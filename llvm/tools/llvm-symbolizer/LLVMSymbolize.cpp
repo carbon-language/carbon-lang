@@ -196,7 +196,7 @@ std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
   if (Opts.UseSymbolTable) {
     if (ModuleInfo *Info = getOrCreateModuleInfo(ModuleName)) {
       if (Info->symbolizeData(ModuleOffset, Name, Start, Size) && Opts.Demangle)
-        Name = DemangleName(Name);
+        Name = DemangleGlobalName(Name);
     }
   }
   std::stringstream ss;
@@ -434,6 +434,12 @@ std::string LLVMSymbolizer::DemangleName(const std::string &Name) {
 #else
   return Name;
 #endif
+}
+
+std::string LLVMSymbolizer::DemangleGlobalName(const std::string &Name) {
+  // We can spoil names of globals with C linkage, so use an heuristic
+  // approach to check if the name should be demangled.
+  return (Name.substr(0, 2) == "_Z") ? DemangleName(Name) : Name;
 }
 
 } // namespace symbolize
