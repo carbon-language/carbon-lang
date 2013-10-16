@@ -7148,6 +7148,12 @@ int64_t test_vqabsd_s64(int64_t a) {
   return (int64_t)vqabsd_s64(a);
 }
 
+int64_t test_vnegd_s64(int64_t a) {
+// CHECK: test_vnegd_s64
+// CHECK: neg {{d[0-9]+}}, {{d[0-9]+}}
+  return (int64_t)vnegd_s64(a);
+}
+
 int8_t test_vqnegb_s8(int8_t a) {
 // CHECK: test_vqnegb_s8
 // CHECK: sqneg {{b[0-9]+}}, {{b[0-9]+}}

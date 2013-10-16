@@ -2085,6 +2085,10 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vqabsd_s64:
     Int = Intrinsic::arm_neon_vqabs;
     s = "vqabs"; OverloadInt = true; break;
+  // Scalar Negate
+  case AArch64::BI__builtin_neon_vnegd_s64:
+    Int = Intrinsic::aarch64_neon_vneg;
+    s = "vneg"; OverloadInt = false; break;
   // Scalar Signed Saturating Negate
   case AArch64::BI__builtin_neon_vqnegb_s8:
   case AArch64::BI__builtin_neon_vqnegh_s16:

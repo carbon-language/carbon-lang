@@ -864,6 +864,10 @@ def SCALAR_ABS : SInst<"vabs", "ss", "Sl">;
 def SCALAR_SQABS : SInst<"vqabs", "ss", "ScSsSiSl">;
 
 ////////////////////////////////////////////////////////////////////////////////
+// Scalar Negate
+def SCALAR_NEG : SInst<"vneg", "ss", "Sl">;
+
+////////////////////////////////////////////////////////////////////////////////
 // Scalar Signed Saturating Negate
 def SCALAR_SQNEG : SInst<"vqneg", "ss", "ScSsSiSl">;
 
