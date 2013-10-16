@@ -541,6 +541,14 @@ LLVMBool LLVMPrintModuleToFile(LLVMModuleRef M, const char *Filename,
                                char **ErrorMessage);
 
 /**
+ * Return a string representation of the module. Use
+ * LLVMDisposeMessage to free the string.
+ *
+ * @see Module::print()
+ */
+char *LLVMPrintModuleToString(LLVMModuleRef M);
+
+/**
  * Set inline assembly for a module.
  *
  * @see Module::setModuleInlineAsm()
