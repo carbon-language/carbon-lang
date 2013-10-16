@@ -213,6 +213,7 @@ public:
                                      unsigned Isa, unsigned Discriminator,
                                      StringRef FileName);
 
+  virtual void EmitIdent(StringRef IdentString);
   virtual void EmitCFISections(bool EH, bool Debug);
   virtual void EmitCFIDefCfa(int64_t Register, int64_t Offset);
   virtual void EmitCFIDefCfaOffset(int64_t Offset);
@@ -877,6 +878,13 @@ void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
     OS << MAI->getCommentString() << ' ' << FileName << ':'
        << Line << ':' << Column;
   }
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitIdent(StringRef IdentString) {
+  assert(MAI->hasIdentDirective() && ".ident directive not supported");
+  OS << "\t.ident\t";
+  PrintQuotedString(IdentString, OS);
   EmitEOL();
 }
 

@@ -72,6 +72,7 @@ public:
   virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
                               uint64_t Size, unsigned ByteAlignment);
   virtual void EmitFileDirective(StringRef Filename);
+  virtual void EmitIdent(StringRef IdentString);
   virtual void EmitWin64EHHandlerData();
   virtual void FinishImpl();
 
@@ -304,6 +305,11 @@ void WinCOFFStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
 void WinCOFFStreamer::EmitFileDirective(StringRef Filename) {
   // Ignore for now, linkers don't care, and proper debug
   // info will be a much large effort.
+}
+
+// TODO: Implement this if you want to emit .comment section in COFF obj files.
+void WinCOFFStreamer::EmitIdent(StringRef IdentString) {
+  llvm_unreachable("unsupported directive");
 }
 
 void WinCOFFStreamer::EmitWin64EHHandlerData() {

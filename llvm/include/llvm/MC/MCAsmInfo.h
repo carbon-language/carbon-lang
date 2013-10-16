@@ -271,6 +271,10 @@ namespace llvm {
     /// .file directive, this is true for ELF targets.
     bool HasSingleParameterDotFile;          // Defaults to true.
 
+    /// hasIdentDirective - True if the target has a .ident directive, this is
+    /// true for ELF targets.
+    bool HasIdentDirective;                  // Defaults to false.
+
     /// HasNoDeadStrip - True if this target supports the MachO .no_dead_strip
     /// directive.
     bool HasNoDeadStrip;                     // Defaults to false.
@@ -523,6 +527,7 @@ namespace llvm {
     }
     bool hasDotTypeDotSizeDirective() const {return HasDotTypeDotSizeDirective;}
     bool hasSingleParameterDotFile() const { return HasSingleParameterDotFile; }
+    bool hasIdentDirective() const { return HasIdentDirective; }
     bool hasNoDeadStrip() const { return HasNoDeadStrip; }
     bool hasSymbolResolver() const { return HasSymbolResolver; }
     const char *getWeakRefDirective() const { return WeakRefDirective; }

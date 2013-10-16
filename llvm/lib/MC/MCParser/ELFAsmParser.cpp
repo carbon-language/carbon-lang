@@ -31,14 +31,11 @@ class ELFAsmParser : public MCAsmParserExtension {
     getParser().addDirectiveHandler(Directive, Handler);
   }
 
-  bool ParseSectionSwitch(StringRef Section, unsigned Type,
-                          unsigned Flags, SectionKind Kind);
-  bool SeenIdent;
+  bool ParseSectionSwitch(StringRef Section, unsigned Type, unsigned Flags,
+                          SectionKind Kind);
 
 public:
-  ELFAsmParser() : SeenIdent(false) {
-    BracketExpressionsSupported = true;
-  }
+  ELFAsmParser() { BracketExpressionsSupported = true; }
 
   virtual void Initialize(MCAsmParser &Parser) {
     // Call the base implementation.
@@ -579,22 +576,7 @@ bool ELFAsmParser::ParseDirectiveIdent(StringRef, SMLoc) {
 
   Lex();
 
-  const MCSection *Comment =
-    getContext().getELFSection(".comment", ELF::SHT_PROGBITS,
-                               ELF::SHF_MERGE |
-                               ELF::SHF_STRINGS,
-                               SectionKind::getReadOnly(),
-                               1, "");
-
-  getStreamer().PushSection();
-  getStreamer().SwitchSection(Comment);
-  if (!SeenIdent) {
-    getStreamer().EmitIntValue(0, 1);
-    SeenIdent = true;
-  }
-  getStreamer().EmitBytes(Data);
-  getStreamer().EmitIntValue(0, 1);
-  getStreamer().PopSection();
+  getStreamer().EmitIdent(Data);
   return false;
 }
 

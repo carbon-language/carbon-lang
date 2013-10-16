@@ -76,6 +76,7 @@ MCAsmInfo::MCAsmInfo() {
   LCOMMDirectiveAlignmentType = LCOMM::NoAlignment;
   HasDotTypeDotSizeDirective = true;
   HasSingleParameterDotFile = true;
+  HasIdentDirective = false;
   HasNoDeadStrip = false;
   HasSymbolResolver = false;
   WeakRefDirective = 0;

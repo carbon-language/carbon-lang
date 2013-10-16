@@ -571,6 +571,10 @@ public:
   /// implement the '.file "foo.c"' assembler directive.
   virtual void EmitFileDirective(StringRef Filename) = 0;
 
+  /// Emit the "identifiers" directive.  This implements the
+  /// '.ident "version foo"' assembler directive.
+  virtual void EmitIdent(StringRef IdentString) {}
+
   /// EmitDwarfFileDirective - Associate a filename with a specified logical
   /// file number.  This implements the DWARF2 '.file 4 "foo.c"' assembler
   /// directive.

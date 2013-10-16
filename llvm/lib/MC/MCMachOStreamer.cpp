@@ -82,7 +82,11 @@ public:
     // FIXME: Just ignore the .file; it isn't important enough to fail the
     // entire assembly.
 
-    //report_fatal_error("unsupported directive: '.file'");
+    // report_fatal_error("unsupported directive: '.file'");
+  }
+
+  virtual void EmitIdent(StringRef IdentString) {
+    llvm_unreachable("macho doesn't support this directive");
   }
 
   virtual void FinishImpl();

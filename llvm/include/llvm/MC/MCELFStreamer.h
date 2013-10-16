@@ -31,13 +31,14 @@ class MCELFStreamer : public MCObjectStreamer {
 public:
   MCELFStreamer(MCContext &Context, MCTargetStreamer *TargetStreamer,
                 MCAsmBackend &TAB, raw_ostream &OS, MCCodeEmitter *Emitter)
-      : MCObjectStreamer(Context, TargetStreamer, TAB, OS, Emitter) {}
+      : MCObjectStreamer(Context, TargetStreamer, TAB, OS, Emitter), 
+                         SeenIdent(false) {}
 
   MCELFStreamer(MCContext &Context, MCTargetStreamer *TargetStreamer,
                 MCAsmBackend &TAB, raw_ostream &OS, MCCodeEmitter *Emitter,
                 MCAssembler *Assembler)
-      : MCObjectStreamer(Context, TargetStreamer, TAB, OS, Emitter, Assembler) {
-  }
+      : MCObjectStreamer(Context, TargetStreamer, TAB, OS, Emitter, Assembler), 
+                         SeenIdent(false) {}
 
   virtual ~MCELFStreamer();
 
@@ -77,6 +78,8 @@ public:
 
   virtual void EmitFileDirective(StringRef Filename);
 
+  virtual void EmitIdent(StringRef IdentString);
+
   virtual void EmitValueToAlignment(unsigned, int64_t, unsigned, unsigned);
 
   virtual void Flush();
@@ -92,6 +95,8 @@ private:
   virtual void EmitBundleUnlock();
 
   void fixSymbolsInTLSFixups(const MCExpr *expr);
+
+  bool SeenIdent;
 
   struct LocalCommon {
     MCSymbolData *SD;
