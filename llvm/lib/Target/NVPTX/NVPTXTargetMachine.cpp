@@ -57,9 +57,6 @@ extern "C" void LLVMInitializeNVPTXTarget() {
   RegisterTargetMachine<NVPTXTargetMachine32> X(TheNVPTXTarget32);
   RegisterTargetMachine<NVPTXTargetMachine64> Y(TheNVPTXTarget64);
 
-  RegisterMCAsmInfo<NVPTXMCAsmInfo> A(TheNVPTXTarget32);
-  RegisterMCAsmInfo<NVPTXMCAsmInfo> B(TheNVPTXTarget64);
-
   // FIXME: This pass is really intended to be invoked during IR optimization,
   // but it's very NVPTX-specific.
   initializeNVVMReflectPass(*PassRegistry::getPassRegistry());

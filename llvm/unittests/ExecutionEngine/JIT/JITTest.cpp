@@ -721,16 +721,4 @@ TEST(LazyLoadedJITTest, EagerCompiledRecursionThroughGhost) {
 }
 #endif // !defined(__arm__) && !defined(__powerpc__) && !defined(__s390__)
 
-// This code is copied from JITEventListenerTest, but it only runs once for all
-// the tests in this directory.  Everything seems fine, but that's strange
-// behavior.
-class JITEnvironment : public testing::Environment {
-  virtual void SetUp() {
-    // Required to create a JIT.
-    InitializeNativeTarget();
-  }
-};
-testing::Environment* const jit_env =
-  testing::AddGlobalTestEnvironment(new JITEnvironment);
-
 }
