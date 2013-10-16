@@ -172,3 +172,34 @@ namespace test10 {
 @implementation PropertyOfItself
 @synthesize x;
 @end
+
+// rdar://14654207
+struct CGSize {
+  double width;
+  double height;
+};
+typedef struct CGSize CGSize;
+
+struct CGRect {
+  CGSize origin;
+  CGSize size;
+};
+typedef struct CGRect CGRect;
+
+typedef CGRect NSRect;
+void HappySetFrame(NSRect frame) {}
+
+__attribute__((objc_root_class))
+@interface NSObject 
+@property CGRect frame;
+@end
+
+@implementation NSObject
+- (void) nothing
+{
+	HappySetFrame({{0,0}, {13,14}});
+	[self setFrame: {{0,0}, {13,14}}];
+        self.frame = {{0,0}, {13,14}};
+        self.frame = (CGRect){{3,5}, {13,14}};
+}
+@end
