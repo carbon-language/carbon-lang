@@ -135,11 +135,13 @@ void MCObjectDisassembler::buildSectionAtoms(MCModule *Module) {
           Text->addInst(Inst, InstSize);
           InvalidData = 0;
         } else {
+          assert(InstSize && "getInstruction() consumed no bytes");
           if (!InvalidData) {
             Text = 0;
-            InvalidData = Module->createDataAtom(CurAddr, EndAddr);
+            InvalidData = Module->createDataAtom(CurAddr, CurAddr+InstSize - 1);
           }
-          InvalidData->addData(Contents[Index]);
+          for (uint64_t I = 0; I < InstSize; ++I)
+            InvalidData->addData(Contents[Index+I]);
         }
       }
     } else {
