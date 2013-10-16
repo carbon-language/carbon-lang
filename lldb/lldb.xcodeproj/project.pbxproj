@@ -493,6 +493,8 @@
 		26FFC19C14FC072100087D58 /* DYLDRendezvous.h in Headers */ = {isa = PBXBuildFile; fileRef = 26FFC19614FC072100087D58 /* DYLDRendezvous.h */; };
 		26FFC19D14FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26FFC19714FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp */; };
 		26FFC19E14FC072100087D58 /* DynamicLoaderPOSIXDYLD.h in Headers */ = {isa = PBXBuildFile; fileRef = 26FFC19814FC072100087D58 /* DynamicLoaderPOSIXDYLD.h */; };
+		490A36C0180F0E6F00BA31F8 /* PlatformWindows.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490A36BD180F0E6F00BA31F8 /* PlatformWindows.cpp */; };
+		490A36C2180F0E9300BA31F8 /* PlatformWindows.h in Headers */ = {isa = PBXBuildFile; fileRef = 490A36BE180F0E6F00BA31F8 /* PlatformWindows.h */; };
 		490A966B1628C3BF00F0002E /* SBDeclaration.h in Headers */ = {isa = PBXBuildFile; fileRef = 9452573816262CEF00325455 /* SBDeclaration.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		494260DA14579144003C1C78 /* VerifyDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 494260D914579144003C1C78 /* VerifyDecl.cpp */; };
 		4966DCC4148978A10028481B /* ClangExternalASTSourceCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4966DCC3148978A10028481B /* ClangExternalASTSourceCommon.cpp */; };
@@ -1450,6 +1452,8 @@
 		26FFC19814FC072100087D58 /* DynamicLoaderPOSIXDYLD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DynamicLoaderPOSIXDYLD.h; sourceTree = "<group>"; };
 		4906FD4012F2255300A2A77C /* ASTDumper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTDumper.cpp; path = source/Expression/ASTDumper.cpp; sourceTree = "<group>"; };
 		4906FD4412F2257600A2A77C /* ASTDumper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTDumper.h; path = include/lldb/Expression/ASTDumper.h; sourceTree = "<group>"; };
+		490A36BD180F0E6F00BA31F8 /* PlatformWindows.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformWindows.cpp; sourceTree = "<group>"; };
+		490A36BE180F0E6F00BA31F8 /* PlatformWindows.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformWindows.h; sourceTree = "<group>"; };
 		4911934B1226383D00578B7F /* ASTStructExtractor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTStructExtractor.h; path = include/lldb/Expression/ASTStructExtractor.h; sourceTree = "<group>"; };
 		491193501226386000578B7F /* ASTStructExtractor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTStructExtractor.cpp; path = source/Expression/ASTStructExtractor.cpp; sourceTree = "<group>"; };
 		49307AAD11DEA4D90081F992 /* IRForTarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IRForTarget.cpp; path = source/Expression/IRForTarget.cpp; sourceTree = "<group>"; };
@@ -3175,11 +3179,12 @@
 		26C5577E132575B6008FD8FE /* Platform */ = {
 			isa = PBXGroup;
 			children = (
-				9457596415349416005A9070 /* POSIX */,
 				2694E99814FC0BB30076DE67 /* FreeBSD */,
 				264A97BC133918A30017F0BE /* GDB Server */,
 				2694E99F14FC0BBD0076DE67 /* Linux */,
 				26C5577F132575C8008FD8FE /* MacOSX */,
+				9457596415349416005A9070 /* POSIX */,
+				490A36BA180F0E6F00BA31F8 /* Windows */,
 			);
 			path = Platform;
 			sourceTree = "<group>";
@@ -3329,6 +3334,15 @@
 				26FFC19814FC072100087D58 /* DynamicLoaderPOSIXDYLD.h */,
 			);
 			path = "POSIX-DYLD";
+			sourceTree = "<group>";
+		};
+		490A36BA180F0E6F00BA31F8 /* Windows */ = {
+			isa = PBXGroup;
+			children = (
+				490A36BD180F0E6F00BA31F8 /* PlatformWindows.cpp */,
+				490A36BE180F0E6F00BA31F8 /* PlatformWindows.h */,
+			);
+			path = Windows;
 			sourceTree = "<group>";
 		};
 		4CCA643A13B40B82003BDF98 /* LanguageRuntime */ = {
@@ -3582,6 +3596,7 @@
 				260CC63415D04377002BF2E0 /* OptionValueFileSpec.h in Headers */,
 				26D1804716CEE12C00EDFB5B /* TimeSpecTimeout.h in Headers */,
 				260CC63515D04377002BF2E0 /* OptionValueFileSpecList.h in Headers */,
+				490A36C2180F0E9300BA31F8 /* PlatformWindows.h in Headers */,
 				260CC63615D04377002BF2E0 /* OptionValueFormat.h in Headers */,
 				26D1804516CEE12500EDFB5B /* KQueue.h in Headers */,
 				260CC63715D04377002BF2E0 /* OptionValueSInt64.h in Headers */,
@@ -4320,6 +4335,7 @@
 				260CC64D15D0440D002BF2E0 /* OptionValueEnumeration.cpp in Sources */,
 				260CC64E15D0440D002BF2E0 /* OptionValueFileSpec.cpp in Sources */,
 				260CC64F15D0440D002BF2E0 /* OptionValueFileSpecLIst.cpp in Sources */,
+				490A36C0180F0E6F00BA31F8 /* PlatformWindows.cpp in Sources */,
 				260CC65015D0440D002BF2E0 /* OptionValueFormat.cpp in Sources */,
 				260CC65115D0440D002BF2E0 /* OptionValueSInt64.cpp in Sources */,
 				260CC65215D0440D002BF2E0 /* OptionValueString.cpp in Sources */,
