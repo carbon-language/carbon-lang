@@ -4396,3 +4396,47 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:          cmtst b20, d21, d22
 // CHECK-ERROR:                ^
+
+//----------------------------------------------------------------------
+// Scalar Signed Saturating Accumulated of Unsigned Value
+//----------------------------------------------------------------------
+
+        suqadd b0, h1
+        suqadd h0, s1
+        suqadd s0, d1
+        suqadd d0, b0
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        suqadd b0, h1
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        suqadd h0, s1
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        suqadd s0, d1
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        suqadd d0, b0
+// CHECK-ERROR:                   ^
+
+//----------------------------------------------------------------------
+// Scalar Unsigned Saturating Accumulated of Unsigned Value
+//----------------------------------------------------------------------
+
+        usqadd b0, h1
+        usqadd h0, s1
+        usqadd s0, d1
+        usqadd d0, b1
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usqadd b0, h1
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usqadd h0, s1
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usqadd s0, d1
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usqadd d0, b1
+// CHECK-ERROR:                   ^

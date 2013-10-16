@@ -3116,7 +3116,7 @@ def ST1_4V_1D : NeonI_STVList<0, 0b0010, 0b11, VQuad1D_operand, "st1">;
 
 // End of vector load/store multiple N-element structure(class SIMD lselem)
 
-// Scalar Arithmetic
+// Scalar Three Same
 
 class NeonI_Scalar3Same_D_size<bit u, bits<5> opcode, string asmop>
   : NeonI_Scalar3Same<u, 0b11, opcode,
@@ -3264,6 +3264,29 @@ multiclass NeonI_Scalar2SameMisc_BHSD_size<bit u, bits<5> opcode, string asmop>{
                          [], NoItinerary>;
 }
 
+multiclass NeonI_Scalar2SameMisc_accum_BHSD_size<bit u, bits<5> opcode,
+                                                 string asmop> {
+
+  let Constraints = "$Src = $Rd" in {
+    def bb : NeonI_Scalar2SameMisc<u, 0b00, opcode,
+                            (outs FPR8:$Rd), (ins FPR8:$Src, FPR8:$Rn),
+                            !strconcat(asmop, " $Rd, $Rn"),
+                            [], NoItinerary>;
+    def hh : NeonI_Scalar2SameMisc<u, 0b01, opcode,
+                            (outs FPR16:$Rd), (ins FPR16:$Src, FPR16:$Rn),
+                            !strconcat(asmop, " $Rd, $Rn"),
+                            [], NoItinerary>;
+    def ss : NeonI_Scalar2SameMisc<u, 0b10, opcode,
+                            (outs FPR32:$Rd), (ins FPR32:$Src, FPR32:$Rn),
+                            !strconcat(asmop, " $Rd, $Rn"),
+                            [], NoItinerary>;
+    def dd: NeonI_Scalar2SameMisc<u, 0b11, opcode,
+                           (outs FPR64:$Rd), (ins FPR64:$Src, FPR64:$Rn),
+                           !strconcat(asmop, " $Rd, $Rn"),
+                           [], NoItinerary>;
+  }
+}
+
 multiclass Neon_Scalar2SameMisc_cvt_SD_size_patterns<SDPatternOperator Sopnode,
                                                      SDPatternOperator Dopnode,
                                                      Instruction INSTS,
@@ -3283,7 +3306,6 @@ multiclass Neon_Scalar2SameMisc_SD_size_patterns<SDPatternOperator opnode,
             (INSTD FPR64:$Rn)>;
 }
 
-// AdvSIMD Scalar Two Registers Miscellaneous
 class NeonI_Scalar2SameMisc_cmpz_D_size<bit u, bits<5> opcode, string asmop>
   : NeonI_Scalar2SameMisc<u, 0b11, opcode,
                           (outs FPR64:$Rd), (ins FPR64:$Rn, neon_uimm0:$Imm),
@@ -3309,6 +3331,22 @@ multiclass Neon_Scalar2SameMisc_BHSD_size_patterns<SDPatternOperator opnode,
             (INSTS FPR32:$Rn)>;
   def : Pat<(v1i64 (opnode (v1i64 FPR64:$Rn))),
             (INSTD FPR64:$Rn)>;
+}
+
+multiclass Neon_Scalar2SameMisc_accum_BHSD_size_patterns<
+                                                       SDPatternOperator opnode,
+                                                       Instruction INSTB,
+                                                       Instruction INSTH,
+                                                       Instruction INSTS,
+                                                       Instruction INSTD> {
+  def : Pat<(v1i8 (opnode (v1i8 FPR8:$Src), (v1i8 FPR8:$Rn))),
+            (INSTB FPR8:$Src, FPR8:$Rn)>;
+  def : Pat<(v1i16 (opnode (v1i16 FPR16:$Src), (v1i16 FPR16:$Rn))),
+            (INSTH FPR16:$Src, FPR16:$Rn)>;
+  def : Pat<(v1i32 (opnode (v1i32 FPR32:$Src), (v1i32 FPR32:$Rn))),
+            (INSTS FPR32:$Src, FPR32:$Rn)>;
+  def : Pat<(v1i64 (opnode (v1i64 FPR64:$Src), (v1i64 FPR64:$Rn))),
+            (INSTD FPR64:$Src, FPR64:$Rn)>;
 }
 
 // Scalar Integer Add
@@ -3538,6 +3576,18 @@ defm : Neon_Scalar2SameMisc_BHSD_size_patterns<int_arm_neon_vqabs,
 defm SQNEG : NeonI_Scalar2SameMisc_BHSD_size<0b1, 0b00111, "sqneg">;
 defm : Neon_Scalar2SameMisc_BHSD_size_patterns<int_arm_neon_vqneg,
                                                SQNEGbb, SQNEGhh, SQNEGss, SQNEGdd>;
+
+// Scalar Signed Saturating Accumulated of Unsigned Value
+defm SUQADD : NeonI_Scalar2SameMisc_accum_BHSD_size<0b0, 0b00011, "suqadd">;
+defm : Neon_Scalar2SameMisc_accum_BHSD_size_patterns<int_aarch64_neon_vuqadd,
+                                                     SUQADDbb, SUQADDhh,
+                                                     SUQADDss, SUQADDdd>;
+
+// Scalar Unsigned Saturating Accumulated of Unsigned Value
+defm USQADD : NeonI_Scalar2SameMisc_accum_BHSD_size<0b1, 0b00011, "usqadd">;
+defm : Neon_Scalar2SameMisc_accum_BHSD_size_patterns<int_aarch64_neon_vsqadd,
+                                                     USQADDbb, USQADDhh,
+                                                     USQADDss, USQADDdd>;
 
 // Scalar Reduce Pairwise
 
