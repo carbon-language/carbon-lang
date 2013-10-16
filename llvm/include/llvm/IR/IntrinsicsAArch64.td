@@ -196,4 +196,8 @@ def int_aarch64_neon_vuqadd : Neon_2Arg_Intrinsic;
 
 // Scalar Unsigned Saturating Accumulated of Signed Value
 def int_aarch64_neon_vsqadd : Neon_2Arg_Intrinsic;
+
+// Scalar Absolute Value
+def int_aarch64_neon_vabs :
+  Intrinsic<[llvm_v1i64_ty], [llvm_v1i64_ty], [IntrNoMem]>;
 }

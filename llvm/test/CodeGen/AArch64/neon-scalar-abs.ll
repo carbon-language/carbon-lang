@@ -1,5 +1,17 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
 
+define i64 @test_vabsd_s64(i64 %a) {
+; CHECK: test_vabsd_s64
+; CHECK: abs {{d[0-9]+}}, {{d[0-9]+}}
+entry:
+  %vabs.i = insertelement <1 x i64> undef, i64 %a, i32 0
+  %vabs1.i = tail call <1 x i64> @llvm.aarch64.neon.vabs(<1 x i64> %vabs.i)
+  %0 = extractelement <1 x i64> %vabs1.i, i32 0
+  ret i64 %0
+}
+
+declare <1 x i64> @llvm.aarch64.neon.vabs(<1 x i64>)
+
 define i8 @test_vqabsb_s8(i8 %a) {
 ; CHECK: test_vqabsb_s8
 ; CHECK: sqabs {{b[0-9]+}}, {{b[0-9]+}}

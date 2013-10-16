@@ -4440,3 +4440,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        usqadd d0, b1
 // CHECK-ERROR:                   ^
+
+//----------------------------------------------------------------------
+// Scalar Absolute Value
+//----------------------------------------------------------------------
+
+    abs d29, s24
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        abs d29, s24
+// CHECK-ERROR:                 ^
