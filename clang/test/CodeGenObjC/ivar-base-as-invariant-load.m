@@ -23,7 +23,7 @@
 
 @end
 
-// CHECK: [[T1:%.*]] = load i64* @"OBJC_IVAR_$_A._flags", !invariant.load !4
-// CHECK: [[T2:%.*]] = load i64* @"OBJC_IVAR_$_A._flags", !invariant.load !4
-// CHECK: [[T3:%.*]] = load i64* @"OBJC_IVAR_$_A._flags", !invariant.load !4
+// CHECK: [[T1:%.*]] = load i64* @"OBJC_IVAR_$_A._flags", !invariant.load !5
+// CHECK: [[T2:%.*]] = load i64* @"OBJC_IVAR_$_A._flags", !invariant.load !5
+// CHECK: [[T3:%.*]] = load i64* @"OBJC_IVAR_$_A._flags", !invariant.load !5
 
