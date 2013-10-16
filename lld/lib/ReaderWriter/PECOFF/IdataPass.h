@@ -243,7 +243,9 @@ public:
 class IdataPassFile : public SimpleFile {
 public:
   IdataPassFile(const LinkingContext &ctx)
-      : SimpleFile(ctx, "<idata-pass-file>") {}
+      : SimpleFile(ctx, "<idata-pass-file>") {
+    setOrdinal(ctx.getNextOrdinalAndIncrement());
+  }
 };
 
 class IdataPass : public lld::Pass {

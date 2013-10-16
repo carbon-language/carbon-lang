@@ -23,8 +23,12 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileOutputBuffer.h"
+#include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/Memory.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 
@@ -726,11 +730,15 @@ public:
   error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                        std::vector<std::unique_ptr<File> > &result) const {
     StringRef magic(mb->getBufferStart(), mb->getBufferSize());
-    // The input file should be an archive file, a regular COFF file, or an
-    // import library member file. Try to parse in that order. If the input file
-    // does not start with a known magic, parseCOFFImportLibrary will return an
-    // error object.
+
+    // The input file should be a resource file, an archive file, a regular COFF
+    // file, or an import library member file. Try to parse in that order. If
+    // the input file does not start with a known magic, parseCOFFImportLibrary
+    // will return an error object.
     llvm::sys::fs::file_magic fileType = llvm::sys::fs::identify_magic(magic);
+
+    if (fileType == llvm::sys::fs::file_magic::windows_resource)
+      return convertAndParseResourceFile(mb, result);
     if (fileType == llvm::sys::fs::file_magic::coff_object)
       return parseCOFFFile(mb, result);
     return lld::coff::parseCOFFImportLibrary(_context, mb, result);
@@ -774,6 +782,104 @@ private:
       llvm::errs() << "lld warning: " << errorMessage << "\n";
     }
   }
+
+  //
+  // RC file Reader
+  //
+
+  ErrorOr<std::string>
+  writeResToTemporaryFile(std::unique_ptr<MemoryBuffer> mb) const {
+    // Get a temporary file path for .rc file.
+    SmallString<128> tempFilePath;
+    if (error_code ec = llvm::sys::fs::createTemporaryFile(
+            "tmp", "rc", tempFilePath))
+      return ec;
+
+    // Write the memory buffer contents to .rc file, so that we can run
+    // cvtres.exe on it.
+    OwningPtr<llvm::FileOutputBuffer> buffer;
+    if (error_code ec = llvm::FileOutputBuffer::create(
+            tempFilePath.str(), mb->getBufferSize(), buffer))
+      return ec;
+    memcpy(buffer->getBufferStart(), mb->getBufferStart(), mb->getBufferSize());
+    if (error_code ec = buffer->commit())
+      return ec;
+
+    // Convert SmallString -> StringRef -> std::string.
+    return tempFilePath.str().str();
+  }
+
+  ErrorOr<std::string>
+  convertResourceFileToCOFF(std::unique_ptr<MemoryBuffer> mb) const {
+    // Write the resource file to a temporary file.
+    ErrorOr<std::string> inFilePath = writeResToTemporaryFile(std::move(mb));
+    if (!inFilePath)
+      return error_code(inFilePath);
+    llvm::FileRemover inFileRemover(*inFilePath);
+
+    // Create an output file path.
+    SmallString<128> outFilePath;
+    if (error_code ec = llvm::sys::fs::createTemporaryFile(
+            "tmp", "obj", outFilePath))
+      return ec;
+    std::string outFileArg = ("/out:" + outFilePath).str();
+
+    // Construct CVTRES.EXE command line and execute it.
+    std::string program = "cvtres.exe";
+    std::string programPath = llvm::sys::FindProgramByName(program);
+    if (programPath.empty()) {
+      llvm::errs() << "Unable to find " << program << " in PATH\n";
+      return llvm::errc::broken_pipe;
+    }
+    std::vector<const char *> args;
+    args.push_back(programPath.c_str());
+    args.push_back("/machine:x86");
+    args.push_back("/readonly");
+    args.push_back(outFileArg.c_str());
+    args.push_back(inFilePath->c_str());
+    args.push_back(nullptr);
+
+    DEBUG({
+      for (const char **p = &args[0]; *p; ++p)
+        llvm::dbgs() << *p << " ";
+      llvm::dbgs() << "\n";
+    });
+
+    if (llvm::sys::ExecuteAndWait(programPath.c_str(), &args[0]) != 0) {
+      llvm::errs() << program << " failed\n";
+      return llvm::errc::broken_pipe;
+    }
+    return outFilePath.str().str();
+  }
+
+  // Convert .rc file to .coff file and then parse it. Resource file is a file
+  // containing various types of data, such as icons, translation texts,
+  // etc. "cvtres.exe" command reads an RC file to create a COFF file which
+  // encapsulates resource data into rsrc$N sections, where N is an integer.
+  //
+  // The linker is not capable to handle RC files directly. Instead, it runs
+  // cvtres.exe on RC files and then then link its outputs.
+  error_code
+  convertAndParseResourceFile(
+      std::unique_ptr<MemoryBuffer> &mb,
+      std::vector<std::unique_ptr<File> > &result) const {
+    // Convert an RC to a COFF
+    ErrorOr<std::string> coffFilePath = convertResourceFileToCOFF(std::move(mb));
+    if (!coffFilePath)
+      return error_code(coffFilePath);
+    llvm::FileRemover coffFileRemover(*coffFilePath);
+
+    // Read and parse the COFF
+    OwningPtr<llvm::MemoryBuffer> opmb;
+    if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(*coffFilePath, opmb))
+      return ec;
+    std::unique_ptr<llvm::MemoryBuffer> newmb(opmb.take());
+    return parseCOFFFile(newmb, result);
+  }
+
+  //
+  // COFF file Reader
+  //
 
   error_code parseCOFFFile(std::unique_ptr<MemoryBuffer> &mb,
                            std::vector<std::unique_ptr<File> > &result) const {
