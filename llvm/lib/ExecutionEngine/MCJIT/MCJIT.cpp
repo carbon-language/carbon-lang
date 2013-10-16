@@ -62,6 +62,8 @@ MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM,
 }
 
 MCJIT::~MCJIT() {
+  Dyld.deregisterEHFrames();
+
   LoadedObjectMap::iterator it, end = LoadedObjects.end();
   for (it = LoadedObjects.begin(); it != end; ++it) {
     ObjectImage *Obj = it->second;

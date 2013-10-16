@@ -32,6 +32,9 @@ namespace llvm {
 void RuntimeDyldImpl::registerEHFrames() {
 }
 
+void RuntimeDyldImpl::deregisterEHFrames() {
+}
+
 // Resolve the relocations for all symbols we currently know about.
 void RuntimeDyldImpl::resolveRelocations() {
   // First, resolve relocations associated with external symbols.
@@ -595,7 +598,13 @@ StringRef RuntimeDyld::getErrorString() {
 }
 
 void RuntimeDyld::registerEHFrames() {
-  return Dyld->registerEHFrames();
+  if (Dyld)
+    Dyld->registerEHFrames();
+}
+
+void RuntimeDyld::deregisterEHFrames() {
+  if (Dyld)
+    Dyld->deregisterEHFrames();
 }
 
 } // end namespace llvm

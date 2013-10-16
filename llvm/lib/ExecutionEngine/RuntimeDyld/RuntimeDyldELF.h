@@ -126,6 +126,7 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
   // in a table until we receive a request to register all unregistered
   // EH frame sections with the memory manager.
   SmallVector<SID, 2> UnregisteredEHFrameSections;
+  SmallVector<SID, 2> RegisteredEHFrameSections;
 
 public:
   RuntimeDyldELF(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm)
@@ -141,6 +142,7 @@ public:
   virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const;
   virtual ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);
   virtual void registerEHFrames();
+  virtual void deregisterEHFrames();
   virtual void finalizeLoad(ObjSectionToIDMap &SectionMap);
   virtual ~RuntimeDyldELF();
 };

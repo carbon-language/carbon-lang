@@ -71,6 +71,8 @@ public:
   /// the actual target-specific EH frame registration.
   void registerEHFrames();
 
+  void deregisterEHFrames();
+
   StringRef getErrorString();
 };
 

@@ -87,6 +87,7 @@ public:
   // For now, remote EH frame registration isn't supported.  Remote symbol
   // resolution is a prerequisite to supporting remote EH frame registration.
   void registerEHFrames(uint8_t *Addr, uint64_t LoadAddr, size_t Size) {}
+  void deregisterEHFrames(uint8_t *Addr, uint64_t LoadAddr, size_t Size) {}
 
   // This is a non-interface function used by lli
   void setRemoteTarget(RemoteTarget *T) { Target = T; }

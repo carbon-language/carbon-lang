@@ -55,6 +55,12 @@ public:
     ClientMM->registerEHFrames(Addr, LoadAddr, Size);
   }
 
+  virtual void deregisterEHFrames(uint8_t *Addr,
+                                  uint64_t LoadAddr,
+                                  size_t Size) {
+    ClientMM->deregisterEHFrames(Addr, LoadAddr, Size);
+  }
+
   virtual bool finalizeMemory(std::string *ErrMsg = 0) {
     return ClientMM->finalizeMemory(ErrMsg);
   }

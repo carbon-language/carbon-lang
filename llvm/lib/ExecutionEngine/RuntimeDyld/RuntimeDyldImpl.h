@@ -342,6 +342,8 @@ public:
 
   virtual void registerEHFrames();
 
+  virtual void deregisterEHFrames();
+
   virtual void finalizeLoad(ObjSectionToIDMap &SectionMap) {}
 };
 

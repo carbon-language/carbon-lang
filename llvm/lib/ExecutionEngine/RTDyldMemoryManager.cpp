@@ -42,17 +42,53 @@ RTDyldMemoryManager::~RTDyldMemoryManager() {}
 
 #if HAVE_EHTABLE_SUPPORT
 extern "C" void __register_frame(void*);
+extern "C" void __deregister_frame(void*);
+#else
+// The building compiler does not have __(de)register_frame but
+// it may be found at runtime in a dynamically-loaded library.
+// For example, this happens when building LLVM with Visual C++
+// but using the MingW runtime.
+void __register_frame(void *p) {
+  static bool Searched = false;
+  static void *rf = 0;
 
-static const char *processFDE(const char *Entry) {
+  if (!Searched) {
+    Searched = true;
+    rf = llvm::sys::DynamicLibrary::SearchForAddressOfSymbol(
+                                                      "__register_frame");
+  }
+  if (rf)
+    ((void (*)(void *))rf)(p);
+}
+
+void __deregister_frame(void *p) {
+  static bool Searched = false;
+  static void *df = 0;
+
+  if (!Searched) {
+    Searched = true;
+    df = llvm::sys::DynamicLibrary::SearchForAddressOfSymbol(
+                                                      "__deregister_frame");
+  }
+  if (df)
+    ((void (*)(void *))df)(p);
+}
+#endif
+
+#ifdef __APPLE__
+
+static const char *processFDE(const char *Entry, bool isDeregister) {
   const char *P = Entry;
   uint32_t Length = *((const uint32_t *)P);
   P += 4;
   uint32_t Offset = *((const uint32_t *)P);
   if (Offset != 0)
-    __register_frame(const_cast<char *>(Entry));
+    if (isDeregister)
+      __deregister_frame(const_cast<char *>(Entry));
+    else
+      __register_frame(const_cast<char *>(Entry));
   return P + Length;
 }
-#endif
 
 // This implementation handles frame registration for local targets.
 // Memory managers for remote targets should re-implement this function
@@ -60,14 +96,49 @@ static const char *processFDE(const char *Entry) {
 void RTDyldMemoryManager::registerEHFrames(uint8_t *Addr,
                                            uint64_t LoadAddr,
                                            size_t Size) {
-#if HAVE_EHTABLE_SUPPORT
+  // On OS X OS X __register_frame takes a single FDE as an argument.
+  // See http://lists.cs.uiuc.edu/pipermail/llvmdev/2013-April/061768.html
   const char *P = (const char *)Addr;
   const char *End = P + Size;
   do  {
-    P = processFDE(P);
+    P = processFDE(P, false);
   } while(P != End);
-#endif
 }
+
+void RTDyldMemoryManager::deregisterEHFrames(uint8_t *Addr,
+                                           uint64_t LoadAddr,
+                                           size_t Size) {
+  const char *P = (const char *)Addr;
+  const char *End = P + Size;
+  do  {
+    P = processFDE(P, true);
+  } while(P != End);
+}
+
+#else
+
+void RTDyldMemoryManager::registerEHFrames(uint8_t *Addr,
+                                           uint64_t LoadAddr,
+                                           size_t Size) {
+  // On Linux __register_frame takes a single argument: 
+  // a pointer to the start of the .eh_frame section.
+
+  // How can it find the end? Because crtendS.o is linked 
+  // in and it has an .eh_frame section with four zero chars.
+  // FIXME: make sure EH frame is followed by four zero bytes.
+  // This should be done in the linker RuntimeDyldELF::getEHFrameSection(),
+  // return pointer to .eh_frame properly appended by four zero bytes.
+  // If the linker can not fixed, do it here.
+  __register_frame(Addr);
+}
+
+void RTDyldMemoryManager::deregisterEHFrames(uint8_t *Addr,
+                                           uint64_t LoadAddr,
+                                           size_t Size) {
+  __deregister_frame(Addr);
+}
+
+#endif
 
 static int jit_noop() {
   return 0;
