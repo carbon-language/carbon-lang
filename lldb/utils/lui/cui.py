@@ -78,26 +78,53 @@ class ListWin(CursesWin):
     self.items = []
     self.selected = 0
     self.first_drawn = 0
+    self.win.leaveok(True)
 
   def draw(self):
+    if len(self.items) == 0:
+      self.win.erase()
+      return
+
     h, w = self.win.getmaxyx()
-    if self.selected < self.first_drawn:
-      self.first_drawn = self.selected
-    if self.selected >= self.first_drawn + h:
-      self.first_drawn = self.selected - h + 1
+
+    allLines = []
+    firstSelected = -1
+    lastSelected = -1
+    for i, item in enumerate(self.items):
+      lines = self.items[i].split('\n')
+      lines = lines if lines[len(lines)-1] != '' else lines[:-1]
+      if len(lines) == 0:
+        lines = ['']
+
+      if i == self.getSelected():
+        firstSelected = len(allLines)
+      allLines.extend(lines)
+      if i == self.selected:
+        lastSelected = len(allLines) - 1
+
+    if firstSelected < self.first_drawn:
+      self.first_drawn = firstSelected
+    elif lastSelected >= self.first_drawn + h:
+      self.first_drawn = lastSelected - h + 1
 
     self.win.clear()
 
     begin = self.first_drawn
     end = begin + h
-    for i, item in enumerate(self.items[begin:end]):
-      text = item
-      if i + begin == self.selected:
-        attr = curses.A_REVERSE 
-        text = '{0:{width}}'.format(text, width=w-1)
-      else:
-        attr = curses.A_NORMAL
-      self.win.addstr(i, 0, text, attr)
+
+    y = 0
+    for i, line in list(enumerate(allLines))[begin:end]:
+      attr = curses.A_NORMAL
+      if i >= firstSelected and i <= lastSelected:
+        attr = curses.A_REVERSE
+        line = '{0:{width}}'.format(line, width=w-1)
+
+      # Ignore the error we get from drawing over the bottom-right char.
+      try:
+        self.win.addstr(y, 0, line[:w], attr)
+      except curses.error:
+        pass
+      y += 1
     self.win.noutrefresh()
 
   def getSelected(self):
