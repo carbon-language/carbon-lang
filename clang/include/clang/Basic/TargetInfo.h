@@ -713,7 +713,7 @@ public:
   /// passed onwards to the backend.
   ///
   /// \return  False on error.
-  virtual bool HandleTargetFeatures(std::vector<std::string> &Features,
+  virtual bool handleTargetFeatures(std::vector<std::string> &Features,
                                     DiagnosticsEngine &Diags) {
     return true;
   }
@@ -817,7 +817,7 @@ protected:
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
                                 unsigned &NumAliases) const = 0;
   virtual void getGCCAddlRegNames(const AddlRegName *&Addl,
-				  unsigned &NumAddl) const {
+                                  unsigned &NumAddl) const {
     Addl = 0;
     NumAddl = 0;
   }

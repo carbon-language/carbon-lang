@@ -760,7 +760,7 @@ public:
 
   virtual void getDefaultFeatures(llvm::StringMap<bool> &Features) const;
 
-  virtual bool HandleTargetFeatures(std::vector<std::string> &Features,
+  virtual bool handleTargetFeatures(std::vector<std::string> &Features,
                                     DiagnosticsEngine &Diags);
   virtual bool hasFeature(StringRef Feature) const;
   
@@ -883,9 +883,9 @@ const Builtin::Info PPCTargetInfo::BuiltinInfo[] = {
 #include "clang/Basic/BuiltinsPPC.def"
 };
 
-  /// HandleTargetFeatures - Perform initialization based on the user
+  /// handleTargetFeatures - Perform initialization based on the user
 /// configured set of features.
-bool PPCTargetInfo::HandleTargetFeatures(std::vector<std::string> &Features,
+bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
                                          DiagnosticsEngine &Diags) {
   // Remember the maximum enabled sselevel.
   for (unsigned i = 0, e = Features.size(); i !=e; ++i) {
@@ -1842,7 +1842,7 @@ public:
                                     StringRef Name, bool Enabled);
   virtual void getDefaultFeatures(llvm::StringMap<bool> &Features) const;
   virtual bool hasFeature(StringRef Feature) const;
-  virtual bool HandleTargetFeatures(std::vector<std::string> &Features,
+  virtual bool handleTargetFeatures(std::vector<std::string> &Features,
                                     DiagnosticsEngine &Diags);
   virtual const char* getABI() const {
     if (getTriple().getArch() == llvm::Triple::x86_64 && SSELevel >= AVX)
@@ -2362,9 +2362,9 @@ void X86TargetInfo::setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
   }
 }
 
-/// HandleTargetFeatures - Perform initialization based on the user
+/// handleTargetFeatures - Perform initialization based on the user
 /// configured set of features.
-bool X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features,
+bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
                                          DiagnosticsEngine &Diags) {
   // Remember the maximum enabled sselevel.
   for (unsigned i = 0, e = Features.size(); i !=e; ++i) {
@@ -3465,7 +3465,7 @@ public:
     return Feature == "aarch64" || (Feature == "neon" && FPU == NeonMode);
   }
 
-  virtual bool HandleTargetFeatures(std::vector<std::string> &Features,
+  virtual bool handleTargetFeatures(std::vector<std::string> &Features,
                                     DiagnosticsEngine &Diags) {
     FPU = FPUMode;
     for (unsigned i = 0, e = Features.size(); i != e; ++i) {
@@ -3766,7 +3766,7 @@ public:
     }
   }
 
-  virtual bool HandleTargetFeatures(std::vector<std::string> &Features,
+  virtual bool handleTargetFeatures(std::vector<std::string> &Features,
                                     DiagnosticsEngine &Diags) {
     FPU = 0;
     SoftFloat = SoftFloatABI = false;
@@ -4300,7 +4300,7 @@ class SparcTargetInfo : public TargetInfo {
 public:
   SparcTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {}
 
-  virtual bool HandleTargetFeatures(std::vector<std::string> &Features,
+  virtual bool handleTargetFeatures(std::vector<std::string> &Features,
                                     DiagnosticsEngine &Diags) {
     SoftFloat = false;
     for (unsigned i = 0, e = Features.size(); i != e; ++i)
@@ -4879,7 +4879,7 @@ public:
     return "";
   }
 
-  virtual bool HandleTargetFeatures(std::vector<std::string> &Features,
+  virtual bool handleTargetFeatures(std::vector<std::string> &Features,
                                     DiagnosticsEngine &Diags) {
     IsMips16 = false;
     IsMicromips = false;
@@ -5767,7 +5767,7 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   for (llvm::StringMap<bool>::const_iterator it = Features.begin(),
          ie = Features.end(); it != ie; ++it)
     Opts->Features.push_back((it->second ? "+" : "-") + it->first().str());
-  if (!Target->HandleTargetFeatures(Opts->Features, Diags))
+  if (!Target->handleTargetFeatures(Opts->Features, Diags))
     return 0;
 
   return Target.take();
