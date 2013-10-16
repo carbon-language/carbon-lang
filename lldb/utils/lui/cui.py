@@ -72,6 +72,65 @@ class TitledWin(CursesWin):
     self.title_win.draw()
     self.win.noutrefresh()
 
+class ListWin(CursesWin):
+  def __init__(self, x, y, w, h):
+    super(ListWin, self).__init__(x, y, w, h)
+    self.items = []
+    self.selected = 0
+    self.first_drawn = 0
+
+  def draw(self):
+    h, w = self.win.getmaxyx()
+    if self.selected < self.first_drawn:
+      self.first_drawn = self.selected
+    if self.selected >= self.first_drawn + h:
+      self.first_drawn = self.selected - h + 1
+
+    self.win.clear()
+
+    begin = self.first_drawn
+    end = begin + h
+    for i, item in enumerate(self.items[begin:end]):
+      text = item
+      if i + begin == self.selected:
+        attr = curses.A_REVERSE 
+        text = '{0:{width}}'.format(text, width=w-1)
+      else:
+        attr = curses.A_NORMAL
+      self.win.addstr(i, 0, text, attr)
+    self.win.noutrefresh()
+
+  def getSelected(self):
+    if self.items:
+      return self.selected
+    return -1
+
+  def setSelected(self, selected):
+    self.selected = selected
+    if self.selected < 0:
+      self.selected = 0
+    elif self.selected >= len(self.items):
+      self.selected = len(self.items) - 1
+
+  def handleEvent(self, event):
+    if isinstance(event, int):
+      if len(self.items) > 0:
+        if event == curses.KEY_UP:
+          self.setSelected(self.selected - 1)
+        if event == curses.KEY_DOWN:
+          self.setSelected(self.selected + 1)
+        if event == curses.ascii.NL:
+          self.handleSelect(self.selected)
+
+  def addItem(self, item):
+    self.items.append(item)
+
+  def clearItems(self):
+    self.items = []
+
+  def handleSelect(self, index):
+    return
+
 class InputHandler(threading.Thread):
   def __init__(self, screen, queue):
     super(InputHandler, self).__init__()
