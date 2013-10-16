@@ -305,9 +305,6 @@ declarations), they are accessible outside of the current module.
 It is illegal for a function *declaration* to have any linkage type
 other than ``external``, ``dllimport`` or ``extern_weak``.
 
-Aliases can have only ``external``, ``internal``, ``weak`` or
-``weak_odr`` linkages.
-
 .. _callingconv:
 
 Calling Conventions
