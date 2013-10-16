@@ -856,6 +856,10 @@ def SCALAR_CMHI : SInst<"vcgt", "sss", "SUl">;
 def SCALAR_CMTST : SInst<"vtst", "sss", "SlSUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
+// Scalar Absolute Value
+def SCALAR_ABS : SInst<"vabs", "ss", "Sl">;
+
+////////////////////////////////////////////////////////////////////////////////
 // Scalar Signed Saturating Absolute Value
 def SCALAR_SQABS : SInst<"vqabs", "ss", "ScSsSiSl">;
 

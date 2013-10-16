@@ -7118,6 +7118,12 @@ uint64_t test_vtstd_u64(uint64_t a, uint64_t b) {
   return (uint64_t)vtstd_u64(a, b);
 }
 
+int64_t test_vabsd_s64(int64_t a) {
+// CHECK: test_vabsd_s64
+// CHECK: abs {{d[0-9]+}}, {{d[0-9]+}}
+  return (int64_t)vabsd_s64(a);
+}
+
 int8_t test_vqabsb_s8(int8_t a) {
 // CHECK: test_vqabsb_s8
 // CHECK: sqabs {{b[0-9]+}}, {{b[0-9]+}}
