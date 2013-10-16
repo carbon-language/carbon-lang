@@ -246,6 +246,41 @@ static void adjustCallLocations(PathPieces &Pieces,
   }
 }
 
+/// Remove edges in and out of C++ default initializer expressions. These are
+/// for fields that have in-class initializers, as opposed to being initialized
+/// explicitly in a constructor or braced list.
+static void removeEdgesToDefaultInitializers(PathPieces &Pieces) {
+  for (PathPieces::iterator I = Pieces.begin(), E = Pieces.end(); I != E;) {
+    if (PathDiagnosticCallPiece *C = dyn_cast<PathDiagnosticCallPiece>(*I))
+      removeEdgesToDefaultInitializers(C->path);
+
+    if (PathDiagnosticMacroPiece *M = dyn_cast<PathDiagnosticMacroPiece>(*I))
+      removeEdgesToDefaultInitializers(M->subPieces);
+
+    if (PathDiagnosticControlFlowPiece *CF =
+          dyn_cast<PathDiagnosticControlFlowPiece>(*I)) {
+      const Stmt *Start = CF->getStartLocation().asStmt();
+      const Stmt *End = CF->getEndLocation().asStmt();
+      if (Start && isa<CXXDefaultInitExpr>(Start)) {
+        I = Pieces.erase(I);
+        continue;
+      } else if (End && isa<CXXDefaultInitExpr>(End)) {
+        PathPieces::iterator Next = llvm::next(I);
+        if (Next != E) {
+          if (PathDiagnosticControlFlowPiece *NextCF =
+                dyn_cast<PathDiagnosticControlFlowPiece>(*Next)) {
+            NextCF->setStartLocation(CF->getStartLocation());
+          }
+        }
+        I = Pieces.erase(I);
+        continue;
+      }
+    }
+
+    I++;
+  }
+}
+
 /// Remove all pieces with invalid locations as these cannot be serialized.
 /// We might have pieces with invalid locations as a result of inlining Body
 /// Farm generated functions.
@@ -3163,7 +3198,6 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
 
       // Redirect all call pieces to have valid locations.
       adjustCallLocations(PD.getMutablePieces());
-
       removePiecesWithInvalidLocations(PD.getMutablePieces());
 
       if (ActiveScheme == PathDiagnosticConsumer::AlternateExtensive) {
@@ -3180,9 +3214,11 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
         dropFunctionEntryEdge(PD.getMutablePieces(), LCM, SM);
       }
 
-      // Remove messages that are basically the same.
+      // Remove messages that are basically the same, and edges that may not
+      // make sense.
       // We have to do this after edge optimization in the Extensive mode.
       removeRedundantMsgs(PD.getMutablePieces());
+      removeEdgesToDefaultInitializers(PD.getMutablePieces());
     }
 
     // We found a report and didn't suppress it.
