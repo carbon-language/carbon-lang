@@ -44,3 +44,46 @@ entry:
   store double %mul5, double* %arrayidx5, align 8
   ret void
 }
+
+; Don't vectorize volatile loads.
+; CHECK: test_volatile_load
+; CHECK-NOT: load <2 x double>
+; CHECK: store <2 x double>
+; CHECK: ret
+define void @test_volatile_load(double* %a, double* %b, double* %c) {
+entry:
+  %i0 = load volatile double* %a, align 8
+  %i1 = load volatile double* %b, align 8
+  %mul = fmul double %i0, %i1
+  %arrayidx3 = getelementptr inbounds double* %a, i64 1
+  %i3 = load double* %arrayidx3, align 8
+  %arrayidx4 = getelementptr inbounds double* %b, i64 1
+  %i4 = load double* %arrayidx4, align 8
+  %mul5 = fmul double %i3, %i4
+  store double %mul, double* %c, align 8
+  %arrayidx5 = getelementptr inbounds double* %c, i64 1
+  store double %mul5, double* %arrayidx5, align 8
+  ret void
+}
+
+; Don't vectorize volatile stores.
+; CHECK: test_volatile_store
+; CHECK-NOT: store <2 x double>
+; CHECK: ret
+define void @test_volatile_store(double* %a, double* %b, double* %c) {
+entry:
+  %i0 = load double* %a, align 8
+  %i1 = load double* %b, align 8
+  %mul = fmul double %i0, %i1
+  %arrayidx3 = getelementptr inbounds double* %a, i64 1
+  %i3 = load double* %arrayidx3, align 8
+  %arrayidx4 = getelementptr inbounds double* %b, i64 1
+  %i4 = load double* %arrayidx4, align 8
+  %mul5 = fmul double %i3, %i4
+  store volatile double %mul, double* %c, align 8
+  %arrayidx5 = getelementptr inbounds double* %c, i64 1
+  store volatile double %mul5, double* %arrayidx5, align 8
+  ret void
+}
+
+
