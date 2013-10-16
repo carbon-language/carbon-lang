@@ -3583,7 +3583,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
   }
   // fold (xor (and x, y), y) -> (and (not x), y)
   if (N0.getOpcode() == ISD::AND && N0.getNode()->hasOneUse() &&
-      N0->getOperand(1) == N1) {
+      N0->getOperand(1) == N1 && isTypeLegal(VT.getScalarType())) {
     SDValue X = N0->getOperand(0);
     SDValue NotX = DAG.getNOT(SDLoc(X), X, VT);
     AddToWorkList(NotX.getNode());

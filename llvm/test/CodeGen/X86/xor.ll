@@ -165,3 +165,17 @@ define <4 x i32> @test10(<4 x i32> %a) nounwind {
 ; X32-LABEL: test10:
 ; X32:    andnps
 }
+
+define i32 @PR17487(i1 %tobool) {
+  %tmp = insertelement <2 x i1> undef, i1 %tobool, i32 1
+  %tmp1 = zext <2 x i1> %tmp to <2 x i64>
+  %tmp2 = xor <2 x i64> %tmp1, <i64 1, i64 1>
+  %tmp3 = extractelement <2 x i64> %tmp2, i32 1
+  %add = add nsw i64 0, %tmp3
+  %cmp6 = icmp ne i64 %add, 1
+  %conv7 = zext i1 %cmp6 to i32
+  ret i32 %conv7
+
+; X64-LABEL: PR17487:
+; X64: andn
+}
