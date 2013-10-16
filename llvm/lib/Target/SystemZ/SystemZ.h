@@ -68,6 +68,9 @@ namespace llvm {
     const unsigned CCMASK_TM_MSB_1       = CCMASK_2 | CCMASK_3;
     const unsigned CCMASK_TM             = CCMASK_ANY;
 
+    // The position of the low CC bit in an IPM result.
+    const unsigned IPM_CC = 28;
+
     // Mask assignments for PFD.
     const unsigned PFD_READ  = 1;
     const unsigned PFD_WRITE = 2;

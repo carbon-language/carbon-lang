@@ -449,7 +449,7 @@ static bool removeIPMBasedCompare(MachineInstr *Compare, unsigned SrcReg,
     return false;
 
   MachineInstr *SRL = getDef(RLL->getOperand(1).getReg(), MRI);
-  if (!SRL || !isShift(SRL, SystemZ::SRL, 28))
+  if (!SRL || !isShift(SRL, SystemZ::SRL, SystemZ::IPM_CC))
     return false;
 
   MachineInstr *IPM = getDef(SRL->getOperand(1).getReg(), MRI);

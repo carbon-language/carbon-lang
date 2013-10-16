@@ -97,10 +97,9 @@ exit:
 ; Test a vector of 0/-1 results for i32 EQ.
 define i64 @f7(i64 %a, i64 %b) {
 ; CHECK-LABEL: f7:
-; CHECK: lhi [[REG:%r[0-5]]], -1
-; CHECK: crje {{%r[0-5]}}
-; CHECK: lhi [[REG]], 0
-; CHECK-NOT: sra
+; CHECK: ipm [[REG:%r[0-5]]]
+; CHECK: afi [[REG]], -268435456
+; CHECK: sra [[REG]], 31
 ; CHECK: br %r14
   %avec = bitcast i64 %a to <2 x i32>
   %bvec = bitcast i64 %b to <2 x i32>
@@ -113,10 +112,9 @@ define i64 @f7(i64 %a, i64 %b) {
 ; Test a vector of 0/-1 results for i32 NE.
 define i64 @f8(i64 %a, i64 %b) {
 ; CHECK-LABEL: f8:
-; CHECK: lhi [[REG:%r[0-5]]], -1
-; CHECK: crjlh {{%r[0-5]}}
-; CHECK: lhi [[REG]], 0
-; CHECK-NOT: sra
+; CHECK: ipm [[REG:%r[0-5]]]
+; CHECK: afi [[REG]], 1879048192
+; CHECK: sra [[REG]], 31
 ; CHECK: br %r14
   %avec = bitcast i64 %a to <2 x i32>
   %bvec = bitcast i64 %b to <2 x i32>
@@ -129,10 +127,10 @@ define i64 @f8(i64 %a, i64 %b) {
 ; Test a vector of 0/-1 results for i64 EQ.
 define void @f9(i64 %a, i64 %b, <2 x i64> *%dest) {
 ; CHECK-LABEL: f9:
-; CHECK: lghi [[REG:%r[0-5]]], -1
-; CHECK: crje {{%r[0-5]}}
-; CHECK: lghi [[REG]], 0
-; CHECK-NOT: sra
+; CHECK: ipm [[REG:%r[0-5]]]
+; CHECK: afi [[REG]], -268435456
+; CHECK: sllg [[REG2:%r[0-5]]], [[REG]], 32
+; CHECK: srag {{%r[0-5]}}, [[REG2]], 63
 ; CHECK: br %r14
   %avec = bitcast i64 %a to <2 x i32>
   %bvec = bitcast i64 %b to <2 x i32>
@@ -145,10 +143,10 @@ define void @f9(i64 %a, i64 %b, <2 x i64> *%dest) {
 ; Test a vector of 0/-1 results for i64 NE.
 define void @f10(i64 %a, i64 %b, <2 x i64> *%dest) {
 ; CHECK-LABEL: f10:
-; CHECK: lghi [[REG:%r[0-5]]], -1
-; CHECK: crjlh {{%r[0-5]}}
-; CHECK: lghi [[REG]], 0
-; CHECK-NOT: sra
+; CHECK: ipm [[REG:%r[0-5]]]
+; CHECK: afi [[REG]], 1879048192
+; CHECK: sllg [[REG2:%r[0-5]]], [[REG]], 32
+; CHECK: srag {{%r[0-5]}}, [[REG2]], 63
 ; CHECK: br %r14
   %avec = bitcast i64 %a to <2 x i32>
   %bvec = bitcast i64 %b to <2 x i32>

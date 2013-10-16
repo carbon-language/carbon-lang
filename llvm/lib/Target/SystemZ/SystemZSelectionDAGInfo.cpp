@@ -183,7 +183,7 @@ static SDValue emitCLC(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
 static SDValue addIPMSequence(SDLoc DL, SDValue Glue, SelectionDAG &DAG) {
   SDValue IPM = DAG.getNode(SystemZISD::IPM, DL, MVT::i32, Glue);
   SDValue SRL = DAG.getNode(ISD::SRL, DL, MVT::i32, IPM,
-                            DAG.getConstant(28, MVT::i32));
+                            DAG.getConstant(SystemZ::IPM_CC, MVT::i32));
   SDValue ROTL = DAG.getNode(ISD::ROTL, DL, MVT::i32, SRL,
                              DAG.getConstant(31, MVT::i32));
   return ROTL;

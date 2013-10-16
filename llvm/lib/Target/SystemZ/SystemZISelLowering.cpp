@@ -27,6 +27,19 @@
 
 using namespace llvm;
 
+namespace {
+// Represents a sequence for extracting a 0/1 value from an IPM result:
+// (((X ^ XORValue) + AddValue) >> Bit)
+struct IPMConversion {
+  IPMConversion(unsigned xorValue, int64_t addValue, unsigned bit)
+    : XORValue(xorValue), AddValue(addValue), Bit(bit) {}
+
+  int64_t XORValue;
+  int64_t AddValue;
+  unsigned Bit;
+};
+}
+
 // Classify VT as either 32 or 64 bit.
 static bool is32Bit(EVT VT) {
   switch (VT.getSimpleVT().SimpleTy) {
@@ -88,8 +101,8 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
        ++I) {
     MVT VT = MVT::SimpleValueType(I);
     if (isTypeLegal(VT)) {
-      // Expand SETCC(X, Y, COND) into SELECT_CC(X, Y, 1, 0, COND).
-      setOperationAction(ISD::SETCC, VT, Expand);
+      // Lower SET_CC into an IPM-based sequence.
+      setOperationAction(ISD::SETCC, VT, Custom);
 
       // Expand SELECT(C, A, B) into SELECT_CC(X, 0, A, B, NE).
       setOperationAction(ISD::SELECT, VT, Expand);
@@ -980,6 +993,73 @@ static unsigned CCMaskForCondCode(ISD::CondCode CC) {
 #undef CONV
 }
 
+// Return a sequence for getting a 1 from an IPM result when CC has a
+// value in CCMask and a 0 when CC has a value in CCValid & ~CCMask.
+// The handling of CC values outside CCValid doesn't matter.
+static IPMConversion getIPMConversion(unsigned CCValid, unsigned CCMask) {
+  // Deal with cases where the result can be taken directly from a bit
+  // of the IPM result.
+  if (CCMask == (CCValid & (SystemZ::CCMASK_1 | SystemZ::CCMASK_3)))
+    return IPMConversion(0, 0, SystemZ::IPM_CC);
+  if (CCMask == (CCValid & (SystemZ::CCMASK_2 | SystemZ::CCMASK_3)))
+    return IPMConversion(0, 0, SystemZ::IPM_CC + 1);
+
+  // Deal with cases where we can add a value to force the sign bit
+  // to contain the right value.  Putting the bit in 31 means we can
+  // use SRL rather than RISBG(L), and also makes it easier to get a
+  // 0/-1 value, so it has priority over the other tests below.
+  //
+  // These sequences rely on the fact that the upper two bits of the
+  // IPM result are zero.
+  uint64_t TopBit = uint64_t(1) << 31;
+  if (CCMask == (CCValid & SystemZ::CCMASK_0))
+    return IPMConversion(0, -(1 << SystemZ::IPM_CC), 31);
+  if (CCMask == (CCValid & (SystemZ::CCMASK_0 | SystemZ::CCMASK_1)))
+    return IPMConversion(0, -(2 << SystemZ::IPM_CC), 31);
+  if (CCMask == (CCValid & (SystemZ::CCMASK_0
+                            | SystemZ::CCMASK_1
+                            | SystemZ::CCMASK_2)))
+    return IPMConversion(0, -(3 << SystemZ::IPM_CC), 31);
+  if (CCMask == (CCValid & SystemZ::CCMASK_3))
+    return IPMConversion(0, TopBit - (3 << SystemZ::IPM_CC), 31);
+  if (CCMask == (CCValid & (SystemZ::CCMASK_1
+                            | SystemZ::CCMASK_2
+                            | SystemZ::CCMASK_3)))
+    return IPMConversion(0, TopBit - (1 << SystemZ::IPM_CC), 31);
+
+  // Next try inverting the value and testing a bit.  0/1 could be
+  // handled this way too, but we dealt with that case above.
+  if (CCMask == (CCValid & (SystemZ::CCMASK_0 | SystemZ::CCMASK_2)))
+    return IPMConversion(-1, 0, SystemZ::IPM_CC);
+
+  // Handle cases where adding a value forces a non-sign bit to contain
+  // the right value.
+  if (CCMask == (CCValid & (SystemZ::CCMASK_1 | SystemZ::CCMASK_2)))
+    return IPMConversion(0, 1 << SystemZ::IPM_CC, SystemZ::IPM_CC + 1);
+  if (CCMask == (CCValid & (SystemZ::CCMASK_0 | SystemZ::CCMASK_3)))
+    return IPMConversion(0, -(1 << SystemZ::IPM_CC), SystemZ::IPM_CC + 1);
+
+  // The remaing cases are 1, 2, 0/1/3 and 0/2/3.  All these are
+  // can be done by inverting the low CC bit and applying one of the
+  // sign-based extractions above.
+  if (CCMask == (CCValid & SystemZ::CCMASK_1))
+    return IPMConversion(1 << SystemZ::IPM_CC, -(1 << SystemZ::IPM_CC), 31);
+  if (CCMask == (CCValid & SystemZ::CCMASK_2))
+    return IPMConversion(1 << SystemZ::IPM_CC,
+                         TopBit - (3 << SystemZ::IPM_CC), 31);
+  if (CCMask == (CCValid & (SystemZ::CCMASK_0
+                            | SystemZ::CCMASK_1
+                            | SystemZ::CCMASK_3)))
+    return IPMConversion(1 << SystemZ::IPM_CC, -(3 << SystemZ::IPM_CC), 31);
+  if (CCMask == (CCValid & (SystemZ::CCMASK_0
+                            | SystemZ::CCMASK_2
+                            | SystemZ::CCMASK_3)))
+    return IPMConversion(1 << SystemZ::IPM_CC,
+                         TopBit - (1 << SystemZ::IPM_CC), 31);
+
+  llvm_unreachable("Unexpected CC combination");
+}
+
 // If a comparison described by IsUnsigned, CCMask, CmpOp0 and CmpOp1
 // can be converted to a comparison against zero, adjust the operands
 // as necessary.
@@ -1399,6 +1479,36 @@ static void lowerGR128Binary(SelectionDAG &DAG, SDLoc DL, EVT VT,
   bool Is32Bit = is32Bit(VT);
   Even = DAG.getTargetExtractSubreg(SystemZ::even128(Is32Bit), DL, VT, Result);
   Odd = DAG.getTargetExtractSubreg(SystemZ::odd128(Is32Bit), DL, VT, Result);
+}
+
+SDValue SystemZTargetLowering::lowerSETCC(SDValue Op,
+                                          SelectionDAG &DAG) const {
+  SDValue CmpOp0   = Op.getOperand(0);
+  SDValue CmpOp1   = Op.getOperand(1);
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
+  SDLoc DL(Op);
+
+  unsigned CCValid, CCMask;
+  SDValue Glue = emitCmp(TM, DAG, DL, CmpOp0, CmpOp1, CC, CCValid, CCMask);
+
+  IPMConversion Conversion = getIPMConversion(CCValid, CCMask);
+  SDValue Result = DAG.getNode(SystemZISD::IPM, DL, MVT::i32, Glue);
+
+  if (Conversion.XORValue)
+    Result = DAG.getNode(ISD::XOR, DL, MVT::i32, Result,
+                         DAG.getConstant(Conversion.XORValue, MVT::i32));
+
+  if (Conversion.AddValue)
+    Result = DAG.getNode(ISD::ADD, DL, MVT::i32, Result,
+                         DAG.getConstant(Conversion.AddValue, MVT::i32));
+
+  // The SHR/AND sequence should get optimized to an RISBG.
+  Result = DAG.getNode(ISD::SRL, DL, MVT::i32, Result,
+                       DAG.getConstant(Conversion.Bit, MVT::i32));
+  if (Conversion.Bit != 31)
+    Result = DAG.getNode(ISD::AND, DL, MVT::i32, Result,
+                         DAG.getConstant(1, MVT::i32));
+  return Result;
 }
 
 SDValue SystemZTargetLowering::lowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
@@ -1997,6 +2107,8 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
     return lowerBR_CC(Op, DAG);
   case ISD::SELECT_CC:
     return lowerSELECT_CC(Op, DAG);
+  case ISD::SETCC:
+    return lowerSETCC(Op, DAG);
   case ISD::GlobalAddress:
     return lowerGlobalAddress(cast<GlobalAddressSDNode>(Op), DAG);
   case ISD::GlobalTLSAddress:
