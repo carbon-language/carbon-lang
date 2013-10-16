@@ -700,6 +700,13 @@ LLVMBool LLVMTypeIsSized(LLVMTypeRef Ty);
 LLVMContextRef LLVMGetTypeContext(LLVMTypeRef Ty);
 
 /**
+ * Dump a representation of a type to stderr.
+ *
+ * @see llvm::Type::dump()
+ */
+void LLVMDumpType(LLVMTypeRef Val);
+
+/**
  * @defgroup LLVMCCoreTypeInt Integer Types
  *
  * Functions in this section operate on integer types.

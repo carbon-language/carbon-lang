@@ -220,6 +220,10 @@ LLVMContextRef LLVMGetTypeContext(LLVMTypeRef Ty) {
   return wrap(&unwrap(Ty)->getContext());
 }
 
+void LLVMDumpType(LLVMTypeRef Ty) {
+  return unwrap(Ty)->dump();
+}
+
 /*--.. Operations on integer types .........................................--*/
 
 LLVMTypeRef LLVMInt1TypeInContext(LLVMContextRef C)  {
