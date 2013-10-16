@@ -786,14 +786,13 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
     }
     case Instruction::Load: {
       // Check if the loads are consecutive or of we need to swizzle them.
-      for (unsigned i = 0, e = VL.size() - 1; i < e; ++i) {
-        LoadInst *L = cast<LoadInst>(VL[i]);
-        if (!L->isSimple() || !isConsecutiveAccess(VL[i], VL[i + 1])) {
+      for (unsigned i = 0, e = VL.size() - 1; i < e; ++i)
+        if (!isConsecutiveAccess(VL[i], VL[i + 1])) {
           newTreeEntry(VL, false);
           DEBUG(dbgs() << "SLP: Need to swizzle loads.\n");
           return;
         }
-      }
+
       newTreeEntry(VL, true);
       DEBUG(dbgs() << "SLP: added a vector of loads.\n");
       return;
@@ -1910,10 +1909,6 @@ unsigned SLPVectorizer::collectStores(BasicBlock *BB, BoUpSLP &R) {
   for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
     StoreInst *SI = dyn_cast<StoreInst>(it);
     if (!SI)
-      continue;
-
-    // Don't touch volatile stores.
-    if (!SI->isSimple())
       continue;
 
     // Check that the pointer points to scalars.
