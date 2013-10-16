@@ -229,8 +229,14 @@ void ObjCMigrateASTConsumer::migrateDecl(Decl *D) {
   BodyMigrator(*this).TraverseDecl(D);
 }
 
-static void append_attr(std::string &PropertyString, const char *attr) {
-  PropertyString += ", ";
+static void append_attr(std::string &PropertyString, const char *attr,
+                        bool &LParenAdded) {
+  if (!LParenAdded) {
+    PropertyString += "(";
+    LParenAdded = true;
+  }
+  else
+    PropertyString += ", ";
   PropertyString += attr;
 }
 
@@ -273,24 +279,40 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
                                   unsigned LengthOfPrefix,
                                   bool Atomic) {
   ASTContext &Context = NS.getASTContext();
-  std::string PropertyString = "@property (";
-  PropertyString += (Atomic ? "atomic" : "nonatomic");
+  bool LParenAdded = false;
+  std::string PropertyString = "@property ";
+  if (!Atomic) {
+    PropertyString += "(nonatomic";
+    LParenAdded = true;
+  }
+  
   std::string PropertyNameString = Getter->getNameAsString();
   StringRef PropertyName(PropertyNameString);
   if (LengthOfPrefix > 0) {
-    PropertyString += ", getter=";
+    if (!LParenAdded) {
+      PropertyString += "(getter=";
+      LParenAdded = true;
+    }
+    else
+      PropertyString += ", getter=";
     PropertyString += PropertyNameString;
   }
   // Property with no setter may be suggested as a 'readonly' property.
-  if (!Setter)
-    append_attr(PropertyString, "readonly");
+  if (!Setter) {
+    if (!LParenAdded) {
+      PropertyString += "(readonly";
+      LParenAdded = true;
+    }
+    else
+      append_attr(PropertyString, "readonly", LParenAdded);
+  }
   
   // Short circuit 'delegate' properties that contain the name "delegate" or
   // "dataSource", or have exact name "target" to have 'assign' attribute.
   if (PropertyName.equals("target") ||
       (PropertyName.find("delegate") != StringRef::npos) ||
       (PropertyName.find("dataSource") != StringRef::npos))
-    append_attr(PropertyString, "assign");
+    append_attr(PropertyString, "assign", LParenAdded);
   else if (Setter) {
     const ParmVarDecl *argDecl = *Setter->param_begin();
     QualType ArgType = Context.getCanonicalType(argDecl->getType());
@@ -302,21 +324,22 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
         ObjCInterfaceDecl *IDecl = ObjPtrTy->getObjectType()->getInterface();
         if (IDecl &&
             IDecl->lookupNestedProtocol(&Context.Idents.get("NSCopying")))
-          append_attr(PropertyString, "copy");
+          append_attr(PropertyString, "copy", LParenAdded);
         else
-          append_attr(PropertyString, "retain");
+          append_attr(PropertyString, "retain", LParenAdded);
       }
       else if (ArgType->isBlockPointerType())
-        append_attr(PropertyString, "copy");
+        append_attr(PropertyString, "copy", LParenAdded);
     } else if (propertyLifetime == Qualifiers::OCL_Weak)
       // TODO. More precise determination of 'weak' attribute requires
       // looking into setter's implementation for backing weak ivar.
-      append_attr(PropertyString, "weak");
+      append_attr(PropertyString, "weak", LParenAdded);
     else if (RetainableObject)
       append_attr(PropertyString,
-                  ArgType->isBlockPointerType() ? "copy" : "retain");
+                  ArgType->isBlockPointerType() ? "copy" : "retain", LParenAdded);
   }
-  PropertyString += ')';
+  if (LParenAdded)
+    PropertyString += ')';
   QualType RT = Getter->getResultType();
   if (!isa<TypedefType>(RT)) {
     // strip off any ARC lifetime qualifier.
