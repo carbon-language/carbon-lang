@@ -501,7 +501,8 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   // symbols given by /include to the dead strip root set, so that it
   // won't be removed from the output.
   if (ctx.deadStrip()) {
-    ctx.addDeadStripRoot(ctx.entrySymbolName());
+    if (!ctx.entrySymbolName().empty())
+      ctx.addDeadStripRoot(ctx.entrySymbolName());
     for (const StringRef symbolName : ctx.initialUndefinedSymbols())
       ctx.addDeadStripRoot(symbolName);
   }

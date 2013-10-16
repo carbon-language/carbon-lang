@@ -88,6 +88,7 @@ public:
   /// deadStrip() returns true.
   void addDeadStripRoot(StringRef symbolName) {
     assert(_deadStrip && "only applicable when deadstripping enabled");
+    assert(!symbolName.empty() && "Empty symbol cannot be a dead strip root");
     _deadStripRoots.push_back(symbolName);
   }
 
