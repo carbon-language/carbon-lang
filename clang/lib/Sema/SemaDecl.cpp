@@ -6911,7 +6911,9 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   if (!NewFD->isInvalidDecl() && !NewFD->hasAttr<WarnUnusedResultAttr>() &&
       Ret && Ret->hasAttr<WarnUnusedResultAttr>()) {
     const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(NewFD);
-    if (!(MD && MD->getCorrespondingMethodInClass(Ret, true))) {
+    // Attach the attribute to the new decl. Don't apply the attribute if it
+    // returns an instance of the class (e.g. assignment operators).
+    if (!MD || MD->getParent() != Ret) {
       NewFD->addAttr(new (Context) WarnUnusedResultAttr(SourceRange(),
                                                         Context));
     }
