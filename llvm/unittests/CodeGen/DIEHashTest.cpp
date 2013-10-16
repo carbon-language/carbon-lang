@@ -23,6 +23,6 @@ TEST(DIEHashData1Test, DIEHash) {
   DIEInteger Size(4);
   Die.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Size);
   uint64_t MD5Res = Hash.computeTypeSignature(&Die);
-  ASSERT_EQ(MD5Res, 0x540e9ff30ade3e4aULL);
+  ASSERT_EQ(MD5Res, 0x4F68EF1039F8D2BULL);
 }
 }
