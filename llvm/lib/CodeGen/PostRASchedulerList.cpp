@@ -515,11 +515,11 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
 
     // Examine all used registers and set/clear kill flag. When a
     // register is used multiple times we only set the kill flag on
-    // the first use.
+    // the first use. Don't set kill flags on undef operands.
     killedRegs.reset();
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
-      if (!MO.isReg() || !MO.isUse()) continue;
+      if (!MO.isReg() || !MO.isUse() || MO.isUndef()) continue;
       unsigned Reg = MO.getReg();
       if ((Reg == 0) || MRI.isReserved(Reg)) continue;
 
