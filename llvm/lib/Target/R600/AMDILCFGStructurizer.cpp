@@ -1335,31 +1335,10 @@ int AMDGPUCFGStructurizer::improveSimpleJumpintoIf(MachineBasicBlock *HeadMBB,
   // add initReg = initVal to headBlk
 
   const TargetRegisterClass * I32RC = TRI->getCFGStructurizerRegClass(MVT::i32);
-  unsigned InitReg =
-    HeadMBB->getParent()->getRegInfo().createVirtualRegister(I32RC);
   if (!MigrateTrue || !MigrateFalse)
     llvm_unreachable("Extra register needed to handle CFG");
 
   int NumNewBlk = 0;
-
-  if (!LandBlk) {
-    LandBlk = HeadMBB->getParent()->CreateMachineBasicBlock();
-    HeadMBB->getParent()->push_back(LandBlk);  //insert to function
-
-    if (TrueMBB) {
-      TrueMBB->addSuccessor(LandBlk);
-    } else {
-      HeadMBB->addSuccessor(LandBlk);
-    }
-
-    if (FalseMBB) {
-      FalseMBB->addSuccessor(LandBlk);
-    } else {
-      HeadMBB->addSuccessor(LandBlk);
-    }
-
-    NumNewBlk ++;
-  }
 
   bool LandBlkHasOtherPred = (LandBlk->pred_size() > 2);
 
@@ -1375,6 +1354,10 @@ int AMDGPUCFGStructurizer::improveSimpleJumpintoIf(MachineBasicBlock *HeadMBB,
         CmpResReg, DebugLoc());
   }
 
+  // XXX: We are running this after RA, so creating virtual registers will
+  // cause an assertion failure in the PostRA scheduling pass.
+  unsigned InitReg =
+    HeadMBB->getParent()->getRegInfo().createVirtualRegister(I32RC);
   insertCondBranchBefore(LandBlk, I, AMDGPU::IF_PREDICATE_SET, InitReg,
       DebugLoc());
 
