@@ -361,8 +361,7 @@ void DIEHash::hashAttributes(const DIEAttrs &Attrs) {
 
 // Add all of the attributes for \param Die to the hash.
 void DIEHash::addAttributes(DIE *Die) {
-  DIEAttrs Attrs;
-  memset(&Attrs, 0, sizeof(Attrs));
+  DIEAttrs Attrs = {};
   collectAttributes(Die, Attrs);
   hashAttributes(Attrs);
 }
