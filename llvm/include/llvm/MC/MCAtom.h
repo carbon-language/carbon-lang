@@ -188,7 +188,9 @@ private:
   friend class MCModule;
   // Private constructor - only callable by MCModule
   MCDataAtom(MCModule *P, uint64_t Begin, uint64_t End)
-    : MCAtom(DataAtom, P, Begin, End), Data(End - Begin) {}
+    : MCAtom(DataAtom, P, Begin, End) {
+    Data.reserve(End + 1 - Begin);
+  }
 };
 
 }

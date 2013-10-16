@@ -44,7 +44,7 @@ void MCAtom::remapForSplit(uint64_t SplitPt,
 
 void MCDataAtom::addData(const MCData &D) {
   Data.push_back(D);
-  if (Data.size() > Begin - End - 1)
+  if (Data.size() > End + 1 - Begin)
     remap(Begin, End + 1);
 }
 

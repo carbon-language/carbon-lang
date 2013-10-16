@@ -10,7 +10,7 @@
 LEVEL = ..
 
 PARALLEL_DIRS = ADT Analysis Bitcode CodeGen DebugInfo ExecutionEngine IR \
-		Object Option Support Transforms
+		MC Object Option Support Transforms
 
 include $(LEVEL)/Makefile.common
 
