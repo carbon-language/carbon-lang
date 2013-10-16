@@ -501,10 +501,15 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   // symbols given by /include to the dead strip root set, so that it
   // won't be removed from the output.
   if (ctx.deadStrip()) {
-    if (!ctx.entrySymbolName().empty())
-      ctx.addDeadStripRoot(ctx.entrySymbolName());
-    for (const StringRef symbolName : ctx.initialUndefinedSymbols())
+    StringRef entry = ctx.entrySymbolName();
+    if (!entry.empty()) {
+      ctx.addInitialUndefinedSymbol(entry);
+      ctx.addDeadStripRoot(entry);
+    }
+    for (const StringRef symbolName : ctx.initialUndefinedSymbols()) {
+      ctx.addInitialUndefinedSymbol(entry);
       ctx.addDeadStripRoot(symbolName);
+    }
   }
 
   // Arguments after "--" are interpreted as filenames even if they

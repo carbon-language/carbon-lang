@@ -71,7 +71,7 @@ private:
   /// \brief The main function that iterates over the files to resolve
   bool resolveUndefines();
   void updateReferences();
-  bool deadStripOptimize();
+  void deadStripOptimize();
   bool checkUndefines(bool final);
   void removeCoalescedAwayAtoms();
   void checkDylibSymbolCollisions();

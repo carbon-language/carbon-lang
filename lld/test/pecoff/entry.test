@@ -7,10 +7,3 @@
 # RUN: FileCheck -check-prefix=CHECK %s < %t1.log
 
 CHECK: : _main
-
-
-# RUN: not lld -flavor link /out:%t2.exe /subsystem:console \
-# RUN:    /entry:no_such_symbol /force -- %t.obj >& %t2.log
-# RUN: FileCheck -check-prefix=FAIL %s < %t2.log
-
-FAIL: Dead strip root '_no_such_symbol' is not defined

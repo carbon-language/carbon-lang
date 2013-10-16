@@ -224,8 +224,6 @@ TEST_F(WinLinkParserTest, Include) {
   auto symbols = _context.initialUndefinedSymbols();
   EXPECT_FALSE(symbols.empty());
   EXPECT_EQ("foo", symbols[0]);
-  symbols.pop_front();
-  EXPECT_TRUE(symbols.empty());
 }
 
 //
