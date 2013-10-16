@@ -3,7 +3,7 @@
 ; Check that a fastcall function gets correct mangling
 
 define x86_fastcallcc void @func(i64 %X, i8 %Y, i8 %G, i16 %Z) {
-; CHECK: @func@20:
+; CHECK: "@func@20":
         ret void
 }
 

@@ -39,6 +39,22 @@ void MCSectionCOFF::setSelection(int Selection,
   Characteristics |= COFF::IMAGE_SCN_LNK_COMDAT;
 }
 
+static bool isAcceptableSectionNameChar(char C) {
+  return (C >= 'a' && C <= 'z') ||
+         (C >= 'A' && C <= 'Z') ||
+         (C >= '0' && C <= '9') ||
+         C == '_' || C == '$' || C == '.';
+}
+
+/// NameNeedsQuoting - Return true if the identifier \p Str needs quotes to be
+/// syntactically correct.
+static bool sectionNameNeedsQuoting(StringRef Name) {
+  for (unsigned i = 0, e = Name.size(); i != e; ++i)
+    if (!isAcceptableSectionNameChar(Name[i]))
+      return true;
+  return false;
+}
+
 void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
                                          raw_ostream &OS,
                                          const MCExpr *Subsection) const {
@@ -49,7 +65,10 @@ void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
     return;
   }
 
-  OS << "\t.section\t" << getSectionName() << ",\"";
+  if (sectionNameNeedsQuoting(getSectionName()))
+    OS << "\t.section\t" << '"' << getSectionName() << '"' << ",\"";
+  else
+    OS << "\t.section\t" << getSectionName() << ",\"";
   if (getKind().isText())
     OS << 'x';
   if (getKind().isWriteable())

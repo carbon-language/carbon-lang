@@ -5,7 +5,7 @@
 
 define internal x86_stdcallcc void @MyFunc() nounwind {
 entry:
-; CHECK: MyFunc@0:
+; CHECK: "_MyFunc@0":
 ; CHECK: ret
   ret void
 }
@@ -20,5 +20,5 @@ entry:
 
 @B = global %0 { void (...)* bitcast (void ()* @MyFunc to void (...)*) }, align 4
 ; CHECK: _B:
-; CHECK: .long _MyFunc@0
+; CHECK: .long "_MyFunc@0"
 
