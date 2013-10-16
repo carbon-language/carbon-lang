@@ -849,7 +849,7 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
   switch ((unsigned char)Magic[0]) {
     case 0x00: {
       // Windows resource file
-      const char Expected[] = "\0\0\0\0\x20\0\0\0\xff";
+      const char Expected[] = { 0, 0, 0, 0, '\x20', 0, 0, 0, '\xff' };
       if (Magic.size() >= sizeof(Expected) &&
           memcmp(Magic.data(), Expected, sizeof(Expected)) == 0)
         return file_magic::windows_resource;
