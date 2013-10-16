@@ -76,6 +76,7 @@ protected:
   bool IsPPC64;
   bool HasAltivec;
   bool HasQPX;
+  bool HasVSX;
   bool HasFCPSGN;
   bool HasFSQRT;
   bool HasFRE, HasFRES, HasFRSQRTE, HasFRSQRTES;
