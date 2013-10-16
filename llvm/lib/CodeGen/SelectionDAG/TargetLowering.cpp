@@ -635,6 +635,31 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
                           TLO.DAG.getNode(ISD::ANY_EXTEND, dl, Op.getValueType(),
                                           NarrowShl));
         }
+        // Repeat the SHL optimization above in cases where an extension
+        // intervenes: (shl (anyext (shr x, c1)), c2) to
+        // (shl (anyext x), c2-c1).  This requires that the bottom c1 bits
+        // aren't demanded (as above) and that the shifted upper c1 bits of
+        // x aren't demanded.
+        if (InOp.hasOneUse() &&
+            InnerOp.getOpcode() == ISD::SRL &&
+            InnerOp.hasOneUse() &&
+            isa<ConstantSDNode>(InnerOp.getOperand(1))) {
+          uint64_t InnerShAmt = cast<ConstantSDNode>(InnerOp.getOperand(1))
+            ->getZExtValue();
+          if (InnerShAmt < ShAmt &&
+              InnerShAmt < InnerBits &&
+              NewMask.lshr(InnerBits - InnerShAmt + ShAmt) == 0 &&
+              NewMask.trunc(ShAmt) == 0) {
+            SDValue NewSA =
+              TLO.DAG.getConstant(ShAmt - InnerShAmt,
+                                  Op.getOperand(1).getValueType());
+            EVT VT = Op.getValueType();
+            SDValue NewExt = TLO.DAG.getNode(ISD::ANY_EXTEND, dl, VT,
+                                             InnerOp.getOperand(0));
+            return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SHL, dl, VT,
+                                                     NewExt, NewSA));
+          }
+        }
       }
 
       KnownZero <<= SA->getZExtValue();
