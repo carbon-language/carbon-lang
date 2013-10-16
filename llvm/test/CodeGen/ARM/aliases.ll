@@ -1,7 +1,20 @@
-; RUN: llc < %s -mtriple=arm-linux-gnueabi -o %t
-; RUN: grep " = " %t   | count 5
-; RUN: grep globl %t | count 4
-; RUN: grep weak %t  | count 1
+; RUN: llc < %s -mtriple=arm-linux-gnueabi | FileCheck %s
+
+; CHECK: .globl	test
+
+; CHECK: .globl	foo1
+; CHECK: foo1 = bar
+
+; CHECK: .globl	foo2
+; CHECK: foo2 = bar
+
+; CHECK: .weak	bar_f
+; CHECK: bar_f = foo_f
+
+; CHECK: bar_i = bar
+
+; CHECK: .globl	A
+; CHECK: A = bar
 
 @bar = external global i32
 @foo1 = alias i32* @bar
