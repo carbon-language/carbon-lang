@@ -1229,7 +1229,7 @@ public:
       : DarwinTargetInfo<PPC32TargetInfo>(Triple) {
     HasAlignMac68kSupport = true;
     BoolWidth = BoolAlign = 32; //XXX support -mone-byte-bool?
-    PtrDiffType = SignedInt;	// for http://llvm.org/bugs/show_bug.cgi?id=15726
+    PtrDiffType = SignedInt;    // for http://llvm.org/bugs/show_bug.cgi?id=15726
     LongLongAlign = 32;
     SuitableAlign = 128;
     DescriptionString = "E-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
@@ -2330,7 +2330,7 @@ void X86TargetInfo::setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
   }
 }
 
-/// HandleTargetOptions - Perform initialization based on the user
+/// HandleTargetFeatures - Perform initialization based on the user
 /// configured set of features.
 bool X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features,
                                          DiagnosticsEngine &Diags) {
