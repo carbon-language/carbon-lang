@@ -1785,30 +1785,36 @@ static void addDfsanRTLinux(const ToolChain &TC, const ArgList &Args,
     addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "dfsan", true);
 }
 
+static bool shouldUseFramePointerForTarget(const ArgList &Args,
+                                           const llvm::Triple &Triple) {
+  switch (Triple.getArch()) {
+  // Don't use a frame pointer on linux if optimizing for certain targets.
+  case llvm::Triple::mips64:
+  case llvm::Triple::mips64el:
+  case llvm::Triple::mips:
+  case llvm::Triple::mipsel:
+  case llvm::Triple::systemz:
+  case llvm::Triple::x86:
+  case llvm::Triple::x86_64:
+    if (Triple.isOSLinux())
+      if (Arg *A = Args.getLastArg(options::OPT_O_Group))
+        if (!A->getOption().matches(options::OPT_O0))
+          return false;
+    return true;
+  case llvm::Triple::xcore:
+    return false;
+  default:
+    return true;
+  }
+}
+
 static bool shouldUseFramePointer(const ArgList &Args,
                                   const llvm::Triple &Triple) {
   if (Arg *A = Args.getLastArg(options::OPT_fno_omit_frame_pointer,
                                options::OPT_fomit_frame_pointer))
     return A->getOption().matches(options::OPT_fno_omit_frame_pointer);
 
-  // Don't use a frame pointer on linux x86, x86_64 and z if optimizing.
-  if ((Triple.getArch() == llvm::Triple::x86_64 ||
-       Triple.getArch() == llvm::Triple::x86 ||
-       Triple.getArch() == llvm::Triple::systemz ||
-       Triple.getArch() == llvm::Triple::mips ||
-       Triple.getArch() == llvm::Triple::mipsel ||
-       Triple.getArch() == llvm::Triple::mips64 ||
-       Triple.getArch() == llvm::Triple::mips64el) &&
-      Triple.isOSLinux()) {
-    if (Arg *A = Args.getLastArg(options::OPT_O_Group))
-      if (!A->getOption().matches(options::OPT_O0))
-        return false;
-  }
-
-  if (Triple.getArch() == llvm::Triple::xcore)
-    return false;
-
-  return true;
+  return shouldUseFramePointerForTarget(Args, Triple);
 }
 
 static bool shouldUseLeafFramePointer(const ArgList &Args,
@@ -1817,24 +1823,7 @@ static bool shouldUseLeafFramePointer(const ArgList &Args,
                                options::OPT_momit_leaf_frame_pointer))
     return A->getOption().matches(options::OPT_mno_omit_leaf_frame_pointer);
 
-  // Don't use a leaf frame pointer on linux x86, x86_64 and z if optimizing.
-  if ((Triple.getArch() == llvm::Triple::x86_64 ||
-       Triple.getArch() == llvm::Triple::x86 ||
-       Triple.getArch() == llvm::Triple::systemz ||
-       Triple.getArch() == llvm::Triple::mips ||
-       Triple.getArch() == llvm::Triple::mipsel ||
-       Triple.getArch() == llvm::Triple::mips64 ||
-       Triple.getArch() == llvm::Triple::mips64el) &&
-      Triple.isOSLinux()) {
-    if (Arg *A = Args.getLastArg(options::OPT_O_Group))
-      if (!A->getOption().matches(options::OPT_O0))
-        return false;
-  }
-
-  if (Triple.getArch() == llvm::Triple::xcore)
-    return false;
-
-  return true;
+  return shouldUseFramePointerForTarget(Args, Triple);
 }
 
 /// Add a CC1 option to specify the debug compilation directory.
