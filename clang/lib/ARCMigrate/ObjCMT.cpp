@@ -285,12 +285,12 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   if (!Setter)
     append_attr(PropertyString, "readonly");
   
-  // Short circuit properties that contain the name "delegate" or "dataSource",
-  // or have exact name "target" to have unsafe_unretained attribute.
+  // Short circuit 'delegate' properties that contain the name "delegate" or
+  // "dataSource", or have exact name "target" to have 'assign' attribute.
   if (PropertyName.equals("target") ||
       (PropertyName.find("delegate") != StringRef::npos) ||
       (PropertyName.find("dataSource") != StringRef::npos))
-    append_attr(PropertyString, "unsafe_unretained");
+    append_attr(PropertyString, "assign");
   else if (Setter) {
     const ParmVarDecl *argDecl = *Setter->param_begin();
     QualType ArgType = Context.getCanonicalType(argDecl->getType());
