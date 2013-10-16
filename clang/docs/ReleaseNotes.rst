@@ -63,6 +63,9 @@ New Compiler Flags
   enable it.
 - Command line "clang -O3 -flto a.c -c" and "clang -emit-llvm a.c -c" 
   are no longer equivalent.
+- Clang now errors on unknown -m flags (``-munknown-to-clang``),
+  unknown -f flags (``-funknown-to-clang``) and unknown
+  options (``-what-is-this``).
 
 C Language Changes in Clang
 ---------------------------
