@@ -2,8 +2,15 @@
 # Verify that entry atom will not be dead-stripped.
 
 # RUN: yaml2obj %p/Inputs/main.obj.yaml > %t.obj
-# RUN: lld -flavor link /mllvm:-debug-only=WriterPECOFF /out:%t.exe \
-# RUN:   /subsystem:console /entry:_main /force -- %t.obj >& %t.log
-# RUN: FileCheck %s < %t.log
+# RUN: lld -flavor link /mllvm:-debug-only=WriterPECOFF /out:%t1.exe \
+# RUN:   /subsystem:console /entry:main /force -- %t.obj >& %t1.log
+# RUN: FileCheck -check-prefix=CHECK %s < %t1.log
 
 CHECK: : _main
+
+
+# RUN: not lld -flavor link /out:%t2.exe /subsystem:console \
+# RUN:    /entry:no_such_symbol /force -- %t.obj >& %t2.log
+# RUN: FileCheck -check-prefix=FAIL %s < %t2.log
+
+FAIL: Dead strip root '_no_such_symbol' is not defined

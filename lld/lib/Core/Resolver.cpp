@@ -363,11 +363,11 @@ void Resolver::markLive(const Atom &atom) {
 
 
 // remove all atoms not actually used
-void Resolver::deadStripOptimize() {
+bool Resolver::deadStripOptimize() {
   ScopedTask task(getDefaultDomain(), "deadStripOptimize");
   // only do this optimization with -dead_strip
   if (!_context.deadStrip())
-    return;
+    return true;
 
   // clear liveness on all atoms
   _liveAtoms.clear();
@@ -386,10 +386,10 @@ void Resolver::deadStripOptimize() {
   // Or, use list of names that are dead stip roots.
   for (const StringRef &name : _context.deadStripRoots()) {
     const Atom *symAtom = _symbolTable.findByName(name);
-    if (symAtom->definition() == Atom::definitionUndefined) {
+    if (!symAtom || symAtom->definition() == Atom::definitionUndefined) {
       llvm::errs() << "Dead strip root '" << symAtom->name()
                    << "' is not defined\n";
-      return;
+      return false;
     }
     _deadStripRoots.insert(symAtom);
   }
@@ -402,6 +402,7 @@ void Resolver::deadStripOptimize() {
   // now remove all non-live atoms from _atoms
   _atoms.erase(std::remove_if(_atoms.begin(), _atoms.end(),
                               NotLive(_liveAtoms)), _atoms.end());
+  return true;
 }
 
 
@@ -473,7 +474,8 @@ bool Resolver::resolve() {
   if (!this->resolveUndefines())
     return false;
   this->updateReferences();
-  this->deadStripOptimize();
+  if (!this->deadStripOptimize())
+    return false;
   if (this->checkUndefines(false)) {
     if (!_context.allowRemainingUndefines())
       return false;
