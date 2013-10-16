@@ -134,7 +134,7 @@ static void PrintLocation(const ReportLocation *loc) {
   bool print_stack = false;
   Printf("%s", d.Location());
   if (loc->type == ReportLocationGlobal) {
-    Printf("  Location is global '%s' of size %zu at %zx (%s+%p)\n\n",
+    Printf("  Location is global '%s' of size %zu at %p (%s+%p)\n\n",
                loc->name, loc->size, loc->addr, loc->module, loc->offset);
   } else if (loc->type == ReportLocationHeap) {
     char thrbuf[kThreadBufSize];
