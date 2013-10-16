@@ -1472,10 +1472,8 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     addType(VariableDIE, GTy);
 
     // Add scoping info.
-    if (!GV.isLocalToUnit()) {
+    if (!GV.isLocalToUnit())
       addFlag(VariableDIE, dwarf::DW_AT_external);
-      addGlobalName(GV.getName(), VariableDIE);
-    }
 
     // Add line number info.
     addSourceLine(VariableDIE, GV);
@@ -1568,6 +1566,10 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     if (GV.getLinkageName() != "" && GV.getName() != GV.getLinkageName())
       addAccelName(GV.getLinkageName(), AddrDIE);
   }
+
+  if (!GV.isLocalToUnit())
+    addGlobalName(GV.getName(),
+                  VariableSpecDIE ? VariableSpecDIE : VariableDIE);
 }
 
 /// constructSubrangeDIE - Construct subrange DIE from DISubrange.

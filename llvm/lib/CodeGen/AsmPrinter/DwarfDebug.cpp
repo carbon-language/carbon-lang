@@ -2356,9 +2356,17 @@ void DwarfDebug::emitAccelTypes() {
 /// computeIndexValue - Compute the gdb index value for the DIE and CU.
 static dwarf::PubIndexEntryDescriptor computeIndexValue(CompileUnit *CU,
                                                         DIE *Die) {
-  dwarf::GDBIndexEntryLinkage Linkage =
-      Die->findAttribute(dwarf::DW_AT_external) ? dwarf::GIEL_EXTERNAL
-                                                : dwarf::GIEL_STATIC;
+  dwarf::GDBIndexEntryLinkage Linkage = dwarf::GIEL_STATIC;
+
+  // We could have a specification DIE that has our most of our knowledge,
+  // look for that now.
+  DIEValue *SpecVal = Die->findAttribute(dwarf::DW_AT_specification);
+  if (SpecVal) {
+    DIE *SpecDIE = cast<DIEEntry>(SpecVal)->getEntry();
+    if (SpecDIE->findAttribute(dwarf::DW_AT_external))
+      Linkage = dwarf::GIEL_EXTERNAL;
+  } else if (Die->findAttribute(dwarf::DW_AT_external))
+    Linkage = dwarf::GIEL_EXTERNAL;
 
   switch (Die->getTag()) {
   case dwarf::DW_TAG_class_type:
