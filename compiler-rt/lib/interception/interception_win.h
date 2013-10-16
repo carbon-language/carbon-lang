@@ -41,5 +41,8 @@ bool OverrideFunction(uptr old_func, uptr new_func, uptr *orig_old_func);
         (::__interception::uptr*)&REAL(func))
 #endif
 
+#define INTERCEPT_FUNCTION_VER_WIN(func, symver) \
+    INTERCEPT_FUNCTION_WIN(func)
+
 #endif  // INTERCEPTION_WIN_H
 #endif  // _WIN32

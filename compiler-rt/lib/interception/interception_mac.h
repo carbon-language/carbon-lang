@@ -22,6 +22,7 @@
 #define INTERCEPTION_MAC_H
 
 #define INTERCEPT_FUNCTION_MAC(func)
+#define INTERCEPT_FUNCTION_VER_MAC(func, symver)
 
 #endif  // INTERCEPTION_MAC_H
 #endif  // __APPLE__

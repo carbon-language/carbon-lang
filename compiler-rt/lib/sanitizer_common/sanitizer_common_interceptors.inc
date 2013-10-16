@@ -21,6 +21,8 @@
 //   COMMON_INTERCEPTOR_FD_ACCESS
 //   COMMON_INTERCEPTOR_SET_THREAD_NAME
 //   COMMON_INTERCEPTOR_ON_EXIT
+//   COMMON_INTERCEPTOR_MUTEX_LOCK
+//   COMMON_INTERCEPTOR_MUTEX_UNLOCK
 //===----------------------------------------------------------------------===//
 #include "interception/interception.h"
 #include "sanitizer_platform_interceptors.h"
@@ -32,11 +34,19 @@
 #endif // _WIN32
 
 #ifndef COMMON_INTERCEPTOR_INITIALIZE_RANGE
-# define COMMON_INTERCEPTOR_INITIALIZE_RANGE(ctx, p, size)
+#define COMMON_INTERCEPTOR_INITIALIZE_RANGE(ctx, p, size)
 #endif
 
 #ifndef COMMON_INTERCEPTOR_FD_ACCESS
-# define COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd)
+#define COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd)
+#endif
+
+#ifndef COMMON_INTERCEPTOR_MUTEX_LOCK
+#define COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m)
+#endif
+
+#ifndef COMMON_INTERCEPTOR_MUTEX_UNLOCK
+#define COMMON_INTERCEPTOR_MUTEX_UNLOCK(ctx, m)
 #endif
 
 #if SANITIZER_INTERCEPT_STRCMP
@@ -2191,6 +2201,57 @@ INTERCEPTOR(void, _exit, int status) {
 #define INIT__EXIT
 #endif
 
+#if SANITIZER_INTERCEPT_PHTREAD_MUTEX
+INTERCEPTOR(int, pthread_mutex_lock, void *m) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_mutex_lock, m);
+  int res = REAL(pthread_mutex_lock)(m);
+  if (res == 0)
+    COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m);
+  return res;
+}
+
+INTERCEPTOR(int, pthread_mutex_unlock, void *m) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_mutex_unlock, m);
+  COMMON_INTERCEPTOR_MUTEX_UNLOCK(ctx, m);
+  return REAL(pthread_mutex_unlock)(m);
+}
+
+#define INIT_PTHREAD_MUTEX_LOCK INTERCEPT_FUNCTION(pthread_mutex_lock)
+#define INIT_PTHREAD_MUTEX_UNLOCK INTERCEPT_FUNCTION(pthread_mutex_unlock)
+#else
+#define INIT_PTHREAD_MUTEX_LOCK
+#define INIT_PTHREAD_MUTEX_UNLOCK
+#endif
+
+#if SANITIZER_INTERCEPT_PTHREAD_COND
+INTERCEPTOR(int, pthread_cond_wait, void *c, void *m) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_wait, c, m);
+  COMMON_INTERCEPTOR_MUTEX_UNLOCK(ctx, m);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, pthread_cond_t_sz);
+  int res = REAL(pthread_cond_wait)(c, m);
+  COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m);
+  return res;
+}
+
+INTERCEPTOR(int, pthread_cond_init, void *c, void *a) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_init, c, a);
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, c, pthread_cond_t_sz);
+  return REAL(pthread_cond_init)(c, a);
+}
+
+#define INIT_PTHREAD_COND_WAIT \
+  INTERCEPT_FUNCTION_VER(pthread_cond_wait, GLIBC_2.3.2)
+#define INIT_PTHREAD_COND_INIT \
+  INTERCEPT_FUNCTION_VER(pthread_cond_init, GLIBC_2.3.2)
+#else
+#define INIT_PTHREAD_COND_WAIT
+#define INIT_PTHREAD_COND_INIT
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -2269,4 +2330,8 @@ INTERCEPTOR(void, _exit, int status) {
   INIT_SIGPROCMASK;                        \
   INIT_BACKTRACE;                          \
   INIT__EXIT;                              \
+  INIT_PTHREAD_MUTEX_LOCK;                 \
+  INIT_PTHREAD_MUTEX_UNLOCK;               \
+  INIT_PTHREAD_COND_WAIT;                  \
+  INIT_PTHREAD_COND_INIT;                  \
 /**/

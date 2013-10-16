@@ -35,9 +35,12 @@ void *GetFuncAddrVer(const char *func_name, const char *ver);
           (::__interception::uptr)&WRAP(func))
 
 #if !defined(__ANDROID__)  // android does not have dlvsym
-#define INTERCEPT_FUNCTION_VER(func, symver) \
-    ::__interception::real_##func = (func##_f)(unsigned long) \
-        ::__interception::GetFuncAddrVer(#func, #symver)
+# define INTERCEPT_FUNCTION_VER_LINUX(func, symver) \
+     ::__interception::real_##func = (func##_f)(unsigned long) \
+         ::__interception::GetFuncAddrVer(#func, #symver)
+#else
+# define INTERCEPT_FUNCTION_VER_LINUX(func, symver) \
+     INTERCEPT_FUNCTION_LINUX(func)
 #endif  // !defined(__ANDROID__)
 
 #endif  // INTERCEPTION_LINUX_H

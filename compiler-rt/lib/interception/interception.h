@@ -238,12 +238,18 @@ typedef unsigned long uptr;  // NOLINT
 #if defined(__linux__)
 # include "interception_linux.h"
 # define INTERCEPT_FUNCTION(func) INTERCEPT_FUNCTION_LINUX(func)
+# define INTERCEPT_FUNCTION_VER(func, symver) \
+    INTERCEPT_FUNCTION_VER_LINUX(func, symver)
 #elif defined(__APPLE__)
 # include "interception_mac.h"
 # define INTERCEPT_FUNCTION(func) INTERCEPT_FUNCTION_MAC(func)
+# define INTERCEPT_FUNCTION_VER(func, symver) \
+    INTERCEPT_FUNCTION_VER_MAC(func, symver)
 #else  // defined(_WIN32)
 # include "interception_win.h"
 # define INTERCEPT_FUNCTION(func) INTERCEPT_FUNCTION_WIN(func)
+# define INTERCEPT_FUNCTION_VER(func, symver) \
+    INTERCEPT_FUNCTION_VER_WIN(func, symver)
 #endif
 
 #undef INCLUDED_FROM_INTERCEPTION_LIB

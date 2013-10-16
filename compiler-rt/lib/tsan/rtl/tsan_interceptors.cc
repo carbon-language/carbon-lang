@@ -946,15 +946,6 @@ TSAN_INTERCEPTOR(int, pthread_mutex_destroy, void *m) {
   return res;
 }
 
-TSAN_INTERCEPTOR(int, pthread_mutex_lock, void *m) {
-  SCOPED_TSAN_INTERCEPTOR(pthread_mutex_lock, m);
-  int res = REAL(pthread_mutex_lock)(m);
-  if (res == 0) {
-    MutexLock(thr, pc, (uptr)m);
-  }
-  return res;
-}
-
 TSAN_INTERCEPTOR(int, pthread_mutex_trylock, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_mutex_trylock, m);
   int res = REAL(pthread_mutex_trylock)(m);
@@ -970,13 +961,6 @@ TSAN_INTERCEPTOR(int, pthread_mutex_timedlock, void *m, void *abstime) {
   if (res == 0) {
     MutexLock(thr, pc, (uptr)m);
   }
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, pthread_mutex_unlock, void *m) {
-  SCOPED_TSAN_INTERCEPTOR(pthread_mutex_unlock, m);
-  MutexUnlock(thr, pc, (uptr)m);
-  int res = REAL(pthread_mutex_unlock)(m);
   return res;
 }
 
@@ -1102,13 +1086,6 @@ TSAN_INTERCEPTOR(int, pthread_rwlock_unlock, void *m) {
   return res;
 }
 
-TSAN_INTERCEPTOR(int, pthread_cond_init, void *c, void *a) {
-  SCOPED_TSAN_INTERCEPTOR(pthread_cond_init, c, a);
-  MemoryWrite(thr, pc, (uptr)c, kSizeLog1);
-  int res = REAL(pthread_cond_init)(c, a);
-  return res;
-}
-
 TSAN_INTERCEPTOR(int, pthread_cond_destroy, void *c) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_destroy, c);
   MemoryWrite(thr, pc, (uptr)c, kSizeLog1);
@@ -1127,15 +1104,6 @@ TSAN_INTERCEPTOR(int, pthread_cond_broadcast, void *c) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_broadcast, c);
   MemoryRead(thr, pc, (uptr)c, kSizeLog1);
   int res = REAL(pthread_cond_broadcast)(c);
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, pthread_cond_wait, void *c, void *m) {
-  SCOPED_TSAN_INTERCEPTOR(pthread_cond_wait, c, m);
-  MutexUnlock(thr, pc, (uptr)m);
-  MemoryRead(thr, pc, (uptr)c, kSizeLog1);
-  int res = REAL(pthread_cond_wait)(c, m);
-  MutexLock(thr, pc, (uptr)m);
   return res;
 }
 
@@ -1910,6 +1878,12 @@ struct TsanInterceptorContext {
 #define COMMON_INTERCEPTOR_BLOCK_REAL(name) BLOCK_REAL(name)
 #define COMMON_INTERCEPTOR_ON_EXIT(ctx) \
   OnExit(((TsanInterceptorContext *) ctx)->thr)
+#define COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m) \
+  MutexLock(((TsanInterceptorContext *)ctx)->thr, \
+            ((TsanInterceptorContext *)ctx)->pc, (uptr)m)
+#define COMMON_INTERCEPTOR_MUTEX_UNLOCK(ctx, m) \
+  MutexUnlock(((TsanInterceptorContext *)ctx)->thr, \
+            ((TsanInterceptorContext *)ctx)->pc, (uptr)m)
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 #define TSAN_SYSCALL() \
@@ -2097,10 +2071,8 @@ void InitializeInterceptors() {
 
   TSAN_INTERCEPT(pthread_mutex_init);
   TSAN_INTERCEPT(pthread_mutex_destroy);
-  TSAN_INTERCEPT(pthread_mutex_lock);
   TSAN_INTERCEPT(pthread_mutex_trylock);
   TSAN_INTERCEPT(pthread_mutex_timedlock);
-  TSAN_INTERCEPT(pthread_mutex_unlock);
 
   TSAN_INTERCEPT(pthread_spin_init);
   TSAN_INTERCEPT(pthread_spin_destroy);
@@ -2118,11 +2090,9 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(pthread_rwlock_timedwrlock);
   TSAN_INTERCEPT(pthread_rwlock_unlock);
 
-  INTERCEPT_FUNCTION_VER(pthread_cond_init, GLIBC_2.3.2);
   INTERCEPT_FUNCTION_VER(pthread_cond_destroy, GLIBC_2.3.2);
   INTERCEPT_FUNCTION_VER(pthread_cond_signal, GLIBC_2.3.2);
   INTERCEPT_FUNCTION_VER(pthread_cond_broadcast, GLIBC_2.3.2);
-  INTERCEPT_FUNCTION_VER(pthread_cond_wait, GLIBC_2.3.2);
   INTERCEPT_FUNCTION_VER(pthread_cond_timedwait, GLIBC_2.3.2);
 
   TSAN_INTERCEPT(pthread_barrier_init);

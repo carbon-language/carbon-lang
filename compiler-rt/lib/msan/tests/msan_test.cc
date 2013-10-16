@@ -2309,6 +2309,39 @@ TEST(MemorySanitizer, pthread_key_create) {
   assert(!res);
 }
 
+namespace {
+struct SignalCondArg {
+  pthread_cond_t* cond;
+  pthread_mutex_t* mu;
+};
+
+void *SignalCond(void *param) {
+  SignalCondArg *arg = reinterpret_cast<SignalCondArg *>(param);
+  pthread_mutex_lock(arg->mu);
+  pthread_cond_signal(arg->cond);
+  pthread_mutex_unlock(arg->mu);
+  return 0;
+}
+}  // namespace
+
+TEST(MemorySanitizer, pthread_cond_wait) {
+  pthread_cond_t cond;
+  pthread_mutex_t mu;
+  SignalCondArg args = {&cond, &mu};
+  pthread_cond_init(&cond, 0);
+  pthread_mutex_init(&mu, 0);
+
+  pthread_mutex_lock(&mu);
+  pthread_t thr;
+  pthread_create(&thr, 0, SignalCond, &args);
+  int res = pthread_cond_wait(&cond, &mu);
+  assert(!res);
+  pthread_join(thr, 0);
+  pthread_mutex_unlock(&mu);
+  pthread_mutex_destroy(&mu);
+  pthread_cond_destroy(&cond);
+}
+
 TEST(MemorySanitizer, posix_memalign) {
   void *p;
   EXPECT_POISONED(p);
