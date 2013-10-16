@@ -265,6 +265,11 @@ void StackTrace::ObtainCurrent(ThreadState *thr, uptr toppc) {
       n_ = c_ - !!toppc;
     }
   } else {
+    // Cap potentially huge stacks.
+    if (n_ + !!toppc > kTraceStackSize) {
+      start = n_ - kTraceStackSize + !!toppc;
+      n_ = kTraceStackSize - !!toppc;
+    }
     s_ = (uptr*)internal_alloc(MBlockStackTrace,
                                (n_ + !!toppc) * sizeof(s_[0]));
   }

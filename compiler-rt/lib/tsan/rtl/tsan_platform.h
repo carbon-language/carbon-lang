@@ -138,14 +138,20 @@ uptr GetRSS();
 
 const char *InitializePlatform();
 void FinalizePlatform();
+
+// The additional page is to catch shadow stack overflow as paging fault.
+const uptr kTotalTraceSize = (kTraceSize * sizeof(Event) + sizeof(Trace) + 4096
+    + 4095) & ~4095;
+
 uptr ALWAYS_INLINE GetThreadTrace(int tid) {
-  uptr p = kTraceMemBegin + (uptr)(tid * 2) * kTraceSize * sizeof(Event);
+  uptr p = kTraceMemBegin + (uptr)tid * kTotalTraceSize;
   DCHECK_LT(p, kTraceMemBegin + kTraceMemSize);
   return p;
 }
 
 uptr ALWAYS_INLINE GetThreadTraceHeader(int tid) {
-  uptr p = kTraceMemBegin + (uptr)(tid * 2 + 1) * kTraceSize * sizeof(Event);
+  uptr p = kTraceMemBegin + (uptr)tid * kTotalTraceSize
+      + kTraceSize * sizeof(Event);
   DCHECK_LT(p, kTraceMemBegin + kTraceMemSize);
   return p;
 }

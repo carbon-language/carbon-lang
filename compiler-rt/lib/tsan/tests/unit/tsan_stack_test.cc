@@ -19,6 +19,10 @@ namespace __tsan {
 
 static void TestStackTrace(StackTrace *trace) {
   ThreadState thr(0, 0, 0, 0, 0, 0, 0, 0);
+  uptr stack[128];
+  thr.shadow_stack = &stack[0];
+  thr.shadow_stack_pos = &stack[0];
+  thr.shadow_stack_end = &stack[128];
 
   trace->ObtainCurrent(&thr, 0);
   EXPECT_EQ(trace->Size(), (uptr)0);
@@ -60,7 +64,12 @@ TEST(StackTrace, StaticTrim) {
   ScopedInRtl in_rtl;
   uptr buf[2];
   StackTrace trace(buf, 2);
+
   ThreadState thr(0, 0, 0, 0, 0, 0, 0, 0);
+  uptr stack[128];
+  thr.shadow_stack = &stack[0];
+  thr.shadow_stack_pos = &stack[0];
+  thr.shadow_stack_end = &stack[128];
 
   *thr.shadow_stack_pos++ = 100;
   *thr.shadow_stack_pos++ = 101;

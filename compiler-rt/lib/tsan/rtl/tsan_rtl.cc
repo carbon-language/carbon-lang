@@ -90,7 +90,6 @@ ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
   // they may be accessed before the ctor.
   // , ignore_reads_and_writes()
   // , in_rtl()
-  , shadow_stack_pos(&shadow_stack[0])
 #ifndef TSAN_GO
   , jmp_bufs(MBlockJmpBuf)
 #endif
@@ -201,8 +200,10 @@ void MapThreadTrace(uptr addr, uptr size) {
   DPrintf("#0: Mapping trace at %p-%p(0x%zx)\n", addr, addr + size, size);
   CHECK_GE(addr, kTraceMemBegin);
   CHECK_LE(addr + size, kTraceMemBegin + kTraceMemSize);
-  if (addr != (uptr)MmapFixedNoReserve(addr, size)) {
-    Printf("FATAL: ThreadSanitizer can not mmap thread trace\n");
+  uptr addr1 = (uptr)MmapFixedNoReserve(addr, size);
+  if (addr1 != addr) {
+    Printf("FATAL: ThreadSanitizer can not mmap thread trace (%p/%p->%p)\n",
+        addr, size, addr1);
     Die();
   }
 }
@@ -660,9 +661,9 @@ void FuncEntry(ThreadState *thr, uptr pc) {
 
   // Shadow stack maintenance can be replaced with
   // stack unwinding during trace switch (which presumably must be faster).
-  DCHECK_GE(thr->shadow_stack_pos, &thr->shadow_stack[0]);
+  DCHECK_GE(thr->shadow_stack_pos, thr->shadow_stack);
 #ifndef TSAN_GO
-  DCHECK_LT(thr->shadow_stack_pos, &thr->shadow_stack[kShadowStackSize]);
+  DCHECK_LT(thr->shadow_stack_pos, thr->shadow_stack_end);
 #else
   if (thr->shadow_stack_pos == thr->shadow_stack_end) {
     const int sz = thr->shadow_stack_end - thr->shadow_stack;
@@ -688,9 +689,9 @@ void FuncExit(ThreadState *thr) {
   thr->fast_state.IncrementEpoch();
   TraceAddEvent(thr, thr->fast_state, EventTypeFuncExit, 0);
 
-  DCHECK_GT(thr->shadow_stack_pos, &thr->shadow_stack[0]);
+  DCHECK_GT(thr->shadow_stack_pos, thr->shadow_stack);
 #ifndef TSAN_GO
-  DCHECK_LT(thr->shadow_stack_pos, &thr->shadow_stack[kShadowStackSize]);
+  DCHECK_LT(thr->shadow_stack_pos, thr->shadow_stack_end);
 #endif
   thr->shadow_stack_pos--;
 }

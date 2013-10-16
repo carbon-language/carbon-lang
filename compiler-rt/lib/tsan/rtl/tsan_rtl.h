@@ -413,17 +413,13 @@ struct ThreadState {
   // for better performance.
   int ignore_reads_and_writes;
   int ignore_sync;
+  // C/C++ uses fixed size shadow stack embed into Trace.
+  // Go uses malloc-allocated shadow stack with dynamic size.
+  uptr *shadow_stack;
+  uptr *shadow_stack_end;
   uptr *shadow_stack_pos;
   u64 *racy_shadow_addr;
   u64 racy_state[2];
-#ifndef TSAN_GO
-  // C/C++ uses embed shadow stack of fixed size.
-  uptr shadow_stack[kShadowStackSize];
-#else
-  // Go uses satellite shadow stack with dynamic size.
-  uptr *shadow_stack;
-  uptr *shadow_stack_end;
-#endif
   MutexSet mset;
   ThreadClock clock;
 #ifndef TSAN_GO

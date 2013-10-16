@@ -91,18 +91,21 @@ void ThreadContext::OnStarted(void *arg) {
   epoch1 = (u64)-1;
   new(thr) ThreadState(CTX(), tid, unique_id,
       epoch0, args->stk_addr, args->stk_size, args->tls_addr, args->tls_size);
-#ifdef TSAN_GO
+#ifndef TSAN_GO
+  thr->shadow_stack = &ThreadTrace(thr->tid)->shadow_stack[0];
+  thr->shadow_stack_pos = thr->shadow_stack;
+  thr->shadow_stack_end = thr->shadow_stack + kShadowStackSize;
+#else
   // Setup dynamic shadow stack.
   const int kInitStackSize = 8;
-  args->thr->shadow_stack = (uptr*)internal_alloc(MBlockShadowStack,
+  thr->shadow_stack = (uptr*)internal_alloc(MBlockShadowStack,
       kInitStackSize * sizeof(uptr));
-  args->thr->shadow_stack_pos = thr->shadow_stack;
-  args->thr->shadow_stack_end = thr->shadow_stack + kInitStackSize;
+  thr->shadow_stack_pos = thr->shadow_stack;
+  thr->shadow_stack_end = thr->shadow_stack + kInitStackSize;
 #endif
 #ifndef TSAN_GO
-  AllocatorThreadStart(args->thr);
+  AllocatorThreadStart(thr);
 #endif
-  thr = args->thr;
   thr->fast_synch_epoch = epoch0;
   AcquireImpl(thr, 0, &sync);
   thr->fast_state.SetHistorySize(flags()->history_size);
