@@ -2668,11 +2668,6 @@ CharUnits
 VFTableBuilder::ComputeThisOffset(const CXXMethodDecl *MD,
                                   BaseSubobject Base,
                                   FinalOverriders::OverriderInfo Overrider) {
-  // Complete object virtual destructors are always emitted in the most derived
-  // class, thus don't have this offset.
-  if (isa<CXXDestructorDecl>(MD))
-    return CharUnits();
-
   InitialOverriddenDefinitionCollector Collector;
   visitAllOverriddenMethods(MD, Collector);
 
@@ -2690,6 +2685,7 @@ VFTableBuilder::ComputeThisOffset(const CXXMethodDecl *MD,
        I != E; ++I) {
     const CXXBasePath &Path = (*I);
     CharUnits ThisOffset = Base.getBaseOffset();
+    bool SeenVBase = false;
 
     // For each path from the overrider to the parents of the overridden methods,
     // traverse the path, calculating the this offset in the most derived class.
@@ -2701,6 +2697,7 @@ VFTableBuilder::ComputeThisOffset(const CXXMethodDecl *MD,
       const ASTRecordLayout &Layout = Context.getASTRecordLayout(PrevRD);
 
       if (Element.Base->isVirtual()) {
+        SeenVBase = true;
         if (Overrider.Method->getParent() == PrevRD) {
           // This one's interesting. If the final overrider is in a vbase B of the
           // most derived class and it overrides a method of the B's own vbase A,
@@ -2713,10 +2710,21 @@ VFTableBuilder::ComputeThisOffset(const CXXMethodDecl *MD,
         } else {
           ThisOffset = MostDerivedClassLayout.getVBaseClassOffset(CurRD);
         }
+
+        // A virtual destructor of a virtual base takes the address of the
+        // virtual base subobject as the "this" argument.
+        if (isa<CXXDestructorDecl>(MD))
+          break;
       } else {
         ThisOffset += Layout.getBaseClassOffset(CurRD);
       }
     }
+
+    // If a "Base" class has at least one non-virtual base with a virtual
+    // destructor, the "Base" virtual destructor will take the address of the
+    // "Base" subobject as the "this" argument.
+    if (!SeenVBase && isa<CXXDestructorDecl>(MD))
+      return Base.getBaseOffset();
 
     if (Ret > ThisOffset || First) {
       First = false;

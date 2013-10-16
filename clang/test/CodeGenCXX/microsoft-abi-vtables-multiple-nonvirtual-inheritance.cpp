@@ -13,6 +13,10 @@
 // RUN: FileCheck --check-prefix=THIS-THUNKS-Test1 %s < %t
 // RUN: FileCheck --check-prefix=THIS-THUNKS-Test2 %s < %t
 // RUN: FileCheck --check-prefix=THIS-THUNKS-Test3 %s < %t
+// RUN: FileCheck --check-prefix=VDTOR-THUNKS-Test3 %s < %t
+// RUN: FileCheck --check-prefix=VDTOR-THUNKS-Test5 %s < %t
+// RUN: FileCheck --check-prefix=VDTOR-THUNKS-Test6 %s < %t
+// RUN: FileCheck --check-prefix=VDTOR-THUNKS-Test7 %s < %t
 // RUN: FileCheck --check-prefix=RET-THUNKS-Test1 %s < %t
 // RUN: FileCheck --check-prefix=RET-THUNKS-Test2 %s < %t
 // RUN: FileCheck --check-prefix=RET-THUNKS-Test3 %s < %t
@@ -347,6 +351,101 @@ struct Test3: no_thunks::Test1, no_thunks::Test2 {
 };
 
 Test3 t3;
+}
+
+namespace vdtor {
+struct Test1 {
+  virtual ~Test1();
+  virtual void z1();
+};
+
+struct Test2 {
+  virtual ~Test2();
+};
+
+struct Test3 : Test1, Test2 {
+  // VDTOR-THUNKS-Test3: VFTable for 'vdtor::Test1' in 'vdtor::Test3' (2 entries).
+  // VDTOR-THUNKS-Test3-NEXT: 0 | vdtor::Test3::~Test3() [scalar deleting]
+  // VDTOR-THUNKS-Test3-NEXT: 1 | void vdtor::Test1::z1()
+
+  // VDTOR-THUNKS-Test3: VFTable for 'vdtor::Test2' in 'vdtor::Test3' (1 entries).
+  // VDTOR-THUNKS-Test3-NEXT: 0 | vdtor::Test3::~Test3() [scalar deleting]
+  // VDTOR-THUNKS-Test3-NEXT:     [this adjustment: -4 non-virtual]
+
+  // VDTOR-THUNKS-Test3: Thunks for 'vdtor::Test3::~Test3()' (1 entry).
+  // VDTOR-THUNKS-Test3-NEXT: 0 | this adjustment: -4 non-virtual
+
+  // VDTOR-THUNKS-Test3: VFTable indices for 'vdtor::Test3' (1 entries).
+  // VDTOR-THUNKS-Test3-NEXT: 0 | vdtor::Test3::~Test3() [scalar deleting]
+  virtual ~Test3();
+};
+
+Test3 t3;
+
+struct Test4 {
+  // No virtual destructor here!
+  virtual void z4();
+};
+
+struct Test5 : Test4, Test2 {
+  // Implicit virtual dtor here!
+
+  // VDTOR-THUNKS-Test5: VFTable for 'vdtor::Test4' in 'vdtor::Test5' (1 entries).
+  // VDTOR-THUNKS-Test5-NEXT: 0 | void vdtor::Test4::z4()
+
+  // VDTOR-THUNKS-Test5: VFTable for 'vdtor::Test2' in 'vdtor::Test5' (1 entries).
+  // VDTOR-THUNKS-Test5-NEXT: 0 | vdtor::Test5::~Test5() [scalar deleting]
+  // VDTOR-THUNKS-Test5-NEXT:     [this adjustment: -4 non-virtual]
+
+  // VDTOR-THUNKS-Test5: Thunks for 'vdtor::Test5::~Test5()' (1 entry).
+  // VDTOR-THUNKS-Test5-NEXT: 0 | this adjustment: -4 non-virtual
+
+  // VDTOR-THUNKS-Test5: VFTable indices for 'vdtor::Test5' (1 entries).
+  // VDTOR-THUNKS-Test5-NEXT: -- accessible via vfptr at offset 4 --
+  // VDTOR-THUNKS-Test5-NEXT: 0 | vdtor::Test5::~Test5() [scalar deleting]
+};
+
+Test5 t5;
+
+struct Test6 : Test4, Test2 {
+  // Implicit virtual dtor here!
+
+  // VDTOR-THUNKS-Test6: VFTable for 'vdtor::Test4' in 'vdtor::Test6' (1 entries).
+  // VDTOR-THUNKS-Test6-NEXT: 0 | void vdtor::Test4::z4()
+
+  // VDTOR-THUNKS-Test6: VFTable for 'vdtor::Test2' in 'vdtor::Test6' (1 entries).
+  // VDTOR-THUNKS-Test6-NEXT: 0 | vdtor::Test6::~Test6() [scalar deleting]
+  // VDTOR-THUNKS-Test6-NEXT:     [this adjustment: -4 non-virtual]
+
+  // VDTOR-THUNKS-Test6: Thunks for 'vdtor::Test6::~Test6()' (1 entry).
+  // VDTOR-THUNKS-Test6-NEXT: 0 | this adjustment: -4 non-virtual
+
+  // VDTOR-THUNKS-Test6: VFTable indices for 'vdtor::Test6' (1 entries).
+  // VDTOR-THUNKS-Test6-NEXT: -- accessible via vfptr at offset 4 --
+  // VDTOR-THUNKS-Test6-NEXT: 0 | vdtor::Test6::~Test6() [scalar deleting]
+};
+
+Test6 t6;
+
+struct Test7 : Test5 {
+  // VDTOR-THUNKS-Test7: VFTable for 'vdtor::Test4' in 'vdtor::Test5' in 'vdtor::Test7' (1 entries).
+  // VDTOR-THUNKS-Test7-NEXT: 0 | void vdtor::Test4::z4()
+
+  // VDTOR-THUNKS-Test7: VFTable for 'vdtor::Test2' in 'vdtor::Test5' in 'vdtor::Test7' (1 entries).
+  // VDTOR-THUNKS-Test7-NEXT: 0 | vdtor::Test7::~Test7() [scalar deleting]
+  // VDTOR-THUNKS-Test7-NEXT:     [this adjustment: -4 non-virtual]
+
+  // VDTOR-THUNKS-Test7: Thunks for 'vdtor::Test7::~Test7()' (1 entry).
+  // VDTOR-THUNKS-Test7-NEXT: 0 | this adjustment: -4 non-virtual
+
+  // VDTOR-THUNKS-Test7: VFTable indices for 'vdtor::Test7' (1 entries).
+  // VDTOR-THUNKS-Test7-NEXT: -- accessible via vfptr at offset 4 --
+  // VDTOR-THUNKS-Test7-NEXT: 0 | vdtor::Test7::~Test7() [scalar deleting]
+  virtual ~Test7();
+};
+
+Test7 t7;
+
 }
 
 namespace return_adjustment {

@@ -181,3 +181,21 @@ void emit_ctors() {
   // CHECK:   store [1 x i8*]* @"\01??_7GrandchildOverride@@6BRight@@@", [1 x i8*]** %[[VFPTR]]
   // CHECK: ret
 }
+
+struct LeftWithNonVirtualDtor {
+  virtual void left();
+  ~LeftWithNonVirtualDtor();
+};
+
+struct AsymmetricChild : LeftWithNonVirtualDtor, Right {
+  virtual ~AsymmetricChild();
+};
+
+void call_asymmetric_child_complete_dtor() {
+  // CHECK-LABEL: define void @"\01?call_asymmetric_child_complete_dtor@@YAXXZ"
+  AsymmetricChild obj;
+  // CHECK: call x86_thiscallcc %struct.AsymmetricChild* @"\01??0AsymmetricChild@@QAE@XZ"(%struct.AsymmetricChild* %[[OBJ:.*]])
+  // CHECK-NOT: getelementptr
+  // CHECK: call x86_thiscallcc void @"\01??1AsymmetricChild@@UAE@XZ"(%struct.AsymmetricChild* %[[OBJ]])
+  // CHECK: ret
+}
