@@ -111,17 +111,6 @@ TEST(AddressSanitizer, CallocTest) {
   free(a);
 }
 
-TEST(AddressSanitizer, CallocOverflow32) {
-#if SANITIZER_WORDSIZE == 32
-  size_t kArraySize = 112;
-  volatile size_t kArraySize2 = 43878406;
-  void *p = 0;
-  EXPECT_DEATH(p = calloc(kArraySize, kArraySize2),
-               "allocator is terminating the process instead of returning 0");
-  assert(!p);
-#endif
-}
-
 TEST(AddressSanitizer, CallocReturnsZeroMem) {
   size_t sizes[] = {16, 1000, 10000, 100000, 2100000};
   for (size_t s = 0; s < sizeof(sizes)/sizeof(sizes[0]); s++) {
