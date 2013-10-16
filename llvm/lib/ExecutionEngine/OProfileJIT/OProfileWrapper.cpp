@@ -141,6 +141,10 @@ bool OProfileWrapper::checkForOProfileProcEntry() {
         close(CmdLineFD);
         ssize_t Idx = 0;
 
+        if (ExeName[0] != '/') {
+          BaseName = ExeName;
+        }
+
         // Find the terminator for the first string
         while (Idx < NumRead-1 && ExeName[Idx] != 0) {
           Idx++;
@@ -159,7 +163,8 @@ bool OProfileWrapper::checkForOProfileProcEntry() {
         }
 
         // Test this to see if it is the oprofile daemon
-        if (BaseName != 0 && !strcmp("oprofiled", BaseName)) {
+        if (BaseName != 0 && (!strcmp("oprofiled", BaseName) ||
+                              !strcmp("operf", BaseName))) {
           // If it is, we're done
           closedir(ProcDir);
           return true;
