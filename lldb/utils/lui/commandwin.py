@@ -10,6 +10,7 @@
 import cui
 import curses
 import lldb
+from itertools import islice
 
 class History(object):
   def __init__(self):
@@ -52,7 +53,7 @@ class CommandWin(cui.TitledWin):
   def __init__(self, driver, x, y, w, h):
     super(CommandWin, self).__init__(x, y, w, h, "Commands")
     self.command = ""
-
+    self.data = ""
     driver.setSize(w, h)
 
     self.win.scrollok(1)
@@ -63,7 +64,23 @@ class CommandWin(cui.TitledWin):
     def enterCallback(content):
       self.handleCommand(content)
     def tabCompleteCallback(content):
-      pass # TODO: implement
+      self.data = content
+      matches = lldb.SBStringList()
+      commandinterpreter = self.getCommandInterpreter()
+      commandinterpreter.HandleCompletion(self.data, self.el.index, 0, -1, matches)
+      if matches.GetSize() == 2:
+        self.el.content += matches.GetStringAtIndex(0)
+        self.el.index = len(self.el.content)
+        self.el.draw()
+      else:
+        self.win.move(self.el.starty, self.el.startx)
+        self.win.scroll(1)
+        self.win.addstr("Available Completions:")
+        self.win.scroll(1)
+        for m in islice(matches, 1, None):
+          self.win.addstr(self.win.getyx()[0], 0, m)
+          self.win.scroll(1)
+        self.el.draw()
 
     self.startline = self.win.getmaxyx()[0]-2
 
@@ -100,3 +117,5 @@ class CommandWin(cui.TitledWin):
         return
       self.el.handleEvent(event)
 
+  def getCommandInterpreter(self):
+    return self.driver.getCommandInterpreter()
