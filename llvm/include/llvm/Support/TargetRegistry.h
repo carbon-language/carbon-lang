@@ -598,7 +598,6 @@ namespace llvm {
     /// @param T - The target being registered.
     /// @param Fn - A function to construct a MCAsmInfo for the target.
     static void RegisterMCAsmInfo(Target &T, Target::MCAsmInfoCtorFnTy Fn) {
-      assert(!T.MCAsmInfoCtorFn);
       T.MCAsmInfoCtorFn = Fn;
     }
 
@@ -613,7 +612,6 @@ namespace llvm {
     /// @param Fn - A function to construct a MCCodeGenInfo for the target.
     static void RegisterMCCodeGenInfo(Target &T,
                                      Target::MCCodeGenInfoCtorFnTy Fn) {
-      assert(!T.MCCodeGenInfoCtorFn);
       T.MCCodeGenInfoCtorFn = Fn;
     }
 
@@ -627,7 +625,6 @@ namespace llvm {
     /// @param T - The target being registered.
     /// @param Fn - A function to construct a MCInstrInfo for the target.
     static void RegisterMCInstrInfo(Target &T, Target::MCInstrInfoCtorFnTy Fn) {
-      assert(!T.MCInstrInfoCtorFn);
       T.MCInstrInfoCtorFn = Fn;
     }
 
@@ -635,7 +632,6 @@ namespace llvm {
     /// the given target.
     static void RegisterMCInstrAnalysis(Target &T,
                                         Target::MCInstrAnalysisCtorFnTy Fn) {
-      assert(!T.MCInstrAnalysisCtorFn);
       T.MCInstrAnalysisCtorFn = Fn;
     }
 
@@ -649,7 +645,6 @@ namespace llvm {
     /// @param T - The target being registered.
     /// @param Fn - A function to construct a MCRegisterInfo for the target.
     static void RegisterMCRegInfo(Target &T, Target::MCRegInfoCtorFnTy Fn) {
-      assert(!T.MCRegInfoCtorFn);
       T.MCRegInfoCtorFn = Fn;
     }
 
@@ -664,7 +659,6 @@ namespace llvm {
     /// @param Fn - A function to construct a MCSubtargetInfo for the target.
     static void RegisterMCSubtargetInfo(Target &T,
                                         Target::MCSubtargetInfoCtorFnTy Fn) {
-      assert(!T.MCSubtargetInfoCtorFn);
       T.MCSubtargetInfoCtorFn = Fn;
     }
 
@@ -679,7 +673,6 @@ namespace llvm {
     /// @param Fn - A function to construct a TargetMachine for the target.
     static void RegisterTargetMachine(Target &T,
                                       Target::TargetMachineCtorTy Fn) {
-      assert(!T.TargetMachineCtorFn);
       T.TargetMachineCtorFn = Fn;
     }
 
@@ -693,7 +686,6 @@ namespace llvm {
     /// @param T - The target being registered.
     /// @param Fn - A function to construct an AsmBackend for the target.
     static void RegisterMCAsmBackend(Target &T, Target::MCAsmBackendCtorTy Fn) {
-      assert(!T.MCAsmBackendCtorFn);
       T.MCAsmBackendCtorFn = Fn;
     }
 
@@ -707,7 +699,6 @@ namespace llvm {
     /// @param T - The target being registered.
     /// @param Fn - A function to construct an MCTargetAsmParser for the target.
     static void RegisterMCAsmParser(Target &T, Target::MCAsmParserCtorTy Fn) {
-      assert(!T.MCAsmParserCtorFn);
       T.MCAsmParserCtorFn = Fn;
     }
 
@@ -721,7 +712,6 @@ namespace llvm {
     /// @param T - The target being registered.
     /// @param Fn - A function to construct an AsmPrinter for the target.
     static void RegisterAsmPrinter(Target &T, Target::AsmPrinterCtorTy Fn) {
-      assert(!T.AsmPrinterCtorFn);
       T.AsmPrinterCtorFn = Fn;
     }
 
@@ -736,7 +726,6 @@ namespace llvm {
     /// @param Fn - A function to construct an MCDisassembler for the target.
     static void RegisterMCDisassembler(Target &T,
                                        Target::MCDisassemblerCtorTy Fn) {
-      assert(!T.MCDisassemblerCtorFn);
       T.MCDisassemblerCtorFn = Fn;
     }
 
@@ -751,7 +740,6 @@ namespace llvm {
     /// @param Fn - A function to construct an MCInstPrinter for the target.
     static void RegisterMCInstPrinter(Target &T,
                                       Target::MCInstPrinterCtorTy Fn) {
-      assert(!T.MCInstPrinterCtorFn);
       T.MCInstPrinterCtorFn = Fn;
     }
 
@@ -766,7 +754,6 @@ namespace llvm {
     /// @param Fn - A function to construct an MCCodeEmitter for the target.
     static void RegisterMCCodeEmitter(Target &T,
                                       Target::MCCodeEmitterCtorTy Fn) {
-      assert(!T.MCCodeEmitterCtorFn);
       T.MCCodeEmitterCtorFn = Fn;
     }
 
@@ -781,7 +768,6 @@ namespace llvm {
     /// @param Fn - A function to construct an MCStreamer for the target.
     static void RegisterMCObjectStreamer(Target &T,
                                          Target::MCObjectStreamerCtorTy Fn) {
-      assert(!T.MCObjectStreamerCtorFn);
       T.MCObjectStreamerCtorFn = Fn;
     }
 
@@ -795,7 +781,6 @@ namespace llvm {
     /// @param T - The target being registered.
     /// @param Fn - A function to construct an MCStreamer for the target.
     static void RegisterAsmStreamer(Target &T, Target::AsmStreamerCtorTy Fn) {
-      assert(!T.AsmStreamerCtorFn);
       T.AsmStreamerCtorFn = Fn;
     }
 
@@ -810,7 +795,6 @@ namespace llvm {
     /// @param Fn - A function to construct an MCRelocationInfo for the target.
     static void RegisterMCRelocationInfo(Target &T,
                                          Target::MCRelocationInfoCtorTy Fn) {
-      assert(!T.MCRelocationInfoCtorFn);
       T.MCRelocationInfoCtorFn = Fn;
     }
 
@@ -825,7 +809,6 @@ namespace llvm {
     /// @param Fn - A function to construct an MCSymbolizer for the target.
     static void RegisterMCSymbolizer(Target &T,
                                      Target::MCSymbolizerCtorTy Fn) {
-      assert(!T.MCSymbolizerCtorFn);
       T.MCSymbolizerCtorFn = Fn;
     }
 
