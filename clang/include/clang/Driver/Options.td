@@ -72,6 +72,7 @@ def m_Group               : OptionGroup<"<m group>">, Group<CompileOnly_Group>;
 def m_x86_Features_Group  : OptionGroup<"<m x86 features group>">, Group<m_Group>;
 def m_hexagon_Features_Group  : OptionGroup<"<m hexagon features group>">, Group<m_Group>;
 def m_arm_Features_Group  : OptionGroup<"<m arm features group>">, Group<m_Group>;
+def m_ppc_Features_Group  : OptionGroup<"<m ppc features group>">, Group<m_Group>;
 def opencl_Group          : OptionGroup<"<opencl group>">;
 def u_Group               : OptionGroup<"<u group>">;
 
@@ -337,9 +338,6 @@ def fPIE : Flag<["-"], "fPIE">, Group<f_Group>;
 def fno_PIE : Flag<["-"], "fno-PIE">, Group<f_Group>;
 def faccess_control : Flag<["-"], "faccess-control">, Group<f_Group>;
 def fallow_unsupported : Flag<["-"], "fallow-unsupported">, Group<f_Group>;
-def faltivec : Flag<["-"], "faltivec">, Group<f_Group>, Flags<[CC1Option]>,
-  HelpText<"Enable AltiVec vector initializer syntax">;
-def fno_altivec : Flag<["-"], "fno-altivec">, Group<f_Group>, Flags<[CC1Option]>;
 def fapple_kext : Flag<["-"], "fapple-kext">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Use Apple's kernel extensions ABI">;
 def fapple_pragma_pack : Flag<["-"], "fapple-pragma-pack">, Group<f_Group>, Flags<[CC1Option]>,
@@ -935,16 +933,6 @@ def m3dnow : Flag<["-"], "m3dnow">, Group<m_x86_Features_Group>;
 def m64 : Flag<["-"], "m64">, Group<m_Group>, Flags<[DriverOption, CoreOption]>;
 def mabi_EQ : Joined<["-"], "mabi=">, Group<m_Group>;
 def march_EQ : Joined<["-"], "march=">, Group<m_Group>;
-def maltivec : Flag<["-"], "maltivec">, Alias<faltivec>;
-def mno_altivec : Flag<["-"], "mno-altivec">, Alias<fno_altivec>;
-def mfprnd : Flag<["-"], "mfprnd">, Group<m_Group>;
-def mno_fprnd : Flag<["-"], "mno-fprnd">, Group<m_Group>;
-def mmfcrf : Flag<["-"], "mmfcrf">, Group<m_Group>;
-def mno_mfcrf : Flag<["-"], "mno-mfcrf">, Group<m_Group>;
-def mpopcntd : Flag<["-"], "mpopcntd">, Group<m_Group>;
-def mno_popcntd : Flag<["-"], "mno-popcntd">, Group<m_Group>;
-def mqpx : Flag<["-"], "mqpx">, Group<m_Group>;
-def mno_qpx : Flag<["-"], "mno-qpx">, Group<m_Group>;
 def mcmodel_EQ : Joined<["-"], "mcmodel=">, Group<m_Group>;
 def mconstant_cfstrings : Flag<["-"], "mconstant-cfstrings">, Group<clang_ignored_m_Group>;
 def mcpu_EQ : Joined<["-"], "mcpu=">, Group<m_Group>;
@@ -1028,6 +1016,21 @@ def mno_thumb : Flag<["-"], "mno-thumb">, Group<m_arm_Features_Group>;
 def marm : Flag<["-"], "marm">, Alias<mno_thumb>;
 def ffixed_r9 : Flag<["-"], "ffixed-r9">, Group<m_arm_Features_Group>,
   HelpText<"Reserve the r9 register (ARM only)">;
+
+def mfprnd : Flag<["-"], "mfprnd">, Group<m_ppc_Features_Group>;
+def mno_fprnd : Flag<["-"], "mno-fprnd">, Group<m_ppc_Features_Group>;
+def mmfcrf : Flag<["-"], "mmfcrf">, Group<m_ppc_Features_Group>;
+def mno_mfcrf : Flag<["-"], "mno-mfcrf">, Group<m_ppc_Features_Group>;
+def mpopcntd : Flag<["-"], "mpopcntd">, Group<m_ppc_Features_Group>;
+def mno_popcntd : Flag<["-"], "mno-popcntd">, Group<m_ppc_Features_Group>;
+def mqpx : Flag<["-"], "mqpx">, Group<m_ppc_Features_Group>;
+def mno_qpx : Flag<["-"], "mno-qpx">, Group<m_ppc_Features_Group>;
+
+def faltivec : Flag<["-"], "faltivec">, Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Enable AltiVec vector initializer syntax">;
+def fno_altivec : Flag<["-"], "fno-altivec">, Group<f_Group>, Flags<[CC1Option]>;
+def maltivec : Flag<["-"], "maltivec">, Alias<faltivec>;
+def mno_altivec : Flag<["-"], "mno-altivec">, Alias<fno_altivec>;
 
 def mno_warn_nonportable_cfstrings : Flag<["-"], "mno-warn-nonportable-cfstrings">, Group<m_Group>;
 def mno_omit_leaf_frame_pointer : Flag<["-"], "mno-omit-leaf-frame-pointer">, Group<m_Group>;

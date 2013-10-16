@@ -85,4 +85,3 @@
 
 // RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-fprnd -mfprnd -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-FPRND %s
 // CHECK-FPRND: "-target-feature" "+fprnd"
-

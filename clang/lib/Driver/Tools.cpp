@@ -1112,24 +1112,33 @@ static std::string getPPCTargetCPU(const ArgList &Args) {
 
 static void getPPCTargetFeatures(const ArgList &Args,
                                  std::vector<const char *> &Features) {
-  // Allow override of the Altivec feature.
+  for (arg_iterator it = Args.filtered_begin(options::OPT_m_ppc_Features_Group),
+                    ie = Args.filtered_end();
+       it != ie; ++it) {
+    StringRef Name = (*it)->getOption().getName();
+    (*it)->claim();
+
+    // Skip over "-m".
+    assert(Name.startswith("m") && "Invalid feature name.");
+    Name = Name.substr(1);
+
+    bool IsNegative = Name.startswith("no-");
+    if (IsNegative)
+      Name = Name.substr(3);
+
+    // Note that gcc calls this mfcrf and LLVM calls this mfocrf so we
+    // pass the correct option to the backend while calling the frontend
+    // option the same.
+    // TODO: Change the LLVM backend option maybe?
+    if (Name == "mfcrf")
+      Name = "mfocrf";
+
+    Features.push_back(Args.MakeArgString((IsNegative ? "-" : "+") + Name));
+  }
+
+  // Altivec is a bit weird, allow overriding of the Altivec feature here.
   AddTargetFeature(Args, Features, options::OPT_faltivec,
                    options::OPT_fno_altivec, "altivec");
-
-  AddTargetFeature(Args, Features, options::OPT_mfprnd, options::OPT_mno_fprnd,
-                   "fprnd");
-
-  // Note that gcc calls this mfcrf and LLVM calls this mfocrf.
-  AddTargetFeature(Args, Features, options::OPT_mmfcrf, options::OPT_mno_mfcrf,
-                   "mfocrf");
-
-  AddTargetFeature(Args, Features, options::OPT_mpopcntd,
-                   options::OPT_mno_popcntd, "popcntd");
-
-  // It is really only possible to turn qpx off because turning qpx on is tied
-  // to using the a2q CPU.
-  if (Args.hasFlag(options::OPT_mno_qpx, options::OPT_mqpx, false))
-    Features.push_back("-qpx");
 }
 
 /// Get the (LLVM) name of the R600 gpu we are targeting.
