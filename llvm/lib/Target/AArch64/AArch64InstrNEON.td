@@ -3583,7 +3583,7 @@ defm : Neon_Scalar2SameMisc_accum_BHSD_size_patterns<int_aarch64_neon_vuqadd,
                                                      SUQADDbb, SUQADDhh,
                                                      SUQADDss, SUQADDdd>;
 
-// Scalar Unsigned Saturating Accumulated of Unsigned Value
+// Scalar Unsigned Saturating Accumulated of Signed Value
 defm USQADD : NeonI_Scalar2SameMisc_accum_BHSD_size<0b1, 0b00011, "usqadd">;
 defm : Neon_Scalar2SameMisc_accum_BHSD_size_patterns<int_aarch64_neon_vsqadd,
                                                      USQADDbb, USQADDhh,
