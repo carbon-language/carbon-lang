@@ -258,6 +258,7 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
   bool IsZeroInit;
   bool IsReadOnly;
   uint64_t DataSize;
+  unsigned PaddingSize = 0;
   StringRef Name;
   Check(Section.isRequiredForExecution(IsRequired));
   Check(Section.isVirtual(IsVirtual));
@@ -272,6 +273,12 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
       StubBufSize += StubAlignment - EndAlignment;
   }
 
+  // The .eh_frame section (at least on Linux) needs an extra four bytes padded
+  // with zeroes added at the end.  For MachO objects, this section has a
+  // slightly different name, so this won't have any effect for MachO objects.
+  if (Name == ".eh_frame")
+    PaddingSize = 4;
+
   unsigned Allocate;
   unsigned SectionID = Sections.size();
   uint8_t *Addr;
@@ -280,7 +287,7 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
   // Some sections, such as debug info, don't need to be loaded for execution.
   // Leave those where they are.
   if (IsRequired) {
-    Allocate = DataSize + StubBufSize;
+    Allocate = DataSize + PaddingSize + StubBufSize;
     Addr = IsCode
       ? MemMgr->allocateCodeSection(Allocate, Alignment, SectionID, Name)
       : MemMgr->allocateDataSection(Allocate, Alignment, SectionID, Name,
@@ -297,6 +304,13 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
       memset(Addr, 0, DataSize);
     else
       memcpy(Addr, pData, DataSize);
+
+    // Fill in any extra bytes we allocated for padding
+    if (PaddingSize != 0) {
+      memset(Addr + DataSize, 0, PaddingSize);
+      // Update the DataSize variable so that the stub offset is set correctly.
+      DataSize += PaddingSize;
+    }
 
     DEBUG(dbgs() << "emitSection SectionID: " << SectionID
                  << " Name: " << Name
