@@ -1637,7 +1637,7 @@
 0xd2,0x3a,0xe0,0x5e
 
 #----------------------------------------------------------------------
-# Unsigned Saturating Accumulated of Unsigned Value
+# Unsigned Saturating Accumulated of Signed Value
 #----------------------------------------------------------------------
 # CHECK: usqadd b19, b14
 # CHECK: usqadd h20, h15

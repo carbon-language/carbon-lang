@@ -4420,7 +4420,7 @@
 // CHECK-ERROR:                   ^
 
 //----------------------------------------------------------------------
-// Scalar Unsigned Saturating Accumulated of Unsigned Value
+// Scalar Unsigned Saturating Accumulated of Signed Value
 //----------------------------------------------------------------------
 
         usqadd b0, h1

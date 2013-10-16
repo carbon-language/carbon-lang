@@ -67,7 +67,7 @@
 // CHECK: suqadd d18, d22    // encoding: [0xd2,0x3a,0xe0,0x5e]
 
 //----------------------------------------------------------------------
-// Unsigned Saturating Accumulated of Unsigned Value
+// Unsigned Saturating Accumulated of Signed Value
 //----------------------------------------------------------------------
 
     usqadd b19, b14
