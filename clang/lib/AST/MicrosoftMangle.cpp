@@ -179,8 +179,8 @@ class MicrosoftMangleContextImpl : public MicrosoftMangleContext {
 public:
   MicrosoftMangleContextImpl(ASTContext &Context, DiagnosticsEngine &Diags)
       : MicrosoftMangleContext(Context, Diags) {}
-  virtual bool shouldMangleDeclName(const NamedDecl *D);
-  virtual void mangleName(const NamedDecl *D, raw_ostream &Out);
+  virtual bool shouldMangleCXXName(const NamedDecl *D);
+  virtual void mangleCXXName(const NamedDecl *D, raw_ostream &Out);
   virtual void mangleThunk(const CXXMethodDecl *MD,
                            const ThunkInfo &Thunk,
                            raw_ostream &);
@@ -211,16 +211,7 @@ private:
 
 }
 
-bool MicrosoftMangleContextImpl::shouldMangleDeclName(const NamedDecl *D) {
-  // In C, functions with no attributes never need to be mangled. Fastpath them.
-  if (!getASTContext().getLangOpts().CPlusPlus && !D->hasAttrs())
-    return false;
-
-  // Any decl can be declared with __asm("foo") on it, and this takes precedence
-  // over all other naming in the .o file.
-  if (D->hasAttr<AsmLabelAttr>())
-    return true;
-
+bool MicrosoftMangleContextImpl::shouldMangleCXXName(const NamedDecl *D) {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     LanguageLinkage L = FD->getLanguageLinkage();
     // Overloadable functions need mangling.
@@ -280,14 +271,6 @@ void MicrosoftCXXNameMangler::mangle(const NamedDecl *D,
   // name with leading underscores or leading/trailing at signs. So, by
   // default, we emit an asm marker at the start so we get the name right.
   // Callers can override this with a custom prefix.
-
-  // Any decl can be declared with __asm("foo") on it, and this takes precedence
-  // over all other naming in the .o file.
-  if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
-    // If we have an asm name, then we use it as the mangling.
-    Out << '\01' << ALA->getLabel();
-    return;
-  }
 
   // <mangled-name> ::= ? <name> <type-encoding>
   Out << Prefix;
@@ -1845,8 +1828,8 @@ void MicrosoftCXXNameMangler::mangleType(const AtomicType *T,
     << Range;
 }
 
-void MicrosoftMangleContextImpl::mangleName(const NamedDecl *D,
-                                            raw_ostream &Out) {
+void MicrosoftMangleContextImpl::mangleCXXName(const NamedDecl *D,
+                                               raw_ostream &Out) {
   assert((isa<FunctionDecl>(D) || isa<VarDecl>(D)) &&
          "Invalid mangleName() call, argument is not a variable or function!");
   assert(!isa<CXXConstructorDecl>(D) && !isa<CXXDestructorDecl>(D) &&

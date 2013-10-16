@@ -108,10 +108,12 @@ public:
   /// @name Mangler Entry Points
   /// @{
 
-  virtual bool shouldMangleDeclName(const NamedDecl *D) = 0;
+  bool shouldMangleDeclName(const NamedDecl *D);
+  virtual bool shouldMangleCXXName(const NamedDecl *D) = 0;
 
   // FIXME: consider replacing raw_ostream & with something like SmallString &.
-  virtual void mangleName(const NamedDecl *D, raw_ostream &) = 0;
+  void mangleName(const NamedDecl *D, raw_ostream &);
+  virtual void mangleCXXName(const NamedDecl *D, raw_ostream &) = 0;
   virtual void mangleThunk(const CXXMethodDecl *MD,
                           const ThunkInfo &Thunk,
                           raw_ostream &) = 0;

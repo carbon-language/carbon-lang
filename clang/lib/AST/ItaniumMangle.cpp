@@ -125,8 +125,8 @@ public:
   /// @name Mangler Entry Points
   /// @{
 
-  bool shouldMangleDeclName(const NamedDecl *D);
-  void mangleName(const NamedDecl *D, raw_ostream &);
+  bool shouldMangleCXXName(const NamedDecl *D);
+  void mangleCXXName(const NamedDecl *D, raw_ostream &);
   void mangleThunk(const CXXMethodDecl *MD,
                    const ThunkInfo &Thunk,
                    raw_ostream &);
@@ -384,16 +384,7 @@ private:
 
 }
 
-bool ItaniumMangleContextImpl::shouldMangleDeclName(const NamedDecl *D) {
-  // In C, functions with no attributes never need to be mangled. Fastpath them.
-  if (!getASTContext().getLangOpts().CPlusPlus && !D->hasAttrs())
-    return false;
-
-  // Any decl can be declared with __asm("foo") on it, and this takes precedence
-  // over all other naming in the .o file.
-  if (D->hasAttr<AsmLabelAttr>())
-    return true;
-
+bool ItaniumMangleContextImpl::shouldMangleCXXName(const NamedDecl *D) {
   const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
   if (FD) {
     LanguageLinkage L = FD->getLanguageLinkage();
@@ -440,26 +431,6 @@ bool ItaniumMangleContextImpl::shouldMangleDeclName(const NamedDecl *D) {
 }
 
 void CXXNameMangler::mangle(const NamedDecl *D, StringRef Prefix) {
-  // Any decl can be declared with __asm("foo") on it, and this takes precedence
-  // over all other naming in the .o file.
-  if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
-    // If we have an asm name, then we use it as the mangling.
-
-    // Adding the prefix can cause problems when one file has a "foo" and
-    // another has a "\01foo". That is known to happen on ELF with the
-    // tricks normally used for producing aliases (PR9177). Fortunately the
-    // llvm mangler on ELF is a nop, so we can just avoid adding the \01
-    // marker.  We also avoid adding the marker if this is an alias for an
-    // LLVM intrinsic.
-    StringRef UserLabelPrefix =
-      getASTContext().getTargetInfo().getUserLabelPrefix();
-    if (!UserLabelPrefix.empty() && !ALA->getLabel().startswith("llvm."))
-      Out << '\01';  // LLVM IR Marker for __asm("foo")
-
-    Out << ALA->getLabel();
-    return;
-  }
-
   // <mangled-name> ::= _Z <encoding>
   //            ::= <data name>
   //            ::= <special-name>
@@ -3632,8 +3603,8 @@ void CXXNameMangler::addSubstitution(uintptr_t Ptr) {
 /// and this routine will return false. In this case, the caller should just
 /// emit the identifier of the declaration (\c D->getIdentifier()) as its
 /// name.
-void ItaniumMangleContextImpl::mangleName(const NamedDecl *D,
-                                          raw_ostream &Out) {
+void ItaniumMangleContextImpl::mangleCXXName(const NamedDecl *D,
+                                             raw_ostream &Out) {
   assert((isa<FunctionDecl>(D) || isa<VarDecl>(D)) &&
           "Invalid mangleName() call, argument is not a variable or function!");
   assert(!isa<CXXConstructorDecl>(D) && !isa<CXXDestructorDecl>(D) &&
