@@ -82,12 +82,12 @@ static const char *processFDE(const char *Entry, bool isDeregister) {
   uint32_t Length = *((const uint32_t *)P);
   P += 4;
   uint32_t Offset = *((const uint32_t *)P);
-  if (Offset != 0)
-    if (isDeregister) {
+  if (Offset != 0) {
+    if (isDeregister)
       __deregister_frame(const_cast<char *>(Entry));
-    } else {
+    else
       __register_frame(const_cast<char *>(Entry));
-    }
+  }
   return P + Length;
 }
 
