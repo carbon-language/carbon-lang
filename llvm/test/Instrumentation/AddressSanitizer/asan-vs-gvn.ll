@@ -9,7 +9,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 
 %struct_of_7_bytes_4_aligned = type { i32, i8, i8, i8}
 
-@f = global %struct_of_7_bytes_4_aligned zeroinitializer, align 4
+@f = external global %struct_of_7_bytes_4_aligned , align 4
 
 ; Accessing bytes 4 and 6, not ok to widen to i32 if sanitize_address is set.
 
