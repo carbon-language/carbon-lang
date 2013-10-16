@@ -3,8 +3,8 @@
 
 ; The source is an empty file.
 
-; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8] (0xa188c11a9264c05d)
-; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8] (0xa188c11a9264c05d)
+; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8] (0x2410f0bbc44241ed)
+; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8] (0x2410f0bbc44241ed)
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!3}
