@@ -15,6 +15,7 @@
 #define LLVM_ARMTARGETASMINFO_H
 
 #include "llvm/MC/MCAsmInfoDarwin.h"
+#include "llvm/MC/MCAsmInfoELF.h"
 
 namespace llvm {
 
@@ -24,7 +25,7 @@ namespace llvm {
     explicit ARMMCAsmInfoDarwin();
   };
 
-  class ARMELFMCAsmInfo : public MCAsmInfo {
+  class ARMELFMCAsmInfo : public MCAsmInfoELF {
     virtual void anchor();
   public:
     explicit ARMELFMCAsmInfo();

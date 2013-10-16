@@ -4,6 +4,7 @@ add_llvm_library(LLVMMC
   MCAsmInfo.cpp
   MCAsmInfoCOFF.cpp
   MCAsmInfoDarwin.cpp
+  MCAsmInfoELF.cpp
   MCAsmStreamer.cpp
   MCAssembler.cpp
   MCAtom.cpp

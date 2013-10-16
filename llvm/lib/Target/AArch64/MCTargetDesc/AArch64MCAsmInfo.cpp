@@ -31,8 +31,6 @@ AArch64ELFMCAsmInfo::AArch64ELFMCAsmInfo() {
 
   UseDataRegionDirectives = true;
 
-  WeakRefDirective = "\t.weak\t";
-
   HasLEB128 = true;
   SupportsDebugInformation = true;
 

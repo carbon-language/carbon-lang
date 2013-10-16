@@ -29,7 +29,6 @@ HexagonMCAsmInfo::HexagonMCAsmInfo(StringRef TT) {
   InlineAsmEnd = "# InlineAsm End";
   ZeroDirective = "\t.space\t";
   AscizDirective = "\t.string\t";
-  WeakRefDirective = "\t.weak\t";
 
   SupportsDebugInformation = true;
   UsesELFSectionDirectiveForBSS  = true;

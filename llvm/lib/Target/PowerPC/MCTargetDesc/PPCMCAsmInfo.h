@@ -15,6 +15,7 @@
 #define PPCTARGETASMINFO_H
 
 #include "llvm/MC/MCAsmInfoDarwin.h"
+#include "llvm/MC/MCAsmInfoELF.h"
 
 namespace llvm {
 
@@ -24,7 +25,7 @@ namespace llvm {
     explicit PPCMCAsmInfoDarwin(bool is64Bit);
   };
 
-  class PPCLinuxMCAsmInfo : public MCAsmInfo {
+  class PPCLinuxMCAsmInfo : public MCAsmInfoELF {
     virtual void anchor();
   public:
     explicit PPCLinuxMCAsmInfo(bool is64Bit);

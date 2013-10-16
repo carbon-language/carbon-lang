@@ -17,6 +17,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAsmInfoCOFF.h"
 #include "llvm/MC/MCAsmInfoDarwin.h"
+#include "llvm/MC/MCAsmInfoELF.h"
 
 namespace llvm {
   class Triple;
@@ -35,7 +36,7 @@ namespace llvm {
                                 MCStreamer &Streamer) const;
   };
 
-  class X86ELFMCAsmInfo : public MCAsmInfo {
+  class X86ELFMCAsmInfo : public MCAsmInfoELF {
     virtual void anchor();
   public:
     explicit X86ELFMCAsmInfo(const Triple &Triple);

@@ -1,4 +1,4 @@
-//==-- AArch64MCAsmInfo.h - AArch64 asm properties -------------*- C++ -*--===//
+//===-- MCAsmInfoELF.cpp - ELF asm properties -------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,21 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the AArch64MCAsmInfo class.
+// This file defines target asm properties related what form asm statements
+// should take in general on ELF-based targets
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_AARCH64TARGETASMINFO_H
-#define LLVM_AARCH64TARGETASMINFO_H
-
 #include "llvm/MC/MCAsmInfoELF.h"
+using namespace llvm;
 
-namespace llvm {
+void MCAsmInfoELF::anchor() { }
 
-  struct AArch64ELFMCAsmInfo : public MCAsmInfoELF {
-    explicit AArch64ELFMCAsmInfo();
-  };
-
-} // namespace llvm
-
-#endif
+MCAsmInfoELF::MCAsmInfoELF() {
+  HasIdentDirective = true;
+  WeakRefDirective = "\t.weak\t";
+}

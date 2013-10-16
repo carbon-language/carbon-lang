@@ -23,7 +23,6 @@ XCoreMCAsmInfo::XCoreMCAsmInfo(StringRef TT) {
     
   PrivateGlobalPrefix = ".L";
   AscizDirective = ".asciiz";
-  WeakRefDirective = "\t.weak\t";
 
   HiddenVisibilityAttr = MCSA_Invalid;
   HiddenDeclarationVisibilityAttr = MCSA_Invalid;

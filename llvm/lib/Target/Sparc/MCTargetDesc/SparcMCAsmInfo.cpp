@@ -41,8 +41,6 @@ SparcELFMCAsmInfo::SparcELFMCAsmInfo(StringRef TT) {
   SunStyleELFSectionSwitchSyntax = true;
   UsesELFSectionDirectiveForBSS = true;
 
-  WeakRefDirective = "\t.weak\t";
-
   PrivateGlobalPrefix = ".L";
 }
 
