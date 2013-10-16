@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 int GlobalData[10];
-int qwerty;
+int x;
 namespace XXX {
   struct YYY {
     static int ZZZ[10];
@@ -14,19 +14,19 @@ namespace XXX {
 
 void *Thread(void *a) {
   GlobalData[2] = 42;
-  qwerty = 1;
+  x = 1;
   XXX::YYY::ZZZ[0] = 1;
   return 0;
 }
 
 int main() {
   fprintf(stderr, "addr=%p\n", GlobalData);
-  fprintf(stderr, "addr2=%p\n", &qwerty);
+  fprintf(stderr, "addr2=%p\n", &x);
   fprintf(stderr, "addr3=%p\n", XXX::YYY::ZZZ);
   pthread_t t;
   pthread_create(&t, 0, Thread, 0);
   GlobalData[2] = 43;
-  qwerty = 0;
+  x = 0;
   XXX::YYY::ZZZ[0] = 0;
   pthread_join(t, 0);
 }
@@ -37,6 +37,6 @@ int main() {
 // CHECK: WARNING: ThreadSanitizer: data race
 // CHECK: Location is global 'GlobalData' of size 40 at [[ADDR]] ({{.*}}+0x{{[0-9,a-f]+}})
 // CHECK: WARNING: ThreadSanitizer: data race
-// CHECK: Location is global 'qwerty' of size 4 at [[ADDR2]] ({{.*}}+0x{{[0-9,a-f]+}})
+// CHECK: Location is global 'x' of size 4 at [[ADDR2]] ({{.*}}+0x{{[0-9,a-f]+}})
 // CHECK: WARNING: ThreadSanitizer: data race
 // CHECK: Location is global 'XXX::YYY::ZZZ' of size 40 at [[ADDR3]] ({{.*}}+0x{{[0-9,a-f]+}})
