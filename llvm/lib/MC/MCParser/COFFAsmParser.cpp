@@ -295,7 +295,12 @@ bool COFFAsmParser::ParseSectionSwitch(StringRef Section,
 }
 
 bool COFFAsmParser::ParseSectionName(StringRef &SectionName) {
-  return getParser().parseIdentifier(SectionName);
+  if (!getLexer().is(AsmToken::Identifier))
+    return true;
+
+  SectionName = getTok().getIdentifier();
+  Lex();
+  return false;
 }
 
 // .section name [, "flags"]
