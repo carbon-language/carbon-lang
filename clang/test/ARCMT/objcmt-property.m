@@ -227,3 +227,11 @@ DEPRECATED
 - (id (*)(id, NSArray *, NSMutableDictionary *)) MyFuncptr;
 - (void) setMyFuncptr : (id (*)(id, NSArray *, NSMutableDictionary *)) bl;
 @end
+
+// rdar://15231241
+@interface rdar15231241
+@property (nonatomic, readonly) double Ddelegate;
+@property (nonatomic, readonly) float Fdelegate;
+@property (nonatomic, readonly) int Idelegate;
+@property (nonatomic, readonly) BOOL Bdelegate;
+@end

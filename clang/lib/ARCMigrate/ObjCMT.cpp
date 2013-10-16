@@ -311,8 +311,11 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   // "dataSource", or have exact name "target" to have 'assign' attribute.
   if (PropertyName.equals("target") ||
       (PropertyName.find("delegate") != StringRef::npos) ||
-      (PropertyName.find("dataSource") != StringRef::npos))
-    append_attr(PropertyString, "assign", LParenAdded);
+      (PropertyName.find("dataSource") != StringRef::npos)) {
+    QualType QT = Getter->getResultType();
+    if (!QT->isRealType())
+      append_attr(PropertyString, "assign", LParenAdded);
+  }
   else if (Setter) {
     const ParmVarDecl *argDecl = *Setter->param_begin();
     QualType ArgType = Context.getCanonicalType(argDecl->getType());
