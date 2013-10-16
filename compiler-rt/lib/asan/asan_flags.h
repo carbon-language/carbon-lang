@@ -96,6 +96,9 @@ struct Flags {
   // Poison (or not) the heap memory on [de]allocation. Zero value is useful
   // for benchmarking the allocator or instrumentator.
   bool poison_heap;
+  // If true, poison partially addressable 8-byte aligned words (default=true).
+  // This flag affects heap and global buffers, but not stack buffers.
+  bool poison_partial;
   // Report errors on malloc/delete, new/free, new/delete[], etc.
   bool alloc_dealloc_mismatch;
   // Use stack depot instead of storing stacks in the redzones.

@@ -408,7 +408,7 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   // Deal with the end of the region if size is not aligned to granularity.
   if (size != size_rounded_down_to_granularity && fl.poison_heap) {
     u8 *shadow = (u8*)MemToShadow(user_beg + size_rounded_down_to_granularity);
-    *shadow = size & (SHADOW_GRANULARITY - 1);
+    *shadow = fl.poison_partial ? (size & (SHADOW_GRANULARITY - 1)) : 0;
   }
 
   AsanStats &thread_stats = GetCurrentThreadStats();
