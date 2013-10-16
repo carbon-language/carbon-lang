@@ -1335,8 +1335,74 @@ int AMDGPUCFGStructurizer::improveSimpleJumpintoIf(MachineBasicBlock *HeadMBB,
   // add initReg = initVal to headBlk
 
   const TargetRegisterClass * I32RC = TRI->getCFGStructurizerRegClass(MVT::i32);
-  if (!MigrateTrue || !MigrateFalse)
-    llvm_unreachable("Extra register needed to handle CFG");
+  if (!MigrateTrue || !MigrateFalse) {
+    // XXX: We have an opportunity here to optimize the "branch into if" case
+    // here.  Branch into if looks like this:
+    //                        entry
+    //                       /     \
+    //           diamond_head       branch_from
+    //             /      \           |
+    // diamond_false        diamond_true
+    //             \      /
+    //               done
+    //
+    // The diamond_head block begins the "if" and the diamond_true block
+    // is the block being "branched into".
+    //
+    // If MigrateTrue is true, then TrueBB is the block being "branched into"
+    // and if MigrateFalse is true, then FalseBB is the block being
+    // "branched into"
+    // 
+    // Here is the pseudo code for how I think the optimization should work:
+    // 1. Insert MOV GPR0, 0 before the branch instruction in diamond_head.
+    // 2. Insert MOV GPR0, 1 before the branch instruction in branch_from.
+    // 3. Move the branch instruction from diamond_head into its own basic
+    //    block (new_block).
+    // 4. Add an unconditional branch from diamond_head to new_block
+    // 5. Replace the branch instruction in branch_from with an unconditional
+    //    branch to new_block.  If branch_from has multiple predecessors, then
+    //    we need to replace the True/False block in the branch
+    //    instruction instead of replacing it.
+    // 6. Change the condition of the branch instruction in new_block from
+    //    COND to (COND || GPR0)
+    //
+    // In order insert these MOV instruction, we will need to use the
+    // RegisterScavenger.  Usually liveness stops being tracked during
+    // the late machine optimization passes, however if we implement
+    // bool TargetRegisterInfo::requiresRegisterScavenging(
+    //                                                const MachineFunction &MF)
+    // and have it return true, liveness will be tracked correctly 
+    // by generic optimization passes.  We will also need to make sure that
+    // all of our target-specific passes that run after regalloc and before
+    // the CFGStructurizer track liveness and we will need to modify this pass
+    // to correctly track liveness.
+    //
+    // After the above changes, the new CFG should look like this:
+    //                        entry
+    //                       /     \
+    //           diamond_head       branch_from
+    //                       \     /
+    //                      new_block
+    //                      /      \
+    //         diamond_false        diamond_true
+    //                      \      /
+    //                        done
+    //
+    // Without this optimization, we are forced to duplicate the diamond_true
+    // block and we will end up with a CFG like this:
+    //
+    //                        entry
+    //                       /     \
+    //           diamond_head       branch_from
+    //             /      \                   |
+    // diamond_false        diamond_true      diamond_true (duplicate)
+    //             \      /                   |
+    //               done --------------------|
+    //
+    // Duplicating diamond_true can be very costly especially if it has a
+    // lot of instructions.
+    return 0;
+  }
 
   int NumNewBlk = 0;
 
