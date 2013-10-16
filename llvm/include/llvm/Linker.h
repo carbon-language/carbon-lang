@@ -32,7 +32,9 @@ class Linker {
 
     Linker(Module *M);
     ~Linker();
+
     Module *getModule() const { return Composite; }
+    void deleteModule();
 
     /// \brief Link \p Src into the composite. The source is destroyed if
     /// \p Mode is DestroySource and preserved if it is PreserveSource.

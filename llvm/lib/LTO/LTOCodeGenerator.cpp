@@ -66,7 +66,10 @@ LTOCodeGenerator::LTOCodeGenerator()
 LTOCodeGenerator::~LTOCodeGenerator() {
   delete TargetMach;
   delete NativeObjectFile;
-  delete Linker.getModule();
+  TargetMach = NULL;
+  NativeObjectFile = NULL;
+
+  Linker.deleteModule();
 
   for (std::vector<char *>::iterator I = CodegenOptions.begin(),
                                      E = CodegenOptions.end();
