@@ -107,7 +107,7 @@ class ListWin(CursesWin):
     elif lastSelected >= self.first_drawn + h:
       self.first_drawn = lastSelected - h + 1
 
-    self.win.clear()
+    self.win.erase()
 
     begin = self.first_drawn
     end = begin + h
@@ -177,7 +177,7 @@ class CursesUI(object):
     self.event_queue = event_queue
 
     curses.start_color()
-    curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLUE)
+    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLUE)
     curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
     curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
     self.screen.bkgd(curses.color_pair(1))
