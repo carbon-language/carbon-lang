@@ -1373,3 +1373,10 @@
 // CHECK_BDVER2_M64: #define __x86_64__ 1
 //
 // End X86/GCC/Linux tests ------------------
+
+// Begin PPC/GCC/Linux tests ----------------
+// RUN: %clang -mvsx -E -dM %s -o - 2>&1 \
+// RUN:     -target powerpc64-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_PPC_VSX_M64
+//
+// CHECK_PPC_VSX_M64: #define __VSX__
