@@ -491,6 +491,8 @@ namespace llvm {
                             const MachineBasicBlock *MBB,
                             unsigned uid) const;
     void EmitLLVMUsedList(const ConstantArray *InitList);
+    /// Emit llvm.ident metadata in an '.ident' directive.
+    void EmitModuleIdents(Module &M);
     void EmitXXStructorList(const Constant *List, bool isCtor);
     GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
   };

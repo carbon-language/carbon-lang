@@ -953,6 +953,9 @@ bool AsmPrinter::doFinalization(Module &M) {
     if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(*--I))
       MP->finishAssembly(*this);
 
+  // Emit llvm.ident metadata in an '.ident' directive.
+  EmitModuleIdents(M);
+
   // If we don't have any trampolines, then we don't require stack memory
   // to be executable. Some targets have a directive to declare this.
   Function *InitTrampolineIntrinsic = M.getFunction("llvm.init.trampoline");
@@ -1329,6 +1332,21 @@ void AsmPrinter::EmitXXStructorList(const Constant *List, bool isCtor) {
     if (OutStreamer.getCurrentSection() != OutStreamer.getPreviousSection())
       EmitAlignment(Align);
     EmitXXStructor(Structors[i].second);
+  }
+}
+
+void AsmPrinter::EmitModuleIdents(Module &M) {
+  if (!MAI->hasIdentDirective())
+    return;
+
+  if (const NamedMDNode *NMD = M.getNamedMetadata("llvm.ident")) {
+    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+      const MDNode *N = NMD->getOperand(i);
+      assert(N->getNumOperands() == 1 && 
+             "llvm.ident metadata entry can have only one operand");
+      const MDString *S = cast<MDString>(N->getOperand(0));
+      OutStreamer.EmitIdent(S->getString());
+    }
   }
 }
 

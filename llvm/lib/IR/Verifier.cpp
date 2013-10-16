@@ -216,6 +216,7 @@ namespace {
         visitNamedMDNode(*I);
 
       visitModuleFlags(M);
+      visitModuleIdents(M);
 
       // Verify Debug Info.
       verifyDebugInfo(M);
@@ -260,6 +261,7 @@ namespace {
     void visitGlobalAlias(GlobalAlias &GA);
     void visitNamedMDNode(NamedMDNode &NMD);
     void visitMDNode(MDNode &MD, Function *F);
+    void visitModuleIdents(Module &M);
     void visitModuleFlags(Module &M);
     void visitModuleFlag(MDNode *Op, DenseMap<MDString*, MDNode*> &SeenIDs,
                          SmallVectorImpl<MDNode*> &Requirements);
@@ -611,6 +613,24 @@ void Verifier::visitMDNode(MDNode &MD, Function *F) {
     Assert2(ActualF == F, "function-local metadata used in wrong function",
             &MD, Op);
   }
+}
+
+void Verifier::visitModuleIdents(Module &M) {
+  const NamedMDNode *Idents = M.getNamedMetadata("llvm.ident");
+  if (!Idents) 
+    return;
+  
+  // llvm.ident takes a list of metadata entry. Each entry has only one string.
+  // Scan each llvm.ident entry and make sure that this requirement is met.
+  for (unsigned i = 0, e = Idents->getNumOperands(); i != e; ++i) {
+    const MDNode *N = Idents->getOperand(i);
+    Assert1(N->getNumOperands() == 1,
+            "incorrect number of operands in llvm.ident metadata", N);
+    Assert1(isa<MDString>(N->getOperand(0)),
+            ("invalid value for llvm.ident metadata entry operand"
+             "(the operand should be a string)"),
+            N->getOperand(0));
+  } 
 }
 
 void Verifier::visitModuleFlags(Module &M) {
