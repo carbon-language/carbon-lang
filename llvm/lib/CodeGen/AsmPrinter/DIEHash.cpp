@@ -385,7 +385,7 @@ void DIEHash::computeHash(DIE *Die) {
     computeHash(*I);
 
   // Following the last (or if there are no children), append a zero byte.
-  Hash.update((uint8_t)0);
+  Hash.update(makeArrayRef((uint8_t)'\0'));
 }
 
 /// This is based on the type signature computation given in section 7.27 of the
