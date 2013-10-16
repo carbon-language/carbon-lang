@@ -21,23 +21,19 @@ typedef char BOOL;
 @interface I : NSObject {
   int ivarVal;
 }
-
 @property (nonatomic, weak) NSString *WeakProp;
 
 @property (nonatomic, retain) NSString *StrongProp;
-
 
 - (NSString *) UnavailProp  __attribute__((unavailable));
 - (void) setUnavailProp  : (NSString *)Val;
 
 @property (nonatomic, retain) NSString *UnavailProp1  __attribute__((unavailable));
 
-
 - (NSString *) UnavailProp2;
 - (void) setUnavailProp2  : (NSString *)Val  __attribute__((unavailable));
 
 @property (nonatomic, copy) NSDictionary *undoAction;
-
 @end
 
 @implementation I
@@ -52,10 +48,6 @@ typedef char BOOL;
     NSArray *_names3;
     NSArray *_names4;
 }
-
-
-
-
 @property (nonatomic, retain) NSArray *names2;
 @property (nonatomic, retain) NSArray *names3;
 @property (nonatomic, retain) NSArray *names4;
@@ -67,25 +59,18 @@ typedef char BOOL;
 @interface NSInvocation 
 @property (nonatomic, assign) id target;
 
-
 @property (nonatomic, assign) id dataSource;
 
 @property (nonatomic, assign) id xxxdelegateYYY;
 
 
-
-
 @property (nonatomic, retain) id MYtarget;
 
-
 @property (nonatomic, retain) id targetX;
-
  
 @property (nonatomic) int value;
 
-
 @property (nonatomic, getter=isContinuous) BOOL continuous;
-
 
 - (id) isAnObject;
 - (void)setAnObject : (id) object;
@@ -102,7 +87,6 @@ typedef char BOOL;
 
 @property (nonatomic, getter=getStringValue, retain) NSString *stringValue;
 @property (nonatomic, getter=getCounterValue, readonly) BOOL counterValue;
-
 @property (nonatomic, getter=getns_dixtionary, readonly) NSDictionary *ns_dixtionary;
 
 - (BOOL)is3bar; // watch out
@@ -119,25 +103,18 @@ typedef char BOOL;
 @interface NSInvocation(CAT)
 @property (nonatomic, assign) id target;
 
-
 @property (nonatomic, assign) id dataSource;
 
 @property (nonatomic, assign) id xxxdelegateYYY;
 
 
-
-
 @property (nonatomic, retain) id MYtarget;
-
 
 @property (nonatomic, retain) id targetX;
 
-
 @property (nonatomic) int value;
 
-
 @property (nonatomic, getter=isContinuous) BOOL continuous;
-
 
 - (id) isAnObject;
 - (void)setAnObject : (id) object;
@@ -189,7 +166,6 @@ DEPRECATED
 
 @property (nonatomic, retain) NSURL *appStoreReceiptURLX NS_AVAILABLE;
 
-
 // Do not infer a property.
 - (NSURL *)appStoreReceiptURLY ;
 - (void) setAppStoreReceiptURLY : (NSURL *)object NS_AVAILABLE;
@@ -206,7 +182,6 @@ DEPRECATED
 
 @property (nonatomic, retain) id method1 ALIGNED NS_AVAILABLE;
 
-
 - (NSURL *)init;  // No Change
 + (id)alloc;      // No Change
 
@@ -222,10 +197,8 @@ DEPRECATED
 @interface NSArray
 @property (nonatomic, readonly) id (^expressionBlock)(id, NSArray *, NSMutableDictionary *);
 @property (nonatomic, copy) id (^MyBlock)(id, NSArray *, NSMutableDictionary *);
-
 @property (nonatomic, readonly) id (*expressionFuncptr)(id, NSArray *, NSMutableDictionary *);
 @property (nonatomic) id (*MyFuncptr)(id, NSArray *, NSMutableDictionary *);
-
 @end
 
 // rdar://15231241

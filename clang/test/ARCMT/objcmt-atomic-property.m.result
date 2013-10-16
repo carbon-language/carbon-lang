@@ -21,23 +21,19 @@ typedef char BOOL;
 @interface I : NSObject {
   int ivarVal;
 }
-
 @property (weak) NSString *WeakProp;
 
 @property (retain) NSString *StrongProp;
-
 
 - (NSString *) UnavailProp  __attribute__((unavailable));
 - (void) setUnavailProp  : (NSString *)Val;
 
 @property (retain) NSString *UnavailProp1  __attribute__((unavailable));
 
-
 - (NSString *) UnavailProp2;
 - (void) setUnavailProp2  : (NSString *)Val  __attribute__((unavailable));
 
 @property (copy) NSDictionary *undoAction;
-
 @end
 
 @implementation I
@@ -52,10 +48,6 @@ typedef char BOOL;
     NSArray *_names3;
     NSArray *_names4;
 }
-
-
-
-
 @property (retain) NSArray *names2;
 @property (retain) NSArray *names3;
 @property (retain) NSArray *names4;
@@ -67,25 +59,18 @@ typedef char BOOL;
 @interface NSInvocation 
 @property (assign) id target;
 
-
 @property (assign) id dataSource;
 
 @property (assign) id xxxdelegateYYY;
 
 
-
-
 @property (retain) id MYtarget;
 
-
 @property (retain) id targetX;
-
  
 @property  int value;
 
-
 @property (getter=isContinuous) BOOL continuous;
-
 
 - (id) isAnObject;
 - (void)setAnObject : (id) object;
@@ -102,7 +87,6 @@ typedef char BOOL;
 
 @property (getter=getStringValue, retain) NSString *stringValue;
 @property (getter=getCounterValue, readonly) BOOL counterValue;
-
 @property (getter=getns_dixtionary, readonly) NSDictionary *ns_dixtionary;
 
 - (BOOL)is3bar; // watch out
@@ -119,25 +103,18 @@ typedef char BOOL;
 @interface NSInvocation(CAT)
 @property (assign) id target;
 
-
 @property (assign) id dataSource;
 
 @property (assign) id xxxdelegateYYY;
 
 
-
-
 @property (retain) id MYtarget;
-
 
 @property (retain) id targetX;
 
-
 @property  int value;
 
-
 @property (getter=isContinuous) BOOL continuous;
-
 
 - (id) isAnObject;
 - (void)setAnObject : (id) object;
@@ -189,7 +166,6 @@ DEPRECATED
 
 @property (retain) NSURL *appStoreReceiptURLX NS_AVAILABLE;
 
-
 // Do not infer a property.
 - (NSURL *)appStoreReceiptURLY ;
 - (void) setAppStoreReceiptURLY : (NSURL *)object NS_AVAILABLE;
@@ -206,7 +182,6 @@ DEPRECATED
 
 @property (retain) id method1 ALIGNED NS_AVAILABLE;
 
-
 - (NSURL *)init;  // No Change
 + (id)alloc;      // No Change
 
@@ -222,8 +197,6 @@ DEPRECATED
 @interface NSArray
 @property (readonly) id (^expressionBlock)(id, NSArray *, NSMutableDictionary *);
 @property (copy) id (^MyBlock)(id, NSArray *, NSMutableDictionary *);
-
 @property (readonly) id (*expressionFuncptr)(id, NSArray *, NSMutableDictionary *);
 @property  id (*MyFuncptr)(id, NSArray *, NSMutableDictionary *);
-
 @end

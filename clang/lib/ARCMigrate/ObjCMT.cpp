@@ -273,7 +273,7 @@ void MigrateBlockOrFunctionPointerTypeVariable(std::string & PropertyString,
 }
 
 
-static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
+static void rewriteToObjCProperty(const ObjCMethodDecl *Getter,
                                   const ObjCMethodDecl *Setter,
                                   const NSAPI &NS, edit::Commit &commit,
                                   unsigned LengthOfPrefix,
@@ -393,9 +393,12 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
     SourceLocation EndLoc = Setter->getDeclaratorEndLoc();
     // Get location past ';'
     EndLoc = EndLoc.getLocWithOffset(1);
-    commit.remove(CharSourceRange::getCharRange(Setter->getLocStart(), EndLoc));
+    SourceLocation BeginOfSetterDclLoc = Setter->getLocStart();
+    // FIXME. This assumes that setter decl; is immediately preceeded by eoln.
+    // It is trying to remove the setter method decl. line entirely.
+    BeginOfSetterDclLoc = BeginOfSetterDclLoc.getLocWithOffset(-1);
+    commit.remove(SourceRange(BeginOfSetterDclLoc, EndLoc));
   }
-  return true;
 }
 
 void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,

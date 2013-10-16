@@ -2089,7 +2089,5 @@ CFAttributedStringRef CFAttributedCreate(void *CFObj CF_CONSUMED) CF_RETURNS_RET
 
 @interface Action
 @property (nonatomic) SEL action;
-
 @property (nonatomic, assign) id target;
-
 @end
