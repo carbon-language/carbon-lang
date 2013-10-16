@@ -516,26 +516,38 @@ u32 __msan_get_umr_origin() {
 
 u16 __sanitizer_unaligned_load16(const uu16 *p) {
   __msan_retval_tls[0] = *(uu16 *)MEM_TO_SHADOW((uptr)p);
+  if (__msan_get_track_origins())
+    __msan_retval_origin_tls = *(uu32 *)MEM_TO_ORIGIN((uptr)p);
   return *p;
 }
 u32 __sanitizer_unaligned_load32(const uu32 *p) {
   __msan_retval_tls[0] = *(uu32 *)MEM_TO_SHADOW((uptr)p);
+  if (__msan_get_track_origins())
+    __msan_retval_origin_tls = *(uu32 *)MEM_TO_ORIGIN((uptr)p);
   return *p;
 }
 u64 __sanitizer_unaligned_load64(const uu64 *p) {
   __msan_retval_tls[0] = *(uu64 *)MEM_TO_SHADOW((uptr)p);
+  if (__msan_get_track_origins())
+    __msan_retval_origin_tls = *(uu32 *)MEM_TO_ORIGIN((uptr)p);
   return *p;
 }
 void __sanitizer_unaligned_store16(uu16 *p, u16 x) {
   *(uu16 *)MEM_TO_SHADOW((uptr)p) = __msan_param_tls[1];
+  if (__msan_get_track_origins())
+    *(uu32 *)MEM_TO_ORIGIN((uptr)p) = __msan_param_origin_tls[1];
   *p = x;
 }
 void __sanitizer_unaligned_store32(uu32 *p, u32 x) {
   *(uu32 *)MEM_TO_SHADOW((uptr)p) = __msan_param_tls[1];
+  if (__msan_get_track_origins())
+    *(uu32 *)MEM_TO_ORIGIN((uptr)p) = __msan_param_origin_tls[1];
   *p = x;
 }
 void __sanitizer_unaligned_store64(uu64 *p, u64 x) {
   *(uu64 *)MEM_TO_SHADOW((uptr)p) = __msan_param_tls[1];
+  if (__msan_get_track_origins())
+    *(uu32 *)MEM_TO_ORIGIN((uptr)p) = __msan_param_origin_tls[1];
   *p = x;
 }
 
