@@ -162,8 +162,12 @@ static bool addModuleDescription(Module *RootModule,
   DependentsVector &FileDependents = Dependencies[HeaderFilePath];
   std::string FilePath;
   // Strip prefix.
-  if (HeaderFilePath.startswith(HeaderPrefix))
-    FilePath = HeaderFilePath.substr(HeaderPrefix.size() + 1);
+  // HeaderFilePath should be compared to natively-canonicalized Prefix.
+  llvm::SmallString<256> NativePath, NativePrefix;
+  llvm::sys::path::native(HeaderFilePath, NativePath);
+  llvm::sys::path::native(HeaderPrefix, NativePrefix);
+  if (NativePath.startswith(NativePrefix))
+    FilePath = NativePath.substr(NativePrefix.size() + 1);
   else
     FilePath = HeaderFilePath;
   int Count = FileDependents.size();
