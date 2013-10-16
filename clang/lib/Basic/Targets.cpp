@@ -2120,6 +2120,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabledImpl(Features, "cx16", true);
     setFeatureEnabledImpl(Features, "lzcnt", true);
     setFeatureEnabledImpl(Features, "popcnt", true);
+    setFeatureEnabledImpl(Features, "prfchw", true);
     break;
   case CK_BTVER2:
     setFeatureEnabledImpl(Features, "avx", true);
@@ -2127,6 +2128,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabledImpl(Features, "lzcnt", true);
     setFeatureEnabledImpl(Features, "aes", true);
     setFeatureEnabledImpl(Features, "pclmul", true);
+    setFeatureEnabledImpl(Features, "prfchw", true);
     setFeatureEnabledImpl(Features, "bmi", true);
     setFeatureEnabledImpl(Features, "f16c", true);
     setFeatureEnabledImpl(Features, "cx16", true);
@@ -2136,6 +2138,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabledImpl(Features, "lzcnt", true);
     setFeatureEnabledImpl(Features, "aes", true);
     setFeatureEnabledImpl(Features, "pclmul", true);
+    setFeatureEnabledImpl(Features, "prfchw", true);
     setFeatureEnabledImpl(Features, "cx16", true);
     break;
   case CK_BDVER2:
@@ -2143,6 +2146,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabledImpl(Features, "lzcnt", true);
     setFeatureEnabledImpl(Features, "aes", true);
     setFeatureEnabledImpl(Features, "pclmul", true);
+    setFeatureEnabledImpl(Features, "prfchw", true);
     setFeatureEnabledImpl(Features, "bmi", true);
     setFeatureEnabledImpl(Features, "fma", true);
     setFeatureEnabledImpl(Features, "f16c", true);
@@ -2465,6 +2469,13 @@ bool X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features,
       std::find(Features.begin(), Features.end(), "-popcnt") == Features.end()){
     HasPOPCNT = true;
     Features.push_back("+popcnt");
+  }
+
+  // Enable prfchw if 3DNow! is enabled and prfchw is not explicitly disabled.
+  if (!HasPRFCHW && MMX3DNowLevel >= AMD3DNow &&
+      std::find(Features.begin(), Features.end(), "-prfchw") == Features.end()){
+    HasPRFCHW = true;
+    Features.push_back("+prfchw");
   }
 
   // LLVM doesn't have a separate switch for fpmath, so only accept it if it

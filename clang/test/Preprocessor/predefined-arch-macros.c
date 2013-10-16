@@ -1166,6 +1166,7 @@
 // CHECK_BTVER1_M32: #define __LZCNT__ 1
 // CHECK_BTVER1_M32: #define __MMX__ 1
 // CHECK_BTVER1_M32: #define __POPCNT__ 1
+// CHECK_BTVER1_M32: #define __PRFCHW__ 1
 // CHECK_BTVER1_M32: #define __SSE2_MATH__ 1
 // CHECK_BTVER1_M32: #define __SSE2__ 1
 // CHECK_BTVER1_M32: #define __SSE3__ 1
@@ -1186,6 +1187,7 @@
 // CHECK_BTVER1_M64: #define __LZCNT__ 1
 // CHECK_BTVER1_M64: #define __MMX__ 1
 // CHECK_BTVER1_M64: #define __POPCNT__ 1
+// CHECK_BTVER1_M64: #define __PRFCHW__ 1
 // CHECK_BTVER1_M64: #define __SSE2_MATH__ 1
 // CHECK_BTVER1_M64: #define __SSE2__ 1
 // CHECK_BTVER1_M64: #define __SSE3__ 1
@@ -1210,6 +1212,7 @@
 // CHECK_BTVER2_M32: #define __LZCNT__ 1
 // CHECK_BTVER2_M32: #define __MMX__ 1
 // CHECK_BTVER2_M32: #define __POPCNT__ 1
+// CHECK_BTVER2_M32: #define __PRFCHW__ 1
 // CHECK_BTVER2_M32: #define __SSE2_MATH__ 1
 // CHECK_BTVER2_M32: #define __SSE2__ 1
 // CHECK_BTVER2_M32: #define __SSE3__ 1
@@ -1232,6 +1235,7 @@
 // CHECK_BTVER2_M64: #define __LZCNT__ 1
 // CHECK_BTVER2_M64: #define __MMX__ 1
 // CHECK_BTVER2_M64: #define __POPCNT__ 1
+// CHECK_BTVER2_M64: #define __PRFCHW__ 1
 // CHECK_BTVER2_M64: #define __SSE2_MATH__ 1
 // CHECK_BTVER2_M64: #define __SSE2__ 1
 // CHECK_BTVER2_M64: #define __SSE3__ 1
@@ -1258,6 +1262,7 @@
 // CHECK_BDVER1_M32: #define __MMX__ 1
 // CHECK_BDVER1_M32: #define __PCLMUL__ 1
 // CHECK_BDVER1_M32: #define __POPCNT__ 1
+// CHECK_BDVER1_M32: #define __PRFCHW__ 1
 // CHECK_BDVER1_M32: #define __SSE2_MATH__ 1
 // CHECK_BDVER1_M32: #define __SSE2__ 1
 // CHECK_BDVER1_M32: #define __SSE3__ 1
@@ -1285,6 +1290,7 @@
 // CHECK_BDVER1_M64: #define __MMX__ 1
 // CHECK_BDVER1_M64: #define __PCLMUL__ 1
 // CHECK_BDVER1_M64: #define __POPCNT__ 1
+// CHECK_BDVER1_M64: #define __PRFCHW__ 1
 // CHECK_BDVER1_M64: #define __SSE2_MATH__ 1
 // CHECK_BDVER1_M64: #define __SSE2__ 1
 // CHECK_BDVER1_M64: #define __SSE3__ 1
@@ -1317,6 +1323,7 @@
 // CHECK_BDVER2_M32: #define __MMX__ 1
 // CHECK_BDVER2_M32: #define __PCLMUL__ 1
 // CHECK_BDVER2_M32: #define __POPCNT__ 1
+// CHECK_BDVER2_M32: #define __PRFCHW__ 1
 // CHECK_BDVER2_M32: #define __SSE2_MATH__ 1
 // CHECK_BDVER2_M32: #define __SSE2__ 1
 // CHECK_BDVER2_M32: #define __SSE3__ 1
@@ -1348,6 +1355,7 @@
 // CHECK_BDVER2_M64: #define __MMX__ 1
 // CHECK_BDVER2_M64: #define __PCLMUL__ 1
 // CHECK_BDVER2_M64: #define __POPCNT__ 1
+// CHECK_BDVER2_M64: #define __PRFCHW__ 1
 // CHECK_BDVER2_M64: #define __SSE2_MATH__ 1
 // CHECK_BDVER2_M64: #define __SSE2__ 1
 // CHECK_BDVER2_M64: #define __SSE3__ 1
