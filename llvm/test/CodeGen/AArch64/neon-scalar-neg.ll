@@ -1,5 +1,17 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
 
+define i64 @test_vnegd_s64(i64 %a) {
+; CHECK: test_vnegd_s64
+; CHECK: neg {{d[0-9]+}}, {{d[0-9]+}}
+entry:
+  %vneg.i = insertelement <1 x i64> undef, i64 %a, i32 0
+  %vneg1.i = tail call <1 x i64> @llvm.aarch64.neon.vneg(<1 x i64> %vneg.i)
+  %0 = extractelement <1 x i64> %vneg1.i, i32 0
+  ret i64 %0
+}
+
+declare <1 x i64> @llvm.aarch64.neon.vneg(<1 x i64>)
+
 define i8 @test_vqnegb_s8(i8 %a) {
 ; CHECK: test_vqnegb_s8
 ; CHECK: sqneg {{b[0-9]+}}, {{b[0-9]+}}

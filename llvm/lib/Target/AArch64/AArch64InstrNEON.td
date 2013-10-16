@@ -3585,6 +3585,10 @@ defm SQABS : NeonI_Scalar2SameMisc_BHSD_size<0b0, 0b00111, "sqabs">;
 defm : Neon_Scalar2SameMisc_BHSD_size_patterns<int_arm_neon_vqabs,
                                                SQABSbb, SQABShh, SQABSss, SQABSdd>;
 
+// Scalar Negate
+defm NEG : NeonI_Scalar2SameMisc_D_size<0b1, 0b01011, "neg">;
+defm : Neon_Scalar2SameMisc_D_size_patterns<int_aarch64_neon_vneg, NEGdd>;
+
 // Scalar Signed Saturating Negate
 defm SQNEG : NeonI_Scalar2SameMisc_BHSD_size<0b1, 0b00111, "sqneg">;
 defm : Neon_Scalar2SameMisc_BHSD_size_patterns<int_arm_neon_vqneg,
