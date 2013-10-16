@@ -862,4 +862,12 @@ def SCALAR_SQABS : SInst<"vqabs", "ss", "ScSsSiSl">;
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Signed Saturating Negate
 def SCALAR_SQNEG : SInst<"vqneg", "ss", "ScSsSiSl">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Signed Saturating Accumulated of Unsigned Value
+def SCALAR_SUQADD : SInst<"vuqadd", "sss", "ScSsSiSl">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Unsigned Saturating Accumulated of Unsigned Value
+def SCALAR_USQADD : SInst<"vsqadd", "sss", "SUcSUsSUiSUl">;
 }
