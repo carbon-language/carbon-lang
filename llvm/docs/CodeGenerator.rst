@@ -643,6 +643,11 @@ inherit from it, a target object streamer and a target asm streamer. The target
 asm streamer just prints it (``emitFnStart -> .fnstrart``), and the object
 streamer implement the assembler logic for it.
 
+To make llvm use these classes, the target initialization must call
+TargetRegistry::RegisterAsmStreamer and TargetRegistry::RegisterMCObjectStreamer
+passing callbacks that allocate the corresponding target streamer and pass it
+to createAsmStreamer or to the appropriate object streamer constructor.
+
 The ``MCContext`` class
 -----------------------
 
