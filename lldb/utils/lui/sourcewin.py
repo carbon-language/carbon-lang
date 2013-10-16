@@ -103,10 +103,11 @@ class SourceWin(cui.TitledWin):
 
       if self.viewline < 0:
         raise Exception("negative viewline: pc=%d viewline=%d" % (self.pc_line, self.viewline))
-      if self.viewline + self.height > len(self.content) + 1:
+      end = min(total_lines, self.height - 1)
+      if self.viewline + end > len(self.content) + 1:
         raise Exception("viewline too large: PC=%d viewline=%d (to %d of %d)" % (self.pc_line,
                                                                                  self.viewline,
-                                                                                 self.viewline + self.height - 1,
+                                                                                 self.viewline + end - 1,
                                                                                  total_lines))
 
   def refreshSource(self, process = None):
@@ -154,7 +155,8 @@ class SourceWin(cui.TitledWin):
     source = ""
     count = 1
     self.win.erase()
-    for i in range(self.viewline, self.viewline + self.height - 1):
+    end = min(len(content), self.height -1)
+    for i in range(self.viewline, self.viewline + end):
       if i > len(content) - 1:
         raise Exception("Out of range content (%d-%d of %d)" % (self.viewline,
                                                                 self.viewline + self.height - 1,
