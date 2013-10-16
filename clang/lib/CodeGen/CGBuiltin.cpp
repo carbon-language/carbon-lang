@@ -2095,7 +2095,7 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vuqaddd_s64:
     Int = Intrinsic::aarch64_neon_vuqadd;
     s = "vuqadd"; OverloadInt = true; break;
-  // Scalar Unsigned Saturating Accumulated of Unsigned Value
+  // Scalar Unsigned Saturating Accumulated of Signed Value
   case AArch64::BI__builtin_neon_vsqaddb_u8:
   case AArch64::BI__builtin_neon_vsqaddh_u16:
   case AArch64::BI__builtin_neon_vsqadds_u32:
