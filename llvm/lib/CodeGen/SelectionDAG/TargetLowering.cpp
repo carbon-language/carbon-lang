@@ -750,13 +750,24 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
 
       // If the input sign bit is known to be zero, or if none of the top bits
       // are demanded, turn this into an unsigned shift right.
-      if (KnownZero.intersects(SignBit) || (HighBits & ~NewMask) == HighBits) {
+      if (KnownZero.intersects(SignBit) || (HighBits & ~NewMask) == HighBits)
         return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, dl, VT,
                                                  Op.getOperand(0),
                                                  Op.getOperand(1)));
-      } else if (KnownOne.intersects(SignBit)) { // New bits are known one.
-        KnownOne |= HighBits;
+
+      int Log2 = NewMask.exactLogBase2();
+      if (Log2 >= 0) {
+        // The bit must come from the sign.
+        SDValue NewSA =
+          TLO.DAG.getConstant(BitWidth - 1 - Log2,
+                              Op.getOperand(1).getValueType());
+        return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, dl, VT,
+                                                 Op.getOperand(0), NewSA));
       }
+
+      if (KnownOne.intersects(SignBit))
+        // New bits are known one.
+        KnownOne |= HighBits;
     }
     break;
   case ISD::SIGN_EXTEND_INREG: {

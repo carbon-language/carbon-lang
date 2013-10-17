@@ -64,3 +64,15 @@ define i64 @f5(i32 %a) {
   %or = or i64 %shl, 7
   ret i64 %or
 }
+
+; Test that SRA gets replaced with SRL if the sign bit is the only one
+; that matters.
+define i64 @f6(i64 %a) {
+; CHECK-LABEL: f6:
+; CHECK: risbg %r2, %r2, 55, 183, 19
+; CHECK: br %r14
+  %shl = shl i64 %a, 10
+  %shr = ashr i64 %shl, 60
+  %and = and i64 %shr, 256
+  ret i64 %and
+}
