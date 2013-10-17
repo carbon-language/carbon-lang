@@ -1277,6 +1277,7 @@ MicrosoftCXXABI::BuildMemberPointer(const CXXRecordDecl *RD,
   if (MD->isVirtual()) {
     // FIXME: We have to instantiate a thunk that loads the vftable and jumps to
     // the right offset.
+    CGM.ErrorUnsupported(MD, "pointer to virtual member function");
     FirstField = llvm::Constant::getNullValue(CGM.VoidPtrTy);
   } else {
     const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
