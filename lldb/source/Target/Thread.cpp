@@ -1857,6 +1857,24 @@ Thread::SettingsTerminate ()
 {
 }
 
+lldb::addr_t
+Thread::GetThreadPointer ()
+{
+    return LLDB_INVALID_ADDRESS;
+}
+
+addr_t
+Thread::GetThreadLocalData (const ModuleSP module)
+{
+    // The default implementation is to ask the dynamic loader for it.
+    // This can be overridden for specific platforms.
+    DynamicLoader *loader = GetProcess()->GetDynamicLoader();
+    if (loader)
+        return loader->GetThreadLocalData (module, shared_from_this());
+    else
+        return LLDB_INVALID_ADDRESS;
+}
+
 lldb::StackFrameSP
 Thread::GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr)
 {

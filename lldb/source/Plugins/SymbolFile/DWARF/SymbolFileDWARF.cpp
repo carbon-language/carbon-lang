@@ -1706,6 +1706,7 @@ SymbolFileDWARF::ParseChildMembers
     const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize());
     uint32_t member_idx = 0;
     BitfieldInfo last_field_info;
+    ModuleSP module = GetObjectFile()->GetModule();
 
     for (die = parent_die->GetFirstChild(); die != NULL; die = die->GetSibling())
     {
@@ -1769,6 +1770,7 @@ SymbolFileDWARF::ParseChildMembers
                                                                   NULL, // ClangExpressionVariableList *
                                                                   NULL, // ClangExpressionDeclMap *
                                                                   NULL, // RegisterContext *
+                                                                  module,
                                                                   debug_info_data, 
                                                                   block_offset, 
                                                                   block_length, 
@@ -2160,6 +2162,7 @@ SymbolFileDWARF::ParseChildMembers
                                                                    NULL, 
                                                                    NULL, 
                                                                    NULL,
+                                                                   module,
                                                                    debug_info_data, 
                                                                    block_offset, 
                                                                    block_length, 
@@ -7267,6 +7270,7 @@ SymbolFileDWARF::ParseVariableDIE
         return var_sp;  // Already been parsed!
     
     const dw_tag_t tag = die->Tag();
+    ModuleSP module = GetObjectFile()->GetModule();
     
     if ((tag == DW_TAG_variable) ||
         (tag == DW_TAG_constant) ||
@@ -7316,7 +7320,7 @@ SymbolFileDWARF::ParseVariableDIE
                                 // Retrieve the value as a block expression.
                                 uint32_t block_offset = form_value.BlockData() - debug_info_data.GetDataStart();
                                 uint32_t block_length = form_value.Unsigned();
-                                location.CopyOpcodeData(debug_info_data, block_offset, block_length);
+                                location.CopyOpcodeData(module, debug_info_data, block_offset, block_length);
                             }
                             else if (DWARFFormValue::IsDataForm(form_value.Form()))
                             {
@@ -7324,7 +7328,7 @@ SymbolFileDWARF::ParseVariableDIE
                                 const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize());
                                 uint32_t data_offset = attributes.DIEOffsetAtIndex(i);
                                 uint32_t data_length = fixed_form_sizes[form_value.Form()];
-                                location.CopyOpcodeData(debug_info_data, data_offset, data_length);
+                                location.CopyOpcodeData(module, debug_info_data, data_offset, data_length);
                             }
                             else
                             {
@@ -7334,14 +7338,14 @@ SymbolFileDWARF::ParseVariableDIE
                                     const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize());
                                     uint32_t data_offset = attributes.DIEOffsetAtIndex(i);
                                     uint32_t data_length = fixed_form_sizes[form_value.Form()];
-                                    location.CopyOpcodeData(debug_info_data, data_offset, data_length);
+                                    location.CopyOpcodeData(module, debug_info_data, data_offset, data_length);
                                 }
                                 else
                                 {
                                     const char *str = form_value.AsCString(&debug_info_data);
                                     uint32_t string_offset = str - (const char *)debug_info_data.GetDataStart();
                                     uint32_t string_length = strlen(str) + 1;
-                                    location.CopyOpcodeData(debug_info_data, string_offset, string_length);
+                                    location.CopyOpcodeData(module, debug_info_data, string_offset, string_length);
                                 }
                             }
                         }
@@ -7356,7 +7360,7 @@ SymbolFileDWARF::ParseVariableDIE
 
                                 uint32_t block_offset = form_value.BlockData() - debug_info_data.GetDataStart();
                                 uint32_t block_length = form_value.Unsigned();
-                                location.CopyOpcodeData(get_debug_info_data(), block_offset, block_length);
+                                location.CopyOpcodeData(module, get_debug_info_data(), block_offset, block_length);
                             }
                             else
                             {
@@ -7366,7 +7370,7 @@ SymbolFileDWARF::ParseVariableDIE
                                 size_t loc_list_length = DWARFLocationList::Size(debug_loc_data, debug_loc_offset);
                                 if (loc_list_length > 0)
                                 {
-                                    location.CopyOpcodeData(debug_loc_data, debug_loc_offset, loc_list_length);
+                                    location.CopyOpcodeData(module, debug_loc_data, debug_loc_offset, loc_list_length);
                                     assert (func_low_pc != LLDB_INVALID_ADDRESS);
                                     location.SetLocationListSlide (func_low_pc - dwarf_cu->GetBaseAddress());
                                 }

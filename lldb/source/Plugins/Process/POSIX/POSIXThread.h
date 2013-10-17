@@ -59,6 +59,9 @@ public:
     virtual lldb::RegisterContextSP
     CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
 
+    virtual lldb::addr_t
+    GetThreadPointer ();
+
     //--------------------------------------------------------------------------
     // These functions provide a mapping from the register offset
     // back to the register index or name for use in debugging or log

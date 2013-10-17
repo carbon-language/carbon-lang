@@ -455,6 +455,33 @@ public:
     DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx);
 
     //------------------------------------------------------------------
+    /// Retrieves the per-thread data area.
+    /// Most OSs maintain a per-thread pointer (e.g. the FS register on
+    /// x64), which we return the value of here.
+    ///
+    /// @return
+    ///     LLDB_INVALID_ADDRESS if not supported, otherwise the thread
+    ///     pointer value.
+    //------------------------------------------------------------------
+    virtual lldb::addr_t
+    GetThreadPointer ();
+
+    //------------------------------------------------------------------
+    /// Retrieves the per-module TLS block for a thread.
+    ///
+    /// @param[in] module
+    ///     The module to query TLS data for.
+    ///
+    /// @return
+    ///     If the thread has TLS data allocated for the
+    ///     module, the address of the TLS block. Otherwise
+    ///     LLDB_INVALID_ADDRESS is returned.
+    //------------------------------------------------------------------
+    virtual lldb::addr_t
+    GetThreadLocalData (const lldb::ModuleSP module);
+
+
+    //------------------------------------------------------------------
     // Thread Plan Providers:
     // This section provides the basic thread plans that the Process control
     // machinery uses to run the target.  ThreadPlan.h provides more details on

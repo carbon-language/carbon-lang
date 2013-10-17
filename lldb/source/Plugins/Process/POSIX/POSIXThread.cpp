@@ -230,6 +230,17 @@ POSIXThread::CreateRegisterContextForFrame(lldb_private::StackFrame *frame)
     return reg_ctx_sp;
 }
 
+lldb::addr_t
+POSIXThread::GetThreadPointer ()
+{
+    ProcessMonitor &monitor = GetMonitor();
+    addr_t addr;
+    if (monitor.ReadThreadPointer (GetID(), addr))
+        return addr;
+    else
+        return LLDB_INVALID_ADDRESS;
+}
+
 bool
 POSIXThread::CalculateStopInfo()
 {

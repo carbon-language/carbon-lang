@@ -763,6 +763,8 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
     lldb::offset_t offset;
     const DWARFAbbreviationDeclaration* abbrevDecl = GetAbbreviationDeclarationPtr(dwarf2Data, cu, offset);
 
+    lldb::ModuleSP module = dwarf2Data->GetObjectFile()->GetModule();
+
     if (abbrevDecl)
     {
         const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
@@ -874,7 +876,7 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
                         {
                             uint32_t block_offset = form_value.BlockData() - debug_info_data.GetDataStart();
                             uint32_t block_length = form_value.Unsigned();
-                            frame_base->SetOpcodeData(debug_info_data, block_offset, block_length);
+                            frame_base->SetOpcodeData(module, debug_info_data, block_offset, block_length);
                         }
                         else
                         {
@@ -884,7 +886,7 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
                             size_t loc_list_length = DWARFLocationList::Size(debug_loc_data, debug_loc_offset);
                             if (loc_list_length > 0)
                             {
-                                frame_base->SetOpcodeData(debug_loc_data, debug_loc_offset, loc_list_length);
+                                frame_base->SetOpcodeData(module, debug_loc_data, debug_loc_offset, loc_list_length);
                                 if (lo_pc != LLDB_INVALID_ADDRESS)
                                 {
                                     assert (lo_pc >= cu->GetBaseAddress());

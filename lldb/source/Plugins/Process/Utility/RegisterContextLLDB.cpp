@@ -1196,7 +1196,8 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         DataExtractor dwarfdata (unwindplan_regloc.GetDWARFExpressionBytes(),
                                  unwindplan_regloc.GetDWARFExpressionLength(),
                                  process->GetByteOrder(), process->GetAddressByteSize());
-        DWARFExpression dwarfexpr (dwarfdata, 0, unwindplan_regloc.GetDWARFExpressionLength());
+        ModuleSP opcode_ctx;
+        DWARFExpression dwarfexpr (opcode_ctx, dwarfdata, 0, unwindplan_regloc.GetDWARFExpressionLength());
         dwarfexpr.SetRegisterKind (unwindplan_registerkind);
         Value result;
         Error error;

@@ -58,7 +58,8 @@ public:
     /// @param[in] data_length
     ///     The byte length of the location expression.
     //------------------------------------------------------------------
-    DWARFExpression(const DataExtractor& data,
+    DWARFExpression(lldb::ModuleSP module,
+                    const DataExtractor& data,
                     lldb::offset_t data_offset,
                     lldb::offset_t data_length);
 
@@ -172,6 +173,9 @@ public:
     /// Make the expression parser read its location information from a
     /// given data source
     ///
+    /// @param[in] module_sp
+    ///     The module that defines the DWARF expression.
+    ///
     /// @param[in] data
     ///     A data extractor configured to read the DWARF location expression's
     ///     bytecode.
@@ -183,7 +187,7 @@ public:
     ///     The byte length of the location expression.
     //------------------------------------------------------------------
     void
-    SetOpcodeData(const DataExtractor& data, lldb::offset_t data_offset, lldb::offset_t data_length);
+    SetOpcodeData(lldb::ModuleSP module_sp, const DataExtractor& data, lldb::offset_t data_offset, lldb::offset_t data_length);
 
     //------------------------------------------------------------------
     /// Copy the DWARF location expression into a local buffer.
@@ -199,6 +203,9 @@ public:
     /// the data, it shouldn't amount to that much for the variables we
     /// end up parsing.
     ///
+    /// @param[in] module_sp
+    ///     The module that defines the DWARF expression.
+    ///
     /// @param[in] data
     ///     A data extractor configured to read and copy the DWARF
     ///     location expression's bytecode.
@@ -210,7 +217,8 @@ public:
     ///     The byte length of the location expression.
     //------------------------------------------------------------------
     void
-    CopyOpcodeData (const DataExtractor& data,
+    CopyOpcodeData (lldb::ModuleSP module_sp,
+                    const DataExtractor& data,
                     lldb::offset_t data_offset,
                     lldb::offset_t data_length);
     
@@ -279,6 +287,9 @@ public:
     ///     expression.  The location expression may access the target's
     ///     memory, especially if it comes from the expression parser.
     ///
+    /// @param[in] opcode_ctx
+    ///     The module which defined the expression.
+    ///
     /// @param[in] opcodes
     ///     This is a static method so the opcodes need to be provided
     ///     explicitly.
@@ -332,6 +343,7 @@ public:
               ClangExpressionVariableList *expr_locals,
               ClangExpressionDeclMap *decl_map,
               RegisterContext *reg_ctx,
+              lldb::ModuleSP opcode_ctx,
               const DataExtractor& opcodes,
               const lldb::offset_t offset,
               const lldb::offset_t length,
@@ -410,7 +422,8 @@ protected:
     //------------------------------------------------------------------
     /// Classes that inherit from DWARFExpression can see and modify these
     //------------------------------------------------------------------
-    
+
+    lldb::ModuleWP m_module_wp;                 ///< Module which defined this expression.
     DataExtractor m_data;                       ///< A data extractor capable of reading opcode bytes
     lldb::RegisterKind m_reg_kind;              ///< One of the defines that starts with LLDB_REGKIND_
     lldb::addr_t m_loclist_slide;               ///< A value used to slide the location list offsets so that 

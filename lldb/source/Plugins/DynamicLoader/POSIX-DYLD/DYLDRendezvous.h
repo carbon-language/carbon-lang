@@ -48,6 +48,16 @@ class DYLDRendezvous {
     };
 
 public:
+    // Various metadata supplied by the inferior's threading library to describe
+    // the per-thread state.
+    struct ThreadInfo {
+        bool     valid;         // whether we read valid metadata
+        uint32_t dtv_offset;    // offset of DTV pointer within pthread
+        uint32_t dtv_slot_size; // size of one DTV slot
+        uint32_t modid_offset;  // offset of module ID within link_map
+        uint32_t tls_offset;    // offset of TLS pointer within DTV slot
+    };
+
     DYLDRendezvous(lldb_private::Process *process);
 
     /// Update the internal snapshot of runtime linker rendezvous and recompute
@@ -100,6 +110,10 @@ public:
     lldb::addr_t
     GetLDBase() const { return m_current.ldbase; }
 
+    /// @returns the thread layout metadata from the inferiors thread library.
+    const ThreadInfo&
+    GetThreadInfo();
+
     /// @returns true if modules have been loaded into the inferior since the
     /// last call to Resolve().
     bool
@@ -128,6 +142,7 @@ public:
     /// This object is a rough analogue to the struct link_map object which
     /// actually lives in the inferiors memory.
     struct SOEntry {
+        lldb::addr_t link_addr; ///< Address of this link_map.
         lldb::addr_t base_addr; ///< Base address of the loaded object.
         lldb::addr_t path_addr; ///< String naming the shared object.
         lldb::addr_t dyn_addr;  ///< Dynamic section of shared object.
@@ -142,6 +157,7 @@ public:
         }
 
         void clear() {
+            link_addr = 0;
             base_addr = 0;
             path_addr = 0;
             dyn_addr  = 0;
@@ -194,6 +210,9 @@ protected:
     /// Resolve().
     SOEntryList m_removed_soentries;
 
+    /// Threading metadata read from the inferior.
+    ThreadInfo  m_thread_info;
+
     /// Reads an unsigned integer of @p size bytes from the inferior's address
     /// space starting at @p addr.
     ///
@@ -232,6 +251,10 @@ protected:
     /// supplied by the runtime linker.
     bool
     TakeSnapshot(SOEntryList &entry_list);
+
+    enum PThreadField { eSize, eNElem, eOffset };
+
+    bool FindMetadata(const char *name, PThreadField field, uint32_t& value);
 };
 
 #endif

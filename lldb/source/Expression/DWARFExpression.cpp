@@ -38,10 +38,12 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/StackID.h"
+#include "lldb/Target/Thread.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
+// TODO- why is this also defined (in a better way) in DWARFDefines.cpp?
 const char *
 DW_OP_value_to_name (uint32_t val)
 {
@@ -220,6 +222,7 @@ DW_OP_value_to_name (uint32_t val)
 // DWARFExpression constructor
 //----------------------------------------------------------------------
 DWARFExpression::DWARFExpression() :
+    m_module_wp(),
     m_data(),
     m_reg_kind (eRegisterKindDWARF),
     m_loclist_slide (LLDB_INVALID_ADDRESS)
@@ -227,6 +230,7 @@ DWARFExpression::DWARFExpression() :
 }
 
 DWARFExpression::DWARFExpression(const DWARFExpression& rhs) :
+    m_module_wp(rhs.m_module_wp),
     m_data(rhs.m_data),
     m_reg_kind (rhs.m_reg_kind),
     m_loclist_slide(rhs.m_loclist_slide)
@@ -234,11 +238,14 @@ DWARFExpression::DWARFExpression(const DWARFExpression& rhs) :
 }
 
 
-DWARFExpression::DWARFExpression(const DataExtractor& data, lldb::offset_t data_offset, lldb::offset_t data_length) :
+DWARFExpression::DWARFExpression(lldb::ModuleSP module_sp, const DataExtractor& data, lldb::offset_t data_offset, lldb::offset_t data_length) :
+    m_module_wp(),
     m_data(data, data_offset, data_length),
     m_reg_kind (eRegisterKindDWARF),
     m_loclist_slide(LLDB_INVALID_ADDRESS)
 {
+    if (module_sp)
+        m_module_wp = module_sp;
 }
 
 //----------------------------------------------------------------------
@@ -262,11 +269,12 @@ DWARFExpression::SetOpcodeData (const DataExtractor& data)
 }
 
 void
-DWARFExpression::CopyOpcodeData (const DataExtractor& data, lldb::offset_t data_offset, lldb::offset_t data_length)
+DWARFExpression::CopyOpcodeData (lldb::ModuleSP module_sp, const DataExtractor& data, lldb::offset_t data_offset, lldb::offset_t data_length)
 {
     const uint8_t *bytes = data.PeekData(data_offset, data_length);
     if (bytes)
     {
+        m_module_wp = module_sp;
         m_data.SetData(DataBufferSP(new DataBufferHeap(bytes, data_length)));
         m_data.SetByteOrder(data.GetByteOrder());
         m_data.SetAddressByteSize(data.GetAddressByteSize());
@@ -274,8 +282,9 @@ DWARFExpression::CopyOpcodeData (const DataExtractor& data, lldb::offset_t data_
 }
 
 void
-DWARFExpression::SetOpcodeData (const DataExtractor& data, lldb::offset_t data_offset, lldb::offset_t data_length)
+DWARFExpression::SetOpcodeData (lldb::ModuleSP module_sp, const DataExtractor& data, lldb::offset_t data_offset, lldb::offset_t data_length)
 {
+    m_module_wp = module_sp;
     m_data.SetData(data, data_offset, data_length);
 }
 
@@ -588,6 +597,9 @@ DWARFExpression::DumpLocation (Stream *s, lldb::offset_t offset, lldb::offset_t 
 //        case DW_OP_APPLE_array_ref:
 //            s->PutCString("DW_OP_APPLE_array_ref");
 //            break;
+        case DW_OP_GNU_push_tls_address:
+            s->PutCString("DW_OP_GNU_push_tls_address");  // 0xe0
+            break;
         case DW_OP_APPLE_uninit:
             s->PutCString("DW_OP_APPLE_uninit");  // 0xF0
             break;
@@ -919,7 +931,8 @@ GetOpcodeDataSize (const DataExtractor &data, const lldb::offset_t data_offset, 
         case DW_OP_form_tls_address:    // 0x9b DWARF3
         case DW_OP_call_frame_cfa:      // 0x9c DWARF3
         case DW_OP_stack_value: // 0x9f DWARF4
-            return 0; 
+        case DW_OP_GNU_push_tls_address: // 0xe0 GNU extension
+            return 0;
 
         // Opcodes with a single 1 byte arguments
         case DW_OP_const1u:     // 0x08 1 1-byte constant
@@ -1221,6 +1234,8 @@ DWARFExpression::Evaluate
     Error *error_ptr
 ) const
 {
+    ModuleSP module_sp = m_module_wp.lock();
+
     if (IsLocationList())
     {
         lldb::offset_t offset = 0;
@@ -1268,7 +1283,7 @@ DWARFExpression::Evaluate
 
                     if (length > 0 && lo_pc <= pc && pc < hi_pc)
                     {
-                        return DWARFExpression::Evaluate (exe_ctx, expr_locals, decl_map, reg_ctx, m_data, offset, length, m_reg_kind, initial_value_ptr, result, error_ptr);
+                        return DWARFExpression::Evaluate (exe_ctx, expr_locals, decl_map, reg_ctx, module_sp, m_data, offset, length, m_reg_kind, initial_value_ptr, result, error_ptr);
                     }
                     offset += length;
                 }
@@ -1280,7 +1295,7 @@ DWARFExpression::Evaluate
     }
 
     // Not a location list, just a single expression.
-    return DWARFExpression::Evaluate (exe_ctx, expr_locals, decl_map, reg_ctx, m_data, 0, m_data.GetByteSize(), m_reg_kind, initial_value_ptr, result, error_ptr);
+    return DWARFExpression::Evaluate (exe_ctx, expr_locals, decl_map, reg_ctx, module_sp, m_data, 0, m_data.GetByteSize(), m_reg_kind, initial_value_ptr, result, error_ptr);
 }
 
 
@@ -1292,6 +1307,7 @@ DWARFExpression::Evaluate
     ClangExpressionVariableList *expr_locals,
     ClangExpressionDeclMap *decl_map,
     RegisterContext *reg_ctx,
+    lldb::ModuleSP opcode_ctx,
     const DataExtractor& opcodes,
     const lldb::offset_t opcodes_offset,
     const lldb::offset_t opcodes_length,
@@ -2659,6 +2675,54 @@ DWARFExpression::Evaluate
                 return false;
             }
             break;
+
+        //----------------------------------------------------------------------
+        // OPCODE: DW_OP_GNU_push_tls_address
+        // OPERANDS: none
+        // DESCRIPTION: Pops a TLS offset from the stack, converts it to
+        // an absolute value, and pushes it back on.
+        //----------------------------------------------------------------------
+        case DW_OP_GNU_push_tls_address:
+            {
+                if (stack.size() < 1)
+                {
+                    if (error_ptr)
+                        error_ptr->SetErrorString("DW_OP_GNU_push_tls_address needs an argument.");
+                    return false;
+                }
+
+                if (!exe_ctx || !opcode_ctx)
+                {
+                    if (error_ptr)
+                        error_ptr->SetErrorString("No context to evaluate TLS within.");
+                    return false;
+                }
+
+                Thread *thread = exe_ctx->GetThreadPtr();
+                if (!thread)
+                {
+                    if (error_ptr)
+                        error_ptr->SetErrorString("No thread to evaluate TLS within.");
+                    return false;
+                }
+
+                // Lookup the TLS block address for this thread and module.
+                addr_t tls_addr = thread->GetThreadLocalData (opcode_ctx);
+
+                if (tls_addr == LLDB_INVALID_ADDRESS)
+                {
+                    if (error_ptr)
+                        error_ptr->SetErrorString ("No TLS data currently exists for this thread.");
+                    return false;
+                }
+
+                // Convert the TLS offset into the absolute address.
+                Scalar tmp = stack.back().ResolveValue(exe_ctx);
+                stack.back() = tmp + tls_addr;
+                stack.back().SetValueType (Value::eValueTypeLoadAddress);
+            }
+            break;
+
         default:
             if (log)
                 log->Printf("Unhandled opcode %s in DWARFExpression.", DW_OP_value_to_name(op));
