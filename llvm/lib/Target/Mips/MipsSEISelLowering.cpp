@@ -1403,6 +1403,12 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_ldi_w:
   case Intrinsic::mips_ldi_d:
     return lowerMSASplatImm(Op, 1, DAG);
+  case Intrinsic::mips_lsa: {
+    EVT ResTy = Op->getValueType(0);
+    return DAG.getNode(ISD::ADD, SDLoc(Op), ResTy, Op->getOperand(1),
+                       DAG.getNode(ISD::SHL, SDLoc(Op), ResTy,
+                                   Op->getOperand(2), Op->getOperand(3)));
+  }
   case Intrinsic::mips_maddv_b:
   case Intrinsic::mips_maddv_h:
   case Intrinsic::mips_maddv_w:

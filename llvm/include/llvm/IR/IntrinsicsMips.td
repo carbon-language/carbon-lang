@@ -1251,6 +1251,12 @@ def int_mips_ldi_w : GCCBuiltin<"__builtin_msa_ldi_w">,
 def int_mips_ldi_d : GCCBuiltin<"__builtin_msa_ldi_d">,
   Intrinsic<[llvm_v2i64_ty], [llvm_i32_ty], [IntrNoMem]>;
 
+// This instruction is part of the MSA spec but it does not share the
+// __builtin_msa prefix because it operates on the GPR registers.
+def int_mips_lsa : GCCBuiltin<"__builtin_mips_lsa">,
+  Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+            [IntrNoMem]>;
+
 def int_mips_madd_q_h : GCCBuiltin<"__builtin_msa_madd_q_h">,
   Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty, llvm_v8i16_ty],
   [IntrNoMem]>;

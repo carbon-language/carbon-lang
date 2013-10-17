@@ -61,6 +61,10 @@ def MipsVExtractZExt : SDNode<"MipsISD::VEXTRACT_ZEXT_ELT",
 
 // Operands
 
+def uimm2 : Operand<i32> {
+  let PrintMethod = "printUnsignedImm";
+}
+
 def uimm3 : Operand<i32> {
   let PrintMethod = "printUnsignedImm";
 }
@@ -108,6 +112,8 @@ def vsplat_uimm8 : Operand<vAny> {
 def vsplat_simm5 : Operand<vAny>;
 
 def vsplat_simm10 : Operand<vAny>;
+
+def immZExt2Lsa : ImmLeaf<i32, [{return isUInt<2>(Imm - 1);}]>;
 
 // Pattern fragments
 def vextract_sext_i8  : PatFrag<(ops node:$vec, node:$idx),
@@ -761,6 +767,8 @@ class LDI_B_ENC  : MSA_I10_FMT<0b010, 0b00, 0b001100>;
 class LDI_H_ENC  : MSA_I10_FMT<0b010, 0b01, 0b001100>;
 class LDI_W_ENC  : MSA_I10_FMT<0b010, 0b10, 0b001100>;
 class LDI_D_ENC  : MSA_I10_FMT<0b010, 0b11, 0b001100>;
+
+class LSA_ENC : SPECIAL_LSA_FMT;
 
 class MADD_Q_H_ENC : MSA_3RF_FMT<0b0101, 0b0, 0b011100>;
 class MADD_Q_W_ENC : MSA_3RF_FMT<0b0101, 0b1, 0b011100>;
@@ -2038,6 +2046,14 @@ class LDI_H_DESC : MSA_I10_LDI_DESC_BASE<"ldi.h", MSA128H>;
 class LDI_W_DESC : MSA_I10_LDI_DESC_BASE<"ldi.w", MSA128W>;
 class LDI_D_DESC : MSA_I10_LDI_DESC_BASE<"ldi.d", MSA128D>;
 
+class LSA_DESC {
+  dag OutOperandList = (outs GPR32:$rd);
+  dag InOperandList = (ins GPR32:$rs, GPR32:$rt, uimm2:$sa);
+  string AsmString = "lsa\t$rd, $rs, $rt, $sa";
+  list<dag> Pattern = [(set GPR32:$rd, (add GPR32:$rs, (shl GPR32:$rt,
+                                                            immZExt2Lsa:$sa)))];
+  InstrItinClass Itinerary = NoItinerary;
+}
 
 class MADD_Q_H_DESC : MSA_3RF_4RF_DESC_BASE<"madd_q.h", int_mips_madd_q_h,
                                             MSA128HOpnd>;
@@ -2892,6 +2908,8 @@ def LDI_B : LDI_B_ENC, LDI_B_DESC;
 def LDI_H : LDI_H_ENC, LDI_H_DESC;
 def LDI_W : LDI_W_ENC, LDI_W_DESC;
 def LDI_D : LDI_D_ENC, LDI_D_DESC;
+
+def LSA : LSA_ENC, LSA_DESC;
 
 def MADD_Q_H : MADD_Q_H_ENC, MADD_Q_H_DESC;
 def MADD_Q_W : MADD_Q_W_ENC, MADD_Q_W_DESC;
