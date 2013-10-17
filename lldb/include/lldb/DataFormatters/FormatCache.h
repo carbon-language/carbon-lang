@@ -27,28 +27,40 @@ private:
     struct Entry
     {
     private:
+        bool m_format_cached : 1;
         bool m_summary_cached : 1;
         bool m_synthetic_cached : 1;
         
+        lldb::TypeFormatImplSP m_format_sp;
         lldb::TypeSummaryImplSP m_summary_sp;
         lldb::SyntheticChildrenSP m_synthetic_sp;
     public:
         Entry ();
+        Entry (lldb::TypeFormatImplSP);
         Entry (lldb::TypeSummaryImplSP);
         Entry (lldb::SyntheticChildrenSP);
-        Entry (lldb::TypeSummaryImplSP,lldb::SyntheticChildrenSP);
+        Entry (lldb::TypeFormatImplSP,lldb::TypeSummaryImplSP,lldb::SyntheticChildrenSP);
 
+        bool
+        IsFormatCached ();
+        
         bool
         IsSummaryCached ();
         
         bool
         IsSyntheticCached ();
         
+        lldb::TypeFormatImplSP
+        GetFormat ();
+        
         lldb::TypeSummaryImplSP
         GetSummary ();
         
         lldb::SyntheticChildrenSP
         GetSynthetic ();
+        
+        void
+        SetFormat (lldb::TypeFormatImplSP);
         
         void
         SetSummary (lldb::TypeSummaryImplSP);
@@ -70,10 +82,16 @@ public:
     FormatCache ();
     
     bool
+    GetFormat (const ConstString& type,lldb::TypeFormatImplSP& format_sp);
+    
+    bool
     GetSummary (const ConstString& type,lldb::TypeSummaryImplSP& summary_sp);
 
     bool
     GetSynthetic (const ConstString& type,lldb::SyntheticChildrenSP& synthetic_sp);
+    
+    void
+    SetFormat (const ConstString& type,lldb::TypeFormatImplSP& format_sp);
     
     void
     SetSummary (const ConstString& type,lldb::TypeSummaryImplSP& summary_sp);

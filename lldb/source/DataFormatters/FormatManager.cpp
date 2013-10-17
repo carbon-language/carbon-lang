@@ -425,34 +425,34 @@ FormatManager::GetFormat (ValueObject& valobj,
                           lldb::DynamicValueType use_dynamic)
 {
     TypeFormatImplSP retval;
-//    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-//    ConstString valobj_type(GetTypeForCache(valobj, use_dynamic));
-//    if (valobj_type)
-//    {
-//        if (log)
-//            log->Printf("\n\n[FormatManager::GetSummaryFormat] Looking into cache for type %s", valobj_type.AsCString("<invalid>"));
-//        if (m_format_cache.GetSummary(valobj_type,retval))
-//        {
-//            if (log)
-//            {
-//                log->Printf("[FormatManager::GetSummaryFormat] Cache search success. Returning.");
-//                if (log->GetDebug())
-//                    log->Printf("[FormatManager::GetSummaryFormat] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
-//            }
-//            return retval;
-//        }
-//        if (log)
-//            log->Printf("[FormatManager::GetSummaryFormat] Cache search failed. Going normal route");
-//    }
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    ConstString valobj_type(GetTypeForCache(valobj, use_dynamic));
+    if (valobj_type)
+    {
+        if (log)
+            log->Printf("\n\n[FormatManager::GetFormat] Looking into cache for type %s", valobj_type.AsCString("<invalid>"));
+        if (m_format_cache.GetFormat(valobj_type,retval))
+        {
+            if (log)
+            {
+                log->Printf("[FormatManager::GetFormat] Cache search success. Returning.");
+                if (log->GetDebug())
+                    log->Printf("[FormatManager::GetFormat] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
+            }
+            return retval;
+        }
+        if (log)
+            log->Printf("[FormatManager::GetFormat] Cache search failed. Going normal route");
+    }
     retval = m_categories_map.GetFormat(valobj, use_dynamic);
-//    if (valobj_type)
-//    {
-//        if (log)
-//            log->Printf("[FormatManager::GetSummaryFormat] Caching %p for type %s",retval.get(),valobj_type.AsCString("<invalid>"));
-//        m_format_cache.SetSummary(valobj_type,retval);
-//    }
-//    if (log && log->GetDebug())
-//        log->Printf("[FormatManager::GetSummaryFormat] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
+    if (valobj_type)
+    {
+        if (log)
+            log->Printf("[FormatManager::GetFormat] Caching %p for type %s",retval.get(),valobj_type.AsCString("<invalid>"));
+        m_format_cache.SetFormat(valobj_type,retval);
+    }
+    if (log && log->GetDebug())
+        log->Printf("[FormatManager::GetFormat] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
     return retval;
 }
 

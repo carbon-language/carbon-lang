@@ -624,7 +624,7 @@ def parseOptionsAndInitTestdirs():
         noHeaders = True
         parsable = True
 
-    if args.P:
+    if args.P and not args.v:
         progress_bar = True
         verbose = 0
 

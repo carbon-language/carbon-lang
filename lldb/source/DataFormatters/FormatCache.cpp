@@ -22,30 +22,52 @@ using namespace lldb;
 using namespace lldb_private;
 
 FormatCache::Entry::Entry () :
+m_format_cached(false),
 m_summary_cached(false),
 m_synthetic_cached(false),
+m_format_sp(),
 m_summary_sp(),
 m_synthetic_sp()
 {}
 
-FormatCache::Entry::Entry (lldb::TypeSummaryImplSP summary_sp) :
+FormatCache::Entry::Entry (lldb::TypeFormatImplSP format_sp) :
+m_summary_cached(false),
 m_synthetic_cached(false),
+m_summary_sp(),
+m_synthetic_sp()
+{
+    SetFormat (format_sp);
+}
+
+FormatCache::Entry::Entry (lldb::TypeSummaryImplSP summary_sp) :
+m_format_cached(false),
+m_synthetic_cached(false),
+m_format_sp(),
 m_synthetic_sp()
 {
     SetSummary (summary_sp);
 }
 
 FormatCache::Entry::Entry (lldb::SyntheticChildrenSP synthetic_sp) :
+m_format_cached(false),
 m_summary_cached(false),
+m_format_sp(),
 m_summary_sp()
 {
     SetSynthetic (synthetic_sp);
 }
 
-FormatCache::Entry::Entry (lldb::TypeSummaryImplSP summary_sp,lldb::SyntheticChildrenSP synthetic_sp)
+FormatCache::Entry::Entry (lldb::TypeFormatImplSP format_sp, lldb::TypeSummaryImplSP summary_sp, lldb::SyntheticChildrenSP synthetic_sp)
 {
+    SetFormat (format_sp);
     SetSummary (summary_sp);
     SetSynthetic (synthetic_sp);
+}
+
+bool
+FormatCache::Entry::IsFormatCached ()
+{
+    return m_format_cached;
 }
 
 bool
@@ -60,6 +82,12 @@ FormatCache::Entry::IsSyntheticCached ()
     return m_synthetic_cached;
 }
 
+lldb::TypeFormatImplSP
+FormatCache::Entry::GetFormat ()
+{
+    return m_format_sp;
+}
+
 lldb::TypeSummaryImplSP
 FormatCache::Entry::GetSummary ()
 {
@@ -70,6 +98,13 @@ lldb::SyntheticChildrenSP
 FormatCache::Entry::GetSynthetic ()
 {
     return m_synthetic_sp;
+}
+
+void
+FormatCache::Entry::SetFormat (lldb::TypeFormatImplSP format_sp)
+{
+    m_format_cached = true;
+    m_format_sp = format_sp;
 }
 
 void
@@ -104,6 +139,26 @@ FormatCache::GetEntry (const ConstString& type)
         return i->second;
     m_map[type] = FormatCache::Entry();
     return m_map[type];
+}
+
+bool
+FormatCache::GetFormat (const ConstString& type,lldb::TypeFormatImplSP& format_sp)
+{
+    Mutex::Locker lock(m_mutex);
+    auto entry = GetEntry(type);
+    if (entry.IsSummaryCached())
+    {
+#ifdef LLDB_CONFIGURATION_DEBUG
+        m_cache_hits++;
+#endif
+        format_sp = entry.GetFormat();
+        return true;
+    }
+#ifdef LLDB_CONFIGURATION_DEBUG
+    m_cache_misses++;
+#endif
+    format_sp.reset();
+    return false;
 }
 
 bool
@@ -144,6 +199,13 @@ FormatCache::GetSynthetic (const ConstString& type,lldb::SyntheticChildrenSP& sy
 #endif
     synthetic_sp.reset();
     return false;
+}
+
+void
+FormatCache::SetFormat (const ConstString& type,lldb::TypeFormatImplSP& format_sp)
+{
+    Mutex::Locker lock(m_mutex);
+    GetEntry(type).SetFormat(format_sp);
 }
 
 void
