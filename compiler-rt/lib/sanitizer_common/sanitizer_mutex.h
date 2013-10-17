@@ -40,6 +40,10 @@ class StaticSpinMutex {
     atomic_store(&state_, 0, memory_order_release);
   }
 
+  void AssertHeld() {
+    CHECK_EQ(atomic_load(&state_, memory_order_relaxed), 1);
+  }
+
  private:
   atomic_uint8_t state_;
 

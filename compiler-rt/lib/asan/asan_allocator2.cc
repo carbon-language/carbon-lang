@@ -186,14 +186,19 @@ COMPILER_CHECK(kChunkHeader2Size <= 16);
 
 struct AsanChunk: ChunkBase {
   uptr Beg() { return reinterpret_cast<uptr>(this) + kChunkHeaderSize; }
-  uptr UsedSize() {
+  uptr UsedSize(bool locked_version = false) {
     if (user_requested_size != SizeClassMap::kMaxSize)
       return user_requested_size;
-    return *reinterpret_cast<uptr *>(allocator.GetMetaData(AllocBeg()));
+    return *reinterpret_cast<uptr *>(
+                allocator.GetMetaData(AllocBeg(locked_version)));
   }
-  void *AllocBeg() {
-    if (from_memalign)
+  void *AllocBeg(bool locked_version = false) {
+    if (from_memalign) {
+      if (locked_version)
+        return allocator.GetBlockBeginFastLocked(
+            reinterpret_cast<void *>(this));
       return allocator.GetBlockBegin(reinterpret_cast<void *>(this));
+    }
     return reinterpret_cast<void*>(Beg() - RZLog2Size(rz_log));
   }
   // If we don't use stack depot, we store the alloc/free stack traces
@@ -213,8 +218,8 @@ struct AsanChunk: ChunkBase {
     uptr available = RoundUpTo(user_requested_size, SHADOW_GRANULARITY);
     return (available - kChunkHeader2Size) / sizeof(u32);
   }
-  bool AddrIsInside(uptr addr) {
-    return (addr >= Beg()) && (addr < Beg() + UsedSize());
+  bool AddrIsInside(uptr addr, bool locked_version = false) {
+    return (addr >= Beg()) && (addr < Beg() + UsedSize(locked_version));
   }
 };
 
@@ -722,7 +727,8 @@ uptr PointsIntoChunk(void* p) {
   __asan::AsanChunk *m = __asan::GetAsanChunkByAddrFastLocked(addr);
   if (!m) return 0;
   uptr chunk = m->Beg();
-  if ((m->chunk_state == __asan::CHUNK_ALLOCATED) && m->AddrIsInside(addr))
+  if ((m->chunk_state == __asan::CHUNK_ALLOCATED) &&
+      m->AddrIsInside(addr, /*locked_version=*/true))
     return chunk;
   return 0;
 }
@@ -755,7 +761,7 @@ void LsanMetadata::set_tag(ChunkTag value) {
 
 uptr LsanMetadata::requested_size() const {
   __asan::AsanChunk *m = reinterpret_cast<__asan::AsanChunk *>(metadata_);
-  return m->UsedSize();
+  return m->UsedSize(/*locked_version=*/true);
 }
 
 u32 LsanMetadata::stack_trace_id() const {

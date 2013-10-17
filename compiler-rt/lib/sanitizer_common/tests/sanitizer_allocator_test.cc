@@ -742,6 +742,7 @@ TEST(SanitizerCommon, LargeMmapAllocatorBlockBegin) {
     allocated[i] = (char *)a.Allocate(&stats, size, 1);
   }
 
+  a.ForceLock();
   for (uptr i = 0; i < kNumAllocs  * kNumAllocs; i++) {
     // if ((i & (i - 1)) == 0) fprintf(stderr, "[%zd]\n", i);
     char *p1 = allocated[i % kNumAllocs];
@@ -757,6 +758,7 @@ TEST(SanitizerCommon, LargeMmapAllocatorBlockBegin) {
     p = reinterpret_cast<void *>(~0L - (i % 1024));
     EXPECT_EQ((void *)0, a.GetBlockBeginFastLocked(p));
   }
+  a.ForceUnlock();
 
   for (uptr i = 0; i < kNumAllocs; i++)
     a.Deallocate(&stats, allocated[i]);
