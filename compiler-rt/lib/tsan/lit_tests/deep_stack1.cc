@@ -1,4 +1,5 @@
-// RUN: %clangxx_tsan -O1 %s -o %t && not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_tsan -O1 %s -o %t -DORDER1 && not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_tsan -O1 %s -o %t -DORDER2 && not %t 2>&1 | FileCheck %s
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -15,6 +16,9 @@ static void foo() {
 }
 
 void *Thread(void *p) {
+#ifdef ORDER1
+  sleep(1);
+#endif
   F();
   return 0;
 }
@@ -27,7 +31,9 @@ int main() {
   pthread_attr_init(&a);
   pthread_attr_setstacksize(&a, N * 256 + (1 << 20));
   pthread_create(&t, &a, Thread, 0);
+#ifdef ORDER2
   sleep(1);
+#endif
   X = 43;
   pthread_join(t, 0);
 }
