@@ -587,14 +587,20 @@ llvm::Value *MicrosoftCXXABI::adjustThisArgumentForVirtualCall(
     bool AvoidVirtualOffset = false;
     if (isa<CXXDestructorDecl>(MD) && GD.getDtorType() == Dtor_Base) {
       // A base destructor can only be called from a complete destructor of the
-      // same record type or another destructor of a more derived type.
+      // same record type or another destructor of a more derived type;
+      // or a constructor of the same record type if an exception is thrown.
+      assert(isa<CXXDestructorDecl>(CGF.CurGD.getDecl()) ||
+             isa<CXXConstructorDecl>(CGF.CurGD.getDecl()));
       const CXXRecordDecl *CurRD =
-          cast<CXXDestructorDecl>(CGF.CurGD.getDecl())->getParent();
+          cast<CXXMethodDecl>(CGF.CurGD.getDecl())->getParent();
 
       if (MD->getParent() == CurRD) {
-        assert(CGF.CurGD.getDtorType() == Dtor_Complete);
-        // We're calling the main base dtor from a complete dtor, so we know the
-        // "this" offset statically.
+        if (isa<CXXDestructorDecl>(CGF.CurGD.getDecl()))
+          assert(CGF.CurGD.getDtorType() == Dtor_Complete);
+        if (isa<CXXConstructorDecl>(CGF.CurGD.getDecl()))
+          assert(CGF.CurGD.getCtorType() == Ctor_Complete);
+        // We're calling the main base dtor from a complete structor,
+        // so we know the "this" offset statically.
         AvoidVirtualOffset = true;
       } else {
         // Let's see if we try to call a destructor of a non-virtual base.
@@ -604,6 +610,8 @@ llvm::Value *MicrosoftCXXABI::adjustThisArgumentForVirtualCall(
             continue;
           // If we call a base destructor for a non-virtual base, we statically
           // know where it expects the vfptr and "this" to be.
+          // The total offset should reflect the adjustment done by
+          // adjustThisParameterInVirtualFunctionPrologue().
           AvoidVirtualOffset = true;
           break;
         }
@@ -613,7 +621,6 @@ llvm::Value *MicrosoftCXXABI::adjustThisArgumentForVirtualCall(
     if (AvoidVirtualOffset) {
       const ASTRecordLayout &Layout =
           CGF.getContext().getASTRecordLayout(MD->getParent());
-      // This reflects the logic from VFTableBuilder::ComputeThisOffset().
       StaticOffset += Layout.getVBaseClassOffset(ML.VBase);
     } else {
       This = CGF.Builder.CreateBitCast(This, charPtrTy);

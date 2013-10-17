@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-pc-win32 -cxx-abi microsoft -fexceptions | FileCheck -check-prefix WIN32 %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-pc-win32 -cxx-abi microsoft -fexceptions -fno-rtti | FileCheck -check-prefix WIN32 %s
 
 struct A {
   A();
@@ -116,3 +116,42 @@ int HasConditionalDeactivatedCleanups(bool cond) {
 // WIN32:   br i1 %[[isactive]]
 // WIN32:   invoke x86_thiscallcc void @"\01??1A@@QAE@XZ"(%struct.A* %[[arg1]])
 // WIN32: }
+
+namespace crash_on_partial_destroy {
+struct A {
+  virtual ~A();
+};
+
+struct B : virtual A {
+  // Has an implicit destructor.
+};
+
+struct C : B {
+  C();
+};
+
+void foo();
+// We used to crash when emitting this.
+C::C() { foo(); }
+
+// Verify that we don't bother with a vbtable lookup when adjusting the this
+// pointer to call a base destructor from a constructor while unwinding.
+// WIN32-LABEL: define {{.*}} @"\01??0C@crash_on_partial_destroy@@QAE@XZ"{{.*}} {
+// WIN32:      landingpad
+//
+//        We shouldn't do any vbptr loads, just constant GEPs.
+// WIN32-NOT:  load
+// WIN32:      getelementptr inbounds i8* %{{.*}}, i64 4
+// WIN32-NOT:  load
+// WIN32:      bitcast i8* %{{.*}} to %"struct.crash_on_partial_destroy::B"*
+// WIN32:      invoke x86_thiscallcc void @"\01??1B@crash_on_partial_destroy@@UAE@XZ"
+//
+// WIN32-NOT:  load
+// WIN32:      bitcast %"struct.crash_on_partial_destroy::C"* %{{.*}} to i8*
+// WIN32-NOT:  load
+// WIN32:      getelementptr inbounds i8* %{{.*}}, i64 4
+// WIN32-NOT:  load
+// WIN32:      bitcast i8* %{{.*}} to %"struct.crash_on_partial_destroy::A"*
+// WIN32:      invoke x86_thiscallcc void @"\01??1A@crash_on_partial_destroy@@UAE@XZ"
+// WIN32: }
+}
