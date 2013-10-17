@@ -878,4 +878,16 @@ def SCALAR_SUQADD : SInst<"vuqadd", "sss", "ScSsSiSl">;
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Unsigned Saturating Accumulated of Signed Value
 def SCALAR_USQADD : SInst<"vsqadd", "sss", "SUcSUsSUiSUl">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Signed Saturating Doubling Multiply-Add Long
+def SCALAR_SQDMLAL : SInst<"vqdmlal", "rss", "SsSi">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Signed Saturating Doubling Multiply-Subtract Long
+def SCALAR_SQDMLSL : SInst<"vqdmlsl", "rss", "SsSi">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Signed Saturating Doubling Multiply Long
+def SCALAR_SQDMULL : SInst<"vqdmull", "rss", "SsSi">;
 }

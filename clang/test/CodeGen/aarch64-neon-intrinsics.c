@@ -7225,3 +7225,39 @@ uint64_t test_vsqaddd_u64(uint64_t a, uint64_t b) {
 // CHECK: usqadd {{d[0-9]+}}, {{d[0-9]+}}
   return (uint64_t)vsqaddd_u64(a, b);
 }
+
+int32_t test_vqdmlalh_s16(int16_t a, int16_t b) {
+// CHECK: test_vqdmlalh_s16
+// CHECK: sqdmlal {{s[0-9]+}}, {{h[0-9]+}}, {{h[0-9]+}}
+  return (int32_t)vqdmlalh_s16(a, b);
+}
+
+int64_t test_vqdmlals_s32(int32_t a, int32_t b) {
+// CHECK: test_vqdmlals_s32
+// CHECK: sqdmlal {{d[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+  return (int64_t)vqdmlals_s32(a, b);
+}
+
+int32_t test_vqdmlslh_s16(int16_t a, int16_t b) {
+// CHECK: test_vqdmlslh_s16
+// CHECK: sqdmlsl {{s[0-9]+}}, {{h[0-9]+}}, {{h[0-9]+}}
+  return (int32_t)vqdmlslh_s16(a, b);
+}
+
+int64_t test_vqdmlsls_s32(int32_t a, int32_t b) {
+// CHECK: test_vqdmlsls_s32
+// CHECK: sqdmlsl {{d[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+  return (int64_t)vqdmlsls_s32(a, b);
+}
+
+int32_t test_vqdmullh_s16(int16_t a, int16_t b) {
+// CHECK: test_vqdmullh_s16
+// CHECK: sqdmull {{s[0-9]+}}, {{h[0-9]+}}, {{h[0-9]+}}
+  return (int32_t)vqdmullh_s16(a, b);
+}
+
+int64_t test_vqdmulls_s32(int32_t a, int32_t b) {
+// CHECK: test_vqdmulls_s32
+// CHECK: sqdmull {{d[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+  return (int64_t)vqdmulls_s32(a, b);
+}

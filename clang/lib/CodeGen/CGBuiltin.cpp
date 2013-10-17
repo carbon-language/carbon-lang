@@ -1755,6 +1755,7 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   // Extend element of one-element vector
   bool ExtendEle = false;
   bool OverloadInt = false;
+  bool OverloadWideInt = false;
   const char *s = NULL;
 
   SmallVector<Value *, 4> Ops;
@@ -2110,6 +2111,21 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vsqaddd_u64:
     Int = Intrinsic::aarch64_neon_vsqadd;
     s = "vsqadd"; OverloadInt = true; break;
+  // Signed Saturating Doubling Multiply-Add Long
+  case AArch64::BI__builtin_neon_vqdmlalh_s16:
+  case AArch64::BI__builtin_neon_vqdmlals_s32:
+    Int = Intrinsic::aarch64_neon_vqdmlal;
+    s = "vqdmlal"; OverloadWideInt = true; break;
+  // Signed Saturating Doubling Multiply-Subtract Long
+  case AArch64::BI__builtin_neon_vqdmlslh_s16:
+  case AArch64::BI__builtin_neon_vqdmlsls_s32:
+    Int = Intrinsic::aarch64_neon_vqdmlsl;
+    s = "vqdmlsl"; OverloadWideInt = true; break;
+  // Signed Saturating Doubling Multiply Long
+  case AArch64::BI__builtin_neon_vqdmullh_s16:
+  case AArch64::BI__builtin_neon_vqdmulls_s32:
+    Int = Intrinsic::aarch64_neon_vqdmull;
+    s = "vqdmull"; OverloadWideInt = true; break;
   }
 
   if (!Int)
@@ -2135,8 +2151,7 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
     llvm::Type *Tys[2] = {RTy, VTy};
     F = CGF.CGM.getIntrinsic(Int, Tys);
     assert(E->getNumArgs() == 1);
-  }
-  else if (OverloadInt) {
+  } else if (OverloadInt) {
     // Determine the type of this overloaded AArch64 intrinsic
     const Expr *Arg = E->getArg(E->getNumArgs()-1);
     llvm::Type *Ty = CGF.ConvertType(Arg->getType());
@@ -2144,6 +2159,13 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
     assert(VTy);
 
     F = CGF.CGM.getIntrinsic(Int, VTy);
+  } else if (OverloadWideInt) {
+    // Determine the type of this overloaded AArch64 intrinsic
+    const Expr *Arg = E->getArg(E->getNumArgs()-1);
+    llvm::Type *Ty = CGF.ConvertType(Arg->getType());
+    llvm::VectorType *VTy = llvm::VectorType::get(Ty, 1);
+    llvm::VectorType *RTy = llvm::VectorType::getExtendedElementVectorType(VTy);
+    F = CGF.CGM.getIntrinsic(Int, RTy);
   } else
     F = CGF.CGM.getIntrinsic(Int);
 
