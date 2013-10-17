@@ -575,7 +575,7 @@ static bool rewriteToNSEnumDecl(const EnumDecl *EnumDcl,
   return false;
 }
 
-static bool rewriteToNSMacroDecl(const EnumDecl *EnumDcl,
+static void rewriteToNSMacroDecl(const EnumDecl *EnumDcl,
                                 const TypedefDecl *TypedefDcl,
                                 const NSAPI &NS, edit::Commit &commit,
                                  bool IsNSIntegerType) {
@@ -587,7 +587,6 @@ static bool rewriteToNSMacroDecl(const EnumDecl *EnumDcl,
   commit.replace(R, ClassString);
   SourceLocation TypedefLoc = TypedefDcl->getLocEnd();
   commit.remove(SourceRange(TypedefLoc, TypedefLoc));
-  return true;
 }
 
 static bool UseNSOptionsMacro(Preprocessor &PP, ASTContext &Ctx,
@@ -1527,26 +1526,27 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
           migrateNSEnumDecl(Ctx, ED, /*TypedefDecl */0);
       }
       else if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(*D)) {
-        if (ASTMigrateActions & FrontendOptions::ObjCMT_NsMacros) {
-          DeclContext::decl_iterator N = D;
+        if (!(ASTMigrateActions & FrontendOptions::ObjCMT_NsMacros))
+          continue;
+        DeclContext::decl_iterator N = D;
+        if (++N == DEnd)
+          continue;
+        if (const EnumDecl *ED = dyn_cast<EnumDecl>(*N)) {
           if (++N != DEnd)
-            if (const EnumDecl *ED = dyn_cast<EnumDecl>(*N)) {
-              if (++N != DEnd) {
-                if (const TypedefDecl *TD1 = dyn_cast<TypedefDecl>(*N)) {
-                  if (migrateNSEnumDecl(Ctx, ED, TD1)) {
-                    ++D; ++D;
-                    CacheObjCNSIntegerTypedefed(TD);
-                    continue;
-                  }
-                }
-              }
-              if (migrateNSEnumDecl(Ctx, ED, TD)) {
-                ++D;
+            if (const TypedefDecl *TDF = dyn_cast<TypedefDecl>(*N)) {
+              // prefer typedef-follows-enum to enum-follows-typedef pattern.
+              if (migrateNSEnumDecl(Ctx, ED, TDF)) {
+                ++D; ++D;
+                CacheObjCNSIntegerTypedefed(TD);
                 continue;
               }
             }
-          CacheObjCNSIntegerTypedefed(TD);
+          if (migrateNSEnumDecl(Ctx, ED, TD)) {
+            ++D;
+            continue;
+          }
         }
+        CacheObjCNSIntegerTypedefed(TD);
       }
       else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*D)) {
         if (ASTMigrateActions & FrontendOptions::ObjCMT_Annotation)
