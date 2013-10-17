@@ -1244,18 +1244,19 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
   /// \brief Cast between two shadow types, extending or truncating as
   /// necessary.
-  Value *CreateShadowCast(IRBuilder<> &IRB, Value *V, Type *dstTy) {
+  Value *CreateShadowCast(IRBuilder<> &IRB, Value *V, Type *dstTy,
+                          bool Signed = false) {
     Type *srcTy = V->getType();
     if (dstTy->isIntegerTy() && srcTy->isIntegerTy())
-      return IRB.CreateIntCast(V, dstTy, true);
+      return IRB.CreateIntCast(V, dstTy, Signed);
     if (dstTy->isVectorTy() && srcTy->isVectorTy() &&
         dstTy->getVectorNumElements() == srcTy->getVectorNumElements())
-      return IRB.CreateIntCast(V, dstTy, true);
+      return IRB.CreateIntCast(V, dstTy, Signed);
     size_t srcSizeInBits = VectorOrPrimitiveTypeSizeInBits(srcTy);
     size_t dstSizeInBits = VectorOrPrimitiveTypeSizeInBits(dstTy);
     Value *V1 = IRB.CreateBitCast(V, Type::getIntNTy(*MS.C, srcSizeInBits));
     Value *V2 =
-      IRB.CreateIntCast(V1, Type::getIntNTy(*MS.C, dstSizeInBits), true);
+      IRB.CreateIntCast(V1, Type::getIntNTy(*MS.C, dstSizeInBits), Signed);
     return IRB.CreateBitCast(V2, dstTy);
     // TODO: handle struct types.
   }
@@ -2019,9 +2020,9 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
                            "_msprop_select_agg");
     } else {
       // Sa = (sext Sb) | (select b, Sc, Sd)
-      S = IRB.CreateOr(
-          S, CreateShadowCast(IRB, getShadow(I.getCondition()), S->getType()),
-          "_msprop_select");
+      S = IRB.CreateOr(S, CreateShadowCast(IRB, getShadow(I.getCondition()),
+                                           S->getType(), true),
+                       "_msprop_select");
     }
     setShadow(&I, S);
     if (MS.TrackOrigins) {
