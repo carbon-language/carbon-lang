@@ -4,8 +4,9 @@
 
 #define CALLABLE_WHEN(...)      __attribute__ ((callable_when(__VA_ARGS__)))
 #define CONSUMABLE(state)       __attribute__ ((consumable(state)))
-#define SET_TYPESTATE(state)    __attribute__ ((set_typestate(state)))
+#define PARAM_TYPESTATE(state)  __attribute__ ((param_typestate(state)))
 #define RETURN_TYPESTATE(state) __attribute__ ((return_typestate(state)))
+#define SET_TYPESTATE(state)    __attribute__ ((set_typestate(state)))
 #define TESTS_TYPESTATE(state)  __attribute__ ((tests_typestate(state)))
 
 typedef decltype(nullptr) nullptr_t;
@@ -404,6 +405,19 @@ void testParamReturnTypestateCaller() {
   testParamReturnTypestateCallee(true, var);
   
   *var;
+}
+
+void testParamTypestateCallee(ConsumableClass<int>  Param0 PARAM_TYPESTATE(consumed),
+                              ConsumableClass<int> &Param1 PARAM_TYPESTATE(consumed)) {
+  
+  *Param0; // expected-warning {{invalid invocation of method 'operator*' on object 'Param0' while it is in the 'consumed' state}}
+  *Param1; // expected-warning {{invalid invocation of method 'operator*' on object 'Param1' while it is in the 'consumed' state}}
+}
+
+void testParamTypestateCaller() {
+  ConsumableClass<int> Var0, Var1(42);
+  
+  testParamTypestateCallee(Var0, Var1); // expected-warning {{argument not in expected state; expected 'consumed', observed 'unconsumed'}}
 }
 
 void testCallingConventions() {

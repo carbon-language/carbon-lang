@@ -967,6 +967,14 @@ def CallableWhen : InheritableAttr {
                                    ["Unknown", "Consumed", "Unconsumed"]>];
 }
 
+def ParamTypestate : InheritableAttr {
+  let Spellings = [GNU<"param_typestate">];
+  let Subjects = [ParmVar];
+  let Args = [EnumArgument<"ParamState", "ConsumedState",
+                           ["unknown", "consumed", "unconsumed"],
+                           ["Unknown", "Consumed", "Unconsumed"]>];
+}
+
 def ReturnTypestate : InheritableAttr {
   let Spellings = [GNU<"return_typestate">];
   let Subjects = [Function, ParmVar];

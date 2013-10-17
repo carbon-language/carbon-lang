@@ -73,6 +73,11 @@ namespace consumed {
                                                   StringRef ExpectedState,
                                                   StringRef ObservedState) {};
     
+    // FIXME: Add documentation.
+    virtual void warnParamTypestateMismatch(SourceLocation LOC,
+                                            StringRef ExpectedState,
+                                            StringRef ObservedState) {}
+    
     // FIXME: This can be removed when the attr propagation fix for templated
     //        classes lands.
     /// \brief Warn about return typestates set for unconsumable types.

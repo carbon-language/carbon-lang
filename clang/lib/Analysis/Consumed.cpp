@@ -180,13 +180,14 @@ static ConsumedState mapConsumableAttrState(const QualType QT) {
   llvm_unreachable("invalid enum");
 }
 
-static ConsumedState mapSetTypestateAttrState(const SetTypestateAttr *STAttr) {
-  switch (STAttr->getNewState()) {
-  case SetTypestateAttr::Unknown:
+static ConsumedState
+mapParamTypestateAttrState(const ParamTypestateAttr *PTAttr) {
+  switch (PTAttr->getParamState()) {
+  case ParamTypestateAttr::Unknown:
     return CS_Unknown;
-  case SetTypestateAttr::Unconsumed:
+  case ParamTypestateAttr::Unconsumed:
     return CS_Unconsumed;
-  case SetTypestateAttr::Consumed:
+  case ParamTypestateAttr::Consumed:
     return CS_Consumed;
   }
   llvm_unreachable("invalid_enum");
@@ -203,6 +204,18 @@ mapReturnTypestateAttrState(const ReturnTypestateAttr *RTSAttr) {
     return CS_Consumed;
   }
   llvm_unreachable("invalid enum");
+}
+
+static ConsumedState mapSetTypestateAttrState(const SetTypestateAttr *STAttr) {
+  switch (STAttr->getNewState()) {
+  case SetTypestateAttr::Unknown:
+    return CS_Unknown;
+  case SetTypestateAttr::Unconsumed:
+    return CS_Unconsumed;
+  case SetTypestateAttr::Consumed:
+    return CS_Consumed;
+  }
+  llvm_unreachable("invalid_enum");
 }
 
 static StringRef stateToString(ConsumedState State) {
@@ -577,11 +590,32 @@ void ConsumedStmtVisitor::VisitCallExpr(const CallExpr *Call) {
       
       InfoEntry Entry = PropagationMap.find(Call->getArg(Index));
       
-      if (Entry == PropagationMap.end() || !Entry->second.isVar()) {
+      if (Entry == PropagationMap.end() ||
+          !(Entry->second.isState() || Entry->second.isVar()))
         continue;
-      }
       
       PropagationInfo PInfo = Entry->second;
+      
+      // Check that the parameter is in the correct state.
+      
+      if (Param->hasAttr<ParamTypestateAttr>()) {
+        ConsumedState ParamState =
+          PInfo.isState() ? PInfo.getState() :
+                            StateMap->getState(PInfo.getVar());
+        
+        ConsumedState ExpectedState =
+          mapParamTypestateAttrState(Param->getAttr<ParamTypestateAttr>());
+        
+        if (ParamState != ExpectedState)
+          Analyzer.WarningsHandler.warnParamTypestateMismatch(
+            Call->getArg(Index - Offset)->getExprLoc(),
+            stateToString(ExpectedState), stateToString(ParamState));
+      }
+      
+      if (!Entry->second.isVar())
+        continue;
+      
+      // Adjust state on the caller side.
       
       if (ParamType->isRValueReferenceType() ||
           (ParamType->isLValueReferenceType() &&
@@ -812,15 +846,22 @@ void ConsumedStmtVisitor::VisitMemberExpr(const MemberExpr *MExpr) {
 void ConsumedStmtVisitor::VisitParmVarDecl(const ParmVarDecl *Param) {
   QualType ParamType = Param->getType();
   ConsumedState ParamState = consumed::CS_None;
-
-  if (!(ParamType->isPointerType() || ParamType->isReferenceType()) &&
-      isConsumableType(ParamType))
+  
+  if (Param->hasAttr<ParamTypestateAttr>()) {
+    ParamState =
+      mapParamTypestateAttrState(Param->getAttr<ParamTypestateAttr>());
+    
+  } else if (!(ParamType->isPointerType() || ParamType->isReferenceType()) &&
+             isConsumableType(ParamType)) {
+    
     ParamState = mapConsumableAttrState(ParamType);
-  else if (ParamType->isReferenceType() &&
-           isConsumableType(ParamType->getPointeeType()))
+    
+  } else if (ParamType->isReferenceType() &&
+             isConsumableType(ParamType->getPointeeType())) {
     ParamState = consumed::CS_Unknown;
-
-  if (ParamState)
+  }
+  
+  if (ParamState != CS_None)
     StateMap->setState(Param, ParamState);
 }
 

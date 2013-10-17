@@ -1051,7 +1051,7 @@ static void handleCallableWhenAttr(Sema &S, Decl *D,
       return;
 
     if (!CallableWhenAttr::ConvertStrToConsumedState(StateString,
-                                                      CallableState)) {
+                                                     CallableState)) {
       S.Diag(Loc, diag::warn_attribute_type_not_supported)
         << Attr.getName() << StateString;
       return;
@@ -1063,6 +1063,52 @@ static void handleCallableWhenAttr(Sema &S, Decl *D,
   D->addAttr(::new (S.Context)
              CallableWhenAttr(Attr.getRange(), S.Context, States.data(),
                States.size(), Attr.getAttributeSpellingListIndex()));
+}
+
+
+static void handleParamTypestateAttr(Sema &S, Decl *D,
+                                    const AttributeList &Attr) {
+  if (!checkAttributeNumArgs(S, Attr, 1)) return;
+  
+  if (!isa<ParmVarDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
+      Attr.getName() << ExpectedParameter;
+    return;
+  }
+  
+  ParamTypestateAttr::ConsumedState ParamState;
+  
+  if (Attr.isArgIdent(0)) {
+    IdentifierLoc *Ident = Attr.getArgAsIdent(0);
+    StringRef StateString = Ident->Ident->getName();
+
+    if (!ParamTypestateAttr::ConvertStrToConsumedState(StateString,
+                                                       ParamState)) {
+      S.Diag(Ident->Loc, diag::warn_attribute_type_not_supported)
+        << Attr.getName() << StateString;
+      return;
+    }
+  } else {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type) <<
+      Attr.getName() << AANT_ArgumentIdentifier;
+    return;
+  }
+  
+  // FIXME: This check is currently being done in the analysis.  It can be
+  //        enabled here only after the parser propagates attributes at
+  //        template specialization definition, not declaration.
+  //QualType ReturnType = cast<ParmVarDecl>(D)->getType();
+  //const CXXRecordDecl *RD = ReturnType->getAsCXXRecordDecl();
+  //
+  //if (!RD || !RD->hasAttr<ConsumableAttr>()) {
+  //    S.Diag(Attr.getLoc(), diag::warn_return_state_for_unconsumable_type) <<
+  //      ReturnType.getAsString();
+  //    return;
+  //}
+  
+  D->addAttr(::new (S.Context)
+             ParamTypestateAttr(Attr.getRange(), S.Context, ParamState,
+                                Attr.getAttributeSpellingListIndex()));
 }
 
 
@@ -4817,6 +4863,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_CallableWhen:
     handleCallableWhenAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_ParamTypestate:
+    handleParamTypestateAttr(S, D, Attr);
     break;
   case AttributeList::AT_ReturnTypestate:
     handleReturnTypestateAttr(S, D, Attr);

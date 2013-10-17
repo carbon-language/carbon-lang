@@ -2225,6 +2225,9 @@ def warn_loop_state_mismatch : Warning<
 def warn_param_return_typestate_mismatch : Warning<
   "parameter '%0' not in expected state when the function returns: expected "
   "'%1', observed '%2'">, InGroup<Consumed>, DefaultIgnore;
+def warn_param_typestate_mismatch : Warning<
+  "argument not in expected state; expected '%0', observed '%1'">,
+  InGroup<Consumed>, DefaultIgnore;
 
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,
