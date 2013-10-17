@@ -1937,8 +1937,8 @@ with :doc:`ThreadSanitizer`.
 Use ``__attribute__((no_sanitize_thread))`` on a function declaration
 to specify that checks for data races on plain (non-atomic) memory accesses
 should not be inserted by ThreadSanitizer.
-The function may still be instrumented by the tool
-to avoid false positives in other places.
+The function is still instrumented by the tool to avoid false positives and
+provide meaningful stack traces.
 
 .. _langext-memory_sanitizer:
 
