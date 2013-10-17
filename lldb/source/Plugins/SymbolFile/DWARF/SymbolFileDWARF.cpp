@@ -3100,7 +3100,7 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const lldb_privat
     }
     
     if (!NamespaceDeclMatchesThisSymbolFile(namespace_decl))
-		return 0;
+        return 0;
     
     DWARFDebugInfo* info = DebugInfo();
     if (info == NULL)
@@ -3557,7 +3557,7 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
         sc_list.Clear();
     
     if (!NamespaceDeclMatchesThisSymbolFile(namespace_decl))
-		return 0;
+        return 0;
         
     // If name is empty then we won't find anything.
     if (name.IsEmpty())
@@ -3943,7 +3943,7 @@ SymbolFileDWARF::FindTypes (const SymbolContext& sc,
         types.Clear();
     
     if (!NamespaceDeclMatchesThisSymbolFile(namespace_decl))
-		return 0;
+        return 0;
 
     DIEArray die_offsets;
     
@@ -4045,7 +4045,7 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
     }
     
     if (!NamespaceDeclMatchesThisSymbolFile(parent_namespace_decl))
-		return ClangNamespaceDecl();
+        return ClangNamespaceDecl();
 
     ClangNamespaceDecl namespace_decl;
     DWARFDebugInfo* info = DebugInfo();
@@ -4844,8 +4844,8 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (const DWARFDebugInfoEntry
                 
                 if (try_resolving_type)
                 {
-					if (must_be_implementation && type_cu->Supports_DW_AT_APPLE_objc_complete_type())
-	                    try_resolving_type = type_die->GetAttributeValueAsUnsigned (this, type_cu, DW_AT_APPLE_objc_complete_type, 0);
+                    if (must_be_implementation && type_cu->Supports_DW_AT_APPLE_objc_complete_type())
+                        try_resolving_type = type_die->GetAttributeValueAsUnsigned (this, type_cu, DW_AT_APPLE_objc_complete_type, 0);
                     
                     if (try_resolving_type)
                     {
@@ -5905,12 +5905,12 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 {
                                 case DW_AT_decl_file:
                                     if (dwarf_cu->DW_AT_decl_file_attributes_are_invalid())
-									{
-										// llvm-gcc outputs invalid DW_AT_decl_file attributes that always
-										// point to the compile unit file, so we clear this invalid value
-										// so that we can still unique types efficiently.
+                                    {
+                                        // llvm-gcc outputs invalid DW_AT_decl_file attributes that always
+                                        // point to the compile unit file, so we clear this invalid value
+                                        // so that we can still unique types efficiently.
                                         decl.SetFile(FileSpec ("<invalid>", false));
-									}
+                                    }
                                     else
                                         decl.SetFile(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(form_value.Unsigned())); 
                                     break;
