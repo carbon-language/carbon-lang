@@ -762,11 +762,6 @@ class LDI_H_ENC  : MSA_I10_FMT<0b010, 0b01, 0b001100>;
 class LDI_W_ENC  : MSA_I10_FMT<0b010, 0b10, 0b001100>;
 class LDI_D_ENC  : MSA_I10_FMT<0b010, 0b11, 0b001100>;
 
-class LDX_B_ENC  : MSA_3R_FMT<0b110, 0b00, 0b001111>;
-class LDX_H_ENC  : MSA_3R_FMT<0b110, 0b01, 0b001111>;
-class LDX_W_ENC  : MSA_3R_FMT<0b110, 0b10, 0b001111>;
-class LDX_D_ENC  : MSA_3R_FMT<0b110, 0b11, 0b001111>;
-
 class MADD_Q_H_ENC : MSA_3RF_FMT<0b0101, 0b0, 0b011100>;
 class MADD_Q_W_ENC : MSA_3RF_FMT<0b0101, 0b1, 0b011100>;
 
@@ -983,11 +978,6 @@ class ST_B_ENC   : MSA_I5_FMT<0b111, 0b00, 0b000111>;
 class ST_H_ENC   : MSA_I5_FMT<0b111, 0b01, 0b000111>;
 class ST_W_ENC   : MSA_I5_FMT<0b111, 0b10, 0b000111>;
 class ST_D_ENC   : MSA_I5_FMT<0b111, 0b11, 0b000111>;
-
-class STX_B_ENC  : MSA_3R_FMT<0b111, 0b00, 0b001111>;
-class STX_H_ENC  : MSA_3R_FMT<0b111, 0b01, 0b001111>;
-class STX_W_ENC  : MSA_3R_FMT<0b111, 0b10, 0b001111>;
-class STX_D_ENC  : MSA_3R_FMT<0b111, 0b11, 0b001111>;
 
 class SUBS_S_B_ENC : MSA_3R_FMT<0b000, 0b00, 0b010001>;
 class SUBS_S_H_ENC : MSA_3R_FMT<0b000, 0b01, 0b010001>;
@@ -2048,21 +2038,6 @@ class LDI_H_DESC : MSA_I10_LDI_DESC_BASE<"ldi.h", MSA128H>;
 class LDI_W_DESC : MSA_I10_LDI_DESC_BASE<"ldi.w", MSA128W>;
 class LDI_D_DESC : MSA_I10_LDI_DESC_BASE<"ldi.d", MSA128D>;
 
-class LDX_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                    ValueType TyNode, RegisterClass RCWD,
-                    Operand MemOpnd = mem, ComplexPattern Addr = addrRegReg,
-                    InstrItinClass itin = NoItinerary> {
-  dag OutOperandList = (outs RCWD:$wd);
-  dag InOperandList = (ins MemOpnd:$addr);
-  string AsmString = !strconcat(instr_asm, "\t$wd, $addr");
-  list<dag> Pattern = [(set RCWD:$wd, (TyNode (OpNode Addr:$addr)))];
-  InstrItinClass Itinerary = itin;
-}
-
-class LDX_B_DESC : LDX_DESC_BASE<"ldx.b", load, v16i8, MSA128B>;
-class LDX_H_DESC : LDX_DESC_BASE<"ldx.h", load, v8i16, MSA128H>;
-class LDX_W_DESC : LDX_DESC_BASE<"ldx.w", load, v4i32, MSA128W>;
-class LDX_D_DESC : LDX_DESC_BASE<"ldx.d", load, v2i64, MSA128D>;
 
 class MADD_Q_H_DESC : MSA_3RF_4RF_DESC_BASE<"madd_q.h", int_mips_madd_q_h,
                                             MSA128HOpnd>;
@@ -2368,22 +2343,6 @@ class ST_B_DESC : ST_DESC_BASE<"st.b", store, v16i8, MSA128B>;
 class ST_H_DESC : ST_DESC_BASE<"st.h", store, v8i16, MSA128H>;
 class ST_W_DESC : ST_DESC_BASE<"st.w", store, v4i32, MSA128W>;
 class ST_D_DESC : ST_DESC_BASE<"st.d", store, v2i64, MSA128D>;
-
-class STX_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                    ValueType TyNode, RegisterClass RCWD,
-                    Operand MemOpnd = mem, ComplexPattern Addr = addrRegReg,
-                    InstrItinClass itin = NoItinerary> {
-  dag OutOperandList = (outs);
-  dag InOperandList = (ins RCWD:$wd, MemOpnd:$addr);
-  string AsmString = !strconcat(instr_asm, "\t$wd, $addr");
-  list<dag> Pattern = [(OpNode (TyNode RCWD:$wd), Addr:$addr)];
-  InstrItinClass Itinerary = itin;
-}
-
-class STX_B_DESC : STX_DESC_BASE<"stx.b", store, v16i8, MSA128B>;
-class STX_H_DESC : STX_DESC_BASE<"stx.h", store, v8i16, MSA128H>;
-class STX_W_DESC : STX_DESC_BASE<"stx.w", store, v4i32, MSA128W>;
-class STX_D_DESC : STX_DESC_BASE<"stx.d", store, v2i64, MSA128D>;
 
 class SUBS_S_B_DESC : MSA_3R_DESC_BASE<"subs_s.b", int_mips_subs_s_b,
                                        MSA128BOpnd>;
@@ -2934,11 +2893,6 @@ def LDI_H : LDI_H_ENC, LDI_H_DESC;
 def LDI_W : LDI_W_ENC, LDI_W_DESC;
 def LDI_D : LDI_D_ENC, LDI_D_DESC;
 
-def LDX_B: LDX_B_ENC, LDX_B_DESC;
-def LDX_H: LDX_H_ENC, LDX_H_DESC;
-def LDX_W: LDX_W_ENC, LDX_W_DESC;
-def LDX_D: LDX_D_ENC, LDX_D_DESC;
-
 def MADD_Q_H : MADD_Q_H_ENC, MADD_Q_H_DESC;
 def MADD_Q_W : MADD_Q_W_ENC, MADD_Q_W_DESC;
 
@@ -3179,11 +3133,6 @@ def ST_B: ST_B_ENC, ST_B_DESC;
 def ST_H: ST_H_ENC, ST_H_DESC;
 def ST_W: ST_W_ENC, ST_W_DESC;
 def ST_D: ST_D_ENC, ST_D_DESC;
-
-def STX_B: STX_B_ENC, STX_B_DESC;
-def STX_H: STX_H_ENC, STX_H_DESC;
-def STX_W: STX_W_ENC, STX_W_DESC;
-def STX_D: STX_D_ENC, STX_D_DESC;
 
 def SUBS_S_B : SUBS_S_B_ENC, SUBS_S_B_DESC;
 def SUBS_S_H : SUBS_S_H_ENC, SUBS_S_H_DESC;

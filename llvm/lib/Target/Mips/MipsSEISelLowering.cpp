@@ -1665,10 +1665,6 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_W_CHAIN(SDValue Op,
   case Intrinsic::mips_ld_h:
   case Intrinsic::mips_ld_w:
   case Intrinsic::mips_ld_d:
-  case Intrinsic::mips_ldx_b:
-  case Intrinsic::mips_ldx_h:
-  case Intrinsic::mips_ldx_w:
-  case Intrinsic::mips_ldx_d:
    return lowerMSALoadIntr(Op, DAG, Intr);
   }
 }
@@ -1697,10 +1693,6 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_VOID(SDValue Op,
   case Intrinsic::mips_st_h:
   case Intrinsic::mips_st_w:
   case Intrinsic::mips_st_d:
-  case Intrinsic::mips_stx_b:
-  case Intrinsic::mips_stx_h:
-  case Intrinsic::mips_stx_w:
-  case Intrinsic::mips_stx_d:
     return lowerMSAStoreIntr(Op, DAG, Intr);
   }
 }
