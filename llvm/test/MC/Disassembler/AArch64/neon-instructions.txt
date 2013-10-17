@@ -1659,3 +1659,27 @@
 0xf4,0x39,0x60,0x7e
 0x95,0x39,0xa0,0x7e
 0xd2,0x3a,0xe0,0x7e
+
+#----------------------------------------------------------------------
+# Signed Saturating Doubling Multiply-Add Long
+#----------------------------------------------------------------------
+# CHECK: sqdmlal s17, h27, h12
+# CHECK: sqdmlal d19, s24, s12
+0x71,0x93,0x6c,0x5e
+0x13,0x93,0xac,0x5e
+        
+#----------------------------------------------------------------------
+# Signed Saturating Doubling Multiply-Subtract Long
+#----------------------------------------------------------------------
+# CHECK: sqdmlsl s14, h12, h25
+# CHECK: sqdmlsl d12, s23, s13
+0x8e,0xb1,0x79,0x5e
+0xec,0xb2,0xad,0x5e
+        
+#----------------------------------------------------------------------
+# Signed Saturating Doubling Multiply Long
+#----------------------------------------------------------------------
+# CHECK: sqdmull s12, h22, h12
+# CHECK: sqdmull d15, s22, s12
+0xcc,0xd2,0x6c,0x5e
+0xcf,0xd2,0xac,0x5e

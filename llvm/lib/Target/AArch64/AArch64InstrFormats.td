@@ -1212,5 +1212,23 @@ class NeonI_LdStMult<bit q, bit l, bits<4> opcode, bits<2> size,
   // Inherit Rt in 4-0
 }
 
+// Format AdvSIMD 3 scalar registers with different type
+
+class NeonI_Scalar3Diff<bit u, bits<2> size, bits<4> opcode,
+                          dag outs, dag ins, string asmstr,
+                          list<dag> patterns, InstrItinClass itin>
+  : A64InstRdnm<outs, ins, asmstr, patterns, itin> {
+  let Inst{31-30} = 0b01;
+  let Inst{29} = u;
+  let Inst{28-24} = 0b11110;
+  let Inst{23-22} = size;
+  let Inst{21} = 0b1;
+  // Inherit Rm in 20-16
+  let Inst{15-12} = opcode;
+  let Inst{11-10} = 0b00;
+  // Inherit Rn in 9-5
+  // Inherit Rd in 4-0
+}
+
 }
 

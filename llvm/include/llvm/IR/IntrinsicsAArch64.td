@@ -204,4 +204,13 @@ def int_aarch64_neon_vabs :
 // Scalar Negate Value
 def int_aarch64_neon_vneg :
   Intrinsic<[llvm_v1i64_ty], [llvm_v1i64_ty], [IntrNoMem]>;
+
+// Signed Saturating Doubling Multiply-Add Long
+def int_aarch64_neon_vqdmlal : Neon_2Arg_Long_Intrinsic;
+
+// Signed Saturating Doubling Multiply-Subtract Long
+def int_aarch64_neon_vqdmlsl : Neon_2Arg_Long_Intrinsic;
+
+// Signed Saturating Doubling Multiply Long
+def int_aarch64_neon_vqdmull : Neon_2Arg_Long_Intrinsic;
 }
