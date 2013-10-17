@@ -182,36 +182,29 @@ bool DWARFDebugInfoEntryMinimal::isSubroutineDIE() const {
          Tag == DW_TAG_inlined_subroutine;
 }
 
-uint32_t DWARFDebugInfoEntryMinimal::getAttributeValue(
-    const DWARFUnit *u, const uint16_t attr, DWARFFormValue &form_value,
-    uint32_t *end_attr_offset_ptr) const {
-  if (AbbrevDecl) {
-    uint32_t attr_idx = AbbrevDecl->findAttributeIndex(attr);
+bool DWARFDebugInfoEntryMinimal::getAttributeValue(
+    const DWARFUnit *U, const uint16_t Attr, DWARFFormValue &FormValue) const {
+  if (!AbbrevDecl)
+    return false;
 
-    if (attr_idx != -1U) {
-      uint32_t offset = getOffset();
+  uint32_t AttrIdx = AbbrevDecl->findAttributeIndex(Attr);
+  if (AttrIdx == -1U)
+    return false;
 
-      DataExtractor debug_info_data = u->getDebugInfoExtractor();
+  DataExtractor DebugInfoData = U->getDebugInfoExtractor();
+  uint32_t DebugInfoOffset = getOffset();
 
-      // Skip the abbreviation code so we are at the data for the attributes
-      debug_info_data.getULEB128(&offset);
+  // Skip the abbreviation code so we are at the data for the attributes
+  DebugInfoData.getULEB128(&DebugInfoOffset);
 
-      uint32_t idx = 0;
-      while (idx < attr_idx)
-        DWARFFormValue::skipValue(AbbrevDecl->getFormByIndex(idx++),
-                                  debug_info_data, &offset, u);
-
-      const uint32_t attr_offset = offset;
-      form_value = DWARFFormValue(AbbrevDecl->getFormByIndex(idx));
-      if (form_value.extractValue(debug_info_data, &offset, u)) {
-        if (end_attr_offset_ptr)
-          *end_attr_offset_ptr = offset;
-        return attr_offset;
-      }
-    }
+  // Skip preceding attribute values.
+  for (uint32_t i = 0; i < AttrIdx; ++i) {
+    DWARFFormValue::skipValue(AbbrevDecl->getFormByIndex(i),
+                              DebugInfoData, &DebugInfoOffset, U);
   }
 
-  return 0;
+  FormValue = DWARFFormValue(AbbrevDecl->getFormByIndex(AttrIdx));
+  return FormValue.extractValue(DebugInfoData, &DebugInfoOffset, U);
 }
 
 const char *DWARFDebugInfoEntryMinimal::getAttributeValueAsString(
@@ -238,20 +231,12 @@ uint64_t DWARFDebugInfoEntryMinimal::getAttributeValueAsUnsigned(
   return FailValue;
 }
 
-int64_t DWARFDebugInfoEntryMinimal::getAttributeValueAsSigned(
-    const DWARFUnit *u, const uint16_t attr, int64_t fail_value) const {
-  DWARFFormValue form_value;
-  if (getAttributeValue(u, attr, form_value))
-      return form_value.getSigned();
-  return fail_value;
-}
-
 uint64_t DWARFDebugInfoEntryMinimal::getAttributeValueAsReference(
-    const DWARFUnit *u, const uint16_t attr, uint64_t fail_value) const {
-  DWARFFormValue form_value;
-  if (getAttributeValue(u, attr, form_value))
-      return form_value.getReference(u);
-  return fail_value;
+    const DWARFUnit *U, const uint16_t Attr, uint64_t FailValue) const {
+  DWARFFormValue FormValue;
+  if (getAttributeValue(U, Attr, FormValue))
+      return FormValue.getReference(U);
+  return FailValue;
 }
 
 bool DWARFDebugInfoEntryMinimal::getLowAndHighPC(const DWARFUnit *U,
@@ -259,6 +244,7 @@ bool DWARFDebugInfoEntryMinimal::getLowAndHighPC(const DWARFUnit *U,
                                                  uint64_t &HighPC) const {
   HighPC = -1ULL;
   LowPC = getAttributeValueAsAddress(U, DW_AT_low_pc, -1ULL);
+  // FIXME: Check if HighPC is of class constant (it has different semantics).
   if (LowPC != -1ULL)
     HighPC = getAttributeValueAsAddress(U, DW_AT_high_pc, -1ULL);
   return (HighPC != -1ULL);

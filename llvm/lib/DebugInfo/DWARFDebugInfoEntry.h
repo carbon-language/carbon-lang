@@ -120,24 +120,20 @@ public:
     return AbbrevDecl;
   }
 
-  uint32_t getAttributeValue(const DWARFUnit *u, const uint16_t attr,
-                             DWARFFormValue &formValue,
-                             uint32_t *end_attr_offset_ptr = 0) const;
+  bool getAttributeValue(const DWARFUnit *U, const uint16_t Attr,
+                         DWARFFormValue &FormValue) const;
 
-  const char *getAttributeValueAsString(const DWARFUnit *u, const uint16_t attr,
-                                        const char *fail_value) const;
+  const char *getAttributeValueAsString(const DWARFUnit *U, const uint16_t Attr,
+                                        const char *FailValue) const;
 
   uint64_t getAttributeValueAsAddress(const DWARFUnit *U, const uint16_t Attr,
                                       uint64_t FailValue) const;
 
-  uint64_t getAttributeValueAsUnsigned(const DWARFUnit *u, const uint16_t attr,
-                                       uint64_t fail_value) const;
+  uint64_t getAttributeValueAsUnsigned(const DWARFUnit *U, const uint16_t Attr,
+                                       uint64_t FailValue) const;
 
-  uint64_t getAttributeValueAsReference(const DWARFUnit *u, const uint16_t attr,
-                                        uint64_t fail_value) const;
-
-  int64_t getAttributeValueAsSigned(const DWARFUnit *u, const uint16_t attr,
-                                    int64_t fail_value) const;
+  uint64_t getAttributeValueAsReference(const DWARFUnit *U, const uint16_t Attr,
+                                        uint64_t FailValue) const;
 
   /// Retrieves DW_AT_low_pc and DW_AT_high_pc from CU.
   /// Returns true if both attributes are present.
