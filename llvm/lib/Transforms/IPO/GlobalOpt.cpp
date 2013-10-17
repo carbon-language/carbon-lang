@@ -99,38 +99,36 @@ ModulePass *llvm::createGlobalOptimizerPass() { return new GlobalOpt(); }
 
 namespace {
 
-/// GlobalStatus - As we analyze each global, keep track of some information
-/// about it.  If we find out that the address of the global is taken, none of
-/// this info will be accurate.
+/// As we analyze each global, keep track of some information about it.  If we
+/// find out that the address of the global is taken, none of this info will be
+/// accurate.
 struct GlobalStatus {
-  /// isCompared - True if the global's address is used in a comparison.
-  bool isCompared;
+  /// True if the global's address is used in a comparison.
+  bool IsCompared;
 
-  /// isLoaded - True if the global is ever loaded.  If the global isn't ever
-  /// loaded it can be deleted.
-  bool isLoaded;
+  /// True if the global is ever loaded.  If the global isn't ever loaded it can
+  /// be deleted.
+  bool IsLoaded;
 
-  /// StoredType - Keep track of what stores to the global look like.
+  /// Keep track of what stores to the global look like.
   ///
   enum StoredType {
-    /// NotStored - There is no store to this global.  It can thus be marked
-    /// constant.
+    /// There is no store to this global.  It can thus be marked constant.
     NotStored,
 
-    /// isInitializerStored - This global is stored to, but the only thing
-    /// stored is the constant it was initialized with.  This is only tracked
-    /// for scalar globals.
-    isInitializerStored,
+    /// This global is stored to, but the only thing stored is the constant it
+    /// was initialized with.  This is only tracked for scalar globals.
+    InitializerStored,
 
-    /// isStoredOnce - This global is stored to, but only its initializer and
-    /// one other value is ever stored to it.  If this global isStoredOnce, we
-    /// track the value stored to it in StoredOnceValue below.  This is only
-    /// tracked for scalar globals.
-    isStoredOnce,
+    /// This global is stored to, but only its initializer and one other value
+    /// is ever stored to it.  If this global StoredOnce, we track the value
+    /// stored to it in StoredOnceValue below.  This is only tracked for scalar
+    /// globals.
+    StoredOnce,
 
-    /// isStored - This global is stored to by multiple values or something else
-    /// that we cannot track.
-    isStored
+    /// This global is stored to by multiple values or something else that we
+    /// cannot track.
+    Stored
   } StoredType;
 
   /// StoredOnceValue - If only one value (besides the initializer constant) is
@@ -151,7 +149,7 @@ struct GlobalStatus {
   /// AtomicOrdering - Set to the strongest atomic ordering requirement.
   AtomicOrdering Ordering;
 
-  GlobalStatus() : isCompared(false), isLoaded(false), StoredType(NotStored),
+  GlobalStatus() : IsCompared(false), IsLoaded(false), StoredType(NotStored),
                    StoredOnceValue(0), AccessingFunction(0),
                    HasMultipleAccessingFunctions(false),
                    HasNonInstructionUser(false), Ordering(NotAtomic) {}
@@ -209,7 +207,7 @@ static bool analyzeGlobalAux(const Value *V, GlobalStatus &GS,
           GS.HasMultipleAccessingFunctions = true;
       }
       if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
-        GS.isLoaded = true;
+        GS.IsLoaded = true;
         // Don't hack on volatile loads.
         if (LI->isVolatile()) return true;
         GS.Ordering = StrongerOrdering(GS.Ordering, LI->getOrdering());
@@ -225,7 +223,7 @@ static bool analyzeGlobalAux(const Value *V, GlobalStatus &GS,
         // If this is a direct store to the global (i.e., the global is a scalar
         // value, not an aggregate), keep more specific information about
         // stores.
-        if (GS.StoredType != GlobalStatus::isStored) {
+        if (GS.StoredType != GlobalStatus::Stored) {
           if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(
                                                            SI->getOperand(1))) {
             Value *StoredVal = SI->getOperand(0);
@@ -238,23 +236,23 @@ static bool analyzeGlobalAux(const Value *V, GlobalStatus &GS,
             }
 
             if (StoredVal == GV->getInitializer()) {
-              if (GS.StoredType < GlobalStatus::isInitializerStored)
-                GS.StoredType = GlobalStatus::isInitializerStored;
+              if (GS.StoredType < GlobalStatus::InitializerStored)
+                GS.StoredType = GlobalStatus::InitializerStored;
             } else if (isa<LoadInst>(StoredVal) &&
                        cast<LoadInst>(StoredVal)->getOperand(0) == GV) {
-              if (GS.StoredType < GlobalStatus::isInitializerStored)
-                GS.StoredType = GlobalStatus::isInitializerStored;
-            } else if (GS.StoredType < GlobalStatus::isStoredOnce) {
-              GS.StoredType = GlobalStatus::isStoredOnce;
+              if (GS.StoredType < GlobalStatus::InitializerStored)
+                GS.StoredType = GlobalStatus::InitializerStored;
+            } else if (GS.StoredType < GlobalStatus::StoredOnce) {
+              GS.StoredType = GlobalStatus::StoredOnce;
               GS.StoredOnceValue = StoredVal;
-            } else if (GS.StoredType == GlobalStatus::isStoredOnce &&
+            } else if (GS.StoredType == GlobalStatus::StoredOnce &&
                        GS.StoredOnceValue == StoredVal) {
               // noop.
             } else {
-              GS.StoredType = GlobalStatus::isStored;
+              GS.StoredType = GlobalStatus::Stored;
             }
           } else {
-            GS.StoredType = GlobalStatus::isStored;
+            GS.StoredType = GlobalStatus::Stored;
           }
         }
       } else if (isa<BitCastInst>(I)) {
@@ -273,17 +271,17 @@ static bool analyzeGlobalAux(const Value *V, GlobalStatus &GS,
           if (analyzeGlobalAux(I, GS, PHIUsers))
             return true;
       } else if (isa<CmpInst>(I)) {
-        GS.isCompared = true;
+        GS.IsCompared = true;
       } else if (const MemTransferInst *MTI = dyn_cast<MemTransferInst>(I)) {
         if (MTI->isVolatile()) return true;
         if (MTI->getArgOperand(0) == V)
-          GS.StoredType = GlobalStatus::isStored;
+          GS.StoredType = GlobalStatus::Stored;
         if (MTI->getArgOperand(1) == V)
-          GS.isLoaded = true;
+          GS.IsLoaded = true;
       } else if (const MemSetInst *MSI = dyn_cast<MemSetInst>(I)) {
         assert(MSI->getArgOperand(0) == V && "Memset only takes one pointer!");
         if (MSI->isVolatile()) return true;
-        GS.StoredType = GlobalStatus::isStored;
+        GS.StoredType = GlobalStatus::Stored;
       } else {
         return true;  // Any other non-load instruction might take address!
       }
@@ -1932,7 +1930,7 @@ bool GlobalOpt::ProcessGlobal(GlobalVariable *GV,
   if (analyzeGlobal(GV, GS))
     return false;
 
-  if (!GS.isCompared && !GV->hasUnnamedAddr()) {
+  if (!GS.IsCompared && !GV->hasUnnamedAddr()) {
     GV->setUnnamedAddr(true);
     NumUnnamed++;
   }
@@ -1979,7 +1977,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
   // If the global is never loaded (but may be stored to), it is dead.
   // Delete it now.
-  if (!GS.isLoaded) {
+  if (!GS.IsLoaded) {
     DEBUG(dbgs() << "GLOBAL NEVER LOADED: " << *GV);
 
     bool Changed;
@@ -2000,7 +1998,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     }
     return Changed;
 
-  } else if (GS.StoredType <= GlobalStatus::isInitializerStored) {
+  } else if (GS.StoredType <= GlobalStatus::InitializerStored) {
     DEBUG(dbgs() << "MARKING CONSTANT: " << *GV << "\n");
     GV->setConstant(true);
 
@@ -2023,7 +2021,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
         GVI = FirstNewGV;  // Don't skip the newly produced globals!
         return true;
       }
-  } else if (GS.StoredType == GlobalStatus::isStoredOnce) {
+  } else if (GS.StoredType == GlobalStatus::StoredOnce) {
     // If the initial value for the global was an undef value, and if only
     // one other value was stored into it, we can just change the
     // initializer to be the stored value, then delete all stores to the
