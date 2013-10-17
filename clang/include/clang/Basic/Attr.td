@@ -969,7 +969,7 @@ def CallableWhen : InheritableAttr {
 
 def ReturnTypestate : InheritableAttr {
   let Spellings = [GNU<"return_typestate">];
-  let Subjects = [Function];
+  let Subjects = [Function, ParmVar];
   let Args = [EnumArgument<"State", "ConsumedState",
                            ["unknown", "consumed", "unconsumed"],
                            ["Unknown", "Consumed", "Unconsumed"]>];

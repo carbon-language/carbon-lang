@@ -87,7 +87,7 @@ static SourceLocation getLastStmtLoc(const CFGBlock *Block) {
     Loc = getFirstStmtLoc(*Block->succ_begin());
   if (Loc.isValid())
     return Loc;
-  
+
   // If we have one predecessor, return the last statement in that block
   if (Block->pred_size() == 1 && *Block->pred_begin())
     return getLastStmtLoc(*Block->pred_begin());
@@ -572,7 +572,8 @@ void ConsumedStmtVisitor::VisitCallExpr(const CallExpr *Call) {
     unsigned Offset = Call->getNumArgs() - FunDecl->getNumParams();
     
     for (unsigned Index = Offset; Index < Call->getNumArgs(); ++Index) {
-      QualType ParamType = FunDecl->getParamDecl(Index - Offset)->getType();
+      const ParmVarDecl *Param = FunDecl->getParamDecl(Index - Offset);
+      QualType ParamType = Param->getType();
       
       InfoEntry Entry = PropagationMap.find(Call->getArg(Index));
       
@@ -587,6 +588,10 @@ void ConsumedStmtVisitor::VisitCallExpr(const CallExpr *Call) {
            !cast<LValueReferenceType>(*ParamType).isSpelledAsLValue())) {
         
         StateMap->setState(PInfo.getVar(), consumed::CS_Consumed);
+        
+      } else if (Param->hasAttr<ReturnTypestateAttr>()) {
+        StateMap->setState(PInfo.getVar(),
+          mapReturnTypestateAttrState(Param->getAttr<ReturnTypestateAttr>()));
         
       } else if (!(ParamType.isConstQualified() ||
                    ((ParamType->isReferenceType() ||
@@ -820,7 +825,9 @@ void ConsumedStmtVisitor::VisitParmVarDecl(const ParmVarDecl *Param) {
 }
 
 void ConsumedStmtVisitor::VisitReturnStmt(const ReturnStmt *Ret) {
-  if (ConsumedState ExpectedState = Analyzer.getExpectedReturnState()) {
+  ConsumedState ExpectedState = Analyzer.getExpectedReturnState();
+  
+  if (ExpectedState != CS_None) {
     InfoEntry Entry = PropagationMap.find(Ret->getRetValue());
     
     if (Entry != PropagationMap.end()) {
@@ -835,6 +842,9 @@ void ConsumedStmtVisitor::VisitReturnStmt(const ReturnStmt *Ret) {
           stateToString(RetState));
     }
   }
+  
+  StateMap->checkParamsForReturnTypestate(Ret->getLocStart(),
+                                          Analyzer.WarningsHandler);
 }
 
 void ConsumedStmtVisitor::VisitUnaryOperator(const UnaryOperator *UOp) {
@@ -1052,6 +1062,31 @@ bool ConsumedBlockInfo::isBackEdgeTarget(const CFGBlock *Block) {
       return true;
   }
   return false;
+}
+
+void ConsumedStateMap::checkParamsForReturnTypestate(SourceLocation BlameLoc,
+  ConsumedWarningsHandlerBase &WarningsHandler) const {
+  
+  ConsumedState ExpectedState;
+  
+  for (MapType::const_iterator DMI = Map.begin(), DME = Map.end(); DMI != DME;
+       ++DMI) {
+    
+    if (isa<ParmVarDecl>(DMI->first)) {
+      const ParmVarDecl *Param = cast<ParmVarDecl>(DMI->first);
+      
+      if (!Param->hasAttr<ReturnTypestateAttr>()) continue;
+      
+      ExpectedState =
+        mapReturnTypestateAttrState(Param->getAttr<ReturnTypestateAttr>());
+      
+      if (DMI->second != ExpectedState) {
+        WarningsHandler.warnParamReturnTypestateMismatch(BlameLoc,
+          Param->getNameAsString(), stateToString(ExpectedState),
+          stateToString(DMI->second));
+      }
+    }
+  }
 }
 
 ConsumedState ConsumedStateMap::getState(const VarDecl *Var) const {
@@ -1375,6 +1410,11 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
         CurrStates = NULL;
       }
     }
+    
+    if (CurrBlock == &AC.getCFG()->getExit() &&
+        D->getCallResultType()->isVoidType())
+      CurrStates->checkParamsForReturnTypestate(D->getLocation(),
+                                                WarningsHandler);
   } // End of block iterator.
   
   // Delete the last existing state map.

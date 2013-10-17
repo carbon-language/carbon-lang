@@ -1484,6 +1484,18 @@ public:
     Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
   
+  void warnParamReturnTypestateMismatch(SourceLocation Loc,
+                                        StringRef VariableName,
+                                        StringRef ExpectedState,
+                                        StringRef ObservedState) {
+    
+    PartialDiagnosticAt Warning(Loc, S.PDiag(
+      diag::warn_param_return_typestate_mismatch) << VariableName <<
+        ExpectedState << ObservedState);
+    
+    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
+  }
+  
   void warnReturnTypestateForUnconsumableType(SourceLocation Loc,
                                               StringRef TypeName) {
     PartialDiagnosticAt Warning(Loc, S.PDiag(

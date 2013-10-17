@@ -44,6 +44,8 @@ class CONSUMABLE(unknown) AttrTester1 {
 AttrTester1 returnTypestateTester0() RETURN_TYPESTATE(not_a_state); // expected-warning {{'return_typestate' attribute argument not supported: 'not_a_state'}}
 AttrTester1 returnTypestateTester1() RETURN_TYPESTATE(42); // expected-error {{'return_typestate' attribute requires an identifier}}
 
+void returnTypestateTester2(AttrTester1 &Param RETURN_TYPESTATE(unconsumed));
+
 class AttrTester2 {
   void callableWhen()    CALLABLE_WHEN("unconsumed"); // expected-warning {{consumed analysis attribute is attached to member of class 'AttrTester2' which isn't marked as consumable}}
   void consumes()        SET_TYPESTATE(consumed); // expected-warning {{consumed analysis attribute is attached to member of class 'AttrTester2' which isn't marked as consumable}}

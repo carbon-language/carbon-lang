@@ -1068,6 +1068,14 @@ static void handleCallableWhenAttr(Sema &S, Decl *D,
 
 static void handleReturnTypestateAttr(Sema &S, Decl *D,
                                       const AttributeList &Attr) {
+  if (!checkAttributeNumArgs(S, Attr, 1)) return;
+  
+  if (!(isa<FunctionDecl>(D) || isa<ParmVarDecl>(D))) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
+      Attr.getName() << ExpectedFunctionMethodOrParameter;
+    return;
+  }
+
   ReturnTypestateAttr::ConsumedState ReturnState;
   
   if (Attr.isArgIdent(0)) {
@@ -1084,18 +1092,16 @@ static void handleReturnTypestateAttr(Sema &S, Decl *D,
     return;
   }
   
-  if (!isa<FunctionDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
-      Attr.getName() << ExpectedFunction;
-    return;
-  }
-  
   // FIXME: This check is currently being done in the analysis.  It can be
   //        enabled here only after the parser propagates attributes at
   //        template specialization definition, not declaration.
   //QualType ReturnType;
   //
-  //if (const CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
+  //if (const ParmVarDecl *Param = dyn_cast<ParmVarDecl>(D)) {
+  //  ReturnType = Param->getType();
+  //
+  //} else if (const CXXConstructorDecl *Constructor =
+  //             dyn_cast<CXXConstructorDecl>(D)) {
   //  ReturnType = Constructor->getThisType(S.getASTContext())->getPointeeType();
   //  
   //} else {

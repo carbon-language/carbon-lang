@@ -388,6 +388,24 @@ void testFunctionParam(ConsumableClass<int> param) {
   *param; // expected-warning {{invocation of method 'operator*' on object 'param' while it is in the 'consumed' state}}
 }
 
+void testParamReturnTypestateCallee(bool cond, ConsumableClass<int> &Param RETURN_TYPESTATE(unconsumed)) { // expected-warning {{parameter 'Param' not in expected state when the function returns: expected 'unconsumed', observed 'consumed'}}
+  
+  if (cond) {
+    Param.consume();
+    return; // expected-warning {{parameter 'Param' not in expected state when the function returns: expected 'unconsumed', observed 'consumed'}}
+  }
+  
+  Param.consume();
+}
+
+void testParamReturnTypestateCaller() {
+  ConsumableClass<int> var;
+  
+  testParamReturnTypestateCallee(true, var);
+  
+  *var;
+}
+
 void testCallingConventions() {
   ConsumableClass<int> var(42);
   
