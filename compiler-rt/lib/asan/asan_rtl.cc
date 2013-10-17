@@ -533,9 +533,9 @@ void __asan_init() {
     Die();
   }
 
+  AsanTSDInit(PlatformTSDDtor);
   InstallSignalHandlers();
 
-  AsanTSDInit(PlatformTSDDtor);
   // Allocator should be initialized before starting external symbolizer, as
   // fork() on Mac locks the allocator.
   InitializeAllocator();
