@@ -205,11 +205,11 @@ LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M,
   char* Filename, LLVMCodeGenFileType codegen, char** ErrorMessage) {
   std::string error;
   raw_fd_ostream dest(Filename, error, sys::fs::F_Binary);
-  formatted_raw_ostream destf(dest);
   if (!error.empty()) {
     *ErrorMessage = strdup(error.c_str());
     return true;
   }
+  formatted_raw_ostream destf(dest);
   bool Result = LLVMTargetMachineEmit(T, M, destf, codegen, ErrorMessage);
   dest.flush();
   return Result;
