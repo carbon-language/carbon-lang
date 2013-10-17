@@ -4864,14 +4864,27 @@ void Sema::CheckExplicitlyDefaultedMemberExceptionSpec(
     SpecifiedType, MD->getLocation());
 }
 
-void Sema::CheckDelayedExplicitlyDefaultedMemberExceptionSpecs() {
-  for (unsigned I = 0, N = DelayedDefaultedMemberExceptionSpecs.size();
-       I != N; ++I)
-    CheckExplicitlyDefaultedMemberExceptionSpec(
-      DelayedDefaultedMemberExceptionSpecs[I].first,
-      DelayedDefaultedMemberExceptionSpecs[I].second);
+void Sema::CheckDelayedMemberExceptionSpecs() {
+  // Perform any deferred checking of exception specifications for virtual
+  // destructors.
+  while (!DelayedDestructorExceptionSpecChecks.empty()) {
+    std::pair<const CXXDestructorDecl *, const CXXDestructorDecl *> Check =
+        DelayedDestructorExceptionSpecChecks.pop_back_val();
+    const CXXDestructorDecl *Dtor = Check.first;
+    assert(!Dtor->getParent()->isDependentType() &&
+           "Should not ever add destructors of templates into the list.");
+    CheckOverridingFunctionExceptionSpec(Dtor, Check.second);
+  }
 
-  DelayedDefaultedMemberExceptionSpecs.clear();
+  // Check that any explicitly-defaulted methods have exception specifications
+  // compatible with their implicit exception specifications.
+  while (!DelayedDefaultedMemberExceptionSpecs.empty()) {
+    std::pair<CXXMethodDecl *, const FunctionProtoType *> Spec =
+        DelayedDefaultedMemberExceptionSpecs.pop_back_val();
+    CheckExplicitlyDefaultedMemberExceptionSpec(Spec.first, Spec.second);
+  }
+
+  assert(DelayedDestructorExceptionSpecChecks.empty());
 }
 
 namespace {
@@ -8182,9 +8195,8 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
 }
 
 void Sema::ActOnFinishDelayedMemberInitializers(Decl *D) {
-  // Check that any explicitly-defaulted methods have exception specifications
-  // compatible with their implicit exception specifications.
-  CheckDelayedExplicitlyDefaultedMemberExceptionSpecs();
+  // Perform any delayed checks on exception specifications.
+  CheckDelayedMemberExceptionSpecs();
 
   // Once all the member initializers are processed, perform checks to see if
   // any unintialized use is happeneing.
@@ -8707,23 +8719,11 @@ void Sema::ActOnFinishCXXMemberDecls() {
   // If the context is an invalid C++ class, just suppress these checks.
   if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(CurContext)) {
     if (Record->isInvalidDecl()) {
+      DelayedDefaultedMemberExceptionSpecs.clear();
       DelayedDestructorExceptionSpecChecks.clear();
       return;
     }
   }
-
-  // Perform any deferred checking of exception specifications for virtual
-  // destructors.
-  for (unsigned i = 0, e = DelayedDestructorExceptionSpecChecks.size();
-       i != e; ++i) {
-    const CXXDestructorDecl *Dtor =
-        DelayedDestructorExceptionSpecChecks[i].first;
-    assert(!Dtor->getParent()->isDependentType() &&
-           "Should not ever add destructors of templates into the list.");
-    CheckOverridingFunctionExceptionSpec(Dtor,
-        DelayedDestructorExceptionSpecChecks[i].second);
-  }
-  DelayedDestructorExceptionSpecChecks.clear();
 }
 
 void Sema::AdjustDestructorExceptionSpec(CXXRecordDecl *ClassDecl,

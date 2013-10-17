@@ -792,6 +792,11 @@ void Sema::ActOnEndOfTranslationUnit() {
     }
   }
 
+  // All delayed member exception specs should be checked or we end up accepting
+  // incompatible declarations.
+  assert(DelayedDefaultedMemberExceptionSpecs.empty());
+  assert(DelayedDestructorExceptionSpecChecks.empty());
+
   // Check we've noticed that we're no longer parsing the initializer for every
   // variable. If we miss cases, then at best we have a performance issue and
   // at worst a rejects-valid bug.
