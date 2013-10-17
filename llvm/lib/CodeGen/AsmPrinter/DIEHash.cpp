@@ -466,6 +466,9 @@ uint64_t DIEHash::computeCUSignature(DIE *Die) {
 /// standard.
 uint64_t DIEHash::computeTypeSignature(DIE *Die) {
 
+  if (DIE *Parent = Die->getParent())
+    addParentContext(Parent);
+
   // Hash the DIE.
   computeHash(Die);
 
