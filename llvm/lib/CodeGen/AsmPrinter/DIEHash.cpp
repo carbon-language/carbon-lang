@@ -274,6 +274,9 @@ void DIEHash::collectAttributes(DIE *Die, DIEAttrs &Attrs) {
     case dwarf::DW_AT_vtable_elem_location:
       COLLECT_ATTR(DW_AT_vtable_elem_location)
       break;
+    case dwarf::DW_AT_type:
+      COLLECT_ATTR(DW_AT_type)
+      break;
     default:
       break;
     }
@@ -286,19 +289,39 @@ void DIEHash::hashAttribute(AttrEntry Attr) {
   const DIEValue *Value = Attr.Val;
   const DIEAbbrevData *Desc = Attr.Desc;
 
-  // TODO: Add support for types.
+  // 7.27s3
+  // ... An attribute that refers to another type entry T is processed as
+  // follows:
+  // a) If T is in the list of [previously hashed types], use the letter 'R' as
+  // the marker and use the unsigned LEB128 encoding of [the index of T in the
+  // list] as the attribute value; otherwise,
 
-  // Add the letter A to the hash.
+  // [TODO: implement clause (a)]
+
+  if (const DIEEntry *EntryAttr = dyn_cast<DIEEntry>(Value)) {
+    DIE *Entry = EntryAttr->getEntry();
+
+    // b) use the letter 'T' as a the marker, ...
+    addULEB128('T');
+
+    addULEB128(Desc->getAttribute());
+
+    // ... process the type T recursively by performing Steps 2 through 7, and
+    // use the result as the attribute value.
+    computeHash(Entry);
+    return;
+  }
+
+  // Other attribute values use the letter 'A' as the marker, ...
   addULEB128('A');
 
-  // Then the attribute code.
   addULEB128(Desc->getAttribute());
 
-  // To ensure reproducibility of the signature, the set of forms used in the
+  // ... and the value consists of the form code (encoded as an unsigned LEB128
+  // value) followed by the encoding of the value according to the form code. To
+  // ensure reproducibility of the signature, the set of forms used in the
   // signature computation is limited to the following: DW_FORM_sdata,
   // DW_FORM_flag, DW_FORM_string, and DW_FORM_block.
-
-  // TODO: Add support for additional forms.
   switch (Desc->getForm()) {
   case dwarf::DW_FORM_string:
     llvm_unreachable(
@@ -315,6 +338,7 @@ void DIEHash::hashAttribute(AttrEntry Attr) {
     addULEB128(dwarf::DW_FORM_sdata);
     addSLEB128((int64_t)cast<DIEInteger>(Value)->getValue());
     break;
+  // TODO: Add support for additional forms.
   }
 }
 
@@ -375,6 +399,7 @@ void DIEHash::hashAttributes(const DIEAttrs &Attrs) {
   ADD_ATTR(Attrs.DW_AT_virtuality);
   ADD_ATTR(Attrs.DW_AT_visibility);
   ADD_ATTR(Attrs.DW_AT_vtable_elem_location);
+  ADD_ATTR(Attrs.DW_AT_type);
 
   // FIXME: Add the extended attributes.
 }

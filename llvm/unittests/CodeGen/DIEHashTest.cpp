@@ -51,9 +51,6 @@ TEST(NamedType, DIEHash) {
   Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FooStr);
   Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &One);
 
-  // Line and file number are ignored.
-  Foo.addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, &One);
-  Foo.addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, &One);
   uint64_t MD5Res = DIEHash().computeTypeSignature(&Foo);
 
   // The exact same hash GCC produces for this DIE.
@@ -78,10 +75,6 @@ TEST(NamespacedType, DIEHash) {
   Foo->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FooStr);
   Foo->addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &One);
 
-  // Line and file number are ignored.
-  Foo->addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, &One);
-  Foo->addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, &One);
-
   Space->addChild(Foo);
   CU.addChild(Space);
 
@@ -89,5 +82,34 @@ TEST(NamespacedType, DIEHash) {
 
   // The exact same hash GCC produces for this DIE.
   ASSERT_EQ(0x7b80381fd17f1e33ULL, MD5Res);
+}
+
+TEST(TypeWithMember, DIEHash) {
+  DIE Unnamed(dwarf::DW_TAG_structure_type);
+  DIEInteger Four(4);
+  Unnamed.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Four);
+
+  DIE *Member = new DIE(dwarf::DW_TAG_member);
+  DIEString MemberStr(&Four, "member");
+  Member->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &MemberStr);
+  // type
+  DIEInteger Zero(0);
+  Member->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, &Zero);
+
+  Unnamed.addChild(Member);
+
+  DIE Int(dwarf::DW_TAG_base_type);
+  DIEString IntStr(&Four, "int");
+  Int.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &IntStr);
+  Int.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Four);
+  DIEInteger Five(5);
+  Int.addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, &Five);
+
+  DIEEntry IntRef(&Int);
+  Member->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &IntRef);
+
+  uint64_t MD5Res = DIEHash().computeTypeSignature(&Unnamed);
+
+  ASSERT_EQ(0x5646aa436b7e07c6ULL, MD5Res);
 }
 }

@@ -76,6 +76,7 @@ class DIEHash {
     AttrEntry DW_AT_virtuality;
     AttrEntry DW_AT_visibility;
     AttrEntry DW_AT_vtable_elem_location;
+    AttrEntry DW_AT_type;
 
     // Insert any additional ones here...
   };
