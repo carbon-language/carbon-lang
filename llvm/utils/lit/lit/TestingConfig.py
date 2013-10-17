@@ -35,6 +35,15 @@ class TestingConfig:
                     'TMP' : os.environ.get('TMP',''),
                     })
 
+        # The option to preserve TMP (and TEMP).
+        # This is intended to check how many temporary files would be generated
+        # in automated builders.
+        if os.environ.has_key('LIT_PRESERVES_TMP'):
+            environment.update({
+                    'TEMP' : os.environ.get('TEMP',''),
+                    'TMP' : os.environ.get('TMP',''),
+                    })
+
         # Set the default available features based on the LitConfig.
         available_features = []
         if litConfig.useValgrind:
