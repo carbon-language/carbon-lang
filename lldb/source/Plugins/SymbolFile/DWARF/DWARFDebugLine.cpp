@@ -459,7 +459,7 @@ DWARFDebugLine::ParsePrologue(const DataExtractor& debug_line_data, lldb::offset
     if (*offset_ptr != end_prologue_offset)
     {
         Host::SystemLog (Host::eSystemLogWarning, 
-                         "warning: parsing line table prologue at 0x%8.8" PRIx64 " should have ended at 0x%8.8" PRIx64 " but it ended ad 0x%8.8" PRIx64 "\n",
+                         "warning: parsing line table prologue at 0x%8.8" PRIx64 " should have ended at 0x%8.8" PRIx64 " but it ended at 0x%8.8" PRIx64 "\n",
                          prologue_offset,
                          end_prologue_offset, 
                          *offset_ptr);
@@ -554,7 +554,7 @@ DWARFDebugLine::ParseSupportFiles (const lldb::ModuleSP &module_sp,
     if (offset != end_prologue_offset)
     {
         Host::SystemLog (Host::eSystemLogError, 
-                         "warning: parsing line table prologue at 0x%8.8x should have ended at 0x%8.8x but it ended ad 0x%8.8" PRIx64 "\n",
+                         "warning: parsing line table prologue at 0x%8.8x should have ended at 0x%8.8x but it ended at 0x%8.8" PRIx64 "\n",
                          stmt_list, 
                          end_prologue_offset, 
                          offset);
