@@ -2243,13 +2243,33 @@ INTERCEPTOR(int, pthread_cond_init, void *c, void *a) {
   return REAL(pthread_cond_init)(c, a);
 }
 
+INTERCEPTOR(int, pthread_cond_signal, void *c) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_signal, c);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, pthread_cond_t_sz);
+  return REAL(pthread_cond_signal)(c);
+}
+
+INTERCEPTOR(int, pthread_cond_broadcast, void *c) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_broadcast, c);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, pthread_cond_t_sz);
+  return REAL(pthread_cond_broadcast)(c);
+}
+
 #define INIT_PTHREAD_COND_WAIT \
   INTERCEPT_FUNCTION_VER(pthread_cond_wait, GLIBC_2.3.2)
 #define INIT_PTHREAD_COND_INIT \
   INTERCEPT_FUNCTION_VER(pthread_cond_init, GLIBC_2.3.2)
+#define INIT_PTHREAD_COND_SIGNAL \
+  INTERCEPT_FUNCTION_VER(pthread_cond_signal, GLIBC_2.3.2)
+#define INIT_PTHREAD_COND_BROADCAST \
+  INTERCEPT_FUNCTION_VER(pthread_cond_broadcast, GLIBC_2.3.2)
 #else
 #define INIT_PTHREAD_COND_WAIT
 #define INIT_PTHREAD_COND_INIT
+#define INIT_PTHREAD_COND_SIGNAL
+#define INIT_PTHREAD_COND_BROADCAST
 #endif
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
@@ -2334,4 +2354,6 @@ INTERCEPTOR(int, pthread_cond_init, void *c, void *a) {
   INIT_PTHREAD_MUTEX_UNLOCK;               \
   INIT_PTHREAD_COND_WAIT;                  \
   INIT_PTHREAD_COND_INIT;                  \
+  INIT_PTHREAD_COND_SIGNAL;                \
+  INIT_PTHREAD_COND_BROADCAST;             \
 /**/

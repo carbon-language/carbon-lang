@@ -1093,20 +1093,6 @@ TSAN_INTERCEPTOR(int, pthread_cond_destroy, void *c) {
   return res;
 }
 
-TSAN_INTERCEPTOR(int, pthread_cond_signal, void *c) {
-  SCOPED_TSAN_INTERCEPTOR(pthread_cond_signal, c);
-  MemoryRead(thr, pc, (uptr)c, kSizeLog1);
-  int res = REAL(pthread_cond_signal)(c);
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, pthread_cond_broadcast, void *c) {
-  SCOPED_TSAN_INTERCEPTOR(pthread_cond_broadcast, c);
-  MemoryRead(thr, pc, (uptr)c, kSizeLog1);
-  int res = REAL(pthread_cond_broadcast)(c);
-  return res;
-}
-
 TSAN_INTERCEPTOR(int, pthread_cond_timedwait, void *c, void *m,
     void *abstime) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_timedwait, c, m, abstime);
@@ -2091,8 +2077,6 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(pthread_rwlock_unlock);
 
   INTERCEPT_FUNCTION_VER(pthread_cond_destroy, GLIBC_2.3.2);
-  INTERCEPT_FUNCTION_VER(pthread_cond_signal, GLIBC_2.3.2);
-  INTERCEPT_FUNCTION_VER(pthread_cond_broadcast, GLIBC_2.3.2);
   INTERCEPT_FUNCTION_VER(pthread_cond_timedwait, GLIBC_2.3.2);
 
   TSAN_INTERCEPT(pthread_barrier_init);

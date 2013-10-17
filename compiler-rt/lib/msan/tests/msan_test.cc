@@ -2313,12 +2313,16 @@ namespace {
 struct SignalCondArg {
   pthread_cond_t* cond;
   pthread_mutex_t* mu;
+  bool broadcast;
 };
 
 void *SignalCond(void *param) {
   SignalCondArg *arg = reinterpret_cast<SignalCondArg *>(param);
   pthread_mutex_lock(arg->mu);
-  pthread_cond_signal(arg->cond);
+  if (arg->broadcast)
+    pthread_cond_broadcast(arg->cond);
+  else
+    pthread_cond_signal(arg->cond);
   pthread_mutex_unlock(arg->mu);
   return 0;
 }
@@ -2327,16 +2331,25 @@ void *SignalCond(void *param) {
 TEST(MemorySanitizer, pthread_cond_wait) {
   pthread_cond_t cond;
   pthread_mutex_t mu;
-  SignalCondArg args = {&cond, &mu};
+  SignalCondArg args = {&cond, &mu, false};
   pthread_cond_init(&cond, 0);
   pthread_mutex_init(&mu, 0);
-
   pthread_mutex_lock(&mu);
+
+  // signal
   pthread_t thr;
   pthread_create(&thr, 0, SignalCond, &args);
   int res = pthread_cond_wait(&cond, &mu);
   assert(!res);
   pthread_join(thr, 0);
+
+  // broadcast
+  args.broadcast = true;
+  pthread_create(&thr, 0, SignalCond, &args);
+  res = pthread_cond_wait(&cond, &mu);
+  assert(!res);
+  pthread_join(thr, 0);
+
   pthread_mutex_unlock(&mu);
   pthread_mutex_destroy(&mu);
   pthread_cond_destroy(&cond);
