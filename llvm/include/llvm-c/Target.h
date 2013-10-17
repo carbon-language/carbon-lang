@@ -186,6 +186,15 @@ LLVMTypeRef LLVMIntPtrType(LLVMTargetDataRef);
     See the method llvm::DataLayout::getIntPtrType. */
 LLVMTypeRef LLVMIntPtrTypeForAS(LLVMTargetDataRef, unsigned AS);
 
+/** Returns the integer type that is the same size as a pointer on a target.
+    See the method llvm::DataLayout::getIntPtrType. */
+LLVMTypeRef LLVMIntPtrTypeInContext(LLVMContextRef, LLVMTargetDataRef);
+
+/** Returns the integer type that is the same size as a pointer on a target.
+    This version allows the address space to be specified.
+    See the method llvm::DataLayout::getIntPtrType. */
+LLVMTypeRef LLVMIntPtrTypeForASInContext(LLVMContextRef, LLVMTargetDataRef, unsigned AS);
+
 /** Computes the size of a type in bytes for a target.
     See the method llvm::DataLayout::getTypeSizeInBits. */
 unsigned long long LLVMSizeOfTypeInBits(LLVMTargetDataRef, LLVMTypeRef);
