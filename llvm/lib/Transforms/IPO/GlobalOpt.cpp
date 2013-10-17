@@ -168,17 +168,19 @@ static AtomicOrdering StrongerOrdering(AtomicOrdering X, AtomicOrdering Y) {
   return (AtomicOrdering)std::max(X, Y);
 }
 
-/// SafeToDestroyConstant - It is safe to destroy a constant iff it is only used
-/// by constants itself.  Note that constants cannot be cyclic, so this test is
-/// pretty easy to implement recursively.
+/// It is safe to destroy a constant iff it is only used by constants itself.
+/// Note that constants cannot be cyclic, so this test is pretty easy to
+/// implement recursively.
 ///
-static bool SafeToDestroyConstant(const Constant *C) {
-  if (isa<GlobalValue>(C)) return false;
+static bool isSafeToDestroyConstant(const Constant *C) {
+  if (isa<GlobalValue>(C))
+    return false;
 
   for (Value::const_use_iterator UI = C->use_begin(), E = C->use_end(); UI != E;
        ++UI)
     if (const Constant *CU = dyn_cast<Constant>(*UI)) {
-      if (!SafeToDestroyConstant(CU)) return false;
+      if (!isSafeToDestroyConstant(CU))
+        return false;
     } else
       return false;
   return true;
@@ -288,7 +290,7 @@ static bool analyzeGlobalAux(const Value *V, GlobalStatus &GS,
     } else if (const Constant *C = dyn_cast<Constant>(U)) {
       GS.HasNonInstructionUser = true;
       // We might have a dead and dangling constant hanging off of here.
-      if (!SafeToDestroyConstant(C))
+      if (!isSafeToDestroyConstant(C))
         return true;
     } else {
       GS.HasNonInstructionUser = true;
@@ -442,7 +444,7 @@ static bool CleanupPointerRootUsers(GlobalVariable *GV,
         Changed = true;
       }
     } else if (Constant *C = dyn_cast<Constant>(U)) {
-      if (SafeToDestroyConstant(C)) {
+      if (isSafeToDestroyConstant(C)) {
         C->destroyConstant();
         // This could have invalidated UI, start over from scratch.
         Dead.clear();
@@ -542,7 +544,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init,
     } else if (Constant *C = dyn_cast<Constant>(U)) {
       // If we have a chain of dead constantexprs or other things dangling from
       // us, and if they are all dead, nuke them without remorse.
-      if (SafeToDestroyConstant(C)) {
+      if (isSafeToDestroyConstant(C)) {
         C->destroyConstant();
         CleanupConstantGlobalUsers(V, Init, TD, TLI);
         return true;
@@ -557,7 +559,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init,
 static bool isSafeSROAElementUse(Value *V) {
   // We might have a dead and dangling constant hanging off of here.
   if (Constant *C = dyn_cast<Constant>(V))
-    return SafeToDestroyConstant(C);
+    return isSafeToDestroyConstant(C);
 
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return false;
