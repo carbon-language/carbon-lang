@@ -103,30 +103,6 @@ DWARFCompileUnit::Extract(const DataExtractor &debug_info, lldb::offset_t *offse
 }
 
 
-dw_offset_t
-DWARFCompileUnit::Extract(lldb::offset_t offset, const DataExtractor& debug_info_data, const DWARFAbbreviationDeclarationSet* abbrevs)
-{
-    Clear();
-
-    m_offset = offset;
-
-    if (debug_info_data.ValidOffset(offset))
-    {
-        m_length        = debug_info_data.GetU32(&offset);
-        m_version       = debug_info_data.GetU16(&offset);
-        bool abbrevs_OK = debug_info_data.GetU32(&offset) == abbrevs->GetOffset();
-        m_abbrevs       = abbrevs;
-        m_addr_size     = debug_info_data.GetU8 (&offset);
-
-        bool version_OK = SymbolFileDWARF::SupportedVersion(m_version);
-        bool addr_size_OK = ((m_addr_size == 4) || (m_addr_size == 8));
-
-        if (version_OK && addr_size_OK && abbrevs_OK && debug_info_data.ValidOffset(offset))
-            return offset;
-    }
-    return DW_INVALID_OFFSET;
-}
-
 void
 DWARFCompileUnit::ClearDIEs(bool keep_compile_unit_die)
 {
