@@ -190,7 +190,7 @@ def _HASH_HASH_HASH : Flag<["-"], "###">, Flags<[DriverOption, CoreOption]>,
     HelpText<"Print the commands to run for this compilation">;
 def _DASH_DASH : Option<["--"], "", KIND_REMAINING_ARGS>,
     Flags<[DriverOption, CoreOption]>;
-def A : JoinedOrSeparate<["-"], "A">;
+def A : JoinedOrSeparate<["-"], "A">, Flags<[RenderJoined]>;
 def B : JoinedOrSeparate<["-"], "B">;
 def CC : Flag<["-"], "CC">, Flags<[CC1Option]>;
 def C : Flag<["-"], "C">, Flags<[CC1Option]>;
@@ -1420,8 +1420,6 @@ def fuse_ld_EQ : Joined<["-"], "fuse-ld=">, Group<clang_ignored_f_Group>;
 defm align_functions : BooleanFFlag<"align-functions">, Group<clang_ignored_f_Group>;
 def falign_functions_EQ : Joined<["-"], "falign-functions=">, Group<clang_ignored_f_Group>;
 
-def ffixed_line_length_VALUE : Joined<["-"], "ffixed-line-length-">, Group<clang_ignored_f_Group>;
-
 defm eliminate_unused_debug_types : BooleanFFlag<"eliminate-unused-debug-types">, Group<clang_ignored_f_Group>;
 defm float_store : BooleanFFlag<"float-store">, Group<clang_ignored_f_Group>;
 defm function_attribute_list : BooleanFFlag<"function-attribute-list">, Group<clang_ignored_f_Group>;
@@ -1452,6 +1450,85 @@ defm tree_salias : BooleanFFlag<"tree-salias">, Group<clang_ignored_f_Group>;
 defm tree_vectorizer_verbose : BooleanFFlag<"tree-vectorizer-verbose">, Group<clang_ignored_f_Group>;
 defm unroll_all_loops : BooleanFFlag<"unroll-all-loops">, Group<clang_ignored_f_Group>;
 defm unswitch_loops : BooleanFFlag<"unswitch-loops">, Group<clang_ignored_f_Group>;
+
+
+// gfortran options that we recognize in the driver and pass along when
+// invoking GCC to compile Fortran code.
+def gfortran_Group : OptionGroup<"gfortran Group">;
+
+// Generic gfortran options.
+def A_DASH : Joined<["-"], "A-">, Group<gfortran_Group>;
+def J : JoinedOrSeparate<["-"], "J">, Flags<[RenderJoined]>, Group<gfortran_Group>;
+def cpp : Flag<["-"], "cpp">, Group<gfortran_Group>;
+def nocpp : Flag<["-"], "nocpp">, Group<gfortran_Group>;
+def static_libgfortran : Flag<["-"], "static-libgfortran">, Group<gfortran_Group>;
+
+// "f" options with values for gfortran.
+def fblas_matmul_limit_EQ : Joined<["-"], "fblas-matmul-limit=">, Group<gfortran_Group>;
+def fcheck_EQ : Joined<["-"], "fcheck=">, Group<gfortran_Group>;
+def fcoarray_EQ : Joined<["-"], "fcoarray=">, Group<gfortran_Group>;
+def fconvert_EQ : Joined<["-"], "fconvert=">, Group<gfortran_Group>;
+def ffixed_line_length_VALUE : Joined<["-"], "ffixed-line-length-">, Group<gfortran_Group>;
+def ffpe_trap_EQ : Joined<["-"], "ffpe-trap=">, Group<gfortran_Group>;
+def ffree_line_length_VALUE : Joined<["-"], "ffree-line-length-">, Group<gfortran_Group>;
+def finit_character_EQ : Joined<["-"], "finit-character=">, Group<gfortran_Group>;
+def finit_integer_EQ : Joined<["-"], "finit-integer=">, Group<gfortran_Group>;
+def finit_logical_EQ : Joined<["-"], "finit-logical=">, Group<gfortran_Group>;
+def finit_real_EQ : Joined<["-"], "finit-real=">, Group<gfortran_Group>;
+def fmax_array_constructor_EQ : Joined<["-"], "fmax-array-constructor=">, Group<gfortran_Group>;
+def fmax_errors_EQ : Joined<["-"], "fmax-errors=">, Group<gfortran_Group>;
+def fmax_stack_var_size_EQ : Joined<["-"], "fmax-stack-var-size=">, Group<gfortran_Group>;
+def fmax_subrecord_length_EQ : Joined<["-"], "fmax-subrecord-length=">, Group<gfortran_Group>;
+def frecord_marker_EQ : Joined<["-"], "frecord-marker=">, Group<gfortran_Group>;
+
+// "f" flags for gfortran.
+defm aggressive_function_elimination : BooleanFFlag<"aggressive-function-elimination">, Group<gfortran_Group>;
+defm align_commons : BooleanFFlag<"align-commons">, Group<gfortran_Group>;
+defm all_intrinsics : BooleanFFlag<"all-intrinsics">, Group<gfortran_Group>;
+defm automatic : BooleanFFlag<"automatic">, Group<gfortran_Group>;
+defm backslash : BooleanFFlag<"backslash">, Group<gfortran_Group>;
+defm backtrace : BooleanFFlag<"backtrace">, Group<gfortran_Group>;
+defm bounds_check : BooleanFFlag<"bounds-check">, Group<gfortran_Group>;
+defm check_array_temporaries : BooleanFFlag<"check-array-temporaries">, Group<gfortran_Group>;
+defm cray_pointer : BooleanFFlag<"cray-pointer">, Group<gfortran_Group>;
+defm d_lines_as_code : BooleanFFlag<"d-lines-as-code">, Group<gfortran_Group>;
+defm d_lines_as_comments : BooleanFFlag<"d-lines-as-comments">, Group<gfortran_Group>;
+defm default_double_8 : BooleanFFlag<"default-double-8">, Group<gfortran_Group>;
+defm default_integer_8 : BooleanFFlag<"default-integer-8">, Group<gfortran_Group>;
+defm default_real_8 : BooleanFFlag<"default-real-8">, Group<gfortran_Group>;
+defm dollar_ok : BooleanFFlag<"dollar-ok">, Group<gfortran_Group>;
+defm dump_fortran_optimized : BooleanFFlag<"dump-fortran-optimized">, Group<gfortran_Group>;
+defm dump_fortran_original : BooleanFFlag<"dump-fortran-original">, Group<gfortran_Group>;
+defm dump_parse_tree : BooleanFFlag<"dump-parse-tree">, Group<gfortran_Group>;
+defm external_blas : BooleanFFlag<"external-blas">, Group<gfortran_Group>;
+defm f2c : BooleanFFlag<"f2c">, Group<gfortran_Group>;
+defm fixed_form : BooleanFFlag<"fixed-form">, Group<gfortran_Group>;
+defm free_form : BooleanFFlag<"free-form">, Group<gfortran_Group>;
+defm frontend_optimize : BooleanFFlag<"frontend-optimize">, Group<gfortran_Group>;
+defm implicit_none : BooleanFFlag<"implicit-none">, Group<gfortran_Group>;
+defm init_local_zero : BooleanFFlag<"init-local-zero">, Group<gfortran_Group>;
+defm integer_4_integer_8 : BooleanFFlag<"integer-4-integer-8">, Group<gfortran_Group>;
+defm intrinsic_modules_path : BooleanFFlag<"intrinsic-modules-path">, Group<gfortran_Group>;
+defm max_identifier_length : BooleanFFlag<"max-identifier-length">, Group<gfortran_Group>;
+defm module_private : BooleanFFlag<"module-private">, Group<gfortran_Group>;
+defm pack_derived : BooleanFFlag<"pack-derived">, Group<gfortran_Group>;
+defm protect_parens : BooleanFFlag<"protect-parens">, Group<gfortran_Group>;
+defm range_check : BooleanFFlag<"range-check">, Group<gfortran_Group>;
+defm real_4_real_10 : BooleanFFlag<"real-4-real-10">, Group<gfortran_Group>;
+defm real_4_real_16 : BooleanFFlag<"real-4-real-16">, Group<gfortran_Group>;
+defm real_4_real_8 : BooleanFFlag<"real-4-real-8">, Group<gfortran_Group>;
+defm real_8_real_10 : BooleanFFlag<"real-8-real-10">, Group<gfortran_Group>;
+defm real_8_real_16 : BooleanFFlag<"real-8-real-16">, Group<gfortran_Group>;
+defm real_8_real_4 : BooleanFFlag<"real-8-real-4">, Group<gfortran_Group>;
+defm realloc_lhs : BooleanFFlag<"realloc-lhs">, Group<gfortran_Group>;
+defm recursive : BooleanFFlag<"recursive">, Group<gfortran_Group>;
+defm repack_arrays : BooleanFFlag<"repack-arrays">, Group<gfortran_Group>;
+defm second_underscore : BooleanFFlag<"second-underscore">, Group<gfortran_Group>;
+defm sign_zero : BooleanFFlag<"sign-zero">, Group<gfortran_Group>;
+defm stack_arrays : BooleanFFlag<"stack-arrays">, Group<gfortran_Group>;
+defm underscoring : BooleanFFlag<"underscoring">, Group<gfortran_Group>;
+defm whole_file : BooleanFFlag<"whole-file">, Group<gfortran_Group>;
+
 
 include "CC1Options.td"
 
