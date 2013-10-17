@@ -1392,14 +1392,13 @@ INTERCEPTOR(long double, modfl, long double x, long double *iptr) {
 static void write_msghdr(void *ctx, struct __sanitizer_msghdr *msg,
                          SSIZE_T maxlen) {
   COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg, sizeof(*msg));
-  if (msg->msg_name)
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg->msg_name,
-                                   REAL(strlen)((char *)msg->msg_name) + 1);
-  if (msg->msg_iov)
+  if (msg->msg_name && msg->msg_namelen)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg->msg_name, msg->msg_namelen);
+  if (msg->msg_iov && msg->msg_iovlen)
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg->msg_iov,
                                    sizeof(*msg->msg_iov) * msg->msg_iovlen);
   write_iovec(ctx, msg->msg_iov, msg->msg_iovlen, maxlen);
-  if (msg->msg_control)
+  if (msg->msg_control && msg->msg_controllen)
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg->msg_control, msg->msg_controllen);
 }
 

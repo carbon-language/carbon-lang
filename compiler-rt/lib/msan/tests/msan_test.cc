@@ -815,6 +815,7 @@ TEST(MemorySanitizer, accept) {
   ASSERT_LT(0, listen_socket);
 
   struct sockaddr_in sai;
+  memset(&sai, 0, sizeof(sai));
   sai.sin_family = AF_INET;
   sai.sin_port = 0;
   sai.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
@@ -868,6 +869,7 @@ TEST(MemorySanitizer, getaddrinfo) {
 
 TEST(MemorySanitizer, getnameinfo) {
   struct sockaddr_in sai;
+  memset(&sai, 0, sizeof(sai));
   sai.sin_family = AF_INET;
   sai.sin_port = 80;
   sai.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
@@ -920,6 +922,77 @@ TEST(MemorySanitizer, gethostbyname) {
 }
 
 #endif // MSAN_TEST_DISABLE_GETHOSTBYNAME
+
+TEST(MemorySanitizer, recvmsg) {
+  int server_socket = socket(AF_INET, SOCK_DGRAM, 0);
+  ASSERT_LT(0, server_socket);
+
+  struct sockaddr_in sai;
+  memset(&sai, 0, sizeof(sai));
+  sai.sin_family = AF_INET;
+  sai.sin_port = 0;
+  sai.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  int res = bind(server_socket, (struct sockaddr *)&sai, sizeof(sai));
+  ASSERT_EQ(0, res);
+
+  socklen_t sz = sizeof(sai);
+  res = getsockname(server_socket, (struct sockaddr *)&sai, &sz);
+  ASSERT_EQ(0, res);
+  ASSERT_EQ(sizeof(sai), sz);
+
+
+  int client_socket = socket(AF_INET, SOCK_DGRAM, 0);
+  ASSERT_LT(0, client_socket);
+
+  struct sockaddr_in client_sai;
+  memset(&client_sai, 0, sizeof(client_sai));
+  client_sai.sin_family = AF_INET;
+  client_sai.sin_port = 0;
+  client_sai.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  res = bind(client_socket, (struct sockaddr *)&client_sai, sizeof(client_sai));
+  ASSERT_EQ(0, res);
+
+  sz = sizeof(client_sai);
+  res = getsockname(client_socket, (struct sockaddr *)&client_sai, &sz);
+  ASSERT_EQ(0, res);
+  ASSERT_EQ(sizeof(client_sai), sz);
+
+  
+  const char *s = "message text";
+  struct iovec iov;
+  iov.iov_base = (void *)s;
+  iov.iov_len = strlen(s) + 1;
+  struct msghdr msg;
+  memset(&msg, 0, sizeof(msg));
+  msg.msg_name = &sai;
+  msg.msg_namelen = sizeof(sai);
+  msg.msg_iov = &iov;
+  msg.msg_iovlen = 1;
+  res = sendmsg(client_socket, &msg, 0);
+  ASSERT_LT(0, res);
+
+
+  char buf[1000];
+  struct iovec recv_iov;
+  recv_iov.iov_base = (void *)&buf;
+  recv_iov.iov_len = sizeof(buf);
+  struct sockaddr_in recv_sai;
+  struct msghdr recv_msg;
+  memset(&recv_msg, 0, sizeof(recv_msg));
+  recv_msg.msg_name = &recv_sai;
+  recv_msg.msg_namelen = sizeof(recv_sai);
+  recv_msg.msg_iov = &recv_iov;
+  recv_msg.msg_iovlen = 1;
+  res = recvmsg(server_socket, &recv_msg, 0);
+  ASSERT_LT(0, res);
+
+  ASSERT_EQ(sizeof(recv_sai), recv_msg.msg_namelen);
+  EXPECT_NOT_POISONED(*(struct sockaddr_in *)recv_msg.msg_name);
+  EXPECT_STREQ(s, buf);
+
+  close(server_socket);
+  close(client_socket);
+}
 
 TEST(MemorySanitizer, gethostbyname2) {
   struct hostent *he = gethostbyname2("localhost", AF_INET);
