@@ -839,7 +839,7 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU, const MDNode *N) {
   SPMap[N] = TheCU;
 
   // Expose as a global name.
-  TheCU->addGlobalName(SP.getName(), SubprogramDie);
+  TheCU->addGlobalName(SP.getName(), SubprogramDie, resolve(SP.getContext()));
 }
 
 void DwarfDebug::constructImportedEntityDIE(CompileUnit *TheCU,

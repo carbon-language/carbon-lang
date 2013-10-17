@@ -123,9 +123,13 @@ public:
   ///
   bool hasContent() const { return !CUDie->getChildren().empty(); }
 
+  /// getParentContextString - Get a string containing the language specific
+  /// context for a global name.
+  std::string getParentContextString(DIScope Context) const;
+
   /// addGlobalName - Add a new global entity to the compile unit.
   ///
-  void addGlobalName(StringRef Name, DIE *Die);
+  void addGlobalName(StringRef Name, DIE *Die, DIScope Context);
 
   /// addGlobalType - Add a new global type to the compile unit.
   ///

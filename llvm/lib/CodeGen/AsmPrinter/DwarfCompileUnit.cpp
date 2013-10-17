@@ -911,8 +911,10 @@ void CompileUnit::addAccelType(StringRef Name, std::pair<DIE *, unsigned> Die) {
 }
 
 /// addGlobalName - Add a new global name to the compile unit.
-void CompileUnit::addGlobalName(StringRef Name, DIE *Die) {
-  GlobalNames[Name] = Die;
+void CompileUnit::addGlobalName(StringRef Name, DIE *Die, DIScope Context) {
+  std::string ContextString = getParentContextString(Context);
+  std::string FullName = ContextString + Name.str();
+  GlobalNames[FullName] = Die;
 }
 
 /// addGlobalType - Add a new global type to the compile unit.
@@ -922,8 +924,51 @@ void CompileUnit::addGlobalType(DIType Ty) {
   if (!Ty.getName().empty() && !Ty.isForwardDecl() &&
       (!Context || Context.isCompileUnit() || Context.isFile() ||
        Context.isNameSpace()))
-    if (DIEEntry *Entry = getDIEEntry(Ty))
-      GlobalTypes[Ty.getName()] = Entry->getEntry();
+    if (DIEEntry *Entry = getDIEEntry(Ty)) {
+      std::string ContextString = getParentContextString(Context);
+      std::string FullName = ContextString + Ty.getName().str();
+      GlobalTypes[FullName] = Entry->getEntry();
+    }
+}
+
+/// getParentContextString - Walks the metadata parent chain in a language
+/// specific manner (using the compile unit language) and returns
+/// it as a string. This is done at the metadata level because DIEs may
+/// not currently have been added to the parent context and walking the
+/// DIEs looking for names is more expensive than walking the metadata.
+std::string CompileUnit::getParentContextString(DIScope Context) const {
+  if (!Context)
+    return "";
+
+  // FIXME: Decide whether to implement this for non-C++ languages.
+  if (getLanguage() != dwarf::DW_LANG_C_plus_plus)
+    return "";
+
+  std::string CS = "";
+  SmallVector<DIScope, 1> Parents;
+  while (!Context.isCompileUnit()) {
+    Parents.push_back(Context);
+    if (Context.getContext())
+      Context = resolve(Context.getContext());
+    else
+      // Structure, etc types will have a NULL context if they're at the top
+      // level.
+      break;
+  }
+
+  // Reverse iterate over our list to go from the outermost construct to the
+  // innermost.
+  for (SmallVectorImpl<DIScope>::reverse_iterator I = Parents.rbegin(),
+                                                  E = Parents.rend();
+       I != E; ++I) {
+    DIScope Ctx = *I;
+    StringRef Name = Ctx.getName();
+    if (Name != "") {
+      CS += Name;
+      CS += "::";
+    }
+  }
+  return CS;
 }
 
 /// addPubTypes - Add subprogram argument types for pubtypes section.
@@ -1289,7 +1334,7 @@ DIE *CompileUnit::getOrCreateNameSpace(DINameSpace NS) {
   if (!NS.getName().empty()) {
     addString(NDie, dwarf::DW_AT_name, NS.getName());
     addAccelNamespace(NS.getName(), NDie);
-    addGlobalName(NS.getName(), NDie);
+    addGlobalName(NS.getName(), NDie, NS.getContext());
   } else
     addAccelNamespace("(anonymous namespace)", NDie);
   addSourceLine(NDie, NS);
@@ -1571,8 +1616,8 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
   }
 
   if (!GV.isLocalToUnit())
-    addGlobalName(GV.getName(),
-                  VariableSpecDIE ? VariableSpecDIE : VariableDIE);
+    addGlobalName(GV.getName(), VariableSpecDIE ? VariableSpecDIE : VariableDIE,
+                  GV.getContext());
 }
 
 /// constructSubrangeDIE - Construct subrange DIE from DISubrange.
