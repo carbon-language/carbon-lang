@@ -3794,6 +3794,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
         EVT CountVT = NewOp0.getOperand(1).getValueType();
         SDValue NewSHL = DAG.getNode(ISD::SHL, SDLoc(N), NewOp0.getValueType(),
                                      NewOp0, DAG.getConstant(c2, CountVT));
+        AddToWorkList(NewSHL.getNode());
         return DAG.getNode(ISD::ZERO_EXTEND, SDLoc(N0), VT, NewSHL);
       }
     }

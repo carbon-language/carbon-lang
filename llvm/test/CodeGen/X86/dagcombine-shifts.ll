@@ -187,6 +187,8 @@ entry:
 ; Once the add is removed, the number of uses becomes one and therefore the
 ; dags are canonicalized. After Legalization, we need to make sure that the
 ; valuetype for the shift count is legal.
+; Verify also that we correctly fold the shl-shr sequence into an 
+; AND with bitmask.
 
 define void @g(i32 %a) {
   %b = lshr i32 %a, 2
@@ -196,6 +198,12 @@ define void @g(i32 %a) {
   tail call void @f(i64 %e)
   ret void
 }
+
+; CHECK-LABEL: @g
+; CHECK-NOT: shr
+; CHECK-NOT: shl
+; CHECK: and
+; CHECK-NEXT: jmp
 
 declare void @f(i64)
 
