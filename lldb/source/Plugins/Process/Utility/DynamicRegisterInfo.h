@@ -13,6 +13,7 @@
 // C Includes
 // C++ Includes
 #include <vector>
+#include <map>
 
 // Other libraries and framework includes
 // Project includes
@@ -24,13 +25,15 @@ class DynamicRegisterInfo
 public:
     DynamicRegisterInfo ();
 
-    DynamicRegisterInfo (const lldb_private::PythonDictionary &dict);
+    DynamicRegisterInfo (const lldb_private::PythonDictionary &dict,
+                         lldb::ByteOrder byte_order);
     
     virtual 
     ~DynamicRegisterInfo ();
 
     size_t
-    SetRegisterInfo (const lldb_private::PythonDictionary &dict);
+    SetRegisterInfo (const lldb_private::PythonDictionary &dict,
+                     lldb::ByteOrder byte_order);
 
     void
     AddRegister (lldb_private::RegisterInfo &reg_info, 
@@ -63,6 +66,9 @@ public:
     ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num) const;
 
     void
+    Dump () const;
+
+    void
     Clear();
 
 protected:
@@ -74,12 +80,19 @@ protected:
     typedef std::vector <uint32_t> reg_num_collection;
     typedef std::vector <reg_num_collection> set_reg_num_collection;
     typedef std::vector <lldb_private::ConstString> name_collection;
+    typedef std::map<uint32_t, reg_num_collection> reg_to_regs_map;
+
+    lldb_private::RegisterInfo *
+    GetRegisterInfo (const lldb_private::ConstString &reg_name);
 
     reg_collection m_regs;
     set_collection m_sets;
     set_reg_num_collection m_set_reg_nums;
     name_collection m_set_names;
+    reg_to_regs_map m_value_regs_map;
+    reg_to_regs_map m_invalidate_regs_map;
     size_t m_reg_data_byte_size;   // The number of bytes required to store all registers
+    bool m_finalized;
 };
 
 #endif  // lldb_DynamicRegisterInfo_h_

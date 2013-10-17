@@ -144,7 +144,7 @@ OperatingSystemPython::GetDynamicRegisterInfo ()
         if (!dictionary)
             return NULL;
         
-        m_register_info_ap.reset (new DynamicRegisterInfo (dictionary));
+        m_register_info_ap.reset (new DynamicRegisterInfo (dictionary, m_process->GetTarget().GetArchitecture().GetByteOrder()));
         assert (m_register_info_ap->GetNumRegisters() > 0);
         assert (m_register_info_ap->GetNumRegisterSets() > 0);
     }

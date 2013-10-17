@@ -93,18 +93,22 @@ PythonObject::Str ()
 //----------------------------------------------------------------------
 
 PythonString::PythonString (PyObject *py_obj) :
-    PythonObject(py_obj)
+    PythonObject()
 {
+    Reset(py_obj); // Use "Reset()" to ensure that py_obj is a string
 }
 
 PythonString::PythonString (const PythonObject &object) :
-    PythonObject(object.GetPythonObject())
+    PythonObject()
 {
+    Reset(object.GetPythonObject()); // Use "Reset()" to ensure that py_obj is a string
 }
 
 PythonString::PythonString (const lldb::ScriptInterpreterObjectSP &script_object_sp) :
-    PythonObject (script_object_sp)
+    PythonObject()
 {
+    if (script_object_sp)
+        Reset((PyObject *)script_object_sp->GetObject()); // Use "Reset()" to ensure that py_obj is a string
 }
 
 PythonString::PythonString (const char* string) :
@@ -158,23 +162,28 @@ PythonString::SetString (const char* string)
 //----------------------------------------------------------------------
 
 PythonInteger::PythonInteger (PyObject *py_obj) :
-    PythonObject(py_obj)
+    PythonObject()
 {
+    Reset(py_obj); // Use "Reset()" to ensure that py_obj is a integer type
 }
 
 PythonInteger::PythonInteger (const PythonObject &object) :
-    PythonObject(object.GetPythonObject())
+    PythonObject()
 {
+    Reset(object.GetPythonObject()); // Use "Reset()" to ensure that py_obj is a integer type
 }
 
 PythonInteger::PythonInteger (const lldb::ScriptInterpreterObjectSP &script_object_sp) :
-    PythonObject (script_object_sp)
+    PythonObject()
 {
+    if (script_object_sp)
+        Reset((PyObject *)script_object_sp->GetObject()); // Use "Reset()" to ensure that py_obj is a string
 }
 
 PythonInteger::PythonInteger (int64_t value) :
-    PythonObject(PyInt_FromLong(value))
+    PythonObject()
 {
+    SetInteger (value);
 }
 
 
@@ -185,8 +194,11 @@ PythonInteger::~PythonInteger ()
 bool
 PythonInteger::Reset (PyObject *py_obj)
 {
-    if (py_obj && PyInt_Check(py_obj))
-        return PythonObject::Reset(py_obj);
+    if (py_obj)
+    {
+        if (PyInt_Check (py_obj) || PyLong_Check(py_obj))
+            return PythonObject::Reset(py_obj);
+    }
     
     PythonObject::Reset(NULL);
     return py_obj == NULL;
@@ -196,15 +208,19 @@ int64_t
 PythonInteger::GetInteger()
 {
     if (m_py_obj)
-        return PyInt_AsLong(m_py_obj);
-    else
-        return UINT64_MAX;
+    {
+        if (PyInt_Check(m_py_obj))
+            return PyInt_AsLong(m_py_obj);
+        else if (PyLong_Check(m_py_obj))
+            return PyLong_AsLongLong(m_py_obj);
+    }
+    return UINT64_MAX;
 }
 
 void
 PythonInteger::SetInteger (int64_t value)
 {
-    PythonObject::Reset(PyInt_FromLong(value));
+    PythonObject::Reset(PyLong_FromLongLong(value));
 }
 
 //----------------------------------------------------------------------
@@ -222,19 +238,23 @@ PythonList::PythonList (uint32_t count) :
 }
 
 PythonList::PythonList (PyObject *py_obj) :
-    PythonObject(py_obj)
+    PythonObject()
 {
+    Reset(py_obj); // Use "Reset()" to ensure that py_obj is a list
 }
 
 
 PythonList::PythonList (const PythonObject &object) :
-    PythonObject(object.GetPythonObject())
+    PythonObject()
 {
+    Reset(object.GetPythonObject()); // Use "Reset()" to ensure that py_obj is a list
 }
 
 PythonList::PythonList (const lldb::ScriptInterpreterObjectSP &script_object_sp) :
-    PythonObject (script_object_sp)
+    PythonObject()
 {
+    if (script_object_sp)
+        Reset((PyObject *)script_object_sp->GetObject()); // Use "Reset()" to ensure that py_obj is a list
 }
 
 PythonList::~PythonList ()
@@ -293,17 +313,21 @@ PythonDictionary::PythonDictionary () :
 PythonDictionary::PythonDictionary (PyObject *py_obj) :
     PythonObject(py_obj)
 {
+    Reset(py_obj); // Use "Reset()" to ensure that py_obj is a dictionary
 }
 
 
 PythonDictionary::PythonDictionary (const PythonObject &object) :
-    PythonObject(object.GetPythonObject())
+    PythonObject()
 {
+    Reset(object.GetPythonObject()); // Use "Reset()" to ensure that py_obj is a dictionary
 }
 
 PythonDictionary::PythonDictionary (const lldb::ScriptInterpreterObjectSP &script_object_sp) :
-    PythonObject (script_object_sp)
+    PythonObject ()
 {
+    if (script_object_sp)
+        Reset((PyObject *)script_object_sp->GetObject()); // Use "Reset()" to ensure that py_obj is a dictionary
 }
 
 PythonDictionary::~PythonDictionary ()

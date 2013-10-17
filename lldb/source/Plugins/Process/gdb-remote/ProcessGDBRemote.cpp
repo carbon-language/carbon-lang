@@ -334,7 +334,18 @@ ProcessGDBRemote::ParsePythonTargetDefinition(const FileSpec &target_definition_
 
         if (target_dict)
         {
-            if (m_register_info.SetRegisterInfo (target_dict) > 0)
+            PythonDictionary host_info_dict (target_dict.GetItemForKey("host-info"));
+            if (host_info_dict)
+            {
+                ArchSpec host_arch (host_info_dict.GetItemForKeyAsString(PythonString("triple")));
+                
+                if (!host_arch.IsCompatibleMatch(GetTarget().GetArchitecture()))
+                {
+                    GetTarget().SetArchitecture(host_arch);
+                }
+                    
+            }
+            if (m_register_info.SetRegisterInfo (target_dict, GetTarget().GetArchitecture().GetByteOrder()) > 0)
             {
                 return true;
             }
@@ -522,12 +533,12 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
     if (reg_num == 0)
     {
         FileSpec target_definition_fspec = GetGlobalPluginProperties()->GetTargetDefinitionFile ();
-
-        // See if we can get register definitions from a python file
-        if (ParsePythonTargetDefinition (target_definition_fspec))
+        
+        if (target_definition_fspec)
         {
-            m_register_info.Finalize ();
-            return;
+            // See if we can get register definitions from a python file
+            if (ParsePythonTargetDefinition (target_definition_fspec))
+                return;
         }
     }
 
