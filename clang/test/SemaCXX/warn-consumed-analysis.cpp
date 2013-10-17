@@ -546,14 +546,36 @@ void testWhileLoop1() {
   
   ConsumableClass<int> var0, var1(42);
   
-  while (i-- > 0) {
+  while (i-- > 0) { // expected-warning {{state of variable 'var1' must match at the entry and exit of loop}}
     *var0; // expected-warning {{invalid invocation of method 'operator*' on object 'var0' while it is in the 'consumed' state}}
     
     *var1;
     var1.consume();
-    *var1; // expected-warning {{invalid invocation of method 'operator*' on object 'var1' while it is in the 'consumed' state}} \
-           // expected-warning {{state of variable 'var1' must match at the entry and exit of loop}}
+    *var1; // expected-warning {{invalid invocation of method 'operator*' on object 'var1' while it is in the 'consumed' state}}
   }
   
   *var0; // expected-warning {{invalid invocation of method 'operator*' on object 'var0' while it is in the 'consumed' state}}
 }
+
+
+namespace ContinueICETest {
+
+bool cond1();
+bool cond2();
+
+static void foo1() {
+  while (cond1()) {
+    if (cond2())
+      continue;
+  }
+}
+
+static void foo2() {
+  while (true) {
+    if (false)
+      continue;
+  }
+}
+
+} // end namespace ContinueICETest
+

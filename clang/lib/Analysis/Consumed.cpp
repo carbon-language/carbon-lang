@@ -51,6 +51,23 @@ using namespace consumed;
 // Key method definition
 ConsumedWarningsHandlerBase::~ConsumedWarningsHandlerBase() {}
 
+static SourceLocation getFirstStmtLoc(const CFGBlock *Block) {
+  // Find the source location of the first statement in the block, if the block
+  // is not empty.
+  for (CFGBlock::const_iterator BI = Block->begin(), BE = Block->end();
+       BI != BE; ++BI) {
+    if (Optional<CFGStmt> CS = BI->getAs<CFGStmt>())
+      return CS->getStmt()->getLocStart();
+  }
+
+  // Block is empty.
+  // If we have one successor, return the first statement in that block
+  if (Block->succ_size() == 1 && *Block->succ_begin())
+    return getFirstStmtLoc(*Block->succ_begin());
+
+  return SourceLocation();
+}
+
 static SourceLocation getLastStmtLoc(const CFGBlock *Block) {
   // Find the source location of the last statement in the block, if the block
   // is not empty.
@@ -59,17 +76,23 @@ static SourceLocation getLastStmtLoc(const CFGBlock *Block) {
   } else {
     for (CFGBlock::const_reverse_iterator BI = Block->rbegin(),
          BE = Block->rend(); BI != BE; ++BI) {
-      // FIXME: Handle other CFGElement kinds.
       if (Optional<CFGStmt> CS = BI->getAs<CFGStmt>())
         return CS->getStmt()->getLocStart();
     }
   }
+
+  // If we have one successor, return the first statement in that block
+  SourceLocation Loc;
+  if (Block->succ_size() == 1 && *Block->succ_begin())
+    Loc = getFirstStmtLoc(*Block->succ_begin());
+  if (Loc.isValid())
+    return Loc;
   
-  // The block is empty, and has a single predecessor. Use its exit location.
-  assert(Block->pred_size() == 1 && *Block->pred_begin() &&
-         Block->succ_size() != 0);
-    
-  return getLastStmtLoc(*Block->pred_begin());
+  // If we have one predecessor, return the last statement in that block
+  if (Block->pred_size() == 1 && *Block->pred_begin())
+    return getLastStmtLoc(*Block->pred_begin());
+
+  return Loc;
 }
 
 static ConsumedState invertConsumedUnconsumed(ConsumedState State) {
@@ -1237,7 +1260,7 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
   CFG *CFGraph = AC.getCFG();
   if (!CFGraph)
     return;
-  
+
   determineExpectedReturnState(AC, D);
 
   PostOrderCFGView *SortedGraph = AC.getAnalysis<PostOrderCFGView>();
