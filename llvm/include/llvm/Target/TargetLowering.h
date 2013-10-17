@@ -576,7 +576,7 @@ public:
       VectorType *VTy = cast<VectorType>(Ty);
       Type *Elm = VTy->getElementType();
       // Lower vectors of pointers to native pointer types.
-      if (Elm->isPointerTy()) 
+      if (Elm->isPointerTy())
         Elm = EVT(PointerTy).getTypeForEVT(Ty->getContext());
       return EVT::getVectorVT(Ty->getContext(), EVT::getEVT(Elm, false),
                        VTy->getNumElements());
@@ -1185,11 +1185,12 @@ public:
 
   /// Return true if the target supplies and combines to a paired load
   /// two loaded values of type LoadedType next to each other in memory.
-  /// RequiredAlignment gives the minimal alignment constraints that must be met to
-  /// be able to select this paired load.
+  /// RequiredAlignment gives the minimal alignment constraints that must be met
+  /// to be able to select this paired load.
   ///
-  /// This information is *not* used to generate actual paired loads, but it is used
-  /// to generate a sequence of loads that is easier to combine into a paired load.
+  /// This information is *not* used to generate actual paired loads, but it is
+  /// used to generate a sequence of loads that is easier to combine into a
+  /// paired load.
   /// For instance, something like this:
   /// a = load i64* addr
   /// b = trunc i64 a to i32
@@ -1200,8 +1201,9 @@ public:
   /// d = load i32* addr2
   /// Where addr1 = addr2 +/- sizeof(i32).
   ///
-  /// In other words, unless the target performs a post-isel load combining, this 
-  /// information should not be provided because it will generate more loads.
+  /// In other words, unless the target performs a post-isel load combining,
+  /// this information should not be provided because it will generate more
+  /// loads.
   virtual bool hasPairedLoad(Type * /*LoadedType*/,
                              unsigned & /*RequiredAligment*/) const {
     return false;
@@ -1502,7 +1504,7 @@ public:
     if (NumElts == 1)
       return LegalizeKind(TypeScalarizeVector, EltVT);
 
-    // Try to widen vector elements until the element type is a power of two and 
+    // Try to widen vector elements until the element type is a power of two and
     // promote it to a legal type later on, for example:
     // <3 x i8> -> <4 x i8> -> <4 x i32>
     if (EltVT.isInteger()) {
@@ -1536,7 +1538,8 @@ public:
 
         // Stop trying when getting a non-simple element type.
         // Note that vector elements may be greater than legal vector element
-        // types. Example: X86 XMM registers hold 64bit element on 32bit systems.
+        // types. Example: X86 XMM registers hold 64bit element on 32bit
+        // systems.
         if (!EltVT.isSimple()) break;
 
         // Build a new vector type and check if it is legal.
@@ -1697,7 +1700,8 @@ public:
   /// by reference if this node can be combined with a load / store to form a
   /// post-indexed load / store.
   virtual bool getPostIndexedAddressParts(SDNode * /*N*/, SDNode * /*Op*/,
-                                          SDValue &/*Base*/, SDValue &/*Offset*/,
+                                          SDValue &/*Base*/,
+                                          SDValue &/*Offset*/,
                                           ISD::MemIndexedMode &/*AM*/,
                                           SelectionDAG &/*DAG*/) const {
     return false;

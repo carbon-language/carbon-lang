@@ -349,7 +349,8 @@ namespace {
       assert(LHSTy.isInteger() && "Shift amount is not an integer type!");
       if (LHSTy.isVector())
         return LHSTy;
-      return LegalTypes ? TLI.getScalarShiftAmountTy(LHSTy) : TLI.getPointerTy();
+      return LegalTypes ? TLI.getScalarShiftAmountTy(LHSTy)
+                        : TLI.getPointerTy();
     }
 
     /// isTypeLegal - This method returns true if we are running before type
@@ -1037,7 +1038,8 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
   // try and combine it.
   while (!WorkListContents.empty()) {
     SDNode *N;
-    // The WorkListOrder holds the SDNodes in order, but it may contain duplicates.
+    // The WorkListOrder holds the SDNodes in order, but it may contain
+    // duplicates.
     // In order to avoid a linear scan, we use a set (O(log N)) to hold what the
     // worklist *should* contain, and check the node we want to visit is should
     // actually be visited.
@@ -1791,8 +1793,8 @@ SDValue DAGCombiner::visitSUBE(SDNode *N) {
   return SDValue();
 }
 
-/// isConstantSplatVector - Returns true if N is a BUILD_VECTOR node whose elements are
-/// all the same constant or undefined.
+/// isConstantSplatVector - Returns true if N is a BUILD_VECTOR node whose
+/// elements are all the same constant or undefined.
 static bool isConstantSplatVector(SDNode *N, APInt& SplatValue) {
   BuildVectorSDNode *C = dyn_cast<BuildVectorSDNode>(N);
   if (!C)
@@ -1828,9 +1830,11 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
     N1IsConst = isConstantSplatVector(N1.getNode(), ConstValue1);
   } else {
     N0IsConst = dyn_cast<ConstantSDNode>(N0) != 0;
-    ConstValue0 = N0IsConst? (dyn_cast<ConstantSDNode>(N0))->getAPIntValue() : APInt();
+    ConstValue0 = N0IsConst ? (dyn_cast<ConstantSDNode>(N0))->getAPIntValue()
+                            : APInt();
     N1IsConst = dyn_cast<ConstantSDNode>(N1) != 0;
-    ConstValue1 = N1IsConst? (dyn_cast<ConstantSDNode>(N1))->getAPIntValue() : APInt();
+    ConstValue1 = N1IsConst ? (dyn_cast<ConstantSDNode>(N1))->getAPIntValue()
+                            : APInt();
   }
 
   // fold (mul c1, c2) -> c1*c2
@@ -3442,8 +3446,8 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, SDLoc DL) {
                 DAG.getNode(HasROTLWithLArg ? ISD::ROTL : ISD::ROTR, DL, LArgVT,
                             LArgExtOp0, HasROTL ? LHSShiftAmt : RHSShiftAmt);
             return DAG.getNode(LHSShiftArg.getOpcode(), DL, VT, V).getNode();
-          }     
-        }     
+          }
+        }
       }
     }
   } else if (LExtOp0.getOpcode() == ISD::SUB &&
@@ -4691,9 +4695,9 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
          TLI.isOperationLegal(ISD::SETCC, getSetCCResultType(VT)))) {
       return DAG.getSelect(SDLoc(N), VT,
                            DAG.getSetCC(SDLoc(N),
-                                        getSetCCResultType(VT),
-                                        N0.getOperand(0), N0.getOperand(1),
-                                        cast<CondCodeSDNode>(N0.getOperand(2))->get()),
+                           getSetCCResultType(VT),
+                           N0.getOperand(0), N0.getOperand(1),
+                           cast<CondCodeSDNode>(N0.getOperand(2))->get()),
                            NegOne, DAG.getConstant(0, VT));
     }
   }
@@ -9891,7 +9895,8 @@ SDValue DAGCombiner::visitEXTRACT_SUBVECTOR(SDNode* N) {
     //    (extract_subvec (concat V1, V2, ...), i)
     // Into:
     //    Vi if possible
-    // Only operand 0 is checked as 'concat' assumes all inputs of the same type.
+    // Only operand 0 is checked as 'concat' assumes all inputs of the same
+    // type.
     if (V->getOperand(0).getValueType() != NVT)
       return SDValue();
     unsigned Idx = dyn_cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
@@ -10640,9 +10645,10 @@ SDValue DAGCombiner::SimplifySelectCC(SDLoc DL, SDValue N0, SDValue N1,
         return Temp;
 
       // shl setcc result by log2 n2c
-      return DAG.getNode(ISD::SHL, DL, N2.getValueType(), Temp,
-                         DAG.getConstant(N2C->getAPIntValue().logBase2(),
-                                         getShiftAmountTy(Temp.getValueType())));
+      return DAG.getNode(
+          ISD::SHL, DL, N2.getValueType(), Temp,
+          DAG.getConstant(N2C->getAPIntValue().logBase2(),
+                          getShiftAmountTy(Temp.getValueType())));
     }
   }
 
