@@ -2475,11 +2475,11 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
 
     if (DebugKind >= CodeGenOptions::LimitedDebugInfo) {
       if (const NamespaceDecl *NSDecl =
-          dyn_cast_or_null<NamespaceDecl>(FD->getDeclContext()))
+              dyn_cast_or_null<NamespaceDecl>(FD->getDeclContext()))
         FDContext = getOrCreateNameSpace(NSDecl);
       else if (const RecordDecl *RDecl =
-               dyn_cast_or_null<RecordDecl>(FD->getDeclContext()))
-        FDContext = getContextDescriptor(cast<Decl>(RDecl->getDeclContext()));
+                   dyn_cast_or_null<RecordDecl>(FD->getDeclContext()))
+        FDContext = getContextDescriptor(cast<Decl>(RDecl));
 
       // Collect template parameters.
       TParamsArray = CollectFunctionTemplateParams(FD, Unit);
@@ -2499,11 +2499,13 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   if (!HasDecl || D->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
 
-  llvm::DISubprogram SP = DBuilder.createFunction(
-      FDContext, Name, LinkageName, Unit, LineNo,
-      getOrCreateFunctionType(D, FnType, Unit), Fn->hasInternalLinkage(),
-      true /*definition*/, getLineNumber(CurLoc), Flags,
-      CGM.getLangOpts().Optimize, Fn, TParamsArray, getFunctionDeclaration(D));
+  llvm::DISubprogram SP =
+      DBuilder.createFunction(FDContext, Name, LinkageName, Unit, LineNo,
+                              getOrCreateFunctionType(D, FnType, Unit),
+                              Fn->hasInternalLinkage(), true /*definition*/,
+                              getLineNumber(CurLoc), Flags,
+                              CGM.getLangOpts().Optimize, Fn, TParamsArray,
+                              getFunctionDeclaration(D));
   if (HasDecl)
     DeclCache.insert(std::make_pair(D->getCanonicalDecl(), llvm::WeakVH(SP)));
 
