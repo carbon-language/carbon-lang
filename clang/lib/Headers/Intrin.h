@@ -243,7 +243,9 @@ static __inline__
 unsigned long __cdecl _lrotr(unsigned long, int);
 static __inline__
 unsigned int _lzcnt_u32(unsigned int);
+static __inline__
 void _ReadBarrier(void);
+static __inline__
 void _ReadWriteBarrier(void);
 static __inline__
 void *_ReturnAddress(void);
@@ -280,6 +282,7 @@ unsigned int _t1mskc_u32(unsigned int);
 unsigned int _tzcnt_u32(unsigned int);
 unsigned int _tzcnt_u32(unsigned int);
 unsigned int _tzmsk_u32(unsigned int);
+static __inline__
 void _WriteBarrier(void);
 void _xabort(const unsigned int imm);
 unsigned __int32 xbegin(void);
@@ -743,6 +746,24 @@ _InterlockedCompareExchange64(__int64 volatile *_Destination,
   return _Comparand;
 }
 #endif
+/*----------------------------------------------------------------------------*\
+|* Barriers
+\*----------------------------------------------------------------------------*/
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+__attribute__((deprecated("use other intrinsics or C++11 atomics instead")))
+_ReadWriteBarrier(void) {
+  __asm__ volatile ("" : : : "memory");
+}
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+__attribute__((deprecated("use other intrinsics or C++11 atomics instead")))
+_ReadBarrier(void) {
+  __asm__ volatile ("" : : : "memory");
+}
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+__attribute__((deprecated("use other intrinsics or C++11 atomics instead")))
+_WriteBarrier(void) {
+  __asm__ volatile ("" : : : "memory");
+}
 /*----------------------------------------------------------------------------*\
 |* Misc
 \*----------------------------------------------------------------------------*/
