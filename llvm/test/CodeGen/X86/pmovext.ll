@@ -18,5 +18,28 @@ define void @intrin_pmov(i16* noalias %dest, i8* noalias %src) nounwind uwtable 
 }
 
 declare <8 x i16> @llvm.x86.sse41.pmovzxbw(<16 x i8>) nounwind readnone
-
 declare void @llvm.x86.sse2.storeu.dq(i8*, <16 x i8>) nounwind
+
+; rdar://15245794
+
+define <4 x i32> @foo0(double %v.coerce) nounwind ssp {
+; CHECK-LABEL: foo0
+; CHECK: pmovzxwd %xmm0, %xmm0
+; CHECK-NEXT: ret
+  %tmp = bitcast double %v.coerce to <4 x i16>
+  %tmp1 = shufflevector <4 x i16> %tmp, <4 x i16> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
+  %tmp2 = tail call <4 x i32> @llvm.x86.sse41.pmovzxwd(<8 x i16> %tmp1) nounwind
+  ret <4 x i32> %tmp2
+}
+
+define <8 x i16> @foo1(double %v.coerce) nounwind ssp {
+; CHECK-LABEL: foo1
+; CHECK: pmovzxbw %xmm0, %xmm0
+; CHECK-NEXT: ret
+  %tmp = bitcast double %v.coerce to <8 x i8>
+  %tmp1 = shufflevector <8 x i8> %tmp, <8 x i8> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %tmp2 = tail call <8 x i16> @llvm.x86.sse41.pmovzxbw(<16 x i8> %tmp1)
+  ret <8 x i16> %tmp2
+}
+
+declare <4 x i32> @llvm.x86.sse41.pmovzxwd(<8 x i16>) nounwind readnone
