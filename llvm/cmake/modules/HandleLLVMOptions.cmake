@@ -153,9 +153,14 @@ endif()
 if( MSVC )
   include(ChooseMSVCCRT)
 
-  # Visual C++ default stack size is 1MB. This is not enough for clang to
-  # instantiate templates up to the default maximum depth allowed, 256.
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -STACK:2097152")
+  if( NOT (${CMAKE_VERSION} VERSION_LESS 2.8.11) )
+    # set stack reserved size to ~10MB
+    # CMake previously automatically set this value for MSVC builds, but the
+    # behavior was changed in CMake 2.8.11 (Issue 12437) to use the MSVC default
+    # value (1 MB) which is not enough for us in tasks such as parsing recursive
+    # C++ templates in Clang.
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:10000000")
+  endif()
 
   if( MSVC10 )
     # MSVC 10 will complain about headers in the STL not being exported, but
