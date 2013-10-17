@@ -60,8 +60,12 @@ inline LLVMTargetRef wrap(const Target * P) {
 }
 
 LLVMTargetRef LLVMGetFirstTarget() {
-   const Target* target = &*TargetRegistry::begin();
-   return wrap(target);
+  if(TargetRegistry::begin() == TargetRegistry::end()) {
+    return NULL;
+  }
+
+  const Target* target = &*TargetRegistry::begin();
+  return wrap(target);
 }
 LLVMTargetRef LLVMGetNextTarget(LLVMTargetRef T) {
   return wrap(unwrap(T)->getNext());
