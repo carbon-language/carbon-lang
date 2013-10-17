@@ -85,16 +85,18 @@ namespace abi = __cxxabiv1;
 // reused as needed. The second caching layer is a large hash table with open
 // chaining. We can freely evict from either layer since this is just a cache.
 //
-// FIXME: Make these hash table accesses thread-safe. The races here are benign
-//        (worst-case, we could miss a bug or see a slowdown) but we should
-//        avoid upsetting race detectors.
+// FIXME: Make these hash table accesses thread-safe. The races here are benign:
+//        assuming the unsequenced loads and stores don't misbehave too badly,
+//        the worst case is false negatives or poor cache behavior, not false
+//        positives or crashes.
 
 /// Find a bucket to store the given hash value in.
 static __ubsan::HashValue *getTypeCacheHashTableBucket(__ubsan::HashValue V) {
   static const unsigned HashTableSize = 65537;
-  static __ubsan::HashValue __ubsan_vptr_hash_set[HashTableSize] = { 1 };
+  static __ubsan::HashValue __ubsan_vptr_hash_set[HashTableSize];
 
-  unsigned Probe = V & 65535;
+  unsigned First = (V & 65535) ^ 1;
+  unsigned Probe = First;
   for (int Tries = 5; Tries; --Tries) {
     if (!__ubsan_vptr_hash_set[Probe] || __ubsan_vptr_hash_set[Probe] == V)
       return &__ubsan_vptr_hash_set[Probe];
@@ -104,12 +106,12 @@ static __ubsan::HashValue *getTypeCacheHashTableBucket(__ubsan::HashValue V) {
   }
   // FIXME: Pick a random entry from the probe sequence to evict rather than
   //        just taking the first.
-  return &__ubsan_vptr_hash_set[V];
+  return &__ubsan_vptr_hash_set[First];
 }
 
 /// A cache of recently-checked hashes. Mini hash table with "random" evictions.
 __ubsan::HashValue
-__ubsan::__ubsan_vptr_type_cache[__ubsan::VptrTypeCacheSize] = { 1 };
+__ubsan::__ubsan_vptr_type_cache[__ubsan::VptrTypeCacheSize];
 
 /// \brief Determine whether \p Derived has a \p Base base class subobject at
 /// offset \p Offset.
