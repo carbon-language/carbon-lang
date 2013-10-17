@@ -1321,9 +1321,6 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
     DeclDie = getOrCreateSubprogramDIE(SPDecl);
   }
 
-  // Add to context owner.
-  ContextDIE->addChild(SPDie);
-
   // Add function template parameters.
   addTemplateParams(*SPDie, SP.getTemplateParams());
 
@@ -1333,8 +1330,14 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
     // Refer function declaration directly.
     addDIEEntry(SPDie, dwarf::DW_AT_specification, DeclDie);
 
+    // Add subprogram definitions to the CU die directly.
+    CUDie.get()->addChild(SPDie);
+
     return SPDie;
   }
+
+  // Add to context owner.
+  ContextDIE->addChild(SPDie);
 
   // Add the linkage name if we have one.
   StringRef LinkageName = SP.getLinkageName();
