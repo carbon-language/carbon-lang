@@ -184,13 +184,8 @@ static bool SafeToDestroyConstant(const Constant *C) {
   return true;
 }
 
-
-/// AnalyzeGlobal - Look at all uses of the global and fill in the GlobalStatus
-/// structure.  If the global has its address taken, return true to indicate we
-/// can't do anything with it.
-///
-static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
-                          SmallPtrSet<const PHINode*, 16> &PHIUsers) {
+static bool analyzeGlobalAux(const Value *V, GlobalStatus &GS,
+                             SmallPtrSet<const PHINode *, 16> &PHIUsers) {
   for (Value::const_use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;
        ++UI) {
     const User *U = *UI;
@@ -201,7 +196,8 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
       // know to expect it in various places.  Just reject early.
       if (!isa<PointerType>(CE->getType())) return true;
 
-      if (AnalyzeGlobal(CE, GS, PHIUsers)) return true;
+      if (analyzeGlobalAux(CE, GS, PHIUsers))
+        return true;
     } else if (const Instruction *I = dyn_cast<Instruction>(U)) {
       if (!GS.HasMultipleAccessingFunctions) {
         const Function *F = I->getParent()->getParent();
@@ -260,16 +256,20 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
           }
         }
       } else if (isa<BitCastInst>(I)) {
-        if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
+        if (analyzeGlobalAux(I, GS, PHIUsers))
+          return true;
       } else if (isa<GetElementPtrInst>(I)) {
-        if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
+        if (analyzeGlobalAux(I, GS, PHIUsers))
+          return true;
       } else if (isa<SelectInst>(I)) {
-        if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
+        if (analyzeGlobalAux(I, GS, PHIUsers))
+          return true;
       } else if (const PHINode *PN = dyn_cast<PHINode>(I)) {
         // PHI nodes we can check just like select or GEP instructions, but we
         // have to be careful about infinite recursion.
         if (PHIUsers.insert(PN))  // Not already visited.
-          if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
+          if (analyzeGlobalAux(I, GS, PHIUsers))
+            return true;
       } else if (isa<CmpInst>(I)) {
         GS.isCompared = true;
       } else if (const MemTransferInst *MTI = dyn_cast<MemTransferInst>(I)) {
@@ -298,6 +298,15 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
   }
 
   return false;
+}
+
+/// Look at all uses of the global and fill in the GlobalStatus
+/// structure.  If the global has its address taken, return true to indicate we
+/// can't do anything with it.
+///
+static bool analyzeGlobal(const Value *V, GlobalStatus &GS) {
+  SmallPtrSet<const PHINode *, 16> PHIUsers;
+  return analyzeGlobalAux(V, GS, PHIUsers);
 }
 
 /// isLeakCheckerRoot - Is this global variable possibly used by a leak checker
@@ -1916,10 +1925,9 @@ bool GlobalOpt::ProcessGlobal(GlobalVariable *GV,
   if (!GV->hasLocalLinkage())
     return false;
 
-  SmallPtrSet<const PHINode*, 16> PHIUsers;
   GlobalStatus GS;
 
-  if (AnalyzeGlobal(GV, GS, PHIUsers))
+  if (analyzeGlobal(GV, GS))
     return false;
 
   if (!GS.isCompared && !GV->hasUnnamedAddr()) {
