@@ -358,7 +358,7 @@ bool ThreadSanitizer::runOnFunction(Function &F) {
   // (e.g. variables that do not escape, etc).
 
   // Instrument memory accesses.
-  if (ClInstrumentMemoryAccesses)
+  if (ClInstrumentMemoryAccesses && F.hasFnAttribute(Attribute::SanitizeThread))
     for (size_t i = 0, n = AllLoadsAndStores.size(); i < n; ++i) {
       Res |= instrumentLoadOrStore(AllLoadsAndStores[i]);
     }
