@@ -745,6 +745,7 @@ bool ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
         edit::Commit commit(*Editor);
         rewriteToNSMacroDecl(EnumDcl, TypedefDcl, *NSAPIObj, commit, !NSOptions);
         Editor->commit(commit);
+        return true;
       }
     }
     return false;
@@ -1530,6 +1531,15 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
           DeclContext::decl_iterator N = D;
           if (++N != DEnd)
             if (const EnumDecl *ED = dyn_cast<EnumDecl>(*N)) {
+              if (++N != DEnd) {
+                if (const TypedefDecl *TD1 = dyn_cast<TypedefDecl>(*N)) {
+                  if (migrateNSEnumDecl(Ctx, ED, TD1)) {
+                    ++D; ++D;
+                    CacheObjCNSIntegerTypedefed(TD);
+                    continue;
+                  }
+                }
+              }
               if (migrateNSEnumDecl(Ctx, ED, TD)) {
                 ++D;
                 continue;

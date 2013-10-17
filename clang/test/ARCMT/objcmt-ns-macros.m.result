@@ -207,12 +207,13 @@ typedef NS_ENUM(NSInteger, NSModalResponse) {
 } NS_ENUM_AVAILABLE_MAC(10.9);
 
 // rdar://15201056
-typedef NS_OPTIONS(NSUInteger, FarAwayNSUInteger) {
+typedef NSUInteger FarFarAwayOptions;
+
+// rdar://15200915
+typedef NS_OPTIONS(NSUInteger, FarAwayOptions) {
   FarAway1    = 1 << 1,
   FarAway2    = 1 << 2
 };
-
-// rdar://15200915
 typedef NS_OPTIONS(NSUInteger, NSWorkspaceLaunchOptions) {
      NSWorkspaceLaunchAndPrint =                 0x00000002,
      NSWorkspaceLaunchWithErrorPresentation    = 0x00000040,
@@ -226,33 +227,53 @@ typedef NS_OPTIONS(NSUInteger, NSWorkspaceLaunchOptions) {
      NSWorkspaceLaunchAndHide                  = 0x00100000,
      NSWorkspaceLaunchAndHideOthers            = 0x00200000,
      NSWorkspaceLaunchDefault = NSWorkspaceLaunchAsync | 
-NSWorkspaceLaunchAllowingClassicStartup
+     NSWorkspaceLaunchAllowingClassicStartup
 };
 
-typedef NS_OPTIONS(NSUInteger, NSWorkspaceIconCreationOptions) {
+typedef NS_OPTIONS(NSUInteger, NSExcludeOptions) {
     NSExcludeQuickDrawElementsIconCreationOption    = 1 << 1,
     NSExclude10_4ElementsIconCreationOption         = 1 << 2
 };
 
-typedef NS_OPTIONS(NSUInteger, NSWorkspaceCreationOptions) {
+typedef NS_OPTIONS(NSUInteger, NSExcludeCreationOption) {
     NSExcludeQuickDrawElementsCreationOption    = 1 << 1,
     NSExclude10_4ElementsCreationOption         = 1 << 2
 };
 
 
-typedef NS_OPTIONS(NSUInteger, NSWorkspaceIconOptions) {
+typedef NS_OPTIONS(NSUInteger, NSExcludeIconOptions) {
     NSExcludeQuickDrawElementsIconOption    = 1 << 1,
     NSExclude10_4ElementsIconOption         = 1 << 2
 };
 
-typedef NS_OPTIONS(NSUInteger, NSCollectionViewDropOperation) {
-  NotFarAway1    = 1 << 1,
-  NotFarAway2    = 1 << 2
-};
-
 @interface INTF {
-  NSCollectionViewDropOperation I1;
-  NSCollectionViewDropOperation I2;
+  NSExcludeIconOptions I1;
+  NSExcludeIconOptions I2;
 }
 @end
 
+enum {
+  FarFarAway1    = 1 << 1,
+  FarFarAway2    = 1 << 2
+};
+
+// rdar://15200915
+typedef NS_OPTIONS(NSUInteger, NSWindowOcclusionState) {
+    NSWindowOcclusionStateVisible = 1UL << 1,
+};
+
+typedef NS_ENUM(NSUInteger, NSWindowNumberListOptions) {
+    NSWindowCloseButton,
+    NSWindowMiniaturizeButton,
+    NSWindowZoomButton,
+    NSWindowToolbarButton,
+    NSWindowDocumentIconButton
+};
+
+typedef NS_ENUM(NSUInteger, NSSelectionDirection) {
+    NSDirectSelection = 0,
+    NSSelectingNext,
+    NSSelectingPrevious
+};
+
+// standard window buttons
