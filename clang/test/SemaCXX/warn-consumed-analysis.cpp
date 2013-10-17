@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wconsumed -std=c++11 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wconsumed -fcxx-exceptions -std=c++11 %s
 
 // TODO: Switch to using macros for the expected warnings.
 
@@ -575,6 +575,18 @@ static void foo2() {
     if (false)
       continue;
   }
+}
+
+class runtime_error
+{
+public:
+  virtual ~runtime_error();
+};
+
+void read(bool sf) {
+    while (sf) {
+        if(sf) throw runtime_error();
+    }
 }
 
 } // end namespace ContinueICETest
