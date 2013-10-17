@@ -60,6 +60,18 @@
 // RUN:   | FileCheck --check-prefix=CHECK-NOMMSA %s
 // CHECK-NOMMSA: "-target-feature" "-msa"
 //
+// -mfp64
+// RUN: %clang -target mips-linux-gnu -### -c %s \
+// RUN:     -mfp32 -mfp64 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MFP64 %s
+// CHECK-MFP64: "-target-feature" "+fp64"
+//
+// -mfp32
+// RUN: %clang -target mips-linux-gnu -### -c %s \
+// RUN:     -mfp64 -mfp32 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NOMFP64 %s
+// CHECK-NOMFP64: "-target-feature" "-fp64"
+//
 // -mxgot
 // RUN: %clang -target mips-linux-gnu -### -c %s \
 // RUN:     -mno-xgot -mxgot 2>&1 \

@@ -1104,6 +1104,10 @@ def mmsa : Flag<["-"], "mmsa">, Group<m_Group>,
   HelpText<"Enable MSA ASE (MIPS only)">;
 def mno_msa : Flag<["-"], "mno-msa">, Group<m_Group>,
   HelpText<"Disable MSA ASE (MIPS only)">;
+def mfp64 : Flag<["-"], "mfp64">, Group<m_Group>,
+  HelpText<"Use 64-bit floating point registers (MIPS only)">;
+def mfp32 : Flag<["-"], "mfp32">, Group<m_Group>,
+  HelpText<"Use 32-bit floating point registers (MIPS only)">;
 def mnan_EQ : Joined<["-"], "mnan=">, Group<m_Group>;
 def mips32 : Flag<["-"], "mips32">,
   Alias<march_EQ>, AliasArgs<["mips32"]>,

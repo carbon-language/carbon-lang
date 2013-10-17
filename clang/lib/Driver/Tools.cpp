@@ -982,6 +982,8 @@ static void getMIPSTargetFeatures(const Driver &D, const ArgList &Args,
                    "dspr2");
   AddTargetFeature(Args, Features, options::OPT_mmsa, options::OPT_mno_msa,
                    "msa");
+  AddTargetFeature(Args, Features, options::OPT_mfp64, options::OPT_mfp32,
+                   "fp64");
 }
 
 void Clang::AddMIPSTargetArgs(const ArgList &Args,
