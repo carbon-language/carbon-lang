@@ -17,6 +17,12 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#if defined(__APPLE__)
+#define LIBUNWIND_AVAIL __attribute__ (( unavailable ))
+#else
+#define LIBUNWIND_AVAIL
+#endif
+
 typedef enum {
   _URC_NO_REASON = 0,
   _URC_FOREIGN_EXCEPTION_CAUGHT = 1,
@@ -181,28 +187,28 @@ extern void *_Unwind_FindEnclosingFunction(void *pc);
 // Mac OS X does not support text-rel and data-rel addressing so these functions
 // are unimplemented
 extern uintptr_t _Unwind_GetDataRelBase(struct _Unwind_Context *context)
-    __attribute__((unavailable));
+    LIBUNWIND_AVAIL;
 extern uintptr_t _Unwind_GetTextRelBase(struct _Unwind_Context *context)
-    __attribute__((unavailable));
+    LIBUNWIND_AVAIL;
 
 // Mac OS X 10.4 and 10.5 had implementations of these functions in
 // libgcc_s.dylib, but they never worked.  
 /// These functions are no longer available on Mac OS X.
 extern void __register_frame_info_bases(const void *fde, void *ob, void *tb,
-                                        void *db) __attribute__((unavailable));
+                                        void *db) LIBUNWIND_AVAIL;
 extern void __register_frame_info(const void *fde, void *ob)
-    __attribute__((unavailable));
+    LIBUNWIND_AVAIL;
 extern void __register_frame_info_table_bases(const void *fde, void *ob,
                                               void *tb, void *db)
-    __attribute__((unavailable));
+    LIBUNWIND_AVAIL;
 extern void __register_frame_info_table(const void *fde, void *ob)
-    __attribute__((unavailable));
+    LIBUNWIND_AVAIL;
 extern void __register_frame_table(const void *fde)
-    __attribute__((unavailable));
+    LIBUNWIND_AVAIL;
 extern void *__deregister_frame_info(const void *fde)
-    __attribute__((unavailable));
+    LIBUNWIND_AVAIL;
 extern void *__deregister_frame_info_bases(const void *fde)
-    __attribute__((unavailable));
+    LIBUNWIND_AVAIL;
 
 #ifdef __cplusplus
 }
