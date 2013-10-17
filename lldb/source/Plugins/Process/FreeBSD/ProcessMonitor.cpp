@@ -857,14 +857,6 @@ ProcessMonitor::Launch(LaunchArgs *args)
     if (envp == NULL || envp[0] == NULL)
         envp = const_cast<const char **>(environ);
 
-    // Pseudo terminal setup.
-    if (!terminal.OpenFirstAvailableMaster(O_RDWR | O_NOCTTY, err_str, err_len))
-    {
-        args->m_error.SetErrorToGenericError();
-        args->m_error.SetErrorString("Could not open controlling TTY.");
-        goto FINISH;
-    }
-
     if ((pid = terminal.Fork(err_str, err_len)) == -1)
     {
         args->m_error.SetErrorToGenericError();
