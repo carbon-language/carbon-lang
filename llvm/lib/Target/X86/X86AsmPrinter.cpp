@@ -519,9 +519,11 @@ void X86AsmPrinter::EmitStartOfAsmFile(Module &M) {
   if (Subtarget->isTargetEnvMacho())
     OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
 
-  if (Subtarget->isTargetCOFF()) {
+  if (Subtarget->isTargetCOFF() && Subtarget->isTargetWindows()) {
     // Emit an absolute @feat.00 symbol.  This appears to be some kind of
     // compiler features bitfield read by link.exe.
+    // We only do this on win32, since on cygwin etc. we use the GNU assembler,
+    // which doesn't handle this symbol.
     if (!Subtarget->is64Bit()) {
       MCSymbol *S = MMI->getContext().GetOrCreateSymbol(StringRef("@feat.00"));
       OutStreamer.BeginCOFFSymbolDef(S);

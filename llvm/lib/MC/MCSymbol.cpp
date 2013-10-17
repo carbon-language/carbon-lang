@@ -18,12 +18,10 @@ const MCSection *MCSymbol::AbsolutePseudoSection =
   reinterpret_cast<const MCSection *>(1);
 
 static bool isAcceptableChar(char C) {
-  if ((C < 'a' || C > 'z') &&
-      (C < 'A' || C > 'Z') &&
-      (C < '0' || C > '9') &&
-      C != '_' && C != '$' && C != '.' && C != '@')
-    return false;
-  return true;
+  return (C >= 'a' && C <= 'z') ||
+         (C >= 'A' && C <= 'Z') ||
+         (C >= '0' && C <= '9') ||
+         C == '_' || C == '$' || C == '.';
 }
 
 /// NameNeedsQuoting - Return true if the identifier \p Str needs quotes to be
