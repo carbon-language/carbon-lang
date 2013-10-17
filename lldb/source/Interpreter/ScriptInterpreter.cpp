@@ -88,10 +88,48 @@ ScriptInterpreter::AcquireInterpreterLock ()
 }
 
 void
-ScriptInterpreter::InitializeInterpreter (SWIGInitCallback python_swig_init_callback)
+ScriptInterpreter::InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
+                                          SWIGBreakpointCallbackFunction swig_breakpoint_callback,
+                                          SWIGWatchpointCallbackFunction swig_watchpoint_callback,
+                                          SWIGPythonTypeScriptCallbackFunction swig_typescript_callback,
+                                          SWIGPythonCreateSyntheticProvider swig_synthetic_script,
+                                          SWIGPythonCalculateNumChildren swig_calc_children,
+                                          SWIGPythonGetChildAtIndex swig_get_child_index,
+                                          SWIGPythonGetIndexOfChildWithName swig_get_index_child,
+                                          SWIGPythonCastPyObjectToSBValue swig_cast_to_sbvalue ,
+                                          SWIGPythonGetValueObjectSPFromSBValue swig_get_valobj_sp_from_sbvalue,
+                                          SWIGPythonUpdateSynthProviderInstance swig_update_provider,
+                                          SWIGPythonMightHaveChildrenSynthProviderInstance swig_mighthavechildren_provider,
+                                          SWIGPythonCallCommand swig_call_command,
+                                          SWIGPythonCallModuleInit swig_call_module_init,
+                                          SWIGPythonCreateOSPlugin swig_create_os_plugin,
+                                          SWIGPythonScriptKeyword_Process swig_run_script_keyword_process,
+                                          SWIGPythonScriptKeyword_Thread swig_run_script_keyword_thread,
+                                          SWIGPythonScriptKeyword_Target swig_run_script_keyword_target,
+                                          SWIGPythonScriptKeyword_Frame swig_run_script_keyword_frame,
+                                          SWIGPython_GetDynamicSetting swig_plugin_get)
 {
 #ifndef LLDB_DISABLE_PYTHON
-    ScriptInterpreterPython::InitializeInterpreter (python_swig_init_callback);
+    ScriptInterpreterPython::InitializeInterpreter (python_swig_init_callback,
+                                                    swig_breakpoint_callback,
+                                                    swig_watchpoint_callback,
+                                                    swig_typescript_callback,
+                                                    swig_synthetic_script,
+                                                    swig_calc_children,
+                                                    swig_get_child_index,
+                                                    swig_get_index_child,
+                                                    swig_cast_to_sbvalue ,
+                                                    swig_get_valobj_sp_from_sbvalue,
+                                                    swig_update_provider,
+                                                    swig_mighthavechildren_provider,
+                                                    swig_call_command,
+                                                    swig_call_module_init,
+                                                    swig_create_os_plugin,
+                                                    swig_run_script_keyword_process,
+                                                    swig_run_script_keyword_thread,
+                                                    swig_run_script_keyword_target,
+                                                    swig_run_script_keyword_frame,
+                                                    swig_plugin_get);
 #endif // #ifndef LLDB_DISABLE_PYTHON
 }
 

@@ -64,103 +64,6 @@ static ScriptInterpreter::SWIGPythonScriptKeyword_Target g_swig_run_script_keywo
 static ScriptInterpreter::SWIGPythonScriptKeyword_Frame g_swig_run_script_keyword_frame = NULL;
 static ScriptInterpreter::SWIGPython_GetDynamicSetting g_swig_plugin_get = NULL;
 
-// these are the Pythonic implementations of the required callbacks
-// these are scripting-language specific, which is why they belong here
-// we still need to use function pointers to them instead of relying
-// on linkage-time resolution because the SWIG stuff and this file
-// get built at different times
-extern "C" bool
-LLDBSwigPythonBreakpointCallbackFunction (const char *python_function_name,
-                                          const char *session_dictionary_name,
-                                          const lldb::StackFrameSP& sb_frame,
-                                          const lldb::BreakpointLocationSP& sb_bp_loc);
-
-extern "C" bool
-LLDBSwigPythonWatchpointCallbackFunction (const char *python_function_name,
-                                          const char *session_dictionary_name,
-                                          const lldb::StackFrameSP& sb_frame,
-                                          const lldb::WatchpointSP& sb_wp);
-
-extern "C" bool
-LLDBSwigPythonCallTypeScript (const char *python_function_name,
-                              void *session_dictionary,
-                              const lldb::ValueObjectSP& valobj_sp,
-                              void** pyfunct_wrapper,
-                              std::string& retval);
-
-extern "C" void*
-LLDBSwigPythonCreateSyntheticProvider (const char *python_class_name,
-                                       const char *session_dictionary_name,
-                                       const lldb::ValueObjectSP& valobj_sp);
-
-
-extern "C" uint32_t
-LLDBSwigPython_CalculateNumChildren (void *implementor);
-
-extern "C" void *
-LLDBSwigPython_GetChildAtIndex (void *implementor, uint32_t idx);
-
-extern "C" int
-LLDBSwigPython_GetIndexOfChildWithName (void *implementor, const char* child_name);
-
-extern "C" void *
-LLDBSWIGPython_CastPyObjectToSBValue (void* data);
-
-extern lldb::ValueObjectSP
-LLDBSWIGPython_GetValueObjectSPFromSBValue (void* data);
-
-extern "C" bool
-LLDBSwigPython_UpdateSynthProviderInstance (void* implementor);
-
-extern "C" bool
-LLDBSwigPython_MightHaveChildrenSynthProviderInstance (void* implementor);
-
-extern "C" bool
-LLDBSwigPythonCallCommand (const char *python_function_name,
-                           const char *session_dictionary_name,
-                           lldb::DebuggerSP& debugger,
-                           const char* args,
-                           lldb_private::CommandReturnObject &cmd_retobj);
-
-extern "C" bool
-LLDBSwigPythonCallModuleInit (const char *python_module_name,
-                              const char *session_dictionary_name,
-                              lldb::DebuggerSP& debugger);
-
-extern "C" void*
-LLDBSWIGPythonCreateOSPlugin (const char *python_class_name,
-                              const char *session_dictionary_name,
-                              const lldb::ProcessSP& process_sp);
-
-extern "C" bool
-LLDBSWIGPythonRunScriptKeywordProcess (const char* python_function_name,
-                                       const char* session_dictionary_name,
-                                       lldb::ProcessSP& process,
-                                       std::string& output);
-
-extern "C" bool
-LLDBSWIGPythonRunScriptKeywordThread (const char* python_function_name,
-                                      const char* session_dictionary_name,
-                                      lldb::ThreadSP& thread,
-                                      std::string& output);
-
-extern "C" bool
-LLDBSWIGPythonRunScriptKeywordTarget (const char* python_function_name,
-                                      const char* session_dictionary_name,
-                                      lldb::TargetSP& target,
-                                      std::string& output);
-
-extern "C" bool
-LLDBSWIGPythonRunScriptKeywordFrame (const char* python_function_name,
-                                     const char* session_dictionary_name,
-                                     lldb::StackFrameSP& frame,
-                                     std::string& output);
-
-extern "C" void*
-LLDBSWIGPython_GetDynamicSetting (void* module,
-                                  const char* setting,
-                                  const lldb::TargetSP& target_sp);
-
 static int
 _check_and_flush (FILE *stream)
 {
@@ -3115,28 +3018,47 @@ ScriptInterpreterPython::AcquireInterpreterLock ()
 }
 
 void
-ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_init_callback)
+ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback swig_init_callback,
+                                                SWIGBreakpointCallbackFunction swig_breakpoint_callback,
+                                                SWIGWatchpointCallbackFunction swig_watchpoint_callback,
+                                                SWIGPythonTypeScriptCallbackFunction swig_typescript_callback,
+                                                SWIGPythonCreateSyntheticProvider swig_synthetic_script,
+                                                SWIGPythonCalculateNumChildren swig_calc_children,
+                                                SWIGPythonGetChildAtIndex swig_get_child_index,
+                                                SWIGPythonGetIndexOfChildWithName swig_get_index_child,
+                                                SWIGPythonCastPyObjectToSBValue swig_cast_to_sbvalue ,
+                                                SWIGPythonGetValueObjectSPFromSBValue swig_get_valobj_sp_from_sbvalue,
+                                                SWIGPythonUpdateSynthProviderInstance swig_update_provider,
+                                                SWIGPythonMightHaveChildrenSynthProviderInstance swig_mighthavechildren_provider,
+                                                SWIGPythonCallCommand swig_call_command,
+                                                SWIGPythonCallModuleInit swig_call_module_init,
+                                                SWIGPythonCreateOSPlugin swig_create_os_plugin,
+                                                SWIGPythonScriptKeyword_Process swig_run_script_keyword_process,
+                                                SWIGPythonScriptKeyword_Thread swig_run_script_keyword_thread,
+                                                SWIGPythonScriptKeyword_Target swig_run_script_keyword_target,
+                                                SWIGPythonScriptKeyword_Frame swig_run_script_keyword_frame,
+                                                SWIGPython_GetDynamicSetting swig_plugin_get)
 {
-    g_swig_init_callback = python_swig_init_callback;
-    g_swig_breakpoint_callback = LLDBSwigPythonBreakpointCallbackFunction;
-    g_swig_watchpoint_callback = LLDBSwigPythonWatchpointCallbackFunction;
-    g_swig_typescript_callback = LLDBSwigPythonCallTypeScript;
-    g_swig_synthetic_script = LLDBSwigPythonCreateSyntheticProvider;
-    g_swig_calc_children = LLDBSwigPython_CalculateNumChildren;
-    g_swig_get_child_index = LLDBSwigPython_GetChildAtIndex;
-    g_swig_get_index_child = LLDBSwigPython_GetIndexOfChildWithName;
-    g_swig_cast_to_sbvalue = LLDBSWIGPython_CastPyObjectToSBValue;
-    g_swig_get_valobj_sp_from_sbvalue = LLDBSWIGPython_GetValueObjectSPFromSBValue;
-    g_swig_update_provider = LLDBSwigPython_UpdateSynthProviderInstance;
-    g_swig_mighthavechildren_provider = LLDBSwigPython_MightHaveChildrenSynthProviderInstance;
-    g_swig_call_command = LLDBSwigPythonCallCommand;
-    g_swig_call_module_init = LLDBSwigPythonCallModuleInit;
-    g_swig_create_os_plugin = LLDBSWIGPythonCreateOSPlugin;
-    g_swig_run_script_keyword_process = LLDBSWIGPythonRunScriptKeywordProcess;
-    g_swig_run_script_keyword_thread = LLDBSWIGPythonRunScriptKeywordThread;
-    g_swig_run_script_keyword_target = LLDBSWIGPythonRunScriptKeywordTarget;
-    g_swig_run_script_keyword_frame = LLDBSWIGPythonRunScriptKeywordFrame;
-    g_swig_plugin_get = LLDBSWIGPython_GetDynamicSetting;
+    g_swig_init_callback = swig_init_callback;
+    g_swig_breakpoint_callback = swig_breakpoint_callback;
+    g_swig_watchpoint_callback = swig_watchpoint_callback;
+    g_swig_typescript_callback = swig_typescript_callback;
+    g_swig_synthetic_script = swig_synthetic_script;
+    g_swig_calc_children = swig_calc_children;
+    g_swig_get_child_index = swig_get_child_index;
+    g_swig_get_index_child = swig_get_index_child;
+    g_swig_cast_to_sbvalue = swig_cast_to_sbvalue;
+    g_swig_get_valobj_sp_from_sbvalue = swig_get_valobj_sp_from_sbvalue;
+    g_swig_update_provider = swig_update_provider;
+    g_swig_mighthavechildren_provider = swig_mighthavechildren_provider;
+    g_swig_call_command = swig_call_command;
+    g_swig_call_module_init = swig_call_module_init;
+    g_swig_create_os_plugin = swig_create_os_plugin;
+    g_swig_run_script_keyword_process = swig_run_script_keyword_process;
+    g_swig_run_script_keyword_thread = swig_run_script_keyword_thread;
+    g_swig_run_script_keyword_target = swig_run_script_keyword_target;
+    g_swig_run_script_keyword_frame = swig_run_script_keyword_frame;
+    g_swig_plugin_get = swig_plugin_get;
 }
 
 void
