@@ -49,6 +49,8 @@ const char *types::getTypeTempSuffix(ID Id, bool CLMode) {
     return "obj";
   if (Id == TY_Image && CLMode)
     return "exe";
+  if (Id == TY_PP_Asm && CLMode)
+    return "asm";
   return getInfo(Id).TempSuffix;
 }
 

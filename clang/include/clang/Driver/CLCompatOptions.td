@@ -112,6 +112,11 @@ def _SLASH_Zs : CLFlag<"Zs">, HelpText<"Syntax-check only">,
 
 def _SLASH_M_Group : OptionGroup<"</M group>">, Group<cl_compile_Group>;
 
+def _SLASH_FA : CLFlag<"FA">,
+  HelpText<"Output assembly code file during compilation">;
+def _SLASH_Fa : CLJoined<"Fa">,
+  HelpText<"Output assembly code to this file during compilation">,
+  MetaVarName<"<file or directory>">;
 def _SLASH_fallback : CLCompileFlag<"fallback">,
   HelpText<"Fall back to cl.exe if clang-cl fails to compile">;
 def _SLASH_FI : CLJoined<"FI">,
@@ -165,8 +170,7 @@ def _SLASH_Zm : CLIgnoredJoined<"Zm">;
 
 def _SLASH_bigobj : CLFlag<"bigobj">;
 def _SLASH_EH : CLJoined<"EH">;
-def _SLASH_FA : CLJoined<"FA">;
-def _SLASH_Fa : CLJoined<"Fa">;
+def _SLASH_FA_joined : CLJoined<"FA">;
 def _SLASH_Fd : CLJoined<"Fd">;
 def _SLASH_fp : CLJoined<"fp">;
 def _SLASH_Gd : CLFlag<"Gd">;

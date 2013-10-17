@@ -1446,6 +1446,8 @@ static const Tool *SelectToolForJob(Compilation &C, const ToolChain *TC,
 
   if (TC->useIntegratedAs() &&
       !C.getArgs().hasArg(options::OPT_save_temps) &&
+      !C.getArgs().hasArg(options::OPT__SLASH_FA) &&
+      !C.getArgs().hasArg(options::OPT__SLASH_Fa) &&
       isa<AssembleJobAction>(JA) &&
       Inputs->size() == 1 && isa<CompileJobAction>(*Inputs->begin())) {
     const Tool *Compiler =
@@ -1568,8 +1570,10 @@ void Driver::BuildJobsForAction(Compilation &C,
   }
 }
 
-/// \brief Create output filename based on ArgValue, which could either be a 
-/// full filename, filename without extension, or a directory.
+/// \brief Create output filename based on ArgValue, which could either be a
+/// full filename, filename without extension, or a directory. If ArgValue
+/// does not provide a filename, then use BaseName, and use the extension
+/// suitable for FileType.
 static const char *MakeCLOutputFilename(const ArgList &Args, StringRef ArgValue,
                                         StringRef BaseName, types::ID FileType) {
   SmallString<128> Filename = ArgValue;
@@ -1616,6 +1620,17 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   if (AtTopLevel && !CCGenDiagnostics &&
       (isa<PreprocessJobAction>(JA) || JA.getType() == types::TY_ModuleFile))
     return "-";
+
+  // Is this the assembly listing for /FA?
+  if (JA.getType() == types::TY_PP_Asm &&
+      (C.getArgs().hasArg(options::OPT__SLASH_FA) ||
+       C.getArgs().hasArg(options::OPT__SLASH_Fa))) {
+    // Use /Fa and the input filename to determine the asm file name.
+    StringRef BaseName = llvm::sys::path::filename(BaseInput);
+    StringRef FaValue = C.getArgs().getLastArgValue(options::OPT__SLASH_Fa);
+    return C.addResultFile(MakeCLOutputFilename(C.getArgs(), FaValue, BaseName,
+                                                JA.getType()), &JA);
+  }
 
   // Output to a temporary file?
   if ((!AtTopLevel && !C.getArgs().hasArg(options::OPT_save_temps) &&

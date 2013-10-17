@@ -88,3 +88,18 @@
 
 // RUN: %clang_cl /Fefoo /Febar -### -- %s 2>&1 | FileCheck -check-prefix=FeOVERRIDE %s
 // FeOVERRIDE: "-out:bar.exe"
+
+
+// RUN: %clang_cl /FA -### -- %s 2>&1 | FileCheck -check-prefix=FA %s
+// FA: "-o" "cl-outputs.asm"
+// RUN: %clang_cl /FA /Fafoo -### -- %s 2>&1 | FileCheck -check-prefix=FaNAME %s
+// RUN: %clang_cl /Fafoo -### -- %s 2>&1 | FileCheck -check-prefix=FaNAME %s
+// FaNAME:  "-o" "foo.asm"
+// RUN: %clang_cl /FA /Faa.ext /Fab.ext -### -- %s 2>&1 | FileCheck -check-prefix=FaNAMEEXT %s
+// FaNAMEEXT:  "-o" "b.ext"
+// RUN: %clang_cl /FA /Fafoo.dir/ -### -- %s 2>&1 | FileCheck -check-prefix=FaDIR %s
+// FaDIR:  "-o" "foo.dir{{[/\\]+}}cl-outputs.asm"
+// RUN: %clang_cl /FA /Fafoo.dir/a -### -- %s 2>&1 | FileCheck -check-prefix=FaDIRNAME %s
+// FaDIRNAME:  "-o" "foo.dir{{[/\\]+}}a.asm"
+// RUN: %clang_cl /FA /Fafoo.dir/a.ext -### -- %s 2>&1 | FileCheck -check-prefix=FaDIRNAMEEXT %s
+// FaDIRNAMEEXT:  "-o" "foo.dir{{[/\\]+}}a.ext"

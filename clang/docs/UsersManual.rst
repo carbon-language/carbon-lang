@@ -1456,6 +1456,8 @@ Execute ``clang-cl /?`` to see a list of supported options:
     /c                     Compile only
     /D <macro[=value]>     Define macro
     /fallback              Fall back to cl.exe if clang-cl fails to compile
+    /FA                    Output assembly code file during compilation
+    /Fa<file or directory> Output assembly code to this file during compilation
     /Fe<file or directory> Set output executable file or directory (ends in / or \)
     /FI<value>             Include file before parsing
     /Fo<file or directory> Set output object file, or directory (ends in / or \)
