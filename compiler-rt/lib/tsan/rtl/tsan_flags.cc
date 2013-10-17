@@ -23,14 +23,6 @@ Flags *flags() {
   return &CTX()->flags;
 }
 
-#if !SANITIZER_SUPPORTS_WEAK_HOOKS
-extern "C" {
-SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
-const char* __asan_default_options() { return ""; }
-}  // extern "C"
-#endif
-
-
 // Can be overriden in frontend.
 #ifdef TSAN_EXTERNAL_HOOKS
 void OverrideFlags(Flags *f);
