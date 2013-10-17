@@ -991,8 +991,6 @@ void DebugInfoFinder::processModule(const Module &M) {
         else if (Entity.isNameSpace())
           processScope(DINameSpace(Entity).getContext());
       }
-      // FIXME: We really shouldn't be bailing out after visiting just one CU
-      return;
     }
   }
 }
