@@ -692,12 +692,6 @@ class FSUN_D_ENC : MSA_3RF_FMT<0b1001, 0b1, 0b011010>;
 class FSUNE_W_ENC : MSA_3RF_FMT<0b1010, 0b0, 0b011100>;
 class FSUNE_D_ENC : MSA_3RF_FMT<0b1010, 0b1, 0b011100>;
 
-class FTRUNC_S_W_ENC : MSA_2RF_FMT<0b110010001, 0b0, 0b011110>;
-class FTRUNC_S_D_ENC : MSA_2RF_FMT<0b110010001, 0b1, 0b011110>;
-
-class FTRUNC_U_W_ENC : MSA_2RF_FMT<0b110010010, 0b0, 0b011110>;
-class FTRUNC_U_D_ENC : MSA_2RF_FMT<0b110010010, 0b1, 0b011110>;
-
 class FTINT_S_W_ENC : MSA_2RF_FMT<0b110011100, 0b0, 0b011110>;
 class FTINT_S_D_ENC : MSA_2RF_FMT<0b110011100, 0b1, 0b011110>;
 
@@ -706,6 +700,12 @@ class FTINT_U_D_ENC : MSA_2RF_FMT<0b110011101, 0b1, 0b011110>;
 
 class FTQ_H_ENC : MSA_3RF_FMT<0b1010, 0b0, 0b011011>;
 class FTQ_W_ENC : MSA_3RF_FMT<0b1010, 0b1, 0b011011>;
+
+class FTRUNC_S_W_ENC : MSA_2RF_FMT<0b110010001, 0b0, 0b011110>;
+class FTRUNC_S_D_ENC : MSA_2RF_FMT<0b110010001, 0b1, 0b011110>;
+
+class FTRUNC_U_W_ENC : MSA_2RF_FMT<0b110010010, 0b0, 0b011110>;
+class FTRUNC_U_D_ENC : MSA_2RF_FMT<0b110010010, 0b1, 0b011110>;
 
 class HADD_S_H_ENC : MSA_3R_FMT<0b100, 0b01, 0b010101>;
 class HADD_S_W_ENC : MSA_3R_FMT<0b100, 0b10, 0b010101>;
@@ -1933,16 +1933,6 @@ class FSUNE_W_DESC : MSA_3RF_DESC_BASE<"fsune.w", int_mips_fsune_w,
 class FSUNE_D_DESC : MSA_3RF_DESC_BASE<"fsune.d", int_mips_fsune_d,
                                        MSA128DOpnd>;
 
-class FTRUNC_S_W_DESC : MSA_2RF_DESC_BASE<"ftrunc_s.w", fp_to_sint,
-                                          MSA128WOpnd>;
-class FTRUNC_S_D_DESC : MSA_2RF_DESC_BASE<"ftrunc_s.d", fp_to_sint,
-                                          MSA128DOpnd>;
-
-class FTRUNC_U_W_DESC : MSA_2RF_DESC_BASE<"ftrunc_u.w", fp_to_uint,
-                                          MSA128WOpnd>;
-class FTRUNC_U_D_DESC : MSA_2RF_DESC_BASE<"ftrunc_u.d", fp_to_uint,
-                                          MSA128DOpnd>;
-
 class FTINT_S_W_DESC : MSA_2RF_DESC_BASE<"ftint_s.w", int_mips_ftint_s_w,
                                          MSA128WOpnd>;
 class FTINT_S_D_DESC : MSA_2RF_DESC_BASE<"ftint_s.d", int_mips_ftint_s_d,
@@ -1957,6 +1947,16 @@ class FTQ_H_DESC : MSA_3RF_DESC_BASE<"ftq.h", int_mips_ftq_h,
                                      MSA128HOpnd, MSA128WOpnd, MSA128WOpnd>;
 class FTQ_W_DESC : MSA_3RF_DESC_BASE<"ftq.w", int_mips_ftq_w,
                                      MSA128WOpnd, MSA128DOpnd, MSA128DOpnd>;
+
+class FTRUNC_S_W_DESC : MSA_2RF_DESC_BASE<"ftrunc_s.w", fp_to_sint,
+                                          MSA128WOpnd>;
+class FTRUNC_S_D_DESC : MSA_2RF_DESC_BASE<"ftrunc_s.d", fp_to_sint,
+                                          MSA128DOpnd>;
+
+class FTRUNC_U_W_DESC : MSA_2RF_DESC_BASE<"ftrunc_u.w", fp_to_uint,
+                                          MSA128WOpnd>;
+class FTRUNC_U_D_DESC : MSA_2RF_DESC_BASE<"ftrunc_u.d", fp_to_uint,
+                                          MSA128DOpnd>;
 
 class HADD_S_H_DESC : MSA_3R_DESC_BASE<"hadd_s.h", int_mips_hadd_s_h,
                                        MSA128HOpnd, MSA128BOpnd, MSA128BOpnd>;
@@ -2858,12 +2858,6 @@ def FSUN_D : FSUN_D_ENC, FSUN_D_DESC;
 def FSUNE_W : FSUNE_W_ENC, FSUNE_W_DESC;
 def FSUNE_D : FSUNE_D_ENC, FSUNE_D_DESC;
 
-def FTRUNC_S_W : FTRUNC_S_W_ENC, FTRUNC_S_W_DESC;
-def FTRUNC_S_D : FTRUNC_S_D_ENC, FTRUNC_S_D_DESC;
-
-def FTRUNC_U_W : FTRUNC_U_W_ENC, FTRUNC_U_W_DESC;
-def FTRUNC_U_D : FTRUNC_U_D_ENC, FTRUNC_U_D_DESC;
-
 def FTINT_S_W : FTINT_S_W_ENC, FTINT_S_W_DESC;
 def FTINT_S_D : FTINT_S_D_ENC, FTINT_S_D_DESC;
 
@@ -2872,6 +2866,12 @@ def FTINT_U_D : FTINT_U_D_ENC, FTINT_U_D_DESC;
 
 def FTQ_H : FTQ_H_ENC, FTQ_H_DESC;
 def FTQ_W : FTQ_W_ENC, FTQ_W_DESC;
+
+def FTRUNC_S_W : FTRUNC_S_W_ENC, FTRUNC_S_W_DESC;
+def FTRUNC_S_D : FTRUNC_S_D_ENC, FTRUNC_S_D_DESC;
+
+def FTRUNC_U_W : FTRUNC_U_W_ENC, FTRUNC_U_W_DESC;
+def FTRUNC_U_D : FTRUNC_U_D_ENC, FTRUNC_U_D_DESC;
 
 def HADD_S_H : HADD_S_H_ENC, HADD_S_H_DESC;
 def HADD_S_W : HADD_S_W_ENC, HADD_S_W_DESC;
