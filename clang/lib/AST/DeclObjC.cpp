@@ -1079,7 +1079,7 @@ ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
   : ObjCContainerDecl(ObjCInterface, DC, Id, CLoc, atLoc),
     TypeForDecl(0), Data()
 {
-  setPreviousDeclaration(PrevDecl);
+  setPreviousDecl(PrevDecl);
   
   // Copy the 'data' pointer over.
   if (PrevDecl)
@@ -1418,7 +1418,7 @@ ObjCProtocolDecl::ObjCProtocolDecl(DeclContext *DC, IdentifierInfo *Id,
                                    ObjCProtocolDecl *PrevDecl)
   : ObjCContainerDecl(ObjCProtocol, DC, Id, nameLoc, atStartLoc), Data()
 {
-  setPreviousDeclaration(PrevDecl);
+  setPreviousDecl(PrevDecl);
   if (PrevDecl)
     Data = PrevDecl->Data;
 }

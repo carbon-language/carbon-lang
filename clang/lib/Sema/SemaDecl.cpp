@@ -1245,13 +1245,13 @@ void Sema::MarkUnusedFileScopedDecl(const DeclaratorDecl *D) {
     return;
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    const FunctionDecl *First = FD->getFirstDeclaration();
+    const FunctionDecl *First = FD->getFirstDecl();
     if (FD != First && ShouldWarnIfUnusedFileScopedDecl(First))
       return; // First should already be in the vector.
   }
 
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    const VarDecl *First = VD->getFirstDeclaration();
+    const VarDecl *First = VD->getFirstDecl();
     if (VD != First && ShouldWarnIfUnusedFileScopedDecl(First))
       return; // First should already be in the vector.
   }
@@ -1713,7 +1713,7 @@ void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
   // The types match.  Link up the redeclaration chain and merge attributes if
   // the old declaration was a typedef.
   if (TypedefNameDecl *Typedef = dyn_cast<TypedefNameDecl>(Old)) {
-    New->setPreviousDeclaration(Typedef);
+    New->setPreviousDecl(Typedef);
     mergeDeclAttributes(New, Old);
   }
 
@@ -2132,7 +2132,7 @@ static void mergeParamDeclAttributes(ParmVarDecl *newDecl,
     // Find the first declaration of the parameter.
     // FIXME: Should we build redeclaration chains for function parameters?
     const FunctionDecl *FirstFD =
-      cast<FunctionDecl>(oldDecl->getDeclContext())->getFirstDeclaration();
+      cast<FunctionDecl>(oldDecl->getDeclContext())->getFirstDecl();
     const ParmVarDecl *FirstVD =
       FirstFD->getParamDecl(oldDecl->getFunctionScopeIndex());
     S.Diag(FirstVD->getLocation(),
@@ -2330,7 +2330,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
   bool RequiresAdjustment = false;
 
   if (OldTypeInfo.getCC() != NewTypeInfo.getCC()) {
-    FunctionDecl *First = Old->getFirstDeclaration();
+    FunctionDecl *First = Old->getFirstDecl();
     const FunctionType *FT =
         First->getType().getCanonicalType()->castAs<FunctionType>();
     FunctionType::ExtInfo FI = FT->getExtInfo();
@@ -2545,7 +2545,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
         !Old->hasAttr<CXX11NoReturnAttr>()) {
       Diag(New->getAttr<CXX11NoReturnAttr>()->getLocation(),
            diag::err_noreturn_missing_on_first_decl);
-      Diag(Old->getFirstDeclaration()->getLocation(),
+      Diag(Old->getFirstDecl()->getLocation(),
            diag::note_noreturn_missing_first_decl);
     }
 
@@ -2557,7 +2557,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
         !Old->hasAttr<CarriesDependencyAttr>()) {
       Diag(New->getAttr<CarriesDependencyAttr>()->getLocation(),
            diag::err_carries_dependency_missing_on_first_decl) << 0/*Function*/;
-      Diag(Old->getFirstDeclaration()->getLocation(),
+      Diag(Old->getFirstDecl()->getLocation(),
            diag::note_carries_dependency_missing_first_decl) << 0/*Function*/;
     }
 
@@ -3074,7 +3074,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   New->setIsUsed(Old->isUsed(false));
 
   // Keep a chain of previous declarations.
-  New->setPreviousDeclaration(Old);
+  New->setPreviousDecl(Old);
 
   // Inherit access appropriately.
   New->setAccess(Old->getAccess());
@@ -5575,9 +5575,9 @@ static bool checkGlobalOrExternCConflict(
   // is lexically inside an extern "C" linkage-spec.
   assert(Prev && "should have found a previous declaration to diagnose");
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(Prev))
-    Prev = FD->getFirstDeclaration();
+    Prev = FD->getFirstDecl();
   else
-    Prev = cast<VarDecl>(Prev)->getFirstDeclaration();
+    Prev = cast<VarDecl>(Prev)->getFirstDecl();
 
   S.Diag(ND->getLocation(), diag::err_extern_c_global_conflict)
     << IsGlobal << ND;
@@ -7474,7 +7474,7 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
           // setNonKeyFunction needs to work with the original
           // declaration from the class definition, and isVirtual() is
           // just faster in that case, so map back to that now.
-          oldMethod = cast<CXXMethodDecl>(oldMethod->getFirstDeclaration());
+          oldMethod = cast<CXXMethodDecl>(oldMethod->getFirstDecl());
           if (oldMethod->isVirtual()) {
             Context.setNonKeyFunction(oldMethod);
           }

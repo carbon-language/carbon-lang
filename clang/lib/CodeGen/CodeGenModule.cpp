@@ -1663,7 +1663,7 @@ void CodeGenModule::MaybeHandleStaticInExternC(const SomeDecl *D,
 
   // Must be in an extern "C" context. Entities declared directly within
   // a record are not extern "C" even if the record is in such a context.
-  const SomeDecl *First = D->getFirstDeclaration();
+  const SomeDecl *First = D->getFirstDecl();
   if (First->getDeclContext()->isRecord() || !First->isInExternCContext())
     return;
 

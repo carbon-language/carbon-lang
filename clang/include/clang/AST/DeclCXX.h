@@ -2111,8 +2111,7 @@ public:
 
   /// \brief Determine whether this constructor was marked "explicit" or not.
   bool isExplicit() const {
-    return cast<CXXConstructorDecl>(getFirstDeclaration())
-      ->isExplicitSpecified();
+    return cast<CXXConstructorDecl>(getFirstDecl())->isExplicitSpecified();
   }
 
   /// \brief Iterates through the member/base initializer list.
@@ -2352,8 +2351,7 @@ public:
   /// Explicit conversion operators are only considered for direct
   /// initialization, e.g., when the user has explicitly written a cast.
   bool isExplicit() const {
-    return cast<CXXConversionDecl>(getFirstDeclaration())
-      ->isExplicitSpecified();
+    return cast<CXXConversionDecl>(getFirstDecl())->isExplicitSpecified();
   }
 
   /// \brief Returns the type that this conversion function is converting to.

@@ -296,7 +296,7 @@ void MicrosoftCXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   // Since MSVC operates on the type as written and not the canonical type, it
   // actually matters which decl we have here.  MSVC appears to choose the
   // first, since it is most likely to be the declaration in a header file.
-  FD = FD->getFirstDeclaration();
+  FD = FD->getFirstDecl();
 
   // We should never ever see a FunctionNoProtoType at this point.
   // We don't even know how to mangle their types anyway :).

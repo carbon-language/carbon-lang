@@ -1921,7 +1921,7 @@ NamespaceDecl::NamespaceDecl(DeclContext *DC, bool Inline,
   : NamedDecl(Namespace, DC, IdLoc, Id), DeclContext(Namespace),
     LocStart(StartLoc), RBraceLoc(), AnonOrFirstNamespaceAndInline(0, Inline) 
 {
-  setPreviousDeclaration(PrevDecl);
+  setPreviousDecl(PrevDecl);
   
   if (PrevDecl)
     AnonOrFirstNamespaceAndInline.setPointer(PrevDecl->getOriginalNamespace());

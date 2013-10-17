@@ -308,7 +308,7 @@ ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C,
                                              ClassTemplateDecl *PrevDecl) {
   AdoptTemplateParameterList(Params, cast<DeclContext>(Decl));
   ClassTemplateDecl *New = new (C) ClassTemplateDecl(DC, L, Name, Params, Decl);
-  New->setPreviousDeclaration(PrevDecl);
+  New->setPreviousDecl(PrevDecl);
   return New;
 }
 
@@ -974,7 +974,7 @@ VarTemplateDecl *VarTemplateDecl::Create(ASTContext &C, DeclContext *DC,
                                          NamedDecl *Decl,
                                          VarTemplateDecl *PrevDecl) {
   VarTemplateDecl *New = new (C) VarTemplateDecl(DC, L, Name, Params, Decl);
-  New->setPreviousDeclaration(PrevDecl);
+  New->setPreviousDecl(PrevDecl);
   return New;
 }
 

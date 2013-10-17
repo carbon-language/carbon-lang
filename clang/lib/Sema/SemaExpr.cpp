@@ -245,7 +245,7 @@ static void diagnoseUseOfInternalDeclInInlineFunction(Sema &S,
 }
 
 void Sema::MaybeSuggestAddingStaticToDecl(const FunctionDecl *Cur) {
-  const FunctionDecl *First = Cur->getFirstDeclaration();
+  const FunctionDecl *First = Cur->getFirstDecl();
 
   // Suggest "static" on the function, if possible.
   if (!hasAnyExplicitStorageClass(First)) {

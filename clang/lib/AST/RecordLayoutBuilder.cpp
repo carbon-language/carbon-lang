@@ -3140,7 +3140,7 @@ const CXXMethodDecl *ASTContext::getCurrentKeyFunction(const CXXRecordDecl *RD) 
 }
 
 void ASTContext::setNonKeyFunction(const CXXMethodDecl *Method) {
-  assert(Method == Method->getFirstDeclaration() &&
+  assert(Method == Method->getFirstDecl() &&
          "not working with method declaration from class definition");
 
   // Look up the cache entry.  Since we're working with the first

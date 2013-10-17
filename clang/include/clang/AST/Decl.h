@@ -394,7 +394,7 @@ public:
 
   /// \brief Get the original (first) namespace declaration.
   NamespaceDecl *getOriginalNamespace() {
-    if (isFirstDeclaration())
+    if (isFirstDecl())
       return this;
 
     return AnonOrFirstNamespaceAndInline.getPointer();
@@ -402,7 +402,7 @@ public:
 
   /// \brief Get the original (first) namespace declaration.
   const NamespaceDecl *getOriginalNamespace() const {
-    if (isFirstDeclaration())
+    if (isFirstDecl())
       return this;
 
     return AnonOrFirstNamespaceAndInline.getPointer();
@@ -411,9 +411,7 @@ public:
   /// \brief Return true if this declaration is an original (first) declaration
   /// of the namespace. This is false for non-original (subsequent) namespace
   /// declarations and anonymous namespaces.
-  bool isOriginalNamespace() const {
-    return isFirstDeclaration();
-  }
+  bool isOriginalNamespace() const { return isFirstDecl(); }
 
   /// \brief Retrieve the anonymous namespace nested inside this namespace,
   /// if any.
@@ -2223,12 +2221,8 @@ public:
   SourceRange getSourceRange() const LLVM_READONLY;
 
   /// Retrieves the canonical declaration of this field.
-  FieldDecl *getCanonicalDecl() {
-    return getFirstDeclaration();
-  }
-  const FieldDecl *getCanonicalDecl() const {
-    return getFirstDeclaration();
-  }
+  FieldDecl *getCanonicalDecl() { return getFirstDecl(); }
+  const FieldDecl *getCanonicalDecl() const { return getFirstDecl(); }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -2269,12 +2263,8 @@ public:
   SourceRange getSourceRange() const LLVM_READONLY;
 
   /// Retrieves the canonical declaration of this enumerator.
-  EnumConstantDecl *getCanonicalDecl() {
-    return getFirstDeclaration();
-  }
-  const EnumConstantDecl *getCanonicalDecl() const {
-    return getFirstDeclaration();
-  }
+  EnumConstantDecl *getCanonicalDecl() { return getFirstDecl(); }
+  const EnumConstantDecl *getCanonicalDecl() const { return getFirstDecl(); }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -2421,12 +2411,8 @@ public:
   }
 
   /// Retrieves the canonical declaration of this typedef-name.
-  TypedefNameDecl *getCanonicalDecl() {
-    return getFirstDeclaration();
-  }
-  const TypedefNameDecl *getCanonicalDecl() const {
-    return getFirstDeclaration();
-  }
+  TypedefNameDecl *getCanonicalDecl() { return getFirstDecl(); }
+  const TypedefNameDecl *getCanonicalDecl() const { return getFirstDecl(); }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -2565,7 +2551,7 @@ protected:
         NamedDeclOrQualifier((NamedDecl *)0) {
     assert((DK != Enum || TK == TTK_Enum) &&
            "EnumDecl not matched with TTK_Enum");
-    setPreviousDeclaration(PrevDecl);
+    setPreviousDecl(PrevDecl);
   }
 
   typedef Redeclarable<TagDecl> redeclarable_base;
@@ -3487,7 +3473,7 @@ inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
 }
 
 template<typename decl_type>
-void Redeclarable<decl_type>::setPreviousDeclaration(decl_type *PrevDecl) {
+void Redeclarable<decl_type>::setPreviousDecl(decl_type *PrevDecl) {
   // Note: This routine is implemented here because we need both NamedDecl
   // and Redeclarable to be defined.
 
@@ -3497,7 +3483,7 @@ void Redeclarable<decl_type>::setPreviousDeclaration(decl_type *PrevDecl) {
     // Point to previous. Make sure that this is actually the most recent
     // redeclaration, or we can build invalid chains. If the most recent
     // redeclaration is invalid, it won't be PrevDecl, but we want it anyway.
-    First = PrevDecl->getFirstDeclaration();
+    First = PrevDecl->getFirstDecl();
     assert(First->RedeclLink.NextIsLatest() && "Expected first");
     decl_type *MostRecent = First->RedeclLink.getNext();
     RedeclLink = PreviousDeclLink(cast<decl_type>(MostRecent));

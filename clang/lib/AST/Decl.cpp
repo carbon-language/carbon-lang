@@ -508,7 +508,7 @@ static bool useInlineVisibilityHidden(const NamedDecl *D) {
 }
 
 template <typename T> static bool isFirstInExternCContext(T *D) {
-  const T *First = D->getFirstDeclaration();
+  const T *First = D->getFirstDecl();
   return First->isInExternCContext();
 }
 
@@ -1721,9 +1721,7 @@ bool VarDecl::isInExternCXXContext() const {
   return isInLanguageSpecContext(this, LinkageSpecDecl::lang_cxx);
 }
 
-VarDecl *VarDecl::getCanonicalDecl() {
-  return getFirstDeclaration();
-}
+VarDecl *VarDecl::getCanonicalDecl() { return getFirstDecl(); }
 
 VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition(
   ASTContext &C) const
@@ -1745,7 +1743,7 @@ VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition(
          // If the first declaration is out-of-line, this may be an
          // instantiation of an out-of-line partial specialization of a variable
          // template for which we have not yet instantiated the initializer.
-         (getFirstDeclaration()->isOutOfLine()
+         (getFirstDecl()->isOutOfLine()
               ? getTemplateSpecializationKind() == TSK_Undeclared
               : getTemplateSpecializationKind() !=
                     TSK_ExplicitSpecialization) ||
@@ -1800,7 +1798,7 @@ VarDecl *VarDecl::getActingDefinition() {
     return 0;
 
   VarDecl *LastTentative = 0;
-  VarDecl *First = getFirstDeclaration();
+  VarDecl *First = getFirstDecl();
   for (redecl_iterator I = First->redecls_begin(), E = First->redecls_end();
        I != E; ++I) {
     Kind = (*I)->isThisDeclarationADefinition();
@@ -1813,7 +1811,7 @@ VarDecl *VarDecl::getActingDefinition() {
 }
 
 VarDecl *VarDecl::getDefinition(ASTContext &C) {
-  VarDecl *First = getFirstDeclaration();
+  VarDecl *First = getFirstDecl();
   for (redecl_iterator I = First->redecls_begin(), E = First->redecls_end();
        I != E; ++I) {
     if ((*I)->isThisDeclarationADefinition(C) == Definition)
@@ -1825,7 +1823,7 @@ VarDecl *VarDecl::getDefinition(ASTContext &C) {
 VarDecl::DefinitionKind VarDecl::hasDefinition(ASTContext &C) const {
   DefinitionKind Kind = DeclarationOnly;
   
-  const VarDecl *First = getFirstDeclaration();
+  const VarDecl *First = getFirstDecl();
   for (redecl_iterator I = First->redecls_begin(), E = First->redecls_end();
        I != E; ++I) {
     Kind = std::max(Kind, (*I)->isThisDeclarationADefinition(C));
@@ -2418,13 +2416,13 @@ bool FunctionDecl::isNoReturn() const {
 
 void
 FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
-  redeclarable_base::setPreviousDeclaration(PrevDecl);
+  redeclarable_base::setPreviousDecl(PrevDecl);
 
   if (FunctionTemplateDecl *FunTmpl = getDescribedFunctionTemplate()) {
     FunctionTemplateDecl *PrevFunTmpl
       = PrevDecl? PrevDecl->getDescribedFunctionTemplate() : 0;
     assert((!PrevDecl || PrevFunTmpl) && "Function/function template mismatch");
-    FunTmpl->setPreviousDeclaration(PrevFunTmpl);
+    FunTmpl->setPreviousDecl(PrevFunTmpl);
   }
   
   if (PrevDecl && PrevDecl->IsInline)
@@ -2432,12 +2430,10 @@ FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
 }
 
 const FunctionDecl *FunctionDecl::getCanonicalDecl() const {
-  return getFirstDeclaration();
+  return getFirstDecl();
 }
 
-FunctionDecl *FunctionDecl::getCanonicalDecl() {
-  return getFirstDeclaration();
-}
+FunctionDecl *FunctionDecl::getCanonicalDecl() { return getFirstDecl(); }
 
 /// \brief Returns a value indicating whether this function
 /// corresponds to a builtin function.
@@ -3157,9 +3153,7 @@ SourceRange TagDecl::getSourceRange() const {
   return SourceRange(getOuterLocStart(), E);
 }
 
-TagDecl* TagDecl::getCanonicalDecl() {
-  return getFirstDeclaration();
-}
+TagDecl *TagDecl::getCanonicalDecl() { return getFirstDecl(); }
 
 void TagDecl::setTypedefNameForAnonDecl(TypedefNameDecl *TDD) {
   NamedDeclOrQualifier = TDD;

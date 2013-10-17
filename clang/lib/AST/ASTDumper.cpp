@@ -582,7 +582,7 @@ static void dumpPreviousDeclImpl(raw_ostream &OS, ...) {}
 
 template<typename T>
 static void dumpPreviousDeclImpl(raw_ostream &OS, const Mergeable<T> *D) {
-  const T *First = D->getFirstDeclaration();
+  const T *First = D->getFirstDecl();
   if (First != D)
     OS << " first " << First;
 }

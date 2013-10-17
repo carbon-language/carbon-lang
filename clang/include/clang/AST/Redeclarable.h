@@ -75,7 +75,7 @@ public:
 
   /// \brief Return the first declaration of this declaration or itself if this
   /// is the only declaration.
-  decl_type *getFirstDeclaration() {
+  decl_type *getFirstDecl() {
     decl_type *D = static_cast<decl_type*>(this);
     while (D->getPreviousDecl())
       D = D->getPreviousDecl();
@@ -84,7 +84,7 @@ public:
 
   /// \brief Return the first declaration of this declaration or itself if this
   /// is the only declaration.
-  const decl_type *getFirstDeclaration() const {
+  const decl_type *getFirstDecl() const {
     const decl_type *D = static_cast<const decl_type*>(this);
     while (D->getPreviousDecl())
       D = D->getPreviousDecl();
@@ -92,23 +92,21 @@ public:
   }
 
   /// \brief Returns true if this is the first declaration.
-  bool isFirstDeclaration() const {
-    return RedeclLink.NextIsLatest();
-  }
+  bool isFirstDecl() const { return RedeclLink.NextIsLatest(); }
 
   /// \brief Returns the most recent (re)declaration of this declaration.
   decl_type *getMostRecentDecl() {
-    return getFirstDeclaration()->RedeclLink.getNext();
+    return getFirstDecl()->RedeclLink.getNext();
   }
 
   /// \brief Returns the most recent (re)declaration of this declaration.
   const decl_type *getMostRecentDecl() const {
-    return getFirstDeclaration()->RedeclLink.getNext();
+    return getFirstDecl()->RedeclLink.getNext();
   }
   
   /// \brief Set the previous declaration. If PrevDecl is NULL, set this as the
   /// first and only declaration.
-  void setPreviousDeclaration(decl_type *PrevDecl);
+  void setPreviousDecl(decl_type *PrevDecl);
 
   /// \brief Iterates through all the redeclarations of the same decl.
   class redecl_iterator {
@@ -134,7 +132,7 @@ public:
     redecl_iterator& operator++() {
       assert(Current && "Advancing while iterator has reached end");
       // Sanity check to avoid infinite loop on invalid redecl chain.
-      if (Current->isFirstDeclaration()) {
+      if (Current->isFirstDecl()) {
         if (PassedFirst) {
           assert(0 && "Passed first decl twice, invalid redecl chain!");
           Current = 0;
@@ -189,7 +187,7 @@ public:
 
   /// \brief Return the first declaration of this declaration or itself if this
   /// is the only declaration.
-  decl_type *getFirstDeclaration() {
+  decl_type *getFirstDecl() {
     decl_type *D = static_cast<decl_type*>(this);
     if (!D->isFromASTFile())
       return D;
@@ -198,7 +196,7 @@ public:
 
   /// \brief Return the first declaration of this declaration or itself if this
   /// is the only declaration.
-  const decl_type *getFirstDeclaration() const {
+  const decl_type *getFirstDecl() const {
     const decl_type *D = static_cast<const decl_type*>(this);
     if (!D->isFromASTFile())
       return D;
@@ -206,9 +204,7 @@ public:
   }
 
   /// \brief Returns true if this is the first declaration.
-  bool isFirstDeclaration() const {
-    return getFirstDeclaration() == this;
-  }
+  bool isFirstDecl() const { return getFirstDecl() == this; }
 };
 
 }

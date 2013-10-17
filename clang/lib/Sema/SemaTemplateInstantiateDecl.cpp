@@ -254,7 +254,7 @@ Decl *TemplateDeclInstantiator::InstantiateTypedefNameDecl(TypedefNameDecl *D,
     // If the typedef types are not identical, reject them.
     SemaRef.isIncompatibleTypedef(InstPrevTypedef, Typedef);
 
-    Typedef->setPreviousDeclaration(InstPrevTypedef);
+    Typedef->setPreviousDecl(InstPrevTypedef);
   }
 
   SemaRef.InstantiateAttrs(TemplateArgs, D, Typedef);
@@ -306,7 +306,7 @@ TemplateDeclInstantiator::VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D) {
     = TypeAliasTemplateDecl::Create(SemaRef.Context, Owner, D->getLocation(),
                                     D->getDeclName(), InstParams, AliasInst);
   if (PrevAliasTemplate)
-    Inst->setPreviousDeclaration(PrevAliasTemplate);
+    Inst->setPreviousDecl(PrevAliasTemplate);
 
   Inst->setAccess(D->getAccess());
 
@@ -922,7 +922,7 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     SmallVector<ClassTemplatePartialSpecializationDecl *, 4> PartialSpecs;
     D->getPartialSpecializations(PartialSpecs);
     for (unsigned I = 0, N = PartialSpecs.size(); I != N; ++I)
-      if (PartialSpecs[I]->getFirstDeclaration()->isOutOfLine())
+      if (PartialSpecs[I]->getFirstDecl()->isOutOfLine())
         OutOfLinePartialSpecs.push_back(std::make_pair(Inst, PartialSpecs[I]));
   }
 
@@ -1003,7 +1003,7 @@ Decl *TemplateDeclInstantiator::VisitVarTemplateDecl(VarTemplateDecl *D) {
     SmallVector<VarTemplatePartialSpecializationDecl *, 4> PartialSpecs;
     D->getPartialSpecializations(PartialSpecs);
     for (unsigned I = 0, N = PartialSpecs.size(); I != N; ++I)
-      if (PartialSpecs[I]->getFirstDeclaration()->isOutOfLine())
+      if (PartialSpecs[I]->getFirstDecl()->isOutOfLine())
         OutOfLineVarPartialSpecs.push_back(
             std::make_pair(Inst, PartialSpecs[I]));
   }
@@ -3310,7 +3310,7 @@ VarTemplateSpecializationDecl *Sema::BuildVarTemplateInstantiation(
   // or may not be the declaration in the class; if it's in the class, we want
   // to instantiate a member in the class (a declaration), and if it's outside,
   // we want to instantiate a definition.
-  FromVar = FromVar->getFirstDeclaration();
+  FromVar = FromVar->getFirstDecl();
 
   MultiLevelTemplateArgumentList MultiLevelList(TemplateArgList);
   TemplateDeclInstantiator Instantiator(*this, FromVar->getDeclContext(),
@@ -3564,7 +3564,7 @@ void Sema::InstantiateVariableDefinition(SourceLocation PointOfInstantiation,
     // uninstantiated initializer on the declaration. If so, instantiate
     // it now.
     if (PatternDecl->isStaticDataMember() &&
-        (PatternDecl = PatternDecl->getFirstDeclaration())->hasInit() &&
+        (PatternDecl = PatternDecl->getFirstDecl())->hasInit() &&
         !Var->hasInit()) {
       // FIXME: Factor out the duplicated instantiation context setup/tear down
       // code here.

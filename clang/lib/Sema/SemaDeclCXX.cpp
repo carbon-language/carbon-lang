@@ -7840,7 +7840,7 @@ Decl *Sema::ActOnAliasDeclaration(Scope *S,
     if (Invalid)
       NewDecl->setInvalidDecl();
     else if (OldDecl)
-      NewDecl->setPreviousDeclaration(OldDecl);
+      NewDecl->setPreviousDecl(OldDecl);
 
     NewND = NewDecl;
   } else {
