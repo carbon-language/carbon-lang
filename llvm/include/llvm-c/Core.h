@@ -416,6 +416,22 @@ void LLVMShutdown();
 char *LLVMCreateMessage(const char *Message);
 void LLVMDisposeMessage(char *Message);
 
+typedef void (*LLVMFatalErrorHandler)(const char *Reason);
+
+/**
+ * Install a fatal error handler. By default, if LLVM detects a fatal error, it
+ * will call exit(1). This may not be appropriate in many contexts. For example,
+ * doing exit(1) will bypass many crash reporting/tracing system tools. This
+ * function allows you to install a callback that will be invoked prior to the
+ * call to exit(1).
+ */
+void LLVMInstallFatalErrorHandler(LLVMFatalErrorHandler Handler);
+
+/**
+ * Reset the fatal error handler. This resets LLVM's fatal error handling
+ * behavior to the default.
+ */
+void LLVMResetFatalErrorHandler(void);
 
 /**
  * @defgroup LLVMCCoreContext Contexts
