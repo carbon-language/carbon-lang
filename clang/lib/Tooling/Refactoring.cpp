@@ -107,16 +107,10 @@ void Replacement::setFromSourceLocation(SourceManager &Sources,
   const FileEntry *Entry = Sources.getFileEntryForID(DecomposedLocation.first);
   if (Entry != NULL) {
     // Make FilePath absolute so replacements can be applied correctly when
-    // relative paths for files are used. But we don't want to change virtual
-    // files.
-    if (llvm::sys::fs::exists(Entry->getName())) {
-      llvm::SmallString<256> FilePath(Entry->getName());
-      llvm::sys::fs::make_absolute(FilePath);
-      this->FilePath = FilePath.c_str();
-    }
-    else {
-      this->FilePath = Entry->getName();
-    }
+    // relative paths for files are used.
+    llvm::SmallString<256> FilePath(Entry->getName());
+    llvm::error_code EC = llvm::sys::fs::make_absolute(FilePath);
+    this->FilePath = EC ? FilePath.c_str() : Entry->getName();
   } else {
     this->FilePath = InvalidLocation;
   }
