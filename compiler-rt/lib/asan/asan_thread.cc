@@ -19,6 +19,7 @@
 #include "asan_mapping.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
+#include "sanitizer_common/sanitizer_stackdepot.h"
 #include "lsan/lsan_common.h"
 
 namespace __asan {
@@ -27,9 +28,8 @@ namespace __asan {
 
 void AsanThreadContext::OnCreated(void *arg) {
   CreateThreadContextArgs *args = static_cast<CreateThreadContextArgs*>(arg);
-  if (args->stack) {
-    internal_memcpy(&stack, args->stack, sizeof(stack));
-  }
+  if (args->stack)
+    stack_id = StackDepotPut(args->stack->trace, args->stack->size);
   thread = args->thread;
   thread->set_context(this);
 }

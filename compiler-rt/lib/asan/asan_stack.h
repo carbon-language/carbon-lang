@@ -22,6 +22,7 @@
 namespace __asan {
 
 void PrintStack(StackTrace *stack);
+void PrintStack(const uptr *trace, uptr size);
 
 }  // namespace __asan
 

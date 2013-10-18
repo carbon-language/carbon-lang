@@ -38,12 +38,12 @@ class AsanThreadContext : public ThreadContextBase {
       : ThreadContextBase(tid),
         announced(false),
         destructor_iterations(kPthreadDestructorIterations),
+        stack_id(0),
         thread(0) {
-    internal_memset(&stack, 0, sizeof(stack));
   }
   bool announced;
-  int destructor_iterations;
-  StackTrace stack;
+  u8 destructor_iterations;
+  u32 stack_id;
   AsanThread *thread;
 
   void OnCreated(void *arg);
@@ -51,7 +51,7 @@ class AsanThreadContext : public ThreadContextBase {
 };
 
 // AsanThreadContext objects are never freed, so we need many of them.
-COMPILER_CHECK(sizeof(AsanThreadContext) <= 4096);
+COMPILER_CHECK(sizeof(AsanThreadContext) <= 256);
 
 // AsanThread are stored in TSD and destroyed when the thread dies.
 class AsanThread {
