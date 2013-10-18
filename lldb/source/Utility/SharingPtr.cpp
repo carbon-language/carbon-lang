@@ -138,13 +138,21 @@ namespace imp
     void
     shared_count::add_shared()
     {
-        increment(shared_owners_);
+#ifdef _MSC_VER
+        _InterlockedIncrement(&shared_owners_);
+#else
+        ++shared_owners_;
+#endif
     }
 
     void
     shared_count::release_shared()
     {
-        if (decrement(shared_owners_) == -1)
+#ifdef _MSC_VER
+        if (_InterlockedDecrement(&shared_owners_) == -1)
+#else
+        if (--shared_owners_ == -1)
+#endif
         {
             on_zero_shared();
             delete this;

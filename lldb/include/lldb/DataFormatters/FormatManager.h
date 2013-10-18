@@ -23,7 +23,7 @@
 #include "lldb/DataFormatters/TypeCategory.h"
 #include "lldb/DataFormatters/TypeCategoryMap.h"
 
-#include "lldb/Host/Atomic.h"
+#include <atomic>
 
 namespace lldb_private {
     
@@ -199,7 +199,7 @@ public:
     void
     Changed ()
     {
-        AtomicIncrement((cas_flag*)&m_last_revision);
+        ++m_last_revision;
         m_format_cache.Clear ();
     }
     
@@ -216,7 +216,7 @@ public:
 private:
     FormatCache m_format_cache;
     NamedSummariesMap m_named_summaries_map;
-    uint32_t m_last_revision;
+    std::atomic<uint32_t> m_last_revision;
     TypeCategoryMap m_categories_map;
     
     ConstString m_default_category_name;
