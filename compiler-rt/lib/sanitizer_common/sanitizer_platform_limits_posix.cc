@@ -111,6 +111,7 @@
 #if SANITIZER_MAC
 #include <netinet/ip_mroute.h>
 #include <sys/filio.h>
+#include <sys/mount.h>
 #include <sys/sockio.h>
 #endif
 
