@@ -176,7 +176,9 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
     // If you remove this, you can remove the code that clears the flag
     // after parsing the member.
     if (D.getDeclSpec().isFriendSpecified()) {
-      getFunctionDecl(FnD)->setLateTemplateParsed(true);
+      FunctionDecl *FD = getFunctionDecl(FnD);
+      Actions.CheckForFunctionRedefinition(FD);
+      FD->setLateTemplateParsed(true);
     }
   } else {
     // If semantic analysis could not build a function declaration,

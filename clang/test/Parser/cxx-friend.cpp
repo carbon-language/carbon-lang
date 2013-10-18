@@ -30,6 +30,10 @@ class B {
   void f(A *a) { a->f(); }
 };
 
+void bar() {} // expected-note {{previous definition is here}}
+class E {
+  friend void bar() {} // expected-error {{redefinition of 'bar'}}
+};
 
 
 
