@@ -76,8 +76,12 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
                                StringRef Annot) {
   unsigned Opcode = MI->getOpcode();
 
+  switch(Opcode) {
+
   // Check for HINT instructions w/ canonical names.
-  if (Opcode == ARM::HINT || Opcode == ARM::tHINT || Opcode == ARM::t2HINT) {
+  case ARM::HINT:
+  case ARM::tHINT:
+  case ARM::t2HINT:
     switch (MI->getOperand(0).getImm()) {
     case 0: O << "\tnop"; break;
     case 1: O << "\tyield"; break;
@@ -100,10 +104,9 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
       O << ".w";
     printAnnotation(O, Annot);
     return;
-  }
 
   // Check for MOVs and print canonical forms, instead.
-  if (Opcode == ARM::MOVsr) {
+  case ARM::MOVsr: {
     // FIXME: Thumb variants?
     const MCOperand &Dst = MI->getOperand(0);
     const MCOperand &MO1 = MI->getOperand(1);
@@ -126,7 +129,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     return;
   }
 
-  if (Opcode == ARM::MOVsi) {
+  case ARM::MOVsi: {
     // FIXME: Thumb variants?
     const MCOperand &Dst = MI->getOperand(0);
     const MCOperand &MO1 = MI->getOperand(1);
@@ -154,81 +157,91 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     return;
   }
 
-
   // A8.6.123 PUSH
-  if ((Opcode == ARM::STMDB_UPD || Opcode == ARM::t2STMDB_UPD) &&
-      MI->getOperand(0).getReg() == ARM::SP &&
-      MI->getNumOperands() > 5) {
-    // Should only print PUSH if there are at least two registers in the list.
-    O << '\t' << "push";
-    printPredicateOperand(MI, 2, O);
-    if (Opcode == ARM::t2STMDB_UPD)
-      O << ".w";
-    O << '\t';
-    printRegisterList(MI, 4, O);
-    printAnnotation(O, Annot);
-    return;
-  }
-  if (Opcode == ARM::STR_PRE_IMM && MI->getOperand(2).getReg() == ARM::SP &&
-      MI->getOperand(3).getImm() == -4) {
-    O << '\t' << "push";
-    printPredicateOperand(MI, 4, O);
-    O << "\t{";
-    printRegName(O, MI->getOperand(1).getReg());
-    O << "}";
-    printAnnotation(O, Annot);
-    return;
-  }
+  case ARM::STMDB_UPD:
+  case ARM::t2STMDB_UPD:
+    if (MI->getOperand(0).getReg() == ARM::SP && MI->getNumOperands() > 5) {
+      // Should only print PUSH if there are at least two registers in the list.
+      O << '\t' << "push";
+      printPredicateOperand(MI, 2, O);
+      if (Opcode == ARM::t2STMDB_UPD)
+        O << ".w";
+      O << '\t';
+      printRegisterList(MI, 4, O);
+      printAnnotation(O, Annot);
+      return;
+    } else
+      break;
+
+  case ARM::STR_PRE_IMM:
+    if (MI->getOperand(2).getReg() == ARM::SP &&
+        MI->getOperand(3).getImm() == -4) {
+      O << '\t' << "push";
+      printPredicateOperand(MI, 4, O);
+      O << "\t{";
+      printRegName(O, MI->getOperand(1).getReg());
+      O << "}";
+      printAnnotation(O, Annot);
+      return;
+    } else
+      break;
 
   // A8.6.122 POP
-  if ((Opcode == ARM::LDMIA_UPD || Opcode == ARM::t2LDMIA_UPD) &&
-      MI->getOperand(0).getReg() == ARM::SP &&
-      MI->getNumOperands() > 5) {
-    // Should only print POP if there are at least two registers in the list.
-    O << '\t' << "pop";
-    printPredicateOperand(MI, 2, O);
-    if (Opcode == ARM::t2LDMIA_UPD)
-      O << ".w";
-    O << '\t';
-    printRegisterList(MI, 4, O);
-    printAnnotation(O, Annot);
-    return;
-  }
-  if (Opcode == ARM::LDR_POST_IMM && MI->getOperand(2).getReg() == ARM::SP &&
-      MI->getOperand(4).getImm() == 4) {
-    O << '\t' << "pop";
-    printPredicateOperand(MI, 5, O);
-    O << "\t{";
-    printRegName(O, MI->getOperand(0).getReg());
-    O << "}";
-    printAnnotation(O, Annot);
-    return;
-  }
+  case ARM::LDMIA_UPD:
+  case ARM::t2LDMIA_UPD:
+    if (MI->getOperand(0).getReg() == ARM::SP && MI->getNumOperands() > 5) {
+      // Should only print POP if there are at least two registers in the list.
+      O << '\t' << "pop";
+      printPredicateOperand(MI, 2, O);
+      if (Opcode == ARM::t2LDMIA_UPD)
+        O << ".w";
+      O << '\t';
+      printRegisterList(MI, 4, O);
+      printAnnotation(O, Annot);
+      return;
+    } else
+      break;
 
+  case ARM::LDR_POST_IMM:
+    if (MI->getOperand(2).getReg() == ARM::SP &&
+        MI->getOperand(4).getImm() == 4) {
+      O << '\t' << "pop";
+      printPredicateOperand(MI, 5, O);
+      O << "\t{";
+      printRegName(O, MI->getOperand(0).getReg());
+      O << "}";
+      printAnnotation(O, Annot);
+      return;
+    } else
+      break;
 
   // A8.6.355 VPUSH
-  if ((Opcode == ARM::VSTMSDB_UPD || Opcode == ARM::VSTMDDB_UPD) &&
-      MI->getOperand(0).getReg() == ARM::SP) {
-    O << '\t' << "vpush";
-    printPredicateOperand(MI, 2, O);
-    O << '\t';
-    printRegisterList(MI, 4, O);
-    printAnnotation(O, Annot);
-    return;
-  }
+  case ARM::VSTMSDB_UPD:
+  case ARM::VSTMDDB_UPD:
+    if (MI->getOperand(0).getReg() == ARM::SP) {
+      O << '\t' << "vpush";
+      printPredicateOperand(MI, 2, O);
+      O << '\t';
+      printRegisterList(MI, 4, O);
+      printAnnotation(O, Annot);
+      return;
+    } else
+      break;
 
   // A8.6.354 VPOP
-  if ((Opcode == ARM::VLDMSIA_UPD || Opcode == ARM::VLDMDIA_UPD) &&
-      MI->getOperand(0).getReg() == ARM::SP) {
-    O << '\t' << "vpop";
-    printPredicateOperand(MI, 2, O);
-    O << '\t';
-    printRegisterList(MI, 4, O);
-    printAnnotation(O, Annot);
-    return;
-  }
+  case ARM::VLDMSIA_UPD:
+  case ARM::VLDMDIA_UPD:
+    if (MI->getOperand(0).getReg() == ARM::SP) {
+      O << '\t' << "vpop";
+      printPredicateOperand(MI, 2, O);
+      O << '\t';
+      printRegisterList(MI, 4, O);
+      printAnnotation(O, Annot);
+      return;
+    } else
+      break;
 
-  if (Opcode == ARM::tLDMIA) {
+  case ARM::tLDMIA: {
     bool Writeback = true;
     unsigned BaseReg = MI->getOperand(0).getReg();
     for (unsigned i = 3; i < MI->getNumOperands(); ++i) {
@@ -254,8 +267,8 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
   // GPRs. However, when decoding them, the two GRPs cannot be automatically
   // expressed as a GPRPair, so we have to manually merge them.
   // FIXME: We would really like to be able to tablegen'erate this.
-  if (Opcode == ARM::LDREXD || Opcode == ARM::STREXD ||
-      Opcode == ARM::LDAEXD || Opcode == ARM::STLEXD) {
+  case ARM::LDREXD: case ARM::STREXD:
+  case ARM::LDAEXD: case ARM::STLEXD:
     const MCRegisterClass& MRC = MRI.getRegClass(ARM::GPRRegClassID);
     bool isStore = Opcode == ARM::STREXD || Opcode == ARM::STLEXD;
     unsigned Reg = MI->getOperand(isStore ? 1 : 0).getReg();
