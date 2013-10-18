@@ -10,16 +10,17 @@
 
 #include "ThreadGDBRemote.h"
 
+#include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataExtractor.h"
-#include "lldb/Core/StreamString.h"
 #include "lldb/Core/State.h"
+#include "lldb/Core/StreamString.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Unwind.h"
-#include "lldb/Breakpoint/Watchpoint.h"
 
 #include "ProcessGDBRemote.h"
 #include "ProcessGDBRemoteLog.h"
@@ -73,11 +74,36 @@ ThreadGDBRemote::GetQueueName ()
         ProcessSP process_sp (GetProcess());
         if (process_sp)
         {
-            ProcessGDBRemote *gdb_process = static_cast<ProcessGDBRemote *>(process_sp.get());
-            return gdb_process->GetDispatchQueueNameForThread (m_thread_dispatch_qaddr, m_dispatch_queue_name);
+            PlatformSP platform_sp (process_sp->GetTarget().GetPlatform());
+            if (platform_sp)
+            {
+                m_dispatch_queue_name = platform_sp->GetQueueNameForThreadQAddress (process_sp.get(), m_thread_dispatch_qaddr);
+            }
+            if (m_dispatch_queue_name.length() > 0)
+            {
+                return m_dispatch_queue_name.c_str();
+            }
         }
     }
     return NULL;
+}
+
+queue_id_t
+ThreadGDBRemote::GetQueueID ()
+{
+    if (m_thread_dispatch_qaddr != 0 || m_thread_dispatch_qaddr != LLDB_INVALID_ADDRESS)
+    {
+        ProcessSP process_sp (GetProcess());
+        if (process_sp)
+        {
+            PlatformSP platform_sp (process_sp->GetTarget().GetPlatform());
+            if (platform_sp)
+            {
+                return platform_sp->GetQueueIDForThreadQAddress (process_sp.get(), m_thread_dispatch_qaddr);
+            }
+        }
+    }
+    return LLDB_INVALID_QUEUE_ID;
 }
 
 void

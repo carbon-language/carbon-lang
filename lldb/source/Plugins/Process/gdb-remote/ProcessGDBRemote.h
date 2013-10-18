@@ -332,7 +332,6 @@ protected:
     tid_sig_collection m_continue_C_tids; // 'C' for continue with signal
     tid_collection m_continue_s_tids;                  // 's' for step
     tid_sig_collection m_continue_S_tids; // 'S' for step with signal
-    lldb::addr_t m_dispatch_queue_offsets_addr;
     size_t m_max_memory_size;       // The maximum number of bytes to read/write when reading and writing memory
     MMapMap m_addr_to_mmap_size;
     lldb::BreakpointSP m_thread_create_bp_sp;

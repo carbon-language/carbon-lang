@@ -339,6 +339,12 @@ public:
         return NULL;
     }
 
+    virtual lldb::queue_id_t
+    GetQueueID ()
+    {
+        return LLDB_INVALID_QUEUE_ID;
+    }
+
     virtual const char *
     GetQueueName ()
     {

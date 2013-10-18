@@ -38,6 +38,9 @@ public:
     virtual const char *
     GetQueueName ();
 
+    virtual lldb::queue_id_t
+    GetQueueID ();
+
     virtual lldb::RegisterContextSP
     GetRegisterContext ();
 

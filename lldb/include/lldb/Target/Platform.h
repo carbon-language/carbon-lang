@@ -732,7 +732,60 @@ namespace lldb_private {
         {
             return 1;
         }
-                
+
+        //------------------------------------------------------------------
+        /// Locate a queue name given a thread's qaddr
+        ///
+        /// On a system using libdispatch ("Grand Central Dispatch") style
+        /// queues, a thread may be associated with a GCD queue or not,
+        /// and a queue may be associated with multiple threads.
+        /// The process/thread must provide a way to find the "dispatch_qaddr" 
+        /// for each thread, and from that dispatch_qaddr this Platform method
+        /// will locate the queue name and provide that.
+        ///
+        /// @param[in] process
+        ///     A process is required for reading memory.
+        ///
+        /// @param[in] dispatch_qaddr
+        ///     The dispatch_qaddr for this thread.
+        ///
+        /// @return
+        ///     The name of the queue, if there is one.  An empty string
+        ///     means that this thread is not associated with a dispatch 
+        ///     queue.
+        //------------------------------------------------------------------
+        virtual std::string
+        GetQueueNameForThreadQAddress (Process *process, lldb::addr_t dispatch_qaddr)
+        {
+            return "";
+        }
+
+        //------------------------------------------------------------------
+        /// Locate a queue ID given a thread's qaddr
+        ///
+        /// On a system using libdispatch ("Grand Central Dispatch") style
+        /// queues, a thread may be associated with a GCD queue or not,
+        /// and a queue may be associated with multiple threads.
+        /// The process/thread must provide a way to find the "dispatch_qaddr" 
+        /// for each thread, and from that dispatch_qaddr this Platform method
+        /// will locate the queue ID and provide that.
+        ///
+        /// @param[in] process
+        ///     A process is required for reading memory.
+        ///
+        /// @param[in] dispatch_qaddr
+        ///     The dispatch_qaddr for this thread.
+        ///
+        /// @return
+        ///     The queue_id for this thread, if this thread is associated
+        ///     with a dispatch queue.  Else LLDB_INVALID_QUEUE_ID is returned.
+        //------------------------------------------------------------------
+        virtual lldb::queue_id_t
+        GetQueueIDForThreadQAddress (Process *process, lldb::addr_t dispatch_qaddr)
+        {
+            return LLDB_INVALID_QUEUE_ID;
+        }
+
     protected:
         bool m_is_host;
         // Set to true when we are able to actually set the OS version while 

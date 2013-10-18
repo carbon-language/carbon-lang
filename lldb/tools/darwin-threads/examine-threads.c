@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <libproc.h>
 #include <errno.h>
+#include <dispatch/dispatch.h>
 
 /* Step through the process table, find a matching process name, return
    the pid of that matched process.
@@ -419,20 +420,23 @@ main (int argc, char **argv)
             case TH_STATE_HALTED: puts ("halted"); break;
             default: puts ("");
           }
+
+          printf ("           pthread handle id 0x%llx (not the same value as pthread_self() returns)\n", (uint64_t) identifier_info.thread_handle);
+
+          struct proc_threadinfo pth;
+          int proc_threadinfo_succeeded = get_proc_threadinfo (pid, identifier_info.thread_handle, &pth);
+
+          if (proc_threadinfo_succeeded && pth.pth_name[0] != '\0')
+            printf ("           thread name '%s'\n", pth.pth_name);
+
+          printf ("           libdispatch qaddr 0x%llx (not the same as the dispatch_queue_t token)\n", (uint64_t) identifier_info.dispatch_qaddr);
+
           if (verbose)
             {
               printf ("           (examine-threads port namespace) mach port # 0x%4.4x\n", (int) thread_list[i]);
               thread_t mach_port_inferior_namespace;
               if (inferior_namespace_mach_port_num (task, thread_list[i], &mach_port_inferior_namespace))
                   printf ("           (inferior port namepsace) mach port # 0x%4.4x\n", (int) mach_port_inferior_namespace);
-              printf ("           pthread handle id 0x%llx\n", (uint64_t) identifier_info.thread_handle);
-
-              struct proc_threadinfo pth;
-              int proc_threadinfo_succeeded = get_proc_threadinfo (pid, identifier_info.thread_handle, &pth);
-
-              if (proc_threadinfo_succeeded && pth.pth_name[0] != '\0')
-                printf ("           thread name '%s' ", pth.pth_name);
-
               printf ("           user %d.%06ds, system %d.%06ds", 
                               basic_info->user_time.seconds, basic_info->user_time.microseconds, 
                               basic_info->system_time.seconds, basic_info->system_time.microseconds);

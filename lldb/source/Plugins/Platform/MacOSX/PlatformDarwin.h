@@ -111,6 +111,12 @@ public:
     virtual size_t
     GetEnvironment (lldb_private::StringList &environment);
 
+    std::string
+    GetQueueNameForThreadQAddress (lldb_private::Process *process, lldb::addr_t dispatch_qaddr);
+
+    lldb::queue_id_t
+    GetQueueIDForThreadQAddress (lldb_private::Process *process, lldb::addr_t dispatch_qaddr);
+
     bool
     ARMGetSupportedArchitectureAtIndex (uint32_t idx, lldb_private::ArchSpec &arch);
     
@@ -129,6 +135,7 @@ protected:
                                    bool *did_create_ptr);
 
     std::string m_developer_directory;
+    lldb::addr_t m_dispatch_queue_offsets_addr;
     
     const char *
     GetDeveloperDirectory();

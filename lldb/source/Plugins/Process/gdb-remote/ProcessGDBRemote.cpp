@@ -266,7 +266,6 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_continue_C_tids (),
     m_continue_s_tids (),
     m_continue_S_tids (),
-    m_dispatch_queue_offsets_addr (LLDB_INVALID_ADDRESS),
     m_max_memory_size (512),
     m_addr_to_mmap_size (),
     m_thread_create_bp_sp (),
@@ -934,8 +933,6 @@ ProcessGDBRemote::DidLaunchOrAttach ()
         log->Printf ("ProcessGDBRemote::DidLaunch()");
     if (GetID() != LLDB_INVALID_PROCESS_ID)
     {
-        m_dispatch_queue_offsets_addr = LLDB_INVALID_ADDRESS;
-
         BuildDynamicRegisterInfo (false);
 
         // See if the GDB server supports the qHostInfo information
@@ -2992,97 +2989,6 @@ ProcessGDBRemote::AsyncThread (void *arg)
 
     process->m_async_thread = LLDB_INVALID_HOST_THREAD;
     return NULL;
-}
-
-const char *
-ProcessGDBRemote::GetDispatchQueueNameForThread
-(
-    addr_t thread_dispatch_qaddr,
-    std::string &dispatch_queue_name
-)
-{
-    dispatch_queue_name.clear();
-    if (thread_dispatch_qaddr != 0 && thread_dispatch_qaddr != LLDB_INVALID_ADDRESS)
-    {
-        // Cache the dispatch_queue_offsets_addr value so we don't always have
-        // to look it up
-        if (m_dispatch_queue_offsets_addr == LLDB_INVALID_ADDRESS)
-        {
-            static ConstString g_dispatch_queue_offsets_symbol_name ("dispatch_queue_offsets");
-            const Symbol *dispatch_queue_offsets_symbol = NULL;
-            ModuleSpec libSystem_module_spec (FileSpec("libSystem.B.dylib", false));
-            ModuleSP module_sp(GetTarget().GetImages().FindFirstModule (libSystem_module_spec));
-            if (module_sp)
-                dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
-            
-            if (dispatch_queue_offsets_symbol == NULL)
-            {
-                ModuleSpec libdispatch_module_spec (FileSpec("libdispatch.dylib", false));
-                module_sp = GetTarget().GetImages().FindFirstModule (libdispatch_module_spec);
-                if (module_sp)
-                    dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
-            }
-            if (dispatch_queue_offsets_symbol)
-                m_dispatch_queue_offsets_addr = dispatch_queue_offsets_symbol->GetAddress().GetLoadAddress(&m_target);
-
-            if (m_dispatch_queue_offsets_addr == LLDB_INVALID_ADDRESS)
-                return NULL;
-        }
-
-        uint8_t memory_buffer[8];
-        DataExtractor data (memory_buffer, 
-                            sizeof(memory_buffer), 
-                            m_target.GetArchitecture().GetByteOrder(), 
-                            m_target.GetArchitecture().GetAddressByteSize());
-
-        // Excerpt from src/queue_private.h
-        struct dispatch_queue_offsets_s
-        {
-            uint16_t dqo_version;
-            uint16_t dqo_label;      // in version 1-3, offset to string; in version 4+, offset to a pointer to a string
-            uint16_t dqo_label_size; // in version 1-3, length of string; in version 4+, size of a (void*) in this process
-        } dispatch_queue_offsets;
-
-
-        Error error;
-        if (ReadMemory (m_dispatch_queue_offsets_addr, memory_buffer, sizeof(dispatch_queue_offsets), error) == sizeof(dispatch_queue_offsets))
-        {
-            lldb::offset_t data_offset = 0;
-            if (data.GetU16(&data_offset, &dispatch_queue_offsets.dqo_version, sizeof(dispatch_queue_offsets)/sizeof(uint16_t)))
-            {
-                if (ReadMemory (thread_dispatch_qaddr, &memory_buffer, data.GetAddressByteSize(), error) == data.GetAddressByteSize())
-                {
-                    data_offset = 0;
-                    lldb::addr_t queue_addr = data.GetAddress(&data_offset);
-                    if (dispatch_queue_offsets.dqo_version >= 4)
-                    {
-                        // libdispatch versions 4+, pointer to dispatch name is in the 
-                        // queue structure.
-                        lldb::addr_t pointer_to_label_address = queue_addr + dispatch_queue_offsets.dqo_label;
-                        if (ReadMemory (pointer_to_label_address, &memory_buffer, data.GetAddressByteSize(), error) == data.GetAddressByteSize())
-                        {
-                            data_offset = 0;
-                            lldb::addr_t label_addr = data.GetAddress(&data_offset);
-                            ReadCStringFromMemory (label_addr, dispatch_queue_name, error);
-                        }
-                    }
-                    else
-                    {
-                        // libdispatch versions 1-3, dispatch name is a fixed width char array
-                        // in the queue structure.
-                        lldb::addr_t label_addr = queue_addr + dispatch_queue_offsets.dqo_label;
-                        dispatch_queue_name.resize(dispatch_queue_offsets.dqo_label_size, '\0');
-                        size_t bytes_read = ReadMemory (label_addr, &dispatch_queue_name[0], dispatch_queue_offsets.dqo_label_size, error);
-                        if (bytes_read < dispatch_queue_offsets.dqo_label_size)
-                            dispatch_queue_name.erase (bytes_read);
-                    }
-                }
-            }
-        }
-    }
-    if (dispatch_queue_name.empty())
-        return NULL;
-    return dispatch_queue_name.c_str();
 }
 
 //uint32_t
