@@ -33,7 +33,7 @@ def err_drv_use_of_Z_option : Error<
   "unsupported use of internal gcc -Z option '%0'">;
 def err_drv_output_argument_with_multiple_files : Error<
   "cannot specify -o when generating multiple output files">;
-def err_drv_obj_file_argument_with_multiple_sources : Error<
+def err_drv_out_file_argument_with_multiple_sources : Error<
   "cannot specify '%0%1' when compiling multiple source files">;
 def err_no_external_windows_assembler : Error<
   "there is no external assembler we can use on windows">;

@@ -103,3 +103,5 @@
 // FaDIRNAME:  "-o" "foo.dir{{[/\\]+}}a.asm"
 // RUN: %clang_cl /FA /Fafoo.dir/a.ext -### -- %s 2>&1 | FileCheck -check-prefix=FaDIRNAMEEXT %s
 // FaDIRNAMEEXT:  "-o" "foo.dir{{[/\\]+}}a.ext"
+// RUN: %clang_cl /Faa.asm -### -- %s %s 2>&1 | FileCheck -check-prefix=FaMULTIPLESOURCE %s
+// FaMULTIPLESOURCE: error: cannot specify '/Faa.asm' when compiling multiple source files

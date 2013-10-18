@@ -1150,9 +1150,20 @@ void Driver::BuildActions(const ToolChain &TC, DerivedArgList &Args,
       Args.eraseArg(options::OPT__SLASH_Fo);
     } else if (Inputs.size() > 1 && !llvm::sys::path::is_separator(V.back())) {
       // Check whether /Fo tries to name an output file for multiple inputs.
-      Diag(clang::diag::err_drv_obj_file_argument_with_multiple_sources)
+      Diag(clang::diag::err_drv_out_file_argument_with_multiple_sources)
         << A->getSpelling() << V;
       Args.eraseArg(options::OPT__SLASH_Fo);
+    }
+  }
+
+  // Diagnose misuse of /Fa.
+  if (Arg *A = Args.getLastArg(options::OPT__SLASH_Fa)) {
+    StringRef V = A->getValue();
+    if (Inputs.size() > 1 && !llvm::sys::path::is_separator(V.back())) {
+      // Check whether /Fa tries to name an asm file for multiple inputs.
+      Diag(clang::diag::err_drv_out_file_argument_with_multiple_sources)
+        << A->getSpelling() << V;
+      Args.eraseArg(options::OPT__SLASH_Fa);
     }
   }
 
