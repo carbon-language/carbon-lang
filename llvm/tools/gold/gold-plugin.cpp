@@ -351,8 +351,13 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     }
   }
 
-  if (code_gen)
-    lto_codegen_add_module(code_gen, M);
+  if (code_gen) {
+    if (lto_codegen_add_module(code_gen, M)) {
+      (*message)(LDPL_ERROR, "Error linking module: %s",
+                 lto_get_error_message());
+      return LDPS_ERR;
+    }
+  }
 
   lto_module_dispose(M);
 
