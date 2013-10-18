@@ -68,6 +68,9 @@ of bugs and enhancements occurring in LLVM.  We really appreciate people who are
 proactive at catching incoming bugs in their components and dealing with them
 promptly.
 
+Please be aware that all public LLVM mailing lists are public and archived, and
+that notices of confidentiality or non-disclosure cannot be respected.
+
 .. _patch:
 .. _one-off patches:
 
@@ -106,6 +109,10 @@ setting, Thunderbird sends your attachment using ``Content-Disposition: inline``
 rather than ``Content-Disposition: attachment``. Apple Mail gamely displays such
 a file inline, making it difficult to work with for reviewers using that
 program.
+
+When submitting patches, please do not add confidentiality or non-disclosure
+notices to the patches themselves.  These notices conflict with the `LLVM
+License`_ and may result in your contribution being excluded.
 
 .. _code review:
 
