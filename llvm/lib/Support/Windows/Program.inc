@@ -27,7 +27,7 @@
 namespace llvm {
 using namespace sys;
 
-ProcessInfo::ProcessInfo() : Pid(0), ProcessHandle(0), ReturnCode(0) {}
+ProcessInfo::ProcessInfo() : ProcessHandle(0), Pid(0), ReturnCode(0) {}
 
 // This function just uses the PATH environment variable to find the program.
 std::string sys::FindProgramByName(const std::string &progName) {
