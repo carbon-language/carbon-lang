@@ -67,4 +67,13 @@ def err_pch_pp_detailed_record : Error<
 
 def err_not_a_pch_file : Error<
     "'%0' does not appear to be a precompiled header file">, DefaultFatal;
+
+def err_module_odr_violation_missing_decl : Error<
+  "%q0 from module '%1' is not present in definition of %q2"
+  "%select{ in module '%4'| provided earlier}3">, NoSFINAE;
+def note_module_odr_violation_no_possible_decls : Note<
+  "definition has no member %0">;
+def note_module_odr_violation_possible_decl : Note<
+  "declaration of %0 does not match">;
+
 }
