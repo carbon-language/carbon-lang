@@ -271,7 +271,8 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_thread_create_bp_sp (),
     m_waiting_for_attach (false),
     m_destroy_tried_resuming (false),
-    m_command_sp ()
+    m_command_sp (),
+    m_breakpoint_pc_offset (0)
 {
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncContinue,           "async thread continue");
@@ -344,6 +345,8 @@ ProcessGDBRemote::ParsePythonTargetDefinition(const FileSpec &target_definition_
                 }
                     
             }
+            m_breakpoint_pc_offset = target_dict.GetItemForKeyAsInteger("breakpoint-pc-offset", 0);
+
             if (m_register_info.SetRegisterInfo (target_dict, GetTarget().GetArchitecture().GetByteOrder()) > 0)
             {
                 return true;
@@ -1722,7 +1725,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                             // Currently we are going to assume SIGTRAP means we are either
                             // hitting a breakpoint or hardware single stepping. 
                             handled = true;
-                            addr_t pc = thread_sp->GetRegisterContext()->GetPC();
+                            addr_t pc = thread_sp->GetRegisterContext()->GetPC() + m_breakpoint_pc_offset;
                             lldb::BreakpointSiteSP bp_site_sp = thread_sp->GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
                             
                             if (bp_site_sp)
@@ -1732,6 +1735,8 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                                 // will be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
                                 if (bp_site_sp->ValidForThisThread (thread_sp.get()))
                                 {
+                                    if(m_breakpoint_pc_offset != 0)
+                                        thread_sp->GetRegisterContext()->SetPC(pc);
                                     thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID (*thread_sp, bp_site_sp->GetID()));
                                 }
                                 else

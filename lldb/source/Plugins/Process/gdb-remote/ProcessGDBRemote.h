@@ -338,6 +338,7 @@ protected:
     bool m_waiting_for_attach;
     bool m_destroy_tried_resuming;
     lldb::CommandObjectSP m_command_sp;
+    int64_t m_breakpoint_pc_offset;
     
     bool
     StartAsyncThread ();
