@@ -136,7 +136,13 @@ public:
 
     virtual bool
     RestoreThreadState();
-
+    
+    virtual void
+    ThreadDestroyed ()
+    {
+        m_takedown_done = true;
+    }
+    
 protected:    
     void ReportRegisterState (const char *message);
 

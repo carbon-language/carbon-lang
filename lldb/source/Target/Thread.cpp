@@ -282,10 +282,16 @@ Thread::~Thread()
 void 
 Thread::DestroyThread ()
 {
-    // Tell any plans on the plan stack that the thread is being destroyed since
-    // any active plans that have a thread go away in the middle of might need
-    // to do cleanup.
+    // Tell any plans on the plan stacks that the thread is being destroyed since
+    // any plans that have a thread go away in the middle of might need
+    // to do cleanup, or in some cases NOT do cleanup...
     for (auto plan : m_plan_stack)
+        plan->ThreadDestroyed();
+
+    for (auto plan : m_discarded_plan_stack)
+        plan->ThreadDestroyed();
+
+    for (auto plan : m_completed_plan_stack)
         plan->ThreadDestroyed();
 
     m_destroy_called = true;
