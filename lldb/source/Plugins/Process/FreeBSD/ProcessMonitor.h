@@ -160,6 +160,10 @@ public:
     bool
     WriteRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset);
 
+    /// Reads the value of the thread-specific pointer for a given thread ID.
+    bool
+    ReadThreadPointer(lldb::tid_t tid, lldb::addr_t &value);
+
     /// Writes a ptrace_lwpinfo structure corresponding to the given thread ID
     /// to the memory region pointed to by @p lwpinfo.
     bool

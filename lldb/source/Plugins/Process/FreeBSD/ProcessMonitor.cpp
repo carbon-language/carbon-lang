@@ -1461,6 +1461,12 @@ ProcessMonitor::WriteRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, un
 }
 
 bool
+ProcessMonitor::ReadThreadPointer(lldb::tid_t tid, lldb::addr_t &value)
+{
+    return false;
+}
+
+bool
 ProcessMonitor::Resume(lldb::tid_t tid, uint32_t signo)
 {
     bool result;
