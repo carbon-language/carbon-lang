@@ -827,7 +827,14 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
 
 // Construct subprogram DIE.
 void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU, const MDNode *N) {
-  assert(!SPMap[N] && "Trying to create a subprogram DIE twice!");
+  // FIXME: We should only call this routine once, however, during LTO if a
+  // program is defined in multiple CUs we could end up calling it out of
+  // beginModule as we walk the CUs.
+
+  CompileUnit *&CURef = SPMap[N];
+  if (CURef)
+    return;
+  CURef = TheCU;
 
   DISubprogram SP(N);
   if (!SP.isDefinition())
@@ -836,7 +843,6 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU, const MDNode *N) {
     return;
 
   DIE *SubprogramDie = TheCU->getOrCreateSubprogramDIE(SP);
-  SPMap[N] = TheCU;
 
   // Expose as a global name.
   TheCU->addGlobalName(SP.getName(), SubprogramDie, resolve(SP.getContext()));
