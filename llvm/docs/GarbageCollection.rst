@@ -523,7 +523,7 @@ extension):
   $ cat sample.ll
   define void @f() gc "mygc" {
   entry:
-          ret void
+    ret void
   }
   $ llvm-as < sample.ll | llc -load=MyGC.so
 
@@ -896,11 +896,9 @@ in the JIT, nor using the object writers.
   namespace {
     class LLVM_LIBRARY_VISIBILITY MyGCPrinter : public GCMetadataPrinter {
     public:
-      virtual void beginAssembly(std::ostream &OS, AsmPrinter &AP,
-                                 const TargetAsmInfo &TAI);
+      virtual void beginAssembly(AsmPrinter &AP);
 
-      virtual void finishAssembly(std::ostream &OS, AsmPrinter &AP,
-                                  const TargetAsmInfo &TAI);
+      virtual void finishAssembly(AsmPrinter &AP);
     };
 
     GCMetadataPrinterRegistry::Add<MyGCPrinter>
@@ -920,85 +918,74 @@ map for the entire module, and may access the ``GCFunctionInfo`` using its own
   #include "llvm/Target/TargetAsmInfo.h"
   #include "llvm/Target/TargetMachine.h"
 
-  void MyGCPrinter::beginAssembly(std::ostream &OS, AsmPrinter &AP,
-                                  const TargetAsmInfo &TAI) {
+  void MyGCPrinter::beginAssembly(AsmPrinter &AP) {
     // Nothing to do.
   }
 
-  void MyGCPrinter::finishAssembly(std::ostream &OS, AsmPrinter &AP,
-                                   const TargetAsmInfo &TAI) {
-    // Set up for emitting addresses.
-    const char *AddressDirective;
-    int AddressAlignLog;
-    if (AP.TM.getDataLayout()->getPointerSize() == sizeof(int32_t)) {
-      AddressDirective = TAI.getData32bitsDirective();
-      AddressAlignLog = 2;
-    } else {
-      AddressDirective = TAI.getData64bitsDirective();
-      AddressAlignLog = 3;
-    }
+  void MyGCPrinter::finishAssembly(AsmPrinter &AP) {
+    MCStreamer &OS = AP.OutStreamer;
+    unsigned IntPtrSize = AP.TM.getDataLayout()->getPointerSize();
 
     // Put this in the data section.
-    AP.SwitchToDataSection(TAI.getDataSection());
+    OS.SwitchSection(AP.getObjFileLowering().getDataSection());
 
     // For each function...
     for (iterator FI = begin(), FE = end(); FI != FE; ++FI) {
       GCFunctionInfo &MD = **FI;
 
-      // Emit this data structure:
+      // A compact GC layout. Emit this data structure:
       //
       // struct {
       //   int32_t PointCount;
-      //   struct {
-      //     void *SafePointAddress;
-      //     int32_t LiveCount;
-      //     int32_t LiveOffsets[LiveCount];
-      //   } Points[PointCount];
+      //   void *SafePointAddress[PointCount];
+      //   int32_t StackFrameSize; // in words
+      //   int32_t StackArity;
+      //   int32_t LiveCount;
+      //   int32_t LiveOffsets[LiveCount];
       // } __gcmap_<FUNCTIONNAME>;
 
       // Align to address width.
-      AP.EmitAlignment(AddressAlignLog);
-
-      // Emit the symbol by which the stack map entry can be found.
-      std::string Symbol;
-      Symbol += TAI.getGlobalPrefix();
-      Symbol += "__gcmap_";
-      Symbol += MD.getFunction().getName();
-      if (const char *GlobalDirective = TAI.getGlobalDirective())
-        OS << GlobalDirective << Symbol << "\n";
-      OS << TAI.getGlobalPrefix() << Symbol << ":\n";
+      AP.EmitAlignment(IntPtrSize == 4 ? 2 : 3);
 
       // Emit PointCount.
+      OS.AddComment("safe point count");
       AP.EmitInt32(MD.size());
-      AP.EOL("safe point count");
 
       // And each safe point...
       for (GCFunctionInfo::iterator PI = MD.begin(),
-                                       PE = MD.end(); PI != PE; ++PI) {
-        // Align to address width.
-        AP.EmitAlignment(AddressAlignLog);
-
+                                    PE = MD.end(); PI != PE; ++PI) {
         // Emit the address of the safe point.
-        OS << AddressDirective
-           << TAI.getPrivateGlobalPrefix() << "label" << PI->Num;
-        AP.EOL("safe point address");
+        OS.AddComment("safe point address");
+        MCSymbol *Label = PI->Label;
+        AP.EmitLabelPlusOffset(Label/*Hi*/, 0/*Offset*/, 4/*Size*/);
+      }
 
-        // Emit the stack frame size.
-        AP.EmitInt32(MD.getFrameSize());
-        AP.EOL("stack frame size");
+      // Stack information never change in safe points! Only print info from the
+      // first call-site.
+      GCFunctionInfo::iterator PI = MD.begin();
 
-        // Emit the number of live roots in the function.
-        AP.EmitInt32(MD.live_size(PI));
-        AP.EOL("live root count");
+      // Emit the stack frame size.
+      OS.AddComment("stack frame size (in words)");
+      AP.EmitInt32(MD.getFrameSize() / IntPtrSize);
 
-        // And for each live root...
-        for (GCFunctionInfo::live_iterator LI = MD.live_begin(PI),
-                                           LE = MD.live_end(PI);
-                                           LI != LE; ++LI) {
-          // Print its offset within the stack frame.
-          AP.EmitInt32(LI->StackOffset);
-          AP.EOL("stack offset");
-        }
+      // Emit stack arity, i.e. the number of stacked arguments.
+      unsigned RegisteredArgs = IntPtrSize == 4 ? 5 : 6;
+      unsigned StackArity = MD.getFunction().arg_size() > RegisteredArgs ?
+                            MD.getFunction().arg_size() - RegisteredArgs : 0;
+      OS.AddComment("stack arity");
+      AP.EmitInt32(StackArity);
+
+      // Emit the number of live roots in the function.
+      OS.AddComment("live root count");
+      AP.EmitInt32(MD.live_size(PI));
+
+      // And for each live root...
+      for (GCFunctionInfo::live_iterator LI = MD.live_begin(PI),
+                                         LE = MD.live_end(PI);
+                                         LI != LE; ++LI) {
+        // Emit live root's offset within the stack frame.
+        OS.AddComment("stack index (offset / wordsize)");
+        AP.EmitInt32(LI->StackOffset);
       }
     }
   }
@@ -1026,4 +1013,3 @@ programming.
 
 [Henderson2002] `Accurate Garbage Collection in an Uncooperative Environment
 <http://citeseer.ist.psu.edu/henderson02accurate.html>`__
-
