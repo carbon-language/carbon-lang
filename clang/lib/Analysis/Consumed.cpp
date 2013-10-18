@@ -159,8 +159,18 @@ static bool isKnownState(ConsumedState State) {
   llvm_unreachable("invalid enum");
 }
 
+static bool isRValueRefish(QualType ParamType) {
+  return ParamType->isRValueReferenceType() ||
+        (ParamType->isLValueReferenceType() &&
+         !cast<LValueReferenceType>(*ParamType).isSpelledAsLValue());
+}
+
 static bool isTestingFunction(const FunctionDecl *FunDecl) {
   return FunDecl->hasAttr<TestsTypestateAttr>();
+}
+
+static bool isValueType(QualType ParamType) {
+  return !(ParamType->isPointerType() || ParamType->isReferenceType());
 }
 
 static ConsumedState mapConsumableAttrState(const QualType QT) {
@@ -617,20 +627,15 @@ void ConsumedStmtVisitor::VisitCallExpr(const CallExpr *Call) {
       
       // Adjust state on the caller side.
       
-      if (ParamType->isRValueReferenceType() ||
-          (ParamType->isLValueReferenceType() &&
-           !cast<LValueReferenceType>(*ParamType).isSpelledAsLValue())) {
-        
+      if (isRValueRefish(ParamType)) {
         StateMap->setState(PInfo.getVar(), consumed::CS_Consumed);
         
       } else if (Param->hasAttr<ReturnTypestateAttr>()) {
         StateMap->setState(PInfo.getVar(),
           mapReturnTypestateAttrState(Param->getAttr<ReturnTypestateAttr>()));
         
-      } else if (!(ParamType.isConstQualified() ||
-                   ((ParamType->isReferenceType() ||
-                     ParamType->isPointerType()) &&
-                    ParamType->getPointeeType().isConstQualified()))) {
+      } else if (!isValueType(ParamType) &&
+                 !ParamType->getPointeeType().isConstQualified()) {
         
         StateMap->setState(PInfo.getVar(), consumed::CS_Unknown);
       }
@@ -856,13 +861,16 @@ void ConsumedStmtVisitor::VisitParmVarDecl(const ParmVarDecl *Param) {
   ConsumedState ParamState = consumed::CS_None;
   
   if (Param->hasAttr<ParamTypestateAttr>()) {
-    ParamState =
-      mapParamTypestateAttrState(Param->getAttr<ParamTypestateAttr>());
+    const ParamTypestateAttr *PTAttr = Param->getAttr<ParamTypestateAttr>();
+    ParamState = mapParamTypestateAttrState(PTAttr);
     
-  } else if (!(ParamType->isPointerType() || ParamType->isReferenceType()) &&
-             isConsumableType(ParamType)) {
-    
+  } else if (isValueType(ParamType) && isConsumableType(ParamType)) {
     ParamState = mapConsumableAttrState(ParamType);
+    
+  } else if (isRValueRefish(ParamType) &&
+             isConsumableType(ParamType->getPointeeType())) {
+    
+    ParamState = mapConsumableAttrState(ParamType->getPointeeType());
     
   } else if (ParamType->isReferenceType() &&
              isConsumableType(ParamType->getPointeeType())) {

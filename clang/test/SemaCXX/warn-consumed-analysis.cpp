@@ -63,9 +63,10 @@ void baf0(const ConsumableClass<int>  var);
 void baf1(const ConsumableClass<int> &var);
 void baf2(const ConsumableClass<int> *var);
 
-void baf3(ConsumableClass<int>  &var);
-void baf4(ConsumableClass<int>  *var);
-void baf5(ConsumableClass<int> &&var);
+void baf3(ConsumableClass<int>   var);
+void baf4(ConsumableClass<int>  &var);
+void baf5(ConsumableClass<int>  *var);
+void baf6(ConsumableClass<int> &&var);
 
 ConsumableClass<int> returnsUnconsumed() {
   return ConsumableClass<int>(); // expected-warning {{return value not in expected state; expected 'unconsumed', observed 'consumed'}}
@@ -268,9 +269,9 @@ void testComplexConditionals1() {
   ConsumableClass<int> var0, var1, var2;
   
   // Coerce all variables into the unknown state.
-  baf3(var0);
-  baf3(var1);
-  baf3(var2);
+  baf4(var0);
+  baf4(var1);
+  baf4(var2);
   
   if (var0 && var1) {
     *var0;
@@ -374,7 +375,7 @@ void testStateChangeInBranch() {
   ConsumableClass<int> var;
   
   // Make var enter the 'unknown' state.
-  baf3(var);
+  baf4(var);
   
   if (!var) {
     var = ConsumableClass<int>(42);
@@ -426,6 +427,18 @@ void testParamTypestateCaller() {
   testParamTypestateCallee(Var0, Var1); // expected-warning {{argument not in expected state; expected 'consumed', observed 'unconsumed'}}
 }
 
+void baf3(ConsumableClass<int> var) {
+  *var;
+}
+
+void baf4(ConsumableClass<int> &var) {
+  *var;  // expected-warning {{invalid invocation of method 'operator*' on object 'var' while it is in the 'unknown' state}}
+}
+
+void baf6(ConsumableClass<int> &&var) {
+  *var;
+}
+
 void testCallingConventions() {
   ConsumableClass<int> var(42);
   
@@ -438,15 +451,15 @@ void testCallingConventions() {
   baf2(&var);  
   *var;
   
-  baf3(var);  
+  baf4(var);  
   *var; // expected-warning {{invalid invocation of method 'operator*' on object 'var' while it is in the 'unknown' state}}
   
   var = ConsumableClass<int>(42);
-  baf4(&var);  
+  baf5(&var);  
   *var; // expected-warning {{invalid invocation of method 'operator*' on object 'var' while it is in the 'unknown' state}}
   
   var = ConsumableClass<int>(42);
-  baf5(static_cast<ConsumableClass<int>&&>(var));  
+  baf6(static_cast<ConsumableClass<int>&&>(var));  
   *var; // expected-warning {{invalid invocation of method 'operator*' on object 'var' while it is in the 'consumed' state}}
 }
 
@@ -483,7 +496,7 @@ void testCallableWhen() {
   
   *var;
   
-  baf3(var);
+  baf4(var);
   
   var.callableWhenUnknown();
 }
