@@ -493,8 +493,14 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
       scal = true;
       usgn = true;
       break;
+    case 'z':
+      type = Narrow(type);
+      scal = true;
+      break;
     case 'r':
       type = Widen(type);
+      scal = true;
+      break;
     case 's':
     case 'a':
       scal = true;

@@ -1756,6 +1756,7 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   bool ExtendEle = false;
   bool OverloadInt = false;
   bool OverloadWideInt = false;
+  bool OverloadNarrowInt = false;
   const char *s = NULL;
 
   SmallVector<Value *, 4> Ops;
@@ -2126,6 +2127,24 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vqdmulls_s32:
     Int = Intrinsic::aarch64_neon_vqdmull;
     s = "vqdmull"; OverloadWideInt = true; break;
+  // Scalar Signed Saturating Extract Unsigned Narrow
+  case AArch64::BI__builtin_neon_vqmovunh_s16:
+  case AArch64::BI__builtin_neon_vqmovuns_s32:
+  case AArch64::BI__builtin_neon_vqmovund_s64:
+    Int = Intrinsic::arm_neon_vqmovnsu;
+    s = "vqmovun"; OverloadNarrowInt = true; break;
+  // Scalar Signed Saturating Extract Narrow
+  case AArch64::BI__builtin_neon_vqmovnh_s16:
+  case AArch64::BI__builtin_neon_vqmovns_s32:
+  case AArch64::BI__builtin_neon_vqmovnd_s64:
+    Int = Intrinsic::arm_neon_vqmovns;
+    s = "vqmovn"; OverloadNarrowInt = true; break;
+  // Scalar Unsigned Saturating Extract Narrow
+  case AArch64::BI__builtin_neon_vqmovnh_u16:
+  case AArch64::BI__builtin_neon_vqmovns_u32:
+  case AArch64::BI__builtin_neon_vqmovnd_u64:
+    Int = Intrinsic::arm_neon_vqmovnu;
+    s = "vqmovn"; OverloadNarrowInt = true; break;
   }
 
   if (!Int)
@@ -2159,12 +2178,14 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
     assert(VTy);
 
     F = CGF.CGM.getIntrinsic(Int, VTy);
-  } else if (OverloadWideInt) {
+  } else if (OverloadWideInt || OverloadNarrowInt) {
     // Determine the type of this overloaded AArch64 intrinsic
     const Expr *Arg = E->getArg(E->getNumArgs()-1);
     llvm::Type *Ty = CGF.ConvertType(Arg->getType());
     llvm::VectorType *VTy = llvm::VectorType::get(Ty, 1);
-    llvm::VectorType *RTy = llvm::VectorType::getExtendedElementVectorType(VTy);
+    llvm::VectorType *RTy = OverloadWideInt ? 
+      llvm::VectorType::getExtendedElementVectorType(VTy) :
+      llvm::VectorType::getTruncatedElementVectorType(VTy);
     F = CGF.CGM.getIntrinsic(Int, RTy);
   } else
     F = CGF.CGM.getIntrinsic(Int);
