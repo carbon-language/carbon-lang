@@ -1373,9 +1373,10 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   // C++ [class]p3:
   //   If a class is marked final and it appears as a base-type-specifier in 
   //   base-clause, the program is ill-formed.
-  if (CXXBaseDecl->hasAttr<FinalAttr>()) {
+  if (FinalAttr *FA = CXXBaseDecl->getAttr<FinalAttr>()) {
     Diag(BaseLoc, diag::err_class_marked_final_used_as_base) 
-      << CXXBaseDecl->getDeclName();
+      << CXXBaseDecl->getDeclName()
+      << FA->isSpelledAsSealed();
     Diag(CXXBaseDecl->getLocation(), diag::note_previous_decl)
       << CXXBaseDecl->getDeclName();
     return 0;
@@ -1762,7 +1763,8 @@ void Sema::CheckOverrideControl(NamedDecl *D) {
       } else if (FinalAttr *FA = D->getAttr<FinalAttr>()) {
         Diag(FA->getLocation(),
              diag::override_keyword_hides_virtual_member_function)
-            << "final" << (OverloadedMethods.size() > 1);
+          << (FA->isSpelledAsSealed() ? "sealed" : "final")
+          << (OverloadedMethods.size() > 1);
       }
       NoteHiddenVirtualMethods(MD, OverloadedMethods);
       MD->setInvalidDecl();
@@ -1782,7 +1784,8 @@ void Sema::CheckOverrideControl(NamedDecl *D) {
     if (FinalAttr *FA = D->getAttr<FinalAttr>()) {
       Diag(FA->getLocation(),
            diag::override_keyword_only_allowed_on_virtual_member_functions)
-        << "final" << FixItHint::CreateRemoval(FA->getLocation());
+        << (FA->isSpelledAsSealed() ? "sealed" : "final")
+        << FixItHint::CreateRemoval(FA->getLocation());
       D->dropAttr<FinalAttr>();
     }
     return;
@@ -1804,11 +1807,13 @@ void Sema::CheckOverrideControl(NamedDecl *D) {
 /// C++11 [class.virtual]p4.
 bool Sema::CheckIfOverriddenFunctionIsMarkedFinal(const CXXMethodDecl *New,
                                                   const CXXMethodDecl *Old) {
-  if (!Old->hasAttr<FinalAttr>())
+  FinalAttr *FA = Old->getAttr<FinalAttr>();
+  if (!FA)
     return false;
 
   Diag(New->getLocation(), diag::err_final_function_overridden)
-    << New->getDeclName();
+    << New->getDeclName()
+    << FA->isSpelledAsSealed();
   Diag(Old->getLocation(), diag::note_overridden_virtual_function);
   return true;
 }
@@ -2067,7 +2072,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   if (VS.isOverrideSpecified())
     Member->addAttr(new (Context) OverrideAttr(VS.getOverrideLoc(), Context));
   if (VS.isFinalSpecified())
-    Member->addAttr(new (Context) FinalAttr(VS.getFinalLoc(), Context));
+    Member->addAttr(new (Context) FinalAttr(VS.getFinalLoc(), Context,
+                                            VS.isFinalSpelledSealed()));
 
   if (VS.getLastLocation().isValid()) {
     // Update the end location of a method that has a virt-specifiers.
@@ -4406,9 +4412,12 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
            diag::warn_non_virtual_dtor) << Context.getRecordType(Record);
   }
 
-  if (Record->isAbstract() && Record->hasAttr<FinalAttr>()) {
-    Diag(Record->getLocation(), diag::warn_abstract_final_class);
-    DiagnoseAbstractType(Record);
+  if (Record->isAbstract()) {
+    if (FinalAttr *FA = Record->getAttr<FinalAttr>()) {
+      Diag(Record->getLocation(), diag::warn_abstract_final_class)
+        << FA->isSpelledAsSealed();
+      DiagnoseAbstractType(Record);
+    }
   }
 
   if (!Record->isDependentType()) {

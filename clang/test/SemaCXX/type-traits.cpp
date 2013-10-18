@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fsyntax-only -verify -std=gnu++11 %s 
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fsyntax-only -verify -std=gnu++11 -fms-extensions -Wno-microsoft %s
 #define T(b) (b) ? 1 : -1
 #define F(b) (b) ? -1 : 1
 
@@ -306,6 +306,37 @@ void is_final()
 	{ int arr[F(__is_final(IntArNB))]; }
 	{ int arr[F(__is_final(HasAnonymousUnion))]; }
 	{ int arr[F(__is_final(PotentiallyFinal<float>))]; }
+}
+
+struct SealedClass sealed {
+};
+
+template<typename T>
+struct PotentiallySealed { };
+
+template<typename T>
+struct PotentiallySealed<T*> sealed { };
+
+template<>
+struct PotentiallySealed<int> sealed { };
+
+void is_sealed()
+{
+	{ int arr[T(__is_sealed(SealedClass))]; }
+	{ int arr[T(__is_sealed(PotentiallySealed<float*>))]; }
+	{ int arr[T(__is_sealed(PotentiallySealed<int>))]; }
+
+	{ int arr[F(__is_sealed(int))]; }
+	{ int arr[F(__is_sealed(Union))]; }
+	{ int arr[F(__is_sealed(Int))]; }
+	{ int arr[F(__is_sealed(IntAr))]; }
+	{ int arr[F(__is_sealed(UnionAr))]; }
+	{ int arr[F(__is_sealed(Derives))]; }
+	{ int arr[F(__is_sealed(ClassType))]; }
+	{ int arr[F(__is_sealed(cvoid))]; }
+	{ int arr[F(__is_sealed(IntArNB))]; }
+	{ int arr[F(__is_sealed(HasAnonymousUnion))]; }
+	{ int arr[F(__is_sealed(PotentiallyFinal<float>))]; }
 }
 
 typedef HasVirt Polymorph;

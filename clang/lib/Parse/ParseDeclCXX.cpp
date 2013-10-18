@@ -1837,11 +1837,16 @@ VirtSpecifiers::Specifier Parser::isCXX11VirtSpecifier(const Token &Tok) const {
     // Initialize the contextual keywords.
     if (!Ident_final) {
       Ident_final = &PP.getIdentifierTable().get("final");
+      if (getLangOpts().MicrosoftExt)
+        Ident_sealed = &PP.getIdentifierTable().get("sealed");
       Ident_override = &PP.getIdentifierTable().get("override");
     }
 
     if (II == Ident_override)
       return VirtSpecifiers::VS_Override;
+
+    if (II == Ident_sealed)
+      return VirtSpecifiers::VS_Sealed;
 
     if (II == Ident_final)
       return VirtSpecifiers::VS_Final;
@@ -1870,14 +1875,18 @@ void Parser::ParseOptionalCXX11VirtSpecifierSeq(VirtSpecifiers &VS,
         << PrevSpec
         << FixItHint::CreateRemoval(Tok.getLocation());
 
-    if (IsInterface && Specifier == VirtSpecifiers::VS_Final) {
+    if (IsInterface && (Specifier == VirtSpecifiers::VS_Final ||
+                        Specifier == VirtSpecifiers::VS_Sealed)) {
       Diag(Tok.getLocation(), diag::err_override_control_interface)
         << VirtSpecifiers::getSpecifierName(Specifier);
+    } else if (Specifier == VirtSpecifiers::VS_Sealed) {
+      Diag(Tok.getLocation(), diag::ext_ms_sealed_keyword);
     } else {
-      Diag(Tok.getLocation(), getLangOpts().CPlusPlus11 ?
-           diag::warn_cxx98_compat_override_control_keyword :
-           diag::ext_override_control_keyword)
-        << VirtSpecifiers::getSpecifierName(Specifier);
+      Diag(Tok.getLocation(),
+           getLangOpts().CPlusPlus11
+               ? diag::warn_cxx98_compat_override_control_keyword
+               : diag::ext_override_control_keyword)
+          << VirtSpecifiers::getSpecifierName(Specifier);
     }
     ConsumeToken();
   }
@@ -1895,10 +1904,13 @@ bool Parser::isCXX11FinalKeyword() const {
   // Initialize the contextual keywords.
   if (!Ident_final) {
     Ident_final = &PP.getIdentifierTable().get("final");
+    if (getLangOpts().MicrosoftExt)
+      Ident_sealed = &PP.getIdentifierTable().get("sealed");
     Ident_override = &PP.getIdentifierTable().get("override");
   }
-  
-  return Tok.getIdentifierInfo() == Ident_final;
+
+  return Tok.getIdentifierInfo() == Ident_final ||
+         Tok.getIdentifierInfo() == Ident_sealed;
 }
 
 /// ParseCXXClassMemberDeclaration - Parse a C++ class member declaration.
@@ -1929,6 +1941,7 @@ bool Parser::isCXX11FinalKeyword() const {
 ///       virt-specifier:
 ///         override
 ///         final
+/// [MS]    sealed
 /// 
 ///       pure-specifier:
 ///         '= 0'
@@ -2520,20 +2533,27 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     Actions.ActOnTagStartDefinition(getCurScope(), TagDecl);
 
   SourceLocation FinalLoc;
+  bool IsFinalSpelledSealed = false;
 
   // Parse the optional 'final' keyword.
   if (getLangOpts().CPlusPlus && Tok.is(tok::identifier)) {
-    assert(isCXX11FinalKeyword() && "not a class definition");
+    VirtSpecifiers::Specifier Specifier = isCXX11VirtSpecifier(Tok);
+    assert((Specifier == VirtSpecifiers::VS_Final ||
+            Specifier == VirtSpecifiers::VS_Sealed) &&
+           "not a class definition");
     FinalLoc = ConsumeToken();
+    IsFinalSpelledSealed = Specifier == VirtSpecifiers::VS_Sealed;
 
-    if (TagType == DeclSpec::TST_interface) {
+    if (TagType == DeclSpec::TST_interface)
       Diag(FinalLoc, diag::err_override_control_interface)
-        << "final";
-    } else {
-      Diag(FinalLoc, getLangOpts().CPlusPlus11 ?
-           diag::warn_cxx98_compat_override_control_keyword :
-           diag::ext_override_control_keyword) << "final";
-    }
+        << VirtSpecifiers::getSpecifierName(Specifier);
+    else if (Specifier == VirtSpecifiers::VS_Final)
+      Diag(FinalLoc, getLangOpts().CPlusPlus11
+                         ? diag::warn_cxx98_compat_override_control_keyword
+                         : diag::ext_override_control_keyword)
+        << VirtSpecifiers::getSpecifierName(Specifier);
+    else if (Specifier == VirtSpecifiers::VS_Sealed)
+      Diag(FinalLoc, diag::ext_ms_sealed_keyword);
 
     // Parse any C++11 attributes after 'final' keyword.
     // These attributes are not allowed to appear here,
@@ -2560,6 +2580,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 
   if (TagDecl)
     Actions.ActOnStartCXXMemberDeclarations(getCurScope(), TagDecl, FinalLoc,
+                                            IsFinalSpelledSealed,
                                             T.getOpenLocation());
 
   // C++ 11p3: Members of a class defined with the keyword class are private

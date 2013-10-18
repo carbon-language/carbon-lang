@@ -2107,7 +2107,8 @@ public:
   enum Specifier {
     VS_None = 0,
     VS_Override = 1,
-    VS_Final = 2
+    VS_Final = 2,
+    VS_Sealed = 4
   };
 
   VirtSpecifiers() : Specifiers(0) { }
@@ -2118,7 +2119,8 @@ public:
   bool isOverrideSpecified() const { return Specifiers & VS_Override; }
   SourceLocation getOverrideLoc() const { return VS_overrideLoc; }
 
-  bool isFinalSpecified() const { return Specifiers & VS_Final; }
+  bool isFinalSpecified() const { return Specifiers & (VS_Final | VS_Sealed); }
+  bool isFinalSpelledSealed() const { return Specifiers & VS_Sealed; }
   SourceLocation getFinalLoc() const { return VS_finalLoc; }
 
   void clear() { Specifiers = 0; }

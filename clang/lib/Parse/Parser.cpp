@@ -486,6 +486,7 @@ void Parser::Initialize() {
 
   Ident_instancetype = 0;
   Ident_final = 0;
+  Ident_sealed = 0;
   Ident_override = 0;
 
   Ident_super = &PP.getIdentifierTable().get("super");

@@ -350,6 +350,7 @@ KEYWORD(typeof                      , KEYGNU)
 
 // MS Extensions
 KEYWORD(L__FUNCTION__               , KEYMS)
+KEYWORD(__is_sealed                 , KEYMS)
 
 // GNU and MS Type Traits
 KEYWORD(__has_nothrow_assign          , KEYCXX)

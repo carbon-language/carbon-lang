@@ -2669,6 +2669,7 @@ static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   case tok::kw___is_reference:               return UTT_IsReference;
   case tok::kw___is_rvalue_reference:        return UTT_IsRvalueReference;
   case tok::kw___is_scalar:                  return UTT_IsScalar;
+  case tok::kw___is_sealed:                  return UTT_IsSealed;
   case tok::kw___is_signed:                  return UTT_IsSigned;
   case tok::kw___is_standard_layout:         return UTT_IsStandardLayout;
   case tok::kw___is_trivial:                 return UTT_IsTrivial;

@@ -57,6 +57,7 @@ namespace clang {
     UTT_IsReference,
     UTT_IsRvalueReference,
     UTT_IsScalar,
+    UTT_IsSealed,
     UTT_IsSigned,
     UTT_IsStandardLayout,
     UTT_IsTrivial,

@@ -102,6 +102,7 @@ class Parser : public CodeCompletionHandler {
 
   /// Contextual keywords for Microsoft extensions.
   IdentifierInfo *Ident__except;
+  mutable IdentifierInfo *Ident_sealed;
 
   /// Ident_super - IdentifierInfo for "super", to support fast
   /// comparison.

@@ -704,6 +704,9 @@ def warn_cxx98_compat_override_control_keyword : Warning<
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_override_control_interface : Error<
   "'%0' keyword not permitted with interface types">;
+def ext_ms_sealed_keyword : ExtWarn<
+  "'sealed' keyword is a Microsoft extension">,
+  InGroup<Microsoft>;
 
 def err_access_specifier_interface : Error<
   "interface types cannot specify '%select{private|protected}0' access">;

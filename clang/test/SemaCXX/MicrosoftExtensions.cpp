@@ -385,3 +385,28 @@ namespace rdar14250378 {
     }
   }
 }
+
+// expected-error@+1 {{'sealed' keyword not permitted with interface types}}
+__interface InterfaceWithSealed sealed {
+};
+
+struct SomeBase {
+  virtual void OverrideMe();
+
+  // expected-note@+2 {{overridden virtual function is here}}
+  // expected-warning@+1 {{'sealed' keyword is a Microsoft extension}}
+  virtual void SealedFunction() sealed;
+};
+
+// expected-note@+2 {{'SealedType' declared here}}
+// expected-warning@+1 {{'sealed' keyword is a Microsoft extension}}
+struct SealedType sealed : SomeBase {
+  // expected-error@+1 {{declaration of 'SealedFunction' overrides a 'sealed' function}}
+  virtual void SealedFunction();
+
+  // expected-warning@+1 {{'override' keyword is a C++11 extension}}
+  virtual void OverrideMe() override;
+};
+
+// expected-error@+1 {{base 'SealedType' is marked 'sealed'}}
+struct InheritFromSealed : SealedType {};

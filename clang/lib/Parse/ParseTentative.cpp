@@ -962,6 +962,7 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
   case tok::kw___is_literal_type:
   case tok::kw___is_pod:
   case tok::kw___is_polymorphic:
+  case tok::kw___is_sealed:
   case tok::kw___is_trivial:
   case tok::kw___is_trivially_assignable:
   case tok::kw___is_trivially_constructible:

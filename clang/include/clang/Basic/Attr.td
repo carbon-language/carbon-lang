@@ -395,7 +395,8 @@ def FastCall : InheritableAttr {
 }
 
 def Final : InheritableAttr {
-  let Spellings = [];
+  let Spellings = [Keyword<"final">, Keyword<"sealed">];
+  let Accessors = [Accessor<"isSpelledAsSealed", [Keyword<"sealed">]>];
   let SemaHandler = 0;
 }
 

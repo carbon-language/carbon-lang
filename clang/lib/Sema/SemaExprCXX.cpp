@@ -3131,6 +3131,7 @@ static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
 
   // These traits require a complete type.
   case UTT_IsFinal:
+  case UTT_IsSealed:
 
     // These trait expressions are designed to help implement predicates in
     // [meta.unary.prop] despite not being named the same. They are specified
@@ -3303,6 +3304,11 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
   case UTT_IsFinal:
     if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())
       return RD->hasAttr<FinalAttr>();
+    return false;
+  case UTT_IsSealed:
+    if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())
+      if (FinalAttr *FA = RD->getAttr<FinalAttr>())
+        return FA->isSpelledAsSealed();
     return false;
   case UTT_IsSigned:
     return T->isSignedIntegerType();

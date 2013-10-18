@@ -983,6 +983,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("is_standard_layout", LangOpts.CPlusPlus)
            .Case("is_pod", LangOpts.CPlusPlus)
            .Case("is_polymorphic", LangOpts.CPlusPlus)
+           .Case("is_sealed", LangOpts.MicrosoftExt)
            .Case("is_trivial", LangOpts.CPlusPlus)
            .Case("is_trivially_assignable", LangOpts.CPlusPlus)
            .Case("is_trivially_constructible", LangOpts.CPlusPlus)
