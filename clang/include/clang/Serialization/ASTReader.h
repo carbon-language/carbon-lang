@@ -1268,6 +1268,9 @@ public:
   /// \brief Initializes the ASTContext
   void InitializeContext();
 
+  /// \brief Update the state of Sema after loading some additional modules.
+  void UpdateSema();
+
   /// \brief Add in-memory (virtual file) buffer.
   void addInMemoryBuffer(StringRef &FileName, llvm::MemoryBuffer *Buffer) {
     ModuleMgr.addInMemoryBuffer(FileName, Buffer);

@@ -2524,9 +2524,10 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       break;
 
     case SEMA_DECL_REFS:
-      // Later tables overwrite earlier ones.
-      // FIXME: Modules will have some trouble with this.
-      SemaDeclRefs.clear();
+      if (Record.size() != 2) {
+        Error("Invalid SEMA_DECL_REFS block");
+        return true;
+      }
       for (unsigned I = 0, N = Record.size(); I != N; ++I)
         SemaDeclRefs.push_back(getGlobalDeclID(F, Record[I]));
       break;
@@ -3034,6 +3035,9 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   // module itself.
   
   InitializeContext();
+
+  if (SemaObj)
+    UpdateSema();
 
   if (DeserializationListener)
     DeserializationListener->ReaderInitialized(this);
@@ -6136,27 +6140,38 @@ void ASTReader::InitializeSema(Sema &S) {
   }
   PreloadedDecls.clear();
 
-  // Load the offsets of the declarations that Sema references.
-  // They will be lazily deserialized when needed.
-  if (!SemaDeclRefs.empty()) {
-    assert(SemaDeclRefs.size() == 2 && "More decl refs than expected!");
-    if (!SemaObj->StdNamespace)
-      SemaObj->StdNamespace = SemaDeclRefs[0];
-    if (!SemaObj->StdBadAlloc)
-      SemaObj->StdBadAlloc = SemaDeclRefs[1];
-  }
-
+  // FIXME: What happens if these are changed by a module import?
   if (!FPPragmaOptions.empty()) {
     assert(FPPragmaOptions.size() == 1 && "Wrong number of FP_PRAGMA_OPTIONS");
     SemaObj->FPFeatures.fp_contract = FPPragmaOptions[0];
   }
 
+  // FIXME: What happens if these are changed by a module import?
   if (!OpenCLExtensions.empty()) {
     unsigned I = 0;
 #define OPENCLEXT(nm)  SemaObj->OpenCLFeatures.nm = OpenCLExtensions[I++];
 #include "clang/Basic/OpenCLExtensions.def"
 
     assert(OpenCLExtensions.size() == I && "Wrong number of OPENCL_EXTENSIONS");
+  }
+
+  UpdateSema();
+}
+
+void ASTReader::UpdateSema() {
+  assert(SemaObj && "no Sema to update");
+
+  // Load the offsets of the declarations that Sema references.
+  // They will be lazily deserialized when needed.
+  if (!SemaDeclRefs.empty()) {
+    assert(SemaDeclRefs.size() % 2 == 0);
+    for (unsigned I = 0; I != SemaDeclRefs.size(); I += 2) {
+      if (!SemaObj->StdNamespace)
+        SemaObj->StdNamespace = SemaDeclRefs[I];
+      if (!SemaObj->StdBadAlloc)
+        SemaObj->StdBadAlloc = SemaDeclRefs[I+1];
+    }
+    SemaDeclRefs.clear();
   }
 }
 

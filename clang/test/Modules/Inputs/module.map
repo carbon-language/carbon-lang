@@ -254,3 +254,7 @@ module incomplete_mod {
 module warning {
   header "warning.h"
 }
+
+module initializer_list {
+  header "initializer_list"
+}
