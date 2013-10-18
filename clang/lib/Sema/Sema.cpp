@@ -604,7 +604,13 @@ void Sema::ActOnEndOfTranslationUnit() {
     // valid, but we could do better by diagnosing if an instantiation uses a
     // name that was not visible at its first point of instantiation.
     PerformPendingInstantiations();
+    CheckDelayedMemberExceptionSpecs();
   }
+
+  // All delayed member exception specs should be checked or we end up accepting
+  // incompatible declarations.
+  assert(DelayedDefaultedMemberExceptionSpecs.empty());
+  assert(DelayedDestructorExceptionSpecChecks.empty());
 
   // Remove file scoped decls that turned out to be used.
   UnusedFileScopedDecls.erase(
