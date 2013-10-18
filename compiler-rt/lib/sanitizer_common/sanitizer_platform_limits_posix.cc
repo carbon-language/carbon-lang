@@ -140,6 +140,7 @@ namespace __sanitizer {
 
 #if !SANITIZER_ANDROID
   unsigned ucontext_t_sz = sizeof(ucontext_t);
+  unsigned struct_statfs64_sz = sizeof(struct statfs64);
 #endif // !SANITIZER_ANDROID
 
 #if SANITIZER_LINUX
@@ -160,7 +161,6 @@ namespace __sanitizer {
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
   unsigned struct_rlimit64_sz = sizeof(struct rlimit64);
-  unsigned struct_statfs64_sz = sizeof(struct statfs64);
   unsigned struct_timex_sz = sizeof(struct timex);
   unsigned struct_msqid_ds_sz = sizeof(struct msqid_ds);
   unsigned struct_shmid_ds_sz = sizeof(struct shmid_ds);

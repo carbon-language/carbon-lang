@@ -42,6 +42,7 @@ namespace __sanitizer {
 
 #if !SANITIZER_ANDROID
   extern unsigned ucontext_t_sz;
+  extern unsigned struct_statfs64_sz;
 #endif // !SANITIZER_ANDROID
 
 #if SANITIZER_LINUX
@@ -83,7 +84,6 @@ namespace __sanitizer {
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
   extern unsigned struct_rlimit64_sz;
-  extern unsigned struct_statfs64_sz;
   extern unsigned struct_statvfs_sz;
   extern unsigned struct_statvfs64_sz;
 #endif // SANITIZER_LINUX && !SANITIZER_ANDROID
