@@ -20,6 +20,7 @@
 
 using namespace lld;
 
+#ifndef NDEBUG
 namespace {
 // Return "reason (leftval, rightval)"
 std::string formatReason(StringRef reason, int leftVal, int rightVal) {
@@ -28,6 +29,7 @@ std::string formatReason(StringRef reason, int leftVal, int rightVal) {
   return std::move(msg.str());
 }
 }
+#endif // NDEBUG
 
 /// The function compares atoms by sorting atoms in the following order
 /// a) Sorts atoms by Section position preference
