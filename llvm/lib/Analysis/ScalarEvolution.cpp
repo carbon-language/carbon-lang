@@ -6398,13 +6398,6 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
   if (!AddRec || AddRec->getLoop() != L)
     return getCouldNotCompute();
 
-  // Check to see if we have a flag which makes analysis easy.
-  bool NoWrap = false;
-  if (!IsSubExpr) {
-    NoWrap = AddRec->getNoWrapFlags(
-      (SCEV::NoWrapFlags)(((isSigned ? SCEV::FlagNSW : SCEV::FlagNUW))
-                          | SCEV::FlagNW));
-  }
   if (AddRec->isAffine()) {
     unsigned BitWidth = getTypeSizeInBits(AddRec->getType());
     const SCEV *Step = AddRec->getStepRecurrence(*this);
@@ -6414,20 +6407,21 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
     if (Step->isOne()) {
       // With unit stride, the iteration never steps past the limit value.
     } else if (isKnownPositive(Step)) {
-      // Test whether a positive iteration can step past the limit
-      // value and past the maximum value for its type in a single step.
-      // Note that it's not sufficient to check NoWrap here, because even
-      // though the value after a wrap is undefined, it's not undefined
-      // behavior, so if wrap does occur, the loop could either terminate or
-      // loop infinitely, but in either case, the loop is guaranteed to
-      // iterate at least until the iteration where the wrapping occurs.
+      // Test whether a positive iteration can step past the limit value and
+      // past the maximum value for its type in a single step. The NSW/NUW flags
+      // can imply that stepping past RHS would immediately result in undefined
+      // behavior. No self-wrap is not useful here because the loop counter may
+      // signed or unsigned wrap but continue iterating and terminate with
+      // defined behavior without ever self-wrapping.
       const SCEV *One = getConstant(Step->getType(), 1);
       if (isSigned) {
-        APInt Max = APInt::getSignedMaxValue(BitWidth);
-        if ((Max - getSignedRange(getMinusSCEV(Step, One)).getSignedMax())
+        if (!AddRec->getNoWrapFlags(SCEV::FlagNSW)) {
+          APInt Max = APInt::getSignedMaxValue(BitWidth);
+          if ((Max - getSignedRange(getMinusSCEV(Step, One)).getSignedMax())
               .slt(getSignedRange(RHS).getSignedMax()))
-          return getCouldNotCompute();
-      } else {
+            return getCouldNotCompute();
+        }
+      } else if (!AddRec->getNoWrapFlags(SCEV::FlagNUW)){
         APInt Max = APInt::getMaxValue(BitWidth);
         if ((Max - getUnsignedRange(getMinusSCEV(Step, One)).getUnsignedMax())
               .ult(getUnsignedRange(RHS).getUnsignedMax()))
@@ -6481,6 +6475,15 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
                   getMinusSCEV(getConstant(APInt::getMaxValue(BitWidth)),
                                StepMinusOne));
 
+    // If the loop counter does not self-wrap, then the trip count may be
+    // computed by dividing the distance by the step. This is independent of
+    // signed or unsigned wrap.
+    bool NoWrap = false;
+    if (!IsSubExpr) {
+      NoWrap = AddRec->getNoWrapFlags(
+        (SCEV::NoWrapFlags)(((isSigned ? SCEV::FlagNSW : SCEV::FlagNUW))
+                            | SCEV::FlagNW));
+    }
     // Finally, we subtract these two values and divide, rounding up, to get
     // the number of times the backedge is executed.
     const SCEV *BECount = getBECount(Start, End, Step, NoWrap);
