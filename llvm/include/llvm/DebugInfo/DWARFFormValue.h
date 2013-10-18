@@ -33,14 +33,6 @@ public:
     bool IsDWOIndex;
   };
 
-  enum {
-    eValueTypeInvalid = 0,
-    eValueTypeUnsigned,
-    eValueTypeSigned,
-    eValueTypeCStr,
-    eValueTypeBlock
-  };
-
 private:
   uint16_t Form;   // Form for this value.
   ValueType Value; // Contains all data for the form.
@@ -55,19 +47,18 @@ public:
   bool isInlinedCStr() const {
     return Value.data != NULL && Value.data == (const uint8_t*)Value.cstr;
   }
-  const uint8_t *BlockData() const;
-  uint64_t getReference(const DWARFUnit *U) const;
 
+  uint64_t getReference(const DWARFUnit *U) const;
   uint64_t getUnsigned() const { return Value.uval; }
   int64_t getSigned() const { return Value.sval; }
   const char *getAsCString(const DWARFUnit *U) const;
   uint64_t getAsAddress(const DWARFUnit *U) const;
+
   bool skipValue(DataExtractor debug_info_data, uint32_t *offset_ptr,
                  const DWARFUnit *u) const;
   static bool skipValue(uint16_t form, DataExtractor debug_info_data,
                         uint32_t *offset_ptr, const DWARFUnit *u);
-  static bool isBlockForm(uint16_t form);
-  static bool isDataForm(uint16_t form);
+
   static const uint8_t *getFixedFormSizes(uint8_t AddrSize, uint16_t Version);
 };
 

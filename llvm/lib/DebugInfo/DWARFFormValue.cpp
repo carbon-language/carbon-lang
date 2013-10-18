@@ -479,34 +479,3 @@ uint64_t DWARFFormValue::getReference(const DWARFUnit *cu) const {
 
   return die_offset;
 }
-
-const uint8_t *DWARFFormValue::BlockData() const {
-  if (!isInlinedCStr())
-    return Value.data;
-  return NULL;
-}
-
-bool DWARFFormValue::isBlockForm(uint16_t form) {
-  switch (form) {
-  case DW_FORM_exprloc:
-  case DW_FORM_block:
-  case DW_FORM_block1:
-  case DW_FORM_block2:
-  case DW_FORM_block4:
-    return true;
-  }
-  return false;
-}
-
-bool DWARFFormValue::isDataForm(uint16_t form) {
-  switch (form) {
-  case DW_FORM_sdata:
-  case DW_FORM_udata:
-  case DW_FORM_data1:
-  case DW_FORM_data2:
-  case DW_FORM_data4:
-  case DW_FORM_data8:
-    return true;
-  }
-  return false;
-}
