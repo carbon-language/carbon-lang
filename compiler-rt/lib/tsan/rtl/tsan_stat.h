@@ -371,6 +371,14 @@ enum StatType {
   StatInt_dlclose,
   StatInt_getmntent,
   StatInt_getmntent_r,
+  StatInt_statfs,
+  StatInt_statfs64,
+  StatInt_fstatfs,
+  StatInt_fstatfs64,
+  StatInt_statvfs,
+  StatInt_statvfs64,
+  StatInt_fstatvfs,
+  StatInt_fstatvfs64,
 
   // Dynamic annotations.
   StatAnnotation,

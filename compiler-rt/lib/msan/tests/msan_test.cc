@@ -41,6 +41,7 @@
 #include <fcntl.h>
 #include <sys/resource.h>
 #include <sys/ioctl.h>
+#include <sys/statvfs.h>
 #include <sys/sysinfo.h>
 #include <sys/utsname.h>
 #include <sys/mman.h>
@@ -687,12 +688,34 @@ TEST(MemorySanitizer, fstatat) {
 }
 
 TEST(MemorySanitizer, statfs) {
-  struct statfs* st = new struct statfs;
-  int res = statfs("/", st);
+  struct statfs st;
+  int res = statfs("/", &st);
   assert(!res);
-  EXPECT_NOT_POISONED(st->f_type);
-  EXPECT_NOT_POISONED(st->f_bfree);
-  EXPECT_NOT_POISONED(st->f_namelen);
+  EXPECT_NOT_POISONED(st.f_type);
+  EXPECT_NOT_POISONED(st.f_bfree);
+  EXPECT_NOT_POISONED(st.f_namelen);
+}
+
+TEST(MemorySanitizer, statvfs) {
+  struct statvfs st;
+  int res = statvfs("/", &st);
+  assert(!res);
+  EXPECT_NOT_POISONED(st.f_bsize);
+  EXPECT_NOT_POISONED(st.f_blocks);
+  EXPECT_NOT_POISONED(st.f_bfree);
+  EXPECT_NOT_POISONED(st.f_namemax);
+}
+
+TEST(MemorySanitizer, fstatvfs) {
+  struct statvfs st;
+  int fd = open("/", O_RDONLY | O_DIRECTORY);
+  int res = fstatvfs(fd, &st);
+  assert(!res);
+  EXPECT_NOT_POISONED(st.f_bsize);
+  EXPECT_NOT_POISONED(st.f_blocks);
+  EXPECT_NOT_POISONED(st.f_bfree);
+  EXPECT_NOT_POISONED(st.f_namemax);
+  close(fd);
 }
 
 TEST(MemorySanitizer, pipe) {

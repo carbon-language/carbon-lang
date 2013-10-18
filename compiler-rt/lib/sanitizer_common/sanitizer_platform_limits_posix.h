@@ -38,6 +38,8 @@ namespace __sanitizer {
   extern unsigned struct_itimerspec_sz;
   extern unsigned struct_sigevent_sz;
   extern unsigned struct_sched_param_sz;
+  extern unsigned struct_statvfs_sz;
+  extern unsigned struct_statvfs64_sz;
 
 #if !SANITIZER_ANDROID
   extern unsigned ucontext_t_sz;

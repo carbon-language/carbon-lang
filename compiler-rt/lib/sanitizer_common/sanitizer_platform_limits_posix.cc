@@ -78,6 +78,7 @@
 #include <sys/mtio.h>
 #include <sys/kd.h>
 #include <sys/shm.h>
+#include <sys/statvfs.h>
 #include <sys/timex.h>
 #include <sys/user.h>
 #include <sys/ustat.h>
@@ -164,6 +165,8 @@ namespace __sanitizer {
   unsigned struct_msqid_ds_sz = sizeof(struct msqid_ds);
   unsigned struct_shmid_ds_sz = sizeof(struct shmid_ds);
   unsigned struct_mq_attr_sz = sizeof(struct mq_attr);
+  unsigned struct_statvfs_sz = sizeof(struct statvfs);
+  unsigned struct_statvfs64_sz = sizeof(struct statvfs64);
 #endif // SANITIZER_LINUX && !SANITIZER_ANDROID
 
   uptr sig_ign = (uptr)SIG_IGN;

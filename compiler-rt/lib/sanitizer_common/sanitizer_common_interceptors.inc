@@ -2316,6 +2316,97 @@ INTERCEPTOR(__sanitizer_mntent *, getmntent_r, void *fp,
 #define INIT_GETMNTENT_R
 #endif
 
+#if SANITIZER_INTERCEPT_STATFS
+INTERCEPTOR(int, statfs, char *path, void *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, statfs, path, buf);
+  if (path) COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  int res = REAL(statfs)(path, buf);
+  if (!res) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, struct_statfs_sz);
+  return res;
+}
+INTERCEPTOR(int, fstatfs, int fd, void *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fstatfs, fd, buf);
+  int res = REAL(fstatfs)(fd, buf);
+  if (!res) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, struct_statfs_sz);
+  return res;
+}
+#define INIT_STATFS           \
+  INTERCEPT_FUNCTION(statfs); \
+  INTERCEPT_FUNCTION(fstatfs);
+#else
+#define INIT_STATFS
+#endif
+
+#if SANITIZER_INTERCEPT_STATFS64
+INTERCEPTOR(int, statfs64, char *path, void *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, statfs64, path, buf);
+  if (path) COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  int res = REAL(statfs64)(path, buf);
+  if (!res) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, struct_statfs64_sz);
+  return res;
+}
+INTERCEPTOR(int, fstatfs64, int fd, void *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fstatfs64, fd, buf);
+  int res = REAL(fstatfs64)(fd, buf);
+  if (!res) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, struct_statfs64_sz);
+  return res;
+}
+#define INIT_STATFS64           \
+  INTERCEPT_FUNCTION(statfs64); \
+  INTERCEPT_FUNCTION(fstatfs64);
+#else
+#define INIT_STATFS64
+#endif
+
+#if SANITIZER_INTERCEPT_STATVFS
+INTERCEPTOR(int, statvfs, char *path, void *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, statvfs, path, buf);
+  if (path) COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  int res = REAL(statvfs)(path, buf);
+  if (!res) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, struct_statvfs_sz);
+  return res;
+}
+INTERCEPTOR(int, fstatvfs, int fd, void *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fstatvfs, fd, buf);
+  int res = REAL(fstatvfs)(fd, buf);
+  if (!res) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, struct_statvfs_sz);
+  return res;
+}
+#define INIT_STATVFS           \
+  INTERCEPT_FUNCTION(statvfs); \
+  INTERCEPT_FUNCTION(fstatvfs);
+#else
+#define INIT_STATVFS
+#endif
+
+#if SANITIZER_INTERCEPT_STATVFS64
+INTERCEPTOR(int, statvfs64, char *path, void *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, statvfs64, path, buf);
+  if (path) COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  int res = REAL(statvfs64)(path, buf);
+  if (!res) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, struct_statvfs64_sz);
+  return res;
+}
+INTERCEPTOR(int, fstatvfs64, int fd, void *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fstatvfs64, fd, buf);
+  int res = REAL(fstatvfs64)(fd, buf);
+  if (!res) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, struct_statvfs64_sz);
+  return res;
+}
+#define INIT_STATVFS64           \
+  INTERCEPT_FUNCTION(statvfs64); \
+  INTERCEPT_FUNCTION(fstatvfs64);
+#else
+#define INIT_STATVFS64
+#endif
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
@@ -2403,4 +2494,8 @@ INTERCEPTOR(__sanitizer_mntent *, getmntent_r, void *fp,
   INIT_PTHREAD_COND_BROADCAST;             \
   INIT_GETMNTENT;                          \
   INIT_GETMNTENT_R;                        \
+  INIT_STATFS;                             \
+  INIT_STATFS64;                           \
+  INIT_STATVFS;                            \
+  INIT_STATVFS64;                          \
 /**/
