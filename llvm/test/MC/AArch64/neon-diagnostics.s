@@ -4502,3 +4502,58 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        sqdmull d15, s22, d12
 // CHECK-ERROR:                          ^
+
+//----------------------------------------------------------------------
+// Scalar Signed Saturating Extract Unsigned Narrow
+//----------------------------------------------------------------------
+
+    sqxtun b19, b14
+    sqxtun h21, h15
+    sqxtun s20, s12
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqxtun b19, b14
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqxtun h21, h15
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqxtun s20, s12
+// CHECK-ERROR:                    ^
+
+//----------------------------------------------------------------------
+// Scalar Signed Saturating Extract Signed Narrow
+//----------------------------------------------------------------------
+
+    sqxtn b18, b18
+    sqxtn h20, h17
+    sqxtn s19, s14
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqxtn b18, b18
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqxtn h20, h17
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqxtn s19, s14
+// CHECK-ERROR:                   ^
+
+
+//----------------------------------------------------------------------
+// Scalar Unsigned Saturating Extract Narrow
+//----------------------------------------------------------------------
+
+    uqxtn b18, b18
+    uqxtn h20, h17
+    uqxtn s19, s14
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uqxtn b18, b18
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uqxtn h20, h17
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uqxtn s19, s14
+// CHECK-ERROR:                   ^
