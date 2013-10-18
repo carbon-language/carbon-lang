@@ -6874,7 +6874,7 @@ The '``llvm.memcpy.*``' intrinsics copy a block of memory from the
 source location to the destination location, which are not allowed to
 overlap. It copies "len" bytes of memory over. If the argument is known
 to be aligned to some boundary, this can be specified as the fourth
-argument, otherwise it should be set to 0 or 1.
+argument, otherwise it should be set to 0 or 1 (both meaning no alignment).
 
 '``llvm.memmove``' Intrinsic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -6929,7 +6929,7 @@ The '``llvm.memmove.*``' intrinsics copy a block of memory from the
 source location to the destination location, which may overlap. It
 copies "len" bytes of memory over. If the argument is known to be
 aligned to some boundary, this can be specified as the fourth argument,
-otherwise it should be set to 0 or 1.
+otherwise it should be set to 0 or 1 (both meaning no alignment).
 
 '``llvm.memset.*``' Intrinsics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -6980,7 +6980,7 @@ Semantics:
 The '``llvm.memset.*``' intrinsics fill "len" bytes of memory starting
 at the destination location. If the argument is known to be aligned to
 some boundary, this can be specified as the fourth argument, otherwise
-it should be set to 0 or 1.
+it should be set to 0 or 1 (both meaning no alignment).
 
 '``llvm.sqrt.*``' Intrinsic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
