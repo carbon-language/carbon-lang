@@ -1339,7 +1339,7 @@ int AMDGPUCFGStructurizer::improveSimpleJumpintoIf(MachineBasicBlock *HeadMBB,
     // XXX: We have an opportunity here to optimize the "branch into if" case
     // here.  Branch into if looks like this:
     //                        entry
-    //                       /     \
+    //                       /     |
     //           diamond_head       branch_from
     //             /      \           |
     // diamond_false        diamond_true
@@ -1379,11 +1379,11 @@ int AMDGPUCFGStructurizer::improveSimpleJumpintoIf(MachineBasicBlock *HeadMBB,
     //
     // After the above changes, the new CFG should look like this:
     //                        entry
-    //                       /     \
+    //                       /     |
     //           diamond_head       branch_from
     //                       \     /
     //                      new_block
-    //                      /      \
+    //                      /      |
     //         diamond_false        diamond_true
     //                      \      /
     //                        done
@@ -1392,7 +1392,7 @@ int AMDGPUCFGStructurizer::improveSimpleJumpintoIf(MachineBasicBlock *HeadMBB,
     // block and we will end up with a CFG like this:
     //
     //                        entry
-    //                       /     \
+    //                       /     |
     //           diamond_head       branch_from
     //             /      \                   |
     // diamond_false        diamond_true      diamond_true (duplicate)
