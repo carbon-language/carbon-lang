@@ -1376,7 +1376,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
     addDIEEntry(SPDie, dwarf::DW_AT_specification, DeclDie);
 
     // Add subprogram definitions to the CU die directly.
-    CUDie.get()->addChild(SPDie);
+    addDie(SPDie);
 
     return SPDie;
   }
