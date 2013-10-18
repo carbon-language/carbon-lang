@@ -82,7 +82,7 @@ MemoryBlock Memory::allocateMappedMemory(size_t NumBytes,
 
   uintptr_t Start = NearBlock ? reinterpret_cast<uintptr_t>(NearBlock->base()) +
                                 NearBlock->size()
-                           : NULL;
+                           : 0;
 
   // If the requested address is not aligned to the allocation granularity,
   // round up to get beyond NearBlock. VirtualAlloc would have rounded down.
@@ -106,7 +106,7 @@ MemoryBlock Memory::allocateMappedMemory(size_t NumBytes,
   MemoryBlock Result;
   Result.Address = PA;
   Result.Size = NumBlocks*Granularity;
-                                 ;
+
   if (Flags & MF_EXEC)
     Memory::InvalidateInstructionCache(Result.Address, Result.Size);
 
