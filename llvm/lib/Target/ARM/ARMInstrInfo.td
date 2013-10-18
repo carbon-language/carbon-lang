@@ -221,9 +221,9 @@ def HasCrypto        : Predicate<"Subtarget->hasCrypto()">,
 def HasFP16          : Predicate<"Subtarget->hasFP16()">,
                                  AssemblerPredicate<"FeatureFP16","half-float">;
 def HasDivide        : Predicate<"Subtarget->hasDivide()">,
-                                 AssemblerPredicate<"FeatureHWDiv", "divide">;
+                                 AssemblerPredicate<"FeatureHWDiv", "divide in THUMB">;
 def HasDivideInARM   : Predicate<"Subtarget->hasDivideInARMMode()">,
-                                 AssemblerPredicate<"FeatureHWDivARM">;
+                                 AssemblerPredicate<"FeatureHWDivARM", "divide in ARM">;
 def HasT2ExtractPack : Predicate<"Subtarget->hasT2ExtractPack()">,
                                  AssemblerPredicate<"FeatureT2XtPk",
                                                      "pack/extract">;
