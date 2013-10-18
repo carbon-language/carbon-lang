@@ -4373,16 +4373,16 @@ TEST_F(FormatTest, DoesNotTouchUnwrappedLinesWithErrors) {
 }
 
 TEST_F(FormatTest, IncorrectCodeErrorDetection) {
-  EXPECT_EQ("{\n{}\n", format("{\n{\n}\n"));
+  EXPECT_EQ("{\n  {}\n", format("{\n{\n}\n"));
   EXPECT_EQ("{\n  {}\n", format("{\n  {\n}\n"));
   EXPECT_EQ("{\n  {}\n", format("{\n  {\n  }\n"));
-  EXPECT_EQ("{\n  {}\n  }\n}\n", format("{\n  {\n    }\n  }\n}\n"));
+  EXPECT_EQ("{\n  {}\n}\n}\n", format("{\n  {\n    }\n  }\n}\n"));
 
   EXPECT_EQ("{\n"
-            "    {\n"
-            " breakme(\n"
-            "     qwe);\n"
-            "}\n",
+            "  {\n"
+            "    breakme(\n"
+            "        qwe);\n"
+            "  }\n",
             format("{\n"
                    "    {\n"
                    " breakme(qwe);\n"

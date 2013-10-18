@@ -915,10 +915,7 @@ public:
       } else if (TheLine.Type != LT_Invalid &&
                  (WasMoved || FormatPPDirective || touchesLine(TheLine))) {
         unsigned LevelIndent = getIndent(IndentForLevel, TheLine.Level);
-        if (FirstTok->WhitespaceRange.isValid() &&
-            // Insert a break even if there is a structural error in case where
-            // we break apart a line consisting of multiple unwrapped lines.
-            (FirstTok->NewlinesBefore == 0 || !StructuralError)) {
+        if (FirstTok->WhitespaceRange.isValid()) {
           formatFirstToken(*TheLine.First, PreviousLine, TheLine.Level, Indent,
                            TheLine.InPPDirective);
         } else {
