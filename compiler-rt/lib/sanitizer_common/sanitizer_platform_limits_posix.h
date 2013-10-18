@@ -38,8 +38,7 @@ namespace __sanitizer {
   extern unsigned struct_itimerspec_sz;
   extern unsigned struct_sigevent_sz;
   extern unsigned struct_sched_param_sz;
-  extern unsigned struct_statvfs_sz;
-  extern unsigned struct_statvfs64_sz;
+  extern unsigned struct_statfs_sz;
 
 #if !SANITIZER_ANDROID
   extern unsigned ucontext_t_sz;
@@ -63,7 +62,6 @@ namespace __sanitizer {
   extern unsigned struct_ustat_sz;
 
   extern unsigned struct_rlimit_sz;
-  extern unsigned struct_statfs_sz;
   extern unsigned struct_epoll_event_sz;
   extern unsigned struct_sysinfo_sz;
   extern unsigned struct_timespec_sz;
@@ -86,6 +84,8 @@ namespace __sanitizer {
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
   extern unsigned struct_rlimit64_sz;
   extern unsigned struct_statfs64_sz;
+  extern unsigned struct_statvfs_sz;
+  extern unsigned struct_statvfs64_sz;
 #endif // SANITIZER_LINUX && !SANITIZER_ANDROID
 
   struct __sanitizer_iovec {

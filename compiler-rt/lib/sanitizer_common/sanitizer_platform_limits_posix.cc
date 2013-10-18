@@ -136,6 +136,7 @@ namespace __sanitizer {
   unsigned struct_tms_sz = sizeof(struct tms);
   unsigned struct_sigevent_sz = sizeof(struct sigevent);
   unsigned struct_sched_param_sz = sizeof(struct sched_param);
+  unsigned struct_statfs_sz = sizeof(struct statfs);
 
 #if !SANITIZER_ANDROID
   unsigned ucontext_t_sz = sizeof(ucontext_t);
@@ -143,7 +144,6 @@ namespace __sanitizer {
 
 #if SANITIZER_LINUX
   unsigned struct_rlimit_sz = sizeof(struct rlimit);
-  unsigned struct_statfs_sz = sizeof(struct statfs);
   unsigned struct_epoll_event_sz = sizeof(struct epoll_event);
   unsigned struct_sysinfo_sz = sizeof(struct sysinfo);
   unsigned struct_timespec_sz = sizeof(struct timespec);
