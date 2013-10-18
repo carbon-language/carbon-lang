@@ -1,5 +1,11 @@
-# RUN: yaml-bench -canonical %s
+# RUN: yaml-bench -canonical %s | FileCheck %s
 
 - !!yaml '!'
 - !!yaml '&'
 - !!yaml '*'
+
+# CHECK: !!seq [
+# CHECK:   !!yaml "!",
+# CHECK:   !!yaml "&",
+# CHECK:   !!yaml "*",
+# CHECK: ]

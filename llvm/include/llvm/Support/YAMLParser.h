@@ -43,6 +43,8 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/SMLoc.h"
+
+#include <map>
 #include <limits>
 #include <utility>
 
@@ -99,9 +101,6 @@ private:
   OwningPtr<Document> CurrentDoc;
 
   friend class Document;
-
-  /// @brief Validate a %YAML x.x directive.
-  void handleYAMLDirective(const Token &);
 };
 
 /// @brief Abstract base class for all Nodes.
@@ -116,11 +115,20 @@ public:
     NK_Alias
   };
 
-  Node(unsigned int Type, OwningPtr<Document>&, StringRef Anchor);
+  Node(unsigned int Type, OwningPtr<Document> &, StringRef Anchor,
+       StringRef Tag);
 
   /// @brief Get the value of the anchor attached to this node. If it does not
   ///        have one, getAnchor().size() will be 0.
   StringRef getAnchor() const { return Anchor; }
+
+  /// \brief Get the tag as it was written in the document. This does not
+  ///   perform tag resolution.
+  StringRef getRawTag() const { return Tag; }
+
+  /// \brief Get the verbatium tag for a given Node. This performs tag resoluton
+  ///   and substitution.
+  std::string getVerbatimTag() const;
 
   SMRange getSourceRange() const { return SourceRange; }
   void setSourceRange(SMRange SR) { SourceRange = SR; }
@@ -158,6 +166,8 @@ protected:
 private:
   unsigned int TypeID;
   StringRef Anchor;
+  /// \brief The tag as typed in the document.
+  StringRef Tag;
 };
 
 /// @brief A null value.
@@ -166,7 +176,8 @@ private:
 ///   !!null null
 class NullNode : public Node {
 public:
-  NullNode(OwningPtr<Document> &D) : Node(NK_Null, D, StringRef()) {}
+  NullNode(OwningPtr<Document> &D)
+      : Node(NK_Null, D, StringRef(), StringRef()) {}
 
   static inline bool classof(const Node *N) {
     return N->getType() == NK_Null;
@@ -180,9 +191,9 @@ public:
 ///   Adena
 class ScalarNode : public Node {
 public:
-  ScalarNode(OwningPtr<Document> &D, StringRef Anchor, StringRef Val)
-    : Node(NK_Scalar, D, Anchor)
-    , Value(Val) {
+  ScalarNode(OwningPtr<Document> &D, StringRef Anchor, StringRef Tag,
+             StringRef Val)
+      : Node(NK_Scalar, D, Anchor, Tag), Value(Val) {
     SMLoc Start = SMLoc::getFromPointer(Val.begin());
     SMLoc End = SMLoc::getFromPointer(Val.end());
     SourceRange = SMRange(Start, End);
@@ -222,7 +233,7 @@ private:
 class KeyValueNode : public Node {
 public:
   KeyValueNode(OwningPtr<Document> &D)
-    : Node(NK_KeyValue, D, StringRef())
+    : Node(NK_KeyValue, D, StringRef(), StringRef())
     , Key(0)
     , Value(0)
   {}
@@ -338,13 +349,10 @@ public:
     MT_Inline ///< An inline mapping node is used for "[key: value]".
   };
 
-  MappingNode(OwningPtr<Document> &D, StringRef Anchor, MappingType MT)
-    : Node(NK_Mapping, D, Anchor)
-    , Type(MT)
-    , IsAtBeginning(true)
-    , IsAtEnd(false)
-    , CurrentEntry(0)
-  {}
+  MappingNode(OwningPtr<Document> &D, StringRef Anchor, StringRef Tag,
+              MappingType MT)
+      : Node(NK_Mapping, D, Anchor, Tag), Type(MT), IsAtBeginning(true),
+        IsAtEnd(false), CurrentEntry(0) {}
 
   friend class basic_collection_iterator<MappingNode, KeyValueNode>;
   typedef basic_collection_iterator<MappingNode, KeyValueNode> iterator;
@@ -397,14 +405,12 @@ public:
     ST_Indentless
   };
 
-  SequenceNode(OwningPtr<Document> &D, StringRef Anchor, SequenceType ST)
-    : Node(NK_Sequence, D, Anchor)
-    , SeqType(ST)
-    , IsAtBeginning(true)
-    , IsAtEnd(false)
-    , WasPreviousTokenFlowEntry(true) // Start with an imaginary ','.
-    , CurrentEntry(0)
-  {}
+  SequenceNode(OwningPtr<Document> &D, StringRef Anchor, StringRef Tag,
+               SequenceType ST)
+      : Node(NK_Sequence, D, Anchor, Tag), SeqType(ST), IsAtBeginning(true),
+        IsAtEnd(false),
+        WasPreviousTokenFlowEntry(true), // Start with an imaginary ','.
+        CurrentEntry(0) {}
 
   friend class basic_collection_iterator<SequenceNode, Node>;
   typedef basic_collection_iterator<SequenceNode, Node> iterator;
@@ -442,7 +448,7 @@ private:
 class AliasNode : public Node {
 public:
   AliasNode(OwningPtr<Document> &D, StringRef Val)
-    : Node(NK_Alias, D, StringRef()), Name(Val) {}
+    : Node(NK_Alias, D, StringRef(), StringRef()), Name(Val) {}
 
   StringRef getName() const { return Name; }
   Node *getTarget();
@@ -475,6 +481,10 @@ public:
     return Root = parseBlockNode();
   }
 
+  const std::map<StringRef, StringRef> &getTagMap() const {
+    return TagMap;
+  }
+
 private:
   friend class Node;
   friend class document_iterator;
@@ -490,17 +500,22 @@ private:
   ///        document.
   Node *Root;
 
+  /// \brief Maps tag prefixes to their expansion.
+  std::map<StringRef, StringRef> TagMap;
+
   Token &peekNext();
   Token getNext();
   void setError(const Twine &Message, Token &Location) const;
   bool failed() const;
 
-  void handleTagDirective(const Token &Tag) {
-    // TODO: Track tags.
-  }
-
   /// @brief Parse %BLAH directives and return true if any were encountered.
   bool parseDirectives();
+
+  /// \brief Parse %YAML
+  void parseYAMLDirective();
+
+  /// \brief Parse %TAG
+  void parseTAGDirective();
 
   /// @brief Consume the next token and error if it is not \a TK.
   bool expectToken(int TK);
