@@ -3522,7 +3522,17 @@ ClangASTType::GetIndexOfChildMemberWithName (const char *name,
                          field != field_end;
                          ++field, ++child_idx)
                     {
-                        if (field->getName().equals (name_sref))
+                        llvm::StringRef field_name = field->getName();
+                        if (field_name.empty())
+                        {
+                            ClangASTType field_type(m_ast,field->getType());
+                            child_indexes.push_back(child_idx);
+                            if (field_type.GetIndexOfChildMemberWithName(name,  omit_empty_base_classes, child_indexes))
+                                return child_indexes.size();
+                            child_indexes.pop_back();
+                                
+                        }
+                        else if (field_name.equals (name_sref))
                         {
                             // We have to add on the number of base classes to this index!
                             child_indexes.push_back (child_idx + ClangASTContext::GetNumBaseClasses (cxx_record_decl, omit_empty_base_classes));
