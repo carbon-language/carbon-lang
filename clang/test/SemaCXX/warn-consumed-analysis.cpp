@@ -51,9 +51,10 @@ public:
 
 class CONSUMABLE(unconsumed) DestructorTester {
 public:
+  DestructorTester() RETURN_TYPESTATE(unconsumed);
   DestructorTester(int);
   
-  void operator*();
+  void operator*() CALLABLE_WHEN("unconsumed");
   
   ~DestructorTester() CALLABLE_WHEN("consumed");
 };
@@ -101,9 +102,14 @@ void testDestruction() {
   *D0;
   *D1;
   
+  DestructorTester D2;
+  *D2;
+  
   D0.~DestructorTester(); // expected-warning {{invalid invocation of method '~DestructorTester' on object 'D0' while it is in the 'unconsumed' state}}
   
-  return; // expected-warning {{invalid invocation of method '~DestructorTester' on object 'D0' while it is in the 'unconsumed' state}} expected-warning {{invalid invocation of method '~DestructorTester' on object 'D1' while it is in the 'unconsumed' state}}
+  return; // expected-warning {{invalid invocation of method '~DestructorTester' on object 'D0' while it is in the 'unconsumed' state}} \
+             expected-warning {{invalid invocation of method '~DestructorTester' on object 'D1' while it is in the 'unconsumed' state}} \
+             expected-warning {{invalid invocation of method '~DestructorTester' on object 'D2' while it is in the 'unconsumed' state}}
 }
 
 void testTempValue() {

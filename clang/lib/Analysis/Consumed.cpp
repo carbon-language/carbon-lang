@@ -660,38 +660,46 @@ void ConsumedStmtVisitor::VisitCXXConstructExpr(const CXXConstructExpr *Call) {
   ASTContext &CurrContext = AC.getASTContext();
   QualType ThisType = Constructor->getThisType(CurrContext)->getPointeeType();
   
-  if (isConsumableType(ThisType)) {
-    if (Constructor->isDefaultConstructor()) {
+  if (!isConsumableType(ThisType))
+    return;
+  
+  // FIXME: What should happen if someone annotates the move constructor?
+  if (Constructor->hasAttr<ReturnTypestateAttr>()) {
+    ReturnTypestateAttr *RTAttr = Constructor->getAttr<ReturnTypestateAttr>();
+    ConsumedState RetState = mapReturnTypestateAttrState(RTAttr);
+    PropagationMap.insert(PairType(Call, PropagationInfo(RetState, ThisType)));
+    
+  } else if (Constructor->isDefaultConstructor()) {
+    
+    PropagationMap.insert(PairType(Call,
+      PropagationInfo(consumed::CS_Consumed, ThisType)));
+    
+  } else if (Constructor->isMoveConstructor()) {
+    
+    PropagationInfo PInfo =
+      PropagationMap.find(Call->getArg(0))->second;
+    
+    if (PInfo.isVar()) {
+      const VarDecl* Var = PInfo.getVar();
       
       PropagationMap.insert(PairType(Call,
-        PropagationInfo(consumed::CS_Consumed, ThisType)));
+        PropagationInfo(StateMap->getState(Var), ThisType)));
       
-    } else if (Constructor->isMoveConstructor()) {
-      
-      PropagationInfo PInfo =
-        PropagationMap.find(Call->getArg(0))->second;
-      
-      if (PInfo.isVar()) {
-        const VarDecl* Var = PInfo.getVar();
-        
-        PropagationMap.insert(PairType(Call,
-          PropagationInfo(StateMap->getState(Var), ThisType)));
-        
-        StateMap->setState(Var, consumed::CS_Consumed);
-        
-      } else {
-        PropagationMap.insert(PairType(Call, PInfo));
-      }
-        
-    } else if (Constructor->isCopyConstructor()) {
-      MapType::iterator Entry = PropagationMap.find(Call->getArg(0));
-    
-      if (Entry != PropagationMap.end())
-        PropagationMap.insert(PairType(Call, Entry->second));
+      StateMap->setState(Var, consumed::CS_Consumed);
       
     } else {
-      propagateReturnType(Call, Constructor, ThisType);
+      PropagationMap.insert(PairType(Call, PInfo));
     }
+      
+  } else if (Constructor->isCopyConstructor()) {
+    MapType::iterator Entry = PropagationMap.find(Call->getArg(0));
+  
+    if (Entry != PropagationMap.end())
+      PropagationMap.insert(PairType(Call, Entry->second));
+    
+  } else {
+    ConsumedState RetState = mapConsumableAttrState(ThisType);
+    PropagationMap.insert(PairType(Call, PropagationInfo(RetState, ThisType)));
   }
 }
 
