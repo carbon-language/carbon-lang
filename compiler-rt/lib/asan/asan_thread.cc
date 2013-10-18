@@ -43,8 +43,12 @@ void AsanThreadContext::OnFinished() {
 static ALIGNED(16) char thread_registry_placeholder[sizeof(ThreadRegistry)];
 static ThreadRegistry *asan_thread_registry;
 
+static BlockingMutex mu_for_thread_context(LINKER_INITIALIZED);
+static LowLevelAllocator allocator_for_thread_context;
+
 static ThreadContextBase *GetAsanThreadContext(u32 tid) {
-  void *mem = MmapOrDie(sizeof(AsanThreadContext), "AsanThreadContext");
+  BlockingMutexLock lock(&mu_for_thread_context);
+  void *mem = allocator_for_thread_context.Allocate(sizeof(AsanThreadContext));
   return new(mem) AsanThreadContext(tid);
 }
 
