@@ -184,7 +184,6 @@ bool DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
     case DW_FORM_GNU_addr_index:
     case DW_FORM_GNU_str_index:
       Value.uval = data.getULEB128(offset_ptr);
-      Value.IsDWOIndex = true;
       break;
     default:
       return false;
@@ -441,7 +440,7 @@ const char *DWARFFormValue::getAsCString(const DWARFUnit *CU) const {
   if (!CU)
     return NULL;
   uint32_t Offset = Value.uval;
-  if (Value.IsDWOIndex) {
+  if (Form == DW_FORM_GNU_str_index) {
     uint32_t StrOffset;
     if (!CU->getStringOffsetSectionItem(Offset, StrOffset))
       return NULL;
@@ -453,7 +452,7 @@ const char *DWARFFormValue::getAsCString(const DWARFUnit *CU) const {
 uint64_t DWARFFormValue::getAsAddress(const DWARFUnit *CU) const {
   if (!CU)
     return 0;
-  if (Value.IsDWOIndex) {
+  if (Form == DW_FORM_GNU_addr_index) {
     uint32_t Index = Value.uval;
     uint64_t Address;
     if (!CU->getAddrOffsetSectionItem(Index, Address))

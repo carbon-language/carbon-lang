@@ -18,9 +18,8 @@ class DWARFUnit;
 class raw_ostream;
 
 class DWARFFormValue {
-public:
   struct ValueType {
-    ValueType() : data(NULL), IsDWOIndex(false) {
+    ValueType() : data(NULL) {
       uval = 0;
     }
 
@@ -30,10 +29,8 @@ public:
       const char* cstr;
     };
     const uint8_t* data;
-    bool IsDWOIndex;
   };
 
-private:
   uint16_t Form;   // Form for this value.
   ValueType Value; // Contains all data for the form.
 
