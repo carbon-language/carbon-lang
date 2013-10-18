@@ -792,24 +792,18 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     EndLoc = SMLoc::getFromPointer(Identifier.end());
 
     // This is a symbol reference.
-    StringRef SymbolName = Identifier;
-    MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
     std::pair<StringRef, StringRef> Split = Identifier.split('@');
+    MCSymbol *Sym = getContext().GetOrCreateSymbol(Split.first);
 
-    if (Split.first.size() != Identifier.size() &&
-        FirstTokenKind != AsmToken::String) {
-      SymbolName = Split.first;
-      StringRef VariantName = Split.second;
-
-      // Lookup the symbol variant.
-      Variant = MCSymbolRefExpr::getVariantKindForName(VariantName);
+    // Lookup the symbol variant if used.
+    MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
+    if (Split.first.size() != Identifier.size()) {
+      Variant = MCSymbolRefExpr::getVariantKindForName(Split.second);
       if (Variant == MCSymbolRefExpr::VK_Invalid) {
         Variant = MCSymbolRefExpr::VK_None;
-        return TokError("invalid variant '" + VariantName + "'");
+        return TokError("invalid variant '" + Split.second + "'");
       }
     }
-
-    MCSymbol *Sym = getContext().GetOrCreateSymbol(SymbolName);
 
     // If this is an absolute variable reference, substitute it now to preserve
     // semantics in the face of reassignment.
