@@ -571,7 +571,7 @@ static addr_t ReadPointer(Process *process, addr_t addr)
 lldb::addr_t
 DynamicLoaderPOSIXDYLD::GetThreadLocalData (const lldb::ModuleSP module, const lldb::ThreadSP thread)
 {
-    std::map<ModuleWP, addr_t>::const_iterator it = m_loaded_modules.find (module);
+    auto it = m_loaded_modules.find (module);
     if (it == m_loaded_modules.end())
         return LLDB_INVALID_ADDRESS;
 
