@@ -581,9 +581,12 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
                            Current.PackingKind == PPK_Inconclusive)));
     }
 
-    State.Stack.push_back(
-        ParenState(NewIndent, NewIndentLevel, State.Stack.back().LastSpace,
-                   AvoidBinPacking, State.Stack.back().NoLineBreak));
+    bool NoLineBreak = State.Stack.back().NoLineBreak ||
+                       (Current.Type == TT_TemplateOpener &&
+                        State.Stack.back().ContainsUnwrappedBuilder);
+    State.Stack.push_back(ParenState(NewIndent, NewIndentLevel,
+                                     State.Stack.back().LastSpace,
+                                     AvoidBinPacking, NoLineBreak));
     State.Stack.back().BreakBeforeParameter = Current.BlockKind == BK_Block;
     ++State.ParenLevel;
   }
