@@ -4745,6 +4745,7 @@ class MipsTargetInfoBase : public TargetInfo {
     NoDSP, DSP1, DSP2
   } DspRev;
   bool HasMSA;
+  bool HasFP64;
 
 protected:
   std::string ABI;
@@ -4754,7 +4755,7 @@ public:
                      const std::string &CPUStr)
       : TargetInfo(Triple), CPU(CPUStr), IsMips16(false), IsMicromips(false),
         IsNan2008(false), IsSingleFloat(false), FloatABI(HardFloat),
-        DspRev(NoDSP), HasMSA(false), ABI(ABIStr) {}
+        DspRev(NoDSP), HasMSA(false), HasFP64(false), ABI(ABIStr) {}
 
   virtual const char *getABI() const { return ABI.c_str(); }
   virtual bool setABI(const std::string &Name) = 0;
@@ -4784,6 +4785,10 @@ public:
 
     if (IsSingleFloat)
       Builder.defineMacro("__mips_single_float", Twine(1));
+
+    Builder.defineMacro("__mips_fpr", HasFP64 ? Twine(64) : Twine(32));
+    Builder.defineMacro("_MIPS_FPSET",
+                        Twine(32 / (HasFP64 || IsSingleFloat ? 1 : 2)));
 
     if (IsMips16)
       Builder.defineMacro("__mips16", Twine(1));
@@ -4887,6 +4892,7 @@ public:
     IsSingleFloat = false;
     FloatABI = HardFloat;
     DspRev = NoDSP;
+    HasFP64 = ABI == "n32" || ABI == "n64" || ABI == "64";
 
     for (std::vector<std::string>::iterator it = Features.begin(),
          ie = Features.end(); it != ie; ++it) {
@@ -4904,6 +4910,10 @@ public:
         DspRev = std::max(DspRev, DSP2);
       else if (*it == "+msa")
         HasMSA = true;
+      else if (*it == "+fp64")
+        HasFP64 = true;
+      else if (*it == "-fp64")
+        HasFP64 = false;
       else if (*it == "+nan2008")
         IsNan2008 = true;
     }
