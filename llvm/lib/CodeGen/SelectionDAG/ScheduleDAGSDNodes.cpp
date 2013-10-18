@@ -735,7 +735,10 @@ ProcessSourceNode(SDNode *N, SelectionDAG *DAG, InstrEmitter &Emitter,
   }
 
   MachineBasicBlock *BB = Emitter.getBlock();
-  if (Emitter.getInsertPos() == BB->begin() || BB->back().isPHI()) {
+  if (Emitter.getInsertPos() == BB->begin() || BB->back().isPHI() ||
+      // Fast-isel may have inserted some instructions, in which case the
+      // BB->back().isPHI() test will not fire when we want it to.
+      prior(Emitter.getInsertPos())->isPHI()) {
     // Did not insert any instruction.
     Orders.push_back(std::make_pair(Order, (MachineInstr*)0));
     return;
