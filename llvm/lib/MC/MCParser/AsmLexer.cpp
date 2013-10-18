@@ -138,9 +138,9 @@ AsmToken AsmLexer::LexHexFloatLiteral(bool NoIntDigits) {
   return AsmToken(AsmToken::Real, StringRef(TokStart, CurPtr - TokStart));
 }
 
-/// LexIdentifier: [a-zA-Z_.][a-zA-Z0-9_$.@]*
+/// LexIdentifier: [a-zA-Z_.][a-zA-Z0-9_$.@?]*
 static bool IsIdentifierChar(char c) {
-  return isalnum(c) || c == '_' || c == '$' || c == '.' || c == '@';
+  return isalnum(c) || c == '_' || c == '$' || c == '.' || c == '@' || c == '?';
 }
 AsmToken AsmLexer::LexIdentifier() {
   // Check for floating point literals.

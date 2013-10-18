@@ -156,6 +156,10 @@ namespace llvm {
     /// symbol names.  This defaults to true.
     bool AllowPeriodsInName;
 
+    /// \brief This is true if the assembler allows @ characters in symbol
+    /// names. Defaults to false.
+    bool AllowAtInName;
+
     /// AllowUTF8 - This is true if the assembler accepts UTF-8 input.
     // FIXME: Make this a more general encoding setting?
     bool AllowUTF8;
@@ -484,6 +488,9 @@ namespace llvm {
     }
     bool doesAllowPeriodsInName() const {
       return AllowPeriodsInName;
+    }
+    bool doesAllowAtInName() const {
+      return AllowAtInName;
     }
     bool doesAllowUTF8() const {
       return AllowUTF8;
