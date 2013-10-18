@@ -121,7 +121,7 @@ public:
     Disassemble ();
 
     void
-    DumpUsingSettingsFormat (Stream *strm);
+    DumpUsingSettingsFormat (Stream *strm, const char *frame_marker = NULL);
     
     void
     Dump (Stream *strm, bool show_frame_index, bool show_fullpaths);
@@ -165,7 +165,8 @@ public:
     bool
     GetStatus (Stream &strm,
                bool show_frame_info,
-               bool show_source);
+               bool show_source,
+               const char *frame_marker = NULL);
     
 protected:
     friend class StackFrameList;

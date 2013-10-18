@@ -1275,7 +1275,7 @@ StackFrame::CalculateExecutionContext (ExecutionContext &exe_ctx)
 }
 
 void
-StackFrame::DumpUsingSettingsFormat (Stream *strm)
+StackFrame::DumpUsingSettingsFormat (Stream *strm, const char *frame_marker)
 {
     if (strm == NULL)
         return;
@@ -1283,6 +1283,10 @@ StackFrame::DumpUsingSettingsFormat (Stream *strm)
     GetSymbolContext(eSymbolContextEverything);
     ExecutionContext exe_ctx (shared_from_this());
     StreamString s;
+    
+    if (frame_marker)
+        s.PutCString(frame_marker);
+
     const char *frame_format = NULL;
     Target *target = exe_ctx.GetTargetPtr();
     if (target)
@@ -1370,13 +1374,14 @@ StackFrame::HasCachedData () const
 bool
 StackFrame::GetStatus (Stream& strm,
                        bool show_frame_info,
-                       bool show_source)
+                       bool show_source,
+                       const char *frame_marker)
 {
     
     if (show_frame_info)
     {
         strm.Indent();
-        DumpUsingSettingsFormat (&strm);
+        DumpUsingSettingsFormat (&strm, frame_marker);
     }
     
     if (show_source)

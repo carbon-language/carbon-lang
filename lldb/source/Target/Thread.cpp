@@ -1960,13 +1960,21 @@ Thread::GetStatus (Stream &strm, uint32_t start_frame, uint32_t num_frames, uint
         strm.IndentMore();
         
         const bool show_frame_info = true;
-        strm.IndentMore ();
+        
+        const char *selected_frame_marker = NULL;
+        if (num_frames == 1 || (GetID() != GetProcess()->GetThreadList().GetSelectedThread()->GetID()))
+            strm.IndentMore ();
+        else
+            selected_frame_marker = "* ";
+
         num_frames_shown = GetStackFrameList ()->GetStatus (strm,
                                                             start_frame, 
                                                             num_frames, 
                                                             show_frame_info, 
-                                                            num_frames_with_source);
-        strm.IndentLess();
+                                                            num_frames_with_source,
+                                                            selected_frame_marker);
+        if (num_frames == 1)
+            strm.IndentLess();
         strm.IndentLess();
     }
     return num_frames_shown;
