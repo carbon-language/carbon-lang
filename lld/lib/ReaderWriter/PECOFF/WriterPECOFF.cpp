@@ -588,13 +588,13 @@ public:
   virtual void write(uint8_t *fileBuffer) {
     if (_atomLayouts.empty())
       return;
-    // Fill the section with NOP (0x90) rather than NUL, so that the
+    // Fill the section with INT 3 (0xCC) rather than NUL, so that the
     // disassembler will not interpret a garbage between atoms as the beginning
     // of multi-byte machine code. This does not change the behavior of
     // resulting binary but help debugging.
     uint8_t *start = fileBuffer + _atomLayouts.front()->_fileOffset;
     uint8_t *end = fileBuffer + _atomLayouts.back()->_fileOffset;
-    memset(start, 0x90, end - start);
+    memset(start, 0xCC, end - start);
 
     SectionChunk::write(fileBuffer);
   }
