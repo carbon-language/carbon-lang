@@ -124,7 +124,7 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
   std::string reason;
   bool result = compare(left, right, reason);
   DEBUG({
-    StringRef comp = result ? "<" : ">";
+    StringRef comp = result ? "<" : ">=";
     llvm::dbgs() << "Layout: '" << left->name() << "' " << comp << " '"
                  << right->name() << "' (" << reason << ")\n";
   });
