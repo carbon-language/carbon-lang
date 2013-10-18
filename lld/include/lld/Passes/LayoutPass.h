@@ -19,6 +19,7 @@
 #include "llvm/ADT/DenseMap.h"
 
 #include <map>
+#include <string>
 #include <vector>
 
 namespace lld {
@@ -39,6 +40,8 @@ public:
     explicit CompareAtoms(const LayoutPass &pass) : _layout(pass) {}
     bool operator()(const DefinedAtom *left, const DefinedAtom *right) const;
   private:
+    bool compare(const DefinedAtom *left, const DefinedAtom *right,
+                 std::string &reason) const;
     const LayoutPass &_layout;
   };
 

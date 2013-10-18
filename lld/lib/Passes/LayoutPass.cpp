@@ -20,6 +20,15 @@
 
 using namespace lld;
 
+namespace {
+// Return "reason (leftval, rightval)"
+std::string formatReason(StringRef reason, int leftVal, int rightVal) {
+  Twine msg =
+      Twine(reason) + " (" + Twine(leftVal) + ", " + Twine(rightVal) + ")";
+  return std::move(msg.str());
+}
+}
+
 /// The function compares atoms by sorting atoms in the following order
 /// a) Sorts atoms by Section position preference
 /// b) Sorts atoms by their ordinal overrides
@@ -28,27 +37,26 @@ using namespace lld;
 /// d) Sorts atoms by their content
 /// e) Sorts atoms on how they appear using File Ordinality
 /// f) Sorts atoms on how they appear within the File
-bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
-                                          const DefinedAtom *right) const {
-  DEBUG(llvm::dbgs() << "Sorting " << left->name() << " " << right->name() << "\n");
-  if (left == right)
+bool LayoutPass::CompareAtoms::compare(const DefinedAtom *left,
+                                       const DefinedAtom *right,
+                                       std::string &reason) const {
+  if (left == right) {
+    reason = "same";
     return false;
+  }
 
   // Sort by section position preference.
   DefinedAtom::SectionPosition leftPos = left->sectionPosition();
   DefinedAtom::SectionPosition rightPos = right->sectionPosition();
 
-  DEBUG(llvm::dbgs() << "Sorting by sectionPos"
-                     << "(" << leftPos << "," << rightPos << ")\n");
-
   bool leftSpecialPos = (leftPos != DefinedAtom::sectionPositionAny);
   bool rightSpecialPos = (rightPos != DefinedAtom::sectionPositionAny);
   if (leftSpecialPos || rightSpecialPos) {
-    if (leftPos != rightPos)
+    if (leftPos != rightPos) {
+      DEBUG(reason = formatReason("sectionPos", (int)leftPos, (int)rightPos));
       return leftPos < rightPos;
+    }
   }
-
-  DEBUG(llvm::dbgs() << "Sorting by override\n");
 
   AtomToOrdinalT::const_iterator lPos = _layout._ordinalOverrideMap.find(left);
   AtomToOrdinalT::const_iterator rPos = _layout._ordinalOverrideMap.find(right);
@@ -63,6 +71,7 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
       rightAtom != _layout._followOnRoots.end() &&
       leftAtom->second == rightAtom->second) {
     if ((lPos != end) && (rPos != end)) {
+      DEBUG(reason = formatReason("override", lPos->second, rPos->second));
       return lPos->second < rPos->second;
     }
   }
@@ -71,47 +80,55 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
   DefinedAtom::ContentPermissions leftPerms = left->permissions();
   DefinedAtom::ContentPermissions rightPerms = right->permissions();
 
-  DEBUG(llvm::dbgs() << "Sorting by contentPerms"
-                     << "(" << leftPerms << "," << rightPerms << ")\n");
-
-  if (leftPerms != rightPerms)
+  if (leftPerms != rightPerms) {
+    DEBUG(reason =
+              formatReason("contentPerms", (int)leftPerms, (int)rightPerms));
     return leftPerms < rightPerms;
+  }
 
   // Sort same content types together.
   DefinedAtom::ContentType leftType = left->contentType();
   DefinedAtom::ContentType rightType = right->contentType();
 
-  DEBUG(llvm::dbgs() << "Sorting by contentType"
-                     << "(" << leftType << "," << rightType << ")\n");
-
-  if (leftType != rightType)
+  if (leftType != rightType) {
+    DEBUG(reason = formatReason("contentType", (int)leftType, (int)rightType));
     return leftType < rightType;
+  }
 
   // Sort by .o order.
   const File *leftFile = &left->file();
   const File *rightFile = &right->file();
 
-  DEBUG(llvm::dbgs()
-        << "Sorting by .o order("
-        << "(" << leftFile->ordinal() << "," << rightFile->ordinal() << ")"
-        << "[" << leftFile->path() << "," << rightFile->path() << "]\n");
-
-  if (leftFile != rightFile)
+  if (leftFile != rightFile) {
+    DEBUG(reason = formatReason(".o order", (int)leftFile->ordinal(),
+                                (int)rightFile->ordinal()));
     return leftFile->ordinal() < rightFile->ordinal();
+  }
 
   // Sort by atom order with .o file.
   uint64_t leftOrdinal = left->ordinal();
   uint64_t rightOrdinal = right->ordinal();
 
-  DEBUG(llvm::dbgs() << "Sorting by ordinal(" << left->ordinal() << ","
-                     << right->ordinal() << ")\n");
-
-  if (leftOrdinal != rightOrdinal)
+  if (leftOrdinal != rightOrdinal) {
+    DEBUG(reason = formatReason("ordinal", (int)left->ordinal(),
+                                (int)right->ordinal()));
     return leftOrdinal < rightOrdinal;
+  }
 
   DEBUG(llvm::dbgs() << "Unordered\n");
-
   llvm_unreachable("Atoms with Same Ordinal!");
+}
+
+bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
+                                          const DefinedAtom *right) const {
+  std::string reason;
+  bool result = compare(left, right, reason);
+  DEBUG({
+    StringRef comp = result ? "<" : ">";
+    llvm::dbgs() << "Layout: '" << left->name() << "' " << comp << " '"
+                 << right->name() << "' (" << reason << ")\n";
+  });
+  return result;
 }
 
 // Returns the atom immediately followed by the given atom in the followon
