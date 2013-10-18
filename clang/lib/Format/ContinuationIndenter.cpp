@@ -265,7 +265,7 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
   State.Column += Spaces;
   if (Current.is(tok::l_paren) && Previous.isOneOf(tok::kw_if, tok::kw_for))
     // Treat the condition inside an if as if it was a second function
-    // parameter, i.e. let nested calls have an indent of 4.
+    // parameter, i.e. let nested calls have a continuation indent.
     State.Stack.back().LastSpace = State.Column + 1; // 1 is length of "(".
   else if (Previous.is(tok::comma))
     State.Stack.back().LastSpace = State.Column;
@@ -303,9 +303,10 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
                                                  bool DryRun) {
   FormatToken &Current = *State.NextToken;
   const FormatToken &Previous = *State.NextToken->Previous;
-  // If we are continuing an expression, we want to indent an extra 4 spaces.
+  // If we are continuing an expression, we want to use the continuation indent.
   unsigned ContinuationIndent =
-      std::max(State.Stack.back().LastSpace, State.Stack.back().Indent) + 4;
+      std::max(State.Stack.back().LastSpace, State.Stack.back().Indent) +
+      Style.ContinuationIndentWidth;
   // Extra penalty that needs to be added because of the way certain line
   // breaks are chosen.
   unsigned Penalty = 0;
@@ -384,10 +385,10 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
     State.Column = State.Stack.back().Indent;
   } else {
     State.Column = State.Stack.back().Indent;
-    // Ensure that we fall back to indenting 4 spaces instead of just
+    // Ensure that we fall back to the continuation indent width instead of just
     // flushing continuations left.
     if (State.Column == State.FirstIndent)
-      State.Column += 4;
+      State.Column += Style.ContinuationIndentWidth;
   }
 
   if (Current.is(tok::question))
@@ -478,9 +479,10 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   }
 
   // In ObjC method declaration we align on the ":" of parameters, but we need
-  // to ensure that we indent parameters on subsequent lines by at least 4.
+  // to ensure that we indent parameters on subsequent lines by at least our
+  // continuation indent width.
   if (Current.Type == TT_ObjCMethodSpecifier)
-    State.Stack.back().Indent += 4;
+    State.Stack.back().Indent += Style.ContinuationIndentWidth;
 
   // Insert scopes created by fake parenthesis.
   const FormatToken *Previous = Current.getPreviousNonComment();
@@ -521,7 +523,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     if (*I == prec::Conditional ||
         (!SkipFirstExtraIndent && *I > prec::Assignment &&
          !Style.BreakBeforeBinaryOperators))
-      NewParenState.Indent += 4;
+      NewParenState.Indent += Style.ContinuationIndentWidth;
     if (Previous && !Previous->opensScope())
       NewParenState.BreakBeforeParameter = false;
     State.Stack.push_back(NewParenState);
@@ -558,7 +560,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
       } else {
         NewIndent = State.Stack.back().LastSpace;
         if (Style.Cpp11BracedListStyle)
-          NewIndent += 4;
+          NewIndent += Style.ContinuationIndentWidth;
         else {
           NewIndent += Style.IndentWidth;
           ++NewIndentLevel;
@@ -569,8 +571,9 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
                         (NextNoComment &&
                          NextNoComment->Type == TT_DesignatedInitializerPeriod);
     } else {
-      NewIndent = 4 + std::max(State.Stack.back().LastSpace,
-                               State.Stack.back().StartOfFunctionCall);
+      NewIndent = Style.ContinuationIndentWidth +
+                  std::max(State.Stack.back().LastSpace,
+                           State.Stack.back().StartOfFunctionCall);
       AvoidBinPacking = !Style.BinPackParameters ||
                         (Style.ExperimentalAutoDetectBinPacking &&
                          (Current.PackingKind == PPK_OnePerLine ||

@@ -163,6 +163,7 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
                    Style.SpaceAfterControlStatementKeyword);
     IO.mapOptional("SpaceBeforeAssignmentOperators",
                    Style.SpaceBeforeAssignmentOperators);
+    IO.mapOptional("ContinuationIndentWidth", Style.ContinuationIndentWidth);
   }
 };
 }
@@ -214,6 +215,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.SpacesInCStyleCastParentheses = false;
   LLVMStyle.SpaceAfterControlStatementKeyword = true;
   LLVMStyle.SpaceBeforeAssignmentOperators = true;
+  LLVMStyle.ContinuationIndentWidth = 4;
 
   setDefaultPenalties(LLVMStyle);
   LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 60;
@@ -257,6 +259,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.SpacesInCStyleCastParentheses = false;
   GoogleStyle.SpaceAfterControlStatementKeyword = true;
   GoogleStyle.SpaceBeforeAssignmentOperators = true;
+  GoogleStyle.ContinuationIndentWidth = 4;
 
   setDefaultPenalties(GoogleStyle);
   GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 200;

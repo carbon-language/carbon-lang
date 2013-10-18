@@ -235,6 +235,9 @@ struct FormatStyle {
   /// \brief If \c false, spaces will be removed before assignment operators.
   bool SpaceBeforeAssignmentOperators;
 
+  /// \brief Indent width for line continuations.
+  unsigned ContinuationIndentWidth;
+
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
            ConstructorInitializerIndentWidth ==
@@ -282,7 +285,8 @@ struct FormatStyle {
            SpacesInCStyleCastParentheses == R.SpacesInCStyleCastParentheses &&
            SpaceAfterControlStatementKeyword ==
                R.SpaceAfterControlStatementKeyword &&
-           SpaceBeforeAssignmentOperators == R.SpaceBeforeAssignmentOperators;
+           SpaceBeforeAssignmentOperators == R.SpaceBeforeAssignmentOperators &&
+           ContinuationIndentWidth == R.ContinuationIndentWidth;
   }
 };
 

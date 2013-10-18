@@ -6495,6 +6495,7 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE("SpacesBeforeTrailingComments: 1234",
               SpacesBeforeTrailingComments, 1234u);
   CHECK_PARSE("IndentWidth: 32", IndentWidth, 32u);
+  CHECK_PARSE("ContinuationIndentWidth: 11", ContinuationIndentWidth, 11u);
 
   Style.Standard = FormatStyle::LS_Auto;
   CHECK_PARSE("Standard: Cpp03", Standard, FormatStyle::LS_Cpp03);
@@ -6874,6 +6875,24 @@ TEST_F(FormatTest, MunchSemicolonAfterBlocks) {
                "  int i;\n"
                "  int j;\n"
                "};");
+}
+
+TEST_F(FormatTest, ConfigurableContinuationIndentWidth) {
+  FormatStyle TwoIndent = getLLVMStyleWithColumns(15);
+  TwoIndent.ContinuationIndentWidth = 2;
+
+  EXPECT_EQ("int i =\n"
+            "  longFunction(\n"
+            "    arg);",
+            format("int i = longFunction(arg);", TwoIndent));
+
+  FormatStyle SixIndent = getLLVMStyleWithColumns(20);
+  SixIndent.ContinuationIndentWidth = 6;
+
+  EXPECT_EQ("int i =\n"
+            "      longFunction(\n"
+            "            arg);",
+            format("int i = longFunction(arg);", SixIndent));
 }
 
 } // end namespace tooling
