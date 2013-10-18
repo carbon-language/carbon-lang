@@ -181,17 +181,24 @@ private:
 class COFFDefinedAtom : public COFFDefinedFileAtom {
 public:
   COFFDefinedAtom(const File &file, StringRef name, StringRef sectionName,
-                  Scope scope, ContentType type, ContentPermissions perms,
-                  Merge merge, ArrayRef<uint8_t> data, uint64_t ordinal)
+                  Scope scope, ContentType type, bool isComdat,
+                  ContentPermissions perms, Merge merge, ArrayRef<uint8_t> data,
+                  uint64_t ordinal)
       : COFFDefinedFileAtom(file, name, sectionName, scope, type, perms,
                             ordinal),
-        _merge(merge), _dataref(data) {}
+        _isComdat(isComdat), _merge(merge), _dataref(data) {}
 
   virtual Merge merge() const { return _merge; }
   virtual uint64_t size() const { return _dataref.size(); }
   virtual ArrayRef<uint8_t> rawContent() const { return _dataref; }
 
+  virtual DeadStripKind deadStrip() const {
+    // Only COMDAT symbols would be dead-stripped.
+    return _isComdat ? deadStripNormal : deadStripNever;
+  }
+
 private:
+  bool _isComdat;
   Merge _merge;
   ArrayRef<uint8_t> _dataref;
 };

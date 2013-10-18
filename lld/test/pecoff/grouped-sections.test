@@ -1,6 +1,6 @@
 # RUN: yaml2obj %p/Inputs/grouped-sections.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console /force /opt:noref \
+# RUN: lld -flavor link /out:%t1 /subsystem:console /force \
 # RUN:   -- %t.obj && llvm-objdump -s %t1 | FileCheck %s
 #
 # The file "grouped-sections.obj" has three data sections in the following

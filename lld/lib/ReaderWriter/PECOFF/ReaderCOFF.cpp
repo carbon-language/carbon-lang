@@ -397,6 +397,8 @@ private:
       if (!(sec->Characteristics & llvm::COFF::IMAGE_SCN_LNK_COMDAT))
         continue;
 
+      _comdatSections.insert(sec);
+
       if (sym->NumberOfAuxSymbols == 0)
         return llvm::object::object_error::parse_failed;
       const coff_aux_section_definition *aux =
@@ -473,13 +475,14 @@ private:
 
     DefinedAtom::ContentType type = getContentType(section);
     DefinedAtom::ContentPermissions perms = getPermissions(section);
+    bool isComdat = (_comdatSections.count(section) == 1);
 
     // Create an atom for the entire section.
     if (symbols.empty()) {
       ArrayRef<uint8_t> data(secData.data(), secData.size());
       auto *atom = new (_alloc)
           COFFDefinedAtom(*this, "", sectionName, Atom::scopeTranslationUnit,
-                          type, perms, _merge[section], data, 0);
+                          type, isComdat, perms, _merge[section], data, 0);
       atoms.push_back(atom);
       _definedAtomLocations[section][0].push_back(atom);
       return error_code::success();
@@ -490,9 +493,9 @@ private:
     if (symbols[0]->Value != 0) {
       uint64_t size = symbols[0]->Value;
       ArrayRef<uint8_t> data(secData.data(), size);
-      auto *atom = new (_alloc)
-          COFFDefinedAtom(*this, "", sectionName, Atom::scopeTranslationUnit,
-                          type, perms, _merge[section], data, ++ordinal);
+      auto *atom = new (_alloc) COFFDefinedAtom(
+          *this, "", sectionName, Atom::scopeTranslationUnit, type, isComdat,
+          perms, _merge[section], data, ++ordinal);
       atoms.push_back(atom);
       _definedAtomLocations[section][0].push_back(atom);
     }
@@ -503,9 +506,9 @@ private:
       const uint8_t *end = (si + 1 == se) ? secData.data() + secData.size()
                                           : secData.data() + (*(si + 1))->Value;
       ArrayRef<uint8_t> data(start, end);
-      auto *atom = new (_alloc)
-          COFFDefinedAtom(*this, _symbolName[*si], sectionName, getScope(*si),
-                          type, perms, _merge[section], data, ++ordinal);
+      auto *atom = new (_alloc) COFFDefinedAtom(
+          *this, _symbolName[*si], sectionName, getScope(*si), type, isComdat,
+          perms, _merge[section], data, ++ordinal);
       atoms.push_back(atom);
       _symbolAtom[*si] = atom;
       _definedAtomLocations[section][(*si)->Value].push_back(atom);
@@ -695,6 +698,9 @@ private:
 
   // A map from section to its atoms.
   std::map<const coff_section *, vector<COFFDefinedFileAtom *> > _sectionAtoms;
+
+  // A set of COMDAT sections.
+  std::set<const coff_section *> _comdatSections;
 
   // A map to get whether the section allows its contents to be merged or not.
   std::map<const coff_section *, DefinedAtom::Merge> _merge;
