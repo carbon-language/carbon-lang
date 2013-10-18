@@ -505,10 +505,10 @@
 		49DA65031485C92A005FF180 /* AppleObjCTypeVendor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DA65021485C92A005FF180 /* AppleObjCTypeVendor.cpp */; };
 		49DCF6FE170E6B4A0092F75E /* IRMemoryMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DCF6FD170E6B4A0092F75E /* IRMemoryMap.cpp */; };
 		49DCF702170E70120092F75E /* Materializer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DCF700170E70120092F75E /* Materializer.cpp */; };
+		4C3ADCD61810D88B00357218 /* BreakpointResolverFileRegex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CAA56141422D986001FFA01 /* BreakpointResolverFileRegex.cpp */; };
 		4C6649A014EEE7F100B0316F /* StreamCallback.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C66499F14EEE7F100B0316F /* StreamCallback.h */; };
 		4C6649A314EEE81000B0316F /* StreamCallback.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C6649A214EEE81000B0316F /* StreamCallback.cpp */; };
 		4C701C1E15ABB70C00B50001 /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26D55234159A7DB100708D8D /* libxml2.dylib */; };
-		4CAA56151422D986001FFA01 /* BreakpointResolverFileRegex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CAA56141422D986001FFA01 /* BreakpointResolverFileRegex.cpp */; };
 		4CABA9E0134A8BCD00539BDD /* ValueObjectMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CABA9DF134A8BCD00539BDD /* ValueObjectMemory.cpp */; };
 		4CCA644D13B40B82003BDF98 /* ItaniumABILanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CCA643D13B40B82003BDF98 /* ItaniumABILanguageRuntime.cpp */; };
 		4CCA645013B40B82003BDF98 /* AppleObjCRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CCA644213B40B82003BDF98 /* AppleObjCRuntime.cpp */; };
@@ -3960,7 +3960,6 @@
 				268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */,
 				26C72C961243229A0068DC16 /* SBStream.cpp in Sources */,
 				9443B122140C18C40013457C /* SBData.cpp in Sources */,
-				4CAA56151422D986001FFA01 /* BreakpointResolverFileRegex.cpp in Sources */,
 				4CF52AF8142829390051E832 /* SBFileSpecList.cpp in Sources */,
 				26B82840142D020F002DBC64 /* SBSection.cpp in Sources */,
 				B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */,
@@ -4085,6 +4084,7 @@
 				2689006213353E0E00698AC0 /* ClangExpressionVariable.cpp in Sources */,
 				2689006313353E0E00698AC0 /* ClangPersistentVariables.cpp in Sources */,
 				2689006413353E0E00698AC0 /* ClangUserExpression.cpp in Sources */,
+				4C3ADCD61810D88B00357218 /* BreakpointResolverFileRegex.cpp in Sources */,
 				2689006513353E0E00698AC0 /* ClangUtilityFunction.cpp in Sources */,
 				2689006613353E0E00698AC0 /* DWARFExpression.cpp in Sources */,
 				2689006713353E0E00698AC0 /* ASTDumper.cpp in Sources */,
