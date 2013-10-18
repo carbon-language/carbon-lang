@@ -1178,6 +1178,30 @@ don't have to specify the string. This will disable some optimizations
 that require precise layout information, but this also prevents those
 optimizations from introducing target specificity into the IR.
 
+.. _langref_triple:
+
+Target Triple
+-------------
+
+A module may specify a target triple string that describes the target
+host. The syntax for the target triple is simply:
+
+.. code-block:: llvm
+
+    target triple = "x86_64-apple-macosx10.7.0"
+
+The *target triple* string consists of a series of identifiers delimited
+by the minus sign character ('-'). The canonical forms are:
+
+::
+
+    ARCHITECTURE-VENDOR-OPERATING_SYSTEM
+    ARCHITECTURE-VENDOR-OPERATING_SYSTEM-ENVIRONMENT
+
+This information is passed along to the backend so that it generates
+code for the proper architecture. It's possible to override this on the
+command line with the ``-mtriple`` command line option.
+
 .. _pointeraliasing:
 
 Pointer Aliasing Rules
