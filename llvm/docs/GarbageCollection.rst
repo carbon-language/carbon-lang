@@ -905,10 +905,10 @@ in the JIT, nor using the object writers.
     X("mygc", "My bespoke garbage collector.");
   }
 
-The collector should use ``AsmPrinter`` and ``TargetAsmInfo`` to print portable
-assembly code to the ``std::ostream``.  The collector itself contains the stack
-map for the entire module, and may access the ``GCFunctionInfo`` using its own
-``begin()`` and ``end()`` methods.  Here's a realistic example:
+The collector should use ``AsmPrinter`` to print portable assembly code.  The
+collector itself contains the stack map for the entire module, and may access
+the ``GCFunctionInfo`` using its own ``begin()`` and ``end()`` methods.  Here's
+a realistic example:
 
 .. code-block:: c++
 
