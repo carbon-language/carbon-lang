@@ -50,6 +50,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <wordexp.h>
+#include <mntent.h>
 
 #if defined(__i386__) || defined(__x86_64__)
 # include <emmintrin.h>
@@ -1614,6 +1615,34 @@ TEST(MemorySanitizer, localtime_r) {
   EXPECT_NOT_POISONED(time.tm_year);
   EXPECT_NOT_POISONED(time.tm_isdst);
   EXPECT_NE(0, strlen(time.tm_zone));
+}
+
+TEST(MemorySanitizer, getmntent) {
+  FILE *fp = setmntent("/etc/fstab", "r");
+  struct mntent *mnt = getmntent(fp);
+  ASSERT_NE((void *)0, mnt);
+  ASSERT_NE(0, strlen(mnt->mnt_fsname));
+  ASSERT_NE(0, strlen(mnt->mnt_dir));
+  ASSERT_NE(0, strlen(mnt->mnt_type));
+  ASSERT_NE(0, strlen(mnt->mnt_opts));
+  EXPECT_NOT_POISONED(mnt->mnt_freq);
+  EXPECT_NOT_POISONED(mnt->mnt_passno);
+  fclose(fp);
+}
+
+TEST(MemorySanitizer, getmntent_r) {
+  FILE *fp = setmntent("/etc/fstab", "r");
+  struct mntent mntbuf;
+  char buf[1000];
+  struct mntent *mnt = getmntent_r(fp, &mntbuf, buf, sizeof(buf));
+  ASSERT_NE((void *)0, mnt);
+  ASSERT_NE(0, strlen(mnt->mnt_fsname));
+  ASSERT_NE(0, strlen(mnt->mnt_dir));
+  ASSERT_NE(0, strlen(mnt->mnt_type));
+  ASSERT_NE(0, strlen(mnt->mnt_opts));
+  EXPECT_NOT_POISONED(mnt->mnt_freq);
+  EXPECT_NOT_POISONED(mnt->mnt_passno);
+  fclose(fp);
 }
 
 TEST(MemorySanitizer, mmap) {

@@ -111,6 +111,17 @@ namespace __sanitizer {
     const char *tm_zone;
   };
 
+#if SANITIZER_LINUX
+  struct __sanitizer_mntent {
+    char *mnt_fsname;
+    char *mnt_dir;
+    char *mnt_type;
+    char *mnt_opts;
+    int mnt_freq;
+    int mnt_passno;
+  };
+#endif
+
 #if SANITIZER_ANDROID || SANITIZER_MAC
   struct __sanitizer_msghdr {
     void *msg_name;

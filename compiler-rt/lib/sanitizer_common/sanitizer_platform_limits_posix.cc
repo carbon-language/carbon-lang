@@ -44,6 +44,7 @@
 #include <wchar.h>
 
 #if SANITIZER_LINUX
+#include <mntent.h>
 #include <utime.h>
 #include <sys/mount.h>
 #include <sys/ptrace.h>
@@ -895,5 +896,15 @@ CHECK_SIZE_AND_OFFSET(tm, tm_yday);
 CHECK_SIZE_AND_OFFSET(tm, tm_isdst);
 CHECK_SIZE_AND_OFFSET(tm, tm_gmtoff);
 CHECK_SIZE_AND_OFFSET(tm, tm_zone);
+
+#if SANITIZER_LINUX
+CHECK_TYPE_SIZE(mntent);
+CHECK_SIZE_AND_OFFSET(mntent, mnt_fsname);
+CHECK_SIZE_AND_OFFSET(mntent, mnt_dir);
+CHECK_SIZE_AND_OFFSET(mntent, mnt_type);
+CHECK_SIZE_AND_OFFSET(mntent, mnt_opts);
+CHECK_SIZE_AND_OFFSET(mntent, mnt_freq);
+CHECK_SIZE_AND_OFFSET(mntent, mnt_passno);
+#endif
 
 #endif  // SANITIZER_LINUX || SANITIZER_MAC

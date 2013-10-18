@@ -369,6 +369,8 @@ enum StatType {
   StatInt_backtrace_symbols,
   StatInt_dlopen,
   StatInt_dlclose,
+  StatInt_getmntent,
+  StatInt_getmntent_r,
 
   // Dynamic annotations.
   StatAnnotation,

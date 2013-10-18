@@ -374,6 +374,8 @@ void StatOutput(u64 *stat) {
   name[StatInt_backtrace_symbols]        = "  backtrace_symbols               ";
   name[StatInt_dlopen]                   = "  dlopen                          ";
   name[StatInt_dlclose]                  = "  dlclose                         ";
+  name[StatInt_getmntent]                = "  getmntent                       ";
+  name[StatInt_getmntent_r]              = "  getmntent_r                     ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

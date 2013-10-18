@@ -2271,6 +2271,52 @@ INTERCEPTOR(int, pthread_cond_broadcast, void *c) {
 #define INIT_PTHREAD_COND_BROADCAST
 #endif
 
+#if SANITIZER_INTERCEPT_GETMNTENT || SANITIZER_INTERCEPT_GETMNTENT_R
+static void write_mntent(void *ctx, __sanitizer_mntent *mnt) {
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, mnt, sizeof(*mnt));
+  if (mnt->mnt_fsname)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, mnt->mnt_fsname,
+                                   REAL(strlen)(mnt->mnt_fsname) + 1);
+  if (mnt->mnt_dir)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, mnt->mnt_dir,
+                                   REAL(strlen)(mnt->mnt_dir) + 1);
+  if (mnt->mnt_type)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, mnt->mnt_type,
+                                   REAL(strlen)(mnt->mnt_type) + 1);
+  if (mnt->mnt_opts)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, mnt->mnt_opts,
+                                   REAL(strlen)(mnt->mnt_opts) + 1);
+}
+#endif
+
+#if SANITIZER_INTERCEPT_GETMNTENT
+INTERCEPTOR(__sanitizer_mntent *, getmntent, void *fp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getmntent, fp);
+  __sanitizer_mntent *res = REAL(getmntent)(fp);
+  if (res) write_mntent(ctx, res);
+  return res;
+}
+#define INIT_GETMNTENT INTERCEPT_FUNCTION(getmntent);
+#else
+#define INIT_GETMNTENT
+#endif
+
+#if SANITIZER_INTERCEPT_GETMNTENT_R
+INTERCEPTOR(__sanitizer_mntent *, getmntent_r, void *fp,
+            __sanitizer_mntent *mntbuf, char *buf, int buflen) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getmntent_r, fp, mntbuf, buf, buflen);
+  __sanitizer_mntent *res = REAL(getmntent_r)(fp, mntbuf, buf, buflen);
+  if (res) write_mntent(ctx, res);
+  return res;
+}
+#define INIT_GETMNTENT_R INTERCEPT_FUNCTION(getmntent_r);
+#else
+#define INIT_GETMNTENT_R
+#endif
+
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -2355,4 +2401,6 @@ INTERCEPTOR(int, pthread_cond_broadcast, void *c) {
   INIT_PTHREAD_COND_INIT;                  \
   INIT_PTHREAD_COND_SIGNAL;                \
   INIT_PTHREAD_COND_BROADCAST;             \
+  INIT_GETMNTENT;                          \
+  INIT_GETMNTENT_R;                        \
 /**/
