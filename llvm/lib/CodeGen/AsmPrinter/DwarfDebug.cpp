@@ -994,8 +994,10 @@ void DwarfDebug::collectDeadVariables() {
         // Construct subprogram DIE and add variables DIEs.
         CompileUnit *SPCU = CUMap.lookup(TheCU);
         assert(SPCU && "Unable to find Compile Unit!");
-        DIE *SPDIE = SPCU->getDIE(SP);
-        assert(SPDIE && "Subprogram wasn't created?");
+	// FIXME: See the comment in constructSubprogramDIE about duplicate
+	// subprogram DIEs.
+	constructSubprogramDIE(SPCU, SP);
+	DIE *SPDIE = SPCU->getDIE(SP);
         for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
           DIVariable DV(Variables.getElement(vi));
           if (!DV.isVariable())
