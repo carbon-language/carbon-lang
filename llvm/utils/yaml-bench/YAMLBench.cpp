@@ -69,7 +69,7 @@ static std::string prettyTag(yaml::Node *N) {
   if (StringRef(Tag).startswith("tag:yaml.org,2002:")) {
     std::string Ret = "!!";
     Ret += StringRef(Tag).substr(18);
-    return std::move(Ret);
+    return llvm_move(Ret);
   }
   std::string Ret = "!<";
   Ret += Tag;
