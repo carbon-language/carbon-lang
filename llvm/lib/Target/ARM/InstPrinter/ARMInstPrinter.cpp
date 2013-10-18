@@ -77,7 +77,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
   unsigned Opcode = MI->getOpcode();
 
   // Check for HINT instructions w/ canonical names.
-  if (Opcode == ARM::HINT || Opcode == ARM::t2HINT) {
+  if (Opcode == ARM::HINT || Opcode == ARM::tHINT || Opcode == ARM::t2HINT) {
     switch (MI->getOperand(0).getImm()) {
     case 0: O << "\tnop"; break;
     case 1: O << "\tyield"; break;

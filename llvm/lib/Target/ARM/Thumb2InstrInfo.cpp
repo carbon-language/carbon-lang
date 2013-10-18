@@ -36,7 +36,8 @@ Thumb2InstrInfo::Thumb2InstrInfo(const ARMSubtarget &STI)
 
 /// getNoopForMachoTarget - Return the noop instruction to use for a noop.
 void Thumb2InstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
-  NopInst.setOpcode(ARM::tNOP);
+  NopInst.setOpcode(ARM::tHINT);
+  NopInst.addOperand(MCOperand::CreateImm(0));
   NopInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
   NopInst.addOperand(MCOperand::CreateReg(0));
 }

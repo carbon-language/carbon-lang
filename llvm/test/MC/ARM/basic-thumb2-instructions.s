@@ -3593,6 +3593,11 @@ _func:
         wfige
         yieldlt
         hint.w #4
+        hint.w #3
+        hint.w #2
+        hint.w #1
+        hint.w #0
+        hint #4
         hint #3
         hint #2
         hint #1
@@ -3610,7 +3615,19 @@ _func:
 @ CHECK: wfe.w                          @ encoding: [0xaf,0xf3,0x02,0x80]
 @ CHECK: yield.w                        @ encoding: [0xaf,0xf3,0x01,0x80]
 @ CHECK: nop.w                          @ encoding: [0xaf,0xf3,0x00,0x80]
+@ CHECK: sev                            @ encoding: [0x40,0xbf]
+@ CHECK: wfi                            @ encoding: [0x30,0xbf]
+@ CHECK: wfe                            @ encoding: [0x20,0xbf]
+@ CHECK: yield                          @ encoding: [0x10,0xbf]
+@ CHECK: nop                            @ encoding: [0x00,0xbf]
 
+@------------------------------------------------------------------------------
+@ Unallocated wide/narrow hints
+@------------------------------------------------------------------------------
+        hint #7
+        hint.w #7
+@ CHECK: hint #7                        @ encoding: [0x70,0xbf]
+@ CHECK: hint.w #7                      @ encoding: [0xaf,0xf3,0x07,0x80]
 
 @------------------------------------------------------------------------------
 @ Alternate syntax for LDR*(literal) encodings

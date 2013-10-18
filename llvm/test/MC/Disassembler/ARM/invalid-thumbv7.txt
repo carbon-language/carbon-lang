@@ -32,15 +32,6 @@
 # CHECK: invalid instruction encoding
 # CHECK-NEXT: [0x6f 0xde]
 
-
-#------------------------------------------------------------------------------
-# Undefined encoding space for hint instructions
-#------------------------------------------------------------------------------
-
-[0x60 0xbf]
-# CHECK: invalid instruction encoding
-# CHECK-NEXT: [0x60 0xbf]
-
 #------------------------------------------------------------------------------
 # Undefined encoding for it
 #------------------------------------------------------------------------------
@@ -49,10 +40,7 @@
 # CHECK: potentially undefined instruction encoding
 # CHECK-NEXT: [0xff 0xbf 0x6b 0x80 0x00 0x75]
 
-# mask = 0
-[0x50 0xbf 0x00 0x00]
-# CHECK: invalid instruction encoding
-# CHECK-NEXT: [0x50 0xbf 0x00 0x00]
+[0x50 0xbf] # hint #5; legal as the third instruction for the iteee above
 
 # Two warnings from this block since there are two instructions in there
 [0xdb 0xbf 0x42 0xbb]
