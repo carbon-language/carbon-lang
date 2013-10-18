@@ -642,3 +642,46 @@ void read(bool sf) {
 
 } // end namespace ContinueICETest
 
+
+namespace InitializerAssertionFailTest {
+
+class CONSUMABLE(unconsumed) Status {
+  int code;
+
+public:
+  Status() RETURN_TYPESTATE(consumed);
+  Status(int c) RETURN_TYPESTATE(unconsumed);
+
+  Status(const Status &other);
+  //Status(Status &&other);
+
+  Status& operator=(const Status &other) CALLABLE_WHEN("unknown", "consumed");
+  //Status& operator=(Status &&other) CALLABLE_WHEN("unknown", "consumed");
+
+  bool check()  const SET_TYPESTATE(consumed);
+  void ignore() const SET_TYPESTATE(consumed);
+  // Status& markAsChecked() { return *this; }
+
+  void clear() CALLABLE_WHEN("unknown", "consumed") SET_TYPESTATE(consumed);
+
+  ~Status() CALLABLE_WHEN("unknown", "consumed");
+};
+
+
+bool   cond();
+Status doSomething();
+void   handleStatus(const Status& s);
+void   handleStatusPtr(const Status* s);
+
+int a;
+
+
+void test() {
+  if (cond()) {
+    Status s = doSomething();
+    return;                     // Warning: Store it, but don't check.
+  }
+}
+
+} // end namespace InitializerAssertionFailTest
+

@@ -414,6 +414,15 @@ class ConsumedStmtVisitor : public ConstStmtVisitor<ConsumedStmtVisitor> {
   void propagateReturnType(const Stmt *Call, const FunctionDecl *Fun,
                            QualType ReturnType);
   
+  inline ConsumedState getPInfoState(const PropagationInfo& PInfo) {
+    if (PInfo.isVar())
+      return StateMap->getState(PInfo.getVar());
+    else if (PInfo.isState())
+      return PInfo.getState();
+    else
+      return CS_None;
+  }
+
 public:
   void checkCallability(const PropagationInfo &PInfo,
                         const FunctionDecl *FunDecl,
@@ -927,15 +936,18 @@ void ConsumedStmtVisitor::VisitUnaryOperator(const UnaryOperator *UOp) {
 void ConsumedStmtVisitor::VisitVarDecl(const VarDecl *Var) {
   if (isConsumableType(Var->getType())) {
     if (Var->hasInit()) {
-      PropagationInfo PInfo =
-        PropagationMap.find(Var->getInit())->second;
-      
-      StateMap->setState(Var, PInfo.isVar() ?
-        StateMap->getState(PInfo.getVar()) : PInfo.getState());
-      
-    } else {
-      StateMap->setState(Var, consumed::CS_Unknown);
+      MapType::iterator VIT = PropagationMap.find(Var->getInit());
+      if (VIT != PropagationMap.end()) {
+        PropagationInfo PInfo = VIT->second;
+        ConsumedState St = getPInfoState(PInfo);
+        if (St != consumed::CS_None) {
+          StateMap->setState(Var, St);
+          return;
+        }
+      }
     }
+    // Otherwise
+    StateMap->setState(Var, consumed::CS_Unknown);
   }
 }
 }} // end clang::consumed::ConsumedStmtVisitor
