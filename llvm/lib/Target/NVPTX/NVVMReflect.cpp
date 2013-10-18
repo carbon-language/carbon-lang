@@ -79,7 +79,7 @@ ModulePass *llvm::createNVVMReflectPass(const StringMap<int>& Mapping) {
 }
 
 static cl::opt<bool>
-NVVMReflectEnabled("nvvm-reflect-enable", cl::init(true),
+NVVMReflectEnabled("nvvm-reflect-enable", cl::init(true), cl::Hidden,
                    cl::desc("NVVM reflection, enabled by default"));
 
 char NVVMReflect::ID = 0;
@@ -88,7 +88,7 @@ INITIALIZE_PASS(NVVMReflect, "nvvm-reflect",
                 false)
 
 static cl::list<std::string>
-ReflectList("nvvm-reflect-list", cl::value_desc("name=<int>"),
+ReflectList("nvvm-reflect-list", cl::value_desc("name=<int>"), cl::Hidden,
             cl::desc("A list of string=num assignments"),
             cl::ValueRequired);
 

@@ -26,24 +26,24 @@
 using namespace llvm;
 
 static cl::opt<int>
-FMAContractLevel("nvptx-fma-level", cl::ZeroOrMore,
+FMAContractLevel("nvptx-fma-level", cl::ZeroOrMore, cl::Hidden,
                  cl::desc("NVPTX Specific: FMA contraction (0: don't do it"
                           " 1: do it  2: do it aggressively"),
                  cl::init(2));
 
 static cl::opt<int> UsePrecDivF32(
-    "nvptx-prec-divf32", cl::ZeroOrMore,
+    "nvptx-prec-divf32", cl::ZeroOrMore, cl::Hidden,
     cl::desc("NVPTX Specifies: 0 use div.approx, 1 use div.full, 2 use"
              " IEEE Compliant F32 div.rnd if avaiable."),
     cl::init(2));
 
 static cl::opt<bool>
-UsePrecSqrtF32("nvptx-prec-sqrtf32",
+UsePrecSqrtF32("nvptx-prec-sqrtf32", cl::Hidden,
           cl::desc("NVPTX Specific: 0 use sqrt.approx, 1 use sqrt.rn."),
           cl::init(true));
 
 static cl::opt<bool>
-FtzEnabled("nvptx-f32ftz", cl::ZeroOrMore,
+FtzEnabled("nvptx-f32ftz", cl::ZeroOrMore, cl::Hidden,
            cl::desc("NVPTX Specific: Flush f32 subnormals to sign-preserving zero."),
            cl::init(false));
 

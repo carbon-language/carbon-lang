@@ -29,7 +29,7 @@
 using namespace llvm;
 
 static cl::opt<bool>
-RunLoopVectorization("vectorize-loops",
+RunLoopVectorization("vectorize-loops", cl::Hidden,
                      cl::desc("Run the Loop vectorization passes"));
 
 static cl::opt<bool>
@@ -38,11 +38,11 @@ LateVectorization("late-vectorize", cl::init(true), cl::Hidden,
                            "pipeline (after the inliner)"));
 
 static cl::opt<bool>
-RunSLPVectorization("vectorize-slp",
+RunSLPVectorization("vectorize-slp", cl::Hidden,
                     cl::desc("Run the SLP vectorization passes"));
 
 static cl::opt<bool>
-RunBBVectorization("vectorize-slp-aggressive",
+RunBBVectorization("vectorize-slp-aggressive", cl::Hidden,
                     cl::desc("Run the BB vectorization passes"));
 
 static cl::opt<bool>
