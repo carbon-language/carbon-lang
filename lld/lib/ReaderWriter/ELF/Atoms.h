@@ -516,7 +516,7 @@ public:
     _referenceEndIndex = _referenceList.size();
   }
 
-  void setOrdinal(uint64_t ord) { _ordinal = ord; }
+  virtual void setOrdinal(uint64_t ord) { _ordinal = ord; }
 
 private:
   const ELFFile<ELFT> &_owningFile;
@@ -561,7 +561,7 @@ public:
 
   virtual uint64_t offset() const { return _offset; }
 
-  void setOrdinal(uint64_t ord) { _ordinal = ord; }
+  virtual void setOrdinal(uint64_t ord) { _ordinal = ord; }
 
   virtual uint64_t ordinal() const { return _ordinal; }
 
@@ -645,9 +645,7 @@ public:
     return _ordinal;
   }
 
-  void setOrdinal(uint64_t ord) {
-    _ordinal = ord;
-  }
+  virtual void setOrdinal(uint64_t ord) { _ordinal = ord; }
 
   virtual uint64_t size() const {
     return _symbol->st_size;

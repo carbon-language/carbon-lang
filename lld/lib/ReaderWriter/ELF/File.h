@@ -302,7 +302,7 @@ public:
       } else if (isCommonSymbol(&*SymI)) {
         auto *newAtom = new (_readerStorage)
           ELFCommonAtom<ELFT>(*this, *symbolName, &*SymI);
-        newAtom->setOrdinal(_ordinal++);
+        newAtom->setOrdinal(++_ordinal);
         _definedAtoms._atoms.push_back(newAtom);
         _symbolToAtomMapping.insert(std::make_pair(&*SymI, newAtom));
       } else {
@@ -361,6 +361,7 @@ public:
         ELFDefinedAtom<ELFT> *newAtom = createSectionAtom(
             section, *sectionName, secCont);
         _definedAtoms._atoms.push_back(newAtom);
+        newAtom->setOrdinal(++_ordinal);
         continue;
       }
 
@@ -408,6 +409,7 @@ public:
                 *this, symbolName, *sectionName, &**si, section, symbolData,
                 _references.size(), _references.size(), _references);
             _definedAtoms._atoms.push_back(definedMergeAtom);
+            definedMergeAtom->setOrdinal(++_ordinal);
           }
           continue;
         }
