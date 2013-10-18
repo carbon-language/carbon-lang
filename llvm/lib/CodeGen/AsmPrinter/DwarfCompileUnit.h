@@ -290,14 +290,6 @@ public:
   /// given DIType.
   DIE *getOrCreateTypeDIE(const MDNode *N);
 
-  /// getOrCreateTemplateTypeParameterDIE - Find existing DIE or create new DIE
-  /// for the given DITemplateTypeParameter.
-  DIE *getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP);
-
-  /// getOrCreateTemplateValueParameterDIE - Find existing DIE or create
-  /// new DIE for the given DITemplateValueParameter.
-  DIE *getOrCreateTemplateValueParameterDIE(DITemplateValueParameter TVP);
-
   /// getOrCreateContextDIE - Get context owner's DIE.
   DIE *getOrCreateContextDIE(DIScope Context);
 
@@ -328,10 +320,20 @@ private:
   void constructArrayTypeDIE(DIE &Buffer, DICompositeType *CTy);
 
   /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
-  DIE *constructEnumTypeDIE(DIEnumerator ETy);
+  DIE *constructEnumTypeDIE(DIEnumerator ETy, DIE &Buffer);
 
   /// createMemberDIE - Create new member DIE.
-  DIE *createMemberDIE(DIDerivedType DT);
+  DIE *createMemberDIE(DIDerivedType DT, DIE &Buffer);
+
+  /// getOrCreateTemplateTypeParameterDIE - Find existing DIE or create new DIE
+  /// for the given DITemplateTypeParameter.
+  DIE *getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP,
+                                           DIE &Buffer);
+
+  /// getOrCreateTemplateValueParameterDIE - Find existing DIE or create
+  /// new DIE for the given DITemplateValueParameter.
+  DIE *getOrCreateTemplateValueParameterDIE(DITemplateValueParameter TVP,
+                                            DIE &Buffer);
 
   /// getOrCreateStaticMemberDIE - Create new static data member DIE.
   DIE *getOrCreateStaticMemberDIE(DIDerivedType DT);

@@ -782,11 +782,11 @@ void CompileUnit::addTemplateParams(DIE &Buffer, DIArray TParams) {
   for (unsigned i = 0, e = TParams.getNumElements(); i != e; ++i) {
     DIDescriptor Element = TParams.getElement(i);
     if (Element.isTemplateTypeParameter())
-      Buffer.addChild(getOrCreateTemplateTypeParameterDIE(
-                        DITemplateTypeParameter(Element)));
+      getOrCreateTemplateTypeParameterDIE(
+                        DITemplateTypeParameter(Element), Buffer);
     else if (Element.isTemplateValueParameter())
-      Buffer.addChild(getOrCreateTemplateValueParameterDIE(
-                        DITemplateValueParameter(Element)));
+      getOrCreateTemplateValueParameterDIE(
+                        DITemplateValueParameter(Element), Buffer);
   }
 }
 
@@ -1084,10 +1084,8 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
       DIE *ElemDie = NULL;
       DIDescriptor Enum(Elements.getElement(i));
-      if (Enum.isEnumerator()) {
-        ElemDie = constructEnumTypeDIE(DIEnumerator(Enum));
-        Buffer.addChild(ElemDie);
-      }
+      if (Enum.isEnumerator())
+        ElemDie = constructEnumTypeDIE(DIEnumerator(Enum), Buffer);
     }
     DIType DTy = resolve(CTy.getTypeDerivedFrom());
     if (DTy) {
@@ -1161,8 +1159,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         } else if (DDTy.isStaticMember()) {
           ElemDie = getOrCreateStaticMemberDIE(DDTy);
         } else {
-          ElemDie = createMemberDIE(DDTy);
-          Buffer.addChild(ElemDie);
+          ElemDie = createMemberDIE(DDTy, Buffer);
         }
       } else if (Element.isObjCProperty()) {
         DIObjCProperty Property(Element);
@@ -1267,12 +1264,14 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
 /// getOrCreateTemplateTypeParameterDIE - Find existing DIE or create new DIE
 /// for the given DITemplateTypeParameter.
 DIE *
-CompileUnit::getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP) {
+CompileUnit::getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP,
+                                                 DIE &Buffer) {
   DIE *ParamDIE = getDIE(TP);
   if (ParamDIE)
     return ParamDIE;
 
   ParamDIE = new DIE(dwarf::DW_TAG_template_type_parameter);
+  Buffer.addChild(ParamDIE);
   // Add the type if it exists, it could be void and therefore no type.
   if (TP.getType())
     addType(ParamDIE, resolve(TP.getType()));
@@ -1284,12 +1283,14 @@ CompileUnit::getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP) {
 /// getOrCreateTemplateValueParameterDIE - Find existing DIE or create new DIE
 /// for the given DITemplateValueParameter.
 DIE *
-CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter VP) {
+CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter VP,
+                                                  DIE &Buffer) {
   DIE *ParamDIE = getDIE(VP);
   if (ParamDIE)
     return ParamDIE;
 
   ParamDIE = new DIE(VP.getTag());
+  Buffer.addChild(ParamDIE);
 
   // Add the type if there is one, template template and template parameter
   // packs will not have a type.
@@ -1681,8 +1682,9 @@ void CompileUnit::constructArrayTypeDIE(DIE &Buffer,
 }
 
 /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
-DIE *CompileUnit::constructEnumTypeDIE(DIEnumerator ETy) {
+DIE *CompileUnit::constructEnumTypeDIE(DIEnumerator ETy, DIE &Buffer) {
   DIE *Enumerator = new DIE(dwarf::DW_TAG_enumerator);
+  Buffer.addChild(Enumerator);
   StringRef Name = ETy.getName();
   addString(Enumerator, dwarf::DW_AT_name, Name);
   int64_t Value = ETy.getEnumValue();
@@ -1779,8 +1781,9 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV,
 }
 
 /// createMemberDIE - Create new member DIE.
-DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
+DIE *CompileUnit::createMemberDIE(DIDerivedType DT, DIE &Buffer) {
   DIE *MemberDie = new DIE(DT.getTag());
+  Buffer.addChild(MemberDie);
   StringRef Name = DT.getName();
   if (!Name.empty())
     addString(MemberDie, dwarf::DW_AT_name, Name);
