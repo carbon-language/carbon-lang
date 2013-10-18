@@ -133,8 +133,8 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
     return true;
   if (Style.AlwaysBreakBeforeMultilineStrings &&
       State.Column > State.Stack.back().Indent && // Breaking saves columns.
-      Previous.isNot(tok::lessless) && Previous.Type != TT_InlineASMColon &&
-      NextIsMultilineString(State))
+      !Previous.isOneOf(tok::kw_return, tok::lessless) &&
+      Previous.Type != TT_InlineASMColon && NextIsMultilineString(State))
     return true;
 
   if (!Style.BreakBeforeBinaryOperators) {
