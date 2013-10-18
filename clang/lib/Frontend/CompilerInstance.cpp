@@ -1108,23 +1108,23 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
                              ModuleIdPath Path,
                              Module::NameVisibilityKind Visibility,
                              bool IsInclusionDirective) {
+  // Determine what file we're searching from.
+  StringRef ModuleName = Path[0].first->getName();
+  SourceLocation ModuleNameLoc = Path[0].second;
+
   // If we've already handled this import, just return the cached result.
   // This one-element cache is important to eliminate redundant diagnostics
   // when both the preprocessor and parser see the same import declaration.
   if (!ImportLoc.isInvalid() && LastModuleImportLoc == ImportLoc) {
     // Make the named module visible.
-    if (LastModuleImportResult)
+    if (LastModuleImportResult && ModuleName != getLangOpts().CurrentModule)
       ModuleManager->makeModuleVisible(LastModuleImportResult, Visibility,
                                        ImportLoc, /*Complain=*/false);
     return LastModuleImportResult;
   }
-  
-  // Determine what file we're searching from.
-  StringRef ModuleName = Path[0].first->getName();
-  SourceLocation ModuleNameLoc = Path[0].second;
 
   clang::Module *Module = 0;
-  
+
   // If we don't already have information on this module, load the module now.
   llvm::DenseMap<const IdentifierInfo *, clang::Module *>::iterator Known
     = KnownModules.find(Path[0].first);
