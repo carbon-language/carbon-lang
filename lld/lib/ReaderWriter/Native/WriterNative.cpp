@@ -153,6 +153,9 @@ private:
     NativeUndefinedAtomIvarsV1 ivar;
     ivar.nameOffset = getNameOffset(atom);
     ivar.flags = (atom.canBeNull() & 0x03);
+    ivar.fallbackNameOffset = 0;
+    if (atom.fallback())
+      ivar.fallbackNameOffset = getNameOffset(*atom.fallback());
     _undefinedAtomIvars.push_back(ivar);
   }
 
