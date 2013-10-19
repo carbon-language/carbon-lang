@@ -1080,10 +1080,9 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
 
     // Add enumerators to enumeration type.
     for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
-      DIE *ElemDie = NULL;
       DIDescriptor Enum(Elements.getElement(i));
       if (Enum.isEnumerator())
-        ElemDie = constructEnumTypeDIE(DIEnumerator(Enum), Buffer);
+        constructEnumTypeDIE(DIEnumerator(Enum), Buffer);
     }
     DIType DTy = resolve(CTy.getTypeDerivedFrom());
     if (DTy) {
