@@ -7580,7 +7580,7 @@ void ASTReader::FinishedDeserializing() {
 }
 
 void ASTReader::pushExternalDeclIntoScope(NamedDecl *D, DeclarationName Name) {
-  D = cast<NamedDecl>(D->getMostRecentDecl());
+  D = D->getMostRecentDecl();
 
   if (SemaObj->IdResolver.tryAddTopLevelDecl(D, Name) && SemaObj->TUScope) {
     SemaObj->TUScope->AddDecl(D);

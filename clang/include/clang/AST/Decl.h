@@ -273,6 +273,13 @@ public:
     return const_cast<NamedDecl*>(this)->getUnderlyingDecl();
   }
 
+  NamedDecl *getMostRecentDecl() {
+    return cast<NamedDecl>(Decl::getMostRecentDecl());
+  }
+  const NamedDecl *getMostRecentDecl() const {
+    return const_cast<NamedDecl*>(this)->getMostRecentDecl();
+  }
+
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K >= firstNamed && K <= lastNamed; }
 };
@@ -2810,21 +2817,21 @@ public:
     return cast<EnumDecl>(TagDecl::getCanonicalDecl());
   }
   const EnumDecl *getCanonicalDecl() const {
-    return cast<EnumDecl>(TagDecl::getCanonicalDecl());
+    return const_cast<EnumDecl*>(this)->getCanonicalDecl();
   }
 
-  const EnumDecl *getPreviousDecl() const {
-    return cast_or_null<EnumDecl>(TagDecl::getPreviousDecl());
-  }
   EnumDecl *getPreviousDecl() {
     return cast_or_null<EnumDecl>(TagDecl::getPreviousDecl());
   }
-
-  const EnumDecl *getMostRecentDecl() const {
-    return cast<EnumDecl>(TagDecl::getMostRecentDecl());
+  const EnumDecl *getPreviousDecl() const {
+    return const_cast<EnumDecl*>(this)->getPreviousDecl();
   }
+
   EnumDecl *getMostRecentDecl() {
     return cast<EnumDecl>(TagDecl::getMostRecentDecl());
+  }
+  const EnumDecl *getMostRecentDecl() const {
+    return const_cast<EnumDecl*>(this)->getMostRecentDecl();
   }
 
   EnumDecl *getDefinition() const {
@@ -3020,18 +3027,18 @@ public:
                             IdentifierInfo *Id, RecordDecl* PrevDecl = 0);
   static RecordDecl *CreateDeserialized(const ASTContext &C, unsigned ID);
 
-  const RecordDecl *getPreviousDecl() const {
-    return cast_or_null<RecordDecl>(TagDecl::getPreviousDecl());
-  }
   RecordDecl *getPreviousDecl() {
     return cast_or_null<RecordDecl>(TagDecl::getPreviousDecl());
   }
-
-  const RecordDecl *getMostRecentDecl() const {
-    return cast<RecordDecl>(TagDecl::getMostRecentDecl());
+  const RecordDecl *getPreviousDecl() const {
+    return const_cast<RecordDecl*>(this)->getPreviousDecl();
   }
+
   RecordDecl *getMostRecentDecl() {
     return cast<RecordDecl>(TagDecl::getMostRecentDecl());
+  }
+  const RecordDecl *getMostRecentDecl() const {
+    return const_cast<RecordDecl*>(this)->getMostRecentDecl();
   }
 
   bool hasFlexibleArrayMember() const { return HasFlexibleArrayMember; }

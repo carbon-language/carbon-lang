@@ -972,7 +972,7 @@ NamedDecl::getExplicitVisibility(ExplicitVisibilityKind kind) const {
                            kind);
 
   // Use the most recent declaration.
-  const NamedDecl *MostRecent = cast<NamedDecl>(this->getMostRecentDecl());
+  const NamedDecl *MostRecent = getMostRecentDecl();
   if (MostRecent != this)
     return MostRecent->getExplicitVisibility(kind);
 

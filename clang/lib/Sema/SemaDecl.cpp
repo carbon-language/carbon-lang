@@ -4487,7 +4487,7 @@ NamedDecl *Sema::findLocallyScopedExternCDecl(DeclarationName Name) {
   }
 
   NamedDecl *D = LocallyScopedExternCDecls.lookup(Name);
-  return D ? cast<NamedDecl>(D->getMostRecentDecl()) : 0;
+  return D ? D->getMostRecentDecl() : 0;
 }
 
 /// \brief Diagnose function specifiers on a declaration of an identifier that

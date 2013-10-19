@@ -323,8 +323,7 @@ private:
     } else if (const CXXMemberCallExpr *CMCE = dyn_cast<CXXMemberCallExpr>(Exp)) {
       // When calling a function with a lock_returned attribute, replace
       // the function call with the expression in lock_returned.
-      const CXXMethodDecl* MD =
-        cast<CXXMethodDecl>(CMCE->getMethodDecl()->getMostRecentDecl());
+      const CXXMethodDecl *MD = CMCE->getMethodDecl()->getMostRecentDecl();
       if (LockReturnedAttr* At = MD->getAttr<LockReturnedAttr>()) {
         CallingContext LRCallCtx(CMCE->getMethodDecl());
         LRCallCtx.SelfArg = CMCE->getImplicitObjectArgument();
@@ -353,8 +352,7 @@ private:
       NodeVec[Root].setSize(Sz + 1);
       return Sz + 1;
     } else if (const CallExpr *CE = dyn_cast<CallExpr>(Exp)) {
-      const FunctionDecl* FD =
-        cast<FunctionDecl>(CE->getDirectCallee()->getMostRecentDecl());
+      const FunctionDecl *FD = CE->getDirectCallee()->getMostRecentDecl();
       if (LockReturnedAttr* At = FD->getAttr<LockReturnedAttr>()) {
         CallingContext LRCallCtx(CE->getDirectCallee());
         LRCallCtx.NumArgs = CE->getNumArgs();

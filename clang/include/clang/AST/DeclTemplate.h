@@ -1449,8 +1449,7 @@ public:
                                     bool Qualified) const;
 
   ClassTemplateSpecializationDecl *getMostRecentDecl() {
-    CXXRecordDecl *Recent
-        = cast<CXXRecordDecl>(CXXRecordDecl::getMostRecentDecl());
+    CXXRecordDecl *Recent = CXXRecordDecl::getMostRecentDecl();
     while (!isa<ClassTemplateSpecializationDecl>(Recent)) {
       // FIXME: Does injected class name need to be in the redeclarations chain?
       assert(Recent->isInjectedClassName() && Recent->getPreviousDecl());
@@ -2310,7 +2309,7 @@ public:
                                     bool Qualified) const;
 
   VarTemplateSpecializationDecl *getMostRecentDecl() {
-    VarDecl *Recent = cast<VarDecl>(VarDecl::getMostRecentDecl());
+    VarDecl *Recent = VarDecl::getMostRecentDecl();
     return cast<VarTemplateSpecializationDecl>(Recent);
   }
 

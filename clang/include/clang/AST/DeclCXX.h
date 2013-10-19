@@ -641,18 +641,19 @@ public:
     return cast<CXXRecordDecl>(RecordDecl::getCanonicalDecl());
   }
 
-  const CXXRecordDecl *getPreviousDecl() const {
-    return cast_or_null<CXXRecordDecl>(RecordDecl::getPreviousDecl());
-  }
   CXXRecordDecl *getPreviousDecl() {
     return cast_or_null<CXXRecordDecl>(RecordDecl::getPreviousDecl());
   }
+  const CXXRecordDecl *getPreviousDecl() const {
+    return const_cast<CXXRecordDecl*>(this)->getPreviousDecl();
+  }
+
+  CXXRecordDecl *getMostRecentDecl() {
+    return cast<CXXRecordDecl>(RecordDecl::getMostRecentDecl());
+  }
 
   const CXXRecordDecl *getMostRecentDecl() const {
-    return cast_or_null<CXXRecordDecl>(RecordDecl::getMostRecentDecl());
-  }
-  CXXRecordDecl *getMostRecentDecl() {
-    return cast_or_null<CXXRecordDecl>(RecordDecl::getMostRecentDecl());
+    return const_cast<CXXRecordDecl*>(this)->getMostRecentDecl();
   }
 
   CXXRecordDecl *getDefinition() const {
@@ -1716,11 +1717,18 @@ public:
   /// \brief Determine whether this is a move assignment operator.
   bool isMoveAssignmentOperator() const;
 
-  const CXXMethodDecl *getCanonicalDecl() const {
-    return cast<CXXMethodDecl>(FunctionDecl::getCanonicalDecl());
-  }
   CXXMethodDecl *getCanonicalDecl() {
     return cast<CXXMethodDecl>(FunctionDecl::getCanonicalDecl());
+  }
+  const CXXMethodDecl *getCanonicalDecl() const {
+    return const_cast<CXXMethodDecl*>(this)->getCanonicalDecl();
+  }
+
+  CXXMethodDecl *getMostRecentDecl() {
+    return cast<CXXMethodDecl>(FunctionDecl::getMostRecentDecl());
+  }
+  const CXXMethodDecl *getMostRecentDecl() const {
+    return const_cast<CXXMethodDecl*>(this)->getMostRecentDecl();
   }
 
   /// True if this method is user-declared and was not
