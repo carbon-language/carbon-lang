@@ -2233,15 +2233,11 @@ bool FunctionDecl::isDefined(const FunctionDecl *&Definition) const {
 }
 
 Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
-  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
-    if (I->Body) {
-      Definition = *I;
-      return I->Body.get(getASTContext().getExternalSource());
-    } else if (I->IsLateTemplateParsed) {
-      Definition = *I;
-      return 0;
-    }
-  }
+  if (!hasBody(Definition))
+    return 0;
+
+  if (Definition->Body)
+    return Definition->Body.get(getASTContext().getExternalSource());
 
   return 0;
 }
