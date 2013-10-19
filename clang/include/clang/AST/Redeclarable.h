@@ -91,7 +91,7 @@ public:
     return D;
   }
 
-  /// \brief True if this is the first declaration in it's redeclaration chain.
+  /// \brief True if this is the first declaration in its redeclaration chain.
   bool isFirstDecl() const { return RedeclLink.NextIsLatest(); }
 
   /// \brief Returns the most recent (re)declaration of this declaration.
