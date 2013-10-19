@@ -11218,7 +11218,7 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
       UndefinedButUsed.insert(std::make_pair(Func->getCanonicalDecl(), Loc));
   }
 
-  // Normally the must current decl is marked used while processing the use and
+  // Normally the most current decl is marked used while processing the use and
   // any subsequent decls are marked used by decl merging. This fails with
   // template instantiation since marking can happen at the end of the file
   // and, because of the two phase lookup, this function is called with at
