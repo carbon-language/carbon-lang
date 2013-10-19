@@ -1900,6 +1900,14 @@ public:
              RedeclarableTemplateDecl::getPreviousDecl());
   }
 
+  ClassTemplateDecl *getMostRecentDecl() {
+    return cast<ClassTemplateDecl>(
+        RedeclarableTemplateDecl::getMostRecentDecl());
+  }
+  const ClassTemplateDecl *getMostRecentDecl() const {
+    return const_cast<ClassTemplateDecl*>(this)->getMostRecentDecl();
+  }
+
   ClassTemplateDecl *getInstantiatedFromMemberTemplate() {
     return cast_or_null<ClassTemplateDecl>(
              RedeclarableTemplateDecl::getInstantiatedFromMemberTemplate());
