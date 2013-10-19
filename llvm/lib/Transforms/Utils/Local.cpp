@@ -503,7 +503,19 @@ void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB, Pass *P) {
 
   // Splice all the instructions from PredBB to DestBB.
   PredBB->getTerminator()->eraseFromParent();
-  DestBB->getInstList().splice(DestBB->begin(), PredBB->getInstList());
+
+  // First splice over the PHI nodes.
+  BasicBlock::iterator PI = PredBB->begin();
+  while (isa<PHINode>(PI))
+    ++PI;
+
+  if (PI != PredBB->begin())
+    DestBB->getInstList().splice(DestBB->begin(), PredBB->getInstList(),
+                                 PredBB->begin(), PI);
+
+  // Now splice over the rest of the instructions.
+  DestBB->getInstList().splice(DestBB->getFirstInsertionPt(),
+                               PredBB->getInstList(), PI, PredBB->end());
 
   if (P) {
     DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>();
@@ -513,6 +525,7 @@ void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB, Pass *P) {
       DT->eraseNode(PredBB);
     }
   }
+
   // Nuke BB.
   PredBB->eraseFromParent();
 }
