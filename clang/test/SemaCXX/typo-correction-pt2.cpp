@@ -168,3 +168,16 @@ namespace PR17019 {
     evil<int> Q(0); // expected-note {{in instantiation of member function}}
   }
 }
+
+namespace fix_class_name_qualifier {
+class MessageHeaders {};
+class MessageUtils {
+ public:
+  static void ParseMessageHeaders(int, int); // expected-note {{'MessageUtils::ParseMessageHeaders' declared here}}
+};
+
+void test() {
+  // No, we didn't mean to call MessageHeaders::MessageHeaders.
+  MessageHeaders::ParseMessageHeaders(5, 4); // expected-error {{no member named 'ParseMessageHeaders' in 'fix_class_name_qualifier::MessageHeaders'; did you mean 'MessageUtils::ParseMessageHeaders'?}}
+}
+}

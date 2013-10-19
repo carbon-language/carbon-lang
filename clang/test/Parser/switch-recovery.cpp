@@ -95,7 +95,7 @@ int test8( foo x ) {
 }
 
 // Stress test to make sure Clang doesn't crash.
-void test9(int x) {
+void test9(int x) { // expected-note {{'x' declared here}}
   switch(x) {
     case 1: return;
     2: case; // expected-error {{expected 'case' keyword before expression}} \
@@ -104,8 +104,8 @@ void test9(int x) {
     7: :x; // expected-error {{expected 'case' keyword before expression}} \
               expected-error {{expected expression}}
     8:: x; // expected-error {{expected ';' after expression}} \
-              expected-error {{no member named 'x' in the global namespace}} \
-              expected-warning {{expression result unused}}
+              expected-error {{no member named 'x' in the global namespace; did you mean simply 'x'?}} \
+              expected-warning 2 {{expression result unused}}
     9:: :y; // expected-error {{expected ';' after expression}} \
                expected-error {{expected unqualified-id}} \
                expected-warning {{expression result unused}}

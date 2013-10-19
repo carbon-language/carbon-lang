@@ -217,10 +217,14 @@ namespace PR13051 {
     operator bool() const;
   };
 
-  void f() {
-    f(&S<int>::tempalte f<int>); // expected-error{{did you mean 'template'?}}
-    f(&S<int>::opeartor bool); // expected-error{{did you mean 'operator'?}}
-    f(&S<int>::foo); // expected-error-re{{no member named 'foo' in 'PR13051::S<int>'$}}
+  void foo(); // expected-note{{'foo' declared here}}
+  void g(void(*)());
+  void g(bool(S<int>::*)() const);
+
+  void test() {
+    g(&S<int>::tempalte f<int>); // expected-error{{did you mean 'template'?}}
+    g(&S<int>::opeartor bool); // expected-error{{did you mean 'operator'?}}
+    g(&S<int>::foo); // expected-error{{no member named 'foo' in 'PR13051::S<int>'; did you mean simply 'foo'?}}
   }
 }
 

@@ -4157,7 +4157,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   // corrections.
   bool SearchNamespaces
     = getLangOpts().CPlusPlus &&
-      (IsUnqualifiedLookup || (QualifiedDC && QualifiedDC->isNamespace()));
+      (IsUnqualifiedLookup || (SS && SS->isSet()));
   // In a few cases we *only* want to search for corrections based on just
   // adding or changing the nested name specifier.
   unsigned TypoLen = Typo->getName().size();
@@ -4400,6 +4400,18 @@ retry_lookup:
           switch (TmpRes.getResultKind()) {
           case LookupResult::Found:
           case LookupResult::FoundOverloaded: {
+            if (SS && SS->isValid()) {
+              std::string NewQualified = TC.getAsString(getLangOpts());
+              std::string OldQualified;
+              llvm::raw_string_ostream OldOStream(OldQualified);
+              SS->getScopeRep()->print(OldOStream, getPrintingPolicy());
+              OldOStream << TypoName;
+              // If correction candidate would be an identical written qualified
+              // identifer, then the existing CXXScopeSpec probably included a
+              // typedef that didn't get accounted for properly.
+              if (OldOStream.str() == NewQualified)
+                break;
+            }
             for (LookupResult::iterator TRD = TmpRes.begin(),
                                      TRDEnd = TmpRes.end();
                  TRD != TRDEnd; ++TRD) {

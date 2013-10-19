@@ -7301,15 +7301,20 @@ void Sema::HideUsingShadowDecl(Scope *S, UsingShadowDecl *Shadow) {
 namespace {
 class UsingValidatorCCC : public CorrectionCandidateCallback {
 public:
-  UsingValidatorCCC(bool HasTypenameKeyword, bool IsInstantiation)
+  UsingValidatorCCC(bool HasTypenameKeyword, bool IsInstantiation,
+                    bool RequireMember)
       : HasTypenameKeyword(HasTypenameKeyword),
-        IsInstantiation(IsInstantiation) {}
+        IsInstantiation(IsInstantiation), RequireMember(RequireMember) {}
 
   bool ValidateCandidate(const TypoCorrection &Candidate) LLVM_OVERRIDE {
     NamedDecl *ND = Candidate.getCorrectionDecl();
 
     // Keywords are not valid here.
     if (!ND || isa<NamespaceDecl>(ND))
+      return false;
+
+    if (RequireMember && !isa<FieldDecl>(ND) && !isa<CXXMethodDecl>(ND) &&
+        !isa<TypeDecl>(ND))
       return false;
 
     // Completely unqualified names are invalid for a 'using' declaration.
@@ -7325,6 +7330,7 @@ public:
 private:
   bool HasTypenameKeyword;
   bool IsInstantiation;
+  bool RequireMember;
 };
 } // end anonymous namespace
 
@@ -7440,7 +7446,8 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
 
   // Try to correct typos if possible.
   if (R.empty()) {
-    UsingValidatorCCC CCC(HasTypenameKeyword, IsInstantiation);
+    UsingValidatorCCC CCC(HasTypenameKeyword, IsInstantiation,
+                          CurContext->isRecord());
     if (TypoCorrection Corrected = CorrectTypo(R.getLookupNameInfo(),
                                                R.getLookupKind(), S, &SS, CCC)){
       // We reject any correction for which ND would be NULL.

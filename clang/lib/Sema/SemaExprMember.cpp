@@ -538,13 +538,42 @@ bool Sema::CheckQualifiedMemberReference(Expr *BaseExpr,
 namespace {
 
 // Callback to only accept typo corrections that are either a ValueDecl or a
-// FunctionTemplateDecl.
+// FunctionTemplateDecl and are declared in the current record or, for a C++
+// classes, one of its base classes.
 class RecordMemberExprValidatorCCC : public CorrectionCandidateCallback {
  public:
+  explicit RecordMemberExprValidatorCCC(const RecordType *RTy)
+      : Record(RTy->getDecl()) {}
+
   virtual bool ValidateCandidate(const TypoCorrection &candidate) {
     NamedDecl *ND = candidate.getCorrectionDecl();
-    return ND && (isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND));
+    // Don't accept candidates that cannot be member functions, constants,
+    // variables, or templates.
+    if (!ND || !(isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND)))
+      return false;
+
+    // Accept candidates that occur in the current record.
+    if (Record->containsDecl(ND))
+      return true;
+
+    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(Record)) {
+      // Accept candidates that occur in any of the current class' base classes.
+      for (CXXRecordDecl::base_class_const_iterator BS = RD->bases_begin(),
+                                                    BSEnd = RD->bases_end();
+           BS != BSEnd; ++BS) {
+        if (const RecordType *BSTy = dyn_cast_or_null<RecordType>(
+                BS->getType().getTypePtrOrNull())) {
+          if (BSTy->getDecl()->containsDecl(ND))
+            return true;
+        }
+      }
+    }
+
+    return false;
   }
+
+ private:
+  const RecordDecl *const Record;
 };
 
 }
@@ -600,7 +629,7 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
   // We didn't find anything with the given name, so try to correct
   // for typos.
   DeclarationName Name = R.getLookupName();
-  RecordMemberExprValidatorCCC Validator;
+  RecordMemberExprValidatorCCC Validator(RTy);
   TypoCorrection Corrected = SemaRef.CorrectTypo(R.getLookupNameInfo(),
                                                  R.getLookupKind(), NULL,
                                                  &SS, Validator, DC);
