@@ -490,6 +490,9 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   // Use the default entry name if /entry option is not given.
   if (ctx.entrySymbolName().empty())
     ctx.setEntrySymbolName(getDefaultEntrySymbolName(ctx));
+  StringRef entry = ctx.entrySymbolName();
+  if (!entry.empty())
+    ctx.addInitialUndefinedSymbol(entry);
 
   // Specifying both /opt:ref and /opt:noref is an error.
   if (parsedArgs->getLastArg(OPT_ref) && parsedArgs->getLastArg(OPT_ref_no)) {
@@ -500,17 +503,9 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   // If dead-stripping is enabled, we need to add the entry symbol and
   // symbols given by /include to the dead strip root set, so that it
   // won't be removed from the output.
-  if (ctx.deadStrip()) {
-    StringRef entry = ctx.entrySymbolName();
-    if (!entry.empty()) {
-      ctx.addInitialUndefinedSymbol(entry);
-      ctx.addDeadStripRoot(entry);
-    }
-    for (const StringRef symbolName : ctx.initialUndefinedSymbols()) {
-      ctx.addInitialUndefinedSymbol(entry);
+  if (ctx.deadStrip())
+    for (const StringRef symbolName : ctx.initialUndefinedSymbols())
       ctx.addDeadStripRoot(symbolName);
-    }
-  }
 
   // Arguments after "--" are interpreted as filenames even if they
   // start with a hypen or a slash. This is not compatible with link.exe
