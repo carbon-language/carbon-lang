@@ -139,24 +139,24 @@ using typename N::FFG; // expected-error {{no member named 'FFG' in namespace 'u
 // Currently hints aren't provided to drop out the incorrect M::.
 namespace using_suggestion_ty_dropped_nested_specifier {
 namespace N {
-class AAA {};
+class AAA {}; // expected-note {{'N::AAA' declared here}}
 namespace M { }
 }
-using N::M::AAA; // expected-error {{no member named 'AAA' in namespace 'using_suggestion_ty_dropped_nested_specifier::N::M'}}
+using N::M::AAA; // expected-error {{no member named 'AAA' in namespace 'using_suggestion_ty_dropped_nested_specifier::N::M'; did you mean 'N::AAA'?}}
 }
 
 namespace using_suggestion_tyname_ty_dropped_nested_specifier {
 namespace N {
-class AAA {};
+class AAA {}; // expected-note {{'N::AAA' declared here}}
 namespace M { }
 }
-using typename N::M::AAA; // expected-error {{no member named 'AAA' in namespace 'using_suggestion_tyname_ty_dropped_nested_specifier::N::M'}}
+using typename N::M::AAA; // expected-error {{no member named 'AAA' in namespace 'using_suggestion_tyname_ty_dropped_nested_specifier::N::M'; did you mean 'N::AAA'?}}
 }
 
 namespace using_suggestion_val_dropped_nested_specifier {
 namespace N {
-void FFF() {}
+void FFF() {} // expected-note {{'N::FFF' declared here}}
 namespace M { }
 }
-using N::M::FFF; // expected-error {{no member named 'FFF' in namespace 'using_suggestion_val_dropped_nested_specifier::N::M'}}
+using N::M::FFF; // expected-error {{no member named 'FFF' in namespace 'using_suggestion_val_dropped_nested_specifier::N::M'; did you mean 'N::FFF'?}}
 }

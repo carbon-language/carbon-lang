@@ -3575,6 +3575,7 @@ typedef SmallVector<SpecifierInfo, 16> SpecifierInfoList;
 class NamespaceSpecifierSet {
   ASTContext &Context;
   DeclContextList CurContextChain;
+  std::string CurNameSpecifier;
   SmallVector<const IdentifierInfo*, 4> CurContextIdentifiers;
   SmallVector<const IdentifierInfo*, 4> CurNameSpecifierIdentifiers;
   bool isSorted;
@@ -3594,9 +3595,13 @@ class NamespaceSpecifierSet {
                         CXXScopeSpec *CurScopeSpec)
       : Context(Context), CurContextChain(BuildContextChain(CurContext)),
         isSorted(false) {
-    if (CurScopeSpec && CurScopeSpec->getScopeRep())
-      getNestedNameSpecifierIdentifiers(CurScopeSpec->getScopeRep(),
-                                        CurNameSpecifierIdentifiers);
+    if (NestedNameSpecifier *NNS =
+            CurScopeSpec ? CurScopeSpec->getScopeRep() : 0) {
+      llvm::raw_string_ostream SpecifierOStream(CurNameSpecifier);
+      NNS->print(SpecifierOStream, Context.getPrintingPolicy());
+
+      getNestedNameSpecifierIdentifiers(NNS, CurNameSpecifierIdentifiers);
+    }
     // Build the list of identifiers that would be used for an absolute
     // (from the global context) NestedNameSpecifier referring to the current
     // context.
@@ -3659,6 +3664,25 @@ void NamespaceSpecifierSet::SortNamespaces() {
   isSorted = true;
 }
 
+static unsigned BuildNestedNameSpecifier(ASTContext &Context,
+                                         DeclContextList &DeclChain,
+                                         NestedNameSpecifier *&NNS) {
+  unsigned NumSpecifiers = 0;
+  for (DeclContextList::reverse_iterator C = DeclChain.rbegin(),
+                                      CEnd = DeclChain.rend();
+       C != CEnd; ++C) {
+    if (NamespaceDecl *ND = dyn_cast_or_null<NamespaceDecl>(*C)) {
+      NNS = NestedNameSpecifier::Create(Context, NNS, ND);
+      ++NumSpecifiers;
+    } else if (RecordDecl *RD = dyn_cast_or_null<RecordDecl>(*C)) {
+      NNS = NestedNameSpecifier::Create(Context, NNS, RD->isTemplateDecl(),
+                                        RD->getTypeForDecl());
+      ++NumSpecifiers;
+    }
+  }
+  return NumSpecifiers;
+}
+
 void NamespaceSpecifierSet::AddNameSpecifier(DeclContext *Ctx) {
   NestedNameSpecifier *NNS = NULL;
   unsigned NumSpecifiers = 0;
@@ -3673,34 +3697,37 @@ void NamespaceSpecifierSet::AddNameSpecifier(DeclContext *Ctx) {
     NamespaceDeclChain.pop_back();
   }
 
+  // Build the NestedNameSpecifier from what is left of the NamespaceDeclChain
+  NumSpecifiers = BuildNestedNameSpecifier(Context, NamespaceDeclChain, NNS);
+
   // Add an explicit leading '::' specifier if needed.
   if (NamespaceDeclChain.empty()) {
-    NamespaceDeclChain = FullNamespaceDeclChain;
+    // Rebuild the NestedNameSpecifier as a globally-qualified specifier.
     NNS = NestedNameSpecifier::GlobalSpecifier(Context);
+    NumSpecifiers =
+        BuildNestedNameSpecifier(Context, FullNamespaceDeclChain, NNS);
   } else if (NamedDecl *ND =
                  dyn_cast_or_null<NamedDecl>(NamespaceDeclChain.back())) {
     IdentifierInfo *Name = ND->getIdentifier();
-    if (std::find(CurContextIdentifiers.begin(), CurContextIdentifiers.end(),
-                  Name) != CurContextIdentifiers.end() ||
-        std::find(CurNameSpecifierIdentifiers.begin(),
+    bool SameNameSpecifier = false;
+    if (std::find(CurNameSpecifierIdentifiers.begin(),
                   CurNameSpecifierIdentifiers.end(),
                   Name) != CurNameSpecifierIdentifiers.end()) {
-      NamespaceDeclChain = FullNamespaceDeclChain;
-      NNS = NestedNameSpecifier::GlobalSpecifier(Context);
+      std::string NewNameSpecifier;
+      llvm::raw_string_ostream SpecifierOStream(NewNameSpecifier);
+      SmallVector<const IdentifierInfo *, 4> NewNameSpecifierIdentifiers;
+      getNestedNameSpecifierIdentifiers(NNS, NewNameSpecifierIdentifiers);
+      NNS->print(SpecifierOStream, Context.getPrintingPolicy());
+      SpecifierOStream.flush();
+      SameNameSpecifier = NewNameSpecifier == CurNameSpecifier;
     }
-  }
-
-  // Build the NestedNameSpecifier from what is left of the NamespaceDeclChain
-  for (DeclContextList::reverse_iterator C = NamespaceDeclChain.rbegin(),
-                                      CEnd = NamespaceDeclChain.rend();
-       C != CEnd; ++C) {
-    if (NamespaceDecl *ND = dyn_cast_or_null<NamespaceDecl>(*C)) {
-      NNS = NestedNameSpecifier::Create(Context, NNS, ND);
-      ++NumSpecifiers;
-    } else if (RecordDecl *RD = dyn_cast_or_null<RecordDecl>(*C)) {
-      NNS = NestedNameSpecifier::Create(Context, NNS, RD->isTemplateDecl(),
-                                        RD->getTypeForDecl());
-      ++NumSpecifiers;
+    if (SameNameSpecifier ||
+        std::find(CurContextIdentifiers.begin(), CurContextIdentifiers.end(),
+                  Name) != CurContextIdentifiers.end()) {
+      // Rebuild the NestedNameSpecifier as a globally-qualified specifier.
+      NNS = NestedNameSpecifier::GlobalSpecifier(Context);
+      NumSpecifiers =
+          BuildNestedNameSpecifier(Context, FullNamespaceDeclChain, NNS);
     }
   }
 
