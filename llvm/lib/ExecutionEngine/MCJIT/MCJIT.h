@@ -74,6 +74,26 @@ private:
 // like only having one module, not needing to worry about multi-threading,
 // blah blah. Purely in get-it-up-and-limping mode for now.
 
+// About Module states:
+//
+// The purpose of the "added" state is having modules in standby. (added=known
+// but not compiled). The idea is that you can add a module to provide function
+// definitions but if nothing in that module is referenced by a module in which
+// a function is executed (note the wording here because it’s not exactly the
+// ideal case) then the module never gets compiled. This is sort of lazy
+// compilation.
+//
+// The purpose of the "loaded" state (loaded=compiled and required sections
+// copied into local memory but not yet ready for execution) is to have an
+// intermediate state wherein clients can remap the addresses of sections, using
+// MCJIT::mapSectionAddress, (in preparation for later copying to a new location
+// or an external process) before relocations and page permissions are applied.
+//
+// It might not be obvious at first glance, but the "remote-mcjit" case in the
+// lli tool does this.  In that case, the intermediate action is taken by the
+// RemoteMemoryManager in response to the notifyObjectLoaded function being
+// called.
+
 class MCJIT : public ExecutionEngine {
   MCJIT(Module *M, TargetMachine *tm, RTDyldMemoryManager *MemMgr,
         bool AllocateGVsWithCode);
@@ -136,6 +156,7 @@ public:
   /// object have been relocated using mapSectionAddress.  When this method is
   /// called the MCJIT execution engine will reapply relocations for a loaded
   /// object.
+  /// Is it OK to finalize a set of modules, add modules and finalize again.
   /// FIXME: Do we really need both of these?
   virtual void finalizeObject();
   virtual void finalizeModule(Module *);
