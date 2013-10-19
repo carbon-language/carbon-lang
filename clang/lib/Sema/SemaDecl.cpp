@@ -5388,7 +5388,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
   // If this is the first declaration of an extern C variable, update
   // the map of such variables.
-  if (!NewVD->getPreviousDecl() && !NewVD->isInvalidDecl() &&
+  if (NewVD->isFirstDecl() && !NewVD->isInvalidDecl() &&
       isIncompleteDeclExternC(*this, NewVD))
     RegisterLocallyScopedExternCDecl(NewVD, S);
 
@@ -7205,7 +7205,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
   // If this is the first declaration of an extern C variable, update
   // the map of such variables.
-  if (!NewFD->getPreviousDecl() && !NewFD->isInvalidDecl() &&
+  if (NewFD->isFirstDecl() && !NewFD->isInvalidDecl() &&
       isIncompleteDeclExternC(*this, NewFD))
     RegisterLocallyScopedExternCDecl(NewFD, S);
 
@@ -8520,7 +8520,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
           // is accepted by gcc. Hence here we issue a warning instead of
           // an error and we do not invalidate the static declaration.
           // NOTE: to avoid multiple warnings, only check the first declaration.
-          if (Var->getPreviousDecl() == 0)
+          if (Var->isFirstDecl())
             RequireCompleteType(Var->getLocation(), Type,
                                 diag::ext_typecheck_decl_incomplete_type);
         }
@@ -9619,7 +9619,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
     // The only way to be included in UndefinedButUsed is if there is an
     // ODR use before the definition. Avoid the expensive map lookup if this
     // is the first declaration.
-    if (FD->getPreviousDecl() != 0 && FD->getPreviousDecl()->isUsed()) {
+    if (!FD->isFirstDecl() && FD->getPreviousDecl()->isUsed()) {
       if (!FD->isExternallyVisible())
         UndefinedButUsed.erase(FD);
       else if (FD->isInlined() &&

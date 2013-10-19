@@ -368,6 +368,7 @@ public:
   using redeclarable_base::redecls_end;
   using redeclarable_base::getPreviousDecl;
   using redeclarable_base::getMostRecentDecl;
+  using redeclarable_base::isFirstDecl;
 
   /// \brief Returns true if this is an anonymous namespace declaration.
   ///
@@ -775,6 +776,7 @@ public:
   using redeclarable_base::redecls_end;
   using redeclarable_base::getPreviousDecl;
   using redeclarable_base::getMostRecentDecl;
+  using redeclarable_base::isFirstDecl;
 
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation StartLoc, SourceLocation IdLoc,
@@ -1563,6 +1565,7 @@ public:
   using redeclarable_base::redecls_end;
   using redeclarable_base::getPreviousDecl;
   using redeclarable_base::getMostRecentDecl;
+  using redeclarable_base::isFirstDecl;
 
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC,
                               SourceLocation StartLoc, SourceLocation NLoc,
@@ -2390,6 +2393,7 @@ public:
   using redeclarable_base::redecls_end;
   using redeclarable_base::getPreviousDecl;
   using redeclarable_base::getMostRecentDecl;
+  using redeclarable_base::isFirstDecl;
 
   bool isModed() const { return MaybeModedTInfo.is<ModedTInfo*>(); }
 
@@ -2574,6 +2578,7 @@ public:
   using redeclarable_base::redecls_end;
   using redeclarable_base::getPreviousDecl;
   using redeclarable_base::getMostRecentDecl;
+  using redeclarable_base::isFirstDecl;
 
   SourceLocation getRBraceLoc() const { return RBraceLoc; }
   void setRBraceLoc(SourceLocation L) { RBraceLoc = L; }

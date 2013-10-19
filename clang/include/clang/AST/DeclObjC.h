@@ -1201,6 +1201,7 @@ public:
   using redeclarable_base::redecls_end;
   using redeclarable_base::getPreviousDecl;
   using redeclarable_base::getMostRecentDecl;
+  using redeclarable_base::isFirstDecl;
 
   /// Retrieves the canonical declaration of this Objective-C class.
   ObjCInterfaceDecl *getCanonicalDecl() { return getFirstDecl(); }
@@ -1503,6 +1504,7 @@ public:
   using redeclarable_base::redecls_end;
   using redeclarable_base::getPreviousDecl;
   using redeclarable_base::getMostRecentDecl;
+  using redeclarable_base::isFirstDecl;
 
   /// Retrieves the canonical declaration of this Objective-C protocol.
   ObjCProtocolDecl *getCanonicalDecl() { return getFirstDecl(); }

@@ -785,7 +785,12 @@ public:
   const Decl *getPreviousDecl() const { 
     return const_cast<Decl *>(this)->getPreviousDeclImpl();
   }
-  
+
+  /// \brief Returns true if this is the first declaration.
+  bool isFirstDecl() const {
+    return getPreviousDecl() == 0;
+  }
+
   /// \brief Retrieve the most recent declaration that declares the same entity
   /// as this declaration (which may be this declaration).
   Decl *getMostRecentDecl() { return getMostRecentDeclImpl(); }
