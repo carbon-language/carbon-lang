@@ -912,8 +912,7 @@ void CompileUnit::addAccelType(StringRef Name, std::pair<DIE *, unsigned> Die) {
 
 /// addGlobalName - Add a new global name to the compile unit.
 void CompileUnit::addGlobalName(StringRef Name, DIE *Die, DIScope Context) {
-  std::string ContextString = getParentContextString(Context);
-  std::string FullName = ContextString + Name.str();
+  std::string FullName = getParentContextString(Context) + Name.str();
   GlobalNames[FullName] = Die;
 }
 
@@ -925,9 +924,9 @@ void CompileUnit::addGlobalType(DIType Ty) {
       (!Context || Context.isCompileUnit() || Context.isFile() ||
        Context.isNameSpace()))
     if (DIEEntry *Entry = getDIEEntry(Ty)) {
-      std::string ContextString = getParentContextString(Context);
-      std::string FullName = ContextString + Ty.getName().str();
-      GlobalTypes[FullName] = Entry->getEntry();
+      std::string FullName =
+          getParentContextString(Context) + Ty.getName().str();
+       GlobalTypes[FullName] = Entry->getEntry();
     }
 }
 
@@ -944,7 +943,7 @@ std::string CompileUnit::getParentContextString(DIScope Context) const {
   if (getLanguage() != dwarf::DW_LANG_C_plus_plus)
     return "";
 
-  std::string CS = "";
+  std::string CS;
   SmallVector<DIScope, 1> Parents;
   while (!Context.isCompileUnit()) {
     Parents.push_back(Context);
@@ -963,7 +962,7 @@ std::string CompileUnit::getParentContextString(DIScope Context) const {
        I != E; ++I) {
     DIScope Ctx = *I;
     StringRef Name = Ctx.getName();
-    if (Name != "") {
+    if (!Name.empty()) {
       CS += Name;
       CS += "::";
     }
