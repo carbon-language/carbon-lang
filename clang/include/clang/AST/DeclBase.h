@@ -786,7 +786,7 @@ public:
     return const_cast<Decl *>(this)->getPreviousDeclImpl();
   }
 
-  /// \brief Returns true if this is the first declaration.
+  /// \brief True if this is the first declaration in it's redeclaration chain.
   bool isFirstDecl() const {
     return getPreviousDecl() == 0;
   }
