@@ -503,7 +503,7 @@ void RuntimeDyldImpl::resolveExternalSymbols() {
       } else {
         // We found the symbol in our global table.  It was probably in a
         // Module that we loaded previously.
-        SymbolLoc SymLoc = GlobalSymbolTable.lookup(Name);
+        SymbolLoc SymLoc = Loc->second;
         Addr = getSectionLoadAddress(SymLoc.first) + SymLoc.second;
       }
 

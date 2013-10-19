@@ -308,18 +308,20 @@ public:
   void *getSymbolAddress(StringRef Name) {
     // FIXME: Just look up as a function for now. Overly simple of course.
     // Work in progress.
-    if (GlobalSymbolTable.find(Name) == GlobalSymbolTable.end())
+    SymbolTableMap::const_iterator pos = GlobalSymbolTable.find(Name);
+    if (pos == GlobalSymbolTable.end())
       return 0;
-    SymbolLoc Loc = GlobalSymbolTable.lookup(Name);
+    SymbolLoc Loc = pos->second;
     return getSectionAddress(Loc.first) + Loc.second;
   }
 
   uint64_t getSymbolLoadAddress(StringRef Name) {
     // FIXME: Just look up as a function for now. Overly simple of course.
     // Work in progress.
-    if (GlobalSymbolTable.find(Name) == GlobalSymbolTable.end())
+    SymbolTableMap::const_iterator pos = GlobalSymbolTable.find(Name);
+    if (pos == GlobalSymbolTable.end())
       return 0;
-    SymbolLoc Loc = GlobalSymbolTable.lookup(Name);
+    SymbolLoc Loc = pos->second;
     return getSectionLoadAddress(Loc.first) + Loc.second;
   }
 
