@@ -68,11 +68,6 @@ private:
   // Build a map of Atoms to ordinals for sorting the atoms
   void buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range);
 
-#ifndef NDEBUG
-  // Check if the follow-on graph is a correct structure. For debugging only.
-  void checkFollowonChain(MutableFile::DefinedAtomRange &range);
-#endif
-
   typedef llvm::DenseMap<const DefinedAtom *, const DefinedAtom *> AtomToAtomT;
   typedef llvm::DenseMap<const DefinedAtom *, uint64_t> AtomToOrdinalT;
 
@@ -96,6 +91,14 @@ private:
   bool checkAllPrevAtomsZeroSize(const DefinedAtom *targetAtom);
 
   void setChainRoot(const DefinedAtom *targetAtom, const DefinedAtom *root);
+
+#ifndef NDEBUG
+  // Check if the follow-on graph is a correct structure. For debugging only.
+  void checkFollowonChain(MutableFile::DefinedAtomRange &range);
+
+  typedef std::vector<const DefinedAtom *>::iterator DefinedAtomIter;
+  void checkTransitivity(DefinedAtomIter begin, DefinedAtomIter end) const;
+#endif
 };
 
 } // namespace lld

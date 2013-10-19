@@ -1,0 +1,33 @@
+# RUN: lld -core --add-pass layout -mllvm -debug %s 2> /dev/null | FileCheck %s
+
+---
+defined-atoms:
+  - name:            fn3
+    scope:           global
+  - name:            fn2
+    scope:           global
+    references:
+      - kind:            layout-after
+        offset:          0
+        target:          fn3
+  - name:            fn
+    scope:           global
+    references:
+      - kind:            layout-after
+        offset:          0
+        target:          fn1
+  - name:            fn4
+    scope:           global
+  - name:            fn1
+    scope:           global
+    references:
+      - kind:            layout-after
+        offset:          0
+        target:          fn2
+...
+
+# CHECK:   - name:            fn
+# CHECK:   - name:            fn1
+# CHECK:   - name:            fn2
+# CHECK:   - name:            fn3
+# CHECK:   - name:            fn4

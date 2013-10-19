@@ -28,6 +28,19 @@ std::string formatReason(StringRef reason, int leftVal, int rightVal) {
       Twine(reason) + " (" + Twine(leftVal) + ", " + Twine(rightVal) + ")";
   return std::move(msg.str());
 }
+} // end anonymous namespace
+
+// Less-than relationship of two atoms must be transitive, which is, if a < b
+// and b < c, a < c must be true. This function checks the transitivity by
+// checking the sort results.
+void LayoutPass::checkTransitivity(DefinedAtomIter begin,
+                                   DefinedAtomIter end) const {
+  for (DefinedAtomIter i = begin; (i + 1) != end; ++i) {
+    for (DefinedAtomIter j = i + 1; j != end; ++j) {
+      assert(_compareAtoms(*i, *j));
+      assert(!_compareAtoms(*j, *i));
+    }
+  }
 }
 #endif // NDEBUG
 
@@ -60,27 +73,27 @@ bool LayoutPass::CompareAtoms::compare(const DefinedAtom *left,
     }
   }
 
-  AtomToOrdinalT::const_iterator lPos = _layout._ordinalOverrideMap.find(left);
-  AtomToOrdinalT::const_iterator rPos = _layout._ordinalOverrideMap.find(right);
-  AtomToOrdinalT::const_iterator end = _layout._ordinalOverrideMap.end();
+  // Find the root of the chain if it is a part of a follow-on chain.
+  auto leftFind = _layout._followOnRoots.find(left);
+  auto rightFind = _layout._followOnRoots.find(right);
+  const DefinedAtom *leftRoot =
+      (leftFind == _layout._followOnRoots.end()) ? left : leftFind->second;
+  const DefinedAtom *rightRoot =
+      (rightFind == _layout._followOnRoots.end()) ? right : rightFind->second;
 
   // Sort atoms by their ordinal overrides only if they fall in the same
   // chain.
-  auto leftAtom = _layout._followOnRoots.find(left);
-  auto rightAtom = _layout._followOnRoots.find(right);
-
-  if (leftAtom != _layout._followOnRoots.end() &&
-      rightAtom != _layout._followOnRoots.end() &&
-      leftAtom->second == rightAtom->second) {
-    if ((lPos != end) && (rPos != end)) {
-      DEBUG(reason = formatReason("override", lPos->second, rPos->second));
-      return lPos->second < rPos->second;
-    }
+  AtomToOrdinalT::const_iterator lPos = _layout._ordinalOverrideMap.find(left);
+  AtomToOrdinalT::const_iterator rPos = _layout._ordinalOverrideMap.find(right);
+  AtomToOrdinalT::const_iterator end = _layout._ordinalOverrideMap.end();
+  if (leftRoot == rightRoot && lPos != end && rPos != end) {
+    DEBUG(reason = formatReason("override", lPos->second, rPos->second));
+    return lPos->second < rPos->second;
   }
 
   // Sort same permissions together.
-  DefinedAtom::ContentPermissions leftPerms = left->permissions();
-  DefinedAtom::ContentPermissions rightPerms = right->permissions();
+  DefinedAtom::ContentPermissions leftPerms = leftRoot->permissions();
+  DefinedAtom::ContentPermissions rightPerms = rightRoot->permissions();
 
   if (leftPerms != rightPerms) {
     DEBUG(reason =
@@ -89,8 +102,8 @@ bool LayoutPass::CompareAtoms::compare(const DefinedAtom *left,
   }
 
   // Sort same content types together.
-  DefinedAtom::ContentType leftType = left->contentType();
-  DefinedAtom::ContentType rightType = right->contentType();
+  DefinedAtom::ContentType leftType = leftRoot->contentType();
+  DefinedAtom::ContentType rightType = rightRoot->contentType();
 
   if (leftType != rightType) {
     DEBUG(reason = formatReason("contentType", (int)leftType, (int)rightType));
@@ -98,8 +111,8 @@ bool LayoutPass::CompareAtoms::compare(const DefinedAtom *left,
   }
 
   // Sort by .o order.
-  const File *leftFile = &left->file();
-  const File *rightFile = &right->file();
+  const File *leftFile = &leftRoot->file();
+  const File *rightFile = &rightRoot->file();
 
   if (leftFile != rightFile) {
     DEBUG(reason = formatReason(".o order", (int)leftFile->ordinal(),
@@ -108,12 +121,12 @@ bool LayoutPass::CompareAtoms::compare(const DefinedAtom *left,
   }
 
   // Sort by atom order with .o file.
-  uint64_t leftOrdinal = left->ordinal();
-  uint64_t rightOrdinal = right->ordinal();
+  uint64_t leftOrdinal = leftRoot->ordinal();
+  uint64_t rightOrdinal = rightRoot->ordinal();
 
   if (leftOrdinal != rightOrdinal) {
-    DEBUG(reason = formatReason("ordinal", (int)left->ordinal(),
-                                (int)right->ordinal()));
+    DEBUG(reason = formatReason("ordinal", (int)leftRoot->ordinal(),
+                                (int)rightRoot->ordinal()));
     return leftOrdinal < rightOrdinal;
   }
 
@@ -547,6 +560,8 @@ void LayoutPass::perform(MutableFile &mergedFile) {
 
   // sort the atoms
   std::sort(atomRange.begin(), atomRange.end(), _compareAtoms);
+
+  DEBUG(checkTransitivity(atomRange.begin(), atomRange.end()));
 
   DEBUG({
     llvm::dbgs() << "sorted atoms:\n";
