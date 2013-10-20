@@ -79,7 +79,7 @@ static int CompareOptionRecords(Record *const *Av, Record *const *Bv) {
   if (APrec == BPrec &&
       A->getValueAsListOfStrings("Prefixes") ==
       B->getValueAsListOfStrings("Prefixes")) {
-    PrintError(A->getLoc(), Twine("Option is equivilent to"));
+    PrintError(A->getLoc(), Twine("Option is equivalent to"));
     PrintError(B->getLoc(), Twine("Other defined here"));
     PrintFatalError("Equivalent Options found.");
   }
