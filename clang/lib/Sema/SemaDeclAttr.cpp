@@ -2899,10 +2899,15 @@ static void handleCleanupAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   } else if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(E)) {
     if (ULE->hasExplicitTemplateArgs())
       S.Diag(Loc, diag::warn_cleanup_ext);
-
-    // This will diagnose the case where the function cannot be found.
     FD = S.ResolveSingleFunctionTemplateSpecialization(ULE, true);
     NI = ULE->getNameInfo();
+    if (!FD) {
+      S.Diag(Loc, diag::err_attribute_cleanup_arg_not_function) << 2
+        << NI.getName();
+      if (ULE->getType() == S.Context.OverloadTy)
+        S.NoteAllOverloadCandidates(ULE);
+      return;
+    }
   } else {
     S.Diag(Loc, diag::err_attribute_cleanup_arg_not_function) << 0;
     return;

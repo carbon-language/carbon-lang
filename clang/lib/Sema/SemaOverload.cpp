@@ -9672,6 +9672,9 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *AddressOfExpr,
 /// template, where that template-id refers to a single template whose template
 /// arguments are either provided by the template-id or have defaults,
 /// as described in C++0x [temp.arg.explicit]p3.
+///
+/// If no template-ids are found, no diagnostics are emitted and NULL is
+/// returned.
 FunctionDecl *
 Sema::ResolveSingleFunctionTemplateSpecialization(OverloadExpr *ovl, 
                                                   bool Complain,

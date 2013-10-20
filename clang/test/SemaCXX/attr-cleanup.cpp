@@ -19,3 +19,11 @@ class D : public C {
     int v1 __attribute__((cleanup(c2)));  // expected-error {{'c2' is a private member of 'C'}}
   }
 };
+
+namespace E {
+  void c3(int *a) {} // expected-note {{candidate function}}
+  void c3() {}       // expected-note {{candidate function}}
+  void t3() {
+    int v1 __attribute__((cleanup(c3))); // expected-error {{'c3' is not a single function}}
+  }
+}
