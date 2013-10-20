@@ -1705,15 +1705,13 @@ static void addSanitizerRTLinkFlagsLinux(
   // Sanitizer runtime may need to come before -lstdc++ (or -lc++, libstdc++.a,
   // etc.) so that the linker picks custom versions of the global 'operator
   // new' and 'operator delete' symbols. We take the extreme (but simple)
-  // strategy of inserting it at the front of the link command. If we're
-  // responsible for exporting the symbols then it also needs to be forced to
-  // end up in the executable, so wrap it in whole-archive.
+  // strategy of inserting it at the front of the link command. It also
+  // needs to be forced to end up in the executable, so wrap it in
+  // whole-archive.
   SmallVector<const char *, 3> LibSanitizerArgs;
-  if (ExportSymbols)
-    LibSanitizerArgs.push_back("-whole-archive");
+  LibSanitizerArgs.push_back("-whole-archive");
   LibSanitizerArgs.push_back(Args.MakeArgString(LibSanitizer));
-  if (ExportSymbols)
-    LibSanitizerArgs.push_back("-no-whole-archive");
+  LibSanitizerArgs.push_back("-no-whole-archive");
 
   CmdArgs.insert(BeforeLibStdCXX ? CmdArgs.begin() : CmdArgs.end(),
                  LibSanitizerArgs.begin(), LibSanitizerArgs.end());
@@ -1779,18 +1777,17 @@ static void addLsanRTLinux(const ToolChain &TC, const ArgList &Args,
 static void addUbsanRTLinux(const ToolChain &TC, const ArgList &Args,
                             ArgStringList &CmdArgs, bool IsCXX,
                             bool HasOtherSanitizerRt) {
-  // Only include the bits of the runtime which need a C++ ABI library if
-  // we're linking in C++ mode.
-  if (IsCXX)
-    addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "ubsan_cxx", false, false);
-
-  // Now insert the common ubsan bits. ubsan_cxx depends on them.
-  addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "ubsan", false, false);
-
   // Need a copy of sanitizer_common. This could come from another sanitizer
   // runtime; if we're not including one, include our own copy.
   if (!HasOtherSanitizerRt)
-    addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "san", false, false);
+    addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "san", true, false);
+
+  addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "ubsan", false);
+
+  // Only include the bits of the runtime which need a C++ ABI library if
+  // we're linking in C++ mode.
+  if (IsCXX)
+    addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "ubsan_cxx", false);
 }
 
 static void addDfsanRTLinux(const ToolChain &TC, const ArgList &Args,
