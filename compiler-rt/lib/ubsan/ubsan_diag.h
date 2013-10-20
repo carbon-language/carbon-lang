@@ -80,6 +80,12 @@ public:
 /// an invalid location or a module location for the caller.
 Location getCallerLocation(uptr CallerLoc = GET_CALLER_PC());
 
+/// Try to obtain a location for the given function pointer. This might fail,
+/// and produce either an invalid location or a module location for the caller.
+/// If FName is non-null and the name of the function is known, set *FName to
+/// the function name, otherwise *FName is unchanged.
+Location getFunctionLocation(uptr Loc, const char **FName);
+
 /// A diagnostic severity level.
 enum DiagLevel {
   DL_Error, ///< An error.

@@ -8,6 +8,7 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS)
   # working binaries.
   set(UBSAN_TEST_DEPS
     ${SANITIZER_COMMON_LIT_TEST_DEPS}
+    asan
     ${UBSAN_RUNTIME_LIBRARIES})
   set(UBSAN_TEST_PARAMS
     ubsan_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg

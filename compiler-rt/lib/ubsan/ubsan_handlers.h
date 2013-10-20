@@ -112,6 +112,15 @@ struct InvalidValueData {
 /// \brief Handle a load of an invalid value for the type.
 RECOVERABLE(load_invalid_value, InvalidValueData *Data, ValueHandle Val)
 
+struct FunctionTypeMismatchData {
+  SourceLocation Loc;
+  const TypeDescriptor &Type;
+};
+
+RECOVERABLE(function_type_mismatch,
+            FunctionTypeMismatchData *Data,
+            ValueHandle Val)
+
 }
 
 #endif // UBSAN_HANDLERS_H
