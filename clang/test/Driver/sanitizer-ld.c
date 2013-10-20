@@ -113,8 +113,8 @@
 // RUN:   | FileCheck --check-prefix=CHECK-UBSAN-LINUX-CXX %s
 // CHECK-UBSAN-LINUX-CXX: "{{.*}}ld{{(.exe)?}}"
 // CHECK-UBSAN-LINUX-CXX-NOT: libclang_rt.asan
-// CHECK-UBSAN-LINUX-CXX: "{{.*}}libclang_rt.ubsan-i386.a"
 // CHECK-UBSAN-LINUX-CXX: "{{.*}}libclang_rt.ubsan_cxx-i386.a"
+// CHECK-UBSAN-LINUX-CXX: "{{.*}}libclang_rt.ubsan-i386.a"
 // CHECK-UBSAN-LINUX-CXX-NOT: libclang_rt.asan
 // CHECK-UBSAN-LINUX-CXX: "{{.*}}libclang_rt.san-i386.a"
 // CHECK-UBSAN-LINUX-CXX-NOT: libclang_rt.asan
@@ -142,8 +142,8 @@
 // CHECK-ASAN-UBSAN-LINUX-CXX-NOT: libclang_rt.san
 // CHECK-ASAN-UBSAN-LINUX-CXX: "-whole-archive" "{{.*}}libclang_rt.asan-i386.a" "-no-whole-archive"
 // CHECK-ASAN-UBSAN-LINUX-CXX-NOT: libclang_rt.san
-// CHECK-ASAN-UBSAN-LINUX-CXX: "{{.*}}libclang_rt.ubsan-i386.a"
 // CHECK-ASAN-UBSAN-LINUX-CXX: "{{.*}}libclang_rt.ubsan_cxx-i386.a"
+// CHECK-ASAN-UBSAN-LINUX-CXX: "{{.*}}libclang_rt.ubsan-i386.a"
 // CHECK-ASAN-UBSAN-LINUX-CXX: "-lpthread"
 // CHECK-ASAN-UBSAN-LINUX-CXX: "-lstdc++"
 

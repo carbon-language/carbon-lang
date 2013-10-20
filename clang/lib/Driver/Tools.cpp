@@ -1779,12 +1779,13 @@ static void addLsanRTLinux(const ToolChain &TC, const ArgList &Args,
 static void addUbsanRTLinux(const ToolChain &TC, const ArgList &Args,
                             ArgStringList &CmdArgs, bool IsCXX,
                             bool HasOtherSanitizerRt) {
-  addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "ubsan", false, false);
-
   // Only include the bits of the runtime which need a C++ ABI library if
   // we're linking in C++ mode.
   if (IsCXX)
     addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "ubsan_cxx", false, false);
+
+  // Now insert the common ubsan bits. ubsan_cxx depends on them.
+  addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "ubsan", false, false);
 
   // Need a copy of sanitizer_common. This could come from another sanitizer
   // runtime; if we're not including one, include our own copy.
