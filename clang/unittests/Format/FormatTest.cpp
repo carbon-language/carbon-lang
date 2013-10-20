@@ -2397,6 +2397,12 @@ TEST_F(FormatTest, LayoutNestedBlocks) {
                    "});",
                    getLLVMStyleWithColumns(29)));
   EXPECT_EQ("DEBUG({ int i; });", format("DEBUG({ int   i; });"));
+  EXPECT_EQ("DEBUG({ // comment\n"
+            "  int i;\n"
+            "});",
+            format("DEBUG({ // comment\n"
+                   "int  i;\n"
+                   "});"));
   EXPECT_EQ("DEBUG({\n"
             "  int i;\n"
             "\n"

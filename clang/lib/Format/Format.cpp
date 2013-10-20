@@ -541,9 +541,10 @@ private:
   /// break or don't break.
   bool formatChildren(LineState &State, bool NewLine, bool DryRun,
                       unsigned &Penalty) {
-    const FormatToken &LBrace = *State.NextToken->Previous;
-    if (LBrace.isNot(tok::l_brace) || LBrace.BlockKind != BK_Block ||
-        LBrace.Children.size() == 0)
+    const FormatToken &Previous = *State.NextToken->Previous;
+    const FormatToken *LBrace = State.NextToken->getPreviousNonComment();
+    if (!LBrace || LBrace->isNot(tok::l_brace) ||
+        LBrace->BlockKind != BK_Block || Previous.Children.size() == 0)
       // The previous token does not open a block. Nothing to do. We don't
       // assert so that we can simply call this function for all tokens.
       return true;
@@ -551,8 +552,8 @@ private:
     if (NewLine) {
       unsigned ParentIndent = State.Stack.back().Indent;
       for (SmallVector<AnnotatedLine *, 1>::const_iterator
-               I = LBrace.Children.begin(),
-               E = LBrace.Children.end();
+               I = Previous.Children.begin(),
+               E = Previous.Children.end();
            I != E; ++I) {
         unsigned Indent =
             ParentIndent + ((*I)->Level - Line.Level - 1) * Style.IndentWidth;
@@ -570,24 +571,24 @@ private:
       return true;
     }
 
-    if (LBrace.Children.size() > 1)
+    if (Previous.Children.size() > 1)
       return false; // Cannot merge multiple statements into a single line.
 
     // We can't put the closing "}" on a line with a trailing comment.
-    if (LBrace.Children[0]->Last->isTrailingComment())
+    if (Previous.Children[0]->Last->isTrailingComment())
       return false;
 
     if (!DryRun) {
       Whitespaces->replaceWhitespace(
-          *LBrace.Children[0]->First,
+          *Previous.Children[0]->First,
           /*Newlines=*/0, /*IndentLevel=*/0, /*Spaces=*/1,
           /*StartOfTokenColumn=*/State.Column, State.Line->InPPDirective);
       UnwrappedLineFormatter Formatter(Indenter, Whitespaces, Style,
-                                       *LBrace.Children[0]);
+                                       *Previous.Children[0]);
       Penalty += Formatter.format(State.Column + 1, DryRun);
     }
 
-    State.Column += 1 + LBrace.Children[0]->Last->TotalLength;
+    State.Column += 1 + Previous.Children[0]->Last->TotalLength;
     return true;
   }
 
