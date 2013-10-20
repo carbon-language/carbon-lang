@@ -248,6 +248,9 @@ ProcessMessage::PrintKind(Kind kind)
     case eNewThreadMessage:
         str = "eNewThreadMessage";
         break;
+    case eExecMessage:
+        str = "eExecMessage";
+        break;
     }
 #endif
 
