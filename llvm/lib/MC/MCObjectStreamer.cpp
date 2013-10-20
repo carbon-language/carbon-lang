@@ -305,6 +305,7 @@ void MCObjectStreamer::EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
 }
 
 void MCObjectStreamer::EmitBytes(StringRef Data) {
+  MCLineEntry::Make(this, getCurrentSection().first);
   getOrCreateDataFragment()->getContents().append(Data.begin(), Data.end());
 }
 
