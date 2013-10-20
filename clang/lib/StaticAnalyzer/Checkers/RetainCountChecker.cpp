@@ -2609,7 +2609,7 @@ void RetainCountChecker::checkPostStmt(const CastExpr *CE,
       AE = IncRef;
       break;      
     case clang::OBC_BridgeTransfer:
-      AE = DecRefBridgedTransfered;
+      AE = DecRefBridgedTransferred;
       break;
   }
   
@@ -2997,7 +2997,7 @@ RetainCountChecker::updateSymbol(ProgramStateRef state, SymbolRef sym,
       break;
 
     case DecRef:
-    case DecRefBridgedTransfered:
+    case DecRefBridgedTransferred:
     case DecRefAndStopTrackingHard:
       switch (V.getKind()) {
         default:
@@ -3007,8 +3007,8 @@ RetainCountChecker::updateSymbol(ProgramStateRef state, SymbolRef sym,
         case RefVal::Owned:
           assert(V.getCount() > 0);
           if (V.getCount() == 1)
-            V = V ^ (E == DecRefBridgedTransfered ? 
-                      RefVal::NotOwned : RefVal::Released);
+            V = V ^ (E == DecRefBridgedTransferred ? RefVal::NotOwned
+                                                   : RefVal::Released);
           else if (E == DecRefAndStopTrackingHard)
             return removeRefBinding(state, sym);
 
