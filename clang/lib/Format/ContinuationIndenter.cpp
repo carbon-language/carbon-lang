@@ -136,6 +136,9 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       !Previous.isOneOf(tok::kw_return, tok::lessless) &&
       Previous.Type != TT_InlineASMColon && NextIsMultilineString(State))
     return true;
+  if (Previous.Type == TT_ObjCDictLiteral && Previous.is(tok::l_brace) &&
+      getLengthToMatchingParen(Previous) + State.Column > getColumnLimit(State))
+    return true;
 
   if (!Style.BreakBeforeBinaryOperators) {
     // If we need to break somewhere inside the LHS of a binary expression, we
@@ -593,11 +596,15 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
 
   // If this '[' opens an ObjC call, determine whether all parameters fit into
   // one line and put one per line if they don't.
-  if (Current.is(tok::l_square) && Current.Type == TT_ObjCMethodExpr &&
+  if (Current.isOneOf(tok::l_brace, tok::l_square) &&
+      (Current.Type == TT_ObjCDictLiteral ||
+       Current.Type == TT_ObjCMethodExpr) &&
       Current.MatchingParen != NULL) {
     if (getLengthToMatchingParen(Current) + State.Column >
-        getColumnLimit(State))
+        getColumnLimit(State)) {
       State.Stack.back().BreakBeforeParameter = true;
+      State.Stack.back().AvoidBinPacking = true;
+    }
   }
 
   // If we encounter a closing ), ], } or >, we can remove a level from our
