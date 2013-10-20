@@ -49,7 +49,9 @@
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/CommandObjectMultiword.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#ifndef LLDB_DISABLE_PYTHON
 #include "lldb/Interpreter/PythonDataObjects.h"
+#endif
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/Target.h"
@@ -320,6 +322,7 @@ ProcessGDBRemote::GetPluginVersion()
 bool
 ProcessGDBRemote::ParsePythonTargetDefinition(const FileSpec &target_definition_fspec)
 {
+#ifndef LLDB_DISABLE_PYTHON
     ScriptInterpreter *interpreter = GetTarget().GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
     Error error;
     lldb::ScriptInterpreterObjectSP module_object_sp (interpreter->LoadPluginModule(target_definition_fspec, error));
@@ -353,6 +356,7 @@ ProcessGDBRemote::ParsePythonTargetDefinition(const FileSpec &target_definition_
             }
         }
     }
+#endif
     return false;
 }
 
