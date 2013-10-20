@@ -1,6 +1,6 @@
-// RUN: %clang -DADD_I32 -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=CHECK-ADD_I32
-// RUN: %clang -DADD_I64 -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=CHECK-ADD_I64
-// RUN: %clang -DADD_I128 -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=CHECK-ADD_I128
+// RUN: %clangxx -DADD_I32 -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=CHECK-ADD_I32
+// RUN: %clangxx -DADD_I64 -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=CHECK-ADD_I64
+// RUN: %clangxx -DADD_I128 -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=CHECK-ADD_I128
 
 #include <stdint.h>
 #include <stdio.h>

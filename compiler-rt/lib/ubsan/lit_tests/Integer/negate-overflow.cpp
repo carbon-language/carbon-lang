@@ -1,5 +1,5 @@
-// RUN: %clang -fsanitize=signed-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=CHECKS
-// RUN: %clang -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=CHECKU
+// RUN: %clangxx -fsanitize=signed-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=CHECKS
+// RUN: %clangxx -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=CHECKU
 
 int main() {
   // CHECKS-NOT: runtime error

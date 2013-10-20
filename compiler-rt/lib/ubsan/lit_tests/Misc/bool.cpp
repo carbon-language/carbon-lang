@@ -1,4 +1,4 @@
-// RUN: %clang -fsanitize=bool %s -O3 -o %T/bool.exe && %T/bool.exe 2>&1 | FileCheck %s
+// RUN: %clangxx -fsanitize=bool %s -O3 -o %T/bool.exe && %T/bool.exe 2>&1 | FileCheck %s
 
 unsigned char NotABool = 123;
 

@@ -1,4 +1,4 @@
-// RUN: %clang -fsanitize=alignment %s -O3 -o %t
+// RUN: %clangxx -fsanitize=alignment %s -O3 -o %t
 // RUN: %t l0 && %t s0 && %t r0 && %t m0 && %t f0 && %t n0
 // RUN: %t l1 2>&1 | FileCheck %s --check-prefix=CHECK-LOAD --strict-whitespace
 // RUN: %t s1 2>&1 | FileCheck %s --check-prefix=CHECK-STORE

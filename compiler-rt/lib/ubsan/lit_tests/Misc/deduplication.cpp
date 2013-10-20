@@ -1,4 +1,4 @@
-// RUN: %clang -fsanitize=undefined %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx -fsanitize=undefined %s -o %t && %t 2>&1 | FileCheck %s
 // Verify deduplication works by ensuring only one diag is emitted.
 #include <limits.h>
 #include <stdio.h>

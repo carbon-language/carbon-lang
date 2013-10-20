@@ -1,7 +1,7 @@
-// RUN: %clang -DOP=n++ -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck --check-prefix=CHECK-INC %s
-// RUN: %clang -DOP=++n -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck --check-prefix=CHECK-INC %s
-// RUN: %clang -DOP=m-- -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck --check-prefix=CHECK-DEC %s
-// RUN: %clang -DOP=--m -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck --check-prefix=CHECK-DEC %s
+// RUN: %clangxx -DOP=n++ -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck --check-prefix=CHECK-INC %s
+// RUN: %clangxx -DOP=++n -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck --check-prefix=CHECK-INC %s
+// RUN: %clangxx -DOP=m-- -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck --check-prefix=CHECK-DEC %s
+// RUN: %clangxx -DOP=--m -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck --check-prefix=CHECK-DEC %s
 
 #include <stdint.h>
 

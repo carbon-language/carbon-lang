@@ -1,4 +1,4 @@
-// RUN: %clang -fsanitize=bounds %s -O3 -o %T/bounds.exe
+// RUN: %clangxx -fsanitize=bounds %s -O3 -o %T/bounds.exe
 // RUN: %T/bounds.exe 0 0 0
 // RUN: %T/bounds.exe 1 2 3
 // RUN: %T/bounds.exe 2 0 0 2>&1 | FileCheck %s --check-prefix=CHECK-A-2
