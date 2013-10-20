@@ -16,6 +16,7 @@
 #include "CGCXXABI.h"
 #include "CGDebugInfo.h"
 #include "CodeGenModule.h"
+#include "TargetInfo.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
@@ -517,6 +518,22 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
     // Add metadata for a kernel function.
     if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
       EmitOpenCLKernelMetadata(FD, Fn);
+  }
+
+  // If we are checking function types, emit a function type signature as
+  // prefix data.
+  if (getLangOpts().CPlusPlus && SanOpts->Function) {
+    if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D)) {
+      if (llvm::Constant *PrefixSig =
+              CGM.getTargetCodeGenInfo().getUBSanFunctionSignature(CGM)) {
+        llvm::Constant *FTRTTIConst =
+            CGM.GetAddrOfRTTIDescriptor(FD->getType(), /*ForEH=*/true);
+        llvm::Constant *PrefixStructElems[] = { PrefixSig, FTRTTIConst };
+        llvm::Constant *PrefixStructConst =
+            llvm::ConstantStruct::getAnon(PrefixStructElems, /*Packed=*/true);
+        Fn->setPrefixData(PrefixStructConst);
+      }
+    }
   }
 
   llvm::BasicBlock *EntryBB = createBasicBlock("entry", CurFn);

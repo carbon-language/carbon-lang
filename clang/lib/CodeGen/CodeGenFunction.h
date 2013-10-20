@@ -2073,6 +2073,7 @@ public:
                   llvm::Instruction **callOrInvoke = 0);
 
   RValue EmitCall(QualType FnType, llvm::Value *Callee,
+                  SourceLocation CallLoc,
                   ReturnValueSlot ReturnValue,
                   CallExpr::const_arg_iterator ArgBeg,
                   CallExpr::const_arg_iterator ArgEnd,

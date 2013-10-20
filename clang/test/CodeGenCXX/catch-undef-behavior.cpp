@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -fsanitize=signed-integer-overflow,integer-divide-by-zero,float-divide-by-zero,shift,unreachable,return,vla-bound,alignment,null,vptr,object-size,float-cast-overflow,bool,enum,bounds -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -fsanitize=signed-integer-overflow,integer-divide-by-zero,float-divide-by-zero,shift,unreachable,return,vla-bound,alignment,null,vptr,object-size,float-cast-overflow,bool,enum,bounds,function -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
 
 struct S {
   double d;
@@ -370,6 +370,24 @@ void downcast_reference(B &b) {
   // AND the alignment test with the objectsize test.
   // CHECK-NEXT: [[AND:%[0-9]*]] = and i1 {{.*}}, [[TEST]]
   // CHECK-NEXT: br i1 [[AND]]
+}
+
+// CHECK-LABEL: @_Z22indirect_function_callPFviE({{.*}} prefix <{ i32, i8* }> <{ i32 1413876459, i8* bitcast ({ i8*, i8* }* @_ZTIFvPFviEE to i8*) }>
+void indirect_function_call(void (*p)(int)) {
+  // CHECK: [[PTR:%[0-9]*]] = bitcast void (i32)* {{.*}} to <{ i32, i8* }>*
+
+  // Signature check
+  // CHECK-NEXT: [[SIGPTR:%[0-9]*]] = getelementptr <{ i32, i8* }>* [[PTR]], i32 0, i32 0
+  // CHECK-NEXT: [[SIG:%[0-9]*]] = load i32* [[SIGPTR]]
+  // CHECK-NEXT: [[SIGCMP:%[0-9]*]] = icmp eq i32 [[SIG]], 1413876459
+  // CHECK-NEXT: br i1 [[SIGCMP]]
+
+  // RTTI pointer check
+  // CHECK: [[RTTIPTR:%[0-9]*]] = getelementptr <{ i32, i8* }>* [[PTR]], i32 0, i32 1
+  // CHECK-NEXT: [[RTTI:%[0-9]*]] = load i8** [[RTTIPTR]]
+  // CHECK-NEXT: [[RTTICMP:%[0-9]*]] = icmp eq i8* [[RTTI]], bitcast ({ i8*, i8* }* @_ZTIFviE to i8*)
+  // CHECK-NEXT: br i1 [[RTTICMP]]
+  p(42);
 }
 
 namespace CopyValueRepresentation {

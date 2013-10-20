@@ -21,6 +21,7 @@
 #include "llvm/ADT/SmallString.h"
 
 namespace llvm {
+  class Constant;
   class GlobalValue;
   class Type;
   class Value;
@@ -134,6 +135,13 @@ namespace clang {
     /// empty if none is required.
     virtual StringRef getARCRetainAutoreleasedReturnValueMarker() const {
       return "";
+    }
+
+    /// Return a constant used by UBSan as a signature to identify functions
+    /// possessing type information, or 0 if the platform is unsupported.
+    virtual llvm::Constant *getUBSanFunctionSignature(
+        CodeGen::CodeGenModule &CGM) const {
+      return 0;
     }
 
     /// Determine whether a call to an unprototyped functions under

@@ -64,6 +64,7 @@ SANITIZER("bounds", Bounds)
 SANITIZER("enum", Enum)
 SANITIZER("float-cast-overflow", FloatCastOverflow)
 SANITIZER("float-divide-by-zero", FloatDivideByZero)
+SANITIZER("function", Function)
 SANITIZER("integer-divide-by-zero", IntegerDivideByZero)
 SANITIZER("null", Null)
 SANITIZER("object-size", ObjectSize)
@@ -84,9 +85,9 @@ SANITIZER("dataflow", DataFlow)
 // ABI or address space layout implications, and only catch undefined behavior.
 SANITIZER_GROUP("undefined", Undefined,
                 Alignment | Bool | Bounds | Enum | FloatCastOverflow |
-                FloatDivideByZero | IntegerDivideByZero | Null | ObjectSize |
-                Return | Shift | SignedIntegerOverflow | Unreachable |
-                VLABound | Vptr)
+                FloatDivideByZero | Function | IntegerDivideByZero | Null |
+                ObjectSize | Return | Shift | SignedIntegerOverflow |
+                Unreachable | VLABound | Vptr)
 
 // -fsanitize=undefined-trap (and its alias -fcatch-undefined-behavior) includes
 // all sanitizers included by -fsanitize=undefined, except those that require

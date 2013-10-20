@@ -601,6 +601,14 @@ public:
     return X86AdjustInlineAsmType(CGF, Constraint, Ty);
   }
 
+  llvm::Constant *getUBSanFunctionSignature(CodeGen::CodeGenModule &CGM) const {
+    unsigned Sig = (0xeb << 0) |  // jmp rel8
+                   (0x06 << 8) |  //           .+0x08
+                   ('F' << 16) |
+                   ('T' << 24);
+    return llvm::ConstantInt::get(CGM.Int32Ty, Sig);
+  }
+
 };
 
 }
@@ -1282,6 +1290,14 @@ public:
     }
 
     return TargetCodeGenInfo::isNoProtoCallVariadic(args, fnType);
+  }
+
+  llvm::Constant *getUBSanFunctionSignature(CodeGen::CodeGenModule &CGM) const {
+    unsigned Sig = (0xeb << 0) |  // jmp rel8
+                   (0x0a << 8) |  //           .+0x0c
+                   ('F' << 16) |
+                   ('T' << 24);
+    return llvm::ConstantInt::get(CGM.Int32Ty, Sig);
   }
 
 };

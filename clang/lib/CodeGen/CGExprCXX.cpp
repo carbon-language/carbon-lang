@@ -86,7 +86,8 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
     // The method is static, emit it as we would a regular call.
     llvm::Value *Callee = CGM.GetAddrOfFunction(MD);
     return EmitCall(getContext().getPointerType(MD->getType()), Callee,
-                    ReturnValue, CE->arg_begin(), CE->arg_end());
+                    CE->getLocStart(), ReturnValue, CE->arg_begin(),
+                    CE->arg_end());
   }
 
   // Compute the object pointer.
