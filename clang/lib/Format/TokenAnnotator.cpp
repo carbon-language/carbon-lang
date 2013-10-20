@@ -1237,7 +1237,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Left.is(tok::less) || Right.isOneOf(tok::greater, tok::less))
     return false;
   if (Right.is(tok::ellipsis))
-    return false;
+    return Left.Tok.isLiteral();
   if (Left.is(tok::l_square) && Right.is(tok::amp))
     return false;
   if (Right.Type == TT_PointerOrReference)

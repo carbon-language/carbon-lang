@@ -590,6 +590,14 @@ TEST_F(FormatTest, FormatsSwitchStatement) {
                "});");
 }
 
+TEST_F(FormatTest, CaseRanges) {
+  verifyFormat("switch (x) {\n"
+               "case 'A' ... 'Z':\n"
+               "case 1 ... 5:\n"
+               "  break;\n"
+               "}");
+}
+
 TEST_F(FormatTest, FormatsLabels) {
   verifyFormat("void f() {\n"
                "  some_code();\n"
