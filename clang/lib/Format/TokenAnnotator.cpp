@@ -96,8 +96,15 @@ private:
     }
 
     if (Left->Previous && Left->Previous->isOneOf(tok::kw_static_assert,
-                                                  tok::kw_if, tok::kw_while))
+                                                  tok::kw_if, tok::kw_while)) {
+      // static_assert, if and while usually contain expressions.
       Contexts.back().IsExpression = true;
+    } else if (Left->Previous && Left->Previous->is(tok::r_square) &&
+               Left->Previous->MatchingParen &&
+               Left->Previous->MatchingParen->Type == TT_LambdaLSquare) {
+      // This is a parameter list of a lambda expression.
+      Contexts.back().IsExpression = false;
+    }
 
     if (StartsObjCMethodExpr) {
       Contexts.back().ColonIsObjCMethodExpr = true;
