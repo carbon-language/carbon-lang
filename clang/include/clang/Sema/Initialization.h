@@ -129,7 +129,7 @@ private:
     DeclaratorDecl *VariableOrMember;
     
     /// \brief When Kind == EK_RelatedResult, the ObjectiveC method where
-    /// result type was implicitly changed to accomodate ARC semantics.
+    /// result type was implicitly changed to accommodate ARC semantics.
     ObjCMethodDecl *MethodDecl;
 
     /// \brief When Kind == EK_Parameter, the ParmVarDecl, with the

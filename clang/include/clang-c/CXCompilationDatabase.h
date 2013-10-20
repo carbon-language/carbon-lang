@@ -58,7 +58,7 @@ typedef void * CXCompileCommand;
  */
 typedef enum  {
   /*
-   * \brief No error occured
+   * \brief No error occurred
    */
   CXCompilationDatabase_NoError = 0,
 

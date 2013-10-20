@@ -308,7 +308,7 @@
 /// to another.
 ///
 /// For a specific \c SpecificType, the traversal is done using 
-/// \c SpecificType::FunctionName. The existance of such a function determines
+/// \c SpecificType::FunctionName. The existence of such a function determines
 /// whether a corresponding matcher can be used on \c SpecificType.
 #define AST_TYPE_TRAVERSE_MATCHER(MatcherName, FunctionName, ReturnTypesF)     \
   namespace internal {                                                         \

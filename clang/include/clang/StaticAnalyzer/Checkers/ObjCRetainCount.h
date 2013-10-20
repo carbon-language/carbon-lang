@@ -46,7 +46,7 @@ enum ArgEffect {
 
   /// The argument has its reference count decreased by 1 to model
   /// a transferred bridge cast under ARC.
-  DecRefBridgedTransfered,
+  DecRefBridgedTransferred,
 
   /// The argument has its reference count increased by 1.  This is as
   /// if a -retain message has been sent to the argument.  This differs

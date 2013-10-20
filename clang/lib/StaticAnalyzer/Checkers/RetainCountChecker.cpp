@@ -818,7 +818,7 @@ static ArgEffect getStopTrackingHardEquivalent(ArgEffect E) {
   switch (E) {
   case DoNothing:
   case Autorelease:
-  case DecRefBridgedTransfered:
+  case DecRefBridgedTransferred:
   case IncRef:
   case IncRefMsg:
   case MakeCollectable:
