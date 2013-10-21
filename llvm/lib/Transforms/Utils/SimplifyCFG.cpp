@@ -3741,18 +3741,20 @@ static bool SwitchToLookupTable(SwitchInst *SI,
 
   // Compute the maximum table size representable by the integer type we are
   // switching upon.
-  const unsigned CaseSize = MinCaseVal->getType()->getPrimitiveSizeInBits();
-  const uint64_t MaxTableSize = CaseSize > 63? UINT64_MAX : 1ULL << CaseSize;
+  unsigned CaseSize = MinCaseVal->getType()->getPrimitiveSizeInBits();
+  uint64_t MaxTableSize = CaseSize > 63? UINT64_MAX : 1ULL << CaseSize;
   assert(MaxTableSize >= TableSize &&
          "It is impossible for a switch to have more entries than the max "
          "representable value of its input integer type's size.");
 
-  // If we have a covered lookup table, unconditionally branch to the lookup table
-  // BB. Otherwise, check if the condition value is within the case range. If it
-  // is so, branch to the new BB. Otherwise branch to SI's default destination.
+  // If we have a fully covered lookup table, unconditionally branch to the
+  // lookup table BB. Otherwise, check if the condition value is within the case
+  // range. If it is so, branch to the new BB. Otherwise branch to SI's default
+  // destination.
   const bool GeneratingCoveredLookupTable = MaxTableSize == TableSize;
   if (GeneratingCoveredLookupTable) {
     Builder.CreateBr(LookupBB);
+    SI->getDefaultDest()->removePredecessor(SI->getParent());
   } else {
     Value *Cmp = Builder.CreateICmpULT(TableIndex, ConstantInt::get(
                                          MinCaseVal->getType(), TableSize));
@@ -3786,14 +3788,10 @@ static bool SwitchToLookupTable(SwitchInst *SI,
     Builder.CreateBr(CommonDest);
 
   // Remove the switch.
-  for (unsigned i = 0; i < SI->getNumSuccessors(); ++i) {
+  for (unsigned i = 0, e = SI->getNumSuccessors(); i < e; ++i) {
     BasicBlock *Succ = SI->getSuccessor(i);
 
-    // If we are not generating a covered lookup table, we will have a
-    // conditional branch from SI's parent BB to SI's default destination if our
-    // input value lies outside of our case range. Thus in that case leave the
-    // default destination BB as a predecessor of SI's parent BB.
-    if (Succ == SI->getDefaultDest() && !GeneratingCoveredLookupTable)
+    if (Succ == SI->getDefaultDest())
       continue;
     Succ->removePredecessor(SI->getParent());
   }
