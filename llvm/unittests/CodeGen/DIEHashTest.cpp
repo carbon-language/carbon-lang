@@ -198,4 +198,70 @@ TEST(DIEHashTest, Pointer) {
 
   ASSERT_EQ(0x74ea73862e8708d2ULL, MD5Res);
 }
+
+// struct foo { foo &mem; };
+TEST(DIEHashTest, Reference) {
+  DIE Foo(dwarf::DW_TAG_structure_type);
+  DIEInteger Eight(8);
+  Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
+  DIEString FooStr(&Eight, "foo");
+  Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FooStr);
+
+  DIE *Mem = new DIE(dwarf::DW_TAG_member);
+  DIEString MemStr(&Eight, "mem");
+  Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &MemStr);
+  DIEInteger Zero(0);
+  Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, &Zero);
+
+  DIE FooRef(dwarf::DW_TAG_reference_type);
+  FooRef.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
+  DIEEntry FooEntry(&Foo);
+  FooRef.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooEntry);
+
+  DIE FooRefConst(dwarf::DW_TAG_const_type);
+  DIEEntry FooRefRef(&FooRef);
+  FooRefConst.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooRefRef);
+
+  DIEEntry FooRefConstRef(&FooRefConst);
+  Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooRefConstRef);
+
+  Foo.addChild(Mem);
+
+  uint64_t MD5Res = DIEHash().computeTypeSignature(&Foo);
+
+  ASSERT_EQ(0xa0b15f467ad4525bULL, MD5Res);
+}
+
+// struct foo { foo &&mem; };
+TEST(DIEHashTest, RValueReference) {
+  DIE Foo(dwarf::DW_TAG_structure_type);
+  DIEInteger Eight(8);
+  Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
+  DIEString FooStr(&Eight, "foo");
+  Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FooStr);
+
+  DIE *Mem = new DIE(dwarf::DW_TAG_member);
+  DIEString MemStr(&Eight, "mem");
+  Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &MemStr);
+  DIEInteger Zero(0);
+  Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, &Zero);
+
+  DIE FooRef(dwarf::DW_TAG_rvalue_reference_type);
+  FooRef.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
+  DIEEntry FooEntry(&Foo);
+  FooRef.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooEntry);
+
+  DIE FooRefConst(dwarf::DW_TAG_const_type);
+  DIEEntry FooRefRef(&FooRef);
+  FooRefConst.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooRefRef);
+
+  DIEEntry FooRefConstRef(&FooRefConst);
+  Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooRefConstRef);
+
+  Foo.addChild(Mem);
+
+  uint64_t MD5Res = DIEHash().computeTypeSignature(&Foo);
+
+  ASSERT_EQ(0xad211c8c3b31e57ULL, MD5Res);
+}
 }

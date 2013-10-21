@@ -201,7 +201,9 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
 
     // Step 5
     // If the tag in Step 3 is one of ...
-    if (Tag == dwarf::DW_TAG_pointer_type) {
+    if (Tag == dwarf::DW_TAG_pointer_type ||
+        Tag == dwarf::DW_TAG_reference_type ||
+        Tag == dwarf::DW_TAG_rvalue_reference_type) {
       // ... and the referenced type (via the DW_AT_type or DW_AT_friend
       // attribute) ...
       assert(Desc->getAttribute() == dwarf::DW_AT_type ||
