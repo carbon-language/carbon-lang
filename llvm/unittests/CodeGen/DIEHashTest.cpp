@@ -17,7 +17,7 @@
 using namespace llvm;
 
 namespace {
-TEST(Data1, DIEHash) {
+TEST(DIEHashTest, Data1) {
   DIEHash Hash;
   DIE Die(dwarf::DW_TAG_base_type);
   DIEInteger Size(4);
@@ -26,7 +26,7 @@ TEST(Data1, DIEHash) {
   ASSERT_EQ(0x1AFE116E83701108ULL, MD5Res);
 }
 
-TEST(TrivialType, DIEHash) {
+TEST(DIEHashTest, TrivialType) {
   // A complete, but simple, type containing no members and defined on the first
   // line of a file.
   DIE Unnamed(dwarf::DW_TAG_structure_type);
@@ -42,7 +42,7 @@ TEST(TrivialType, DIEHash) {
   ASSERT_EQ(0x715305ce6cfd9ad1ULL, MD5Res);
 }
 
-TEST(NamedType, DIEHash) {
+TEST(DIEHashTest, NamedType) {
   // A complete named type containing no members and defined on the first line
   // of a file.
   DIE Foo(dwarf::DW_TAG_structure_type);
@@ -57,7 +57,7 @@ TEST(NamedType, DIEHash) {
   ASSERT_EQ(0xd566dbd2ca5265ffULL, MD5Res);
 }
 
-TEST(NamespacedType, DIEHash) {
+TEST(DIEHashTest, NamespacedType) {
   // A complete named type containing no members and defined on the first line
   // of a file.
   DIE CU(dwarf::DW_TAG_compile_unit);
@@ -84,7 +84,7 @@ TEST(NamespacedType, DIEHash) {
   ASSERT_EQ(0x7b80381fd17f1e33ULL, MD5Res);
 }
 
-TEST(TypeWithMember, DIEHash) {
+TEST(DIEHashTest, TypeWithMember) {
   DIE Unnamed(dwarf::DW_TAG_structure_type);
   DIEInteger Four(4);
   Unnamed.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Four);
@@ -112,7 +112,7 @@ TEST(TypeWithMember, DIEHash) {
   ASSERT_EQ(0x5646aa436b7e07c6ULL, MD5Res);
 }
 
-TEST(ReusedType, DIEHash) {
+TEST(DIEHashTest, ReusedType) {
   DIE Unnamed(dwarf::DW_TAG_structure_type);
   DIEInteger Eight(8);
   Unnamed.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
@@ -149,7 +149,7 @@ TEST(ReusedType, DIEHash) {
   ASSERT_EQ(0x3a7dc3ed7b76b2f8ULL, MD5Res);
 }
 
-TEST(RecursiveType, DIEHash) {
+TEST(DIEHashTest, RecursiveType) {
   DIE Foo(dwarf::DW_TAG_structure_type);
   DIEInteger One(1);
   Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &One);
