@@ -26,7 +26,9 @@ class COFFDefinedAtom;
 /// to be fixed up so that the address points to atom Y's address.
 class COFFReference LLVM_FINAL : public Reference {
 public:
-  explicit COFFReference(Kind kind) { _kind = kind; }
+  explicit COFFReference(Kind kind) : _target(nullptr), _offsetInAtom(0) {
+    _kind = kind;
+  }
 
   COFFReference(const Atom *target, uint32_t offsetInAtom, uint16_t relocType)
       : _target(target), _offsetInAtom(offsetInAtom) {
@@ -46,8 +48,8 @@ public:
   virtual uint64_t offsetInAtom() const { return _offsetInAtom; }
 
 private:
-  const Atom *_target = nullptr;
-  uint32_t _offsetInAtom = 0;
+  const Atom *_target;
+  uint32_t _offsetInAtom;
 };
 
 class COFFAbsoluteAtom : public AbsoluteAtom {
@@ -150,7 +152,7 @@ public:
                       ContentPermissions perms, uint64_t ordinal)
       : COFFBaseDefinedAtom(file, name, Kind::File), _sectionName(sectionName),
         _scope(scope), _contentType(contentType), _permissions(perms),
-        _ordinal(ordinal) {}
+        _ordinal(ordinal), _alignment(0) {}
 
   static bool classof(const COFFBaseDefinedAtom *atom) {
     return atom->getKind() == Kind::File;
@@ -171,7 +173,7 @@ private:
   ContentType _contentType;
   ContentPermissions _permissions;
   uint64_t _ordinal;
-  Alignment _alignment = 0;
+  Alignment _alignment;
   std::vector<std::unique_ptr<COFFReference>> _references;
 };
 
@@ -273,7 +275,8 @@ public:
   COFFSharedLibraryAtom(const File &file, uint16_t hint, StringRef symbolName,
                         StringRef importName, StringRef dllName)
       : _file(file), _hint(hint), _mangledName(addImpPrefix(symbolName)),
-        _importName(importName), _dllName(dllName) {}
+        _importName(importName), _dllName(dllName),
+        _importTableEntry(nullptr) {}
 
   virtual const File &file() const { return _file; }
   uint16_t hint() const { return _hint; }
