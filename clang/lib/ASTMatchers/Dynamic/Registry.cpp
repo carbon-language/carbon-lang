@@ -329,10 +329,10 @@ VariantMatcher Registry::constructBoundMatcher(StringRef MatcherName,
   VariantMatcher Out = constructMatcher(MatcherName, NameRange, Args, Error);
   if (Out.isNull()) return Out;
 
-  llvm::Optional<DynTypedMatcher> Result = Out.getSingleMatcher();
-  if (Result.hasValue()) {
-    llvm::Optional<DynTypedMatcher> Bound = Result->tryBind(BindID);
-    if (Bound.hasValue()) {
+  const DynTypedMatcher *Result;
+  if (Out.getSingleMatcher(Result)) {
+    OwningPtr<DynTypedMatcher> Bound(Result->tryBind(BindID));
+    if (Bound) {
       return VariantMatcher::SingleMatcher(*Bound);
     }
   }

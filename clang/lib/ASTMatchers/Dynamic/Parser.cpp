@@ -390,29 +390,29 @@ bool Parser::parseExpression(StringRef Code, Sema *S,
   return true;
 }
 
-llvm::Optional<DynTypedMatcher>
-Parser::parseMatcherExpression(StringRef Code, Diagnostics *Error) {
+DynTypedMatcher *Parser::parseMatcherExpression(StringRef Code,
+                                                Diagnostics *Error) {
   RegistrySema S;
   return parseMatcherExpression(Code, &S, Error);
 }
 
-llvm::Optional<DynTypedMatcher>
-Parser::parseMatcherExpression(StringRef Code, Parser::Sema *S,
-                               Diagnostics *Error) {
+DynTypedMatcher *Parser::parseMatcherExpression(StringRef Code,
+                                                Parser::Sema *S,
+                                                Diagnostics *Error) {
   VariantValue Value;
   if (!parseExpression(Code, S, &Value, Error))
-    return llvm::Optional<DynTypedMatcher>();
+    return NULL;
   if (!Value.isMatcher()) {
     Error->addError(SourceRange(), Error->ET_ParserNotAMatcher);
-    return llvm::Optional<DynTypedMatcher>();
+    return NULL;
   }
-  llvm::Optional<DynTypedMatcher> Result =
-      Value.getMatcher().getSingleMatcher();
-  if (!Result.hasValue()) {
+  const DynTypedMatcher *Result;
+  if (!Value.getMatcher().getSingleMatcher(Result)) {
     Error->addError(SourceRange(), Error->ET_ParserOverloadedType)
         << Value.getTypeAsString();
+    return NULL;
   }
-  return Result;
+  return Result->clone();
 }
 
 }  // namespace dynamic

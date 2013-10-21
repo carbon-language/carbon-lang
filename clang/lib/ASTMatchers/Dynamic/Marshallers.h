@@ -167,13 +167,15 @@ private:
 /// out of the polymorphic object.
 template <class PolyMatcher>
 static void mergePolyMatchers(const PolyMatcher &Poly,
-                              std::vector<DynTypedMatcher> &Out,
+                              std::vector<const DynTypedMatcher *> &Out,
                               ast_matchers::internal::EmptyTypeList) {}
 
 template <class PolyMatcher, class TypeList>
 static void mergePolyMatchers(const PolyMatcher &Poly,
-                              std::vector<DynTypedMatcher> &Out, TypeList) {
-  Out.push_back(ast_matchers::internal::Matcher<typename TypeList::head>(Poly));
+                              std::vector<const DynTypedMatcher *> &Out,
+                              TypeList) {
+  Out.push_back(ast_matchers::internal::Matcher<typename TypeList::head>(Poly)
+                    .clone());
   mergePolyMatchers(Poly, Out, typename TypeList::tail());
 }
 
@@ -191,9 +193,10 @@ template <typename T>
 static VariantMatcher outvalueToVariantMatcher(const T &PolyMatcher,
                                                typename T::ReturnTypes * =
                                                    NULL) {
-  std::vector<DynTypedMatcher> Matchers;
+  std::vector<const DynTypedMatcher *> Matchers;
   mergePolyMatchers(PolyMatcher, Matchers, typename T::ReturnTypes());
   VariantMatcher Out = VariantMatcher::PolymorphicMatcher(Matchers);
+  llvm::DeleteContainerPointers(Matchers);
   return Out;
 }
 
