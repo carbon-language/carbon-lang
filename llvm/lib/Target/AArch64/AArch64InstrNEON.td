@@ -3246,6 +3246,21 @@ multiclass NeonI_Scalar3Diff_HS_size<bit u, bits<4> opcode, string asmop> {
                               NoItinerary>;
 }
 
+multiclass NeonI_Scalar3Diff_ml_HS_size<bit u, bits<4> opcode, string asmop> {
+  let Constraints = "$Src = $Rd" in {
+    def shh : NeonI_Scalar3Diff<u, 0b01, opcode,
+                       (outs FPR32:$Rd), (ins FPR32:$Src, FPR16:$Rn, FPR16:$Rm),
+                       !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                       [],
+                       NoItinerary>;
+    def dss : NeonI_Scalar3Diff<u, 0b10, opcode,
+                       (outs FPR64:$Rd), (ins FPR64:$Src, FPR32:$Rn, FPR32:$Rm),
+                       !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                       [],
+                       NoItinerary>;
+  }
+}
+
 multiclass Neon_Scalar3Diff_HS_size_patterns<SDPatternOperator opnode,
                                              Instruction INSTH,
                                              Instruction INSTS> {
@@ -3253,6 +3268,15 @@ multiclass Neon_Scalar3Diff_HS_size_patterns<SDPatternOperator opnode,
             (INSTH FPR16:$Rn, FPR16:$Rm)>;
   def : Pat<(v1i64 (opnode (v1i32 FPR32:$Rn), (v1i32 FPR32:$Rm))),
             (INSTS FPR32:$Rn, FPR32:$Rm)>;
+}
+
+multiclass Neon_Scalar3Diff_ml_HS_size_patterns<SDPatternOperator opnode,
+                                             Instruction INSTH,
+                                             Instruction INSTS> {
+  def : Pat<(v1i32 (opnode (v1i32 FPR32:$Src), (v1i16 FPR16:$Rn), (v1i16 FPR16:$Rm))),
+            (INSTH FPR32:$Src, FPR16:$Rn, FPR16:$Rm)>;
+  def : Pat<(v1i64 (opnode (v1i64 FPR64:$Src), (v1i32 FPR32:$Rn), (v1i32 FPR32:$Rm))),
+            (INSTS FPR64:$Src, FPR32:$Rn, FPR32:$Rm)>;
 }
 
 // Scalar Two Registers Miscellaneous
@@ -3553,14 +3577,14 @@ defm : Neon_Scalar3Same_D_size_patterns<int_arm_neon_vqrshifts, SQRSHLddd>;
 defm : Neon_Scalar3Same_D_size_patterns<int_arm_neon_vqrshiftu, UQRSHLddd>;
 
 // Signed Saturating Doubling Multiply-Add Long
-defm SQDMLAL : NeonI_Scalar3Diff_HS_size<0b0, 0b1001, "sqdmlal">;
-defm : Neon_Scalar3Diff_HS_size_patterns<int_aarch64_neon_vqdmlal,
-                                         SQDMLALshh, SQDMLALdss>;
+defm SQDMLAL : NeonI_Scalar3Diff_ml_HS_size<0b0, 0b1001, "sqdmlal">;
+defm : Neon_Scalar3Diff_ml_HS_size_patterns<int_aarch64_neon_vqdmlal,
+                                            SQDMLALshh, SQDMLALdss>;
 
 // Signed Saturating Doubling Multiply-Subtract Long
-defm SQDMLSL : NeonI_Scalar3Diff_HS_size<0b0, 0b1011, "sqdmlsl">;
-defm : Neon_Scalar3Diff_HS_size_patterns<int_aarch64_neon_vqdmlsl,
-                                         SQDMLSLshh, SQDMLSLdss>;
+defm SQDMLSL : NeonI_Scalar3Diff_ml_HS_size<0b0, 0b1011, "sqdmlsl">;
+defm : Neon_Scalar3Diff_ml_HS_size_patterns<int_aarch64_neon_vqdmlsl,
+                                            SQDMLSLshh, SQDMLSLdss>;
 
 // Signed Saturating Doubling Multiply Long
 defm SQDMULL : NeonI_Scalar3Diff_HS_size<0b0, 0b1101, "sqdmull">;
