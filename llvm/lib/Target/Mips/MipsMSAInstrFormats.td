@@ -150,6 +150,26 @@ class MSA_ELM_FMT<bits<10> major, bits<6> minor>: MSAInst {
   let Inst{5-0} = minor;
 }
 
+class MSA_ELM_CFCMSA_FMT<bits<10> major, bits<6> minor>: MSAInst {
+  bits<5> rd;
+  bits<5> cs;
+
+  let Inst{25-16} = major;
+  let Inst{15-11} = cs;
+  let Inst{10-6} = rd;
+  let Inst{5-0} = minor;
+}
+
+class MSA_ELM_CTCMSA_FMT<bits<10> major, bits<6> minor>: MSAInst {
+  bits<5> rs;
+  bits<5> cd;
+
+  let Inst{25-16} = major;
+  let Inst{15-11} = rs;
+  let Inst{10-6} = cd;
+  let Inst{5-0} = minor;
+}
+
 class MSA_ELM_B_FMT<bits<4> major, bits<6> minor>: MSAInst {
   bits<4> n;
   bits<5> ws;

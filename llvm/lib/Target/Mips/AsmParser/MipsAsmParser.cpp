@@ -92,6 +92,10 @@ class MipsAsmParser : public MCTargetAsmParser {
                int RegKind);
 
   MipsAsmParser::OperandMatchResultTy
+  parseMSACtrlRegs(SmallVectorImpl<MCParsedAsmOperand *> &Operands,
+                   int RegKind);
+
+  MipsAsmParser::OperandMatchResultTy
   parseMemOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   bool parsePtrReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands, int RegKind);
@@ -149,6 +153,9 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   MipsAsmParser::OperandMatchResultTy
   parseMSA128DRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+
+  MipsAsmParser::OperandMatchResultTy
+  parseMSA128CtrlRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   MipsAsmParser::OperandMatchResultTy
   parseInvNum(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
@@ -228,6 +235,8 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   int matchMSA128RegisterName(StringRef Name);
 
+  int matchMSA128CtrlRegisterName(StringRef Name);
+
   int regKindToRegClass(int RegKind);
 
   unsigned getReg(int RC, int RegNo);
@@ -282,7 +291,8 @@ public:
     Kind_MSA128BRegs,
     Kind_MSA128HRegs,
     Kind_MSA128WRegs,
-    Kind_MSA128DRegs
+    Kind_MSA128DRegs,
+    Kind_MSA128CtrlRegs
   };
 
 private:
@@ -519,6 +529,10 @@ public:
 
   bool isMSA128DAsm() const {
     return Kind == k_Register && Reg.Kind == Kind_MSA128DRegs;
+  }
+
+  bool isMSA128CRAsm() const {
+    return Kind == k_Register && Reg.Kind == Kind_MSA128CtrlRegs;
   }
 
   /// getStartLoc - Get the location of the first token of this operand.
@@ -982,6 +996,23 @@ int MipsAsmParser::matchMSA128RegisterName(StringRef Name) {
   return IntVal;
 }
 
+int MipsAsmParser::matchMSA128CtrlRegisterName(StringRef Name) {
+  int CC;
+
+  CC = StringSwitch<unsigned>(Name)
+    .Case("msair",      0)
+    .Case("msacsr",     1)
+    .Case("msaaccess",  2)
+    .Case("msasave",    3)
+    .Case("msamodify",  4)
+    .Case("msarequest", 5)
+    .Case("msamap",     6)
+    .Case("msaunmap",   7)
+    .Default(-1);
+
+  return CC;
+}
+
 int MipsAsmParser::matchRegisterName(StringRef Name, bool is64BitReg) {
 
   int CC;
@@ -1014,6 +1045,7 @@ int MipsAsmParser::regKindToRegClass(int RegKind) {
   case MipsOperand::Kind_MSA128HRegs: return Mips::MSA128HRegClassID;
   case MipsOperand::Kind_MSA128WRegs: return Mips::MSA128WRegClassID;
   case MipsOperand::Kind_MSA128DRegs: return Mips::MSA128DRegClassID;
+  case MipsOperand::Kind_MSA128CtrlRegs: return Mips::MSACtrlRegClassID;
   default :return -1;
   }
 
@@ -1715,6 +1747,45 @@ MipsAsmParser::parseMSARegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
 }
 
 MipsAsmParser::OperandMatchResultTy
+MipsAsmParser::parseMSACtrlRegs(SmallVectorImpl<MCParsedAsmOperand *> &Operands,
+                                int RegKind) {
+  MipsOperand::RegisterKind Kind = (MipsOperand::RegisterKind)RegKind;
+
+  if (Kind != MipsOperand::Kind_MSA128CtrlRegs)
+    return MatchOperand_NoMatch;
+
+  if (Parser.getTok().isNot(AsmToken::Dollar))
+    return MatchOperand_ParseFail;
+
+  SMLoc S = Parser.getTok().getLoc();
+
+  Parser.Lex(); // Eat the '$' symbol.
+
+  int RegNum = -1;
+  if (getLexer().getKind() == AsmToken::Identifier)
+    RegNum = matchMSA128CtrlRegisterName(Parser.getTok().getString().lower());
+  else if (getLexer().getKind() == AsmToken::Integer)
+    RegNum = Parser.getTok().getIntVal();
+  else
+    return MatchOperand_ParseFail;
+
+  if (RegNum < 0 || RegNum > 7)
+    return MatchOperand_ParseFail;
+
+  int RegVal = getReg(regKindToRegClass(Kind), RegNum);
+  if (RegVal == -1)
+    return MatchOperand_ParseFail;
+
+  MipsOperand *RegOp = MipsOperand::CreateReg(RegVal, S,
+                                              Parser.getTok().getLoc());
+  RegOp->setRegKind(MipsOperand::Kind_MSA128CtrlRegs);
+  Operands.push_back(RegOp);
+  Parser.Lex(); // Eat the register identifier.
+
+  return MatchOperand_Success;
+}
+
+MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseGPR64(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   if (!isMips64())
@@ -1876,6 +1947,12 @@ MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseMSA128DRegs(
                               SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return parseMSARegs(Operands, (int) MipsOperand::Kind_MSA128DRegs);
+}
+
+MipsAsmParser::OperandMatchResultTy
+MipsAsmParser::parseMSA128CtrlRegs(
+                             SmallVectorImpl<MCParsedAsmOperand *> &Operands) {
+  return parseMSACtrlRegs(Operands, (int) MipsOperand::Kind_MSA128CtrlRegs);
 }
 
 bool MipsAsmParser::searchSymbolAlias(

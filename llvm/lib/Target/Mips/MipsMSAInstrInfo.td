@@ -470,7 +470,7 @@ class CEQI_H_ENC : MSA_I5_FMT<0b000, 0b01, 0b000111>;
 class CEQI_W_ENC : MSA_I5_FMT<0b000, 0b10, 0b000111>;
 class CEQI_D_ENC : MSA_I5_FMT<0b000, 0b11, 0b000111>;
 
-class CFCMSA_ENC : MSA_ELM_FMT<0b0001111110, 0b011001>;
+class CFCMSA_ENC : MSA_ELM_CFCMSA_FMT<0b0001111110, 0b011001>;
 
 class CLE_S_B_ENC : MSA_3R_FMT<0b100, 0b00, 0b001111>;
 class CLE_S_H_ENC : MSA_3R_FMT<0b100, 0b01, 0b001111>;
@@ -520,7 +520,7 @@ class COPY_U_B_ENC : MSA_ELM_COPY_B_FMT<0b0011, 0b011001>;
 class COPY_U_H_ENC : MSA_ELM_COPY_H_FMT<0b0011, 0b011001>;
 class COPY_U_W_ENC : MSA_ELM_COPY_W_FMT<0b0011, 0b011001>;
 
-class CTCMSA_ENC : MSA_ELM_FMT<0b0000111110, 0b011001>;
+class CTCMSA_ENC : MSA_ELM_CTCMSA_FMT<0b0000111110, 0b011001>;
 
 class DIV_S_B_ENC : MSA_3R_FMT<0b100, 0b00, 0b010010>;
 class DIV_S_H_ENC : MSA_3R_FMT<0b100, 0b01, 0b010010>;
@@ -1582,8 +1582,8 @@ class CEQI_D_DESC : MSA_I5_DESC_BASE<"ceqi.d", vseteq_v2i64, vsplati64_simm5,
                                      MSA128DOpnd>;
 
 class CFCMSA_DESC {
-  dag OutOperandList = (outs GPR32:$rd);
-  dag InOperandList = (ins MSACtrl:$cs);
+  dag OutOperandList = (outs GPR32Opnd:$rd);
+  dag InOperandList = (ins MSA128CROpnd:$cs);
   string AsmString = "cfcmsa\t$rd, $cs";
   InstrItinClass Itinerary = NoItinerary;
   bit hasSideEffects = 1;
@@ -1666,7 +1666,7 @@ class COPY_FD_PSEUDO_DESC : MSA_COPY_PSEUDO_BASE<vector_extract, v2f64, FGR64,
 
 class CTCMSA_DESC {
   dag OutOperandList = (outs);
-  dag InOperandList = (ins MSACtrl:$cd, GPR32:$rs);
+  dag InOperandList = (ins MSA128CROpnd:$cd, GPR32Opnd:$rs);
   string AsmString = "ctcmsa\t$cd, $rs";
   InstrItinClass Itinerary = NoItinerary;
   bit hasSideEffects = 1;
