@@ -162,7 +162,7 @@ public:
 private:
   /// \brief For each \c DynTypedMatcher a \c MatchCallback that will be called
   /// when it matches.
-  std::vector<std::pair<const internal::DynTypedMatcher*, MatchCallback*> >
+  std::vector<std::pair<internal::DynTypedMatcher, MatchCallback *> >
     MatcherCallbackPairs;
 
   /// \brief Called when parsing is done.
