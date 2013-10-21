@@ -11,8 +11,9 @@ int *[[gnu::unused]] attr_on_ptr;
 
 // Valid cases.
 
+void aliasb [[gnu::alias("_Z6alias1v")]] ();
 void alias1() {}
-void alias2 [[gnu::alias("_Z6alias1v")]] ();
+void aliasa [[gnu::alias("_Z6alias1v")]] ();
 
 [[gnu::aligned(8)]] int aligned;
 void aligned_fn [[gnu::aligned(32)]] ();
