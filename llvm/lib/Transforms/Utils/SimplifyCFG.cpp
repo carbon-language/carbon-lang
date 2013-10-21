@@ -1561,6 +1561,19 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
   return true;
 }
 
+/// \returns True if this block contains a CallInst with the NoDuplicate
+/// attribute.
+static bool HasNoDuplicateCall(const BasicBlock *BB) {
+  for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+    const CallInst *CI = dyn_cast<CallInst>(I);
+    if (!CI)
+      continue;
+    if (CI->cannotDuplicate())
+      return true;
+  }
+  return false;
+}
+
 /// BlockIsSimpleEnoughToThreadThrough - Return true if we can thread a branch
 /// across this block.
 static bool BlockIsSimpleEnoughToThreadThrough(BasicBlock *BB) {
@@ -1607,6 +1620,8 @@ static bool FoldCondBranchOnPHI(BranchInst *BI, const DataLayout *TD) {
 
   // Now we know that this block has multiple preds and two succs.
   if (!BlockIsSimpleEnoughToThreadThrough(BB)) return false;
+
+  if (HasNoDuplicateCall(BB)) return false;
 
   // Okay, this is a simple enough basic block.  See if any phi values are
   // constants.
