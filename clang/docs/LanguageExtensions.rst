@@ -2115,24 +2115,54 @@ properties, specifically for unique objects that have a single owning reference.
 The following attributes are currently supported, although **the implementation
 for these annotations is currently in development and are subject to change.**
 
-``consumes``
-------------
+``consumable``
+--------------
 
-Use ``__attribute__((consumes))`` on a method that transitions an object into
-the consumed state.
+Each class that uses any of the following annotations must first be marked
+using the consumable attribute.  Failure to do so will result in a warning.
 
-``callable_when_unconsumed``
+``set_typestate(new_state)``
 ----------------------------
 
-Use ``__attribute__((callable_when_unconsumed))`` to indicate that a method may
-only be called when the object is not in the consumed state.
+Annotate methods that transition an object into a new state with
+``__attribute__((set_typestate(new_state)))``.  The new new state must be
+unconsumed, consumed, or unknown.
 
-``tests_unconsumed``
---------------------
+``callable_when(...)``
+----------------------
 
-Use `__attribute__((tests_unconsumed))`` to indicate that a method returns true
-if the object is in the unconsumed state.
+Use ``__attribute__((callable_when(...)))`` to indicate what states a method
+may be called in.  Valid states are unconsumed, consumed, or unknown.  Each
+argument to this attribute must be a quoted string.  E.g.:
 
+``__attribute__((callable_when("unconsumed", "unknown")))``
+
+``tests_typestate(tested_state)``
+---------------------------------
+
+Use ``__attribute__((tests_typestate(tested_state)))`` to indicate that a method
+returns true if the object is in the specified state..
+
+``param_typestate(expected_state)``
+-----------------------------------
+
+This attribute specifies expectations about function parameters.  Calls to an
+function with annotated parameters will issue a warning if the corresponding
+argument isn't in the expected state.  The attribute is also used to set the
+initial state of the parameter when analyzing the function's body.
+
+``return_typestate(ret_state)``
+-------------------------------
+
+The ``return_typestate`` attribute can be applied to functions or parameters.
+When applied to a function the attribute specifies the state of the returned
+value.  The function's body is checked to ensure that it always returns a value
+in the specified state.  On the caller side, values returned by the annotated
+function are initialized to the given state.
+
+If the attribute is applied to a function parameter it modifies the state of
+an argument after a call to the function returns.  The function's body is
+checked to ensure that the parameter is in the expected state before returning. 
 
 Type Safety Checking
 ====================
