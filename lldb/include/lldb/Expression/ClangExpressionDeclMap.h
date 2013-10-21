@@ -291,6 +291,9 @@ public:
     /// @param[in] name
     ///     The name of the symbol.  
     ///
+    /// @param[in] module
+    ///     The module to limit the search to. This can be NULL
+    ///
     /// @return
     ///     Valid load address for the symbol
     //------------------------------------------------------------------
@@ -298,7 +301,8 @@ public:
     GetSymbolAddress (Target &target,
                       Process *process,
                       const ConstString &name,
-                      lldb::SymbolType symbol_type);
+                      lldb::SymbolType symbol_type,
+                      Module *module = NULL);
     
     lldb::addr_t
     GetSymbolAddress (const ConstString &name,
@@ -504,12 +508,16 @@ private:
     /// @param[in] name
     ///     The name as a plain C string.
     ///
+    /// @param[in] module
+    ///     The module to limit the search to. This can be NULL
+    ///
     /// @return
     ///     The LLDB Symbol found, or NULL if none was found.
-    //---------------------------------------------------------
+    //------------------------------------------------------------------
     const Symbol *
     FindGlobalDataSymbol (Target &target,
-                          const ConstString &name);
+                          const ConstString &name,
+                          Module *module = NULL);
     
     //------------------------------------------------------------------
     /// Given a target, find a variable that matches the given name and 

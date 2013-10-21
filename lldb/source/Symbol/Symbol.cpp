@@ -10,6 +10,7 @@
 #include "lldb/Symbol/Symbol.h"
 
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -176,6 +177,66 @@ Symbol::ValueIsAddress() const
     return m_addr_range.GetBaseAddress().GetSection().get() != NULL;
 }
 
+ConstString
+Symbol::GetReExportedSymbolName() const
+{
+    if (m_type == eSymbolTypeReExported)
+    {
+        // For eSymbolTypeReExported, the "const char *" from a ConstString
+        // is used as the offset in the address range base address. We can
+        // then make this back into a string that is the re-exported name.
+        intptr_t str_ptr = m_addr_range.GetBaseAddress().GetOffset();
+        if (str_ptr != 0)
+            return ConstString((const char *)str_ptr);
+        else
+            return GetName();
+    }
+    return ConstString();
+}
+
+FileSpec
+Symbol::GetReExportedSymbolSharedLibrary() const
+{
+    if (m_type == eSymbolTypeReExported)
+    {
+        // For eSymbolTypeReExported, the "const char *" from a ConstString
+        // is used as the offset in the address range base address. We can
+        // then make this back into a string that is the re-exported name.
+        intptr_t str_ptr = m_addr_range.GetByteSize();
+        if (str_ptr != 0)
+            return FileSpec((const char *)str_ptr, false);
+    }
+    return FileSpec();
+}
+
+bool
+Symbol::SetReExportedSymbolName(const ConstString &name)
+{
+    if (m_type == eSymbolTypeReExported)
+    {
+        // For eSymbolTypeReExported, the "const char *" from a ConstString
+        // is used as the offset in the address range base address.
+        m_addr_range.GetBaseAddress().SetOffset((intptr_t)name.GetCString());
+        return true;
+    }
+    return false;
+    
+}
+
+bool
+Symbol::SetReExportedSymbolSharedLibrary(const FileSpec &fspec)
+{
+    if (m_type == eSymbolTypeReExported)
+    {
+        // For eSymbolTypeReExported, the "const char *" from a ConstString
+        // is used as the offset in the address range base address.
+        m_addr_range.SetByteSize((intptr_t)ConstString(fspec.GetPath().c_str()).GetCString());
+        return true;
+    }
+    return false;
+    
+}
+
 uint32_t
 Symbol::GetSiblingIndex() const
 {
@@ -266,6 +327,19 @@ Symbol::Dump(Stream *s, Target *target, uint32_t index) const
                     GetByteSize(),
                     m_flags,
                     m_mangled.GetName().AsCString(""));
+    }
+    else if (m_type == eSymbolTypeReExported)
+    {
+        s->Printf ("                                                         0x%8.8x %s",
+                   m_flags,
+                   m_mangled.GetName().AsCString(""));
+        
+        ConstString reexport_name = GetReExportedSymbolName();
+        intptr_t shlib = m_addr_range.GetByteSize();
+        if (shlib)
+            s->Printf(" -> %s`%s\n", (const char *)shlib, reexport_name.GetCString());
+        else
+            s->Printf(" -> %s\n", reexport_name.GetCString());
     }
     else
     {
@@ -380,6 +454,7 @@ Symbol::GetTypeAsString() const
     ENUM_TO_CSTRING(Invalid);
     ENUM_TO_CSTRING(Absolute);
     ENUM_TO_CSTRING(Code);
+    ENUM_TO_CSTRING(Resolver);
     ENUM_TO_CSTRING(Data);
     ENUM_TO_CSTRING(Trampoline);
     ENUM_TO_CSTRING(Runtime);
@@ -404,6 +479,7 @@ Symbol::GetTypeAsString() const
     ENUM_TO_CSTRING(ObjCClass);
     ENUM_TO_CSTRING(ObjCMetaClass);
     ENUM_TO_CSTRING(ObjCIVar);
+    ENUM_TO_CSTRING(ReExported);
     default:
         break;
     }
@@ -460,3 +536,47 @@ Symbol::GetByteSize () const
     return m_addr_range.GetByteSize();
 }
 
+Symbol *
+Symbol::ResolveReExportedSymbol (Target &target)
+{
+    ConstString reexport_name (GetReExportedSymbolName());
+    if (reexport_name)
+    {
+        ModuleSpec module_spec;
+        ModuleSP module_sp;
+        module_spec.GetFileSpec() = GetReExportedSymbolSharedLibrary();
+        if (module_spec.GetFileSpec())
+        {
+            // Try searching for the module file spec first using the full path
+            module_sp = target.GetImages().FindFirstModule(module_spec);
+            if (!module_sp)
+            {
+                // Next try and find the module by basename in case environment
+                // variables or other runtime trickery causes shared libraries
+                // to be loaded from alternate paths
+                module_spec.GetFileSpec().GetDirectory().Clear();
+                module_sp = target.GetImages().FindFirstModule(module_spec);
+            }
+        }
+        
+        if (module_sp)
+        {
+            lldb_private::SymbolContextList sc_list;
+            module_sp->FindSymbolsWithNameAndType(reexport_name, eSymbolTypeAny, sc_list);
+            const size_t num_scs = sc_list.GetSize();
+            if (num_scs > 0)
+            {
+                for (size_t i=0; i<num_scs; ++i)
+                {
+                    lldb_private::SymbolContext sc;
+                    if (sc_list.GetContextAtIndex(i, sc))
+                    {
+                        if (sc.symbol->IsExternal())
+                            return sc.symbol;
+                    }
+                }
+            }
+        }
+    }
+    return NULL;
+}

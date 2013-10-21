@@ -484,7 +484,8 @@ namespace lldb {
         eSymbolTypeUndefined,
         eSymbolTypeObjCClass,
         eSymbolTypeObjCMetaClass,
-        eSymbolTypeObjCIVar
+        eSymbolTypeObjCIVar,
+        eSymbolTypeReExported
     } SymbolType;
     
     typedef enum SectionType

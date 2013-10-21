@@ -1135,6 +1135,7 @@ Symtab::FindFunctionSymbols (const ConstString &name,
                     {
                     case eSymbolTypeCode:
                     case eSymbolTypeResolver:
+                    case eSymbolTypeReExported:
                         symbol_indexes.push_back(temp_symbol_indexes[i]);
                         break;
                     default:

@@ -894,6 +894,7 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
             case eSymbolTypeObjCClass:      return eAddressClassRuntime;
             case eSymbolTypeObjCMetaClass:  return eAddressClassRuntime;
             case eSymbolTypeObjCIVar:       return eAddressClassRuntime;
+            case eSymbolTypeReExported:     return eAddressClassRuntime;
             }
         }
     }
@@ -1481,6 +1482,138 @@ protected:
     std::vector<SectionInfo> m_section_infos;
 };
 
+struct TrieEntry
+{
+    TrieEntry () :
+        name(),
+        address(LLDB_INVALID_ADDRESS),
+        flags (0),
+        other(0),
+        import_name()
+    {
+    }
+    
+    void
+    Clear ()
+    {
+        name.Clear();
+        address = LLDB_INVALID_ADDRESS;
+        flags = 0;
+        other = 0;
+        import_name.Clear();
+    }
+    
+    void
+    Dump () const
+    {
+        printf ("0x%16.16llx 0x%16.16llx 0x%16.16llx \"%s\"", address, flags, other, name.GetCString());
+        if (import_name)
+            printf (" -> \"%s\"\n", import_name.GetCString());
+        else
+            printf ("\n");
+    }
+    ConstString		name;
+    uint64_t		address;
+    uint64_t		flags;
+    uint64_t		other;
+    ConstString		import_name;
+};
+
+struct TrieEntryWithOffset
+{
+	lldb::offset_t nodeOffset;
+	TrieEntry entry;
+	
+    TrieEntryWithOffset (lldb::offset_t offset) :
+        nodeOffset (offset),
+        entry()
+    {
+    }
+    
+    void
+    Dump (uint32_t idx) const
+    {
+        printf ("[%3u] 0x%16.16llx: ", idx, nodeOffset);
+        entry.Dump();
+    }
+
+	bool
+    operator<(const TrieEntryWithOffset& other) const
+    {
+        return ( nodeOffset < other.nodeOffset );
+    }
+};
+
+static void
+ParseTrieEntries (DataExtractor &data,
+                  lldb::offset_t offset,
+                  std::vector<llvm::StringRef> &nameSlices,
+                  std::set<lldb::addr_t> &resolver_addresses,
+                  std::vector<TrieEntryWithOffset>& output)
+{
+	if (!data.ValidOffset(offset))
+        return;
+
+	const uint64_t terminalSize = data.GetULEB128(&offset);
+	lldb::offset_t children_offset = offset + terminalSize;
+	if ( terminalSize != 0 ) {
+		TrieEntryWithOffset e (offset);
+		e.entry.flags = data.GetULEB128(&offset);
+        const char *import_name = NULL;
+		if ( e.entry.flags & EXPORT_SYMBOL_FLAGS_REEXPORT ) {
+			e.entry.address = 0;
+			e.entry.other = data.GetULEB128(&offset); // dylib ordinal
+            import_name = data.GetCStr(&offset);
+		}
+		else {
+			e.entry.address = data.GetULEB128(&offset);
+			if ( e.entry.flags & EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER )
+            {
+                resolver_addresses.insert(e.entry.address);
+				e.entry.other = data.GetULEB128(&offset);
+            }
+			else
+				e.entry.other = 0;
+		}
+        // Only add symbols that are reexport symbols with a valid import name
+        if (EXPORT_SYMBOL_FLAGS_REEXPORT & e.entry.flags && import_name && import_name[0])
+        {
+            std::string name;
+            if (!nameSlices.empty())
+            {
+                for (auto name_slice: nameSlices)
+                    name.append(name_slice.data(), name_slice.size());
+            }
+            if (name.size() > 1)
+            {
+                // Skip the leading '_'
+                e.entry.name.SetCStringWithLength(name.c_str() + 1,name.size() - 1);
+            }
+            if (import_name)
+            {
+                // Skip the leading '_'
+                e.entry.import_name.SetCString(import_name+1);                
+            }
+            output.push_back(e);
+        }
+	}
+    
+	const uint8_t childrenCount = data.GetU8(&children_offset);
+	for (uint8_t i=0; i < childrenCount; ++i) {
+        nameSlices.push_back(data.GetCStr(&children_offset));
+        lldb::offset_t childNodeOffset = data.GetULEB128(&children_offset);
+		if (childNodeOffset)
+        {
+            ParseTrieEntries(data,
+                             childNodeOffset,
+                             nameSlices,
+                             resolver_addresses,
+                             output);
+        }
+        nameSlices.pop_back();
+	}
+}
+
 size_t
 ObjectFileMachO::ParseSymtab ()
 {
@@ -1493,11 +1626,12 @@ ObjectFileMachO::ParseSymtab ()
 
     struct symtab_command symtab_load_command = { 0, 0, 0, 0, 0, 0 };
     struct linkedit_data_command function_starts_load_command = { 0, 0, 0, 0 };
+    struct dyld_info_command dyld_info = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     typedef AddressDataArray<lldb::addr_t, bool, 100> FunctionStarts;
     FunctionStarts function_starts;
     lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
     uint32_t i;
-
+    FileSpecList dylib_files;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYMBOLS));
 
     for (i=0; i<m_header.ncmds; ++i)
@@ -1545,6 +1679,39 @@ ObjectFileMachO::ParseSymtab ()
             }
             break;
 
+        case LC_DYLD_INFO:
+        case LC_DYLD_INFO_ONLY:
+            if (m_data.GetU32(&offset, &dyld_info.rebase_off, 10))
+            {
+                dyld_info.cmd = lc.cmd;
+                dyld_info.cmdsize = lc.cmdsize;
+            }
+            else
+            {
+                memset (&dyld_info, 0, sizeof(dyld_info));
+            }
+            break;
+
+        case LC_LOAD_DYLIB:
+        case LC_LOAD_WEAK_DYLIB:
+        case LC_REEXPORT_DYLIB:
+        case LC_LOADFVMLIB:
+        case LC_LOAD_UPWARD_DYLIB:
+            {
+                uint32_t name_offset = cmd_offset + m_data.GetU32(&offset);
+                const char *path = m_data.PeekCStr(name_offset);
+                if (path)
+                {
+                    FileSpec file_spec(path, false);
+                    // Strip the path if there is @rpath, @executanble, etc so we just use the basename
+                    if (path[0] == '@')
+                        file_spec.GetDirectory().Clear();
+
+                    dylib_files.Append(file_spec);
+                }
+            }
+            break;
+
         case LC_FUNCTION_STARTS:
             function_starts_load_command.cmd = lc.cmd;
             function_starts_load_command.cmdsize = lc.cmdsize;
@@ -1574,6 +1741,7 @@ ObjectFileMachO::ParseSymtab ()
         DataExtractor strtab_data (NULL, 0, byte_order, addr_byte_size);
         DataExtractor function_starts_data (NULL, 0, byte_order, addr_byte_size);
         DataExtractor indirect_symbol_index_data (NULL, 0, byte_order, addr_byte_size);
+        DataExtractor dyld_trie_data (NULL, 0, byte_order, addr_byte_size);
 
         const addr_t nlist_data_byte_size = symtab_load_command.nsyms * nlist_byte_size;
         const addr_t strtab_data_byte_size = symtab_load_command.strsize;
@@ -1689,6 +1857,14 @@ ObjectFileMachO::ParseSymtab ()
             strtab_data.SetData (m_data,
                                  symtab_load_command.stroff,
                                  strtab_data_byte_size);
+            
+            if (dyld_info.export_size > 0)
+            {
+                dyld_trie_data.SetData (m_data,
+                                        dyld_info.export_off,
+                                        dyld_info.export_size);
+            }
+
             if (m_dysymtab.nindirectsyms != 0)
             {
                 indirect_symbol_index_data.SetData (m_data,
@@ -2661,6 +2837,7 @@ ObjectFileMachO::ParseSymtab ()
                                                                 m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
                                                                 // We just need the flags from the linker symbol, so put these flags
                                                                 // into the N_FUN flags to avoid duplicate symbols in the symbol table
+                                                                sym[pos->second].SetExternal(sym[sym_idx].IsExternal());
                                                                 sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
                                                                 sym[sym_idx].Clear();
                                                                 continue;
@@ -2681,6 +2858,7 @@ ObjectFileMachO::ParseSymtab ()
                                                                 m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
                                                                 // We just need the flags from the linker symbol, so put these flags
                                                                 // into the N_STSYM flags to avoid duplicate symbols in the symbol table
+                                                                sym[pos->second].SetExternal(sym[sym_idx].IsExternal());
                                                                 sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
                                                                 sym[sym_idx].Clear();
                                                                 continue;
@@ -3404,6 +3582,7 @@ ObjectFileMachO::ParseSymtab ()
                                     m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
                                     // We just need the flags from the linker symbol, so put these flags
                                     // into the N_FUN flags to avoid duplicate symbols in the symbol table
+                                    sym[pos->second].SetExternal(sym[sym_idx].IsExternal());
                                     sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
                                     sym[sym_idx].Clear();
                                     continue;
@@ -3424,6 +3603,7 @@ ObjectFileMachO::ParseSymtab ()
                                     m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
                                     // We just need the flags from the linker symbol, so put these flags
                                     // into the N_STSYM flags to avoid duplicate symbols in the symbol table
+                                    sym[pos->second].SetExternal(sym[sym_idx].IsExternal());
                                     sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
                                     sym[sym_idx].Clear();
                                     continue;
@@ -3468,38 +3648,6 @@ ObjectFileMachO::ParseSymtab ()
                 else
                 {
                     sym[sym_idx].Clear();
-                }
-
-            }
-
-            // STAB N_GSYM entries end up having a symbol type eSymbolTypeGlobal and when the symbol value
-            // is zero, the address of the global ends up being in a non-STAB entry. Try and fix up all
-            // such entries by figuring out what the address for the global is by looking up this non-STAB
-            // entry and copying the value into the debug symbol's value to save us the hassle in the
-            // debug symbol parser.
-
-            Symbol *global_symbol = NULL;
-            for (nlist_idx = 0;
-                 nlist_idx < symtab_load_command.nsyms && (global_symbol = symtab->FindSymbolWithType (eSymbolTypeData, Symtab::eDebugYes, Symtab::eVisibilityAny, nlist_idx)) != NULL;
-                 nlist_idx++)
-            {
-                if (global_symbol->GetAddress().GetFileAddress() == 0)
-                {
-                    std::vector<uint32_t> indexes;
-                    if (symtab->AppendSymbolIndexesWithName (global_symbol->GetMangled().GetName(), indexes) > 0)
-                    {
-                        std::vector<uint32_t>::const_iterator pos;
-                        std::vector<uint32_t>::const_iterator end = indexes.end();
-                        for (pos = indexes.begin(); pos != end; ++pos)
-                        {
-                            symbol_ptr = symtab->SymbolAtIndex(*pos);
-                            if (symbol_ptr != global_symbol && symbol_ptr->IsDebug() == false)
-                            {
-                                global_symbol->GetAddress() = symbol_ptr->GetAddress();
-                                break;
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -3588,6 +3736,31 @@ ObjectFileMachO::ParseSymtab ()
             sym = symtab->Resize (num_syms);
         }
 
+        std::vector<TrieEntryWithOffset> trie_entries;
+        std::set<lldb::addr_t> resolver_addresses;
+
+        if (dyld_trie_data.GetByteSize() > 0)
+        {
+            std::vector<llvm::StringRef> nameSlices;
+            ParseTrieEntries (dyld_trie_data,
+                              0,
+                              nameSlices,
+                              resolver_addresses,
+                              trie_entries);
+            
+            ConstString text_segment_name ("__TEXT");
+            SectionSP text_segment_sp = GetSectionList()->FindSectionByName(text_segment_name);
+            if (text_segment_sp)
+            {
+                const lldb::addr_t text_segment_file_addr = text_segment_sp->GetFileAddress();
+                if (text_segment_file_addr != LLDB_INVALID_ADDRESS)
+                {
+                    for (auto &e : trie_entries)
+                        e.entry.address += text_segment_file_addr;
+                }
+            }
+        }
+
         // Now synthesize indirect symbols
         if (m_dysymtab.nindirectsyms != 0)
         {
@@ -3646,7 +3819,10 @@ ObjectFileMachO::ParseSymtab ()
                                         // These symbols were N_UNDF N_EXT, and are useless to us, so we
                                         // can re-use them so we don't have to make up a synthetic symbol
                                         // for no good reason.
-                                        stub_symbol->SetType (eSymbolTypeTrampoline);
+                                        if (resolver_addresses.find(symbol_stub_addr) == resolver_addresses.end())
+                                            stub_symbol->SetType (eSymbolTypeTrampoline);
+                                        else
+                                            stub_symbol->SetType (eSymbolTypeResolver);
                                         stub_symbol->SetExternal (false);
                                         stub_symbol->GetAddress() = so_addr;
                                         stub_symbol->SetByteSize (symbol_stub_byte_size);
@@ -3662,7 +3838,10 @@ ObjectFileMachO::ParseSymtab ()
                                         }
                                         sym[sym_idx].SetID (synthetic_sym_id++);
                                         sym[sym_idx].GetMangled() = stub_symbol_mangled_name;
-                                        sym[sym_idx].SetType (eSymbolTypeTrampoline);
+                                        if (resolver_addresses.find(symbol_stub_addr) == resolver_addresses.end())
+                                            sym[sym_idx].SetType (eSymbolTypeTrampoline);
+                                        else
+                                            sym[sym_idx].SetType (eSymbolTypeResolver);
                                         sym[sym_idx].SetIsSynthetic (true);
                                         sym[sym_idx].GetAddress() = so_addr;
                                         sym[sym_idx].SetByteSize (symbol_stub_byte_size);
@@ -3680,6 +3859,32 @@ ObjectFileMachO::ParseSymtab ()
                 }
             }
         }
+
+        
+        if (!trie_entries.empty())
+        {
+            for (const auto &e : trie_entries)
+            {
+                if (e.entry.import_name)
+                {
+                    // Make a synthetic symbol to describe re-exported symbol.
+                    if (sym_idx >= num_syms)
+                        sym = symtab->Resize (++num_syms);
+                    sym[sym_idx].SetID (synthetic_sym_id++);
+                    sym[sym_idx].GetMangled() = Mangled(e.entry.name);
+                    sym[sym_idx].SetType (eSymbolTypeReExported);
+                    sym[sym_idx].SetIsSynthetic (true);
+                    sym[sym_idx].SetReExportedSymbolName(e.entry.import_name);
+                    if (e.entry.other > 0 && e.entry.other <= dylib_files.GetSize())
+                    {
+                        sym[sym_idx].SetReExportedSymbolSharedLibrary(dylib_files.GetFileSpecAtIndex(e.entry.other-1));
+                    }
+                    ++sym_idx;
+                }
+            }
+        }
+
+
         
 //        StreamFile s(stdout, false);
 //        s.Printf ("Symbol table before CalculateSymbolSizes():\n");

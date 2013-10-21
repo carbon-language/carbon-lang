@@ -21,6 +21,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Core/ValueObjectVariable.h"
@@ -591,11 +592,18 @@ ClangExpressionDeclMap::GetFunctionAddress
 }
 
 addr_t
-ClangExpressionDeclMap::GetSymbolAddress (Target &target, Process *process, const ConstString &name, lldb::SymbolType symbol_type)
+ClangExpressionDeclMap::GetSymbolAddress (Target &target,
+                                          Process *process,
+                                          const ConstString &name,
+                                          lldb::SymbolType symbol_type,
+                                          Module *module)
 {
     SymbolContextList sc_list;
     
-    target.GetImages().FindSymbolsWithNameAndType(name, symbol_type, sc_list);
+    if (module)
+        module->FindSymbolsWithNameAndType(name, symbol_type, sc_list);
+    else
+        target.GetImages().FindSymbolsWithNameAndType(name, symbol_type, sc_list);
     
     const uint32_t num_matches = sc_list.GetSize();
     addr_t symbol_load_addr = LLDB_INVALID_ADDRESS;
@@ -621,6 +629,28 @@ ClangExpressionDeclMap::GetSymbolAddress (Target &target, Process *process, cons
 
                 case eSymbolTypeResolver:
                     symbol_load_addr = sym_address->GetCallableLoadAddress (&target, true);
+                    break;
+
+                case eSymbolTypeReExported:
+                    {
+                        ConstString reexport_name = sym_ctx.symbol->GetReExportedSymbolName();
+                        if (reexport_name)
+                        {
+                            ModuleSP reexport_module_sp;
+                            ModuleSpec reexport_module_spec;
+                            reexport_module_spec.GetPlatformFileSpec() = sym_ctx.symbol->GetReExportedSymbolSharedLibrary();
+                            if (reexport_module_spec.GetPlatformFileSpec())
+                            {
+                                reexport_module_sp = target.GetImages().FindFirstModule(reexport_module_spec);
+                                if (!reexport_module_sp)
+                                {
+                                    reexport_module_spec.GetPlatformFileSpec().GetDirectory().Clear();
+                                    reexport_module_sp = target.GetImages().FindFirstModule(reexport_module_spec);
+                                }
+                            }
+                            symbol_load_addr = GetSymbolAddress(target, process, sym_ctx.symbol->GetReExportedSymbolName(), symbol_type, reexport_module_sp.get());
+                        }
+                    }
                     break;
 
                 case eSymbolTypeData:
@@ -680,11 +710,15 @@ ClangExpressionDeclMap::GetSymbolAddress (const ConstString &name, lldb::SymbolT
 
 const Symbol *
 ClangExpressionDeclMap::FindGlobalDataSymbol (Target &target,
-                                              const ConstString &name)
+                                              const ConstString &name,
+                                              Module *module)
 {
     SymbolContextList sc_list;
     
-    target.GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeAny, sc_list);
+    if (module)
+        module->FindSymbolsWithNameAndType(name, eSymbolTypeAny, sc_list);
+    else
+        target.GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeAny, sc_list);
     
     const uint32_t matches = sc_list.GetSize();
     for (uint32_t i=0; i<matches; ++i)
@@ -716,6 +750,28 @@ ClangExpressionDeclMap::FindGlobalDataSymbol (Target &target,
                         }
                         return symbol;
 
+                    case eSymbolTypeReExported:
+                        {
+                            ConstString reexport_name = symbol->GetReExportedSymbolName();
+                            if (reexport_name)
+                            {
+                                ModuleSP reexport_module_sp;
+                                ModuleSpec reexport_module_spec;
+                                reexport_module_spec.GetPlatformFileSpec() = symbol->GetReExportedSymbolSharedLibrary();
+                                if (reexport_module_spec.GetPlatformFileSpec())
+                                {
+                                    reexport_module_sp = target.GetImages().FindFirstModule(reexport_module_spec);
+                                    if (!reexport_module_sp)
+                                    {
+                                        reexport_module_spec.GetPlatformFileSpec().GetDirectory().Clear();
+                                        reexport_module_sp = target.GetImages().FindFirstModule(reexport_module_spec);
+                                    }
+                                }
+                                return FindGlobalDataSymbol(target, symbol->GetReExportedSymbolName(), reexport_module_sp.get());
+                            }
+                        }
+                        break;
+                        
                     case eSymbolTypeCode: // We already lookup functions elsewhere
                     case eSymbolTypeVariable:
                     case eSymbolTypeLocal:
@@ -1286,8 +1342,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             if (sc_list.GetSize())
             {
-                Symbol *generic_symbol = NULL;
-                Symbol *non_extern_symbol = NULL;
+                Symbol *symbol = NULL;
                 
                 for (uint32_t index = 0, num_indices = sc_list.GetSize();
                      index < num_indices;
@@ -1315,23 +1370,18 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     }
                     else if (sym_ctx.symbol)
                     {
-                        if (sym_ctx.symbol->IsExternal())
-                            generic_symbol = sym_ctx.symbol;
+                        if (sym_ctx.symbol->GetType() == eSymbolTypeReExported)
+                            symbol = sym_ctx.symbol->ResolveReExportedSymbol(*target);
                         else
-                            non_extern_symbol = sym_ctx.symbol;
+                            symbol = sym_ctx.symbol;
                     }
                 }
                 
                 if (!context.m_found.function_with_type_info)
                 {
-                    if (generic_symbol)
+                    if (symbol)
                     {
-                        AddOneFunction (context, NULL, generic_symbol, current_id);
-                        context.m_found.function = true;
-                    }
-                    else if (non_extern_symbol)
-                    {
-                        AddOneFunction (context, NULL, non_extern_symbol, current_id);
+                        AddOneFunction (context, NULL, symbol, current_id);
                         context.m_found.function = true;
                     }
                 }

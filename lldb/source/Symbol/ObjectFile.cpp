@@ -423,6 +423,7 @@ ObjectFile::GetAddressClass (addr_t file_addr)
             case eSymbolTypeObjCClass:      return eAddressClassRuntime;
             case eSymbolTypeObjCMetaClass:  return eAddressClassRuntime;
             case eSymbolTypeObjCIVar:       return eAddressClassRuntime;
+            case eSymbolTypeReExported:     return eAddressClassRuntime;
             }
         }
     }
