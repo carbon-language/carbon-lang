@@ -350,6 +350,7 @@ KEYWORD(typeof                      , KEYGNU)
 
 // MS Extensions
 KEYWORD(L__FUNCTION__               , KEYMS)
+KEYWORD(__is_interface_class        , KEYMS)
 KEYWORD(__is_sealed                 , KEYMS)
 
 // GNU and MS Type Traits
@@ -371,7 +372,6 @@ KEYWORD(__is_convertible_to           , KEYCXX)
 KEYWORD(__is_empty                    , KEYCXX)
 KEYWORD(__is_enum                     , KEYCXX)
 KEYWORD(__is_final                    , KEYCXX)
-KEYWORD(__is_interface_class          , KEYCXX)
 // Tentative name - there's no implementation of std::is_literal_type yet.
 KEYWORD(__is_literal                  , KEYCXX)
 // Name for GCC 4.6 compatibility - people have already written libraries using
