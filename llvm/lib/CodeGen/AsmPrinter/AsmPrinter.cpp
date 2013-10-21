@@ -1513,7 +1513,7 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
   case Instruction::GetElementPtr: {
     const DataLayout &DL = *AP.TM.getDataLayout();
     // Generate a symbolic expression for the byte address
-    APInt OffsetAI(DL.getPointerSizeInBits(), 0);
+    APInt OffsetAI(DL.getPointerTypeSizeInBits(CE->getType()), 0);
     cast<GEPOperator>(CE)->accumulateConstantOffset(DL, OffsetAI);
 
     const MCExpr *Base = lowerConstant(CE->getOperand(0), AP);
@@ -1539,7 +1539,7 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
     // Handle casts to pointers by changing them into casts to the appropriate
     // integer type.  This promotes constant folding and simplifies this code.
     Constant *Op = CE->getOperand(0);
-    Op = ConstantExpr::getIntegerCast(Op, DL.getIntPtrType(CV->getContext()),
+    Op = ConstantExpr::getIntegerCast(Op, DL.getIntPtrType(CV->getType()),
                                       false/*ZExt*/);
     return lowerConstant(Op, AP);
   }
