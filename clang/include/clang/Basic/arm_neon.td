@@ -882,11 +882,11 @@ def SCALAR_USQADD : SInst<"vsqadd", "sss", "SUcSUsSUiSUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Signed Saturating Doubling Multiply-Add Long
-def SCALAR_SQDMLAL : SInst<"vqdmlal", "rss", "SsSi">;
+def SCALAR_SQDMLAL : SInst<"vqdmlal", "rrss", "SsSi">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Signed Saturating Doubling Multiply-Subtract Long
-def SCALAR_SQDMLSL : SInst<"vqdmlsl", "rss", "SsSi">;
+def SCALAR_SQDMLSL : SInst<"vqdmlsl", "rrss", "SsSi">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Signed Saturating Doubling Multiply Long

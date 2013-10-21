@@ -7226,28 +7226,28 @@ uint64_t test_vsqaddd_u64(uint64_t a, uint64_t b) {
   return (uint64_t)vsqaddd_u64(a, b);
 }
 
-int32_t test_vqdmlalh_s16(int16_t a, int16_t b) {
+int32_t test_vqdmlalh_s16(int32_t a, int16_t b, int16_t c) {
 // CHECK: test_vqdmlalh_s16
 // CHECK: sqdmlal {{s[0-9]+}}, {{h[0-9]+}}, {{h[0-9]+}}
-  return (int32_t)vqdmlalh_s16(a, b);
+  return (int32_t)vqdmlalh_s16(a, b, c);
 }
 
-int64_t test_vqdmlals_s32(int32_t a, int32_t b) {
+int64_t test_vqdmlals_s32(int64_t a, int32_t b, int32_t c) {
 // CHECK: test_vqdmlals_s32
 // CHECK: sqdmlal {{d[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
-  return (int64_t)vqdmlals_s32(a, b);
+  return (int64_t)vqdmlals_s32(a, b, c);
 }
 
-int32_t test_vqdmlslh_s16(int16_t a, int16_t b) {
+int32_t test_vqdmlslh_s16(int32_t a, int16_t b, int16_t c) {
 // CHECK: test_vqdmlslh_s16
 // CHECK: sqdmlsl {{s[0-9]+}}, {{h[0-9]+}}, {{h[0-9]+}}
-  return (int32_t)vqdmlslh_s16(a, b);
+  return (int32_t)vqdmlslh_s16(a, b, c);
 }
 
-int64_t test_vqdmlsls_s32(int32_t a, int32_t b) {
+int64_t test_vqdmlsls_s32(int64_t a, int32_t b, int32_t c) {
 // CHECK: test_vqdmlsls_s32
 // CHECK: sqdmlsl {{d[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
-  return (int64_t)vqdmlsls_s32(a, b);
+  return (int64_t)vqdmlsls_s32(a, b, c);
 }
 
 int32_t test_vqdmullh_s16(int16_t a, int16_t b) {
