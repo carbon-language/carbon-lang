@@ -200,6 +200,10 @@
 # CHECK:        sll.h           $w17, $w27, $w3                 # encoding: [0x78,0x23,0xdc,0x4d]
 # CHECK:        sll.w           $w16, $w7, $w6                  # encoding: [0x78,0x46,0x3c,0x0d]
 # CHECK:        sll.d           $w9, $w0, $w26                  # encoding: [0x78,0x7a,0x02,0x4d]
+# CHECK:        splat.b         $w28, $w1[$1]                   # encoding: [0x78,0x81,0x0f,0x14]
+# CHECK:        splat.h         $w2, $w11[$11]                  # encoding: [0x78,0xab,0x58,0x94]
+# CHECK:        splat.w         $w22, $w0[$11]                  # encoding: [0x78,0xcb,0x05,0x94]
+# CHECK:        splat.d         $w0, $w0[$2]                    # encoding: [0x78,0xe2,0x00,0x14]
 # CHECK:        sra.b           $w28, $w4, $w17                 # encoding: [0x78,0x91,0x27,0x0d]
 # CHECK:        sra.h           $w13, $w9, $w3                  # encoding: [0x78,0xa3,0x4b,0x4d]
 # CHECK:        sra.w           $w27, $w21, $w19                # encoding: [0x78,0xd3,0xae,0xcd]
@@ -439,6 +443,10 @@
 # CHECKOBJDUMP:        sll.h           $w17, $w27, $w3
 # CHECKOBJDUMP:        sll.w           $w16, $w7, $w6
 # CHECKOBJDUMP:        sll.d           $w9, $w0, $w26
+# CHECKOBJDUMP:        splat.b         $w28, $w1[$1]
+# CHECKOBJDUMP:        splat.h         $w2, $w11[$11]
+# CHECKOBJDUMP:        splat.w         $w22, $w0[$11]
+# CHECKOBJDUMP:        splat.d         $w0, $w0[$2]
 # CHECKOBJDUMP:        sra.b           $w28, $w4, $w17
 # CHECKOBJDUMP:        sra.h           $w13, $w9, $w3
 # CHECKOBJDUMP:        sra.w           $w27, $w21, $w19
@@ -678,6 +686,10 @@
                 sll.h           $w17, $w27, $w3
                 sll.w           $w16, $w7, $w6
                 sll.d           $w9, $w0, $w26
+                splat.b         $w28, $w1[$1]
+                splat.h         $w2, $w11[$11]
+                splat.w         $w22, $w0[$11]
+                splat.d         $w0, $w0[$2]
                 sra.b           $w28, $w4, $w17
                 sra.h           $w13, $w9, $w3
                 sra.w           $w27, $w21, $w19

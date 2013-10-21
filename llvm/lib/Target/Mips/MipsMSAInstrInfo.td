@@ -932,10 +932,10 @@ class SLLI_H_ENC : MSA_BIT_H_FMT<0b000, 0b001001>;
 class SLLI_W_ENC : MSA_BIT_W_FMT<0b000, 0b001001>;
 class SLLI_D_ENC : MSA_BIT_D_FMT<0b000, 0b001001>;
 
-class SPLAT_B_ENC : MSA_3R_FMT<0b001, 0b00, 0b010100>;
-class SPLAT_H_ENC : MSA_3R_FMT<0b001, 0b01, 0b010100>;
-class SPLAT_W_ENC : MSA_3R_FMT<0b001, 0b10, 0b010100>;
-class SPLAT_D_ENC : MSA_3R_FMT<0b001, 0b11, 0b010100>;
+class SPLAT_B_ENC : MSA_3R_INDEX_FMT<0b001, 0b00, 0b010100>;
+class SPLAT_H_ENC : MSA_3R_INDEX_FMT<0b001, 0b01, 0b010100>;
+class SPLAT_W_ENC : MSA_3R_INDEX_FMT<0b001, 0b10, 0b010100>;
+class SPLAT_D_ENC : MSA_3R_INDEX_FMT<0b001, 0b11, 0b010100>;
 
 class SPLATI_B_ENC : MSA_ELM_B_FMT<0b0001, 0b011001>;
 class SPLATI_H_ENC : MSA_ELM_H_FMT<0b0001, 0b011001>;
@@ -2285,14 +2285,18 @@ class SLLI_W_DESC : MSA_BIT_SPLAT_DESC_BASE<"slli.w", shl, vsplati32_uimm5,
 class SLLI_D_DESC : MSA_BIT_SPLAT_DESC_BASE<"slli.d", shl, vsplati64_uimm6,
                                             MSA128DOpnd>;
 
-class SPLAT_B_DESC : MSA_3R_DESC_BASE<"splat.b", int_mips_splat_b, MSA128BOpnd,
-                                      MSA128BOpnd, GPR32Opnd>;
-class SPLAT_H_DESC : MSA_3R_DESC_BASE<"splat.h", int_mips_splat_h, MSA128HOpnd,
-                                      MSA128HOpnd, GPR32Opnd>;
-class SPLAT_W_DESC : MSA_3R_DESC_BASE<"splat.w", int_mips_splat_w, MSA128WOpnd,
-                                      MSA128WOpnd, GPR32Opnd>;
-class SPLAT_D_DESC : MSA_3R_DESC_BASE<"splat.d", int_mips_splat_d, MSA128DOpnd,
-                                      MSA128DOpnd, GPR32Opnd>;
+class SPLAT_B_DESC : MSA_3R_INDEX_DESC_BASE<"splat.b", int_mips_splat_b,
+                                            MSA128BOpnd, MSA128BOpnd,
+                                            GPR32Opnd>;
+class SPLAT_H_DESC : MSA_3R_INDEX_DESC_BASE<"splat.h", int_mips_splat_h,
+                                            MSA128HOpnd, MSA128HOpnd,
+                                            GPR32Opnd>;
+class SPLAT_W_DESC : MSA_3R_INDEX_DESC_BASE<"splat.w", int_mips_splat_w,
+                                            MSA128WOpnd, MSA128WOpnd,
+                                            GPR32Opnd>;
+class SPLAT_D_DESC : MSA_3R_INDEX_DESC_BASE<"splat.d", int_mips_splat_d,
+                                            MSA128DOpnd, MSA128DOpnd,
+                                            GPR32Opnd>;
 
 class SPLATI_B_DESC : MSA_ELM_SPLAT_DESC_BASE<"splati.b", vsplati8_uimm4,
                                               MSA128BOpnd>;
