@@ -73,7 +73,7 @@ public:
     kindDataDirectory
   };
 
-  explicit Chunk(Kind kind) : _kind(kind), _size(0), _align(1) {}
+  explicit Chunk(Kind kind) : _kind(kind) {}
   virtual ~Chunk() {};
   virtual void write(uint8_t *fileBuffer) = 0;
 
@@ -89,9 +89,9 @@ public:
 
 protected:
   Kind _kind;
-  uint64_t _size;
+  uint64_t _size = 0;
   uint64_t _fileOffset;
-  uint64_t _align;
+  uint64_t _align = 1;
 };
 
 /// A HeaderChunk is an abstract class to represent a file header for
@@ -802,8 +802,7 @@ private:
 class ExecutableWriter : public Writer {
 public:
   explicit ExecutableWriter(const PECOFFLinkingContext &context)
-      : _PECOFFLinkingContext(context), _numSections(0),
-        _imageSizeInMemory(PAGE_SIZE), _imageSizeOnDisk(0) {}
+      : _PECOFFLinkingContext(context) {}
 
   // Create all chunks that consist of the output file.
   void build(const File &linkedFile) {
@@ -978,17 +977,17 @@ private:
 
   std::vector<std::unique_ptr<Chunk>> _chunks;
   const PECOFFLinkingContext &_PECOFFLinkingContext;
-  uint32_t _numSections;
+  uint32_t _numSections = 0;
 
   // The size of the image in memory. This is initialized with PAGE_SIZE, as the
   // first page starting at ImageBase is usually left unmapped. IIUC there's no
   // technical reason to do so, but we'll follow that convention so that we
   // don't produce odd-looking binary.
-  uint32_t _imageSizeInMemory;
+  uint32_t _imageSizeInMemory = PAGE_SIZE;
 
   // The size of the image on disk. This is basically the sum of all chunks in
   // the output file with paddings between them.
-  uint32_t _imageSizeOnDisk;
+  uint32_t _imageSizeOnDisk = 0;
 
   // The map from defined atoms to its RVAs. Will be used for relocation.
   std::map<const Atom *, uint64_t> atomRva;

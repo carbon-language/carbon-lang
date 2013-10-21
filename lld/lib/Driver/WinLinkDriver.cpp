@@ -204,6 +204,8 @@ StringRef getDefaultEntrySymbolName(PECOFFLinkingContext &context) {
   return "";
 }
 
+
+
 // Parses the given command line options and returns the result. Returns NULL if
 // there's an error in the options.
 std::unique_ptr<llvm::opt::InputArgList>
