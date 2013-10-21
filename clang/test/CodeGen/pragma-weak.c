@@ -1,4 +1,4 @@
-// RUN: not %clang_cc1 -triple x86_64-pc-linux-gnu -emit-llvm %s -o - -verify | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -emit-llvm %s -o - -verify | FileCheck %s
 
 // CHECK: @weakvar = weak global
 // CHECK: @__weakvar_alias = common global
@@ -147,7 +147,7 @@ void __a3(void) {}
 // CHECK: define void @__a3() [[NI]]
 
 #pragma weak xxx = __xxx
-__attribute((pure,noinline,const,fastcall)) void __xxx(void) { }
+__attribute((pure,noinline,const)) void __xxx(void) { }
 // CHECK: void @__xxx() [[RN:#[0-9]+]]
 
 ///////////// PR10878: Make sure we can call a weak alias
