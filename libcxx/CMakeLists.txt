@@ -196,7 +196,9 @@ endmacro()
 # Get warning flags
 if (NOT MSVC)
   append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_WALL_FLAG -Wall)
+  set(LIBCXX_CXX_REQUIRED_FLAGS, -Werror=return-type)
 endif()
+
 append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_W_FLAG -W)
 append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_WNO_UNUSED_PARAMETER_FLAG -Wno-unused-parameter)
 append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_WWRITE_STRINGS_FLAG -Wwrite-strings)
@@ -253,6 +255,10 @@ if (NOT LIBCXX_ENABLE_SHARED)
 endif()
 
 # This is the _ONLY_ place where add_definitions is called.
+if (MSVC)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
 add_definitions(
  ${LIBCXX_CXX_REQUIRED_FLAGS}
  ${LIBCXX_CXX_WARNING_FLAGS}
