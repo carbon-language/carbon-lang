@@ -827,7 +827,6 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   return false;
 }
 
-
 /// SimplifyPartiallyRedundantLoad - If LI is an obviously partially redundant
 /// load instruction, eliminate it by replacing it with a PHI node.  This is an
 /// important optimization that encourages jump threading, and needs to be run
@@ -840,6 +839,12 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
   // partially redundant.
   BasicBlock *LoadBB = LI->getParent();
   if (LoadBB->getSinglePredecessor())
+    return false;
+
+  // If the load is defined in a landing pad, it can't be partially redundant,
+  // because the edges between the invoke and the landing pad cannot have other
+  // instructions between them.
+  if (LoadBB->isLandingPad())
     return false;
 
   Value *LoadedPtr = LI->getOperand(0);
