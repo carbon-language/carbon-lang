@@ -801,12 +801,6 @@ FormatManager::LoadLibcxxFormatters()
 #endif
 }
 
-static SyntheticChildrenFrontEnd*
-FooStructSynth (CXXSyntheticChildren*, lldb::ValueObjectSP)
-{
-    return NULL;
-}
-
 void
 FormatManager::LoadSystemFormatters()
 {
@@ -839,11 +833,7 @@ FormatManager::LoadSystemFormatters()
     sys_category_sp->GetSummaryNavigator()->Add(ConstString("char *"), string_format);
     sys_category_sp->GetSummaryNavigator()->Add(ConstString("unsigned char *"), string_format);
     sys_category_sp->GetRegexSummaryNavigator()->Add(any_size_char_arr, string_array_format);
-    
-#ifndef LLDB_DISABLE_PYTHON
-    AddCXXSynthetic(sys_category_sp, FooStructSynth, "Foo synth", ConstString("Foo"), ScriptedSyntheticChildren::Flags(), false);
-#endif
-    
+
     lldb::TypeSummaryImplSP ostype_summary(new StringSummaryFormat(TypeSummaryImpl::Flags().SetCascades(false)
                                                                    .SetSkipPointers(true)
                                                                    .SetSkipReferences(true)
