@@ -20,15 +20,12 @@ void * __ptr32 PtrToPtr32(const void *p)
 
 void __forceinline InterlockedBitTestAndSet (long *Base, long Bit)
 {
-  // FIXME: Re-enable this once MS inline asm stabilizes.
-#if 0
   __asm {
     mov eax, Bit
     mov ecx, Base
     lock bts [ecx], eax
     setc al
   };
-#endif
 }
 _inline int foo99() { return 99; }
 
