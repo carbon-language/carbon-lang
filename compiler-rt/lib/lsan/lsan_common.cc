@@ -93,8 +93,12 @@ void InitializeSuppressions() {
 
 void InitCommonLsan() {
   InitializeFlags();
-  InitializeSuppressions();
-  InitializePlatformSpecificModules();
+  if (common_flags()->detect_leaks) {
+    // Initialization which can fail or print warnings should only be done if
+    // LSan is actually enabled.
+    InitializeSuppressions();
+    InitializePlatformSpecificModules();
+  }
 }
 
 class Decorator: private __sanitizer::AnsiColorDecorator {
@@ -537,6 +541,8 @@ extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE
 void __lsan_ignore_object(const void *p) {
 #if CAN_SANITIZE_LEAKS
+  if (!common_flags()->detect_leaks)
+    return;
   // Cannot use PointsIntoChunk or LsanMetadata here, since the allocator is not
   // locked.
   BlockingMutexLock l(&global_mutex);
@@ -561,7 +567,7 @@ void __lsan_disable() {
 SANITIZER_INTERFACE_ATTRIBUTE
 void __lsan_enable() {
 #if CAN_SANITIZE_LEAKS
-  if (!__lsan::disable_counter) {
+  if (!__lsan::disable_counter && common_flags()->detect_leaks) {
     Report("Unmatched call to __lsan_enable().\n");
     Die();
   }
