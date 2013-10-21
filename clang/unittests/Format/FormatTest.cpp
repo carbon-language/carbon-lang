@@ -2329,6 +2329,19 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
                "int i;");
 }
 
+TEST_F(FormatTest, FormatsJoinedLinesOnSubsequentRuns) {
+  FormatStyle SingleLine = getLLVMStyle();
+  SingleLine.AllowShortIfStatementsOnASingleLine = true;
+  verifyFormat(
+      "#if 0\n"
+      "#elif 1\n"
+      "#endif\n"
+      "void foo() {\n"
+      "  if (test) foo2();\n"
+      "}",
+      SingleLine);
+}
+
 TEST_F(FormatTest, LayoutBlockInsideParens) {
   EXPECT_EQ("functionCall({ int i; });", format(" functionCall ( {int i;} );"));
   EXPECT_EQ("functionCall({\n"

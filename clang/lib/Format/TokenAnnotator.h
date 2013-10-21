@@ -43,6 +43,11 @@ public:
         MustBeDeclaration(Line.MustBeDeclaration), MightBeFunctionDecl(false),
         StartsDefinition(false) {
     assert(!Line.Tokens.empty());
+
+    // Calculate Next and Previous for all tokens. Note that we must overwrite
+    // Next and Previous for every token, as previous formatting runs might have
+    // left them in a different state.
+    First->Previous = NULL;
     FormatToken *Current = First;
     for (std::list<UnwrappedLineNode>::const_iterator I = ++Line.Tokens.begin(),
                                                       E = Line.Tokens.end();
@@ -60,6 +65,7 @@ public:
       }
     }
     Last = Current;
+    Last->Next = NULL;
   }
 
   ~AnnotatedLine() {
