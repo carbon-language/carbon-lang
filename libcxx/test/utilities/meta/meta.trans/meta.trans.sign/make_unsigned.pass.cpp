@@ -17,7 +17,7 @@ enum Enum {zero, one_};
 
 enum BigEnum
 {
-    bzero,
+    bigzero,
     big = 0xFFFFFFFFFFFFFFFFULL
 };
 
