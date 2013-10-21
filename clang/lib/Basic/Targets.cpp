@@ -3760,16 +3760,31 @@ public:
   }
 
   void getDefaultFeatures(llvm::StringMap<bool> &Features) const {
+    StringRef ArchName = getTriple().getArchName();
     if (CPU == "arm1136jf-s" || CPU == "arm1176jzf-s" || CPU == "mpcore")
       Features["vfp2"] = true;
     else if (CPU == "cortex-a8" || CPU == "cortex-a9" ||
              CPU == "cortex-a9-mp") {
       Features["vfp3"] = true;
       Features["neon"] = true;
-    } else if (CPU == "swift" || CPU == "cortex-a5" ||
-        CPU == "cortex-a7" || CPU == "cortex-a15") {
+    }
+    else if (CPU == "cortex-a5") {
       Features["vfp4"] = true;
       Features["neon"] = true;
+    } else if (CPU == "swift" || CPU == "cortex-a7" || CPU == "cortex-a15") {
+      Features["vfp4"] = true;
+      Features["neon"] = true;
+      Features["hwdiv"] = true;
+      Features["hwdiv-arm"] = true;
+    } else if (CPU == "cortex-r5" || CPU == "cortex-a53"||
+               CPU == "cortex-a57" || CPU == "cortex-m3" ||
+               CPU == "cortex-m4" ||
+               // Enable the hwdiv extension for all v8a AArch32 cores by
+               // default.
+               ArchName == "armv8a" || ArchName == "armv8" ||
+               ArchName == "thumbv8a" || ArchName == "thumbv8") {
+      Features["hwdiv"] = true;
+      Features["hwdiv-arm"] = true;
     }
   }
 
