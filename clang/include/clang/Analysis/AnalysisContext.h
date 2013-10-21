@@ -16,18 +16,14 @@
 #define LLVM_CLANG_ANALYSIS_ANALYSISCONTEXT_H
 
 #include "clang/AST/Decl.h"
-#include "clang/AST/Expr.h"
 #include "clang/Analysis/CFG.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/PointerUnion.h"
 #include "llvm/Support/Allocator.h"
 
 namespace clang {
 
-class Decl;
 class Stmt;
 class CFGReverseBlockReachabilityAnalysis;
 class CFGStmtMap;
@@ -35,7 +31,6 @@ class LiveVariables;
 class ManagedAnalysis;
 class ParentMap;
 class PseudoConstantAnalysis;
-class ImplicitParamDecl;
 class LocationContextManager;
 class StackFrameContext;
 class BlockInvocationContext;
