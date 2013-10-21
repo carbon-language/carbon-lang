@@ -3599,6 +3599,12 @@ class ARMTargetInfo : public TargetInfo {
     NeonFPU = (1 << 3)
   };
 
+  // Possible HWDiv features.
+  enum HWDivMode {
+    HWDivThumb = (1 << 0),
+    HWDivARM = (1 << 1)
+  };
+
   static bool FPUModeIsVFP(FPUMode Mode) {
     return Mode & (VFP2FPU | VFP3FPU | VFP4FPU | NeonFPU);
   }
@@ -3618,6 +3624,7 @@ class ARMTargetInfo : public TargetInfo {
 
   unsigned IsAAPCS : 1;
   unsigned IsThumb : 1;
+  unsigned HWDiv : 2;
 
   // Initialized via features.
   unsigned SoftFloat : 1;
@@ -3770,6 +3777,7 @@ public:
                                     DiagnosticsEngine &Diags) {
     FPU = 0;
     SoftFloat = SoftFloatABI = false;
+    HWDiv = 0;
     for (unsigned i = 0, e = Features.size(); i != e; ++i) {
       if (Features[i] == "+soft-float")
         SoftFloat = true;
@@ -3783,6 +3791,10 @@ public:
         FPU |= VFP4FPU;
       else if (Features[i] == "+neon")
         FPU |= NeonFPU;
+      else if (Features[i] == "+hwdiv")
+        HWDiv |= HWDivThumb;
+      else if (Features[i] == "+hwdiv-arm")
+        HWDiv |= HWDivARM;
     }
 
     if (!(FPU & NeonFPU) && FPMath == FP_Neon) {
@@ -3812,6 +3824,8 @@ public:
         .Case("softfloat", SoftFloat)
         .Case("thumb", IsThumb)
         .Case("neon", (FPU & NeonFPU) && !SoftFloat)
+        .Case("hwdiv", HWDiv & HWDivThumb)
+        .Case("hwdiv-arm", HWDiv & HWDivARM)
         .Default(false);
   }
   // FIXME: Should we actually have some table instead of these switches?
@@ -3905,6 +3919,8 @@ public:
       if (CPUArch == "6T2" || IsARMv7)
         Builder.defineMacro("__thumb2__");
     }
+    if (((HWDiv & HWDivThumb) && IsThumb) || ((HWDiv & HWDivARM) && !IsThumb))
+      Builder.defineMacro("__ARM_ARCH_EXT_IDIV__", "1");
 
     // Note, this is always on in gcc, even though it doesn't make sense.
     Builder.defineMacro("__APCS_32__");
