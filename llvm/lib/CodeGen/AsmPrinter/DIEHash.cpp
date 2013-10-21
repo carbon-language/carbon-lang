@@ -230,6 +230,7 @@ void DIEHash::hashAttribute(AttrEntry Attr) {
   case dwarf::DW_FORM_string:
     llvm_unreachable(
         "Add support for DW_FORM_string if we ever start emitting them again");
+  case dwarf::DW_FORM_GNU_str_index:
   case dwarf::DW_FORM_strp:
     addULEB128(dwarf::DW_FORM_string);
     addString(cast<DIEString>(Value)->getString());
@@ -242,7 +243,8 @@ void DIEHash::hashAttribute(AttrEntry Attr) {
     addULEB128(dwarf::DW_FORM_sdata);
     addSLEB128((int64_t)cast<DIEInteger>(Value)->getValue());
     break;
-  // TODO: Add support for additional forms.
+  default:
+    llvm_unreachable("Add support for additional forms");
   }
 }
 
