@@ -189,15 +189,47 @@ void DIEHash::collectAttributes(DIE *Die, DIEAttrs &Attrs) {
 
 // Hash an individual attribute \param Attr based on the type of attribute and
 // the form.
-void DIEHash::hashAttribute(AttrEntry Attr) {
+void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
   const DIEValue *Value = Attr.Val;
   const DIEAbbrevData *Desc = Attr.Desc;
 
-  // 7.27s3
+  // 7.27 Step 3
   // ... An attribute that refers to another type entry T is processed as
   // follows:
   if (const DIEEntry *EntryAttr = dyn_cast<DIEEntry>(Value)) {
     DIE *Entry = EntryAttr->getEntry();
+
+    // Step 5
+    // If the tag in Step 3 is one of ...
+    if (Tag == dwarf::DW_TAG_pointer_type) {
+      // ... and the referenced type (via the DW_AT_type or DW_AT_friend
+      // attribute) ...
+      assert(Desc->getAttribute() == dwarf::DW_AT_type ||
+             Desc->getAttribute() == dwarf::DW_AT_friend);
+      // [FIXME] ... has a DW_AT_name attribute,
+      // append the letter 'N'
+      addULEB128('N');
+
+      // the DWARF attribute code (DW_AT_type or DW_AT_friend),
+      addULEB128(Desc->getAttribute());
+
+      // the context of the tag,
+      if (DIE *Parent = Entry->getParent())
+        addParentContext(Parent);
+
+      // the letter 'E',
+      addULEB128('E');
+
+      // and the name of the type.
+      addString(getDIEStringAttr(Entry, dwarf::DW_AT_name));
+
+      // FIXME:
+      // For DW_TAG_friend, if the referenced entry is the DW_TAG_subprogram,
+      // the context is omitted and the name to be used is the ABI-specific name
+      // of the subprogram (e.g., the mangled linker name).
+      return;
+    }
+
     unsigned &DieNumber = Numbering[Entry];
     if (DieNumber) {
       // a) If T is in the list of [previously hashed types], use the letter
@@ -258,11 +290,11 @@ void DIEHash::hashAttribute(AttrEntry Attr) {
 
 // Go through the attributes from \param Attrs in the order specified in 7.27.4
 // and hash them.
-void DIEHash::hashAttributes(const DIEAttrs &Attrs) {
+void DIEHash::hashAttributes(const DIEAttrs &Attrs, dwarf::Tag Tag) {
 #define ADD_ATTR(ATTR)                                                         \
   {                                                                            \
     if (ATTR.Val != 0)                                                         \
-      hashAttribute(ATTR);                                                     \
+      hashAttribute(ATTR, Tag);                                                \
   }
 
   ADD_ATTR(Attrs.DW_AT_name);
@@ -322,7 +354,7 @@ void DIEHash::hashAttributes(const DIEAttrs &Attrs) {
 void DIEHash::addAttributes(DIE *Die) {
   DIEAttrs Attrs = {};
   collectAttributes(Die, Attrs);
-  hashAttributes(Attrs);
+  hashAttributes(Attrs, Die->getTag());
 }
 
 // Compute the hash of a DIE. This is based on the type signature computation
