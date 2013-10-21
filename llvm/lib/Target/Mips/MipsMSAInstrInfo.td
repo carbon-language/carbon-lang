@@ -1149,11 +1149,11 @@ class MSA_I8_SHF_DESC_BASE<string instr_asm, RegisterOperand ROWD,
   InstrItinClass Itinerary = itin;
 }
 
-class MSA_I10_LDI_DESC_BASE<string instr_asm, RegisterClass RCWD,
+class MSA_I10_LDI_DESC_BASE<string instr_asm, RegisterOperand ROWD,
                             InstrItinClass itin = NoItinerary> {
-  dag OutOperandList = (outs RCWD:$wd);
-  dag InOperandList = (ins vsplat_simm10:$i10);
-  string AsmString = !strconcat(instr_asm, "\t$wd, $i10");
+  dag OutOperandList = (outs ROWD:$wd);
+  dag InOperandList = (ins vsplat_simm10:$s10);
+  string AsmString = !strconcat(instr_asm, "\t$wd, $s10");
   // LDI is matched using custom matching code in MipsSEISelDAGToDAG.cpp
   list<dag> Pattern = [];
   bit hasSideEffects = 0;
@@ -2052,10 +2052,10 @@ class LD_H_DESC : LD_DESC_BASE<"ld.h", load, v8i16, MSA128H>;
 class LD_W_DESC : LD_DESC_BASE<"ld.w", load, v4i32, MSA128W>;
 class LD_D_DESC : LD_DESC_BASE<"ld.d", load, v2i64, MSA128D>;
 
-class LDI_B_DESC : MSA_I10_LDI_DESC_BASE<"ldi.b", MSA128B>;
-class LDI_H_DESC : MSA_I10_LDI_DESC_BASE<"ldi.h", MSA128H>;
-class LDI_W_DESC : MSA_I10_LDI_DESC_BASE<"ldi.w", MSA128W>;
-class LDI_D_DESC : MSA_I10_LDI_DESC_BASE<"ldi.d", MSA128D>;
+class LDI_B_DESC : MSA_I10_LDI_DESC_BASE<"ldi.b", MSA128BOpnd>;
+class LDI_H_DESC : MSA_I10_LDI_DESC_BASE<"ldi.h", MSA128HOpnd>;
+class LDI_W_DESC : MSA_I10_LDI_DESC_BASE<"ldi.w", MSA128WOpnd>;
+class LDI_D_DESC : MSA_I10_LDI_DESC_BASE<"ldi.d", MSA128DOpnd>;
 
 class LSA_DESC {
   dag OutOperandList = (outs GPR32:$rd);

@@ -331,8 +331,13 @@ class MSA_I8_FMT<bits<2> major, bits<6> minor>: MSAInst {
 }
 
 class MSA_I10_FMT<bits<3> major, bits<2> df, bits<6> minor>: MSAInst {
+  bits<10> s10;
+  bits<5> wd;
+
   let Inst{25-23} = major;
   let Inst{22-21} = df;
+  let Inst{20-11} = s10;
+  let Inst{10-6} = wd;
   let Inst{5-0} = minor;
 }
 
