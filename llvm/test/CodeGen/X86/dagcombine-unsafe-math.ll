@@ -43,7 +43,7 @@ define float @test4(float %x, float %y) {
 
 ; rdar://13445387
 ; "x + x + x => 3.0 * x" should be disabled after legalization because 
-; Instruction-Selection dosen't know how to handle "3.0"
+; Instruction-Selection doesn't know how to handle "3.0"
 ; 
 define float @test5() {
   %mul.i.i151 = fmul <4 x float> zeroinitializer, zeroinitializer
