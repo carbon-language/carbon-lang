@@ -218,7 +218,8 @@ uptr GetTid() {
 }
 
 u64 NanoTime() {
-  kernel_timeval tv = {};
+  kernel_timeval tv;
+  internal_memset(&tv, 0, sizeof(tv));
   internal_syscall(__NR_gettimeofday, &tv, 0);
   return (u64)tv.tv_sec * 1000*1000*1000 + tv.tv_usec * 1000;
 }
