@@ -342,6 +342,16 @@ public:
   /// Init - This is used by the parser to implement scope caching.
   ///
   void Init(Scope *parent, unsigned flags);
+
+  /// \brief Sets up the specified scope flags and adjusts the scope state
+  /// variables accordingly.
+  ///
+  void SetFlags(unsigned Flags);
+
+  /// \brief Clears the specified scope flags and adjusts the scope state
+  /// variables accordingly.
+  ///
+  void ClearFlags(unsigned Flags);
 };
 
 }  // end namespace clang

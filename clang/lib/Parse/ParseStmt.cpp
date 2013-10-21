@@ -1135,6 +1135,9 @@ StmtResult Parser::ParseSwitchStatement(SourceLocation *TrailingElseLoc) {
     ScopeFlags |= Scope::DeclScope | Scope::ControlScope;
   ParseScope SwitchScope(this, ScopeFlags);
 
+  // Temporarily disable 'break' while parsing condition.
+  SwitchScope.ClearFlags(Scope::BreakScope);
+
   // Parse the condition.
   ExprResult Cond;
   Decl *CondVar = 0;
@@ -1156,6 +1159,9 @@ StmtResult Parser::ParseSwitchStatement(SourceLocation *TrailingElseLoc) {
       SkipUntil(tok::semi);
     return Switch;
   }
+
+  // Enable 'break' in the body of switch statement.
+  SwitchScope.SetFlags(Scope::BreakScope);
 
   // C99 6.8.4p3 - In C99, the body of the switch statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
@@ -1227,6 +1233,9 @@ StmtResult Parser::ParseWhileStatement(SourceLocation *TrailingElseLoc) {
     ScopeFlags = Scope::BreakScope | Scope::ContinueScope;
   ParseScope WhileScope(this, ScopeFlags);
 
+  // Disable 'break' and 'continue' while parsing condition.
+  WhileScope.ClearFlags(Scope::BreakScope | Scope::ContinueScope);
+
   // Parse the condition.
   ExprResult Cond;
   Decl *CondVar = 0;
@@ -1234,6 +1243,9 @@ StmtResult Parser::ParseWhileStatement(SourceLocation *TrailingElseLoc) {
     return StmtError();
 
   FullExprArg FullCond(Actions.MakeFullExpr(Cond.get(), WhileLoc));
+
+  // Allow 'break' and 'continue' in the body of the statement.
+  WhileScope.SetFlags(Scope::BreakScope | Scope::ContinueScope);
 
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
@@ -1314,6 +1326,9 @@ StmtResult Parser::ParseDoStatement() {
     return StmtError();
   }
 
+  // Do not allow 'break' and 'continue' in 'while' condition expression.
+  DoScope.ClearFlags(Scope::BreakScope | Scope::ContinueScope);
+
   // Parse the parenthesized expression.
   BalancedDelimiterTracker T(*this, tok::l_paren);
   T.consumeOpen();
@@ -1390,6 +1405,10 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
 
   BalancedDelimiterTracker T(*this, tok::l_paren);
   T.consumeOpen();
+
+  // Until loop body starts, statements 'break' and 'continue' cannot
+  // be used.
+  ForScope.ClearFlags(Scope::BreakScope | Scope::ContinueScope);
 
   ExprResult Value;
 
@@ -1565,6 +1584,9 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
                                                      Collection.take(),
                                                      T.getCloseLocation());
   }
+
+  // When parsing body of 'for' statement, 'break' and 'continue' may be used.
+  ForScope.SetFlags(Scope::BreakScope | Scope::ContinueScope);
 
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this

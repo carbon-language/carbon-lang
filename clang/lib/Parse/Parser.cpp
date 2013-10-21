@@ -390,6 +390,15 @@ void Parser::ExitScope() {
     ScopeCache[NumCachedScopes++] = OldScope;
 }
 
+void Parser::SetScopeFlags(unsigned Flags) {
+  Actions.CurScope->SetFlags(Flags);
+}
+
+void Parser::ClearScopeFlags(unsigned Flags) {
+  Actions.CurScope->ClearFlags(Flags);
+}
+
+
 /// Set the flags for the current scope to ScopeFlags. If ManageFlags is false,
 /// this object does nothing.
 Parser::ParseScopeFlags::ParseScopeFlags(Parser *Self, unsigned ScopeFlags,

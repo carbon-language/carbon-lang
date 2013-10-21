@@ -696,6 +696,22 @@ public:
       }
     }
 
+    /// \brief Sets the specified flags in this scope.
+    /// \param Flags Set of or'd flags (specified in Scope::Scopeflags) that
+    ///              must be set.
+    void SetFlags(unsigned Flags) {
+      if (Self)
+        Self->SetScopeFlags(Flags);
+    }
+
+    /// \brief Clear the specified flags in this scope.
+    /// \param Flags Set of or'd flags (specified in Scope::Scopeflags) that
+    ///              must be cleared.
+    void ClearFlags(unsigned Flags) {
+      if (Self)
+        Self->ClearScopeFlags(Flags);
+    }
+
     ~ParseScope() {
       Exit();
     }
@@ -706,6 +722,12 @@ public:
 
   /// ExitScope - Pop a scope off the scope stack.
   void ExitScope();
+
+  /// \brief Sets the specified flags in the current scope.
+  void SetScopeFlags(unsigned Flags);
+
+  /// \brief Clears the specified flags in the current scope.
+  void ClearScopeFlags(unsigned Flags);
 
 private:
   /// \brief RAII object used to modify the scope flags for the current scope.

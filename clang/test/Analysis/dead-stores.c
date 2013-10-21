@@ -476,18 +476,6 @@ int f26_nestedblocks() {
   return y;
 }
 
-// The FOREACH macro in QT uses 'break' statements within statement expressions
-// placed within the increment code of for loops.
-void rdar8014335() {
-  for (int i = 0 ; i != 10 ; ({ break; })) {
-    for ( ; ; ({ ++i; break; })) ;
-    // Note that the next value stored to 'i' is never executed
-    // because the next statement to be executed is the 'break'
-    // in the increment code of the first loop.
-    i = i * 3; // expected-warning{{Value stored to 'i' is never read}} expected-warning{{The left operand to '*' is always 1}}
-  }
-}
-
 // <rdar://problem/8320674> NullStmts followed by do...while() can lead to disconnected CFG
 //
 // This previously caused bogus dead-stores warnings because the body of the first do...while was
