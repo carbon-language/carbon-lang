@@ -74,6 +74,15 @@ entry:
   ret <16 x float> %sub.i
 }
 
+; CHECK-LABEL: imulq512
+; CHECK: vpmuludq
+; CHECK: vpmuludq
+; CHECK: ret
+define <8 x i64> @imulq512(<8 x i64> %y, <8 x i64> %x) {
+  %z = mul <8 x i64>%x, %y
+  ret <8 x i64>%z
+}
+
 ; CHECK-LABEL: mulpd512
 ; CHECK: vmulpd
 ; CHECK: ret

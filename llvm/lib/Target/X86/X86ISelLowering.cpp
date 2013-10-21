@@ -12402,8 +12402,8 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget *Subtarget,
     return DAG.getVectorShuffle(VT, dl, Evens, Odds, ShufMask);
   }
 
-  assert((VT == MVT::v2i64 || VT == MVT::v4i64) &&
-         "Only know how to lower V2I64/V4I64 multiply");
+  assert((VT == MVT::v2i64 || VT == MVT::v4i64 || VT == MVT::v8i64) &&
+         "Only know how to lower V2I64/V4I64/V8I64 multiply");
 
   //  Ahi = psrlqi(a, 32);
   //  Bhi = psrlqi(b, 32);
@@ -12422,7 +12422,8 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget *Subtarget,
   SDValue Bhi = DAG.getNode(X86ISD::VSRLI, dl, VT, B, ShAmt);
 
   // Bit cast to 32-bit vectors for MULUDQ
-  EVT MulVT = (VT == MVT::v2i64) ? MVT::v4i32 : MVT::v8i32;
+  EVT MulVT = (VT == MVT::v2i64) ? MVT::v4i32 :
+                                  (VT == MVT::v4i64) ? MVT::v8i32 : MVT::v16i32;
   A = DAG.getNode(ISD::BITCAST, dl, MulVT, A);
   B = DAG.getNode(ISD::BITCAST, dl, MulVT, B);
   Ahi = DAG.getNode(ISD::BITCAST, dl, MulVT, Ahi);
