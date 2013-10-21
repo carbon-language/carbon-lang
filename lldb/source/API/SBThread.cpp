@@ -507,6 +507,34 @@ SBThread::GetQueueName () const
     return name;
 }
 
+lldb::queue_id_t
+SBThread::GetQueueID () const
+{
+    queue_id_t id = LLDB_INVALID_QUEUE_ID;
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (exe_ctx.HasThreadScope())
+    {
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        {
+            id = exe_ctx.GetThreadPtr()->GetQueueID();
+        }
+        else
+        {
+            if (log)
+                log->Printf ("SBThread(%p)::GetQueueID() => error: process is running", exe_ctx.GetThreadPtr());
+        }
+    }
+    
+    if (log)
+        log->Printf ("SBThread(%p)::GetQueueID () => 0x%" PRIx64, exe_ctx.GetThreadPtr(), id);
+
+    return id;
+}
+
 SBError
 SBThread::ResumeNewPlan (ExecutionContext &exe_ctx, ThreadPlan *new_plan)
 {

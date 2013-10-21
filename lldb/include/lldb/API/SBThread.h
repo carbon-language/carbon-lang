@@ -94,6 +94,9 @@ public:
     const char *
     GetQueueName() const;
 
+    lldb::queue_id_t
+    GetQueueID() const;
+
     void
     StepOver (lldb::RunMode stop_other_threads = lldb::eOnlyDuringStepping);
 
