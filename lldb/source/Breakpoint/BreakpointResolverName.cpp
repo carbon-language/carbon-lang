@@ -289,7 +289,17 @@ BreakpointResolverName::SearchCallback
                 }
                 else if (sc.symbol)
                 {
-                    break_addr = sc.symbol->GetAddress();
+                    if (sc.symbol->GetType() == eSymbolTypeReExported)
+                    {
+                        const Symbol *actual_symbol = sc.symbol->ResolveReExportedSymbol(m_breakpoint->GetTarget());
+                        if (actual_symbol)
+                            break_addr = actual_symbol->GetAddress();
+                    }
+                    else
+                    {
+                        break_addr = sc.symbol->GetAddress();
+                    }
+                    
                     if (m_skip_prologue && break_addr.IsValid())
                     {
                         const uint32_t prologue_byte_size = sc.symbol->GetPrologueByteSize();
