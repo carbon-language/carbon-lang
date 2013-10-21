@@ -1831,7 +1831,7 @@ INTERCEPTOR(char *, strerror, int errnum) {
   COMMON_INTERCEPTOR_ENTER(ctx, strerror, errnum);
   char *res = REAL(strerror)(errnum);
   if (res)
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+    COMMON_INTERCEPTOR_INITIALIZE_RANGE(ctx, res, REAL(strlen)(res) + 1);
   return res;
 }
 #define INIT_STRERROR INTERCEPT_FUNCTION(strerror);
