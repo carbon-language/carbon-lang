@@ -34,8 +34,10 @@ using namespace llvm;
 /// Profile - Used to gather unique data for the abbreviation folding set.
 ///
 void DIEAbbrevData::Profile(FoldingSetNodeID &ID) const {
-  ID.AddInteger(Attribute);
-  ID.AddInteger(Form);
+  // Explicitly cast to an integer type for which FoldingSetNodeID has
+  // overloads.  Otherwise MSVC 2010 thinks this call is ambiguous.
+  ID.AddInteger(unsigned(Attribute));
+  ID.AddInteger(unsigned(Form));
 }
 
 //===----------------------------------------------------------------------===//
@@ -45,7 +47,7 @@ void DIEAbbrevData::Profile(FoldingSetNodeID &ID) const {
 /// Profile - Used to gather unique data for the abbreviation folding set.
 ///
 void DIEAbbrev::Profile(FoldingSetNodeID &ID) const {
-  ID.AddInteger(Tag);
+  ID.AddInteger(unsigned(Tag));
   ID.AddInteger(ChildrenFlag);
 
   // For each attribute description.
