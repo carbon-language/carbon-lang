@@ -37,6 +37,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Path.h"
 using namespace clang;
 using namespace clang::CodeGen;
 
@@ -340,8 +341,11 @@ void CGDebugInfo::CreateCompileUnit() {
   std::string MainFileDir;
   if (const FileEntry *MainFile = SM.getFileEntryForID(SM.getMainFileID())) {
     MainFileDir = MainFile->getDir()->getName();
-    if (MainFileDir != ".")
-      MainFileName = MainFileDir + "/" + MainFileName;
+    if (MainFileDir != ".") {
+      llvm::SmallString<1024> MainFileDirSS(MainFileDir);
+      llvm::sys::path::append(MainFileDirSS, MainFileName);
+      MainFileName = MainFileDirSS.str();
+    }
   }
 
   // Save filename string.
