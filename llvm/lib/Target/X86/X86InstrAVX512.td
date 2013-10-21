@@ -1845,22 +1845,22 @@ multiclass avx512_shift_rmi<bits<8> opc, Format ImmFormR, Format ImmFormM,
                          ValueType vt, X86MemOperand x86memop, PatFrag mem_frag,
                          RegisterClass KRC> {
   def ri : AVX512BIi8<opc, ImmFormR, (outs RC:$dst),
-       (ins RC:$src1, i32i8imm:$src2),
+       (ins RC:$src1, i8imm:$src2),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-       [(set RC:$dst, (vt (OpNode RC:$src1, (i32 imm:$src2))))],
+       [(set RC:$dst, (vt (OpNode RC:$src1, (i8 imm:$src2))))],
         SSE_INTSHIFT_ITINS_P.rr>, EVEX_4V;
   def rik : AVX512BIi8<opc, ImmFormR, (outs RC:$dst),
-       (ins KRC:$mask, RC:$src1, i32i8imm:$src2),
+       (ins KRC:$mask, RC:$src1, i8imm:$src2),
            !strconcat(OpcodeStr,
                 "\t{$src2, $src1, $dst {${mask}}|$dst {${mask}}, $src1, $src2}"),
        [], SSE_INTSHIFT_ITINS_P.rr>, EVEX_4V, EVEX_K;
   def mi: AVX512BIi8<opc, ImmFormM, (outs RC:$dst),
-       (ins x86memop:$src1, i32i8imm:$src2),
+       (ins x86memop:$src1, i8imm:$src2),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
        [(set RC:$dst, (OpNode (mem_frag addr:$src1),
-                     (i32 imm:$src2)))], SSE_INTSHIFT_ITINS_P.rm>, EVEX_4V;
+                     (i8 imm:$src2)))], SSE_INTSHIFT_ITINS_P.rm>, EVEX_4V;
   def mik: AVX512BIi8<opc, ImmFormM, (outs RC:$dst),
-       (ins KRC:$mask, x86memop:$src1, i32i8imm:$src2),
+       (ins KRC:$mask, x86memop:$src1, i8imm:$src2),
            !strconcat(OpcodeStr,
                 "\t{$src2, $src1, $dst {${mask}}|$dst {${mask}}, $src1, $src2}"),
        [], SSE_INTSHIFT_ITINS_P.rm>, EVEX_4V, EVEX_K;

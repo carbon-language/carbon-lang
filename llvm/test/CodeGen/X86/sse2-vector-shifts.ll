@@ -121,7 +121,7 @@ entry:
 }
 
 ; CHECK-LABEL: test_sraw_3:
-; CHECK: psraw   $16, %xmm0
+; CHECK: psraw   $15, %xmm0
 ; CHECK-NEXT: ret
 
 define <4 x i32> @test_srad_1(<4 x i32> %InVec) {
@@ -151,7 +151,7 @@ entry:
 }
 
 ; CHECK-LABEL: test_srad_3:
-; CHECK: psrad   $32, %xmm0
+; CHECK: psrad   $31, %xmm0
 ; CHECK-NEXT: ret
 
 ; SSE Logical Shift Right
