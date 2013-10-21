@@ -1169,7 +1169,7 @@ static void getPPCTargetFeatures(const ArgList &Args,
 /// Get the (LLVM) name of the R600 gpu we are targeting.
 static std::string getR600TargetGPU(const ArgList &Args) {
   if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
-    std::string GPUName = A->getValue();
+    const char *GPUName = A->getValue();
     return llvm::StringSwitch<const char *>(GPUName)
       .Cases("rv630", "rv635", "r600")
       .Cases("rv610", "rv620", "rs780", "rs880")
@@ -1178,7 +1178,7 @@ static std::string getR600TargetGPU(const ArgList &Args) {
       .Cases("sumo", "sumo2", "sumo")
       .Case("hemlock", "cypress")
       .Case("aruba", "cayman")
-      .Default(GPUName.c_str());
+      .Default(GPUName);
   }
   return "";
 }
@@ -1261,27 +1261,28 @@ static const char *getX86TargetCPU(const ArgList &Args,
   if (Triple.isOSDarwin())
     return Is64Bit ? "core2" : "yonah";
 
-  // Everything else goes to x86-64 in 64-bit mode.
-  if (Is64Bit)
-    return "x86-64";
-
-  if (Triple.getOSName().startswith("haiku"))
-    return "i586";
-  if (Triple.getOSName().startswith("openbsd"))
-    return "i486";
-  if (Triple.getOSName().startswith("bitrig"))
-    return "i686";
-  if (Triple.getOSName().startswith("freebsd"))
-    return "i486";
-  if (Triple.getOSName().startswith("netbsd"))
-    return "i486";
   // All x86 devices running Android have core2 as their common
   // denominator. This makes a better choice than pentium4.
   if (Triple.getEnvironment() == llvm::Triple::Android)
     return "core2";
 
-  // Fallback to p4.
-  return "pentium4";
+  // Everything else goes to x86-64 in 64-bit mode.
+  if (Is64Bit)
+    return "x86-64";
+
+  switch (Triple.getOS()) {
+  case llvm::Triple::FreeBSD:
+  case llvm::Triple::NetBSD:
+  case llvm::Triple::OpenBSD:
+    return "i486";
+  case llvm::Triple::Haiku:
+    return "i586";
+  case llvm::Triple::Bitrig:
+    return "i686";
+  default:
+    // Fallback to p4.
+    return "pentium4";
+  }
 }
 
 static std::string getCPUName(const ArgList &Args, const llvm::Triple &T) {
@@ -4391,10 +4392,7 @@ void hexagon::Link::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   std::string Linker = ToolChain.GetProgramPath("hexagon-ld");
-  C.addCommand(
-    new Command(
-      JA, *this,
-      Args.MakeArgString(Linker), CmdArgs));
+  C.addCommand(new Command(JA, *this, Args.MakeArgString(Linker), CmdArgs));
 }
 // Hexagon tools end.
 
@@ -5056,18 +5054,17 @@ void solaris::Link::ConstructJob(Compilation &C, const JobAction &JA,
   std::string LibPath = "/usr/lib/";
   llvm::Triple::ArchType Arch = T.getArch();
   switch (Arch) {
-        case llvm::Triple::x86:
-          GCCLibPath += ("i386-" + T.getVendorName() + "-" +
-              T.getOSName()).str() + "/4.5.2/";
-          break;
-        case llvm::Triple::x86_64:
-          GCCLibPath += ("i386-" + T.getVendorName() + "-" +
-              T.getOSName()).str();
-          GCCLibPath += "/4.5.2/amd64/";
-          LibPath += "amd64/";
-          break;
-        default:
-          assert(0 && "Unsupported architecture");
+  case llvm::Triple::x86:
+    GCCLibPath +=
+        ("i386-" + T.getVendorName() + "-" + T.getOSName()).str() + "/4.5.2/";
+    break;
+  case llvm::Triple::x86_64:
+    GCCLibPath += ("i386-" + T.getVendorName() + "-" + T.getOSName()).str();
+    GCCLibPath += "/4.5.2/amd64/";
+    LibPath += "amd64/";
+    break;
+  default:
+    llvm_unreachable("Unsupported architecture");
   }
 
   ArgStringList CmdArgs;
@@ -5522,23 +5519,21 @@ void bitrig::Link::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back("-lc");
     }
 
-    std::string myarch = "-lclang_rt.";
-    const llvm::Triple &T = getToolChain().getTriple();
-    llvm::Triple::ArchType Arch = T.getArch();
-    switch (Arch) {
-          case llvm::Triple::arm:
-            myarch += ("arm");
-            break;
-          case llvm::Triple::x86:
-            myarch += ("i386");
-            break;
-          case llvm::Triple::x86_64:
-            myarch += ("amd64");
-            break;
-          default:
-            assert(0 && "Unsupported architecture");
-     }
-     CmdArgs.push_back(Args.MakeArgString(myarch));
+    StringRef MyArch;
+    switch (getToolChain().getTriple().getArch()) {
+    case llvm::Triple::arm:
+      MyArch = "arm";
+      break;
+    case llvm::Triple::x86:
+      MyArch = "i386";
+      break;
+    case llvm::Triple::x86_64:
+      MyArch = "amd64";
+      break;
+    default:
+      llvm_unreachable("Unsupported architecture");
+    }
+    CmdArgs.push_back(Args.MakeArgString("-lclang_rt." + MyArch));
   }
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
