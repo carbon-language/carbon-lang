@@ -558,10 +558,10 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
 
   // Add the call site information to the DIE.
   DILocation DL(Scope->getInlinedAt());
-  TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_file, 0,
+  TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_file, None,
                  getOrCreateSourceID(DL.getFilename(), DL.getDirectory(),
                                      TheCU->getUniqueID()));
-  TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_line, 0, DL.getLineNumber());
+  TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_line, None, DL.getLineNumber());
 
   // Add name to the name table, we do this here because we're guaranteed
   // to have concrete versions of our DW_TAG_inlined_subprogram nodes.
@@ -886,8 +886,8 @@ void DwarfDebug::constructImportedEntityDIE(CompileUnit *TheCU,
   unsigned FileID = getOrCreateSourceID(Module.getContext().getFilename(),
                                         Module.getContext().getDirectory(),
                                         TheCU->getUniqueID());
-  TheCU->addUInt(IMDie, dwarf::DW_AT_decl_file, 0, FileID);
-  TheCU->addUInt(IMDie, dwarf::DW_AT_decl_line, 0, Module.getLineNumber());
+  TheCU->addUInt(IMDie, dwarf::DW_AT_decl_file, None, FileID);
+  TheCU->addUInt(IMDie, dwarf::DW_AT_decl_line, None, Module.getLineNumber());
   TheCU->addDIEEntry(IMDie, dwarf::DW_AT_import, EntityDie);
   StringRef Name = Module.getName();
   if (!Name.empty())
@@ -955,14 +955,14 @@ void DwarfDebug::computeInlinedDIEs() {
   for (SmallPtrSet<DIE *, 4>::iterator AI = InlinedSubprogramDIEs.begin(),
          AE = InlinedSubprogramDIEs.end(); AI != AE; ++AI) {
     DIE *ISP = *AI;
-    FirstCU->addUInt(ISP, dwarf::DW_AT_inline, 0, dwarf::DW_INL_inlined);
+    FirstCU->addUInt(ISP, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
   }
   for (DenseMap<const MDNode *, DIE *>::iterator AI = AbstractSPDies.begin(),
          AE = AbstractSPDies.end(); AI != AE; ++AI) {
     DIE *ISP = AI->second;
     if (InlinedSubprogramDIEs.count(ISP))
       continue;
-    FirstCU->addUInt(ISP, dwarf::DW_AT_inline, 0, dwarf::DW_INL_inlined);
+    FirstCU->addUInt(ISP, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
   }
 }
 
@@ -2047,8 +2047,8 @@ void DwarfDebug::emitDIE(DIE *Die, std::vector<DIEAbbrev *> *Abbrevs) {
 
   // Emit the DIE attribute values.
   for (unsigned i = 0, N = Values.size(); i < N; ++i) {
-    unsigned Attr = AbbrevData[i].getAttribute();
-    unsigned Form = AbbrevData[i].getForm();
+    dwarf::Attribute Attr = AbbrevData[i].getAttribute();
+    dwarf::Form Form = AbbrevData[i].getForm();
     assert(Form && "Too many attributes for DIE (check abbreviation)");
 
     if (Asm->isVerbose())

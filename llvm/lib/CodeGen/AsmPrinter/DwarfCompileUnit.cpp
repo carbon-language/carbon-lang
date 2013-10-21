@@ -96,7 +96,7 @@ int64_t CompileUnit::getDefaultLowerBound() const {
 }
 
 /// addFlag - Add a flag that is true.
-void CompileUnit::addFlag(DIE *Die, uint16_t Attribute) {
+void CompileUnit::addFlag(DIE *Die, dwarf::Attribute Attribute) {
   if (DD->getDwarfVersion() >= 4)
     Die->addValue(Attribute, dwarf::DW_FORM_flag_present, DIEIntegerOne);
   else
@@ -105,23 +105,32 @@ void CompileUnit::addFlag(DIE *Die, uint16_t Attribute) {
 
 /// addUInt - Add an unsigned integer attribute data and value.
 ///
-void CompileUnit::addUInt(DIE *Die, uint16_t Attribute, uint16_t Form,
-                          uint64_t Integer) {
+void CompileUnit::addUInt(DIE *Die, dwarf::Attribute Attribute,
+                          Optional<dwarf::Form> Form, uint64_t Integer) {
   if (!Form)
     Form = DIEInteger::BestForm(false, Integer);
   DIEValue *Value = Integer == 1 ? DIEIntegerOne : new (DIEValueAllocator)
                         DIEInteger(Integer);
-  Die->addValue(Attribute, Form, Value);
+  Die->addValue(Attribute, *Form, Value);
+}
+
+void CompileUnit::addUInt(DIEBlock *Block, dwarf::Form Form, uint64_t Integer) {
+  addUInt(Block, (dwarf::Attribute)0, Form, Integer);
 }
 
 /// addSInt - Add an signed integer attribute data and value.
 ///
-void CompileUnit::addSInt(DIE *Die, uint16_t Attribute, uint16_t Form,
-                          int64_t Integer) {
+void CompileUnit::addSInt(DIE *Die, dwarf::Attribute Attribute,
+                          Optional<dwarf::Form> Form, int64_t Integer) {
   if (!Form)
     Form = DIEInteger::BestForm(true, Integer);
   DIEValue *Value = new (DIEValueAllocator) DIEInteger(Integer);
-  Die->addValue(Attribute, Form, Value);
+  Die->addValue(Attribute, *Form, Value);
+}
+
+void CompileUnit::addSInt(DIEBlock *Die, Optional<dwarf::Form> Form,
+                          int64_t Integer) {
+  addSInt(Die, (dwarf::Attribute)0, Form, Integer);
 }
 
 /// addString - Add a string attribute data and value. We always emit a
@@ -129,9 +138,9 @@ void CompileUnit::addSInt(DIE *Die, uint16_t Attribute, uint16_t Form,
 /// more predictable sizes. In the case of split dwarf we emit an index
 /// into another table which gets us the static offset into the string
 /// table.
-void CompileUnit::addString(DIE *Die, uint16_t Attribute, StringRef String) {
+void CompileUnit::addString(DIE *Die, dwarf::Attribute Attribute, StringRef String) {
   DIEValue *Value;
-  uint16_t Form;
+  dwarf::Form Form;
   if (!DD->useSplitDwarf()) {
     MCSymbol *Symb = DU->getStringPoolEntry(String);
     if (Asm->needsRelocationsForDwarfStringPool())
@@ -152,7 +161,7 @@ void CompileUnit::addString(DIE *Die, uint16_t Attribute, StringRef String) {
 
 /// addLocalString - Add a string attribute data and value. This is guaranteed
 /// to be in the local string pool instead of indirected.
-void CompileUnit::addLocalString(DIE *Die, uint16_t Attribute,
+void CompileUnit::addLocalString(DIE *Die, dwarf::Attribute Attribute,
                                  StringRef String) {
   MCSymbol *Symb = DU->getStringPoolEntry(String);
   DIEValue *Value;
@@ -167,24 +176,28 @@ void CompileUnit::addLocalString(DIE *Die, uint16_t Attribute,
 
 /// addExpr - Add a Dwarf expression attribute data and value.
 ///
-void CompileUnit::addExpr(DIE *Die, uint16_t Attribute, uint16_t Form,
-                          const MCExpr *Expr) {
+void CompileUnit::addExpr(DIEBlock *Die, dwarf::Form Form, const MCExpr *Expr) {
   DIEValue *Value = new (DIEValueAllocator) DIEExpr(Expr);
-  Die->addValue(Attribute, Form, Value);
+  Die->addValue((dwarf::Attribute)0, Form, Value);
 }
 
 /// addLabel - Add a Dwarf label attribute data and value.
 ///
-void CompileUnit::addLabel(DIE *Die, uint16_t Attribute, uint16_t Form,
+void CompileUnit::addLabel(DIE *Die, dwarf::Attribute Attribute, dwarf::Form Form,
                            const MCSymbol *Label) {
   DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
   Die->addValue(Attribute, Form, Value);
 }
 
+void CompileUnit::addLabel(DIEBlock *Die, dwarf::Form Form,
+                           const MCSymbol *Label) {
+  addLabel(Die, (dwarf::Attribute)0, Form, Label);
+}
+
 /// addLabelAddress - Add a dwarf label attribute data and value using
 /// DW_FORM_addr or DW_FORM_GNU_addr_index.
 ///
-void CompileUnit::addLabelAddress(DIE *Die, uint16_t Attribute,
+void CompileUnit::addLabelAddress(DIE *Die, dwarf::Attribute Attribute,
                                   MCSymbol *Label) {
   if (Label)
     DD->addArangeLabel(SymbolCU(this, Label));
@@ -207,20 +220,20 @@ void CompileUnit::addLabelAddress(DIE *Die, uint16_t Attribute,
 /// addOpAddress - Add a dwarf op address data and value using the
 /// form given and an op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
 ///
-void CompileUnit::addOpAddress(DIE *Die, const MCSymbol *Sym) {
+void CompileUnit::addOpAddress(DIEBlock *Die, const MCSymbol *Sym) {
   DD->addArangeLabel(SymbolCU(this, Sym));
   if (!DD->useSplitDwarf()) {
-    addUInt(Die, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
-    addLabel(Die, 0, dwarf::DW_FORM_udata, Sym);
+    addUInt(Die, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
+    addLabel(Die, dwarf::DW_FORM_udata, Sym);
   } else {
-    addUInt(Die, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_addr_index);
-    addUInt(Die, 0, dwarf::DW_FORM_GNU_addr_index, DU->getAddrPoolIndex(Sym));
+    addUInt(Die, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_addr_index);
+    addUInt(Die, dwarf::DW_FORM_GNU_addr_index, DU->getAddrPoolIndex(Sym));
   }
 }
 
 /// addDelta - Add a label delta attribute data and value.
 ///
-void CompileUnit::addDelta(DIE *Die, uint16_t Attribute, uint16_t Form,
+void CompileUnit::addDelta(DIE *Die, dwarf::Attribute Attribute, dwarf::Form Form,
                            const MCSymbol *Hi, const MCSymbol *Lo) {
   DIEValue *Value = new (DIEValueAllocator) DIEDelta(Hi, Lo);
   Die->addValue(Attribute, Form, Value);
@@ -228,14 +241,14 @@ void CompileUnit::addDelta(DIE *Die, uint16_t Attribute, uint16_t Form,
 
 /// addDIEEntry - Add a DIE attribute data and value.
 ///
-void CompileUnit::addDIEEntry(DIE *Die, uint16_t Attribute, DIE *Entry) {
+void CompileUnit::addDIEEntry(DIE *Die, dwarf::Attribute Attribute, DIE *Entry) {
   // We currently only use ref4.
   Die->addValue(Attribute, dwarf::DW_FORM_ref4, createDIEEntry(Entry));
 }
 
 /// addBlock - Add block data.
 ///
-void CompileUnit::addBlock(DIE *Die, uint16_t Attribute, uint16_t Form,
+void CompileUnit::addBlock(DIE *Die, dwarf::Attribute Attribute,
                            DIEBlock *Block) {
   Block->ComputeSize(Asm);
   DIEBlocks.push_back(Block); // Memoize so we can call the destructor later on.
@@ -256,8 +269,8 @@ void CompileUnit::addSourceLine(DIE *Die, DIVariable V) {
       DD->getOrCreateSourceID(V.getContext().getFilename(),
                               V.getContext().getDirectory(), getUniqueID());
   assert(FileID && "Invalid file id");
-  addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
-  addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
+  addUInt(Die, dwarf::DW_AT_decl_file, None, FileID);
+  addUInt(Die, dwarf::DW_AT_decl_line, None, Line);
 }
 
 /// addSourceLine - Add location information to specified debug information
@@ -273,8 +286,8 @@ void CompileUnit::addSourceLine(DIE *Die, DIGlobalVariable G) {
   unsigned FileID =
       DD->getOrCreateSourceID(G.getFilename(), G.getDirectory(), getUniqueID());
   assert(FileID && "Invalid file id");
-  addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
-  addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
+  addUInt(Die, dwarf::DW_AT_decl_file, None, FileID);
+  addUInt(Die, dwarf::DW_AT_decl_line, None, Line);
 }
 
 /// addSourceLine - Add location information to specified debug information
@@ -292,8 +305,8 @@ void CompileUnit::addSourceLine(DIE *Die, DISubprogram SP) {
   unsigned FileID = DD->getOrCreateSourceID(SP.getFilename(), SP.getDirectory(),
                                             getUniqueID());
   assert(FileID && "Invalid file id");
-  addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
-  addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
+  addUInt(Die, dwarf::DW_AT_decl_file, None, FileID);
+  addUInt(Die, dwarf::DW_AT_decl_line, None, Line);
 }
 
 /// addSourceLine - Add location information to specified debug information
@@ -309,8 +322,8 @@ void CompileUnit::addSourceLine(DIE *Die, DIType Ty) {
   unsigned FileID = DD->getOrCreateSourceID(Ty.getFilename(), Ty.getDirectory(),
                                             getUniqueID());
   assert(FileID && "Invalid file id");
-  addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
-  addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
+  addUInt(Die, dwarf::DW_AT_decl_file, None, FileID);
+  addUInt(Die, dwarf::DW_AT_decl_line, None, Line);
 }
 
 /// addSourceLine - Add location information to specified debug information
@@ -327,8 +340,8 @@ void CompileUnit::addSourceLine(DIE *Die, DIObjCProperty Ty) {
   unsigned FileID = DD->getOrCreateSourceID(File.getFilename(),
                                             File.getDirectory(), getUniqueID());
   assert(FileID && "Invalid file id");
-  addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
-  addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
+  addUInt(Die, dwarf::DW_AT_decl_file, None, FileID);
+  addUInt(Die, dwarf::DW_AT_decl_line, None, Line);
 }
 
 /// addSourceLine - Add location information to specified debug information
@@ -346,8 +359,8 @@ void CompileUnit::addSourceLine(DIE *Die, DINameSpace NS) {
   unsigned FileID =
       DD->getOrCreateSourceID(FN, NS.getDirectory(), getUniqueID());
   assert(FileID && "Invalid file id");
-  addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
-  addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
+  addUInt(Die, dwarf::DW_AT_decl_file, None, FileID);
+  addUInt(Die, dwarf::DW_AT_decl_line, None, Line);
 }
 
 /// addVariableAddress - Add DW_AT_location attribute for a
@@ -364,37 +377,38 @@ void CompileUnit::addVariableAddress(const DbgVariable &DV, DIE *Die,
 }
 
 /// addRegisterOp - Add register operand.
-void CompileUnit::addRegisterOp(DIE *TheDie, unsigned Reg) {
+void CompileUnit::addRegisterOp(DIEBlock *TheDie, unsigned Reg) {
   const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
   unsigned DWReg = RI->getDwarfRegNum(Reg, false);
   if (DWReg < 32)
-    addUInt(TheDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_reg0 + DWReg);
+    addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_reg0 + DWReg);
   else {
-    addUInt(TheDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_regx);
-    addUInt(TheDie, 0, dwarf::DW_FORM_udata, DWReg);
+    addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_regx);
+    addUInt(TheDie, dwarf::DW_FORM_udata, DWReg);
   }
 }
 
 /// addRegisterOffset - Add register offset.
-void CompileUnit::addRegisterOffset(DIE *TheDie, unsigned Reg, int64_t Offset) {
+void CompileUnit::addRegisterOffset(DIEBlock *TheDie, unsigned Reg,
+                                    int64_t Offset) {
   const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
   unsigned DWReg = RI->getDwarfRegNum(Reg, false);
   const TargetRegisterInfo *TRI = Asm->TM.getRegisterInfo();
   if (Reg == TRI->getFrameRegister(*Asm->MF))
     // If variable offset is based in frame register then use fbreg.
-    addUInt(TheDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_fbreg);
+    addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_fbreg);
   else if (DWReg < 32)
-    addUInt(TheDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_breg0 + DWReg);
+    addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_breg0 + DWReg);
   else {
-    addUInt(TheDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_bregx);
-    addUInt(TheDie, 0, dwarf::DW_FORM_udata, DWReg);
+    addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_bregx);
+    addUInt(TheDie, dwarf::DW_FORM_udata, DWReg);
   }
-  addSInt(TheDie, 0, dwarf::DW_FORM_sdata, Offset);
+  addSInt(TheDie, dwarf::DW_FORM_sdata, Offset);
 }
 
 /// addAddress - Add an address attribute to a die based on the location
 /// provided.
-void CompileUnit::addAddress(DIE *Die, uint16_t Attribute,
+void CompileUnit::addAddress(DIE *Die, dwarf::Attribute Attribute,
                              const MachineLocation &Location, bool Indirect) {
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
 
@@ -403,12 +417,12 @@ void CompileUnit::addAddress(DIE *Die, uint16_t Attribute,
   else {
     addRegisterOffset(Block, Location.getReg(), Location.getOffset());
     if (Indirect && !Location.isReg()) {
-      addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
+      addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
     }
   }
 
   // Now attach the location information to the DIE.
-  addBlock(Die, Attribute, 0, Block);
+  addBlock(Die, Attribute, Block);
 }
 
 /// addComplexAddress - Start with the address based on the location provided,
@@ -417,7 +431,7 @@ void CompileUnit::addAddress(DIE *Die, uint16_t Attribute,
 /// the starting location.  Add the DWARF information to the die.
 ///
 void CompileUnit::addComplexAddress(const DbgVariable &DV, DIE *Die,
-                                    uint16_t Attribute,
+                                    dwarf::Attribute Attribute,
                                     const MachineLocation &Location) {
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
   unsigned N = DV.getNumAddrElements();
@@ -436,17 +450,17 @@ void CompileUnit::addComplexAddress(const DbgVariable &DV, DIE *Die,
   for (; i < N; ++i) {
     uint64_t Element = DV.getAddrElement(i);
     if (Element == DIBuilder::OpPlus) {
-      addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
-      addUInt(Block, 0, dwarf::DW_FORM_udata, DV.getAddrElement(++i));
+      addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
+      addUInt(Block, dwarf::DW_FORM_udata, DV.getAddrElement(++i));
     } else if (Element == DIBuilder::OpDeref) {
       if (!Location.isReg())
-        addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
+        addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
     } else
       llvm_unreachable("unknown DIBuilder Opcode");
   }
 
   // Now attach the location information to the DIE.
-  addBlock(Die, Attribute, 0, Block);
+  addBlock(Die, Attribute, Block);
 }
 
 /* Byref variables, in Blocks, are declared by the programmer as "SomeType
@@ -510,7 +524,7 @@ void CompileUnit::addComplexAddress(const DbgVariable &DV, DIE *Die,
 /// more information, read large comment just above here.
 ///
 void CompileUnit::addBlockByrefAddress(const DbgVariable &DV, DIE *Die,
-                                       uint16_t Attribute,
+                                       dwarf::Attribute Attribute,
                                        const MachineLocation &Location) {
   DIType Ty = DV.getType();
   DIType TmpTy = Ty;
@@ -560,30 +574,30 @@ void CompileUnit::addBlockByrefAddress(const DbgVariable &DV, DIE *Die,
   // If we started with a pointer to the __Block_byref... struct, then
   // the first thing we need to do is dereference the pointer (DW_OP_deref).
   if (isPointer)
-    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
+    addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
 
   // Next add the offset for the '__forwarding' field:
   // DW_OP_plus_uconst ForwardingFieldOffset.  Note there's no point in
   // adding the offset if it's 0.
   if (forwardingFieldOffset > 0) {
-    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
-    addUInt(Block, 0, dwarf::DW_FORM_udata, forwardingFieldOffset);
+    addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
+    addUInt(Block, dwarf::DW_FORM_udata, forwardingFieldOffset);
   }
 
   // Now dereference the __forwarding field to get to the real __Block_byref
   // struct:  DW_OP_deref.
-  addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
+  addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
 
   // Now that we've got the real __Block_byref... struct, add the offset
   // for the variable's field to get to the location of the actual variable:
   // DW_OP_plus_uconst varFieldOffset.  Again, don't add if it's 0.
   if (varFieldOffset > 0) {
-    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
-    addUInt(Block, 0, dwarf::DW_FORM_udata, varFieldOffset);
+    addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
+    addUInt(Block, dwarf::DW_FORM_udata, varFieldOffset);
   }
 
   // Now attach the location information to the DIE.
-  addBlock(Die, Attribute, 0, Block);
+  addBlock(Die, Attribute, Block);
 }
 
 /// isTypeSigned - Return true if the type is signed.
@@ -654,7 +668,7 @@ void CompileUnit::addConstantValue(DIE *Die, const MachineOperand &MO,
   assert(MO.isImm() && "Invalid machine operand!");
   int SizeInBits = -1;
   bool SignedConstant = isTypeSigned(DD, Ty, &SizeInBits);
-  uint16_t Form;
+  dwarf::Form Form;
 
   // If we're a signed constant definitely use sdata.
   if (SignedConstant) {
@@ -702,10 +716,10 @@ void CompileUnit::addConstantFPValue(DIE *Die, const MachineOperand &MO) {
 
   // Output the constant to DWARF one byte at a time.
   for (; Start != Stop; Start += Incr)
-    addUInt(Block, 0, dwarf::DW_FORM_data1,
+    addUInt(Block, dwarf::DW_FORM_data1,
             (unsigned char)0xFF & FltPtr[Start]);
 
-  addBlock(Die, dwarf::DW_AT_const_value, 0, Block);
+  addBlock(Die, dwarf::DW_AT_const_value, Block);
 }
 
 /// addConstantFPValue - Add constant value entry in variable DIE.
@@ -732,7 +746,7 @@ void CompileUnit::addConstantValue(DIE *Die, const APInt &Val, bool Unsigned) {
     }
 
     // Else use data for now unless it's larger than we can deal with.
-    uint16_t Form;
+    dwarf::Form Form;
     switch (CIBitWidth) {
     case 8:
       Form = dwarf::DW_FORM_data1;
@@ -770,10 +784,10 @@ void CompileUnit::addConstantValue(DIE *Die, const APInt &Val, bool Unsigned) {
       c = Ptr64[i / 8] >> (8 * (i & 7));
     else
       c = Ptr64[(NumBytes - 1 - i) / 8] >> (8 * ((NumBytes - 1 - i) & 7));
-    addUInt(Block, 0, dwarf::DW_FORM_data1, c);
+    addUInt(Block, dwarf::DW_FORM_data1, c);
   }
 
-  addBlock(Die, dwarf::DW_AT_const_value, 0, Block);
+  addBlock(Die, dwarf::DW_AT_const_value, Block);
 }
 
 /// addTemplateParams - Add template parameters into buffer.
@@ -857,7 +871,7 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
 }
 
 /// addType - Add a new type attribute to the specified entity.
-void CompileUnit::addType(DIE *Entity, DIType Ty, uint16_t Attribute) {
+void CompileUnit::addType(DIE *Entity, DIType Ty, dwarf::Attribute Attribute) {
   assert(Ty && "Trying to add a type that doesn't exist?");
 
   // Check for pre-existence.
@@ -1001,7 +1015,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIBasicType BTy) {
           BTy.getEncoding());
 
   uint64_t Size = BTy.getSizeInBits() >> 3;
-  addUInt(&Buffer, dwarf::DW_AT_byte_size, 0, Size);
+  addUInt(&Buffer, dwarf::DW_AT_byte_size, None, Size);
 }
 
 /// constructTypeDIE - Construct derived type die from DIDerivedType.
@@ -1022,7 +1036,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 
   // Add size if non-zero (derived types might be zero-sized.)
   if (Size && Tag != dwarf::DW_TAG_pointer_type)
-    addUInt(&Buffer, dwarf::DW_AT_byte_size, 0, Size);
+    addUInt(&Buffer, dwarf::DW_AT_byte_size, None, Size);
 
   if (Tag == dwarf::DW_TAG_ptr_to_member_type)
     addDIEEntry(&Buffer, dwarf::DW_AT_containing_type,
@@ -1182,7 +1196,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         if (Property.isNonAtomicObjCProperty())
           PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_nonatomic;
         if (PropertyAttributes)
-          addUInt(ElemDie, dwarf::DW_AT_APPLE_property_attribute, 0,
+          addUInt(ElemDie, dwarf::DW_AT_APPLE_property_attribute, None,
                   PropertyAttributes);
 
         DIEEntry *Entry = getDIEEntry(Element);
@@ -1228,10 +1242,10 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     // Add size if non-zero (derived types might be zero-sized.)
     // TODO: Do we care about size for enum forward declarations?
     if (Size)
-      addUInt(&Buffer, dwarf::DW_AT_byte_size, 0, Size);
+      addUInt(&Buffer, dwarf::DW_AT_byte_size, None, Size);
     else if (!CTy.isForwardDecl())
       // Add zero size if it is not a forward declaration.
-      addUInt(&Buffer, dwarf::DW_AT_byte_size, 0, 0);
+      addUInt(&Buffer, dwarf::DW_AT_byte_size, None, 0);
 
     // If we're a forward decl, say so.
     if (CTy.isForwardDecl())
@@ -1301,8 +1315,8 @@ CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter VP,
       addOpAddress(Block, Asm->Mang->getSymbol(GV));
       // Emit DW_OP_stack_value to use the address as the immediate value of the
       // parameter, rather than a pointer to it.
-      addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_stack_value);
-      addBlock(ParamDIE, dwarf::DW_AT_location, 0, Block);
+      addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_stack_value);
+      addBlock(ParamDIE, dwarf::DW_AT_location, Block);
     } else if (VP.getTag() == dwarf::DW_TAG_GNU_template_template_param) {
       assert(isa<MDString>(Val));
       addString(ParamDIE, dwarf::DW_AT_GNU_template_name,
@@ -1410,9 +1424,9 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   if (VK) {
     addUInt(SPDie, dwarf::DW_AT_virtuality, dwarf::DW_FORM_data1, VK);
     DIEBlock *Block = getDIEBlock();
-    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
-    addUInt(Block, 0, dwarf::DW_FORM_udata, SP.getVirtualIndex());
-    addBlock(SPDie, dwarf::DW_AT_vtable_elem_location, 0, Block);
+    addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
+    addUInt(Block, dwarf::DW_FORM_udata, SP.getVirtualIndex());
+    addBlock(SPDie, dwarf::DW_AT_vtable_elem_location, Block);
     ContainingTypeMap.insert(std::make_pair(SPDie,
                                             resolve(SP.getContainingType())));
   }
@@ -1539,18 +1553,17 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
       // Based on GCC's support for TLS:
       if (!DD->useSplitDwarf()) {
         // 1) Start with a constNu of the appropriate pointer size
-        addUInt(Block, 0, dwarf::DW_FORM_data1,
+        addUInt(Block, dwarf::DW_FORM_data1,
                 PointerSize == 4 ? dwarf::DW_OP_const4u : dwarf::DW_OP_const8u);
         // 2) containing the (relocated) offset of the TLS variable
         //    within the module's TLS block.
-        addExpr(Block, 0, dwarf::DW_FORM_udata, Expr);
+        addExpr(Block, dwarf::DW_FORM_udata, Expr);
       } else {
-        addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_const_index);
-        addUInt(Block, 0, dwarf::DW_FORM_udata, DU->getAddrPoolIndex(Expr));
+        addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_const_index);
+        addUInt(Block, dwarf::DW_FORM_udata, DU->getAddrPoolIndex(Expr));
       }
       // 3) followed by a custom OP to make the debugger do a TLS lookup.
-      addUInt(Block, 0, dwarf::DW_FORM_data1,
-              dwarf::DW_OP_GNU_push_tls_address);
+      addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_push_tls_address);
     } else
       addOpAddress(Block, Sym);
     // Do not create specification DIE if context is either compile unit
@@ -1560,13 +1573,13 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
       // Create specification DIE.
       VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
       addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification, VariableDIE);
-      addBlock(VariableSpecDIE, dwarf::DW_AT_location, 0, Block);
+      addBlock(VariableSpecDIE, dwarf::DW_AT_location, Block);
       // A static member's declaration is already flagged as such.
       if (!SDMDecl.Verify())
         addFlag(VariableDIE, dwarf::DW_AT_declaration);
       addDie(VariableSpecDIE);
     } else {
-      addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
+      addBlock(VariableDIE, dwarf::DW_AT_location, Block);
     }
     // Add the linkage name.
     StringRef LinkageName = GV.getLinkageName();
@@ -1591,12 +1604,12 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
     Value *Ptr = CE->getOperand(0);
     addOpAddress(Block, Asm->Mang->getSymbol(cast<GlobalValue>(Ptr)));
-    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
+    addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
     SmallVector<Value *, 3> Idx(CE->op_begin() + 1, CE->op_end());
-    addUInt(Block, 0, dwarf::DW_FORM_udata,
+    addUInt(Block, dwarf::DW_FORM_udata,
             Asm->getDataLayout().getIndexedOffset(Ptr->getType(), Idx));
-    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus);
-    addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
+    addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_plus);
+    addBlock(VariableDIE, dwarf::DW_AT_location, Block);
   }
 
   if (addToAccelTable) {
@@ -1631,12 +1644,12 @@ void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR,
   int64_t Count = SR.getCount();
 
   if (DefaultLowerBound == -1 || LowerBound != DefaultLowerBound)
-    addUInt(DW_Subrange, dwarf::DW_AT_lower_bound, 0, LowerBound);
+    addUInt(DW_Subrange, dwarf::DW_AT_lower_bound, None, LowerBound);
 
   if (Count != -1 && Count != 0)
     // FIXME: An unbounded array should reference the expression that defines
     // the array.
-    addUInt(DW_Subrange, dwarf::DW_AT_upper_bound, 0, LowerBound + Count - 1);
+    addUInt(DW_Subrange, dwarf::DW_AT_upper_bound, None, LowerBound + Count - 1);
 
   Buffer.addChild(DW_Subrange);
 }
@@ -1657,7 +1670,7 @@ void CompileUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType *CTy) {
     // Construct an anonymous type for index type.
     IdxTy = new DIE(dwarf::DW_TAG_base_type);
     addString(IdxTy, dwarf::DW_AT_name, "int");
-    addUInt(IdxTy, dwarf::DW_AT_byte_size, 0, sizeof(int32_t));
+    addUInt(IdxTy, dwarf::DW_AT_byte_size, None, sizeof(int32_t));
     addUInt(IdxTy, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
             dwarf::DW_ATE_signed);
     addDie(IdxTy);
@@ -1787,15 +1800,16 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT, DIE &Buffer) {
   addSourceLine(MemberDie, DT);
 
   DIEBlock *MemLocationDie = new (DIEValueAllocator) DIEBlock();
-  addUInt(MemLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
+  addUInt(MemLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
 
   uint64_t Size = DT.getSizeInBits();
   uint64_t FieldSize = getBaseTypeSize(DD, DT);
 
   if (Size != FieldSize) {
     // Handle bitfield.
-    addUInt(MemberDie, dwarf::DW_AT_byte_size, 0, getBaseTypeSize(DD, DT) >> 3);
-    addUInt(MemberDie, dwarf::DW_AT_bit_size, 0, DT.getSizeInBits());
+    addUInt(MemberDie, dwarf::DW_AT_byte_size, None,
+            getBaseTypeSize(DD, DT) >> 3);
+    addUInt(MemberDie, dwarf::DW_AT_bit_size, None, DT.getSizeInBits());
 
     uint64_t Offset = DT.getOffsetInBits();
     uint64_t AlignMask = ~(DT.getAlignInBits() - 1);
@@ -1806,15 +1820,15 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT, DIE &Buffer) {
     // Maybe we need to work from the other end.
     if (Asm->getDataLayout().isLittleEndian())
       Offset = FieldSize - (Offset + Size);
-    addUInt(MemberDie, dwarf::DW_AT_bit_offset, 0, Offset);
+    addUInt(MemberDie, dwarf::DW_AT_bit_offset, None, Offset);
 
     // Here WD_AT_data_member_location points to the anonymous
     // field that includes this bit field.
-    addUInt(MemLocationDie, 0, dwarf::DW_FORM_udata, FieldOffset >> 3);
+    addUInt(MemLocationDie, dwarf::DW_FORM_udata, FieldOffset >> 3);
 
   } else
     // This is not a bitfield.
-    addUInt(MemLocationDie, 0, dwarf::DW_FORM_udata, DT.getOffsetInBits() >> 3);
+    addUInt(MemLocationDie, dwarf::DW_FORM_udata, DT.getOffsetInBits() >> 3);
 
   if (DT.getTag() == dwarf::DW_TAG_inheritance && DT.isVirtual()) {
 
@@ -1823,17 +1837,17 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT, DIE &Buffer) {
     // BaseAddr = ObAddr + *((*ObAddr) - Offset)
 
     DIEBlock *VBaseLocationDie = new (DIEValueAllocator) DIEBlock();
-    addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_dup);
-    addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
-    addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
-    addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_udata, DT.getOffsetInBits());
-    addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_minus);
-    addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
-    addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus);
+    addUInt(VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_dup);
+    addUInt(VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
+    addUInt(VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
+    addUInt(VBaseLocationDie, dwarf::DW_FORM_udata, DT.getOffsetInBits());
+    addUInt(VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_minus);
+    addUInt(VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
+    addUInt(VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_plus);
 
-    addBlock(MemberDie, dwarf::DW_AT_data_member_location, 0, VBaseLocationDie);
+    addBlock(MemberDie, dwarf::DW_AT_data_member_location, VBaseLocationDie);
   } else
-    addBlock(MemberDie, dwarf::DW_AT_data_member_location, 0, MemLocationDie);
+    addBlock(MemberDie, dwarf::DW_AT_data_member_location, MemLocationDie);
 
   if (DT.isProtected())
     addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
