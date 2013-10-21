@@ -1300,7 +1300,7 @@ CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter VP,
 
   // Add the type if there is one, template template and template parameter
   // packs will not have a type.
-  if (VP.getType())
+  if (VP.getTag() == dwarf::DW_TAG_template_value_parameter)
     addType(ParamDIE, resolve(VP.getType()));
   if (!VP.getName().empty())
     addString(ParamDIE, dwarf::DW_AT_name, VP.getName());
@@ -1411,12 +1411,13 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
        Language == dwarf::DW_LANG_ObjC))
     addFlag(SPDie, dwarf::DW_AT_prototyped);
 
-  // Add Return Type. A void return type will not have a type.
   DICompositeType SPTy = SP.getType();
   assert(SPTy.getTag() == dwarf::DW_TAG_subroutine_type &&
          "the type of a subprogram should be a subroutine");
 
   DIArray Args = SPTy.getTypeArray();
+  // Add a return type. If this is a type like a C/C++ void type we don't add a
+  // return type.
   if (Args.getElement(0))
     addType(SPDie, DIType(Args.getElement(0)));
 
