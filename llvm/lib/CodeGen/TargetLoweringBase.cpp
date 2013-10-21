@@ -644,7 +644,6 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm,
 
   // Perform these initializations only once.
   IsLittleEndian = TD->isLittleEndian();
-  PointerTy = MVT::getIntegerVT(8*TD->getPointerSize(0));
   MaxStoresPerMemset = MaxStoresPerMemcpy = MaxStoresPerMemmove = 8;
   MaxStoresPerMemsetOptSize = MaxStoresPerMemcpyOptSize
     = MaxStoresPerMemmoveOptSize = 4;

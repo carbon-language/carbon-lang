@@ -1299,10 +1299,6 @@ private:
   const DataLayout *TD;
   const TargetLoweringObjectFile &TLOF;
 
-  /// The type to use for pointers for the default address space, usually i32 or
-  /// i64.
-  MVT PointerTy;
-
   /// True if this is a little endian target.
   bool IsLittleEndian;
 
