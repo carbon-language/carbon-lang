@@ -16,6 +16,7 @@
 # CHECK:        splati.h        $w24, $w28[1]           # encoding: [0x78,0x61,0xe6,0x19]
 # CHECK:        splati.w        $w13, $w18[0]           # encoding: [0x78,0x70,0x93,0x59]
 # CHECK:        splati.d        $w28, $w1[0]            # encoding: [0x78,0x78,0x0f,0x19]
+# CHECK:        move.v          $w23, $w24              # encoding: [0x78,0xbe,0xc5,0xd9]
 
 # CHECKOBJDUMP:        copy_s.b        $13, $w8[2]
 # CHECKOBJDUMP:        copy_s.h        $1, $w25[0]
@@ -31,6 +32,7 @@
 # CHECKOBJDUMP:        splati.h        $w24, $w28[1]
 # CHECKOBJDUMP:        splati.w        $w13, $w18[0]
 # CHECKOBJDUMP:        splati.d        $w28, $w1[0]
+# CHECKOBJDUMP:        move.v          $w23, $w24
 
                 copy_s.b        $13, $w8[2]
                 copy_s.h        $1, $w25[0]
@@ -46,3 +48,4 @@
                 splati.h        $w24, $w28[1]
                 splati.w        $w13, $w18[0]
                 splati.d        $w28, $w1[0]
+                move.v          $w23, $w24

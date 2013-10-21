@@ -2158,8 +2158,8 @@ class MOD_U_W_DESC : MSA_3R_DESC_BASE<"mod_u.w", urem, MSA128WOpnd>;
 class MOD_U_D_DESC : MSA_3R_DESC_BASE<"mod_u.d", urem, MSA128DOpnd>;
 
 class MOVE_V_DESC {
-  dag OutOperandList = (outs MSA128B:$wd);
-  dag InOperandList = (ins MSA128B:$ws);
+  dag OutOperandList = (outs MSA128BOpnd:$wd);
+  dag InOperandList = (ins MSA128BOpnd:$ws);
   string AsmString = "move.v\t$wd, $ws";
   list<dag> Pattern = [];
   InstrItinClass Itinerary = NoItinerary;
