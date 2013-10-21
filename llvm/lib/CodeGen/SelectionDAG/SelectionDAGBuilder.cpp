@@ -2448,7 +2448,7 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
   MachineFunction *CurMF = FuncInfo.MF;
 
   // If target does not have legal shift left, do not emit bit tests at all.
-  if (!TLI->isOperationLegal(ISD::SHL, TLI->getPointerTy()))
+  if (!TLI->isOperationLegal(ISD::SHL, PTy))
     return false;
 
   size_t numCmps = 0;
