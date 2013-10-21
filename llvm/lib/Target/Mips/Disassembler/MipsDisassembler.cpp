@@ -210,6 +210,9 @@ static DecodeStatus DecodeMem(MCInst &Inst,
                               uint64_t Address,
                               const void *Decoder);
 
+static DecodeStatus DecodeMSA128Mem(MCInst &Inst, unsigned Insn,
+                                    uint64_t Address, const void *Decoder);
+
 static DecodeStatus DecodeMemMMImm12(MCInst &Inst,
                                      unsigned Insn,
                                      uint64_t Address,
@@ -522,6 +525,22 @@ static DecodeStatus DecodeMem(MCInst &Inst,
   if(Inst.getOpcode() == Mips::SC){
     Inst.addOperand(MCOperand::CreateReg(Reg));
   }
+
+  Inst.addOperand(MCOperand::CreateReg(Reg));
+  Inst.addOperand(MCOperand::CreateReg(Base));
+  Inst.addOperand(MCOperand::CreateImm(Offset));
+
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeMSA128Mem(MCInst &Inst, unsigned Insn,
+                                    uint64_t Address, const void *Decoder) {
+  int Offset = SignExtend32<10>(fieldFromInstruction(Insn, 16, 10));
+  unsigned Reg = fieldFromInstruction(Insn, 6, 5);
+  unsigned Base = fieldFromInstruction(Insn, 11, 5);
+
+  Reg = getReg(Decoder, Mips::MSA128BRegClassID, Reg);
+  Base = getReg(Decoder, Mips::GPR32RegClassID, Base);
 
   Inst.addOperand(MCOperand::CreateReg(Reg));
   Inst.addOperand(MCOperand::CreateReg(Base));

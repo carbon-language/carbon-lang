@@ -758,10 +758,10 @@ class INSVE_H_ENC : MSA_ELM_H_FMT<0b0101, 0b011001>;
 class INSVE_W_ENC : MSA_ELM_W_FMT<0b0101, 0b011001>;
 class INSVE_D_ENC : MSA_ELM_D_FMT<0b0101, 0b011001>;
 
-class LD_B_ENC   : MSA_I5_FMT<0b110, 0b00, 0b000111>;
-class LD_H_ENC   : MSA_I5_FMT<0b110, 0b01, 0b000111>;
-class LD_W_ENC   : MSA_I5_FMT<0b110, 0b10, 0b000111>;
-class LD_D_ENC   : MSA_I5_FMT<0b110, 0b11, 0b000111>;
+class LD_B_ENC   : MSA_MI10_FMT<0b00, 0b1000>;
+class LD_H_ENC   : MSA_MI10_FMT<0b01, 0b1000>;
+class LD_W_ENC   : MSA_MI10_FMT<0b10, 0b1000>;
+class LD_D_ENC   : MSA_MI10_FMT<0b11, 0b1000>;
 
 class LDI_B_ENC  : MSA_I10_FMT<0b010, 0b00, 0b001100>;
 class LDI_H_ENC  : MSA_I10_FMT<0b010, 0b01, 0b001100>;
@@ -982,10 +982,10 @@ class SRLRI_H_ENC : MSA_BIT_H_FMT<0b011, 0b001010>;
 class SRLRI_W_ENC : MSA_BIT_W_FMT<0b011, 0b001010>;
 class SRLRI_D_ENC : MSA_BIT_D_FMT<0b011, 0b001010>;
 
-class ST_B_ENC   : MSA_I5_FMT<0b111, 0b00, 0b000111>;
-class ST_H_ENC   : MSA_I5_FMT<0b111, 0b01, 0b000111>;
-class ST_W_ENC   : MSA_I5_FMT<0b111, 0b10, 0b000111>;
-class ST_D_ENC   : MSA_I5_FMT<0b111, 0b11, 0b000111>;
+class ST_B_ENC   : MSA_MI10_FMT<0b00, 0b1001>;
+class ST_H_ENC   : MSA_MI10_FMT<0b01, 0b1001>;
+class ST_W_ENC   : MSA_MI10_FMT<0b10, 0b1001>;
+class ST_D_ENC   : MSA_MI10_FMT<0b11, 0b1001>;
 
 class SUBS_S_B_ENC : MSA_3R_FMT<0b000, 0b00, 0b010001>;
 class SUBS_S_H_ENC : MSA_3R_FMT<0b000, 0b01, 0b010001>;
@@ -2037,20 +2037,21 @@ class INSVE_D_DESC : MSA_INSVE_DESC_BASE<"insve.d", int_mips_insve_d,
                                          MSA128DOpnd>;
 
 class LD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                   ValueType TyNode, RegisterClass RCWD, Operand MemOpnd = mem,
-                   ComplexPattern Addr = addrRegImm,
+                   ValueType TyNode, RegisterOperand ROWD,
+                   Operand MemOpnd = mem, ComplexPattern Addr = addrRegImm,
                    InstrItinClass itin = NoItinerary> {
-  dag OutOperandList = (outs RCWD:$wd);
+  dag OutOperandList = (outs ROWD:$wd);
   dag InOperandList = (ins MemOpnd:$addr);
   string AsmString = !strconcat(instr_asm, "\t$wd, $addr");
-  list<dag> Pattern = [(set RCWD:$wd, (TyNode (OpNode Addr:$addr)))];
+  list<dag> Pattern = [(set ROWD:$wd, (TyNode (OpNode Addr:$addr)))];
   InstrItinClass Itinerary = itin;
+  string DecoderMethod = "DecodeMSA128Mem";
 }
 
-class LD_B_DESC : LD_DESC_BASE<"ld.b", load, v16i8, MSA128B>;
-class LD_H_DESC : LD_DESC_BASE<"ld.h", load, v8i16, MSA128H>;
-class LD_W_DESC : LD_DESC_BASE<"ld.w", load, v4i32, MSA128W>;
-class LD_D_DESC : LD_DESC_BASE<"ld.d", load, v2i64, MSA128D>;
+class LD_B_DESC : LD_DESC_BASE<"ld.b", load, v16i8, MSA128BOpnd>;
+class LD_H_DESC : LD_DESC_BASE<"ld.h", load, v8i16, MSA128HOpnd>;
+class LD_W_DESC : LD_DESC_BASE<"ld.w", load, v4i32, MSA128WOpnd>;
+class LD_D_DESC : LD_DESC_BASE<"ld.d", load, v2i64, MSA128DOpnd>;
 
 class LDI_B_DESC : MSA_I10_LDI_DESC_BASE<"ldi.b", MSA128BOpnd>;
 class LDI_H_DESC : MSA_I10_LDI_DESC_BASE<"ldi.h", MSA128HOpnd>;
@@ -2364,20 +2365,21 @@ class SRLRI_D_DESC : MSA_BIT_D_DESC_BASE<"srlri.d", int_mips_srlri_d,
                                          MSA128DOpnd>;
 
 class ST_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                   ValueType TyNode, RegisterClass RCWD, Operand MemOpnd = mem,
-                   ComplexPattern Addr = addrRegImm,
+                   ValueType TyNode, RegisterOperand ROWD,
+                   Operand MemOpnd = mem, ComplexPattern Addr = addrRegImm,
                    InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs);
-  dag InOperandList = (ins RCWD:$wd, MemOpnd:$addr);
+  dag InOperandList = (ins ROWD:$wd, MemOpnd:$addr);
   string AsmString = !strconcat(instr_asm, "\t$wd, $addr");
-  list<dag> Pattern = [(OpNode (TyNode RCWD:$wd), Addr:$addr)];
+  list<dag> Pattern = [(OpNode (TyNode ROWD:$wd), Addr:$addr)];
   InstrItinClass Itinerary = itin;
+  string DecoderMethod = "DecodeMSA128Mem";
 }
 
-class ST_B_DESC : ST_DESC_BASE<"st.b", store, v16i8, MSA128B>;
-class ST_H_DESC : ST_DESC_BASE<"st.h", store, v8i16, MSA128H>;
-class ST_W_DESC : ST_DESC_BASE<"st.w", store, v4i32, MSA128W>;
-class ST_D_DESC : ST_DESC_BASE<"st.d", store, v2i64, MSA128D>;
+class ST_B_DESC : ST_DESC_BASE<"st.b", store, v16i8, MSA128BOpnd>;
+class ST_H_DESC : ST_DESC_BASE<"st.h", store, v8i16, MSA128HOpnd>;
+class ST_W_DESC : ST_DESC_BASE<"st.w", store, v4i32, MSA128WOpnd>;
+class ST_D_DESC : ST_DESC_BASE<"st.d", store, v2i64, MSA128DOpnd>;
 
 class SUBS_S_B_DESC : MSA_3R_DESC_BASE<"subs_s.b", int_mips_subs_s_b,
                                        MSA128BOpnd>;
