@@ -507,7 +507,7 @@ namespace llvm {
     /// @param AlwaysPreserve Boolean. Set to true if debug info for this
     ///                       variable should be preserved in optimized build.
     /// @param Flags          Flags, e.g. artificial variable.
-    /// @param ArgNo       If this variable is an arugment then this argument's
+    /// @param ArgNo       If this variable is an argument then this argument's
     ///                    number. 1 indicates 1st argument.
     DIVariable createLocalVariable(unsigned Tag, DIDescriptor Scope,
                                    StringRef Name,
@@ -527,7 +527,7 @@ namespace llvm {
     /// @param LineNo      Line number.
     /// @param Ty          Variable Type
     /// @param Addr        An array of complex address operations.
-    /// @param ArgNo       If this variable is an arugment then this argument's
+    /// @param ArgNo       If this variable is an argument then this argument's
     ///                    number. 1 indicates 1st argument.
     DIVariable createComplexVariable(unsigned Tag, DIDescriptor Scope,
                                      StringRef Name, DIFile F, unsigned LineNo,
