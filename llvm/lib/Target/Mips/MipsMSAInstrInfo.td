@@ -912,10 +912,10 @@ class SHF_B_ENC  : MSA_I8_FMT<0b00, 0b000010>;
 class SHF_H_ENC  : MSA_I8_FMT<0b01, 0b000010>;
 class SHF_W_ENC  : MSA_I8_FMT<0b10, 0b000010>;
 
-class SLD_B_ENC : MSA_3R_FMT<0b000, 0b00, 0b010100>;
-class SLD_H_ENC : MSA_3R_FMT<0b000, 0b01, 0b010100>;
-class SLD_W_ENC : MSA_3R_FMT<0b000, 0b10, 0b010100>;
-class SLD_D_ENC : MSA_3R_FMT<0b000, 0b11, 0b010100>;
+class SLD_B_ENC : MSA_3R_INDEX_FMT<0b000, 0b00, 0b010100>;
+class SLD_H_ENC : MSA_3R_INDEX_FMT<0b000, 0b01, 0b010100>;
+class SLD_W_ENC : MSA_3R_INDEX_FMT<0b000, 0b10, 0b010100>;
+class SLD_D_ENC : MSA_3R_INDEX_FMT<0b000, 0b11, 0b010100>;
 
 class SLDI_B_ENC : MSA_ELM_B_FMT<0b0000, 0b011001>;
 class SLDI_H_ENC : MSA_ELM_H_FMT<0b0000, 0b011001>;
@@ -1219,6 +1219,17 @@ class MSA_3R_VSHF_DESC_BASE<string instr_asm, RegisterOperand ROWD,
   list<dag> Pattern = [(set ROWD:$wd, (MipsVSHF ROWD:$wd_in, ROWS:$ws,
                                                 ROWT:$wt))];
   string Constraints = "$wd = $wd_in";
+  InstrItinClass Itinerary = itin;
+}
+
+class MSA_3R_INDEX_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                             RegisterOperand ROWD, RegisterOperand ROWS,
+                             RegisterOperand RORT,
+                             InstrItinClass itin = NoItinerary> {
+  dag OutOperandList = (outs ROWD:$wd);
+  dag InOperandList = (ins ROWS:$ws, RORT:$rt);
+  string AsmString = !strconcat(instr_asm, "\t$wd, $ws[$rt]");
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, RORT:$rt))];
   InstrItinClass Itinerary = itin;
 }
 
@@ -2246,10 +2257,14 @@ class SHF_B_DESC : MSA_I8_SHF_DESC_BASE<"shf.b", MSA128BOpnd>;
 class SHF_H_DESC : MSA_I8_SHF_DESC_BASE<"shf.h", MSA128HOpnd>;
 class SHF_W_DESC : MSA_I8_SHF_DESC_BASE<"shf.w", MSA128WOpnd>;
 
-class SLD_B_DESC : MSA_3R_DESC_BASE<"sld.b", int_mips_sld_b, MSA128BOpnd>;
-class SLD_H_DESC : MSA_3R_DESC_BASE<"sld.h", int_mips_sld_h, MSA128HOpnd>;
-class SLD_W_DESC : MSA_3R_DESC_BASE<"sld.w", int_mips_sld_w, MSA128WOpnd>;
-class SLD_D_DESC : MSA_3R_DESC_BASE<"sld.d", int_mips_sld_d, MSA128DOpnd>;
+class SLD_B_DESC : MSA_3R_INDEX_DESC_BASE<"sld.b", int_mips_sld_b, MSA128BOpnd,
+                                          MSA128BOpnd, GPR32Opnd>;
+class SLD_H_DESC : MSA_3R_INDEX_DESC_BASE<"sld.h", int_mips_sld_h, MSA128HOpnd,
+                                          MSA128HOpnd, GPR32Opnd>;
+class SLD_W_DESC : MSA_3R_INDEX_DESC_BASE<"sld.w", int_mips_sld_w, MSA128WOpnd,
+                                          MSA128WOpnd, GPR32Opnd>;
+class SLD_D_DESC : MSA_3R_INDEX_DESC_BASE<"sld.d", int_mips_sld_d, MSA128DOpnd,
+                                          MSA128DOpnd, GPR32Opnd>;
 
 class SLDI_B_DESC : MSA_ELM_DESC_BASE<"sldi.b", int_mips_sldi_b, MSA128BOpnd>;
 class SLDI_H_DESC : MSA_ELM_DESC_BASE<"sldi.h", int_mips_sldi_h, MSA128HOpnd>;

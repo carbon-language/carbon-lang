@@ -192,10 +192,10 @@
 # CHECK:        pckod.h         $w26, $w5, $w8                  # encoding: [0x79,0xa8,0x2e,0x94]
 # CHECK:        pckod.w         $w9, $w4, $w2                   # encoding: [0x79,0xc2,0x22,0x54]
 # CHECK:        pckod.d         $w30, $w22, $w20                # encoding: [0x79,0xf4,0xb7,0x94]
-# CHECK:        sld.b           $w5, $w23, $w12                 # encoding: [0x78,0x0c,0xb9,0x54]
-# CHECK:        sld.h           $w1, $w23, $w3                  # encoding: [0x78,0x23,0xb8,0x54]
-# CHECK:        sld.w           $w20, $w8, $w9                  # encoding: [0x78,0x49,0x45,0x14]
-# CHECK:        sld.d           $w7, $w23, $w30                 # encoding: [0x78,0x7e,0xb9,0xd4]
+# CHECK:        sld.b           $w5, $w23[$12]                  # encoding: [0x78,0x0c,0xb9,0x54]
+# CHECK:        sld.h           $w1, $w23[$3]                   # encoding: [0x78,0x23,0xb8,0x54]
+# CHECK:        sld.w           $w20, $w8[$9]                   # encoding: [0x78,0x49,0x45,0x14]
+# CHECK:        sld.d           $w7, $w23[$fp]                  # encoding: [0x78,0x7e,0xb9,0xd4]
 # CHECK:        sll.b           $w3, $w0, $w17                  # encoding: [0x78,0x11,0x00,0xcd]
 # CHECK:        sll.h           $w17, $w27, $w3                 # encoding: [0x78,0x23,0xdc,0x4d]
 # CHECK:        sll.w           $w16, $w7, $w6                  # encoding: [0x78,0x46,0x3c,0x0d]
@@ -431,10 +431,10 @@
 # CHECKOBJDUMP:        pckod.h         $w26, $w5, $w8
 # CHECKOBJDUMP:        pckod.w         $w9, $w4, $w2
 # CHECKOBJDUMP:        pckod.d         $w30, $w22, $w20
-# CHECKOBJDUMP:        sld.b           $w5, $w23, $w12
-# CHECKOBJDUMP:        sld.h           $w1, $w23, $w3
-# CHECKOBJDUMP:        sld.w           $w20, $w8, $w9
-# CHECKOBJDUMP:        sld.d           $w7, $w23, $w30
+# CHECKOBJDUMP:        sld.b           $w5, $w23[$12]
+# CHECKOBJDUMP:        sld.h           $w1, $w23[$3]
+# CHECKOBJDUMP:        sld.w           $w20, $w8[$9]
+# CHECKOBJDUMP:        sld.d           $w7, $w23[$fp]
 # CHECKOBJDUMP:        sll.b           $w3, $w0, $w17
 # CHECKOBJDUMP:        sll.h           $w17, $w27, $w3
 # CHECKOBJDUMP:        sll.w           $w16, $w7, $w6
@@ -670,10 +670,10 @@
                 pckod.h         $w26, $w5, $w8
                 pckod.w         $w9, $w4, $w2
                 pckod.d         $w30, $w22, $w20
-                sld.b           $w5, $w23, $w12
-                sld.h           $w1, $w23, $w3
-                sld.w           $w20, $w8, $w9
-                sld.d           $w7, $w23, $w30
+                sld.b           $w5, $w23[$12]
+                sld.h           $w1, $w23[$3]
+                sld.w           $w20, $w8[$9]
+                sld.d           $w7, $w23[$30]
                 sll.b           $w3, $w0, $w17
                 sll.h           $w17, $w27, $w3
                 sll.w           $w16, $w7, $w6
