@@ -6807,6 +6807,8 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
     // C++11 [replacement.functions]p3:
     //  The program's definitions shall not be specified as inline.
+    //
+    // N.B. We diagnose declarations instead of definitions per LWG issue 2340.
     if (isInline && NewFD->isReplaceableGlobalAllocationFunction())
       Diag(D.getDeclSpec().getInlineSpecLoc(),
            diag::err_operator_new_delete_declared_inline)
