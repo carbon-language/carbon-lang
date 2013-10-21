@@ -5901,7 +5901,7 @@ def err_operator_new_delete_declared_in_namespace : Error<
 def err_operator_new_delete_declared_static : Error<
   "%0 cannot be declared static in global scope">;
 def err_operator_new_delete_declared_inline : Error<
-  "%0 cannot be declared 'inline'">;
+  "replacement function %0 cannot be declared 'inline'">;
 def err_operator_new_delete_invalid_result_type : Error<
   "%0 must return type %1">;
 def err_operator_new_delete_dependent_result_type : Error<
