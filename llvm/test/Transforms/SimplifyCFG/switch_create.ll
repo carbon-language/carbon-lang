@@ -1,5 +1,5 @@
 ; RUN: opt -S -simplifycfg < %s | FileCheck -check-prefix=CHECK %s
-; RUN: opt -S -default-data-layout="p:32:32" -simplifycfg < %s | FileCheck -check-prefix=DL %s
+; RUN: opt -S -default-data-layout="p:32:32-p1:16:16" -simplifycfg < %s | FileCheck -check-prefix=DL %s
 
 ; TODO: Other tests should also have check lines with datalayout
 
@@ -41,6 +41,25 @@ F:              ; preds = %0
 ; DL:  switch i32 %magicptr, label %F [
 ; DL:    i32 17, label %T
 ; DL:    i32 4, label %T
+; DL:  ]
+}
+
+define void @test1_ptr_as1(i32 addrspace(1)* %V) {
+        %C1 = icmp eq i32 addrspace(1)* %V, inttoptr (i32 4 to i32 addrspace(1)*)
+        %C2 = icmp eq i32 addrspace(1)* %V, inttoptr (i32 17 to i32 addrspace(1)*)
+        %CN = or i1 %C1, %C2            ; <i1> [#uses=1]
+        br i1 %CN, label %T, label %F
+T:              ; preds = %0
+        call void @foo1( )
+        ret void
+F:              ; preds = %0
+        call void @foo2( )
+        ret void
+; DL-LABEL: @test1_ptr_as1(
+; DL:  %magicptr = ptrtoint i32 addrspace(1)* %V to i16
+; DL:  switch i16 %magicptr, label %F [
+; DL:    i16 17, label %T
+; DL:    i16 4, label %T
 ; DL:  ]
 }
 
