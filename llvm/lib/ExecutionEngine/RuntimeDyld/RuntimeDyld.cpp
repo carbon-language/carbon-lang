@@ -19,6 +19,7 @@
 #include "RuntimeDyldMachO.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/MutexGuard.h"
 #include "llvm/Object/ELF.h"
 
 using namespace llvm;
@@ -37,6 +38,8 @@ void RuntimeDyldImpl::deregisterEHFrames() {
 
 // Resolve the relocations for all symbols we currently know about.
 void RuntimeDyldImpl::resolveRelocations() {
+  MutexGuard locked(lock);
+
   // First, resolve relocations associated with external symbols.
   resolveExternalSymbols();
 
@@ -57,6 +60,7 @@ void RuntimeDyldImpl::resolveRelocations() {
 
 void RuntimeDyldImpl::mapSectionAddress(const void *LocalAddress,
                                         uint64_t TargetAddress) {
+  MutexGuard locked(lock);
   for (unsigned i = 0, e = Sections.size(); i != e; ++i) {
     if (Sections[i].Address == LocalAddress) {
       reassignSectionAddress(i, TargetAddress);
@@ -73,6 +77,8 @@ ObjectImage *RuntimeDyldImpl::createObjectImage(ObjectBuffer *InputBuffer) {
 }
 
 ObjectImage *RuntimeDyldImpl::loadObject(ObjectBuffer *InputBuffer) {
+  MutexGuard locked(lock);
+
   OwningPtr<ObjectImage> obj(createObjectImage(InputBuffer));
   if (!obj)
     report_fatal_error("Unable to create object image from memory buffer!");

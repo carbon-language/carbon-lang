@@ -70,10 +70,6 @@ private:
   OwningPtr<RTDyldMemoryManager> ClientMM;
 };
 
-// FIXME: This makes all kinds of horrible assumptions for the time being,
-// like only having one module, not needing to worry about multi-threading,
-// blah blah. Purely in get-it-up-and-limping mode for now.
-
 // About Module states:
 //
 // The purpose of the "added" state is having modules in standby. (added=known

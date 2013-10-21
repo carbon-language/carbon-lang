@@ -25,6 +25,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/Mutex.h"
 #include "llvm/Support/SwapByteOrder.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
@@ -185,6 +186,18 @@ protected:
 
   Triple::ArchType Arch;
   bool IsTargetLittleEndian;
+
+  // This mutex prevents simultaneously loading objects from two different
+  // threads.  This keeps us from having to protect individual data structures
+  // and guarantees that section allocation requests to the memory manager
+  // won't be interleaved between modules.  It is also used in mapSectionAddress
+  // and resolveRelocations to protect write access to internal data structures.
+  //
+  // loadObject may be called on the same thread during the handling of of
+  // processRelocations, and that's OK.  The handling of the relocation lists
+  // is written in such a way as to work correctly if new elements are added to
+  // the end of the list while the list is being processed.
+  sys::Mutex lock;
 
   virtual unsigned getMaxStubSize() = 0;
   virtual unsigned getStubAlignment() = 0;

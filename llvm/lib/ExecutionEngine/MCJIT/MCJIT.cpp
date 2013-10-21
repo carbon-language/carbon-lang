@@ -62,6 +62,7 @@ MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM,
 }
 
 MCJIT::~MCJIT() {
+  MutexGuard locked(lock);
   Dyld.deregisterEHFrames();
 
   LoadedObjectMap::iterator it, end = LoadedObjects.end();
@@ -77,21 +78,22 @@ MCJIT::~MCJIT() {
 }
 
 void MCJIT::addModule(Module *M) {
+  MutexGuard locked(lock);
   Modules.push_back(M);
   ModuleStates[M] = MCJITModuleState();
 }
 
 void MCJIT::setObjectCache(ObjectCache* NewCache) {
+  MutexGuard locked(lock);
   ObjCache = NewCache;
 }
 
 ObjectBufferStream* MCJIT::emitObject(Module *M) {
+  MutexGuard locked(lock);
+
   // This must be a module which has already been added to this MCJIT instance.
   assert(std::find(Modules.begin(), Modules.end(), M) != Modules.end());
   assert(ModuleStates.find(M) != ModuleStates.end());
-
-  // Get a thread lock to make sure we aren't trying to compile multiple times
-  MutexGuard locked(lock);
 
   // Re-compilation is not supported
   assert(!ModuleStates[M].hasBeenEmitted());
@@ -127,12 +129,12 @@ ObjectBufferStream* MCJIT::emitObject(Module *M) {
 }
 
 void MCJIT::generateCodeForModule(Module *M) {
+  // Get a thread lock to make sure we aren't trying to load multiple times
+  MutexGuard locked(lock);
+
   // This must be a module which has already been added to this MCJIT instance.
   assert(std::find(Modules.begin(), Modules.end(), M) != Modules.end());
   assert(ModuleStates.find(M) != ModuleStates.end());
-
-  // Get a thread lock to make sure we aren't trying to load multiple times
-  MutexGuard locked(lock);
 
   // Re-compilation is not supported
   if (ModuleStates[M].hasBeenLoaded())
@@ -168,6 +170,8 @@ void MCJIT::generateCodeForModule(Module *M) {
 }
 
 void MCJIT::finalizeLoadedModules() {
+  MutexGuard locked(lock);
+
   // Resolve any outstanding relocations.
   Dyld.resolveRelocations();
 
@@ -192,6 +196,8 @@ void MCJIT::finalizeLoadedModules() {
 
 // FIXME: Rename this.
 void MCJIT::finalizeObject() {
+  MutexGuard locked(lock);
+
   // FIXME: This is a temporary hack to get around problems with calling
   // finalize multiple times.
   bool finalizeNeeded = false;
@@ -232,6 +238,8 @@ void MCJIT::finalizeObject() {
 }
 
 void MCJIT::finalizeModule(Module *M) {
+  MutexGuard locked(lock);
+
   // This must be a module which has already been added to this MCJIT instance.
   assert(std::find(Modules.begin(), Modules.end(), M) != Modules.end());
   assert(ModuleStates.find(M) != ModuleStates.end());
@@ -268,6 +276,8 @@ uint64_t MCJIT::getExistingSymbolAddress(const std::string &Name) {
 
 Module *MCJIT::findModuleForSymbol(const std::string &Name,
                                    bool CheckFunctionsOnly) {
+  MutexGuard locked(lock);
+
   // If it hasn't already been generated, see if it's in one of our modules.
   SmallVector<Module *, 1>::iterator end = Modules.end();
   SmallVector<Module *, 1>::iterator it;
@@ -290,6 +300,8 @@ Module *MCJIT::findModuleForSymbol(const std::string &Name,
 uint64_t MCJIT::getSymbolAddress(const std::string &Name,
                                  bool CheckFunctionsOnly)
 {
+  MutexGuard locked(lock);
+
   // First, check to see if we already have this symbol.
   uint64_t Addr = getExistingSymbolAddress(Name);
   if (Addr)
@@ -306,8 +318,6 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
   if (ModuleStates[M].hasBeenLoaded())
     return 0;
 
-  // FIXME: We probably need to make sure we aren't in the process of
-  //        loading or finalizing this module.
   generateCodeForModule(M);
 
   // Check the RuntimeDyld table again, it should be there now.
@@ -315,6 +325,7 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
 }
 
 uint64_t MCJIT::getGlobalValueAddress(const std::string &Name) {
+  MutexGuard locked(lock);
   uint64_t Result = getSymbolAddress(Name, false);
   if (Result != 0)
     finalizeLoadedModules();
@@ -322,6 +333,7 @@ uint64_t MCJIT::getGlobalValueAddress(const std::string &Name) {
 }
 
 uint64_t MCJIT::getFunctionAddress(const std::string &Name) {
+  MutexGuard locked(lock);
   uint64_t Result = getSymbolAddress(Name, true);
   if (Result != 0)
     finalizeLoadedModules();
@@ -330,6 +342,7 @@ uint64_t MCJIT::getFunctionAddress(const std::string &Name) {
 
 // Deprecated.  Use getFunctionAddress instead.
 void *MCJIT::getPointerToFunction(Function *F) {
+  MutexGuard locked(lock);
 
   if (F->isDeclaration() || F->hasAvailableExternallyLinkage()) {
     bool AbortOnFailure = !F->hasExternalWeakLinkage();

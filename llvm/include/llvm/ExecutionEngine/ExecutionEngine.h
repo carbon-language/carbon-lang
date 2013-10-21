@@ -153,7 +153,7 @@ protected:
   void *(*LazyFunctionCreator)(const std::string &);
 
 public:
-  /// lock - This lock protects the ExecutionEngine, JIT, JITResolver and
+  /// lock - This lock protects the ExecutionEngine, MCJIT, JIT, JITResolver and
   /// JITEmitter classes.  It must be held while changing the internal state of
   /// any of those classes.
   sys::Mutex lock;
