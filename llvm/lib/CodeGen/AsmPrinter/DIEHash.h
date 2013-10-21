@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/MD5.h"
 
 namespace llvm {
@@ -125,5 +126,6 @@ private:
 
 private:
   MD5 Hash;
+  DenseMap<DIE*, unsigned> Numbering;
 };
 }

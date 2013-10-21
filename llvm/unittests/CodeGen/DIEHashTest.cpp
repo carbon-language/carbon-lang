@@ -92,7 +92,6 @@ TEST(TypeWithMember, DIEHash) {
   DIE *Member = new DIE(dwarf::DW_TAG_member);
   DIEString MemberStr(&Four, "member");
   Member->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &MemberStr);
-  // type
   DIEInteger Zero(0);
   Member->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, &Zero);
 
@@ -111,5 +110,63 @@ TEST(TypeWithMember, DIEHash) {
   uint64_t MD5Res = DIEHash().computeTypeSignature(&Unnamed);
 
   ASSERT_EQ(0x5646aa436b7e07c6ULL, MD5Res);
+}
+
+TEST(ReusedType, DIEHash) {
+  DIE Unnamed(dwarf::DW_TAG_structure_type);
+  DIEInteger Eight(8);
+  Unnamed.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
+
+  DIE *Mem1 = new DIE(dwarf::DW_TAG_member);
+  DIEInteger Four(4);
+  DIEString Mem1Str(&Four, "mem1");
+  Mem1->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &Mem1Str);
+  DIEInteger Zero(0);
+  Mem1->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, &Zero);
+
+  Unnamed.addChild(Mem1);
+
+  DIE *Mem2 = new DIE(dwarf::DW_TAG_member);
+  DIEString Mem2Str(&Four, "mem2");
+  Mem2->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &Mem2Str);
+  Mem2->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, &Four);
+
+  Unnamed.addChild(Mem2);
+
+  DIE Int(dwarf::DW_TAG_base_type);
+  DIEString IntStr(&Four, "int");
+  Int.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &IntStr);
+  Int.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Four);
+  DIEInteger Five(5);
+  Int.addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, &Five);
+
+  DIEEntry IntRef(&Int);
+  Mem1->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &IntRef);
+  Mem2->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &IntRef);
+
+  uint64_t MD5Res = DIEHash().computeTypeSignature(&Unnamed);
+
+  ASSERT_EQ(0x3a7dc3ed7b76b2f8ULL, MD5Res);
+}
+
+TEST(RecursiveType, DIEHash) {
+  DIE Foo(dwarf::DW_TAG_structure_type);
+  DIEInteger One(1);
+  Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &One);
+  DIEString FooStr(&One, "foo");
+  Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FooStr);
+
+  DIE *Mem = new DIE(dwarf::DW_TAG_member);
+  DIEString MemStr(&One, "mem");
+  Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &MemStr);
+  DIEEntry FooRef(&Foo);
+  Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooRef);
+  // DW_AT_external and DW_AT_declaration are ignored anyway, so skip them.
+
+  Foo.addChild(Mem);
+
+  uint64_t MD5Res = DIEHash().computeTypeSignature(&Foo);
+
+  ASSERT_EQ(0x73d8b25aef227b06ULL, MD5Res);
 }
 }

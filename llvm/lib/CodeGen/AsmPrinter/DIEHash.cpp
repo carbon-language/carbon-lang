@@ -196,22 +196,30 @@ void DIEHash::hashAttribute(AttrEntry Attr) {
   // 7.27s3
   // ... An attribute that refers to another type entry T is processed as
   // follows:
-  // a) If T is in the list of [previously hashed types], use the letter 'R' as
-  // the marker and use the unsigned LEB128 encoding of [the index of T in the
-  // list] as the attribute value; otherwise,
-
-  // [TODO: implement clause (a)]
-
   if (const DIEEntry *EntryAttr = dyn_cast<DIEEntry>(Value)) {
     DIE *Entry = EntryAttr->getEntry();
+    unsigned &DieNumber = Numbering[Entry];
+    if (DieNumber) {
+      // a) If T is in the list of [previously hashed types], use the letter
+      // 'R' as the marker
+      addULEB128('R');
 
-    // b) use the letter 'T' as a the marker, ...
+      addULEB128(Desc->getAttribute());
+
+      // and use the unsigned LEB128 encoding of [the index of T in the
+      // list] as the attribute value;
+      addULEB128(DieNumber);
+      return;
+    }
+
+    // otherwise, b) use the letter 'T' as a the marker, ...
     addULEB128('T');
 
     addULEB128(Desc->getAttribute());
 
     // ... process the type T recursively by performing Steps 2 through 7, and
     // use the result as the attribute value.
+    DieNumber = Numbering.size();
     computeHash(Entry);
     return;
   }
@@ -321,7 +329,6 @@ void DIEHash::addAttributes(DIE *Die) {
 // given in section 7.27 of the DWARF4 standard. It is the md5 hash of a
 // flattened description of the DIE.
 void DIEHash::computeHash(DIE *Die) {
-
   // Append the letter 'D', followed by the DWARF tag of the DIE.
   addULEB128('D');
   addULEB128(Die->getTag());
@@ -377,6 +384,8 @@ uint64_t DIEHash::computeDIEODRSignature(DIE *Die) {
 /// with the inclusion of the full CU and all top level CU entities.
 // TODO: Initialize the type chain at 0 instead of 1 for CU signatures.
 uint64_t DIEHash::computeCUSignature(DIE *Die) {
+  Numbering.clear();
+  Numbering[Die] = 1;
 
   // Hash the DIE.
   computeHash(Die);
@@ -396,6 +405,8 @@ uint64_t DIEHash::computeCUSignature(DIE *Die) {
 /// with the inclusion of additional forms not specifically called out in the
 /// standard.
 uint64_t DIEHash::computeTypeSignature(DIE *Die) {
+  Numbering.clear();
+  Numbering[Die] = 1;
 
   if (DIE *Parent = Die->getParent())
     addParentContext(Parent);
