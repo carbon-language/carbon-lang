@@ -5103,18 +5103,23 @@ static Constant *BuildConstantFromSCEV(const SCEV *V) {
     case scAddExpr: {
       const SCEVAddExpr *SA = cast<SCEVAddExpr>(V);
       if (Constant *C = BuildConstantFromSCEV(SA->getOperand(0))) {
-        if (C->getType()->isPointerTy())
-          C = ConstantExpr::getBitCast(C, Type::getInt8PtrTy(C->getContext()));
+        if (PointerType *PTy = dyn_cast<PointerType>(C->getType())) {
+          unsigned AS = PTy->getAddressSpace();
+          Type *DestPtrTy = Type::getInt8PtrTy(C->getContext(), AS);
+          C = ConstantExpr::getBitCast(C, DestPtrTy);
+        }
         for (unsigned i = 1, e = SA->getNumOperands(); i != e; ++i) {
           Constant *C2 = BuildConstantFromSCEV(SA->getOperand(i));
           if (!C2) return 0;
 
           // First pointer!
           if (!C->getType()->isPointerTy() && C2->getType()->isPointerTy()) {
+            unsigned AS = C2->getType()->getPointerAddressSpace();
             std::swap(C, C2);
+            Type *DestPtrTy = Type::getInt8PtrTy(C->getContext(), AS);
             // The offsets have been converted to bytes.  We can add bytes to an
             // i8* by GEP with the byte count in the first index.
-            C = ConstantExpr::getBitCast(C,Type::getInt8PtrTy(C->getContext()));
+            C = ConstantExpr::getBitCast(C, DestPtrTy);
           }
 
           // Don't bother trying to sum two pointers. We probably can't
@@ -5122,8 +5127,8 @@ static Constant *BuildConstantFromSCEV(const SCEV *V) {
           if (C2->getType()->isPointerTy())
             return 0;
 
-          if (C->getType()->isPointerTy()) {
-            if (cast<PointerType>(C->getType())->getElementType()->isStructTy())
+          if (PointerType *PTy = dyn_cast<PointerType>(C->getType())) {
+            if (PTy->getElementType()->isStructTy())
               C2 = ConstantExpr::getIntegerCast(
                   C2, Type::getInt32Ty(C->getContext()), true);
             C = ConstantExpr::getGetElementPtr(C, C2);
