@@ -512,7 +512,7 @@ public:
     _LIBCPP_ALWAYS_INLINE
     bool is(mask __m, char_type __c) const
     {
-        return isascii(__c) ? __tab_[static_cast<int>(__c)] & __m : false;
+        return isascii(__c) ? (__tab_[static_cast<int>(__c)] & __m) !=0 : false;
     }
 
     _LIBCPP_ALWAYS_INLINE

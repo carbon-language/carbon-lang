@@ -535,21 +535,21 @@ inline _LIBCPP_INLINE_VISIBILITY
 bool
 ios_base::eof() const
 {
-    return __rdstate_ & eofbit;
+    return (__rdstate_ & eofbit) != 0;
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
 bool
 ios_base::fail() const
 {
-    return __rdstate_ & (failbit | badbit);
+    return (__rdstate_ & (failbit | badbit)) != 0;
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
 bool
 ios_base::bad() const
 {
-    return __rdstate_ & badbit;
+    return (__rdstate_ & badbit) != 0;
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
