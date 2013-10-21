@@ -1172,7 +1172,7 @@ static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
     Type *DestPTy =
       IntegerType::get(LoadTy->getContext(), NewLoadSize*8);
     DestPTy = PointerType::get(DestPTy,
-                       cast<PointerType>(PtrVal->getType())->getAddressSpace());
+                               PtrVal->getType()->getPointerAddressSpace());
     Builder.SetCurrentDebugLocation(SrcVal->getDebugLoc());
     PtrVal = Builder.CreateBitCast(PtrVal, DestPTy);
     LoadInst *NewLoad = Builder.CreateLoad(PtrVal);

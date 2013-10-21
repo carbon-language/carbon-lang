@@ -625,10 +625,10 @@ namespace {
         ConstantInt *IntOff = ConstOffSCEV->getValue();
         int64_t Offset = IntOff->getSExtValue();
 
-        Type *VTy = cast<PointerType>(IPtr->getType())->getElementType();
+        Type *VTy = IPtr->getType()->getPointerElementType();
         int64_t VTyTSS = (int64_t) TD->getTypeStoreSize(VTy);
 
-        Type *VTy2 = cast<PointerType>(JPtr->getType())->getElementType();
+        Type *VTy2 = JPtr->getType()->getPointerElementType();
         if (VTy != VTy2 && Offset < 0) {
           int64_t VTy2TSS = (int64_t) TD->getTypeStoreSize(VTy2);
           OffsetInElmts = Offset/VTy2TSS;
@@ -2231,11 +2231,12 @@ namespace {
     // The pointer value is taken to be the one with the lowest offset.
     Value *VPtr = IPtr;
 
-    Type *ArgTypeI = cast<PointerType>(IPtr->getType())->getElementType();
-    Type *ArgTypeJ = cast<PointerType>(JPtr->getType())->getElementType();
+    Type *ArgTypeI = IPtr->getType()->getPointerElementType();
+    Type *ArgTypeJ = JPtr->getType()->getPointerElementType();
     Type *VArgType = getVecTypeForPair(ArgTypeI, ArgTypeJ);
-    Type *VArgPtrType = PointerType::get(VArgType,
-      cast<PointerType>(IPtr->getType())->getAddressSpace());
+    Type *VArgPtrType
+      = PointerType::get(VArgType,
+                         IPtr->getType()->getPointerAddressSpace());
     return new BitCastInst(VPtr, VArgPtrType, getReplacementName(I, true, o),
                         /* insert before */ I);
   }
@@ -2244,7 +2245,7 @@ namespace {
                      unsigned MaskOffset, unsigned NumInElem,
                      unsigned NumInElem1, unsigned IdxOffset,
                      std::vector<Constant*> &Mask) {
-    unsigned NumElem1 = cast<VectorType>(J->getType())->getNumElements();
+    unsigned NumElem1 = J->getType()->getVectorNumElements();
     for (unsigned v = 0; v < NumElem1; ++v) {
       int m = cast<ShuffleVectorInst>(J)->getMaskValue(v);
       if (m < 0) {
@@ -2271,18 +2272,18 @@ namespace {
     Type *ArgTypeJ = J->getType();
     Type *VArgType = getVecTypeForPair(ArgTypeI, ArgTypeJ);
 
-    unsigned NumElemI = cast<VectorType>(ArgTypeI)->getNumElements();
+    unsigned NumElemI = ArgTypeI->getVectorNumElements();
 
     // Get the total number of elements in the fused vector type.
     // By definition, this must equal the number of elements in
     // the final mask.
-    unsigned NumElem = cast<VectorType>(VArgType)->getNumElements();
+    unsigned NumElem = VArgType->getVectorNumElements();
     std::vector<Constant*> Mask(NumElem);
 
     Type *OpTypeI = I->getOperand(0)->getType();
-    unsigned NumInElemI = cast<VectorType>(OpTypeI)->getNumElements();
+    unsigned NumInElemI = OpTypeI->getVectorNumElements();
     Type *OpTypeJ = J->getOperand(0)->getType();
-    unsigned NumInElemJ = cast<VectorType>(OpTypeJ)->getNumElements();
+    unsigned NumInElemJ = OpTypeJ->getVectorNumElements();
 
     // The fused vector will be:
     // -----------------------------------------------------
@@ -2427,11 +2428,12 @@ namespace {
 
       if (CanUseInputs) {
         unsigned LOpElem =
-          cast<VectorType>(cast<Instruction>(LOp)->getOperand(0)->getType())
-            ->getNumElements();
+          cast<Instruction>(LOp)->getOperand(0)->getType()
+            ->getVectorNumElements();
+
         unsigned HOpElem =
-          cast<VectorType>(cast<Instruction>(HOp)->getOperand(0)->getType())
-            ->getNumElements();
+          cast<Instruction>(HOp)->getOperand(0)->getType()
+            ->getVectorNumElements();
 
         // We have one or two input vectors. We need to map each index of the
         // operands to the index of the original vector.
@@ -2647,14 +2649,14 @@ namespace {
                                            getReplacementName(IBeforeJ ? I : J,
                                                               true, o, 1));
         }
-  
+
         NHOp->insertBefore(IBeforeJ ? J : I);
         HOp = NHOp;
       }
     }
 
     if (ArgType->isVectorTy()) {
-      unsigned numElem = cast<VectorType>(VArgType)->getNumElements();
+      unsigned numElem = VArgType->getVectorNumElements();
       std::vector<Constant*> Mask(numElem);
       for (unsigned v = 0; v < numElem; ++v) {
         unsigned Idx = v;

@@ -3167,7 +3167,7 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
   Type *IntPtrTy = getEffectiveSCEVType(GEP->getType());
   Value *Base = GEP->getOperand(0);
   // Don't attempt to analyze GEPs over unsized objects.
-  if (!cast<PointerType>(Base->getType())->getElementType()->isSized())
+  if (!Base->getType()->getPointerElementType()->isSized())
     return getUnknown(GEP);
 
   // Don't blindly transfer the inbounds flag from the GEP instruction to the

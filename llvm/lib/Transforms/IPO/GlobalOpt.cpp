@@ -1175,8 +1175,7 @@ static Value *GetHeapSROAValue(Value *V, unsigned FieldNo,
   } else if (PHINode *PN = dyn_cast<PHINode>(V)) {
     // PN's type is pointer to struct.  Make a new PHI of pointer to struct
     // field.
-    StructType *ST =
-      cast<StructType>(cast<PointerType>(PN->getType())->getElementType());
+    StructType *ST = cast<StructType>(PN->getType()->getPointerElementType());
 
     PHINode *NewPN =
      PHINode::Create(PointerType::getUnqual(ST->getElementType(FieldNo)),
@@ -2013,8 +2012,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
   CSVals[1] = 0;
 
   StructType *StructTy =
-    cast <StructType>(
-    cast<ArrayType>(GCL->getType()->getElementType())->getElementType());
+    cast<StructType>(GCL->getType()->getElementType()->getArrayElementType());
 
   // Create the new init list.
   std::vector<Constant*> CAList;

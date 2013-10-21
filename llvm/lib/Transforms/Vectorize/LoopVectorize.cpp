@@ -1069,7 +1069,7 @@ Value *InnerLoopVectorizer::getConsecutiveVector(Value* Val, int StartIdx,
 int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
   assert(Ptr->getType()->isPointerTy() && "Unexpected non ptr");
   // Make sure that the pointer does not point to structs.
-  if (cast<PointerType>(Ptr->getType())->getElementType()->isAggregateType())
+  if (Ptr->getType()->getPointerElementType()->isAggregateType())
     return 0;
 
   // If this value is a pointer induction variable we know it is consecutive.
