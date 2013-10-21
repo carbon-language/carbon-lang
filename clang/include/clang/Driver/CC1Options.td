@@ -479,12 +479,6 @@ def fsized_deallocation : Flag<["-"], "fsized-deallocation">,
 
 def nostdsysteminc : Flag<["-"], "nostdsysteminc">,
   HelpText<"Disable standard system #include directories">;
-def fmodule_name : Joined<["-"], "fmodule-name=">,
-  MetaVarName<"<name>">,
-  HelpText<"Specify the name of the module to build">;
-def fmodule_map_file : Joined<["-"], "fmodule-map-file=">,
-  MetaVarName<"<file>">,
-  HelpText<"Load this module map file">;
 def fdisable_module_hash : Flag<["-"], "fdisable-module-hash">,
   HelpText<"Disable the module hash">;
 def c_isystem : JoinedOrSeparate<["-"], "c-isystem">, MetaVarName<"<directory>">,

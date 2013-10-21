@@ -3060,11 +3060,26 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fmodule-maps");
   }
 
-  // -fmodules-decluse checks that modules used are declared so (off by default).
+  // -fmodules-decluse checks that modules used are declared so (off by
+  // default).
   if (Args.hasFlag(options::OPT_fmodules_decluse,
                    options::OPT_fno_modules_decluse,
                    false)) {
     CmdArgs.push_back("-fmodules-decluse");
+  }
+
+  // -fmodule-name specifies the module that is currently being built (or
+  // used for header checking by -fmodule-maps).
+  if (Arg *A = Args.getLastArg(options::OPT_fmodule_name)) {
+    A->claim();
+    A->render(Args, CmdArgs);
+  }
+
+  // -fmodule-map-file can be used to specify a file containing module
+  // definitions.
+  if (Arg *A = Args.getLastArg(options::OPT_fmodule_map_file)) {
+    A->claim();
+    A->render(Args, CmdArgs);
   }
 
   // If a module path was provided, pass it along. Otherwise, use a temporary
