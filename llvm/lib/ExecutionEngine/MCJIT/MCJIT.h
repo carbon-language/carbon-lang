@@ -153,7 +153,7 @@ public:
   /// called the MCJIT execution engine will reapply relocations for a loaded
   /// object.
   /// Is it OK to finalize a set of modules, add modules and finalize again.
-  /// FIXME: Do we really need both of these?
+  // FIXME: Do we really need both of these?
   virtual void finalizeObject();
   virtual void finalizeModule(Module *);
   void finalizeLoadedModules();
