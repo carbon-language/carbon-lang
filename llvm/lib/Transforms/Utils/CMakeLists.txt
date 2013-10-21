@@ -8,6 +8,7 @@ add_llvm_library(LLVMTransformUtils
   CmpInstAnalysis.cpp
   CodeExtractor.cpp
   DemoteRegToStack.cpp
+  GlobalStatus.cpp
   InlineFunction.cpp
   InstructionNamer.cpp
   IntegerDivision.cpp

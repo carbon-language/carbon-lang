@@ -29,6 +29,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 ; RUN: llvm-nm %t | FileCheck %s -check-prefix=ZED1_AND_ZED2
 ; ZED1_AND_ZED2: V zed1
 @zed1 = linkonce_odr global i32 42
+define i32* @get_zed1() {
+  ret i32* @zed1
+}
 
 ; ZED1_AND_ZED2: d zed2
 @zed2 = linkonce_odr unnamed_addr global i32 42

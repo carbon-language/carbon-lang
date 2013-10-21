@@ -11,6 +11,19 @@
 // If the function or variable is not in the list of external names given to
 // the pass it is marked as internal.
 //
+// This transformation would not be legal or profitable in a regular
+// compilation, but it gets extra information from the linker about what is safe
+// or profitable.
+//
+// As an example of a normally illegal transformation: Internalizing a function
+// with external linkage. Only if we are told it is only used from within this
+// module, it is safe to do it.
+//
+// On the profitability side: It is always legal to internalize a linkonce_odr
+// whose address is not used. Doing so normally would introduce code bloat, but
+// if we are told by the linker that the only use of this would be for a
+// DSO symbol table, it is profitable to hide it.
+//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "internalize"
@@ -23,6 +36,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Utils/GlobalStatus.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include <fstream>
 #include <set>
@@ -142,8 +156,11 @@ static bool shouldInternalize(const GlobalValue &GV,
   if (GV.hasUnnamedAddr())
     return true;
 
-  // FIXME: Check if the address is used.
-  return false;
+  GlobalStatus GS;
+  if (GlobalStatus::analyzeGlobal(&GV, GS))
+    return false;
+
+  return !GS.IsCompared;
 }
 
 bool InternalizePass::runOnModule(Module &M) {
