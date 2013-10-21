@@ -127,5 +127,6 @@
 // RUN:     -fno-var-tracking                                                 \
 // RUN:     -fno-unsigned-char                                                \
 // RUN:     -fno-signed-char                                                  \
+// RUN:     -fstrength-reduce -fno-strength-reduce                            \
 // RUN:     %s 2>&1 | FileCheck --check-prefix=IGNORE %s
 // IGNORE-NOT: error: unknown argument
