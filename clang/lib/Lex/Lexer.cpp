@@ -2730,6 +2730,10 @@ uint32_t Lexer::tryReadUCN(const char *&StartPtr, const char *SlashLoc,
     StartPtr = CurPtr;
   }
 
+  // Don't apply C family restrictions to UCNs in assembly mode
+  if (LangOpts.AsmPreprocessor)
+    return CodePoint;
+
   // C99 6.4.3p2: A universal character name shall not specify a character whose
   //   short identifier is less than 00A0 other than 0024 ($), 0040 (@), or
   //   0060 (`), nor one in the range D800 through DFFF inclusive.)
