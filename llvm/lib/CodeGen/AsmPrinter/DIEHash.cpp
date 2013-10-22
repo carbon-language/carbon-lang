@@ -192,6 +192,7 @@ void DIEHash::collectAttributes(DIE *Die, DIEAttrs &Attrs) {
 void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
   const DIEValue *Value = Attr.Val;
   const DIEAbbrevData *Desc = Attr.Desc;
+  dwarf::Attribute Attribute = Desc->getAttribute();
 
   // 7.27 Step 3
   // ... An attribute that refers to another type entry T is processed as
@@ -200,14 +201,16 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
     DIE *Entry = EntryAttr->getEntry();
 
     // Step 5
-    // If the tag in Step 3 is one of ...
-    if (Tag == dwarf::DW_TAG_pointer_type ||
-        Tag == dwarf::DW_TAG_reference_type ||
-        Tag == dwarf::DW_TAG_rvalue_reference_type) {
-      // ... and the referenced type (via the DW_AT_type or DW_AT_friend
-      // attribute) ...
-      assert(Desc->getAttribute() == dwarf::DW_AT_type ||
-             Desc->getAttribute() == dwarf::DW_AT_friend);
+    // If the tag in Step 3 is one of [the below tags]
+    if ((Tag == dwarf::DW_TAG_pointer_type ||
+         Tag == dwarf::DW_TAG_reference_type ||
+         Tag == dwarf::DW_TAG_rvalue_reference_type ||
+         Tag == dwarf::DW_TAG_ptr_to_member_type) &&
+        // and the referenced type (via the [below attributes])
+        // FIXME: This seems overly restrictive, and causes hash mismatches
+        // there's a decl/def difference in the containing type of a
+        // ptr_to_member_type.
+        Attribute == dwarf::DW_AT_type) {
       // [FIXME] ... has a DW_AT_name attribute,
       // append the letter 'N'
       addULEB128('N');
@@ -238,7 +241,7 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
       // 'R' as the marker
       addULEB128('R');
 
-      addULEB128(Desc->getAttribute());
+      addULEB128(Attribute);
 
       // and use the unsigned LEB128 encoding of [the index of T in the
       // list] as the attribute value;
@@ -249,7 +252,7 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
     // otherwise, b) use the letter 'T' as a the marker, ...
     addULEB128('T');
 
-    addULEB128(Desc->getAttribute());
+    addULEB128(Attribute);
 
     // ... process the type T recursively by performing Steps 2 through 7, and
     // use the result as the attribute value.
@@ -261,7 +264,7 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
   // Other attribute values use the letter 'A' as the marker, ...
   addULEB128('A');
 
-  addULEB128(Desc->getAttribute());
+  addULEB128(Attribute);
 
   // ... and the value consists of the form code (encoded as an unsigned LEB128
   // value) followed by the encoding of the value according to the form code. To

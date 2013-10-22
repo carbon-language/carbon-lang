@@ -264,4 +264,182 @@ TEST(DIEHashTest, RValueReference) {
 
   ASSERT_EQ(0xad211c8c3b31e57ULL, MD5Res);
 }
+
+// struct foo { foo foo::*mem; };
+TEST(DIEHashTest, PtrToMember) {
+  DIE Foo(dwarf::DW_TAG_structure_type);
+  DIEInteger Eight(8);
+  Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
+  DIEString FooStr(&Eight, "foo");
+  Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FooStr);
+
+  DIE *Mem = new DIE(dwarf::DW_TAG_member);
+  DIEString MemStr(&Eight, "mem");
+  Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &MemStr);
+  DIEInteger Zero(0);
+  Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, &Zero);
+
+  DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
+  DIEEntry FooEntry(&Foo);
+  PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooEntry);
+  PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, &FooEntry);
+
+  DIEEntry PtrToFooMemRef(&PtrToFooMem);
+  Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PtrToFooMemRef);
+
+  Foo.addChild(Mem);
+
+  uint64_t MD5Res = DIEHash().computeTypeSignature(&Foo);
+
+  ASSERT_EQ(0x852e0c9ff7c04ebULL, MD5Res);
+}
+
+// Check that the hash for a pointer-to-member matches regardless of whether the
+// pointed-to type is a declaration or a definition.
+//
+//   struct bar; // { };
+//   struct foo { bar foo::*mem; };
+TEST(DIEHashTest, PtrToMemberDeclDefMatch) {
+  DIEInteger Zero(0);
+  DIEInteger One(1);
+  DIEInteger Eight(8);
+  DIEString FooStr(&Eight, "foo");
+  DIEString BarStr(&Eight, "bar");
+  DIEString MemStr(&Eight, "mem");
+  uint64_t MD5ResDecl;
+  {
+    DIE Bar(dwarf::DW_TAG_structure_type);
+    Bar.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &BarStr);
+    Bar.addValue(dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present, &One);
+
+    DIE Foo(dwarf::DW_TAG_structure_type);
+    Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
+    Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FooStr);
+
+    DIE *Mem = new DIE(dwarf::DW_TAG_member);
+    Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &MemStr);
+    Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+                  &Zero);
+
+    DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
+    DIEEntry BarEntry(&Bar);
+    PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &BarEntry);
+    DIEEntry FooEntry(&Foo);
+    PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
+                         &FooEntry);
+
+    DIEEntry PtrToFooMemRef(&PtrToFooMem);
+    Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PtrToFooMemRef);
+
+    Foo.addChild(Mem);
+
+    MD5ResDecl = DIEHash().computeTypeSignature(&Foo);
+  }
+  uint64_t MD5ResDef;
+  {
+    DIE Bar(dwarf::DW_TAG_structure_type);
+    Bar.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &BarStr);
+    Bar.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &One);
+
+    DIE Foo(dwarf::DW_TAG_structure_type);
+    Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
+    Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FooStr);
+
+    DIE *Mem = new DIE(dwarf::DW_TAG_member);
+    Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &MemStr);
+    Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+                  &Zero);
+
+    DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
+    DIEEntry BarEntry(&Bar);
+    PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &BarEntry);
+    DIEEntry FooEntry(&Foo);
+    PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
+                         &FooEntry);
+
+    DIEEntry PtrToFooMemRef(&PtrToFooMem);
+    Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PtrToFooMemRef);
+
+    Foo.addChild(Mem);
+
+    MD5ResDef = DIEHash().computeTypeSignature(&Foo);
+  }
+  ASSERT_EQ(MD5ResDef, MD5ResDecl);
+}
+
+// Check that the hash for a pointer-to-member matches regardless of whether the
+// pointed-to type is a declaration or a definition.
+//
+//   struct bar; // { };
+//   struct foo { bar bar::*mem; };
+TEST(DIEHashTest, PtrToMemberDeclDefMisMatch) {
+  DIEInteger Zero(0);
+  DIEInteger One(1);
+  DIEInteger Eight(8);
+  DIEString FooStr(&Eight, "foo");
+  DIEString BarStr(&Eight, "bar");
+  DIEString MemStr(&Eight, "mem");
+  uint64_t MD5ResDecl;
+  {
+    DIE Bar(dwarf::DW_TAG_structure_type);
+    Bar.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &BarStr);
+    Bar.addValue(dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present, &One);
+
+    DIE Foo(dwarf::DW_TAG_structure_type);
+    Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
+    Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FooStr);
+
+    DIE *Mem = new DIE(dwarf::DW_TAG_member);
+    Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &MemStr);
+    Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+                  &Zero);
+
+    DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
+    DIEEntry BarEntry(&Bar);
+    PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &BarEntry);
+    PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
+                         &BarEntry);
+
+    DIEEntry PtrToFooMemRef(&PtrToFooMem);
+    Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PtrToFooMemRef);
+
+    Foo.addChild(Mem);
+
+    MD5ResDecl = DIEHash().computeTypeSignature(&Foo);
+  }
+  uint64_t MD5ResDef;
+  {
+    DIE Bar(dwarf::DW_TAG_structure_type);
+    Bar.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &BarStr);
+    Bar.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &One);
+
+    DIE Foo(dwarf::DW_TAG_structure_type);
+    Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
+    Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FooStr);
+
+    DIE *Mem = new DIE(dwarf::DW_TAG_member);
+    Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &MemStr);
+    Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+                  &Zero);
+
+    DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
+    DIEEntry BarEntry(&Bar);
+    PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &BarEntry);
+    PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
+                         &BarEntry);
+
+    DIEEntry PtrToFooMemRef(&PtrToFooMem);
+    Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PtrToFooMemRef);
+
+    Foo.addChild(Mem);
+
+    MD5ResDef = DIEHash().computeTypeSignature(&Foo);
+  }
+  // FIXME: This seems to be a bug in the DWARF type hashing specification that
+  // only uses the brief name hashing for types referenced via DW_AT_type. In
+  // this case the type is referenced via DW_AT_containing_type and full hashing
+  // causes a hash to differ when the containing type is a declaration in one TU
+  // and a definition in another.
+  ASSERT_NE(MD5ResDef, MD5ResDecl);
+}
 }
