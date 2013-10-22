@@ -1005,8 +1005,8 @@ void ELFObjectWriter::CreateRelocationSections(MCAssembler &Asm,
     unsigned Flags = 0;
     StringRef Group = "";
     if (Section.getFlags() & ELF::SHF_GROUP) {
-        Flags = ELF::SHF_GROUP;
-        Group = Section.getGroup()->getName();
+      Flags = ELF::SHF_GROUP;
+      Group = Section.getGroup()->getName();
     }
 
     const MCSectionELF *RelaSection =
