@@ -583,33 +583,33 @@ bool Preprocessor::violatesUseDeclarations(
   return Declared == AllowedUses.end();
 }
 
-void Preprocessor::verifyModuleInclude(
-    SourceLocation FilenameLoc,
-    StringRef Filename,
-    const FileEntry *IncFileEnt,
-    ModuleMap::KnownHeader *SuggestedModule) {
+void Preprocessor::verifyModuleInclude(SourceLocation FilenameLoc,
+                                       StringRef Filename,
+                                       const FileEntry *IncFileEnt) {
   Module *RequestingModule = getModuleForLocation(FilenameLoc);
-  Module *RequestedModule = SuggestedModule->getModule();
-  if (!RequestedModule)
-    RequestedModule = HeaderInfo.findModuleForHeader(IncFileEnt).getModule();
+  if (RequestingModule)
+    HeaderInfo.getModuleMap().resolveUses(RequestingModule, /*Complain=*/false);
+  ModuleMap::KnownHeader RequestedModule =
+      HeaderInfo.getModuleMap().findModuleForHeader(IncFileEnt,
+                                                    RequestingModule);
 
-  if (RequestingModule == RequestedModule)
+  if (RequestingModule == RequestedModule.getModule())
     return; // No faults wihin a module, or between files both not in modules.
 
   if (RequestingModule != HeaderInfo.getModuleMap().SourceModule)
     return; // No errors for indirect modules.
             // This may be a bit of a problem for modules with no source files.
 
-  if (RequestedModule &&
-      violatesPrivateInclude(RequestingModule, IncFileEnt,
-                             SuggestedModule->getRole(), RequestedModule))
+  if (RequestedModule && violatesPrivateInclude(RequestingModule, IncFileEnt,
+                                                RequestedModule.getRole(),
+                                                RequestedModule.getModule()))
     Diag(FilenameLoc, diag::error_use_of_private_header_outside_module)
         << Filename;
 
   // FIXME: Add support for FixIts in module map files and offer adding the
   // required use declaration.
   if (RequestingModule && getLangOpts().ModulesDeclUse &&
-      violatesUseDeclarations(RequestingModule, RequestedModule))
+      violatesUseDeclarations(RequestingModule, RequestedModule.getModule()))
     Diag(FilenameLoc, diag::error_undeclared_use_of_module)
         << Filename;
 }
@@ -650,7 +650,7 @@ const FileEntry *Preprocessor::LookupFile(
       SearchPath, RelativePath, SuggestedModule, SkipCache);
   if (FE) {
     if (SuggestedModule)
-      verifyModuleInclude(FilenameLoc, Filename, FE, SuggestedModule);
+      verifyModuleInclude(FilenameLoc, Filename, FE);
     return FE;
   }
 

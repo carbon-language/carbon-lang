@@ -1461,10 +1461,9 @@ private:
   /// \brief Verify that it is legal for the source file that \p FilenameLoc
   /// points to to include the file \p Filename.
   ///
-  /// Tries to reuse \p IncFileEnt and \p SuggestedModule.
+  /// Tries to reuse \p IncFileEnt.
   void verifyModuleInclude(SourceLocation FilenameLoc, StringRef Filename,
-                           const FileEntry *IncFileEnt,
-                           ModuleMap::KnownHeader *SuggestedModule);
+                           const FileEntry *IncFileEnt);
 
   // Macro handling.
   void HandleDefineDirective(Token &Tok, bool ImmediatelyAfterTopLevelIfndef);

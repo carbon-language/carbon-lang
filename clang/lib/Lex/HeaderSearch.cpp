@@ -247,16 +247,18 @@ const FileEntry *DirectoryLookup::LookupFile(
     
     // If we have a module map that might map this header, load it and
     // check whether we'll have a suggestion for a module.
-    if (SuggestedModule &&
-        HS.hasModuleMap(TmpDir, getDir(), isSystemHeaderDirectory())) {
-      const FileEntry *File = HS.getFileMgr().getFile(TmpDir.str(), 
+    HS.hasModuleMap(TmpDir, getDir(), isSystemHeaderDirectory());
+    if (SuggestedModule) {
+      const FileEntry *File = HS.getFileMgr().getFile(TmpDir.str(),
                                                       /*openFile=*/false);
       if (!File)
         return File;
       
-      // If there is a module that corresponds to this header, 
-      // suggest it.
+      // If there is a module that corresponds to this header, suggest it.
       *SuggestedModule = HS.findModuleForHeader(File);
+      if (!SuggestedModule->getModule() &&
+          HS.hasModuleMap(TmpDir, getDir(), isSystemHeaderDirectory()))
+        *SuggestedModule = HS.findModuleForHeader(File);
       return File;
     }
     
@@ -503,6 +505,24 @@ const FileEntry *HeaderSearch::LookupFile(
     ModuleMap::KnownHeader *SuggestedModule,
     bool SkipCache)
 {
+  if (!HSOpts->ModuleMapFiles.empty()) {
+    // Preload all explicitly specified module map files. This enables modules
+    // map files lying in a directory structure separate from the header files
+    // that they describe. These cannot be loaded lazily upon encountering a
+    // header file, as there is no other knwon mapping from a header file to its
+    // module map file.
+    for (llvm::SetVector<std::string>::iterator
+             I = HSOpts->ModuleMapFiles.begin(),
+             E = HSOpts->ModuleMapFiles.end();
+         I != E; ++I) {
+      const FileEntry *File = FileMgr.getFile(*I);
+      if (!File)
+        continue;
+      loadModuleMapFile(File, /*IsSystem=*/false);
+    }
+    HSOpts->ModuleMapFiles.clear();
+  }
+
   if (SuggestedModule)
     *SuggestedModule = ModuleMap::KnownHeader();
     
@@ -946,43 +966,20 @@ bool HeaderSearch::hasModuleMap(StringRef FileName,
     const DirectoryEntry *Dir = FileMgr.getDirectory(DirName);
     if (!Dir)
       return false;
-    
-    // Load user-specified module map files in 'Dir'.
-    bool ModuleMapFound = false;
-    for (llvm::SetVector<std::string>::iterator
-             I = HSOpts->ModuleMapFiles.begin(),
-             E = HSOpts->ModuleMapFiles.end();
-         I != E; ++I) {
-      StringRef ModuleMapFileDir = llvm::sys::path::parent_path(*I);
-      if (!llvm::sys::fs::equivalent(ModuleMapFileDir, DirName))
-        continue;
-
-      const FileEntry *File = FileMgr.getFile(*I);
-      if (!File)
-        continue;
-
-      loadModuleMapFile(File, /*IsSystem=*/false);
-      ModuleMapFound = true;
-    }
 
     // Try to load the "module.map" file in this directory.
     switch (loadModuleMapFile(Dir, IsSystem)) {
     case LMM_NewlyLoaded:
     case LMM_AlreadyLoaded:
-      ModuleMapFound = true;
-      break;
-
-    case LMM_NoDirectory:
-    case LMM_InvalidModuleMap:
-      break;
-    }
-
-    if (ModuleMapFound) {
       // Success. All of the directories we stepped through inherit this module
       // map file.
       for (unsigned I = 0, N = FixUpDirectories.size(); I != N; ++I)
         DirectoryHasModuleMap[FixUpDirectories[I]] = true;
       return true;
+
+    case LMM_NoDirectory:
+    case LMM_InvalidModuleMap:
+      break;
     }
 
     // If we hit the top of our search, we're done.

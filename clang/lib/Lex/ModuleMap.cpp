@@ -168,14 +168,41 @@ static bool isBuiltinHeader(StringRef FileName) {
            .Default(false);
 }
 
-ModuleMap::KnownHeader ModuleMap::findModuleForHeader(const FileEntry *File) {
+ModuleMap::KnownHeader
+ModuleMap::findModuleForHeader(const FileEntry *File,
+                               Module *RequestingModule) {
   HeadersMap::iterator Known = Headers.find(File);
   if (Known != Headers.end()) {
-    // If a header is not available, don't report that it maps to anything.
-    if (!Known->second.isAvailable())
-      return KnownHeader();
+    ModuleMap::KnownHeader Result = KnownHeader();
 
-    return Known->second;
+    // Iterate over all modules that 'File' is part of to find the best fit.
+    for (SmallVectorImpl<KnownHeader>::iterator I = Known->second.begin(),
+                                                E = Known->second.end();
+         I != E; ++I) {
+      // Cannot use a module if the header is excluded or unavailable in it.
+      if (I->getRole() == ModuleMap::ExcludedHeader ||
+          !I->getModule()->isAvailable())
+        continue;
+
+      // If 'File' is part of 'RequestingModule', 'RequestingModule' is the
+      // module we are looking for.
+      if (I->getModule() == RequestingModule)
+        return *I;
+
+      // If uses need to be specified explicitly, we are only allowed to return
+      // modules that are explicitly used by the requesting module.
+      if (RequestingModule && LangOpts.ModulesDeclUse &&
+          std::find(RequestingModule->DirectUses.begin(),
+                    RequestingModule->DirectUses.end(),
+                    I->getModule()) == RequestingModule->DirectUses.end())
+        continue;
+      Result = *I;
+      // If 'File' is a public header of this module, this is as good as we
+      // are going to get.
+      if (I->getRole() == ModuleMap::NormalHeader)
+        break;
+    }
+    return Result;
   }
 
   // If we've found a builtin header within Clang's builtin include directory,
@@ -186,14 +213,8 @@ ModuleMap::KnownHeader ModuleMap::findModuleForHeader(const FileEntry *File) {
     HeaderInfo.loadTopLevelSystemModules();
 
     // Check again.
-    Known = Headers.find(File);
-    if (Known != Headers.end()) {
-      // If a header is not available, don't report that it maps to anything.
-      if (!Known->second.isAvailable())
-        return KnownHeader();
-
-      return Known->second;
-    }
+    if (Headers.find(File) != Headers.end())
+      return findModuleForHeader(File, RequestingModule);
   }
   
   const DirectoryEntry *Dir = File->getDir();
@@ -262,14 +283,14 @@ ModuleMap::KnownHeader ModuleMap::findModuleForHeader(const FileEntry *File) {
           UmbrellaDirs[SkippedDirs[I]] = Result;
       }
       
-      Headers[File] = KnownHeader(Result, NormalHeader);
+      Headers[File].push_back(KnownHeader(Result, NormalHeader));
 
       // If a header corresponds to an unavailable module, don't report
       // that it maps to anything.
       if (!Result->isAvailable())
         return KnownHeader();
 
-      return Headers[File];
+      return Headers[File].back();
     }
     
     SkippedDirs.push_back(Dir);
@@ -288,8 +309,16 @@ ModuleMap::KnownHeader ModuleMap::findModuleForHeader(const FileEntry *File) {
 
 bool ModuleMap::isHeaderInUnavailableModule(const FileEntry *Header) const {
   HeadersMap::const_iterator Known = Headers.find(Header);
-  if (Known != Headers.end())
-    return !Known->second.isAvailable();
+  if (Known != Headers.end()) {
+    for (SmallVectorImpl<KnownHeader>::const_iterator
+             I = Known->second.begin(),
+             E = Known->second.end();
+         I != E; ++I) {
+      if (I->isAvailable())
+        return false;
+    }
+    return true;
+  }
   
   const DirectoryEntry *Dir = Header->getDir();
   SmallVector<const DirectoryEntry *, 2> SkippedDirs;
@@ -534,7 +563,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   
   // umbrella header "umbrella-header-name"
   Result->Umbrella = UmbrellaHeader;
-  Headers[UmbrellaHeader] = KnownHeader(Result, NormalHeader);
+  Headers[UmbrellaHeader].push_back(KnownHeader(Result, NormalHeader));
   UmbrellaDirs[UmbrellaHeader->getDir()] = Result;
   
   // export *
@@ -598,7 +627,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
 }
 
 void ModuleMap::setUmbrellaHeader(Module *Mod, const FileEntry *UmbrellaHeader){
-  Headers[UmbrellaHeader] = KnownHeader(Mod, NormalHeader);
+  Headers[UmbrellaHeader].push_back(KnownHeader(Mod, NormalHeader));
   Mod->Umbrella = UmbrellaHeader;
   UmbrellaDirs[UmbrellaHeader->getDir()] = Mod;
 }
@@ -620,7 +649,7 @@ void ModuleMap::addHeader(Module *Mod, const FileEntry *Header,
     bool isCompilingModuleHeader = Mod->getTopLevelModule() == CompilingModule;
     HeaderInfo.MarkFileModuleHeader(Header, Role, isCompilingModuleHeader);
   }
-  Headers[Header] = KnownHeader(Mod, Role);
+  Headers[Header].push_back(KnownHeader(Mod, Role));
 }
 
 const FileEntry *
@@ -642,8 +671,15 @@ void ModuleMap::dump() {
   llvm::errs() << "Headers:";
   for (HeadersMap::iterator H = Headers.begin(), HEnd = Headers.end();
        H != HEnd; ++H) {
-    llvm::errs() << "  \"" << H->first->getName() << "\" -> " 
-                 << H->second.getModule()->getFullModuleName() << "\n";
+    llvm::errs() << "  \"" << H->first->getName() << "\" -> ";
+    for (SmallVectorImpl<KnownHeader>::const_iterator I = H->second.begin(),
+                                                      E = H->second.end();
+         I != E; ++I) {
+      if (I != H->second.begin())
+        llvm::errs() << ",";
+      llvm::errs() << I->getModule()->getFullModuleName();
+    }
+    llvm::errs() << "\n";
   }
 }
 
@@ -1494,11 +1530,7 @@ void ModuleMapParser::parseHeaderDecl(MMToken::TokenKind LeadingToken,
   // FIXME: We shouldn't be eagerly stat'ing every file named in a module map.
   // Come up with a lazy way to do this.
   if (File) {
-    if (ModuleMap::KnownHeader OwningModule = Map.Headers[File]) {
-      Diags.Report(FileNameLoc, diag::err_mmap_header_conflict)
-        << FileName << OwningModule.getModule()->getFullModuleName();
-      HadError = true;
-    } else if (LeadingToken == MMToken::UmbrellaKeyword) {
+    if (LeadingToken == MMToken::UmbrellaKeyword) {
       const DirectoryEntry *UmbrellaDir = File->getDir();
       if (Module *UmbrellaModule = Map.UmbrellaDirs[UmbrellaDir]) {
         Diags.Report(LeadingLoc, diag::err_mmap_umbrella_clash)

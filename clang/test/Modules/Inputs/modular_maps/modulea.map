@@ -1,4 +1,5 @@
 module A {
+  header "common.h"
   header "a.h"
 }
 
