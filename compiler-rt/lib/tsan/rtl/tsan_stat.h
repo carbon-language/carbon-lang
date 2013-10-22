@@ -379,6 +379,7 @@ enum StatType {
   StatInt_statvfs64,
   StatInt_fstatvfs,
   StatInt_fstatvfs64,
+  StatInt_initgroups,
 
   // Dynamic annotations.
   StatAnnotation,

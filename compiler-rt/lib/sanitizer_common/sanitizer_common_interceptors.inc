@@ -2408,6 +2408,19 @@ INTERCEPTOR(int, fstatvfs64, int fd, void *buf) {
 #define INIT_STATVFS64
 #endif
 
+#if SANITIZER_INTERCEPT_INITGROUPS
+INTERCEPTOR(int, initgroups, char *user, u32 group) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, initgroups, user, group);
+  if (user) COMMON_INTERCEPTOR_READ_RANGE(ctx, user, REAL(strlen)(user) + 1);
+  int res = REAL(initgroups)(user, group);
+  return res;
+}
+#define INIT_INITGROUPS INTERCEPT_FUNCTION(initgroups);
+#else
+#define INIT_INITGROUPS
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -2498,4 +2511,5 @@ INTERCEPTOR(int, fstatvfs64, int fd, void *buf) {
   INIT_STATFS64;                           \
   INIT_STATVFS;                            \
   INIT_STATVFS64;                          \
+  INIT_INITGROUPS;                         \
 /**/

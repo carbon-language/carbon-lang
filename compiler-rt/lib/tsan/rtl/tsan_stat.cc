@@ -384,6 +384,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_statvfs64]                = "  statvfs64                       ";
   name[StatInt_fstatvfs]                 = "  fstatvfs                        ";
   name[StatInt_fstatvfs64]               = "  fstatvfs64                      ";
+  name[StatInt_initgroups]               = "  initgroups                      ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";
