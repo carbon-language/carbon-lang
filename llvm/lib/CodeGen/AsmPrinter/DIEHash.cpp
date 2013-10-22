@@ -200,6 +200,9 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
   if (const DIEEntry *EntryAttr = dyn_cast<DIEEntry>(Value)) {
     DIE *Entry = EntryAttr->getEntry();
 
+    assert(Tag != dwarf::DW_TAG_friend && "No current LLVM clients emit friend "
+                                          "tags. Add support here when there's "
+                                          "a use case");
     // Step 5
     // If the tag in Step 3 is one of [the below tags]
     if ((Tag == dwarf::DW_TAG_pointer_type ||
