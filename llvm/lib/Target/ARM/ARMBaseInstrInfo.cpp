@@ -652,16 +652,16 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                    unsigned DestReg, unsigned SrcReg,
                                    bool KillSrc) const {
   bool GPRDest = ARM::GPRRegClass.contains(DestReg);
-  bool GPRSrc  = ARM::GPRRegClass.contains(SrcReg);
+  bool GPRSrc = ARM::GPRRegClass.contains(SrcReg);
 
   if (GPRDest && GPRSrc) {
     AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::MOVr), DestReg)
-                                  .addReg(SrcReg, getKillRegState(KillSrc))));
+                                    .addReg(SrcReg, getKillRegState(KillSrc))));
     return;
   }
 
   bool SPRDest = ARM::SPRRegClass.contains(DestReg);
-  bool SPRSrc  = ARM::SPRRegClass.contains(SrcReg);
+  bool SPRSrc = ARM::SPRRegClass.contains(SrcReg);
 
   unsigned Opc = 0;
   if (SPRDest && SPRSrc)
@@ -690,26 +690,47 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   int Spacing = 1;
 
   // Use VORRq when possible.
-  if (ARM::QQPRRegClass.contains(DestReg, SrcReg))
-    Opc = ARM::VORRq, BeginIdx = ARM::qsub_0, SubRegs = 2;
-  else if (ARM::QQQQPRRegClass.contains(DestReg, SrcReg))
-    Opc = ARM::VORRq, BeginIdx = ARM::qsub_0, SubRegs = 4;
+  if (ARM::QQPRRegClass.contains(DestReg, SrcReg)) {
+    Opc = ARM::VORRq;
+    BeginIdx = ARM::qsub_0;
+    SubRegs = 2;
+  } else if (ARM::QQQQPRRegClass.contains(DestReg, SrcReg)) {
+    Opc = ARM::VORRq;
+    BeginIdx = ARM::qsub_0;
+    SubRegs = 4;
   // Fall back to VMOVD.
-  else if (ARM::DPairRegClass.contains(DestReg, SrcReg))
-    Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 2;
-  else if (ARM::DTripleRegClass.contains(DestReg, SrcReg))
-    Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 3;
-  else if (ARM::DQuadRegClass.contains(DestReg, SrcReg))
-    Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 4;
-  else if (ARM::GPRPairRegClass.contains(DestReg, SrcReg))
-    Opc = ARM::MOVr, BeginIdx = ARM::gsub_0, SubRegs = 2;
-
-  else if (ARM::DPairSpcRegClass.contains(DestReg, SrcReg))
-    Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 2, Spacing = 2;
-  else if (ARM::DTripleSpcRegClass.contains(DestReg, SrcReg))
-    Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 3, Spacing = 2;
-  else if (ARM::DQuadSpcRegClass.contains(DestReg, SrcReg))
-    Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 4, Spacing = 2;
+  } else if (ARM::DPairRegClass.contains(DestReg, SrcReg)) {
+    Opc = ARM::VMOVD;
+    BeginIdx = ARM::dsub_0;
+    SubRegs = 2;
+  } else if (ARM::DTripleRegClass.contains(DestReg, SrcReg)) {
+    Opc = ARM::VMOVD;
+    BeginIdx = ARM::dsub_0;
+    SubRegs = 3;
+  } else if (ARM::DQuadRegClass.contains(DestReg, SrcReg)) {
+    Opc = ARM::VMOVD;
+    BeginIdx = ARM::dsub_0;
+    SubRegs = 4;
+  } else if (ARM::GPRPairRegClass.contains(DestReg, SrcReg)) {
+    Opc = ARM::MOVr;
+    BeginIdx = ARM::gsub_0;
+    SubRegs = 2;
+  } else if (ARM::DPairSpcRegClass.contains(DestReg, SrcReg)) {
+    Opc = ARM::VMOVD;
+    BeginIdx = ARM::dsub_0;
+    SubRegs = 2;
+    Spacing = 2;
+  } else if (ARM::DTripleSpcRegClass.contains(DestReg, SrcReg)) {
+    Opc = ARM::VMOVD;
+    BeginIdx = ARM::dsub_0;
+    SubRegs = 3;
+    Spacing = 2;
+  } else if (ARM::DQuadSpcRegClass.contains(DestReg, SrcReg)) {
+    Opc = ARM::VMOVD;
+    BeginIdx = ARM::dsub_0;
+    SubRegs = 4;
+    Spacing = 2;
+  }
 
   assert(Opc && "Impossible reg-to-reg copy");
 
@@ -718,22 +739,21 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
   // Copy register tuples backward when the first Dest reg overlaps with SrcReg.
   if (TRI->regsOverlap(SrcReg, TRI->getSubReg(DestReg, BeginIdx))) {
-    BeginIdx = BeginIdx + ((SubRegs-1)*Spacing);
+    BeginIdx = BeginIdx + ((SubRegs - 1) * Spacing);
     Spacing = -Spacing;
   }
 #ifndef NDEBUG
   SmallSet<unsigned, 4> DstRegs;
 #endif
   for (unsigned i = 0; i != SubRegs; ++i) {
-    unsigned Dst = TRI->getSubReg(DestReg, BeginIdx + i*Spacing);
-    unsigned Src = TRI->getSubReg(SrcReg,  BeginIdx + i*Spacing);
+    unsigned Dst = TRI->getSubReg(DestReg, BeginIdx + i * Spacing);
+    unsigned Src = TRI->getSubReg(SrcReg, BeginIdx + i * Spacing);
     assert(Dst && Src && "Bad sub-register");
 #ifndef NDEBUG
     assert(!DstRegs.count(Src) && "destructive vector copy");
     DstRegs.insert(Dst);
 #endif
-    Mov = BuildMI(MBB, I, I->getDebugLoc(), get(Opc), Dst)
-      .addReg(Src);
+    Mov = BuildMI(MBB, I, I->getDebugLoc(), get(Opc), Dst).addReg(Src);
     // VORR takes two source operands.
     if (Opc == ARM::VORRq)
       Mov.addReg(Src);
