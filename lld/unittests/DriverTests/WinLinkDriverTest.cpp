@@ -60,6 +60,11 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_TRUE(_context.getBaseRelocationEnabled());
   EXPECT_TRUE(_context.isTerminalServerAware());
   EXPECT_TRUE(_context.getDynamicBaseEnabled());
+  EXPECT_TRUE(_context.getCreateManifest());
+  EXPECT_FALSE(_context.getEmbedManifest());
+  EXPECT_EQ(1, _context.getManifestId());
+  EXPECT_EQ("'asInvoker'", _context.getManifestLevel());
+  EXPECT_EQ(false, _context.getManifestUiAccess());
   EXPECT_TRUE(_context.deadStrip());
   EXPECT_FALSE(_context.logInputFiles());
 }
@@ -364,6 +369,41 @@ TEST_F(WinLinkParserTest, FailIfMismatch_Match) {
 TEST_F(WinLinkParserTest, FailIfMismatch_Mismatch) {
   EXPECT_FALSE(parse("link.exe", "/failifmismatch:foo=bar",
                      "/failifmismatch:foo=baz", "a.out", nullptr));
+}
+
+//
+// Tests for /manifest.
+//
+TEST_F(WinLinkParserTest, Manifest_Default) {
+  EXPECT_TRUE(parse("link.exe", "/manifest", "a.out", nullptr));
+  EXPECT_TRUE(_context.getCreateManifest());
+  EXPECT_FALSE(_context.getEmbedManifest());
+  EXPECT_EQ(1, _context.getManifestId());
+  EXPECT_EQ("'asInvoker'", _context.getManifestLevel());
+  EXPECT_EQ(false, _context.getManifestUiAccess());
+}
+
+TEST_F(WinLinkParserTest, Manifest_No) {
+  EXPECT_TRUE(parse("link.exe", "/manifest:no", "a.out", nullptr));
+  EXPECT_FALSE(_context.getCreateManifest());
+}
+
+TEST_F(WinLinkParserTest, Manifest_Embed) {
+  EXPECT_TRUE(parse("link.exe", "/manifest:embed", "a.out", nullptr));
+  EXPECT_TRUE(_context.getCreateManifest());
+  EXPECT_TRUE(_context.getEmbedManifest());
+  EXPECT_EQ(1, _context.getManifestId());
+  EXPECT_EQ("'asInvoker'", _context.getManifestLevel());
+  EXPECT_EQ(false, _context.getManifestUiAccess());
+}
+
+TEST_F(WinLinkParserTest, Manifest_Embed_ID42) {
+  EXPECT_TRUE(parse("link.exe", "/manifest:embed,id=42", "a.out", nullptr));
+  EXPECT_TRUE(_context.getCreateManifest());
+  EXPECT_TRUE(_context.getEmbedManifest());
+  EXPECT_EQ(42, _context.getManifestId());
+  EXPECT_EQ("'asInvoker'", _context.getManifestLevel());
+  EXPECT_EQ(false, _context.getManifestUiAccess());
 }
 
 //

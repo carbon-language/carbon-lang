@@ -31,6 +31,10 @@ def machine : P<"machine", "Specify target platform">;
 def version : P<"version", "Specify a version number in the PE header">;
 def subsystem : P<"subsystem", "Specify subsystem">;
 
+def manifest : F<"manifest">;
+def manifest_colon : P<"manifest", "Create manifest file">;
+def manifestuac : P<"manifestuac", "User access control">;
+
 // We cannot use multiclass P because class name "incl" is different
 // from its command line option name. We do this because "include" is
 // a reserved keyword in tablegen.

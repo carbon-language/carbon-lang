@@ -38,6 +38,8 @@ public:
         _allowBind(true), _allowIsolation(true), _swapRunFromCD(false),
         _swapRunFromNet(false), _baseRelocationEnabled(true),
         _terminalServerAware(true), _dynamicBaseEnabled(true),
+        _createManifest(true), _embedManifest(false), _manifestId(1),
+        _manifestLevel("'asInvoker'"), _manifestUiAccess(false),
         _imageType(ImageType::IMAGE_EXE) {
     setDeadStripping(true);
   }
@@ -147,6 +149,21 @@ public:
   void setDynamicBaseEnabled(bool val) { _dynamicBaseEnabled = val; }
   bool getDynamicBaseEnabled() const { return _dynamicBaseEnabled; }
 
+  void setCreateManifest(bool val) { _createManifest = val; }
+  bool getCreateManifest() const { return _createManifest; }
+
+  void setEmbedManifest(bool val) { _embedManifest = val; }
+  bool getEmbedManifest() const { return _embedManifest; }
+
+  void setManifestId(int val) { _manifestId = val; }
+  int getManifestId() const { return _manifestId; }
+
+  void setManifestLevel(std::string val) { _manifestLevel = std::move(val); }
+  const std::string &getManifestLevel() const { return _manifestLevel; }
+
+  void setManifestUiAccess(bool val) { _manifestUiAccess = val; }
+  bool getManifestUiAccess() const { return _manifestUiAccess; }
+
   void setImageType(ImageType type) { _imageType = type; }
   ImageType getImageType() const { return _imageType; }
 
@@ -205,6 +222,11 @@ private:
   bool _baseRelocationEnabled;
   bool _terminalServerAware;
   bool _dynamicBaseEnabled;
+  bool _createManifest;
+  bool _embedManifest;
+  int _manifestId;
+  std::string _manifestLevel;
+  bool _manifestUiAccess;
   ImageType _imageType;
 
   // The set to store /nodefaultlib arguments.
