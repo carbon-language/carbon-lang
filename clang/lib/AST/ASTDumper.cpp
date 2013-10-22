@@ -552,6 +552,8 @@ void ASTDumper::dumpLookups(const DeclContext *DC) {
       if (RI + 1 == RE)
         lastChild();
       dumpDeclRef(*RI);
+      if ((*RI)->isHidden())
+        OS << " hidden";
     }
   }
 
@@ -740,6 +742,11 @@ void ASTDumper::dumpDecl(const Decl *D) {
     OS << " parent " << cast<Decl>(D->getDeclContext());
   dumpPreviousDecl(OS, D);
   dumpSourceRange(D->getSourceRange());
+  if (Module *M = D->getOwningModule())
+    OS << " in " << M->getFullModuleName();
+  if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
+    if (ND->isHidden())
+      OS << " hidden";
 
   bool HasAttrs = D->attr_begin() != D->attr_end();
   const FullComment *Comment =
