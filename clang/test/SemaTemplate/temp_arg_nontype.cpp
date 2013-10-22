@@ -75,6 +75,9 @@ struct Z {
 
   int int_member;
   float float_member;
+  union {
+    int union_member;
+  };
 };
 template<int (Z::*pmf)(int)> struct A6; // expected-note{{template parameter is declared here}}
 A6<&Z::foo> *a17_1;
@@ -88,6 +91,7 @@ A7<&Z::int_member> *a18_1;
 A7c<&Z::int_member> *a18_2;
 A7<&Z::float_member> *a18_3; // expected-error{{non-type template argument of type 'float Z::*' cannot be converted to a value of type 'int Z::*'}}
 A7c<(&Z::int_member)> *a18_4; // expected-warning{{address non-type template argument cannot be surrounded by parentheses}}
+A7c<&Z::union_member> *a18_5;
 
 template<unsigned char C> struct Overflow; // expected-note{{template parameter is declared here}}
 

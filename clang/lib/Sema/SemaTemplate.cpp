@@ -4609,8 +4609,11 @@ static bool CheckTemplateArgumentPointerToMember(Sema &S,
                   diag::err_template_arg_not_pointer_to_member_form)
       << Arg->getSourceRange();
 
-  if (isa<FieldDecl>(DRE->getDecl()) || isa<CXXMethodDecl>(DRE->getDecl())) {
+  if (isa<FieldDecl>(DRE->getDecl()) ||
+      isa<IndirectFieldDecl>(DRE->getDecl()) ||
+      isa<CXXMethodDecl>(DRE->getDecl())) {
     assert((isa<FieldDecl>(DRE->getDecl()) ||
+            isa<IndirectFieldDecl>(DRE->getDecl()) ||
             !cast<CXXMethodDecl>(DRE->getDecl())->isStatic()) &&
            "Only non-static member pointers can make it here");
 
