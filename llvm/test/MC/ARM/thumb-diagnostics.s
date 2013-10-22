@@ -57,6 +57,8 @@ error: invalid operand for instruction
         ldm r2!, {r5, r8}
         ldm r2, {r5, r7}
         ldm r2!, {r2, r3, r4}
+        ldm r2!, {r2, r3, r4, r10}
+        ldmdb r2!, {r2, r3, r4}
 @ CHECK-ERRORS: error: registers must be in range r0-r7
 @ CHECK-ERRORS:         ldm r2!, {r5, r8}
 @ CHECK-ERRORS:                  ^
@@ -66,6 +68,12 @@ error: invalid operand for instruction
 @ CHECK-ERRORS: error: writeback operator '!' not allowed when base register in register list
 @ CHECK-ERRORS:         ldm r2!, {r2, r3, r4}
 @ CHECK-ERRORS:               ^
+@ CHECK-ERRORS-V8: error: writeback operator '!' not allowed when base register in register list
+@ CHECK-ERRORS-V8:         ldm r2!, {r2, r3, r4, r10}
+@ CHECK-ERRORS-V8:               ^
+@ CHECK-ERRORS-V8: error: writeback operator '!' not allowed when base register in register list
+@ CHECK-ERRORS-V8:         ldmdb r2!, {r2, r3, r4}
+@ CHECK-ERRORS-V8:                 ^
 
 @ Invalid writeback and register lists for PUSH/POP
         pop {r1, r2, r10}
@@ -81,12 +89,20 @@ error: invalid operand for instruction
 @ Invalid writeback and register lists for STM
         stm r1, {r2, r6}
         stm r1!, {r2, r9}
+        stm r2!, {r2, r9}
+        stmdb r2!, {r0, r2}
 @ CHECK-ERRORS: error: instruction requires: thumb2
 @ CHECK-ERRORS:         stm r1, {r2, r6}
 @ CHECK-ERRORS:         ^
 @ CHECK-ERRORS: error: registers must be in range r0-r7
 @ CHECK-ERRORS:         stm r1!, {r2, r9}
 @ CHECK-ERRORS:                  ^
+@ CHECK-ERRORS-V8: error: writeback operator '!' not allowed when base register in register list
+@ CHECK-ERRORS-V8:         stm r2!, {r2, r9}
+@ CHECK-ERRORS-V8:                  ^
+@ CHECK-ERRORS-V8: error: writeback operator '!' not allowed when base register in register list
+@ CHECK-ERRORS-V8:         stmdb r2!, {r0, r2}
+@ CHECK-ERRORS-V8:                  ^
 
 @ Out of range immediates for LSL instruction.
         lsls r4, r5, #-1

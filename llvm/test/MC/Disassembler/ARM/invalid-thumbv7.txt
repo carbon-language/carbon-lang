@@ -389,3 +389,19 @@
 [0x80 0xf9 0x30 0x0b]
 # CHECK: invalid instruction encoding
 # CHECK-NEXT: [0x80 0xf9 0x30 0x0b]
+
+
+#------------------------------------------------------------------------------
+# Unpredictable STMs
+#------------------------------------------------------------------------------
+
+# 32-bit Thumb STM instructions cannot have a writeback register which appears
+# in the list.
+
+[0xa1,0xe8,0x07,0x04]
+# CHECK: warning: potentially undefined instruction encoding
+# CHECK-NEXT: [0xa1,0xe8,0x07,0x04]
+
+[0x21,0xe9,0x07,0x04]
+# CHECK: warning: potentially undefined instruction encoding
+# CHECK-NEXT: [0x21,0xe9,0x07,0x04]

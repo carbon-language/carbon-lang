@@ -5416,6 +5416,7 @@ validateInstruction(MCInst &Inst,
                    "bitfield width must be in range [1,32-lsb]");
     return false;
   }
+  // Notionally handles ARM::tLDMIA_UPD too.
   case ARM::tLDMIA: {
     // If we're parsing Thumb2, the .w variant is available and handles
     // most cases that are normally illegal for a Thumb1 LDM instruction.
@@ -5444,7 +5445,19 @@ validateInstruction(MCInst &Inst,
 
     break;
   }
-  case ARM::t2LDMIA_UPD: {
+  case ARM::LDMIA_UPD:
+  case ARM::LDMDB_UPD:
+  case ARM::LDMIB_UPD:
+  case ARM::LDMDA_UPD:
+    // ARM variants loading and updating the same register are only officially
+    // UNPREDICTABLE on v7 upwards. Goodness knows what they did before.
+    if (!hasV7Ops())
+      break;
+    // Fallthrough
+  case ARM::t2LDMIA_UPD:
+  case ARM::t2LDMDB_UPD:
+  case ARM::t2STMIA_UPD:
+  case ARM::t2STMDB_UPD: {
     if (listContainsReg(Inst, 3, Inst.getOperand(0).getReg()))
       return Error(Operands[4]->getStartLoc(),
                    "writeback operator '!' not allowed when base register "
@@ -5490,10 +5503,19 @@ validateInstruction(MCInst &Inst,
     break;
   }
   case ARM::tSTMIA_UPD: {
-    bool ListContainsBase;
-    if (checkLowRegisterList(Inst, 4, 0, 0, ListContainsBase) && !isThumbTwo())
+    bool ListContainsBase, InvalidLowList;
+    InvalidLowList = checkLowRegisterList(Inst, 4, Inst.getOperand(0).getReg(),
+                                          0, ListContainsBase);
+    if (InvalidLowList && !isThumbTwo())
       return Error(Operands[4]->getStartLoc(),
                    "registers must be in range r0-r7");
+
+    // This would be converted to a 32-bit stm, but that's not valid if the
+    // writeback register is in the list.
+    if (InvalidLowList && ListContainsBase)
+      return Error(Operands[4]->getStartLoc(),
+                   "writeback operator '!' not allowed when base register "
+                   "in register list");
     break;
   }
   case ARM::tADDrSP: {

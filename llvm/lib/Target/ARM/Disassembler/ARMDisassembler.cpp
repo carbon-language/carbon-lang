@@ -1203,20 +1203,22 @@ static DecodeStatus DecodeRegListOperand(MCInst &Inst, unsigned Val,
                                  uint64_t Address, const void *Decoder) {
   DecodeStatus S = MCDisassembler::Success;
 
-  bool writebackLoad = false;
-  unsigned writebackReg = 0;
+  bool NeedDisjointWriteback = false;
+  unsigned WritebackReg = 0;
   switch (Inst.getOpcode()) {
-    default:
-      break;
-    case ARM::LDMIA_UPD:
-    case ARM::LDMDB_UPD:
-    case ARM::LDMIB_UPD:
-    case ARM::LDMDA_UPD:
-    case ARM::t2LDMIA_UPD:
-    case ARM::t2LDMDB_UPD:
-      writebackLoad = true;
-      writebackReg = Inst.getOperand(0).getReg();
-      break;
+  default:
+    break;
+  case ARM::LDMIA_UPD:
+  case ARM::LDMDB_UPD:
+  case ARM::LDMIB_UPD:
+  case ARM::LDMDA_UPD:
+  case ARM::t2LDMIA_UPD:
+  case ARM::t2LDMDB_UPD:
+  case ARM::t2STMIA_UPD:
+  case ARM::t2STMDB_UPD:
+    NeedDisjointWriteback = true;
+    WritebackReg = Inst.getOperand(0).getReg();
+    break;
   }
 
   // Empty register lists are not allowed.
@@ -1226,7 +1228,7 @@ static DecodeStatus DecodeRegListOperand(MCInst &Inst, unsigned Val,
       if (!Check(S, DecodeGPRRegisterClass(Inst, i, Address, Decoder)))
         return MCDisassembler::Fail;
       // Writeback not allowed if Rn is in the target list.
-      if (writebackLoad && writebackReg == Inst.end()[-1].getReg())
+      if (NeedDisjointWriteback && WritebackReg == Inst.end()[-1].getReg())
         Check(S, MCDisassembler::SoftFail);
     }
   }

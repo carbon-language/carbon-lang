@@ -429,3 +429,10 @@
 
         bkpteq #7
 @ CHECK-ERRORS: error: instruction 'bkpt' is not predicable, but condition code specified
+
+        ldm r2!, {r2, r3}
+        ldmdb r2!, {r2, r3}
+        ldmda r2!, {r2, r3}
+@ CHECK-ERRORS: error: writeback operator '!' not allowed when base register in register list
+@ CHECK-ERRORS: error: writeback operator '!' not allowed when base register in register list
+@ CHECK-ERRORS: error: writeback operator '!' not allowed when base register in register list
