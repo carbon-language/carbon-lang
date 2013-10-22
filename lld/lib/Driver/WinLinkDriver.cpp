@@ -92,10 +92,10 @@ bool parseMemoryOption(StringRef arg, uint64_t &reserve, uint64_t &commit) {
   StringRef reserveStr, commitStr;
   llvm::tie(reserveStr, commitStr) = arg.split(',');
   if (reserveStr.getAsInteger(0, reserve))
-    return true;
+    return false;
   if (!commitStr.empty() && commitStr.getAsInteger(0, commit))
-    return true;
-  return false;
+    return false;
+  return true;
 }
 
 // Parse an argument for /version or /subsystem. The expected string is
@@ -106,10 +106,10 @@ bool parseVersion(StringRef arg, uint32_t &major, uint32_t &minor) {
   if (minorVersion.empty())
     minorVersion = "0";
   if (majorVersion.getAsInteger(0, major))
-    return true;
+    return false;
   if (minorVersion.getAsInteger(0, minor))
-    return true;
-  return false;
+    return false;
+  return true;
 }
 
 // Returns subsystem type for the given string.
@@ -341,7 +341,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       // Size should be set to SizeOfImage field in the COFF header, and if
       // it's smaller than the actual size, the linker should warn about that.
       // Currently we just ignore the value of size parameter.
-      if (parseMemoryOption(inputArg->getValue(), addr, size))
+      if (!parseMemoryOption(inputArg->getValue(), addr, size))
         return false;
       ctx.setBaseAddress(addr);
       break;
@@ -350,7 +350,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       // Parse /stack command line option
       uint64_t reserve;
       uint64_t commit = ctx.getStackCommit();
-      if (parseMemoryOption(inputArg->getValue(), reserve, commit))
+      if (!parseMemoryOption(inputArg->getValue(), reserve, commit))
         return false;
       ctx.setStackReserve(reserve);
       ctx.setStackCommit(commit);
@@ -361,7 +361,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       // Parse /heap command line option
       uint64_t reserve;
       uint64_t commit = ctx.getHeapCommit();
-      if (parseMemoryOption(inputArg->getValue(), reserve, commit))
+      if (!parseMemoryOption(inputArg->getValue(), reserve, commit))
         return false;
       ctx.setHeapReserve(reserve);
       ctx.setHeapCommit(commit);
@@ -392,7 +392,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
 
     case OPT_version: {
       uint32_t major, minor;
-      if (parseVersion(inputArg->getValue(), major, minor))
+      if (!parseVersion(inputArg->getValue(), major, minor))
         return false;
       ctx.setImageVersion(PECOFFLinkingContext::Version(major, minor));
       break;
@@ -406,7 +406,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
           StringRef(inputArg->getValue()).split(',');
       if (!osVersion.empty()) {
         uint32_t major, minor;
-        if (parseVersion(osVersion, major, minor))
+        if (!parseVersion(osVersion, major, minor))
           return false;
         ctx.setMinOSVersion(PECOFFLinkingContext::Version(major, minor));
       }
