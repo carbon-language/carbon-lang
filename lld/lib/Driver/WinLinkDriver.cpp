@@ -161,6 +161,38 @@ bool parseManifest(StringRef option, bool &enable, bool &embed, int &id) {
   return true;
 }
 
+// Parse /manifestuac:(level=<string>|uiAccess=<string>).
+//
+// The arguments will be embedded to the manifest XML file with no error check,
+// so the values given via the command line must be valid as XML attributes.
+// This may sound a bit odd, but that's how link.exe works, so we will follow.
+bool parseManifestUac(StringRef option, llvm::Optional<std::string> &level,
+                      llvm::Optional<bool> &uiAccess) {
+  for (;;) {
+    option = option.ltrim();
+    if (option.empty())
+      return true;
+    if (option.startswith("level=")) {
+      option = option.substr(strlen("level="));
+      StringRef value;
+      llvm::tie(value, option) = option.split(" ");
+      level = value.str();
+      continue;
+    }
+    if (option.startswith("uiAccess=true")) {
+      option = option.substr(strlen("uiAccess=true"));
+      uiAccess = true;
+      continue;
+    }
+    if (option.startswith("uiAccess=false")) {
+      option = option.substr(strlen("uiAccess=false"));
+      uiAccess = false;
+      continue;
+    }
+    return false;
+  }
+}
+
 // Handle /failifmismatch option.
 bool handleFailIfMismatchOption(StringRef option,
                                 std::map<StringRef, StringRef> &mustMatch,
@@ -434,6 +466,22 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       ctx.setCreateManifest(enable);
       ctx.setEmbedManifest(embed);
       ctx.setManifestId(id);
+      break;
+    }
+
+    case OPT_manifestuac: {
+      // Parse /manifestuac.
+      llvm::Optional<std::string> priviledgeLevel;
+      llvm::Optional<bool> uiAccess;
+      if (!parseManifestUac(inputArg->getValue(), priviledgeLevel, uiAccess)) {
+        diagnostics << "Unknown argument for /manifestuac: "
+                    << inputArg->getValue() << "\n";
+        return false;
+      }
+      if (priviledgeLevel.hasValue())
+        ctx.setManifestLevel(priviledgeLevel.getValue());
+      if (uiAccess.hasValue())
+        ctx.setManifestUiAccess(uiAccess.getValue());
       break;
     }
 
