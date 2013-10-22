@@ -77,18 +77,6 @@ R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   }
 }
 
-MachineInstr * R600InstrInfo::getMovImmInstr(MachineFunction *MF,
-                                             unsigned DstReg, int64_t Imm) const {
-  MachineInstr * MI = MF->CreateMachineInstr(get(AMDGPU::MOV), DebugLoc());
-  MachineInstrBuilder MIB(*MF, MI);
-  MIB.addReg(DstReg, RegState::Define);
-  MIB.addReg(AMDGPU::ALU_LITERAL_X);
-  MIB.addImm(Imm);
-  MIB.addReg(0); // PREDICATE_BIT
-
-  return MI;
-}
-
 unsigned R600InstrInfo::getIEQOpcode() const {
   return AMDGPU::SETE_INT;
 }

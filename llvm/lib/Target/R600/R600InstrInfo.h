@@ -136,9 +136,6 @@ namespace llvm {
   /// instruction slots within an instruction group.
   bool isVector(const MachineInstr &MI) const;
 
-  virtual MachineInstr * getMovImmInstr(MachineFunction *MF, unsigned DstReg,
-                                        int64_t Imm) const;
-
   virtual unsigned getIEQOpcode() const;
   virtual bool isMov(unsigned Opcode) const;
 

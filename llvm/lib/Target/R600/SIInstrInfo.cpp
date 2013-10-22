@@ -197,17 +197,6 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
   return MI;
 }
 
-MachineInstr * SIInstrInfo::getMovImmInstr(MachineFunction *MF, unsigned DstReg,
-                                           int64_t Imm) const {
-  MachineInstr * MI = MF->CreateMachineInstr(get(AMDGPU::V_MOV_B32_e32), DebugLoc());
-  MachineInstrBuilder MIB(*MF, MI);
-  MIB.addReg(DstReg, RegState::Define);
-  MIB.addImm(Imm);
-
-  return MI;
-
-}
-
 bool SIInstrInfo::isMov(unsigned Opcode) const {
   switch(Opcode) {
   default: return false;

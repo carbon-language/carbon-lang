@@ -139,8 +139,6 @@ public:
 // Pure virtual funtions to be implemented by sub-classes.
 //===---------------------------------------------------------------------===//
 
-  virtual MachineInstr* getMovImmInstr(MachineFunction *MF, unsigned DstReg,
-                                       int64_t Imm) const = 0;
   virtual unsigned getIEQOpcode() const = 0;
   virtual bool isMov(unsigned opcode) const = 0;
 

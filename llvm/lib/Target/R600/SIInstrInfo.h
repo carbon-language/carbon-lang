@@ -40,9 +40,6 @@ public:
   virtual MachineInstr *commuteInstruction(MachineInstr *MI,
                                            bool NewMI=false) const;
 
-  virtual MachineInstr * getMovImmInstr(MachineFunction *MF, unsigned DstReg,
-                                        int64_t Imm) const;
-
   virtual unsigned getIEQOpcode() const { assert(!"Implement"); return 0;}
   virtual bool isMov(unsigned Opcode) const;
 
