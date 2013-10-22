@@ -25,10 +25,15 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/SourceMgr.h"
+
+#include <map>
+
 using namespace llvm;
 
+typedef std::pair<std::string, std::string> SectionGroupPair;
+
 typedef StringMap<const MCSectionMachO*> MachOUniqueMapTy;
-typedef StringMap<const MCSectionELF*> ELFUniqueMapTy;
+typedef std::map<SectionGroupPair, const MCSectionELF *> ELFUniqueMapTy;
 typedef StringMap<const MCSectionCOFF*> COFFUniqueMapTy;
 
 
@@ -249,8 +254,9 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
   ELFUniqueMapTy &Map = *(ELFUniqueMapTy*)ELFUniquingMap;
 
   // Do the lookup, if we have a hit, return it.
-  StringMapEntry<const MCSectionELF*> &Entry = Map.GetOrCreateValue(Section);
-  if (Entry.getValue()) return Entry.getValue();
+  std::pair<ELFUniqueMapTy::iterator, bool> Entry = Map.insert(
+      std::make_pair(SectionGroupPair(Section, Group), (MCSectionELF *)0));
+  if (!Entry.second) return Entry.first->second;
 
   // Possibly refine the entry size first.
   if (!EntrySize) {
@@ -261,9 +267,9 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
   if (!Group.empty())
     GroupSym = GetOrCreateSymbol(Group);
 
-  MCSectionELF *Result = new (*this) MCSectionELF(Entry.getKey(), Type, Flags,
-                                                  Kind, EntrySize, GroupSym);
-  Entry.setValue(Result);
+  MCSectionELF *Result = new (*this) MCSectionELF(
+      Entry.first->first.first, Type, Flags, Kind, EntrySize, GroupSym);
+  Entry.first->second = Result;
   return Result;
 }
 
