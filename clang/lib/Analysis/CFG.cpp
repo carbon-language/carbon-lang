@@ -3762,6 +3762,8 @@ static void print_elem(raw_ostream &OS, StmtPrinterHelper* Helper,
     const CXXCtorInitializer *I = IE->getInitializer();
     if (I->isBaseInitializer())
       OS << I->getBaseClass()->getAsCXXRecordDecl()->getName();
+    else if (I->isDelegatingInitializer())
+      OS << I->getTypeSourceInfo()->getType()->getAsCXXRecordDecl()->getName();
     else OS << I->getAnyMember()->getName();
 
     OS << "(";
@@ -3771,6 +3773,8 @@ static void print_elem(raw_ostream &OS, StmtPrinterHelper* Helper,
 
     if (I->isBaseInitializer())
       OS << " (Base initializer)\n";
+    else if (I->isDelegatingInitializer())
+      OS << " (Delegating initializer)\n";
     else OS << " (Member initializer)\n";
 
   } else if (Optional<CFGAutomaticObjDtor> DE =
