@@ -206,3 +206,10 @@ void test_stream_si128(__m128i x, void *y) {
   // CHECK: store {{.*}} <2 x i64>* {{.*}}, align 16, !nontemporal
   _mm_stream_si128(y, x);
 }
+
+void test_extract_epi16(__m128i __a) {
+  // CHECK-LABEL: define void @test_extract_epi16
+  // CHECK: [[x:%.*]] = and i32 %{{.*}}, 7
+  // CHECK: extractelement <8 x i16> %{{.*}}, i32 [[x]]
+  _mm_extract_epi16(__a, 8);
+}
