@@ -1,0 +1,54 @@
+# RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
+
+# RUN: lld -flavor link /out:%t1.exe /subsystem:console /force /opt:noref \
+# RUN:   -- %t.obj
+# RUN: FileCheck -check-prefix=MANIFEST %s < %t1.exe.manifest
+
+MANIFEST: ?xml version="1.0" standalone="yes"?>
+MANIFEST: <assembly xmlns="urn:schemas-microsoft-com:asm.v1"
+MANIFEST:           manifestVersion="1.0">
+MANIFEST:   <trustinfo>
+MANIFEST:     <security>
+MANIFEST:       <requestedPrivileges>
+MANIFEST:          <requestedExecutionLevel level='asInvoker' uiAccess='false'/>
+MANIFEST:       </requestedPrivileges>
+MANIFEST:     </security>
+MANIFEST:   </trustinfo>
+MANIFEST: </assembly>
+
+# RUN: lld -flavor link /out:%t2.exe /subsystem:console /force /opt:noref \
+# RUN:   /manifestuac:"level='requireAdministrator' uiAccess='true'" -- %t.obj
+# RUN: FileCheck -check-prefix=UAC %s < %t2.exe.manifest
+
+UAC: ?xml version="1.0" standalone="yes"?>
+UAC: <assembly xmlns="urn:schemas-microsoft-com:asm.v1"
+UAC:           manifestVersion="1.0">
+UAC:   <trustinfo>
+UAC:     <security>
+UAC:       <requestedPrivileges>
+UAC:          <requestedExecutionLevel level='requireAdministrator' uiAccess='true'/>
+UAC:       </requestedPrivileges>
+UAC:     </security>
+UAC:   </trustinfo>
+UAC: </assembly>
+
+# RUN: lld -flavor link /out:%t3.exe /subsystem:console /force /opt:noref \
+# RUN:   /manifestdependency:"foo='bar'" -- %t.obj
+# RUN: FileCheck -check-prefix=DEPENDENCY %s < %t3.exe.manifest
+
+DEPENDENCY: ?xml version="1.0" standalone="yes"?>
+DEPENDENCY: <assembly xmlns="urn:schemas-microsoft-com:asm.v1"
+DEPENDENCY:           manifestVersion="1.0">
+DEPENDENCY:   <trustinfo>
+DEPENDENCY:     <security>
+DEPENDENCY:       <requestedPrivileges>
+DEPENDENCY:          <requestedExecutionLevel level='asInvoker' uiAccess='false'/>
+DEPENDENCY:       </requestedPrivileges>
+DEPENDENCY:     </security>
+DEPENDENCY:   </trustinfo>
+DEPENDENCY:   <dependency>
+DEPENDENCY:     <dependentAssembly>
+DEPENDENCY:       <assemblyIdentity foo='bar' />
+DEPENDENCY:     </dependentAssembly>
+DEPENDENCY:   </dependency>
+DEPENDENCY: </assembly>

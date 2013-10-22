@@ -27,6 +27,7 @@
 #include "llvm/Option/Option.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace lld {
 
@@ -202,6 +203,46 @@ StringRef replaceExtension(PECOFFLinkingContext &ctx,
   SmallString<128> val = path;
   llvm::sys::path::replace_extension(val, extension);
   return ctx.allocateString(val.str());
+}
+
+// Create a side-by-side manifest file. The manifest file will convey some
+// information to the linker, such as whether the binary needs to run as
+// Administrator or not. Instead of being placed in the PE/COFF header, it's in
+// XML format for some reason -- I guess it's probably because it's invented in
+// the early dot-com era.
+//
+// Instead of having the linker emit a manifest file as a separate file, you
+// could have the linker embed the contents of XML into the resource section of
+// the executable. The feature is not implemented in LLD yet, though.
+bool createManifestFile(PECOFFLinkingContext &ctx, raw_ostream &diagnostics) {
+  std::string errorInfo;
+  llvm::raw_fd_ostream out(ctx.getManifestOutputPath().data(), errorInfo);
+  if (!errorInfo.empty()) {
+    diagnostics << "Failed to open " << ctx.getManifestOutputPath() << ": "
+                << errorInfo << "\n";
+    return false;
+  }
+  out << "<?xml version=\"1.0\" standalone=\"yes\"?>\n"
+      << "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\"\n"
+      << "          manifestVersion=\"1.0\">\n"
+      << "  <trustinfo>\n"
+      << "    <security>\n"
+      << "      <requestedPrivileges>\n"
+      << "         <requestedExecutionLevel level=" << ctx.getManifestLevel()
+      << " uiAccess=" << ctx.getManifestUiAccess() << "/>\n"
+      << "      </requestedPrivileges>\n"
+      << "    </security>\n"
+      << "  </trustinfo>\n";
+  const std::string &dependency = ctx.getManifestDependency();
+  if (!dependency.empty()) {
+    out << "  <dependency>\n"
+        << "    <dependentAssembly>\n"
+        << "      <assemblyIdentity " << dependency << " />\n"
+        << "    </dependentAssembly>\n"
+        << "  </dependency>\n";
+  }
+  out << "</assembly>\n";
+  return true;
 }
 
 // Handle /failifmismatch option.
@@ -672,6 +713,11 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
     ctx.setInputGraph(std::unique_ptr<InputGraph>(new InputGraph()));
   for (auto &e : inputElements)
     ctx.inputGraph().addInputElement(std::move(e));
+
+  // Create the side-by-side manifest file if needed.
+  if (!isReadingDirectiveSection && ctx.getCreateManifest())
+    if (!createManifestFile(ctx, diagnostics))
+      return false;
 
   // Validate the combination of options used.
   return ctx.validate(diagnostics);
