@@ -4891,76 +4891,81 @@ SDVTList SelectionDAG::getVTList(EVT VT) {
 }
 
 SDVTList SelectionDAG::getVTList(EVT VT1, EVT VT2) {
-  for (std::vector<SDVTList>::reverse_iterator I = VTList.rbegin(),
-       E = VTList.rend(); I != E; ++I)
-    if (I->NumVTs == 2 && I->VTs[0] == VT1 && I->VTs[1] == VT2)
-      return *I;
+  FoldingSetNodeID ID;
+  ID.AddInteger(2U);
+  ID.AddInteger(VT1.getRawBits());
+  ID.AddInteger(VT2.getRawBits());
 
-  EVT *Array = Allocator.Allocate<EVT>(2);
-  Array[0] = VT1;
-  Array[1] = VT2;
-  SDVTList Result = makeVTList(Array, 2);
-  VTList.push_back(Result);
-  return Result;
+  void *IP = 0;
+  SDVTListNode *Result = VTListMap.FindNodeOrInsertPos(ID, IP);
+  if (Result == NULL) {
+    EVT *Array = Allocator.Allocate<EVT>(2);
+    Array[0] = VT1;
+    Array[1] = VT2;
+    Result = new (Allocator) SDVTListNode(ID.Intern(Allocator), Array, 2);
+    VTListMap.InsertNode(Result, IP);
+  }
+  return Result->getSDVTList();
 }
 
 SDVTList SelectionDAG::getVTList(EVT VT1, EVT VT2, EVT VT3) {
-  for (std::vector<SDVTList>::reverse_iterator I = VTList.rbegin(),
-       E = VTList.rend(); I != E; ++I)
-    if (I->NumVTs == 3 && I->VTs[0] == VT1 && I->VTs[1] == VT2 &&
-                          I->VTs[2] == VT3)
-      return *I;
+  FoldingSetNodeID ID;
+  ID.AddInteger(3U);
+  ID.AddInteger(VT1.getRawBits());
+  ID.AddInteger(VT2.getRawBits());
+  ID.AddInteger(VT3.getRawBits());
 
-  EVT *Array = Allocator.Allocate<EVT>(3);
-  Array[0] = VT1;
-  Array[1] = VT2;
-  Array[2] = VT3;
-  SDVTList Result = makeVTList(Array, 3);
-  VTList.push_back(Result);
-  return Result;
+  void *IP = 0;
+  SDVTListNode *Result = VTListMap.FindNodeOrInsertPos(ID, IP);
+  if (Result == NULL) {
+    EVT *Array = Allocator.Allocate<EVT>(3);
+    Array[0] = VT1;
+    Array[1] = VT2;
+    Array[2] = VT3;
+    Result = new (Allocator) SDVTListNode(ID.Intern(Allocator), Array, 3);
+    VTListMap.InsertNode(Result, IP);
+  }
+  return Result->getSDVTList();
 }
 
 SDVTList SelectionDAG::getVTList(EVT VT1, EVT VT2, EVT VT3, EVT VT4) {
-  for (std::vector<SDVTList>::reverse_iterator I = VTList.rbegin(),
-       E = VTList.rend(); I != E; ++I)
-    if (I->NumVTs == 4 && I->VTs[0] == VT1 && I->VTs[1] == VT2 &&
-                          I->VTs[2] == VT3 && I->VTs[3] == VT4)
-      return *I;
+  FoldingSetNodeID ID;
+  ID.AddInteger(4U);
+  ID.AddInteger(VT1.getRawBits());
+  ID.AddInteger(VT2.getRawBits());
+  ID.AddInteger(VT3.getRawBits());
+  ID.AddInteger(VT4.getRawBits());
 
-  EVT *Array = Allocator.Allocate<EVT>(4);
-  Array[0] = VT1;
-  Array[1] = VT2;
-  Array[2] = VT3;
-  Array[3] = VT4;
-  SDVTList Result = makeVTList(Array, 4);
-  VTList.push_back(Result);
-  return Result;
+  void *IP = 0;
+  SDVTListNode *Result = VTListMap.FindNodeOrInsertPos(ID, IP);
+  if (Result == NULL) {
+    EVT *Array = Allocator.Allocate<EVT>(4);
+    Array[0] = VT1;
+    Array[1] = VT2;
+    Array[2] = VT3;
+    Array[3] = VT4;
+    Result = new (Allocator) SDVTListNode(ID.Intern(Allocator), Array, 4);
+    VTListMap.InsertNode(Result, IP);
+  }
+  return Result->getSDVTList();
 }
 
 SDVTList SelectionDAG::getVTList(const EVT *VTs, unsigned NumVTs) {
-  switch (NumVTs) {
-    case 0: llvm_unreachable("Cannot have nodes without results!");
-    case 1: return getVTList(VTs[0]);
-    case 2: return getVTList(VTs[0], VTs[1]);
-    case 3: return getVTList(VTs[0], VTs[1], VTs[2]);
-    case 4: return getVTList(VTs[0], VTs[1], VTs[2], VTs[3]);
-    default: break;
+  FoldingSetNodeID ID;
+  ID.AddInteger(NumVTs);
+  for (unsigned index = 0; index < NumVTs; index++) {
+    ID.AddInteger(VTs[index].getRawBits());
   }
 
-  for (std::vector<SDVTList>::reverse_iterator I = VTList.rbegin(),
-       E = VTList.rend(); I != E; ++I) {
-    if (I->NumVTs != NumVTs || VTs[0] != I->VTs[0] || VTs[1] != I->VTs[1])
-      continue;
-
-    if (std::equal(&VTs[2], &VTs[NumVTs], &I->VTs[2]))
-      return *I;
+  void *IP = 0;
+  SDVTListNode *Result = VTListMap.FindNodeOrInsertPos(ID, IP);
+  if (Result == NULL) {
+    EVT *Array = Allocator.Allocate<EVT>(NumVTs);
+    std::copy(VTs, VTs + NumVTs, Array);
+    Result = new (Allocator) SDVTListNode(ID.Intern(Allocator), Array, NumVTs);
+    VTListMap.InsertNode(Result, IP);
   }
-
-  EVT *Array = Allocator.Allocate<EVT>(NumVTs);
-  std::copy(VTs, VTs+NumVTs, Array);
-  SDVTList Result = makeVTList(Array, NumVTs);
-  VTList.push_back(Result);
-  return Result;
+  return Result->getSDVTList();
 }
 
 
