@@ -41,15 +41,10 @@ BitVector R600RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(AMDGPU::PRED_SEL_OFF);
   Reserved.set(AMDGPU::PRED_SEL_ZERO);
   Reserved.set(AMDGPU::PRED_SEL_ONE);
+  Reserved.set(AMDGPU::INDIRECT_BASE_ADDR);
 
   for (TargetRegisterClass::iterator I = AMDGPU::R600_AddrRegClass.begin(),
                         E = AMDGPU::R600_AddrRegClass.end(); I != E; ++I) {
-    Reserved.set(*I);
-  }
-
-  for (TargetRegisterClass::iterator I = AMDGPU::TRegMemRegClass.begin(),
-                                     E = AMDGPU::TRegMemRegClass.end();
-                                     I !=  E; ++I) {
     Reserved.set(*I);
   }
 

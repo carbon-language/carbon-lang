@@ -63,3 +63,42 @@ entry:
   store i32 %0, i32 addrspace(1)* %out
   ret void
 }
+
+; Test direct access of a private array inside a loop.  The private array
+; loads and stores should be lowered to copies, so there shouldn't be any
+; MOVA instructions.
+
+; CHECK: @direct_loop
+; CHECK-NOT: MOVA_INT
+
+define void @direct_loop(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
+entry:
+  %prv_array_const = alloca [2 x i32]
+  %prv_array = alloca [2 x i32]
+  %a = load i32 addrspace(1)* %in
+  %b_src_ptr = getelementptr i32 addrspace(1)* %in, i32 1
+  %b = load i32 addrspace(1)* %b_src_ptr
+  %a_dst_ptr = getelementptr [2 x i32]* %prv_array_const, i32 0, i32 0
+  store i32 %a, i32* %a_dst_ptr
+  %b_dst_ptr = getelementptr [2 x i32]* %prv_array_const, i32 0, i32 1
+  store i32 %b, i32* %b_dst_ptr
+  br label %for.body
+
+for.body:
+  %inc = phi i32 [0, %entry], [%count, %for.body]
+  %x_ptr = getelementptr [2 x i32]* %prv_array_const, i32 0, i32 0
+  %x = load i32* %x_ptr
+  %y_ptr = getelementptr [2 x i32]* %prv_array, i32 0, i32 0
+  %y = load i32* %y_ptr
+  %xy = add i32 %x, %y
+  store i32 %xy, i32* %y_ptr
+  %count = add i32 %inc, 1
+  %done = icmp eq i32 %count, 4095
+  br i1 %done, label %for.end, label %for.body
+
+for.end:
+  %value_ptr = getelementptr [2 x i32]* %prv_array, i32 0, i32 0
+  %value = load i32* %value_ptr
+  store i32 %value, i32 addrspace(1)* %out
+  ret void
+}

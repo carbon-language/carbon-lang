@@ -17,7 +17,6 @@ add_llvm_target(R600CodeGen
   AMDILISelLowering.cpp
   AMDGPUAsmPrinter.cpp
   AMDGPUFrameLowering.cpp
-  AMDGPUIndirectAddressing.cpp
   AMDGPUISelDAGToDAG.cpp
   AMDGPUMCInstLower.cpp
   AMDGPUMachineFunction.cpp

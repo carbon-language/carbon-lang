@@ -41,6 +41,9 @@ public:
                                            bool NewMI=false) const;
 
   virtual unsigned getIEQOpcode() const { assert(!"Implement"); return 0;}
+  MachineInstr *buildMovInstr(MachineBasicBlock *MBB,
+                              MachineBasicBlock::iterator I,
+                              unsigned DstReg, unsigned SrcReg) const;
   virtual bool isMov(unsigned Opcode) const;
 
   virtual bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const;
@@ -62,10 +65,7 @@ public:
   virtual unsigned calculateIndirectAddress(unsigned RegIndex,
                                             unsigned Channel) const;
 
-  virtual const TargetRegisterClass *getIndirectAddrStoreRegClass(
-                                                      unsigned SourceReg) const;
-
-  virtual const TargetRegisterClass *getIndirectAddrLoadRegClass() const;
+  virtual const TargetRegisterClass *getIndirectAddrRegClass() const;
 
   virtual MachineInstrBuilder buildIndirectWrite(MachineBasicBlock *MBB,
                                                  MachineBasicBlock::iterator I,
@@ -78,8 +78,6 @@ public:
                                                 unsigned ValueReg,
                                                 unsigned Address,
                                                 unsigned OffsetReg) const;
-
-  virtual const TargetRegisterClass *getSuperIndirectRegClass() const;
   };
 
 namespace AMDGPU {

@@ -39,8 +39,6 @@ foreach Index = 0-127 in {
     // Indirect addressing offset registers
     def Addr#Index#_#Chan : R600RegWithChan <"T("#Index#" + AR.x)."#Chan,
                                               Index, Chan>;
-    def TRegMem#Index#_#Chan : R600RegWithChan <"T"#Index#"."#Chan, Index,
-                                                Chan>;
   }
   // 128-bit Temporary Registers
   def T#Index#_XYZW : R600Reg_128 <"T"#Index#"",
@@ -210,33 +208,3 @@ def R600_Reg128 : RegisterClass<"AMDGPU", [v4f32, v4i32], 128,
 
 def R600_Reg64 : RegisterClass<"AMDGPU", [v2f32, v2i32], 64,
                                 (add (sequence "T%u_XY", 0, 63))>;
-
-//===----------------------------------------------------------------------===//
-// Register classes for indirect addressing
-//===----------------------------------------------------------------------===//
-
-// Super register for all the Indirect Registers.  This register class is used
-// by the REG_SEQUENCE instruction to specify the registers to use for direct
-// reads / writes which may be written / read by an indirect address.
-class IndirectSuper<string n, list<Register> subregs> :
-    RegisterWithSubRegs<n, subregs> {
-  let Namespace = "AMDGPU";
-  let SubRegIndices =
- [sub0, sub1, sub2, sub3, sub4, sub5, sub6, sub7,
-  sub8, sub9, sub10, sub11, sub12, sub13, sub14, sub15];
-}
-
-def IndirectSuperReg : IndirectSuper<"Indirect",
-  [TRegMem0_X, TRegMem1_X, TRegMem2_X, TRegMem3_X, TRegMem4_X, TRegMem5_X,
-   TRegMem6_X, TRegMem7_X, TRegMem8_X, TRegMem9_X, TRegMem10_X, TRegMem11_X,
-   TRegMem12_X, TRegMem13_X, TRegMem14_X, TRegMem15_X]
->;
-
-def IndirectReg : RegisterClass<"AMDGPU", [f32, i32], 32, (add IndirectSuperReg)>;
-
-// This register class defines the registers that are the storage units for
-// the "Indirect Addressing" pseudo memory space.
-// XXX: Only use the X channel, until we support wider stack widths
-def TRegMem : RegisterClass<"AMDGPU", [f32, i32], 32,
-  (add (sequence "TRegMem%u_X", 0, 16))
->;

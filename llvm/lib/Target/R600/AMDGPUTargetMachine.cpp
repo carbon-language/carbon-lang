@@ -139,12 +139,6 @@ AMDGPUPassConfig::addPreISel() {
 
 bool AMDGPUPassConfig::addInstSelector() {
   addPass(createAMDGPUISelDag(getAMDGPUTargetMachine()));
-
-  const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
-  if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
-    // This callbacks this pass uses are not implemented yet on SI.
-    addPass(createAMDGPUIndirectAddressingPass(*TM));
-  }
   return false;
 }
 

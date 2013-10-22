@@ -210,6 +210,14 @@ bool R600InstrInfo::mustBeLastInClause(unsigned Opcode) const {
   }
 }
 
+bool R600InstrInfo::usesAddressRegister(MachineInstr *MI) const {
+  return  MI->findRegisterUseOperandIdx(AMDGPU::AR_X) != -1;
+}
+
+bool R600InstrInfo::definesAddressRegister(MachineInstr *MI) const {
+  return MI->findRegisterDefOperandIdx(AMDGPU::AR_X) != -1;
+}
+
 bool R600InstrInfo::readsLDSSrcReg(const MachineInstr *MI) const {
   if (!isALUInstr(MI->getOpcode())) {
     return false;
@@ -1086,13 +1094,8 @@ unsigned R600InstrInfo::calculateIndirectAddress(unsigned RegIndex,
   return RegIndex;
 }
 
-const TargetRegisterClass * R600InstrInfo::getIndirectAddrStoreRegClass(
-                                                     unsigned SourceReg) const {
-  return &AMDGPU::R600_TReg32RegClass;
-}
-
-const TargetRegisterClass *R600InstrInfo::getIndirectAddrLoadRegClass() const {
-  return &AMDGPU::TRegMemRegClass;
+const TargetRegisterClass *R600InstrInfo::getIndirectAddrRegClass() const {
+  return &AMDGPU::R600_TReg32_XRegClass;
 }
 
 MachineInstrBuilder R600InstrInfo::buildIndirectWrite(MachineBasicBlock *MBB,
@@ -1129,10 +1132,6 @@ MachineInstrBuilder R600InstrInfo::buildIndirectRead(MachineBasicBlock *MBB,
   setImmOperand(Mov, AMDGPU::OpName::src0_rel, 1);
 
   return Mov;
-}
-
-const TargetRegisterClass *R600InstrInfo::getSuperIndirectRegClass() const {
-  return &AMDGPU::IndirectRegRegClass;
 }
 
 unsigned R600InstrInfo::getMaxAlusPerClause() const {
@@ -1270,6 +1269,12 @@ MachineInstr *R600InstrInfo::buildMovImm(MachineBasicBlock &BB,
                                                   AMDGPU::ALU_LITERAL_X);
   setImmOperand(MovImm, AMDGPU::OpName::literal, Imm);
   return MovImm;
+}
+
+MachineInstr *R600InstrInfo::buildMovInstr(MachineBasicBlock *MBB,
+                                       MachineBasicBlock::iterator I,
+                                       unsigned DstReg, unsigned SrcReg) const {
+  return buildDefaultInstruction(*MBB, I, AMDGPU::MOV, DstReg, SrcReg);
 }
 
 int R600InstrInfo::getOperandIdx(const MachineInstr &MI, unsigned Op) const {

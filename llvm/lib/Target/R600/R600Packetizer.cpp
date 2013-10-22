@@ -206,6 +206,14 @@ public:
         return false;
       }
     }
+
+    bool ARDef = TII->definesAddressRegister(MII) ||
+                 TII->definesAddressRegister(MIJ);
+    bool ARUse = TII->usesAddressRegister(MII) ||
+                 TII->usesAddressRegister(MIJ);
+    if (ARDef && ARUse)
+      return false;
+
     return true;
   }
 

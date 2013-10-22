@@ -197,6 +197,13 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
   return MI;
 }
 
+MachineInstr *SIInstrInfo::buildMovInstr(MachineBasicBlock *MBB,
+                                         MachineBasicBlock::iterator I,
+                                         unsigned DstReg,
+                                         unsigned SrcReg) const {
+  assert(!"Not Implemented");
+}
+
 bool SIInstrInfo::isMov(unsigned Opcode) const {
   switch(Opcode) {
   default: return false;
@@ -346,12 +353,7 @@ int SIInstrInfo::getIndirectIndexEnd(const MachineFunction &MF) const {
   llvm_unreachable("Unimplemented");
 }
 
-const TargetRegisterClass *SIInstrInfo::getIndirectAddrStoreRegClass(
-                                                     unsigned SourceReg) const {
-  llvm_unreachable("Unimplemented");
-}
-
-const TargetRegisterClass *SIInstrInfo::getIndirectAddrLoadRegClass() const {
+const TargetRegisterClass *SIInstrInfo::getIndirectAddrRegClass() const {
   llvm_unreachable("Unimplemented");
 }
 
@@ -368,9 +370,5 @@ MachineInstrBuilder SIInstrInfo::buildIndirectRead(
                                    MachineBasicBlock::iterator I,
                                    unsigned ValueReg,
                                    unsigned Address, unsigned OffsetReg) const {
-  llvm_unreachable("Unimplemented");
-}
-
-const TargetRegisterClass *SIInstrInfo::getSuperIndirectRegClass() const {
   llvm_unreachable("Unimplemented");
 }
