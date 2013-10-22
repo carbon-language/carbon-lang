@@ -361,8 +361,8 @@ IRForTarget::ResolveFunctionPointers(llvm::Module &llvm_module)
         // be called with the builtin attribute on call sites. Remove any such
         // attributes since it's illegal to have a builtin call to something
         // other than a nobuiltin function.
-        if (fun->hasFnAttribute(Attribute::NoBuiltin)) {
-            Attribute builtin = Attribute::get(fun->getContext(), Attribute::Builtin);
+        if (fun->hasFnAttribute(llvm::Attribute::NoBuiltin)) {
+            llvm::Attribute builtin = llvm::Attribute::get(fun->getContext(), llvm::Attribute::Builtin);
 
             for (auto u = fun->use_begin(), e = fun->use_end(); u != e; ++u) {
                 if (auto call = dyn_cast<CallInst>(*u)) {
