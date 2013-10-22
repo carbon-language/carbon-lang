@@ -633,6 +633,29 @@ bool X86FastISel::X86SelectCallAddress(const Value *V, X86AddressMode &AM) {
   const User *U = NULL;
   unsigned Opcode = Instruction::UserOp1;
   const Instruction *I = dyn_cast<Instruction>(V);
+  // Record if the value is defined in the same basic block.
+  //
+  // This information is crucial to know whether or not folding an
+  // operand is valid.
+  // Indeed, FastISel generates or reuses a virtual register for all
+  // operands of all instructions it selects. Obviously, the definition and
+  // its uses must use the same virtual register otherwise the produced
+  // code is incorrect.
+  // Before instruction selection, FunctionLoweringInfo::set sets the virtual
+  // registers for values that are alive across basic blocks. This ensures
+  // that the values are consistently set between across basic block, even
+  // if different instruction selection mechanisms are used (e.g., a mix of
+  // SDISel and FastISel).
+  // For values local to a basic block, the instruction selection process
+  // generates these virtual registers with whatever method is appropriate
+  // for its needs. In particular, FastISel and SDISel do not share the way
+  // local virtual registers are set.
+  // Therefore, this is impossible (or at least unsafe) to share values
+  // between basic blocks unless they use the same instruction selection
+  // method, which is not guarantee for X86.
+  // Moreover, things like hasOneUse could not be used accurately, if we
+  // allow to reference values across basic blocks whereas they are not
+  // alive across basic blocks initially.
   bool InMBB = true;
   if (I) {
     Opcode = I->getOpcode();
