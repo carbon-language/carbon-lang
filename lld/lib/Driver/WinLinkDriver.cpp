@@ -140,30 +140,25 @@ llvm::COFF::MachineTypes stringToMachineType(StringRef str) {
 }
 
 // Parse /manifest:EMBED[,ID=#]|NO.
-bool parseManifest(StringRef option, raw_ostream &diagnostics, bool &enable,
-                   bool &embed, int &id) {
+bool parseManifest(StringRef option, bool &enable, bool &embed, int &id) {
   std::string optionLower = option.lower();
   if (optionLower == "no") {
     enable = false;
     return true;
   }
   if (!StringRef(optionLower).startswith("embed"))
-    goto parse_error;
+    return false;
 
   embed = true;
   optionLower = optionLower.substr(strlen("embed"));
   if (optionLower.empty())
     return true;
   if (!StringRef(optionLower).startswith(",id="))
-    goto parse_error;
+    return false;
   optionLower = optionLower.substr(strlen(",id="));
   if (StringRef(optionLower).getAsInteger(0, id))
-    goto parse_error;
+    return false;
   return true;
-
-parse_error:
-  diagnostics << "Unknown argument for /manifest: " << option << "\n";
-  return false;
 }
 
 // Handle /failifmismatch option.
@@ -431,8 +426,11 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       bool enable = true;
       bool embed = false;
       int id = 1;
-      if (!parseManifest(inputArg->getValue(), diagnostics, enable, embed, id))
+      if (!parseManifest(inputArg->getValue(), enable, embed, id)) {
+        diagnostics << "Unknown argument for /manifest: "
+                    << inputArg->getValue() << "\n";
         return false;
+      }
       ctx.setCreateManifest(enable);
       ctx.setEmbedManifest(embed);
       ctx.setManifestId(id);
