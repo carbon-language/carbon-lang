@@ -37,7 +37,6 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.h"
 #include "clang/Frontend/CodeGenOptions.h"
-#include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/CallingConv.h"
@@ -934,12 +933,6 @@ void CodeGenModule::EmitDeferred() {
     GlobalDecl D = DeferredDeclsToEmit.back();
     DeferredDeclsToEmit.pop_back();
 
-    const ValueDecl *Global = cast<ValueDecl>(D.getDecl());
-    if (Global->hasAttr<AliasAttr>()) {
-      EmitAliasDefinition(D);
-      continue;
-    }
-
     // Check to see if we've already emitted this.  This is necessary
     // for a couple of reasons: first, decls can end up in the
     // deferred-decls queue multiple times, and second, decls can end
@@ -1105,7 +1098,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   // If this is an alias definition (which otherwise looks like a declaration)
   // emit it now.
   if (Global->hasAttr<AliasAttr>())
-    return scheduleAliasDefinitionEmission(GD);
+    return EmitAliasDefinition(GD);
 
   // If this is CUDA, be selective about which declarations we emit.
   if (LangOpts.CUDA) {
@@ -2082,24 +2075,6 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
     AddGlobalAnnotations(D, Fn);
 }
 
-void CodeGenModule::scheduleAliasDefinitionEmission(GlobalDecl GD) {
-  const ValueDecl *D = cast<ValueDecl>(GD.getDecl());
-  const AliasAttr *AA = D->getAttr<AliasAttr>();
-  assert(AA && "Not an alias?");
-
-  // Schedule it.
-  DeferredDeclsToEmit.push_back(GD);
-
-  llvm::Type *DeclTy = getTypes().ConvertTypeForMem(D->getType());
-
-  // Cause the aliasee emission to be scheduled.
-  if (isa<llvm::FunctionType>(DeclTy))
-    GetOrCreateLLVMFunction(AA->getAliasee(), DeclTy, GD, /*ForVTable=*/false);
-  else
-    GetOrCreateLLVMGlobal(AA->getAliasee(),
-                          llvm::PointerType::getUnqual(DeclTy), 0);
-}
-
 void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
   const ValueDecl *D = cast<ValueDecl>(GD.getDecl());
   const AliasAttr *AA = D->getAttr<AliasAttr>();
@@ -2124,18 +2099,6 @@ void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
   else
     Aliasee = GetOrCreateLLVMGlobal(AA->getAliasee(),
                                     llvm::PointerType::getUnqual(DeclTy), 0);
-
-  llvm::GlobalValue *GV = dyn_cast<llvm::GlobalValue>(Aliasee);
-  if (!GV) {
-    llvm::ConstantExpr *CE = cast<llvm::ConstantExpr>(Aliasee);
-    assert(CE->getOpcode() == llvm::Instruction::BitCast ||
-           CE->getOpcode() == llvm::Instruction::GetElementPtr);
-    GV = cast<llvm::GlobalValue>(CE->getOperand(0));
-  }
-  if (GV->isDeclaration()) {
-    getDiags().Report(AA->getLocation(), diag::err_alias_to_undefined);
-    return;
-  }
 
   // Create the new alias itself, but don't set a name yet.
   llvm::GlobalValue *GA =
