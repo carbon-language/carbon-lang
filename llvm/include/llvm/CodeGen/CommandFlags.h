@@ -150,7 +150,7 @@ FloatABIForCalls("float-abi",
 
 cl::opt<llvm::FPOpFusion::FPOpFusionMode>
 FuseFPOps("fp-contract",
-          cl::desc("Enable aggresive formation of fused FP ops"),
+          cl::desc("Enable aggressive formation of fused FP ops"),
           cl::init(FPOpFusion::Standard),
           cl::values(
               clEnumValN(FPOpFusion::Fast, "fast",

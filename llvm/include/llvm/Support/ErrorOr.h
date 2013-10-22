@@ -34,7 +34,7 @@ struct ErrorHolderBase {
 
   ErrorHolderBase() : RefCount(1) {}
 
-  void aquire() {
+  void acquire() {
     ++RefCount;
   }
 
@@ -308,7 +308,7 @@ private:
       // Get other's error.
       Error = Other.Error;
       HasError = true;
-      Error->aquire();
+      Error->acquire();
     }
   }
 
@@ -437,7 +437,7 @@ public:
   ErrorOr(const ErrorOr &Other) : Error(0, 0) {
     Error = Other.Error;
     if (Other.Error.getPointer()->Error) {
-      Error.getPointer()->aquire();
+      Error.getPointer()->acquire();
     }
   }
 

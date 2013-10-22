@@ -197,7 +197,7 @@ LLVMMCJITMemoryManagerRef LLVMCreateSimpleMCJITMemoryManager(
   LLVMMemoryManagerAllocateCodeSectionCallback AllocateCodeSection,
   LLVMMemoryManagerAllocateDataSectionCallback AllocateDataSection,
   LLVMMemoryManagerFinalizeMemoryCallback FinalizeMemory,
-  LLVMMemoryManagerDestroyCallback Destory);
+  LLVMMemoryManagerDestroyCallback Destroy);
 
 void LLVMDisposeMCJITMemoryManager(LLVMMCJITMemoryManagerRef MM);
 

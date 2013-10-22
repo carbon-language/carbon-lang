@@ -694,7 +694,7 @@ public:
 };
 
 
-/// IntInit - 7 - Represent an initalization by a literal integer value.
+/// IntInit - 7 - Represent an initialization by a literal integer value.
 ///
 class IntInit : public TypedInit {
   int64_t Value;

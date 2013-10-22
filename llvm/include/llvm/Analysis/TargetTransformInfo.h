@@ -314,7 +314,7 @@ public:
     SK_ExtractSubvector ///< ExtractSubvector Index indicates start offset.
   };
 
-  /// \brief Additonal information about an operand's possible values.
+  /// \brief Additional information about an operand's possible values.
   enum OperandValueKind {
     OK_AnyValue,            // Operand can have any value.
     OK_UniformValue,        // Operand is uniform (splat of a value).

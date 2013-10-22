@@ -124,7 +124,7 @@ struct MCSchedClassDesc {
 /// microarchitecture to the scheduler in the form of properties. It also
 /// optionally refers to scheduler resource tables and itinerary
 /// tables. Scheduler resource tables model the latency and cost for each
-/// instruction type. Itinerary tables are an independant mechanism that
+/// instruction type. Itinerary tables are an independent mechanism that
 /// provides a detailed reservation table describing each cycle of instruction
 /// execution. Subtargets may define any or all of the above categories of data
 /// depending on the type of CPU and selected scheduler.

@@ -732,7 +732,7 @@ public:
   ///               should begin. Must be a multiple of
   ///               mapped_file_region::alignment().
   /// \param ec This is set to errc::success if the map was constructed
-  ///           sucessfully. Otherwise it is set to a platform dependent error.
+  ///           successfully. Otherwise it is set to a platform dependent error.
   mapped_file_region(const Twine &path,
                      mapmode mode,
                      uint64_t length,
