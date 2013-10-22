@@ -125,3 +125,31 @@ define <4 x i32> @test15(i32* %x) {
    %res = insertelement <4 x i32>zeroinitializer, i32 %y, i32 0
    ret <4 x i32>%res
 }
+
+; CHECK-LABEL: test16
+; CHECK: vmovdqu32
+; CHECK: ret
+define <16 x i32> @test16(i8 * %addr) {
+  %vaddr = bitcast i8* %addr to <16 x i32>*
+  %res = load <16 x i32>* %vaddr, align 1
+  ret <16 x i32>%res
+}
+
+; CHECK-LABEL: test17
+; CHECK: vmovdqa32
+; CHECK: ret
+define <16 x i32> @test17(i8 * %addr) {
+  %vaddr = bitcast i8* %addr to <16 x i32>*
+  %res = load <16 x i32>* %vaddr, align 64
+  ret <16 x i32>%res
+}
+
+; CHECK-LABEL: test18
+; CHECK: vmovdqa64
+; CHECK: ret
+define void @test18(i8 * %addr, <8 x i64> %data) {
+  %vaddr = bitcast i8* %addr to <8 x i64>*
+  store <8 x i64>%data, <8 x i64>* %vaddr, align 64
+  ret void
+}
+
