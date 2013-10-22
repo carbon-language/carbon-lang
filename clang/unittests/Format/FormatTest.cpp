@@ -5416,6 +5416,18 @@ TEST_F(FormatTest, ObjCLiterals) {
       "  @\"--productid\",\n"
       "  @\"com.google.Chrome\"\n"
       "];");
+  verifyGoogleFormat(
+      "@{\n"
+      "  NSFontAttributeNameeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee : "
+      "regularFont,\n"
+      "};");
+  verifyGoogleFormat(
+      "NSArray *arguments = @[\n"
+      "  kind == kUserTicket ? @\"--user-store\" : @\"--system-store\",\n"
+      "  @\"--print-tickets\",\n"
+      "  @\"--productid\",\n"
+      "  @\"com.google.Chrome\"\n"
+      "];");
 }
 
 TEST_F(FormatTest, ReformatRegionAdjustsIndent) {

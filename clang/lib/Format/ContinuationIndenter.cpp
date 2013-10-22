@@ -562,11 +562,11 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
         BreakBeforeParameter = true;
       } else {
         NewIndent = State.Stack.back().LastSpace;
-        if (Style.Cpp11BracedListStyle)
-          NewIndent += Style.ContinuationIndentWidth;
-        else {
+        if (Current.opensBlockTypeList(Style)) {
           NewIndent += Style.IndentWidth;
           ++NewIndentLevel;
+        } else {
+          NewIndent += Style.ContinuationIndentWidth;
         }
       }
       const FormatToken *NextNoComment = Current.getNextNonComment();
