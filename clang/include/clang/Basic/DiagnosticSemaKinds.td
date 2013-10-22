@@ -6227,9 +6227,9 @@ def warn_cfstring_truncated : Warning<
 
 // Statements.
 def err_continue_not_in_loop : Error<
-  "'continue' statement not in loop statement body">;
+  "'continue' statement not in loop statement">;
 def err_break_not_in_loop_or_switch : Error<
-  "'break' statement not in loop or switch statement body">;
+  "'break' statement not in loop or switch statement">;
 def err_default_not_in_switch : Error<
   "'default' statement not in switch statement">;
 def err_case_not_in_switch : Error<"'case' statement not in switch statement">;

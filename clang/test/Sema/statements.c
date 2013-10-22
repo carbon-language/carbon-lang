@@ -95,7 +95,7 @@ void foo(enum x X) {
 // was causing a crash in the CFG builder.
 int test_pr8880() {
   int first = 1;
-  for ( ; ({ if (first) { first = 0; continue; } 0; }); ) // expected-error {{'continue' statement not in loop statement}}
+  for ( ; ({ if (first) { first = 0; continue; } 0; }); )
     return 0;
   return 1;
 }
