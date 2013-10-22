@@ -285,7 +285,7 @@ public:
         if _newclass: queue = property(GetQueueName, None, doc='''A read only property that returns the dispatch queue name of this thread as a string.''')
 
         __swig_getmethods__["queue_id"] = GetQueueID
-        if _newclass: queue = property(GetQueueID, None, doc='''A read only property that returns the dispatch queue id of this thread as an integer.''')
+        if _newclass: queue_id = property(GetQueueID, None, doc='''A read only property that returns the dispatch queue id of this thread as an integer.''')
 
         __swig_getmethods__["stop_reason"] = GetStopReason
         if _newclass: stop_reason = property(GetStopReason, None, doc='''A read only property that returns an lldb enumeration value (see enumerations that start with "lldb.eStopReason") that represents the reason this thread stopped.''')
