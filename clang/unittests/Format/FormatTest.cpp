@@ -2327,6 +2327,12 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
                getLLVMStyleWithColumns(28));
   verifyFormat("#if 1\n"
                "int i;");
+  verifyFormat(
+      "#if 1\n"
+      "#endif\n"
+      "#if 1\n"
+      "#else\n"
+      "#endif\n");
 }
 
 TEST_F(FormatTest, FormatsJoinedLinesOnSubsequentRuns) {

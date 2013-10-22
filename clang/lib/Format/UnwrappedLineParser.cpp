@@ -485,7 +485,6 @@ void UnwrappedLineParser::parsePPEndIf() {
   assert(PPBranchLevel < (int)PPLevelBranchIndex.size());
   if (PPBranchLevel >= 0 && !PPChainBranchIndex.empty()) {
     if (PPChainBranchIndex.top() + 1 > PPLevelBranchCount[PPBranchLevel]) {
-      assert(PPLevelBranchCount[PPBranchLevel] == 0);
       PPLevelBranchCount[PPBranchLevel] = PPChainBranchIndex.top() + 1;
     }
   }
