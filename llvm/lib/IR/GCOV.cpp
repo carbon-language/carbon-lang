@@ -74,7 +74,6 @@ void GCOVFile::collectLineCounts(FileInfo &FI) {
   for (SmallVectorImpl<GCOVFunction *>::iterator I = Functions.begin(),
          E = Functions.end(); I != E; ++I) 
     (*I)->collectLineCounts(FI);
-  FI.print();
 }
 
 //===----------------------------------------------------------------------===//

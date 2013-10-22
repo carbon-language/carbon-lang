@@ -74,5 +74,6 @@ int main(int argc, char **argv) {
 
   FileInfo FI;
   GF.collectLineCounts(FI);
+  FI.print();
   return 0;
 }
