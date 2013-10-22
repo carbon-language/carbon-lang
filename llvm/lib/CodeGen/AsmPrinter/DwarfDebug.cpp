@@ -969,7 +969,6 @@ void DwarfDebug::computeInlinedDIEs() {
 // Collect info for variables that were optimized out.
 void DwarfDebug::collectDeadVariables() {
   const Module *M = MMI->getModule();
-  DenseMap<const MDNode *, LexicalScope *> DeadFnScopeMap;
 
   if (NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu")) {
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
@@ -987,10 +986,6 @@ void DwarfDebug::collectDeadVariables() {
         if (Variables.getNumElements() == 0)
           continue;
 
-        LexicalScope *Scope =
-            new LexicalScope(NULL, DIDescriptor(SP), NULL, false);
-        DeadFnScopeMap[SP] = Scope;
-
         // Construct subprogram DIE and add variables DIEs.
         CompileUnit *SPCU = CUMap.lookup(TheCU);
         assert(SPCU && "Unable to find Compile Unit!");
@@ -1004,13 +999,12 @@ void DwarfDebug::collectDeadVariables() {
             continue;
           DbgVariable NewVar(DV, NULL, this);
           if (DIE *VariableDIE =
-                  SPCU->constructVariableDIE(&NewVar, Scope->isAbstractScope()))
+                  SPCU->constructVariableDIE(&NewVar, false))
             SPDIE->addChild(VariableDIE);
         }
       }
     }
   }
-  DeleteContainerSeconds(DeadFnScopeMap);
 }
 
 // Type Signature [7.27] and ODR Hash code.
