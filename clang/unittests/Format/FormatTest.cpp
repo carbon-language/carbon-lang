@@ -5378,6 +5378,7 @@ TEST_F(FormatTest, ObjCLiterals) {
   verifyFormat(
       "NSArray *array = @[ @\" Hey \", NSApp, [NSNumber numberWithInt:42] ];");
   verifyFormat("return @[ @3, @[], @[ @4, @5 ] ];");
+  verifyFormat("NSArray *array = @[ [foo description] ];");
 
   verifyFormat("@{");
   verifyFormat("@{}");
@@ -5408,6 +5409,13 @@ TEST_F(FormatTest, ObjCLiterals) {
       "  NSFontAttributeNameeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee : "
       "regularFont,\n"
       "};");
+  verifyFormat(
+      "NSArray *arguments = @[\n"
+      "  kind == kUserTicket ? @\"--user-store\" : @\"--system-store\",\n"
+      "  @\"--print-tickets\",\n"
+      "  @\"--productid\",\n"
+      "  @\"com.google.Chrome\"\n"
+      "];");
 }
 
 TEST_F(FormatTest, ReformatRegionAdjustsIndent) {

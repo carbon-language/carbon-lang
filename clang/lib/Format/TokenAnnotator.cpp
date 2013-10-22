@@ -197,13 +197,14 @@ private:
          getBinOpPrecedence(Parent->Tok.getKind(), true, true) > prec::Unknown);
     ScopedContextCreator ContextCreator(*this, tok::l_square, 10);
     Contexts.back().IsExpression = true;
-    bool StartsObjCArrayLiteral = Parent && Parent->is(tok::at);
 
     if (StartsObjCMethodExpr) {
       Contexts.back().ColonIsObjCMethodExpr = true;
       Left->Type = TT_ObjCMethodExpr;
-    } else if (StartsObjCArrayLiteral) {
-      Left->Type = TT_ObjCArrayLiteral;
+    } else if (Parent && Parent->is(tok::at)) {
+      Left->Type = TT_ArrayInitializerLSquare;
+    } else if (Left->Type == TT_Unknown) {
+      Left->Type = TT_ArraySubscriptLSquare;
     }
 
     while (CurrentToken != NULL) {
@@ -222,8 +223,6 @@ private:
           // binary operator.
           if (Parent != NULL && Parent->Type == TT_PointerOrReference)
             Parent->Type = TT_BinaryOperator;
-        } else if (StartsObjCArrayLiteral) {
-          CurrentToken->Type = TT_ObjCArrayLiteral;
         }
         Left->MatchingParen = CurrentToken;
         CurrentToken->MatchingParen = Left;
@@ -235,6 +234,9 @@ private:
       }
       if (CurrentToken->isOneOf(tok::r_paren, tok::r_brace))
         return false;
+      if (CurrentToken->is(tok::comma) &&
+          Left->Type == TT_ArraySubscriptLSquare)
+        Left->Type = TT_ArrayInitializerLSquare;
       updateParameterCount(Left, CurrentToken);
       if (!consumeToken())
         return false;
@@ -1263,9 +1265,11 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Right.is(tok::star) && Left.is(tok::l_paren))
     return false;
   if (Left.is(tok::l_square))
-    return Left.Type == TT_ObjCArrayLiteral && Right.isNot(tok::r_square);
+    return Left.Type == TT_ArrayInitializerLSquare &&
+           Right.isNot(tok::r_square);
   if (Right.is(tok::r_square))
-    return Right.Type == TT_ObjCArrayLiteral;
+    return Right.MatchingParen &&
+           Right.MatchingParen->Type == TT_ArrayInitializerLSquare;
   if (Right.is(tok::l_square) && Right.Type != TT_ObjCMethodExpr &&
       Right.Type != TT_LambdaLSquare && Left.isNot(tok::numeric_constant))
     return false;
@@ -1481,15 +1485,17 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   if (Left.is(tok::greater) && Right.is(tok::greater) &&
       Left.Type != TT_TemplateCloser)
     return false;
+  if (Left.Type == TT_ArrayInitializerLSquare)
+    return true;
   return (Left.isBinaryOperator() && Left.isNot(tok::lessless) &&
           !Style.BreakBeforeBinaryOperators) ||
          Left.isOneOf(tok::comma, tok::coloncolon, tok::semi, tok::l_brace,
                       tok::kw_class, tok::kw_struct) ||
-         Right.isOneOf(tok::lessless, tok::arrow, tok::period, tok::colon) ||
+         Right.isOneOf(tok::lessless, tok::arrow, tok::period, tok::colon,
+                       tok::l_square, tok::at) ||
          (Left.is(tok::r_paren) &&
           Right.isOneOf(tok::identifier, tok::kw_const, tok::kw___attribute)) ||
-         (Left.is(tok::l_paren) && !Right.is(tok::r_paren)) ||
-         Right.is(tok::l_square);
+         (Left.is(tok::l_paren) && !Right.is(tok::r_paren));
 }
 
 void TokenAnnotator::printDebugInfo(const AnnotatedLine &Line) {

@@ -92,8 +92,8 @@ bool ContinuationIndenter::canBreak(const LineState &State) {
   const FormatToken &Current = *State.NextToken;
   const FormatToken &Previous = *Current.Previous;
   assert(&Previous == Current.Previous);
-  if (!Current.CanBreakBefore &&
-      !(Current.is(tok::r_brace) && State.Stack.back().BreakBeforeClosingBrace))
+  if (!Current.CanBreakBefore && !(State.Stack.back().BreakBeforeClosingBrace &&
+                                   Current.closesBlockTypeList(Style)))
     return false;
   // The opening "{" of a braced list has to be on the same line as the first
   // element if it is nested in another braced init list or function call.
@@ -118,10 +118,8 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
   const FormatToken &Previous = *Current.Previous;
   if (Current.MustBreakBefore || Current.Type == TT_InlineASMColon)
     return true;
-  if ((!Style.Cpp11BracedListStyle ||
-       (Current.MatchingParen &&
-        Current.MatchingParen->BlockKind == BK_Block)) &&
-      Current.is(tok::r_brace) && State.Stack.back().BreakBeforeClosingBrace)
+  if (State.Stack.back().BreakBeforeClosingBrace &&
+      Current.closesBlockTypeList(Style))
     return true;
   if (Previous.is(tok::semi) && State.LineContainsContinuedForLoopSection)
     return true;
@@ -136,7 +134,8 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       !Previous.isOneOf(tok::kw_return, tok::lessless) &&
       Previous.Type != TT_InlineASMColon && NextIsMultilineString(State))
     return true;
-  if (Previous.Type == TT_ObjCDictLiteral && Previous.is(tok::l_brace) &&
+  if (((Previous.Type == TT_ObjCDictLiteral && Previous.is(tok::l_brace)) ||
+       Previous.Type == TT_ArrayInitializerLSquare) &&
       getLengthToMatchingParen(Previous) + State.Column > getColumnLimit(State))
     return true;
 
@@ -332,10 +331,8 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
 
   if (Current.is(tok::l_brace) && Current.BlockKind == BK_Block) {
     State.Column = State.FirstIndent;
-  } else if (Current.is(tok::r_brace)) {
-    if (Current.MatchingParen &&
-        (Current.MatchingParen->BlockKind == BK_BracedInit ||
-         !Current.MatchingParen->Children.empty()))
+  } else if (Current.isOneOf(tok::r_brace, tok::r_square)) {
+    if (Current.closesBlockTypeList(Style))
       State.Column = State.Stack[State.Stack.size() - 2].LastSpace;
     else
       State.Column = State.FirstIndent;
@@ -372,8 +369,7 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
       State.Column = State.Stack.back().Indent;
       State.Stack.back().ColonPos = State.Column + Current.ColumnWidth;
     }
-  } else if (Current.is(tok::l_square) && Current.Type != TT_ObjCMethodExpr &&
-             Current.Type != TT_LambdaLSquare) {
+  } else if (Current.Type == TT_ArraySubscriptLSquare) {
     if (State.Stack.back().StartOfArraySubscripts != 0)
       State.Column = State.Stack.back().StartOfArraySubscripts;
     else
@@ -431,8 +427,9 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
       TokenBefore->Type != TT_BinaryOperator && !TokenBefore->opensScope())
     State.Stack.back().BreakBeforeParameter = true;
 
-  // If we break after {, we should also break before the corresponding }.
-  if (Previous.is(tok::l_brace))
+  // If we break after { or the [ of an array initializer, we should also break
+  // before the corresponding } or ].
+  if (Previous.is(tok::l_brace) || Previous.Type == TT_ArrayInitializerLSquare)
     State.Stack.back().BreakBeforeClosingBrace = true;
 
   if (State.Stack.back().AvoidBinPacking) {
@@ -457,7 +454,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     State.Stack.back().AvoidBinPacking = true;
   if (Current.is(tok::lessless) && State.Stack.back().FirstLessLess == 0)
     State.Stack.back().FirstLessLess = State.Column;
-  if (Current.is(tok::l_square) && Current.Type != TT_LambdaLSquare &&
+  if (Current.Type == TT_ArraySubscriptLSquare &&
       State.Stack.back().StartOfArraySubscripts == 0)
     State.Stack.back().StartOfArraySubscripts = State.Column;
   if (Current.is(tok::question))
@@ -527,7 +524,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
         (!SkipFirstExtraIndent && *I > prec::Assignment &&
          !Style.BreakBeforeBinaryOperators))
       NewParenState.Indent += Style.ContinuationIndentWidth;
-    if (Previous && !Previous->opensScope())
+    if ((Previous && !Previous->opensScope()) || *I > prec::Comma)
       NewParenState.BreakBeforeParameter = false;
     State.Stack.push_back(NewParenState);
     SkipFirstExtraIndent = false;
@@ -539,7 +536,9 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     unsigned NewIndent;
     unsigned NewIndentLevel = State.Stack.back().IndentLevel;
     bool AvoidBinPacking;
-    if (Current.is(tok::l_brace)) {
+    bool BreakBeforeParameter = false;
+    if (Current.is(tok::l_brace) ||
+        Current.Type == TT_ArrayInitializerLSquare) {
       if (Current.MatchingParen && Current.BlockKind == BK_Block) {
         // If this is an l_brace starting a nested block, we pretend (wrt. to
         // indentation) that we already consumed the corresponding r_brace.
@@ -560,6 +559,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
           State.Stack.pop_back();
         NewIndent = State.Stack.back().LastSpace + Style.IndentWidth;
         ++NewIndentLevel;
+        BreakBeforeParameter = true;
       } else {
         NewIndent = State.Stack.back().LastSpace;
         if (Style.Cpp11BracedListStyle)
@@ -571,6 +571,8 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
       }
       const FormatToken *NextNoComment = Current.getNextNonComment();
       AvoidBinPacking = Current.BlockKind == BK_Block ||
+                        Current.Type == TT_ArrayInitializerLSquare ||
+                        Current.Type == TT_ObjCDictLiteral ||
                         (NextNoComment &&
                          NextNoComment->Type == TT_DesignatedInitializerPeriod);
     } else {
@@ -582,6 +584,12 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
                          (Current.PackingKind == PPK_OnePerLine ||
                           (!BinPackInconclusiveFunctions &&
                            Current.PackingKind == PPK_Inconclusive)));
+      // If this '[' opens an ObjC call, determine whether all parameters fit
+      // into one line and put one per line if they don't.
+      if (Current.Type == TT_ObjCMethodExpr &&
+          getLengthToMatchingParen(Current) + State.Column >
+              getColumnLimit(State))
+        BreakBeforeParameter = true;
     }
 
     bool NoLineBreak = State.Stack.back().NoLineBreak ||
@@ -590,21 +598,8 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     State.Stack.push_back(ParenState(NewIndent, NewIndentLevel,
                                      State.Stack.back().LastSpace,
                                      AvoidBinPacking, NoLineBreak));
-    State.Stack.back().BreakBeforeParameter = Current.BlockKind == BK_Block;
+    State.Stack.back().BreakBeforeParameter = BreakBeforeParameter;
     ++State.ParenLevel;
-  }
-
-  // If this '[' opens an ObjC call, determine whether all parameters fit into
-  // one line and put one per line if they don't.
-  if (Current.isOneOf(tok::l_brace, tok::l_square) &&
-      (Current.Type == TT_ObjCDictLiteral ||
-       Current.Type == TT_ObjCMethodExpr) &&
-      Current.MatchingParen != NULL) {
-    if (getLengthToMatchingParen(Current) + State.Column >
-        getColumnLimit(State)) {
-      State.Stack.back().BreakBeforeParameter = true;
-      State.Stack.back().AvoidBinPacking = true;
-    }
   }
 
   // If we encounter a closing ), ], } or >, we can remove a level from our

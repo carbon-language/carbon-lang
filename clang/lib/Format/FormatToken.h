@@ -25,6 +25,8 @@ namespace clang {
 namespace format {
 
 enum TokenType {
+  TT_ArrayInitializerLSquare,
+  TT_ArraySubscriptLSquare,
   TT_BinaryOperator,
   TT_BitFieldColon,
   TT_BlockComment,
@@ -39,7 +41,6 @@ enum TokenType {
   TT_FunctionTypeLParen,
   TT_LambdaLSquare,
   TT_LineComment,
-  TT_ObjCArrayLiteral,
   TT_ObjCBlockLParen,
   TT_ObjCDecl,
   TT_ObjCDictLiteral,
@@ -336,6 +337,17 @@ struct FormatToken {
     while (Tok != NULL && Tok->is(tok::comment))
       Tok = Tok->Next;
     return Tok;
+  }
+
+  bool closesBlockTypeList(const FormatStyle &Style) const {
+    if (is(tok::r_brace) && MatchingParen &&
+        (MatchingParen->BlockKind == BK_Block ||
+         !Style.Cpp11BracedListStyle))
+      return true;
+    if (is(tok::r_square) && MatchingParen &&
+        MatchingParen->Type == TT_ArrayInitializerLSquare)
+      return true;
+    return false;
   }
 
   FormatToken *MatchingParen;
