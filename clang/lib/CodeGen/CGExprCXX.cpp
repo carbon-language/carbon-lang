@@ -929,9 +929,8 @@ static RValue EmitNewDeleteCall(CodeGenFunction &CGF,
   ///   to a replaceable global allocation function.
   ///
   /// We model such elidable calls with the 'builtin' attribute.
-  llvm::Function *Fn = dyn_cast<llvm::Function>(CalleeAddr);
   if (Callee->isReplaceableGlobalAllocationFunction() &&
-      Fn && Fn->hasFnAttribute(llvm::Attribute::NoBuiltin)) {
+      !Callee->hasAttr<AliasAttr>()) {
     // FIXME: Add addAttribute to CallSite.
     if (llvm::CallInst *CI = dyn_cast<llvm::CallInst>(CallOrInvoke))
       CI->addAttribute(llvm::AttributeSet::FunctionIndex,

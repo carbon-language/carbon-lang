@@ -5020,6 +5020,13 @@ void Sema::DeclApplyPragmaWeak(Scope *S, NamedDecl *ND, WeakInfo &W) {
   W.setUsed(true);
   if (W.getAlias()) { // clone decl, impersonate __attribute(weak,alias(...))
     IdentifierInfo *NDId = ND->getIdentifier();
+
+    // FIXME: we should reject this (pr17640).
+    NamedDecl *Aliasee = LookupSingleName(TUScope, W.getAlias(),
+                                          W.getLocation(), LookupOrdinaryName);
+    if (Aliasee && Aliasee->hasAttr<AliasAttr>())
+      return;
+
     NamedDecl *NewD = DeclClonePragmaWeak(ND, W.getAlias(), W.getLocation());
     NewD->addAttr(::new (Context) AliasAttr(W.getLocation(), Context,
                                             NDId->getName()));

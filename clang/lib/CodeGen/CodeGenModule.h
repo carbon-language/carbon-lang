@@ -1024,6 +1024,7 @@ private:
 
   void EmitGlobalFunctionDefinition(GlobalDecl GD);
   void EmitGlobalVarDefinition(const VarDecl *D);
+  void scheduleAliasDefinitionEmission(GlobalDecl GD);
   void EmitAliasDefinition(GlobalDecl GD);
   void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);
   void EmitObjCIvarInitializations(ObjCImplementationDecl *D);
