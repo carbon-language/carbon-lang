@@ -37,6 +37,8 @@ using __sanitizer::atomic_load;
 using __sanitizer::atomic_store;
 using __sanitizer::atomic_uintptr_t;
 
+static unsigned g_thread_finalize_key;
+
 // True if this is a nested interceptor.
 static THREADLOCAL int in_interceptor_scope;
 
@@ -1040,6 +1042,39 @@ extern "C" int pthread_attr_init(void *attr);
 extern "C" int pthread_attr_destroy(void *attr);
 extern "C" int pthread_attr_setstacksize(void *attr, uptr stacksize);
 extern "C" int pthread_attr_getstack(void *attr, uptr *stack, uptr *stacksize);
+extern "C" int pthread_setspecific(unsigned key, const void *v);
+extern "C" int pthread_yield();
+
+static void thread_finalize(void *v) {
+  uptr iter = (uptr)v;
+  if (iter > 1) {
+    if (pthread_setspecific(g_thread_finalize_key, (void*)(iter - 1))) {
+      Printf("MemorySanitizer: failed to set thread key\n");
+      Die();
+    }
+    return;
+  }
+  MsanAllocatorThreadFinish();
+}
+
+struct ThreadParam {
+  void* (*callback)(void *arg);
+  void *param;
+  atomic_uintptr_t done;
+};
+
+static void *MsanThreadStartFunc(void *arg) {
+  ThreadParam *p = (ThreadParam *)arg;
+  void* (*callback)(void *arg) = p->callback;
+  void *param = p->param;
+  if (pthread_setspecific(g_thread_finalize_key,
+          (void *)kPthreadDestructorIterations)) {
+    Printf("MemorySanitizer: failed to set thread key\n");
+    Die();
+  }
+  atomic_store(&p->done, 1, memory_order_release);
+  return callback(param);
+}
 
 INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
             void * param) {
@@ -1052,7 +1087,17 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
 
   AdjustStackSizeLinux(attr);
 
-  int res = REAL(pthread_create)(th, attr, callback, param);
+  ThreadParam p;
+  p.callback = callback;
+  p.param = param;
+  atomic_store(&p.done, 0, memory_order_relaxed);
+
+  int res = REAL(pthread_create)(th, attr, MsanThreadStartFunc, (void *)&p);
+  if (res == 0) {
+    while (atomic_load(&p.done, memory_order_acquire) != 1)
+      pthread_yield();
+  }
+
   if (attr == &myattr)
     pthread_attr_destroy(&myattr);
   if (!res) {
@@ -1387,6 +1432,12 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(pthread_join);
   INTERCEPT_FUNCTION(tzset);
   INTERCEPT_FUNCTION(__cxa_atexit);
+
+  if (REAL(pthread_key_create)(&g_thread_finalize_key, &thread_finalize)) {
+    Printf("MemorySanitizer: failed to create thread key\n");
+    Die();
+  }
+
   inited = 1;
 }
 }  // namespace __msan

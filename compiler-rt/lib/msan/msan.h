@@ -44,6 +44,7 @@ bool InitShadow(bool prot1, bool prot2, bool map_shadow, bool init_origins);
 char *GetProcSelfMaps();
 void InitializeInterceptors();
 
+void MsanAllocatorThreadFinish();
 void *MsanReallocate(StackTrace *stack, void *oldp, uptr size,
                      uptr alignment, bool zeroise);
 void MsanDeallocate(StackTrace *stack, void *ptr);

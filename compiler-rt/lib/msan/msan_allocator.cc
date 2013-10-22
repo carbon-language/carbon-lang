@@ -46,6 +46,10 @@ static inline void Init() {
   allocator.Init();
 }
 
+void MsanAllocatorThreadFinish() {
+  allocator.SwallowCache(&cache);
+}
+
 static void *MsanAllocate(StackTrace *stack, uptr size,
                           uptr alignment, bool zeroise) {
   Init();
