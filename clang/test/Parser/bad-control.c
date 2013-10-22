@@ -52,14 +52,15 @@ int pr8880_6 (int a) {
 
 void pr8880_7() {
   for (int i = 0 ; i != 10 ; i++ ) {
-    for ( ; ; ({ ++i; break; })) { // expected-error {{'break' statement not in loop or switch statement}}
+    for ( ; ; ({ ++i; continue; })) { // expected-error {{'continue' statement not in loop statement}}
     }
   }
 }
 
-void pr8880_8() {
+// Have to allow 'break' in the third part of 'for' specifier to enable compilation of QT 4.8 macro 'foreach'
+void pr17649() {
   for (int i = 0 ; i != 10 ; i++ )
-    for ( ; ; ({ ++i; break; })) { // expected-error {{'break' statement not in loop or switch statement}}
+    for ( ; ; ({ ++i; break; })) {
     }
 }
 
@@ -86,8 +87,15 @@ void pr8880_11() {
 
 // Moved from Analysis/dead-stores.c
 void rdar8014335() {
-  for (int i = 0 ; i != 10 ; ({ break; })) { // expected-error {{'break' statement not in loop or switch statement}}
-    for ( ; ; ({ ++i; break; })) ; // expected-error {{'break' statement not in loop or switch statement}}
+  for (int i = 0 ; i != 10 ; ({ break; })) {
+    for ( ; ; ({ ++i; break; })) ;
+    i = i * 3;
+  }
+}
+
+void pr17649_2() {
+  for (int i = 0 ; i != 10 ; ({ continue; })) { // expected-error {{'continue' statement not in loop statement}}
+    for ( ; ; ({ ++i; continue; })) ; // expected-error {{'continue' statement not in loop statement}}
     i = i * 3;
   }
 }

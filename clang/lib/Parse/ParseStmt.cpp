@@ -1553,6 +1553,10 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
 
     // Parse the third part of the for specifier.
     if (Tok.isNot(tok::r_paren)) {   // for (...;...;)
+      // This is needed to compile QT 4.8.4, which uses statement
+      // expression with 'break' in it.
+      ForScope.SetFlags(Scope::BreakScope);
+
       ExprResult Third = ParseExpression();
       // FIXME: The C++11 standard doesn't actually say that this is a
       // discarded-value expression, but it clearly should be.
