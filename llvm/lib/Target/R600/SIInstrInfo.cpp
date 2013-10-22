@@ -201,8 +201,7 @@ MachineInstr *SIInstrInfo::buildMovInstr(MachineBasicBlock *MBB,
                                          MachineBasicBlock::iterator I,
                                          unsigned DstReg,
                                          unsigned SrcReg) const {
-  assert(!"Not Implemented");
-  return NULL;
+  llvm_unreachable("Not Implemented");
 }
 
 bool SIInstrInfo::isMov(unsigned Opcode) const {
