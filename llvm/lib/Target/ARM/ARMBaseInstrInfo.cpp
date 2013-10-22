@@ -712,7 +712,7 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     BeginIdx = ARM::dsub_0;
     SubRegs = 4;
   } else if (ARM::GPRPairRegClass.contains(DestReg, SrcReg)) {
-    Opc = ARM::MOVr;
+    Opc = Subtarget.isThumb2() ? ARM::tMOVr : ARM::MOVr;
     BeginIdx = ARM::gsub_0;
     SubRegs = 2;
   } else if (ARM::DPairSpcRegClass.contains(DestReg, SrcReg)) {
