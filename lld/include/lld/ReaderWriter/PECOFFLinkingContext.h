@@ -152,6 +152,11 @@ public:
   void setCreateManifest(bool val) { _createManifest = val; }
   bool getCreateManifest() const { return _createManifest; }
 
+  void setManifestOutputPath(std::string val) { _manifestOutputPath = val; }
+  const std::string &getManifestOutputPath() const {
+    return _manifestOutputPath;
+  }
+
   void setEmbedManifest(bool val) { _embedManifest = val; }
   bool getEmbedManifest() const { return _embedManifest; }
 
@@ -223,6 +228,7 @@ private:
   bool _terminalServerAware;
   bool _dynamicBaseEnabled;
   bool _createManifest;
+  std::string _manifestOutputPath;
   bool _embedManifest;
   int _manifestId;
   std::string _manifestLevel;

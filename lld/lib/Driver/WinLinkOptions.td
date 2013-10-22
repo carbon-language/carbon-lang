@@ -34,6 +34,7 @@ def subsystem : P<"subsystem", "Specify subsystem">;
 def manifest : F<"manifest">;
 def manifest_colon : P<"manifest", "Create manifest file">;
 def manifestuac : P<"manifestuac", "User access control">;
+def manifestfile : P<"manifestfile", "Manifest file path">;
 
 // We cannot use multiclass P because class name "incl" is different
 // from its command line option name. We do this because "include" is

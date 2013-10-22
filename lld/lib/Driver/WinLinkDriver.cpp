@@ -496,6 +496,10 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       break;
     }
 
+    case OPT_manifestfile:
+      ctx.setManifestOutputPath(ctx.allocateString(inputArg->getValue()));
+      break;
+
     case OPT_failifmismatch:
       if (handleFailIfMismatchOption(inputArg->getValue(), failIfMismatchMap,
                                      diagnostics))
@@ -637,6 +641,14 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   if (ctx.outputPath().empty()) {
     StringRef path = *dyn_cast<FileNode>(&*inputElements[0])->getPath(ctx);
     ctx.setOutputPath(replaceExtension(ctx, path, ".exe"));
+  }
+
+  // Default name of the manifest file is "foo.exe.manifest" where "foo.exe" is
+  // the output path.
+  if (ctx.getManifestOutputPath().empty()) {
+    std::string path = ctx.outputPath();
+    path.append(".manifest");
+    ctx.setManifestOutputPath(ctx.allocateString(path));
   }
 
   // If the core linker already started, we need to explicitly call parse() for
