@@ -2754,8 +2754,8 @@ Process::AllocateMemory(size_t size, uint32_t permissions, Error &error)
     addr_t allocated_addr = DoAllocateMemory (size, permissions, error);
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
-        log->Printf("Process::AllocateMemory(size=%4zu, permissions=%s) => 0x%16.16" PRIx64 " (m_stop_id = %u m_memory_id = %u)",
-                    size, 
+        log->Printf("Process::AllocateMemory(size=%" PRIx64 ", permissions=%s) => 0x%16.16" PRIx64 " (m_stop_id = %u m_memory_id = %u)",
+                    (uint64_t)size,
                     GetPermissionsAsCString (permissions),
                     (uint64_t)allocated_addr,
                     m_mod_id.GetStopID(),

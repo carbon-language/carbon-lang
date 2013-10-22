@@ -12,19 +12,12 @@
 
 #if defined( _MSC_VER )
 
-    #define PRIu32 "u"
-    #define PRId64 "I64d"
-    #define PRIi64 "I64i"
-    #define PRIo64 "I64o"
-    #define PRIu64 "I64u"
-    #define PRIx64 "I64x"
-    #define PRIX64 "I64X"
-
     // this will stop signal.h being included
     #define _INC_SIGNAL
 
     #include <io.h>
     #include <eh.h>
+    #include <inttypes.h>
     #include "ELWrapper.h"
     #include "lldb/Host/windows/Windows.h"
     #include "GetOptWrapper.h"

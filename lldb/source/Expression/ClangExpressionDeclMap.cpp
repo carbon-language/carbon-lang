@@ -596,7 +596,7 @@ ClangExpressionDeclMap::GetSymbolAddress (Target &target,
                                           Process *process,
                                           const ConstString &name,
                                           lldb::SymbolType symbol_type,
-                                          Module *module)
+                                          lldb_private::Module *module)
 {
     SymbolContextList sc_list;
     
@@ -711,7 +711,7 @@ ClangExpressionDeclMap::GetSymbolAddress (const ConstString &name, lldb::SymbolT
 const Symbol *
 ClangExpressionDeclMap::FindGlobalDataSymbol (Target &target,
                                               const ConstString &name,
-                                              Module *module)
+                                              lldb_private::Module *module)
 {
     SymbolContextList sc_list;
     

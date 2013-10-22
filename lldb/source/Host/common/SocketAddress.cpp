@@ -11,7 +11,9 @@
 #include <stddef.h>
 
 // C Includes
+#if !defined(_MSC_VER)
 #include <arpa/inet.h>
+#endif
 #include <assert.h>
 #include <string.h>
 

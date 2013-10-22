@@ -439,7 +439,7 @@ DynamicLoaderPOSIXDYLD::LoadAllCurrentModules()
         Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
         if (log)
             log->Printf("DynamicLoaderPOSIXDYLD::%s unable to resolve POSIX DYLD rendezvous address",
-                        __func__);
+                        __FUNCTION__);
         return;
     }
 
@@ -463,7 +463,7 @@ DynamicLoaderPOSIXDYLD::LoadAllCurrentModules()
             Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
             if (log)
                 log->Printf("DynamicLoaderPOSIXDYLD::%s failed loading module %s at 0x%" PRIx64,
-                            __func__, module_path, I->base_addr);
+                            __FUNCTION__, module_path, I->base_addr);
         }
     }
 

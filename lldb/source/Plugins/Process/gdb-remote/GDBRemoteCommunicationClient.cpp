@@ -2596,7 +2596,7 @@ GDBRemoteCommunicationClient::CloseFile (lldb::user_id_t fd,
     {
         return ParseHostIOPacketResponse (response, -1, error) == 0;
     }
-    return UINT64_MAX;
+    return false;
 }
 
 // Extension of host I/O packets to get the file size.

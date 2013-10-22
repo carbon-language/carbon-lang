@@ -177,7 +177,7 @@ GDBRemoteCommunication::SendAck ()
     char ch = '+';
     const size_t bytes_written = Write (&ch, 1, status, NULL);
     if (log)
-        log->Printf ("<%4zu> send packet: %c", bytes_written, ch);
+        log->Printf ("<" PRIx64 "> send packet: %c", (uint64_t)bytes_written, ch);
     m_history.AddPacket (ch, History::ePacketTypeSend, bytes_written);
     return bytes_written;
 }
@@ -190,7 +190,7 @@ GDBRemoteCommunication::SendNack ()
     char ch = '-';
     const size_t bytes_written = Write (&ch, 1, status, NULL);
     if (log)
-        log->Printf ("<%4zu> send packet: %c", bytes_written, ch);
+        log->Printf("<" PRIx64 "> send packet: %c", (uint64_t)bytes_written, ch);
     m_history.AddPacket (ch, History::ePacketTypeSend, bytes_written);
     return bytes_written;
 }
@@ -226,7 +226,7 @@ GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_le
             if (!m_history.DidDumpToLog ())
                 m_history.Dump (log);
 
-            log->Printf ("<%4zu> send packet: %.*s", bytes_written, (int)packet.GetSize(), packet.GetData());
+            log->Printf("<" PRIx64 "> send packet: %.*s", (uint64_t)bytes_written, (int)packet.GetSize(), packet.GetData());
         }
 
         m_history.AddPacket (packet.GetString(), packet.GetSize(), History::ePacketTypeSend, bytes_written);
@@ -460,7 +460,7 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
                 if (!m_history.DidDumpToLog ())
                     m_history.Dump (log);
                 
-                log->Printf ("<%4zu> read packet: %.*s", total_length, (int)(total_length), m_bytes.c_str());
+                log->Printf("<" PRIx64 "> read packet: %.*s", (uint64_t)total_length, (int)(total_length), m_bytes.c_str());
             }
 
             m_history.AddPacket (m_bytes.c_str(), total_length, History::ePacketTypeRecv, total_length);

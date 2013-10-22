@@ -19,7 +19,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Target/Process.h"
 
-#if defined(__linux__) or defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__)
 #include "Plugins/Process/elf-core/ProcessElfCore.h"
 #endif
 
@@ -57,7 +57,7 @@ ParseAuxvEntry(DataExtractor &data,
 DataBufferSP
 AuxVector::GetAuxvData()
 {
-#if defined(__linux__) or defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__)
     if (m_process->GetPluginName() == ProcessElfCore::GetPluginNameStatic())
         return static_cast<ProcessElfCore *>(m_process)->GetAuxvData();
 #endif

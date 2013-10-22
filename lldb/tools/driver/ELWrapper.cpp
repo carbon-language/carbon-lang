@@ -199,9 +199,9 @@ el_gets (EditLine *el, int *length)
     if ( _prompt != NULL )
         printf( _prompt );
     // create a buffer for the user input
-    char *buffer = new char[ 64 ];
+    char *buffer = new char[ MAX_PATH ];
     // try to get user input string
-    if ( el_get_s( buffer, 64 ) )
+    if ( el_get_s( buffer, MAX_PATH ) )
     {
         // get the string length in 'length'
         while ( buffer[ *length ] != '\0' )
