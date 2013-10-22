@@ -107,13 +107,13 @@ void llvm::llvm_unreachable_internal(const char *msg, const char *file,
 static void bindingsErrorHandler(void *user_data, const std::string& reason,
                                  bool gen_crash_diag) {
   LLVMFatalErrorHandler handler =
-    reinterpret_cast<LLVMFatalErrorHandler>(user_data);
+      LLVM_EXTENSION reinterpret_cast<LLVMFatalErrorHandler>(user_data);
   handler(reason.c_str());
 }
 
 void LLVMInstallFatalErrorHandler(LLVMFatalErrorHandler Handler) {
-  install_fatal_error_handler(
-    bindingsErrorHandler, reinterpret_cast<void*>(Handler));
+  install_fatal_error_handler(bindingsErrorHandler,
+                              LLVM_EXTENSION reinterpret_cast<void *>(Handler));
 }
 
 void LLVMResetFatalErrorHandler() {
