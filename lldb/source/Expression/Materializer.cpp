@@ -461,17 +461,11 @@ public:
         }
         else
         {
-            Error get_address_error;
-            lldb::ValueObjectSP addr_of_valobj_sp = valobj_sp->AddressOf(get_address_error);
-            if (get_address_error.Success())
+            lldb::addr_t addr_of_valobj = valobj_sp->GetAddressOf();
+            if (addr_of_valobj != LLDB_INVALID_ADDRESS)
             {
-                DataExtractor valobj_extractor;
-                addr_of_valobj_sp->GetData(valobj_extractor);
-                lldb::offset_t offset = 0;
-                lldb::addr_t addr_of_valobj_addr = valobj_extractor.GetAddress(&offset);
-                
                 Error write_error;
-                map.WritePointerToMemory(load_addr, addr_of_valobj_addr, write_error);
+                map.WritePointerToMemory(load_addr, addr_of_valobj, write_error);
                 
                 if (!write_error.Success())
                 {
