@@ -7,8 +7,6 @@
 
 // CHECK-DAG: @both = alias void ()* @__both
 // CHECK-DAG: @both2 = alias void ()* @__both2
-// CHECK-DAG: @both3 = alias weak void ()* @__both3
-// CHECK-DAG: @a3 = alias weak void ()* @__a3
 // CHECK-DAG: @weakvar_alias = alias weak i32* @__weakvar_alias
 // CHECK-DAG: @foo = alias weak void ()* @__foo
 // CHECK-DAG: @foo2 = alias weak void ()* @__foo2
@@ -125,26 +123,12 @@ void both2(void) __attribute((alias("__both2"))); // first, wins
 void __both2(void) {}
 // CHECK-LABEL: define void @__both2()
 
-void __both3(void);
-#pragma weak both3 = __both3 // first, wins
-void both3(void) __attribute((alias("__both3")));
-void __both3(void) {}
-// CHECK-LABEL: define void @__both3()
-
 ///////////// ensure that #pragma weak does not alter existing __attributes()
 
 void __a1(void) __attribute((noinline));
 #pragma weak a1 = __a1
 void __a1(void) {}
 // CHECK: define void @__a1() [[NI:#[0-9]+]]
-
-// attributes introduced BEFORE a combination of #pragma weak and alias()
-// hold...
-void __a3(void) __attribute((noinline));
-#pragma weak a3 = __a3
-void a3(void) __attribute((alias("__a3")));
-void __a3(void) {}
-// CHECK: define void @__a3() [[NI]]
 
 #pragma weak xxx = __xxx
 __attribute((pure,noinline,const)) void __xxx(void) { }

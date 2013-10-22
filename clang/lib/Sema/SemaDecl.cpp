@@ -1996,11 +1996,15 @@ static bool mergeDeclAttribute(Sema &S, NamedDecl *D, InheritableAttr *Attr,
 static const Decl *getDefinition(const Decl *D) {
   if (const TagDecl *TD = dyn_cast<TagDecl>(D))
     return TD->getDefinition();
-  if (const VarDecl *VD = dyn_cast<VarDecl>(D))
-    return VD->getDefinition();
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    const VarDecl *Def = VD->getDefinition();
+    if (Def)
+      return Def;
+    return VD->getActingDefinition();
+  }
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     const FunctionDecl* Def;
-    if (FD->hasBody(Def))
+    if (FD->isDefined(Def))
       return Def;
   }
   return NULL;
@@ -2029,6 +2033,32 @@ static void checkNewAttributesAfterDef(Sema &S, Decl *New, const Decl *Old) {
   AttrVec &NewAttributes = New->getAttrs();
   for (unsigned I = 0, E = NewAttributes.size(); I != E;) {
     const Attr *NewAttribute = NewAttributes[I];
+
+    if (isa<AliasAttr>(NewAttribute)) {
+      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(New))
+        S.CheckForFunctionRedefinition(FD, cast<FunctionDecl>(Def));
+      else {
+        VarDecl *VD = cast<VarDecl>(New);
+        unsigned Diag = cast<VarDecl>(Def)->isThisDeclarationADefinition() ==
+                                VarDecl::TentativeDefinition
+                            ? diag::err_alias_after_tentative
+                            : diag::err_redefinition;
+        S.Diag(VD->getLocation(), Diag) << VD->getDeclName();
+        S.Diag(Def->getLocation(), diag::note_previous_definition);
+        VD->setInvalidDecl();
+      }
+      ++I;
+      continue;
+    }
+
+    if (const VarDecl *VD = dyn_cast<VarDecl>(Def)) {
+      // Tentative definitions are only interesting for the alias check above.
+      if (VD->isThisDeclarationADefinition() != VarDecl::Definition) {
+        ++I;
+        continue;
+      }
+    }
+
     if (hasAttribute(Def, NewAttribute->getKind())) {
       ++I;
       continue; // regular attr merging will take care of validating this.
@@ -8819,6 +8849,18 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
     }
   }
 
+  if (!VD->isInvalidDecl() &&
+      VD->isThisDeclarationADefinition() == VarDecl::TentativeDefinition) {
+    if (const VarDecl *Def = VD->getDefinition()) {
+      if (Def->hasAttr<AliasAttr>()) {
+        Diag(VD->getLocation(), diag::err_tentative_after_alias)
+            << VD->getDeclName();
+        Diag(Def->getLocation(), diag::note_previous_definition);
+        VD->setInvalidDecl();
+      }
+    }
+  }
+
   const DeclContext *DC = VD->getDeclContext();
   // If there's a #pragma GCC visibility in scope, and this isn't a class
   // member, set the visibility of this variable.
@@ -9323,12 +9365,17 @@ static bool ShouldWarnAboutMissingPrototype(const FunctionDecl *FD,
   return MissingPrototype;
 }
 
-void Sema::CheckForFunctionRedefinition(FunctionDecl *FD) {
+void
+Sema::CheckForFunctionRedefinition(FunctionDecl *FD,
+                                   const FunctionDecl *EffectiveDefinition) {
   // Don't complain if we're in GNU89 mode and the previous definition
   // was an extern inline function.
-  const FunctionDecl *Definition;
-  if (!FD->isDefined(Definition) ||
-      canRedefineFunction(Definition, getLangOpts()))
+  const FunctionDecl *Definition = EffectiveDefinition;
+  if (!Definition)
+    if (!FD->isDefined(Definition))
+      return;
+
+  if (canRedefineFunction(Definition, getLangOpts()))
     return;
 
   if (getLangOpts().GNUMode && Definition->isInlineSpecified() &&

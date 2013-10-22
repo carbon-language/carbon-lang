@@ -173,7 +173,7 @@ def AddressSpace : TypeAttr {
   let Args = [IntArgument<"AddressSpace">];
 }
 
-def Alias : InheritableAttr {
+def Alias : Attr {
   let Spellings = [GNU<"alias">, CXX11<"gnu", "alias">];
   let Args = [StringArgument<"Aliasee">];
 }
