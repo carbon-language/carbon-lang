@@ -62,6 +62,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_TRUE(_context.getDynamicBaseEnabled());
   EXPECT_TRUE(_context.getCreateManifest());
   EXPECT_EQ("a.exe.manifest", _context.getManifestOutputPath());
+  EXPECT_EQ("", _context.getManifestDependency());
   EXPECT_FALSE(_context.getEmbedManifest());
   EXPECT_EQ(1, _context.getManifestId());
   EXPECT_EQ("'asInvoker'", _context.getManifestLevel());
@@ -373,7 +374,7 @@ TEST_F(WinLinkParserTest, FailIfMismatch_Mismatch) {
 }
 
 //
-// Tests for /manifest, /manifestuac, and /manifestfile.
+// Tests for /manifest, /manifestuac, /manifestfile, and /manifestdependency.
 //
 TEST_F(WinLinkParserTest, Manifest_Default) {
   EXPECT_TRUE(parse("link.exe", "/manifest", "a.out", nullptr));
@@ -432,6 +433,12 @@ TEST_F(WinLinkParserTest, Manifestfile) {
   EXPECT_TRUE(parse("link.exe", "/manifestfile:bar.manifest",
                     "a.out", nullptr));
   EXPECT_EQ("bar.manifest", _context.getManifestOutputPath());
+}
+
+TEST_F(WinLinkParserTest, Manifestdependency) {
+  EXPECT_TRUE(parse("link.exe", "/manifestdependency:foo bar", "a.out",
+                    nullptr));
+  EXPECT_EQ("foo bar", _context.getManifestDependency());
 }
 
 //

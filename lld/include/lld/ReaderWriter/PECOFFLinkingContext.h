@@ -169,6 +169,11 @@ public:
   void setManifestUiAccess(std::string val) { _manifestUiAccess = val; }
   const std::string &getManifestUiAccess() const { return _manifestUiAccess; }
 
+  void setManifestDependency(std::string val) { _manifestDependency = val; }
+  const std::string &getManifestDependency() const {
+    return _manifestDependency;
+  }
+
   void setImageType(ImageType type) { _imageType = type; }
   ImageType getImageType() const { return _imageType; }
 
@@ -233,6 +238,7 @@ private:
   int _manifestId;
   std::string _manifestLevel;
   std::string _manifestUiAccess;
+  std::string _manifestDependency;
   ImageType _imageType;
 
   // The set to store /nodefaultlib arguments.

@@ -500,6 +500,14 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       ctx.setManifestOutputPath(ctx.allocateString(inputArg->getValue()));
       break;
 
+    case OPT_manifestdependency:
+      // /manifestdependency:<string> option. Note that the argument will be
+      // embedded to the manifest XML file with no error check, for link.exe
+      // compatibility. We do not gurantete that the resulting XML file is
+      // valid.
+      ctx.setManifestDependency(ctx.allocateString(inputArg->getValue()));
+      break;
+
     case OPT_failifmismatch:
       if (handleFailIfMismatchOption(inputArg->getValue(), failIfMismatchMap,
                                      diagnostics))
