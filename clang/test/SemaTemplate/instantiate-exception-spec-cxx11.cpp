@@ -44,13 +44,14 @@ namespace dr1330_example {
     A<int>().f(42);
   }
 
+  struct S {
+    template<typename T>
+    static int f() noexcept(noexcept(A<T>().f("boo!"))) { return 0; } // \
+    // expected-note {{instantiation of exception spec}}
+    typedef decltype(f<S>()) X;
+  };
+
   int test2() {
-    struct S {
-      template<typename T>
-      static int f() noexcept(noexcept(A<T>().f("boo!"))) { return 0; } // \
-      // expected-note {{instantiation of exception spec}}
-      typedef decltype(f<S>()) X;
-    };
     S().f<S>(); // ok
     S().f<int>(); // expected-note {{instantiation of exception spec}}
   }

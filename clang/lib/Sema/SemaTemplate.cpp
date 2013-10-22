@@ -5459,8 +5459,20 @@ Sema::CheckTemplateDeclScope(Scope *S, TemplateParameterList *TemplateParams) {
   while (Ctx && isa<LinkageSpecDecl>(Ctx))
     Ctx = Ctx->getParent();
 
-  if (Ctx && (Ctx->isFileContext() || Ctx->isRecord()))
-    return false;
+  if (Ctx) {
+    if (Ctx->isFileContext())
+      return false;
+    if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(Ctx)) {
+      // C++ [temp.mem]p2:
+      //   A local class shall not have member templates.
+      if (RD->isLocalClass())
+        return Diag(TemplateParams->getTemplateLoc(),
+                    diag::err_template_inside_local_class)
+          << TemplateParams->getSourceRange();
+      else
+        return false;
+    }
+  }
 
   return Diag(TemplateParams->getTemplateLoc(),
               diag::err_template_outside_namespace_or_class_scope)

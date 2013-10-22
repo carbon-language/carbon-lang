@@ -75,16 +75,6 @@ inline void OmittingCode(float x) {
 }
 void CallOmittingCode() { OmittingCode(1); }
 
-// CHECK: @_ZZ25LocalTemplateFunctionTestdEN5Local3fooIdEET_S1_
-int LocalTemplateFunctionTest(double d) {
-  struct Local {
-    template<class T> T foo(T t) {
-      return t;
-    }
-  };
-  return Local().foo(d);
-}
-
 // CHECK: @_ZZ15LocalAnonStructvENUt0_1gEv
 inline void LocalAnonStruct() {
   if (0) {
