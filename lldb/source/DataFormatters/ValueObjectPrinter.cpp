@@ -99,17 +99,38 @@ ValueObjectPrinter::GetDynamicValueIfNeeded ()
         return true;
     bool update_success = m_orig_valobj->UpdateValueIfNeeded (true);
     if (!update_success)
-        return false;
-    if (options.m_use_dynamic != eNoDynamicValues)
     {
-        ValueObject *dynamic_value = m_orig_valobj->GetDynamicValue(options.m_use_dynamic).get();
-        if (dynamic_value)
-            m_valobj = dynamic_value;
-        else
-            m_valobj = m_orig_valobj;
+        m_valobj = m_orig_valobj;
     }
     else
-        m_valobj = m_orig_valobj;
+    {
+        if (m_orig_valobj->IsDynamic())
+        {
+            if (options.m_use_dynamic == eNoDynamicValues)
+            {
+                ValueObject *static_value = m_orig_valobj->GetStaticValue().get();
+                if (static_value)
+                    m_valobj = static_value;
+                else
+                    m_valobj = m_orig_valobj;
+            }
+            else
+                m_valobj = m_orig_valobj;
+        }
+        else
+        {
+            if (options.m_use_dynamic != eNoDynamicValues)
+            {
+                ValueObject *dynamic_value = m_orig_valobj->GetDynamicValue(options.m_use_dynamic).get();
+                if (dynamic_value)
+                    m_valobj = dynamic_value;
+                else
+                    m_valobj = m_orig_valobj;
+            }
+            else
+                m_valobj = m_orig_valobj;
+        }
+    }
     m_clang_type = m_valobj->GetClangType();
     m_type_flags = m_clang_type.GetTypeInfo ();
     return true;
