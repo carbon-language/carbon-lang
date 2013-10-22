@@ -795,13 +795,13 @@ private:
 
   ErrorOr<std::string>
   writeResToTemporaryFile(std::unique_ptr<MemoryBuffer> mb) const {
-    // Get a temporary file path for .rc file.
+    // Get a temporary file path for .res file.
     SmallString<128> tempFilePath;
     if (error_code ec = llvm::sys::fs::createTemporaryFile(
-            "tmp", "rc", tempFilePath))
+            "tmp", "res", tempFilePath))
       return ec;
 
-    // Write the memory buffer contents to .rc file, so that we can run
+    // Write the memory buffer contents to .res file, so that we can run
     // cvtres.exe on it.
     OwningPtr<llvm::FileOutputBuffer> buffer;
     if (error_code ec = llvm::FileOutputBuffer::create(
@@ -858,7 +858,7 @@ private:
     return outFilePath.str().str();
   }
 
-  // Convert .rc file to .coff file and then parse it. Resource file is a file
+  // Convert .res file to .coff file and then parse it. Resource file is a file
   // containing various types of data, such as icons, translation texts,
   // etc. "cvtres.exe" command reads an RC file to create a COFF file which
   // encapsulates resource data into rsrc$N sections, where N is an integer.
