@@ -39,7 +39,7 @@ public:
         _swapRunFromNet(false), _baseRelocationEnabled(true),
         _terminalServerAware(true), _dynamicBaseEnabled(true),
         _createManifest(true), _embedManifest(false), _manifestId(1),
-        _manifestLevel("'asInvoker'"), _manifestUiAccess(false),
+        _manifestLevel("'asInvoker'"), _manifestUiAccess("'false'"),
         _imageType(ImageType::IMAGE_EXE) {
     setDeadStripping(true);
   }
@@ -161,8 +161,8 @@ public:
   void setManifestLevel(std::string val) { _manifestLevel = std::move(val); }
   const std::string &getManifestLevel() const { return _manifestLevel; }
 
-  void setManifestUiAccess(bool val) { _manifestUiAccess = val; }
-  bool getManifestUiAccess() const { return _manifestUiAccess; }
+  void setManifestUiAccess(std::string val) { _manifestUiAccess = val; }
+  const std::string &getManifestUiAccess() const { return _manifestUiAccess; }
 
   void setImageType(ImageType type) { _imageType = type; }
   ImageType getImageType() const { return _imageType; }
@@ -226,7 +226,7 @@ private:
   bool _embedManifest;
   int _manifestId;
   std::string _manifestLevel;
-  bool _manifestUiAccess;
+  std::string _manifestUiAccess;
   ImageType _imageType;
 
   // The set to store /nodefaultlib arguments.

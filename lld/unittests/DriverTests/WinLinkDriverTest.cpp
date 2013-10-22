@@ -64,7 +64,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_FALSE(_context.getEmbedManifest());
   EXPECT_EQ(1, _context.getManifestId());
   EXPECT_EQ("'asInvoker'", _context.getManifestLevel());
-  EXPECT_EQ(false, _context.getManifestUiAccess());
+  EXPECT_EQ("'false'", _context.getManifestUiAccess());
   EXPECT_TRUE(_context.deadStrip());
   EXPECT_FALSE(_context.logInputFiles());
 }
@@ -380,7 +380,7 @@ TEST_F(WinLinkParserTest, Manifest_Default) {
   EXPECT_FALSE(_context.getEmbedManifest());
   EXPECT_EQ(1, _context.getManifestId());
   EXPECT_EQ("'asInvoker'", _context.getManifestLevel());
-  EXPECT_EQ(false, _context.getManifestUiAccess());
+  EXPECT_EQ("'false'", _context.getManifestUiAccess());
 }
 
 TEST_F(WinLinkParserTest, Manifest_No) {
@@ -394,7 +394,7 @@ TEST_F(WinLinkParserTest, Manifest_Embed) {
   EXPECT_TRUE(_context.getEmbedManifest());
   EXPECT_EQ(1, _context.getManifestId());
   EXPECT_EQ("'asInvoker'", _context.getManifestLevel());
-  EXPECT_EQ(false, _context.getManifestUiAccess());
+  EXPECT_EQ("'false'", _context.getManifestUiAccess());
 }
 
 TEST_F(WinLinkParserTest, Manifest_Embed_ID42) {
@@ -403,28 +403,28 @@ TEST_F(WinLinkParserTest, Manifest_Embed_ID42) {
   EXPECT_TRUE(_context.getEmbedManifest());
   EXPECT_EQ(42, _context.getManifestId());
   EXPECT_EQ("'asInvoker'", _context.getManifestLevel());
-  EXPECT_EQ(false, _context.getManifestUiAccess());
+  EXPECT_EQ("'false'", _context.getManifestUiAccess());
 }
 
 TEST_F(WinLinkParserTest, Manifestuac_Level) {
   EXPECT_TRUE(parse("link.exe", "/manifestuac:level='requireAdministrator'",
                     "a.out", nullptr));
   EXPECT_EQ("'requireAdministrator'", _context.getManifestLevel());
-  EXPECT_EQ(false, _context.getManifestUiAccess());
+  EXPECT_EQ("'false'", _context.getManifestUiAccess());
 }
 
 TEST_F(WinLinkParserTest, Manifestuac_UiAccess) {
-  EXPECT_TRUE(parse("link.exe", "/manifestuac:uiAccess=true", "a.out", nullptr));
+  EXPECT_TRUE(parse("link.exe", "/manifestuac:uiAccess='true'", "a.out", nullptr));
   EXPECT_EQ("'asInvoker'", _context.getManifestLevel());
-  EXPECT_EQ(true, _context.getManifestUiAccess());
+  EXPECT_EQ("'true'", _context.getManifestUiAccess());
 }
 
 TEST_F(WinLinkParserTest, Manifestuac_LevelAndUiAccess) {
   EXPECT_TRUE(parse("link.exe",
-                    "/manifestuac:level='requireAdministrator' uiAccess=true",
+                    "/manifestuac:level='requireAdministrator' uiAccess='true'",
                     "a.out", nullptr));
   EXPECT_EQ("'requireAdministrator'", _context.getManifestLevel());
-  EXPECT_EQ(true, _context.getManifestUiAccess());
+  EXPECT_EQ("'true'", _context.getManifestUiAccess());
 }
 
 //

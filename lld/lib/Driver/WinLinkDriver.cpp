@@ -167,7 +167,7 @@ bool parseManifest(StringRef option, bool &enable, bool &embed, int &id) {
 // so the values given via the command line must be valid as XML attributes.
 // This may sound a bit odd, but that's how link.exe works, so we will follow.
 bool parseManifestUac(StringRef option, llvm::Optional<std::string> &level,
-                      llvm::Optional<bool> &uiAccess) {
+                      llvm::Optional<std::string> &uiAccess) {
   for (;;) {
     option = option.ltrim();
     if (option.empty())
@@ -179,14 +179,11 @@ bool parseManifestUac(StringRef option, llvm::Optional<std::string> &level,
       level = value.str();
       continue;
     }
-    if (option.startswith("uiAccess=true")) {
-      option = option.substr(strlen("uiAccess=true"));
-      uiAccess = true;
-      continue;
-    }
-    if (option.startswith("uiAccess=false")) {
-      option = option.substr(strlen("uiAccess=false"));
-      uiAccess = false;
+    if (option.startswith("uiAccess=")) {
+      option = option.substr(strlen("uiAccess="));
+      StringRef value;
+      llvm::tie(value, option) = option.split(" ");
+      uiAccess = value.str();
       continue;
     }
     return false;
@@ -472,7 +469,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
     case OPT_manifestuac: {
       // Parse /manifestuac.
       llvm::Optional<std::string> privilegeLevel;
-      llvm::Optional<bool> uiAccess;
+      llvm::Optional<std::string> uiAccess;
       if (!parseManifestUac(inputArg->getValue(), privilegeLevel, uiAccess)) {
         diagnostics << "Unknown argument for /manifestuac: "
                     << inputArg->getValue() << "\n";
