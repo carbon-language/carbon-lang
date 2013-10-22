@@ -484,10 +484,6 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     while ($Cnt > 0) { ++$i; --$Cnt; push @CompileOpts, $ARGV[$i]; }
     next;
   }
-  if ($Arg =~ /-m.*/) {
-    push @CompileOpts,$Arg;
-    next;
-  }
   # Handle the case where there isn't a space after -iquote
   if ($Arg =~ /-iquote.*/) {
     push @CompileOpts,$Arg;
@@ -546,6 +542,11 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
       $Tmp = $Arg . $ARGV[$i];
     }
     push @CompileOpts,$Tmp;
+    next;
+  }
+  
+  if ($Arg =~ /-m.*/) {
+    push @CompileOpts,$Arg;
     next;
   }
   
