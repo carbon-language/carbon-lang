@@ -161,6 +161,13 @@ bool parseManifest(StringRef option, bool &enable, bool &embed, int &id) {
   return true;
 }
 
+// Returns true if \p str starts with \p prefix, ignoring case.
+bool startswith_lower(StringRef str, StringRef prefix) {
+  if (str.size() < prefix.size())
+    return false;
+  return str.substr(0, prefix.size()).equals_lower(prefix);
+}
+
 // Parse /manifestuac:(level=<string>|uiAccess=<string>).
 //
 // The arguments will be embedded to the manifest XML file with no error check,
@@ -172,15 +179,15 @@ bool parseManifestUac(StringRef option, llvm::Optional<std::string> &level,
     option = option.ltrim();
     if (option.empty())
       return true;
-    if (option.startswith("level=")) {
+    if (startswith_lower(option, "level=")) {
       option = option.substr(strlen("level="));
       StringRef value;
       llvm::tie(value, option) = option.split(" ");
       level = value.str();
       continue;
     }
-    if (option.startswith("uiAccess=")) {
-      option = option.substr(strlen("uiAccess="));
+    if (startswith_lower(option, "uiaccess=")) {
+      option = option.substr(strlen("uiaccess="));
       StringRef value;
       llvm::tie(value, option) = option.split(" ");
       uiAccess = value.str();
