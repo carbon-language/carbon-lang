@@ -6394,11 +6394,14 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
       // With unit stride, the iteration never steps past the limit value.
     } else if (isKnownPositive(Step)) {
       // Test whether a positive iteration can step past the limit value and
-      // past the maximum value for its type in a single step. The NSW/NUW flags
-      // can imply that stepping past RHS would immediately result in undefined
-      // behavior. No self-wrap is not useful here because the loop counter may
-      // signed or unsigned wrap but continue iterating and terminate with
-      // defined behavior without ever self-wrapping.
+      // past the maximum value for its type in a single step. Constant negative
+      // stride should be rare because LHS > RHS comparisons are canonicalized
+      // to -LHS < -RHS.
+      //
+      // NSW/NUW flags imply that stepping past RHS would immediately result in
+      // undefined behavior. No self-wrap is not useful here because the loop
+      // counter may signed or unsigned wrap but continue iterating and
+      // terminate with defined behavior without ever self-wrapping.
       const SCEV *One = getConstant(Step->getType(), 1);
       if (isSigned) {
         if (!AddRec->getNoWrapFlags(SCEV::FlagNSW)) {
@@ -6413,10 +6416,10 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
               .ult(getUnsignedRange(RHS).getUnsignedMax()))
           return getCouldNotCompute();
       }
-    } else
-      // TODO: Handle negative strides here and below.
+    } else {
+      // Cannot handle variable stride.
       return getCouldNotCompute();
-
+    }
     // We know the LHS is of the form {n,+,s} and the RHS is some loop-invariant
     // m.  So, we count the number of iterations in which {n,+,s} < m is true.
     // Note that we cannot simply return max(m-n,0)/s because it's not safe to
