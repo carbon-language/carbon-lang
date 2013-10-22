@@ -723,6 +723,14 @@ LLVMContextRef LLVMGetTypeContext(LLVMTypeRef Ty);
 void LLVMDumpType(LLVMTypeRef Val);
 
 /**
+ * Return a string representation of the type. Use
+ * LLVMDisposeMessage to free the string.
+ *
+ * @see llvm::Type::print()
+ */
+char *LLVMPrintTypeToString(LLVMTypeRef Val);
+
+/**
  * @defgroup LLVMCCoreTypeInt Integer Types
  *
  * Functions in this section operate on integer types.

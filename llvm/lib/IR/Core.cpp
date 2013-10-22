@@ -224,6 +224,16 @@ void LLVMDumpType(LLVMTypeRef Ty) {
   return unwrap(Ty)->dump();
 }
 
+char *LLVMPrintTypeToString(LLVMTypeRef Ty) {
+  std::string buf;
+  raw_string_ostream os(buf);
+
+  unwrap(Ty)->print(os);
+  os.flush();
+
+  return strdup(buf.c_str());
+}
+
 /*--.. Operations on integer types .........................................--*/
 
 LLVMTypeRef LLVMInt1TypeInContext(LLVMContextRef C)  {
