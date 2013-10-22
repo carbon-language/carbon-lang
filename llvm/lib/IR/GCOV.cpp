@@ -117,7 +117,7 @@ bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
   (void)BlockTagFound;
   assert(BlockTagFound && "Block Tag not found!");
   uint32_t BlockCount = Buff.readInt();
-  for (int i = 0, e = BlockCount; i != e; ++i) {
+  for (uint32_t i = 0, e = BlockCount; i != e; ++i) {
     Buff.readInt(); // Block flags;
     Blocks.push_back(new GCOVBlock(i));
   }
@@ -127,7 +127,7 @@ bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
     uint32_t EdgeCount = (Buff.readInt() - 1) / 2;
     uint32_t BlockNo = Buff.readInt();
     assert(BlockNo < BlockCount && "Unexpected Block number!");
-    for (int i = 0, e = EdgeCount; i != e; ++i) {
+    for (uint32_t i = 0, e = EdgeCount; i != e; ++i) {
       Blocks[BlockNo]->addEdge(Buff.readInt());
       Buff.readInt(); // Edge flag
     }
