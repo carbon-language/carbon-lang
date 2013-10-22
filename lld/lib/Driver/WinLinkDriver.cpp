@@ -471,15 +471,15 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
 
     case OPT_manifestuac: {
       // Parse /manifestuac.
-      llvm::Optional<std::string> priviledgeLevel;
+      llvm::Optional<std::string> privilegeLevel;
       llvm::Optional<bool> uiAccess;
-      if (!parseManifestUac(inputArg->getValue(), priviledgeLevel, uiAccess)) {
+      if (!parseManifestUac(inputArg->getValue(), privilegeLevel, uiAccess)) {
         diagnostics << "Unknown argument for /manifestuac: "
                     << inputArg->getValue() << "\n";
         return false;
       }
-      if (priviledgeLevel.hasValue())
-        ctx.setManifestLevel(priviledgeLevel.getValue());
+      if (privilegeLevel.hasValue())
+        ctx.setManifestLevel(privilegeLevel.getValue());
       if (uiAccess.hasValue())
         ctx.setManifestUiAccess(uiAccess.getValue());
       break;
