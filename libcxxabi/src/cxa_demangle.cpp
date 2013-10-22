@@ -4591,6 +4591,29 @@ struct string_pair
     String move_full() {return std::move(first) + std::move(second);}
 };
 
+struct Db
+{
+    typedef String String;
+    typedef Vector<string_pair> sub_type;
+    typedef Vector<sub_type> template_param_type;
+    Vector<string_pair> names;
+    Vector<sub_type> subs;
+    Vector<template_param_type> template_param;
+    unsigned cv;
+    unsigned ref;
+    bool parsed_ctor_dtor_cv;
+    bool tag_templates;
+    bool fix_forward_references;
+    bool try_to_parse_template_args;
+
+    template <size_t N>
+    Db(arena<N>& ar) :
+        names(ar),
+        subs(0, names, ar),
+        template_param(0, subs, ar)
+    {}
+};
+
 }  // unnamed namespace
 
 __attribute__ ((__visibility__("default")))
@@ -4606,28 +4629,6 @@ __cxa_demangle(const char* mangled_name, char* buf, size_t* n, int* status)
     }
     size_t internal_size = buf != nullptr ? *n : 0;
     arena<bs> a;
-    struct Db
-    {
-        typedef String String;
-        typedef Vector<string_pair> sub_type;
-        typedef Vector<sub_type> template_param_type;
-        Vector<string_pair> names;
-        Vector<sub_type> subs;
-        Vector<template_param_type> template_param;
-        unsigned cv;
-        unsigned ref;
-        bool parsed_ctor_dtor_cv;
-        bool tag_templates;
-        bool fix_forward_references;
-        bool try_to_parse_template_args;
-
-        template <size_t N>
-        Db(arena<N>& ar) :
-            names(ar),
-            subs(0, names, ar),
-            template_param(0, subs, ar)
-        {}
-    };
     Db db(a);
     db.cv = 0;
     db.ref = 0;
