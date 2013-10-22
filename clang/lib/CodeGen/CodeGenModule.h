@@ -275,6 +275,10 @@ class CodeGenModule : public CodeGenTypeCache {
   /// is done.
   std::vector<GlobalDecl> DeferredDeclsToEmit;
 
+  /// List of alias we have emitted. Used to make sure that what they point to
+  /// is defined once we get to the end of the of the translation unit.
+  std::vector<GlobalDecl> Aliases;
+
   /// DeferredVTables - A queue of (optional) vtables to consider emitting.
   std::vector<const CXXRecordDecl*> DeferredVTables;
 
@@ -1076,6 +1080,8 @@ private:
   /// EmitDeferred - Emit any needed decls for which code generation
   /// was deferred.
   void EmitDeferred();
+
+  void checkAliases();
 
   /// EmitDeferredVTables - Emit any vtables which we deferred and
   /// still have a use for.
