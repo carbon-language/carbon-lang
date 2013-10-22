@@ -2607,9 +2607,22 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
     }
 
     if (haveIncompatibleLanguageLinkages(Old, New)) {
-      Diag(New->getLocation(), diag::err_different_language_linkage) << New;
-      Diag(Old->getLocation(), PrevDiag);
-      return true;
+      // As a special case, retain the language linkage from previous
+      // declarations of a friend function as an extension.
+      //
+      // This liberal interpretation of C++ [class.friend]p3 matches GCC/MSVC
+      // and is useful because there's otherwise no way to specify language
+      // linkage within class scope.
+      //
+      // Check cautiously as the friend object kind isn't yet complete.
+      if (New->getFriendObjectKind() != Decl::FOK_None) {
+        Diag(New->getLocation(), diag::ext_retained_language_linkage) << New;
+        Diag(Old->getLocation(), PrevDiag);
+      } else {
+        Diag(New->getLocation(), diag::err_different_language_linkage) << New;
+        Diag(Old->getLocation(), PrevDiag);
+        return true;
+      }
     }
 
     if (OldQTypeForComparison == NewQType)

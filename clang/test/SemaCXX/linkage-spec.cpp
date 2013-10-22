@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wretained-language-linkage -DW_RETAINED_LANGUAGE_LINKAGE  %s
 extern "C" {
   extern "C" void f(int);
 }
@@ -153,4 +154,22 @@ void bar_pr7927() {
   f_pr7927(0);
   ::f_pr7927(E_7927);
   ::f_pr7927(0);
+}
+
+namespace PR17337 {
+  extern "C++" {
+    class Foo;
+    extern "C" int bar3(Foo *y);
+    class Foo {
+      int x;
+      friend int bar3(Foo *y);
+#ifdef W_RETAINED_LANGUAGE_LINKAGE
+// expected-note@-5 {{previous declaration is here}}
+// expected-warning@-3 {{retaining previous language linkage}}
+#endif
+    };
+    extern "C" int bar3(Foo *y) {
+      return y->x;
+    }
+  }
 }
