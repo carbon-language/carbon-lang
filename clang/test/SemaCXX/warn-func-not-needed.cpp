@@ -42,3 +42,12 @@ namespace test4 {
     g<int>();
   }
 }
+
+namespace test4 {
+  static void func();
+  void bar() {
+    void func();
+    func();
+  }
+  static void func() {}
+}
