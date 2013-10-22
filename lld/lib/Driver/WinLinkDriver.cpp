@@ -197,6 +197,13 @@ bool parseManifestUac(StringRef option, llvm::Optional<std::string> &level,
   }
 }
 
+StringRef replaceExtension(PECOFFLinkingContext &ctx,
+                           StringRef path, StringRef extension) {
+  SmallString<128> val = path;
+  llvm::sys::path::replace_extension(val, extension);
+  return ctx.allocateString(val.str());
+}
+
 // Handle /failifmismatch option.
 bool handleFailIfMismatchOption(StringRef option,
                                 std::map<StringRef, StringRef> &mustMatch,
@@ -628,10 +635,8 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   // constructed by replacing an extension of the first input file
   // with ".exe".
   if (ctx.outputPath().empty()) {
-    SmallString<128> firstInputFilePath =
-        *dyn_cast<FileNode>(&*inputElements[0])->getPath(ctx);
-    llvm::sys::path::replace_extension(firstInputFilePath, ".exe");
-    ctx.setOutputPath(ctx.allocateString(firstInputFilePath.str()));
+    StringRef path = *dyn_cast<FileNode>(&*inputElements[0])->getPath(ctx);
+    ctx.setOutputPath(replaceExtension(ctx, path, ".exe"));
   }
 
   // If the core linker already started, we need to explicitly call parse() for
