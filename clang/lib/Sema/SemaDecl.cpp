@@ -2743,7 +2743,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
 /// known to be compatible.
 ///
 /// This routine handles the merging of attributes and other
-/// properties of function declarations form the old declaration to
+/// properties of function declarations from the old declaration to
 /// the new declaration, once we know that New is in fact a
 /// redeclaration of Old.
 ///
