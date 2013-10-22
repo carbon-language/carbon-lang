@@ -15,6 +15,7 @@
 #include "llvm/Support/GCOV.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/system_error.h"
 using namespace llvm;
@@ -243,7 +244,7 @@ void FileInfo::addLineCount(StringRef Filename, uint32_t Line, uint32_t Count) {
       return;
     }
     StringRef AllLines = Buff.take()->getBuffer();
-    LineCounts L(AllLines.count('\n')+2);
+    LineCounts L(AllLines.count('\n'));
     L[Line-1] = Count;
     LineInfo[Filename] = L;
     return;
@@ -253,11 +254,13 @@ void FileInfo::addLineCount(StringRef Filename, uint32_t Line, uint32_t Count) {
 }
 
 /// print -  Print source files with collected line count information.
-void FileInfo::print() {
+void FileInfo::print(StringRef gcnoFile, StringRef gcdaFile) {
   for (StringMap<LineCounts>::iterator I = LineInfo.begin(), E = LineInfo.end();
        I != E; ++I) {
     StringRef Filename = I->first();
-    outs() << Filename << "\n";
+    outs() << "        -:    0:Source:" << Filename << "\n";
+    outs() << "        -:    0:Graph:" << gcnoFile << "\n";
+    outs() << "        -:    0:Data:" << gcdaFile << "\n";
     LineCounts &L = LineInfo[Filename];
     OwningPtr<MemoryBuffer> Buff;
     if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {
@@ -267,16 +270,15 @@ void FileInfo::print() {
     StringRef AllLines = Buff.take()->getBuffer();
     for (unsigned i = 0, e = L.size(); i != e; ++i) {
       if (L[i])
-        outs() << L[i] << ":\t";
+        outs() << format("%9lu:", L[i]);
       else
-        outs() << " :\t";
+        outs() << "        -:";
       std::pair<StringRef, StringRef> P = AllLines.split('\n');
       if (AllLines != P.first)
-        outs() << P.first;
+        outs() << format("%5u:", i+1) << P.first;
       outs() << "\n";
       AllLines = P.second;
     }
   }
 }
-
 

@@ -145,7 +145,7 @@ public:
     uint32_t Len = readInt() * 4;
     StringRef Str = Buffer->getBuffer().slice(Cursor, Cursor+Len);
     Cursor += Len;
-    return Str;
+    return Str.split('\0').first;
   }
 
   uint64_t getCursor() const { return Cursor; }
@@ -216,7 +216,7 @@ typedef SmallVector<uint32_t, 16> LineCounts;
 class FileInfo {
 public:
   void addLineCount(StringRef Filename, uint32_t Line, uint32_t Count);
-  void print();
+  void print(StringRef gcnoFile, StringRef gcdaFile);
 private:
   StringMap<LineCounts> LineInfo;
 };
