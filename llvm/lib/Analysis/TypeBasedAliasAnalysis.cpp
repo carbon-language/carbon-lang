@@ -231,8 +231,12 @@ namespace {
       if (Node->getNumOperands() < 2)
         return TBAAStructTypeNode();
 
-      // Special handling for a scalar type node. 
+      // Fast path for a scalar type node and a struct type node with a single
+      // field.
       if (Node->getNumOperands() <= 3) {
+        uint64_t Cur = Node->getNumOperands() == 2 ? 0 :
+                       cast<ConstantInt>(Node->getOperand(2))->getZExtValue();
+        Offset -= Cur;
         MDNode *P = dyn_cast_or_null<MDNode>(Node->getOperand(1));
         if (!P)
           return TBAAStructTypeNode();
