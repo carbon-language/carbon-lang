@@ -1073,7 +1073,7 @@ Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   Value *Idx  = Visit(E->getIdx());
   QualType IdxTy = E->getIdx()->getType();
 
-  if (CGF.SanOpts->Bounds)
+  if (CGF.SanOpts->ArrayBounds)
     CGF.EmitBoundsCheck(E, E->getBase(), Idx, IdxTy, /*Accessed*/true);
 
   bool IdxSigned = IdxTy->isSignedIntegerOrEnumerationType();
@@ -2314,7 +2314,7 @@ static Value *emitPointerArithmetic(CodeGenFunction &CGF,
   if (isSubtraction)
     index = CGF.Builder.CreateNeg(index, "idx.neg");
 
-  if (CGF.SanOpts->Bounds)
+  if (CGF.SanOpts->ArrayBounds)
     CGF.EmitBoundsCheck(op.E, pointerOperand, index, indexOperand->getType(),
                         /*Accessed*/ false);
 

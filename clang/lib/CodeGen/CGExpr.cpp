@@ -641,7 +641,8 @@ static llvm::Value *getArrayIndexingBound(
 void CodeGenFunction::EmitBoundsCheck(const Expr *E, const Expr *Base,
                                       llvm::Value *Index, QualType IndexType,
                                       bool Accessed) {
-  assert(SanOpts->Bounds && "should not be called unless adding bounds checks");
+  assert(SanOpts->ArrayBounds &&
+         "should not be called unless adding bounds checks");
 
   QualType IndexedType;
   llvm::Value *Bound = getArrayIndexingBound(*this, Base, IndexedType);
@@ -742,7 +743,7 @@ LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
 
 LValue CodeGenFunction::EmitCheckedLValue(const Expr *E, TypeCheckKind TCK) {
   LValue LV;
-  if (SanOpts->Bounds && isa<ArraySubscriptExpr>(E))
+  if (SanOpts->ArrayBounds && isa<ArraySubscriptExpr>(E))
     LV = EmitArraySubscriptExpr(cast<ArraySubscriptExpr>(E), /*Accessed*/true);
   else
     LV = EmitLValue(E);
@@ -2233,7 +2234,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E,
   QualType IdxTy  = E->getIdx()->getType();
   bool IdxSigned = IdxTy->isSignedIntegerOrEnumerationType();
 
-  if (SanOpts->Bounds)
+  if (SanOpts->ArrayBounds)
     EmitBoundsCheck(E, E->getBase(), Idx, IdxTy, Accessed);
 
   // If the base is a vector type, then we are forming a vector element lvalue

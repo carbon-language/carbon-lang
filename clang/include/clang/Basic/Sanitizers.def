@@ -59,8 +59,8 @@ SANITIZER("leak", Leak)
 
 // UndefinedBehaviorSanitizer
 SANITIZER("alignment", Alignment)
+SANITIZER("array-bounds", ArrayBounds)
 SANITIZER("bool", Bool)
-SANITIZER("bounds", Bounds)
 SANITIZER("enum", Enum)
 SANITIZER("float-cast-overflow", FloatCastOverflow)
 SANITIZER("float-divide-by-zero", FloatDivideByZero)
@@ -84,7 +84,7 @@ SANITIZER("dataflow", DataFlow)
 // -fsanitize=undefined includes all the sanitizers which have low overhead, no
 // ABI or address space layout implications, and only catch undefined behavior.
 SANITIZER_GROUP("undefined", Undefined,
-                Alignment | Bool | Bounds | Enum | FloatCastOverflow |
+                Alignment | Bool | ArrayBounds | Enum | FloatCastOverflow |
                 FloatDivideByZero | Function | IntegerDivideByZero | Null |
                 ObjectSize | Return | Shift | SignedIntegerOverflow |
                 Unreachable | VLABound | Vptr)
@@ -94,7 +94,7 @@ SANITIZER_GROUP("undefined", Undefined,
 // runtime support.  This group is generally used in conjunction with the
 // -fsanitize-undefined-trap-on-error flag.
 SANITIZER_GROUP("undefined-trap", UndefinedTrap,
-                Alignment | Bool | Bounds | Enum | FloatCastOverflow |
+                Alignment | Bool | ArrayBounds | Enum | FloatCastOverflow |
                 FloatDivideByZero | IntegerDivideByZero | Null | ObjectSize |
                 Return | Shift | SignedIntegerOverflow | Unreachable |
                 VLABound)
@@ -102,6 +102,10 @@ SANITIZER_GROUP("undefined-trap", UndefinedTrap,
 SANITIZER_GROUP("integer", Integer,
                 SignedIntegerOverflow | UnsignedIntegerOverflow | Shift |
                 IntegerDivideByZero)
+
+// -fbounds-checking
+SANITIZER("local-bounds", LocalBounds)
+SANITIZER_GROUP("bounds", Bounds, ArrayBounds | LocalBounds)
 
 #undef SANITIZER
 #undef SANITIZER_GROUP

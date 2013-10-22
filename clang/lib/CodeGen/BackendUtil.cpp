@@ -245,7 +245,7 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
                            addObjCARCOptPass);
   }
 
-  if (LangOpts.Sanitize.Bounds) {
+  if (LangOpts.Sanitize.LocalBounds) {
     PMBuilder.addExtension(PassManagerBuilder::EP_ScalarOptimizerLate,
                            addBoundsCheckingPass);
     PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,

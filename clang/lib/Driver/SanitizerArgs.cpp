@@ -256,8 +256,8 @@ bool SanitizerArgs::parse(const Driver &D, const llvm::opt::ArgList &Args,
       "-fsanitize=undefined-trap -fsanitize-undefined-trap-on-error";
   } else if (A->getOption().matches(options::OPT_fbounds_checking) ||
              A->getOption().matches(options::OPT_fbounds_checking_EQ)) {
-    Add = Bounds;
-    DeprecatedReplacement = "-fsanitize=bounds";
+    Add = LocalBounds;
+    DeprecatedReplacement = "-fsanitize=local-bounds";
   } else if (A->getOption().matches(options::OPT_fsanitize_EQ)) {
     Add = parse(D, A, DiagnoseErrors);
   } else if (A->getOption().matches(options::OPT_fno_sanitize_EQ)) {

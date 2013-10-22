@@ -1,26 +1,29 @@
-// RUN: %clang_cc1 -fsanitize=bounds -emit-llvm -triple x86_64-apple-darwin10 < %s | FileCheck %s
+// RUN: %clang_cc1 -fsanitize=local-bounds -emit-llvm -triple x86_64-apple-darwin10 %s -o - | FileCheck %s
+// RUN: %clang_cc1 -fsanitize=array-bounds -O -fsanitize-undefined-trap-on-error -emit-llvm -triple x86_64-apple-darwin10 -DNO_DYNAMIC %s -o - | FileCheck %s
 
-// CHECK: @f
+// CHECK-LABEL: @f
 double f(int b, int i) {
   double a[b];
-  // CHECK: trap
+  // CHECK: call {{.*}} @llvm.trap
   return a[i];
 }
 
-// CHECK: @f2
+// CHECK-LABEL: @f2
 void f2() {
   // everything is constant; no trap possible
-  // CHECK-NOT: trap
+  // CHECK-NOT: call {{.*}} @llvm.trap
   int a[2];
   a[1] = 42;
-  
+
+#ifndef NO_DYNAMIC
   short *b = malloc(64);
   b[5] = *a + a[1] + 2;
+#endif
 }
 
-// CHECK: @f3
+// CHECK-LABEL: @f3
 void f3() {
   int a[1];
-  // CHECK: trap
+  // CHECK: call {{.*}} @llvm.trap
   a[2] = 1;
 }
