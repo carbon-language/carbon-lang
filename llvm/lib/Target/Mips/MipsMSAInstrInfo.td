@@ -432,12 +432,12 @@ class BNEGI_H_ENC : MSA_BIT_H_FMT<0b101, 0b001001>;
 class BNEGI_W_ENC : MSA_BIT_W_FMT<0b101, 0b001001>;
 class BNEGI_D_ENC : MSA_BIT_D_FMT<0b101, 0b001001>;
 
-class BNZ_B_ENC : MSA_I10_FMT<0b000, 0b00, 0b001100>;
-class BNZ_H_ENC : MSA_I10_FMT<0b000, 0b01, 0b001100>;
-class BNZ_W_ENC : MSA_I10_FMT<0b000, 0b10, 0b001100>;
-class BNZ_D_ENC : MSA_I10_FMT<0b000, 0b11, 0b001100>;
+class BNZ_B_ENC : MSA_CBRANCH_FMT<0b111, 0b00>;
+class BNZ_H_ENC : MSA_CBRANCH_FMT<0b111, 0b01>;
+class BNZ_W_ENC : MSA_CBRANCH_FMT<0b111, 0b10>;
+class BNZ_D_ENC : MSA_CBRANCH_FMT<0b111, 0b11>;
 
-class BNZ_V_ENC : MSA_VEC_FMT<0b01000, 0b011110>;
+class BNZ_V_ENC : MSA_CBRANCH_V_FMT<0b01000>;
 
 class BSEL_V_ENC : MSA_VEC_FMT<0b00110, 0b011110>;
 
@@ -453,12 +453,12 @@ class BSETI_H_ENC : MSA_BIT_H_FMT<0b100, 0b001001>;
 class BSETI_W_ENC : MSA_BIT_W_FMT<0b100, 0b001001>;
 class BSETI_D_ENC : MSA_BIT_D_FMT<0b100, 0b001001>;
 
-class BZ_B_ENC : MSA_I10_FMT<0b001, 0b00, 0b001100>;
-class BZ_H_ENC : MSA_I10_FMT<0b001, 0b01, 0b001100>;
-class BZ_W_ENC : MSA_I10_FMT<0b001, 0b10, 0b001100>;
-class BZ_D_ENC : MSA_I10_FMT<0b001, 0b11, 0b001100>;
+class BZ_B_ENC : MSA_CBRANCH_FMT<0b110, 0b00>;
+class BZ_H_ENC : MSA_CBRANCH_FMT<0b110, 0b01>;
+class BZ_W_ENC : MSA_CBRANCH_FMT<0b110, 0b10>;
+class BZ_D_ENC : MSA_CBRANCH_FMT<0b110, 0b11>;
 
-class BZ_V_ENC : MSA_VECS10_FMT<0b01001, 0b011110>;
+class BZ_V_ENC : MSA_CBRANCH_V_FMT<0b01011>;
 
 class CEQ_B_ENC : MSA_3R_FMT<0b000, 0b00, 0b001111>;
 class CEQ_H_ENC : MSA_3R_FMT<0b000, 0b01, 0b001111>;
@@ -1258,10 +1258,10 @@ class MSA_3RF_4RF_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                             InstrItinClass itin = NoItinerary> :
   MSA_3R_4R_DESC_BASE<instr_asm, OpNode, ROWD, ROWS, ROWT, itin>;
 
-class MSA_CBRANCH_DESC_BASE<string instr_asm, RegisterClass RCWD> {
+class MSA_CBRANCH_DESC_BASE<string instr_asm, RegisterOperand ROWD> {
   dag OutOperandList = (outs);
-  dag InOperandList = (ins RCWD:$wd, brtarget:$offset);
-  string AsmString = !strconcat(instr_asm, "\t$wd, $offset");
+  dag InOperandList = (ins ROWD:$wt, brtarget:$offset);
+  string AsmString = !strconcat(instr_asm, "\t$wt, $offset");
   list<dag> Pattern = [];
   InstrItinClass Itinerary = IIBranch;
   bit isBranch = 1;
@@ -1511,12 +1511,12 @@ class BNEGI_W_DESC : MSA_BIT_W_DESC_BASE<"bnegi.w", int_mips_bnegi_w,
 class BNEGI_D_DESC : MSA_BIT_D_DESC_BASE<"bnegi.d", int_mips_bnegi_d,
                                          MSA128DOpnd>;
 
-class BNZ_B_DESC : MSA_CBRANCH_DESC_BASE<"bnz.b", MSA128B>;
-class BNZ_H_DESC : MSA_CBRANCH_DESC_BASE<"bnz.h", MSA128H>;
-class BNZ_W_DESC : MSA_CBRANCH_DESC_BASE<"bnz.w", MSA128W>;
-class BNZ_D_DESC : MSA_CBRANCH_DESC_BASE<"bnz.d", MSA128D>;
+class BNZ_B_DESC : MSA_CBRANCH_DESC_BASE<"bnz.b", MSA128BOpnd>;
+class BNZ_H_DESC : MSA_CBRANCH_DESC_BASE<"bnz.h", MSA128HOpnd>;
+class BNZ_W_DESC : MSA_CBRANCH_DESC_BASE<"bnz.w", MSA128WOpnd>;
+class BNZ_D_DESC : MSA_CBRANCH_DESC_BASE<"bnz.d", MSA128DOpnd>;
 
-class BNZ_V_DESC : MSA_CBRANCH_DESC_BASE<"bnz.v", MSA128B>;
+class BNZ_V_DESC : MSA_CBRANCH_DESC_BASE<"bnz.v", MSA128BOpnd>;
 
 class BSEL_V_DESC {
   dag OutOperandList = (outs MSA128BOpnd:$wd);
@@ -1556,12 +1556,12 @@ class BSETI_W_DESC : MSA_BIT_W_DESC_BASE<"bseti.w", int_mips_bseti_w,
 class BSETI_D_DESC : MSA_BIT_D_DESC_BASE<"bseti.d", int_mips_bseti_d,
                                          MSA128DOpnd>;
 
-class BZ_B_DESC : MSA_CBRANCH_DESC_BASE<"bz.b", MSA128B>;
-class BZ_H_DESC : MSA_CBRANCH_DESC_BASE<"bz.h", MSA128H>;
-class BZ_W_DESC : MSA_CBRANCH_DESC_BASE<"bz.w", MSA128W>;
-class BZ_D_DESC : MSA_CBRANCH_DESC_BASE<"bz.d", MSA128D>;
+class BZ_B_DESC : MSA_CBRANCH_DESC_BASE<"bz.b", MSA128BOpnd>;
+class BZ_H_DESC : MSA_CBRANCH_DESC_BASE<"bz.h", MSA128HOpnd>;
+class BZ_W_DESC : MSA_CBRANCH_DESC_BASE<"bz.w", MSA128WOpnd>;
+class BZ_D_DESC : MSA_CBRANCH_DESC_BASE<"bz.d", MSA128DOpnd>;
 
-class BZ_V_DESC : MSA_CBRANCH_DESC_BASE<"bz.v", MSA128B>;
+class BZ_V_DESC : MSA_CBRANCH_DESC_BASE<"bz.v", MSA128BOpnd>;
 
 class CEQ_B_DESC : MSA_3R_DESC_BASE<"ceq.b", vseteq_v16i8, MSA128BOpnd>,
                    IsCommutable;

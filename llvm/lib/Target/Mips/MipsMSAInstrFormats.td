@@ -15,6 +15,10 @@ class MSAInst : MipsInst<(outs), (ins), "", [], NoItinerary, FrmOther> {
   let Inst{31-26} = 0b011110;
 }
 
+class MSACBranch : MSAInst {
+  let Inst{31-26} = 0b010001;
+}
+
 class PseudoMSA<dag outs, dag ins, list<dag> pattern,
                 InstrItinClass itin = IIPseudo>:
   MipsPseudo<outs, ins, pattern, itin> {
@@ -364,9 +368,23 @@ class MSA_VEC_FMT<bits<5> major, bits<6> minor>: MSAInst {
   let Inst{5-0} = minor;
 }
 
-class MSA_VECS10_FMT<bits<5> major, bits<6> minor>: MSAInst {
+class MSA_CBRANCH_FMT<bits<3> major, bits<2> df>: MSACBranch {
+  bits<16> offset;
+  bits<5> wt;
+
+  let Inst{25-23} = major;
+  let Inst{22-21} = df;
+  let Inst{20-16} = wt;
+  let Inst{15-0} = offset;
+}
+
+class MSA_CBRANCH_V_FMT<bits<5> major>: MSACBranch {
+  bits<16> offset;
+  bits<5> wt;
+
   let Inst{25-21} = major;
-  let Inst{5-0} = minor;
+  let Inst{20-16} = wt;
+  let Inst{15-0} = offset;
 }
 
 class SPECIAL_LSA_FMT: MSAInst {
