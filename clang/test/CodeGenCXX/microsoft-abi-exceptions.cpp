@@ -141,7 +141,7 @@ C::C() { foo(); }
 //
 //        We shouldn't do any vbptr loads, just constant GEPs.
 // WIN32-NOT:  load
-// WIN32:      getelementptr inbounds i8* %{{.*}}, i64 4
+// WIN32:      getelementptr i8* %{{.*}}, i32 4
 // WIN32-NOT:  load
 // WIN32:      bitcast i8* %{{.*}} to %"struct.crash_on_partial_destroy::B"*
 // WIN32:      invoke x86_thiscallcc void @"\01??1B@crash_on_partial_destroy@@UAE@XZ"

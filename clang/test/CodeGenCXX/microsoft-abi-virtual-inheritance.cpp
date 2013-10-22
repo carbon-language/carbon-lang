@@ -54,7 +54,7 @@ B::~B() {
   // CHECK-LABEL: define x86_thiscallcc void @"\01??1B@@UAE@XZ"
   // Adjust the this parameter:
   // CHECK:   %[[THIS_PARAM_i8:.*]] = bitcast %struct.B* {{.*}} to i8*
-  // CHECK:   %[[THIS_i8:.*]] = getelementptr i8* %[[THIS_PARAM_i8]], i64 -8
+  // CHECK:   %[[THIS_i8:.*]] = getelementptr inbounds i8* %[[THIS_PARAM_i8]], i32 -8
   // CHECK:   %[[THIS:.*]] = bitcast i8* %[[THIS_i8]] to %struct.B*
   // CHECK:   store %struct.B* %[[THIS]], %struct.B** %[[THIS_ADDR:.*]], align 4
   // CHECK:   %[[THIS:.*]] = load %struct.B** %[[THIS_ADDR]]
@@ -87,7 +87,7 @@ B::~B() {
   // CHECK2-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_DB@@UAE@XZ"(%struct.B*
   // CHECK2: %[[THIS:.*]] = load %struct.B** {{.*}}
   // CHECK2: %[[THIS_i8:.*]] = bitcast %struct.B* %[[THIS]] to i8*
-  // CHECK2: %[[B_i8:.*]] = getelementptr inbounds i8* %[[THIS_i8]], i64 8
+  // CHECK2: %[[B_i8:.*]] = getelementptr i8* %[[THIS_i8]], i32 8
   // CHECK2: %[[B:.*]] = bitcast i8* %[[B_i8]] to %struct.B*
   // CHECK2: call x86_thiscallcc void @"\01??1B@@UAE@XZ"(%struct.B* %[[B]])
   // CHECK2: %[[THIS_i8:.*]] = bitcast %struct.B* %[[THIS]] to i8*
@@ -98,7 +98,7 @@ B::~B() {
 
   // CHECK2-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_GB@@UAEPAXI@Z"
   // CHECK2:   %[[THIS_PARAM_i8:.*]] = bitcast %struct.B* {{.*}} to i8*
-  // CHECK2:   %[[THIS_i8:.*]] = getelementptr i8* %[[THIS_PARAM_i8:.*]], i64 -8
+  // CHECK2:   %[[THIS_i8:.*]] = getelementptr inbounds i8* %[[THIS_PARAM_i8:.*]], i32 -8
   // CHECK2:   %[[THIS:.*]] = bitcast i8* %[[THIS_i8]] to %struct.B*
   // CHECK2:   store %struct.B* %[[THIS]], %struct.B** %[[THIS_ADDR:.*]], align 4
   // CHECK2:   %[[THIS:.*]] = load %struct.B** %[[THIS_ADDR]]
@@ -114,7 +114,7 @@ void B::foo() {
 // need to adjust 'this' before use.
 //
 // CHECK: %[[THIS_ADDR:.*]] = alloca %struct.B*, align 4
-// CHECK: %[[THIS_i8:.*]] = getelementptr i8* %[[ECX:.*]], i64 -8
+// CHECK: %[[THIS_i8:.*]] = getelementptr inbounds i8* %[[ECX:.*]], i32 -8
 // CHECK: %[[THIS:.*]] = bitcast i8* %[[THIS_i8]] to %struct.B*
 // CHECK: store %struct.B* %[[THIS]], %struct.B** %[[THIS_ADDR]], align 4
 
@@ -290,7 +290,7 @@ struct D : virtual Z, B, C {
 D::~D() {
   // CHECK-LABEL: define x86_thiscallcc void @"\01??1D@diamond@@UAE@XZ"(%"struct.diamond::D"*)
   // CHECK: %[[ARG_i8:.*]] = bitcast %"struct.diamond::D"* %{{.*}} to i8*
-  // CHECK: %[[THIS_i8:.*]] = getelementptr i8* %[[ARG_i8]], i64 -24
+  // CHECK: %[[THIS_i8:.*]] = getelementptr inbounds i8* %[[ARG_i8]], i32 -24
   // CHECK: %[[THIS:.*]] = bitcast i8* %[[THIS_i8]] to %"struct.diamond::D"*
   // CHECK: store %"struct.diamond::D"* %[[THIS]], %"struct.diamond::D"** %[[THIS_VAL:.*]], align 4
   // CHECK: %[[THIS:.*]] = load %"struct.diamond::D"** %[[THIS_VAL]]
@@ -298,14 +298,14 @@ D::~D() {
   // CHECK: %[[C_i8:.*]] = getelementptr inbounds i8* %[[D_i8]], i64 4
   // CHECK: %[[C:.*]] = bitcast i8* %[[C_i8]] to %"struct.diamond::C"*
   // CHECK: %[[C_i8:.*]] = bitcast %"struct.diamond::C"* %[[C]] to i8*
-  // CHECK: %[[ARG_i8:.*]] = getelementptr inbounds i8* %{{.*}}, i64 16
+  // CHECK: %[[ARG_i8:.*]] = getelementptr i8* %{{.*}}, i32 16
   // FIXME: We might consider changing the dtor this parameter type to i8*.
   // CHECK: %[[ARG:.*]] = bitcast i8* %[[ARG_i8]] to %"struct.diamond::C"*
   // CHECK: call x86_thiscallcc void @"\01??1C@diamond@@UAE@XZ"(%"struct.diamond::C"* %[[ARG]])
 
   // CHECK: %[[B:.*]] = bitcast %"struct.diamond::D"* %[[THIS]] to %"struct.diamond::B"*
   // CHECK: %[[B_i8:.*]] = bitcast %"struct.diamond::B"* %[[B]] to i8*
-  // CHECK: %[[ARG_i8:.*]] = getelementptr inbounds i8* %[[B_i8]], i64 4
+  // CHECK: %[[ARG_i8:.*]] = getelementptr i8* %[[B_i8]], i32 4
   // CHECK: %[[ARG:.*]] = bitcast i8* %[[ARG_i8]] to %"struct.diamond::B"*
   // CHECK: call x86_thiscallcc void @"\01??1B@diamond@@UAE@XZ"(%"struct.diamond::B"* %[[ARG]])
   // CHECK: ret void

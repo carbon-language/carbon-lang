@@ -632,8 +632,16 @@ llvm::Value *MicrosoftCXXABI::adjustThisArgumentForVirtualCall(
   if (!StaticOffset.isZero()) {
     assert(StaticOffset.isPositive());
     This = CGF.Builder.CreateBitCast(This, charPtrTy);
-    This = CGF.Builder
-        .CreateConstInBoundsGEP1_64(This, StaticOffset.getQuantity());
+    if (ML.VBase) {
+      // Non-virtual adjustment might result in a pointer outside the allocated
+      // object, e.g. if the final overrider class is laid out after the virtual
+      // base that declares a method in the most derived class.
+      // FIXME: Update the code that emits this adjustment in thunks prologues.
+      This = CGF.Builder.CreateConstGEP1_32(This, StaticOffset.getQuantity());
+    } else {
+      This = CGF.Builder.CreateConstInBoundsGEP1_32(This,
+                                                    StaticOffset.getQuantity());
+    }
   }
   return This;
 }
@@ -713,7 +721,8 @@ llvm::Value *MicrosoftCXXABI::adjustThisParameterInVirtualFunctionPrologue(
 
   This = CGF.Builder.CreateBitCast(This, charPtrTy);
   assert(Adjustment.isPositive());
-  This = CGF.Builder.CreateConstGEP1_64(This, -Adjustment.getQuantity());
+  This =
+      CGF.Builder.CreateConstInBoundsGEP1_32(This, -Adjustment.getQuantity());
   return CGF.Builder.CreateBitCast(This, thisTy);
 }
 
