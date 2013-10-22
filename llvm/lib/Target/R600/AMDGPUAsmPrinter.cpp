@@ -196,8 +196,10 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF) {
           VCCUsed = true;
           continue;
         }
+
         switch (reg) {
         default: break;
+        case AMDGPU::SCC:
         case AMDGPU::EXEC:
         case AMDGPU::M0:
           continue;
