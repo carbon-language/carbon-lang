@@ -219,7 +219,7 @@ void GCOVBlock::dump() {
 /// collectLineCounts - Collect line counts. This must be used after
 /// reading .gcno and .gcda files.
 void GCOVLines::collectLineCounts(FileInfo &FI, StringRef Filename, 
-                                  uint32_t Count) {
+                                  uint64_t Count) {
   for (SmallVectorImpl<uint32_t>::iterator I = Lines.begin(),
          E = Lines.end(); I != E; ++I)
     FI.addLineCount(Filename, *I, Count);
@@ -236,7 +236,7 @@ void GCOVLines::dump() {
 // FileInfo implementation.
 
 /// addLineCount - Add line count for the given line number in a file.
-void FileInfo::addLineCount(StringRef Filename, uint32_t Line, uint32_t Count) {
+void FileInfo::addLineCount(StringRef Filename, uint32_t Line, uint64_t Count) {
   if (LineInfo.find(Filename) == LineInfo.end()) {
     OwningPtr<MemoryBuffer> Buff;
     if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {
