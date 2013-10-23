@@ -1268,7 +1268,7 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
 
         for (unsigned i = 0; i < NumParts; ++i) {
           Outs.push_back(ISD::OutputArg(Flags, Parts[i].getValueType(),
-                                        /*isfixed=*/true, 0, 0));
+                                        VT, /*isfixed=*/true, 0, 0));
           OutVals.push_back(Parts[i]);
         }
       }
@@ -6738,6 +6738,7 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
     for (unsigned i = 0; i != NumRegs; ++i) {
       ISD::InputArg MyFlags;
       MyFlags.VT = RegisterVT;
+      MyFlags.ArgVT = VT;
       MyFlags.Used = CLI.IsReturnValueUsed;
       if (CLI.RetSExt)
         MyFlags.Flags.setSExt();
@@ -6827,7 +6828,7 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
 
       for (unsigned j = 0; j != NumParts; ++j) {
         // if it isn't first piece, alignment must be 1
-        ISD::OutputArg MyFlags(Flags, Parts[j].getValueType(),
+        ISD::OutputArg MyFlags(Flags, Parts[j].getValueType(), VT,
                                i < CLI.NumFixedArgs,
                                i, j*Parts[j].getValueType().getStoreSize());
         if (NumParts > 1 && j == 0)
@@ -6966,7 +6967,7 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
     ISD::ArgFlagsTy Flags;
     Flags.setSRet();
     MVT RegisterVT = TLI->getRegisterType(*DAG.getContext(), ValueVTs[0]);
-    ISD::InputArg RetArg(Flags, RegisterVT, true, 0, 0);
+    ISD::InputArg RetArg(Flags, RegisterVT, ValueVTs[0], true, 0, 0);
     Ins.push_back(RetArg);
   }
 
@@ -6977,6 +6978,7 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
     SmallVector<EVT, 4> ValueVTs;
     ComputeValueVTs(*TLI, I->getType(), ValueVTs);
     bool isArgValueUsed = !I->use_empty();
+    unsigned PartBase = 0;
     for (unsigned Value = 0, NumValues = ValueVTs.size();
          Value != NumValues; ++Value) {
       EVT VT = ValueVTs[Value];
@@ -7014,8 +7016,8 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
       MVT RegisterVT = TLI->getRegisterType(*CurDAG->getContext(), VT);
       unsigned NumRegs = TLI->getNumRegisters(*CurDAG->getContext(), VT);
       for (unsigned i = 0; i != NumRegs; ++i) {
-        ISD::InputArg MyFlags(Flags, RegisterVT, isArgValueUsed,
-                              Idx-1, i*RegisterVT.getStoreSize());
+        ISD::InputArg MyFlags(Flags, RegisterVT, VT, isArgValueUsed,
+                              Idx-1, PartBase+i*RegisterVT.getStoreSize());
         if (NumRegs > 1 && i == 0)
           MyFlags.Flags.setSplit();
         // if it isn't first piece, alignment must be 1
@@ -7023,6 +7025,7 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
           MyFlags.Flags.setOrigAlign(1);
         Ins.push_back(MyFlags);
       }
+      PartBase += VT.getStoreSize();
     }
   }
 
