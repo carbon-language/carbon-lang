@@ -508,7 +508,7 @@ public:
   /// \brief Set whether the declaration is used, in the sense of odr-use.
   ///
   /// This should only be used immediately after creating a declaration.
-  void setIsUsed(bool U) { Used = U; }
+  void setIsUsed() { Used = true; }
 
   /// \brief Mark the declaration used, in the sense of odr-use.
   ///

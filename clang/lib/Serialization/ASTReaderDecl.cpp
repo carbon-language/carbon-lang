@@ -386,7 +386,7 @@ void ASTDeclReader::VisitDecl(Decl *D) {
     D->setAttrsImpl(Attrs, Reader.getContext());
   }
   D->setImplicit(Record[Idx++]);
-  D->setIsUsed(Record[Idx++]);
+  D->Used = Record[Idx++];
   D->setReferenced(Record[Idx++]);
   D->setTopLevelDeclInObjCContainer(Record[Idx++]);
   D->setAccess((AccessSpecifier)Record[Idx++]);
@@ -2989,7 +2989,7 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
     case UPD_DECL_MARKED_USED: {
       // FIXME: This doesn't send the right notifications if there are
       // ASTMutationListeners other than an ASTWriter.
-      D->setIsUsed(true);
+      D->Used = true;
       break;
     }
     }
