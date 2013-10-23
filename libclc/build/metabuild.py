@@ -61,8 +61,13 @@ endif
     self.all_targets.append(output)
     if r['generator']:
       self.distclean_files.append(output)
+      if r['depfile']:
+        self.distclean_files.append(depfile)
     else:
       self.clean_files.append(output)
+      if r['depfile']:
+        self.distclean_files.append(depfile)
+
 
   def _as_list(self, input):
     if isinstance(input, list):
