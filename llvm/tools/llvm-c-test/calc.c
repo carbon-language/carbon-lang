@@ -44,8 +44,9 @@ static LLVMValueRef build_from_tokens(char **tokens, int ntokens,
                                       LLVMValueRef param) {
   LLVMValueRef stack[MAX_DEPTH];
   int depth = 0;
+  int i;
 
-  for (int i = 0; i < ntokens; i++) {
+  for (i = 0; i < ntokens; i++) {
     char tok = tokens[i][0];
     switch (tok) {
     case '+':
@@ -66,16 +67,19 @@ static LLVMValueRef build_from_tokens(char **tokens, int ntokens,
 
       break;
 
-    case '@':
+    case '@': {
+      LLVMValueRef off;
+
       if (depth < 1) {
         printf("stack underflow\n");
         return NULL;
       }
 
-      LLVMValueRef off = LLVMBuildGEP(builder, param, &stack[depth - 1], 1, "");
+      off = LLVMBuildGEP(builder, param, &stack[depth - 1], 1, "");
       stack[depth - 1] = LLVMBuildLoad(builder, off, "");
 
       break;
+    }
 
     default: {
       char *end;
@@ -108,6 +112,8 @@ static LLVMValueRef build_from_tokens(char **tokens, int ntokens,
 
 static void handle_line(char **tokens, int ntokens) {
   char *name = tokens[0];
+  LLVMValueRef param;
+  LLVMValueRef res;
 
   LLVMModuleRef M = LLVMModuleCreateWithName(name);
 
@@ -119,11 +125,10 @@ static void handle_line(char **tokens, int ntokens) {
   LLVMBuilderRef builder = LLVMCreateBuilder();
   LLVMPositionBuilderAtEnd(builder, LLVMAppendBasicBlock(F, "entry"));
 
-  LLVMValueRef param;
   LLVMGetParams(F, &param);
   LLVMSetValueName(param, "in");
 
-  LLVMValueRef res = build_from_tokens(tokens + 1, ntokens - 1, builder, param);
+  res = build_from_tokens(tokens + 1, ntokens - 1, builder, param);
   if (res) {
     char *irstr = LLVMPrintModuleToString(M);
     puts(irstr);

@@ -20,6 +20,7 @@
 int object_list_sections(void) {
   LLVMMemoryBufferRef MB;
   LLVMObjectFileRef O;
+  LLVMSectionIteratorRef sect;
   char *msg = NULL;
 
   if (LLVMCreateMemoryBufferWithSTDIN(&MB, &msg)) {
@@ -33,7 +34,7 @@ int object_list_sections(void) {
     exit(1);
   }
 
-  LLVMSectionIteratorRef sect = LLVMGetSections(O);
+  sect = LLVMGetSections(O);
   while (!LLVMIsSectionIteratorAtEnd(O, sect)) {
     printf("'%s': @0x%08" PRIx64 " +%" PRIu64 "\n", LLVMGetSectionName(sect),
            LLVMGetSectionAddress(sect), LLVMGetSectionSize(sect));
@@ -51,6 +52,8 @@ int object_list_sections(void) {
 int object_list_symbols(void) {
   LLVMMemoryBufferRef MB;
   LLVMObjectFileRef O;
+  LLVMSectionIteratorRef sect;
+  LLVMSymbolIteratorRef sym;
   char *msg = NULL;
 
   if (LLVMCreateMemoryBufferWithSTDIN(&MB, &msg)) {
@@ -64,8 +67,8 @@ int object_list_symbols(void) {
     exit(1);
   }
 
-  LLVMSectionIteratorRef sect = LLVMGetSections(O);
-  LLVMSymbolIteratorRef sym = LLVMGetSymbols(O);
+  sect = LLVMGetSections(O);
+  sym = LLVMGetSymbols(O);
   while (!LLVMIsSymbolIteratorAtEnd(O, sym)) {
 
     LLVMMoveToContainingSection(sect, sym);

@@ -15,10 +15,11 @@
 #include <stdio.h>
 
 int targets_list(void) {
+  LLVMTargetRef t;
   LLVMInitializeAllTargetInfos();
   LLVMInitializeAllTargets();
 
-  for (LLVMTargetRef t = LLVMGetFirstTarget(); t; t = LLVMGetNextTarget(t)) {
+  for (t = LLVMGetFirstTarget(); t; t = LLVMGetNextTarget(t)) {
     printf("%s", LLVMGetTargetName(t));
     if (LLVMTargetHasJIT(t))
       printf(" (+jit)");

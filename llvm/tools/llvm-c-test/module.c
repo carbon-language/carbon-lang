@@ -58,16 +58,18 @@ int module_list_functions(void) {
     if (LLVMIsDeclaration(f)) {
       printf("FunctionDeclaration: %s\n", LLVMGetValueName(f));
     } else {
+      LLVMBasicBlockRef bb;
+      LLVMValueRef isn;
       unsigned nisn = 0;
       unsigned nbb = 0;
 
       printf("FunctionDefinition: %s [#bb=%u]\n", LLVMGetValueName(f),
              LLVMCountBasicBlocks(f));
 
-      for (LLVMBasicBlockRef bb = LLVMGetFirstBasicBlock(f); bb;
+      for (bb = LLVMGetFirstBasicBlock(f); bb;
            bb = LLVMGetNextBasicBlock(bb)) {
         nbb++;
-        for (LLVMValueRef isn = LLVMGetFirstInstruction(bb); isn;
+        for (isn = LLVMGetFirstInstruction(bb); isn;
              isn = LLVMGetNextInstruction(isn)) {
           nisn++;
           if (LLVMIsACallInst(isn)) {
