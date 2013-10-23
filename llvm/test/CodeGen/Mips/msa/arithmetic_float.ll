@@ -236,6 +236,73 @@ define void @fabs_v2f64(<2 x double>* %c, <2 x double>* %a) nounwind {
   ; CHECK: .size fabs_v2f64
 }
 
+define void @fexp2_v4f32(<4 x float>* %c, <4 x float>* %a) nounwind {
+  ; CHECK: fexp2_v4f32:
+
+  %1 = load <4 x float>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = tail call <4 x float> @llvm.exp2.v4f32 (<4 x float> %1)
+  ; CHECK-DAG: ldi.w [[R3:\$w[0-9]+]], 1
+  ; CHECK-DAG: ffint_u.w [[R4:\$w[0-9]+]], [[R3]]
+  ; CHECK-DAG: fexp2.w [[R4:\$w[0-9]+]], [[R3]], [[R1]]
+  store <4 x float> %2, <4 x float>* %c
+  ; CHECK-DAG: st.w [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size fexp2_v4f32
+}
+
+define void @fexp2_v2f64(<2 x double>* %c, <2 x double>* %a) nounwind {
+  ; CHECK: fexp2_v2f64:
+
+  %1 = load <2 x double>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = tail call <2 x double> @llvm.exp2.v2f64 (<2 x double> %1)
+  ; CHECK-DAG: ldi.d [[R3:\$w[0-9]+]], 1
+  ; CHECK-DAG: ffint_u.d [[R4:\$w[0-9]+]], [[R3]]
+  ; CHECK-DAG: fexp2.d [[R4:\$w[0-9]+]], [[R3]], [[R1]]
+  store <2 x double> %2, <2 x double>* %c
+  ; CHECK-DAG: st.d [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size fexp2_v2f64
+}
+
+define void @fexp2_v4f32_2(<4 x float>* %c, <4 x float>* %a) nounwind {
+  ; CHECK: fexp2_v4f32_2:
+
+  %1 = load <4 x float>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = tail call <4 x float> @llvm.exp2.v4f32 (<4 x float> %1)
+  %3 = fmul <4 x float> <float 2.0, float 2.0, float 2.0, float 2.0>, %2
+  ; CHECK-DAG: lui [[R3:\$[0-9]+]], 16384
+  ; CHECK-DAG: fill.w [[R4:\$w[0-9]+]], [[R3]]
+  ; CHECK-DAG: fexp2.w [[R5:\$w[0-9]+]], [[R4]], [[R1]]
+  store <4 x float> %3, <4 x float>* %c
+  ; CHECK-DAG: st.w [[R5]], 0($4)
+
+  ret void
+  ; CHECK: .size fexp2_v4f32_2
+}
+
+define void @fexp2_v2f64_2(<2 x double>* %c, <2 x double>* %a) nounwind {
+  ; CHECK:      .8byte 4611686018427387904
+  ; CHECK-NEXT: .8byte 4611686018427387904
+  ; CHECK: fexp2_v2f64_2:
+
+  %1 = load <2 x double>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = tail call <2 x double> @llvm.exp2.v2f64 (<2 x double> %1)
+  %3 = fmul <2 x double> <double 2.0, double 2.0>, %2
+  ; CHECK-DAG: ld.d [[R3:\$w[0-9]+]], %lo(
+  ; CHECK-DAG: fexp2.d [[R4:\$w[0-9]+]], [[R3]], [[R1]]
+  store <2 x double> %3, <2 x double>* %c
+  ; CHECK-DAG: st.d [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size fexp2_v2f64_2
+}
+
 define void @fsqrt_v4f32(<4 x float>* %c, <4 x float>* %a) nounwind {
   ; CHECK: fsqrt_v4f32:
 
@@ -378,6 +445,8 @@ define void @ftrunc_s_v2f64(<2 x i64>* %c, <2 x double>* %a) nounwind {
 
 declare <4 x float>  @llvm.fabs.v4f32(<4 x float>  %Val)
 declare <2 x double> @llvm.fabs.v2f64(<2 x double> %Val)
+declare <4 x float>  @llvm.exp2.v4f32(<4 x float>  %val)
+declare <2 x double> @llvm.exp2.v2f64(<2 x double> %val)
 declare <4 x float>  @llvm.fma.v4f32(<4 x float>  %a, <4 x float>  %b,
                                      <4 x float>  %c)
 declare <2 x double> @llvm.fma.v2f64(<2 x double> %a, <2 x double> %b,

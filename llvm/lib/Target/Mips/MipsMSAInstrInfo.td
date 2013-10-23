@@ -315,6 +315,9 @@ def muladd : PatFrag<(ops node:$wd, node:$ws, node:$wt),
 def mulsub : PatFrag<(ops node:$wd, node:$ws, node:$wt),
                      (sub node:$wd, (mul node:$ws, node:$wt))>;
 
+def mul_fexp2 : PatFrag<(ops node:$ws, node:$wt),
+                        (fmul node:$ws, (fexp2 node:$wt))>;
+
 // Immediates
 def immSExt5 : ImmLeaf<i32, [{return isInt<5>(Imm);}]>;
 def immSExt10: ImmLeaf<i32, [{return isInt<10>(Imm);}]>;
@@ -1811,10 +1814,19 @@ class FEXDO_H_DESC : MSA_3RF_DESC_BASE<"fexdo.h", int_mips_fexdo_h,
 class FEXDO_W_DESC : MSA_3RF_DESC_BASE<"fexdo.w", int_mips_fexdo_w,
                                        MSA128WOpnd, MSA128DOpnd, MSA128DOpnd>;
 
-class FEXP2_W_DESC : MSA_3RF_DESC_BASE<"fexp2.w", int_mips_fexp2_w,
-                                       MSA128WOpnd>;
-class FEXP2_D_DESC : MSA_3RF_DESC_BASE<"fexp2.d", int_mips_fexp2_d,
-                                       MSA128DOpnd>;
+// The fexp2.df instruction multiplies the first operand by 2 to the power of
+// the second operand. We therefore need a pseudo-insn in order to invent the
+// 1.0 when we only need to match ISD::FEXP2.
+class FEXP2_W_DESC : MSA_3RF_DESC_BASE<"fexp2.w", mul_fexp2, MSA128WOpnd>;
+class FEXP2_D_DESC : MSA_3RF_DESC_BASE<"fexp2.d", mul_fexp2, MSA128DOpnd>;
+let usesCustomInserter = 1 in {
+  class FEXP2_W_1_PSEUDO_DESC :
+      MipsPseudo<(outs MSA128W:$wd), (ins MSA128W:$ws),
+                 [(set MSA128W:$wd, (fexp2 MSA128W:$ws))]>;
+  class FEXP2_D_1_PSEUDO_DESC :
+      MipsPseudo<(outs MSA128D:$wd), (ins MSA128D:$ws),
+                 [(set MSA128D:$wd, (fexp2 MSA128D:$ws))]>;
+}
 
 class FEXUPL_W_DESC : MSA_2RF_DESC_BASE<"fexupl.w", int_mips_fexupl_w,
                                         MSA128WOpnd, MSA128HOpnd>;
@@ -2757,6 +2769,8 @@ def FEXDO_W : FEXDO_W_ENC, FEXDO_W_DESC;
 
 def FEXP2_W : FEXP2_W_ENC, FEXP2_W_DESC;
 def FEXP2_D : FEXP2_D_ENC, FEXP2_D_DESC;
+def FEXP2_W_1_PSEUDO : FEXP2_W_1_PSEUDO_DESC;
+def FEXP2_D_1_PSEUDO : FEXP2_D_1_PSEUDO_DESC;
 
 def FEXUPL_W : FEXUPL_W_ENC, FEXUPL_W_DESC;
 def FEXUPL_D : FEXUPL_D_ENC, FEXUPL_D_DESC;

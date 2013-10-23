@@ -220,6 +220,7 @@ addMSAFloatType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
     setOperationAction(ISD::FABS,  Ty, Legal);
     setOperationAction(ISD::FADD,  Ty, Legal);
     setOperationAction(ISD::FDIV,  Ty, Legal);
+    setOperationAction(ISD::FEXP2, Ty, Legal);
     setOperationAction(ISD::FLOG2, Ty, Legal);
     setOperationAction(ISD::FMA,   Ty, Legal);
     setOperationAction(ISD::FMUL,  Ty, Legal);
@@ -840,6 +841,10 @@ MipsSETargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return emitFILL_FW(MI, BB);
   case Mips::FILL_FD_PSEUDO:
     return emitFILL_FD(MI, BB);
+  case Mips::FEXP2_W_1_PSEUDO:
+    return emitFEXP2_W_1(MI, BB);
+  case Mips::FEXP2_D_1_PSEUDO:
+    return emitFEXP2_D_1(MI, BB);
   }
 }
 
@@ -1331,6 +1336,13 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
     // If ResTy is v2i64 then the type legalizer will break this node down into
     // an equivalent v4i32.
     return DAG.getNode(ISD::BUILD_VECTOR, DL, ResTy, &Ops[0], Ops.size());
+  }
+  case Intrinsic::mips_fexp2_w:
+  case Intrinsic::mips_fexp2_d: {
+    EVT ResTy = Op->getValueType(0);
+    return DAG.getNode(
+        ISD::FMUL, SDLoc(Op), ResTy, Op->getOperand(1),
+        DAG.getNode(ISD::FEXP2, SDLoc(Op), ResTy, Op->getOperand(2)));
   }
   case Intrinsic::mips_flog2_w:
   case Intrinsic::mips_flog2_d:
@@ -2504,5 +2516,63 @@ MipsSETargetLowering::emitFILL_FD(MachineInstr *MI,
   BuildMI(*BB, MI, DL, TII->get(Mips::SPLATI_D), Wd).addReg(Wt2).addImm(0);
 
   MI->eraseFromParent();   // The pseudo instruction is gone now.
+  return BB;
+}
+
+// Emit the FEXP2_W_1 pseudo instructions.
+//
+// fexp2_w_1_pseudo $wd, $wt
+// =>
+// ldi.w $ws, 1
+// fexp2.w $wd, $ws, $wt
+MachineBasicBlock *
+MipsSETargetLowering::emitFEXP2_W_1(MachineInstr *MI,
+                                    MachineBasicBlock *BB) const {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  MachineRegisterInfo &RegInfo = BB->getParent()->getRegInfo();
+  const TargetRegisterClass *RC = &Mips::MSA128WRegClass;
+  unsigned Ws1 = RegInfo.createVirtualRegister(RC);
+  unsigned Ws2 = RegInfo.createVirtualRegister(RC);
+  DebugLoc DL = MI->getDebugLoc();
+
+  // Splat 1.0 into a vector
+  BuildMI(*BB, MI, DL, TII->get(Mips::LDI_W), Ws1).addImm(1);
+  BuildMI(*BB, MI, DL, TII->get(Mips::FFINT_U_W), Ws2).addReg(Ws1);
+
+  // Emit 1.0 * fexp2(Wt)
+  BuildMI(*BB, MI, DL, TII->get(Mips::FEXP2_W), MI->getOperand(0).getReg())
+      .addReg(Ws2)
+      .addReg(MI->getOperand(1).getReg());
+
+  MI->eraseFromParent(); // The pseudo instruction is gone now.
+  return BB;
+}
+
+// Emit the FEXP2_D_1 pseudo instructions.
+//
+// fexp2_d_1_pseudo $wd, $wt
+// =>
+// ldi.d $ws, 1
+// fexp2.d $wd, $ws, $wt
+MachineBasicBlock *
+MipsSETargetLowering::emitFEXP2_D_1(MachineInstr *MI,
+                                    MachineBasicBlock *BB) const {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  MachineRegisterInfo &RegInfo = BB->getParent()->getRegInfo();
+  const TargetRegisterClass *RC = &Mips::MSA128DRegClass;
+  unsigned Ws1 = RegInfo.createVirtualRegister(RC);
+  unsigned Ws2 = RegInfo.createVirtualRegister(RC);
+  DebugLoc DL = MI->getDebugLoc();
+
+  // Splat 1.0 into a vector
+  BuildMI(*BB, MI, DL, TII->get(Mips::LDI_D), Ws1).addImm(1);
+  BuildMI(*BB, MI, DL, TII->get(Mips::FFINT_U_D), Ws2).addReg(Ws1);
+
+  // Emit 1.0 * fexp2(Wt)
+  BuildMI(*BB, MI, DL, TII->get(Mips::FEXP2_D), MI->getOperand(0).getReg())
+      .addReg(Ws2)
+      .addReg(MI->getOperand(1).getReg());
+
+  MI->eraseFromParent(); // The pseudo instruction is gone now.
   return BB;
 }
