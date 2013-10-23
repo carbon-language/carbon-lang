@@ -1176,8 +1176,9 @@ of this feature in version of clang being used.
 
 .. _langext-objc_method_family:
 
-The ``objc_method_family`` attribute
-------------------------------------
+
+Objective-C Method Families
+---------------------------
 
 Many methods in Objective-C have conventional meanings determined by their
 selectors. It is sometimes useful to be able to mark a method as having a
