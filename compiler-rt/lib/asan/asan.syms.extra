@@ -1,1 +1,3 @@
 __asan_*
+__lsan_*
+__ubsan_*
