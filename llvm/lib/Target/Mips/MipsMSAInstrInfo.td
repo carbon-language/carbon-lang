@@ -771,7 +771,7 @@ class LDI_H_ENC  : MSA_I10_FMT<0b010, 0b01, 0b001100>;
 class LDI_W_ENC  : MSA_I10_FMT<0b010, 0b10, 0b001100>;
 class LDI_D_ENC  : MSA_I10_FMT<0b010, 0b11, 0b001100>;
 
-class LSA_ENC : SPECIAL_LSA_FMT;
+class LSA_ENC : SPECIAL_LSA_FMT<0b000101>;
 
 class MADD_Q_H_ENC : MSA_3RF_FMT<0b0101, 0b0, 0b011100>;
 class MADD_Q_W_ENC : MSA_3RF_FMT<0b0101, 0b1, 0b011100>;
@@ -2071,11 +2071,12 @@ class LDI_W_DESC : MSA_I10_LDI_DESC_BASE<"ldi.w", MSA128WOpnd>;
 class LDI_D_DESC : MSA_I10_LDI_DESC_BASE<"ldi.d", MSA128DOpnd>;
 
 class LSA_DESC {
-  dag OutOperandList = (outs GPR32:$rd);
-  dag InOperandList = (ins GPR32:$rs, GPR32:$rt, uimm2:$sa);
+  dag OutOperandList = (outs GPR32Opnd:$rd);
+  dag InOperandList = (ins GPR32Opnd:$rs, GPR32Opnd:$rt, uimm2:$sa);
   string AsmString = "lsa\t$rd, $rs, $rt, $sa";
-  list<dag> Pattern = [(set GPR32:$rd, (add GPR32:$rs, (shl GPR32:$rt,
-                                                            immZExt2Lsa:$sa)))];
+  list<dag> Pattern = [(set GPR32Opnd:$rd, (add GPR32Opnd:$rs,
+                                                (shl GPR32Opnd:$rt,
+                                                     immZExt2Lsa:$sa)))];
   InstrItinClass Itinerary = NoItinerary;
 }
 

@@ -19,6 +19,10 @@ class MSACBranch : MSAInst {
   let Inst{31-26} = 0b010001;
 }
 
+class MSASpecial : MSAInst {
+  let Inst{31-26} = 0b000000;
+}
+
 class PseudoMSA<dag outs, dag ins, list<dag> pattern,
                 InstrItinClass itin = IIPseudo>:
   MipsPseudo<outs, ins, pattern, itin> {
@@ -387,8 +391,16 @@ class MSA_CBRANCH_V_FMT<bits<5> major>: MSACBranch {
   let Inst{15-0} = offset;
 }
 
-class SPECIAL_LSA_FMT: MSAInst {
-  let Inst{25-21} = 0b000000;
+class SPECIAL_LSA_FMT<bits<6> minor>: MSASpecial {
+  bits<5> rs;
+  bits<5> rt;
+  bits<5> rd;
+  bits<2> sa;
+
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
   let Inst{10-8} = 0b000;
-  let Inst{5-0} = 0b000101;
+  let Inst{7-6} = sa;
+  let Inst{5-0} = minor;
 }
