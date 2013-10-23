@@ -1177,6 +1177,45 @@ of this feature in version of clang being used.
 .. _langext-objc_method_family:
 
 
+Objective-C requiring a call to a super in an override
+------------------------------------------------------
+
+Some Objective-C classes allow an subclass to override a particular method in
+a parent class but expect that the override chains to calling the same method
+in the parent class.  In such cases it is useful to be able to mark a method
+as having this required chaining behavior from overrides in subclasses.  For
+these cases, we provide an attribute to designate that a method requires a
+"call to ``super``" in the overriden method in the subclass.
+
+**Usage**: ``__attribute__((objc_requires_super))``.  This attribute can only be placed at the end of a method declaration:
+
+.. code-block:: objc
+
+  - (void)foo __attribute__((objc_requires_super));
+
+This attribute can only be applied the method declarations within a class, and not a protocol.
+
+Note that on both OS X and iOS that the Foundation framework provides a
+convenience macro ``NS_REQUIRES_SUPER`` that provides syntantic sugar for this
+attribute:
+
+.. code-block:: objc
+
+  - (void)foo NS_REQUIRES_SUPER;
+
+This macro is conditionally defined depending on the compiler's support for
+this attribute.  If the compiler does not support the attribute the macro
+expands to nothing.
+
+Operationally, when a method has this annotation the compiler will warn if the
+implementation of an override in a subclass does not call super.  For example:
+
+.. code-block:: objc
+
+   warning: method possibly missing a [super AnnotMeth] call
+   - (void) AnnotMeth{};
+                      ^
+
 Objective-C Method Families
 ---------------------------
 
