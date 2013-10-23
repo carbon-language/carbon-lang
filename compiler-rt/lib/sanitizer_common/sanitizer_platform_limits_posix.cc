@@ -45,6 +45,7 @@
 
 #if SANITIZER_LINUX
 #include <mntent.h>
+#include <netinet/ether.h>
 #include <utime.h>
 #include <sys/mount.h>
 #include <sys/ptrace.h>
@@ -109,6 +110,7 @@
 #endif // SANITIZER_LINUX
 
 #if SANITIZER_MAC
+#include <net/ethernet.h>
 #include <netinet/ip_mroute.h>
 #include <sys/filio.h>
 #include <sys/mount.h>
@@ -910,5 +912,7 @@ CHECK_SIZE_AND_OFFSET(mntent, mnt_opts);
 CHECK_SIZE_AND_OFFSET(mntent, mnt_freq);
 CHECK_SIZE_AND_OFFSET(mntent, mnt_passno);
 #endif
+
+CHECK_TYPE_SIZE(ether_addr);
 
 #endif  // SANITIZER_LINUX || SANITIZER_MAC

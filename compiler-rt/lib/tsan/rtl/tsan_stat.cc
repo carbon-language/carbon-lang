@@ -385,6 +385,13 @@ void StatOutput(u64 *stat) {
   name[StatInt_fstatvfs]                 = "  fstatvfs                        ";
   name[StatInt_fstatvfs64]               = "  fstatvfs64                      ";
   name[StatInt_initgroups]               = "  initgroups                      ";
+  name[StatInt_ether_ntoa]               = "  ether_ntoa                      ";
+  name[StatInt_ether_aton]               = "  ether_aton                      ";
+  name[StatInt_ether_ntoa_r]             = "  ether_ntoa_r                    ";
+  name[StatInt_ether_aton_r]             = "  ether_aton_r                    ";
+  name[StatInt_ether_ntohost]            = "  ether_ntohost                   ";
+  name[StatInt_ether_hostton]            = "  ether_hostton                   ";
+  name[StatInt_ether_line]               = "  ether_line                      ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

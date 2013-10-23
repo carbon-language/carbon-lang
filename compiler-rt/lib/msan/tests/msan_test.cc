@@ -52,6 +52,7 @@
 #include <netdb.h>
 #include <wordexp.h>
 #include <mntent.h>
+#include <netinet/ether.h>
 
 #if defined(__i386__) || defined(__x86_64__)
 # include <emmintrin.h>
@@ -1666,6 +1667,25 @@ TEST(MemorySanitizer, getmntent_r) {
   EXPECT_NOT_POISONED(mnt->mnt_freq);
   EXPECT_NOT_POISONED(mnt->mnt_passno);
   fclose(fp);
+}
+
+TEST(MemorySanitizer, ether) {
+  const char *asc = "11:22:33:44:55:66";
+  struct ether_addr *paddr = ether_aton(asc);
+  EXPECT_NOT_POISONED(*paddr);
+
+  struct ether_addr addr;
+  paddr = ether_aton_r(asc, &addr);
+  ASSERT_EQ(paddr, &addr);
+  EXPECT_NOT_POISONED(addr);
+
+  char *s = ether_ntoa(&addr);
+  ASSERT_NE(0, strlen(s));
+
+  char buf[100];
+  s = ether_ntoa_r(&addr, buf);
+  ASSERT_EQ(s, buf);
+  ASSERT_NE(0, strlen(buf));
 }
 
 TEST(MemorySanitizer, mmap) {

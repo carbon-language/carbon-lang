@@ -99,6 +99,10 @@ namespace __sanitizer {
   typedef unsigned __sanitizer_pthread_key_t;
 #endif
 
+  struct __sanitizer_ether_addr {
+    u8 octet[6];
+  };
+
   struct __sanitizer_tm {
     int tm_sec;
     int tm_min;

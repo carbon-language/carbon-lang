@@ -2421,6 +2421,83 @@ INTERCEPTOR(int, initgroups, char *user, u32 group) {
 #define INIT_INITGROUPS
 #endif
 
+#if SANITIZER_INTERCEPT_ETHER
+INTERCEPTOR(char *, ether_ntoa, __sanitizer_ether_addr *addr) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ether_ntoa, addr);
+  if (addr) COMMON_INTERCEPTOR_READ_RANGE(ctx, addr, sizeof(*addr));
+  char *res = REAL(ether_ntoa)(addr);
+  if (res) COMMON_INTERCEPTOR_INITIALIZE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  return res;
+}
+INTERCEPTOR(char *, ether_ntoa_r, __sanitizer_ether_addr *addr, char *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ether_ntoa_r, addr, buf);
+  if (addr) COMMON_INTERCEPTOR_READ_RANGE(ctx, addr, sizeof(*addr));
+  char *res = REAL(ether_ntoa_r)(addr, buf);
+  if (res) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  return res;
+}
+INTERCEPTOR(__sanitizer_ether_addr *, ether_aton, char *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ether_aton, buf);
+  if (buf) COMMON_INTERCEPTOR_READ_RANGE(ctx, buf, REAL(strlen)(buf) + 1);
+  __sanitizer_ether_addr *res = REAL(ether_aton)(buf);
+  if (res) COMMON_INTERCEPTOR_INITIALIZE_RANGE(ctx, res, sizeof(*res));
+  return res;
+}
+INTERCEPTOR(__sanitizer_ether_addr *, ether_aton_r, char *buf,
+            __sanitizer_ether_addr *addr) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ether_aton_r, buf, addr);
+  if (buf) COMMON_INTERCEPTOR_READ_RANGE(ctx, buf, REAL(strlen)(buf) + 1);
+  __sanitizer_ether_addr *res = REAL(ether_aton_r)(buf, addr);
+  if (res) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, sizeof(*res));
+  return res;
+}
+INTERCEPTOR(int, ether_ntohost, char *hostname, __sanitizer_ether_addr *addr) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ether_ntohost, hostname, addr);
+  if (addr) COMMON_INTERCEPTOR_READ_RANGE(ctx, addr, sizeof(*addr));
+  int res = REAL(ether_ntohost)(hostname, addr);
+  if (!res && hostname)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, hostname, REAL(strlen)(hostname) + 1);
+  return res;
+}
+INTERCEPTOR(int, ether_hostton, char *hostname, __sanitizer_ether_addr *addr) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ether_hostton, hostname, addr);
+  if (hostname)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, hostname, REAL(strlen)(hostname) + 1);
+  int res = REAL(ether_hostton)(hostname, addr);
+  if (!res && addr) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, addr, sizeof(*addr));
+  return res;
+}
+INTERCEPTOR(int, ether_line, char *line, __sanitizer_ether_addr *addr,
+            char *hostname) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ether_line, line, addr, hostname);
+  if (line) COMMON_INTERCEPTOR_READ_RANGE(ctx, line, REAL(strlen)(line) + 1);
+  int res = REAL(ether_line)(line, addr, hostname);
+  if (!res) {
+    if (addr) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, addr, sizeof(*addr));
+    if (hostname)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, hostname, REAL(strlen)(hostname) + 1);
+  }
+  return res;
+}
+#define INIT_ETHER                   \
+  INTERCEPT_FUNCTION(ether_ntoa_r);  \
+  INTERCEPT_FUNCTION(ether_aton_r);  \
+  INTERCEPT_FUNCTION(ether_ntoa);    \
+  INTERCEPT_FUNCTION(ether_aton);    \
+  INTERCEPT_FUNCTION(ether_ntohost); \
+  INTERCEPT_FUNCTION(ether_hostton); \
+  INTERCEPT_FUNCTION(ether_line);
+#else
+#define INIT_ETHER
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -2512,4 +2589,5 @@ INTERCEPTOR(int, initgroups, char *user, u32 group) {
   INIT_STATVFS;                            \
   INIT_STATVFS64;                          \
   INIT_INITGROUPS;                         \
+  INIT_ETHER;                              \
 /**/
