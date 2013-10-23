@@ -1165,9 +1165,9 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
                   dwarf::DW_AT_friend);
           Buffer.addChild(ElemDie);
         } else if (DDTy.isStaticMember()) {
-          ElemDie = getOrCreateStaticMemberDIE(DDTy);
+          getOrCreateStaticMemberDIE(DDTy);
         } else {
-          ElemDie = createMemberDIE(Buffer, DDTy);
+          createMemberDIE(Buffer, DDTy);
         }
       } else if (Element.isObjCProperty()) {
         DIObjCProperty Property(Element);
@@ -1269,12 +1269,12 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
 
 /// getOrCreateTemplateTypeParameterDIE - Find existing DIE or create new DIE
 /// for the given DITemplateTypeParameter.
-DIE *
+void
 CompileUnit::getOrCreateTemplateTypeParameterDIE(DIE &Buffer,
                                                  DITemplateTypeParameter TP) {
   DIE *ParamDIE = getDIE(TP);
   if (ParamDIE)
-    return ParamDIE;
+    return;
 
   ParamDIE = new DIE(dwarf::DW_TAG_template_type_parameter);
   Buffer.addChild(ParamDIE);
@@ -1283,17 +1283,16 @@ CompileUnit::getOrCreateTemplateTypeParameterDIE(DIE &Buffer,
     addType(ParamDIE, resolve(TP.getType()));
   if (!TP.getName().empty())
     addString(ParamDIE, dwarf::DW_AT_name, TP.getName());
-  return ParamDIE;
 }
 
 /// getOrCreateTemplateValueParameterDIE - Find existing DIE or create new DIE
 /// for the given DITemplateValueParameter.
-DIE *
+void
 CompileUnit::getOrCreateTemplateValueParameterDIE(DIE &Buffer,
                                                   DITemplateValueParameter VP) {
   DIE *ParamDIE = getDIE(VP);
   if (ParamDIE)
-    return ParamDIE;
+    return;
 
   ParamDIE = new DIE(VP.getTag());
   Buffer.addChild(ParamDIE);
@@ -1327,8 +1326,6 @@ CompileUnit::getOrCreateTemplateValueParameterDIE(DIE &Buffer,
       addTemplateParams(*ParamDIE, A);
     }
   }
-
-  return ParamDIE;
 }
 
 /// getOrCreateNameSpace - Create a DIE for DINameSpace.
@@ -1687,14 +1684,13 @@ void CompileUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType *CTy) {
 }
 
 /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
-DIE *CompileUnit::constructEnumTypeDIE(DIE &Buffer, DIEnumerator ETy) {
+void CompileUnit::constructEnumTypeDIE(DIE &Buffer, DIEnumerator ETy) {
   DIE *Enumerator = new DIE(dwarf::DW_TAG_enumerator);
   Buffer.addChild(Enumerator);
   StringRef Name = ETy.getName();
   addString(Enumerator, dwarf::DW_AT_name, Name);
   int64_t Value = ETy.getEnumValue();
   addSInt(Enumerator, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata, Value);
-  return Enumerator;
 }
 
 /// constructContainingTypeDIEs - Construct DIEs for types that contain
@@ -1788,7 +1784,7 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV, bool isScopeAbstract) {
 }
 
 /// createMemberDIE - Create new member DIE.
-DIE *CompileUnit::createMemberDIE(DIE &Buffer, DIDerivedType DT) {
+void CompileUnit::createMemberDIE(DIE &Buffer, DIDerivedType DT) {
   DIE *MemberDie = new DIE(DT.getTag());
   Buffer.addChild(MemberDie);
   StringRef Name = DT.getName();
@@ -1871,8 +1867,6 @@ DIE *CompileUnit::createMemberDIE(DIE &Buffer, DIDerivedType DT) {
 
   if (DT.isArtificial())
     addFlag(MemberDie, dwarf::DW_AT_artificial);
-
-  return MemberDie;
 }
 
 /// getOrCreateStaticMemberDIE - Create new DIE for C++ static member.
