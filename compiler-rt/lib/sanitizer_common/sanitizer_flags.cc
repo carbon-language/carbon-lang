@@ -20,6 +20,8 @@ namespace __sanitizer {
 
 void ParseCommonFlagsFromString(const char *str) {
   CommonFlags *f = common_flags();
+  ParseFlag(str, &f->symbolize, "symbolize");
+  ParseFlag(str, &f->external_symbolizer_path, "external_symbolizer_path");
   ParseFlag(str, &f->malloc_context_size, "malloc_context_size");
   ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix");
   ParseFlag(str, &f->fast_unwind_on_fatal, "fast_unwind_on_fatal");
