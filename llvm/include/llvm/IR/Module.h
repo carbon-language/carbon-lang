@@ -391,7 +391,7 @@ public:
 /// @name Named Metadata Accessors
 /// @{
 
-  /// getNamedMetadata - Return the NamedMDNode in the module with the
+  /// getNamedMetadata - Return the first NamedMDNode in the module with the
   /// specified name. This method returns null if a NamedMDNode with the
   /// specified name is not found.
   NamedMDNode *getNamedMetadata(const Twine &Name) const;
