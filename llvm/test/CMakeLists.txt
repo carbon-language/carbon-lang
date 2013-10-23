@@ -23,6 +23,7 @@ set(LLVM_TEST_DEPENDS
           llvm-ar
           llvm-as
           llvm-bcanalyzer
+          llvm-c-test
           llvm-cov
           llvm-diff
           llvm-dis
@@ -51,10 +52,6 @@ set(LLVM_TEST_DEPENDS
 if( LLVM_USE_INTEL_JITEVENTS )
   set(LLVM_TEST_DEPENDS ${LLVM_TEST_DEPENDS} llvm-jitlistener)
 endif( LLVM_USE_INTEL_JITEVENTS )
-
-if( NOT MSVC )
-  set(LLVM_TEST_DEPENDS ${LLVM_TEST_DEPENDS} llvm-c-test)
-endif( NOT MSVC )
 
 add_lit_testsuite(check-llvm "Running the LLVM regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}
