@@ -90,26 +90,26 @@ const char* lto_get_error_message() {
 }
 
 /// lto_module_is_object_file - Validates if a file is a loadable object file.
-bool lto_module_is_object_file(const char* path) {
+int lto_module_is_object_file(const char* path) {
   return LTOModule::isBitcodeFile(path);
 }
 
 /// lto_module_is_object_file_for_target - Validates if a file is a loadable
 /// object file compilable for requested target.
-bool lto_module_is_object_file_for_target(const char* path,
+int lto_module_is_object_file_for_target(const char* path,
                                           const char* target_triplet_prefix) {
   return LTOModule::isBitcodeFileForTarget(path, target_triplet_prefix);
 }
 
 /// lto_module_is_object_file_in_memory - Validates if a buffer is a loadable
 /// object file.
-bool lto_module_is_object_file_in_memory(const void* mem, size_t length) {
+int lto_module_is_object_file_in_memory(const void* mem, size_t length) {
   return LTOModule::isBitcodeFile(mem, length);
 }
 
 /// lto_module_is_object_file_in_memory_for_target - Validates if a buffer is a
 /// loadable object file compilable for the target.
-bool
+int
 lto_module_is_object_file_in_memory_for_target(const void* mem,
                                             size_t length,
                                             const char* target_triplet_prefix) {
@@ -216,21 +216,21 @@ void lto_codegen_dispose(lto_code_gen_t cg) {
 /// lto_codegen_add_module - Add an object module to the set of modules for
 /// which code will be generated. Returns true on error (check
 /// lto_get_error_message() for details).
-bool lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod) {
+int lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod) {
   return !cg->addModule(mod, sLastErrorString);
 }
 
 /// lto_codegen_set_debug_model - Sets what if any format of debug info should
 /// be generated. Returns true on error (check lto_get_error_message() for
 /// details).
-bool lto_codegen_set_debug_model(lto_code_gen_t cg, lto_debug_model debug) {
+int lto_codegen_set_debug_model(lto_code_gen_t cg, lto_debug_model debug) {
   cg->setDebugInfo(debug);
   return false;
 }
 
 /// lto_codegen_set_pic_model - Sets what code model to generated. Returns true
 /// on error (check lto_get_error_message() for details).
-bool lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model model) {
+int lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model model) {
   cg->setCodePICModel(model);
   return false;
 }
@@ -267,7 +267,7 @@ void lto_codegen_add_dso_symbol(lto_code_gen_t cg, const char *symbol) {
 /// lto_codegen_write_merged_modules - Writes a new file at the specified path
 /// that contains the merged contents of all modules added so far. Returns true
 /// on error (check lto_get_error_message() for details).
-bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char *path) {
+int lto_codegen_write_merged_modules(lto_code_gen_t cg, const char *path) {
   if (!parsedOptions) {
     cg->parseCodeGenDebugOptions();
     parsedOptions = true;
@@ -293,7 +293,7 @@ const void *lto_codegen_compile(lto_code_gen_t cg, size_t *length) {
 /// lto_codegen_compile_to_file - Generates code for all added modules into one
 /// native object file. The name of the file is written to name. Returns true on
 /// error.
-bool lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name) {
+int lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name) {
   if (!parsedOptions) {
     cg->parseCodeGenDebugOptions();
     parsedOptions = true;

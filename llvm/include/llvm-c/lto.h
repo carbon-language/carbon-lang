@@ -16,9 +16,6 @@
 #ifndef LLVM_C_LTO_H
 #define LLVM_C_LTO_H
 
-#ifndef __cplusplus
-#include <stdbool.h>
-#endif
 #include <stddef.h>
 #include <sys/types.h>
 
@@ -89,14 +86,14 @@ lto_get_error_message(void);
 /**
  * Checks if a file is a loadable object file.
  */
-extern bool
+extern int
 lto_module_is_object_file(const char* path);
 
 
 /**
  * Checks if a file is a loadable object compiled for requested target.
  */
-extern bool
+extern int
 lto_module_is_object_file_for_target(const char* path,
                                      const char* target_triple_prefix);
 
@@ -104,14 +101,14 @@ lto_module_is_object_file_for_target(const char* path,
 /**
  * Checks if a buffer is a loadable object file.
  */
-extern bool
+extern int
 lto_module_is_object_file_in_memory(const void* mem, size_t length);
 
 
 /**
  * Checks if a buffer is a loadable object compiled for requested target.
  */
-extern bool
+extern int
 lto_module_is_object_file_in_memory_for_target(const void* mem, size_t length,
                                               const char* target_triple_prefix);
 
@@ -210,7 +207,7 @@ lto_codegen_dispose(lto_code_gen_t);
  * Add an object module to the set of modules for which code will be generated.
  * Returns true on error (check lto_get_error_message() for details).
  */
-extern bool
+extern int
 lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod);
 
 
@@ -219,7 +216,7 @@ lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod);
  * Sets if debug info should be generated.
  * Returns true on error (check lto_get_error_message() for details).
  */
-extern bool
+extern int
 lto_codegen_set_debug_model(lto_code_gen_t cg, lto_debug_model);
 
 
@@ -227,7 +224,7 @@ lto_codegen_set_debug_model(lto_code_gen_t cg, lto_debug_model);
  * Sets which PIC code model to generated.
  * Returns true on error (check lto_get_error_message() for details).
  */
-extern bool
+extern int
 lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model);
 
 
@@ -273,7 +270,7 @@ extern void lto_codegen_add_dso_symbol(lto_code_gen_t cg, const char *symbol);
  * merged contents of all modules added so far.
  * Returns true on error (check lto_get_error_message() for details).
  */
-extern bool
+extern int
 lto_codegen_write_merged_modules(lto_code_gen_t cg, const char* path);
 
 /**
@@ -291,7 +288,7 @@ lto_codegen_compile(lto_code_gen_t cg, size_t* length);
  * Generates code for all added modules into one native object file.
  * The name of the file is written to name. Returns true on error.
  */
-extern bool
+extern int
 lto_codegen_compile_to_file(lto_code_gen_t cg, const char** name);
 
 
