@@ -1177,15 +1177,15 @@ of this feature in version of clang being used.
 .. _langext-objc_method_family:
 
 
-Objective-C requiring a call to a super in an override
-------------------------------------------------------
+Objective-C requiring a call to ``super`` in an override
+--------------------------------------------------------
 
-Some Objective-C classes allow an subclass to override a particular method in
-a parent class but expect that the override chains to calling the same method
-in the parent class.  In such cases it is useful to be able to mark a method
-as having this required chaining behavior from overrides in subclasses.  For
-these cases, we provide an attribute to designate that a method requires a
-"call to ``super``" in the overriden method in the subclass.
+Some Objective-C classes allow a subclass to override a particular method in a
+parent class but expect that the override chains to calling the same method in
+the parent class.  In such cases it is useful to be able to mark a method as
+requiring this chaining behavior.  For these cases, we provide an attribute to
+designate that a method requires a "call to ``super``" in the overriden method
+in the subclass.
 
 **Usage**: ``__attribute__((objc_requires_super))``.  This attribute can only be placed at the end of a method declaration:
 
