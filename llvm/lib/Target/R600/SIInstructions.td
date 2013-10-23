@@ -1963,6 +1963,25 @@ def : Pat<
 >;
 
 //============================================================================//
+// Miscellaneous Patterns
+//===----------------------------------------------------------------------===//
+
+def : Pat <
+  (i64 (trunc i128:$x)),
+  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+    (i32 (EXTRACT_SUBREG $x, sub0)), sub0),
+    (i32 (EXTRACT_SUBREG $x, sub1)), sub1)
+>;
+
+def : Pat <
+  (or i64:$a, i64:$b),
+  (INSERT_SUBREG
+    (INSERT_SUBREG (IMPLICIT_DEF),
+      (V_OR_B32_e32 (EXTRACT_SUBREG $a, sub0), (EXTRACT_SUBREG $b, sub0)), sub0),
+    (V_OR_B32_e32 (EXTRACT_SUBREG $a, sub1), (EXTRACT_SUBREG $b, sub1)), sub1)
+>;
+
+//============================================================================//
 // Miscellaneous Optimization Patterns
 //============================================================================//
 
