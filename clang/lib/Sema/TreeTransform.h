@@ -593,6 +593,11 @@ public:
   /// \brief Transform the captures and body of a lambda expression.
   ExprResult TransformLambdaScope(LambdaExpr *E, CXXMethodDecl *CallOperator);
 
+  TemplateParameterList *TransformTemplateParameterList(
+        TemplateParameterList *TPL) {
+    return TPL;
+  }
+
   ExprResult TransformAddressOfOperand(Expr *E);
   ExprResult TransformDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E,
                                                 bool IsAddressOfOperand);
@@ -8267,48 +8272,100 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
  
-  // FIXME: Implement nested generic lambda transformations.
-  if (E->isGenericLambda()) {
-    getSema().Diag(E->getIntroducerRange().getBegin(), 
-      diag::err_glambda_not_fully_implemented) 
-      << " template transformation of generic lambdas not implemented yet";
-    return ExprError();
+  getSema().PushLambdaScope();
+  LambdaScopeInfo *LSI = getSema().getCurLambda();
+  // Transform the template parameters, and add them to the current
+  // instantiation scope. The null case is handled correctly.
+  LSI->GLTemplateParameterList = getDerived().TransformTemplateParameterList(
+      E->getTemplateParameterList());
+
+  // Check to see if the TypeSourceInfo of the call operator needs to
+  // be transformed, and if so do the transformation in the 
+  // CurrentInstantiationScope.
+
+  TypeSourceInfo *OldCallOpTSI = E->getCallOperator()->getTypeSourceInfo();
+  FunctionProtoTypeLoc OldCallOpFPTL = 
+      OldCallOpTSI->getTypeLoc().getAs<FunctionProtoTypeLoc>();
+  TypeSourceInfo *NewCallOpTSI = 0;
+  
+  const bool CallOpWasAlreadyTransformed = 
+      getDerived().AlreadyTransformed(OldCallOpTSI->getType()); 
+  
+  // Use the Old Call Operator's TypeSourceInfo if it is already transformed.
+  if (CallOpWasAlreadyTransformed)  
+    NewCallOpTSI = OldCallOpTSI;  
+  else {
+    // Transform the TypeSourceInfo of the Original Lambda's Call Operator.
+    // The transformation MUST be done in the CurrentInstantiationScope since
+    // it introduces a mapping of the original to the newly created 
+    // transformed parameters.
+
+    TypeLocBuilder NewCallOpTLBuilder;
+    QualType NewCallOpType = TransformFunctionProtoType(NewCallOpTLBuilder, 
+                                                        OldCallOpFPTL, 
+                                                        0, 0);
+    NewCallOpTSI = NewCallOpTLBuilder.getTypeSourceInfo(getSema().Context,
+                                                        NewCallOpType);
   }
-  // Transform the type of the lambda parameters and start the definition of
-  // the lambda itself.
-  TypeSourceInfo *MethodTy
-    = TransformType(E->getCallOperator()->getTypeSourceInfo());
-  if (!MethodTy)
+  // Extract the ParmVarDecls from the NewCallOpTSI and add them to
+  // the vector below - this will be used to synthesize the 
+  // NewCallOperator.  Additionally, add the parameters of the untransformed 
+  // lambda call operator to the CurrentInstantiationScope.
+  SmallVector<ParmVarDecl *, 4> Params;  
+  {
+    FunctionProtoTypeLoc NewCallOpFPTL = 
+        NewCallOpTSI->getTypeLoc().castAs<FunctionProtoTypeLoc>();
+    ParmVarDecl **NewParamDeclArray = NewCallOpFPTL.getParmArray();
+    const unsigned NewNumArgs = NewCallOpFPTL.getNumArgs();
+
+    for (unsigned I = 0; I < NewNumArgs; ++I) {
+      // If this call operator's type does not require transformation, 
+      // the parameters do not get added to the current instantiation scope, 
+      // - so ADD them! This allows the following to compile when the enclosing
+      // template is specialized and the entire lambda expression has to be
+      // transformed. 
+      // template<class T> void foo(T t) {
+      //   auto L = [](auto a) {
+      //       auto M = [](char b) { <-- note: non-generic lambda
+      //         auto N = [](auto c) {
+      //            int x = sizeof(a);
+      //            x = sizeof(b); <-- specifically this line
+      //            x = sizeof(c);
+      //          };
+      //        };
+      //      };
+      //    }
+      // foo('a')
+      if (CallOpWasAlreadyTransformed)
+        getDerived().transformedLocalDecl(NewParamDeclArray[I],
+                                          NewParamDeclArray[I]);
+      // Add to Params array, so these parameters can be used to create
+      // the newly transformed call operator.
+      Params.push_back(NewParamDeclArray[I]);
+    }
+  }
+
+  if (!NewCallOpTSI)
     return ExprError();
 
   // Create the local class that will describe the lambda.
   CXXRecordDecl *Class
     = getSema().createLambdaClosureType(E->getIntroducerRange(),
-                                        MethodTy,
+                                        NewCallOpTSI,
                                         /*KnownDependent=*/false);
   getDerived().transformedLocalDecl(E->getLambdaClass(), Class);
 
-  // Transform lambda parameters.
-  SmallVector<QualType, 4> ParamTypes;
-  SmallVector<ParmVarDecl *, 4> Params;
-  if (getDerived().TransformFunctionTypeParams(E->getLocStart(),
-        E->getCallOperator()->param_begin(),
-        E->getCallOperator()->param_size(),
-        0, ParamTypes, &Params))
-    return ExprError();
-  getSema().PushLambdaScope();
-  LambdaScopeInfo *LSI = getSema().getCurLambda();
-  // TODO: Fix for nested lambdas
-  LSI->GLTemplateParameterList = 0;
   // Build the call operator.
-  CXXMethodDecl *CallOperator
+  CXXMethodDecl *NewCallOperator
     = getSema().startLambdaDefinition(Class, E->getIntroducerRange(),
-                                      MethodTy,
+                                      NewCallOpTSI,
                                       E->getCallOperator()->getLocEnd(),
                                       Params);
-  getDerived().transformAttrs(E->getCallOperator(), CallOperator);
+  LSI->CallOperator = NewCallOperator;
 
-  return getDerived().TransformLambdaScope(E, CallOperator);
+  getDerived().transformAttrs(E->getCallOperator(), NewCallOperator);
+
+  return getDerived().TransformLambdaScope(E, NewCallOperator);
 }
 
 template<typename Derived>
