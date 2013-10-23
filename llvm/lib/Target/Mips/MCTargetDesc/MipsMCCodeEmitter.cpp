@@ -320,31 +320,39 @@ getExprOpValue(const MCExpr *Expr,SmallVectorImpl<MCFixup> &Fixups) const {
     FixupKind = Mips::fixup_Mips_GPOFF_LO;
     break;
   case MCSymbolRefExpr::VK_Mips_GOT_PAGE :
-    FixupKind = Mips::fixup_Mips_GOT_PAGE;
+    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT_PAGE
+                            : Mips::fixup_Mips_GOT_PAGE;
     break;
   case MCSymbolRefExpr::VK_Mips_GOT_OFST :
-    FixupKind = Mips::fixup_Mips_GOT_OFST;
+    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT_OFST
+                            : Mips::fixup_Mips_GOT_OFST;
     break;
   case MCSymbolRefExpr::VK_Mips_GOT_DISP :
-    FixupKind = Mips::fixup_Mips_GOT_DISP;
+    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT_DISP
+                            : Mips::fixup_Mips_GOT_DISP;
     break;
   case MCSymbolRefExpr::VK_Mips_GPREL:
     FixupKind = Mips::fixup_Mips_GPREL16;
     break;
   case MCSymbolRefExpr::VK_Mips_GOT_CALL:
-    FixupKind = Mips::fixup_Mips_CALL16;
+    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_CALL16
+                            : Mips::fixup_Mips_CALL16;
     break;
   case MCSymbolRefExpr::VK_Mips_GOT16:
-    FixupKind = Mips::fixup_Mips_GOT_Global;
+    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT16
+                            : Mips::fixup_Mips_GOT_Global;
     break;
   case MCSymbolRefExpr::VK_Mips_GOT:
-    FixupKind = Mips::fixup_Mips_GOT_Local;
+    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT16
+                            : Mips::fixup_Mips_GOT_Local;
     break;
   case MCSymbolRefExpr::VK_Mips_ABS_HI:
-    FixupKind = Mips::fixup_Mips_HI16;
+    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_HI16
+                            : Mips::fixup_Mips_HI16;
     break;
   case MCSymbolRefExpr::VK_Mips_ABS_LO:
-    FixupKind = Mips::fixup_Mips_LO16;
+    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_LO16
+                            : Mips::fixup_Mips_LO16;
     break;
   case MCSymbolRefExpr::VK_Mips_TLSGD:
     FixupKind = Mips::fixup_Mips_TLSGD;
@@ -353,19 +361,23 @@ getExprOpValue(const MCExpr *Expr,SmallVectorImpl<MCFixup> &Fixups) const {
     FixupKind = Mips::fixup_Mips_TLSLDM;
     break;
   case MCSymbolRefExpr::VK_Mips_DTPREL_HI:
-    FixupKind = Mips::fixup_Mips_DTPREL_HI;
+    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_DTPREL_HI16
+                            : Mips::fixup_Mips_DTPREL_HI;
     break;
   case MCSymbolRefExpr::VK_Mips_DTPREL_LO:
-    FixupKind = Mips::fixup_Mips_DTPREL_LO;
+    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_DTPREL_LO16
+                            : Mips::fixup_Mips_DTPREL_LO;
     break;
   case MCSymbolRefExpr::VK_Mips_GOTTPREL:
     FixupKind = Mips::fixup_Mips_GOTTPREL;
     break;
   case MCSymbolRefExpr::VK_Mips_TPREL_HI:
-    FixupKind = Mips::fixup_Mips_TPREL_HI;
+    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_TPREL_HI16
+                            : Mips::fixup_Mips_TPREL_HI;
     break;
   case MCSymbolRefExpr::VK_Mips_TPREL_LO:
-    FixupKind = Mips::fixup_Mips_TPREL_LO;
+    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_TPREL_LO16
+                            : Mips::fixup_Mips_TPREL_LO;
     break;
   case MCSymbolRefExpr::VK_Mips_HIGHER:
     FixupKind = Mips::fixup_Mips_HIGHER;

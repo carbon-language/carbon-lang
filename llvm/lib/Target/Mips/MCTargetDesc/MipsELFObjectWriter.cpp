@@ -183,6 +183,39 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
   case Mips::fixup_Mips_CALL_LO16:
     Type = ELF::R_MIPS_CALL_LO16;
     break;
+  case Mips::fixup_MICROMIPS_HI16:
+    Type = ELF::R_MICROMIPS_HI16;
+    break;
+  case Mips::fixup_MICROMIPS_LO16:
+    Type = ELF::R_MICROMIPS_LO16;
+    break;
+  case Mips::fixup_MICROMIPS_GOT16:
+    Type = ELF::R_MICROMIPS_GOT16;
+    break;
+  case Mips::fixup_MICROMIPS_CALL16:
+    Type = ELF::R_MICROMIPS_CALL16;
+    break;
+  case Mips::fixup_MICROMIPS_GOT_DISP:
+    Type = ELF::R_MICROMIPS_GOT_DISP;
+    break;
+  case Mips::fixup_MICROMIPS_GOT_PAGE:
+    Type = ELF::R_MICROMIPS_GOT_PAGE;
+    break;
+  case Mips::fixup_MICROMIPS_GOT_OFST:
+    Type = ELF::R_MICROMIPS_GOT_OFST;
+    break;
+  case Mips::fixup_MICROMIPS_TLS_DTPREL_HI16:
+    Type = ELF::R_MICROMIPS_TLS_DTPREL_HI16;
+    break;
+  case Mips::fixup_MICROMIPS_TLS_DTPREL_LO16:
+    Type = ELF::R_MICROMIPS_TLS_DTPREL_LO16;
+    break;
+  case Mips::fixup_MICROMIPS_TLS_TPREL_HI16:
+    Type = ELF::R_MICROMIPS_TLS_TPREL_HI16;
+    break;
+  case Mips::fixup_MICROMIPS_TLS_TPREL_LO16:
+    Type = ELF::R_MICROMIPS_TLS_TPREL_LO16;
+    break;
   }
   return Type;
 }

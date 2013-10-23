@@ -128,6 +128,39 @@ namespace Mips {
     // resulting in - R_MIPS_CALL_LO16
     fixup_Mips_CALL_LO16,
 
+    // resulting in - R_MICROMIPS_HI16
+    fixup_MICROMIPS_HI16,
+
+    // resulting in - R_MICROMIPS_LO16
+    fixup_MICROMIPS_LO16,
+
+    // resulting in - R_MICROMIPS_GOT16
+    fixup_MICROMIPS_GOT16,
+
+    // resulting in - R_MICROMIPS_CALL16
+    fixup_MICROMIPS_CALL16,
+
+    // resulting in - R_MICROMIPS_GOT_DISP
+    fixup_MICROMIPS_GOT_DISP,
+
+    // resulting in - R_MICROMIPS_GOT_PAGE
+    fixup_MICROMIPS_GOT_PAGE,
+
+    // resulting in - R_MICROMIPS_GOT_OFST
+    fixup_MICROMIPS_GOT_OFST,
+
+    // resulting in - R_MICROMIPS_TLS_DTPREL_HI16
+    fixup_MICROMIPS_TLS_DTPREL_HI16,
+
+    // resulting in - R_MICROMIPS_TLS_DTPREL_LO16
+    fixup_MICROMIPS_TLS_DTPREL_LO16,
+
+    // resulting in - R_MICROMIPS_TLS_TPREL_HI16
+    fixup_MICROMIPS_TLS_TPREL_HI16,
+
+    // resulting in - R_MICROMIPS_TLS_TPREL_LO16
+    fixup_MICROMIPS_TLS_TPREL_LO16,
+
     // Marker
     LastTargetFixupKind,
     NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind

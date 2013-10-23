@@ -45,6 +45,10 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case Mips::fixup_Mips_GOT_DISP:
   case Mips::fixup_Mips_GOT_LO16:
   case Mips::fixup_Mips_CALL_LO16:
+  case Mips::fixup_MICROMIPS_LO16:
+  case Mips::fixup_MICROMIPS_GOT_PAGE:
+  case Mips::fixup_MICROMIPS_GOT_OFST:
+  case Mips::fixup_MICROMIPS_GOT_DISP:
     break;
   case Mips::fixup_Mips_PC16:
     // So far we are only using this type for branches.
@@ -65,6 +69,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case Mips::fixup_Mips_GOT_Local:
   case Mips::fixup_Mips_GOT_HI16:
   case Mips::fixup_Mips_CALL_HI16:
+  case Mips::fixup_MICROMIPS_HI16:
     // Get the 2nd 16-bits. Also add 1 if bit 15 is 1.
     Value = ((Value + 0x8000) >> 16) & 0xffff;
     break;
@@ -188,7 +193,18 @@ public:
       { "fixup_Mips_GOT_HI16",     0,     16,   0 },
       { "fixup_Mips_GOT_LO16",     0,     16,   0 },
       { "fixup_Mips_CALL_HI16",    0,     16,   0 },
-      { "fixup_Mips_CALL_LO16",    0,     16,   0 }
+      { "fixup_Mips_CALL_LO16",    0,     16,   0 },
+      { "fixup_MICROMIPS_HI16",    0,     16,   0 },
+      { "fixup_MICROMIPS_LO16",    0,     16,   0 },
+      { "fixup_MICROMIPS_GOT16",   0,     16,   0 },
+      { "fixup_MICROMIPS_CALL16",  0,     16,   0 },
+      { "fixup_MICROMIPS_GOT_DISP",        0,     16,   0 },
+      { "fixup_MICROMIPS_GOT_PAGE",        0,     16,   0 },
+      { "fixup_MICROMIPS_GOT_OFST",        0,     16,   0 },
+      { "fixup_MICROMIPS_TLS_DTPREL_HI16", 0,     16,   0 },
+      { "fixup_MICROMIPS_TLS_DTPREL_LO16", 0,     16,   0 },
+      { "fixup_MICROMIPS_TLS_TPREL_HI16",  0,     16,   0 },
+      { "fixup_MICROMIPS_TLS_TPREL_LO16",  0,     16,   0 }
     };
 
     if (Kind < FirstTargetFixupKind)
