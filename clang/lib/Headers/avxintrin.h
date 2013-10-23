@@ -435,21 +435,21 @@ static __inline int __attribute__((__always_inline__, __nodebug__))
 _mm256_extract_epi32(__m256i __a, int const __imm)
 {
   __v8si __b = (__v8si)__a;
-  return __b[__imm];
+  return __b[__imm & 7];
 }
 
 static __inline int __attribute__((__always_inline__, __nodebug__))
 _mm256_extract_epi16(__m256i __a, int const __imm)
 {
   __v16hi __b = (__v16hi)__a;
-  return __b[__imm];
+  return __b[__imm & 15];
 }
 
 static __inline int __attribute__((__always_inline__, __nodebug__))
 _mm256_extract_epi8(__m256i __a, int const __imm)
 {
   __v32qi __b = (__v32qi)__a;
-  return __b[__imm];
+  return __b[__imm & 31];
 }
 
 #ifdef __x86_64__
@@ -457,7 +457,7 @@ static __inline long long  __attribute__((__always_inline__, __nodebug__))
 _mm256_extract_epi64(__m256i __a, const int __imm)
 {
   __v4di __b = (__v4di)__a;
-  return __b[__imm];
+  return __b[__imm & 3];
 }
 #endif
 

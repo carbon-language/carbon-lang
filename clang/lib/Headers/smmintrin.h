@@ -197,7 +197,7 @@ _mm_max_epu32 (__m128i __V1, __m128i __V2)
 #define _mm_extract_ps(X, N) (__extension__                      \
                               ({ union { int __i; float __f; } __t;  \
                                  __v4sf __a = (__v4sf)(X);       \
-                                 __t.__f = __a[N];                 \
+                                 __t.__f = __a[(N) & 3];                 \
                                  __t.__i;}))
 
 /* Miscellaneous insert and extract macros.  */
@@ -215,14 +215,14 @@ _mm_max_epu32 (__m128i __V1, __m128i __V2)
                                              
 /* Insert int into packed integer array at index.  */
 #define _mm_insert_epi8(X, I, N) (__extension__ ({ __v16qi __a = (__v16qi)(X); \
-                                                   __a[(N)] = (I);             \
+                                                   __a[(N) & 15] = (I);             \
                                                    __a;}))
 #define _mm_insert_epi32(X, I, N) (__extension__ ({ __v4si __a = (__v4si)(X); \
-                                                    __a[(N)] = (I);           \
+                                                    __a[(N) & 3] = (I);           \
                                                     __a;}))
 #ifdef __x86_64__
 #define _mm_insert_epi64(X, I, N) (__extension__ ({ __v2di __a = (__v2di)(X); \
-                                                    __a[(N)] = (I);           \
+                                                    __a[(N) & 1] = (I);           \
                                                     __a;}))
 #endif /* __x86_64__ */
 
@@ -231,12 +231,12 @@ _mm_max_epu32 (__m128i __V1, __m128i __V2)
  */
 #define _mm_extract_epi8(X, N) (__extension__ ({ __v16qi __a = (__v16qi)(X); \
                                                  (int)(unsigned char) \
-                                                     __a[(N)];}))
+                                                     __a[(N) & 15];}))
 #define _mm_extract_epi32(X, N) (__extension__ ({ __v4si __a = (__v4si)(X); \
-                                                  __a[(N)];}))
+                                                  __a[(N) & 3];}))
 #ifdef __x86_64__
 #define _mm_extract_epi64(X, N) (__extension__ ({ __v2di __a = (__v2di)(X); \
-                                                  __a[(N)];}))
+                                                  __a[(N) & 1];}))
 #endif /* __x86_64 */
 
 /* SSE4 128-bit Packed Integer Comparisons.  */

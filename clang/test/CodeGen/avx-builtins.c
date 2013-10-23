@@ -93,3 +93,21 @@ int test_mm_cmpistrz(__m128i A, __m128i B) {
   // CHECK: @llvm.x86.sse42.pcmpistriz128
   return _mm_cmpistrz(A, B, 7);
 }
+
+int test_extract_epi32(__m256i __a) {
+  // CHECK-LABEL: @test_extract_epi32
+  // CHECK: extractelement <8 x i32> %{{.*}}, i32 0
+  return _mm256_extract_epi32(__a, 8);
+}
+
+int test_extract_epi16(__m256i __a) {
+  // CHECK-LABEL: @test_extract_epi16
+  // CHECK: extractelement <16 x i16> %{{.*}}, i32 0
+  return _mm256_extract_epi16(__a, 16);
+}
+
+int test_extract_epi8(__m256i __a) {
+  // CHECK-LABEL: @test_extract_epi8
+  // CHECK: extractelement <32 x i8> %{{.*}}, i32 0
+  return _mm256_extract_epi8(__a, 32);
+}
