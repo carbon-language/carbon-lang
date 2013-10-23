@@ -1115,7 +1115,7 @@ void SITargetLowering::adjustWritemask(MachineSDNode *&Node,
     unsigned Comp;
     for (unsigned i = 0, Dmask = OldDmask; i <= Lane; i++) {
       assert(Dmask);
-      Comp = ffs(Dmask)-1;
+      Comp = countTrailingZeros(Dmask);
       Dmask &= ~(1 << Comp);
     }
 
