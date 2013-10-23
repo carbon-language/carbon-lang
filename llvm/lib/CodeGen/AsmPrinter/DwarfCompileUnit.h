@@ -328,20 +328,20 @@ private:
   void constructArrayTypeDIE(DIE &Buffer, DICompositeType *CTy);
 
   /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
-  DIE *constructEnumTypeDIE(DIEnumerator ETy, DIE &Buffer);
+  DIE *constructEnumTypeDIE(DIE &Buffer, DIEnumerator ETy);
 
   /// createMemberDIE - Create new member DIE.
-  DIE *createMemberDIE(DIDerivedType DT, DIE &Buffer);
+  DIE *createMemberDIE(DIE &Buffer, DIDerivedType DT);
 
   /// getOrCreateTemplateTypeParameterDIE - Find existing DIE or create new DIE
   /// for the given DITemplateTypeParameter.
-  DIE *getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP,
-                                           DIE &Buffer);
+  DIE *getOrCreateTemplateTypeParameterDIE(DIE &Buffer,
+                                           DITemplateTypeParameter TP);
 
   /// getOrCreateTemplateValueParameterDIE - Find existing DIE or create
   /// new DIE for the given DITemplateValueParameter.
-  DIE *getOrCreateTemplateValueParameterDIE(DITemplateValueParameter TVP,
-                                            DIE &Buffer);
+  DIE *getOrCreateTemplateValueParameterDIE(DIE &Buffer,
+                                            DITemplateValueParameter TVP);
 
   /// getOrCreateStaticMemberDIE - Create new static data member DIE.
   DIE *getOrCreateStaticMemberDIE(DIDerivedType DT);

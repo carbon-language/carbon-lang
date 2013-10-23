@@ -796,11 +796,11 @@ void CompileUnit::addTemplateParams(DIE &Buffer, DIArray TParams) {
   for (unsigned i = 0, e = TParams.getNumElements(); i != e; ++i) {
     DIDescriptor Element = TParams.getElement(i);
     if (Element.isTemplateTypeParameter())
-      getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter(Element),
-                                          Buffer);
+      getOrCreateTemplateTypeParameterDIE(Buffer,
+                                          DITemplateTypeParameter(Element));
     else if (Element.isTemplateValueParameter())
-      getOrCreateTemplateValueParameterDIE(DITemplateValueParameter(Element),
-                                           Buffer);
+      getOrCreateTemplateValueParameterDIE(Buffer,
+                                           DITemplateValueParameter(Element));
   }
 }
 
@@ -1096,7 +1096,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
       DIDescriptor Enum(Elements.getElement(i));
       if (Enum.isEnumerator())
-        constructEnumTypeDIE(DIEnumerator(Enum), Buffer);
+        constructEnumTypeDIE(Buffer, DIEnumerator(Enum));
     }
     DIType DTy = resolve(CTy.getTypeDerivedFrom());
     if (DTy) {
@@ -1167,7 +1167,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         } else if (DDTy.isStaticMember()) {
           ElemDie = getOrCreateStaticMemberDIE(DDTy);
         } else {
-          ElemDie = createMemberDIE(DDTy, Buffer);
+          ElemDie = createMemberDIE(Buffer, DDTy);
         }
       } else if (Element.isObjCProperty()) {
         DIObjCProperty Property(Element);
@@ -1270,8 +1270,8 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
 /// getOrCreateTemplateTypeParameterDIE - Find existing DIE or create new DIE
 /// for the given DITemplateTypeParameter.
 DIE *
-CompileUnit::getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP,
-                                                 DIE &Buffer) {
+CompileUnit::getOrCreateTemplateTypeParameterDIE(DIE &Buffer,
+                                                 DITemplateTypeParameter TP) {
   DIE *ParamDIE = getDIE(TP);
   if (ParamDIE)
     return ParamDIE;
@@ -1289,8 +1289,8 @@ CompileUnit::getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP,
 /// getOrCreateTemplateValueParameterDIE - Find existing DIE or create new DIE
 /// for the given DITemplateValueParameter.
 DIE *
-CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter VP,
-                                                  DIE &Buffer) {
+CompileUnit::getOrCreateTemplateValueParameterDIE(DIE &Buffer,
+                                                  DITemplateValueParameter VP) {
   DIE *ParamDIE = getDIE(VP);
   if (ParamDIE)
     return ParamDIE;
@@ -1687,7 +1687,7 @@ void CompileUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType *CTy) {
 }
 
 /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
-DIE *CompileUnit::constructEnumTypeDIE(DIEnumerator ETy, DIE &Buffer) {
+DIE *CompileUnit::constructEnumTypeDIE(DIE &Buffer, DIEnumerator ETy) {
   DIE *Enumerator = new DIE(dwarf::DW_TAG_enumerator);
   Buffer.addChild(Enumerator);
   StringRef Name = ETy.getName();
@@ -1788,7 +1788,7 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV, bool isScopeAbstract) {
 }
 
 /// createMemberDIE - Create new member DIE.
-DIE *CompileUnit::createMemberDIE(DIDerivedType DT, DIE &Buffer) {
+DIE *CompileUnit::createMemberDIE(DIE &Buffer, DIDerivedType DT) {
   DIE *MemberDie = new DIE(DT.getTag());
   Buffer.addChild(MemberDie);
   StringRef Name = DT.getName();
