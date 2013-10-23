@@ -21,6 +21,8 @@ import metabuild
 p = OptionParser()
 p.add_option('--with-llvm-config', metavar='PATH',
              help='use given llvm-config script')
+p.add_option('--with-cxx-compiler', metavar='PATH',
+             help='use given C++ compiler')
 p.add_option('--prefix', metavar='PATH',
              help='install to given prefix')
 p.add_option('--libexecdir', metavar='PATH',
@@ -65,10 +67,13 @@ llvm_core_libs = llvm_config(['--libs', 'core', 'bitreader', 'bitwriter']) + ' '
                  llvm_config(['--ldflags'])
 llvm_cxxflags = llvm_config(['--cxxflags']) + ' -fno-exceptions -fno-rtti'
 
-llvm_clang_cxx = os.path.join(llvm_bindir, 'clang++')
 llvm_clang = os.path.join(llvm_bindir, 'clang')
 llvm_link = os.path.join(llvm_bindir, 'llvm-link')
 llvm_opt = os.path.join(llvm_bindir, 'opt')
+
+cxx_compiler = options.with_cxx_compiler
+if not cxx_compiler:
+  cxx_compiler = os.path.join(llvm_bindir, 'clang++')
 
 available_targets = {
   'r600--' : { 'devices' :
@@ -96,8 +101,8 @@ b.rule("LLVM_LINK", command = llvm_link + " -o $out $in",
 b.rule("OPT", command = llvm_opt + " -O3 -o $out $in",
        description = 'OPT $out')
 
-c_compiler_rule(b, "LLVM_TOOL_CXX", 'LLVM-CXX', llvm_clang_cxx, llvm_cxxflags)
-b.rule("LLVM_TOOL_LINK", llvm_clang_cxx + " -o $out $in %s" % llvm_core_libs, 'LINK $out')
+c_compiler_rule(b, "LLVM_TOOL_CXX", 'CXX', cxx_compiler, llvm_cxxflags)
+b.rule("LLVM_TOOL_LINK", cxx_compiler + " -o $out $in %s" % llvm_core_libs, 'LINK $out')
 
 prepare_builtins = os.path.join('utils', 'prepare-builtins')
 b.build(os.path.join('utils', 'prepare-builtins.o'), "LLVM_TOOL_CXX",
