@@ -39,6 +39,12 @@ add_llvm_tool_subdirectory(llvm-mcmarkup)
 
 add_llvm_tool_subdirectory(llvm-symbolizer)
 
+if( NOT MSVC )
+  add_llvm_tool_subdirectory(llvm-c-test)
+else()
+  ignore_llvm_tool_subdirectory(llvm-c-test)
+endif( NOT MSVC )
+
 add_llvm_tool_subdirectory(obj2yaml)
 add_llvm_tool_subdirectory(yaml2obj)
 
