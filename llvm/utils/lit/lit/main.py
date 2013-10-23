@@ -200,7 +200,7 @@ def main(builtinParameters = {}):
                       action="store_true", default=useProcessesIsDefault)
     group.add_option("", "--use-threads", dest="useProcesses",
                       help="Run tests in parallel with threads (not processes)",
-                      action="store_false", default=not useProcessesIsDefault)
+                      action="store_false", default=useProcessesIsDefault)
     parser.add_option_group(group)
 
     (opts, args) = parser.parse_args()
