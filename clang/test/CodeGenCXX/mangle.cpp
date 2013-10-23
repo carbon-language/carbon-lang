@@ -933,3 +933,12 @@ namespace test42 {
 
   void g() { func(foo<20, X>()); }
 }
+
+namespace test43 {
+  // CHECK-LABEL: define void @_ZN6test431gEPNS_3zedIXadL_ZNS_3fooUt_3barEEEEE
+  struct foo { union { int bar; }; };
+  template <int (foo::*)>
+  struct zed {};
+  void g(zed<&foo::bar>*)
+  {}
+}

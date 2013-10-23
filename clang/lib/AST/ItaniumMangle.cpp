@@ -439,6 +439,8 @@ void CXXNameMangler::mangle(const NamedDecl *D, StringRef Prefix) {
     mangleFunctionEncoding(FD);
   else if (const VarDecl *VD = dyn_cast<VarDecl>(D))
     mangleName(VD);
+  else if (const IndirectFieldDecl *IFD = dyn_cast<IndirectFieldDecl>(D))
+    mangleName(IFD->getAnonField());
   else
     mangleName(cast<FieldDecl>(D));
 }
