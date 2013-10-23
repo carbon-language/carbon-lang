@@ -374,18 +374,14 @@ FormatManager::ShouldPrintAsOneLiner (ValueObject& valobj)
                 return false;
         }
         
-        // if there is a base-class...
-        if (child_sp->IsBaseClass())
+        // if this child has children..
+        if (child_sp->GetNumChildren())
         {
-            // and it has children..
-            if (child_sp->GetNumChildren())
-            {
-                // ...and no summary...
-                // (if it had a summary and the summary wanted children, we would have bailed out anyway
-                //  so this only makes us bail out if this has no summary and we would then print children)
-                if (!child_sp->GetSummaryFormat())
-                    return false; // then bail out
-            }
+            // ...and no summary...
+            // (if it had a summary and the summary wanted children, we would have bailed out anyway
+            //  so this only makes us bail out if this has no summary and we would then print children)
+            if (!child_sp->GetSummaryFormat())
+                return false; // then bail out
         }
     }
     return true;
