@@ -408,7 +408,7 @@ void LLVMInitializeCore(LLVMPassRegistryRef R);
 /** Deallocate and destroy all ManagedStatic variables.
     @see llvm::llvm_shutdown
     @see ManagedStatic */
-void LLVMShutdown();
+void LLVMShutdown(void);
 
 
 /*===-- Error handling ----------------------------------------------------===*/
@@ -2748,16 +2748,16 @@ void LLVMDisposePassManager(LLVMPassManagerRef PM);
     initialization succeeded. Must be executed in isolation from all
     other LLVM api calls.
     @see llvm::llvm_start_multithreaded */
-LLVMBool LLVMStartMultithreaded();
+LLVMBool LLVMStartMultithreaded(void);
 
 /** Deallocate structures necessary to make LLVM safe for multithreading.
     Must be executed in isolation from all other LLVM api calls.
     @see llvm::llvm_stop_multithreaded */
-void LLVMStopMultithreaded();
+void LLVMStopMultithreaded(void);
 
 /** Check whether LLVM is executing in thread-safe mode or not.
     @see llvm::llvm_is_multithreaded */
-LLVMBool LLVMIsMultithreaded();
+LLVMBool LLVMIsMultithreaded(void);
 
 /**
  * @}
