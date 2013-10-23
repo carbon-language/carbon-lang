@@ -87,28 +87,15 @@ class SourceWin(cui.TitledWin):
     elif key == curses.KEY_UP:
       self.pageUp()
 
-  def updateViewline(self, total_lines):
+  def updateViewline(self):
     half = self.height / 2
-    if total_lines == 0:
+    if self.pc_line < half:
       self.viewline = 0
     else:
-      lines_before_pc = self.pc_line
-      lines_after_pc = total_lines - self.pc_line
-      if lines_before_pc < half:
-        self.viewline = 0
-      elif lines_after_pc < half:
-        self.viewline = total_lines - self.height + 1
-      else:
-        self.viewline = self.pc_line - half + 1
+      self.viewline = self.pc_line - half + 1
 
-      if self.viewline < 0:
-        raise Exception("negative viewline: pc=%d viewline=%d" % (self.pc_line, self.viewline))
-      end = min(total_lines, self.height - 1)
-      if self.viewline + end > len(self.content) + 1:
-        raise Exception("viewline too large: PC=%d viewline=%d (to %d of %d)" % (self.pc_line,
-                                                                                 self.viewline,
-                                                                                 self.viewline + end - 1,
-                                                                                 total_lines))
+    if self.viewline < 0:
+      raise Exception("negative viewline: pc=%d viewline=%d" % (self.pc_line, self.viewline))
 
   def refreshSource(self, process = None):
     (self.height, self.width) = self.win.getmaxyx()
@@ -126,7 +113,7 @@ class SourceWin(cui.TitledWin):
       path = os.path.join(f.GetDirectory(), self.filename)
       self.setTitle(path)
       self.content = self.getContent(path)
-      self.updateViewline(len(self.content))
+      self.updateViewline()
 
     if self.filename is None:
       return
@@ -155,13 +142,8 @@ class SourceWin(cui.TitledWin):
     source = ""
     count = 1
     self.win.erase()
-    end = min(len(content), self.height -1)
-    for i in range(self.viewline, self.viewline + end):
-      if i > len(content) - 1:
-        raise Exception("Out of range content (%d-%d of %d)" % (self.viewline,
-                                                                self.viewline + self.height - 1,
-                                                                len(content)))
-
+    end = min(len(content), self.viewline + self.height)
+    for i in range(self.viewline, end):
       line_num = i + 1
       marker = self.markerNone
       attr = curses.A_NORMAL
