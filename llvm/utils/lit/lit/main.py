@@ -109,12 +109,6 @@ def write_test_results(run, lit_config, testing_time, output_path):
         f.close()
 
 def main(builtinParameters = {}):
-    # Bump the GIL check interval, its more important to get any one thread to a
-    # blocking operation (hopefully exec) than to try and unblock other threads.
-    #
-    # FIXME: This is a hack.
-    sys.setcheckinterval(1000)
-
     # Use processes by default on Unix platforms.
     isWindows = platform.system() == 'Windows'
     useProcessesIsDefault = not isWindows
