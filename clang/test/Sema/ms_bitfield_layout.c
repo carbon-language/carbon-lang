@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple i686-pc-win32 -cxx-abi microsoft -fdump-record-layouts %s 2>/dev/null \
 // RUN:            | FileCheck %s
+// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple x86_64-pc-win32 -cxx-abi microsoft -fdump-record-layouts %s 2>/dev/null \
+// RUN:            | FileCheck %s
 
 typedef struct A {
 	char x;

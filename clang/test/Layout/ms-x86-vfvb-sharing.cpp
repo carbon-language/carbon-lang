@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple i686-pc-win32 -fdump-record-layouts -fsyntax-only -cxx-abi microsoft %s 2>&1 \
 // RUN:            | FileCheck %s
+// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple x86_64-pc-win32 -fdump-record-layouts -fsyntax-only -cxx-abi microsoft %s 2>/dev/null \
+// RUN:            | FileCheck %s -check-prefix CHECK-X64
 
 extern "C" int printf(const char *fmt, ...);
 
@@ -26,6 +28,17 @@ struct A : B0, virtual B1 {
 // CHECK:   64 |     int a
 // CHECK:      | [sizeof=80, align=16
 // CHECK:      |  nvsize=64, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct A
+// CHECK-X64:    0 |   (A vftable pointer)
+// CHECK-X64:    8 |   struct B0 (base)
+// CHECK-X64:    8 |     int a
+// CHECK-X64:   16 |   (A vbtable pointer)
+// CHECK-X64:   32 |   int a
+// CHECK-X64:   48 |   struct B1 (virtual base)
+// CHECK-X64:   48 |     int a
+// CHECK-X64:      | [sizeof=64, align=16
+// CHECK-X64:      |  nvsize=48, nvalign=16]
 
 struct B : B2, B0, virtual B1 {
 	__declspec(align(16)) int a;
@@ -45,6 +58,18 @@ struct B : B2, B0, virtual B1 {
 // CHECK:   48 |     int a
 // CHECK:      | [sizeof=64, align=16
 // CHECK:      |  nvsize=48, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct B
+// CHECK-X64:    0 |   struct B2 (primary base)
+// CHECK-X64:    0 |     (B2 vftable pointer)
+// CHECK-X64:    8 |   struct B0 (base)
+// CHECK-X64:    8 |     int a
+// CHECK-X64:   16 |   (B vbtable pointer)
+// CHECK-X64:   32 |   int a
+// CHECK-X64:   48 |   struct B1 (virtual base)
+// CHECK-X64:   48 |     int a
+// CHECK-X64:      | [sizeof=64, align=16
+// CHECK-X64:      |  nvsize=48, nvalign=16]
 
 struct C : B3, B0, virtual B1 {
 	__declspec(align(16)) int a;
@@ -64,6 +89,18 @@ struct C : B3, B0, virtual B1 {
 // CHECK:   48 |     int a
 // CHECK:      | [sizeof=64, align=16
 // CHECK:      |  nvsize=48, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct C
+// CHECK-X64:    0 |   (C vftable pointer)
+// CHECK-X64:    8 |   struct B3 (base)
+// CHECK-X64:    8 |     (B3 vbtable pointer)
+// CHECK-X64:   16 |   struct B0 (base)
+// CHECK-X64:   16 |     int a
+// CHECK-X64:   32 |   int a
+// CHECK-X64:   48 |   struct B1 (virtual base)
+// CHECK-X64:   48 |     int a
+// CHECK-X64:      | [sizeof=64, align=16
+// CHECK-X64:      |  nvsize=48, nvalign=16]
 
 struct D : B4, B0, virtual B1 {
 	__declspec(align(16)) int a;
@@ -83,6 +120,18 @@ struct D : B4, B0, virtual B1 {
 // CHECK:   32 |     int a
 // CHECK:      | [sizeof=48, align=16
 // CHECK:      |  nvsize=32, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct D
+// CHECK-X64:    0 |   struct B4 (primary base)
+// CHECK-X64:    0 |     (B4 vftable pointer)
+// CHECK-X64:    8 |     (B4 vbtable pointer)
+// CHECK-X64:   16 |   struct B0 (base)
+// CHECK-X64:   16 |     int a
+// CHECK-X64:   32 |   int a
+// CHECK-X64:   48 |   struct B1 (virtual base)
+// CHECK-X64:   48 |     int a
+// CHECK-X64:      | [sizeof=64, align=16
+// CHECK-X64:      |  nvsize=48, nvalign=16]
 
 int a[
 sizeof(A)+

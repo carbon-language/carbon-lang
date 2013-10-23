@@ -1,5 +1,7 @@
-// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple i686-pc-win32 -fdump-record-layouts -fsyntax-only -cxx-abi microsoft %s 2>&1 \
+// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple i686-pc-win32 -fdump-record-layouts -fsyntax-only -cxx-abi microsoft %s 2>/dev/null \
 // RUN:            | FileCheck %s
+// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple x86_64-pc-win32 -fdump-record-layouts -fsyntax-only -cxx-abi microsoft %s 2>/dev/null \
+// RUN:            | FileCheck %s -check-prefix CHECK-X64
 
 extern "C" int printf(const char *fmt, ...);
 
@@ -45,6 +47,16 @@ struct TestF0 : A4, virtual B4 {
 // CHECK:   12 |     int a
 // CHECK:      | [sizeof=16, align=4
 // CHECK:      |  nvsize=12, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct TestF0
+// CHECK-X64:    0 |   struct A4 (base)
+// CHECK-X64:    0 |     int a
+// CHECK-X64:    8 |   (TestF0 vbtable pointer)
+// CHECK-X64:   16 |   int a
+// CHECK-X64:   24 |   struct B4 (virtual base)
+// CHECK-X64:   24 |     int a
+// CHECK-X64:      | [sizeof=32, align=8
+// CHECK-X64:      |  nvsize=24, nvalign=8]
 
 struct TestF1 : A4, virtual A16 {
 	int a;
@@ -61,6 +73,16 @@ struct TestF1 : A4, virtual A16 {
 // CHECK:   16 |     int a
 // CHECK:      | [sizeof=32, align=16
 // CHECK:      |  nvsize=12, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct TestF1
+// CHECK-X64:    0 |   struct A4 (base)
+// CHECK-X64:    0 |     int a
+// CHECK-X64:    8 |   (TestF1 vbtable pointer)
+// CHECK-X64:   16 |   int a
+// CHECK-X64:   32 |   struct A16 (virtual base)
+// CHECK-X64:   32 |     int a
+// CHECK-X64:      | [sizeof=48, align=16
+// CHECK-X64:      |  nvsize=24, nvalign=8]
 
 struct TestF2 : A4, virtual C4 {
 	int a;
@@ -78,6 +100,17 @@ struct TestF2 : A4, virtual C4 {
 // CHECK:   16 |     int a
 // CHECK:      | [sizeof=20, align=4
 // CHECK:      |  nvsize=12, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct TestF2
+// CHECK-X64:    0 |   struct A4 (base)
+// CHECK-X64:    0 |     int a
+// CHECK-X64:    8 |   (TestF2 vbtable pointer)
+// CHECK-X64:   16 |   int a
+// CHECK-X64:   24 |   struct C4 (virtual base)
+// CHECK-X64:   24 |     (C4 vftable pointer)
+// CHECK-X64:   32 |     int a
+// CHECK-X64:      | [sizeof=40, align=8
+// CHECK-X64:      |  nvsize=24, nvalign=8]
 
 struct TestF3 : A4, virtual C16 {
 	int a;
@@ -95,6 +128,17 @@ struct TestF3 : A4, virtual C16 {
 // CHECK:   32 |     int a
 // CHECK:      | [sizeof=48, align=16
 // CHECK:      |  nvsize=12, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct TestF3
+// CHECK-X64:    0 |   struct A4 (base)
+// CHECK-X64:    0 |     int a
+// CHECK-X64:    8 |   (TestF3 vbtable pointer)
+// CHECK-X64:   16 |   int a
+// CHECK-X64:   32 |   struct C16 (virtual base)
+// CHECK-X64:   32 |     (C16 vftable pointer)
+// CHECK-X64:   48 |     int a
+// CHECK-X64:      | [sizeof=64, align=16
+// CHECK-X64:      |  nvsize=24, nvalign=8]
 
 struct TestF4 : TestF3, A4 {
 	int a;
@@ -116,6 +160,21 @@ struct TestF4 : TestF3, A4 {
 // CHECK:   48 |     int a
 // CHECK:      | [sizeof=64, align=16
 // CHECK:      |  nvsize=32, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct TestF4
+// CHECK-X64:    0 |   struct TestF3 (base)
+// CHECK-X64:    0 |     struct A4 (base)
+// CHECK-X64:    0 |       int a
+// CHECK-X64:    8 |     (TestF3 vbtable pointer)
+// CHECK-X64:   16 |     int a
+// CHECK-X64:   24 |   struct A4 (base)
+// CHECK-X64:   24 |     int a
+// CHECK-X64:   28 |   int a
+// CHECK-X64:   32 |   struct C16 (virtual base)
+// CHECK-X64:   32 |     (C16 vftable pointer)
+// CHECK-X64:   48 |     int a
+// CHECK-X64:      | [sizeof=64, align=16
+// CHECK-X64:      |  nvsize=32, nvalign=16]
 
 struct TestF5 : TestF3, A4 {
 	int a;
@@ -139,6 +198,22 @@ struct TestF5 : TestF3, A4 {
 // CHECK:   64 |     int a
 // CHECK:      | [sizeof=80, align=16
 // CHECK:      |  nvsize=48, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct TestF5
+// CHECK-X64:    0 |   (TestF5 vftable pointer)
+// CHECK-X64:   16 |   struct TestF3 (base)
+// CHECK-X64:   16 |     struct A4 (base)
+// CHECK-X64:   16 |       int a
+// CHECK-X64:   24 |     (TestF3 vbtable pointer)
+// CHECK-X64:   32 |     int a
+// CHECK-X64:   40 |   struct A4 (base)
+// CHECK-X64:   40 |     int a
+// CHECK-X64:   44 |   int a
+// CHECK-X64:   48 |   struct C16 (virtual base)
+// CHECK-X64:   48 |     (C16 vftable pointer)
+// CHECK-X64:   64 |     int a
+// CHECK-X64:      | [sizeof=80, align=16
+// CHECK-X64:      |  nvsize=48, nvalign=16]
 
 struct TestF6 : TestF3, A4 {
 	int a;
@@ -162,6 +237,22 @@ struct TestF6 : TestF3, A4 {
 // CHECK:   64 |     int a
 // CHECK:      | [sizeof=80, align=16
 // CHECK:      |  nvsize=32, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct TestF6
+// CHECK-X64:    0 |   struct TestF3 (base)
+// CHECK-X64:    0 |     struct A4 (base)
+// CHECK-X64:    0 |       int a
+// CHECK-X64:    8 |     (TestF3 vbtable pointer)
+// CHECK-X64:   16 |     int a
+// CHECK-X64:   24 |   struct A4 (base)
+// CHECK-X64:   24 |     int a
+// CHECK-X64:   28 |   int a
+// CHECK-X64:   44 |   (vtordisp for vbase C16)
+// CHECK-X64:   48 |   struct C16 (virtual base)
+// CHECK-X64:   48 |     (C16 vftable pointer)
+// CHECK-X64:   64 |     int a
+// CHECK-X64:      | [sizeof=80, align=16
+// CHECK-X64:      |  nvsize=32, nvalign=16]
 
 struct TestF7 : A4, virtual C16 {
 	int a;
@@ -181,6 +272,18 @@ struct TestF7 : A4, virtual C16 {
 // CHECK:   48 |     int a
 // CHECK:      | [sizeof=64, align=16
 // CHECK:      |  nvsize=12, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct TestF7
+// CHECK-X64:    0 |   struct A4 (base)
+// CHECK-X64:    0 |     int a
+// CHECK-X64:    8 |   (TestF7 vbtable pointer)
+// CHECK-X64:   16 |   int a
+// CHECK-X64:   44 |   (vtordisp for vbase C16)
+// CHECK-X64:   48 |   struct C16 (virtual base)
+// CHECK-X64:   48 |     (C16 vftable pointer)
+// CHECK-X64:   64 |     int a
+// CHECK-X64:      | [sizeof=80, align=16
+// CHECK-X64:      |  nvsize=24, nvalign=8]
 
 struct TestF8 : TestF7, A4 {
 	int a;
@@ -204,6 +307,22 @@ struct TestF8 : TestF7, A4 {
 // CHECK:   64 |     int a
 // CHECK:      | [sizeof=80, align=16
 // CHECK:      |  nvsize=32, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct TestF8
+// CHECK-X64:    0 |   struct TestF7 (base)
+// CHECK-X64:    0 |     struct A4 (base)
+// CHECK-X64:    0 |       int a
+// CHECK-X64:    8 |     (TestF7 vbtable pointer)
+// CHECK-X64:   16 |     int a
+// CHECK-X64:   24 |   struct A4 (base)
+// CHECK-X64:   24 |     int a
+// CHECK-X64:   28 |   int a
+// CHECK-X64:   44 |   (vtordisp for vbase C16)
+// CHECK-X64:   48 |   struct C16 (virtual base)
+// CHECK-X64:   48 |     (C16 vftable pointer)
+// CHECK-X64:   64 |     int a
+// CHECK-X64:      | [sizeof=80, align=16
+// CHECK-X64:      |  nvsize=32, nvalign=16]
 
 struct TestF9 : A4, virtual C16 {
 	int a;
@@ -223,6 +342,18 @@ struct TestF9 : A4, virtual C16 {
 // CHECK:   32 |     int a
 // CHECK:      | [sizeof=48, align=16
 // CHECK:      |  nvsize=16, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct TestF9
+// CHECK-X64:    0 |   (TestF9 vftable pointer)
+// CHECK-X64:    8 |   struct A4 (base)
+// CHECK-X64:    8 |     int a
+// CHECK-X64:   16 |   (TestF9 vbtable pointer)
+// CHECK-X64:   24 |   int a
+// CHECK-X64:   32 |   struct C16 (virtual base)
+// CHECK-X64:   32 |     (C16 vftable pointer)
+// CHECK-X64:   48 |     int a
+// CHECK-X64:      | [sizeof=64, align=16
+// CHECK-X64:      |  nvsize=32, nvalign=8]
 
 struct TestFA : TestF9, A4 {
 	int a;
@@ -246,6 +377,22 @@ struct TestFA : TestF9, A4 {
 // CHECK:   48 |     int a
 // CHECK:      | [sizeof=64, align=16
 // CHECK:      |  nvsize=32, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct TestFA
+// CHECK-X64:    0 |   struct TestF9 (primary base)
+// CHECK-X64:    0 |     (TestF9 vftable pointer)
+// CHECK-X64:    8 |     struct A4 (base)
+// CHECK-X64:    8 |       int a
+// CHECK-X64:   16 |     (TestF9 vbtable pointer)
+// CHECK-X64:   24 |     int a
+// CHECK-X64:   32 |   struct A4 (base)
+// CHECK-X64:   32 |     int a
+// CHECK-X64:   36 |   int a
+// CHECK-X64:   48 |   struct C16 (virtual base)
+// CHECK-X64:   48 |     (C16 vftable pointer)
+// CHECK-X64:   64 |     int a
+// CHECK-X64:      | [sizeof=80, align=16
+// CHECK-X64:      |  nvsize=48, nvalign=16]
 
 struct TestFB : A16, virtual C16 {
 	int a;
@@ -265,6 +412,18 @@ struct TestFB : A16, virtual C16 {
 // CHECK:   80 |     int a
 // CHECK:      | [sizeof=96, align=16
 // CHECK:      |  nvsize=64, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct TestFB
+// CHECK-X64:    0 |   (TestFB vftable pointer)
+// CHECK-X64:   16 |   struct A16 (base)
+// CHECK-X64:   16 |     int a
+// CHECK-X64:   32 |   (TestFB vbtable pointer)
+// CHECK-X64:   40 |   int a
+// CHECK-X64:   48 |   struct C16 (virtual base)
+// CHECK-X64:   48 |     (C16 vftable pointer)
+// CHECK-X64:   64 |     int a
+// CHECK-X64:      | [sizeof=80, align=16
+// CHECK-X64:      |  nvsize=48, nvalign=16]
 
 struct TestFC : TestFB, A4 {
 	int a;
@@ -288,6 +447,22 @@ struct TestFC : TestFB, A4 {
 // CHECK:   96 |     int a
 // CHECK:      | [sizeof=112, align=16
 // CHECK:      |  nvsize=80, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct TestFC
+// CHECK-X64:    0 |   struct TestFB (primary base)
+// CHECK-X64:    0 |     (TestFB vftable pointer)
+// CHECK-X64:   16 |     struct A16 (base)
+// CHECK-X64:   16 |       int a
+// CHECK-X64:   32 |     (TestFB vbtable pointer)
+// CHECK-X64:   40 |     int a
+// CHECK-X64:   48 |   struct A4 (base)
+// CHECK-X64:   48 |     int a
+// CHECK-X64:   52 |   int a
+// CHECK-X64:   64 |   struct C16 (virtual base)
+// CHECK-X64:   64 |     (C16 vftable pointer)
+// CHECK-X64:   80 |     int a
+// CHECK-X64:      | [sizeof=96, align=16
+// CHECK-X64:      |  nvsize=64, nvalign=16]
 
 
 struct A16f {
@@ -329,6 +504,25 @@ struct F0 : A4, B {
 // CHECK:   96 |     int a
 // CHECK:      | [sizeof=112, align=16
 // CHECK:      |  nvsize=80, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct F0
+// CHECK-X64:    0 |   (F0 vftable pointer)
+// CHECK-X64:    8 |   struct A4 (base)
+// CHECK-X64:    8 |     int a
+// CHECK-X64:   16 |   struct B (base)
+// CHECK-X64:   16 |     struct A4 (base)
+// CHECK-X64:   16 |       int a
+// CHECK-X64:   20 |     struct Y (base)
+// CHECK-X64:   20 |       char y
+// CHECK-X64:   32 |     struct X (base)
+// CHECK-X64:   32 |       (X vbtable pointer)
+// CHECK-X64:   40 |     int a
+// CHECK-X64:   48 |   int a
+// CHECK-X64:   64 |   struct A16f (virtual base)
+// CHECK-X64:   64 |     (A16f vftable pointer)
+// CHECK-X64:   80 |     int a
+// CHECK-X64:      | [sizeof=96, align=16
+// CHECK-X64:      |  nvsize=64, nvalign=16]
 
 struct F1 : B, A4 {
 	int a;
@@ -355,6 +549,25 @@ struct F1 : B, A4 {
 // CHECK:   80 |     int a
 // CHECK:      | [sizeof=96, align=16
 // CHECK:      |  nvsize=64, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct F1
+// CHECK-X64:    0 |   (F1 vftable pointer)
+// CHECK-X64:   16 |   struct B (base)
+// CHECK-X64:   16 |     struct A4 (base)
+// CHECK-X64:   16 |       int a
+// CHECK-X64:   20 |     struct Y (base)
+// CHECK-X64:   20 |       char y
+// CHECK-X64:   32 |     struct X (base)
+// CHECK-X64:   32 |       (X vbtable pointer)
+// CHECK-X64:   40 |     int a
+// CHECK-X64:   48 |   struct A4 (base)
+// CHECK-X64:   48 |     int a
+// CHECK-X64:   52 |   int a
+// CHECK-X64:   64 |   struct A16f (virtual base)
+// CHECK-X64:   64 |     (A16f vftable pointer)
+// CHECK-X64:   80 |     int a
+// CHECK-X64:      | [sizeof=96, align=16
+// CHECK-X64:      |  nvsize=64, nvalign=16]
 
 struct F2 : A4, virtual A16f {
 	int a;
@@ -374,6 +587,18 @@ struct F2 : A4, virtual A16f {
 // CHECK:   32 |     int a
 // CHECK:      | [sizeof=48, align=16
 // CHECK:      |  nvsize=16, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct F2
+// CHECK-X64:    0 |   (F2 vftable pointer)
+// CHECK-X64:    8 |   struct A4 (base)
+// CHECK-X64:    8 |     int a
+// CHECK-X64:   16 |   (F2 vbtable pointer)
+// CHECK-X64:   24 |   int a
+// CHECK-X64:   32 |   struct A16f (virtual base)
+// CHECK-X64:   32 |     (A16f vftable pointer)
+// CHECK-X64:   48 |     int a
+// CHECK-X64:      | [sizeof=64, align=16
+// CHECK-X64:      |  nvsize=32, nvalign=8]
 
 struct F3 : A4, virtual A16f {
 	__declspec(align(16)) int a;
@@ -393,6 +618,18 @@ struct F3 : A4, virtual A16f {
 // CHECK:   80 |     int a
 // CHECK:      | [sizeof=96, align=16
 // CHECK:      |  nvsize=64, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct F3
+// CHECK-X64:    0 |   (F3 vftable pointer)
+// CHECK-X64:    8 |   struct A4 (base)
+// CHECK-X64:    8 |     int a
+// CHECK-X64:   16 |   (F3 vbtable pointer)
+// CHECK-X64:   32 |   int a
+// CHECK-X64:   48 |   struct A16f (virtual base)
+// CHECK-X64:   48 |     (A16f vftable pointer)
+// CHECK-X64:   64 |     int a
+// CHECK-X64:      | [sizeof=80, align=16
+// CHECK-X64:      |  nvsize=48, nvalign=16]
 
 struct F4 : A4, B {
 	__declspec(align(16)) int a;
@@ -419,6 +656,25 @@ struct F4 : A4, B {
 // CHECK:   96 |     int a
 // CHECK:      | [sizeof=112, align=16
 // CHECK:      |  nvsize=80, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct F4
+// CHECK-X64:    0 |   (F4 vftable pointer)
+// CHECK-X64:    8 |   struct A4 (base)
+// CHECK-X64:    8 |     int a
+// CHECK-X64:   16 |   struct B (base)
+// CHECK-X64:   16 |     struct A4 (base)
+// CHECK-X64:   16 |       int a
+// CHECK-X64:   20 |     struct Y (base)
+// CHECK-X64:   20 |       char y
+// CHECK-X64:   32 |     struct X (base)
+// CHECK-X64:   32 |       (X vbtable pointer)
+// CHECK-X64:   40 |     int a
+// CHECK-X64:   48 |   int a
+// CHECK-X64:   64 |   struct A16f (virtual base)
+// CHECK-X64:   64 |     (A16f vftable pointer)
+// CHECK-X64:   80 |     int a
+// CHECK-X64:      | [sizeof=96, align=16
+// CHECK-X64:      |  nvsize=64, nvalign=16]
 
 struct F5 : A16f, virtual A4 {
 	int a;
@@ -437,6 +693,17 @@ struct F5 : A16f, virtual A4 {
 // CHECK:   64 |     int a
 // CHECK:      | [sizeof=80, align=16
 // CHECK:      |  nvsize=64, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct F5
+// CHECK-X64:    0 |   struct A16f (primary base)
+// CHECK-X64:    0 |     (A16f vftable pointer)
+// CHECK-X64:   16 |     int a
+// CHECK-X64:   32 |   (F5 vbtable pointer)
+// CHECK-X64:   40 |   int a
+// CHECK-X64:   48 |   struct A4 (virtual base)
+// CHECK-X64:   48 |     int a
+// CHECK-X64:      | [sizeof=64, align=16
+// CHECK-X64:      |  nvsize=48, nvalign=16]
 
 struct F6 : virtual A16f, A4, virtual B {
 	int a;
@@ -464,6 +731,26 @@ struct F6 : virtual A16f, A4, virtual B {
 // CHECK:   68 |     int a
 // CHECK:      | [sizeof=80, align=16
 // CHECK:      |  nvsize=16, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct F6
+// CHECK-X64:    0 |   (F6 vftable pointer)
+// CHECK-X64:    8 |   struct A4 (base)
+// CHECK-X64:    8 |     int a
+// CHECK-X64:   16 |   (F6 vbtable pointer)
+// CHECK-X64:   24 |   int a
+// CHECK-X64:   32 |   struct A16f (virtual base)
+// CHECK-X64:   32 |     (A16f vftable pointer)
+// CHECK-X64:   48 |     int a
+// CHECK-X64:   64 |   struct B (virtual base)
+// CHECK-X64:   64 |     struct A4 (base)
+// CHECK-X64:   64 |       int a
+// CHECK-X64:   68 |     struct Y (base)
+// CHECK-X64:   68 |       char y
+// CHECK-X64:   80 |     struct X (base)
+// CHECK-X64:   80 |       (X vbtable pointer)
+// CHECK-X64:   88 |     int a
+// CHECK-X64:      | [sizeof=96, align=16
+// CHECK-X64:      |  nvsize=32, nvalign=8]
 
 int a[
 sizeof(TestF0)+
