@@ -231,8 +231,17 @@ bool VZeroUpperInserter::processBasicBlock(MachineFunction &MF,
   bool BBHasCall = false;
 
   for (MachineBasicBlock::iterator I = BB.begin(); I != BB.end(); ++I) {
-    MachineInstr *MI = I;
     DebugLoc dl = I->getDebugLoc();
+    MachineInstr *MI = I;
+
+    // Don't need to check instructions added in prolog.
+    // In prolog, special function calls may be added for specific targets
+    // (e.g. on Windows, a prolog helper '_chkstk' is called when the local
+    // variables exceed 4K bytes on stack.) These helpers won't use/def YMM/XMM
+    // registers.
+    if (MI->getFlag(MachineInstr::FrameSetup))
+      continue;
+
     bool isControlFlow = MI->isCall() || MI->isReturn();
 
     // Shortcut: don't need to check regular instructions in dirty state.
