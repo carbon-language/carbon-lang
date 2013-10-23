@@ -11088,8 +11088,7 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
     // However, they cannot be referenced if they are deleted, and they are
     // deleted whenever the implicit definition of the special member would
     // fail.
-    if (!(Func->isConstexpr() && !getLangOpts().DelayedTemplateParsing) ||
-        Func->getBody())
+    if (!Func->isConstexpr() || Func->getBody())
       return;
     CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Func);
     if (!Func->isImplicitlyInstantiable() && (!MD || MD->isUserProvided()))
@@ -11180,14 +11179,13 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
       }
     }
 
-    if (!AlreadyInstantiated ||
-        (Func->isConstexpr() && !getLangOpts().DelayedTemplateParsing)) {
+    if (!AlreadyInstantiated || Func->isConstexpr()) {
       if (isa<CXXRecordDecl>(Func->getDeclContext()) &&
           cast<CXXRecordDecl>(Func->getDeclContext())->isLocalClass() &&
           ActiveTemplateInstantiations.size())
         PendingLocalImplicitInstantiations.push_back(
             std::make_pair(Func, PointOfInstantiation));
-      else if (Func->isConstexpr() && !getLangOpts().DelayedTemplateParsing)
+      else if (Func->isConstexpr())
         // Do not defer instantiations of constexpr functions, to avoid the
         // expression evaluator needing to call back into Sema if it sees a
         // call to such a function.

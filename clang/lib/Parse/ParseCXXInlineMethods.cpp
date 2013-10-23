@@ -115,6 +115,7 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
   // the tokens and store them for parsing at the end of the translation unit.
   if (getLangOpts().DelayedTemplateParsing &&
       DefinitionKind == FDK_Definition &&
+      !D.getDeclSpec().isConstexprSpecified() &&
       ((Actions.CurContext->isDependentContext() ||
         (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate &&
          TemplateInfo.Kind != ParsedTemplateInfo::ExplicitSpecialization)) &&
