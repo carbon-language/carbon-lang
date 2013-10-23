@@ -3640,9 +3640,11 @@ public:
 
   void HideUsingShadowDecl(Scope *S, UsingShadowDecl *Shadow);
   bool CheckUsingShadowDecl(UsingDecl *UD, NamedDecl *Target,
-                            const LookupResult &PreviousDecls);
+                            const LookupResult &PreviousDecls,
+                            UsingShadowDecl *&PrevShadow);
   UsingShadowDecl *BuildUsingShadowDecl(Scope *S, UsingDecl *UD,
-                                        NamedDecl *Target);
+                                        NamedDecl *Target,
+                                        UsingShadowDecl *PrevDecl);
 
   bool CheckUsingDeclRedeclaration(SourceLocation UsingLoc,
                                    bool HasTypenameKeyword,

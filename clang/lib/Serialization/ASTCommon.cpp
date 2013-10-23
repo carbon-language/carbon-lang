@@ -165,6 +165,7 @@ bool serialization::isRedeclarableDeclKind(unsigned Kind) {
   case Decl::CXXConstructor:
   case Decl::CXXDestructor:
   case Decl::CXXConversion:
+  case Decl::UsingShadow:
   case Decl::Var:
   case Decl::FunctionTemplate:
   case Decl::ClassTemplate:
@@ -192,7 +193,6 @@ bool serialization::isRedeclarableDeclKind(unsigned Kind) {
   case Decl::NonTypeTemplateParm:
   case Decl::TemplateTemplateParm:
   case Decl::Using:
-  case Decl::UsingShadow:
   case Decl::ObjCMethod:
   case Decl::ObjCCategory:
   case Decl::ObjCCategoryImpl:

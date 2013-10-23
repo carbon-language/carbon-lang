@@ -2676,7 +2676,7 @@ public:
 ///                 // Also creates a UsingShadowDecl for A::foo() in B
 /// }
 /// \endcode
-class UsingShadowDecl : public NamedDecl {
+class UsingShadowDecl : public NamedDecl, public Redeclarable<UsingShadowDecl> {
   virtual void anchor();
 
   /// The referenced declaration.
@@ -2699,6 +2699,17 @@ class UsingShadowDecl : public NamedDecl {
     setImplicit();
   }
 
+  typedef Redeclarable<UsingShadowDecl> redeclarable_base;
+  virtual UsingShadowDecl *getNextRedeclaration() {
+    return RedeclLink.getNext();
+  }
+  virtual UsingShadowDecl *getPreviousDeclImpl() {
+    return getPreviousDecl();
+  }
+  virtual UsingShadowDecl *getMostRecentDeclImpl() {
+    return getMostRecentDecl();
+  }
+
 public:
   static UsingShadowDecl *Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation Loc, UsingDecl *Using,
@@ -2707,7 +2718,20 @@ public:
   }
 
   static UsingShadowDecl *CreateDeserialized(ASTContext &C, unsigned ID);
-  
+
+  typedef redeclarable_base::redecl_iterator redecl_iterator;
+  using redeclarable_base::redecls_begin;
+  using redeclarable_base::redecls_end;
+  using redeclarable_base::getPreviousDecl;
+  using redeclarable_base::getMostRecentDecl;
+
+  virtual UsingShadowDecl *getCanonicalDecl() {
+    return getFirstDecl();
+  }
+  virtual const UsingShadowDecl *getCanonicalDecl() const {
+    return getFirstDecl();
+  }
+
   /// \brief Gets the underlying declaration which has been brought into the
   /// local scope.
   NamedDecl *getTargetDecl() const { return Underlying; }

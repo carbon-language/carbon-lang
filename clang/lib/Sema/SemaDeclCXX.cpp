@@ -7073,20 +7073,15 @@ Decl *Sema::ActOnUsingDeclaration(Scope *S,
 /// \brief Determine whether a using declaration considers the given
 /// declarations as "equivalent", e.g., if they are redeclarations of
 /// the same entity or are both typedefs of the same type.
-static bool 
-IsEquivalentForUsingDecl(ASTContext &Context, NamedDecl *D1, NamedDecl *D2,
-                         bool &SuppressRedeclaration) {
-  if (D1->getCanonicalDecl() == D2->getCanonicalDecl()) {
-    SuppressRedeclaration = false;
+static bool
+IsEquivalentForUsingDecl(ASTContext &Context, NamedDecl *D1, NamedDecl *D2) {
+  if (D1->getCanonicalDecl() == D2->getCanonicalDecl())
     return true;
-  }
 
   if (TypedefNameDecl *TD1 = dyn_cast<TypedefNameDecl>(D1))
-    if (TypedefNameDecl *TD2 = dyn_cast<TypedefNameDecl>(D2)) {
-      SuppressRedeclaration = true;
+    if (TypedefNameDecl *TD2 = dyn_cast<TypedefNameDecl>(D2))
       return Context.hasSameType(TD1->getUnderlyingType(),
                                  TD2->getUnderlyingType());
-    }
 
   return false;
 }
@@ -7095,7 +7090,8 @@ IsEquivalentForUsingDecl(ASTContext &Context, NamedDecl *D1, NamedDecl *D2,
 /// Determines whether to create a using shadow decl for a particular
 /// decl, given the set of decls existing prior to this using lookup.
 bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
-                                const LookupResult &Previous) {
+                                const LookupResult &Previous,
+                                UsingShadowDecl *&PrevShadow) {
   // Diagnose finding a decl which is not from a base class of the
   // current class.  We do this now because there are cases where this
   // function will silently decide not to build a shadow decl, which
@@ -7155,15 +7151,21 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
   // FIXME: but we might be increasing its access, in which case we
   // should redeclare it.
   NamedDecl *NonTag = 0, *Tag = 0;
+  bool FoundEquivalentDecl = false;
   for (LookupResult::iterator I = Previous.begin(), E = Previous.end();
          I != E; ++I) {
     NamedDecl *D = (*I)->getUnderlyingDecl();
-    bool Result;
-    if (IsEquivalentForUsingDecl(Context, D, Target, Result))
-      return Result;
+    if (IsEquivalentForUsingDecl(Context, D, Target)) {
+      if (UsingShadowDecl *Shadow = dyn_cast<UsingShadowDecl>(*I))
+        PrevShadow = Shadow;
+      FoundEquivalentDecl = true;
+    }
 
     (isa<TagDecl>(D) ? Tag : NonTag) = D;
   }
+
+  if (FoundEquivalentDecl)
+    return false;
 
   if (Target->isFunctionOrFunctionTemplate()) {
     FunctionDecl *FD;
@@ -7223,7 +7225,8 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
 /// Builds a shadow declaration corresponding to a 'using' declaration.
 UsingShadowDecl *Sema::BuildUsingShadowDecl(Scope *S,
                                             UsingDecl *UD,
-                                            NamedDecl *Orig) {
+                                            NamedDecl *Orig,
+                                            UsingShadowDecl *PrevDecl) {
 
   // If we resolved to another shadow declaration, just coalesce them.
   NamedDecl *Target = Orig;
@@ -7231,16 +7234,18 @@ UsingShadowDecl *Sema::BuildUsingShadowDecl(Scope *S,
     Target = cast<UsingShadowDecl>(Target)->getTargetDecl();
     assert(!isa<UsingShadowDecl>(Target) && "nested shadow declaration");
   }
-  
+
   UsingShadowDecl *Shadow
     = UsingShadowDecl::Create(Context, CurContext,
                               UD->getLocation(), UD, Target);
   UD->addShadowDecl(Shadow);
-  
+
   Shadow->setAccess(UD->getAccess());
   if (Orig->isInvalidDecl() || UD->isInvalidDecl())
     Shadow->setInvalidDecl();
-  
+
+  Shadow->setPreviousDecl(PrevDecl);
+
   if (S)
     PushOnScopeChains(Shadow, S);
   else
@@ -7504,8 +7509,9 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   }
 
   for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
-    if (!CheckUsingShadowDecl(UD, *I, Previous))
-      BuildUsingShadowDecl(S, UD, *I);
+    UsingShadowDecl *PrevDecl = 0;
+    if (!CheckUsingShadowDecl(UD, *I, Previous, PrevDecl))
+      BuildUsingShadowDecl(S, UD, *I, PrevDecl);
   }
 
   return UD;

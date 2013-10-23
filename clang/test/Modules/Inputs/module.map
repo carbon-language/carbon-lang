@@ -258,3 +258,8 @@ module warning {
 module initializer_list {
   header "initializer_list"
 }
+
+module using_decl {
+  module a { header "using-decl-a.h" export * }
+  module b { header "using-decl-b.h" export * }
+}

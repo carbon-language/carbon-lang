@@ -938,6 +938,7 @@ void ASTDeclWriter::VisitUsingDecl(UsingDecl *D) {
 }
 
 void ASTDeclWriter::VisitUsingShadowDecl(UsingShadowDecl *D) {
+  VisitRedeclarable(D);
   VisitNamedDecl(D);
   Writer.AddDeclRef(D->getTargetDecl(), Record);
   Writer.AddDeclRef(D->UsingOrNextShadow, Record);

@@ -2152,19 +2152,22 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
          I != E; ++I) {
     UsingShadowDecl *Shadow = *I;
     NamedDecl *InstTarget =
-      cast_or_null<NamedDecl>(SemaRef.FindInstantiatedDecl(
-                                                          Shadow->getLocation(),
-                                                        Shadow->getTargetDecl(),
-                                                           TemplateArgs));
+        cast_or_null<NamedDecl>(SemaRef.FindInstantiatedDecl(
+            Shadow->getLocation(), Shadow->getTargetDecl(), TemplateArgs));
     if (!InstTarget)
       return 0;
 
-    if (CheckRedeclaration &&
-        SemaRef.CheckUsingShadowDecl(NewUD, InstTarget, Prev))
-      continue;
+    UsingShadowDecl *PrevDecl = 0;
+    if (CheckRedeclaration) {
+      if (SemaRef.CheckUsingShadowDecl(NewUD, InstTarget, Prev, PrevDecl))
+        continue;
+    } else if (UsingShadowDecl *OldPrev = Shadow->getPreviousDecl()) {
+      PrevDecl = cast_or_null<UsingShadowDecl>(SemaRef.FindInstantiatedDecl(
+          Shadow->getLocation(), OldPrev, TemplateArgs));
+    }
 
-    UsingShadowDecl *InstShadow
-      = SemaRef.BuildUsingShadowDecl(/*Scope*/ 0, NewUD, InstTarget);
+    UsingShadowDecl *InstShadow =
+        SemaRef.BuildUsingShadowDecl(/*Scope*/0, NewUD, InstTarget, PrevDecl);
     SemaRef.Context.setInstantiatedFromUsingShadowDecl(InstShadow, Shadow);
 
     if (isFunctionScope)

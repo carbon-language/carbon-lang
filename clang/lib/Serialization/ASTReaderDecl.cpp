@@ -1134,12 +1134,14 @@ void ASTDeclReader::VisitUsingDecl(UsingDecl *D) {
 }
 
 void ASTDeclReader::VisitUsingShadowDecl(UsingShadowDecl *D) {
+  RedeclarableResult Redecl = VisitRedeclarable(D);
   VisitNamedDecl(D);
   D->setTargetDecl(ReadDeclAs<NamedDecl>(Record, Idx));
   D->UsingOrNextShadow = ReadDeclAs<NamedDecl>(Record, Idx);
   UsingShadowDecl *Pattern = ReadDeclAs<UsingShadowDecl>(Record, Idx);
   if (Pattern)
     Reader.getContext().setInstantiatedFromUsingShadowDecl(D, Pattern);
+  mergeRedeclarable(D, Redecl);
 }
 
 void ASTDeclReader::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
@@ -2151,6 +2153,12 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
     // FIXME: Also check the value is odr-equivalent.
     return true;
 
+  // Using shadow declarations with the same target match.
+  if (UsingShadowDecl *USX = dyn_cast<UsingShadowDecl>(X)) {
+    UsingShadowDecl *USY = cast<UsingShadowDecl>(Y);
+    return USX->getTargetDecl() == USY->getTargetDecl();
+  }
+
   // FIXME: Many other cases to implement.
   return false;
 }
@@ -2258,6 +2266,8 @@ void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *previous) {
     VD->RedeclLink.setNext(cast<VarDecl>(previous));
   } else if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
     TD->RedeclLink.setNext(cast<TypedefNameDecl>(previous));
+  } else if (UsingShadowDecl *USD = dyn_cast<UsingShadowDecl>(D)) {
+    USD->RedeclLink.setNext(cast<UsingShadowDecl>(previous));
   } else if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D)) {
     ID->RedeclLink.setNext(cast<ObjCInterfaceDecl>(previous));
   } else if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D)) {
@@ -2285,7 +2295,7 @@ void ASTDeclReader::attachLatestDecl(Decl *D, Decl *Latest) {
     TD->RedeclLink
       = Redeclarable<TagDecl>::LatestDeclLink(cast<TagDecl>(Latest));
   } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    FD->RedeclLink 
+    FD->RedeclLink
       = Redeclarable<FunctionDecl>::LatestDeclLink(cast<FunctionDecl>(Latest));
   } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
     VD->RedeclLink
@@ -2294,6 +2304,10 @@ void ASTDeclReader::attachLatestDecl(Decl *D, Decl *Latest) {
     TD->RedeclLink
       = Redeclarable<TypedefNameDecl>::LatestDeclLink(
                                                 cast<TypedefNameDecl>(Latest));
+  } else if (UsingShadowDecl *USD = dyn_cast<UsingShadowDecl>(D)) {
+    USD->RedeclLink
+      = Redeclarable<UsingShadowDecl>::LatestDeclLink(
+                                             cast<UsingShadowDecl>(Latest));
   } else if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D)) {
     ID->RedeclLink
       = Redeclarable<ObjCInterfaceDecl>::LatestDeclLink(
