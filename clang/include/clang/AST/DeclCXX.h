@@ -514,10 +514,12 @@ class CXXRecordDecl : public RecordDecl {
   struct LambdaDefinitionData : public DefinitionData {
     typedef LambdaExpr::Capture Capture;
     
-    LambdaDefinitionData(CXXRecordDecl *D, TypeSourceInfo *Info, bool Dependent) 
-      : DefinitionData(D), Dependent(Dependent), NumCaptures(0), 
-        NumExplicitCaptures(0), ManglingNumber(0), ContextDecl(0), 
-        Captures(0), MethodTyInfo(Info), TheLambdaExpr(0) 
+       LambdaDefinitionData(CXXRecordDecl *D, TypeSourceInfo *Info, 
+                         bool Dependent, bool IsGeneric, 
+                         LambdaCaptureDefault CaptureDefault) 
+      : DefinitionData(D), Dependent(Dependent), IsGenericLambda(IsGeneric), 
+        CaptureDefault(CaptureDefault), NumCaptures(0), NumExplicitCaptures(0), 
+        ManglingNumber(0), ContextDecl(0), Captures(0), MethodTyInfo(Info)
     {
       IsLambda = true;
     }
@@ -532,11 +534,17 @@ class CXXRecordDecl : public RecordDecl {
     /// artifact of having to parse the default arguments before. 
     unsigned Dependent : 1;
     
-    /// \brief The number of captures in this lambda.
-    unsigned NumCaptures : 16;
+    /// \brief Whether this lambda is a generic lambda.
+    unsigned IsGenericLambda : 1;
+
+    /// \brief The Default Capture.
+    unsigned CaptureDefault : 2;
+
+    /// \brief The number of captures in this lambda is limited 2^NumCaptures.
+    unsigned NumCaptures : 15;
 
     /// \brief The number of explicit captures in this lambda.
-    unsigned NumExplicitCaptures : 15;
+    unsigned NumExplicitCaptures : 13;
 
     /// \brief The number used to indicate this lambda expression for name 
     /// mangling in the Itanium C++ ABI.
@@ -554,9 +562,6 @@ class CXXRecordDecl : public RecordDecl {
 
     /// \brief The type of the call method.
     TypeSourceInfo *MethodTyInfo;
-
-    /// \brief The AST node of the lambda expression.
-    LambdaExpr *TheLambdaExpr;
        
   };
 
@@ -669,7 +674,8 @@ public:
                                bool DelayTypeCreation = false);
   static CXXRecordDecl *CreateLambda(const ASTContext &C, DeclContext *DC,
                                      TypeSourceInfo *Info, SourceLocation Loc,
-                                     bool DependentLambda);
+                                     bool DependentLambda, bool IsGeneric, 
+                                     LambdaCaptureDefault CaptureDefault);
   static CXXRecordDecl *CreateDeserialized(const ASTContext &C, unsigned ID);
 
   bool isDynamicClass() const {
@@ -1013,16 +1019,10 @@ public:
   /// lambda.
   TemplateParameterList *getGenericLambdaTemplateParameterList() const;
 
-  /// \brief Assign the member call operator of the lambda. 
-  void setLambdaExpr(LambdaExpr *E) {
-    getLambdaData().TheLambdaExpr = E;
+  LambdaCaptureDefault getLambdaCaptureDefault() const {
+    assert(isLambda());
+    return static_cast<LambdaCaptureDefault>(getLambdaData().CaptureDefault);
   }
-
-  /// \brief Retrieve the parent lambda expression.
-  LambdaExpr *getLambdaExpr() const {
-    return isLambda() ? getLambdaData().TheLambdaExpr : 0;
-  }
-
 
   /// \brief For a closure type, retrieve the mapping from captured
   /// variables and \c this to the non-static data members that store the

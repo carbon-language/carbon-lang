@@ -24,17 +24,43 @@
 using namespace clang;
 using namespace sema;
 
+
+static inline TemplateParameterList *
+getGenericLambdaTemplateParameterList(LambdaScopeInfo *LSI, Sema &SemaRef) {
+  if (LSI->GLTemplateParameterList)
+    return LSI->GLTemplateParameterList;
+
+  if (LSI->AutoTemplateParams.size()) {
+    SourceRange IntroRange = LSI->IntroducerRange;
+    SourceLocation LAngleLoc = IntroRange.getBegin();
+    SourceLocation RAngleLoc = IntroRange.getEnd();
+    LSI->GLTemplateParameterList = TemplateParameterList::Create(
+                                   SemaRef.Context, 
+                                   /*Template kw loc*/SourceLocation(), 
+                                   LAngleLoc,
+                                   (NamedDecl**)LSI->AutoTemplateParams.data(),
+                                   LSI->AutoTemplateParams.size(), RAngleLoc);  
+  }
+  return LSI->GLTemplateParameterList;
+}
+
+
+
 CXXRecordDecl *Sema::createLambdaClosureType(SourceRange IntroducerRange,
                                              TypeSourceInfo *Info,
-                                             bool KnownDependent) {
+                                             bool KnownDependent, 
+                                             LambdaCaptureDefault CaptureDefault) {
   DeclContext *DC = CurContext;
   while (!(DC->isFunctionOrMethod() || DC->isRecord() || DC->isFileContext()))
     DC = DC->getParent();
-  
+  bool IsGenericLambda = getGenericLambdaTemplateParameterList(getCurLambda(),
+                                                               *this);  
   // Start constructing the lambda class.
   CXXRecordDecl *Class = CXXRecordDecl::CreateLambda(Context, DC, Info,
                                                      IntroducerRange.getBegin(),
-                                                     KnownDependent);
+                                                     KnownDependent, 
+                                                     IsGenericLambda, 
+                                                     CaptureDefault);
   DC->addDecl(Class);
   
   return Class;
@@ -131,25 +157,6 @@ Sema::ExpressionEvaluationContextRecord::getMangleNumberingContext(
   return *MangleNumbering;
 }
 
-static inline TemplateParameterList *
-getGenericLambdaTemplateParameterList(LambdaScopeInfo *LSI, Sema &SemaRef) {
-  if (LSI->GLTemplateParameterList)
-    return LSI->GLTemplateParameterList;
-  else if (LSI->AutoTemplateParams.size()) {
-    SourceRange IntroRange = LSI->IntroducerRange;
-    SourceLocation LAngleLoc = IntroRange.getBegin();
-    SourceLocation RAngleLoc = IntroRange.getEnd();
-    LSI->GLTemplateParameterList = 
-          TemplateParameterList::Create(SemaRef.Context, 
-            /* Template kw loc */ SourceLocation(), 
-            LAngleLoc,
-            (NamedDecl**)LSI->AutoTemplateParams.data(), 
-            LSI->AutoTemplateParams.size(), RAngleLoc);  
-  }
-  return LSI->GLTemplateParameterList;
-}
-
-
 CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
                                            SourceRange IntroducerRange,
                                            TypeSourceInfo *MethodTypeInfo,
@@ -243,7 +250,8 @@ void Sema::buildLambdaScope(LambdaScopeInfo *LSI,
                                         bool ExplicitResultType,
                                         bool Mutable) {
   LSI->CallOperator = CallOperator;
-  LSI->Lambda = CallOperator->getParent();
+  CXXRecordDecl *LambdaClass = CallOperator->getParent();
+  LSI->Lambda = LambdaClass;
   if (CaptureDefault == LCD_ByCopy)
     LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByval;
   else if (CaptureDefault == LCD_ByRef)
@@ -628,7 +636,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   }
 
   CXXRecordDecl *Class = createLambdaClosureType(Intro.Range, MethodTyInfo,
-                                                 KnownDependent);
+                                                 KnownDependent, Intro.Default);
 
   CXXMethodDecl *Method = startLambdaDefinition(Class, Intro.Range,
                                                 MethodTyInfo, EndLoc, Params);
@@ -1155,7 +1163,6 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
                                           CaptureInits, ArrayIndexVars, 
                                           ArrayIndexStarts, Body->getLocEnd(),
                                           ContainsUnexpandedParameterPack);
-  Class->setLambdaExpr(Lambda);
   // C++11 [expr.prim.lambda]p2:
   //   A lambda-expression shall not appear in an unevaluated operand
   //   (Clause 5).
