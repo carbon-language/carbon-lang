@@ -1209,7 +1209,7 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
   }
 
   int ConstantBlock = ConstantAddressBlock(LoadNode->getAddressSpace());
-  if (ConstantBlock > -1) {
+  if (ConstantBlock > -1 && LoadNode->getExtensionType() != ISD::SEXTLOAD) {
     SDValue Result;
     if (dyn_cast<ConstantExpr>(LoadNode->getSrcValue()) ||
         dyn_cast<Constant>(LoadNode->getSrcValue()) ||
@@ -1340,22 +1340,29 @@ SDValue R600TargetLowering::LowerFormalArguments(
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
                  getTargetMachine(), ArgLocs, *DAG.getContext());
 
-  AnalyzeFormalArguments(CCInfo, Ins);
+  SmallVector<ISD::InputArg, 8> LocalIns;
+
+  getOriginalFunctionArgs(DAG, DAG.getMachineFunction().getFunction(), Ins,
+                          LocalIns);
+
+  AnalyzeFormalArguments(CCInfo, LocalIns);
 
   for (unsigned i = 0, e = Ins.size(); i < e; ++i) {
     CCValAssign &VA = ArgLocs[i];
-    EVT VT = VA.getLocVT();
+    EVT VT = Ins[i].VT;
+    EVT MemVT = LocalIns[i].VT;
 
     PointerType *PtrTy = PointerType::get(VT.getTypeForEVT(*DAG.getContext()),
                                                    AMDGPUAS::CONSTANT_BUFFER_0);
 
     // The first 36 bytes of the input buffer contains information about
     // thread group and global sizes.
-    SDValue Arg = DAG.getLoad(VT, DL, Chain,
-                           DAG.getConstant(36 + VA.getLocMemOffset(), MVT::i32),
-                           MachinePointerInfo(UndefValue::get(PtrTy)), false,
-                           false, false, 4); // 4 is the prefered alignment for
-                                             // the CONSTANT memory space.
+    SDValue Arg = DAG.getExtLoad(ISD::SEXTLOAD, DL, VT, Chain,
+                                 DAG.getConstant(36 + VA.getLocMemOffset(), MVT::i32),
+                                 MachinePointerInfo(UndefValue::get(PtrTy)),
+                                 MemVT, false, false, 4);
+                                 // 4 is the prefered alignment for
+                                 // the CONSTANT memory space.
     InVals.push_back(Arg);
   }
   return Chain;

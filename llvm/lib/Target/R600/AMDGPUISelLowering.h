@@ -36,7 +36,6 @@ private:
   SDValue MergeVectorStore(const SDValue &Op, SelectionDAG &DAG) const;
   /// \brief Split a vector store into multiple scalar stores.
   /// \returns The resulting chain. 
-  SDValue SplitVectorStore(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerUDIVREM(SDValue Op, SelectionDAG &DAG) const;
 
 protected:
@@ -52,10 +51,21 @@ protected:
                              SelectionDAG &DAG) const;
   /// \brief Split a vector load into multiple scalar loads.
   SDValue SplitVectorLoad(const SDValue &Op, SelectionDAG &DAG) const;
+  SDValue SplitVectorStore(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
   bool isHWTrueValue(SDValue Op) const;
   bool isHWFalseValue(SDValue Op) const;
 
+  /// The SelectionDAGBuilder will automatically promote function arguments
+  /// with illegal types.  However, this does not work for the AMDGPU targets
+  /// since the function arguments are stored in memory as these illegal types.
+  /// In order to handle this properly we need to get the origianl types sizes
+  /// from the LLVM IR Function and fixup the ISD:InputArg values before
+  /// passing them to AnalyzeFormalArguments()
+  void getOriginalFunctionArgs(SelectionDAG &DAG,
+                               const Function *F,
+                               const SmallVectorImpl<ISD::InputArg> &Ins,
+                               SmallVectorImpl<ISD::InputArg> &OrigIns) const;
   void AnalyzeFormalArguments(CCState &State,
                               const SmallVectorImpl<ISD::InputArg> &Ins) const;
 

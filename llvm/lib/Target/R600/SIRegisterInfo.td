@@ -174,7 +174,7 @@ def VReg_96 : RegisterClass<"AMDGPU", [untyped], 96, (add VGPR_96)> {
   let Size = 96;
 }
 
-def VReg_128 : RegisterClass<"AMDGPU", [v4i32, v4f32], 128, (add VGPR_128)>;
+def VReg_128 : RegisterClass<"AMDGPU", [v4i32, v4f32, i128], 128, (add VGPR_128)>;
 
 def VReg_256 : RegisterClass<"AMDGPU", [v32i8, v8i32, v8f32], 256, (add VGPR_256)>;
 

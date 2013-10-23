@@ -41,7 +41,7 @@ define void @or_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in)
 
 ; EG-CHECK-LABEL: @or_i64
 ; EG-CHECK-DAG: OR_INT * T{{[0-9]\.[XYZW]}}, KC0[2].W, KC0[3].Y
-; EG-CHECK-DAG: OR_INT * T{{[0-9]\.[XYZW]}}, KC0[2].Z, KC0[3].X
+; EG-CHECK-DAG: OR_INT * T{{[0-9]\.[XYZW]}}, KC0[3].X, KC0[3].Z
 ; SI-CHECK-LABEL: @or_i64
 ; SI-CHECK: V_OR_B32_e32 VGPR{{[0-9]}}
 ; SI-CHECK: V_OR_B32_e32 VGPR{{[0-9]}}

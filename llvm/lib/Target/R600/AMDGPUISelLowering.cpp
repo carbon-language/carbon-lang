@@ -28,6 +28,14 @@
 #include "llvm/IR/DataLayout.h"
 
 using namespace llvm;
+static bool allocateStack(unsigned ValNo, MVT ValVT, MVT LocVT,
+                      CCValAssign::LocInfo LocInfo,
+                      ISD::ArgFlagsTy ArgFlags, CCState &State) {
+  unsigned Offset = State.AllocateStack(ValVT.getSizeInBits() / 8, ArgFlags.getOrigAlign());
+    State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
+
+  return true;
+}
 
 #include "AMDGPUGenCallingConv.inc"
 
@@ -64,6 +72,12 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::STORE, MVT::v4f32, Promote);
   AddPromotedToType(ISD::STORE, MVT::v4f32, MVT::v4i32);
 
+  setOperationAction(ISD::STORE, MVT::v8f32, Promote);
+  AddPromotedToType(ISD::STORE, MVT::v8f32, MVT::v8i32);
+
+  setOperationAction(ISD::STORE, MVT::v16f32, Promote);
+  AddPromotedToType(ISD::STORE, MVT::v16f32, MVT::v16i32);
+
   setOperationAction(ISD::STORE, MVT::f64, Promote);
   AddPromotedToType(ISD::STORE, MVT::f64, MVT::i64);
 
@@ -89,6 +103,12 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::LOAD, MVT::v4f32, Promote);
   AddPromotedToType(ISD::LOAD, MVT::v4f32, MVT::v4i32);
+
+  setOperationAction(ISD::LOAD, MVT::v8f32, Promote);
+  AddPromotedToType(ISD::LOAD, MVT::v8f32, MVT::v8i32);
+
+  setOperationAction(ISD::LOAD, MVT::v16f32, Promote);
+  AddPromotedToType(ISD::LOAD, MVT::v16f32, MVT::v16i32);
 
   setOperationAction(ISD::LOAD, MVT::f64, Promote);
   AddPromotedToType(ISD::LOAD, MVT::f64, MVT::i64);
@@ -655,6 +675,38 @@ SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
 //===----------------------------------------------------------------------===//
 // Helper functions
 //===----------------------------------------------------------------------===//
+
+void AMDGPUTargetLowering::getOriginalFunctionArgs(
+                               SelectionDAG &DAG,
+                               const Function *F,
+                               const SmallVectorImpl<ISD::InputArg> &Ins,
+                               SmallVectorImpl<ISD::InputArg> &OrigIns) const {
+
+  for (unsigned i = 0, e = Ins.size(); i < e; ++i) {
+    if (Ins[i].ArgVT == Ins[i].VT) {
+      OrigIns.push_back(Ins[i]);
+      continue;
+    }
+
+    EVT VT;
+    if (Ins[i].ArgVT.isVector() && !Ins[i].VT.isVector()) {
+      // Vector has been split into scalars.
+      VT = Ins[i].ArgVT.getVectorElementType();
+    } else if (Ins[i].VT.isVector() && Ins[i].ArgVT.isVector() &&
+               Ins[i].ArgVT.getVectorElementType() !=
+               Ins[i].VT.getVectorElementType()) {
+      // Vector elements have been promoted
+      VT = Ins[i].ArgVT;
+    } else {
+      // Vector has been spilt into smaller vectors.
+      VT = Ins[i].VT;
+    }
+
+    ISD::InputArg Arg(Ins[i].Flags, VT, VT, Ins[i].Used,
+                      Ins[i].OrigArgIndex, Ins[i].PartOffset);
+    OrigIns.push_back(Arg);
+  }
+}
 
 bool AMDGPUTargetLowering::isHWTrueValue(SDValue Op) const {
   if (ConstantFPSDNode * CFP = dyn_cast<ConstantFPSDNode>(Op)) {

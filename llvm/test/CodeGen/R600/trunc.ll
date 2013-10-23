@@ -21,7 +21,6 @@ define void @trunc_i64_to_i32_store(i32 addrspace(1)* %out, i64 %in) {
 ; SI: S_LOAD_DWORDX2
 ; SI: S_LOAD_DWORDX2 [[SREG:SGPR[0-9]+_SGPR[0-9]+]]
 ; SI: V_LSHL_B64 [[LO_VREG:VGPR[0-9]+]]_VGPR{{[0-9]+}}, [[SREG]], 2
-; SI-NOT: [[LO_VREG]]
 ; SI: BUFFER_STORE_DWORD [[LO_VREG]],
 define void @trunc_shl_i64(i32 addrspace(1)* %out, i64 %a) {
   %b = shl i64 %a, 2
