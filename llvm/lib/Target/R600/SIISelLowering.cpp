@@ -1092,7 +1092,9 @@ static unsigned SubIdx2Lane(unsigned Idx) {
 void SITargetLowering::adjustWritemask(MachineSDNode *&Node,
                                        SelectionDAG &DAG) const {
   SDNode *Users[4] = { };
-  unsigned Writemask = 0, Lane = 0;
+  unsigned Lane = 0;
+  unsigned OldDmask = Node->getConstantOperandVal(0);
+  unsigned NewDmask = 0;
 
   // Try to figure out the used register components
   for (SDNode::use_iterator I = Node->use_begin(), E = Node->use_end();
@@ -1103,29 +1105,42 @@ void SITargetLowering::adjustWritemask(MachineSDNode *&Node,
         I->getMachineOpcode() != TargetOpcode::EXTRACT_SUBREG)
       return;
 
+    // Lane means which subreg of %VGPRa_VGPRb_VGPRc_VGPRd is used.
+    // Note that subregs are packed, i.e. Lane==0 is the first bit set
+    // in OldDmask, so it can be any of X,Y,Z,W; Lane==1 is the second bit
+    // set, etc.
     Lane = SubIdx2Lane(I->getConstantOperandVal(1));
+
+    // Set which texture component corresponds to the lane.
+    unsigned Comp;
+    for (unsigned i = 0, Dmask = OldDmask; i <= Lane; i++) {
+      assert(Dmask);
+      Comp = ffs(Dmask)-1;
+      Dmask &= ~(1 << Comp);
+    }
 
     // Abort if we have more than one user per component
     if (Users[Lane])
       return;
 
     Users[Lane] = *I;
-    Writemask |= 1 << Lane;
+    NewDmask |= 1 << Comp;
   }
 
-  // Abort if all components are used
-  if (Writemask == 0xf)
+  // Abort if there's no change
+  if (NewDmask == OldDmask)
     return;
 
   // Adjust the writemask in the node
   std::vector<SDValue> Ops;
-  Ops.push_back(DAG.getTargetConstant(Writemask, MVT::i32));
+  Ops.push_back(DAG.getTargetConstant(NewDmask, MVT::i32));
   for (unsigned i = 1, e = Node->getNumOperands(); i != e; ++i)
     Ops.push_back(Node->getOperand(i));
   Node = (MachineSDNode*)DAG.UpdateNodeOperands(Node, Ops.data(), Ops.size());
 
   // If we only got one lane, replace it with a copy
-  if (Writemask == (1U << Lane)) {
+  // (if NewDmask has only one bit set...)
+  if (NewDmask && (NewDmask & (NewDmask-1)) == 0) {
     SDValue RC = DAG.getTargetConstant(AMDGPU::VReg_32RegClassID, MVT::i32);
     SDNode *Copy = DAG.getMachineNode(TargetOpcode::COPY_TO_REGCLASS,
                                       SDLoc(), Users[Lane]->getValueType(0),
