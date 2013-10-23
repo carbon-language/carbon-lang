@@ -796,11 +796,11 @@ void CompileUnit::addTemplateParams(DIE &Buffer, DIArray TParams) {
   for (unsigned i = 0, e = TParams.getNumElements(); i != e; ++i) {
     DIDescriptor Element = TParams.getElement(i);
     if (Element.isTemplateTypeParameter())
-      getOrCreateTemplateTypeParameterDIE(Buffer,
-                                          DITemplateTypeParameter(Element));
+      constructTemplateTypeParameterDIE(Buffer,
+                                        DITemplateTypeParameter(Element));
     else if (Element.isTemplateValueParameter())
-      getOrCreateTemplateValueParameterDIE(Buffer,
-                                           DITemplateValueParameter(Element));
+      constructTemplateValueParameterDIE(Buffer,
+                                         DITemplateValueParameter(Element));
   }
 }
 
@@ -1267,16 +1267,12 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     DD->addTypeUnitType(&Buffer);
 }
 
-/// getOrCreateTemplateTypeParameterDIE - Find existing DIE or create new DIE
-/// for the given DITemplateTypeParameter.
+/// constructTemplateTypeParameterDIE - Construct new DIE for the given
+/// DITemplateTypeParameter.
 void
-CompileUnit::getOrCreateTemplateTypeParameterDIE(DIE &Buffer,
-                                                 DITemplateTypeParameter TP) {
-  DIE *ParamDIE = getDIE(TP);
-  if (ParamDIE)
-    return;
-
-  ParamDIE = new DIE(dwarf::DW_TAG_template_type_parameter);
+CompileUnit::constructTemplateTypeParameterDIE(DIE &Buffer,
+                                               DITemplateTypeParameter TP) {
+  DIE *ParamDIE = new DIE(dwarf::DW_TAG_template_type_parameter);
   Buffer.addChild(ParamDIE);
   // Add the type if it exists, it could be void and therefore no type.
   if (TP.getType())
@@ -1285,16 +1281,12 @@ CompileUnit::getOrCreateTemplateTypeParameterDIE(DIE &Buffer,
     addString(ParamDIE, dwarf::DW_AT_name, TP.getName());
 }
 
-/// getOrCreateTemplateValueParameterDIE - Find existing DIE or create new DIE
-/// for the given DITemplateValueParameter.
+/// constructTemplateValueParameterDIE - Construct new DIE for the given
+/// DITemplateValueParameter.
 void
-CompileUnit::getOrCreateTemplateValueParameterDIE(DIE &Buffer,
-                                                  DITemplateValueParameter VP) {
-  DIE *ParamDIE = getDIE(VP);
-  if (ParamDIE)
-    return;
-
-  ParamDIE = new DIE(VP.getTag());
+CompileUnit::constructTemplateValueParameterDIE(DIE &Buffer,
+                                                DITemplateValueParameter VP) {
+  DIE *ParamDIE = new DIE(VP.getTag());
   Buffer.addChild(ParamDIE);
 
   // Add the type if there is one, template template and template parameter

@@ -333,15 +333,15 @@ private:
   /// constructMemberDIE - Construct member DIE from DIDerivedType.
   void constructMemberDIE(DIE &Buffer, DIDerivedType DT);
 
-  /// getOrCreateTemplateTypeParameterDIE - Find existing DIE or create new DIE
-  /// for the given DITemplateTypeParameter.
-  void getOrCreateTemplateTypeParameterDIE(DIE &Buffer,
-                                           DITemplateTypeParameter TP);
+  /// constructTemplateTypeParameterDIE - Construct new DIE for the given
+  /// DITemplateTypeParameter.
+  void constructTemplateTypeParameterDIE(DIE &Buffer,
+                                         DITemplateTypeParameter TP);
 
-  /// getOrCreateTemplateValueParameterDIE - Find existing DIE or create
-  /// new DIE for the given DITemplateValueParameter.
-  void getOrCreateTemplateValueParameterDIE(DIE &Buffer,
-                                            DITemplateValueParameter TVP);
+  /// constructTemplateValueParameterDIE - Construct new DIE for the given
+  /// DITemplateValueParameter.
+  void constructTemplateValueParameterDIE(DIE &Buffer,
+                                          DITemplateValueParameter TVP);
 
   /// getOrCreateStaticMemberDIE - Create new static data member DIE.
   DIE *getOrCreateStaticMemberDIE(DIDerivedType DT);
