@@ -108,15 +108,11 @@ CXXRecordDecl *CXXRecordDecl::Create(const ASTContext &C, TagKind TK,
 
 CXXRecordDecl *CXXRecordDecl::CreateLambda(const ASTContext &C, DeclContext *DC,
                                            TypeSourceInfo *Info, SourceLocation Loc,
-                                           bool Dependent, bool IsGeneric, 
-                                           LambdaCaptureDefault CaptureDefault) {
+                                           bool Dependent) {
   CXXRecordDecl* R = new (C) CXXRecordDecl(CXXRecord, TTK_Class, DC, Loc, Loc,
                                            0, 0);
   R->IsBeingDefined = true;
-  R->DefinitionData = new (C) struct LambdaDefinitionData(R, Info, 
-                                                          Dependent, 
-                                                          IsGeneric, 
-                                                          CaptureDefault);
+  R->DefinitionData = new (C) struct LambdaDefinitionData(R, Info, Dependent);
   R->MayHaveOutOfDateDef = false;
   R->setImplicit(true);
   C.getTypeDeclType(R, /*PrevDecl=*/0);
@@ -946,10 +942,10 @@ bool CXXRecordDecl::isCLike() const {
 
   return isPOD() && data().HasOnlyCMembers;
 }
- 
+
 bool CXXRecordDecl::isGenericLambda() const { 
-  if (!isLambda()) return false;
-  return getLambdaData().IsGenericLambda;
+  return isLambda() && 
+      getLambdaCallOperator()->getDescribedFunctionTemplate(); 
 }
 
 CXXMethodDecl* CXXRecordDecl::getLambdaCallOperator() const {

@@ -9401,29 +9401,6 @@ Sema::CheckForFunctionRedefinition(FunctionDecl *FD,
   Diag(Definition->getLocation(), diag::note_previous_definition);
   FD->setInvalidDecl();
 }
-static void RebuildLambdaScopeInfo(CXXMethodDecl *CallOperator, 
-                                   Sema &S) {
-  CXXRecordDecl *const LambdaClass = CallOperator->getParent();
-  S.PushLambdaScope();
-  LambdaScopeInfo *LSI = S.getCurLambda();
-  LSI->CallOperator = CallOperator;
-  LSI->Lambda = LambdaClass;
-  LSI->ReturnType = CallOperator->getResultType();
-  const LambdaCaptureDefault LCD = LambdaClass->getLambdaCaptureDefault();
-
-  if (LCD == LCD_None)
-    LSI->ImpCaptureStyle = CapturingScopeInfo::ImpCap_None;
-  else if (LCD == LCD_ByCopy)
-    LSI->ImpCaptureStyle = CapturingScopeInfo::ImpCap_LambdaByval;
-  else if (LCD == LCD_ByRef)
-    LSI->ImpCaptureStyle = CapturingScopeInfo::ImpCap_LambdaByref;
-  DeclarationNameInfo DNI = CallOperator->getNameInfo();
-    
-  LSI->IntroducerRange = DNI.getCXXOperatorNameRange(); 
-  LSI->Mutable = !CallOperator->isConst();
-
-  // FIXME: Add the captures to the LSI.
-}
 
 Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
   // Clear the last template instantiation error context.
@@ -9439,18 +9416,31 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
     FD = cast<FunctionDecl>(D);
   // If we are instantiating a generic lambda call operator, push
   // a LambdaScopeInfo onto the function stack.  But use the information
-  // that's already been calculated (ActOnLambdaExpr) to prime the current 
-  // LambdaScopeInfo.  
-  // When the template operator is being specialized, the LambdaScopeInfo,
-  // has to be properly restored so that tryCaptureVariable doesn't try
-  // and capture any new variables. In addition when calculating potential
-  // captures during transformation of nested lambdas, it is necessary to 
-  // have the LSI properly restored. 
+  // that's already been calculated (ActOnLambdaExpr) when analyzing the
+  // template version, to prime the current LambdaScopeInfo. 
   if (isGenericLambdaCallOperatorSpecialization(FD)) {
+    CXXMethodDecl *CallOperator = cast<CXXMethodDecl>(D);
+    CXXRecordDecl *LambdaClass = CallOperator->getParent();
+    LambdaExpr    *LE = LambdaClass->getLambdaExpr();
+    assert(LE && 
+     "No LambdaExpr of closure class when instantiating a generic lambda!");
     assert(ActiveTemplateInstantiations.size() &&
       "There should be an active template instantiation on the stack " 
       "when instantiating a generic lambda!");
-    RebuildLambdaScopeInfo(cast<CXXMethodDecl>(D), *this);
+    PushLambdaScope();
+    LambdaScopeInfo *LSI = getCurLambda();
+    LSI->CallOperator = CallOperator;
+    LSI->Lambda = LambdaClass;
+    LSI->ReturnType = CallOperator->getResultType();
+
+    if (LE->getCaptureDefault() == LCD_None)
+      LSI->ImpCaptureStyle = CapturingScopeInfo::ImpCap_None;
+    else if (LE->getCaptureDefault() == LCD_ByCopy)
+      LSI->ImpCaptureStyle = CapturingScopeInfo::ImpCap_LambdaByval;
+    else if (LE->getCaptureDefault() == LCD_ByRef)
+      LSI->ImpCaptureStyle = CapturingScopeInfo::ImpCap_LambdaByref;
+    
+    LSI->IntroducerRange = LE->getIntroducerRange();
   }
   else
     // Enter a new function scope
@@ -9814,6 +9804,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
     PopDeclContext();
 
   PopFunctionScopeInfo(ActivePolicy, dcl);
+  
   // If any errors have occurred, clear out any temporaries that may have
   // been leftover. This ensures that these temporaries won't be picked up for
   // deletion in some later function.
