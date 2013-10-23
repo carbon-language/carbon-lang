@@ -330,8 +330,8 @@ private:
   /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
   void constructEnumTypeDIE(DIE &Buffer, DIEnumerator ETy);
 
-  /// createMemberDIE - Create new member DIE.
-  void createMemberDIE(DIE &Buffer, DIDerivedType DT);
+  /// constructMemberDIE - Construct member DIE from DIDerivedType.
+  void constructMemberDIE(DIE &Buffer, DIDerivedType DT);
 
   /// getOrCreateTemplateTypeParameterDIE - Find existing DIE or create new DIE
   /// for the given DITemplateTypeParameter.

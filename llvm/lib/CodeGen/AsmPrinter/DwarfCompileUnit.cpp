@@ -1167,7 +1167,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         } else if (DDTy.isStaticMember()) {
           getOrCreateStaticMemberDIE(DDTy);
         } else {
-          createMemberDIE(Buffer, DDTy);
+          constructMemberDIE(Buffer, DDTy);
         }
       } else if (Element.isObjCProperty()) {
         DIObjCProperty Property(Element);
@@ -1783,8 +1783,8 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV, bool isScopeAbstract) {
   return VariableDie;
 }
 
-/// createMemberDIE - Create new member DIE.
-void CompileUnit::createMemberDIE(DIE &Buffer, DIDerivedType DT) {
+/// constructMemberDIE - Construct member DIE from DIDerivedType.
+void CompileUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
   DIE *MemberDie = new DIE(DT.getTag());
   Buffer.addChild(MemberDie);
   StringRef Name = DT.getName();
