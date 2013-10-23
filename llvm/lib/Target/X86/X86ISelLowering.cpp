@@ -16188,6 +16188,8 @@ static SDValue PerformConcatCombine(SDNode *N, SelectionDAG &DAG,
       Op0->getOpcode() == ISD::BITCAST &&
       !TLI.isTypeLegal(Op0->getValueType(0)) &&
       TLI.isTypeLegal(Op0->getOperand(0)->getValueType(0))) {
+    if (Op0->getOperand(0)->getValueType(0).isVector())
+      return SDValue();
     SDValue Scalar = Op0->getOperand(0);
     // Any legal type here will be a simple value type.
     MVT SVT = Scalar->getValueType(0).getSimpleVT();
@@ -16195,6 +16197,10 @@ static SDValue PerformConcatCombine(SDNode *N, SelectionDAG &DAG,
     if (SVT == MVT::x86mmx)
       return SDValue();
     EVT NVT = MVT::getVectorVT(SVT, 2);
+    // If the result vector type isn't legal, this transform won't really
+    // help, so bail on that, too.
+    if (!TLI.isTypeLegal(NVT))
+      return SDValue();
     SDLoc dl = SDLoc(N);
     SDValue Res = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, NVT, Scalar);
     Res = DAG.getNode(ISD::BITCAST, dl, VT, Res);
