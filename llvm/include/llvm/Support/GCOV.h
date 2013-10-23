@@ -15,6 +15,7 @@
 #ifndef LLVM_SUPPORT_GCOV_H
 #define LLVM_SUPPORT_GCOV_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -212,10 +213,12 @@ private:
   SmallVector<uint32_t, 4> Lines;
 };
 
-typedef SmallVector<uint64_t, 16> LineCounts;
+typedef DenseMap<uint32_t, uint64_t> LineCounts;
 class FileInfo {
 public:
-  void addLineCount(StringRef Filename, uint32_t Line, uint64_t Count);
+  void addLineCount(StringRef Filename, uint32_t Line, uint64_t Count) {
+    LineInfo[Filename][Line-1] = Count;
+  }
   void print(StringRef gcnoFile, StringRef gcdaFile);
 private:
   StringMap<LineCounts> LineInfo;

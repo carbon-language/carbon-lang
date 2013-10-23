@@ -235,24 +235,6 @@ void GCOVLines::dump() {
 //===----------------------------------------------------------------------===//
 // FileInfo implementation.
 
-/// addLineCount - Add line count for the given line number in a file.
-void FileInfo::addLineCount(StringRef Filename, uint32_t Line, uint64_t Count) {
-  if (LineInfo.find(Filename) == LineInfo.end()) {
-    OwningPtr<MemoryBuffer> Buff;
-    if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {
-      errs() << Filename << ": " << ec.message() << "\n";
-      return;
-    }
-    StringRef AllLines = Buff.take()->getBuffer();
-    LineCounts L(AllLines.count('\n'));
-    L[Line-1] = Count;
-    LineInfo[Filename] = L;
-    return;
-  }
-  LineCounts &L = LineInfo[Filename];
-  L[Line-1] = Count;
-}
-
 /// print -  Print source files with collected line count information.
 void FileInfo::print(StringRef gcnoFile, StringRef gcdaFile) {
   for (StringMap<LineCounts>::iterator I = LineInfo.begin(), E = LineInfo.end();
@@ -268,16 +250,22 @@ void FileInfo::print(StringRef gcnoFile, StringRef gcdaFile) {
       return;
     }
     StringRef AllLines = Buff.take()->getBuffer();
-    for (unsigned i = 0, e = L.size(); i != e; ++i) {
-      if (L[i])
-        outs() << format("%9lu:", L[i]);
-      else
+    uint32_t i = 0;
+    while (!AllLines.empty()) {
+      if (L.find(i) != L.end()) {
+        if (L[i] == 0)
+          outs() << "    #####:";
+        else
+          outs() << format("%9lu:", L[i]);
+      } else {
         outs() << "        -:";
+      }
       std::pair<StringRef, StringRef> P = AllLines.split('\n');
       if (AllLines != P.first)
         outs() << format("%5u:", i+1) << P.first;
       outs() << "\n";
       AllLines = P.second;
+      ++i;
     }
   }
 }
