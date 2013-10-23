@@ -51,6 +51,7 @@ namespace lltok {
     kw_localdynamic, kw_initialexec, kw_localexec,
     kw_zeroinitializer,
     kw_undef, kw_null,
+    kw_notaddrtaken,
     kw_to,
     kw_tail,
     kw_target,

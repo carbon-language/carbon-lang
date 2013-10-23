@@ -48,6 +48,7 @@ class GlobalVariable : public GlobalValue, public ilist_node<GlobalVariable> {
                                                // can change from its initial
                                                // value before global
                                                // initializers are run?
+  bool notAddrTaken : 1;                       // Dose not have address taken.
 
 public:
   // allocate space for exactly one operand
@@ -173,6 +174,9 @@ public:
   void setExternallyInitialized(bool Val) {
     isExternallyInitializedConstant = Val;
   }
+
+  void setAddressMaybeTaken(bool Val) { notAddrTaken = !Val; }
+  bool AddressMaybeTaken(void) const { return !notAddrTaken; }
 
   /// copyAttributesFrom - copy all additional attributes (those not needed to
   /// create a GlobalVariable) from the GlobalVariable Src to this one.

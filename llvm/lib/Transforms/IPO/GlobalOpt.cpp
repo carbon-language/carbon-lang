@@ -1723,6 +1723,7 @@ bool GlobalOpt::ProcessGlobal(GlobalVariable *GV,
   if (GlobalStatus::analyzeGlobal(GV, GS))
     return false;
 
+  GV->setAddressMaybeTaken(false);
   if (!GS.IsCompared && !GV->hasUnnamedAddr()) {
     GV->setUnnamedAddr(true);
     NumUnnamed++;

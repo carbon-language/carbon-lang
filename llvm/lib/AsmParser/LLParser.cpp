@@ -704,7 +704,7 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
                            unsigned Linkage, bool HasLinkage,
                            unsigned Visibility) {
   unsigned AddrSpace;
-  bool IsConstant, UnnamedAddr, IsExternallyInitialized;
+  bool IsConstant, UnnamedAddr, IsExternallyInitialized, notAddrTaken;
   GlobalVariable::ThreadLocalMode TLM;
   LocTy UnnamedAddrLoc;
   LocTy IsExternallyInitializedLoc;
@@ -719,6 +719,7 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
                          IsExternallyInitialized,
                          &IsExternallyInitializedLoc) ||
       ParseGlobalType(IsConstant) ||
+      ParseOptionalToken(lltok::kw_notaddrtaken, notAddrTaken) ||
       ParseType(Ty, TyLoc))
     return true;
 
@@ -776,6 +777,7 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
   GV->setLinkage((GlobalValue::LinkageTypes)Linkage);
   GV->setVisibility((GlobalValue::VisibilityTypes)Visibility);
   GV->setExternallyInitialized(IsExternallyInitialized);
+  GV->setAddressMaybeTaken(!notAddrTaken);
   GV->setThreadLocalMode(TLM);
   GV->setUnnamedAddr(UnnamedAddr);
 

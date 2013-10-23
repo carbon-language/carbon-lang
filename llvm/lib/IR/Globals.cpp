@@ -99,6 +99,7 @@ GlobalVariable::GlobalVariable(Type *Ty, bool constant, LinkageTypes Link,
   }
 
   LeakDetector::addGarbageObject(this);
+  setAddressMaybeTaken(true);
 }
 
 GlobalVariable::GlobalVariable(Module &M, Type *Ty, bool constant,
@@ -125,6 +126,7 @@ GlobalVariable::GlobalVariable(Module &M, Type *Ty, bool constant,
     Before->getParent()->getGlobalList().insert(Before, this);
   else
     M.getGlobalList().push_back(this);
+  setAddressMaybeTaken(true);
 }
 
 void GlobalVariable::setParent(Module *parent) {
@@ -185,6 +187,7 @@ void GlobalVariable::copyAttributesFrom(const GlobalValue *Src) {
   GlobalValue::copyAttributesFrom(Src);
   const GlobalVariable *SrcVar = cast<GlobalVariable>(Src);
   setThreadLocal(SrcVar->isThreadLocal());
+  setAddressMaybeTaken(SrcVar->AddressMaybeTaken());
 }
 
 

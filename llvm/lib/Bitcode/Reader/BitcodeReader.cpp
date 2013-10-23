@@ -1848,6 +1848,9 @@ bool BitcodeReader::ParseModule(bool Resume) {
         new GlobalVariable(*TheModule, Ty, isConstant, Linkage, 0, "", 0,
                            TLM, AddressSpace, ExternallyInitialized);
       NewGV->setAlignment(Alignment);
+      if (Record.size() > 10)
+        NewGV->setAddressMaybeTaken(Record[10]);
+
       if (!Section.empty())
         NewGV->setSection(Section);
       NewGV->setVisibility(Visibility);

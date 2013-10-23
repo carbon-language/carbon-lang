@@ -4,7 +4,7 @@
 @G = internal addrspace(1) global i32 0
 ; CHECK: @G
 ; CHECK: addrspace(1)
-; CHECK: global i1 false
+; CHECK: global notaddrtaken i1 false
 
 define void @set1() {
   store i32 0, i32 addrspace(1)* @G
