@@ -401,12 +401,15 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
 
   static const TypeConversionCostTblEntry<MVT::SimpleValueType>
   AVXConversionTbl[] = {
+    { ISD::SIGN_EXTEND, MVT::v16i16, MVT::v16i8, 1 },
+    { ISD::ZERO_EXTEND, MVT::v16i16, MVT::v16i8, 1 },
     { ISD::SIGN_EXTEND, MVT::v8i32, MVT::v8i16, 1 },
     { ISD::ZERO_EXTEND, MVT::v8i32, MVT::v8i16, 1 },
     { ISD::SIGN_EXTEND, MVT::v4i64, MVT::v4i32, 1 },
     { ISD::ZERO_EXTEND, MVT::v4i64, MVT::v4i32, 1 },
     { ISD::TRUNCATE,    MVT::v4i32, MVT::v4i64, 1 },
     { ISD::TRUNCATE,    MVT::v8i16, MVT::v8i32, 1 },
+    { ISD::TRUNCATE,    MVT::v16i8, MVT::v16i16, 2 },
 
     { ISD::SINT_TO_FP,  MVT::v8f32, MVT::v8i1,  8 },
     { ISD::SINT_TO_FP,  MVT::v8f32, MVT::v8i8,  8 },

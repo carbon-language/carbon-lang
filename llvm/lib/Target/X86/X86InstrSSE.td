@@ -5602,16 +5602,19 @@ let Predicates = [HasAVX2] in {
 
   def : Pat<(v4i64 (X86vsmovl (v4i32 VR128:$src))), (VPMOVSXDQYrr VR128:$src)>;
   def : Pat<(v8i32 (X86vsmovl (v8i16 VR128:$src))), (VPMOVSXWDYrr VR128:$src)>;
+  def : Pat<(v16i16 (X86vsmovl (v16i8 VR128:$src))), (VPMOVSXBWYrr VR128:$src)>;
 }
 
 let Predicates = [HasAVX] in {
   def : Pat<(v2i64 (X86vsmovl (v4i32 VR128:$src))), (VPMOVSXDQrr VR128:$src)>;
   def : Pat<(v4i32 (X86vsmovl (v8i16 VR128:$src))), (VPMOVSXWDrr VR128:$src)>;
+  def : Pat<(v8i16 (X86vsmovl (v16i8 VR128:$src))), (VPMOVSXBWrr VR128:$src)>;
 }
 
 let Predicates = [UseSSE41] in {
   def : Pat<(v2i64 (X86vsmovl (v4i32 VR128:$src))), (PMOVSXDQrr VR128:$src)>;
   def : Pat<(v4i32 (X86vsmovl (v8i16 VR128:$src))), (PMOVSXWDrr VR128:$src)>;
+  def : Pat<(v8i16 (X86vsmovl (v16i8 VR128:$src))), (PMOVSXBWrr VR128:$src)>;
 }
 
 

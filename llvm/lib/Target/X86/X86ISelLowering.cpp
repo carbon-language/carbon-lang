@@ -1150,9 +1150,6 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::FNEG,               MVT::v4f64, Custom);
     setOperationAction(ISD::FABS,               MVT::v4f64, Custom);
 
-    setOperationAction(ISD::TRUNCATE,           MVT::v8i16, Custom);
-    setOperationAction(ISD::TRUNCATE,           MVT::v4i32, Custom);
-
     setOperationAction(ISD::FP_TO_SINT,         MVT::v8i16, Custom);
 
     setOperationAction(ISD::FP_TO_SINT,         MVT::v8i32, Legal);
@@ -1160,8 +1157,6 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::SINT_TO_FP,         MVT::v8i32, Legal);
     setOperationAction(ISD::FP_ROUND,           MVT::v4f32, Legal);
 
-    setOperationAction(ISD::ZERO_EXTEND,        MVT::v16i16, Custom);
-    setOperationAction(ISD::ZERO_EXTEND,        MVT::v8i32, Custom);
     setOperationAction(ISD::UINT_TO_FP,         MVT::v8i8,  Custom);
     setOperationAction(ISD::UINT_TO_FP,         MVT::v8i16, Custom);
 
@@ -1194,10 +1189,16 @@ void X86TargetLowering::resetOperationActions() {
 
     setOperationAction(ISD::SIGN_EXTEND,       MVT::v4i64, Custom);
     setOperationAction(ISD::SIGN_EXTEND,       MVT::v8i32, Custom);
+    setOperationAction(ISD::SIGN_EXTEND,       MVT::v16i16, Custom);
     setOperationAction(ISD::ZERO_EXTEND,       MVT::v4i64, Custom);
     setOperationAction(ISD::ZERO_EXTEND,       MVT::v8i32, Custom);
+    setOperationAction(ISD::ZERO_EXTEND,       MVT::v16i16, Custom);
     setOperationAction(ISD::ANY_EXTEND,        MVT::v4i64, Custom);
     setOperationAction(ISD::ANY_EXTEND,        MVT::v8i32, Custom);
+    setOperationAction(ISD::ANY_EXTEND,        MVT::v16i16, Custom);
+    setOperationAction(ISD::TRUNCATE,          MVT::v16i8, Custom);
+    setOperationAction(ISD::TRUNCATE,          MVT::v8i16, Custom);
+    setOperationAction(ISD::TRUNCATE,          MVT::v4i32, Custom);
 
     if (Subtarget->hasFMA() || Subtarget->hasFMA4()) {
       setOperationAction(ISD::FMA,             MVT::v8f32, Legal);
@@ -10391,7 +10392,8 @@ static SDValue LowerSIGN_EXTEND(SDValue Op, const X86Subtarget *Subtarget,
     return LowerSIGN_EXTEND_AVX512(Op, DAG);
 
   if ((VT != MVT::v4i64 || InVT != MVT::v4i32) &&
-      (VT != MVT::v8i32 || InVT != MVT::v8i16))
+      (VT != MVT::v8i32 || InVT != MVT::v8i16) &&
+      (VT != MVT::v16i16 || InVT != MVT::v16i8))
     return SDValue();
 
   if (Subtarget->hasInt256())

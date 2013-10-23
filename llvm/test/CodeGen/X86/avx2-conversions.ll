@@ -72,6 +72,25 @@ define <16 x i16> @zext_16i8_16i16(<16 x i8> %z) {
   ret <16 x i16> %t
 }
 
+; CHECK-LABEL: sext_16i8_16i16:
+; CHECK: vpmovsxbw
+; CHECK-NOT: vinsert
+; CHECK: ret
+define <16 x i16> @sext_16i8_16i16(<16 x i8> %z) {
+  %t = sext <16 x i8> %z to <16 x i16>
+  ret <16 x i16> %t
+}
+
+; CHECK-LABEL: trunc_16i16_16i8:
+; CHECK: vpshufb
+; CHECK: vpshufb
+; CHECK: vpor
+; CHECK: ret
+define <16 x i8> @trunc_16i16_16i8(<16 x i16> %z) {
+  %t = trunc <16 x i16> %z to <16 x i8>
+  ret <16 x i8> %t
+}
+
 ; CHECK: load_sext_test1
 ; CHECK: vpmovsxdq (%r{{[^,]*}}), %ymm{{.*}}
 ; CHECK: ret 
