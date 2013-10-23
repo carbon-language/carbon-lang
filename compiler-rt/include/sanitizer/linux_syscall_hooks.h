@@ -987,10 +987,11 @@
 #else
 #define __sanitizer_syscall_pre_pread64(fd, buf, count, pos0, pos1)            \
   __sanitizer_syscall_pre_impl_pread64((long)(fd), (long)(buf), (long)(count), \
-                                       (long)(pos))
+                                       (long)(pos0), (long)(pos1))
 #define __sanitizer_syscall_post_pread64(res, fd, buf, count, pos0, pos1) \
   __sanitizer_syscall_post_impl_pread64(res, (long)(fd), (long)(buf),     \
-                                        (long)(count), (long)(pos))
+                                        (long)(count), (long)(pos0), \
+                                        (long)(pos1))
 #define __sanitizer_syscall_pre_pwrite64(fd, buf, count, pos0, pos1) \
   __sanitizer_syscall_pre_impl_pwrite64(                             \
       (long)(fd), (long)(buf), (long)(count), (long)(pos0), (long)(pos1))
