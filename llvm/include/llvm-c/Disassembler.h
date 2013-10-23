@@ -42,7 +42,7 @@ typedef void *LLVMDisasmContextRef;
  * instruction are specified by the Offset parameter and its byte widith is the
  * size parameter.  For instructions sets with fixed widths and one symbolic
  * operand per instruction, the Offset parameter will be zero and Size parameter
- * will be the instruction width.  The information is returned in TagBuf and is 
+ * will be the instruction width.  The information is returned in TagBuf and is
  * Triple specific with its specific information defined by the value of
  * TagType for that Triple.  If symbolic information is returned the function
  * returns 1, otherwise it returns 0.
@@ -58,7 +58,7 @@ typedef int (*LLVMOpInfoCallback)(void *DisInfo, uint64_t PC,
  * SubtractSymbol can be link edited independent of each other.  Many other
  * platforms only allow a relocatable expression of the form AddSymbol + Offset
  * to be encoded.
- * 
+ *
  * The LLVMOpInfoCallback() for the TagType value of 1 uses the struct
  * LLVMOpInfo1.  The value of the relocatable expression for the operand,
  * including any PC adjustment, is passed in to the call back in the Value

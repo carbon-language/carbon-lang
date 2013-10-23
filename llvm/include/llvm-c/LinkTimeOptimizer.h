@@ -4,7 +4,7 @@
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This header provides a C API to use the LLVM link time optimization
@@ -46,7 +46,7 @@ extern "C" {
     //  Added C-specific error codes
     LLVM_LTO_NULL_OBJECT
   } llvm_lto_status_t;
- 
+
   /// This provides C interface to initialize link time optimizer. This allows
   /// linker to use dlopen() interface to dynamically load LinkTimeOptimizer.
   /// extern "C" helps, because dlopen() interface uses name to find the symbol.

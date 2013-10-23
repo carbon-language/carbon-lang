@@ -206,7 +206,7 @@ void LLVMDisposeMCJITMemoryManager(LLVMMCJITMemoryManagerRef MM);
  */
 
 #ifdef __cplusplus
-}  
+}
 #endif /* defined(__cplusplus) */
 
 #endif

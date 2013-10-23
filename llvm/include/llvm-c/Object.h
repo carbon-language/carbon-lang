@@ -100,4 +100,3 @@ const char *LLVMGetRelocationValueString(LLVMRelocationIteratorRef RI);
 #endif /* defined(__cplusplus) */
 
 #endif
-
