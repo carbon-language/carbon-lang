@@ -598,7 +598,7 @@ bool GCOVProfiler::emitProfileArcs() {
     };
     FTy = FunctionType::get(Builder.getVoidTy(), Params, false);
 
-    // Inialize the environment and register the local writeout and flush
+    // Initialize the environment and register the local writeout and flush
     // functions.
     Constant *GCOVInit = M->getOrInsertFunction("llvm_gcov_init", FTy);
     Builder.CreateCall2(GCOVInit, WriteoutF, FlushF);
