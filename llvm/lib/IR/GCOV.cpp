@@ -51,7 +51,7 @@ bool GCOVFile::read(GCOVBuffer &Buffer) {
       // Use existing function while reading .gcda file.
       assert(i < Functions.size() && ".gcda data does not match .gcno data");
       GFun = Functions[i];
-    } else if (isGCNOFile(Format)){
+    } else if (isGCNOFile(Format)) {
       GFun = new GCOVFunction();
       Functions.push_back(GFun);
     }
