@@ -168,7 +168,8 @@ void ReportErrorSummary(const char *error_type, const char *file,
   const int kMaxSize = 1024;  // We don't want a summary too long.
   InternalScopedBuffer<char> buff(kMaxSize);
   internal_snprintf(
-      buff.data(), kMaxSize, "%s: %s %s:%d %s", SanitizerToolName, error_type,
+      buff.data(), kMaxSize, "SUMMARY: %s: %s %s:%d %s", SanitizerToolName,
+      error_type,
       file ? StripPathPrefix(file, common_flags()->strip_path_prefix) : "??",
       line, function ? function : "??");
   __sanitizer_report_error_summary(buff.data());
@@ -233,6 +234,6 @@ void NOINLINE __sanitizer_sandbox_on_notify(void *reserved) {
 }
 
 void __sanitizer_report_error_summary(const char *error_summary) {
-  Printf("SUMMARY: %s\n", error_summary);
+  Printf("%s\n", error_summary);
 }
 }  // extern "C"
