@@ -212,8 +212,10 @@ bool AsmPrinter::doInitialization(Module &M) {
   llvm_unreachable("Unknown exception type.");
 }
 
-void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const {
-  switch ((GlobalValue::LinkageTypes)Linkage) {
+void AsmPrinter::EmitLinkage(unsigned L, MCSymbol *GVSym) const {
+  GlobalValue::LinkageTypes Linkage = (GlobalValue::LinkageTypes)L;
+
+  switch (Linkage) {
   case GlobalValue::CommonLinkage:
   case GlobalValue::LinkOnceAnyLinkage:
   case GlobalValue::LinkOnceODRLinkage:
@@ -225,8 +227,7 @@ void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const {
       // .globl _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
 
-      if ((GlobalValue::LinkageTypes)Linkage !=
-          GlobalValue::LinkOnceODRAutoHideLinkage)
+      if (Linkage != GlobalValue::LinkOnceODRAutoHideLinkage)
         // .weak_definition _foo
         OutStreamer.EmitSymbolAttribute(GVSym, MCSA_WeakDefinition);
       else
@@ -239,7 +240,7 @@ void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const {
       // .weak _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Weak);
     }
-    break;
+    return;
   case GlobalValue::DLLExportLinkage:
   case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of
@@ -248,14 +249,18 @@ void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const {
     // If external or appending, declare as a global symbol.
     // .globl _foo
     OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
-    break;
+    return;
   case GlobalValue::PrivateLinkage:
   case GlobalValue::InternalLinkage:
   case GlobalValue::LinkerPrivateLinkage:
-    break;
-  default:
-    llvm_unreachable("Unknown linkage type!");
+    return;
+  case GlobalValue::AvailableExternallyLinkage:
+    llvm_unreachable("Should never emit this");
+  case GlobalValue::DLLImportLinkage:
+  case GlobalValue::ExternalWeakLinkage:
+    llvm_unreachable("Don't know how to emit these");
   }
+  llvm_unreachable("Unknown linkage type!");
 }
 
 
