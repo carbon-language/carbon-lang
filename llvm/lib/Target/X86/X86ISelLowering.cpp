@@ -631,7 +631,7 @@ void X86TargetLowering::resetOperationActions() {
   setOperationAction(ISD::STACKSAVE,          MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
 
-  if (Subtarget->isTargetCOFF() && !Subtarget->isTargetEnvMacho())
+  if (Subtarget->isTargetWindows())
     setOperationAction(ISD::DYNAMIC_STACKALLOC, Subtarget->is64Bit() ?
                        MVT::i64 : MVT::i32, Custom);
   else if (TM.Options.EnableSegmentedStacks)
