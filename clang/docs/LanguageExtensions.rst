@@ -1196,7 +1196,7 @@ these cases, we provide an attribute to designate that a method requires a
 This attribute can only be applied the method declarations within a class, and not a protocol.
 
 Note that on both OS X and iOS that the Foundation framework provides a
-convenience macro ``NS_REQUIRES_SUPER`` that provides syntantic sugar for this
+convenience macro ``NS_REQUIRES_SUPER`` that provides syntactic sugar for this
 attribute:
 
 .. code-block:: objc
