@@ -5596,6 +5596,8 @@ let Predicates = [HasAVX2] in {
               (VPMOVZXDQYrr VR128:$src)>;
     def : Pat<(v8i32 (X86vzmovly (v8i16 VR128:$src))),
               (VPMOVZXWDYrr VR128:$src)>;
+    def : Pat<(v16i16 (X86vzmovly (v16i8 VR128:$src))),
+              (VPMOVZXBWYrr VR128:$src)>;
   }
 
   def : Pat<(v4i64 (X86vsmovl (v4i32 VR128:$src))), (VPMOVSXDQYrr VR128:$src)>;

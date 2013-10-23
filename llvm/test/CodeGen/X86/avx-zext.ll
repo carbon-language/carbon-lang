@@ -27,3 +27,15 @@ define <8 x i32> @zext_8i8_to_8i32(<8 x i8> %z) {
   %t = zext <8 x i8> %z to <8 x i32>
   ret <8 x i32> %t
 }
+
+; PR17654
+define <16 x i16> @zext_16i8_to_16i16(<16 x i8> %z) {
+; CHECK-LABEL: zext_16i8_to_16i16:
+; CHECK: vpxor
+; CHECK: vpunpckhbw
+; CHECK: vpunpcklbw
+; CHECK: vinsertf128
+; CHECK: ret
+  %t = zext <16 x i8> %z to <16 x i16>
+  ret <16 x i16> %t
+}
