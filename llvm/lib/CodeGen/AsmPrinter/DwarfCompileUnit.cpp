@@ -1369,9 +1369,8 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
   DISubprogram SPDecl = SP.getFunctionDeclaration();
   DIE *DeclDie = NULL;
-  if (SPDecl.isSubprogram()) {
+  if (SPDecl.isSubprogram())
     DeclDie = getOrCreateSubprogramDIE(SPDecl);
-  }
 
   // Add function template parameters.
   addTemplateParams(*SPDie, SP.getTemplateParams());
