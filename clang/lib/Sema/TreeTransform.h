@@ -8352,7 +8352,9 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
   CXXRecordDecl *Class
     = getSema().createLambdaClosureType(E->getIntroducerRange(),
                                         NewCallOpTSI,
-                                        /*KnownDependent=*/false);
+                                        /*KnownDependent=*/false,
+                                        E->getCaptureDefault());
+
   getDerived().transformedLocalDecl(E->getLambdaClass(), Class);
 
   // Build the call operator.
