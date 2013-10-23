@@ -333,8 +333,6 @@ public:
   }
   bool isTargetEnvMacho() const { return TargetTriple.isEnvironmentMachO(); }
 
-  bool isOSWindows() const { return TargetTriple.isOSWindows(); }
-
   bool isTargetWin64() const {
     return In64BitMode && TargetTriple.isOSWindows();
   }
