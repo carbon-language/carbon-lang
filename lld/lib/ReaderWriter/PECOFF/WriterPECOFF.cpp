@@ -61,9 +61,6 @@ const int PAGE_SIZE = 4096;
 // file.
 const int SECTOR_SIZE = 512;
 
-// The address of the executable when loaded into memory.
-const int32_t IMAGE_BASE = 0x400000;
-
 /// A Chunk is an abstrace contiguous range in an output file.
 class Chunk {
 public:
