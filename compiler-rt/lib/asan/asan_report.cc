@@ -550,16 +550,14 @@ class ScopedInErrorReport {
 };
 
 static void ReportSummary(const char *error_type, StackTrace *stack) {
-  if (!stack->size) return;
+  AddressInfo ai;
   if (&getSymbolizer && getSymbolizer()->IsAvailable()) {
-    AddressInfo ai;
     // Currently, we include the first stack frame into the report summary.
     // Maybe sometimes we need to choose another frame (e.g. skip memcpy/etc).
     uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
     getSymbolizer()->SymbolizeCode(pc, &ai, 1);
-    ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
   }
-  // FIXME: do we need to print anything at all if there is no symbolizer?
+  ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
 }
 
 void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
