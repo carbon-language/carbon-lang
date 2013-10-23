@@ -3523,7 +3523,7 @@ private:
 public:
     // constructors
     _LIBCPP_INLINE_VISIBILITY
-    seed_seq() {}
+    seed_seq() _NOEXCEPT {}
 #ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     template<class _Tp>
         _LIBCPP_INLINE_VISIBILITY
@@ -3541,7 +3541,7 @@ public:
 
     // property functions
     _LIBCPP_INLINE_VISIBILITY
-    size_t size() const {return __v_.size();}
+    size_t size() const _NOEXCEPT {return __v_.size();}
     template<class _OutputIterator>
         _LIBCPP_INLINE_VISIBILITY
         void param(_OutputIterator __dest) const
