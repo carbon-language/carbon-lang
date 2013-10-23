@@ -280,7 +280,6 @@ class tHintAlias<string Asm, dag Result> : tInstAlias<Asm, Result> {
   let Predicates = [IsThumb, HasV6M];
 }
 
-def : tHintAlias<"hint$p $imm", (tHINT imm0_15:$imm, pred:$p)>;
 def : tHintAlias<"nop$p", (tHINT 0, pred:$p)>; // A8.6.110
 def : tHintAlias<"yield$p", (tHINT 1, pred:$p)>; // A8.6.410
 def : tHintAlias<"wfe$p", (tHINT 2, pred:$p)>; // A8.6.408

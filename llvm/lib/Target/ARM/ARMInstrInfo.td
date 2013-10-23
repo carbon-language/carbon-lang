@@ -677,6 +677,15 @@ def imm0_63 : Operand<i32>, ImmLeaf<i32, [{
   let ParserMatchClass = Imm0_63AsmOperand;
 }
 
+/// imm0_239 predicate - Immediate in the range [0,239].
+def Imm0_239AsmOperand : ImmAsmOperand {
+  let Name = "Imm0_239";
+  let DiagnosticType = "ImmRange0_239";
+}
+def imm0_239 : Operand<i32>, ImmLeaf<i32, [{ return Imm >= 0 && Imm < 240; }]> {
+  let ParserMatchClass = Imm0_239AsmOperand;
+}
+
 /// imm0_255 predicate - Immediate in the range [0,255].
 def Imm0_255AsmOperand : ImmAsmOperand { let Name = "Imm0_255"; }
 def imm0_255 : Operand<i32>, ImmLeaf<i32, [{ return Imm >= 0 && Imm < 256; }]> {
@@ -1670,7 +1679,7 @@ PseudoInst<(outs), (ins i32imm:$amt, pred:$p), NoItinerary,
            [(ARMcallseq_start timm:$amt)]>;
 }
 
-def HINT : AI<(outs), (ins imm0_255:$imm), MiscFrm, NoItinerary,
+def HINT : AI<(outs), (ins imm0_239:$imm), MiscFrm, NoItinerary,
               "hint", "\t$imm", []>, Requires<[IsARM, HasV6]> {
   bits<8> imm;
   let Inst{27-8} = 0b00110010000011110000;

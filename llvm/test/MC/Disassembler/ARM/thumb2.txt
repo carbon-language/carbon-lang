@@ -2710,7 +2710,11 @@
 #------------------------------------------------------------------------------
 # Unallocated hints (They execute as NOPs, but software must not use them.)
 #------------------------------------------------------------------------------
-
-[0x60 0xbf]
 # CHECK: hint #6
+# CHECK: hint.w #6
+# CHECK: hint.w #102
+
+0x60 0xbf
+0xaf 0xf3 0x06 0x80
+0xaf 0xf3 0x66 0x80
 

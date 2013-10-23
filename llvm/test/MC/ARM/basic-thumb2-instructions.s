@@ -3603,6 +3603,11 @@ _func:
         hint #1
         hint #0
 
+        itet lt
+        hintlt #15
+        hintge #16
+        hintlt #239
+
 @ CHECK: wfe                            @ encoding: [0x20,0xbf]
 @ CHECK: wfi                            @ encoding: [0x30,0xbf]
 @ CHECK: yield                          @ encoding: [0x10,0xbf]
@@ -3620,6 +3625,11 @@ _func:
 @ CHECK: wfe                            @ encoding: [0x20,0xbf]
 @ CHECK: yield                          @ encoding: [0x10,0xbf]
 @ CHECK: nop                            @ encoding: [0x00,0xbf]
+
+@ CHECK: itet	lt                      @ encoding: [0xb6,0xbf]
+@ CHECK: hintlt #15                     @ encoding: [0xf0,0xbf]
+@ CHECK: hintge.w #16                   @ encoding: [0xaf,0xf3,0x10,0x80]
+@ CHECK: hintlt.w #239                  @ encoding: [0xaf,0xf3,0xef,0x80]
 
 @------------------------------------------------------------------------------
 @ Unallocated wide/narrow hints

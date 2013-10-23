@@ -2928,7 +2928,7 @@ Lforward:
         hint #2
         hint #1
         hint #0
-        hint #255
+        hintgt #239
 
 @ CHECK: wfe                            @ encoding: [0x02,0xf0,0x20,0xe3]
 @ CHECK: wfehi                          @ encoding: [0x02,0xf0,0x20,0x83]
@@ -2941,4 +2941,4 @@ Lforward:
 @ CHECK: wfe                            @ encoding: [0x02,0xf0,0x20,0xe3]
 @ CHECK: yield                          @ encoding: [0x01,0xf0,0x20,0xe3]
 @ CHECK: nop                            @ encoding: [0x00,0xf0,0x20,0xe3]
-@ CHECK: hint #255                      @ encoding: [0xff,0xf0,0x20,0xe3]
+@ CHECK: hintgt #239                    @ encoding: [0xef,0xf0,0x20,0xc3]
