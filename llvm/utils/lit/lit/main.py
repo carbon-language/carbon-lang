@@ -115,6 +115,10 @@ def main(builtinParameters = {}):
     # FIXME: This is a hack.
     sys.setcheckinterval(1000)
 
+    # Use processes by default on Unix platforms.
+    isWindows = platform.system() == 'Windows'
+    useProcessesIsDefault = not isWindows
+
     global options
     from optparse import OptionParser, OptionGroup
     parser = OptionParser("usage: %prog [options] {file-or-path}")
@@ -199,10 +203,10 @@ def main(builtinParameters = {}):
                       action="store_true", default=False)
     group.add_option("", "--use-processes", dest="useProcesses",
                       help="Run tests in parallel with processes (not threads)",
-                      action="store_true", default=False)
+                      action="store_true", default=useProcessesIsDefault)
     group.add_option("", "--use-threads", dest="useProcesses",
                       help="Run tests in parallel with threads (not processes)",
-                      action="store_false", default=False)
+                      action="store_false", default=not useProcessesIsDefault)
     parser.add_option_group(group)
 
     (opts, args) = parser.parse_args()
@@ -241,7 +245,7 @@ def main(builtinParameters = {}):
         valgrindArgs = opts.valgrindArgs,
         noExecute = opts.noExecute,
         debug = opts.debug,
-        isWindows = (platform.system()=='Windows'),
+        isWindows = isWindows,
         params = userParams,
         config_prefix = opts.configPrefix)
 
