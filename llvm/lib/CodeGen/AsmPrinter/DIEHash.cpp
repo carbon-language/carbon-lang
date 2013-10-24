@@ -83,33 +83,34 @@ void DIEHash::addSLEB128(int64_t Value) {
 }
 
 /// \brief Including \p Parent adds the context of Parent to the hash..
-void DIEHash::addParentContext(DIE *Parent) {
+void DIEHash::addParentContext(const DIE &Parent) {
 
   DEBUG(dbgs() << "Adding parent context to hash...\n");
 
   // [7.27.2] For each surrounding type or namespace beginning with the
   // outermost such construct...
-  SmallVector<DIE *, 1> Parents;
-  while (Parent->getTag() != dwarf::DW_TAG_compile_unit) {
-    Parents.push_back(Parent);
-    Parent = Parent->getParent();
+  SmallVector<const DIE *, 1> Parents;
+  const DIE *Cur = &Parent;
+  while (Cur->getTag() != dwarf::DW_TAG_compile_unit) {
+    Parents.push_back(Cur);
+    Cur = Cur->getParent();
   }
 
   // Reverse iterate over our list to go from the outermost construct to the
   // innermost.
-  for (SmallVectorImpl<DIE *>::reverse_iterator I = Parents.rbegin(),
-                                                E = Parents.rend();
+  for (SmallVectorImpl<const DIE *>::reverse_iterator I = Parents.rbegin(),
+                                                      E = Parents.rend();
        I != E; ++I) {
-    DIE *Die = *I;
+    const DIE &Die = **I;
 
     // ... Append the letter "C" to the sequence...
     addULEB128('C');
 
     // ... Followed by the DWARF tag of the construct...
-    addULEB128(Die->getTag());
+    addULEB128(Die.getTag());
 
     // ... Then the name, taken from the DW_AT_name attribute.
-    StringRef Name = getDIEStringAttr(*Die, dwarf::DW_AT_name);
+    StringRef Name = getDIEStringAttr(Die, dwarf::DW_AT_name);
     DEBUG(dbgs() << "... adding context: " << Name << "\n");
     if (!Name.empty())
       addString(Name);
@@ -117,9 +118,9 @@ void DIEHash::addParentContext(DIE *Parent) {
 }
 
 // Collect all of the attributes for a particular DIE in single structure.
-void DIEHash::collectAttributes(DIE *Die, DIEAttrs &Attrs) {
-  const SmallVectorImpl<DIEValue *> &Values = Die->getValues();
-  const DIEAbbrev &Abbrevs = Die->getAbbrev();
+void DIEHash::collectAttributes(const DIE &Die, DIEAttrs &Attrs) {
+  const SmallVectorImpl<DIEValue *> &Values = Die.getValues();
+  const DIEAbbrev &Abbrevs = Die.getAbbrev();
 
 #define COLLECT_ATTR(NAME)                                                     \
   case dwarf::NAME:                                                            \
@@ -196,8 +197,8 @@ void DIEHash::hashShallowTypeReference(dwarf::Attribute Attribute,
   addULEB128(Attribute);
 
   // the context of the tag,
-  if (DIE *Parent = Entry.getParent())
-    addParentContext(Parent);
+  if (const DIE *Parent = Entry.getParent())
+    addParentContext(*Parent);
 
   // the letter 'E',
   addULEB128('E');
@@ -227,7 +228,7 @@ void DIEHash::hashRepeatedTypeReference(dwarf::Attribute Attribute,
 }
 
 void DIEHash::hashDIEEntry(dwarf::Attribute Attribute, dwarf::Tag Tag,
-                           DIE &Entry) {
+                           const DIE &Entry) {
   assert(Tag != dwarf::DW_TAG_friend && "No current LLVM clients emit friend "
                                         "tags. Add support here when there's "
                                         "a use case");
@@ -264,7 +265,7 @@ void DIEHash::hashDIEEntry(dwarf::Attribute Attribute, dwarf::Tag Tag,
   // ... process the type T recursively by performing Steps 2 through 7, and
   // use the result as the attribute value.
   DieNumber = Numbering.size();
-  computeHash(&Entry);
+  computeHash(Entry);
 }
 
 // Hash an individual attribute \param Attr based on the type of attribute and
@@ -377,28 +378,28 @@ void DIEHash::hashAttributes(const DIEAttrs &Attrs, dwarf::Tag Tag) {
 }
 
 // Add all of the attributes for \param Die to the hash.
-void DIEHash::addAttributes(DIE *Die) {
+void DIEHash::addAttributes(const DIE &Die) {
   DIEAttrs Attrs = {};
   collectAttributes(Die, Attrs);
-  hashAttributes(Attrs, Die->getTag());
+  hashAttributes(Attrs, Die.getTag());
 }
 
 // Compute the hash of a DIE. This is based on the type signature computation
 // given in section 7.27 of the DWARF4 standard. It is the md5 hash of a
 // flattened description of the DIE.
-void DIEHash::computeHash(DIE *Die) {
+void DIEHash::computeHash(const DIE &Die) {
   // Append the letter 'D', followed by the DWARF tag of the DIE.
   addULEB128('D');
-  addULEB128(Die->getTag());
+  addULEB128(Die.getTag());
 
   // Add each of the attributes of the DIE.
   addAttributes(Die);
 
   // Then hash each of the children of the DIE.
-  for (std::vector<DIE *>::const_iterator I = Die->getChildren().begin(),
-                                          E = Die->getChildren().end();
+  for (std::vector<DIE *>::const_iterator I = Die.getChildren().begin(),
+                                          E = Die.getChildren().end();
        I != E; ++I)
-    computeHash(*I);
+    computeHash(**I);
 
   // Following the last (or if there are no children), append a zero byte.
   Hash.update(makeArrayRef((uint8_t)'\0'));
@@ -408,24 +409,23 @@ void DIEHash::computeHash(DIE *Die) {
 /// DWARF4 standard. It is the md5 hash of a flattened description of the DIE
 /// with the exception that we are hashing only the context and the name of the
 /// type.
-uint64_t DIEHash::computeDIEODRSignature(DIE *Die) {
+uint64_t DIEHash::computeDIEODRSignature(const DIE &Die) {
 
   // Add the contexts to the hash. We won't be computing the ODR hash for
   // function local types so it's safe to use the generic context hashing
   // algorithm here.
   // FIXME: If we figure out how to account for linkage in some way we could
   // actually do this with a slight modification to the parent hash algorithm.
-  DIE *Parent = Die->getParent();
-  if (Parent)
-    addParentContext(Parent);
+  if (const DIE *Parent = Die.getParent())
+    addParentContext(*Parent);
 
   // Add the current DIE information.
 
   // Add the DWARF tag of the DIE.
-  addULEB128(Die->getTag());
+  addULEB128(Die.getTag());
 
   // Add the name of the type to the hash.
-  addString(getDIEStringAttr(*Die, dwarf::DW_AT_name));
+  addString(getDIEStringAttr(Die, dwarf::DW_AT_name));
 
   // Now get the result.
   MD5::MD5Result Result;
@@ -441,9 +441,9 @@ uint64_t DIEHash::computeDIEODRSignature(DIE *Die) {
 /// DWARF4 standard. It is an md5 hash of the flattened description of the DIE
 /// with the inclusion of the full CU and all top level CU entities.
 // TODO: Initialize the type chain at 0 instead of 1 for CU signatures.
-uint64_t DIEHash::computeCUSignature(DIE *Die) {
+uint64_t DIEHash::computeCUSignature(const DIE &Die) {
   Numbering.clear();
-  Numbering[Die] = 1;
+  Numbering[&Die] = 1;
 
   // Hash the DIE.
   computeHash(Die);
@@ -462,12 +462,12 @@ uint64_t DIEHash::computeCUSignature(DIE *Die) {
 /// DWARF4 standard. It is an md5 hash of the flattened description of the DIE
 /// with the inclusion of additional forms not specifically called out in the
 /// standard.
-uint64_t DIEHash::computeTypeSignature(DIE *Die) {
+uint64_t DIEHash::computeTypeSignature(const DIE &Die) {
   Numbering.clear();
-  Numbering[Die] = 1;
+  Numbering[&Die] = 1;
 
-  if (DIE *Parent = Die->getParent())
-    addParentContext(Parent);
+  if (const DIE *Parent = Die.getParent())
+    addParentContext(*Parent);
 
   // Hash the DIE.
   computeHash(Die);

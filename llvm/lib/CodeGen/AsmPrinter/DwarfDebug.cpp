@@ -1062,7 +1062,7 @@ void DwarfDebug::finalizeModuleInfo() {
     if (GenerateODRHash && shouldAddODRHash(CUMap.begin()->second, Die))
       CUMap.begin()->second->addUInt(Die, dwarf::DW_AT_GNU_odr_signature,
                                      dwarf::DW_FORM_data8,
-                                     Hash.computeDIEODRSignature(Die));
+                                     Hash.computeDIEODRSignature(*Die));
   }
 
   // Handle anything that needs to be done on a per-cu basis.
@@ -1080,7 +1080,7 @@ void DwarfDebug::finalizeModuleInfo() {
       uint64_t ID = 0;
       if (GenerateCUHash) {
         DIEHash CUHash;
-        ID = CUHash.computeCUSignature(TheCU->getCUDie());
+        ID = CUHash.computeCUSignature(*TheCU->getCUDie());
       }
       // This should be a unique identifier when we want to build .dwp files.
       TheCU->addUInt(TheCU->getCUDie(), dwarf::DW_AT_GNU_dwo_id,

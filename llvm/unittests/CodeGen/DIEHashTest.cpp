@@ -22,7 +22,7 @@ TEST(DIEHashTest, Data1) {
   DIE Die(dwarf::DW_TAG_base_type);
   DIEInteger Size(4);
   Die.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Size);
-  uint64_t MD5Res = Hash.computeTypeSignature(&Die);
+  uint64_t MD5Res = Hash.computeTypeSignature(Die);
   ASSERT_EQ(0x1AFE116E83701108ULL, MD5Res);
 }
 
@@ -35,7 +35,7 @@ TEST(DIEHashTest, TrivialType) {
   // Line and file number are ignored.
   Unnamed.addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, &One);
   Unnamed.addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, &One);
-  uint64_t MD5Res = DIEHash().computeTypeSignature(&Unnamed);
+  uint64_t MD5Res = DIEHash().computeTypeSignature(Unnamed);
 
   // The exact same hash GCC produces for this DIE.
   ASSERT_EQ(0x715305ce6cfd9ad1ULL, MD5Res);
@@ -49,7 +49,7 @@ TEST(DIEHashTest, NamedType) {
   Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FooStr);
   Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &One);
 
-  uint64_t MD5Res = DIEHash().computeTypeSignature(&Foo);
+  uint64_t MD5Res = DIEHash().computeTypeSignature(Foo);
 
   // The exact same hash GCC produces for this DIE.
   ASSERT_EQ(0xd566dbd2ca5265ffULL, MD5Res);
@@ -75,7 +75,7 @@ TEST(DIEHashTest, NamespacedType) {
   Space->addChild(Foo);
   CU.addChild(Space);
 
-  uint64_t MD5Res = DIEHash().computeTypeSignature(Foo);
+  uint64_t MD5Res = DIEHash().computeTypeSignature(*Foo);
 
   // The exact same hash GCC produces for this DIE.
   ASSERT_EQ(0x7b80381fd17f1e33ULL, MD5Res);
@@ -105,7 +105,7 @@ TEST(DIEHashTest, TypeWithMember) {
   DIEEntry IntRef(&Int);
   Member->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &IntRef);
 
-  uint64_t MD5Res = DIEHash().computeTypeSignature(&Unnamed);
+  uint64_t MD5Res = DIEHash().computeTypeSignature(Unnamed);
 
   ASSERT_EQ(0x5646aa436b7e07c6ULL, MD5Res);
 }
@@ -143,7 +143,7 @@ TEST(DIEHashTest, ReusedType) {
   Mem1->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &IntRef);
   Mem2->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &IntRef);
 
-  uint64_t MD5Res = DIEHash().computeTypeSignature(&Unnamed);
+  uint64_t MD5Res = DIEHash().computeTypeSignature(Unnamed);
 
   ASSERT_EQ(0x3a7dc3ed7b76b2f8ULL, MD5Res);
 }
@@ -165,7 +165,7 @@ TEST(DIEHashTest, RecursiveType) {
 
   Foo.addChild(Mem);
 
-  uint64_t MD5Res = DIEHash().computeTypeSignature(&Foo);
+  uint64_t MD5Res = DIEHash().computeTypeSignature(Foo);
 
   ASSERT_EQ(0x73d8b25aef227b06ULL, MD5Res);
 }
@@ -194,7 +194,7 @@ TEST(DIEHashTest, Pointer) {
 
   Foo.addChild(Mem);
 
-  uint64_t MD5Res = DIEHash().computeTypeSignature(&Foo);
+  uint64_t MD5Res = DIEHash().computeTypeSignature(Foo);
 
   ASSERT_EQ(0x74ea73862e8708d2ULL, MD5Res);
 }
@@ -227,7 +227,7 @@ TEST(DIEHashTest, Reference) {
 
   Foo.addChild(Mem);
 
-  uint64_t MD5Res = DIEHash().computeTypeSignature(&Foo);
+  uint64_t MD5Res = DIEHash().computeTypeSignature(Foo);
 
   ASSERT_EQ(0xa0b15f467ad4525bULL, MD5Res);
 }
@@ -260,7 +260,7 @@ TEST(DIEHashTest, RValueReference) {
 
   Foo.addChild(Mem);
 
-  uint64_t MD5Res = DIEHash().computeTypeSignature(&Foo);
+  uint64_t MD5Res = DIEHash().computeTypeSignature(Foo);
 
   ASSERT_EQ(0xad211c8c3b31e57ULL, MD5Res);
 }
@@ -289,7 +289,7 @@ TEST(DIEHashTest, PtrToMember) {
 
   Foo.addChild(Mem);
 
-  uint64_t MD5Res = DIEHash().computeTypeSignature(&Foo);
+  uint64_t MD5Res = DIEHash().computeTypeSignature(Foo);
 
   ASSERT_EQ(0x852e0c9ff7c04ebULL, MD5Res);
 }
@@ -333,7 +333,7 @@ TEST(DIEHashTest, PtrToMemberDeclDefMatch) {
 
     Foo.addChild(Mem);
 
-    MD5ResDecl = DIEHash().computeTypeSignature(&Foo);
+    MD5ResDecl = DIEHash().computeTypeSignature(Foo);
   }
   uint64_t MD5ResDef;
   {
@@ -362,7 +362,7 @@ TEST(DIEHashTest, PtrToMemberDeclDefMatch) {
 
     Foo.addChild(Mem);
 
-    MD5ResDef = DIEHash().computeTypeSignature(&Foo);
+    MD5ResDef = DIEHash().computeTypeSignature(Foo);
   }
   ASSERT_EQ(MD5ResDef, MD5ResDecl);
 }
@@ -405,7 +405,7 @@ TEST(DIEHashTest, PtrToMemberDeclDefMisMatch) {
 
     Foo.addChild(Mem);
 
-    MD5ResDecl = DIEHash().computeTypeSignature(&Foo);
+    MD5ResDecl = DIEHash().computeTypeSignature(Foo);
   }
   uint64_t MD5ResDef;
   {
@@ -433,7 +433,7 @@ TEST(DIEHashTest, PtrToMemberDeclDefMisMatch) {
 
     Foo.addChild(Mem);
 
-    MD5ResDef = DIEHash().computeTypeSignature(&Foo);
+    MD5ResDef = DIEHash().computeTypeSignature(Foo);
   }
   // FIXME: This seems to be a bug in the DWARF type hashing specification that
   // only uses the brief name hashing for types referenced via DW_AT_type. In
@@ -473,7 +473,7 @@ TEST(DIEHashTest, RefUnnamedType) {
 
   Foo.addChild(Mem);
 
-  uint64_t MD5Res = DIEHash().computeTypeSignature(&Foo);
+  uint64_t MD5Res = DIEHash().computeTypeSignature(Foo);
 
   ASSERT_EQ(0x954e026f01c02529ULL, MD5Res);
 }
