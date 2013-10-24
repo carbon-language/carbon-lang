@@ -190,3 +190,18 @@ define i64 @test_x86_avx512_cvtsd2usi64(<2 x double> %a0) {
   ret i64 %res
 }
 declare i64 @llvm.x86.avx512.cvtsd2usi64(<2 x double>) nounwind readnone
+
+define <16 x float> @test_x86_vcvtph2ps_512(<16 x i16> %a0) {
+  ; CHECK: vcvtph2ps
+  %res = call <16 x float> @llvm.x86.avx512.vcvtph2ps.512(<16 x i16> %a0)
+  ret <16 x float> %res
+}
+declare <16 x float> @llvm.x86.avx512.vcvtph2ps.512(<16 x i16>) nounwind readonly
+
+
+define <16 x i16> @test_x86_vcvtps2ph_256(<16 x float> %a0) {
+  ; CHECK: vcvtps2ph
+  %res = call <16 x i16> @llvm.x86.avx512.vcvtps2ph.512(<16 x float> %a0, i32 0)
+  ret <16 x i16> %res
+}
+declare <16 x i16> @llvm.x86.avx512.vcvtps2ph.512(<16 x float>, i32) nounwind readonly
