@@ -1172,6 +1172,8 @@ int OnExit() {
 
 }  // namespace __msan
 
+extern "C" int *__errno_location(void);
+
 // A version of CHECK_UNPOISED using a saved scope value. Used in common
 // interceptors.
 #define CHECK_UNPOISONED_CTX(ctx, x, n)                         \
@@ -1188,12 +1190,13 @@ int OnExit() {
   CHECK_UNPOISONED_CTX(ctx, ptr, size)
 #define COMMON_INTERCEPTOR_INITIALIZE_RANGE(ctx, ptr, size) \
   __msan_unpoison(ptr, size)
-#define COMMON_INTERCEPTOR_ENTER(ctx, func, ...)              \
-  if (msan_init_is_running) return REAL(func)(__VA_ARGS__);   \
-  MSanInterceptorContext msan_ctx = {IsInInterceptorScope()}; \
-  ctx = (void *)&msan_ctx;                                    \
-  (void)ctx;                                                  \
-  InterceptorScope interceptor_scope;                         \
+#define COMMON_INTERCEPTOR_ENTER(ctx, func, ...)                  \
+  if (msan_init_is_running) return REAL(func)(__VA_ARGS__);       \
+  MSanInterceptorContext msan_ctx = {IsInInterceptorScope()};     \
+  ctx = (void *)&msan_ctx;                                        \
+  (void)ctx;                                                      \
+  InterceptorScope interceptor_scope;                             \
+  __msan_unpoison(__errno_location(), sizeof(int)); /* NOLINT */  \
   ENSURE_MSAN_INITED();
 #define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) \
   do {                                         \
