@@ -5158,10 +5158,10 @@ def  VSWPq    : N2VX<0b11, 0b11, 0b00, 0b10, 0b00000, 1, 0,
 // Vector Move Operations.
 
 //   VMOV     : Vector Move (Register)
-def : InstAlias<"vmov${p} $Vd, $Vm",
-                (VORRd DPR:$Vd, DPR:$Vm, DPR:$Vm, pred:$p)>;
-def : InstAlias<"vmov${p} $Vd, $Vm",
-                (VORRq QPR:$Vd, QPR:$Vm, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmov${p} $Vd, $Vm",
+                    (VORRd DPR:$Vd, DPR:$Vm, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmov${p} $Vd, $Vm",
+                    (VORRq QPR:$Vd, QPR:$Vm, QPR:$Vm, pred:$p)>;
 
 //   VMOV     : Vector Move (Immediate)
 

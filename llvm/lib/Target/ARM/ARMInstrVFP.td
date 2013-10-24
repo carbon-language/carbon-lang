@@ -671,9 +671,11 @@ multiclass vrint_inst_zrx<string opc, bit op, bit op2> {
   }
 
   def : InstAlias<!strconcat("vrint", opc, "$p.f32.f32\t$Sd, $Sm"),
-                  (!cast<Instruction>(NAME#"S") SPR:$Sd, SPR:$Sm, pred:$p)>;
+                  (!cast<Instruction>(NAME#"S") SPR:$Sd, SPR:$Sm, pred:$p)>,
+        Requires<[HasFPARMv8]>;
   def : InstAlias<!strconcat("vrint", opc, "$p.f64.f64\t$Dd, $Dm"),
-                  (!cast<Instruction>(NAME#"D") DPR:$Dd, DPR:$Dm, pred:$p)>;
+                  (!cast<Instruction>(NAME#"D") DPR:$Dd, DPR:$Dm, pred:$p)>,
+        Requires<[HasFPARMv8]>;
 }
 
 defm VRINTZ : vrint_inst_zrx<"z", 0, 1>;
@@ -697,9 +699,11 @@ multiclass vrint_inst_anpm<string opc, bits<2> rm> {
   }
 
   def : InstAlias<!strconcat("vrint", opc, ".f32.f32\t$Sd, $Sm"),
-                  (!cast<Instruction>(NAME#"S") SPR:$Sd, SPR:$Sm)>;
+                  (!cast<Instruction>(NAME#"S") SPR:$Sd, SPR:$Sm)>,
+        Requires<[HasFPARMv8]>;
   def : InstAlias<!strconcat("vrint", opc, ".f64.f64\t$Dd, $Dm"),
-                  (!cast<Instruction>(NAME#"D") DPR:$Dd, DPR:$Dm)>;
+                  (!cast<Instruction>(NAME#"D") DPR:$Dd, DPR:$Dm)>,
+        Requires<[HasFPARMv8]>;
 }
 
 defm VRINTA : vrint_inst_anpm<"a", 0b00>;

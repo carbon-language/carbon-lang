@@ -438,3 +438,20 @@
 @ CHECK-ERRORS: error: writeback register not allowed in register list
 @ CHECK-ERRORS: error: writeback register not allowed in register list
 @ CHECK-ERRORS: error: writeback register not allowed in register list
+
+        vrintz.f32.f32 s0, s1
+        vrintr.f32 s0, s1
+        vrintx.f64.f64 d2, d5
+        vrintz.f64 d10, d9
+        vrinta.f32.f32 s6, s7
+        vrintn.f32 s8, s9
+        vrintp.f64.f64 d10, d11
+        vrintm.f64 d12, d13
+@ CHECK-ERRORS: error: instruction requires: FPARMv8
+@ CHECK-ERRORS: error: instruction requires: FPARMv8
+@ CHECK-ERRORS: error: instruction requires: FPARMv8
+@ CHECK-ERRORS: error: instruction requires: FPARMv8
+@ CHECK-ERRORS: error: instruction requires: FPARMv8
+@ CHECK-ERRORS: error: instruction requires: FPARMv8
+@ CHECK-ERRORS: error: instruction requires: FPARMv8
+@ CHECK-ERRORS: error: instruction requires: FPARMv8
