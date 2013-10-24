@@ -384,9 +384,12 @@ public:
   }
 
   ErrorOr<void> handle32S(const Reference &ref) {
-    if (auto sla = dyn_cast_or_null<SharedLibraryAtom>(ref.target()))
+    if (auto sla = dyn_cast_or_null<SharedLibraryAtom>(ref.target())) {
       if (sla->type() == SharedLibraryAtom::Type::Data)
         const_cast<Reference &>(ref).setTarget(getObjectEntry(sla));
+      else if (sla->type() == SharedLibraryAtom::Type::Code)
+        const_cast<Reference &>(ref).setTarget(getPLTEntry(sla));
+    }
     return error_code::success();
   }
 
