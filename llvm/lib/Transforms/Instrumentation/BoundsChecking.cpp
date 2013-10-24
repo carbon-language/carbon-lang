@@ -172,7 +172,8 @@ bool BoundsChecking::runOnFunction(Function &F) {
   TrapBB = 0;
   BuilderTy TheBuilder(F.getContext(), TargetFolder(TD));
   Builder = &TheBuilder;
-  ObjectSizeOffsetEvaluator TheObjSizeEval(TD, TLI, F.getContext());
+  ObjectSizeOffsetEvaluator TheObjSizeEval(TD, TLI, F.getContext(),
+                                           /*RoundToAlign=*/true);
   ObjSizeEval = &TheObjSizeEval;
 
   // check HANDLE_MEMORY_INST in include/llvm/Instruction.def for memory

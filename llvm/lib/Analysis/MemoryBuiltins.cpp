@@ -588,8 +588,10 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitInstruction(Instruction &I) {
 
 ObjectSizeOffsetEvaluator::ObjectSizeOffsetEvaluator(const DataLayout *DL,
                                                      const TargetLibraryInfo *TLI,
-                                                     LLVMContext &Context)
-: DL(DL), TLI(TLI), Context(Context), Builder(Context, TargetFolder(DL)) {
+                                                     LLVMContext &Context,
+                                                     bool RoundToAlign)
+: DL(DL), TLI(TLI), Context(Context), Builder(Context, TargetFolder(DL)),
+  RoundToAlign(RoundToAlign) {
   IntTy = DL->getIntPtrType(Context);
   Zero = ConstantInt::get(IntTy, 0);
 }
@@ -614,7 +616,7 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::compute(Value *V) {
 }
 
 SizeOffsetEvalType ObjectSizeOffsetEvaluator::compute_(Value *V) {
-  ObjectSizeOffsetVisitor Visitor(DL, TLI, Context);
+  ObjectSizeOffsetVisitor Visitor(DL, TLI, Context, RoundToAlign);
   SizeOffsetType Const = Visitor.compute(V);
   if (Visitor.bothKnown(Const))
     return std::make_pair(ConstantInt::get(Context, Const.first),

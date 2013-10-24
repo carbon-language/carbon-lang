@@ -228,6 +228,7 @@ class ObjectSizeOffsetEvaluator
   Value *Zero;
   CacheMapTy CacheMap;
   PtrSetTy SeenVals;
+  bool RoundToAlign;
 
   SizeOffsetEvalType unknown() {
     return std::make_pair((Value*)0, (Value*)0);
@@ -236,7 +237,7 @@ class ObjectSizeOffsetEvaluator
 
 public:
   ObjectSizeOffsetEvaluator(const DataLayout *DL, const TargetLibraryInfo *TLI,
-                            LLVMContext &Context);
+                            LLVMContext &Context, bool RoundToAlign = false);
   SizeOffsetEvalType compute(Value *V);
 
   bool knownSize(SizeOffsetEvalType SizeOffset) {
