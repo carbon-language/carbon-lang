@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=-avx,+sse42 | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=-avx,+sse4.2 | FileCheck %s
 
 define i32 @test_x86_sse42_pcmpestri128(<16 x i8> %a0, <16 x i8> %a2) {
   ; CHECK: movl $7
