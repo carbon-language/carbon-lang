@@ -460,6 +460,15 @@ namespace lldb_private {
         virtual lldb::BreakpointSP
         SetThreadCreationBreakpoint (Target &target);
         
+        //------------------------------------------------------------------
+        // Given a target, find the local SDK directory if one exists on the
+        // current host.
+        //------------------------------------------------------------------
+        virtual lldb_private::ConstString
+        GetSDKDirectory (lldb_private::Target &target)
+        {
+            return lldb_private::ConstString();
+        }
 
         const std::string &
         GetRemoteURL () const

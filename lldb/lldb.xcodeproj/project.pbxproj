@@ -427,6 +427,8 @@
 		26A527C414E24F5F00F3A14A /* ThreadMachCore.h in Headers */ = {isa = PBXBuildFile; fileRef = 26A527C014E24F5F00F3A14A /* ThreadMachCore.h */; };
 		26A69C5F137A17A500262477 /* RegisterValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C6886E137880C400407EDF /* RegisterValue.cpp */; };
 		26A7A035135E6E4200FB369E /* OptionValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A7A034135E6E4200FB369E /* OptionValue.cpp */; };
+		26AB92121819D74600E63F3E /* DWARFDataExtractor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26AB92101819D74600E63F3E /* DWARFDataExtractor.cpp */; };
+		26AB92131819D74600E63F3E /* DWARFDataExtractor.h in Headers */ = {isa = PBXBuildFile; fileRef = 26AB92111819D74600E63F3E /* DWARFDataExtractor.h */; };
 		26ACEC2815E077AE00E94760 /* Property.h in Headers */ = {isa = PBXBuildFile; fileRef = 26ACEC2715E077AE00E94760 /* Property.h */; };
 		26B1EFAE154638AF00E2DAC7 /* DWARFDeclContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B1EFAC154638AF00E2DAC7 /* DWARFDeclContext.cpp */; };
 		26B1EFAF154638AF00E2DAC7 /* DWARFDeclContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B1EFAD154638AF00E2DAC7 /* DWARFDeclContext.h */; };
@@ -1081,6 +1083,8 @@
 		26A527C014E24F5F00F3A14A /* ThreadMachCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadMachCore.h; sourceTree = "<group>"; };
 		26A7A034135E6E4200FB369E /* OptionValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValue.cpp; path = source/Interpreter/OptionValue.cpp; sourceTree = "<group>"; };
 		26A7A036135E6E5300FB369E /* OptionValue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionValue.h; path = include/lldb/Interpreter/OptionValue.h; sourceTree = "<group>"; };
+		26AB92101819D74600E63F3E /* DWARFDataExtractor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DWARFDataExtractor.cpp; sourceTree = "<group>"; };
+		26AB92111819D74600E63F3E /* DWARFDataExtractor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DWARFDataExtractor.h; sourceTree = "<group>"; };
 		26ACEC2715E077AE00E94760 /* Property.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Property.h; path = include/lldb/Interpreter/Property.h; sourceTree = "<group>"; };
 		26B167A41123BF5500DC7B4F /* ThreadSafeValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadSafeValue.h; path = include/lldb/Core/ThreadSafeValue.h; sourceTree = "<group>"; };
 		26B1EFAC154638AF00E2DAC7 /* DWARFDeclContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DWARFDeclContext.cpp; sourceTree = "<group>"; };
@@ -2036,6 +2040,8 @@
 				260C89B610F57C5600BB2B04 /* DWARFAttribute.h */,
 				260C89B710F57C5600BB2B04 /* DWARFCompileUnit.cpp */,
 				260C89B810F57C5600BB2B04 /* DWARFCompileUnit.h */,
+				26AB92101819D74600E63F3E /* DWARFDataExtractor.cpp */,
+				26AB92111819D74600E63F3E /* DWARFDataExtractor.h */,
 				260C89B910F57C5600BB2B04 /* DWARFDebugAbbrev.cpp */,
 				260C89BA10F57C5600BB2B04 /* DWARFDebugAbbrev.h */,
 				260C89BB10F57C5600BB2B04 /* DWARFDebugAranges.cpp */,
@@ -3584,6 +3590,7 @@
 				AF254E32170CCC33007AE5C9 /* PlatformDarwinKernel.h in Headers */,
 				2694E99E14FC0BB30076DE67 /* PlatformFreeBSD.h in Headers */,
 				2694E9A514FC0BBD0076DE67 /* PlatformLinux.h in Headers */,
+				26AB92131819D74600E63F3E /* DWARFDataExtractor.h in Headers */,
 				2663E379152BD1890091EC22 /* ReadWriteLock.h in Headers */,
 				945759681534941F005A9070 /* PlatformPOSIX.h in Headers */,
 				26B1EFAF154638AF00E2DAC7 /* DWARFDeclContext.h in Headers */,
@@ -4193,6 +4200,7 @@
 				268900E613353E6F00698AC0 /* Variable.cpp in Sources */,
 				268900E713353E6F00698AC0 /* VariableList.cpp in Sources */,
 				268900E813353E6F00698AC0 /* ABI.cpp in Sources */,
+				26AB92121819D74600E63F3E /* DWARFDataExtractor.cpp in Sources */,
 				268900E913353E6F00698AC0 /* CPPLanguageRuntime.cpp in Sources */,
 				268900EA13353E6F00698AC0 /* DynamicLoader.cpp in Sources */,
 				268900EB13353E6F00698AC0 /* ExecutionContext.cpp in Sources */,

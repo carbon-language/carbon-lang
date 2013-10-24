@@ -95,6 +95,9 @@ public:
     GetSupportedArchitectureAtIndex (uint32_t idx, 
                                      lldb_private::ArchSpec &arch);
 
+    virtual lldb_private::ConstString
+    GetSDKDirectory (lldb_private::Target &target);
+
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformMacOSX);
 

@@ -152,6 +152,12 @@ public:
     virtual uint32_t
     GetVersion (uint32_t *versions, uint32_t num_versions);
 
+    virtual uint32_t
+    GetMinimumOSVersion (uint32_t *versions, uint32_t num_versions);
+    
+    virtual uint32_t
+    GetSDKVersion (uint32_t *versions, uint32_t num_versions);
+
 protected:
 
     static bool
@@ -192,6 +198,8 @@ protected:
     llvm::MachO::dysymtab_command m_dysymtab;
     std::vector<llvm::MachO::segment_command_64> m_mach_segments;
     std::vector<llvm::MachO::section_64> m_mach_sections;
+    std::vector<uint32_t> m_min_os_versions;
+    std::vector<uint32_t> m_sdk_versions;
     typedef lldb_private::RangeVector<uint32_t, uint32_t> FileRangeArray;
     lldb_private::Address  m_entry_point_address;
     FileRangeArray m_thread_context_offsets;

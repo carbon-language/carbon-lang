@@ -4516,6 +4516,130 @@ ObjectFileMachO::GetLLDBSharedCacheUUID ()
     return uuid;
 }
 
+uint32_t
+ObjectFileMachO::GetMinimumOSVersion (uint32_t *versions, uint32_t num_versions)
+{
+    if (m_min_os_versions.empty())
+    {
+        lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
+        bool success = false;
+        for (uint32_t i=0; success == false && i < m_header.ncmds; ++i)
+        {
+            const lldb::offset_t load_cmd_offset = offset;
+            
+            version_min_command lc;
+            if (m_data.GetU32(&offset, &lc.cmd, 2) == NULL)
+                break;
+            if (lc.cmd == LC_VERSION_MIN_MACOSX || lc.cmd == LC_VERSION_MIN_IPHONEOS)
+            {
+                if (m_data.GetU32 (&offset, &lc.version, (sizeof(lc) / sizeof(uint32_t)) - 2))
+                {
+                    const uint32_t xxxx = lc.version >> 16;
+                    const uint32_t yy = (lc.version >> 8) & 0xffu;
+                    const uint32_t zz = lc.version  & 0xffu;
+                    if (xxxx)
+                    {
+                        m_min_os_versions.push_back(xxxx);
+                        if (yy)
+                        {
+                            m_min_os_versions.push_back(yy);
+                            if (zz)
+                                m_min_os_versions.push_back(zz);
+                        }
+                    }
+                    success = true;
+                }
+            }
+            offset = load_cmd_offset + lc.cmdsize;
+        }
+        
+        if (success == false)
+        {
+            // Push an invalid value so we don't keep trying to
+            m_min_os_versions.push_back(UINT32_MAX);
+        }
+    }
+    
+    if (m_min_os_versions.size() > 1 || m_min_os_versions[0] != UINT32_MAX)
+    {
+        if (versions != NULL && num_versions > 0)
+        {
+            for (size_t i=0; i<num_versions; ++i)
+            {
+                if (i < m_min_os_versions.size())
+                    versions[i] = m_min_os_versions[i];
+                else
+                    versions[i] = 0;
+            }
+        }
+        return m_min_os_versions.size();
+    }
+    // Call the superclasses version that will empty out the data
+    return ObjectFile::GetMinimumOSVersion (versions, num_versions);
+}
+
+uint32_t
+ObjectFileMachO::GetSDKVersion(uint32_t *versions, uint32_t num_versions)
+{
+    if (m_sdk_versions.empty())
+    {
+        lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
+        bool success = false;
+        for (uint32_t i=0; success == false && i < m_header.ncmds; ++i)
+        {
+            const lldb::offset_t load_cmd_offset = offset;
+            
+            version_min_command lc;
+            if (m_data.GetU32(&offset, &lc.cmd, 2) == NULL)
+                break;
+            if (lc.cmd == LC_VERSION_MIN_MACOSX || lc.cmd == LC_VERSION_MIN_IPHONEOS)
+            {
+                if (m_data.GetU32 (&offset, &lc.version, (sizeof(lc) / sizeof(uint32_t)) - 2))
+                {
+                    const uint32_t xxxx = lc.reserved >> 16;
+                    const uint32_t yy = (lc.reserved >> 8) & 0xffu;
+                    const uint32_t zz = lc.reserved  & 0xffu;
+                    if (xxxx)
+                    {
+                        m_sdk_versions.push_back(xxxx);
+                        if (yy)
+                        {
+                            m_sdk_versions.push_back(yy);
+                            if (zz)
+                                m_sdk_versions.push_back(zz);
+                        }
+                    }
+                    success = true;
+                }
+            }
+            offset = load_cmd_offset + lc.cmdsize;
+        }
+        
+        if (success == false)
+        {
+            // Push an invalid value so we don't keep trying to
+            m_sdk_versions.push_back(UINT32_MAX);
+        }
+    }
+    
+    if (m_sdk_versions.size() > 1 || m_sdk_versions[0] != UINT32_MAX)
+    {
+        if (versions != NULL && num_versions > 0)
+        {
+            for (size_t i=0; i<num_versions; ++i)
+            {
+                if (i < m_sdk_versions.size())
+                    versions[i] = m_sdk_versions[i];
+                else
+                    versions[i] = 0;
+            }
+        }
+        return m_sdk_versions.size();
+    }
+    // Call the superclasses version that will empty out the data
+    return ObjectFile::GetSDKVersion (versions, num_versions);
+}
+
 
 //------------------------------------------------------------------
 // PluginInterface protocol
