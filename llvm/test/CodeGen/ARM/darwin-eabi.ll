@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=thumbv7m-apple-darwin-eabi -mcpu=cortex-m3 < %s | FileCheck %s --check-prefix=CHECK-M3
-; RUN: llc -mtriple=thumbv7em-apple-darwin-eabi -mcpu=cortex-m4 < %s | FileCheck %s --check-prefix=CHECK-M4
+; RUN: llc -mtriple=thumbv7m-apple-darwin -mcpu=cortex-m3 < %s | FileCheck %s --check-prefix=CHECK-M3
+; RUN: llc -mtriple=thumbv7em-apple-darwin -mcpu=cortex-m4 < %s | FileCheck %s --check-prefix=CHECK-M4
 
 define float @float_op(float %lhs, float %rhs) {
   %sum = fadd float %lhs, %rhs
