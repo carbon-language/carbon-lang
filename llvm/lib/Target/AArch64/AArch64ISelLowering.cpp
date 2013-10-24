@@ -699,6 +699,12 @@ AArch64TargetLowering::EmitF128CSEL(MachineInstr *MI,
   MBB->addSuccessor(TrueBB);
   MBB->addSuccessor(EndBB);
 
+  if (!NZCVKilled) {
+    // NZCV is live-through TrueBB.
+    TrueBB->addLiveIn(AArch64::NZCV);
+    EndBB->addLiveIn(AArch64::NZCV);
+  }
+
   // IfTrue:
   //     str qIFTRUE, [sp]
   BuildMI(TrueBB, DL, TII->get(AArch64::LSFP128_STR))
@@ -713,8 +719,6 @@ AArch64TargetLowering::EmitF128CSEL(MachineInstr *MI,
   // Done:
   //     ldr qDEST, [sp]
   //     [... rest of incoming MBB ...]
-  if (!NZCVKilled)
-    EndBB->addLiveIn(AArch64::NZCV);
   MachineInstr *StartOfEnd = EndBB->begin();
   BuildMI(*EndBB, StartOfEnd, DL, TII->get(AArch64::LSFP128_LDR), DestReg)
     .addFrameIndex(ScratchFI)
