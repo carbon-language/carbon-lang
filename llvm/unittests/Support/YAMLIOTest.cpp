@@ -130,7 +130,6 @@ TEST(YAMLIO, TestSequenceMapWriteAndRead) {
 
 struct BuiltInTypes {
   llvm::StringRef str;
-  std::string stdstr;
   uint64_t        u64;
   uint32_t        u32;
   uint16_t        u16;
@@ -154,7 +153,6 @@ namespace yaml {
   struct MappingTraits<BuiltInTypes> {
     static void mapping(IO &io, BuiltInTypes& bt) {
       io.mapRequired("str",      bt.str);
-      io.mapRequired("stdstr",   bt.stdstr);
       io.mapRequired("u64",      bt.u64);
       io.mapRequired("u32",      bt.u32);
       io.mapRequired("u16",      bt.u16);
@@ -183,7 +181,6 @@ TEST(YAMLIO, TestReadBuiltInTypes) {
   BuiltInTypes map;
   Input yin("---\n"
             "str:      hello there\n"
-            "stdstr:   hello where?\n"
             "u64:      5000000000\n"
             "u32:      4000000000\n"
             "u16:      65000\n"
@@ -204,7 +201,6 @@ TEST(YAMLIO, TestReadBuiltInTypes) {
 
   EXPECT_FALSE(yin.error());
   EXPECT_TRUE(map.str.equals("hello there"));
-  EXPECT_TRUE(map.stdstr == "hello where?");
   EXPECT_EQ(map.u64, 5000000000ULL);
   EXPECT_EQ(map.u32, 4000000000U);
   EXPECT_EQ(map.u16, 65000);
@@ -231,7 +227,6 @@ TEST(YAMLIO, TestReadWriteBuiltInTypes) {
   {
     BuiltInTypes map;
     map.str = "one two";
-    map.stdstr = "three four";
     map.u64 = 6000000000ULL;
     map.u32 = 3000000000U;
     map.u16 = 50000;
@@ -260,7 +255,6 @@ TEST(YAMLIO, TestReadWriteBuiltInTypes) {
 
     EXPECT_FALSE(yin.error());
     EXPECT_TRUE(map.str.equals("one two"));
-    EXPECT_TRUE(map.stdstr == "three four");
     EXPECT_EQ(map.u64,      6000000000ULL);
     EXPECT_EQ(map.u32,      3000000000U);
     EXPECT_EQ(map.u16,      50000);
@@ -285,11 +279,6 @@ struct StringTypes {
   llvm::StringRef str3;
   llvm::StringRef str4;
   llvm::StringRef str5;
-  std::string stdstr1;
-  std::string stdstr2;
-  std::string stdstr3;
-  std::string stdstr4;
-  std::string stdstr5;
 };
 
 namespace llvm {
@@ -302,11 +291,6 @@ namespace yaml {
       io.mapRequired("str3",      st.str3);
       io.mapRequired("str4",      st.str4);
       io.mapRequired("str5",      st.str5);
-      io.mapRequired("stdstr1",   st.stdstr1);
-      io.mapRequired("stdstr2",   st.stdstr2);
-      io.mapRequired("stdstr3",   st.stdstr3);
-      io.mapRequired("stdstr4",   st.stdstr4);
-      io.mapRequired("stdstr5",   st.stdstr5);
     }
   };
 }
@@ -321,11 +305,6 @@ TEST(YAMLIO, TestReadWriteStringTypes) {
     map.str3 = "`ccc";
     map.str4 = "@ddd";
     map.str5 = "";
-    map.stdstr1 = "'eee";
-    map.stdstr2 = "\"fff";
-    map.stdstr3 = "`ggg";
-    map.stdstr4 = "@hhh";
-    map.stdstr5 = "";
 
     llvm::raw_string_ostream ostr(intermediate);
     Output yout(ostr);
@@ -338,11 +317,6 @@ TEST(YAMLIO, TestReadWriteStringTypes) {
   EXPECT_NE(llvm::StringRef::npos, flowOut.find("'`ccc'"));
   EXPECT_NE(llvm::StringRef::npos, flowOut.find("'@ddd'"));
   EXPECT_NE(llvm::StringRef::npos, flowOut.find("''\n"));
-  EXPECT_NE(std::string::npos, flowOut.find("'''eee"));
-  EXPECT_NE(std::string::npos, flowOut.find("'\"fff'"));
-  EXPECT_NE(std::string::npos, flowOut.find("'`ggg'"));
-  EXPECT_NE(std::string::npos, flowOut.find("'@hhh'"));
-  EXPECT_NE(std::string::npos, flowOut.find("''\n"));
 
   {
     Input yin(intermediate);
@@ -355,11 +329,6 @@ TEST(YAMLIO, TestReadWriteStringTypes) {
     EXPECT_TRUE(map.str3.equals("`ccc"));
     EXPECT_TRUE(map.str4.equals("@ddd"));
     EXPECT_TRUE(map.str5.equals(""));
-    EXPECT_TRUE(map.stdstr1 == "'eee");
-    EXPECT_TRUE(map.stdstr2 == "\"fff");
-    EXPECT_TRUE(map.stdstr3 == "`ggg");
-    EXPECT_TRUE(map.stdstr4 == "@hhh");
-    EXPECT_TRUE(map.stdstr5 == "");
   }
 }
 
