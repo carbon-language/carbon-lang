@@ -99,12 +99,15 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
   // trailing comments which are otherwise ignored for column alignment.
   SmallVector<unsigned, 8> EndOfLineItemLength;
 
+  bool HasNestedBracedList = false;
   for (unsigned i = 0, e = Commas.size() + 1; i != e; ++i) {
     // Skip comments on their own line.
     while (ItemBegin->HasUnescapedNewline && ItemBegin->isTrailingComment())
       ItemBegin = ItemBegin->Next;
 
     MustBreakBeforeItem.push_back(ItemBegin->MustBreakBefore);
+    if (ItemBegin->is(tok::l_brace))
+      HasNestedBracedList = true;
     const FormatToken *ItemEnd = NULL;
     if (i == Commas.size()) {
       ItemEnd = Token->MatchingParen;
@@ -142,7 +145,7 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
     ColumnFormat Format;
     Format.Columns = Columns;
     Format.ColumnSizes.resize(Columns);
-    Format.LineCount = 0;
+    Format.LineCount = 1;
     bool HasRowWithSufficientColumns = false;
     unsigned Column = 0;
     for (unsigned i = 0, e = ItemLengths.size(); i != e; ++i) {
@@ -170,6 +173,11 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
 
     // Ignore layouts that are bound to violate the column limit.
     if (Format.TotalWidth > Style.ColumnLimit)
+      continue;
+
+    // If this braced list has nested braced list, we format it either with one
+    // element per line or with all elements on one line.
+    if (HasNestedBracedList && Columns > 1 && Format.LineCount > 1)
       continue;
 
     Formats.push_back(Format);
