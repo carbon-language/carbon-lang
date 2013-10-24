@@ -247,6 +247,8 @@ class t2InstAlias<string Asm, dag Result, bit Emit = 0b1>
       : InstAlias<Asm, Result, Emit>, Requires<[IsThumb2]>;
 class VFP2InstAlias<string Asm, dag Result, bit Emit = 0b1>
       : InstAlias<Asm, Result, Emit>, Requires<[HasVFP2]>;
+class VFP2DPInstAlias<string Asm, dag Result, bit Emit = 0b1>
+      : InstAlias<Asm, Result, Emit>, Requires<[HasVFP2,HasDPVFP]>;
 class VFP3InstAlias<string Asm, dag Result, bit Emit = 0b1>
       : InstAlias<Asm, Result, Emit>, Requires<[HasVFP3]>;
 class NEONInstAlias<string Asm, dag Result, bit Emit = 0b1>
@@ -1570,6 +1572,8 @@ class ADuI<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<2> opcod4,
   let Inst{8}     = 1;          // Double precision
   let Inst{7-6}   = opcod4;
   let Inst{4}     = opcod5;
+
+  let Predicates = [HasVFP2, HasDPVFP];
 }
 
 // Double precision, unary, not-predicated
@@ -1622,6 +1626,8 @@ class ADbI<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
   let Inst{8}     = 1;          // Double precision
   let Inst{6}     = op6;
   let Inst{4}     = op4;
+
+  let Predicates = [HasVFP2, HasDPVFP];
 }
 
 // FP, binary, not predicated
@@ -1651,6 +1657,8 @@ class ADbInp<bits<5> opcod1, bits<2> opcod2, bit opcod3, dag oops, dag iops,
   let Inst{8}     = 1; // double precision
   let Inst{6}     = opcod3;
   let Inst{4}     = 0;
+
+  let Predicates = [HasVFP2, HasDPVFP];
 }
 
 // Single precision, unary, predicated

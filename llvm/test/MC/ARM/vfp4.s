@@ -6,6 +6,8 @@
 
 @ ARM: vfma.f64 d16, d18, d17 @ encoding: [0xa1,0x0b,0xe2,0xee]
 @ THUMB: vfma.f64 d16, d18, d17 @ encoding: [0xe2,0xee,0xa1,0x0b]
+@ THUMB_V7EM-ERRORS: error: instruction requires: double precision VFP
+@ THUMB_V7EM-ERRORS-NEXT: vfma.f64 d16, d18, d17
 vfma.f64 d16, d18, d17
 
 @ ARM: vfma.f32 s2, s4, s0 @ encoding: [0x00,0x1a,0xa2,0xee]
@@ -27,6 +29,8 @@ vfma.f32 q2, q4, q0
 
 @ ARM: vfnma.f64 d16, d18, d17 @ encoding: [0xe1,0x0b,0xd2,0xee]
 @ THUMB: vfnma.f64 d16, d18, d17 @ encoding: [0xd2,0xee,0xe1,0x0b]
+@ THUMB_V7EM-ERRORS: error: instruction requires: double precision VFP
+@ THUMB_V7EM-ERRORS-NEXT: vfnma.f64 d16, d18, d17
 vfnma.f64 d16, d18, d17
 
 @ ARM: vfnma.f32 s2, s4, s0 @ encoding: [0x40,0x1a,0x92,0xee]
@@ -36,6 +40,8 @@ vfnma.f32 s2, s4, s0
 
 @ ARM: vfms.f64 d16, d18, d17 @ encoding: [0xe1,0x0b,0xe2,0xee]
 @ THUMB: vfms.f64 d16, d18, d17 @ encoding: [0xe2,0xee,0xe1,0x0b]
+@ THUMB_V7EM-ERRORS: error: instruction requires: double precision VFP
+@ THUMB_V7EM-ERRORS-NEXT: vfms.f64 d16, d18, d17
 vfms.f64 d16, d18, d17
 
 @ ARM: vfms.f32 s2, s4, s0 @ encoding: [0x40,0x1a,0xa2,0xee]
@@ -57,6 +63,8 @@ vfms.f32 q2, q4, q0
 
 @ ARM: vfnms.f64 d16, d18, d17 @ encoding: [0xa1,0x0b,0xd2,0xee]
 @ THUMB: vfnms.f64 d16, d18, d17 @ encoding: [0xd2,0xee,0xa1,0x0b]
+@ THUMB_V7EM-ERRORS: error: instruction requires: double precision VFP
+@ THUMB_V7EM-ERRORS-NEXT: vfnms.f64 d16, d18, d17
 vfnms.f64 d16, d18, d17
 
 @ ARM: vfnms.f32 s2, s4, s0 @ encoding: [0x00,0x1a,0x92,0xee]
