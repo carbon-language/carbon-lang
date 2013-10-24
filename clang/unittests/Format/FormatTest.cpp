@@ -5372,14 +5372,9 @@ TEST_F(FormatTest, ObjCLiterals) {
   verifyFormat("NSNumber *piOverTwo = @(M_PI / 2);");
   verifyFormat("NSNumber *favoriteColor = @(Green);");
   verifyFormat("NSString *path = @(getenv(\"PATH\"));");
+}
 
-  verifyFormat("@[");
-  verifyFormat("@[]");
-  verifyFormat(
-      "NSArray *array = @[ @\" Hey \", NSApp, [NSNumber numberWithInt:42] ];");
-  verifyFormat("return @[ @3, @[], @[ @4, @5 ] ];");
-  verifyFormat("NSArray *array = @[ [foo description] ];");
-
+TEST_F(FormatTest, ObjCDictLiterals) {
   verifyFormat("@{");
   verifyFormat("@{}");
   verifyFormat("@{ @\"one\" : @1 }");
@@ -5409,25 +5404,56 @@ TEST_F(FormatTest, ObjCLiterals) {
       "  NSFontAttributeNameeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee : "
       "regularFont,\n"
       "};");
-  verifyFormat(
-      "NSArray *arguments = @[\n"
-      "  kind == kUserTicket ? @\"--user-store\" : @\"--system-store\",\n"
-      "  @\"--print-tickets\",\n"
-      "  @\"--productid\",\n"
-      "  @\"com.google.Chrome\"\n"
-      "];");
   verifyGoogleFormat(
       "@{\n"
       "  NSFontAttributeNameeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee : "
       "regularFont,\n"
       "};");
-  verifyGoogleFormat(
-      "NSArray *arguments = @[\n"
-      "  kind == kUserTicket ? @\"--user-store\" : @\"--system-store\",\n"
-      "  @\"--print-tickets\",\n"
-      "  @\"--productid\",\n"
-      "  @\"com.google.Chrome\"\n"
+
+  // We should try to be robust in case someone forgets the "@".
+  verifyFormat(
+      "NSDictionary *d = {\n"
+      "  @\"nam\" : NSUserNam(),\n"
+      "  @\"dte\" : [NSDate date],\n"
+      "  @\"processInfo\" : [NSProcessInfo processInfo]\n"
+      "};");
+}
+
+TEST_F(FormatTest, ObjCArrayLiterals) {
+  verifyFormat("@[");
+  verifyFormat("@[]");
+  verifyFormat(
+      "NSArray *array = @[ @\" Hey \", NSApp, [NSNumber numberWithInt:42] ];");
+  verifyFormat("return @[ @3, @[], @[ @4, @5 ] ];");
+  verifyFormat("NSArray *array = @[ [foo description] ];");
+
+  verifyFormat(
+      "NSArray *some_variable = @[\n"
+      "  aaaa == bbbbbbbbbbb ? @\"aaaaaaaaaaaa\" : @\"aaaaaaaaaaaaaa\",\n"
+      "  @\"aaaaaaaaaaaaaaaaa\",\n"
+      "  @\"aaaaaaaaaaaaaaaaa\",\n"
+      "  @\"aaaaaaaaaaaaaaaaa\"\n"
       "];");
+  verifyFormat("NSArray *some_variable = @[\n"
+               "  @\"aaaaaaaaaaaaaaaaa\",\n"
+               "  @\"aaaaaaaaaaaaaaaaa\",\n"
+               "  @\"aaaaaaaaaaaaaaaaa\",\n"
+               "  @\"aaaaaaaaaaaaaaaaa\",\n"
+               "];");
+  verifyGoogleFormat("NSArray *some_variable = @[\n"
+                     "  @\"aaaaaaaaaaaaaaaaa\",\n"
+                     "  @\"aaaaaaaaaaaaaaaaa\",\n"
+                     "  @\"aaaaaaaaaaaaaaaaa\",\n"
+                     "  @\"aaaaaaaaaaaaaaaaa\"\n"
+                     "];");
+
+  // We should try to be robust in case someone forgets the "@".
+  verifyFormat("NSArray *some_variable = [\n"
+               "  @\"aaaaaaaaaaaaaaaaa\",\n"
+               "  @\"aaaaaaaaaaaaaaaaa\",\n"
+               "  @\"aaaaaaaaaaaaaaaaa\",\n"
+               "  @\"aaaaaaaaaaaaaaaaa\",\n"
+               "];");
 }
 
 TEST_F(FormatTest, ReformatRegionAdjustsIndent) {

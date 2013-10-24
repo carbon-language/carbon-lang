@@ -37,6 +37,7 @@ unsigned CommaSeparatedList::format(LineState &State,
   const FormatToken *LBrace = State.NextToken->Previous->Previous;
   if (LBrace->isNot(tok::l_brace) ||
       LBrace->BlockKind == BK_Block ||
+      LBrace->Type == TT_DictLiteral ||
       LBrace->Next->Type == TT_DesignatedInitializerPeriod)
     return 0;
 

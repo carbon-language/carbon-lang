@@ -98,6 +98,7 @@ bool ContinuationIndenter::canBreak(const LineState &State) {
   // The opening "{" of a braced list has to be on the same line as the first
   // element if it is nested in another braced init list or function call.
   if (!Current.MustBreakBefore && Previous.is(tok::l_brace) &&
+      Previous.Type != TT_DictLiteral &&
       Previous.BlockKind == BK_BracedInit && Previous.Previous &&
       Previous.Previous->isOneOf(tok::l_brace, tok::l_paren, tok::comma))
     return false;
@@ -134,7 +135,7 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       !Previous.isOneOf(tok::kw_return, tok::lessless) &&
       Previous.Type != TT_InlineASMColon && NextIsMultilineString(State))
     return true;
-  if (((Previous.Type == TT_ObjCDictLiteral && Previous.is(tok::l_brace)) ||
+  if (((Previous.Type == TT_DictLiteral && Previous.is(tok::l_brace)) ||
        Previous.Type == TT_ArrayInitializerLSquare) &&
       getLengthToMatchingParen(Previous) + State.Column > getColumnLimit(State))
     return true;
@@ -572,7 +573,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
       const FormatToken *NextNoComment = Current.getNextNonComment();
       AvoidBinPacking = Current.BlockKind == BK_Block ||
                         Current.Type == TT_ArrayInitializerLSquare ||
-                        Current.Type == TT_ObjCDictLiteral ||
+                        Current.Type == TT_DictLiteral ||
                         (NextNoComment &&
                          NextNoComment->Type == TT_DesignatedInitializerPeriod);
     } else {

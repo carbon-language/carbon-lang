@@ -35,6 +35,7 @@ enum TokenType {
   TT_CtorInitializerColon,
   TT_CtorInitializerComma,
   TT_DesignatedInitializerPeriod,
+  TT_DictLiteral,
   TT_ImplicitStringLiteral,
   TT_InlineASMColon,
   TT_InheritanceColon,
@@ -43,7 +44,6 @@ enum TokenType {
   TT_LineComment,
   TT_ObjCBlockLParen,
   TT_ObjCDecl,
-  TT_ObjCDictLiteral,
   TT_ObjCForIn,
   TT_ObjCMethodExpr,
   TT_ObjCMethodSpecifier,
@@ -344,7 +344,7 @@ struct FormatToken {
   bool opensBlockTypeList(const FormatStyle &Style) const {
     return Type == TT_ArrayInitializerLSquare ||
            (is(tok::l_brace) &&
-            (BlockKind == BK_Block || Type == TT_ObjCDictLiteral ||
+            (BlockKind == BK_Block || Type == TT_DictLiteral ||
              !Style.Cpp11BracedListStyle));
   }
 
