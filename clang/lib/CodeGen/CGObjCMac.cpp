@@ -5757,6 +5757,9 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
   };
   if (!Values[1])
     Values[1] = llvm::Constant::getNullValue(ObjCTypes.ClassnfABIPtrTy);
+  if (!Values[3])
+    Values[3] = llvm::Constant::getNullValue(
+                  llvm::PointerType::getUnqual(ObjCTypes.ImpnfABITy));
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassnfABITy,
                                                    Values);
   llvm::GlobalVariable *GV = GetClassGlobal(ClassName);
@@ -5800,14 +5803,21 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
       llvm::GlobalValue::ExternalLinkage,
       0,
       "_objc_empty_cache");
-
-    ObjCEmptyVtableVar = new llvm::GlobalVariable(
-      CGM.getModule(),
-      ObjCTypes.ImpnfABITy,
-      false,
-      llvm::GlobalValue::ExternalLinkage,
-      0,
-      "_objc_empty_vtable");
+    
+    // Make this entry NULL for any iOS device target, any iOS simulator target,
+    // OS X with deployment target 10.9 or later.
+    const llvm::Triple &Triple = CGM.getTarget().getTriple();
+    if (Triple.isiOS() || (Triple.isMacOSX() && !Triple.isMacOSXVersionLT(10, 9)))
+      // This entry will be null.
+      ObjCEmptyVtableVar = 0;
+    else
+      ObjCEmptyVtableVar = new llvm::GlobalVariable(
+                                                    CGM.getModule(),
+                                                    ObjCTypes.ImpnfABITy,
+                                                    false,
+                                                    llvm::GlobalValue::ExternalLinkage,
+                                                    0,
+                                                    "_objc_empty_vtable");
   }
   assert(ID->getClassInterface() &&
          "CGObjCNonFragileABIMac::GenerateClass - class is 0");
