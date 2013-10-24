@@ -44,11 +44,11 @@ HeaderFileInfo::getControllingMacro(ExternalIdentifierLookup *External) {
 ExternalHeaderFileInfoSource::~ExternalHeaderFileInfoSource() {}
 
 HeaderSearch::HeaderSearch(IntrusiveRefCntPtr<HeaderSearchOptions> HSOpts,
-                           FileManager &FM, DiagnosticsEngine &Diags,
+                           SourceManager &SourceMgr, DiagnosticsEngine &Diags,
                            const LangOptions &LangOpts, 
                            const TargetInfo *Target)
-  : HSOpts(HSOpts), FileMgr(FM), FrameworkMap(64),
-    ModMap(FileMgr, *Diags.getClient(), LangOpts, Target, *this)
+  : HSOpts(HSOpts), FileMgr(SourceMgr.getFileManager()), FrameworkMap(64),
+    ModMap(SourceMgr, *Diags.getClient(), LangOpts, Target, *this)
 {
   AngledDirIdx = 0;
   SystemDirIdx = 0;

@@ -1,43 +1,43 @@
-module A {
+module XA {
   header "a.h"
 }
 
-module B {
+module XB {
   header "b.h"
 }
 
-module C {
+module XC {
   header "c.h"
-  use A
+  use XA
 }
 
-module D {
+module XD {
   header "d.h"
-  use A
+  use XA
 }
 
-module E {
+module XE {
   header "e.h"
-  use A
-  use B
+  use XA
+  use XB
 }
 
-module F {
+module XF {
   header "f.h"
-  use A
-  use B
+  use XA
+  use XB
 }
 
-module G {
+module XG {
   header "g.h"
   header "g1.h"
-  use C
-  use E
+  use XC
+  use XE
 }
 
-module H {
+module XH {
   header "h.h"
   header "h1.h"
-  use C
-  use E
+  use XC
+  use XE
 }

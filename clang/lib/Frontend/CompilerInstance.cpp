@@ -218,7 +218,7 @@ void CompilerInstance::createPreprocessor() {
 
   // Create the Preprocessor.
   HeaderSearch *HeaderInfo = new HeaderSearch(&getHeaderSearchOpts(),
-                                              getFileManager(),
+                                              getSourceManager(),
                                               getDiagnostics(),
                                               getLangOpts(),
                                               &getTarget());
@@ -851,29 +851,6 @@ static void compileModule(CompilerInstance &ImportingInstance,
   FrontendOpts.Inputs.clear();
   InputKind IK = getSourceInputKindFromOptions(*Invocation->getLangOpts());
 
-  // Get or create the module map that we'll use to build this module.
-  SmallString<128> TempModuleMapFileName;
-  if (const FileEntry *ModuleMapFile
-                                  = ModMap.getContainingModuleMapFile(Module)) {
-    // Use the module map where this module resides.
-    FrontendOpts.Inputs.push_back(FrontendInputFile(ModuleMapFile->getName(), 
-                                                    IK));
-  } else {
-    // Create a temporary module map file.
-    int FD;
-    if (llvm::sys::fs::createTemporaryFile(Module->Name, "map", FD,
-                                           TempModuleMapFileName)) {
-      ImportingInstance.getDiagnostics().Report(diag::err_module_map_temp_file)
-        << TempModuleMapFileName;
-      return;
-    }
-    // Print the module map to this file.
-    llvm::raw_fd_ostream OS(FD, /*shouldClose=*/true);
-    Module->print(OS);
-    FrontendOpts.Inputs.push_back(
-      FrontendInputFile(TempModuleMapFileName.str().str(), IK));
-  }
-
   // Don't free the remapped file buffers; they are owned by our caller.
   PPOpts.RetainRemappedFileBuffers = true;
     
@@ -900,6 +877,26 @@ static void compileModule(CompilerInstance &ImportingInstance,
   SourceMgr.pushModuleBuildStack(Module->getTopLevelModuleName(),
     FullSourceLoc(ImportLoc, ImportingInstance.getSourceManager()));
 
+  // Get or create the module map that we'll use to build this module.
+  std::string InferredModuleMapContent;
+  if (const FileEntry *ModuleMapFile =
+          ModMap.getContainingModuleMapFile(Module)) {
+    // Use the module map where this module resides.
+    FrontendOpts.Inputs.push_back(
+        FrontendInputFile(ModuleMapFile->getName(), IK));
+  } else {
+    llvm::raw_string_ostream OS(InferredModuleMapContent);
+    Module->print(OS);
+    OS.flush();
+    FrontendOpts.Inputs.push_back(
+        FrontendInputFile("__inferred_module.map", IK));
+
+    const llvm::MemoryBuffer *ModuleMapBuffer =
+        llvm::MemoryBuffer::getMemBuffer(InferredModuleMapContent);
+    ModuleMapFile = Instance.getFileManager().getVirtualFile(
+        "__inferred_module.map", InferredModuleMapContent.size(), 0);
+    SourceMgr.overrideFileContents(ModuleMapFile, ModuleMapBuffer);
+  }
 
   // Construct a module-generating action.
   GenerateModuleAction CreateModuleAction(Module->IsSystem);
@@ -917,8 +914,6 @@ static void compileModule(CompilerInstance &ImportingInstance,
   // be nice to do this with RemoveFileOnSignal when we can. However, that
   // doesn't make sense for all clients, so clean this up manually.
   Instance.clearOutputFiles(/*EraseFiles=*/true);
-  if (!TempModuleMapFileName.empty())
-    llvm::sys::fs::remove(TempModuleMapFileName.str());
 
   // We've rebuilt a module. If we're allowed to generate or update the global
   // module index, record that fact in the importing compiler instance.

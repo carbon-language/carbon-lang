@@ -162,7 +162,8 @@ protected:
     VoidModuleLoader ModLoader;
 
     IntrusiveRefCntPtr<HeaderSearchOptions> HSOpts = new HeaderSearchOptions();
-    HeaderSearch HeaderInfo(HSOpts, FileMgr, Diags, LangOpts, Target.getPtr());
+    HeaderSearch HeaderInfo(HSOpts, SourceMgr, Diags, LangOpts,
+                            Target.getPtr());
     AddFakeHeader(HeaderInfo, HeaderPath, SystemHeader);
 
     IntrusiveRefCntPtr<PreprocessorOptions> PPOpts = new PreprocessorOptions();
@@ -198,7 +199,7 @@ protected:
     (void)SourceMgr.createMainFileIDForMemBuffer(sourceBuf);
 
     VoidModuleLoader ModLoader;
-    HeaderSearch HeaderInfo(new HeaderSearchOptions, FileMgr, Diags, 
+    HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, 
                             OpenCLLangOpts, Target.getPtr());
 
     Preprocessor PP(new PreprocessorOptions(), Diags, OpenCLLangOpts, 

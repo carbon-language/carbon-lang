@@ -240,7 +240,7 @@ class HeaderSearch {
   
 public:
   HeaderSearch(IntrusiveRefCntPtr<HeaderSearchOptions> HSOpts,
-               FileManager &FM, DiagnosticsEngine &Diags,
+               SourceManager &SourceMgr, DiagnosticsEngine &Diags,
                const LangOptions &LangOpts, const TargetInfo *Target);
   ~HeaderSearch();
 

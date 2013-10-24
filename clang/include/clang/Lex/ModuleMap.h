@@ -37,7 +37,7 @@ class HeaderSearch;
 class ModuleMapParser;
   
 class ModuleMap {
-  SourceManager *SourceMgr;
+  SourceManager &SourceMgr;
   IntrusiveRefCntPtr<DiagnosticsEngine> Diags;
   const LangOptions &LangOpts;
   const TargetInfo *Target;
@@ -178,9 +178,9 @@ private:
 public:
   /// \brief Construct a new module map.
   ///
-  /// \param FileMgr The file manager used to find module files and headers.
-  /// This file manager should be shared with the header-search mechanism, since
-  /// they will refer to the same headers.
+  /// \param SourceMgr The source manager used to find module files and headers.
+  /// This source manager should be shared with the header-search mechanism,
+  /// since they will refer to the same headers.
   ///
   /// \param DC A diagnostic consumer that will be cloned for use in generating
   /// diagnostics.
@@ -188,7 +188,7 @@ public:
   /// \param LangOpts Language options for this translation unit.
   ///
   /// \param Target The target for this translation unit.
-  ModuleMap(FileManager &FileMgr, DiagnosticConsumer &DC,
+  ModuleMap(SourceManager &SourceMgr, DiagnosticConsumer &DC,
             const LangOptions &LangOpts, const TargetInfo *Target,
             HeaderSearch &HeaderInfo);
 

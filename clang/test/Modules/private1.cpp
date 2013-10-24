@@ -2,7 +2,7 @@
 // RUN: %clang_cc1 -x objective-c -fmodules-cache-path=%t -fmodules -I %S/Inputs/private0 -I %S/Inputs/private1 -I %S/Inputs/private2 %s -verify
 
 #include "common.h"
-@import libPrivate1;
+@import libPrivateN2;
 #include "private1.h" // expected-error {{use of private header from outside its module}}
 #include "public2.h"
 #include "private2.h" // expected-error {{use of private header from outside its module}}

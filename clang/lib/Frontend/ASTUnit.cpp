@@ -707,7 +707,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   AST->HSOpts = new HeaderSearchOptions();
   
   AST->HeaderInfo.reset(new HeaderSearch(AST->HSOpts,
-                                         AST->getFileManager(),
+                                         AST->getSourceManager(),
                                          AST->getDiagnostics(),
                                          AST->ASTFileLangOpts,
                                          /*Target=*/0));

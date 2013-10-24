@@ -131,6 +131,26 @@ TEST(ToolInvocation, TestMapVirtualFile) {
   EXPECT_TRUE(Invocation.run());
 }
 
+TEST(ToolInvocation, TestVirtualModulesCompilation) {
+  // FIXME: Currently, this only tests that we don't exit with an error if a
+  // mapped module.map is found on the include path. In the future, expand this
+  // test to run a full modules enabled compilation, so we make sure we can
+  // rerun modules compilations with a virtual file system.
+  clang::FileManager Files((clang::FileSystemOptions()));
+  std::vector<std::string> Args;
+  Args.push_back("tool-executable");
+  Args.push_back("-Idef");
+  Args.push_back("-fsyntax-only");
+  Args.push_back("test.cpp");
+  clang::tooling::ToolInvocation Invocation(Args, new SyntaxOnlyAction, &Files);
+  Invocation.mapVirtualFile("test.cpp", "#include <abc>\n");
+  Invocation.mapVirtualFile("def/abc", "\n");
+  // Add a module.map file in the include directory of our header, so we trigger
+  // the module.map header search logic.
+  Invocation.mapVirtualFile("def/module.map", "\n");
+  EXPECT_TRUE(Invocation.run());
+}
+
 struct VerifyEndCallback : public SourceFileCallbacks {
   VerifyEndCallback() : BeginCalled(0), EndCalled(0), Matched(false) {}
   virtual bool handleBeginSource(CompilerInstance &CI,
