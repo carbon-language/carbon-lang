@@ -218,9 +218,10 @@ void PrintWarningWithOrigin(uptr pc, uptr bp, u32 origin) {
   ReportUMR(&stack, report_origin);
 
   if (__msan_get_track_origins() && !OriginIsValid(origin)) {
-    Printf("  ORIGIN: invalid (%x). Might be a bug in MemorySanitizer, "
-           "please report to MemorySanitizer developers.\n",
-           origin);
+    Printf(
+        "  ORIGIN: invalid (%x). Might be a bug in MemorySanitizer origin "
+        "tracking.\n    This could still be a bug in your code, too!\n",
+        origin);
   }
 }
 
