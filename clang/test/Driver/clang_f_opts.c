@@ -110,6 +110,7 @@
 // RUN:     -feliminate-unused-debug-types -fno-eliminate-unused-debug-types  \
 // RUN:     -fgcse -fno-gcse                                                  \
 // RUN:     -fident -fno-ident                                                \
+// RUN:     -fimplicit-templates -fno-implicit-templates                      \
 // RUN:     -fivopts -fno-ivopts                                              \
 // RUN:     -fnon-call-exceptions -fno-non-call-exceptions                    \
 // RUN:     -fpermissive -fno-permissive                                      \

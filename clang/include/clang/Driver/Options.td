@@ -1442,6 +1442,7 @@ defm function_attribute_list : BooleanFFlag<"function-attribute-list">, Group<cl
 defm gcse : BooleanFFlag<"gcse">, Group<clang_ignored_f_Group>;
 defm gnu : BooleanFFlag<"gnu">, Group<clang_ignored_f_Group>;
 defm ident : BooleanFFlag<"ident">, Group<clang_ignored_f_Group>;
+defm implicit_templates : BooleanFFlag<"implicit-templates">, Group<clang_ignored_f_Group>;
 defm inline_limit : BooleanFFlag<"inline-limit">, Group<clang_ignored_f_Group>;
 defm ivopts : BooleanFFlag<"ivopts">, Group<clang_ignored_f_Group>;
 defm non_call_exceptions : BooleanFFlag<"non-call-exceptions">, Group<clang_ignored_f_Group>;
