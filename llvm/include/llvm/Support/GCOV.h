@@ -191,7 +191,8 @@ public:
   ~GCOVBlock();
   void addEdge(uint32_t N) { Edges.push_back(N); }
   void addLine(StringRef Filename, uint32_t LineNo);
-  void addCount(uint64_t N) { Counter = N; }
+  void addCount(uint64_t N) { Counter += N; }
+  size_t getNumEdges() { return Edges.size(); }
   void dump();
   void collectLineCounts(FileInfo &FI);
 private:
@@ -217,7 +218,7 @@ typedef DenseMap<uint32_t, uint64_t> LineCounts;
 class FileInfo {
 public:
   void addLineCount(StringRef Filename, uint32_t Line, uint64_t Count) {
-    LineInfo[Filename][Line-1] = Count;
+    LineInfo[Filename][Line-1] += Count;
   }
   void print(StringRef gcnoFile, StringRef gcdaFile);
 private:

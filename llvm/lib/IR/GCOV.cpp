@@ -103,9 +103,18 @@ bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
 
   if (Format == GCOV::GCDA_402 || Format == GCOV::GCDA_404) {
     Buff.readArcTag();
+    uint32_t i = 0;
     uint32_t Count = Buff.readInt() / 2;
-    for (unsigned i = 0, e = Count; i != e; ++i) {
-      Blocks[i]->addCount(Buff.readInt64());
+
+    // This for loop adds the counts for each block. A second nested loop is
+    // required to combine the edge counts that are contained in the GCDA file.
+    for (uint32_t Line = 0; i < Count; ++Line) {
+      GCOVBlock &Block = *Blocks[Line];
+      for (size_t Edge = 0, End = Block.getNumEdges(); Edge < End; ++Edge) {
+        assert(i < Count && "Unexpected number of Edges!");
+        Block.addCount(Buff.readInt64());
+        ++i;
+      }
     }
     return true;
   }
