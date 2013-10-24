@@ -442,4 +442,39 @@ TEST(DIEHashTest, PtrToMemberDeclDefMisMatch) {
   // and a definition in another.
   ASSERT_NE(MD5ResDef, MD5ResDecl);
 }
+
+// struct { } a;
+// struct foo { decltype(a) mem; };
+TEST(DIEHashTest, RefUnnamedType) {
+  DIEInteger Zero(0);
+  DIEInteger One(1);
+  DIEInteger Eight(8);
+  DIEString FooStr(&Zero, "foo");
+  DIEString MemStr(&Zero, "mem");
+
+  DIE Unnamed(dwarf::DW_TAG_structure_type);
+  Unnamed.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &One);
+
+  DIE Foo(dwarf::DW_TAG_structure_type);
+  Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
+  Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FooStr);
+
+  DIE *Mem = new DIE(dwarf::DW_TAG_member);
+  Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &MemStr);
+  Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, &Zero);
+
+  DIE UnnamedPtr(dwarf::DW_TAG_pointer_type);
+  UnnamedPtr.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
+  DIEEntry UnnamedRef(&Unnamed);
+  UnnamedPtr.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &UnnamedRef);
+
+  DIEEntry UnnamedPtrRef(&UnnamedPtr);
+  Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &UnnamedPtrRef);
+
+  Foo.addChild(Mem);
+
+  uint64_t MD5Res = DIEHash().computeTypeSignature(&Foo);
+
+  ASSERT_EQ(0x954e026f01c02529ULL, MD5Res);
+}
 }

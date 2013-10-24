@@ -242,10 +242,12 @@ void DIEHash::hashDIEEntry(dwarf::Attribute Attribute, dwarf::Tag Tag,
       // there's a decl/def difference in the containing type of a
       // ptr_to_member_type, but it's what DWARF says, for some reason.
       Attribute == dwarf::DW_AT_type) {
-    // [FIXME] ... has a DW_AT_name attribute,
-    hashShallowTypeReference(Attribute, Entry,
-                             getDIEStringAttr(Entry, dwarf::DW_AT_name));
-    return;
+    // ... has a DW_AT_name attribute,
+    StringRef Name = getDIEStringAttr(Entry, dwarf::DW_AT_name);
+    if (!Name.empty()) {
+      hashShallowTypeReference(Attribute, Entry, Name);
+      return;
+    }
   }
 
   unsigned &DieNumber = Numbering[&Entry];
