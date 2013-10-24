@@ -65,7 +65,6 @@ class CodeGenTypes {
   const llvm::DataLayout &TheDataLayout;
   const TargetInfo &Target;
   CGCXXABI &TheCXXABI;
-  const CodeGenOptions &CodeGenOpts;
 
   // This should not be moved earlier, since its initialization depends on some
   // of the previous reference members being already initialized
@@ -114,7 +113,6 @@ public:
   const llvm::DataLayout &getDataLayout() const { return TheDataLayout; }
   ASTContext &getContext() const { return Context; }
   const ABIInfo &getABIInfo() const { return TheABIInfo; }
-  const CodeGenOptions &getCodeGenOpts() const { return CodeGenOpts; }
   const TargetInfo &getTarget() const { return Target; }
   CGCXXABI &getCXXABI() const { return TheCXXABI; }
   llvm::LLVMContext &getLLVMContext() { return TheModule.getContext(); }
