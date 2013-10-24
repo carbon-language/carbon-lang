@@ -1506,9 +1506,10 @@ static Value *genLoopLimit(PHINode *IndVar, const SCEV *IVCount, Loop *L,
     // BECount = (IVEnd - IVInit - 1) => IVLimit = IVInit (postinc).
     //
     // Valid Cases: (1) both integers is most common; (2) both may be pointers
-    // for simple memset-style loops; (3) IVInit is an integer and IVCount is a
-    // pointer may occur when enable-iv-rewrite generates a canonical IV on top
-    // of case #2.
+    // for simple memset-style loops.
+    //
+    // IVInit integer and IVCount pointer would only occur if a canonical IV
+    // were generated on top of case #2, which is not expected.
 
     const SCEV *IVLimit = 0;
     // For unit stride, IVCount = Start + BECount with 2's complement overflow.
