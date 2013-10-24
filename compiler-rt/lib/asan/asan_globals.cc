@@ -94,15 +94,13 @@ static void RegisterGlobal(const Global *g) {
   CHECK(AddrIsAlignedByGranularity(g->size_with_redzone));
   if (flags()->poison_heap)
     PoisonRedZones(*g);
-  ListOfGlobals *l =
-      (ListOfGlobals*)allocator_for_globals.Allocate(sizeof(ListOfGlobals));
+  ListOfGlobals *l = new(allocator_for_globals) ListOfGlobals;
   l->g = g;
   l->next = list_of_all_globals;
   list_of_all_globals = l;
   if (g->has_dynamic_init) {
     if (dynamic_init_globals == 0) {
-      void *mem = allocator_for_globals.Allocate(sizeof(VectorOfGlobals));
-      dynamic_init_globals = new(mem)
+      dynamic_init_globals = new(allocator_for_globals)
           VectorOfGlobals(kDynamicInitGlobalsInitialCapacity);
     }
     DynInitGlobal dyn_global = { *g, false };

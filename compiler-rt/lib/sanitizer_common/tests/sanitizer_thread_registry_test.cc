@@ -23,8 +23,7 @@ static LowLevelAllocator tctx_allocator;
 template<typename TCTX>
 static ThreadContextBase *GetThreadContext(u32 tid) {
   BlockingMutexLock l(&tctx_allocator_lock);
-  void *mem = tctx_allocator.Allocate(sizeof(TCTX));
-  return new(mem) TCTX(tid);
+  return new(tctx_allocator) TCTX(tid);
 }
 
 static const u32 kMaxRegistryThreads = 1000;

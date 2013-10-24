@@ -48,8 +48,7 @@ static LowLevelAllocator allocator_for_thread_context;
 
 static ThreadContextBase *GetAsanThreadContext(u32 tid) {
   BlockingMutexLock lock(&mu_for_thread_context);
-  void *mem = allocator_for_thread_context.Allocate(sizeof(AsanThreadContext));
-  return new(mem) AsanThreadContext(tid);
+  return new(allocator_for_thread_context) AsanThreadContext(tid);
 }
 
 ThreadRegistry &asanThreadRegistry() {

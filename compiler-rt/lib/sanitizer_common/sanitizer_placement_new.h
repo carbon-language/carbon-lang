@@ -18,15 +18,7 @@
 
 #include "sanitizer_internal_defs.h"
 
-namespace __sanitizer {
-#if (SANITIZER_WORDSIZE == 64) || SANITIZER_MAC
-typedef uptr operator_new_ptr_type;
-#else
-typedef u32 operator_new_ptr_type;
-#endif
-}  // namespace __sanitizer
-
-inline void *operator new(__sanitizer::operator_new_ptr_type sz, void *p) {
+inline void *operator new(__sanitizer::operator_new_size_type sz, void *p) {
   return p;
 }
 

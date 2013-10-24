@@ -34,6 +34,12 @@
 # define SANITIZER_SUPPORTS_WEAK_HOOKS 0
 #endif
 
+#if __LP64__ || defined(_WIN64)
+#  define SANITIZER_WORDSIZE 64
+#else
+#  define SANITIZER_WORDSIZE 32
+#endif
+
 // GCC does not understand __has_feature
 #if !defined(__has_feature)
 # define __has_feature(x) 0
@@ -79,6 +85,12 @@ typedef u64 OFF_T;
 typedef uptr OFF_T;
 #endif
 typedef u64  OFF64_T;
+
+#if (SANITIZER_WORDSIZE == 64) || SANITIZER_MAC
+typedef uptr operator_new_size_type;
+#else
+typedef u32 operator_new_size_type;
+#endif
 }  // namespace __sanitizer
 
 extern "C" {
@@ -166,12 +178,6 @@ typedef void* thread_return_t;
 # define THREAD_CALLING_CONV
 #endif  // _WIN32
 typedef thread_return_t (THREAD_CALLING_CONV *thread_callback_t)(void* arg);
-
-#if __LP64__ || defined(_WIN64)
-#  define SANITIZER_WORDSIZE 64
-#else
-#  define SANITIZER_WORDSIZE 32
-#endif
 
 // NOTE: Functions below must be defined in each run-time.
 namespace __sanitizer {
