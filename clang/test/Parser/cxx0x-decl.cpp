@@ -95,3 +95,12 @@ namespace FinalOverride {
     virtual auto i() -> void *override final;
   };
 }
+
+namespace UsingDeclAttrs {
+  using T __attribute__((aligned(1))) = int;
+  using T [[gnu::aligned(1)]] = int;
+  static_assert(alignof(T) == 1, "");
+
+  using [[gnu::aligned(1)]] T = int; // expected-error {{an attribute list cannot appear here}}
+  using T = int [[gnu::aligned(1)]]; // expected-error {{'aligned' attribute cannot be applied to types}}
+}

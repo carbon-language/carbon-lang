@@ -508,6 +508,7 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
   }
 
   ParsedAttributesWithRange Attrs(AttrFactory);
+  MaybeParseGNUAttributes(Attrs);
   MaybeParseCXX11Attributes(Attrs);
 
   // Maybe this is an alias-declaration.
@@ -525,7 +526,6 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
       Attrs.takeAllFrom(MisplacedAttrs);
     }
 
-    // TODO: Can GNU attributes appear here?
     ConsumeToken();
 
     Diag(Tok.getLocation(), getLangOpts().CPlusPlus11 ?
@@ -1159,8 +1159,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
   ParsedAttributesWithRange attrs(AttrFactory);
   // If attributes exist after tag, parse them.
-  if (Tok.is(tok::kw___attribute))
-    ParseGNUAttributes(attrs);
+  MaybeParseGNUAttributes(attrs);
 
   // If declspecs exist after tag, parse them.
   while (Tok.is(tok::kw___declspec))
@@ -1170,7 +1169,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   if (Tok.is(tok::kw___single_inheritance) ||
       Tok.is(tok::kw___multiple_inheritance) ||
       Tok.is(tok::kw___virtual_inheritance))
-      ParseMicrosoftInheritanceClassAttributes(attrs);
+    ParseMicrosoftInheritanceClassAttributes(attrs);
 
   // If C++0x attributes exist here, parse them.
   // FIXME: Are we consistent with the ordering of parsing of different
