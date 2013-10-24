@@ -1112,28 +1112,6 @@ RecordLayoutBuilder::AddPrimaryVirtualBaseOffsets(const BaseSubobjectInfo *Info,
   }
 }
 
-/// Does the given class inherit non-virtually from any of the classes
-/// in the given set?
-static bool hasNonVirtualBaseInSet(const CXXRecordDecl *RD, 
-                                   const ClassSetTy &set) {
-  for (CXXRecordDecl::base_class_const_iterator
-         I = RD->bases_begin(), E = RD->bases_end(); I != E; ++I) {
-    // Ignore virtual links.
-    if (I->isVirtual()) continue;
-
-    // Check whether the set contains the base.
-    const CXXRecordDecl *base = I->getType()->getAsCXXRecordDecl();
-    if (set.count(base))
-      return true;
-
-    // Otherwise, recurse and propagate.
-    if (hasNonVirtualBaseInSet(base, set))
-      return true;
-  }
-
-  return false;
-}
-
 void
 RecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
                                         const CXXRecordDecl *MostDerivedClass) {
