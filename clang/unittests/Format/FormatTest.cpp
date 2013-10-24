@@ -2333,6 +2333,13 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
       "#if 1\n"
       "#else\n"
       "#endif\n");
+  verifyFormat("DEBUG({\n"
+               "  return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +\n"
+               "         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;\n"
+               "});\n"
+               "#if a\n"
+               "#else\n"
+               "#endif");
 }
 
 TEST_F(FormatTest, FormatsJoinedLinesOnSubsequentRuns) {

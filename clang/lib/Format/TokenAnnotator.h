@@ -56,6 +56,7 @@ public:
       Current->Next = I->Tok;
       I->Tok->Previous = Current;
       Current = Current->Next;
+      Current->Children.clear();
       for (SmallVectorImpl<UnwrappedLine>::const_iterator
                I = Node.Children.begin(),
                E = Node.Children.end();
