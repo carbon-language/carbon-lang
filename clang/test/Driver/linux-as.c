@@ -30,6 +30,11 @@
 // RUN:   | FileCheck -check-prefix=CHECK-ARM-TARGET %s
 // CHECK-ARM-TARGET: as{{(.exe)?}}" "-mfpu=neon" "-mfloat-abi=soft" "-mcpu=cortex-a8"
 //
+// RUN: %clang -target armv8-linux -mcpu=cortex-a53 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-ARM-TARGET-V8 %s
+// CHECK-ARM-TARGET-V8: as{{(.exe)?}}" "-mfpu=crypto-neon-fp-armv8" "-mfloat-abi=soft" "-mcpu=cortex-a53"
+//
 // RUN: %clang -target arm-linux -mfloat-abi=hard -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-ARM-MFLOAT-ABI %s

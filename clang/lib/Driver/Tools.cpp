@@ -5986,6 +5986,8 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     StringRef MArch = getToolChain().getArchName();
     if (MArch == "armv7" || MArch == "armv7a" || MArch == "armv7-a")
       CmdArgs.push_back("-mfpu=neon");
+    if (MArch == "armv8" || MArch == "armv8a" || MArch == "armv8-a")
+      CmdArgs.push_back("-mfpu=crypto-neon-fp-armv8");
 
     StringRef ARMFloatABI = getARMFloatABI(getToolChain().getDriver(), Args,
                                            getToolChain().getTriple());
