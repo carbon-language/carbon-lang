@@ -75,7 +75,7 @@ private:
 // The purpose of the "added" state is having modules in standby. (added=known
 // but not compiled). The idea is that you can add a module to provide function
 // definitions but if nothing in that module is referenced by a module in which
-// a function is executed (note the wording here because it’s not exactly the
+// a function is executed (note the wording here because it's not exactly the
 // ideal case) then the module never gets compiled. This is sort of lazy
 // compilation.
 //
