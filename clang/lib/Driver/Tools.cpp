@@ -468,6 +468,7 @@ static const char *getLLVMArchSuffixForARM(StringRef CPU) {
     .Case("cortex-m4", "v7em")
     .Case("cortex-a9-mp", "v7f")
     .Case("swift", "v7s")
+    .Cases("cortex-a53", "cortex-a57", "v8")
     .Default("");
 }
 
