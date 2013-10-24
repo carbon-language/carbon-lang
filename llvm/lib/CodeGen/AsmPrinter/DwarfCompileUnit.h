@@ -42,7 +42,7 @@ class CompileUnit {
   /// Node - MDNode for the compile unit.
   const MDNode *Node;
 
-  /// Die - Compile unit debug information entry.
+  /// CUDie - Compile unit debug information entry.
   ///
   const OwningPtr<DIE> CUDie;
 
