@@ -105,6 +105,7 @@
 // RUN:     -falign-functions -falign-functions=2 -fno-align-functions        \
 // RUN:     -fasynchronous-unwind-tables -fno-asynchronous-unwind-tables      \
 // RUN:     -fbuiltin -fno-builtin                                            \
+// RUN:     -fdiagnostics-show-location=once                                  \
 // RUN:     -ffloat-store -fno-float-store                                    \
 // RUN:     -feliminate-unused-debug-types -fno-eliminate-unused-debug-types  \
 // RUN:     -fgcse -fno-gcse                                                  \
