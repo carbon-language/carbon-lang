@@ -71,7 +71,7 @@ error: invalid operand for instruction
 @ CHECK-ERRORS-V8: error: writeback operator '!' not allowed when base register in register list
 @ CHECK-ERRORS-V8:         ldm r2!, {r2, r3, r4, r10}
 @ CHECK-ERRORS-V8:               ^
-@ CHECK-ERRORS-V8: error: writeback operator '!' not allowed when base register in register list
+@ CHECK-ERRORS-V8: error: writeback register not allowed in register list
 @ CHECK-ERRORS-V8:         ldmdb r2!, {r2, r3, r4}
 @ CHECK-ERRORS-V8:                 ^
 
@@ -100,7 +100,7 @@ error: invalid operand for instruction
 @ CHECK-ERRORS-V8: error: writeback operator '!' not allowed when base register in register list
 @ CHECK-ERRORS-V8:         stm r2!, {r2, r9}
 @ CHECK-ERRORS-V8:                  ^
-@ CHECK-ERRORS-V8: error: writeback operator '!' not allowed when base register in register list
+@ CHECK-ERRORS-V8: error: writeback register not allowed in register list
 @ CHECK-ERRORS-V8:         stmdb r2!, {r0, r2}
 @ CHECK-ERRORS-V8:                  ^
 

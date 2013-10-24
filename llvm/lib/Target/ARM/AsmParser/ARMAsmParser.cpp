@@ -5466,9 +5466,8 @@ validateInstruction(MCInst &Inst,
   case ARM::t2STMIA_UPD:
   case ARM::t2STMDB_UPD: {
     if (listContainsReg(Inst, 3, Inst.getOperand(0).getReg()))
-      return Error(Operands[4]->getStartLoc(),
-                   "writeback operator '!' not allowed when base register "
-                   "in register list");
+      return Error(Operands.back()->getStartLoc(),
+                   "writeback register not allowed in register list");
     break;
   }
   case ARM::tMUL: {
