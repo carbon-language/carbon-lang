@@ -1,4 +1,4 @@
-//===- llvm/Supporrt/YAMLTraits.h -------------------------------*- C++ -*-===//
+//===- llvm/Support/YAMLTraits.h -------------------------------*- C++ -*-===//
 //
 //                             The LLVM Linker
 //
@@ -536,6 +536,12 @@ template<>
 struct ScalarTraits<StringRef> {
   static void output(const StringRef &, void*, llvm::raw_ostream &);
   static StringRef input(StringRef, void*, StringRef &);
+};
+
+template<>
+struct ScalarTraits<std::string> {
+  static void output(const std::string &, void*, llvm::raw_ostream &);
+  static StringRef input(StringRef, void*, std::string &);
 };
 
 template<>
