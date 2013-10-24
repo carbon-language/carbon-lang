@@ -3901,6 +3901,10 @@ public:
     Builder.defineMacro("__REGISTER_PREFIX__", "");
 
     StringRef CPUArch = getCPUDefineSuffix(CPU);
+    unsigned int CPUArchVer;
+    if(CPUArch.substr(0, 1).getAsInteger<unsigned int>(10, CPUArchVer)) {
+      llvm_unreachable("Invalid char for architecture version number");
+    }
     Builder.defineMacro("__ARM_ARCH_" + CPUArch + "__");
     Builder.defineMacro("__ARM_ARCH", CPUArch.substr(0, 1));
     StringRef CPUProfile = getCPUProfile(CPU);
@@ -3911,7 +3915,7 @@ public:
 
     // FIXME: It's more complicated than this and we don't really support
     // interworking.
-    if ('5' <= CPUArch[0] && CPUArch[0] <= '7')
+    if (5 <= CPUArchVer && CPUArchVer <= 7)
       Builder.defineMacro("__THUMB_INTERWORK__");
 
     if (ABI == "aapcs" || ABI == "aapcs-linux" || ABI == "aapcs-vfp") {
@@ -3930,11 +3934,10 @@ public:
     if (CPU == "xscale")
       Builder.defineMacro("__XSCALE__");
 
-    bool IsARMv7 = CPUArch.startswith("7");
     if (IsThumb) {
       Builder.defineMacro("__THUMBEL__");
       Builder.defineMacro("__thumb__");
-      if (CPUArch == "6T2" || IsARMv7)
+      if (CPUArch == "6T2" || CPUArchVer == 7)
         Builder.defineMacro("__thumb2__");
     }
     if (((HWDiv & HWDivThumb) && IsThumb) || ((HWDiv & HWDivARM) && !IsThumb))
@@ -3957,13 +3960,13 @@ public:
     // the VFP define, hence the soft float and arch check. This is subtly
     // different from gcc, we follow the intent which was that it should be set
     // when Neon instructions are actually available.
-    if ((FPU & NeonFPU) && !SoftFloat && IsARMv7)
+    if ((FPU & NeonFPU) && !SoftFloat && CPUArchVer == 7)
       Builder.defineMacro("__ARM_NEON__");
 
-    if (CPUArch.startswith("8"))
+    if (CPUArchVer == 8)
       Builder.defineMacro("__ARM_FEATURE_CRC32");
 
-    if (CPUArch[0] >= '6' && CPUArch != "6M") {
+    if (CPUArchVer >= 6 && CPUArch != "6M") {
       Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_1");
       Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_2");
       Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4");
