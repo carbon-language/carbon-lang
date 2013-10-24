@@ -801,6 +801,7 @@ struct LoopVectorizeHints {
         Vals.push_back(LoopID->getOperand(i));
 
     Vals.push_back(createHint(Context, Twine(Prefix(), "width").str(), Width));
+    Vals.push_back(createHint(Context, Twine(Prefix(), "unroll").str(), 1));
 
     MDNode *NewLoopID = MDNode::get(Context, Vals);
     // Set operand 0 to refer to the loop id itself.
@@ -1785,6 +1786,9 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   LoopExitBlock = ExitBlock;
   LoopVectorBody = VecBody;
   LoopScalarBody = OldBasicBlock;
+
+  LoopVectorizeHints Hints(Lp, true);
+  Hints.setAlreadyVectorized(Lp);
 }
 
 /// This function returns the identity element (or neutral element) for

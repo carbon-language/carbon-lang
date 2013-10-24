@@ -68,9 +68,10 @@ _ZSt10accumulateIPiiET0_T_S2_S1_.exit:            ; preds = %for.body.i, %entry
 
 attributes #0 = { nounwind readonly ssp uwtable "fp-contract-model"="standard" "no-frame-pointer-elim" "no-frame-pointer-elim-non-leaf" "realign-stack" "relocation-model"="pic" "ssp-buffers-size"="8" }
 
-; CHECK: !0 = metadata !{metadata !0, metadata !1}
+; CHECK: !0 = metadata !{metadata !0, metadata !1, metadata !2}
 ; CHECK: !1 = metadata !{metadata !"llvm.vectorizer.width", i32 1}
-; CHECK: !2 = metadata !{metadata !2, metadata !1}
+; CHECK: !2 = metadata !{metadata !"llvm.vectorizer.unroll", i32 1}
+; CHECK: !3 = metadata !{metadata !3, metadata !1, metadata !2}
 
 !0 = metadata !{metadata !0, metadata !1}
 !1 = metadata !{metadata !"llvm.vectorizer.width", i32 1}
