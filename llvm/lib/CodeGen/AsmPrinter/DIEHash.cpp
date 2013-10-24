@@ -28,9 +28,9 @@ using namespace llvm;
 
 /// \brief Grabs the string in whichever attribute is passed in and returns
 /// a reference to it.
-static StringRef getDIEStringAttr(DIE *Die, uint16_t Attr) {
-  const SmallVectorImpl<DIEValue *> &Values = Die->getValues();
-  const DIEAbbrev &Abbrevs = Die->getAbbrev();
+static StringRef getDIEStringAttr(const DIE &Die, uint16_t Attr) {
+  const SmallVectorImpl<DIEValue *> &Values = Die.getValues();
+  const DIEAbbrev &Abbrevs = Die.getAbbrev();
 
   // Iterate through all the attributes until we find the one we're
   // looking for, if we can't find it return an empty string.
@@ -109,7 +109,7 @@ void DIEHash::addParentContext(DIE *Parent) {
     addULEB128(Die->getTag());
 
     // ... Then the name, taken from the DW_AT_name attribute.
-    StringRef Name = getDIEStringAttr(Die, dwarf::DW_AT_name);
+    StringRef Name = getDIEStringAttr(*Die, dwarf::DW_AT_name);
     DEBUG(dbgs() << "... adding context: " << Name << "\n");
     if (!Name.empty())
       addString(Name);
@@ -187,6 +187,84 @@ void DIEHash::collectAttributes(DIE *Die, DIEAttrs &Attrs) {
   }
 }
 
+void DIEHash::hashShallowTypeReference(dwarf::Attribute Attribute,
+                                       const DIE &Entry, StringRef Name) {
+  // append the letter 'N'
+  addULEB128('N');
+
+  // the DWARF attribute code (DW_AT_type or DW_AT_friend),
+  addULEB128(Attribute);
+
+  // the context of the tag,
+  if (DIE *Parent = Entry.getParent())
+    addParentContext(Parent);
+
+  // the letter 'E',
+  addULEB128('E');
+
+  // and the name of the type.
+  addString(Name);
+
+  // Currently DW_TAG_friends are not used by Clang, but if they do become so,
+  // here's the relevant spec text to implement:
+  //
+  // For DW_TAG_friend, if the referenced entry is the DW_TAG_subprogram,
+  // the context is omitted and the name to be used is the ABI-specific name
+  // of the subprogram (e.g., the mangled linker name).
+}
+
+void DIEHash::hashRepeatedTypeReference(dwarf::Attribute Attribute,
+                                        unsigned DieNumber) {
+  // a) If T is in the list of [previously hashed types], use the letter
+  // 'R' as the marker
+  addULEB128('R');
+
+  addULEB128(Attribute);
+
+  // and use the unsigned LEB128 encoding of [the index of T in the
+  // list] as the attribute value;
+  addULEB128(DieNumber);
+}
+
+void DIEHash::hashDIEEntry(dwarf::Attribute Attribute, dwarf::Tag Tag,
+                           DIE &Entry) {
+  assert(Tag != dwarf::DW_TAG_friend && "No current LLVM clients emit friend "
+                                        "tags. Add support here when there's "
+                                        "a use case");
+  // Step 5
+  // If the tag in Step 3 is one of [the below tags]
+  if ((Tag == dwarf::DW_TAG_pointer_type ||
+       Tag == dwarf::DW_TAG_reference_type ||
+       Tag == dwarf::DW_TAG_rvalue_reference_type ||
+       Tag == dwarf::DW_TAG_ptr_to_member_type) &&
+      // and the referenced type (via the [below attributes])
+      // FIXME: This seems overly restrictive, and causes hash mismatches
+      // there's a decl/def difference in the containing type of a
+      // ptr_to_member_type, but it's what DWARF says, for some reason.
+      Attribute == dwarf::DW_AT_type) {
+    // [FIXME] ... has a DW_AT_name attribute,
+    hashShallowTypeReference(Attribute, Entry,
+                             getDIEStringAttr(Entry, dwarf::DW_AT_name));
+    return;
+  }
+
+  unsigned &DieNumber = Numbering[&Entry];
+  if (DieNumber) {
+    hashRepeatedTypeReference(Attribute, DieNumber);
+    return;
+  }
+
+  // otherwise, b) use the letter 'T' as a the marker, ...
+  addULEB128('T');
+
+  addULEB128(Attribute);
+
+  // ... process the type T recursively by performing Steps 2 through 7, and
+  // use the result as the attribute value.
+  DieNumber = Numbering.size();
+  computeHash(&Entry);
+}
+
 // Hash an individual attribute \param Attr based on the type of attribute and
 // the form.
 void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
@@ -198,69 +276,7 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
   // ... An attribute that refers to another type entry T is processed as
   // follows:
   if (const DIEEntry *EntryAttr = dyn_cast<DIEEntry>(Value)) {
-    DIE *Entry = EntryAttr->getEntry();
-
-    assert(Tag != dwarf::DW_TAG_friend && "No current LLVM clients emit friend "
-                                          "tags. Add support here when there's "
-                                          "a use case");
-    // Step 5
-    // If the tag in Step 3 is one of [the below tags]
-    if ((Tag == dwarf::DW_TAG_pointer_type ||
-         Tag == dwarf::DW_TAG_reference_type ||
-         Tag == dwarf::DW_TAG_rvalue_reference_type ||
-         Tag == dwarf::DW_TAG_ptr_to_member_type) &&
-        // and the referenced type (via the [below attributes])
-        // FIXME: This seems overly restrictive, and causes hash mismatches
-        // there's a decl/def difference in the containing type of a
-        // ptr_to_member_type.
-        Attribute == dwarf::DW_AT_type) {
-      // [FIXME] ... has a DW_AT_name attribute,
-      // append the letter 'N'
-      addULEB128('N');
-
-      // the DWARF attribute code (DW_AT_type or DW_AT_friend),
-      addULEB128(Desc->getAttribute());
-
-      // the context of the tag,
-      if (DIE *Parent = Entry->getParent())
-        addParentContext(Parent);
-
-      // the letter 'E',
-      addULEB128('E');
-
-      // and the name of the type.
-      addString(getDIEStringAttr(Entry, dwarf::DW_AT_name));
-
-      // FIXME:
-      // For DW_TAG_friend, if the referenced entry is the DW_TAG_subprogram,
-      // the context is omitted and the name to be used is the ABI-specific name
-      // of the subprogram (e.g., the mangled linker name).
-      return;
-    }
-
-    unsigned &DieNumber = Numbering[Entry];
-    if (DieNumber) {
-      // a) If T is in the list of [previously hashed types], use the letter
-      // 'R' as the marker
-      addULEB128('R');
-
-      addULEB128(Attribute);
-
-      // and use the unsigned LEB128 encoding of [the index of T in the
-      // list] as the attribute value;
-      addULEB128(DieNumber);
-      return;
-    }
-
-    // otherwise, b) use the letter 'T' as a the marker, ...
-    addULEB128('T');
-
-    addULEB128(Attribute);
-
-    // ... process the type T recursively by performing Steps 2 through 7, and
-    // use the result as the attribute value.
-    DieNumber = Numbering.size();
-    computeHash(Entry);
+    hashDIEEntry(Attribute, Tag, *EntryAttr->getEntry());
     return;
   }
 
@@ -407,7 +423,7 @@ uint64_t DIEHash::computeDIEODRSignature(DIE *Die) {
   addULEB128(Die->getTag());
 
   // Add the name of the type to the hash.
-  addString(getDIEStringAttr(Die, dwarf::DW_AT_name));
+  addString(getDIEStringAttr(*Die, dwarf::DW_AT_name));
 
   // Now get the result.
   MD5::MD5Result Result;

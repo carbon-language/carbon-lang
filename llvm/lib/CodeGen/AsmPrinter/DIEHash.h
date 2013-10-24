@@ -124,6 +124,19 @@ private:
   /// \brief Hashes an individual attribute.
   void hashAttribute(AttrEntry Attr, dwarf::Tag Tag);
 
+  /// \brief Hashes an attribute that refers to another DIE.
+  void hashDIEEntry(dwarf::Attribute Attribute, dwarf::Tag Tag,
+                    DIE &Entry);
+
+  /// \brief Hashes a reference to a named type in such a way that is
+  /// independent of whether that type is described by a declaration or a
+  /// definition.
+  void hashShallowTypeReference(dwarf::Attribute Attribute,
+                                const DIE &Entry, StringRef Name);
+
+  /// \brief Hashes a reference to a previously referenced type DIE.
+  void hashRepeatedTypeReference(dwarf::Attribute Attribute, unsigned DieNumber);
+
 private:
   MD5 Hash;
   DenseMap<DIE*, unsigned> Numbering;

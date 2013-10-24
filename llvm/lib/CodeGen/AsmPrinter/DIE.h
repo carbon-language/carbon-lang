@@ -138,6 +138,7 @@ namespace llvm {
 
     // Accessors.
     DIEAbbrev &getAbbrev() { return Abbrev; }
+    const DIEAbbrev &getAbbrev() const { return Abbrev; }
     unsigned getAbbrevNumber() const { return Abbrev.getNumber(); }
     dwarf::Tag getTag() const { return Abbrev.getTag(); }
     unsigned getOffset() const { return Offset; }
