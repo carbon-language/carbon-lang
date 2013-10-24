@@ -76,6 +76,15 @@ MCJIT::~MCJIT() {
   //
   Modules.clear();
   Dyld.deregisterEHFrames();
+
+  LoadedObjectMap::iterator it, end = LoadedObjects.end();
+  for (it = LoadedObjects.begin(); it != end; ++it) {
+    ObjectImage *Obj = it->second;
+    if (Obj) {
+      NotifyFreeingObject(*Obj);
+      delete Obj;
+    }
+  }
   LoadedObjects.clear();
   delete TM;
 }
