@@ -13,10 +13,10 @@ YAML: target: main
 
 YAML: name: main
 YAML: references:      
-YAML:   kind:    R_X86_64_PC32
+YAML:   kind:    R_X86_64_GOTPCREL
 YAML:   offset:  3
 YAML:   target:  [[NULLGOT]]
-YAML:   kind:    R_X86_64_PC32
+YAML:   kind:    R_X86_64_GOTPCREL
 YAML:   offset:  10
 YAML:   target:  [[MAINGOT]]
 

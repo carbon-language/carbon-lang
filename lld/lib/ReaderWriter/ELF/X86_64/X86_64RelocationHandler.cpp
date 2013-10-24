@@ -74,6 +74,7 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
     reloc64(location, relocVAddress, targetVAddress, ref.addend());
     break;
   case R_X86_64_PC32:
+  case R_X86_64_GOTPCREL:
     relocPC32(location, relocVAddress, targetVAddress, ref.addend());
     break;
   case R_X86_64_32:
