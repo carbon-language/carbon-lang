@@ -16,6 +16,7 @@
 
 #include "lldb/lldb-private.h"
 
+#include "DWARFDataExtractor.h"
 #include "DWARFDefines.h"
 
 class SymbolFileDWARF;
@@ -201,13 +202,13 @@ public:
 
     static bool DumpOpcodes(lldb_private::Log *log, SymbolFileDWARF* dwarf2Data, dw_offset_t line_offset = DW_INVALID_OFFSET, uint32_t dump_flags = 0);   // If line_offset is invalid, dump everything
     static bool DumpLineTableRows(lldb_private::Log *log, SymbolFileDWARF* dwarf2Data, dw_offset_t line_offset = DW_INVALID_OFFSET);  // If line_offset is invalid, dump everything
-    static bool ParseSupportFiles(const lldb::ModuleSP &module_sp, const lldb_private::DataExtractor& debug_line_data, const char *cu_comp_dir, dw_offset_t stmt_list, lldb_private::FileSpecList &support_files);
-    static bool ParsePrologue(const lldb_private::DataExtractor& debug_line_data, lldb::offset_t* offset_ptr, Prologue* prologue);
-    static bool ParseStatementTable(const lldb_private::DataExtractor& debug_line_data, lldb::offset_t* offset_ptr, State::Callback callback, void* userData);
-    static dw_offset_t DumpStatementTable(lldb_private::Log *log, const lldb_private::DataExtractor& debug_line_data, const dw_offset_t line_offset);
-    static dw_offset_t DumpStatementOpcodes(lldb_private::Log *log, const lldb_private::DataExtractor& debug_line_data, const dw_offset_t line_offset, uint32_t flags);
-    static bool ParseStatementTable(const lldb_private::DataExtractor& debug_line_data, lldb::offset_t *offset_ptr, LineTable* line_table);
-    static void Parse(const lldb_private::DataExtractor& debug_line_data, DWARFDebugLine::State::Callback callback, void* userData);
+    static bool ParseSupportFiles(const lldb::ModuleSP &module_sp, const lldb_private::DWARFDataExtractor& debug_line_data, const char *cu_comp_dir, dw_offset_t stmt_list, lldb_private::FileSpecList &support_files);
+    static bool ParsePrologue(const lldb_private::DWARFDataExtractor& debug_line_data, lldb::offset_t* offset_ptr, Prologue* prologue);
+    static bool ParseStatementTable(const lldb_private::DWARFDataExtractor& debug_line_data, lldb::offset_t* offset_ptr, State::Callback callback, void* userData);
+    static dw_offset_t DumpStatementTable(lldb_private::Log *log, const lldb_private::DWARFDataExtractor& debug_line_data, const dw_offset_t line_offset);
+    static dw_offset_t DumpStatementOpcodes(lldb_private::Log *log, const lldb_private::DWARFDataExtractor& debug_line_data, const dw_offset_t line_offset, uint32_t flags);
+    static bool ParseStatementTable(const lldb_private::DWARFDataExtractor& debug_line_data, lldb::offset_t *offset_ptr, LineTable* line_table);
+    static void Parse(const lldb_private::DWARFDataExtractor& debug_line_data, DWARFDebugLine::State::Callback callback, void* userData);
 //  static void AppendLineTableData(const DWARFDebugLine::Prologue* prologue, const DWARFDebugLine::Row::collection& state_coll, const uint32_t addr_size, BinaryStreamBuf &debug_line_data);
 
     DWARFDebugLine() :
@@ -215,8 +216,8 @@ public:
     {
     }
 
-    void Parse(const lldb_private::DataExtractor& debug_line_data);
-    void ParseIfNeeded(const lldb_private::DataExtractor& debug_line_data);
+    void Parse(const lldb_private::DWARFDataExtractor& debug_line_data);
+    void ParseIfNeeded(const lldb_private::DWARFDataExtractor& debug_line_data);
     LineTable::shared_ptr GetLineTable(const dw_offset_t offset) const;
 
 protected:

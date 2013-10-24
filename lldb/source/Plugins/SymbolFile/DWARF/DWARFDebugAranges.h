@@ -35,7 +35,7 @@ public:
     }
 
     bool
-    Extract(const lldb_private::DataExtractor &debug_aranges_data);
+    Extract(const lldb_private::DWARFDataExtractor &debug_aranges_data);
 
     bool
     Generate(SymbolFileDWARF* dwarf2Data);

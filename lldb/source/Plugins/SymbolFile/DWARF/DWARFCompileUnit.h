@@ -29,7 +29,7 @@ public:
 
     DWARFCompileUnit(SymbolFileDWARF* dwarf2Data);
 
-    bool        Extract(const lldb_private::DataExtractor &debug_info, lldb::offset_t *offset_ptr);
+    bool        Extract(const lldb_private::DWARFDataExtractor &debug_info, lldb::offset_t *offset_ptr);
     size_t      ExtractDIEsIfNeeded (bool cu_die_only);
     bool        LookupAddress(
                     const dw_addr_t address,

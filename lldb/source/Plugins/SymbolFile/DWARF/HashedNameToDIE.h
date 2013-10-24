@@ -432,7 +432,7 @@ struct DWARFMappedHash
         }
         
         bool
-        Read (const lldb_private::DataExtractor &data, 
+        Read (const lldb_private::DWARFDataExtractor &data, 
               lldb::offset_t *offset_ptr, 
               DIEInfo &hash_data) const
         {
@@ -585,8 +585,8 @@ struct DWARFMappedHash
     {
     public:
         
-        MemoryTable (lldb_private::DataExtractor &table_data, 
-                     const lldb_private::DataExtractor &string_table,
+        MemoryTable (lldb_private::DWARFDataExtractor &table_data, 
+                     const lldb_private::DWARFDataExtractor &string_table,
                      const char *name) :
             MappedHash::MemoryTable<uint32_t, Header, DIEInfoArray> (table_data),
             m_data (table_data),
@@ -923,8 +923,8 @@ struct DWARFMappedHash
         }
         
     protected:
-        const lldb_private::DataExtractor &m_data;
-        const lldb_private::DataExtractor &m_string_table;
+        const lldb_private::DWARFDataExtractor &m_data;
+        const lldb_private::DWARFDataExtractor &m_string_table;
         std::string m_name;
     };
 };

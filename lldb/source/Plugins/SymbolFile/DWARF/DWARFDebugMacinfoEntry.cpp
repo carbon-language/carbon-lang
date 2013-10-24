@@ -80,7 +80,7 @@ DWARFDebugMacinfoEntry::Dump(Stream *s) const
 
 
 bool
-DWARFDebugMacinfoEntry::Extract(const DataExtractor& mac_info_data, lldb::offset_t* offset_ptr)
+DWARFDebugMacinfoEntry::Extract(const DWARFDataExtractor& mac_info_data, lldb::offset_t* offset_ptr)
 {
     if (mac_info_data.ValidOffset(*offset_ptr))
     {

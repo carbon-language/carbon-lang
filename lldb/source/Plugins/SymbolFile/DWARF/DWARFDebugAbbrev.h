@@ -43,7 +43,7 @@ public:
     void Clear();
     dw_offset_t GetOffset() const { return m_offset; }
     void Dump(lldb_private::Stream *s) const;
-    bool Extract(const lldb_private::DataExtractor& data, lldb::offset_t *offset_ptr);
+    bool Extract(const lldb_private::DWARFDataExtractor& data, lldb::offset_t *offset_ptr);
     //void Encode(BinaryStreamBuf& debug_abbrev_buf) const;
     dw_uleb128_t AppendAbbrevDeclSequential(const DWARFAbbreviationDeclaration& abbrevDecl);
 
@@ -65,7 +65,7 @@ public:
     DWARFDebugAbbrev();
     const DWARFAbbreviationDeclarationSet*  GetAbbreviationDeclarationSet(dw_offset_t cu_abbr_offset) const;
     void Dump(lldb_private::Stream *s) const;
-    void Parse(const lldb_private::DataExtractor& data);
+    void Parse(const lldb_private::DWARFDataExtractor& data);
 protected:
     DWARFAbbreviationDeclarationCollMap m_abbrevCollMap;
     mutable DWARFAbbreviationDeclarationCollMapConstIter m_prev_abbr_offset_pos;

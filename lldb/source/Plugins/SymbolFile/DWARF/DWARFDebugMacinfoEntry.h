@@ -38,7 +38,7 @@ public:
     GetCString() const;
 
     bool
-    Extract(const lldb_private::DataExtractor& mac_info_data,
+    Extract(const lldb_private::DWARFDataExtractor& mac_info_data,
             lldb::offset_t* offset_ptr);
 
 protected:

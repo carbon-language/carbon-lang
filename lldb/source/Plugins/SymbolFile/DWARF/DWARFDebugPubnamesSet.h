@@ -70,7 +70,7 @@ public:
     uint32_t    NumDescriptors() const { return m_descriptors.size(); }
     void        AddDescriptor(dw_offset_t cu_rel_offset, const char* name);
     void        Clear();
-    bool        Extract(const lldb_private::DataExtractor& debug_pubnames_data, lldb::offset_t *offset_ptr);
+    bool        Extract(const lldb_private::DWARFDataExtractor& debug_pubnames_data, lldb::offset_t *offset_ptr);
     void        Dump(lldb_private::Log *s) const;
     void        InitNameIndexes() const;
     void        Find(const char* name, bool ignore_case, std::vector<dw_offset_t>& die_offset_coll) const;

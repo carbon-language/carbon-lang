@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "DWARFDebugAbbrev.h"
-#include "lldb/Core/DataExtractor.h"
+#include "DWARFDataExtractor.h"
 #include "lldb/Core/Stream.h"
 
 using namespace lldb;
@@ -30,7 +30,7 @@ DWARFAbbreviationDeclarationSet::Clear()
 // DWARFAbbreviationDeclarationSet::Extract()
 //----------------------------------------------------------------------
 bool
-DWARFAbbreviationDeclarationSet::Extract(const DataExtractor& data, lldb::offset_t *offset_ptr)
+DWARFAbbreviationDeclarationSet::Extract(const DWARFDataExtractor& data, lldb::offset_t *offset_ptr)
 {
     const lldb::offset_t begin_offset = *offset_ptr;
     m_offset = begin_offset;
@@ -142,7 +142,7 @@ DWARFDebugAbbrev::DWARFDebugAbbrev() :
 // DWARFDebugAbbrev::Parse()
 //----------------------------------------------------------------------
 void
-DWARFDebugAbbrev::Parse(const DataExtractor& data)
+DWARFDebugAbbrev::Parse(const DWARFDataExtractor& data)
 {
     lldb::offset_t offset = 0;
 

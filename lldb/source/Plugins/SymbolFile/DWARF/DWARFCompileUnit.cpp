@@ -69,7 +69,7 @@ DWARFCompileUnit::Clear()
 }
 
 bool
-DWARFCompileUnit::Extract(const DataExtractor &debug_info, lldb::offset_t *offset_ptr)
+DWARFCompileUnit::Extract(const DWARFDataExtractor &debug_info, lldb::offset_t *offset_ptr)
 {
     Clear();
 
@@ -163,7 +163,7 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
     uint32_t depth = 0;
     // We are in our compile unit, parse starting at the offset
     // we were told to parse
-    const DataExtractor& debug_info_data = m_dwarf2Data->get_debug_info_data();
+    const DWARFDataExtractor& debug_info_data = m_dwarf2Data->get_debug_info_data();
     std::vector<uint32_t> die_index_stack;
     die_index_stack.reserve(32);
     die_index_stack.push_back(0);
@@ -288,7 +288,7 @@ DWARFCompileUnit::GetAbbrevOffset() const
 bool
 DWARFCompileUnit::Verify(Stream *s) const
 {
-    const DataExtractor& debug_info = m_dwarf2Data->get_debug_info_data();
+    const DWARFDataExtractor& debug_info = m_dwarf2Data->get_debug_info_data();
     bool valid_offset = debug_info.ValidOffset(m_offset);
     bool length_OK = debug_info.ValidOffset(GetNextCompileUnitOffset()-1);
     bool version_OK = SymbolFileDWARF::SupportedVersion(m_version);
@@ -588,7 +588,7 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                          NameToDIE& types,
                          NameToDIE& namespaces)
 {
-    const DataExtractor* debug_str = &m_dwarf2Data->get_debug_str_data();
+    const DWARFDataExtractor* debug_str = &m_dwarf2Data->get_debug_str_data();
 
     const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize());
 

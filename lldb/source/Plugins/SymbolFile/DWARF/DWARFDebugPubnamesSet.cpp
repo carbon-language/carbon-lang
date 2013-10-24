@@ -78,7 +78,7 @@ DWARFDebugPubnamesSet::InitNameIndexes() const
 
 
 bool
-DWARFDebugPubnamesSet::Extract(const DataExtractor& data, lldb::offset_t *offset_ptr)
+DWARFDebugPubnamesSet::Extract(const DWARFDataExtractor& data, lldb::offset_t *offset_ptr)
 {
     if (data.ValidOffset(*offset_ptr))
     {

@@ -29,7 +29,7 @@ DWARFDebugPubnames::DWARFDebugPubnames() :
 }
 
 bool
-DWARFDebugPubnames::Extract(const DataExtractor& data)
+DWARFDebugPubnames::Extract(const DWARFDataExtractor& data)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "DWARFDebugPubnames::Extract (byte_size = %" PRIu64 ")",
@@ -77,7 +77,7 @@ DWARFDebugPubnames::GeneratePubnames(SymbolFileDWARF* dwarf2Data)
     if (debug_info)
     {
 
-        const DataExtractor* debug_str = &dwarf2Data->get_debug_str_data();
+        const DWARFDataExtractor* debug_str = &dwarf2Data->get_debug_str_data();
 
         uint32_t cu_idx = 0;
         const uint32_t num_compile_units = dwarf2Data->GetNumCompileUnits();

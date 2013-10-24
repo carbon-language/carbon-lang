@@ -56,7 +56,7 @@ public:
 // Extract
 //----------------------------------------------------------------------
 bool
-DWARFDebugAranges::Extract(const DataExtractor &debug_aranges_data)
+DWARFDebugAranges::Extract(const DWARFDataExtractor &debug_aranges_data)
 {
     if (debug_aranges_data.ValidOffset(0))
     {

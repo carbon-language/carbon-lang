@@ -15,11 +15,11 @@
 
 using namespace lldb_private;
 
-static int print_dwarf_exp_op (Stream &s, const DataExtractor& data, lldb::offset_t *offset_ptr, int address_size, int dwarf_ref_size);
+static int print_dwarf_exp_op (Stream &s, const DWARFDataExtractor& data, lldb::offset_t *offset_ptr, int address_size, int dwarf_ref_size);
 
 int
 print_dwarf_expression (Stream &s,
-                        const DataExtractor& data,
+                        const DWARFDataExtractor& data,
                         int address_size,
                         int dwarf_ref_size,
                         bool location_expression)
@@ -47,7 +47,7 @@ print_dwarf_expression (Stream &s,
 
 static int
 print_dwarf_exp_op (Stream &s,
-                    const DataExtractor& data,
+                    const DWARFDataExtractor& data,
                     lldb::offset_t *offset_ptr,
                     int address_size,
                     int dwarf_ref_size)

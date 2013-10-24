@@ -116,7 +116,7 @@ DWARFDebugInfoEntry::Attributes::FormValueAsUnsignedAtIndex(SymbolFileDWARF* dwa
 bool
 DWARFDebugInfoEntry::FastExtract
 (
-    const DataExtractor& debug_info_data,
+    const DWARFDataExtractor& debug_info_data,
     const DWARFCompileUnit* cu,
     const uint8_t *fixed_form_sizes,
     lldb::offset_t *offset_ptr
@@ -281,8 +281,8 @@ DWARFDebugInfoEntry::Extract
     lldb::offset_t *offset_ptr
 )
 {
-    const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
-//    const DataExtractor& debug_str_data = dwarf2Data->get_debug_str_data();
+    const DWARFDataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
+//    const DWARFDataExtractor& debug_str_data = dwarf2Data->get_debug_str_data();
     const uint32_t cu_end_offset = cu->GetNextCompileUnitOffset();
     const uint8_t cu_addr_size = cu->GetAddressByteSize();
     lldb::offset_t offset = *offset_ptr;
@@ -591,7 +591,7 @@ DWARFDebugInfoEntry::DumpAncestry
 //        // The number of attributes are the same...
 //        if (a_attr_count > 0)
 //        {
-//            const DataExtractor* debug_str_data_ptr = &dwarf2Data->get_debug_str_data();
+//            const DWARFDataExtractor* debug_str_data_ptr = &dwarf2Data->get_debug_str_data();
 //
 //            uint32_t i;
 //            for (i=0; i<a_attr_count; ++i)
@@ -767,7 +767,7 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
 
     if (abbrevDecl)
     {
-        const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
+        const DWARFDataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
 
         if (!debug_info_data.ValidOffset(offset))
             return false;
@@ -880,7 +880,7 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
                         }
                         else
                         {
-                            const DataExtractor &debug_loc_data = dwarf2Data->get_debug_loc_data();
+                            const DWARFDataExtractor &debug_loc_data = dwarf2Data->get_debug_loc_data();
                             const dw_offset_t debug_loc_offset = form_value.Unsigned();
 
                             size_t loc_list_length = DWARFLocationList::Size(debug_loc_data, debug_loc_offset);
@@ -961,7 +961,7 @@ DWARFDebugInfoEntry::Dump
     uint32_t recurse_depth
 ) const
 {
-    const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
+    const DWARFDataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
     lldb::offset_t offset = m_offset;
 
     if (debug_info_data.ValidOffset(offset))
@@ -1055,7 +1055,7 @@ DWARFDebugInfoEntry::DumpAttribute
 (
     SymbolFileDWARF* dwarf2Data,
     const DWARFCompileUnit* cu,
-    const DataExtractor& debug_info_data,
+    const DWARFDataExtractor& debug_info_data,
     lldb::offset_t *offset_ptr,
     Stream &s,
     dw_attr_t attr,
@@ -1065,7 +1065,7 @@ DWARFDebugInfoEntry::DumpAttribute
     bool verbose    = s.GetVerbose();
     bool show_form  = s.GetFlags().Test(DWARFDebugInfo::eDumpFlag_ShowForm);
     
-    const DataExtractor* debug_str_data = dwarf2Data ? &dwarf2Data->get_debug_str_data() : NULL;
+    const DWARFDataExtractor* debug_str_data = dwarf2Data ? &dwarf2Data->get_debug_str_data() : NULL;
     if (verbose)
         s.Offset (*offset_ptr);
     else
@@ -1133,7 +1133,7 @@ DWARFDebugInfoEntry::DumpAttribute
                     form_value.Dump(s, debug_str_data, cu);
 
                 // Location description is inlined in data in the form value
-                DataExtractor locationData(debug_info_data, (*offset_ptr) - form_value.Unsigned(), form_value.Unsigned());
+                DWARFDataExtractor locationData(debug_info_data, (*offset_ptr) - form_value.Unsigned(), form_value.Unsigned());
                 if ( verbose ) s.PutCString(" ( ");
                 print_dwarf_expression (s, locationData, DWARFCompileUnit::GetAddressByteSize(cu), 4, false);
                 if ( verbose ) s.PutCString(" )");
@@ -1223,7 +1223,7 @@ DWARFDebugInfoEntry::GetAttributes
 
     if (abbrevDecl)
     {
-        const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
+        const DWARFDataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
 
         if (fixed_form_sizes == NULL)
             fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize(cu->GetAddressByteSize());
@@ -1324,7 +1324,7 @@ DWARFDebugInfoEntry::GetAttributeValue
 
         if (attr_idx != DW_INVALID_INDEX)
         {
-            const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
+            const DWARFDataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
 
             uint32_t idx=0;
             while (idx<attr_idx)
@@ -1497,7 +1497,7 @@ DWARFDebugInfoEntry::GetAttributeValueAsLocation
     SymbolFileDWARF* dwarf2Data,
     const DWARFCompileUnit* cu,
     const dw_attr_t attr,
-    DataExtractor& location_data,
+    DWARFDataExtractor& location_data,
     uint32_t &block_size
 ) const
 {
@@ -1514,7 +1514,7 @@ DWARFDebugInfoEntry::GetAttributeValueAsLocation
         if (blockData)
         {
             // We have an inlined location list in the .debug_info section
-            const DataExtractor& debug_info = dwarf2Data->get_debug_info_data();
+            const DWARFDataExtractor& debug_info = dwarf2Data->get_debug_info_data();
             dw_offset_t block_offset = blockData - debug_info.GetDataStart();
             block_size = (end_addr_offset - attr_offset) - form_value.Unsigned();
             location_data.SetData(debug_info, block_offset, block_size);

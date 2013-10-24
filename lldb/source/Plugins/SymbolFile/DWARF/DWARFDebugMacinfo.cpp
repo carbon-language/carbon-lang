@@ -26,7 +26,7 @@ DWARFDebugMacinfo::~DWARFDebugMacinfo()
 }
 
 void
-DWARFDebugMacinfo::Dump(Stream *s, const DataExtractor& macinfo_data, lldb::offset_t offset)
+DWARFDebugMacinfo::Dump(Stream *s, const DWARFDataExtractor& macinfo_data, lldb::offset_t offset)
 {
     DWARFDebugMacinfoEntry maninfo_entry;
     if (macinfo_data.GetByteSize() == 0)

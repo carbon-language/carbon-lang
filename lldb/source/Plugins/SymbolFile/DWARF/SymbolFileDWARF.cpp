@@ -699,8 +699,8 @@ SymbolFileDWARF::CalculateAbilities ()
     return abilities;
 }
 
-const DataExtractor&
-SymbolFileDWARF::GetCachedSectionData (uint32_t got_flag, SectionType sect_type, DataExtractor &data)
+const DWARFDataExtractor&
+SymbolFileDWARF::GetCachedSectionData (uint32_t got_flag, SectionType sect_type, DWARFDataExtractor &data)
 {
     if (m_flags.IsClear (got_flag))
     {
@@ -728,73 +728,73 @@ SymbolFileDWARF::GetCachedSectionData (uint32_t got_flag, SectionType sect_type,
     return data;
 }
 
-const DataExtractor&
+const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_abbrev_data()
 {
     return GetCachedSectionData (flagsGotDebugAbbrevData, eSectionTypeDWARFDebugAbbrev, m_data_debug_abbrev);
 }
 
-const DataExtractor&
+const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_aranges_data()
 {
     return GetCachedSectionData (flagsGotDebugArangesData, eSectionTypeDWARFDebugAranges, m_data_debug_aranges);
 }
 
-const DataExtractor&
+const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_frame_data()
 {
     return GetCachedSectionData (flagsGotDebugFrameData, eSectionTypeDWARFDebugFrame, m_data_debug_frame);
 }
 
-const DataExtractor&
+const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_info_data()
 {
     return GetCachedSectionData (flagsGotDebugInfoData, eSectionTypeDWARFDebugInfo, m_data_debug_info);
 }
 
-const DataExtractor&
+const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_line_data()
 {
     return GetCachedSectionData (flagsGotDebugLineData, eSectionTypeDWARFDebugLine, m_data_debug_line);
 }
 
-const DataExtractor&
+const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_loc_data()
 {
     return GetCachedSectionData (flagsGotDebugLocData, eSectionTypeDWARFDebugLoc, m_data_debug_loc);
 }
 
-const DataExtractor&
+const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_ranges_data()
 {
     return GetCachedSectionData (flagsGotDebugRangesData, eSectionTypeDWARFDebugRanges, m_data_debug_ranges);
 }
 
-const DataExtractor&
+const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_str_data()
 {
     return GetCachedSectionData (flagsGotDebugStrData, eSectionTypeDWARFDebugStr, m_data_debug_str);
 }
 
-const DataExtractor&
+const DWARFDataExtractor&
 SymbolFileDWARF::get_apple_names_data()
 {
     return GetCachedSectionData (flagsGotAppleNamesData, eSectionTypeDWARFAppleNames, m_data_apple_names);
 }
 
-const DataExtractor&
+const DWARFDataExtractor&
 SymbolFileDWARF::get_apple_types_data()
 {
     return GetCachedSectionData (flagsGotAppleTypesData, eSectionTypeDWARFAppleTypes, m_data_apple_types);
 }
 
-const DataExtractor&
+const DWARFDataExtractor&
 SymbolFileDWARF::get_apple_namespaces_data()
 {
     return GetCachedSectionData (flagsGotAppleNamespacesData, eSectionTypeDWARFAppleNamespaces, m_data_apple_namespaces);
 }
 
-const DataExtractor&
+const DWARFDataExtractor&
 SymbolFileDWARF::get_apple_objc_data()
 {
     return GetCachedSectionData (flagsGotAppleObjCData, eSectionTypeDWARFAppleObjC, m_data_apple_objc);
@@ -806,7 +806,7 @@ SymbolFileDWARF::DebugAbbrev()
 {
     if (m_abbr.get() == NULL)
     {
-        const DataExtractor &debug_abbrev_data = get_debug_abbrev_data();
+        const DWARFDataExtractor &debug_abbrev_data = get_debug_abbrev_data();
         if (debug_abbrev_data.GetByteSize() > 0)
         {
             m_abbr.reset(new DWARFDebugAbbrev());
@@ -1763,7 +1763,7 @@ SymbolFileDWARF::ParseChildMembers
                                 {
                                     Value initialValue(0);
                                     Value memberOffset(0);
-                                    const DataExtractor& debug_info_data = get_debug_info_data();
+                                    const DWARFDataExtractor& debug_info_data = get_debug_info_data();
                                     uint32_t block_length = form_value.Unsigned();
                                     uint32_t block_offset = form_value.BlockData() - debug_info_data.GetDataStart();
                                     if (DWARFExpression::Evaluate(NULL, // ExecutionContext *
@@ -2155,7 +2155,7 @@ SymbolFileDWARF::ParseChildMembers
                                 {
                                     Value initialValue(0);
                                     Value memberOffset(0);
-                                    const DataExtractor& debug_info_data = get_debug_info_data();
+                                    const DWARFDataExtractor& debug_info_data = get_debug_info_data();
                                     uint32_t block_length = form_value.Unsigned();
                                     uint32_t block_offset = form_value.BlockData() - debug_info_data.GetDataStart();
                                     if (DWARFExpression::Evaluate (NULL, 
@@ -4207,9 +4207,9 @@ SymbolFileDWARF::ParseChildParameters (const SymbolContext& sc,
                             case DW_AT_location:
     //                          if (form_value.BlockData())
     //                          {
-    //                              const DataExtractor& debug_info_data = debug_info();
+    //                              const DWARFDataExtractor& debug_info_data = debug_info();
     //                              uint32_t block_length = form_value.Unsigned();
-    //                              DataExtractor location(debug_info_data, form_value.BlockData() - debug_info_data.GetDataStart(), block_length);
+    //                              DWARFDataExtractor location(debug_info_data, form_value.BlockData() - debug_info_data.GetDataStart(), block_length);
     //                          }
     //                          else
     //                          {
@@ -7314,7 +7314,7 @@ SymbolFileDWARF::ParseVariableDIE
                         {
                             location_is_const_value_data = true;
                             // The constant value will be either a block, a data value or a string.
-                            const DataExtractor& debug_info_data = get_debug_info_data();
+                            const DWARFDataExtractor& debug_info_data = get_debug_info_data();
                             if (DWARFFormValue::IsBlockForm(form_value.Form()))
                             {
                                 // Retrieve the value as a block expression.
@@ -7356,7 +7356,7 @@ SymbolFileDWARF::ParseVariableDIE
                             has_explicit_location = true;
                             if (form_value.BlockData())
                             {
-                                const DataExtractor& debug_info_data = get_debug_info_data();
+                                const DWARFDataExtractor& debug_info_data = get_debug_info_data();
 
                                 uint32_t block_offset = form_value.BlockData() - debug_info_data.GetDataStart();
                                 uint32_t block_length = form_value.Unsigned();
@@ -7364,7 +7364,7 @@ SymbolFileDWARF::ParseVariableDIE
                             }
                             else
                             {
-                                const DataExtractor&    debug_loc_data = get_debug_loc_data();
+                                const DWARFDataExtractor&    debug_loc_data = get_debug_loc_data();
                                 const dw_offset_t debug_loc_offset = form_value.Unsigned();
 
                                 size_t loc_list_length = DWARFLocationList::Size(debug_loc_data, debug_loc_offset);

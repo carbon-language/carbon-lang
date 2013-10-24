@@ -57,7 +57,7 @@ DWARFDebugInfo::GetCompileUnitAranges ()
         Log *log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES));
 
         m_cu_aranges_ap.reset (new DWARFDebugAranges());
-        const DataExtractor &debug_aranges_data = m_dwarf2Data->get_debug_aranges_data();
+        const DWARFDataExtractor &debug_aranges_data = m_dwarf2Data->get_debug_aranges_data();
         if (debug_aranges_data.GetByteSize() > 0)
         {
             if (log)
@@ -163,7 +163,7 @@ DWARFDebugInfo::ParseCompileUnitHeadersIfNeeded()
         if (m_dwarf2Data != NULL)
         {
             lldb::offset_t offset = 0;
-            const DataExtractor &debug_info_data = m_dwarf2Data->get_debug_info_data();
+            const DWARFDataExtractor &debug_info_data = m_dwarf2Data->get_debug_info_data();
             while (debug_info_data.ValidOffset(offset))
             {
                 DWARFCompileUnitSP cu_sp(new DWARFCompileUnit(m_dwarf2Data));

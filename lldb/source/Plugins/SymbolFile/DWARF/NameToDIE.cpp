@@ -9,7 +9,6 @@
 
 #include "NameToDIE.h"
 #include "lldb/Core/ConstString.h"
-#include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/RegularExpression.h"

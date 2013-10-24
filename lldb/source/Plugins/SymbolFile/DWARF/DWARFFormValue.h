@@ -11,6 +11,7 @@
 #define SymbolFileDWARF_DWARFFormValue_h_
 
 #include <stddef.h> // for NULL
+#include "DWARFDataExtractor.h"
 
 class DWARFCompileUnit;
 
@@ -48,8 +49,8 @@ public:
     dw_form_t           Form()  const { return m_form; }
     void                SetForm(dw_form_t form) { m_form = form; }
     const ValueType&    Value() const { return m_value; }
-    void                Dump(lldb_private::Stream &s, const lldb_private::DataExtractor* debug_str_data, const DWARFCompileUnit* cu) const;
-    bool                ExtractValue(const lldb_private::DataExtractor& data,
+    void                Dump(lldb_private::Stream &s, const lldb_private::DWARFDataExtractor* debug_str_data, const DWARFCompileUnit* cu) const;
+    bool                ExtractValue(const lldb_private::DWARFDataExtractor& data,
                                      lldb::offset_t* offset_ptr,
                                      const DWARFCompileUnit* cu);
     bool                IsInlinedCStr() const { return (m_value.data != NULL) && m_value.data == (uint8_t*)m_value.value.cstr; }
@@ -62,16 +63,16 @@ public:
     void                SetUnsigned(uint64_t uval) { m_value.value.uval = uval; }
     int64_t             Signed() const { return m_value.value.sval; }
     void                SetSigned(int64_t sval) { m_value.value.sval = sval; }
-    const char*         AsCString(const lldb_private::DataExtractor* debug_str_data_ptr) const;
-    bool                SkipValue(const lldb_private::DataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu) const;
-    static bool         SkipValue(const dw_form_t form, const lldb_private::DataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu);
-//  static bool         TransferValue(dw_form_t form, const lldb_private::DataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu, BinaryStreamBuf& out_buff);
+    const char*         AsCString(const lldb_private::DWARFDataExtractor* debug_str_data_ptr) const;
+    bool                SkipValue(const lldb_private::DWARFDataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu) const;
+    static bool         SkipValue(const dw_form_t form, const lldb_private::DWARFDataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu);
+//  static bool         TransferValue(dw_form_t form, const lldb_private::DWARFDataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu, BinaryStreamBuf& out_buff);
 //  static bool         TransferValue(const DWARFFormValue& formValue, const DWARFCompileUnit* cu, BinaryStreamBuf& out_buff);
 //  static bool         PutUnsigned(dw_form_t form, dw_offset_t offset, uint64_t value, BinaryStreamBuf& out_buff, const DWARFCompileUnit* cu, bool fixup_cu_relative_refs);
     static bool         IsBlockForm(const dw_form_t form);
     static bool         IsDataForm(const dw_form_t form);
     static const uint8_t * GetFixedFormSizesForAddressSize (uint8_t addr_size);
-    static int          Compare (const DWARFFormValue& a, const DWARFFormValue& b, const DWARFCompileUnit* a_cu, const DWARFCompileUnit* b_cu, const lldb_private::DataExtractor* debug_str_data_ptr);
+    static int          Compare (const DWARFFormValue& a, const DWARFFormValue& b, const DWARFCompileUnit* a_cu, const DWARFCompileUnit* b_cu, const lldb_private::DWARFDataExtractor* debug_str_data_ptr);
 protected:
     dw_form_t   m_form;     // Form for this value
     ValueType   m_value;    // Contains all data for the form

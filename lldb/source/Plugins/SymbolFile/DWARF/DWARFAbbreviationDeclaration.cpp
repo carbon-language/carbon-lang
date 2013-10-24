@@ -32,13 +32,13 @@ DWARFAbbreviationDeclaration::DWARFAbbreviationDeclaration(dw_tag_t tag, uint8_t
 }
 
 bool
-DWARFAbbreviationDeclaration::Extract(const DataExtractor& data, lldb::offset_t* offset_ptr)
+DWARFAbbreviationDeclaration::Extract(const DWARFDataExtractor& data, lldb::offset_t* offset_ptr)
 {
     return Extract(data, offset_ptr, data.GetULEB128(offset_ptr));
 }
 
 bool
-DWARFAbbreviationDeclaration::Extract(const DataExtractor& data, lldb::offset_t *offset_ptr, dw_uleb128_t code)
+DWARFAbbreviationDeclaration::Extract(const DWARFDataExtractor& data, lldb::offset_t *offset_ptr, dw_uleb128_t code)
 {
     m_code = code;
     m_attributes.clear();
@@ -139,7 +139,7 @@ DWARFAbbreviationDeclaration::CopyExcludingAddressAttributes(const DWARFAbbrevia
 void
 DWARFAbbreviationDeclaration::CopyChangingStringToStrp(
     const DWARFAbbreviationDeclaration& abbr_decl,
-    const DataExtractor& debug_info_data,
+    const DWARFDataExtractor& debug_info_data,
     dw_offset_t debug_info_offset,
     const DWARFCompileUnit* cu,
     const uint32_t strp_min_len

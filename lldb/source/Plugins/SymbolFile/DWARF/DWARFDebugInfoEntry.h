@@ -142,7 +142,7 @@ public:
                     DWARFDebugAranges* debug_aranges) const;
 
     bool        FastExtract(
-                    const lldb_private::DataExtractor& debug_info_data,
+                    const lldb_private::DWARFDataExtractor& debug_info_data,
                     const DWARFCompileUnit* cu,
                     const uint8_t *fixed_form_sizes,
                     lldb::offset_t* offset_ptr);
@@ -214,7 +214,7 @@ public:
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,
                     const dw_attr_t attr,
-                    lldb_private::DataExtractor& data,
+                    lldb_private::DWARFDataExtractor& data,
                     uint32_t &block_size) const;
 
     const char* GetName(
@@ -289,7 +289,7 @@ public:
     static void DumpAttribute(
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,
-                    const lldb_private::DataExtractor& debug_info_data,
+                    const lldb_private::DWARFDataExtractor& debug_info_data,
                     lldb::offset_t *offset_ptr,
                     lldb_private::Stream &s,
                     dw_attr_t attr,

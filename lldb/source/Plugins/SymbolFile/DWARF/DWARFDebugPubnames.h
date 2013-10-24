@@ -20,7 +20,7 @@ class DWARFDebugPubnames
 {
 public:
             DWARFDebugPubnames();
-    bool    Extract(const lldb_private::DataExtractor& data);
+    bool    Extract(const lldb_private::DWARFDataExtractor& data);
     bool    GeneratePubnames(SymbolFileDWARF* dwarf2Data);
     bool    GeneratePubBaseTypes(SymbolFileDWARF* dwarf2Data);
 

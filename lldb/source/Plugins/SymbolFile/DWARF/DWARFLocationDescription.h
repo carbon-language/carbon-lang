@@ -14,7 +14,7 @@
 
 int
 print_dwarf_expression (lldb_private::Stream &s,
-                        const lldb_private::DataExtractor& data,
+                        const lldb_private::DWARFDataExtractor& data,
                         int address_size,
                         int dwarf_ref_size,
                         bool location_expression);

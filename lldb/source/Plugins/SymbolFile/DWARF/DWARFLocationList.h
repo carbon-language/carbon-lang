@@ -18,16 +18,16 @@ public:
     static dw_offset_t
     Dump (lldb_private::Stream &s,
           const DWARFCompileUnit* cu,
-          const lldb_private::DataExtractor& debug_loc_data,
+          const lldb_private::DWARFDataExtractor& debug_loc_data,
           lldb::offset_t offset);
 
     static bool
-    Extract (const lldb_private::DataExtractor& debug_loc_data,
+    Extract (const lldb_private::DWARFDataExtractor& debug_loc_data,
              lldb::offset_t* offset_ptr,
-             lldb_private::DataExtractor& location_list_data);
+             lldb_private::DWARFDataExtractor& location_list_data);
 
     static size_t
-    Size (const lldb_private::DataExtractor& debug_loc_data,
+    Size (const lldb_private::DWARFDataExtractor& debug_loc_data,
           lldb::offset_t offset);
 
 };

@@ -1,0 +1,40 @@
+//===-- DWARFDataExtractor.h ------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef liblldb_DWARFDataExtractor_h_                                 
+#define liblldb_DWARFDataExtractor_h_                                 
+
+// Other libraries and framework includes.
+#include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/dwarf.h"
+
+namespace lldb_private {
+
+class DWARFDataExtractor : public lldb_private::DataExtractor
+{
+public:
+    DWARFDataExtractor() : DataExtractor(), m_is_dwarf64(false) { };
+
+    DWARFDataExtractor (const DWARFDataExtractor& data, lldb::offset_t offset, lldb::offset_t length) :
+      DataExtractor(data, offset, length), m_is_dwarf64(false) { };
+
+    uint64_t
+    GetDWARFInitialLength(lldb::offset_t *offset_ptr) const;
+
+    dw_offset_t
+    GetDWARFOffset(lldb::offset_t *offset_ptr) const;
+
+protected:
+    mutable bool m_is_dwarf64;
+};
+
+}
+
+#endif  // liblldb_DWARFDataExtractor_h_                                 
+

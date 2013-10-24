@@ -87,7 +87,7 @@ DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data, lldb::offset_t *offset_pt
     range_list.Clear();
 
     lldb::offset_t range_offset = *offset_ptr;
-    const DataExtractor& debug_ranges_data = dwarf2Data->get_debug_ranges_data();
+    const DWARFDataExtractor& debug_ranges_data = dwarf2Data->get_debug_ranges_data();
     uint32_t addr_size = debug_ranges_data.GetAddressByteSize();
 
     while (debug_ranges_data.ValidOffsetForDataOfSize(*offset_ptr, 2 * addr_size))
@@ -132,7 +132,7 @@ DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data, lldb::offset_t *offset_pt
 
 
 void
-DWARFDebugRanges::Dump(Stream &s, const DataExtractor& debug_ranges_data, lldb::offset_t *offset_ptr, dw_addr_t cu_base_addr)
+DWARFDebugRanges::Dump(Stream &s, const DWARFDataExtractor& debug_ranges_data, lldb::offset_t *offset_ptr, dw_addr_t cu_base_addr)
 {
     uint32_t addr_size = s.GetAddressByteSize();
     bool verbose = s.GetVerbose();

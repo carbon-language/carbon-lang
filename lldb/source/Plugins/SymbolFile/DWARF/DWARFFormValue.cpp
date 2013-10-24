@@ -114,7 +114,7 @@ DWARFFormValue::DWARFFormValue(dw_form_t form) :
 }
 
 bool
-DWARFFormValue::ExtractValue(const DataExtractor& data, lldb::offset_t* offset_ptr, const DWARFCompileUnit* cu)
+DWARFFormValue::ExtractValue(const DWARFDataExtractor& data, lldb::offset_t* offset_ptr, const DWARFCompileUnit* cu)
 {
     bool indirect = false;
     bool is_block = false;
@@ -183,13 +183,13 @@ DWARFFormValue::ExtractValue(const DataExtractor& data, lldb::offset_t* offset_p
 }
 
 bool
-DWARFFormValue::SkipValue(const DataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu) const
+DWARFFormValue::SkipValue(const DWARFDataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu) const
 {
     return DWARFFormValue::SkipValue(m_form, debug_info_data, offset_ptr, cu);
 }
 
 bool
-DWARFFormValue::SkipValue(dw_form_t form, const DataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu)
+DWARFFormValue::SkipValue(dw_form_t form, const DWARFDataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu)
 {
     switch (form)
     {
@@ -278,7 +278,7 @@ DWARFFormValue::SkipValue(dw_form_t form, const DataExtractor& debug_info_data, 
 
 
 void
-DWARFFormValue::Dump(Stream &s, const DataExtractor* debug_str_data, const DWARFCompileUnit* cu) const
+DWARFFormValue::Dump(Stream &s, const DWARFDataExtractor* debug_str_data, const DWARFCompileUnit* cu) const
 {
     uint64_t uvalue = Unsigned();
     bool cu_relative_offset = false;
@@ -378,7 +378,7 @@ DWARFFormValue::Dump(Stream &s, const DataExtractor* debug_str_data, const DWARF
 }
 
 const char*
-DWARFFormValue::AsCString(const DataExtractor* debug_str_data_ptr) const
+DWARFFormValue::AsCString(const DWARFDataExtractor* debug_str_data_ptr) const
 {
     if (IsInlinedCStr())
         return m_value.value.cstr;
@@ -496,7 +496,7 @@ DWARFFormValue::IsDataForm(const dw_form_t form)
 }
 
 int
-DWARFFormValue::Compare (const DWARFFormValue& a_value, const DWARFFormValue& b_value, const DWARFCompileUnit* a_cu, const DWARFCompileUnit* b_cu, const DataExtractor* debug_str_data_ptr)
+DWARFFormValue::Compare (const DWARFFormValue& a_value, const DWARFFormValue& b_value, const DWARFCompileUnit* a_cu, const DWARFCompileUnit* b_cu, const DWARFDataExtractor* debug_str_data_ptr)
 {
     dw_form_t a_form = a_value.Form();
     dw_form_t b_form = b_value.Form();
