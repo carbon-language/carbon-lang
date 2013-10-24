@@ -172,20 +172,22 @@ void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
       }
     }
     if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
-      SkipUntil(tok::r_paren, false);
+      SkipUntil(tok::r_paren);
     SourceLocation Loc = Tok.getLocation();
-    if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen)) {
-      SkipUntil(tok::r_paren, false);
-    }
+    if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
+      SkipUntil(tok::r_paren);
     if (endLoc)
       *endLoc = Loc;
   }
 }
 
-/// \brief Determine whether the given attribute has all expression arguments.
-static bool attributeHasExprArgs(const IdentifierInfo &II) {
-  return llvm::StringSwitch<bool>(II.getName())
-#include "clang/Parse/AttrExprArgs.inc"
+/// \brief Determine whether the given attribute has an identifier argument.
+static bool attributeHasIdentifierArg(const IdentifierInfo &II) {
+  StringRef Name = II.getName();
+  if (Name.size() >= 4 && Name.startswith("__") && Name.endswith("__"))
+    Name = Name.drop_front(2).drop_back(2);
+  return llvm::StringSwitch<bool>(Name)
+#include "clang/Parse/AttrIdentifierArg.inc"
            .Default(false);
 }
 
@@ -210,8 +212,11 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
 
   assert(Tok.is(tok::l_paren) && "Attribute arg list not starting with '('");
 
+  AttributeList::Kind AttrKind =
+      AttributeList::getKind(AttrName, ScopeName, AttributeList::AS_GNU);
+
   // Availability attributes have their own grammar.
-  if (AttrName->isStr("availability")) {
+  if (AttrKind == AttributeList::AT_Availability) {
     ParseAvailabilityAttribute(*AttrName, AttrNameLoc, Attrs, EndLoc);
     return;
   }
@@ -222,12 +227,13 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
     return;
   }
   // Type safety attributes have their own grammar.
-  if (AttrName->isStr("type_tag_for_datatype")) {
+  if (AttrKind == AttributeList::AT_TypeTagForDatatype) {
     ParseTypeTagForDatatypeAttribute(*AttrName, AttrNameLoc, Attrs, EndLoc);
     return;
   }
 
-  ConsumeParen(); // ignore the left paren loc for now
+  // Ignore the left paren location for now.
+  ConsumeParen();
 
   bool BuiltinType = false;
   ArgsVector ArgExprs;
@@ -260,17 +266,28 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
     break;
 
   case tok::identifier: {
-    if (AttrName->isStr("vec_type_hint")) {
+    if (AttrKind == AttributeList::AT_VecTypeHint) {
       T = ParseTypeName(&TypeRange);
       TypeParsed = true;
       break;
     }
-    // If this attribute doesn't want an 'identifier' argument, then this
-    // argument should be parsed as an expression.
-    if (attributeHasExprArgs(*AttrName))
-      break;
 
-    ArgExprs.push_back(ParseIdentifierLoc());
+    // If this attribute wants an 'identifier' argument, make it so.
+    if (attributeHasIdentifierArg(*AttrName))
+      ArgExprs.push_back(ParseIdentifierLoc());
+
+    // __attribute__((iboutletcollection)) expects an identifier then
+    // some other (ignored) things.
+    if (AttrKind == AttributeList::AT_IBOutletCollection)
+      ArgExprs.push_back(ParseIdentifierLoc());
+
+    // If we don't know how to parse this attribute, but this is the only
+    // token in this argument, assume it's meant to be an identifier.
+    if (AttrKind == AttributeList::UnknownAttribute) {
+      const Token &Next = NextToken();
+      if (Next.is(tok::r_paren) || Next.is(tok::comma))
+        ArgExprs.push_back(ParseIdentifierLoc());
+    }
   } break;
 
   default:
@@ -280,7 +297,7 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
   bool isInvalid = false;
   bool isParmType = false;
 
-  if (!BuiltinType && !AttrName->isStr("vec_type_hint") &&
+  if (!BuiltinType && AttrKind != AttributeList::AT_VecTypeHint &&
       (!ArgExprs.empty() ? Tok.is(tok::comma) : Tok.isNot(tok::r_paren))) {
     // Eat the comma.
     if (!ArgExprs.empty())
@@ -298,8 +315,8 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
         break;
       ConsumeToken(); // Eat the comma, move to the next argument
     }
-  }
-  else if (Tok.is(tok::less) && AttrName->isStr("iboutletcollection")) {
+  } else if (Tok.is(tok::less) &&
+             AttrKind == AttributeList::AT_IBOutletCollection) {
     if (!ExpectAndConsume(tok::less, diag::err_expected_less_after, "<",
                           tok::greater)) {
       while (Tok.is(tok::identifier)) {
@@ -315,7 +332,7 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
         Diag(Tok, diag::err_iboutletcollection_with_protocol);
       SkipUntil(tok::r_paren, false, true); // skip until ')'
     }
-  } else if (AttrName->isStr("vec_type_hint")) {
+  } else if (AttrKind == AttributeList::AT_VecTypeHint) {
     if (T.get() && !T.isInvalid())
       isParmType = true;
     else {

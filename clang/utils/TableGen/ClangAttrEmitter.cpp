@@ -1163,10 +1163,18 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
   OS << "#endif\n";
 }
 
-// Emits the all-arguments-are-expressions property for attributes.
-void EmitClangAttrExprArgsList(RecordKeeper &Records, raw_ostream &OS) {
+static bool isIdentifierArgument(Record *Arg) {
+  return !Arg->getSuperClasses().empty() &&
+         llvm::StringSwitch<bool>(Arg->getSuperClasses().back()->getName())
+             .Case("IdentifierArgument", true)
+             .Case("EnumArgument", true)
+             .Default(false);
+}
+
+// Emits the first-argument-is-identifier property for attributes.
+void EmitClangAttrIdentifierArgList(RecordKeeper &Records, raw_ostream &OS) {
   emitSourceFileHeader("llvm::StringSwitch code to match attributes with "
-                       "expression arguments", OS);
+                       "an identifier argument", OS);
 
   std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr");
 
@@ -1174,35 +1182,19 @@ void EmitClangAttrExprArgsList(RecordKeeper &Records, raw_ostream &OS) {
        I != E; ++I) {
     Record &Attr = **I;
 
-    // Determine whether the first argument is something that is always
-    // an expression.
+    // Determine whether the first argument is an identifier.
     std::vector<Record *> Args = Attr.getValueAsListOfDefs("Args");
-    if (Args.empty() || Args[0]->getSuperClasses().empty())
+    if (Args.empty() || !isIdentifierArgument(Args[0]))
       continue;
 
-    // Check whether this is one of the argument kinds that implies an
-    // expression.
-    // FIXME: Aligned is weird.
-    if (!llvm::StringSwitch<bool>(Args[0]->getSuperClasses().back()->getName())
-          .Case("AlignedArgument", true)
-          .Case("BoolArgument", true)
-          .Case("DefaultIntArgument", true)
-          .Case("FunctionArgument", true)
-          .Case("IntArgument", true)
-          .Case("ExprArgument", true)
-          .Case("StringArgument", true)
-          .Case("UnsignedArgument", true)
-          .Case("VariadicUnsignedArgument", true)
-          .Case("VariadicExprArgument", true)
-          .Default(false))
-      continue;
-
+    // All these spellings take an identifier argument.
     std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
-
+    std::set<std::string> Emitted;
     for (std::vector<Record*>::const_iterator I = Spellings.begin(),
          E = Spellings.end(); I != E; ++I) {
-      OS << ".Case(\"" << (*I)->getValueAsString("Name") << "\", "
-         << "true" << ")\n";
+      if (Emitted.insert((*I)->getValueAsString("Name")).second)
+        OS << ".Case(\"" << (*I)->getValueAsString("Name") << "\", "
+           << "true" << ")\n";
     }
   }
 }

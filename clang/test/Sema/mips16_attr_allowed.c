@@ -13,8 +13,8 @@ void foo16_();
 void foo32__() __attribute__((nomips16));
 void foo32__() __attribute__((mips16));
 
-void foo32a() __attribute__((nomips16(xyz))) ; // expected-error {{'nomips16' attribute takes no arguments}}
-void __attribute__((mips16(xyz))) foo16a(); // expected-error {{'mips16' attribute takes no arguments}}
+void foo32a() __attribute__((nomips16(0))) ; // expected-error {{'nomips16' attribute takes no arguments}}
+void __attribute__((mips16(1))) foo16a(); // expected-error {{'mips16' attribute takes no arguments}}
 
 void __attribute__((nomips16(1, 2))) foo32b(); // expected-error {{'nomips16' attribute takes no arguments}}
 void __attribute__((mips16(1, 2))) foo16b(); // expected-error {{'mips16' attribute takes no arguments}}

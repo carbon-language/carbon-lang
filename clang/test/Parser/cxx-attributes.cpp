@@ -11,3 +11,9 @@ template <typename T> class X {
   template <typename S> void X<S>::f() __attribute__((locks_excluded())); // expected-error{{nested name specifier 'X<S>::' for declaration does not refer into a class, class template or class template partial specialization}} \
                                                                           // expected-warning{{attribute locks_excluded ignored, because it is not attached to a declaration}}
 };
+
+namespace PR17666 {
+  const int A = 1;
+  typedef int __attribute__((__aligned__(A))) T1;
+  int check1[__alignof__(T1) == 1 ? 1 : -1];
+}
