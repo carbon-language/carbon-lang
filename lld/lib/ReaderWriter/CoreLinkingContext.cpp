@@ -12,7 +12,6 @@
 #include "lld/Core/Pass.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Passes/LayoutPass.h"
-#include "lld/ReaderWriter/Simple.h"
 
 #include "llvm/ADT/ArrayRef.h"
 
@@ -150,10 +149,10 @@ private:
   uint32_t _ordinal;
 };
 
-class TestingPassFile : public SimpleFile {
+class TestingPassFile : public MutableFile {
 public:
   TestingPassFile(const LinkingContext &ctx)
-      : SimpleFile(ctx, "Testing pass") {}
+      : MutableFile(ctx, "Testing pass") {}
 
   virtual void addAtom(const Atom &atom) {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom))

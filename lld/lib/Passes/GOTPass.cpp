@@ -67,12 +67,12 @@ findGOTAtom(const Atom *target,
 }
 } // end anonymous namespace
 
-void GOTPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
+void GOTPass::perform(MutableFile &mergedFile) {
   // Use map so all pointers to same symbol use same GOT entry.
   llvm::DenseMap<const Atom*, const DefinedAtom*> targetToGOT;
 
   // Scan all references in all atoms.
-  for (const DefinedAtom *atom : mergedFile->defined()) {
+  for(const DefinedAtom *atom : mergedFile.defined()) {
     for (const Reference *ref : *atom) {
       // Look at instructions accessing the GOT.
       bool canBypassGOT;
@@ -102,7 +102,7 @@ void GOTPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
 
   // add all created GOT Atoms to master file
   for (auto &it : targetToGOT) {
-    mergedFile->addAtom(*it.second);
+    mergedFile.addAtom(*it.second);
   }
 }
 }

@@ -4,7 +4,6 @@
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 
@@ -38,9 +37,8 @@ public:
   };
 
   Resolver(LinkingContext &context)
-      : _context(context), _symbolTable(context),
-        _result(new MergedFile(context)), _haveLLVMObjs(false),
-        _addToFinalSection(false) {}
+      : _context(context), _symbolTable(context), _result(context),
+        _haveLLVMObjs(false), _addToFinalSection(false) {}
 
   virtual ~Resolver() {}
 
@@ -64,7 +62,9 @@ public:
   /// @brief do work of merging and resolving and return list
   bool resolve();
 
-  std::unique_ptr<MutableFile> resultFile() { return std::move(_result); }
+  MutableFile& resultFile() {
+    return _result;
+  }
 
 private:
 
@@ -117,7 +117,7 @@ private:
   std::set<const Atom *>        _deadStripRoots;
   std::vector<const Atom *>     _atomsWithUnresolvedReferences;
   llvm::DenseSet<const Atom *>  _liveAtoms;
-  std::unique_ptr<MergedFile> _result;
+  MergedFile                    _result;
   bool                          _haveLLVMObjs;
   bool _addToFinalSection;
 };

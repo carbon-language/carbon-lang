@@ -37,6 +37,3 @@ ELF-hexagon: absolute-atoms:
 ELF-hexagon:   - name:            sample.c
 ELF-hexagon:     scope:           static
 ELF-hexagon:     value:           0x0000000000000000
-
-# Disable the test for now as this is going to fail with DEBUG mode
-REQUIRES: disable

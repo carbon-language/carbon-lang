@@ -60,9 +60,9 @@ class GroupedSectionsPass : public lld::Pass {
 public:
   GroupedSectionsPass() {}
 
-  virtual void perform(std::unique_ptr<MutableFile> &mergedFile) {
-    std::map<StringRef, std::vector<COFFDefinedAtom *> > sectionToHeadAtoms(
-        filterHeadAtoms(*mergedFile));
+  virtual void perform(MutableFile &mergedFile) {
+    std::map<StringRef, std::vector<COFFDefinedAtom *>> sectionToHeadAtoms(
+        filterHeadAtoms(mergedFile));
     std::vector<std::vector<COFFDefinedAtom *>> groupedAtomsList(
         groupBySectionName(sectionToHeadAtoms));
     for (auto &groupedAtoms : groupedAtomsList)

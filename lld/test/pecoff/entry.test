@@ -7,6 +7,3 @@
 # RUN: FileCheck -check-prefix=CHECK %s < %t1.log
 
 CHECK: : _main
-
-# Disable the test for now as this is going to fail with DEBUG mode
-REQUIRES: disable

@@ -22,6 +22,3 @@ IMPORT-NEXT:        1  fn
 IMPORT-NEXT:        1
 
 ERROR-NOT: foo
-
-# Disable the test for now as this is going to fail with DEBUG mode
-REQUIRES: disable

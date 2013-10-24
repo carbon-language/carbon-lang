@@ -52,6 +52,3 @@ SECTIONS:       IMAGE_SCN_MEM_WRITE (0x80000000)
 SECTIONS:     ]
 SECTIONS:   }
 SECTIONS: ]
-
-# Disable the test for now as this is going to fail with DEBUG mode
-REQUIRES: disable

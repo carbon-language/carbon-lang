@@ -219,10 +219,10 @@ public:
   ///
   /// After all references are handled, the atoms created during that are all
   /// added to mf.
-  virtual void perform(std::unique_ptr<MutableFile> &mf) {
+  virtual void perform(MutableFile &mf) {
     ScopedTask task(getDefaultDomain(), "X86-64 GOT/PLT Pass");
     // Process all references.
-    for (const auto &atom : mf->defined())
+    for (const auto &atom : mf.defined())
       for (const auto &ref : *atom)
         handleReference(*atom, *ref);
 
@@ -230,29 +230,29 @@ public:
     uint64_t ordinal = 0;
     if (_PLT0) {
       _PLT0->setOrdinal(ordinal++);
-      mf->addAtom(*_PLT0);
+      mf.addAtom(*_PLT0);
     }
     for (auto &plt : _pltVector) {
       plt->setOrdinal(ordinal++);
-      mf->addAtom(*plt);
+      mf.addAtom(*plt);
     }
     if (_null) {
       _null->setOrdinal(ordinal++);
-      mf->addAtom(*_null);
+      mf.addAtom(*_null);
     }
     if (_PLT0) {
       _got0->setOrdinal(ordinal++);
       _got1->setOrdinal(ordinal++);
-      mf->addAtom(*_got0);
-      mf->addAtom(*_got1);
+      mf.addAtom(*_got0);
+      mf.addAtom(*_got1);
     }
     for (auto &got : _gotVector) {
       got->setOrdinal(ordinal++);
-      mf->addAtom(*got);
+      mf.addAtom(*got);
     }
     for (auto obj : _objectVector) {
       obj->setOrdinal(ordinal++);
-      mf->addAtom(*obj);
+      mf.addAtom(*obj);
     }
   }
 

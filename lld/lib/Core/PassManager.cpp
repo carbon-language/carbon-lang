@@ -15,7 +15,7 @@
 #include "llvm/Support/ErrorOr.h"
 
 namespace lld {
-ErrorOr<void> PassManager::runOnFile(std::unique_ptr<MutableFile> &mf) {
+ErrorOr<void> PassManager::runOnFile(MutableFile &mf) {
   for (auto &pass : _passes) {
     pass->perform(mf);
   }

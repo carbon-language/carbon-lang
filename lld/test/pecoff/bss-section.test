@@ -18,6 +18,3 @@ CHECK-NEXT:      IMAGE_SCN_MEM_READ
 CHECK-NEXT:      IMAGE_SCN_MEM_WRITE
 CHECK-NEXT:    ]
 CHECK-NEXT:  }
-
-# Disable the test for now as this is going to fail with DEBUG mode
-REQUIRES: disable

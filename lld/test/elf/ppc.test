@@ -12,6 +12,3 @@ ppc-readobj:     ABIVersion: 0
 ppc-readobj:   }
 ppc-readobj:   Type: Executable (0x2)
 ppc-readobj:   Machine: EM_PPC (0x14)
-
-# Disable the test for now as this is going to fail with DEBUG mode
-REQUIRES: disable

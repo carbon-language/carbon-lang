@@ -48,7 +48,7 @@ public:
   LayoutPass() : Pass(), _compareAtoms(*this) {}
 
   /// Sorts atoms in mergedFile by content type then by command line order.
-  virtual void perform(std::unique_ptr<MutableFile> &mergedFile);
+  virtual void perform(MutableFile &mergedFile);
 
   virtual ~LayoutPass() {}
 

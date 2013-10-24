@@ -480,7 +480,7 @@ bool Resolver::resolve() {
   }
   this->removeCoalescedAwayAtoms();
   this->linkTimeOptimize();
-  this->_result->addAtoms(_atoms);
+  this->_result.addAtoms(_atoms);
   return true;
 }
 

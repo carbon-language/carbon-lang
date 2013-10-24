@@ -40,7 +40,3 @@ NOTESEGMENT:      PF_W (0x2)
 NOTESEGMENT:    ]
 NOTESEGMENT:    Alignment: 4
 NOTESEGMENT:  }
-
-# Disable the test for now as this is going to fail with DEBUG mode
-REQUIRES: disable
-

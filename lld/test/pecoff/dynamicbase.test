@@ -21,6 +21,3 @@ DYNAMICBASE: IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE
 NODYNAMICBASE-NOT: IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE
 
 DYNAMIC-AND-FIXED: /dynamicbase must not be specified with /fixed
-
-# Disable the test for now as this is going to fail with DEBUG mode
-REQUIRES: disable
