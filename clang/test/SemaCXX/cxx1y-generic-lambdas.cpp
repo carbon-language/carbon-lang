@@ -53,7 +53,10 @@ int test() {
   char (*fc)(char) = L; //expected-error{{no viable conversion}}
   double (*fd)(double) = L; //expected-error{{no viable conversion}}
 }
-
+{
+  int* (*fp)(int*) = [](auto *a) -> auto* { return a; };
+  fp(0);
+}
 }
 
 namespace more_converion_to_ptr_to_function_tests {
