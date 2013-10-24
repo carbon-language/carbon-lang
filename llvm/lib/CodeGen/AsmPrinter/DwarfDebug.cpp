@@ -1959,9 +1959,10 @@ DwarfUnits::computeSizeAndOffset(DIE *Die, unsigned Offset) {
   return Offset;
 }
 
-// Compute the size and offset of all the DIEs.
+// Compute the size and offset for each DIE.
 void DwarfUnits::computeSizeAndOffsets() {
-  // Offset from the beginning of debug info section.
+  // Iterate over each compile unit and set the size and offsets for each
+  // DIE within each compile unit. All offsets are CU relative.
   for (SmallVectorImpl<CompileUnit *>::iterator I = CUs.begin(),
          E = CUs.end(); I != E; ++I) {
     unsigned Offset =
