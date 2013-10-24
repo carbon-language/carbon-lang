@@ -2050,13 +2050,6 @@ void DwarfDebug::emitDIE(DIE *Die, std::vector<DIEAbbrev *> *Abbrevs) {
       Asm->OutStreamer.AddComment(dwarf::AttributeString(Attr));
 
     switch (Attr) {
-    case dwarf::DW_AT_abstract_origin: {
-      DIEEntry *E = cast<DIEEntry>(Values[i]);
-      DIE *Origin = E->getEntry();
-      unsigned Addr = Origin->getOffset();
-      Asm->EmitInt32(Addr);
-      break;
-    }
     case dwarf::DW_AT_ranges: {
       // DW_AT_range Value encodes offset in debug_range section.
       DIEInteger *V = cast<DIEInteger>(Values[i]);
