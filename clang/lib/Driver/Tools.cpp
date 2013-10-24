@@ -645,12 +645,16 @@ static void getARMFPUFeatures(const Driver &D, const Arg *A,
     Features.push_back("-neon");
   } else if (FPU == "fp-armv8") {
     Features.push_back("+fp-armv8");
+    Features.push_back("-neon");
+    Features.push_back("-crypto");
   } else if (FPU == "neon-fp-armv8") {
     Features.push_back("+fp-armv8");
     Features.push_back("+neon");
+    Features.push_back("-crypto");
   } else if (FPU == "crypto-neon-fp-armv8") {
-    Features.push_back("+crypto");
     Features.push_back("+fp-armv8");
+    Features.push_back("+neon");
+    Features.push_back("+crypto");
   } else if (FPU == "neon") {
     Features.push_back("+neon");
   } else if (FPU == "none") {

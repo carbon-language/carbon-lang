@@ -10,6 +10,23 @@
 // CHECK-V7: __ARM_ARCH_7A__ 1
 // CHECK-NOT-V7: __ARM_FEATURE_CRC32
 
+// RUN: %clang -target armv8a -mfloat-abi=hard -x c -E -dM %s | FileCheck --check-prefix=CHECK-V8-BAREHF %s
+// CHECK-V8-BAREHF: __ARMEL__ 1
+// CHECK-V8-BAREHF: __ARM_ARCH 8
+// CHECK-V8-BAREHF: __ARM_ARCH_8A__ 1
+// CHECK-V8-BAREHF: __ARM_FEATURE_CRC32 1
+// CHECK-V8-BAREHF: __ARM_NEON__ 1
+// CHECK-V8-BAREHF: __VFP_FP__ 1
+
+// RUN: %clang -target armv8a -mfloat-abi=hard -mfpu=fp-armv8 -x c -E -dM %s | FileCheck --check-prefix=CHECK-V8-BAREHF-FP %s
+// CHECK-V8-BAREHF-FP-NOT: __ARM_NEON__ 1
+// CHECK-V8-BAREHF-FP: __VFP_FP__ 1
+
+// RUN: %clang -target armv8a -mfloat-abi=hard -mfpu=neon-fp-armv8 -x c -E -dM %s | FileCheck --check-prefix=CHECK-V8-BAREHF-NEON-FP %s
+// RUN: %clang -target armv8a -mfloat-abi=hard -mfpu=crypto-neon-fp-armv8 -x c -E -dM %s | FileCheck --check-prefix=CHECK-V8-BAREHF-NEON-FP %s
+// CHECK-V8-BAREHF-NEON-FP: __ARM_NEON__ 1
+// CHECK-V8-BAREHF-NEON-FP: __VFP_FP__ 1
+
 // Check that -mhwdiv works properly for armv8/thumbv8 (enabled by default).
 
 // RUN: %clang -target armv8 -x c -E -dM %s -o - | FileCheck --check-prefix=ARMV8 %s

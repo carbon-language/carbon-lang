@@ -47,19 +47,29 @@
 // RUN:   | FileCheck --check-prefix=CHECK-SOFT-FLOAT %s
 // CHECK-SOFT-FLOAT: "-target-feature" "-neon"
 
+// RUN: %clang -target armv8 -mfpu=fp-armv8 %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-ARMV8-SOFT-FLOAT %s
+// CHECK-ARMV8-SOFT-FLOAT: "-target-feature" "+fp-armv8"
+// CHECK-ARMV8-SOFT-FLOAT: "-target-feature" "-crypto"
+// CHECK-ARMV8-SOFT-FLOAT: "-target-feature" "-neon"
+
 // RUN: %clang -target armv8-linux-gnueabihf -mfpu=fp-armv8 %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-FP-ARMV8 %s
 // CHECK-FP-ARMV8: "-target-feature" "+fp-armv8"
+// CHECK-FP-ARMV8: "-target-feature" "-neon"
+// CHECK-FP-ARMV8: "-target-feature" "-crypto"
 
 // RUN: %clang -target armv8-linux-gnueabihf -mfpu=neon-fp-armv8 %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NEON-FP-ARMV8 %s
 // CHECK-NEON-FP-ARMV8: "-target-feature" "+fp-armv8"
 // CHECK-NEON-FP-ARMV8: "-target-feature" "+neon"
+// CHECK-NEON-FP-ARMV8: "-target-feature" "-crypto"
 
 // RUN: %clang -target armv8-linux-gnueabihf -mfpu=crypto-neon-fp-armv8 %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-CRYPTO-NEON-FP-ARMV8 %s
-// CHECK-CRYPTO-NEON-FP-ARMV8: "-target-feature" "+crypto"
 // CHECK-CRYPTO-NEON-FP-ARMV8: "-target-feature" "+fp-armv8"
+// CHECK-CRYPTO-NEON-FP-ARMV8: "-target-feature" "+neon"
+// CHECK-CRYPTO-NEON-FP-ARMV8: "-target-feature" "+crypto"
 
 // RUN: %clang -target armv8-linux-gnueabi -mfpu=none %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NO-FP %s

@@ -3598,7 +3598,8 @@ class ARMTargetInfo : public TargetInfo {
     VFP2FPU = (1 << 0),
     VFP3FPU = (1 << 1),
     VFP4FPU = (1 << 2),
-    NeonFPU = (1 << 3)
+    NeonFPU = (1 << 3),
+    FPARMV8 = (1 << 4)
   };
 
   // Possible HWDiv features.
@@ -3608,7 +3609,7 @@ class ARMTargetInfo : public TargetInfo {
   };
 
   static bool FPUModeIsVFP(FPUMode Mode) {
-    return Mode & (VFP2FPU | VFP3FPU | VFP4FPU | NeonFPU);
+    return Mode & (VFP2FPU | VFP3FPU | VFP4FPU | NeonFPU | FPARMV8);
   }
 
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
@@ -3622,7 +3623,7 @@ class ARMTargetInfo : public TargetInfo {
     FP_Neon
   } FPMath;
 
-  unsigned FPU : 4;
+  unsigned FPU : 5;
 
   unsigned IsAAPCS : 1;
   unsigned IsThumb : 1;
@@ -3778,8 +3779,12 @@ public:
       Features["neon"] = true;
       Features["hwdiv"] = true;
       Features["hwdiv-arm"] = true;
-    } else if (CPU == "cortex-r5" || CPU == "cortex-a53"||
-               CPU == "cortex-a57" || CPU == "cortex-m3" ||
+    } else if (CPU == "cortex-a53" || CPU == "cortex-a57") {
+      Features["fp-armv8"] = true;
+      Features["neon"] = true;
+      Features["hwdiv"] = true;
+      Features["hwdiv-arm"] = true;
+    } else if (CPU == "cortex-r5" || CPU == "cortex-m3" ||
                CPU == "cortex-m4" ||
                // Enable the hwdiv extension for all v8a AArch32 cores by
                // default.
@@ -3806,6 +3811,8 @@ public:
         FPU |= VFP3FPU;
       else if (Features[i] == "+vfp4")
         FPU |= VFP4FPU;
+      else if (Features[i] == "+fp-armv8")
+        FPU |= FPARMV8;
       else if (Features[i] == "+neon")
         FPU |= NeonFPU;
       else if (Features[i] == "+hwdiv")
@@ -3960,7 +3967,7 @@ public:
     // the VFP define, hence the soft float and arch check. This is subtly
     // different from gcc, we follow the intent which was that it should be set
     // when Neon instructions are actually available.
-    if ((FPU & NeonFPU) && !SoftFloat && CPUArchVer == 7)
+    if ((FPU & NeonFPU) && !SoftFloat && CPUArchVer >= 7)
       Builder.defineMacro("__ARM_NEON__");
 
     if (CPUArchVer == 8)
