@@ -7246,528 +7246,6 @@ MachineBasicBlock *OtherSucc(MachineBasicBlock *MBB, MachineBasicBlock *Succ) {
   llvm_unreachable("Expecting a BB with two successors!");
 }
 
-namespace {
-// This class is a helper for lowering the COPY_STRUCT_BYVAL_I32 instruction.
-// It defines the operations needed to lower the byval copy. We use a helper
-// class because the opcodes and machine instructions are different for each
-// subtarget, but the overall algorithm for the lowering is the same.  The
-// implementation of each operation will be defined separately for arm, thumb1,
-// and thumb2 targets by subclassing this base class. See
-// ARMTargetLowering::EmitStructByval() for how these operations are used.
-class TargetStructByvalEmitter {
-public:
-  TargetStructByvalEmitter(const TargetInstrInfo *TII_,
-                           MachineRegisterInfo &MRI_,
-                           const TargetRegisterClass *TRC_)
-      : TII(TII_), MRI(MRI_), TRC(TRC_) {}
-
-  // Emit a post-increment load of "unit" size. The unit size is based on the
-  // alignment of the struct being copied (4, 2, or 1 bytes). Alignments higher
-  // than 4 are handled separately by using NEON instructions.
-  //
-  // \param baseReg the register holding the address to load.
-  // \param baseOut the register to recieve the incremented address.
-  // \returns the register holding the loaded value.
-  virtual unsigned emitUnitLoad(MachineBasicBlock *BB, MachineInstr *MI,
-                                DebugLoc &dl, unsigned baseReg,
-                                unsigned baseOut) = 0;
-
-  // Emit a post-increment store of "unit" size. The unit size is based on the
-  // alignment of the struct being copied (4, 2, or 1 bytes). Alignments higher
-  // than 4 are handled separately by using NEON instructions.
-  //
-  // \param baseReg the register holding the address to store.
-  // \param storeReg the register holding the value to store.
-  // \param baseOut the register to recieve the incremented address.
-  virtual void emitUnitStore(MachineBasicBlock *BB, MachineInstr *MI,
-                             DebugLoc &dl, unsigned baseReg, unsigned storeReg,
-                             unsigned baseOut) = 0;
-
-  // Emit a post-increment load of one byte.
-  //
-  // \param baseReg the register holding the address to load.
-  // \param baseOut the register to recieve the incremented address.
-  // \returns the register holding the loaded value.
-  virtual unsigned emitByteLoad(MachineBasicBlock *BB, MachineInstr *MI,
-                                DebugLoc &dl, unsigned baseReg,
-                                unsigned baseOut) = 0;
-
-  // Emit a post-increment store of one byte.
-  //
-  // \param baseReg the register holding the address to store.
-  // \param storeReg the register holding the value to store.
-  // \param baseOut the register to recieve the incremented address.
-  virtual void emitByteStore(MachineBasicBlock *BB, MachineInstr *MI,
-                             DebugLoc &dl, unsigned baseReg, unsigned storeReg,
-                             unsigned baseOut) = 0;
-
-  // Emit a load of a constant value.
-  //
-  // \param Constant the register holding the address to store.
-  // \returns the register holding the loaded value.
-  virtual unsigned emitConstantLoad(MachineBasicBlock *BB, MachineInstr *MI,
-                                    DebugLoc &dl, unsigned Constant,
-                                    const DataLayout *DL) = 0;
-
-  // Emit a subtract of a register minus immediate, with the immediate equal to
-  // the "unit" size. The unit size is based on the alignment of the struct
-  // being copied (16, 8, 4, 2, or 1 bytes).
-  //
-  // \param InReg the register holding the initial value.
-  // \param OutReg the register to recieve the subtracted value.
-  virtual void emitSubImm(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                          unsigned InReg, unsigned OutReg) = 0;
-
-  // Emit a branch based on a condition code of not equal.
-  //
-  // \param TargetBB the destination of the branch.
-  virtual void emitBranchNE(MachineBasicBlock *BB, MachineInstr *MI,
-                            DebugLoc &dl, MachineBasicBlock *TargetBB) = 0;
-
-  // Find the constant pool index for the given constant. This method is
-  // implemented in the base class because it is the same for all subtargets.
-  //
-  // \param LoopSize the constant value for which the index should be returned.
-  // \returns the constant pool index for the constant.
-  unsigned getConstantPoolIndex(MachineFunction *MF, const DataLayout *DL,
-                                unsigned LoopSize) {
-    MachineConstantPool *ConstantPool = MF->getConstantPool();
-    Type *Int32Ty = Type::getInt32Ty(MF->getFunction()->getContext());
-    const Constant *C = ConstantInt::get(Int32Ty, LoopSize);
-
-    // MachineConstantPool wants an explicit alignment.
-    unsigned Align = DL->getPrefTypeAlignment(Int32Ty);
-    if (Align == 0)
-      Align = DL->getTypeAllocSize(C->getType());
-    return ConstantPool->getConstantPoolIndex(C, Align);
-  }
-
-  // Return the register class used by the subtarget.
-  //
-  // \returns the target register class.
-  const TargetRegisterClass *getTRC() const { return TRC; }
-
-  virtual ~TargetStructByvalEmitter() {};
-
-protected:
-  const TargetInstrInfo *TII;
-  MachineRegisterInfo &MRI;
-  const TargetRegisterClass *TRC;
-};
-
-class ARMStructByvalEmitter : public TargetStructByvalEmitter {
-public:
-  ARMStructByvalEmitter(const TargetInstrInfo *TII, MachineRegisterInfo &MRI,
-                        unsigned LoadStoreSize)
-      : TargetStructByvalEmitter(
-            TII, MRI, (const TargetRegisterClass *)&ARM::GPRRegClass),
-        UnitSize(LoadStoreSize),
-        UnitLdOpc(LoadStoreSize == 4
-                      ? ARM::LDR_POST_IMM
-                      : LoadStoreSize == 2
-                            ? ARM::LDRH_POST
-                            : LoadStoreSize == 1 ? ARM::LDRB_POST_IMM : 0),
-        UnitStOpc(LoadStoreSize == 4
-                      ? ARM::STR_POST_IMM
-                      : LoadStoreSize == 2
-                            ? ARM::STRH_POST
-                            : LoadStoreSize == 1 ? ARM::STRB_POST_IMM : 0) {}
-
-  unsigned emitUnitLoad(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                        unsigned baseReg, unsigned baseOut) {
-    unsigned scratch = MRI.createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitLdOpc), scratch).addReg(
-        baseOut, RegState::Define).addReg(baseReg).addReg(0).addImm(UnitSize));
-    return scratch;
-  }
-
-  void emitUnitStore(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                     unsigned baseReg, unsigned storeReg, unsigned baseOut) {
-    AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitStOpc), baseOut).addReg(
-        storeReg).addReg(baseReg).addReg(0).addImm(UnitSize));
-  }
-
-  unsigned emitByteLoad(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                        unsigned baseReg, unsigned baseOut) {
-    unsigned scratch = MRI.createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::LDRB_POST_IMM), scratch)
-                       .addReg(baseOut, RegState::Define).addReg(baseReg)
-                       .addReg(0).addImm(1));
-    return scratch;
-  }
-
-  void emitByteStore(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                     unsigned baseReg, unsigned storeReg, unsigned baseOut) {
-    AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::STRB_POST_IMM), baseOut)
-                       .addReg(storeReg).addReg(baseReg).addReg(0).addImm(1));
-  }
-
-  unsigned emitConstantLoad(MachineBasicBlock *BB, MachineInstr *MI,
-                            DebugLoc &dl, unsigned Constant,
-                            const DataLayout *DL) {
-    unsigned constReg = MRI.createVirtualRegister(TRC);
-    unsigned Idx = getConstantPoolIndex(BB->getParent(), DL, Constant);
-    AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::LDRcp)).addReg(
-        constReg, RegState::Define).addConstantPoolIndex(Idx).addImm(0));
-    return constReg;
-  }
-
-  void emitSubImm(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                  unsigned InReg, unsigned OutReg) {
-    MachineInstrBuilder MIB =
-        BuildMI(*BB, MI, dl, TII->get(ARM::SUBri), OutReg);
-    AddDefaultCC(AddDefaultPred(MIB.addReg(InReg).addImm(UnitSize)));
-    MIB->getOperand(5).setReg(ARM::CPSR);
-    MIB->getOperand(5).setIsDef(true);
-  }
-
-  void emitBranchNE(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                    MachineBasicBlock *TargetBB) {
-    BuildMI(*BB, MI, dl, TII->get(ARM::Bcc)).addMBB(TargetBB).addImm(ARMCC::NE)
-        .addReg(ARM::CPSR);
-  }
-
-private:
-  const unsigned UnitSize;
-  const unsigned UnitLdOpc;
-  const unsigned UnitStOpc;
-};
-
-class Thumb2StructByvalEmitter : public TargetStructByvalEmitter {
-public:
-  Thumb2StructByvalEmitter(const TargetInstrInfo *TII, MachineRegisterInfo &MRI,
-                           unsigned LoadStoreSize)
-      : TargetStructByvalEmitter(
-            TII, MRI, (const TargetRegisterClass *)&ARM::tGPRRegClass),
-        UnitSize(LoadStoreSize),
-        UnitLdOpc(LoadStoreSize == 4
-                      ? ARM::t2LDR_POST
-                      : LoadStoreSize == 2
-                            ? ARM::t2LDRH_POST
-                            : LoadStoreSize == 1 ? ARM::t2LDRB_POST : 0),
-        UnitStOpc(LoadStoreSize == 4
-                      ? ARM::t2STR_POST
-                      : LoadStoreSize == 2
-                            ? ARM::t2STRH_POST
-                            : LoadStoreSize == 1 ? ARM::t2STRB_POST : 0) {}
-
-  unsigned emitUnitLoad(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                        unsigned baseReg, unsigned baseOut) {
-    unsigned scratch = MRI.createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitLdOpc), scratch).addReg(
-        baseOut, RegState::Define).addReg(baseReg).addImm(UnitSize));
-    return scratch;
-  }
-
-  void emitUnitStore(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                     unsigned baseReg, unsigned storeReg, unsigned baseOut) {
-    AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitStOpc), baseOut)
-                       .addReg(storeReg).addReg(baseReg).addImm(UnitSize));
-  }
-
-  unsigned emitByteLoad(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                        unsigned baseReg, unsigned baseOut) {
-    unsigned scratch = MRI.createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::t2LDRB_POST), scratch)
-                       .addReg(baseOut, RegState::Define).addReg(baseReg)
-                       .addImm(1));
-    return scratch;
-  }
-
-  void emitByteStore(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                     unsigned baseReg, unsigned storeReg, unsigned baseOut) {
-    AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::t2STRB_POST), baseOut)
-                       .addReg(storeReg).addReg(baseReg).addImm(1));
-  }
-
-  unsigned emitConstantLoad(MachineBasicBlock *BB, MachineInstr *MI,
-                            DebugLoc &dl, unsigned Constant,
-                            const DataLayout *DL) {
-    unsigned VConst = MRI.createVirtualRegister(TRC);
-    unsigned Vtmp = VConst;
-    if ((Constant & 0xFFFF0000) != 0)
-      Vtmp = MRI.createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::t2MOVi16), Vtmp)
-                       .addImm(Constant & 0xFFFF));
-
-    if ((Constant & 0xFFFF0000) != 0)
-      AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::t2MOVTi16), VConst)
-                         .addReg(Vtmp).addImm(Constant >> 16));
-    return VConst;
-  }
-
-  void emitSubImm(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                  unsigned InReg, unsigned OutReg) {
-    MachineInstrBuilder MIB =
-        BuildMI(*BB, MI, dl, TII->get(ARM::t2SUBri), OutReg);
-    AddDefaultCC(AddDefaultPred(MIB.addReg(InReg).addImm(UnitSize)));
-    MIB->getOperand(5).setReg(ARM::CPSR);
-    MIB->getOperand(5).setIsDef(true);
-  }
-
-  void emitBranchNE(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                    MachineBasicBlock *TargetBB) {
-    BuildMI(BB, dl, TII->get(ARM::t2Bcc)).addMBB(TargetBB).addImm(ARMCC::NE)
-        .addReg(ARM::CPSR);
-  }
-
-private:
-  const unsigned UnitSize;
-  const unsigned UnitLdOpc;
-  const unsigned UnitStOpc;
-};
-
-class Thumb1StructByvalEmitter : public TargetStructByvalEmitter {
-public:
-  Thumb1StructByvalEmitter(const TargetInstrInfo *TII, MachineRegisterInfo &MRI,
-                           unsigned LoadStoreSize)
-      : TargetStructByvalEmitter(
-            TII, MRI, (const TargetRegisterClass *)&ARM::tGPRRegClass),
-        UnitSize(LoadStoreSize),
-        UnitLdOpc(LoadStoreSize == 4 ? ARM::tLDRi : LoadStoreSize == 2
-                                                        ? ARM::tLDRHi
-                                                        : LoadStoreSize == 1
-                                                              ? ARM::tLDRBi
-                                                              : 0),
-        UnitStOpc(LoadStoreSize == 4 ? ARM::tSTRi : LoadStoreSize == 2
-                                                        ? ARM::tSTRHi
-                                                        : LoadStoreSize == 1
-                                                              ? ARM::tSTRBi
-                                                              : 0) {}
-
-  void emitAddSubi8(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                    unsigned opcode, unsigned baseReg, unsigned Imm,
-                    unsigned baseOut) {
-    MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(opcode), baseOut);
-    MIB = AddDefaultT1CC(MIB);
-    MIB.addReg(baseReg).addImm(Imm);
-    AddDefaultPred(MIB);
-  }
-
-  unsigned emitUnitLoad(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                        unsigned baseReg, unsigned baseOut) {
-    // load into scratch
-    unsigned scratch = MRI.createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitLdOpc), scratch)
-                       .addReg(baseReg).addImm(0));
-
-    // update base pointer
-    emitAddSubi8(BB, MI, dl, ARM::tADDi8, baseReg, UnitSize, baseOut);
-    return scratch;
-  }
-
-  void emitUnitStore(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                     unsigned baseReg, unsigned storeReg, unsigned baseOut) {
-    // load into scratch
-    AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitStOpc)).addReg(storeReg)
-                       .addReg(baseReg).addImm(0));
-
-    // update base pointer
-    emitAddSubi8(BB, MI, dl, ARM::tADDi8, baseReg, UnitSize, baseOut);
-  }
-
-  unsigned emitByteLoad(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                        unsigned baseReg, unsigned baseOut) {
-    // load into scratch
-    unsigned scratch = MRI.createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::tLDRBi), scratch)
-                       .addReg(baseReg).addImm(0));
-
-    // update base pointer
-    emitAddSubi8(BB, MI, dl, ARM::tADDi8, baseReg, 1, baseOut);
-    return scratch;
-  }
-
-  void emitByteStore(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                     unsigned baseReg, unsigned storeReg, unsigned baseOut) {
-    // load into scratch
-    AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::tSTRBi)).addReg(storeReg)
-                       .addReg(baseReg).addImm(0));
-
-    // update base pointer
-    emitAddSubi8(BB, MI, dl, ARM::tADDi8, baseReg, 1, baseOut);
-  }
-
-  unsigned emitConstantLoad(MachineBasicBlock *BB, MachineInstr *MI,
-                            DebugLoc &dl, unsigned Constant,
-                            const DataLayout *DL) {
-    unsigned constReg = MRI.createVirtualRegister(TRC);
-    unsigned Idx = getConstantPoolIndex(BB->getParent(), DL, Constant);
-    AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::tLDRpci)).addReg(
-        constReg, RegState::Define).addConstantPoolIndex(Idx));
-    return constReg;
-  }
-
-  void emitSubImm(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                  unsigned InReg, unsigned OutReg) {
-    emitAddSubi8(BB, MI, dl, ARM::tSUBi8, InReg, UnitSize, OutReg);
-  }
-
-  void emitBranchNE(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                    MachineBasicBlock *TargetBB) {
-    BuildMI(*BB, MI, dl, TII->get(ARM::tBcc)).addMBB(TargetBB).addImm(ARMCC::NE)
-        .addReg(ARM::CPSR);
-  }
-
-private:
-  const unsigned UnitSize;
-  const unsigned UnitLdOpc;
-  const unsigned UnitStOpc;
-};
-
-// This class is a thin wrapper that delegates most of the work to the correct
-// TargetStructByvalEmitter implementation. It also handles the lowering for
-// targets that support neon because the neon implementation is the same for all
-// targets that support it.
-class StructByvalEmitter {
-public:
-  StructByvalEmitter(unsigned LoadStoreSize, const ARMSubtarget *Subtarget,
-                     const TargetInstrInfo *TII_, MachineRegisterInfo &MRI_,
-                     const DataLayout *DL_)
-      : UnitSize(LoadStoreSize),
-        TargetEmitter(
-            Subtarget->isThumb1Only()
-                ? static_cast<TargetStructByvalEmitter *>(
-                      new Thumb1StructByvalEmitter(TII_, MRI_, LoadStoreSize))
-                : Subtarget->isThumb2()
-                      ? static_cast<TargetStructByvalEmitter *>(
-                            new Thumb2StructByvalEmitter(TII_, MRI_,
-                                                         LoadStoreSize))
-                      : static_cast<TargetStructByvalEmitter *>(
-                            new ARMStructByvalEmitter(TII_, MRI_,
-                                                      LoadStoreSize))),
-        TII(TII_), MRI(MRI_), DL(DL_),
-        VecTRC(UnitSize == 16
-                   ? (const TargetRegisterClass *)&ARM::DPairRegClass
-                   : UnitSize == 8
-                         ? (const TargetRegisterClass *)&ARM::DPRRegClass
-                         : 0),
-        VecLdOpc(UnitSize == 16 ? ARM::VLD1q32wb_fixed
-                                : UnitSize == 8 ? ARM::VLD1d32wb_fixed : 0),
-        VecStOpc(UnitSize == 16 ? ARM::VST1q32wb_fixed
-                                : UnitSize == 8 ? ARM::VST1d32wb_fixed : 0) {}
-
-  // Emit a post-increment load of "unit" size. The unit size is based on the
-  // alignment of the struct being copied (16, 8, 4, 2, or 1 bytes). Loads of 16
-  // or 8 bytes use NEON instructions to load the value.
-  //
-  // \param baseReg the register holding the address to load.
-  // \param baseOut the register to recieve the incremented address. If baseOut
-  // is 0 then a new register is created to hold the incremented address.
-  // \returns a pair of registers holding the loaded value and the updated
-  // address.
-  std::pair<unsigned, unsigned> emitUnitLoad(MachineBasicBlock *BB,
-                                             MachineInstr *MI, DebugLoc &dl,
-                                             unsigned baseReg,
-                                             unsigned baseOut = 0) {
-    unsigned scratch = 0;
-    if (baseOut == 0)
-      baseOut = MRI.createVirtualRegister(TargetEmitter->getTRC());
-    if (UnitSize >= 8) { // neon
-      scratch = MRI.createVirtualRegister(VecTRC);
-      AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(VecLdOpc), scratch).addReg(
-          baseOut, RegState::Define).addReg(baseReg).addImm(0));
-    } else {
-      scratch = TargetEmitter->emitUnitLoad(BB, MI, dl, baseReg, baseOut);
-    }
-    return std::make_pair(scratch, baseOut);
-  }
-
-  // Emit a post-increment store of "unit" size. The unit size is based on the
-  // alignment of the struct being copied (16, 8, 4, 2, or 1 bytes). Stores of
-  // 16 or 8 bytes use NEON instructions to store the value.
-  //
-  // \param baseReg the register holding the address to store.
-  // \param storeReg the register holding the value to store.
-  // \param baseOut the register to recieve the incremented address. If baseOut
-  // is 0 then a new register is created to hold the incremented address.
-  // \returns the register holding the updated address.
-  unsigned emitUnitStore(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                         unsigned baseReg, unsigned storeReg,
-                         unsigned baseOut = 0) {
-    if (baseOut == 0)
-      baseOut = MRI.createVirtualRegister(TargetEmitter->getTRC());
-    if (UnitSize >= 8) { // neon
-      AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(VecStOpc), baseOut)
-                         .addReg(baseReg).addImm(0).addReg(storeReg));
-    } else {
-      TargetEmitter->emitUnitStore(BB, MI, dl, baseReg, storeReg, baseOut);
-    }
-    return baseOut;
-  }
-
-  // Emit a post-increment load of one byte.
-  //
-  // \param baseReg the register holding the address to load.
-  // \returns a pair of registers holding the loaded value and the updated
-  // address.
-  std::pair<unsigned, unsigned> emitByteLoad(MachineBasicBlock *BB,
-                                             MachineInstr *MI, DebugLoc &dl,
-                                             unsigned baseReg) {
-    unsigned baseOut = MRI.createVirtualRegister(TargetEmitter->getTRC());
-    unsigned scratch =
-        TargetEmitter->emitByteLoad(BB, MI, dl, baseReg, baseOut);
-    return std::make_pair(scratch, baseOut);
-  }
-
-  // Emit a post-increment store of one byte.
-  //
-  // \param baseReg the register holding the address to store.
-  // \param storeReg the register holding the value to store.
-  // \returns the register holding the updated address.
-  unsigned emitByteStore(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                         unsigned baseReg, unsigned storeReg) {
-    unsigned baseOut = MRI.createVirtualRegister(TargetEmitter->getTRC());
-    TargetEmitter->emitByteStore(BB, MI, dl, baseReg, storeReg, baseOut);
-    return baseOut;
-  }
-
-  // Emit a load of the constant LoopSize.
-  //
-  // \param LoopSize the constant to load.
-  // \returns the register holding the loaded constant.
-  unsigned emitConstantLoad(MachineBasicBlock *BB, MachineInstr *MI,
-                            DebugLoc &dl, unsigned LoopSize) {
-    return TargetEmitter->emitConstantLoad(BB, MI, dl, LoopSize, DL);
-  }
-
-  // Emit a subtract of a register minus immediate, with the immediate equal to
-  // the "unit" size. The unit size is based on the alignment of the struct
-  // being copied (16, 8, 4, 2, or 1 bytes).
-  //
-  // \param InReg the register holding the initial value.
-  // \param OutReg the register to recieve the subtracted value.
-  void emitSubImm(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                  unsigned InReg, unsigned OutReg) {
-    TargetEmitter->emitSubImm(BB, MI, dl, InReg, OutReg);
-  }
-
-  // Emit a branch based on a condition code of not equal.
-  //
-  // \param TargetBB the destination of the branch.
-  void emitBranchNE(MachineBasicBlock *BB, MachineInstr *MI, DebugLoc &dl,
-                    MachineBasicBlock *TargetBB) {
-    TargetEmitter->emitBranchNE(BB, MI, dl, TargetBB);
-  }
-
-  // Return the register class used by the subtarget.
-  //
-  // \returns the target register class.
-  const TargetRegisterClass *getTRC() const { return TargetEmitter->getTRC(); }
-
-private:
-  const unsigned UnitSize;
-  OwningPtr<TargetStructByvalEmitter> TargetEmitter;
-  const TargetInstrInfo *TII;
-  MachineRegisterInfo &MRI;
-  const DataLayout *DL;
-
-  const TargetRegisterClass *VecTRC;
-  const unsigned VecLdOpc;
-  const unsigned VecStOpc;
-};
-}
-
 MachineBasicBlock *
 ARMTargetLowering::EmitStructByval(MachineInstr *MI,
                                    MachineBasicBlock *BB) const {
@@ -7788,6 +7266,13 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
   MachineFunction *MF = BB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
   unsigned UnitSize = 0;
+  unsigned UnitLdOpc = 0;
+  unsigned UnitStOpc = 0;
+  const TargetRegisterClass *TRC = 0;
+  const TargetRegisterClass *VecTRC = 0;
+
+  bool IsThumb1 = Subtarget->isThumb1Only();
+  bool IsThumb2 = Subtarget->isThumb2();
 
   if (Align & 1) {
     UnitSize = 1;
@@ -7809,8 +7294,48 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
       UnitSize = 4;
   }
 
-  StructByvalEmitter ByvalEmitter(UnitSize, Subtarget, TII, MRI,
-                                  getDataLayout());
+  // Select the correct opcode and register class for unit size load/store
+  bool IsNeon = UnitSize >= 8;
+  TRC = (IsThumb1 || IsThumb2) ? (const TargetRegisterClass *)&ARM::tGPRRegClass
+                               : (const TargetRegisterClass *)&ARM::GPRRegClass;
+  if (IsNeon) {
+    UnitLdOpc = UnitSize == 16 ? ARM::VLD1q32wb_fixed
+                               : UnitSize == 8 ? ARM::VLD1d32wb_fixed : 0;
+    UnitStOpc = UnitSize == 16 ? ARM::VST1q32wb_fixed
+                               : UnitSize == 8 ? ARM::VST1d32wb_fixed : 0;
+    VecTRC = UnitSize == 16
+                 ? (const TargetRegisterClass *)&ARM::DPairRegClass
+                 : UnitSize == 8
+                       ? (const TargetRegisterClass *)&ARM::DPRRegClass
+                       : 0;
+  } else if (IsThumb1) {
+    UnitLdOpc = UnitSize == 4 ? ARM::tLDRi
+                              : UnitSize == 2 ? ARM::tLDRHi
+                                              : UnitSize == 1 ? ARM::tLDRBi : 0;
+    UnitStOpc = UnitSize == 4 ? ARM::tSTRi
+                              : UnitSize == 2 ? ARM::tSTRHi
+                                              : UnitSize == 1 ? ARM::tSTRBi : 0;
+  } else if (IsThumb2) {
+    UnitLdOpc = UnitSize == 4
+                    ? ARM::t2LDR_POST
+                    : UnitSize == 2 ? ARM::t2LDRH_POST
+                                    : UnitSize == 1 ? ARM::t2LDRB_POST : 0;
+    UnitStOpc = UnitSize == 4
+                    ? ARM::t2STR_POST
+                    : UnitSize == 2 ? ARM::t2STRH_POST
+                                    : UnitSize == 1 ? ARM::t2STRB_POST : 0;
+  } else {
+    UnitLdOpc = UnitSize == 4
+                    ? ARM::LDR_POST_IMM
+                    : UnitSize == 2 ? ARM::LDRH_POST
+                                    : UnitSize == 1 ? ARM::LDRB_POST_IMM : 0;
+    UnitStOpc = UnitSize == 4
+                    ? ARM::STR_POST_IMM
+                    : UnitSize == 2 ? ARM::STRH_POST
+                                    : UnitSize == 1 ? ARM::STRB_POST_IMM : 0;
+  }
+  assert(UnitLdOpc != 0 && UnitStOpc != 0 && "Should have unit opcodes");
+
   unsigned BytesLeft = SizeVal % UnitSize;
   unsigned LoopSize = SizeVal - BytesLeft;
 
@@ -7821,22 +7346,95 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
     unsigned srcIn = src;
     unsigned destIn = dest;
     for (unsigned i = 0; i < LoopSize; i+=UnitSize) {
-      std::pair<unsigned, unsigned> res =
-          ByvalEmitter.emitUnitLoad(BB, MI, dl, srcIn);
-      unsigned scratch = res.first;
-      srcIn = res.second;
-      destIn = ByvalEmitter.emitUnitStore(BB, MI, dl, destIn, scratch);
+      unsigned srcOut = MRI.createVirtualRegister(TRC);
+      unsigned destOut = MRI.createVirtualRegister(TRC);
+      unsigned scratch = MRI.createVirtualRegister(IsNeon ? VecTRC : TRC);
+      if (IsNeon) {
+        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitLdOpc), scratch)
+                           .addReg(srcOut, RegState::Define).addReg(srcIn)
+                           .addImm(0));
+
+        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitStOpc), destOut)
+                           .addReg(destIn).addImm(0).addReg(scratch));
+      } else if (IsThumb1) {
+        // load + update srcIn
+        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitLdOpc), scratch)
+                           .addReg(srcIn).addImm(0));
+        MachineInstrBuilder MIB =
+            BuildMI(*BB, MI, dl, TII->get(ARM::tADDi8), srcOut);
+        MIB = AddDefaultT1CC(MIB);
+        MIB.addReg(srcIn).addImm(UnitSize);
+        AddDefaultPred(MIB);
+
+        // store + update destIn
+        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitStOpc)).addReg(scratch)
+                           .addReg(destIn).addImm(0));
+        MIB = BuildMI(*BB, MI, dl, TII->get(ARM::tADDi8), destOut);
+        MIB = AddDefaultT1CC(MIB);
+        MIB.addReg(destIn).addImm(UnitSize);
+        AddDefaultPred(MIB);
+      } else if (IsThumb2) {
+        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitLdOpc), scratch)
+                           .addReg(srcOut, RegState::Define).addReg(srcIn)
+                           .addImm(UnitSize));
+        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitStOpc), destOut)
+                           .addReg(scratch).addReg(destIn).addImm(UnitSize));
+      } else { // arm
+        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitLdOpc), scratch)
+                           .addReg(srcOut, RegState::Define).addReg(srcIn)
+                           .addReg(0).addImm(UnitSize));
+        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitStOpc), destOut)
+                           .addReg(scratch).addReg(destIn).addReg(0)
+                           .addImm(UnitSize));
+      }
+      srcIn = srcOut;
+      destIn = destOut;
     }
 
     // Handle the leftover bytes with LDRB and STRB.
     // [scratch, srcOut] = LDRB_POST(srcIn, 1)
     // [destOut] = STRB_POST(scratch, destIn, 1)
     for (unsigned i = 0; i < BytesLeft; i++) {
-      std::pair<unsigned, unsigned> res =
-          ByvalEmitter.emitByteLoad(BB, MI, dl, srcIn);
-      unsigned scratch = res.first;
-      srcIn = res.second;
-      destIn = ByvalEmitter.emitByteStore(BB, MI, dl, destIn, scratch);
+      unsigned srcOut = MRI.createVirtualRegister(TRC);
+      unsigned destOut = MRI.createVirtualRegister(TRC);
+      unsigned scratch = MRI.createVirtualRegister(TRC);
+      if (IsThumb1) {
+        // load into scratch
+        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::tLDRBi), scratch)
+                           .addReg(srcIn).addImm(0));
+
+        // update base pointer
+        MachineInstrBuilder MIB =
+            BuildMI(*BB, MI, dl, TII->get(ARM::tADDi8), srcOut);
+        MIB = AddDefaultT1CC(MIB);
+        MIB.addReg(srcIn).addImm(1);
+        AddDefaultPred(MIB);
+
+        // store
+        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::tSTRBi))
+                           .addReg(scratch).addReg(destIn).addImm(0));
+
+        // update base pointer
+        MIB = BuildMI(*BB, MI, dl, TII->get(ARM::tADDi8), destOut);
+        MIB = AddDefaultT1CC(MIB);
+        MIB.addReg(destIn).addImm(1);
+        AddDefaultPred(MIB);
+      } else if (IsThumb2) {
+        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::t2LDRB_POST), scratch)
+                           .addReg(srcOut, RegState::Define).addReg(srcIn)
+                           .addImm(1));
+        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::t2STRB_POST), destOut)
+                           .addReg(scratch).addReg(destIn).addImm(1));
+      } else { // arm
+        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::LDRB_POST_IMM),
+                               scratch).addReg(srcOut, RegState::Define)
+                           .addReg(srcIn).addReg(0).addImm(1));
+        AddDefaultPred(
+            BuildMI(*BB, MI, dl, TII->get(ARM::STRB_POST_IMM), destOut)
+                .addReg(scratch).addReg(destIn).addReg(0).addImm(1));
+      }
+      srcIn = srcOut;
+      destIn = destOut;
     }
     MI->eraseFromParent();   // The instruction is gone now.
     return BB;
@@ -7874,7 +7472,35 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
   exitMBB->transferSuccessorsAndUpdatePHIs(BB);
 
   // Load an immediate to varEnd.
-  unsigned varEnd = ByvalEmitter.emitConstantLoad(BB, MI, dl, LoopSize);
+  unsigned varEnd = MRI.createVirtualRegister(TRC);
+  if (IsThumb2) {
+    unsigned Vtmp = varEnd;
+    if ((LoopSize & 0xFFFF0000) != 0)
+      Vtmp = MRI.createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::t2MOVi16), Vtmp)
+                       .addImm(LoopSize & 0xFFFF));
+
+    if ((LoopSize & 0xFFFF0000) != 0)
+      AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::t2MOVTi16), varEnd)
+                         .addReg(Vtmp).addImm(LoopSize >> 16));
+  } else {
+    MachineConstantPool *ConstantPool = MF->getConstantPool();
+    Type *Int32Ty = Type::getInt32Ty(MF->getFunction()->getContext());
+    const Constant *C = ConstantInt::get(Int32Ty, LoopSize);
+
+    // MachineConstantPool wants an explicit alignment.
+    unsigned Align = getDataLayout()->getPrefTypeAlignment(Int32Ty);
+    if (Align == 0)
+      Align = getDataLayout()->getTypeAllocSize(C->getType());
+    unsigned Idx = ConstantPool->getConstantPoolIndex(C, Align);
+
+    if (IsThumb1)
+      AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::tLDRpci)).addReg(
+          varEnd, RegState::Define).addConstantPoolIndex(Idx));
+    else
+      AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::LDRcp)).addReg(
+          varEnd, RegState::Define).addConstantPoolIndex(Idx).addImm(0));
+  }
   BB->addSuccessor(loopMBB);
 
   // Generate the loop body:
@@ -7883,12 +7509,12 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
   //   destPhi = PHI(destLoop, dst)
   MachineBasicBlock *entryBB = BB;
   BB = loopMBB;
-  unsigned varLoop = MRI.createVirtualRegister(ByvalEmitter.getTRC());
-  unsigned varPhi = MRI.createVirtualRegister(ByvalEmitter.getTRC());
-  unsigned srcLoop = MRI.createVirtualRegister(ByvalEmitter.getTRC());
-  unsigned srcPhi = MRI.createVirtualRegister(ByvalEmitter.getTRC());
-  unsigned destLoop = MRI.createVirtualRegister(ByvalEmitter.getTRC());
-  unsigned destPhi = MRI.createVirtualRegister(ByvalEmitter.getTRC());
+  unsigned varLoop = MRI.createVirtualRegister(TRC);
+  unsigned varPhi = MRI.createVirtualRegister(TRC);
+  unsigned srcLoop = MRI.createVirtualRegister(TRC);
+  unsigned srcPhi = MRI.createVirtualRegister(TRC);
+  unsigned destLoop = MRI.createVirtualRegister(TRC);
+  unsigned destPhi = MRI.createVirtualRegister(TRC);
 
   BuildMI(*BB, BB->begin(), dl, TII->get(ARM::PHI), varPhi)
     .addReg(varLoop).addMBB(loopMBB)
@@ -7902,16 +7528,64 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
 
   //   [scratch, srcLoop] = LDR_POST(srcPhi, UnitSize)
   //   [destLoop] = STR_POST(scratch, destPhi, UnitSiz)
-  {
-    std::pair<unsigned, unsigned> res =
-        ByvalEmitter.emitUnitLoad(BB, BB->end(), dl, srcPhi, srcLoop);
-    unsigned scratch = res.first;
-    ByvalEmitter.emitUnitStore(BB, BB->end(), dl, destPhi, scratch, destLoop);
+  unsigned scratch = MRI.createVirtualRegister(IsNeon ? VecTRC : TRC);
+  if (IsNeon) {
+    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitLdOpc), scratch)
+                       .addReg(srcLoop, RegState::Define).addReg(srcPhi)
+                       .addImm(0));
+
+    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitStOpc), destLoop)
+                       .addReg(destPhi).addImm(0).addReg(scratch));
+  } else if (IsThumb1) {
+    // load + update srcIn
+    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitLdOpc), scratch)
+                       .addReg(srcPhi).addImm(0));
+    MachineInstrBuilder MIB =
+        BuildMI(*BB, BB->end(), dl, TII->get(ARM::tADDi8), srcLoop);
+    MIB = AddDefaultT1CC(MIB);
+    MIB.addReg(srcPhi).addImm(UnitSize);
+    AddDefaultPred(MIB);
+
+    // store + update destIn
+    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitStOpc))
+                       .addReg(scratch).addReg(destPhi).addImm(0));
+    MIB = BuildMI(*BB, BB->end(), dl, TII->get(ARM::tADDi8), destLoop);
+    MIB = AddDefaultT1CC(MIB);
+    MIB.addReg(destPhi).addImm(UnitSize);
+    AddDefaultPred(MIB);
+  } else if (IsThumb2) {
+    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitLdOpc), scratch)
+                       .addReg(srcLoop, RegState::Define).addReg(srcPhi)
+                       .addImm(UnitSize));
+    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitStOpc), destLoop)
+                       .addReg(scratch).addReg(destPhi).addImm(UnitSize));
+  } else { // arm
+    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitLdOpc), scratch)
+                       .addReg(srcLoop, RegState::Define).addReg(srcPhi)
+                       .addReg(0).addImm(UnitSize));
+    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitStOpc), destLoop)
+                       .addReg(scratch).addReg(destPhi).addReg(0)
+                       .addImm(UnitSize));
   }
 
   // Decrement loop variable by UnitSize.
-  ByvalEmitter.emitSubImm(BB, BB->end(), dl, varPhi, varLoop);
-  ByvalEmitter.emitBranchNE(BB, BB->end(), dl, loopMBB);
+  if (IsThumb1) {
+    MachineInstrBuilder MIB =
+        BuildMI(*BB, BB->end(), dl, TII->get(ARM::tSUBi8), varLoop);
+    MIB = AddDefaultT1CC(MIB);
+    MIB.addReg(varPhi).addImm(UnitSize);
+    AddDefaultPred(MIB);
+  } else {
+    MachineInstrBuilder MIB =
+        BuildMI(*BB, BB->end(), dl,
+                TII->get(IsThumb2 ? ARM::t2SUBri : ARM::SUBri), varLoop);
+    AddDefaultCC(AddDefaultPred(MIB.addReg(varPhi).addImm(UnitSize)));
+    MIB->getOperand(5).setReg(ARM::CPSR);
+    MIB->getOperand(5).setIsDef(true);
+  }
+  BuildMI(*BB, BB->end(), dl,
+          TII->get(IsThumb1 ? ARM::tBcc : IsThumb2 ? ARM::t2Bcc : ARM::Bcc))
+      .addMBB(loopMBB).addImm(ARMCC::NE).addReg(ARM::CPSR);
 
   // loopMBB can loop back to loopMBB or fall through to exitMBB.
   BB->addSuccessor(loopMBB);
@@ -7926,11 +7600,46 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
   unsigned srcIn = srcLoop;
   unsigned destIn = destLoop;
   for (unsigned i = 0; i < BytesLeft; i++) {
-    std::pair<unsigned, unsigned> res =
-        ByvalEmitter.emitByteLoad(BB, StartOfExit, dl, srcIn);
-    unsigned scratch = res.first;
-    srcIn = res.second;
-    destIn = ByvalEmitter.emitByteStore(BB, StartOfExit, dl, destIn, scratch);
+    unsigned srcOut = MRI.createVirtualRegister(TRC);
+    unsigned destOut = MRI.createVirtualRegister(TRC);
+    unsigned scratch = MRI.createVirtualRegister(TRC);
+    if (IsThumb1) {
+      // load into scratch
+      AddDefaultPred(BuildMI(*BB, StartOfExit, dl, TII->get(ARM::tLDRBi),
+                             scratch).addReg(srcIn).addImm(0));
+
+      // update base pointer
+      MachineInstrBuilder MIB =
+          BuildMI(*BB, StartOfExit, dl, TII->get(ARM::tADDi8), srcOut);
+      MIB = AddDefaultT1CC(MIB);
+      MIB.addReg(srcIn).addImm(1);
+      AddDefaultPred(MIB);
+
+      // store
+      AddDefaultPred(BuildMI(*BB, StartOfExit, dl, TII->get(ARM::tSTRBi))
+                         .addReg(scratch).addReg(destIn).addImm(0));
+
+      // update base pointer
+      MIB = BuildMI(*BB, StartOfExit, dl, TII->get(ARM::tADDi8), destOut);
+      MIB = AddDefaultT1CC(MIB);
+      MIB.addReg(destIn).addImm(1);
+      AddDefaultPred(MIB);
+    } else if (IsThumb2) {
+      AddDefaultPred(
+          BuildMI(*BB, StartOfExit, dl, TII->get(ARM::t2LDRB_POST), scratch)
+              .addReg(srcOut, RegState::Define).addReg(srcIn).addImm(1));
+      AddDefaultPred(BuildMI(*BB, StartOfExit, dl, TII->get(ARM::t2STRB_POST),
+                             destOut).addReg(scratch).addReg(destIn).addImm(1));
+    } else { // arm
+      AddDefaultPred(BuildMI(*BB, StartOfExit, dl, TII->get(ARM::LDRB_POST_IMM),
+                             scratch).addReg(srcOut, RegState::Define)
+                         .addReg(srcIn).addReg(0).addImm(1));
+      AddDefaultPred(
+          BuildMI(*BB, StartOfExit, dl, TII->get(ARM::STRB_POST_IMM), destOut)
+              .addReg(scratch).addReg(destIn).addReg(0).addImm(1));
+    }
+    srcIn = srcOut;
+    destIn = destOut;
   }
 
   MI->eraseFromParent();   // The instruction is gone now.
