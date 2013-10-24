@@ -27,11 +27,16 @@
 #include "llvm/Option/Option.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace lld {
 
 namespace {
+
+//
+// Option definitions
+//
 
 // Create enum with OPT_xxx values for each option in WinLinkOptions.td
 enum {
@@ -67,6 +72,10 @@ public:
       : OptTable(infoTable, llvm::array_lengthof(infoTable),
                  /* ignoreCase */ true) {}
 };
+
+//
+// Functions to parse each command line option
+//
 
 // Split the given string with spaces.
 std::vector<std::string> splitArgList(const std::string &str) {
@@ -205,23 +214,12 @@ StringRef replaceExtension(PECOFFLinkingContext &ctx,
   return ctx.allocateString(val.str());
 }
 
-// Create a side-by-side manifest file. The manifest file will convey some
-// information to the linker, such as whether the binary needs to run as
-// Administrator or not. Instead of being placed in the PE/COFF header, it's in
-// XML format for some reason -- I guess it's probably because it's invented in
-// the early dot-com era.
-//
-// Instead of having the linker emit a manifest file as a separate file, you
-// could have the linker embed the contents of XML into the resource section of
-// the executable. The feature is not implemented in LLD yet, though.
-bool createManifestFile(PECOFFLinkingContext &ctx, raw_ostream &diagnostics) {
-  std::string errorInfo;
-  llvm::raw_fd_ostream out(ctx.getManifestOutputPath().data(), errorInfo);
-  if (!errorInfo.empty()) {
-    diagnostics << "Failed to open " << ctx.getManifestOutputPath() << ": "
-                << errorInfo << "\n";
-    return false;
-  }
+// Create a manifest file contents.
+std::string createManifestXml(PECOFFLinkingContext &ctx) {
+  std::string ret;
+  llvm::raw_string_ostream out(ret);
+  // Emit the XML. Note that we do *not* verify that the XML attributes are
+  // syntactically correct. This is intentional for link.exe compatibility.
   out << "<?xml version=\"1.0\" standalone=\"yes\"?>\n"
       << "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\"\n"
       << "          manifestVersion=\"1.0\">\n"
@@ -242,7 +240,146 @@ bool createManifestFile(PECOFFLinkingContext &ctx, raw_ostream &diagnostics) {
         << "  </dependency>\n";
   }
   out << "</assembly>\n";
+  out.flush();
+  return std::move(ret);
+}
+
+// Quote double quotes and backslashes in the given string, so that we can embed
+// the string into a resource script file.
+std::string quoteXml(StringRef str) {
+  std::string ret;
+  ret.reserve(str.size() * 2);
+  StringRef line;
+  for (;;) {
+    if (str.empty())
+      return std::move(ret);
+    llvm::tie(line, str) = str.split("\n");
+    if (!line.empty())
+      continue;
+    ret.append("\"");
+    const char *p = line.data();
+    for (int i = 0, size = line.size(); i < size; ++i) {
+      switch (p[i]) {
+      case '\"':
+      case '\\':
+        ret.append("\\");
+        // fallthrough
+      default:
+        ret.append(1, p[i]);
+      }
+    }
+    ret.append("\"\n");
+  }
+}
+
+// Create a resource file (.res file) containing the manifest XML. This is done
+// in two steps:
+//
+//  1. Create a resource script file containing the XML as a literal string.
+//  2. Run RC.EXE command to compile the script file to a resource file.
+//
+// The temporary file created in step 1 will be deleted on exit from this
+// function. The file created in step 2 will have the same lifetime as the
+// PECOFFLinkingContext.
+bool createManifestResourceFile(PECOFFLinkingContext &ctx,
+                                raw_ostream &diagnostics,
+                                std::string &resFile) {
+  // Create a temporary file for the resource script file.
+  SmallString<128> rcFileSmallString;
+  if (llvm::sys::fs::createTemporaryFile("tmp", "rc", rcFileSmallString)) {
+    diagnostics << "Cannot create a temporary file\n";
+    return false;
+  }
+  StringRef rcFile(rcFileSmallString.str());
+  llvm::FileRemover rcFileRemover((Twine(rcFile)));
+
+  // Open the temporary file for writing.
+  std::string errorInfo;
+  llvm::raw_fd_ostream out(rcFile.data(), errorInfo);
+  if (!errorInfo.empty()) {
+    diagnostics << "Failed to open " << ctx.getManifestOutputPath() << ": "
+                << errorInfo << "\n";
+    return false;
+  }
+
+  // Write resource script to the RC file.
+  out << "#define LANG_ENGLISH 9\n"
+      << "#define SUBLANG_DEFAULT 1\n"
+      << "#define APP_MANIFEST " << ctx.getManifestId() << "\n"
+      << "#define RT_MANIFEST 24\n"
+      << "LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT\n"
+      << "APP_MANIFEST RT_MANIFEST {\n"
+      << quoteXml(createManifestXml(ctx))
+      << "}\n";
+  out.close();
+
+  // Create output resource file.
+  SmallString<128> resFileSmallString;
+  if (llvm::sys::fs::createTemporaryFile("tmp", "res", resFileSmallString)) {
+    diagnostics << "Cannot create a temporary file";
+    return false;
+  }
+  resFile = resFileSmallString.str();
+
+  // Register the resource file path so that the file will be deleted when the
+  // context's destructor is called.
+  ctx.registerTemporaryFile(resFile);
+
+  // Run RC.EXE /fo tmp.res tmp.rc
+  std::string program = "rc.exe";
+  std::string programPath = llvm::sys::FindProgramByName(program);
+  if (programPath.empty()) {
+    diagnostics << "Unable to find " << program << " in PATH\n";
+    return false;
+  }
+  std::vector<const char *> args;
+  args.push_back(programPath.c_str());
+  args.push_back("/fo");
+  args.push_back(resFile.c_str());
+  args.push_back(rcFile.data());
+  args.push_back(nullptr);
+
+  if (llvm::sys::ExecuteAndWait(programPath.c_str(), &args[0]) != 0) {
+    llvm::errs() << program << " failed\n";
+    return false;
+  }
   return true;
+}
+
+// Create a side-by-side manifest file. The side-by-side manifest file is a
+// separate XML file having ".manifest" extension. It will be created in the
+// same directory as the resulting executable.
+bool createSideBySideManifestFile(PECOFFLinkingContext &ctx,
+                                  raw_ostream &diagnostics) {
+  std::string errorInfo;
+  llvm::raw_fd_ostream out(ctx.getManifestOutputPath().data(), errorInfo);
+  if (!errorInfo.empty()) {
+    diagnostics << "Failed to open " << ctx.getManifestOutputPath() << ": "
+                << errorInfo << "\n";
+    return false;
+  }
+  out << createManifestXml(ctx);
+  return true;
+}
+
+// Create the a side-by-side manifest file, or create a resource file for the
+// manifest file and add it to the input graph.
+//
+// The manifest file will convey some information to the linker, such as whether
+// the binary needs to run as Administrator or not. Instead of being placed in
+// the PE/COFF header, it's in XML format for some reason -- I guess it's
+// probably because it's invented in the early dot-com era.
+bool createManifest(PECOFFLinkingContext &ctx, raw_ostream &diagnostics) {
+  if (ctx.getEmbedManifest()) {
+    std::string resourceFilePath;
+    if (!createManifestResourceFile(ctx, diagnostics, resourceFilePath))
+      return false;
+    std::unique_ptr<InputElement> inputElement(
+        new PECOFFFileNode(ctx, resourceFilePath));
+    ctx.inputGraph().addInputElement(std::move(inputElement));
+    return true;
+  }
+  return createSideBySideManifestFile(ctx, diagnostics);
 }
 
 // Handle /failifmismatch option.
@@ -264,6 +401,10 @@ bool handleFailIfMismatchOption(StringRef option,
   mustMatch[key] = value;
   return false;
 }
+
+//
+// Environment variable
+//
 
 // Process "LINK" environment variable. If defined, the value of the variable
 // should be processed as command line arguments.
@@ -344,6 +485,10 @@ parseArgs(int argc, const char *argv[], raw_ostream &diagnostics,
 
 } // namespace
 
+//
+// Main driver
+//
+
 ErrorOr<StringRef> PECOFFFileNode::getPath(const LinkingContext &) const {
   if (_path.endswith(".lib"))
     return _ctx.searchLibraryFile(_path);
@@ -365,6 +510,12 @@ bool WinLinkDriver::linkPECOFF(int argc, const char *argv[],
   processLibEnv(context);
   if (!parse(newargv.size() - 1, &newargv[0], context, diagnostics))
     return false;
+
+  // Create the file if needed.
+  if (context.getCreateManifest())
+    if (!createManifest(context, diagnostics))
+      return false;
+
   return link(context, diagnostics);
 }
 
@@ -713,11 +864,6 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
     ctx.setInputGraph(std::unique_ptr<InputGraph>(new InputGraph()));
   for (auto &e : inputElements)
     ctx.inputGraph().addInputElement(std::move(e));
-
-  // Create the side-by-side manifest file if needed.
-  if (!isReadingDirectiveSection && ctx.getCreateManifest())
-    if (!createManifestFile(ctx, diagnostics))
-      return false;
 
   // Validate the combination of options used.
   return ctx.validate(diagnostics);

@@ -20,6 +20,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileUtilities.h"
 
 using llvm::COFF::MachineTypes;
 using llvm::COFF::WindowsSubsystem;
@@ -74,6 +75,12 @@ public:
 
   const std::vector<StringRef> getInputSearchPaths() {
     return _inputSearchPaths;
+  }
+
+  void registerTemporaryFile(StringRef path) {
+    std::unique_ptr<llvm::FileRemover> fileRemover(
+        new llvm::FileRemover(Twine(allocateString(path))));
+    _tempFiles.push_back(std::move(fileRemover));
   }
 
   StringRef searchLibraryFile(StringRef path) const;
@@ -247,6 +254,9 @@ private:
   std::vector<StringRef> _inputSearchPaths;
   std::unique_ptr<Reader> _reader;
   std::unique_ptr<Writer> _writer;
+
+  // List of files that will be removed on destruction.
+  std::vector<std::unique_ptr<llvm::FileRemover> > _tempFiles;
 };
 
 } // end namespace lld
