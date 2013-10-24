@@ -302,7 +302,7 @@ public:
   AddrPool *getAddrPool() { return &AddressPool; }
 };
 
-/// \brief Helper used to pair up a symbol and it's DWARF compile unit.
+/// \brief Helper used to pair up a symbol and its DWARF compile unit.
 struct SymbolCU {
   SymbolCU(CompileUnit *CU, const MCSymbol *Sym) : Sym(Sym), CU(CU) {}
   const MCSymbol *Sym;
