@@ -1210,6 +1210,35 @@ TEST(MemorySanitizer, memcpy) {
   EXPECT_POISONED(y[1]);
 }
 
+void TestUnalignedMemcpy(int left, int right, bool src_is_aligned) {
+  const int sz = 20;
+  char *dst = (char *)malloc(sz);
+  U4 origin = __msan_get_origin(dst);
+
+  char *src = (char *)malloc(sz);
+  memset(src, 0, sz);
+
+  memcpy(dst + left, src_is_aligned ? src + left : src, sz - left - right);
+  for (int i = 0; i < left; ++i)
+    EXPECT_POISONED_O(dst[i], origin);
+  for (int i = 0; i < right; ++i)
+    EXPECT_POISONED_O(dst[sz - i - 1], origin);
+  EXPECT_NOT_POISONED(dst[left]);
+  EXPECT_NOT_POISONED(dst[sz - right - 1]);
+
+  free(dst);
+  free(src);
+}
+
+TEST(MemorySanitizer, memcpy_unaligned) {
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      TestUnalignedMemcpy(i, j, true);
+      TestUnalignedMemcpy(i, j, false);
+    }
+  }
+}
+
 TEST(MemorySanitizer, memmove) {
   char* x = new char[2];
   char* y = new char[2];

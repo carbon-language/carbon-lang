@@ -1278,15 +1278,41 @@ void __msan_clear_and_unpoison(void *a, uptr size) {
   fast_memset((void*)MEM_TO_SHADOW((uptr)a), 0, size);
 }
 
+u32 get_origin_if_poisoned(uptr a, uptr size) {
+  unsigned char *s = (unsigned char *)MEM_TO_SHADOW(a);
+  for (uptr i = 0; i < size; ++i)
+    if (s[i])
+      return *(uptr *)SHADOW_TO_ORIGIN((s + i) & ~3UL);
+  return 0;
+}
+
 void __msan_copy_origin(void *dst, const void *src, uptr size) {
   if (!__msan_get_track_origins()) return;
   if (!MEM_IS_APP(dst) || !MEM_IS_APP(src)) return;
-  uptr d = MEM_TO_ORIGIN(dst);
-  uptr s = MEM_TO_ORIGIN(src);
-  uptr beg = d & ~3UL;  // align down.
-  uptr end = (d + size + 3) & ~3UL;  // align up.
-  s = s & ~3UL;  // align down.
-  fast_memcpy((void*)beg, (void*)s, end - beg);
+  uptr d = (uptr)dst;
+  uptr beg = d & ~3UL;
+  // Copy left unaligned origin if that memory is poisoned.
+  if (beg < d) {
+    u32 o = get_origin_if_poisoned(beg, d - beg);
+    if (o)
+      *(uptr *)MEM_TO_ORIGIN(beg) = o;
+    beg += 4;
+  }
+
+  uptr end = (d + size + 3) & ~3UL;
+  // Copy right unaligned origin if that memory is poisoned.
+  if (end > d + size) {
+    u32 o = get_origin_if_poisoned(d + size, end - d - size);
+    if (o)
+      *(uptr *)MEM_TO_ORIGIN(end - 4) = o;
+    end -= 4;
+  }
+
+  if (beg < end) {
+    // Align src up.
+    uptr s = ((uptr)src + 3) & ~3UL;
+    fast_memcpy((void*)MEM_TO_ORIGIN(beg), (void*)MEM_TO_ORIGIN(s), end - beg);
+  }
 }
 
 void __msan_copy_poison(void *dst, const void *src, uptr size) {

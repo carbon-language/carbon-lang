@@ -25,11 +25,12 @@
 # define MSAN_REPLACE_OPERATORS_NEW_AND_DELETE 1
 #endif
 
-#define MEM_TO_SHADOW(mem) (((uptr)mem)       & ~0x400000000000ULL)
-#define MEM_TO_ORIGIN(mem) (MEM_TO_SHADOW(mem) + 0x200000000000ULL)
-#define MEM_IS_APP(mem)    ((uptr)mem >=         0x600000000000ULL)
-#define MEM_IS_SHADOW(mem) ((uptr)mem >=         0x200000000000ULL && \
-                            (uptr)mem <=         0x400000000000ULL)
+#define MEM_TO_SHADOW(mem)       (((uptr)mem) & ~0x400000000000ULL)
+#define SHADOW_TO_ORIGIN(shadow) (((uptr)shadow) + 0x200000000000ULL)
+#define MEM_TO_ORIGIN(mem)       (SHADOW_TO_ORIGIN(MEM_TO_SHADOW(mem)))
+#define MEM_IS_APP(mem)          ((uptr)mem >= 0x600000000000ULL)
+#define MEM_IS_SHADOW(mem) \
+  ((uptr)mem >= 0x200000000000ULL && (uptr)mem <= 0x400000000000ULL)
 
 const int kMsanParamTlsSizeInWords = 100;
 const int kMsanRetvalTlsSizeInWords = 100;
