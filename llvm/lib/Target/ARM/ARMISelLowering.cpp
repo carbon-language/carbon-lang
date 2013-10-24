@@ -175,7 +175,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
 
-  if (Subtarget->isTargetDarwin()) {
+  if (Subtarget->isTargetIOS()) {
     // Uses VFP for Thumb libfuncs if available.
     if (Subtarget->isThumb() && Subtarget->hasVFP2()) {
       // Single-precision floating-point arithmetic.
