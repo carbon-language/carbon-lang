@@ -255,7 +255,7 @@ public:
   /// EmitRawText - If this file is backed by an assembly streamer, this dumps
   /// the specified string in the output .s file.  This capability is
   /// indicated by the hasRawTextSupport() predicate.
-  virtual void EmitRawText(StringRef String);
+  virtual void EmitRawTextImpl(StringRef String);
 
   virtual void FinishImpl();
 };
@@ -1346,7 +1346,7 @@ void MCAsmStreamer::EmitBundleUnlock() {
 /// EmitRawText - If this file is backed by an assembly streamer, this dumps
 /// the specified string in the output .s file.  This capability is
 /// indicated by the hasRawTextSupport() predicate.
-void MCAsmStreamer::EmitRawText(StringRef String) {
+void MCAsmStreamer::EmitRawTextImpl(StringRef String) {
   if (!String.empty() && String.back() == '\n')
     String = String.substr(0, String.size()-1);
   OS << String;

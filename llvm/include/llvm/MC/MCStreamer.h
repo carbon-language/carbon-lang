@@ -149,6 +149,8 @@ protected:
   }
   void EmitW64Tables();
 
+  virtual void EmitRawTextImpl(StringRef String);
+
 public:
   virtual ~MCStreamer();
 
@@ -657,7 +659,6 @@ public:
   /// EmitRawText - If this file is backed by a assembly streamer, this dumps
   /// the specified string in the output .s file.  This capability is
   /// indicated by the hasRawTextSupport() predicate.  By default this aborts.
-  virtual void EmitRawText(StringRef String);
   void EmitRawText(const Twine &String);
 
   /// Flush - Causes any cached state to be written out.
