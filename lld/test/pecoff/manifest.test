@@ -7,13 +7,13 @@
 MANIFEST: ?xml version="1.0" standalone="yes"?>
 MANIFEST: <assembly xmlns="urn:schemas-microsoft-com:asm.v1"
 MANIFEST:           manifestVersion="1.0">
-MANIFEST:   <trustinfo>
+MANIFEST:   <trustInfo>
 MANIFEST:     <security>
 MANIFEST:       <requestedPrivileges>
 MANIFEST:          <requestedExecutionLevel level='asInvoker' uiAccess='false'/>
 MANIFEST:       </requestedPrivileges>
 MANIFEST:     </security>
-MANIFEST:   </trustinfo>
+MANIFEST:   </trustInfo>
 MANIFEST: </assembly>
 
 # RUN: lld -flavor link /out:%t2.exe /subsystem:console /force /opt:noref \
@@ -23,13 +23,13 @@ MANIFEST: </assembly>
 UAC: ?xml version="1.0" standalone="yes"?>
 UAC: <assembly xmlns="urn:schemas-microsoft-com:asm.v1"
 UAC:           manifestVersion="1.0">
-UAC:   <trustinfo>
+UAC:   <trustInfo>
 UAC:     <security>
 UAC:       <requestedPrivileges>
 UAC:          <requestedExecutionLevel level='requireAdministrator' uiAccess='true'/>
 UAC:       </requestedPrivileges>
 UAC:     </security>
-UAC:   </trustinfo>
+UAC:   </trustInfo>
 UAC: </assembly>
 
 # RUN: lld -flavor link /out:%t3.exe /subsystem:console /force /opt:noref \
@@ -39,13 +39,13 @@ UAC: </assembly>
 DEPENDENCY: ?xml version="1.0" standalone="yes"?>
 DEPENDENCY: <assembly xmlns="urn:schemas-microsoft-com:asm.v1"
 DEPENDENCY:           manifestVersion="1.0">
-DEPENDENCY:   <trustinfo>
+DEPENDENCY:   <trustInfo>
 DEPENDENCY:     <security>
 DEPENDENCY:       <requestedPrivileges>
 DEPENDENCY:          <requestedExecutionLevel level='asInvoker' uiAccess='false'/>
 DEPENDENCY:       </requestedPrivileges>
 DEPENDENCY:     </security>
-DEPENDENCY:   </trustinfo>
+DEPENDENCY:   </trustInfo>
 DEPENDENCY:   <dependency>
 DEPENDENCY:     <dependentAssembly>
 DEPENDENCY:       <assemblyIdentity foo='bar' />

@@ -223,14 +223,14 @@ std::string createManifestXml(PECOFFLinkingContext &ctx) {
   out << "<?xml version=\"1.0\" standalone=\"yes\"?>\n"
       << "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\"\n"
       << "          manifestVersion=\"1.0\">\n"
-      << "  <trustinfo>\n"
+      << "  <trustInfo>\n"
       << "    <security>\n"
       << "      <requestedPrivileges>\n"
       << "         <requestedExecutionLevel level=" << ctx.getManifestLevel()
       << " uiAccess=" << ctx.getManifestUiAccess() << "/>\n"
       << "      </requestedPrivileges>\n"
       << "    </security>\n"
-      << "  </trustinfo>\n";
+      << "  </trustInfo>\n";
   const std::string &dependency = ctx.getManifestDependency();
   if (!dependency.empty()) {
     out << "  <dependency>\n"
