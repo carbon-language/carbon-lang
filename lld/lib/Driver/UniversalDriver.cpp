@@ -20,6 +20,9 @@
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Option/Arg.h"
+#include "llvm/Option/Option.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
@@ -27,6 +30,42 @@
 using namespace lld;
 
 namespace {
+
+// Create enum with OPT_xxx values for each option in GnuLdOptions.td
+enum {
+  OPT_INVALID = 0,
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM,  \
+               HELP, META)                                                     \
+  OPT_##ID,
+#include "UniversalDriverOptions.inc"
+#undef OPTION
+};
+
+// Create prefix string literals used in GnuLdOptions.td
+#define PREFIX(NAME, VALUE) const char *const NAME[] = VALUE;
+#include "UniversalDriverOptions.inc"
+#undef PREFIX
+
+// Create table mapping all options defined in GnuLdOptions.td
+static const llvm::opt::OptTable::Info infoTable[] = {
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM,  \
+               HELPTEXT, METAVAR)                                              \
+  {                                                                            \
+    PREFIX, NAME, HELPTEXT, METAVAR, OPT_##ID, llvm::opt::Option::KIND##Class, \
+        PARAM, FLAGS, OPT_##GROUP, OPT_##ALIAS, ALIASARGS                      \
+  }                                                                            \
+  ,
+#include "UniversalDriverOptions.inc"
+#undef OPTION
+};
+
+// Create OptTable class for parsing actual command line arguments
+class UniversalDriverOptTable : public llvm::opt::OptTable {
+public:
+  UniversalDriverOptTable()
+      : OptTable(infoTable, llvm::array_lengthof(infoTable)) {}
+};
+
 enum class Flavor {
   invalid,
   gnu_ld,       // -flavor gnu
@@ -80,44 +119,50 @@ ProgramNameParts parseProgramName(StringRef programName) {
   return ret;
 }
 
-Flavor selectFlavor(std::vector<const char *> &args, raw_ostream &diag) {
-  // -core as first arg is shorthand for -flavor core.
-  if (args.size() > 1 && StringRef(args[1]) == "-core") {
-    args.erase(args.begin() + 1);
-    return Flavor::core;
-  }
-  // Handle -flavor as first arg.
-  if (args.size() > 2 && StringRef(args[1]) == "-flavor") {
-    Flavor flavor = strToFlavor(args[2]);
-    args.erase(args.begin() + 1);
-    args.erase(args.begin() + 1);
-    if (flavor == Flavor::invalid)
-      diag << "error: '" << args[2] << "' invalid value for -flavor.\n";
-    return flavor;
-  }
-
-  Flavor flavor =
-      strToFlavor(parseProgramName(llvm::sys::path::stem(args[0]))._flavor);
-
-  // If flavor still undetermined, then error out.
-  if (flavor == Flavor::invalid)
-    diag << "error: failed to determine driver flavor from program name"
-         << " '" << args[0] << "'.\n"
-         << "select a flavor with -flavor [gnu|darwin|link|core].\n";
-  return flavor;
-}
-}
+} // namespace
 
 namespace lld {
 bool UniversalDriver::link(int argc, const char *argv[],
                            raw_ostream &diagnostics) {
-  // Convert argv[] C-array to vector.
+  // Parse command line options using GnuLdOptions.td
+  std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
+  UniversalDriverOptTable table;
+  unsigned missingIndex;
+  unsigned missingCount;
+
+  // Program name
+  StringRef programName = llvm::sys::path::stem(argv[0]);
+
+  parsedArgs.reset(
+      table.ParseArgs(&argv[1], &argv[argc], missingIndex, missingCount));
+
+  if (missingCount) {
+    diagnostics << "error: missing arg value for '"
+                << parsedArgs->getArgString(missingIndex) << "' expected "
+                << missingCount << " argument(s).\n";
+    return false;
+  }
+
+  // Handle --help
+  if (parsedArgs->getLastArg(OPT_help)) {
+    table.PrintHelp(llvm::outs(), argv[0], "LLVM Linker", false);
+    return true;
+  }
+
+  Flavor flavor;
+
+  if (parsedArgs->getLastArg(OPT_core)) {
+    flavor = Flavor::core;
+    argv++;
+    argc--;
+  } else if (llvm::opt::Arg *argFlavor = parsedArgs->getLastArg(OPT_flavor)) {
+    flavor = strToFlavor(argFlavor->getValue());
+    argv += 2;
+    argc -= 2;
+  } else
+    flavor = strToFlavor(parseProgramName(programName)._flavor);
+
   std::vector<const char *> args(argv, argv + argc);
-
-  // Determine flavor of link based on command name or -flavor argument.
-  // Note: 'args' is modified to remove -flavor option.
-  Flavor flavor = selectFlavor(args, diagnostics);
-
   // Switch to appropriate driver.
   switch (flavor) {
   case Flavor::gnu_ld:
@@ -129,6 +174,8 @@ bool UniversalDriver::link(int argc, const char *argv[],
   case Flavor::core:
     return CoreDriver::link(args.size(), args.data(), diagnostics);
   case Flavor::invalid:
+    diagnostics << "Select the appropriate flavor\n";
+    table.PrintHelp(llvm::outs(), programName.data(), "LLVM Linker", false);
     return false;
   }
   llvm_unreachable("Unrecognised flavor");

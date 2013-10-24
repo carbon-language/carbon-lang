@@ -1,3 +1,5 @@
+set(LLVM_TARGET_DEFINITIONS UniversalDriverOptions.td)
+tablegen(LLVM UniversalDriverOptions.inc -gen-opt-parser-defs)
 set(LLVM_TARGET_DEFINITIONS GnuLdOptions.td)
 tablegen(LLVM GnuLdOptions.inc -gen-opt-parser-defs)
 set(LLVM_TARGET_DEFINITIONS CoreOptions.td)
