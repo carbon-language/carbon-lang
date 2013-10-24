@@ -534,9 +534,9 @@ void LayoutPass::checkFollowonChain(MutableFile::DefinedAtomRange &range) {
 #endif  // #ifndef NDEBUG
 
 /// Perform the actual pass
-void LayoutPass::perform(MutableFile &mergedFile) {
+void LayoutPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   ScopedTask task(getDefaultDomain(), "LayoutPass");
-  MutableFile::DefinedAtomRange atomRange = mergedFile.definedAtoms();
+  MutableFile::DefinedAtomRange atomRange = mergedFile->definedAtoms();
 
   // Build follow on tables
   buildFollowOnTable(atomRange);

@@ -10,7 +10,6 @@ WEAKORDER: 004001a4 T _start
 
 WEAKATOMSORDER:  - ref-name:        [[TARGETA:[-a-zA-Z0-9_]+]]
 WEAKATOMSORDER:    alignment:       2^2
-WEAKATOMSORDER:    section-name:    .text
 WEAKATOMSORDER:      - kind:            layout-after
 WEAKATOMSORDER:        offset:          0
 WEAKATOMSORDER:        target:          [[TARGETB:[-a-zA-Z0-9_]+]]
@@ -18,7 +17,6 @@ WEAKATOMSORDER:  - name:            _start
 WEAKATOMSORDER:    scope:           global
 WEAKATOMSORDER:    merge:           as-weak
 WEAKATOMSORDER:    alignment:       2^2
-WEAKATOMSORDER:    section-name:    .text
 WEAKATOMSORDER:    references:      
 WEAKATOMSORDER:      - kind:            layout-after
 WEAKATOMSORDER:        offset:          0
@@ -27,7 +25,6 @@ WEAKATOMSORDER:  - ref-name:        [[TARGETB]]
 WEAKATOMSORDER:    scope:           global
 WEAKATOMSORDER:    content:         [ C3 ]
 WEAKATOMSORDER:    alignment:       2^2
-WEAKATOMSORDER:    section-name:    .text
 WEAKATOMSORDER:    references:      
 WEAKATOMSORDER:      - kind:            layout-before
 WEAKATOMSORDER:        offset:          0

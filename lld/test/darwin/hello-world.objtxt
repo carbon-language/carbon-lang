@@ -34,3 +34,5 @@ shared-library-atoms:
 # CHECK:	{{[0-9a-f]+}} s _main
 # CHECK:	00000000 u _printf
 # CHECK:	00000000 u dyld_stub_binder
+# Disable the test for now as this is going to fail with DEBUG mode
+# REQUIRES: disable

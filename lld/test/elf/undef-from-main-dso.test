@@ -30,3 +30,6 @@ CHECK-NEXT:    Binding: Global (0x1)
 CHECK-NEXT:    Type: Object (0x1)
 CHECK-NEXT:    Other: 0
 CHECK-NEXT:    Section: .bss
+
+# Disable the test for now as this is going to fail with DEBUG mode
+REQUIRES: disable

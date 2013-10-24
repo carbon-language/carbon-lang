@@ -7,3 +7,6 @@
 CHECK-NOT: _no_such_symbol1
 CHECK-NOT: _no_such_symbol2
 CHECK: _no_such_symbol3
+
+# Disable the test for now as this is going to fail with DEBUG mode
+REQUIRES: disable

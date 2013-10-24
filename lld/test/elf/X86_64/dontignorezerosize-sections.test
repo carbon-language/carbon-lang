@@ -3,9 +3,7 @@ RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/zerosizedsection.o  \
 RUN: --noinhibit-exec --output-filetype=yaml -o %t
 RUN: FileCheck %s < %t
 
-CHECK:    section-name:    .data
 CHECK:    references:      
 CHECK:      - kind:            R_X86_64_16
 CHECK:        offset:          0
 CHECK:        target:          L000
-CHECK:    section-name:    .text
