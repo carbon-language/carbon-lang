@@ -1,5 +1,4 @@
-//===------ Passes/RoundTripYAMLPass.h - Handles Layout of atoms
-//------------------===//
+//===- Passes/RoundTripYAMLPass.h- Write YAML file/Read it back-----------===//
 //
 //                             The LLVM Linker
 //

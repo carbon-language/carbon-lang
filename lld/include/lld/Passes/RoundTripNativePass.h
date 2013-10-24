@@ -1,5 +1,4 @@
-//===------ Passes/RoundTripNativePass.h - Handles Layout of atoms
-//------------------===//
+//===- Passes/RoundTripNativePass.cpp - Write Native file/Read it back-----===//
 //
 //                             The LLVM Linker
 //
@@ -8,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_PASSES_NATIVE_PASS_H
-#define LLD_PASSES_NATIVE_PASS_H
+#ifndef LLD_PASSES_ROUNDTRIP_NATIVE_PASS_H
+#define LLD_PASSES_ROUNDTRIP_NATIVE_PASS_H
 
 #include "lld/Core/File.h"
 #include "lld/Core/LinkingContext.h"
@@ -38,4 +37,4 @@ private:
 
 } // namespace lld
 
-#endif // LLD_PASSES_NATIVE_PASS_H
+#endif // LLD_PASSES_ROUNDTRIP_NATIVE_PASS_H

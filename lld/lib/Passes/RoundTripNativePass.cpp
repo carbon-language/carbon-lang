@@ -1,5 +1,4 @@
-//===- Passes/RoundTripNativePass.cpp - Layout atoms
-//-------------------------------===//
+//===- Passes/RoundTripNativePass.cpp - Write Native file/Read it back-----===//
 //
 //                             The LLVM Linker
 //
@@ -7,8 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//===----------------------------------------------------------------------===//
-
 #define DEBUG_TYPE "RoundTripNativePass"
 
 #include "lld/Core/Instrumentation.h"

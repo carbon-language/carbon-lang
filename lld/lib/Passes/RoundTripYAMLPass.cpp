@@ -1,12 +1,10 @@
-//===- Passes/RoundTripYAMLPass.cpp - Layout atoms
-//-------------------------------===//
+//===- Passes/RoundTripYAMLPass.cpp - Write YAML file/Read it back--------===//
 //
 //                             The LLVM Linker
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===----------------------------------------------------------------------===//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "RoundTripYAMLPass"
