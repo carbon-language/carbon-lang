@@ -365,14 +365,14 @@ namespace llvm {
     /// where the size in bytes of the directive is specified by Size and Label
     /// specifies the label.  This implicitly uses .set if it is available.
     void EmitLabelPlusOffset(const MCSymbol *Label, uint64_t Offset,
-                                   unsigned Size, 
-                                   bool IsSectionRelative = false) const;
+                             unsigned Size,
+                             bool IsSectionRelative = false) const;
 
     /// EmitLabelReference - Emit something like ".long Label"
     /// where the size in bytes of the directive is specified by Size and Label
     /// specifies the label.
-    void EmitLabelReference(const MCSymbol *Label, unsigned Size, 
-        bool IsSectionRelative = false) const {
+    void EmitLabelReference(const MCSymbol *Label, unsigned Size,
+                            bool IsSectionRelative = false) const {
       EmitLabelPlusOffset(Label, 0, Size, IsSectionRelative);
     }
 
@@ -457,8 +457,7 @@ namespace llvm {
     /// return true if the operand is erroneous.
     virtual bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                        unsigned AsmVariant,
-                                       const char *ExtraCode,
-                                       raw_ostream &OS);
+                                       const char *ExtraCode, raw_ostream &OS);
 
   private:
     /// Private state for PrintSpecial()
@@ -470,7 +469,8 @@ namespace llvm {
 
     /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
     void EmitInlineAsm(StringRef Str, const MDNode *LocMDNode = 0,
-                    InlineAsm::AsmDialect AsmDialect = InlineAsm::AD_ATT) const;
+                       InlineAsm::AsmDialect AsmDialect =
+                           InlineAsm::AD_ATT) const;
 
     /// EmitInlineAsm - This method formats and emits the specified machine
     /// instruction that is an inline asm.
@@ -488,8 +488,7 @@ namespace llvm {
     void EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const;
 
     void EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
-                            const MachineBasicBlock *MBB,
-                            unsigned uid) const;
+                            const MachineBasicBlock *MBB, unsigned uid) const;
     void EmitLLVMUsedList(const ConstantArray *InitList);
     /// Emit llvm.ident metadata in an '.ident' directive.
     void EmitModuleIdents(Module &M);
