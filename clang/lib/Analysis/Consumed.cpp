@@ -592,12 +592,7 @@ void ConsumedStmtVisitor::VisitCallExpr(const CallExpr *Call) {
     // Special case for the std::move function.
     // TODO: Make this more specific. (Deferred)
     if (FunDecl->getNameAsString() == "move") {
-      InfoEntry Entry = PropagationMap.find(Call->getArg(0));
-      
-      if (Entry != PropagationMap.end()) {
-        PropagationMap.insert(PairType(Call, Entry->second));
-      }
-      
+      forwardInfo(Call->getArg(0), Call);
       return;
     }
     
@@ -690,33 +685,31 @@ void ConsumedStmtVisitor::VisitCXXConstructExpr(const CXXConstructExpr *Call) {
     
   } else if (Constructor->isMoveConstructor()) {
     
-    PropagationInfo PInfo =
-      PropagationMap.find(Call->getArg(0))->second;
+    InfoEntry Entry = PropagationMap.find(Call->getArg(0));
     
-    if (PInfo.isVar()) {
-      const VarDecl* Var = PInfo.getVar();
+    if (Entry != PropagationMap.end()) {
+      PropagationInfo PInfo = Entry->second;
       
-      PropagationMap.insert(PairType(Call,
-        PropagationInfo(StateMap->getState(Var), ThisType)));
-      
-      StateMap->setState(Var, consumed::CS_Consumed);
-      
-    } else {
-      PropagationMap.insert(PairType(Call, PInfo));
+      if (PInfo.isVar()) {
+        const VarDecl* Var = PInfo.getVar();
+        
+        PropagationMap.insert(PairType(Call,
+          PropagationInfo(StateMap->getState(Var), ThisType)));
+        
+        StateMap->setState(Var, consumed::CS_Consumed);
+        
+      } else {
+        PropagationMap.insert(PairType(Call, PInfo));
+      }
     }
-      
   } else if (Constructor->isCopyConstructor()) {
-    MapType::iterator Entry = PropagationMap.find(Call->getArg(0));
-  
-    if (Entry != PropagationMap.end())
-      PropagationMap.insert(PairType(Call, Entry->second));
+    forwardInfo(Call->getArg(0), Call);
     
   } else {
     ConsumedState RetState = mapConsumableAttrState(ThisType);
     PropagationMap.insert(PairType(Call, PropagationInfo(RetState, ThisType)));
   }
 }
-
 
 void ConsumedStmtVisitor::VisitCXXMemberCallExpr(
   const CXXMemberCallExpr *Call) {
@@ -854,10 +847,7 @@ void ConsumedStmtVisitor::VisitDeclStmt(const DeclStmt *DeclS) {
 void ConsumedStmtVisitor::VisitMaterializeTemporaryExpr(
   const MaterializeTemporaryExpr *Temp) {
   
-  InfoEntry Entry = PropagationMap.find(Temp->GetTemporaryExpr());
-  
-  if (Entry != PropagationMap.end())
-    PropagationMap.insert(PairType(Temp, Entry->second));
+  forwardInfo(Temp->GetTemporaryExpr(), Temp);
 }
 
 void ConsumedStmtVisitor::VisitMemberExpr(const MemberExpr *MExpr) {
