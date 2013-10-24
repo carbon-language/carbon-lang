@@ -2504,6 +2504,28 @@ INTERCEPTOR(__sanitizer_ether_addr *, ether_aton_r, char *buf,
 #define INIT_ETHER_R
 #endif
 
+#if SANITIZER_INTERCEPT_SHMCTL
+INTERCEPTOR(int, shmctl, int shmid, int cmd, void *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, shmctl, shmid, cmd, buf);
+  int res = REAL(shmctl)(shmid, cmd, buf);
+  if (res >= 0) {
+    unsigned sz = 0;
+    if (cmd == shmctl_ipc_stat || cmd == shmctl_shm_stat)
+      sz = struct_shmid_ds_sz;
+    else if (cmd == shmctl_ipc_info)
+      sz = struct_shminfo_sz;
+    else if (cmd == shmctl_shm_info)
+      sz = struct_shm_info_sz;
+    if (sz) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, sz);
+  }
+  return res;
+}
+#define INIT_SHMCTL INTERCEPT_FUNCTION(shmctl);
+#else
+#define INIT_SHMCTL
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -2597,4 +2619,5 @@ INTERCEPTOR(__sanitizer_ether_addr *, ether_aton_r, char *buf,
   INIT_INITGROUPS;                         \
   INIT_ETHER;                              \
   INIT_ETHER_R;                            \
+  INIT_SHMCTL;                             \
 /**/

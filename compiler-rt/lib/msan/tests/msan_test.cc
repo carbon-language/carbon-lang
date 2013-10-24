@@ -53,6 +53,8 @@
 #include <wordexp.h>
 #include <mntent.h>
 #include <netinet/ether.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
 #if defined(__i386__) || defined(__x86_64__)
 # include <emmintrin.h>
@@ -1120,6 +1122,30 @@ TEST(MemorySanitizer, get_current_dir_name) {
   EXPECT_NOT_POISONED(res[0]);
   free(res);
 }
+
+TEST(MemorySanitizer, shmctl) {
+  int id = shmget(IPC_PRIVATE, 4096, 0644 | IPC_CREAT);
+  ASSERT_GT(id, -1);
+
+  struct shmid_ds ds;
+  int res = shmctl(id, IPC_STAT, &ds);
+  ASSERT_GT(res, -1);
+  EXPECT_NOT_POISONED(ds);
+
+  struct shminfo si;
+  res = shmctl(id, IPC_INFO, (struct shmid_ds *)&si);
+  ASSERT_GT(res, -1);
+  EXPECT_NOT_POISONED(si);
+
+  struct shm_info s_i;
+  res = shmctl(id, SHM_INFO, (struct shmid_ds *)&s_i);
+  ASSERT_GT(res, -1);
+  EXPECT_NOT_POISONED(s_i);
+
+  res = shmctl(id, IPC_RMID, 0);
+  ASSERT_GT(res, -1);
+}
+
 
 TEST(MemorySanitizer, confstr) {
   char buf[3];

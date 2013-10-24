@@ -387,6 +387,7 @@ enum StatType {
   StatInt_ether_ntohost,
   StatInt_ether_hostton,
   StatInt_ether_line,
+  StatInt_shmctl,
 
   // Dynamic annotations.
   StatAnnotation,

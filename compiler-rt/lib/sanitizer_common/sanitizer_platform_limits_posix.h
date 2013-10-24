@@ -356,6 +356,15 @@ namespace __sanitizer {
   extern int ptrace_setregset;
 #endif
 
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
+  extern unsigned struct_shminfo_sz;
+  extern unsigned struct_shm_info_sz;
+  extern int shmctl_ipc_stat;
+  extern int shmctl_ipc_info;
+  extern int shmctl_shm_info;
+  extern int shmctl_shm_stat;
+#endif
+
   // ioctl arguments
   struct __sanitizer_ifconf {
     int ifc_len;
