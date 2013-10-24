@@ -1479,8 +1479,14 @@ static Value *genLoopLimit(PHINode *IndVar, const SCEV *IVCount, Loop *L,
   if (IndVar->getType()->isPointerTy()
       && !IVCount->getType()->isPointerTy()) {
 
+    // IVOffset will be the new GEP offset that is interpreted by GEP as a
+    // signed value. IVCount on the other hand represents the loop trip count,
+    // which is an unsigned value. FindLoopCounter only allows induction
+    // variables that have a positive unit stride of one. This means we don't
+    // have to handle the case of negative offsets (yet) and just need to zero
+    // extend IVCount.
     Type *OfsTy = SE->getEffectiveSCEVType(IVInit->getType());
-    const SCEV *IVOffset = SE->getTruncateOrSignExtend(IVCount, OfsTy);
+    const SCEV *IVOffset = SE->getTruncateOrZeroExtend(IVCount, OfsTy);
 
     // Expand the code for the iteration count.
     assert(SE->isLoopInvariant(IVOffset, L) &&
