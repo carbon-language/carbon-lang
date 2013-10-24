@@ -14,6 +14,7 @@
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/ExecutionEngine/ObjectBuffer.h"
 #include "llvm/ExecutionEngine/ObjectImage.h"
+#include "llvm/PassManager.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -57,31 +58,39 @@ MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM,
   : ExecutionEngine(m), TM(tm), Ctx(0), MemMgr(this, MM), Dyld(&MemMgr),
     ObjCache(0) {
 
-  ModuleStates[m] = ModuleAdded;
+  OwnedModules.addModule(m);
   setDataLayout(TM->getDataLayout());
 }
 
 MCJIT::~MCJIT() {
   MutexGuard locked(lock);
+  // FIXME: We are managing our modules, so we do not want the base class
+  // ExecutionEngine to manage them as well. To avoid double destruction
+  // of the first (and only) module added in ExecutionEngine constructor
+  // we remove it from EE and will destruct it ourselves.
+  //
+  // It may make sense to move our module manager (based on SmallStPtr) back
+  // into EE if the JIT and Interpreter can live with it.
+  // If so, additional functions: addModule, removeModule, FindFunctionNamed,
+  // runStaticConstructorsDestructors could be moved back to EE as well.
+  //
+  Modules.clear();
   Dyld.deregisterEHFrames();
-
-  LoadedObjectMap::iterator it, end = LoadedObjects.end();
-  for (it = LoadedObjects.begin(); it != end; ++it) {
-    ObjectImage *Obj = it->second;
-    if (Obj) {
-      NotifyFreeingObject(*Obj);
-      delete Obj;
-    }
-  }
   LoadedObjects.clear();
   delete TM;
 }
 
 void MCJIT::addModule(Module *M) {
   MutexGuard locked(lock);
-  Modules.push_back(M);
-  ModuleStates[M] = MCJITModuleState();
+  OwnedModules.addModule(M);
 }
+
+bool MCJIT::removeModule(Module *M) {
+  MutexGuard locked(lock);
+  return OwnedModules.removeModule(M);
+}
+
+
 
 void MCJIT::setObjectCache(ObjectCache* NewCache) {
   MutexGuard locked(lock);
@@ -91,12 +100,9 @@ void MCJIT::setObjectCache(ObjectCache* NewCache) {
 ObjectBufferStream* MCJIT::emitObject(Module *M) {
   MutexGuard locked(lock);
 
-  // This must be a module which has already been added to this MCJIT instance.
-  assert(std::find(Modules.begin(), Modules.end(), M) != Modules.end());
-  assert(ModuleStates.find(M) != ModuleStates.end());
-
-  // Re-compilation is not supported
-  assert(!ModuleStates[M].hasBeenEmitted());
+  // This must be a module which has already been added but not loaded to this
+  // MCJIT instance, since these conditions are tested by our caller,
+  // generateCodeForModule.
 
   PassManager PM;
 
@@ -133,11 +139,11 @@ void MCJIT::generateCodeForModule(Module *M) {
   MutexGuard locked(lock);
 
   // This must be a module which has already been added to this MCJIT instance.
-  assert(std::find(Modules.begin(), Modules.end(), M) != Modules.end());
-  assert(ModuleStates.find(M) != ModuleStates.end());
+  assert(OwnedModules.ownsModule(M) &&
+         "MCJIT::generateCodeForModule: Unknown module.");
 
   // Re-compilation is not supported
-  if (ModuleStates[M].hasBeenLoaded())
+  if (OwnedModules.hasModuleBeenLoaded(M))
     return;
 
   OwningPtr<ObjectBuffer> ObjectToLoad;
@@ -166,7 +172,7 @@ void MCJIT::generateCodeForModule(Module *M) {
 
   NotifyObjectEmitted(*LoadedObject);
 
-  ModuleStates[M] = ModuleLoaded;
+  OwnedModules.markModuleAsLoaded(M);
 }
 
 void MCJIT::finalizeLoadedModules() {
@@ -175,19 +181,9 @@ void MCJIT::finalizeLoadedModules() {
   // Resolve any outstanding relocations.
   Dyld.resolveRelocations();
 
+  OwnedModules.markAllLoadedModulesAsFinalized();
+
   // Register EH frame data for any module we own which has been loaded
-  SmallVector<Module *, 1>::iterator end = Modules.end();
-  SmallVector<Module *, 1>::iterator it;
-  for (it = Modules.begin(); it != end; ++it) {
-    Module *M = *it;
-    assert(ModuleStates.find(M) != ModuleStates.end());
-
-    if (ModuleStates[M].hasBeenLoaded() &&
-        !ModuleStates[M].hasBeenFinalized()) {
-      ModuleStates[M] = ModuleFinalized;
-    }
-  }
-
   Dyld.registerEHFrames();
 
   // Set page permissions.
@@ -198,68 +194,27 @@ void MCJIT::finalizeLoadedModules() {
 void MCJIT::finalizeObject() {
   MutexGuard locked(lock);
 
-  // FIXME: This is a temporary hack to get around problems with calling
-  // finalize multiple times.
-  bool finalizeNeeded = false;
-  SmallVector<Module *, 1>::iterator end = Modules.end();
-  SmallVector<Module *, 1>::iterator it;
-  for (it = Modules.begin(); it != end; ++it) {
-    Module *M = *it;
-    assert(ModuleStates.find(M) != ModuleStates.end());
-    if (!ModuleStates[M].hasBeenFinalized())
-      finalizeNeeded = true;
-
-    // I don't really like this, but the C API depends on this behavior.
-    // I suppose it's OK for a deprecated function.
-    if (!ModuleStates[M].hasBeenLoaded())
-      generateCodeForModule(M);
-  }
-  if (!finalizeNeeded)
-    return;
-
-  // Resolve any outstanding relocations.
-  Dyld.resolveRelocations();
-
-  // Register EH frame data for any module we own which has been loaded
-  for (it = Modules.begin(); it != end; ++it) {
-    Module *M = *it;
-    assert(ModuleStates.find(M) != ModuleStates.end());
-
-    if (ModuleStates[M].hasBeenLoaded() &&
-        !ModuleStates[M].hasBeenFinalized()) {
-      ModuleStates[M] = ModuleFinalized;
-    }
+  for (ModulePtrSet::iterator I = OwnedModules.begin_added(),
+                              E = OwnedModules.end_added();
+       I != E; ++I) {
+    Module *M = *I;
+    generateCodeForModule(M);
   }
 
-  Dyld.registerEHFrames();
-
-  // Set page permissions.
-  MemMgr.finalizeMemory();
+  finalizeLoadedModules();
 }
 
 void MCJIT::finalizeModule(Module *M) {
   MutexGuard locked(lock);
 
   // This must be a module which has already been added to this MCJIT instance.
-  assert(std::find(Modules.begin(), Modules.end(), M) != Modules.end());
-  assert(ModuleStates.find(M) != ModuleStates.end());
-
-  if (ModuleStates[M].hasBeenFinalized())
-    return;
+  assert(OwnedModules.ownsModule(M) && "MCJIT::finalizeModule: Unknown module.");
 
   // If the module hasn't been compiled, just do that.
-  if (!ModuleStates[M].hasBeenLoaded())
+  if (!OwnedModules.hasModuleBeenLoaded(M))
     generateCodeForModule(M);
 
-  // Resolve any outstanding relocations.
-  Dyld.resolveRelocations();
-
-  Dyld.registerEHFrames();
-
-  // Set page permissions.
-  MemMgr.finalizeMemory();
-
-  ModuleStates[M] = ModuleFinalized;
+  finalizeLoadedModules();
 }
 
 void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {
@@ -279,10 +234,10 @@ Module *MCJIT::findModuleForSymbol(const std::string &Name,
   MutexGuard locked(lock);
 
   // If it hasn't already been generated, see if it's in one of our modules.
-  SmallVector<Module *, 1>::iterator end = Modules.end();
-  SmallVector<Module *, 1>::iterator it;
-  for (it = Modules.begin(); it != end; ++it) {
-    Module *M = *it;
+  for (ModulePtrSet::iterator I = OwnedModules.begin_added(),
+                              E = OwnedModules.end_added();
+       I != E; ++I) {
+    Module *M = *I;
     Function *F = M->getFunction(Name);
     if (F && !F->empty())
       return M;
@@ -310,12 +265,6 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
   // If it hasn't already been generated, see if it's in one of our modules.
   Module *M = findModuleForSymbol(Name, CheckFunctionsOnly);
   if (!M)
-    return 0;
-
-  // If this is in one of our modules, generate code for that module.
-  assert(ModuleStates.find(M) != ModuleStates.end());
-  // If the module code has already been generated, we won't find the symbol.
-  if (ModuleStates[M].hasBeenLoaded())
     return 0;
 
   generateCodeForModule(M);
@@ -351,16 +300,15 @@ void *MCJIT::getPointerToFunction(Function *F) {
     return Addr;
   }
 
-  // If this function doesn't belong to one of our modules, we're done.
   Module *M = F->getParent();
-  if (std::find(Modules.begin(), Modules.end(), M) == Modules.end())
-    return NULL;
-
-  assert(ModuleStates.find(M) != ModuleStates.end());
+  bool HasBeenAddedButNotLoaded = OwnedModules.hasModuleBeenAddedButNotLoaded(M);
 
   // Make sure the relevant module has been compiled and loaded.
-  if (!ModuleStates[M].hasBeenLoaded())
+  if (HasBeenAddedButNotLoaded)
     generateCodeForModule(M);
+  else if (!OwnedModules.hasModuleBeenLoaded(M))
+    // If this function doesn't belong to one of our modules, we're done.
+    return NULL;
 
   // FIXME: Should the Dyld be retaining module information? Probably not.
   // FIXME: Should we be using the mangler for this? Probably.
@@ -380,6 +328,45 @@ void *MCJIT::recompileAndRelinkFunction(Function *F) {
 
 void MCJIT::freeMachineCodeForFunction(Function *F) {
   report_fatal_error("not yet implemented");
+}
+
+void MCJIT::runStaticConstructorsDestructorsInModulePtrSet(
+    bool isDtors, ModulePtrSet::iterator I, ModulePtrSet::iterator E) {
+  for (; I != E; ++I) {
+    ExecutionEngine::runStaticConstructorsDestructors(*I, isDtors);
+  }
+}
+
+void MCJIT::runStaticConstructorsDestructors(bool isDtors) {
+  // Execute global ctors/dtors for each module in the program.
+  runStaticConstructorsDestructorsInModulePtrSet(
+      isDtors, OwnedModules.begin_added(), OwnedModules.end_added());
+  runStaticConstructorsDestructorsInModulePtrSet(
+      isDtors, OwnedModules.begin_loaded(), OwnedModules.end_loaded());
+  runStaticConstructorsDestructorsInModulePtrSet(
+      isDtors, OwnedModules.begin_finalized(), OwnedModules.end_finalized());
+}
+
+Function *MCJIT::FindFunctionNamedInModulePtrSet(const char *FnName,
+                                                 ModulePtrSet::iterator I,
+                                                 ModulePtrSet::iterator E) {
+  for (; I != E; ++I) {
+    if (Function *F = (*I)->getFunction(FnName))
+      return F;
+  }
+  return 0;
+}
+
+Function *MCJIT::FindFunctionNamed(const char *FnName) {
+  Function *F = FindFunctionNamedInModulePtrSet(
+      FnName, OwnedModules.begin_added(), OwnedModules.end_added());
+  if (!F)
+    F = FindFunctionNamedInModulePtrSet(FnName, OwnedModules.begin_loaded(),
+                                        OwnedModules.end_loaded());
+  if (!F)
+    F = FindFunctionNamedInModulePtrSet(FnName, OwnedModules.begin_finalized(),
+                                        OwnedModules.end_finalized());
+  return F;
 }
 
 GenericValue MCJIT::runFunction(Function *F,
