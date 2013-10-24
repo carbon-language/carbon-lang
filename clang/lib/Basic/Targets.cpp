@@ -149,7 +149,9 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
     Str[4] = '0' + (Rev % 10);
     Str[5] = '\0';
     Builder.defineMacro("__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__", Str);
-  } else {
+  } else if (Triple.getArchName() != "thumbv6m" &&
+             Triple.getArchName() != "thumbv7m" &&
+             Triple.getArchName() != "thumbv7em") {
     // Note that the Driver allows versions which aren't representable in the
     // define (because we only get a single digit for the minor and micro
     // revision numbers). So, we limit them to the maximum representable
