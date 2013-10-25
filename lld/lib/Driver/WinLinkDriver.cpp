@@ -221,23 +221,25 @@ std::string createManifestXml(PECOFFLinkingContext &ctx) {
   // Emit the XML. Note that we do *not* verify that the XML attributes are
   // syntactically correct. This is intentional for link.exe compatibility.
   out << "<?xml version=\"1.0\" standalone=\"yes\"?>\n"
-      << "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\"\n"
-      << "          manifestVersion=\"1.0\">\n"
-      << "  <trustInfo>\n"
-      << "    <security>\n"
-      << "      <requestedPrivileges>\n"
-      << "         <requestedExecutionLevel level=" << ctx.getManifestLevel()
-      << " uiAccess=" << ctx.getManifestUiAccess() << "/>\n"
-      << "      </requestedPrivileges>\n"
-      << "    </security>\n"
-      << "  </trustInfo>\n";
+         "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\"\n"
+         "          manifestVersion=\"1.0\">\n"
+         "  <trustInfo>\n"
+         "    <security>\n"
+         "      <requestedPrivileges>\n"
+         "         <requestedExecutionLevel level=" << ctx.getManifestLevel()
+      << " uiAccess=" << ctx.getManifestUiAccess()
+      << "/>\n"
+         "      </requestedPrivileges>\n"
+         "    </security>\n"
+         "  </trustInfo>\n";
   const std::string &dependency = ctx.getManifestDependency();
   if (!dependency.empty()) {
     out << "  <dependency>\n"
-        << "    <dependentAssembly>\n"
-        << "      <assemblyIdentity " << dependency << " />\n"
-        << "    </dependentAssembly>\n"
-        << "  </dependency>\n";
+           "    <dependentAssembly>\n"
+           "      <assemblyIdentity " << dependency
+        << " />\n"
+           "    </dependentAssembly>\n"
+           "  </dependency>\n";
   }
   out << "</assembly>\n";
   out.flush();
