@@ -391,6 +391,11 @@ def : Pat<(v16f32 (X86VBroadcast (loadf32 addr:$src))),
 def : Pat<(v8f64 (X86VBroadcast (loadf64 addr:$src))),
           (VBROADCASTSDZrm addr:$src)>;
 
+def : Pat<(int_x86_avx512_vbroadcast_ss_512 addr:$src),
+          (VBROADCASTSSZrm addr:$src)>;
+def : Pat<(int_x86_avx512_vbroadcast_sd_512 addr:$src),
+          (VBROADCASTSDZrm addr:$src)>;
+
 multiclass avx512_int_broadcast_reg<bits<8> opc, string OpcodeStr,
                           RegisterClass SrcRC, RegisterClass KRC> {
   def Zrr : AVX5128I<opc, MRMSrcReg, (outs VR512:$dst), (ins SrcRC:$src),
