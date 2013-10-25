@@ -254,7 +254,7 @@ void quoteAndPrintXml(raw_ostream &out, StringRef str) {
       return;
     StringRef line;
     llvm::tie(line, str) = str.split("\n");
-    if (!line.empty())
+    if (line.empty())
       continue;
     out << '\"';
     const char *p = line.data();
