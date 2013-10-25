@@ -342,7 +342,7 @@ bool createManifestResourceFile(PECOFFLinkingContext &ctx,
   args.push_back(nullptr);
 
   if (llvm::sys::ExecuteAndWait(programPath.c_str(), &args[0]) != 0) {
-    llvm::errs() << program << " failed\n";
+    diagnostics << program << " failed\n";
     return false;
   }
   return true;
