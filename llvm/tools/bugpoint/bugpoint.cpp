@@ -49,8 +49,8 @@ TimeoutValue("timeout", cl::init(300), cl::value_desc("seconds"),
 
 static cl::opt<int>
 MemoryLimit("mlimit", cl::init(-1), cl::value_desc("MBytes"),
-             cl::desc("Maximum amount of memory to use. 0 disables check."
-                      " Defaults to 100MB (800MB under valgrind)."));
+            cl::desc("Maximum amount of memory to use. 0 disables check."
+                     " Defaults to 300MB (800MB under valgrind)."));
 
 static cl::opt<bool>
 UseValgrind("enable-valgrind",
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
     if (sys::RunningOnValgrind() || UseValgrind)
       MemoryLimit = 800;
     else
-      MemoryLimit = 100;
+      MemoryLimit = 300;
   }
 
   BugDriver D(argv[0], FindBugs, TimeoutValue, MemoryLimit,
