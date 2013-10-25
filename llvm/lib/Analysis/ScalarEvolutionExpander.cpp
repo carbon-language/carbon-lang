@@ -1233,6 +1233,7 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
 
   // Re-apply any non-loop-dominating scale.
   if (PostLoopScale) {
+    assert(S->isAffine() && "Can't linearly scale non-affine recurrences.");
     Result = InsertNoopCastOfTo(Result, IntTy);
     Result = Builder.CreateMul(Result,
                                expandCodeFor(PostLoopScale, IntTy));
@@ -1704,28 +1705,43 @@ namespace {
 // Currently, we only allow division by a nonzero constant here. If this is
 // inadequate, we could easily allow division by SCEVUnknown by using
 // ValueTracking to check isKnownNonZero().
+//
+// We cannot generally expand recurrences unless the step dominates the loop
+// header. The expander handles the special case of affine recurrences by
+// scaling the recurrence outside the loop, but this technique isn't generally
+// applicable. Expanding a nested recurrence outside a loop requires computing
+// binomial coefficients. This could be done, but the recurrence has to be in a
+// perfectly reduced form, which can't be guaranteed.
 struct SCEVFindUnsafe {
+  ScalarEvolution &SE;
   bool IsUnsafe;
 
-  SCEVFindUnsafe(): IsUnsafe(false) {}
+  SCEVFindUnsafe(ScalarEvolution &se): SE(se), IsUnsafe(false) {}
 
   bool follow(const SCEV *S) {
-    const SCEVUDivExpr *D = dyn_cast<SCEVUDivExpr>(S);
-    if (!D)
-      return true;
-    const SCEVConstant *SC = dyn_cast<SCEVConstant>(D->getRHS());
-    if (SC && !SC->getValue()->isZero())
-      return true;
-    IsUnsafe = true;
-    return false;
+    if (const SCEVUDivExpr *D = dyn_cast<SCEVUDivExpr>(S)) {
+      const SCEVConstant *SC = dyn_cast<SCEVConstant>(D->getRHS());
+      if (!SC || SC->getValue()->isZero()) {
+        IsUnsafe = true;
+        return false;
+      }
+    }
+    if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
+      const SCEV *Step = AR->getStepRecurrence(SE);
+      if (!AR->isAffine() && !SE.dominates(Step, AR->getLoop()->getHeader())) {
+        IsUnsafe = true;
+        return false;
+      }
+    }
+    return true;
   }
   bool isDone() const { return IsUnsafe; }
 };
 }
 
 namespace llvm {
-bool isSafeToExpand(const SCEV *S) {
-  SCEVFindUnsafe Search;
+bool isSafeToExpand(const SCEV *S, ScalarEvolution &SE) {
+  SCEVFindUnsafe Search(SE);
   visitAll(S, Search);
   return !Search.IsUnsafe;
 }

@@ -26,7 +26,7 @@ namespace llvm {
 
   /// Return true if the given expression is safe to expand in the sense that
   /// all materialized values are safe to speculate.
-  bool isSafeToExpand(const SCEV *S);
+  bool isSafeToExpand(const SCEV *S, ScalarEvolution &SE);
 
   /// SCEVExpander - This class uses information about analyze scalars to
   /// rewrite expressions in canonical form.

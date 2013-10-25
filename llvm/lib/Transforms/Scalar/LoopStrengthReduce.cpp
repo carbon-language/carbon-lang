@@ -1170,6 +1170,13 @@ public:
   /// may be used.
   bool AllFixupsOutsideLoop;
 
+  /// RigidFormula is set to true to guarantee that this use will be associated
+  /// with a single formula--the one that initially matched. Some SCEV
+  /// expressions cannot be expanded. This allows LSR to consider the registers
+  /// used by those expressions without the need to expand them later after
+  /// changing the formula.
+  bool RigidFormula;
+
   /// WidestFixupType - This records the widest use type for any fixup using
   /// this LSRUse. FindUseWithSimilarFormula can't consider uses with different
   /// max fixup widths to be equivalent, because the narrower one may be relying
@@ -1188,6 +1195,7 @@ public:
                                       MinOffset(INT64_MAX),
                                       MaxOffset(INT64_MIN),
                                       AllFixupsOutsideLoop(true),
+                                      RigidFormula(false),
                                       WidestFixupType(0) {}
 
   bool HasFormulaWithSameRegs(const Formula &F) const;
@@ -1214,6 +1222,9 @@ bool LSRUse::HasFormulaWithSameRegs(const Formula &F) const {
 /// InsertFormula - If the given formula has not yet been inserted, add it to
 /// the list, and return true. Return false otherwise.
 bool LSRUse::InsertFormula(const Formula &F) {
+  if (!Formulae.empty() && RigidFormula)
+    return false;
+
   SmallVector<const SCEV *, 4> Key = F.BaseRegs;
   if (F.ScaledReg) Key.push_back(F.ScaledReg);
   // Unstable sort by host order ok, because this is only used for uniquifying.
@@ -1433,7 +1444,7 @@ static unsigned getScalingFactorCost(const TargetTransformInfo &TTI,
   }
   case LSRUse::ICmpZero:
     // ICmpZero BaseReg + -1*ScaleReg => ICmp BaseReg, ScaleReg.
-    // Therefore, return 0 in case F.Scale == -1. 
+    // Therefore, return 0 in case F.Scale == -1.
     return F.Scale != -1;
 
   case LSRUse::Basic:
@@ -2943,7 +2954,7 @@ void LSRInstance::CollectFixupsAndInitialFormulae() {
 
         // x == y  -->  x - y == 0
         const SCEV *N = SE.getSCEV(NV);
-        if (SE.isLoopInvariant(N, L) && isSafeToExpand(N)) {
+        if (SE.isLoopInvariant(N, L) && isSafeToExpand(N, SE)) {
           // S is normalized, so normalize N before folding it into S
           // to keep the result normalized.
           N = TransformForPostIncUse(Normalize, N, CI, 0,
@@ -2986,6 +2997,10 @@ void LSRInstance::CollectFixupsAndInitialFormulae() {
 /// and loop-computable portions.
 void
 LSRInstance::InsertInitialFormula(const SCEV *S, LSRUse &LU, size_t LUIdx) {
+  // Mark uses whose expressions cannot be expanded.
+  if (!isSafeToExpand(S, SE))
+    LU.RigidFormula = true;
+
   Formula F;
   F.InitialMatch(S, L, SE);
   bool Inserted = InsertFormula(LU, LUIdx, F);
@@ -4353,6 +4368,8 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
                            SCEVExpander &Rewriter,
                            SmallVectorImpl<WeakVH> &DeadInsts) const {
   const LSRUse &LU = Uses[LF.LUIdx];
+  if (LU.RigidFormula)
+    return LF.OperandValToReplace;
 
   // Determine an input position which will be dominated by the operands and
   // which will dominate the result.
