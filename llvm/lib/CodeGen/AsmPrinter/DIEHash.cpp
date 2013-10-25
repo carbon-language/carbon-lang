@@ -413,7 +413,7 @@ void DIEHash::computeHash(const DIE &Die) {
        I != E; ++I) {
     // 7.27 Step 7
     // If C is a nested type entry or a member function entry, ...
-    if (isType((*I)->getTag())) {
+    if (isType((*I)->getTag()) || (*I)->getTag() == dwarf::DW_TAG_subprogram) {
       StringRef Name = getDIEStringAttr(**I, dwarf::DW_AT_name);
       // ... and has a DW_AT_name attribute
       if (!Name.empty()) {
