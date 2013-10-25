@@ -2099,6 +2099,12 @@ static void checkNewAttributesAfterDef(Sema &S, Decl *New, const Decl *Old) {
 /// mergeDeclAttributes - Copy attributes from the Old decl to the New one.
 void Sema::mergeDeclAttributes(NamedDecl *New, Decl *Old,
                                AvailabilityMergeKind AMK) {
+  if (UsedAttr *OldAttr = Old->getMostRecentDecl()->getAttr<UsedAttr>()) {
+    UsedAttr *NewAttr = OldAttr->clone(Context);
+    NewAttr->setInherited(true);
+    New->addAttr(NewAttr);
+  }
+
   if (!Old->hasAttrs() && !New->hasAttrs())
     return;
 
@@ -2135,6 +2141,10 @@ void Sema::mergeDeclAttributes(NamedDecl *New, Decl *Old,
         break;
       }
     }
+
+    // Already handled.
+    if (isa<UsedAttr>(*i))
+      continue;
 
     if (mergeDeclAttribute(*this, New, *i, Override))
       foundAny = true;

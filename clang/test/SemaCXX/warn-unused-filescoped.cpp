@@ -187,4 +187,10 @@ namespace UndefinedInternalStaticMember {
   }
 }
 
+namespace test8 {
+static void func();
+void bar() { void func() __attribute__((used)); }
+static void func() {}
+}
+
 #endif
