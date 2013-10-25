@@ -2576,12 +2576,10 @@ INTERCEPTOR(int, pthread_attr_getstack, void *attr, void **addr, SIZE_T *size) {
   INTERCEPT_FUNCTION(pthread_attr_getguardsize);    \
   INTERCEPT_FUNCTION(pthread_attr_getschedparam);   \
   INTERCEPT_FUNCTION(pthread_attr_getschedpolicy);  \
-  INTERCEPT_FUNCTION(pthread_attr_getinheritsched); \
   INTERCEPT_FUNCTION(pthread_attr_getscope);        \
   INTERCEPT_FUNCTION(pthread_attr_getstackaddr);    \
   INTERCEPT_FUNCTION(pthread_attr_getstacksize);    \
-  INTERCEPT_FUNCTION(pthread_attr_getstack);        \
-  INTERCEPT_FUNCTION(pthread_attr_getaffinity_np);
+  INTERCEPT_FUNCTION(pthread_attr_getstack);
 #else
 #define INIT_PTHREAD_ATTR_GET
 #endif
