@@ -9836,8 +9836,35 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
     return N->getOperand(0);
 
   // Check if all of the operands are undefs.
+  EVT VT = N->getValueType(0);
   if (ISD::allOperandsUndef(N))
-    return DAG.getUNDEF(N->getValueType(0));
+    return DAG.getUNDEF(VT);
+
+  // Optimize concat_vectors where one of the vectors is undef.
+  if (N->getNumOperands() == 2 &&
+      N->getOperand(1)->getOpcode() == ISD::UNDEF) {
+    SDValue In = N->getOperand(0);
+    assert(In->getValueType(0).isVector() && "Must concat vectors");
+
+    // Transform: concat_vectors(scalar, undef) -> scalar_to_vector(sclr).
+    if (In->getOpcode() == ISD::BITCAST &&
+        !In->getOperand(0)->getValueType(0).isVector()) {
+      SDValue Scalar = In->getOperand(0);
+      EVT SclTy = Scalar->getValueType(0);
+
+      if (!SclTy.isFloatingPoint() && !SclTy.isInteger())
+        return SDValue();
+
+      EVT NVT = EVT::getVectorVT(*DAG.getContext(), SclTy,
+                                 VT.getSizeInBits() / SclTy.getSizeInBits());
+      if (!TLI.isTypeLegal(NVT) || !TLI.isTypeLegal(Scalar.getValueType()))
+        return SDValue();
+
+      SDLoc dl = SDLoc(N);
+      SDValue Res = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, NVT, Scalar);
+      return DAG.getNode(ISD::BITCAST, dl, VT, Res);
+    }
+  }
 
   // Type legalization of vectors and DAG canonicalization of SHUFFLE_VECTOR
   // nodes often generate nop CONCAT_VECTOR nodes.

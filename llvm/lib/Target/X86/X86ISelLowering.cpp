@@ -1500,7 +1500,6 @@ void X86TargetLowering::resetOperationActions() {
   }
 
   // We have target-specific dag combine patterns for the following nodes:
-  setTargetDAGCombine(ISD::CONCAT_VECTORS);
   setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
   setTargetDAGCombine(ISD::EXTRACT_VECTOR_ELT);
   setTargetDAGCombine(ISD::VSELECT);
@@ -16155,50 +16154,6 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-static SDValue PerformConcatCombine(SDNode *N, SelectionDAG &DAG,
-                                    TargetLowering::DAGCombinerInfo &DCI,
-                                    const X86Subtarget *Subtarget) {
-  // Creating a v8i16 from a v4i16 argument and an undef runs into trouble in
-  // type legalization and ends up spilling to the stack. Avoid that by
-  // creating a vector first and bitcasting the result rather than
-  // bitcasting the source then creating the vector. Similar problems with
-  // v8i8.
-
-  // No point in doing this after legalize, so early exit for that.
-  if (!DCI.isBeforeLegalize())
-    return SDValue();
-
-  EVT VT = N->getValueType(0);
-  SDValue Op0 = N->getOperand(0);
-  SDValue Op1 = N->getOperand(1);
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  if (VT.getSizeInBits() == 128 && N->getNumOperands() == 2 &&
-      Op1->getOpcode() == ISD::UNDEF &&
-      Op0->getOpcode() == ISD::BITCAST &&
-      !TLI.isTypeLegal(Op0->getValueType(0)) &&
-      TLI.isTypeLegal(Op0->getOperand(0)->getValueType(0))) {
-    if (Op0->getOperand(0)->getValueType(0).isVector())
-      return SDValue();
-    SDValue Scalar = Op0->getOperand(0);
-    // Any legal type here will be a simple value type.
-    MVT SVT = Scalar->getValueType(0).getSimpleVT();
-    // As a special case, bail out on MMX values.
-    if (SVT == MVT::x86mmx)
-      return SDValue();
-    EVT NVT = MVT::getVectorVT(SVT, 2);
-    // If the result vector type isn't legal, this transform won't really
-    // help, so bail on that, too.
-    if (!TLI.isTypeLegal(NVT))
-      return SDValue();
-    SDLoc dl = SDLoc(N);
-    SDValue Res = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, NVT, Scalar);
-    Res = DAG.getNode(ISD::BITCAST, dl, VT, Res);
-    return Res;
-  }
-
-  return SDValue();
-}
-
 /// PerformShuffleCombine - Performs several different shuffle combines.
 static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
                                      TargetLowering::DAGCombinerInfo &DCI,
@@ -19077,7 +19032,6 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::VPERMILP:
   case X86ISD::VPERM2X128:
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, DCI,Subtarget);
-  case ISD::CONCAT_VECTORS: return PerformConcatCombine(N, DAG, DCI, Subtarget);
   case ISD::FMA:            return PerformFMACombine(N, DAG, Subtarget);
   }
 

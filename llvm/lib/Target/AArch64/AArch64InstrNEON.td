@@ -5130,6 +5130,10 @@ def : Pat<(v1f64 (scalar_to_vector (f64 FPR64:$Rn))),
 def : Pat<(v1f64 (scalar_to_vector (f64 FPR64:$src))),
           (FMOVdd $src)>;
 
+def : Pat<(v2f64 (scalar_to_vector (f64 FPR64:$src))),
+          (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)),
+                         (f64 FPR64:$src), sub_64)>;
+
 class NeonI_DUP_Elt<bit Q, string asmop, string rdlane,  string rnlane,
                     RegisterOperand ResVPR, ValueType ResTy,
                     ValueType OpTy, Operand OpImm>
