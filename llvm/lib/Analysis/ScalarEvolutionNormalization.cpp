@@ -119,11 +119,19 @@ TransformImpl(const SCEV *S, Instruction *User, Value *OperandValToReplace) {
     const SCEV *Result = SE.getAddRecExpr(Operands, L, SCEV::FlagAnyWrap);
     switch (Kind) {
     case NormalizeAutodetect:
-      if (IVUseShouldUsePostIncValue(User, OperandValToReplace, L, &DT)) {
-        const SCEV *TransformedStep =
-          TransformSubExpr(AR->getStepRecurrence(SE),
-                           User, OperandValToReplace);
-        Result = SE.getMinusSCEV(Result, TransformedStep);
+      // Normalize this SCEV by subtracting the expression for the final step.
+      // We only allow affine AddRecs to be normalized, otherwise we would not
+      // be able to correctly denormalize.
+      // e.g. {1,+,3,+,2} == {-2,+,1,+,2} + {3,+,2}
+      // Normalized form:   {-2,+,1,+,2}
+      // Denormalized form: {1,+,3,+,2}
+      //
+      // However, denormalization would use the a different step expression than
+      // normalization (see getPostIncExpr), generating the wrong final
+      // expression: {-2,+,1,+,2} + {1,+,2} => {-1,+,3,+,2}
+      if (AR->isAffine() &&
+          IVUseShouldUsePostIncValue(User, OperandValToReplace, L, &DT)) {
+        Result = SE.getMinusSCEV(Result, AR->getStepRecurrence(SE));
         Loops.insert(L);
       }
 #if 0
