@@ -246,8 +246,8 @@ std::string createManifestXml(PECOFFLinkingContext &ctx) {
   return std::move(ret);
 }
 
-// Quote double quotes and backslashes in the given string, so that we can embed
-// the string into a resource script file.
+// Convert one doublequote to two doublequotes, so that we can embed the string
+// into a resource script file.
 std::string quoteXml(StringRef str) {
   std::string ret;
   ret.reserve(str.size() * 2);
@@ -263,8 +263,7 @@ std::string quoteXml(StringRef str) {
     for (int i = 0, size = line.size(); i < size; ++i) {
       switch (p[i]) {
       case '\"':
-      case '\\':
-        ret.append("\\");
+        ret.append("\"");
         // fallthrough
       default:
         ret.append(1, p[i]);
