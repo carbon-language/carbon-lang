@@ -1241,6 +1241,8 @@ void ASTDumper::VisitObjCIvarDecl(const ObjCIvarDecl *D) {
   dumpType(D->getType());
   if (D->getSynthesize())
     OS << " synthesize";
+  if (D->getBackingIvarReferencedInAccessor())
+    OS << " BackingIvarReferencedInAccessor";
 
   switch (D->getAccessControl()) {
   case ObjCIvarDecl::None:

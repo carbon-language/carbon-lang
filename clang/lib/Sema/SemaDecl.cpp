@@ -1388,6 +1388,7 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
     // Remove this name from our lexical scope.
     IdResolver.RemoveDecl(D);
   }
+  DiagnoseUnusedBackingIvarInAccessor(S);
 }
 
 void Sema::ActOnStartFunctionDeclarator() {

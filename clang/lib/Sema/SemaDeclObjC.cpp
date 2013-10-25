@@ -3501,3 +3501,34 @@ void Sema::DiagnoseUseOfUnimplementedSelectors() {
   }
   return;
 }
+
+ObjCIvarDecl *
+Sema::GetIvarBackingPropertyAccessor(const ObjCMethodDecl *Method,
+                                     const ObjCPropertyDecl *&PDecl) const {
+  
+  const ObjCInterfaceDecl *IDecl = Method->getClassInterface();
+  if (!IDecl)
+    return 0;
+  Method = IDecl->lookupMethod(Method->getSelector(), true);
+  if (!Method || !Method->isPropertyAccessor())
+    return 0;
+  if ((PDecl = Method->findPropertyDecl()))
+    return PDecl->getPropertyIvarDecl();
+  return 0;
+}
+
+void Sema::DiagnoseUnusedBackingIvarInAccessor(Scope *S) {
+  if (S->hasUnrecoverableErrorOccurred() || !S->isInObjcMethodScope())
+    return;
+  
+  const ObjCMethodDecl *CurMethod = getCurMethodDecl();
+  if (!CurMethod)
+    return;
+  const ObjCPropertyDecl *PDecl;
+  const ObjCIvarDecl *IV = GetIvarBackingPropertyAccessor(CurMethod, PDecl);
+  if (IV && !IV->getBackingIvarReferencedInAccessor()) {
+    Diag(getCurMethodDecl()->getLocation(), diag::warn_unused_property_backing_ivar)
+    << IV->getDeclName();
+    Diag(PDecl->getLocation(), diag::note_property_declare);
+  }
+}

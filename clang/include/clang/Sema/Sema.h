@@ -2629,6 +2629,16 @@ public:
   bool IvarBacksCurrentMethodAccessor(ObjCInterfaceDecl *IFace,
                                       ObjCMethodDecl *Method, ObjCIvarDecl *IV);
   
+  /// DiagnoseUnusedBackingIvarInAccessor - Issue an 'unused' warning if ivar which
+  /// backs the property is not used in the property's accessor.
+  void DiagnoseUnusedBackingIvarInAccessor(Scope *S);
+  
+  /// GetIvarBackingPropertyAccessor - If method is a property setter/getter and
+  /// it property has a backing ivar, returns this ivar; otherwise, returns NULL.
+  /// It also returns ivar's property on success.
+  ObjCIvarDecl *GetIvarBackingPropertyAccessor(const ObjCMethodDecl *Method,
+                                               const ObjCPropertyDecl *&PDecl) const;
+  
   /// Called by ActOnProperty to handle \@property declarations in
   /// class extensions.
   ObjCPropertyDecl *HandlePropertyInClassExtension(Scope *S,
