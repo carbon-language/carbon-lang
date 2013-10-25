@@ -2526,6 +2526,20 @@ INTERCEPTOR(int, shmctl, int shmid, int cmd, void *buf) {
 #define INIT_SHMCTL
 #endif
 
+#if SANITIZER_INTERCEPT_RANDOM_R
+INTERCEPTOR(int, random_r, void *buf, u32 *result) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, random_r, buf, result);
+  int res = REAL(random_r)(buf, result);
+  if (!res && result)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
+  return res;
+}
+#define INIT_RANDOM_R INTERCEPT_FUNCTION(random_r);
+#else
+#define INIT_RANDOM_R
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -2620,4 +2634,5 @@ INTERCEPTOR(int, shmctl, int shmid, int cmd, void *buf) {
   INIT_ETHER;                              \
   INIT_ETHER_R;                            \
   INIT_SHMCTL;                             \
+  INIT_RANDOM_R;                           \
 /**/

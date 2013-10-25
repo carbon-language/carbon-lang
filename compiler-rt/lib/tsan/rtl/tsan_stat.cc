@@ -393,6 +393,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_ether_hostton]            = "  ether_hostton                   ";
   name[StatInt_ether_line]               = "  ether_line                      ";
   name[StatInt_shmctl]                   = "  shmctl                          ";
+  name[StatInt_random_r]                 = "  random_r                        ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

@@ -388,6 +388,7 @@ enum StatType {
   StatInt_ether_hostton,
   StatInt_ether_line,
   StatInt_shmctl,
+  StatInt_random_r,
 
   // Dynamic annotations.
   StatAnnotation,
