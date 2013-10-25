@@ -525,10 +525,17 @@ Key value pairs are one of:
 
 cputype: is a number that is the mach-o CPU type that is being debugged
 cpusubtype: is a number that is the mach-o CPU subtype type that is being debugged
-ostype: is a string the represents the OS being debugged (darwin, linux, freebsd)
-vendor: is a string that represents the vendor (apple)
+triple: a string for the target triple (x86_64-apple-macosx) that can be used to specify arch + vendor + os in one entry
+vendor: a string for the vendor (apple), not needed if "triple" is specified
+ostype: a string for the OS being debugged (darwin, linux, freebsd), not needed if "triple" is specified
 endian: is one of "little", "big", or "pdp"
-ptrsize: is a number that represents how big pointers are in bytes on the debug target
+ptrsize: an unsigned number that represents how big pointers are in bytes on the debug target
+hostname: the hostname of the host that is running the GDB server if available
+os_build: a string for the the OS build for the remote host as a string value
+os_kernel: a string describing the kernel version
+os_version: a version string that represents the current OS version (10.8.2)
+watchpoint_exceptions_received: one of "before" or "after" to specify if a watchpoint is triggered before or after the pc when it stops
+default_packet_timeout: an unsigned number that specifies the default timeout in seconds
 
 //----------------------------------------------------------------------
 // "qGDBServerVersion"
