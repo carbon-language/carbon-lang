@@ -62,6 +62,12 @@
 
 namespace {
 
+std::string g_app_path;
+
+int msan_retval_tls_offset;
+int msan_param_tls_offset;
+
+#ifndef MSANDR_NATIVE_EXEC
 class ModuleData {
 public:
   ModuleData();
@@ -77,11 +83,6 @@ public:
   bool should_instrument_;
   bool executed_;
 };
-
-std::string g_app_path;
-
-int msan_retval_tls_offset;
-int msan_param_tls_offset;
 
 // A vector of loaded modules sorted by module bounds.  We lookup the current PC
 // in here from the bb event.  This is better than an rb tree because the lookup
@@ -99,6 +100,7 @@ ModuleData::ModuleData(const module_data_t *info)
       // We'll check the black/white lists later and adjust this.
       should_instrument_(true), executed_(false) {
 }
+#endif /* !MSANDR_NATIVE_EXEC */
 
 int(*__msan_get_retval_tls_offset)();
 int(*__msan_get_param_tls_offset)();
@@ -319,6 +321,7 @@ void InstrumentIndirectBranch(void *drcontext, instrlist_t *bb,
   // a prefix.
 }
 
+#ifndef MSANDR_NATIVE_EXEC
 // For use with binary search.  Modules shouldn't overlap, so we shouldn't have
 // to look at end_.  If that can happen, we won't support such an application.
 bool ModuleDataCompareStart(const ModuleData &left, const ModuleData &right) {
@@ -373,22 +376,26 @@ bool ShouldInstrumentPc(app_pc pc, ModuleData **pmod_data) {
   }
   return true;
 }
+#endif /* !NATIVE_CLIENT */
 
 // TODO(rnk): Make sure we instrument after __msan_init.
 dr_emit_flags_t
 event_basic_block_app2app(void *drcontext, void *tag, instrlist_t *bb,
                           bool for_trace, bool translating) {
+#ifndef MSANDR_NATIVE_EXEC
   app_pc pc = dr_fragment_app_pc(tag);
-
   if (ShouldInstrumentPc(pc, NULL))
     CHECK(drutil_expand_rep_string(drcontext, bb));
-
+#else  /* MSANDR_NATIVE_EXEC */
+  CHECK(drutil_expand_rep_string(drcontext, bb));
+#endif /* MSANDR_NATIVE_EXEC */
   return DR_EMIT_PERSISTABLE;
 }
 
 dr_emit_flags_t event_basic_block(void *drcontext, void *tag, instrlist_t *bb,
                                   bool for_trace, bool translating) {
   app_pc pc = dr_fragment_app_pc(tag);
+#ifndef MSANDR_NATIVE_EXEC
   ModuleData *mod_data;
 
   if (!ShouldInstrumentPc(pc, &mod_data))
@@ -411,6 +418,8 @@ dr_emit_flags_t event_basic_block(void *drcontext, void *tag, instrlist_t *bb,
           pc - mod_data->start_);
     }
   }
+#endif /* !MSANDR_NATIVE_EXEC */
+
   if (VERBOSITY > 1) {
     instrlist_disassemble(drcontext, pc, bb, STDOUT);
     instr_t *instr;
@@ -474,6 +483,7 @@ dr_emit_flags_t event_basic_block(void *drcontext, void *tag, instrlist_t *bb,
   return DR_EMIT_PERSISTABLE;
 }
 
+#ifndef MSANDR_NATIVE_EXEC
 void event_module_load(void *drcontext, const module_data_t *info,
                        bool loaded) {
   // Insert the module into the list while maintaining the ordering.
@@ -507,6 +517,7 @@ void event_module_unload(void *drcontext, const module_data_t *info) {
         it->end_ == mod_data.end_ && it->path_ == mod_data.path_);
   g_module_list.erase(it);
 }
+#endif /* !MSANDR_NATIVE_EXEC */
 
 void event_exit() {
   // Clean up so DR doesn't tell us we're leaking memory.
@@ -551,6 +562,7 @@ bool drsys_iter_memarg_cb(drsys_arg_t *arg, void *user_data) {
     drsys_syscall_t *syscall = (drsys_syscall_t *)user_data;
     const char *name;
     res = drsys_syscall_name(syscall, &name);
+    CHECK(res == DRMF_SUCCESS);
     dr_printf("drsyscall: syscall '%s' arg %d wrote range [%p, %p)\n",
               name, arg->ordinal, arg->start_addr,
               (char *)arg->start_addr + sz);
@@ -719,8 +731,10 @@ DR_EXPORT void dr_init(client_id_t id) {
 
   drmgr_register_bb_app2app_event(event_basic_block_app2app, &priority);
   drmgr_register_bb_instru2instru_event(event_basic_block, &priority);
+#ifndef MSANDR_NATIVE_EXEC
   drmgr_register_module_load_event(event_module_load);
   drmgr_register_module_unload_event(event_module_unload);
+#endif /* MSANDR_NATIVE_EXEC */
   if (VERBOSITY > 0)
     dr_printf("==MSANDR== Starting!\n");
 }
