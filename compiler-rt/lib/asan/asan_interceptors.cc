@@ -151,8 +151,6 @@ static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
 }
 
 #if ASAN_INTERCEPT_PTHREAD_CREATE
-extern "C" int pthread_attr_getdetachstate(void *attr, int *v);
-
 INTERCEPTOR(int, pthread_create, void *thread,
     void *attr, void *(*start_routine)(void*), void *arg) {
   EnsureMainThreadIDIsCorrect();

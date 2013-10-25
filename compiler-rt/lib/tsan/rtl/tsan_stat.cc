@@ -395,6 +395,17 @@ void StatOutput(u64 *stat) {
   name[StatInt_shmctl]                   = "  shmctl                          ";
   name[StatInt_random_r]                 = "  random_r                        ";
 
+  name[StatInt_pthread_attr_getdetachstate]  = "  pthread_addr_getdetachstate     ";  // NOLINT
+  name[StatInt_pthread_attr_getguardsize]    = "  pthread_addr_getguardsize       ";  // NOLINT
+  name[StatInt_pthread_attr_getschedparam]   = "  pthread_addr_getschedparam      ";  // NOLINT
+  name[StatInt_pthread_attr_getschedpolicy]  = "  pthread_addr_getschedpolicy     ";  // NOLINT
+  name[StatInt_pthread_attr_getinheritsched] = "  pthread_addr_getinheritsched    ";  // NOLINT
+  name[StatInt_pthread_attr_getscope]        = "  pthread_addr_getscope           ";  // NOLINT
+  name[StatInt_pthread_attr_getstackaddr]    = "  pthread_addr_getstackaddr       ";  // NOLINT
+  name[StatInt_pthread_attr_getstacksize]    = "  pthread_addr_getstacksize       ";  // NOLINT
+  name[StatInt_pthread_attr_getstack]        = "  pthread_addr_getstack           ";  // NOLINT
+  name[StatInt_pthread_attr_getaffinity_np]  = "  pthread_addr_getaffinity_np     ";  // NOLINT
+
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";
   name[StatAnnotateHappensAfter]         = "  HappensAfter                    ";

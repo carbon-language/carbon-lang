@@ -1040,8 +1040,6 @@ INTERCEPTOR(int, signal, int signo, uptr cb) {
 
 extern "C" int pthread_attr_init(void *attr);
 extern "C" int pthread_attr_destroy(void *attr);
-extern "C" int pthread_attr_setstacksize(void *attr, uptr stacksize);
-extern "C" int pthread_attr_getstack(void *attr, uptr *stack, uptr *stacksize);
 extern "C" int pthread_setspecific(unsigned key, const void *v);
 extern "C" int pthread_yield();
 

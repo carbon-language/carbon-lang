@@ -2504,6 +2504,77 @@ TEST(MemorySanitizer, PreAllocatedStackThread) {
   ASSERT_EQ(0, res);
 }
 
+TEST(MemorySanitizer, pthread_attr_get) {
+  pthread_attr_t attr;
+  int res;
+  res = pthread_attr_init(&attr);
+  ASSERT_EQ(0, res);
+  {
+    int v;
+    res = pthread_attr_getdetachstate(&attr, &v);
+    ASSERT_EQ(0, res);
+    EXPECT_NOT_POISONED(v);
+  }
+  {
+    size_t v;
+    res = pthread_attr_getguardsize(&attr, &v);
+    ASSERT_EQ(0, res);
+    EXPECT_NOT_POISONED(v);
+  }
+  {
+    struct sched_param v;
+    res = pthread_attr_getschedparam(&attr, &v);
+    ASSERT_EQ(0, res);
+    EXPECT_NOT_POISONED(v);
+  }
+  {
+    int v;
+    res = pthread_attr_getschedpolicy(&attr, &v);
+    ASSERT_EQ(0, res);
+    EXPECT_NOT_POISONED(v);
+  }
+  {
+    int v;
+    res = pthread_attr_getinheritsched(&attr, &v);
+    ASSERT_EQ(0, res);
+    EXPECT_NOT_POISONED(v);
+  }
+  {
+    int v;
+    res = pthread_attr_getscope(&attr, &v);
+    ASSERT_EQ(0, res);
+    EXPECT_NOT_POISONED(v);
+  }
+  {
+    void *v;
+    res = pthread_attr_getstackaddr(&attr, &v);
+    ASSERT_EQ(0, res);
+    EXPECT_NOT_POISONED(v);
+  }
+  {
+    size_t v;
+    res = pthread_attr_getstacksize(&attr, &v);
+    ASSERT_EQ(0, res);
+    EXPECT_NOT_POISONED(v);
+  }
+  {
+    void *v;
+    size_t w;
+    res = pthread_attr_getstack(&attr, &v, &w);
+    ASSERT_EQ(0, res);
+    EXPECT_NOT_POISONED(v);
+    EXPECT_NOT_POISONED(w);
+  }
+  {
+    cpu_set_t v;
+    res = pthread_attr_getaffinity_np(&attr, sizeof(v), &v);
+    ASSERT_EQ(0, res);
+    EXPECT_NOT_POISONED(v);
+  }
+  res = pthread_attr_destroy(&attr);
+  ASSERT_EQ(0, res);
+}
+
 TEST(MemorySanitizer, pthread_getschedparam) {
   int policy;
   struct sched_param param;

@@ -51,6 +51,7 @@ set(MSAN_UNITTEST_COMMON_CFLAGS
   -fno-exceptions
   -fno-omit-frame-pointer
   -mno-omit-leaf-frame-pointer
+  -Wno-deprecated-declarations
 )
 set(MSAN_UNITTEST_INSTRUMENTED_CFLAGS
   ${MSAN_UNITTEST_COMMON_CFLAGS}
