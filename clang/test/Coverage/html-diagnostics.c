@@ -2,6 +2,9 @@
 // RUN: %clang_cc1 -analyze -analyzer-output=html -analyzer-checker=core -o %t %s
 // RUN: cat %t/*.html | FileCheck %s
 
+// Because of the glob (*.html)
+// REQUIRES: shell
+
 // CHECK: <h3>Annotated Source Code</h3>
 
 // Without tweaking expr, the expr would hit to the line below
