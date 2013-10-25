@@ -374,7 +374,7 @@ bool createManifest(PECOFFLinkingContext &ctx, raw_ostream &diagnostics) {
     if (!createManifestResourceFile(ctx, diagnostics, resourceFilePath))
       return false;
     std::unique_ptr<InputElement> inputElement(
-        new PECOFFFileNode(ctx, resourceFilePath));
+        new PECOFFFileNode(ctx, ctx.allocateString(resourceFilePath)));
     ctx.inputGraph().addInputElement(std::move(inputElement));
     return true;
   }
