@@ -126,10 +126,6 @@ void RTDyldMemoryManager::registerEHFrames(uint8_t *Addr,
 
   // How can it find the end? Because crtendS.o is linked 
   // in and it has an .eh_frame section with four zero chars.
-  // FIXME: make sure EH frame is followed by four zero bytes.
-  // This should be done in the linker RuntimeDyldELF::getEHFrameSection(),
-  // return pointer to .eh_frame properly appended by four zero bytes.
-  // If the linker can not fixed, do it here.
   __register_frame(Addr);
 }
 
