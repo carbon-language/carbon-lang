@@ -25,7 +25,7 @@
 // Ok, APCS and AAPCS agree on 32 bit args, so it's safe to use the same routine.
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_idiv, __divsi3)
 DEFINE_COMPILERRT_FUNCTION(__divsi3)
-#if __ARM_ARCH_7S__
+#if __ARM_ARCH_EXT_IDIV__
    tst     r1,r1
    beq     LOCAL_LABEL(divzero)
    sdiv    r0, r0, r1

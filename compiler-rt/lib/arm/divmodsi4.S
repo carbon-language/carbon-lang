@@ -24,7 +24,7 @@
 .syntax unified
 .align 3
 DEFINE_COMPILERRT_FUNCTION(__divmodsi4)
-#if __ARM_ARCH_7S__
+#if __ARM_ARCH_EXT_IDIV__
 	tst     r1, r1
 	beq     LOCAL_LABEL(divzero)
 	mov 	r3, r0
