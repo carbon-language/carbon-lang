@@ -477,4 +477,23 @@ TEST(DIEHashTest, RefUnnamedType) {
 
   ASSERT_EQ(0x954e026f01c02529ULL, MD5Res);
 }
+
+// struct { struct bar { }; };
+TEST(DIEHashTest, NestedType) {
+  DIE Unnamed(dwarf::DW_TAG_structure_type);
+  DIEInteger One(1);
+  Unnamed.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &One);
+
+  DIE *Foo = new DIE(dwarf::DW_TAG_structure_type);
+  DIEString FooStr(&One, "foo");
+  Foo->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FooStr);
+  Foo->addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &One);
+
+  Unnamed.addChild(Foo);
+
+  uint64_t MD5Res = DIEHash().computeTypeSignature(Unnamed);
+
+  // The exact same hash GCC produces for this DIE.
+  ASSERT_EQ(0xde8a3b7b43807f4aULL, MD5Res);
+}
 }

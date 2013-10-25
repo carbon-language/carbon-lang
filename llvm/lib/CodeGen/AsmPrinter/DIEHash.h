@@ -137,6 +137,8 @@ private:
   /// \brief Hashes a reference to a previously referenced type DIE.
   void hashRepeatedTypeReference(dwarf::Attribute Attribute, unsigned DieNumber);
 
+  void hashNestedType(const DIE &Die, StringRef Name);
+
 private:
   MD5 Hash;
   DenseMap<const DIE *, unsigned> Numbering;

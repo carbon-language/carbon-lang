@@ -384,6 +384,18 @@ void DIEHash::addAttributes(const DIE &Die) {
   hashAttributes(Attrs, Die.getTag());
 }
 
+void DIEHash::hashNestedType(const DIE &Die, StringRef Name) {
+  // 7.27 Step 7
+  // ... append the letter 'S',
+  addULEB128('S');
+
+  // the tag of C,
+  addULEB128(Die.getTag());
+
+  // and the name.
+  addString(Name);
+}
+
 // Compute the hash of a DIE. This is based on the type signature computation
 // given in section 7.27 of the DWARF4 standard. It is the md5 hash of a
 // flattened description of the DIE.
@@ -398,8 +410,19 @@ void DIEHash::computeHash(const DIE &Die) {
   // Then hash each of the children of the DIE.
   for (std::vector<DIE *>::const_iterator I = Die.getChildren().begin(),
                                           E = Die.getChildren().end();
-       I != E; ++I)
+       I != E; ++I) {
+    // 7.27 Step 7
+    // If C is a nested type entry or a member function entry, ...
+    if (isType((*I)->getTag())) {
+      StringRef Name = getDIEStringAttr(**I, dwarf::DW_AT_name);
+      // ... and has a DW_AT_name attribute
+      if (!Name.empty()) {
+        hashNestedType(**I, Name);
+        continue;
+      }
+    }
     computeHash(**I);
+  }
 
   // Following the last (or if there are no children), append a zero byte.
   Hash.update(makeArrayRef((uint8_t)'\0'));

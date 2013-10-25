@@ -141,6 +141,34 @@ enum Tag LLVM_ENUM_INT_TYPE(uint16_t) {
   DW_TAG_hi_user = 0xffff
 };
 
+inline bool isType(Tag T) {
+  switch (T) {
+  case DW_TAG_array_type:
+  case DW_TAG_class_type:
+  case DW_TAG_interface_type:
+  case DW_TAG_enumeration_type:
+  case DW_TAG_pointer_type:
+  case DW_TAG_reference_type:
+  case DW_TAG_rvalue_reference_type:
+  case DW_TAG_string_type:
+  case DW_TAG_structure_type:
+  case DW_TAG_subroutine_type:
+  case DW_TAG_union_type:
+  case DW_TAG_ptr_to_member_type:
+  case DW_TAG_set_type:
+  case DW_TAG_subrange_type:
+  case DW_TAG_base_type:
+  case DW_TAG_const_type:
+  case DW_TAG_file_type:
+  case DW_TAG_packed_type:
+  case DW_TAG_volatile_type:
+  case DW_TAG_typedef:
+    return true;
+  default:
+    return false;
+  }
+}
+
 enum Attribute LLVM_ENUM_INT_TYPE(uint16_t) {
   // Attributes
   DW_AT_sibling = 0x01,
