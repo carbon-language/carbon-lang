@@ -285,8 +285,6 @@ class ExternalSymbolizer {
   uptr times_restarted_;
 };
 
-static LowLevelAllocator symbolizer_allocator;  // Linker initialized.
-
 #if SANITIZER_SUPPORTS_WEAK_HOOKS
 extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
@@ -306,11 +304,10 @@ class InternalSymbolizer {
  public:
   typedef bool (*SanitizerSymbolizeFn)(const char*, u64, char*, int);
 
-  static InternalSymbolizer *get() {
+  static InternalSymbolizer *get(LowLevelAllocator *alloc) {
     if (__sanitizer_symbolize_code != 0 &&
         __sanitizer_symbolize_data != 0) {
-      void *mem = symbolizer_allocator.Allocate(sizeof(InternalSymbolizer));
-      return new(mem) InternalSymbolizer();
+      return new(*alloc) InternalSymbolizer();
     }
     return 0;
   }
@@ -357,7 +354,7 @@ class InternalSymbolizer {
 
 class InternalSymbolizer {
  public:
-  static InternalSymbolizer *get() { return 0; }
+  static InternalSymbolizer *get(LowLevelAllocator *alloc) { return 0; }
   char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
     return 0;
   }
@@ -367,11 +364,15 @@ class InternalSymbolizer {
 
 #endif  // SANITIZER_SUPPORTS_WEAK_HOOKS
 
-class Symbolizer : public SymbolizerInterface {
-  // This class has no constructor, as global constructors are forbidden in
-  // sanitizer_common. It should be linker initialized instead.
+class POSIXSymbolizer : public Symbolizer {
  public:
+  POSIXSymbolizer(ExternalSymbolizer *external_symbolizer,
+                  InternalSymbolizer *internal_symbolizer)
+      : external_symbolizer_(external_symbolizer),
+        internal_symbolizer_(internal_symbolizer) {}
+
   uptr SymbolizeCode(uptr addr, AddressInfo *frames, uptr max_frames) {
+    BlockingMutexLock l(&mu_);
     if (max_frames == 0)
       return 0;
     LoadedModule *module = FindModuleForAddress(addr);
@@ -432,6 +433,7 @@ class Symbolizer : public SymbolizerInterface {
   }
 
   bool SymbolizeData(uptr addr, DataInfo *info) {
+    BlockingMutexLock l(&mu_);
     LoadedModule *module = FindModuleForAddress(addr);
     if (module == 0)
       return false;
@@ -451,42 +453,32 @@ class Symbolizer : public SymbolizerInterface {
     return true;
   }
 
-  bool InitializeExternal(const char *path_to_symbolizer) {
-    if (!path_to_symbolizer || path_to_symbolizer[0] == '\0') {
-      path_to_symbolizer = FindPathToBinary("llvm-symbolizer");
-      if (!path_to_symbolizer)
-        return false;
-    }
-    int input_fd, output_fd;
-    if (!StartSymbolizerSubprocess(path_to_symbolizer, &input_fd, &output_fd))
-      return false;
-    void *mem = symbolizer_allocator.Allocate(sizeof(ExternalSymbolizer));
-    external_symbolizer_ = new(mem) ExternalSymbolizer(path_to_symbolizer,
-                                                       input_fd, output_fd);
-    return true;
+  bool IsAvailable() {
+    return internal_symbolizer_ != 0 || external_symbolizer_ != 0;
   }
 
-  bool IsAvailable() {
-    if (internal_symbolizer_ == 0)
-      internal_symbolizer_ = InternalSymbolizer::get();
-    return internal_symbolizer_ || external_symbolizer_;
+  bool IsExternalAvailable() {
+    return external_symbolizer_ != 0;
   }
 
   void Flush() {
-    if (internal_symbolizer_)
+    BlockingMutexLock l(&mu_);
+    if (internal_symbolizer_ != 0)
       internal_symbolizer_->Flush();
-    if (external_symbolizer_)
+    if (external_symbolizer_ != 0)
       external_symbolizer_->Flush();
   }
 
   const char *Demangle(const char *name) {
-    if (IsAvailable() && internal_symbolizer_ != 0)
+    BlockingMutexLock l(&mu_);
+    if (internal_symbolizer_ != 0)
       return internal_symbolizer_->Demangle(name);
     return DemangleCXXABI(name);
   }
 
   void PrepareForSandboxing() {
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
+    BlockingMutexLock l(&mu_);
     // Cache /proc/self/exe on Linux.
     CacheBinaryName();
 #endif
@@ -494,10 +486,8 @@ class Symbolizer : public SymbolizerInterface {
 
  private:
   char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
+    mu_.CheckLocked();
     // First, try to use internal symbolizer.
-    if (!IsAvailable()) {
-      return 0;
-    }
     if (internal_symbolizer_) {
       return internal_symbolizer_->SendCommand(is_data, module_name,
                                                module_offset);
@@ -526,9 +516,10 @@ class Symbolizer : public SymbolizerInterface {
   }
 
   LoadedModule *FindModuleForAddress(uptr address) {
+    mu_.CheckLocked();
     bool modules_were_reloaded = false;
     if (modules_ == 0 || !modules_fresh_) {
-      modules_ = (LoadedModule*)(symbolizer_allocator.Allocate(
+      modules_ = (LoadedModule*)(symbolizer_allocator_.Allocate(
           kMaxNumberOfModuleContexts * sizeof(LoadedModule)));
       CHECK(modules_);
       n_modules_ = GetListOfModules(modules_, kMaxNumberOfModuleContexts,
@@ -571,25 +562,31 @@ class Symbolizer : public SymbolizerInterface {
   uptr n_modules_;
   // If stale, need to reload the modules before looking up addresses.
   bool modules_fresh_;
+  BlockingMutex mu_;
 
-  ExternalSymbolizer *external_symbolizer_;  // Leaked.
-  InternalSymbolizer *internal_symbolizer_;  // Leaked.
+  ExternalSymbolizer *external_symbolizer_;        // Leaked.
+  InternalSymbolizer *const internal_symbolizer_;  // Leaked.
 };
 
-static ALIGNED(64) char symbolizer_placeholder[sizeof(Symbolizer)];
-static Symbolizer *symbolizer;
+Symbolizer *Symbolizer::PlatformInit(const char *path_to_external) {
+  InternalSymbolizer* internal_symbolizer =
+      InternalSymbolizer::get(&symbolizer_allocator_);
+  ExternalSymbolizer *external_symbolizer = 0;
 
-SymbolizerInterface *getSymbolizer() {
-  static atomic_uint8_t initialized;
-  static StaticSpinMutex init_mu;
-  if (atomic_load(&initialized, memory_order_acquire) == 0) {
-    SpinMutexLock l(&init_mu);
-    if (atomic_load(&initialized, memory_order_relaxed) == 0) {
-      symbolizer = new(symbolizer_placeholder) Symbolizer();
-      atomic_store(&initialized, 1, memory_order_release);
+  if (!internal_symbolizer) {
+    if (!path_to_external || path_to_external[0] == '\0')
+      path_to_external = FindPathToBinary("llvm-symbolizer");
+
+    int input_fd, output_fd;
+    if (path_to_external &&
+        StartSymbolizerSubprocess(path_to_external, &input_fd, &output_fd)) {
+      external_symbolizer = new(symbolizer_allocator_)
+          ExternalSymbolizer(path_to_external, input_fd, output_fd);
     }
   }
-  return symbolizer;
+
+  return new(symbolizer_allocator_)
+      POSIXSymbolizer(external_symbolizer, internal_symbolizer);
 }
 
 }  // namespace __sanitizer

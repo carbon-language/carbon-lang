@@ -137,8 +137,6 @@ endif()
 
 add_compiler_rt_resource_file(asan_blacklist asan_blacklist.txt)
 
-add_custom_target(asan DEPENDS asan_blacklist ${ASAN_RUNTIME_LIBRARIES})
-
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)
 endif()

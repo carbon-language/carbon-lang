@@ -54,7 +54,7 @@ static void DescribeOrigin(u32 origin) {
     Printf("  %sUninitialized value was created by an allocation of '%s%s%s'"
            " in the stack frame of function '%s%s%s'%s\n",
            d.Origin(), d.Name(), s, d.Origin(), d.Name(),
-           getSymbolizer()->Demangle(sep + 1), d.Origin(), d.End());
+           Symbolizer::Get()->Demangle(sep + 1), d.Origin(), d.End());
     InternalFree(s);
 
     if (pc) {
@@ -73,12 +73,12 @@ static void DescribeOrigin(u32 origin) {
 }
 
 static void ReportSummary(const char *error_type, StackTrace *stack) {
-  if (!stack->size || !getSymbolizer()->IsAvailable()) return;
+  if (!stack->size || !Symbolizer::Get()->IsAvailable()) return;
   AddressInfo ai;
   uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
   {
     SymbolizerScope sym_scope;
-    getSymbolizer()->SymbolizeCode(pc, &ai, 1);
+    Symbolizer::Get()->SymbolizeCode(pc, &ai, 1);
   }
   ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
 }

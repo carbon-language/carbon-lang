@@ -536,9 +536,10 @@ void __asan_init() {
   InitializeAllocator();
 
   // Start symbolizer process if necessary.
-  if (common_flags()->symbolize && &getSymbolizer) {
-    getSymbolizer()
-        ->InitializeExternal(common_flags()->external_symbolizer_path);
+  if (common_flags()->symbolize) {
+    Symbolizer::Init(common_flags()->external_symbolizer_path);
+  } else {
+    Symbolizer::Disable();
   }
 
   // On Linux AsanThread::ThreadStart() calls malloc() that's why asan_inited

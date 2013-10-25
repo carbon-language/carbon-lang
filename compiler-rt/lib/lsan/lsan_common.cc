@@ -413,8 +413,8 @@ static Suppression *GetSuppressionForAddr(uptr addr) {
   static const uptr kMaxAddrFrames = 16;
   InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
   for (uptr i = 0; i < kMaxAddrFrames; i++) new (&addr_frames[i]) AddressInfo();
-  uptr addr_frames_num =
-      getSymbolizer()->SymbolizeCode(addr, addr_frames.data(), kMaxAddrFrames);
+  uptr addr_frames_num = Symbolizer::Get()->SymbolizeCode(
+      addr, addr_frames.data(), kMaxAddrFrames);
   for (uptr i = 0; i < addr_frames_num; i++) {
     Suppression* s;
     if (suppression_ctx->Match(addr_frames[i].function, SuppressionLeak, &s) ||

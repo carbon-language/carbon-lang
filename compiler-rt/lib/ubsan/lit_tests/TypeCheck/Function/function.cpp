@@ -1,4 +1,4 @@
-// RUN: %clangxx -fsanitize=address,function %s -O3 -g -o %t
+// RUN: %clangxx -fsanitize=function %s -O3 -g -o %t
 // RUN: %t 2>&1 | FileCheck %s
 
 #include <stdint.h>

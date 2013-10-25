@@ -119,15 +119,15 @@ ReportStack *SymbolizeCode(uptr addr) {
     ent->col = col;
     return ent;
   }
-  if (!getSymbolizer()->IsAvailable())
+  if (!Symbolizer::Get()->IsAvailable())
     return SymbolizeCodeAddr2Line(addr);
   ScopedInSymbolizer in_symbolizer;
   static const uptr kMaxAddrFrames = 16;
   InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
   for (uptr i = 0; i < kMaxAddrFrames; i++)
     new(&addr_frames[i]) AddressInfo();
-  uptr addr_frames_num =
-      getSymbolizer()->SymbolizeCode(addr, addr_frames.data(), kMaxAddrFrames);
+  uptr addr_frames_num = Symbolizer::Get()->SymbolizeCode(
+      addr, addr_frames.data(), kMaxAddrFrames);
   if (addr_frames_num == 0)
     return NewReportStackEntry(addr);
   ReportStack *top = 0;
@@ -146,11 +146,11 @@ ReportStack *SymbolizeCode(uptr addr) {
 }
 
 ReportLocation *SymbolizeData(uptr addr) {
-  if (!getSymbolizer()->IsAvailable())
+  if (!Symbolizer::Get()->IsAvailable())
     return 0;
   ScopedInSymbolizer in_symbolizer;
   DataInfo info;
-  if (!getSymbolizer()->SymbolizeData(addr, &info))
+  if (!Symbolizer::Get()->SymbolizeData(addr, &info))
     return 0;
   ReportLocation *ent = (ReportLocation*)internal_alloc(MBlockReportStack,
                                                         sizeof(ReportLocation));
@@ -166,10 +166,10 @@ ReportLocation *SymbolizeData(uptr addr) {
 }
 
 void SymbolizeFlush() {
-  if (!getSymbolizer()->IsAvailable())
+  if (!Symbolizer::Get()->IsAvailable())
     return;
   ScopedInSymbolizer in_symbolizer;
-  getSymbolizer()->Flush();
+  Symbolizer::Get()->Flush();
 }
 
 }  // namespace __tsan

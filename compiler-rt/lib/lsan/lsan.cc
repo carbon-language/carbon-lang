@@ -53,8 +53,9 @@ void Init() {
 
   // Start symbolizer process if necessary.
   if (common_flags()->symbolize) {
-    getSymbolizer()
-        ->InitializeExternal(common_flags()->external_symbolizer_path);
+    Symbolizer::Init(common_flags()->external_symbolizer_path);
+  } else {
+    Symbolizer::Disable();
   }
 
   InitCommonLsan();

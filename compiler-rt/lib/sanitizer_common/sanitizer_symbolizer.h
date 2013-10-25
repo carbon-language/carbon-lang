@@ -69,8 +69,24 @@ struct DataInfo {
   uptr size;
 };
 
-class SymbolizerInterface {
+class Symbolizer {
  public:
+  /// Returns platform-specific implementation of Symbolizer. The symbolizer
+  /// must be initialized (with init or disable) before calling this function.
+  static Symbolizer *Get();
+  /// Returns platform-specific implementation of Symbolizer, or null if not
+  /// initialized.
+  static Symbolizer *GetOrNull();
+  /// Returns platform-specific implementation of Symbolizer.  Will
+  /// automatically initialize symbolizer as if by calling Init(0) if needed.
+  static Symbolizer *GetOrInit();
+  /// Initialize and return the symbolizer, given an optional path to an
+  /// external symbolizer.  The path argument is only required for legacy
+  /// reasons as this function will check $PATH for an external symbolizer.  Not
+  /// thread safe.
+  static Symbolizer *Init(const char* path_to_external = 0);
+  /// Initialize the symbolizer in a disabled state.  Not thread safe.
+  static Symbolizer *Disable();
   // Fills at most "max_frames" elements of "frames" with descriptions
   // for a given address (in all inlined functions). Returns the number
   // of descriptions actually filled.
@@ -84,6 +100,9 @@ class SymbolizerInterface {
   virtual bool IsAvailable() {
     return false;
   }
+  virtual bool IsExternalAvailable() {
+    return false;
+  }
   // Release internal caches (if any).
   virtual void Flush() {}
   // Attempts to demangle the provided C++ mangled name.
@@ -91,17 +110,19 @@ class SymbolizerInterface {
     return name;
   }
   virtual void PrepareForSandboxing() {}
-  // Starts external symbolizer program in a subprocess. Sanitizer communicates
-  // with external symbolizer via pipes. If path_to_symbolizer is NULL or empty,
-  // tries to look for llvm-symbolizer in PATH.
-  virtual bool InitializeExternal(const char *path_to_symbolizer) {
-    return false;
-  }
-};
 
-// Returns platform-specific implementation of SymbolizerInterface. It can't be
-// used from multiple threads simultaneously.
-SANITIZER_WEAK_ATTRIBUTE SymbolizerInterface *getSymbolizer();
+ private:
+  /// Platform-specific function for creating a Symbolizer object.
+  static Symbolizer *PlatformInit(const char *path_to_external);
+  /// Create a symbolizer and store it to symbolizer_ without checking if one
+  /// already exists.  Not thread safe.
+  static Symbolizer *CreateAndStore(const char *path_to_external);
+
+  static atomic_uintptr_t symbolizer_;
+
+ protected:
+  static LowLevelAllocator symbolizer_allocator_;
+};
 
 }  // namespace __sanitizer
 
