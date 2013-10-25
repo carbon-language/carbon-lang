@@ -74,6 +74,8 @@ class ARMAsmParser : public MCTargetAsmParser {
   // Map of register aliases registers via the .req directive.
   StringMap<unsigned> RegisterReqs;
 
+  bool NextSymbolIsThumb;
+
   struct {
     ARMCC::CondCodes Cond;    // Condition for IT block.
     unsigned Mask:4;          // Condition mask for instructions.
@@ -268,6 +270,8 @@ public:
 
     // Not in an ITBlock to start with.
     ITState.CurPosition = ~0U;
+
+    NextSymbolIsThumb = false;
   }
 
   // Implementation of the MCTargetAsmParser interface:
@@ -284,6 +288,8 @@ public:
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out, unsigned &ErrorInfo,
                                bool MatchingInlineAsm);
+  void onLabelParsed(MCSymbol *Symbol);
+
 };
 } // end anonymous namespace
 
@@ -7837,13 +7843,18 @@ bool ARMAsmParser::parseDirectiveARM(SMLoc L) {
   return false;
 }
 
+void ARMAsmParser::onLabelParsed(MCSymbol *Symbol) {
+  if (NextSymbolIsThumb) {
+    getParser().getStreamer().EmitThumbFunc(Symbol);
+    NextSymbolIsThumb = false;
+  }
+}
+
 /// parseDirectiveThumbFunc
 ///  ::= .thumbfunc symbol_name
 bool ARMAsmParser::parseDirectiveThumbFunc(SMLoc L) {
   const MCAsmInfo *MAI = getParser().getStreamer().getContext().getAsmInfo();
   bool isMachO = MAI->hasSubsectionsViaSymbols();
-  StringRef Name;
-  bool needFuncName = true;
 
   // Darwin asm has (optionally) function name after .thumb_func direction
   // ELF doesn't
@@ -7852,29 +7863,19 @@ bool ARMAsmParser::parseDirectiveThumbFunc(SMLoc L) {
     if (Tok.isNot(AsmToken::EndOfStatement)) {
       if (Tok.isNot(AsmToken::Identifier) && Tok.isNot(AsmToken::String))
         return Error(L, "unexpected token in .thumb_func directive");
-      Name = Tok.getIdentifier();
+      MCSymbol *Func =
+          getParser().getContext().GetOrCreateSymbol(Tok.getIdentifier());
+      getParser().getStreamer().EmitThumbFunc(Func);
       Parser.Lex(); // Consume the identifier token.
-      needFuncName = false;
+      return false;
     }
   }
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return Error(L, "unexpected token in directive");
 
-  // Eat the end of statement and any blank lines that follow.
-  while (getLexer().is(AsmToken::EndOfStatement))
-    Parser.Lex();
+  NextSymbolIsThumb = true;
 
-  // FIXME: assuming function name will be the line following .thumb_func
-  // We really should be checking the next symbol definition even if there's
-  // stuff in between.
-  if (needFuncName) {
-    Name = Parser.getTok().getIdentifier();
-  }
-
-  // Mark symbol as a thumb symbol.
-  MCSymbol *Func = getParser().getContext().GetOrCreateSymbol(Name);
-  getParser().getStreamer().EmitThumbFunc(Func);
   return false;
 }
 

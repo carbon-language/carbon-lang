@@ -181,6 +181,8 @@ public:
                                             MCContext &Ctx) {
     return 0;
   }
+
+  virtual void onLabelParsed(MCSymbol *Symbol) { };
 };
 
 } // End llvm namespace

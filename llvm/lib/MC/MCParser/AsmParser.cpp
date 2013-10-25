@@ -1262,6 +1262,8 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info) {
       MCGenDwarfLabelEntry::Make(Sym, &getStreamer(), getSourceManager(),
                                  IDLoc);
 
+    getTargetParser().onLabelParsed(Sym);
+
     // Consume any end of statement token, if present, to avoid spurious
     // AddBlankLine calls().
     if (Lexer.is(AsmToken::EndOfStatement)) {

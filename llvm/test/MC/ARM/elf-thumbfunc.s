@@ -5,9 +5,9 @@
 	.text
 	.globl	foo
 	.align	2
-	.type	foo,%function
 	.code	16
 	.thumb_func
+	.type	foo,%function
 foo:
 	bx	lr
 
