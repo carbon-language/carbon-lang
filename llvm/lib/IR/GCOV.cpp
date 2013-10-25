@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/GCOV.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
@@ -65,7 +66,7 @@ bool GCOVFile::read(GCOVBuffer &Buffer) {
   return true;
 }
 
-/// dump - Dump GCOVFile content on standard out for debugging purposes.
+/// dump - Dump GCOVFile content to dbgs() for debugging purposes.
 void GCOVFile::dump() {
   for (SmallVectorImpl<GCOVFunction *>::iterator I = Functions.begin(),
          E = Functions.end(); I != E; ++I)
@@ -165,9 +166,9 @@ bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
   return true;
 }
 
-/// dump - Dump GCOVFunction content on standard out for debugging purposes.
+/// dump - Dump GCOVFunction content to dbgs() for debugging purposes.
 void GCOVFunction::dump() {
-  outs() <<  "===== " << Name << " @ " << Filename << ":" << LineNumber << "\n";
+  dbgs() <<  "===== " << Name << " @ " << Filename << ":" << LineNumber << "\n";
   for (SmallVectorImpl<GCOVBlock *>::iterator I = Blocks.begin(),
          E = Blocks.end(); I != E; ++I)
     (*I)->dump();
@@ -205,23 +206,23 @@ void GCOVBlock::collectLineCounts(FileInfo &FI) {
     I->second->collectLineCounts(FI, I->first(), Counter);
 }
 
-/// dump - Dump GCOVBlock content on standard out for debugging purposes.
+/// dump - Dump GCOVBlock content to dbgs() for debugging purposes.
 void GCOVBlock::dump() {
-  outs() << "Block : " << Number << " Counter : " << Counter << "\n";
+  dbgs() << "Block : " << Number << " Counter : " << Counter << "\n";
   if (!Edges.empty()) {
-    outs() << "\tEdges : ";
+    dbgs() << "\tEdges : ";
     for (SmallVectorImpl<uint32_t>::iterator I = Edges.begin(), E = Edges.end();
          I != E; ++I)
-      outs() << (*I) << ",";
-    outs() << "\n";
+      dbgs() << (*I) << ",";
+    dbgs() << "\n";
   }
   if (!Lines.empty()) {
-    outs() << "\tLines : ";
+    dbgs() << "\tLines : ";
     for (StringMap<GCOVLines *>::iterator LI = Lines.begin(),
            LE = Lines.end(); LI != LE; ++LI) {
-      outs() << LI->first() << " -> ";
+      dbgs() << LI->first() << " -> ";
       LI->second->dump();
-      outs() << "\n";
+      dbgs() << "\n";
     }
   }
 }
@@ -238,11 +239,11 @@ void GCOVLines::collectLineCounts(FileInfo &FI, StringRef Filename,
     FI.addLineCount(Filename, *I, Count);
 }
 
-/// dump - Dump GCOVLines content on standard out for debugging purposes.
+/// dump - Dump GCOVLines content to dbgs() for debugging purposes.
 void GCOVLines::dump() {
   for (SmallVectorImpl<uint32_t>::iterator I = Lines.begin(),
          E = Lines.end(); I != E; ++I)
-    outs() << (*I) << ",";
+    dbgs() << (*I) << ",";
 }
 
 //===----------------------------------------------------------------------===//
