@@ -21,7 +21,9 @@ void bad_news(int *ip)
   auto s = new int*[[]{return 1;}()][2]; // expected-error {{expected ']'}}
   // ... but not here:
   auto t = new (int(*)[[]]); // expected-error {{an attribute list cannot appear here}}
-  auto u = new (int(*)[[]{return 1;}()][2]); // expected-error {{C++11 only allows consecutive left square brackets when introducing an attribute}} expected-error {{variably modified type}}
+  auto u = new (int(*)[[]{return 1;}()][2]); // expected-error {{C++11 only allows consecutive left square brackets when introducing an attribute}} \
+                                                expected-error {{variably modified type}} \
+                                                expected-error {{a lambda expression may not appear inside of a constant expression}}
 }
 
 void good_deletes()

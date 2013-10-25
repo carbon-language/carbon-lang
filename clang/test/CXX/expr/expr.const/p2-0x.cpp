@@ -275,9 +275,7 @@ namespace UndefinedBehavior {
 
 // - a lambda-expression (5.1.2);
 struct Lambda {
-  // FIXME: clang crashes when trying to parse this! Revisit this check once
-  // lambdas are fully implemented.
-  //int n : []{ return 1; }();
+  int n : []{ return 1; }(); // expected-error {{constant expression}} expected-error {{integral constant expression}}
 };
 
 // - an lvalue-to-rvalue conversion (4.1) unless it is applied to

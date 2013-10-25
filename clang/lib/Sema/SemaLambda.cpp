@@ -1229,20 +1229,25 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
                                           CaptureInits, ArrayIndexVars, 
                                           ArrayIndexStarts, Body->getLocEnd(),
                                           ContainsUnexpandedParameterPack);
-  // C++11 [expr.prim.lambda]p2:
-  //   A lambda-expression shall not appear in an unevaluated operand
-  //   (Clause 5).
+
   if (!CurContext->isDependentContext()) {
     switch (ExprEvalContexts.back().Context) {
+    // C++11 [expr.prim.lambda]p2:
+    //   A lambda-expression shall not appear in an unevaluated operand
+    //   (Clause 5).
     case Unevaluated:
     case UnevaluatedAbstract:
+    // C++1y [expr.const]p2:
+    //   A conditional-expression e is a core constant expression unless the
+    //   evaluation of e, following the rules of the abstract machine, would
+    //   evaluate [...] a lambda-expression.
+    case ConstantEvaluated:
       // We don't actually diagnose this case immediately, because we
       // could be within a context where we might find out later that
       // the expression is potentially evaluated (e.g., for typeid).
       ExprEvalContexts.back().Lambdas.push_back(Lambda);
       break;
 
-    case ConstantEvaluated:
     case PotentiallyEvaluated:
     case PotentiallyEvaluatedIfUsed:
       break;
