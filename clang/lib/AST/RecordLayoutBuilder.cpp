@@ -1032,25 +1032,16 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
     setDataSize(getSize());
   }
 
-  bool HasDirectVirtualBases = false;
-  bool HasNonVirtualBaseWithVBTable = false;
-
   // Now lay out the non-virtual bases.
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
          E = RD->bases_end(); I != E; ++I) {
 
-    // Ignore virtual bases, but remember that we saw one.
-    if (I->isVirtual()) {
-      HasDirectVirtualBases = true;
+    // Ignore virtual bases.
+    if (I->isVirtual())
       continue;
-    }
 
     const CXXRecordDecl *BaseDecl =
       cast<CXXRecordDecl>(I->getType()->castAs<RecordType>()->getDecl());
-
-    // Remember if this base has virtual bases itself.
-    if (BaseDecl->getNumVBases())
-      HasNonVirtualBaseWithVBTable = true;
 
     // Skip the primary base, because we've already laid it out.  The
     // !PrimaryBaseIsVirtual check is required because we might have a
