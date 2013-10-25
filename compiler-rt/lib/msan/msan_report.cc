@@ -41,6 +41,7 @@ static void PrintStack(const uptr *trace, uptr size) {
 
 static void DescribeOrigin(u32 origin) {
   Decorator d;
+  Printf("\n");
   if (common_flags()->verbosity)
     Printf("  raw origin id: %d\n", origin);
   uptr pc;
