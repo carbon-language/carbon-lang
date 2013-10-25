@@ -138,6 +138,14 @@ namespace {
             const uint32_t idx = ePropertyPacketTimeout;
             return m_collection_sp->GetPropertyAtIndexAsUInt64(NULL, idx, g_properties[idx].default_uint_value);
         }
+
+        bool
+        SetPacketTimeout(uint64_t timeout)
+        {
+            const uint32_t idx = ePropertyPacketTimeout;
+            return m_collection_sp->SetPropertyAtIndexAsUInt64(NULL, idx, timeout);
+        }
+
         FileSpec
         GetTargetDefinitionFile () const
         {
@@ -535,6 +543,16 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
             break;
         }
     }
+
+    // Check if qHostInfo specified a specific packet timeout for this connection.
+    // If so then lets update our setting so the user knows what the timeout is
+    // and can see it.
+    const uint32_t host_packet_timeout = m_gdb_comm.GetHostDefaultPacketTimeout();
+    if (host_packet_timeout)
+    {
+        GetGlobalPluginProperties()->SetPacketTimeout(host_packet_timeout);
+    }
+    
 
     if (reg_num == 0)
     {

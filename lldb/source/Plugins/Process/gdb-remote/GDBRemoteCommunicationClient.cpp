@@ -90,7 +90,11 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_process_arch(),
     m_os_version_major (UINT32_MAX),
     m_os_version_minor (UINT32_MAX),
-    m_os_version_update (UINT32_MAX)
+    m_os_version_update (UINT32_MAX),
+    m_os_build (),
+    m_os_kernel (),
+    m_hostname (),
+    m_default_packet_timeout (0)
 {
 }
 
@@ -1299,6 +1303,15 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                         else
                             --num_keys_decoded;
                     }
+                    else if (name.compare("default_packet_timeout") == 0)
+                    {
+                        m_default_packet_timeout = Args::StringToUInt32(value.c_str(), 0);
+                        if (m_default_packet_timeout > 0)
+                        {
+                            SetPacketTimeout(m_default_packet_timeout);
+                            ++num_keys_decoded;
+                        }
+                    }
 
                 }
                 
@@ -1431,6 +1444,14 @@ GDBRemoteCommunicationClient::GetHostArchitecture ()
     if (m_qHostInfo_is_valid == eLazyBoolCalculate)
         GetHostInfo ();
     return m_host_arch;
+}
+
+uint32_t
+GDBRemoteCommunicationClient::GetHostDefaultPacketTimeout ()
+{
+    if (m_qHostInfo_is_valid == eLazyBoolCalculate)
+        GetHostInfo ();
+    return m_default_packet_timeout;
 }
 
 addr_t

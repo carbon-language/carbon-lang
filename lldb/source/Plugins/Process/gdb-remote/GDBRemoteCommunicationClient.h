@@ -220,6 +220,9 @@ public:
 
     const lldb_private::ArchSpec &
     GetHostArchitecture ();
+    
+    uint32_t
+    GetHostDefaultPacketTimeout();
 
     const lldb_private::ArchSpec &
     GetProcessArchitecture ();
@@ -476,6 +479,7 @@ protected:
     std::string m_os_build;
     std::string m_os_kernel;
     std::string m_hostname;
+    uint32_t m_default_packet_timeout;
     
     bool
     DecodeProcessInfoResponse (StringExtractorGDBRemote &response, 
