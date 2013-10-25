@@ -96,16 +96,16 @@ DefinedAtom::Alignment getAlignment(const coff_section *section) {
   // Bit [20:24] contains section alignment information. We need to decrease
   // the value stored by 1 in order to get the real exponent (e.g, ALIGN_1BYTE
   // is 0x00100000, but the exponent should be 0)
-  uint32_t charactersitcis = (section->Characteristics >> 20) & 0xf;
+  uint32_t characteristics = (section->Characteristics >> 20) & 0xf;
 
   // If all bits are off, we treat it as if ALIGN_1BYTE was on. The PE/COFF spec
   // does not say anything about this case, but CVTRES.EXE does not set any bit
   // in characteristics[20:24], and its output is intended to be copied to .rsrc
   // section with no padding, so I think doing this is the right thing.
-  if (charactersitcis == 0)
+  if (characteristics == 0)
     return DefinedAtom::Alignment(0);
 
-  uint32_t powerOf2 = charactersitcis - 1;
+  uint32_t powerOf2 = characteristics - 1;
   return DefinedAtom::Alignment(powerOf2);
 }
 
