@@ -6963,12 +6963,63 @@ static void diagnoseStringPlusInt(Sema &Self, SourceLocation OpLoc,
   // Only print a fixit for "str" + int, not for int + "str".
   if (IndexExpr == RHSExpr) {
     SourceLocation EndLoc = Self.PP.getLocForEndOfToken(RHSExpr->getLocEnd());
-    Self.Diag(OpLoc, diag::note_string_plus_int_silence)
+    Self.Diag(OpLoc, diag::note_string_plus_scalar_silence)
         << FixItHint::CreateInsertion(LHSExpr->getLocStart(), "&")
         << FixItHint::CreateReplacement(SourceRange(OpLoc), "[")
         << FixItHint::CreateInsertion(EndLoc, "]");
   } else
-    Self.Diag(OpLoc, diag::note_string_plus_int_silence);
+    Self.Diag(OpLoc, diag::note_string_plus_scalar_silence);
+}
+
+/// \brief Emit a warning when adding a char literal to a string.
+static void diagnoseStringPlusChar(Sema &Self, SourceLocation OpLoc,
+                                   Expr *LHSExpr, Expr *RHSExpr) {
+  const DeclRefExpr *StringRefExpr =
+      dyn_cast<DeclRefExpr>(LHSExpr->IgnoreImpCasts());
+  const CharacterLiteral *CharExpr =
+      dyn_cast<CharacterLiteral>(RHSExpr->IgnoreImpCasts());
+  if (!StringRefExpr) {
+    StringRefExpr = dyn_cast<DeclRefExpr>(RHSExpr->IgnoreImpCasts());
+    CharExpr = dyn_cast<CharacterLiteral>(LHSExpr->IgnoreImpCasts());
+  }
+
+  if (!CharExpr || !StringRefExpr)
+    return;
+
+  const QualType StringType = StringRefExpr->getType();
+
+  // Return if not a PointerType.
+  if (!StringType->isAnyPointerType())
+    return;
+
+  // Return if not a CharacterType.
+  if (!StringType->getPointeeType()->isAnyCharacterType())
+    return;
+
+  ASTContext &Ctx = Self.getASTContext();
+  SourceRange DiagRange(LHSExpr->getLocStart(), RHSExpr->getLocEnd());
+
+  const QualType CharType = CharExpr->getType();
+  if (!CharType->isAnyCharacterType() &&
+      CharType->isIntegerType() &&
+      llvm::isUIntN(Ctx.getCharWidth(), CharExpr->getValue())) {
+    Self.Diag(OpLoc, diag::warn_string_plus_char)
+        << DiagRange << Ctx.CharTy;
+  } else {
+    Self.Diag(OpLoc, diag::warn_string_plus_char)
+        << DiagRange << CharExpr->getType();
+  }
+
+  // Only print a fixit for str + char, not for char + str.
+  if (isa<CharacterLiteral>(RHSExpr->IgnoreImpCasts())) {
+    SourceLocation EndLoc = Self.PP.getLocForEndOfToken(RHSExpr->getLocEnd());
+    Self.Diag(OpLoc, diag::note_string_plus_scalar_silence)
+        << FixItHint::CreateInsertion(LHSExpr->getLocStart(), "&")
+        << FixItHint::CreateReplacement(SourceRange(OpLoc), "[")
+        << FixItHint::CreateInsertion(EndLoc, "]");
+  } else {
+    Self.Diag(OpLoc, diag::note_string_plus_scalar_silence);
+  }
 }
 
 /// \brief Emit error when two pointers are incompatible.
@@ -6997,9 +7048,11 @@ QualType Sema::CheckAdditionOperands( // C99 6.5.6
   if (LHS.isInvalid() || RHS.isInvalid())
     return QualType();
 
-  // Diagnose "string literal" '+' int.
-  if (Opc == BO_Add)
+  // Diagnose "string literal" '+' int and string '+' "char literal".
+  if (Opc == BO_Add) {
     diagnoseStringPlusInt(*this, Loc, LHS.get(), RHS.get());
+    diagnoseStringPlusChar(*this, Loc, LHS.get(), RHS.get());
+  }
 
   // handle the common case first (both operands are arithmetic).
   if (!compType.isNull() && compType->isArithmeticType()) {
