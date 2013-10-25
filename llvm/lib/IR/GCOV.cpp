@@ -44,21 +44,24 @@ bool GCOVFile::read(GCOVBuffer &Buffer) {
   if (Format == GCOV::InvalidGCOV)
     return false;
 
-  unsigned i = 0;
-  while (1) {
-    GCOVFunction *GFun = NULL;
-    if (isGCDAFile(Format)) {
-      // Use existing function while reading .gcda file.
-      assert(i < Functions.size() && ".gcda data does not match .gcno data");
-      GFun = Functions[i];
-    } else if (isGCNOFile(Format)) {
-      GFun = new GCOVFunction();
+  if (isGCNOFile(Format)) {
+    while (true) {
+      GCOVFunction *GFun = new GCOVFunction();
+      if (!GFun->read(Buffer, Format))
+        break;
       Functions.push_back(GFun);
     }
-    if (!GFun || !GFun->read(Buffer, Format))
-      break;
-    ++i;
   }
+  else if (isGCDAFile(Format)) {
+    for (size_t i = 0, e = Functions.size(); i < e; ++i) {
+      bool ReadGCDA = Functions[i]->read(Buffer, Format);
+      (void)ReadGCDA;
+      assert(ReadGCDA && ".gcda data does not match .gcno data");
+    }
+    while (Buffer.readProgramTag())
+      ++ProgramCount;
+  }
+
   return true;
 }
 
@@ -75,6 +78,7 @@ void GCOVFile::collectLineCounts(FileInfo &FI) {
   for (SmallVectorImpl<GCOVFunction *>::iterator I = Functions.begin(),
          E = Functions.end(); I != E; ++I) 
     (*I)->collectLineCounts(FI);
+  FI.setProgramCount(ProgramCount);
 }
 
 //===----------------------------------------------------------------------===//
@@ -252,6 +256,7 @@ void FileInfo::print(StringRef gcnoFile, StringRef gcdaFile) {
     outs() << "        -:    0:Source:" << Filename << "\n";
     outs() << "        -:    0:Graph:" << gcnoFile << "\n";
     outs() << "        -:    0:Data:" << gcdaFile << "\n";
+    outs() << "        -:    0:Programs:" << ProgramCount << "\n";
     LineCounts &L = LineInfo[Filename];
     OwningPtr<MemoryBuffer> Buff;
     if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {

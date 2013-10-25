@@ -126,6 +126,19 @@ public:
     return true;
   }
 
+  /// readProgramTag - If cursor points to a program summary tag then increment
+  /// the cursor and return true otherwise return false.
+  bool readProgramTag() {
+    StringRef Tag = Buffer->getBuffer().slice(Cursor, Cursor+4);
+    if (Tag.empty() ||
+        Tag[0] != '\0' || Tag[1] != '\0' ||
+        Tag[2] != '\0' || Tag[3] != '\xa3') {
+      return false;
+    }
+    Cursor += 4;
+    return true;
+  }
+
   uint32_t readInt() {
     uint32_t Result;
     StringRef Str = Buffer->getBuffer().slice(Cursor, Cursor+4);
@@ -159,13 +172,14 @@ private:
 /// (.gcno and .gcda).
 class GCOVFile {
 public:
-  GCOVFile() {}
+  GCOVFile() : Functions(), ProgramCount(0) {}
   ~GCOVFile();
   bool read(GCOVBuffer &Buffer);
   void dump();
   void collectLineCounts(FileInfo &FI);
 private:
   SmallVector<GCOVFunction *, 16> Functions;
+  uint32_t ProgramCount;
 };
 
 /// GCOVFunction - Collects function information.
@@ -220,9 +234,11 @@ public:
   void addLineCount(StringRef Filename, uint32_t Line, uint64_t Count) {
     LineInfo[Filename][Line-1] += Count;
   }
+  void setProgramCount(uint32_t PC) { ProgramCount = PC; }
   void print(StringRef gcnoFile, StringRef gcdaFile);
 private:
   StringMap<LineCounts> LineInfo;
+  uint32_t ProgramCount;
 };
 
 }
