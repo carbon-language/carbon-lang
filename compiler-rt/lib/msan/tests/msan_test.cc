@@ -1149,9 +1149,11 @@ TEST(MemorySanitizer, shmctl) {
 TEST(MemorySanitizer, random_r) {
   int32_t x;
   char z[64];
-  struct random_data buf;
-
   memset(z, 0, sizeof(z));
+
+  struct random_data buf;
+  memset(&buf, 0, sizeof(buf));
+
   int res = initstate_r(0, z, sizeof(z), &buf);
   ASSERT_EQ(0, res);
 
