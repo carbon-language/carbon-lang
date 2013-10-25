@@ -219,3 +219,17 @@ define <8 x double> @test_x86_vbroadcast_sd_512(i8* %a0) {
   ret <8 x double> %res
 }
 declare <8 x double> @llvm.x86.avx512.vbroadcast.sd.512(i8*) nounwind readonly
+
+define <16 x float> @test_x86_vbroadcast_ss_ps_512(<4 x float> %a0) {
+  ; CHECK: vbroadcastss
+  %res = call <16 x float> @llvm.x86.avx512.vbroadcast.ss.ps.512(<4 x float> %a0) ; <<16 x float>> [#uses=1]
+  ret <16 x float> %res
+}
+declare <16 x float> @llvm.x86.avx512.vbroadcast.ss.ps.512(<4 x float>) nounwind readonly
+
+define <8 x double> @test_x86_vbroadcast_sd_pd_512(<2 x double> %a0) {
+  ; CHECK: vbroadcastsd
+  %res = call <8 x double> @llvm.x86.avx512.vbroadcast.sd.pd.512(<2 x double> %a0) ; <<8 x double>> [#uses=1]
+  ret <8 x double> %res
+}
+declare <8 x double> @llvm.x86.avx512.vbroadcast.sd.pd.512(<2 x double>) nounwind readonly
