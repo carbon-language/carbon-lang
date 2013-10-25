@@ -31,9 +31,11 @@ static LLVMModuleRef load_module(void) {
 
   if (LLVMParseBitcode(MB, &M, &msg)) {
     fprintf(stderr, "Error parsing bitcode: %s\n", msg);
+    LLVMDisposeMemoryBuffer(MB);
     exit(1);
   }
 
+  LLVMDisposeMemoryBuffer(MB);
   return M;
 }
 
