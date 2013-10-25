@@ -111,7 +111,7 @@ def write_test_results(run, lit_config, testing_time, output_path):
 def main(builtinParameters = {}):
     # Use processes by default on Unix platforms.
     isWindows = platform.system() == 'Windows'
-    useProcessesIsDefault = not isWindows
+    useProcessesIsDefault = (not isWindows) and platform.system() != 'OpenBSD'
 
     global options
     from optparse import OptionParser, OptionGroup
