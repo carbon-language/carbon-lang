@@ -395,7 +395,6 @@ enum StatType {
   StatInt_pthread_attr_getschedpolicy,
   StatInt_pthread_attr_getinheritsched,
   StatInt_pthread_attr_getscope,
-  StatInt_pthread_attr_getstackaddr,
   StatInt_pthread_attr_getstacksize,
   StatInt_pthread_attr_getstack,
   StatInt_pthread_attr_getaffinity_np,

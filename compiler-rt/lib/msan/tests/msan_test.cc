@@ -2548,12 +2548,6 @@ TEST(MemorySanitizer, pthread_attr_get) {
     EXPECT_NOT_POISONED(v);
   }
   {
-    void *v;
-    res = pthread_attr_getstackaddr(&attr, &v);
-    ASSERT_EQ(0, res);
-    EXPECT_NOT_POISONED(v);
-  }
-  {
     size_t v;
     res = pthread_attr_getstacksize(&attr, &v);
     ASSERT_EQ(0, res);

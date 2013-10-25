@@ -401,7 +401,6 @@ void StatOutput(u64 *stat) {
   name[StatInt_pthread_attr_getschedpolicy]  = "  pthread_addr_getschedpolicy     ";  // NOLINT
   name[StatInt_pthread_attr_getinheritsched] = "  pthread_addr_getinheritsched    ";  // NOLINT
   name[StatInt_pthread_attr_getscope]        = "  pthread_addr_getscope           ";  // NOLINT
-  name[StatInt_pthread_attr_getstackaddr]    = "  pthread_addr_getstackaddr       ";  // NOLINT
   name[StatInt_pthread_attr_getstacksize]    = "  pthread_addr_getstacksize       ";  // NOLINT
   name[StatInt_pthread_attr_getstack]        = "  pthread_addr_getstack           ";  // NOLINT
   name[StatInt_pthread_attr_getaffinity_np]  = "  pthread_addr_getaffinity_np     ";  // NOLINT

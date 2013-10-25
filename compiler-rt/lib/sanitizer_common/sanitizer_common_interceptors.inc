@@ -2558,7 +2558,6 @@ INTERCEPTOR_PTHREAD_ATTR_GET(guardsize, sizeof(SIZE_T))
 INTERCEPTOR_PTHREAD_ATTR_GET(schedparam, struct_sched_param_sz)
 INTERCEPTOR_PTHREAD_ATTR_GET(schedpolicy, sizeof(int))
 INTERCEPTOR_PTHREAD_ATTR_GET(scope, sizeof(int))
-INTERCEPTOR_PTHREAD_ATTR_GET(stackaddr, sizeof(void *))
 INTERCEPTOR_PTHREAD_ATTR_GET(stacksize, sizeof(SIZE_T))
 INTERCEPTOR(int, pthread_attr_getstack, void *attr, void **addr, SIZE_T *size) {
   void *ctx;
@@ -2577,7 +2576,6 @@ INTERCEPTOR(int, pthread_attr_getstack, void *attr, void **addr, SIZE_T *size) {
   INTERCEPT_FUNCTION(pthread_attr_getschedparam);   \
   INTERCEPT_FUNCTION(pthread_attr_getschedpolicy);  \
   INTERCEPT_FUNCTION(pthread_attr_getscope);        \
-  INTERCEPT_FUNCTION(pthread_attr_getstackaddr);    \
   INTERCEPT_FUNCTION(pthread_attr_getstacksize);    \
   INTERCEPT_FUNCTION(pthread_attr_getstack);
 #else
