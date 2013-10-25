@@ -6,22 +6,23 @@ sections:
   - Name:            .text
     Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ ]
     Alignment:       256
-    SectionData:     5589E583EC14C745FC00000000C744240C00000000C744240807000000C744240400000000C7042400000000FF150000000083EC1031C083C4145DC3
-    Relocations:
-      - VirtualAddress:  25
-        SymbolName:      .data
-        Type:            IMAGE_REL_I386_DIR32
-      - VirtualAddress:  33
-        SymbolName:      .data
-        Type:            IMAGE_REL_I386_DIR32
+    SectionData:     CC
   - Name:            .text$1
     Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ ]
     Alignment:       4096
     SectionData:     00
-  - Name:            .data
+  - Name:            .data$1
     Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE ]
     Alignment:       4
-    SectionData:     576F726C64210048656C6C6F2C00
+    SectionData:     00
+  - Name:            .data$2
+    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE ]
+    Alignment:       4
+    SectionData:     11
+  - Name:            .data$3
+    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE ]
+    Alignment:       0
+    SectionData:     22
 symbols:
   - Name:            .text
     Value:           0
@@ -29,16 +30,30 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   3C0000000300000000000000010000000000
-  - Name:            .data
+  - Name:            .text$1
     Value:           0
     SectionNumber:   2
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   0E0000000000000000000000020000000000
+  - Name:            .data$1
+    Value:           0
+    SectionNumber:   3
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            .data$2
+    Value:           0
+    SectionNumber:   4
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            .data$3
+    Value:           0
+    SectionNumber:   5
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
   - Name:            _start
     Value:           0
     SectionNumber:   1
