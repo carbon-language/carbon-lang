@@ -11,6 +11,7 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
 
 using namespace llvm;
@@ -148,6 +149,10 @@ static bool analyzeGlobalAux(const Value *V, GlobalStatus &GS,
         if (MSI->isVolatile())
           return true;
         GS.StoredType = GlobalStatus::Stored;
+      } else if (ImmutableCallSite C = I) {
+        if (!C.isCallee(UI))
+          return true;
+        GS.IsLoaded = true;
       } else {
         return true; // Any other non-load instruction might take address!
       }
