@@ -24,9 +24,9 @@
 #include <stdbool.h>
 typedef bool lto_bool_t;
 #else
-// MSVC in particular does not have anything like _Bool or bool in C, but we can
-// at least make sure the type is the same size.  The implementation side will
-// use C++ bool.
+/* MSVC in particular does not have anything like _Bool or bool in C, but we can
+   at least make sure the type is the same size.  The implementation side will
+   use C++ bool. */
 typedef unsigned char lto_bool_t;
 #endif
 #else
