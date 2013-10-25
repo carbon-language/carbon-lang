@@ -46,12 +46,16 @@ public:
     ExternalCallingNode(0), CallsExternalNode(0) {
       initializeBasicCallGraphPass(*PassRegistry::getPassRegistry());
     }
+  ~BasicCallGraph() {
+    destroy();
+  }
 
   // runOnModule - Compute the call graph for the specified module.
   virtual bool runOnModule(Module &M) {
     CallGraph::initialize(M);
     
     ExternalCallingNode = getOrInsertFunction(0);
+    assert(!CallsExternalNode);
     CallsExternalNode = new CallGraphNode(0);
     Root = 0;
   

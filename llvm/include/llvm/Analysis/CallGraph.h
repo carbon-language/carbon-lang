@@ -152,7 +152,7 @@ protected:
   CallGraph() {}
 
 public:
-  virtual ~CallGraph() { destroy(); }
+  virtual ~CallGraph() { }
 
   /// initialize - Call this method before calling other methods,
   /// re/initializes the state of the CallGraph.
