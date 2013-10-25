@@ -461,7 +461,7 @@ TEST_F(FileSystemTest, CarriageReturn) {
   }
   {
     OwningPtr<MemoryBuffer> Buf;
-    MemoryBuffer::getFile(FilePathname, Buf);
+    MemoryBuffer::getFile(FilePathname.c_str(), Buf);
     EXPECT_EQ(Buf->getBuffer(), "\r\n");
   }
 
@@ -472,7 +472,7 @@ TEST_F(FileSystemTest, CarriageReturn) {
   }
   {
     OwningPtr<MemoryBuffer> Buf;
-    MemoryBuffer::getFile(FilePathname, Buf);
+    MemoryBuffer::getFile(FilePathname.c_str(), Buf);
     EXPECT_EQ(Buf->getBuffer(), "\n");
   }
 }
