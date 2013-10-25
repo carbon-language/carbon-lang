@@ -2965,8 +2965,9 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
       }
 
       // Check that the instruction return type is vectorizable.
-      if (!VectorType::isValidElementType(it->getType()) &&
-          !it->getType()->isVoidTy()) {
+      // Also, we can't vectorize extractelement instructions.
+      if ((!VectorType::isValidElementType(it->getType()) &&
+           !it->getType()->isVoidTy()) || isa<ExtractElementInst>(it)) {
         DEBUG(dbgs() << "LV: Found unvectorizable type.\n");
         return false;
       }
