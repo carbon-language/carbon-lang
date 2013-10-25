@@ -48,9 +48,10 @@ if sys.platform.startswith('win32'):
   startupinfo.wShowWindow = subprocess.SW_HIDE
 
 # Call formatter.
-p = subprocess.Popen([binary, '-lines', lines, '-style', style,
-                      '-cursor', str(cursor),
-                      '-assume-filename', vim.current.buffer.name],
+command = [binary, '-lines', lines, '-style', style, '-cursor', str(cursor)]
+if vim.current.buffer.name:
+  command.extend(['-assume-filename', vim.current.buffer.name])
+p = subprocess.Popen(command,
                      stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                      stdin=subprocess.PIPE, startupinfo=startupinfo)
 stdout, stderr = p.communicate(input=text)
