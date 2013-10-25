@@ -2426,12 +2426,11 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
 
   // Try walking via the GCC triple path in case of biarch or multiarch GCC
   // installations with strange symlinks.
-  if (GCCInstallation.isValid())
+  if (GCCInstallation.isValid()) {
     addPathIfExists(SysRoot + "/usr/lib/" + GCCInstallation.getTriple().str() +
                     "/../../" + Multilib, Paths);
 
-  // Add the non-multilib suffixed paths (if potentially different).
-  if (GCCInstallation.isValid()) {
+    // Add the non-multilib suffixed paths (if potentially different).
     const std::string &LibPath = GCCInstallation.getParentLibPath();
     const llvm::Triple &GCCTriple = GCCInstallation.getTriple();
     if (!GCCInstallation.getBiarchSuffix().empty())
