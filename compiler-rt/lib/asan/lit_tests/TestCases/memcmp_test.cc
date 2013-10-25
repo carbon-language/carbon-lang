@@ -3,6 +3,8 @@
 // RUN: %clangxx_asan -O2 %s -o %t && not %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O3 %s -o %t && not %t 2>&1 | FileCheck %s
 
+// REQUIRES: compiler-rt-optimized
+
 #include <string.h>
 int main(int argc, char **argv) {
   char a1[] = {argc, 2, 3, 4};

@@ -26,3 +26,13 @@ function(find_flag_in_string flag_string flag out_var)
     set(${out_var} FALSE PARENT_SCOPE)
   endif()
 endfunction()
+
+# Set the variable var_PYBOOL to True if var holds a true-ish string,
+# otherwise set it to False.
+macro(pythonize_bool var)
+  if (${var})
+    set(${var}_PYBOOL True)
+  else()
+    set(${var}_PYBOOL False)
+  endif()
+endmacro()

@@ -7,6 +7,8 @@
 // RUN: %clangxx_asan -O3 %s -o %t && not %t 2>%t.out
 // RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-%os < %t.out
 
+// REQUIRES: compiler-rt-optimized
+
 #include <string.h>
 #include <stdlib.h>
 int main(int argc, char **argv) {

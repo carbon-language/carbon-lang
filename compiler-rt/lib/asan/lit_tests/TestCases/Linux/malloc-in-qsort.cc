@@ -9,6 +9,8 @@
 // Fast unwinder is only avaliable on x86_64 and i386.
 // REQUIRES: x86_64-supported-target
 
+// REQUIRES: compiler-rt-optimized
+
 #include <stdlib.h>
 #include <stdio.h>
 

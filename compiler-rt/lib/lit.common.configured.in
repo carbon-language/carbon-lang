@@ -13,6 +13,7 @@ config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
 config.clang = "@LLVM_BINARY_DIR@/bin/clang"
 config.compiler_rt_arch = "@COMPILER_RT_SUPPORTED_ARCH@"
 config.python_executable = "@PYTHON_EXECUTABLE@"
+config.compiler_rt_debug = @COMPILER_RT_DEBUG_PYBOOL@
 
 # LLVM tools dir can be passed in lit parameters, so try to
 # apply substitution.
