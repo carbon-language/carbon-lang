@@ -69,8 +69,10 @@
 @ CHECK-ERRORS: error: instruction requires: double precision VFP
 @ CHECK-ERRORS-NEXT: vcmp.f64 d6, #0
 
+        @ FIXME: overlapping aliases and a probable TableGen indeterminacy mean
+        @ that the actual reason can vary by platform.
         vmov.f64 d11, d10
-@ CHECK-ERRORS: error: instruction requires: NEON
+@ CHECK-ERRORS: error: instruction requires:
 @ CHECK-ERRORS-NEXT: vmov.f64 d11, d10
 
         vcvt.f64.s32 d9, s8
