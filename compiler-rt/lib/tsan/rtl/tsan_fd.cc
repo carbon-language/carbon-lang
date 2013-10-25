@@ -42,6 +42,11 @@ struct FdContext {
 
 static FdContext fdctx;
 
+static bool bogusfd(int fd) {
+  // Apparently a bogus fd value.
+  return fd < 0 || fd >= (1 << 30);
+}
+
 static FdSync *allocsync() {
   FdSync *s = (FdSync*)internal_alloc(MBlockFD, sizeof(FdSync));
   atomic_store(&s->rc, 1, memory_order_relaxed);
@@ -69,6 +74,7 @@ static void unref(ThreadState *thr, uptr pc, FdSync *s) {
 }
 
 static FdDesc *fddesc(ThreadState *thr, uptr pc, int fd) {
+  CHECK_GE(fd, 0);
   CHECK_LT(fd, kTableSize);
   atomic_uintptr_t *pl1 = &fdctx.tab[fd / kTableSizeL2];
   uptr l1 = atomic_load(pl1, memory_order_consume);
@@ -148,6 +154,8 @@ bool FdLocation(uptr addr, int *fd, int *tid, u32 *stack) {
 }
 
 void FdAcquire(ThreadState *thr, uptr pc, int fd) {
+  if (bogusfd(fd))
+    return;
   FdDesc *d = fddesc(thr, pc, fd);
   FdSync *s = d->sync;
   DPrintf("#%d: FdAcquire(%d) -> %p\n", thr->tid, fd, s);
@@ -157,6 +165,8 @@ void FdAcquire(ThreadState *thr, uptr pc, int fd) {
 }
 
 void FdRelease(ThreadState *thr, uptr pc, int fd) {
+  if (bogusfd(fd))
+    return;
   FdDesc *d = fddesc(thr, pc, fd);
   FdSync *s = d->sync;
   DPrintf("#%d: FdRelease(%d) -> %p\n", thr->tid, fd, s);
@@ -166,15 +176,17 @@ void FdRelease(ThreadState *thr, uptr pc, int fd) {
 }
 
 void FdAccess(ThreadState *thr, uptr pc, int fd) {
-  if (fd < 0)
-    return;
   DPrintf("#%d: FdAccess(%d)\n", thr->tid, fd);
+  if (bogusfd(fd))
+    return;
   FdDesc *d = fddesc(thr, pc, fd);
   MemoryRead(thr, pc, (uptr)d, kSizeLog8);
 }
 
 void FdClose(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdClose(%d)\n", thr->tid, fd);
+  if (bogusfd(fd))
+    return;
   FdDesc *d = fddesc(thr, pc, fd);
   // To catch races between fd usage and close.
   MemoryWrite(thr, pc, (uptr)d, kSizeLog8);
@@ -189,11 +201,15 @@ void FdClose(ThreadState *thr, uptr pc, int fd) {
 
 void FdFileCreate(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdFileCreate(%d)\n", thr->tid, fd);
+  if (bogusfd(fd))
+    return;
   init(thr, pc, fd, &fdctx.filesync);
 }
 
 void FdDup(ThreadState *thr, uptr pc, int oldfd, int newfd) {
   DPrintf("#%d: FdDup(%d, %d)\n", thr->tid, oldfd, newfd);
+  if (bogusfd(oldfd) || bogusfd(newfd))
+    return;
   // Ignore the case when user dups not yet connected socket.
   FdDesc *od = fddesc(thr, pc, oldfd);
   MemoryRead(thr, pc, (uptr)od, kSizeLog8);
@@ -211,32 +227,44 @@ void FdPipeCreate(ThreadState *thr, uptr pc, int rfd, int wfd) {
 
 void FdEventCreate(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdEventCreate(%d)\n", thr->tid, fd);
+  if (bogusfd(fd))
+    return;
   init(thr, pc, fd, allocsync());
 }
 
 void FdSignalCreate(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdSignalCreate(%d)\n", thr->tid, fd);
+  if (bogusfd(fd))
+    return;
   init(thr, pc, fd, 0);
 }
 
 void FdInotifyCreate(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdInotifyCreate(%d)\n", thr->tid, fd);
+  if (bogusfd(fd))
+    return;
   init(thr, pc, fd, 0);
 }
 
 void FdPollCreate(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdPollCreate(%d)\n", thr->tid, fd);
+  if (bogusfd(fd))
+    return;
   init(thr, pc, fd, allocsync());
 }
 
 void FdSocketCreate(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdSocketCreate(%d)\n", thr->tid, fd);
+  if (bogusfd(fd))
+    return;
   // It can be a UDP socket.
   init(thr, pc, fd, &fdctx.socksync);
 }
 
 void FdSocketAccept(ThreadState *thr, uptr pc, int fd, int newfd) {
   DPrintf("#%d: FdSocketAccept(%d, %d)\n", thr->tid, fd, newfd);
+  if (bogusfd(fd))
+    return;
   // Synchronize connect->accept.
   Acquire(thr, pc, (uptr)&fdctx.connectsync);
   init(thr, pc, newfd, &fdctx.socksync);
@@ -244,12 +272,16 @@ void FdSocketAccept(ThreadState *thr, uptr pc, int fd, int newfd) {
 
 void FdSocketConnecting(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdSocketConnecting(%d)\n", thr->tid, fd);
+  if (bogusfd(fd))
+    return;
   // Synchronize connect->accept.
   Release(thr, pc, (uptr)&fdctx.connectsync);
 }
 
 void FdSocketConnect(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdSocketConnect(%d)\n", thr->tid, fd);
+  if (bogusfd(fd))
+    return;
   init(thr, pc, fd, &fdctx.socksync);
 }
 
