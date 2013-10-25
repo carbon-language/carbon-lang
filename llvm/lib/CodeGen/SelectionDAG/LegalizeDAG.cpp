@@ -2734,6 +2734,46 @@ std::pair <SDValue, SDValue> SelectionDAGLegalize::ExpandAtomic(SDNode *Node) {
     case MVT::i128:LC = RTLIB::SYNC_FETCH_AND_NAND_16;break;
     }
     break;
+  case ISD::ATOMIC_LOAD_MAX:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_MAX_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_MAX_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_MAX_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_MAX_8; break;
+    case MVT::i128:LC = RTLIB::SYNC_FETCH_AND_MAX_16;break;
+    }
+    break;
+  case ISD::ATOMIC_LOAD_UMAX:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_UMAX_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_UMAX_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_UMAX_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_UMAX_8; break;
+    case MVT::i128:LC = RTLIB::SYNC_FETCH_AND_UMAX_16;break;
+    }
+    break;
+  case ISD::ATOMIC_LOAD_MIN:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_MIN_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_MIN_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_MIN_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_MIN_8; break;
+    case MVT::i128:LC = RTLIB::SYNC_FETCH_AND_MIN_16;break;
+    }
+    break;
+  case ISD::ATOMIC_LOAD_UMIN:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_UMIN_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_UMIN_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_UMIN_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_UMIN_8; break;
+    case MVT::i128:LC = RTLIB::SYNC_FETCH_AND_UMIN_16;break;
+    }
+    break;
   }
 
   return ExpandChainLibCall(LC, Node, false);
