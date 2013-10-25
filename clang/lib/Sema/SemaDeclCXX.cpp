@@ -2110,40 +2110,20 @@ namespace {
   class UninitializedFieldVisitor
       : public EvaluatedExprVisitor<UninitializedFieldVisitor> {
     Sema &S;
-    // If VD is null, this visitor will only update the Decls set.
-    ValueDecl *VD;
-    bool isReferenceType;
-    // List of Decls to generate a warning on.
+    // List of Decls to generate a warning on.  Also remove Decls that become
+    // initialized.
     llvm::SmallPtrSet<ValueDecl*, 4> &Decls;
-    bool WarnOnSelfReference;
     // If non-null, add a note to the warning pointing back to the constructor.
     const CXXConstructorDecl *Constructor;
   public:
     typedef EvaluatedExprVisitor<UninitializedFieldVisitor> Inherited;
-    UninitializedFieldVisitor(Sema &S, ValueDecl *VD,
+    UninitializedFieldVisitor(Sema &S,
                               llvm::SmallPtrSet<ValueDecl*, 4> &Decls,
-                              bool WarnOnSelfReference,
                               const CXXConstructorDecl *Constructor)
-      : Inherited(S.Context), S(S), VD(VD), isReferenceType(false), Decls(Decls),
-        WarnOnSelfReference(WarnOnSelfReference), Constructor(Constructor) {
-      // When VD is null, this visitor is used to detect initialization of other
-      // fields.
-      if (VD) {
-        if (IndirectFieldDecl *IFD = dyn_cast<IndirectFieldDecl>(VD))
-          this->VD = IFD->getAnonField();
-        else
-          this->VD = VD;
-        isReferenceType = this->VD->getType()->isReferenceType();
-      }
-    }
+      : Inherited(S.Context), S(S), Decls(Decls),
+        Constructor(Constructor) { }
 
     void HandleMemberExpr(MemberExpr *ME, bool CheckReferenceOnly) {
-      if (!VD)
-        return;
-
-      if (CheckReferenceOnly && !isReferenceType)
-        return;
-
       if (isa<EnumConstantDecl>(ME->getMemberDecl()))
         return;
 
@@ -2170,36 +2150,27 @@ namespace {
 
       ValueDecl* FoundVD = FieldME->getMemberDecl();
 
-      if (VD == FoundVD) {
-        if (!WarnOnSelfReference)
-          return;
-
-        unsigned diag = isReferenceType
-            ? diag::warn_reference_field_is_uninit
-            : diag::warn_field_is_uninit;
-        S.Diag(FieldME->getExprLoc(), diag) << VD;
-        if (Constructor)
-          S.Diag(Constructor->getLocation(),
-                 diag::note_uninit_in_this_constructor);
-        return;
-      }
-
-      if (CheckReferenceOnly)
+      if (!Decls.count(FoundVD))
         return;
 
-      if (Decls.count(FoundVD)) {
-        S.Diag(FieldME->getExprLoc(), diag::warn_field_is_uninit) << FoundVD;
-        if (Constructor)
-          S.Diag(Constructor->getLocation(),
-                 diag::note_uninit_in_this_constructor);
+      const bool IsReference = FoundVD->getType()->isReferenceType();
 
-      }
+      // Prevent double warnings on use of unbounded references.
+      if (IsReference != CheckReferenceOnly)
+        return;
+
+      unsigned diag = IsReference
+          ? diag::warn_reference_field_is_uninit
+          : diag::warn_field_is_uninit;
+      S.Diag(FieldME->getExprLoc(), diag) << FoundVD;
+      if (Constructor)
+        S.Diag(Constructor->getLocation(),
+               diag::note_uninit_in_this_constructor)
+          << (Constructor->isDefaultConstructor() && Constructor->isImplicit());
+
     }
 
     void HandleValue(Expr *E) {
-      if (!VD)
-        return;
-
       E = E->IgnoreParens();
 
       if (MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
@@ -2236,6 +2207,7 @@ namespace {
     }
 
     void VisitMemberExpr(MemberExpr *ME) {
+      // All uses of unbounded reference fields will warn.
       HandleMemberExpr(ME, true /*CheckReferenceOnly*/);
 
       Inherited::VisitMemberExpr(ME);
@@ -2272,20 +2244,78 @@ namespace {
       if (E->getOpcode() == BO_Assign)
         if (MemberExpr *ME = dyn_cast<MemberExpr>(E->getLHS()))
           if (FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl()))
-            Decls.erase(FD);
+            if (!FD->getType()->isReferenceType())
+              Decls.erase(FD);
 
       Inherited::VisitBinaryOperator(E);
     }
   };
   static void CheckInitExprContainsUninitializedFields(
-      Sema &S, Expr *E, ValueDecl *VD, llvm::SmallPtrSet<ValueDecl*, 4> &Decls,
-      bool WarnOnSelfReference, const CXXConstructorDecl *Constructor = 0) {
-    if (Decls.size() == 0 && !WarnOnSelfReference)
+      Sema &S, Expr *E, llvm::SmallPtrSet<ValueDecl*, 4> &Decls,
+      const CXXConstructorDecl *Constructor) {
+    if (Decls.size() == 0)
       return;
 
-    if (E)
-      UninitializedFieldVisitor(S, VD, Decls, WarnOnSelfReference, Constructor)
-          .Visit(E);
+    if (!E)
+      return;
+
+    if (CXXDefaultInitExpr *Default = dyn_cast<CXXDefaultInitExpr>(E)) {
+      E = Default->getExpr();
+      if (!E)
+        return;
+      // In class initializers will point to the constructor.
+      UninitializedFieldVisitor(S, Decls, Constructor).Visit(E);
+    } else {
+      UninitializedFieldVisitor(S, Decls, 0).Visit(E);
+    }
+  }
+
+  // Diagnose value-uses of fields to initialize themselves, e.g.
+  //   foo(foo)
+  // where foo is not also a parameter to the constructor.
+  // Also diagnose across field uninitialized use such as
+  //   x(y), y(x)
+  // TODO: implement -Wuninitialized and fold this into that framework.
+  static void DiagnoseUninitializedFields(
+      Sema &SemaRef, const CXXConstructorDecl *Constructor) {
+
+    if (SemaRef.getDiagnostics().getDiagnosticLevel(diag::warn_field_is_uninit,
+                                                    Constructor->getLocation())
+        == DiagnosticsEngine::Ignored) {
+      return;
+    }
+
+    if (Constructor->isInvalidDecl())
+      return;
+
+    const CXXRecordDecl *RD = Constructor->getParent();
+
+    // Holds fields that are uninitialized.
+    llvm::SmallPtrSet<ValueDecl*, 4> UninitializedFields;
+
+    // At the beginning, all fields are uninitialized.
+    for (DeclContext::decl_iterator I = RD->decls_begin(), E = RD->decls_end();
+         I != E; ++I) {
+      if (FieldDecl *FD = dyn_cast<FieldDecl>(*I)) {
+        UninitializedFields.insert(FD);
+      } else if (IndirectFieldDecl *IFD = dyn_cast<IndirectFieldDecl>(*I)) {
+        UninitializedFields.insert(IFD->getAnonField());
+      }
+    }
+
+    for (CXXConstructorDecl::init_const_iterator FieldInit =
+             Constructor->init_begin(),
+             FieldInitEnd = Constructor->init_end();
+         FieldInit != FieldInitEnd; ++FieldInit) {
+
+      Expr *InitExpr = (*FieldInit)->getInit();
+
+      CheckInitExprContainsUninitializedFields(
+          SemaRef, InitExpr, UninitializedFields, Constructor);
+
+      if (FieldDecl *Field = (*FieldInit)->getAnyMember())
+        UninitializedFields.erase(Field);
+    }
   }
 } // namespace
 
@@ -3779,90 +3809,6 @@ bool CheckRedundantUnionInit(Sema &S,
 }
 }
 
-// Diagnose value-uses of fields to initialize themselves, e.g.
-//   foo(foo)
-// where foo is not also a parameter to the constructor.
-// Also diagnose across field uninitialized use such as
-//   x(y), y(x)
-// TODO: implement -Wuninitialized and fold this into that framework.
-static void DiagnoseUnitializedFields(
-    Sema &SemaRef, const CXXConstructorDecl *Constructor) {
-
-  if (SemaRef.getDiagnostics().getDiagnosticLevel(diag::warn_field_is_uninit,
-                                                  Constructor->getLocation())
-      == DiagnosticsEngine::Ignored) {
-    return;
-  }
-
-  const CXXRecordDecl *RD = Constructor->getParent();
-
-  // Holds fields that are uninitialized.
-  llvm::SmallPtrSet<ValueDecl*, 4> UninitializedFields;
-
-  for (DeclContext::decl_iterator I = RD->decls_begin(), E = RD->decls_end();
-       I != E; ++I) {
-    if (FieldDecl *FD = dyn_cast<FieldDecl>(*I)) {
-      UninitializedFields.insert(FD);
-    } else if (IndirectFieldDecl *IFD = dyn_cast<IndirectFieldDecl>(*I)) {
-      UninitializedFields.insert(IFD->getAnonField());
-    }
-  }
-
-  // Fields already checked when processing the in class initializers.
-  llvm::SmallPtrSet<ValueDecl*, 4>
-      InClassUninitializedFields = UninitializedFields;
-
-  for (CXXConstructorDecl::init_const_iterator FieldInit =
-           Constructor->init_begin(),
-           FieldInitEnd = Constructor->init_end();
-       FieldInit != FieldInitEnd; ++FieldInit) {
-
-    FieldDecl *Field = (*FieldInit)->getAnyMember();
-    Expr *InitExpr = (*FieldInit)->getInit();
-
-    if (!Field) {
-      CheckInitExprContainsUninitializedFields(
-          SemaRef, InitExpr, 0, UninitializedFields,
-          false/*WarnOnSelfReference*/);
-      continue;
-    }
-
-    if (CXXDefaultInitExpr *Default = dyn_cast<CXXDefaultInitExpr>(InitExpr)) {
-      // This field is initialized with an in-class initailzer.  Remove the
-      // fields already checked to prevent duplicate warnings.
-      llvm::SmallPtrSet<ValueDecl*, 4> DiffSet = UninitializedFields;
-      for (llvm::SmallPtrSet<ValueDecl*, 4>::iterator
-               I = InClassUninitializedFields.begin(),
-               E = InClassUninitializedFields.end();
-           I != E; ++I) {
-        DiffSet.erase(*I);
-      }
-      CheckInitExprContainsUninitializedFields(
-            SemaRef, Default->getExpr(), Field, DiffSet,
-            DiffSet.count(Field), Constructor);
-
-      // Update the unitialized field sets.
-      CheckInitExprContainsUninitializedFields(
-            SemaRef, Default->getExpr(), 0, UninitializedFields,
-            false);
-      CheckInitExprContainsUninitializedFields(
-            SemaRef, Default->getExpr(), 0, InClassUninitializedFields,
-            false);
-    } else {
-      CheckInitExprContainsUninitializedFields(
-          SemaRef, InitExpr, Field, UninitializedFields,
-          UninitializedFields.count(Field));
-      if (Expr* InClassInit = Field->getInClassInitializer()) {
-        CheckInitExprContainsUninitializedFields(
-            SemaRef, InClassInit, 0, InClassUninitializedFields,
-            false);
-      }
-    }
-    UninitializedFields.erase(Field);
-    InClassUninitializedFields.erase(Field);
-  }
-}
-
 /// ActOnMemInitializers - Handle the member initializers for a constructor.
 void Sema::ActOnMemInitializers(Decl *ConstructorDecl,
                                 SourceLocation ColonLoc,
@@ -3928,7 +3874,7 @@ void Sema::ActOnMemInitializers(Decl *ConstructorDecl,
 
   SetCtorInitializers(Constructor, AnyErrors, MemInits);
 
-  DiagnoseUnitializedFields(*this, Constructor);
+  DiagnoseUninitializedFields(*this, Constructor);
 }
 
 void
@@ -4056,8 +4002,10 @@ void Sema::ActOnDefaultCtorInitializers(Decl *CDtorDecl) {
     return;
 
   if (CXXConstructorDecl *Constructor
-      = dyn_cast<CXXConstructorDecl>(CDtorDecl))
+      = dyn_cast<CXXConstructorDecl>(CDtorDecl)) {
     SetCtorInitializers(Constructor, /*AnyErrors=*/false);
+    DiagnoseUninitializedFields(*this, Constructor);
+  }
 }
 
 bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
@@ -8215,61 +8163,13 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   if (ASTMutationListener *L = getASTMutationListener()) {
     L->CompletedImplicitDefinition(Constructor);
   }
+
+  DiagnoseUninitializedFields(*this, Constructor);
 }
 
 void Sema::ActOnFinishDelayedMemberInitializers(Decl *D) {
   // Perform any delayed checks on exception specifications.
   CheckDelayedMemberExceptionSpecs();
-
-  // Once all the member initializers are processed, perform checks to see if
-  // any unintialized use is happeneing.
-  if (getDiagnostics().getDiagnosticLevel(diag::warn_field_is_uninit,
-                                          D->getLocation())
-      == DiagnosticsEngine::Ignored)
-    return;
-
-  CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D);
-  if (!RD) return;
-
-  // Holds fields that are uninitialized.
-  llvm::SmallPtrSet<ValueDecl*, 4> UninitializedFields;
-
-  // In the beginning, every field is uninitialized.
-  for (DeclContext::decl_iterator I = RD->decls_begin(), E = RD->decls_end();
-       I != E; ++I) {
-    if (FieldDecl *FD = dyn_cast<FieldDecl>(*I)) {
-      UninitializedFields.insert(FD);
-    } else if (IndirectFieldDecl *IFD = dyn_cast<IndirectFieldDecl>(*I)) {
-      UninitializedFields.insert(IFD->getAnonField());
-    }
-  }
-
-  for (DeclContext::decl_iterator I = RD->decls_begin(), E = RD->decls_end();
-       I != E; ++I) {
-    FieldDecl *FD = dyn_cast<FieldDecl>(*I);
-    if (!FD)
-      if (IndirectFieldDecl *IFD = dyn_cast<IndirectFieldDecl>(*I))
-        FD = IFD->getAnonField();
-
-    if (!FD)
-      continue;
-
-    Expr *InitExpr = FD->getInClassInitializer();
-    if (!InitExpr) {
-      // Uninitialized reference types will give an error.
-      // Record types with an initializer are default initialized.
-      QualType FieldType = FD->getType();
-      if (FieldType->isReferenceType() || FieldType->isRecordType())
-        UninitializedFields.erase(FD);
-      continue;
-    }
-
-    CheckInitExprContainsUninitializedFields(
-        *this, InitExpr, FD, UninitializedFields,
-        UninitializedFields.count(FD)/*WarnOnSelfReference*/);
-
-    UninitializedFields.erase(FD);
-  }
 }
 
 namespace {

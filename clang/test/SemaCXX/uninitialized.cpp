@@ -487,7 +487,8 @@ namespace references {
   }
 
   struct T {
-    T() : a(b), b(a) {} // FIXME: Warn here.
+    T() // expected-note{{during field initialization in this constructor}}
+     : a(b), b(a) {} // expected-warning{{reference 'b' is not yet bound to a value when used here}}
     int &a, &b;
     int &c = c; // expected-warning{{reference 'c' is not yet bound to a value when used here}}
   };
@@ -552,7 +553,9 @@ namespace record_fields {
     B(char (*)[7]) : a(const_ref(a)) {}
     B(char (*)[8]) : a(pointer(&a)) {}
     B(char (*)[9]) : a(normal(a)) {}  // expected-warning {{uninitialized}}
-
+  };
+  struct C {
+    C() {} // expected-note4{{in this constructor}}
     A a1 = a1;  // expected-warning {{uninitialized}}
     A a2 = a2.get();  // expected-warning {{uninitialized}}
     A a3 = a3.num();
@@ -562,6 +565,29 @@ namespace record_fields {
     A a7 = const_ref(a7);
     A a8 = pointer(&a8);
     A a9 = normal(a9);  // expected-warning {{uninitialized}}
+  };
+  struct D {  // expected-note4{{in the implicit default constructor}}
+    A a1 = a1;  // expected-warning {{uninitialized}}
+    A a2 = a2.get();  // expected-warning {{uninitialized}}
+    A a3 = a3.num();
+    A a4 = a4.copy(a4);  // expected-warning {{uninitialized}}
+    A a5 = a5.something(a5);
+    A a6 = ref(a6);
+    A a7 = const_ref(a7);
+    A a8 = pointer(&a8);
+    A a9 = normal(a9);  // expected-warning {{uninitialized}}
+  };
+  D d;
+  struct E {
+    A a1 = a1;
+    A a2 = a2.get();
+    A a3 = a3.num();
+    A a4 = a4.copy(a4);
+    A a5 = a5.something(a5);
+    A a6 = ref(a6);
+    A a7 = const_ref(a7);
+    A a8 = pointer(&a8);
+    A a9 = normal(a9);
   };
 }
 
@@ -576,13 +602,14 @@ namespace cross_field_warnings {
   struct B {
     int a = b;  // expected-warning{{field 'b' is uninitialized when used here}}
     int b;
+    B() {} // expected-note{{during field initialization in this constructor}}
   };
 
   struct C {
     int a;
     int b = a;  // expected-warning{{field 'a' is uninitialized when used here}}
     C(char (*)[1]) : a(5) {}
-    C(char (*)[2]) {}
+    C(char (*)[2]) {} // expected-note{{during field initialization in this constructor}}
   };
 
   struct D {
@@ -666,5 +693,38 @@ namespace cross_field_warnings {
     P() : x(o.get()) { }
   };
 
+  struct Q {
+    int a;
+    int b;
+    int &c;
+    Q() :
+      a(c = 5),  // expected-warning{{reference 'c' is not yet bound to a value when used here}}
+      b(c),  // expected-warning{{reference 'c' is not yet bound to a value when used here}}
+      c(a) {}
+  };
+
+  struct R {
+    int a;
+    int b;
+    int c;
+    int d = a + b + c;
+    R() : a(c = 5), b(c), c(a) {}
+  };
 }
 
+namespace base_class {
+  struct A {
+    A (int) {}
+  };
+
+  struct B : public A {
+    int x;
+    B() : A(x) {}   // expected-warning{{field 'x' is uninitialized when used here}}
+  };
+
+  struct C : public A {
+    int x;
+    int y;
+    C() : A(y = 4), x(y) {}
+  };
+}
