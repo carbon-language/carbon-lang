@@ -19,9 +19,9 @@
 // the correct relocation information.
 
 namespace llvm {
-  /// SymbolFlags - We store the value for the 'desc' symbol field in the lowest
-  /// 16 bits of the implementation defined flags.
-  enum SymbolFlags { // See <mach-o/nlist.h>.
+  /// MachOSymbolFlags - We store the value for the 'desc' symbol field in the
+  /// lowest 16 bits of the implementation defined flags.
+  enum MachOSymbolFlags { // See <mach-o/nlist.h>.
     SF_DescFlagsMask                        = 0xFFFF,
 
     // Reference type flags.

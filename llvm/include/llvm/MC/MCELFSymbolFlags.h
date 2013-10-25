@@ -27,7 +27,7 @@ namespace llvm {
     ELF_Other_Shift = 10 // Shift value for other flags.
   };
 
-  enum SymbolFlags {
+  enum ELFSymbolFlags {
     ELF_STB_Local     = (ELF::STB_LOCAL     << ELF_STB_Shift),
       ELF_STB_Global    = (ELF::STB_GLOBAL    << ELF_STB_Shift),
       ELF_STB_Weak      = (ELF::STB_WEAK      << ELF_STB_Shift),
