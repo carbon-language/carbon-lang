@@ -296,7 +296,7 @@ bool createManifestResourceFile(PECOFFLinkingContext &ctx,
 
   // Open the temporary file for writing.
   std::string errorInfo;
-  llvm::raw_fd_ostream out(rcFile.data(), errorInfo);
+  llvm::raw_fd_ostream out(rcFileSmallString.c_str(), errorInfo);
   if (!errorInfo.empty()) {
     diagnostics << "Failed to open " << ctx.getManifestOutputPath() << ": "
                 << errorInfo << "\n";
@@ -337,7 +337,7 @@ bool createManifestResourceFile(PECOFFLinkingContext &ctx,
   args.push_back(programPath.c_str());
   args.push_back("/fo");
   args.push_back(resFile.c_str());
-  args.push_back(rcFile.data());
+  args.push_back(rcFileSmallString.c_str());
   args.push_back(nullptr);
 
   if (llvm::sys::ExecuteAndWait(programPath.c_str(), &args[0]) != 0) {
