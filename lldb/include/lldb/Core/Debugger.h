@@ -322,6 +322,9 @@ public:
     GetDisassemblyLineCount () const;
     
     bool
+    GetEnableAutoOneLine () const;
+    
+    bool
     GetNotifyVoid () const;
 
     

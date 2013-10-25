@@ -334,6 +334,10 @@ FormatManager::GetSingleItemFormat(lldb::Format vector_format)
 bool
 FormatManager::ShouldPrintAsOneLiner (ValueObject& valobj)
 {
+    // if settings say no oneline whatsoever
+    if (valobj.GetTargetSP().get() && valobj.GetTargetSP()->GetDebugger().GetEnableAutoOneLine() == false)
+        return false; // then don't oneline
+    
     // if this object has a summary, don't try to do anything special to it
     // if the user wants one-liner, they can ask for it in summary :)
     if (valobj.GetSummaryFormat().get() != nullptr)

@@ -132,6 +132,7 @@ g_properties[] =
 {   "thread-format",            OptionValue::eTypeString , true, 0    , DEFAULT_THREAD_FORMAT, NULL, "The default thread format string to use when displaying thread information." },
 {   "use-external-editor",      OptionValue::eTypeBoolean, true, false, NULL, NULL, "Whether to use an external editor or not." },
 {   "use-color",                OptionValue::eTypeBoolean, true, true , NULL, NULL, "Whether to use Ansi color codes or not." },
+{   "enable-auto-oneliner",     OptionValue::eTypeBoolean, true, true, NULL, NULL, "If true, LLDB will automatically display small structs in one-liner format (default: true)." },
 
     {   NULL,                       OptionValue::eTypeInvalid, true, 0    , NULL, NULL, NULL }
 };
@@ -151,6 +152,7 @@ enum
     ePropertyThreadFormat,
     ePropertyUseExternalEditor,
     ePropertyUseColor,
+    ePropertyEnableAutoOneLine
 };
 
 //
@@ -345,6 +347,14 @@ Debugger::GetDisassemblyLineCount () const
 {
     const uint32_t idx = ePropertyStopDisassemblyCount;
     return m_collection_sp->GetPropertyAtIndexAsSInt64 (NULL, idx, g_properties[idx].default_uint_value);
+}
+
+bool
+Debugger::GetEnableAutoOneLine () const
+{
+    const uint32_t idx = ePropertyEnableAutoOneLine;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, true);
+
 }
 
 #pragma mark Debugger
