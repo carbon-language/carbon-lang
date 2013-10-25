@@ -389,6 +389,10 @@ enum StatType {
   StatInt_ether_line,
   StatInt_shmctl,
   StatInt_random_r,
+  StatInt_tmpnam,
+  StatInt_tmpnam_r,
+  StatInt_tempnam,
+
   StatInt_pthread_attr_getdetachstate,
   StatInt_pthread_attr_getguardsize,
   StatInt_pthread_attr_getschedparam,

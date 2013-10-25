@@ -394,6 +394,9 @@ void StatOutput(u64 *stat) {
   name[StatInt_ether_line]               = "  ether_line                      ";
   name[StatInt_shmctl]                   = "  shmctl                          ";
   name[StatInt_random_r]                 = "  random_r                        ";
+  name[StatInt_tmpnam]                   = "  tmpnam                          ";
+  name[StatInt_tmpnam_r]                 = "  tmpnam_r                        ";
+  name[StatInt_tempnam]                  = "  tempnam                         ";
 
   name[StatInt_pthread_attr_getdetachstate]  = "  pthread_addr_getdetachstate     ";  // NOLINT
   name[StatInt_pthread_attr_getguardsize]    = "  pthread_addr_getguardsize       ";  // NOLINT

@@ -2609,6 +2609,53 @@ INTERCEPTOR(int, pthread_attr_getaffinity_np, void *attr, SIZE_T cpusetsize,
 #define INIT_PTHREAD_ATTR_GETAFFINITY_NP
 #endif
 
+#if SANITIZER_INTERCEPT_TMPNAM
+INTERCEPTOR(char *, tmpnam, char *s) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, tmpnam, s);
+  char *res = REAL(tmpnam)(s);
+  if (res) {
+    if (s)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, s, REAL(strlen)(s) + 1);
+    else
+      COMMON_INTERCEPTOR_INITIALIZE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  }
+  return res;
+}
+#define INIT_TMPNAM INTERCEPT_FUNCTION(tmpnam);
+#else
+#define INIT_TMPNAM
+#endif
+
+#if SANITIZER_INTERCEPT_TMPNAM_R
+INTERCEPTOR(char *, tmpnam_r, char *s) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, tmpnam_r, s);
+  char *res = REAL(tmpnam_r)(s);
+  if (res && s) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, s, REAL(strlen)(s) + 1);
+  return res;
+}
+#define INIT_TMPNAM_R INTERCEPT_FUNCTION(tmpnam_r);
+#else
+#define INIT_TMPNAM_R
+#endif
+
+#if SANITIZER_INTERCEPT_TEMPNAM
+INTERCEPTOR(char *, tempnam, char *dir, char *pfx) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, tempnam, dir, pfx);
+  if (dir) COMMON_INTERCEPTOR_READ_RANGE(ctx, dir, REAL(strlen)(dir) + 1);
+  if (pfx) COMMON_INTERCEPTOR_READ_RANGE(ctx, pfx, REAL(strlen)(pfx) + 1);
+  char *res = REAL(tempnam)(dir, pfx);
+  if (res) COMMON_INTERCEPTOR_INITIALIZE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  return res;
+}
+#define INIT_TEMPNAM INTERCEPT_FUNCTION(tempnam);
+#else
+#define INIT_TEMPNAM
+#endif
+
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -2707,4 +2754,7 @@ INTERCEPTOR(int, pthread_attr_getaffinity_np, void *attr, SIZE_T cpusetsize,
   INIT_PTHREAD_ATTR_GET;                   \
   INIT_PTHREAD_ATTR_GETINHERITSCHED;       \
   INIT_PTHREAD_ATTR_GETAFFINITY_NP;        \
+  INIT_TMPNAM;                             \
+  INIT_TMPNAM_R;                           \
+  INIT_TEMPNAM;                            \
 /**/

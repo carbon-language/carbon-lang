@@ -2635,6 +2635,19 @@ TEST(MemorySanitizer, pthread_cond_wait) {
   pthread_cond_destroy(&cond);
 }
 
+TEST(MemorySanitizer, tmpnam) {
+  char s[L_tmpnam];
+  char *res = tmpnam(s);
+  ASSERT_EQ(s, res);
+  EXPECT_NOT_POISONED(strlen(res));
+}
+
+TEST(MemorySanitizer, tempnam) {
+  char *res = tempnam(NULL, "zzz");
+  EXPECT_NOT_POISONED(strlen(res));
+  free(res);
+}
+
 TEST(MemorySanitizer, posix_memalign) {
   void *p;
   EXPECT_POISONED(p);
