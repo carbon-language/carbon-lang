@@ -1,6 +1,7 @@
 ; RUN: llc < %s -mtriple=armv7-apple-ios -verify-machineinstrs | FileCheck %s
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios -verify-machineinstrs | FileCheck %s
 ; RUN: llc < %s -mtriple=thumbv6-apple-ios -verify-machineinstrs | FileCheck %s --check-prefix=CHECK-T1
+; RUN: llc < %s -mtriple=thumbv6-apple-ios -verify-machineinstrs -mcpu=cortex-m0 | FileCheck %s --check-prefix=CHECK-T1
 
 define void @func(i32 %argc, i8** %argv) nounwind {
 entry:
