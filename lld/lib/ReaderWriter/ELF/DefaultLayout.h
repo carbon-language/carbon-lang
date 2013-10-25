@@ -413,6 +413,8 @@ StringRef DefaultLayout<ELFT>::getSectionName(const DefinedAtom *da) const {
       .StartsWith(".data", ".data")
       .StartsWith(".tdata", ".tdata")
       .StartsWith(".tbss", ".tbss")
+      .StartsWith(".init_array", ".init_array")
+      .StartsWith(".fini_array", ".fini_array")
       .Default(da->customSectionName());
 }
 

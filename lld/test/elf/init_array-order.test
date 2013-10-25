@@ -1,0 +1,37 @@
+#RUN: yaml2obj -format=elf %s > %t
+#RUN: lld -flavor gnu -target x86_64-linux %t --noinhibit-exec \
+#RUN:   --output-filetype=yaml | FileCheck %s
+
+!ELF
+FileHeader:
+  Class: ELFCLASS64
+  Data: ELFDATA2LSB
+  Type: ET_REL
+  Machine: EM_X86_64
+
+Sections:
+- Name: .init_array.2
+  Type: SHT_INIT_ARRAY
+  Content: "0200000000000000"
+  AddressAlign: 8
+  Flags: [SHF_ALLOC]
+- Name: .init_array.1
+  Type: SHT_INIT_ARRAY
+  Content: "0100000000000000"
+  AddressAlign: 8
+  Flags: [SHF_ALLOC]
+
+Symbols:
+  Local:
+  - Name: .init_array.2
+    Type: STT_SECTION
+    Section: .init_array.2
+  - Name: .init_array.1
+    Type: STT_SECTION
+    Section: .init_array.1
+
+#CHECK: defined-atoms:
+#CHECK:   content: [ 01,
+#CHECK:   section-name: .init_array.1
+#CHECK:   content: [ 02,
+#CHECK:   section-name: .init_array.2

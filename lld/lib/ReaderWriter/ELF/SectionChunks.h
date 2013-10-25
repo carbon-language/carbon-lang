@@ -1039,6 +1039,10 @@ public:
     _dt_strsz = addEntry(dyn);
     dyn.d_tag = DT_SYMENT;
     _dt_syment = addEntry(dyn);
+    dyn.d_tag = DT_FINI_ARRAY;
+    _dt_fini_array = addEntry(dyn);
+    dyn.d_tag = DT_FINI_ARRAYSZ;
+    _dt_fini_arraysz = addEntry(dyn);
     if (_layout->hasDynamicRelocationTable()) {
       dyn.d_tag = DT_RELA;
       _dt_rela = addEntry(dyn);
@@ -1085,6 +1089,11 @@ public:
     _entries[_dt_symtab].d_un.d_val = _dynamicSymbolTable->virtualAddr();
     _entries[_dt_strsz].d_un.d_val = dynamicStringTable->memSize();
     _entries[_dt_syment].d_un.d_val = _dynamicSymbolTable->getEntSize();
+    auto finiArray = _layout->findOutputSection(".fini_array");
+    if (finiArray) {
+      _entries[_dt_fini_array].d_un.d_val = finiArray->virtualAddr();
+      _entries[_dt_fini_arraysz].d_un.d_val = finiArray->memSize();
+    }
     if (_layout->hasDynamicRelocationTable()) {
       auto relaTbl = _layout->getDynamicRelocationTable();
       _entries[_dt_rela].d_un.d_val = relaTbl->virtualAddr();
@@ -1114,6 +1123,8 @@ private:
   std::size_t _dt_pltgot;
   std::size_t _dt_pltrel;
   std::size_t _dt_jmprel;
+  std::size_t _dt_fini_array;
+  std::size_t _dt_fini_arraysz;
   TargetLayout<ELFT> *_layout;
   DynamicSymbolTable<ELFT> *_dynamicSymbolTable;
   HashSection<ELFT> *_hashTable;

@@ -9,6 +9,7 @@
 
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 
+#include "ArrayOrderPass.h"
 #include "File.h"
 #include "TargetHandler.h"
 #include "Targets.h"
@@ -54,6 +55,7 @@ bool ELFLinkingContext::isLittleEndian() const {
 void ELFLinkingContext::addPasses(PassManager &pm) const {
   if (_runLayoutPass)
     pm.add(std::unique_ptr<Pass>(new LayoutPass()));
+  pm.add(std::unique_ptr<Pass>(new elf::ArrayOrderPass()));
 }
 
 uint16_t ELFLinkingContext::getOutputMachine() const {

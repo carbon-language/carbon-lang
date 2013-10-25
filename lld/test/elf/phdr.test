@@ -36,8 +36,8 @@ I386-NEXT:     Type: PT_LOAD (0x1)
 I386-NEXT:     Offset: 0x0
 I386-NEXT:     VirtualAddress: 0x0
 I386-NEXT:     PhysicalAddress: 0x0
-I386-NEXT:     FileSize: 516
-I386-NEXT:     MemSize: 516
+I386-NEXT:     FileSize: 532
+I386-NEXT:     MemSize: 532
 I386-NEXT:     Flags [ (0x5)
 I386-NEXT:       PF_R (0x4)
 I386-NEXT:       PF_X (0x1)
@@ -75,8 +75,8 @@ I386-NEXT:     Type: PT_DYNAMIC (0x2)
 I386-NEXT:     Offset: 0x1D4
 I386-NEXT:     VirtualAddress: 0x1D4
 I386-NEXT:     PhysicalAddress: 0x1D4
-I386-NEXT:     FileSize: 48
-I386-NEXT:     MemSize: 48
+I386-NEXT:     FileSize: 64
+I386-NEXT:     MemSize: 64
 I386-NEXT:     Flags [ (0x4)
 I386-NEXT:       PF_R (0x4)
 I386-NEXT:     ]

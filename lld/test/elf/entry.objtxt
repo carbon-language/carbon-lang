@@ -12,9 +12,9 @@
 # RUN: llvm-nm -n %t1 | FileCheck %s
 # 
 # CHECK:  004001b0 T main
-# CHECK:  00401060 D _DYNAMIC
-# CHECK:  00401060 A _end
-# CHECK:  00401060 A end
+# CHECK:  00401080 D _DYNAMIC
+# CHECK:  00401080 A _end
+# CHECK:  00401080 A end
 # CHECK:           U _entrypoint
 
 defined-atoms:   
