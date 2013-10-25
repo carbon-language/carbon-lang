@@ -84,26 +84,15 @@ DWARFDebugPubnamesSet::Extract(const DWARFDataExtractor& data, lldb::offset_t *o
     {
         m_descriptors.clear();
         m_offset = *offset_ptr;
-        size_t dwarf_offset_size = 4;
-        m_header.length     = data.GetU32(offset_ptr);
-        if (m_header.length == 0xffffffff)
-        {
-            dwarf_offset_size = 8;
-            m_header.length = data.GetU64(offset_ptr);
-        }
-        else if (m_header.length >= 0xffffff00)
-        {
-            // Reserved.
-            return false;
-        }
+        m_header.length     = data.GetDWARFInitialLength(offset_ptr);
         m_header.version    = data.GetU16(offset_ptr);
-        m_header.die_offset = data.GetMaxU64(offset_ptr, dwarf_offset_size);
-        m_header.die_length = data.GetMaxU64(offset_ptr, dwarf_offset_size);
+        m_header.die_offset = data.GetDWARFOffset(offset_ptr);
+        m_header.die_length = data.GetDWARFOffset(offset_ptr);
 
         Descriptor pubnameDesc;
         while (data.ValidOffset(*offset_ptr))
         {
-            pubnameDesc.offset  = data.GetMaxU64(offset_ptr, dwarf_offset_size);
+            pubnameDesc.offset  = data.GetDWARFOffset(offset_ptr);
 
             if (pubnameDesc.offset)
             {
