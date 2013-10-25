@@ -52,6 +52,9 @@ struct FormatStyle {
   /// \brief The penalty for breaking before the first \c <<.
   unsigned PenaltyBreakFirstLessLess;
 
+  /// \brief The penalty for breaking a function call after "call(".
+  unsigned PenaltyBreakBeforeFirstCallParameter;
+
   /// \brief Set whether & and * bind to the type as opposed to the variable.
   bool PointerBindsToType;
 

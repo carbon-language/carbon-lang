@@ -2973,9 +2973,9 @@ TEST_F(FormatTest, BreaksDesireably) {
       "aaaaaa(aaa, new Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "                aaaaaaaaaaaaaaaaaaaaaaaaaaaaa));");
   verifyFormat(
-      "aaaaaaaaaaaaaaaaa(\n"
-      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
-      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
+      "aaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +\n"
+      "                      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+      "                  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 
   // Indent consistently indenpendent of call expression.
   verifyFormat("aaaaaaaaaaa(bbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccc(\n"
@@ -3122,7 +3122,7 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
       "        ->aaaaaaaaaaaaaaaa(\n"
       "              aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
       "        ->aaaaaaaaaaaaaaaaa();");
-  verifyFormat(
+  verifyGoogleFormat(
       "someobj->Add((new util::filetools::Handler(dir))\n"
       "                 ->OnEvent1(NewPermanentCallback(\n"
       "                       this, &HandlerHolderClass::EventHandlerCBA))\n"
@@ -4497,7 +4497,7 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
                  NoSpaces);
 }
 
-TEST_F(FormatTest, FormatsBracedListsinColumnLayout) {
+TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
   verifyFormat("vector<int> x = { 1, 22, 333, 4444, 55555, 666666, 7777777,\n"
                "                  1, 22, 333, 4444, 55555, 666666, 7777777,\n"
                "                  1, 22, 333, 4444, 55555, 666666, 7777777,\n"
@@ -4538,8 +4538,8 @@ TEST_F(FormatTest, FormatsBracedListsinColumnLayout) {
   verifyFormat("vector<int> x = { 1, 1, 1, 1,\n"
                "                  1, 1, 1, 1, };",
                getLLVMStyleWithColumns(39));
-  verifyFormat("vector<int> x = {\n"
-               "  1, 1, 1, 1, 1, 1, 1, 1, //\n"
+  verifyFormat("vector<int> x = { 1, 1, 1, 1,\n"
+               "                  1, 1, 1, 1, //\n"
                "};",
                getLLVMStyleWithColumns(39));
   verifyFormat("vector<int> x = { 1, 1, 1, 1,\n"
@@ -6597,6 +6597,8 @@ TEST_F(FormatTest, ParsesConfiguration) {
               ConstructorInitializerIndentWidth, 1234u);
   CHECK_PARSE("ColumnLimit: 1234", ColumnLimit, 1234u);
   CHECK_PARSE("MaxEmptyLinesToKeep: 1234", MaxEmptyLinesToKeep, 1234u);
+  CHECK_PARSE("PenaltyBreakBeforeFirstCallParameter: 1234",
+              PenaltyBreakBeforeFirstCallParameter, 1234u);
   CHECK_PARSE("PenaltyExcessCharacter: 1234", PenaltyExcessCharacter, 1234u);
   CHECK_PARSE("PenaltyReturnTypeOnItsOwnLine: 1234",
               PenaltyReturnTypeOnItsOwnLine, 1234u);

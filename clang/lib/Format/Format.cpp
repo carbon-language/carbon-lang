@@ -137,6 +137,8 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
     IO.mapOptional("NamespaceIndentation", Style.NamespaceIndentation);
     IO.mapOptional("ObjCSpaceBeforeProtocolList",
                    Style.ObjCSpaceBeforeProtocolList);
+    IO.mapOptional("PenaltyBreakBeforeFirstCallParameter",
+                   Style.PenaltyBreakBeforeFirstCallParameter);
     IO.mapOptional("PenaltyBreakComment", Style.PenaltyBreakComment);
     IO.mapOptional("PenaltyBreakString", Style.PenaltyBreakString);
     IO.mapOptional("PenaltyBreakFirstLessLess",
@@ -219,6 +221,7 @@ FormatStyle getLLVMStyle() {
 
   setDefaultPenalties(LLVMStyle);
   LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 60;
+  LLVMStyle.PenaltyBreakBeforeFirstCallParameter = 19;
 
   return LLVMStyle;
 }
@@ -263,6 +266,7 @@ FormatStyle getGoogleStyle() {
 
   setDefaultPenalties(GoogleStyle);
   GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 200;
+  GoogleStyle.PenaltyBreakBeforeFirstCallParameter = 1;
 
   return GoogleStyle;
 }
