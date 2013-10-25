@@ -14,7 +14,7 @@
 #ifndef LLVM_SUPPORT_MEMORYBUFFER_H
 #define LLVM_SUPPORT_MEMORYBUFFER_H
 
-#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
@@ -66,11 +66,7 @@ public:
   /// MemoryBuffer if successful, otherwise returning null.  If FileSize is
   /// specified, this means that the client knows that the file exists and that
   /// it has the specified size.
-  static error_code getFile(StringRef Filename, OwningPtr<MemoryBuffer> &result,
-                            int64_t FileSize = -1,
-                            bool RequiresNullTerminator = true);
-  static error_code getFile(const char *Filename,
-                            OwningPtr<MemoryBuffer> &result,
+  static error_code getFile(Twine Filename, OwningPtr<MemoryBuffer> &result,
                             int64_t FileSize = -1,
                             bool RequiresNullTerminator = true);
 

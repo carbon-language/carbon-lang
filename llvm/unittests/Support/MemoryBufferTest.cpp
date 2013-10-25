@@ -79,7 +79,7 @@ TEST_F(MemoryBufferTest, NullTerminator4K) {
   OF.close();
 
   OwningPtr<MemoryBuffer> MB;
-  error_code EC = MemoryBuffer::getFile(TestPath, MB);
+  error_code EC = MemoryBuffer::getFile(TestPath.c_str(), MB);
   ASSERT_FALSE(EC);
 
   const char *BufData = MB->getBufferStart();
