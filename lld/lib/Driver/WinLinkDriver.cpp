@@ -248,28 +248,26 @@ std::string createManifestXml(PECOFFLinkingContext &ctx) {
 
 // Convert one doublequote to two doublequotes, so that we can embed the string
 // into a resource script file.
-std::string quoteXml(StringRef str) {
-  std::string ret;
-  ret.reserve(str.size() * 2);
-  StringRef line;
+void quoteAndPrintXml(raw_ostream &out, StringRef str) {
   for (;;) {
     if (str.empty())
-      return std::move(ret);
+      return;
+    StringRef line;
     llvm::tie(line, str) = str.split("\n");
     if (!line.empty())
       continue;
-    ret.append("\"");
+    out << '\"';
     const char *p = line.data();
     for (int i = 0, size = line.size(); i < size; ++i) {
       switch (p[i]) {
       case '\"':
-        ret.append("\"");
+        out << '\"';
         // fallthrough
       default:
-        ret.append(1, p[i]);
+        out << p[i];
       }
     }
-    ret.append("\"\n");
+    out << "\"\n";
   }
 }
 
@@ -309,9 +307,9 @@ bool createManifestResourceFile(PECOFFLinkingContext &ctx,
       << "#define APP_MANIFEST " << ctx.getManifestId() << "\n"
       << "#define RT_MANIFEST 24\n"
       << "LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT\n"
-      << "APP_MANIFEST RT_MANIFEST {\n"
-      << quoteXml(createManifestXml(ctx))
-      << "}\n";
+      << "APP_MANIFEST RT_MANIFEST {\n";
+  quoteAndPrintXml(out, createManifestXml(ctx));
+  out << "}\n";
   out.close();
 
   // Create output resource file.
