@@ -197,6 +197,7 @@ private:
          getBinOpPrecedence(Parent->Tok.getKind(), true, true) > prec::Unknown);
     ScopedContextCreator ContextCreator(*this, tok::l_square, 10);
     Contexts.back().IsExpression = true;
+    bool ColonFound = false;
 
     if (StartsObjCMethodExpr) {
       Contexts.back().ColonIsObjCMethodExpr = true;
@@ -234,9 +235,11 @@ private:
       }
       if (CurrentToken->isOneOf(tok::r_paren, tok::r_brace))
         return false;
+      if (CurrentToken->is(tok::colon))
+        ColonFound = true;
       if (CurrentToken->is(tok::comma) &&
           (Left->Type == TT_ArraySubscriptLSquare ||
-           Left->Type == TT_ObjCMethodExpr))
+           (Left->Type == TT_ObjCMethodExpr && !ColonFound)))
         Left->Type = TT_ArrayInitializerLSquare;
       updateParameterCount(Left, CurrentToken);
       if (!consumeToken())
