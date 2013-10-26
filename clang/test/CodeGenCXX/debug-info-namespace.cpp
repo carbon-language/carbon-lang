@@ -74,3 +74,4 @@ int func(bool b) {
 
 // FIXME: It is confused on win32 to generate file entry when dosish filename is given.
 // REQUIRES: shell
+// REQUIRES: shell-preserves-root
