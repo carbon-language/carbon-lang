@@ -204,3 +204,19 @@ uint8_t *RemoteMemoryManager::allocateGlobal(uintptr_t Size, unsigned Alignment)
 void RemoteMemoryManager::deallocateFunctionBody(void *Body) {
   llvm_unreachable("Unexpected!");
 }
+
+static int jit_noop() {
+  return 0;
+}
+
+uint64_t RemoteMemoryManager::getSymbolAddress(const std::string &Name) {
+  // We should not invoke parent's ctors/dtors from generated main()!
+  // On Mingw and Cygwin, the symbol __main is resolved to
+  // callee's(eg. tools/lli) one, to invoke wrong duplicated ctors
+  // (and register wrong callee's dtors with atexit(3)).
+  // We expect ExecutionEngine::runStaticConstructorsDestructors()
+  // is called before ExecutionEngine::runFunctionAsMain() is called.
+  if (Name == "__main") return (uintptr_t)&jit_noop;
+
+  return 0;
+}
