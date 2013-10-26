@@ -1,4 +1,3 @@
-// REQUIRES: aarch64-registered-target
 // RUN: %clang_cc1 %s -triple aarch64-none-linux-gnu -target-feature +neon -fsyntax-only -verify
 
 typedef float float32_t;
