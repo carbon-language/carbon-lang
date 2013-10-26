@@ -627,6 +627,20 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       break;
     }
 
+    case OPT_merge: {
+      // Parse /merge:<from>=<to>.
+      StringRef from, to;
+      llvm::tie(from, to) = StringRef(inputArg->getValue()).split('=');
+      if (from.empty() || to.empty()) {
+        diagnostics << "error: malformed /merge option: "
+                    << inputArg->getValue() << "\n";
+        return false;
+      }
+      if (!ctx.addSectionRenaming(diagnostics, from, to))
+        return false;
+      break;
+    }
+
     case OPT_subsystem: {
       // Parse /subsystem command line option. The form of /subsystem is
       // "subsystem_name[,majorOSVersion[.minorOSVersion]]".

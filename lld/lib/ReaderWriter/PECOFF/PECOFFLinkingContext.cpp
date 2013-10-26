@@ -23,6 +23,7 @@
 #include "lld/ReaderWriter/Writer.h"
 
 #include <bitset>
+#include <set>
 
 namespace lld {
 
@@ -98,6 +99,58 @@ bool PECOFFLinkingContext::createImplicitFiles(
   fileNode->appendInputFile(std::move(linkerGeneratedSymFile));
   inputGraph().insertOneElementAt(std::move(fileNode),
                                   InputGraph::Position::END);
+  return true;
+}
+
+/// Returns the section name in the resulting executable.
+///
+/// Sections in object files are usually output to the executable with the same
+/// name, but you can rename by command line option. /merge:from=to makes the
+/// linker to combine "from" section contents to "to" section in the
+/// executable. We have a mapping for the renaming. This method looks up the
+/// table and returns a new section name if renamed.
+StringRef
+PECOFFLinkingContext::getFinalSectionName(StringRef sectionName) const {
+  auto it = _renamedSections.find(sectionName);
+  if (it == _renamedSections.end())
+    return sectionName;
+  return getFinalSectionName(it->second);
+}
+
+/// Adds a mapping to the section renaming table. This method will be used for
+/// /merge command line option.
+bool PECOFFLinkingContext::addSectionRenaming(raw_ostream &diagnostics,
+                                              StringRef from, StringRef to) {
+  auto it = _renamedSections.find(from);
+  if (it != _renamedSections.end()) {
+    if (it->second == to)
+      // There's already the same mapping.
+      return true;
+    diagnostics << "Section \"" << from << "\" is already mapped to \""
+                << it->second << ", so it cannot be mapped to \"" << to << "\".";
+    return true;
+  }
+
+  // Add a mapping, and check if there's no cycle in the renaming mapping. The
+  // cycle detection algorithm we use here is naive, but that's OK because the
+  // number of mapping is usually less than 10.
+  _renamedSections[from] = to;
+  for (auto elem : _renamedSections) {
+    StringRef sectionName = elem.first;
+    std::set<StringRef> visited;
+    visited.insert(sectionName);
+    for (;;) {
+      auto it = _renamedSections.find(sectionName);
+      if (it == _renamedSections.end())
+        break;
+      if (visited.count(it->second)) {
+        diagnostics << "/merge:" << from << "=" << to << " makes a cycle";
+        return false;
+      }
+      sectionName = it->second;
+      visited.insert(sectionName);
+    }
+  }
   return true;
 }
 

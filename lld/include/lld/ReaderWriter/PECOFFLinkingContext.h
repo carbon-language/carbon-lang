@@ -10,6 +10,7 @@
 #ifndef LLD_READER_WRITER_PECOFF_LINKER_CONTEXT_H
 #define LLD_READER_WRITER_PECOFF_LINKER_CONTEXT_H
 
+#include <map>
 #include <set>
 #include <vector>
 
@@ -184,6 +185,10 @@ public:
   void setImageType(ImageType type) { _imageType = type; }
   ImageType getImageType() const { return _imageType; }
 
+  StringRef getFinalSectionName(StringRef sectionName) const;
+  bool addSectionRenaming(raw_ostream &diagnostics,
+                          StringRef from, StringRef to);
+
   void addNoDefaultLib(StringRef libName) { _noDefaultLibs.insert(libName); }
   const std::set<std::string> &getNoDefaultLibs() const {
     return _noDefaultLibs;
@@ -254,6 +259,11 @@ private:
   std::vector<StringRef> _inputSearchPaths;
   std::unique_ptr<Reader> _reader;
   std::unique_ptr<Writer> _writer;
+
+  // A map for section renaming. For example, if there is an entry in the map
+  // whose value is .rdata -> .text, the section contens of .rdata will be
+  // merged to .text in the resulting executable.
+  std::map<std::string, std::string> _renamedSections;
 
   // List of files that will be removed on destruction.
   std::vector<std::unique_ptr<llvm::FileRemover> > _tempFiles;
