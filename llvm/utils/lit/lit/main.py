@@ -111,7 +111,8 @@ def write_test_results(run, lit_config, testing_time, output_path):
 def main(builtinParameters = {}):
     # Use processes by default on Unix platforms.
     isWindows = platform.system() == 'Windows'
-    useProcessesIsDefault = (not isWindows) and platform.system() != 'OpenBSD'
+    # multiprocessing is broken on various BSD Python versions: http://bugs.python.org/issue3770
+    useProcessesIsDefault = (not isWindows) and ('BSD' not in platform.system())
 
     global options
     from optparse import OptionParser, OptionGroup
