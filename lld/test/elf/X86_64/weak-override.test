@@ -41,7 +41,6 @@ WEAKATOMSORDER:      - kind:            layout-before
 WEAKATOMSORDER:        offset:          0
 WEAKATOMSORDER:        target:          [[CONSTSTRA]]
 WEAKATOMSORDER:  - ref-name:            {{[0-9A-Z]+}}
-WEAKATOMSORDER:    section-name:    .text
 WEAKATOMSORDER:    references:      
 WEAKATOMSORDER:      - kind:            layout-after
 WEAKATOMSORDER:        offset:          0
