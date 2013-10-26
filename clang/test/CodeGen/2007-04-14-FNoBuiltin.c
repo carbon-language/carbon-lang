@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -O2 -fno-builtin -o - | grep call.*printf
+// RUN: %clang_cc1 -emit-llvm %s -O2 -fno-builtin -o - | grep 'call.*printf'
 // Check that -fno-builtin is honored.
 
 extern int printf(const char*, ...);
