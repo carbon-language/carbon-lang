@@ -209,16 +209,20 @@ class Run(object):
         """
 
         # Choose the appropriate parallel execution implementation.
-        if jobs == 1 or not use_processes or multiprocessing is None:
+        if jobs != 1 and use_processes and multiprocessing:
+            try:
+                task_impl = multiprocessing.Process
+                queue_impl = multiprocessing.Queue
+                canceled_flag =  multiprocessing.Value('i', 0)
+                consumer = MultiprocessResultsConsumer(self, display, jobs)
+            except ImportError:
+                # Workaround for BSD: http://bugs.python.org/issue3770
+                consumer = None
+        if not consumer:
             task_impl = threading.Thread
             queue_impl = queue.Queue
             canceled_flag = LockedValue(0)
             consumer = ThreadResultsConsumer(display)
-        else:
-            task_impl = multiprocessing.Process
-            queue_impl = multiprocessing.Queue
-            canceled_flag =  multiprocessing.Value('i', 0)
-            consumer = MultiprocessResultsConsumer(self, display, jobs)
 
         # Create the test provider.
         provider = TestProvider(self.tests, jobs, queue_impl, canceled_flag)
