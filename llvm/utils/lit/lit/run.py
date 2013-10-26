@@ -209,6 +209,7 @@ class Run(object):
         """
 
         # Choose the appropriate parallel execution implementation.
+        consumer = None
         if jobs != 1 and use_processes and multiprocessing:
             try:
                 task_impl = multiprocessing.Process
