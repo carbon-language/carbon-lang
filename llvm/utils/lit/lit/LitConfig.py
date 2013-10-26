@@ -73,11 +73,7 @@ class LitConfig:
 
         self.bashPath = lit.util.which('bash', os.pathsep.join(self.path))
         if self.bashPath is None:
-            # Check some known paths.
-            for path in ('/bin/bash', '/usr/bin/bash', '/usr/local/bin/bash'):
-                if os.path.exists(path):
-                    self.bashPath = path
-                    break
+            self.bashPath = lit.util.which('bash')
 
         if self.bashPath is None:
             self.warning("Unable to find 'bash'.")
