@@ -265,10 +265,9 @@ public:
   /// Set the various output file types that the linker would
   /// create
   bool setOutputFileType(StringRef outputFileType) {
-    StringRef lowerOutputFileType = outputFileType.lower();
-    if (lowerOutputFileType == "yaml")
+    if (outputFileType.equals_lower("yaml"))
       _outputFileType = OutputFileType::YAML;
-    else if (lowerOutputFileType == "native")
+    else if (outputFileType.equals_lower("native"))
       _outputFileType = OutputFileType::YAML;
     else
       return false;
