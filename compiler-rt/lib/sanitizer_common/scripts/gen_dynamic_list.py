@@ -24,7 +24,8 @@ new_delete = set(['_ZdaPv', '_ZdaPvRKSt9nothrow_t',
                   '_Znam', '_ZnamRKSt9nothrow_t',
                   '_Znwm', '_ZnwmRKSt9nothrow_t'])
 
-versioned_functions = set(['memcpy', 'pthread_cond_broadcast',
+versioned_functions = set(['memcpy', 'pthread_attr_getaffinity_np',
+                           'pthread_cond_broadcast',
                            'pthread_cond_destroy', 'pthread_cond_init',
                            'pthread_cond_signal', 'pthread_cond_timedwait',
                            'pthread_cond_wait', 'realpath',
