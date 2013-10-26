@@ -1,8 +1,8 @@
 // REQUIRES: x86-registered-target,x86-64-registered-target
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -std=c++11 -S %s -o %t-64.s
-// RUN: FileCheck -check-prefix CHECK-LP64 --input-file=%t-64.s %s
-// RUN: %clang_cc1 -triple i386-apple-darwin -std=c++11 -S %s -o %t-32.s
-// RUN: FileCheck -check-prefix CHECK-LP32 --input-file=%t-32.s %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -std=c++11 -emit-llvm %s -o - | \
+// RUN: FileCheck %s
+// RUN: %clang_cc1 -triple i386-apple-darwin -std=c++11 -emit-llvm %s -o - | \
+// RUN: FileCheck %s
 
 extern "C" int printf(...);
 
@@ -93,11 +93,5 @@ int main() {
   dstY.pr();
 }
 
-// CHECK-LP64: .globl   __ZN1XaSERKS_
-// CHECK-LP64: .weak_definition  __ZN1XaSERKS_
-// CHECK-LP64: __ZN1XaSERKS_:
-
-// CHECK-LP32: .globl   __ZN1XaSERKS_
-// CHECK-LP32: .weak_definition  __ZN1XaSERKS_
-// CHECK-LP32: __ZN1XaSERKS_:
+// CHECK: define linkonce_odr %struct.X* @_ZN1XaSERKS_
 
