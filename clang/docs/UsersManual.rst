@@ -922,7 +922,7 @@ are listed below.
    -  ``-fsanitize=float-divide-by-zero``: Floating point division by
       zero.
    -  ``-fsanitize=function``: Indirect call of a function through a
-      function pointer of the wrong type (C++ and x86/x86_64 only).
+      function pointer of the wrong type (Linux, C++ and x86/x86_64 only).
    -  ``-fsanitize=integer-divide-by-zero``: Integer division by zero.
    -  ``-fsanitize=null``: Use of a null pointer or creation of a null
       reference.
