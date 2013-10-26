@@ -55,7 +55,6 @@ namespace {
     DominatorTree *DT;
     LoopInfo *LI;
     ScalarEvolution *SE;
-    std::vector<BasicBlock*> LoopBlocks;
     PredIteratorCache PredCache;
     Loop *L;
     
@@ -81,11 +80,6 @@ namespace {
     virtual void verifyAnalysis() const {
       // Check the special guarantees that LCSSA makes.
       assert(L->isLCSSAForm(*DT) && "LCSSA form not preserved!");
-    }
-
-    /// inLoop - returns true if the given block is within the current loop
-    bool inLoop(BasicBlock *B) const {
-      return std::binary_search(LoopBlocks.begin(), LoopBlocks.end(), B);
     }
   };
 }
@@ -128,11 +122,6 @@ bool LCSSA::runOnLoop(Loop *TheLoop, LPPassManager &LPM) {
   
   if (ExitBlocks.empty())
     return false;
-  
-  // Speed up queries by creating a sorted vector of blocks.
-  LoopBlocks.clear();
-  LoopBlocks.insert(LoopBlocks.end(), L->block_begin(), L->block_end());
-  array_pod_sort(LoopBlocks.begin(), LoopBlocks.end());
   
   // Look at all the instructions in the loop, checking to see if they have uses
   // outside the loop.  If so, rewrite those uses.
@@ -198,7 +187,7 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
     if (PHINode *PN = dyn_cast<PHINode>(U))
       UserBB = PN->getIncomingBlock(UI);
     
-    if (InstBB != UserBB && !inLoop(UserBB))
+    if (InstBB != UserBB && !L->contains(UserBB))
       UsesToRewrite.push_back(&UI.getUse());
   }
 
@@ -244,7 +233,7 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
       // If the exit block has a predecessor not within the loop, arrange for
       // the incoming value use corresponding to that predecessor to be
       // rewritten in terms of a different LCSSA PHI.
-      if (!inLoop(*PI))
+      if (!L->contains(*PI))
         UsesToRewrite.push_back(
           &PN->getOperandUse(
             PN->getOperandNumForIncomingValue(PN->getNumIncomingValues()-1)));
