@@ -72,24 +72,34 @@
   <tr><td><b>2013</b></td></tr>
   <tr><td width="120"><p>October</p></td>
   <td>
-  <p>Automatic code coverage and static analysis tests</p>
+  <h4>Automatic code coverage and static analysis tests</h4>
   Sylvestre Ledre set up automatic tests for <a
   href="http://buildd-clang.debian.net/coverage/">code coverage</a> and
   <a href="http://buildd-clang.debian.net/scan-build/">static analysis</a>
   which run at least once a day and which include results for Polly.
+  <h4>Move to CLooG 0.18.1 and isl 0.12.1</h4>
+  With the move to an isl 0.12 version Polly can be compiled without the
+  need to link directly to GMP (if isl is used for code generation). Currenty
+  isl is still internally using GMP, but private patches exist to also remove
+  this dependency. Without the use of GMP, a <b>GPL free</b> version of Polly
+  is possible.
   </td></tr>
+
   <tr><td><b>2012</b></td></tr>
   <tr><td width="120"><p>December</p></td>
   <td>
-  <p> New <a
-href="http://www.worldscientific.com/doi/abs/10.1142/S0129626412500107?af=R">
-        publication</a> in the PPL Journal.
-     </p>
+  <h4> New publication in the PPL Journal
+     </h4>
+
+      We published a journal version of the Polly paper named
+      <em>
+      Polly - Performing polyhedral optimizations on a low-level intermediate
+      representation</em> in the Parallel Processing Letters 2012.
   </td></tr>
   <tr><td width="120"><p>September</p></td>
   <td>
-  <p>Experimental support for the <b>new isl code generator</b>
-     was committed. The code generator can be parameterized on a fine-grained
+  <h4>Experimental support for the <b>new isl code generator</b></h4>
+     The code generator can be parameterized on a fine-grained
      level. It gives direct control for example over unrolling, the amount of
      control overhead and the code size. It can also be used to
      create loops to handle border conditions or to perform full-partial tile
