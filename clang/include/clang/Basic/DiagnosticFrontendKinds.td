@@ -136,8 +136,6 @@ def err_no_submodule_suggest : Error<
   "no submodule named %0 in module '%1'; did you mean '%2'?">;
 def warn_missing_submodule : Warning<"missing submodule '%0'">,
   InGroup<IncompleteUmbrella>;
-def err_module_map_temp_file : Error<
-  "unable to write temporary module map file '%0'">, DefaultFatal;
 def err_module_unavailable : Error<"module '%0' requires feature '%1'">;
 def warn_module_config_macro_undef : Warning<
   "%select{definition|#undef}0 of configuration macro '%1' has no effect on "
