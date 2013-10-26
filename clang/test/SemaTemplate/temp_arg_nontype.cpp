@@ -350,3 +350,17 @@ namespace rdar13806270 {
   };
   void foo() {}
 }
+
+namespace PR17696 {
+  struct a {
+    union {
+      int i;
+    };
+  };
+
+  template <int (a::*p)> struct b : a {
+    b() { this->*p = 0; }
+  };
+
+  b<&a::i> c; // okay
+}
