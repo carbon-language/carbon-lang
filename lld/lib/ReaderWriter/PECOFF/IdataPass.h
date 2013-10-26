@@ -264,10 +264,21 @@ public:
       vector<COFFSharedLibraryAtom *> &atoms = i.second;
       createImportDirectory(context, loadName, atoms);
     }
-    new (_alloc) NullImportDirectoryAtom(context);
+
+    auto nidatom = new (_alloc) NullImportDirectoryAtom(context);
+    context.file.addAtom(*nidatom);
+
     connectAtoms(context);
     createDataDirectoryAtoms(context);
     replaceSharedLibraryAtoms(context);
+    for (auto id : context.importDirectories)
+      context.file.addAtom(*id);
+    for (auto ilt : context.importLookupTables)
+      context.file.addAtom(*ilt);
+    for (auto iat : context.importAddressTables)
+      context.file.addAtom(*iat);
+    for (auto hna : context.hintNameAtoms)
+      context.file.addAtom(*hna);
   }
 
 private:
@@ -303,6 +314,7 @@ private:
     appendAtoms(atoms, context.importAddressTables);
     appendAtoms(atoms, context.dllNameAtoms);
     appendAtoms(atoms, context.hintNameAtoms);
+
     coff::connectAtomsWithLayoutEdge(atoms);
   }
 
