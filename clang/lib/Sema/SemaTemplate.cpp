@@ -4361,9 +4361,9 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
   ValueDecl *Entity = DRE->getDecl();
 
   // Cannot refer to non-static data members
-  if (FieldDecl *Field = dyn_cast<FieldDecl>(Entity)) {
+  if (isa<FieldDecl>(Entity) || isa<IndirectFieldDecl>(Entity)) {
     S.Diag(Arg->getLocStart(), diag::err_template_arg_field)
-      << Field << Arg->getSourceRange();
+      << Entity << Arg->getSourceRange();
     S.Diag(Param->getLocation(), diag::note_template_param_here);
     return true;
   }

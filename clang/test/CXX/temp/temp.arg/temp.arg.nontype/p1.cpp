@@ -27,7 +27,7 @@ namespace non_type_tmpl_param {
 //      omitted if the name refers to a function or array and shall be omitted
 //      if the corresopnding template-parameter is a reference; or
 namespace addr_of_obj_or_func {
-  template <int* p> struct X0 { }; // expected-note 4{{here}}
+  template <int* p> struct X0 { }; // expected-note 5{{here}}
   template <int (*fp)(int)> struct X1 { };
   template <int &p> struct X2 { }; // expected-note 4{{here}}
   template <const int &p> struct X2k { }; // expected-note {{here}}
@@ -40,6 +40,7 @@ namespace addr_of_obj_or_func {
   __thread int ti = 100; // expected-note 2{{here}}
   static int f_internal(int); // expected-note 4{{here}}
   template <typename T> T f_tmpl(T t);
+  struct S { union { int NonStaticMember; }; };
 
   void test() {
     X0<i> x0a; // expected-error {{must have its address taken}}
@@ -78,6 +79,7 @@ namespace addr_of_obj_or_func {
     X0<&n> x0_no_linkage; // expected-error {{non-type template argument refers to object 'n' that does not have linkage}}
     struct Local { static int f() {} }; // expected-note {{here}}
     X1<&Local::f> x1_no_linkage; // expected-error {{non-type template argument refers to function 'f' that does not have linkage}}
+    X0<&S::NonStaticMember> x0_non_static; // expected-error {{non-static data member}}
   }
 }
 
