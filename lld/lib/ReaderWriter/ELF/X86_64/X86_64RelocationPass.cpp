@@ -379,7 +379,8 @@ public:
       return obj->second;
 
     auto oa = new (_file._alloc) ObjectAtom(_file);
-    oa->addReference(R_X86_64_COPY, 0, a, 0);
+    // This needs to point to the atom that we just created.
+    oa->addReference(R_X86_64_COPY, 0, oa, 0);
 
     oa->_name = a->name();
     oa->_size = a->size();

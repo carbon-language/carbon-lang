@@ -19,7 +19,7 @@ RUN: llvm-readobj -relocations -symbols %t | FileCheck %s
 
 CHECK:       Relocations [
 CHECK-NEXT:    Section ({{[0-9]+}}) .rela.dyn {
-CHECK-NEXT:      0x{{[1-9A-F][0-9A-F]*}} R_X86_64_COPY x 0x0
+CHECK-NEXT:      0x{{[1-9A-F][0-9A-F]*}} R_X86_64_COPY - 0x0
 CHECK-NEXT:    }
 CHECK-NEXT:  ]
 
