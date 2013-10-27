@@ -551,7 +551,9 @@ class ScopedInErrorReport {
 
 static void ReportSummary(const char *error_type, StackTrace *stack) {
   AddressInfo ai;
-  if (Symbolizer::Get()->IsAvailable()) {
+  // FIXME: The symbolizer interface should be changed in order to support
+  // Windows where we don't have a symbolizer.
+  if (!SANITIZER_WINDOWS && Symbolizer::Get()->IsAvailable()) {
     // Currently, we include the first stack frame into the report summary.
     // Maybe sometimes we need to choose another frame (e.g. skip memcpy/etc).
     uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
