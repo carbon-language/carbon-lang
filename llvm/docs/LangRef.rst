@@ -1752,9 +1752,10 @@ Function Type
 Overview:
 """""""""
 
-The function type can be thought of as a function signature. It consists
-of a return type and a list of formal parameter types. The return type
-of a function type is a first class type or a void type.
+The function type can be thought of as a function signature. It consists of a
+return type and a list of formal parameter types. The return type of a function
+type is a void type or first class type --- except for :ref:`label <t_label>`
+and :ref:`metadata <t_metadata>` types.
 
 Syntax:
 """""""
@@ -1764,11 +1765,11 @@ Syntax:
       <returntype> (<parameter list>)
 
 ...where '``<parameter list>``' is a comma-separated list of type
-specifiers. Optionally, the parameter list may include a type ``...``,
-which indicates that the function takes a variable number of arguments.
-Variable argument functions can access their arguments with the
-:ref:`variable argument handling intrinsic <int_varargs>` functions.
-'``<returntype>``' is any type except :ref:`label <t_label>`.
+specifiers. Optionally, the parameter list may include a type ``...``, which
+indicates that the function takes a variable number of arguments.  Variable
+argument functions can access their arguments with the :ref:`variable argument
+handling intrinsic <int_varargs>` functions.  '``<returntype>``' is any type
+except :ref:`label <t_label>` and :ref:`metadata <t_metadata>`.
 
 Examples:
 """""""""
