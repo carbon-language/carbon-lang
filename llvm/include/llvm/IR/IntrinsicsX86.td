@@ -2719,6 +2719,32 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx512_max_pd_512 : GCCBuiltin<"__builtin_ia32_maxpd512">,
       Intrinsic<[llvm_v8f64_ty], [llvm_v8f64_ty,
                 llvm_v8f64_ty], [IntrNoMem]>;
+
+  def int_x86_avx512_pmaxu_d : GCCBuiltin<"__builtin_ia32_pmaxud512">,
+      Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,
+                llvm_v16i32_ty], [IntrNoMem]>;
+  def int_x86_avx512_pmaxu_q : GCCBuiltin<"__builtin_ia32_pmaxuq512">,
+      Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty,
+                llvm_v8i64_ty], [IntrNoMem]>;
+  def int_x86_avx512_pmaxs_d : GCCBuiltin<"__builtin_ia32_pmaxsd512">,
+      Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,
+                llvm_v16i32_ty], [IntrNoMem]>;
+  def int_x86_avx512_pmaxs_q : GCCBuiltin<"__builtin_ia32_pmaxsq512">,
+      Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty,
+                llvm_v8i64_ty], [IntrNoMem]>;
+
+  def int_x86_avx512_pminu_d : GCCBuiltin<"__builtin_ia32_pminud512">,
+      Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,
+                llvm_v16i32_ty], [IntrNoMem]>;
+  def int_x86_avx512_pminu_q : GCCBuiltin<"__builtin_ia32_pminuq512">,
+      Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty,
+                llvm_v8i64_ty], [IntrNoMem]>;
+  def int_x86_avx512_pmins_d : GCCBuiltin<"__builtin_ia32_pminsd512">,
+      Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,
+                llvm_v16i32_ty], [IntrNoMem]>;
+  def int_x86_avx512_pmins_q : GCCBuiltin<"__builtin_ia32_pminsq512">,
+      Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty,
+                llvm_v8i64_ty], [IntrNoMem]>;
 }
 
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
