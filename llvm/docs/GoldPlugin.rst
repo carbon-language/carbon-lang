@@ -67,7 +67,7 @@ ready to switch to using gold, backup your existing ``/usr/bin/ld``
 then replace it with ``ld-new``.
 
 You should produce bitcode files from ``clang`` with the option
- ``-flto``. This flag will also cause ``clang`` to look for the gold plugin in
+``-flto``. This flag will also cause ``clang`` to look for the gold plugin in
 the ``lib`` directory under its prefix and pass the ``-plugin`` option to
 ``ld``. It will not look for an alternate linker, which is why you need
 gold to be the installed system linker in your path.
