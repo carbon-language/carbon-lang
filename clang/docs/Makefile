@@ -80,6 +80,8 @@ regendoc:
 	$(Echo) Building doxygen documentation
 	$(Verb) $(RM) -rf $(PROJ_OBJ_DIR)/doxygen
 	$(Verb) $(DOXYGEN) $(PROJ_OBJ_DIR)/doxygen.cfg
+	$(Verb) sed -i "s/[$$]LatestRev[$$]/`svnversion $(PROJ_SRC_DIR)`/g" \
+	 $(PROJ_OBJ_DIR)/doxygen/html/*.html
 
 $(PROJ_OBJ_DIR)/doxygen.tar.gz: $(DOXYFILES) $(PROJ_OBJ_DIR)/doxygen.cfg
 	$(Echo) Packaging doxygen documentation

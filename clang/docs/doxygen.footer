@@ -1,6 +1,6 @@
 <hr>
 <p class="footer">
-Generated on $datetime by <a href="http://www.doxygen.org">Doxygen 
+Generated on $datetime for r$LatestRev$ by <a href="http://www.doxygen.org">Doxygen 
 $doxygenversion</a>.</p>
 
 <p class="footer">
