@@ -87,8 +87,10 @@
 #define CHAR_MAX __SCHAR_MAX__
 #endif
 
-/* C99 5.2.4.2.1: Added long long. */
-#if __STDC_VERSION__ >= 199901
+/* C99 5.2.4.2.1: Added long long.
+   C++11 18.3.3.2: same contents as the Standard C Library header <limits.h>.
+ */
+#if __STDC_VERSION__ >= 199901 || __cplusplus >= 201103L
 
 #undef  LLONG_MIN
 #undef  LLONG_MAX
