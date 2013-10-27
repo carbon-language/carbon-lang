@@ -511,9 +511,6 @@ module, including those with external linkage or appearing in
 ``@llvm.used``. This assumption may be suppressed by marking the
 variable with ``externally_initialized``.
 
-If a global variable dose not have its address taken, it will be optionally
-flagged ``notaddrtaken``.
-
 An explicit alignment may be specified for a global, which must be a
 power of 2. If not present, or if the alignment is set to zero, the
 alignment of the global is set by the target to whatever it feels

@@ -3,8 +3,8 @@
 @GV1 = internal global i64 1
 @GV2 = internal global i32 0
 
-; CHECK: @GV1 = internal unnamed_addr constant notaddrtaken i64 1
-; CHECK: @GV2 = internal unnamed_addr global notaddrtaken i32 0
+; CHECK: @GV1 = internal unnamed_addr constant i64 1
+; CHECK: @GV2 = internal unnamed_addr global i32 0
 
 define void @test1() {
 entry:

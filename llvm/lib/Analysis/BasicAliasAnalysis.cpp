@@ -1238,17 +1238,6 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
       return NoAlias;
     if (isEscapeSource(O2) && isNonEscapingLocalObject(O1))
       return NoAlias;
-
-    // If one object is a global variable without address taken, the other one
-    // is a different object, they will not alias because the global variable
-    // in question cannot be indirectly accessed.
-    if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(O1))
-      if (!GV->AddressMaybeTaken())
-        return NoAlias;
-
-    if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(O2))
-      if (!GV->AddressMaybeTaken())
-        return NoAlias;
   }
 
   // If the size of one access is larger than the entire object on the other

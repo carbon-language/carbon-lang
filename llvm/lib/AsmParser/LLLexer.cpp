@@ -504,7 +504,6 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(zeroinitializer);
   KEYWORD(undef);
   KEYWORD(null);
-  KEYWORD(notaddrtaken);
   KEYWORD(to);
   KEYWORD(tail);
   KEYWORD(target);

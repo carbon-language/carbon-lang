@@ -6,10 +6,10 @@
 @d = internal constant [4 x i8] c"foo\00", align 1
 @e = linkonce_odr global i32 0
 
-; CHECK: @a = internal global notaddrtaken i32 0, align 4
+; CHECK: @a = internal global i32 0, align 4
 ; CHECK: @b = internal global i32 0, align 4
-; CHECK: @c = internal unnamed_addr global notaddrtaken i32 0, align 4
-; CHECK: @d = internal unnamed_addr constant notaddrtaken [4 x i8] c"foo\00", align 1
+; CHECK: @c = internal unnamed_addr global i32 0, align 4
+; CHECK: @d = internal unnamed_addr constant [4 x i8] c"foo\00", align 1
 ; CHECK: @e = linkonce_odr global i32 0
 
 define i32 @get_e() {
