@@ -21,9 +21,9 @@ tests.
 Requirements
 ============
 
-In order to use the LLVM testing infrastructure, you will need all of
-the software required to build LLVM, as well as
-`Python <http://python.org>`_ 2.4 or later.
+In order to use the LLVM testing infrastructure, you will need all of the
+software required to build LLVM, as well as `Python <http://python.org>`_ 2.5 or
+later.
 
 LLVM testing infrastructure organization
 ========================================
