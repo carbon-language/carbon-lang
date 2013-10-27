@@ -474,7 +474,7 @@ parseArgs(int argc, const char *argv[], raw_ostream &diagnostics,
   // new linker option to an object file while keeping backward compatibility.
   for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
             ie = parsedArgs->filtered_end(); it != ie; ++it) {
-    StringRef arg = (*it)->getAsString(*parsedArgs);
+    StringRef arg = (*it)->getSpelling();
     if (isReadingDirectiveSection && arg.startswith("-?"))
       continue;
     diagnostics << "warning: ignoring unknown argument: " << arg << "\n";
