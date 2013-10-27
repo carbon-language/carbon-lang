@@ -53,6 +53,12 @@ Mips16HardFloat("mips16-hard-float", cl::NotHidden,
                 cl::desc("MIPS: mips16 hard float enable."),
                 cl::init(false));
 
+static cl::opt<bool>
+Mips16ConstantIslands(
+  "mips16-constant-islands", cl::Hidden,
+  cl::desc("MIPS: mips16 constant islands enable. experimental feature"),
+  cl::init(false));
+
 void MipsSubtarget::anchor() { }
 
 MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
@@ -162,4 +168,9 @@ void MipsSubtarget::resetSubtarget(MachineFunction *MF) {
 
 bool MipsSubtarget::mipsSEUsesSoftFloat() const {
   return TM->Options.UseSoftFloat && !InMips16HardFloat;
+}
+
+bool MipsSubtarget::useConstantIslands() {
+  DEBUG(dbgs() << "use constant islands " << Mips16ConstantIslands << "\n");
+  return Mips16ConstantIslands;
 }

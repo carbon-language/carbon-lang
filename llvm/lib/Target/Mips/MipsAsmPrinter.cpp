@@ -55,6 +55,7 @@ bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     const_cast<TargetLoweringObjectFile&>(getObjFileLowering())
       .Initialize(OutContext, TM);
   MipsFI = MF.getInfo<MipsFunctionInfo>();
+  MCP = MF.getConstantPool();
   AsmPrinter::runOnMachineFunction(MF);
   return true;
 }
@@ -74,6 +75,39 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     PrintDebugValueComment(MI, OS);
     return;
   }
+
+  // If we just ended a constant pool, mark it as such.
+  if (InConstantPool && MI->getOpcode() != Mips::CONSTPOOL_ENTRY) {
+    OutStreamer.EmitDataRegion(MCDR_DataRegionEnd);
+    InConstantPool = false;
+  }
+  if (MI->getOpcode() == Mips::CONSTPOOL_ENTRY) {
+    // CONSTPOOL_ENTRY - This instruction represents a floating
+    //constant pool in the function.  The first operand is the ID#
+    // for this instruction, the second is the index into the
+    // MachineConstantPool that this is, the third is the size in
+    // bytes of this constant pool entry.
+    // The required alignment is specified on the basic block holding this MI.
+    //
+    unsigned LabelId = (unsigned)MI->getOperand(0).getImm();
+    unsigned CPIdx   = (unsigned)MI->getOperand(1).getIndex();
+
+    // If this is the first entry of the pool, mark it.
+    if (!InConstantPool) {
+      OutStreamer.EmitDataRegion(MCDR_DataRegion);
+      InConstantPool = true;
+    }
+
+    OutStreamer.EmitLabel(GetCPISymbol(LabelId));
+
+    const MachineConstantPoolEntry &MCPE = MCP->getConstants()[CPIdx];
+    if (MCPE.isMachineConstantPoolEntry())
+      EmitMachineConstantPoolValue(MCPE.Val.MachineCPVal);
+    else
+      EmitGlobalConstant(MCPE.Val.ConstVal);
+    return;
+  }
+
 
   MachineBasicBlock::const_instr_iterator I = MI;
   MachineBasicBlock::const_instr_iterator E = MI->getParent()->instr_end();
@@ -287,6 +321,12 @@ void MipsAsmPrinter::EmitFunctionBodyEnd() {
     }
     OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
   }
+  // Make sure to terminate any constant pools that were at the end
+  // of the function.
+  if (!InConstantPool)
+    return;
+  InConstantPool = false;
+  OutStreamer.EmitDataRegion(MCDR_DataRegionEnd);
 }
 
 /// isBlockOnlyReachableByFallthough - Return true if the basic block has

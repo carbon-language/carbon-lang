@@ -278,6 +278,9 @@ def uimm16      : Operand<i32> {
   let PrintMethod = "printUnsignedImm";
 }
 
+def pcrel16      : Operand<i32> {
+}
+
 def MipsMemAsmOperand : AsmOperandClass {
   let Name = "Mem";
   let ParserMethod = "parseMemOperand";

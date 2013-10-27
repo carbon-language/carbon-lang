@@ -172,6 +172,11 @@ class FEXT_RI16_B_ins<bits<5> _op, string asmstr,
   FEXT_RI16<_op, (outs), (ins  CPU16Regs:$rx, brtarget:$imm),
             !strconcat(asmstr, "\t$rx, $imm"), [], itin>;
 
+class FEXT_RI16_TCP_ins<bits<5> _op, string asmstr,
+                        InstrItinClass itin>:
+  FEXT_RI16<_op, (outs CPU16Regs:$rx), (ins pcrel16:$imm),
+            !strconcat(asmstr, "\t$rx, $imm"), [], itin>;
+
 class FEXT_2RI16_ins<bits<5> _op, string asmstr,
                      InstrItinClass itin>:
   FEXT_RI16<_op, (outs CPU16Regs:$rx), (ins CPU16Regs:$rx_, simm16:$imm),
@@ -455,7 +460,7 @@ def Constant32:
   MipsPseudo16<(outs), (ins imm32:$imm), "\t.word $imm", []>;
 
 def LwConstant32:
-  MipsPseudo16<(outs CPU16Regs:$rx), (ins imm32:$imm),
+  MipsPseudo16<(outs CPU16Regs:$rx), (ins imm32:$imm, imm32:$constid),
     "lw\t$rx, 1f\n\tb\t2f\n\t.align\t2\n1: \t.word\t$imm\n2:", []>;
 
 
@@ -793,10 +798,11 @@ def LwRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10011, "lw", mem16, IILoad>, MayLoad{
 // Purpose: Load Word (SP-Relative, Extended)
 // To load an SP-relative word from memory as a signed value.
 //
-def LwRxSpImmX16: FEXT_RI16_SP_explicit_ins<0b10110, "lw", IILoad>, MayLoad{
+def LwRxSpImmX16: FEXT_RI16_SP_explicit_ins<0b10010, "lw", IILoad>, MayLoad{
   let Uses = [SP];
 }
 
+def LwRxPcTcpX16: FEXT_RI16_TCP_ins<0b10110, "lw", IILoad>, MayLoad;
 //
 // Format: MOVE r32, rz MIPS16e
 // Purpose: Move
@@ -1355,7 +1361,7 @@ def: Mips16Pat<(i32  addr16:$addr),
 
 
 // Large (>16 bit) immediate loads
-def : Mips16Pat<(i32 imm:$imm), (LwConstant32 imm:$imm)>;
+def : Mips16Pat<(i32 imm:$imm), (LwConstant32 imm:$imm, -1)>;
 
 // Carry MipsPatterns
 def : Mips16Pat<(subc CPU16Regs:$lhs, CPU16Regs:$rhs),
@@ -1848,3 +1854,19 @@ def GotPrologue16:
     (outs CPU16Regs:$rh, CPU16Regs:$rl),
     (ins simm16:$immHi, simm16:$immLo),
     ".align 2\n\tli\t$rh, $immHi\n\taddiu\t$rl, $$pc, $immLo\n ",[]> ;
+
+// An operand for the CONSTPOOL_ENTRY pseudo-instruction.
+def cpinst_operand : Operand<i32> {
+  // let PrintMethod = "printCPInstOperand";
+}
+
+// CONSTPOOL_ENTRY - This instruction represents a floating constant pool in
+// the function.  The first operand is the ID# for this instruction, the second
+// is the index into the MachineConstantPool that this is, the third is the
+// size in bytes of this constant pool entry.
+//
+let neverHasSideEffects = 1, isNotDuplicable = 1 in
+def CONSTPOOL_ENTRY :
+MipsPseudo16<(outs), (ins cpinst_operand:$instid, cpinst_operand:$cpidx,
+                      i32imm:$size), "foo", []>;
+

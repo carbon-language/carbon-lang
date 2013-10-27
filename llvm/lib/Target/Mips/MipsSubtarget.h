@@ -212,6 +212,10 @@ public:
 
   bool os16() const { return Os16;};
 
+// for now constant islands are on for the whole compilation unit but we only
+// really use them if in addition we are in mips16 mode
+//
+static bool useConstantIslands();
   // Grab MipsRegInfo object
   const MipsReginfo &getMReginfo() const { return MRI; }
 
