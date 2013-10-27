@@ -5127,15 +5127,15 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         uint64_t remaining_time = final_timeout - TimeValue::Now();
                         if (before_first_timeout)
                             log->Printf ("Process::RunThreadPlan(): Running function with one thread timeout timed out, "
-                                         "running till  for %" PRId64 " usec with all threads enabled.",
+                                         "running till  for %" PRIu64 " usec with all threads enabled.",
                                          remaining_time);
                         else
                             log->Printf ("Process::RunThreadPlan(): Restarting function with all threads enabled "
-                                         "and timeout: %d timed out, abandoning execution.",
+                                         "and timeout: %u timed out, abandoning execution.",
                                          timeout_usec);
                     }
                     else
-                        log->Printf ("Process::RunThreadPlan(): Running function with timeout: %d timed out, "
+                        log->Printf ("Process::RunThreadPlan(): Running function with timeout: %u timed out, "
                                      "abandoning execution.", 
                                      timeout_usec);
                 }
