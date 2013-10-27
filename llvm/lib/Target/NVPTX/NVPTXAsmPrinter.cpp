@@ -48,8 +48,6 @@
 #include <sstream>
 using namespace llvm;
 
-bool RegAllocNilUsed = true;
-
 #define DEPOTNAME "__local_depot"
 
 static cl::opt<bool>
@@ -57,12 +55,10 @@ EmitLineNumbers("nvptx-emit-line-numbers", cl::Hidden,
                 cl::desc("NVPTX Specific: Emit Line numbers even without -G"),
                 cl::init(true));
 
-namespace llvm { bool InterleaveSrcInPtx = false; }
-
-static cl::opt<bool, true>
+static cl::opt<bool>
 InterleaveSrc("nvptx-emit-src", cl::ZeroOrMore, cl::Hidden,
               cl::desc("NVPTX Specific: Emit source line in ptx file"),
-              cl::location(llvm::InterleaveSrcInPtx));
+              cl::init(false));
 
 namespace {
 /// DiscoverDependentGlobals - Return a set of GlobalVariables on which \p V
@@ -295,7 +291,7 @@ void NVPTXAsmPrinter::emitLineNumberAsDotLoc(const MachineInstr &MI) {
     return;
 
   // Emit the line from the source file.
-  if (llvm::InterleaveSrcInPtx)
+  if (InterleaveSrc)
     this->emitSrcInText(fileName.str(), curLoc.getLine());
 
   std::stringstream temp;
