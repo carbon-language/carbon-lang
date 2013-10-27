@@ -412,7 +412,7 @@ MicrosoftCXXABI::GetVirtualBaseClassOffset(CodeGenFunction &CGF,
     llvm::ConstantInt::get(CGM.IntTy, VBTableChars.getQuantity());
 
   llvm::Value *VBPtrToNewBase =
-    GetVBaseOffsetFromVBPtr(CGF, This, VBTableOffset, VBPtrOffset);
+    GetVBaseOffsetFromVBPtr(CGF, This, VBPtrOffset, VBTableOffset);
   VBPtrToNewBase =
     CGF.Builder.CreateSExtOrBitCast(VBPtrToNewBase, CGM.PtrDiffTy);
   return CGF.Builder.CreateNSWAdd(VBPtrOffset, VBPtrToNewBase);
@@ -1436,8 +1436,8 @@ bool MicrosoftCXXABI::MemberPointerConstantIsNull(const MemberPointerType *MPT,
 llvm::Value *
 MicrosoftCXXABI::GetVBaseOffsetFromVBPtr(CodeGenFunction &CGF,
                                          llvm::Value *This,
-                                         llvm::Value *VBTableOffset,
                                          llvm::Value *VBPtrOffset,
+                                         llvm::Value *VBTableOffset,
                                          llvm::Value **VBPtrOut) {
   CGBuilderTy &Builder = CGF.Builder;
   // Load the vbtable pointer from the vbptr in the instance.
@@ -1493,7 +1493,7 @@ MicrosoftCXXABI::AdjustVirtualBase(CodeGenFunction &CGF,
   }
   llvm::Value *VBPtr = 0;
   llvm::Value *VBaseOffs =
-    GetVBaseOffsetFromVBPtr(CGF, Base, VBTableOffset, VBPtrOffset, &VBPtr);
+    GetVBaseOffsetFromVBPtr(CGF, Base, VBPtrOffset, VBTableOffset, &VBPtr);
   llvm::Value *AdjustedBase = Builder.CreateInBoundsGEP(VBPtr, VBaseOffs);
 
   // Merge control flow with the case where we didn't have to adjust.
