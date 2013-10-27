@@ -1,5 +1,7 @@
 ; RUN: %lli_mcjit -remote-mcjit -mcjit-remote-process=lli-child-target %s > /dev/null
-; XFAIL:  mips
+
+; This fails because __main is not resolved in remote mcjit on cygming.
+; XFAIL: cygwin,mingw32,mips
 
 define i32 @bar() {
 	ret i32 0

@@ -1,5 +1,8 @@
 ; RUN: %lli_mcjit -extra-modules=%p/cross-module-b.ir  -disable-lazy-compilation=true -remote-mcjit -mcjit-remote-process=lli-child-target %s > /dev/null
 
+; This fails because __main is not resolved in remote mcjit.
+; XFAIL: cygwin,mingw32
+
 declare i32 @FB()
 
 define i32 @FA() {

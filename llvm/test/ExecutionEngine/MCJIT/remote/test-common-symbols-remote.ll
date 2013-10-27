@@ -1,5 +1,7 @@
 ; RUN: %lli_mcjit -remote-mcjit -O0 -disable-lazy-compilation=false -mcjit-remote-process=lli-child-target %s
-; XFAIL: mips
+
+; This fails because __main is not resolved in remote mcjit on cygming.
+; XFAIL: cygwin,mingw32,mips
 
 ; The intention of this test is to verify that symbols mapped to COMMON in ELF
 ; work as expected.

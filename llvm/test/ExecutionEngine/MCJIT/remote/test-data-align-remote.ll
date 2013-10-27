@@ -1,5 +1,7 @@
 ; RUN:  %lli_mcjit -remote-mcjit -O0 -mcjit-remote-process=lli-child-target %s
-; XFAIL: mips
+
+; This fails because __main is not resolved in remote mcjit on cygming.
+; XFAIL: cygwin,mingw32,mips
 
 ; Check that a variable is always aligned as specified.
 

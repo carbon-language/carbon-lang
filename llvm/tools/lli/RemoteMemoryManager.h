@@ -78,7 +78,7 @@ public:
   // interface does support this, but clients must provide their own
   // mechanism for finding remote symbol addresses.  MCJIT will resolve
   // symbols from Modules it contains.
-  uint64_t getSymbolAddress(const std::string &Name);
+  uint64_t getSymbolAddress(const std::string &Name) { return 0; }
 
   void notifyObjectLoaded(ExecutionEngine *EE, const ObjectImage *Obj);
 
