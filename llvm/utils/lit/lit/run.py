@@ -217,7 +217,8 @@ class Run(object):
                 canceled_flag =  multiprocessing.Value('i', 0)
                 consumer = MultiprocessResultsConsumer(self, display, jobs)
             except ImportError:
-                # Workaround for BSD: http://bugs.python.org/issue3770
+                # multiprocessing fails to initialize with certain OpenBSD and
+                # FreeBSD Python versions: http://bugs.python.org/issue3770
                 self.lit_config.note('failed to initialize multiprocessing')
                 consumer = None
         if not consumer:
