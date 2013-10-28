@@ -144,7 +144,7 @@ uint64_t DWARFUnit::getDWOId() {
   if (DieArray.empty())
     return FailValue;
   return DieArray[0]
-      .getAttributeValueAsUnsigned(this, DW_AT_GNU_dwo_id, FailValue);
+      .getAttributeValueAsUnsignedConstant(this, DW_AT_GNU_dwo_id, FailValue);
 }
 
 void DWARFUnit::setDIERelations() {
@@ -251,14 +251,14 @@ size_t DWARFUnit::extractDIEsIfNeeded(bool CUDieOnly) {
   // If CU DIE was just parsed, copy several attribute values from it.
   if (!HasCUDie) {
     uint64_t BaseAddr =
-      DieArray[0].getAttributeValueAsUnsigned(this, DW_AT_low_pc, -1U);
-    if (BaseAddr == -1U)
-      BaseAddr = DieArray[0].getAttributeValueAsUnsigned(this, DW_AT_entry_pc, 0);
+        DieArray[0].getAttributeValueAsAddress(this, DW_AT_low_pc, -1ULL);
+    if (BaseAddr == -1ULL)
+      BaseAddr = DieArray[0].getAttributeValueAsAddress(this, DW_AT_entry_pc, 0);
     setBaseAddress(BaseAddr);
-    AddrOffsetSectionBase =
-        DieArray[0].getAttributeValueAsReference(this, DW_AT_GNU_addr_base, 0);
-    RangeSectionBase =
-        DieArray[0].getAttributeValueAsReference(this, DW_AT_GNU_ranges_base, 0);
+    AddrOffsetSectionBase = DieArray[0].getAttributeValueAsSectionOffset(
+        this, DW_AT_GNU_addr_base, 0);
+    RangeSectionBase = DieArray[0].getAttributeValueAsSectionOffset(
+        this, DW_AT_GNU_ranges_base, 0);
   }
 
   setDIERelations();

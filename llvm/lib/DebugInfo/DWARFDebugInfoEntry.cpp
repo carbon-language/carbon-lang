@@ -160,8 +160,11 @@ bool DWARFDebugInfoEntryMinimal::extract(const DWARFUnit *U,
         ((Attr == DW_AT_entry_pc) || (Attr == DW_AT_low_pc))) {
       DWARFFormValue FormValue(Form);
       if (FormValue.extractValue(DebugInfoData, OffsetPtr, U)) {
-        if (Attr == DW_AT_low_pc || Attr == DW_AT_entry_pc)
-          const_cast<DWARFUnit *>(U)->setBaseAddress(FormValue.getUnsigned());
+        if (Attr == DW_AT_low_pc || Attr == DW_AT_entry_pc) {
+          Optional<uint64_t> BaseAddr = FormValue.getAsAddress(U);
+          if (BaseAddr.hasValue())
+            const_cast<DWARFUnit *>(U)->setBaseAddress(BaseAddr.getValue());
+        }
       }
     } else if (!DWARFFormValue::skipValue(Form, DebugInfoData, OffsetPtr, U)) {
       // Restore the original offset.
@@ -210,33 +213,46 @@ bool DWARFDebugInfoEntryMinimal::getAttributeValue(
 const char *DWARFDebugInfoEntryMinimal::getAttributeValueAsString(
     const DWARFUnit *U, const uint16_t Attr, const char *FailValue) const {
   DWARFFormValue FormValue;
-  if (getAttributeValue(U, Attr, FormValue))
-    return FormValue.getAsCString(U);
-  return FailValue;
+  if (!getAttributeValue(U, Attr, FormValue))
+    return FailValue;
+  Optional<const char *> Result = FormValue.getAsCString(U);
+  return Result.hasValue() ? Result.getValue() : FailValue;
 }
 
 uint64_t DWARFDebugInfoEntryMinimal::getAttributeValueAsAddress(
     const DWARFUnit *U, const uint16_t Attr, uint64_t FailValue) const {
   DWARFFormValue FormValue;
-  if (getAttributeValue(U, Attr, FormValue))
-    return FormValue.getAsAddress(U);
-  return FailValue;
+  if (!getAttributeValue(U, Attr, FormValue))
+    return FailValue;
+  Optional<uint64_t> Result = FormValue.getAsAddress(U);
+  return Result.hasValue() ? Result.getValue() : FailValue;
 }
 
-uint64_t DWARFDebugInfoEntryMinimal::getAttributeValueAsUnsigned(
+uint64_t DWARFDebugInfoEntryMinimal::getAttributeValueAsUnsignedConstant(
     const DWARFUnit *U, const uint16_t Attr, uint64_t FailValue) const {
   DWARFFormValue FormValue;
-  if (getAttributeValue(U, Attr, FormValue))
-    return FormValue.getUnsigned();
-  return FailValue;
+  if (!getAttributeValue(U, Attr, FormValue))
+    return FailValue;
+  Optional<uint64_t> Result = FormValue.getAsUnsignedConstant();
+  return Result.hasValue() ? Result.getValue() : FailValue;
 }
 
 uint64_t DWARFDebugInfoEntryMinimal::getAttributeValueAsReference(
     const DWARFUnit *U, const uint16_t Attr, uint64_t FailValue) const {
   DWARFFormValue FormValue;
-  if (getAttributeValue(U, Attr, FormValue))
-      return FormValue.getReference(U);
-  return FailValue;
+  if (!getAttributeValue(U, Attr, FormValue))
+    return FailValue;
+  Optional<uint64_t> Result = FormValue.getAsReference(U);
+  return Result.hasValue() ? Result.getValue() : FailValue;
+}
+
+uint64_t DWARFDebugInfoEntryMinimal::getAttributeValueAsSectionOffset(
+    const DWARFUnit *U, const uint16_t Attr, uint64_t FailValue) const {
+  DWARFFormValue FormValue;
+  if (!getAttributeValue(U, Attr, FormValue))
+    return FailValue;
+  Optional<uint64_t> Result = FormValue.getAsSectionOffset();
+  return Result.hasValue() ? Result.getValue() : FailValue;
 }
 
 bool DWARFDebugInfoEntryMinimal::getLowAndHighPC(const DWARFUnit *U,
@@ -277,7 +293,8 @@ bool DWARFDebugInfoEntryMinimal::addressRangeContainsAddress(
   if (getLowAndHighPC(U, LowPC, HighPC))
     return (LowPC <= Address && Address <= HighPC);
   // Try to get address ranges from .debug_ranges section.
-  uint32_t RangesOffset = getAttributeValueAsReference(U, DW_AT_ranges, -1U);
+  uint32_t RangesOffset =
+      getAttributeValueAsSectionOffset(U, DW_AT_ranges, -1U);
   if (RangesOffset != -1U) {
     DWARFDebugRangeList RangeList;
     if (U->extractRangeList(RangesOffset, RangeList))
@@ -325,9 +342,9 @@ void DWARFDebugInfoEntryMinimal::getCallerFrame(const DWARFUnit *U,
                                                 uint32_t &CallFile,
                                                 uint32_t &CallLine,
                                                 uint32_t &CallColumn) const {
-  CallFile = getAttributeValueAsUnsigned(U, DW_AT_call_file, 0);
-  CallLine = getAttributeValueAsUnsigned(U, DW_AT_call_line, 0);
-  CallColumn = getAttributeValueAsUnsigned(U, DW_AT_call_column, 0);
+  CallFile = getAttributeValueAsUnsignedConstant(U, DW_AT_call_file, 0);
+  CallLine = getAttributeValueAsUnsignedConstant(U, DW_AT_call_line, 0);
+  CallColumn = getAttributeValueAsUnsignedConstant(U, DW_AT_call_column, 0);
 }
 
 DWARFDebugInfoEntryInlinedChain

@@ -10,6 +10,8 @@
 #include "llvm/DebugInfo/DWARFFormValue.h"
 #include "DWARFCompileUnit.h"
 #include "DWARFContext.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Format.h"
@@ -72,6 +74,57 @@ DWARFFormValue::getFixedFormSizes(uint8_t AddrSize, uint16_t Version) {
   if (AddrSize == 8 && RefAddrSize == 8)
     return FixedFormSizes<8, 8>::sizes;
   return 0;
+}
+
+static const DWARFFormValue::FormClass DWARF4FormClasses[] = {
+  DWARFFormValue::FC_Unknown,       // 0x0
+  DWARFFormValue::FC_Address,       // 0x01 DW_FORM_addr
+  DWARFFormValue::FC_Unknown,       // 0x02 unused
+  DWARFFormValue::FC_Block,         // 0x03 DW_FORM_block2
+  DWARFFormValue::FC_Block,         // 0x04 DW_FORM_block4
+  DWARFFormValue::FC_Constant,      // 0x05 DW_FORM_data2
+  // --- These can be FC_SectionOffset in DWARF3 and below:
+  DWARFFormValue::FC_Constant,      // 0x06 DW_FORM_data4
+  DWARFFormValue::FC_Constant,      // 0x07 DW_FORM_data8
+  // ---
+  DWARFFormValue::FC_String,        // 0x08 DW_FORM_string
+  DWARFFormValue::FC_Block,         // 0x09 DW_FORM_block
+  DWARFFormValue::FC_Block,         // 0x0a DW_FORM_block1
+  DWARFFormValue::FC_Constant,      // 0x0b DW_FORM_data1
+  DWARFFormValue::FC_Flag,          // 0x0c DW_FORM_flag
+  DWARFFormValue::FC_Constant,      // 0x0d DW_FORM_sdata
+  DWARFFormValue::FC_String,        // 0x0e DW_FORM_strp
+  DWARFFormValue::FC_Constant,      // 0x0f DW_FORM_udata
+  DWARFFormValue::FC_Reference,     // 0x10 DW_FORM_ref_addr
+  DWARFFormValue::FC_Reference,     // 0x11 DW_FORM_ref1
+  DWARFFormValue::FC_Reference,     // 0x12 DW_FORM_ref2
+  DWARFFormValue::FC_Reference,     // 0x13 DW_FORM_ref4
+  DWARFFormValue::FC_Reference,     // 0x14 DW_FORM_ref8
+  DWARFFormValue::FC_Reference,     // 0x15 DW_FORM_ref_udata
+  DWARFFormValue::FC_Indirect,      // 0x16 DW_FORM_indirect
+  DWARFFormValue::FC_SectionOffset, // 0x17 DW_FORM_sec_offset
+  DWARFFormValue::FC_Exprloc,       // 0x18 DW_FORM_exprloc
+  DWARFFormValue::FC_Flag,          // 0x19 DW_FORM_flag_present
+  DWARFFormValue::FC_Reference,     // 0x20 DW_FORM_ref_sig8
+};
+
+bool DWARFFormValue::isFormClass(DWARFFormValue::FormClass FC) const {
+  // First, check DWARF4 form classes.
+  if (Form < ArrayRef<FormClass>(DWARF4FormClasses).size() &&
+      DWARF4FormClasses[Form] == FC)
+    return true;
+  // Check for some DWARF5 forms.
+  if (Form == DW_FORM_GNU_addr_index)
+    return (FC == FC_Address);
+  if (Form == DW_FORM_GNU_str_index)
+    return (FC == FC_String);
+  // In DWARF3 DW_FORM_data4 and DW_FORM_data8 served also as a section offset.
+  // Don't check for DWARF version here, as some producers may still do this
+  // by mistake.
+  if ((Form == DW_FORM_data4 || Form == DW_FORM_data8) &&
+      FC == FC_SectionOffset)
+    return true;
+  return false;
 }
 
 bool DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
@@ -155,10 +208,6 @@ bool DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
       break;
     case DW_FORM_string:
       Value.cstr = data.getCStr(offset_ptr);
-      // Set the string value to also be the data for inlined cstr form
-      // values only so we can tell the differnence between DW_FORM_string
-      // and DW_FORM_strp form values
-      Value.data = (const uint8_t*)Value.cstr;
       break;
     case DW_FORM_indirect:
       Form = data.getULEB128(offset_ptr);
@@ -313,7 +362,7 @@ void
 DWARFFormValue::dump(raw_ostream &OS, const DWARFUnit *cu) const {
   DataExtractor debug_str_data(cu->getStringSection(), true, 0);
   DataExtractor debug_str_offset_data(cu->getStringOffsetSection(), true, 0);
-  uint64_t uvalue = getUnsigned();
+  uint64_t uvalue = Value.uval;
   bool cu_relative_offset = false;
 
   switch (Form) {
@@ -336,7 +385,7 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFUnit *cu) const {
   case DW_FORM_data8:     OS << format("0x%016" PRIx64, uvalue); break;
   case DW_FORM_string:
     OS << '"';
-    OS.write_escaped(getAsCString(NULL));
+    OS.write_escaped(Value.cstr);
     OS << '"';
     break;
   case DW_FORM_exprloc:
@@ -368,24 +417,24 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFUnit *cu) const {
     }
     break;
 
-  case DW_FORM_sdata:     OS << getSigned();   break;
-  case DW_FORM_udata:     OS << getUnsigned(); break;
+  case DW_FORM_sdata:     OS << Value.sval; break;
+  case DW_FORM_udata:     OS << Value.uval; break;
   case DW_FORM_strp: {
     OS << format(" .debug_str[0x%8.8x] = ", (uint32_t)uvalue);
-    const char* dbg_str = getAsCString(cu);
-    if (dbg_str) {
+    Optional<const char *> DbgStr = getAsCString(cu);
+    if (DbgStr.hasValue()) {
       OS << '"';
-      OS.write_escaped(dbg_str);
+      OS.write_escaped(DbgStr.getValue());
       OS << '"';
     }
     break;
   }
   case DW_FORM_GNU_str_index: {
     OS << format(" indexed (%8.8x) string = ", (uint32_t)uvalue);
-    const char *dbg_str = getAsCString(cu);
-    if (dbg_str) {
+    Optional<const char *> DbgStr = getAsCString(cu);
+    if (DbgStr.hasValue()) {
       OS << '"';
-      OS.write_escaped(dbg_str);
+      OS.write_escaped(DbgStr.getValue());
       OS << '"';
     }
     break;
@@ -434,47 +483,67 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFUnit *cu) const {
     OS << format(" => {0x%8.8" PRIx64 "}", uvalue + (cu ? cu->getOffset() : 0));
 }
 
-const char *DWARFFormValue::getAsCString(const DWARFUnit *CU) const {
-  if (isInlinedCStr())
+Optional<const char *> DWARFFormValue::getAsCString(const DWARFUnit *U) const {
+  if (!isFormClass(FC_String))
+    return None;
+  if (Form == DW_FORM_string)
     return Value.cstr;
-  if (!CU)
-    return NULL;
+  if (U == 0)
+    return None;
   uint32_t Offset = Value.uval;
   if (Form == DW_FORM_GNU_str_index) {
     uint32_t StrOffset;
-    if (!CU->getStringOffsetSectionItem(Offset, StrOffset))
-      return NULL;
+    if (!U->getStringOffsetSectionItem(Offset, StrOffset))
+      return None;
     Offset = StrOffset;
   }
-  return CU->getStringExtractor().getCStr(&Offset);
+  if (const char *Str = U->getStringExtractor().getCStr(&Offset)) {
+    return Str;
+  }
+  return None;
 }
 
-uint64_t DWARFFormValue::getAsAddress(const DWARFUnit *CU) const {
-  if (!CU)
-    return 0;
+Optional<uint64_t> DWARFFormValue::getAsAddress(const DWARFUnit *U) const {
+  if (!isFormClass(FC_Address))
+    return None;
   if (Form == DW_FORM_GNU_addr_index) {
     uint32_t Index = Value.uval;
-    uint64_t Address;
-    if (!CU->getAddrOffsetSectionItem(Index, Address))
-      return 0;
-    return Address;
+    uint64_t Result;
+    if (U == 0 || !U->getAddrOffsetSectionItem(Index, Result))
+      return None;
+    return Result;
   }
   return Value.uval;
 }
 
-uint64_t DWARFFormValue::getReference(const DWARFUnit *cu) const {
-  uint64_t die_offset = Value.uval;
+Optional<uint64_t> DWARFFormValue::getAsReference(const DWARFUnit *U) const {
+  if (!isFormClass(FC_Reference))
+    return None;
   switch (Form) {
   case DW_FORM_ref1:
   case DW_FORM_ref2:
   case DW_FORM_ref4:
   case DW_FORM_ref8:
   case DW_FORM_ref_udata:
-      die_offset += (cu ? cu->getOffset() : 0);
-      break;
+    if (U == 0)
+      return None;
+    return Value.uval + U->getOffset();
+  case DW_FORM_ref_addr:
+    return Value.uval;
+  // FIXME: Add proper support for DW_FORM_ref_sig8
   default:
-      break;
+    return Value.uval;
   }
+}
 
-  return die_offset;
+Optional<uint64_t> DWARFFormValue::getAsSectionOffset() const {
+  if (!isFormClass(FC_SectionOffset))
+    return None;
+  return Value.uval;
+}
+
+Optional<uint64_t> DWARFFormValue::getAsUnsignedConstant() const {
+  if (!isFormClass(FC_Constant) || Form == DW_FORM_sdata)
+    return None;
+  return Value.uval;
 }

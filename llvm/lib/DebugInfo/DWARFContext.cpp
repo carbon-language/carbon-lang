@@ -102,8 +102,8 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
       DWARFCompileUnit *cu = getCompileUnitAtIndex(i);
       savedAddressByteSize = cu->getAddressByteSize();
       unsigned stmtOffset =
-        cu->getCompileUnitDIE()->getAttributeValueAsUnsigned(cu, DW_AT_stmt_list,
-                                                             -1U);
+          cu->getCompileUnitDIE()->getAttributeValueAsSectionOffset(
+              cu, DW_AT_stmt_list, -1U);
       if (stmtOffset != -1U) {
         DataExtractor lineData(getLineSection().Data, isLittleEndian(),
                                savedAddressByteSize);
@@ -262,8 +262,8 @@ DWARFContext::getLineTableForCompileUnit(DWARFCompileUnit *cu) {
     Line.reset(new DWARFDebugLine(&getLineSection().Relocs));
 
   unsigned stmtOffset =
-    cu->getCompileUnitDIE()->getAttributeValueAsUnsigned(cu, DW_AT_stmt_list,
-                                                         -1U);
+      cu->getCompileUnitDIE()->getAttributeValueAsSectionOffset(
+          cu, DW_AT_stmt_list, -1U);
   if (stmtOffset == -1U)
     return 0; // No line table for this compile unit.
 

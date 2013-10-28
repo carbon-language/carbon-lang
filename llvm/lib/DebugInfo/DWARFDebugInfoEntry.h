@@ -129,11 +129,16 @@ public:
   uint64_t getAttributeValueAsAddress(const DWARFUnit *U, const uint16_t Attr,
                                       uint64_t FailValue) const;
 
-  uint64_t getAttributeValueAsUnsigned(const DWARFUnit *U, const uint16_t Attr,
-                                       uint64_t FailValue) const;
+  uint64_t getAttributeValueAsUnsignedConstant(const DWARFUnit *U,
+                                               const uint16_t Attr,
+                                               uint64_t FailValue) const;
 
   uint64_t getAttributeValueAsReference(const DWARFUnit *U, const uint16_t Attr,
                                         uint64_t FailValue) const;
+
+  uint64_t getAttributeValueAsSectionOffset(const DWARFUnit *U,
+                                            const uint16_t Attr,
+                                            uint64_t FailValue) const;
 
   /// Retrieves DW_AT_low_pc and DW_AT_high_pc from CU.
   /// Returns true if both attributes are present.

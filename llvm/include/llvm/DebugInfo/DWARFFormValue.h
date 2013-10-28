@@ -10,6 +10,7 @@
 #ifndef LLVM_DEBUGINFO_DWARFFORMVALUE_H
 #define LLVM_DEBUGINFO_DWARFFORMVALUE_H
 
+#include "llvm/ADT/Optional.h"
 #include "llvm/Support/DataExtractor.h"
 
 namespace llvm {
@@ -18,6 +19,21 @@ class DWARFUnit;
 class raw_ostream;
 
 class DWARFFormValue {
+public:
+  enum FormClass {
+    FC_Unknown,
+    FC_Address,
+    FC_Block,
+    FC_Constant,
+    FC_String,
+    FC_Flag,
+    FC_Reference,
+    FC_Indirect,
+    FC_SectionOffset,
+    FC_Exprloc
+  };
+
+private:
   struct ValueType {
     ValueType() : data(NULL) {
       uval = 0;
@@ -35,9 +51,10 @@ class DWARFFormValue {
   ValueType Value; // Contains all data for the form.
 
 public:
-  DWARFFormValue(uint16_t form = 0) : Form(form) {}
+  DWARFFormValue(uint16_t Form = 0) : Form(Form) {}
   uint16_t getForm() const { return Form; }
-  const ValueType& value() const { return Value; }
+  bool isFormClass(FormClass FC) const;
+
   void dump(raw_ostream &OS, const DWARFUnit *U) const;
   bool extractValue(DataExtractor data, uint32_t *offset_ptr,
                     const DWARFUnit *u);
@@ -45,11 +62,13 @@ public:
     return Value.data != NULL && Value.data == (const uint8_t*)Value.cstr;
   }
 
-  uint64_t getReference(const DWARFUnit *U) const;
-  uint64_t getUnsigned() const { return Value.uval; }
-  int64_t getSigned() const { return Value.sval; }
-  const char *getAsCString(const DWARFUnit *U) const;
-  uint64_t getAsAddress(const DWARFUnit *U) const;
+  /// getAsFoo functions below return the extracted value as Foo if only
+  /// DWARFFormValue has form class is suitable for representing Foo.
+  Optional<uint64_t> getAsReference(const DWARFUnit *U) const;
+  Optional<uint64_t> getAsUnsignedConstant() const;
+  Optional<const char *> getAsCString(const DWARFUnit *U) const;
+  Optional<uint64_t> getAsAddress(const DWARFUnit *U) const;
+  Optional<uint64_t> getAsSectionOffset() const;
 
   bool skipValue(DataExtractor debug_info_data, uint32_t *offset_ptr,
                  const DWARFUnit *u) const;

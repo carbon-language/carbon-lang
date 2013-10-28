@@ -28,4 +28,21 @@ TEST(DWARFFormValue, FixedFormSizes) {
   EXPECT_EQ(0, DWARFFormValue::getFixedFormSizes(16, 2));
 }
 
+bool isFormClass(uint16_t Form, DWARFFormValue::FormClass FC) {
+  return DWARFFormValue(Form).isFormClass(FC);
+}
+
+TEST(DWARFFormValue, FormClass) {
+  EXPECT_TRUE(isFormClass(DW_FORM_addr, DWARFFormValue::FC_Address));
+  EXPECT_FALSE(isFormClass(DW_FORM_data8, DWARFFormValue::FC_Address));
+  EXPECT_TRUE(isFormClass(DW_FORM_data8, DWARFFormValue::FC_Constant));
+  EXPECT_TRUE(isFormClass(DW_FORM_data8, DWARFFormValue::FC_SectionOffset));
+  EXPECT_TRUE(
+      isFormClass(DW_FORM_sec_offset, DWARFFormValue::FC_SectionOffset));
+  EXPECT_TRUE(isFormClass(DW_FORM_GNU_str_index, DWARFFormValue::FC_String));
+  EXPECT_TRUE(isFormClass(DW_FORM_GNU_addr_index, DWARFFormValue::FC_Address));
+  EXPECT_FALSE(isFormClass(DW_FORM_ref_addr, DWARFFormValue::FC_Address));
+  EXPECT_TRUE(isFormClass(DW_FORM_ref_addr, DWARFFormValue::FC_Reference));
+}
+
 } // end anonymous namespace
