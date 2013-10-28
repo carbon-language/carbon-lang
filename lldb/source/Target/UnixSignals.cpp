@@ -74,13 +74,13 @@ UnixSignals::Reset ()
     AddSignal (11,   "SIGSEGV",   "SEGV",    false,   true , true , "segmentation violation");
     AddSignal (12,   "SIGSYS",    "SYS",     false,   true , true , "bad argument to system call");
     AddSignal (13,   "SIGPIPE",   "PIPE",    false,   true , true , "write on a pipe with no one to read it");
-    AddSignal (14,   "SIGALRM",   "ALRM",    false,   false, true , "alarm clock");
+    AddSignal (14,   "SIGALRM",   "ALRM",    false,   false, false, "alarm clock");
     AddSignal (15,   "SIGTERM",   "TERM",    false,   true , true , "software termination signal from kill");
     AddSignal (16,   "SIGURG",    "URG",     false,   false, false, "urgent condition on IO channel");
     AddSignal (17,   "SIGSTOP",   "STOP",    true ,   true , true , "sendable stop signal not from tty");
     AddSignal (18,   "SIGTSTP",   "TSTP",    false,   true , true , "stop signal from tty");
     AddSignal (19,   "SIGCONT",   "CONT",    false,   true , true , "continue a stopped process");
-    AddSignal (20,   "SIGCHLD",   "CHLD",    false,   false, true , "to parent on child stop or exit");
+    AddSignal (20,   "SIGCHLD",   "CHLD",    false,   false, false, "to parent on child stop or exit");
     AddSignal (21,   "SIGTTIN",   "TTIN",    false,   true , true , "to readers process group upon background tty read");
     AddSignal (22,   "SIGTTOU",   "TTOU",    false,   true , true , "to readers process group upon background tty write");
     AddSignal (23,   "SIGIO",     "IO",      false,   false, false, "input/output possible signal");
