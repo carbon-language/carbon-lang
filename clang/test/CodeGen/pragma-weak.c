@@ -149,6 +149,28 @@ void PR14046f() {
 }
 // CHECK: declare extern_weak i32 @PR14046e()
 
+// Parse #pragma weak after a label or case statement
+extern int PR16705a(void);
+extern int PR16705b(void);
+extern int PR16705c(void);
+void PR16705f(int a) {
+  switch(a) {
+  case 1:
+#pragma weak PR16705a
+    PR16705a();
+  default:
+#pragma weak PR16705b
+    PR16705b();
+  }
+label:
+  #pragma weak PR16705c
+  PR16705c();
+}
+
+// CHECK: declare extern_weak i32 @PR16705a()
+// CHECK: declare extern_weak i32 @PR16705b()
+// CHECK: declare extern_weak i32 @PR16705c()
+
 
 ///////////// TODO: stuff that still doesn't work
 

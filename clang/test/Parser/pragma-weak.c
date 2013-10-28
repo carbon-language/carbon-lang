@@ -15,3 +15,30 @@ extern int z;
 extern int a;
 /* expected-warning {{extra tokens at end of '#pragma weak'}}*/ #pragma weak a b
 /* expected-warning {{extra tokens at end of '#pragma weak'}}*/ #pragma weak a = x c
+
+
+void pragma_is_not_a_statement(int x)
+{
+  int t;
+
+  {
+    if (x)
+#pragma weak t
+    else // expected-error {{expected expression}}
+#pragma weak t
+  }
+
+  switch (x) {
+    case 1:
+#pragma weak t
+  } // expected-error {{expected statement}}
+  switch(x) {
+    default:
+#pragma weak t
+  } // expected-error {{expected statement}}
+
+label:
+#pragma weak t
+} // expected-error {{expected statement}}
+
+
