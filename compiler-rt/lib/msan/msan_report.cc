@@ -37,11 +37,11 @@ class Decorator: private __sanitizer::AnsiColorDecorator {
 static void PrintStack(const uptr *trace, uptr size) {
   SymbolizerScope sym_scope;
   StackTrace::PrintStack(trace, size, true, 0);
+  Printf("\n");
 }
 
 static void DescribeOrigin(u32 origin) {
   Decorator d;
-  Printf("\n");
   if (common_flags()->verbosity)
     Printf("  raw origin id: %d\n", origin);
   uptr pc;
