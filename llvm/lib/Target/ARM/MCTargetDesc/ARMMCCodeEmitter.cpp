@@ -641,7 +641,7 @@ getUnconditionalBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
   const MCOperand MO = MI.getOperand(OpIdx);
     
   if(MO.isExpr())
-    Val = ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_t2_uncondbranch, Fixups);
+    return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_t2_uncondbranch, Fixups);
   else 
     Val = MO.getImm() >> 1;
 
