@@ -209,7 +209,7 @@ public:
   COFFBSSAtom(const File &file, StringRef name, Scope scope,
               ContentPermissions perms, Merge merge, uint32_t size,
               uint64_t ordinal)
-      : COFFDefinedFileAtom(file, name, "", scope, typeZeroFill, perms,
+      : COFFDefinedFileAtom(file, name, ".bss", scope, typeZeroFill, perms,
                             ordinal),
         _merge(merge), _size(size) {}
 
