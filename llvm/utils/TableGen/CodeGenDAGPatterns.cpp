@@ -2881,6 +2881,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
     CodeGenInstruction &CGI = Target.getInstruction(Instrs[i]);
     const DAGInstruction &DI = parseInstructionPattern(CGI, LI, Instructions);
 
+    (void)DI;
     DEBUG(DI.getPattern()->dump());
   }
 
