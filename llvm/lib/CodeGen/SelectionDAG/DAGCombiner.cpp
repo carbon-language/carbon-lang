@@ -296,11 +296,11 @@ namespace {
 
     /// isAlias - Return true if there is any possibility that the two addresses
     /// overlap.
-    bool isAlias(SDValue Ptr1, int64_t Size1,
+    bool isAlias(SDValue Ptr1, int64_t Size1, bool IsVolatile1,
                  const Value *SrcValue1, int SrcValueOffset1,
                  unsigned SrcValueAlign1,
                  const MDNode *TBAAInfo1,
-                 SDValue Ptr2, int64_t Size2,
+                 SDValue Ptr2, int64_t Size2, bool IsVolatile2,
                  const Value *SrcValue2, int SrcValueOffset2,
                  unsigned SrcValueAlign2,
                  const MDNode *TBAAInfo2) const;
@@ -312,7 +312,7 @@ namespace {
     /// FindAliasInfo - Extracts the relevant alias information from the memory
     /// node.  Returns true if the operand was a load.
     bool FindAliasInfo(SDNode *N,
-                       SDValue &Ptr, int64_t &Size,
+                       SDValue &Ptr, int64_t &Size, bool &IsVolatile,
                        const Value *&SrcValue, int &SrcValueOffset,
                        unsigned &SrcValueAlignment,
                        const MDNode *&TBAAInfo) const;
@@ -10789,16 +10789,19 @@ static bool FindBaseOffset(SDValue Ptr, SDValue &Base, int64_t &Offset,
 
 /// isAlias - Return true if there is any possibility that the two addresses
 /// overlap.
-bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1,
+bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1, bool IsVolatile1,
                           const Value *SrcValue1, int SrcValueOffset1,
                           unsigned SrcValueAlign1,
                           const MDNode *TBAAInfo1,
-                          SDValue Ptr2, int64_t Size2,
+                          SDValue Ptr2, int64_t Size2, bool IsVolatile2,
                           const Value *SrcValue2, int SrcValueOffset2,
                           unsigned SrcValueAlign2,
                           const MDNode *TBAAInfo2) const {
   // If they are the same then they must be aliases.
   if (Ptr1 == Ptr2) return true;
+
+  // If they are both volatile then they cannot be reordered.
+  if (IsVolatile1 && IsVolatile2) return true;
 
   // Gather base node and offset information.
   SDValue Base1, Base2;
@@ -10865,24 +10868,25 @@ bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1,
 bool DAGCombiner::isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) {
   SDValue Ptr0, Ptr1;
   int64_t Size0, Size1;
+  bool IsVolatile0, IsVolatile1;
   const Value *SrcValue0, *SrcValue1;
   int SrcValueOffset0, SrcValueOffset1;
   unsigned SrcValueAlign0, SrcValueAlign1;
   const MDNode *SrcTBAAInfo0, *SrcTBAAInfo1;
-  FindAliasInfo(Op0, Ptr0, Size0, SrcValue0, SrcValueOffset0,
+  FindAliasInfo(Op0, Ptr0, Size0, IsVolatile0, SrcValue0, SrcValueOffset0,
                 SrcValueAlign0, SrcTBAAInfo0);
-  FindAliasInfo(Op1, Ptr1, Size1, SrcValue1, SrcValueOffset1,
+  FindAliasInfo(Op1, Ptr1, Size1, IsVolatile1, SrcValue1, SrcValueOffset1,
                 SrcValueAlign1, SrcTBAAInfo1);
-  return isAlias(Ptr0, Size0, SrcValue0, SrcValueOffset0,
+  return isAlias(Ptr0, Size0, IsVolatile0, SrcValue0, SrcValueOffset0,
                  SrcValueAlign0, SrcTBAAInfo0,
-                 Ptr1, Size1, SrcValue1, SrcValueOffset1,
+                 Ptr1, Size1, IsVolatile1, SrcValue1, SrcValueOffset1,
                  SrcValueAlign1, SrcTBAAInfo1);
 }
 
 /// FindAliasInfo - Extracts the relevant alias information from the memory
-/// node.  Returns true if the operand was a load.
+/// node.  Returns true if the operand was a nonvolatile load.
 bool DAGCombiner::FindAliasInfo(SDNode *N,
-                                SDValue &Ptr, int64_t &Size,
+                                SDValue &Ptr, int64_t &Size, bool &IsVolatile,
                                 const Value *&SrcValue,
                                 int &SrcValueOffset,
                                 unsigned &SrcValueAlign,
@@ -10891,11 +10895,12 @@ bool DAGCombiner::FindAliasInfo(SDNode *N,
 
   Ptr = LS->getBasePtr();
   Size = LS->getMemoryVT().getSizeInBits() >> 3;
+  IsVolatile = LS->isVolatile();
   SrcValue = LS->getSrcValue();
   SrcValueOffset = LS->getSrcValueOffset();
   SrcValueAlign = LS->getOriginalAlignment();
   TBAAInfo = LS->getTBAAInfo();
-  return isa<LoadSDNode>(LS);
+  return isa<LoadSDNode>(LS) && !IsVolatile;
 }
 
 /// GatherAllAliases - Walk up chain skipping non-aliasing memory nodes,
@@ -10908,12 +10913,13 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDValue OriginalChain,
   // Get alias information for node.
   SDValue Ptr;
   int64_t Size;
+  bool IsVolatile;
   const Value *SrcValue;
   int SrcValueOffset;
   unsigned SrcValueAlign;
   const MDNode *SrcTBAAInfo;
-  bool IsLoad = FindAliasInfo(N, Ptr, Size, SrcValue, SrcValueOffset,
-                              SrcValueAlign, SrcTBAAInfo);
+  bool IsLoad = FindAliasInfo(N, Ptr, Size, IsVolatile, SrcValue,
+                              SrcValueOffset, SrcValueAlign, SrcTBAAInfo);
 
   // Starting off.
   Chains.push_back(OriginalChain);
@@ -10954,20 +10960,21 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDValue OriginalChain,
       // Get alias information for Chain.
       SDValue OpPtr;
       int64_t OpSize;
+      bool OpIsVolatile;
       const Value *OpSrcValue;
       int OpSrcValueOffset;
       unsigned OpSrcValueAlign;
       const MDNode *OpSrcTBAAInfo;
       bool IsOpLoad = FindAliasInfo(Chain.getNode(), OpPtr, OpSize,
-                                    OpSrcValue, OpSrcValueOffset,
+                                    OpIsVolatile, OpSrcValue, OpSrcValueOffset,
                                     OpSrcValueAlign,
                                     OpSrcTBAAInfo);
 
       // If chain is alias then stop here.
       if (!(IsLoad && IsOpLoad) &&
-          isAlias(Ptr, Size, SrcValue, SrcValueOffset, SrcValueAlign,
-                  SrcTBAAInfo,
-                  OpPtr, OpSize, OpSrcValue, OpSrcValueOffset,
+          isAlias(Ptr, Size, IsVolatile, SrcValue, SrcValueOffset,
+                  SrcValueAlign, SrcTBAAInfo,
+                  OpPtr, OpSize, OpIsVolatile, OpSrcValue, OpSrcValueOffset,
                   OpSrcValueAlign, OpSrcTBAAInfo)) {
         Aliases.push_back(Chain);
       } else {

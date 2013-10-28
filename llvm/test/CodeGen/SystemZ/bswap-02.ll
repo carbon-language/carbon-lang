@@ -1,6 +1,7 @@
 ; Test 32-bit byteswaps from memory to registers.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -combiner-alias-analysis \
+; RUN:   -combiner-global-alias-analysis | FileCheck %s
 
 declare i32 @llvm.bswap.i32(i32 %a)
 
