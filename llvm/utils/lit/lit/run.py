@@ -216,9 +216,10 @@ class Run(object):
                 queue_impl = multiprocessing.Queue
                 canceled_flag =  multiprocessing.Value('i', 0)
                 consumer = MultiprocessResultsConsumer(self, display, jobs)
-            except ImportError:
+            except:
                 # multiprocessing fails to initialize with certain OpenBSD and
                 # FreeBSD Python versions: http://bugs.python.org/issue3770
+                # Unfortunately the error raised also varies by platform.
                 self.lit_config.note('failed to initialize multiprocessing')
                 consumer = None
         if not consumer:
