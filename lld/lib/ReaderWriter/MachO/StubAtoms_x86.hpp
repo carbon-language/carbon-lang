@@ -142,6 +142,10 @@ public:
     return DefinedAtom::typeLazyPointer;
   }
 
+  virtual Alignment alignment() const { 
+    return Alignment(2); 
+  }
+  
   virtual uint64_t size() const {
     return 4;
   }
@@ -176,6 +180,10 @@ public:
     return DefinedAtom::typeGOT;
   }
 
+  virtual Alignment alignment() const { 
+    return Alignment(2); 
+  }
+  
   virtual uint64_t size() const {
     return 4;
   }
