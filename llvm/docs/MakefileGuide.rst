@@ -169,7 +169,7 @@ openable with the ``dlopen`` function and searchable with the ``dlsym`` function
 Linux and a few other platforms, it is required on systems like HP-UX and
 Darwin. You should use ``LOADABLE_MODULE`` for any shared library that you
 intend to be loaded into an tool via the ``-load`` option.  :ref:`Pass
-documentation <writing-an-llvm-pass-makefile>`_ has an example of why you might
+documentation <writing-an-llvm-pass-makefile>` has an example of why you might
 want to do this.
 
 Loadable Modules
