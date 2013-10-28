@@ -2675,54 +2675,13 @@ static bool checkOperandClass(CGIOperandList::OperandInfo &OI,
   return false;
 }
 
-/// ParseInstructions - Parse all of the instructions, inlining and resolving
-/// any fragments involved.  This populates the Instructions list with fully
-/// resolved instructions.
-void CodeGenDAGPatterns::ParseInstructions() {
-  std::vector<Record*> Instrs = Records.getAllDerivedDefinitions("Instruction");
+const DAGInstruction &CodeGenDAGPatterns::parseInstructionPattern(
+    CodeGenInstruction &CGI, ListInit *Pat, DAGInstMap &DAGInsts) {
 
-  for (unsigned i = 0, e = Instrs.size(); i != e; ++i) {
-    ListInit *LI = 0;
-
-    if (isa<ListInit>(Instrs[i]->getValueInit("Pattern")))
-      LI = Instrs[i]->getValueAsListInit("Pattern");
-
-    // If there is no pattern, only collect minimal information about the
-    // instruction for its operand list.  We have to assume that there is one
-    // result, as we have no detailed info. A pattern which references the
-    // null_frag operator is as-if no pattern were specified. Normally this
-    // is from a multiclass expansion w/ a SDPatternOperator passed in as
-    // null_frag.
-    if (!LI || LI->getSize() == 0 || hasNullFragReference(LI)) {
-      std::vector<Record*> Results;
-      std::vector<Record*> Operands;
-
-      CodeGenInstruction &InstInfo = Target.getInstruction(Instrs[i]);
-
-      if (InstInfo.Operands.size() != 0) {
-        if (InstInfo.Operands.NumDefs == 0) {
-          // These produce no results
-          for (unsigned j = 0, e = InstInfo.Operands.size(); j < e; ++j)
-            Operands.push_back(InstInfo.Operands[j].Rec);
-        } else {
-          // Assume the first operand is the result.
-          Results.push_back(InstInfo.Operands[0].Rec);
-
-          // The rest are inputs.
-          for (unsigned j = 1, e = InstInfo.Operands.size(); j < e; ++j)
-            Operands.push_back(InstInfo.Operands[j].Rec);
-        }
-      }
-
-      // Create and insert the instruction.
-      std::vector<Record*> ImpResults;
-      Instructions.insert(std::make_pair(Instrs[i],
-                          DAGInstruction(0, Results, Operands, ImpResults)));
-      continue;  // no pattern.
-    }
+    assert(!DAGInsts.count(CGI.TheDef) && "Instruction already parsed!");
 
     // Parse the instruction.
-    TreePattern *I = new TreePattern(Instrs[i], LI, true, *this);
+    TreePattern *I = new TreePattern(CGI.TheDef, Pat, true, *this);
     // Inline pattern fragments into it.
     I->InlinePatternFragments();
 
@@ -2761,7 +2720,6 @@ void CodeGenDAGPatterns::ParseInstructions() {
 
     // Parse the operands list from the (ops) list, validating it.
     assert(I->getArgList().empty() && "Args list should still be empty here!");
-    CodeGenInstruction &CGI = Target.getInstruction(Instrs[i]);
 
     // Check that all of the results occur first in the list.
     std::vector<Record*> Results;
@@ -2860,18 +2818,70 @@ void CodeGenDAGPatterns::ParseInstructions() {
     // Create and insert the instruction.
     // FIXME: InstImpResults should not be part of DAGInstruction.
     DAGInstruction TheInst(I, Results, Operands, InstImpResults);
-    Instructions.insert(std::make_pair(I->getRecord(), TheInst));
+    DAGInsts.insert(std::make_pair(I->getRecord(), TheInst));
 
     // Use a temporary tree pattern to infer all types and make sure that the
     // constructed result is correct.  This depends on the instruction already
-    // being inserted into the Instructions map.
+    // being inserted into the DAGInsts map.
     TreePattern Temp(I->getRecord(), ResultPattern, false, *this);
     Temp.InferAllTypes(&I->getNamedNodesMap());
 
-    DAGInstruction &TheInsertedInst = Instructions.find(I->getRecord())->second;
+    DAGInstruction &TheInsertedInst = DAGInsts.find(I->getRecord())->second;
     TheInsertedInst.setResultPattern(Temp.getOnlyTree());
 
-    DEBUG(I->dump());
+    return TheInsertedInst;
+  }
+
+/// ParseInstructions - Parse all of the instructions, inlining and resolving
+/// any fragments involved.  This populates the Instructions list with fully
+/// resolved instructions.
+void CodeGenDAGPatterns::ParseInstructions() {
+  std::vector<Record*> Instrs = Records.getAllDerivedDefinitions("Instruction");
+
+  for (unsigned i = 0, e = Instrs.size(); i != e; ++i) {
+    ListInit *LI = 0;
+
+    if (isa<ListInit>(Instrs[i]->getValueInit("Pattern")))
+      LI = Instrs[i]->getValueAsListInit("Pattern");
+
+    // If there is no pattern, only collect minimal information about the
+    // instruction for its operand list.  We have to assume that there is one
+    // result, as we have no detailed info. A pattern which references the
+    // null_frag operator is as-if no pattern were specified. Normally this
+    // is from a multiclass expansion w/ a SDPatternOperator passed in as
+    // null_frag.
+    if (!LI || LI->getSize() == 0 || hasNullFragReference(LI)) {
+      std::vector<Record*> Results;
+      std::vector<Record*> Operands;
+
+      CodeGenInstruction &InstInfo = Target.getInstruction(Instrs[i]);
+
+      if (InstInfo.Operands.size() != 0) {
+        if (InstInfo.Operands.NumDefs == 0) {
+          // These produce no results
+          for (unsigned j = 0, e = InstInfo.Operands.size(); j < e; ++j)
+            Operands.push_back(InstInfo.Operands[j].Rec);
+        } else {
+          // Assume the first operand is the result.
+          Results.push_back(InstInfo.Operands[0].Rec);
+
+          // The rest are inputs.
+          for (unsigned j = 1, e = InstInfo.Operands.size(); j < e; ++j)
+            Operands.push_back(InstInfo.Operands[j].Rec);
+        }
+      }
+
+      // Create and insert the instruction.
+      std::vector<Record*> ImpResults;
+      Instructions.insert(std::make_pair(Instrs[i],
+                          DAGInstruction(0, Results, Operands, ImpResults)));
+      continue;  // no pattern.
+    }
+
+    CodeGenInstruction &CGI = Target.getInstruction(Instrs[i]);
+    const DAGInstruction &DI = parseInstructionPattern(CGI, LI, Instructions);
+
+    DEBUG(DI.getPattern()->dump());
   }
 
   // If we can, convert the instructions to be patterns that are matched!
