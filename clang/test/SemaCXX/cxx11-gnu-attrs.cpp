@@ -1,4 +1,4 @@
-// RUN: %clang -cc1 -triple x86_64-unknown-unknown -std=c++11 -verify %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -std=c++11 -verify %s
 
 // Error cases.
 
