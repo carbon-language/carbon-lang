@@ -272,7 +272,7 @@ set(TARGET_TRIPLE "${LLVM_DEFAULT_TARGET_TRIPLE}")
 include(HandleLLVMOptions)
 
 # Verify that we can find a Python 2 interpreter.  Python 3 is unsupported.
-set(Python_ADDITIONAL_VERSIONS 2.7 2.6 2.5 2.4)
+set(Python_ADDITIONAL_VERSIONS 2.7 2.6 2.5)
 include(FindPythonInterp)
 if( NOT PYTHONINTERP_FOUND )
   message(FATAL_ERROR
