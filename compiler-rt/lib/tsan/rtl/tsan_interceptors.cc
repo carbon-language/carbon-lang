@@ -2191,9 +2191,15 @@ void InitializeInterceptors() {
 }
 
 void internal_start_thread(void(*func)(void *arg), void *arg) {
+  // Start the thread with signals blocked, otherwise it can steal users
+  // signals.
+  __sanitizer_kernel_sigset_t set, old;
+  internal_sigfillset(&set);
+  internal_sigprocmask(SIG_SETMASK, &set, &old);
   void *th;
   REAL(pthread_create)(&th, 0, (void*(*)(void *arg))func, arg);
   REAL(pthread_detach)(th);
+  internal_sigprocmask(SIG_SETMASK, &old, 0);
 }
 
 }  // namespace __tsan
