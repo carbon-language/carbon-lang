@@ -1,4 +1,4 @@
-; RUN: %lli_mcjit -extra-module=%p/cross-module-b.ir -disable-lazy-compilation=true -remote-mcjit -mcjit-remote-process=lli-child-target %s > /dev/null
+; RUN: %lli_mcjit -extra-module=%p/Inputs/cross-module-b.ll -disable-lazy-compilation=true -remote-mcjit -mcjit-remote-process=lli-child-target %s > /dev/null
 
 ; This fails because __main is not resolved in remote mcjit.
 ; XFAIL: cygwin,mingw32

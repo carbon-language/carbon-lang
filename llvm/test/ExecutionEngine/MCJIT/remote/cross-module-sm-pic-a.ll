@@ -1,4 +1,4 @@
-; RUN: %lli_mcjit -extra-module=%p/cross-module-b.ir -disable-lazy-compilation=true -remote-mcjit -mcjit-remote-process=lli-child-target -relocation-model=pic -code-model=small %s > /dev/null
+; RUN: %lli_mcjit -extra-module=%p/Inputs/cross-module-b.ll -disable-lazy-compilation=true -remote-mcjit -mcjit-remote-process=lli-child-target -relocation-model=pic -code-model=small %s > /dev/null
 ; XFAIL: mips, i686, i386, aarch64, arm
 
 declare i32 @FB()
