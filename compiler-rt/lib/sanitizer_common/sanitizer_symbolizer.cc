@@ -35,7 +35,7 @@ Symbolizer *Symbolizer::Get() {
 Symbolizer *Symbolizer::Disable() {
   CHECK_EQ(0, atomic_load(&symbolizer_, memory_order_acquire));
   Symbolizer *dummy_sym = new(symbolizer_allocator_) Symbolizer;
-  atomic_store(&symbolizer_, reinterpret_cast<uptr>(&dummy_sym),
+  atomic_store(&symbolizer_, reinterpret_cast<uptr>(dummy_sym),
                memory_order_release);
   return dummy_sym;
 }

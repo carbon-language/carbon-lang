@@ -20,7 +20,8 @@ namespace __sanitizer {
 
 Symbolizer *Symbolizer::CreateAndStore(const char *path_to_external) {
   Symbolizer *platform_symbolizer = PlatformInit(path_to_external);
-  if (!platform_symbolizer) return Disable();
+  if (!platform_symbolizer)
+    return Disable();
   atomic_store(&symbolizer_, reinterpret_cast<uptr>(platform_symbolizer),
                memory_order_release);
   return platform_symbolizer;
