@@ -320,9 +320,12 @@ A *requires-declaration* specifies the requirements that an importing translatio
     ``requires`` *feature-list*
 
   *feature-list*:
-    *identifier* (',' *identifier*)*
+    *feature* (',' *feature*)*
 
-The requirements clause allows specific modules or submodules to specify that they are only accessible with certain language dialects or on certain platforms. The feature list is a set of identifiers, defined below. If any of the features is not available in a given translation unit, that translation unit shall not import the module.
+  *feature*:
+    ``!``:sub:`opt` *identifier*
+
+The requirements clause allows specific modules or submodules to specify that they are only accessible with certain language dialects or on certain platforms. The feature list is a set of identifiers, defined below. If any of the features is not available in a given translation unit, that translation unit shall not import the module. The optional ``!`` indicates that a feature is incompatible with the module.
 
 The following features are defined:
 

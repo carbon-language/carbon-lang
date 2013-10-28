@@ -246,11 +246,11 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
   }
 
   // Check whether we can build this module at all.
-  StringRef Feature;
-  if (!Module->isAvailable(CI.getLangOpts(), CI.getTarget(), Feature)) {
+  clang::Module::Requirement Requirement;
+  if (!Module->isAvailable(CI.getLangOpts(), CI.getTarget(), Requirement)) {
     CI.getDiagnostics().Report(diag::err_module_unavailable)
       << Module->getFullModuleName()
-      << Feature;
+      << Requirement.second << Requirement.first;
 
     return false;
   }

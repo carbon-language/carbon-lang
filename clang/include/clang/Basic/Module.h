@@ -38,6 +38,7 @@ class FileEntry;
 class FileManager;
 class LangOptions;
 class TargetInfo;
+class IdentifierInfo;
   
 /// \brief Describes the name of a module.
 typedef SmallVector<std::pair<std::string, SourceLocation>, 2> ModuleId;
@@ -89,12 +90,15 @@ public:
   /// \brief The headers that are private to this module.
   llvm::SmallVector<const FileEntry *, 2> PrivateHeaders;
 
+  /// \brief An individual requirement: a feature name and a flag indicating
+  /// the required state of that feature.
+  typedef std::pair<std::string, bool> Requirement;
+
   /// \brief The set of language features required to use this module.
   ///
-  /// If any of these features is not present, the \c IsAvailable bit
-  /// will be false to indicate that this (sub)module is not
-  /// available.
-  SmallVector<std::string, 2> Requires;
+  /// If any of these requirements are not available, the \c IsAvailable bit
+  /// will be false to indicate that this (sub)module is not available.
+  SmallVector<Requirement, 2> Requirements;
 
   /// \brief Whether this module is available in the current
   /// translation unit.
@@ -267,12 +271,12 @@ public:
   ///
   /// \param Target The target options used for the current translation unit.
   ///
-  /// \param Feature If this module is unavailable, this parameter
-  /// will be set to one of the features that is required for use of
-  /// this module (but is not available).
+  /// \param Req If this module is unavailable, this parameter
+  /// will be set to one of the requirements that is not met for use of
+  /// this module.
   bool isAvailable(const LangOptions &LangOpts, 
                    const TargetInfo &Target,
-                   StringRef &Feature) const;
+                   Requirement &Req) const;
 
   /// \brief Determine whether this module is a submodule.
   bool isSubModule() const { return Parent != 0; }
@@ -366,12 +370,16 @@ public:
   /// \param Feature The feature that is required by this module (and
   /// its submodules).
   ///
+  /// \param RequiredState The required state of this feature: \c true
+  /// if it must be present, \c false if it must be absent.
+  ///
   /// \param LangOpts The set of language options that will be used to
   /// evaluate the availability of this feature.
   ///
   /// \param Target The target options that will be used to evaluate the
   /// availability of this feature.
-  void addRequirement(StringRef Feature, const LangOptions &LangOpts,
+  void addRequirement(StringRef Feature, bool RequiredState,
+                      const LangOptions &LangOpts,
                       const TargetInfo &Target);
 
   /// \brief Find the submodule with the given name.

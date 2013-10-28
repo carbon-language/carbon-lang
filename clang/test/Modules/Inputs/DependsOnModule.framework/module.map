@@ -8,6 +8,14 @@ framework module DependsOnModule {
     requires cplusplus
     header "cxx_other.h"
   }
+  explicit module NotCXX {
+    requires !cplusplus
+    header "not_cxx.h"
+  }
+  explicit module NotObjC {
+    requires !objc
+    header "not_objc.h"
+  }
 
   explicit framework module SubFramework {
     umbrella header "SubFramework.h"

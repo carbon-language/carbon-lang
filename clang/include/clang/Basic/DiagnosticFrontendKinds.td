@@ -136,7 +136,8 @@ def err_no_submodule_suggest : Error<
   "no submodule named %0 in module '%1'; did you mean '%2'?">;
 def warn_missing_submodule : Warning<"missing submodule '%0'">,
   InGroup<IncompleteUmbrella>;
-def err_module_unavailable : Error<"module '%0' requires feature '%1'">;
+def err_module_unavailable : Error<
+  "module '%0' %select{is incompatible with|requires}1 feature '%2'">;
 def warn_module_config_macro_undef : Warning<
   "%select{definition|#undef}0 of configuration macro '%1' has no effect on "
   "the import of '%2'; pass '%select{-D%1=...|-U%1}0' on the command line "

@@ -3912,7 +3912,7 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       if (!CurrentModule)
         break;
 
-      CurrentModule->addRequirement(Blob, Context.getLangOpts(),
+      CurrentModule->addRequirement(Blob, Record[0], Context.getLangOpts(),
                                     Context.getTargetInfo());
       break;
     }

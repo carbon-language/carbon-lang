@@ -773,6 +773,7 @@ namespace clang {
       EndOfFile,
       HeaderKeyword,
       Identifier,
+      Exclaim,
       ExcludeKeyword,
       ExplicitKeyword,
       ExportKeyword,
@@ -965,6 +966,10 @@ retry:
       
   case tok::star:
     Tok.Kind = MMToken::Star;
+    break;
+      
+  case tok::exclaim:
+    Tok.Kind = MMToken::Exclaim;
     break;
       
   case tok::string_literal: {
@@ -1392,8 +1397,11 @@ void ModuleMapParser::parseExternModuleDecl() {
 ///     'requires' feature-list
 ///
 ///   feature-list:
-///     identifier ',' feature-list
-///     identifier
+///     feature ',' feature-list
+///     feature
+///
+///   feature:
+///     '!'[opt] identifier
 void ModuleMapParser::parseRequiresDecl() {
   assert(Tok.is(MMToken::RequiresKeyword));
 
@@ -1402,6 +1410,12 @@ void ModuleMapParser::parseRequiresDecl() {
 
   // Parse the feature-list.
   do {
+    bool RequiredState = true;
+    if (Tok.is(MMToken::Exclaim)) {
+      RequiredState = false;
+      consumeToken();
+    }
+
     if (!Tok.is(MMToken::Identifier)) {
       Diags.Report(Tok.getLocation(), diag::err_mmap_expected_feature);
       HadError = true;
@@ -1413,7 +1427,8 @@ void ModuleMapParser::parseRequiresDecl() {
     consumeToken();
 
     // Add this feature.
-    ActiveModule->addRequirement(Feature, Map.LangOpts, *Map.Target);
+    ActiveModule->addRequirement(Feature, RequiredState,
+                                 Map.LangOpts, *Map.Target);
 
     if (!Tok.is(MMToken::Comma))
       break;
@@ -2077,6 +2092,7 @@ bool ModuleMapParser::parseModuleMapFile() {
     case MMToken::Comma:
     case MMToken::ConfigMacros:
     case MMToken::Conflict:
+    case MMToken::Exclaim:
     case MMToken::ExcludeKeyword:
     case MMToken::ExportKeyword:
     case MMToken::HeaderKeyword:

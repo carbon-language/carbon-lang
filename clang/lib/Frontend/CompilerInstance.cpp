@@ -1359,11 +1359,11 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
     }
 
     // Check whether this module is available.
-    StringRef Feature;
-    if (!Module->isAvailable(getLangOpts(), getTarget(), Feature)) {
+    clang::Module::Requirement Requirement;
+    if (!Module->isAvailable(getLangOpts(), getTarget(), Requirement)) {
       getDiagnostics().Report(ImportLoc, diag::err_module_unavailable)
         << Module->getFullModuleName()
-        << Feature
+        << Requirement.second << Requirement.first
         << SourceRange(Path.front().second, Path.back().second);
       LastModuleImportLoc = ImportLoc;
       LastModuleImportResult = ModuleLoadResult();

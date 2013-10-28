@@ -2278,7 +2278,8 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
 
   Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(SUBMODULE_REQUIRES));
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Feature
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // State
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));     // Feature
   unsigned RequiresAbbrev = Stream.EmitAbbrev(Abbrev);
 
   Abbrev = new BitCodeAbbrev();
@@ -2342,12 +2343,12 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
     Stream.EmitRecordWithBlob(DefinitionAbbrev, Record, Mod->Name);
     
     // Emit the requirements.
-    for (unsigned I = 0, N = Mod->Requires.size(); I != N; ++I) {
+    for (unsigned I = 0, N = Mod->Requirements.size(); I != N; ++I) {
       Record.clear();
       Record.push_back(SUBMODULE_REQUIRES);
+      Record.push_back(Mod->Requirements[I].second);
       Stream.EmitRecordWithBlob(RequiresAbbrev, Record,
-                                Mod->Requires[I].data(),
-                                Mod->Requires[I].size());
+                                Mod->Requirements[I].first);
     }
 
     // Emit the umbrella header, if there is one.
