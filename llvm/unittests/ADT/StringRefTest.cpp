@@ -248,6 +248,7 @@ TEST(StringRefTest, Trim) {
 
 TEST(StringRefTest, StartsWith) {
   StringRef Str("hello");
+  EXPECT_TRUE(Str.startswith(""));
   EXPECT_TRUE(Str.startswith("he"));
   EXPECT_FALSE(Str.startswith("helloworld"));
   EXPECT_FALSE(Str.startswith("hi"));
@@ -255,6 +256,7 @@ TEST(StringRefTest, StartsWith) {
 
 TEST(StringRefTest, EndsWith) {
   StringRef Str("hello");
+  EXPECT_TRUE(Str.endswith(""));
   EXPECT_TRUE(Str.endswith("lo"));
   EXPECT_FALSE(Str.endswith("helloworld"));
   EXPECT_FALSE(Str.endswith("worldhello"));
