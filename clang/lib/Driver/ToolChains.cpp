@@ -2127,9 +2127,9 @@ static bool IsUbuntu(enum Distro Distro) {
   return Distro >= UbuntuHardy && Distro <= UbuntuSaucy;
 }
 
-static Distro DetectDistro(llvm::Triple::ArchType Arch) {
+static Distro DetectDistro(StringRef Prefix, llvm::Triple::ArchType Arch) {
   OwningPtr<llvm::MemoryBuffer> File;
-  if (!llvm::MemoryBuffer::getFile("/etc/lsb-release", File)) {
+  if (!llvm::MemoryBuffer::getFile(Prefix + "/etc/lsb-release", File)) {
     StringRef Data = File.get()->getBuffer();
     SmallVector<StringRef, 8> Lines;
     Data.split(Lines, "\n");
@@ -2153,7 +2153,7 @@ static Distro DetectDistro(llvm::Triple::ArchType Arch) {
     return Version;
   }
 
-  if (!llvm::MemoryBuffer::getFile("/etc/redhat-release", File)) {
+  if (!llvm::MemoryBuffer::getFile(Prefix + "/etc/redhat-release", File)) {
     StringRef Data = File.get()->getBuffer();
     if (Data.startswith("Fedora release"))
       return Fedora;
@@ -2171,7 +2171,7 @@ static Distro DetectDistro(llvm::Triple::ArchType Arch) {
     return UnknownDistro;
   }
 
-  if (!llvm::MemoryBuffer::getFile("/etc/debian_version", File)) {
+  if (!llvm::MemoryBuffer::getFile(Prefix + "/etc/debian_version", File)) {
     StringRef Data = File.get()->getBuffer();
     if (Data[0] == '5')
       return DebianLenny;
@@ -2184,13 +2184,13 @@ static Distro DetectDistro(llvm::Triple::ArchType Arch) {
     return UnknownDistro;
   }
 
-  if (llvm::sys::fs::exists("/etc/SuSE-release"))
+  if (llvm::sys::fs::exists(Prefix + "/etc/SuSE-release"))
     return OpenSUSE;
 
-  if (llvm::sys::fs::exists("/etc/exherbo-release"))
+  if (llvm::sys::fs::exists(Prefix + "/etc/exherbo-release"))
     return Exherbo;
 
-  if (llvm::sys::fs::exists("/etc/arch-release"))
+  if (llvm::sys::fs::exists(Prefix + "/etc/arch-release"))
     return ArchLinux;
 
   return UnknownDistro;
@@ -2265,9 +2265,14 @@ static void addPathIfExists(Twine Path, ToolChain::path_list &Paths) {
 }
 
 static StringRef getMultilibDir(const llvm::Triple &Triple,
+                                bool IsBiarch,
                                 const ArgList &Args) {
-  if (!isMipsArch(Triple.getArch()))
+  if (!isMipsArch(Triple.getArch())) {
+    if (!IsBiarch)
+      return "lib";
+
     return Triple.isArch32Bit() ? "lib32" : "lib64";
+  }
 
   // lib32 directory has a special meaning on MIPS targets.
   // It contains N32 ABI binaries. Use this folder if produce
@@ -2297,7 +2302,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
 
   Linker = GetProgramPath("ld");
 
-  Distro Distro = DetectDistro(Arch);
+  Distro Distro = DetectDistro(SysRoot, Arch);
 
   if (IsOpenSUSE(Distro) || IsUbuntu(Distro)) {
     ExtraOpts.push_back("-z");
@@ -2346,8 +2351,15 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   // possible permutations of these directories, and seeing which ones it added
   // to the link paths.
   path_list &Paths = getFilePaths();
+  bool IsBiarch;
+  if (IsRedhat(Distro))
+    IsBiarch = true;
+  else if (GCCInstallation.isValid())
+    IsBiarch = !GCCInstallation.getBiarchSuffix().empty();
+  else
+    IsBiarch = true; // FIXME: is this a reasonable fallback?
 
-  const std::string Multilib = getMultilibDir(Triple, Args);
+  const std::string Multilib = getMultilibDir(Triple, IsBiarch, Args);
   const std::string MultiarchTriple = getMultiarchTriple(Triple, SysRoot);
 
   // Add the multilib suffixed paths where they are available.
@@ -2419,7 +2431,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     // Add the non-multilib suffixed paths (if potentially different).
     const std::string &LibPath = GCCInstallation.getParentLibPath();
     const llvm::Triple &GCCTriple = GCCInstallation.getTriple();
-    if (!GCCInstallation.getBiarchSuffix().empty())
+    if (IsBiarch)
       addPathIfExists(GCCInstallation.getInstallPath() +
                       GCCInstallation.getMultiLibSuffix(), Paths);
 
