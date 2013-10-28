@@ -4503,6 +4503,14 @@ SDValue SelectionDAG::getLoad(EVT VT, SDLoc dl,
                  TBAAInfo, Ranges);
 }
 
+SDValue SelectionDAG::getLoad(EVT VT, SDLoc dl,
+                              SDValue Chain, SDValue Ptr,
+                              MachineMemOperand *MMO) {
+  SDValue Undef = getUNDEF(Ptr.getValueType());
+  return getLoad(ISD::UNINDEXED, ISD::NON_EXTLOAD, VT, dl, Chain, Ptr, Undef,
+                 VT, MMO);
+}
+
 SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, SDLoc dl, EVT VT,
                                  SDValue Chain, SDValue Ptr,
                                  MachinePointerInfo PtrInfo, EVT MemVT,
@@ -4514,6 +4522,14 @@ SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, SDLoc dl, EVT VT,
                  TBAAInfo);
 }
 
+
+SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, SDLoc dl, EVT VT,
+                                 SDValue Chain, SDValue Ptr, EVT MemVT,
+                                 MachineMemOperand *MMO) {
+  SDValue Undef = getUNDEF(Ptr.getValueType());
+  return getLoad(ISD::UNINDEXED, ExtType, VT, dl, Chain, Ptr, Undef,
+                 MemVT, MMO);
+}
 
 SDValue
 SelectionDAG::getIndexedLoad(SDValue OrigLoad, SDLoc dl, SDValue Base,

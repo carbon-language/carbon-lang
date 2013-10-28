@@ -418,7 +418,8 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
         ScalarLoad = DAG.getLoad(WideVT, dl, Chain, BasePTR,
                                  LD->getPointerInfo().getWithOffset(Offset),
                                  LD->isVolatile(), LD->isNonTemporal(),
-                                 LD->isInvariant(), LD->getAlignment());
+                                 LD->isInvariant(), LD->getAlignment(),
+                                 LD->getTBAAInfo());
       } else {
         EVT LoadVT = WideVT;
         while (RemainingBytes < LoadBytes) {
@@ -428,7 +429,8 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
         ScalarLoad = DAG.getExtLoad(ISD::EXTLOAD, dl, WideVT, Chain, BasePTR,
                                     LD->getPointerInfo().getWithOffset(Offset),
                                     LoadVT, LD->isVolatile(),
-                                    LD->isNonTemporal(), LD->getAlignment());
+                                    LD->isNonTemporal(), LD->getAlignment(),
+                                    LD->getTBAAInfo());
       }
 
       RemainingBytes -= LoadBytes;
@@ -499,7 +501,7 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
                 Chain, BasePTR, LD->getPointerInfo().getWithOffset(Idx * Stride),
                 SrcVT.getScalarType(),
                 LD->isVolatile(), LD->isNonTemporal(),
-                LD->getAlignment());
+                LD->getAlignment(), LD->getTBAAInfo());
 
       BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
                          DAG.getConstant(Stride, BasePTR.getValueType()));
@@ -531,6 +533,7 @@ SDValue VectorLegalizer::ExpandStore(SDValue Op) {
   unsigned Alignment = ST->getAlignment();
   bool isVolatile = ST->isVolatile();
   bool isNonTemporal = ST->isNonTemporal();
+  const MDNode *TBAAInfo = ST->getTBAAInfo();
 
   unsigned NumElem = StVT.getVectorNumElements();
   // The type of the data we want to save
@@ -558,7 +561,7 @@ SDValue VectorLegalizer::ExpandStore(SDValue Op) {
     // This scalar TruncStore may be illegal, but we legalize it later.
     SDValue Store = DAG.getTruncStore(Chain, dl, Ex, BasePTR,
                ST->getPointerInfo().getWithOffset(Idx*Stride), MemSclVT,
-               isVolatile, isNonTemporal, Alignment);
+               isVolatile, isNonTemporal, Alignment, TBAAInfo);
 
     BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
                                DAG.getConstant(Stride, BasePTR.getValueType()));

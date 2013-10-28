@@ -765,9 +765,7 @@ SDValue DAGCombiner::PromoteOperand(SDValue Op, EVT PVT, bool &Replace) {
     Replace = true;
     return DAG.getExtLoad(ExtType, dl, PVT,
                           LD->getChain(), LD->getBasePtr(),
-                          LD->getPointerInfo(),
-                          MemVT, LD->isVolatile(),
-                          LD->isNonTemporal(), LD->getAlignment());
+                          MemVT, LD->getMemOperand());
   }
 
   unsigned Opc = Op.getOpcode();
@@ -988,9 +986,7 @@ bool DAGCombiner::PromoteLoad(SDValue Op) {
       : LD->getExtensionType();
     SDValue NewLD = DAG.getExtLoad(ExtType, dl, PVT,
                                    LD->getChain(), LD->getBasePtr(),
-                                   LD->getPointerInfo(),
-                                   MemVT, LD->isVolatile(),
-                                   LD->isNonTemporal(), LD->getAlignment());
+                                   MemVT, LD->getMemOperand());
     SDValue Result = DAG.getNode(ISD::TRUNCATE, dl, VT, NewLD);
 
     DEBUG(dbgs() << "\nPromoting ";
@@ -2759,9 +2755,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
          TLI.isLoadExtLegal(ISD::ZEXTLOAD, MemVT))) {
       SDValue ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, SDLoc(N0), VT,
                                        LN0->getChain(), LN0->getBasePtr(),
-                                       LN0->getPointerInfo(), MemVT,
-                                       LN0->isVolatile(), LN0->isNonTemporal(),
-                                       LN0->getAlignment());
+                                       MemVT, LN0->getMemOperand());
       AddToWorkList(N);
       CombineTo(N0.getNode(), ExtLoad, ExtLoad.getValue(1));
       return SDValue(N, 0);   // Return N so it doesn't get rechecked!
@@ -2780,11 +2774,8 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
         ((!LegalOperations && !LN0->isVolatile()) ||
          TLI.isLoadExtLegal(ISD::ZEXTLOAD, MemVT))) {
       SDValue ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, SDLoc(N0), VT,
-                                       LN0->getChain(),
-                                       LN0->getBasePtr(), LN0->getPointerInfo(),
-                                       MemVT,
-                                       LN0->isVolatile(), LN0->isNonTemporal(),
-                                       LN0->getAlignment());
+                                       LN0->getChain(), LN0->getBasePtr(),
+                                       MemVT, LN0->getMemOperand());
       AddToWorkList(N);
       CombineTo(N0.getNode(), ExtLoad, ExtLoad.getValue(1));
       return SDValue(N, 0);   // Return N so it doesn't get rechecked!
@@ -2814,10 +2805,8 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
 
           SDValue NewLoad =
             DAG.getExtLoad(ISD::ZEXTLOAD, SDLoc(LN0), LoadResultTy,
-                           LN0->getChain(), LN0->getBasePtr(),
-                           LN0->getPointerInfo(),
-                           ExtVT, LN0->isVolatile(), LN0->isNonTemporal(),
-                           LN0->getAlignment());
+                           LN0->getChain(), LN0->getBasePtr(), ExtVT,
+                           LN0->getMemOperand());
           AddToWorkList(N);
           CombineTo(LN0, NewLoad, NewLoad.getValue(1));
           return SDValue(N, 0);   // Return N so it doesn't get rechecked!
@@ -2853,7 +2842,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
                            LN0->getChain(), NewPtr,
                            LN0->getPointerInfo(),
                            ExtVT, LN0->isVolatile(), LN0->isNonTemporal(),
-                           Alignment);
+                           Alignment, LN0->getTBAAInfo());
           AddToWorkList(N);
           CombineTo(LN0, Load, Load.getValue(1));
           return SDValue(N, 0);   // Return N so it doesn't get rechecked!
@@ -4572,10 +4561,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
       LoadSDNode *LN0 = cast<LoadSDNode>(N0);
       SDValue ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, SDLoc(N), VT,
                                        LN0->getChain(),
-                                       LN0->getBasePtr(), LN0->getPointerInfo(),
-                                       N0.getValueType(),
-                                       LN0->isVolatile(), LN0->isNonTemporal(),
-                                       LN0->getAlignment());
+                                       LN0->getBasePtr(), N0.getValueType(),
+                                       LN0->getMemOperand());
       CombineTo(N, ExtLoad);
       SDValue Trunc = DAG.getNode(ISD::TRUNCATE, SDLoc(N0),
                                   N0.getValueType(), ExtLoad);
@@ -4596,10 +4583,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
         TLI.isLoadExtLegal(ISD::SEXTLOAD, MemVT)) {
       SDValue ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, SDLoc(N), VT,
                                        LN0->getChain(),
-                                       LN0->getBasePtr(), LN0->getPointerInfo(),
-                                       MemVT,
-                                       LN0->isVolatile(), LN0->isNonTemporal(),
-                                       LN0->getAlignment());
+                                       LN0->getBasePtr(), MemVT,
+                                       LN0->getMemOperand());
       CombineTo(N, ExtLoad);
       CombineTo(N0.getNode(),
                 DAG.getNode(ISD::TRUNCATE, SDLoc(N0),
@@ -4627,11 +4612,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
       if (DoXform) {
         SDValue ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, SDLoc(LN0), VT,
                                          LN0->getChain(), LN0->getBasePtr(),
-                                         LN0->getPointerInfo(),
                                          LN0->getMemoryVT(),
-                                         LN0->isVolatile(),
-                                         LN0->isNonTemporal(),
-                                         LN0->getAlignment());
+                                         LN0->getMemOperand());
         APInt Mask = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
         Mask = Mask.sext(VT.getSizeInBits());
         SDValue And = DAG.getNode(N0.getOpcode(), SDLoc(N), VT,
@@ -4865,10 +4847,8 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
       LoadSDNode *LN0 = cast<LoadSDNode>(N0);
       SDValue ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, SDLoc(N), VT,
                                        LN0->getChain(),
-                                       LN0->getBasePtr(), LN0->getPointerInfo(),
-                                       N0.getValueType(),
-                                       LN0->isVolatile(), LN0->isNonTemporal(),
-                                       LN0->getAlignment());
+                                       LN0->getBasePtr(), N0.getValueType(),
+                                       LN0->getMemOperand());
       CombineTo(N, ExtLoad);
       SDValue Trunc = DAG.getNode(ISD::TRUNCATE, SDLoc(N0),
                                   N0.getValueType(), ExtLoad);
@@ -4898,11 +4878,8 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
       if (DoXform) {
         SDValue ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, SDLoc(LN0), VT,
                                          LN0->getChain(), LN0->getBasePtr(),
-                                         LN0->getPointerInfo(),
                                          LN0->getMemoryVT(),
-                                         LN0->isVolatile(),
-                                         LN0->isNonTemporal(),
-                                         LN0->getAlignment());
+                                         LN0->getMemOperand());
         APInt Mask = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
         Mask = Mask.zext(VT.getSizeInBits());
         SDValue And = DAG.getNode(N0.getOpcode(), SDLoc(N), VT,
@@ -4929,10 +4906,8 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
         TLI.isLoadExtLegal(ISD::ZEXTLOAD, MemVT)) {
       SDValue ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, SDLoc(N), VT,
                                        LN0->getChain(),
-                                       LN0->getBasePtr(), LN0->getPointerInfo(),
-                                       MemVT,
-                                       LN0->isVolatile(), LN0->isNonTemporal(),
-                                       LN0->getAlignment());
+                                       LN0->getBasePtr(), MemVT,
+                                       LN0->getMemOperand());
       CombineTo(N, ExtLoad);
       CombineTo(N0.getNode(),
                 DAG.getNode(ISD::TRUNCATE, SDLoc(N0), N0.getValueType(),
@@ -5095,10 +5070,8 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
       LoadSDNode *LN0 = cast<LoadSDNode>(N0);
       SDValue ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, SDLoc(N), VT,
                                        LN0->getChain(),
-                                       LN0->getBasePtr(), LN0->getPointerInfo(),
-                                       N0.getValueType(),
-                                       LN0->isVolatile(), LN0->isNonTemporal(),
-                                       LN0->getAlignment());
+                                       LN0->getBasePtr(), N0.getValueType(),
+                                       LN0->getMemOperand());
       CombineTo(N, ExtLoad);
       SDValue Trunc = DAG.getNode(ISD::TRUNCATE, SDLoc(N0),
                                   N0.getValueType(), ExtLoad);
@@ -5119,9 +5092,7 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
     EVT MemVT = LN0->getMemoryVT();
     SDValue ExtLoad = DAG.getExtLoad(LN0->getExtensionType(), SDLoc(N),
                                      VT, LN0->getChain(), LN0->getBasePtr(),
-                                     LN0->getPointerInfo(), MemVT,
-                                     LN0->isVolatile(), LN0->isNonTemporal(),
-                                     LN0->getAlignment());
+                                     MemVT, LN0->getMemOperand());
     CombineTo(N, ExtLoad);
     CombineTo(N0.getNode(),
               DAG.getNode(ISD::TRUNCATE, SDLoc(N0),
@@ -5353,12 +5324,12 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
     Load =  DAG.getLoad(VT, SDLoc(N0), LN0->getChain(), NewPtr,
                         LN0->getPointerInfo().getWithOffset(PtrOff),
                         LN0->isVolatile(), LN0->isNonTemporal(),
-                        LN0->isInvariant(), NewAlign);
+                        LN0->isInvariant(), NewAlign, LN0->getTBAAInfo());
   else
     Load = DAG.getExtLoad(ExtType, SDLoc(N0), VT, LN0->getChain(),NewPtr,
                           LN0->getPointerInfo().getWithOffset(PtrOff),
                           ExtVT, LN0->isVolatile(), LN0->isNonTemporal(),
-                          NewAlign);
+                          NewAlign, LN0->getTBAAInfo());
 
   // Replace the old load's chain with the new load's chain.
   WorkListRemover DeadNodes(*this);
@@ -5456,10 +5427,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDValue ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, SDLoc(N), VT,
                                      LN0->getChain(),
-                                     LN0->getBasePtr(), LN0->getPointerInfo(),
-                                     EVT,
-                                     LN0->isVolatile(), LN0->isNonTemporal(),
-                                     LN0->getAlignment());
+                                     LN0->getBasePtr(), EVT,
+                                     LN0->getMemOperand());
     CombineTo(N, ExtLoad);
     CombineTo(N0.getNode(), ExtLoad, ExtLoad.getValue(1));
     AddToWorkList(ExtLoad.getNode());
@@ -5474,10 +5443,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDValue ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, SDLoc(N), VT,
                                      LN0->getChain(),
-                                     LN0->getBasePtr(), LN0->getPointerInfo(),
-                                     EVT,
-                                     LN0->isVolatile(), LN0->isNonTemporal(),
-                                     LN0->getAlignment());
+                                     LN0->getBasePtr(), EVT,
+                                     LN0->getMemOperand());
     CombineTo(N, ExtLoad);
     CombineTo(N0.getNode(), ExtLoad, ExtLoad.getValue(1));
     return SDValue(N, 0);   // Return N so it doesn't get rechecked!
@@ -5770,7 +5737,8 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
       SDValue Load = DAG.getLoad(VT, SDLoc(N), LN0->getChain(),
                                  LN0->getBasePtr(), LN0->getPointerInfo(),
                                  LN0->isVolatile(), LN0->isNonTemporal(),
-                                 LN0->isInvariant(), OrigAlign);
+                                 LN0->isInvariant(), OrigAlign,
+                                 LN0->getTBAAInfo());
       AddToWorkList(N);
       CombineTo(N0.getNode(),
                 DAG.getNode(ISD::BITCAST, SDLoc(N0),
@@ -6761,10 +6729,8 @@ SDValue DAGCombiner::visitFP_EXTEND(SDNode *N) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDValue ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, SDLoc(N), VT,
                                      LN0->getChain(),
-                                     LN0->getBasePtr(), LN0->getPointerInfo(),
-                                     N0.getValueType(),
-                                     LN0->isVolatile(), LN0->isNonTemporal(),
-                                     LN0->getAlignment());
+                                     LN0->getBasePtr(), N0.getValueType(),
+                                     LN0->getMemOperand());
     CombineTo(N, ExtLoad);
     CombineTo(N0.getNode(),
               DAG.getNode(ISD::FP_ROUND, SDLoc(N0),
@@ -7554,7 +7520,8 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
                               LD->getValueType(0),
                               Chain, Ptr, LD->getPointerInfo(),
                               LD->getMemoryVT(),
-                              LD->isVolatile(), LD->isNonTemporal(), Align);
+                              LD->isVolatile(), LD->isNonTemporal(), Align,
+                              LD->getTBAAInfo());
         return CombineTo(N, NewLoad, SDValue(NewLoad.getNode(), 1), true);
       }
     }
@@ -7573,17 +7540,12 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
       // Replace the chain to void dependency.
       if (LD->getExtensionType() == ISD::NON_EXTLOAD) {
         ReplLoad = DAG.getLoad(N->getValueType(0), SDLoc(LD),
-                               BetterChain, Ptr, LD->getPointerInfo(),
-                               LD->isVolatile(), LD->isNonTemporal(),
-                               LD->isInvariant(), LD->getAlignment());
+                               BetterChain, Ptr, LD->getMemOperand());
       } else {
         ReplLoad = DAG.getExtLoad(LD->getExtensionType(), SDLoc(LD),
                                   LD->getValueType(0),
-                                  BetterChain, Ptr, LD->getPointerInfo(),
-                                  LD->getMemoryVT(),
-                                  LD->isVolatile(),
-                                  LD->isNonTemporal(),
-                                  LD->getAlignment());
+                                  BetterChain, Ptr, LD->getMemoryVT(),
+                                  LD->getMemOperand());
       }
 
       // Create token factor to keep old chain connected.
@@ -8393,7 +8355,8 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
                                   LD->getChain(), NewPtr,
                                   LD->getPointerInfo().getWithOffset(PtrOff),
                                   LD->isVolatile(), LD->isNonTemporal(),
-                                  LD->isInvariant(), NewAlign);
+                                  LD->isInvariant(), NewAlign,
+                                  LD->getTBAAInfo());
       SDValue NewVal = DAG.getNode(Opc, SDLoc(Value), NewVT, NewLD,
                                    DAG.getConstant(NewImm, NewVT));
       SDValue NewST = DAG.getStore(Chain, SDLoc(N),
@@ -9053,7 +9016,8 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
          TLI.isOperationLegalOrCustom(ISD::STORE, SVT)))
       return DAG.getStore(Chain, SDLoc(N), Value.getOperand(0),
                           Ptr, ST->getPointerInfo(), ST->isVolatile(),
-                          ST->isNonTemporal(), OrigAlign);
+                          ST->isNonTemporal(), OrigAlign,
+                          ST->getTBAAInfo());
   }
 
   // Turn 'store undef, Ptr' -> nothing.
@@ -9081,8 +9045,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
           Tmp = DAG.getConstant((uint32_t)CFP->getValueAPF().
                               bitcastToAPInt().getZExtValue(), MVT::i32);
           return DAG.getStore(Chain, SDLoc(N), Tmp,
-                              Ptr, ST->getPointerInfo(), ST->isVolatile(),
-                              ST->isNonTemporal(), ST->getAlignment());
+                              Ptr, ST->getMemOperand());
         }
         break;
       case MVT::f64:
@@ -9092,8 +9055,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
           Tmp = DAG.getConstant(CFP->getValueAPF().bitcastToAPInt().
                                 getZExtValue(), MVT::i64);
           return DAG.getStore(Chain, SDLoc(N), Tmp,
-                              Ptr, ST->getPointerInfo(), ST->isVolatile(),
-                              ST->isNonTemporal(), ST->getAlignment());
+                              Ptr, ST->getMemOperand());
         }
 
         if (!ST->isVolatile() &&
@@ -9109,18 +9071,19 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
           unsigned Alignment = ST->getAlignment();
           bool isVolatile = ST->isVolatile();
           bool isNonTemporal = ST->isNonTemporal();
+          const MDNode *TBAAInfo = ST->getTBAAInfo();
 
           SDValue St0 = DAG.getStore(Chain, SDLoc(ST), Lo,
                                      Ptr, ST->getPointerInfo(),
                                      isVolatile, isNonTemporal,
-                                     ST->getAlignment());
+                                     ST->getAlignment(), TBAAInfo);
           Ptr = DAG.getNode(ISD::ADD, SDLoc(N), Ptr.getValueType(), Ptr,
                             DAG.getConstant(4, Ptr.getValueType()));
           Alignment = MinAlign(Alignment, 4U);
           SDValue St1 = DAG.getStore(Chain, SDLoc(ST), Hi,
                                      Ptr, ST->getPointerInfo().getWithOffset(4),
                                      isVolatile, isNonTemporal,
-                                     Alignment);
+                                     Alignment, TBAAInfo);
           return DAG.getNode(ISD::TokenFactor, SDLoc(N), MVT::Other,
                              St0, St1);
         }
@@ -9136,7 +9099,8 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
       if (Align > ST->getAlignment())
         return DAG.getTruncStore(Chain, SDLoc(N), Value,
                                  Ptr, ST->getPointerInfo(), ST->getMemoryVT(),
-                                 ST->isVolatile(), ST->isNonTemporal(), Align);
+                                 ST->isVolatile(), ST->isNonTemporal(), Align,
+                                 ST->getTBAAInfo());
     }
   }
 
@@ -9159,14 +9123,10 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
       // Replace the chain to avoid dependency.
       if (ST->isTruncatingStore()) {
         ReplStore = DAG.getTruncStore(BetterChain, SDLoc(N), Value, Ptr,
-                                      ST->getPointerInfo(),
-                                      ST->getMemoryVT(), ST->isVolatile(),
-                                      ST->isNonTemporal(), ST->getAlignment());
+                                      ST->getMemoryVT(), ST->getMemOperand());
       } else {
         ReplStore = DAG.getStore(BetterChain, SDLoc(N), Value, Ptr,
-                                 ST->getPointerInfo(),
-                                 ST->isVolatile(), ST->isNonTemporal(),
-                                 ST->getAlignment());
+                                 ST->getMemOperand());
       }
 
       // Create token to keep both nodes around.
@@ -9199,9 +9159,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
     AddToWorkList(Value.getNode());
     if (Shorter.getNode())
       return DAG.getTruncStore(Chain, SDLoc(N), Shorter,
-                               Ptr, ST->getPointerInfo(), ST->getMemoryVT(),
-                               ST->isVolatile(), ST->isNonTemporal(),
-                               ST->getAlignment());
+                               Ptr, ST->getMemoryVT(), ST->getMemOperand());
 
     // Otherwise, see if we can simplify the operation with
     // SimplifyDemandedBits, which only works if the value has a single use.
@@ -9232,9 +9190,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
       TLI.isTruncStoreLegal(Value.getOperand(0).getValueType(),
                             ST->getMemoryVT())) {
     return DAG.getTruncStore(Chain, SDLoc(N), Value.getOperand(0),
-                             Ptr, ST->getPointerInfo(), ST->getMemoryVT(),
-                             ST->isVolatile(), ST->isNonTemporal(),
-                             ST->getAlignment());
+                             Ptr, ST->getMemoryVT(), ST->getMemOperand());
   }
 
   // Only perform this optimization before the types are legal, because we
@@ -9492,13 +9448,14 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
         ? ISD::ZEXTLOAD : ISD::EXTLOAD;
       Load = DAG.getExtLoad(ExtType, SDLoc(N), NVT, LN0->getChain(),
                             NewPtr, LN0->getPointerInfo().getWithOffset(PtrOff),
-                            LVT, LN0->isVolatile(), LN0->isNonTemporal(),Align);
+                            LVT, LN0->isVolatile(), LN0->isNonTemporal(),
+                            Align, LN0->getTBAAInfo());
       Chain = Load.getValue(1);
     } else {
       Load = DAG.getLoad(LVT, SDLoc(N), LN0->getChain(), NewPtr,
                          LN0->getPointerInfo().getWithOffset(PtrOff),
                          LN0->isVolatile(), LN0->isNonTemporal(),
-                         LN0->isInvariant(), Align);
+                         LN0->isInvariant(), Align, LN0->getTBAAInfo());
       Chain = Load.getValue(1);
       if (NVT.bitsLT(LVT))
         Load = DAG.getNode(ISD::TRUNCATE, SDLoc(N), NVT, Load);
@@ -10437,7 +10394,7 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
     if (LLD->getExtensionType() == ISD::NON_EXTLOAD) {
       Load = DAG.getLoad(TheSelect->getValueType(0),
                          SDLoc(TheSelect),
-                         // FIXME: Discards pointer info.
+                         // FIXME: Discards pointer and TBAA info.
                          LLD->getChain(), Addr, MachinePointerInfo(),
                          LLD->isVolatile(), LLD->isNonTemporal(),
                          LLD->isInvariant(), LLD->getAlignment());
@@ -10446,7 +10403,7 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
                             RLD->getExtensionType() : LLD->getExtensionType(),
                             SDLoc(TheSelect),
                             TheSelect->getValueType(0),
-                            // FIXME: Discards pointer info.
+                            // FIXME: Discards pointer and TBAA info.
                             LLD->getChain(), Addr, MachinePointerInfo(),
                             LLD->getMemoryVT(), LLD->isVolatile(),
                             LLD->isNonTemporal(), LLD->getAlignment());

@@ -517,7 +517,8 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_LOAD(SDNode *N) {
     NewL = DAG.getLoad(L->getAddressingMode(), L->getExtensionType(),
                        NVT, dl, L->getChain(), L->getBasePtr(), L->getOffset(),
                        L->getPointerInfo(), NVT, L->isVolatile(),
-                       L->isNonTemporal(), false, L->getAlignment());
+                       L->isNonTemporal(), false, L->getAlignment(),
+                       L->getTBAAInfo());
     // Legalized the chain result - switch anything that used the old chain to
     // use the new one.
     ReplaceValueWith(SDValue(N, 1), NewL.getValue(1));
@@ -529,7 +530,8 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_LOAD(SDNode *N) {
                      L->getMemoryVT(), dl, L->getChain(),
                      L->getBasePtr(), L->getOffset(), L->getPointerInfo(),
                      L->getMemoryVT(), L->isVolatile(),
-                     L->isNonTemporal(), false, L->getAlignment());
+                     L->isNonTemporal(), false, L->getAlignment(),
+                     L->getTBAAInfo());
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
   ReplaceValueWith(SDValue(N, 1), NewL.getValue(1));
@@ -767,9 +769,7 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_STORE(SDNode *N, unsigned OpNo) {
     Val = GetSoftenedFloat(Val);
 
   return DAG.getStore(ST->getChain(), dl, Val, ST->getBasePtr(),
-                      ST->getPointerInfo(),
-                      ST->isVolatile(), ST->isNonTemporal(),
-                      ST->getAlignment());
+                      ST->getMemOperand());
 }
 
 
@@ -1160,8 +1160,7 @@ void DAGTypeLegalizer::ExpandFloatRes_LOAD(SDNode *N, SDValue &Lo,
   assert(LD->getMemoryVT().bitsLE(NVT) && "Float type not round?");
 
   Hi = DAG.getExtLoad(LD->getExtensionType(), dl, NVT, Chain, Ptr,
-                      LD->getPointerInfo(), LD->getMemoryVT(), LD->isVolatile(),
-                      LD->isNonTemporal(), LD->getAlignment());
+                      LD->getMemoryVT(), LD->getMemOperand());
 
   // Remember the chain.
   Chain = Hi.getValue(1);
@@ -1483,7 +1482,5 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_STORE(SDNode *N, unsigned OpNo) {
   GetExpandedOp(ST->getValue(), Lo, Hi);
 
   return DAG.getTruncStore(Chain, SDLoc(N), Hi, Ptr,
-                           ST->getPointerInfo(),
-                           ST->getMemoryVT(), ST->isVolatile(),
-                           ST->isNonTemporal(), ST->getAlignment());
+                           ST->getMemoryVT(), ST->getMemOperand());
 }

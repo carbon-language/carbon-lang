@@ -754,11 +754,16 @@ public:
                   MachinePointerInfo PtrInfo, bool isVolatile,
                   bool isNonTemporal, bool isInvariant, unsigned Alignment,
                   const MDNode *TBAAInfo = 0, const MDNode *Ranges = 0);
+  SDValue getLoad(EVT VT, SDLoc dl, SDValue Chain, SDValue Ptr,
+                  MachineMemOperand *MMO);
   SDValue getExtLoad(ISD::LoadExtType ExtType, SDLoc dl, EVT VT,
                      SDValue Chain, SDValue Ptr, MachinePointerInfo PtrInfo,
                      EVT MemVT, bool isVolatile,
                      bool isNonTemporal, unsigned Alignment,
                      const MDNode *TBAAInfo = 0);
+  SDValue getExtLoad(ISD::LoadExtType ExtType, SDLoc dl, EVT VT,
+                     SDValue Chain, SDValue Ptr, EVT MemVT,
+                     MachineMemOperand *MMO);
   SDValue getIndexedLoad(SDValue OrigLoad, SDLoc dl, SDValue Base,
                          SDValue Offset, ISD::MemIndexedMode AM);
   SDValue getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
