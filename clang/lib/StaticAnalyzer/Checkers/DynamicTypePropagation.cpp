@@ -1,4 +1,4 @@
-//== DynamicTypePropagation.cpp ----------------------------------- -*- C++ -*--=//
+//== DynamicTypePropagation.cpp -------------------------------- -*- C++ -*--=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -62,7 +62,7 @@ void DynamicTypePropagation::checkPreCall(const CallEvent &Call,
   if (const CXXConstructorCall *Ctor = dyn_cast<CXXConstructorCall>(&Call)) {
     // C++11 [class.cdtor]p4: When a virtual function is called directly or
     //   indirectly from a constructor or from a destructor, including during
-    //   the construction or destruction of the class’s non-static data members,
+    //   the construction or destruction of the class's non-static data members,
     //   and the object to which the call applies is the object under
     //   construction or destruction, the function called is the final overrider
     //   in the constructor's or destructor's class and not one overriding it in
