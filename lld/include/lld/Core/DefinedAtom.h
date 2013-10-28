@@ -84,7 +84,7 @@ class File;
 ///  C function place in custom section:  __attribute__((section("__foo")))
 ///                                       void foo() {} <br>
 ///    name=foo, type=code, perm=r_x, scope=global,
-///    sectionChoice=customRequired, sectionName=__foo
+///    sectionChoice=customRequired, custonSectionName=__foo
 ///
 class DefinedAtom : public Atom {
 public:
