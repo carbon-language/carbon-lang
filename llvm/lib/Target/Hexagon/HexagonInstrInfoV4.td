@@ -3390,4 +3390,3 @@ def : Pat<(i32 (load FoldGlobalAddrGP:$addr)),
 def : Pat<(atomic_load_32 FoldGlobalAddrGP:$addr),
           (i32 (LDriw_abs_V4 FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
-

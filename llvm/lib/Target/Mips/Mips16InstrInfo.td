@@ -1869,4 +1869,3 @@ let neverHasSideEffects = 1, isNotDuplicable = 1 in
 def CONSTPOOL_ENTRY :
 MipsPseudo16<(outs), (ins cpinst_operand:$instid, cpinst_operand:$cpidx,
                       i32imm:$size), "foo", []>;
-
