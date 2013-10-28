@@ -118,14 +118,14 @@ SIInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
   } else if (AMDGPU::VReg_32RegClass.contains(DestReg)) {
     assert(AMDGPU::VReg_32RegClass.contains(SrcReg) ||
-	   AMDGPU::SReg_32RegClass.contains(SrcReg));
+           AMDGPU::SReg_32RegClass.contains(SrcReg));
     BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), DestReg)
             .addReg(SrcReg, getKillRegState(KillSrc));
     return;
 
   } else if (AMDGPU::VReg_64RegClass.contains(DestReg)) {
     assert(AMDGPU::VReg_64RegClass.contains(SrcReg) ||
-	   AMDGPU::SReg_64RegClass.contains(SrcReg));
+           AMDGPU::SReg_64RegClass.contains(SrcReg));
     Opcode = AMDGPU::V_MOV_B32_e32;
     SubIndices = Sub0_1;
 
@@ -136,19 +136,19 @@ SIInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
   } else if (AMDGPU::VReg_128RegClass.contains(DestReg)) {
     assert(AMDGPU::VReg_128RegClass.contains(SrcReg) ||
-	   AMDGPU::SReg_128RegClass.contains(SrcReg));
+           AMDGPU::SReg_128RegClass.contains(SrcReg));
     Opcode = AMDGPU::V_MOV_B32_e32;
     SubIndices = Sub0_3;
 
   } else if (AMDGPU::VReg_256RegClass.contains(DestReg)) {
     assert(AMDGPU::VReg_256RegClass.contains(SrcReg) ||
-	   AMDGPU::SReg_256RegClass.contains(SrcReg));
+           AMDGPU::SReg_256RegClass.contains(SrcReg));
     Opcode = AMDGPU::V_MOV_B32_e32;
     SubIndices = Sub0_7;
 
   } else if (AMDGPU::VReg_512RegClass.contains(DestReg)) {
     assert(AMDGPU::VReg_512RegClass.contains(SrcReg) ||
-	   AMDGPU::SReg_512RegClass.contains(SrcReg));
+           AMDGPU::SReg_512RegClass.contains(SrcReg));
     Opcode = AMDGPU::V_MOV_B32_e32;
     SubIndices = Sub0_15;
 
