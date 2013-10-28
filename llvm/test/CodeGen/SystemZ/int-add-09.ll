@@ -7,7 +7,7 @@
 define void @f1(i128 *%aptr) {
 ; CHECK-LABEL: f1:
 ; CHECK: algfi {{%r[0-5]}}, 1
-; CHECK: alcgr
+; CHECK: alcg
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 128
@@ -20,7 +20,7 @@ define void @f1(i128 *%aptr) {
 define void @f2(i128 *%aptr) {
 ; CHECK-LABEL: f2:
 ; CHECK: algfi {{%r[0-5]}}, 4294967295
-; CHECK: alcgr
+; CHECK: alcg
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 128
@@ -33,7 +33,7 @@ define void @f2(i128 *%aptr) {
 define void @f3(i128 *%aptr) {
 ; CHECK-LABEL: f3:
 ; CHECK: algr
-; CHECK: alcgr
+; CHECK: alcg
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 128
@@ -46,7 +46,7 @@ define void @f3(i128 *%aptr) {
 define void @f4(i128 *%aptr) {
 ; CHECK-LABEL: f4:
 ; CHECK: algr
-; CHECK: alcgr
+; CHECK: alcg
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 128

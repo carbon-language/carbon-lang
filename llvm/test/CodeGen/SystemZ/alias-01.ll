@@ -1,7 +1,6 @@
 ; Test 32-bit ANDs in which the second operand is variable.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu -combiner-alias-analysis \
-; RUN:   -combiner-global-alias-analysis | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
 ; Check that there are no spills.
 define void @f1(<16 x i32> *%src1, <16 x float> *%dest) {

@@ -7,7 +7,7 @@
 define void @f1(i128 *%aptr, i32 %b) {
 ; CHECK-LABEL: f1:
 ; CHECK: algfr {{%r[0-5]}}, %r3
-; CHECK: alcgr
+; CHECK: alcg
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 127
@@ -21,7 +21,7 @@ define void @f1(i128 *%aptr, i32 %b) {
 define void @f2(i128 *%aptr, i64 %b) {
 ; CHECK-LABEL: f2:
 ; CHECK: algfr {{%r[0-5]}}, %r3
-; CHECK: alcgr
+; CHECK: alcg
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 127
@@ -37,7 +37,7 @@ define void @f2(i128 *%aptr, i64 %b) {
 define void @f3(i128 *%aptr, i64 %b) {
 ; CHECK-LABEL: f3:
 ; CHECK: algfr {{%r[0-5]}}, %r3
-; CHECK: alcgr
+; CHECK: alcg
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 127
@@ -52,7 +52,7 @@ define void @f3(i128 *%aptr, i64 %b) {
 define void @f4(i128 *%aptr, i32 *%bsrc) {
 ; CHECK-LABEL: f4:
 ; CHECK: algf {{%r[0-5]}}, 0(%r3)
-; CHECK: alcgr
+; CHECK: alcg
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 127
@@ -67,7 +67,7 @@ define void @f4(i128 *%aptr, i32 *%bsrc) {
 define void @f5(i128 *%aptr, i32 *%bsrc) {
 ; CHECK-LABEL: f5:
 ; CHECK: algf {{%r[0-5]}}, 524284(%r3)
-; CHECK: alcgr
+; CHECK: alcg
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 127
@@ -85,7 +85,7 @@ define void @f6(i128 *%aptr, i32 *%bsrc) {
 ; CHECK-LABEL: f6:
 ; CHECK: agfi %r3, 524288
 ; CHECK: algf {{%r[0-5]}}, 0(%r3)
-; CHECK: alcgr
+; CHECK: alcg
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 127
@@ -101,7 +101,7 @@ define void @f6(i128 *%aptr, i32 *%bsrc) {
 define void @f7(i128 *%aptr, i32 *%bsrc) {
 ; CHECK-LABEL: f7:
 ; CHECK: algf {{%r[0-5]}}, -4(%r3)
-; CHECK: alcgr
+; CHECK: alcg
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 127
@@ -117,7 +117,7 @@ define void @f7(i128 *%aptr, i32 *%bsrc) {
 define void @f8(i128 *%aptr, i32 *%bsrc) {
 ; CHECK-LABEL: f8:
 ; CHECK: algf {{%r[0-5]}}, -524288(%r3)
-; CHECK: alcgr
+; CHECK: alcg
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 127
@@ -135,7 +135,7 @@ define void @f9(i128 *%aptr, i32 *%bsrc) {
 ; CHECK-LABEL: f9:
 ; CHECK: agfi %r3, -524292
 ; CHECK: algf {{%r[0-5]}}, 0(%r3)
-; CHECK: alcgr
+; CHECK: alcg
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 127
