@@ -1,4 +1,4 @@
-; RUN: %lli_mcjit -extra-modules=%p/multi-module-b.ir,%p/multi-module-c.ir %s > /dev/null
+; RUN: %lli_mcjit -extra-module=%p/multi-module-b.ir -extra-module=%p/multi-module-c.ir %s > /dev/null
 
 declare i32 @FB()
 

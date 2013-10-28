@@ -1,4 +1,4 @@
-; RUN: %lli_mcjit -extra-modules=%p/multi-module-eh-b.ir %s
+; RUN: %lli_mcjit -extra-module=%p/multi-module-eh-b.ir %s
 ; XFAIL: arm, cygwin, win32, mingw
 declare i8* @__cxa_allocate_exception(i64)
 declare void @__cxa_throw(i8*, i8*, i8*)
