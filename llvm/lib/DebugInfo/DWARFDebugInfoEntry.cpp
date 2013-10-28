@@ -96,41 +96,8 @@ bool DWARFDebugInfoEntryMinimal::extractFast(const DWARFUnit *U,
                                              uint32_t *OffsetPtr) {
   Offset = *OffsetPtr;
   DataExtractor DebugInfoData = U->getDebugInfoExtractor();
-  uint64_t AbbrCode = DebugInfoData.getULEB128(OffsetPtr);
-  if (0 == AbbrCode) {
-    // NULL debug tag entry.
-    AbbrevDecl = NULL;
-    return true;
-  }
-  AbbrevDecl = U->getAbbreviations()->getAbbreviationDeclaration(AbbrCode);
-  assert(AbbrevDecl);
-  ArrayRef<uint8_t> FixedFormSizes = DWARFFormValue::getFixedFormSizes(
-      U->getAddressByteSize(), U->getVersion());
-  assert(FixedFormSizes.size() > 0);
-
-  // Skip all data in the .debug_info for the attributes
-  for (uint32_t i = 0, n = AbbrevDecl->getNumAttributes(); i < n; ++i) {
-    uint16_t Form = AbbrevDecl->getFormByIndex(i);
-
-    uint8_t FixedFormSize =
-        (Form < FixedFormSizes.size()) ? FixedFormSizes[Form] : 0;
-    if (FixedFormSize)
-      *OffsetPtr += FixedFormSize;
-    else if (!DWARFFormValue::skipValue(Form, DebugInfoData, OffsetPtr, U)) {
-      // Restore the original offset.
-      *OffsetPtr = Offset;
-      return false;
-    }
-  }
-  return true;
-}
-
-bool DWARFDebugInfoEntryMinimal::extract(const DWARFUnit *U,
-                                         uint32_t *OffsetPtr) {
-  DataExtractor DebugInfoData = U->getDebugInfoExtractor();
-  const uint32_t UEndOffset = U->getNextUnitOffset();
-  Offset = *OffsetPtr;
-  if ((Offset >= UEndOffset) || !DebugInfoData.isValidOffset(Offset))
+  uint32_t UEndOffset = U->getNextUnitOffset();
+  if (Offset >= UEndOffset || !DebugInfoData.isValidOffset(Offset))
     return false;
   uint64_t AbbrCode = DebugInfoData.getULEB128(OffsetPtr);
   if (0 == AbbrCode) {
@@ -144,26 +111,19 @@ bool DWARFDebugInfoEntryMinimal::extract(const DWARFUnit *U,
     *OffsetPtr = Offset;
     return false;
   }
-  bool IsCompileUnitTag = (AbbrevDecl->getTag() == DW_TAG_compile_unit);
-  if (IsCompileUnitTag)
-    const_cast<DWARFUnit *>(U)->setBaseAddress(0);
+  ArrayRef<uint8_t> FixedFormSizes = DWARFFormValue::getFixedFormSizes(
+      U->getAddressByteSize(), U->getVersion());
+  assert(FixedFormSizes.size() > 0);
 
   // Skip all data in the .debug_info for the attributes
   for (uint32_t i = 0, n = AbbrevDecl->getNumAttributes(); i < n; ++i) {
-    uint16_t Attr = AbbrevDecl->getAttrByIndex(i);
     uint16_t Form = AbbrevDecl->getFormByIndex(i);
 
-    if (IsCompileUnitTag &&
-        ((Attr == DW_AT_entry_pc) || (Attr == DW_AT_low_pc))) {
-      DWARFFormValue FormValue(Form);
-      if (FormValue.extractValue(DebugInfoData, OffsetPtr, U)) {
-        if (Attr == DW_AT_low_pc || Attr == DW_AT_entry_pc) {
-          Optional<uint64_t> BaseAddr = FormValue.getAsAddress(U);
-          if (BaseAddr.hasValue())
-            const_cast<DWARFUnit *>(U)->setBaseAddress(BaseAddr.getValue());
-        }
-      }
-    } else if (!DWARFFormValue::skipValue(Form, DebugInfoData, OffsetPtr, U)) {
+    uint8_t FixedFormSize =
+        (Form < FixedFormSizes.size()) ? FixedFormSizes[Form] : 0;
+    if (FixedFormSize)
+      *OffsetPtr += FixedFormSize;
+    else if (!DWARFFormValue::skipValue(Form, DebugInfoData, OffsetPtr, U)) {
       // Restore the original offset.
       *OffsetPtr = Offset;
       return false;
@@ -323,7 +283,7 @@ DWARFDebugInfoEntryMinimal::getSubroutineName(const DWARFUnit *U) const {
       getAttributeValueAsReference(U, DW_AT_specification, -1U);
   if (spec_ref != -1U) {
     DWARFDebugInfoEntryMinimal spec_die;
-    if (spec_die.extract(U, &spec_ref)) {
+    if (spec_die.extractFast(U, &spec_ref)) {
       if (const char *name = spec_die.getSubroutineName(U))
         return name;
     }
@@ -333,7 +293,7 @@ DWARFDebugInfoEntryMinimal::getSubroutineName(const DWARFUnit *U) const {
       getAttributeValueAsReference(U, DW_AT_abstract_origin, -1U);
   if (abs_origin_ref != -1U) {
     DWARFDebugInfoEntryMinimal abs_origin_die;
-    if (abs_origin_die.extract(U, &abs_origin_ref)) {
+    if (abs_origin_die.extractFast(U, &abs_origin_ref)) {
       if (const char *name = abs_origin_die.getSubroutineName(U))
         return name;
     }
