@@ -144,9 +144,6 @@ bool ConstantRange::isSignWrappedSet() const {
 /// getSetSize - Return the number of elements in this set.
 ///
 APInt ConstantRange::getSetSize() const {
-  if (isEmptySet())
-    return APInt(getBitWidth()+1, 0);
-
   if (isFullSet()) {
     APInt Size(getBitWidth()+1, 0);
     Size.setBit(getBitWidth());
