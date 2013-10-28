@@ -258,11 +258,17 @@ uint64_t DWARFDebugInfoEntryMinimal::getAttributeValueAsSectionOffset(
 bool DWARFDebugInfoEntryMinimal::getLowAndHighPC(const DWARFUnit *U,
                                                  uint64_t &LowPC,
                                                  uint64_t &HighPC) const {
-  HighPC = -1ULL;
   LowPC = getAttributeValueAsAddress(U, DW_AT_low_pc, -1ULL);
-  // FIXME: Check if HighPC is of class constant (it has different semantics).
-  if (LowPC != -1ULL)
-    HighPC = getAttributeValueAsAddress(U, DW_AT_high_pc, -1ULL);
+  if (LowPC == -1ULL)
+    return false;
+  HighPC = getAttributeValueAsAddress(U, DW_AT_high_pc, -1ULL);
+  if (HighPC == -1ULL) {
+    // Since DWARF4, DW_AT_high_pc may also be of class constant, in which case
+    // it represents function size.
+    HighPC = getAttributeValueAsUnsignedConstant(U, DW_AT_high_pc, -1ULL);
+    if (HighPC != -1ULL)
+      HighPC += LowPC;
+  }
   return (HighPC != -1ULL);
 }
 
