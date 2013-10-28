@@ -2598,22 +2598,9 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
     // Arguments stored on registers
     if (IsRegLoc) {
-      EVT RegVT = VA.getLocVT();
+      MVT RegVT = VA.getLocVT();
       unsigned ArgReg = VA.getLocReg();
-      const TargetRegisterClass *RC;
-
-      if (RegVT == MVT::i32)
-        RC = Subtarget->inMips16Mode()? &Mips::CPU16RegsRegClass :
-                                        &Mips::GPR32RegClass;
-      else if (RegVT == MVT::i64)
-        RC = &Mips::GPR64RegClass;
-      else if (RegVT == MVT::f32)
-        RC = &Mips::FGR32RegClass;
-      else if (RegVT == MVT::f64)
-        RC = Subtarget->isFP64bit() ? &Mips::FGR64RegClass :
-                                      &Mips::AFGR64RegClass;
-      else
-        llvm_unreachable("RegVT not supported by FormalArguments Lowering");
+      const TargetRegisterClass *RC = getRegClassFor(RegVT);
 
       // Transform the arguments stored on
       // physical registers into virtual ones
