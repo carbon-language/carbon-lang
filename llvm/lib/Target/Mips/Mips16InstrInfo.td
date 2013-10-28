@@ -1106,7 +1106,7 @@ def ShRxRyOffMemX16:
 //
 // Format: SLL rx, ry, sa MIPS16e
 // Purpose: Shift Word Left Logical (Extended)
-// To execute a left-shift of a word by a fixed number of bits—0 to 31 bits.
+// To execute a left-shift of a word by a fixed number of bits-0 to 31 bits.
 //
 def SllX16: FEXT_SHIFT16_ins<0b00, "sll", IIAlu>;
 
@@ -1202,7 +1202,7 @@ def SravRxRy16: FRxRxRy16_ins<0b00111, "srav", IIAlu>;
 // Format: SRA rx, ry, sa MIPS16e
 // Purpose: Shift Word Right Arithmetic (Extended)
 // To execute an arithmetic right-shift of a word by a fixed
-// number of bits—1 to 8 bits.
+// number of bits-1 to 8 bits.
 //
 def SraX16: FEXT_SHIFT16_ins<0b11, "sra", IIAlu>;
 
@@ -1220,7 +1220,7 @@ def SrlvRxRy16: FRxRxRy16_ins<0b00110, "srlv", IIAlu>;
 // Format: SRL rx, ry, sa MIPS16e
 // Purpose: Shift Word Right Logical (Extended)
 // To execute a logical right-shift of a word by a fixed
-// number of bits—1 to 31 bits.
+// number of bits-1 to 31 bits.
 //
 def SrlX16: FEXT_SHIFT16_ins<0b10, "srl", IIAlu>;
 

@@ -1525,8 +1525,8 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
     break;
   }
 
-  // insert_vector_elt (build_vector elt0, …, eltN), NewEltIdx, idx
-  // => build_vector elt0, …, NewEltIdx, …, eltN
+  // insert_vector_elt (build_vector elt0, ... , eltN), NewEltIdx, idx
+  // => build_vector elt0, ... , NewEltIdx, ... , eltN
   case ISD::INSERT_VECTOR_ELT: {
     SDValue InVec = N->getOperand(0);
     SDValue InVal = N->getOperand(1);
