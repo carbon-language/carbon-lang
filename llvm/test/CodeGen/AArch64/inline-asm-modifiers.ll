@@ -1,5 +1,4 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -relocation-model=pic < %s | FileCheck %s
-; RUN: llc -mtriple=aarch64-none-linux-gnu -relocation-model=pic -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-ELF %s
 
 @var_simple = hidden global i32 0
 @var_got = global i32 0
@@ -23,13 +22,6 @@ define void @test_inline_modifier_L() nounwind {
 ; CHECK: ldr x0, [x0, #:gottprel_lo12:var_tlsie]
 ; CHECK: add x0, x0, #:tprel_lo12:var_tlsle
 
-; CHECK-ELF: R_AARCH64_ADD_ABS_LO12_NC var_simple
-; CHECK-ELF: R_AARCH64_LD64_GOT_LO12_NC var_got
-; CHECK-ELF: R_AARCH64_TLSDESC_ADD_LO12_NC var_tlsgd
-; CHECK-ELF: R_AARCH64_TLSLD_ADD_DTPREL_LO12 var_tlsld
-; CHECK-ELF: R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC var_tlsie
-; CHECK-ELF: R_AARCH64_TLSLE_ADD_TPREL_LO12 var_tlsle
-
   ret void
 }
 
@@ -39,9 +31,6 @@ define void @test_inline_modifier_G() nounwind {
   call void asm sideeffect "add x0, x0, ${0:G}, lsl #12", "S,~{x0}"(i32* @var_tlsle)
 ; CHECK: add x0, x0, #:dtprel_hi12:var_tlsld, lsl #12
 ; CHECK: add x0, x0, #:tprel_hi12:var_tlsle, lsl #12
-
-; CHECK-ELF: R_AARCH64_TLSLD_ADD_DTPREL_HI12 var_tlsld
-; CHECK-ELF: R_AARCH64_TLSLE_ADD_TPREL_HI12 var_tlsle
 
   ret void
 }
@@ -57,11 +46,6 @@ define void @test_inline_modifier_A() nounwind {
 ; CHECK: adrp x0, :got:var_got
 ; CHECK: adrp x0, :tlsdesc:var_tlsgd
 ; CHECK: adrp x0, :gottprel:var_tlsie
-
-; CHECK-ELF: R_AARCH64_ADR_PREL_PG_HI21 var_simple
-; CHECK-ELF: R_AARCH64_ADR_GOT_PAGE var_got
-; CHECK-ELF: R_AARCH64_TLSDESC_ADR_PAGE var_tlsgd
-; CHECK-ELF: R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21 var_tlsie
 
   ret void
 }
