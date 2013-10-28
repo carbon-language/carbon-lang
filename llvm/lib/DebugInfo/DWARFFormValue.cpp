@@ -62,8 +62,8 @@ static uint8_t getRefAddrSize(uint8_t AddrSize, uint16_t Version) {
   return (Version == 2) ? AddrSize : 4;
 }
 
-const uint8_t *
-DWARFFormValue::getFixedFormSizes(uint8_t AddrSize, uint16_t Version) {
+ArrayRef<uint8_t> DWARFFormValue::getFixedFormSizes(uint8_t AddrSize,
+                                                    uint16_t Version) {
   uint8_t RefAddrSize = getRefAddrSize(AddrSize, Version);
   if (AddrSize == 4 && RefAddrSize == 4)
     return FixedFormSizes<4, 4>::sizes;
@@ -73,7 +73,7 @@ DWARFFormValue::getFixedFormSizes(uint8_t AddrSize, uint16_t Version) {
     return FixedFormSizes<8, 4>::sizes;
   if (AddrSize == 8 && RefAddrSize == 8)
     return FixedFormSizes<8, 8>::sizes;
-  return 0;
+  return None;
 }
 
 static const DWARFFormValue::FormClass DWARF4FormClasses[] = {

@@ -10,6 +10,7 @@
 #ifndef LLVM_DEBUGINFO_DWARFFORMVALUE_H
 #define LLVM_DEBUGINFO_DWARFFORMVALUE_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/DataExtractor.h"
 
@@ -75,7 +76,8 @@ public:
   static bool skipValue(uint16_t form, DataExtractor debug_info_data,
                         uint32_t *offset_ptr, const DWARFUnit *u);
 
-  static const uint8_t *getFixedFormSizes(uint8_t AddrSize, uint16_t Version);
+  static ArrayRef<uint8_t> getFixedFormSizes(uint8_t AddrSize,
+                                             uint16_t Version);
 };
 
 }

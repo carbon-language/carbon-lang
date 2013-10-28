@@ -194,12 +194,9 @@ void DWARFUnit::extractDIEsToVector(
   uint32_t NextCUOffset = getNextUnitOffset();
   DWARFDebugInfoEntryMinimal DIE;
   uint32_t Depth = 0;
-  const uint8_t *FixedFormSizes =
-    DWARFFormValue::getFixedFormSizes(getAddressByteSize(), getVersion());
   bool IsCUDie = true;
 
-  while (Offset < NextCUOffset &&
-         DIE.extractFast(this, FixedFormSizes, &Offset)) {
+  while (Offset < NextCUOffset && DIE.extractFast(this, &Offset)) {
     if (IsCUDie) {
       if (AppendCUDie)
         Dies.push_back(DIE);

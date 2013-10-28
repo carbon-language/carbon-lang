@@ -93,7 +93,6 @@ void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
 }
 
 bool DWARFDebugInfoEntryMinimal::extractFast(const DWARFUnit *U,
-                                             const uint8_t *FixedFormSizes,
                                              uint32_t *OffsetPtr) {
   Offset = *OffsetPtr;
   DataExtractor DebugInfoData = U->getDebugInfoExtractor();
@@ -105,21 +104,19 @@ bool DWARFDebugInfoEntryMinimal::extractFast(const DWARFUnit *U,
   }
   AbbrevDecl = U->getAbbreviations()->getAbbreviationDeclaration(AbbrCode);
   assert(AbbrevDecl);
-  assert(FixedFormSizes); // For best performance this should be specified!
+  ArrayRef<uint8_t> FixedFormSizes = DWARFFormValue::getFixedFormSizes(
+      U->getAddressByteSize(), U->getVersion());
+  assert(FixedFormSizes.size() > 0);
 
   // Skip all data in the .debug_info for the attributes
   for (uint32_t i = 0, n = AbbrevDecl->getNumAttributes(); i < n; ++i) {
     uint16_t Form = AbbrevDecl->getFormByIndex(i);
 
-    // FIXME: Currently we're checking if this is less than the last
-    // entry in the fixed_form_sizes table, but this should be changed
-    // to use dynamic dispatch.
     uint8_t FixedFormSize =
-        (Form < DW_FORM_ref_sig8) ? FixedFormSizes[Form] : 0;
+        (Form < FixedFormSizes.size()) ? FixedFormSizes[Form] : 0;
     if (FixedFormSize)
       *OffsetPtr += FixedFormSize;
-    else if (!DWARFFormValue::skipValue(Form, DebugInfoData, OffsetPtr,
-                                        U)) {
+    else if (!DWARFFormValue::skipValue(Form, DebugInfoData, OffsetPtr, U)) {
       // Restore the original offset.
       *OffsetPtr = Offset;
       return false;

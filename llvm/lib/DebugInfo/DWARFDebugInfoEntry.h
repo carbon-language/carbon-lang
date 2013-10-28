@@ -45,11 +45,10 @@ public:
   void dumpAttribute(raw_ostream &OS, const DWARFUnit *u, uint32_t *offset_ptr,
                      uint16_t attr, uint16_t form, unsigned indent = 0) const;
 
-  /// Extracts a debug info entry, which is a child of a given compile unit,
+  /// Extracts a debug info entry, which is a child of a given unit,
   /// starting at a given offset. If DIE can't be extracted, returns false and
   /// doesn't change OffsetPtr.
-  bool extractFast(const DWARFUnit *U, const uint8_t *FixedFormSizes,
-                   uint32_t *OffsetPtr);
+  bool extractFast(const DWARFUnit *U, uint32_t *OffsetPtr);
 
   /// Extract a debug info entry for a given compile unit from the
   /// .debug_info and .debug_abbrev data starting at the given offset.
