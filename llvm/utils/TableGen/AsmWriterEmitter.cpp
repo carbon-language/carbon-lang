@@ -32,10 +32,12 @@ using namespace llvm;
 namespace {
 class AsmWriterEmitter {
   RecordKeeper &Records;
+  CodeGenTarget Target;
   std::map<const CodeGenInstruction*, AsmWriterInst*> CGIAWIMap;
   std::vector<const CodeGenInstruction*> NumberedInstructions;
+  std::vector<AsmWriterInst> Instructions;
 public:
-  AsmWriterEmitter(RecordKeeper &R) : Records(R) {}
+  AsmWriterEmitter(RecordKeeper &R);
 
   void run(raw_ostream &o);
 
@@ -273,9 +275,9 @@ static void UnescapeString(std::string &Str) {
 }
 
 /// EmitPrintInstruction - Generate the code for the "printInstruction" method
-/// implementation.
+/// implementation. Destroys all instances of AsmWriterInst information, by
+/// clearing the Instructions vector.
 void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
-  CodeGenTarget Target(Records);
   Record *AsmWriter = Target.getAsmWriter();
   std::string ClassName = AsmWriter->getValueAsString("AsmWriterClassName");
   bool isMC = AsmWriter->getValueAsBit("isMCAsmWriter");
@@ -287,27 +289,6 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     "void " << Target.getName() << ClassName
             << "::printInstruction(const " << MachineInstrClassName
             << " *MI, raw_ostream &O) {\n";
-
-  std::vector<AsmWriterInst> Instructions;
-
-  for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
-         E = Target.inst_end(); I != E; ++I)
-    if (!(*I)->AsmString.empty() &&
-        (*I)->TheDef->getName() != "PHI")
-      Instructions.push_back(
-        AsmWriterInst(**I,
-                      AsmWriter->getValueAsInt("Variant"),
-                      AsmWriter->getValueAsInt("FirstOperandColumn"),
-                      AsmWriter->getValueAsInt("OperandSpacing")));
-
-  // Get the instruction numbering.
-  NumberedInstructions = Target.getInstructionsByEnumValue();
-
-  // Compute the CodeGenInstruction -> AsmWriterInst mapping.  Note that not
-  // all machine instructions are necessarily being printed, so there may be
-  // target instructions not in this map.
-  for (unsigned i = 0, e = Instructions.size(); i != e; ++i)
-    CGIAWIMap.insert(std::make_pair(Instructions[i].CGI, &Instructions[i]));
 
   // Build an aggregate string, and build a table of offsets into it.
   SequenceToOffsetTable<std::string> StringTable;
@@ -592,7 +573,6 @@ emitRegisterNameString(raw_ostream &O, StringRef AltName,
 }
 
 void AsmWriterEmitter::EmitGetRegisterName(raw_ostream &O) {
-  CodeGenTarget Target(Records);
   Record *AsmWriter = Target.getAsmWriter();
   std::string ClassName = AsmWriter->getValueAsString("AsmWriterClassName");
   const std::vector<CodeGenRegister*> &Registers =
@@ -782,7 +762,6 @@ static unsigned CountResultNumOperands(StringRef AsmString) {
 }
 
 void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
-  CodeGenTarget Target(Records);
   Record *AsmWriter = Target.getAsmWriter();
 
   if (!AsmWriter->getValueAsBit("isMCAsmWriter"))
@@ -998,6 +977,27 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   O << "}\n\n";
 
   O << "#endif // PRINT_ALIAS_INSTR\n";
+}
+
+AsmWriterEmitter::AsmWriterEmitter(RecordKeeper &R) : Records(R), Target(R) {
+  Record *AsmWriter = Target.getAsmWriter();
+  for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
+                                    E = Target.inst_end();
+       I != E; ++I)
+    if (!(*I)->AsmString.empty() && (*I)->TheDef->getName() != "PHI")
+      Instructions.push_back(
+          AsmWriterInst(**I, AsmWriter->getValueAsInt("Variant"),
+                        AsmWriter->getValueAsInt("FirstOperandColumn"),
+                        AsmWriter->getValueAsInt("OperandSpacing")));
+
+  // Get the instruction numbering.
+  NumberedInstructions = Target.getInstructionsByEnumValue();
+
+  // Compute the CodeGenInstruction -> AsmWriterInst mapping.  Note that not
+  // all machine instructions are necessarily being printed, so there may be
+  // target instructions not in this map.
+  for (unsigned i = 0, e = Instructions.size(); i != e; ++i)
+    CGIAWIMap.insert(std::make_pair(Instructions[i].CGI, &Instructions[i]));
 }
 
 void AsmWriterEmitter::run(raw_ostream &O) {
