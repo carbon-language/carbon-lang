@@ -62,11 +62,11 @@ for.body.lr.ph.i.i:                               ; preds = %entry
 for.body.i.i:                                     ; preds = %for.body.i.i, %for.body.lr.ph.i.i
   %__first.addr.02.i.i = phi i32* [ %begin, %for.body.lr.ph.i.i ], [ %ptrincdec.i.i, %for.body.i.i ]
 ; CHECK: %__first.addr.02.i.i
-; CHECK-NEXT: -->  {%begin,+,4}<nw><%for.body.i.i>
+; CHECK-NEXT: -->  {%begin,+,4}<nuw><%for.body.i.i>
   store i32 0, i32* %__first.addr.02.i.i, align 4
   %ptrincdec.i.i = getelementptr inbounds i32* %__first.addr.02.i.i, i64 1
 ; CHECK: %ptrincdec.i.i
-; CHECK-NEXT: -->  {(4 + %begin),+,4}<nw><%for.body.i.i>
+; CHECK-NEXT: -->  {(4 + %begin),+,4}<nuw><%for.body.i.i>
   %cmp.i.i = icmp eq i32* %ptrincdec.i.i, %end
   br i1 %cmp.i.i, label %for.cond.for.end_crit_edge.i.i, label %for.body.i.i
 
@@ -121,4 +121,40 @@ greater:
 exit:
   %result = phi i32 [ %a, %entry ], [ %tmp2, %greater ]
   ret i32 %result
+}
+
+; TODO: This could fold down to '1'
+; CHECK-LABEL: PR12375
+; CHECK: -->  {(4 + %arg),+,4}<nuw><%bb1>		Exits: (4 + (4 * ((-1 + (-1 * %arg) + ((4 + %arg) umax (8 + %arg)<nsw>)) /u 4)) + %arg)
+define i32 @PR12375(i32* readnone %arg) {
+bb:
+  %tmp = getelementptr inbounds i32* %arg, i64 2
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp2 = phi i32* [ %arg, %bb ], [ %tmp5, %bb1 ]
+  %tmp3 = phi i32 [ 0, %bb ], [ %tmp4, %bb1 ]
+  %tmp4 = add nsw i32 %tmp3, 1
+  %tmp5 = getelementptr inbounds i32* %tmp2, i64 1
+  %tmp6 = icmp ult i32* %tmp5, %tmp
+  br i1 %tmp6, label %bb1, label %bb7
+
+bb7:                                              ; preds = %bb1
+  ret i32 %tmp4
+}
+
+; CHECK-LABEL: PR12376
+; CHECK: -->  {(4 + %arg),+,4}<nuw><%bb2>		Exits: (4 + (4 * ((3 + (-1 * %arg) + (%arg umax %arg1)) /u 4)) + %arg)
+define void @PR12376(i32* nocapture %arg, i32* nocapture %arg1)  {
+bb:
+  br label %bb2
+
+bb2:                                              ; preds = %bb2, %bb
+  %tmp = phi i32* [ %arg, %bb ], [ %tmp4, %bb2 ]
+  %tmp3 = icmp ult i32* %tmp, %arg1
+  %tmp4 = getelementptr inbounds i32* %tmp, i64 1
+  br i1 %tmp3, label %bb2, label %bb5
+
+bb5:                                              ; preds = %bb2
+  ret void
 }

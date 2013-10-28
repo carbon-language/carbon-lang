@@ -3088,15 +3088,20 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
                   Flags = setFlags(Flags, SCEV::FlagNUW);
                 if (OBO->hasNoSignedWrap())
                   Flags = setFlags(Flags, SCEV::FlagNSW);
-              } else if (const GEPOperator *GEP =
-                         dyn_cast<GEPOperator>(BEValueV)) {
+              } else if (GEPOperator *GEP = dyn_cast<GEPOperator>(BEValueV)) {
                 // If the increment is an inbounds GEP, then we know the address
                 // space cannot be wrapped around. We cannot make any guarantee
                 // about signed or unsigned overflow because pointers are
                 // unsigned but we may have a negative index from the base
-                // pointer.
-                if (GEP->isInBounds())
+                // pointer. We can guarantee that no unsigned wrap occurs if the
+                // indices form a positive value.
+                if (GEP->isInBounds()) {
                   Flags = setFlags(Flags, SCEV::FlagNW);
+
+                  const SCEV *Ptr = getSCEV(GEP->getPointerOperand());
+                  if (isKnownPositive(getMinusSCEV(getSCEV(GEP), Ptr)))
+                    Flags = setFlags(Flags, SCEV::FlagNUW);
+                }
               }
 
               const SCEV *StartVal = getSCEV(StartValueV);
