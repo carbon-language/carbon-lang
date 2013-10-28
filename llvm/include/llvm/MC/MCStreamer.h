@@ -87,6 +87,12 @@ public:
   virtual void emitPad(int64_t Offset) = 0;
   virtual void emitRegSave(const SmallVectorImpl<unsigned> &RegList,
                            bool isVector) = 0;
+
+  virtual void switchVendor(StringRef Vendor) = 0;
+  virtual void emitAttribute(unsigned Attribute, unsigned Value) = 0;
+  virtual void emitTextAttribute(unsigned Attribute, StringRef String) = 0;
+  virtual void emitFPU(unsigned FPU) = 0;
+  virtual void finishAttributeSection() = 0;
 };
 
 /// MCStreamer - Streaming machine code generation interface.  This interface

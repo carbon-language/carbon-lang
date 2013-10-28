@@ -17,6 +17,7 @@
 #include "ARM.h"
 #include "ARMBuildAttrs.h"
 #include "ARMConstantPoolValue.h"
+#include "ARMFPUName.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMTargetMachine.h"
 #include "ARMTargetObjectFile.h"
@@ -54,164 +55,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include <cctype>
 using namespace llvm;
-
-namespace {
-
-  // Per section and per symbol attributes are not supported.
-  // To implement them we would need the ability to delay this emission
-  // until the assembly file is fully parsed/generated as only then do we
-  // know the symbol and section numbers.
-  class AttributeEmitter {
-  public:
-    virtual void MaybeSwitchVendor(StringRef Vendor) = 0;
-    virtual void EmitAttribute(unsigned Attribute, unsigned Value) = 0;
-    virtual void EmitTextAttribute(unsigned Attribute, StringRef String) = 0;
-    virtual void Finish() = 0;
-    virtual ~AttributeEmitter() {}
-  };
-
-  class AsmAttributeEmitter : public AttributeEmitter {
-    MCStreamer &Streamer;
-
-  public:
-    AsmAttributeEmitter(MCStreamer &Streamer_) : Streamer(Streamer_) {}
-    void MaybeSwitchVendor(StringRef Vendor) { }
-
-    void EmitAttribute(unsigned Attribute, unsigned Value) {
-      Streamer.EmitRawText("\t.eabi_attribute " +
-                           Twine(Attribute) + ", " + Twine(Value));
-    }
-
-    void EmitTextAttribute(unsigned Attribute, StringRef String) {
-      switch (Attribute) {
-      default: llvm_unreachable("Unsupported Text attribute in ASM Mode");
-      case ARMBuildAttrs::CPU_name:
-        Streamer.EmitRawText(StringRef("\t.cpu ") + String.lower());
-        break;
-      /* GAS requires .fpu to be emitted regardless of EABI attribute */
-      case ARMBuildAttrs::Advanced_SIMD_arch:
-      case ARMBuildAttrs::VFP_arch:
-        Streamer.EmitRawText(StringRef("\t.fpu ") + String.lower());
-        break;
-      }
-    }
-    void Finish() { }
-  };
-
-  class ObjectAttributeEmitter : public AttributeEmitter {
-    // This structure holds all attributes, accounting for
-    // their string/numeric value, so we can later emmit them
-    // in declaration order, keeping all in the same vector
-    struct AttributeItemType {
-      enum {
-        HiddenAttribute = 0,
-        NumericAttribute,
-        TextAttribute
-      } Type;
-      unsigned Tag;
-      unsigned IntValue;
-      StringRef StringValue;
-    };
-
-    MCObjectStreamer &Streamer;
-    StringRef CurrentVendor;
-    SmallVector<AttributeItemType, 64> Contents;
-
-    // Account for the ULEB/String size of each item,
-    // not just the number of items
-    size_t ContentsSize;
-    // FIXME: this should be in a more generic place, but
-    // getULEBSize() is in MCAsmInfo and will be moved to MCDwarf
-    size_t getULEBSize(int Value) {
-      size_t Size = 0;
-      do {
-        Value >>= 7;
-        Size += sizeof(int8_t); // Is this really necessary?
-      } while (Value);
-      return Size;
-    }
-
-  public:
-    ObjectAttributeEmitter(MCObjectStreamer &Streamer_) :
-      Streamer(Streamer_), CurrentVendor(""), ContentsSize(0) { }
-
-    void MaybeSwitchVendor(StringRef Vendor) {
-      assert(!Vendor.empty() && "Vendor cannot be empty.");
-
-      if (CurrentVendor.empty())
-        CurrentVendor = Vendor;
-      else if (CurrentVendor == Vendor)
-        return;
-      else
-        Finish();
-
-      CurrentVendor = Vendor;
-
-      assert(Contents.size() == 0);
-    }
-
-    void EmitAttribute(unsigned Attribute, unsigned Value) {
-      AttributeItemType attr = {
-        AttributeItemType::NumericAttribute,
-        Attribute,
-        Value,
-        StringRef("")
-      };
-      ContentsSize += getULEBSize(Attribute);
-      ContentsSize += getULEBSize(Value);
-      Contents.push_back(attr);
-    }
-
-    void EmitTextAttribute(unsigned Attribute, StringRef String) {
-      AttributeItemType attr = {
-        AttributeItemType::TextAttribute,
-        Attribute,
-        0,
-        String
-      };
-      ContentsSize += getULEBSize(Attribute);
-      // String + \0
-      ContentsSize += String.size()+1;
-
-      Contents.push_back(attr);
-    }
-
-    void Finish() {
-      // Vendor size + Vendor name + '\0'
-      const size_t VendorHeaderSize = 4 + CurrentVendor.size() + 1;
-
-      // Tag + Tag Size
-      const size_t TagHeaderSize = 1 + 4;
-
-      Streamer.EmitIntValue(VendorHeaderSize + TagHeaderSize + ContentsSize, 4);
-      Streamer.EmitBytes(CurrentVendor);
-      Streamer.EmitIntValue(0, 1); // '\0'
-
-      Streamer.EmitIntValue(ARMBuildAttrs::File, 1);
-      Streamer.EmitIntValue(TagHeaderSize + ContentsSize, 4);
-
-      // Size should have been accounted for already, now
-      // emit each field as its type (ULEB or String)
-      for (unsigned int i=0; i<Contents.size(); ++i) {
-        AttributeItemType item = Contents[i];
-        Streamer.EmitULEB128IntValue(item.Tag);
-        switch (item.Type) {
-        default: llvm_unreachable("Invalid attribute type");
-        case AttributeItemType::NumericAttribute:
-          Streamer.EmitULEB128IntValue(item.IntValue);
-          break;
-        case AttributeItemType::TextAttribute:
-          Streamer.EmitBytes(item.StringValue.upper());
-          Streamer.EmitIntValue(0, 1); // '\0'
-          break;
-        }
-      }
-
-      Contents.clear();
-    }
-  };
-
-} // end of anonymous namespace
 
 /// EmitDwarfRegOp - Emit dwarf register operation.
 void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc,
@@ -768,149 +611,102 @@ static ARMBuildAttrs::CPUArch getArchForCPU(StringRef CPU,
 }
 
 void ARMAsmPrinter::emitAttributes() {
+  MCTargetStreamer &TS = OutStreamer.getTargetStreamer();
+  ARMTargetStreamer &ATS = static_cast<ARMTargetStreamer &>(TS);
 
-  emitARMAttributeSection();
-
-  /* GAS expect .fpu to be emitted, regardless of VFP build attribute */
-  bool emitFPU = false;
-  AttributeEmitter *AttrEmitter;
-  if (OutStreamer.hasRawTextSupport()) {
-    AttrEmitter = new AsmAttributeEmitter(OutStreamer);
-    emitFPU = true;
-  } else {
-    MCObjectStreamer &O = static_cast<MCObjectStreamer&>(OutStreamer);
-    AttrEmitter = new ObjectAttributeEmitter(O);
-  }
-
-  AttrEmitter->MaybeSwitchVendor("aeabi");
+  ATS.switchVendor("aeabi");
 
   std::string CPUString = Subtarget->getCPUString();
 
   if (CPUString != "generic")
-    AttrEmitter->EmitTextAttribute(ARMBuildAttrs::CPU_name, CPUString);
+    ATS.emitTextAttribute(ARMBuildAttrs::CPU_name, CPUString);
 
-  AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch,
-                             getArchForCPU(CPUString, Subtarget));
+  ATS.emitAttribute(ARMBuildAttrs::CPU_arch,
+                    getArchForCPU(CPUString, Subtarget));
 
   if (Subtarget->isAClass()) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch_profile,
-                               ARMBuildAttrs::ApplicationProfile);
+    ATS.emitAttribute(ARMBuildAttrs::CPU_arch_profile,
+                      ARMBuildAttrs::ApplicationProfile);
   } else if (Subtarget->isRClass()) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch_profile,
-                               ARMBuildAttrs::RealTimeProfile);
+    ATS.emitAttribute(ARMBuildAttrs::CPU_arch_profile,
+                      ARMBuildAttrs::RealTimeProfile);
   } else if (Subtarget->isMClass()){
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch_profile,
-                               ARMBuildAttrs::MicroControllerProfile);
+    ATS.emitAttribute(ARMBuildAttrs::CPU_arch_profile,
+                      ARMBuildAttrs::MicroControllerProfile);
   }
 
-  AttrEmitter->EmitAttribute(ARMBuildAttrs::ARM_ISA_use, Subtarget->hasARMOps() ?
-                           ARMBuildAttrs::Allowed : ARMBuildAttrs::Not_Allowed);
+  ATS.emitAttribute(ARMBuildAttrs::ARM_ISA_use, Subtarget->hasARMOps() ?
+                      ARMBuildAttrs::Allowed : ARMBuildAttrs::Not_Allowed);
   if (Subtarget->isThumb1Only()) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::THUMB_ISA_use,
-                               ARMBuildAttrs::Allowed);
+    ATS.emitAttribute(ARMBuildAttrs::THUMB_ISA_use,
+                      ARMBuildAttrs::Allowed);
   } else if (Subtarget->hasThumb2()) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::THUMB_ISA_use,
-                               ARMBuildAttrs::AllowThumb32);
+    ATS.emitAttribute(ARMBuildAttrs::THUMB_ISA_use,
+                      ARMBuildAttrs::AllowThumb32);
   }
 
-  if (Subtarget->hasNEON() && emitFPU) {
+  if (Subtarget->hasNEON()) {
     /* NEON is not exactly a VFP architecture, but GAS emit one of
      * neon/neon-fp-armv8/neon-vfpv4/vfpv3/vfpv2 for .fpu parameters */
     if (Subtarget->hasFPARMv8()) {
       if (Subtarget->hasCrypto())
-        AttrEmitter->EmitTextAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
-                                       "crypto-neon-fp-armv8");
+        ATS.emitFPU(ARM::CRYPTO_NEON_FP_ARMV8);
       else
-        AttrEmitter->EmitTextAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
-                                       "neon-fp-armv8");
+        ATS.emitFPU(ARM::NEON_FP_ARMV8);
     }
     else if (Subtarget->hasVFP4())
-      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
-                                     "neon-vfpv4");
+      ATS.emitFPU(ARM::NEON_VFPV4);
     else
-      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::Advanced_SIMD_arch, "neon");
-    /* If emitted for NEON, omit from VFP below, since you can have both
-     * NEON and VFP in build attributes but only one .fpu */
-    emitFPU = false;
-  }
-
-  /* FPARMv8 + .fpu */
-  if (Subtarget->hasFPARMv8()) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
-                               ARMBuildAttrs::AllowFPARMv8A);
-    if (emitFPU)
-      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::VFP_arch, "fp-armv8");
-    /* VFPv4 + .fpu */
-  } else if (Subtarget->hasVFP4()) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
-      Subtarget->isFPOnlySP() ? ARMBuildAttrs::AllowFPv4B :
-                                ARMBuildAttrs::AllowFPv4A);
-    if (emitFPU)
-      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::VFP_arch, "vfpv4");
-
-  /* VFPv3 + .fpu */
-  } else if (Subtarget->hasVFP3()) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
-      Subtarget->isFPOnlySP() ? ARMBuildAttrs::AllowFPv3B :
-                                ARMBuildAttrs::AllowFPv3A);
-    if (emitFPU)
-      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::VFP_arch, "vfpv3");
-
-  /* VFPv2 + .fpu */
-  } else if (Subtarget->hasVFP2()) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
-                               ARMBuildAttrs::AllowFPv2);
-    if (emitFPU)
-      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::VFP_arch, "vfpv2");
-  }
-
-  /* TODO: ARMBuildAttrs::Allowed is not completely accurate,
-   * since NEON can have 1 (allowed) or 2 (MAC operations) */
-  if (Subtarget->hasNEON()) {
+      ATS.emitFPU(ARM::NEON);
+    // Emit Tag_Advanced_SIMD_arch for ARMv8 architecture
     if (Subtarget->hasV8Ops())
-      AttrEmitter->EmitAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
-                                 ARMBuildAttrs::AllowedNeonV8);
-    else
-      AttrEmitter->EmitAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
-                                 ARMBuildAttrs::Allowed);
+      ATS.emitAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
+                        ARMBuildAttrs::AllowNeonARMv8);
+  } else {
+    if (Subtarget->hasFPARMv8())
+      ATS.emitFPU(ARM::FP_ARMV8);
+    else if (Subtarget->hasVFP4())
+      ATS.emitFPU(Subtarget->hasD16() ? ARM::VFPV4_D16 : ARM::VFPV4);
+    else if (Subtarget->hasVFP3())
+      ATS.emitFPU(Subtarget->hasD16() ? ARM::VFPV3_D16 : ARM::VFPV3);
+    else if (Subtarget->hasVFP2())
+      ATS.emitFPU(ARM::VFPV2);
   }
 
   // Signal various FP modes.
   if (!TM.Options.UnsafeFPMath) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_denormal,
-                               ARMBuildAttrs::Allowed);
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_exceptions,
-                               ARMBuildAttrs::Allowed);
+    ATS.emitAttribute(ARMBuildAttrs::ABI_FP_denormal, ARMBuildAttrs::Allowed);
+    ATS.emitAttribute(ARMBuildAttrs::ABI_FP_exceptions,
+                      ARMBuildAttrs::Allowed);
   }
 
   if (TM.Options.NoInfsFPMath && TM.Options.NoNaNsFPMath)
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model,
-                               ARMBuildAttrs::Allowed);
+    ATS.emitAttribute(ARMBuildAttrs::ABI_FP_number_model,
+                      ARMBuildAttrs::Allowed);
   else
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model,
-                               ARMBuildAttrs::AllowIEE754);
+    ATS.emitAttribute(ARMBuildAttrs::ABI_FP_number_model,
+                      ARMBuildAttrs::AllowIEE754);
 
   // FIXME: add more flags to ARMBuildAttrs.h
   // 8-bytes alignment stuff.
-  AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_align8_needed, 1);
-  AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_align8_preserved, 1);
+  ATS.emitAttribute(ARMBuildAttrs::ABI_align8_needed, 1);
+  ATS.emitAttribute(ARMBuildAttrs::ABI_align8_preserved, 1);
 
   // Hard float.  Use both S and D registers and conform to AAPCS-VFP.
   if (Subtarget->isAAPCS_ABI() && TM.Options.FloatABIType == FloatABI::Hard) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_HardFP_use, 3);
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_VFP_args, 1);
+    ATS.emitAttribute(ARMBuildAttrs::ABI_HardFP_use, 3);
+    ATS.emitAttribute(ARMBuildAttrs::ABI_VFP_args, 1);
   }
   // FIXME: Should we signal R9 usage?
 
   if (Subtarget->hasDivide()) {
     // Check if hardware divide is only available in thumb2 or ARM as well.
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::DIV_use,
+    ATS.emitAttribute(ARMBuildAttrs::DIV_use,
       Subtarget->hasDivideInARMMode() ? ARMBuildAttrs::AllowDIVExt :
                                         ARMBuildAttrs::AllowDIVIfExists);
   }
 
-  AttrEmitter->Finish();
-  delete AttrEmitter;
+  ATS.finishAttributeSection();
 }
 
 void ARMAsmPrinter::emitARMAttributeSection() {

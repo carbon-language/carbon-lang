@@ -309,7 +309,7 @@ def : ProcessorModel<"cortex-r5",   CortexA8Model,
                                     [ProcR5, HasV7Ops, FeatureDB,
                                      FeatureVFP3, FeatureDSPThumb2,
                                      FeatureHasRAS, FeatureVFPOnlySP,
-                                     FeatureRClass]>;
+                                     FeatureD16, FeatureRClass]>;
 
 // V7M Processors.
 def : ProcNoItin<"cortex-m3",       [HasV7Ops,
@@ -321,7 +321,8 @@ def : ProcNoItin<"cortex-m4",       [HasV7Ops,
                                      FeatureThumb2, FeatureNoARM, FeatureDB,
                                      FeatureHWDiv, FeatureDSPThumb2,
                                      FeatureT2XtPk, FeatureVFP4,
-                                     FeatureVFPOnlySP, FeatureMClass]>;
+                                     FeatureVFPOnlySP, FeatureD16,
+                                     FeatureMClass]>;
 
 // Swift uArch Processors.
 def : ProcessorModel<"swift",       SwiftModel,

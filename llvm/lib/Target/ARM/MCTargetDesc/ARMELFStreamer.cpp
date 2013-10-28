@@ -13,6 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ARMBuildAttrs.h"
+#include "ARMFPUName.h"
 #include "ARMRegisterInfo.h"
 #include "ARMUnwindOp.h"
 #include "ARMUnwindOpAsm.h"
@@ -39,12 +41,24 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 
 using namespace llvm;
 
 static std::string GetAEABIUnwindPersonalityName(unsigned Index) {
   assert(Index < NUM_PERSONALITY_INDEX && "Invalid personality index");
   return (Twine("__aeabi_unwind_cpp_pr") + Twine(Index)).str();
+}
+
+static const char *GetFPUName(unsigned ID) {
+  switch (ID) {
+  default:
+    llvm_unreachable("Unknown FPU kind");
+    break;
+#define ARM_FPU_NAME(NAME, ID) case ARM::ID: return NAME;
+#include "ARMFPUName.def"
+  }
+  return NULL;
 }
 
 namespace {
@@ -64,6 +78,12 @@ class ARMTargetAsmStreamer : public ARMTargetStreamer {
   virtual void emitPad(int64_t Offset);
   virtual void emitRegSave(const SmallVectorImpl<unsigned> &RegList,
                            bool isVector);
+
+  virtual void switchVendor(StringRef Vendor);
+  virtual void emitAttribute(unsigned Attribute, unsigned Value);
+  virtual void emitTextAttribute(unsigned Attribute, StringRef String);
+  virtual void emitFPU(unsigned FPU);
+  virtual void finishAttributeSection();
 
 public:
   ARMTargetAsmStreamer(formatted_raw_ostream &OS, MCInstPrinter &InstPrinter);
@@ -109,9 +129,114 @@ void ARMTargetAsmStreamer::emitRegSave(const SmallVectorImpl<unsigned> &RegList,
 
   OS << "}\n";
 }
+void ARMTargetAsmStreamer::switchVendor(StringRef Vendor) {
+}
+void ARMTargetAsmStreamer::emitAttribute(unsigned Attribute, unsigned Value) {
+  OS << "\t.eabi_attribute\t" << Attribute << ", " << Twine(Value) << "\n";
+}
+void ARMTargetAsmStreamer::emitTextAttribute(unsigned Attribute,
+                                             StringRef String) {
+  switch (Attribute) {
+  default: llvm_unreachable("Unsupported Text attribute in ASM Mode");
+  case ARMBuildAttrs::CPU_name:
+    OS << "\t.cpu\t" << String.lower() << "\n";
+    break;
+  }
+}
+void ARMTargetAsmStreamer::emitFPU(unsigned FPU) {
+  OS << "\t.fpu\t" << GetFPUName(FPU) << "\n";
+}
+void ARMTargetAsmStreamer::finishAttributeSection() {
+}
 
 class ARMTargetELFStreamer : public ARMTargetStreamer {
+private:
+  // This structure holds all attributes, accounting for
+  // their string/numeric value, so we can later emmit them
+  // in declaration order, keeping all in the same vector
+  struct AttributeItem {
+    enum {
+      HiddenAttribute = 0,
+      NumericAttribute,
+      TextAttribute
+    } Type;
+    unsigned Tag;
+    unsigned IntValue;
+    StringRef StringValue;
+
+    static bool LessTag(const AttributeItem &LHS, const AttributeItem &RHS) {
+      return (LHS.Tag < RHS.Tag);
+    }
+  };
+
+  StringRef CurrentVendor;
+  unsigned FPU;
+  SmallVector<AttributeItem, 64> Contents;
+
+  const MCSection *AttributeSection;
+
+  // FIXME: this should be in a more generic place, but
+  // getULEBSize() is in MCAsmInfo and will be moved to MCDwarf
+  static size_t getULEBSize(int Value) {
+    size_t Size = 0;
+    do {
+      Value >>= 7;
+      Size += sizeof(int8_t); // Is this really necessary?
+    } while (Value);
+    return Size;
+  }
+
+  AttributeItem *getAttributeItem(unsigned Attribute) {
+    for (size_t i = 0; i < Contents.size(); ++i)
+      if (Contents[i].Tag == Attribute)
+        return &Contents[i];
+    return 0;
+  }
+
+  void setAttributeItem(unsigned Attribute, unsigned Value,
+                        bool OverwriteExisting) {
+    // Look for existing attribute item
+    if (AttributeItem *Item = getAttributeItem(Attribute)) {
+      if (!OverwriteExisting)
+        return;
+      Item->IntValue = Value;
+      return;
+    }
+
+    // Create new attribute item
+    AttributeItem Item = {
+      AttributeItem::NumericAttribute,
+      Attribute,
+      Value,
+      StringRef("")
+    };
+    Contents.push_back(Item);
+  }
+
+  void setAttributeItem(unsigned Attribute, StringRef Value,
+                        bool OverwriteExisting) {
+    // Look for existing attribute item
+    if (AttributeItem *Item = getAttributeItem(Attribute)) {
+      if (!OverwriteExisting)
+        return;
+      Item->StringValue = Value;
+      return;
+    }
+
+    // Create new attribute item
+    AttributeItem Item = {
+      AttributeItem::TextAttribute,
+      Attribute,
+      0,
+      Value
+    };
+    Contents.push_back(Item);
+  }
+
+  void emitFPUDefaultAttributes();
+
   ARMELFStreamer &getStreamer();
+
   virtual void emitFnStart();
   virtual void emitFnEnd();
   virtual void emitCantUnwind();
@@ -121,6 +246,20 @@ class ARMTargetELFStreamer : public ARMTargetStreamer {
   virtual void emitPad(int64_t Offset);
   virtual void emitRegSave(const SmallVectorImpl<unsigned> &RegList,
                            bool isVector);
+
+  virtual void switchVendor(StringRef Vendor);
+  virtual void emitAttribute(unsigned Attribute, unsigned Value);
+  virtual void emitTextAttribute(unsigned Attribute, StringRef String);
+  virtual void emitFPU(unsigned FPU);
+  virtual void finishAttributeSection();
+
+  size_t calculateContentSize() const;
+
+public:
+  ARMTargetELFStreamer()
+    : ARMTargetStreamer(), CurrentVendor("aeabi"), FPU(ARM::INVALID_FPU),
+      AttributeSection(0) {
+  }
 };
 
 /// Extend the generic ELFStreamer class so that it can emit mapping symbols at
@@ -148,6 +287,8 @@ public:
   }
 
   ~ARMELFStreamer() {}
+
+  virtual void FinishImpl();
 
   // ARM exception handling directives
   void emitFnStart();
@@ -328,6 +469,198 @@ void ARMTargetELFStreamer::emitPad(int64_t Offset) {
 void ARMTargetELFStreamer::emitRegSave(const SmallVectorImpl<unsigned> &RegList,
                                        bool isVector) {
   getStreamer().emitRegSave(RegList, isVector);
+}
+void ARMTargetELFStreamer::switchVendor(StringRef Vendor) {
+  assert(!Vendor.empty() && "Vendor cannot be empty.");
+
+  if (CurrentVendor == Vendor)
+    return;
+
+  if (!CurrentVendor.empty())
+    finishAttributeSection();
+
+  assert(Contents.empty() &&
+         ".ARM.attributes should be flushed before changing vendor");
+  CurrentVendor = Vendor;
+
+}
+void ARMTargetELFStreamer::emitAttribute(unsigned Attribute, unsigned Value) {
+  setAttributeItem(Attribute, Value, /* OverwriteExisting= */ true);
+}
+void ARMTargetELFStreamer::emitTextAttribute(unsigned Attribute,
+                                             StringRef Value) {
+  setAttributeItem(Attribute, Value, /* OverwriteExisting= */ true);
+}
+void ARMTargetELFStreamer::emitFPU(unsigned Value) {
+  FPU = Value;
+}
+void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
+  switch (FPU) {
+  case ARM::VFP:
+  case ARM::VFPV2:
+    setAttributeItem(ARMBuildAttrs::VFP_arch,
+                     ARMBuildAttrs::AllowFPv2,
+                     /* OverwriteExisting= */ false);
+    break;
+
+  case ARM::VFPV3:
+    setAttributeItem(ARMBuildAttrs::VFP_arch,
+                     ARMBuildAttrs::AllowFPv3A,
+                     /* OverwriteExisting= */ false);
+    break;
+
+  case ARM::VFPV3_D16:
+    setAttributeItem(ARMBuildAttrs::VFP_arch,
+                     ARMBuildAttrs::AllowFPv3B,
+                     /* OverwriteExisting= */ false);
+    break;
+
+  case ARM::VFPV4:
+    setAttributeItem(ARMBuildAttrs::VFP_arch,
+                     ARMBuildAttrs::AllowFPv4A,
+                     /* OverwriteExisting= */ false);
+    break;
+
+  case ARM::VFPV4_D16:
+    setAttributeItem(ARMBuildAttrs::VFP_arch,
+                     ARMBuildAttrs::AllowFPv4B,
+                     /* OverwriteExisting= */ false);
+    break;
+
+  case ARM::FP_ARMV8:
+    setAttributeItem(ARMBuildAttrs::VFP_arch,
+                     ARMBuildAttrs::AllowFPARMv8A,
+                     /* OverwriteExisting= */ false);
+    break;
+
+  case ARM::NEON:
+    setAttributeItem(ARMBuildAttrs::VFP_arch,
+                     ARMBuildAttrs::AllowFPv3A,
+                     /* OverwriteExisting= */ false);
+    setAttributeItem(ARMBuildAttrs::Advanced_SIMD_arch,
+                     ARMBuildAttrs::AllowNeon,
+                     /* OverwriteExisting= */ false);
+    break;
+
+  case ARM::NEON_VFPV4:
+    setAttributeItem(ARMBuildAttrs::VFP_arch,
+                     ARMBuildAttrs::AllowFPv4A,
+                     /* OverwriteExisting= */ false);
+    setAttributeItem(ARMBuildAttrs::Advanced_SIMD_arch,
+                     ARMBuildAttrs::AllowNeon2,
+                     /* OverwriteExisting= */ false);
+    break;
+
+  case ARM::NEON_FP_ARMV8:
+  case ARM::CRYPTO_NEON_FP_ARMV8:
+    setAttributeItem(ARMBuildAttrs::VFP_arch,
+                     ARMBuildAttrs::AllowFPARMv8A,
+                     /* OverwriteExisting= */ false);
+    setAttributeItem(ARMBuildAttrs::Advanced_SIMD_arch,
+                     ARMBuildAttrs::AllowNeonARMv8,
+                     /* OverwriteExisting= */ false);
+    break;
+
+  default:
+    report_fatal_error("Unknown FPU: " + Twine(FPU));
+    break;
+  }
+}
+size_t ARMTargetELFStreamer::calculateContentSize() const {
+  size_t Result = 0;
+  for (size_t i = 0; i < Contents.size(); ++i) {
+    AttributeItem item = Contents[i];
+    switch (item.Type) {
+    case AttributeItem::HiddenAttribute:
+      break;
+    case AttributeItem::NumericAttribute:
+      Result += getULEBSize(item.Tag);
+      Result += getULEBSize(item.IntValue);
+      break;
+    case AttributeItem::TextAttribute:
+      Result += getULEBSize(item.Tag);
+      Result += item.StringValue.size() + 1; // string + '\0'
+      break;
+    }
+  }
+  return Result;
+}
+void ARMTargetELFStreamer::finishAttributeSection() {
+  // <format-version>
+  // [ <section-length> "vendor-name"
+  // [ <file-tag> <size> <attribute>*
+  //   | <section-tag> <size> <section-number>* 0 <attribute>*
+  //   | <symbol-tag> <size> <symbol-number>* 0 <attribute>*
+  //   ]+
+  // ]*
+
+  if (FPU != ARM::INVALID_FPU)
+    emitFPUDefaultAttributes();
+
+  if (Contents.empty())
+    return;
+
+  std::sort(Contents.begin(), Contents.end(), AttributeItem::LessTag);
+
+  ARMELFStreamer &Streamer = getStreamer();
+
+  // Switch to .ARM.attributes section
+  if (AttributeSection) {
+    Streamer.SwitchSection(AttributeSection);
+  } else {
+    AttributeSection =
+      Streamer.getContext().getELFSection(".ARM.attributes",
+                                          ELF::SHT_ARM_ATTRIBUTES,
+                                          0,
+                                          SectionKind::getMetadata());
+    Streamer.SwitchSection(AttributeSection);
+
+    // Format version
+    Streamer.EmitIntValue(0x41, 1);
+  }
+
+  // Vendor size + Vendor name + '\0'
+  const size_t VendorHeaderSize = 4 + CurrentVendor.size() + 1;
+
+  // Tag + Tag Size
+  const size_t TagHeaderSize = 1 + 4;
+
+  const size_t ContentsSize = calculateContentSize();
+
+  Streamer.EmitIntValue(VendorHeaderSize + TagHeaderSize + ContentsSize, 4);
+  Streamer.EmitBytes(CurrentVendor);
+  Streamer.EmitIntValue(0, 1); // '\0'
+
+  Streamer.EmitIntValue(ARMBuildAttrs::File, 1);
+  Streamer.EmitIntValue(TagHeaderSize + ContentsSize, 4);
+
+  // Size should have been accounted for already, now
+  // emit each field as its type (ULEB or String)
+  for (size_t i = 0; i < Contents.size(); ++i) {
+    AttributeItem item = Contents[i];
+    Streamer.EmitULEB128IntValue(item.Tag);
+    switch (item.Type) {
+    default: llvm_unreachable("Invalid attribute type");
+    case AttributeItem::NumericAttribute:
+      Streamer.EmitULEB128IntValue(item.IntValue);
+      break;
+    case AttributeItem::TextAttribute:
+      Streamer.EmitBytes(item.StringValue.upper());
+      Streamer.EmitIntValue(0, 1); // '\0'
+      break;
+    }
+  }
+
+  Contents.clear();
+  FPU = ARM::INVALID_FPU;
+}
+
+void ARMELFStreamer::FinishImpl() {
+  MCTargetStreamer &TS = getTargetStreamer();
+  ARMTargetStreamer &ATS = static_cast<ARMTargetStreamer &>(TS);
+  ATS.finishAttributeSection();
+
+  MCELFStreamer::FinishImpl();
 }
 
 inline void ARMELFStreamer::SwitchToEHSection(const char *Prefix,

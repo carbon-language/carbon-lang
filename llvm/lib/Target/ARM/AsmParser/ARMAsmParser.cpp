@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ARMBuildAttrs.h"
+#include "ARMFPUName.h"
 #include "ARMFeatures.h"
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
@@ -137,6 +139,8 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parseDirectiveUnreq(SMLoc L);
   bool parseDirectiveArch(SMLoc L);
   bool parseDirectiveEabiAttr(SMLoc L);
+  bool parseDirectiveCPU(SMLoc L);
+  bool parseDirectiveFPU(SMLoc L);
   bool parseDirectiveFnStart(SMLoc L);
   bool parseDirectiveFnEnd(SMLoc L);
   bool parseDirectiveCantUnwind(SMLoc L);
@@ -7765,6 +7769,10 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveArch(DirectiveID.getLoc());
   else if (IDVal == ".eabi_attribute")
     return parseDirectiveEabiAttr(DirectiveID.getLoc());
+  else if (IDVal == ".cpu")
+    return parseDirectiveCPU(DirectiveID.getLoc());
+  else if (IDVal == ".fpu")
+    return parseDirectiveFPU(DirectiveID.getLoc());
   else if (IDVal == ".fnstart")
     return parseDirectiveFnStart(DirectiveID.getLoc());
   else if (IDVal == ".fnend")
@@ -7987,7 +7995,48 @@ bool ARMAsmParser::parseDirectiveArch(SMLoc L) {
 /// parseDirectiveEabiAttr
 ///  ::= .eabi_attribute int, int
 bool ARMAsmParser::parseDirectiveEabiAttr(SMLoc L) {
-  return true;
+  if (Parser.getTok().isNot(AsmToken::Integer))
+    return Error(L, "integer expected");
+  int64_t Tag = Parser.getTok().getIntVal();
+  Parser.Lex(); // eat tag integer
+
+  if (Parser.getTok().isNot(AsmToken::Comma))
+    return Error(L, "comma expected");
+  Parser.Lex(); // skip comma
+
+  L = Parser.getTok().getLoc();
+  if (Parser.getTok().isNot(AsmToken::Integer))
+    return Error(L, "integer expected");
+  int64_t Value = Parser.getTok().getIntVal();
+  Parser.Lex(); // eat value integer
+
+  getTargetStreamer().emitAttribute(Tag, Value);
+  return false;
+}
+
+/// parseDirectiveCPU
+///  ::= .cpu str
+bool ARMAsmParser::parseDirectiveCPU(SMLoc L) {
+  StringRef CPU = getParser().parseStringToEndOfStatement().trim();
+  getTargetStreamer().emitTextAttribute(ARMBuildAttrs::CPU_name, CPU);
+  return false;
+}
+
+/// parseDirectiveFPU
+///  ::= .fpu str
+bool ARMAsmParser::parseDirectiveFPU(SMLoc L) {
+  StringRef FPU = getParser().parseStringToEndOfStatement().trim();
+
+  unsigned ID = StringSwitch<unsigned>(FPU)
+#define ARM_FPU_NAME(NAME, ID) .Case(NAME, ARM::ID)
+#include "ARMFPUName.def"
+    .Default(ARM::INVALID_FPU);
+
+  if (ID == ARM::INVALID_FPU)
+    return Error(L, "Unknown FPU name");
+
+  getTargetStreamer().emitFPU(ID);
+  return false;
 }
 
 /// parseDirectiveFnStart
