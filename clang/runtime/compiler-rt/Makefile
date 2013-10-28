@@ -23,7 +23,9 @@ ResourceDir := $(PROJ_OBJ_ROOT)/$(BuildMode)/lib/clang/$(CLANG_VERSION)
 PROJ_resources := $(DESTDIR)$(PROJ_prefix)/lib/clang/$(CLANG_VERSION)
 
 ResourceLibDir := $(ResourceDir)/lib
+ResourceIncludeDir := $(ResourceDir)/include
 PROJ_resources_lib := $(PROJ_resources)/lib
+PROJ_resources_include := $(PROJ_resources)/include
 
 # Expect compiler-rt to be in llvm/projects/compiler-rt
 COMPILERRT_SRC_ROOT := $(LLVM_SRC_ROOT)/projects/compiler-rt
@@ -150,9 +152,17 @@ CleanRuntimeLibraries:
 	  ProjObjRoot=$(PROJ_OBJ_DIR) \
 	  clean
 .PHONY: CleanRuntimeLibraries
+RuntimeHeader: $(ResourceIncludeDir)/sanitizer
 
 $(PROJ_resources_lib):
 	$(Verb) $(MKDIR) $@
+
+$(ResourceIncludeDir):
+	$(Verb) $(MKDIR) $@
+
+$(ResourceIncludeDir)/sanitizer: $(ResourceIncludeDir)
+	$(Verb) $(MKDIR) $@
+	$(Verb) cp $(COMPILERRT_SRC_ROOT)/include/sanitizer/*.h $@
 
 # Expand rules for copying/installing each individual library. We can't use
 # implicit rules here because we need to match against multiple things.
@@ -210,9 +220,21 @@ RuntimeLibraryInstall.$1: \
 endef
 $(foreach lib,$(RuntimeDirs), $(eval $(call RuntimeLibraryTemplate,$(lib))))
 
+$(PROJ_resources_include):
+	$(Verb) $(MKDIR) $@
+
+$(PROJ_resources_include)/sanitizer: $(ResourceIncludeDir)/sanitizer $(PROJ_resources_include)
+	$(Verb) $(MKDIR) $@
+	$(Echo) Installing compiler runtime headers
+	$(Verb) $(DataInstall) $(ResourceIncludeDir)/sanitizer/* \
+                               $(PROJ_resources_include)/sanitizer
+
+RuntimeHeaderInstall: $(PROJ_resources_include)/sanitizer
+.PHONY: RuntimeHeaderInstall
+
 # Hook into the standard Makefile rules.
-all-local:: $(RuntimeDirs:%=RuntimeLibrary.%)
-install-local:: $(RuntimeDirs:%=RuntimeLibraryInstall.%)
+all-local:: $(RuntimeDirs:%=RuntimeLibrary.%) RuntimeHeader
+install-local:: $(RuntimeDirs:%=RuntimeLibraryInstall.%) RuntimeHeaderInstall
 clean-local:: CleanRuntimeLibraries
 
 endif
