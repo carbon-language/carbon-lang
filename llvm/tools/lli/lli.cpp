@@ -134,7 +134,7 @@ namespace {
   cl::list<std::string>
   ExtraModules("extra-module",
          cl::desc("Extra modules to be loaded"),
-         cl::value_desc("<input bitcode 2>,<input bitcode 3>,..."));
+         cl::value_desc("input bitcode"));
 
   cl::opt<std::string>
   FakeArgv0("fake-argv0",
