@@ -201,6 +201,9 @@ public:
     IsPointerToScalarType () const;
     
     bool
+    IsRuntimeGeneratedType () const;
+    
+    bool
     IsPointerType (ClangASTType *pointee_type = NULL) const;
     
     bool

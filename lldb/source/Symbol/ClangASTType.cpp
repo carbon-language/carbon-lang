@@ -288,6 +288,21 @@ ClangASTType::IsArrayType (ClangASTType *element_type_ptr,
     return 0;
 }
 
+bool
+ClangASTType::IsRuntimeGeneratedType () const
+{
+    if (!IsValid())
+        return false;
+    clang::DeclContext* decl_ctx = GetDeclContextForType();
+    if (!decl_ctx)
+        return false;
+    if (!llvm::isa<ObjCContainerDecl>(decl_ctx))
+        return false;
+    ClangASTMetadata* ast_metadata = ClangASTContext::GetMetadata(m_ast, decl_ctx);
+    if (!ast_metadata)
+        return false;
+    return (ast_metadata->GetISAPtr() != 0);
+}
 
 bool
 ClangASTType::IsCharType () const

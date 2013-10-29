@@ -81,7 +81,7 @@ TypeImpl
 ValueObjectDynamicValue::GetTypeImpl ()
 {
     const bool success = UpdateValueIfNeeded(false);
-    if (success)
+    if (success && m_type_impl.IsValid())
     {
         return m_type_impl;
     }
@@ -225,12 +225,29 @@ ValueObjectDynamicValue::UpdateValue ()
     
     m_update_point.SetUpdated();
 
-    // if the runtime only vended a ClangASTType, then we have an hollow type that we don't want to use
-    // but we save it for the TypeImpl, which can still use an hollow type for some questions
-    if (found_dynamic_type && class_type_or_name.HasType() && !class_type_or_name.HasTypeSP())
+    if (found_dynamic_type)
     {
-        m_type_impl = TypeImpl(m_parent->GetClangType(),FixupTypeAndOrName(class_type_or_name, *m_parent).GetClangASTType());
-        class_type_or_name.SetClangASTType(ClangASTType());
+        if (class_type_or_name.HasType())
+        {
+            // TypeSP are always generated from debug info
+            if (!class_type_or_name.HasTypeSP() && class_type_or_name.GetClangASTType().IsRuntimeGeneratedType())
+            {
+                m_type_impl = TypeImpl(m_parent->GetClangType(),FixupTypeAndOrName(class_type_or_name, *m_parent).GetClangASTType());
+                class_type_or_name.SetClangASTType(ClangASTType());
+            }
+            else
+            {
+                m_type_impl = TypeImpl(FixupTypeAndOrName(class_type_or_name, *m_parent).GetClangASTType());
+            }
+        }
+        else
+        {
+            m_type_impl.Clear();
+        }
+    }
+    else
+    {
+        m_type_impl.Clear();
     }
     
     // If we don't have a dynamic type, then make ourselves just a echo of our parent.

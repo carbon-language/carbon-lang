@@ -1,5 +1,5 @@
 """
-Test that we are able to properly report a usable dynamic type for NSImage
+Test that we are able to properly report a usable dynamic type
 """
 
 import os, time
@@ -16,7 +16,7 @@ class ObjCDynamicSBTypeTestCase(TestBase):
     @dsym_test
     @skipIfi386
     def test_nsimage_dyn_with_dsym(self):
-        """Test that we are able to properly report a usable dynamic type for NSImage."""
+        """Test that we are able to properly report a usable dynamic type."""
         d = {'EXE': self.exe_name}
         self.buildDsym(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
@@ -25,7 +25,7 @@ class ObjCDynamicSBTypeTestCase(TestBase):
     @dwarf_test
     @skipIfi386
     def test_nsimage_dyn_with_dwarf(self):
-        """Test that we are able to properly report a usable dynamic type for NSImage."""
+        """Test that we are able to properly report a usable dynamic type."""
         d = {'EXE': self.exe_name}
         self.buildDwarf(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
@@ -41,7 +41,7 @@ class ObjCDynamicSBTypeTestCase(TestBase):
         self.line = line_number(self.main_source, '// Set breakpoint here.')
 
     def nsimage_dyn(self, exe_name):
-        """Test that we are able to properly report a usable dynamic type for NSImage."""
+        """Test that we are able to properly report a usable dynamic type."""
         exe = os.path.join(os.getcwd(), exe_name)
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -57,6 +57,27 @@ class ObjCDynamicSBTypeTestCase(TestBase):
         self.assertTrue(image_pointee_type.GetName() == "NSImage", "The dynamic type figures out its pointee type just fine")
         self.assertTrue(image_pointee_type.GetDirectBaseClassAtIndex(0).GetName() == "NSObject", "The dynamic type can go back to its base class")
 
+        v_object = self.frame().FindVariable("object").GetDynamicValue(lldb.eDynamicCanRunTarget)
+        v_base = self.frame().FindVariable("base").GetDynamicValue(lldb.eDynamicCanRunTarget)
+        self.assertTrue(v_object.GetTypeName() == "MyDerivedClass *", "The NSObject is properly type-named")
+        self.assertTrue(v_base.GetTypeName() == "MyDerivedClass *", "The Base is properly type-named")
+        object_type = v_object.GetType()
+        base_type = v_base.GetType()
+        self.assertTrue(object_type.GetName() == "MyDerivedClass *", "The dynamic SBType for NSObject is for the correct type")
+        self.assertTrue(base_type.GetName() == "MyDerivedClass *", "The dynamic SBType for Base is for the correct type")
+        object_pointee_type = object_type.GetPointeeType()
+        base_pointee_type = base_type.GetPointeeType()
+        self.assertTrue(object_pointee_type.GetName() == "MyDerivedClass", "The dynamic type for NSObject figures out its pointee type just fine")
+        self.assertTrue(base_pointee_type.GetName() == "MyDerivedClass", "The dynamic type for Base figures out its pointee type just fine")
+
+        self.assertTrue(object_pointee_type.GetDirectBaseClassAtIndex(0).GetName() == "MyBaseClass", "The dynamic type for NSObject can go back to its base class")
+        self.assertTrue(base_pointee_type.GetDirectBaseClassAtIndex(0).GetName() == "MyBaseClass", "The dynamic type for Base can go back to its base class")
+
+        self.assertTrue(object_pointee_type.GetDirectBaseClassAtIndex(0).GetType().GetDirectBaseClassAtIndex(0).GetName() == "NSObject", "The dynamic type for NSObject can go up the hierarchy")
+        self.assertTrue(base_pointee_type.GetDirectBaseClassAtIndex(0).GetType().GetDirectBaseClassAtIndex(0).GetName() == "NSObject", "The dynamic type for Base can go up the hierarchy")
+
+        self.assertTrue(object_pointee_type.GetNumberOfFields() == 2, "The dynamic type for NSObject has 2 fields")
+        self.assertTrue(base_pointee_type.GetNumberOfFields() == 2, "The dynamic type for Base has 2 fields")
 
 if __name__ == '__main__':
     import atexit
