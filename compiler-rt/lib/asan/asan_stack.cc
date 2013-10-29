@@ -29,9 +29,8 @@ void PrintStack(const uptr *trace, uptr size) {
     Printf("<empty stack>\n\n");
     return;
   }
-  StackTrace::PrintStack(trace, size, common_flags()->symbolize,
-                         MaybeCallAsanSymbolize);
-    Printf("\n");
+  StackTrace::PrintStack(trace, size, MaybeCallAsanSymbolize);
+  Printf("\n");
 }
 
 void PrintStack(StackTrace *stack) {

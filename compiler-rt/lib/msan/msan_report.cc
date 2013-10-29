@@ -36,7 +36,7 @@ class Decorator: private __sanitizer::AnsiColorDecorator {
 
 static void PrintStack(const uptr *trace, uptr size) {
   SymbolizerScope sym_scope;
-  StackTrace::PrintStack(trace, size, true, 0);
+  StackTrace::PrintStack(trace, size);
   Printf("\n");
 }
 

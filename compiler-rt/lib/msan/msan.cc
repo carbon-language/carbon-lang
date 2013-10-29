@@ -142,6 +142,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
 static void InitializeFlags(Flags *f, const char *options) {
   CommonFlags *cf = common_flags();
   cf->external_symbolizer_path = GetEnv("MSAN_SYMBOLIZER_PATH");
+  cf->symbolize = true;
   cf->strip_path_prefix = "";
   cf->fast_unwind_on_fatal = false;
   cf->fast_unwind_on_malloc = true;

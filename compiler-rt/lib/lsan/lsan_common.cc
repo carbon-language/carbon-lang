@@ -295,7 +295,7 @@ static void PrintStackTraceById(u32 stack_trace_id) {
   CHECK(stack_trace_id);
   uptr size = 0;
   const uptr *trace = StackDepotGet(stack_trace_id, &size);
-  StackTrace::PrintStack(trace, size, common_flags()->symbolize, 0);
+  StackTrace::PrintStack(trace, size);
 }
 
 // ForEachChunk callback. Aggregates unreachable chunks into a LeakReport.

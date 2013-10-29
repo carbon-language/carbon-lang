@@ -38,7 +38,7 @@ static void PrintStackFramePrefix(uptr frame_num, uptr pc) {
   Printf("    #%zu 0x%zx", frame_num, pc);
 }
 
-void StackTrace::PrintStack(const uptr *addr, uptr size, bool symbolize,
+void StackTrace::PrintStack(const uptr *addr, uptr size,
                             SymbolizeCallback symbolize_callback) {
   MemoryMappingLayout proc_maps(/*cache_enabled*/true);
   InternalScopedBuffer<char> buff(GetPageSizeCached() * 2);
@@ -62,7 +62,7 @@ void StackTrace::PrintStack(const uptr *addr, uptr size, bool symbolize,
         frame_num++;
       }
     }
-    if (symbolize && addr_frames_num == 0) {
+    if (common_flags()->symbolize && addr_frames_num == 0) {
       // Use our own (online) symbolizer, if necessary.
       if (Symbolizer *sym = Symbolizer::GetOrNull())
         addr_frames_num =

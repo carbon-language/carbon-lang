@@ -34,8 +34,8 @@ struct StackTrace {
   uptr size;
   uptr trace[kStackTraceMax];
 
-  static void PrintStack(const uptr *addr, uptr size, bool symbolize,
-                         SymbolizeCallback symbolize_callback);
+  static void PrintStack(const uptr *addr, uptr size,
+                         SymbolizeCallback symbolize_callback = 0);
 
   void CopyFrom(const uptr *src, uptr src_size) {
     size = src_size;
