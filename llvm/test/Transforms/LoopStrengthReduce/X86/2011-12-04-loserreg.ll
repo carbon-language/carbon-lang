@@ -1,6 +1,6 @@
 ; RUN: opt < %s -loop-reduce -S | FileCheck %s
 ;
-; Test LSR's ability to prune formulae that refer to nonexistant
+; Test LSR's ability to prune formulae that refer to nonexistent
 ; AddRecs in other loops.
 ;
 ; Unable to reduce this case further because it requires LSR to exceed

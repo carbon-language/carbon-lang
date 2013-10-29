@@ -6451,7 +6451,7 @@ static void checkForCyclesHelper(const SDNode *N,
 
 void llvm::checkForCycles(const llvm::SDNode *N) {
 #ifdef XDEBUG
-  assert(N && "Checking nonexistant SDNode");
+  assert(N && "Checking nonexistent SDNode");
   SmallPtrSet<const SDNode*, 32> visited;
   SmallPtrSet<const SDNode*, 32> checked;
   checkForCyclesHelper(N, visited, checked);
