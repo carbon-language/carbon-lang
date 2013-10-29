@@ -2264,13 +2264,26 @@ static void addPathIfExists(Twine Path, ToolChain::path_list &Paths) {
 
 static StringRef getMultilibDir(const llvm::Triple &Triple,
                                 const ArgList &Args) {
-  if (!isMipsArch(Triple.getArch()))
-    return Triple.isArch32Bit() ? "lib32" : "lib64";
+  if (isMipsArch(Triple.getArch())) {
+    // lib32 directory has a special meaning on MIPS targets.
+    // It contains N32 ABI binaries. Use this folder if produce
+    // code for N32 ABI only.
+    if (hasMipsN32ABIArg(Args))
+      return "lib32";
+    return Triple.isArch32Bit() ? "lib" : "lib64";
+  }
 
-  // lib32 directory has a special meaning on MIPS targets.
-  // It contains N32 ABI binaries. Use this folder if produce
-  // code for N32 ABI only.
-  if (hasMipsN32ABIArg(Args))
+  // It happens that only x86 and PPC use the 'lib32' variant of multilib, and
+  // using that variant while targeting other architectures causes problems
+  // because the libraries are laid out in shared system roots that can't cope
+  // with a 'lib32' multilib search path being considered. So we only enable
+  // them when we know we may need it.
+  //
+  // FIXME: This is a bit of a hack. We should really unify this code for
+  // reasoning about multilib spellings with the lib dir spellings in the
+  // GCCInstallationDetector, but that is a more significant refactoring.
+  if (Triple.getArch() == llvm::Triple::x86 ||
+      Triple.getArch() == llvm::Triple::ppc)
     return "lib32";
 
   return Triple.isArch32Bit() ? "lib" : "lib64";
