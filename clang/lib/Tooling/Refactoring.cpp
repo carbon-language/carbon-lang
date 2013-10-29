@@ -301,23 +301,7 @@ bool RefactoringTool::applyAllReplacements(Rewriter &Rewrite) {
 }
 
 int RefactoringTool::saveRewrittenFiles(Rewriter &Rewrite) {
-  for (Rewriter::buffer_iterator I = Rewrite.buffer_begin(),
-                                 E = Rewrite.buffer_end();
-       I != E; ++I) {
-    // FIXME: This code is copied from the FixItRewriter.cpp - I think it should
-    // go into directly into Rewriter (there we also have the Diagnostics to
-    // handle the error cases better).
-    const FileEntry *Entry =
-        Rewrite.getSourceMgr().getFileEntryForID(I->first);
-    std::string ErrorInfo;
-    llvm::raw_fd_ostream FileStream(Entry->getName(), ErrorInfo,
-                                    llvm::sys::fs::F_Binary);
-    if (!ErrorInfo.empty())
-      return 1;
-    I->second.write(FileStream);
-    FileStream.flush();
-  }
-  return 0;
+  return Rewrite.overwriteChangedFiles() ? 0 : 1;
 }
 
 } // end namespace tooling
