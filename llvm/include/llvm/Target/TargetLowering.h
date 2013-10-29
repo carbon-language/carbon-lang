@@ -520,13 +520,12 @@ public:
   LegalizeAction
   getCondCodeAction(ISD::CondCode CC, MVT VT) const {
     assert((unsigned)CC < array_lengthof(CondCodeActions) &&
-           (unsigned)VT.SimpleTy < sizeof(CondCodeActions[0])*4 &&
+           ((unsigned)VT.SimpleTy >> 4) < array_lengthof(CondCodeActions[0]) &&
            "Table isn't big enough!");
-    /// The lower 5 bits of the SimpleTy index into Nth 2bit set from the 64bit
-    /// value and the upper 27 bits index into the second dimension of the
-    /// array to select what 64bit value to use.
-    LegalizeAction Action = (LegalizeAction)
-      ((CondCodeActions[CC][VT.SimpleTy >> 5] >> (2*(VT.SimpleTy & 0x1F))) & 3);
+    // See setCondCodeAction for how this is encoded.
+    uint32_t Shift = 2 * (VT.SimpleTy & 0xF);
+    uint32_t Value = CondCodeActions[CC][VT.SimpleTy >> 4];
+    LegalizeAction Action = (LegalizeAction) ((Value >> Shift) & 0x3);
     assert(Action != Promote && "Can't promote condition code!");
     return Action;
   }
@@ -1020,13 +1019,12 @@ protected:
     assert(VT < MVT::LAST_VALUETYPE &&
            (unsigned)CC < array_lengthof(CondCodeActions) &&
            "Table isn't big enough!");
-    /// The lower 5 bits of the SimpleTy index into Nth 2bit set from the 64bit
-    /// value and the upper 27 bits index into the second dimension of the
-    /// array to select what 64bit value to use.
-    CondCodeActions[(unsigned)CC][VT.SimpleTy >> 5]
-      &= ~(uint64_t(3UL)  << (VT.SimpleTy & 0x1F)*2);
-    CondCodeActions[(unsigned)CC][VT.SimpleTy >> 5]
-      |= (uint64_t)Action << (VT.SimpleTy & 0x1F)*2;
+    /// The lower 5 bits of the SimpleTy index into Nth 2bit set from the 32-bit
+    /// value and the upper 27 bits index into the second dimension of the array
+    /// to select what 32-bit value to use.
+    uint32_t Shift = 2 * (VT.SimpleTy & 0xF);
+    CondCodeActions[CC][VT.SimpleTy >> 4] &= ~((uint32_t)0x3 << Shift);
+    CondCodeActions[CC][VT.SimpleTy >> 4] |= (uint32_t)Action << Shift;
   }
 
   /// If Opc/OrigVT is specified as being promoted, the promotion code defaults
@@ -1448,8 +1446,8 @@ private:
   ///
   /// Because each CC action takes up 2 bits, we need to have the array size be
   /// large enough to fit all of the value types. This can be done by dividing
-  /// the MVT::LAST_VALUETYPE by 32 and adding one.
-  uint64_t CondCodeActions[ISD::SETCC_INVALID][(MVT::LAST_VALUETYPE / 32) + 1];
+  /// the MVT::LAST_VALUETYPE by 16 and adding one.
+  uint32_t CondCodeActions[ISD::SETCC_INVALID][(MVT::LAST_VALUETYPE + 15) / 16];
 
   ValueTypeActionImpl ValueTypeActions;
 
