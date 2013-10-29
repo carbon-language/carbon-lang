@@ -282,21 +282,14 @@ void InstrumentMops(void *drcontext, instrlist_t *bb, instr_t *instr, opnd_t op,
   }
   CHECK(reg_is_pointer_sized(R1)); // otherwise R2 may be wrong.
 
-  // Pick R2 that's not R1 or used by the operand.  It's OK if the instr uses
-  // R2 elsewhere, since we'll restore it before instr.
-  reg_id_t GPR_TO_USE_FOR_R2[] = {
-    DR_REG_XAX, DR_REG_XBX, DR_REG_XCX, DR_REG_XDX
-    // Don't forget to update the +4 below if you add anything else!
-  };
-  std::set<reg_id_t> unused_registers(GPR_TO_USE_FOR_R2, GPR_TO_USE_FOR_R2 + 4);
-  unused_registers.erase(R1);
-  for (int j = 0; j < opnd_num_regs_used(op); j++) {
-    unused_registers.erase(opnd_get_reg_used(op, j));
+  // Pick R2 from R8 to R15.
+  // It's OK if the instr uses R2 elsewhere, since we'll restore it before instr.
+  reg_id_t R2;
+  for (R2 = DR_REG_R8; R2 <= DR_REG_R15; R2++) {
+    if (!opnd_uses_reg(op, R2))
+      break;
   }
-
-  CHECK(unused_registers.size() > 0);
-  reg_id_t R2 = *unused_registers.begin();
-  CHECK(R1 != R2);
+  CHECK((R2 <= DR_REG_R15) && R1 != R2);
 
   // Save the current values of R1 and R2.
   dr_save_reg(drcontext, bb, instr, R1, SPILL_SLOT_1);
@@ -334,6 +327,7 @@ void InstrumentMops(void *drcontext, instrlist_t *bb, instr_t *instr, opnd_t op,
   dr_restore_reg(drcontext, bb, instr, R1, SPILL_SLOT_1);
   dr_restore_reg(drcontext, bb, instr, R2, SPILL_SLOT_2);
 
+  // TODO: move aflags save/restore to per instr instead of per opnd
   if (need_to_restore_eflags) {
     if (VERBOSITY > 1)
       dr_printf("Restoring eflags\n");
