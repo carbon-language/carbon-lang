@@ -1023,14 +1023,14 @@ int BoUpSLP::getEntryCost(TreeEntry *E) {
       // Cost of wide load - cost of scalar loads.
       int ScalarLdCost = VecTy->getNumElements() *
       TTI->getMemoryOpCost(Instruction::Load, ScalarTy, 1, 0);
-      int VecLdCost = TTI->getMemoryOpCost(Instruction::Load, ScalarTy, 1, 0);
+      int VecLdCost = TTI->getMemoryOpCost(Instruction::Load, VecTy, 1, 0);
       return VecLdCost - ScalarLdCost;
     }
     case Instruction::Store: {
       // We know that we can merge the stores. Calculate the cost.
       int ScalarStCost = VecTy->getNumElements() *
       TTI->getMemoryOpCost(Instruction::Store, ScalarTy, 1, 0);
-      int VecStCost = TTI->getMemoryOpCost(Instruction::Store, ScalarTy, 1, 0);
+      int VecStCost = TTI->getMemoryOpCost(Instruction::Store, VecTy, 1, 0);
       return VecStCost - ScalarStCost;
     }
     default:
