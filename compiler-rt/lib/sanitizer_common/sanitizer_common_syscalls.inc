@@ -2218,9 +2218,45 @@ PRE_SYSCALL(ni_syscall)() {}
 
 POST_SYSCALL(ni_syscall)(long res) {}
 
-PRE_SYSCALL(ptrace)(long request, long pid, long addr, long data) {}
+PRE_SYSCALL(ptrace)(long request, long pid, long addr, long data) {
+  if (data) {
+    if (request == ptrace_setregs) {
+      PRE_READ((void *)data, struct_user_regs_struct_sz);
+    } else if (request == ptrace_setfpregs) {
+      PRE_READ((void *)data, struct_user_fpregs_struct_sz);
+    } else if (request == ptrace_setfpxregs) {
+      PRE_READ((void *)data, struct_user_fpxregs_struct_sz);
+    } else if (request == ptrace_setsiginfo) {
+      PRE_READ((void *)data, siginfo_t_sz);
+    } else if (request == ptrace_setregset) {
+      __sanitizer_iovec *iov = (__sanitizer_iovec *)data;
+      PRE_READ(iov->iov_base, iov->iov_len);
+    }
+  }
+}
 
-POST_SYSCALL(ptrace)(long res, long request, long pid, long addr, long data) {}
+POST_SYSCALL(ptrace)(long res, long request, long pid, long addr, long data) {
+  if (res >= 0 && data) {
+    // Note that this is different from the interceptor in
+    // sanitizer_common_interceptors.inc.
+    // PEEK* requests return resulting values through data pointer.
+    if (request == ptrace_getregs) {
+      POST_WRITE((void *)data, struct_user_regs_struct_sz);
+    } else if (request == ptrace_getfpregs) {
+      POST_WRITE((void *)data, struct_user_fpregs_struct_sz);
+    } else if (request == ptrace_getfpxregs) {
+      POST_WRITE((void *)data, struct_user_fpxregs_struct_sz);
+    } else if (request == ptrace_getsiginfo) {
+      POST_WRITE((void *)data, siginfo_t_sz);
+    } else if (request == ptrace_getregset) {
+      __sanitizer_iovec *iov = (__sanitizer_iovec *)data;
+      POST_WRITE(iov->iov_base, iov->iov_len);
+    } else if (request == ptrace_peekdata || request == ptrace_peektext ||
+               request == ptrace_peekuser) {
+      POST_WRITE((void *)data, sizeof(void *));
+    }
+  }
+}
 
 PRE_SYSCALL(add_key)(const void *_type, const void *_description,
                      const void *_payload, long plen, long destringid) {

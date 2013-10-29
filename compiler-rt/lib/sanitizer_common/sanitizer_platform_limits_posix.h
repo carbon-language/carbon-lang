@@ -379,6 +379,9 @@ namespace __sanitizer {
   extern unsigned struct_user_fpregs_struct_sz;
   extern unsigned struct_user_fpxregs_struct_sz;
 
+  extern int ptrace_peektext;
+  extern int ptrace_peekdata;
+  extern int ptrace_peekuser;
   extern int ptrace_getregs;
   extern int ptrace_setregs;
   extern int ptrace_getfpregs;

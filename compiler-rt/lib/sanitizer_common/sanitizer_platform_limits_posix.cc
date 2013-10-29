@@ -218,6 +218,9 @@ namespace __sanitizer {
   unsigned struct_user_fpxregs_struct_sz = sizeof(struct user_fpxregs_struct);
 #endif
 
+  int ptrace_peektext = PTRACE_PEEKTEXT;
+  int ptrace_peekdata = PTRACE_PEEKDATA;
+  int ptrace_peekuser = PTRACE_PEEKUSER;
   int ptrace_getregs = PTRACE_GETREGS;
   int ptrace_setregs = PTRACE_SETREGS;
   int ptrace_getfpregs = PTRACE_GETFPREGS;

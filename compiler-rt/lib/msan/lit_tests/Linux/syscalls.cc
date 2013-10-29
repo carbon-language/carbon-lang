@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <sys/ptrace.h>
 #include <sys/stat.h>
 
 #include <sanitizer/linux_syscall_hooks.h>
@@ -76,6 +77,10 @@ int main(int argc, char *argv[]) {
   __sanitizer_syscall_post_mq_timedreceive(kFortyTwo, 5, buf, sizeof(buf), &prio, 0);
   assert(__msan_test_shadow(buf, sizeof(buf)) == kFortyTwo);
   assert(__msan_test_shadow(&prio, sizeof(prio)) == -1);
+
+  __msan_poison(buf, sizeof(buf));
+  __sanitizer_syscall_post_ptrace(0, PTRACE_PEEKUSER, kFortyTwo, 0xABCD, buf);
+  assert(__msan_test_shadow(buf, sizeof(buf)) == sizeof(void *));
   
   return 0;
 }
