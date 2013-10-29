@@ -4766,13 +4766,12 @@ llvm::Type* MipsABIInfo::HandleAggregates(QualType Ty, uint64_t TySize) const {
   return llvm::StructType::get(getVMContext(), ArgList);
 }
 
-llvm::Type *MipsABIInfo::getPaddingType(uint64_t Align, uint64_t Offset) const {
-  assert((Offset % MinABIStackAlignInBytes) == 0);
+llvm::Type *MipsABIInfo::getPaddingType(uint64_t OrigOffset,
+                                        uint64_t Offset) const {
+  if (OrigOffset + MinABIStackAlignInBytes > Offset)
+    return 0;
 
-  if ((Align - 1) & Offset)
-    return llvm::IntegerType::get(getVMContext(), MinABIStackAlignInBytes * 8);
-
-  return 0;
+  return llvm::IntegerType::get(getVMContext(), (Offset - OrigOffset) * 8);
 }
 
 ABIArgInfo
@@ -4783,8 +4782,8 @@ MipsABIInfo::classifyArgumentType(QualType Ty, uint64_t &Offset) const {
 
   Align = std::min(std::max(Align, (uint64_t)MinABIStackAlignInBytes),
                    (uint64_t)StackAlignInBytes);
-  Offset = llvm::RoundUpToAlignment(Offset, Align);
-  Offset += llvm::RoundUpToAlignment(TySize, Align * 8) / 8;
+  unsigned CurrOffset = llvm::RoundUpToAlignment(Offset, Align);
+  Offset = CurrOffset + llvm::RoundUpToAlignment(TySize, Align * 8) / 8;
 
   if (isAggregateTypeForABI(Ty) || Ty->isVectorType()) {
     // Ignore empty aggregates.
@@ -4800,7 +4799,7 @@ MipsABIInfo::classifyArgumentType(QualType Ty, uint64_t &Offset) const {
     // another structure type. Padding is inserted if the offset of the
     // aggregate is unaligned.
     return ABIArgInfo::getDirect(HandleAggregates(Ty, TySize), 0,
-                                 getPaddingType(Align, OrigOffset));
+                                 getPaddingType(OrigOffset, CurrOffset));
   }
 
   // Treat an enum type as its underlying type.
@@ -4810,8 +4809,8 @@ MipsABIInfo::classifyArgumentType(QualType Ty, uint64_t &Offset) const {
   if (Ty->isPromotableIntegerType())
     return ABIArgInfo::getExtend();
 
-  return ABIArgInfo::getDirect(0, 0,
-                               IsO32 ? 0 : getPaddingType(Align, OrigOffset));
+  return ABIArgInfo::getDirect(
+      0, 0, IsO32 ? 0 : getPaddingType(OrigOffset, CurrOffset));
 }
 
 llvm::Type*
