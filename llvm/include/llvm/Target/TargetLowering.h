@@ -1445,8 +1445,8 @@ private:
   /// indicates how instruction selection should deal with the condition code.
   ///
   /// Because each CC action takes up 2 bits, we need to have the array size be
-  /// large enough to fit all of the value types. This can be done by dividing
-  /// the MVT::LAST_VALUETYPE by 16 and adding one.
+  /// large enough to fit all of the value types. This can be done by rounding
+  /// up the MVT::LAST_VALUETYPE value to the next multiple of 16.
   uint32_t CondCodeActions[ISD::SETCC_INVALID][(MVT::LAST_VALUETYPE + 15) / 16];
 
   ValueTypeActionImpl ValueTypeActions;
