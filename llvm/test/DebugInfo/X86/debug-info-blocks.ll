@@ -5,13 +5,15 @@
 ; rdar://problem/9279956
 ; test that the DW_AT_location of self is at ( fbreg +{{[0-9]+}}, deref, +{{[0-9]+}} )
 
+; CHECK: DW_TAG_subprogram
 ; CHECK: DW_AT_name{{.*}}_block_invoke
+
 ; CHECK-NOT: DW_TAG_subprogram
 ; CHECK: DW_TAG_formal_parameter
-; CHECK-NOT: DW_TAG
-; CHECK: .block_descriptor
+; CHECK-NEXT: DW_AT_name{{.*}}.block_descriptor
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_location
+
 ; CHECK-NOT: DW_TAG_subprogram
 ; CHECK: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name{{.*}}"self"
