@@ -2,11 +2,12 @@
 #
 # RUN: lld -flavor link /out:%t1 /subsystem:console /entry:_start /opt:noref \
 # RUN:   -- %t.obj \
-# RUN:   && llvm-objdump -disassemble %t1 | FileCheck -check-prefix=CHECK1 %s
+# RUN:   && llvm-objdump -disassemble %t1 | FileCheck -check-prefix=DEFAULT %s
 #
 # RUN: lld -flavor link /out:%t1 /subsystem:console /entry:_start /base:65536 \
 # RUN:   /opt:noref -- %t.obj \
-# RUN:   && llvm-objdump -disassemble %t1 | FileCheck -check-prefix=CHECK2 %s
+# RUN:   && llvm-objdump -disassemble %t1 | FileCheck -check-prefix=BASE %s
 
-CHECK1: a1 00 20 40 00    movl    4202496, %eax
-CHECK2: a1 00 20 01 00    movl    73728, %eax
+DEFAULT: a1 00 00 40 00    movl    4194304, %eax
+
+BASE:    a1 00 00 01 00    movl    65536, %eax

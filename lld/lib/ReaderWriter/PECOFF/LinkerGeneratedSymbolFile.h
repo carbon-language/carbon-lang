@@ -27,50 +27,26 @@ namespace coff {
 
 namespace {
 
-// The symbol __ImageBase is a linker generated symbol. No standard library
-// files define it, but the linker is expected to prepare it as if it was read
-// from a file. The content of the atom is a 4-byte integer equal to the image
-// base address. Note that because the name is prefixed by an underscore on x86
-// Win32, the actual symbol name will be ___ImageBase (three underscores).
-class ImageBaseAtom : public COFFLinkerInternalAtom {
-public:
-  ImageBaseAtom(const PECOFFLinkingContext &context, const File &file,
-                uint32_t imageBase)
-      : COFFLinkerInternalAtom(file, assembleRawContent(imageBase)),
-        _name(context.decorateSymbol("__ImageBase")) {}
-
-  virtual StringRef name() const { return _name; }
-  virtual uint64_t ordinal() const { return 0; }
-  virtual ContentType contentType() const { return typeData; }
-  virtual ContentPermissions permissions() const { return permRW_; }
-  virtual DeadStripKind deadStrip() const { return deadStripAlways; }
-
-private:
-  std::vector<uint8_t> assembleRawContent(uint32_t imageBase) {
-    std::vector<uint8_t> data = std::vector<uint8_t>(4);
-    *(reinterpret_cast<uint32_t *>(&data[0])) = imageBase;
-    return data;
-  }
-
-  StringRef _name;
-};
-
-// The file to wrap ImageBaseAtom. This is the only member file of
-// LinkerGeneratedSymbolFile.
+// A virtual file containing absolute symbol __ImageBase. __ImageBase (or
+// ___ImageBase on x86) is a linker-generated symbol whose address is the same
+// as the image base address.
+//
+// This is the only member file of LinkerGeneratedSymbolFile.
 class MemberFile : public SimpleFile {
 public:
-  MemberFile(const PECOFFLinkingContext &context)
-      : SimpleFile(context, "Member of the Linker Internal File"),
-        _atom(context, *this, context.getBaseAddress()) {
-    addAtom(_atom);
+  MemberFile(const PECOFFLinkingContext &ctx)
+      : SimpleFile(ctx, "Member of the Linker Internal File"),
+        _imageBaseAtom(*this, ctx.decorateSymbol("__ImageBase"),
+                       Atom::scopeGlobal, ctx.getBaseAddress()) {
+    addAtom(_imageBaseAtom);
   };
 
   bool contains(StringRef name) const {
-    return _atom.name() == name;
+    return _imageBaseAtom.name() == name;
   }
 
 private:
-  ImageBaseAtom _atom;
+  COFFAbsoluteAtom _imageBaseAtom;
 };
 
 } // anonymous namespace
