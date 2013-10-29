@@ -7248,6 +7248,106 @@ MachineBasicBlock *OtherSucc(MachineBasicBlock *MBB, MachineBasicBlock *Succ) {
   llvm_unreachable("Expecting a BB with two successors!");
 }
 
+/// Return the load opcode for a given load size. If load size >= 8,
+/// neon opcode will be returned.
+static unsigned getLdOpcode(unsigned LdSize, bool IsThumb1, bool IsThumb2) {
+  if (LdSize >= 8)
+    return LdSize == 16 ? ARM::VLD1q32wb_fixed
+                        : LdSize == 8 ? ARM::VLD1d32wb_fixed : 0;
+  if (IsThumb1)
+    return LdSize == 4 ? ARM::tLDRi
+                       : LdSize == 2 ? ARM::tLDRHi
+                                     : LdSize == 1 ? ARM::tLDRBi : 0;
+  if (IsThumb2)
+    return LdSize == 4 ? ARM::t2LDR_POST
+                       : LdSize == 2 ? ARM::t2LDRH_POST
+                                     : LdSize == 1 ? ARM::t2LDRB_POST : 0;
+  return LdSize == 4 ? ARM::LDR_POST_IMM
+                     : LdSize == 2 ? ARM::LDRH_POST
+                                   : LdSize == 1 ? ARM::LDRB_POST_IMM : 0;
+}
+
+/// Return the store opcode for a given store size. If store size >= 8,
+/// neon opcode will be returned.
+static unsigned getStOpcode(unsigned StSize, bool IsThumb1, bool IsThumb2) {
+  if (StSize >= 8)
+    return StSize == 16 ? ARM::VST1q32wb_fixed
+                        : StSize == 8 ? ARM::VST1d32wb_fixed : 0;
+  if (IsThumb1)
+    return StSize == 4 ? ARM::tSTRi
+                       : StSize == 2 ? ARM::tSTRHi
+                                     : StSize == 1 ? ARM::tSTRBi : 0;
+  if (IsThumb2)
+    return StSize == 4 ? ARM::t2STR_POST
+                       : StSize == 2 ? ARM::t2STRH_POST
+                                     : StSize == 1 ? ARM::t2STRB_POST : 0;
+  return StSize == 4 ? ARM::STR_POST_IMM
+                     : StSize == 2 ? ARM::STRH_POST
+                                   : StSize == 1 ? ARM::STRB_POST_IMM : 0;
+}
+
+/// Emit a post-increment load operation with given size. The instructions
+/// will be added to BB at Pos.
+static void emitPostLd(MachineBasicBlock *BB, MachineInstr *Pos,
+                       const TargetInstrInfo *TII, DebugLoc dl,
+                       unsigned LdSize, unsigned Data, unsigned AddrIn,
+                       unsigned AddrOut, bool IsThumb1, bool IsThumb2) {
+  unsigned LdOpc = getLdOpcode(LdSize, IsThumb1, IsThumb2);
+  assert(LdOpc != 0 && "Should have a load opcode");
+  if (LdSize >= 8) {
+    AddDefaultPred(BuildMI(*BB, Pos, dl, TII->get(LdOpc), Data)
+                       .addReg(AddrOut, RegState::Define).addReg(AddrIn)
+                       .addImm(0));
+  } else if (IsThumb1) {
+    // load + update AddrIn
+    AddDefaultPred(BuildMI(*BB, Pos, dl, TII->get(LdOpc), Data)
+                       .addReg(AddrIn).addImm(0));
+    MachineInstrBuilder MIB =
+        BuildMI(*BB, Pos, dl, TII->get(ARM::tADDi8), AddrOut);
+    MIB = AddDefaultT1CC(MIB);
+    MIB.addReg(AddrIn).addImm(LdSize);
+    AddDefaultPred(MIB);
+  } else if (IsThumb2) {
+    AddDefaultPred(BuildMI(*BB, Pos, dl, TII->get(LdOpc), Data)
+                       .addReg(AddrOut, RegState::Define).addReg(AddrIn)
+                       .addImm(LdSize));
+  } else { // arm
+    AddDefaultPred(BuildMI(*BB, Pos, dl, TII->get(LdOpc), Data)
+                       .addReg(AddrOut, RegState::Define).addReg(AddrIn)
+                       .addReg(0).addImm(LdSize));
+  }
+}
+
+/// Emit a post-increment store operation with given size. The instructions
+/// will be added to BB at Pos.
+static void emitPostSt(MachineBasicBlock *BB, MachineInstr *Pos,
+                       const TargetInstrInfo *TII, DebugLoc dl,
+                       unsigned StSize, unsigned Data, unsigned AddrIn,
+                       unsigned AddrOut, bool IsThumb1, bool IsThumb2) {
+  unsigned StOpc = getStOpcode(StSize, IsThumb1, IsThumb2);
+  assert(StOpc != 0 && "Should have a store opcode");
+  if (StSize >= 8) {
+    AddDefaultPred(BuildMI(*BB, Pos, dl, TII->get(StOpc), AddrOut)
+                       .addReg(AddrIn).addImm(0).addReg(Data));
+  } else if (IsThumb1) {
+    // store + update AddrIn
+    AddDefaultPred(BuildMI(*BB, Pos, dl, TII->get(StOpc)).addReg(Data)
+                       .addReg(AddrIn).addImm(0));
+    MachineInstrBuilder MIB =
+        BuildMI(*BB, Pos, dl, TII->get(ARM::tADDi8), AddrOut);
+    MIB = AddDefaultT1CC(MIB);
+    MIB.addReg(AddrIn).addImm(StSize);
+    AddDefaultPred(MIB);
+  } else if (IsThumb2) {
+    AddDefaultPred(BuildMI(*BB, Pos, dl, TII->get(StOpc), AddrOut)
+                       .addReg(Data).addReg(AddrIn).addImm(StSize));
+  } else { // arm
+    AddDefaultPred(BuildMI(*BB, Pos, dl, TII->get(StOpc), AddrOut)
+                       .addReg(Data).addReg(AddrIn).addReg(0)
+                       .addImm(StSize));
+  }
+}
+
 MachineBasicBlock *
 ARMTargetLowering::EmitStructByval(MachineInstr *MI,
                                    MachineBasicBlock *BB) const {
@@ -7268,8 +7368,6 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
   MachineFunction *MF = BB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
   unsigned UnitSize = 0;
-  unsigned UnitLdOpc = 0;
-  unsigned UnitStOpc = 0;
   const TargetRegisterClass *TRC = 0;
   const TargetRegisterClass *VecTRC = 0;
 
@@ -7300,43 +7398,12 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
   bool IsNeon = UnitSize >= 8;
   TRC = (IsThumb1 || IsThumb2) ? (const TargetRegisterClass *)&ARM::tGPRRegClass
                                : (const TargetRegisterClass *)&ARM::GPRRegClass;
-  if (IsNeon) {
-    UnitLdOpc = UnitSize == 16 ? ARM::VLD1q32wb_fixed
-                               : UnitSize == 8 ? ARM::VLD1d32wb_fixed : 0;
-    UnitStOpc = UnitSize == 16 ? ARM::VST1q32wb_fixed
-                               : UnitSize == 8 ? ARM::VST1d32wb_fixed : 0;
+  if (IsNeon)
     VecTRC = UnitSize == 16
                  ? (const TargetRegisterClass *)&ARM::DPairRegClass
                  : UnitSize == 8
                        ? (const TargetRegisterClass *)&ARM::DPRRegClass
                        : 0;
-  } else if (IsThumb1) {
-    UnitLdOpc = UnitSize == 4 ? ARM::tLDRi
-                              : UnitSize == 2 ? ARM::tLDRHi
-                                              : UnitSize == 1 ? ARM::tLDRBi : 0;
-    UnitStOpc = UnitSize == 4 ? ARM::tSTRi
-                              : UnitSize == 2 ? ARM::tSTRHi
-                                              : UnitSize == 1 ? ARM::tSTRBi : 0;
-  } else if (IsThumb2) {
-    UnitLdOpc = UnitSize == 4
-                    ? ARM::t2LDR_POST
-                    : UnitSize == 2 ? ARM::t2LDRH_POST
-                                    : UnitSize == 1 ? ARM::t2LDRB_POST : 0;
-    UnitStOpc = UnitSize == 4
-                    ? ARM::t2STR_POST
-                    : UnitSize == 2 ? ARM::t2STRH_POST
-                                    : UnitSize == 1 ? ARM::t2STRB_POST : 0;
-  } else {
-    UnitLdOpc = UnitSize == 4
-                    ? ARM::LDR_POST_IMM
-                    : UnitSize == 2 ? ARM::LDRH_POST
-                                    : UnitSize == 1 ? ARM::LDRB_POST_IMM : 0;
-    UnitStOpc = UnitSize == 4
-                    ? ARM::STR_POST_IMM
-                    : UnitSize == 2 ? ARM::STRH_POST
-                                    : UnitSize == 1 ? ARM::STRB_POST_IMM : 0;
-  }
-  assert(UnitLdOpc != 0 && UnitStOpc != 0 && "Should have unit opcodes");
 
   unsigned BytesLeft = SizeVal % UnitSize;
   unsigned LoopSize = SizeVal - BytesLeft;
@@ -7351,44 +7418,10 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
       unsigned srcOut = MRI.createVirtualRegister(TRC);
       unsigned destOut = MRI.createVirtualRegister(TRC);
       unsigned scratch = MRI.createVirtualRegister(IsNeon ? VecTRC : TRC);
-      if (IsNeon) {
-        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitLdOpc), scratch)
-                           .addReg(srcOut, RegState::Define).addReg(srcIn)
-                           .addImm(0));
-
-        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitStOpc), destOut)
-                           .addReg(destIn).addImm(0).addReg(scratch));
-      } else if (IsThumb1) {
-        // load + update srcIn
-        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitLdOpc), scratch)
-                           .addReg(srcIn).addImm(0));
-        MachineInstrBuilder MIB =
-            BuildMI(*BB, MI, dl, TII->get(ARM::tADDi8), srcOut);
-        MIB = AddDefaultT1CC(MIB);
-        MIB.addReg(srcIn).addImm(UnitSize);
-        AddDefaultPred(MIB);
-
-        // store + update destIn
-        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitStOpc)).addReg(scratch)
-                           .addReg(destIn).addImm(0));
-        MIB = BuildMI(*BB, MI, dl, TII->get(ARM::tADDi8), destOut);
-        MIB = AddDefaultT1CC(MIB);
-        MIB.addReg(destIn).addImm(UnitSize);
-        AddDefaultPred(MIB);
-      } else if (IsThumb2) {
-        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitLdOpc), scratch)
-                           .addReg(srcOut, RegState::Define).addReg(srcIn)
-                           .addImm(UnitSize));
-        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitStOpc), destOut)
-                           .addReg(scratch).addReg(destIn).addImm(UnitSize));
-      } else { // arm
-        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitLdOpc), scratch)
-                           .addReg(srcOut, RegState::Define).addReg(srcIn)
-                           .addReg(0).addImm(UnitSize));
-        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(UnitStOpc), destOut)
-                           .addReg(scratch).addReg(destIn).addReg(0)
-                           .addImm(UnitSize));
-      }
+      emitPostLd(BB, MI, TII, dl, UnitSize, scratch, srcIn, srcOut,
+                 IsThumb1, IsThumb2);
+      emitPostSt(BB, MI, TII, dl, UnitSize, scratch, destIn, destOut,
+                 IsThumb1, IsThumb2);
       srcIn = srcOut;
       destIn = destOut;
     }
@@ -7400,41 +7433,10 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
       unsigned srcOut = MRI.createVirtualRegister(TRC);
       unsigned destOut = MRI.createVirtualRegister(TRC);
       unsigned scratch = MRI.createVirtualRegister(TRC);
-      if (IsThumb1) {
-        // load into scratch
-        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::tLDRBi), scratch)
-                           .addReg(srcIn).addImm(0));
-
-        // update base pointer
-        MachineInstrBuilder MIB =
-            BuildMI(*BB, MI, dl, TII->get(ARM::tADDi8), srcOut);
-        MIB = AddDefaultT1CC(MIB);
-        MIB.addReg(srcIn).addImm(1);
-        AddDefaultPred(MIB);
-
-        // store
-        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::tSTRBi))
-                           .addReg(scratch).addReg(destIn).addImm(0));
-
-        // update base pointer
-        MIB = BuildMI(*BB, MI, dl, TII->get(ARM::tADDi8), destOut);
-        MIB = AddDefaultT1CC(MIB);
-        MIB.addReg(destIn).addImm(1);
-        AddDefaultPred(MIB);
-      } else if (IsThumb2) {
-        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::t2LDRB_POST), scratch)
-                           .addReg(srcOut, RegState::Define).addReg(srcIn)
-                           .addImm(1));
-        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::t2STRB_POST), destOut)
-                           .addReg(scratch).addReg(destIn).addImm(1));
-      } else { // arm
-        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(ARM::LDRB_POST_IMM),
-                               scratch).addReg(srcOut, RegState::Define)
-                           .addReg(srcIn).addReg(0).addImm(1));
-        AddDefaultPred(
-            BuildMI(*BB, MI, dl, TII->get(ARM::STRB_POST_IMM), destOut)
-                .addReg(scratch).addReg(destIn).addReg(0).addImm(1));
-      }
+      emitPostLd(BB, MI, TII, dl, 1, scratch, srcIn, srcOut,
+                 IsThumb1, IsThumb2);
+      emitPostSt(BB, MI, TII, dl, 1, scratch, destIn, destOut,
+                 IsThumb1, IsThumb2);
       srcIn = srcOut;
       destIn = destOut;
     }
@@ -7531,44 +7533,10 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
   //   [scratch, srcLoop] = LDR_POST(srcPhi, UnitSize)
   //   [destLoop] = STR_POST(scratch, destPhi, UnitSiz)
   unsigned scratch = MRI.createVirtualRegister(IsNeon ? VecTRC : TRC);
-  if (IsNeon) {
-    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitLdOpc), scratch)
-                       .addReg(srcLoop, RegState::Define).addReg(srcPhi)
-                       .addImm(0));
-
-    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitStOpc), destLoop)
-                       .addReg(destPhi).addImm(0).addReg(scratch));
-  } else if (IsThumb1) {
-    // load + update srcIn
-    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitLdOpc), scratch)
-                       .addReg(srcPhi).addImm(0));
-    MachineInstrBuilder MIB =
-        BuildMI(*BB, BB->end(), dl, TII->get(ARM::tADDi8), srcLoop);
-    MIB = AddDefaultT1CC(MIB);
-    MIB.addReg(srcPhi).addImm(UnitSize);
-    AddDefaultPred(MIB);
-
-    // store + update destIn
-    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitStOpc))
-                       .addReg(scratch).addReg(destPhi).addImm(0));
-    MIB = BuildMI(*BB, BB->end(), dl, TII->get(ARM::tADDi8), destLoop);
-    MIB = AddDefaultT1CC(MIB);
-    MIB.addReg(destPhi).addImm(UnitSize);
-    AddDefaultPred(MIB);
-  } else if (IsThumb2) {
-    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitLdOpc), scratch)
-                       .addReg(srcLoop, RegState::Define).addReg(srcPhi)
-                       .addImm(UnitSize));
-    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitStOpc), destLoop)
-                       .addReg(scratch).addReg(destPhi).addImm(UnitSize));
-  } else { // arm
-    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitLdOpc), scratch)
-                       .addReg(srcLoop, RegState::Define).addReg(srcPhi)
-                       .addReg(0).addImm(UnitSize));
-    AddDefaultPred(BuildMI(*BB, BB->end(), dl, TII->get(UnitStOpc), destLoop)
-                       .addReg(scratch).addReg(destPhi).addReg(0)
-                       .addImm(UnitSize));
-  }
+  emitPostLd(BB, BB->end(), TII, dl, UnitSize, scratch, srcPhi, srcLoop,
+             IsThumb1, IsThumb2);
+  emitPostSt(BB, BB->end(), TII, dl, UnitSize, scratch, destPhi, destLoop,
+             IsThumb1, IsThumb2);
 
   // Decrement loop variable by UnitSize.
   if (IsThumb1) {
@@ -7605,41 +7573,10 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
     unsigned srcOut = MRI.createVirtualRegister(TRC);
     unsigned destOut = MRI.createVirtualRegister(TRC);
     unsigned scratch = MRI.createVirtualRegister(TRC);
-    if (IsThumb1) {
-      // load into scratch
-      AddDefaultPred(BuildMI(*BB, StartOfExit, dl, TII->get(ARM::tLDRBi),
-                             scratch).addReg(srcIn).addImm(0));
-
-      // update base pointer
-      MachineInstrBuilder MIB =
-          BuildMI(*BB, StartOfExit, dl, TII->get(ARM::tADDi8), srcOut);
-      MIB = AddDefaultT1CC(MIB);
-      MIB.addReg(srcIn).addImm(1);
-      AddDefaultPred(MIB);
-
-      // store
-      AddDefaultPred(BuildMI(*BB, StartOfExit, dl, TII->get(ARM::tSTRBi))
-                         .addReg(scratch).addReg(destIn).addImm(0));
-
-      // update base pointer
-      MIB = BuildMI(*BB, StartOfExit, dl, TII->get(ARM::tADDi8), destOut);
-      MIB = AddDefaultT1CC(MIB);
-      MIB.addReg(destIn).addImm(1);
-      AddDefaultPred(MIB);
-    } else if (IsThumb2) {
-      AddDefaultPred(
-          BuildMI(*BB, StartOfExit, dl, TII->get(ARM::t2LDRB_POST), scratch)
-              .addReg(srcOut, RegState::Define).addReg(srcIn).addImm(1));
-      AddDefaultPred(BuildMI(*BB, StartOfExit, dl, TII->get(ARM::t2STRB_POST),
-                             destOut).addReg(scratch).addReg(destIn).addImm(1));
-    } else { // arm
-      AddDefaultPred(BuildMI(*BB, StartOfExit, dl, TII->get(ARM::LDRB_POST_IMM),
-                             scratch).addReg(srcOut, RegState::Define)
-                         .addReg(srcIn).addReg(0).addImm(1));
-      AddDefaultPred(
-          BuildMI(*BB, StartOfExit, dl, TII->get(ARM::STRB_POST_IMM), destOut)
-              .addReg(scratch).addReg(destIn).addReg(0).addImm(1));
-    }
+    emitPostLd(BB, StartOfExit, TII, dl, 1, scratch, srcIn, srcOut,
+               IsThumb1, IsThumb2);
+    emitPostSt(BB, StartOfExit, TII, dl, 1, scratch, destIn, destOut,
+               IsThumb1, IsThumb2);
     srcIn = srcOut;
     destIn = destOut;
   }
