@@ -1337,7 +1337,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   if (Tok.Type == TT_CtorInitializerColon || Tok.Type == TT_ObjCBlockLParen)
     return true;
   if (Tok.Previous->Tok.is(tok::kw_operator))
-    return false;
+    return Tok.is(tok::coloncolon);
   if (Tok.Type == TT_OverloadedOperatorLParen)
     return false;
   if (Tok.is(tok::colon))
