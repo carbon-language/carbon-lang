@@ -129,6 +129,9 @@ public:
   unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty,
                                   OperandValueKind Op1Info = OK_AnyValue,
                                   OperandValueKind Op2Info = OK_AnyValue) const;
+
+  unsigned getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
+                           unsigned AddressSpace) const;
   /// @}
 };
 
@@ -540,3 +543,15 @@ unsigned ARMTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty, OperandValueK
   return Cost;
 }
 
+unsigned ARMTTI::getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
+                                 unsigned AddressSpace) const {
+  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Src);
+
+  if (Src->isVectorTy() && Alignment != 16 &&
+      Src->getVectorElementType()->isDoubleTy()) {
+    // Unaligned loads/stores are extremely inefficient.
+    // We need 4 uops for vst.1/vld.1 vs 1uop for vldr/vstr.
+    return LT.first * 4;
+  }
+  return LT.first;
+}
