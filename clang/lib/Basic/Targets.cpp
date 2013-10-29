@@ -1456,7 +1456,8 @@ class R600TargetInfo : public TargetInfo {
     GK_EVERGREEN_DOUBLE_OPS,
     GK_NORTHERN_ISLANDS,
     GK_CAYMAN,
-    GK_SOUTHERN_ISLANDS
+    GK_SOUTHERN_ISLANDS,
+    GK_SEA_ISLANDS
   } GPU;
 
 public:
@@ -1535,6 +1536,9 @@ public:
       .Case("pitcairn", GK_SOUTHERN_ISLANDS)
       .Case("verde",    GK_SOUTHERN_ISLANDS)
       .Case("oland",    GK_SOUTHERN_ISLANDS)
+      .Case("bonaire",  GK_SEA_ISLANDS)
+      .Case("kabini",   GK_SEA_ISLANDS)
+      .Case("kaveri",   GK_SEA_ISLANDS)
       .Default(GK_NONE);
 
     if (GPU == GK_NONE) {
@@ -1557,6 +1561,7 @@ public:
       DescriptionString = DescriptionStringR600DoubleOps;
       break;
     case GK_SOUTHERN_ISLANDS:
+    case GK_SEA_ISLANDS:
       DescriptionString = DescriptionStringSI;
       break;
     }

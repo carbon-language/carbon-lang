@@ -30,6 +30,9 @@
 // RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=pitcairn %s -o - 2>&1 | FileCheck --check-prefix=PITCAIRN-CHECK %s
 // RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=verde %s -o - 2>&1 | FileCheck --check-prefix=VERDE-CHECK %s
 // RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=oland %s -o - 2>&1 | FileCheck --check-prefix=OLAND-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=bonaire %s -o - 2>&1 | FileCheck --check-prefix=BONAIRE-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=kabini %s -o - 2>&1 | FileCheck --check-prefix=KABINI-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=kaveri %s -o - 2>&1 | FileCheck --check-prefix=KAVERI-CHECK %s
 
 // R600-CHECK:  "-target-cpu" "r600"
 // RS880-CHECK: "-target-cpu" "rs880"
@@ -50,3 +53,6 @@
 // PITCAIRN-CHECK: "-target-cpu" "pitcairn"
 // VERDE-CHECK: "-target-cpu" "verde"
 // OLAND-CHECK: "-target-cpu" "oland"
+// BONAIRE-CHECK: "-target-cpu" "bonaire"
+// KABINI-CHECK: "-target-cpu" "kabini"
+// KAVERI-CHECK: "-target-cpu" "kaveri"
