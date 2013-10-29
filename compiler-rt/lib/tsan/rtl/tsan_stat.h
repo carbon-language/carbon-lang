@@ -405,6 +405,8 @@ enum StatType {
   StatInt_lgamma_r,
   StatInt_lgammaf_r,
   StatInt_lgammal_r,
+  StatInt_drand48_r,
+  StatInt_lrand48_r,
 
   StatInt_pthread_attr_getdetachstate,
   StatInt_pthread_attr_getguardsize,

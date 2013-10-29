@@ -2789,6 +2789,27 @@ INTERCEPTOR(long double, lgammal_r, long double x, int *signp) {
 #define INIT_LGAMMA_R
 #endif
 
+#if SANITIZER_INTERCEPT_DRAND48_R
+INTERCEPTOR(int, drand48_r, void *buffer, double *result) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, drand48_r, buffer, result);
+  int res = REAL(drand48_r)(buffer, result);
+  if (result) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
+  return res;
+}
+INTERCEPTOR(int, lrand48_r, void *buffer, long *result) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, lrand48_r, buffer, result);
+  int res = REAL(lrand48_r)(buffer, result);
+  if (result) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
+  return res;
+}
+#define INIT_DRAND48_R            \
+  INTERCEPT_FUNCTION(drand48_r);  \
+  INTERCEPT_FUNCTION(lrand48_r);
+#else
+#define INIT_DRAND48_R
+#endif
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
@@ -2896,4 +2917,5 @@ INTERCEPTOR(long double, lgammal_r, long double x, int *signp) {
   INIT_REMQUO;                             \
   INIT_LGAMMA;                             \
   INIT_LGAMMA_R;                           \
+  INIT_DRAND48_R;                          \
 /**/

@@ -1587,6 +1587,22 @@ TEST(MemorySanitizer, lgammal_r) {
   EXPECT_NOT_POISONED(sgn);
 }
 
+TEST(MemorySanitizer, drand48_r) {
+  struct drand48_data buf;
+  srand48_r(0, &buf);
+  double d;
+  drand48_r(&buf, &d);
+  EXPECT_NOT_POISONED(d);
+}
+
+TEST(MemorySanitizer, lrand48_r) {
+  struct drand48_data buf;
+  srand48_r(0, &buf);
+  long d;
+  lrand48_r(&buf, &d);
+  EXPECT_NOT_POISONED(d);
+}
+
 TEST(MemorySanitizer, sprintf) {  // NOLINT
   char buff[10];
   break_optimization(buff);
