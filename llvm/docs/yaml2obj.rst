@@ -38,7 +38,7 @@ Here's a sample COFF file.
       ComplexType: IMAGE_SYM_DTYPE_NULL # (0)
       StorageClass: IMAGE_SYM_CLASS_STATIC # (3)
       NumberOfAuxSymbols: 1
-      AuxillaryData:
+      AuxiliaryData:
         "\x24\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00" # |$.................|
 
     - Name: _main

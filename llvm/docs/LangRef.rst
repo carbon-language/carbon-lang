@@ -8818,7 +8818,7 @@ level without an intrinsic, one would need to create additional basic blocks to
 handle the success/failure cases. This makes it difficult to stop the stack
 protector check from disrupting sibling tail calls in Codegen. With this
 intrinsic, we are able to generate the stack protector basic blocks late in
-codegen after the tail call decision has occured.
+codegen after the tail call decision has occurred.
 
 '``llvm.objectsize``' Intrinsic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

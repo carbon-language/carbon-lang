@@ -21,7 +21,7 @@ on the ARMv6 and ARMv7 architectures and may be inapplicable to older chips.
 #. If you are building LLVM/Clang on an ARM board with 1G of memory or less,
    please use ``gold`` rather then GNU ``ld``.
    Building LLVM/Clang with ``--enable-optimized``
-   is prefered since it consumes less memory. Otherwise, the building
+   is preferred since it consumes less memory. Otherwise, the building
    process will very likely fail due to insufficient memory. In any
    case it is probably a good idea to set up a swap partition.
 

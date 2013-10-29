@@ -295,7 +295,7 @@ Subprogram descriptors
     i32,      ;; Index into a virtual function
     metadata, ;; indicates which base type contains the vtable pointer for the
               ;; derived class
-    i32,      ;; Flags - Artifical, Private, Protected, Explicit, Prototyped.
+    i32,      ;; Flags - Artificial, Private, Protected, Explicit, Prototyped.
     i1,       ;; isOptimized
     Function * , ;; Pointer to LLVM function
     metadata, ;; Lists function template parameters
