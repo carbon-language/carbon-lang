@@ -81,6 +81,9 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // Get the 4th 16-bits.
     Value = ((Value + 0x800080008000LL) >> 48) & 0xffff;
     break;
+  case Mips::fixup_MICROMIPS_26_S1:
+    Value >>= 1;
+    break;
   }
 
   return Value;
@@ -194,6 +197,7 @@ public:
       { "fixup_Mips_GOT_LO16",     0,     16,   0 },
       { "fixup_Mips_CALL_HI16",    0,     16,   0 },
       { "fixup_Mips_CALL_LO16",    0,     16,   0 },
+      { "fixup_MICROMIPS_26_S1",   0,     26,   0 },
       { "fixup_MICROMIPS_HI16",    0,     16,   0 },
       { "fixup_MICROMIPS_LO16",    0,     16,   0 },
       { "fixup_MICROMIPS_GOT16",   0,     16,   0 },

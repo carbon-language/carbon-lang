@@ -881,6 +881,7 @@ enum {
   R_MIPS_GLOB_DAT          = 51,
   R_MIPS_COPY              = 126,
   R_MIPS_JUMP_SLOT         = 127,
+  R_MICROMIPS_26_S1        = 133,
   R_MICROMIPS_HI16         = 134,
   R_MICROMIPS_LO16         = 135,
   R_MICROMIPS_GOT16        = 138,

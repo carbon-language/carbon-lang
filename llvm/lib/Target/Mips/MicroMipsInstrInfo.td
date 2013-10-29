@@ -12,6 +12,14 @@ def mem_mm_12 : Operand<i32> {
   let OperandType = "OPERAND_MEMORY";
 }
 
+def jmptarget_mm : Operand<OtherVT> {
+  let EncoderMethod = "getJumpTargetOpValueMM";
+}
+
+def calltarget_mm : Operand<iPTR> {
+  let EncoderMethod = "getJumpTargetOpValueMM";
+}
+
 let canFoldAsLoad = 1 in
 class LoadLeftRightMM<string opstr, SDNode OpNode, RegisterOperand RO,
                       Operand MemOpnd> :
@@ -155,4 +163,18 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
                EXT_FM_MM<0x2c>;
   def INS_MM : MMRel, InsBase<"ins", GPR32Opnd, uimm5, MipsIns>,
                EXT_FM_MM<0x0c>;
+
+  /// Jump Instructions
+  let DecoderMethod = "DecodeJumpTargetMM" in {
+    def J_MM        : MMRel, JumpFJ<jmptarget_mm, "j", br, bb, "j">,
+                      J_FM_MM<0x35>;
+    def JAL_MM      : MMRel, JumpLink<"jal", calltarget_mm>, J_FM_MM<0x3d>;
+    def TAILCALL_MM : MMRel, JumpFJ<calltarget_mm, "j", MipsTailCall, imm,
+                                    "tcall">, J_FM_MM<0x3d>, IsTailCall;
+  }
+  def JR_MM   : MMRel, IndirectBranch<"jr", GPR32Opnd>, JR_FM_MM<0x3c>;
+  def JALR_MM : MMRel, JumpLinkReg<"jalr", GPR32Opnd>, JALR_FM_MM<0x03c>;
+  def TAILCALL_R_MM : MMRel, JumpFR<"tcallr", GPR32Opnd, MipsTailCall>,
+                      JR_FM_MM<0x3c>, IsTailCall;
+  def RET_MM : MMRel, RetBase<"ret", GPR32Opnd>, JR_FM_MM<0x3c>;
 }

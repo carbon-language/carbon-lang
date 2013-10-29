@@ -105,6 +105,7 @@ private:
                          const MachineOperand &MO) const;
 
   unsigned getJumpTargetOpValue(const MachineInstr &MI, unsigned OpNo) const;
+  unsigned getJumpTargetOpValueMM(const MachineInstr &MI, unsigned OpNo) const;
 
   unsigned getBranchTargetOpValue(const MachineInstr &MI, unsigned OpNo) const;
   unsigned getMemEncoding(const MachineInstr &MI, unsigned OpNo) const;
@@ -184,6 +185,12 @@ unsigned MipsCodeEmitter::getJumpTargetOpValue(const MachineInstr &MI,
     emitMachineBasicBlock(MO.getMBB(), getRelocation(MI, MO));
   else
     llvm_unreachable("Unexpected jump target operand kind.");
+  return 0;
+}
+
+unsigned MipsCodeEmitter::getJumpTargetOpValueMM(const MachineInstr &MI,
+                                                 unsigned OpNo) const {
+  llvm_unreachable("Unimplemented function.");
   return 0;
 }
 

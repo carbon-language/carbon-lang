@@ -541,9 +541,9 @@ class SetCC_I<string opstr, PatFrag cond_op, Operand Od, PatLeaf imm_type,
 
 // Jump
 class JumpFJ<DAGOperand opnd, string opstr, SDPatternOperator operator,
-             SDPatternOperator targetoperator> :
+             SDPatternOperator targetoperator, string bopstr> :
   InstSE<(outs), (ins opnd:$target), !strconcat(opstr, "\t$target"),
-         [(operator targetoperator:$target)], IIBranch, FrmJ> {
+         [(operator targetoperator:$target)], IIBranch, FrmJ, bopstr> {
   let isTerminator=1;
   let isBarrier=1;
   let hasDelaySlot = 1;
@@ -565,17 +565,20 @@ class UncondBranch<Instruction BEQInst> :
 
 // Base class for indirect branch and return instruction classes.
 let isTerminator=1, isBarrier=1, hasDelaySlot = 1 in
-class JumpFR<RegisterOperand RO, SDPatternOperator operator = null_frag>:
-  InstSE<(outs), (ins RO:$rs), "jr\t$rs", [(operator RO:$rs)], IIBranch, FrmR>;
+class JumpFR<string opstr, RegisterOperand RO,
+             SDPatternOperator operator = null_frag>:
+  InstSE<(outs), (ins RO:$rs), "jr\t$rs", [(operator RO:$rs)], IIBranch,
+         FrmR, opstr>;
 
 // Indirect branch
-class IndirectBranch<RegisterOperand RO>: JumpFR<RO, brind> {
+class IndirectBranch<string opstr, RegisterOperand RO> :
+      JumpFR<opstr, RO, brind> {
   let isBranch = 1;
   let isIndirectBranch = 1;
 }
 
 // Return instruction
-class RetBase<RegisterOperand RO>: JumpFR<RO> {
+class RetBase<string opstr, RegisterOperand RO>: JumpFR<opstr, RO> {
   let isReturn = 1;
   let isCodeGenOnly = 1;
   let hasCtrlDep = 1;
@@ -584,9 +587,9 @@ class RetBase<RegisterOperand RO>: JumpFR<RO> {
 
 // Jump and Link (Call)
 let isCall=1, hasDelaySlot=1, Defs = [RA] in {
-  class JumpLink<string opstr> :
-    InstSE<(outs), (ins calltarget:$target), !strconcat(opstr, "\t$target"),
-           [(MipsJmpLink imm:$target)], IIBranch, FrmJ> {
+  class JumpLink<string opstr, DAGOperand opnd> :
+    InstSE<(outs), (ins opnd:$target), !strconcat(opstr, "\t$target"),
+           [(MipsJmpLink imm:$target)], IIBranch, FrmJ, opstr> {
     let DecoderMethod = "DecodeJumpTarget";
   }
 
@@ -597,7 +600,7 @@ let isCall=1, hasDelaySlot=1, Defs = [RA] in {
 
   class JumpLinkReg<string opstr, RegisterOperand RO>:
     InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
-           [], IIBranch, FrmR>;
+           [], IIBranch, FrmR, opstr>;
 
   class BGEZAL_FT<string opstr, RegisterOperand RO> :
     InstSE<(outs), (ins RO:$rs, brtarget:$offset),
@@ -988,9 +991,9 @@ def LL : LLBase<"ll", GPR32Opnd>, LW_FM<0x30>;
 def SC : SCBase<"sc", GPR32Opnd>, LW_FM<0x38>;
 
 /// Jump and Branch Instructions
-def J       : JumpFJ<jmptarget, "j", br, bb>, FJ<2>,
+def J       : MMRel, JumpFJ<jmptarget, "j", br, bb, "j">, FJ<2>,
               Requires<[RelocStatic, HasStdEnc]>, IsBranch;
-def JR      : IndirectBranch<GPR32Opnd>, MTLO_FM<8>;
+def JR      : MMRel, IndirectBranch<"jr", GPR32Opnd>, MTLO_FM<8>;
 def BEQ     : CBranch<"beq", seteq, GPR32Opnd>, BEQ_FM<4>;
 def BNE     : CBranch<"bne", setne, GPR32Opnd>, BEQ_FM<5>;
 def BGEZ    : CBranchZero<"bgez", setge, GPR32Opnd>, BGEZ_FM<1, 1>;
@@ -999,16 +1002,18 @@ def BLEZ    : CBranchZero<"blez", setle, GPR32Opnd>, BGEZ_FM<6, 0>;
 def BLTZ    : CBranchZero<"bltz", setlt, GPR32Opnd>, BGEZ_FM<1, 0>;
 def B       : UncondBranch<BEQ>;
 
-def JAL  : JumpLink<"jal">, FJ<3>;
-def JALR : JumpLinkReg<"jalr", GPR32Opnd>, JALR_FM;
+def JAL  : MMRel, JumpLink<"jal", calltarget>, FJ<3>;
+def JALR : MMRel, JumpLinkReg<"jalr", GPR32Opnd>, JALR_FM;
 def JALRPseudo : JumpLinkRegPseudo<GPR32Opnd, JALR, RA>;
 def BGEZAL : BGEZAL_FT<"bgezal", GPR32Opnd>, BGEZAL_FM<0x11>;
 def BLTZAL : BGEZAL_FT<"bltzal", GPR32Opnd>, BGEZAL_FM<0x10>;
 def BAL_BR : BAL_BR_Pseudo<BGEZAL>;
-def TAILCALL : JumpFJ<calltarget, "j", MipsTailCall, imm>, FJ<2>, IsTailCall;
-def TAILCALL_R : JumpFR<GPR32Opnd, MipsTailCall>, MTLO_FM<8>, IsTailCall;
+def TAILCALL : MMRel, JumpFJ<calltarget, "j", MipsTailCall, imm, "tcall">,
+               FJ<2>, IsTailCall;
+def TAILCALL_R : MMRel, JumpFR<"tcallr", GPR32Opnd, MipsTailCall>, MTLO_FM<8>,
+                 IsTailCall;
 
-def RET : RetBase<GPR32Opnd>, MTLO_FM<8>;
+def RET : MMRel, RetBase<"ret", GPR32Opnd>, MTLO_FM<8>;
 
 // Exception handling related node and instructions.
 // The conversion sequence is:

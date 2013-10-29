@@ -183,7 +183,7 @@ class BranchBase<bits<6> op, dag outs, dag ins, string asmstr,
 // Format J instruction class in Mips : <|opcode|address|>
 //===----------------------------------------------------------------------===//
 
-class FJ<bits<6> op>
+class FJ<bits<6> op> : StdArch
 {
   bits<26> target;
 
@@ -375,7 +375,7 @@ class LUI_FM : StdArch {
   let Inst{15-0}  = imm16;
 }
 
-class JALR_FM {
+class JALR_FM : StdArch {
   bits<5> rd;
   bits<5> rs;
 
