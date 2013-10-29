@@ -3,8 +3,10 @@
 
 ; test that the DW_AT_specification is a back edge in the file.
 
-; CHECK: 0x0000[[OFFSET:[0-9a-f]*]]: DW_TAG_subprogram [7] *
-; CHECK: DW_AT_specification [DW_FORM_ref4]      (cu + 0x[[OFFSET]] => {0x0000[[OFFSET]]})
+; CHECK: DW_TAG_subprogram [{{[0-9]+}}] *
+; CHECK: DW_AT_specification [DW_FORM_ref4]      (cu + 0x[[OFFSET:[0-9a-f]*]] => {0x0000[[OFFSET]]})
+; CHECK: 0x0000[[OFFSET]]: DW_TAG_subprogram [{{[0-9]+}}] *
+; CHECK: DW_AT_name [DW_FORM_strp]	( .debug_str[0x{{[0-9a-f]*}}] = "bar")
 
 
 @_ZZN3foo3barEvE1x = constant i32 0, align 4

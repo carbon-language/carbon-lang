@@ -1356,12 +1356,14 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   if (SPDie)
     return SPDie;
 
-  SPDie = new DIE(dwarf::DW_TAG_subprogram);
+  DISubprogram SPDecl = SP.getFunctionDeclaration();
+  if (SPDecl.isSubprogram())
+    // Add subprogram definitions to the CU die directly.
+    ContextDIE = CUDie.get();
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
-  insertDIE(SP, SPDie);
+  SPDie = createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE, SP);
 
-  DISubprogram SPDecl = SP.getFunctionDeclaration();
   DIE *DeclDie = NULL;
   if (SPDecl.isSubprogram())
     DeclDie = getOrCreateSubprogramDIE(SPDecl);
@@ -1375,14 +1377,8 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
     // Refer function declaration directly.
     addDIEEntry(SPDie, dwarf::DW_AT_specification, DeclDie);
 
-    // Add subprogram definitions to the CU die directly.
-    addDie(SPDie);
-
     return SPDie;
   }
-
-  // Add to context owner.
-  ContextDIE->addChild(SPDie);
 
   // Add the linkage name if we have one.
   StringRef LinkageName = SP.getLinkageName();

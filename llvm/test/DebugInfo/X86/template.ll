@@ -17,9 +17,6 @@
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_template_type_parameter
 
-; CHECK: [[INTPTR:0x[0-9a-f]*]]:{{ *}}DW_TAG_pointer_type
-; CHECK-NEXT: DW_AT_type{{.*}} => {[[INT]]}
-
 ; CHECK: DW_AT_name{{.*}}"func<3, &glbl, y_impl, 1, 2>"
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_template_value_parameter
@@ -33,7 +30,7 @@
 ; CHECK-NEXT: DW_AT_const_value [DW_FORM_sdata]{{.*}}(3)
 
 ; CHECK: DW_TAG_template_value_parameter
-; CHECK-NEXT: DW_AT_type{{.*}}=> {[[INTPTR]]}
+; CHECK-NEXT: DW_AT_type{{.*}}=> {[[INTPTR:0x[0-9a-f]*]]}
 
 ; The address of the global 'glbl', followed by DW_OP_stack_value (9f), to use
 ; the value immediately, rather than indirecting through the address.
@@ -55,6 +52,9 @@
 ; CHECK: DW_TAG_template_value_parameter
 ; CHECK-NEXT: DW_AT_type{{.*}}=> {[[INT]]}
 ; CHECK-NEXT: DW_AT_const_value  [DW_FORM_sdata]{{.*}}(2)
+
+; CHECK: [[INTPTR]]:{{ *}}DW_TAG_pointer_type
+; CHECK-NEXT: DW_AT_type{{.*}} => {[[INT]]}
 
 %"struct.y_impl<int>::nested" = type { i8 }
 

@@ -4,11 +4,14 @@
 
 ; CHECK: 0x0000000b: DW_TAG_compile_unit
 ; CHECK:               DW_AT_name [DW_FORM_strp] ( .debug_str[0x00000035] = "foo.cpp")
-; CHECK: 0x0000003c:   DW_TAG_class_type
-; CHECK:                 DW_AT_name [DW_FORM_strp]       ( .debug_str[0x0000006d] = "D")
-; CHECK: 0x00000044:     DW_TAG_member
-; CHECK:                   DW_AT_name [DW_FORM_strp]     ( .debug_str[0x0000005d] = "c1")
-; CHECK:                   DW_AT_artificial [DW_FORM_flag_present]       (true)
+; CHECK: 0x{{[0-9a-f]+}}:   DW_TAG_class_type
+; CHECK:                 DW_AT_name [DW_FORM_strp]       ( .debug_str[0x{{[0-9a-f]+}}] = "D")
+; CHECK: 0x{{[0-9a-f]+}}:     DW_TAG_member
+; CHECK:                   DW_AT_name [DW_FORM_strp]     ( .debug_str[0x{{[0-9a-f]+}}] = "c1")
+; CHECK: DW_TAG_subprogram
+; CHECK-NEXT: DW_AT_name [DW_FORM_strp]     ( .debug_str[0x{{[0-9a-f]+}}] = "D")
+; CHECK: DW_TAG_formal_parameter
+; CHECK: DW_AT_artificial [DW_FORM_flag_present]       (true)
 
 ; CHECK-DIS: [artificial]
 
