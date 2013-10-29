@@ -245,6 +245,7 @@ struct X : D, C {
 
   // TEST8: VFTable indices for 'Test8::X' (1 entries).
   // TEST8-NEXT: via vbtable index 1, vfptr at offset 0
+  // TEST8-NEXT: 0 | void Test8::X::f()
 
   // MANGLING-DAG: @"\01??_7X@Test8@@6BA@@@"
   // MANGLING-DAG: @"\01??_7X@Test8@@6BD@@@"
