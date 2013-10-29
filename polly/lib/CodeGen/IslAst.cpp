@@ -60,12 +60,15 @@ public:
   void pprint(llvm::raw_ostream &OS);
 
   __isl_give isl_ast_node *getAst();
+  __isl_give isl_ast_expr *getRunCondition();
 
 private:
   Scop *S;
   isl_ast_node *Root;
+  isl_ast_expr *RunCondition;
 
   __isl_give isl_union_map *getSchedule();
+  void buildAssumedContext(__isl_keep isl_ast_build *Context);
 };
 } // End namespace polly.
 
@@ -312,6 +315,26 @@ static __isl_give isl_ast_node *AtEachDomain(__isl_take isl_ast_node *Node,
   return isl_ast_node_set_annotation(Node, Id);
 }
 
+void IslAst::buildAssumedContext(__isl_keep isl_ast_build *Context) {
+  isl_aff *Zero =
+      isl_aff_zero_on_domain(isl_local_space_from_space(S->getParamSpace()));
+  isl_aff *One =
+      isl_aff_zero_on_domain(isl_local_space_from_space(S->getParamSpace()));
+
+  One = isl_aff_add_constant_si(One, 1);
+
+  isl_pw_aff *PwZero = isl_pw_aff_from_aff(Zero);
+  isl_pw_aff *PwOne = isl_pw_aff_from_aff(One);
+
+  PwOne = isl_pw_aff_intersect_domain(PwOne, S->getAssumedContext());
+  PwZero = isl_pw_aff_intersect_domain(
+      PwZero, isl_set_complement(S->getAssumedContext()));
+
+  isl_pw_aff *Cond = isl_pw_aff_union_max(PwZero, PwOne);
+
+  RunCondition = isl_ast_build_expr_from_pw_aff(Context, Cond);
+}
+
 IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {
   isl_ctx *Ctx = S->getIslCtx();
   isl_options_set_ast_build_atomic_upper_bound(Ctx, true);
@@ -345,6 +368,8 @@ IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {
                                                &BuildInfo);
   }
 
+  buildAssumedContext(Context);
+
   Root = isl_ast_build_ast_from_schedule(Context, Schedule);
 
   isl_ast_build_free(Context);
@@ -367,7 +392,10 @@ __isl_give isl_union_map *IslAst::getSchedule() {
   return Schedule;
 }
 
-IslAst::~IslAst() { isl_ast_node_free(Root); }
+IslAst::~IslAst() {
+  isl_ast_node_free(Root);
+  isl_ast_expr_free(RunCondition);
+}
 
 /// Print a C like representation of the program.
 void IslAst::pprint(llvm::raw_ostream &OS) {
@@ -379,16 +407,28 @@ void IslAst::pprint(llvm::raw_ostream &OS) {
 
   isl_printer *P = isl_printer_to_str(S->getIslCtx());
   P = isl_printer_set_output_format(P, ISL_FORMAT_C);
+
+  P = isl_printer_print_ast_expr(P, RunCondition);
+  char *result = isl_printer_get_str(P);
+  P = isl_printer_flush(P);
+
+  OS << "\nif (" << result << ")\n\n";
+  P = isl_printer_indent(P, 4);
+
   Root = getAst();
   P = isl_ast_node_print(Root, P, Options);
-  char *result = isl_printer_get_str(P);
+  result = isl_printer_get_str(P);
   OS << result << "\n";
+  OS << "else\n";
+  OS << "    {  /* original code */ }\n\n";
   isl_printer_free(P);
   isl_ast_node_free(Root);
 }
 
-/// Create the isl_ast from this program.
 __isl_give isl_ast_node *IslAst::getAst() { return isl_ast_node_copy(Root); }
+__isl_give isl_ast_expr *IslAst::getRunCondition() {
+  return isl_ast_expr_copy(RunCondition);
+}
 
 void IslAstInfo::pprint(llvm::raw_ostream &OS) { Ast->pprint(OS); }
 

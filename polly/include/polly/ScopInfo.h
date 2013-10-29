@@ -445,6 +445,15 @@ class Scop {
   /// Constraints on parameters.
   isl_set *Context;
 
+  /// @brief The assumptions under which this scop was built.
+  ///
+  /// When constructing a scop sometimes the exact representation of a statement
+  /// or condition would be very complex, but there is a common case which is a
+  /// lot simpler, but which is only valid under certain assumptions. The
+  /// assumed context records the assumptions taken during the construction of
+  /// this scop and that need to be code generated as a run-time test.
+  isl_set *AssumedContext;
+
   /// Create the static control part with a region, max loop depth of this
   /// region and parameters used in this region.
   Scop(TempScop &TempScop, LoopInfo &LI, ScalarEvolution &SE, isl_ctx *ctx);
@@ -550,6 +559,11 @@ public:
   /// @return The constraint on parameter of this Scop.
   __isl_give isl_set *getContext() const;
   __isl_give isl_space *getParamSpace() const;
+
+  /// @brief Get the assumped context for this Scop.
+  ///
+  /// @return The assumed context of this Scop.
+  __isl_give isl_set *getAssumedContext() const;
 
   /// @brief Get an isl string representing the context.
   std::string getContextStr() const;
