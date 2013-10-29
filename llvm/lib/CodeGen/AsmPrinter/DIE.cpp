@@ -112,6 +112,18 @@ DIE::~DIE() {
     delete Children[i];
 }
 
+/// Climb up the parent chain to get the compile unit DIE to which this DIE
+/// belongs.
+const DIE *DIE::getCompileUnit() const {
+  const DIE *p = this;
+  while (p) {
+    if (p->getTag() == dwarf::DW_TAG_compile_unit)
+      return p;
+    p = p->getParent();
+  }
+  llvm_unreachable("We should not have orphaned DIEs.");
+}
+
 DIEValue *DIE::findAttribute(uint16_t Attribute) {
   const SmallVectorImpl<DIEValue *> &Values = getValues();
   const DIEAbbrev &Abbrevs = getAbbrev();

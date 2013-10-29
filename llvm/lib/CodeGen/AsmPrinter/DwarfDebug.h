@@ -329,6 +329,9 @@ class DwarfDebug {
   // Maps subprogram MDNode with its corresponding CompileUnit.
   DenseMap <const MDNode *, CompileUnit *> SPMap;
 
+  // Maps a CU DIE with its corresponding CompileUnit.
+  DenseMap <const DIE *, CompileUnit *> CUDieMap;
+
   // Used to uniquely define abbreviations.
   FoldingSet<DIEAbbrev> AbbreviationsSet;
 

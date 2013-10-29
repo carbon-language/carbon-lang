@@ -120,6 +120,9 @@ public:
     return AccelTypes;
   }
 
+  unsigned getDebugInfoOffset() const { return DebugInfoOffset; }
+  void setDebugInfoOffset(unsigned DbgInfoOff) { DebugInfoOffset = DbgInfoOff; }
+
   /// hasContent - Return true if this compile unit has something to write out.
   ///
   bool hasContent() const { return !CUDie->getChildren().empty(); }
@@ -346,6 +349,9 @@ private:
 
   /// getOrCreateStaticMemberDIE - Create new static data member DIE.
   DIE *getOrCreateStaticMemberDIE(DIDerivedType DT);
+
+  /// Offset of the CUDie from beginning of debug info section.
+  unsigned DebugInfoOffset;
 
   /// getLowerBoundDefault - Return the default lower bound for an array. If the
   /// DWARF version doesn't handle the language, return -1.
