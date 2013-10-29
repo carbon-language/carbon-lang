@@ -28,8 +28,7 @@ using namespace llvm;
 MipsMCInstLower::MipsMCInstLower(MipsAsmPrinter &asmprinter)
   : AsmPrinter(asmprinter) {}
 
-void MipsMCInstLower::Initialize(Mangler *M, MCContext *C) {
-  Mang = M;
+void MipsMCInstLower::Initialize(MCContext *C) {
   Ctx = C;
 }
 
@@ -74,7 +73,7 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
     break;
 
   case MachineOperand::MO_GlobalAddress:
-    Symbol = Mang->getSymbol(MO.getGlobal());
+    Symbol = AsmPrinter.Mang->getSymbol(MO.getGlobal());
     Offset += MO.getOffset();
     break;
 

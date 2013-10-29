@@ -19,7 +19,6 @@ namespace llvm {
   class MCOperand;
   class MachineInstr;
   class MachineFunction;
-  class Mangler;
   class MipsAsmPrinter;
 
 /// MipsMCInstLower - This class is used to lower an MachineInstr into an
@@ -27,11 +26,10 @@ namespace llvm {
 class LLVM_LIBRARY_VISIBILITY MipsMCInstLower {
   typedef MachineOperand::MachineOperandType MachineOperandType;
   MCContext *Ctx;
-  Mangler *Mang;
   MipsAsmPrinter &AsmPrinter;
 public:
   MipsMCInstLower(MipsAsmPrinter &asmprinter);
-  void Initialize(Mangler *mang, MCContext *C);
+  void Initialize(MCContext *C);
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
   MCOperand LowerOperand(const MachineOperand& MO, unsigned offset = 0) const;
 
