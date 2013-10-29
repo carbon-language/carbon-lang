@@ -107,3 +107,12 @@ define void @test_inline_modifier_c() nounwind {
 
   ret void
 }
+
+define void @test_inline_modifier_a() nounwind {
+; CHECK-LABEL: test_inline_modifier_a:
+  call void asm sideeffect "prfm pldl1keep, ${0:a}", "r"(i32* @var_simple)
+; CHECK: adrp [[VARHI:x[0-9]+]], var_simple
+; CHECK: add x[[VARADDR:[0-9]+]], [[VARHI]], #:lo12:var_simple
+; CHECK: prfm pldl1keep, [x[[VARADDR]]]
+  ret void
+}

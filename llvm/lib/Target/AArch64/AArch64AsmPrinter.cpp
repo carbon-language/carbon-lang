@@ -230,6 +230,8 @@ bool AArch64AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
     // Output bits 23:12 of symbolic address with appropriate :hi12: relocation
     // modifier (currently only for TLS local exec).
     return printSymbolicAddress(MI->getOperand(OpNum), true, "hi12", O);
+  case 'a':
+    return PrintAsmMemoryOperand(MI, OpNum, AsmVariant, ExtraCode, O);
   }
 
 
