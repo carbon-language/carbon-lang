@@ -167,7 +167,7 @@ static bool isRValueRefish(QualType ParamType) {
 }
 
 static bool isTestingFunction(const FunctionDecl *FunDecl) {
-  return FunDecl->hasAttr<TestsTypestateAttr>();
+  return FunDecl->hasAttr<TestTypestateAttr>();
 }
 
 static bool isValueType(QualType ParamType) {
@@ -248,10 +248,10 @@ static StringRef stateToString(ConsumedState State) {
 
 static ConsumedState testsFor(const FunctionDecl *FunDecl) {
   assert(isTestingFunction(FunDecl));
-  switch (FunDecl->getAttr<TestsTypestateAttr>()->getTestState()) {
-  case TestsTypestateAttr::Unconsumed:
+  switch (FunDecl->getAttr<TestTypestateAttr>()->getTestState()) {
+  case TestTypestateAttr::Unconsumed:
     return CS_Unconsumed;
-  case TestsTypestateAttr::Consumed:
+  case TestTypestateAttr::Consumed:
     return CS_Consumed;
   }
   llvm_unreachable("invalid enum");

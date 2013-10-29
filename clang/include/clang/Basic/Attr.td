@@ -995,8 +995,8 @@ def SetTypestate : InheritableAttr {
                            ["Unknown", "Consumed", "Unconsumed"]>];
 }
 
-def TestsTypestate : InheritableAttr {
-  let Spellings = [GNU<"tests_typestate">];
+def TestTypestate : InheritableAttr {
+  let Spellings = [GNU<"test_typestate">];
   let Subjects = [CXXMethod];
   let Args = [EnumArgument<"TestState", "ConsumedState",
                            ["consumed", "unconsumed"],

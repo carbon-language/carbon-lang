@@ -7,7 +7,7 @@
 #define PARAM_TYPESTATE(state)  __attribute__ ((param_typestate(state)))
 #define RETURN_TYPESTATE(state) __attribute__ ((return_typestate(state)))
 #define SET_TYPESTATE(state)    __attribute__ ((set_typestate(state)))
-#define TESTS_TYPESTATE(state)  __attribute__ ((tests_typestate(state)))
+#define TEST_TYPESTATE(state)   __attribute__ ((test_typestate(state)))
 
 typedef decltype(nullptr) nullptr_t;
 
@@ -37,10 +37,10 @@ public:
   void unconsumedCall() const CALLABLE_WHEN("unconsumed");
   void callableWhenUnknown() const CALLABLE_WHEN("unconsumed", "unknown");
   
-  bool isValid() const TESTS_TYPESTATE(unconsumed);
-  operator bool() const TESTS_TYPESTATE(unconsumed);
-  bool operator!=(nullptr_t) const TESTS_TYPESTATE(unconsumed);
-  bool operator==(nullptr_t) const TESTS_TYPESTATE(consumed);
+  bool isValid() const TEST_TYPESTATE(unconsumed);
+  operator bool() const TEST_TYPESTATE(unconsumed);
+  bool operator!=(nullptr_t) const TEST_TYPESTATE(unconsumed);
+  bool operator==(nullptr_t) const TEST_TYPESTATE(consumed);
   
   void constCall() const;
   void nonconstCall();

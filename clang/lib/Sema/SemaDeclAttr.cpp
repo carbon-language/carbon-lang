@@ -1202,8 +1202,8 @@ static void handleSetTypestateAttr(Sema &S, Decl *D, const AttributeList &Attr) 
                               Attr.getAttributeSpellingListIndex()));
 }
 
-static void handleTestsTypestateAttr(Sema &S, Decl *D,
-                                        const AttributeList &Attr) {
+static void handleTestTypestateAttr(Sema &S, Decl *D,
+                                    const AttributeList &Attr) {
   if (!checkAttributeNumArgs(S, Attr, 1))
     return;
   
@@ -1216,11 +1216,11 @@ static void handleTestsTypestateAttr(Sema &S, Decl *D,
   if (!checkForConsumableClass(S, cast<CXXMethodDecl>(D), Attr))
     return;
   
-  TestsTypestateAttr::ConsumedState TestState;  
+  TestTypestateAttr::ConsumedState TestState;  
   if (Attr.isArgIdent(0)) {
     IdentifierLoc *Ident = Attr.getArgAsIdent(0);
     StringRef Param = Ident->Ident->getName();
-    if (!TestsTypestateAttr::ConvertStrToConsumedState(Param, TestState)) {
+    if (!TestTypestateAttr::ConvertStrToConsumedState(Param, TestState)) {
       S.Diag(Ident->Loc, diag::warn_attribute_type_not_supported)
         << Attr.getName() << Param;
       return;
@@ -1232,7 +1232,7 @@ static void handleTestsTypestateAttr(Sema &S, Decl *D,
   }
   
   D->addAttr(::new (S.Context)
-             TestsTypestateAttr(Attr.getRange(), S.Context, TestState,
+             TestTypestateAttr(Attr.getRange(), S.Context, TestState,
                                 Attr.getAttributeSpellingListIndex()));
 }
 
@@ -4878,8 +4878,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_SetTypestate:
     handleSetTypestateAttr(S, D, Attr);
     break;
-  case AttributeList::AT_TestsTypestate:
-    handleTestsTypestateAttr(S, D, Attr);
+  case AttributeList::AT_TestTypestate:
+    handleTestTypestateAttr(S, D, Attr);
     break;
 
   // Type safety attributes.
