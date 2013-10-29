@@ -1506,6 +1506,87 @@ TEST(MemorySanitizer, modfl) {
   EXPECT_NOT_POISONED(y);
 }
 
+TEST(MemorySanitizer, sincos) {
+  double s, c;
+  sincos(0.2, &s, &c);
+  EXPECT_NOT_POISONED(s);
+  EXPECT_NOT_POISONED(c);
+}
+
+TEST(MemorySanitizer, sincosf) {
+  float s, c;
+  sincosf(0.2, &s, &c);
+  EXPECT_NOT_POISONED(s);
+  EXPECT_NOT_POISONED(c);
+}
+
+TEST(MemorySanitizer, sincosl) {
+  long double s, c;
+  sincosl(0.2, &s, &c);
+  EXPECT_NOT_POISONED(s);
+  EXPECT_NOT_POISONED(c);
+}
+
+TEST(MemorySanitizer, remquo) {
+  int quo;
+  double res = remquo(29.0, 3.0, &quo);
+  ASSERT_NE(0.0, res);
+  EXPECT_NOT_POISONED(quo);
+}
+
+TEST(MemorySanitizer, remquof) {
+  int quo;
+  float res = remquof(29.0, 3.0, &quo);
+  ASSERT_NE(0.0, res);
+  EXPECT_NOT_POISONED(quo);
+}
+
+TEST(MemorySanitizer, remquol) {
+  int quo;
+  long double res = remquof(29.0, 3.0, &quo);
+  ASSERT_NE(0.0, res);
+  EXPECT_NOT_POISONED(quo);
+}
+
+TEST(MemorySanitizer, lgamma) {
+  double res = lgamma(1.1);
+  ASSERT_NE(0.0, res);
+  EXPECT_NOT_POISONED(signgam);
+}
+
+TEST(MemorySanitizer, lgammaf) {
+  float res = lgammaf(1.1);
+  ASSERT_NE(0.0, res);
+  EXPECT_NOT_POISONED(signgam);
+}
+
+TEST(MemorySanitizer, lgammal) {
+  long double res = lgammal(1.1);
+  ASSERT_NE(0.0, res);
+  EXPECT_NOT_POISONED(signgam);
+}
+
+TEST(MemorySanitizer, lgamma_r) {
+  int sgn;
+  double res = lgamma_r(1.1, &sgn);
+  ASSERT_NE(0.0, res);
+  EXPECT_NOT_POISONED(sgn);
+}
+
+TEST(MemorySanitizer, lgammaf_r) {
+  int sgn;
+  float res = lgammaf_r(1.1, &sgn);
+  ASSERT_NE(0.0, res);
+  EXPECT_NOT_POISONED(sgn);
+}
+
+TEST(MemorySanitizer, lgammal_r) {
+  int sgn;
+  long double res = lgammal_r(1.1, &sgn);
+  ASSERT_NE(0.0, res);
+  EXPECT_NOT_POISONED(sgn);
+}
+
 TEST(MemorySanitizer, sprintf) {  // NOLINT
   char buff[10];
   break_optimization(buff);

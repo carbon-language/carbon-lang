@@ -398,6 +398,18 @@ void StatOutput(u64 *stat) {
   name[StatInt_tmpnam]                   = "  tmpnam                          ";
   name[StatInt_tmpnam_r]                 = "  tmpnam_r                        ";
   name[StatInt_tempnam]                  = "  tempnam                         ";
+  name[StatInt_sincos]                   = "  sincos                          ";
+  name[StatInt_sincosf]                  = "  sincosf                         ";
+  name[StatInt_sincosl]                  = "  sincosl                         ";
+  name[StatInt_remquo]                   = "  remquo                          ";
+  name[StatInt_remquof]                  = "  remquof                         ";
+  name[StatInt_remquol]                  = "  remquol                         ";
+  name[StatInt_lgamma]                   = "  lgamma                          ";
+  name[StatInt_lgammaf]                  = "  lgammaf                         ";
+  name[StatInt_lgammal]                  = "  lgammal                         ";
+  name[StatInt_lgamma_r]                 = "  lgamma_r                        ";
+  name[StatInt_lgammaf_r]                = "  lgammaf_r                       ";
+  name[StatInt_lgammal_r]                = "  lgammal_r                       ";
 
   name[StatInt_pthread_attr_getdetachstate]  = "  pthread_addr_getdetachstate     ";  // NOLINT
   name[StatInt_pthread_attr_getguardsize]    = "  pthread_addr_getguardsize       ";  // NOLINT

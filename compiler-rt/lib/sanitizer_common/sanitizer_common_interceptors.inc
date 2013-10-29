@@ -2668,6 +2668,127 @@ INTERCEPTOR(int, pthread_setname_np, uptr thread, const char *name) {
 #define INIT_PTHREAD_SETNAME_NP
 #endif
 
+#if SANITIZER_INTERCEPT_SINCOS
+INTERCEPTOR(void, sincos, double x, double *sin, double *cos) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, sincos, x, sin, cos);
+  REAL(sincos)(x, sin, cos);
+  if (sin) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, sin, sizeof(*sin));
+  if (cos) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, cos, sizeof(*cos));
+}
+INTERCEPTOR(void, sincosf, float x, float *sin, float *cos) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, sincosf, x, sin, cos);
+  REAL(sincosf)(x, sin, cos);
+  if (sin) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, sin, sizeof(*sin));
+  if (cos) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, cos, sizeof(*cos));
+}
+INTERCEPTOR(void, sincosl, long double x, long double *sin, long double *cos) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, sincosl, x, sin, cos);
+  REAL(sincosl)(x, sin, cos);
+  if (sin) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, sin, sizeof(*sin));
+  if (cos) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, cos, sizeof(*cos));
+}
+#define INIT_SINCOS            \
+  INTERCEPT_FUNCTION(sincos);  \
+  INTERCEPT_FUNCTION(sincosf); \
+  INTERCEPT_FUNCTION(sincosl);
+#else
+#define INIT_SINCOS
+#endif
+
+#if SANITIZER_INTERCEPT_REMQUO
+INTERCEPTOR(double, remquo, double x, double y, int *quo) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, remquo, x, y, quo);
+  double res = REAL(remquo)(x, y, quo);
+  if (quo) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, quo, sizeof(*quo));
+  return res;
+}
+INTERCEPTOR(float, remquof, float x, float y, int *quo) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, remquof, x, y, quo);
+  float res = REAL(remquof)(x, y, quo);
+  if (quo) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, quo, sizeof(*quo));
+  return res;
+}
+INTERCEPTOR(long double, remquol, long double x, long double y, int *quo) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, remquol, x, y, quo);
+  long double res = REAL(remquol)(x, y, quo);
+  if (quo) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, quo, sizeof(*quo));
+  return res;
+}
+#define INIT_REMQUO            \
+  INTERCEPT_FUNCTION(remquo);  \
+  INTERCEPT_FUNCTION(remquof); \
+  INTERCEPT_FUNCTION(remquol);
+#else
+#define INIT_REMQUO
+#endif
+
+#if SANITIZER_INTERCEPT_LGAMMA
+extern int signgam;
+INTERCEPTOR(double, lgamma, double x) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, lgamma, x);
+  double res = REAL(lgamma)(x);
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, &signgam, sizeof(signgam));
+  return res;
+}
+INTERCEPTOR(float, lgammaf, float x) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, lgammaf, x);
+  float res = REAL(lgammaf)(x);
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, &signgam, sizeof(signgam));
+  return res;
+}
+INTERCEPTOR(long double, lgammal, long double x) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, lgammal, x);
+  long double res = REAL(lgammal)(x);
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, &signgam, sizeof(signgam));
+  return res;
+}
+#define INIT_LGAMMA            \
+  INTERCEPT_FUNCTION(lgamma);  \
+  INTERCEPT_FUNCTION(lgammaf); \
+  INTERCEPT_FUNCTION(lgammal);
+#else
+#define INIT_LGAMMA
+#endif
+
+#if SANITIZER_INTERCEPT_LGAMMA_R
+INTERCEPTOR(double, lgamma_r, double x, int *signp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, lgamma_r, x, signp);
+  double res = REAL(lgamma_r)(x, signp);
+  if (signp) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, signp, sizeof(*signp));
+  return res;
+}
+INTERCEPTOR(float, lgammaf_r, float x, int *signp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, lgammaf_r, x, signp);
+  float res = REAL(lgammaf_r)(x, signp);
+  if (signp) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, signp, sizeof(*signp));
+  return res;
+}
+INTERCEPTOR(long double, lgammal_r, long double x, int *signp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, lgammal_r, x, signp);
+  long double res = REAL(lgammal_r)(x, signp);
+  if (signp) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, signp, sizeof(*signp));
+  return res;
+}
+#define INIT_LGAMMA_R            \
+  INTERCEPT_FUNCTION(lgamma_r);  \
+  INTERCEPT_FUNCTION(lgammaf_r); \
+  INTERCEPT_FUNCTION(lgammal_r);
+#else
+#define INIT_LGAMMA_R
+#endif
+
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
@@ -2771,4 +2892,8 @@ INTERCEPTOR(int, pthread_setname_np, uptr thread, const char *name) {
   INIT_TMPNAM_R;                           \
   INIT_TEMPNAM;                            \
   INIT_PTHREAD_SETNAME_NP;                 \
+  INIT_SINCOS;                             \
+  INIT_REMQUO;                             \
+  INIT_LGAMMA;                             \
+  INIT_LGAMMA_R;                           \
 /**/
