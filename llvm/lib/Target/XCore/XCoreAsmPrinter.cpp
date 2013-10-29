@@ -109,7 +109,7 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GV, Mang,TM));
 
   
-  MCSymbol *GVSym = Mang->getSymbol(GV);
+  MCSymbol *GVSym = getSymbol(GV);
   const Constant *C = GV->getInitializer();
   unsigned Align = (unsigned)TD->getPreferredTypeAlignmentShift(C->getType());
   
@@ -216,7 +216,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     O << *MO.getMBB()->getSymbol();
     break;
   case MachineOperand::MO_GlobalAddress:
-    O << *Mang->getSymbol(MO.getGlobal());
+    O << *getSymbol(MO.getGlobal());
     break;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();

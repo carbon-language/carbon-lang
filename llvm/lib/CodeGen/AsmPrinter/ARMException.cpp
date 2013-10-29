@@ -82,7 +82,7 @@ void ARMException::EndFunction() {
         // Emit references to personality.
         if (const Function * Personality =
             MMI->getPersonalities()[MMI->getPersonalityIndex()]) {
-          MCSymbol *PerSym = Asm->Mang->getSymbol(Personality);
+          MCSymbol *PerSym = Asm->getSymbol(Personality);
           Asm->OutStreamer.EmitSymbolAttribute(PerSym, MCSA_Global);
           ATS.emitPersonality(PerSym);
         }

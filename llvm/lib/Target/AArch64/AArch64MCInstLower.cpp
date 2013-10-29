@@ -121,7 +121,7 @@ bool AArch64AsmPrinter::lowerOperand(const MachineOperand &MO,
     MCOp = lowerSymbolOperand(MO, GetExternalSymbolSymbol(MO.getSymbolName()));
     break;
   case MachineOperand::MO_GlobalAddress:
-    MCOp = lowerSymbolOperand(MO, Mang->getSymbol(MO.getGlobal()));
+    MCOp = lowerSymbolOperand(MO, getSymbol(MO.getGlobal()));
     break;
   case MachineOperand::MO_MachineBasicBlock:
     MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(

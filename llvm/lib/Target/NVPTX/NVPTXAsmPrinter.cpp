@@ -126,7 +126,7 @@ const MCExpr *nvptx::LowerConstant(const Constant *CV, AsmPrinter &AP) {
     return MCConstantExpr::Create(CI->getZExtValue(), Ctx);
 
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV))
-    return MCSymbolRefExpr::Create(AP.Mang->getSymbol(GV), Ctx);
+    return MCSymbolRefExpr::Create(AP.getSymbol(GV), Ctx);
 
   if (const BlockAddress *BA = dyn_cast<BlockAddress>(CV))
     return MCSymbolRefExpr::Create(AP.GetBlockAddressSymbol(BA), Ctx);
@@ -341,7 +341,7 @@ bool NVPTXAsmPrinter::lowerOperand(const MachineOperand &MO,
     MCOp = GetSymbolRef(MO, GetExternalSymbolSymbol(MO.getSymbolName()));
     break;
   case MachineOperand::MO_GlobalAddress:
-    MCOp = GetSymbolRef(MO, Mang->getSymbol(MO.getGlobal()));
+    MCOp = GetSymbolRef(MO, getSymbol(MO.getGlobal()));
     break;
   case MachineOperand::MO_FPImmediate: {
     const ConstantFP *Cnt = MO.getFPImm();
@@ -677,7 +677,7 @@ void NVPTXAsmPrinter::emitDeclaration(const Function *F, raw_ostream &O) {
   else
     O << ".func ";
   printReturnValStr(F, O);
-  O << *Mang->getSymbol(F) << "\n";
+  O << *getSymbol(F) << "\n";
   emitFunctionParamList(F, O);
   O << ";\n";
 }
@@ -1207,7 +1207,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
     else
       O << getPTXFundamentalTypeStr(ETy, false);
     O << " ";
-    O << *Mang->getSymbol(GVar);
+    O << *getSymbol(GVar);
 
     // Ptx allows variable initilization only for constant and global state
     // spaces.
@@ -1243,15 +1243,15 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
           bufferAggregateConstant(Initializer, &aggBuffer);
           if (aggBuffer.numSymbols) {
             if (nvptxSubtarget.is64Bit()) {
-              O << " .u64 " << *Mang->getSymbol(GVar) << "[";
+              O << " .u64 " << *getSymbol(GVar) << "[";
               O << ElementSize / 8;
             } else {
-              O << " .u32 " << *Mang->getSymbol(GVar) << "[";
+              O << " .u32 " << *getSymbol(GVar) << "[";
               O << ElementSize / 4;
             }
             O << "]";
           } else {
-            O << " .b8 " << *Mang->getSymbol(GVar) << "[";
+            O << " .b8 " << *getSymbol(GVar) << "[";
             O << ElementSize;
             O << "]";
           }
@@ -1259,7 +1259,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
           aggBuffer.print();
           O << "}";
         } else {
-          O << " .b8 " << *Mang->getSymbol(GVar);
+          O << " .b8 " << *getSymbol(GVar);
           if (ElementSize) {
             O << "[";
             O << ElementSize;
@@ -1267,7 +1267,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
           }
         }
       } else {
-        O << " .b8 " << *Mang->getSymbol(GVar);
+        O << " .b8 " << *getSymbol(GVar);
         if (ElementSize) {
           O << "[";
           O << ElementSize;
@@ -1374,7 +1374,7 @@ void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
     O << " .";
     O << getPTXFundamentalTypeStr(ETy);
     O << " ";
-    O << *Mang->getSymbol(GVar);
+    O << *getSymbol(GVar);
     return;
   }
 
@@ -1389,7 +1389,7 @@ void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
   case Type::ArrayTyID:
   case Type::VectorTyID:
     ElementSize = TD->getTypeStoreSize(ETy);
-    O << " .b8 " << *Mang->getSymbol(GVar) << "[";
+    O << " .b8 " << *getSymbol(GVar) << "[";
     if (ElementSize) {
       O << itostr(ElementSize);
     }
@@ -1444,7 +1444,7 @@ void NVPTXAsmPrinter::printParamName(Function::const_arg_iterator I,
                                      int paramIndex, raw_ostream &O) {
   if ((nvptxSubtarget.getDrvInterface() == NVPTX::NVCL) ||
       (nvptxSubtarget.getDrvInterface() == NVPTX::CUDA))
-    O << *Mang->getSymbol(I->getParent()) << "_param_" << paramIndex;
+    O << *getSymbol(I->getParent()) << "_param_" << paramIndex;
   else {
     std::string argName = I->getName();
     const char *p = argName.c_str();
@@ -1503,13 +1503,13 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
       if (llvm::isImage(*I)) {
         std::string sname = I->getName();
         if (llvm::isImageWriteOnly(*I))
-          O << "\t.param .surfref " << *Mang->getSymbol(F) << "_param_"
+          O << "\t.param .surfref " << *getSymbol(F) << "_param_"
             << paramIndex;
         else // Default image is read_only
-          O << "\t.param .texref " << *Mang->getSymbol(F) << "_param_"
+          O << "\t.param .texref " << *getSymbol(F) << "_param_"
             << paramIndex;
       } else // Should be llvm::isSampler(*I)
-        O << "\t.param .samplerref " << *Mang->getSymbol(F) << "_param_"
+        O << "\t.param .samplerref " << *getSymbol(F) << "_param_"
           << paramIndex;
       continue;
     }
@@ -1756,13 +1756,13 @@ void NVPTXAsmPrinter::printScalarConstant(const Constant *CPV, raw_ostream &O) {
     return;
   }
   if (const GlobalValue *GVar = dyn_cast<GlobalValue>(CPV)) {
-    O << *Mang->getSymbol(GVar);
+    O << *getSymbol(GVar);
     return;
   }
   if (const ConstantExpr *Cexpr = dyn_cast<ConstantExpr>(CPV)) {
     const Value *v = Cexpr->stripPointerCasts();
     if (const GlobalValue *GVar = dyn_cast<GlobalValue>(v)) {
-      O << *Mang->getSymbol(GVar);
+      O << *getSymbol(GVar);
       return;
     } else {
       O << *LowerConstant(CPV, *this);
@@ -2076,7 +2076,7 @@ void NVPTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     break;
 
   case MachineOperand::MO_GlobalAddress:
-    O << *Mang->getSymbol(MO.getGlobal());
+    O << *getSymbol(MO.getGlobal());
     break;
 
   case MachineOperand::MO_ExternalSymbol: {

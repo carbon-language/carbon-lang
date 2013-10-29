@@ -82,7 +82,7 @@ bool ARMAsmPrinter::lowerOperand(const MachineOperand &MO,
         MO.getMBB()->getSymbol(), OutContext));
     break;
   case MachineOperand::MO_GlobalAddress:
-    MCOp = GetSymbolRef(MO, Mang->getSymbol(MO.getGlobal()));
+    MCOp = GetSymbolRef(MO, getSymbol(MO.getGlobal()));
     break;
   case MachineOperand::MO_ExternalSymbol:
    MCOp = GetSymbolRef(MO,

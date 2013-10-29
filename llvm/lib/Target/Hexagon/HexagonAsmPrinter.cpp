@@ -99,7 +99,7 @@ void HexagonAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     return;
   case MachineOperand::MO_GlobalAddress:
     // Computing the address of a global symbol, not calling it.
-    O << *Mang->getSymbol(MO.getGlobal());
+    O << *getSymbol(MO.getGlobal());
     printOffset(MO.getOffset(), O);
     return;
   }
@@ -267,7 +267,7 @@ void HexagonAsmPrinter::printGlobalOperand(const MachineInstr *MI, int OpNo,
   assert( (MO.getType() == MachineOperand::MO_GlobalAddress) &&
          "Expecting global address");
 
-  O << *Mang->getSymbol(MO.getGlobal());
+  O << *getSymbol(MO.getGlobal());
   if (MO.getOffset() != 0) {
     O << " + ";
     O << MO.getOffset();

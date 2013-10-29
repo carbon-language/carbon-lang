@@ -42,7 +42,7 @@ SystemZMCInstLower::getExpr(const MachineOperand &MO,
     break;
 
   case MachineOperand::MO_GlobalAddress:
-    Symbol = AsmPrinter.Mang->getSymbol(MO.getGlobal());
+    Symbol = AsmPrinter.getSymbol(MO.getGlobal());
     break;
 
   case MachineOperand::MO_ExternalSymbol:

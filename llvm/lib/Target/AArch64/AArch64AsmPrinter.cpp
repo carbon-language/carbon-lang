@@ -84,7 +84,7 @@ bool AArch64AsmPrinter::printSymbolicAddress(const MachineOperand &MO,
   default:
     llvm_unreachable("Unexpected operand for symbolic address constraint");
   case MachineOperand::MO_GlobalAddress:
-    Name = Mang->getSymbol(MO.getGlobal())->getName();
+    Name = getSymbol(MO.getGlobal())->getName();
 
     // Global variables may be accessed either via a GOT or in various fun and
     // interesting TLS-model specific ways. Set the prefix modifier as

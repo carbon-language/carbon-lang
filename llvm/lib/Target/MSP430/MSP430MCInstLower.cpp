@@ -33,7 +33,7 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
   case 0: break;
   }
 
-  return Printer.Mang->getSymbol(MO.getGlobal());
+  return Printer.getSymbol(MO.getGlobal());
 }
 
 MCSymbol *MSP430MCInstLower::

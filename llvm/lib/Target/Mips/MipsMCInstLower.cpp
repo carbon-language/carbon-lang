@@ -73,7 +73,7 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
     break;
 
   case MachineOperand::MO_GlobalAddress:
-    Symbol = AsmPrinter.Mang->getSymbol(MO.getGlobal());
+    Symbol = AsmPrinter.getSymbol(MO.getGlobal());
     Offset += MO.getOffset();
     break;
 

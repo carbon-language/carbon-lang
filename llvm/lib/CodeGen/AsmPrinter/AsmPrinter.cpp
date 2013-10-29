@@ -263,6 +263,9 @@ void AsmPrinter::EmitLinkage(unsigned L, MCSymbol *GVSym) const {
   llvm_unreachable("Unknown linkage type!");
 }
 
+MCSymbol *AsmPrinter::getSymbol(const GlobalValue *GV) const {
+  return Mang->getSymbol(GV);
+}
 
 /// EmitGlobalVariable - Emit the specified global variable to the .s file.
 void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
@@ -278,7 +281,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     }
   }
 
-  MCSymbol *GVSym = Mang->getSymbol(GV);
+  MCSymbol *GVSym = getSymbol(GV);
   EmitVisibility(GVSym, GV->getVisibility(), !GV->isDeclaration());
 
   if (!GV->hasInitializer())   // External globals require no extra code.
@@ -879,7 +882,7 @@ bool AsmPrinter::doFinalization(Module &M) {
     if (V == GlobalValue::DefaultVisibility)
       continue;
 
-    MCSymbol *Name = Mang->getSymbol(&F);
+    MCSymbol *Name = getSymbol(&F);
     EmitVisibility(Name, V, false);
   }
 
@@ -919,12 +922,12 @@ bool AsmPrinter::doFinalization(Module &M) {
     for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I) {
       if (!I->hasExternalWeakLinkage()) continue;
-      OutStreamer.EmitSymbolAttribute(Mang->getSymbol(I), MCSA_WeakReference);
+      OutStreamer.EmitSymbolAttribute(getSymbol(I), MCSA_WeakReference);
     }
 
     for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I) {
       if (!I->hasExternalWeakLinkage()) continue;
-      OutStreamer.EmitSymbolAttribute(Mang->getSymbol(I), MCSA_WeakReference);
+      OutStreamer.EmitSymbolAttribute(getSymbol(I), MCSA_WeakReference);
     }
   }
 
@@ -932,10 +935,10 @@ bool AsmPrinter::doFinalization(Module &M) {
     OutStreamer.AddBlankLine();
     for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
          I != E; ++I) {
-      MCSymbol *Name = Mang->getSymbol(I);
+      MCSymbol *Name = getSymbol(I);
 
       const GlobalValue *GV = I->getAliasedGlobal();
-      MCSymbol *Target = Mang->getSymbol(GV);
+      MCSymbol *Target = getSymbol(GV);
 
       if (I->hasExternalLinkage() || !MAI->getWeakRefDirective())
         OutStreamer.EmitSymbolAttribute(Name, MCSA_Global);
@@ -984,7 +987,7 @@ bool AsmPrinter::doFinalization(Module &M) {
 void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   this->MF = &MF;
   // Get the function symbol.
-  CurrentFnSym = Mang->getSymbol(MF.getFunction());
+  CurrentFnSym = getSymbol(MF.getFunction());
   CurrentFnSymForSize = CurrentFnSym;
 
   if (isVerbose())
@@ -1291,7 +1294,7 @@ void AsmPrinter::EmitLLVMUsedList(const ConstantArray *InitList) {
     const GlobalValue *GV =
       dyn_cast<GlobalValue>(InitList->getOperand(i)->stripPointerCasts());
     if (GV && getObjFileLowering().shouldEmitUsedDirectiveFor(GV, Mang))
-      OutStreamer.EmitSymbolAttribute(Mang->getSymbol(GV), MCSA_NoDeadStrip);
+      OutStreamer.EmitSymbolAttribute(getSymbol(GV), MCSA_NoDeadStrip);
   }
 }
 
@@ -1486,7 +1489,7 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
     return MCConstantExpr::Create(CI->getZExtValue(), Ctx);
 
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV))
-    return MCSymbolRefExpr::Create(AP.Mang->getSymbol(GV), Ctx);
+    return MCSymbolRefExpr::Create(AP.getSymbol(GV), Ctx);
 
   if (const BlockAddress *BA = dyn_cast<BlockAddress>(CV))
     return MCSymbolRefExpr::Create(AP.GetBlockAddressSymbol(BA), Ctx);

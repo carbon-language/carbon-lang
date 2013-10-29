@@ -111,7 +111,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
       assert(MO.isGlobal() && "Extern symbol not handled yet");
       StubSym =
         MachineModuleInfoImpl::
-        StubValueTy(getMang()->getSymbol(MO.getGlobal()),
+        StubValueTy(AsmPrinter.getSymbol(MO.getGlobal()),
                     !MO.getGlobal()->hasInternalLinkage());
     }
     return Sym;
@@ -125,7 +125,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
       assert(MO.isGlobal() && "Extern symbol not handled yet");
       StubSym =
         MachineModuleInfoImpl::
-        StubValueTy(getMang()->getSymbol(MO.getGlobal()),
+        StubValueTy(AsmPrinter.getSymbol(MO.getGlobal()),
                     !MO.getGlobal()->hasInternalLinkage());
     }
     return Sym;
@@ -141,7 +141,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
     if (MO.isGlobal()) {
       StubSym =
         MachineModuleInfoImpl::
-        StubValueTy(getMang()->getSymbol(MO.getGlobal()),
+        StubValueTy(AsmPrinter.getSymbol(MO.getGlobal()),
                     !MO.getGlobal()->hasInternalLinkage());
     } else {
       Name.erase(Name.end()-5, Name.end());

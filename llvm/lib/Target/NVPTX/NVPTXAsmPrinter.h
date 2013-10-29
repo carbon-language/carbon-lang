@@ -155,7 +155,7 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
           if (pos == nextSymbolPos) {
             const Value *v = Symbols[nSym];
             if (const GlobalValue *GVar = dyn_cast<GlobalValue>(v)) {
-              MCSymbol *Name = AP.Mang->getSymbol(GVar);
+              MCSymbol *Name = AP.getSymbol(GVar);
               O << *Name;
             } else if (const ConstantExpr *Cexpr = dyn_cast<ConstantExpr>(v)) {
               O << *nvptx::LowerConstant(Cexpr, AP);

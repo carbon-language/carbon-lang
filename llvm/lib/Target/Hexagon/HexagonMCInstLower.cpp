@@ -73,7 +73,7 @@ void llvm::HexagonLowerToMC(const MachineInstr* MI, HexagonMCInst& MCI,
                AP.OutContext));
       break;
     case MachineOperand::MO_GlobalAddress:
-      MCO = GetSymbolRef(MO, AP.Mang->getSymbol(MO.getGlobal()), AP);
+      MCO = GetSymbolRef(MO, AP.getSymbol(MO.getGlobal()), AP);
       break;
     case MachineOperand::MO_ExternalSymbol:
       MCO = GetSymbolRef(MO, AP.GetExternalSymbolSymbol(MO.getSymbolName()),

@@ -145,7 +145,7 @@ void ARMAsmPrinter::EmitXXStructor(const Constant *CV) {
   const GlobalValue *GV = dyn_cast<GlobalValue>(CV->stripPointerCasts());
   assert(GV && "C++ constructor pointer was not a GlobalValue!");
 
-  const MCExpr *E = MCSymbolRefExpr::Create(Mang->getSymbol(GV),
+  const MCExpr *E = MCSymbolRefExpr::Create(getSymbol(GV),
                                             (Subtarget->isTargetDarwin()
                                              ? MCSymbolRefExpr::VK_None
                                              : MCSymbolRefExpr::VK_ARM_TARGET1),
@@ -206,7 +206,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     else if ((Modifier && strcmp(Modifier, "hi16") == 0) ||
              (TF & ARMII::MO_HI16))
       O << ":upper16:";
-    O << *Mang->getSymbol(GV);
+    O << *getSymbol(GV);
 
     printOffset(MO.getOffset(), O);
     if (TF == ARMII::MO_PLT)
@@ -758,7 +758,7 @@ MCSymbol *ARMAsmPrinter::GetARMGVSymbol(const GlobalValue *GV) {
   bool isIndirect = Subtarget->isTargetDarwin() &&
     Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
   if (!isIndirect)
-    return Mang->getSymbol(GV);
+    return getSymbol(GV);
 
   // FIXME: Remove this when Darwin transition to @GOT like syntax.
   MCSymbol *MCSym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
@@ -769,7 +769,7 @@ MCSymbol *ARMAsmPrinter::GetARMGVSymbol(const GlobalValue *GV) {
     MMIMachO.getGVStubEntry(MCSym);
   if (StubSym.getPointer() == 0)
     StubSym = MachineModuleInfoImpl::
-      StubValueTy(Mang->getSymbol(GV), !GV->hasInternalLinkage());
+      StubValueTy(getSymbol(GV), !GV->hasInternalLinkage());
   return MCSym;
 }
 
@@ -1203,7 +1203,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       .addReg(0));
 
     const GlobalValue *GV = MI->getOperand(0).getGlobal();
-    MCSymbol *GVSym = Mang->getSymbol(GV);
+    MCSymbol *GVSym = getSymbol(GV);
     const MCExpr *GVSymExpr = MCSymbolRefExpr::Create(GVSym, OutContext);
     OutStreamer.EmitInstruction(MCInstBuilder(ARM::Bcc)
       .addExpr(GVSymExpr)

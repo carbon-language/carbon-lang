@@ -43,7 +43,7 @@ MCOperand XCoreMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
       Symbol = MO.getMBB()->getSymbol();
       break;
     case MachineOperand::MO_GlobalAddress:
-      Symbol = Mang->getSymbol(MO.getGlobal());
+      Symbol = Printer.getSymbol(MO.getGlobal());
       Offset += MO.getOffset();
       break;
     case MachineOperand::MO_BlockAddress:

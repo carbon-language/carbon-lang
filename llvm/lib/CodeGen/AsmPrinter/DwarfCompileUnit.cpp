@@ -1308,7 +1308,7 @@ CompileUnit::constructTemplateValueParameterDIE(DIE &Buffer,
       // For declaration non-type template parameters (such as global values and
       // functions)
       DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
-      addOpAddress(Block, Asm->Mang->getSymbol(GV));
+      addOpAddress(Block, Asm->getSymbol(GV));
       // Emit DW_OP_stack_value to use the address as the immediate value of the
       // parameter, rather than a pointer to it.
       addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_stack_value);
@@ -1541,7 +1541,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
   if (isGlobalVariable) {
     addToAccelTable = true;
     DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
-    const MCSymbol *Sym = Asm->Mang->getSymbol(GV.getGlobal());
+    const MCSymbol *Sym = Asm->getSymbol(GV.getGlobal());
     if (GV.getGlobal()->isThreadLocal()) {
       // FIXME: Make this work with -gsplit-dwarf.
       unsigned PointerSize = Asm->getDataLayout().getPointerSize();
@@ -1601,7 +1601,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     // GV is a merged global.
     DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
     Value *Ptr = CE->getOperand(0);
-    addOpAddress(Block, Asm->Mang->getSymbol(cast<GlobalValue>(Ptr)));
+    addOpAddress(Block, Asm->getSymbol(cast<GlobalValue>(Ptr)));
     addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
     SmallVector<Value *, 3> Idx(CE->op_begin() + 1, CE->op_end());
     addUInt(Block, dwarf::DW_FORM_udata,

@@ -160,7 +160,7 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
     static_cast<SystemZConstantPoolValue*>(MCPV);
 
   const MCExpr *Expr =
-    MCSymbolRefExpr::Create(Mang->getSymbol(ZCPV->getGlobalValue()),
+    MCSymbolRefExpr::Create(getSymbol(ZCPV->getGlobalValue()),
                             getModifierVariantKind(ZCPV->getModifier()),
                             OutContext);
   uint64_t Size = TM.getDataLayout()->getTypeAllocSize(ZCPV->getType());
