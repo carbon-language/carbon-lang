@@ -1,6 +1,8 @@
 # This tests the functionality of the RoundTrip Passes and verifies
 # that the atoms belong to the native file after the passes finish
 
+# REQUIRES: debug
+
 RUN: lld -flavor gnu -target x86_64 %p/Inputs/foo.o.x86-64 --noinhibit-exec  \
 RUN: --output-filetype=yaml -o %t1
 RUN: FileCheck %s < %t1
