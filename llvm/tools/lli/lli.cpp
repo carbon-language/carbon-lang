@@ -27,8 +27,10 @@
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
+#include "llvm/IR/TypeBuilder.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -227,6 +229,46 @@ static void do_shutdown() {
 #endif
 }
 
+// On Mingw and Cygwin, an external symbol named '__main' is called from the
+// generated 'main' function to allow static intialization.  To avoid linking
+// problems with remote targets (because lli's remote target support does not
+// currently handle external linking) we add a secondary module which defines
+// an empty '__main' function.
+static void addCygMingExtraModule(ExecutionEngine *EE,
+                                  LLVMContext &Context,
+                                  StringRef TargetTripleStr) {
+  IRBuilder<> Builder(Context);
+  Triple TargetTriple(TargetTripleStr);
+
+  // Create a new module.
+  Module *M = new Module("CygMingHelper", Context);
+  M->setTargetTriple(TargetTripleStr);
+
+  // Create an empty function named "__main".
+  Function *Result;
+  if (TargetTriple.isArch64Bit()) {
+    Result = Function::Create(
+      TypeBuilder<int64_t(void), false>::get(Context),
+      GlobalValue::ExternalLinkage, "__main", M);
+  } else {
+    Result = Function::Create(
+      TypeBuilder<int32_t(void), false>::get(Context),
+      GlobalValue::ExternalLinkage, "__main", M);
+  }
+  BasicBlock *BB = BasicBlock::Create(Context, "__main", Result);
+  Builder.SetInsertPoint(BB);
+  Value *ReturnVal;
+  if (TargetTriple.isArch64Bit())
+    ReturnVal = ConstantInt::get(Context, APInt(64, 0));
+  else
+    ReturnVal = ConstantInt::get(Context, APInt(32, 0));
+  Builder.CreateRet(ReturnVal);
+
+  // Add this new module to the ExecutionEngine.
+  EE->addModule(M);
+}
+
+
 //===----------------------------------------------------------------------===//
 // main Driver function
 //
@@ -357,6 +399,12 @@ int main(int argc, char **argv, char * const *envp) {
       return 1;
     }
     EE->addModule(XMod);
+  }
+
+  // If the target is Cygwin/MingW and we are generating remote code, we
+  // need an extra module to help out with linking.
+  if (RemoteMCJIT && Triple(Mod->getTargetTriple()).isOSCygMing()) {
+    addCygMingExtraModule(EE, Context, Mod->getTargetTriple());
   }
 
   // The following functions have no effect if their respective profiling
