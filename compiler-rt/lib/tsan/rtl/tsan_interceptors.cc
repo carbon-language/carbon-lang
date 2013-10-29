@@ -1939,11 +1939,16 @@ static void syscall_post_fork(uptr pc, int res) {
 #define COMMON_SYSCALL_PRE_WRITE_RANGE(p, s) \
   syscall_access_range(GET_CALLER_PC(), (uptr)(p), (uptr)(s), true)
 #define COMMON_SYSCALL_POST_READ_RANGE(p, s) \
-  do { } while (false)
+  do {                                       \
+    (void)(p);                               \
+    (void)(s);                               \
+  } while (false)
 #define COMMON_SYSCALL_POST_WRITE_RANGE(p, s) \
-  do { } while (false)
-#define COMMON_SYSCALL_FD_CLOSE(fd) \
-  syscall_fd_close(GET_CALLER_PC(), fd)
+  do {                                        \
+    (void)(p);                                \
+    (void)(s);                                \
+  } while (false)
+#define COMMON_SYSCALL_FD_CLOSE(fd) syscall_fd_close(GET_CALLER_PC(), fd)
 #define COMMON_SYSCALL_PRE_FORK() \
   syscall_pre_fork(GET_CALLER_PC())
 #define COMMON_SYSCALL_POST_FORK(res) \
