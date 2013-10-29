@@ -30,7 +30,7 @@ include $(CLANG_LEVEL)/Makefile
 
 # Add soname to the library.
 ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux FreeBSD GNU GNU/kFreeBSD))
-        LDFLAGS += -Wl,-soname,lib$(LIBRARYNAME)$(SHLIBEXT)
+        LLVMLibsOptions += -Wl,-soname,lib$(LIBRARYNAME)$(SHLIBEXT)
 endif
 
 ##===----------------------------------------------------------------------===##
