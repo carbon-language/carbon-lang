@@ -87,6 +87,8 @@ def FeatureNorthernIslands : SubtargetFeatureGeneration<"NORTHERN_ISLANDS",
 def FeatureSouthernIslands : SubtargetFeatureGeneration<"SOUTHERN_ISLANDS",
         [Feature64BitPtr, FeatureFP64]>;
 
+def FeatureSeaIslands : SubtargetFeatureGeneration<"SEA_ISLANDS",
+        [Feature64BitPtr, FeatureFP64]>;
 //===----------------------------------------------------------------------===//
 
 def AMDGPUInstrInfo : InstrInfo {

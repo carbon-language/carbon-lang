@@ -33,7 +33,8 @@ public:
     R700,
     EVERGREEN,
     NORTHERN_ISLANDS,
-    SOUTHERN_ISLANDS
+    SOUTHERN_ISLANDS,
+    SEA_ISLANDS
   };
 
 private:

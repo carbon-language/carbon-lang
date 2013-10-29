@@ -48,7 +48,7 @@ def CC_AMDGPU_Kernel : CallingConv<[
 ]>;
 
 def CC_AMDGPU : CallingConv<[
-  CCIf<"State.getTarget().getSubtarget<AMDGPUSubtarget>().getGeneration() == "
+  CCIf<"State.getTarget().getSubtarget<AMDGPUSubtarget>().getGeneration() >= "
        "AMDGPUSubtarget::SOUTHERN_ISLANDS && "
        "State.getMachineFunction().getInfo<SIMachineFunctionInfo>()->"#
        "ShaderType == ShaderType::COMPUTE", CCDelegateTo<CC_AMDGPU_Kernel>>,
@@ -57,5 +57,5 @@ def CC_AMDGPU : CallingConv<[
        "State.getMachineFunction().getInfo<R600MachineFunctionInfo>()->"
        "ShaderType == ShaderType::COMPUTE", CCDelegateTo<CC_AMDGPU_Kernel>>,
   CCIf<"State.getTarget().getSubtarget<AMDGPUSubtarget>()"#
-       ".getGeneration() == AMDGPUSubtarget::SOUTHERN_ISLANDS", CCDelegateTo<CC_SI>>
+       ".getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS", CCDelegateTo<CC_SI>>
 ]>;

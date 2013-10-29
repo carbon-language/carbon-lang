@@ -23,7 +23,7 @@ def InterpSlot : Operand<i32> {
 }
 
 def isSI : Predicate<"Subtarget.getGeneration() "
-                      "== AMDGPUSubtarget::SOUTHERN_ISLANDS">;
+                      ">= AMDGPUSubtarget::SOUTHERN_ISLANDS">;
 
 def WAIT_FLAG : InstFlag<"printWaitFlag">;
 
