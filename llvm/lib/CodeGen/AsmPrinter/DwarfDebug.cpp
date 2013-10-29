@@ -2082,7 +2082,9 @@ void DwarfDebug::emitDIE(DIE *Die, std::vector<DIEAbbrev *> *Abbrevs) {
           Asm->EmitLabelPlusOffset(DwarfInfoSectionSym, Addr,
                                    DIEEntry::getRefAddrSize(Asm));
         else
-          Asm->OutStreamer.EmitIntValue(Addr, DIEEntry::getRefAddrSize(Asm));
+          Asm->EmitLabelOffsetDifference(DwarfInfoSectionSym, Addr,
+                                         DwarfInfoSectionSym,
+                                         DIEEntry::getRefAddrSize(Asm));
       } else {
         Asm->EmitInt32(Addr);
       }
