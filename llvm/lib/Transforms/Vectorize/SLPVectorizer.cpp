@@ -1013,9 +1013,24 @@ int BoUpSLP::getEntryCost(TreeEntry *E) {
         TTI->getCmpSelInstrCost(Opcode, ScalarTy, Builder.getInt1Ty());
         VecCost = TTI->getCmpSelInstrCost(Opcode, VecTy, MaskTy);
       } else {
-        ScalarCost = VecTy->getNumElements() *
-        TTI->getArithmeticInstrCost(Opcode, ScalarTy);
-        VecCost = TTI->getArithmeticInstrCost(Opcode, VecTy);
+        // Certain instructions can be cheaper to vectorize if they have a
+        // constant second vector operand.
+        TargetTransformInfo::OperandValueKind Op1VK =
+            TargetTransformInfo::OK_AnyValue;
+        TargetTransformInfo::OperandValueKind Op2VK =
+            TargetTransformInfo::OK_UniformConstantValue;
+
+        // Check whether all second operands are constant.
+        for (unsigned i = 0; i < VL.size(); ++i)
+          if (!isa<ConstantInt>(cast<Instruction>(VL[i])->getOperand(1))) {
+            Op2VK = TargetTransformInfo::OK_AnyValue;
+            break;
+          }
+
+        ScalarCost =
+            VecTy->getNumElements() *
+            TTI->getArithmeticInstrCost(Opcode, ScalarTy, Op1VK, Op2VK);
+        VecCost = TTI->getArithmeticInstrCost(Opcode, VecTy, Op1VK, Op2VK);
       }
       return VecCost - ScalarCost;
     }

@@ -523,8 +523,20 @@ unsigned ARMTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty, OperandValueK
   if (Idx != -1)
     return LT.first * CostTbl[Idx].Cost;
 
+  unsigned Cost =
+      TargetTransformInfo::getArithmeticInstrCost(Opcode, Ty, Op1Info, Op2Info);
 
-  return TargetTransformInfo::getArithmeticInstrCost(Opcode, Ty, Op1Info,
-                                                     Op2Info);
+  // This is somewhat of a hack. The problem that we are facing is that SROA
+  // creates a sequence of shift, and, or instructions to construct values.
+  // These sequences are recognized by the ISel and have zero-cost. Not so for
+  // the vectorized code. Because we have support for v2i64 but not i64 those
+  // sequences look particularily beneficial to vectorize.
+  // To work around this we increase the cost of v2i64 operations to make them
+  // seem less beneficial.
+  if (LT.second == MVT::v2i64 &&
+      Op2Info == TargetTransformInfo::OK_UniformConstantValue)
+    Cost += 4;
+
+  return Cost;
 }
 
