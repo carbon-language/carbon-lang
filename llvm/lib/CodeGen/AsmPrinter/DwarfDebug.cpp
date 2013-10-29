@@ -378,9 +378,8 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
   // concrete DIE twice.
   if (DIE *AbsSPDIE = AbstractSPDies.lookup(SPNode)) {
     // Pick up abstract subprogram DIE.
-    SPDie = new DIE(dwarf::DW_TAG_subprogram);
+    SPDie = SPCU->createAndAddDIE(dwarf::DW_TAG_subprogram, *SPCU->getCUDie());
     SPCU->addDIEEntry(SPDie, dwarf::DW_AT_abstract_origin, AbsSPDIE);
-    SPCU->addDie(SPDie);
   } else {
     DISubprogram SPDecl = SP.getFunctionDeclaration();
     if (!SPDecl.isSubprogram()) {
@@ -401,19 +400,19 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
         uint16_t SPTag = SPTy.getTag();
         if (SPTag == dwarf::DW_TAG_subroutine_type)
           for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
-            DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
+            DIE *Arg =
+                SPCU->createAndAddDIE(dwarf::DW_TAG_formal_parameter, *SPDie);
             DIType ATy = DIType(Args.getElement(i));
             SPCU->addType(Arg, ATy);
             if (ATy.isArtificial())
               SPCU->addFlag(Arg, dwarf::DW_AT_artificial);
             if (ATy.isObjectPointer())
               SPCU->addDIEEntry(SPDie, dwarf::DW_AT_object_pointer, Arg);
-            SPDie->addChild(Arg);
           }
         DIE *SPDeclDie = SPDie;
-        SPDie = new DIE(dwarf::DW_TAG_subprogram);
+        SPDie =
+            SPCU->createAndAddDIE(dwarf::DW_TAG_subprogram, *SPCU->getCUDie());
         SPCU->addDIEEntry(SPDie, dwarf::DW_AT_specification, SPDeclDie);
-        SPCU->addDie(SPDie);
       }
     }
   }
