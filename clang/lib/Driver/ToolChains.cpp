@@ -2356,18 +2356,26 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     const std::string &LibPath = GCCInstallation.getParentLibPath();
 
     // Sourcery CodeBench MIPS toolchain holds some libraries under
-    // the parent prefix of the GCC installation.
-    // FIXME: It would be cleaner to model this as a variant of multilib. IE,
-    // instead of 'lib64' it would be 'lib/el'.
+    // a biarch-like suffix of the GCC installation.
+    //
+    // FIXME: It would be cleaner to model this as a variant of bi-arch. IE,
+    // instead of a '64' biarch suffix it would be 'el' or something.
+    //
+    // FIXME: it is also deeply confusing that the suffix is called
+    // 'MultiLibSuffix' on the GCCInstallation class. It has nothing to do with
+    // multilib setups, and much more in common with a combined biarch and
+    // multiarch suffix set. (biarch for the GCC installation, multiarch for
+    // the lib directories.)
     if (IsAndroid && IsMips && isMips32r2(Args)) {
       assert(GCCInstallation.getBiarchSuffix().empty() &&
              "Unexpected bi-arch suffix");
       addPathIfExists(GCCInstallation.getInstallPath() + "/mips-r2", Paths);
-    } else
+    } else {
       addPathIfExists((GCCInstallation.getInstallPath() +
                        GCCInstallation.getMultiLibSuffix() +
                        GCCInstallation.getBiarchSuffix()),
                       Paths);
+    }
 
     // GCC cross compiling toolchains will install target libraries which ship
     // as part of the toolchain under <prefix>/<triple>/<libdir> rather than as
@@ -2387,6 +2395,9 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     //
     // Note that this matches the GCC behavior. See the below comment for where
     // Clang diverges from GCC's behavior.
+    //
+    // FIXME: The GCCInstallation MultiLibSuffix is totally orthogonal from the
+    // Multilib directory component. It is misnamed and needs clarification.
     addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib/../" + Multilib +
                     GCCInstallation.getMultiLibSuffix(),
                     Paths);
