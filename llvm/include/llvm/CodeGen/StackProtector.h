@@ -19,6 +19,7 @@
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/ADT/ValueMap.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetLowering.h"
 
@@ -29,6 +30,24 @@ class Module;
 class PHINode;
 
 class StackProtector : public FunctionPass {
+public:
+  /// SSPLayoutKind.  Stack Smashing Protection (SSP) rules require that 
+  /// vulnerable stack allocations are located close the stack protector.
+  enum SSPLayoutKind {
+    SSPLK_None,       //< Did not trigger a stack protector.  No effect on data
+                      //< layout.
+    SSPLK_LargeArray, //< Array or nested array >= SSP-buffer-size.  Closest
+                      //< to the stack protector.
+    SSPLK_SmallArray, //< Array or nested array < SSP-buffer-size. 2nd closest
+                      //< to the stack protector.
+    SSPLK_AddrOf      //< The address of this allocation is exposed and
+                      //< triggered protection.  3rd closest to the protector.
+  };
+
+  /// A mapping of AllocaInsts to their required SSP layout.
+  typedef ValueMap<const AllocaInst*, SSPLayoutKind> SSPLayoutMap;
+
+private:
   const TargetMachine *TM;
 
   /// TLI - Keep a pointer of a TargetLowering to consult for determining
@@ -40,6 +59,11 @@ class StackProtector : public FunctionPass {
   Module *M;
 
   DominatorTree *DT;
+
+  /// Layout - Mapping of allocations to the required SSPLayoutKind.
+  /// StackProtector analysis will update this map when determining if an
+  /// AllocaInst triggers a stack protector.
+  SSPLayoutMap Layout;
 
   /// \brief The minimum size of buffers that will receive stack smashing
   /// protection when -fstack-protection is used.
@@ -66,7 +90,10 @@ class StackProtector : public FunctionPass {
   /// ContainsProtectableArray - Check whether the type either is an array or
   /// contains an array of sufficient size so that we need stack protectors
   /// for it.
-  bool ContainsProtectableArray(Type *Ty, bool Strong = false,
+  /// \param [out] IsLarge is set to true if a protectable array is found and
+  /// it is "large" ( >= ssp-buffer-size).  In the case of a structure with
+  /// multiple arrays, this gets set if any of them is large.
+  bool ContainsProtectableArray(Type *Ty, bool &IsLarge, bool Strong = false,
                                 bool InStruct = false) const;
 
   /// \brief Check whether a stack allocation has its address taken.
@@ -89,6 +116,8 @@ public:
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addPreserved<DominatorTree>();
   }
+
+  SSPLayoutKind getSSPLayout(const AllocaInst *AI) const;
 
   virtual bool runOnFunction(Function &Fn);
 };

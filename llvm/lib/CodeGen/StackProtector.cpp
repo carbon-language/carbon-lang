@@ -48,10 +48,15 @@ EnableSelectionDAGSP("enable-selectiondag-sp", cl::init(true),
 
 char StackProtector::ID = 0;
 INITIALIZE_PASS(StackProtector, "stack-protector",
-                "Insert stack protectors", false, false)
+                "Insert stack protectors", false, true)
 
 FunctionPass *llvm::createStackProtectorPass(const TargetMachine *TM) {
   return new StackProtector(TM);
+}
+
+StackProtector::SSPLayoutKind StackProtector::getSSPLayout(const AllocaInst *AI)
+                                                           const {
+  return AI ? Layout.lookup(AI) : SSPLK_None;
 }
 
 bool StackProtector::runOnFunction(Function &Fn) {
@@ -72,39 +77,51 @@ bool StackProtector::runOnFunction(Function &Fn) {
   return InsertStackProtectors();
 }
 
-/// ContainsProtectableArray - Check whether the type either is an array or
-/// contains a char array of sufficient size so that we need stack protectors
-/// for it.
-bool StackProtector::ContainsProtectableArray(Type *Ty, bool Strong,
-                                              bool InStruct) const {
+/// \param [out] IsLarge is set to true if a protectable array is found and
+/// it is "large" ( >= ssp-buffer-size).  In the case of a structure with
+/// multiple arrays, this gets set if any of them is large.
+bool StackProtector::ContainsProtectableArray(Type *Ty, bool &IsLarge,
+                                              bool Strong, bool InStruct)
+                                              const {
   if (!Ty) return false;
   if (ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
-    // In strong mode any array, regardless of type and size, triggers a
-    // protector
-    if (Strong)
-      return true;
     if (!AT->getElementType()->isIntegerTy(8)) {
       // If we're on a non-Darwin platform or we're inside of a structure, don't
       // add stack protectors unless the array is a character array.
-      if (InStruct || !Trip.isOSDarwin())
-          return false;
+      // However, in strong mode any array, regardless of type and size,
+      // triggers a protector.
+      if (!Strong && (InStruct || !Trip.isOSDarwin()))
+        return false;
     }
 
     // If an array has more than SSPBufferSize bytes of allocated space, then we
     // emit stack protectors.
-    if (SSPBufferSize <= TLI->getDataLayout()->getTypeAllocSize(AT))
+    if (SSPBufferSize <= TLI->getDataLayout()->getTypeAllocSize(AT)) {
+      IsLarge = true;
+      return true;
+    } 
+
+    if (Strong)
+      // Require a protector for all arrays in strong mode
       return true;
   }
 
   const StructType *ST = dyn_cast<StructType>(Ty);
   if (!ST) return false;
 
+  bool NeedsProtector = false;
   for (StructType::element_iterator I = ST->element_begin(),
          E = ST->element_end(); I != E; ++I)
-    if (ContainsProtectableArray(*I, Strong, true))
-      return true;
+    if (ContainsProtectableArray(*I, IsLarge, Strong, true)) {
+      // If the element is a protectable array and is large (>= SSPBufferSize)
+      // then we are done.  If the protectable array is not large, then
+      // keep looking in case a subsequent element is a large array.
+      if (IsLarge)
+        return true;
+      NeedsProtector = true;
+    }
 
-  return false;
+  return NeedsProtector;
 }
 
 bool StackProtector::HasAddressTaken(const Instruction *AI) {
@@ -156,11 +173,13 @@ bool StackProtector::HasAddressTaken(const Instruction *AI) {
 /// address taken.
 bool StackProtector::RequiresStackProtector() {
   bool Strong = false;
+  bool NeedsProtector = false;
   if (F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                      Attribute::StackProtectReq))
-    return true;
-  else if (F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                           Attribute::StackProtectStrong))
+                                      Attribute::StackProtectReq)) {
+    NeedsProtector = true;
+    Strong = true; // Use the same heuristic as strong to determine SSPLayout
+  } else if (F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                             Attribute::StackProtectStrong))
     Strong = true;
   else if (!F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
                                             Attribute::StackProtect))
@@ -180,28 +199,42 @@ bool StackProtector::RequiresStackProtector() {
 
           if (const ConstantInt *CI =
                dyn_cast<ConstantInt>(AI->getArraySize())) {
-            if (CI->getLimitedValue(SSPBufferSize) >= SSPBufferSize)
+            if (CI->getLimitedValue(SSPBufferSize) >= SSPBufferSize) {
               // A call to alloca with size >= SSPBufferSize requires
               // stack protectors.
-              return true;
+              Layout.insert(std::make_pair(AI, SSPLK_LargeArray));
+              NeedsProtector = true;
+            } else if (Strong) {
+              // Require protectors for all alloca calls in strong mode.
+              Layout.insert(std::make_pair(AI, SSPLK_SmallArray));
+              NeedsProtector = true;
+            }
           } else {
             // A call to alloca with a variable size requires protectors.
-            return true;
+            Layout.insert(std::make_pair(AI, SSPLK_LargeArray));
+            NeedsProtector = true;
           }
+          continue;
         }
 
-        if (ContainsProtectableArray(AI->getAllocatedType(), Strong))
-          return true;
+        bool IsLarge = false;
+        if (ContainsProtectableArray(AI->getAllocatedType(), IsLarge, Strong)) {
+          Layout.insert(std::make_pair(AI, IsLarge ? SSPLK_LargeArray
+                                                   : SSPLK_SmallArray));
+          NeedsProtector = true;
+          continue;
+        }
 
         if (Strong && HasAddressTaken(AI)) {
           ++NumAddrTaken;
-          return true;
+          Layout.insert(std::make_pair(AI, SSPLK_AddrOf));
+          NeedsProtector = true;
         }
       }
     }
   }
 
-  return false;
+  return NeedsProtector;
 }
 
 static bool InstructionWillNotHaveChain(const Instruction *I) {
