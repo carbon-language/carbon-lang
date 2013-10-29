@@ -1240,12 +1240,30 @@ void LLVMSetVisibility(LLVMValueRef Global, LLVMVisibility Viz) {
     ->setVisibility(static_cast<GlobalValue::VisibilityTypes>(Viz));
 }
 
-unsigned LLVMGetAlignment(LLVMValueRef Global) {
-  return unwrap<GlobalValue>(Global)->getAlignment();
+/*--.. Operations on global variables, load and store instructions .........--*/
+
+unsigned LLVMGetAlignment(LLVMValueRef V) {
+  Value *P = unwrap<Value>(V);
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(P))
+    return GV->getAlignment();
+  if (LoadInst *LI = dyn_cast<LoadInst>(P))
+    return LI->getAlignment();
+  if (StoreInst *SI = dyn_cast<StoreInst>(P))
+    return SI->getAlignment();
+
+  llvm_unreachable("only GlobalValue, LoadInst and StoreInst have alignment");
 }
 
-void LLVMSetAlignment(LLVMValueRef Global, unsigned Bytes) {
-  unwrap<GlobalValue>(Global)->setAlignment(Bytes);
+void LLVMSetAlignment(LLVMValueRef V, unsigned Bytes) {
+  Value *P = unwrap<Value>(V);
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(P))
+    GV->setAlignment(Bytes);
+  else if (LoadInst *LI = dyn_cast<LoadInst>(P))
+    LI->setAlignment(Bytes);
+  else if (StoreInst *SI = dyn_cast<StoreInst>(P))
+    SI->setAlignment(Bytes);
+
+  llvm_unreachable("only GlobalValue, LoadInst and StoreInst have alignment");
 }
 
 /*--.. Operations on global variables ......................................--*/
