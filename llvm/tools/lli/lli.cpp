@@ -88,8 +88,8 @@ namespace {
 
   // Manually specify the child process for remote execution. This overrides
   // the simulated remote execution that allocates address space for child
-  // execution. The child process resides in the disk and communicates with lli
-  // via stdin/stdout pipes.
+  // execution. The child process will be executed and will communicate with
+  // lli via stdin/stdout pipes.
   cl::opt<std::string>
   MCJITRemoteProcess("mcjit-remote-process",
             cl::desc("Specify the filename of the process to launch "
