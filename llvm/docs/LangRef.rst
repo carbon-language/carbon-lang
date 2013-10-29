@@ -445,9 +445,13 @@ Global Variables
 ----------------
 
 Global variables define regions of memory allocated at compilation time
-instead of run-time. Global variables may optionally be initialized, may
-have an explicit section to be placed in, and may have an optional
-explicit alignment specified.
+instead of run-time.
+
+Global variables definitions must be initialized, may have an explicit section
+to be placed in, and may have an optional explicit alignment specified.
+
+Global variables in other translation units can also be declared, in which
+case they don't have an initializer.
 
 A variable may be defined as ``thread_local``, which means that it will
 not be shared by threads (each thread will have a separated copy of the
@@ -528,6 +532,12 @@ with an initializer, section, and alignment:
 .. code-block:: llvm
 
     @G = addrspace(5) constant float 1.0, section "foo", align 4
+
+The following example just declares a global variable
+
+.. code-block:: llvm
+
+   @G = external global i32
 
 The following example defines a thread-local global with the
 ``initialexec`` TLS model:
