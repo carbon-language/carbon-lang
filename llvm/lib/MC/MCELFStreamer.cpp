@@ -316,17 +316,11 @@ void MCELFStreamer::EmitValueToAlignment(unsigned ByteAlignment,
                                          ValueSize, MaxBytesToEmit);
 }
 
-
-// Add a symbol for the file name of this module. This is the second
-// entry in the module's symbol table (the first being the null symbol).
+// Add a symbol for the file name of this module. They start after the
+// null symbol and don't count as normal symbol, i.e. a non-STT_FILE symbol
+// with the same name may appear.
 void MCELFStreamer::EmitFileDirective(StringRef Filename) {
-  MCSymbol *Symbol = getAssembler().getContext().GetOrCreateSymbol(Filename);
-  Symbol->setSection(*getCurrentSection().first);
-  Symbol->setAbsolute();
-
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
-
-  SD.setFlags(ELF_STT_File | ELF_STB_Local | ELF_STV_Default);
+  getAssembler().addFileName(Filename);
 }
 
 void MCELFStreamer::EmitIdent(StringRef IdentString) {

@@ -73,10 +73,6 @@ class ELFObjectWriter : public MCObjectWriter {
 
       // Support lexicographic sorting.
       bool operator<(const ELFSymbolData &RHS) const {
-        if (MCELF::GetType(*SymbolData) == ELF::STT_FILE)
-          return true;
-        if (MCELF::GetType(*RHS.SymbolData) == ELF::STT_FILE)
-          return false;
         return SymbolData->getSymbol().getName() <
                RHS.SymbolData->getSymbol().getName();
       }
@@ -98,6 +94,7 @@ class ELFObjectWriter : public MCObjectWriter {
     /// @{
 
     SmallString<256> StringTable;
+    std::vector<uint64_t> FileSymbolData;
     std::vector<ELFSymbolData> LocalSymbolData;
     std::vector<ELFSymbolData> ExternalSymbolData;
     std::vector<ELFSymbolData> UndefinedSymbolData;
@@ -551,7 +548,7 @@ void ELFObjectWriter::WriteSymbol(MCDataFragment *SymtabF,
   uint8_t Type = MCELF::GetType(Data);
   uint8_t Info = (Binding << ELF_STB_Shift) | (Type << ELF_STT_Shift);
 
-  // Other and Visibility share the same byte with Visability using the lower
+  // Other and Visibility share the same byte with Visibility using the lower
   // 2 bits
   uint8_t Visibility = MCELF::GetVisibility(OrigData);
   uint8_t Other = MCELF::getOther(OrigData) <<
@@ -590,8 +587,15 @@ void ELFObjectWriter::WriteSymbolTable(MCDataFragment *SymtabF,
   // The first entry is the undefined symbol entry.
   WriteSymbolEntry(SymtabF, ShndxF, 0, 0, 0, 0, 0, 0, false);
 
+  for (unsigned i = 0, e = FileSymbolData.size(); i != e; ++i) {
+    WriteSymbolEntry(SymtabF, ShndxF, FileSymbolData[i],
+                     ELF::STT_FILE | ELF::STB_LOCAL, 0, 0,
+                     ELF::STV_DEFAULT, ELF::SHN_ABS, true);
+  }
+
   // Write the symbol table entries.
-  LastLocalSymbolIndex = LocalSymbolData.size() + 1;
+  LastLocalSymbolIndex = FileSymbolData.size() + LocalSymbolData.size() + 1;
+
   for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i) {
     ELFSymbolData &MSD = LocalSymbolData[i];
     WriteSymbol(SymtabF, ShndxF, MSD, Layout);
@@ -880,6 +884,20 @@ void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
   // FIXME: We could optimize suffixes in strtab in the same way we
   // optimize them in shstrtab.
 
+  for (MCAssembler::const_file_name_iterator it = Asm.file_names_begin(),
+                                            ie = Asm.file_names_end();
+                                            it != ie;
+                                            ++it) {
+    StringRef Name = *it;
+    uint64_t &Entry = StringIndexMap[Name];
+    if (!Entry) {
+      Entry = StringTable.size();
+      StringTable += Name;
+      StringTable += '\x00';
+    }
+    FileSymbolData.push_back(Entry);
+  }
+
   // Add the data for the symbols.
   for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
          ie = Asm.symbol_end(); it != ie; ++it) {
@@ -964,7 +982,7 @@ void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
 
   // Set the symbol indices. Local symbols must come before all other
   // symbols with non-local bindings.
-  unsigned Index = 1;
+  unsigned Index = FileSymbolData.size() + 1;
   for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i)
     LocalSymbolData[i].SymbolData->setIndex(Index++);
 
@@ -1073,7 +1091,7 @@ void ELFObjectWriter::WriteRelocationsFragment(const MCAssembler &Asm,
     else if (entry.Index < 0)
       entry.Index = getSymbolIndexInSymbolTable(Asm, entry.Symbol);
     else
-      entry.Index += LocalSymbolData.size();
+      entry.Index += FileSymbolData.size() + LocalSymbolData.size();
     if (is64Bit()) {
       String64(*F, entry.r_offset);
       if (TargetObjectWriter->isN64()) {
