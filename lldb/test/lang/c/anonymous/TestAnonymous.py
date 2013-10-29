@@ -74,7 +74,7 @@ class AnonymousTestCase(TestBase):
 
     @dwarf_test
     def test_child_by_name_with_dwarf(self):
-        self.buildDsym()
+        self.buildDwarf()
         self.child_by_name()
 
     def setUp(self):
