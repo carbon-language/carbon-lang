@@ -34,14 +34,12 @@ namespace {
 /// X86MCInstLower - This class is used to lower an MachineInstr into an MCInst.
 class X86MCInstLower {
   MCContext &Ctx;
-  Mangler *Mang;
   const MachineFunction &MF;
   const TargetMachine &TM;
   const MCAsmInfo &MAI;
   X86AsmPrinter &AsmPrinter;
 public:
-  X86MCInstLower(Mangler *mang, const MachineFunction &MF,
-                 X86AsmPrinter &asmprinter);
+  X86MCInstLower(const MachineFunction &MF, X86AsmPrinter &asmprinter);
 
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
 
@@ -50,13 +48,16 @@ public:
 
 private:
   MachineModuleInfoMachO &getMachOMMI() const;
+  Mangler *getMang() const {
+    return AsmPrinter.Mang;
+  }
 };
 
 } // end anonymous namespace
 
-X86MCInstLower::X86MCInstLower(Mangler *mang, const MachineFunction &mf,
+X86MCInstLower::X86MCInstLower(const MachineFunction &mf,
                                X86AsmPrinter &asmprinter)
-: Ctx(mf.getContext()), Mang(mang), MF(mf), TM(mf.getTarget()),
+: Ctx(mf.getContext()), MF(mf), TM(mf.getTarget()),
   MAI(*TM.getMCAsmInfo()), AsmPrinter(asmprinter) {}
 
 MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
@@ -81,7 +82,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
         MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
       isImplicitlyPrivate = true;
 
-    Mang->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
+    getMang()->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
   } else if (MO.isSymbol()) {
     Name += MAI.getGlobalPrefix();
     Name += MO.getSymbolName();
@@ -110,7 +111,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
       assert(MO.isGlobal() && "Extern symbol not handled yet");
       StubSym =
         MachineModuleInfoImpl::
-        StubValueTy(Mang->getSymbol(MO.getGlobal()),
+        StubValueTy(getMang()->getSymbol(MO.getGlobal()),
                     !MO.getGlobal()->hasInternalLinkage());
     }
     return Sym;
@@ -124,7 +125,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
       assert(MO.isGlobal() && "Extern symbol not handled yet");
       StubSym =
         MachineModuleInfoImpl::
-        StubValueTy(Mang->getSymbol(MO.getGlobal()),
+        StubValueTy(getMang()->getSymbol(MO.getGlobal()),
                     !MO.getGlobal()->hasInternalLinkage());
     }
     return Sym;
@@ -140,7 +141,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
     if (MO.isGlobal()) {
       StubSym =
         MachineModuleInfoImpl::
-        StubValueTy(Mang->getSymbol(MO.getGlobal()),
+        StubValueTy(getMang()->getSymbol(MO.getGlobal()),
                     !MO.getGlobal()->hasInternalLinkage());
     } else {
       Name.erase(Name.end()-5, Name.end());
@@ -686,7 +687,7 @@ static void LowerTlsAddr(MCStreamer &OutStreamer,
 }
 
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  X86MCInstLower MCInstLowering(Mang, *MF, *this);
+  X86MCInstLower MCInstLowering(*MF, *this);
   switch (MI->getOpcode()) {
   case TargetOpcode::DBG_VALUE:
     llvm_unreachable("Should be handled target independently");
