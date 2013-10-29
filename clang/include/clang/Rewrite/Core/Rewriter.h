@@ -284,7 +284,7 @@ public:
 
   /// overwriteChangedFiles - Save all changed files to disk.
   ///
-  /// Returns whether not all changes were saved successfully.
+  /// Returns true if any files were not saved successfully.
   /// Outputs diagnostics via the source manager's diagnostic engine
   /// in case of an error.
   bool overwriteChangedFiles();
