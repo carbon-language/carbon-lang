@@ -293,7 +293,7 @@ public:
 
   /// This method is called by core linking to build the list of Passes to be
   /// run on the merged/linked graph of all input files.
-  virtual void addPasses(PassManager &pm) const;
+  virtual void addPasses(PassManager &pm);
 
   /// Calls through to the writeFile() method on the specified Writer.
   ///

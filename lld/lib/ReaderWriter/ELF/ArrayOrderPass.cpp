@@ -13,8 +13,8 @@
 
 namespace lld {
 namespace elf {
-void ArrayOrderPass::perform(MutableFile &f) {
-  auto definedAtoms = f.definedAtoms();
+void ArrayOrderPass::perform(std::unique_ptr<MutableFile> &f) {
+  auto definedAtoms = f->definedAtoms();
   std::stable_sort(definedAtoms.begin(), definedAtoms.end(),
                    [](const DefinedAtom *left, const DefinedAtom *right) {
     if (left->sectionChoice() != DefinedAtom::sectionCustomRequired ||

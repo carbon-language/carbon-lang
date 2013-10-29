@@ -23,13 +23,13 @@
 
 namespace lld {
 
-void StubsPass::perform(MutableFile &mergedFile) {
+void StubsPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   // Skip this pass if output format uses text relocations instead of stubs.
   if ( ! this->noTextRelocs() )
     return;
 
   // Scan all references in all atoms.
-  for(const DefinedAtom *atom : mergedFile.defined()) {
+  for (const DefinedAtom *atom : mergedFile->defined()) {
     for (const Reference *ref : *atom) {
       // Look at call-sites.
       if (this->isCallSite(ref->kind()) ) {
@@ -61,6 +61,6 @@ void StubsPass::perform(MutableFile &mergedFile) {
   }
 
   // Add all created stubs and support Atoms.
- this->addStubAtoms(mergedFile);
+  this->addStubAtoms(*mergedFile);
 }
 }

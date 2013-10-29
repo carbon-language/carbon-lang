@@ -204,7 +204,7 @@ PECOFFLinkingContext::stringFromRelocKind(Reference::Kind kind) const {
   return make_error_code(YamlReaderError::illegal_value);
 }
 
-void PECOFFLinkingContext::addPasses(PassManager &pm) const {
+void PECOFFLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new pecoff::GroupedSectionsPass()));
   pm.add(std::unique_ptr<Pass>(new pecoff::IdataPass(*this)));
   pm.add(std::unique_ptr<Pass>(new LayoutPass()));

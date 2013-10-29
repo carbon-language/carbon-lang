@@ -16,6 +16,8 @@
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
 #include "lld/Passes/LayoutPass.h"
+#include "lld/Passes/RoundTripNativePass.h"
+#include "lld/Passes/RoundTripYAMLPass.h"
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
@@ -235,10 +237,14 @@ bool MachOLinkingContext::setOS(OS os, StringRef minOSVersion) {
   return parsePackedVersion(minOSVersion, _osMinVersion);
 }
 
-void MachOLinkingContext::addPasses(PassManager &pm) const {
+void MachOLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new mach_o::GOTPass));
   pm.add(std::unique_ptr<Pass>(new mach_o::StubsPass(*this)));
   pm.add(std::unique_ptr<Pass>(new LayoutPass()));
+#ifndef NDEBUG
+  pm.add(std::unique_ptr<Pass>(new RoundTripYAMLPass(*this)));
+  pm.add(std::unique_ptr<Pass>(new RoundTripNativePass(*this)));
+#endif
 }
 
 Writer &MachOLinkingContext::writer() const {

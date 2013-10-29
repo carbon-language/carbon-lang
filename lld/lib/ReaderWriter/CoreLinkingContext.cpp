@@ -12,6 +12,9 @@
 #include "lld/Core/Pass.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Passes/LayoutPass.h"
+#include "lld/Passes/RoundTripNativePass.h"
+#include "lld/Passes/RoundTripYAMLPass.h"
+#include "lld/ReaderWriter/Simple.h"
 
 #include "llvm/ADT/ArrayRef.h"
 
@@ -149,10 +152,10 @@ private:
   uint32_t _ordinal;
 };
 
-class TestingPassFile : public MutableFile {
+class TestingPassFile : public SimpleFile {
 public:
   TestingPassFile(const LinkingContext &ctx)
-      : MutableFile(ctx, "Testing pass") {}
+      : SimpleFile(ctx, "Testing pass") {}
 
   virtual void addAtom(const Atom &atom) {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom))
@@ -277,7 +280,7 @@ bool CoreLinkingContext::validateImpl(raw_ostream &) {
   return true;
 }
 
-void CoreLinkingContext::addPasses(PassManager &pm) const {
+void CoreLinkingContext::addPasses(PassManager &pm) {
   for (StringRef name : _passNames) {
     if (name.equals("layout"))
       pm.add(std::unique_ptr<Pass>((new LayoutPass())));
@@ -288,6 +291,10 @@ void CoreLinkingContext::addPasses(PassManager &pm) const {
     else
       llvm_unreachable("bad pass name");
   }
+#ifndef NDEBUG
+  pm.add(std::unique_ptr<Pass>(new RoundTripYAMLPass(*this)));
+  pm.add(std::unique_ptr<Pass>(new RoundTripNativePass(*this)));
+#endif
 }
 
 Writer &CoreLinkingContext::writer() const { return *_writer; }

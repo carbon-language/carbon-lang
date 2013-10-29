@@ -108,6 +108,6 @@ ErrorOr<File &> LinkingContext::nextFile() {
   }
 }
 
-void LinkingContext::addPasses(PassManager &pm) const {}
+void LinkingContext::addPasses(PassManager &pm) {}
 
 } // end namespace lld

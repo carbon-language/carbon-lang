@@ -16,6 +16,8 @@
 #include "lld/Core/Resolver.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
+#include "lld/Passes/RoundTripNativePass.h"
+#include "lld/Passes/RoundTripYAMLPass.h"
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -105,19 +107,27 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   Resolver resolver(context);
   if (!resolver.resolve())
     return false;
-  MutableFile &merged = resolver.resultFile();
+  std::unique_ptr<MutableFile> merged = resolver.resultFile();
   resolveTask.end();
 
   // Run passes on linked atoms.
   ScopedTask passTask(getDefaultDomain(), "Passes");
   PassManager pm;
   context.addPasses(pm);
+
+// TODO: Replace the code with #ifndef NDEBUG after fixing the
+// failures with pecoff
+#ifdef FIXME
+  pm.add(std::unique_ptr<Pass>(new RoundTripNativePass(context)));
+  pm.add(std::unique_ptr<Pass>(new RoundTripYAMLPass(context)));
+#endif
+
   pm.runOnFile(merged);
   passTask.end();
 
   // Give linked atoms to Writer to generate output file.
   ScopedTask writeTask(getDefaultDomain(), "Write");
-  if (error_code ec = context.writeFile(merged)) {
+  if (error_code ec = context.writeFile(*merged)) {
     diagnostics << "Failed to write file '" << context.outputPath()
                 << "': " << ec.message() << "\n";
     return false;

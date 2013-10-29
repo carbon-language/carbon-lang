@@ -27,7 +27,7 @@ public:
   MachOLinkingContext();
   ~MachOLinkingContext();
 
-  virtual void addPasses(PassManager &pm) const;
+  virtual void addPasses(PassManager &pm);
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
   virtual bool validateImpl(raw_ostream &diagnostics);

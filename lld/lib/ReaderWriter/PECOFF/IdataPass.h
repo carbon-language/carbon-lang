@@ -252,13 +252,13 @@ class IdataPass : public lld::Pass {
 public:
   IdataPass(const LinkingContext &ctx) : _dummyFile(ctx) {}
 
-  virtual void perform(MutableFile &file) {
-    if (file.sharedLibrary().size() == 0)
+  virtual void perform(std::unique_ptr<MutableFile> &file) {
+    if (file->sharedLibrary().size() == 0)
       return;
 
-    Context context(file, _dummyFile);
+    Context context(*file, _dummyFile);
     map<StringRef, vector<COFFSharedLibraryAtom *> > sharedAtoms =
-        groupByLoadName(file);
+        groupByLoadName(*file);
     for (auto i : sharedAtoms) {
       StringRef loadName = i.first;
       vector<COFFSharedLibraryAtom *> &atoms = i.second;

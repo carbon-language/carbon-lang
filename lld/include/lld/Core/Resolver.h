@@ -37,8 +37,9 @@ public:
   };
 
   Resolver(LinkingContext &context)
-      : _context(context), _symbolTable(context), _result(context),
-        _haveLLVMObjs(false), _addToFinalSection(false) {}
+      : _context(context), _symbolTable(context),
+        _result(new MergedFile(context)), _haveLLVMObjs(false),
+        _addToFinalSection(false) {}
 
   virtual ~Resolver() {}
 
@@ -62,9 +63,7 @@ public:
   /// @brief do work of merging and resolving and return list
   bool resolve();
 
-  MutableFile& resultFile() {
-    return _result;
-  }
+  std::unique_ptr<MutableFile> resultFile() { return std::move(_result); }
 
 private:
 
@@ -117,7 +116,7 @@ private:
   std::set<const Atom *>        _deadStripRoots;
   std::vector<const Atom *>     _atomsWithUnresolvedReferences;
   llvm::DenseSet<const Atom *>  _liveAtoms;
-  MergedFile                    _result;
+  std::unique_ptr<MergedFile> _result;
   bool                          _haveLLVMObjs;
   bool _addToFinalSection;
 };

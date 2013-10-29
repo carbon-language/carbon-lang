@@ -16,6 +16,8 @@
 
 #include "lld/Core/Instrumentation.h"
 #include "lld/Passes/LayoutPass.h"
+#include "lld/Passes/RoundTripNativePass.h"
+#include "lld/Passes/RoundTripYAMLPass.h"
 #include "lld/ReaderWriter/ReaderLinkerScript.h"
 
 #include "llvm/ADT/Triple.h"
@@ -52,10 +54,14 @@ bool ELFLinkingContext::isLittleEndian() const {
   return true;
 }
 
-void ELFLinkingContext::addPasses(PassManager &pm) const {
+void ELFLinkingContext::addPasses(PassManager &pm) {
   if (_runLayoutPass)
     pm.add(std::unique_ptr<Pass>(new LayoutPass()));
   pm.add(std::unique_ptr<Pass>(new elf::ArrayOrderPass()));
+#ifndef NDEBUG
+  pm.add(std::unique_ptr<Pass>(new RoundTripYAMLPass(*this)));
+  pm.add(std::unique_ptr<Pass>(new RoundTripNativePass(*this)));
+#endif
 }
 
 uint16_t ELFLinkingContext::getOutputMachine() const {

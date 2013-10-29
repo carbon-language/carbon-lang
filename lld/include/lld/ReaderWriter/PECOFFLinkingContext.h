@@ -65,7 +65,7 @@ public:
   virtual Writer &writer() const;
   virtual bool validateImpl(raw_ostream &diagnostics);
 
-  virtual void addPasses(PassManager &pm) const;
+  virtual void addPasses(PassManager &pm);
 
   virtual bool
   createImplicitFiles(std::vector<std::unique_ptr<File> > &result) const;

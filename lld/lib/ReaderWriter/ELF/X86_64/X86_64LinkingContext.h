@@ -33,7 +33,7 @@ public:
       : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
                                       new X86_64TargetHandler(*this))) {}
 
-  virtual void addPasses(PassManager &) const;
+  virtual void addPasses(PassManager &);
 
   virtual uint64_t getBaseAddress() const {
     if (_baseAddress == 0)

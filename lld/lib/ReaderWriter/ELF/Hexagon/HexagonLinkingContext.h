@@ -29,7 +29,7 @@ public:
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
-  virtual void addPasses(PassManager &) const;
+  virtual void addPasses(PassManager &);
 
   virtual bool isDynamicRelocation(const DefinedAtom &,
                                    const Reference &r) const {

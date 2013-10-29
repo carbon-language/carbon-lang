@@ -130,7 +130,7 @@ public:
     return static_cast<lld::elf::TargetHandler<ELFT> &>(*_targetHandler.get());
   }
 
-  virtual void addPasses(PassManager &pm) const;
+  virtual void addPasses(PassManager &pm);
 
   void setTriple(llvm::Triple trip) { _triple = trip; }
   void setNoInhibitExec(bool v) { _noInhibitExec = v; }

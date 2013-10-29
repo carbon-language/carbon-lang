@@ -62,11 +62,29 @@ public:
     return make_range(_definedAtoms._atoms);
   }
 
-private:
+protected:
   atom_collection_vector<DefinedAtom> _definedAtoms;
   atom_collection_vector<UndefinedAtom> _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
+};
+
+class FileToMutable : public SimpleFile {
+public:
+  explicit FileToMutable(const LinkingContext &context, File &file)
+      : SimpleFile(context, file.path()), _file(file) {
+    for (auto definedAtom : _file.defined())
+      _definedAtoms._atoms.push_back(std::move(definedAtom));
+    for (auto undefAtom : _file.undefined())
+      _undefinedAtoms._atoms.push_back(std::move(undefAtom));
+    for (auto shlibAtom : _file.sharedLibrary())
+      _sharedLibraryAtoms._atoms.push_back(std::move(shlibAtom));
+    for (auto absAtom : _file.absolute())
+      _absoluteAtoms._atoms.push_back(std::move(absAtom));
+  }
+
+private:
+  const File &_file;
 };
 
 class SimpleReference : public Reference {

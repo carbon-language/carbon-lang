@@ -90,8 +90,7 @@ private:
 
 } // end anon namespace
 
-
-void elf::X86_64LinkingContext::addPasses(PassManager &pm) const {
+void elf::X86_64LinkingContext::addPasses(PassManager &pm) {
   auto pass = createX86_64RelocationPass(*this);
   if (pass)
     pm.add(std::move(pass));
