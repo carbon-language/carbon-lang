@@ -119,7 +119,7 @@ def _SLASH_Fa : CLJoined<"Fa">,
   MetaVarName<"<file or directory>">;
 def _SLASH_fallback : CLCompileFlag<"fallback">,
   HelpText<"Fall back to cl.exe if clang-cl fails to compile">;
-def _SLASH_FI : CLJoined<"FI">,
+def _SLASH_FI : CLJoinedOrSeparate<"FI">,
   HelpText<"Include file before parsing">, Alias<include_>;
 def _SLASH_Fe : CLJoined<"Fe">,
   HelpText<"Set output executable file or directory (ends in / or \\)">,
