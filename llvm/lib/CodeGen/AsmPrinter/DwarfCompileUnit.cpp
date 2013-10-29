@@ -246,6 +246,16 @@ void CompileUnit::addDIEEntry(DIE *Die, dwarf::Attribute Attribute, DIE *Entry) 
   Die->addValue(Attribute, dwarf::DW_FORM_ref4, createDIEEntry(Entry));
 }
 
+/// Create a DIE with the given Tag, add the DIE to its parent, and
+/// call insertDIE if MD is not null.
+DIE *CompileUnit::createAndAddDIE(unsigned Tag, DIE &Parent, const MDNode *MD) {
+  DIE *Die = new DIE(Tag);
+  Parent.addChild(Die);
+  if (MD)
+    insertDIE(MD, Die);
+  return Die;
+}
+
 /// addBlock - Add block data.
 ///
 void CompileUnit::addBlock(DIE *Die, dwarf::Attribute Attribute,
@@ -1116,15 +1126,13 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     for (unsigned i = 1, N = Elements.getNumElements(); i < N; ++i) {
       DIDescriptor Ty = Elements.getElement(i);
       if (Ty.isUnspecifiedParameter()) {
-        DIE *Arg = new DIE(dwarf::DW_TAG_unspecified_parameters);
-        Buffer.addChild(Arg);
+        createAndAddDIE(dwarf::DW_TAG_unspecified_parameters, Buffer);
         isPrototyped = false;
       } else {
-        DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
+        DIE *Arg = createAndAddDIE(dwarf::DW_TAG_formal_parameter, Buffer);
         addType(Arg, DIType(Ty));
         if (DIType(Ty).isArtificial())
           addFlag(Arg, dwarf::DW_AT_artificial);
-        Buffer.addChild(Arg);
       }
     }
     // Add prototype flag if we're dealing with a C language and the
@@ -1160,10 +1168,9 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       } else if (Element.isDerivedType()) {
         DIDerivedType DDTy(Element);
         if (DDTy.getTag() == dwarf::DW_TAG_friend) {
-          ElemDie = new DIE(dwarf::DW_TAG_friend);
+          ElemDie = createAndAddDIE(dwarf::DW_TAG_friend, Buffer);
           addType(ElemDie, resolve(DDTy.getTypeDerivedFrom()),
                   dwarf::DW_AT_friend);
-          Buffer.addChild(ElemDie);
         } else if (DDTy.isStaticMember()) {
           getOrCreateStaticMemberDIE(DDTy);
         } else {
@@ -1171,7 +1178,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         }
       } else if (Element.isObjCProperty()) {
         DIObjCProperty Property(Element);
-        ElemDie = new DIE(Property.getTag());
+        ElemDie = createAndAddDIE(Property.getTag(), Buffer);
         StringRef PropertyName = Property.getObjCPropertyName();
         addString(ElemDie, dwarf::DW_AT_APPLE_property_name, PropertyName);
         addType(ElemDie, Property.getType());
@@ -1204,7 +1211,6 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
           Entry = createDIEEntry(ElemDie);
           insertDIEEntry(Element, Entry);
         }
-        Buffer.addChild(ElemDie);
       } else
         continue;
     }
@@ -1272,8 +1278,8 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
 void
 CompileUnit::constructTemplateTypeParameterDIE(DIE &Buffer,
                                                DITemplateTypeParameter TP) {
-  DIE *ParamDIE = new DIE(dwarf::DW_TAG_template_type_parameter);
-  Buffer.addChild(ParamDIE);
+  DIE *ParamDIE =
+      createAndAddDIE(dwarf::DW_TAG_template_type_parameter, Buffer);
   // Add the type if it exists, it could be void and therefore no type.
   if (TP.getType())
     addType(ParamDIE, resolve(TP.getType()));
@@ -1286,8 +1292,7 @@ CompileUnit::constructTemplateTypeParameterDIE(DIE &Buffer,
 void
 CompileUnit::constructTemplateValueParameterDIE(DIE &Buffer,
                                                 DITemplateValueParameter VP) {
-  DIE *ParamDIE = new DIE(VP.getTag());
-  Buffer.addChild(ParamDIE);
+  DIE *ParamDIE = createAndAddDIE(VP.getTag(), Buffer);
 
   // Add the type if there is one, template template and template parameter
   // packs will not have a type.
@@ -1426,12 +1431,11 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
     // Add arguments. Do not add arguments for subprogram definition. They will
     // be handled while processing variables.
     for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
-      DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
+      DIE *Arg = createAndAddDIE(dwarf::DW_TAG_formal_parameter, *SPDie);
       DIType ATy = DIType(Args.getElement(i));
       addType(Arg, ATy);
       if (ATy.isArtificial())
         addFlag(Arg, dwarf::DW_AT_artificial);
-      SPDie->addChild(Arg);
     }
   }
 
@@ -1560,13 +1564,12 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     if (GVContext && GV.isDefinition() && !GVContext.isCompileUnit() &&
         !GVContext.isFile() && !DD->isSubprogramContext(GVContext)) {
       // Create specification DIE.
-      VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
+      VariableSpecDIE = createAndAddDIE(dwarf::DW_TAG_variable, *CUDie.get());
       addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification, VariableDIE);
       addBlock(VariableSpecDIE, dwarf::DW_AT_location, Block);
       // A static member's declaration is already flagged as such.
       if (!SDMDecl.Verify())
         addFlag(VariableDIE, dwarf::DW_AT_declaration);
-      addDie(VariableSpecDIE);
     } else {
       addBlock(VariableDIE, dwarf::DW_AT_location, Block);
     }
@@ -1619,7 +1622,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
 /// constructSubrangeDIE - Construct subrange DIE from DISubrange.
 void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR,
                                        DIE *IndexTy) {
-  DIE *DW_Subrange = new DIE(dwarf::DW_TAG_subrange_type);
+  DIE *DW_Subrange = createAndAddDIE(dwarf::DW_TAG_subrange_type, Buffer);
   addDIEEntry(DW_Subrange, dwarf::DW_AT_type, IndexTy);
 
   // The LowerBound value defines the lower bounds which is typically zero for
@@ -1639,8 +1642,6 @@ void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR,
     // FIXME: An unbounded array should reference the expression that defines
     // the array.
     addUInt(DW_Subrange, dwarf::DW_AT_upper_bound, None, LowerBound + Count - 1);
-
-  Buffer.addChild(DW_Subrange);
 }
 
 /// constructArrayTypeDIE - Construct array type DIE from DICompositeType.
@@ -1657,12 +1658,11 @@ void CompileUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType *CTy) {
   DIE *IdxTy = getIndexTyDie();
   if (!IdxTy) {
     // Construct an anonymous type for index type.
-    IdxTy = new DIE(dwarf::DW_TAG_base_type);
+    IdxTy = createAndAddDIE(dwarf::DW_TAG_base_type, *CUDie.get());
     addString(IdxTy, dwarf::DW_AT_name, "int");
     addUInt(IdxTy, dwarf::DW_AT_byte_size, None, sizeof(int32_t));
     addUInt(IdxTy, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
             dwarf::DW_ATE_signed);
-    addDie(IdxTy);
     setIndexTyDie(IdxTy);
   }
 
@@ -1677,8 +1677,7 @@ void CompileUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType *CTy) {
 
 /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
 void CompileUnit::constructEnumTypeDIE(DIE &Buffer, DIEnumerator ETy) {
-  DIE *Enumerator = new DIE(dwarf::DW_TAG_enumerator);
-  Buffer.addChild(Enumerator);
+  DIE *Enumerator = createAndAddDIE(dwarf::DW_TAG_enumerator, Buffer);
   StringRef Name = ETy.getName();
   addString(Enumerator, dwarf::DW_AT_name, Name);
   int64_t Value = ETy.getEnumValue();
@@ -1777,8 +1776,7 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV, bool isScopeAbstract) {
 
 /// constructMemberDIE - Construct member DIE from DIDerivedType.
 void CompileUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
-  DIE *MemberDie = new DIE(DT.getTag());
-  Buffer.addChild(MemberDie);
+  DIE *MemberDie = createAndAddDIE(DT.getTag(), Buffer);
   StringRef Name = DT.getName();
   if (!Name.empty())
     addString(MemberDie, dwarf::DW_AT_name, Name);
@@ -1875,9 +1873,7 @@ DIE *CompileUnit::getOrCreateStaticMemberDIE(const DIDerivedType DT) {
   if (StaticMemberDIE)
     return StaticMemberDIE;
 
-  StaticMemberDIE = new DIE(DT.getTag());
-  // Add to context owner.
-  ContextDIE->addChild(StaticMemberDIE);
+  StaticMemberDIE = createAndAddDIE(DT.getTag(), *ContextDIE, DT);
 
   DIType Ty = resolve(DT.getTypeDerivedFrom());
 
@@ -1904,6 +1900,5 @@ DIE *CompileUnit::getOrCreateStaticMemberDIE(const DIDerivedType DT) {
   if (const ConstantFP *CFP = dyn_cast_or_null<ConstantFP>(DT.getConstant()))
     addConstantFPValue(StaticMemberDIE, CFP);
 
-  insertDIE(DT, StaticMemberDIE);
   return StaticMemberDIE;
 }
