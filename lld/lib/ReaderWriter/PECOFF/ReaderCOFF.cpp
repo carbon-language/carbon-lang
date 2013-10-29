@@ -851,6 +851,7 @@ private:
     args.push_back(programPath.c_str());
     args.push_back("/machine:x86");
     args.push_back("/readonly");
+    args.push_back("/nologo");
     args.push_back(outFileArg.c_str());
     args.push_back(inFilePath->c_str());
     args.push_back(nullptr);

@@ -335,6 +335,7 @@ bool createManifestResourceFile(PECOFFLinkingContext &ctx,
   args.push_back(programPath.c_str());
   args.push_back("/fo");
   args.push_back(resFile.c_str());
+  args.push_back("/nologo");
   args.push_back(rcFileSmallString.c_str());
   args.push_back(nullptr);
 
