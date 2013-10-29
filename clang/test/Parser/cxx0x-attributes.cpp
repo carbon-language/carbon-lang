@@ -312,3 +312,10 @@ namespace GccConst {
   void f(const int *);
   void g() { f(f1()); f(f2()); }
 }
+
+namespace GccASan {
+  __attribute__((no_address_safety_analysis)) void f1();
+  __attribute__((no_sanitize_address)) void f2();
+  [[gnu::no_address_safety_analysis]] void f3();
+  [[gnu::no_sanitize_address]] void f4();
+}
