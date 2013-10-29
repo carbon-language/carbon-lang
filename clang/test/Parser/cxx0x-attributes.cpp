@@ -304,3 +304,11 @@ class A {
   A([[gnu::unused]] int a);
 };
 A::A([[gnu::unused]] int a) {}
+
+namespace GccConst {
+  // GCC's tokenizer treats const and __const as the same token.
+  [[gnu::const]] int *f1();
+  [[gnu::__const]] int *f2();
+  void f(const int *);
+  void g() { f(f1()); f(f2()); }
+}

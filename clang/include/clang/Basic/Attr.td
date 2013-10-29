@@ -314,7 +314,8 @@ def Common : InheritableAttr {
 }
 
 def Const : InheritableAttr {
-  let Spellings = [GNU<"const">, GNU<"__const">, CXX11<"gnu", "const">];
+  let Spellings = [GNU<"const">, GNU<"__const">,
+                   CXX11<"gnu", "const">, CXX11<"gnu", "__const">];
 }
 
 def Constructor : InheritableAttr {
