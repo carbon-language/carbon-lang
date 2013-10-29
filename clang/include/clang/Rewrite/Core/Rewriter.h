@@ -40,10 +40,6 @@ class RewriteBuffer {
   /// Deltas - Keep track of all the deltas in the source code due to insertions
   /// and deletions.
   DeltaTree Deltas;
-
-  /// Buffer - This is the actual buffer itself.  Note that using a vector or
-  /// string is a horribly inefficient way to do this, we should use a rope
-  /// instead.
   typedef RewriteRope BufferTy;
   BufferTy Buffer;
 public:
