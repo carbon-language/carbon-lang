@@ -221,6 +221,8 @@ def HasNEON          : Predicate<"Subtarget->hasNEON()">,
                                  AssemblerPredicate<"FeatureNEON", "NEON">;
 def HasCrypto        : Predicate<"Subtarget->hasCrypto()">,
                                  AssemblerPredicate<"FeatureCrypto", "crypto">;
+def HasCRC           : Predicate<"Subtarget->hasCRC()">,
+                                 AssemblerPredicate<"FeatureCRC", "crc">;
 def HasFP16          : Predicate<"Subtarget->hasFP16()">,
                                  AssemblerPredicate<"FeatureFP16","half-float">;
 def HasDivide        : Predicate<"Subtarget->hasDivide()">,
@@ -4032,7 +4034,7 @@ class AI_crc32<bit C, bits<2> sz, string suffix, SDPatternOperator builtin>
   : AInoP<(outs GPRnopc:$Rd), (ins GPRnopc:$Rn, GPRnopc:$Rm), MiscFrm, NoItinerary,
                !strconcat("crc32", suffix), "\t$Rd, $Rn, $Rm",
                [(set GPRnopc:$Rd, (builtin GPRnopc:$Rn, GPRnopc:$Rm))]>,
-               Requires<[IsARM, HasV8]> {
+               Requires<[IsARM, HasV8, HasCRC]> {
   bits<4> Rd;
   bits<4> Rn;
   bits<4> Rm;
