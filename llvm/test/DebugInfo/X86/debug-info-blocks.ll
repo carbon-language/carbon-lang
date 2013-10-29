@@ -26,7 +26,7 @@
 ; 0x23 = DW_OP_uconst
 ; 0x91 = DW_OP_fbreg
 ; CHECK: DW_AT_location{{.*}}91 {{[0-9]+}} 06 23 {{[0-9]+}} )
-; CHECK: DW_TAG_structure_type
+
 ; CHECK: [[A:.*]]:   DW_TAG_structure_type
 ; CHECK-NEXT: DW_AT_APPLE_objc_complete_type
 ; CHECK-NEXT: DW_AT_name{{.*}}"A"

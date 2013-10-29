@@ -5,6 +5,7 @@
 ; CHECK: DW_TAG_pointer_type
 ; CHECK-NEXT: DW_AT_type
 ; CHECK-NOT: DW_AT_byte_size
+; CHECK: DW_TAG
 ; CHECK: .debug_info contents
 
 %struct.A = type { i32 }

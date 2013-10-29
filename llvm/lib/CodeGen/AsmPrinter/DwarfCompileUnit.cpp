@@ -826,34 +826,26 @@ DIE *CompileUnit::getOrCreateContextDIE(DIScope Context) {
     return getDIE(Context);
 }
 
-/// addToContextOwner - Add Die into the list of its context owner's children.
-void CompileUnit::addToContextOwner(DIE *Die, DIScope Context) {
-  assert(!Die->getParent());
-  if (DIE *ContextDIE = getOrCreateContextDIE(Context)) {
-    if (Die->getParent()) {
-      // While creating the context, if this is a type member, we will have
-      // added the child to the context already.
-      assert(Die->getParent() == ContextDIE);
-      return;
-    }
-    ContextDIE->addChild(Die);
-  } else
-    addDie(Die);
-}
-
 /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
 /// given DIType.
 DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
   DIType Ty(TyNode);
   if (!Ty.isType())
     return NULL;
+
+  // Construct the context before querying for the existence of the DIE in case
+  // such construction creates the DIE.
+  DIE *ContextDIE = getOrCreateContextDIE(resolve(Ty.getContext()));
+  if (!ContextDIE)
+    ContextDIE = CUDie.get();
+
   DIE *TyDIE = getDIE(Ty);
   if (TyDIE)
     return TyDIE;
 
   // Create new type.
-  TyDIE = new DIE(Ty.getTag());
-  insertDIE(Ty, TyDIE);
+  TyDIE = createAndAddDIE(Ty.getTag(), *ContextDIE, Ty);
+
   if (Ty.isBasicType())
     constructTypeDIE(*TyDIE, DIBasicType(Ty));
   else if (Ty.isCompositeType())
@@ -876,7 +868,6 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     addAccelType(Ty.getName(), std::make_pair(TyDIE, Flags));
   }
 
-  addToContextOwner(TyDIE, resolve(Ty.getContext()));
   return TyDIE;
 }
 

@@ -2,9 +2,9 @@
 
 ; RUN: llc -filetype=obj -O0 < %s > %t
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
-; CHECK: [[TYPE:.*]]:   DW_TAG_base_type
 ; CHECK: DW_TAG_ptr_to_member_type
-; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]       (cu + {{.*}} => {[[TYPE]]})
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]       (cu + {{.*}} => {[[TYPE:0x[0-9a-f]+]]})
+; CHECK: [[TYPE]]:   DW_TAG_base_type
 ; IR generated from clang -g with the following source:
 ; struct Foo {
 ;   int e;
