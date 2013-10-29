@@ -1,6 +1,6 @@
 @ New ARMv8 T32 encodings
 
-@ RUN: not llvm-mc -triple thumbv8 -show-encoding -mattr=+db < %s | FileCheck %s --check-prefix=CHECK-V8
+@ RUN: llvm-mc -triple thumbv8 -show-encoding < %s | FileCheck %s --check-prefix=CHECK-V8
 @ RUN: not llvm-mc -triple thumbv7 -show-encoding < %s 2>&1 | FileCheck %s --check-prefix=CHECK-V7
 
 @ HLT
@@ -42,7 +42,6 @@
         dmb oshld
         dmb nshld
         dmb ld
-        dmb #20
 
 @ CHECK-V8: dmb ishld @ encoding: [0xbf,0xf3,0x59,0x8f]
 @ CHECK-V8: dmb oshld @ encoding: [0xbf,0xf3,0x51,0x8f]
@@ -52,7 +51,6 @@
 @ CHECK-V7: error: invalid operand for instruction
 @ CHECK-V7: error: invalid operand for instruction
 @ CHECK-V7: error: invalid operand for instruction
-@ CHECK-V7: error: immediate value out of range
 
 @------------------------------------------------------------------------------
 @ DSB (v8 barriers)
@@ -69,6 +67,7 @@
 @ CHECK-V7: error: invalid operand for instruction
 @ CHECK-V7: error: invalid operand for instruction
 @ CHECK-V7: error: invalid operand for instruction
+@ CHECK-V7: error: invalid operand for instruction
 
 @------------------------------------------------------------------------------
 @ SEVL
@@ -82,3 +81,7 @@
 @ CHECK-V8: sevl.w @ encoding: [0xaf,0xf3,0x05,0x80]
 @ CHECK-V8: it ge @ encoding: [0xa8,0xbf]
 @ CHECK-V8: sevlge @ encoding: [0x50,0xbf]
+@ CHECK-V7: error: instruction requires: armv8
+@ CHECK-V7: error: instruction requires: armv8
+@ CHECK-V7: error:
+@ CHECK-V7: error: instruction requires: armv8
