@@ -66,13 +66,13 @@ ArrayRef<uint8_t> DWARFFormValue::getFixedFormSizes(uint8_t AddrSize,
                                                     uint16_t Version) {
   uint8_t RefAddrSize = getRefAddrSize(AddrSize, Version);
   if (AddrSize == 4 && RefAddrSize == 4)
-    return ArrayRef<uint8_t>(FixedFormSizes<4, 4>::sizes);
+    return makeArrayRef(FixedFormSizes<4, 4>::sizes);
   if (AddrSize == 4 && RefAddrSize == 8)
-    return ArrayRef<uint8_t>(FixedFormSizes<4, 8>::sizes);
+    return makeArrayRef(FixedFormSizes<4, 8>::sizes);
   if (AddrSize == 8 && RefAddrSize == 4)
-    return ArrayRef<uint8_t>(FixedFormSizes<8, 4>::sizes);
+    return makeArrayRef(FixedFormSizes<8, 4>::sizes);
   if (AddrSize == 8 && RefAddrSize == 8)
-    return ArrayRef<uint8_t>(FixedFormSizes<8, 8>::sizes);
+    return makeArrayRef(FixedFormSizes<8, 8>::sizes);
   return None;
 }
 
