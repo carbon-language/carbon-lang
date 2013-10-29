@@ -109,6 +109,7 @@ class ThreadRegistry {
   ThreadContextBase *FindThreadContextByOsIDLocked(uptr os_id);
 
   void SetThreadName(u32 tid, const char *name);
+  void SetThreadNameByUserId(uptr user_id, const char *name);
   void DetachThread(u32 tid);
   void JoinThread(u32 tid, void *arg);
   void FinishThread(u32 tid);

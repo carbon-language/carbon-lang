@@ -23,6 +23,7 @@
 //   COMMON_INTERCEPTOR_ON_EXIT
 //   COMMON_INTERCEPTOR_MUTEX_LOCK
 //   COMMON_INTERCEPTOR_MUTEX_UNLOCK
+//   COMMON_INTERCEPTOR_SET_PTHREAD_NAME
 //===----------------------------------------------------------------------===//
 #include "interception/interception.h"
 #include "sanitizer_platform_interceptors.h"
@@ -34,19 +35,19 @@
 #endif // _WIN32
 
 #ifndef COMMON_INTERCEPTOR_INITIALIZE_RANGE
-#define COMMON_INTERCEPTOR_INITIALIZE_RANGE(ctx, p, size)
+#define COMMON_INTERCEPTOR_INITIALIZE_RANGE(ctx, p, size) {}
 #endif
 
 #ifndef COMMON_INTERCEPTOR_FD_ACCESS
-#define COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd)
+#define COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd) {}
 #endif
 
 #ifndef COMMON_INTERCEPTOR_MUTEX_LOCK
-#define COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m)
+#define COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m) {}
 #endif
 
 #ifndef COMMON_INTERCEPTOR_MUTEX_UNLOCK
-#define COMMON_INTERCEPTOR_MUTEX_UNLOCK(ctx, m)
+#define COMMON_INTERCEPTOR_MUTEX_UNLOCK(ctx, m) {}
 #endif
 
 #if SANITIZER_INTERCEPT_STRCMP
@@ -2655,6 +2656,18 @@ INTERCEPTOR(char *, tempnam, char *dir, char *pfx) {
 #define INIT_TEMPNAM
 #endif
 
+#if SANITIZER_INTERCEPT_PTHREAD_SETNAME_NP
+INTERCEPTOR(int, pthread_setname_np, uptr thread, const char *name) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_setname_np, thread, name);
+  COMMON_INTERCEPTOR_SET_PTHREAD_NAME(ctx, thread, name);
+  return REAL(pthread_setname_np)(thread, name);
+}
+#define INIT_PTHREAD_SETNAME_NP INTERCEPT_FUNCTION(pthread_setname_np);
+#else
+#define INIT_PTHREAD_SETNAME_NP
+#endif
+
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
@@ -2757,4 +2770,5 @@ INTERCEPTOR(char *, tempnam, char *dir, char *pfx) {
   INIT_TMPNAM;                             \
   INIT_TMPNAM_R;                           \
   INIT_TEMPNAM;                            \
+  INIT_PTHREAD_SETNAME_NP;                 \
 /**/

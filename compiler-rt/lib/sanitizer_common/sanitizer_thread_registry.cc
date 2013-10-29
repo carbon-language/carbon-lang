@@ -200,6 +200,18 @@ void ThreadRegistry::SetThreadName(u32 tid, const char *name) {
   tctx->SetName(name);
 }
 
+void ThreadRegistry::SetThreadNameByUserId(uptr user_id, const char *name) {
+  BlockingMutexLock l(&mtx_);
+  for (u32 tid = 0; tid < n_contexts_; tid++) {
+    ThreadContextBase *tctx = threads_[tid];
+    if (tctx != 0 && tctx->user_id == user_id &&
+        tctx->status != ThreadStatusInvalid) {
+      tctx->SetName(name);
+      return;
+    }
+  }
+}
+
 void ThreadRegistry::DetachThread(u32 tid) {
   BlockingMutexLock l(&mtx_);
   CHECK_LT(tid, n_contexts_);

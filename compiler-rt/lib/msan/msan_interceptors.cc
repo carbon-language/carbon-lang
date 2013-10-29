@@ -1224,6 +1224,9 @@ extern "C" int *__errno_location(void);
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) \
   do {                                                \
   } while (false)  // FIXME
+#define COMMON_INTERCEPTOR_SET_PTHREAD_NAME(ctx, thread, name) \
+  do {                                                         \
+  } while (false)  // FIXME
 #define COMMON_INTERCEPTOR_BLOCK_REAL(name) REAL(name)
 #define COMMON_INTERCEPTOR_ON_EXIT(ctx) OnExit()
 #include "sanitizer_common/sanitizer_common_interceptors.inc"

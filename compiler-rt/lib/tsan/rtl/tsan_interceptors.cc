@@ -1837,38 +1837,54 @@ struct TsanInterceptorContext {
 #define COMMON_INTERCEPTOR_UNPOISON_PARAM(ctx, count) \
   do {                                                \
   } while (false)
+
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size)                    \
   MemoryAccessRange(((TsanInterceptorContext *)ctx)->thr,                 \
                     ((TsanInterceptorContext *)ctx)->pc, (uptr)ptr, size, \
                     true)
+
 #define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size)                       \
   MemoryAccessRange(((TsanInterceptorContext *) ctx)->thr,                  \
                     ((TsanInterceptorContext *) ctx)->pc, (uptr) ptr, size, \
                     false)
+
 #define COMMON_INTERCEPTOR_ENTER(ctx, func, ...)      \
   SCOPED_TSAN_INTERCEPTOR(func, __VA_ARGS__);         \
   TsanInterceptorContext _ctx = {thr, caller_pc, pc}; \
   ctx = (void *)&_ctx;                                \
   (void) ctx;
+
 #define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) \
   FdAcquire(((TsanInterceptorContext *) ctx)->thr, pc, fd)
+
 #define COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd) \
   FdRelease(((TsanInterceptorContext *) ctx)->thr, pc, fd)
+
 #define COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd) \
   FdAccess(((TsanInterceptorContext *) ctx)->thr, pc, fd)
+
 #define COMMON_INTERCEPTOR_FD_SOCKET_ACCEPT(ctx, fd, newfd) \
   FdSocketAccept(((TsanInterceptorContext *) ctx)->thr, pc, fd, newfd)
+
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) \
   ThreadSetName(((TsanInterceptorContext *) ctx)->thr, name)
+
+#define COMMON_INTERCEPTOR_SET_PTHREAD_NAME(ctx, thread, name) \
+  CTX()->thread_registry->SetThreadNameByUserId(thread, name)
+
 #define COMMON_INTERCEPTOR_BLOCK_REAL(name) BLOCK_REAL(name)
+
 #define COMMON_INTERCEPTOR_ON_EXIT(ctx) \
   OnExit(((TsanInterceptorContext *) ctx)->thr)
+
 #define COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m) \
   MutexLock(((TsanInterceptorContext *)ctx)->thr, \
             ((TsanInterceptorContext *)ctx)->pc, (uptr)m)
+
 #define COMMON_INTERCEPTOR_MUTEX_UNLOCK(ctx, m) \
   MutexUnlock(((TsanInterceptorContext *)ctx)->thr, \
             ((TsanInterceptorContext *)ctx)->pc, (uptr)m)
+
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 #define TSAN_SYSCALL() \

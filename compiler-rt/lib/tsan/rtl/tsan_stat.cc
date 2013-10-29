@@ -182,6 +182,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_pthread_barrier_wait]     = "  pthread_barrier_wait            ";
   name[StatInt_pthread_once]             = "  pthread_once                    ";
   name[StatInt_pthread_getschedparam]    = "  pthread_getschedparam           ";
+  name[StatInt_pthread_setname_np]       = "  pthread_setname_np              ";
   name[StatInt_sem_init]                 = "  sem_init                        ";
   name[StatInt_sem_destroy]              = "  sem_destroy                     ";
   name[StatInt_sem_wait]                 = "  sem_wait                        ";
