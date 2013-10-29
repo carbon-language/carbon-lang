@@ -55,6 +55,7 @@
 
 // RUN: %clang -target armv8-linux-gnueabihf -mfpu=fp-armv8 %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-FP-ARMV8 %s
+// CHECK-FP-ARMV8-NOT: "-target-feature" "+neon"
 // CHECK-FP-ARMV8: "-target-feature" "+fp-armv8"
 // CHECK-FP-ARMV8: "-target-feature" "-neon"
 // CHECK-FP-ARMV8: "-target-feature" "-crypto"

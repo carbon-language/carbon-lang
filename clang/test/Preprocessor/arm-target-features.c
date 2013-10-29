@@ -27,6 +27,9 @@
 // CHECK-V8-BAREHF-NEON-FP: __ARM_NEON__ 1
 // CHECK-V8-BAREHF-NEON-FP: __VFP_FP__ 1
 
+// RUN: %clang -target armv8a -mnocrc -x c -E -dM %s | FileCheck --check-prefix=CHECK-V8-NOCRC %s
+// CHECK-V8-NOCRC-NOT: __ARM_FEATURE_CRC32 1
+
 // Check that -mhwdiv works properly for armv8/thumbv8 (enabled by default).
 
 // RUN: %clang -target armv8 -x c -E -dM %s -o - | FileCheck --check-prefix=ARMV8 %s

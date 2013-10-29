@@ -773,6 +773,15 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   // implementation, although the same isn't true of VFP or VFP3.
   if (FloatABI == "soft")
     Features.push_back("-neon");
+
+  // En/disable crc
+  if (Arg *A = Args.getLastArg(options::OPT_mcrc,
+                               options::OPT_mnocrc)) {
+    if (A->getOption().matches(options::OPT_mcrc))
+      Features.push_back("+crc");
+    else
+      Features.push_back("-crc");
+  }
 }
 
 void Clang::AddARMTargetArgs(const ArgList &Args,

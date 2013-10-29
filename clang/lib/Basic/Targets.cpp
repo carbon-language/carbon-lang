@@ -3633,6 +3633,8 @@ class ARMTargetInfo : public TargetInfo {
   unsigned SoftFloat : 1;
   unsigned SoftFloatABI : 1;
 
+  unsigned CRC : 1;
+
   static const Builtin::Info BuiltinInfo[];
 
   static bool shouldUseInlineAtomic(const llvm::Triple &T) {
@@ -3784,6 +3786,7 @@ public:
       Features["neon"] = true;
       Features["hwdiv"] = true;
       Features["hwdiv-arm"] = true;
+      Features["crc"] = true;
     } else if (CPU == "cortex-r5" || CPU == "cortex-m3" ||
                CPU == "cortex-m4" ||
                // Enable the hwdiv extension for all v8a AArch32 cores by
@@ -3798,6 +3801,7 @@ public:
   virtual bool handleTargetFeatures(std::vector<std::string> &Features,
                                     DiagnosticsEngine &Diags) {
     FPU = 0;
+    CRC = 0;
     SoftFloat = SoftFloatABI = false;
     HWDiv = 0;
     for (unsigned i = 0, e = Features.size(); i != e; ++i) {
@@ -3819,6 +3823,8 @@ public:
         HWDiv |= HWDivThumb;
       else if (Features[i] == "+hwdiv-arm")
         HWDiv |= HWDivARM;
+      else if (Features[i] == "+crc")
+        CRC = 1;
     }
 
     if (!(FPU & NeonFPU) && FPMath == FP_Neon) {
@@ -3970,7 +3976,7 @@ public:
     if ((FPU & NeonFPU) && !SoftFloat && CPUArchVer >= 7)
       Builder.defineMacro("__ARM_NEON__");
 
-    if (CPUArchVer == 8)
+    if (CRC)
       Builder.defineMacro("__ARM_FEATURE_CRC32");
 
     if (CPUArchVer >= 6 && CPUArch != "6M") {

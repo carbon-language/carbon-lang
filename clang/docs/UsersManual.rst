@@ -1057,6 +1057,15 @@ are listed below.
    hardware division instructions. This only applies to the ARM
    architecture.
 
+.. option:: -m[no-]crc
+
+   Enable or disable CRC instructions.
+
+   This option is used to indicate whether CRC instructions are to
+   be generated. This only applies to the ARM architecture.
+
+   CRC instructions are enabled by default on ARMv8.
+
 
 Controlling Size of Debug Information
 -------------------------------------
