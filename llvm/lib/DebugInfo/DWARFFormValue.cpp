@@ -22,7 +22,9 @@ using namespace dwarf;
 
 namespace {
 template <uint8_t AddrSize, uint8_t RefAddrSize> struct FixedFormSizes {
-  static const uint8_t sizes[];
+  // FIXME: do we need a template here?  Will a stack-allocated struct with
+  // an initializer in getFixedFormSizes() work just fine?
+  static const uint8_t sizes[27];
 };
 }
 
