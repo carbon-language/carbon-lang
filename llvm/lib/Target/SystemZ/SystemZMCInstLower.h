@@ -23,13 +23,11 @@ class Mangler;
 class SystemZAsmPrinter;
 
 class LLVM_LIBRARY_VISIBILITY SystemZMCInstLower {
-  Mangler *Mang;
   MCContext &Ctx;
   SystemZAsmPrinter &AsmPrinter;
 
 public:
-  SystemZMCInstLower(Mangler *mang, MCContext &ctx,
-                     SystemZAsmPrinter &asmPrinter);
+  SystemZMCInstLower(MCContext &ctx, SystemZAsmPrinter &asmPrinter);
 
   // Lower MachineInstr MI to MCInst OutMI.
   void lower(const MachineInstr *MI, MCInst &OutMI) const;

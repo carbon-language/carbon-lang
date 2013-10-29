@@ -57,7 +57,7 @@ static MCInst lowerRIEfLow(const MachineInstr *MI, unsigned Opcode) {
 }
 
 void SystemZAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  SystemZMCInstLower Lower(Mang, MF->getContext(), *this);
+  SystemZMCInstLower Lower(MF->getContext(), *this);
   MCInst LoweredMI;
   switch (MI->getOpcode()) {
   case SystemZ::Return:
@@ -178,7 +178,7 @@ bool SystemZAsmPrinter::PrintAsmOperand(const MachineInstr *MI,
       return true;
     OS << -int64_t(MI->getOperand(OpNo).getImm());
   } else {
-    SystemZMCInstLower Lower(Mang, MF->getContext(), *this);
+    SystemZMCInstLower Lower(MF->getContext(), *this);
     MCOperand MO(Lower.lowerOperand(MI->getOperand(OpNo)));
     SystemZInstPrinter::printOperand(MO, OS);
   }

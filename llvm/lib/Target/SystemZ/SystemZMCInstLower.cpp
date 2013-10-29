@@ -26,9 +26,9 @@ static MCSymbolRefExpr::VariantKind getVariantKind(unsigned Flags) {
   llvm_unreachable("Unrecognised MO_ACCESS_MODEL");
 }
 
-SystemZMCInstLower::SystemZMCInstLower(Mangler *mang, MCContext &ctx,
+SystemZMCInstLower::SystemZMCInstLower(MCContext &ctx,
                                        SystemZAsmPrinter &asmprinter)
-  : Mang(mang), Ctx(ctx), AsmPrinter(asmprinter) {}
+  : Ctx(ctx), AsmPrinter(asmprinter) {}
 
 const MCExpr *
 SystemZMCInstLower::getExpr(const MachineOperand &MO,
@@ -42,7 +42,7 @@ SystemZMCInstLower::getExpr(const MachineOperand &MO,
     break;
 
   case MachineOperand::MO_GlobalAddress:
-    Symbol = Mang->getSymbol(MO.getGlobal());
+    Symbol = AsmPrinter.Mang->getSymbol(MO.getGlobal());
     break;
 
   case MachineOperand::MO_ExternalSymbol:
