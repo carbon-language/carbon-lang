@@ -1262,8 +1262,8 @@ void LLVMSetAlignment(LLVMValueRef V, unsigned Bytes) {
     LI->setAlignment(Bytes);
   else if (StoreInst *SI = dyn_cast<StoreInst>(P))
     SI->setAlignment(Bytes);
-
-  llvm_unreachable("only GlobalValue, LoadInst and StoreInst have alignment");
+  else
+    llvm_unreachable("only GlobalValue, LoadInst and StoreInst have alignment");
 }
 
 /*--.. Operations on global variables ......................................--*/
