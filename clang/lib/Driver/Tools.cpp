@@ -1757,6 +1757,7 @@ static void addSanitizerRTLinkFlagsLinux(
   CmdArgs.push_back("-lpthread");
   CmdArgs.push_back("-lrt");
   CmdArgs.push_back("-ldl");
+  CmdArgs.push_back("-lm");
 
   // If possible, use a dynamic symbols file to export the symbols from the
   // runtime library. If we can't do so, use -export-dynamic instead to export
