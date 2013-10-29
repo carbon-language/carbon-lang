@@ -1958,6 +1958,45 @@ AArch64TargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
   return LowerF128ToCall(Op, DAG, LC);
 }
 
+SDValue AArch64TargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const{
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  MFI->setReturnAddressIsTaken(true);
+
+  EVT VT = Op.getValueType();
+  SDLoc dl(Op);
+  unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+  if (Depth) {
+    SDValue FrameAddr = LowerFRAMEADDR(Op, DAG);
+    SDValue Offset = DAG.getConstant(8, MVT::i64);
+    return DAG.getLoad(VT, dl, DAG.getEntryNode(),
+                       DAG.getNode(ISD::ADD, dl, VT, FrameAddr, Offset),
+                       MachinePointerInfo(), false, false, false, 0);
+  }
+
+  // Return X30, which contains the return address. Mark it an implicit live-in.
+  unsigned Reg = MF.addLiveIn(AArch64::X30, getRegClassFor(MVT::i64));
+  return DAG.getCopyFromReg(DAG.getEntryNode(), dl, Reg, MVT::i64);
+}
+
+
+SDValue AArch64TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG)
+                                              const {
+  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  MFI->setFrameAddressIsTaken(true);
+
+  EVT VT = Op.getValueType();
+  SDLoc dl(Op);
+  unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+  unsigned FrameReg = AArch64::X29;
+  SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, FrameReg, VT);
+  while (Depth--)
+    FrameAddr = DAG.getLoad(VT, dl, DAG.getEntryNode(), FrameAddr,
+                            MachinePointerInfo(),
+                            false, false, false, 0);
+  return FrameAddr;
+}
+
 SDValue
 AArch64TargetLowering::LowerGlobalAddressELFLarge(SDValue Op,
                                                   SelectionDAG &DAG) const {
@@ -2703,6 +2742,8 @@ AArch64TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::UINT_TO_FP: return LowerINT_TO_FP(Op, DAG, false);
   case ISD::FP_ROUND: return LowerFP_ROUND(Op, DAG);
   case ISD::FP_EXTEND: return LowerFP_EXTEND(Op, DAG);
+  case ISD::RETURNADDR:    return LowerRETURNADDR(Op, DAG);
+  case ISD::FRAMEADDR:     return LowerFRAMEADDR(Op, DAG);
 
   case ISD::BlockAddress: return LowerBlockAddress(Op, DAG);
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
