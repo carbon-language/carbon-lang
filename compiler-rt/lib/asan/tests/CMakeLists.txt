@@ -93,7 +93,7 @@ endif()
 
 set(ASAN_UNITTEST_NOINST_LINKFLAGS
   ${ASAN_UNITTEST_COMMON_LINKFLAGS}
-  -ldl)
+  -ldl -lm)
 if(NOT ANDROID)
   list(APPEND ASAN_UNITTEST_NOINST_LINKFLAGS -lpthread)
 endif()
