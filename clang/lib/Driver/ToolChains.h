@@ -83,7 +83,7 @@ protected:
     std::string GCCInstallPath;
     std::string GCCBiarchSuffix;
     std::string GCCParentLibPath;
-    std::string GCCMultiLibSuffix;
+    std::string GCCMIPSABIDirSuffix;
 
     GCCVersion Version;
 
@@ -111,8 +111,19 @@ protected:
     /// \brief Get the detected GCC parent lib path.
     StringRef getParentLibPath() const { return GCCParentLibPath; }
 
-    /// \brief Get the detected GCC lib path suffix.
-    StringRef getMultiLibSuffix() const { return GCCMultiLibSuffix; }
+    /// \brief Get the detected GCC MIPS ABI directory suffix.
+    ///
+    /// This is used as a suffix both to the install directory of GCC and as
+    /// a suffix to its parent lib path in order to select a MIPS ABI-specific
+    /// subdirectory.
+    ///
+    /// This will always be empty for any non-MIPS target.
+    ///
+    // FIXME: This probably shouldn't exist at all, and should be factored
+    // into the multiarch and/or biarch support. Please don't add more uses of
+    // this interface, it is meant as a legacy crutch for the MIPS driver
+    // logic.
+    StringRef getMIPSABIDirSuffix() const { return GCCMIPSABIDirSuffix; }
 
     /// \brief Get the detected GCC version string.
     const GCCVersion &getVersion() const { return Version; }
@@ -135,10 +146,9 @@ protected:
                                 StringRef CandidateTriple,
                                 bool NeedsBiarchSuffix = false);
 
-    void findMultiLibSuffix(std::string &Suffix,
-                            llvm::Triple::ArchType TargetArch,
-                            StringRef Path,
-                            const llvm::opt::ArgList &Args);
+    void findMIPSABIDirSuffix(std::string &Suffix,
+                              llvm::Triple::ArchType TargetArch, StringRef Path,
+                              const llvm::opt::ArgList &Args);
   };
 
   GCCInstallationDetector GCCInstallation;
@@ -590,7 +600,8 @@ protected:
 private:
   static bool addLibStdCXXIncludePaths(Twine Base, Twine Suffix,
                                        Twine TargetArchDir,
-                                       Twine MultiLibSuffix,
+                                       Twine BiarchSuffix,
+                                       Twine MIPSABIDirSuffix,
                                        const llvm::opt::ArgList &DriverArgs,
                                        llvm::opt::ArgStringList &CC1Args);
   static bool addLibStdCXXIncludePaths(Twine Base, Twine TargetArchDir,
