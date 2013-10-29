@@ -94,7 +94,7 @@ AllocatorCache *GetAllocatorCache(AsanThreadLocalMallocStorage *ms) {
 static Allocator allocator;
 
 static const uptr kMaxAllowedMallocSize =
-  FIRST_32_SECOND_64(3UL << 30, 8UL << 30);
+  FIRST_32_SECOND_64(3UL << 30, 64UL << 30);
 
 static const uptr kMaxThreadLocalQuarantine =
   FIRST_32_SECOND_64(1 << 18, 1 << 20);
