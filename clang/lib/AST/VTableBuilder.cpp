@@ -2730,28 +2730,6 @@ VFTableBuilder::ComputeThisOffset(const CXXMethodDecl *MD,
   return Ret;
 }
 
-static const CXXMethodDecl*
-FindDirectlyOverriddenMethodInBases(const CXXMethodDecl *MD,
-                                    BasesSetVectorTy &Bases) {
-  // We can't just iterate over the overridden methods and return the first one
-  // which has its parent in Bases, e.g. this doesn't work when we have
-  // multiple subobjects of the same type that have its virtual function
-  // overridden.
-  for (int I = Bases.size(), E = 0; I != E; --I) {
-    const CXXRecordDecl *CurrentBase = Bases[I - 1];
-
-    for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
-         E = MD->end_overridden_methods(); I != E; ++I) {
-      const CXXMethodDecl *OverriddenMD = *I;
-
-      if (OverriddenMD->getParent() == CurrentBase)
-        return OverriddenMD;
-    }
-  }
-
-  return 0;
-}
-
 static void GroupNewVirtualOverloads(
     const CXXRecordDecl *RD,
     SmallVector<const CXXMethodDecl *, 10> &VirtualMethods) {
@@ -2843,7 +2821,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
     // Check if this virtual member function overrides
     // a method in one of the visited bases.
     if (const CXXMethodDecl *OverriddenMD =
-            FindDirectlyOverriddenMethodInBases(MD, VisitedBases)) {
+            FindNearestOverriddenMethod(MD, VisitedBases)) {
       MethodInfoMapTy::iterator OverriddenMDIterator =
           MethodInfoMap.find(OverriddenMD);
 
@@ -2887,7 +2865,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
           // FIXME: this is O(N^2), can be O(N).
           const CXXMethodDecl *SubOverride = OverriddenMD;
           while ((SubOverride =
-              FindDirectlyOverriddenMethodInBases(SubOverride, VisitedBases))) {
+                      FindNearestOverriddenMethod(SubOverride, VisitedBases))) {
             MethodInfoMapTy::iterator SubOverrideIterator =
                 MethodInfoMap.find(SubOverride);
             if (SubOverrideIterator == MethodInfoMap.end())

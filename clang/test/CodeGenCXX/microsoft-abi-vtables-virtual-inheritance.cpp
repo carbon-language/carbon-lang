@@ -9,7 +9,8 @@
 // RUN: FileCheck --check-prefix=TEST5 %s < %t
 // RUN: FileCheck --check-prefix=TEST6 %s < %t
 // RUN: FileCheck --check-prefix=TEST7 %s < %t
-// RUN: FileCheck --check-prefix=TEST8 %s < %t
+// RUN: FileCheck --check-prefix=TEST8-X %s < %t
+// RUN: FileCheck --check-prefix=TEST8-Z %s < %t
 // RUN: FileCheck --check-prefix=TEST9-Y %s < %t
 // RUN: FileCheck --check-prefix=TEST9-Z %s < %t
 // RUN: FileCheck --check-prefix=TEST9-W %s < %t
@@ -236,16 +237,16 @@ namespace Test8 {
 
 // This is a typical diamond inheritance with a shared 'A' vbase.
 struct X : D, C {
-  // TEST8: VFTable for 'D' in 'Test8::X' (1 entries).
-  // TEST8-NEXT: 0 | void D::h()
+  // TEST8-X: VFTable for 'D' in 'Test8::X' (1 entries).
+  // TEST8-X-NEXT: 0 | void D::h()
 
-  // TEST8: VFTable for 'A' in 'D' in 'Test8::X' (2 entries).
-  // TEST8-NEXT: 0 | void Test8::X::f()
-  // TEST8-NEXT: 1 | void A::z()
+  // TEST8-X: VFTable for 'A' in 'D' in 'Test8::X' (2 entries).
+  // TEST8-X-NEXT: 0 | void Test8::X::f()
+  // TEST8-X-NEXT: 1 | void A::z()
 
-  // TEST8: VFTable indices for 'Test8::X' (1 entries).
-  // TEST8-NEXT: via vbtable index 1, vfptr at offset 0
-  // TEST8-NEXT: 0 | void Test8::X::f()
+  // TEST8-X: VFTable indices for 'Test8::X' (1 entries).
+  // TEST8-X-NEXT: via vbtable index 1, vfptr at offset 0
+  // TEST8-X-NEXT: 0 | void Test8::X::f()
 
   // MANGLING-DAG: @"\01??_7X@Test8@@6BA@@@"
   // MANGLING-DAG: @"\01??_7X@Test8@@6BD@@@"
@@ -254,6 +255,21 @@ struct X : D, C {
 };
 
 X x;
+
+// Another diamond inheritance which led to AST crashes.
+struct Y : virtual A {};
+
+class Z : Y, C {
+  // TEST8-Z: VFTable for 'A' in 'Test8::Y' in 'Test8::Z' (2 entries).
+  // TEST8-Z-NEXT: 0 | void Test8::Z::f()
+  // TEST8-Z-NEXT: 1 | void A::z()
+
+  // TEST8-Z: VFTable indices for 'Test8::Z' (1 entries).
+  // TEST8-Z-NEXT: via vbtable index 1, vfptr at offset 0
+  // TEST8-Z-NEXT: 0 | void Test8::Z::f()
+  virtual void f();
+};
+Z z;
 }
 
 namespace Test9 {
