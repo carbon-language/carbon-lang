@@ -36,7 +36,7 @@ SBTypeNameSpecifier::SBTypeNameSpecifier (SBType type) :
 m_opaque_sp()
 {
     if (type.IsValid())
-        m_opaque_sp = TypeNameSpecifierImplSP(new TypeNameSpecifierImpl(type.m_opaque_sp->GetClangASTType()));
+        m_opaque_sp = TypeNameSpecifierImplSP(new TypeNameSpecifierImpl(type.m_opaque_sp->GetClangASTType(true)));
 }
 
 SBTypeNameSpecifier::SBTypeNameSpecifier (const lldb::SBTypeNameSpecifier &rhs) :

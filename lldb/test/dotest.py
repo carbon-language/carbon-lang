@@ -97,7 +97,8 @@ validCategories = {
 'objc':'Tests related to the Objective-C programming language support',
 'pyapi':'Tests related to the Python API',
 'basic_process': 'Basic process execution sniff tests.',
-'cmdline' : 'Tests related to the LLDB command-line interface'
+'cmdline' : 'Tests related to the LLDB command-line interface',
+'dyntype' : 'Tests related to dynamic type support'
 }
 
 # The test suite.

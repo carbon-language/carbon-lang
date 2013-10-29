@@ -385,6 +385,34 @@ ClangASTType::IsFunctionType (bool *is_variadic_ptr) const
     return false;
 }
 
+size_t
+ClangASTType::GetNumberOfFunctionArguments () const
+{
+    if (IsValid())
+    {
+        QualType qual_type (GetCanonicalQualType());
+        const FunctionProtoType* func = dyn_cast<FunctionProtoType>(qual_type.getTypePtr());
+        if (func)
+            return func->getNumArgs();
+    }
+    return 0;
+}
+
+ClangASTType
+ClangASTType::GetFunctionArgumentAtIndex (const size_t index)
+{
+    if (IsValid())
+    {
+        QualType qual_type (GetCanonicalQualType());
+        const FunctionProtoType* func = dyn_cast<FunctionProtoType>(qual_type.getTypePtr());
+        if (func)
+        {
+            if (index < func->getNumArgs())
+                return ClangASTType(m_ast, func->getArgType(index).getAsOpaquePtr());
+        }
+    }
+    return ClangASTType();
+}
 
 bool
 ClangASTType::IsFunctionPointerType () const

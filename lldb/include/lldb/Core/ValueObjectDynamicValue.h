@@ -93,6 +93,9 @@ public:
     virtual bool
     SetData (DataExtractor &data, Error &error);
     
+    virtual TypeImpl
+    GetTypeImpl ();
+    
 protected:
     virtual bool
     UpdateValue ();
@@ -116,6 +119,7 @@ protected:
     TypeAndOrName m_dynamic_type_info; // We can have a type_sp or just a name
     lldb::ValueObjectSP m_owning_valobj_sp;
     lldb::DynamicValueType m_use_dynamic;
+    TypeImpl m_type_impl;
 
 private:
     friend class ValueObject;

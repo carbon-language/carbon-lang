@@ -393,6 +393,17 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
                     objc_class_sp->SetType (type_sp);
                     class_type_or_name.SetTypeSP (type_sp);
                 }
+                else
+                {
+                    // try to go for a ClangASTType at least
+                    TypeVendor* vendor = GetTypeVendor();
+                    if (vendor)
+                    {
+                        std::vector<ClangASTType> types;
+                        if (vendor->FindTypes(class_name, false, 1, types) && types.size() && types.at(0).IsValid())
+                            class_type_or_name.SetClangASTType(types.at(0));
+                    }
+                }
             }
         }
     }    

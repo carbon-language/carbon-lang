@@ -359,6 +359,12 @@ ValueObject::GetClangType ()
     return MaybeCalculateCompleteType();
 }
 
+TypeImpl
+ValueObject::GetTypeImpl ()
+{
+    return TypeImpl(GetClangType());
+}
+
 DataExtractor &
 ValueObject::GetDataExtractor ()
 {

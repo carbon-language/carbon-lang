@@ -798,12 +798,12 @@ Type::GetTypeScopeAndBasename (const char* &name_cstr,
 
 
 
-TypeAndOrName::TypeAndOrName () : m_type_sp(), m_type_name()
+TypeAndOrName::TypeAndOrName () : m_type_pair(), m_type_name()
 {
 
 }
 
-TypeAndOrName::TypeAndOrName (TypeSP &in_type_sp) : m_type_sp(in_type_sp)
+TypeAndOrName::TypeAndOrName (TypeSP &in_type_sp) : m_type_pair(in_type_sp)
 {
     if (in_type_sp)
         m_type_name = in_type_sp->GetName();
@@ -813,7 +813,7 @@ TypeAndOrName::TypeAndOrName (const char *in_type_str) : m_type_name(in_type_str
 {
 }
 
-TypeAndOrName::TypeAndOrName (const TypeAndOrName &rhs) : m_type_sp (rhs.m_type_sp), m_type_name (rhs.m_type_name)
+TypeAndOrName::TypeAndOrName (const TypeAndOrName &rhs) : m_type_pair (rhs.m_type_pair), m_type_name (rhs.m_type_name)
 {
 
 }
@@ -828,7 +828,7 @@ TypeAndOrName::operator= (const TypeAndOrName &rhs)
     if (this != &rhs)
     {
         m_type_name = rhs.m_type_name;
-        m_type_sp = rhs.m_type_sp;
+        m_type_pair = rhs.m_type_pair;
     }
     return *this;
 }
@@ -836,7 +836,7 @@ TypeAndOrName::operator= (const TypeAndOrName &rhs)
 bool
 TypeAndOrName::operator==(const TypeAndOrName &other) const
 {
-    if (m_type_sp != other.m_type_sp)
+    if (m_type_pair != other.m_type_pair)
         return false;
     if (m_type_name != other.m_type_name)
         return false;
@@ -846,7 +846,7 @@ TypeAndOrName::operator==(const TypeAndOrName &other) const
 bool
 TypeAndOrName::operator!=(const TypeAndOrName &other) const
 {
-    if (m_type_sp != other.m_type_sp)
+    if (m_type_pair != other.m_type_pair)
         return true;
     if (m_type_name != other.m_type_name)
         return true;
@@ -856,8 +856,8 @@ TypeAndOrName::operator!=(const TypeAndOrName &other) const
 ConstString
 TypeAndOrName::GetName () const
 {    
-    if (m_type_sp)
-        return m_type_sp->GetName();
+    if (m_type_pair)
+        return m_type_pair.GetName();
     else
         return m_type_name;
 }
@@ -877,15 +877,23 @@ TypeAndOrName::SetName (const char *type_name_cstr)
 void
 TypeAndOrName::SetTypeSP (lldb::TypeSP type_sp)
 {
-    m_type_sp = type_sp;
-    if (type_sp)
-        m_type_name = type_sp->GetName();
+    m_type_pair.SetType(type_sp);
+    if (m_type_pair)
+        m_type_name = m_type_pair.GetName();
+}
+
+void
+TypeAndOrName::SetClangASTType (ClangASTType clang_type)
+{
+    m_type_pair.SetType(clang_type);
+    if (m_type_pair)
+        m_type_name = m_type_pair.GetName();
 }
 
 bool
-TypeAndOrName::IsEmpty()
+TypeAndOrName::IsEmpty()  const
 {
-    if (m_type_name || m_type_sp)
+    if ((bool)m_type_name || (bool)m_type_pair)
         return false;
     else
         return true;
@@ -895,96 +903,247 @@ void
 TypeAndOrName::Clear ()
 {
     m_type_name.Clear();
-    m_type_sp.reset();
+    m_type_pair.Clear();
 }
 
 bool
-TypeAndOrName::HasName ()
+TypeAndOrName::HasName () const
 {
     return (bool)m_type_name;
 }
 
 bool
-TypeAndOrName::HasTypeSP ()
+TypeAndOrName::HasTypeSP () const
 {
-    return m_type_sp.get() != NULL;
+    return m_type_pair.GetTypeSP().get() != nullptr;
 }
 
-TypeImpl::TypeImpl(const lldb_private::ClangASTType& clang_ast_type) :
-    m_clang_ast_type(clang_ast_type),
-    m_type_sp()
+bool
+TypeAndOrName::HasClangASTType () const
+{
+    return m_type_pair.GetClangASTType().IsValid();
+}
+
+
+TypeImpl::TypeImpl() :
+m_static_type(),
+m_dynamic_type()
 {
 }
 
-TypeImpl::TypeImpl(const lldb::TypeSP& type) :
-    m_clang_ast_type(type->GetClangForwardType()),
-    m_type_sp(type)
+TypeImpl::TypeImpl(const TypeImpl& rhs) :
+m_static_type(rhs.m_static_type),
+m_dynamic_type(rhs.m_dynamic_type)
+{
+}
+
+TypeImpl::TypeImpl (lldb::TypeSP type_sp) :
+m_static_type(type_sp),
+m_dynamic_type()
+{
+}
+
+TypeImpl::TypeImpl (ClangASTType clang_type) :
+m_static_type(clang_type),
+m_dynamic_type()
+{
+}
+
+TypeImpl::TypeImpl (lldb::TypeSP type_sp, ClangASTType dynamic) :
+m_static_type (type_sp),
+m_dynamic_type(dynamic)
+{
+}
+
+TypeImpl::TypeImpl (ClangASTType clang_type, ClangASTType dynamic) :
+m_static_type (clang_type),
+m_dynamic_type(dynamic)
+{
+}
+
+TypeImpl::TypeImpl (TypePair pair, ClangASTType dynamic) :
+m_static_type (pair),
+m_dynamic_type(dynamic)
 {
 }
 
 void
-TypeImpl::SetType (const lldb::TypeSP &type_sp)
+TypeImpl::SetType (lldb::TypeSP type_sp)
 {
-    if (type_sp)
-    {
-        m_clang_ast_type = type_sp->GetClangForwardType();
-        m_type_sp = type_sp;
-    }
-    else
-    {
-        m_clang_ast_type.Clear();
-        m_type_sp.reset();
-    }
+    m_static_type.SetType(type_sp);
+}
+
+void
+TypeImpl::SetType (ClangASTType clang_type)
+{
+    m_static_type.SetType (clang_type);
+}
+
+void
+TypeImpl::SetType (lldb::TypeSP type_sp, ClangASTType dynamic)
+{
+    m_static_type.SetType (type_sp);
+    m_dynamic_type = dynamic;
+}
+
+void
+TypeImpl::SetType (ClangASTType clang_type, ClangASTType dynamic)
+{
+    m_static_type.SetType (clang_type);
+    m_dynamic_type = dynamic;
+}
+
+void
+TypeImpl::SetType (TypePair pair, ClangASTType dynamic)
+{
+    m_static_type = pair;
+    m_dynamic_type = dynamic;
 }
 
 TypeImpl&
 TypeImpl::operator = (const TypeImpl& rhs)
 {
-    if (*this != rhs)
+    if (rhs != *this)
     {
-        m_clang_ast_type = rhs.m_clang_ast_type;
-        m_type_sp = rhs.m_type_sp;
+        m_static_type = rhs.m_static_type;
+        m_dynamic_type = rhs.m_dynamic_type;
     }
     return *this;
 }
 
-clang::ASTContext*
-TypeImpl::GetASTContext()
+bool
+TypeImpl::operator == (const TypeImpl& rhs) const
 {
-    if (!IsValid())
-        return NULL;
-    
-    return m_clang_ast_type.GetASTContext();
-}
-
-lldb::clang_type_t
-TypeImpl::GetOpaqueQualType()
-{
-    if (!IsValid())
-        return NULL;
-    
-    return m_clang_ast_type.GetOpaqueQualType();
+    return m_static_type == rhs.m_static_type &&
+    m_dynamic_type == rhs.m_dynamic_type;
 }
 
 bool
-TypeImpl::GetDescription (lldb_private::Stream &strm, 
-                          lldb::DescriptionLevel description_level)
+TypeImpl::operator != (const TypeImpl& rhs) const
 {
-    if (m_clang_ast_type.IsValid())
-    {
-        m_clang_ast_type.DumpTypeDescription (&strm);
-    }
-    else
-    {
-        strm.PutCString ("No value");
-    }
-    return true;
+    return m_static_type != rhs.m_static_type ||
+    m_dynamic_type != rhs.m_dynamic_type;
+}
+
+bool
+TypeImpl::IsValid() const
+{
+    // just a name is not valid
+    return m_static_type.IsValid() || m_dynamic_type.IsValid();
+}
+
+TypeImpl::operator bool () const
+{
+    return IsValid();
+}
+
+void
+TypeImpl::Clear()
+{
+    m_static_type.Clear();
+    m_dynamic_type.Clear();
 }
 
 ConstString
-TypeImpl::GetName ()
+TypeImpl::GetName ()  const
 {
-    if (m_clang_ast_type.IsValid())
-        return m_clang_ast_type.GetConstTypeName();
-    return ConstString();
+    if (m_dynamic_type)
+        return m_dynamic_type.GetTypeName();
+    return m_static_type.GetName ();
+}
+
+TypeImpl
+TypeImpl::GetPointerType () const
+{
+    if (m_dynamic_type.IsValid())
+    {
+        return TypeImpl(m_static_type, m_dynamic_type.GetPointerType());
+    }
+    return TypeImpl(m_static_type.GetPointerType());
+}
+
+TypeImpl
+TypeImpl::GetPointeeType () const
+{
+    if (m_dynamic_type.IsValid())
+    {
+        return TypeImpl(m_static_type, m_dynamic_type.GetPointeeType());
+    }
+    return TypeImpl(m_static_type.GetPointeeType());
+}
+
+TypeImpl
+TypeImpl::GetReferenceType () const
+{
+    if (m_dynamic_type.IsValid())
+    {
+        return TypeImpl(m_static_type, m_dynamic_type.GetLValueReferenceType());
+    }
+    return TypeImpl(m_static_type.GetReferenceType());
+}
+
+TypeImpl
+TypeImpl::GetDereferencedType () const
+{
+    if (m_dynamic_type.IsValid())
+    {
+        return TypeImpl(m_static_type, m_dynamic_type.GetNonReferenceType());
+    }
+    return TypeImpl(m_static_type.GetDereferencedType());
+}
+
+TypeImpl
+TypeImpl::GetUnqualifiedType() const
+{
+    if (m_dynamic_type.IsValid())
+    {
+        return TypeImpl(m_static_type, m_dynamic_type.GetFullyUnqualifiedType());
+    }
+    return TypeImpl(m_static_type.GetUnqualifiedType());
+}
+
+TypeImpl
+TypeImpl::GetCanonicalType() const
+{
+    if (m_dynamic_type.IsValid())
+    {
+        return TypeImpl(m_static_type, m_dynamic_type.GetCanonicalType());
+    }
+    return TypeImpl(m_static_type.GetCanonicalType());
+}
+
+ClangASTType
+TypeImpl::GetClangASTType (bool prefer_dynamic)
+{
+    if (prefer_dynamic)
+    {
+        if (m_dynamic_type.IsValid())
+            return m_dynamic_type;
+    }
+    return m_static_type.GetClangASTType();
+}
+
+clang::ASTContext *
+TypeImpl::GetClangASTContext (bool prefer_dynamic)
+{
+    if (prefer_dynamic)
+    {
+        if (m_dynamic_type.IsValid())
+            return m_dynamic_type.GetASTContext();
+    }
+    return m_static_type.GetClangASTContext();
+}
+
+bool
+TypeImpl::GetDescription (lldb_private::Stream &strm,
+                lldb::DescriptionLevel description_level)
+{
+    if (m_dynamic_type.IsValid())
+    {
+        strm.Printf("Dynamic:\n");
+        m_dynamic_type.DumpTypeDescription(&strm);
+        strm.Printf("\nStatic:\n");
+    }
+    m_static_type.GetClangASTType().DumpTypeDescription(&strm);
+    return true;
 }

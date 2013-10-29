@@ -155,6 +155,12 @@ public:
     bool
     IsFunctionType (bool *is_variadic_ptr = NULL) const;
 
+    size_t
+    GetNumberOfFunctionArguments () const;
+    
+    ClangASTType
+    GetFunctionArgumentAtIndex (const size_t index);
+    
     bool
     IsVariadicFunctionType () const;
 

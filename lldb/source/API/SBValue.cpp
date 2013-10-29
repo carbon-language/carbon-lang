@@ -473,7 +473,7 @@ SBValue::GetType()
     TypeImplSP type_sp;
     if (value_sp)
     {
-        type_sp.reset (new TypeImpl(value_sp->GetClangType()));
+        type_sp.reset (new TypeImpl(value_sp->GetTypeImpl()));
         sb_type.SetSP(type_sp);
     }
     if (log)
@@ -671,7 +671,7 @@ SBValue::CreateChildAtOffset (const char *name, uint32_t offset, SBType type)
         TypeImplSP type_sp (type.GetSP());
         if (type.IsValid())
         {
-            sb_value.SetSP(value_sp->GetSyntheticChildAtOffset(offset, type_sp->GetClangASTType(), true),GetPreferDynamicValue(),GetPreferSyntheticValue(), name);
+            sb_value.SetSP(value_sp->GetSyntheticChildAtOffset(offset, type_sp->GetClangASTType(false), true),GetPreferDynamicValue(),GetPreferSyntheticValue(), name);
         }
     }
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -696,7 +696,7 @@ SBValue::Cast (SBType type)
     lldb::ValueObjectSP value_sp(GetSP(locker));
     TypeImplSP type_sp (type.GetSP());
     if (value_sp && type_sp)
-        sb_value.SetSP(value_sp->Cast(type_sp->GetClangASTType()),GetPreferDynamicValue(),GetPreferSyntheticValue());
+        sb_value.SetSP(value_sp->Cast(type_sp->GetClangASTType(false)),GetPreferDynamicValue(),GetPreferSyntheticValue());
     return sb_value;
 }
 
@@ -761,7 +761,7 @@ SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, SBType s
     lldb::TypeImplSP type_impl_sp (sb_type.GetSP());
     if (value_sp && type_impl_sp)
     {
-        ClangASTType pointer_ast_type(type_impl_sp->GetClangASTType().GetPointerType ());
+        ClangASTType pointer_ast_type(type_impl_sp->GetClangASTType(false).GetPointerType ());
         if (pointer_ast_type)
         {
             lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&address,sizeof(lldb::addr_t)));
@@ -808,7 +808,7 @@ SBValue::CreateValueFromData (const char* name, SBData data, SBType type)
         ExecutionContext exe_ctx (value_sp->GetExecutionContextRef());
         
         new_value_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
-                                                       type.m_opaque_sp->GetClangASTType(),
+                                                       type.m_opaque_sp->GetClangASTType(false),
                                                        ConstString(name),
                                                        *data.m_opaque_sp,
                                                        LLDB_INVALID_ADDRESS);

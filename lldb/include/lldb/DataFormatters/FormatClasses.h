@@ -60,7 +60,7 @@ public:
         if (type)
         {
             m_type.m_type_name.assign(type->GetName().GetCString());
-            m_type.m_typeimpl_sp = lldb::TypeImplSP(new TypeImpl(type));
+            m_type.m_type_pair.SetType(type);
         }
     }
 
@@ -71,7 +71,7 @@ public:
         if (type.IsValid())
         {
             m_type.m_type_name.assign(type.GetConstTypeName().GetCString());
-            m_type.m_typeimpl_sp = lldb::TypeImplSP(new TypeImpl(type));
+            m_type.m_type_pair.SetType(type);
         }
     }
     
@@ -86,16 +86,16 @@ public:
     lldb::TypeSP
     GetTypeSP ()
     {
-        if (m_type.m_typeimpl_sp && m_type.m_typeimpl_sp->IsValid())
-            return m_type.m_typeimpl_sp->GetTypeSP();
+        if (m_type.m_type_pair.IsValid())
+            return m_type.m_type_pair.GetTypeSP();
         return lldb::TypeSP();
     }
     
     ClangASTType
     GetClangASTType ()
     {
-        if (m_type.m_typeimpl_sp && m_type.m_typeimpl_sp->IsValid())
-            return m_type.m_typeimpl_sp->GetClangASTType();
+        if (m_type.m_type_pair.IsValid())
+            return m_type.m_type_pair.GetClangASTType();
         return ClangASTType();
     }
     
@@ -108,12 +108,11 @@ public:
 private:
     bool m_is_regex;
     // this works better than TypeAndOrName because the latter only wraps a TypeSP
-    // whereas TypeImplSP can also be backed by a ClangASTType which is more commonly
-    // used in LLDB. moreover, TypeImplSP is also what is currently backing SBType
+    // whereas TypePair can also be backed by a ClangASTType
     struct TypeOrName
     {
         std::string m_type_name;
-        lldb::TypeImplSP m_typeimpl_sp;
+        TypePair m_type_pair;
     };
     TypeOrName m_type;
     

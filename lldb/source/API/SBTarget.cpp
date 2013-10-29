@@ -1891,7 +1891,7 @@ SBTarget::CreateValueFromAddress (const char *name, SBAddress addr, SBType type)
     {
         lldb::addr_t address(addr.GetLoadAddress(*this));
         lldb::TypeImplSP type_impl_sp (type.GetSP());
-        ClangASTType pointer_ast_type(type_impl_sp->GetClangASTType().GetPointerType ());
+        ClangASTType pointer_ast_type(type_impl_sp->GetClangASTType(true).GetPointerType ());
         if (pointer_ast_type)
         {
             lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&address,sizeof(lldb::addr_t)));
