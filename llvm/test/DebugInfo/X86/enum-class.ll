@@ -28,12 +28,12 @@
 !21 = metadata !{i32 786484, i32 0, null, metadata !"c", metadata !"c", metadata !"", metadata !4, i32 6, metadata !12, i32 0, i32 1, i32* @c, null} ; [ DW_TAG_variable ]
 !22 = metadata !{metadata !"foo.cpp", metadata !"/Users/echristo/tmp"}
 
-; CHECK: DW_TAG_enumeration_type [3]
+; CHECK: DW_TAG_enumeration_type [{{.*}}]
 ; CHECK: DW_AT_type [DW_FORM_ref4]
 ; CHECK: DW_AT_enum_class [DW_FORM_flag_present] (true)
 ; CHECK: DW_AT_name [DW_FORM_strp]      ( .debug_str[{{.*}}] = "A")
 
-; CHECK: DW_TAG_enumeration_type [3] *
+; CHECK: DW_TAG_enumeration_type [{{.*}}] *
 ; CHECK: DW_AT_type [DW_FORM_ref4]
 ; CHECK: DW_AT_enum_class [DW_FORM_flag_present] (true)
 ; CHECK: DW_AT_name [DW_FORM_strp]          ( .debug_str[{{.*}}] = "B")

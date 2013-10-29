@@ -21,7 +21,7 @@
 
 ; Verify that we refer to 'yyyy' with a relocation.
 ; LINUX:      .long   .Linfo_string3          # DW_AT_name
-; LINUX-NEXT: .long   38                      # DW_AT_type
+; LINUX-NEXT: .long   {{[0-9]+}}              # DW_AT_type
 ; LINUX-NEXT:                                 # DW_AT_external
 ; LINUX-NEXT: .byte   1                       # DW_AT_decl_file
 ; LINUX-NEXT: .byte   1                       # DW_AT_decl_line
@@ -30,9 +30,9 @@
 ; LINUX-NEXT: .quad   yyyy
 
 ; Verify that we refer to 'yyyy' without a relocation.
-; DARWIN: Lset5 = Linfo_string3-Linfo_string          ## DW_AT_name
-; DARWIN-NEXT:        .long   Lset5
-; DARWIN-NEXT:        .long   38                      ## DW_AT_type
+; DARWIN: Lset[[ID:[0-9]+]] = Linfo_string3-Linfo_string ## DW_AT_name
+; DARWIN-NEXT:        .long   Lset[[ID]]
+; DARWIN-NEXT:        .long   {{[0-9]+}}              ## DW_AT_type
 ; DARWIN-NEXT:                                        ## DW_AT_external
 ; DARWIN-NEXT:        .byte   1                       ## DW_AT_decl_file
 ; DARWIN-NEXT:        .byte   1                       ## DW_AT_decl_line

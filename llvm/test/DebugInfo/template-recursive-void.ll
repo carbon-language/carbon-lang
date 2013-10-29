@@ -13,7 +13,7 @@
 ; class bar : public foo<void> { };
 ; bar filters;
 
-; CHECK: DW_TAG_template_type_parameter [10]
+; CHECK: DW_TAG_template_type_parameter [{{.*}}]
 ; CHECK-NEXT: DW_AT_name{{.*}}"T"
 ; CHECK-NOT: DW_AT_type
 ; CHECK: NULL

@@ -77,11 +77,11 @@
 ; CHECK: [[GLOB_NS_VAR_DECL:[0-9a-f]+]]: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name {{.*}} "global_namespace_variable"
 
-; CHECK: [[D:[0-9a-f]+]]: DW_TAG_structure_type
-; CHECK-NEXT: DW_AT_name {{.*}} "D"
-
 ; CHECK: [[D_VAR_DECL:[0-9a-f]+]]: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name {{.*}} "d"
+
+; CHECK: [[D:[0-9a-f]+]]: DW_TAG_structure_type
+; CHECK-NEXT: DW_AT_name {{.*}} "D"
 
 ; CHECK: [[GLOB_NS_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
 ; CHECK-NEXT: DW_AT_MIPS_linkage_name

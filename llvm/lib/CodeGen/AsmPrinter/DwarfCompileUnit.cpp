@@ -1327,11 +1327,19 @@ CompileUnit::constructTemplateValueParameterDIE(DIE &Buffer,
 
 /// getOrCreateNameSpace - Create a DIE for DINameSpace.
 DIE *CompileUnit::getOrCreateNameSpace(DINameSpace NS) {
+  // Construct the context before querying for the existence of the DIE in case
+  // such construction creates the DIE.
+  DIE *ContextDIE = getOrCreateContextDIE(NS.getContext());
+  if (!ContextDIE)
+    // If the context is null, DIE should belong to the CU we call construct
+    // function on.
+    ContextDIE = CUDie.get();
+
   DIE *NDie = getDIE(NS);
   if (NDie)
     return NDie;
-  NDie = new DIE(dwarf::DW_TAG_namespace);
-  insertDIE(NS, NDie);
+  NDie = createAndAddDIE(dwarf::DW_TAG_namespace, *ContextDIE, NS);
+
   if (!NS.getName().empty()) {
     addString(NDie, dwarf::DW_AT_name, NS.getName());
     addAccelNamespace(NS.getName(), NDie);
@@ -1339,7 +1347,6 @@ DIE *CompileUnit::getOrCreateNameSpace(DINameSpace NS) {
   } else
     addAccelNamespace("(anonymous namespace)", NDie);
   addSourceLine(NDie, NS);
-  addToContextOwner(NDie, NS.getContext());
   return NDie;
 }
 
@@ -1506,9 +1513,14 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
   // If this is not a static data member definition, create the variable
   // DIE and add the initial set of attributes to it.
   if (!VariableDIE) {
-    VariableDIE = new DIE(GV.getTag());
+    // Construct the context before querying for the existence of the DIE in
+    // case such construction creates the DIE.
+    DIE *ContextDIE = getOrCreateContextDIE(GVContext);
+    if (!ContextDIE)
+      ContextDIE = CUDie.get();
+
     // Add to map.
-    insertDIE(N, VariableDIE);
+    VariableDIE = createAndAddDIE(GV.getTag(), *ContextDIE, N);
 
     // Add name and type.
     addString(VariableDIE, dwarf::DW_AT_name, GV.getDisplayName());
@@ -1520,8 +1532,6 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
 
     // Add line number info.
     addSourceLine(VariableDIE, GV);
-    // Add to context owner.
-    addToContextOwner(VariableDIE, GVContext);
   }
 
   // Add location.

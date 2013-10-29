@@ -2,7 +2,7 @@
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
 ; Make sure that structures have a decl file and decl line attached.
-; CHECK: DW_TAG_structure_type [3]
+; CHECK: DW_TAG_structure_type
 ; CHECK: DW_AT_decl_file
 ; CHECK: DW_AT_decl_line
 ; CHECK: DW_TAG_member

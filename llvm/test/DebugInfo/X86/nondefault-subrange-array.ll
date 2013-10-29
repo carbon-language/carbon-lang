@@ -8,22 +8,23 @@
 ; Check that we can handle non-default array bounds. In this case, the array
 ; goes from [-3, 38].
 
-; CHECK:      0x0000002d:   DW_TAG_base_type [3]
-; CHECK-NEXT:                 DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000041] = "int")
+; CHECK: [[BASE:0x[0-9a-f]*]]: DW_TAG_base_type
+; CHECK: [[BASE2:0x[0-9a-f]*]]: DW_TAG_base_type
+; CHECK-NEXT:                 DW_AT_name [DW_FORM_strp]       ( .debug_str[0x{{[0-9a-f]*}}] = "int")
 ; CHECK-NEXT:                 DW_AT_byte_size [DW_FORM_data1] (0x04)
 ; CHECK-NEXT:                 DW_AT_encoding [DW_FORM_data1]  (0x05)
 
-; CHECK:      0x00000034:   DW_TAG_array_type [4] *
-; CHECK-NEXT:                 DW_AT_type [DW_FORM_ref4]    (cu + 0x0026 => {0x00000026})
+; CHECK: [[ARRAY:0x[0-9a-f]*]]: DW_TAG_array_type [{{.*}}] *
+; CHECK-NEXT:                 DW_AT_type [DW_FORM_ref4]    (cu + 0x{{[0-9a-f]*}} => {[[BASE]]})
 
-; CHECK:      0x00000039:     DW_TAG_subrange_type [5]
-; CHECK-NEXT:                   DW_AT_type [DW_FORM_ref4]  (cu + 0x002d => {0x0000002d})
+; CHECK: DW_TAG_subrange_type
+; CHECK-NEXT:                   DW_AT_type [DW_FORM_ref4]  (cu + 0x{{[0-9a-f]*}} => {[[BASE2]]})
 ; CHECK-NEXT:                   DW_AT_lower_bound [DW_FORM_data8]       (0xfffffffffffffffd)
 ; CHECK-NEXT:                   DW_AT_upper_bound [DW_FORM_data1]       (0x26)
 
-; CHECK:      0x00000055:     DW_TAG_member [8]
-; CHECK-NEXT:                   DW_AT_name [DW_FORM_strp]       ( .debug_str[0x0000003f] = "x")
-; CHECK-NEXT:                   DW_AT_type [DW_FORM_ref4]       (cu + 0x0034 => {0x00000034})
+; CHECK: DW_TAG_member
+; CHECK-NEXT:                   DW_AT_name [DW_FORM_strp]       ( .debug_str[0x{{[0-9a-f]*}}] = "x")
+; CHECK-NEXT:                   DW_AT_type [DW_FORM_ref4]       (cu + 0x{{[0-9a-f]*}} => {[[ARRAY]]})
 
 !llvm.dbg.cu = !{!0}
 

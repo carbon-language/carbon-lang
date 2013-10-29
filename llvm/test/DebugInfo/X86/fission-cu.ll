@@ -54,18 +54,18 @@
 ; CHECK-NOT: DW_AT_comp_dir
 ; CHECK: DW_AT_GNU_dwo_id        DW_FORM_data8
 
-; CHECK: [2] DW_TAG_base_type    DW_CHILDREN_no
-; CHECK: DW_AT_name      DW_FORM_GNU_str_index
-; CHECK: DW_AT_encoding  DW_FORM_data1
-; CHECK: DW_AT_byte_size DW_FORM_data1
-
-; CHECK: [3] DW_TAG_variable     DW_CHILDREN_no
+; CHECK: [2] DW_TAG_variable     DW_CHILDREN_no
 ; CHECK: DW_AT_name      DW_FORM_GNU_str_index
 ; CHECK: DW_AT_type      DW_FORM_ref4
 ; CHECK: DW_AT_external  DW_FORM_flag_present
 ; CHECK: DW_AT_decl_file DW_FORM_data1
 ; CHECK: DW_AT_decl_line DW_FORM_data1
 ; CHECK: DW_AT_location  DW_FORM_block1
+
+; CHECK: [3] DW_TAG_base_type    DW_CHILDREN_no
+; CHECK: DW_AT_name      DW_FORM_GNU_str_index
+; CHECK: DW_AT_encoding  DW_FORM_data1
+; CHECK: DW_AT_byte_size DW_FORM_data1
 
 ; Check that the rest of the compile units have information.
 ; CHECK: .debug_info.dwo contents:
@@ -77,15 +77,15 @@
 ; CHECK-NOT: DW_AT_stmt_list
 ; CHECK-NOT: DW_AT_comp_dir
 ; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8]  (0x0000000000000000)
-; CHECK: DW_TAG_base_type
-; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000003) string = "int")
 ; CHECK: DW_TAG_variable
 ; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000002) string = "a")
-; CHECK: DW_AT_type [DW_FORM_ref4]       (cu + 0x0018 => {0x00000018})
+; CHECK: DW_AT_type [DW_FORM_ref4]       (cu + 0x{{[0-9a-f]*}} => {[[TYPE:0x[0-9a-f]*]]})
 ; CHECK: DW_AT_external [DW_FORM_flag_present]   (true)
 ; CHECK: DW_AT_decl_file [DW_FORM_data1] (0x01)
 ; CHECK: DW_AT_decl_line [DW_FORM_data1] (0x01)
 ; CHECK: DW_AT_location [DW_FORM_block1] (<0x02> fb 00 )
+; CHECK: [[TYPE]]: DW_TAG_base_type
+; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000003) string = "int")
 
 
 ; CHECK: .debug_str.dwo contents:
