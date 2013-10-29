@@ -639,17 +639,6 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD, OpenFlags Flags,
 
 error_code openFileForRead(const Twine &Name, int &ResultFD);
 
-/// @brief Canonicalize path.
-///
-/// Sets result to the file system's idea of what path is. The result is always
-/// absolute and has the same capitalization as the file system.
-///
-/// @param path Input path.
-/// @param result Set to the canonicalized version of \a path.
-/// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code canonicalize(const Twine &path, SmallVectorImpl<char> &result);
-
 /// @brief Are \a path's first bytes \a magic?
 ///
 /// @param path Input path.
