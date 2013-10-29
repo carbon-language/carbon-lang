@@ -221,9 +221,12 @@ struct FormatStyle {
   /// are not also definitions after the type.
   bool IndentFunctionDeclarationAfterType;
 
-  /// \brief If \c true, spaces will be inserted after every '(' and before
-  /// every ')'.
+  /// \brief If \c true, spaces will be inserted after '(' and before ')'.
   bool SpacesInParentheses;
+
+  /// \brief If \c true, spaces will be inserted after '<' and before '>' in
+  /// template argument lists
+  bool SpacesInAngles;
 
   /// \brief If \c false, spaces may be inserted into '()'.
   bool SpaceInEmptyParentheses;
@@ -284,6 +287,7 @@ struct FormatStyle {
            Cpp11BracedListStyle == R.Cpp11BracedListStyle &&
            Standard == R.Standard && TabWidth == R.TabWidth &&
            UseTab == R.UseTab && SpacesInParentheses == R.SpacesInParentheses &&
+           SpacesInAngles == R.SpacesInAngles &&
            SpaceInEmptyParentheses == R.SpaceInEmptyParentheses &&
            SpacesInCStyleCastParentheses == R.SpacesInCStyleCastParentheses &&
            SpaceAfterControlStatementKeyword ==

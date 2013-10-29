@@ -158,6 +158,7 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
     IO.mapOptional("IndentFunctionDeclarationAfterType",
                    Style.IndentFunctionDeclarationAfterType);
     IO.mapOptional("SpacesInParentheses", Style.SpacesInParentheses);
+    IO.mapOptional("SpacesInAngles", Style.SpacesInAngles);
     IO.mapOptional("SpaceInEmptyParentheses", Style.SpaceInEmptyParentheses);
     IO.mapOptional("SpacesInCStyleCastParentheses",
                    Style.SpacesInCStyleCastParentheses);
@@ -218,6 +219,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.SpaceAfterControlStatementKeyword = true;
   LLVMStyle.SpaceBeforeAssignmentOperators = true;
   LLVMStyle.ContinuationIndentWidth = 4;
+  LLVMStyle.SpacesInAngles = false;
 
   setDefaultPenalties(LLVMStyle);
   LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 60;
@@ -263,6 +265,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.SpaceAfterControlStatementKeyword = true;
   GoogleStyle.SpaceBeforeAssignmentOperators = true;
   GoogleStyle.ContinuationIndentWidth = 4;
+  GoogleStyle.SpacesInAngles = false;
 
   setDefaultPenalties(GoogleStyle);
   GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 200;
