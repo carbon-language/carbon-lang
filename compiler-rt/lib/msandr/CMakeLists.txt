@@ -4,11 +4,6 @@ if(DynamoRIO_DIR AND DrMemoryFramework_DIR)
   find_package(DynamoRIO)
   find_package(DrMemoryFramework)
 
-  option(MSANDR_NATIVE_EXEC "Building msandr client for running in DynamoRIO hybrid mode, which allows some module running natively" OFF)
-  if (MSANDR_NATIVE_EXEC)
-    add_definitions(-DMSANDR_NATIVE_EXEC)
-  endif (MSANDR_NATIVE_EXEC)
-
   set(arch "x86_64")
   add_library(clang_rt.msandr-${arch} SHARED msandr.cc)
   configure_DynamoRIO_client(clang_rt.msandr-${arch})
