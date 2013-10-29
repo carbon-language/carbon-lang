@@ -47,7 +47,7 @@ getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
                         MCStreamer &Streamer) const {
   assert(Encoding == DW_EH_PE_absptr && "Can handle absptr encoding only");
 
-  return MCSymbolRefExpr::Create(Mang->getSymbol(GV),
+  return MCSymbolRefExpr::Create(getSymbol(*Mang, GV),
                                  MCSymbolRefExpr::VK_ARM_TARGET2,
                                  getContext());
 }

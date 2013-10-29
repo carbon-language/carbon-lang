@@ -25,7 +25,7 @@ getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
   // On Darwin/X86-64, we can reference dwarf symbols with foo@GOTPCREL+4, which
   // is an indirect pc-relative reference.
   if (Encoding & (DW_EH_PE_indirect | DW_EH_PE_pcrel)) {
-    const MCSymbol *Sym = Mang->getSymbol(GV);
+    const MCSymbol *Sym = getSymbol(*Mang, GV);
     const MCExpr *Res =
       MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOTPCREL, getContext());
     const MCExpr *Four = MCConstantExpr::Create(4, getContext());
@@ -39,7 +39,7 @@ getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
 MCSymbol *X86_64MachoTargetObjectFile::
 getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
                         MachineModuleInfo *MMI) const {
-  return Mang->getSymbol(GV);
+  return getSymbol(*Mang, GV);
 }
 
 void

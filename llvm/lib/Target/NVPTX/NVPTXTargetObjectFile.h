@@ -68,6 +68,7 @@ public:
   }
 
   virtual void Initialize(MCContext &ctx, const TargetMachine &TM) {
+    TargetLoweringObjectFile::Initialize(ctx, TM);
     TextSection = new NVPTXSection(MCSection::SV_ELF, SectionKind::getText());
     DataSection =
         new NVPTXSection(MCSection::SV_ELF, SectionKind::getDataRel());

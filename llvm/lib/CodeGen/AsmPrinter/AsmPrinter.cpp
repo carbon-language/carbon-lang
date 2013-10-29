@@ -164,7 +164,7 @@ bool AsmPrinter::doInitialization(Module &M) {
 
   OutStreamer.InitStreamer();
 
-  Mang = new Mangler(OutContext, &TM);
+  Mang = new Mangler(&TM);
 
   // Allow the target to emit any magic that it wants at the start of the file.
   EmitStartOfAsmFile(M);
@@ -264,7 +264,7 @@ void AsmPrinter::EmitLinkage(unsigned L, MCSymbol *GVSym) const {
 }
 
 MCSymbol *AsmPrinter::getSymbol(const GlobalValue *GV) const {
-  return Mang->getSymbol(GV);
+  return getObjFileLowering().getSymbol(*Mang, GV);
 }
 
 /// EmitGlobalVariable - Emit the specified global variable to the .s file.

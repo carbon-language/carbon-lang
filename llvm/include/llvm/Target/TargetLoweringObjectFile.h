@@ -117,6 +117,10 @@ public:
                           MachineModuleInfo *MMI, unsigned Encoding,
                           MCStreamer &Streamer) const;
 
+  /// Return the MCSymbol for the specified global value.  This symbol is the
+  /// main label that is the address of the global
+  MCSymbol *getSymbol(Mangler &M, const GlobalValue *GV) const;
+
   // getCFIPersonalitySymbol - The symbol that gets passed to .cfi_personality.
   virtual MCSymbol *
   getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,

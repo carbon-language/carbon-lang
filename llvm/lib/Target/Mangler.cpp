@@ -111,7 +111,7 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   StringRef Name = GVName.toStringRef(TmpData);
   assert(!Name.empty() && "getNameWithPrefix requires non-empty name");
   
-  const MCAsmInfo *MAI = Context.getAsmInfo();
+  const MCAsmInfo *MAI = TM->getMCAsmInfo();
   
   // If the global name is not led with \1, add the appropriate prefixes.
   if (Name[0] == '\1') {
@@ -212,7 +212,7 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   
   // If we are supposed to add a microsoft-style suffix for stdcall/fastcall,
   // add it.
-  if (Context.getAsmInfo()->hasMicrosoftFastStdCallMangling()) {
+  if (TM->getMCAsmInfo()->hasMicrosoftFastStdCallMangling()) {
     if (const Function *F = dyn_cast<Function>(GV)) {
       CallingConv::ID CC = F->getCallingConv();
     
@@ -236,13 +236,3 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
     }
   }
 }
-
-/// getSymbol - Return the MCSymbol for the specified global value.  This
-/// symbol is the main label that is the address of the global.
-MCSymbol *Mangler::getSymbol(const GlobalValue *GV) {
-  SmallString<60> NameStr;
-  getNameWithPrefix(NameStr, GV, false);
-  return Context.GetOrCreateSymbol(NameStr.str());
-}
-
-
