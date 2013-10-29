@@ -22,6 +22,7 @@
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchersInternal.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/type_traits.h"
 
@@ -62,7 +63,7 @@ class VariantMatcher {
   class Payload : public RefCountedBaseVPTR {
   public:
     virtual ~Payload();
-    virtual bool getSingleMatcher(const DynTypedMatcher *&Out) const = 0;
+    virtual llvm::Optional<DynTypedMatcher> getSingleMatcher() const = 0;
     virtual std::string getTypeAsString() const = 0;
     virtual void makeTypedMatcher(MatcherOps &Ops) const = 0;
   };
@@ -77,8 +78,7 @@ public:
   /// \brief Clones the provided matchers.
   ///
   /// They should be the result of a polymorphic matcher.
-  static VariantMatcher
-  PolymorphicMatcher(ArrayRef<const DynTypedMatcher *> Matchers);
+  static VariantMatcher PolymorphicMatcher(ArrayRef<DynTypedMatcher> Matchers);
 
   /// \brief Creates a 'variadic' operator matcher.
   ///
@@ -95,10 +95,10 @@ public:
 
   /// \brief Return a single matcher, if there is no ambiguity.
   ///
-  /// \returns \c true, and set Out to the matcher, if there is only one
-  /// matcher. \c false, if the underlying matcher is a polymorphic matcher with
-  /// more than one representation.
-  bool getSingleMatcher(const DynTypedMatcher *&Out) const;
+  /// \returns the matcher, if there is only one matcher. An empty Optional, if
+  /// the underlying matcher is a polymorphic matcher with more than one
+  /// representation.
+  llvm::Optional<DynTypedMatcher> getSingleMatcher() const;
 
   /// \brief Determines if the contained matcher can be converted to
   ///   \c Matcher<T>.
@@ -146,11 +146,11 @@ private:
     typedef ast_matchers::internal::Matcher<T> MatcherT;
 
     virtual bool canConstructFrom(const DynTypedMatcher &Matcher) const {
-      return MatcherT::canConstructFrom(Matcher);
+      return Matcher.canConvertTo<T>();
     }
 
     virtual void constructFrom(const DynTypedMatcher& Matcher) {
-      Out.reset(new MatcherT(MatcherT::constructFrom(Matcher)));
+      Out.reset(new MatcherT(Matcher.convertTo<T>()));
     }
 
     virtual void constructVariadicOperator(
@@ -173,7 +173,9 @@ private:
             new ast_matchers::internal::VariadicOperatorMatcherInterface<T>(
                 Func, ArrayRef<const MatcherT *>(InnerArgs, NumArgs))));
       }
-      std::for_each(InnerArgs, InnerArgs + NumArgs, llvm::deleter<MatcherT>);
+      for (size_t i = 0; i != NumArgs; ++i) {
+        delete InnerArgs[i];
+      }
       delete[] InnerArgs;
     }
 

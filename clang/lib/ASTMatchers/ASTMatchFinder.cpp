@@ -295,25 +295,26 @@ private:
 class MatchASTVisitor : public RecursiveASTVisitor<MatchASTVisitor>,
                         public ASTMatchFinder {
 public:
-  MatchASTVisitor(std::vector<std::pair<const internal::DynTypedMatcher*,
-                                        MatchCallback*> > *MatcherCallbackPairs)
-     : MatcherCallbackPairs(MatcherCallbackPairs),
-       ActiveASTContext(NULL) {
-  }
+  MatchASTVisitor(
+      std::vector<std::pair<internal::DynTypedMatcher, MatchCallback *> > *
+          MatcherCallbackPairs)
+      : MatcherCallbackPairs(MatcherCallbackPairs), ActiveASTContext(NULL) {}
 
   void onStartOfTranslationUnit() {
-    for (std::vector<std::pair<const internal::DynTypedMatcher*,
-                               MatchCallback*> >::const_iterator
-             I = MatcherCallbackPairs->begin(), E = MatcherCallbackPairs->end();
+    for (std::vector<std::pair<internal::DynTypedMatcher,
+                               MatchCallback *> >::const_iterator
+             I = MatcherCallbackPairs->begin(),
+             E = MatcherCallbackPairs->end();
          I != E; ++I) {
       I->second->onStartOfTranslationUnit();
     }
   }
 
   void onEndOfTranslationUnit() {
-    for (std::vector<std::pair<const internal::DynTypedMatcher*,
-                               MatchCallback*> >::const_iterator
-             I = MatcherCallbackPairs->begin(), E = MatcherCallbackPairs->end();
+    for (std::vector<std::pair<internal::DynTypedMatcher,
+                               MatchCallback *> >::const_iterator
+             I = MatcherCallbackPairs->begin(),
+             E = MatcherCallbackPairs->end();
          I != E; ++I) {
       I->second->onEndOfTranslationUnit();
     }
@@ -450,12 +451,13 @@ public:
   // Matches all registered matchers on the given node and calls the
   // result callback for every node that matches.
   void match(const ast_type_traits::DynTypedNode& Node) {
-    for (std::vector<std::pair<const internal::DynTypedMatcher*,
-                               MatchCallback*> >::const_iterator
-             I = MatcherCallbackPairs->begin(), E = MatcherCallbackPairs->end();
+    for (std::vector<std::pair<internal::DynTypedMatcher,
+                               MatchCallback *> >::const_iterator
+             I = MatcherCallbackPairs->begin(),
+             E = MatcherCallbackPairs->end();
          I != E; ++I) {
       BoundNodesTreeBuilder Builder;
-      if (I->first->matches(Node, this, &Builder)) {
+      if (I->first.matches(Node, this, &Builder)) {
         MatchVisitor Visitor(ActiveASTContext, I->second);
         Builder.visitMatches(&Visitor);
       }
@@ -603,8 +605,8 @@ private:
     return false;
   }
 
-  std::vector<std::pair<const internal::DynTypedMatcher*,
-                        MatchCallback*> > *const MatcherCallbackPairs;
+  std::vector<std::pair<internal::DynTypedMatcher, MatchCallback *> > *const
+  MatcherCallbackPairs;
   ASTContext *ActiveASTContext;
 
   // Maps a canonical type to its TypedefDecls.
@@ -743,11 +745,10 @@ bool MatchASTVisitor::TraverseNestedNameSpecifierLoc(
 class MatchASTConsumer : public ASTConsumer {
 public:
   MatchASTConsumer(
-    std::vector<std::pair<const internal::DynTypedMatcher*,
-                          MatchCallback*> > *MatcherCallbackPairs,
-    MatchFinder::ParsingDoneTestCallback *ParsingDone)
-    : Visitor(MatcherCallbackPairs),
-      ParsingDone(ParsingDone) {}
+      std::vector<std::pair<internal::DynTypedMatcher, MatchCallback *> > *
+          MatcherCallbackPairs,
+      MatchFinder::ParsingDoneTestCallback *ParsingDone)
+      : Visitor(MatcherCallbackPairs), ParsingDone(ParsingDone) {}
 
 private:
   virtual void HandleTranslationUnit(ASTContext &Context) {
@@ -778,49 +779,36 @@ MatchFinder::ParsingDoneTestCallback::~ParsingDoneTestCallback() {}
 
 MatchFinder::MatchFinder() : ParsingDone(NULL) {}
 
-MatchFinder::~MatchFinder() {
-  for (std::vector<std::pair<const internal::DynTypedMatcher*,
-                             MatchCallback*> >::const_iterator
-           It = MatcherCallbackPairs.begin(), End = MatcherCallbackPairs.end();
-       It != End; ++It) {
-    delete It->first;
-  }
-}
+MatchFinder::~MatchFinder() {}
 
 void MatchFinder::addMatcher(const DeclarationMatcher &NodeMatch,
                              MatchCallback *Action) {
-  MatcherCallbackPairs.push_back(std::make_pair(
-    new internal::Matcher<Decl>(NodeMatch), Action));
+  MatcherCallbackPairs.push_back(std::make_pair(NodeMatch, Action));
 }
 
 void MatchFinder::addMatcher(const TypeMatcher &NodeMatch,
                              MatchCallback *Action) {
-  MatcherCallbackPairs.push_back(std::make_pair(
-    new internal::Matcher<QualType>(NodeMatch), Action));
+  MatcherCallbackPairs.push_back(std::make_pair(NodeMatch, Action));
 }
 
 void MatchFinder::addMatcher(const StatementMatcher &NodeMatch,
                              MatchCallback *Action) {
-  MatcherCallbackPairs.push_back(std::make_pair(
-    new internal::Matcher<Stmt>(NodeMatch), Action));
+  MatcherCallbackPairs.push_back(std::make_pair(NodeMatch, Action));
 }
 
 void MatchFinder::addMatcher(const NestedNameSpecifierMatcher &NodeMatch,
                              MatchCallback *Action) {
-  MatcherCallbackPairs.push_back(std::make_pair(
-    new NestedNameSpecifierMatcher(NodeMatch), Action));
+  MatcherCallbackPairs.push_back(std::make_pair(NodeMatch, Action));
 }
 
 void MatchFinder::addMatcher(const NestedNameSpecifierLocMatcher &NodeMatch,
                              MatchCallback *Action) {
-  MatcherCallbackPairs.push_back(std::make_pair(
-    new NestedNameSpecifierLocMatcher(NodeMatch), Action));
+  MatcherCallbackPairs.push_back(std::make_pair(NodeMatch, Action));
 }
 
 void MatchFinder::addMatcher(const TypeLocMatcher &NodeMatch,
                              MatchCallback *Action) {
-  MatcherCallbackPairs.push_back(std::make_pair(
-    new TypeLocMatcher(NodeMatch), Action));
+  MatcherCallbackPairs.push_back(std::make_pair(NodeMatch, Action));
 }
 
 ASTConsumer *MatchFinder::newASTConsumer() {
