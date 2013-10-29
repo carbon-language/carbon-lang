@@ -877,9 +877,9 @@ int main(int argc, char **argv) {
   );
 
   StringRef Stem = sys::path::stem(ToolName);
-  if (Stem.endswith("ar"))
+  if (Stem.find("ar") != StringRef::npos)
     return ar_main(argv);
-  if (Stem.endswith("ranlib"))
+  if (Stem.find("ranlib") != StringRef::npos)
     return ranlib_main();
   fail("Not ranlib or ar!");
 }
