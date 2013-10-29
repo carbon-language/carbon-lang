@@ -2643,10 +2643,6 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
                                                 Twine MIPSABIDirSuffix,
                                                 const ArgList &DriverArgs,
                                                 ArgStringList &CC1Args) {
-  // FIXME: The MIPS folks added this code with the MIPS ABI suffix *preceding*
-  // the biarch suffix here, but following it almost everywhere else. This is
-  // almost certainly a bug, or if not, the most confusing part of the MIPS
-  // toolchain tree layout.
   if (!addLibStdCXXIncludePaths(Base + Suffix,
                                 TargetArchDir + MIPSABIDirSuffix + BiarchSuffix,
                                 DriverArgs, CC1Args))
