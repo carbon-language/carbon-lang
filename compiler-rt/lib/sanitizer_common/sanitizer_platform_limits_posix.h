@@ -56,7 +56,6 @@ namespace __sanitizer {
   extern unsigned struct_old_utsname_sz;
   extern unsigned struct_oldold_utsname_sz;
   extern unsigned struct_msqid_ds_sz;
-  extern unsigned struct_shmid_ds_sz;
   extern unsigned struct_mq_attr_sz;
   extern unsigned struct_perf_event_attr_sz;
   extern unsigned struct_timex_sz;
@@ -86,7 +85,43 @@ namespace __sanitizer {
   extern unsigned struct_rlimit64_sz;
   extern unsigned struct_statvfs_sz;
   extern unsigned struct_statvfs64_sz;
-#endif // SANITIZER_LINUX && !SANITIZER_ANDROID
+
+  struct __sanitizer_ipc_perm {
+    int __key;
+    int uid;
+    int gid;
+    int cuid;
+    int cgid;
+    unsigned short mode;
+    unsigned short __pad1;
+    unsigned short __seq;
+    unsigned short __pad2;
+    uptr __unused1;
+    uptr __unused2;
+  };
+
+  struct __sanitizer_shmid_ds {
+    __sanitizer_ipc_perm shm_perm;
+    uptr shm_segsz;
+    uptr shm_atime;
+  #ifndef _LP64
+    uptr __unused1;
+  #endif
+    uptr shm_dtime;
+  #ifndef _LP64
+    uptr __unused2;
+  #endif
+    uptr shm_ctime;
+  #ifndef _LP64
+    uptr __unused3;
+  #endif
+    int shm_cpid;
+    int shm_lpid;
+    uptr shm_nattch;
+    uptr __unused4;
+    uptr __unused5;
+  };
+  #endif  // SANITIZER_LINUX && !SANITIZER_ANDROID
 
   struct __sanitizer_iovec {
     void  *iov_base;

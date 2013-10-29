@@ -2067,7 +2067,7 @@ PRE_SYSCALL(shmctl)(long shmid, long cmd, void *buf) {}
 
 POST_SYSCALL(shmctl)(long res, long shmid, long cmd, void *buf) {
   if (res >= 0) {
-    if (buf) POST_WRITE(buf, struct_shmid_ds_sz);
+    if (buf) POST_WRITE(buf, sizeof(__sanitizer_shmid_ds));
   }
 }
 

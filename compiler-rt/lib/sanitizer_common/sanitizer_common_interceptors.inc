@@ -2512,7 +2512,7 @@ INTERCEPTOR(int, shmctl, int shmid, int cmd, void *buf) {
   if (res >= 0) {
     unsigned sz = 0;
     if (cmd == shmctl_ipc_stat || cmd == shmctl_shm_stat)
-      sz = struct_shmid_ds_sz;
+      sz = sizeof(__sanitizer_shmid_ds);
     else if (cmd == shmctl_ipc_info)
       sz = struct_shminfo_sz;
     else if (cmd == shmctl_shm_info)
