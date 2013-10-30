@@ -311,6 +311,8 @@ static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
   SDValue Val = ST->getValue();
   EVT VT = Val.getValueType();
   int Alignment = ST->getAlignment();
+  unsigned AS = ST->getAddressSpace();
+
   SDLoc dl(ST);
   if (ST->getMemoryVT().isFloatingPoint() ||
       ST->getMemoryVT().isVector()) {
@@ -343,7 +345,7 @@ static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
     SDValue Store = DAG.getTruncStore(Chain, dl,
                                       Val, StackPtr, MachinePointerInfo(),
                                       StoredVT, false, false, 0);
-    SDValue Increment = DAG.getConstant(RegBytes, TLI.getPointerTy());
+    SDValue Increment = DAG.getConstant(RegBytes, TLI.getPointerTy(AS));
     SmallVector<SDValue, 8> Stores;
     unsigned Offset = 0;
 
@@ -409,8 +411,9 @@ static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
   Store1 = DAG.getTruncStore(Chain, dl, TLI.isLittleEndian()?Lo:Hi, Ptr,
                              ST->getPointerInfo(), NewStoredVT,
                              ST->isVolatile(), ST->isNonTemporal(), Alignment);
+
   Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                    DAG.getConstant(IncrementSize, TLI.getPointerTy()));
+                    DAG.getConstant(IncrementSize, TLI.getPointerTy(AS)));
   Alignment = MinAlign(Alignment, IncrementSize);
   Store2 = DAG.getTruncStore(Chain, dl, TLI.isLittleEndian()?Hi:Lo, Ptr,
                              ST->getPointerInfo().getWithOffset(IncrementSize),
