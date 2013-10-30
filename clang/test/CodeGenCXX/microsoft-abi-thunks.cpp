@@ -61,14 +61,14 @@ struct C : A, B {
 
 C::C() {}  // Emits vftable and forces thunk generation.
 
-// CODEGEN: define weak x86_thiscallcc void @"\01??_EC@@W3AEPAXI@Z"(%struct.C* %this, i32 %should_call_delete)
-// CODEGEN:   getelementptr inbounds i8* {{.*}}, i64 -4
+// CODEGEN-LABEL: define weak x86_thiscallcc void @"\01??_EC@@W3AEPAXI@Z"(%struct.C* %this, i32 %should_call_delete)
+// CODEGEN:   getelementptr i8* {{.*}}, i32 -4
 // FIXME: should actually call _EC, not _GC.
 // CODEGEN:   call x86_thiscallcc void @"\01??_GC@@UAEPAXI@Z"
 // CODEGEN: ret
 
-// CODEGEN: define weak x86_thiscallcc void @"\01?public_f@C@@W3AEXXZ"(%struct.C*
-// CODEGEN:   getelementptr inbounds i8* {{.*}}, i64 -4
+// CODEGEN-LABEL: define weak x86_thiscallcc void @"\01?public_f@C@@W3AEXXZ"(%struct.C*
+// CODEGEN:   getelementptr i8* {{.*}}, i32 -4
 // CODEGEN:   call x86_thiscallcc void @"\01?public_f@C@@UAEXXZ"(%struct.C*
 // CODEGEN: ret
 
@@ -81,6 +81,7 @@ struct D {
 };
 
 struct E : D {
+  E();
   virtual C* goo();
   // MANGLING-DAG: @"\01?goo@E@@UAEPAUC@@XZ"
   // MANGLING-DAG: @"\01?goo@E@@QAEPAUB@@XZ"
@@ -88,14 +89,15 @@ struct E : D {
   // MANGLING-X64-DAG: @"\01?goo@E@@QEAAPEAUB@@XZ"
 };
 
-E e;  // Emits vftable and forces thunk generation.
+E::E() {}  // Emits vftable and forces thunk generation.
 
-// CODEGEN: define weak x86_thiscallcc %struct.C* @"\01?goo@E@@QAEPAUB@@XZ"
+// CODEGEN-LABEL: define weak x86_thiscallcc %struct.C* @"\01?goo@E@@QAEPAUB@@XZ"
 // CODEGEN:   call x86_thiscallcc %struct.C* @"\01?goo@E@@UAEPAUC@@XZ"
-// CODEGEN:   getelementptr inbounds i8* {{.*}}, i64 4
+// CODEGEN:   getelementptr inbounds i8* {{.*}}, i32 4
 // CODEGEN: ret
 
 struct F : virtual A, virtual B {
+  virtual void own_method();
   virtual ~F();
 };
 
@@ -114,6 +116,27 @@ struct H : E {
 };
 
 H h;
+
+struct I : D {
+  I();
+  virtual F* goo();
+};
+
+I::I() {}  // Emits vftable and forces thunk generation.
+
+// CODEGEN-LABEL: define weak x86_thiscallcc %struct.{{[BF]}}* @"\01?goo@I@@QAEPAUB@@XZ"
+// CODEGEN: %[[ORIG_RET:.*]] = call x86_thiscallcc %struct.F* @"\01?goo@I@@UAEPAUF@@XZ"
+// CODEGEN: %[[ORIG_RET_i8:.*]] = bitcast %struct.F* %[[ORIG_RET]] to i8*
+// CODEGEN: %[[VBPTR_i8:.*]] = getelementptr inbounds i8* %[[ORIG_RET_i8]], i32 4
+// CODEGEN: %[[VBPTR:.*]] = bitcast i8* %[[VBPTR_i8]] to i8**
+// CODEGEN: %[[VBTABLE:.*]] = load i8** %[[VBPTR]]
+// CODEGEN: %[[VBASE_OFFSET_PTR_i8:.*]] = getelementptr inbounds i8* %[[VBTABLE]], i32 8
+// CODEGEN: %[[VBASE_OFFSET_PTR:.*]] = bitcast i8* %[[VBASE_OFFSET_PTR_i8]] to i32*
+// CODEGEN: %[[VBASE_OFFSET:.*]] = load i32* %[[VBASE_OFFSET_PTR]]
+// CODEGEN: %[[RES_i8:.*]] = getelementptr inbounds i8* %[[VBPTR_i8]], i32 %[[VBASE_OFFSET]]
+// CODEGEN: %[[RES:.*]] = bitcast i8* %[[RES_i8]] to %struct.F*
+// CODEGEN: phi %struct.F* {{.*}} %[[RES]]
+// CODEGEN: ret %struct.{{[BF]}}*
 
 // FIXME: Write vtordisp adjusting thunk tests
 

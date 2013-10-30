@@ -3657,8 +3657,8 @@ void ItaniumMangleContextImpl::mangleThunk(const CXXMethodDecl *MD,
   // Mangle the return pointer adjustment if there is one.
   if (!Thunk.Return.isEmpty())
     Mangler.mangleCallOffset(Thunk.Return.NonVirtual,
-                             Thunk.Return.VBaseOffsetOffset);
-  
+                             Thunk.Return.Virtual.Itanium.VBaseOffsetOffset);
+
   Mangler.mangleFunctionEncoding(MD);
 }
 

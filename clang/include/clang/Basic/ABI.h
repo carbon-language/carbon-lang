@@ -39,19 +39,52 @@ struct ReturnAdjustment {
   /// \brief The non-virtual adjustment from the derived object to its
   /// nearest virtual base.
   int64_t NonVirtual;
+
+  /// \brief Holds the ABI-specific information about the virtual return
+  /// adjustment, if needed.
+  union VirtualAdjustment {
+    // Itanium ABI
+    struct {
+      /// \brief The offset (in bytes), relative to the address point
+      /// of the virtual base class offset.
+      int64_t VBaseOffsetOffset;
+    } Itanium;
+
+    // Microsoft ABI
+    struct {
+      /// \brief The offset (in bytes) of the vbptr, relative to the beginning
+      /// of the derived class.
+      uint32_t VBPtrOffset;
+
+      /// \brief Index of the virtual base in the vbtable.
+      uint32_t VBIndex;
+    } Microsoft;
+
+    VirtualAdjustment() {
+      memset(this, 0, sizeof(*this));
+    }
+
+    bool Equals(const VirtualAdjustment &Other) const {
+      return memcmp(this, &Other, sizeof(Other)) == 0;
+    }
+
+    bool isEmpty() const {
+      VirtualAdjustment Zero;
+      return Equals(Zero);
+    }
+
+    bool Less(const VirtualAdjustment &RHS) const {
+      return memcmp(this, &RHS, sizeof(RHS)) < 0;
+    }
+  } Virtual;
   
-  /// \brief The offset (in bytes), relative to the address point 
-  /// of the virtual base class offset.
-  int64_t VBaseOffsetOffset;
+  ReturnAdjustment() : NonVirtual(0) {}
   
-  ReturnAdjustment() : NonVirtual(0), VBaseOffsetOffset(0) { }
-  
-  bool isEmpty() const { return !NonVirtual && !VBaseOffsetOffset; }
+  bool isEmpty() const { return !NonVirtual && Virtual.isEmpty(); }
 
   friend bool operator==(const ReturnAdjustment &LHS, 
                          const ReturnAdjustment &RHS) {
-    return LHS.NonVirtual == RHS.NonVirtual && 
-      LHS.VBaseOffsetOffset == RHS.VBaseOffsetOffset;
+    return LHS.NonVirtual == RHS.NonVirtual && LHS.Virtual.Equals(RHS.Virtual);
   }
 
   friend bool operator!=(const ReturnAdjustment &LHS, const ReturnAdjustment &RHS) {
@@ -62,9 +95,8 @@ struct ReturnAdjustment {
                         const ReturnAdjustment &RHS) {
     if (LHS.NonVirtual < RHS.NonVirtual)
       return true;
-    
-    return LHS.NonVirtual == RHS.NonVirtual && 
-      LHS.VBaseOffsetOffset < RHS.VBaseOffsetOffset;
+
+    return LHS.NonVirtual == RHS.NonVirtual && LHS.Virtual.Less(RHS.Virtual);
   }
 };
   

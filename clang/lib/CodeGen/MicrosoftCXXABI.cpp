@@ -190,6 +190,12 @@ public:
     Thunk->setLinkage(llvm::GlobalValue::WeakAnyLinkage);
   }
 
+  llvm::Value *performThisAdjustment(CodeGenFunction &CGF, llvm::Value *This,
+                                     const ThisAdjustment &TA);
+
+  llvm::Value *performReturnAdjustment(CodeGenFunction &CGF, llvm::Value *Ret,
+                                       const ReturnAdjustment &RA);
+
   void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
                        llvm::GlobalVariable *DeclPtr,
                        bool PerformInit);
@@ -267,6 +273,16 @@ private:
                                        llvm::Value *VBPtrOffset,
                                        llvm::Value *VBTableOffset,
                                        llvm::Value **VBPtr = 0);
+
+  llvm::Value *GetVBaseOffsetFromVBPtr(CodeGenFunction &CGF,
+                                       llvm::Value *Base,
+                                       int32_t VBPtrOffset,
+                                       int32_t VBTableOffset,
+                                       llvm::Value **VBPtr = 0) {
+    llvm::Value *VBPOffset = llvm::ConstantInt::get(CGM.IntTy, VBPtrOffset),
+                *VBTOffset = llvm::ConstantInt::get(CGM.IntTy, VBTableOffset);
+    return GetVBaseOffsetFromVBPtr(CGF, Base, VBPOffset, VBTOffset, VBPtr);
+  }
 
   /// \brief Performs a full virtual base adjustment.  Used to dereference
   /// pointers to members of virtual bases.
@@ -960,6 +976,54 @@ void MicrosoftCXXABI::emitVirtualInheritanceTables(const CXXRecordDecl *RD) {
        I != E; ++I) {
     I->EmitVBTableDefinition(CGM, RD, Linkage);
   }
+}
+
+llvm::Value *MicrosoftCXXABI::performThisAdjustment(CodeGenFunction &CGF,
+                                                    llvm::Value *This,
+                                                    const ThisAdjustment &TA) {
+  if (TA.isEmpty())
+    return This;
+
+  llvm::Value *V = CGF.Builder.CreateBitCast(This, CGF.Int8PtrTy);
+
+  assert(TA.VCallOffsetOffset == 0 &&
+         "VtorDisp adjustment is not supported yet");
+
+  if (TA.NonVirtual) {
+    // Non-virtual adjustment might result in a pointer outside the allocated
+    // object, e.g. if the final overrider class is laid out after the virtual
+    // base that declares a method in the most derived class.
+    V = CGF.Builder.CreateConstGEP1_32(V, TA.NonVirtual);
+  }
+
+  // Don't need to bitcast back, the call CodeGen will handle this.
+  return V;
+}
+
+llvm::Value *
+MicrosoftCXXABI::performReturnAdjustment(CodeGenFunction &CGF, llvm::Value *Ret,
+                                         const ReturnAdjustment &RA) {
+  if (RA.isEmpty())
+    return Ret;
+
+  llvm::Value *V = CGF.Builder.CreateBitCast(Ret, CGF.Int8PtrTy);
+
+  if (RA.Virtual.Microsoft.VBIndex) {
+    assert(RA.Virtual.Microsoft.VBIndex > 0);
+    int32_t IntSize =
+        getContext().getTypeSizeInChars(getContext().IntTy).getQuantity();
+    llvm::Value *VBPtr;
+    llvm::Value *VBaseOffset =
+        GetVBaseOffsetFromVBPtr(CGF, V, RA.Virtual.Microsoft.VBPtrOffset,
+                                IntSize * RA.Virtual.Microsoft.VBIndex, &VBPtr);
+    V = CGF.Builder.CreateInBoundsGEP(VBPtr, VBaseOffset);
+  }
+
+  if (RA.NonVirtual)
+    V = CGF.Builder.CreateConstInBoundsGEP1_32(V, RA.NonVirtual);
+
+  // Cast back to the original type.
+  return CGF.Builder.CreateBitCast(V, Ret->getType());
 }
 
 bool MicrosoftCXXABI::requiresArrayCookie(const CXXDeleteExpr *expr,

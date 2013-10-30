@@ -1203,10 +1203,10 @@ ItaniumVTableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
       // Get the virtual base offset offset.
       if (Offset.DerivedClass == MostDerivedClass) {
         // We can get the offset offset directly from our map.
-        Adjustment.VBaseOffsetOffset = 
+        Adjustment.Virtual.Itanium.VBaseOffsetOffset =
           VBaseOffsetOffsets.lookup(Offset.VirtualBase).getQuantity();
       } else {
-        Adjustment.VBaseOffsetOffset = 
+        Adjustment.Virtual.Itanium.VBaseOffsetOffset =
           VTables.getVirtualBaseOffsetOffset(Offset.DerivedClass,
                                              Offset.VirtualBase).getQuantity();
       }
@@ -1304,7 +1304,7 @@ ThisAdjustment ItaniumVTableBuilder::ComputeThisAdjustment(
       VCallOffsets = Builder.getVCallOffsets();
     }
       
-    Adjustment.VCallOffsetOffset = 
+    Adjustment.VCallOffsetOffset =
       VCallOffsets.getVCallOffsetOffset(MD).getQuantity();
   }
 
@@ -1996,8 +1996,8 @@ void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
           Out << "\n       [return adjustment: ";
           Out << Thunk.Return.NonVirtual << " non-virtual";
           
-          if (Thunk.Return.VBaseOffsetOffset) {
-            Out << ", " << Thunk.Return.VBaseOffsetOffset;
+          if (Thunk.Return.Virtual.Itanium.VBaseOffsetOffset) {
+            Out << ", " << Thunk.Return.Virtual.Itanium.VBaseOffsetOffset;
             Out << " vbase offset offset";
           }
 
@@ -2172,8 +2172,8 @@ void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
         if (!Thunk.Return.isEmpty()) {
           Out << "return adjustment: " << Thunk.Return.NonVirtual;
           Out << " non-virtual";
-          if (Thunk.Return.VBaseOffsetOffset) {
-            Out << ", " << Thunk.Return.VBaseOffsetOffset;
+          if (Thunk.Return.Virtual.Itanium.VBaseOffsetOffset) {
+            Out << ", " << Thunk.Return.Virtual.Itanium.VBaseOffsetOffset;
             Out << " vbase offset offset";
           }
 
@@ -2911,9 +2911,11 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
       ReturnAdjustment.NonVirtual =
           ReturnAdjustmentOffset.NonVirtualOffset.getQuantity();
       if (ReturnAdjustmentOffset.VirtualBase) {
-        // FIXME: We might want to create a VBIndex alias for VBaseOffsetOffset
-        // in the ReturnAdjustment struct.
-        ReturnAdjustment.VBaseOffsetOffset =
+        const ASTRecordLayout &DerivedLayout =
+            Context.getASTRecordLayout(ReturnAdjustmentOffset.DerivedClass);
+        ReturnAdjustment.Virtual.Microsoft.VBPtrOffset =
+            DerivedLayout.getVBPtrOffset().getQuantity();
+        ReturnAdjustment.Virtual.Microsoft.VBIndex =
             GetVBTableIndex(ReturnAdjustmentOffset.DerivedClass,
                             ReturnAdjustmentOffset.VirtualBase);
       }
@@ -2944,6 +2946,34 @@ struct MicrosoftThunkInfoStableSortComparator {
     return false;
   }
 };
+
+static void dumpMicrosoftThunkAdjustment(const ThunkInfo &TI, raw_ostream &Out,
+                                         bool ContinueFirstLine) {
+  const ReturnAdjustment &R = TI.Return;
+  bool Multiline = false;
+  const char *LinePrefix = "\n        ";
+  if (!R.isEmpty()) {
+    if (!ContinueFirstLine)
+      Out << LinePrefix;
+    Out << "[return adjustment: ";
+    if (R.Virtual.Microsoft.VBPtrOffset)
+      Out << "vbptr at offset " << R.Virtual.Microsoft.VBPtrOffset << ", ";
+    if (R.Virtual.Microsoft.VBIndex)
+      Out << "vbase #" << R.Virtual.Microsoft.VBIndex << ", ";
+    Out << R.NonVirtual << " non-virtual]";
+    Multiline = true;
+  }
+
+  const ThisAdjustment &T = TI.This;
+  if (!T.isEmpty()) {
+    if (Multiline || !ContinueFirstLine)
+      Out << LinePrefix;
+    Out << "[this adjustment: ";
+    assert(TI.This.VCallOffsetOffset == 0 &&
+           "VtorDisp adjustment is not supported yet");
+    Out << T.NonVirtual << " non-virtual]";
+  }
+}
 
 void VFTableBuilder::dumpLayout(raw_ostream &Out) {
   Out << "VFTable for ";
@@ -2977,23 +3007,8 @@ void VFTableBuilder::dumpLayout(raw_ostream &Out) {
       }
 
       ThunkInfo Thunk = VTableThunks.lookup(I);
-      if (!Thunk.isEmpty()) {
-        // If this function pointer has a return adjustment, dump it.
-        if (!Thunk.Return.isEmpty()) {
-          Out << "\n       [return adjustment: ";
-          if (Thunk.Return.VBaseOffsetOffset)
-            Out << "vbase #" << Thunk.Return.VBaseOffsetOffset << ", ";
-          Out << Thunk.Return.NonVirtual << " non-virtual]";
-        }
-
-        // If this function pointer has a 'this' pointer adjustment, dump it.
-        if (!Thunk.This.isEmpty()) {
-          assert(!Thunk.This.VCallOffsetOffset &&
-                 "No virtual this adjustment in this ABI");
-          Out << "\n       [this adjustment: " << Thunk.This.NonVirtual
-              << " non-virtual]";
-        }
-      }
+      if (!Thunk.isEmpty())
+        dumpMicrosoftThunkAdjustment(Thunk, Out, /*ContinueFirstLine=*/false);
 
       break;
     }
@@ -3011,13 +3026,7 @@ void VFTableBuilder::dumpLayout(raw_ostream &Out) {
       if (!Thunk.isEmpty()) {
         assert(Thunk.Return.isEmpty() &&
                "No return adjustment needed for destructors!");
-        // If this destructor has a 'this' pointer adjustment, dump it.
-        if (!Thunk.This.isEmpty()) {
-          assert(!Thunk.This.VCallOffsetOffset &&
-                 "No virtual this adjustment in this ABI");
-          Out << "\n       [this adjustment: " << Thunk.This.NonVirtual
-              << " non-virtual]";
-        }
+        dumpMicrosoftThunkAdjustment(Thunk, Out, /*ContinueFirstLine=*/false);
       }
 
       break;
@@ -3068,26 +3077,7 @@ void VFTableBuilder::dumpLayout(raw_ostream &Out) {
         const ThunkInfo &Thunk = ThunksVector[I];
 
         Out << llvm::format("%4d | ", I);
-
-        // If this function pointer has a return pointer adjustment, dump it.
-        if (!Thunk.Return.isEmpty()) {
-          Out << "return adjustment: ";
-          if (Thunk.Return.VBaseOffsetOffset)
-            Out << "vbase #" << Thunk.Return.VBaseOffsetOffset << ", ";
-          Out << Thunk.Return.NonVirtual << " non-virtual";
-
-          if (!Thunk.This.isEmpty())
-            Out << "\n       ";
-        }
-
-        // If this function pointer has a 'this' pointer adjustment, dump it.
-        if (!Thunk.This.isEmpty()) {
-          assert(!Thunk.This.VCallOffsetOffset &&
-                 "No virtual this adjustment in this ABI");
-          Out << "this adjustment: ";
-          Out << Thunk.This.NonVirtual << " non-virtual";
-        }
-
+        dumpMicrosoftThunkAdjustment(Thunk, Out, /*ContinueFirstLine=*/true);
         Out << '\n';
       }
 

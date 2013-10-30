@@ -56,53 +56,6 @@ llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
   return GetOrCreateLLVMFunction(Name, Ty, GD, /*ForVTable=*/true);
 }
 
-static llvm::Value *PerformTypeAdjustment(CodeGenFunction &CGF,
-                                          llvm::Value *Ptr,
-                                          int64_t NonVirtualAdjustment,
-                                          int64_t VirtualAdjustment,
-                                          bool IsReturnAdjustment) {
-  if (!NonVirtualAdjustment && !VirtualAdjustment)
-    return Ptr;
-
-  llvm::Type *Int8PtrTy = CGF.Int8PtrTy;
-  llvm::Value *V = CGF.Builder.CreateBitCast(Ptr, Int8PtrTy);
-
-  if (NonVirtualAdjustment && !IsReturnAdjustment) {
-    // Perform the non-virtual adjustment for a base-to-derived cast.
-    V = CGF.Builder.CreateConstInBoundsGEP1_64(V, NonVirtualAdjustment);
-  }
-
-  if (VirtualAdjustment) {
-    llvm::Type *PtrDiffTy = 
-      CGF.ConvertType(CGF.getContext().getPointerDiffType());
-
-    // Perform the virtual adjustment.
-    llvm::Value *VTablePtrPtr = 
-      CGF.Builder.CreateBitCast(V, Int8PtrTy->getPointerTo());
-    
-    llvm::Value *VTablePtr = CGF.Builder.CreateLoad(VTablePtrPtr);
-  
-    llvm::Value *OffsetPtr =
-      CGF.Builder.CreateConstInBoundsGEP1_64(VTablePtr, VirtualAdjustment);
-    
-    OffsetPtr = CGF.Builder.CreateBitCast(OffsetPtr, PtrDiffTy->getPointerTo());
-    
-    // Load the adjustment offset from the vtable.
-    llvm::Value *Offset = CGF.Builder.CreateLoad(OffsetPtr);
-    
-    // Adjust our pointer.
-    V = CGF.Builder.CreateInBoundsGEP(V, Offset);
-  }
-
-  if (NonVirtualAdjustment && IsReturnAdjustment) {
-    // Perform the non-virtual adjustment for a derived-to-base cast.
-    V = CGF.Builder.CreateConstInBoundsGEP1_64(V, NonVirtualAdjustment);
-  }
-
-  // Cast back to the original type.
-  return CGF.Builder.CreateBitCast(V, Ptr->getType());
-}
-
 static void setThunkVisibility(CodeGenModule &CGM, const CXXMethodDecl *MD,
                                const ThunkInfo &Thunk, llvm::Function *Fn) {
   CGM.setGlobalVisibility(Fn, MD);
@@ -181,12 +134,10 @@ static RValue PerformReturnAdjustment(CodeGenFunction &CGF,
     CGF.Builder.CreateCondBr(IsNull, AdjustNull, AdjustNotNull);
     CGF.EmitBlock(AdjustNotNull);
   }
-  
-  ReturnValue = PerformTypeAdjustment(CGF, ReturnValue, 
-                                      Thunk.Return.NonVirtual, 
-                                      Thunk.Return.VBaseOffsetOffset,
-                                      /*IsReturnAdjustment*/true);
-  
+
+  ReturnValue = CGF.CGM.getCXXABI().performReturnAdjustment(CGF, ReturnValue,
+                                                            Thunk.Return);
+
   if (NullCheckValue) {
     CGF.Builder.CreateBr(AdjustEnd);
     CGF.EmitBlock(AdjustNull);
@@ -266,11 +217,8 @@ void CodeGenFunction::GenerateVarArgsThunk(
   assert(ThisStore && "Store of this should be in entry block?");
   // Adjust "this", if necessary.
   Builder.SetInsertPoint(ThisStore);
-  llvm::Value *AdjustedThisPtr = 
-    PerformTypeAdjustment(*this, ThisPtr, 
-                          Thunk.This.NonVirtual, 
-                          Thunk.This.VCallOffsetOffset,
-                          /*IsReturnAdjustment*/false);
+  llvm::Value *AdjustedThisPtr =
+      CGM.getCXXABI().performThisAdjustment(*this, ThisPtr, Thunk.This);
   ThisStore->setOperand(0, AdjustedThisPtr);
 
   if (!Thunk.Return.isEmpty()) {
@@ -322,12 +270,9 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   CXXThisValue = CXXABIThisValue;
 
   // Adjust the 'this' pointer if necessary.
-  llvm::Value *AdjustedThisPtr = 
-    PerformTypeAdjustment(*this, LoadCXXThis(), 
-                          Thunk.This.NonVirtual, 
-                          Thunk.This.VCallOffsetOffset,
-                          /*IsReturnAdjustment*/false);
-  
+  llvm::Value *AdjustedThisPtr =
+      CGM.getCXXABI().performThisAdjustment(*this, LoadCXXThis(), Thunk.This);
+
   CallArgList CallArgs;
   
   // Add our adjusted 'this' pointer.

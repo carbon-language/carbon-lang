@@ -275,7 +275,7 @@ struct Test1 : B, C {
   // THIS-THUNKS-Test1-NEXT:     [this adjustment: -4 non-virtual]
 
   // THIS-THUNKS-Test1: Thunks for 'void this_adjustment::Test1::g()' (1 entry).
-  // THIS-THUNKS-Test1-NEXT: 0 | this adjustment: -4 non-virtual
+  // THIS-THUNKS-Test1-NEXT: 0 | [this adjustment: -4 non-virtual]
 
   // THIS-THUNKS-Test1: VFTable indices for 'this_adjustment::Test1' (1 entries).
   // THIS-THUNKS-Test1-NEXT: 0 | void this_adjustment::Test1::g()
@@ -301,7 +301,7 @@ struct Test2 : A, B, C {
   // THIS-THUNKS-Test2-NEXT:     [this adjustment: -4 non-virtual]
 
   // THIS-THUNKS-Test2: Thunks for 'void this_adjustment::Test2::g()' (1 entry).
-  // THIS-THUNKS-Test2-NEXT: 0 | this adjustment: -4 non-virtual
+  // THIS-THUNKS-Test2-NEXT: 0 | [this adjustment: -4 non-virtual]
 
   // THIS-THUNKS-Test2: VFTable indices for 'this_adjustment::Test2' (1 entries).
   // THIS-THUNKS-Test2-NEXT: via vfptr at offset 4
@@ -327,18 +327,18 @@ struct Test3: no_thunks::Test1, no_thunks::Test2 {
 
   // THIS-THUNKS-Test3: VFTable for 'A' in 'no_thunks::Test2' in 'this_adjustment::Test3' (1 entries).
   // THIS-THUNKS-Test3-NEXT: 0 | void this_adjustment::Test3::f()
-  // THIS-THUNKS-Test3-NEXT: [this adjustment: -8 non-virtual]
+  // THIS-THUNKS-Test3-NEXT:     [this adjustment: -8 non-virtual]
 
   // THIS-THUNKS-Test3: Thunks for 'void this_adjustment::Test3::f()' (1 entry).
-  // THIS-THUNKS-Test3-NEXT: 0 | this adjustment: -8 non-virtual
+  // THIS-THUNKS-Test3-NEXT: 0 | [this adjustment: -8 non-virtual]
 
   // THIS-THUNKS-Test3: VFTable for 'B' in 'no_thunks::Test2' in 'this_adjustment::Test3' (2 entries).
   // THIS-THUNKS-Test3-NEXT: 0 | void this_adjustment::Test3::g()
-  // THIS-THUNKS-Test3-NEXT: [this adjustment: -8 non-virtual]
+  // THIS-THUNKS-Test3-NEXT:     [this adjustment: -8 non-virtual]
   // THIS-THUNKS-Test3-NEXT: 1 | void B::h()
 
   // THIS-THUNKS-Test3: Thunks for 'void this_adjustment::Test3::g()' (1 entry).
-  // THIS-THUNKS-Test3-NEXT: 0 | this adjustment: -8 non-virtual
+  // THIS-THUNKS-Test3-NEXT: 0 | [this adjustment: -8 non-virtual]
 
   // THIS-THUNKS-Test3: VFTable indices for 'this_adjustment::Test3' (2 entries).
   // THIS-THUNKS-Test3-NEXT: via vfptr at offset 0
@@ -373,7 +373,7 @@ struct Test3 : Test1, Test2 {
   // VDTOR-THUNKS-Test3-NEXT:     [this adjustment: -4 non-virtual]
 
   // VDTOR-THUNKS-Test3: Thunks for 'vdtor::Test3::~Test3()' (1 entry).
-  // VDTOR-THUNKS-Test3-NEXT: 0 | this adjustment: -4 non-virtual
+  // VDTOR-THUNKS-Test3-NEXT: 0 | [this adjustment: -4 non-virtual]
 
   // VDTOR-THUNKS-Test3: VFTable indices for 'vdtor::Test3' (1 entries).
   // VDTOR-THUNKS-Test3-NEXT: 0 | vdtor::Test3::~Test3() [scalar deleting]
@@ -398,7 +398,7 @@ struct Test5 : Test4, Test2 {
   // VDTOR-THUNKS-Test5-NEXT:     [this adjustment: -4 non-virtual]
 
   // VDTOR-THUNKS-Test5: Thunks for 'vdtor::Test5::~Test5()' (1 entry).
-  // VDTOR-THUNKS-Test5-NEXT: 0 | this adjustment: -4 non-virtual
+  // VDTOR-THUNKS-Test5-NEXT: 0 | [this adjustment: -4 non-virtual]
 
   // VDTOR-THUNKS-Test5: VFTable indices for 'vdtor::Test5' (1 entries).
   // VDTOR-THUNKS-Test5-NEXT: -- accessible via vfptr at offset 4 --
@@ -418,7 +418,7 @@ struct Test6 : Test4, Test2 {
   // VDTOR-THUNKS-Test6-NEXT:     [this adjustment: -4 non-virtual]
 
   // VDTOR-THUNKS-Test6: Thunks for 'vdtor::Test6::~Test6()' (1 entry).
-  // VDTOR-THUNKS-Test6-NEXT: 0 | this adjustment: -4 non-virtual
+  // VDTOR-THUNKS-Test6-NEXT: 0 | [this adjustment: -4 non-virtual]
 
   // VDTOR-THUNKS-Test6: VFTable indices for 'vdtor::Test6' (1 entries).
   // VDTOR-THUNKS-Test6-NEXT: -- accessible via vfptr at offset 4 --
@@ -436,7 +436,7 @@ struct Test7 : Test5 {
   // VDTOR-THUNKS-Test7-NEXT:     [this adjustment: -4 non-virtual]
 
   // VDTOR-THUNKS-Test7: Thunks for 'vdtor::Test7::~Test7()' (1 entry).
-  // VDTOR-THUNKS-Test7-NEXT: 0 | this adjustment: -4 non-virtual
+  // VDTOR-THUNKS-Test7-NEXT: 0 | [this adjustment: -4 non-virtual]
 
   // VDTOR-THUNKS-Test7: VFTable indices for 'vdtor::Test7' (1 entries).
   // VDTOR-THUNKS-Test7-NEXT: -- accessible via vfptr at offset 4 --
