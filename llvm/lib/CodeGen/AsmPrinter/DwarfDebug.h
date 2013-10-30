@@ -226,7 +226,7 @@ class DwarfUnits {
   FoldingSet<DIEAbbrev> *AbbreviationsSet;
 
   // A list of all the unique abbreviations in use.
-  std::vector<DIEAbbrev *> *Abbreviations;
+  std::vector<DIEAbbrev *> &Abbreviations;
 
   // A pointer to all units in the section.
   SmallVector<CompileUnit *, 1> CUs;
@@ -249,7 +249,7 @@ class DwarfUnits {
 
 public:
   DwarfUnits(AsmPrinter *AP, FoldingSet<DIEAbbrev> *AS,
-             std::vector<DIEAbbrev *> *A, const char *Pref,
+             std::vector<DIEAbbrev *> &A, const char *Pref,
              BumpPtrAllocator &DA)
       : Asm(AP), AbbreviationsSet(AS), Abbreviations(A), StringPool(DA),
         NextStringPoolNumber(0), StringPref(Pref), AddressPool(),
@@ -699,7 +699,7 @@ public:
                                unsigned CUID);
 
   /// \brief Recursively Emits a debug information entry.
-  void emitDIE(DIE *Die, std::vector<DIEAbbrev *> *Abbrevs);
+  void emitDIE(DIE *Die, ArrayRef<DIEAbbrev *> Abbrevs);
 
   // Experimental DWARF5 features.
 

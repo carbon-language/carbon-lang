@@ -183,10 +183,10 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     AbbreviationsSet(InitAbbreviationsSetSize),
     SourceIdMap(DIEValueAllocator),
     PrevLabel(NULL), GlobalCUIndexCount(0),
-    InfoHolder(A, &AbbreviationsSet, &Abbreviations, "info_string",
+    InfoHolder(A, &AbbreviationsSet, Abbreviations, "info_string",
                DIEValueAllocator),
     SkeletonAbbrevSet(InitAbbreviationsSetSize),
-    SkeletonHolder(A, &SkeletonAbbrevSet, &SkeletonAbbrevs, "skel_string",
+    SkeletonHolder(A, &SkeletonAbbrevSet, SkeletonAbbrevs, "skel_string",
                    DIEValueAllocator) {
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
@@ -279,10 +279,10 @@ void DwarfUnits::assignAbbrevNumber(DIEAbbrev &Abbrev) {
   // If it's newly added.
   if (InSet == &Abbrev) {
     // Add to abbreviation list.
-    Abbreviations->push_back(&Abbrev);
+    Abbreviations.push_back(&Abbrev);
 
     // Assign the vector position + 1 as its number.
-    Abbrev.setNumber(Abbreviations->size());
+    Abbrev.setNumber(Abbreviations.size());
   } else {
     // Assign existing abbreviation number.
     Abbrev.setNumber(InSet->getNumber());
@@ -1928,7 +1928,7 @@ DwarfUnits::computeSizeAndOffset(DIE *Die, unsigned Offset) {
 
   // Get the abbreviation for this DIE.
   unsigned AbbrevNumber = Die->getAbbrevNumber();
-  const DIEAbbrev *Abbrev = Abbreviations->at(AbbrevNumber - 1);
+  const DIEAbbrev *Abbrev = Abbreviations[AbbrevNumber - 1];
 
   // Set DIE offset
   Die->setOffset(Offset);
@@ -2035,10 +2035,10 @@ void DwarfDebug::emitSectionLabels() {
 }
 
 // Recursively emits a debug information entry.
-void DwarfDebug::emitDIE(DIE *Die, std::vector<DIEAbbrev *> *Abbrevs) {
+void DwarfDebug::emitDIE(DIE *Die, ArrayRef<DIEAbbrev *> Abbrevs) {
   // Get the abbreviation for this DIE.
   unsigned AbbrevNumber = Die->getAbbrevNumber();
-  const DIEAbbrev *Abbrev = Abbrevs->at(AbbrevNumber - 1);
+  const DIEAbbrev *Abbrev = Abbrevs[AbbrevNumber - 1];
 
   // Emit the code (index) for the abbreviation.
   if (Asm->isVerbose())
