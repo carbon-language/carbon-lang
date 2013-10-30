@@ -17,6 +17,7 @@
 #include "CGCXXABI.h"
 #include "CodeGenFunction.h"
 #include "clang/AST/RecordLayout.h"
+#include "clang/CodeGen/CGFunctionInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/DataLayout.h"

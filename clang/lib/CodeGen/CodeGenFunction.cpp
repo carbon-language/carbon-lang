@@ -23,6 +23,7 @@
 #include "clang/AST/StmtCXX.h"
 #include "clang/Basic/OpenCL.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/CodeGen/CGFunctionInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Intrinsics.h"

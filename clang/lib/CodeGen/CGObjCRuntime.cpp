@@ -20,6 +20,7 @@
 #include "CodeGenModule.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtObjC.h"
+#include "clang/CodeGen/CGFunctionInfo.h"
 #include "llvm/Support/CallSite.h"
 
 using namespace clang;
