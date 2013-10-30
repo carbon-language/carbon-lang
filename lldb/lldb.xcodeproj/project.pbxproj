@@ -4849,6 +4849,7 @@
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
+					"-DLLDB_USE_BUILTIN_DEMANGLER",
 				);
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
@@ -4878,6 +4879,7 @@
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
+					"-DLLDB_USE_BUILTIN_DEMANGLER",
 				);
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
@@ -4907,6 +4909,7 @@
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
+					"-DLLDB_USE_BUILTIN_DEMANGLER",
 				);
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
@@ -5609,6 +5612,7 @@
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
+					"-DLLDB_USE_BUILTIN_DEMANGLER",
 				);
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
