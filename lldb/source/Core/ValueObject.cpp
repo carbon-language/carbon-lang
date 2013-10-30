@@ -272,6 +272,7 @@ ValueObject::SetNeedsUpdate ()
 void
 ValueObject::ClearDynamicTypeInformation ()
 {
+    m_children_count_valid = false;
     m_did_calculate_complete_objc_class_type = false;
     m_last_format_mgr_revision = 0;
     m_override_type = ClangASTType();

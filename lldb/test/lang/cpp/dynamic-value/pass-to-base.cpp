@@ -52,6 +52,31 @@ private:
 
 static A* my_global_A_ptr;
 
+class BaseClass
+{
+public:
+    BaseClass();
+    virtual ~BaseClass() { }
+};
+
+class DerivedClass : public BaseClass
+{
+public:
+    DerivedClass();
+    virtual ~DerivedClass() { }
+protected:
+    int mem;
+};
+
+BaseClass::BaseClass()
+{
+}
+
+DerivedClass::DerivedClass() : BaseClass()
+{
+    mem = 101;
+}
+
 int
 main (int argc, char **argv)
 {
@@ -65,5 +90,8 @@ main (int argc, char **argv)
   A reallyA (500);
   myB.doSomething (reallyA);  // Break here and get real address of reallyA.
 
+  BaseClass *b = nullptr; // Break here and check b has 0 children
+  b = new DerivedClass();  // Break here and check b still has 0 children
+  b = nullptr;  // Break here and check b has one child now
   return 0;
 }
