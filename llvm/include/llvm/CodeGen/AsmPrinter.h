@@ -486,7 +486,7 @@ namespace llvm {
     void EmitVisibility(MCSymbol *Sym, unsigned Visibility,
                         bool IsDefinition = true) const;
 
-    void EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const;
+    void EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const;
 
     void EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
                             const MachineBasicBlock *MBB, unsigned uid) const;
