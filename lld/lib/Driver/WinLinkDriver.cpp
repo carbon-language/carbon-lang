@@ -151,31 +151,23 @@ llvm::COFF::MachineTypes stringToMachineType(StringRef str) {
 
 // Parse /manifest:EMBED[,ID=#]|NO.
 bool parseManifest(StringRef option, bool &enable, bool &embed, int &id) {
-  std::string optionLower = option.lower();
-  if (optionLower == "no") {
+  if (option.equals_lower("no")) {
     enable = false;
     return true;
   }
-  if (!StringRef(optionLower).startswith("embed"))
+  if (!option.startswith_lower("embed"))
     return false;
 
   embed = true;
-  optionLower = optionLower.substr(strlen("embed"));
-  if (optionLower.empty())
+  option = option.substr(strlen("embed"));
+  if (option.empty())
     return true;
-  if (!StringRef(optionLower).startswith(",id="))
+  if (!option.startswith_lower(",id="))
     return false;
-  optionLower = optionLower.substr(strlen(",id="));
-  if (StringRef(optionLower).getAsInteger(0, id))
+  option = option.substr(strlen(",id="));
+  if (option.getAsInteger(0, id))
     return false;
   return true;
-}
-
-// Returns true if \p str starts with \p prefix, ignoring case.
-bool startswith_lower(StringRef str, StringRef prefix) {
-  if (str.size() < prefix.size())
-    return false;
-  return str.substr(0, prefix.size()).equals_lower(prefix);
 }
 
 // Parse /manifestuac:(level=<string>|uiAccess=<string>).
@@ -189,14 +181,14 @@ bool parseManifestUac(StringRef option, llvm::Optional<std::string> &level,
     option = option.ltrim();
     if (option.empty())
       return true;
-    if (startswith_lower(option, "level=")) {
+    if (option.startswith_lower("level=")) {
       option = option.substr(strlen("level="));
       StringRef value;
       llvm::tie(value, option) = option.split(" ");
       level = value.str();
       continue;
     }
-    if (startswith_lower(option, "uiaccess=")) {
+    if (option.startswith_lower("uiaccess=")) {
       option = option.substr(strlen("uiaccess="));
       StringRef value;
       llvm::tie(value, option) = option.split(" ");
