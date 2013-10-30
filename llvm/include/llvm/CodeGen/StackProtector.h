@@ -34,14 +34,14 @@ public:
   /// SSPLayoutKind.  Stack Smashing Protection (SSP) rules require that
   /// vulnerable stack allocations are located close the stack protector.
   enum SSPLayoutKind {
-    SSPLK_None,       //< Did not trigger a stack protector.  No effect on data
-                      //< layout.
-    SSPLK_LargeArray, //< Array or nested array >= SSP-buffer-size.  Closest
-                      //< to the stack protector.
-    SSPLK_SmallArray, //< Array or nested array < SSP-buffer-size. 2nd closest
-                      //< to the stack protector.
-    SSPLK_AddrOf      //< The address of this allocation is exposed and
-                      //< triggered protection.  3rd closest to the protector.
+    SSPLK_None,       ///< Did not trigger a stack protector.  No effect on data
+                      ///< layout.
+    SSPLK_LargeArray, ///< Array or nested array >= SSP-buffer-size.  Closest
+                      ///< to the stack protector.
+    SSPLK_SmallArray, ///< Array or nested array < SSP-buffer-size. 2nd closest
+                      ///< to the stack protector.
+    SSPLK_AddrOf      ///< The address of this allocation is exposed and
+                      ///< triggered protection.  3rd closest to the protector.
   };
 
   /// A mapping of AllocaInsts to their required SSP layout.
