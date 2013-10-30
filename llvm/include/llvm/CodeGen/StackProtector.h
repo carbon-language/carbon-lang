@@ -31,7 +31,7 @@ class PHINode;
 
 class StackProtector : public FunctionPass {
 public:
-  /// SSPLayoutKind.  Stack Smashing Protection (SSP) rules require that 
+  /// SSPLayoutKind.  Stack Smashing Protection (SSP) rules require that
   /// vulnerable stack allocations are located close the stack protector.
   enum SSPLayoutKind {
     SSPLK_None,       //< Did not trigger a stack protector.  No effect on data
