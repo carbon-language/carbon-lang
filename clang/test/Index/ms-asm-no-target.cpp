@@ -1,4 +1,5 @@
-// RUN: c-index-test -test-load-source all -triple x86_64-apple-darwin10 -fasm-blocks -Wno-microsoft %s 2>&1 | FileCheck %s
+// REQUIRES: x86-registered-target
+// RUN: c-index-test -test-load-source all -fasm-blocks -Wno-microsoft %s 2>&1 | FileCheck %s
 
 // Test that we diagnose when the application hasn't initialized LLVM targets
 // supporting the MS-style inline asm parser.
