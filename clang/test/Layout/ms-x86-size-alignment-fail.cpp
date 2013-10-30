@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple i686-pc-win32 -fdump-record-layouts -fsyntax-only -cxx-abi microsoft %s 2>/dev/null \
+// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple i686-pc-win32 -fdump-record-layouts -cxx-abi microsoft %s 2>/dev/null \
 // RUN:            | FileCheck %s
-// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple x86_64-pc-win32 -fdump-record-layouts -fsyntax-only -cxx-abi microsoft %s 2>/dev/null \
+// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple x86_64-pc-win32 -fdump-record-layouts -cxx-abi microsoft %s 2>/dev/null \
 // RUN:            | FileCheck %s -check-prefix CHECK-X64
 
 extern "C" int printf(const char *fmt, ...);
@@ -8,7 +8,7 @@ extern "C" int printf(const char *fmt, ...);
 struct B0 { char a; B0() : a(0xB0) {} };
 struct __declspec(align(1)) B1 {};
 
-struct A : virtual B0 {};
+struct A : virtual B0 {} b;
 
 // CHECK: *** Dumping AST Record Layout
 // CHECK:    0 | struct A
