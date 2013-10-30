@@ -1030,7 +1030,7 @@ ValueObject::GetPointeeData (DataExtractor& data,
                     {
                         heap_buf_ptr->SetByteSize(bytes);
                         size_t bytes_read = process->ReadMemory(addr + offset, heap_buf_ptr->GetBytes(), bytes, error);
-                        if (error.Success())
+                        if (error.Success() || bytes_read > 0)
                         {
                             data.SetData(data_sp);
                             return bytes_read;
