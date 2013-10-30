@@ -105,7 +105,7 @@ protected:
     //std::vector<FileSpec> m_device_support_os_dirs;
     
     const char *
-    GetSDKDirectory();
+    GetSDKsDirectory();
 
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformiOSSimulator);

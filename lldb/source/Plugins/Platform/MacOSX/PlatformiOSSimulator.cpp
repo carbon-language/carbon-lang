@@ -162,7 +162,7 @@ void
 PlatformiOSSimulator::GetStatus (Stream &strm)
 {
     Platform::GetStatus (strm);
-    const char *sdk_directory = GetSDKDirectory();
+    const char *sdk_directory = GetSDKsDirectory();
     if (sdk_directory)
         strm.Printf ("  SDK Path: \"%s\"\n", sdk_directory);
     else
@@ -268,7 +268,7 @@ EnumerateDirectoryCallback (void *baton, FileSpec::FileType file_type, const Fil
 
 
 const char *
-PlatformiOSSimulator::GetSDKDirectory()
+PlatformiOSSimulator::GetSDKsDirectory()
 {
     if (m_sdk_directory.empty())
     {
@@ -325,7 +325,7 @@ PlatformiOSSimulator::GetSymbolFile (const FileSpec &platform_file,
     {
         char resolved_path[PATH_MAX];
     
-        const char * sdk_dir = GetSDKDirectory();
+        const char * sdk_dir = GetSDKsDirectory();
         if (sdk_dir)
         {
             ::snprintf (resolved_path, 
