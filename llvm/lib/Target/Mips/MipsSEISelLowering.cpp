@@ -10,6 +10,7 @@
 // Subclass of MipsTargetLowering specialized for mips32/64.
 //
 //===----------------------------------------------------------------------===//
+#define DEBUG_TYPE "mips-isel"
 #include "MipsSEISelLowering.h"
 #include "MipsRegisterInfo.h"
 #include "MipsTargetMachine.h"
@@ -17,6 +18,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
 using namespace llvm;
@@ -795,8 +797,14 @@ MipsSETargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {
     break;
   }
 
-  if (Val.getNode())
+  if (Val.getNode()) {
+    DEBUG(dbgs() << "\nMipsSE DAG Combine:\n";
+          N->printrWithDepth(dbgs(), &DAG);
+          dbgs() << "\n=> \n";
+          Val.getNode()->printrWithDepth(dbgs(), &DAG);
+          dbgs() << "\n");
     return Val;
+  }
 
   return MipsTargetLowering::PerformDAGCombine(N, DCI);
 }
