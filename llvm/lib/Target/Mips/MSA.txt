@@ -43,7 +43,14 @@ splati.w:
         It is not possible to emit splati.w since shf.w covers the same cases.
         shf.w will be emitted instead.
 
-copy_s.w
+copy_s.w:
         On MIPS32, the copy_u.d intrinsic will emit this instruction instead of
         copy_u.w. This is semantically equivalent since the general-purpose
         register file is 32-bits wide.
+
+binsri.[bhwd],  binsli.[bhwd]:
+        These two operations are equivalent to each other with the operands
+        swapped and condition inverted. The compiler may use either one as
+        appropriate.
+        Furthermore, the compiler may use bsel.[bhwd] for some masks that do
+        not survive the legalization process (this is a bug and will be fixed).

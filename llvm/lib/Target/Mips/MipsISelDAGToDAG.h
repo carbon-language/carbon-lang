@@ -96,6 +96,12 @@ private:
   virtual bool selectVSplatSimm5(SDValue N, SDValue &Imm) const;
   /// \brief Select constant vector splats whose value is a power of 2.
   virtual bool selectVSplatUimmPow2(SDValue N, SDValue &Imm) const;
+  /// \brief Select constant vector splats whose value is a run of set bits
+  /// ending at the most significant bit
+  virtual bool selectVSplatMaskL(SDValue N, SDValue &Imm) const;
+  /// \brief Select constant vector splats whose value is a run of set bits
+  /// starting at bit zero.
+  virtual bool selectVSplatMaskR(SDValue N, SDValue &Imm) const;
 
   virtual SDNode *Select(SDNode *N);
 
