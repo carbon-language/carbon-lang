@@ -1114,6 +1114,7 @@ FormatManager::LoadObjCFormatters()
     AddStringSummary(appkit_category_sp,"name:${var.name%S} reason:${var.reason%S}",ConstString("NSException"),appkit_flags);
 
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("NSNumber"), appkit_flags);
+    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "CFNumberRef summary provider", ConstString("CFNumberRef"), appkit_flags);
     AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("__NSCFBoolean"), appkit_flags);
     AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("__NSCFNumber"), appkit_flags);
     AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("NSCFBoolean"), appkit_flags);
