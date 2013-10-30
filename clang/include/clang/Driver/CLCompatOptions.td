@@ -168,10 +168,12 @@ def _SLASH_Zm : CLIgnoredJoined<"Zm">;
 
 // Unsupported:
 
+def _SLASH_arch : CLJoined<"arch:">;
 def _SLASH_bigobj : CLFlag<"bigobj">;
 def _SLASH_EH : CLJoined<"EH">;
 def _SLASH_FA_joined : CLJoined<"FA">;
 def _SLASH_Fd : CLJoined<"Fd">;
+def _SLASH_Fp : CLJoined<"Fp">;
 def _SLASH_fp : CLJoined<"fp">;
 def _SLASH_Gd : CLFlag<"Gd">;
 def _SLASH_GL : CLFlag<"GL">;
@@ -188,6 +190,7 @@ def _SLASH_vmb : CLFlag<"vmb">;
 def _SLASH_vmm : CLFlag<"vmm">;
 def _SLASH_vms : CLFlag<"vms">;
 def _SLASH_vmv : CLFlag<"vmv">;
+def _SLASH_Yu : CLJoined<"Yu">;
 def _SLASH_Za : CLFlag<"Za">;
 def _SLASH_Zc : CLJoined<"Zc:">;
 def _SLASH_ZI : CLFlag<"ZI">;
