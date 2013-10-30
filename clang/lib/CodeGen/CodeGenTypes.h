@@ -16,6 +16,7 @@
 
 #include "CGCall.h"
 #include "clang/AST/GlobalDecl.h"
+#include "clang/CodeGen/CGFunctionInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/Module.h"
 #include <vector>
