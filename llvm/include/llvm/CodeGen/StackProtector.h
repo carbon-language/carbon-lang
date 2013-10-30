@@ -45,7 +45,7 @@ public:
   };
 
   /// A mapping of AllocaInsts to their required SSP layout.
-  typedef ValueMap<const AllocaInst*, SSPLayoutKind> SSPLayoutMap;
+  typedef ValueMap<const AllocaInst *, SSPLayoutKind> SSPLayoutMap;
 
 private:
   const TargetMachine *TM;
@@ -73,7 +73,7 @@ private:
   /// if a variable's reference has been taken.  This set
   /// is maintained to ensure we don't visit the same PHI node multiple
   /// times.
-  SmallPtrSet<const PHINode*, 16> VisitedPHIs;
+  SmallPtrSet<const PHINode *, 16> VisitedPHIs;
 
   /// InsertStackProtectors - Insert code into the prologue and epilogue of
   /// the function.
@@ -102,14 +102,15 @@ private:
   /// RequiresStackProtector - Check whether or not this function needs a
   /// stack protector based upon the stack protector level.
   bool RequiresStackProtector();
+
 public:
-  static char ID;             // Pass identification, replacement for typeid.
+  static char ID; // Pass identification, replacement for typeid.
   StackProtector() : FunctionPass(ID), TM(0), TLI(0), SSPBufferSize(0) {
     initializeStackProtectorPass(*PassRegistry::getPassRegistry());
   }
   StackProtector(const TargetMachine *TM)
-    : FunctionPass(ID), TM(TM), TLI(0), Trip(TM->getTargetTriple()),
-      SSPBufferSize(8) {
+      : FunctionPass(ID), TM(TM), TLI(0), Trip(TM->getTargetTriple()),
+        SSPBufferSize(8) {
     initializeStackProtectorPass(*PassRegistry::getPassRegistry());
   }
 
