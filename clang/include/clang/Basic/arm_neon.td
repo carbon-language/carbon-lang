@@ -169,6 +169,7 @@ class NoTestOpInst<string n, string p, string t, Op o> : Inst<n, p, t, o> {}
 // z: scalar of half width element type, signed
 // r: scalar of double width element type, signed
 // a: scalar of element type (splat to vector type)
+// b: scalar of unsigned integer/long type (int/float args)
 // y: scalar of float
 // o: scalar of double
 // k: default elt width, double num elts
@@ -855,6 +856,29 @@ def SCALAR_CMGT : SInst<"vcgt", "sss", "Sl">;
 def SCALAR_CMGTZ : SInst<"vcgtz", "ss", "Sl">;
 def SCALAR_CMHI : SInst<"vcgt", "sss", "SUl">;
 def SCALAR_CMTST : SInst<"vtst", "sss", "SlSUl">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Floating-point Comparison
+def SCALAR_FCMEQ : IInst<"vceq", "bss", "SfSd">;
+def SCALAR_FCMEQZ : IInst<"vceqz", "bs", "SfSd">;
+def SCALAR_FCMGE : IInst<"vcge", "bss", "SfSd">;
+def SCALAR_FCMGEZ : IInst<"vcgez", "bs", "SfSd">;
+def SCALAR_FCMGT : IInst<"vcgt", "bss", "SfSd">;
+def SCALAR_FCMGTZ : IInst<"vcgtz", "bs", "SfSd">;
+def SCALAR_FCMLE : IInst<"vcle", "bss", "SfSd">;
+def SCALAR_FCMLEZ : IInst<"vclez", "bs", "SfSd">;
+def SCALAR_FCMLT : IInst<"vclt", "bss", "SfSd">;
+def SCALAR_FCMLTZ : IInst<"vcltz", "bs", "SfSd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Floating-point Absolute Compare Mask Greater Than Or Equal
+def SCALAR_FACGE : IInst<"vcage", "bss", "SfSd">;
+def SCALAR_FACLE : IInst<"vcale", "bss", "SfSd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Floating-point Absolute Compare Mask Greater Than
+def SCALAR_FACGT : IInst<"vcagt", "bss", "SfSd">;
+def SCALAR_FACLT : IInst<"vcalt", "bss", "SfSd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Absolute Value

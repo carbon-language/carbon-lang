@@ -442,6 +442,8 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
         usgn = true;
       }
       break;
+    case 'b':
+      scal = true;
     case 'u':
       usgn = true;
       poly = false;
