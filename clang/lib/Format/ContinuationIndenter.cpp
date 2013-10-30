@@ -391,7 +391,8 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
     State.Column = State.Stack.back().Indent;
     // Ensure that we fall back to the continuation indent width instead of just
     // flushing continuations left.
-    if (State.Column == State.FirstIndent)
+    if (State.Column == State.FirstIndent &&
+        PreviousNonComment->isNot(tok::r_brace))
       State.Column += Style.ContinuationIndentWidth;
   }
 

@@ -374,6 +374,13 @@ TEST_F(FormatTest, ElseIf) {
                "  g();\n"
                "else\n"
                "  h();");
+  verifyFormat("if (a) {\n"
+               "  f();\n"
+               "}\n"
+               "// or else ..\n"
+               "else {\n"
+               "  g()\n"
+               "}");
 }
 
 TEST_F(FormatTest, FormatsForLoop) {
