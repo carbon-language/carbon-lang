@@ -1,13 +1,16 @@
 ; PR892
-; RUN: opt < %s -scalarrepl -S | \
-; RUN:   not grep alloca
-; RUN: opt < %s -scalarrepl -S | grep "ret i8"
+; RUN: opt < %s -scalarrepl -S | FileCheck %s
 
-target datalayout = "e-p:32:32-n8:16:32"
+
+target datalayout = "e-p:32:32-p1:16:16-n8:16:32"
 target triple = "i686-apple-darwin8.7.2"
-	%struct.Val = type { i32*, i32 }
+
+%struct.Val = type { i32*, i32 }
 
 define i8* @test(i16* %X) {
+; CHECK-LABEL: @test(
+; CHECK-NOT: alloca
+; CHECK: ret i8*
 	%X_addr = alloca i16*		; <i16**> [#uses=2]
 	store i16* %X, i16** %X_addr
 	%X_addr.upgrd.1 = bitcast i16** %X_addr to i8**		; <i8**> [#uses=1]
@@ -15,7 +18,37 @@ define i8* @test(i16* %X) {
 	ret i8* %tmp
 }
 
+define i8 addrspace(1)* @test_as1(i16 addrspace(1)* %x) {
+; CHECK-LABEL: @test_as1(
+; CHECK-NEXT: %1 = ptrtoint i16 addrspace(1)* %x to i16
+; CHECK-NEXT: %2 = inttoptr i16 %1 to i8 addrspace(1)*
+; CHECK-NEXT: ret i8 addrspace(1)* %2
+    %x_addr = alloca i16 addrspace(1)*
+	store i16 addrspace(1)* %x, i16 addrspace(1)** %x_addr
+	%x_addr.upgrd.1 = bitcast i16 addrspace(1)** %x_addr to i8 addrspace(1)**
+	%tmp = load i8 addrspace(1)** %x_addr.upgrd.1
+	ret i8 addrspace(1)* %tmp
+}
+
+define i8 addrspace(1)* @test_as1_array(i16 addrspace(1)* %x) {
+; CHECK-LABEL: @test_as1_array(
+; CHECK-NEXT: %1 = ptrtoint i16 addrspace(1)* %x to i16
+; CHECK-NEXT: %2 = inttoptr i16 %1 to i8 addrspace(1)*
+; CHECK-NEXT: ret i8 addrspace(1)* %2
+  %as_ptr_array = alloca [4 x i16 addrspace(1)*]
+  %elem1 = getelementptr [4 x i16 addrspace(1)*]* %as_ptr_array, i32 0, i32 1
+  store i16 addrspace(1)* %x, i16 addrspace(1)** %elem1
+  %elem1.cast = bitcast i16 addrspace(1)** %elem1 to i8 addrspace(1)**
+  %tmp = load i8 addrspace(1)** %elem1.cast
+  ret i8 addrspace(1)* %tmp
+}
+
+
 define void @test2(i64 %Op.0) {
+; CHECK-LABEL: @test2(
+; CHECK-NOT: alloca
+; CHECK: ret void
+
 	%tmp = alloca %struct.Val, align 8		; <%struct.Val*> [#uses=3]
 	%tmp1 = alloca %struct.Val, align 8		; <%struct.Val*> [#uses=3]
 	%tmp.upgrd.2 = call i64 @_Z3foov( )		; <i64> [#uses=1]
