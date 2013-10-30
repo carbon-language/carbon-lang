@@ -21,7 +21,6 @@ class FrameAPITestCase(TestBase):
         self.buildDsym()
         self.do_get_arg_vals()
 
-    @expectedFailurei386 # llvm.org/pr17385: registers are unavailable above frame 0 in the inferior including pc
     @python_api_test
     @dwarf_test
     def test_get_arg_vals_for_call_stack_with_dwarf(self):
