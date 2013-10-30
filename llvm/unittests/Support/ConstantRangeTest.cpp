@@ -216,6 +216,9 @@ TEST_F(ConstantRangeTest, SExt) {
 
   EXPECT_EQ(ConstantRange(APInt(8, 120), APInt(8, 140)).signExtend(16),
             ConstantRange(APInt(16, -128), APInt(16, 128)));
+
+  EXPECT_EQ(ConstantRange(APInt(16, 0x0200), APInt(16, 0x8000)).signExtend(19),
+            ConstantRange(APInt(19, 0x0200), APInt(19, 0x8000)));
 }
 
 TEST_F(ConstantRangeTest, IntersectWith) {
