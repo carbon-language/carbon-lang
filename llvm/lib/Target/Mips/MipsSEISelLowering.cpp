@@ -1561,6 +1561,17 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_slli_d:
     return DAG.getNode(ISD::SHL, DL, Op->getValueType(0),
                        Op->getOperand(1), lowerMSASplatImm(Op, 2, DAG));
+  case Intrinsic::mips_splat_b:
+  case Intrinsic::mips_splat_h:
+  case Intrinsic::mips_splat_w:
+  case Intrinsic::mips_splat_d:
+    // We can't lower via VECTOR_SHUFFLE because it requires constant shuffle
+    // masks, nor can we lower via BUILD_VECTOR & EXTRACT_VECTOR_ELT because
+    // EXTRACT_VECTOR_ELT can't extract i64's on MIPS32.
+    // Instead we lower to MipsISD::VSHF and match from there.
+    return DAG.getNode(MipsISD::VSHF, DL, Op->getValueType(0),
+                       lowerMSASplatImm(Op, 2, DAG), Op->getOperand(1),
+                       Op->getOperand(1));
   case Intrinsic::mips_splati_b:
   case Intrinsic::mips_splati_h:
   case Intrinsic::mips_splati_w:

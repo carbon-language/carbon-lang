@@ -224,6 +224,15 @@ def vsplatf32 : PatFrag<(ops node:$e0),
 def vsplatf64 : PatFrag<(ops node:$e0),
                         (v2f64 (build_vector node:$e0, node:$e0))>;
 
+def vsplati8_elt  : PatFrag<(ops node:$v, node:$i),
+                            (MipsVSHF (vsplati8 node:$i), node:$v, node:$v)>;
+def vsplati16_elt : PatFrag<(ops node:$v, node:$i),
+                            (MipsVSHF (vsplati16 node:$i), node:$v, node:$v)>;
+def vsplati32_elt : PatFrag<(ops node:$v, node:$i),
+                            (MipsVSHF (vsplati32 node:$i), node:$v, node:$v)>;
+def vsplati64_elt : PatFrag<(ops node:$v, node:$i),
+                            (MipsVSHF (vsplati64 node:$i), node:$v, node:$v)>;
+
 class SplatPatLeaf<Operand opclass, dag frag, code pred = [{}],
                    SDNodeXForm xform = NOOP_SDNodeXForm>
   : PatLeaf<frag, pred, xform> {
@@ -1212,6 +1221,16 @@ class MSA_3R_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   InstrItinClass Itinerary = itin;
 }
 
+class MSA_3R_SPLAT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                             RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
+                             InstrItinClass itin = NoItinerary> {
+  dag OutOperandList = (outs ROWD:$wd);
+  dag InOperandList = (ins ROWS:$ws, GPR32:$rt);
+  string AsmString = !strconcat(instr_asm, "\t$wd, $ws[$rt]");
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, GPR32:$rt))];
+  InstrItinClass Itinerary = itin;
+}
+
 class MSA_3R_VSHF_DESC_BASE<string instr_asm, RegisterOperand ROWD,
                             RegisterOperand ROWS = ROWD,
                             RegisterOperand ROWT = ROWD,
@@ -1225,14 +1244,13 @@ class MSA_3R_VSHF_DESC_BASE<string instr_asm, RegisterOperand ROWD,
   InstrItinClass Itinerary = itin;
 }
 
-class MSA_3R_INDEX_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                             RegisterOperand ROWD, RegisterOperand ROWS,
-                             RegisterOperand RORT,
-                             InstrItinClass itin = NoItinerary> {
+class MSA_3R_SLD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                           RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
+                           InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs ROWD:$wd);
-  dag InOperandList = (ins ROWS:$ws, RORT:$rt);
+  dag InOperandList = (ins ROWS:$ws, GPR32:$rt);
   string AsmString = !strconcat(instr_asm, "\t$wd, $ws[$rt]");
-  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, RORT:$rt))];
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, GPR32:$rt))];
   InstrItinClass Itinerary = itin;
 }
 
@@ -2271,14 +2289,10 @@ class SHF_B_DESC : MSA_I8_SHF_DESC_BASE<"shf.b", MSA128BOpnd>;
 class SHF_H_DESC : MSA_I8_SHF_DESC_BASE<"shf.h", MSA128HOpnd>;
 class SHF_W_DESC : MSA_I8_SHF_DESC_BASE<"shf.w", MSA128WOpnd>;
 
-class SLD_B_DESC : MSA_3R_INDEX_DESC_BASE<"sld.b", int_mips_sld_b, MSA128BOpnd,
-                                          MSA128BOpnd, GPR32Opnd>;
-class SLD_H_DESC : MSA_3R_INDEX_DESC_BASE<"sld.h", int_mips_sld_h, MSA128HOpnd,
-                                          MSA128HOpnd, GPR32Opnd>;
-class SLD_W_DESC : MSA_3R_INDEX_DESC_BASE<"sld.w", int_mips_sld_w, MSA128WOpnd,
-                                          MSA128WOpnd, GPR32Opnd>;
-class SLD_D_DESC : MSA_3R_INDEX_DESC_BASE<"sld.d", int_mips_sld_d, MSA128DOpnd,
-                                          MSA128DOpnd, GPR32Opnd>;
+class SLD_B_DESC : MSA_3R_SLD_DESC_BASE<"sld.b", int_mips_sld_b, MSA128BOpnd>;
+class SLD_H_DESC : MSA_3R_SLD_DESC_BASE<"sld.h", int_mips_sld_h, MSA128HOpnd>;
+class SLD_W_DESC : MSA_3R_SLD_DESC_BASE<"sld.w", int_mips_sld_w, MSA128WOpnd>;
+class SLD_D_DESC : MSA_3R_SLD_DESC_BASE<"sld.d", int_mips_sld_d, MSA128DOpnd>;
 
 class SLDI_B_DESC : MSA_ELM_DESC_BASE<"sldi.b", int_mips_sldi_b, MSA128BOpnd>;
 class SLDI_H_DESC : MSA_ELM_DESC_BASE<"sldi.h", int_mips_sldi_h, MSA128HOpnd>;
@@ -2299,18 +2313,14 @@ class SLLI_W_DESC : MSA_BIT_SPLAT_DESC_BASE<"slli.w", shl, vsplati32_uimm5,
 class SLLI_D_DESC : MSA_BIT_SPLAT_DESC_BASE<"slli.d", shl, vsplati64_uimm6,
                                             MSA128DOpnd>;
 
-class SPLAT_B_DESC : MSA_3R_INDEX_DESC_BASE<"splat.b", int_mips_splat_b,
-                                            MSA128BOpnd, MSA128BOpnd,
-                                            GPR32Opnd>;
-class SPLAT_H_DESC : MSA_3R_INDEX_DESC_BASE<"splat.h", int_mips_splat_h,
-                                            MSA128HOpnd, MSA128HOpnd,
-                                            GPR32Opnd>;
-class SPLAT_W_DESC : MSA_3R_INDEX_DESC_BASE<"splat.w", int_mips_splat_w,
-                                            MSA128WOpnd, MSA128WOpnd,
-                                            GPR32Opnd>;
-class SPLAT_D_DESC : MSA_3R_INDEX_DESC_BASE<"splat.d", int_mips_splat_d,
-                                            MSA128DOpnd, MSA128DOpnd,
-                                            GPR32Opnd>;
+class SPLAT_B_DESC : MSA_3R_SPLAT_DESC_BASE<"splat.b", vsplati8_elt,
+                                            MSA128BOpnd>;
+class SPLAT_H_DESC : MSA_3R_SPLAT_DESC_BASE<"splat.h", vsplati16_elt,
+                                            MSA128HOpnd>;
+class SPLAT_W_DESC : MSA_3R_SPLAT_DESC_BASE<"splat.w", vsplati32_elt,
+                                            MSA128WOpnd>;
+class SPLAT_D_DESC : MSA_3R_SPLAT_DESC_BASE<"splat.d", vsplati64_elt,
+                                            MSA128DOpnd>;
 
 class SPLATI_B_DESC : MSA_ELM_SPLAT_DESC_BASE<"splati.b", vsplati8_uimm4,
                                               MSA128BOpnd>;

@@ -21,6 +21,12 @@ vshf.w:
         unknown at compile-time due to the definition of shufflevector in
         LLVM IR.
 
+vshf.[bhwd]
+        When the shuffle description describes a splat operation, splat.[bhwd]
+        instructions will be selected instead of vshf.[bhwd]. Unlike the ilv*,
+        and pck* instructions, this is matched from MipsISD::VSHF instead of
+        a special-case MipsISD node.
+
 ilvl.d, pckev.d:
         It is not possible to emit ilvl.d, or pckev.d since ilvev.d covers the
         same shuffle. ilvev.d will be emitted instead.
@@ -28,6 +34,10 @@ ilvl.d, pckev.d:
 ilvr.d, ilvod.d, pckod.d:
         It is not possible to emit ilvr.d, or pckod.d since ilvod.d covers the
         same shuffle. ilvod.d will be emitted instead.
+
+splat.[bhwd]
+        The intrinsic will work as expected. However, unlike other intrinsics
+        it lowers directly to MipsISD::VSHF instead of using common IR.
 
 splati.w:
         It is not possible to emit splati.w since shf.w covers the same cases.
