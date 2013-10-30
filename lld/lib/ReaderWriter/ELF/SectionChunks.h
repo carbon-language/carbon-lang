@@ -26,6 +26,7 @@
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
@@ -1283,6 +1284,52 @@ private:
   std::vector<uint32_t> _buckets;
   std::vector<uint32_t> _chains;
   const DynamicSymbolTable<ELFT> *_symbolTable;
+};
+
+template <class ELFT> class EHFrameHeader : public Section<ELFT> {
+public:
+  EHFrameHeader(const ELFLinkingContext &context, StringRef name, int32_t order)
+      : Section<ELFT>(context, name) {
+    this->setOrder(order);
+    this->_entSize = 0;
+    this->_type = SHT_PROGBITS;
+    this->_flags = SHF_ALLOC;
+    // Set the alignment properly depending on the target architecture
+    if (context.is64Bits())
+      this->_align2 = 8;
+    else
+      this->_align2 = 4;
+    // Minimum size for empty .eh_frame_hdr.
+    this->_fsize = 1 + 1 + 1 + 1 + 4;
+    this->_msize = this->_fsize;
+  }
+
+  virtual void doPreFlight() LLVM_OVERRIDE {
+    // TODO: Generate a proper binary search table.
+  }
+
+  virtual void finalize() LLVM_OVERRIDE {
+    MergedSections<ELFT> *s = this->_context.template getTargetHandler<ELFT>()
+                                  .targetLayout()
+                                  .findOutputSection(".eh_frame");
+    _ehFrameAddr = s ? s->virtualAddr() : 0;
+  }
+
+  virtual void write(ELFWriter *writer,
+                     llvm::FileOutputBuffer &buffer) LLVM_OVERRIDE {
+    uint8_t *chunkBuffer = buffer.getBufferStart();
+    uint8_t *dest = chunkBuffer + this->fileOffset();
+    int pos = 0;
+    dest[pos++] = 1; // version
+    dest[pos++] = llvm::dwarf::DW_EH_PE_udata4; // eh_frame_ptr_enc
+    dest[pos++] = llvm::dwarf::DW_EH_PE_omit; // fde_count_enc
+    dest[pos++] = llvm::dwarf::DW_EH_PE_omit; // table_enc
+    *reinterpret_cast<typename llvm::object::ELFFile<ELFT>::Elf_Word *>(
+         dest + pos) = (uint32_t)_ehFrameAddr;
+  }
+
+private:
+  uint64_t _ehFrameAddr;
 };
 } // end namespace elf
 } // end namespace lld

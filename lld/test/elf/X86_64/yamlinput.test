@@ -16,7 +16,7 @@ SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 1
-SECTIONS:     Name: .interp (1)
+SECTIONS:     Name: .interp
 SECTIONS:     Type: SHT_PROGBITS (0x1)
 SECTIONS:     Flags [ (0x2)
 SECTIONS:       SHF_ALLOC (0x2)
@@ -24,7 +24,7 @@ SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 2
-SECTIONS:     Name: .hash (9)
+SECTIONS:     Name: .hash
 SECTIONS:     Type: SHT_HASH (0x5)
 SECTIONS:     Flags [ (0x2)
 SECTIONS:       SHF_ALLOC (0x2)
@@ -32,7 +32,7 @@ SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 3
-SECTIONS:     Name: .dynsym (15)
+SECTIONS:     Name: .dynsym
 SECTIONS:     Type: SHT_DYNSYM (0xB)
 SECTIONS:     Flags [ (0x2)
 SECTIONS:       SHF_ALLOC (0x2)
@@ -40,7 +40,7 @@ SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 4
-SECTIONS:     Name: .dynstr (23)
+SECTIONS:     Name: .dynstr
 SECTIONS:     Type: SHT_STRTAB (0x3)
 SECTIONS:     Flags [ (0x2)
 SECTIONS:       SHF_ALLOC (0x2)
@@ -48,7 +48,7 @@ SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 5
-SECTIONS:     Name: .text (31)
+SECTIONS:     Name: .text
 SECTIONS:     Type: SHT_PROGBITS (0x1)
 SECTIONS:     Flags [ (0x6)
 SECTIONS:       SHF_ALLOC (0x2)
@@ -57,7 +57,7 @@ SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 6
-SECTIONS:     Name: .rodata (37)
+SECTIONS:     Name: .rodata
 SECTIONS:     Type: SHT_PROGBITS (0x1)
 SECTIONS:     Flags [ (0x2)
 SECTIONS:       SHF_ALLOC (0x2)
@@ -65,7 +65,7 @@ SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 7
-SECTIONS:     Name: .eh_frame (45)
+SECTIONS:     Name: .eh_frame
 SECTIONS:     Type: SHT_PROGBITS (0x1)
 SECTIONS:     Flags [ (0x2)
 SECTIONS:       SHF_ALLOC (0x2)
@@ -73,16 +73,11 @@ SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 8
-SECTIONS:     Name: .init_array (55)
-SECTIONS:     Type: SHT_PROGBITS (0x1)
-SECTIONS:     Flags [ (0x3)
-SECTIONS:       SHF_ALLOC (0x2)
-SECTIONS:       SHF_WRITE (0x1)
-SECTIONS:     ]
+SECTIONS:     Name: .eh_frame_hdr
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 9
-SECTIONS:     Name: .fini_array (67)
+SECTIONS:     Name: .init_array
 SECTIONS:     Type: SHT_PROGBITS (0x1)
 SECTIONS:     Flags [ (0x3)
 SECTIONS:       SHF_ALLOC (0x2)
@@ -91,7 +86,7 @@ SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 10
-SECTIONS:     Name: .dynamic (79)
+SECTIONS:     Name: .fini_array
 SECTIONS:     Type: SHT_PROGBITS (0x1)
 SECTIONS:     Flags [ (0x3)
 SECTIONS:       SHF_ALLOC (0x2)
@@ -100,7 +95,7 @@ SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 11
-SECTIONS:     Name: .got.plt (88)
+SECTIONS:     Name: .dynamic
 SECTIONS:     Type: SHT_PROGBITS (0x1)
 SECTIONS:     Flags [ (0x3)
 SECTIONS:       SHF_ALLOC (0x2)
@@ -109,7 +104,7 @@ SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 12
-SECTIONS:     Name: .data (97)
+SECTIONS:     Name: .got.plt
 SECTIONS:     Type: SHT_PROGBITS (0x1)
 SECTIONS:     Flags [ (0x3)
 SECTIONS:       SHF_ALLOC (0x2)
@@ -118,8 +113,8 @@ SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 13
-SECTIONS:     Name: .bss (103)
-SECTIONS:     Type: SHT_NOBITS (0x8)
+SECTIONS:     Name: .data
+SECTIONS:     Type: SHT_PROGBITS (0x1)
 SECTIONS:     Flags [ (0x3)
 SECTIONS:       SHF_ALLOC (0x2)
 SECTIONS:       SHF_WRITE (0x1)
@@ -127,35 +122,44 @@ SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 14
-SECTIONS:     Name: .comment (108)
-SECTIONS:     Type: SHT_PROGBITS (0x1)
-SECTIONS:     Flags [ (0x0)
+SECTIONS:     Name: .bss
+SECTIONS:     Type: SHT_NOBITS (0x8)
+SECTIONS:     Flags [ (0x3)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:       SHF_WRITE (0x1)
 SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 15
-SECTIONS:     Name: .note.GNU-stack (117)
+SECTIONS:     Name: .comment
 SECTIONS:     Type: SHT_PROGBITS (0x1)
 SECTIONS:     Flags [ (0x0)
 SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 16
-SECTIONS:     Name: .shstrtab (133)
-SECTIONS:     Type: SHT_STRTAB (0x3)
+SECTIONS:     Name: .note.GNU-stack
+SECTIONS:     Type: SHT_PROGBITS (0x1)
 SECTIONS:     Flags [ (0x0)
 SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 17
-SECTIONS:     Name: .symtab (143)
-SECTIONS:     Type: SHT_SYMTAB (0x2)
+SECTIONS:     Name: .shstrtab
+SECTIONS:     Type: SHT_STRTAB (0x3)
 SECTIONS:     Flags [ (0x0)
 SECTIONS:     ]
 SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 18
-SECTIONS:     Name: .strtab (151)
+SECTIONS:     Name: .symtab
+SECTIONS:     Type: SHT_SYMTAB (0x2)
+SECTIONS:     Flags [ (0x0)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 19
+SECTIONS:     Name: .strtab
 SECTIONS:     Type: SHT_STRTAB (0x3)
 SECTIONS:     Flags [ (0x0)
 SECTIONS:     ]

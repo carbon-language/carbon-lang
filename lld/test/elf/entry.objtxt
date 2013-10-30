@@ -11,7 +11,7 @@
 # RUN: lld -flavor gnu %s -e _entrypoint --noinhibit-exec -o %t1 
 # RUN: llvm-nm -n %t1 | FileCheck %s
 # 
-# CHECK:  004001b0 T main
+# CHECK:  004001e0 T main
 # CHECK:  00401080 D _DYNAMIC
 # CHECK:  00401080 A _end
 # CHECK:  00401080 A end

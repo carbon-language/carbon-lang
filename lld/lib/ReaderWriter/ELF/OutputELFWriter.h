@@ -105,6 +105,7 @@ protected:
   LLD_UNIQUE_BUMP_PTR(StringTable<ELFT>) _strtab;
   LLD_UNIQUE_BUMP_PTR(StringTable<ELFT>) _shstrtab;
   LLD_UNIQUE_BUMP_PTR(SectionHeader<ELFT>) _shdrtab;
+  LLD_UNIQUE_BUMP_PTR(EHFrameHeader<ELFT>) _ehFrameHeader;
   /// \name Dynamic sections.
   /// @{
   LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) _dynamicTable;
@@ -266,6 +267,15 @@ template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
   _shdrtab->setStringSection(_shstrtab.get());
   _symtab->setStringSection(_strtab.get());
   _layout->addSection(_shdrtab.get());
+
+  for (auto sec : _layout->sections()) {
+    if (sec->name() != ".eh_frame")
+      continue;
+    _ehFrameHeader.reset(new (_alloc) EHFrameHeader<ELFT>(
+        _context, ".eh_frame_hdr", DefaultLayout<ELFT>::ORDER_EH_FRAMEHDR));
+    _layout->addSection(_ehFrameHeader.get());
+    break;
+  }
 
   if (_context.isDynamic()) {
     _dynamicTable.reset(new (_alloc) DynamicTable<ELFT>(

@@ -439,7 +439,6 @@ Layout::SegmentType DefaultLayout<ELFT>::getSegmentType(
   case ORDER_FINI:
   case ORDER_RODATA:
   case ORDER_EH_FRAME:
-  case ORDER_EH_FRAMEHDR:
     return llvm::ELF::PT_LOAD;
 
   case ORDER_RO_NOTE:
@@ -452,6 +451,9 @@ Layout::SegmentType DefaultLayout<ELFT>::getSegmentType(
   case ORDER_CTORS:
   case ORDER_DTORS:
     return llvm::ELF::PT_GNU_RELRO;
+
+  case ORDER_EH_FRAMEHDR:
+    return llvm::ELF::PT_GNU_EH_FRAME;
 
   case ORDER_GOT:
   case ORDER_GOT_PLT:

@@ -1,0 +1,26 @@
+#RUN: yaml2obj -format=elf %s > %t
+#RUN: lld -flavor gnu -target x86_64-linux %t --noinhibit-exec \
+#RUN:   -o %t1
+#RUN: llvm-readobj -s %t1 | FileCheck %s
+
+!ELF
+FileHeader:
+  Class: ELFCLASS64
+  Data: ELFDATA2LSB
+  Type: ET_REL
+  Machine: EM_X86_64
+
+Sections:
+- Name: .eh_frame
+  Type: SHT_PROGBITS
+  Content: "00"
+  AddressAlign: 8
+  Flags: [SHF_ALLOC]
+
+Symbols:
+  Local:
+  - Name: .eh_frame
+    Type: STT_SECTION
+    Section: .eh_frame
+
+#CHECK: .eh_frame_hdr

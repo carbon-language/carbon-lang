@@ -7,8 +7,8 @@ RUN: --noinhibit-exec -static
 
 RUN: llvm-nm -n %t | FileCheck -check-prefix=SYMBOLSORDER %s
 
-SYMBOLSORDER: 004000b0 T main
-SYMBOLSORDER: 004000c5 T b
-SYMBOLSORDER: 004000d0 T a
-SYMBOLSORDER: 004000db T c
-SYMBOLSORDER: 004000e8 T d
+SYMBOLSORDER: {{[A-Fa-f0-9]+}} T main
+SYMBOLSORDER: {{[A-Fa-f0-9]+}} T b
+SYMBOLSORDER: {{[A-Fa-f0-9]+}} T a
+SYMBOLSORDER: {{[A-Fa-f0-9]+}} T c
+SYMBOLSORDER: {{[A-Fa-f0-9]+}} T d
