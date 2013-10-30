@@ -1253,13 +1253,13 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
     return DAG.getMergeValues(MergedValues, 2, DL);
   }
 
-  // For most operations returning SDValue() will result int he node being
-  // expanded by the DAG Legalizer.  This is not the case for ISD::LOAD, so
-  // we need to manually expand loads that may be legal in some address spaces
-  // and illegal in others.  SEXT loads from CONSTANT_BUFFER_0 are supported
-  // for compute shaders, since the data is sign extended when it is uploaded
-  // to the buffer.  Howerver SEXT loads from other addresspaces are not
-  // supported, so we need to expand them here.
+  // For most operations returning SDValue() will result in the node being
+  // expanded by the DAG Legalizer. This is not the case for ISD::LOAD, so we
+  // need to manually expand loads that may be legal in some address spaces and
+  // illegal in others. SEXT loads from CONSTANT_BUFFER_0 are supported for
+  // compute shaders, since the data is sign extended when it is uploaded to the
+  // buffer. However SEXT loads from other address spaces are not supported, so
+  // we need to expand them here.
   if (LoadNode->getExtensionType() == ISD::SEXTLOAD) {
     EVT MemVT = LoadNode->getMemoryVT();
     assert(!MemVT.isVector() && (MemVT == MVT::i16 || MemVT == MVT::i8));
