@@ -668,8 +668,7 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
                "#include \"a/b/c\" // comment");
   verifyFormat("#include <a>     // comment\n"
                "#include <a/b/c> // comment");
-  EXPECT_EQ("#include \\\n"
-            "  \"a\"            // comment\n"
+  EXPECT_EQ("#include \"a\"     // comment\n"
             "#include \"a/b/c\" // comment",
             format("#include \\\n"
                    "  \"a\" // comment\n"
@@ -4295,6 +4294,8 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
                "#include \"some long include\" // with a comment\n"
                "#include \"some very long include paaaaaaaaaaaaaaaaaaaaaaath\"",
                getLLVMStyleWithColumns(35));
+  EXPECT_EQ("#include \"a.h\"", format("#include  \"a.h\""));
+  EXPECT_EQ("#include <a>", format("#include<a>"));
 
   verifyFormat("#import <string>");
   verifyFormat("#import <a/b/c.h>");

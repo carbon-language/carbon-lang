@@ -202,7 +202,11 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
                                                unsigned ExtraSpaces) {
   const FormatToken &Current = *State.NextToken;
 
-  if (State.Stack.size() == 0 || Current.Type == TT_ImplicitStringLiteral) {
+  if (State.Stack.size() == 0 ||
+      (Current.Type == TT_ImplicitStringLiteral &&
+       (Current.Previous->Tok.getIdentifierInfo() == NULL ||
+        Current.Previous->Tok.getIdentifierInfo()->getPPKeywordID() ==
+            tok::pp_not_keyword))) {
     // FIXME: Is this correct?
     int WhitespaceLength = SourceMgr.getSpellingColumnNumber(
                                State.NextToken->WhitespaceRange.getEnd()) -
@@ -699,6 +703,10 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
   // update the state.
   if (Current.Type != TT_BlockComment && Current.IsMultiline)
     return addMultilineToken(Current, State);
+
+  // Don't break implicit string literals.
+  if (Current.Type == TT_ImplicitStringLiteral)
+    return 0;
 
   if (!Current.isOneOf(tok::string_literal, tok::wide_string_literal,
                        tok::utf8_string_literal, tok::utf16_string_literal,

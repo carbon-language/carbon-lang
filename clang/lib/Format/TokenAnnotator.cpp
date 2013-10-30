@@ -1450,7 +1450,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
                                   Left.Previous->Type == TT_CastRParen))
       return false;
   }
-
+  if (Right.Type == TT_ImplicitStringLiteral)
+    return false;
   if (Right.isTrailingComment())
     // We rely on MustBreakBefore being set correctly here as we should not
     // change the "binding" behavior of a comment.
