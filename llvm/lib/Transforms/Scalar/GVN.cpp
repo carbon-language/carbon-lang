@@ -1088,14 +1088,15 @@ static int AnalyzeLoadFromClobberingMemInst(Type *LoadTy, Value *LoadPtr,
   if (Offset == -1)
     return Offset;
 
+  unsigned AS = Src->getType()->getPointerAddressSpace();
   // Otherwise, see if we can constant fold a load from the constant with the
   // offset applied as appropriate.
   Src = ConstantExpr::getBitCast(Src,
-                                 llvm::Type::getInt8PtrTy(Src->getContext()));
+                                 Type::getInt8PtrTy(Src->getContext(), AS));
   Constant *OffsetCst =
     ConstantInt::get(Type::getInt64Ty(Src->getContext()), (unsigned)Offset);
   Src = ConstantExpr::getGetElementPtr(Src, OffsetCst);
-  Src = ConstantExpr::getBitCast(Src, PointerType::getUnqual(LoadTy));
+  Src = ConstantExpr::getBitCast(Src, PointerType::get(LoadTy, AS));
   if (ConstantFoldLoadFromConstPtr(Src, &TD))
     return Offset;
   return -1;
@@ -1247,15 +1248,16 @@ static Value *GetMemInstValueForLoad(MemIntrinsic *SrcInst, unsigned Offset,
   // Otherwise, this is a memcpy/memmove from a constant global.
   MemTransferInst *MTI = cast<MemTransferInst>(SrcInst);
   Constant *Src = cast<Constant>(MTI->getSource());
+  unsigned AS = Src->getType()->getPointerAddressSpace();
 
   // Otherwise, see if we can constant fold a load from the constant with the
   // offset applied as appropriate.
   Src = ConstantExpr::getBitCast(Src,
-                                 llvm::Type::getInt8PtrTy(Src->getContext()));
+                                 Type::getInt8PtrTy(Src->getContext(), AS));
   Constant *OffsetCst =
-  ConstantInt::get(Type::getInt64Ty(Src->getContext()), (unsigned)Offset);
+    ConstantInt::get(Type::getInt64Ty(Src->getContext()), (unsigned)Offset);
   Src = ConstantExpr::getGetElementPtr(Src, OffsetCst);
-  Src = ConstantExpr::getBitCast(Src, PointerType::getUnqual(LoadTy));
+  Src = ConstantExpr::getBitCast(Src, PointerType::get(LoadTy, AS));
   return ConstantFoldLoadFromConstPtr(Src, &TD);
 }
 
