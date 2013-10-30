@@ -93,6 +93,7 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
     addMSAFloatType(MVT::v2f64, &Mips::MSA128DRegClass);
 
     setTargetDAGCombine(ISD::AND);
+    setTargetDAGCombine(ISD::OR);
     setTargetDAGCombine(ISD::SRA);
     setTargetDAGCombine(ISD::VSELECT);
     setTargetDAGCombine(ISD::XOR);
@@ -487,6 +488,110 @@ static SDValue performANDCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+// Determine if the specified node is a constant vector splat.
+//
+// Returns true and sets Imm if:
+// * N is a ISD::BUILD_VECTOR representing a constant splat
+//
+// This function is quite similar to MipsSEDAGToDAGISel::selectVSplat. The
+// differences are that it assumes the MSA has already been checked and the
+// arbitrary requirement for a maximum of 32-bit integers isn't applied (and
+// must not be in order for binsri.d to be selectable).
+static bool isVSplat(SDValue N, APInt &Imm, bool IsLittleEndian) {
+  BuildVectorSDNode *Node = dyn_cast<BuildVectorSDNode>(N.getNode());
+
+  if (Node == NULL)
+    return false;
+
+  APInt SplatValue, SplatUndef;
+  unsigned SplatBitSize;
+  bool HasAnyUndefs;
+
+  if (!Node->isConstantSplat(SplatValue, SplatUndef, SplatBitSize, HasAnyUndefs,
+                             8, !IsLittleEndian))
+    return false;
+
+  Imm = SplatValue;
+
+  return true;
+}
+
+// Perform combines where ISD::OR is the root node.
+//
+// Performs the following transformations:
+// - (or (and $a, $mask), (and $b, $inv_mask)) => (vselect $mask, $a, $b)
+//   where $inv_mask is the bitwise inverse of $mask and the 'or' has a 128-bit
+//   vector type.
+static SDValue performORCombine(SDNode *N, SelectionDAG &DAG,
+                                TargetLowering::DAGCombinerInfo &DCI,
+                                const MipsSubtarget *Subtarget) {
+  if (!Subtarget->hasMSA())
+    return SDValue();
+
+  EVT Ty = N->getValueType(0);
+
+  if (!Ty.is128BitVector())
+    return SDValue();
+
+  SDValue Op0 = N->getOperand(0);
+  SDValue Op1 = N->getOperand(1);
+
+  if (Op0->getOpcode() == ISD::AND && Op1->getOpcode() == ISD::AND) {
+    SDValue Op0Op0 = Op0->getOperand(0);
+    SDValue Op0Op1 = Op0->getOperand(1);
+    SDValue Op1Op0 = Op1->getOperand(0);
+    SDValue Op1Op1 = Op1->getOperand(1);
+    bool IsLittleEndian = !Subtarget->isLittle();
+
+    SDValue IfSet, IfClr, Cond;
+    APInt Mask, InvMask;
+
+    // If Op0Op0 is an appropriate mask, try to find it's inverse in either
+    // Op1Op0, or Op1Op1. Keep track of the Cond, IfSet, and IfClr nodes, while
+    // looking.
+    // IfClr will be set if we find a valid match.
+    if (isVSplat(Op0Op0, Mask, IsLittleEndian)) {
+      Cond = Op0Op0;
+      IfSet = Op0Op1;
+
+      if (isVSplat(Op1Op0, InvMask, IsLittleEndian) && Mask == ~InvMask)
+        IfClr = Op1Op1;
+      else if (isVSplat(Op1Op1, InvMask, IsLittleEndian) && Mask == ~InvMask)
+        IfClr = Op1Op0;
+    }
+
+    // If IfClr is not yet set, and Op0Op1 is an appropriate mask, try the same
+    // thing again using this mask.
+    // IfClr will be set if we find a valid match.
+    if (!IfClr.getNode() && isVSplat(Op0Op1, Mask, IsLittleEndian)) {
+      Cond = Op0Op1;
+      IfSet = Op0Op0;
+
+      if (isVSplat(Op1Op0, InvMask, IsLittleEndian) && Mask == ~InvMask)
+        IfClr = Op1Op1;
+      else if (isVSplat(Op1Op1, InvMask, IsLittleEndian) && Mask == ~InvMask)
+        IfClr = Op1Op0;
+    }
+
+    // At this point, IfClr will be set if we have a valid match.
+    if (!IfClr.getNode())
+      return SDValue();
+
+    assert(Cond.getNode() && IfSet.getNode());
+
+    // Fold degenerate cases.
+    if (Mask.isAllOnesValue())
+      return IfSet;
+    else if (Mask == 0)
+      return IfClr;
+
+    // Transform the DAG into an equivalent VSELECT.
+    return DAG.getNode(ISD::VSELECT, SDLoc(N), Ty, Cond, IfClr, IfSet);
+  }
+
+  return SDValue();
+}
+
 static SDValue performSUBECombine(SDNode *N, SelectionDAG &DAG,
                                   TargetLowering::DAGCombinerInfo &DCI,
                                   const MipsSubtarget *Subtarget) {
@@ -776,6 +881,9 @@ MipsSETargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {
     return performADDECombine(N, DAG, DCI, Subtarget);
   case ISD::AND:
     Val = performANDCombine(N, DAG, DCI, Subtarget);
+    break;
+  case ISD::OR:
+    Val = performORCombine(N, DAG, DCI, Subtarget);
     break;
   case ISD::SUBE:
     return performSUBECombine(N, DAG, DCI, Subtarget);
