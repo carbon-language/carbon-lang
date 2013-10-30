@@ -30,12 +30,10 @@ def MipsInstrInfo : InstrInfo;
 // Mips Subtarget features                                                    //
 //===----------------------------------------------------------------------===//
 
-def StackAlign16 : SubtargetFeature<"stackalign16", "StackAlignment", "16",
-                                    "Set stack alignment to 16-bytes.">;
 def FeatureGP64Bit     : SubtargetFeature<"gp64", "IsGP64bit", "true",
                                 "General Purpose Registers are 64-bit wide.">;
 def FeatureFP64Bit     : SubtargetFeature<"fp64", "IsFP64bit", "true",
-                                "Support 64-bit FP registers.", [StackAlign16]>;
+                                "Support 64-bit FP registers.">;
 def FeatureSingleFloat : SubtargetFeature<"single-float", "IsSingleFloat",
                                 "true", "Only supports single precision float">;
 def FeatureO32         : SubtargetFeature<"o32", "MipsABI", "O32",

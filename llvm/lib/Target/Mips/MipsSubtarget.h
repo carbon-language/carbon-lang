@@ -116,8 +116,6 @@ protected:
   // HasMSA -- supports MSA ASE.
   bool HasMSA;
 
-  unsigned StackAlignment;
-
   InstrItineraryData InstrItins;
 
   // The instance to the register info section object
@@ -219,7 +217,7 @@ public:
 //
 static bool useConstantIslands();
 
-  unsigned stackAlignment() const { return StackAlignment; }
+  unsigned stackAlignment() const { return isFP64bit() ? 16 : 8; }
 
   // Grab MipsRegInfo object
   const MipsReginfo &getMReginfo() const { return MRI; }
