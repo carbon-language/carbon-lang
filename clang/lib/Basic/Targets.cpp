@@ -4997,8 +4997,6 @@ public:
     if (RegNo == 1) return 5;
     return -1;
   }
-
-  virtual unsigned getStackAlignment() const = 0;
 };
 
 const Builtin::Info MipsTargetInfoBase::BuiltinInfo[] = {
@@ -5077,10 +5075,6 @@ public:
     };
     Aliases = GCCRegAliases;
     NumAliases = llvm::array_lengthof(GCCRegAliases);
-  }
-
-  virtual unsigned getStackAlignment() const {
-    return HasFP64 ? 16 : 8;
   }
 };
 
@@ -5216,10 +5210,6 @@ public:
     };
     Aliases = GCCRegAliases;
     NumAliases = llvm::array_lengthof(GCCRegAliases);
-  }
-
-  virtual unsigned getStackAlignment() const {
-    return 16;
   }
 };
 
