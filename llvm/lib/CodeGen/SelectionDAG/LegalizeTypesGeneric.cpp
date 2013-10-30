@@ -492,19 +492,14 @@ void DAGTypeLegalizer::SplitRes_SELECT(SDNode *N, SDValue &Lo,
   SDValue Cond = N->getOperand(0);
   CL = CH = Cond;
   if (Cond.getValueType().isVector()) {
-    if (Cond.getOpcode() == ISD::SETCC) {
-      assert(Cond.getValueType() == getSetCCResultType(N->getValueType(0)) &&
-             "Condition has not been prepared for split!");
-      GetSplitVector(Cond, CL, CH);
-    } else {
-      EVT ETy = Cond.getValueType().getVectorElementType();
-      unsigned NumElements = Cond.getValueType().getVectorNumElements();
-      EVT VCondTy = EVT::getVectorVT(*DAG.getContext(), ETy, NumElements / 2);
-      CL = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VCondTy, Cond,
-                       DAG.getConstant(0, TLI.getVectorIdxTy()));
-      CH = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VCondTy, Cond,
-                       DAG.getConstant(NumElements / 2, TLI.getVectorIdxTy()));
-    }
+    assert(Cond.getValueType().getVectorElementType() == MVT::i1 &&
+           "Condition legalized before result?");
+    unsigned NumElements = Cond.getValueType().getVectorNumElements();
+    EVT VCondTy = EVT::getVectorVT(*DAG.getContext(), MVT::i1, NumElements / 2);
+    CL = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VCondTy, Cond,
+                     DAG.getConstant(0, TLI.getVectorIdxTy()));
+    CH = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VCondTy, Cond,
+                     DAG.getConstant(NumElements / 2, TLI.getVectorIdxTy()));
   }
 
   Lo = DAG.getNode(N->getOpcode(), dl, LL.getValueType(), CL, LL, RL);
