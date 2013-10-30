@@ -4398,6 +4398,146 @@
 // CHECK-ERROR:                ^
 
 //----------------------------------------------------------------------
+// Scalar Floating-point Compare Mask Equal
+//----------------------------------------------------------------------
+
+         fcmeq s10, h11, s12
+         fcmeq d20, s21, d22
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmeq s10, h11, s12
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmeq d20, s21, d22
+// CHECK-ERROR:                     ^
+
+//----------------------------------------------------------------------
+// Scalar Floating-point Compare Mask Equal To Zero
+//----------------------------------------------------------------------
+
+         fcmeq h10, s11, #0.0
+         fcmeq d20, s21, #0.0
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmeq h10, s11, #0.0
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmeq d20, s21, #0.0
+// CHECK-ERROR:                     ^
+
+//----------------------------------------------------------------------
+// Scalar Floating-point Compare Mask Greater Than Or Equal
+//----------------------------------------------------------------------
+
+         fcmge s10, h11, s12
+         fcmge d20, s21, d22
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmge s10, h11, s12
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmge d20, s21, d22
+// CHECK-ERROR:                     ^
+
+//----------------------------------------------------------------------
+// Scalar Floating-point Compare Mask Greater Than Or Equal To Zero
+//----------------------------------------------------------------------
+
+         fcmge h10, s11, #0.0
+         fcmge d20, s21, #0.0
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmge h10, s11, #0.0
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmge d20, s21, #0.0
+// CHECK-ERROR:                     ^
+
+//----------------------------------------------------------------------
+// Scalar Floating-point Compare Mask Greather Than
+//----------------------------------------------------------------------
+
+         fcmgt s10, h11, s12
+         fcmgt d20, s21, d22
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmgt s10, h11, s12
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmgt d20, s21, d22
+// CHECK-ERROR:                     ^
+
+//----------------------------------------------------------------------
+// Scalar Floating-point Compare Mask Greather Than Zero
+//----------------------------------------------------------------------
+
+         fcmgt h10, s11, #0.0
+         fcmgt d20, s21, #0.0
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmgt h10, s11, #0.0
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmgt d20, s21, #0.0
+// CHECK-ERROR:                     ^
+
+//----------------------------------------------------------------------
+// Scalar Floating-point Compare Mask Less Than Or Equal To Zero
+//----------------------------------------------------------------------
+
+         fcmle h10, s11, #0.0
+         fcmle d20, s21, #0.0
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmle h10, s11, #0.0
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmle d20, s21, #0.0
+// CHECK-ERROR:                     ^
+
+//----------------------------------------------------------------------
+// Scalar Floating-point Compare Mask Less Than
+//----------------------------------------------------------------------
+
+         fcmlt h10, s11, #0.0
+         fcmlt d20, s21, #0.0
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmlt h10, s11, #0.0
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fcmlt d20, s21, #0.0
+// CHECK-ERROR:                     ^
+
+//----------------------------------------------------------------------
+// Scalar Floating-point Absolute Compare Mask Greater Than Or Equal
+//----------------------------------------------------------------------
+
+         facge s10, h11, s12
+         facge d20, s21, d22
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          facge s10, h11, s12
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          facge d20, s21, d22
+// CHECK-ERROR:                     ^
+
+//----------------------------------------------------------------------
+// Scalar Floating-point Absolute Compare Mask Greater Than
+//----------------------------------------------------------------------
+
+         facgt s10, h11, s12
+         facgt d20, d21, s22
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          facgt s10, h11, s12
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          facgt d20, d21, s22
+// CHECK-ERROR:                          ^
+        
+//----------------------------------------------------------------------
 // Scalar Signed Saturating Accumulated of Unsigned Value
 //----------------------------------------------------------------------
 

@@ -1980,6 +1980,13 @@ def fpz64 : Operand<f64>,
   let DecoderMethod = "DecodeFPZeroOperand";
 }
 
+def fpz64movi : Operand<i64>,
+            ComplexPattern<f64, 1, "SelectFPZeroOperand", [fpimm]> {
+  let ParserMatchClass = fpzero_asmoperand;
+  let PrintMethod = "printFPZeroOperand";
+  let DecoderMethod = "DecodeFPZeroOperand";
+}
+
 multiclass A64I_fpcmpSignal<bits<2> type, bit imm, dag ins, dag pattern> {
   def _quiet : A64I_fpcmp<0b0, 0b0, type, 0b00, {0b0, imm, 0b0, 0b0, 0b0},
                           (outs), ins, "fcmp\t$Rn, $Rm", [pattern],

@@ -1601,6 +1601,86 @@
 0xb4,0x8e,0xf6,0x5e
 
 #----------------------------------------------------------------------
+# Scalar Floating-point Compare Mask Equal
+#----------------------------------------------------------------------
+# CHECK: fcmeq s10, s11, s12
+# CHECK: fcmeq d20, d21, d22
+0x6a,0xe5,0x2c,0x5e
+0xb4,0xe6,0x76,0x5e
+
+#----------------------------------------------------------------------
+# Scalar Floating-point Compare Mask Equal To Zero
+#----------------------------------------------------------------------
+# CHECK: fcmeq s10, s11, #0.0
+# CHECK: fcmeq d20, d21, #0.0
+0x6a,0xd9,0xa0,0x5e
+0xb4,0xda,0xe0,0x5e
+
+#----------------------------------------------------------------------
+# Scalar Floating-point Compare Mask Greater Than Or Equal
+#----------------------------------------------------------------------
+# CHECK: fcmge s10, s11, s12
+# CHECK: fcmge d20, d21, d22
+0x6a,0xe5,0x2c,0x7e
+0xb4,0xe6,0x76,0x7e
+
+#----------------------------------------------------------------------
+# Scalar Floating-point Compare Mask Greater Than Or Equal To Zero
+#----------------------------------------------------------------------
+# CHECK: fcmge s10, s11, #0.0
+# CHECK: fcmge d20, d21, #0.0
+0x6a,0xc9,0xa0,0x7e
+0xb4,0xca,0xe0,0x7e
+
+#----------------------------------------------------------------------
+# Scalar Floating-point Compare Mask Greather Than
+#----------------------------------------------------------------------
+# CHECK: fcmgt s10, s11, s12
+# CHECK: fcmgt d20, d21, d22
+0x6a,0xe5,0xac,0x7e
+0xb4,0xe6,0xf6,0x7e
+
+#----------------------------------------------------------------------
+# Scalar Floating-point Compare Mask Greather Than Zero
+#----------------------------------------------------------------------
+# CHECK: fcmgt s10, s11, #0.0
+# CHECK: fcmgt d20, d21, #0.0
+0x6a,0xc9,0xa0,0x5e
+0xb4,0xca,0xe0,0x5e
+
+#----------------------------------------------------------------------
+# Scalar Floating-point Compare Mask Less Than Or Equal To Zero
+#----------------------------------------------------------------------
+# CHECK: fcmle s10, s11, #0.0
+# CHECK: fcmle d20, d21, #0.0
+0x6a,0xd9,0xa0,0x7e
+0xb4,0xda,0xe0,0x7e
+
+#----------------------------------------------------------------------
+# Scalar Floating-point Compare Mask Less Than
+#----------------------------------------------------------------------
+# CHECK: fcmlt s10, s11, #0.0
+# CHECK: fcmlt d20, d21, #0.0
+0x6a,0xe9,0xa0,0x5e
+0xb4,0xea,0xe0,0x5e
+
+#----------------------------------------------------------------------
+# Scalar Floating-point Absolute Compare Mask Greater Than Or Equal
+#----------------------------------------------------------------------
+# CHECK: facge s10, s11, s12
+# CHECK: facge d20, d21, d22
+0x6a,0xed,0x2c,0x7e
+0xb4,0xee,0x76,0x7e
+
+#----------------------------------------------------------------------
+# Scalar Floating-point Absolute Compare Mask Greater Than
+#----------------------------------------------------------------------
+# CHECK: facgt s10, s11, s12   
+# CHECK: facgt d20, d21, d22   
+0x6a,0xed,0xac,0x7e
+0xb4,0xee,0xf6,0x7e
+
+#----------------------------------------------------------------------
 # Scalar Absolute Value
 #----------------------------------------------------------------------
 # CHECK: abs d29, d24

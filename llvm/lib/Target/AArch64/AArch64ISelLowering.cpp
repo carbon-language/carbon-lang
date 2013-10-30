@@ -3492,12 +3492,15 @@ AArch64TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
   unsigned SplatBitSize;
   bool HasAnyUndefs;
 
+  unsigned UseNeonMov = VT.getSizeInBits() >= 64;
+
   // Note we favor lowering MOVI over MVNI.
   // This has implications on the definition of patterns in TableGen to select
   // BIC immediate instructions but not ORR immediate instructions.
   // If this lowering order is changed, TableGen patterns for BIC immediate and
   // ORR immediate instructions have to be updated.
-  if (BVN->isConstantSplat(SplatBits, SplatUndef, SplatBitSize, HasAnyUndefs)) {
+  if (UseNeonMov &&
+      BVN->isConstantSplat(SplatBits, SplatUndef, SplatBitSize, HasAnyUndefs)) {
     if (SplatBitSize <= 64) {
       // First attempt to use vector immediate-form MOVI
       EVT NeonMovVT;

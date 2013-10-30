@@ -8,7 +8,7 @@ define i64 @test_vceqd(i64 %a, i64 %b) {
 entry:
   %vceq.i = insertelement <1 x i64> undef, i64 %a, i32 0
   %vceq1.i = insertelement <1 x i64> undef, i64 %b, i32 0
-  %vceq2.i = call <1 x i64> @llvm.aarch64.neon.vceq(<1 x i64> %vceq.i, <1 x i64> %vceq1.i)
+  %vceq2.i = call <1 x i64> @llvm.aarch64.neon.vceq.v1i64.v1i64.v1i64(<1 x i64> %vceq.i, <1 x i64> %vceq1.i)
   %0 = extractelement <1 x i64> %vceq2.i, i32 0
   ret i64 %0
 }
@@ -18,7 +18,7 @@ define i64 @test_vceqzd(i64 %a) {
 ; CHECK: cmeq {{d[0-9]}}, {{d[0-9]}}, #0x0
 entry:
   %vceqz.i = insertelement <1 x i64> undef, i64 %a, i32 0
-  %vceqz1.i = call <1 x i64> @llvm.aarch64.neon.vceq(<1 x i64> %vceqz.i, <1 x i64> zeroinitializer)
+  %vceqz1.i = call <1 x i64> @llvm.aarch64.neon.vceq.v1i64.v1i64.v1i64(<1 x i64> %vceqz.i, <1 x i64> zeroinitializer)
   %0 = extractelement <1 x i64> %vceqz1.i, i32 0
   ret i64 %0
 }
@@ -29,7 +29,7 @@ define i64 @test_vcged(i64 %a, i64 %b) {
 entry:
   %vcge.i = insertelement <1 x i64> undef, i64 %a, i32 0
   %vcge1.i = insertelement <1 x i64> undef, i64 %b, i32 0
-  %vcge2.i = call <1 x i64> @llvm.aarch64.neon.vcge(<1 x i64> %vcge.i, <1 x i64> %vcge1.i)
+  %vcge2.i = call <1 x i64> @llvm.aarch64.neon.vcge.v1i64.v1i64.v1i64(<1 x i64> %vcge.i, <1 x i64> %vcge1.i)
   %0 = extractelement <1 x i64> %vcge2.i, i32 0
   ret i64 %0
 }
@@ -39,7 +39,7 @@ define i64 @test_vcgezd(i64 %a) {
 ; CHECK: cmge {{d[0-9]}}, {{d[0-9]}}, #0x0
 entry:
   %vcgez.i = insertelement <1 x i64> undef, i64 %a, i32 0
-  %vcgez1.i = call <1 x i64> @llvm.aarch64.neon.vcge(<1 x i64> %vcgez.i, <1 x i64> zeroinitializer)
+  %vcgez1.i = call <1 x i64> @llvm.aarch64.neon.vcge.v1i64.v1i64.v1i64(<1 x i64> %vcgez.i, <1 x i64> zeroinitializer)
   %0 = extractelement <1 x i64> %vcgez1.i, i32 0
   ret i64 %0
 }
@@ -50,7 +50,7 @@ define i64 @test_vcgtd(i64 %a, i64 %b) {
 entry:
   %vcgt.i = insertelement <1 x i64> undef, i64 %a, i32 0
   %vcgt1.i = insertelement <1 x i64> undef, i64 %b, i32 0
-  %vcgt2.i = call <1 x i64> @llvm.aarch64.neon.vcgt(<1 x i64> %vcgt.i, <1 x i64> %vcgt1.i)
+  %vcgt2.i = call <1 x i64> @llvm.aarch64.neon.vcgt.v1i64.v1i64.v1i64(<1 x i64> %vcgt.i, <1 x i64> %vcgt1.i)
   %0 = extractelement <1 x i64> %vcgt2.i, i32 0
   ret i64 %0
 }
@@ -60,7 +60,7 @@ define i64 @test_vcgtzd(i64 %a) {
 ; CHECK: cmgt {{d[0-9]}}, {{d[0-9]}}, #0x0
 entry:
   %vcgtz.i = insertelement <1 x i64> undef, i64 %a, i32 0
-  %vcgtz1.i = call <1 x i64> @llvm.aarch64.neon.vcgt(<1 x i64> %vcgtz.i, <1 x i64> zeroinitializer)
+  %vcgtz1.i = call <1 x i64> @llvm.aarch64.neon.vcgt.v1i64.v1i64.v1i64(<1 x i64> %vcgtz.i, <1 x i64> zeroinitializer)
   %0 = extractelement <1 x i64> %vcgtz1.i, i32 0
   ret i64 %0
 }
@@ -71,7 +71,7 @@ define i64 @test_vcled(i64 %a, i64 %b) {
 entry:
   %vcgt.i = insertelement <1 x i64> undef, i64 %b, i32 0
   %vcgt1.i = insertelement <1 x i64> undef, i64 %a, i32 0
-  %vcgt2.i = call <1 x i64> @llvm.aarch64.neon.vcgt(<1 x i64> %vcgt.i, <1 x i64> %vcgt1.i)
+  %vcgt2.i = call <1 x i64> @llvm.aarch64.neon.vcgt.v1i64.v1i64.v1i64(<1 x i64> %vcgt.i, <1 x i64> %vcgt1.i)
   %0 = extractelement <1 x i64> %vcgt2.i, i32 0
   ret i64 %0
 }
@@ -81,7 +81,7 @@ define i64 @test_vclezd(i64 %a) {
 ; CHECK: cmle {{d[0-9]}}, {{d[0-9]}}, #0x0
 entry:
   %vclez.i = insertelement <1 x i64> undef, i64 %a, i32 0
-  %vclez1.i = call <1 x i64> @llvm.aarch64.neon.vclez(<1 x i64> %vclez.i, <1 x i64> zeroinitializer)
+  %vclez1.i = call <1 x i64> @llvm.aarch64.neon.vclez.v1i64.v1i64.v1i64(<1 x i64> %vclez.i, <1 x i64> zeroinitializer)
   %0 = extractelement <1 x i64> %vclez1.i, i32 0
   ret i64 %0
 }
@@ -92,7 +92,7 @@ define i64 @test_vcltd(i64 %a, i64 %b) {
 entry:
   %vcge.i = insertelement <1 x i64> undef, i64 %b, i32 0
   %vcge1.i = insertelement <1 x i64> undef, i64 %a, i32 0
-  %vcge2.i = call <1 x i64> @llvm.aarch64.neon.vcge(<1 x i64> %vcge.i, <1 x i64> %vcge1.i)
+  %vcge2.i = call <1 x i64> @llvm.aarch64.neon.vcge.v1i64.v1i64.v1i64(<1 x i64> %vcge.i, <1 x i64> %vcge1.i)
   %0 = extractelement <1 x i64> %vcge2.i, i32 0
   ret i64 %0
 }
@@ -102,7 +102,7 @@ define i64 @test_vcltzd(i64 %a) {
 ; CHECK: cmlt {{d[0-9]}}, {{d[0-9]}}, #0x0
 entry:
   %vcltz.i = insertelement <1 x i64> undef, i64 %a, i32 0
-  %vcltz1.i = call <1 x i64> @llvm.aarch64.neon.vcltz(<1 x i64> %vcltz.i, <1 x i64> zeroinitializer)
+  %vcltz1.i = call <1 x i64> @llvm.aarch64.neon.vcltz.v1i64.v1i64.v1i64(<1 x i64> %vcltz.i, <1 x i64> zeroinitializer)
   %0 = extractelement <1 x i64> %vcltz1.i, i32 0
   ret i64 %0
 }
@@ -113,16 +113,16 @@ define i64 @test_vtstd(i64 %a, i64 %b) {
 entry:
   %vtst.i = insertelement <1 x i64> undef, i64 %a, i32 0
   %vtst1.i = insertelement <1 x i64> undef, i64 %b, i32 0
-  %vtst2.i = call <1 x i64> @llvm.aarch64.neon.vtstd(<1 x i64> %vtst.i, <1 x i64> %vtst1.i)
+  %vtst2.i = call <1 x i64> @llvm.aarch64.neon.vtstd.v1i64.v1i64.v1i64(<1 x i64> %vtst.i, <1 x i64> %vtst1.i)
   %0 = extractelement <1 x i64> %vtst2.i, i32 0
   ret i64 %0
 }
 
-declare <1 x i64> @llvm.aarch64.neon.vtstd(<1 x i64>, <1 x i64>)
-declare <1 x i64> @llvm.aarch64.neon.vcltz(<1 x i64>, <1 x i64>)
-declare <1 x i64> @llvm.aarch64.neon.vchs(<1 x i64>, <1 x i64>)
-declare <1 x i64> @llvm.aarch64.neon.vcge(<1 x i64>, <1 x i64>)
-declare <1 x i64> @llvm.aarch64.neon.vclez(<1 x i64>, <1 x i64>)
-declare <1 x i64> @llvm.aarch64.neon.vchi(<1 x i64>, <1 x i64>)
-declare <1 x i64> @llvm.aarch64.neon.vcgt(<1 x i64>, <1 x i64>)
-declare <1 x i64> @llvm.aarch64.neon.vceq(<1 x i64>, <1 x i64>)
+declare <1 x i64> @llvm.aarch64.neon.vtstd.v1i64.v1i64.v1i64(<1 x i64>, <1 x i64>)
+declare <1 x i64> @llvm.aarch64.neon.vcltz.v1i64.v1i64.v1i64(<1 x i64>, <1 x i64>)
+declare <1 x i64> @llvm.aarch64.neon.vchs.v1i64.v1i64.v1i64(<1 x i64>, <1 x i64>)
+declare <1 x i64> @llvm.aarch64.neon.vcge.v1i64.v1i64.v1i64(<1 x i64>, <1 x i64>)
+declare <1 x i64> @llvm.aarch64.neon.vclez.v1i64.v1i64.v1i64(<1 x i64>, <1 x i64>)
+declare <1 x i64> @llvm.aarch64.neon.vchi.v1i64.v1i64.v1i64(<1 x i64>, <1 x i64>)
+declare <1 x i64> @llvm.aarch64.neon.vcgt.v1i64.v1i64.v1i64(<1 x i64>, <1 x i64>)
+declare <1 x i64> @llvm.aarch64.neon.vceq.v1i64.v1i64.v1i64(<1 x i64>, <1 x i64>)

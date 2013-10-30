@@ -168,28 +168,35 @@ def int_aarch64_neon_vcvtf64_u64 :
 // Scalar Floating-point Reciprocal Exponent
 def int_aarch64_neon_vrecpx : Neon_1Arg_Intrinsic;
 
-class Neon_ICmp_Intrinsic
-  : Intrinsic<[llvm_v1i64_ty], [llvm_v1i64_ty, llvm_v1i64_ty], [IntrNoMem]>;
+class Neon_Cmp_Intrinsic
+  : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty, llvm_anyvector_ty],
+              [IntrNoMem]>;
 
-// Scalar Integer Compare Equal
-def int_aarch64_neon_vceq : Neon_ICmp_Intrinsic;
+// Scalar Compare Equal
+def int_aarch64_neon_vceq : Neon_Cmp_Intrinsic;
 
-// Scalar Integer Compare Greater-Than or Equal
-def int_aarch64_neon_vcge : Neon_ICmp_Intrinsic;
-def int_aarch64_neon_vchs : Neon_ICmp_Intrinsic;
+// Scalar Compare Greater-Than or Equal
+def int_aarch64_neon_vcge : Neon_Cmp_Intrinsic;
+def int_aarch64_neon_vchs : Neon_Cmp_Intrinsic;
 
-// Scalar Integer Compare Less-Than or Equal
-def int_aarch64_neon_vclez : Neon_ICmp_Intrinsic;
+// Scalar Compare Less-Than or Equal
+def int_aarch64_neon_vclez : Neon_Cmp_Intrinsic;
 
 // Scalar Compare Less-Than
-def int_aarch64_neon_vcltz : Neon_ICmp_Intrinsic;
+def int_aarch64_neon_vcltz : Neon_Cmp_Intrinsic;
 
 // Scalar Compare Greater-Than
-def int_aarch64_neon_vcgt : Neon_ICmp_Intrinsic;
-def int_aarch64_neon_vchi : Neon_ICmp_Intrinsic;
+def int_aarch64_neon_vcgt : Neon_Cmp_Intrinsic;
+def int_aarch64_neon_vchi : Neon_Cmp_Intrinsic;
 
 // Scalar Compare Bitwise Test Bits
-def int_aarch64_neon_vtstd : Neon_ICmp_Intrinsic;
+def int_aarch64_neon_vtstd : Neon_Cmp_Intrinsic;
+
+// Scalar Floating-point Absolute Compare Greater Than Or Equal
+def int_aarch64_neon_vcage : Neon_Cmp_Intrinsic;
+ 
+// Scalar Floating-point Absolute Compare Greater Than
+def int_aarch64_neon_vcagt : Neon_Cmp_Intrinsic;
 
 // Scalar Signed Saturating Accumulated of Unsigned Value
 def int_aarch64_neon_vuqadd : Neon_2Arg_Intrinsic;
