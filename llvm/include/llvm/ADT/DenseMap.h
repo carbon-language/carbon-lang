@@ -438,9 +438,8 @@ private:
       this->grow(NumBuckets * 2);
       LookupBucketFor(Key, TheBucket);
       NumBuckets = getNumBuckets();
-    }
-    if (NumBuckets-(NewNumEntries+getNumTombstones()) <= NumBuckets/8) {
-      this->grow(NumBuckets * 2);
+    } else if (NumBuckets-(NewNumEntries+getNumTombstones()) <= NumBuckets/8) {
+      this->grow(NumBuckets);
       LookupBucketFor(Key, TheBucket);
     }
     assert(TheBucket);
