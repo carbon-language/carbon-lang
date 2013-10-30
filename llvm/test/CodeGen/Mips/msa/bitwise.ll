@@ -972,27 +972,54 @@ define void @ctlz_v2i64(<2 x i64>* %c, <2 x i64>* %a) nounwind {
   ; CHECK: .size ctlz_v2i64
 }
 
-define void @bsel_v16i8(<16 x i8>* %c, <16 x i8>* %a, <16 x i8>* %b) nounwind {
+define void @bsel_v16i8(<16 x i8>* %c, <16 x i8>* %a, <16 x i8>* %b, <16 x i8>* %m) nounwind {
   ; CHECK: bsel_v16i8:
 
   %1 = load <16 x i8>* %a
   ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
   %2 = load <16 x i8>* %b
   ; CHECK-DAG: ld.b [[R2:\$w[0-9]+]], 0($6)
-  %3 = and <16 x i8> %1, <i8 6, i8 6, i8 6, i8 6, i8 6, i8 6, i8 6, i8 6,
-                          i8 6, i8 6, i8 6, i8 6, i8 6, i8 6, i8 6, i8 6>
-  %4 = and <16 x i8> %2, <i8 249, i8 249, i8 249, i8 249,
-                          i8 249, i8 249, i8 249, i8 249,
-                          i8 249, i8 249, i8 249, i8 249,
-                          i8 249, i8 249, i8 249, i8 249>
-  %5 = or <16 x i8> %3, %4
-  ; CHECK-DAG: ldi.b [[R3:\$w[0-9]+]], 6
-  ; CHECK-DAG: bsel.v [[R3]], [[R2]], [[R1]]
-  store <16 x i8> %5, <16 x i8>* %c
-  ; CHECK-DAG: st.b [[R3]], 0($4)
+  %3 = load <16 x i8>* %m
+  ; CHECK-DAG: ld.b [[R3:\$w[0-9]+]], 0($7)
+  %4 = xor <16 x i8> %3, <i8 -1, i8 -1, i8 -1, i8 -1,
+                          i8 -1, i8 -1, i8 -1, i8 -1,
+                          i8 -1, i8 -1, i8 -1, i8 -1,
+                          i8 -1, i8 -1, i8 -1, i8 -1>
+  %5 = and <16 x i8> %1, %3
+  %6 = and <16 x i8> %2, %4
+  %7 = or <16 x i8> %5, %6
+  ; bmnz is the same operation
+  ; CHECK-DAG: bmnz.v [[R1]], [[R2]], [[R3]]
+  store <16 x i8> %7, <16 x i8>* %c
+  ; CHECK-DAG: st.b [[R1]], 0($4)
 
   ret void
   ; CHECK: .size bsel_v16i8
+}
+
+define void @bsel_v16i8_i(<16 x i8>* %c, <16 x i8>* %a, <16 x i8>* %m) nounwind {
+  ; CHECK: bsel_v16i8_i:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <16 x i8>* %m
+  ; CHECK-DAG: ld.b [[R3:\$w[0-9]+]], 0($6)
+  %3 = xor <16 x i8> %2, <i8 -1, i8 -1, i8 -1, i8 -1,
+                          i8 -1, i8 -1, i8 -1, i8 -1,
+                          i8 -1, i8 -1, i8 -1, i8 -1,
+                          i8 -1, i8 -1, i8 -1, i8 -1>
+  %4 = and <16 x i8> %1, %3
+  %5 = and <16 x i8> <i8 6, i8 6, i8 6, i8 6,
+                      i8 6, i8 6, i8 6, i8 6,
+                      i8 6, i8 6, i8 6, i8 6,
+                      i8 6, i8 6, i8 6, i8 6>, %2
+  %6 = or <16 x i8> %4, %5
+  ; CHECK-DAG: bseli.b [[R3]], [[R1]], 6
+  store <16 x i8> %6, <16 x i8>* %c
+  ; CHECK-DAG: st.b [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bsel_v16i8_i
 }
 
 define void @bsel_v8i16(<8 x i16>* %c, <8 x i16>* %a, <8 x i16>* %b) nounwind {

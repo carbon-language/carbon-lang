@@ -653,9 +653,10 @@ define void @bsel_s_v16i8(<16 x i8>* %d, <16 x i8>* %a, <16 x i8>* %b,
   %4 = icmp sgt <16 x i8> %1, %2
   ; CHECK-DAG: clt_s.b [[R4:\$w[0-9]+]], [[R2]], [[R1]]
   %5 = select <16 x i1> %4, <16 x i8> %1, <16 x i8> %3
-  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  ; bmnz.v is the same operation
+  ; CHECK-DAG: bmnz.v [[R3]], [[R1]], [[R4]]
   store <16 x i8> %5, <16 x i8>* %d
-  ; CHECK-DAG: st.b [[R4]], 0($4)
+  ; CHECK-DAG: st.b [[R3]], 0($4)
 
   ret void
   ; CHECK: .size bsel_s_v16i8
@@ -737,9 +738,10 @@ define void @bsel_u_v16i8(<16 x i8>* %d, <16 x i8>* %a, <16 x i8>* %b,
   %4 = icmp ugt <16 x i8> %1, %2
   ; CHECK-DAG: clt_u.b [[R4:\$w[0-9]+]], [[R2]], [[R1]]
   %5 = select <16 x i1> %4, <16 x i8> %1, <16 x i8> %3
-  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  ; bmnz.v is the same operation
+  ; CHECK-DAG: bmnz.v [[R3]], [[R1]], [[R4]]
   store <16 x i8> %5, <16 x i8>* %d
-  ; CHECK-DAG: st.b [[R4]], 0($4)
+  ; CHECK-DAG: st.b [[R3]], 0($4)
 
   ret void
   ; CHECK: .size bsel_u_v16i8

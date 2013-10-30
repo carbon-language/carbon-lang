@@ -281,13 +281,13 @@ BUILTIN(__builtin_msa_binsri_h, "V8UsV8UsV8UsIUi", "nc")
 BUILTIN(__builtin_msa_binsri_w, "V4UiV4UiV4UiIUi", "nc")
 BUILTIN(__builtin_msa_binsri_d, "V2ULLiV2ULLiV2ULLiIUi", "nc")
 
-BUILTIN(__builtin_msa_bmnz_v, "V16UcV16UcV16Uc", "nc")
+BUILTIN(__builtin_msa_bmnz_v, "V16UcV16UcV16UcV16Uc", "nc")
 
-BUILTIN(__builtin_msa_bmnzi_b, "V16UcV16UcIUi", "nc")
+BUILTIN(__builtin_msa_bmnzi_b, "V16UcV16UcV16UcIUi", "nc")
 
-BUILTIN(__builtin_msa_bmz_v, "V16UcV16UcV16Uc", "nc")
+BUILTIN(__builtin_msa_bmz_v, "V16UcV16UcV16UcV16Uc", "nc")
 
-BUILTIN(__builtin_msa_bmzi_b, "V16UcV16UcIUi", "nc")
+BUILTIN(__builtin_msa_bmzi_b, "V16UcV16UcV16UcIUi", "nc")
 
 BUILTIN(__builtin_msa_bneg_b, "V16UcV16UcV16Uc", "nc")
 BUILTIN(__builtin_msa_bneg_h, "V8UsV8UsV8Us", "nc")
@@ -305,6 +305,10 @@ BUILTIN(__builtin_msa_bnz_w, "iV4Ui", "nc")
 BUILTIN(__builtin_msa_bnz_d, "iV2ULLi", "nc")
 
 BUILTIN(__builtin_msa_bnz_v, "iV16Uc", "nc")
+
+BUILTIN(__builtin_msa_bsel_v, "V16UcV16UcV16UcV16Uc", "nc")
+
+BUILTIN(__builtin_msa_bseli_b, "V16UcV16UcV16UcIUi", "nc")
 
 BUILTIN(__builtin_msa_bset_b, "V16UcV16UcV16Uc", "nc")
 BUILTIN(__builtin_msa_bset_h, "V8UsV8UsV8Us", "nc")

@@ -516,6 +516,44 @@ static bool isVSplat(SDValue N, APInt &Imm, bool IsLittleEndian) {
   return true;
 }
 
+// Test whether the given node is an all-ones build_vector.
+static bool isVectorAllOnes(SDValue N) {
+  // Look through bitcasts. Endianness doesn't matter because we are looking
+  // for an all-ones value.
+  if (N->getOpcode() == ISD::BITCAST)
+    N = N->getOperand(0);
+
+  BuildVectorSDNode *BVN = dyn_cast<BuildVectorSDNode>(N);
+
+  if (!BVN)
+    return false;
+
+  APInt SplatValue, SplatUndef;
+  unsigned SplatBitSize;
+  bool HasAnyUndefs;
+
+  // Endianness doesn't matter in this context because we are looking for
+  // an all-ones value.
+  if (BVN->isConstantSplat(SplatValue, SplatUndef, SplatBitSize, HasAnyUndefs))
+    return SplatValue.isAllOnesValue();
+
+  return false;
+}
+
+// Test whether N is the bitwise inverse of OfNode.
+static bool isBitwiseInverse(SDValue N, SDValue OfNode) {
+  if (N->getOpcode() != ISD::XOR)
+    return false;
+
+  if (isVectorAllOnes(N->getOperand(0)))
+    return N->getOperand(1) == OfNode;
+
+  if (isVectorAllOnes(N->getOperand(1)))
+    return N->getOperand(0) == OfNode;
+
+  return false;
+}
+
 // Perform combines where ISD::OR is the root node.
 //
 // Performs the following transformations:
@@ -544,6 +582,7 @@ static SDValue performORCombine(SDNode *N, SelectionDAG &DAG,
     bool IsLittleEndian = !Subtarget->isLittle();
 
     SDValue IfSet, IfClr, Cond;
+    bool IsConstantMask = false;
     APInt Mask, InvMask;
 
     // If Op0Op0 is an appropriate mask, try to find it's inverse in either
@@ -558,6 +597,8 @@ static SDValue performORCombine(SDNode *N, SelectionDAG &DAG,
         IfClr = Op1Op1;
       else if (isVSplat(Op1Op1, InvMask, IsLittleEndian) && Mask == ~InvMask)
         IfClr = Op1Op0;
+
+      IsConstantMask = true;
     }
 
     // If IfClr is not yet set, and Op0Op1 is an appropriate mask, try the same
@@ -571,6 +612,47 @@ static SDValue performORCombine(SDNode *N, SelectionDAG &DAG,
         IfClr = Op1Op1;
       else if (isVSplat(Op1Op1, InvMask, IsLittleEndian) && Mask == ~InvMask)
         IfClr = Op1Op0;
+
+      IsConstantMask = true;
+    }
+
+    // If IfClr is not yet set, try looking for a non-constant match.
+    // IfClr will be set if we find a valid match amongst the eight
+    // possibilities.
+    if (!IfClr.getNode()) {
+      if (isBitwiseInverse(Op0Op0, Op1Op0)) {
+        Cond = Op1Op0;
+        IfSet = Op1Op1;
+        IfClr = Op0Op1;
+      } else if (isBitwiseInverse(Op0Op1, Op1Op0)) {
+        Cond = Op1Op0;
+        IfSet = Op1Op1;
+        IfClr = Op0Op0;
+      } else if (isBitwiseInverse(Op0Op0, Op1Op1)) {
+        Cond = Op1Op1;
+        IfSet = Op1Op0;
+        IfClr = Op0Op1;
+      } else if (isBitwiseInverse(Op0Op1, Op1Op1)) {
+        Cond = Op1Op1;
+        IfSet = Op1Op0;
+        IfClr = Op0Op0;
+      } else if (isBitwiseInverse(Op1Op0, Op0Op0)) {
+        Cond = Op0Op0;
+        IfSet = Op0Op1;
+        IfClr = Op1Op1;
+      } else if (isBitwiseInverse(Op1Op1, Op0Op0)) {
+        Cond = Op0Op0;
+        IfSet = Op0Op1;
+        IfClr = Op1Op0;
+      } else if (isBitwiseInverse(Op1Op0, Op0Op1)) {
+        Cond = Op0Op1;
+        IfSet = Op0Op0;
+        IfClr = Op1Op1;
+      } else if (isBitwiseInverse(Op1Op1, Op0Op1)) {
+        Cond = Op0Op1;
+        IfSet = Op0Op0;
+        IfClr = Op1Op0;
+      }
     }
 
     // At this point, IfClr will be set if we have a valid match.
@@ -580,10 +662,12 @@ static SDValue performORCombine(SDNode *N, SelectionDAG &DAG,
     assert(Cond.getNode() && IfSet.getNode());
 
     // Fold degenerate cases.
-    if (Mask.isAllOnesValue())
-      return IfSet;
-    else if (Mask == 0)
-      return IfClr;
+    if (IsConstantMask) {
+      if (Mask.isAllOnesValue())
+        return IfSet;
+      else if (Mask == 0)
+        return IfClr;
+    }
 
     // Transform the DAG into an equivalent VSELECT.
     return DAG.getNode(ISD::VSELECT, SDLoc(N), Ty, Cond, IfClr, IfSet);
@@ -1284,6 +1368,20 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
                        DAG.getConstant(Mask, VecTy, true), Op->getOperand(1),
                        Op->getOperand(2));
   }
+  case Intrinsic::mips_bmnz_v:
+    return DAG.getNode(ISD::VSELECT, DL, Op->getValueType(0), Op->getOperand(3),
+                       Op->getOperand(2), Op->getOperand(1));
+  case Intrinsic::mips_bmnzi_b:
+    return DAG.getNode(ISD::VSELECT, DL, Op->getValueType(0),
+                       lowerMSASplatImm(Op, 3, DAG), Op->getOperand(2),
+                       Op->getOperand(1));
+  case Intrinsic::mips_bmz_v:
+    return DAG.getNode(ISD::VSELECT, DL, Op->getValueType(0), Op->getOperand(3),
+                       Op->getOperand(1), Op->getOperand(2));
+  case Intrinsic::mips_bmzi_b:
+    return DAG.getNode(ISD::VSELECT, DL, Op->getValueType(0),
+                       lowerMSASplatImm(Op, 3, DAG), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_bnz_b:
   case Intrinsic::mips_bnz_h:
   case Intrinsic::mips_bnz_w:
@@ -1872,7 +1970,7 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_VOID(SDValue Op,
 /// true.
 static bool isSplatVector(const BuildVectorSDNode *N) {
   unsigned int nOps = N->getNumOperands();
-  assert(nOps > 1 && "isSplat has 0 or 1 sized build vector");
+  assert(nOps > 1 && "isSplatVector has 0 or 1 sized build vector");
 
   SDValue Operand0 = N->getOperand(0);
 

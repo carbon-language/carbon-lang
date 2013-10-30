@@ -54,3 +54,20 @@ binsri.[bhwd],  binsli.[bhwd]:
         appropriate.
         Furthermore, the compiler may use bsel.[bhwd] for some masks that do
         not survive the legalization process (this is a bug and will be fixed).
+
+bmnz.v, bmz.v, bsel.v:
+        These three operations differ only in the operand that is tied to the
+        result.
+        It is (currently) not possible to emit bmz.v, or bsel.v since bmnz.v is
+        the same operation and will be emitted instead.
+        In future, the compiler may choose between these three instructions
+        according to register allocation.
+
+bmnzi.b, bmzi.b:
+        Like their non-immediate counterparts, bmnzi.v and bmzi.v are the same
+        operation with the operands swapped. bmnzi.v will (currently) be emitted
+        for both cases.
+
+bseli.v:
+        Unlike the non-immediate versions, bseli.v is distinguishable from
+        bmnzi.b and bmzi.b and can be emitted.
