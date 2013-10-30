@@ -2063,6 +2063,13 @@ POST_SYSCALL(shmdt)(long res, void *shmaddr) {
   }
 }
 
+PRE_SYSCALL(ipc)(long call, long first, long second, long third, void *ptr,
+                 long fifth) {}
+
+POST_SYSCALL(ipc)(long res, long call, long first, long second, long third,
+                  void *ptr, long fifth) {}
+
+#if !SANITIZER_ANDROID
 PRE_SYSCALL(shmctl)(long shmid, long cmd, void *buf) {}
 
 POST_SYSCALL(shmctl)(long res, long shmid, long cmd, void *buf) {
@@ -2071,13 +2078,6 @@ POST_SYSCALL(shmctl)(long res, long shmid, long cmd, void *buf) {
   }
 }
 
-PRE_SYSCALL(ipc)(long call, long first, long second, long third, void *ptr,
-                 long fifth) {}
-
-POST_SYSCALL(ipc)(long res, long call, long first, long second, long third,
-                  void *ptr, long fifth) {}
-
-#if !SANITIZER_ANDROID
 PRE_SYSCALL(mq_open)(const void *name, long oflag, long mode, void *attr) {
   if (name)
     PRE_READ(name, __sanitizer::internal_strlen((const char *)name) + 1);
@@ -2219,6 +2219,7 @@ PRE_SYSCALL(ni_syscall)() {}
 POST_SYSCALL(ni_syscall)(long res) {}
 
 PRE_SYSCALL(ptrace)(long request, long pid, long addr, long data) {
+#if defined(__i386) || defined (__x86_64)
   if (data) {
     if (request == ptrace_setregs) {
       PRE_READ((void *)data, struct_user_regs_struct_sz);
@@ -2233,9 +2234,11 @@ PRE_SYSCALL(ptrace)(long request, long pid, long addr, long data) {
       PRE_READ(iov->iov_base, iov->iov_len);
     }
   }
+#endif
 }
 
 POST_SYSCALL(ptrace)(long res, long request, long pid, long addr, long data) {
+#if defined(__i386) || defined (__x86_64)
   if (res >= 0 && data) {
     // Note that this is different from the interceptor in
     // sanitizer_common_interceptors.inc.
@@ -2256,6 +2259,7 @@ POST_SYSCALL(ptrace)(long res, long request, long pid, long addr, long data) {
       POST_WRITE((void *)data, sizeof(void *));
     }
   }
+#endif
 }
 
 PRE_SYSCALL(add_key)(const void *_type, const void *_description,

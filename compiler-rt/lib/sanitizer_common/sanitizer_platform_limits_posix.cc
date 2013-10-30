@@ -143,9 +143,12 @@ namespace __sanitizer {
   unsigned struct_sched_param_sz = sizeof(struct sched_param);
   unsigned struct_statfs_sz = sizeof(struct statfs);
 
+#if SANITIZER_MAC
+  unsigned struct_statfs64_sz = sizeof(struct statfs64);
+#endif
+
 #if !SANITIZER_ANDROID
   unsigned ucontext_t_sz = sizeof(ucontext_t);
-  unsigned struct_statfs64_sz = sizeof(struct statfs64);
 #endif // !SANITIZER_ANDROID
 
 #if SANITIZER_LINUX

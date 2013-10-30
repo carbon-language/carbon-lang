@@ -23,6 +23,12 @@
 #include <asm/stat.h>
 #include <linux/aio_abi.h>
 
+#if SANITIZER_ANDROID
+#include <asm/statfs.h>
+#else
+#include <sys/statfs.h>
+#endif
+
 #if !SANITIZER_ANDROID
 #include <linux/perf_event.h>
 #endif
@@ -32,6 +38,7 @@ namespace __sanitizer {
   unsigned struct_kernel_stat_sz = sizeof(struct stat);
   unsigned struct_io_event_sz = sizeof(struct io_event);
   unsigned struct_iocb_sz = sizeof(struct iocb);
+  unsigned struct_statfs64_sz = sizeof(struct statfs64);
 
 #ifndef _LP64
   unsigned struct_kernel_stat64_sz = sizeof(struct stat64);
