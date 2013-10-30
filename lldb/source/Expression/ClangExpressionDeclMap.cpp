@@ -515,6 +515,7 @@ FindCodeSymbolInContext
             {
                 case eSymbolTypeCode:
                 case eSymbolTypeResolver:
+                case eSymbolTypeReExported:
                     sc_list.Append(sym_ctx);
                     break;
 
@@ -547,7 +548,8 @@ ClangExpressionDeclMap::GetFunctionAddress
     
     FindCodeSymbolInContext(name, m_parser_vars->m_sym_ctx, sc_list);
 
-    if (!sc_list.GetSize())
+    uint32_t sc_list_size = sc_list.GetSize();
+    if (sc_list_size == 0)
     {
         // We occasionally get debug information in which a const function is reported 
         // as non-const, so the mangled name is wrong.  This is a hack to compensate.
@@ -563,32 +565,49 @@ ClangExpressionDeclMap::GetFunctionAddress
                 log->Printf("Failed to find symbols given non-const name %s; trying %s", name.GetCString(), fixed_name.GetCString());
             
             FindCodeSymbolInContext(fixed_name, m_parser_vars->m_sym_ctx, sc_list);
+            sc_list_size = sc_list.GetSize();
         }
     }
-    
-    if (!sc_list.GetSize())
-        return false;
 
-    SymbolContext sym_ctx;
-    sc_list.GetContextAtIndex(0, sym_ctx);
+    for (uint32_t i=0; i<sc_list_size; ++i)
+    {
+        SymbolContext sym_ctx;
+        sc_list.GetContextAtIndex(i, sym_ctx);
 
-    const Address *func_so_addr = NULL;
-    bool is_indirect_function = false;
+        const Address *func_so_addr = NULL;
+        bool is_indirect_function = false;
+        if (sym_ctx.function)
+            func_so_addr = &sym_ctx.function->GetAddressRange().GetBaseAddress();
+        else if (sym_ctx.symbol)
+        {
+            if (sym_ctx.symbol->GetType() == eSymbolTypeReExported)
+            {
+                Symbol *reexported_symbol = sym_ctx.symbol->ResolveReExportedSymbol(*target);
+                if (reexported_symbol)
+                {
+                    func_so_addr = &reexported_symbol->GetAddress();
+                    is_indirect_function = reexported_symbol->IsIndirect();
+                }
+            }
+            else
+            {
+                func_so_addr = &sym_ctx.symbol->GetAddress();
+                is_indirect_function = sym_ctx.symbol->IsIndirect();
+            }
+        }
 
-    if (sym_ctx.function)
-        func_so_addr = &sym_ctx.function->GetAddressRange().GetBaseAddress();
-    else if (sym_ctx.symbol) {
-        func_so_addr = &sym_ctx.symbol->GetAddress();
-        is_indirect_function = sym_ctx.symbol->IsIndirect();
-    } else
-        return false;
-
-    if (!func_so_addr || !func_so_addr->IsValid())
-        return false;
-
-    func_addr = func_so_addr->GetCallableLoadAddress (target, is_indirect_function);
-
-    return true;
+        if (func_so_addr && func_so_addr->IsValid())
+        {
+            lldb::addr_t load_addr = func_so_addr->GetCallableLoadAddress (target, is_indirect_function);
+            
+            if (load_addr != LLDB_INVALID_ADDRESS)
+            {
+                func_addr = load_addr;
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 addr_t
