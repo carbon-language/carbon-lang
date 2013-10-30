@@ -37,18 +37,37 @@ static bool ascii_isdigit(char x) {
   return x >= '0' && x <= '9';
 }
 
-/// compare_lower - Compare strings, ignoring case.
-int StringRef::compare_lower(StringRef RHS) const {
-  for (size_t I = 0, E = min(Length, RHS.Length); I != E; ++I) {
-    unsigned char LHC = ascii_tolower(Data[I]);
-    unsigned char RHC = ascii_tolower(RHS.Data[I]);
+// strncasecmp() is not available on non-POSIX systems, so define an
+// alternative function here.
+static int ascii_strncasecmp(const char *LHS, const char *RHS, size_t Length) {
+  for (size_t I = 0; I < Length; ++I) {
+    unsigned char LHC = ascii_tolower(LHS[I]);
+    unsigned char RHC = ascii_tolower(RHS[I]);
     if (LHC != RHC)
       return LHC < RHC ? -1 : 1;
   }
+  return 0;
+}
 
+/// compare_lower - Compare strings, ignoring case.
+int StringRef::compare_lower(StringRef RHS) const {
+  if (int Res = ascii_strncasecmp(Data, RHS.Data, min(Length, RHS.Length)))
+    return Res;
   if (Length == RHS.Length)
     return 0;
   return Length < RHS.Length ? -1 : 1;
+}
+
+/// Check if this string starts with the given \p Prefix, ignoring case.
+bool StringRef::startswith_lower(StringRef Prefix) const {
+  return Length >= Prefix.Length &&
+      ascii_strncasecmp(Data, Prefix.Data, Prefix.Length) == 0;
+}
+
+/// Check if this string ends with the given \p Suffix, ignoring case.
+bool StringRef::endswith_lower(StringRef Suffix) const {
+  return Length >= Suffix.Length &&
+      ascii_strncasecmp(end() - Suffix.Length, Suffix.Data, Suffix.Length) == 0;
 }
 
 /// compare_numeric - Compare strings, handle embedded numbers.

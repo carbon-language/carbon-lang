@@ -61,6 +61,9 @@ TEST(StringRefTest, StringOps) {
   EXPECT_EQ( 0, StringRef("AaB").compare_lower("aab"));
   EXPECT_EQ( 1, StringRef("AaB").compare_lower("AAA"));
   EXPECT_EQ(-1, StringRef("AaB").compare_lower("aaBb"));
+  EXPECT_EQ(-1, StringRef("AaB").compare_lower("bb"));
+  EXPECT_EQ( 1, StringRef("aaBb").compare_lower("AaB"));
+  EXPECT_EQ( 1, StringRef("bb").compare_lower("AaB"));
   EXPECT_EQ( 1, StringRef("AaB").compare_lower("aA"));
   EXPECT_EQ( 1, StringRef("\xFF").compare_lower("\1"));
 
@@ -254,6 +257,16 @@ TEST(StringRefTest, StartsWith) {
   EXPECT_FALSE(Str.startswith("hi"));
 }
 
+TEST(StringRefTest, StartsWithLower) {
+  StringRef Str("heLLo");
+  EXPECT_TRUE(Str.startswith_lower(""));
+  EXPECT_TRUE(Str.startswith_lower("he"));
+  EXPECT_TRUE(Str.startswith_lower("hell"));
+  EXPECT_TRUE(Str.startswith_lower("HELlo"));
+  EXPECT_FALSE(Str.startswith_lower("helloworld"));
+  EXPECT_FALSE(Str.startswith_lower("hi"));
+}
+
 TEST(StringRefTest, EndsWith) {
   StringRef Str("hello");
   EXPECT_TRUE(Str.endswith(""));
@@ -261,6 +274,16 @@ TEST(StringRefTest, EndsWith) {
   EXPECT_FALSE(Str.endswith("helloworld"));
   EXPECT_FALSE(Str.endswith("worldhello"));
   EXPECT_FALSE(Str.endswith("so"));
+}
+
+TEST(StringRefTest, EndsWithLower) {
+  StringRef Str("heLLo");
+  EXPECT_TRUE(Str.endswith_lower(""));
+  EXPECT_TRUE(Str.endswith_lower("lo"));
+  EXPECT_TRUE(Str.endswith_lower("LO"));
+  EXPECT_TRUE(Str.endswith_lower("ELlo"));
+  EXPECT_FALSE(Str.endswith_lower("helloworld"));
+  EXPECT_FALSE(Str.endswith_lower("hi"));
 }
 
 TEST(StringRefTest, Find) {
