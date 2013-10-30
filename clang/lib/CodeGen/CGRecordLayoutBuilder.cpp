@@ -201,11 +201,9 @@ public:
 }
 
 void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
-  Alignment = Types.getContext().getASTRecordLayout(D).getAlignment();
-  Packed = D->hasAttr<PackedAttr>();
   const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(D);
-  if (Layout.getSize() % Layout.getAlignment() != 0)
-    Packed = true;
+  Alignment = Layout.getAlignment();
+  Packed = D->hasAttr<PackedAttr>() || Layout.getSize() % Alignment != 0;
 
   if (D->isUnion()) {
     LayoutUnion(D);
