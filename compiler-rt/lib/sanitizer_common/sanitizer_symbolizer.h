@@ -118,7 +118,8 @@ class Symbolizer {
   /// already exists.  Not thread safe.
   static Symbolizer *CreateAndStore(const char *path_to_external);
 
-  static atomic_uintptr_t symbolizer_;
+  static Symbolizer *symbolizer_;
+  static StaticSpinMutex init_mu_;
 
  protected:
   static LowLevelAllocator symbolizer_allocator_;

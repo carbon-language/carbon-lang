@@ -18,26 +18,26 @@
 
 namespace __sanitizer {
 
-atomic_uintptr_t Symbolizer::symbolizer_;
+Symbolizer *Symbolizer::symbolizer_;
+StaticSpinMutex Symbolizer::init_mu_;
 LowLevelAllocator Symbolizer::symbolizer_allocator_;
 
 Symbolizer *Symbolizer::GetOrNull() {
-  return reinterpret_cast<Symbolizer *>(
-      atomic_load(&symbolizer_, memory_order_acquire));
+  SpinMutexLock l(&init_mu_);
+  return symbolizer_;
 }
 
 Symbolizer *Symbolizer::Get() {
-  Symbolizer *sym = GetOrNull();
-  CHECK(sym);
-  return sym;
+  SpinMutexLock l(&init_mu_);
+  RAW_CHECK_MSG(symbolizer_ != 0, "Using uninitialized symbolizer!");
+  return symbolizer_;
 }
 
 Symbolizer *Symbolizer::Disable() {
-  CHECK_EQ(0, atomic_load(&symbolizer_, memory_order_acquire));
-  Symbolizer *dummy_sym = new(symbolizer_allocator_) Symbolizer;
-  atomic_store(&symbolizer_, reinterpret_cast<uptr>(dummy_sym),
-               memory_order_release);
-  return dummy_sym;
+  CHECK_EQ(0, symbolizer_);
+  // Initialize a dummy symbolizer.
+  symbolizer_ = new(symbolizer_allocator_) Symbolizer;
+  return symbolizer_;
 }
 
 }  // namespace __sanitizer
