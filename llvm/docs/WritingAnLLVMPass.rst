@@ -131,7 +131,7 @@ Next, we declare our pass itself:
 
   struct Hello : public FunctionPass {
 
-This declares a "``Hello``" class that is a subclass of `FunctionPass
+This declares a "``Hello``" class that is a subclass of :ref:`FunctionPass
 <writing-an-llvm-pass-FunctionPass>`.  The different builtin pass subclasses
 are described in detail :ref:`later <writing-an-llvm-pass-pass-classes>`, but
 for now, know that ``FunctionPass`` operates on a function at a time.
