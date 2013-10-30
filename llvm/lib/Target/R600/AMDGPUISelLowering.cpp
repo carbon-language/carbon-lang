@@ -134,6 +134,8 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FNEG, MVT::v2f32, Expand);
   setOperationAction(ISD::FNEG, MVT::v4f32, Expand);
 
+  setOperationAction(ISD::UINT_TO_FP, MVT::i64, Custom);
+
   setOperationAction(ISD::MUL, MVT::i64, Expand);
 
   setOperationAction(ISD::UDIV, MVT::i32, Expand);
@@ -251,6 +253,7 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::STORE: return LowerSTORE(Op, DAG);
   case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
+  case ISD::UINT_TO_FP: return LowerUINT_TO_FP(Op, DAG);
   }
   return Op;
 }
@@ -672,6 +675,25 @@ SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
   return DAG.getMergeValues(Ops, 2, DL);
 }
 
+SDValue AMDGPUTargetLowering::LowerUINT_TO_FP(SDValue Op,
+                                               SelectionDAG &DAG) const {
+  SDValue S0 = Op.getOperand(0);
+  SDLoc DL(Op);
+  if (Op.getValueType() != MVT::f32 || S0.getValueType() != MVT::i64)
+    return SDValue();
+
+  // f32 uint_to_fp i64
+  SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32, S0,
+                           DAG.getConstant(0, MVT::i32));
+  SDValue FloatLo = DAG.getNode(ISD::UINT_TO_FP, DL, MVT::f32, Lo);
+  SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32, S0,
+                           DAG.getConstant(1, MVT::i32));
+  SDValue FloatHi = DAG.getNode(ISD::UINT_TO_FP, DL, MVT::f32, Hi);
+  FloatHi = DAG.getNode(ISD::FMUL, DL, MVT::f32, FloatHi,
+                        DAG.getConstantFP(4294967296.0f, MVT::f32)); // 2^32
+  return DAG.getNode(ISD::FADD, DL, MVT::f32, FloatLo, FloatHi);
+
+}
 
 //===----------------------------------------------------------------------===//
 // Helper functions
