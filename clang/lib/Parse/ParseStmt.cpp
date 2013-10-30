@@ -2099,20 +2099,22 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
   // We need an actual supported target.
   llvm::Triple TheTriple = Actions.Context.getTargetInfo().getTriple();
   llvm::Triple::ArchType ArchTy = TheTriple.getArch();
+  const std::string &TT = TheTriple.getTriple();
+  const llvm::Target *TheTarget = 0;
   bool UnsupportedArch = (ArchTy != llvm::Triple::x86 &&
                           ArchTy != llvm::Triple::x86_64);
-  if (UnsupportedArch)
+  if (UnsupportedArch) {
     Diag(AsmLoc, diag::err_msasm_unsupported_arch) << TheTriple.getArchName();
-    
-  std::string Error;
-  const std::string &TT = TheTriple.getTriple();
-  const llvm::Target *TheTarget = llvm::TargetRegistry::lookupTarget(TT, Error);
-  if (!TheTarget)
-    Diag(AsmLoc, diag::err_msasm_unable_to_create_target) << Error;
+  } else {
+    std::string Error;
+    TheTarget = llvm::TargetRegistry::lookupTarget(TT, Error);
+    if (!TheTarget)
+      Diag(AsmLoc, diag::err_msasm_unable_to_create_target) << Error;
+  }
 
   // If we don't support assembly, or the assembly is empty, we don't
   // need to instantiate the AsmParser, etc.
-  if (UnsupportedArch || !TheTarget || AsmToks.empty()) {
+  if (!TheTarget || AsmToks.empty()) {
     return Actions.ActOnMSAsmStmt(AsmLoc, LBraceLoc, AsmToks, StringRef(),
                                   /*NumOutputs*/ 0, /*NumInputs*/ 0,
                                   ConstraintRefs, ClobberRefs, Exprs, EndLoc);
