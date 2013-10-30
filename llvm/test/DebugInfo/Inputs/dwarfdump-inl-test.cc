@@ -13,3 +13,6 @@ int main() {
 // $ cp dwarfdump-inl-test.* /tmp/dbginfo
 // $ cd /tmp/dbginfo
 // $ clang++ -O2 -gline-tables-only -fsanitize=address -fPIC -shared dwarfdump-inl-test.cc -o <output>
+//
+// And similarly with with gcc 4.8.2:
+// $ gcc dwarfdump-inl-test.cc -o dwarfdump-inl-test.high_pc.elf-x86-64 -g -O2 -fPIC -shared
