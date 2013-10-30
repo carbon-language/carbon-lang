@@ -7,19 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Symbolizer is intended to be used by both
-// AddressSanitizer and ThreadSanitizer to symbolize a given
-// address. It is an analogue of addr2line utility and allows to map
-// instruction address to a location in source code at run-time.
+// Symbolizer is used by sanitizers to map instruction address to a location in
+// source code at run-time. Symbolizer either uses __sanitizer_symbolize_*
+// defined in the program, or (if they are missing) tries to find and
+// launch "llvm-symbolizer" commandline tool in a separate process and
+// communicate with it.
 //
-// Symbolizer is planned to use debug information (in DWARF format)
-// in a binary via interface defined in "llvm/DebugInfo/DIContext.h"
-//
-// Symbolizer code should be called from the run-time library of
-// dynamic tools, and generally should not call memory allocation
-// routines or other system library functions intercepted by those tools.
-// Instead, Symbolizer code should use their replacements, defined in
-// "compiler-rt/lib/sanitizer_common/sanitizer_libc.h".
+// Generally we should try to avoid calling system library functions during
+// symbolization (and use their replacements from sanitizer_libc.h instead).
 //===----------------------------------------------------------------------===//
 #ifndef SANITIZER_SYMBOLIZER_H
 #define SANITIZER_SYMBOLIZER_H
@@ -27,7 +22,6 @@
 #include "sanitizer_allocator_internal.h"
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
-// WARNING: Do not include system headers here. See details above.
 
 namespace __sanitizer {
 
