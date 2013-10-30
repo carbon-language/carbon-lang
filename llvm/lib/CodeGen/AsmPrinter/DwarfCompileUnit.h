@@ -315,6 +315,17 @@ public:
   /// call insertDIE if MD is not null.
   DIE *createAndAddDIE(unsigned Tag, DIE &Parent, const MDNode *MD = NULL);
 
+  /// Compute the size of a header for this unit, not including the initial
+  /// length field.
+  unsigned getHeaderSize() const {
+    return sizeof(int16_t) + // DWARF version number
+           sizeof(int32_t) + // Offset Into Abbrev. Section
+           sizeof(int8_t);   // Pointer Size (in bytes)
+  }
+
+  /// Emit the header for this unit, not including the initial length field.
+  void emitHeader(const MCSection *ASection, const MCSymbol *ASectionSym);
+
 private:
   /// constructTypeDIE - Construct basic type die from DIBasicType.
   void constructTypeDIE(DIE &Buffer, DIBasicType BTy);

@@ -22,6 +22,8 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
@@ -1899,4 +1901,15 @@ DIE *CompileUnit::getOrCreateStaticMemberDIE(const DIDerivedType DT) {
     addConstantFPValue(StaticMemberDIE, CFP);
 
   return StaticMemberDIE;
+}
+
+void CompileUnit::emitHeader(const MCSection *ASection,
+                             const MCSymbol *ASectionSym) {
+  Asm->OutStreamer.AddComment("DWARF version number");
+  Asm->EmitInt16(DD->getDwarfVersion());
+  Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
+  Asm->EmitSectionOffset(Asm->GetTempSymbol(ASection->getLabelBeginName()),
+                         ASectionSym);
+  Asm->OutStreamer.AddComment("Address Size (in bytes)");
+  Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 }

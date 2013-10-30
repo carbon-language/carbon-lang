@@ -1972,11 +1972,8 @@ void DwarfUnits::computeSizeAndOffsets() {
     (*I)->setDebugInfoOffset(SecOffset);
 
     // CU-relative offset is reset to 0 here.
-    unsigned Offset =
-      sizeof(int32_t) + // Length of Compilation Unit Info
-      sizeof(int16_t) + // DWARF version number
-      sizeof(int32_t) + // Offset Into Abbrev. Section
-      sizeof(int8_t);   // Pointer Size (in bytes)
+    unsigned Offset = sizeof(int32_t) + // Length of Unit Info
+                      (*I)->getHeaderSize(); // Unit-specific headers
 
     // EndOffset here is CU-relative, after laying out
     // all of the CU DIE.
@@ -2163,20 +2160,10 @@ void DwarfUnits::emitUnits(DwarfDebug *DD,
                                     TheCU->getUniqueID()));
 
     // Emit size of content not including length itself
-    unsigned ContentSize = Die->getSize() +
-      sizeof(int16_t) + // DWARF version number
-      sizeof(int32_t) + // Offset Into Abbrev. Section
-      sizeof(int8_t);   // Pointer Size (in bytes)
+    Asm->OutStreamer.AddComment("Length of Unit");
+    Asm->EmitInt32(TheCU->getHeaderSize() + Die->getSize());
 
-    Asm->OutStreamer.AddComment("Length of Compilation Unit Info");
-    Asm->EmitInt32(ContentSize);
-    Asm->OutStreamer.AddComment("DWARF version number");
-    Asm->EmitInt16(DD->getDwarfVersion());
-    Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
-    Asm->EmitSectionOffset(Asm->GetTempSymbol(ASection->getLabelBeginName()),
-                           ASectionSym);
-    Asm->OutStreamer.AddComment("Address Size (in bytes)");
-    Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
+    TheCU->emitHeader(ASection, ASectionSym);
 
     DD->emitDIE(Die, Abbreviations);
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol(USection->getLabelEndName(),
