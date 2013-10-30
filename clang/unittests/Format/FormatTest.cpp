@@ -6984,6 +6984,17 @@ TEST_F(FormatTest, SupportsCRLF) {
                    "  b; \\\r\n"
                    "  c; d; \r\n",
                    getGoogleStyle()));
+
+  EXPECT_EQ("/*\r\n"
+            "multi line block comments\r\n"
+            "should not introduce\r\n"
+            "an extra carriage return\r\n"
+            "*/\r\n",
+            format("/*\r\n"
+                   "multi line block comments\r\n"
+                   "should not introduce\r\n"
+                   "an extra carriage return\r\n"
+                   "*/\r\n"));
 }
 
 TEST_F(FormatTest, MunchSemicolonAfterBlocks) {
