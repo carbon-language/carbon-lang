@@ -309,17 +309,31 @@ void InstrumentMops(void *drcontext, instrlist_t *bb, instr_t *instr, opnd_t op,
   opnd_size_t op_size = opnd_get_size(op);
   CHECK(op_size != OPSZ_NA);
   uint access_size = opnd_size_in_bytes(op_size);
-  // TODO: optimize it with check-before-write
   if (access_size <= 4 || op_size == OPSZ_PTR /* x64 support sign extension */) {
-    PRE(instr,
-        mov_st(drcontext, opnd_create_base_disp(R1, DR_REG_NULL, 0, 0, op_size),
-               opnd_create_immed_int((ptr_int_t) 0,
-                                     (op_size == OPSZ_PTR) ? OPSZ_4 : op_size)));
+    instr_t *label = INSTR_CREATE_label(drcontext);
+    opnd_t   immed;
+    if (op_size == OPSZ_PTR || op_size == OPSZ_4)
+        immed = OPND_CREATE_INT32(0);
+    else
+        immed = opnd_create_immed_int((ptr_int_t) 0, op_size);
+    // we check if target is 0 before write to reduce unnecessary memory stores.
+    PRE(instr, cmp(drcontext,
+                   opnd_create_base_disp(R1, DR_REG_NULL, 0, 0, op_size),
+                   immed));
+    PRE(instr, jcc(drcontext, OP_je, opnd_create_instr(label)));
+    PRE(instr, mov_st(drcontext,
+                      opnd_create_base_disp(R1, DR_REG_NULL, 0, 0, op_size),
+                      immed));
+    PREF(instr, label);
   } else {
     // FIXME: tail?
     for (uint ofs = 0; ofs < access_size; ofs += 4) {
-      PRE(instr,
-          mov_st(drcontext, OPND_CREATE_MEM32(R1, ofs), OPND_CREATE_INT32(0)));
+      instr_t *label = INSTR_CREATE_label(drcontext);
+      opnd_t   immed = OPND_CREATE_INT32(0);
+      PRE(instr, cmp(drcontext, OPND_CREATE_MEM32(R1, ofs), immed));
+      PRE(instr, jcc(drcontext, OP_je, opnd_create_instr(label)));
+      PRE(instr, mov_st(drcontext, OPND_CREATE_MEM32(R1, ofs), immed));
+      PREF(instr, label)
     }
   }
 
