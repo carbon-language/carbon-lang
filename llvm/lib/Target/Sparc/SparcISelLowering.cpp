@@ -1341,6 +1341,14 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SREM, MVT::i32, Expand);
   setOperationAction(ISD::SDIVREM, MVT::i32, Expand);
   setOperationAction(ISD::UDIVREM, MVT::i32, Expand);
+  
+  // ... nor does SparcV9.
+  if (Subtarget->is64Bit()) {
+    setOperationAction(ISD::UREM, MVT::i64, Expand);
+    setOperationAction(ISD::SREM, MVT::i64, Expand);
+    setOperationAction(ISD::SDIVREM, MVT::i64, Expand);
+    setOperationAction(ISD::UDIVREM, MVT::i64, Expand);
+  }
 
   // Custom expand fp<->sint
   setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
