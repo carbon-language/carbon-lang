@@ -87,10 +87,6 @@ public:
         bool        is_64_bit;      // 64-bit dwarf
         uint32_t SizeofTotalLength() const { return is_64_bit ? 12 : 4; }
         uint32_t SizeofPrologueLength() const { return is_64_bit ? 8 : 4; }
-        // Length of the prologue in bytes
-        uint32_t Length() const { return prologue_length + SizeofTotalLength() + sizeof(version) + SizeofPrologueLength(); }
-        // Length of the line table data in bytes (not including the prologue)
-        uint32_t StatementTableLength() const { return total_length + SizeofPrologueLength() - Length(); }
         int32_t MaxLineIncrementForSpecialOpcode() const { return line_base + (int8_t)line_range - 1; }
         bool IsValid() const;
 //      void Append(BinaryStreamBuf& buff) const;
