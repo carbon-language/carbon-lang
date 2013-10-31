@@ -216,8 +216,8 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.expect("next",
             substrs = ['Process', expected_state])
 
-        self.expect("thread list", error=True, 
-            substrs = ['Process must be launched'])
+        if not(sys.platform.startswith("darwin")): # if stopped, we will have a process around
+            self.expect("thread list", error=True,substrs = ['Process must be launched'])
 
     def recursive_inferior_crashing_expr_step_expr(self):
         """Test that lldb expressions work before and after stepping after a crash."""
