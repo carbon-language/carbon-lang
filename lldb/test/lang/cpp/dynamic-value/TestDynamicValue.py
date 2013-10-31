@@ -17,7 +17,7 @@ class DynamicValueTestCase(TestBase):
     @dsym_test
     def test_get_dynamic_vals_with_dsym(self):
         """Test fetching C++ dynamic values from pointers & references."""
-        self.buildDsym()
+        self.buildDsym(dictionary=self.getBuildFlags())
         self.do_get_dynamic_vals()
 
     @expectedFailureFreeBSD('llvm.org/pr17225')
@@ -25,7 +25,7 @@ class DynamicValueTestCase(TestBase):
     @dwarf_test
     def test_get_dynamic_vals_with_dwarf(self):
         """Test fetching C++ dynamic values from pointers & references."""
-        self.buildDwarf()
+        self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_get_dynamic_vals()
 
     def setUp(self):
