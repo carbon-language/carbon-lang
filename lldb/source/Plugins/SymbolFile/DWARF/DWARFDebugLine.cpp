@@ -410,23 +410,12 @@ DWARFDebugLine::ParsePrologue(const DWARFDataExtractor& debug_line_data, lldb::o
     prologue->Clear();
     uint32_t i;
     const char * s;
-    prologue->total_length      = debug_line_data.GetU32(offset_ptr);
-    // 7.4 32-Bit and 64-Bit DWARF Formats
-    if (prologue->total_length == 0xffffffff)
-    {
-        prologue->is_64_bit     = true;
-        prologue->total_length  = debug_line_data.GetU64(offset_ptr);
-    }
-    else if (prologue->total_length >= 0xffffff00)
-    {
-        // Reserved.
-        return false;
-    }
+    prologue->total_length      = debug_line_data.GetDWARFInitialLength(offset_ptr);
     prologue->version           = debug_line_data.GetU16(offset_ptr);
     if (prologue->version != 2)
       return false;
 
-    prologue->prologue_length   = debug_line_data.GetMaxU64(offset_ptr, prologue->SizeofPrologueLength());
+    prologue->prologue_length   = debug_line_data.GetDWARFOffset(offset_ptr);
     const lldb::offset_t end_prologue_offset = prologue->prologue_length + *offset_ptr;
     prologue->min_inst_length   = debug_line_data.GetU8(offset_ptr);
     prologue->default_is_stmt   = debug_line_data.GetU8(offset_ptr);
@@ -488,18 +477,13 @@ DWARFDebugLine::ParseSupportFiles (const lldb::ModuleSP &module_sp,
 {
     lldb::offset_t offset = stmt_list;
     // Skip the total length
-    size_t dwarf_offset_size = 4;
-    if (debug_line_data.GetU32(&offset) == 0xffffffff)
-    {
-        dwarf_offset_size = 8;
-        (void)debug_line_data.GetU64(&offset);
-    }
+    (void)debug_line_data.GetDWARFInitialLength(&offset);
     const char * s;
     uint32_t version = debug_line_data.GetU16(&offset);
     if (version != 2)
       return false;
 
-    const dw_offset_t end_prologue_offset = debug_line_data.GetMaxU64(&offset, dwarf_offset_size) + offset;
+    const dw_offset_t end_prologue_offset = debug_line_data.GetDWARFOffset(&offset) + offset;
     // Skip instruction length, default is stmt, line base, line range and
     // opcode base, and all opcode lengths
     offset += 4;
@@ -619,7 +603,7 @@ DWARFDebugLine::ParseStatementTable
     if (log)
         prologue->Dump (log);
 
-    const dw_offset_t end_offset = debug_line_offset + prologue->total_length + (prologue->SizeofTotalLength());
+    const dw_offset_t end_offset = debug_line_offset + prologue->total_length + (debug_line_data.GetDWARFSizeofInitialLength());
 
     State state(prologue, log, callback, userData);
 

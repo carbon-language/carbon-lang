@@ -65,8 +65,7 @@ public:
             opcode_base(0),
             standard_opcode_lengths(),
             include_directories(),
-            file_names(),
-            is_64_bit(false)
+            file_names()
         {
         }
 
@@ -84,9 +83,6 @@ public:
         std::vector<std::string>        include_directories;
         std::vector<FileNameEntry>      file_names;
 
-        bool        is_64_bit;      // 64-bit dwarf
-        uint32_t SizeofTotalLength() const { return is_64_bit ? 12 : 4; }
-        uint32_t SizeofPrologueLength() const { return is_64_bit ? 8 : 4; }
         int32_t MaxLineIncrementForSpecialOpcode() const { return line_base + (int8_t)line_range - 1; }
         bool IsValid() const;
 //      void Append(BinaryStreamBuf& buff) const;
@@ -98,7 +94,6 @@ public:
             standard_opcode_lengths.clear();
             include_directories.clear();
             file_names.clear();
-            is_64_bit = false;
         }
         bool GetFile(uint32_t file_idx, std::string& file, std::string& dir) const;
 

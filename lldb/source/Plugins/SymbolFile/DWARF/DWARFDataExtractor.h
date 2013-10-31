@@ -30,6 +30,9 @@ public:
     dw_offset_t
     GetDWARFOffset(lldb::offset_t *offset_ptr) const;
 
+    size_t
+    GetDWARFSizeofInitialLength() const { return m_is_dwarf64 ? 12 : 4; }
+
 protected:
     mutable bool m_is_dwarf64;
 };
