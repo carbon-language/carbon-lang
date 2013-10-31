@@ -1,15 +1,10 @@
 
 #include <clc/clc.h>
 
-void barrier_local(void);
-void barrier_global(void);
+_CLC_DEF int __clc_clk_local_mem_fence() {
+  return CLK_LOCAL_MEM_FENCE;
+}
 
-void barrier(cl_mem_fence_flags flags) {
-  if (flags & CLK_LOCAL_MEM_FENCE) {
-    barrier_local();
-  }
-
-  if (flags & CLK_GLOBAL_MEM_FENCE) {
-    barrier_global();
-  }
+_CLC_DEF int __clc_clk_global_mem_fence() {
+  return CLK_GLOBAL_MEM_FENCE;
 }
