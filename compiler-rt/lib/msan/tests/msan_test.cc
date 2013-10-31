@@ -3496,3 +3496,10 @@ TEST(MemorySanitizerAllocator, get_allocated_size_and_ownership) {
 
   delete int_ptr;
 }
+
+TEST(MemorySanitizer, MlockTest) {
+  EXPECT_EQ(0, mlockall(MCL_CURRENT));
+  EXPECT_EQ(0, mlock((void*)0x12345, 0x5678));
+  EXPECT_EQ(0, munlockall());
+  EXPECT_EQ(0, munlock((void*)0x987, 0x654));
+}

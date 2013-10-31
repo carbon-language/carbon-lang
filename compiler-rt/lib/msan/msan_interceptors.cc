@@ -1172,6 +1172,35 @@ INTERCEPTOR(void *, shmat, int shmid, const void *shmaddr, int shmflg) {
   return p;
 }
 
+// Linux kernel has a bug that leads to kernel deadlock if a process
+// maps TBs of memory and then calls mlock().
+static void MlockIsUnsupported() {
+  static atomic_uint8_t printed;
+  if (atomic_exchange(&printed, 1, memory_order_relaxed))
+    return;
+  if (common_flags()->verbosity > 0)
+    Printf("INFO: MemorySanitizer ignores mlock/mlockall/munlock/munlockall\n");
+}
+
+INTERCEPTOR(int, mlock, const void *addr, uptr len) {
+  MlockIsUnsupported();
+  return 0;
+}
+
+INTERCEPTOR(int, munlock, const void *addr, uptr len) {
+  MlockIsUnsupported();
+  return 0;
+}
+
+INTERCEPTOR(int, mlockall, int flags) {
+  MlockIsUnsupported();
+  return 0;
+}
+
+INTERCEPTOR(int, munlockall, void) {
+  MlockIsUnsupported();
+  return 0;
+}
 
 struct MSanInterceptorContext {
   bool in_interceptor_scope;
