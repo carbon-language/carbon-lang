@@ -322,7 +322,7 @@ public:
     GetDisassemblyLineCount () const;
     
     bool
-    GetEnableAutoOneLine () const;
+    GetAutoOneLineSummaries () const;
     
     bool
     GetNotifyVoid () const;

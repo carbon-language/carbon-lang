@@ -335,7 +335,7 @@ bool
 FormatManager::ShouldPrintAsOneLiner (ValueObject& valobj)
 {
     // if settings say no oneline whatsoever
-    if (valobj.GetTargetSP().get() && valobj.GetTargetSP()->GetDebugger().GetEnableAutoOneLine() == false)
+    if (valobj.GetTargetSP().get() && valobj.GetTargetSP()->GetDebugger().GetAutoOneLineSummaries() == false)
         return false; // then don't oneline
     
     // if this object has a summary, don't try to do anything special to it
