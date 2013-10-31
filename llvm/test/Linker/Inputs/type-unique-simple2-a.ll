@@ -1,14 +1,18 @@
-; CHECK: 0x[[INT:.*]]: DW_TAG_base_type
-; CHECK-NEXT: DW_AT_name {{.*}} = "int"
-; CHECK-NOT: DW_TAG_base_type
+; Make sure the backend generates a single DIE and uses ref_addr.
 ; CHECK: 0x[[BASE:.*]]: DW_TAG_structure_type
 ; CHECK-NEXT: DW_AT_name {{.*}} = "Base"
 ; CHECK-NOT: DW_TAG_structure_type
+; CHECK: 0x[[INT:.*]]: DW_TAG_base_type
+; CHECK-NEXT: DW_AT_name {{.*}} = "int"
+; CHECK-NOT: DW_TAG_base_type
+
+; CHECK: DW_TAG_compile_unit
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK: DW_AT_type [DW_FORM_ref_addr] {{.*}}[[INT]])
 ; CHECK: DW_TAG_variable
 ; CHECK: DW_AT_type [DW_FORM_ref_addr] {{.*}}[[BASE]])
 
+; Make sure llvm-link only generates a single copy of the struct.
 ; LINK: DW_TAG_structure_type
 ; LINK-NOT: DW_TAG_structure_type
 

@@ -332,6 +332,11 @@ class DwarfDebug {
   // Maps a CU DIE with its corresponding CompileUnit.
   DenseMap <const DIE *, CompileUnit *> CUDieMap;
 
+  /// Maps MDNodes for type sysstem with the corresponding DIEs. These DIEs can
+  /// be shared across CUs, that is why we keep the map here instead
+  /// of in CompileUnit.
+  DenseMap<const MDNode *, DIE *> MDTypeNodeToDieMap;
+
   // Used to uniquely define abbreviations.
   FoldingSet<DIEAbbrev> AbbreviationsSet;
 
@@ -661,6 +666,13 @@ public:
   // Main entry points.
   //
   DwarfDebug(AsmPrinter *A, Module *M);
+
+  void insertDIE(const MDNode *TypeMD, DIE *Die) {
+    MDTypeNodeToDieMap.insert(std::make_pair(TypeMD, Die));
+  }
+  DIE *getDIE(const MDNode *TypeMD) {
+    return MDTypeNodeToDieMap.lookup(TypeMD);
+  }
 
   /// \brief Emit all Dwarf sections that should come prior to the
   /// content.

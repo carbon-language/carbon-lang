@@ -98,6 +98,35 @@ int64_t CompileUnit::getDefaultLowerBound() const {
   return -1;
 }
 
+/// Check whether the DIE for this MDNode can be shared across CUs.
+static bool isShareableAcrossCUs(const MDNode *N) {
+  // When the MDNode can be part of the type system, the DIE can be
+  // shared across CUs.
+  return DIDescriptor(N).isType() ||
+         (DIDescriptor(N).isSubprogram() && !DISubprogram(N).isDefinition());
+}
+
+/// getDIE - Returns the debug information entry map slot for the
+/// specified debug variable. We delegate the request to DwarfDebug
+/// when the DIE for this MDNode can be shared across CUs. The mappings
+/// will be kept in DwarfDebug for shareable DIEs.
+DIE *CompileUnit::getDIE(const MDNode *N) const {
+  if (isShareableAcrossCUs(N))
+    return DD->getDIE(N);
+  return MDNodeToDieMap.lookup(N);
+}
+
+/// insertDIE - Insert DIE into the map. We delegate the request to DwarfDebug
+/// when the DIE for this MDNode can be shared across CUs. The mappings
+/// will be kept in DwarfDebug for shareable DIEs.
+void CompileUnit::insertDIE(const MDNode *N, DIE *D) {
+  if (isShareableAcrossCUs(N)) {
+    DD->insertDIE(N, D);
+    return;
+  }
+  MDNodeToDieMap.insert(std::make_pair(N, D));
+}
+
 /// addFlag - Add a flag that is true.
 void CompileUnit::addFlag(DIE *Die, dwarf::Attribute Attribute) {
   if (DD->getDwarfVersion() >= 4)
@@ -245,8 +274,21 @@ void CompileUnit::addDelta(DIE *Die, dwarf::Attribute Attribute, dwarf::Form For
 /// addDIEEntry - Add a DIE attribute data and value.
 ///
 void CompileUnit::addDIEEntry(DIE *Die, dwarf::Attribute Attribute, DIE *Entry) {
-  // We currently only use ref4.
-  Die->addValue(Attribute, dwarf::DW_FORM_ref4, createDIEEntry(Entry));
+  addDIEEntry(Die, Attribute, createDIEEntry(Entry));
+}
+
+void CompileUnit::addDIEEntry(DIE *Die, dwarf::Attribute Attribute,
+                              DIEEntry *Entry) {
+  const DIE *DieCU = Die->getCompileUnitOrNull();
+  const DIE *EntryCU = Entry->getEntry()->getCompileUnitOrNull();
+  if (!DieCU)
+    // We assume that Die belongs to this CU, if it is not linked to any CU yet.
+    DieCU = getCUDie();
+  if (!EntryCU)
+    EntryCU = getCUDie();
+  Die->addValue(Attribute, EntryCU == DieCU ? dwarf::DW_FORM_ref4
+                                            : dwarf::DW_FORM_ref_addr,
+                Entry);
 }
 
 /// Create a DIE with the given Tag, add the DIE to its parent, and
@@ -882,7 +924,7 @@ void CompileUnit::addType(DIE *Entity, DIType Ty, dwarf::Attribute Attribute) {
   DIEEntry *Entry = getDIEEntry(Ty);
   // If it exists then use the existing value.
   if (Entry) {
-    Entity->addValue(Attribute, dwarf::DW_FORM_ref4, Entry);
+    addDIEEntry(Entity, Attribute, Entry);
     return;
   }
 
@@ -892,7 +934,7 @@ void CompileUnit::addType(DIE *Entity, DIType Ty, dwarf::Attribute Attribute) {
   // Set up proxy.
   Entry = createDIEEntry(Buffer);
   insertDIEEntry(Ty, Entry);
-  Entity->addValue(Attribute, dwarf::DW_FORM_ref4, Entry);
+  addDIEEntry(Entity, Attribute, Entry);
 
   // If this is a complete composite type then include it in the
   // list of global types.

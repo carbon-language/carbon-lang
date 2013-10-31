@@ -155,15 +155,19 @@ public:
   void addAccelType(StringRef Name, std::pair<DIE *, unsigned> Die);
 
   /// getDIE - Returns the debug information entry map slot for the
-  /// specified debug variable.
-  DIE *getDIE(const MDNode *N) const { return MDNodeToDieMap.lookup(N); }
+  /// specified debug variable. We delegate the request to DwarfDebug
+  /// when the MDNode can be part of the type system, since DIEs for
+  /// the type system can be shared across CUs and the mappings are
+  /// kept in DwarfDebug.
+  DIE *getDIE(const MDNode *N) const;
 
   DIEBlock *getDIEBlock() { return new (DIEValueAllocator) DIEBlock(); }
 
-  /// insertDIE - Insert DIE into the map.
-  void insertDIE(const MDNode *N, DIE *D) {
-    MDNodeToDieMap.insert(std::make_pair(N, D));
-  }
+  /// insertDIE - Insert DIE into the map. We delegate the request to DwarfDebug
+  /// when the MDNode can be part of the type system, since DIEs for
+  /// the type system can be shared across CUs and the mappings are
+  /// kept in DwarfDebug.
+  void insertDIE(const MDNode *N, DIE *D);
 
   /// addDie - Adds or interns the DIE to the compile unit.
   ///
@@ -223,6 +227,10 @@ public:
   /// addDIEEntry - Add a DIE attribute data and value.
   ///
   void addDIEEntry(DIE *Die, dwarf::Attribute Attribute, DIE *Entry);
+
+  /// addDIEEntry - Add a DIE attribute data and value.
+  ///
+  void addDIEEntry(DIE *Die, dwarf::Attribute Attribute, DIEEntry *Entry);
 
   /// addBlock - Add block data.
   ///

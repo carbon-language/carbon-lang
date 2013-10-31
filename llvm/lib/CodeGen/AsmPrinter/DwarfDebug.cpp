@@ -2083,6 +2083,9 @@ void DwarfDebug::emitDIE(DIE *Die, ArrayRef<DIEAbbrev *> Abbrevs) {
                                          DwarfInfoSectionSym,
                                          DIEEntry::getRefAddrSize(Asm));
       } else {
+        // Make sure Origin belong to the same CU.
+        assert(Die->getCompileUnit() == Origin->getCompileUnit() &&
+               "The referenced DIE should belong to the same CU in ref4");
         Asm->EmitInt32(Addr);
       }
       break;

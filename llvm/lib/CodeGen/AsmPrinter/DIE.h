@@ -149,6 +149,9 @@ namespace llvm {
     /// Climb up the parent chain to get the compile unit DIE this DIE belongs
     /// to.
     const DIE *getCompileUnit() const;
+    /// Similar to getCompileUnit, returns null when DIE is not added to an
+    /// owner yet.
+    const DIE *getCompileUnitOrNull() const;
     void setOffset(unsigned O) { Offset = O; }
     void setSize(unsigned S) { Size = S; }
 
