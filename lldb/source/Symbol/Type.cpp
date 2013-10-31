@@ -855,11 +855,12 @@ TypeAndOrName::operator!=(const TypeAndOrName &other) const
 
 ConstString
 TypeAndOrName::GetName () const
-{    
+{
+    if (m_type_name)
+        return m_type_name;
     if (m_type_pair)
         return m_type_pair.GetName();
-    else
-        return m_type_name;
+    return ConstString("<invalid>");
 }
 
 void

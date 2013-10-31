@@ -293,12 +293,17 @@ ClangASTType::IsRuntimeGeneratedType () const
 {
     if (!IsValid())
         return false;
+    
     clang::DeclContext* decl_ctx = GetDeclContextForType();
     if (!decl_ctx)
         return false;
-    if (!llvm::isa<ObjCContainerDecl>(decl_ctx))
+
+    if (!llvm::isa<clang::ObjCInterfaceDecl>(decl_ctx))
         return false;
-    ClangASTMetadata* ast_metadata = ClangASTContext::GetMetadata(m_ast, decl_ctx);
+    
+    clang::ObjCInterfaceDecl *result_iface_decl = llvm::dyn_cast<clang::ObjCInterfaceDecl>(decl_ctx);
+    
+    ClangASTMetadata* ast_metadata = ClangASTContext::GetMetadata(m_ast, result_iface_decl);
     if (!ast_metadata)
         return false;
     return (ast_metadata->GetISAPtr() != 0);

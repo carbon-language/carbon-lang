@@ -422,8 +422,7 @@ ValueObjectPrinter::ShouldPrintChildren (bool is_failed_description,
                 curr_ptr_depth = 1;
             }
             
-            if (curr_ptr_depth == 0)
-                return false;
+            return (curr_ptr_depth > 0);
         }
         
         TypeSummaryImpl* entry = GetSummaryFormatter();

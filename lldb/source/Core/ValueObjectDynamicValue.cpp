@@ -69,10 +69,10 @@ ValueObjectDynamicValue::GetTypeName()
     const bool success = UpdateValueIfNeeded(false);
     if (success)
     {
-        if (m_dynamic_type_info.HasType())
-            return GetClangType().GetConstTypeName();
         if (m_dynamic_type_info.HasName())
             return m_dynamic_type_info.GetName();
+        if (m_dynamic_type_info.HasType())
+            return GetClangType().GetConstTypeName();
     }
     return m_parent->GetTypeName();
 }
@@ -94,10 +94,10 @@ ValueObjectDynamicValue::GetQualifiedTypeName()
     const bool success = UpdateValueIfNeeded(false);
     if (success)
     {
-        if (m_dynamic_type_info.HasType())
-            return GetClangType().GetConstQualifiedTypeName ();
         if (m_dynamic_type_info.HasName())
             return m_dynamic_type_info.GetName();
+        if (m_dynamic_type_info.HasType())
+            return GetClangType().GetConstQualifiedTypeName ();
     }
     return m_parent->GetTypeName();
 }
@@ -155,6 +155,8 @@ FixupTypeAndOrName (const TypeAndOrName& type_andor_name,
             corrected_name.append(" *");
         else if (parent.IsPointerOrReferenceType())
             corrected_name.append(" &");
+        // the parent type should be a correctly pointer'ed or referenc'ed type
+        ret.SetClangASTType(parent.GetClangType());
         ret.SetName(corrected_name.c_str());
     }
     return ret;
