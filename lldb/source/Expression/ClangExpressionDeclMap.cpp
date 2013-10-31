@@ -1361,7 +1361,8 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             if (sc_list.GetSize())
             {
-                Symbol *symbol = NULL;
+                Symbol *extern_symbol = NULL;
+                Symbol *non_extern_symbol = NULL;
                 
                 for (uint32_t index = 0, num_indices = sc_list.GetSize();
                      index < num_indices;
@@ -1390,17 +1391,29 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     else if (sym_ctx.symbol)
                     {
                         if (sym_ctx.symbol->GetType() == eSymbolTypeReExported)
-                            symbol = sym_ctx.symbol->ResolveReExportedSymbol(*target);
+                        {
+                            sym_ctx.symbol = sym_ctx.symbol->ResolveReExportedSymbol(*target);
+                            if (sym_ctx.symbol == NULL)
+                                continue;
+                        }
+                        
+                        if (sym_ctx.symbol->IsExternal())
+                            extern_symbol = sym_ctx.symbol;
                         else
-                            symbol = sym_ctx.symbol;
+                            non_extern_symbol = sym_ctx.symbol;
                     }
                 }
                 
                 if (!context.m_found.function_with_type_info)
                 {
-                    if (symbol)
+                    if (extern_symbol)
                     {
-                        AddOneFunction (context, NULL, symbol, current_id);
+                        AddOneFunction (context, NULL, extern_symbol, current_id);
+                        context.m_found.function = true;
+                    }
+                    else if (non_extern_symbol)
+                    {
+                        AddOneFunction (context, NULL, non_extern_symbol, current_id);
                         context.m_found.function = true;
                     }
                 }
