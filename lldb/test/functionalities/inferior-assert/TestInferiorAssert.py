@@ -62,12 +62,14 @@ class AssertingInferiorTestCase(TestBase):
         self.inferior_asserting_expr()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @unittest2.expectedFailure("rdar://15367233")
     def test_inferior_asserting_step(self):
         """Test that lldb functions correctly after stepping through a call to assert()."""
         self.buildDsym()
         self.inferior_asserting_step()
 
     @expectedFailurei386 # llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly
+    @unittest2.expectedFailure("rdar://15367233")
     def test_inferior_asserting_step(self):
         """Test that lldb functions correctly after stepping through a call to assert()."""
         self.buildDwarf()
