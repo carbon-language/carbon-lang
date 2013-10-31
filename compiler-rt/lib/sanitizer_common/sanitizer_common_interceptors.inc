@@ -2811,6 +2811,37 @@ INTERCEPTOR(int, lrand48_r, void *buffer, long *result) {
 #define INIT_DRAND48_R
 #endif
 
+#if SANITIZER_INTERCEPT_GETLINE
+INTERCEPTOR(SSIZE_T, getline, char **lineptr, SIZE_T *n, void *stream) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getline, lineptr, n, stream);
+  SSIZE_T res = REAL(getline)(lineptr, n, stream);
+  if (res > 0) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, lineptr, sizeof(*lineptr));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, n, sizeof(*n));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *lineptr, res + 1);
+  }
+  return res;
+}
+INTERCEPTOR(SSIZE_T, getdelim, char **lineptr, SIZE_T *n, int delim,
+            void *stream) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getdelim, lineptr, n, delim, stream);
+  SSIZE_T res = REAL(getdelim)(lineptr, n, delim, stream);
+  if (res > 0) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, lineptr, sizeof(*lineptr));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, n, sizeof(*n));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *lineptr, res + 1);
+  }
+  return res;
+}
+#define INIT_GETLINE           \
+  INTERCEPT_FUNCTION(getline); \
+  INTERCEPT_FUNCTION(getdelim);
+#else
+#define INIT_GETLINE
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -2918,4 +2949,5 @@ INTERCEPTOR(int, lrand48_r, void *buffer, long *result) {
   INIT_LGAMMA;                             \
   INIT_LGAMMA_R;                           \
   INIT_DRAND48_R;                          \
+  INIT_GETLINE;                            \
 /**/

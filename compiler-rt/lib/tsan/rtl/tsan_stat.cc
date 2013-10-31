@@ -412,6 +412,8 @@ void StatOutput(u64 *stat) {
   name[StatInt_lgammal_r]                = "  lgammal_r                       ";
   name[StatInt_drand48_r]                = "  drand48_r                       ";
   name[StatInt_lrand48_r]                = "  lrand48_r                       ";
+  name[StatInt_getline]                  = "  getline                         ";
+  name[StatInt_getdelim]                 = "  getdelim                        ";
 
   name[StatInt_pthread_attr_getdetachstate]  = "  pthread_addr_getdetachstate     ";  // NOLINT
   name[StatInt_pthread_attr_getguardsize]    = "  pthread_addr_getguardsize       ";  // NOLINT
