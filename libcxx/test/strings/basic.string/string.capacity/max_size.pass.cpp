@@ -21,6 +21,12 @@ void
 test(const S& s)
 {
     assert(s.max_size() >= s.size());
+    {
+    S s2;
+    try { s2.resize(s2.max_size() - 1, 'x'); }
+    catch ( const std::bad_alloc & ) { return ; }
+    assert ( false );
+    }
 }
 
 int main()

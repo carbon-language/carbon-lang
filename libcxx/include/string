@@ -3047,9 +3047,9 @@ basic_string<_CharT, _Traits, _Allocator>::max_size() const _NOEXCEPT
 {
     size_type __m = __alloc_traits::max_size(__alloc());
 #if _LIBCPP_BIG_ENDIAN
-    return (__m <= ~__long_mask ? __m : __m/2) - 1;
+    return (__m <= ~__long_mask ? __m : __m/2) - __alignment;
 #else
-    return __m - 1;
+    return __m - __alignment;
 #endif
 }
 
