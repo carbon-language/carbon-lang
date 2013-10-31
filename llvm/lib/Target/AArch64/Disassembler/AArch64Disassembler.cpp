@@ -141,6 +141,18 @@ static DecodeStatus DecodeShiftRightImm64(MCInst &Inst, unsigned Val,
                                           uint64_t Address,
                                           const void *Decoder);
 
+static DecodeStatus DecodeShiftLeftImm8(MCInst &Inst, unsigned Val,
+                                        uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeShiftLeftImm16(MCInst &Inst, unsigned Val,
+                                         uint64_t Address,
+                                         const void *Decoder);
+static DecodeStatus DecodeShiftLeftImm32(MCInst &Inst, unsigned Val,
+                                         uint64_t Address,
+                                         const void *Decoder);
+static DecodeStatus DecodeShiftLeftImm64(MCInst &Inst, unsigned Val,
+                                         uint64_t Address,
+                                         const void *Decoder);
+
 template<int RegWidth>
 static DecodeStatus DecodeMoveWideImmOperand(llvm::MCInst &Inst,
                                              unsigned FullImm,
@@ -506,6 +518,46 @@ static DecodeStatus DecodeShiftRightImm64(MCInst &Inst, unsigned Val,
                                           uint64_t Address,
                                           const void *Decoder) {
   Inst.addOperand(MCOperand::CreateImm(64 - Val));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeShiftLeftImm8(MCInst &Inst, unsigned Val,
+                                        uint64_t Address,
+                                        const void *Decoder) {
+  if (Val > 7)
+    return MCDisassembler::Fail;
+
+  Inst.addOperand(MCOperand::CreateImm(Val));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeShiftLeftImm16(MCInst &Inst, unsigned Val,
+                                         uint64_t Address,
+                                         const void *Decoder) {
+  if (Val > 15)
+    return MCDisassembler::Fail;
+
+  Inst.addOperand(MCOperand::CreateImm(Val));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeShiftLeftImm32(MCInst &Inst, unsigned Val,
+                                         uint64_t Address,
+                                         const void *Decoder) {
+  if (Val > 31)
+    return MCDisassembler::Fail;
+
+  Inst.addOperand(MCOperand::CreateImm(Val));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeShiftLeftImm64(MCInst &Inst, unsigned Val,
+                                         uint64_t Address,
+                                         const void *Decoder) {
+  if (Val > 63)
+    return MCDisassembler::Fail;
+
+  Inst.addOperand(MCOperand::CreateImm(Val));
   return MCDisassembler::Success;
 }
 

@@ -970,23 +970,23 @@
 //----------------------------------------------------------------------
 
         // Mismatched vector types
-        sqshl b0, b1, s0
-        uqshl h0, h1, b0
-        sqshl s0, s1, h0
-        uqshl d0, d1, b0
+        sqshl b0, s1, b0
+        uqshl h0, b1, h0
+        sqshl s0, h1, s0
+        uqshl d0, b1, d0
 
 // CHECK-ERROR: error: invalid operand for instruction
-// CHECK-ERROR:        sqshl b0, b1, s0
-// CHECK-ERROR:                      ^
+// CHECK-ERROR:        sqshl b0, s1, b0
+// CHECK-ERROR:                  ^
 // CHECK-ERROR: error: invalid operand for instruction
-// CHECK-ERROR:        uqshl h0, h1, b0
-// CHECK-ERROR:                      ^
+// CHECK-ERROR:        uqshl h0, b1, h0
+// CHECK-ERROR:                  ^
 // CHECK-ERROR: error: invalid operand for instruction
-// CHECK-ERROR:        sqshl s0, s1, h0
-// CHECK-ERROR:                      ^
+// CHECK-ERROR:        sqshl s0, h1, s0
+// CHECK-ERROR:                  ^
 // CHECK-ERROR: error: invalid operand for instruction
-// CHECK-ERROR:        uqshl d0, d1, b0
-// CHECK-ERROR:                      ^
+// CHECK-ERROR:        uqshl d0, b1, d0
+// CHECK-ERROR:                  ^
 
 //----------------------------------------------------------------------
 // Scalar Integer Rouding Shift Left (Signed, Unsigned)

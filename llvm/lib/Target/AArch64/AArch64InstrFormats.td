@@ -1234,5 +1234,24 @@ class NeonI_Scalar3Diff<bit u, bits<2> size, bits<4> opcode,
   // Inherit Rd in 4-0
 }
 
+// Format AdvSIMD scalar shift by immediate
+
+class NeonI_ScalarShiftImm<bit u, bits<5> opcode,
+                           dag outs, dag ins, string asmstr,
+                           list<dag> patterns, InstrItinClass itin>
+  : A64InstRdn<outs, ins, asmstr, patterns, itin> {
+  bits<4> Imm4;
+  bits<3> Imm3;
+  let Inst{31-30} = 0b01;
+  let Inst{29} = u;
+  let Inst{28-23} = 0b111110;
+  let Inst{22-19} = Imm4;
+  let Inst{18-16} = Imm3;
+  let Inst{15-11} = opcode;
+  let Inst{10} = 0b1;
+  // Inherit Rn in 9-5
+  // Inherit Rd in 4-0
+}
+
 }
 

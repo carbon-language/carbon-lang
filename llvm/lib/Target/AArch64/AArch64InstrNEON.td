@@ -1450,7 +1450,7 @@ def imm0_63 : Operand<i32> {
   let ParserMatchClass = uimm6_asmoperand;
 }
 
-// Shift Right Immediate - A shift right immediate is encoded differently from
+// Shift Right/Left Immediate - A shift immediate is encoded differently from
 // other shift immediates. The immh:immb field is encoded like so:
 //
 //    Offset    Encoding
@@ -1458,6 +1458,11 @@ def imm0_63 : Operand<i32> {
 //     16       immh:immb<6:4> = '001xxxx', <imm> is encoded in immh:immb<3:0>
 //     32       immh:immb<6:5> = '01xxxxx', <imm> is encoded in immh:immb<4:0>
 //     64       immh:immb<6>   = '1xxxxxx', <imm> is encoded in immh:immb<5:0>
+//
+// The shift right immediate amount, in the range 1 to element bits, is computed
+// as Offset - UInt(immh:immb).  The shift left immediate amount, in the range 0
+// to element bits - 1, is computed as UInt(immh:immb) - Offset.
+
 class shr_imm_asmoperands<string OFFSET> : AsmOperandClass {
   let Name = "ShrImm" # OFFSET;
   let RenderMethod = "addImmOperands";
@@ -1480,6 +1485,29 @@ def shr_imm8 : shr_imm<"8">;
 def shr_imm16 : shr_imm<"16">;
 def shr_imm32 : shr_imm<"32">;
 def shr_imm64 : shr_imm<"64">;
+
+class shl_imm_asmoperands<string OFFSET> : AsmOperandClass {
+  let Name = "ShlImm" # OFFSET;
+  let RenderMethod = "addImmOperands";
+  let DiagnosticType = "ShlImm" # OFFSET;
+}
+
+class shl_imm<string OFFSET> : Operand<i32> {
+  let EncoderMethod = "getShiftLeftImm" # OFFSET;
+  let DecoderMethod = "DecodeShiftLeftImm" # OFFSET;
+  let ParserMatchClass = 
+    !cast<AsmOperandClass>("shl_imm" # OFFSET # "_asmoperand");
+}
+
+def shl_imm8_asmoperand : shl_imm_asmoperands<"8">;
+def shl_imm16_asmoperand : shl_imm_asmoperands<"16">;
+def shl_imm32_asmoperand : shl_imm_asmoperands<"32">;
+def shl_imm64_asmoperand : shl_imm_asmoperands<"64">;
+
+def shl_imm8 : shl_imm<"8">;
+def shl_imm16 : shl_imm<"16">;
+def shl_imm32 : shl_imm<"32">;
+def shl_imm64 : shl_imm<"64">;
 
 class N2VShift<bit q, bit u, bits<5> opcode, string asmop, string T,
                RegisterOperand VPRC, ValueType Ty, Operand ImmTy, SDNode OpNode>
@@ -3470,6 +3498,250 @@ multiclass Neon_Scalar2SameMisc_accum_BHSD_size_patterns<
   def : Pat<(v1i64 (opnode (v1i64 FPR64:$Src), (v1i64 FPR64:$Rn))),
             (INSTD FPR64:$Src, FPR64:$Rn)>;
 }
+
+// Scalar Shift By Immediate
+
+class NeonI_ScalarShiftImm_size<bit u, bits<5> opcode, string asmop,
+                                RegisterClass FPRC, Operand ImmTy>
+  : NeonI_ScalarShiftImm<u, opcode,
+                         (outs FPRC:$Rd), (ins FPRC:$Rn, ImmTy:$Imm),
+                         !strconcat(asmop, "\t$Rd, $Rn, $Imm"),
+                         [], NoItinerary>;
+
+multiclass NeonI_ScalarShiftRightImm_D_size<bit u, bits<5> opcode,
+                                            string asmop> {
+  def ddi : NeonI_ScalarShiftImm_size<u, opcode, asmop, FPR64, shr_imm64> {
+    bits<6> Imm;
+    let Inst{22} = 0b1; // immh:immb = 1xxxxxx
+    let Inst{21-16} = Imm;
+  }
+}
+
+multiclass NeonI_ScalarShiftRightImm_BHSD_size<bit u, bits<5> opcode,
+                                               string asmop>
+  : NeonI_ScalarShiftRightImm_D_size<u, opcode, asmop> {
+  def bbi : NeonI_ScalarShiftImm_size<u, opcode, asmop, FPR8, shr_imm8> {
+    bits<3> Imm;
+    let Inst{22-19} = 0b0001; // immh:immb = 0001xxx
+    let Inst{18-16} = Imm;
+  }
+  def hhi : NeonI_ScalarShiftImm_size<u, opcode, asmop, FPR16, shr_imm16> {
+    bits<4> Imm;
+    let Inst{22-20} = 0b001; // immh:immb = 001xxxx
+    let Inst{19-16} = Imm;
+  }
+  def ssi : NeonI_ScalarShiftImm_size<u, opcode, asmop, FPR32, shr_imm32> {
+    bits<5> Imm;
+    let Inst{22-21} = 0b01; // immh:immb = 01xxxxx
+    let Inst{20-16} = Imm;
+  }
+}
+
+multiclass NeonI_ScalarShiftLeftImm_D_size<bit u, bits<5> opcode,
+                                            string asmop> {
+  def ddi : NeonI_ScalarShiftImm_size<u, opcode, asmop, FPR64, shl_imm64> {
+    bits<6> Imm;
+    let Inst{22} = 0b1; // immh:immb = 1xxxxxx
+    let Inst{21-16} = Imm;
+  }
+}
+
+multiclass NeonI_ScalarShiftLeftImm_BHSD_size<bit u, bits<5> opcode,
+                                              string asmop>
+  : NeonI_ScalarShiftLeftImm_D_size<u, opcode, asmop> {
+  def bbi : NeonI_ScalarShiftImm_size<u, opcode, asmop, FPR8, shl_imm8> {
+    bits<3> Imm;
+    let Inst{22-19} = 0b0001; // immh:immb = 0001xxx
+    let Inst{18-16} = Imm;
+  }
+  def hhi : NeonI_ScalarShiftImm_size<u, opcode, asmop, FPR16, shl_imm16> {
+    bits<4> Imm;
+    let Inst{22-20} = 0b001; // immh:immb = 001xxxx
+    let Inst{19-16} = Imm;
+  }
+  def ssi : NeonI_ScalarShiftImm_size<u, opcode, asmop, FPR32, shl_imm32> {
+    bits<5> Imm;
+    let Inst{22-21} = 0b01; // immh:immb = 01xxxxx
+    let Inst{20-16} = Imm;
+  }
+}
+
+class NeonI_ScalarShiftImm_accum_D_size<bit u, bits<5> opcode, string asmop>
+  : NeonI_ScalarShiftImm<u, opcode,
+                         (outs FPR64:$Rd), (ins FPR64:$Src, FPR64:$Rn, shr_imm64:$Imm),
+                         !strconcat(asmop, "\t$Rd, $Rn, $Imm"),
+                         [], NoItinerary> {
+    bits<6> Imm;
+    let Inst{22} = 0b1; // immh:immb = 1xxxxxx
+    let Inst{21-16} = Imm;
+    let Constraints = "$Src = $Rd";
+}
+
+class NeonI_ScalarShiftImm_narrow_size<bit u, bits<5> opcode, string asmop,
+                                       RegisterClass FPRCD, RegisterClass FPRCS,
+                                       Operand ImmTy>
+  : NeonI_ScalarShiftImm<u, opcode,
+                         (outs FPRCD:$Rd), (ins FPRCS:$Rn, ImmTy:$Imm),
+                         !strconcat(asmop, "\t$Rd, $Rn, $Imm"),
+                         [], NoItinerary>;
+
+multiclass NeonI_ScalarShiftImm_narrow_HSD_size<bit u, bits<5> opcode,
+                                                string asmop> {
+  def bhi : NeonI_ScalarShiftImm_narrow_size<u, opcode, asmop, FPR8, FPR16,
+                                             shr_imm8> {
+    bits<3> Imm;
+    let Inst{22-19} = 0b0001; // immh:immb = 0001xxx
+    let Inst{18-16} = Imm;
+  }
+  def hsi : NeonI_ScalarShiftImm_narrow_size<u, opcode, asmop, FPR16, FPR32,
+                                             shr_imm16> {
+    bits<4> Imm;
+    let Inst{22-20} = 0b001; // immh:immb = 001xxxx
+    let Inst{19-16} = Imm;
+  }
+  def sdi : NeonI_ScalarShiftImm_narrow_size<u, opcode, asmop, FPR32, FPR64,
+                                             shr_imm32> {
+    bits<5> Imm;
+    let Inst{22-21} = 0b01; // immh:immb = 01xxxxx
+    let Inst{20-16} = Imm;
+  }
+}
+
+multiclass Neon_ScalarShiftImm_D_size_patterns<SDPatternOperator opnode,
+                                               Instruction INSTD> {
+  def ddi : Pat<(v1i64 (opnode (v1i64 FPR64:$Rn), (i32 imm:$Imm))),
+                (INSTD FPR64:$Rn, imm:$Imm)>;
+}
+
+multiclass Neon_ScalarShiftImm_BHSD_size_patterns<SDPatternOperator opnode,
+                                                  Instruction INSTB,
+                                                  Instruction INSTH,
+                                                  Instruction INSTS,
+                                                  Instruction INSTD>
+  : Neon_ScalarShiftImm_D_size_patterns<opnode, INSTD> {
+  def bbi : Pat<(v1i8 (opnode (v1i8 FPR8:$Rn), (i32 imm:$Imm))),
+                (INSTB FPR8:$Rn, imm:$Imm)>;
+  def hhi : Pat<(v1i16 (opnode (v1i16 FPR16:$Rn), (i32 imm:$Imm))),
+                (INSTH FPR16:$Rn, imm:$Imm)>;
+  def ssi : Pat<(v1i32 (opnode (v1i32 FPR32:$Rn), (i32 imm:$Imm))),
+                (INSTS FPR32:$Rn, imm:$Imm)>;
+}
+
+class Neon_ScalarShiftImm_accum_D_size_patterns<SDPatternOperator opnode,
+                                          Instruction INSTD>
+  : Pat<(v1i64 (opnode (v1i64 FPR64:$Src), (v1i64 FPR64:$Rn), (i32 imm:$Imm))),
+        (INSTD FPR64:$Src, FPR64:$Rn, imm:$Imm)>;
+
+multiclass Neon_ScalarShiftImm_narrow_HSD_size_patterns<
+                                                       SDPatternOperator opnode,
+                                                       Instruction INSTH,
+                                                       Instruction INSTS,
+                                                       Instruction INSTD> {
+  def bhi : Pat<(v1i8 (opnode (v1i16 FPR16:$Rn), (i32 imm:$Imm))),
+                (INSTH FPR16:$Rn, imm:$Imm)>;
+  def hsi : Pat<(v1i16 (opnode (v1i32 FPR32:$Rn), (i32 imm:$Imm))),
+                (INSTS FPR32:$Rn, imm:$Imm)>;
+  def sdi : Pat<(v1i32 (opnode (v1i64 FPR64:$Rn), (i32 imm:$Imm))),
+                (INSTD FPR64:$Rn, imm:$Imm)>;
+}
+
+// Scalar Signed Shift Right (Immediate)
+defm SSHR : NeonI_ScalarShiftRightImm_D_size<0b0, 0b00000, "sshr">;
+defm : Neon_ScalarShiftImm_D_size_patterns<int_aarch64_neon_vshrds_n, SSHRddi>;
+
+// Scalar Unsigned Shift Right (Immediate)
+defm USHR : NeonI_ScalarShiftRightImm_D_size<0b1, 0b00000, "ushr">;
+defm : Neon_ScalarShiftImm_D_size_patterns<int_aarch64_neon_vshrdu_n, USHRddi>;
+
+// Scalar Signed Rounding Shift Right (Immediate)
+defm SRSHR : NeonI_ScalarShiftRightImm_D_size<0b0, 0b00100, "srshr">;
+defm : Neon_ScalarShiftImm_D_size_patterns<int_aarch64_neon_vrshrds_n, SRSHRddi>;
+
+// Scalar Unigned Rounding Shift Right (Immediate)
+defm URSHR : NeonI_ScalarShiftRightImm_D_size<0b1, 0b00100, "urshr">;
+defm : Neon_ScalarShiftImm_D_size_patterns<int_aarch64_neon_vrshrdu_n, URSHRddi>;
+
+// Scalar Signed Shift Right and Accumulate (Immediate)
+def SSRA : NeonI_ScalarShiftImm_accum_D_size<0b0, 0b00010, "ssra">;
+def : Neon_ScalarShiftImm_accum_D_size_patterns<int_aarch64_neon_vsrads_n, SSRA>;
+
+// Scalar Unsigned Shift Right and Accumulate (Immediate)
+def USRA : NeonI_ScalarShiftImm_accum_D_size<0b1, 0b00010, "usra">;
+def : Neon_ScalarShiftImm_accum_D_size_patterns<int_aarch64_neon_vsradu_n, USRA>;
+
+// Scalar Signed Rounding Shift Right and Accumulate (Immediate)
+def SRSRA : NeonI_ScalarShiftImm_accum_D_size<0b0, 0b00110, "srsra">;
+def : Neon_ScalarShiftImm_accum_D_size_patterns<int_aarch64_neon_vrsrads_n, SRSRA>;
+
+// Scalar Unsigned Rounding Shift Right and Accumulate (Immediate)
+def URSRA : NeonI_ScalarShiftImm_accum_D_size<0b1, 0b00110, "ursra">;
+def : Neon_ScalarShiftImm_accum_D_size_patterns<int_aarch64_neon_vrsradu_n, URSRA>;
+
+// Scalar Shift Left (Immediate)
+defm SHL : NeonI_ScalarShiftLeftImm_D_size<0b0, 0b01010, "shl">;
+defm : Neon_ScalarShiftImm_D_size_patterns<int_aarch64_neon_vshld_n, SHLddi>;
+
+// Signed Saturating Shift Left (Immediate)
+defm SQSHL : NeonI_ScalarShiftLeftImm_BHSD_size<0b0, 0b01110, "sqshl">;
+defm : Neon_ScalarShiftImm_BHSD_size_patterns<int_aarch64_neon_vqshls_n,
+                                              SQSHLbbi, SQSHLhhi,
+                                              SQSHLssi, SQSHLddi>;
+
+// Unsigned Saturating Shift Left (Immediate)
+defm UQSHL : NeonI_ScalarShiftLeftImm_BHSD_size<0b1, 0b01110, "uqshl">;
+defm : Neon_ScalarShiftImm_BHSD_size_patterns<int_aarch64_neon_vqshlu_n,
+                                              UQSHLbbi, UQSHLhhi,
+                                              UQSHLssi, UQSHLddi>;
+
+// Signed Saturating Shift Left Unsigned (Immediate)
+defm SQSHLU : NeonI_ScalarShiftLeftImm_BHSD_size<0b1, 0b01100, "sqshlu">;
+defm : Neon_ScalarShiftImm_BHSD_size_patterns<int_aarch64_neon_vqshlus_n,
+                                              SQSHLUbbi, SQSHLUhhi,
+                                              SQSHLUssi, SQSHLUddi>;
+
+// Shift Right And Insert (Immediate)
+defm SRI : NeonI_ScalarShiftRightImm_D_size<0b1, 0b01000, "sri">;
+defm : Neon_ScalarShiftImm_D_size_patterns<int_aarch64_neon_vsrid_n, SRIddi>;
+
+// Shift Left And Insert (Immediate)
+defm SLI : NeonI_ScalarShiftLeftImm_D_size<0b1, 0b01010, "sli">;
+defm : Neon_ScalarShiftImm_D_size_patterns<int_aarch64_neon_vslid_n, SLIddi>;
+
+// Signed Saturating Shift Right Narrow (Immediate)
+defm SQSHRN : NeonI_ScalarShiftImm_narrow_HSD_size<0b0, 0b10010, "sqshrn">;
+defm : Neon_ScalarShiftImm_narrow_HSD_size_patterns<int_aarch64_neon_vsqshrn,
+                                                    SQSHRNbhi, SQSHRNhsi,
+                                                    SQSHRNsdi>;
+
+// Unsigned Saturating Shift Right Narrow (Immediate)
+defm UQSHRN : NeonI_ScalarShiftImm_narrow_HSD_size<0b1, 0b10010, "uqshrn">;
+defm : Neon_ScalarShiftImm_narrow_HSD_size_patterns<int_aarch64_neon_vuqshrn,
+                                                    UQSHRNbhi, UQSHRNhsi,
+                                                    UQSHRNsdi>;
+
+// Signed Saturating Rounded Shift Right Narrow (Immediate)
+defm SQRSHRN : NeonI_ScalarShiftImm_narrow_HSD_size<0b0, 0b10011, "sqrshrn">;
+defm : Neon_ScalarShiftImm_narrow_HSD_size_patterns<int_aarch64_neon_vsqrshrn,
+                                                    SQRSHRNbhi, SQRSHRNhsi,
+                                                    SQRSHRNsdi>;
+
+// Unsigned Saturating Rounded Shift Right Narrow (Immediate)
+defm UQRSHRN : NeonI_ScalarShiftImm_narrow_HSD_size<0b1, 0b10011, "uqrshrn">;
+defm : Neon_ScalarShiftImm_narrow_HSD_size_patterns<int_aarch64_neon_vuqrshrn,
+                                                    UQRSHRNbhi, UQRSHRNhsi,
+                                                    UQRSHRNsdi>;
+
+// Signed Saturating Shift Right Unsigned Narrow (Immediate)
+defm SQSHRUN : NeonI_ScalarShiftImm_narrow_HSD_size<0b1, 0b10000, "sqshrun">;
+defm : Neon_ScalarShiftImm_narrow_HSD_size_patterns<int_aarch64_neon_vsqshrun,
+                                                    SQSHRUNbhi, SQSHRUNhsi,
+                                                    SQSHRUNsdi>;
+
+// Signed Saturating Rounded Shift Right Unsigned Narrow (Immediate)
+defm SQRSHRUN : NeonI_ScalarShiftImm_narrow_HSD_size<0b1, 0b10001, "sqrshrun">;
+defm : Neon_ScalarShiftImm_narrow_HSD_size_patterns<int_aarch64_neon_vsqrshrun,
+                                                    SQRSHRUNbhi, SQRSHRUNhsi,
+                                                    SQRSHRUNsdi>;
 
 // Scalar Integer Add
 let isCommutable = 1 in {
