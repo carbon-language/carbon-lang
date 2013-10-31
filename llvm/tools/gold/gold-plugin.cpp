@@ -15,6 +15,7 @@
 #include "llvm/Config/config.h" // plugin-api.h requires HAVE_STDINT_H
 #include "plugin-api.h"
 #include "llvm-c/lto.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Errno.h"
 #include "llvm/Support/FileSystem.h"
@@ -67,6 +68,7 @@ namespace {
   std::list<claimed_file> Modules;
   std::vector<std::string> Cleanup;
   lto_code_gen_t code_gen = NULL;
+  StringSet<> CannotBeHidden;
 }
 
 namespace options {
@@ -297,6 +299,9 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     sym.version = NULL;
 
     int scope = attrs & LTO_SYMBOL_SCOPE_MASK;
+    bool CanBeHidden = scope == LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN;
+    if (!CanBeHidden)
+      CannotBeHidden.insert(sym.name);
     switch (scope) {
       case LTO_SYMBOL_SCOPE_HIDDEN:
         sym.visibility = LDPV_HIDDEN;
@@ -306,6 +311,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
         break;
       case 0: // extern
       case LTO_SYMBOL_SCOPE_DEFAULT:
+      case LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN:
         sym.visibility = LDPV_DEFAULT;
         break;
       default:
@@ -364,6 +370,14 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
   return LDPS_OK;
 }
 
+static bool mustPreserve(const claimed_file &F, int i) {
+  if (F.syms[i].resolution == LDPR_PREVAILING_DEF)
+    return true;
+  if (F.syms[i].resolution == LDPR_PREVAILING_DEF_IRONLY_EXP)
+    return CannotBeHidden.count(F.syms[i].name);
+  return false;
+}
+
 /// all_symbols_read_hook - gold informs us that all symbols have been read.
 /// At this point, we use get_symbols to see if any of our definitions have
 /// been overridden by a native object file. Then, perform optimization and
@@ -386,16 +400,11 @@ static ld_plugin_status all_symbols_read_hook(void) {
       continue;
     (*get_symbols)(I->handle, I->syms.size(), &I->syms[0]);
     for (unsigned i = 0, e = I->syms.size(); i != e; i++) {
-      if (I->syms[i].resolution == LDPR_PREVAILING_DEF) {
+      if (mustPreserve(*I, i)) {
         lto_codegen_add_must_preserve_symbol(code_gen, I->syms[i].name);
 
         if (options::generate_api_file)
           api_file << I->syms[i].name << "\n";
-      } else if (I->syms[i].resolution == LDPR_PREVAILING_DEF_IRONLY_EXP) {
-        lto_codegen_add_dso_symbol(code_gen, I->syms[i].name);
-
-        if (options::generate_api_file)
-          api_file << I->syms[i].name << " dso only\n";
       }
     }
   }

@@ -38,6 +38,7 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Transforms/Utils/GlobalStatus.h"
 using namespace llvm;
 
 LTOModule::LTOModule(llvm::Module *m, llvm::TargetMachine *t)
@@ -162,6 +163,8 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
 
   TargetMachine *target = march->createTargetMachine(TripleStr, CPU, FeatureStr,
                                                      options);
+  m->MaterializeAllPermanently();
+
   LTOModule *Ret = new LTOModule(m.take(), target);
   if (Ret->parseSymbols(errMsg)) {
     delete Ret;
@@ -333,6 +336,25 @@ void LTOModule::addDefinedFunctionSymbol(const Function *f) {
   addDefinedSymbol(f, true);
 }
 
+static bool canBeHidden(const GlobalValue *GV) {
+  GlobalValue::LinkageTypes L = GV->getLinkage();
+
+  if (L == GlobalValue::LinkOnceODRAutoHideLinkage)
+    return true;
+
+  if (L != GlobalValue::LinkOnceODRLinkage)
+    return false;
+
+  if (GV->hasUnnamedAddr())
+    return true;
+
+  GlobalStatus GS;
+  if (GlobalStatus::analyzeGlobal(GV, GS))
+    return false;
+
+  return !GS.IsCompared;
+}
+
 /// addDefinedSymbol - Add a defined symbol to the list.
 void LTOModule::addDefinedSymbol(const GlobalValue *def, bool isFunction) {
   // ignore all llvm.* symbols
@@ -372,12 +394,12 @@ void LTOModule::addDefinedSymbol(const GlobalValue *def, bool isFunction) {
     attr |= LTO_SYMBOL_SCOPE_HIDDEN;
   else if (def->hasProtectedVisibility())
     attr |= LTO_SYMBOL_SCOPE_PROTECTED;
+  else if (canBeHidden(def))
+    attr |= LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN;
   else if (def->hasExternalLinkage() || def->hasWeakLinkage() ||
            def->hasLinkOnceLinkage() || def->hasCommonLinkage() ||
            def->hasLinkerPrivateWeakLinkage())
     attr |= LTO_SYMBOL_SCOPE_DEFAULT;
-  else if (def->hasLinkOnceODRAutoHideLinkage())
-    attr |= LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN;
   else
     attr |= LTO_SYMBOL_SCOPE_INTERNAL;
 

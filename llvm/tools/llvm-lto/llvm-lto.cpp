@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/StringSet.h"
 #include "llvm/CodeGen/CommandFlags.h"
 #include "llvm/LTO/LTOCodeGenerator.h"
 #include "llvm/LTO/LTOModule.h"
@@ -54,6 +55,12 @@ static cl::list<std::string>
 DSOSymbols("dso-symbol",
   cl::desc("Symbol to put in the symtab in the resulting dso"),
   cl::ZeroOrMore);
+
+namespace {
+struct ModuleInfo {
+  std::vector<bool> CanBeHidden;
+};
+}
 
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
@@ -99,6 +106,12 @@ int main(int argc, char **argv) {
   CodeGen.setDebugInfo(LTO_DEBUG_MODEL_DWARF);
   CodeGen.setTargetOptions(Options);
 
+  llvm::StringSet<llvm::MallocAllocator> DSOSymbolsSet;
+  for (unsigned i = 0; i < DSOSymbols.size(); ++i)
+    DSOSymbolsSet.insert(DSOSymbols[i]);
+
+  std::vector<std::string> KeptDSOSyms;
+
   for (unsigned i = BaseArg; i < InputFilenames.size(); ++i) {
     std::string error;
     OwningPtr<LTOModule> Module(LTOModule::makeLTOModule(InputFilenames[i].c_str(),
@@ -115,6 +128,17 @@ int main(int argc, char **argv) {
              << "': " << error << "\n";
       return 1;
     }
+
+    unsigned NumSyms = Module->getSymbolCount();
+    for (unsigned I = 0; I < NumSyms; ++I) {
+      StringRef Name = Module->getSymbolName(I);
+      if (!DSOSymbolsSet.count(Name))
+        continue;
+      lto_symbol_attributes Attrs = Module->getSymbolAttributes(I);
+      unsigned Scope = Attrs & LTO_SYMBOL_SCOPE_MASK;
+      if (Scope != LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN)
+        KeptDSOSyms.push_back(Name);
+    }
   }
 
   // Add all the exported symbols to the table of symbols to preserve.
@@ -122,8 +146,8 @@ int main(int argc, char **argv) {
     CodeGen.addMustPreserveSymbol(ExportedSymbols[i].c_str());
 
   // Add all the dso symbols to the table of symbols to expose.
-  for (unsigned i = 0; i < DSOSymbols.size(); ++i)
-    CodeGen.addDSOSymbol(DSOSymbols[i].c_str());
+  for (unsigned i = 0; i < KeptDSOSyms.size(); ++i)
+    CodeGen.addMustPreserveSymbol(KeptDSOSyms[i].c_str());
 
   if (!OutputFilename.empty()) {
     size_t len = 0;

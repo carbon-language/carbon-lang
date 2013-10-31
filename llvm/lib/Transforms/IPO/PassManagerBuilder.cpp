@@ -277,7 +277,7 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
   // for a main function.  If main is defined, mark all other functions
   // internal.
   if (Internalize)
-    PM.add(createInternalizePass("main", None));
+    PM.add(createInternalizePass("main"));
 
   // Propagate constants at call sites into the functions they call.  This
   // opens opportunities for globalopt (and inlining) by substituting function

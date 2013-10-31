@@ -313,7 +313,6 @@ bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
 void LTOCodeGenerator::
 applyRestriction(GlobalValue &GV,
                  std::vector<const char*> &MustPreserveList,
-                 std::vector<const char*> &DSOList,
                  SmallPtrSet<GlobalValue*, 8> &AsmUsed,
                  Mangler &Mangler) {
   SmallString<64> Buffer;
@@ -323,8 +322,6 @@ applyRestriction(GlobalValue &GV,
     return;
   if (MustPreserveSymbols.count(Buffer))
     MustPreserveList.push_back(GV.getName().data());
-  if (DSOSymbols.count(Buffer))
-    DSOList.push_back(GV.getName().data());
   if (AsmUndefinedRefs.count(Buffer))
     AsmUsed.insert(&GV);
 }
@@ -352,18 +349,17 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   // mark which symbols can not be internalized
   Mangler Mangler(TargetMach);
   std::vector<const char*> MustPreserveList;
-  std::vector<const char*> DSOList;
   SmallPtrSet<GlobalValue*, 8> AsmUsed;
 
   for (Module::iterator f = mergedModule->begin(),
          e = mergedModule->end(); f != e; ++f)
-    applyRestriction(*f, MustPreserveList, DSOList, AsmUsed, Mangler);
+    applyRestriction(*f, MustPreserveList, AsmUsed, Mangler);
   for (Module::global_iterator v = mergedModule->global_begin(),
          e = mergedModule->global_end(); v !=  e; ++v)
-    applyRestriction(*v, MustPreserveList, DSOList, AsmUsed, Mangler);
+    applyRestriction(*v, MustPreserveList, AsmUsed, Mangler);
   for (Module::alias_iterator a = mergedModule->alias_begin(),
          e = mergedModule->alias_end(); a != e; ++a)
-    applyRestriction(*a, MustPreserveList, DSOList, AsmUsed, Mangler);
+    applyRestriction(*a, MustPreserveList, AsmUsed, Mangler);
 
   GlobalVariable *LLVMCompilerUsed =
     mergedModule->getGlobalVariable("llvm.compiler.used");
@@ -391,7 +387,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
     LLVMCompilerUsed->setSection("llvm.metadata");
   }
 
-  passes.add(createInternalizePass(MustPreserveList, DSOList));
+  passes.add(createInternalizePass(MustPreserveList));
 
   // apply scope restrictions
   passes.run(*mergedModule);

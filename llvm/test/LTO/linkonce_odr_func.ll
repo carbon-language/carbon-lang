@@ -1,26 +1,31 @@
-; RUN: opt < %s -internalize -internalize-dso-list foo1,foo2,foo3,foo4 -S | FileCheck %s
+; RUN: llvm-as < %s >%t1
+; RUN: llvm-lto -o %t2 -dso-symbol=foo1 -dso-symbol=foo2 -dso-symbol=foo3 \
+; RUN:     -dso-symbol=foo4  %t1 -disable-opt
+; RUN: llvm-nm %t2 | FileCheck %s
 
-; CHECK: define internal void @foo1(
+; CHECK: t foo1
 define linkonce_odr void @foo1() noinline {
   ret void
 }
 
-; CHECK: define linkonce_odr void @foo2(
+; CHECK: W foo2
 define linkonce_odr void @foo2() noinline {
   ret void
 }
 
-; CHECK: define internal void @foo3(
+; CHECK: t foo3
 define linkonce_odr void @foo3() noinline {
   ret void
 }
 
-; CHECK: define linkonce_odr void @foo4(
+; CHECK: W foo4
 define linkonce_odr void @foo4() noinline {
   ret void
 }
 
 declare void @f(void()*)
+
+declare void @p()
 
 define void @bar() {
 bb0:
@@ -32,6 +37,6 @@ bb1:
 bb2:
   ret void
 clean:
-  landingpad i32 personality i8* null cleanup
+  landingpad {i32, i32} personality void()* @p cleanup
   ret void
 }

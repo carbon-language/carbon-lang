@@ -98,7 +98,7 @@ void LLVMAddInternalizePass(LLVMPassManagerRef PM, unsigned AllButMain) {
   std::vector<const char *> Export;
   if (AllButMain)
     Export.push_back("main");
-  unwrap(PM)->add(createInternalizePass(Export, None));
+  unwrap(PM)->add(createInternalizePass(Export));
 }
 
 void LLVMAddStripDeadPrototypesPass(LLVMPassManagerRef PM) {

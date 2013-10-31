@@ -270,15 +270,6 @@ lto_codegen_set_assembler_args(lto_code_gen_t cg, const char **args,
 extern void
 lto_codegen_add_must_preserve_symbol(lto_code_gen_t cg, const char* symbol);
 
-
-/**
- * Tells LTO optimization passes that a dynamic shared library is being
- * built and this symbol may be exported. Unless IR semantics allow the symbol
- * to be made local to the library, it should remain so it can be exported by
- * the shared library.
- */
-extern void lto_codegen_add_dso_symbol(lto_code_gen_t cg, const char *symbol);
-
 /**
  * Writes a new object file at the specified path that contains the
  * merged contents of all modules added so far.
