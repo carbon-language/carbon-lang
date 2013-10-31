@@ -18,6 +18,7 @@ class TlsGlobalTestCase(TestBase):
         self.tls_globals()
 
     @dwarf_test
+    @expectedFailureFreeBSD("llvm.org/pr16696")
     def test_with_dwarf(self):
         """Test thread-local storage."""
         self.buildDwarf()
