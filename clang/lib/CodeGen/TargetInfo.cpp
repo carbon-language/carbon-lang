@@ -1307,10 +1307,8 @@ static std::string qualifyWindowsLibrary(llvm::StringRef Lib) {
   // If the argument does not end in .lib, automatically add the suffix. This
   // matches the behavior of MSVC.
   std::string ArgStr = Lib;
-  if (Lib.size() <= 4 ||
-      Lib.substr(Lib.size() - 4).compare_lower(".lib") != 0) {
+  if (!Lib.endswith_lower(".lib"))
     ArgStr += ".lib";
-  }
   return ArgStr;
 }
 
