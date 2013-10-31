@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
   PrettyStackTraceProgram X(argc, argv);
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
-  cl::ParseCommandLineOptions(argc, argv, "llvm cov\n");
+  cl::ParseCommandLineOptions(argc, argv, "llvm coverage tool\n");
 
   GCOVFile GF;
   if (InputGCNO.empty())
