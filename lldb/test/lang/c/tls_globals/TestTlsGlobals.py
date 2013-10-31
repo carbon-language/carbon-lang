@@ -12,6 +12,7 @@ class TlsGlobalTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
+    @unittest2.expectedFailure("rdar://7796742")
     def test_with_dsym(self):
         """Test thread-local storage."""
         self.buildDsym()
@@ -19,6 +20,7 @@ class TlsGlobalTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureFreeBSD("llvm.org/pr16696")
+    @unittest2.expectedFailure("rdar://7796742")
     def test_with_dwarf(self):
         """Test thread-local storage."""
         self.buildDwarf()
