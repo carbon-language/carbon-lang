@@ -337,6 +337,7 @@ void __msan_init() {
   if (external_symbolizer && external_symbolizer[0]) {
     CHECK(external_symbolizer_started);
   }
+  Symbolizer::Get()->AddHooks(EnterSymbolizer, ExitSymbolizer);
 
   GetThreadStackTopAndBottom(/* at_initialization */true,
                              &__msan_stack_bounds.stack_top,

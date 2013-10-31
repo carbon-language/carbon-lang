@@ -368,7 +368,8 @@ class POSIXSymbolizer : public Symbolizer {
  public:
   POSIXSymbolizer(ExternalSymbolizer *external_symbolizer,
                   InternalSymbolizer *internal_symbolizer)
-      : external_symbolizer_(external_symbolizer),
+      : Symbolizer(),
+        external_symbolizer_(external_symbolizer),
         internal_symbolizer_(internal_symbolizer) {}
 
   uptr SymbolizeCode(uptr addr, AddressInfo *frames, uptr max_frames) {
@@ -463,14 +464,19 @@ class POSIXSymbolizer : public Symbolizer {
 
   void Flush() {
     BlockingMutexLock l(&mu_);
-    if (internal_symbolizer_ != 0)
+    if (internal_symbolizer_ != 0) {
+      SymbolizerScope sym_scope(this);
       internal_symbolizer_->Flush();
+    }
     if (external_symbolizer_ != 0)
       external_symbolizer_->Flush();
   }
 
   const char *Demangle(const char *name) {
     BlockingMutexLock l(&mu_);
+    // Run hooks even if we don't use internal symbolizer, as cxxabi
+    // demangle may call system functions.
+    SymbolizerScope sym_scope(this);
     if (internal_symbolizer_ != 0)
       return internal_symbolizer_->Demangle(name);
     return DemangleCXXABI(name);
@@ -489,6 +495,7 @@ class POSIXSymbolizer : public Symbolizer {
     mu_.CheckLocked();
     // First, try to use internal symbolizer.
     if (internal_symbolizer_) {
+      SymbolizerScope sym_scope(this);
       return internal_symbolizer_->SendCommand(is_data, module_name,
                                                module_offset);
     }

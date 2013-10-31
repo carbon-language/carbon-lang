@@ -105,6 +105,16 @@ class Symbolizer {
   }
   virtual void PrepareForSandboxing() {}
 
+  // Allow user to install hooks that would be called before/after Symbolizer
+  // does the actual file/line info fetching. Specific sanitizers may need this
+  // to distinguish system library calls made in user code from calls made
+  // during in-process symbolization.
+  typedef void (*StartSymbolizationHook)();
+  typedef void (*EndSymbolizationHook)();
+  // May be called at most once.
+  void AddHooks(StartSymbolizationHook start_hook,
+                EndSymbolizationHook end_hook);
+
  private:
   /// Platform-specific function for creating a Symbolizer object.
   static Symbolizer *PlatformInit(const char *path_to_external);
@@ -116,7 +126,19 @@ class Symbolizer {
   static StaticSpinMutex init_mu_;
 
  protected:
+  Symbolizer();
+
   static LowLevelAllocator symbolizer_allocator_;
+
+  StartSymbolizationHook start_hook_;
+  EndSymbolizationHook end_hook_;
+  class SymbolizerScope {
+   public:
+    explicit SymbolizerScope(const Symbolizer *sym);
+    ~SymbolizerScope();
+   private:
+    const Symbolizer *sym_;
+  };
 };
 
 }  // namespace __sanitizer

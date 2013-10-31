@@ -22,19 +22,17 @@
 
 namespace __tsan {
 
-struct ScopedInSymbolizer {
-  ScopedInSymbolizer() {
-    ThreadState *thr = cur_thread();
-    CHECK(!thr->in_symbolizer);
-    thr->in_symbolizer = true;
-  }
+void EnterSymbolizer() {
+  ThreadState *thr = cur_thread();
+  CHECK(!thr->in_symbolizer);
+  thr->in_symbolizer = true;
+}
 
-  ~ScopedInSymbolizer() {
-    ThreadState *thr = cur_thread();
-    CHECK(thr->in_symbolizer);
-    thr->in_symbolizer = false;
-  }
-};
+void ExitSymbolizer() {
+  ThreadState *thr = cur_thread();
+  CHECK(thr->in_symbolizer);
+  thr->in_symbolizer = false;
+}
 
 ReportStack *NewReportStackEntry(uptr addr) {
   ReportStack *ent = (ReportStack*)internal_alloc(MBlockReportStack,
@@ -121,7 +119,6 @@ ReportStack *SymbolizeCode(uptr addr) {
   }
   if (!Symbolizer::Get()->IsAvailable())
     return SymbolizeCodeAddr2Line(addr);
-  ScopedInSymbolizer in_symbolizer;
   static const uptr kMaxAddrFrames = 16;
   InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
   for (uptr i = 0; i < kMaxAddrFrames; i++)
@@ -148,7 +145,6 @@ ReportStack *SymbolizeCode(uptr addr) {
 ReportLocation *SymbolizeData(uptr addr) {
   if (!Symbolizer::Get()->IsAvailable())
     return 0;
-  ScopedInSymbolizer in_symbolizer;
   DataInfo info;
   if (!Symbolizer::Get()->SymbolizeData(addr, &info))
     return 0;
@@ -168,7 +164,6 @@ ReportLocation *SymbolizeData(uptr addr) {
 void SymbolizeFlush() {
   if (!Symbolizer::Get()->IsAvailable())
     return;
-  ScopedInSymbolizer in_symbolizer;
   Symbolizer::Get()->Flush();
 }
 

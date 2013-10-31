@@ -35,7 +35,6 @@ class Decorator: private __sanitizer::AnsiColorDecorator {
 };
 
 static void PrintStack(const uptr *trace, uptr size) {
-  SymbolizerScope sym_scope;
   StackTrace::PrintStack(trace, size);
   Printf("\n");
 }
@@ -76,10 +75,7 @@ static void ReportSummary(const char *error_type, StackTrace *stack) {
   if (!stack->size || !Symbolizer::Get()->IsAvailable()) return;
   AddressInfo ai;
   uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
-  {
-    SymbolizerScope sym_scope;
-    Symbolizer::Get()->SymbolizeCode(pc, &ai, 1);
-  }
+  Symbolizer::Get()->SymbolizeCode(pc, &ai, 1);
   ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
 }
 

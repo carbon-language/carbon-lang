@@ -246,6 +246,7 @@ void Initialize(ThreadState *thr) {
            external_symbolizer);
     Die();
   }
+  Symbolizer::Get()->AddHooks(EnterSymbolizer, ExitSymbolizer);
 #endif
   internal_start_thread(&BackgroundThread, 0);
 
