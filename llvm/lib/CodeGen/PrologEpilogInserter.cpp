@@ -14,9 +14,6 @@
 // This pass must be run after register allocation.  After this pass is
 // executed, it is illegal to construct MO_FrameIndex operands.
 //
-// This pass provides an optional shrink wrapping variant of prolog/epilog
-// insertion, enabled via --shrink-wrap. See ShrinkWrapping.cpp.
-//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pei"
@@ -66,6 +63,38 @@ STATISTIC(NumScavengedRegs, "Number of frame index regs scavenged");
 STATISTIC(NumBytesStackSpace,
           "Number of bytes used for stack in all functions");
 
+void PEI::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesCFG();
+  AU.addPreserved<MachineLoopInfo>();
+  AU.addPreserved<MachineDominatorTree>();
+  AU.addRequired<TargetPassConfig>();
+  MachineFunctionPass::getAnalysisUsage(AU);
+}
+
+bool PEI::isReturnBlock(MachineBasicBlock* MBB) {
+  return (MBB && !MBB->empty() && MBB->back().isReturn());
+}
+
+/// Compute the set of return blocks
+void PEI::calculateSets(MachineFunction &Fn) {
+  // Sets used to compute spill, restore placement sets.
+  const std::vector<CalleeSavedInfo> &CSI =
+    Fn.getFrameInfo()->getCalleeSavedInfo();
+
+  // If no CSRs used, we are done.
+  if (CSI.empty())
+    return;
+
+  // Save refs to entry and return blocks.
+  EntryBlock = Fn.begin();
+  for (MachineFunction::iterator MBB = Fn.begin(), E = Fn.end();
+       MBB != E; ++MBB)
+    if (isReturnBlock(MBB))
+      ReturnBlocks.push_back(MBB);
+
+  return;
+}
+
 /// runOnMachineFunction - Insert prolog/epilog code and replace abstract
 /// frame indexes with appropriate references.
 ///
@@ -93,12 +122,8 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   calculateCalleeSavedRegisters(Fn);
 
   // Determine placement of CSR spill/restore code:
-  //  - With shrink wrapping, place spills and restores to tightly
-  //    enclose regions in the Machine CFG of the function where
-  //    they are used.
-  //  - Without shink wrapping (default), place all spills in the
-  //    entry block, all restores in return blocks.
-  placeCSRSpillsAndRestores(Fn);
+  // place all spills in the entry block, all restores in return blocks.
+  calculateSets(Fn);
 
   // Add the code to save and restore the callee saved registers
   if (!F->hasFnAttribute(Attribute::Naked))
@@ -141,7 +166,7 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
            << ") in " << Fn.getName()  << ".\n";
 
   delete RS;
-  clearAllSets();
+  ReturnBlocks.clear();
   return true;
 }
 
@@ -283,7 +308,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &F) {
 }
 
 /// insertCSRSpillsAndRestores - Insert spill and restore code for
-/// callee saved registers used in the function, handling shrink wrapping.
+/// callee saved registers used in the function.
 ///
 void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
   // Get callee saved register information.
@@ -301,133 +326,33 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
   const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
   MachineBasicBlock::iterator I;
 
-  if (!ShrinkWrapThisFunction) {
-    // Spill using target interface.
-    I = EntryBlock->begin();
-    if (!TFI->spillCalleeSavedRegisters(*EntryBlock, I, CSI, TRI)) {
-      for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-        // Add the callee-saved register as live-in.
-        // It's killed at the spill.
-        EntryBlock->addLiveIn(CSI[i].getReg());
-
-        // Insert the spill to the stack frame.
-        unsigned Reg = CSI[i].getReg();
-        const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-        TII.storeRegToStackSlot(*EntryBlock, I, Reg, true,
-                                CSI[i].getFrameIdx(), RC, TRI);
-      }
-    }
-
-    // Restore using target interface.
-    for (unsigned ri = 0, re = ReturnBlocks.size(); ri != re; ++ri) {
-      MachineBasicBlock* MBB = ReturnBlocks[ri];
-      I = MBB->end(); --I;
-
-      // Skip over all terminator instructions, which are part of the return
-      // sequence.
-      MachineBasicBlock::iterator I2 = I;
-      while (I2 != MBB->begin() && (--I2)->isTerminator())
-        I = I2;
-
-      bool AtStart = I == MBB->begin();
-      MachineBasicBlock::iterator BeforeI = I;
-      if (!AtStart)
-        --BeforeI;
-
-      // Restore all registers immediately before the return and any
-      // terminators that precede it.
-      if (!TFI->restoreCalleeSavedRegisters(*MBB, I, CSI, TRI)) {
-        for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-          unsigned Reg = CSI[i].getReg();
-          const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-          TII.loadRegFromStackSlot(*MBB, I, Reg,
-                                   CSI[i].getFrameIdx(),
-                                   RC, TRI);
-          assert(I != MBB->begin() &&
-                 "loadRegFromStackSlot didn't insert any code!");
-          // Insert in reverse order.  loadRegFromStackSlot can insert
-          // multiple instructions.
-          if (AtStart)
-            I = MBB->begin();
-          else {
-            I = BeforeI;
-            ++I;
-          }
-        }
-      }
-    }
-    return;
-  }
-
-  // Insert spills.
-  std::vector<CalleeSavedInfo> blockCSI;
-  for (CSRegBlockMap::iterator BI = CSRSave.begin(),
-         BE = CSRSave.end(); BI != BE; ++BI) {
-    MachineBasicBlock* MBB = BI->first;
-    CSRegSet save = BI->second;
-
-    if (save.empty())
-      continue;
-
-    blockCSI.clear();
-    for (CSRegSet::iterator RI = save.begin(),
-           RE = save.end(); RI != RE; ++RI) {
-      blockCSI.push_back(CSI[*RI]);
-    }
-    assert(blockCSI.size() > 0 &&
-           "Could not collect callee saved register info");
-
-    I = MBB->begin();
-
-    // When shrink wrapping, use stack slot stores/loads.
-    for (unsigned i = 0, e = blockCSI.size(); i != e; ++i) {
+  // Spill using target interface.
+  I = EntryBlock->begin();
+  if (!TFI->spillCalleeSavedRegisters(*EntryBlock, I, CSI, TRI)) {
+    for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
       // Add the callee-saved register as live-in.
       // It's killed at the spill.
-      MBB->addLiveIn(blockCSI[i].getReg());
+      EntryBlock->addLiveIn(CSI[i].getReg());
 
       // Insert the spill to the stack frame.
-      unsigned Reg = blockCSI[i].getReg();
+      unsigned Reg = CSI[i].getReg();
       const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-      TII.storeRegToStackSlot(*MBB, I, Reg,
-                              true,
-                              blockCSI[i].getFrameIdx(),
+      TII.storeRegToStackSlot(*EntryBlock, I, Reg, true, CSI[i].getFrameIdx(),
                               RC, TRI);
     }
   }
 
-  for (CSRegBlockMap::iterator BI = CSRRestore.begin(),
-         BE = CSRRestore.end(); BI != BE; ++BI) {
-    MachineBasicBlock* MBB = BI->first;
-    CSRegSet restore = BI->second;
+  // Restore using target interface.
+  for (unsigned ri = 0, re = ReturnBlocks.size(); ri != re; ++ri) {
+    MachineBasicBlock *MBB = ReturnBlocks[ri];
+    I = MBB->end();
+    --I;
 
-    if (restore.empty())
-      continue;
-
-    blockCSI.clear();
-    for (CSRegSet::iterator RI = restore.begin(),
-           RE = restore.end(); RI != RE; ++RI) {
-      blockCSI.push_back(CSI[*RI]);
-    }
-    assert(blockCSI.size() > 0 &&
-           "Could not find callee saved register info");
-
-    // If MBB is empty and needs restores, insert at the _beginning_.
-    if (MBB->empty()) {
-      I = MBB->begin();
-    } else {
-      I = MBB->end();
-      --I;
-
-      // Skip over all terminator instructions, which are part of the
-      // return sequence.
-      if (! I->isTerminator()) {
-        ++I;
-      } else {
-        MachineBasicBlock::iterator I2 = I;
-        while (I2 != MBB->begin() && (--I2)->isTerminator())
-          I = I2;
-      }
-    }
+    // Skip over all terminator instructions, which are part of the return
+    // sequence.
+    MachineBasicBlock::iterator I2 = I;
+    while (I2 != MBB->begin() && (--I2)->isTerminator())
+      I = I2;
 
     bool AtStart = I == MBB->begin();
     MachineBasicBlock::iterator BeforeI = I;
@@ -436,21 +361,21 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
 
     // Restore all registers immediately before the return and any
     // terminators that precede it.
-    for (unsigned i = 0, e = blockCSI.size(); i != e; ++i) {
-      unsigned Reg = blockCSI[i].getReg();
-      const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-      TII.loadRegFromStackSlot(*MBB, I, Reg,
-                               blockCSI[i].getFrameIdx(),
-                               RC, TRI);
-      assert(I != MBB->begin() &&
-             "loadRegFromStackSlot didn't insert any code!");
-      // Insert in reverse order.  loadRegFromStackSlot can insert
-      // multiple instructions.
-      if (AtStart)
-        I = MBB->begin();
-      else {
-        I = BeforeI;
-        ++I;
+    if (!TFI->restoreCalleeSavedRegisters(*MBB, I, CSI, TRI)) {
+      for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+        unsigned Reg = CSI[i].getReg();
+        const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
+        TII.loadRegFromStackSlot(*MBB, I, Reg, CSI[i].getFrameIdx(), RC, TRI);
+        assert(I != MBB->begin() &&
+               "loadRegFromStackSlot didn't insert any code!");
+        // Insert in reverse order.  loadRegFromStackSlot can insert
+        // multiple instructions.
+        if (AtStart)
+          I = MBB->begin();
+        else {
+          I = BeforeI;
+          ++I;
+        }
       }
     }
   }
