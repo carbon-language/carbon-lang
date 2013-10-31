@@ -447,7 +447,7 @@ ConstantRange ConstantRange::signExtend(uint32_t DstTySize) const {
   assert(SrcTySize < DstTySize && "Not a value extension");
 
   // special case: [X, INT_MIN) -- not really wrapping around
-  if (Upper == APInt::getHighBitsSet(SrcTySize, 1))
+  if (Upper.isMinSignedValue())
     return ConstantRange(Lower.sext(DstTySize), Upper.zext(DstTySize));
 
   if (isFullSet() || isSignWrappedSet()) {
