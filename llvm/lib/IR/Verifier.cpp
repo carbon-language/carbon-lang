@@ -321,6 +321,8 @@ namespace {
     bool VerifyIntrinsicType(Type *Ty,
                              ArrayRef<Intrinsic::IITDescriptor> &Infos,
                              SmallVectorImpl<Type*> &ArgTys);
+    bool VerifyIntrinsicIsVarArg(bool isVarArg,
+                                 ArrayRef<Intrinsic::IITDescriptor> &Infos);
     bool VerifyAttributeCount(AttributeSet Attrs, unsigned Params);
     void VerifyAttributeTypes(AttributeSet Attrs, unsigned Idx,
                               bool isFunction, const Value *V);
@@ -2135,6 +2137,7 @@ bool Verifier::VerifyIntrinsicType(Type *Ty,
 
   switch (D.Kind) {
   case IITDescriptor::Void: return !Ty->isVoidTy();
+  case IITDescriptor::VarArg: return true;
   case IITDescriptor::MMX:  return !Ty->isX86_MMXTy();
   case IITDescriptor::Metadata: return !Ty->isMetadataTy();
   case IITDescriptor::Half: return !Ty->isHalfTy();
@@ -2199,6 +2202,33 @@ bool Verifier::VerifyIntrinsicType(Type *Ty,
   llvm_unreachable("unhandled");
 }
 
+/// \brief Verify if the intrinsic has variable arguments.
+/// This method is intended to be called after all the fixed arguments have been
+/// verified first.
+///
+/// This method returns true on error and does not print an error message.
+bool
+Verifier::VerifyIntrinsicIsVarArg(bool isVarArg,
+                                  ArrayRef<Intrinsic::IITDescriptor> &Infos) {
+  using namespace Intrinsic;
+
+  // If there are no descriptors left, then it can't be a vararg.
+  if (Infos.empty())
+    return isVarArg ? true : false;
+
+  // There should be only one descriptor remaining at this point.
+  if (Infos.size() != 1)
+    return true;
+
+  // Check and verify the descriptor.
+  IITDescriptor D = Infos.front();
+  Infos = Infos.slice(1);
+  if (D.Kind == IITDescriptor::VarArg)
+    return isVarArg ? false : true;
+
+  return true;
+}
+
 /// visitIntrinsicFunction - Allow intrinsics to be verified in different ways.
 ///
 void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
@@ -2209,7 +2239,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   // Verify that the intrinsic prototype lines up with what the .td files
   // describe.
   FunctionType *IFTy = IF->getFunctionType();
-  Assert1(!IFTy->isVarArg(), "Intrinsic prototypes are not varargs", IF);
+  bool IsVarArg = IFTy->isVarArg();
 
   SmallVector<Intrinsic::IITDescriptor, 8> Table;
   getIntrinsicInfoTableEntries(ID, Table);
@@ -2221,6 +2251,16 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   for (unsigned i = 0, e = IFTy->getNumParams(); i != e; ++i)
     Assert1(!VerifyIntrinsicType(IFTy->getParamType(i), TableRef, ArgTys),
             "Intrinsic has incorrect argument type!", IF);
+
+  // Verify if the intrinsic call matches the vararg property.
+  if (IsVarArg)
+    Assert1(!VerifyIntrinsicIsVarArg(IsVarArg, TableRef),
+            "Intrinsic was not defined with variable arguments!", IF);
+  else
+    Assert1(!VerifyIntrinsicIsVarArg(IsVarArg, TableRef),
+            "Callsite was not defined with variable arguments!", IF);
+
+  // All descriptors should be absorbed by now.
   Assert1(TableRef.empty(), "Intrinsic has too few arguments!", IF);
 
   // Now that we have the intrinsic ID and the actual argument types (and we
