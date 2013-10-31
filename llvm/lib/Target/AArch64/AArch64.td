@@ -21,8 +21,11 @@ include "llvm/Target/Target.td"
 // AArch64 Subtarget features.
 //
 
+def FeatureFPARMv8 : SubtargetFeature<"fp-armv8", "HasFPARMv8", "true",
+  "Enable ARMv8 FP">;
+
 def FeatureNEON : SubtargetFeature<"neon", "HasNEON", "true",
-  "Enable Advanced SIMD instructions">;
+  "Enable Advanced SIMD instructions", [FeatureFPARMv8]>;
 
 def FeatureCrypto : SubtargetFeature<"crypto", "HasCrypto", "true",
   "Enable cryptographic instructions">;
@@ -33,7 +36,8 @@ def FeatureCrypto : SubtargetFeature<"crypto", "HasCrypto", "true",
 
 include "AArch64Schedule.td"
 
-def : Processor<"generic", GenericItineraries, [FeatureNEON, FeatureCrypto]>;
+def : Processor<"generic", GenericItineraries,
+                [FeatureFPARMv8, FeatureNEON, FeatureCrypto]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description

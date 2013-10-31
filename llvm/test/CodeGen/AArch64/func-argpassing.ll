@@ -1,4 +1,5 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 
 %myStruct = type { i64 , i8, i32 }
 
@@ -23,6 +24,7 @@ define void @add_floats(float %val1, float %val2) {
 ; CHECK-LABEL: add_floats:
     %newval = fadd float %val1, %val2
 ; CHECK: fadd [[ADDRES:s[0-9]+]], s0, s1
+; CHECK-NOFP-NOT: fadd
     store float %newval, float* @varfloat
 ; CHECK: str [[ADDRES]], [{{x[0-9]+}}, #:lo12:varfloat]
     ret void
@@ -84,6 +86,7 @@ define double @return_double() {
 ; CHECK-LABEL: return_double:
     ret double 3.14
 ; CHECK: ldr d0, [{{x[0-9]+}}, #:lo12:.LCPI
+; CHECK-NOFP-NOT: ldr d0,
 }
 
 ; This is the kind of IR clang will produce for returning a struct
@@ -139,6 +142,7 @@ define i32 @struct_on_stack(i8 %var0, i16 %var1, i32 %var2, i64 %var3, i128 %var
     store volatile double %notstacked, double* @vardouble
 ; CHECK-NOT: ldr d0
 ; CHECK: str d0, [{{x[0-9]+}}, #:lo12:vardouble
+; CHECK-NOFP-NOT: str d0,
 
     %retval = load volatile i32* %stacked
     ret i32 %retval

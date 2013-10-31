@@ -1,4 +1,5 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 
 %myStruct = type { i64 , i8, i32 }
 
@@ -31,6 +32,8 @@ define void @simple_args() {
 ; CHECK-DAG: ldr s1, [{{x[0-9]+}}, #:lo12:varfloat_2]
 ; CHECK-DAG: ldr s0, [{{x[0-9]+}}, #:lo12:varfloat]
 ; CHECK: bl take_floats
+; CHECK-NOFP-NOT: ldr s1,
+; CHECK-NOFP-NOT: ldr s0,
 
   ret void
 }
@@ -52,6 +55,7 @@ define void @simple_rets() {
   store double %dbl, double* @vardouble
 ; CHECK: bl return_double
 ; CHECK: str d0, [{{x[0-9]+}}, #:lo12:vardouble]
+; CHECK-NOFP-NOT: str d0,
 
   %arr = call [2 x i64] @return_smallstruct()
   store [2 x i64] %arr, [2 x i64]* @varsmallstruct
@@ -87,6 +91,7 @@ define void @check_stack_args() {
 ; CHECK-DAG: str {{w[0-9]+}}, [x[[SPREG]], #12]
 ; CHECK-DAG: fmov d0,
 ; CHECK: bl struct_on_stack
+; CHECK-NOFP-NOT: fmov
 
   call void @stacked_fpu(float -1.0, double 1.0, float 4.0, float 2.0,
                          float -2.0, float -8.0, float 16.0, float 1.0,

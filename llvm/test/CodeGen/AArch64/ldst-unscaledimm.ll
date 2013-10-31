@@ -1,4 +1,5 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 
 @var_8bit = global i8 0
 @var_16bit = global i16 0
@@ -194,9 +195,11 @@ define void @ldst_float() {
 
   %valfp = load volatile float* %addrfp
 ; CHECK: ldur {{s[0-9]+}}, [{{x[0-9]+}}, #-5]
+; CHECK-NOFP-NOT: ldur {{s[0-9]+}},
 
   store volatile float %valfp, float* %addrfp
 ; CHECK: stur {{s[0-9]+}}, [{{x[0-9]+}}, #-5]
+; CHECK-NOFP-NOT: stur {{s[0-9]+}},
 
   ret void
 }
@@ -210,9 +213,11 @@ define void @ldst_double() {
 
   %valfp = load volatile double* %addrfp
 ; CHECK: ldur {{d[0-9]+}}, [{{x[0-9]+}}, #4]
+; CHECK-NOFP-NOT: ldur {{d[0-9]+}},
 
   store volatile double %valfp, double* %addrfp
 ; CHECK: stur {{d[0-9]+}}, [{{x[0-9]+}}, #4]
+; CHECK-NOFP-NOT: stur {{d[0-9]+}},
 
    ret void
 }

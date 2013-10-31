@@ -383,6 +383,8 @@ class A64I_extract<bit sf, bits<3> op, bit n,
   // Inherits Rd in 4-0
 }
 
+let Predicates = [HasFPARMv8] in {
+
 // Format for floating-point compare instructions.
 class A64I_fpcmp<bit m, bit s, bits<2> type, bits<2> op, bits<5> opcode2,
                 dag outs, dag ins, string asmstr,
@@ -560,6 +562,8 @@ class A64I_fpimm<bit m, bit s, bits<2> type, bits<5> imm5,
   let Inst{12-10} = 0b100;
   let Inst{9-5} = imm5;
   // Inherit Rd in 4-0
+}
+
 }
 
 // Format for load-register (literal) instructions.

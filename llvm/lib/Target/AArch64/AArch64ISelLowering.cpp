@@ -50,10 +50,13 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
   // Scalar register <-> type mapping
   addRegisterClass(MVT::i32, &AArch64::GPR32RegClass);
   addRegisterClass(MVT::i64, &AArch64::GPR64RegClass);
-  addRegisterClass(MVT::f16, &AArch64::FPR16RegClass);
-  addRegisterClass(MVT::f32, &AArch64::FPR32RegClass);
-  addRegisterClass(MVT::f64, &AArch64::FPR64RegClass);
-  addRegisterClass(MVT::f128, &AArch64::FPR128RegClass);
+
+  if (Subtarget->hasFPARMv8()) {
+    addRegisterClass(MVT::f16, &AArch64::FPR16RegClass);
+    addRegisterClass(MVT::f32, &AArch64::FPR32RegClass);
+    addRegisterClass(MVT::f64, &AArch64::FPR64RegClass);
+    addRegisterClass(MVT::f128, &AArch64::FPR128RegClass);
+  }
 
   if (Subtarget->hasNEON()) {
     // And the vectors
@@ -961,24 +964,31 @@ AArch64TargetLowering::SaveVarArgRegisters(CCState &CCInfo, SelectionDAG &DAG,
     }
   }
 
+  if (getSubtarget()->hasFPARMv8()) {
   unsigned FPRSaveSize = 16 * (NumFPRArgRegs - FirstVariadicFPR);
   int FPRIdx = 0;
-  if (FPRSaveSize != 0) {
-    FPRIdx = MFI->CreateStackObject(FPRSaveSize, 16, false);
+    // According to the AArch64 Procedure Call Standard, section B.1/B.3, we
+    // can omit a register save area if we know we'll never use registers of
+    // that class.
+    if (FPRSaveSize != 0) {
+      FPRIdx = MFI->CreateStackObject(FPRSaveSize, 16, false);
 
-    SDValue FIN = DAG.getFrameIndex(FPRIdx, getPointerTy());
+      SDValue FIN = DAG.getFrameIndex(FPRIdx, getPointerTy());
 
-    for (unsigned i = FirstVariadicFPR; i < NumFPRArgRegs; ++i) {
-      unsigned VReg = MF.addLiveIn(AArch64FPRArgRegs[i],
-                                   &AArch64::FPR128RegClass);
-      SDValue Val = DAG.getCopyFromReg(Chain, DL, VReg, MVT::f128);
-      SDValue Store = DAG.getStore(Val.getValue(1), DL, Val, FIN,
-                                   MachinePointerInfo::getStack(i * 16),
-                                   false, false, 0);
-      MemOps.push_back(Store);
-      FIN = DAG.getNode(ISD::ADD, DL, getPointerTy(), FIN,
-                        DAG.getConstant(16, getPointerTy()));
+      for (unsigned i = FirstVariadicFPR; i < NumFPRArgRegs; ++i) {
+        unsigned VReg = MF.addLiveIn(AArch64FPRArgRegs[i],
+            &AArch64::FPR128RegClass);
+        SDValue Val = DAG.getCopyFromReg(Chain, DL, VReg, MVT::f128);
+        SDValue Store = DAG.getStore(Val.getValue(1), DL, Val, FIN,
+            MachinePointerInfo::getStack(i * 16),
+            false, false, 0);
+        MemOps.push_back(Store);
+        FIN = DAG.getNode(ISD::ADD, DL, getPointerTy(), FIN,
+            DAG.getConstant(16, getPointerTy()));
+      }
     }
+    FuncInfo->setVariadicFPRIdx(FPRIdx);
+    FuncInfo->setVariadicFPRSize(FPRSaveSize);
   }
 
   int StackIdx = MFI->CreateFixedObject(8, CCInfo.getNextStackOffset(), true);
@@ -986,8 +996,6 @@ AArch64TargetLowering::SaveVarArgRegisters(CCState &CCInfo, SelectionDAG &DAG,
   FuncInfo->setVariadicStackIdx(StackIdx);
   FuncInfo->setVariadicGPRIdx(GPRIdx);
   FuncInfo->setVariadicGPRSize(GPRSaveSize);
-  FuncInfo->setVariadicFPRIdx(FPRIdx);
-  FuncInfo->setVariadicFPRSize(FPRSaveSize);
 
   if (!MemOps.empty()) {
     Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, &MemOps[0],

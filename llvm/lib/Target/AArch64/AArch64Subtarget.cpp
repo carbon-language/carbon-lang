@@ -26,10 +26,27 @@
 using namespace llvm;
 
 AArch64Subtarget::AArch64Subtarget(StringRef TT, StringRef CPU, StringRef FS)
-    : AArch64GenSubtargetInfo(TT, CPU, FS), HasNEON(false), HasCrypto(false),
-      TargetTriple(TT) {
+    : AArch64GenSubtargetInfo(TT, CPU, FS), HasFPARMv8(false), HasNEON(false),
+      HasCrypto(false), TargetTriple(TT), CPUString(CPU) {
 
-  ParseSubtargetFeatures(CPU, FS);
+  initializeSubtargetFeatures(CPU, FS);
+}
+
+void AArch64Subtarget::initializeSubtargetFeatures(StringRef CPU,
+                                                   StringRef FS) {
+  if (CPU.empty())
+    CPUString = "generic";
+
+  std::string FullFS = FS;
+  if (CPUString == "generic") {
+    // Enable FP by default.
+    if (FullFS.empty())
+      FullFS = "+fp-armv8";
+    else
+      FullFS = "+fp-armv8," + FullFS;
+  }
+
+  ParseSubtargetFeatures(CPU, FullFS);
 }
 
 bool AArch64Subtarget::GVIsIndirectSymbol(const GlobalValue *GV,

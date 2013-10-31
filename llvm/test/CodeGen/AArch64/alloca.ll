@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 -verify-machineinstrs < %s | FileCheck --check-prefix=CHECK-NOFP %s
 
 declare void @use_addr(i8*)
 
@@ -66,16 +67,22 @@ define i64 @test_alloca_with_local(i64 %n) {
 }
 
 define void @test_variadic_alloca(i64 %n, ...) {
-; CHECK-LABEL: test_variadic_alloca:
+; CHECK: test_variadic_alloca:
 
 ; CHECK: sub     sp, sp, #208
 ; CHECK: stp     x29, x30, [sp, #192]
 ; CHECK: add     x29, sp, #192
 ; CHECK: sub     [[TMP:x[0-9]+]], x29, #192
 ; CHECK: add     x8, [[TMP]], #0
-; CHECK: str     q7, [x8, #112]
+; CHECK-FP: str     q7, [x8, #112]
 ; [...]
-; CHECK: str     q1, [x8, #16]
+; CHECK-FP: str     q1, [x8, #16]
+
+; CHECK-NOFP: sub     sp, sp, #80
+; CHECK-NOFP: stp     x29, x30, [sp, #64]
+; CHECK-NOFP: add     x29, sp, #64
+; CHECK-NOFP: sub     [[TMP:x[0-9]+]], x29, #64
+; CHECK-NOFP: add     x8, [[TMP]], #0
 
   %addr = alloca i8, i64 %n
 
@@ -86,6 +93,10 @@ define void @test_variadic_alloca(i64 %n, ...) {
 ; CHECK: sub sp, x29, #192
 ; CHECK: ldp x29, x30, [sp, #192]
 ; CHECK: add sp, sp, #208
+
+; CHECK-NOFP: sub sp, x29, #64
+; CHECK-NOFP: ldp x29, x30, [sp, #64]
+; CHECK-NOFP: add sp, sp, #80
 }
 
 define void @test_alloca_large_frame(i64 %n) {
