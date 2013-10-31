@@ -896,6 +896,13 @@ INTERCEPTOR(int, dladdr, void *addr, dlinfo *info) {
   return res;
 }
 
+INTERCEPTOR(char *, dlerror) {
+  ENSURE_MSAN_INITED();
+  char *res = REAL(dlerror)();
+  if (res != 0) __msan_unpoison(res, REAL(strlen)(res) + 1);
+  return res;
+}
+
 // dlopen() ultimately calls mmap() down inside the loader, which generally
 // doesn't participate in dynamic symbol resolution.  Therefore we won't
 // intercept its calls to mmap, and we have to hook it here.  The loader
@@ -1497,6 +1504,7 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(recv);
   INTERCEPT_FUNCTION(recvfrom);
   INTERCEPT_FUNCTION(dladdr);
+  INTERCEPT_FUNCTION(dlerror);
   INTERCEPT_FUNCTION(dlopen);
   INTERCEPT_FUNCTION(dl_iterate_phdr);
   INTERCEPT_FUNCTION(getrusage);
