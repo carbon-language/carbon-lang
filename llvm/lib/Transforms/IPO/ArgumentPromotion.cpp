@@ -88,7 +88,7 @@ char ArgPromotion::ID = 0;
 INITIALIZE_PASS_BEGIN(ArgPromotion, "argpromotion",
                 "Promote 'by reference' arguments to scalars", false, false)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
-INITIALIZE_AG_DEPENDENCY(CallGraph)
+INITIALIZE_PASS_DEPENDENCY(CallGraph)
 INITIALIZE_PASS_END(ArgPromotion, "argpromotion",
                 "Promote 'by reference' arguments to scalars", false, false)
 

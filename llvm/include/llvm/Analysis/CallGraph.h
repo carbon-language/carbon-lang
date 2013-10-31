@@ -69,12 +69,35 @@ class CallGraphNode;
 //===----------------------------------------------------------------------===//
 // CallGraph class definition
 //
-class CallGraph {
-protected:
+class CallGraph : public ModulePass {
   Module *Mod;              // The module this call graph represents
 
   typedef std::map<const Function *, CallGraphNode *> FunctionMapTy;
   FunctionMapTy FunctionMap;    // Map from a function to its node
+
+  // Root is root of the call graph, or the external node if a 'main' function
+  // couldn't be found.
+  //
+  CallGraphNode *Root;
+
+  // ExternalCallingNode - This node has edges to all external functions and
+  // those internal functions that have their address taken.
+  CallGraphNode *ExternalCallingNode;
+
+  // CallsExternalNode - This node has edges to it from all functions making
+  // indirect calls or calling an external function.
+  CallGraphNode *CallsExternalNode;
+
+  /// Replace the function represented by this node by another.
+  /// This does not rescan the body of the function, so it is suitable when
+  /// splicing the body of one function to another while also updating all
+  /// callers from the old function to the new.
+  ///
+  void spliceFunction(const Function *From, const Function *To);
+
+  // Add a function to the call graph, and link the node to all of the functions
+  // that it calls.
+  void addToCallGraph(Function *F);
 
 public:
   static char ID; // Class identification, replacement for typeinfo
@@ -107,15 +130,14 @@ public:
   }
 
   /// Returns the CallGraphNode which is used to represent undetermined calls
-  /// into the callgraph.  Override this if you want behavioral inheritance.
-  virtual CallGraphNode* getExternalCallingNode() const { return 0; }
-  virtual CallGraphNode* getCallsExternalNode()   const { return 0; }
+  /// into the callgraph.
+  CallGraphNode *getExternalCallingNode() const { return ExternalCallingNode; }
+  CallGraphNode *getCallsExternalNode() const { return CallsExternalNode; }
 
   /// Return the root/main method in the module, or some other root node, such
-  /// as the externalcallingnode.  Overload these if you behavioral
-  /// inheritance.
-  virtual CallGraphNode* getRoot() { return 0; }
-  virtual const CallGraphNode* getRoot() const { return 0; }
+  /// as the externalcallingnode.
+  CallGraphNode *getRoot() { return Root; }
+  const CallGraphNode *getRoot() const { return Root; }
 
   //===---------------------------------------------------------------------
   // Functions to keep a call graph up to date with a function that has been
@@ -129,41 +151,20 @@ public:
   /// do this is to dropAllReferences before calling this.
   ///
   Function *removeFunctionFromModule(CallGraphNode *CGN);
-  Function *removeFunctionFromModule(Function *F) {
-    return removeFunctionFromModule((*this)[F]);
-  }
 
   /// getOrInsertFunction - This method is identical to calling operator[], but
   /// it will insert a new CallGraphNode for the specified function if one does
   /// not already exist.
   CallGraphNode *getOrInsertFunction(const Function *F);
 
-  /// spliceFunction - Replace the function represented by this node by another.
-  /// This does not rescan the body of the function, so it is suitable when
-  /// splicing the body of one function to another while also updating all
-  /// callers from the old function to the new.
-  ///
-  void spliceFunction(const Function *From, const Function *To);
+  CallGraph();
+  virtual ~CallGraph() { releaseMemory(); }
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  virtual bool runOnModule(Module &M);
+  virtual void releaseMemory();
 
-  //===---------------------------------------------------------------------
-  // Pass infrastructure interface glue code.
-  //
-protected:
-  CallGraph() {}
-
-public:
-  virtual ~CallGraph() { }
-
-  /// initialize - Call this method before calling other methods,
-  /// re/initializes the state of the CallGraph.
-  ///
-  void initialize(Module &M);
-
-  void print(raw_ostream &o, Module *) const;
+  void print(raw_ostream &o, const Module *) const;
   void dump() const;
-protected:
-  // destroy - Release memory for the call graph
-  virtual void destroy();
 };
 
 //===----------------------------------------------------------------------===//
