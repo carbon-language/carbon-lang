@@ -113,9 +113,6 @@ public:
     // PP takes ownership.
     PP.addPPCallbacks(new PPCallbacksTracker(Ignore, CallbackCalls, PP));
   }
-
-private:
-  PPCallbacksTracker *CallbacksTracker; // Not owned here.
 };
 
 class PPTraceAction : public SyntaxOnlyAction {
