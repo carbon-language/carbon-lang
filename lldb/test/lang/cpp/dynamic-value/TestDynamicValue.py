@@ -253,12 +253,18 @@ class DynamicValueTestCase(TestBase):
         self.assertTrue (anotherA_value.GetTypeName().find ('B') == -1)
 
         self.runCmd("continue")
+#        self.runCmd("frame select 0")
+#        self.runCmd("frame variable")
         b = self.frame().FindVariable("b").GetDynamicValue(lldb.eDynamicCanRunTarget)
         self.assertTrue(b.GetNumChildren() == 0, "b has 0 children")
-        self.runCmd("continue")
+        self.runCmd("next")
+#        self.runCmd("frame select 0")
+#        self.runCmd("frame variable")
         self.assertTrue(b.GetNumChildren() == 0, "b still has 0 children")
         self.runCmd("continue")
-        self.assertTrue(b.GetNumChildren() == 1, "b now has 1 child")
+#        self.runCmd("frame select 0")
+#        self.runCmd("frame variable")
+        self.assertTrue(b.GetNumChildren() != 0, "b now has 1 child")
 
 if __name__ == '__main__':
     import atexit
