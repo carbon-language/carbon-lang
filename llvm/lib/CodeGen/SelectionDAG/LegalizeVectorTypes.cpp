@@ -521,7 +521,6 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
     SplitVecRes_VECTOR_SHUFFLE(cast<ShuffleVectorSDNode>(N), Lo, Hi);
     break;
 
-  case ISD::ANY_EXTEND:
   case ISD::CONVERT_RNDSAT:
   case ISD::CTLZ:
   case ISD::CTTZ:
@@ -548,12 +547,16 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::FSIN:
   case ISD::FSQRT:
   case ISD::FTRUNC:
-  case ISD::SIGN_EXTEND:
   case ISD::SINT_TO_FP:
   case ISD::TRUNCATE:
   case ISD::UINT_TO_FP:
-  case ISD::ZERO_EXTEND:
     SplitVecRes_UnaryOp(N, Lo, Hi);
+    break;
+
+  case ISD::ANY_EXTEND:
+  case ISD::SIGN_EXTEND:
+  case ISD::ZERO_EXTEND:
+    SplitVecRes_ExtendOp(N, Lo, Hi);
     break;
 
   case ISD::ADD:
@@ -919,6 +922,62 @@ void DAGTypeLegalizer::SplitVecRes_UnaryOp(SDNode *N, SDValue &Lo,
     Lo = DAG.getNode(N->getOpcode(), dl, LoVT, Lo);
     Hi = DAG.getNode(N->getOpcode(), dl, HiVT, Hi);
   }
+}
+
+void DAGTypeLegalizer::SplitVecRes_ExtendOp(SDNode *N, SDValue &Lo,
+                                            SDValue &Hi) {
+  SDLoc dl(N);
+  EVT SrcVT = N->getOperand(0).getValueType();
+  EVT DestVT = N->getValueType(0);
+  EVT LoVT, HiVT;
+  GetSplitDestVTs(DestVT, LoVT, HiVT);
+
+  // We can do better than a generic split operation if the extend is doing
+  // more than just doubling the width of the elements and the following are
+  // true:
+  //   - The number of vector elements is even,
+  //   - the source type is legal,
+  //   - the type of a split source is illegal,
+  //   - the type of an extended (by doubling element size) source is legal, and
+  //   - the type of that extended source when split is legal.
+  //
+  // This won't necessarily completely legalize the operation, but it will
+  // more effectively move in the right direction and prevent falling down
+  // to scalarization in many cases due to the input vector being split too
+  // far.
+  unsigned NumElements = SrcVT.getVectorNumElements();
+  if ((NumElements & 1) == 0 &&
+      SrcVT.getSizeInBits() * 2 < DestVT.getSizeInBits()) {
+    LLVMContext &Ctx = *DAG.getContext();
+    EVT NewSrcVT = EVT::getVectorVT(
+        Ctx, EVT::getIntegerVT(
+                 Ctx, SrcVT.getVectorElementType().getSizeInBits() * 2),
+        NumElements);
+    EVT SplitSrcVT =
+        EVT::getVectorVT(Ctx, SrcVT.getVectorElementType(), NumElements / 2);
+    EVT SplitLoVT, SplitHiVT;
+    GetSplitDestVTs(NewSrcVT, SplitLoVT, SplitHiVT);
+    if (TLI.isTypeLegal(SrcVT) && !TLI.isTypeLegal(SplitSrcVT) &&
+        TLI.isTypeLegal(NewSrcVT) && TLI.isTypeLegal(SplitLoVT)) {
+      DEBUG(dbgs() << "Split vector extend via incremental extend:";
+            N->dump(&DAG); dbgs() << "\n");
+      // Extend the source vector by one step.
+      SDValue NewSrc =
+          DAG.getNode(N->getOpcode(), dl, NewSrcVT, N->getOperand(0));
+      // Get the low and high halves of the new, extended one step, vector.
+      Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, SplitLoVT, NewSrc,
+                       DAG.getConstant(0, TLI.getVectorIdxTy()));
+      Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, SplitHiVT, NewSrc,
+                       DAG.getConstant(SplitLoVT.getVectorNumElements(),
+                                       TLI.getVectorIdxTy()));
+      // Extend those vector halves the rest of the way.
+      Lo = DAG.getNode(N->getOpcode(), dl, LoVT, Lo);
+      Hi = DAG.getNode(N->getOpcode(), dl, HiVT, Hi);
+      return;
+    }
+  }
+  // Fall back to the generic unary operator splitting otherwise.
+  SplitVecRes_UnaryOp(N, Lo, Hi);
 }
 
 void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(ShuffleVectorSDNode *N,
