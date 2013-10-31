@@ -151,6 +151,15 @@ def RetCC_X86_64_HiPE : CallingConv<[
   CCIfType<[i64], CCAssignToReg<[R15, RBP, RAX, RDX]>>
 ]>;
 
+// X86-64 WebKit_JS return-value convention.
+def RetCC_X86_64_WebKit_JS : CallingConv<[
+  // Promote all types to i64
+  CCIfType<[i8, i16, i32], CCPromoteToType<i64>>,
+
+  // Return: RAX
+  CCIfType<[i64], CCAssignToReg<[RAX]>>
+]>;
+
 // This is the root return-value convention for the X86-32 backend.
 def RetCC_X86_32 : CallingConv<[
   // If FastCC, use RetCC_X86_32_Fast.
@@ -166,6 +175,9 @@ def RetCC_X86_32 : CallingConv<[
 def RetCC_X86_64 : CallingConv<[
   // HiPE uses RetCC_X86_64_HiPE
   CCIfCC<"CallingConv::HiPE", CCDelegateTo<RetCC_X86_64_HiPE>>,
+
+  // Handle JavaScript calls.
+  CCIfCC<"CallingConv::WebKit_JS", CCDelegateTo<RetCC_X86_64_WebKit_JS>>,
 
   // Handle explicit CC selection
   CCIfCC<"CallingConv::X86_64_Win64", CCDelegateTo<RetCC_X86_Win64_C>>,
@@ -326,6 +338,15 @@ def CC_X86_64_HiPE : CallingConv<[
 
   // Integer/FP values get stored in stack slots that are 8 bytes in size and
   // 8-byte aligned if there are no more registers to hold them.
+  CCIfType<[i32, i64, f32, f64], CCAssignToStack<8, 8>>
+]>;
+
+def CC_X86_64_WebKit_JS : CallingConv<[
+  // Promote i8/i16 arguments to i32.
+  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+
+  // Integer/FP values are always stored in stack slots that are 8 bytes in size
+  // and 8-byte aligned.
   CCIfType<[i32, i64, f32, f64], CCAssignToStack<8, 8>>
 ]>;
 
@@ -520,6 +541,7 @@ def CC_X86_32 : CallingConv<[
 def CC_X86_64 : CallingConv<[
   CCIfCC<"CallingConv::GHC", CCDelegateTo<CC_X86_64_GHC>>,
   CCIfCC<"CallingConv::HiPE", CCDelegateTo<CC_X86_64_HiPE>>,
+  CCIfCC<"CallingConv::WebKit_JS", CCDelegateTo<CC_X86_64_WebKit_JS>>,
   CCIfCC<"CallingConv::X86_64_Win64", CCDelegateTo<CC_X86_Win64_C>>,
   CCIfCC<"CallingConv::X86_64_SysV", CCDelegateTo<CC_X86_64_C>>,
 
