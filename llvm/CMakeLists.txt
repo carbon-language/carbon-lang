@@ -527,3 +527,4 @@ if(MSVC_VERSION EQUAL 1600)
     file(APPEND "${LLVM_SLN_FILENAME}" "\n# This should be regenerated!\n")
   endif()
 endif()
+
