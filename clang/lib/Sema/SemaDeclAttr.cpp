@@ -1339,33 +1339,37 @@ static void handleIBOutletCollection(Sema &S, Decl *D,
   if (!checkIBOutletCommon(S, D, Attr))
     return;
 
-  IdentifierLoc *IL = Attr.isArgIdent(0) ? Attr.getArgAsIdent(0) : 0;
-  IdentifierInfo *II;
-  SourceLocation ILS;
-  if (IL) {
-    II = IL->Ident;
-    ILS = IL->Loc;
-  } else {
-    II = &S.Context.Idents.get("NSObject");
+  ParsedType PT;
+
+  if (Attr.hasParsedType())
+    PT = Attr.getTypeArg();
+  else {
+    PT = S.getTypeName(S.Context.Idents.get("NSObject"), Attr.getLoc(),
+                       S.getScopeForContext(D->getDeclContext()->getParent()));
+    if (!PT) {
+      S.Diag(Attr.getLoc(), diag::err_iboutletcollection_type) << "NSObject";
+      return;
+    }
   }
-  
-  ParsedType TypeRep = S.getTypeName(*II, Attr.getLoc(), 
-                        S.getScopeForContext(D->getDeclContext()->getParent()));
-  if (!TypeRep) {
-    S.Diag(Attr.getLoc(), diag::err_iboutletcollection_type) << II;
-    return;
-  }
-  QualType QT = TypeRep.get();
+
+  TypeSourceInfo *TSI = 0;
+  QualType QT = S.GetTypeFromParser(PT, &TSI);
+  SourceLocation QTLoc =
+      TSI ? TSI->getTypeLoc().getLocStart() : SourceLocation();
+
   // Diagnose use of non-object type in iboutletcollection attribute.
   // FIXME. Gnu attribute extension ignores use of builtin types in
   // attributes. So, __attribute__((iboutletcollection(char))) will be
   // treated as __attribute__((iboutletcollection())).
   if (!QT->isObjCIdType() && !QT->isObjCObjectType()) {
-    S.Diag(Attr.getLoc(), diag::err_iboutletcollection_type) << II;
+    S.Diag(Attr.getLoc(),
+           QT->isBuiltinType() ? diag::err_iboutletcollection_builtintype
+                               : diag::err_iboutletcollection_type) << QT;
     return;
   }
+
   D->addAttr(::new (S.Context)
-             IBOutletCollectionAttr(Attr.getRange(), S.Context, QT, ILS,
+             IBOutletCollectionAttr(Attr.getRange(), S.Context, QT, QTLoc,
                                     Attr.getAttributeSpellingListIndex()));
 }
 

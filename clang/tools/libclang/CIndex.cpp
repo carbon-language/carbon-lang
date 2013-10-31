@@ -532,8 +532,8 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
   if (Cursor.kind == CXCursor_IBOutletCollectionAttr) {
     const IBOutletCollectionAttr *A =
       cast<IBOutletCollectionAttr>(cxcursor::getCursorAttr(Cursor));
-    if (const ObjCInterfaceType *InterT = A->getInterface()->getAs<ObjCInterfaceType>())
-      return Visit(cxcursor::MakeCursorObjCClassRef(InterT->getInterface(),
+    if (const ObjCObjectType *ObjT = A->getInterface()->getAs<ObjCObjectType>())
+      return Visit(cxcursor::MakeCursorObjCClassRef(ObjT->getInterface(),
                                                     A->getInterfaceLoc(), TU));
   }
 

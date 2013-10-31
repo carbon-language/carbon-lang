@@ -450,7 +450,7 @@ public:
   }
 
   const ParsedType &getTypeArg() const {
-    assert(getKind() == AT_VecTypeHint && "Not a type attribute");
+    assert(HasParsedType && "Not a type attribute");
     return getTypeBuffer();
   }
 

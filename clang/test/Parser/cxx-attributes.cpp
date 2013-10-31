@@ -16,4 +16,7 @@ namespace PR17666 {
   const int A = 1;
   typedef int __attribute__((__aligned__(A))) T1;
   int check1[__alignof__(T1) == 1 ? 1 : -1];
+
+  typedef int __attribute__((aligned(int(1)))) T1;
+  typedef int __attribute__((aligned(int))) T2; // expected-error {{expected '(' for function-style cast}}
 }

@@ -58,7 +58,7 @@ void d2(void) __attribute__((noreturn)), d3(void) __attribute__((noreturn));
 void __attribute__((returns_twice)) returns_twice_test();
 
 int aligned(int);
-int __attribute__((vec_type_hint(char, aligned(16) )) missing_rparen_1; // expected-error {{expected ')'}}
+int __attribute__((vec_type_hint(char, aligned(16) )) missing_rparen_1; // expected-error 2{{expected ')'}} expected-note {{to match}} expected-warning {{does not declare anything}}
 int __attribute__((mode(x aligned(16) )) missing_rparen_2; // expected-error {{expected ')'}}
 int __attribute__((format(printf, 0 aligned(16) )) missing_rparen_3; // expected-error {{expected ')'}}
 

@@ -99,8 +99,8 @@ AttrListInfo::AttrListInfo(const Decl *D, IndexingContext &IdxCtx)
     IBInfo.IBCollInfo.objcClass = 0;
     IBInfo.IBCollInfo.classCursor = clang_getNullCursor();
     QualType Ty = IBAttr->getInterface();
-    if (const ObjCInterfaceType *InterTy = Ty->getAs<ObjCInterfaceType>()) {
-      if (const ObjCInterfaceDecl *InterD = InterTy->getInterface()) {
+    if (const ObjCObjectType *ObjectTy = Ty->getAs<ObjCObjectType>()) {
+      if (const ObjCInterfaceDecl *InterD = ObjectTy->getInterface()) {
         IdxCtx.getEntityInfo(InterD, IBInfo.ClassInfo, SA);
         IBInfo.IBCollInfo.objcClass = &IBInfo.ClassInfo;
         IBInfo.IBCollInfo.classCursor = MakeCursorObjCClassRef(InterD,
