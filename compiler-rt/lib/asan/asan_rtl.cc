@@ -149,7 +149,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->redzone = 16;
   f->debug = false;
   f->report_globals = 1;
-  f->check_initialization_order = false;
+  f->check_initialization_order = true;
   f->replace_str = true;
   f->replace_intrin = true;
   f->mac_ignore_invalid_free = false;
