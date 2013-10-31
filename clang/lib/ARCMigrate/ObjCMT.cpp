@@ -44,7 +44,7 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   
   void migrateDecl(Decl *D);
   void migrateObjCInterfaceDecl(ASTContext &Ctx, ObjCContainerDecl *D);
-  void migregateDeprecatedAnnotation(ASTContext &Ctx, ObjCCategoryDecl *CatDecl);
+  void migrateDeprecatedAnnotation(ASTContext &Ctx, ObjCCategoryDecl *CatDecl);
   void migrateProtocolConformance(ASTContext &Ctx,
                                   const ObjCImplementationDecl *ImpDecl);
   void CacheObjCNSIntegerTypedefed(const TypedefDecl *TypedefDcl);
@@ -425,10 +425,10 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
   }
 }
 
-void ObjCMigrateASTConsumer::migregateDeprecatedAnnotation(ASTContext &Ctx,
+void ObjCMigrateASTConsumer::migrateDeprecatedAnnotation(ASTContext &Ctx,
                                                            ObjCCategoryDecl *CatDecl) {
   StringRef Name = CatDecl->getName();
-  if (!Name.startswith("NS") || !Name.endswith("Deprecated"))
+  if (!Name.endswith("Deprecated"))
     return;
   
   if (!Ctx.Idents.get("DEPRECATED").hasMacroDefinition())
@@ -1541,7 +1541,7 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
       if (ObjCCategoryDecl *CatDecl = dyn_cast<ObjCCategoryDecl>(*D)) {
         migrateObjCInterfaceDecl(Ctx, CatDecl);
         if (ASTMigrateActions & FrontendOptions::ObjCMT_Annotation)
-          migregateDeprecatedAnnotation(Ctx, CatDecl);
+          migrateDeprecatedAnnotation(Ctx, CatDecl);
       }
       else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(*D))
         ObjCProtocolDecls.insert(PDecl);

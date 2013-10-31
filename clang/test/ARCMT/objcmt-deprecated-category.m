@@ -39,3 +39,10 @@
 @property int P2 DEPRECATED;
 
 @end
+
+@interface NSArray (Deprecated)
+- (void)getObjects:(id __unsafe_unretained [])objects;
+- (void)dep_getObjects:(id __unsafe_unretained [])dep_objects DEPRECATED;
+@property int P1;
+@property int P2 DEPRECATED;
+@end

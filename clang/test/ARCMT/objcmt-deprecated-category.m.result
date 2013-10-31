@@ -33,9 +33,16 @@
 
 /* This method is unsafe because it could potentially cause buffer overruns. You should use -getObjects:range: instead.
 */
-- (void)getObjects:(id __unsafe_unretained [])objects;
+- (void)getObjects:(id __unsafe_unretained [])objects DEPRECATED;
 - (void)dep_getObjects:(id __unsafe_unretained [])dep_objects DEPRECATED;
-@property int P1;
+@property int P1 DEPRECATED;
 @property int P2 DEPRECATED;
 
+@end
+
+@interface NSArray (Deprecated)
+- (void)getObjects:(id __unsafe_unretained [])objects DEPRECATED;
+- (void)dep_getObjects:(id __unsafe_unretained [])dep_objects DEPRECATED;
+@property int P1 DEPRECATED;
+@property int P2 DEPRECATED;
 @end
