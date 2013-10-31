@@ -25,10 +25,18 @@
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
-
-// Inlined copy of http://llvm.org/svn/llvm-project/libcxxabi/trunk/src/cxa_demangle.cpp
-// with "__cxxabiv1" namespace removed, stripped attributes and extern "C" attributes.
-// Also changed the unnamed namespace to include cxa_demangle function.
+//----------------------------------------------------------------------
+// Inlined copy of:
+// http://llvm.org/svn/llvm-project/libcxxabi/trunk/src/cxa_demangle.cpp
+// revision 193704.
+//
+// Changes include:
+// - remove the "__cxxabiv1" namespace
+// - stripped GCC attributes()
+// - removed extern "C" from the cxa_demangle function
+// - Changed the scope of the unnamed namespace to include cxa_demangle
+//   function.
+//----------------------------------------------------------------------
 
 namespace
 {
