@@ -4697,3 +4697,298 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        uqxtn s19, s14
 // CHECK-ERROR:                   ^
+
+//----------------------------------------------------------------------
+// Scalar Signed Shift Right (Immediate)
+//----------------------------------------------------------------------
+        sshr d15, d16, #99
+
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:        sshr d15, d16, #99
+// CHECK-ERROR:                       ^
+
+        sshr d15, s16, #31
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sshr d15, s16, #31
+// CHECK-ERROR:                  ^
+
+//----------------------------------------------------------------------
+// Scalar Unsigned Shift Right (Immediate)
+//----------------------------------------------------------------------
+
+        ushr d10, d17, #99
+
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:        ushr d10, d17, #99
+// CHECK-ERROR:                       ^
+
+//----------------------------------------------------------------------
+// Scalar Signed Rounding Shift Right (Immediate)
+//----------------------------------------------------------------------
+
+        srshr d19, d18, #99
+
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:        srshr d19, d18, #99
+// CHECK-ERROR:                        ^
+
+//----------------------------------------------------------------------
+// Scalar Unigned Rounding Shift Right (Immediate)
+//----------------------------------------------------------------------
+
+        urshr d20, d23, #99
+
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:        urshr d20, d23, #99
+// CHECK-ERROR:                        ^
+
+//----------------------------------------------------------------------
+// Scalar Signed Shift Right and Accumulate (Immediate)
+//----------------------------------------------------------------------
+
+        ssra d18, d12, #99
+
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:        ssra d18, d12, #99
+// CHECK-ERROR:                       ^
+
+//----------------------------------------------------------------------
+// Scalar Unsigned Shift Right and Accumulate (Immediate)
+//----------------------------------------------------------------------
+
+        usra d20, d13, #99
+
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:        usra d20, d13, #99
+// CHECK-ERROR:                       ^
+
+//----------------------------------------------------------------------
+// Scalar Signed Rounding Shift Right and Accumulate (Immediate)
+//----------------------------------------------------------------------
+
+        srsra d15, d11, #99
+
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:        srsra d15, d11, #99
+// CHECK-ERROR:                        ^
+
+//----------------------------------------------------------------------
+// Scalar Unsigned Rounding Shift Right and Accumulate (Immediate)
+//----------------------------------------------------------------------
+
+        ursra d18, d10, #99
+
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:        ursra d18, d10, #99
+// CHECK-ERROR:                        ^
+
+//----------------------------------------------------------------------
+// Scalar Shift Left (Immediate)
+//----------------------------------------------------------------------
+
+        shl d7, d10, #99
+
+// CHECK-ERROR: error: expected integer in range [0, 63]
+// CHECK-ERROR:        shl d7, d10, #99
+// CHECK-ERROR:                     ^
+
+        shl d7, s16, #31
+        
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        shl d7, s16, #31
+// CHECK-ERROR:                ^
+
+//----------------------------------------------------------------------
+// Signed Saturating Shift Left (Immediate)
+//----------------------------------------------------------------------
+
+        sqshl b11, b19, #99
+        sqshl h13, h18, #99
+        sqshl s14, s17, #99
+        sqshl d15, d16, #99
+
+// CHECK-ERROR: error: expected integer in range [0, 7]
+// CHECK-ERROR:        sqshl b11, b19, #99
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected integer in range [0, 15]
+// CHECK-ERROR:        sqshl h13, h18, #99
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected integer in range [0, 31]
+// CHECK-ERROR:        sqshl s14, s17, #99
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected integer in range [0, 63]
+// CHECK-ERROR:        sqshl d15, d16, #99
+// CHECK-ERROR:                        ^
+
+//----------------------------------------------------------------------
+// Unsigned Saturating Shift Left (Immediate)
+//----------------------------------------------------------------------
+
+        uqshl b18, b15, #99
+        uqshl h11, h18, #99
+        uqshl s14, s19, #99
+        uqshl d15, d12, #99
+
+// CHECK-ERROR: error: expected integer in range [0, 7]
+// CHECK-ERROR:        uqshl b18, b15, #99
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected integer in range [0, 15]
+// CHECK-ERROR:        uqshl h11, h18, #99
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected integer in range [0, 31]
+// CHECK-ERROR:        uqshl s14, s19, #99
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected integer in range [0, 63]
+// CHECK-ERROR:        uqshl d15, d12, #99
+// CHECK-ERROR:                        ^
+
+//----------------------------------------------------------------------
+// Signed Saturating Shift Left Unsigned (Immediate)
+//----------------------------------------------------------------------
+
+        sqshlu b15, b18, #99
+        sqshlu h19, h17, #99
+        sqshlu s16, s14, #99
+        sqshlu d11, d13, #99
+
+// CHECK-ERROR: error: expected integer in range [0, 7]
+// CHECK-ERROR:        sqshlu  b15, b18, #99
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [0, 15]
+// CHECK-ERROR:        sqshlu  h19, h17, #99
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [0, 31]
+// CHECK-ERROR:        sqshlu  s16, s14, #99
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [0, 63]
+// CHECK-ERROR:        sqshlu  d11, d13, #99
+// CHECK-ERROR:                          ^
+
+//----------------------------------------------------------------------
+// Shift Right And Insert (Immediate)
+//----------------------------------------------------------------------
+
+        sri d10, d12, #99
+
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:        sri d10, d12, #99
+// CHECK-ERROR:                      ^
+
+//----------------------------------------------------------------------
+// Shift Left And Insert (Immediate)
+//----------------------------------------------------------------------
+
+        sli d10, d14, #99
+
+// CHECK-ERROR: error: expected integer in range [0, 63]
+// CHECK-ERROR:        sli d10, d14, #99
+// CHECK-ERROR:                      ^
+
+//----------------------------------------------------------------------
+// Signed Saturating Shift Right Narrow (Immediate)
+//----------------------------------------------------------------------
+
+        sqshrn b10, h15, #99
+        sqshrn h17, s10, #99
+        sqshrn s18, d10, #99
+
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:        sqshrn  b10, h15, #99
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:        sqshrn  h17, s10, #99
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:        sqshrn  s18, d10, #99
+// CHECK-ERROR:                          ^
+        
+//----------------------------------------------------------------------
+// Unsigned Saturating Shift Right Narrow (Immediate)
+//----------------------------------------------------------------------
+
+        uqshrn b12, h10, #99
+        uqshrn h10, s14, #99
+        uqshrn s10, d12, #99
+
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:        uqshrn  b12, h10, #99
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:        uqshrn  h10, s14, #99
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:        uqshrn  s10, d12, #99
+// CHECK-ERROR:                          ^
+        
+//----------------------------------------------------------------------
+// Signed Saturating Rounded Shift Right Narrow (Immediate)
+//----------------------------------------------------------------------
+
+        sqrshrn b10, h13, #99
+        sqrshrn h15, s10, #99
+        sqrshrn s15, d12, #99
+
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:        sqrshrn b10, h13, #99
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:        sqrshrn h15, s10, #99
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:        sqrshrn s15, d12, #99
+// CHECK-ERROR:                          ^
+        
+//----------------------------------------------------------------------
+// Unsigned Saturating Rounded Shift Right Narrow (Immediate)
+//----------------------------------------------------------------------
+
+        uqrshrn b10, h12, #99
+        uqrshrn h12, s10, #99
+        uqrshrn s10, d10, #99
+
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:        uqrshrn b10, h12, #99
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:        uqrshrn h12, s10, #99
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:        uqrshrn s10, d10, #99
+// CHECK-ERROR:                          ^
+
+//----------------------------------------------------------------------
+// Signed Saturating Shift Right Unsigned Narrow (Immediate)
+//----------------------------------------------------------------------
+
+        sqshrun b15, h10, #99
+        sqshrun h20, s14, #99
+        sqshrun s10, d15, #99
+
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:        sqshrun b15, h10, #99
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:        sqshrun h20, s14, #99
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:        sqshrun s10, d15, #99
+// CHECK-ERROR:                          ^
+
+//----------------------------------------------------------------------
+// Signed Saturating Rounded Shift Right Unsigned Narrow (Immediate)
+//----------------------------------------------------------------------
+
+        sqrshrun b17, h10, #99
+        sqrshrun h10, s13, #99
+        sqrshrun s22, d16, #99
+
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:        sqrshrun b17, h10, #99
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:        sqrshrun h10, s13, #99
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:        sqrshrun s22, d16, #99
+// CHECK-ERROR:                           ^
