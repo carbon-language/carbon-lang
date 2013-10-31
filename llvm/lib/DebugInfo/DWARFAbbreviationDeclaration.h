@@ -10,7 +10,6 @@
 #ifndef LLVM_DEBUGINFO_DWARFABBREVIATIONDECLARATION_H
 #define LLVM_DEBUGINFO_DWARFABBREVIATIONDECLARATION_H
 
-#include "DWARFAttribute.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataExtractor.h"
 
@@ -22,31 +21,33 @@ class DWARFAbbreviationDeclaration {
   uint32_t Code;
   uint32_t Tag;
   bool HasChildren;
-  SmallVector<DWARFAttribute, 8> Attribute;
+
+  struct AttributeSpec {
+    AttributeSpec(uint16_t Attr, uint16_t Form) : Attr(Attr), Form(Form) {}
+    uint16_t Attr;
+    uint16_t Form;
+  };
+  SmallVector<AttributeSpec, 8> Attributes;
 public:
-  enum { InvalidCode = 0 };
-  DWARFAbbreviationDeclaration()
-    : Code(InvalidCode), Tag(0), HasChildren(0) {}
+  DWARFAbbreviationDeclaration();
 
   uint32_t getCode() const { return Code; }
   uint32_t getTag() const { return Tag; }
   bool hasChildren() const { return HasChildren; }
-  uint32_t getNumAttributes() const { return Attribute.size(); }
+  uint32_t getNumAttributes() const { return Attributes.size(); }
   uint16_t getAttrByIndex(uint32_t idx) const {
-    return Attribute.size() > idx ? Attribute[idx].getAttribute() : 0;
+    return idx < Attributes.size() ? Attributes[idx].Attr : 0;
   }
   uint16_t getFormByIndex(uint32_t idx) const {
-    return Attribute.size() > idx ? Attribute[idx].getForm() : 0;
+    return idx < Attributes.size() ? Attributes[idx].Form : 0;
   }
 
   uint32_t findAttributeIndex(uint16_t attr) const;
-  bool extract(DataExtractor data, uint32_t* offset_ptr);
-  bool extract(DataExtractor data, uint32_t* offset_ptr, uint32_t code);
-  bool isValid() const { return Code != 0 && Tag != 0; }
+  bool extract(DataExtractor Data, uint32_t* OffsetPtr);
   void dump(raw_ostream &OS) const;
-  const SmallVectorImpl<DWARFAttribute> &getAttributes() const {
-    return Attribute;
-  }
+
+private:
+  void clear();
 };
 
 }
