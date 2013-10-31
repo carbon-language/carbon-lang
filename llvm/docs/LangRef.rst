@@ -897,7 +897,7 @@ example:
 ``minsize``
     This attribute suggests that optimization passes and code generator
     passes make choices that keep the code size of this function as small
-    as possible and perform optimizations that may sacrifice runtime 
+    as possible and perform optimizations that may sacrifice runtime
     performance in order to minimize the size of the generated code.
 ``naked``
     This attribute disables prologue / epilogue emission for the
@@ -942,12 +942,12 @@ example:
     unwind, its runtime behavior is undefined.
 ``optnone``
     This function attribute indicates that the function is not optimized
-    by any optimization or code generator passes with the 
+    by any optimization or code generator passes with the
     exception of interprocedural optimization passes.
     This attribute cannot be used together with the ``alwaysinline``
     attribute; this attribute is also incompatible
     with the ``minsize`` attribute and the ``optsize`` attribute.
-    
+
     The inliner should never inline this function in any situation.
     Only functions with the ``alwaysinline`` attribute are valid
     candidates for inlining inside the body of this function.
@@ -965,7 +965,7 @@ example:
     (including ``byval`` arguments) and never changes any state visible
     to callers. This means that it cannot unwind exceptions by calling
     the ``C++`` exception throwing methods.
-    
+
     On an argument, this attribute indicates that the function does not
     dereference that pointer argument, even though it may read or write the
     memory that the pointer points to if accessed through other pointers.
@@ -979,7 +979,7 @@ example:
     called with the same set of arguments and global state. It cannot
     unwind an exception by calling the ``C++`` exception throwing
     methods.
-    
+
     On an argument, this attribute indicates that the function does not write
     through this pointer argument, even though it may write to the memory that
     the pointer points to.

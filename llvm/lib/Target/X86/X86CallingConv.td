@@ -279,10 +279,10 @@ def CC_X86_Win64_C : CallingConv<[
   // The first 4 integer arguments are passed in integer registers.
   CCIfType<[i32], CCAssignToRegWithShadow<[ECX , EDX , R8D , R9D ],
                                           [XMM0, XMM1, XMM2, XMM3]>>,
-  
+
   // Do not pass the sret argument in RCX, the Win64 thiscall calling
-  // convention requires "this" to be passed in RCX.                                        
-  CCIfCC<"CallingConv::X86_ThisCall", 
+  // convention requires "this" to be passed in RCX.
+  CCIfCC<"CallingConv::X86_ThisCall",
     CCIfSRet<CCIfType<[i64], CCAssignToRegWithShadow<[RDX , R8  , R9  ],
                                                      [XMM1, XMM2, XMM3]>>>>,
 
@@ -354,7 +354,7 @@ def CC_X86_32_Common : CallingConv<[
   // Integer/Float values get stored in stack slots that are 4 bytes in
   // size and 4-byte aligned.
   CCIfType<[i32, f32], CCAssignToStack<4, 4>>,
-  
+
   // Doubles get 8-byte slots that are 4-byte aligned.
   CCIfType<[f64], CCAssignToStack<8, 4>>,
 
@@ -558,11 +558,11 @@ def CSR_MostRegs_64 : CalleeSavedRegs<(add RBX, RCX, RDX, RSI, RDI, R8, R9, R10,
 
 // Standard C + YMM6-15
 def CSR_Win64_Intel_OCL_BI_AVX : CalleeSavedRegs<(add RBX, RBP, RDI, RSI, R12,
-                                                  R13, R14, R15, 
+                                                  R13, R14, R15,
                                                   (sequence "YMM%u", 6, 15))>;
 
 def CSR_Win64_Intel_OCL_BI_AVX512 : CalleeSavedRegs<(add RBX, RBP, RDI, RSI,
-                                                     R12, R13, R14, R15, 
+                                                     R12, R13, R14, R15,
                                                      (sequence "ZMM%u", 6, 21),
                                                      K4, K5, K6, K7)>;
 //Standard C + XMM 8-15

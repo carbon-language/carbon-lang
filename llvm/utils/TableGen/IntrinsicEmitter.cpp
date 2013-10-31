@@ -84,10 +84,10 @@ void IntrinsicEmitter::run(raw_ostream &OS) {
 
   // Emit the function name recognizer.
   EmitFnNameRecognizer(Ints, OS);
-  
+
   // Emit the intrinsic declaration generator.
   EmitGenerator(Ints, OS);
-  
+
   // Emit the intrinsic parameter attributes.
   EmitAttributes(Ints, OS);
 
@@ -125,7 +125,7 @@ void IntrinsicEmitter::EmitEnumInfo(const std::vector<CodeGenIntrinsic> &Ints,
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
     OS << "    " << Ints[i].EnumName;
     OS << ((i != e-1) ? ", " : "  ");
-    OS << std::string(40-Ints[i].EnumName.size(), ' ') 
+    OS << std::string(40-Ints[i].EnumName.size(), ' ')
       << "// " << Ints[i].Name << "\n";
   }
   OS << "#endif\n\n";
@@ -146,13 +146,13 @@ private:
 };
 
 void IntrinsicEmitter::
-EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints, 
+EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
                      raw_ostream &OS) {
   // Build a 'first character of function name' -> intrinsic # mapping.
   std::map<char, std::vector<unsigned> > IntMapping;
   for (unsigned i = 0, e = Ints.size(); i != e; ++i)
     IntMapping[Ints[i].Name[5]].push_back(i);
-  
+
   OS << "// Function name -> enum value recognizer code.\n";
   OS << "#ifdef GET_FUNCTION_RECOGNIZER\n";
   OS << "  StringRef NameR(Name+6, Len-6);   // Skip over 'llvm.'\n";
@@ -171,7 +171,7 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
     // Emit all the overloaded intrinsics first, build a table of the
     // non-overloaded ones.
     std::vector<StringMatcher::StringPair> MatchTable;
-    
+
     for (unsigned i = 0, e = IntList.size(); i != e; ++i) {
       unsigned IntNo = IntList[i];
       std::string Result = "return " + TargetPrefix + "Intrinsic::" +
@@ -188,18 +188,18 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
       OS << "    if (NameR.startswith(\"" << TheStr << "\")) "
          << Result << '\n';
     }
-    
+
     // Emit the matcher logic for the fixed length strings.
     StringMatcher("NameR", MatchTable, OS).Emit(1);
     OS << "    break;  // end of '" << I->first << "' case.\n";
   }
-  
+
   OS << "  }\n";
   OS << "#endif\n\n";
 }
 
 void IntrinsicEmitter::
-EmitIntrinsicToNameTable(const std::vector<CodeGenIntrinsic> &Ints, 
+EmitIntrinsicToNameTable(const std::vector<CodeGenIntrinsic> &Ints,
                          raw_ostream &OS) {
   OS << "// Intrinsic ID to name table\n";
   OS << "#ifdef GET_INTRINSIC_NAME_TABLE\n";
@@ -210,7 +210,7 @@ EmitIntrinsicToNameTable(const std::vector<CodeGenIntrinsic> &Ints,
 }
 
 void IntrinsicEmitter::
-EmitIntrinsicToOverloadTable(const std::vector<CodeGenIntrinsic> &Ints, 
+EmitIntrinsicToOverloadTable(const std::vector<CodeGenIntrinsic> &Ints,
                          raw_ostream &OS) {
   OS << "// Intrinsic ID to overload bitset\n";
   OS << "#ifdef GET_INTRINSIC_OVERLOAD_TABLE\n";
@@ -278,7 +278,7 @@ static void EncodeFixedValueType(MVT::SimpleValueType VT,
     case 64: return Sig.push_back(IIT_I64);
     }
   }
-  
+
   switch (VT) {
   default: PrintFatalError("unhandled MVT in intrinsic!");
   case MVT::f16: return Sig.push_back(IIT_F16);
@@ -293,11 +293,11 @@ static void EncodeFixedValueType(MVT::SimpleValueType VT,
 
 #ifdef _MSC_VER
 #pragma optimize("",off) // MSVC 2010 optimizer can't deal with this function.
-#endif 
+#endif
 
 static void EncodeFixedType(Record *R, std::vector<unsigned char> &ArgCodes,
                             std::vector<unsigned char> &Sig) {
-  
+
   if (R->isSubClassOf("LLVMMatchType")) {
     unsigned Number = R->getValueAsInt("Number");
     assert(Number < ArgCodes.size() && "Invalid matching number!");
@@ -309,7 +309,7 @@ static void EncodeFixedType(Record *R, std::vector<unsigned char> &ArgCodes,
       Sig.push_back(IIT_ARG);
     return Sig.push_back((Number << 2) | ArgCodes[Number]);
   }
-  
+
   MVT::SimpleValueType VT = getValueType(R->getValueAsDef("VT"));
 
   unsigned Tmp = 0;
@@ -320,17 +320,17 @@ static void EncodeFixedType(Record *R, std::vector<unsigned char> &ArgCodes,
   case MVT::fAny: ++Tmp; // FALL THROUGH.
   case MVT::iAny: {
     // If this is an "any" valuetype, then the type is the type of the next
-    // type in the list specified to getIntrinsic().  
+    // type in the list specified to getIntrinsic().
     Sig.push_back(IIT_ARG);
-    
+
     // Figure out what arg # this is consuming, and remember what kind it was.
     unsigned ArgNo = ArgCodes.size();
     ArgCodes.push_back(Tmp);
-    
+
     // Encode what sort of argument it must be in the low 2 bits of the ArgNo.
     return Sig.push_back((ArgNo << 2) | Tmp);
   }
-  
+
   case MVT::iPTR: {
     unsigned AddrSpace = 0;
     if (R->isSubClassOf("LLVMQualPointerType")) {
@@ -346,7 +346,7 @@ static void EncodeFixedType(Record *R, std::vector<unsigned char> &ArgCodes,
     return EncodeFixedType(R->getValueAsDef("ElTy"), ArgCodes, Sig);
   }
   }
-  
+
   if (EVT(VT).isVector()) {
     EVT VVT = VT;
     switch (VVT.getVectorNumElements()) {
@@ -358,7 +358,7 @@ static void EncodeFixedType(Record *R, std::vector<unsigned char> &ArgCodes,
     case 16: Sig.push_back(IIT_V16); break;
     case 32: Sig.push_back(IIT_V32); break;
     }
-    
+
     return EncodeFixedValueType(VVT.getVectorElementType().
                                 getSimpleVT().SimpleTy, Sig);
   }
@@ -375,7 +375,7 @@ static void EncodeFixedType(Record *R, std::vector<unsigned char> &ArgCodes,
 static void ComputeFixedEncoding(const CodeGenIntrinsic &Int,
                                  std::vector<unsigned char> &TypeSig) {
   std::vector<unsigned char> ArgCodes;
-  
+
   if (Int.IS.RetVTs.empty())
     TypeSig.push_back(IIT_Done);
   else if (Int.IS.RetVTs.size() == 1 &&
@@ -390,11 +390,11 @@ static void ComputeFixedEncoding(const CodeGenIntrinsic &Int,
       case 5: TypeSig.push_back(IIT_STRUCT5); break;
       default: assert(0 && "Unhandled case in struct");
     }
-    
+
     for (unsigned i = 0, e = Int.IS.RetVTs.size(); i != e; ++i)
       EncodeFixedType(Int.IS.RetTypeDefs[i], ArgCodes, TypeSig);
   }
-  
+
   for (unsigned i = 0, e = Int.IS.ParamTypeDefs.size(); i != e; ++i)
     EncodeFixedType(Int.IS.ParamTypeDefs[i], ArgCodes, TypeSig);
 }
@@ -403,16 +403,16 @@ static void printIITEntry(raw_ostream &OS, unsigned char X) {
   OS << (unsigned)X;
 }
 
-void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints, 
+void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
                                      raw_ostream &OS) {
   // If we can compute a 32-bit fixed encoding for this intrinsic, do so and
   // capture it in this vector, otherwise store a ~0U.
   std::vector<unsigned> FixedEncodings;
-  
+
   SequenceToOffsetTable<std::vector<unsigned char> > LongEncodingTable;
-  
+
   std::vector<unsigned char> TypeSig;
-  
+
   // Compute the unique argument type info.
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
     // Get the signature for the intrinsic.
@@ -432,7 +432,7 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
         }
         Result = (Result << 4) | TypeSig[e-i-1];
       }
-      
+
       // If this could be encoded into a 31-bit word, return it.
       if (!Failed && (Result >> 31) == 0) {
         FixedEncodings.push_back(Result);
@@ -443,45 +443,45 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
     // Otherwise, we're going to unique the sequence into the
     // LongEncodingTable, and use its offset in the 32-bit table instead.
     LongEncodingTable.add(TypeSig);
-      
+
     // This is a placehold that we'll replace after the table is laid out.
     FixedEncodings.push_back(~0U);
   }
-  
+
   LongEncodingTable.layout();
-  
+
   OS << "// Global intrinsic function declaration type table.\n";
   OS << "#ifdef GET_INTRINSIC_GENERATOR_GLOBAL\n";
 
   OS << "static const unsigned IIT_Table[] = {\n  ";
-  
+
   for (unsigned i = 0, e = FixedEncodings.size(); i != e; ++i) {
     if ((i & 7) == 7)
       OS << "\n  ";
-    
+
     // If the entry fit in the table, just emit it.
     if (FixedEncodings[i] != ~0U) {
       OS << "0x" << utohexstr(FixedEncodings[i]) << ", ";
       continue;
     }
-    
+
     TypeSig.clear();
     ComputeFixedEncoding(Ints[i], TypeSig);
 
-    
+
     // Otherwise, emit the offset into the long encoding table.  We emit it this
     // way so that it is easier to read the offset in the .def file.
     OS << "(1U<<31) | " << LongEncodingTable.get(TypeSig) << ", ";
   }
-  
+
   OS << "0\n};\n\n";
-  
+
   // Emit the shared table of register lists.
   OS << "static const unsigned char IIT_LongEncodingTable[] = {\n";
   if (!LongEncodingTable.empty())
     LongEncodingTable.emit(OS, printIITEntry);
   OS << "  255\n};\n\n";
-  
+
   OS << "#endif\n\n";  // End of GET_INTRINSIC_GENERATOR_GLOBAL
 }
 
@@ -631,7 +631,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
         OS << "      AttrVec.push_back(Attribute::ReadOnly);\n";
         break;
       case MRK_readnone:
-        OS << "      AttrVec.push_back(Attribute::ReadNone);\n"; 
+        OS << "      AttrVec.push_back(Attribute::ReadNone);\n";
         break;
       }
       OS << "      AS[" << numAttrs++ << "] = AttributeSet::get(C, "
@@ -645,7 +645,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
       OS << "      return AttributeSet();\n";
     }
   }
-  
+
   OS << "    }\n";
   OS << "  }\n";
   OS << "  return AttributeSet::get(C, ArrayRef<AttributeSet>(AS, "
@@ -694,9 +694,9 @@ EmitModRefBehavior(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS){
 static void EmitTargetBuiltins(const std::map<std::string, std::string> &BIM,
                                const std::string &TargetPrefix,
                                raw_ostream &OS) {
-  
+
   std::vector<StringMatcher::StringPair> Results;
-  
+
   for (std::map<std::string, std::string>::const_iterator I = BIM.begin(),
        E = BIM.end(); I != E; ++I) {
     std::string ResultCode =
@@ -707,9 +707,9 @@ static void EmitTargetBuiltins(const std::map<std::string, std::string> &BIM,
   StringMatcher("BuiltinName", Results, OS).Emit();
 }
 
-        
+
 void IntrinsicEmitter::
-EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints, 
+EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints,
                              raw_ostream &OS) {
   typedef std::map<std::string, std::map<std::string, std::string> > BIMTy;
   BIMTy BuiltinMap;
@@ -717,20 +717,20 @@ EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints,
     if (!Ints[i].GCCBuiltinName.empty()) {
       // Get the map for this target prefix.
       std::map<std::string, std::string> &BIM =BuiltinMap[Ints[i].TargetPrefix];
-      
+
       if (!BIM.insert(std::make_pair(Ints[i].GCCBuiltinName,
                                      Ints[i].EnumName)).second)
         PrintFatalError("Intrinsic '" + Ints[i].TheDef->getName() +
               "': duplicate GCC builtin name!");
     }
   }
-  
+
   OS << "// Get the LLVM intrinsic that corresponds to a GCC builtin.\n";
   OS << "// This is used by the C front-end.  The GCC builtin name is passed\n";
   OS << "// in as BuiltinName, and a target prefix (e.g. 'ppc') is passed\n";
   OS << "// in as TargetPrefix.  The result is assigned to 'IntrinsicID'.\n";
   OS << "#ifdef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN\n";
-  
+
   if (TargetOnly) {
     OS << "static " << TargetPrefix << "Intrinsic::ID "
        << "getIntrinsicForGCCBuiltin(const char "
@@ -739,10 +739,10 @@ EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints,
     OS << "Intrinsic::ID Intrinsic::getIntrinsicForGCCBuiltin(const char "
        << "*TargetPrefixStr, const char *BuiltinNameStr) {\n";
   }
-  
+
   OS << "  StringRef BuiltinName(BuiltinNameStr);\n";
   OS << "  StringRef TargetPrefix(TargetPrefixStr);\n\n";
-  
+
   // Note: this could emit significantly better code if we cared.
   for (BIMTy::iterator I = BuiltinMap.begin(), E = BuiltinMap.end();I != E;++I){
     OS << "  ";
