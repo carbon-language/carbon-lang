@@ -404,6 +404,9 @@ public:
   submodule_const_iterator submodule_end() const { return SubModules.end(); }
 
   /// \brief Returns the exported modules based on the wildcard restrictions.
+  ///
+  /// This returns a subset of immediately imported modules (the ones that are
+  /// exported), not the complete set of exported modules.
   void getExportedModules(SmallVectorImpl<Module *> &Exported) const;
 
   static StringRef getModuleInputBufferName() {

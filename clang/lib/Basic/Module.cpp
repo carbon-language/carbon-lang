@@ -252,15 +252,23 @@ void Module::buildVisibleModulesCache() const {
   // This module is visible to itself.
   VisibleModulesCache.insert(this);
 
-  llvm::SmallVector<Module*, 4> Exported;
-  for (unsigned I = 0, N = Imports.size(); I != N; ++I) {
-    // Every imported module is visible.
-    VisibleModulesCache.insert(Imports[I]);
+  // Every imported module is visible.
+  // Every module exported by an imported module is visible.
+  llvm::SmallPtrSet<Module *, 4> Visited;
+  llvm::SmallVector<Module *, 4> Exports;
+  SmallVector<Module *, 4> Stack(Imports.begin(), Imports.end());
+  while (!Stack.empty()) {
+    Module *CurrModule = Stack.pop_back_val();
+    VisibleModulesCache.insert(CurrModule);
 
-    // Every module exported by an imported module is visible.
-    Imports[I]->getExportedModules(Exported);
-    VisibleModulesCache.insert(Exported.begin(), Exported.end());
-    Exported.clear();
+    CurrModule->getExportedModules(Exports);
+    for (SmallVectorImpl<Module *>::iterator I = Exports.begin(),
+                                             E = Exports.end();
+         I != E; ++I) {
+      Module *Exported = *I;
+      if (Visited.insert(Exported))
+        Stack.push_back(Exported);
+    }
   }
 }
 
