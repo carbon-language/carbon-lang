@@ -2383,6 +2383,29 @@ static unsigned RangeFromType(const char mod, StringRef typestr) {
   }
 }
 
+static unsigned RangeScalarShiftImm(const char mod, StringRef typestr) {
+  // base type to get the type string for.
+  bool dummy = false;
+  char type = ClassifyType(typestr, dummy, dummy, dummy);
+  type = ModType(mod, type, dummy, dummy, dummy, dummy, dummy, dummy);
+
+  switch (type) {
+    case 'c':
+      return 7;
+    case 'h':
+    case 's':
+      return 15;
+    case 'f':
+    case 'i':
+      return 31;
+    case 'd':
+    case 'l':
+      return 63;
+    default:
+      PrintFatalError("unhandled type!");
+  }
+}
+
 /// Generate the ARM and AArch64 intrinsic range checking code for
 /// shift/lane immediates, checking for unique declarations.
 void
@@ -2456,6 +2479,14 @@ NeonEmitter::genIntrinsicRangeCheckCode(raw_ostream &OS,
         else
           PrintFatalError(R->getLoc(),
               "Fixed point convert name should contains \"32\" or \"64\"");
+
+      } else if (R->getValueAsBit("isScalarShift")) {
+        // Right shifts have an 'r' in the name, left shifts do not.
+        if (name.find('r') != std::string::npos)
+          rangestr = "l = 1; ";
+
+        rangestr += "u = " +
+          utostr(RangeScalarShiftImm(Proto[immPos - 1], TypeVec[ti]));
       } else if (!ProtoHasScalar(Proto)) {
         // Builtins which are overloaded by type will need to have their upper
         // bound computed at Sema time based on the type constant.
