@@ -1,8 +1,11 @@
 ; Test the handling of base + 12-bit displacement addresses for large frames,
-; in cases where no 20-bit form exists.
+; in cases where no 20-bit form exists.  The tests here assume z10 register
+; pressure, without the high words being available.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck -check-prefix=CHECK-NOFP %s
-; RUN: llc < %s -mtriple=s390x-linux-gnu -disable-fp-elim | FileCheck -check-prefix=CHECK-FP %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | \
+; RUN:   FileCheck -check-prefix=CHECK-NOFP %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 -disable-fp-elim | \
+; RUN:   FileCheck -check-prefix=CHECK-FP %s
 
 ; This file tests what happens when a displacement is converted from
 ; being relative to the start of a frame object to being relative to

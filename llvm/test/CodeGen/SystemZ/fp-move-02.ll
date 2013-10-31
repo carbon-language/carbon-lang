@@ -1,6 +1,7 @@
-; Test moves between FPRs and GPRs.
+; Test moves between FPRs and GPRs.  The 32-bit cases test the z10
+; implementation, which has no high-word support.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 
 declare i64 @foo()
 declare double @bar()

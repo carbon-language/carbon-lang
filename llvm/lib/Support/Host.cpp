@@ -535,6 +535,48 @@ std::string sys::getHostCPUName() {
 
   return "generic";
 }
+#elif defined(__linux__) && defined(__s390x__)
+std::string sys::getHostCPUName() {
+  // STIDP is a privileged operation, so use /proc/cpuinfo instead.
+  // Note: We cannot mmap /proc/cpuinfo here and then process the resulting
+  // memory buffer because the 'file' has 0 size (it can be read from only
+  // as a stream).
+
+  std::string Err;
+  DataStreamer *DS = getDataFileStreamer("/proc/cpuinfo", &Err);
+  if (!DS) {
+    DEBUG(dbgs() << "Unable to open /proc/cpuinfo: " << Err << "\n");
+    return "generic";
+  }
+
+  // The "processor 0:" line comes after a fair amount of other information,
+  // including a cache breakdown, but this should be plenty.
+  char buffer[2048];
+  size_t CPUInfoSize = DS->GetBytes((unsigned char*) buffer, sizeof(buffer));
+  delete DS;
+
+  StringRef Str(buffer, CPUInfoSize);
+  SmallVector<StringRef, 32> Lines;
+  Str.split(Lines, "\n");
+  for (unsigned I = 0, E = Lines.size(); I != E; ++I) {
+    if (Lines[I].startswith("processor ")) {
+      size_t Pos = Lines[I].find("machine = ");
+      if (Pos != StringRef::npos) {
+        Pos += sizeof("machine = ") - 1;
+        unsigned int Id;
+        if (!Lines[I].drop_front(Pos).getAsInteger(10, Id)) {
+          if (Id >= 2827)
+            return "zEC12";
+          if (Id >= 2817)
+            return "z196";
+        }
+      }
+      break;
+    }
+  }
+  
+  return "generic";
+}
 #else
 std::string sys::getHostCPUName() {
   return "generic";

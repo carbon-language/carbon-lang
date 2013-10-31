@@ -1,6 +1,7 @@
-; Test 32-bit floating-point comparison.
+; Test 32-bit floating-point comparison.  The tests assume a z10 implementation
+; of select, using conditional branches rather than LOCGR.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 
 declare float @foo()
 

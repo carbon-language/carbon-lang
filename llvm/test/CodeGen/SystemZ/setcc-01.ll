@@ -1,6 +1,7 @@
-; Test SETCC for every integer condition.
+; Test SETCC for every integer condition.  The tests here assume that
+; RISBLG isn't available.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 
 ; Test CC in { 0 }, with 3 don't care.
 define i32 @f1(i32 %a, i32 %b) {

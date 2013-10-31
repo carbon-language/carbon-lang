@@ -36,8 +36,9 @@ def FeatureFPExtension : SystemZFeature<
   "Assume that the floating-point extension facility is installed"
 >;
 
-def : Processor<"z10",   NoItineraries, []>;
-def : Processor<"z196",  NoItineraries,
+def : Processor<"generic", NoItineraries, []>;
+def : Processor<"z10", NoItineraries, []>;
+def : Processor<"z196", NoItineraries,
                 [FeatureDistinctOps, FeatureLoadStoreOnCond, FeatureHighWord,
                  FeatureFPExtension]>;
 def : Processor<"zEC12", NoItineraries,

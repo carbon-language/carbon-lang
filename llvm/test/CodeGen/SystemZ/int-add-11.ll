@@ -1,6 +1,7 @@
-; Test 32-bit additions of constants to memory.
+; Test 32-bit additions of constants to memory.  The tests here
+; assume z10 register pressure, without the high words being available.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 
 ; Check additions of 1.
 define void @f1(i32 *%ptr) {

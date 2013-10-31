@@ -1,6 +1,7 @@
-; Test spilling using MVC.
+; Test spilling using MVC.  The tests here assume z10 register pressure,
+; without the high words being available.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 
 declare void @foo()
 

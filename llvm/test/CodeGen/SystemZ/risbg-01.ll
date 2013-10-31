@@ -1,6 +1,7 @@
 ; Test sequences that can use RISBG with a zeroed first operand.
+; The tests here assume that RISBLG isn't available.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 
 ; Test an extraction of bit 0 from a right-shifted value.
 define i32 @f1(i32 %foo) {

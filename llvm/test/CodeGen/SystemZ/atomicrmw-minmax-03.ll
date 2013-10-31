@@ -1,6 +1,7 @@
-; Test 32-bit atomic minimum and maximum.
+; Test 32-bit atomic minimum and maximum.  Here we match the z10 versions,
+; which can't use LOCR.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 
 ; Check signed minium.
 define i32 @f1(i32 %dummy, i32 *%src, i32 %b) {

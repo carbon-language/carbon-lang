@@ -1,6 +1,7 @@
-; Test SETCC for every floating-point condition.
+; Test SETCC for every floating-point condition.  The tests here assume that
+; RISBLG isn't available.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 
 ; Test CC in { 0 }
 define i32 @f1(float %a, float %b) {

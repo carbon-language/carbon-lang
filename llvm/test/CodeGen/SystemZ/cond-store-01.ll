@@ -1,6 +1,7 @@
-; Test 8-bit conditional stores that are presented as selects.
+; Test 8-bit conditional stores that are presented as selects.  The volatile
+; tests require z10, which use a branch instead of a LOCR.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 
 declare void @foo(i8 *)
 
