@@ -182,7 +182,7 @@ namespace sys  {
 namespace fs {
 #if defined(__FreeBSD__) || defined (__NetBSD__) || defined(__Bitrig__) || \
     defined(__OpenBSD__) || defined(__minix) || defined(__FreeBSD_kernel__) || \
-    defined(__linux__) || defined(__CYGWIN__)
+    defined(__linux__) || defined(__CYGWIN__) || defined(__DragonFly__)
 static int
 test_dir(char buf[PATH_MAX], char ret[PATH_MAX],
     const char *dir, const char *bin)
@@ -251,7 +251,8 @@ std::string getMainExecutable(const char *argv0, void *MainAddr) {
       return link_path;
   }
 #elif defined(__FreeBSD__) || defined (__NetBSD__) || defined(__Bitrig__) || \
-      defined(__OpenBSD__) || defined(__minix) || defined(__FreeBSD_kernel__)
+      defined(__OpenBSD__) || defined(__minix) || defined(__DragonFly__) || \
+      defined(__FreeBSD_kernel__)
   char exe_path[PATH_MAX];
 
   if (getprogpath(exe_path, argv0) != NULL)
