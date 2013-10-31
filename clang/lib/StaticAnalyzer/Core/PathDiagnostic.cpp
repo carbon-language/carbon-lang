@@ -560,7 +560,8 @@ getLocationForCaller(const StackFrameContext *SFC,
                                              SM, CallerCtx);
   }
   case CFGElement::DeleteDtor: {
-    llvm_unreachable("not yet implemented!");
+    const CFGDeleteDtor &Dtor = Source.castAs<CFGDeleteDtor>();
+    return PathDiagnosticLocation(Dtor.getDeleteExpr(), SM, CallerCtx);
   }
   case CFGElement::BaseDtor:
   case CFGElement::MemberDtor: {
