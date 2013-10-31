@@ -101,8 +101,10 @@ class LLVMSymbolizer(Symbolizer):
 def LLVMSymbolizerFactory(system):
   symbolizer_path = os.getenv('LLVM_SYMBOLIZER_PATH')
   if not symbolizer_path:
-    # Assume llvm-symbolizer is in PATH.
-    symbolizer_path = 'llvm-symbolizer'
+    symbolizer_path = os.getenv('ASAN_SYMBOLIZER_PATH')
+    if not symbolizer_path:
+      # Assume llvm-symbolizer is in PATH.
+      symbolizer_path = 'llvm-symbolizer'
   return LLVMSymbolizer(symbolizer_path)
 
 
