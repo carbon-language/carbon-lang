@@ -821,6 +821,18 @@ def SCALAR_SQRSHRUN_N: SInst<"vqrshrun_n", "zsi", "SsSiSl">;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Scalar Signed/Unsigned Fixed-point Convert To Floating-Point (Immediate)
+def SCALAR_SCVTF_N_F32: SInst<"vcvt_n_f32", "ysi", "SiSUi">;
+def SCALAR_SCVTF_N_F64: SInst<"vcvt_n_f64", "osi", "SlSUl">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Floating-point Convert To Signed/Unsigned Fixed-point (Immediate)
+def SCALAR_FCVTZS_N_S32 : SInst<"vcvt_n_s32", "xsi", "Sf">;
+def SCALAR_FCVTZU_N_U32 : SInst<"vcvt_n_u32", "usi", "Sf">;
+def SCALAR_FCVTZS_N_S64 : SInst<"vcvt_n_s64", "xsi", "Sd">;
+def SCALAR_FCVTZU_N_U64 : SInst<"vcvt_n_u64", "usi", "Sd">;
+
+////////////////////////////////////////////////////////////////////////////////
 // Scalar Reduce Pairwise Addition (Scalar and Floating Point)
 def SCALAR_ADDP  : SInst<"vpadd", "sd", "SfSHlSHd">;
 

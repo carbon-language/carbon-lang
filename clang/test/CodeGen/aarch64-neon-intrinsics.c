@@ -7747,3 +7747,27 @@ int32_t test_vqrshrund_n_s64(int64_t a) {
 // CHECK: sqrshrun {{s[0-9]+}}, {{d[0-9]+}}, #63
   return (int32_t)vqrshrund_n_s64(a, 63);
 }
+
+float32_t test_vcvts_n_f32_s32(int32_t a) {
+// CHECK: test_vcvts_n_f32_s32
+// CHECK: scvtf {{s[0-9]+}}, {{s[0-9]+}}, #0
+  return (float32_t)vcvts_n_f32_s32(a, 0);
+}
+
+float64_t test_vcvtd_n_f64_s64(int64_t a) {
+// CHECK: test_vcvtd_n_f64_s64
+// CHECK: scvtf {{d[0-9]+}}, {{d[0-9]+}}, #0
+  return (float64_t)vcvtd_n_f64_s64(a, 0);
+}
+
+float32_t test_vcvts_n_f32_u32(uint32_t a) {
+// CHECK: test_vcvts_n_f32_u32
+// CHECK: ucvtf {{s[0-9]+}}, {{s[0-9]+}}, #0
+  return (float32_t)vcvts_n_f32_u32(a, 0);
+}
+
+float64_t test_vcvtd_n_f64_u64(uint64_t a) {
+// CHECK: test_vcvtd_n_f64_u64
+// CHECK: ucvtf {{d[0-9]+}}, {{d[0-9]+}}, #0
+  return (float64_t)vcvtd_n_f64_u64(a, 0);
+}
