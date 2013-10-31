@@ -193,7 +193,8 @@ static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
     CallInst *CI = dyn_cast<CallInst>(I);
 
     // If this call cannot unwind, don't convert it to an invoke.
-    if (!CI || CI->doesNotThrow())
+    // Inline asm calls cannot throw.
+    if (!CI || CI->doesNotThrow() || isa<InlineAsm>(CI->getCalledValue()))
       continue;
 
     // Convert this function call into an invoke instruction.  First, split the
