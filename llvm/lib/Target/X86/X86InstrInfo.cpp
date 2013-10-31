@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/StackMaps.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -4192,10 +4193,44 @@ breakPartialRegDependency(MachineBasicBlock::iterator MI, unsigned OpNum,
   MI->addRegisterKilled(Reg, TRI, true);
 }
 
-MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
-                                                  MachineInstr *MI,
-                                           const SmallVectorImpl<unsigned> &Ops,
-                                                  int FrameIndex) const {
+static MachineInstr* foldPatchpoint(MachineFunction &MF,
+                                    MachineInstr *MI,
+                                    const SmallVectorImpl<unsigned> &Ops,
+                                    int FrameIndex,
+                                    const TargetInstrInfo &TII) {
+  MachineInstr *NewMI =
+    MF.CreateMachineInstr(TII.get(MI->getOpcode()), MI->getDebugLoc(), true);
+  MachineInstrBuilder MIB(MF, NewMI);
+
+  bool isPatchPoint = MI->getOpcode() == TargetOpcode::PATCHPOINT;
+  unsigned StartIdx = isPatchPoint ? MI->getOperand(3).getImm() + 4 : 2;
+
+  // No need to fold the meta data and function arguments
+  for (unsigned i = 0; i < StartIdx; ++i)
+    MIB.addOperand(MI->getOperand(i));
+
+  for (unsigned i = StartIdx; i < MI->getNumOperands(); ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (std::find(Ops.begin(), Ops.end(), i) != Ops.end()) {
+      MIB.addOperand(MachineOperand::CreateImm(StackMaps::IndirectMemRefOp));
+      MIB.addOperand(MachineOperand::CreateFI(FrameIndex));
+      addOffset(MIB, 0);
+    }
+    else
+      MIB.addOperand(MO);
+  }
+  return NewMI;
+}
+
+MachineInstr*
+X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
+                                    const SmallVectorImpl<unsigned> &Ops,
+                                    int FrameIndex) const {
+  // Special case stack map and patch point intrinsics.
+  if (MI->getOpcode() == TargetOpcode::STACKMAP
+      || MI->getOpcode() == TargetOpcode::PATCHPOINT) {
+    return foldPatchpoint(MF, MI, Ops, FrameIndex, *this);
+  }
   // Check switch flag
   if (NoFusing) return NULL;
 

@@ -33,6 +33,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/StackMaps.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
@@ -6878,6 +6879,8 @@ void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
   for (unsigned i = NumArgs + 4, e = CI.getNumArgOperands(); i != e; ++i) {
     SDValue OpVal = getValue(CI.getArgOperand(i));
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(OpVal)) {
+      Ops.push_back(
+        DAG.getTargetConstant(StackMaps::ConstantOp, MVT::i64));
       Ops.push_back(
         DAG.getTargetConstant(C->getSExtValue(), MVT::i64));
     } else
