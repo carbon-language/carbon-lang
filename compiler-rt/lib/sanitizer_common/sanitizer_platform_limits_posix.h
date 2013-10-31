@@ -21,7 +21,9 @@
 namespace __sanitizer {
   extern unsigned struct_utsname_sz;
   extern unsigned struct_stat_sz;
+#if !SANITIZER_IOS
   extern unsigned struct_stat64_sz;
+#endif
   extern unsigned struct_rusage_sz;
   extern unsigned struct_passwd_sz;
   extern unsigned struct_group_sz;

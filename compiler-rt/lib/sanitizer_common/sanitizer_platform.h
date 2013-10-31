@@ -25,8 +25,15 @@
 
 #if defined(__APPLE__)
 # define SANITIZER_MAC     1
+# include <TargetConditionals.h>
+# if TARGET_OS_IPHONE
+#  define SANITIZER_IOS    1
+# else
+#  define SANITIZER_IOS    0
+# endif
 #else
 # define SANITIZER_MAC     0
+# define SANITIZER_IOS     0
 #endif
 
 #if defined(_WIN32)

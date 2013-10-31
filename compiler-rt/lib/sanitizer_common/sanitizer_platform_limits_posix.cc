@@ -122,7 +122,9 @@
 namespace __sanitizer {
   unsigned struct_utsname_sz = sizeof(struct utsname);
   unsigned struct_stat_sz = sizeof(struct stat);
+#if !SANITIZER_IOS
   unsigned struct_stat64_sz = sizeof(struct stat64);
+#endif // !SANITIZER_IOS
   unsigned struct_rusage_sz = sizeof(struct rusage);
   unsigned struct_tm_sz = sizeof(struct tm);
   unsigned struct_passwd_sz = sizeof(struct passwd);
@@ -143,9 +145,9 @@ namespace __sanitizer {
   unsigned struct_sched_param_sz = sizeof(struct sched_param);
   unsigned struct_statfs_sz = sizeof(struct statfs);
 
-#if SANITIZER_MAC
+#if SANITIZER_MAC && !SANITIZER_IOS
   unsigned struct_statfs64_sz = sizeof(struct statfs64);
-#endif
+#endif // SANITIZER_MAC && !SANITIZER_IOS
 
 #if !SANITIZER_ANDROID
   unsigned ucontext_t_sz = sizeof(ucontext_t);
