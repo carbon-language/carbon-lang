@@ -172,19 +172,23 @@ class RegisterCommandsTestCase(TestBase):
         self.write_and_restore(currentFrame, "mxcsr", False)
         self.write_and_restore(currentFrame, "mxcsrmask", False)
 
+        st0regname = "st0"
+        if currentFrame.FindRegister(st0regname).IsValid() == False:
+                st0regname = "stmm0"
+        if currentFrame.FindRegister(st0regname).IsValid() == False:
+                return # TODO: anything smarter here
+
         new_value = "{0x01 0x02 0x03 0x00 0x00 0x00 0x00 0x00 0x00 0x00}"
-        self.vector_write_and_read(currentFrame, "st0", new_value)
-        new_value = "{0x01 0x02 0x03 0x00 0x00 0x00 0x00 0x00 0x09 0x0a}"
-        self.vector_write_and_read(currentFrame, "st7", new_value)
+        self.vector_write_and_read(currentFrame, st0regname, new_value)
 
         new_value = "{0x01 0x02 0x03 0x00 0x00 0x00 0x00 0x00 0x09 0x0a 0x2f 0x2f 0x2f 0x2f 0x2f 0x2f}"
         self.vector_write_and_read(currentFrame, "xmm0", new_value)
         new_value = "{0x01 0x02 0x03 0x00 0x00 0x00 0x00 0x00 0x09 0x0a 0x2f 0x2f 0x2f 0x2f 0x0e 0x0f}"
         self.vector_write_and_read(currentFrame, "xmm15", new_value, False)
 
-        self.runCmd("register write st0 \"{0x00 0x00 0x00 0x00 0x00 0x00 0x40 0x9a 0x09 0x40}\"")
-        self.expect("register read st0 --format f",
-            substrs = ['st0 = 1234'])
+        self.runCmd("register write " + st0regname + " \"{0x00 0x00 0x00 0x00 0x00 0x00 0x40 0x9a 0x09 0x40}\"")
+        self.expect("register read " + st0regname + " --format f",
+            substrs = ['stmm0 = 1234'])
 
         has_avx = False 
         registerSets = currentFrame.GetRegisters() # Returns an SBValueList.
