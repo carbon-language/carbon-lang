@@ -861,19 +861,19 @@ MachProcess::DisableBreakpoint(nub_addr_t addr, bool remove)
                         }
                         else
                         {
-                            DNBLogError("MachProcess::DisableBreakpoint ( addr = 0x%8.8llx, remove = %d ) memory write failed when restoring original opcode", addr, remove);
+                            DNBLogError("MachProcess::DisableBreakpoint ( addr = 0x%8.8llx, remove = %d ) memory write failed when restoring original opcode", (uint64_t)addr, remove);
                         }
                     }
                     else
                     {
-                        DNBLogWarning("MachProcess::DisableBreakpoint ( addr = 0x%8.8llx, remove = %d ) expected a breakpoint opcode but didn't find one.", addr, remove);
+                        DNBLogWarning("MachProcess::DisableBreakpoint ( addr = 0x%8.8llx, remove = %d ) expected a breakpoint opcode but didn't find one.", (uint64_t)addr, remove);
                         // Set verify to true and so we can check if the original opcode has already been restored
                         verify = true;
                     }
                 }
                 else
                 {
-                    DNBLogThreadedIf(LOG_BREAKPOINTS | LOG_VERBOSE, "MachProcess::DisableBreakpoint ( addr = 0x%8.8llx, remove = %d ) is not enabled", addr, remove);
+                    DNBLogThreadedIf(LOG_BREAKPOINTS | LOG_VERBOSE, "MachProcess::DisableBreakpoint ( addr = 0x%8.8llx, remove = %d ) is not enabled", (uint64_t)addr, remove);
                     // Set verify to true and so we can check if the original opcode is there
                     verify = true;
                 }
@@ -1127,7 +1127,7 @@ MachProcess::ExceptionMessageBundleComplete()
                             }
                             else
                             {
-                                DNBLog ("error: failed to read all_image_infos.infoArrayCount from 0x%8.8llx", info_array_count_addr);
+                                DNBLog ("error: failed to read all_image_infos.infoArrayCount from 0x%8.8llx", (uint64_t)info_array_count_addr);
                             }
                         }
                         break;
