@@ -708,6 +708,9 @@ parseMemoryOperand(StackMaps::Location::LocationType LocTy,
          Index.isReg() && Index.getReg() == 0 &&
          Disp.isImm() && ZeroReg.isReg() && (ZeroReg.getReg() == 0) &&
          "Unsupported x86 memory operand sequence.");
+  (void)Scale;
+  (void)Index;
+  (void)ZeroReg;
 
   return std::make_pair(
            Location(LocTy, Base.getReg(), Disp.getImm()), ++MOI);
