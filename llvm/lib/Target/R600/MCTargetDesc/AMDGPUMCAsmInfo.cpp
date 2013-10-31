@@ -61,7 +61,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   COMMDirectiveAlignmentIsInBytes = false;
   HasDotTypeDotSizeDirective = false;
   HasNoDeadStrip = true;
-  HasSymbolResolver = false;
   WeakRefDirective = ".weakref\t";
   LinkOnceDirective = 0;
   //===--- Dwarf Emission Directives -----------------------------------===//

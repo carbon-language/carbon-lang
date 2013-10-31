@@ -58,7 +58,6 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
 
   HasDotTypeDotSizeDirective = false;
   HasNoDeadStrip = true;
-  HasSymbolResolver = true;
 
   DwarfUsesRelocationsAcrossSections = false;
 }
