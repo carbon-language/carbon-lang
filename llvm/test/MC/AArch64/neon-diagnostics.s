@@ -4992,3 +4992,43 @@
 // CHECK-ERROR: error: expected integer in range [1, 32]
 // CHECK-ERROR:        sqrshrun s22, d16, #99
 // CHECK-ERROR:                           ^
+
+//----------------------------------------------------------------------
+// Scalar Signed Fixed-point Convert To Floating-Point (Immediate)
+//----------------------------------------------------------------------
+
+    scvtf s22, s13, #0
+    scvtf s22, s13, #33
+    scvtf d21, d12, #65
+    scvtf d21, s12, #31
+        
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:        scvtf s22, s13, #0
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:        scvtf s22, s13, #33
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:        scvtf d21, d12, #65
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        scvtf d21, s12, #31
+// CHECK-ERROR:                   ^
+
+//----------------------------------------------------------------------
+// Scalar Unsigned Fixed-point Convert To Floating-Point (Immediate)
+//----------------------------------------------------------------------
+
+    ucvtf s22, s13, #34
+    ucvtf d21, d14, #65
+    ucvtf d21, s14, #64
+        
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:        ucvtf s22, s13, #34
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:        ucvtf d21, d14, #65
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        ucvtf d21, s14, #64
+// CHECK-ERROR:                   ^

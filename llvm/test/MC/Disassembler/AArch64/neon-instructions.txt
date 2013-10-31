@@ -1955,3 +1955,19 @@
 0x51,0x8d,0x0a,0x7f
 0xaa,0x8d,0x11,0x7f
 0x16,0x8e,0x21,0x7f
+
+#----------------------------------------------------------------------
+# Scalar Signed Fixed-point Convert To Floating-Point (Immediate)
+#----------------------------------------------------------------------
+# CHECK: scvtf s22, s13, #32
+# CHECK: scvtf d21, d12, #64
+0xb6,0xe5,0x20,0x5f
+0x95,0xe5,0x40,0x5f
+
+#----------------------------------------------------------------------
+# Scalar Unsigned Fixed-point Convert To Floating-Point (Immediate)
+#----------------------------------------------------------------------
+# CHECK: ucvtf s22, s13, #32
+# CHECK: ucvtf d21, d14, #64
+0xb6,0xe5,0x20,0x7f
+0xd5,0xe5,0x40,0x7f

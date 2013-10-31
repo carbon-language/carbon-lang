@@ -260,4 +260,15 @@ def int_aarch64_neon_vsrid_n : Neon_2Arg_ShiftImm_Intrinsic;
 // Shift Left And Insert (Immediate)
 def int_aarch64_neon_vslid_n : Neon_2Arg_ShiftImm_Intrinsic;
 
+// Scalar Signed Fixed-point Convert To Floating-Point (Immediate)
+def int_aarch64_neon_vcvtf32_n_s32 :
+  Intrinsic<[llvm_v1f32_ty], [llvm_v1i32_ty, llvm_i32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vcvtf64_n_s64 :
+  Intrinsic<[llvm_v1f64_ty], [llvm_v1i64_ty, llvm_i32_ty], [IntrNoMem]>;
+
+// Scalar Unsigned Fixed-point Convert To Floating-Point (Immediate)
+def int_aarch64_neon_vcvtf32_n_u32 :
+  Intrinsic<[llvm_v1f32_ty], [llvm_v1i32_ty, llvm_i32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vcvtf64_n_u64 :
+  Intrinsic<[llvm_v1f64_ty], [llvm_v1i64_ty, llvm_i32_ty], [IntrNoMem]>;
 }

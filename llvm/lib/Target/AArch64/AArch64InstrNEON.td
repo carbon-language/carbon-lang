@@ -3607,6 +3607,19 @@ multiclass NeonI_ScalarShiftImm_narrow_HSD_size<bit u, bits<5> opcode,
   }
 }
 
+multiclass NeonI_ScalarShiftImm_scvtf_SD_size<bit u, bits<5> opcode, string asmop> {
+  def ssi : NeonI_ScalarShiftImm_size<u, opcode, asmop, FPR32, shr_imm32> {
+    bits<5> Imm;
+    let Inst{22-21} = 0b01; // immh:immb = 01xxxxx
+    let Inst{20-16} = Imm;
+  }
+  def ddi : NeonI_ScalarShiftImm_size<u, opcode, asmop, FPR64, shr_imm64> {
+    bits<6> Imm;
+    let Inst{22} = 0b1; // immh:immb = 1xxxxxx
+    let Inst{21-16} = Imm;
+  }
+}
+
 multiclass Neon_ScalarShiftImm_D_size_patterns<SDPatternOperator opnode,
                                                Instruction INSTD> {
   def ddi : Pat<(v1i64 (opnode (v1i64 FPR64:$Rn), (i32 imm:$Imm))),
@@ -3642,6 +3655,16 @@ multiclass Neon_ScalarShiftImm_narrow_HSD_size_patterns<
   def hsi : Pat<(v1i16 (opnode (v1i32 FPR32:$Rn), (i32 imm:$Imm))),
                 (INSTS FPR32:$Rn, imm:$Imm)>;
   def sdi : Pat<(v1i32 (opnode (v1i64 FPR64:$Rn), (i32 imm:$Imm))),
+                (INSTD FPR64:$Rn, imm:$Imm)>;
+}
+
+multiclass Neon_ScalarShiftImm_scvtf_SD_size_patterns<SDPatternOperator Sopnode,
+                                                      SDPatternOperator Dopnode,
+                                                      Instruction INSTS,
+                                                      Instruction INSTD> {
+  def ssi : Pat<(v1f32 (Sopnode (v1i32 FPR32:$Rn), (i32 imm:$Imm))),
+                (INSTS FPR32:$Rn, imm:$Imm)>;
+  def ddi : Pat<(v1f64 (Dopnode (v1i64 FPR64:$Rn), (i32 imm:$Imm))),
                 (INSTD FPR64:$Rn, imm:$Imm)>;
 }
 
@@ -3742,6 +3765,18 @@ defm SQRSHRUN : NeonI_ScalarShiftImm_narrow_HSD_size<0b1, 0b10001, "sqrshrun">;
 defm : Neon_ScalarShiftImm_narrow_HSD_size_patterns<int_aarch64_neon_vsqrshrun,
                                                     SQRSHRUNbhi, SQRSHRUNhsi,
                                                     SQRSHRUNsdi>;
+
+// Scalar Signed Fixed-point Convert To Floating-Point (Immediate)
+defm SCVTF_N : NeonI_ScalarShiftImm_scvtf_SD_size<0b0, 0b11100, "scvtf">;
+defm : Neon_ScalarShiftImm_scvtf_SD_size_patterns<int_aarch64_neon_vcvtf32_n_s32,
+                                                  int_aarch64_neon_vcvtf64_n_s64,
+                                                  SCVTF_Nssi, SCVTF_Nddi>;
+
+// Scalar Unsigned Fixed-point Convert To Floating-Point (Immediate)
+defm UCVTF_N : NeonI_ScalarShiftImm_scvtf_SD_size<0b1, 0b11100, "ucvtf">;
+defm : Neon_ScalarShiftImm_scvtf_SD_size_patterns<int_aarch64_neon_vcvtf32_n_u32,
+                                                  int_aarch64_neon_vcvtf64_n_u64,
+                                                  UCVTF_Nssi, UCVTF_Nddi>;
 
 // Scalar Integer Add
 let isCommutable = 1 in {
