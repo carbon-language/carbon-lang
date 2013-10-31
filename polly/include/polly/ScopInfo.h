@@ -560,7 +560,7 @@ public:
   __isl_give isl_set *getContext() const;
   __isl_give isl_space *getParamSpace() const;
 
-  /// @brief Get the assumped context for this Scop.
+  /// @brief Get the assumed context for this Scop.
   ///
   /// @return The assumed context of this Scop.
   __isl_give isl_set *getAssumedContext() const;

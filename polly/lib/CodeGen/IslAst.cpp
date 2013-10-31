@@ -60,6 +60,8 @@ public:
   void pprint(llvm::raw_ostream &OS);
 
   __isl_give isl_ast_node *getAst();
+
+  /// @brief Get the run-time conditions for the Scop.
   __isl_give isl_ast_expr *getRunCondition();
 
 private:
@@ -68,7 +70,7 @@ private:
   isl_ast_expr *RunCondition;
 
   __isl_give isl_union_map *getSchedule();
-  void buildAssumedContext(__isl_keep isl_ast_build *Context);
+  void buildRunCondition(__isl_keep isl_ast_build *Context);
 };
 } // End namespace polly.
 
@@ -315,7 +317,16 @@ static __isl_give isl_ast_node *AtEachDomain(__isl_take isl_ast_node *Node,
   return isl_ast_node_set_annotation(Node, Id);
 }
 
-void IslAst::buildAssumedContext(__isl_keep isl_ast_build *Context) {
+void IslAst::buildRunCondition(__isl_keep isl_ast_build *Context) {
+  // The conditions that need to be checked at run-time for this scop are
+  // available as an isl_set in the AssumedContext. We generate code for this
+  // check as follows. First, we generate an isl_pw_aff that is 1, if a certain
+  // combination of parameter values fulfills the conditions in the assumed
+  // context, and that is 0 otherwise. We then translate this isl_pw_aff into
+  // an isl_ast_expr. At run-time this expression can be evaluated and the
+  // optimized scop can be executed conditionally according to the result of the
+  // run-time check.
+
   isl_aff *Zero =
       isl_aff_zero_on_domain(isl_local_space_from_space(S->getParamSpace()));
   isl_aff *One =
@@ -368,7 +379,7 @@ IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {
                                                &BuildInfo);
   }
 
-  buildAssumedContext(Context);
+  buildRunCondition(Context);
 
   Root = isl_ast_build_ast_from_schedule(Context, Schedule);
 
