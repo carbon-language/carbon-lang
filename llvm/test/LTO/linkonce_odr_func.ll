@@ -7,6 +7,9 @@
 ; not printing the correct values with Mach-O.
 ; XFAIL: darwin
 
+; FIXME: llvm-nm is printing 'd' instead of 't' for foo1.
+; XFAIL: powerpc64
+
 ; CHECK: t foo1
 define linkonce_odr void @foo1() noinline {
   ret void
