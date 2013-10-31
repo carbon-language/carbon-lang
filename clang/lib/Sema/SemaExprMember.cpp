@@ -1158,6 +1158,11 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       // overloaded operator->, but that should have been dealt with
       // by now--or a diagnostic message already issued if a problem
       // was encountered while looking for the overloaded operator->.
+      if (!getLangOpts().CPlusPlus) {
+        Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
+          << BaseType << int(IsArrow) << BaseExpr.get()->getSourceRange()
+          << FixItHint::CreateReplacement(OpLoc, ".");
+      }
       IsArrow = false;
     } else if (BaseType->isFunctionType()) {
       goto fail;
