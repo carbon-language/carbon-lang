@@ -95,12 +95,7 @@ public:
   const RelocAddrMap *getRelocMap() const { return RelocMap; }
 
   bool extract(DataExtractor debug_info, uint32_t* offset_ptr);
-  uint32_t extract(uint32_t offset, DataExtractor debug_info_data,
-                   const DWARFAbbreviationDeclarationSet *abbrevs);
 
-  /// extractDIEsIfNeeded - Parses a compile unit and indexes its DIEs if it
-  /// hasn't already been done. Returns the number of DIEs parsed at this call.
-  size_t extractDIEsIfNeeded(bool CUDieOnly);
   /// extractRangeList - extracts the range list referenced by this compile
   /// unit from .debug_ranges section. Returns true on success.
   /// Requires that compile unit is already extracted.
@@ -110,10 +105,6 @@ public:
   uint32_t getOffset() const { return Offset; }
   /// Size in bytes of the compile unit header.
   virtual uint32_t getSize() const { return 11; }
-  bool containsDIEOffset(uint32_t die_offset) const {
-    return die_offset >= getFirstDIEOffset() &&
-      die_offset < getNextUnitOffset();
-  }
   uint32_t getFirstDIEOffset() const { return Offset + getSize(); }
   uint32_t getNextUnitOffset() const { return Offset + Length + 4; }
   /// Size in bytes of the .debug_info data associated with this compile unit.
@@ -139,11 +130,6 @@ public:
   const char *getCompilationDir();
   uint64_t getDWOId();
 
-  /// setDIERelations - We read in all of the DIE entries into our flat list
-  /// of DIE entries and now we need to go back through all of them and set the
-  /// parent, sibling and child pointers for quick DIE navigation.
-  void setDIERelations();
-
   void buildAddressRangeTable(DWARFDebugAranges *debug_aranges,
                               bool clear_dies_if_already_not_parsed,
                               uint32_t CUOffsetInAranges);
@@ -154,9 +140,16 @@ public:
   DWARFDebugInfoEntryInlinedChain getInlinedChainForAddress(uint64_t Address);
 
 private:
+  /// extractDIEsIfNeeded - Parses a compile unit and indexes its DIEs if it
+  /// hasn't already been done. Returns the number of DIEs parsed at this call.
+  size_t extractDIEsIfNeeded(bool CUDieOnly);
   /// extractDIEsToVector - Appends all parsed DIEs to a vector.
   void extractDIEsToVector(bool AppendCUDie, bool AppendNonCUDIEs,
                            std::vector<DWARFDebugInfoEntryMinimal> &DIEs) const;
+  /// setDIERelations - We read in all of the DIE entries into our flat list
+  /// of DIE entries and now we need to go back through all of them and set the
+  /// parent, sibling and child pointers for quick DIE navigation.
+  void setDIERelations();
   /// clearDIEs - Clear parsed DIEs to keep memory usage low.
   void clearDIEs(bool KeepCUDie);
 

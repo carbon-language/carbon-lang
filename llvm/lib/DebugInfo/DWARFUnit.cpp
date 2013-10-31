@@ -85,30 +85,6 @@ bool DWARFUnit::extract(DataExtractor debug_info, uint32_t *offset_ptr) {
   return false;
 }
 
-uint32_t
-DWARFUnit::extract(uint32_t offset, DataExtractor debug_info_data,
-                          const DWARFAbbreviationDeclarationSet *abbrevs) {
-  clear();
-
-  Offset = offset;
-
-  if (debug_info_data.isValidOffset(offset)) {
-    Length = debug_info_data.getU32(&offset);
-    Version = debug_info_data.getU16(&offset);
-    bool abbrevsOK = debug_info_data.getU32(&offset) == abbrevs->getOffset();
-    Abbrevs = abbrevs;
-    AddrSize = debug_info_data.getU8(&offset);
-
-    bool versionOK = DWARFContext::isSupportedVersion(Version);
-    bool addrSizeOK = AddrSize == 4 || AddrSize == 8;
-
-    if (versionOK && addrSizeOK && abbrevsOK &&
-        debug_info_data.isValidOffset(offset))
-      return offset;
-  }
-  return 0;
-}
-
 bool DWARFUnit::extractRangeList(uint32_t RangeListOffset,
                                         DWARFDebugRangeList &RangeList) const {
   // Require that compile unit is extracted.
