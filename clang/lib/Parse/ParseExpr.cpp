@@ -1711,6 +1711,9 @@ ExprResult Parser::ParseUnaryExprOrTypeTraitExpression() {
     if (!Name)
       return ExprError();
     
+    EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated,
+                                                 Sema::ReuseLambdaContextDecl);
+
     return Actions.ActOnSizeofParameterPackExpr(getCurScope(),
                                                 OpTok.getLocation(), 
                                                 *Name, NameLoc,
