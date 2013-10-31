@@ -10,12 +10,12 @@
 ; FIXME: llvm-nm is printing 'd' instead of 't' for foo1.
 ; XFAIL: powerpc64
 
-; CHECK: t foo1
+; CHECK: t {{_?}}foo1
 define linkonce_odr void @foo1() noinline {
   ret void
 }
 
-; CHECK: W foo2
+; CHECK: {{W|T}} foo2
 define linkonce_odr void @foo2() noinline {
   ret void
 }
@@ -25,7 +25,7 @@ define linkonce_odr void @foo3() noinline {
   ret void
 }
 
-; CHECK: W foo4
+; CHECK: {{W|T}} foo4
 define linkonce_odr void @foo4() noinline {
   ret void
 }
