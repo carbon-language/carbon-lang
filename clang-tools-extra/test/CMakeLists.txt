@@ -27,7 +27,11 @@ set(CLANG_TOOLS_TEST_DEPS
   clang clang-headers FileCheck count not
 
   # Individual tools we test.
-  remove-cstr-calls clang-apply-replacements clang-modernize modularize clang-tidy
+  clang-apply-replacements
+  clang-modernize
+  clang-tidy
+  modularize
+  remove-cstr-calls
 
   # Unit tests
   ExtraToolsUnitTests
