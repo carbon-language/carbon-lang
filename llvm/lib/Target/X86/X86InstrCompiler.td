@@ -884,6 +884,24 @@ let Uses = [EFLAGS], usesCustomInserter = 1 in {
                     [(set VR256:$dst,
                       (v4i64 (X86cmov VR256:$t, VR256:$f, imm:$cond,
                                           EFLAGS)))]>;
+  def CMOV_V8I64 : I<0, Pseudo,
+                    (outs VR512:$dst), (ins VR512:$t, VR512:$f, i8imm:$cond),
+                    "#CMOV_V8I64 PSEUDO!",
+                    [(set VR512:$dst,
+                      (v8i64 (X86cmov VR512:$t, VR512:$f, imm:$cond,
+                                          EFLAGS)))]>;
+  def CMOV_V8F64 : I<0, Pseudo,
+                    (outs VR512:$dst), (ins VR512:$t, VR512:$f, i8imm:$cond),
+                    "#CMOV_V8F64 PSEUDO!",
+                    [(set VR512:$dst,
+                      (v8f64 (X86cmov VR512:$t, VR512:$f, imm:$cond,
+                                          EFLAGS)))]>;
+  def CMOV_V16F32 : I<0, Pseudo,
+                    (outs VR512:$dst), (ins VR512:$t, VR512:$f, i8imm:$cond),
+                    "#CMOV_V16F32 PSEUDO!",
+                    [(set VR512:$dst,
+                      (v16f32 (X86cmov VR512:$t, VR512:$f, imm:$cond,
+                                          EFLAGS)))]>;
 }
 
 

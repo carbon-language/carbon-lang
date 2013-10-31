@@ -15750,6 +15750,9 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::CMOV_V8F32:
   case X86::CMOV_V4F64:
   case X86::CMOV_V4I64:
+  case X86::CMOV_V16F32:
+  case X86::CMOV_V8F64:
+  case X86::CMOV_V8I64:
   case X86::CMOV_GR16:
   case X86::CMOV_GR32:
   case X86::CMOV_RFP32:
@@ -16633,8 +16636,9 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
       return DAG.getNode(Opcode, DL, N->getValueType(0), LHS, RHS);
   }
 
-  if (Subtarget->hasAVX512() && VT.isVector() &&
-      Cond.getValueType().getVectorElementType() == MVT::i1) {
+  EVT CondVT = Cond.getValueType();
+  if (Subtarget->hasAVX512() && VT.isVector() && CondVT.isVector() &&
+      CondVT.getVectorElementType() == MVT::i1) {
     // v16i8 (select v16i1, v16i8, v16i8) does not have a proper
     // lowering on AVX-512. In this case we convert it to
     // v16i8 (select v16i8, v16i8, v16i8) and use AVX instruction.
