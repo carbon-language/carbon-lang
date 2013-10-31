@@ -1920,6 +1920,8 @@ public:
     ArgListEntry() : isSExt(false), isZExt(false), isInReg(false),
       isSRet(false), isNest(false), isByVal(false), isReturned(false),
       Alignment(0) { }
+
+    void setAttributes(ImmutableCallSite *CS, unsigned AttrIdx);
   };
   typedef std::vector<ArgListEntry> ArgListTy;
 

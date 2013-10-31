@@ -619,6 +619,11 @@ public:
   void LowerCallTo(ImmutableCallSite CS, SDValue Callee, bool IsTailCall,
                    MachineBasicBlock *LandingPad = NULL);
 
+  std::pair<SDValue, SDValue> LowerCallOperands(const CallInst &CI,
+                                                unsigned ArgIdx,
+                                                unsigned NumArgs,
+                                                SDValue Callee);
+
   /// UpdateSplitBlock - When an MBB was split during scheduling, update the
   /// references that ned to refer to the last resulting block.
   void UpdateSplitBlock(MachineBasicBlock *First, MachineBasicBlock *Last);
@@ -752,6 +757,8 @@ private:
   void visitVAArg(const VAArgInst &I);
   void visitVAEnd(const CallInst &I);
   void visitVACopy(const CallInst &I);
+  void visitStackmap(const CallInst &I);
+  void visitPatchpoint(const CallInst &I);
 
   void visitUserOp1(const Instruction &I) {
     llvm_unreachable("UserOp1 should not exist at instruction selection time!");

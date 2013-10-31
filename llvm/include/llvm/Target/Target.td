@@ -800,6 +800,19 @@ def LIFETIME_END : Instruction {
   let AsmString = "LIFETIME_END";
   let neverHasSideEffects = 1;
 }
+def STACKMAP : Instruction {
+  let OutOperandList = (outs);
+  let InOperandList = (ins i32imm:$id, i32imm:$nbytes, variable_ops);
+  let isCall = 1;
+  let mayLoad = 1;
+}
+def PATCHPOINT : Instruction {
+  let OutOperandList = (outs);
+  let InOperandList = (ins i32imm:$id, i32imm:$nbytes, unknown:$callee,
+                       i32imm:$nargs, variable_ops);
+  let isCall = 1;
+  let mayLoad = 1;
+}
 }
 
 //===----------------------------------------------------------------------===//

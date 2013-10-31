@@ -64,6 +64,19 @@ bool TargetLowering::isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
   return isUsedByReturnOnly(Node, Chain);
 }
 
+/// \brief Set CallLoweringInfo attribute flags based on a call instruction
+/// and called function attributes.
+void TargetLowering::ArgListEntry::setAttributes(ImmutableCallSite *CS,
+                                                 unsigned AttrIdx) {
+  isSExt     = CS->paramHasAttr(AttrIdx, Attribute::SExt);
+  isZExt     = CS->paramHasAttr(AttrIdx, Attribute::ZExt);
+  isInReg    = CS->paramHasAttr(AttrIdx, Attribute::InReg);
+  isSRet     = CS->paramHasAttr(AttrIdx, Attribute::StructRet);
+  isNest     = CS->paramHasAttr(AttrIdx, Attribute::Nest);
+  isByVal    = CS->paramHasAttr(AttrIdx, Attribute::ByVal);
+  isReturned = CS->paramHasAttr(AttrIdx, Attribute::Returned);
+  Alignment  = CS->getParamAlignment(AttrIdx);
+}
 
 /// Generate a libcall taking the given operands as arguments and returning a
 /// result of type RetVT.
