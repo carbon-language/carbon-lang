@@ -1363,7 +1363,7 @@ DWARFExpression::Evaluate
         if (log && log->GetVerbose())
         {
             size_t count = stack.size();
-            log->Printf("Stack before operation has %lu values:", count);
+            log->Printf("Stack before operation has %zu values:", count);
             for (size_t i=0; i<count; ++i)
             {
                 StreamString new_value;
@@ -2739,7 +2739,7 @@ DWARFExpression::Evaluate
     else if (log && log->GetVerbose())
     {
         size_t count = stack.size();
-        log->Printf("Stack after operation has %lu values:", count);
+        log->Printf("Stack after operation has %zu values:", count);
         for (size_t i=0; i<count; ++i)
         {
             StreamString new_value;

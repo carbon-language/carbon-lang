@@ -70,12 +70,12 @@ PtraceWrapper(int req, lldb::pid_t pid, void *addr, int data,
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_PTRACE));
 
     if (log) {
-        log->Printf("ptrace(%s, %lu, %p, %x) called from file %s line %d",
+        log->Printf("ptrace(%s, %" PRIu64 ", %p, %x) called from file %s line %d",
                     reqName, pid, addr, data, file, line);
         if (req == PT_IO) {
             struct ptrace_io_desc *pi = (struct ptrace_io_desc *) addr;
             
-            log->Printf("PT_IO: op=%s offs=%zx size=%ld",
+            log->Printf("PT_IO: op=%s offs=%zx size=%zu",
                      Get_PT_IO_OP(pi->piod_op), (size_t)pi->piod_offs, pi->piod_len);
         }
     }

@@ -173,7 +173,7 @@ ClangFunction::CompileFunction (Stream &errors)
             }
             else
             {   
-                errors.Printf("Could not determine type of input value %lu.", i);
+                errors.Printf("Could not determine type of input value %zu.", i);
                 return 1;
             }
         }
@@ -344,7 +344,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
     size_t num_args = arg_values.GetSize();
     if (num_args != m_arg_values.GetSize())
     {
-        errors.Printf ("Wrong number of arguments - was: %lu should be: %lu", num_args, m_arg_values.GetSize());
+        errors.Printf ("Wrong number of arguments - was: %zu should be: %zu", num_args, m_arg_values.GetSize());
         return false;
     }
     

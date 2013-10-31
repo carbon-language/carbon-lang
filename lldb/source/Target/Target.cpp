@@ -634,7 +634,7 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *typ
         if (!CheckIfWatchpointsExhausted(this, error))
         {
             if (!OptionGroupWatchpoint::IsWatchSizeSupported(size))
-                error.SetErrorStringWithFormat("watch size of %lu is not supported", size);
+                error.SetErrorStringWithFormat("watch size of %zu is not supported", size);
         }
         wp_sp.reset();
     }

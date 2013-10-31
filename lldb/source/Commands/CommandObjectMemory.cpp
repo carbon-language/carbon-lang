@@ -651,7 +651,7 @@ protected:
             }
             else if (m_format_options.GetCountValue().OptionWasSet())
             {
-                result.AppendErrorWithFormat("specify either the end address (0x%" PRIx64 ") or the count (--count %lu), not both.\n", end_addr, item_count);
+                result.AppendErrorWithFormat("specify either the end address (0x%" PRIx64 ") or the count (--count %zu), not both.\n", end_addr, item_count);
                 result.SetStatus(eReturnStatusFailed);
                 return false;
             }
@@ -708,7 +708,7 @@ protected:
             }
             
             if (bytes_read < total_byte_size)
-                result.AppendWarningWithFormat("Not all bytes (%lu/%lu) were able to be read from 0x%" PRIx64 ".\n", bytes_read, total_byte_size, addr);
+                result.AppendWarningWithFormat("Not all bytes (%zu/%zu) were able to be read from 0x%" PRIx64 ".\n", bytes_read, total_byte_size, addr);
         }
         else
         {
@@ -1232,7 +1232,7 @@ protected:
                 }
                 else if (!UIntValueIsValidForSize (uval64, item_byte_size))
                 {
-                    result.AppendErrorWithFormat ("Value 0x%" PRIx64 " is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
+                    result.AppendErrorWithFormat ("Value 0x%" PRIx64 " is too large to fit in a %zu byte unsigned integer value.\n", uval64, item_byte_size);
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }
@@ -1260,7 +1260,7 @@ protected:
                 }
                 else if (!UIntValueIsValidForSize (uval64, item_byte_size))
                 {
-                    result.AppendErrorWithFormat ("Value 0x%" PRIx64 " is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
+                    result.AppendErrorWithFormat ("Value 0x%" PRIx64 " is too large to fit in a %zu byte unsigned integer value.\n", uval64, item_byte_size);
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }
@@ -1300,7 +1300,7 @@ protected:
                 }
                 else if (!SIntValueIsValidForSize (sval64, item_byte_size))
                 {
-                    result.AppendErrorWithFormat ("Value %" PRIi64 " is too large or small to fit in a %lu byte signed integer value.\n", sval64, item_byte_size);
+                    result.AppendErrorWithFormat ("Value %" PRIi64 " is too large or small to fit in a %zu byte signed integer value.\n", sval64, item_byte_size);
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }
@@ -1317,7 +1317,7 @@ protected:
                 }
                 else if (!UIntValueIsValidForSize (uval64, item_byte_size))
                 {
-                    result.AppendErrorWithFormat ("Value %" PRIu64 " is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
+                    result.AppendErrorWithFormat ("Value %" PRIu64 " is too large to fit in a %zu byte unsigned integer value.\n", uval64, item_byte_size);
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }
@@ -1334,7 +1334,7 @@ protected:
                 }
                 else if (!UIntValueIsValidForSize (uval64, item_byte_size))
                 {
-                    result.AppendErrorWithFormat ("Value %" PRIo64 " is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
+                    result.AppendErrorWithFormat ("Value %" PRIo64 " is too large to fit in a %zu byte unsigned integer value.\n", uval64, item_byte_size);
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }

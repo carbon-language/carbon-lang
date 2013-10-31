@@ -331,7 +331,7 @@ ScriptInterpreterPython::PythonInputReaderManager::InputReaderCallback (void *ba
             if (script_interpreter->m_embedded_thread_pty.GetMasterFileDescriptor() != -1)
             {
                 if (log)
-                    log->Printf ("ScriptInterpreterPython::NonInteractiveInputReaderCallback, GotToken, bytes='%s', byte_len = %lu", bytes,
+                    log->Printf ("ScriptInterpreterPython::NonInteractiveInputReaderCallback, GotToken, bytes='%s', byte_len = %zu", bytes,
                                  bytes_len);
                 if (bytes && bytes_len)
                     ::write (script_interpreter->m_embedded_thread_pty.GetMasterFileDescriptor(), bytes, bytes_len);
@@ -340,7 +340,7 @@ ScriptInterpreterPython::PythonInputReaderManager::InputReaderCallback (void *ba
             else
             {
                 if (log)
-                    log->Printf ("ScriptInterpreterPython::NonInteractiveInputReaderCallback, GotToken, bytes='%s', byte_len = %lu, Master File Descriptor is bad.", 
+                    log->Printf ("ScriptInterpreterPython::NonInteractiveInputReaderCallback, GotToken, bytes='%s', byte_len = %zu, Master File Descriptor is bad.", 
                                  bytes,
                                  bytes_len);
                 reader.SetIsDone (true);
@@ -867,7 +867,7 @@ ScriptInterpreterPython::InputReaderCallback
         if (script_interpreter->m_embedded_python_pty.GetMasterFileDescriptor() != -1)
         {
             if (log)
-                log->Printf ("ScriptInterpreterPython::InputReaderCallback, GotToken, bytes='%s', byte_len = %lu", bytes,
+                log->Printf ("ScriptInterpreterPython::InputReaderCallback, GotToken, bytes='%s', byte_len = %zu", bytes,
                              bytes_len);
             if (bytes && bytes_len)
             {
@@ -881,7 +881,7 @@ ScriptInterpreterPython::InputReaderCallback
         else
         {
             if (log)
-                log->Printf ("ScriptInterpreterPython::InputReaderCallback, GotToken, bytes='%s', byte_len = %lu, Master File Descriptor is bad.", 
+                log->Printf ("ScriptInterpreterPython::InputReaderCallback, GotToken, bytes='%s', byte_len = %zu, Master File Descriptor is bad.", 
                              bytes,
                              bytes_len);
             reader.SetIsDone (true);
