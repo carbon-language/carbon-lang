@@ -107,6 +107,7 @@ void StackMaps::serializeToStackMapSection() {
 
   // Serialize data.
   const char *WSMP = "Stack Maps: ";
+  (void)WSMP;
   const MCRegisterInfo &MCRI = *OutContext.getRegisterInfo();
 
   DEBUG(dbgs() << "********** Stack Map Output **********\n");
