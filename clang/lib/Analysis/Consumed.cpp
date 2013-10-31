@@ -142,10 +142,13 @@ static bool isCallableInState(const CallableWhenAttr *CWAttr,
 }
 
 static bool isConsumableType(const QualType &QT) {
+  if (QT->isPointerType() || QT->isReferenceType())
+    return false;
+  
   if (const CXXRecordDecl *RD = QT->getAsCXXRecordDecl())
     return RD->hasAttr<ConsumableAttr>();
-  else
-    return false;
+  
+  return false;
 }
 
 static bool isKnownState(ConsumedState State) {
@@ -163,7 +166,8 @@ static bool isKnownState(ConsumedState State) {
 static bool isRValueRefish(QualType ParamType) {
   return ParamType->isRValueReferenceType() ||
         (ParamType->isLValueReferenceType() &&
-         !cast<LValueReferenceType>(*ParamType).isSpelledAsLValue());
+         !cast<LValueReferenceType>(
+           ParamType.getCanonicalType())->isSpelledAsLValue());
 }
 
 static bool isTestingFunction(const FunctionDecl *FunDecl) {
@@ -864,7 +868,7 @@ void ConsumedStmtVisitor::VisitParmVarDecl(const ParmVarDecl *Param) {
     const ParamTypestateAttr *PTAttr = Param->getAttr<ParamTypestateAttr>();
     ParamState = mapParamTypestateAttrState(PTAttr);
     
-  } else if (isValueType(ParamType) && isConsumableType(ParamType)) {
+  } else if (isConsumableType(ParamType)) {
     ParamState = mapConsumableAttrState(ParamType);
     
   } else if (isRValueRefish(ParamType) &&
