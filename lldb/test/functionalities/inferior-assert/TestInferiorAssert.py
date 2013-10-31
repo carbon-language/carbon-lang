@@ -10,12 +10,14 @@ class AssertingInferiorTestCase(TestBase):
     mydir = os.path.join("functionalities", "inferior-assert")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @unittest2.expectedFailure("rdar://15367233")
     def test_inferior_asserting_dsym(self):
         """Test that lldb reliably catches the inferior asserting (command)."""
         self.buildDsym()
         self.inferior_asserting()
 
-    @expectedFailurei386 # llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly
+    @expectedFailurei386 # llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly'
+    @unittest2.expectedFailure("rdar://15367233")
     def test_inferior_asserting_dwarf(self):
         """Test that lldb reliably catches the inferior asserting (command)."""
         self.buildDwarf()
