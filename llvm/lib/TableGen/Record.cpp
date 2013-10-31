@@ -557,9 +557,23 @@ Init *BitsInit::resolveReferences(Record &R, const RecordVal *RV) const {
   return const_cast<BitsInit *>(this);
 }
 
+namespace {
+  template<typename T>
+  class Pool : public T {
+  public:
+    ~Pool();
+  };
+  template<typename T>
+  Pool<T>::~Pool() {
+    for (typename T::iterator I = this->begin(), E = this->end(); I != E; ++I) {
+      typename T::value_type &Item = *I;
+      delete Item.second;
+    }
+  }
+}
+
 IntInit *IntInit::get(int64_t V) {
-  typedef DenseMap<int64_t, IntInit *> Pool;
-  static Pool ThePool;
+  static Pool<DenseMap<int64_t, IntInit *> > ThePool;
 
   IntInit *&I = ThePool[V];
   if (!I) I = new IntInit(V);
@@ -586,8 +600,7 @@ IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
 void StringInit::anchor() { }
 
 StringInit *StringInit::get(StringRef V) {
-  typedef StringMap<StringInit *> Pool;
-  static Pool ThePool;
+  static Pool<StringMap<StringInit *> > ThePool;
 
   StringInit *&I = ThePool[V];
   if (!I) I = new StringInit(V);
@@ -726,9 +739,7 @@ Init *OpInit::getBit(unsigned Bit) const {
 
 UnOpInit *UnOpInit::get(UnaryOp opc, Init *lhs, RecTy *Type) {
   typedef std::pair<std::pair<unsigned, Init *>, RecTy *> Key;
-
-  typedef DenseMap<Key, UnOpInit *> Pool;
-  static Pool ThePool;  
+  static Pool<DenseMap<Key, UnOpInit *> > ThePool;
 
   Key TheKey(std::make_pair(std::make_pair(opc, lhs), Type));
 
@@ -873,8 +884,7 @@ BinOpInit *BinOpInit::get(BinaryOp opc, Init *lhs,
     RecTy *
     > Key;
 
-  typedef DenseMap<Key, BinOpInit *> Pool;
-  static Pool ThePool;  
+  static Pool<DenseMap<Key, BinOpInit *> > ThePool;
 
   Key TheKey(std::make_pair(std::make_pair(std::make_pair(opc, lhs), rhs),
                             Type));
@@ -1298,8 +1308,7 @@ VarInit *VarInit::get(const std::string &VN, RecTy *T) {
 
 VarInit *VarInit::get(Init *VN, RecTy *T) {
   typedef std::pair<RecTy *, Init *> Key;
-  typedef DenseMap<Key, VarInit *> Pool;
-  static Pool ThePool;
+  static Pool<DenseMap<Key, VarInit *> > ThePool;
 
   Key TheKey(std::make_pair(T, VN));
 
