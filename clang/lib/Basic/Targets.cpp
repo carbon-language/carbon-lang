@@ -3472,6 +3472,13 @@ public:
     return Feature == "aarch64" || (Feature == "neon" && FPU == NeonMode);
   }
 
+  virtual bool setCPU(const std::string &Name) {
+    return llvm::StringSwitch<bool>(Name)
+             .Case("generic", true)
+             .Cases("cortex-a53", "cortex-a57", true)
+             .Default(false);
+  }
+
   virtual bool handleTargetFeatures(std::vector<std::string> &Features,
                                     DiagnosticsEngine &Diags) {
     FPU = FPUMode;
