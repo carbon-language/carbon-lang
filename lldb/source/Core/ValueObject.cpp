@@ -1542,6 +1542,27 @@ ValueObject::GetValueAsUnsigned (uint64_t fail_value, bool *success)
     return fail_value;
 }
 
+int64_t
+ValueObject::GetValueAsSigned (int64_t fail_value, bool *success)
+{
+    // If our byte size is zero this is an aggregate type that has children
+    if (!GetClangType().IsAggregateType())
+    {
+        Scalar scalar;
+        if (ResolveValue (scalar))
+        {
+            if (success)
+                *success = true;
+                return scalar.SLongLong(fail_value);
+        }
+        // fallthrough, otherwise...
+    }
+    
+    if (success)
+        *success = false;
+        return fail_value;
+}
+
 // if any more "special cases" are added to ValueObject::DumpPrintableRepresentation() please keep
 // this call up to date by returning true for your new special cases. We will eventually move
 // to checking this call result before trying to display special cases

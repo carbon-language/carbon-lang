@@ -1048,11 +1048,12 @@ SBValue::GetValueAsSigned(SBError& error, int64_t fail_value)
     lldb::ValueObjectSP value_sp(GetSP(locker));
     if (value_sp)
     {
-        Scalar scalar;
-        if (value_sp->ResolveValue (scalar))
-            return scalar.SLongLong (fail_value);
-        else
-            error.SetErrorString ("could not resolve value");
+        bool success = true;
+        uint64_t ret_val = fail_value;
+        ret_val = value_sp->GetValueAsSigned(fail_value, &success);
+        if (!success)
+            error.SetErrorString("could not resolve value");
+        return ret_val;
     }
     else
         error.SetErrorStringWithFormat ("could not get SBValue: %s", locker.GetError().AsCString());
@@ -1068,11 +1069,12 @@ SBValue::GetValueAsUnsigned(SBError& error, uint64_t fail_value)
     lldb::ValueObjectSP value_sp(GetSP(locker));
     if (value_sp)
     {
-        Scalar scalar;
-        if (value_sp->ResolveValue (scalar))
-            return scalar.ULongLong(fail_value);
-        else
+        bool success = true;
+        uint64_t ret_val = fail_value;
+        ret_val = value_sp->GetValueAsUnsigned(fail_value, &success);
+        if (!success)
             error.SetErrorString("could not resolve value");
+        return ret_val;
     }
     else
         error.SetErrorStringWithFormat ("could not get SBValue: %s", locker.GetError().AsCString());
@@ -1087,9 +1089,7 @@ SBValue::GetValueAsSigned(int64_t fail_value)
     lldb::ValueObjectSP value_sp(GetSP(locker));
     if (value_sp)
     {
-        Scalar scalar;
-        if (value_sp->ResolveValue (scalar))
-            return scalar.SLongLong(fail_value);
+        return value_sp->GetValueAsSigned(fail_value);
     }
     return fail_value;
 }
@@ -1101,9 +1101,7 @@ SBValue::GetValueAsUnsigned(uint64_t fail_value)
     lldb::ValueObjectSP value_sp(GetSP(locker));
     if (value_sp)
     {
-        Scalar scalar;
-        if (value_sp->ResolveValue (scalar))
-            return scalar.ULongLong(fail_value);
+        return value_sp->GetValueAsUnsigned(fail_value);
     }
     return fail_value;
 }

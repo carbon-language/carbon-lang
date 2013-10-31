@@ -505,6 +505,9 @@ public:
     virtual uint64_t
     GetValueAsUnsigned (uint64_t fail_value, bool *success = NULL);
 
+    virtual int64_t
+    GetValueAsSigned (int64_t fail_value, bool *success = NULL);
+    
     virtual bool
     SetValueFromCString (const char *value_str, Error& error);
     
