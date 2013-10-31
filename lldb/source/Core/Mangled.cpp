@@ -10,7 +10,7 @@
 
 // FreeBSD9-STABLE requires this to know about size_t in cxxabi.h
 #include <cstddef>
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined (__FreeBSD__)
 #define LLDB_USE_BUILTIN_DEMANGLER
 #else
 #include <cxxabi.h>
