@@ -18,7 +18,7 @@
 //
 // The pp-trace tool supports the following general command line format:
 //
-//    pp-trace [pp-trace options] (source file(s)) [compiler options]
+//    pp-trace [pp-trace options] (source file) [compiler options]
 //
 // Basically you put the pp-trace options first, then the source file or files,
 // and then any options you want to pass to the compiler.
