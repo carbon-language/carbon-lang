@@ -435,8 +435,7 @@ def IBOutlet : InheritableAttr {
 
 def IBOutletCollection : InheritableAttr {
   let Spellings = [GNU<"iboutletcollection">];
-  let Args = [TypeArgument<"Interface", 1>, SourceLocArgument<"InterfaceLoc">];
-  let HasCustomParsing = 1;
+  let Args = [TypeArgument<"Interface", 1>];
 }
 
 def Malloc : InheritableAttr {
@@ -751,8 +750,7 @@ def VectorSize : TypeAttr {
 
 def VecTypeHint : InheritableAttr {
   let Spellings = [GNU<"vec_type_hint">];
-  let Args = [TypeArgument<"TypeHint">, SourceLocArgument<"TypeLoc">];
-  let HasCustomParsing = 1;
+  let Args = [TypeArgument<"TypeHint">];
 }
 
 def Visibility : InheritableAttr {

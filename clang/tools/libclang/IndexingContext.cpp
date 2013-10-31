@@ -94,8 +94,10 @@ AttrListInfo::AttrListInfo(const Decl *D, IndexingContext &IdxCtx)
 
     const IBOutletCollectionAttr *
       IBAttr = cast<IBOutletCollectionAttr>(IBInfo.A);
+    SourceLocation InterfaceLocStart =
+        IBAttr->getInterfaceLoc()->getTypeLoc().getLocStart();
     IBInfo.IBCollInfo.attrInfo = &IBInfo;
-    IBInfo.IBCollInfo.classLoc = IdxCtx.getIndexLoc(IBAttr->getInterfaceLoc());
+    IBInfo.IBCollInfo.classLoc = IdxCtx.getIndexLoc(InterfaceLocStart);
     IBInfo.IBCollInfo.objcClass = 0;
     IBInfo.IBCollInfo.classCursor = clang_getNullCursor();
     QualType Ty = IBAttr->getInterface();
@@ -103,8 +105,8 @@ AttrListInfo::AttrListInfo(const Decl *D, IndexingContext &IdxCtx)
       if (const ObjCInterfaceDecl *InterD = ObjectTy->getInterface()) {
         IdxCtx.getEntityInfo(InterD, IBInfo.ClassInfo, SA);
         IBInfo.IBCollInfo.objcClass = &IBInfo.ClassInfo;
-        IBInfo.IBCollInfo.classCursor = MakeCursorObjCClassRef(InterD,
-                                        IBAttr->getInterfaceLoc(), IdxCtx.CXTU);
+        IBInfo.IBCollInfo.classCursor =
+            MakeCursorObjCClassRef(InterD, InterfaceLocStart, IdxCtx.CXTU);
       }
     }
   }

@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_ATTR_H
 
 #include "clang/AST/AttrIterator.h"
+#include "clang/AST/Decl.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/AttrKinds.h"
 #include "clang/Basic/LLVM.h"

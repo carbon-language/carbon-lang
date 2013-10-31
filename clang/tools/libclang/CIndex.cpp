@@ -533,8 +533,9 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
     const IBOutletCollectionAttr *A =
       cast<IBOutletCollectionAttr>(cxcursor::getCursorAttr(Cursor));
     if (const ObjCObjectType *ObjT = A->getInterface()->getAs<ObjCObjectType>())
-      return Visit(cxcursor::MakeCursorObjCClassRef(ObjT->getInterface(),
-                                                    A->getInterfaceLoc(), TU));
+      return Visit(cxcursor::MakeCursorObjCClassRef(
+          ObjT->getInterface(),
+          A->getInterfaceLoc()->getTypeLoc().getLocStart(), TU));
   }
 
   // If pointing inside a macro definition, check if the token is an identifier

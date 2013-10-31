@@ -207,11 +207,16 @@ static inline bool isCFStringType(QualType T, ASTContext &Ctx) {
   return RD->getIdentifier() == &Ctx.Idents.get("__CFString");
 }
 
+static unsigned getNumAttributeArgs(const AttributeList &Attr) {
+  // FIXME: Include the type in the argument list.
+  return Attr.getNumArgs() + Attr.hasParsedType();
+}
+
 /// \brief Check if the attribute has exactly as many args as Num. May
 /// output an error.
 static bool checkAttributeNumArgs(Sema &S, const AttributeList &Attr,
-                                  unsigned int Num) {
-  if (Attr.getNumArgs() != Num) {
+                                  unsigned Num) {
+  if (getNumAttributeArgs(Attr) != Num) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
       << Attr.getName() << Num;
     return false;
@@ -224,8 +229,8 @@ static bool checkAttributeNumArgs(Sema &S, const AttributeList &Attr,
 /// \brief Check if the attribute has at least as many args as Num. May
 /// output an error.
 static bool checkAttributeAtLeastNumArgs(Sema &S, const AttributeList &Attr,
-                                  unsigned int Num) {
-  if (Attr.getNumArgs() < Num) {
+                                         unsigned Num) {
+  if (getNumAttributeArgs(Attr) < Num) {
     S.Diag(Attr.getLoc(), diag::err_attribute_too_few_arguments) << Num;
     return false;
   }
@@ -1352,10 +1357,10 @@ static void handleIBOutletCollection(Sema &S, Decl *D,
     }
   }
 
-  TypeSourceInfo *TSI = 0;
-  QualType QT = S.GetTypeFromParser(PT, &TSI);
-  SourceLocation QTLoc =
-      TSI ? TSI->getTypeLoc().getLocStart() : SourceLocation();
+  TypeSourceInfo *QTLoc = 0;
+  QualType QT = S.GetTypeFromParser(PT, &QTLoc);
+  if (!QTLoc)
+    QTLoc = S.Context.getTrivialTypeSourceInfo(QT, Attr.getLoc());
 
   // Diagnose use of non-object type in iboutletcollection attribute.
   // FIXME. Gnu attribute extension ignores use of builtin types in
@@ -1369,7 +1374,7 @@ static void handleIBOutletCollection(Sema &S, Decl *D,
   }
 
   D->addAttr(::new (S.Context)
-             IBOutletCollectionAttr(Attr.getRange(), S.Context, QT, QTLoc,
+             IBOutletCollectionAttr(Attr.getRange(), S.Context, QTLoc,
                                     Attr.getAttributeSpellingListIndex()));
 }
 
@@ -2773,16 +2778,15 @@ static void handleWorkGroupSize(Sema &S, Decl *D,
 static void handleVecTypeHint(Sema &S, Decl *D, const AttributeList &Attr) {
   assert(Attr.getKind() == AttributeList::AT_VecTypeHint);
 
-  if (!checkAttributeNumArgs(S, Attr, 0))
-    return;
-
   if (!Attr.hasParsedType()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
       << Attr.getName() << 1;
     return;
   }
 
-  QualType ParmType = S.GetTypeFromParser(Attr.getTypeArg());
+  TypeSourceInfo *ParmTSI = 0;
+  QualType ParmType = S.GetTypeFromParser(Attr.getTypeArg(), &ParmTSI);
+  assert(ParmTSI && "no type source info for attribute argument");
 
   if (!ParmType->isExtVectorType() && !ParmType->isFloatingType() &&
       (ParmType->isBooleanType() ||
@@ -2795,14 +2799,14 @@ static void handleVecTypeHint(Sema &S, Decl *D, const AttributeList &Attr) {
   if (Attr.getKind() == AttributeList::AT_VecTypeHint &&
       D->hasAttr<VecTypeHintAttr>()) {
     VecTypeHintAttr *A = D->getAttr<VecTypeHintAttr>();
-    if (A->getTypeHint() != ParmType) {
+    if (!S.Context.hasSameType(A->getTypeHint(), ParmType)) {
       S.Diag(Attr.getLoc(), diag::warn_duplicate_attribute) << Attr.getName();
       return;
     }
   }
 
   D->addAttr(::new (S.Context) VecTypeHintAttr(Attr.getLoc(), S.Context,
-                                               ParmType, Attr.getLoc()));
+                                               ParmTSI));
 }
 
 SectionAttr *Sema::mergeSectionAttr(Decl *D, SourceRange Range,
@@ -4101,11 +4105,13 @@ static void handleTypeTagForDatatypeAttr(Sema &S, Decl *D,
     return;
 
   IdentifierInfo *PointerKind = Attr.getArgAsIdent(0)->Ident;
-  QualType MatchingCType = S.GetTypeFromParser(Attr.getMatchingCType(), NULL);
+  TypeSourceInfo *MatchingCTypeLoc = 0;
+  S.GetTypeFromParser(Attr.getMatchingCType(), &MatchingCTypeLoc);
+  assert(MatchingCTypeLoc && "no type source info for attribute argument");
 
   D->addAttr(::new (S.Context)
              TypeTagForDatatypeAttr(Attr.getRange(), S.Context, PointerKind,
-                                    MatchingCType,
+                                    MatchingCTypeLoc,
                                     Attr.getLayoutCompatible(),
                                     Attr.getMustBeNull(),
                                     Attr.getAttributeSpellingListIndex()));
