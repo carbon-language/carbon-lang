@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
 
 ; Trivial patchpoint codegen
 ;
@@ -27,7 +27,7 @@ entry:
 ; Caller frame metadata with stackmaps. This should not be optimized
 ; as a leaf function.
 ;
-; CHECK-LABEL: _caller_meta_leaf
+; CHECK-LABEL: caller_meta_leaf
 ; CHECK: subq $24, %rsp
 ; CHECK: Ltmp
 ; CHECK: addq $24, %rsp
@@ -47,7 +47,7 @@ entry:
 ; Return value in $rax.
 define void @jscall_patchpoint_codegen(i64 %p1, i64 %p2, i64 %p3, i64 %p4) {
 entry:
-; CHECK-LABEL: _jscall_patchpoint_codegen:
+; CHECK-LABEL: jscall_patchpoint_codegen:
 ; CHECK: Ltmp
 ; CHECK: movq %r{{.+}}, 8(%rsp)
 ; CHECK: movq %r{{.+}}, (%rsp)
