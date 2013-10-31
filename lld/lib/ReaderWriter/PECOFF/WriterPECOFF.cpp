@@ -802,6 +802,19 @@ public:
       : _PECOFFLinkingContext(context), _numSections(0),
         _imageSizeInMemory(PAGE_SIZE), _imageSizeOnDisk(0) {}
 
+  // Make sure there are no duplicate atoms in the file. RoundTripYAMLPass also
+  // fails if there are duplicate atoms. This is a temporary measure until we
+  // enable the pass for PECOFF port.
+  void verifyFile(const File &linkedFile) {
+#ifndef NDEBUG
+    std::set<const DefinedAtom *> set;
+    for (const DefinedAtom *atom : linkedFile.defined()) {
+      assert(set.count(atom) == 0);
+      set.insert(atom);
+    }
+#endif
+  }
+
   // Create all chunks that consist of the output file.
   void build(const File &linkedFile) {
     // Create file chunks and add them to the list.
@@ -872,6 +885,7 @@ public:
   }
 
   virtual error_code writeFile(const File &linkedFile, StringRef path) {
+    verifyFile(linkedFile);
     this->build(linkedFile);
 
     uint64_t totalSize = _chunks.back()->fileOffset() + _chunks.back()->size();

@@ -265,20 +265,13 @@ public:
       createImportDirectory(context, loadName, atoms);
     }
 
-    auto nidatom = new (_alloc) NullImportDirectoryAtom(context);
-    context.file.addAtom(*nidatom);
+    // All atoms, including those of tyep NullImportDirectoryAtom, are added to
+    // context.file in the IdataAtom's constructor.
+    new (_alloc) NullImportDirectoryAtom(context);
 
     connectAtoms(context);
     createDataDirectoryAtoms(context);
     replaceSharedLibraryAtoms(context);
-    for (auto id : context.importDirectories)
-      context.file.addAtom(*id);
-    for (auto ilt : context.importLookupTables)
-      context.file.addAtom(*ilt);
-    for (auto iat : context.importAddressTables)
-      context.file.addAtom(*iat);
-    for (auto hna : context.hintNameAtoms)
-      context.file.addAtom(*hna);
   }
 
 private:
@@ -314,7 +307,6 @@ private:
     appendAtoms(atoms, context.importAddressTables);
     appendAtoms(atoms, context.dllNameAtoms);
     appendAtoms(atoms, context.hintNameAtoms);
-
     coff::connectAtomsWithLayoutEdge(atoms);
   }
 
