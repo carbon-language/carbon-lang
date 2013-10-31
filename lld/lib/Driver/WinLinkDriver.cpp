@@ -482,7 +482,7 @@ parseArgs(int argc, const char *argv[], raw_ostream &diagnostics,
 //
 
 ErrorOr<StringRef> PECOFFFileNode::getPath(const LinkingContext &) const {
-  if (_path.endswith(".lib"))
+  if (_path.endswith_lower(".lib"))
     return _ctx.searchLibraryFile(_path);
   if (llvm::sys::path::extension(_path).empty())
     return _ctx.allocateString(_path.str() + ".obj");
@@ -490,7 +490,7 @@ ErrorOr<StringRef> PECOFFFileNode::getPath(const LinkingContext &) const {
 }
 
 ErrorOr<StringRef> PECOFFLibraryNode::getPath(const LinkingContext &) const {
-  if (!_path.endswith(".lib"))
+  if (!_path.endswith_lower(".lib"))
     return _ctx.searchLibraryFile(_ctx.allocateString(_path.str() + ".lib"));
   return _ctx.searchLibraryFile(_path);
 }
