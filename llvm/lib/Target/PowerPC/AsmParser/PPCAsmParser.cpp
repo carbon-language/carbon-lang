@@ -907,19 +907,19 @@ MatchRegisterName(const AsmToken &Tok, unsigned &RegNo, int64_t &IntVal) {
       RegNo = PPC::VRSAVE;
       IntVal = 256;
       return false;
-    } else if (Name.substr(0, 1).equals_lower("r") &&
+    } else if (Name.startswith_lower("r") &&
                !Name.substr(1).getAsInteger(10, IntVal) && IntVal < 32) {
       RegNo = isPPC64()? XRegs[IntVal] : RRegs[IntVal];
       return false;
-    } else if (Name.substr(0, 1).equals_lower("f") &&
+    } else if (Name.startswith_lower("f") &&
                !Name.substr(1).getAsInteger(10, IntVal) && IntVal < 32) {
       RegNo = FRegs[IntVal];
       return false;
-    } else if (Name.substr(0, 1).equals_lower("v") &&
+    } else if (Name.startswith_lower("v") &&
                !Name.substr(1).getAsInteger(10, IntVal) && IntVal < 32) {
       RegNo = VRegs[IntVal];
       return false;
-    } else if (Name.substr(0, 2).equals_lower("cr") &&
+    } else if (Name.startswith_lower("cr") &&
                !Name.substr(2).getAsInteger(10, IntVal) && IntVal < 8) {
       RegNo = CRRegs[IntVal];
       return false;
