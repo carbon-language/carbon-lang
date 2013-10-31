@@ -54,6 +54,6 @@ int main()
         assert(os.good());
         assert(&os.seekp(-1, std::ios_base::beg) == &os);
         assert(seekoff_called == 2);
-        assert(os.good());
+        assert(os.fail());
     }
 }

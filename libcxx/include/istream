@@ -1369,8 +1369,10 @@ basic_istream<_CharT, _Traits>::seekg(pos_type __pos)
         this->clear(this->rdstate() & ~ios_base::eofbit);
         sentry __sen(*this, true);
         if (__sen)
+        {
             if (this->rdbuf()->pubseekpos(__pos, ios_base::in) == pos_type(-1))
                 this->setstate(ios_base::failbit);
+        }
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)
@@ -1391,7 +1393,10 @@ basic_istream<_CharT, _Traits>::seekg(off_type __off, ios_base::seekdir __dir)
 #endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __sen(*this, true);
         if (__sen)
-            this->rdbuf()->pubseekoff(__off, __dir, ios_base::in);
+        {
+            if (this->rdbuf()->pubseekoff(__off, __dir, ios_base::in) == pos_type(-1))
+                this->setstate(ios_base::failbit);
+        }
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)

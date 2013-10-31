@@ -57,12 +57,18 @@ int main()
         is.seekg(5, std::ios_base::cur);
         assert(is.good());
         assert(seekoff_called == 1);
+        is.seekg(-1, std::ios_base::beg);
+        assert(is.fail());
+        assert(seekoff_called == 2);
     }
     {
         testbuf<wchar_t> sb(L" 123456789");
         std::wistream is(&sb);
         is.seekg(5, std::ios_base::cur);
         assert(is.good());
-        assert(seekoff_called == 2);
+        assert(seekoff_called == 3);
+        is.seekg(-1, std::ios_base::beg);
+        assert(is.fail());
+        assert(seekoff_called == 4);
     }
 }
