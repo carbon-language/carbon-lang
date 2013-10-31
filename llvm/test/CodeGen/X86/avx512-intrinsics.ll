@@ -234,6 +234,34 @@ define <8 x double> @test_x86_vbroadcast_sd_pd_512(<2 x double> %a0) {
 }
 declare <8 x double> @llvm.x86.avx512.vbroadcast.sd.pd.512(<2 x double>) nounwind readonly
 
+define <16 x i32> @test_x86_pbroadcastd_512(<4 x i32>  %a0) {
+  ; CHECK: vpbroadcastd
+  %res = call <16 x i32> @llvm.x86.avx512.pbroadcastd.512(<4 x i32> %a0) ; <<16 x i32>> [#uses=1]
+  ret <16 x i32> %res
+}
+declare <16 x i32> @llvm.x86.avx512.pbroadcastd.512(<4 x i32>) nounwind readonly
+
+define <16 x i32> @test_x86_pbroadcastd_i32_512(i32  %a0) {
+  ; CHECK: vpbroadcastd
+  %res = call <16 x i32> @llvm.x86.avx512.pbroadcastd.i32.512(i32 %a0) ; <<16 x i32>> [#uses=1]
+  ret <16 x i32> %res
+}
+declare <16 x i32> @llvm.x86.avx512.pbroadcastd.i32.512(i32) nounwind readonly
+
+define <8 x i64> @test_x86_pbroadcastq_512(<2 x i64> %a0) {
+  ; CHECK: vpbroadcastq
+  %res = call <8 x i64> @llvm.x86.avx512.pbroadcastq.512(<2 x i64> %a0) ; <<8 x i64>> [#uses=1]
+  ret <8 x i64> %res
+}
+declare <8 x i64> @llvm.x86.avx512.pbroadcastq.512(<2 x i64>) nounwind readonly
+
+define <8 x i64> @test_x86_pbroadcastq_i64_512(i64 %a0) {
+  ; CHECK: vpbroadcastq
+  %res = call <8 x i64> @llvm.x86.avx512.pbroadcastq.i64.512(i64 %a0) ; <<8 x i64>> [#uses=1]
+  ret <8 x i64> %res
+}
+declare <8 x i64> @llvm.x86.avx512.pbroadcastq.i64.512(i64) nounwind readonly
+
 define <16 x i32> @test_x86_pmaxu_d(<16 x i32> %a0, <16 x i32> %a1) {
   ; CHECK: vpmaxud 
   %res = call <16 x i32> @llvm.x86.avx512.pmaxu.d(<16 x i32> %a0, <16 x i32> %a1) ; <<16 x i32>> [#uses=1]
