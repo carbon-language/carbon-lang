@@ -244,11 +244,6 @@ namespace llvm {
     ///
     const char *GlobalDirective;             // Defaults to NULL.
 
-    /// ExternDirective - This is the directive used to declare external
-    /// globals.
-    ///
-    const char *ExternDirective;             // Defaults to NULL.
-
     /// HasSetDirective - True if the assembler supports the .set directive.
     bool HasSetDirective;                    // Defaults to true.
 
@@ -514,9 +509,6 @@ namespace llvm {
     }
     const char *getGlobalDirective() const {
       return GlobalDirective;
-    }
-    const char *getExternDirective() const {
-      return ExternDirective;
     }
     bool hasSetDirective() const { return HasSetDirective; }
     bool hasAggressiveSymbolFolding() const {
