@@ -2912,7 +2912,7 @@ public:
   /// removeAttribute - removes the attribute from the list of attributes.
   void removeAttribute(unsigned i, Attribute attr);
 
-  /// \brief Determine whether this call has the NoAlias attribute.
+  /// \brief Determine whether this call has the given attribute.
   bool hasFnAttr(Attribute::AttrKind A) const {
     assert(A != Attribute::NoBuiltin &&
            "Use CallInst::isNoBuiltin() to check for Attribute::NoBuiltin");
