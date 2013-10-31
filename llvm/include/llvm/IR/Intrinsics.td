@@ -455,6 +455,19 @@ def int_invariant_end   : Intrinsic<[],
                                      llvm_ptr_ty],
                                     [IntrReadWriteArgMem, NoCapture<2>]>;
 
+//===------------------------ Stackmap Intrinsics -------------------------===//
+//
+def int_experimental_stackmap : Intrinsic<[],
+                                  [llvm_i32_ty, llvm_i32_ty, llvm_vararg_ty]>;
+def int_experimental_patchpoint_void : Intrinsic<[],
+                                                 [llvm_i32_ty, llvm_i32_ty,
+                                                  llvm_ptr_ty, llvm_i32_ty,
+                                                  llvm_vararg_ty]>;
+def int_experimental_patchpoint_i64 : Intrinsic<[llvm_i64_ty],
+                                                [llvm_i32_ty, llvm_i32_ty,
+                                                 llvm_ptr_ty, llvm_i32_ty,
+                                                 llvm_vararg_ty]>;
+
 //===-------------------------- Other Intrinsics --------------------------===//
 //
 def int_flt_rounds : Intrinsic<[llvm_i32_ty]>,
