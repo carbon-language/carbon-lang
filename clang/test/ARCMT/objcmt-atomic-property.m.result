@@ -25,12 +25,12 @@ typedef char BOOL;
 
 @property (retain) NSString *StrongProp;
 
-- (NSString *) UnavailProp  __attribute__((unavailable));
+@property (retain) NSString *UnavailProp  __attribute__((unavailable));
 - (void) setUnavailProp  : (NSString *)Val;
 
 @property (retain) NSString *UnavailProp1  __attribute__((unavailable));
 
-- (NSString *) UnavailProp2;
+@property (retain) NSString *UnavailProp2;
 - (void) setUnavailProp2  : (NSString *)Val  __attribute__((unavailable));
 
 @property (copy) NSDictionary *undoAction;
@@ -161,19 +161,19 @@ DEPRECATED
 
 @interface NSURL
 // Do not infer a property.
-- (NSURL *)appStoreReceiptURL NS_AVAILABLE;
+@property (retain) NSURL *appStoreReceiptURL NS_AVAILABLE;
 - (void) setAppStoreReceiptURL : (NSURL *)object;
 
 @property (retain) NSURL *appStoreReceiptURLX NS_AVAILABLE;
 
 // Do not infer a property.
-- (NSURL *)appStoreReceiptURLY ;
+@property (retain) NSURL *appStoreReceiptURLY ;
 - (void) setAppStoreReceiptURLY : (NSURL *)object NS_AVAILABLE;
 
 @property (readonly) id OkToInfer NS_AVAILABLE;
 
 // Do not infer a property.
-- (NSURL *)appStoreReceiptURLZ ;
+@property (retain) NSURL *appStoreReceiptURLZ ;
 - (void) setAppStoreReceiptURLZ : (NSURL *)object NS_AVAILABLE;
 
 // Do not infer a property.

@@ -278,7 +278,7 @@ static void rewriteToObjCProperty(const ObjCMethodDecl *Getter,
                                   const ObjCMethodDecl *Setter,
                                   const NSAPI &NS, edit::Commit &commit,
                                   unsigned LengthOfPrefix,
-                                  bool Atomic) {
+                                  bool Atomic, bool AvailabilityArgsMatch) {
   ASTContext &Context = NS.getASTContext();
   bool LParenAdded = false;
   std::string PropertyString = "@property ";
@@ -390,7 +390,7 @@ static void rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   commit.replace(CharSourceRange::getCharRange(Getter->getLocStart(),
                                                EndGetterSelectorLoc),
                  PropertyString);
-  if (Setter) {
+  if (Setter && AvailabilityArgsMatch) {
     SourceLocation EndLoc = Setter->getDeclaratorEndLoc();
     // Get location past ';'
     EndLoc = EndLoc.getLocWithOffset(1);
@@ -910,23 +910,49 @@ static bool TypeIsInnerPointer(QualType T) {
   return true;
 }
 
-static bool AttributesMatch(const Decl *Decl1, const Decl *Decl2) {
-  if (Decl1->hasAttrs() != Decl2->hasAttrs())
-    return false;
-  
-  if (!Decl1->hasAttrs())
+/// \brief Check whether the two versions match.
+static bool versionsMatch(const VersionTuple &X, const VersionTuple &Y) {
+  return (X == Y);
+}
+
+/// AvailabilityAttrsMatch - This routine checks that if comparing two
+/// availability attributes, all their components match. It returns
+/// true, if not dealing with availability or when all components of
+/// availability attributes match. This routine is only called when
+/// the attributes are of the same kind.
+static bool AvailabilityAttrsMatch(Attr *At1, Attr *At2) {
+  const AvailabilityAttr *AA1 = dyn_cast<AvailabilityAttr>(At1);
+  if (!AA1)
     return true;
+  const AvailabilityAttr *AA2 = dyn_cast<AvailabilityAttr>(At2);
   
-  const AttrVec &Attrs1 = Decl1->getAttrs();
-  const AttrVec &Attrs2 = Decl2->getAttrs();
+  VersionTuple Introduced1 = AA1->getIntroduced();
+  VersionTuple Deprecated1 = AA1->getDeprecated();
+  VersionTuple Obsoleted1 = AA1->getObsoleted();
+  bool IsUnavailable1 = AA1->getUnavailable();
+  VersionTuple Introduced2 = AA2->getIntroduced();
+  VersionTuple Deprecated2 = AA2->getDeprecated();
+  VersionTuple Obsoleted2 = AA2->getObsoleted();
+  bool IsUnavailable2 = AA2->getUnavailable();
+  return (versionsMatch(Introduced1, Introduced2) &&
+          versionsMatch(Deprecated1, Deprecated2) &&
+          versionsMatch(Obsoleted1, Obsoleted2) &&
+          IsUnavailable1 == IsUnavailable2);
+  
+}
+
+static bool MatchTwoAttributeLists(const AttrVec &Attrs1, const AttrVec &Attrs2,
+                                   bool &AvailabilityArgsMatch) {
   // This list is very small, so this need not be optimized.
   for (unsigned i = 0, e = Attrs1.size(); i != e; i++) {
     bool match = false;
     for (unsigned j = 0, f = Attrs2.size(); j != f; j++) {
-      // Matching attribute kind only. We are not getting into
-      // details of the attributes. For all practical purposes
+      // Matching attribute kind only. Except for Availabilty attributes,
+      // we are not getting into details of the attributes. For all practical purposes
       // this is sufficient.
       if (Attrs1[i]->getKind() == Attrs2[j]->getKind()) {
+        if (AvailabilityArgsMatch)
+          AvailabilityArgsMatch = AvailabilityAttrsMatch(Attrs1[i], Attrs2[j]);
         match = true;
         break;
       }
@@ -935,6 +961,28 @@ static bool AttributesMatch(const Decl *Decl1, const Decl *Decl2) {
       return false;
   }
   return true;
+}
+
+/// AttributesMatch - This routine checks list of attributes for two
+/// decls. It returns false, if there is a mismatch in kind of
+/// attributes seen in the decls. It returns true if the two decls
+/// have list of same kind of attributes. Furthermore, when there
+/// are availability attributes in the two decls, it sets the
+/// AvailabilityArgsMatch to false if availability attributes have
+/// different versions, etc.
+static bool AttributesMatch(const Decl *Decl1, const Decl *Decl2,
+                            bool &AvailabilityArgsMatch) {
+  if (!Decl1->hasAttrs() || !Decl2->hasAttrs()) {
+    AvailabilityArgsMatch = (Decl1->hasAttrs() == Decl2->hasAttrs());
+    return true;
+  }
+  AvailabilityArgsMatch = true;
+  const AttrVec &Attrs1 = Decl1->getAttrs();
+  const AttrVec &Attrs2 = Decl2->getAttrs();
+  bool match = MatchTwoAttributeLists(Attrs1, Attrs2, AvailabilityArgsMatch);
+  if (match && (Attrs2.size() > Attrs1.size()))
+    return MatchTwoAttributeLists(Attrs2, Attrs1, AvailabilityArgsMatch);
+  return match;
 }
 
 static bool IsValidIdentifier(ASTContext &Ctx,
@@ -1001,8 +1049,9 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
   if (SetterMethod) {
     if ((ASTMigrateActions & FrontendOptions::ObjCMT_ReadwriteProperty) == 0)
       return false;
+    bool AvailabilityArgsMatch;
     if (SetterMethod->isDeprecated() ||
-        !AttributesMatch(Method, SetterMethod))
+        !AttributesMatch(Method, SetterMethod, AvailabilityArgsMatch))
       return false;
     
     // Is this a valid setter, matching the target getter?
@@ -1017,7 +1066,8 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
     rewriteToObjCProperty(Method, SetterMethod, *NSAPIObj, commit,
                           LengthOfPrefix,
                           (ASTMigrateActions &
-                           FrontendOptions::ObjCMT_AtomicProperty) != 0);
+                           FrontendOptions::ObjCMT_AtomicProperty) != 0,
+                          AvailabilityArgsMatch);
     Editor->commit(commit);
     return true;
   }
@@ -1028,7 +1078,8 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
     rewriteToObjCProperty(Method, 0 /*SetterMethod*/, *NSAPIObj, commit,
                           LengthOfPrefix,
                           (ASTMigrateActions &
-                           FrontendOptions::ObjCMT_AtomicProperty) != 0);
+                           FrontendOptions::ObjCMT_AtomicProperty) != 0,
+                          /*AvailabilityArgsMatch*/false);
     Editor->commit(commit);
     return true;
   }

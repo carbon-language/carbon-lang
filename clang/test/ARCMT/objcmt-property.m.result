@@ -25,12 +25,12 @@ typedef char BOOL;
 
 @property (nonatomic, retain) NSString *StrongProp;
 
-- (NSString *) UnavailProp  __attribute__((unavailable));
+@property (nonatomic, retain) NSString *UnavailProp  __attribute__((unavailable));
 - (void) setUnavailProp  : (NSString *)Val;
 
 @property (nonatomic, retain) NSString *UnavailProp1  __attribute__((unavailable));
 
-- (NSString *) UnavailProp2;
+@property (nonatomic, retain) NSString *UnavailProp2;
 - (void) setUnavailProp2  : (NSString *)Val  __attribute__((unavailable));
 
 @property (nonatomic, copy) NSDictionary *undoAction;
@@ -161,19 +161,19 @@ DEPRECATED
 
 @interface NSURL
 // Do not infer a property.
-- (NSURL *)appStoreReceiptURL NS_AVAILABLE;
+@property (nonatomic, retain) NSURL *appStoreReceiptURL NS_AVAILABLE;
 - (void) setAppStoreReceiptURL : (NSURL *)object;
 
 @property (nonatomic, retain) NSURL *appStoreReceiptURLX NS_AVAILABLE;
 
 // Do not infer a property.
-- (NSURL *)appStoreReceiptURLY ;
+@property (nonatomic, retain) NSURL *appStoreReceiptURLY ;
 - (void) setAppStoreReceiptURLY : (NSURL *)object NS_AVAILABLE;
 
 @property (nonatomic, readonly) id OkToInfer NS_AVAILABLE;
 
 // Do not infer a property.
-- (NSURL *)appStoreReceiptURLZ ;
+@property (nonatomic, retain) NSURL *appStoreReceiptURLZ ;
 - (void) setAppStoreReceiptURLZ : (NSURL *)object NS_AVAILABLE;
 
 // Do not infer a property.
