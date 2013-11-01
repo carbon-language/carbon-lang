@@ -107,7 +107,7 @@
 ; CHECK-NEXT: Length:                231
 ; CHECK-NEXT: Version:               2
 ; CHECK-NEXT: Offset in .debug_info: 0
-; CHECK-NEXT: Size:                  381
+; CHECK-NEXT: Size:                  379
 ; CHECK-NEXT: Offset     Linkage  Kind     Name
 ; CHECK-DAG:  [[GLOBAL_FUNC]] EXTERNAL FUNCTION "global_function"
 ; CHECK-DAG:  [[NS]] EXTERNAL TYPE     "ns"

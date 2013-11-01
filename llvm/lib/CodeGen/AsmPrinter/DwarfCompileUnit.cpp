@@ -1830,33 +1830,6 @@ void CompileUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
   DIEBlock *MemLocationDie = new (DIEValueAllocator) DIEBlock();
   addUInt(MemLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
 
-  uint64_t Size = DT.getSizeInBits();
-  uint64_t FieldSize = getBaseTypeSize(DD, DT);
-
-  if (Size != FieldSize) {
-    // Handle bitfield.
-    addUInt(MemberDie, dwarf::DW_AT_byte_size, None,
-            getBaseTypeSize(DD, DT) >> 3);
-    addUInt(MemberDie, dwarf::DW_AT_bit_size, None, DT.getSizeInBits());
-
-    uint64_t Offset = DT.getOffsetInBits();
-    uint64_t AlignMask = ~(DT.getAlignInBits() - 1);
-    uint64_t HiMark = (Offset + FieldSize) & AlignMask;
-    uint64_t FieldOffset = (HiMark - FieldSize);
-    Offset -= FieldOffset;
-
-    // Maybe we need to work from the other end.
-    if (Asm->getDataLayout().isLittleEndian())
-      Offset = FieldSize - (Offset + Size);
-    addUInt(MemberDie, dwarf::DW_AT_bit_offset, None, Offset);
-
-    // Here WD_AT_data_member_location points to the anonymous
-    // field that includes this bit field.
-    addUInt(MemLocationDie, dwarf::DW_FORM_udata, FieldOffset >> 3);
-
-  } else
-    // This is not a bitfield.
-    addUInt(MemLocationDie, dwarf::DW_FORM_udata, DT.getOffsetInBits() >> 3);
 
   if (DT.getTag() == dwarf::DW_TAG_inheritance && DT.isVirtual()) {
 
@@ -1874,8 +1847,37 @@ void CompileUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
     addUInt(VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_plus);
 
     addBlock(MemberDie, dwarf::DW_AT_data_member_location, VBaseLocationDie);
-  } else
-    addBlock(MemberDie, dwarf::DW_AT_data_member_location, MemLocationDie);
+  } else {
+    uint64_t Size = DT.getSizeInBits();
+    uint64_t FieldSize = getBaseTypeSize(DD, DT);
+    uint64_t OffsetInBytes;
+
+    if (Size != FieldSize) {
+      // Handle bitfield.
+      addUInt(MemberDie, dwarf::DW_AT_byte_size, None,
+              getBaseTypeSize(DD, DT) >> 3);
+      addUInt(MemberDie, dwarf::DW_AT_bit_size, None, DT.getSizeInBits());
+
+      uint64_t Offset = DT.getOffsetInBits();
+      uint64_t AlignMask = ~(DT.getAlignInBits() - 1);
+      uint64_t HiMark = (Offset + FieldSize) & AlignMask;
+      uint64_t FieldOffset = (HiMark - FieldSize);
+      Offset -= FieldOffset;
+
+      // Maybe we need to work from the other end.
+      if (Asm->getDataLayout().isLittleEndian())
+        Offset = FieldSize - (Offset + Size);
+      addUInt(MemberDie, dwarf::DW_AT_bit_offset, None, Offset);
+
+      // Here WD_AT_data_member_location points to the anonymous
+      // field that includes this bit field.
+      OffsetInBytes = FieldOffset >> 3;
+    } else
+      // This is not a bitfield.
+      OffsetInBytes = DT.getOffsetInBits() >> 3;
+    addUInt(MemberDie, dwarf::DW_AT_data_member_location, None,
+            OffsetInBytes);
+  }
 
   if (DT.isProtected())
     addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
