@@ -104,10 +104,7 @@
 ; CHECK-NEXT: DW_AT_name {{.*}} "global_function"
 
 ; CHECK-LABEL: .debug_gnu_pubnames contents:
-; CHECK-NEXT: Length:                231
-; CHECK-NEXT: Version:               2
-; CHECK-NEXT: Offset in .debug_info: 0
-; CHECK-NEXT: Size:                  379
+; CHECK-NEXT: length = 0x000000e7 version = 0x0002 unit_offset = 0x00000000 unit_size = 0x0000017b
 ; CHECK-NEXT: Offset     Linkage  Kind     Name
 ; CHECK-DAG:  [[GLOBAL_FUNC]] EXTERNAL FUNCTION "global_function"
 ; CHECK-DAG:  [[NS]] EXTERNAL TYPE     "ns"
@@ -121,11 +118,7 @@
 
 
 ; CHECK-LABEL: debug_gnu_pubtypes contents:
-; CHECK-NEXT: Length:
-; CHECK-NEXT: Version:
-; CHECK-NEXT: Offset in .debug_info:
-; CHECK-NEXT: Size:
-; CHECK-NEXT: Offset     Linkage  Kind     Name
+; CHECK: Offset     Linkage  Kind     Name
 ; CHECK-DAG:  [[C]] EXTERNAL TYPE     "C"
 ; CHECK-DAG:  [[D]] EXTERNAL TYPE     "ns::D"
 ; CHECK-DAG:  [[INT]] STATIC   TYPE     "int"

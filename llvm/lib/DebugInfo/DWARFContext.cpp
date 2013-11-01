@@ -34,10 +34,10 @@ static void dumpPubSection(raw_ostream &OS, StringRef Name, StringRef Data,
   OS << "\n." << Name << " contents:\n";
   DataExtractor pubNames(Data, LittleEndian, 0);
   uint32_t offset = 0;
-  OS << "Length:                " << pubNames.getU32(&offset) << "\n";
-  OS << "Version:               " << pubNames.getU16(&offset) << "\n";
-  OS << "Offset in .debug_info: " << pubNames.getU32(&offset) << "\n";
-  OS << "Size:                  " << pubNames.getU32(&offset) << "\n";
+  OS << "length = " << format("0x%08x", pubNames.getU32(&offset));
+  OS << " version = " << format("0x%04x", pubNames.getU16(&offset));
+  OS << " unit_offset = " << format("0x%08x", pubNames.getU32(&offset));
+  OS << " unit_size = " << format("0x%08x", pubNames.getU32(&offset)) << '\n';
   if (GnuStyle)
     OS << "Offset     Linkage  Kind     Name\n";
   else
