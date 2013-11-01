@@ -1211,9 +1211,9 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
   int ConstantBlock = ConstantAddressBlock(LoadNode->getAddressSpace());
   if (ConstantBlock > -1 && LoadNode->getExtensionType() != ISD::SEXTLOAD) {
     SDValue Result;
-    if (dyn_cast<ConstantExpr>(LoadNode->getSrcValue()) ||
-        dyn_cast<Constant>(LoadNode->getSrcValue()) ||
-        dyn_cast<ConstantSDNode>(Ptr)) {
+    if (isa<ConstantExpr>(LoadNode->getSrcValue()) ||
+        isa<Constant>(LoadNode->getSrcValue()) ||
+        isa<ConstantSDNode>(Ptr)) {
       SDValue Slots[4];
       for (unsigned i = 0; i < 4; i++) {
         // We want Const position encoded with the following formula :
