@@ -68,7 +68,5 @@ CHECK_SIZE_AND_OFFSET(iocb, aio_fildes);
 CHECK_SIZE_AND_OFFSET(iocb, aio_buf);
 CHECK_SIZE_AND_OFFSET(iocb, aio_nbytes);
 CHECK_SIZE_AND_OFFSET(iocb, aio_offset);
-CHECK_SIZE_AND_OFFSET(iocb, aio_flags);
-CHECK_SIZE_AND_OFFSET(iocb, aio_resfd);
 
 #endif  // SANITIZER_LINUX

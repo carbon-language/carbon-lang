@@ -82,8 +82,7 @@ namespace __sanitizer {
     u64   aio_nbytes;
     s64   aio_offset;
     u64   aio_reserved2;
-    u32   aio_flags;
-    u32   aio_resfd;
+    u64   aio_reserved3;
   };
 
   extern unsigned iocb_cmd_pread;
