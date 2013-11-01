@@ -184,12 +184,14 @@ void ReportErrorSummary(const char *error_type, const char *file,
 
 void ReportErrorSummary(const char *error_type, StackTrace *stack) {
   AddressInfo ai;
+#if !SANITIZER_GO
   if (stack->size > 0 && Symbolizer::Get()->IsAvailable()) {
     // Currently, we include the first stack frame into the report summary.
     // Maybe sometimes we need to choose another frame (e.g. skip memcpy/etc).
     uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
     Symbolizer::Get()->SymbolizeCode(pc, &ai, 1);
   }
+#endif
   ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
 }
 
