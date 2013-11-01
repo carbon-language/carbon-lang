@@ -80,7 +80,7 @@ private:
       if (coffAtom && coffAtom->ordinal() == 0)
         result[coffAtom->getSectionName()].push_back(coffAtom);
     }
-    return std::move(result);
+    return result;
   }
 
   /// Group atoms that needs to be merged. Returned atoms are sorted by section
@@ -105,7 +105,7 @@ private:
     std::vector<std::vector<COFFDefinedAtom *>> vec;
     for (auto &i : res)
       vec.push_back(std::move(i.second));
-    return std::move(vec);
+    return vec;
   }
 
   /// For each pair of atoms in the given vector, add a layout edge from the

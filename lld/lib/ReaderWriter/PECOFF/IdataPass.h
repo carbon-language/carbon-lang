@@ -104,7 +104,7 @@ private:
     vector<uint8_t> ret(name.size() + 1);
     memcpy(&ret[0], name.data(), name.size());
     ret[name.size()] = 0;
-    return std::move(ret);
+    return ret;
   }
 };
 
@@ -286,7 +286,7 @@ private:
       COFFSharedLibraryAtom *atom = i.second;
       ret[atom->loadName()].push_back(atom);
     }
-    return std::move(ret);
+    return ret;
   }
 
   void createImportDirectory(Context &context, StringRef loadName,

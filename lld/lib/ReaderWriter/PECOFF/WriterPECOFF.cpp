@@ -754,7 +754,7 @@ private:
     for (auto &cp : chunks)
       if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp))
         chunk->addBaseRelocations(ret);
-    return std::move(ret);
+    return ret;
   }
 
   // Divide the given RVAs into blocks.
@@ -763,7 +763,7 @@ private:
     uint64_t mask = static_cast<uint64_t>(PAGE_SIZE) - 1;
     for (uint64_t addr : relocSites)
       blocks[addr & ~mask].push_back(addr & mask);
-    return std::move(blocks);
+    return blocks;
   }
 
   // Create the content of a relocation block.

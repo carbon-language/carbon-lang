@@ -93,7 +93,7 @@ std::vector<StringRef> splitPathList(StringRef str) {
     llvm::tie(path, str) = str.split(';');
     ret.push_back(path);
   }
-  return std::move(ret);
+  return ret;
 }
 
 // Parse an argument for /base, /stack or /heap. The expected string
@@ -235,7 +235,7 @@ std::string createManifestXml(PECOFFLinkingContext &ctx) {
   }
   out << "</assembly>\n";
   out.flush();
-  return std::move(ret);
+  return ret;
 }
 
 // Convert one doublequote to two doublequotes, so that we can embed the string
@@ -418,7 +418,7 @@ std::vector<const char *> processLinkEnv(PECOFFLinkingContext &context,
   for (int i = 1; i < argc; ++i)
     ret.push_back(argv[i]);
   ret.push_back(nullptr);
-  return std::move(ret);
+  return ret;
 }
 
 // Process "LIB" environment variable. The variable contains a list of search

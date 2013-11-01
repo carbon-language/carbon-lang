@@ -294,7 +294,7 @@ private:
   std::string addImpPrefix(StringRef symbolName) {
     std::string ret("__imp_");
     ret.append(symbolName);
-    return std::move(ret);
+    return ret;
   }
 
   const File &_file;

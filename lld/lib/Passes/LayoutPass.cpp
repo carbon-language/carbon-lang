@@ -25,7 +25,7 @@ namespace {
 std::string formatReason(StringRef reason, int leftVal, int rightVal) {
   Twine msg =
       Twine(reason) + " (" + Twine(leftVal) + ", " + Twine(rightVal) + ")";
-  return std::move(msg.str());
+  return msg.str();
 }
 } // end anonymous namespace
 
