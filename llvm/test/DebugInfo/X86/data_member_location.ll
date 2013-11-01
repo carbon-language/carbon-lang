@@ -10,11 +10,11 @@
 ; foo f;
 
 ; CHECK: DW_AT_name {{.*}} "c"
-; CHECK-NOT: DW_AT_data_member_location
+; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_data_member_location {{.*}} (0x00)
 
 ; CHECK: DW_AT_name {{.*}} "i"
-; CHECK-NOT: DW_AT_data_member_location
+; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_data_member_location {{.*}} (0x04)
 
 %struct.foo = type { i8, i32 }
