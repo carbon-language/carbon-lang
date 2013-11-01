@@ -137,8 +137,12 @@ namespace ARMBuildAttrs {
     AllowIEE754 = 3, // this code to use all the IEEE 754-defined FP encodings
 
     // Tag_ABI_HardFP_use, (=27), uleb128
+    HardFPImplied = 0, // FP use should be implied by Tag_FP_arch
     HardFPSinglePrecision = 1, // Single-precision only
-    HardFPImplied = 3, // FP use should be implied by Tag_FP_arch
+
+    // Tag_ABI_VFP_args, (=28), uleb128
+    BaseAAPCS = 0,
+    HardFPAAPCS = 1,
 
     // Tag_DIV_use, (=44), uleb128
     AllowDIVIfExists = 0, // Allow hardware divide if available in arch, or no info exists.
