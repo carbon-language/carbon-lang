@@ -10,23 +10,23 @@
 ; FIXME: llvm-nm is printing 'd' instead of 't' for foo1.
 ; XFAIL: powerpc64
 
-; CHECK: t {{_?}}foo1
-define linkonce_odr void @foo1() noinline {
+; CHECK: t foo1
+define linkonce_odr void @"\01foo1"() noinline {
   ret void
 }
 
 ; CHECK: {{W|T}} foo2
-define linkonce_odr void @foo2() noinline {
+define linkonce_odr void @"\01foo2"() noinline {
   ret void
 }
 
 ; CHECK: t foo3
-define linkonce_odr void @foo3() noinline {
+define linkonce_odr void @"\01foo3"() noinline {
   ret void
 }
 
 ; CHECK: {{W|T}} foo4
-define linkonce_odr void @foo4() noinline {
+define linkonce_odr void @"\01foo4"() noinline {
   ret void
 }
 
@@ -36,11 +36,11 @@ declare void @p()
 
 define void @bar() {
 bb0:
-  call void @foo1()
-  call void @f(void()* @foo2)
-  invoke void @foo3() to label %bb1 unwind label %clean
+  call void @"\01foo1"()
+  call void @f(void()* @"\01foo2")
+  invoke void @"\01foo3"() to label %bb1 unwind label %clean
 bb1:
-  invoke void @f(void()* @foo4) to label %bb2 unwind label %clean
+  invoke void @f(void()* @"\01foo4") to label %bb2 unwind label %clean
 bb2:
   ret void
 clean:
