@@ -101,8 +101,6 @@ struct Flags {
   bool poison_partial;
   // Report errors on malloc/delete, new/free, new/delete[], etc.
   bool alloc_dealloc_mismatch;
-  // Use stack depot instead of storing stacks in the redzones.
-  bool use_stack_depot;
   // If true, assume that memcmp(p1, p2, n) always reads n bytes before
   // comparing p1 and p2.
   bool strict_memcmp;

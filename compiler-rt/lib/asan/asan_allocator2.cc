@@ -241,19 +241,11 @@ static void GetStackTraceFromId(u32 id, StackTrace *stack) {
 }
 
 void AsanChunkView::GetAllocStack(StackTrace *stack) {
-  if (flags()->use_stack_depot)
-    GetStackTraceFromId(chunk_->alloc_context_id, stack);
-  else
-    StackTrace::UncompressStack(stack, chunk_->AllocStackBeg(),
-                                chunk_->AllocStackSize());
+  GetStackTraceFromId(chunk_->alloc_context_id, stack);
 }
 
 void AsanChunkView::GetFreeStack(StackTrace *stack) {
-  if (flags()->use_stack_depot)
-    GetStackTraceFromId(chunk_->free_context_id, stack);
-  else
-    StackTrace::UncompressStack(stack, chunk_->FreeStackBeg(),
-                                chunk_->FreeStackSize());
+  GetStackTraceFromId(chunk_->free_context_id, stack);
 }
 
 struct QuarantineCallback;
@@ -399,12 +391,7 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
     meta[1] = chunk_beg;
   }
 
-  if (fl.use_stack_depot) {
-    m->alloc_context_id = StackDepotPut(stack->trace, stack->size);
-  } else {
-    m->alloc_context_id = 0;
-    StackTrace::CompressStack(stack, m->AllocStackBeg(), m->AllocStackSize());
-  }
+  m->alloc_context_id = StackDepotPut(stack->trace, stack->size);
 
   uptr size_rounded_down_to_granularity = RoundDownTo(size, SHADOW_GRANULARITY);
   // Unpoison the bulk of the memory region.
@@ -472,12 +459,7 @@ static void QuarantineChunk(AsanChunk *m, void *ptr,
     CHECK_EQ(m->free_tid, kInvalidTid);
   AsanThread *t = GetCurrentThread();
   m->free_tid = t ? t->tid() : 0;
-  if (flags()->use_stack_depot) {
-    m->free_context_id = StackDepotPut(stack->trace, stack->size);
-  } else {
-    m->free_context_id = 0;
-    StackTrace::CompressStack(stack, m->FreeStackBeg(), m->FreeStackSize());
-  }
+  m->free_context_id = StackDepotPut(stack->trace, stack->size);
   // Poison the region.
   PoisonShadow(m->Beg(),
                RoundUpTo(m->UsedSize(), SHADOW_GRANULARITY),

@@ -56,11 +56,6 @@ struct StackTrace {
 
   static uptr GetCurrentPc();
   static uptr GetPreviousInstructionPc(uptr pc);
-
-  static uptr CompressStack(StackTrace *stack,
-                            u32 *compressed, uptr size);
-  static void UncompressStack(StackTrace *stack,
-                              u32 *compressed, uptr size);
 };
 
 }  // namespace __sanitizer
