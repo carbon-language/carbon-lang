@@ -14,7 +14,7 @@
 LEVEL := ../../..
 LIBRARYNAME := llvm
 UsedComponents := core
-UsedOcamLibs := llvm
+UsedOcamlLibs := llvm
 
 include ../Makefile.ocaml
 

@@ -67,7 +67,7 @@ Compile.CMX  := $(strip $(OCAMLOPT) -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
 Archive.CMXA := $(strip $(OCAMLOPT) -a $(OCAMLAFLAGS) $(OCAMLDEBUGFLAG) -o)
 
 ifdef OCAMLOPT
-Archive.EXE := $(strip $(OCAMLOPT) -cc $(CXX) $(OCAMLCFLAGS) $(UsedOcamLibs:%=%.cmxa) $(OCAMLDEBUGFLAG) -o)
+Archive.EXE := $(strip $(OCAMLOPT) -cc $(CXX) $(OCAMLCFLAGS) $(UsedOcamlLibs:%=%.cmxa) $(OCAMLDEBUGFLAG) -o)
 else
 Archive.EXE := $(strip $(OCAMLC) -cc $(CXX) $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG:%=%.cma) -o)
 endif
