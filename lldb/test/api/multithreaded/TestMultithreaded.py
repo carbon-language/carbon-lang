@@ -39,7 +39,6 @@ class SBBreakpointCallbackCase(TestBase):
     @skipIfFreeBSD # llvm.org/pr16696
     @skipIfi386
     @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
-    @unittest2.skipUnless(sys.platform.startswith("darwin")==False, "skip on Darwin")
     def test_sb_api_listener_event_process_state(self):
         """ Test that a registered SBListener receives events when a process
             changes state.

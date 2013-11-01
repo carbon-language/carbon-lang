@@ -45,7 +45,7 @@ void listener_func() {
         // send each frame function name
         uint32_t num_frames = thread.GetNumFrames();
         for(int j = 0; j < num_frames; ++j) {
-          const char* function_name = thread.GetFrameAtIndex(j).GetFunction().GetName();
+          const char* function_name = thread.GetFrameAtIndex(j).GetSymbol().GetName();
           if (function_name)
             g_frame_functions.push(function_name);
         }
