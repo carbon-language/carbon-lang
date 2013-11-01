@@ -703,12 +703,25 @@ void ARMAsmPrinter::emitAttributes() {
 
   // FIXME: Should we signal R9 usage?
 
+  if (Subtarget->hasMPExtension())
+      ATS.emitAttribute(ARMBuildAttrs::MPextension_use, ARMBuildAttrs::AllowMP);
+
   if (Subtarget->hasDivide()) {
     // Check if hardware divide is only available in thumb2 or ARM as well.
     ATS.emitAttribute(ARMBuildAttrs::DIV_use,
       Subtarget->hasDivideInARMMode() ? ARMBuildAttrs::AllowDIVExt :
                                         ARMBuildAttrs::AllowDIVIfExists);
   }
+
+  if (Subtarget->hasTrustZone() && Subtarget->hasVirtualization())
+      ATS.emitAttribute(ARMBuildAttrs::Virtualization_use,
+                        ARMBuildAttrs::AllowTZVirtualization);
+  else if (Subtarget->hasTrustZone())
+      ATS.emitAttribute(ARMBuildAttrs::Virtualization_use,
+                        ARMBuildAttrs::AllowTZ);
+  else if (Subtarget->hasVirtualization())
+      ATS.emitAttribute(ARMBuildAttrs::Virtualization_use,
+                        ARMBuildAttrs::AllowVirtualization);
 
   ATS.finishAttributeSection();
 }

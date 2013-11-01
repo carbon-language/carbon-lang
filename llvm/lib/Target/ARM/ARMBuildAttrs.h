@@ -144,11 +144,19 @@ namespace ARMBuildAttrs {
     BaseAAPCS = 0,
     HardFPAAPCS = 1,
 
+    // Tag_MPextension_use, (=42), uleb128
+    AllowMP = 1, // Allow use of MP extensions
+
     // Tag_DIV_use, (=44), uleb128
     AllowDIVIfExists = 0, // Allow hardware divide if available in arch, or no info exists.
     DisallowDIV = 1, // Hardware divide explicitly disallowed
-    AllowDIVExt = 2  // Allow hardware divide as optional architecture extension above
+    AllowDIVExt = 2, // Allow hardware divide as optional architecture extension above
                      // the base arch specified by Tag_CPU_arch and Tag_CPU_arch_profile.
+
+    // Tag_Virtualization_use, (=68), uleb128
+    AllowTZ = 1,
+    AllowVirtualization = 2,
+    AllowTZVirtualization = 3
   };
 
 } // namespace ARMBuildAttrs

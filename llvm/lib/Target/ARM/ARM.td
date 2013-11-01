@@ -119,6 +119,12 @@ def FeatureDSPThumb2 : SubtargetFeature<"t2dsp", "Thumb2DSP", "true",
 def FeatureMP : SubtargetFeature<"mp", "HasMPExtension", "true",
                                  "Supports Multiprocessing extension">;
 
+// Virtualization extension - requires HW divide (ARMv7-AR ARMARM - 4.4.8).
+def FeatureVirtualization : SubtargetFeature<"virtualization",
+                                 "HasVirtualization", "true",
+                                 "Supports Virtualization extension",
+                                 [FeatureHWDiv, FeatureHWDivARM]>;
+
 // M-series ISA
 def FeatureMClass : SubtargetFeature<"mclass", "ARMProcClass", "MClass",
                                      "Is microcontroller profile ('M' series)">;
@@ -159,7 +165,8 @@ def HasV7Ops    : SubtargetFeature<"v7", "HasV7Ops", "true",
                                    [HasV6T2Ops, FeaturePerfMon]>;
 def HasV8Ops    : SubtargetFeature<"v8", "HasV8Ops", "true",
                                    "Support ARM v8 instructions",
-                                   [HasV7Ops]>;
+                                   [HasV7Ops, FeatureVirtualization,
+                                    FeatureMP]>;
 
 //===----------------------------------------------------------------------===//
 // ARM Processors supported.
@@ -198,17 +205,17 @@ def ProcA15      : SubtargetFeature<"a15", "ARMProcFamily", "CortexA15",
                                    [FeatureT2XtPk, FeatureVFP4,
                                     FeatureMP, FeatureHWDiv, FeatureHWDivARM,
                                     FeatureAvoidPartialCPSR,
-                                    FeatureTrustZone]>;
+                                    FeatureTrustZone, FeatureVirtualization]>;
 
 def ProcA53     : SubtargetFeature<"a53", "ARMProcFamily", "CortexA53",
                                    "Cortex-A53 ARM processors",
-                                   [FeatureMP, FeatureHWDiv, FeatureHWDivARM,
+                                   [FeatureHWDiv, FeatureHWDivARM,
                                     FeatureTrustZone, FeatureT2XtPk,
                                     FeatureCrypto, FeatureCRC]>;
 
 def ProcA57     : SubtargetFeature<"a57", "ARMProcFamily", "CortexA57",
                                    "Cortex-A57 ARM processors",
-                                   [FeatureMP, FeatureHWDiv, FeatureHWDivARM,
+                                   [FeatureHWDiv, FeatureHWDivARM,
                                     FeatureTrustZone, FeatureT2XtPk,
                                     FeatureCrypto, FeatureCRC]>;
 
