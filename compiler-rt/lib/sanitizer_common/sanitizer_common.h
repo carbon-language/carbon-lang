@@ -184,11 +184,17 @@ typedef void (*CheckFailedCallbackType)(const char *, int, const char *,
                                        u64, u64);
 void SetCheckFailedCallback(CheckFailedCallbackType callback);
 
-// Construct a one-line string like
-//  SanitizerToolName: error_type file:line function
-// and call __sanitizer_report_error_summary on it.
+// We don't want a summary too long.
+const int kMaxSummaryLength = 1024;
+// Construct a one-line string:
+//   SUMMARY: SanitizerToolName: error_message
+// and pass it to __sanitizer_report_error_summary.
+void ReportErrorSummary(const char *error_message);
+// Same as above, but construct error_message as:
+//   error_type: file:line function
 void ReportErrorSummary(const char *error_type, const char *file,
                         int line, const char *function);
+void ReportErrorSummary(const char *error_type, StackTrace *trace);
 
 // Math
 #if SANITIZER_WINDOWS && !defined(__clang__) && !defined(__GNUC__)

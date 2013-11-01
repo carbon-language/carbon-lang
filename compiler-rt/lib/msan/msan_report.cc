@@ -66,14 +66,6 @@ static void DescribeOrigin(u32 origin) {
   }
 }
 
-static void ReportSummary(const char *error_type, StackTrace *stack) {
-  if (!stack->size || !Symbolizer::Get()->IsAvailable()) return;
-  AddressInfo ai;
-  uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
-  Symbolizer::Get()->SymbolizeCode(pc, &ai, 1);
-  ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
-}
-
 void ReportUMR(StackTrace *stack, u32 origin) {
   if (!__msan::flags()->report_umrs) return;
 
@@ -87,7 +79,7 @@ void ReportUMR(StackTrace *stack, u32 origin) {
   if (origin) {
     DescribeOrigin(origin);
   }
-  ReportSummary("use-of-uninitialized-value", stack);
+  ReportErrorSummary("use-of-uninitialized-value", stack);
 }
 
 void ReportExpectedUMRNotFound(StackTrace *stack) {

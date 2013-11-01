@@ -38,5 +38,5 @@ void ConfirmPointerHasSurvived() {
 // CHECK-sanity: Test alloc: [[ADDR:.*]].
 // CHECK: Directly leaked 1337 byte object at [[ADDR]]
 // CHECK: LeakSanitizer: detected memory leaks
-// CHECK: SUMMARY: LeakSanitizer:
+// CHECK: SUMMARY: {{(Leak|Address)}}Sanitizer:
 // CHECK-sanity: Value after LSan: [[ADDR]].

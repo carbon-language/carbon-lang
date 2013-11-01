@@ -21,4 +21,4 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-// CHECK: SUMMARY: LeakSanitizer: 4 byte(s) leaked in 1 allocation(s)
+// CHECK: SUMMARY: {{(Leak|Address)}}Sanitizer: 4 byte(s) leaked in 1 allocation(s)

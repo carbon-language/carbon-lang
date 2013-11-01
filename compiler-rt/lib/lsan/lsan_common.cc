@@ -509,13 +509,11 @@ void LeakReport::PrintSummary() {
       bytes += leaks_[i].total_size;
       allocations += leaks_[i].hit_count;
   }
-  const int kMaxSummaryLength = 128;
   InternalScopedBuffer<char> summary(kMaxSummaryLength);
-  internal_snprintf(summary.data(), kMaxSummaryLength,
-                    "SUMMARY: LeakSanitizer: %zu byte(s) leaked in %zu "
-                    "allocation(s).",
-                    bytes, allocations);
-  __sanitizer_report_error_summary(summary.data());
+  internal_snprintf(summary.data(), summary.size(),
+                    "%zu byte(s) leaked in %zu allocation(s).", bytes,
+                    allocations);
+  ReportErrorSummary(summary.data());
 }
 
 uptr LeakReport::ApplySuppressions() {

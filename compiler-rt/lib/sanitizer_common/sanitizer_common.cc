@@ -14,6 +14,8 @@
 #include "sanitizer_common.h"
 #include "sanitizer_flags.h"
 #include "sanitizer_libc.h"
+#include "sanitizer_stacktrace.h"
+#include "sanitizer_symbolizer.h"
 
 namespace __sanitizer {
 
@@ -163,16 +165,32 @@ void PrintModuleAndOffset(const char *module, uptr offset) {
          StripPathPrefix(module, common_flags()->strip_path_prefix), offset);
 }
 
+void ReportErrorSummary(const char *error_message) {
+  InternalScopedBuffer<char> buff(kMaxSummaryLength);
+  internal_snprintf(buff.data(), buff.size(),
+                    "SUMMARY: %s: %s", SanitizerToolName, error_message);
+  __sanitizer_report_error_summary(buff.data());
+}
+
 void ReportErrorSummary(const char *error_type, const char *file,
                         int line, const char *function) {
-  const int kMaxSize = 1024;  // We don't want a summary too long.
-  InternalScopedBuffer<char> buff(kMaxSize);
+  InternalScopedBuffer<char> buff(kMaxSummaryLength);
   internal_snprintf(
-      buff.data(), kMaxSize, "SUMMARY: %s: %s %s:%d %s", SanitizerToolName,
-      error_type,
+      buff.data(), buff.size(), "%s %s:%d %s", error_type,
       file ? StripPathPrefix(file, common_flags()->strip_path_prefix) : "??",
       line, function ? function : "??");
-  __sanitizer_report_error_summary(buff.data());
+  ReportErrorSummary(buff.data());
+}
+
+void ReportErrorSummary(const char *error_type, StackTrace *stack) {
+  AddressInfo ai;
+  if (stack->size > 0 && Symbolizer::Get()->IsAvailable()) {
+    // Currently, we include the first stack frame into the report summary.
+    // Maybe sometimes we need to choose another frame (e.g. skip memcpy/etc).
+    uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
+    Symbolizer::Get()->SymbolizeCode(pc, &ai, 1);
+  }
+  ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
 }
 
 LoadedModule::LoadedModule(const char *module_name, uptr base_address) {

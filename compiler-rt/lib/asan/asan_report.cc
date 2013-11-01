@@ -549,17 +549,6 @@ class ScopedInErrorReport {
   }
 };
 
-static void ReportSummary(const char *error_type, StackTrace *stack) {
-  AddressInfo ai;
-  if (Symbolizer::Get()->IsAvailable()) {
-    // Currently, we include the first stack frame into the report summary.
-    // Maybe sometimes we need to choose another frame (e.g. skip memcpy/etc).
-    uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
-    Symbolizer::Get()->SymbolizeCode(pc, &ai, 1);
-  }
-  ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
-}
-
 void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
   ScopedInErrorReport in_report;
   Decorator d;
@@ -572,7 +561,7 @@ void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
   GET_STACK_TRACE_FATAL(pc, bp);
   PrintStack(&stack);
   Printf("AddressSanitizer can not provide additional info.\n");
-  ReportSummary("SEGV", &stack);
+  ReportErrorSummary("SEGV", &stack);
 }
 
 void ReportDoubleFree(uptr addr, StackTrace *stack) {
@@ -589,7 +578,7 @@ void ReportDoubleFree(uptr addr, StackTrace *stack) {
   Printf("%s", d.EndWarning());
   PrintStack(stack);
   DescribeHeapAddress(addr, 1);
-  ReportSummary("double-free", stack);
+  ReportErrorSummary("double-free", stack);
 }
 
 void ReportFreeNotMalloced(uptr addr, StackTrace *stack) {
@@ -604,7 +593,7 @@ void ReportFreeNotMalloced(uptr addr, StackTrace *stack) {
   Printf("%s", d.EndWarning());
   PrintStack(stack);
   DescribeHeapAddress(addr, 1);
-  ReportSummary("bad-free", stack);
+  ReportErrorSummary("bad-free", stack);
 }
 
 void ReportAllocTypeMismatch(uptr addr, StackTrace *stack,
@@ -623,7 +612,7 @@ void ReportAllocTypeMismatch(uptr addr, StackTrace *stack,
   Printf("%s", d.EndWarning());
   PrintStack(stack);
   DescribeHeapAddress(addr, 1);
-  ReportSummary("alloc-dealloc-mismatch", stack);
+  ReportErrorSummary("alloc-dealloc-mismatch", stack);
   Report("HINT: if you don't care about these warnings you may set "
          "ASAN_OPTIONS=alloc_dealloc_mismatch=0\n");
 }
@@ -638,7 +627,7 @@ void ReportMallocUsableSizeNotOwned(uptr addr, StackTrace *stack) {
   Printf("%s", d.EndWarning());
   PrintStack(stack);
   DescribeHeapAddress(addr, 1);
-  ReportSummary("bad-malloc_usable_size", stack);
+  ReportErrorSummary("bad-malloc_usable_size", stack);
 }
 
 void ReportAsanGetAllocatedSizeNotOwned(uptr addr, StackTrace *stack) {
@@ -651,7 +640,7 @@ void ReportAsanGetAllocatedSizeNotOwned(uptr addr, StackTrace *stack) {
   Printf("%s", d.EndWarning());
   PrintStack(stack);
   DescribeHeapAddress(addr, 1);
-  ReportSummary("bad-__asan_get_allocated_size", stack);
+  ReportErrorSummary("bad-__asan_get_allocated_size", stack);
 }
 
 void ReportStringFunctionMemoryRangesOverlap(
@@ -669,7 +658,7 @@ void ReportStringFunctionMemoryRangesOverlap(
   PrintStack(stack);
   DescribeAddress((uptr)offset1, length1);
   DescribeAddress((uptr)offset2, length2);
-  ReportSummary(bug_type, stack);
+  ReportErrorSummary(bug_type, stack);
 }
 
 // ----------------------- Mac-specific reports ----------------- {{{1
@@ -779,7 +768,7 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
   PrintStack(&stack);
 
   DescribeAddress(addr, access_size);
-  ReportSummary(bug_descr, &stack);
+  ReportErrorSummary(bug_descr, &stack);
   PrintShadowMemoryForAddress(addr);
 }
 

@@ -34,4 +34,4 @@ int main() {
 // CHECK: Test alloc: [[ADDR:.*]].
 // CHECK: leaked 1337 byte object at [[ADDR]]
 // CHECK: LeakSanitizer: detected memory leaks
-// CHECK: SUMMARY: LeakSanitizer:
+// CHECK: SUMMARY: {{(Leak|Address)}}Sanitizer:

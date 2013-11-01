@@ -32,5 +32,5 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-// CHECK-strict: SUMMARY: LeakSanitizer: 2003 byte(s) leaked in 2 allocation(s)
-// CHECK-normal: SUMMARY: LeakSanitizer: 666 byte(s) leaked in 1 allocation(s)
+// CHECK-strict: SUMMARY: {{(Leak|Address)}}Sanitizer: 2003 byte(s) leaked in 2 allocation(s)
+// CHECK-normal: SUMMARY: {{(Leak|Address)}}Sanitizer: 666 byte(s) leaked in 1 allocation(s)
