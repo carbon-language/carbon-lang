@@ -58,10 +58,6 @@ void ELFLinkingContext::addPasses(PassManager &pm) {
   if (_runLayoutPass)
     pm.add(std::unique_ptr<Pass>(new LayoutPass()));
   pm.add(std::unique_ptr<Pass>(new elf::ArrayOrderPass()));
-#ifndef NDEBUG
-  pm.add(std::unique_ptr<Pass>(new RoundTripYAMLPass(*this)));
-  pm.add(std::unique_ptr<Pass>(new RoundTripNativePass(*this)));
-#endif
 }
 
 uint16_t ELFLinkingContext::getOutputMachine() const {

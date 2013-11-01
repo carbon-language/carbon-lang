@@ -241,10 +241,6 @@ void MachOLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new mach_o::GOTPass));
   pm.add(std::unique_ptr<Pass>(new mach_o::StubsPass(*this)));
   pm.add(std::unique_ptr<Pass>(new LayoutPass()));
-#ifndef NDEBUG
-  pm.add(std::unique_ptr<Pass>(new RoundTripYAMLPass(*this)));
-  pm.add(std::unique_ptr<Pass>(new RoundTripNativePass(*this)));
-#endif
 }
 
 Writer &MachOLinkingContext::writer() const {

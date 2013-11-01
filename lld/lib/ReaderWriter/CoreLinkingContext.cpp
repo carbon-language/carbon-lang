@@ -291,10 +291,6 @@ void CoreLinkingContext::addPasses(PassManager &pm) {
     else
       llvm_unreachable("bad pass name");
   }
-#ifndef NDEBUG
-  pm.add(std::unique_ptr<Pass>(new RoundTripYAMLPass(*this)));
-  pm.add(std::unique_ptr<Pass>(new RoundTripNativePass(*this)));
-#endif
 }
 
 Writer &CoreLinkingContext::writer() const { return *_writer; }

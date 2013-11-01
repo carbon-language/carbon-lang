@@ -115,11 +115,9 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   PassManager pm;
   context.addPasses(pm);
 
-// TODO: Replace the code with #ifndef NDEBUG after fixing the
-// failures with pecoff
-#ifdef FIXME
-  pm.add(std::unique_ptr<Pass>(new RoundTripNativePass(context)));
+#ifndef NDEBUG
   pm.add(std::unique_ptr<Pass>(new RoundTripYAMLPass(context)));
+  pm.add(std::unique_ptr<Pass>(new RoundTripNativePass(context)));
 #endif
 
   pm.runOnFile(merged);

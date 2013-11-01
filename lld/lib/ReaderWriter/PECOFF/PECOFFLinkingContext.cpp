@@ -210,9 +210,5 @@ void PECOFFLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new pecoff::GroupedSectionsPass()));
   pm.add(std::unique_ptr<Pass>(new pecoff::IdataPass(*this)));
   pm.add(std::unique_ptr<Pass>(new LayoutPass()));
-#ifndef NDEBUG
-  pm.add(std::unique_ptr<Pass>(new RoundTripYAMLPass(*this)));
-  pm.add(std::unique_ptr<Pass>(new RoundTripNativePass(*this)));
-#endif
 }
 } // end namespace lld
