@@ -12,15 +12,17 @@
 #include "IdataPass.h"
 #include "LinkerGeneratedSymbolFile.h"
 
-#include "llvm/ADT/SmallString.h"
-#include "llvm/Support/Allocator.h"
-#include "llvm/Support/Path.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Passes/LayoutPass.h"
+#include "lld/Passes/RoundTripNativePass.h"
+#include "lld/Passes/RoundTripYAMLPass.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Simple.h"
 #include "lld/ReaderWriter/Writer.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/Support/Path.h"
 
 #include <bitset>
 #include <set>
@@ -208,5 +210,9 @@ void PECOFFLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new pecoff::GroupedSectionsPass()));
   pm.add(std::unique_ptr<Pass>(new pecoff::IdataPass(*this)));
   pm.add(std::unique_ptr<Pass>(new LayoutPass()));
+#ifndef NDEBUG
+  pm.add(std::unique_ptr<Pass>(new RoundTripYAMLPass(*this)));
+  pm.add(std::unique_ptr<Pass>(new RoundTripNativePass(*this)));
+#endif
 }
 } // end namespace lld
