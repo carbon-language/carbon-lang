@@ -1,4 +1,4 @@
-##===- tools/ml/Makefile -----------------------------------*- Makefile -*-===##
+##===- bindings/ocaml/Makefile.ocaml -----------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,10 +7,10 @@
 # 
 ##===----------------------------------------------------------------------===##
 # 
-# An ocaml library is a unique project type in the context of LLVM, so rules are
+# An OCaml library is a unique project type in the context of LLVM, so rules are
 # here rather than in Makefile.rules.
 # 
-# Reference materials on installing ocaml libraries:
+# Reference materials on installing OCaml libraries:
 # 
 #   https://fedoraproject.org/wiki/Packaging/OCaml
 #   http://pkg-ocaml-maint.alioth.debian.org/ocaml_packaging_policy.txt

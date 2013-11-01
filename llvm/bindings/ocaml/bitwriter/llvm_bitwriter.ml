@@ -1,4 +1,4 @@
-(*===-- llvm_bitwriter.ml - LLVM Ocaml Interface ----------------*- C++ -*-===*
+(*===-- llvm_bitwriter.ml - LLVM OCaml Interface ----------------*- C++ -*-===*
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -7,7 +7,7 @@
  *
  *===----------------------------------------------------------------------===
  *
- * This interface provides an ocaml API for the LLVM intermediate
+ * This interface provides an OCaml API for the LLVM intermediate
  * representation, the classes in the VMCore library.
  *
  *===----------------------------------------------------------------------===*)

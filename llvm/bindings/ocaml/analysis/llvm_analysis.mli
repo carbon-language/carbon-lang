@@ -1,4 +1,4 @@
-(*===-- llvm_analysis.mli - LLVM Ocaml Interface ----------------*- C++ -*-===*
+(*===-- llvm_analysis.mli - LLVM OCaml Interface ----------------*- C++ -*-===*
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -9,7 +9,7 @@
 
 (** Intermediate representation analysis.
 
-    This interface provides an ocaml API for LLVM IR analyses, the classes in
+    This interface provides an OCaml API for LLVM IR analyses, the classes in
     the Analysis library. *)
 
 (** [verify_module m] returns [None] if the module [m] is valid, and

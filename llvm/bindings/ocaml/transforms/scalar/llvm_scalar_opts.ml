@@ -1,4 +1,4 @@
-(*===-- llvm_scalar_opts.ml - LLVM Ocaml Interface -------------*- OCaml -*-===*
+(*===-- llvm_scalar_opts.ml - LLVM OCaml Interface -------------*- OCaml -*-===*
  *
  *                     The LLVM Compiler Infrastructure
  *

@@ -1,4 +1,4 @@
-(*===-- llvm_executionengine.ml - LLVM Ocaml Interface ----------*- C++ -*-===*
+(*===-- llvm_executionengine.ml - LLVM OCaml Interface ----------*- C++ -*-===*
  *
  *                     The LLVM Compiler Infrastructure
  *

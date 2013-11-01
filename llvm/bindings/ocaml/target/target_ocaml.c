@@ -1,4 +1,4 @@
-/*===-- target_ocaml.c - LLVM Ocaml Glue ------------------------*- C++ -*-===*\
+/*===-- target_ocaml.c - LLVM OCaml Glue ------------------------*- C++ -*-===*\
 |*                                                                            *|
 |*                     The LLVM Compiler Infrastructure                       *|
 |*                                                                            *|
@@ -7,7 +7,7 @@
 |*                                                                            *|
 |*===----------------------------------------------------------------------===*|
 |*                                                                            *|
-|* This file glues LLVM's ocaml interface to its C interface. These functions *|
+|* This file glues LLVM's OCaml interface to its C interface. These functions *|
 |* are by and large transparent wrappers to the corresponding C functions.    *|
 |*                                                                            *|
 |* Note that these functions intentionally take liberties with the CAMLparamX *|

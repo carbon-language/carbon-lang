@@ -1,4 +1,4 @@
-(*===-- llvm_bitreader.ml - LLVM Ocaml Interface ----------------*- C++ -*-===*
+(*===-- llvm_bitreader.ml - LLVM OCaml Interface ----------------*- C++ -*-===*
  *
  *                     The LLVM Compiler Infrastructure
  *

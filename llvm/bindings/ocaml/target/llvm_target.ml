@@ -1,4 +1,4 @@
-(*===-- llvm_target.ml - LLVM Ocaml Interface ------------------*- OCaml -*-===*
+(*===-- llvm_target.ml - LLVM OCaml Interface ------------------*- OCaml -*-===*
  *
  *                     The LLVM Compiler Infrastructure
  *

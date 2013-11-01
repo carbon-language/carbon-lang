@@ -1,4 +1,4 @@
-(*===-- llvm_executionengine.mli - LLVM Ocaml Interface ---------*- C++ -*-===*
+(*===-- llvm_executionengine.mli - LLVM OCaml Interface ---------*- C++ -*-===*
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -9,7 +9,7 @@
 
 (** JIT Interpreter.
 
-    This interface provides an ocaml API for LLVM execution engine (JIT/
+    This interface provides an OCaml API for LLVM execution engine (JIT/
     interpreter), the classes in the ExecutionEngine library. *)
 
 exception Error of string

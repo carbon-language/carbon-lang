@@ -1,4 +1,4 @@
-(*===-- llvm_scalar_opts.mli - LLVM Ocaml Interface ------------*- OCaml -*-===*
+(*===-- llvm_scalar_opts.mli - LLVM OCaml Interface ------------*- OCaml -*-===*
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -9,7 +9,7 @@
 
 (** Scalar Transforms.
 
-    This interface provides an ocaml API for LLVM scalar transforms, the
+    This interface provides an OCaml API for LLVM scalar transforms, the
     classes in the [LLVMScalarOpts] library. *)
 
 (** See the [llvm::createConstantPropogationPass] function. *)

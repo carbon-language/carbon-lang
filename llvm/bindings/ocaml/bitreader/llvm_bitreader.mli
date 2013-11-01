@@ -1,4 +1,4 @@
-(*===-- llvm_bitreader.mli - LLVM Ocaml Interface ---------------*- C++ -*-===*
+(*===-- llvm_bitreader.mli - LLVM OCaml Interface ---------------*- C++ -*-===*
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -9,7 +9,7 @@
 
 (** Bitcode reader.
 
-    This interface provides an ocaml API for the LLVM bitcode reader, the
+    This interface provides an OCaml API for the LLVM bitcode reader, the
     classes in the Bitreader library. *)
 
 exception Error of string

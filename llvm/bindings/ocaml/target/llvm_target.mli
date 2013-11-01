@@ -1,4 +1,4 @@
-(*===-- llvm_target.mli - LLVM Ocaml Interface -----------------*- OCaml -*-===*
+(*===-- llvm_target.mli - LLVM OCaml Interface -----------------*- OCaml -*-===*
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -9,7 +9,7 @@
 
 (** Target Information.
 
-    This interface provides an ocaml API for LLVM target information,
+    This interface provides an OCaml API for LLVM target information,
     the classes in the Target library. *)
 
 module Endian : sig

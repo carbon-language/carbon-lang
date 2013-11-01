@@ -1,4 +1,4 @@
-(*===-- llvm_ipo.mli - LLVM Ocaml Interface ------------*- OCaml -*-===*
+(*===-- llvm_ipo.mli - LLVM OCaml Interface -------------------*- OCaml -*-===*
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -9,13 +9,13 @@
 
 (** IPO Transforms.
 
-    This interface provides an ocaml API for LLVM interprocedural optimizations, the
+    This interface provides an OCaml API for LLVM interprocedural optimizations, the
     classes in the [LLVMIPO] library. *)
 
 (** See llvm::createAddArgumentPromotionPass *)
 external add_argument_promotion : [ | `Module ] Llvm.PassManager.t -> unit =
-
   "llvm_add_argument_promotion"
+
 (** See llvm::createConstantMergePass function. *)
 external add_constant_merge : [ | `Module ] Llvm.PassManager.t -> unit =
   "llvm_add_constant_merge"
