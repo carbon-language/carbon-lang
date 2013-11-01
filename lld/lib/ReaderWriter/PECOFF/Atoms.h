@@ -247,24 +247,11 @@ private:
 // COFF header.
 class COFFDataDirectoryAtom : public COFFLinkerInternalAtom {
 public:
-  COFFDataDirectoryAtom(const File &file, uint64_t ordinal, uint32_t entrySize,
-                        uint32_t entryAddr = 0)
-      : COFFLinkerInternalAtom(file, assembleRawContent(entrySize, entryAddr)),
-        _ordinal(ordinal) {}
+  COFFDataDirectoryAtom(const File &file, std::vector<uint8_t> contents)
+      : COFFLinkerInternalAtom(file, contents) {}
 
-  virtual uint64_t ordinal() const { return _ordinal; }
   virtual ContentType contentType() const { return typeDataDirectoryEntry; }
   virtual ContentPermissions permissions() const { return permR__; }
-
-private:
-  std::vector<uint8_t> assembleRawContent(uint32_t entrySize, uint32_t entryAddr) {
-    std::vector<uint8_t> data = std::vector<uint8_t>(8, 0);
-    *(reinterpret_cast<llvm::support::ulittle32_t *>(&data[0])) = entryAddr;
-    *(reinterpret_cast<llvm::support::ulittle32_t *>(&data[4])) = entrySize;
-    return data;
-  }
-
-  uint64_t _ordinal;
 };
 
 // A COFFSharedLibraryAtom represents a symbol for data in an import library.  A

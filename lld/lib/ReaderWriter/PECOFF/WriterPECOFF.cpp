@@ -412,13 +412,12 @@ protected:
 /// in memory) and 8 byte entry data size.
 class DataDirectoryChunk : public AtomChunk {
 public:
-  DataDirectoryChunk(const File &linkedFile)
-      : AtomChunk(kindDataDirectory), _file(linkedFile) {
-    // Extract atoms from the linked file and append them to this section.
+  DataDirectoryChunk(const File &linkedFile) : AtomChunk(kindDataDirectory) {
+    // Find the data directory atom.
     for (const DefinedAtom *atom : linkedFile.defined()) {
       if (atom->contentType() == DefinedAtom::typeDataDirectoryEntry) {
-        uint64_t offset = atom->ordinal() * sizeof(llvm::object::data_directory);
-        _atomLayouts.push_back(new (_alloc) AtomLayout(atom, offset, offset));
+        _atomLayouts.push_back(new (_alloc) AtomLayout(atom, 0, 0));
+        return;
       }
     }
   }
@@ -428,24 +427,30 @@ public:
   }
 
   void setBaseRelocField(uint32_t addr, uint32_t size) {
-    auto *atom = new (_alloc) coff::COFFDataDirectoryAtom(
-        _file, llvm::COFF::DataDirectoryIndex::BASE_RELOCATION_TABLE, size,
-        addr);
-    uint64_t offset = atom->ordinal() * sizeof(llvm::object::data_directory);
-    _atomLayouts.push_back(new (_alloc) AtomLayout(atom, offset, offset));
+    _baseRelocAddr = addr;
+    _baseRelocSize = size;
   }
 
   virtual void write(uint8_t *fileBuffer) {
-    for (const AtomLayout *layout : _atomLayouts) {
-      if (!layout)
-        continue;
+    if (!_atomLayouts.empty()) {
+      assert(_atomLayouts.size() == 1);
+      const AtomLayout *layout = _atomLayouts[0];
       ArrayRef<uint8_t> content = static_cast<const DefinedAtom *>(layout->_atom)->rawContent();
-      std::memcpy(fileBuffer + layout->_fileOffset, content.data(), content.size());
+      std::memcpy(fileBuffer + _fileOffset, content.data(), content.size());
     }
+
+    // Write base relocation table entry.
+    int baseRelocOffset = llvm::COFF::DataDirectoryIndex::BASE_RELOCATION_TABLE
+        * sizeof(llvm::object::data_directory);
+    auto *baseReloc = reinterpret_cast<llvm::object::data_directory *>(
+        fileBuffer + _fileOffset + baseRelocOffset);
+    baseReloc->RelativeVirtualAddress = _baseRelocAddr;
+    baseReloc->Size = _baseRelocSize;
   }
 
 private:
-  const File &_file;
+  uint32_t _baseRelocAddr;
+  uint32_t _baseRelocSize;
   mutable llvm::BumpPtrAllocator _alloc;
 };
 
