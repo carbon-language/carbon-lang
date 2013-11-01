@@ -1,6 +1,8 @@
 ; RUN: opt < %s -inline -S | FileCheck %s
 target triple = "x86_64-apple-darwin"
 
+; In inliner, we assume that inline asm does not throw. This testing case makes
+; sure that the inliner does not convert "call asm" to "invoke asm".
 ; rdar://15317907
 ; CHECK-LABEL: @caller
 ; Make sure we are generating "call asm" instead of "invoke asm".
