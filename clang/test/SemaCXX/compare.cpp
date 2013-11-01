@@ -380,4 +380,23 @@ namespace templates {
     less_than_max<long>(num);
     less_than_max<short>(num);
   }
+
+  template<typename T>
+  inline bool less_than_zero(T num, T value) {
+    return num < 0;  // no warning
+  }
+
+  template<typename T>
+  inline bool less_than_zero(unsigned num) {
+    // This should trigger one warning on the template pattern, and not a
+    // warning per specialization.
+    return num < 0;  // expected-warning{{comparison of unsigned expression < 0 is always false}}
+  }
+
+  void test11(unsigned num) {
+    less_than_zero(num, num);
+    less_than_zero<int>(num);
+    less_than_zero<long>(num);
+    less_than_zero<short>(num);
+  }
 }

@@ -4779,6 +4779,10 @@ static bool HasEnumType(Expr *E) {
 }
 
 static void CheckTrivialUnsignedComparison(Sema &S, BinaryOperator *E) {
+  // Disable warning in template instantiations.
+  if (!S.ActiveTemplateInstantiations.empty())
+    return;
+
   BinaryOperatorKind op = E->getOpcode();
   if (E->isValueDependent())
     return;
