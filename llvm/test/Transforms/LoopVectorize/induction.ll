@@ -28,3 +28,41 @@ for.end:
   ret void
 }
 
+; RUN: opt < %s -loop-vectorize -force-vector-unroll=1 -force-vector-width=2 -instcombine -S | FileCheck %s --check-prefix=IND
+
+; Make sure we remove unneeded vectorization of induction variables.
+; In order for instcombine to cleanup the vectorized induction variables that we
+; create in the loop vectorizer we need to perform some form of redundancy
+; elimination to get rid of multiple uses.
+
+; IND-LABEL: scalar_use
+
+; IND:     br label %vector.body
+; IND:     vector.body:
+;   Vectorized induction variable.
+; IND-NOT:  insertelement <2 x i64>
+; IND-NOT:  shufflevector <2 x i64>
+; IND:     br {{.*}}, label %vector.body
+
+define void @scalar_use(float* %a, float %b, i64 %offset, i64 %offset2, i64 %n) {
+entry:
+  br label %for.body
+
+for.body:
+  %iv = phi i64 [ 0, %entry ], [ %iv.next, %for.body ]
+  %ind.sum = add i64 %iv, %offset
+  %arr.idx = getelementptr inbounds float* %a, i64 %ind.sum
+  %l1 = load float* %arr.idx, align 4
+  %ind.sum2 = add i64 %iv, %offset2
+  %arr.idx2 = getelementptr inbounds float* %a, i64 %ind.sum2
+  %l2 = load float* %arr.idx2, align 4
+  %m = fmul fast float %b, %l2
+  %ad = fadd fast float %l1, %m
+  store float %ad, float* %arr.idx, align 4
+  %iv.next = add nuw nsw i64 %iv, 1
+  %exitcond = icmp eq i64 %iv.next, %n
+  br i1 %exitcond, label %loopexit, label %for.body
+
+loopexit:
+  ret void
+}

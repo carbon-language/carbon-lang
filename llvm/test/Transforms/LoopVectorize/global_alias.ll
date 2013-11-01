@@ -336,9 +336,8 @@ for.end:                                          ; preds = %for.cond
 ;   return Foo.A[a];
 ; }
 ; CHECK-LABEL: define i32 @noAlias07(
-; CHECK: sub nsw <4 x i32>
+; CHECK: store <4 x i32>
 ; CHECK: ret
-
 define i32 @noAlias07(i32 %a) #0 {
 entry:
   %a.addr = alloca i32, align 4
@@ -552,7 +551,7 @@ for.end:                                          ; preds = %for.cond
 ;   return Bar.A[N][a];
 ; }
 ; CHECK-LABEL: define i32 @noAlias11(
-; CHECK: sub nsw <4 x i32>
+; CHECK: store <4 x i32>
 ; CHECK: ret
 
 define i32 @noAlias11(i32 %a) #0 {
@@ -612,7 +611,7 @@ for.end:                                          ; preds = %for.cond
 ;   return Bar.A[N][a];
 ; }
 ; CHECK-LABEL: define i32 @noAlias12(
-; CHECK: sub nsw <4 x i32>
+; CHECK: store <4 x i32>
 ; CHECK: ret
 
 define i32 @noAlias12(i32 %a) #0 {

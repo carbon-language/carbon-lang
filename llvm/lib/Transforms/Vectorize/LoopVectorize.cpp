@@ -2272,8 +2272,41 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     (RdxPhi)->setIncomingValue(SelfEdgeBlockIdx, ReducedPartRdx);
     (RdxPhi)->setIncomingValue(IncomingEdgeBlockIdx, RdxDesc.LoopExitInstr);
   }// end of for each redux variable.
- 
+
   fixLCSSAPHIs();
+
+  // Perform simple cse.
+  SmallPtrSet<Instruction*, 16> Visited;
+  SmallVector<Instruction*, 16> ToRemove;
+  for (BasicBlock::iterator I = LoopVectorBody->begin(),
+       E = LoopVectorBody->end(); I != E; ++I) {
+      Instruction *In = I;
+
+      if (!isa<InsertElementInst>(In) && !isa<ExtractElementInst>(In) &&
+          !isa<ShuffleVectorInst>(In) && !isa<GetElementPtrInst>(In))
+        continue;
+
+      // Check if we can replace this instruction with any of the
+      // visited instructions.
+      for (SmallPtrSet<Instruction*, 16>::iterator v = Visited.begin(),
+           ve = Visited.end(); v != ve; ++v) {
+        if (In->isIdenticalTo(*v)) {
+          In->replaceAllUsesWith(*v);
+          ToRemove.push_back(In);
+          In = 0;
+          break;
+        }
+      }
+      if (In)
+        Visited.insert(In);
+
+  }
+  // Erase all of the instructions that we RAUWed.
+  for (SmallVectorImpl<Instruction *>::iterator v = ToRemove.begin(),
+       ve = ToRemove.end(); v != ve; ++v) {
+    assert((*v)->getNumUses() == 0 && "Can't remove instructions with uses");
+    (*v)->eraseFromParent();
+  }
 }
 
 void InnerLoopVectorizer::fixLCSSAPHIs() {
