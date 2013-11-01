@@ -355,3 +355,29 @@ void test9(int x) {
   };
   (void)((E)x == 1);
 }
+
+namespace templates {
+  template<class T> T max();
+
+  template<> constexpr int max<int>() { return 2147483647; };
+
+  template<typename T>
+  bool less_than_max(short num, T value) {
+    const T vmax = max<T>();
+    return (vmax >= num);  // no warning
+  }
+
+  template<typename T>
+  bool less_than_max(short num) {
+    // This should trigger one warning on the template pattern, and not a
+    // warning per specialization.
+    return num < max<int>();  // expected-warning{{comparison of constant 2147483647 with expression of type 'short' is always true}}
+  }
+
+  void test10(short num, int x) {
+    less_than_max(num, x);
+    less_than_max<int>(num);
+    less_than_max<long>(num);
+    less_than_max<short>(num);
+  }
+}

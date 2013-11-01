@@ -4806,6 +4806,10 @@ static void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E,
                                          Expr *Constant, Expr *Other,
                                          llvm::APSInt Value,
                                          bool RhsConstant) {
+  // Disable warning in template instantiations.
+  if (!S.ActiveTemplateInstantiations.empty())
+    return;
+
   // 0 values are handled later by CheckTrivialUnsignedComparison().
   if (Value == 0)
     return;
