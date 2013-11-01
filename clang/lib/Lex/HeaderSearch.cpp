@@ -1173,9 +1173,8 @@ void HeaderSearch::collectAllModules(SmallVectorImpl<Module *> &Modules) {
 void HeaderSearch::loadTopLevelSystemModules() {
   // Load module maps for each of the header search directories.
   for (unsigned Idx = 0, N = SearchDirs.size(); Idx != N; ++Idx) {
-    // We only care about normal system header directories.
-    if (!SearchDirs[Idx].isNormalDir() ||
-        SearchDirs[Idx].getDirCharacteristic() != SrcMgr::C_System) {
+    // We only care about normal header directories.
+    if (!SearchDirs[Idx].isNormalDir()) {
       continue;
     }
 
