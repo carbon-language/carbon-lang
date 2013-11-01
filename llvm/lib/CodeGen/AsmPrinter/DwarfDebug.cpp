@@ -1595,13 +1595,25 @@ static DebugLoc getFnDebugLoc(DebugLoc DL, const LLVMContext &Ctx) {
 // Gather pre-function debug information.  Assumes being called immediately
 // after the function entry point has been emitted.
 void DwarfDebug::beginFunction(const MachineFunction *MF) {
-  if (!MMI->hasDebugInfo()) return;
+
+  // If there's no debug info for the function we're not going to do anything.
+  if (!MMI->hasDebugInfo())
+    return;
+
+  // Grab the lexical scopes for the function, if we don't have any of those
+  // then we're not going to be able to do anything.
   LScopes.initialize(*MF);
-  if (LScopes.empty()) return;
+  if (LScopes.empty())
+    return;
+
+  assert(UserVariables.empty() && DbgValues.empty() && "Maps weren't cleaned");
+
+  // Make sure that each lexical scope will have a begin/end label.
   identifyScopeMarkers();
 
   // Set DwarfCompileUnitID in MCContext to the Compile Unit this function
-  // belongs to.
+  // belongs to so that we add to the correct per-cu line table in the
+  // non-asm case.
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
   CompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
   assert(TheCU && "Unable to find compile unit!");
@@ -1611,19 +1623,17 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   else
     Asm->OutStreamer.getContext().setDwarfCompileUnitID(TheCU->getUniqueID());
 
-  FunctionBeginSym = Asm->GetTempSymbol("func_begin",
-                                        Asm->getFunctionNumber());
+  // Emit a label for the function so that we have a beginning address.
+  FunctionBeginSym = Asm->GetTempSymbol("func_begin", Asm->getFunctionNumber());
   // Assumes in correct section after the entry point.
   Asm->OutStreamer.EmitLabel(FunctionBeginSym);
 
-  assert(UserVariables.empty() && DbgValues.empty() && "Maps weren't cleaned");
-
   const TargetRegisterInfo *TRI = Asm->TM.getRegisterInfo();
   // LiveUserVar - Map physreg numbers to the MDNode they contain.
-  std::vector<const MDNode*> LiveUserVar(TRI->getNumRegs());
+  std::vector<const MDNode *> LiveUserVar(TRI->getNumRegs());
 
-  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
-       I != E; ++I) {
+  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end(); I != E;
+       ++I) {
     bool AtBlockEntry = true;
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
@@ -1634,14 +1644,14 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
         // Keep track of user variables.
         const MDNode *Var =
-          MI->getOperand(MI->getNumOperands() - 1).getMetadata();
+            MI->getOperand(MI->getNumOperands() - 1).getMetadata();
 
         // Variable is in a register, we need to check for clobbers.
         if (isDbgValueInDefinedReg(MI))
           LiveUserVar[MI->getOperand(0).getReg()] = Var;
 
         // Check the history of this variable.
-        SmallVectorImpl<const MachineInstr*> &History = DbgValues[Var];
+        SmallVectorImpl<const MachineInstr *> &History = DbgValues[Var];
         if (History.empty()) {
           UserVariables.push_back(Var);
           // The first mention of a function argument gets the FunctionBeginSym
@@ -1649,7 +1659,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
           DIVariable DV(Var);
           if (DV.isVariable() && DV.getTag() == dwarf::DW_TAG_arg_variable &&
               DISubprogram(getDISubprogram(DV.getContext()))
-                .describes(MF->getFunction()))
+                  .describes(MF->getFunction()))
             LabelsBeforeInsn[MI] = FunctionBeginSym;
         } else {
           // We have seen this variable before. Try to coalesce DBG_VALUEs.
@@ -1659,8 +1669,8 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
             if (History.size() >= 2 &&
                 Prev->isIdenticalTo(History[History.size() - 2])) {
               DEBUG(dbgs() << "Coalescing identical DBG_VALUE entries:\n"
-                    << "\t" << *Prev
-                    << "\t" << *History[History.size() - 2] << "\n");
+                           << "\t" << *Prev << "\t"
+                           << *History[History.size() - 2] << "\n");
               History.pop_back();
             }
 
@@ -1671,11 +1681,11 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
               // Previous register assignment needs to terminate at the end of
               // its basic block.
               MachineBasicBlock::const_iterator LastMI =
-                PrevMBB->getLastNonDebugInstr();
+                  PrevMBB->getLastNonDebugInstr();
               if (LastMI == PrevMBB->end()) {
                 // Drop DBG_VALUE for empty range.
                 DEBUG(dbgs() << "Dropping DBG_VALUE for empty range:\n"
-                      << "\t" << *Prev << "\n");
+                             << "\t" << *Prev << "\n");
                 History.pop_back();
               } else if (llvm::next(PrevMBB) != PrevMBB->getParent()->end())
                 // Terminate after LastMI.
@@ -1697,11 +1707,12 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
         // Check if the instruction clobbers any registers with debug vars.
         for (MachineInstr::const_mop_iterator MOI = MI->operands_begin(),
-               MOE = MI->operands_end(); MOI != MOE; ++MOI) {
+                                              MOE = MI->operands_end();
+             MOI != MOE; ++MOI) {
           if (!MOI->isReg() || !MOI->isDef() || !MOI->getReg())
             continue;
-          for (MCRegAliasIterator AI(MOI->getReg(), TRI, true);
-               AI.isValid(); ++AI) {
+          for (MCRegAliasIterator AI(MOI->getReg(), TRI, true); AI.isValid();
+               ++AI) {
             unsigned Reg = *AI;
             const MDNode *Var = LiveUserVar[Reg];
             if (!Var)
@@ -1713,7 +1724,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
             DbgValueHistoryMap::iterator HistI = DbgValues.find(Var);
             if (HistI == DbgValues.end())
               continue;
-            SmallVectorImpl<const MachineInstr*> &History = HistI->second;
+            SmallVectorImpl<const MachineInstr *> &History = HistI->second;
             if (History.empty())
               continue;
             const MachineInstr *Prev = History.back();
@@ -1735,7 +1746,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
   for (DbgValueHistoryMap::iterator I = DbgValues.begin(), E = DbgValues.end();
        I != E; ++I) {
-    SmallVectorImpl<const MachineInstr*> &History = I->second;
+    SmallVectorImpl<const MachineInstr *> &History = I->second;
     if (History.empty())
       continue;
 
@@ -1744,7 +1755,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
     if (Prev->isDebugValue() && isDbgValueInDefinedReg(Prev)) {
       const MachineBasicBlock *PrevMBB = Prev->getParent();
       MachineBasicBlock::const_iterator LastMI =
-        PrevMBB->getLastNonDebugInstr();
+          PrevMBB->getLastNonDebugInstr();
       if (LastMI == PrevMBB->end())
         // Drop DBG_VALUE for empty range.
         History.pop_back();
@@ -1768,13 +1779,14 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
   // Record beginning of function.
   if (!PrologEndLoc.isUnknown()) {
-    DebugLoc FnStartDL = getFnDebugLoc(PrologEndLoc,
-                                       MF->getFunction()->getContext());
-    recordSourceLine(FnStartDL.getLine(), FnStartDL.getCol(),
-                     FnStartDL.getScope(MF->getFunction()->getContext()),
-    // We'd like to list the prologue as "not statements" but GDB behaves
-    // poorly if we do that. Revisit this with caution/GDB (7.5+) testing.
-                     DWARF2_FLAG_IS_STMT);
+    DebugLoc FnStartDL =
+        getFnDebugLoc(PrologEndLoc, MF->getFunction()->getContext());
+    recordSourceLine(
+        FnStartDL.getLine(), FnStartDL.getCol(),
+        FnStartDL.getScope(MF->getFunction()->getContext()),
+        // We'd like to list the prologue as "not statements" but GDB behaves
+        // poorly if we do that. Revisit this with caution/GDB (7.5+) testing.
+        DWARF2_FLAG_IS_STMT);
   }
 }
 
