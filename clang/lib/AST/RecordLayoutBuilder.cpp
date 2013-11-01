@@ -2140,23 +2140,8 @@ public:
 
 std::pair<CharUnits, CharUnits>
 MicrosoftRecordLayoutBuilder::getAdjustedFieldInfo(const FieldDecl *FD) {
-  std::pair<CharUnits, CharUnits> FieldInfo;
-  if (FD->getType()->isIncompleteArrayType()) {
-    // This is a flexible array member; we can't directly
-    // query getTypeInfo about these, so we figure it out here.
-    // Flexible array members don't have any size, but they
-    // have to be aligned appropriately for their element type.
-    FieldInfo.first = CharUnits::Zero();
-    const ArrayType *ATy = Context.getAsArrayType(FD->getType());
-    FieldInfo.second = Context.getTypeAlignInChars(ATy->getElementType());
-  } else if (const ReferenceType *RT = FD->getType()->getAs<ReferenceType>()) {
-    unsigned AS = RT->getPointeeType().getAddressSpace();
-    FieldInfo.first = Context
-        .toCharUnitsFromBits(Context.getTargetInfo().getPointerWidth(AS));
-    FieldInfo.second = Context
-        .toCharUnitsFromBits(Context.getTargetInfo().getPointerAlign(AS));
-  } else
-    FieldInfo = Context.getTypeInfoInChars(FD->getType());
+  std::pair<CharUnits, CharUnits> FieldInfo =
+      Context.getTypeInfoInChars(FD->getType());
 
   // If we're not on win32 and using ms_struct the field alignment will be wrong
   // for 64 bit types, so we fix that here.
@@ -2187,8 +2172,7 @@ MicrosoftRecordLayoutBuilder::getAdjustedFieldInfo(const FieldDecl *FD) {
 
 void MicrosoftRecordLayoutBuilder::initializeLayout(const RecordDecl *RD) {
   IsUnion = RD->isUnion();
-  Is64BitMode = RD->getASTContext().getTargetInfo().getTriple().getArch() ==
-      llvm::Triple::x86_64;
+  Is64BitMode = Context.getTargetInfo().getPointerWidth(0) == 64;
 
   Size = CharUnits::Zero();
   Alignment = CharUnits::One();

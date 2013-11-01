@@ -1387,7 +1387,9 @@ static getConstantArrayInfoInChars(const ASTContext &Context,
          "Overflow in array type char size evaluation");
   uint64_t Width = EltInfo.first.getQuantity() * Size;
   unsigned Align = EltInfo.second.getQuantity();
-  Width = llvm::RoundUpToAlignment(Width, Align);
+  if (!Context.getTargetInfo().getCXXABI().isMicrosoft() ||
+      Context.getTargetInfo().getPointerWidth(0) == 64)
+    Width = llvm::RoundUpToAlignment(Width, Align);
   return std::make_pair(CharUnits::fromQuantity(Width),
                         CharUnits::fromQuantity(Align));
 }
@@ -1460,7 +1462,9 @@ ASTContext::getTypeInfoImpl(const Type *T) const {
            "Overflow in array type bit size evaluation");
     Width = EltInfo.first*Size;
     Align = EltInfo.second;
-    Width = llvm::RoundUpToAlignment(Width, Align);
+    if (!getTargetInfo().getCXXABI().isMicrosoft() ||
+        getTargetInfo().getPointerWidth(0) == 64)
+      Width = llvm::RoundUpToAlignment(Width, Align);
     break;
   }
   case Type::ExtVector:
