@@ -1069,6 +1069,31 @@ Value *InnerLoopVectorizer::getConsecutiveVector(Value* Val, int StartIdx,
   return Builder.CreateAdd(Val, Cv, "induction");
 }
 
+/// \brief Find the operand of the GEP that should be checked for consecutive
+/// stores. This ignores trailing indices that have no effect on the final
+/// pointer.
+static unsigned getGEPInductionOperand(DataLayout *DL,
+                                       const GetElementPtrInst *Gep) {
+  unsigned LastOperand = Gep->getNumOperands() - 1;
+  unsigned GEPAllocSize = DL->getTypeAllocSize(
+      cast<PointerType>(Gep->getType()->getScalarType())->getElementType());
+
+  // Walk backwards and try to peel off zeros.
+  while (LastOperand > 1 && match(Gep->getOperand(LastOperand), m_Zero())) {
+    // Find the type we're currently indexing into.
+    gep_type_iterator GEPTI = gep_type_begin(Gep);
+    std::advance(GEPTI, LastOperand - 1);
+
+    // If it's a type with the same allocation size as the result of the GEP we
+    // can peel off the zero index.
+    if (DL->getTypeAllocSize(*GEPTI) != GEPAllocSize)
+      break;
+    --LastOperand;
+  }
+
+  return LastOperand;
+}
+
 int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
   assert(Ptr->getType()->isPointerTy() && "Unexpected non ptr");
   // Make sure that the pointer does not point to structs.
@@ -1090,8 +1115,6 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
     return 0;
 
   unsigned NumOperands = Gep->getNumOperands();
-  Value *LastIndex = Gep->getOperand(NumOperands - 1);
-
   Value *GpPtr = Gep->getPointerOperand();
   // If this GEP value is a consecutive pointer induction variable and all of
   // the indices are constant then we know it is consecutive. We can
@@ -1115,14 +1138,18 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
       return -1;
   }
 
-  // Check that all of the gep indices are uniform except for the last.
-  for (unsigned i = 0; i < NumOperands - 1; ++i)
-    if (!SE->isLoopInvariant(SE->getSCEV(Gep->getOperand(i)), TheLoop))
+  unsigned InductionOperand = getGEPInductionOperand(DL, Gep);
+
+  // Check that all of the gep indices are uniform except for our induction
+  // operand.
+  for (unsigned i = 0; i != NumOperands; ++i)
+    if (i != InductionOperand &&
+        !SE->isLoopInvariant(SE->getSCEV(Gep->getOperand(i)), TheLoop))
       return 0;
 
-  // We can emit wide load/stores only if the last index is the induction
-  // variable.
-  const SCEV *Last = SE->getSCEV(LastIndex);
+  // We can emit wide load/stores only if the last non-zero index is the
+  // induction variable.
+  const SCEV *Last = SE->getSCEV(Gep->getOperand(InductionOperand));
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Last)) {
     const SCEV *Step = AR->getStepRecurrence(*SE);
 
@@ -1219,7 +1246,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
     // The last index does not have to be the induction. It can be
     // consecutive and be a function of the index. For example A[I+1];
     unsigned NumOperands = Gep->getNumOperands();
-    unsigned LastOperand = NumOperands - 1;
+    unsigned InductionOperand = getGEPInductionOperand(DL, Gep);
     // Create the new GEP with the new induction variable.
     GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
 
@@ -1228,9 +1255,9 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
       Instruction *GepOperandInst = dyn_cast<Instruction>(GepOperand);
 
       // Update last index or loop invariant instruction anchored in loop.
-      if (i == LastOperand ||
+      if (i == InductionOperand ||
           (GepOperandInst && OrigLoop->contains(GepOperandInst))) {
-        assert((i == LastOperand ||
+        assert((i == InductionOperand ||
                SE->isLoopInvariant(SE->getSCEV(GepOperandInst), OrigLoop)) &&
                "Must be last index or loop invariant");
 
