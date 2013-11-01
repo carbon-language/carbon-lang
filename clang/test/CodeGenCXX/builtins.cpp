@@ -15,3 +15,15 @@ S *addressof(bool b, S &s, S &t) {
   // CHECK: ret {{.*}}* %[[LVALUE]]
   return __builtin_addressof(b ? s : t);
 }
+
+extern "C" int __builtin_abs(int); // #1
+long __builtin_abs(long);          // #2
+extern "C" int __builtin_abs(int); // #3
+
+int x = __builtin_abs(-2);
+// CHECK: entry:
+// CHECK-NEXT:  store i32 2, i32* @x, align 4
+
+long y = __builtin_abs(-2l);
+// CHECK: entry:
+// CHECK-NEXT:  %call = call i32 @_Z13__builtin_absl(i32 -2)
