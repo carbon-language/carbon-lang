@@ -58,8 +58,7 @@ def Neon_vduplane : SDNode<"AArch64ISD::NEON_VDUPLANE", SDTypeProfile<1, 2,
 multiclass NeonI_3VSame_B_sizes<bit u, bits<2> size,  bits<5> opcode,
                                 string asmop, SDPatternOperator opnode8B,
                                 SDPatternOperator opnode16B,
-                                bit Commutable = 0>
-{
+                                bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _8B :  NeonI_3VSame<0b0, u, size, opcode,
                (outs VPR64:$Rd), (ins VPR64:$Rn, VPR64:$Rm),
@@ -80,8 +79,7 @@ multiclass NeonI_3VSame_B_sizes<bit u, bits<2> size,  bits<5> opcode,
 
 multiclass NeonI_3VSame_HS_sizes<bit u, bits<5> opcode,
                                   string asmop, SDPatternOperator opnode,
-                                  bit Commutable = 0>
-{
+                                  bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _4H : NeonI_3VSame<0b0, u, 0b01, opcode,
               (outs VPR64:$Rd), (ins VPR64:$Rn, VPR64:$Rm),
@@ -115,8 +113,7 @@ multiclass NeonI_3VSame_HS_sizes<bit u, bits<5> opcode,
 multiclass NeonI_3VSame_BHS_sizes<bit u, bits<5> opcode,
                                   string asmop, SDPatternOperator opnode,
                                   bit Commutable = 0>
-   : NeonI_3VSame_HS_sizes<u, opcode,  asmop, opnode, Commutable>
-{
+   : NeonI_3VSame_HS_sizes<u, opcode,  asmop, opnode, Commutable> {
   let isCommutable = Commutable in {
     def _8B :  NeonI_3VSame<0b0, u, 0b00, opcode,
                (outs VPR64:$Rd), (ins VPR64:$Rn, VPR64:$Rm),
@@ -137,8 +134,7 @@ multiclass NeonI_3VSame_BHS_sizes<bit u, bits<5> opcode,
 multiclass NeonI_3VSame_BHSD_sizes<bit u, bits<5> opcode,
                                    string asmop, SDPatternOperator opnode,
                                    bit Commutable = 0>
-   : NeonI_3VSame_BHS_sizes<u, opcode,  asmop, opnode, Commutable>
-{
+   : NeonI_3VSame_BHS_sizes<u, opcode,  asmop, opnode, Commutable> {
   let isCommutable = Commutable in {
     def _2D : NeonI_3VSame<0b1, u, 0b11, opcode,
               (outs VPR128:$Rd), (ins VPR128:$Rn, VPR128:$Rm),
@@ -156,8 +152,7 @@ multiclass NeonI_3VSame_SD_sizes<bit u, bit size, bits<5> opcode,
                                  SDPatternOperator opnode4S,
                                  SDPatternOperator opnode2D,
                                  ValueType ResTy2S, ValueType ResTy4S,
-                                 ValueType ResTy2D, bit Commutable = 0>
-{
+                                 ValueType ResTy2D, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _2S : NeonI_3VSame<0b0, u, {size, 0b0}, opcode,
               (outs VPR64:$Rd), (ins VPR64:$Rn, VPR64:$Rm),
@@ -1092,7 +1087,7 @@ multiclass NeonI_mov_imm_lsl_sizes<string asmop, bit op,
                               (outs VPR64:$Rd),
                               (ins neon_uimm8:$Imm,
                                 neon_mov_imm_LSL_operand:$Simm),
-                              !strconcat(asmop, " $Rd.2s, $Imm$Simm"),
+                              !strconcat(asmop, "\t$Rd.2s, $Imm$Simm"),
                               [(set (v2i32 VPR64:$Rd),
                                  (v2i32 (opnode (timm:$Imm),
                                    (neon_mov_imm_LSL_operand:$Simm))))],
@@ -1105,7 +1100,7 @@ multiclass NeonI_mov_imm_lsl_sizes<string asmop, bit op,
                               (outs VPR128:$Rd),
                               (ins neon_uimm8:$Imm,
                                 neon_mov_imm_LSL_operand:$Simm),
-                              !strconcat(asmop, " $Rd.4s, $Imm$Simm"),
+                              !strconcat(asmop, "\t$Rd.4s, $Imm$Simm"),
                               [(set (v4i32 VPR128:$Rd),
                                  (v4i32 (opnode (timm:$Imm),
                                    (neon_mov_imm_LSL_operand:$Simm))))],
@@ -1119,7 +1114,7 @@ multiclass NeonI_mov_imm_lsl_sizes<string asmop, bit op,
                               (outs VPR64:$Rd),
                               (ins neon_uimm8:$Imm,
                                 neon_mov_imm_LSLH_operand:$Simm),
-                              !strconcat(asmop, " $Rd.4h, $Imm$Simm"),
+                              !strconcat(asmop, "\t$Rd.4h, $Imm$Simm"),
                               [(set (v4i16 VPR64:$Rd),
                                  (v4i16 (opnode (timm:$Imm),
                                    (neon_mov_imm_LSLH_operand:$Simm))))],
@@ -1132,7 +1127,7 @@ multiclass NeonI_mov_imm_lsl_sizes<string asmop, bit op,
                               (outs VPR128:$Rd),
                               (ins neon_uimm8:$Imm,
                                 neon_mov_imm_LSLH_operand:$Simm),
-                              !strconcat(asmop, " $Rd.8h, $Imm$Simm"),
+                              !strconcat(asmop, "\t$Rd.8h, $Imm$Simm"),
                               [(set (v8i16 VPR128:$Rd),
                                  (v8i16 (opnode (timm:$Imm),
                                    (neon_mov_imm_LSLH_operand:$Simm))))],
@@ -1152,7 +1147,7 @@ multiclass NeonI_mov_imm_with_constraint_lsl_sizes<string asmop, bit op,
                  (outs VPR64:$Rd),
                  (ins VPR64:$src, neon_uimm8:$Imm,
                    neon_mov_imm_LSL_operand:$Simm),
-                 !strconcat(asmop, " $Rd.2s, $Imm$Simm"),
+                 !strconcat(asmop, "\t$Rd.2s, $Imm$Simm"),
                  [(set (v2i32 VPR64:$Rd),
                     (v2i32 (opnode (v2i32 VPR64:$src),
                       (v2i32 (bitconvert (v2i32 (neonopnode timm:$Imm,
@@ -1166,7 +1161,7 @@ multiclass NeonI_mov_imm_with_constraint_lsl_sizes<string asmop, bit op,
                  (outs VPR128:$Rd),
                  (ins VPR128:$src, neon_uimm8:$Imm,
                    neon_mov_imm_LSL_operand:$Simm),
-                 !strconcat(asmop, " $Rd.4s, $Imm$Simm"),
+                 !strconcat(asmop, "\t$Rd.4s, $Imm$Simm"),
                  [(set (v4i32 VPR128:$Rd),
                     (v4i32 (opnode (v4i32 VPR128:$src),
                       (v4i32 (bitconvert (v4i32 (neonopnode timm:$Imm,
@@ -1181,7 +1176,7 @@ multiclass NeonI_mov_imm_with_constraint_lsl_sizes<string asmop, bit op,
                  (outs VPR64:$Rd),
                  (ins VPR64:$src, neon_uimm8:$Imm,
                    neon_mov_imm_LSLH_operand:$Simm),
-                 !strconcat(asmop, " $Rd.4h, $Imm$Simm"),
+                 !strconcat(asmop, "\t$Rd.4h, $Imm$Simm"),
                  [(set (v4i16 VPR64:$Rd),
                     (v4i16 (opnode (v4i16 VPR64:$src),
                        (v4i16 (bitconvert (v4i16 (neonopnode timm:$Imm,
@@ -1195,7 +1190,7 @@ multiclass NeonI_mov_imm_with_constraint_lsl_sizes<string asmop, bit op,
                  (outs VPR128:$Rd),
                  (ins VPR128:$src, neon_uimm8:$Imm,
                    neon_mov_imm_LSLH_operand:$Simm),
-                 !strconcat(asmop, " $Rd.8h, $Imm$Simm"),
+                 !strconcat(asmop, "\t$Rd.8h, $Imm$Simm"),
                  [(set (v8i16 VPR128:$Rd),
                     (v8i16 (opnode (v8i16 VPR128:$src),
                       (v8i16 (bitconvert (v8i16 (neonopnode timm:$Imm,
@@ -1215,7 +1210,7 @@ multiclass NeonI_mov_imm_msl_sizes<string asmop, bit op,
                              (outs VPR64:$Rd),
                              (ins neon_uimm8:$Imm,
                                neon_mov_imm_MSL_operand:$Simm),
-                             !strconcat(asmop, " $Rd.2s, $Imm$Simm"),
+                             !strconcat(asmop, "\t$Rd.2s, $Imm$Simm"),
                               [(set (v2i32 VPR64:$Rd),
                                  (v2i32 (opnode (timm:$Imm),
                                    (neon_mov_imm_MSL_operand:$Simm))))],
@@ -1228,7 +1223,7 @@ multiclass NeonI_mov_imm_msl_sizes<string asmop, bit op,
                               (outs VPR128:$Rd),
                               (ins neon_uimm8:$Imm,
                                 neon_mov_imm_MSL_operand:$Simm),
-                              !strconcat(asmop, " $Rd.4s, $Imm$Simm"),
+                              !strconcat(asmop, "\t$Rd.4s, $Imm$Simm"),
                               [(set (v4i32 VPR128:$Rd),
                                  (v4i32 (opnode (timm:$Imm),
                                    (neon_mov_imm_MSL_operand:$Simm))))],
@@ -1351,7 +1346,7 @@ defm MVNIvi_msl : NeonI_mov_imm_msl_sizes<"mvni", 0b1, Neon_mvni>;
 
 class NeonI_mov_imm_lsl_aliases<string asmop, string asmlane,
                                 Instruction inst, RegisterOperand VPRC>
-  : NeonInstAlias<!strconcat(asmop, " $Rd," # asmlane # ", $Imm"),
+  : NeonInstAlias<!strconcat(asmop, "\t$Rd," # asmlane # ", $Imm"),
                         (inst VPRC:$Rd, neon_uimm8:$Imm,  0), 0b0>;
 
 // Aliases for Vector Move Immediate Shifted
@@ -1450,8 +1445,8 @@ def imm0_63 : Operand<i32> {
   let ParserMatchClass = uimm6_asmoperand;
 }
 
-// Shift Right/Left Immediate - A shift immediate is encoded differently from
-// other shift immediates. The immh:immb field is encoded like so:
+// Shift Right/Left Immediate - The immh:immb field of these shifts are encoded
+// as follows:
 //
 //    Offset    Encoding
 //     8        immh:immb<6:3> = '0001xxx', <imm> is encoded in immh:immb<2:0>
@@ -2343,8 +2338,7 @@ defm ADDV : NeonI_2VAcross_2<0b0, 0b11011, "addv", int_aarch64_neon_vaddv>;
 // Variant 3
 
 multiclass NeonI_2VAcross_3<bit u, bits<5> opcode, bits<2> size,
-                            string asmop, SDPatternOperator opnode>
-{
+                            string asmop, SDPatternOperator opnode> {
     def _1s4s:  NeonI_2VAcross<0b1, u, size, opcode,
                 (outs FPR32:$Rd), (ins VPR128:$Rn),
                 asmop # "\t$Rd, $Rn.4s",
@@ -2381,8 +2375,7 @@ class NeonI_3VDL<bit q, bit u, bits<2> size, bits<4> opcode,
 
 multiclass NeonI_3VDL_s<bit u, bits<4> opcode,
                         string asmop, SDPatternOperator opnode,
-                        bit Commutable = 0>
-{
+                        bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _8h8b : NeonI_3VDL<0b0, u, 0b00, opcode, asmop, "8h", "8b",
                            opnode, sext, VPR64, v8i16, v8i8>;
@@ -2393,10 +2386,8 @@ multiclass NeonI_3VDL_s<bit u, bits<4> opcode,
   }
 }
 
-multiclass NeonI_3VDL2_s<bit u, bits<4> opcode,
-                         string asmop, SDPatternOperator opnode,
-                         bit Commutable = 0>
-{
+multiclass NeonI_3VDL2_s<bit u, bits<4> opcode, string asmop,
+                         SDPatternOperator opnode, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _8h16b : NeonI_3VDL<0b1, u, 0b00, opcode, asmop, "8h", "16b",
                             opnode, NI_sext_high_v8i8, VPR128, v8i16, v16i8>;
@@ -2407,10 +2398,8 @@ multiclass NeonI_3VDL2_s<bit u, bits<4> opcode,
   }
 }
 
-multiclass NeonI_3VDL_u<bit u, bits<4> opcode,
-                          string asmop, SDPatternOperator opnode,
-                          bit Commutable = 0>
-{
+multiclass NeonI_3VDL_u<bit u, bits<4> opcode, string asmop,
+                        SDPatternOperator opnode, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _8h8b : NeonI_3VDL<0b0, u, 0b00, opcode, asmop, "8h", "8b",
                            opnode, zext, VPR64, v8i16, v8i8>;
@@ -2421,10 +2410,8 @@ multiclass NeonI_3VDL_u<bit u, bits<4> opcode,
   }
 }
 
-multiclass NeonI_3VDL2_u<bit u, bits<4> opcode,
-                           string asmop, SDPatternOperator opnode,
-                           bit Commutable = 0>
-{
+multiclass NeonI_3VDL2_u<bit u, bits<4> opcode, string asmop,
+                         SDPatternOperator opnode, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _8h16b : NeonI_3VDL<0b1, u, 0b00, opcode, asmop, "8h", "16b",
                             opnode, NI_zext_high_v8i8, VPR128, v8i16, v16i8>;
@@ -2461,9 +2448,8 @@ class NeonI_3VDW<bit q, bit u, bits<2> size, bits<4> opcode,
                                    (ResTy (ext (OpTy OpVPR:$Rm))))))],
                  NoItinerary>;
 
-multiclass NeonI_3VDW_s<bit u, bits<4> opcode,
-                        string asmop, SDPatternOperator opnode>
-{
+multiclass NeonI_3VDW_s<bit u, bits<4> opcode, string asmop,
+                        SDPatternOperator opnode> {
   def _8h8b : NeonI_3VDW<0b0, u, 0b00, opcode, asmop, "8h", "8b",
                          opnode, sext, VPR64, v8i16, v8i8>;
   def _4s4h : NeonI_3VDW<0b0, u, 0b01, opcode, asmop, "4s", "4h",
@@ -2475,9 +2461,8 @@ multiclass NeonI_3VDW_s<bit u, bits<4> opcode,
 defm SADDWvvv :  NeonI_3VDW_s<0b0, 0b0001, "saddw", add>;
 defm SSUBWvvv :  NeonI_3VDW_s<0b0, 0b0011, "ssubw", sub>;
 
-multiclass NeonI_3VDW2_s<bit u, bits<4> opcode,
-                         string asmop, SDPatternOperator opnode>
-{
+multiclass NeonI_3VDW2_s<bit u, bits<4> opcode, string asmop,
+                         SDPatternOperator opnode> {
   def _8h16b : NeonI_3VDW<0b1, u, 0b00, opcode, asmop, "8h", "16b",
                           opnode, NI_sext_high_v8i8, VPR128, v8i16, v16i8>;
   def _4s8h  : NeonI_3VDW<0b1, u, 0b01, opcode, asmop, "4s", "8h",
@@ -2489,9 +2474,8 @@ multiclass NeonI_3VDW2_s<bit u, bits<4> opcode,
 defm SADDW2vvv :  NeonI_3VDW2_s<0b0, 0b0001, "saddw2", add>;
 defm SSUBW2vvv :  NeonI_3VDW2_s<0b0, 0b0011, "ssubw2", sub>;
 
-multiclass NeonI_3VDW_u<bit u, bits<4> opcode,
-                        string asmop, SDPatternOperator opnode>
-{
+multiclass NeonI_3VDW_u<bit u, bits<4> opcode, string asmop,
+                        SDPatternOperator opnode> {
   def _8h8b : NeonI_3VDW<0b0, u, 0b00, opcode, asmop, "8h", "8b",
                          opnode, zext, VPR64, v8i16, v8i8>;
   def _4s4h : NeonI_3VDW<0b0, u, 0b01, opcode, asmop, "4s", "4h",
@@ -2503,9 +2487,8 @@ multiclass NeonI_3VDW_u<bit u, bits<4> opcode,
 defm UADDWvvv :  NeonI_3VDW_u<0b1, 0b0001, "uaddw", add>;
 defm USUBWvvv :  NeonI_3VDW_u<0b1, 0b0011, "usubw", sub>;
 
-multiclass NeonI_3VDW2_u<bit u, bits<4> opcode,
-                           string asmop, SDPatternOperator opnode>
-{
+multiclass NeonI_3VDW2_u<bit u, bits<4> opcode, string asmop,
+                         SDPatternOperator opnode> {
   def _8h16b : NeonI_3VDW<0b1, u, 0b00, opcode, asmop, "8h", "16b",
                           opnode, NI_zext_high_v8i8, VPR128, v8i16, v16i8>;
   def _4s8h : NeonI_3VDW<0b1, u, 0b01, opcode, asmop, "4s", "8h",
@@ -2518,8 +2501,7 @@ defm UADDW2vvv :  NeonI_3VDW2_u<0b1, 0b0001, "uaddw2", add>;
 defm USUBW2vvv :  NeonI_3VDW2_u<0b1, 0b0011, "usubw2", sub>;
 
 // Get the high half part of the vector element.
-multiclass NeonI_get_high
-{
+multiclass NeonI_get_high {
   def _8h : PatFrag<(ops node:$Rn),
                     (v8i8 (trunc (v8i16 (srl (v8i16 node:$Rn),
                                              (v8i16 (Neon_vdup (i32 8)))))))>;
@@ -2547,10 +2529,8 @@ class NeonI_3VDN_addhn_2Op<bit q, bit u, bits<2> size, bits<4> opcode,
                                     (OpTy VPR128:$Rm))))))],
                  NoItinerary>;
 
-multiclass NeonI_3VDN_addhn_2Op<bit u, bits<4> opcode,
-                                string asmop, SDPatternOperator opnode,
-                                bit Commutable = 0>
-{
+multiclass NeonI_3VDN_addhn_2Op<bit u, bits<4> opcode, string asmop,
+                                SDPatternOperator opnode, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _8b8h : NeonI_3VDN_addhn_2Op<0b0, u, 0b00, opcode, asmop, "8b", "8h",
                                      opnode, NI_get_hi_8h, v8i8, v8i16>;
@@ -2578,10 +2558,8 @@ class NeonI_3VD_2Op<bit q, bit u, bits<2> size, bits<4> opcode,
                  NoItinerary>;
 
 // normal narrow pattern
-multiclass NeonI_3VDN_2Op<bit u, bits<4> opcode,
-                          string asmop, SDPatternOperator opnode,
-                          bit Commutable = 0>
-{
+multiclass NeonI_3VDN_2Op<bit u, bits<4> opcode, string asmop,
+                          SDPatternOperator opnode, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _8b8h : NeonI_3VD_2Op<0b0, u, 0b00, opcode, asmop, "8b", "8h",
                               opnode, VPR64, VPR128, v8i8, v8i16>;
@@ -2606,8 +2584,7 @@ class NeonI_3VDN_3Op<bit q, bit u, bits<2> size, bits<4> opcode,
   let neverHasSideEffects = 1;
 }
 
-multiclass NeonI_3VDN_3Op_v1<bit u, bits<4> opcode,
-                             string asmop> {
+multiclass NeonI_3VDN_3Op_v1<bit u, bits<4> opcode, string asmop> {
   def _16b8h : NeonI_3VDN_3Op<0b1, u, 0b00, opcode, asmop, "16b", "8h">;
   def _8h4s : NeonI_3VDN_3Op<0b1, u, 0b01, opcode, asmop, "8h", "4s">;
   def _4s2d : NeonI_3VDN_3Op<0b1, u, 0b10, opcode, asmop, "4s", "2d">;
@@ -2669,10 +2646,8 @@ class NeonI_3VDL_Ext<bit q, bit u, bits<2> size, bits<4> opcode,
                                                 (OpTy OpVPR:$Rm))))))],
                  NoItinerary>;
 
-multiclass NeonI_3VDL_zext<bit u, bits<4> opcode,
-                           string asmop, SDPatternOperator opnode,
-                           bit Commutable = 0>
-{
+multiclass NeonI_3VDL_zext<bit u, bits<4> opcode, string asmop,
+                           SDPatternOperator opnode, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _8h8b : NeonI_3VDL_Ext<0b0, u, 0b00, opcode, asmop, "8h", "8b",
                                opnode, VPR64, v8i16, v8i8, v8i8>;
@@ -2686,15 +2661,13 @@ multiclass NeonI_3VDL_zext<bit u, bits<4> opcode,
 defm SABDLvvv : NeonI_3VDL_zext<0b0, 0b0111, "sabdl", int_arm_neon_vabds, 1>;
 defm UABDLvvv : NeonI_3VDL_zext<0b1, 0b0111, "uabdl", int_arm_neon_vabdu, 1>;
 
-multiclass NeonI_Op_High<SDPatternOperator op>
-{
+multiclass NeonI_Op_High<SDPatternOperator op> {
   def _16B : PatFrag<(ops node:$Rn, node:$Rm),
                      (op (v8i8 (Neon_High16B node:$Rn)), (v8i8 (Neon_High16B node:$Rm)))>;
   def _8H  : PatFrag<(ops node:$Rn, node:$Rm),
                      (op (v4i16 (Neon_High8H node:$Rn)), (v4i16 (Neon_High8H node:$Rm)))>;
   def _4S  : PatFrag<(ops node:$Rn, node:$Rm),
                      (op (v2i32 (Neon_High4S node:$Rn)), (v2i32 (Neon_High4S node:$Rm)))>;
-
 }
 
 defm NI_sabdl_hi : NeonI_Op_High<int_arm_neon_vabds>;
@@ -2704,10 +2677,8 @@ defm NI_umull_hi : NeonI_Op_High<int_arm_neon_vmullu>;
 defm NI_qdmull_hi : NeonI_Op_High<int_arm_neon_vqdmull>;
 defm NI_pmull_hi : NeonI_Op_High<int_arm_neon_vmullp>;
 
-multiclass NeonI_3VDL_Abd_u<bit u, bits<4> opcode,
-                            string asmop, string opnode,
-                            bit Commutable = 0>
-{
+multiclass NeonI_3VDL_Abd_u<bit u, bits<4> opcode, string asmop, string opnode,
+                            bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _8h8b  : NeonI_3VDL_Ext<0b1, u, 0b00, opcode, asmop, "8h", "16b",
                                 !cast<PatFrag>(opnode # "_16B"),
@@ -2742,10 +2713,8 @@ class NeonI_3VDL_Aba<bit q, bit u, bits<2> size, bits<4> opcode,
   let Constraints = "$src = $Rd";
 }
 
-multiclass NeonI_3VDL_Aba_v1<bit u, bits<4> opcode,
-                             string asmop, SDPatternOperator opnode,
-                             SDPatternOperator subop>
-{
+multiclass NeonI_3VDL_Aba_v1<bit u, bits<4> opcode, string asmop,
+                             SDPatternOperator opnode, SDPatternOperator subop>{
   def _8h8b : NeonI_3VDL_Aba<0b0, u, 0b00, opcode, asmop, "8h", "8b",
                              opnode, subop, VPR64, v8i16, v8i8, v8i8>;
   def _4s4h : NeonI_3VDL_Aba<0b0, u, 0b01, opcode, asmop, "4s", "4h",
@@ -2759,10 +2728,8 @@ defm SABALvvv :  NeonI_3VDL_Aba_v1<0b0, 0b0101, "sabal",
 defm UABALvvv :  NeonI_3VDL_Aba_v1<0b1, 0b0101, "uabal",
                                    add, int_arm_neon_vabdu>;
 
-multiclass NeonI_3VDL2_Aba_v1<bit u, bits<4> opcode,
-                              string asmop, SDPatternOperator opnode,
-                              string subop>
-{
+multiclass NeonI_3VDL2_Aba_v1<bit u, bits<4> opcode, string asmop,
+                              SDPatternOperator opnode, string subop> {
   def _8h8b : NeonI_3VDL_Aba<0b1, u, 0b00, opcode, asmop, "8h", "16b",
                              opnode, !cast<PatFrag>(subop # "_16B"), 
                              VPR128, v8i16, v16i8, v8i8>;
@@ -2780,10 +2747,8 @@ defm UABAL2vvv :  NeonI_3VDL2_Aba_v1<0b1, 0b0101, "uabal2", add,
                                      "NI_uabdl_hi">;
 
 // Long pattern with 2 operands
-multiclass NeonI_3VDL_2Op<bit u, bits<4> opcode,
-                          string asmop, SDPatternOperator opnode,
-                          bit Commutable = 0>
-{
+multiclass NeonI_3VDL_2Op<bit u, bits<4> opcode, string asmop,
+                          SDPatternOperator opnode, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _8h8b : NeonI_3VD_2Op<0b0, u, 0b00, opcode, asmop, "8h", "8b",
                               opnode, VPR128, VPR64, v8i16, v8i8>;
@@ -2808,12 +2773,8 @@ class NeonI_3VDL2_2Op_mull<bit q, bit u, bits<2> size, bits<4> opcode,
                     (ResTy (opnode (OpTy VPR128:$Rn), (OpTy VPR128:$Rm))))],
                  NoItinerary>;
 
-
-multiclass NeonI_3VDL2_2Op_mull_v1<bit u, bits<4> opcode,
-                                   string asmop, 
-                                   string opnode,
-                                   bit Commutable = 0>
-{
+multiclass NeonI_3VDL2_2Op_mull_v1<bit u, bits<4> opcode, string asmop,
+                                   string opnode, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _8h16b : NeonI_3VDL2_2Op_mull<0b1, u, 0b00, opcode, asmop, "8h", "16b",
                                       !cast<PatFrag>(opnode # "_16B"),
@@ -2848,9 +2809,8 @@ class NeonI_3VDL_3Op<bit q, bit u, bits<2> size, bits<4> opcode,
   let Constraints = "$src = $Rd";
 }
 
-multiclass NeonI_3VDL_3Op_v1<bit u, bits<4> opcode,
-                             string asmop, SDPatternOperator opnode>
-{
+multiclass NeonI_3VDL_3Op_v1<bit u, bits<4> opcode, string asmop,
+                             SDPatternOperator opnode> {
   def _8h8b : NeonI_3VDL_3Op<0b0, u, 0b00, opcode, asmop, "8h", "8b",
                              opnode, v8i16, v8i8>;
   def _4s4h : NeonI_3VDL_3Op<0b0, u, 0b01, opcode, asmop, "4s", "4h",
@@ -2897,11 +2857,8 @@ class NeonI_3VDL2_3Op_mlas<bit q, bit u, bits<2> size, bits<4> opcode,
   let Constraints = "$src = $Rd";
 }
 
-multiclass NeonI_3VDL2_3Op_mlas_v1<bit u, bits<4> opcode,
-                                   string asmop, 
-                                   SDPatternOperator subop,
-                                   string opnode>
-{
+multiclass NeonI_3VDL2_3Op_mlas_v1<bit u, bits<4> opcode, string asmop, 
+                                   SDPatternOperator subop, string opnode> {
   def _8h16b : NeonI_3VDL2_3Op_mlas<0b1, u, 0b00, opcode, asmop, "8h", "16b",
                                     subop, !cast<PatFrag>(opnode # "_16B"),
                                     VPR128, v8i16, v16i8>;
@@ -2923,9 +2880,8 @@ defm SMLSL2vvv :  NeonI_3VDL2_3Op_mlas_v1<0b0, 0b1010, "smlsl2",
 defm UMLSL2vvv :  NeonI_3VDL2_3Op_mlas_v1<0b1, 0b1010, "umlsl2",
                                           sub, "NI_umull_hi">;
 
-multiclass NeonI_3VDL_qdmlal_3Op_v2<bit u, bits<4> opcode,
-                                    string asmop, SDPatternOperator opnode>
-{
+multiclass NeonI_3VDL_qdmlal_3Op_v2<bit u, bits<4> opcode, string asmop,
+                                    SDPatternOperator opnode> {
   def _4s4h : NeonI_3VDL2_3Op_mlas<0b0, u, 0b01, opcode, asmop, "4s", "4h",
                                    opnode, int_arm_neon_vqdmull,
                                    VPR64, v4i32, v4i16>;
@@ -2939,10 +2895,8 @@ defm SQDMLALvvv : NeonI_3VDL_qdmlal_3Op_v2<0b0, 0b1001, "sqdmlal",
 defm SQDMLSLvvv : NeonI_3VDL_qdmlal_3Op_v2<0b0, 0b1011, "sqdmlsl",
                                            int_arm_neon_vqsubs>;
 
-multiclass NeonI_3VDL_v2<bit u, bits<4> opcode,
-                         string asmop, SDPatternOperator opnode,
-                         bit Commutable = 0>
-{
+multiclass NeonI_3VDL_v2<bit u, bits<4> opcode, string asmop,
+                         SDPatternOperator opnode, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _4s4h : NeonI_3VD_2Op<0b0, u, 0b01, opcode, asmop, "4s", "4h",
                               opnode, VPR128, VPR64, v4i32, v4i16>;
@@ -2954,11 +2908,8 @@ multiclass NeonI_3VDL_v2<bit u, bits<4> opcode,
 defm SQDMULLvvv : NeonI_3VDL_v2<0b0, 0b1101, "sqdmull",
                                 int_arm_neon_vqdmull, 1>;
 
-multiclass NeonI_3VDL2_2Op_mull_v2<bit u, bits<4> opcode,
-                                   string asmop, 
-                                   string opnode,
-                                   bit Commutable = 0>
-{
+multiclass NeonI_3VDL2_2Op_mull_v2<bit u, bits<4> opcode, string asmop, 
+                                   string opnode, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _4s8h : NeonI_3VDL2_2Op_mull<0b1, u, 0b01, opcode, asmop, "4s", "8h",
                                      !cast<PatFrag>(opnode # "_8H"),
@@ -2972,10 +2923,8 @@ multiclass NeonI_3VDL2_2Op_mull_v2<bit u, bits<4> opcode,
 defm SQDMULL2vvv : NeonI_3VDL2_2Op_mull_v2<0b0, 0b1101, "sqdmull2", 
                                            "NI_qdmull_hi", 1>;
 
-multiclass NeonI_3VDL2_3Op_qdmlal_v2<bit u, bits<4> opcode,
-                                     string asmop, 
-                                     SDPatternOperator opnode>
-{
+multiclass NeonI_3VDL2_3Op_qdmlal_v2<bit u, bits<4> opcode, string asmop, 
+                                     SDPatternOperator opnode> {
   def _4s8h : NeonI_3VDL2_3Op_mlas<0b1, u, 0b01, opcode, asmop, "4s", "8h",
                                    opnode, NI_qdmull_hi_8H,
                                    VPR128, v4i32, v8i16>;
@@ -2989,10 +2938,8 @@ defm SQDMLAL2vvv : NeonI_3VDL2_3Op_qdmlal_v2<0b0, 0b1001, "sqdmlal2",
 defm SQDMLSL2vvv : NeonI_3VDL2_3Op_qdmlal_v2<0b0, 0b1011, "sqdmlsl2",
                                              int_arm_neon_vqsubs>;
 
-multiclass NeonI_3VDL_v3<bit u, bits<4> opcode,
-                                   string asmop, SDPatternOperator opnode,
-                                   bit Commutable = 0>
-{
+multiclass NeonI_3VDL_v3<bit u, bits<4> opcode, string asmop,
+                         SDPatternOperator opnode, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _8h8b : NeonI_3VD_2Op<0b0, u, 0b00, opcode, asmop, "8h", "8b",
                               opnode, VPR128, VPR64, v8i16, v8i8>;
@@ -3001,11 +2948,8 @@ multiclass NeonI_3VDL_v3<bit u, bits<4> opcode,
 
 defm PMULLvvv : NeonI_3VDL_v3<0b0, 0b1110, "pmull", int_arm_neon_vmullp, 1>;
 
-multiclass NeonI_3VDL2_2Op_mull_v3<bit u, bits<4> opcode,
-                                   string asmop, 
-                                   string opnode,
-                                   bit Commutable = 0>
-{
+multiclass NeonI_3VDL2_2Op_mull_v3<bit u, bits<4> opcode, string asmop, 
+                                   string opnode, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _8h16b : NeonI_3VDL2_2Op_mull<0b1, u, 0b00, opcode, asmop, "8h", "16b",
                                       !cast<PatFrag>(opnode # "_16B"),
@@ -3013,8 +2957,8 @@ multiclass NeonI_3VDL2_2Op_mull_v3<bit u, bits<4> opcode,
   }
 }
 
-defm PMULL2vvv : NeonI_3VDL2_2Op_mull_v3<0b0, 0b1110, "pmull2",
-                                         "NI_pmull_hi", 1>;
+defm PMULL2vvv : NeonI_3VDL2_2Op_mull_v3<0b0, 0b1110, "pmull2", "NI_pmull_hi",
+                                         1>;
 
 // End of implementation for instruction class (3V Diff)
 
@@ -3149,66 +3093,63 @@ def ST1_4V_1D : NeonI_STVList<0, 0b0010, 0b11, VQuad1D_operand, "st1">;
 class NeonI_Scalar3Same_D_size<bit u, bits<5> opcode, string asmop>
   : NeonI_Scalar3Same<u, 0b11, opcode,
                 (outs FPR64:$Rd), (ins FPR64:$Rn, FPR64:$Rm),
-                !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
                 [],
                 NoItinerary>;
 
 multiclass NeonI_Scalar3Same_HS_sizes<bit u, bits<5> opcode,
-                                      string asmop, bit Commutable = 0>
-{
+                                      string asmop, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def hhh : NeonI_Scalar3Same<u, 0b01, opcode,
                                 (outs FPR16:$Rd), (ins FPR16:$Rn, FPR16:$Rm),
-                                !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
                                 [],
                                 NoItinerary>;
     def sss : NeonI_Scalar3Same<u, 0b10, opcode,
                                 (outs FPR32:$Rd), (ins FPR32:$Rn, FPR32:$Rm),
-                                !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
                                 [],
                                 NoItinerary>;
   }
 }
 
 multiclass NeonI_Scalar3Same_SD_sizes<bit u, bit size_high, bits<5> opcode,
-                                      string asmop, bit Commutable = 0>
-{
+                                      string asmop, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def sss : NeonI_Scalar3Same<u, {size_high, 0b0}, opcode,
                                 (outs FPR32:$Rd), (ins FPR32:$Rn, FPR32:$Rm),
-                                !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
                                 [],
                                 NoItinerary>;
     def ddd : NeonI_Scalar3Same<u, {size_high, 0b1}, opcode,
                                 (outs FPR64:$Rd), (ins FPR64:$Rn, FPR64:$Rm),
-                                !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
                                 [],
                                 NoItinerary>;
   }
 }
 
 multiclass NeonI_Scalar3Same_BHSD_sizes<bit u, bits<5> opcode,
-                                        string asmop, bit Commutable = 0>
-{
+                                        string asmop, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def bbb : NeonI_Scalar3Same<u, 0b00, opcode,
                                 (outs FPR8:$Rd), (ins FPR8:$Rn, FPR8:$Rm),
-                                !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
                                 [],
                                 NoItinerary>;
     def hhh : NeonI_Scalar3Same<u, 0b01, opcode,
                                 (outs FPR16:$Rd), (ins FPR16:$Rn, FPR16:$Rm),
-                                !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
                                 [],
                                 NoItinerary>;
     def sss : NeonI_Scalar3Same<u, 0b10, opcode,
                                 (outs FPR32:$Rd), (ins FPR32:$Rn, FPR32:$Rm),
-                                !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
                                 [],
                                 NoItinerary>;
     def ddd : NeonI_Scalar3Same<u, 0b11, opcode,
                                (outs FPR64:$Rd), (ins FPR64:$Rn, FPR64:$Rm),
-                               !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                               !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
                                [],
                                NoItinerary>;
   }
@@ -3273,12 +3214,12 @@ multiclass Neon_Scalar3Same_cmp_SD_size_patterns<SDPatternOperator opnode,
 multiclass NeonI_Scalar3Diff_HS_size<bit u, bits<4> opcode, string asmop> {
   def shh : NeonI_Scalar3Diff<u, 0b01, opcode,
                               (outs FPR32:$Rd), (ins FPR16:$Rn, FPR16:$Rm),
-                              !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                              !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
                               [],
                               NoItinerary>;
   def dss : NeonI_Scalar3Diff<u, 0b10, opcode,
                               (outs FPR64:$Rd), (ins FPR32:$Rn, FPR32:$Rm),
-                              !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                              !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
                               [],
                               NoItinerary>;
 }
@@ -3287,12 +3228,12 @@ multiclass NeonI_Scalar3Diff_ml_HS_size<bit u, bits<4> opcode, string asmop> {
   let Constraints = "$Src = $Rd" in {
     def shh : NeonI_Scalar3Diff<u, 0b01, opcode,
                        (outs FPR32:$Rd), (ins FPR32:$Src, FPR16:$Rn, FPR16:$Rm),
-                       !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                       !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
                        [],
                        NoItinerary>;
     def dss : NeonI_Scalar3Diff<u, 0b10, opcode,
                        (outs FPR64:$Rd), (ins FPR64:$Src, FPR32:$Rn, FPR32:$Rm),
-                       !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                       !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
                        [],
                        NoItinerary>;
   }
@@ -3322,18 +3263,18 @@ multiclass NeonI_Scalar2SameMisc_SD_size<bit u, bit size_high, bits<5> opcode,
                                          string asmop> {
   def ss : NeonI_Scalar2SameMisc<u, {size_high, 0b0}, opcode,
                           (outs FPR32:$Rd), (ins FPR32:$Rn),
-                          !strconcat(asmop, " $Rd, $Rn"),
+                          !strconcat(asmop, "\t$Rd, $Rn"),
                           [], NoItinerary>;
   def dd : NeonI_Scalar2SameMisc<u, {size_high, 0b1}, opcode,
                           (outs FPR64:$Rd), (ins FPR64:$Rn),
-                          !strconcat(asmop, " $Rd, $Rn"),
+                          !strconcat(asmop, "\t$Rd, $Rn"),
                           [], NoItinerary>;
 }
 
 multiclass NeonI_Scalar2SameMisc_D_size<bit u, bits<5> opcode, string asmop> {
   def dd: NeonI_Scalar2SameMisc<u, 0b11, opcode,
                          (outs FPR64:$Rd), (ins FPR64:$Rn),
-                         !strconcat(asmop, " $Rd, $Rn"),
+                         !strconcat(asmop, "\t$Rd, $Rn"),
                          [], NoItinerary>;
 }
 
@@ -3341,15 +3282,15 @@ multiclass NeonI_Scalar2SameMisc_BHSD_size<bit u, bits<5> opcode, string asmop>
   : NeonI_Scalar2SameMisc_D_size<u, opcode, asmop> {
   def bb : NeonI_Scalar2SameMisc<u, 0b00, opcode,
                           (outs FPR8:$Rd), (ins FPR8:$Rn),
-                          !strconcat(asmop, " $Rd, $Rn"),
+                          !strconcat(asmop, "\t$Rd, $Rn"),
                           [], NoItinerary>;
   def hh : NeonI_Scalar2SameMisc<u, 0b01, opcode,
                           (outs FPR16:$Rd), (ins FPR16:$Rn),
-                          !strconcat(asmop, " $Rd, $Rn"),
+                          !strconcat(asmop, "\t$Rd, $Rn"),
                           [], NoItinerary>;
   def ss : NeonI_Scalar2SameMisc<u, 0b10, opcode,
                           (outs FPR32:$Rd), (ins FPR32:$Rn),
-                          !strconcat(asmop, " $Rd, $Rn"),
+                          !strconcat(asmop, "\t$Rd, $Rn"),
                           [], NoItinerary>;
 }
 
@@ -3357,15 +3298,15 @@ multiclass NeonI_Scalar2SameMisc_narrow_HSD_size<bit u, bits<5> opcode,
                                                  string asmop> {
   def bh : NeonI_Scalar2SameMisc<u, 0b00, opcode,
                           (outs FPR8:$Rd), (ins FPR16:$Rn),
-                          !strconcat(asmop, " $Rd, $Rn"),
+                          !strconcat(asmop, "\t$Rd, $Rn"),
                           [], NoItinerary>;
   def hs : NeonI_Scalar2SameMisc<u, 0b01, opcode,
                           (outs FPR16:$Rd), (ins FPR32:$Rn),
-                          !strconcat(asmop, " $Rd, $Rn"),
+                          !strconcat(asmop, "\t$Rd, $Rn"),
                           [], NoItinerary>;
   def sd : NeonI_Scalar2SameMisc<u, 0b10, opcode,
                           (outs FPR32:$Rd), (ins FPR64:$Rn),
-                          !strconcat(asmop, " $Rd, $Rn"),
+                          !strconcat(asmop, "\t$Rd, $Rn"),
                           [], NoItinerary>;
 }
 
@@ -3375,19 +3316,19 @@ multiclass NeonI_Scalar2SameMisc_accum_BHSD_size<bit u, bits<5> opcode,
   let Constraints = "$Src = $Rd" in {
     def bb : NeonI_Scalar2SameMisc<u, 0b00, opcode,
                             (outs FPR8:$Rd), (ins FPR8:$Src, FPR8:$Rn),
-                            !strconcat(asmop, " $Rd, $Rn"),
+                            !strconcat(asmop, "\t$Rd, $Rn"),
                             [], NoItinerary>;
     def hh : NeonI_Scalar2SameMisc<u, 0b01, opcode,
                             (outs FPR16:$Rd), (ins FPR16:$Src, FPR16:$Rn),
-                            !strconcat(asmop, " $Rd, $Rn"),
+                            !strconcat(asmop, "\t$Rd, $Rn"),
                             [], NoItinerary>;
     def ss : NeonI_Scalar2SameMisc<u, 0b10, opcode,
                             (outs FPR32:$Rd), (ins FPR32:$Src, FPR32:$Rn),
-                            !strconcat(asmop, " $Rd, $Rn"),
+                            !strconcat(asmop, "\t$Rd, $Rn"),
                             [], NoItinerary>;
     def dd: NeonI_Scalar2SameMisc<u, 0b11, opcode,
                            (outs FPR64:$Rd), (ins FPR64:$Src, FPR64:$Rn),
-                           !strconcat(asmop, " $Rd, $Rn"),
+                           !strconcat(asmop, "\t$Rd, $Rn"),
                            [], NoItinerary>;
   }
 }
@@ -3414,7 +3355,7 @@ multiclass Neon_Scalar2SameMisc_SD_size_patterns<SDPatternOperator opnode,
 class NeonI_Scalar2SameMisc_cmpz_D_size<bit u, bits<5> opcode, string asmop>
   : NeonI_Scalar2SameMisc<u, 0b11, opcode,
                           (outs FPR64:$Rd), (ins FPR64:$Rn, neon_uimm0:$Imm),
-                          !strconcat(asmop, " $Rd, $Rn, $Imm"),
+                          !strconcat(asmop, "\t$Rd, $Rn, $Imm"),
                           [],
                           NoItinerary>;
 
@@ -3422,12 +3363,12 @@ multiclass NeonI_Scalar2SameMisc_cmpz_SD_size<bit u, bits<5> opcode,
                                               string asmop> {
   def ssi : NeonI_Scalar2SameMisc<u, 0b10, opcode,
                            (outs FPR32:$Rd), (ins FPR32:$Rn, fpz32:$FPImm),
-                           !strconcat(asmop, " $Rd, $Rn, $FPImm"),
+                           !strconcat(asmop, "\t$Rd, $Rn, $FPImm"),
                            [],
                            NoItinerary>;
   def ddi : NeonI_Scalar2SameMisc<u, 0b11, opcode,
                            (outs FPR64:$Rd), (ins FPR64:$Rn, fpz64movi:$FPImm),
-                           !strconcat(asmop, " $Rd, $Rn, $FPImm"),
+                           !strconcat(asmop, "\t$Rd, $Rn, $FPImm"),
                            [],
                            NoItinerary>;
 }
@@ -4118,7 +4059,7 @@ multiclass NeonI_ScalarPair_D_sizes<bit u, bit size, bits<5> opcode,
   let isCommutable = Commutable in {
     def _D_2D : NeonI_ScalarPair<u, {size, 0b1}, opcode,
                                 (outs FPR64:$Rd), (ins VPR128:$Rn),
-                                !strconcat(asmop, " $Rd, $Rn.2d"),
+                                !strconcat(asmop, "\t$Rd, $Rn.2d"),
                                 [],
                                 NoItinerary>;
   }
@@ -4130,7 +4071,7 @@ multiclass NeonI_ScalarPair_SD_sizes<bit u, bit size, bits<5> opcode,
   let isCommutable = Commutable in {
     def _S_2S : NeonI_ScalarPair<u, {size, 0b0}, opcode,
                                 (outs FPR32:$Rd), (ins VPR64:$Rn),
-                                !strconcat(asmop, " $Rd, $Rn.2s"),
+                                !strconcat(asmop, "\t$Rd, $Rn.2s"),
                                 [],
                                 NoItinerary>;
   }
@@ -4374,8 +4315,7 @@ class NI_2VE<bit q, bit u, bits<2> size, bits<4> opcode,
   let Constraints = "$src = $Rd";
 }
 
-multiclass NI_2VE_v1<bit u, bits<4> opcode, string asmop>
-{
+multiclass NI_2VE_v1<bit u, bits<4> opcode, string asmop> {
   // vector register class for element is always 128-bit to cover the max index
   def _2s4s : NI_2VE<0b0, u, 0b10, opcode, asmop, "2s", "2s", "s",
                      neon_uimm2_bare, VPR64, VPR64, VPR128> {
@@ -4492,8 +4432,7 @@ class NI_2VE_2op<bit q, bit u, bits<2> size, bits<4> opcode,
   bits<5> Re;
 }
 
-multiclass NI_2VE_v1_2op<bit u, bits<4> opcode, string asmop>
-{
+multiclass NI_2VE_v1_2op<bit u, bits<4> opcode, string asmop> {
   // vector register class for element is always 128-bit to cover the max index
   def _2s4s : NI_2VE_2op<0b0, u, 0b10, opcode, asmop, "2s", "2s", "s",
                          neon_uimm2_bare, VPR64, VPR64, VPR128> {
@@ -4550,8 +4489,7 @@ class NI_2VE_mul_lane<Instruction INST, Operand OpImm, SDPatternOperator op,
         (INST OpVPR:$Rn, 
           (SUBREG_TO_REG (i64 0), EleOpVPR:$Re, sub_64), OpImm:$Index)>;
 
-multiclass NI_2VE_mul_v1_pat<string subop, SDPatternOperator op>
-{
+multiclass NI_2VE_mul_v1_pat<string subop, SDPatternOperator op> {
   def : NI_2VE_mul_laneq<!cast<Instruction>(subop # "_2s4s"), neon_uimm2_bare,
                          op, VPR64, VPR128, v2i32, v2i32, v4i32,
                          BinOpFrag<(Neon_vduplane
@@ -4599,8 +4537,7 @@ defm SQRDMULH_lane_v1 : NI_2VE_mul_v1_pat<"SQRDMULHve", int_arm_neon_vqrdmulh>;
 
 // Variant 2
 
-multiclass NI_2VE_v2_2op<bit u, bits<4> opcode, string asmop>
-{
+multiclass NI_2VE_v2_2op<bit u, bits<4> opcode, string asmop> {
   // vector register class for element is always 128-bit to cover the max index
   def _2s4s : NI_2VE_2op<0b0, u, 0b10, opcode, asmop, "2s", "2s", "s",
                          neon_uimm2_bare, VPR64, VPR64, VPR128> {
@@ -4638,8 +4575,7 @@ class NI_2VE_mul_lane_2d<Instruction INST, Operand OpImm, SDPatternOperator op,
         (INST OpVPR:$Rn, 
           (SUBREG_TO_REG (i64 0), EleOpVPR:$Re, sub_64), 0)>;
 
-multiclass NI_2VE_mul_v2_pat<string subop, SDPatternOperator op>
-{
+multiclass NI_2VE_mul_v2_pat<string subop, SDPatternOperator op> {
   def : NI_2VE_mul_laneq<!cast<Instruction>(subop # "_2s4s"), neon_uimm2_bare,
                          op, VPR64, VPR128, v2f32, v2f32, v4f32,
                          BinOpFrag<(Neon_vduplane
@@ -4676,8 +4612,7 @@ defm FMULX_lane_v2 : NI_2VE_mul_v2_pat<"FMULXve", int_aarch64_neon_vmulx>;
 // The followings are patterns using fma
 // -ffp-contract=fast generates fma
 
-multiclass NI_2VE_v2<bit u, bits<4> opcode, string asmop>
-{
+multiclass NI_2VE_v2<bit u, bits<4> opcode, string asmop> {
   // vector register class for element is always 128-bit to cover the max index
   def _2s4s : NI_2VE<0b0, u, 0b10, opcode, asmop, "2s", "2s", "s",
                      neon_uimm2_bare, VPR64, VPR64, VPR128> {
@@ -4737,8 +4672,7 @@ class NI_2VEswap_lane_2d2d<Instruction INST, Operand OpImm,
           (SUBREG_TO_REG (i64 0), OpVPR:$Re, sub_64), 0)>;
 
 
-multiclass NI_2VE_fma_v2_pat<string subop, SDPatternOperator op>
-{
+multiclass NI_2VE_fma_v2_pat<string subop, SDPatternOperator op> {
   def : NI_2VEswap_laneq<!cast<Instruction>(subop # "_2s4s"),
                          neon_uimm2_bare, op, VPR64, VPR128, v2f32, v4f32,
                          BinOpFrag<(Neon_vduplane
@@ -4845,8 +4779,7 @@ defm FMLS_lane_v2_s : NI_2VE_fms_v2_pat<"FMLSvve", fma>;
 // E.g. SMLAL : 4S/4H/H (v0-v15), 2D/2S/S
 //      SMLAL2: 4S/8H/H (v0-v15), 2D/4S/S
 
-multiclass NI_2VE_v3<bit u, bits<4> opcode, string asmop>
-{
+multiclass NI_2VE_v3<bit u, bits<4> opcode, string asmop> {
   // vector register class for element is always 128-bit to cover the max index
   def _2d2s : NI_2VE<0b0, u, 0b10, opcode, asmop, "2d", "2s", "s",
                      neon_uimm2_bare, VPR128, VPR64, VPR128> {
@@ -4887,8 +4820,7 @@ defm UMLSLvve : NI_2VE_v3<0b1, 0b0110, "umlsl">;
 defm SQDMLALvve : NI_2VE_v3<0b0, 0b0011, "sqdmlal">;
 defm SQDMLSLvve : NI_2VE_v3<0b0, 0b0111, "sqdmlsl">;
 
-multiclass NI_2VE_v3_2op<bit u, bits<4> opcode, string asmop>
-{
+multiclass NI_2VE_v3_2op<bit u, bits<4> opcode, string asmop> {
   // vector register class for element is always 128-bit to cover the max index
   def _2d2s : NI_2VE_2op<0b0, u, 0b10, opcode, asmop, "2d", "2s", "s",
                          neon_uimm2_bare, VPR128, VPR64, VPR128> {
@@ -4947,8 +4879,7 @@ class NI_2VEL2_lane<Instruction INST, Operand OpImm, SDPatternOperator op,
         (INST VPR128:$src, VPR128:$Rn, 
           (SUBREG_TO_REG (i64 0), EleOpVPR:$Re, sub_64), OpImm:$Index)>;
 
-multiclass NI_2VEL_v3_pat<string subop, SDPatternOperator op>
-{
+multiclass NI_2VEL_v3_pat<string subop, SDPatternOperator op> {
   def : NI_2VE_laneq<!cast<Instruction>(subop # "_4s4h"), neon_uimm3_bare,
                      op, VPR128, VPR64, VPR128Lo, v4i32, v4i16, v8i16,
                      BinOpFrag<(Neon_vduplane
@@ -5014,8 +4945,7 @@ class NI_2VEL2_mul_lane<Instruction INST, Operand OpImm, SDPatternOperator op,
         (INST VPR128:$Rn, 
           (SUBREG_TO_REG (i64 0), EleOpVPR:$Re, sub_64), OpImm:$Index)>;
 
-multiclass NI_2VEL_mul_v3_pat<string subop, SDPatternOperator op>
-{
+multiclass NI_2VEL_mul_v3_pat<string subop, SDPatternOperator op> {
   def : NI_2VE_mul_laneq<!cast<Instruction>(subop # "_4s4h"), neon_uimm3_bare,
                          op, VPR64, VPR128Lo, v4i32, v4i16, v8i16,
                          BinOpFrag<(Neon_vduplane
@@ -5060,8 +4990,7 @@ defm SMULL_lane_v3 : NI_2VEL_mul_v3_pat<"SMULLve", int_arm_neon_vmulls>;
 defm UMULL_lane_v3 : NI_2VEL_mul_v3_pat<"UMULLve", int_arm_neon_vmullu>;
 defm SQDMULL_lane_v3 : NI_2VEL_mul_v3_pat<"SQDMULLve", int_arm_neon_vqdmull>;
 
-multiclass NI_qdma<SDPatternOperator op>
-{
+multiclass NI_qdma<SDPatternOperator op> {
   def _4s : PatFrag<(ops node:$Ra, node:$Rn, node:$Rm),
                     (op node:$Ra,
                       (v4i32 (int_arm_neon_vqdmull node:$Rn, node:$Rm)))>;
@@ -5074,8 +5003,7 @@ multiclass NI_qdma<SDPatternOperator op>
 defm Neon_qdmlal : NI_qdma<int_arm_neon_vqadds>;
 defm Neon_qdmlsl : NI_qdma<int_arm_neon_vqsubs>;
 
-multiclass NI_2VEL_v3_qdma_pat<string subop, string op>
-{
+multiclass NI_2VEL_v3_qdma_pat<string subop, string op> {
   def : NI_2VE_laneq<!cast<Instruction>(subop # "_4s4h"), neon_uimm3_bare,
                      !cast<PatFrag>(op # "_4s"), VPR128, VPR64, VPR128Lo,
                      v4i32, v4i16, v8i16,
