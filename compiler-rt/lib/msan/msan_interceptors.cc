@@ -120,6 +120,16 @@ INTERCEPTOR(void *, mempcpy, void *dest, const void *src, SIZE_T n) {
   return (char *)__msan_memcpy(dest, src, n) + n;
 }
 
+INTERCEPTOR(void *, memccpy, void *dest, const void *src, int c, SIZE_T n) {
+  ENSURE_MSAN_INITED();
+  void *res = REAL(memccpy)(dest, src, c, n);
+  CHECK(!res || (res >= dest && res <= (char *)dest + n));
+  SIZE_T sz = res ? (char *)res - (char *)dest : n;
+  CHECK_UNPOISONED(src, sz);
+  __msan_unpoison(dest, sz);
+  return res;
+}
+
 INTERCEPTOR(void *, memmove, void *dest, const void *src, SIZE_T n) {
   return __msan_memmove(dest, src, n);
 }
@@ -1428,6 +1438,7 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(fread_unlocked);
   INTERCEPT_FUNCTION(readlink);
   INTERCEPT_FUNCTION(memcpy);
+  INTERCEPT_FUNCTION(memccpy);
   INTERCEPT_FUNCTION(mempcpy);
   INTERCEPT_FUNCTION(memset);
   INTERCEPT_FUNCTION(memmove);

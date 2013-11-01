@@ -1318,6 +1318,53 @@ TEST(MemorySanitizer, memmove) {
   EXPECT_POISONED(y[1]);
 }
 
+TEST(MemorySanitizer, memccpy_nomatch) {
+  char* x = new char[5];
+  char* y = new char[5];
+  strcpy(x, "abc");
+  memccpy(y, x, 'd', 4);
+  EXPECT_NOT_POISONED(y[0]);
+  EXPECT_NOT_POISONED(y[1]);
+  EXPECT_NOT_POISONED(y[2]);
+  EXPECT_NOT_POISONED(y[3]);
+  EXPECT_POISONED(y[4]);
+  delete[] x;
+  delete[] y;
+}
+
+TEST(MemorySanitizer, memccpy_match) {
+  char* x = new char[5];
+  char* y = new char[5];
+  strcpy(x, "abc");
+  memccpy(y, x, 'b', 4);
+  EXPECT_NOT_POISONED(y[0]);
+  EXPECT_NOT_POISONED(y[1]);
+  EXPECT_POISONED(y[2]);
+  EXPECT_POISONED(y[3]);
+  EXPECT_POISONED(y[4]);
+  delete[] x;
+  delete[] y;
+}
+
+TEST(MemorySanitizer, memccpy_nomatch_positive) {
+  char* x = new char[5];
+  char* y = new char[5];
+  strcpy(x, "abc");
+  EXPECT_UMR(memccpy(y, x, 'd', 5));
+  delete[] x;
+  delete[] y;
+}
+
+TEST(MemorySanitizer, memccpy_match_positive) {
+  char* x = new char[5];
+  char* y = new char[5];
+  x[0] = 'a';
+  x[2] = 'b';
+  EXPECT_UMR(memccpy(y, x, 'b', 5));
+  delete[] x;
+  delete[] y;
+}
+
 TEST(MemorySanitizer, bcopy) {
   char* x = new char[2];
   char* y = new char[2];
