@@ -6785,7 +6785,7 @@ void SelectionDAGBuilder::visitStackmap(const CallInst &CI) {
   SDNode *Call = CallEnd->getOperand(0).getNode();
   bool hasGlue = Call->getGluedNode();
 
-  assert(Call->getNumOperands() == hasGlue ? 2 : 1 &&
+  assert(Call->getNumOperands() == (hasGlue ? 2 : 1) &&
          "Unexpected extra stackmap call arguments.");
 
   // Replace the target specific call node with the stackmap intrinsic.
