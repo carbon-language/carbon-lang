@@ -63,6 +63,8 @@ bool MCExternalSymbolizer::tryAddingSymbolicOperand(MCInst &MI,
     }
     if(ReferenceType == LLVMDisassembler_ReferenceType_Out_SymbolStub)
       cStream << "symbol stub for: " << ReferenceName;
+    else if(ReferenceType == LLVMDisassembler_ReferenceType_Out_Objc_Message)
+      cStream << "Objc message: " << ReferenceName;
     if (!Name && !IsBranch)
       return false;
   }
@@ -132,6 +134,8 @@ bool MCExternalSymbolizer::tryAddingSymbolicOperand(MCInst &MI,
 // literal pool's entry if the referenced address is that of a symbol. Or it
 // will return a pointer to a literal 'C' string if the referenced address of
 // the literal pool's entry is an address into a section with C string literals.
+// Or if the reference is to an Objective-C data structure it will return a
+// specific reference type for it and a string.
 void MCExternalSymbolizer::tryAddingPcLoadReferenceComment(raw_ostream &cStream,
                                                            int64_t Value,
                                                            uint64_t Address) {
@@ -139,9 +143,26 @@ void MCExternalSymbolizer::tryAddingPcLoadReferenceComment(raw_ostream &cStream,
     uint64_t ReferenceType = LLVMDisassembler_ReferenceType_In_PCrel_Load;
     const char *ReferenceName;
     (void)SymbolLookUp(DisInfo, Value, &ReferenceType, Address, &ReferenceName);
-    if(ReferenceType == LLVMDisassembler_ReferenceType_Out_LitPool_SymAddr ||
-       ReferenceType == LLVMDisassembler_ReferenceType_Out_LitPool_CstrAddr)
-      cStream << "literal pool for: " << ReferenceName;
+    if(ReferenceType == LLVMDisassembler_ReferenceType_Out_LitPool_SymAddr)
+      cStream << "literal pool symbol address: " << ReferenceName;
+    else if(ReferenceType ==
+            LLVMDisassembler_ReferenceType_Out_LitPool_CstrAddr)
+      cStream << "literal pool for: \"" << ReferenceName << "\"";
+    else if(ReferenceType ==
+            LLVMDisassembler_ReferenceType_Out_Objc_CFString_Ref)
+      cStream << "Objc cfstring ref: @\"" << ReferenceName << "\"";
+    else if(ReferenceType ==
+            LLVMDisassembler_ReferenceType_Out_Objc_Message)
+      cStream << "Objc message: " << ReferenceName;
+    else if(ReferenceType ==
+            LLVMDisassembler_ReferenceType_Out_Objc_Message_Ref)
+      cStream << "Objc message ref: " << ReferenceName;
+    else if(ReferenceType ==
+            LLVMDisassembler_ReferenceType_Out_Objc_Selector_Ref)
+      cStream << "Objc selector ref: " << ReferenceName;
+    else if(ReferenceType ==
+            LLVMDisassembler_ReferenceType_Out_Objc_Class_Ref)
+      cStream << "Objc class ref: " << ReferenceName;
   }
 }
 
