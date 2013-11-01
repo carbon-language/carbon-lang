@@ -1537,6 +1537,7 @@ TSAN_INTERCEPTOR(void*, freopen, char *path, char *mode, void *stream) {
 }
 
 TSAN_INTERCEPTOR(int, fclose, void *stream) {
+  // libc file streams can call user-supplied functions, see fopencookie.
   {
     SCOPED_TSAN_INTERCEPTOR(fclose, stream);
     if (stream) {
@@ -1549,6 +1550,7 @@ TSAN_INTERCEPTOR(int, fclose, void *stream) {
 }
 
 TSAN_INTERCEPTOR(uptr, fread, void *ptr, uptr size, uptr nmemb, void *f) {
+  // libc file streams can call user-supplied functions, see fopencookie.
   {
     SCOPED_TSAN_INTERCEPTOR(fread, ptr, size, nmemb, f);
     MemoryAccessRange(thr, pc, (uptr)ptr, size * nmemb, true);
@@ -1557,6 +1559,7 @@ TSAN_INTERCEPTOR(uptr, fread, void *ptr, uptr size, uptr nmemb, void *f) {
 }
 
 TSAN_INTERCEPTOR(uptr, fwrite, const void *p, uptr size, uptr nmemb, void *f) {
+  // libc file streams can call user-supplied functions, see fopencookie.
   {
     SCOPED_TSAN_INTERCEPTOR(fwrite, p, size, nmemb, f);
     MemoryAccessRange(thr, pc, (uptr)p, size * nmemb, false);
@@ -1565,7 +1568,10 @@ TSAN_INTERCEPTOR(uptr, fwrite, const void *p, uptr size, uptr nmemb, void *f) {
 }
 
 TSAN_INTERCEPTOR(int, fflush, void *stream) {
-  SCOPED_TSAN_INTERCEPTOR(fflush, stream);
+  // libc file streams can call user-supplied functions, see fopencookie.
+  {
+    SCOPED_TSAN_INTERCEPTOR(fflush, stream);
+  }
   return REAL(fflush)(stream);
 }
 
