@@ -1,5 +1,7 @@
 // RUN: %clang_cc1  -fsyntax-only -verify %s
 // rdar://11062080
+// RUN: %clang_cc1  -fsyntax-only -triple i386-apple-macosx10.9.0 -fobjc-runtime=macosx-fragile-10.9.0 -fobjc-subscripting-legacy-runtime -verify %s
+// rdar://15363492
 
 @interface NSNumber
 + (NSNumber *)numberWithChar:(char)value;

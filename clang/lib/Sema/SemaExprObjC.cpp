@@ -602,7 +602,7 @@ ExprResult Sema::BuildObjCSubscriptExpression(SourceLocation RB, Expr *BaseExpr,
                                         Expr *IndexExpr,
                                         ObjCMethodDecl *getterMethod,
                                         ObjCMethodDecl *setterMethod) {
-  assert(!LangOpts.ObjCRuntime.isSubscriptPointerArithmetic());
+  assert(!LangOpts.isSubscriptPointerArithmetic());
 
   // We can't get dependent types here; our callers should have
   // filtered them out.
