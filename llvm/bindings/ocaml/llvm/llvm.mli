@@ -2342,7 +2342,7 @@ module MemoryBuffer : sig
       raised. *)
   val of_file : string -> llmemorybuffer
   
-  (** [stdin ()] is the memory buffer containing the contents of standard input.
+  (** [of_stdin ()] is the memory buffer containing the contents of standard input.
       If standard input is empty, then [IoError msg] is raised. *)
   val of_stdin : unit -> llmemorybuffer
   
