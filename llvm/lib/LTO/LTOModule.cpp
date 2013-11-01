@@ -339,9 +339,6 @@ void LTOModule::addDefinedFunctionSymbol(const Function *f) {
 static bool canBeHidden(const GlobalValue *GV) {
   GlobalValue::LinkageTypes L = GV->getLinkage();
 
-  if (L == GlobalValue::LinkOnceODRAutoHideLinkage)
-    return true;
-
   if (L != GlobalValue::LinkOnceODRLinkage)
     return false;
 

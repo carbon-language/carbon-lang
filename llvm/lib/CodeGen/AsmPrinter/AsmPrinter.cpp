@@ -219,7 +219,6 @@ void AsmPrinter::EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
   case GlobalValue::CommonLinkage:
   case GlobalValue::LinkOnceAnyLinkage:
   case GlobalValue::LinkOnceODRLinkage:
-  case GlobalValue::LinkOnceODRAutoHideLinkage:
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::LinkerPrivateWeakLinkage:
@@ -227,10 +226,9 @@ void AsmPrinter::EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
       // .globl _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
 
+      bool CanBeHidden = false;
 
-      bool CanBeHidden = Linkage == GlobalValue::LinkOnceODRAutoHideLinkage;
-
-      if (!CanBeHidden && Linkage == GlobalValue::LinkOnceODRLinkage) {
+      if (Linkage == GlobalValue::LinkOnceODRLinkage) {
         if (GV->hasUnnamedAddr()) {
           CanBeHidden = true;
         } else {

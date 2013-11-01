@@ -274,7 +274,7 @@ typedef enum {
   LLVMLinkOnceAnyLinkage, /**< Keep one copy of function when linking (inline)*/
   LLVMLinkOnceODRLinkage, /**< Same, but only replaced by something
                             equivalent. */
-  LLVMLinkOnceODRAutoHideLinkage, /**< Like LinkOnceODR, but possibly hidden. */
+  LLVMLinkOnceODRAutoHideLinkage, /**< Obsolete */
   LLVMWeakAnyLinkage,     /**< Keep one copy of function when linking (weak) */
   LLVMWeakODRLinkage,     /**< Same, but only replaced by something
                             equivalent. */

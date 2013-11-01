@@ -267,13 +267,6 @@ linkage:
     ``linkonce_odr`` and ``weak_odr`` linkage types to indicate that the
     global will only be merged with equivalent globals. These linkage
     types are otherwise the same as their non-``odr`` versions.
-``linkonce_odr_auto_hide``
-    Similar to "``linkonce_odr``", but nothing in the translation unit
-    takes the address of this definition. For instance, functions that
-    had an inline definition, but the compiler decided not to inline it.
-    ``linkonce_odr_auto_hide`` may have only ``default`` visibility. The
-    symbols are removed by the linker from the final linked image
-    (executable or dynamic library).
 ``external``
     If none of the above identifiers are used, the global is externally
     visible, meaning that it participates in linkage and can be used to
@@ -622,9 +615,9 @@ Syntax::
 
 The linkage must be one of ``private``, ``linker_private``,
 ``linker_private_weak``, ``internal``, ``linkonce``, ``weak``,
-``linkonce_odr``, ``weak_odr``, ``linkonce_odr_auto_hide``, ``external``. Note
-that some system linkers might not correctly handle dropping a weak symbol that
-is aliased by a non weak alias.
+``linkonce_odr``, ``weak_odr``, ``external``. Note that some system linkers
+might not correctly handle dropping a weak symbol that is aliased by a non weak
+alias.
 
 .. _namedmetadatastructure:
 

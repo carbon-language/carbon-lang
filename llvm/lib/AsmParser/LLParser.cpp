@@ -246,13 +246,11 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::kw_private:             // OptionalLinkage
     case lltok::kw_linker_private:      // OptionalLinkage
     case lltok::kw_linker_private_weak: // OptionalLinkage
-    case lltok::kw_linker_private_weak_def_auto: // FIXME: backwards compat.
     case lltok::kw_internal:            // OptionalLinkage
     case lltok::kw_weak:                // OptionalLinkage
     case lltok::kw_weak_odr:            // OptionalLinkage
     case lltok::kw_linkonce:            // OptionalLinkage
     case lltok::kw_linkonce_odr:        // OptionalLinkage
-    case lltok::kw_linkonce_odr_auto_hide: // OptionalLinkage
     case lltok::kw_appending:           // OptionalLinkage
     case lltok::kw_dllexport:           // OptionalLinkage
     case lltok::kw_common:              // OptionalLinkage
@@ -1272,7 +1270,6 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
 ///   ::= 'weak_odr'
 ///   ::= 'linkonce'
 ///   ::= 'linkonce_odr'
-///   ::= 'linkonce_odr_auto_hide'
 ///   ::= 'available_externally'
 ///   ::= 'appending'
 ///   ::= 'dllexport'
@@ -1294,10 +1291,6 @@ bool LLParser::ParseOptionalLinkage(unsigned &Res, bool &HasLinkage) {
   case lltok::kw_weak_odr:       Res = GlobalValue::WeakODRLinkage;       break;
   case lltok::kw_linkonce:       Res = GlobalValue::LinkOnceAnyLinkage;   break;
   case lltok::kw_linkonce_odr:   Res = GlobalValue::LinkOnceODRLinkage;   break;
-  case lltok::kw_linkonce_odr_auto_hide:
-  case lltok::kw_linker_private_weak_def_auto: // FIXME: For backwards compat.
-    Res = GlobalValue::LinkOnceODRAutoHideLinkage;
-    break;
   case lltok::kw_available_externally:
     Res = GlobalValue::AvailableExternallyLinkage;
     break;
@@ -2960,7 +2953,6 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   case GlobalValue::AvailableExternallyLinkage:
   case GlobalValue::LinkOnceAnyLinkage:
   case GlobalValue::LinkOnceODRLinkage:
-  case GlobalValue::LinkOnceODRAutoHideLinkage:
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::DLLExportLinkage:

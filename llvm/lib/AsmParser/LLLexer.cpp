@@ -478,12 +478,10 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(private);
   KEYWORD(linker_private);
   KEYWORD(linker_private_weak);
-  KEYWORD(linker_private_weak_def_auto); // FIXME: For backwards compatibility.
   KEYWORD(internal);
   KEYWORD(available_externally);
   KEYWORD(linkonce);
   KEYWORD(linkonce_odr);
-  KEYWORD(linkonce_odr_auto_hide);
   KEYWORD(weak);
   KEYWORD(weak_odr);
   KEYWORD(appending);

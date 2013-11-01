@@ -292,8 +292,6 @@ void CppWriter::printLinkageType(GlobalValue::LinkageTypes LT) {
     Out << "GlobalValue::LinkOnceAnyLinkage "; break;
   case GlobalValue::LinkOnceODRLinkage:
     Out << "GlobalValue::LinkOnceODRLinkage "; break;
-  case GlobalValue::LinkOnceODRAutoHideLinkage:
-    Out << "GlobalValue::LinkOnceODRAutoHideLinkage"; break;
   case GlobalValue::WeakAnyLinkage:
     Out << "GlobalValue::WeakAnyLinkage"; break;
   case GlobalValue::WeakODRLinkage:

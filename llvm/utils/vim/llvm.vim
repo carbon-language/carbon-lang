@@ -43,8 +43,8 @@ syn keyword llvmKeyword constant datalayout declare default define deplibs
 syn keyword llvmKeyword dllexport dllimport except extern_weak external fastcc
 syn keyword llvmKeyword filter gc global hidden initialexec inlinehint inreg
 syn keyword llvmKeyword intel_ocl_bicc inteldialect internal linker_private
-syn keyword llvmKeyword linker_private_weak linker_private_weak_def_auto
-syn keyword llvmKeyword linkonce linkonce_odr linkonce_odr_auto_hide
+syn keyword llvmKeyword linker_private_weak
+syn keyword llvmKeyword linkonce linkonce_odr
 syn keyword llvmKeyword localdynamic localexec minsize module monotonic
 syn keyword llvmKeyword msp430_intrcc naked nest noalias nocapture
 syn keyword llvmKeyword noimplicitfloat noinline nonlazybind noredzone noreturn

@@ -35,7 +35,6 @@ public:
     AvailableExternallyLinkage, ///< Available for inspection, not emission.
     LinkOnceAnyLinkage, ///< Keep one copy of function when linking (inline)
     LinkOnceODRLinkage, ///< Same, but only replaced by something equivalent.
-    LinkOnceODRAutoHideLinkage, ///< Like LinkOnceODRLinkage but addr not taken.
     WeakAnyLinkage,     ///< Keep one copy of named function when linking (weak)
     WeakODRLinkage,     ///< Same, but only replaced by something equivalent.
     AppendingLinkage,   ///< Special purpose, only applies to global arrays
@@ -123,12 +122,7 @@ public:
     return Linkage == AvailableExternallyLinkage;
   }
   static bool isLinkOnceLinkage(LinkageTypes Linkage) {
-    return Linkage == LinkOnceAnyLinkage ||
-           Linkage == LinkOnceODRLinkage ||
-           Linkage == LinkOnceODRAutoHideLinkage;
-  }
-  static bool isLinkOnceODRAutoHideLinkage(LinkageTypes Linkage) {
-    return Linkage == LinkOnceODRAutoHideLinkage;
+    return Linkage == LinkOnceAnyLinkage || Linkage == LinkOnceODRLinkage;
   }
   static bool isWeakLinkage(LinkageTypes Linkage) {
     return Linkage == WeakAnyLinkage || Linkage == WeakODRLinkage;
@@ -192,7 +186,6 @@ public:
            Linkage == WeakODRLinkage ||
            Linkage == LinkOnceAnyLinkage ||
            Linkage == LinkOnceODRLinkage ||
-           Linkage == LinkOnceODRAutoHideLinkage ||
            Linkage == CommonLinkage ||
            Linkage == ExternalWeakLinkage ||
            Linkage == LinkerPrivateWeakLinkage;
@@ -204,9 +197,6 @@ public:
   }
   bool hasLinkOnceLinkage() const {
     return isLinkOnceLinkage(Linkage);
-  }
-  bool hasLinkOnceODRAutoHideLinkage() const {
-    return isLinkOnceODRAutoHideLinkage(Linkage);
   }
   bool hasWeakLinkage() const {
     return isWeakLinkage(Linkage);

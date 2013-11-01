@@ -1134,8 +1134,6 @@ LLVMLinkage LLVMGetLinkage(LLVMValueRef Global) {
     return LLVMLinkOnceAnyLinkage;
   case GlobalValue::LinkOnceODRLinkage:
     return LLVMLinkOnceODRLinkage;
-  case GlobalValue::LinkOnceODRAutoHideLinkage:
-    return LLVMLinkOnceODRAutoHideLinkage;
   case GlobalValue::WeakAnyLinkage:
     return LLVMWeakAnyLinkage;
   case GlobalValue::WeakODRLinkage:
@@ -1180,7 +1178,8 @@ void LLVMSetLinkage(LLVMValueRef Global, LLVMLinkage Linkage) {
     GV->setLinkage(GlobalValue::LinkOnceODRLinkage);
     break;
   case LLVMLinkOnceODRAutoHideLinkage:
-    GV->setLinkage(GlobalValue::LinkOnceODRAutoHideLinkage);
+    DEBUG(errs() << "LLVMSetLinkage(): LLVMLinkOnceODRAutoHideLinkage is no "
+                    "longer supported.");
     break;
   case LLVMWeakAnyLinkage:
     GV->setLinkage(GlobalValue::WeakAnyLinkage);
