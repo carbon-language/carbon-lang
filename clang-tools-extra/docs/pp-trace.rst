@@ -26,12 +26,14 @@ Command Line Format
 
 ``<pp-trace-options>`` is a place-holder for options
 specific to pp-trace, which are described below in
-`pp-trace Command Line Options`.
+:ref:`CommandLineOptions`.
 
 ``<source-file>`` specifies the source file to run through the preprocessor.
 
 ``<front-end-options>`` is a place-holder for regular Clang
 front-end arguments, which must follow the <source-file>.
+
+.. _CommandLineOptions:
 
 Command Line Options
 --------------------
