@@ -339,7 +339,7 @@ void LookupResult::deletePaths(CXXBasePaths *Paths) {
 
 /// Get a representative context for a declaration such that two declarations
 /// will have the same context if they were found within the same scope.
-DeclContext *getContextForScopeMatching(Decl *D) {
+static DeclContext *getContextForScopeMatching(Decl *D) {
   // For function-local declarations, use that function as the context. This
   // doesn't account for scopes within the function; the caller must deal with
   // those.
