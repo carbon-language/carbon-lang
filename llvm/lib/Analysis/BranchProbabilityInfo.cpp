@@ -398,10 +398,24 @@ bool BranchProbabilityInfo::calcZeroHeuristics(BasicBlock *BB) {
     // InstCombine canonicalizes X <= 0 into X < 1.
     // X <= 0   ->  Unlikely
     isProb = false;
-  } else if (CV->isAllOnesValue() && CI->getPredicate() == CmpInst::ICMP_SGT) {
-    // InstCombine canonicalizes X >= 0 into X > -1.
-    // X >= 0   ->  Likely
-    isProb = true;
+  } else if (CV->isAllOnesValue()) {
+    switch (CI->getPredicate()) {
+    case CmpInst::ICMP_EQ:
+      // X == -1  ->  Unlikely
+      isProb = false;
+      break;
+    case CmpInst::ICMP_NE:
+      // X != -1  ->  Likely
+      isProb = true;
+      break;
+    case CmpInst::ICMP_SGT:
+      // InstCombine canonicalizes X >= 0 into X > -1.
+      // X >= 0   ->  Likely
+      isProb = true;
+      break;
+    default:
+      return false;
+    }
   } else {
     return false;
   }
