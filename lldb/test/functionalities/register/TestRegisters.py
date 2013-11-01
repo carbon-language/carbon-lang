@@ -186,9 +186,9 @@ class RegisterCommandsTestCase(TestBase):
         new_value = "{0x01 0x02 0x03 0x00 0x00 0x00 0x00 0x00 0x09 0x0a 0x2f 0x2f 0x2f 0x2f 0x0e 0x0f}"
         self.vector_write_and_read(currentFrame, "xmm15", new_value, False)
 
-        self.runCmd("register write " + st0regname + " \"{0x00 0x00 0x00 0x00 0x00 0x00 0x40 0x9a 0x09 0x40}\"")
+        self.runCmd("register write " + st0regname + " \"{0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00}\"")
         self.expect("register read " + st0regname + " --format f",
-            substrs = ['stmm0 = 1234'])
+            substrs = ['stmm0 = 0'])
 
         has_avx = False 
         registerSets = currentFrame.GetRegisters() # Returns an SBValueList.
