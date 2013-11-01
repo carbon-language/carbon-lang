@@ -13,6 +13,7 @@
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
+#include "clang/Driver/SanitizerArgs.h"
 #include "clang/Driver/ToolChain.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
@@ -43,7 +44,9 @@ bool ToolChain::useIntegratedAs() const {
 }
 
 const SanitizerArgs& ToolChain::getSanitizerArgs() const {
-  return D.getOrParseSanitizerArgs(Args);
+  if (!SanitizerArguments.get())
+    SanitizerArguments.reset(new SanitizerArgs(*this, Args));
+  return *SanitizerArguments.get();
 }
 
 std::string ToolChain::getDefaultUniversalArchName() const {

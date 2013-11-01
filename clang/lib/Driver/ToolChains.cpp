@@ -300,10 +300,11 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
     }
   }
 
-  const SanitizerArgs &Sanitize = getDriver().getOrParseSanitizerArgs(Args);
+  const SanitizerArgs &Sanitize = getSanitizerArgs();
 
   // Add Ubsan runtime library, if required.
   if (Sanitize.needsUbsanRt()) {
+    // FIXME: Move this check to SanitizerArgs::filterUnsupportedKinds.
     if (isTargetIPhoneOS()) {
       getDriver().Diag(diag::err_drv_clang_unsupported_per_platform)
         << "-fsanitize=undefined";
@@ -318,6 +319,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   // Add ASAN runtime library, if required. Dynamic libraries and bundles
   // should not be linked with the runtime library.
   if (Sanitize.needsAsanRt()) {
+    // FIXME: Move this check to SanitizerArgs::filterUnsupportedKinds.
     if (isTargetIPhoneOS() && !isTargetIOSSimulator()) {
       getDriver().Diag(diag::err_drv_clang_unsupported_per_platform)
         << "-fsanitize=address";
@@ -2722,7 +2724,7 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
 }
 
 bool Linux::isPIEDefault() const {
-  return getSanitizerArgs().hasZeroBaseShadow(*this);
+  return getSanitizerArgs().hasZeroBaseShadow();
 }
 
 /// DragonFly - DragonFly tool chain which can call as(1) and ld(1) directly.

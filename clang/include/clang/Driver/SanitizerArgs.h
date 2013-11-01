@@ -25,6 +25,7 @@ class SanitizerArgs {
   /// bit positions within \c Kind.
   enum SanitizeOrdinal {
 #define SANITIZER(NAME, ID) SO_##ID,
+#define SANITIZER_GROUP(NAME, ID, ALIAS) SO_##ID##Group,
 #include "clang/Basic/Sanitizers.def"
     SO_Count
   };
@@ -32,7 +33,8 @@ class SanitizerArgs {
   /// Bugs to catch at runtime.
   enum SanitizeKind {
 #define SANITIZER(NAME, ID) ID = 1 << SO_##ID,
-#define SANITIZER_GROUP(NAME, ID, ALIAS) ID = ALIAS,
+#define SANITIZER_GROUP(NAME, ID, ALIAS)                                       \
+  ID = ALIAS, ID##Group = 1 << SO_##ID##Group,
 #include "clang/Basic/Sanitizers.def"
     NeedsAsanRt = Address,
     NeedsTsanRt = Thread,
@@ -47,17 +49,13 @@ class SanitizerArgs {
 
   std::string BlacklistFile;
   bool MsanTrackOrigins;
-  enum AsanZeroBaseShadowKind {
-    AZBSK_Default,  // Default value is toolchain-specific.
-    AZBSK_On,
-    AZBSK_Off
-  } AsanZeroBaseShadow;
+  bool AsanZeroBaseShadow;
   bool UbsanTrapOnError;
 
  public:
   SanitizerArgs();
   /// Parses the sanitizer arguments from an argument list.
-  SanitizerArgs(const Driver &D, const llvm::opt::ArgList &Args);
+  SanitizerArgs(const ToolChain &TC, const llvm::opt::ArgList &Args);
 
   bool needsAsanRt() const { return Kind & NeedsAsanRt; }
   bool needsTsanRt() const { return Kind & NeedsTsanRt; }
@@ -73,16 +71,14 @@ class SanitizerArgs {
 
   bool sanitizesVptr() const { return Kind & Vptr; }
   bool notAllowedWithTrap() const { return Kind & NotAllowedWithTrap; }
-  bool hasZeroBaseShadow(const ToolChain &TC) const {
-    return (Kind & HasZeroBaseShadow) || hasAsanZeroBaseShadow(TC);
+  bool hasZeroBaseShadow() const {
+    return (Kind & HasZeroBaseShadow) || AsanZeroBaseShadow;
   }
-  void addArgs(const ToolChain &TC, const llvm::opt::ArgList &Args,
+  void addArgs(const llvm::opt::ArgList &Args,
                llvm::opt::ArgStringList &CmdArgs) const;
 
  private:
   void clear();
-
-  bool hasAsanZeroBaseShadow(const ToolChain &TC) const;
 
   /// Parse a single value from a -fsanitize= or -fno-sanitize= value list.
   /// Returns OR of members of the \c SanitizeKind enumeration, or \c 0
@@ -119,6 +115,30 @@ class SanitizerArgs {
 
   static bool getDefaultBlacklistForKind(const Driver &D, unsigned Kind,
                                          std::string &BLPath);
+
+  /// Return the smallest superset of sanitizer set \p Kinds such that each
+  /// member of each group whose flag is set in \p Kinds has its flag set in the
+  /// result.
+  static unsigned expandGroups(unsigned Kinds);
+
+  /// Return the subset of \p Kinds supported by toolchain \p TC.  If
+  /// \p DiagnoseErrors is true, produce an error diagnostic for each sanitizer
+  /// removed from \p Kinds.
+  static unsigned filterUnsupportedKinds(const ToolChain &TC, unsigned Kinds,
+                                         const llvm::opt::ArgList &Args,
+                                         const llvm::opt::Arg *A,
+                                         bool DiagnoseErrors,
+                                         unsigned &DiagnosedKinds);
+
+  /// The flags in \p Mask are unsupported by \p TC.  If present in \p Kinds,
+  /// remove them and produce an error diagnostic referring to \p A if
+  /// \p DiagnoseErrors is true.
+  static void filterUnsupportedMask(const ToolChain &TC, unsigned &Kinds,
+                                    unsigned Mask,
+                                    const llvm::opt::ArgList &Args,
+                                    const llvm::opt::Arg *A,
+                                    bool DiagnoseErrors,
+                                    unsigned &DiagnosedKinds);
 };
 
 }  // namespace driver

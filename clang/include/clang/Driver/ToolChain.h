@@ -73,6 +73,8 @@ private:
   Tool *getLink() const;
   Tool *getClangAs() const;
 
+  mutable OwningPtr<SanitizerArgs> SanitizerArguments;
+
 protected:
   ToolChain(const Driver &D, const llvm::Triple &T,
             const llvm::opt::ArgList &Args);
