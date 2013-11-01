@@ -109,13 +109,15 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
 
     return FnD;
   }
-
+  
   // In delayed template parsing mode, if we are within a class template
   // or if we are about to parse function member template then consume
   // the tokens and store them for parsing at the end of the translation unit.
   if (getLangOpts().DelayedTemplateParsing &&
       DefinitionKind == FDK_Definition &&
-      !D.getDeclSpec().isConstexprSpecified() &&
+      !D.getDeclSpec().isConstexprSpecified() && 
+      !(FnD && getFunctionDecl(FnD) && 
+          getFunctionDecl(FnD)->getResultType()->getContainedAutoType()) &&
       ((Actions.CurContext->isDependentContext() ||
         (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate &&
          TemplateInfo.Kind != ParsedTemplateInfo::ExplicitSpecialization)) &&

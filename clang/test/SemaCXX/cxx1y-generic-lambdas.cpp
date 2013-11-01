@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -std=c++1y -verify -fsyntax-only -fblocks -emit-llvm-only %s
-// DONTRUNYET: %clang_cc1 -std=c++1y -verify -fsyntax-only -fblocks -fdelayed-template-parsing %s -DDELAYED_TEMPLATE_PARSING
-// DONTRUNYET: %clang_cc1 -std=c++1y -verify -fsyntax-only -fblocks -fms-extensions %s -DMS_EXTENSIONS
-// DONTRUNYET: %clang_cc1 -std=c++1y -verify -fsyntax-only -fblocks -fdelayed-template-parsing -fms-extensions %s -DMS_EXTENSIONS -DDELAYED_TEMPLATE_PARSING
+// RUN: %clang_cc1 -std=c++1y -verify -fsyntax-only -fblocks -fdelayed-template-parsing %s -DDELAYED_TEMPLATE_PARSING
+// RUN: %clang_cc1 -std=c++1y -verify -fsyntax-only -fblocks -fms-extensions %s -DMS_EXTENSIONS
+// RUN: %clang_cc1 -std=c++1y -verify -fsyntax-only -fblocks -fdelayed-template-parsing -fms-extensions %s -DMS_EXTENSIONS -DDELAYED_TEMPLATE_PARSING
 
 namespace explicit_call {
 int test() {
@@ -557,6 +557,48 @@ namespace at_ns_scope_within_class_member {
     };
     return L;
   }
+};
+X x;
+auto L = x.test();
+auto L_test = L('4');
+auto M = L('3');
+auto M_test = M('a');
+auto N = M('x');
+auto O = N("\n3 = ", 3, "\n6.14 = ", 6.14, "\n4'123'456 = ", 4'123'456);
+char (*np)(const char*, int, const char*, double, const char*, int) = O;
+auto NP_result = np("\n3 = ", 3, "\n6.14 = ", 6.14, "\n4'123'456 = ", 4'123'456);
+int (*np2)(const char*, int, const char*, double, const char*, int) = O; // expected-error{{no viable conversion}}
+  
+} //end at_ns_scope_within_class_member
+
+
+namespace at_ns_scope_within_class_template_member {
+ struct X {
+  static void foo(double d) { } 
+  template<class T = int>
+  auto test(T = T{}) {
+    auto L = [](auto a) {
+      print("a = ", a, "\n");
+      foo(a);
+      return [](decltype(a) b) {
+        foo(b);
+        foo(sizeof(a) + sizeof(b));
+        return [](auto ... c) {
+          print("c = ", c ..., "\n");
+          foo(decltype(b){});
+          foo(sizeof(decltype(a)*) + sizeof(decltype(b)*));
+          return [](decltype(c) ... d) ->decltype(a) { //expected-note{{candidate}}
+            print("d = ", d ..., "\n");
+            foo(decltype(b){});
+            foo(sizeof(decltype(a)*) + sizeof(decltype(b)*));
+            return decltype(a){};
+          };
+        };
+      };
+    };
+    return L;
+  }
+  
 };
 X x;
 auto L = x.test();
