@@ -34,6 +34,7 @@ struct StackTrace {
   uptr size;
   uptr trace[kStackTraceMax];
 
+  // Prints a symbolized stacktrace, followed by an empty line.
   static void PrintStack(const uptr *addr, uptr size,
                          SymbolizeCallback symbolize_callback = 0);
 

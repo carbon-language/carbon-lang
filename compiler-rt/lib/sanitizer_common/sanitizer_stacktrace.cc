@@ -40,6 +40,10 @@ static void PrintStackFramePrefix(uptr frame_num, uptr pc) {
 
 void StackTrace::PrintStack(const uptr *addr, uptr size,
                             SymbolizeCallback symbolize_callback) {
+  if (addr == 0) {
+    Printf("<empty stack>\n\n");
+    return;
+  }
   MemoryMappingLayout proc_maps(/*cache_enabled*/true);
   InternalScopedBuffer<char> buff(GetPageSizeCached() * 2);
   InternalScopedBuffer<AddressInfo> addr_frames(64);
@@ -100,6 +104,8 @@ void StackTrace::PrintStack(const uptr *addr, uptr size,
       frame_num++;
     }
   }
+  // Always print a trailing empty line after stack trace.
+  Printf("\n");
 }
 
 uptr StackTrace::GetCurrentPc() {

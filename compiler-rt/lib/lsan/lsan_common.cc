@@ -492,7 +492,6 @@ void LeakReport::PrintLargest(uptr num_leaks_to_print) {
            leaks_[i].total_size, leaks_[i].hit_count);
     Printf("%s", d.End());
     PrintStackTraceById(leaks_[i].stack_trace_id);
-    Printf("\n");
     leaks_printed++;
     if (leaks_printed == num_leaks_to_print) break;
   }

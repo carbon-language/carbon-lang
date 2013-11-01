@@ -34,11 +34,6 @@ class Decorator: private __sanitizer::AnsiColorDecorator {
   const char *End()    { return Default(); }
 };
 
-static void PrintStack(const uptr *trace, uptr size) {
-  StackTrace::PrintStack(trace, size);
-  Printf("\n");
-}
-
 static void DescribeOrigin(u32 origin) {
   Decorator d;
   if (common_flags()->verbosity)
@@ -60,14 +55,14 @@ static void DescribeOrigin(u32 origin) {
       // For some reason function address in LLVM IR is 1 less then the address
       // of the first instruction.
       pc += 1;
-      PrintStack(&pc, 1);
+      StackTrace::PrintStack(&pc, 1);
     }
   } else {
     uptr size = 0;
     const uptr *trace = StackDepotGet(origin, &size);
     Printf("  %sUninitialized value was created by a heap allocation%s\n",
            d.Origin(), d.End());
-    PrintStack(trace, size);
+    StackTrace::PrintStack(trace, size);
   }
 }
 
@@ -88,7 +83,7 @@ void ReportUMR(StackTrace *stack, u32 origin) {
   Printf("%s", d.Warning());
   Report(" WARNING: MemorySanitizer: use-of-uninitialized-value\n");
   Printf("%s", d.End());
-  PrintStack(stack->trace, stack->size);
+  StackTrace::PrintStack(stack->trace, stack->size);
   if (origin) {
     DescribeOrigin(origin);
   }
@@ -99,7 +94,7 @@ void ReportExpectedUMRNotFound(StackTrace *stack) {
   SpinMutexLock l(&CommonSanitizerReportMutex);
 
   Printf(" WARNING: Expected use of uninitialized value not found\n");
-  PrintStack(stack->trace, stack->size);
+  StackTrace::PrintStack(stack->trace, stack->size);
 }
 
 void ReportAtExitStatistics() {
