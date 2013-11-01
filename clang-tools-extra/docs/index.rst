@@ -17,6 +17,7 @@ Contents
 
    clang-modernize
    modularize
+   pp-trace
 
 
 Doxygen Documentation
