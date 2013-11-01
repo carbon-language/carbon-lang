@@ -399,4 +399,10 @@ namespace templates {
     less_than_zero<long>(num);
     less_than_zero<short>(num);
   }
+
+  template<unsigned n> bool compare(unsigned k) { return k >= n; }
+
+  void test12() {
+    compare<0>(42);
+  }
 }
