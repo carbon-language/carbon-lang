@@ -3061,7 +3061,7 @@ public:
   /// non-intersection.
   bool canCheckPtrAtRT(LoopVectorizationLegality::RuntimePointerCheck &RtCheck,
                        unsigned &NumComparisons, ScalarEvolution *SE,
-                       Loop *TheLoop);
+                       Loop *TheLoop, bool ShouldCheckStride = false);
 
   /// \brief Goes over all memory accesses, checks whether a RT check is needed
   /// and builds sets of dependent accesses.
@@ -3075,6 +3075,7 @@ public:
   bool isRTCheckNeeded() { return IsRTCheckNeeded; }
 
   bool isDependencyCheckNeeded() { return !CheckDeps.empty(); }
+  void resetDepChecks() { CheckDeps.clear(); }
 
   MemAccessInfoSet &getDependenciesToCheck() { return CheckDeps; }
 
@@ -3129,10 +3130,15 @@ static bool hasComputableBounds(ScalarEvolution *SE, Value *Ptr) {
   return AR->isAffine();
 }
 
+/// \brief Check the stride of the pointer and ensure that it does not wrap in
+/// the address space.
+static int isStridedPtr(ScalarEvolution *SE, DataLayout *DL, Value *Ptr,
+                        const Loop *Lp);
+
 bool AccessAnalysis::canCheckPtrAtRT(
                        LoopVectorizationLegality::RuntimePointerCheck &RtCheck,
                         unsigned &NumComparisons, ScalarEvolution *SE,
-                        Loop *TheLoop) {
+                        Loop *TheLoop, bool ShouldCheckStride) {
   // Find pointers with computable bounds. We are going to use this information
   // to place a runtime bound check.
   unsigned NumReadPtrChecks = 0;
@@ -3160,7 +3166,10 @@ bool AccessAnalysis::canCheckPtrAtRT(
     else
       ++NumReadPtrChecks;
 
-    if (hasComputableBounds(SE, Ptr)) {
+    if (hasComputableBounds(SE, Ptr) &&
+        // When we run after a failing dependency check we have to make sure we
+        // don't have wrapping pointers.
+        (!ShouldCheckStride || isStridedPtr(SE, DL, Ptr, TheLoop) == 1)) {
       // The id of the dependence set.
       unsigned DepId;
 
@@ -3342,8 +3351,9 @@ public:
   typedef PointerIntPair<Value *, 1, bool> MemAccessInfo;
   typedef SmallPtrSet<MemAccessInfo, 8> MemAccessInfoSet;
 
-  MemoryDepChecker(ScalarEvolution *Se, DataLayout *Dl, const Loop *L) :
-    SE(Se), DL(Dl), InnermostLoop(L), AccessIdx(0) {}
+  MemoryDepChecker(ScalarEvolution *Se, DataLayout *Dl, const Loop *L)
+      : SE(Se), DL(Dl), InnermostLoop(L), AccessIdx(0),
+        ShouldRetryWithRuntimeCheck(false) {}
 
   /// \brief Register the location (instructions are given increasing numbers)
   /// of a write access.
@@ -3373,6 +3383,10 @@ public:
   /// the accesses safely with.
   unsigned getMaxSafeDepDistBytes() { return MaxSafeDepDistBytes; }
 
+  /// \brief In same cases when the dependency check fails we can still
+  /// vectorize the loop with a dynamic array access check.
+  bool shouldRetryWithRuntimeCheck() { return ShouldRetryWithRuntimeCheck; }
+
 private:
   ScalarEvolution *SE;
   DataLayout *DL;
@@ -3389,6 +3403,10 @@ private:
 
   // We can access this many bytes in parallel safely.
   unsigned MaxSafeDepDistBytes;
+
+  /// \brief If we see a non constant dependence distance we can still try to
+  /// vectorize this loop with runtime checks.
+  bool ShouldRetryWithRuntimeCheck;
 
   /// \brief Check whether there is a plausible dependence between the two
   /// accesses.
@@ -3587,6 +3605,7 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
   const SCEVConstant *C = dyn_cast<SCEVConstant>(Dist);
   if (!C) {
     DEBUG(dbgs() << "LV: Dependence because of non constant distance\n");
+    ShouldRetryWithRuntimeCheck = true;
     return true;
   }
 
@@ -3876,6 +3895,29 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     CanVecMem = DepChecker.areDepsSafe(DependentAccesses,
                                        Accesses.getDependenciesToCheck());
     MaxSafeDepDistBytes = DepChecker.getMaxSafeDepDistBytes();
+
+    if (!CanVecMem && DepChecker.shouldRetryWithRuntimeCheck()) {
+      DEBUG(dbgs() << "LV: Retrying with memory checks\n");
+      NeedRTCheck = true;
+
+      // Clear the dependency checks. We assume they are not needed.
+      Accesses.resetDepChecks();
+
+      PtrRtCheck.reset();
+      PtrRtCheck.Need = true;
+
+      CanDoRT = Accesses.canCheckPtrAtRT(PtrRtCheck, NumComparisons, SE,
+                                         TheLoop, true);
+      // Check that we did not collect too many pointers or found an unsizeable
+      // pointer.
+      if (!CanDoRT || NumComparisons > RuntimeMemoryCheckThreshold) {
+        DEBUG(dbgs() << "LV: Can't vectorize with memory checks\n");
+        PtrRtCheck.reset();
+        return false;
+      }
+
+      CanVecMem = true;
+    }
   }
 
   DEBUG(dbgs() << "LV: We" << (NeedRTCheck ? "" : " don't") <<

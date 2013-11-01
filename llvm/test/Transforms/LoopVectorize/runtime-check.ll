@@ -34,3 +34,31 @@ for.body:                                         ; preds = %entry, %for.body
 for.end:                                          ; preds = %for.body, %entry
   ret i32 undef
 }
+
+; Make sure that we try to vectorize loops with a runtime check if the
+; dependency check fails.
+
+; CHECK-LABEL: test_runtime_check
+; CHECK:      <4 x float>
+define void @test_runtime_check(float* %a, float %b, i64 %offset, i64 %offset2, i64 %n) {
+entry:
+  br label %for.body
+
+for.body:
+  %iv = phi i64 [ 0, %entry ], [ %iv.next, %for.body ]
+  %ind.sum = add i64 %iv, %offset
+  %arr.idx = getelementptr inbounds float* %a, i64 %ind.sum
+  %l1 = load float* %arr.idx, align 4
+  %ind.sum2 = add i64 %iv, %offset2
+  %arr.idx2 = getelementptr inbounds float* %a, i64 %ind.sum2
+  %l2 = load float* %arr.idx2, align 4
+  %m = fmul fast float %b, %l2
+  %ad = fadd fast float %l1, %m
+  store float %ad, float* %arr.idx, align 4
+  %iv.next = add nuw nsw i64 %iv, 1
+  %exitcond = icmp eq i64 %iv.next, %n
+  br i1 %exitcond, label %loopexit, label %for.body
+
+loopexit:
+  ret void
+}
