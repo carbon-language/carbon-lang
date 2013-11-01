@@ -372,6 +372,10 @@ void __msan_set_expect_umr(int expect_umr) {
 }
 
 void __msan_print_shadow(const void *x, uptr size) {
+  if (!MEM_IS_APP(x)) {
+    Printf("Not a valid application address: %p\n", x);
+    return;
+  }
   unsigned char *s = (unsigned char*)MEM_TO_SHADOW(x);
   u32 *o = (u32*)MEM_TO_ORIGIN(x);
   for (uptr i = 0; i < size; i++) {
