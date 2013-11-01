@@ -1270,15 +1270,30 @@ POST_SYSCALL(io_getevents)(long res, long ctx_id, long min_nr, long nr,
   }
 }
 
-PRE_SYSCALL(io_submit)(long, long arg1, void *arg2) {}
+PRE_SYSCALL(io_submit)(long ctx_id, long nr, __sanitizer_iocb **iocbpp) {
+  for (long i = 0; i < nr; ++i) {
+    if (iocbpp[i]->aio_lio_opcode == iocb_cmd_pwrite && iocbpp[i]->aio_buf &&
+        iocbpp[i]->aio_nbytes)
+      PRE_READ((void *)iocbpp[i]->aio_buf, iocbpp[i]->aio_nbytes);
+  }
+}
 
-POST_SYSCALL(io_submit)(long res, long, long arg1, void *arg2) {}
+POST_SYSCALL(io_submit)(long res, long ctx_id, long nr,
+                        __sanitizer_iocb **iocbpp) {
+  if (res > 0 && iocbpp) {
+    for (long i = 0; i < res; ++i) {
+      if (iocbpp[i]->aio_lio_opcode == iocb_cmd_pread && iocbpp[i]->aio_buf &&
+          iocbpp[i]->aio_nbytes)
+        POST_WRITE((void *)iocbpp[i]->aio_buf, iocbpp[i]->aio_nbytes);
+    }
+  }
+}
 
 PRE_SYSCALL(io_cancel)(long ctx_id, void *iocb, void *result) {}
 
 POST_SYSCALL(io_cancel)(long res, long ctx_id, void *iocb, void *result) {
   if (res >= 0) {
-    if (iocb) POST_WRITE(iocb, struct_iocb_sz);
+    if (iocb) POST_WRITE(iocb, sizeof(__sanitizer_iocb));
     if (result) POST_WRITE(result, struct_io_event_sz);
   }
 }

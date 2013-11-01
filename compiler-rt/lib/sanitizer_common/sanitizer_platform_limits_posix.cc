@@ -764,23 +764,6 @@ namespace __sanitizer {
 #endif
 }  // namespace __sanitizer
 
-#define CHECK_TYPE_SIZE(TYPE) \
-  COMPILER_CHECK(sizeof(__sanitizer_##TYPE) == sizeof(TYPE))
-
-#define CHECK_SIZE_AND_OFFSET(CLASS, MEMBER)                       \
-  COMPILER_CHECK(sizeof(((__sanitizer_##CLASS *) NULL)->MEMBER) == \
-                 sizeof(((CLASS *) NULL)->MEMBER));                \
-  COMPILER_CHECK(offsetof(__sanitizer_##CLASS, MEMBER) ==          \
-                 offsetof(CLASS, MEMBER))
-
-// For sigaction, which is a function and struct at the same time,
-// and thus requires explicit "struct" in sizeof() expression.
-#define CHECK_STRUCT_SIZE_AND_OFFSET(CLASS, MEMBER)                       \
-  COMPILER_CHECK(sizeof(((struct __sanitizer_##CLASS *) NULL)->MEMBER) == \
-                 sizeof(((struct CLASS *) NULL)->MEMBER));                \
-  COMPILER_CHECK(offsetof(struct __sanitizer_##CLASS, MEMBER) ==          \
-                 offsetof(struct CLASS, MEMBER))
-
 COMPILER_CHECK(sizeof(__sanitizer_pthread_attr_t) >= sizeof(pthread_attr_t));
 
 COMPILER_CHECK(sizeof(socklen_t) == sizeof(unsigned));

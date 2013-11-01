@@ -52,7 +52,6 @@ namespace __sanitizer {
   extern unsigned struct_kernel_stat_sz;
   extern unsigned struct_kernel_stat64_sz;
   extern unsigned struct_io_event_sz;
-  extern unsigned struct_iocb_sz;
   extern unsigned struct_utimbuf_sz;
   extern unsigned struct_new_utsname_sz;
   extern unsigned struct_old_utsname_sz;
@@ -71,6 +70,24 @@ namespace __sanitizer {
   extern unsigned __user_cap_data_struct_sz;
   const unsigned old_sigset_t_sz = sizeof(unsigned long);
   const unsigned struct_kexec_segment_sz = 4 * sizeof(unsigned long);
+
+  struct __sanitizer_iocb {
+    u64   aio_data;
+    u32   aio_key_or_aio_reserved1; // Simply crazy.
+    u32   aio_reserved1_or_aio_key; // Luckily, we don't need these.
+    u16   aio_lio_opcode;
+    s16   aio_reqprio;
+    u32   aio_fildes;
+    u64   aio_buf;
+    u64   aio_nbytes;
+    s64   aio_offset;
+    u64   aio_reserved2;
+    u32   aio_flags;
+    u32   aio_resfd;
+  };
+
+  extern unsigned iocb_cmd_pread;
+  extern unsigned iocb_cmd_pwrite;
 
   struct __sanitizer___sysctl_args {
     int *name;
@@ -905,6 +922,23 @@ namespace __sanitizer {
 #endif
 
 }  // namespace __sanitizer
+
+#define CHECK_TYPE_SIZE(TYPE) \
+  COMPILER_CHECK(sizeof(__sanitizer_##TYPE) == sizeof(TYPE))
+
+#define CHECK_SIZE_AND_OFFSET(CLASS, MEMBER)                       \
+  COMPILER_CHECK(sizeof(((__sanitizer_##CLASS *) NULL)->MEMBER) == \
+                 sizeof(((CLASS *) NULL)->MEMBER));                \
+  COMPILER_CHECK(offsetof(__sanitizer_##CLASS, MEMBER) ==          \
+                 offsetof(CLASS, MEMBER))
+
+// For sigaction, which is a function and struct at the same time,
+// and thus requires explicit "struct" in sizeof() expression.
+#define CHECK_STRUCT_SIZE_AND_OFFSET(CLASS, MEMBER)                       \
+  COMPILER_CHECK(sizeof(((struct __sanitizer_##CLASS *) NULL)->MEMBER) == \
+                 sizeof(((struct CLASS *) NULL)->MEMBER));                \
+  COMPILER_CHECK(offsetof(struct __sanitizer_##CLASS, MEMBER) ==          \
+                 offsetof(struct CLASS, MEMBER))
 
 #endif
 
