@@ -3090,68 +3090,40 @@ def ST1_4V_1D : NeonI_STVList<0, 0b0010, 0b11, VQuad1D_operand, "st1">;
 
 // Scalar Three Same
 
-class NeonI_Scalar3Same_D_size<bit u, bits<5> opcode, string asmop>
-  : NeonI_Scalar3Same<u, 0b11, opcode,
-                (outs FPR64:$Rd), (ins FPR64:$Rn, FPR64:$Rm),
-                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
-                [],
-                NoItinerary>;
+class NeonI_Scalar3Same_size<bit u, bits<2> size, bits<5> opcode, string asmop,
+                             RegisterClass FPRC>
+  : NeonI_Scalar3Same<u, size, opcode,
+                      (outs FPRC:$Rd), (ins FPRC:$Rn, FPRC:$Rm),
+                      !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
+                      [],
+                      NoItinerary>;
 
-multiclass NeonI_Scalar3Same_HS_sizes<bit u, bits<5> opcode,
-                                      string asmop, bit Commutable = 0> {
+class NeonI_Scalar3Same_D_size<bit u, bits<5> opcode, string asmop>
+  : NeonI_Scalar3Same_size<u, 0b11, opcode, asmop, FPR64>;
+
+multiclass NeonI_Scalar3Same_HS_sizes<bit u, bits<5> opcode, string asmop,
+                                      bit Commutable = 0> {
   let isCommutable = Commutable in {
-    def hhh : NeonI_Scalar3Same<u, 0b01, opcode,
-                                (outs FPR16:$Rd), (ins FPR16:$Rn, FPR16:$Rm),
-                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
-                                [],
-                                NoItinerary>;
-    def sss : NeonI_Scalar3Same<u, 0b10, opcode,
-                                (outs FPR32:$Rd), (ins FPR32:$Rn, FPR32:$Rm),
-                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
-                                [],
-                                NoItinerary>;
+    def hhh : NeonI_Scalar3Same_size<u, 0b01, opcode, asmop, FPR16>;
+    def sss : NeonI_Scalar3Same_size<u, 0b10, opcode, asmop, FPR32>;
   }
 }
 
 multiclass NeonI_Scalar3Same_SD_sizes<bit u, bit size_high, bits<5> opcode,
                                       string asmop, bit Commutable = 0> {
   let isCommutable = Commutable in {
-    def sss : NeonI_Scalar3Same<u, {size_high, 0b0}, opcode,
-                                (outs FPR32:$Rd), (ins FPR32:$Rn, FPR32:$Rm),
-                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
-                                [],
-                                NoItinerary>;
-    def ddd : NeonI_Scalar3Same<u, {size_high, 0b1}, opcode,
-                                (outs FPR64:$Rd), (ins FPR64:$Rn, FPR64:$Rm),
-                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
-                                [],
-                                NoItinerary>;
+    def sss : NeonI_Scalar3Same_size<u, {size_high, 0b0}, opcode, asmop, FPR32>;
+    def ddd : NeonI_Scalar3Same_size<u, {size_high, 0b1}, opcode, asmop, FPR64>;
   }
 }
 
 multiclass NeonI_Scalar3Same_BHSD_sizes<bit u, bits<5> opcode,
                                         string asmop, bit Commutable = 0> {
   let isCommutable = Commutable in {
-    def bbb : NeonI_Scalar3Same<u, 0b00, opcode,
-                                (outs FPR8:$Rd), (ins FPR8:$Rn, FPR8:$Rm),
-                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
-                                [],
-                                NoItinerary>;
-    def hhh : NeonI_Scalar3Same<u, 0b01, opcode,
-                                (outs FPR16:$Rd), (ins FPR16:$Rn, FPR16:$Rm),
-                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
-                                [],
-                                NoItinerary>;
-    def sss : NeonI_Scalar3Same<u, 0b10, opcode,
-                                (outs FPR32:$Rd), (ins FPR32:$Rn, FPR32:$Rm),
-                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
-                                [],
-                                NoItinerary>;
-    def ddd : NeonI_Scalar3Same<u, 0b11, opcode,
-                               (outs FPR64:$Rd), (ins FPR64:$Rn, FPR64:$Rm),
-                               !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
-                               [],
-                               NoItinerary>;
+    def bbb : NeonI_Scalar3Same_size<u, 0b00, opcode, asmop, FPR8>;
+    def hhh : NeonI_Scalar3Same_size<u, 0b01, opcode, asmop, FPR16>;
+    def sss : NeonI_Scalar3Same_size<u, 0b10, opcode, asmop, FPR32>;
+    def ddd : NeonI_Scalar3Same_size<u, 0b11, opcode, asmop, FPR64>;
   }
 }
 
@@ -3211,17 +3183,17 @@ multiclass Neon_Scalar3Same_cmp_SD_size_patterns<SDPatternOperator opnode,
 
 // Scalar Three Different
 
+class NeonI_Scalar3Diff_size<bit u, bits<2> size, bits<4> opcode, string asmop,
+                             RegisterClass FPRCD, RegisterClass FPRCS>
+  : NeonI_Scalar3Diff<u, size, opcode,
+                      (outs FPRCD:$Rd), (ins FPRCS:$Rn, FPRCS:$Rm),
+                      !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
+                      [],
+                      NoItinerary>;
+
 multiclass NeonI_Scalar3Diff_HS_size<bit u, bits<4> opcode, string asmop> {
-  def shh : NeonI_Scalar3Diff<u, 0b01, opcode,
-                              (outs FPR32:$Rd), (ins FPR16:$Rn, FPR16:$Rm),
-                              !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
-                              [],
-                              NoItinerary>;
-  def dss : NeonI_Scalar3Diff<u, 0b10, opcode,
-                              (outs FPR64:$Rd), (ins FPR32:$Rn, FPR32:$Rm),
-                              !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
-                              [],
-                              NoItinerary>;
+  def shh : NeonI_Scalar3Diff_size<u, 0b01, opcode, asmop, FPR32, FPR16>;
+  def dss : NeonI_Scalar3Diff_size<u, 0b10, opcode, asmop, FPR64, FPR32>;
 }
 
 multiclass NeonI_Scalar3Diff_ml_HS_size<bit u, bits<4> opcode, string asmop> {
@@ -3259,77 +3231,56 @@ multiclass Neon_Scalar3Diff_ml_HS_size_patterns<SDPatternOperator opnode,
 
 // Scalar Two Registers Miscellaneous
 
+class NeonI_Scalar2SameMisc_size<bit u, bits<2> size, bits<5> opcode, string asmop,
+                             RegisterClass FPRCD, RegisterClass FPRCS>
+  : NeonI_Scalar2SameMisc<u, size, opcode,
+                          (outs FPRCD:$Rd), (ins FPRCS:$Rn),
+                          !strconcat(asmop, "\t$Rd, $Rn"),
+                          [],
+                          NoItinerary>;
+
 multiclass NeonI_Scalar2SameMisc_SD_size<bit u, bit size_high, bits<5> opcode,
                                          string asmop> {
-  def ss : NeonI_Scalar2SameMisc<u, {size_high, 0b0}, opcode,
-                          (outs FPR32:$Rd), (ins FPR32:$Rn),
-                          !strconcat(asmop, "\t$Rd, $Rn"),
-                          [], NoItinerary>;
-  def dd : NeonI_Scalar2SameMisc<u, {size_high, 0b1}, opcode,
-                          (outs FPR64:$Rd), (ins FPR64:$Rn),
-                          !strconcat(asmop, "\t$Rd, $Rn"),
-                          [], NoItinerary>;
+  def ss : NeonI_Scalar2SameMisc_size<u, {size_high, 0b0}, opcode, asmop, FPR32,
+                                      FPR32>;
+  def dd : NeonI_Scalar2SameMisc_size<u, {size_high, 0b1}, opcode, asmop, FPR64,
+                                      FPR64>;
 }
 
 multiclass NeonI_Scalar2SameMisc_D_size<bit u, bits<5> opcode, string asmop> {
-  def dd: NeonI_Scalar2SameMisc<u, 0b11, opcode,
-                         (outs FPR64:$Rd), (ins FPR64:$Rn),
-                         !strconcat(asmop, "\t$Rd, $Rn"),
-                         [], NoItinerary>;
+  def dd: NeonI_Scalar2SameMisc_size<u, 0b11, opcode, asmop, FPR64, FPR64>;
 }
 
 multiclass NeonI_Scalar2SameMisc_BHSD_size<bit u, bits<5> opcode, string asmop>
   : NeonI_Scalar2SameMisc_D_size<u, opcode, asmop> {
-  def bb : NeonI_Scalar2SameMisc<u, 0b00, opcode,
-                          (outs FPR8:$Rd), (ins FPR8:$Rn),
-                          !strconcat(asmop, "\t$Rd, $Rn"),
-                          [], NoItinerary>;
-  def hh : NeonI_Scalar2SameMisc<u, 0b01, opcode,
-                          (outs FPR16:$Rd), (ins FPR16:$Rn),
-                          !strconcat(asmop, "\t$Rd, $Rn"),
-                          [], NoItinerary>;
-  def ss : NeonI_Scalar2SameMisc<u, 0b10, opcode,
-                          (outs FPR32:$Rd), (ins FPR32:$Rn),
-                          !strconcat(asmop, "\t$Rd, $Rn"),
-                          [], NoItinerary>;
+  def bb : NeonI_Scalar2SameMisc_size<u, 0b00, opcode, asmop, FPR8, FPR8>;
+  def hh : NeonI_Scalar2SameMisc_size<u, 0b01, opcode, asmop, FPR16, FPR16>;
+  def ss : NeonI_Scalar2SameMisc_size<u, 0b10, opcode, asmop, FPR32, FPR32>;
 }
 
 multiclass NeonI_Scalar2SameMisc_narrow_HSD_size<bit u, bits<5> opcode,
                                                  string asmop> {
-  def bh : NeonI_Scalar2SameMisc<u, 0b00, opcode,
-                          (outs FPR8:$Rd), (ins FPR16:$Rn),
-                          !strconcat(asmop, "\t$Rd, $Rn"),
-                          [], NoItinerary>;
-  def hs : NeonI_Scalar2SameMisc<u, 0b01, opcode,
-                          (outs FPR16:$Rd), (ins FPR32:$Rn),
-                          !strconcat(asmop, "\t$Rd, $Rn"),
-                          [], NoItinerary>;
-  def sd : NeonI_Scalar2SameMisc<u, 0b10, opcode,
-                          (outs FPR32:$Rd), (ins FPR64:$Rn),
-                          !strconcat(asmop, "\t$Rd, $Rn"),
-                          [], NoItinerary>;
+  def bh : NeonI_Scalar2SameMisc_size<u, 0b00, opcode, asmop, FPR8, FPR16>;
+  def hs : NeonI_Scalar2SameMisc_size<u, 0b01, opcode, asmop, FPR16, FPR32>;
+  def sd : NeonI_Scalar2SameMisc_size<u, 0b10, opcode, asmop, FPR32, FPR64>;
 }
+
+class NeonI_Scalar2SameMisc_accum_size<bit u, bits<2> size, bits<5> opcode,
+                                       string asmop, RegisterClass FPRC>
+  : NeonI_Scalar2SameMisc<u, size, opcode,
+                          (outs FPRC:$Rd), (ins FPRC:$Src, FPRC:$Rn),
+                          !strconcat(asmop, "\t$Rd, $Rn"),
+                          [],
+                          NoItinerary>;
 
 multiclass NeonI_Scalar2SameMisc_accum_BHSD_size<bit u, bits<5> opcode,
                                                  string asmop> {
 
   let Constraints = "$Src = $Rd" in {
-    def bb : NeonI_Scalar2SameMisc<u, 0b00, opcode,
-                            (outs FPR8:$Rd), (ins FPR8:$Src, FPR8:$Rn),
-                            !strconcat(asmop, "\t$Rd, $Rn"),
-                            [], NoItinerary>;
-    def hh : NeonI_Scalar2SameMisc<u, 0b01, opcode,
-                            (outs FPR16:$Rd), (ins FPR16:$Src, FPR16:$Rn),
-                            !strconcat(asmop, "\t$Rd, $Rn"),
-                            [], NoItinerary>;
-    def ss : NeonI_Scalar2SameMisc<u, 0b10, opcode,
-                            (outs FPR32:$Rd), (ins FPR32:$Src, FPR32:$Rn),
-                            !strconcat(asmop, "\t$Rd, $Rn"),
-                            [], NoItinerary>;
-    def dd: NeonI_Scalar2SameMisc<u, 0b11, opcode,
-                           (outs FPR64:$Rd), (ins FPR64:$Src, FPR64:$Rn),
-                           !strconcat(asmop, "\t$Rd, $Rn"),
-                           [], NoItinerary>;
+    def bb : NeonI_Scalar2SameMisc_accum_size<u, 0b00, opcode, asmop, FPR8>;
+    def hh : NeonI_Scalar2SameMisc_accum_size<u, 0b01, opcode, asmop, FPR16>;
+    def ss : NeonI_Scalar2SameMisc_accum_size<u, 0b10, opcode, asmop, FPR32>;
+    def dd : NeonI_Scalar2SameMisc_accum_size<u, 0b11, opcode, asmop, FPR64>;
   }
 }
 
