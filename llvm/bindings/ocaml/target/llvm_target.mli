@@ -53,7 +53,7 @@ external pointer_size : DataLayout.t -> int = "llvm_pointer_size"
     See the method llvm::DataLayout::getIntPtrType. *)
 external intptr_type : DataLayout.t -> Llvm.lltype = "LLVMIntPtrType"
 
-(** Computes the size of a type in bytes for a target.
+(** Computes the size of a type in bits for a target.
     See the method llvm::DataLayout::getTypeSizeInBits. *)
 external size_in_bits : DataLayout.t -> Llvm.lltype -> Int64.t
                       = "llvm_size_in_bits"
