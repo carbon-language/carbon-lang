@@ -493,6 +493,8 @@ public:
       Pointers.clear();
       Starts.clear();
       Ends.clear();
+      IsWritePtr.clear();
+      DependencySetId.clear();
     }
 
     /// Insert a pointer and calculate the start and end SCEVs.
