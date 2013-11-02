@@ -90,7 +90,7 @@ void test16() {
   printg("Hello, world!\n"); /* expected-warning {{implicit declaration of function 'printg'}} */
 }
 
-struct x { int x,y[]; }; /* expected-warning {{Flexible array members are a C99-specific feature}} */
+struct x { int x,y[]; }; /* expected-warning {{flexible array members are a C99-specific feature}} */
 
 /* Duplicated type-qualifiers aren't allowed by C90 */
 const const int c_i; /* expected-warning {{duplicate 'const' declaration specifier}} */

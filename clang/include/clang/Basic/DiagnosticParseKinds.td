@@ -74,7 +74,7 @@ def ext_c99_variable_decl_in_for_loop : Extension<
 def ext_c99_compound_literal : Extension<
   "compound literals are a C99-specific feature">, InGroup<C99>;
 def ext_c99_flexible_array_member : Extension<
-  "Flexible array members are a C99-specific feature">, InGroup<C99>;
+  "flexible array members are a C99-specific feature">, InGroup<C99>;
 def ext_enumerator_list_comma_c : Extension<
   "commas at the end of enumerator lists are a C99-specific "
   "feature">, InGroup<C99>;
