@@ -1371,10 +1371,10 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   assert(CXXBaseDecl && "Base type is not a C++ type");
 
   // C++ [class]p3:
-  //   If a class is marked final and it appears as a base-type-specifier in 
+  //   If a class is marked final and it appears as a base-type-specifier in
   //   base-clause, the program is ill-formed.
   if (FinalAttr *FA = CXXBaseDecl->getAttr<FinalAttr>()) {
-    Diag(BaseLoc, diag::err_class_marked_final_used_as_base) 
+    Diag(BaseLoc, diag::err_class_marked_final_used_as_base)
       << CXXBaseDecl->getDeclName()
       << FA->isSpelledAsSealed();
     Diag(CXXBaseDecl->getLocation(), diag::note_previous_decl)
@@ -1384,7 +1384,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
 
   if (BaseDecl->isInvalidDecl())
     Class->setInvalidDecl();
-  
+
   // Create the base specifier.
   return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual,
                                         Class->getTagKind() == TTK_Class,
