@@ -3937,6 +3937,9 @@ def ext_variable_sized_type_in_struct : ExtWarn<
 
 def ext_c99_flexible_array_member : Extension<
   "flexible array members are a C99 feature">, InGroup<C99>;
+def err_flexible_array_virtual_base : Error<
+  "flexible array member %0 not allowed in "
+  "%select{struct|interface|union|class|enum}1 which has a virtual base class">;
 def err_flexible_array_empty_aggregate : Error<
   "flexible array member %0 not allowed in otherwise empty "
   "%select{struct|interface|union|class|enum}1 is not allowed">;

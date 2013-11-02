@@ -11841,6 +11841,15 @@ void Sema::ActOnFields(Scope *S, SourceLocation RecLoc, Decl *EnclosingDecl,
       if (DiagID)
         Diag(FD->getLocation(), DiagID) << FD->getDeclName()
                                         << Record->getTagKind();
+      // While the layout of types that contain virtual bases is not specified
+      // by the C++ standard, both the Itanium and Microsoft C++ ABIs place
+      // virtual bases after the derived members.  This would make a flexible
+      // array member declared at the end of an object not adjacent to the end
+      // of the type.
+      if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(Record))
+        if (RD->getNumVBases() != 0)
+          Diag(FD->getLocation(), diag::err_flexible_array_virtual_base)
+            << FD->getDeclName() << Record->getTagKind();
       if (!getLangOpts().C99)
         Diag(FD->getLocation(), diag::ext_c99_flexible_array_member)
           << FD->getDeclName() << Record->getTagKind();

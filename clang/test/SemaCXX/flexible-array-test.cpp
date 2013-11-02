@@ -66,4 +66,8 @@ struct Storage : StorageBase {
   int data[];
 };
 
+struct VirtStorage : virtual StorageBase {
+  int data[]; // expected-error {{flexible array member 'data' not allowed in struct which has a virtual base class}}
+};
+
 }
