@@ -112,10 +112,8 @@ error_code COFFObjectFile::getSymbolFileOffset(DataRefImpl Symb,
   const coff_section *Section = NULL;
   if (error_code ec = getSection(symb->SectionNumber, Section))
     return ec;
-  char Type;
-  if (error_code ec = getSymbolNMTypeChar(Symb, Type))
-    return ec;
-  if (Type == 'U' || Type == 'w')
+
+  if (symb->SectionNumber == COFF::IMAGE_SYM_UNDEFINED)
     Result = UnknownAddressOrSize;
   else if (Section)
     Result = Section->PointerToRawData + symb->Value;
@@ -130,10 +128,8 @@ error_code COFFObjectFile::getSymbolAddress(DataRefImpl Symb,
   const coff_section *Section = NULL;
   if (error_code ec = getSection(symb->SectionNumber, Section))
     return ec;
-  char Type;
-  if (error_code ec = getSymbolNMTypeChar(Symb, Type))
-    return ec;
-  if (Type == 'U' || Type == 'w')
+
+  if (symb->SectionNumber == COFF::IMAGE_SYM_UNDEFINED)
     Result = UnknownAddressOrSize;
   else if (Section)
     Result = Section->VirtualAddress + symb->Value;
@@ -197,10 +193,8 @@ error_code COFFObjectFile::getSymbolSize(DataRefImpl Symb,
   const coff_section *Section = NULL;
   if (error_code ec = getSection(symb->SectionNumber, Section))
     return ec;
-  char Type;
-  if (error_code ec = getSymbolNMTypeChar(Symb, Type))
-    return ec;
-  if (Type == 'U' || Type == 'w')
+
+  if (symb->SectionNumber == COFF::IMAGE_SYM_UNDEFINED)
     Result = UnknownAddressOrSize;
   else if (Section)
     Result = Section->SizeOfRawData - symb->Value;
