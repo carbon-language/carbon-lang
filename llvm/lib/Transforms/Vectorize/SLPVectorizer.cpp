@@ -206,14 +206,6 @@ static bool CanReuseExtract(ArrayRef<Value *> VL) {
   return true;
 }
 
-static bool all_equal(SmallVectorImpl<Value *> &V) {
-  Value *First = V[0];
-  for (int i = 1, e = V.size(); i != e; ++i)
-    if (V[i] != First)
-      return false;
-  return true;
-}
-
 static void reorderInputsAccordingToOpcode(ArrayRef<Value *> VL,
                                            SmallVectorImpl<Value *> &Left,
                                            SmallVectorImpl<Value *> &Right) {
@@ -301,8 +293,8 @@ static void reorderInputsAccordingToOpcode(ArrayRef<Value *> VL,
     Right.push_back(V1);
   }
 
-  bool LeftBroadcast = all_equal(Left);
-  bool RightBroadcast = all_equal(Right);
+  bool LeftBroadcast = isSplat(Left);
+  bool RightBroadcast = isSplat(Right);
 
   // Don't reorder if the operands where good to begin with.
   if (!(LeftBroadcast || RightBroadcast) &&
