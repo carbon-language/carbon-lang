@@ -6965,7 +6965,7 @@ let Predicates = [HasAVX] in {
 let Predicates = [HasAVX2] in {
   def : Pat<(v32i8 (vselect (v32i8 VR256:$mask), (v32i8 VR256:$src1),
                             (v32i8 VR256:$src2))),
-            (VPBLENDVBYrr VR256:$src1, VR256:$src2, VR256:$mask)>;
+            (VPBLENDVBYrr VR256:$src2, VR256:$src1, VR256:$mask)>;
   def : Pat<(v16i16 (X86Blendi (v16i16 VR256:$src1), (v16i16 VR256:$src2),
                                (imm:$mask))),
             (VPBLENDWYrri VR256:$src1, VR256:$src2, imm:$mask)>;
