@@ -3,10 +3,6 @@
 ; RUN:     -dso-symbol=foo4  %t1 -disable-opt
 ; RUN: llvm-nm %t2 | FileCheck %s
 
-; FIXME: it looks like -march option of llvm-lto is not working and llvm-nm is
-; not printing the correct values with Mach-O.
-; XFAIL: darwin
-
 ; FIXME: llvm-nm is printing 'd' instead of 't' for foo1.
 ; XFAIL: powerpc64
 
@@ -15,7 +11,7 @@ define linkonce_odr void @"\01foo1"() noinline {
   ret void
 }
 
-; CHECK: {{W|T}} foo2
+; CHECK: {{W|T|S}} foo2
 define linkonce_odr void @"\01foo2"() noinline {
   ret void
 }
@@ -25,7 +21,7 @@ define linkonce_odr void @"\01foo3"() noinline {
   ret void
 }
 
-; CHECK: {{W|T}} foo4
+; CHECK: {{W|T|S}} foo4
 define linkonce_odr void @"\01foo4"() noinline {
   ret void
 }
