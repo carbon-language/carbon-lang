@@ -1860,6 +1860,15 @@ TEST(MemorySanitizer, time) {
   EXPECT_NOT_POISONED(t);
 }
 
+TEST(MemorySanitizer, strptime) {
+  struct tm time;
+  char *p = strptime("11/1/2013-05:39", "%m/%d/%Y-%H:%M", &time);
+  assert(p != 0);
+  EXPECT_NOT_POISONED(time.tm_sec);
+  EXPECT_NOT_POISONED(time.tm_hour);
+  EXPECT_NOT_POISONED(time.tm_year);
+}
+
 TEST(MemorySanitizer, localtime) {
   time_t t = 123;
   struct tm *time = localtime(&t);

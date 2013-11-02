@@ -287,6 +287,7 @@ enum StatType {
   StatInt_ctime_r,
   StatInt_asctime,
   StatInt_asctime_r,
+  StatInt_strptime,
   StatInt_frexp,
   StatInt_frexpf,
   StatInt_frexpl,

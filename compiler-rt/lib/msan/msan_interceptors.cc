@@ -495,7 +495,7 @@ INTERCEPTOR(int, swprintf, void *str, uptr size, void *format, ...) {
 
 // SIZE_T strftime(char *s, SIZE_T max, const char *format,const struct tm *tm);
 INTERCEPTOR(SIZE_T, strftime, char *s, SIZE_T max, const char *format,
-            void *tm) {
+            __sanitizer_tm *tm) {
   ENSURE_MSAN_INITED();
   SIZE_T res = REAL(strftime)(s, max, format, tm);
   if (res) __msan_unpoison(s, res + 1);

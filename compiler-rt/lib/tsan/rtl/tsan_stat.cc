@@ -292,6 +292,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_ctime_r]                  = "  ctime_r                         ";
   name[StatInt_asctime]                  = "  asctime                         ";
   name[StatInt_asctime_r]                = "  asctime_r                       ";
+  name[StatInt_strptime]                 = "  strptime                        ";
   name[StatInt_frexp]                    = "  frexp                           ";
   name[StatInt_frexpf]                   = "  frexpf                          ";
   name[StatInt_frexpl]                   = "  frexpl                          ";

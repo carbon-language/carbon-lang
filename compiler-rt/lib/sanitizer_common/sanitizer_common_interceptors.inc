@@ -435,7 +435,6 @@ INTERCEPTOR(unsigned long, time, unsigned long *t) {
 #define INIT_TIME
 #endif // SANITIZER_INTERCEPT_TIME
 
-
 #if SANITIZER_INTERCEPT_LOCALTIME_AND_FRIENDS
 static void unpoison_tm(void *ctx, __sanitizer_tm *tm) {
   COMMON_INTERCEPTOR_WRITE_RANGE(ctx, tm, sizeof(*tm));
@@ -446,7 +445,6 @@ static void unpoison_tm(void *ctx, __sanitizer_tm *tm) {
                                         REAL(strlen(tm->tm_zone)) + 1);
   }
 }
-
 INTERCEPTOR(__sanitizer_tm *, localtime, unsigned long *timep) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, localtime, timep);
@@ -539,6 +537,29 @@ INTERCEPTOR(char *, asctime_r, __sanitizer_tm *tm, char *result) {
 #else
 #define INIT_LOCALTIME_AND_FRIENDS
 #endif // SANITIZER_INTERCEPT_LOCALTIME_AND_FRIENDS
+
+#if SANITIZER_INTERCEPT_STRPTIME
+INTERCEPTOR(char *, strptime, char *s, char *format, __sanitizer_tm *tm) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strptime, s, format, tm);
+  if (format)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, format, REAL(strlen)(format) + 1);
+  char *res = REAL(strptime)(s, format, tm);
+  if (res) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, s, res - s);
+    // Do not call unpoison_tm here, because strptime does not, in fact,
+    // initialize the entire struct tm. For example, tm_zone pointer is left
+    // uninitialized.
+    if (tm)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, tm, sizeof(*tm));
+  }
+  return res;
+}
+#define INIT_STRPTIME INTERCEPT_FUNCTION(strptime);
+#else
+#define INIT_STRPTIME
+#endif
+
 
 #if SANITIZER_INTERCEPT_SCANF
 
@@ -2861,6 +2882,7 @@ INTERCEPTOR(SSIZE_T, getdelim, char **lineptr, SIZE_T *n, int delim,
   INIT_PWRITEV64;                          \
   INIT_PRCTL;                              \
   INIT_LOCALTIME_AND_FRIENDS;              \
+  INIT_STRPTIME;                           \
   INIT_SCANF;                              \
   INIT_ISOC99_SCANF;                       \
   INIT_FREXP;                              \
