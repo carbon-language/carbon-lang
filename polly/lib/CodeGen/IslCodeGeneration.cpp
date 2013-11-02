@@ -706,22 +706,16 @@ void IslNodeBuilder::createForVector(__isl_take isl_ast_node *For,
   isl_ast_expr *Inc = isl_ast_node_for_get_inc(For);
   isl_ast_expr *Iterator = isl_ast_node_for_get_iterator(For);
   isl_id *IteratorID = isl_ast_expr_get_id(Iterator);
-  CmpInst::Predicate Predicate;
-  isl_ast_expr *UB = getUpperBound(For, Predicate);
 
   Value *ValueLB = ExprBuilder.create(Init);
-  Value *ValueUB = ExprBuilder.create(UB);
   Value *ValueInc = ExprBuilder.create(Inc);
 
   Type *MaxType = ExprBuilder.getType(Iterator);
   MaxType = ExprBuilder.getWidestType(MaxType, ValueLB->getType());
-  MaxType = ExprBuilder.getWidestType(MaxType, ValueUB->getType());
   MaxType = ExprBuilder.getWidestType(MaxType, ValueInc->getType());
 
   if (MaxType != ValueLB->getType())
     ValueLB = Builder.CreateSExt(ValueLB, MaxType);
-  if (MaxType != ValueUB->getType())
-    ValueUB = Builder.CreateSExt(ValueUB, MaxType);
   if (MaxType != ValueInc->getType())
     ValueInc = Builder.CreateSExt(ValueInc, MaxType);
 
