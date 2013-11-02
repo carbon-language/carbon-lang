@@ -235,7 +235,7 @@ public:
     LineInfo[Filename][Line-1] += Count;
   }
   void setProgramCount(uint32_t PC) { ProgramCount = PC; }
-  void print(StringRef gcnoFile, StringRef gcdaFile);
+  void print(raw_fd_ostream &OS, StringRef gcnoFile, StringRef gcdaFile);
 private:
   StringMap<LineCounts> LineInfo;
   uint32_t ProgramCount;
