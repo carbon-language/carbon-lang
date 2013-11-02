@@ -1370,6 +1370,18 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   CXXRecordDecl *CXXBaseDecl = cast<CXXRecordDecl>(BaseDecl);
   assert(CXXBaseDecl && "Base type is not a C++ type");
 
+  // A class which contains a flexible array member is not suitable for use as a
+  // base class:
+  //   - If the layout determines that a base comes before another base,
+  //     the flexible array member would index into the subsequent base.
+  //   - If the layout determines that base comes before the derived class,
+  //     the flexible array member would index into the derived class.
+  if (CXXBaseDecl->hasFlexibleArrayMember()) {
+    Diag(BaseLoc, diag::err_base_class_has_flexible_array_member)
+      << CXXBaseDecl->getDeclName();
+    return 0;
+  }
+
   // C++ [class]p3:
   //   If a class is marked final and it appears as a base-type-specifier in
   //   base-clause, the program is ill-formed.
