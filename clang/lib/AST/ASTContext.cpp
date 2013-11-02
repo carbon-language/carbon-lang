@@ -8109,6 +8109,10 @@ bool ASTContext::AtomicUsesUnsupportedLibcall(const AtomicExpr *E) const {
   if (!T.isOSDarwin())
     return false;
 
+  if (!(T.isiOS() && T.isOSVersionLT(7)) &&
+      !(T.isMacOSX() && T.isOSVersionLT(10, 9)))
+    return false;
+
   QualType AtomicTy = E->getPtr()->getType()->getPointeeType();
   CharUnits sizeChars = getTypeSizeInChars(AtomicTy);
   uint64_t Size = sizeChars.getQuantity();
