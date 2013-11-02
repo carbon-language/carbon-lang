@@ -591,43 +591,6 @@ error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
   return object_error::success;
 }
 
-error_code MachOObjectFile::getSymbolNMTypeChar(DataRefImpl Symb,
-                                                char &Res) const {
-  nlist_base Entry = getSymbolTableEntryBase(this, Symb);
-  uint8_t NType = Entry.n_type;
-
-  char Char;
-  switch (NType & MachO::N_TYPE) {
-    case MachO::N_UNDF:
-      Char = 'u';
-      break;
-    case MachO::N_ABS:
-      Char = 's';
-      break;
-    case MachO::N_SECT: {
-      section_iterator Sec = end_sections();
-      getSymbolSection(Symb, Sec);
-      DataRefImpl Ref = Sec->getRawDataRefImpl();
-      StringRef SectionName;
-      getSectionName(Ref, SectionName);
-      StringRef SegmentName = getSectionFinalSegmentName(Ref);
-      if (SegmentName == "__TEXT" && SectionName == "__text")
-        Char = 't';
-      else
-        Char = 's';
-    }
-      break;
-    default:
-      Char = '?';
-      break;
-  }
-
-  if (NType & (MachO::N_EXT | MachO::N_PEXT))
-    Char = toupper(static_cast<unsigned char>(Char));
-  Res = Char;
-  return object_error::success;
-}
-
 error_code MachOObjectFile::getSymbolFlags(DataRefImpl DRI,
                                            uint32_t &Result) const {
   nlist_base Entry = getSymbolTableEntryBase(this, DRI);

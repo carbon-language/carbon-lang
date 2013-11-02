@@ -221,10 +221,6 @@ public:
   error_code getSize(uint64_t &Result) const;
   error_code getType(SymbolRef::Type &Result) const;
 
-  /// Returns the ascii char that should be displayed in a symbol table dump via
-  /// nm for this symbol.
-  error_code getNMTypeChar(char &Result) const;
-
   /// Get symbol flags (bitwise OR of SymbolRef::Flags)
   error_code getFlags(uint32_t &Result) const;
 
@@ -296,7 +292,6 @@ protected:
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const = 0;
   virtual error_code getSymbolType(DataRefImpl Symb,
                                    SymbolRef::Type &Res) const = 0;
-  virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const = 0;
   virtual error_code getSymbolFlags(DataRefImpl Symb,
                                     uint32_t &Res) const = 0;
   virtual error_code getSymbolSection(DataRefImpl Symb,
@@ -429,10 +424,6 @@ inline error_code SymbolRef::getAlignment(uint32_t &Result) const {
 
 inline error_code SymbolRef::getSize(uint64_t &Result) const {
   return OwningObject->getSymbolSize(SymbolPimpl, Result);
-}
-
-inline error_code SymbolRef::getNMTypeChar(char &Result) const {
-  return OwningObject->getSymbolNMTypeChar(SymbolPimpl, Result);
 }
 
 inline error_code SymbolRef::getFlags(uint32_t &Result) const {

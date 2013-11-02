@@ -61,7 +61,6 @@ protected:
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolAlignment(DataRefImpl Symb, uint32_t &Res) const;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const;
-  virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
   virtual error_code getSymbolFlags(DataRefImpl Symb, uint32_t &Res) const;
   virtual error_code getSymbolType(DataRefImpl Symb,
                                    SymbolRef::Type &Res) const;
@@ -104,8 +103,6 @@ protected:
   getRelocationValueString(DataRefImpl Rel,
                            SmallVectorImpl<char> &Result) const;
 
-protected: // ELF specific protected members.
-  const Elf_Sym *getSymbol(DataRefImpl Symb) const;
   uint64_t getROffset(DataRefImpl Rel) const;
   StringRef getRelocationTypeName(uint32_t Type) const;
 
@@ -169,6 +166,8 @@ protected: // ELF specific protected members.
 
 public:
   ELFObjectFile(MemoryBuffer *Object, error_code &ec);
+
+  const Elf_Sym *getSymbol(DataRefImpl Symb) const;
 
   virtual symbol_iterator begin_symbols() const;
   virtual symbol_iterator end_symbols() const;
@@ -335,78 +334,6 @@ template <class ELFT>
 error_code ELFObjectFile<ELFT>::getSymbolSize(DataRefImpl Symb,
                                               uint64_t &Result) const {
   Result = toELFSymIter(Symb)->st_size;
-  return object_error::success;
-}
-
-template <class ELFT>
-error_code ELFObjectFile<ELFT>::getSymbolNMTypeChar(DataRefImpl Symb,
-                                                    char &Result) const {
-  const Elf_Sym *ESym = getSymbol(Symb);
-  const Elf_Shdr *ESec = EF.getSection(ESym);
-
-  char ret = '?';
-
-  if (ESec) {
-    switch (ESec->sh_type) {
-    case ELF::SHT_PROGBITS:
-    case ELF::SHT_DYNAMIC:
-      switch (ESec->sh_flags) {
-      case (ELF::SHF_ALLOC | ELF::SHF_EXECINSTR):
-        ret = 't';
-        break;
-      case (ELF::SHF_ALLOC | ELF::SHF_WRITE):
-        ret = 'd';
-        break;
-      case ELF::SHF_ALLOC:
-      case (ELF::SHF_ALLOC | ELF::SHF_MERGE):
-      case (ELF::SHF_ALLOC | ELF::SHF_MERGE | ELF::SHF_STRINGS):
-        ret = 'r';
-        break;
-      }
-      break;
-    case ELF::SHT_NOBITS:
-      ret = 'b';
-    }
-  }
-
-  switch (EF.getSymbolTableIndex(ESym)) {
-  case ELF::SHN_UNDEF:
-    if (ret == '?')
-      ret = 'U';
-    break;
-  case ELF::SHN_ABS:
-    ret = 'a';
-    break;
-  case ELF::SHN_COMMON:
-    ret = 'c';
-    break;
-  }
-
-  switch (ESym->getBinding()) {
-  case ELF::STB_GLOBAL:
-    ret = ::toupper(ret);
-    break;
-  case ELF::STB_WEAK:
-    if (EF.getSymbolTableIndex(ESym) == ELF::SHN_UNDEF)
-      ret = 'w';
-    else if (ESym->getType() == ELF::STT_OBJECT)
-      ret = 'V';
-    else
-      ret = 'W';
-  }
-
-  if (ret == '?' && ESym->getType() == ELF::STT_SECTION) {
-    ErrorOr<StringRef> Name = EF.getSymbolName(toELFSymIter(Symb));
-    if (!Name)
-      return Name;
-    Result = StringSwitch<char>(*Name)
-        .StartsWith(".debug", 'N')
-        .StartsWith(".note", 'n')
-        .Default('?');
-    return object_error::success;
-  }
-
-  Result = ret;
   return object_error::success;
 }
 
