@@ -124,10 +124,10 @@ public:
     CalculateSymbolContext (SymbolContext *sc);
 
     bool
-    IsInScope (StackFrame *frame);
+    IsInScope (Frame *frame);
 
     bool
-    LocationIsValidForFrame (StackFrame *frame);
+    LocationIsValidForFrame (Frame *frame);
 
     bool
     LocationIsValidForAddress (const Address &address);

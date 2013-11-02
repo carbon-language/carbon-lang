@@ -22,13 +22,20 @@
 #include "lldb/Core/ValueObjectList.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/ExecutionContextScope.h"
+#include "lldb/Target/Frame.h"
 #include "lldb/Target/StackID.h"
 
 namespace lldb_private {
 
+/// StackFrame:
+///
+/// This class provides an interface to a stack frame in a process/thread.
+///
+/// This class is used for a live stack frame in a live process at the current point in time.
+/// It may represent either an actual stack frame or a synthesized inlined function frame.
+
 class StackFrame :
-    public std::enable_shared_from_this<StackFrame>,
-    public ExecutionContextScope
+    public Frame
 {
 public:
     enum ExpressionPathOption
@@ -43,29 +50,29 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
     StackFrame (const lldb::ThreadSP &thread_sp,
-                lldb::user_id_t frame_idx, 
-                lldb::user_id_t concrete_frame_idx, 
-                lldb::addr_t cfa, 
-                lldb::addr_t pc, 
+                lldb::user_id_t frame_idx,
+                lldb::user_id_t concrete_frame_idx,
+                lldb::addr_t cfa,
+                lldb::addr_t pc,
                 const SymbolContext *sc_ptr);
 
     StackFrame (const lldb::ThreadSP &thread_sp,
-                lldb::user_id_t frame_idx, 
-                lldb::user_id_t concrete_frame_idx, 
-                const lldb::RegisterContextSP &reg_context_sp, 
-                lldb::addr_t cfa, 
-                lldb::addr_t pc, 
-                const SymbolContext *sc_ptr);
-    
-    StackFrame (const lldb::ThreadSP &thread_sp,
-                lldb::user_id_t frame_idx, 
-                lldb::user_id_t concrete_frame_idx, 
-                const lldb::RegisterContextSP &reg_context_sp, 
-                lldb::addr_t cfa, 
-                const Address& pc, 
+                lldb::user_id_t frame_idx,
+                lldb::user_id_t concrete_frame_idx,
+                const lldb::RegisterContextSP &reg_context_sp,
+                lldb::addr_t cfa,
+                lldb::addr_t pc,
                 const SymbolContext *sc_ptr);
 
-    virtual ~StackFrame ();
+    StackFrame (const lldb::ThreadSP &thread_sp,
+                lldb::user_id_t frame_idx,
+                lldb::user_id_t concrete_frame_idx,
+                const lldb::RegisterContextSP &reg_context_sp,
+                lldb::addr_t cfa,
+                const Address& pc,
+                const SymbolContext *sc_ptr);
+
+    ~StackFrame ();
 
     lldb::ThreadSP
     GetThread () const
@@ -78,8 +85,8 @@ public:
 
     const Address&
     GetFrameCodeAddress();
-    
-    void
+
+    bool
     ChangePC (lldb::addr_t pc);
 
     const SymbolContext&
@@ -106,10 +113,9 @@ public:
     lldb::VariableListSP
     GetInScopeVariableList (bool get_file_globals);
 
-    // See ExpressionPathOption enumeration for "options" values
     lldb::ValueObjectSP
-    GetValueForVariableExpressionPath (const char *var_expr, 
-                                       lldb::DynamicValueType use_dynamic, 
+    GetValueForVariableExpressionPath (const char *var_expr,
+                                       lldb::DynamicValueType use_dynamic,
                                        uint32_t options,
                                        lldb::VariableSP &var_sp,
                                        Error &error);
@@ -122,10 +128,16 @@ public:
 
     void
     DumpUsingSettingsFormat (Stream *strm, const char *frame_marker = NULL);
-    
+
     void
     Dump (Stream *strm, bool show_frame_index, bool show_fullpaths);
-    
+
+    bool
+    GetStatus (Stream &strm,
+               bool show_frame_info,
+               bool show_source,
+               const char *frame_marker = NULL);
+
     bool
     IsInlined ();
 
@@ -137,37 +149,31 @@ public:
     {
         return m_concrete_frame_index;
     }
-    
+
     lldb::ValueObjectSP
     GetValueObjectForFrameVariable (const lldb::VariableSP &variable_sp, lldb::DynamicValueType use_dynamic);
 
     lldb::ValueObjectSP
     TrackGlobalVariable (const lldb::VariableSP &variable_sp, lldb::DynamicValueType use_dynamic);
-    
+
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
     virtual lldb::TargetSP
     CalculateTarget ();
-    
+
     virtual lldb::ProcessSP
     CalculateProcess ();
-    
+
     virtual lldb::ThreadSP
     CalculateThread ();
-    
-    virtual lldb::StackFrameSP
-    CalculateStackFrame ();
+
+    virtual lldb::FrameSP
+    CalculateFrame ();
 
     virtual void
     CalculateExecutionContext (ExecutionContext &exe_ctx);
-    
-    bool
-    GetStatus (Stream &strm,
-               bool show_frame_info,
-               bool show_source,
-               const char *frame_marker = NULL);
-    
+
 protected:
     friend class StackFrameList;
 
@@ -175,14 +181,16 @@ protected:
     SetSymbolContextScope (SymbolContextScope *symbol_scope);
 
     void
-    UpdateCurrentFrameFromPreviousFrame (StackFrame &prev_frame);
-    
-    void
-    UpdatePreviousFrameFromCurrentFrame (StackFrame &curr_frame);
+    UpdateCurrentFrameFromPreviousFrame (Frame &prev_frame);
 
-    bool
-    HasCachedData () const;
-    
+    void
+    UpdatePreviousFrameFromCurrentFrame (Frame &curr_frame);
+
+    virtual const char *
+    GetFrameType () 
+    { 
+        return "StackFrame"; 
+    }
 private:
     //------------------------------------------------------------------
     // For StackFrame only

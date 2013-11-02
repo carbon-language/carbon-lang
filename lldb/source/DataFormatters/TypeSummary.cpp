@@ -26,7 +26,7 @@
 #include "lldb/DataFormatters/ValueObjectPrinter.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/ClangASTType.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 #include "lldb/Target/Target.h"
 
 #include "lldb/Host/Host.h"
@@ -62,7 +62,7 @@ StringSummaryFormat::FormatObject (ValueObject *valobj,
     StreamString s;
     ExecutionContext exe_ctx (valobj->GetExecutionContextRef());
     SymbolContext sc;
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    Frame *frame = exe_ctx.GetFramePtr();
     if (frame)
         sc = frame->GetSymbolContext(lldb::eSymbolContextEverything);
     

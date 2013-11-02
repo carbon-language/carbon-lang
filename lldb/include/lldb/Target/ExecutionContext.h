@@ -230,10 +230,10 @@ public:
     /// context to make a weak reference to the frame's thread, process
     /// and target, use the ExecutionContextRef::SetContext() functions.
     ///
-    /// @see ExecutionContextRef::SetContext(const lldb::StackFrameSP &)
+    /// @see ExecutionContextRef::SetContext(const lldb::FrameSP &)
     //------------------------------------------------------------------
     void
-    SetFrameSP (const lldb::StackFrameSP &frame_sp);
+    SetFrameSP (const lldb::FrameSP &frame_sp);
 
     void
     SetTargetPtr (Target* target, bool adopt_selected);
@@ -245,7 +245,7 @@ public:
     SetThreadPtr (Thread *thread);
     
     void
-    SetFramePtr (StackFrame *frame);
+    SetFramePtr (Frame *frame);
 
     //------------------------------------------------------------------
     /// Get accessor that creates a strong reference from the weak target
@@ -284,7 +284,7 @@ public:
     /// @returns
     ///     A shared pointer to a frame that is not guaranteed to be valid.
     //------------------------------------------------------------------
-    lldb::StackFrameSP
+    lldb::FrameSP
     GetFrameSP () const;
 
     //------------------------------------------------------------------
@@ -393,14 +393,14 @@ public:
     ExecutionContext (const lldb::TargetSP &target_sp, bool get_process);
     ExecutionContext (const lldb::ProcessSP &process_sp);
     ExecutionContext (const lldb::ThreadSP &thread_sp);
-    ExecutionContext (const lldb::StackFrameSP &frame_sp);
+    ExecutionContext (const lldb::FrameSP &frame_sp);
     //------------------------------------------------------------------
     // Create execution contexts from weak pointers
     //------------------------------------------------------------------
     ExecutionContext (const lldb::TargetWP &target_wp, bool get_process);
     ExecutionContext (const lldb::ProcessWP &process_wp);
     ExecutionContext (const lldb::ThreadWP &thread_wp);
-    ExecutionContext (const lldb::StackFrameWP &frame_wp);    
+    ExecutionContext (const lldb::FrameWP &frame_wp);    
     ExecutionContext (const ExecutionContextRef &exe_ctx_ref);
     ExecutionContext (const ExecutionContextRef *exe_ctx_ref);
     
@@ -440,7 +440,7 @@ public:
     //------------------------------------------------------------------
     ExecutionContext (Process* process,
                       Thread *thread = NULL,
-                      StackFrame * frame = NULL);
+                      Frame * frame = NULL);
 
 
     ~ExecutionContext();
@@ -522,7 +522,7 @@ public:
     ///
     /// @see ExecutionContext::HasFrameScope() const
     //------------------------------------------------------------------
-    StackFrame *
+    Frame *
     GetFramePtr () const
     {
         return m_frame_sp.get();
@@ -580,7 +580,7 @@ public:
     ///
     /// @see ExecutionContext::HasFrameScope() const
     //------------------------------------------------------------------
-    StackFrame &
+    Frame &
     GetFrameRef () const;
     
     //------------------------------------------------------------------
@@ -621,7 +621,7 @@ public:
     ///
     /// The returned shared pointer is not guaranteed to be valid.
     //------------------------------------------------------------------
-    const lldb::StackFrameSP &
+    const lldb::FrameSP &
     GetFrameSP () const
     {
         return m_frame_sp;
@@ -649,7 +649,7 @@ public:
     /// Set accessor to set only the frame shared pointer.
     //------------------------------------------------------------------
     void
-    SetFrameSP (const lldb::StackFrameSP &frame_sp);
+    SetFrameSP (const lldb::FrameSP &frame_sp);
 
     //------------------------------------------------------------------
     /// Set accessor to set only the target shared pointer from a target
@@ -677,7 +677,7 @@ public:
     /// pointer.
     //------------------------------------------------------------------
     void
-    SetFramePtr (StackFrame *frame);
+    SetFramePtr (Frame *frame);
 
     //------------------------------------------------------------------
     // Set the execution context using a target shared pointer. 
@@ -717,7 +717,7 @@ public:
     // If "frame_sp" is not valid, all shared pointers are reset.
     //------------------------------------------------------------------
     void
-    SetContext (const lldb::StackFrameSP &frame_sp);
+    SetContext (const lldb::FrameSP &frame_sp);
 
     //------------------------------------------------------------------
     /// Returns true the ExecutionContext object contains a valid 
@@ -774,7 +774,7 @@ protected:
     lldb::TargetSP m_target_sp;     ///< The target that owns the process/thread/frame
     lldb::ProcessSP m_process_sp;   ///< The process that owns the thread/frame
     lldb::ThreadSP m_thread_sp;     ///< The thread that owns the frame
-    lldb::StackFrameSP m_frame_sp;  ///< The stack frame in thread.
+    lldb::FrameSP m_frame_sp;  ///< The stack frame in thread.
 };
 } // namespace lldb_private
 

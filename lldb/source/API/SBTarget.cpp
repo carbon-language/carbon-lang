@@ -2644,7 +2644,7 @@ SBTarget::EvaluateExpression (const char *expr, const SBExpressionOptions &optio
     ExecutionResults exe_results = eExecutionSetupError;
     ValueObjectSP expr_value_sp;
     TargetSP target_sp(GetSP());
-    StackFrame *frame = NULL;
+    Frame *frame = NULL;
     if (target_sp)
     {
         if (expr == NULL || expr[0] == '\0')

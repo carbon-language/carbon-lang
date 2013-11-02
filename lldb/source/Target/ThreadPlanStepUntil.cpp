@@ -54,7 +54,7 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
     // Stash away our "until" addresses:
     TargetSP target_sp (m_thread.CalculateTarget());
 
-    StackFrameSP frame_sp (m_thread.GetStackFrameAtIndex (frame_idx));
+    FrameSP frame_sp (m_thread.GetStackFrameAtIndex (frame_idx));
     if (frame_sp)
     {
         m_step_from_insn = frame_sp->GetStackID().GetPC();
@@ -63,7 +63,7 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
         // Find the return address and set a breakpoint there:
         // FIXME - can we do this more securely if we know first_insn?
 
-        StackFrameSP return_frame_sp (m_thread.GetStackFrameAtIndex(frame_idx + 1));
+        FrameSP return_frame_sp (m_thread.GetStackFrameAtIndex(frame_idx + 1));
         if (return_frame_sp)
         {
             // TODO: add inline functionality
@@ -247,7 +247,7 @@ ThreadPlanStepUntil::AnalyzeStop()
                                 done = false;
                             else
                             {
-                                StackFrameSP older_frame_sp = m_thread.GetStackFrameAtIndex(1);
+                                FrameSP older_frame_sp = m_thread.GetStackFrameAtIndex(1);
         
                                 // But if we can't even unwind one frame we should just get out of here & stop...
                                 if (older_frame_sp)

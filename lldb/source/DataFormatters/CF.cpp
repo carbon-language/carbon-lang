@@ -79,7 +79,7 @@ lldb_private::formatters::CFBagSummaryProvider (ValueObject& valobj, Stream& str
     
     if (is_type_ok == false)
     {
-        StackFrameSP frame_sp(valobj.GetFrameSP());
+        FrameSP frame_sp(valobj.GetFrameSP());
         if (!frame_sp)
             return false;
         ValueObjectSP count_sp;
@@ -273,7 +273,7 @@ lldb_private::formatters::CFBinaryHeapSummaryProvider (ValueObject& valobj, Stre
     
     if (is_type_ok == false)
     {
-        StackFrameSP frame_sp(valobj.GetFrameSP());
+        FrameSP frame_sp(valobj.GetFrameSP());
         if (!frame_sp)
             return false;
         ValueObjectSP count_sp;

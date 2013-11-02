@@ -79,7 +79,7 @@ public:
     }
     
     lldb::RegisterContextSP
-    CreateRegisterContextForFrame (StackFrame *frame)
+    CreateRegisterContextForFrame (Frame *frame)
     {
         Mutex::Locker locker(m_unwind_mutex);
         return DoCreateRegisterContextForFrame (frame);
@@ -107,7 +107,7 @@ protected:
                          lldb::addr_t& pc) = 0;
     
     virtual lldb::RegisterContextSP
-    DoCreateRegisterContextForFrame (StackFrame *frame) = 0;
+    DoCreateRegisterContextForFrame (Frame *frame) = 0;
 
     Thread &m_thread;
     Mutex  m_unwind_mutex;

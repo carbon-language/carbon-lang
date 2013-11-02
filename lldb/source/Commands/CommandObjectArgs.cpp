@@ -30,7 +30,7 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -139,7 +139,7 @@ CommandObjectArgs::DoExecute (Args& args, CommandReturnObject &result)
         return false;
     }
         
-    lldb::StackFrameSP thread_cur_frame = thread->GetSelectedFrame ();
+    lldb::FrameSP thread_cur_frame = thread->GetSelectedFrame ();
     if (!thread_cur_frame)
     {
         result.AppendError ("The current thread has no current frame.");

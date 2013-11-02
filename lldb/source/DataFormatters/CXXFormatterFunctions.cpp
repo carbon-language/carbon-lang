@@ -44,7 +44,7 @@ lldb_private::formatters::ExtractValueFromObjCExpression (ValueObject &valobj,
     ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
     lldb::ValueObjectSP result_sp;
     Target* target = exe_ctx.GetTargetPtr();
-    StackFrame* stack_frame = exe_ctx.GetFramePtr();
+    Frame* stack_frame = exe_ctx.GetFramePtr();
     if (!target || !stack_frame)
         return false;
     
@@ -78,7 +78,7 @@ lldb_private::formatters::ExtractSummaryFromObjCExpression (ValueObject &valobj,
     ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
     lldb::ValueObjectSP result_sp;
     Target* target = exe_ctx.GetTargetPtr();
-    StackFrame* stack_frame = exe_ctx.GetFramePtr();
+    Frame* stack_frame = exe_ctx.GetFramePtr();
     if (!target || !stack_frame)
         return false;
     
@@ -116,7 +116,7 @@ lldb_private::formatters::CallSelectorOnObject (ValueObject &valobj,
     ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
     lldb::ValueObjectSP result_sp;
     Target* target = exe_ctx.GetTargetPtr();
-    StackFrame* stack_frame = exe_ctx.GetFramePtr();
+    Frame* stack_frame = exe_ctx.GetFramePtr();
     if (!target || !stack_frame)
         return valobj_sp;
     
@@ -153,7 +153,7 @@ lldb_private::formatters::CallSelectorOnObject (ValueObject &valobj,
     ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
     lldb::ValueObjectSP result_sp;
     Target* target = exe_ctx.GetTargetPtr();
-    StackFrame* stack_frame = exe_ctx.GetFramePtr();
+    Frame* stack_frame = exe_ctx.GetFramePtr();
     if (!target || !stack_frame)
         return valobj_sp;
     

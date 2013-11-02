@@ -379,7 +379,7 @@ DynamicLoaderPOSIXDYLD::GetStepThroughTrampolinePlan(Thread &thread, bool stop)
 {
     ThreadPlanSP thread_plan_sp;
 
-    StackFrame *frame = thread.GetStackFrameAtIndex(0).get();
+    Frame *frame = thread.GetStackFrameAtIndex(0).get();
     const SymbolContext &context = frame->GetSymbolContext(eSymbolContextSymbol);
     Symbol *sym = context.symbol;
 

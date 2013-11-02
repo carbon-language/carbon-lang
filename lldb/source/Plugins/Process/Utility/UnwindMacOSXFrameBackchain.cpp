@@ -73,7 +73,7 @@ UnwindMacOSXFrameBackchain::DoGetFrameInfoAtIndex (uint32_t idx, addr_t& cfa, ad
 }
     
 lldb::RegisterContextSP
-UnwindMacOSXFrameBackchain::DoCreateRegisterContextForFrame (StackFrame *frame)
+UnwindMacOSXFrameBackchain::DoCreateRegisterContextForFrame (Frame *frame)
 {
     lldb::RegisterContextSP reg_ctx_sp;
     uint32_t concrete_idx = frame->GetConcreteFrameIndex ();
@@ -88,7 +88,7 @@ UnwindMacOSXFrameBackchain::GetStackFrameData_i386 (const ExecutionContext &exe_
 {
     m_cursors.clear();
     
-    StackFrame *first_frame = exe_ctx.GetFramePtr();
+    Frame *first_frame = exe_ctx.GetFramePtr();
 
     Process *process = exe_ctx.GetProcessPtr();
     if (process == NULL)
@@ -191,7 +191,7 @@ UnwindMacOSXFrameBackchain::GetStackFrameData_x86_64 (const ExecutionContext &ex
     if (process == NULL)
         return 0;
     
-    StackFrame *first_frame = exe_ctx.GetFramePtr();
+    Frame *first_frame = exe_ctx.GetFramePtr();
 
     std::pair<lldb::addr_t, lldb::addr_t> fp_pc_pair;
 

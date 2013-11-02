@@ -211,7 +211,7 @@ LLDBSwigPythonBreakpointCallbackFunction
 (
     const char *python_function_name,
     const char *session_dictionary_name,
-    const lldb::StackFrameSP& frame_sp, 
+    const lldb::FrameSP& frame_sp, 
     const lldb::BreakpointLocationSP& bp_loc_sp
 )
 {
@@ -251,7 +251,7 @@ LLDBSwigPythonWatchpointCallbackFunction
 (
     const char *python_function_name,
     const char *session_dictionary_name,
-    const lldb::StackFrameSP& frame_sp, 
+    const lldb::FrameSP& frame_sp, 
     const lldb::WatchpointSP& wp_sp
 )
 {
@@ -855,7 +855,7 @@ SWIGEXPORT bool
 LLDBSWIGPythonRunScriptKeywordFrame
 (const char* python_function_name,
 const char* session_dictionary_name,
-lldb::StackFrameSP& frame,
+lldb::FrameSP& frame,
 std::string& output)
 
 {

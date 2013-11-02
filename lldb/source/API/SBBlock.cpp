@@ -20,7 +20,7 @@
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/VariableList.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;
@@ -264,7 +264,7 @@ SBBlock::GetVariables (lldb::SBFrame& frame,
     SBValueList value_list;
     if (block)
     {
-        StackFrameSP frame_sp(frame.GetFrameSP());
+        FrameSP frame_sp(frame.GetFrameSP());
         VariableListSP variable_list_sp (block->GetBlockVariableList (true));
 
         if (variable_list_sp)

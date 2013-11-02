@@ -35,32 +35,33 @@ namespace lldb_private {
 /// ValueObject:
 ///
 /// This abstract class provides an interface to a particular value, be it a register, a local or global variable,
-/// that is evaluated in some particular scope.  The ValueObject also has the capibility of being the "child" of
+/// that is evaluated in some particular scope.  The ValueObject also has the capability of being the "child" of
 /// some other variable object, and in turn of having children.  
 /// If a ValueObject is a root variable object - having no parent - then it must be constructed with respect to some
 /// particular ExecutionContextScope.  If it is a child, it inherits the ExecutionContextScope from its parent.
 /// The ValueObject will update itself if necessary before fetching its value, summary, object description, etc.
 /// But it will always update itself in the ExecutionContextScope with which it was originally created.
-
+///
 /// A brief note on life cycle management for ValueObjects.  This is a little tricky because a ValueObject can contain
 /// various other ValueObjects - the Dynamic Value, its children, the dereference value, etc.  Any one of these can be
-/// handed out as a shared pointer, but for that contained value object to be valid, the root object and potentially other
-/// of the value objects need to stay around.  
+/// handed out as a shared pointer, but for that contained value object to be valid, the root object and potentially 
+/// other of the value objects need to stay around.  
 /// We solve this problem by handing out shared pointers to the Value Object and any of its dependents using a shared
 /// ClusterManager.  This treats each shared pointer handed out for the entire cluster as a reference to the whole
 /// cluster.  The whole cluster will stay around until the last reference is released.
 ///
 /// The ValueObject mostly handle this automatically, if a value object is made with a Parent ValueObject, then it adds
 /// itself to the ClusterManager of the parent.
-
-/// It does mean that external to the ValueObjects we should only ever make available ValueObjectSP's, never ValueObjects 
-/// or pointers to them.  So all the "Root level" ValueObject derived constructors should be private, and 
-/// should implement a Create function that new's up object and returns a Shared Pointer that it gets from the GetSP() method.
+///
+/// It does mean that external to the ValueObjects we should only ever make available ValueObjectSP's, never 
+/// ValueObjects or pointers to them.  So all the "Root level" ValueObject derived constructors should be private, and 
+/// should implement a Create function that new's up object and returns a Shared Pointer that it gets from the GetSP() 
+/// method.
 ///
 /// However, if you are making an derived ValueObject that will be contained in a parent value object, you should just
 /// hold onto a pointer to it internally, and by virtue of passing the parent ValueObject into its constructor, it will
-/// be added to the ClusterManager for the parent.  Then if you ever hand out a Shared Pointer to the contained ValueObject,
-/// just do so by calling GetSP() on the contained object.
+/// be added to the ClusterManager for the parent.  Then if you ever hand out a Shared Pointer to the contained 
+/// ValueObject, just do so by calling GetSP() on the contained object.
 
 class ValueObject : public UserID
 {
@@ -361,7 +362,7 @@ public:
         return m_update_point.GetExecutionContextRef().GetThreadSP();
     }
 
-    lldb::StackFrameSP
+    lldb::FrameSP
     GetFrameSP() const
     {
         return m_update_point.GetExecutionContextRef().GetFrameSP();

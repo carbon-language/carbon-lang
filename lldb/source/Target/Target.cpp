@@ -42,7 +42,7 @@
 #include "lldb/lldb-private-log.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Process.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadSpec.h"
 
@@ -1699,10 +1699,10 @@ Target::CalculateThread ()
     return ThreadSP();
 }
 
-StackFrameSP
-Target::CalculateStackFrame ()
+FrameSP
+Target::CalculateFrame ()
 {
-    return StackFrameSP();
+    return FrameSP();
 }
 
 void
@@ -1832,7 +1832,7 @@ ExecutionResults
 Target::EvaluateExpression
 (
     const char *expr_cstr,
-    StackFrame *frame,
+    Frame *frame,
     lldb::ValueObjectSP &result_valobj_sp,
     const EvaluateExpressionOptions& options
 )
@@ -2086,7 +2086,7 @@ Target::RunStopHooks ()
         lldb::ThreadSP cur_thread_sp = cur_threadlist.GetThreadAtIndex (i);
         if (cur_thread_sp->ThreadStoppedForAReason())
         {
-            lldb::StackFrameSP cur_frame_sp = cur_thread_sp->GetStackFrameAtIndex(0);
+            lldb::FrameSP cur_frame_sp = cur_thread_sp->GetStackFrameAtIndex(0);
             exc_ctx_with_reasons.push_back(ExecutionContext(m_process_sp.get(), cur_thread_sp.get(), cur_frame_sp.get()));
             sym_ctx_with_reasons.push_back(cur_frame_sp->GetSymbolContext(eSymbolContextEverything));
         }

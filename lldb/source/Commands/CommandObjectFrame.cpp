@@ -42,7 +42,7 @@
 #include "lldb/Symbol/Variable.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/Process.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Target.h"
 
@@ -378,7 +378,7 @@ protected:
     DoExecute (Args& command, CommandReturnObject &result)
     {
         // No need to check "frame" for validity as eFlagRequiresFrame ensures it is valid
-        StackFrame *frame = m_exe_ctx.GetFramePtr();
+        Frame *frame = m_exe_ctx.GetFramePtr();
 
         Stream &s = result.GetOutputStream();
 
@@ -470,8 +470,8 @@ protected:
                     else // No regex, either exact variable names or variable expressions.
                     {
                         Error error;
-                        uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember |
-                                                     StackFrame::eExpressionPathOptionsAllowDirectIVarAccess;
+                        uint32_t expr_path_options = Frame::eExpressionPathOptionCheckPtrVsMember |
+                                                     Frame::eExpressionPathOptionsAllowDirectIVarAccess;
                         lldb::VariableSP var_sp;
                         valobj_sp = frame->GetValueForVariableExpressionPath (name_cstr, 
                                                                               m_varobj_options.use_dynamic, 

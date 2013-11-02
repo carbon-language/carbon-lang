@@ -15,7 +15,7 @@
 #include "lldb/Expression/IRMemoryMap.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/SymbolContext.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 
 #include <vector>
 
@@ -58,7 +58,7 @@ public:
         friend class Materializer;
 
         Dematerializer (Materializer &materializer,
-                        lldb::StackFrameSP &frame_sp,
+                        lldb::FrameSP &frame_sp,
                         IRMemoryMap &map,
                         lldb::addr_t process_address) :
             m_materializer(&materializer),
@@ -82,7 +82,7 @@ public:
     typedef std::shared_ptr<Dematerializer> DematerializerSP;
     typedef std::weak_ptr<Dematerializer> DematerializerWP;
     
-    DematerializerSP Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err);
+    DematerializerSP Materialize (lldb::FrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err);
     
     uint32_t AddPersistentVariable (lldb::ClangExpressionVariableSP &persistent_variable_sp, Error &err);
     uint32_t AddVariable (lldb::VariableSP &variable_sp, Error &err);
@@ -122,8 +122,8 @@ public:
         {
         }
         
-        virtual void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err) = 0;
-        virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address,
+        virtual void Materialize (lldb::FrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err) = 0;
+        virtual void Dematerialize (lldb::FrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address,
                                     lldb::addr_t frame_top, lldb::addr_t frame_bottom, Error &err) = 0;
         virtual void DumpToLog (IRMemoryMap &map, lldb::addr_t process_address, Log *log) = 0;
         virtual void Wipe (IRMemoryMap &map, lldb::addr_t process_address) = 0;

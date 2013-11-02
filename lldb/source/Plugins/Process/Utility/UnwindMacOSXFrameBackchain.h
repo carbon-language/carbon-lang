@@ -46,7 +46,7 @@ protected:
                          lldb::addr_t& pc);
     
     lldb::RegisterContextSP
-    DoCreateRegisterContextForFrame (lldb_private::StackFrame *frame);
+    DoCreateRegisterContextForFrame (lldb_private::Frame *frame);
 
     friend class RegisterContextMacOSXFrameBackchain;
 

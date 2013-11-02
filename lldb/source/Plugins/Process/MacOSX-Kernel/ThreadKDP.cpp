@@ -109,7 +109,7 @@ ThreadKDP::GetRegisterContext ()
 }
 
 lldb::RegisterContextSP
-ThreadKDP::CreateRegisterContextForFrame (StackFrame *frame)
+ThreadKDP::CreateRegisterContextForFrame (Frame *frame)
 {
     lldb::RegisterContextSP reg_ctx_sp;
     uint32_t concrete_frame_idx = 0;

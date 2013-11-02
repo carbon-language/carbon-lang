@@ -25,7 +25,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 #include "lldb/Target/Thread.h"
 
 #include "llvm/ADT/Triple.h"
@@ -557,7 +557,7 @@ ABISysV_x86_64::GetArgumentValues (Thread &thread,
 }
 
 Error
-ABISysV_x86_64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value_sp)
+ABISysV_x86_64::SetReturnValueObject(lldb::FrameSP &frame_sp, lldb::ValueObjectSP &new_value_sp)
 {
     Error error;
     if (!new_value_sp)

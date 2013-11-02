@@ -49,7 +49,7 @@
 #include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/Process.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadSpec.h"
 
@@ -909,7 +909,7 @@ protected:
             if (num_compile_units == 0 && num_shlibs == 0)
             {
                 bool success = false;
-                StackFrame *frame = m_exe_ctx.GetFramePtr();
+                Frame *frame = m_exe_ctx.GetFramePtr();
                 CompileUnit *comp_unit = NULL;
                 if (frame)
                 {
@@ -3957,7 +3957,7 @@ public:
                 break;
         }
         
-        StackFrameSP frame = m_exe_ctx.GetFrameSP();
+        FrameSP frame = m_exe_ctx.GetFrameSP();
         
         if (!frame)
             return false;
@@ -4546,7 +4546,7 @@ protected:
                         const StateType process_state = process->GetState();
                         if (StateIsStoppedState (process_state, true))
                         {
-                            StackFrame *frame = m_exe_ctx.GetFramePtr();
+                            Frame *frame = m_exe_ctx.GetFramePtr();
                             if (frame)
                             {
                                 ModuleSP frame_module_sp (frame->GetSymbolContext(eSymbolContextModule).module_sp);

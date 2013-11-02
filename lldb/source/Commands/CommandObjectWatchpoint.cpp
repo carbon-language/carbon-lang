@@ -989,7 +989,7 @@ protected:
     DoExecute (Args& command, CommandReturnObject &result)
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-        StackFrame *frame = m_exe_ctx.GetFramePtr();
+        Frame *frame = m_exe_ctx.GetFramePtr();
 
         // If no argument is present, issue an error message.  There's no way to set a watchpoint.
         if (command.GetArgumentCount() <= 0)
@@ -1024,8 +1024,8 @@ protected:
 
         // Things have checked out ok...
         Error error;
-        uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember |
-                                     StackFrame::eExpressionPathOptionsAllowDirectIVarAccess;
+        uint32_t expr_path_options = Frame::eExpressionPathOptionCheckPtrVsMember |
+                                     Frame::eExpressionPathOptionsAllowDirectIVarAccess;
         valobj_sp = frame->GetValueForVariableExpressionPath (command.GetArgumentAtIndex(0), 
                                                               eNoDynamicValues, 
                                                               expr_path_options,
@@ -1188,7 +1188,7 @@ protected:
         m_option_group.NotifyOptionParsingStarting(); // This is a raw command, so notify the option group
         
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-        StackFrame *frame = m_exe_ctx.GetFramePtr();
+        Frame *frame = m_exe_ctx.GetFramePtr();
 
         Args command(raw_command);
         const char *expr = NULL;

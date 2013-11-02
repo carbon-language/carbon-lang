@@ -27,7 +27,7 @@ namespace lldb_private {
 /// objects can inherit from this pure virtual class can reconstruct
 /// their execution context without having to keep a complete
 /// ExecutionContext object in the object state. Examples of these
-/// objects include: Process, Thread, RegisterContext and StackFrame.
+/// objects include: Process, Thread, RegisterContext and Frame.
 ///
 /// Bbjects can contain a valid pointer to an instance of this so they
 /// can reconstruct the execution context.
@@ -51,8 +51,8 @@ public:
     virtual lldb::ThreadSP
     CalculateThread () = 0;
 
-    virtual lldb::StackFrameSP
-    CalculateStackFrame () = 0;
+    virtual lldb::FrameSP
+    CalculateFrame () = 0;
 
     //------------------------------------------------------------------
     /// Reconstruct the object's execution context into \a sc.

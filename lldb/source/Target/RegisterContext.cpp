@@ -17,7 +17,7 @@
 #include "lldb/Core/Scalar.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Target/ExecutionContext.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 
@@ -104,7 +104,7 @@ RegisterContext::SetPC(uint64_t pc)
     bool success = WriteRegisterFromUnsigned (reg, pc);
     if (success)
     {
-        StackFrameSP frame_sp(m_thread.GetFrameWithConcreteFrameIndex (m_concrete_frame_idx));
+        FrameSP frame_sp(m_thread.GetFrameWithConcreteFrameIndex (m_concrete_frame_idx));
         if (frame_sp)
             frame_sp->ChangePC(pc);
         else
@@ -450,13 +450,13 @@ RegisterContext::CalculateThread ()
     return m_thread.shared_from_this();
 }
 
-StackFrameSP
-RegisterContext::CalculateStackFrame ()
+FrameSP
+RegisterContext::CalculateFrame ()
 {
     // Register contexts might belong to many frames if we have inlined 
     // functions inside a frame since all inlined functions share the
     // same registers, so we can't definitively say which frame we come from...
-    return StackFrameSP();
+    return FrameSP();
 }
 
 void

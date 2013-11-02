@@ -27,7 +27,7 @@
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/Process.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 #include "lldb/Target/Target.h"
 
 #define DEFAULT_DISASM_BYTE_SIZE 32
@@ -370,7 +370,7 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
     else
     {
         AddressRange range;
-        StackFrame *frame = m_exe_ctx.GetFramePtr();
+        Frame *frame = m_exe_ctx.GetFramePtr();
         if (m_options.frame_line)
         {
             if (frame == NULL)

@@ -25,7 +25,7 @@
 #include "lldb/DataFormatters/TypeFormat.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/ClangASTType.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;

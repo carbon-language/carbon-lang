@@ -39,7 +39,7 @@ public:
     GetRegisterContext ();
 
     virtual lldb::RegisterContextSP
-    CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
+    CreateRegisterContextForFrame (lldb_private::Frame *frame);
 
     void
     Dump (lldb_private::Log *log, uint32_t index);

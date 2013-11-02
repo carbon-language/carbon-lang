@@ -22,7 +22,7 @@
 #include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Target/ExecutionContext.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;
@@ -196,7 +196,7 @@ SBInstruction::EmulateWithFrame (lldb::SBFrame &frame, uint32_t evaluate_options
 {
     if (m_opaque_sp)
     {
-        lldb::StackFrameSP frame_sp (frame.GetFrameSP());
+        lldb::FrameSP frame_sp (frame.GetFrameSP());
 
         if (frame_sp)
         {

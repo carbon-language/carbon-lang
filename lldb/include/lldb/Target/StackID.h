@@ -109,6 +109,7 @@ public:
 
 protected:
 
+    friend class Frame;
     friend class StackFrame;
     
     void

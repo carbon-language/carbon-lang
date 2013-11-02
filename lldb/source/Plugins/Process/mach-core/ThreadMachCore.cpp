@@ -88,7 +88,7 @@ ThreadMachCore::GetRegisterContext ()
 }
 
 lldb::RegisterContextSP
-ThreadMachCore::CreateRegisterContextForFrame (StackFrame *frame)
+ThreadMachCore::CreateRegisterContextForFrame (Frame *frame)
 {
     lldb::RegisterContextSP reg_ctx_sp;
     uint32_t concrete_frame_idx = 0;

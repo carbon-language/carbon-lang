@@ -78,7 +78,7 @@ ThreadMemory::GetRegisterContext ()
 }
 
 RegisterContextSP
-ThreadMemory::CreateRegisterContextForFrame (StackFrame *frame)
+ThreadMemory::CreateRegisterContextForFrame (Frame *frame)
 {
     RegisterContextSP reg_ctx_sp;
     uint32_t concrete_frame_idx = 0;

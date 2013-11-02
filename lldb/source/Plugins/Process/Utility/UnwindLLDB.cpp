@@ -220,7 +220,7 @@ UnwindLLDB::DoGetFrameInfoAtIndex (uint32_t idx, addr_t& cfa, addr_t& pc)
 }
 
 lldb::RegisterContextSP
-UnwindLLDB::DoCreateRegisterContextForFrame (StackFrame *frame)
+UnwindLLDB::DoCreateRegisterContextForFrame (Frame *frame)
 {
     lldb::RegisterContextSP reg_ctx_sp;
     uint32_t idx = frame->GetConcreteFrameIndex ();

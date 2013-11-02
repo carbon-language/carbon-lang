@@ -26,7 +26,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlanRunToAddress.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 
 #include "DynamicLoaderMacOSXDYLD.h"
 
@@ -216,7 +216,7 @@ DynamicLoaderMacOSXDYLD::ProcessDidExec ()
             ThreadSP thread_sp (m_process->GetThreadList().GetThreadAtIndex(0));
             if (thread_sp)
             {
-                lldb::StackFrameSP frame_sp (thread_sp->GetStackFrameAtIndex(0));
+                lldb::FrameSP frame_sp (thread_sp->GetStackFrameAtIndex(0));
                 if (frame_sp)
                 {
                     const Symbol *symbol = frame_sp->GetSymbolContext(eSymbolContextSymbol).symbol;
@@ -1604,7 +1604,7 @@ ThreadPlanSP
 DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop_others)
 {
     ThreadPlanSP thread_plan_sp;
-    StackFrame *current_frame = thread.GetStackFrameAtIndex(0).get();
+    Frame *current_frame = thread.GetStackFrameAtIndex(0).get();
     const SymbolContext &current_context = current_frame->GetSymbolContext(eSymbolContextSymbol);
     Symbol *current_symbol = current_context.symbol;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));

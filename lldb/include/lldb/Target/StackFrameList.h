@@ -17,7 +17,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Host/Mutex.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 
 namespace lldb_private {
 
@@ -36,18 +36,18 @@ public:
     uint32_t
     GetNumFrames (bool can_create = true);
     
-    lldb::StackFrameSP
+    lldb::FrameSP
     GetFrameAtIndex (uint32_t idx);
 
-    lldb::StackFrameSP
+    lldb::FrameSP
     GetFrameWithConcreteFrameIndex (uint32_t unwind_idx);
     
-    lldb::StackFrameSP
+    lldb::FrameSP
     GetFrameWithStackID (const StackID &stack_id);
 
     // Mark a stack frame as the current frame
     uint32_t
-    SetSelectedFrame (lldb_private::StackFrame *frame);
+    SetSelectedFrame (lldb_private::Frame *frame);
     
     uint32_t
     GetSelectedFrameIndex () const;
@@ -57,7 +57,7 @@ public:
     SetSelectedFrameByIndex (uint32_t idx);
     
     uint32_t
-    GetVisibleStackFrameIndex(uint32_t idx)
+    GetVisibleFrameIndex(uint32_t idx)
     {
         if (m_current_inlined_depth < UINT32_MAX)
             return idx - m_current_inlined_depth;
@@ -80,8 +80,8 @@ public:
     void
     Dump (Stream *s);
     
-    lldb::StackFrameSP
-    GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr);
+    lldb::FrameSP
+    GetFrameSPForFramePtr (Frame *stack_frame_ptr);
 
     size_t
     GetStatus (Stream &strm,
@@ -96,7 +96,7 @@ protected:
     friend class Thread;
 
     bool
-    SetFrameAtIndex (uint32_t idx, lldb::StackFrameSP &frame_sp);
+    SetFrameAtIndex (uint32_t idx, lldb::FrameSP &frame_sp);
 
     static void
     Merge (std::unique_ptr<StackFrameList>& curr_ap,
@@ -132,7 +132,7 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from StackFrameList can see and modify these
     //------------------------------------------------------------------
-    typedef std::vector<lldb::StackFrameSP> collection;
+    typedef std::vector<lldb::FrameSP> collection;
     typedef collection::iterator iterator;
     typedef collection::const_iterator const_iterator;
 

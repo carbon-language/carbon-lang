@@ -9,6 +9,7 @@
 
 #include "lldb/lldb-python.h"
 
+#include "lldb/Target/Frame.h"
 #include "lldb/Target/StackFrame.h"
 
 // C Includes
@@ -204,7 +205,7 @@ StackFrame::GetFrameIndex () const
 {
     ThreadSP thread_sp = GetThread();
     if (thread_sp)
-        return thread_sp->GetStackFrameList()->GetVisibleStackFrameIndex(m_frame_index);
+        return thread_sp->GetStackFrameList()->GetVisibleFrameIndex(m_frame_index);
     else
         return m_frame_index;
 }
@@ -246,7 +247,7 @@ StackFrame::GetFrameCodeAddress()
     return m_frame_code_addr;
 }
 
-void
+bool
 StackFrame::ChangePC (addr_t pc)
 {
     m_frame_code_addr.SetRawAddress(pc);
@@ -255,6 +256,7 @@ StackFrame::ChangePC (addr_t pc)
     ThreadSP thread_sp (GetThread());
     if (thread_sp)
         thread_sp->ClearStackFrames ();
+    return true;
 }
 
 const char *
@@ -1261,8 +1263,8 @@ StackFrame::CalculateThread ()
     return GetThread();
 }
 
-StackFrameSP
-StackFrame::CalculateStackFrame ()
+FrameSP
+StackFrame::CalculateFrame ()
 {
     return shared_from_this();
 }
@@ -1327,49 +1329,45 @@ StackFrame::Dump (Stream *strm, bool show_frame_index, bool show_fullpaths)
 }
 
 void
-StackFrame::UpdateCurrentFrameFromPreviousFrame (StackFrame &prev_frame)
+StackFrame::UpdateCurrentFrameFromPreviousFrame (Frame &prev_frame)
 {
     assert (GetStackID() == prev_frame.GetStackID());    // TODO: remove this after some testing
-    m_variable_list_sp = prev_frame.m_variable_list_sp;
-    m_variable_list_value_objects.Swap (prev_frame.m_variable_list_value_objects);
-    if (!m_disassembly.GetString().empty())
-        m_disassembly.GetString().swap (m_disassembly.GetString());
+    if (strcmp (prev_frame.GetFrameType(), "StackFrame") == 0)
+    {
+        StackFrame &prev_stackframe = *static_cast<StackFrame*>(&prev_frame);
+        m_variable_list_sp = prev_stackframe.m_variable_list_sp;
+        m_variable_list_value_objects.Swap (prev_stackframe.m_variable_list_value_objects);
+        if (!m_disassembly.GetString().empty())
+            m_disassembly.GetString().swap (m_disassembly.GetString());
+    }
 }
     
 
 void
-StackFrame::UpdatePreviousFrameFromCurrentFrame (StackFrame &curr_frame)
+StackFrame::UpdatePreviousFrameFromCurrentFrame (Frame &curr_frame)
 {
     assert (GetStackID() == curr_frame.GetStackID());        // TODO: remove this after some testing
-    m_id.SetPC (curr_frame.m_id.GetPC());       // Update the Stack ID PC value
-    assert (GetThread() == curr_frame.GetThread());
-    m_frame_index = curr_frame.m_frame_index;
-    m_concrete_frame_index = curr_frame.m_concrete_frame_index;
-    m_reg_context_sp = curr_frame.m_reg_context_sp;
-    m_frame_code_addr = curr_frame.m_frame_code_addr;
-    assert (m_sc.target_sp.get() == NULL || curr_frame.m_sc.target_sp.get() == NULL || m_sc.target_sp.get() == curr_frame.m_sc.target_sp.get());
-    assert (m_sc.module_sp.get() == NULL || curr_frame.m_sc.module_sp.get() == NULL || m_sc.module_sp.get() == curr_frame.m_sc.module_sp.get());
-    assert (m_sc.comp_unit == NULL || curr_frame.m_sc.comp_unit == NULL || m_sc.comp_unit == curr_frame.m_sc.comp_unit);
-    assert (m_sc.function == NULL || curr_frame.m_sc.function == NULL || m_sc.function == curr_frame.m_sc.function);
-    m_sc = curr_frame.m_sc;
-    m_flags.Clear(GOT_FRAME_BASE | eSymbolContextEverything);
-    m_flags.Set (m_sc.GetResolvedMask());
-    m_frame_base.Clear();
-    m_frame_base_error.Clear();
+    if (strcmp (curr_frame.GetFrameType(), "StackFrame") == 0)
+    {
+        StackFrame &curr_stackframe = *static_cast<StackFrame*>(&curr_frame);
+        m_id.SetPC (curr_stackframe.m_id.GetPC());       // Update the Stack ID PC value
+        assert (GetThread() == curr_stackframe.GetThread());
+        m_frame_index = curr_stackframe.m_frame_index;
+        m_concrete_frame_index = curr_stackframe.m_concrete_frame_index;
+        m_reg_context_sp = curr_stackframe.m_reg_context_sp;
+        m_frame_code_addr = curr_stackframe.m_frame_code_addr;
+        assert (m_sc.target_sp.get() == NULL || curr_stackframe.m_sc.target_sp.get() == NULL || m_sc.target_sp.get() == curr_stackframe.m_sc.target_sp.get());
+        assert (m_sc.module_sp.get() == NULL || curr_stackframe.m_sc.module_sp.get() == NULL || m_sc.module_sp.get() == curr_stackframe.m_sc.module_sp.get());
+        assert (m_sc.comp_unit == NULL || curr_stackframe.m_sc.comp_unit == NULL || m_sc.comp_unit == curr_stackframe.m_sc.comp_unit);
+        assert (m_sc.function == NULL || curr_stackframe.m_sc.function == NULL || m_sc.function == curr_stackframe.m_sc.function);
+        m_sc = curr_stackframe.m_sc;
+        m_flags.Clear(GOT_FRAME_BASE | eSymbolContextEverything);
+        m_flags.Set (m_sc.GetResolvedMask());
+        m_frame_base.Clear();
+        m_frame_base_error.Clear();
+    }
 }
     
-
-bool
-StackFrame::HasCachedData () const
-{
-    if (m_variable_list_sp.get())
-        return true;
-    if (m_variable_list_value_objects.GetSize() > 0)
-        return true;
-    if (!m_disassembly.GetString().empty())
-        return true;
-    return false;
-}
 
 bool
 StackFrame::GetStatus (Stream& strm,

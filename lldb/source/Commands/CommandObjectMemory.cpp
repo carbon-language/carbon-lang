@@ -34,7 +34,7 @@
 #include "lldb/Interpreter/OptionValueString.h"
 #include "lldb/Symbol/TypeList.h"
 #include "lldb/Target/Process.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -502,7 +502,7 @@ protected:
             }
                     
             ConstString lookup_type_name(type_str.c_str());
-            StackFrame *frame = m_exe_ctx.GetFramePtr();
+            Frame *frame = m_exe_ctx.GetFramePtr();
             if (frame)
             {
                 sc = frame->GetSymbolContext (eSymbolContextModule);

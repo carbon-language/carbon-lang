@@ -53,7 +53,7 @@ public:
     
     // Set the Return value object in the current frame as though a function with 
     virtual Error
-    SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value) = 0;
+    SetReturnValueObject(lldb::FrameSP &frame_sp, lldb::ValueObjectSP &new_value) = 0;
 
 protected:    
     // This is the method the ABI will call to actually calculate the return value.

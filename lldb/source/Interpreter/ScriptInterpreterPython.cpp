@@ -2196,7 +2196,7 @@ ScriptInterpreterPython::BreakpointCallbackFunction
     if (python_function_name != NULL 
         && python_function_name[0] != '\0')
     {
-        const StackFrameSP stop_frame_sp (exe_ctx.GetFrameSP());
+        const FrameSP stop_frame_sp (exe_ctx.GetFrameSP());
         BreakpointSP breakpoint_sp = target->GetBreakpointByID (break_id);
         if (breakpoint_sp)
         {
@@ -2251,7 +2251,7 @@ ScriptInterpreterPython::WatchpointCallbackFunction
     if (python_function_name != NULL 
         && python_function_name[0] != '\0')
     {
-        const StackFrameSP stop_frame_sp (exe_ctx.GetFrameSP());
+        const FrameSP stop_frame_sp (exe_ctx.GetFrameSP());
         WatchpointSP wp_sp = target->GetWatchpointList().FindByID (watch_id);
         if (wp_sp)
         {
@@ -2661,7 +2661,7 @@ ScriptInterpreterPython::RunScriptFormatKeyword (const char* impl_function,
 
 bool
 ScriptInterpreterPython::RunScriptFormatKeyword (const char* impl_function,
-                                                 StackFrame* frame,
+                                                 Frame* frame,
                                                  std::string& output,
                                                  Error& error)
 {
@@ -2682,7 +2682,7 @@ ScriptInterpreterPython::RunScriptFormatKeyword (const char* impl_function,
         return false;
     }
     {
-        StackFrameSP frame_sp(frame->shared_from_this());
+        FrameSP frame_sp(frame->shared_from_this());
         Locker py_lock(this);
         ret_val = g_swig_run_script_keyword_frame (impl_function, m_dictionary_name.c_str(), frame_sp, output);
         if (!ret_val)

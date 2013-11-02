@@ -15,7 +15,7 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/IR/Constants.h"

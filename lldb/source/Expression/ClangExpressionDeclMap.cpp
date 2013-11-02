@@ -45,7 +45,7 @@
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
@@ -967,7 +967,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
     // Only look for functions by name out in our symbols if the function 
     // doesn't start with our phony prefix of '$'
     Target *target = m_parser_vars->m_exe_ctx.GetTargetPtr();
-    StackFrame *frame = m_parser_vars->m_exe_ctx.GetFramePtr();
+    Frame *frame = m_parser_vars->m_exe_ctx.GetFramePtr();
     if (name_unique_cstr[0] == '$' && !namespace_decl)
     {
         static ConstString g_lldb_class_name ("$__lldb_class");
@@ -1293,11 +1293,11 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         {
             valobj = frame->GetValueForVariableExpressionPath(name_unique_cstr, 
                                                               eNoDynamicValues, 
-                                                              StackFrame::eExpressionPathOptionCheckPtrVsMember ||
-                                                              StackFrame::eExpressionPathOptionsAllowDirectIVarAccess ||
-                                                              StackFrame::eExpressionPathOptionsNoFragileObjcIvar ||
-                                                              StackFrame::eExpressionPathOptionsNoSyntheticChildren ||
-                                                              StackFrame::eExpressionPathOptionsNoSyntheticArrayRange,
+                                                              Frame::eExpressionPathOptionCheckPtrVsMember ||
+                                                              Frame::eExpressionPathOptionsAllowDirectIVarAccess ||
+                                                              Frame::eExpressionPathOptionsNoFragileObjcIvar ||
+                                                              Frame::eExpressionPathOptionsNoSyntheticChildren ||
+                                                              Frame::eExpressionPathOptionsNoSyntheticArrayRange,
                                                               var,
                                                               err);
             

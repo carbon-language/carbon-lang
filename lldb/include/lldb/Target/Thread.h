@@ -109,7 +109,7 @@ public:
         static StackID
         GetStackIDFromEvent (const Event *event_ptr);
         
-        static lldb::StackFrameSP
+        static lldb::FrameSP
         GetStackFrameFromEvent (const Event *event_ptr);
         
         lldb::ThreadSP
@@ -357,13 +357,13 @@ public:
         return GetStackFrameList()->GetNumFrames();
     }
 
-    virtual lldb::StackFrameSP
+    virtual lldb::FrameSP
     GetStackFrameAtIndex (uint32_t idx)
     {
         return GetStackFrameList()->GetFrameAtIndex(idx);
     }
     
-    virtual lldb::StackFrameSP
+    virtual lldb::FrameSP
     GetFrameWithConcreteFrameIndex (uint32_t unwind_idx);
     
     bool
@@ -382,17 +382,17 @@ public:
     ReturnFromFrameWithIndex (uint32_t frame_idx, lldb::ValueObjectSP return_value_sp, bool broadcast = false);
     
     Error
-    ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return_value_sp, bool broadcast = false);
+    ReturnFromFrame (lldb::FrameSP frame_sp, lldb::ValueObjectSP return_value_sp, bool broadcast = false);
 
     Error
     JumpToLine (const FileSpec &file, uint32_t line, bool can_leave_function, std::string *warnings = NULL);
 
-    virtual lldb::StackFrameSP
+    virtual lldb::FrameSP
     GetFrameWithStackID (const StackID &stack_id)
     {
         if (stack_id.IsValid())
             return GetStackFrameList()->GetFrameWithStackID (stack_id);
-        return lldb::StackFrameSP();
+        return lldb::FrameSP();
     }
 
     uint32_t
@@ -401,7 +401,7 @@ public:
         return GetStackFrameList()->GetSelectedFrameIndex();
     }
 
-    lldb::StackFrameSP
+    lldb::FrameSP
     GetSelectedFrame ()
     {
         lldb::StackFrameListSP stack_frame_list_sp(GetStackFrameList());
@@ -409,7 +409,7 @@ public:
     }
 
     uint32_t
-    SetSelectedFrame (lldb_private::StackFrame *frame, bool broadcast = false);
+    SetSelectedFrame (lldb_private::Frame *frame, bool broadcast = false);
 
 
     bool
@@ -428,7 +428,7 @@ public:
     GetRegisterContext () = 0;
 
     virtual lldb::RegisterContextSP
-    CreateRegisterContextForFrame (StackFrame *frame) = 0;
+    CreateRegisterContextForFrame (Frame *frame) = 0;
     
     virtual void
     ClearStackFrames ();
@@ -914,14 +914,14 @@ public:
     virtual lldb::ThreadSP
     CalculateThread ();
     
-    virtual lldb::StackFrameSP
-    CalculateStackFrame ();
+    virtual lldb::FrameSP
+    CalculateFrame ();
 
     virtual void
     CalculateExecutionContext (ExecutionContext &exe_ctx);
     
-    lldb::StackFrameSP
-    GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr);
+    lldb::FrameSP
+    GetFrameSPForFramePtr (Frame *stack_frame_ptr);
     
     size_t
     GetStatus (Stream &strm, 
@@ -1008,6 +1008,7 @@ protected:
     friend class ThreadEventData;
     friend class StackFrameList;
     friend class StackFrame;
+    friend class Frame;
     friend class OperatingSystem;
     
     // This is necessary to make sure thread assets get destroyed while the thread is still in good shape

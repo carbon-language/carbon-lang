@@ -216,7 +216,7 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
-    SBFrame (const lldb::StackFrameSP &lldb_object_sp);
+    SBFrame (const lldb::FrameSP &lldb_object_sp);
 
 protected:
 
@@ -228,11 +228,11 @@ protected:
     friend class lldb_private::ScriptInterpreterPython;
 #endif
 
-    lldb::StackFrameSP
+    lldb::FrameSP
     GetFrameSP() const;
 
     void
-    SetFrameSP (const lldb::StackFrameSP &lldb_object_sp);
+    SetFrameSP (const lldb::FrameSP &lldb_object_sp);
 
     lldb::ExecutionContextRefSP m_opaque_sp;
 };

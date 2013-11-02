@@ -394,7 +394,7 @@ private:
     LockAndCheckContext (ExecutionContext &exe_ctx,
                          lldb::TargetSP &target_sp,
                          lldb::ProcessSP &process_sp,
-                         lldb::StackFrameSP &frame_sp);
+                         lldb::FrameSP &frame_sp);
     
     lldb::ProcessWP                             m_process_wp;           ///< The process used as the context for the expression.
     Address                                     m_address;              ///< The address the process is stopped in.

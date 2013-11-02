@@ -594,7 +594,7 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
     {
         Thread *thread = exe_ctx.GetThreadPtr();
         bool abort_other_plans = false;
-        StackFrameSP frame_sp(thread->GetStackFrameAtIndex (0));
+        FrameSP frame_sp(thread->GetStackFrameAtIndex (0));
 
         ThreadPlanSP new_plan_sp;
         if (frame_sp)
@@ -645,7 +645,7 @@ SBThread::StepInto (const char *target_name, lldb::RunMode stop_other_threads)
         bool abort_other_plans = false;
 
         Thread *thread = exe_ctx.GetThreadPtr();
-        StackFrameSP frame_sp(thread->GetStackFrameAtIndex (0));
+        FrameSP frame_sp(thread->GetStackFrameAtIndex (0));
         ThreadPlanSP new_plan_sp;
 
         if (frame_sp && frame_sp->HasDebugInformation ())
@@ -711,7 +711,7 @@ SBThread::StepOutOfFrame (lldb::SBFrame &sb_frame)
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrameSP frame_sp (sb_frame.GetFrameSP());
+    FrameSP frame_sp (sb_frame.GetFrameSP());
     if (log)
     {
         SBStream frame_desc_strm;
@@ -801,7 +801,7 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrameSP frame_sp (sb_frame.GetFrameSP());
+    FrameSP frame_sp (sb_frame.GetFrameSP());
 
     if (log)
     {
@@ -1112,7 +1112,7 @@ SBThread::GetFrameAtIndex (uint32_t idx)
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBFrame sb_frame;
-    StackFrameSP frame_sp;
+    FrameSP frame_sp;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
@@ -1148,7 +1148,7 @@ SBThread::GetSelectedFrame ()
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBFrame sb_frame;
-    StackFrameSP frame_sp;
+    FrameSP frame_sp;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
@@ -1184,7 +1184,7 @@ SBThread::SetSelectedFrame (uint32_t idx)
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBFrame sb_frame;
-    StackFrameSP frame_sp;
+    FrameSP frame_sp;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 

@@ -13,7 +13,7 @@
 #include "lldb/Core/Scalar.h"
 #include "lldb/Interpreter/OptionValueArray.h"
 #include "lldb/Interpreter/OptionValueDictionary.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 #include "lldb/Target/RegisterContext.h"
 
 #include "Utility/ARM_DWARF_Registers.h"
@@ -34,7 +34,7 @@ EmulationStateARM::~EmulationStateARM ()
 }
 
 bool
-EmulationStateARM::LoadPseudoRegistersFromFrame (StackFrame &frame)
+EmulationStateARM::LoadPseudoRegistersFromFrame (Frame &frame)
 {
     RegisterContext *reg_ctx = frame.GetRegisterContext().get();
     bool success = true;

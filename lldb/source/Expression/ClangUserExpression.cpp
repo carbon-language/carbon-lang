@@ -41,7 +41,7 @@
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
-#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Frame.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/ThreadPlan.h"
 #include "lldb/Target/ThreadPlanCallUserExpression.h"
@@ -119,7 +119,7 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
         return;
     }
     
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    Frame *frame = exe_ctx.GetFramePtr();
     if (frame == NULL)
     {
         if (log)
@@ -329,7 +329,7 @@ ClangUserExpression::InstallContext (ExecutionContext &exe_ctx)
 {
     m_process_wp = exe_ctx.GetProcessSP();
     
-    lldb::StackFrameSP frame_sp = exe_ctx.GetFrameSP();
+    lldb::FrameSP frame_sp = exe_ctx.GetFrameSP();
     
     if (frame_sp)
         m_address = frame_sp->GetFrameCodeAddress();
@@ -339,7 +339,7 @@ bool
 ClangUserExpression::LockAndCheckContext (ExecutionContext &exe_ctx,
                                           lldb::TargetSP &target_sp,
                                           lldb::ProcessSP &process_sp,
-                                          lldb::StackFrameSP &frame_sp)
+                                          lldb::FrameSP &frame_sp)
 {
     lldb::ProcessSP expected_process_sp = m_process_wp.lock();
     process_sp = exe_ctx.GetProcessSP();
@@ -367,7 +367,7 @@ ClangUserExpression::MatchesContext (ExecutionContext &exe_ctx)
 {
     lldb::TargetSP target_sp;
     lldb::ProcessSP process_sp;
-    lldb::StackFrameSP frame_sp;
+    lldb::FrameSP frame_sp;
     
     return LockAndCheckContext(exe_ctx, target_sp, process_sp, frame_sp);
 }
@@ -558,7 +558,7 @@ ClangUserExpression::Parse (Stream &error_stream,
 }
 
 static lldb::addr_t
-GetObjectPointer (lldb::StackFrameSP frame_sp,
+GetObjectPointer (lldb::FrameSP frame_sp,
                   ConstString &object_name,
                   Error &err)
 {
@@ -575,11 +575,11 @@ GetObjectPointer (lldb::StackFrameSP frame_sp,
     
     valobj_sp = frame_sp->GetValueForVariableExpressionPath(object_name.AsCString(),
                                                             lldb::eNoDynamicValues,
-                                                            StackFrame::eExpressionPathOptionCheckPtrVsMember ||
-                                                            StackFrame::eExpressionPathOptionsAllowDirectIVarAccess ||
-                                                            StackFrame::eExpressionPathOptionsNoFragileObjcIvar ||
-                                                            StackFrame::eExpressionPathOptionsNoSyntheticChildren ||
-                                                            StackFrame::eExpressionPathOptionsNoSyntheticArrayRange,
+                                                            Frame::eExpressionPathOptionCheckPtrVsMember ||
+                                                            Frame::eExpressionPathOptionsAllowDirectIVarAccess ||
+                                                            Frame::eExpressionPathOptionsNoFragileObjcIvar ||
+                                                            Frame::eExpressionPathOptionsNoSyntheticChildren ||
+                                                            Frame::eExpressionPathOptionsNoSyntheticArrayRange,
                                                             var_sp,
                                                             err);
     
@@ -606,7 +606,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
 {
     lldb::TargetSP target;
     lldb::ProcessSP process;
-    lldb::StackFrameSP frame;
+    lldb::FrameSP frame;
     
     if (!LockAndCheckContext(exe_ctx,
                              target,
