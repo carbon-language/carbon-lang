@@ -149,12 +149,16 @@ error_code COFFObjectFile::getSymbolType(DataRefImpl Symb,
     if (symb->getComplexType() == COFF::IMAGE_SYM_DTYPE_FUNCTION) {
       Result = SymbolRef::ST_Function;
     } else {
-      char Type;
-      if (error_code ec = getSymbolNMTypeChar(Symb, Type))
-        return ec;
-      if (Type == 'r' || Type == 'R') {
-        Result = SymbolRef::ST_Data;
+      uint32_t Characteristics = 0;
+      if (symb->SectionNumber > 0) {
+        const coff_section *Section = NULL;
+        if (error_code ec = getSection(symb->SectionNumber, Section))
+          return ec;
+        Characteristics = Section->Characteristics;
       }
+      if (Characteristics & COFF::IMAGE_SCN_MEM_READ &&
+          ~Characteristics & COFF::IMAGE_SCN_MEM_WRITE) // Read only.
+        Result = SymbolRef::ST_Data;
     }
   }
   return object_error::success;
