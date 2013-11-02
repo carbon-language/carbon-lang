@@ -11837,12 +11837,12 @@ void Sema::ActOnFields(Scope *S, SourceLocation RecLoc, Decl *EnclosingDecl,
           Diag(FD->getLocation(), diag::ext_flexible_array_empty_aggregate_gnu)
             << FD->getDeclName() << Record->getTagKind();
       } else if (!getLangOpts().C99) {
-      if (Record->isUnion())
-        Diag(FD->getLocation(), diag::ext_flexible_array_union_gnu)
-          << FD->getDeclName();
-      else
-        Diag(FD->getLocation(), diag::ext_c99_flexible_array_member)
-          << FD->getDeclName() << Record->getTagKind();
+        if (Record->isUnion())
+          Diag(FD->getLocation(), diag::ext_flexible_array_union_gnu)
+            << FD->getDeclName();
+        else
+          Diag(FD->getLocation(), diag::ext_c99_flexible_array_member)
+            << FD->getDeclName() << Record->getTagKind();
       } else if (NumNamedMembers < 1) {
         Diag(FD->getLocation(), diag::err_flexible_array_empty_struct)
           << FD->getDeclName();
