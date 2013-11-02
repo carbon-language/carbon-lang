@@ -3935,8 +3935,11 @@ def ext_variable_sized_type_in_struct : ExtWarn<
   "field %0 with variable sized type %1 not at the end of a struct or class is"
   " a GNU extension">, InGroup<GNUVariableSizedTypeNotAtEnd>;
 
-def err_flexible_array_empty_struct : Error<
-  "flexible array %0 not allowed in otherwise empty struct">;
+def ext_c99_flexible_array_member : Extension<
+  "flexible array members are a C99 feature">, InGroup<C99>;
+def err_flexible_array_empty_aggregate : Error<
+  "flexible array member %0 not allowed in otherwise empty "
+  "%select{struct|interface|union|class|enum}1 is not allowed">;
 def err_flexible_array_has_nonpod_type : Error<
   "flexible array member %0 of non-POD element type %1">;
 def ext_flexible_array_in_struct : Extension<
@@ -3951,6 +3954,8 @@ def ext_flexible_array_empty_aggregate_ms : Extension<
   "flexible array member %0 in otherwise empty "
   "%select{struct|interface|union|class|enum}1 is a Microsoft extension">,
   InGroup<Microsoft>;
+def err_flexible_array_union : Error<
+  "flexible array member %0 in a union is not allowed">;
 def ext_flexible_array_union_ms : Extension<
   "flexible array member %0 in a union is a Microsoft extension">,
   InGroup<Microsoft>;

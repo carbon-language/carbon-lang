@@ -11822,40 +11822,29 @@ void Sema::ActOnFields(Scope *S, SourceLocation RecLoc, Decl *EnclosingDecl,
       // Microsoft and g++ is more permissive regarding flexible array.
       // It will accept flexible array in union and also
       // as the sole element of a struct/class.
-      if (getLangOpts().MicrosoftExt) {
-        if (Record->isUnion())
-          Diag(FD->getLocation(), diag::ext_flexible_array_union_ms)
-            << FD->getDeclName();
-        else if (Fields.size() == 1)
-          Diag(FD->getLocation(), diag::ext_flexible_array_empty_aggregate_ms)
-            << FD->getDeclName() << Record->getTagKind();
-        else
-          Diag(FD->getLocation(), diag::ext_c99_flexible_array_member)
-            << FD->getDeclName() << Record->getTagKind();
-      } else if (getLangOpts().CPlusPlus) {
-        if (Record->isUnion())
-          Diag(FD->getLocation(), diag::ext_flexible_array_union_gnu)
-            << FD->getDeclName();
-        else if (Fields.size() == 1)
-          Diag(FD->getLocation(), diag::ext_flexible_array_empty_aggregate_gnu)
-            << FD->getDeclName() << Record->getTagKind();
-        else
-          Diag(FD->getLocation(), diag::ext_c99_flexible_array_member)
-            << FD->getDeclName() << Record->getTagKind();
-      } else if (!getLangOpts().C99) {
-        if (Record->isUnion())
-          Diag(FD->getLocation(), diag::ext_flexible_array_union_gnu)
-            << FD->getDeclName();
-        else
-          Diag(FD->getLocation(), diag::ext_c99_flexible_array_member)
-            << FD->getDeclName() << Record->getTagKind();
-      } else if (NumNamedMembers < 1) {
-        Diag(FD->getLocation(), diag::err_flexible_array_empty_struct)
-          << FD->getDeclName();
-        FD->setInvalidDecl();
-        EnclosingDecl->setInvalidDecl();
-        continue;
-      }
+      unsigned DiagID = 0;
+      if (Record->isUnion())
+        DiagID = getLangOpts().MicrosoftExt
+                     ? diag::ext_flexible_array_union_ms
+                     : getLangOpts().CPlusPlus
+                           ? diag::ext_flexible_array_union_gnu
+                           : diag::err_flexible_array_union;
+      else if (Fields.size() == 1)
+        DiagID = getLangOpts().MicrosoftExt
+                     ? diag::ext_flexible_array_empty_aggregate_ms
+                     : getLangOpts().CPlusPlus
+                           ? diag::ext_flexible_array_empty_aggregate_gnu
+                           : NumNamedMembers < 1
+                                 ? diag::err_flexible_array_empty_aggregate
+                                 : 0;
+
+      if (DiagID)
+        Diag(FD->getLocation(), DiagID) << FD->getDeclName()
+                                        << Record->getTagKind();
+      if (!getLangOpts().C99)
+        Diag(FD->getLocation(), diag::ext_c99_flexible_array_member)
+          << FD->getDeclName() << Record->getTagKind();
+
       if (!FD->getType()->isDependentType() &&
           !Context.getBaseElementType(FD->getType()).isPODType(Context)) {
         Diag(FD->getLocation(), diag::err_flexible_array_has_nonpod_type)
