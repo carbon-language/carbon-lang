@@ -594,24 +594,35 @@ error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
 error_code MachOObjectFile::getSymbolNMTypeChar(DataRefImpl Symb,
                                                 char &Res) const {
   nlist_base Entry = getSymbolTableEntryBase(this, Symb);
-  uint8_t Type = Entry.n_type;
-  uint16_t Flags = Entry.n_desc;
+  uint8_t NType = Entry.n_type;
 
   char Char;
-  switch (Type & MachO::N_TYPE) {
+  switch (NType & MachO::N_TYPE) {
     case MachO::N_UNDF:
       Char = 'u';
       break;
     case MachO::N_ABS:
-    case MachO::N_SECT:
       Char = 's';
+      break;
+    case MachO::N_SECT: {
+      section_iterator Sec = end_sections();
+      getSymbolSection(Symb, Sec);
+      DataRefImpl Ref = Sec->getRawDataRefImpl();
+      StringRef SectionName;
+      getSectionName(Ref, SectionName);
+      StringRef SegmentName = getSectionFinalSegmentName(Ref);
+      if (SegmentName == "__TEXT" && SectionName == "__text")
+        Char = 't';
+      else
+        Char = 's';
+    }
       break;
     default:
       Char = '?';
       break;
   }
 
-  if (Flags & (MachO::N_EXT | MachO::N_PEXT))
+  if (NType & (MachO::N_EXT | MachO::N_PEXT))
     Char = toupper(static_cast<unsigned char>(Char));
   Res = Char;
   return object_error::success;
@@ -630,7 +641,7 @@ error_code MachOObjectFile::getSymbolFlags(DataRefImpl DRI,
   if ((MachOType & MachO::N_TYPE) == MachO::N_UNDF)
     Result |= SymbolRef::SF_Undefined;
 
-  if (MachOFlags & MachO::N_STAB)
+  if (MachOType & MachO::N_STAB)
     Result |= SymbolRef::SF_FormatSpecific;
 
   if (MachOType & MachO::N_EXT) {
