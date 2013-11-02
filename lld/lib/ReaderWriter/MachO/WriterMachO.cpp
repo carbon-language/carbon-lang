@@ -1201,6 +1201,7 @@ void SymbolTableChunk::computeSize(const lld::File &file,
       sym.n_strx = _stringsChunk.stringIndex(info.atom->name());
       sym.n_type = this->nType(info.atom);
       sym.n_sect = sectionIndex;
+      sym.n_desc = 0;
       sym.n_value = atomAddress;
       if ( info.atom->scope() == DefinedAtom::scopeGlobal )
         _globalDefinedsymbols.push_back(sym);
@@ -1216,6 +1217,7 @@ void SymbolTableChunk::computeSize(const lld::File &file,
     sym.n_strx = _stringsChunk.stringIndex(atom->name());
     sym.n_type = N_UNDF;
     sym.n_sect = 0;
+    sym.n_desc = 0;
     sym.n_value = 0;
     _undefinedsymbols.push_back(sym);
   }
