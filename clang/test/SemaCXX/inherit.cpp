@@ -30,3 +30,6 @@ typedef G_copy G_copy_3;
 
 class H : G_copy, A, G_copy_2, // expected-error{{base class 'G_copy' (aka 'G') specified more than once as a direct base class}}
           public G_copy_3 { }; // expected-error{{base class 'G_copy' (aka 'G') specified more than once as a direct base class}}
+
+struct J { char c; int i[]; };
+struct K : J { }; // expected-error{{base class 'J' has a flexible array member}}
