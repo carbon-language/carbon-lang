@@ -112,8 +112,10 @@ error_code COFFObjectFile::getSymbolFileOffset(DataRefImpl Symb,
   const coff_section *Section = NULL;
   if (error_code ec = getSection(symb->SectionNumber, Section))
     return ec;
-
-  if (symb->SectionNumber == COFF::IMAGE_SYM_UNDEFINED && symb->Value != 0)
+  char Type;
+  if (error_code ec = getSymbolNMTypeChar(Symb, Type))
+    return ec;
+  if (Type == 'U' || Type == 'w')
     Result = UnknownAddressOrSize;
   else if (Section)
     Result = Section->PointerToRawData + symb->Value;
