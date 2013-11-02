@@ -405,4 +405,20 @@ namespace templates {
   void test12() {
     compare<0>(42);
   }
+
+  struct A { static int x; };
+  struct B { static int x; };
+  typedef A otherA;
+
+  template <typename T>
+  void testx() {
+    if (A::x == T::x &&  // no warning
+        A::x == otherA::x)  // expected-warning{{self-comparison always evaluates to true}}
+      return;
+  }
+
+  void test13() {
+    testx<A>();
+    testx<B>();
+  }
 }
