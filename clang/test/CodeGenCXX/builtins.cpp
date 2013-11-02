@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple=x86_64-linux-gnu -emit-llvm -o - %s | FileCheck %s
 
 // PR8839
 extern "C" char memmove();
@@ -17,13 +17,13 @@ S *addressof(bool b, S &s, S &t) {
 }
 
 extern "C" int __builtin_abs(int); // #1
-long long __builtin_abs(long long);          // #2
+long __builtin_abs(long);          // #2
 extern "C" int __builtin_abs(int); // #3
 
 int x = __builtin_abs(-2);
 // CHECK: entry:
 // CHECK-NEXT:  store i32 2, i32* @x, align 4
 
-long y = __builtin_abs(-2ll);
+long y = __builtin_abs(-2l);
 // CHECK: entry:
-// CHECK-NEXT:  %call = call i64 @_Z13__builtin_absx(i64 -2)
+// CHECK-NEXT:  %call = call i64 @_Z13__builtin_absl(i64 -2)
