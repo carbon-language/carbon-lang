@@ -48,6 +48,7 @@
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/EquivalenceClasses.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -2055,38 +2056,51 @@ Value *createMinMaxOp(IRBuilder<> &Builder,
   return Select;
 }
 
+namespace {
+struct CSEDenseMapInfo {
+  static bool canHandle(Instruction *I) {
+    return isa<InsertElementInst>(I) || isa<ExtractElementInst>(I) ||
+           isa<ShuffleVectorInst>(I) || isa<GetElementPtrInst>(I);
+  }
+  static inline Instruction *getEmptyKey() {
+    return DenseMapInfo<Instruction *>::getEmptyKey();
+  }
+  static inline Instruction *getTombstoneKey() {
+    return DenseMapInfo<Instruction *>::getTombstoneKey();
+  }
+  static unsigned getHashValue(Instruction *I) {
+    assert(canHandle(I) && "Unknown instruction!");
+    return hash_combine(I->getOpcode(), hash_combine_range(I->value_op_begin(),
+                                                           I->value_op_end()));
+  }
+  static bool isEqual(Instruction *LHS, Instruction *RHS) {
+    if (LHS == getEmptyKey() || RHS == getEmptyKey() ||
+        LHS == getTombstoneKey() || RHS == getTombstoneKey())
+      return LHS == RHS;
+    return LHS->isIdenticalTo(RHS);
+  }
+};
+}
+
 ///\brief Perform cse of induction variable instructions.
 static void cse(BasicBlock *BB) {
   // Perform simple cse.
-  SmallPtrSet<Instruction*, 16> Visited;
-  SmallVector<Instruction*, 16> ToRemove;
-  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-      Instruction *In = I;
+  SmallDenseMap<Instruction *, Instruction *, 4, CSEDenseMapInfo> CSEMap;
+  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
+    Instruction *In = I++;
 
-      if (!isa<InsertElementInst>(In) && !isa<ExtractElementInst>(In) &&
-          !isa<ShuffleVectorInst>(In) && !isa<GetElementPtrInst>(In))
-        continue;
+    if (!CSEDenseMapInfo::canHandle(In))
+      continue;
 
-      // Check if we can replace this instruction with any of the
-      // visited instructions.
-      for (SmallPtrSet<Instruction*, 16>::iterator v = Visited.begin(),
-           ve = Visited.end(); v != ve; ++v) {
-        if (In->isIdenticalTo(*v)) {
-          In->replaceAllUsesWith(*v);
-          ToRemove.push_back(In);
-          In = 0;
-          break;
-        }
-      }
-      if (In)
-        Visited.insert(In);
+    // Check if we can replace this instruction with any of the
+    // visited instructions.
+    if (Instruction *V = CSEMap.lookup(In)) {
+      In->replaceAllUsesWith(V);
+      In->eraseFromParent();
+      continue;
+    }
 
-  }
-  // Erase all of the instructions that we RAUWed.
-  for (SmallVectorImpl<Instruction *>::iterator v = ToRemove.begin(),
-       ve = ToRemove.end(); v != ve; ++v) {
-    assert((*v)->getNumUses() == 0 && "Can't remove instructions with uses");
-    (*v)->eraseFromParent();
+    CSEMap[In] = In;
   }
 }
 
