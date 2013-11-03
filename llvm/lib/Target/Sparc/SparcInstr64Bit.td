@@ -169,6 +169,8 @@ def : Pat<(sub i64:$a, (i64 simm13:$b)), (SUBri $a, (as_i32imm $b))>;
 
 def : Pat<(SPcmpicc i64:$a, (i64 simm13:$b)), (CMPri $a, (as_i32imm $b))>;
 
+def : Pat<(ctpop i64:$src), (POPCrr $src)>;
+
 } // Predicates = [Is64Bit]
 
 

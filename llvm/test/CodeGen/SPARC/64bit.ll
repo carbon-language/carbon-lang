@@ -285,3 +285,26 @@ entry:
   store i64 0, i64* %0, align 8
   ret i64 0
 }
+
+; CHECK-LABEL: bit_ops
+; CHECK:       popc
+
+; OPT-LABEL: bit_ops
+; OPT:       popc
+
+define i64 @bit_ops(i64 %arg) {
+entry:
+  %0 = tail call i64 @llvm.ctpop.i64(i64 %arg)
+  %1 = tail call i64 @llvm.ctlz.i64(i64 %arg, i1 true)
+  %2 = tail call i64 @llvm.cttz.i64(i64 %arg, i1 true)
+  %3 = tail call i64 @llvm.bswap.i64(i64 %arg)
+  %4 = add i64 %0, %1
+  %5 = add i64 %2, %3
+  %6 = add i64 %4, %5
+  ret i64 %6
+}
+
+declare i64 @llvm.ctpop.i64(i64) nounwind readnone
+declare i64 @llvm.ctlz.i64(i64, i1) nounwind readnone
+declare i64 @llvm.cttz.i64(i64, i1) nounwind readnone
+declare i64 @llvm.bswap.i64(i64) nounwind readnone
