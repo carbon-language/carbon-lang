@@ -9,12 +9,12 @@ Configs := Debug Release Profile Static
 UniversalArchs := $(RC_ARCHS)
 
 ifneq (,$(SDKROOT))
-	override CC := $(shell xcrun -sdk $(SDKROOT) -find clang) 
-	AR := $(shell xcrun -sdk $(SDKROOT) -find ar) 
-	RANLIB := $(shell xcrun -sdk $(SDKROOT) -find ranlib) 
-	STRIP := $(shell xcrun -sdk $(SDKROOT) -find strip) 
-	LIPO := $(shell xcrun -sdk $(SDKROOT) -find lipo)
-	DSYMUTIL := $(shell xcrun -sdk $(SDKROOT) -find dsymutil)
+	override CC := $(shell xcrun -sdk $(SDKROOT) -find clang || echo "false") 
+	AR := $(shell xcrun -sdk $(SDKROOT) -find ar || echo "false") 
+	RANLIB := $(shell xcrun -sdk $(SDKROOT) -find ranlib || echo "false") 
+	STRIP := $(shell xcrun -sdk $(SDKROOT) -find strip || echo "false") 
+	LIPO := $(shell xcrun -sdk $(SDKROOT) -find lipo || echo "false")
+	DSYMUTIL := $(shell xcrun -sdk $(SDKROOT) -find dsymutil || echo "false")
 endif
 
 ifneq ($(IPHONEOS_DEPLOYMENT_TARGET),)

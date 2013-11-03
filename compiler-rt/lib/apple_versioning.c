@@ -9,19 +9,20 @@
  */
 
 
-
 #if __APPLE__
-  #if __arm__
+  #include <Availability.h>
+  
+  #if __IPHONE_OS_VERSION_MIN_REQUIRED
     #define NOT_HERE_BEFORE_10_6(sym) 
-    #define NOT_HERE_IN_10_8_AND_EARLIER(sym) 
-  #elif __ppc__
-    #define NOT_HERE_BEFORE_10_6(sym) \
-        extern const char sym##_tmp3 __asm("$ld$hide$os10.3$_" #sym ); \
-            __attribute__((visibility("default"))) const char sym##_tmp3 = 0; \
-         extern const char sym##_tmp4 __asm("$ld$hide$os10.4$_" #sym ); \
-            __attribute__((visibility("default"))) const char sym##_tmp4 = 0; \
-        extern const char sym##_tmp5 __asm("$ld$hide$os10.5$_" #sym ); \
-            __attribute__((visibility("default"))) const char sym##_tmp5 = 0; 
+    #define NOT_HERE_IN_10_8_AND_EARLIER(sym) \
+        extern const char sym##_tmp61 __asm("$ld$hide$os6.1$_" #sym ); \
+            __attribute__((visibility("default"))) const char sym##_tmp61 = 0; \
+        extern const char sym##_tmp60 __asm("$ld$hide$os6.0$_" #sym ); \
+            __attribute__((visibility("default"))) const char sym##_tmp60 = 0; \
+        extern const char sym##_tmp51 __asm("$ld$hide$os5.1$_" #sym ); \
+            __attribute__((visibility("default"))) const char sym##_tmp51 = 0; \
+        extern const char sym##_tmp50 __asm("$ld$hide$os5.0$_" #sym ); \
+            __attribute__((visibility("default"))) const char sym##_tmp50 = 0; 
   #else
     #define NOT_HERE_BEFORE_10_6(sym) \
          extern const char sym##_tmp4 __asm("$ld$hide$os10.4$_" #sym ); \
@@ -35,7 +36,7 @@
             __attribute__((visibility("default"))) const char sym##_tmp7 = 0; \
         extern const char sym##_tmp6 __asm("$ld$hide$os10.6$_" #sym ); \
             __attribute__((visibility("default"))) const char sym##_tmp6 = 0; 
-  #endif /* __ppc__ */
+  #endif 
 
 
 /* Symbols in libSystem.dylib in 10.6 and later, 
