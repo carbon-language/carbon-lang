@@ -3942,7 +3942,7 @@ def err_flexible_array_virtual_base : Error<
   "%select{struct|interface|union|class|enum}1 which has a virtual base class">;
 def err_flexible_array_empty_aggregate : Error<
   "flexible array member %0 not allowed in otherwise empty "
-  "%select{struct|interface|union|class|enum}1 is not allowed">;
+  "%select{struct|interface|union|class|enum}1">;
 def err_flexible_array_has_nonpod_type : Error<
   "flexible array member %0 of non-POD element type %1">;
 def ext_flexible_array_in_struct : Extension<
