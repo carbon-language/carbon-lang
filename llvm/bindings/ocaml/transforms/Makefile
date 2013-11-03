@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL := ../../..
-DIRS = scalar ipo
+DIRS = scalar ipo vectorize
 
 ocamldoc:
 	$(Verb) for i in $(DIRS) ; do \
