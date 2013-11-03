@@ -20,6 +20,7 @@
 #include "llvm/Support/ThreadLocal.h"
 #include "llvm/Support/Watchdog.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm-c/Core.h"
 
 #ifdef HAVE_CRASHREPORTERCLIENT_H
 #include <CrashReporterClient.h>
@@ -146,4 +147,8 @@ void PrettyStackTraceProgram::print(raw_ostream &OS) const {
   for (unsigned i = 0, e = ArgC; i != e; ++i)
     OS << ArgV[i] << ' ';
   OS << '\n';
+}
+
+void LLVMDisablePrettyStackTrace() {
+  DisablePrettyStackTrace = true;
 }

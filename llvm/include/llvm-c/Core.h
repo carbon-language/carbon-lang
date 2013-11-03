@@ -434,6 +434,12 @@ void LLVMInstallFatalErrorHandler(LLVMFatalErrorHandler Handler);
 void LLVMResetFatalErrorHandler(void);
 
 /**
+ * Disable LLVM's built-in stack trace code. This must be called before any
+ * other LLVM APIs; otherwise the results are undefined.
+ */
+void LLVMDisablePrettyStackTrace(void);
+
+/**
  * @defgroup LLVMCCoreContext Contexts
  *
  * Contexts are execution states for the core LLVM IR system.
