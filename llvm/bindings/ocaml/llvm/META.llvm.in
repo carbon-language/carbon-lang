@@ -69,3 +69,11 @@ package "target" (
     archive(byte) = "llvm_target.cma"
     archive(native) = "llvm_target.cmxa"
 )
+
+package "linker" (
+    requires = "llvm"
+    version  = "@PACKAGE_VERSION@"
+    description = "Intermediate Representation Linker for LLVM"
+    archive(byte) = "llvm_linker.cma"
+    archive(native) = "llvm_linker.cmxa"
+)

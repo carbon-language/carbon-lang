@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL := ../..
-DIRS = llvm bitreader bitwriter analysis target executionengine transforms
+DIRS = llvm bitreader bitwriter analysis target executionengine transforms linker
 ExtraMakefiles = $(PROJ_OBJ_DIR)/Makefile.ocaml
 
 ocamldoc:
