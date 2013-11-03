@@ -332,7 +332,7 @@ external value_name : llvalue -> string = "llvm_value_name"
 external set_value_name : string -> llvalue -> unit = "llvm_set_value_name"
 external dump_value : llvalue -> unit = "llvm_dump_value"
 external replace_all_uses_with : llvalue -> llvalue -> unit
-                               = "LLVMReplaceAllUsesWith"
+                               = "llvm_replace_all_uses_with"
 
 (*--... Operations on uses .................................................--*)
 external use_begin : llvalue -> lluse option = "llvm_use_begin"

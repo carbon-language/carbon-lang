@@ -485,6 +485,13 @@ CAMLprim value llvm_dump_value(LLVMValueRef Val) {
   return Val_unit;
 }
 
+/* llvalue -> llvalue -> unit */
+CAMLprim value llvm_replace_all_uses_with(LLVMValueRef OldVal,
+                                          LLVMValueRef NewVal) {
+  LLVMReplaceAllUsesWith(OldVal, NewVal);
+  return Val_unit;
+}
+
 /*--... Operations on users ................................................--*/
 
 /* llvalue -> int -> llvalue */
