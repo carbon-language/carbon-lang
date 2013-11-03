@@ -436,6 +436,9 @@ void LLVMResetFatalErrorHandler(void);
 /**
  * Disable LLVM's built-in stack trace code. This must be called before any
  * other LLVM APIs; otherwise the results are undefined.
+ *
+ * FIXME: This API should be replaced by a LLVMEnablePrettyStackTrace()
+ * function; the default should be that pretty stack traces are disabled.
  */
 void LLVMDisablePrettyStackTrace(void);
 
