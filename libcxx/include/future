@@ -2331,20 +2331,32 @@ private:
     }
 };
 
+bool __does_policy_contain(launch __policy, launch __value )
+{ return (int(__policy) & int(__value)) != 0; }
+
 template <class _Fp, class... _Args>
 future<typename __invoke_of<typename decay<_Fp>::type, typename decay<_Args>::type...>::type>
 async(launch __policy, _Fp&& __f, _Args&&... __args)
 {
     typedef __async_func<typename decay<_Fp>::type, typename decay<_Args>::type...> _BF;
     typedef typename _BF::_Rp _Rp;
-    future<_Rp> __r;
-    if (int(__policy) & int(launch::async))
-        __r = _VSTD::__make_async_assoc_state<_Rp>(_BF(__decay_copy(_VSTD::forward<_Fp>(__f)),
+
+#ifndef _LIBCPP_NO_EXCEPTIONS
+    try
+    {
+#endif
+        if (__does_policy_contain(__policy, launch::async))
+        return _VSTD::__make_async_assoc_state<_Rp>(_BF(__decay_copy(_VSTD::forward<_Fp>(__f)),
                                                      __decay_copy(_VSTD::forward<_Args>(__args))...));
-    else if (int(__policy) & int(launch::deferred))
-        __r = _VSTD::__make_deferred_assoc_state<_Rp>(_BF(__decay_copy(_VSTD::forward<_Fp>(__f)),
+#ifndef _LIBCPP_NO_EXCEPTIONS
+    }
+    catch ( ... ) { if (__policy == launch::async) throw ; }
+#endif
+
+    if (__does_policy_contain(__policy, launch::deferred))
+        return _VSTD::__make_deferred_assoc_state<_Rp>(_BF(__decay_copy(_VSTD::forward<_Fp>(__f)),
                                                         __decay_copy(_VSTD::forward<_Args>(__args))...));
-    return __r;
+    return future<_Rp>{};
 }
 
 template <class _Fp, class... _Args>
