@@ -344,6 +344,42 @@ def FMOVD_XCC : Pseudo<(outs DFPRegs:$rd),
                        (SPselectxcc f64:$rs2, f64:$f, imm:$cond))]>;
 } // Uses, Constraints
 
+//===----------------------------------------------------------------------===//
+// 64-bit Floating Point Conversions.
+//===----------------------------------------------------------------------===//
+
+let Predicates = [Is64Bit] in {
+
+def FXTOS : F3_3u<2, 0b110100, 0b010000100,
+                 (outs FPRegs:$dst), (ins DFPRegs:$src),
+                 "fxtos $src, $dst",
+                 [(set FPRegs:$dst, (SPxtof DFPRegs:$src))]>;
+def FXTOD : F3_3u<2, 0b110100, 0b010001000,
+                 (outs DFPRegs:$dst), (ins DFPRegs:$src),
+                 "fxtod $src, $dst",
+                 [(set DFPRegs:$dst, (SPxtof DFPRegs:$src))]>;
+def FXTOQ : F3_3u<2, 0b110100, 0b010001100,
+                 (outs QFPRegs:$dst), (ins DFPRegs:$src),
+                 "fxtoq $src, $dst",
+                 [(set QFPRegs:$dst, (SPxtof DFPRegs:$src))]>,
+                 Requires<[HasHardQuad]>;
+
+def FSTOX : F3_3u<2, 0b110100, 0b010000001,
+                 (outs DFPRegs:$dst), (ins FPRegs:$src),
+                 "fstox $src, $dst",
+                 [(set DFPRegs:$dst, (SPftox FPRegs:$src))]>;
+def FDTOX : F3_3u<2, 0b110100, 0b010000010,
+                 (outs DFPRegs:$dst), (ins DFPRegs:$src),
+                 "fdtox $src, $dst",
+                 [(set DFPRegs:$dst, (SPftox DFPRegs:$src))]>;
+def FQTOX : F3_3u<2, 0b110100, 0b010000011,
+                 (outs DFPRegs:$dst), (ins QFPRegs:$src),
+                 "fqtox $src, $dst",
+                 [(set DFPRegs:$dst, (SPftox QFPRegs:$src))]>,
+                 Requires<[HasHardQuad]>;
+
+} // Predicates = [Is64Bit]
+
 def : Pat<(SPselectxcc i64:$t, i64:$f, imm:$cond),
           (MOVXCCrr $t, $f, imm:$cond)>;
 def : Pat<(SPselectxcc (i64 simm11:$t), i64:$f, imm:$cond),

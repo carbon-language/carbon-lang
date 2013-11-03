@@ -1,7 +1,7 @@
 ; RUN: llc -march=sparc < %s | FileCheck %s -check-prefix=V8
 ; RUN: llc -march=sparc -O0 < %s | FileCheck %s -check-prefix=V8-UNOPT
 ; RUN: llc -march=sparc -mattr=v9 < %s | FileCheck %s -check-prefix=V9
-
+; RUN: llc -mtriple=sparc64-unknown-linux < %s | FileCheck %s -check-prefix=SPARC64
 
 ; V8-LABEL:     test_neg:
 ; V8:     call get_double
@@ -15,6 +15,9 @@
 
 ; V9-LABEL:     test_neg:
 ; V9:     fnegd %f0, %f0
+
+; SPARC64-LABEL: test_neg:
+; SPARC64:       fnegd %f0, %f0
 
 define double @test_neg() {
 entry:
@@ -34,6 +37,10 @@ entry:
 
 ; V9-LABEL:     test_abs:
 ; V9:     fabsd %f0, %f0
+
+
+; SPARC64-LABEL:     test_abs:
+; SPARC64:     fabsd %f0, %f0
 
 define double @test_abs() {
 entry:
@@ -56,6 +63,10 @@ declare double @llvm.fabs.f64(double) nounwind readonly
 ; V9:          faddd {{.+}}, {{.+}}, [[R:%f((3(2|4|6|8))|((4|5)(0|2|4|6|8))|(60|62))]]
 ; V9:          fmovd [[R]], %f0
 
+; SPARC64-LABEL:    test_v9_floatreg:
+; SPARC64:          fsubd {{.+}}, {{.+}}, {{.+}}
+; SPARC64:          faddd {{.+}}, {{.+}}, [[R:%f((3(2|4|6|8))|((4|5)(0|2|4|6|8))|(60|62))]]
+; SPARC64:          fmovd [[R]], %f0
 
 define double @test_v9_floatreg() {
 entry:
@@ -67,4 +78,172 @@ entry:
   ret double %3
 }
 
+; V8-LABEL:    test_xtos_stox
+; V8:          call __floatdisf
+; V8:          call __fixsfdi
 
+; V9-LABEL:    test_xtos_stox
+; V9:          call __floatdisf
+; V9:          call __fixsfdi
+
+; SPARC64-LABEL:    test_xtos_stox
+; SPARC64:          fxtos
+; SPARC64:          fstox
+
+define void @test_xtos_stox(i64 %a, i64* %ptr0, float* %ptr1) {
+entry:
+  %0 = sitofp i64 %a to float
+  store float %0, float* %ptr1, align 8
+  %1 = fptosi float %0 to i64
+  store i64 %1, i64* %ptr0, align 8
+  ret void
+}
+
+; V8-LABEL:    test_itos_stoi
+; V8:          fitos
+; V8:          fstoi
+
+; V9-LABEL:    test_itos_stoi
+; V9:          fitos
+; V9:          fstoi
+
+; SPARC64-LABEL:    test_itos_stoi
+; SPARC64:          fitos
+; SPARC64:          fstoi
+
+define void @test_itos_stoi(i32 %a, i32* %ptr0, float* %ptr1) {
+entry:
+  %0 = sitofp i32 %a to float
+  store float %0, float* %ptr1, align 8
+  %1 = fptosi float %0 to i32
+  store i32 %1, i32* %ptr0, align 8
+  ret void
+}
+
+
+; V8-LABEL:    test_xtod_dtox
+; V8:          call __floatdidf
+; V8:          call __fixdfdi
+
+; V9-LABEL:    test_xtod_dtox
+; V9:          call __floatdidf
+; V9:          call __fixdfdi
+
+; SPARC64-LABEL:    test_xtod_dtox
+; SPARC64:          fxtod
+; SPARC64:          fdtox
+
+define void @test_xtod_dtox(i64 %a, i64* %ptr0, double* %ptr1) {
+entry:
+  %0 = sitofp i64 %a to double
+  store double %0, double* %ptr1, align 8
+  %1 = fptosi double %0 to i64
+  store i64 %1, i64* %ptr0, align 8
+  ret void
+}
+
+; V8-LABEL:    test_itod_dtoi
+; V8:          fitod
+; V8:          fdtoi
+
+; V9-LABEL:    test_itod_dtoi
+; V9:          fitod
+; V9:          fdtoi
+
+; SPARC64-LABEL:    test_itod_dtoi
+; SPARC64:          fitod
+; SPARC64:          fdtoi
+
+define void @test_itod_dtoi(i32 %a, i32* %ptr0, double* %ptr1) {
+entry:
+  %0 = sitofp i32 %a to double
+  store double %0, double* %ptr1, align 8
+  %1 = fptosi double %0 to i32
+  store i32 %1, i32* %ptr0, align 8
+  ret void
+}
+
+; V8-LABEL:    test_uxtos_stoux
+; V8:          call __floatundisf
+; V8:          call __fixunssfdi
+
+; V9-LABEL:    test_uxtos_stoux
+; V9:          call __floatundisf
+; V9:          call __fixunssfdi
+
+; SPARC64-LABEL:   test_uxtos_stoux
+; SPARC64-NOT:     call __floatundisf
+; SPARC64-NOT:     call __fixunssfdi
+
+define void @test_uxtos_stoux(i64 %a, i64* %ptr0, float* %ptr1) {
+entry:
+  %0 = uitofp i64 %a to float
+  store float %0, float* %ptr1, align 8
+  %1 = fptoui float %0 to i64
+  store i64 %1, i64* %ptr0, align 8
+  ret void
+}
+
+; V8-LABEL:    test_utos_stou
+; V8:          fdtos
+; V8:          fstoi
+
+; V9-LABEL:    test_utos_stou
+; V9:          fdtos
+; V9:          fstoi
+
+; SPARC64-LABEL:    test_utos_stou
+; SPARC64:     fdtos
+; SPARC64:     fstoi
+
+define void @test_utos_stou(i32 %a, i32* %ptr0, float* %ptr1) {
+entry:
+  %0 = uitofp i32 %a to float
+  store float %0, float* %ptr1, align 8
+  %1 = fptoui float %0 to i32
+  store i32 %1, i32* %ptr0, align 8
+  ret void
+}
+
+
+; V8-LABEL:    test_uxtod_dtoux
+; V8:          call __floatundidf
+; V8:          call __fixunsdfdi
+
+; V9-LABEL:    test_uxtod_dtoux
+; V9:          call __floatundidf
+; V9:          call __fixunsdfdi
+
+; SPARC64-LABEL:    test_uxtod_dtoux
+; SPARC64-NOT:          call __floatundidf
+; SPARC64-NOT:          call __floatunsdfdi
+
+define void @test_uxtod_dtoux(i64 %a, i64* %ptr0, double* %ptr1) {
+entry:
+  %0 = uitofp i64 %a to double
+  store double %0, double* %ptr1, align 8
+  %1 = fptoui double %0 to i64
+  store i64 %1, i64* %ptr0, align 8
+  ret void
+}
+
+; V8-LABEL:    test_utod_dtou
+; V8-NOT:      fitod
+; V8:          fdtoi
+
+; V9-LABEL:    test_utod_dtou
+; V9-NOT:      fitod
+; V9:          fdtoi
+
+; SPARC64-LABEL:    test_utod_dtou
+; SPARC64-NOT:      fitod
+; SPARC64:          fdtoi
+
+define void @test_utod_dtou(i32 %a, double %b, i32* %ptr0, double* %ptr1) {
+entry:
+  %0 = uitofp i32 %a to double
+  store double %0, double* %ptr1, align 8
+  %1 = fptoui double %b to i32
+  store i32 %1, i32* %ptr0, align 8
+  ret void
+}

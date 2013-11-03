@@ -107,6 +107,10 @@ def SDTSPFTOI :
 SDTypeProfile<1, 1, [SDTCisVT<0, f32>, SDTCisFP<1>]>;
 def SDTSPITOF :
 SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisVT<1, f32>]>;
+def SDTSPFTOX :
+SDTypeProfile<1, 1, [SDTCisVT<0, f64>, SDTCisFP<1>]>;
+def SDTSPXTOF :
+SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisVT<1, f64>]>;
 
 def SDTSPtlsadd :
 SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisSameAs<0, 1>, SDTCisPtrTy<2>]>;
@@ -124,6 +128,8 @@ def SPlo    : SDNode<"SPISD::Lo", SDTIntUnaryOp>;
 
 def SPftoi  : SDNode<"SPISD::FTOI", SDTSPFTOI>;
 def SPitof  : SDNode<"SPISD::ITOF", SDTSPITOF>;
+def SPftox  : SDNode<"SPISD::FTOX", SDTSPFTOX>;
+def SPxtof  : SDNode<"SPISD::XTOF", SDTSPXTOF>;
 
 def SPselecticc : SDNode<"SPISD::SELECT_ICC", SDTSPselectcc, [SDNPInGlue]>;
 def SPselectxcc : SDNode<"SPISD::SELECT_XCC", SDTSPselectcc, [SDNPInGlue]>;
