@@ -1167,6 +1167,8 @@ external build_ptrdiff : llvalue -> llvalue -> string -> llbuilder -> llvalue
 module MemoryBuffer = struct
   external of_file : string -> llmemorybuffer = "llvm_memorybuffer_of_file"
   external of_stdin : unit -> llmemorybuffer = "llvm_memorybuffer_of_stdin"
+  external of_string : ?name:string -> string -> llmemorybuffer = "llvm_memorybuffer_of_string"
+  external as_string : llmemorybuffer -> string = "llvm_memorybuffer_as_string"
   external dispose : llmemorybuffer -> unit = "llvm_memorybuffer_dispose"
 end
 

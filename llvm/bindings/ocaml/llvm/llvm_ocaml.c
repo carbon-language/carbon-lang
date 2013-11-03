@@ -1996,6 +1996,30 @@ CAMLprim LLVMMemoryBufferRef llvm_memorybuffer_of_stdin(value Unit) {
   return MemBuf;
 }
 
+/* ?name:string -> string -> llmemorybuffer */
+CAMLprim LLVMMemoryBufferRef llvm_memorybuffer_of_string(value Name, value String) {
+  const char *NameCStr;
+  if(Name == Val_int(0))
+    NameCStr = "";
+  else
+    NameCStr = String_val(Field(Name, 0));
+
+  LLVMMemoryBufferRef MemBuf;
+  MemBuf = LLVMCreateMemoryBufferWithMemoryRangeCopy(
+                String_val(String), caml_string_length(String), NameCStr);
+
+  return MemBuf;
+}
+
+/* llmemorybuffer -> string */
+CAMLprim value llvm_memorybuffer_as_string(LLVMMemoryBufferRef MemBuf) {
+  value String = caml_alloc_string(LLVMGetBufferSize(MemBuf));
+  memcpy(String_val(String), LLVMGetBufferStart(MemBuf),
+         LLVMGetBufferSize(MemBuf));
+
+  return String;
+}
+
 /* llmemorybuffer -> unit */
 CAMLprim value llvm_memorybuffer_dispose(LLVMMemoryBufferRef MemBuf) {
   LLVMDisposeMemoryBuffer(MemBuf);

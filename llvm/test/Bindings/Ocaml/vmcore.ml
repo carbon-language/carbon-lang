@@ -1320,6 +1320,14 @@ let test_pass_manager () =
   end
 
 
+(*===-- Memory Buffer -----------------------------------------------------===*)
+
+let test_memory_buffer () =
+  group "memory buffer";
+  let buf = MemoryBuffer.of_string "foobar" in
+  insist ((MemoryBuffer.as_string buf) = "foobar")
+
+
 (*===-- Writer ------------------------------------------------------------===*)
 
 let test_writer () =
@@ -1350,5 +1358,6 @@ let _ =
   suite "instructions"     test_instructions;
   suite "builder"          test_builder;
   suite "pass manager"     test_pass_manager;
+  suite "memory buffer"    test_memory_buffer;
   suite "writer"           test_writer; (* Keep this last; it disposes m. *)
   exit !exit_status

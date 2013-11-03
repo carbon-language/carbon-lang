@@ -2345,6 +2345,13 @@ module MemoryBuffer : sig
   (** [of_stdin ()] is the memory buffer containing the contents of standard input.
       If standard input is empty, then [IoError msg] is raised. *)
   val of_stdin : unit -> llmemorybuffer
+
+  (** [of_string ~name s] is the memory buffer containing the contents of string [s].
+      The name of memory buffer is set to [name] if it is provided. *)
+  val of_string : ?name:string -> string -> llmemorybuffer
+
+  (** [as_string mb] is the string containing the contents of memory buffer [mb]. *)
+  val as_string : llmemorybuffer -> string
   
   (** Disposes of a memory buffer. *)
   val dispose : llmemorybuffer -> unit
