@@ -199,3 +199,9 @@ CAMLprim value llvm_add_basic_alias_analysis(LLVMPassManagerRef PM) {
   LLVMAddBasicAliasAnalysisPass(PM);
   return Val_unit;
 }
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_partially_inline_lib_calls(LLVMPassManagerRef PM) {
+  LLVMAddPartiallyInlineLibCallsPass(PM);
+  return Val_unit;
+}

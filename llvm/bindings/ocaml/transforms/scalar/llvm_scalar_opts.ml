@@ -109,3 +109,6 @@ external
 add_basic_alias_analysis : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
         = "llvm_add_basic_alias_analysis"
 
+external
+add_partially_inline_lib_calls : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
+        = "llvm_add_partially_inline_lib_calls"

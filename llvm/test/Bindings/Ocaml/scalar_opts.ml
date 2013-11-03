@@ -75,6 +75,7 @@ let test_transforms () =
            ++ add_lower_expect_intrinsic
            ++ add_type_based_alias_analysis
            ++ add_basic_alias_analysis
+           ++ add_partially_inline_lib_calls
            ++ add_verifier
            ++ PassManager.initialize
            ++ PassManager.run_function fn
