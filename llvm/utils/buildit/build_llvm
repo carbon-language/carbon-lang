@@ -104,7 +104,8 @@ COMMON_CONFIGURE_OPTS="\
   --enable-assertions=$LLVM_ASSERTIONS \
   --enable-optimized=$LLVM_OPTIMIZED \
   --disable-bindings \
-  --disable-zlib"
+  --disable-zlib \
+  --enable-terminfo=no"
 
 COMMON_MAKEFLAGS="\
   UNIVERSAL=1 \
