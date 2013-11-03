@@ -17,6 +17,8 @@ external add_function_attrs : [ | `Module ] Llvm.PassManager.t -> unit =
   "llvm_add_function_attrs"
 external add_function_inlining : [ | `Module ] Llvm.PassManager.t -> unit =
   "llvm_add_function_inlining"
+external add_always_inliner : [ | `Module ] Llvm.PassManager.t -> unit =
+  "llvm_add_always_inliner"
 external add_global_dce : [ | `Module ] Llvm.PassManager.t -> unit =
   "llvm_add_global_dce"
 external add_global_optimizer : [ | `Module ] Llvm.PassManager.t -> unit =

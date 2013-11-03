@@ -32,6 +32,10 @@ external add_function_attrs : [ | `Module ] Llvm.PassManager.t -> unit =
 external add_function_inlining : [ | `Module ] Llvm.PassManager.t -> unit =
   "llvm_add_function_inlining"
 
+(**  See llvm::createAlwaysInlinerPass function. *)
+external add_always_inliner : [ | `Module ] Llvm.PassManager.t -> unit =
+  "llvm_add_always_inliner"
+
 (**  See llvm::createGlobalDCEPass function. *)
 external add_global_dce : [ | `Module ] Llvm.PassManager.t -> unit =
   "llvm_add_global_dce"

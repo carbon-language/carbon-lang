@@ -50,6 +50,12 @@ CAMLprim value llvm_add_function_inlining(LLVMPassManagerRef PM) {
 }
 
 /* [`Module] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_always_inliner(LLVMPassManagerRef PM) {
+  LLVMAddAlwaysInlinerPass(PM);
+  return Val_unit;
+}
+
+/* [`Module] Llvm.PassManager.t -> unit */
 CAMLprim value llvm_add_always_inliner_pass(LLVMPassManagerRef PM) {
   LLVMAddAlwaysInlinerPass(PM);
   return Val_unit;
