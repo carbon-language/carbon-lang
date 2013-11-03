@@ -1682,7 +1682,7 @@ void BoUpSLP::optimizeGatherSequence() {
   for (SmallVectorImpl<BasicBlock *>::iterator I = CSEWorkList.begin(),
                                                E = CSEWorkList.end();
        I != E; ++I) {
-    assert(I == CSEWorkList.begin() || !DT->dominates(*I, *llvm::prior(I)) &&
+    assert((I == CSEWorkList.begin() || !DT->dominates(*I, *llvm::prior(I))) &&
            "Worklist not sorted properly!");
     BasicBlock *BB = *I;
     // For all instructions in blocks containing gather sequences:
