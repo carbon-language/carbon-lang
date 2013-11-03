@@ -281,6 +281,11 @@ unsigned ARMSubtarget::getMispredictionPenalty() const {
   return SchedModel->MispredictPenalty;
 }
 
+bool ARMSubtarget::hasSinCos() const {
+  return getTargetTriple().getOS() == Triple::IOS &&
+    !getTargetTriple().isOSVersionLT(7, 0);
+}
+
 bool ARMSubtarget::enablePostRAScheduler(
            CodeGenOpt::Level OptLevel,
            TargetSubtargetInfo::AntiDepBreakMode& Mode,

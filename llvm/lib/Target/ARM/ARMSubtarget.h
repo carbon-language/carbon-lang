@@ -330,6 +330,10 @@ public:
   const std::string & getCPUString() const { return CPUString; }
 
   unsigned getMispredictionPenalty() const;
+  
+  /// This function returns true if the target has sincos() routine in its
+  /// compiler runtime or math libraries.
+  bool hasSinCos() const;
 
   /// enablePostRAScheduler - True at 'More' optimization.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
