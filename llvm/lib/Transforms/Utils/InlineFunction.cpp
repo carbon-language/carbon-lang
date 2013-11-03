@@ -338,35 +338,33 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
 
 /// HandleByValArgument - When inlining a call site that has a byval argument,
 /// we have to make the implicit memcpy explicit by adding it.
-static Value *HandleByValArgument(Value *PassedValue,
-                                  const Argument *ArgumentSignature,
-                                  Instruction *TheCall,
+static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
                                   const Function *CalledFunc,
                                   InlineFunctionInfo &IFI,
                                   unsigned ByValAlignment) {
-  Type *AggTy = cast<PointerType>(PassedValue->getType())->getElementType();
+  Type *AggTy = cast<PointerType>(Arg->getType())->getElementType();
 
   // If the called function is readonly, then it could not mutate the caller's
   // copy of the byval'd memory.  In this case, it is safe to elide the copy and
   // temporary.
-  if (CalledFunc->onlyReadsMemory() || ArgumentSignature->onlyReadsMemory()) {
+  if (CalledFunc->onlyReadsMemory()) {
     // If the byval argument has a specified alignment that is greater than the
     // passed in pointer, then we either have to round up the input pointer or
     // give up on this transformation.
     if (ByValAlignment <= 1)  // 0 = unspecified, 1 = no particular alignment.
-      return PassedValue;
+      return Arg;
 
     // If the pointer is already known to be sufficiently aligned, or if we can
     // round it up to a larger alignment, then we don't need a temporary.
-    if (getOrEnforceKnownAlignment(PassedValue, ByValAlignment,
+    if (getOrEnforceKnownAlignment(Arg, ByValAlignment,
                                    IFI.TD) >= ByValAlignment)
-      return PassedValue;
+      return Arg;
     
     // Otherwise, we have to make a memcpy to get a safe alignment.  This is bad
     // for code quality, but rarely happens and is required for correctness.
   }
   
-  LLVMContext &Context = PassedValue->getContext();
+  LLVMContext &Context = Arg->getContext();
 
   Type *VoidPtrTy = Type::getInt8PtrTy(Context);
   
@@ -382,7 +380,7 @@ static Value *HandleByValArgument(Value *PassedValue,
   
   Function *Caller = TheCall->getParent()->getParent(); 
   
-  Value *NewAlloca = new AllocaInst(AggTy, 0, Align, PassedValue->getName(),
+  Value *NewAlloca = new AllocaInst(AggTy, 0, Align, Arg->getName(), 
                                     &*Caller->begin()->begin());
   // Emit a memcpy.
   Type *Tys[3] = {VoidPtrTy, VoidPtrTy, Type::getInt64Ty(Context)};
@@ -390,7 +388,7 @@ static Value *HandleByValArgument(Value *PassedValue,
                                                  Intrinsic::memcpy, 
                                                  Tys);
   Value *DestCast = new BitCastInst(NewAlloca, VoidPtrTy, "tmp", TheCall);
-  Value *SrcCast = new BitCastInst(PassedValue, VoidPtrTy, "tmp", TheCall);
+  Value *SrcCast = new BitCastInst(Arg, VoidPtrTy, "tmp", TheCall);
   
   Value *Size;
   if (IFI.TD == 0)
@@ -591,14 +589,13 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
     for (Function::const_arg_iterator I = CalledFunc->arg_begin(),
          E = CalledFunc->arg_end(); I != E; ++I, ++AI, ++ArgNo) {
       Value *ActualArg = *AI;
-      const Argument *Arg = I;
 
       // When byval arguments actually inlined, we need to make the copy implied
       // by them explicit.  However, we don't do this if the callee is readonly
       // or readnone, because the copy would be unneeded: the callee doesn't
       // modify the struct.
       if (CS.isByValArgument(ArgNo)) {
-        ActualArg = HandleByValArgument(ActualArg, Arg, TheCall, CalledFunc, IFI,
+        ActualArg = HandleByValArgument(ActualArg, TheCall, CalledFunc, IFI,
                                         CalledFunc->getParamAlignment(ArgNo+1));
  
         // Calls that we inline may use the new alloca, so we need to clear

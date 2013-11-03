@@ -25,7 +25,7 @@ entry:
 	store i64 2, i64* %tmp4, align 4
 	call void @f( %struct.ss* byval  %S ) nounwind 
 	ret i32 0
-; CHECK-LABEL: @test1()
+; CHECK: @test1()
 ; CHECK: %S1 = alloca %struct.ss
 ; CHECK: %S = alloca %struct.ss
 ; CHECK: call void @llvm.memcpy
@@ -52,7 +52,7 @@ entry:
 	store i64 2, i64* %tmp4, align 4
 	%X = call i32 @f2( %struct.ss* byval  %S ) nounwind 
 	ret i32 %X
-; CHECK-LABEL: @test2()
+; CHECK: @test2()
 ; CHECK: %S = alloca %struct.ss
 ; CHECK-NOT: call void @llvm.memcpy
 ; CHECK: ret i32
@@ -74,7 +74,7 @@ entry:
 	%S = alloca %struct.ss, align 1  ;; May not be aligned.
 	call void @f3( %struct.ss* byval align 64 %S) nounwind 
 	ret void
-; CHECK-LABEL: @test3()
+; CHECK: @test3()
 ; CHECK: %S1 = alloca %struct.ss, align 64
 ; CHECK: %S = alloca %struct.ss
 ; CHECK: call void @llvm.memcpy
@@ -97,35 +97,33 @@ entry:
 	%S = alloca %struct.ss, align 2		; <%struct.ss*> [#uses=4]
 	%X = call i32 @f4( %struct.ss* byval align 64 %S ) nounwind 
 	ret i32 %X
-; CHECK-LABEL: @test4()
+; CHECK: @test4()
 ; CHECK: %S = alloca %struct.ss, align 64
 ; CHECK-NOT: call void @llvm.memcpy
 ; CHECK: call void @g3
 ; CHECK: ret i32 4
 }
 
-; Inlining a byval struct should NOT cause an explicit copy
-; into an alloca if the parameter is readonly
+%struct.S0 = type { i32 }
 
-define internal i32 @f5(%struct.ss* byval readonly %b) nounwind {
+@b = global %struct.S0 { i32 1 }, align 4
+@a = common global i32 0, align 4
+
+define internal void @f5(%struct.S0* byval nocapture readonly align 4 %p) {
 entry:
-	%tmp = getelementptr %struct.ss* %b, i32 0, i32 0		; <i32*> [#uses=2]
-	%tmp1 = load i32* %tmp, align 4		; <i32> [#uses=1]
-	%tmp2 = add i32 %tmp1, 1		; <i32> [#uses=1]
-	ret i32 %tmp2
+	store i32 0, i32* getelementptr inbounds (%struct.S0* @b, i64 0, i32 0), align 4
+	%f2 = getelementptr inbounds %struct.S0* %p, i64 0, i32 0
+	%0 = load i32* %f2, align 4
+	store i32 %0, i32* @a, align 4
+	ret void
 }
 
-define i32 @test5() nounwind  {
+define i32 @test5() {
 entry:
-	%S = alloca %struct.ss		; <%struct.ss*> [#uses=4]
-	%tmp1 = getelementptr %struct.ss* %S, i32 0, i32 0		; <i32*> [#uses=1]
-	store i32 1, i32* %tmp1, align 8
-	%tmp4 = getelementptr %struct.ss* %S, i32 0, i32 1		; <i64*> [#uses=1]
-	store i64 2, i64* %tmp4, align 4
-	%X = call i32 @f5( %struct.ss* byval  %S ) nounwind
-	ret i32 %X
-; CHECK-LABEL: @test5()
-; CHECK: %S = alloca %struct.ss
-; CHECK-NOT: call void @llvm.memcpy
-; CHECK: ret i32
+	tail call void @f5(%struct.S0* byval align 4 @b)
+	%0 = load i32* @a, align 4
+	ret i32 %0
+; CHECK: @test5()
+; CHECK: store i32 0, i32* getelementptr inbounds (%struct.S0* @b, i64 0, i32 0), align 4
+; CHECK-NOT: load i32* getelementptr inbounds (%struct.S0* @b, i64 0, i32 0), align 4
 }
