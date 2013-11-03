@@ -38,6 +38,8 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "_ZnwjRKSt9nothrow_t",
     "_Znwm",
     "_ZnwmRKSt9nothrow_t",
+    "__cospi",
+    "__cospif",
     "__cxa_atexit",
     "__cxa_guard_abort",
     "__cxa_guard_acquire",
@@ -45,6 +47,10 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "__isoc99_scanf",
     "__isoc99_sscanf",
     "__memcpy_chk",
+    "__sincospi_stret",
+    "__sincospi_stretf",
+    "__sinpi",
+    "__sinpif",
     "__sqrt_finite",
     "__sqrtf_finite",
     "__sqrtl_finite",
@@ -331,6 +337,24 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "write"
   };
 
+static bool hasSinCosPiStret(const Triple &T) {
+  // Only Darwin variants have _stret versions of combined trig functions.
+  if (!T.isMacOSX() && T.getOS() != Triple::IOS)
+    return false;
+
+  // The ABI is rather complicated on x86, so don't do anything special there.
+  if (T.getArch() == Triple::x86)
+    return false;
+
+  if (T.isMacOSX() && T.isMacOSXVersionLT(10, 9))
+    return false;
+
+  if (T.getOS() == Triple::IOS && T.isOSVersionLT(7, 0))
+    return false;
+
+  return true;
+}
+
 /// initialize - Initialize the set of available library functions based on the
 /// specified target triple.  This should be carefully written so that a missing
 /// target triple gets a sane set of defaults.
@@ -355,6 +379,15 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
       TLI.setUnavailable(LibFunc::memset_pattern16);
   } else {
     TLI.setUnavailable(LibFunc::memset_pattern16);
+  }
+
+  if (!hasSinCosPiStret(T)) {
+    TLI.setUnavailable(LibFunc::sinpi);
+    TLI.setUnavailable(LibFunc::sinpif);
+    TLI.setUnavailable(LibFunc::cospi);
+    TLI.setUnavailable(LibFunc::cospif);
+    TLI.setUnavailable(LibFunc::sincospi_stret);
+    TLI.setUnavailable(LibFunc::sincospi_stretf);
   }
 
   if (T.isMacOSX() && T.getArch() == Triple::x86 &&

@@ -46,6 +46,10 @@ namespace llvm {
       Znwm,
       /// void *new(unsigned long, nothrow);
       ZnwmRKSt9nothrow_t,
+      /// double __cospi(double x);
+      cospi,
+      /// float __cospif(float x);
+      cospif,
       /// int __cxa_atexit(void (*f)(void *), void *p, void *d);
       cxa_atexit,
       /// void __cxa_guard_abort(guard_t *guard);
@@ -61,6 +65,14 @@ namespace llvm {
       dunder_isoc99_sscanf,
       /// void *__memcpy_chk(void *s1, const void *s2, size_t n, size_t s1size);
       memcpy_chk,
+      /// double __sincospi_stret(double x);
+      sincospi_stret,
+      /// float __sincospi_stretf(float x);
+      sincospi_stretf,
+      /// double __sinpi(double x);
+      sinpi,
+      /// float __sinpif(float x);
+      sinpif,
       /// double __sqrt_finite(double x);
       sqrt_finite,
       /// float __sqrt_finite(float x);
