@@ -128,7 +128,7 @@ static inline bool inheritsFrom(InstructionContext child,
            inheritsFrom(child, IC_EVEX_L_W_XD);
   case IC_EVEX_OPSIZE:
     return inheritsFrom(child, IC_EVEX_W_OPSIZE) ||
-           inheritsFrom(child, IC_EVEX_W_OPSIZE);
+           inheritsFrom(child, IC_EVEX_L_W_OPSIZE);
   case IC_EVEX_W:
   case IC_EVEX_W_XS:
   case IC_EVEX_W_XD:
@@ -176,10 +176,24 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_EVEX_L_XD_K:
   case IC_EVEX_L_OPSIZE_K:
     return false;
+  case IC_EVEX_W_KZ:
+  case IC_EVEX_W_XS_KZ:
+  case IC_EVEX_W_XD_KZ:
+  case IC_EVEX_W_OPSIZE_KZ:
+    return false;
+  case IC_EVEX_L_KZ:
+  case IC_EVEX_L_XS_KZ:
+  case IC_EVEX_L_XD_KZ:
+  case IC_EVEX_L_OPSIZE_KZ:
+    return false;
   case IC_EVEX_L_W_K:
   case IC_EVEX_L_W_XS_K:
   case IC_EVEX_L_W_XD_K:
   case IC_EVEX_L_W_OPSIZE_K:
+  case IC_EVEX_L_W_KZ:
+  case IC_EVEX_L_W_XS_KZ:
+  case IC_EVEX_L_W_XD_KZ:
+  case IC_EVEX_L_W_OPSIZE_KZ:
     return false;
   case IC_EVEX_L2_K:
   case IC_EVEX_L2_B:
@@ -187,12 +201,25 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_EVEX_L2_XD_K:
   case IC_EVEX_L2_OPSIZE_K:
   case IC_EVEX_L2_OPSIZE_B:
+  case IC_EVEX_L2_OPSIZE_K_B:
+  case IC_EVEX_L2_KZ:
+  case IC_EVEX_L2_XS_KZ:
+  case IC_EVEX_L2_XD_KZ:
+  case IC_EVEX_L2_OPSIZE_KZ:
+  case IC_EVEX_L2_OPSIZE_KZ_B:
     return false;
   case IC_EVEX_L2_W_K:
+  case IC_EVEX_L2_W_B:
   case IC_EVEX_L2_W_XS_K:
   case IC_EVEX_L2_W_XD_K:
   case IC_EVEX_L2_W_OPSIZE_K:
   case IC_EVEX_L2_W_OPSIZE_B:
+  case IC_EVEX_L2_W_OPSIZE_K_B:
+  case IC_EVEX_L2_W_KZ:
+  case IC_EVEX_L2_W_XS_KZ:
+  case IC_EVEX_L2_W_XD_KZ:
+  case IC_EVEX_L2_W_OPSIZE_KZ:
+  case IC_EVEX_L2_W_OPSIZE_KZ_B:
     return false;
   default:
     llvm_unreachable("Unknown instruction class");
@@ -213,7 +240,8 @@ static inline bool outranks(InstructionContext upper,
 
 #define ENUM_ENTRY(n, r, d) r,
 #define ENUM_ENTRY_K_B(n, r, d) ENUM_ENTRY(n, r, d) \
-  ENUM_ENTRY(n##_K_B, r, d) ENUM_ENTRY(n##_K, r, d) ENUM_ENTRY(n##_B, r, d)
+  ENUM_ENTRY(n##_K_B, r, d) ENUM_ENTRY(n##_KZ_B, r, d) \
+  ENUM_ENTRY(n##_KZ, r, d) ENUM_ENTRY(n##_K, r, d) ENUM_ENTRY(n##_B, r, d)
   static int ranks[IC_max] = {
     INSTRUCTION_CONTEXTS
   };
@@ -235,7 +263,8 @@ static inline const char* stringForContext(InstructionContext insnContext) {
     llvm_unreachable("Unhandled instruction class");
 #define ENUM_ENTRY(n, r, d)   case n: return #n; break;
 #define ENUM_ENTRY_K_B(n, r, d) ENUM_ENTRY(n, r, d) ENUM_ENTRY(n##_K_B, r, d)\
-        ENUM_ENTRY(n##_K, r, d) ENUM_ENTRY(n##_B, r, d)
+        ENUM_ENTRY(n##_KZ, r, d) ENUM_ENTRY(n##_K, r, d) ENUM_ENTRY(n##_B, r, d)\
+        ENUM_ENTRY(n##_KZ_B, r, d)
   INSTRUCTION_CONTEXTS
 #undef ENUM_ENTRY
 #undef ENUM_ENTRY_K_B

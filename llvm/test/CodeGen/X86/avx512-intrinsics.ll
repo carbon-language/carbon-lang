@@ -317,3 +317,26 @@ define <8 x i64> @test_x86_pmins_q(<8 x i64> %a0, <8 x i64> %a1) {
   ret <8 x i64> %res
 }
 declare <8 x i64> @llvm.x86.avx512.pmins.q(<8 x i64>, <8 x i64>) nounwind readonly
+
+define <16 x i32> @test_conflict_d(<16 x i32> %a) {
+  ; CHECK: vpconflictd
+  %res = call <16 x i32> @llvm.x86.avx512.conflict.d.512(<16 x i32> %a)
+  ret <16 x i32> %res
+}
+declare <16 x i32> @llvm.x86.avx512.conflict.d.512(<16 x i32>) nounwind readonly
+
+define <16 x i32> @test_maskz_conflict_d(<16 x i32> %a, i16 %mask) {
+  ; CHECK: vpconflictd %zmm0, %zmm0 {%k1} {z}
+  %vmask = bitcast i16 %mask to <16 x i1>
+  %res = call <16 x i32> @llvm.x86.avx512.conflict.d.maskz.512(<16 x i1> %vmask, <16 x i32> %a)
+  ret <16 x i32> %res
+}
+declare <16 x i32> @llvm.x86.avx512.conflict.d.maskz.512(<16 x i1>,<16 x i32>) nounwind readonly
+
+define <8 x i64> @test_mask_conflict_q(<8 x i64> %a, <8 x i64> %b, i8 %mask) {
+  ; CHECK: vpconflictq {{.*}} {%k1}
+  %vmask = bitcast i8 %mask to <8 x i1>
+  %res = call <8 x i64> @llvm.x86.avx512.conflict.q.mask.512(<8 x i64> %b, <8 x i1> %vmask, <8 x i64> %a)
+  ret <8 x i64> %res
+}
+declare <8 x i64> @llvm.x86.avx512.conflict.q.mask.512(<8 x i64>, <8 x i1>,<8 x i64>) nounwind readonly

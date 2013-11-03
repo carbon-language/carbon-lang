@@ -221,7 +221,55 @@ enum attributeBits {
   ENUM_ENTRY(IC_EVEX_L2_W_K_B,        3,  "requires EVEX_B, EVEX_K, L2 and W")               \
   ENUM_ENTRY(IC_EVEX_L2_W_XS_K_B,     4,  "requires EVEX_B, EVEX_K, L2, W and XS prefix")    \
   ENUM_ENTRY(IC_EVEX_L2_W_XD_K_B,     4,  "requires EVEX_B, EVEX_K, L2, W and XD prefix")    \
-  ENUM_ENTRY(IC_EVEX_L2_W_OPSIZE_K_B, 4,  "requires EVEX_B, EVEX_K, L2, W and OpSize") 
+  ENUM_ENTRY(IC_EVEX_L2_W_OPSIZE_K_B, 4,  "requires EVEX_B, EVEX_K, L2, W and OpSize")       \
+  ENUM_ENTRY(IC_EVEX_KZ_B,             1,  "requires EVEX_B and EVEX_KZ prefix")             \
+  ENUM_ENTRY(IC_EVEX_XS_KZ_B,          2,  "requires EVEX_B, EVEX_KZ and the XS prefix")     \
+  ENUM_ENTRY(IC_EVEX_XD_KZ_B,          2,  "requires EVEX_B, EVEX_KZ and the XD prefix")     \
+  ENUM_ENTRY(IC_EVEX_OPSIZE_KZ_B,      2,  "requires EVEX_B, EVEX_KZ and the OpSize prefix") \
+  ENUM_ENTRY(IC_EVEX_W_KZ_B,           3,  "requires EVEX_B, EVEX_KZ and the W prefix")      \
+  ENUM_ENTRY(IC_EVEX_W_XS_KZ_B,        4,  "requires EVEX_B, EVEX_KZ, W, and XS prefix")     \
+  ENUM_ENTRY(IC_EVEX_W_XD_KZ_B,        4,  "requires EVEX_B, EVEX_KZ, W, and XD prefix")     \
+  ENUM_ENTRY(IC_EVEX_W_OPSIZE_KZ_B,    4,  "requires EVEX_B, EVEX_KZ, W, and OpSize")        \
+  ENUM_ENTRY(IC_EVEX_L_KZ_B,           3,  "requires EVEX_B, EVEX_KZ and the L prefix")       \
+  ENUM_ENTRY(IC_EVEX_L_XS_KZ_B,        4,  "requires EVEX_B, EVEX_KZ and the L and XS prefix")\
+  ENUM_ENTRY(IC_EVEX_L_XD_KZ_B,        4,  "requires EVEX_B, EVEX_KZ and the L and XD prefix")\
+  ENUM_ENTRY(IC_EVEX_L_OPSIZE_KZ_B,    4,  "requires EVEX_B, EVEX_KZ, L, and OpSize")         \
+  ENUM_ENTRY(IC_EVEX_L_W_KZ_B,         3,  "requires EVEX_B, EVEX_KZ, L and W")               \
+  ENUM_ENTRY(IC_EVEX_L_W_XS_KZ_B,      4,  "requires EVEX_B, EVEX_KZ, L, W and XS prefix")    \
+  ENUM_ENTRY(IC_EVEX_L_W_XD_KZ_B,      4,  "requires EVEX_B, EVEX_KZ, L, W and XD prefix")    \
+  ENUM_ENTRY(IC_EVEX_L_W_OPSIZE_KZ_B,  4,  "requires EVEX_B, EVEX_KZ, L, W and OpSize")       \
+  ENUM_ENTRY(IC_EVEX_L2_KZ_B,          3,  "requires EVEX_B, EVEX_KZ and the L2 prefix")       \
+  ENUM_ENTRY(IC_EVEX_L2_XS_KZ_B,       4,  "requires EVEX_B, EVEX_KZ and the L2 and XS prefix")\
+  ENUM_ENTRY(IC_EVEX_L2_XD_KZ_B,       4,  "requires EVEX_B, EVEX_KZ and the L2 and XD prefix")\
+  ENUM_ENTRY(IC_EVEX_L2_OPSIZE_KZ_B,   4,  "requires EVEX_B, EVEX_KZ, L2, and OpSize")         \
+  ENUM_ENTRY(IC_EVEX_L2_W_KZ_B,        3,  "requires EVEX_B, EVEX_KZ, L2 and W")               \
+  ENUM_ENTRY(IC_EVEX_L2_W_XS_KZ_B,     4,  "requires EVEX_B, EVEX_KZ, L2, W and XS prefix")    \
+  ENUM_ENTRY(IC_EVEX_L2_W_XD_KZ_B,     4,  "requires EVEX_B, EVEX_KZ, L2, W and XD prefix")    \
+  ENUM_ENTRY(IC_EVEX_L2_W_OPSIZE_KZ_B, 4,  "requires EVEX_B, EVEX_KZ, L2, W and OpSize")       \
+  ENUM_ENTRY(IC_EVEX_KZ,             1,  "requires an EVEX_KZ prefix")             \
+  ENUM_ENTRY(IC_EVEX_XS_KZ,          2,  "requires EVEX_KZ and the XS prefix")     \
+  ENUM_ENTRY(IC_EVEX_XD_KZ,          2,  "requires EVEX_KZ and the XD prefix")     \
+  ENUM_ENTRY(IC_EVEX_OPSIZE_KZ,      2,  "requires EVEX_KZ and the OpSize prefix") \
+  ENUM_ENTRY(IC_EVEX_W_KZ,           3,  "requires EVEX_KZ and the W prefix")      \
+  ENUM_ENTRY(IC_EVEX_W_XS_KZ,        4,  "requires EVEX_KZ, W, and XS prefix")     \
+  ENUM_ENTRY(IC_EVEX_W_XD_KZ,        4,  "requires EVEX_KZ, W, and XD prefix")     \
+  ENUM_ENTRY(IC_EVEX_W_OPSIZE_KZ,    4,  "requires EVEX_KZ, W, and OpSize")        \
+  ENUM_ENTRY(IC_EVEX_L_KZ,           3,  "requires EVEX_KZ and the L prefix")       \
+  ENUM_ENTRY(IC_EVEX_L_XS_KZ,        4,  "requires EVEX_KZ and the L and XS prefix")\
+  ENUM_ENTRY(IC_EVEX_L_XD_KZ,        4,  "requires EVEX_KZ and the L and XD prefix")\
+  ENUM_ENTRY(IC_EVEX_L_OPSIZE_KZ,    4,  "requires EVEX_KZ, L, and OpSize")         \
+  ENUM_ENTRY(IC_EVEX_L_W_KZ,         3,  "requires EVEX_KZ, L and W")               \
+  ENUM_ENTRY(IC_EVEX_L_W_XS_KZ,      4,  "requires EVEX_KZ, L, W and XS prefix")    \
+  ENUM_ENTRY(IC_EVEX_L_W_XD_KZ,      4,  "requires EVEX_KZ, L, W and XD prefix")    \
+  ENUM_ENTRY(IC_EVEX_L_W_OPSIZE_KZ,  4,  "requires EVEX_KZ, L, W and OpSize")       \
+  ENUM_ENTRY(IC_EVEX_L2_KZ,          3,  "requires EVEX_KZ and the L2 prefix")       \
+  ENUM_ENTRY(IC_EVEX_L2_XS_KZ,       4,  "requires EVEX_KZ and the L2 and XS prefix")\
+  ENUM_ENTRY(IC_EVEX_L2_XD_KZ,       4,  "requires EVEX_KZ and the L2 and XD prefix")\
+  ENUM_ENTRY(IC_EVEX_L2_OPSIZE_KZ,   4,  "requires EVEX_KZ, L2, and OpSize")         \
+  ENUM_ENTRY(IC_EVEX_L2_W_KZ,        3,  "requires EVEX_KZ, L2 and W")               \
+  ENUM_ENTRY(IC_EVEX_L2_W_XS_KZ,     4,  "requires EVEX_KZ, L2, W and XS prefix")    \
+  ENUM_ENTRY(IC_EVEX_L2_W_XD_KZ,     4,  "requires EVEX_KZ, L2, W and XD prefix")    \
+  ENUM_ENTRY(IC_EVEX_L2_W_OPSIZE_KZ, 4,  "requires EVEX_KZ, L2, W and OpSize")     
 
 #define ENUM_ENTRY(n, r, d) n,
 typedef enum {

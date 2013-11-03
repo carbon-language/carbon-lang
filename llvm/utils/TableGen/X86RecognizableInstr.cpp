@@ -244,6 +244,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   HasEVEXPrefix    = Rec->getValueAsBit("hasEVEXPrefix");
   HasEVEX_L2Prefix = Rec->getValueAsBit("hasEVEX_L2");
   HasEVEX_K        = Rec->getValueAsBit("hasEVEX_K");
+  HasEVEX_KZ       = Rec->getValueAsBit("hasEVEX_Z");
   HasEVEX_B        = Rec->getValueAsBit("hasEVEX_B");
   HasLockPrefix    = Rec->getValueAsBit("hasLockPrefix");
   IsCodeGenOnly    = Rec->getValueAsBit("isCodeGenOnly");
@@ -304,8 +305,10 @@ void RecognizableInstr::processInstr(DisassemblerTables &tables,
     recogInstr.emitDecodePath(tables);
 }
 
-#define EVEX_KB(n) (HasEVEX_K && HasEVEX_B? n##_K_B : \
-                    (HasEVEX_K? n##_K : (HasEVEX_B ? n##_B : n)))
+#define EVEX_KB(n) (HasEVEX_KZ && HasEVEX_B ? n##_KZ_B : \
+                    (HasEVEX_K && HasEVEX_B ? n##_K_B : \
+                    (HasEVEX_KZ ? n##_KZ : \
+                    (HasEVEX_K? n##_K : (HasEVEX_B ? n##_B : n)))))
 
 InstructionContext RecognizableInstr::insnContext() const {
   InstructionContext insnContext;

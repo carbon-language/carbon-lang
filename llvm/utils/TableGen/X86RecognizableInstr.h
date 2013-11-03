@@ -72,6 +72,8 @@ private:
   bool HasEVEX_L2Prefix;
   /// The hasEVEX_K field from the record
   bool HasEVEX_K;
+  /// The hasEVEX_KZ field from the record
+  bool HasEVEX_KZ;
   /// The hasEVEX_B field from the record
   bool HasEVEX_B;
   /// The hasLockPrefix field from the record
