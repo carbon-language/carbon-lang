@@ -148,3 +148,35 @@ entry:
   store fp128 %2, fp128* %c, align 1
   ret void
 }
+
+; HARD-LABEL: uint_to_f128
+; HARD:       fdtoq
+
+; SOFT-LABEL: uint_to_f128
+; SOFT:       _Q_utoq
+
+define void @uint_to_f128(fp128* noalias sret %scalar.result, i32 %i) {
+entry:
+  %0 = uitofp i32 %i to fp128
+  store fp128 %0, fp128* %scalar.result, align 8
+  ret void
+}
+
+; HARD-LABEL: f128_to_i32
+; HARD:       fqtoi
+; HARD:       fqtoi
+
+; SOFT-LABEL: f128_to_i32
+; SOFT:       call _Q_qtou
+; SOFT:       call _Q_qtoi
+
+
+define i32 @f128_to_i32(fp128* %a, fp128* %b) {
+entry:
+  %0 = load fp128* %a, align 8
+  %1 = load fp128* %b, align 8
+  %2 = fptoui fp128 %0 to i32
+  %3 = fptosi fp128 %1 to i32
+  %4 = add i32 %2, %3
+  ret i32 %4
+}

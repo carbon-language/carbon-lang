@@ -1354,9 +1354,9 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
   setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
 
-  // Expand fp<->uint
-  setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
-  setOperationAction(ISD::UINT_TO_FP, MVT::i32, Expand);
+  // Custom Expand fp<->uint
+  setOperationAction(ISD::FP_TO_UINT, MVT::i32, Custom);
+  setOperationAction(ISD::UINT_TO_FP, MVT::i32, Custom);
 
   setOperationAction(ISD::BITCAST, MVT::f32, Expand);
   setOperationAction(ISD::BITCAST, MVT::i32, Expand);
@@ -1520,7 +1520,9 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
       setLibcallName(RTLIB::DIV_F128,  "_Qp_div");
       setLibcallName(RTLIB::SQRT_F128, "_Qp_sqrt");
       setLibcallName(RTLIB::FPTOSINT_F128_I32, "_Qp_qtoi");
+      setLibcallName(RTLIB::FPTOUINT_F128_I32, "_Qp_qtoui");
       setLibcallName(RTLIB::SINTTOFP_I32_F128, "_Qp_itoq");
+      setLibcallName(RTLIB::UINTTOFP_I32_F128, "_Qp_uitoq");
       setLibcallName(RTLIB::FPEXT_F32_F128, "_Qp_stoq");
       setLibcallName(RTLIB::FPEXT_F64_F128, "_Qp_dtoq");
       setLibcallName(RTLIB::FPROUND_F128_F32, "_Qp_qtos");
@@ -1532,7 +1534,9 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
       setLibcallName(RTLIB::DIV_F128,  "_Q_div");
       setLibcallName(RTLIB::SQRT_F128, "_Q_sqrt");
       setLibcallName(RTLIB::FPTOSINT_F128_I32, "_Q_qtoi");
+      setLibcallName(RTLIB::FPTOUINT_F128_I32, "_Q_qtou");
       setLibcallName(RTLIB::SINTTOFP_I32_F128, "_Q_itoq");
+      setLibcallName(RTLIB::UINTTOFP_I32_F128, "_Q_utoq");
       setLibcallName(RTLIB::FPEXT_F32_F128, "_Q_stoq");
       setLibcallName(RTLIB::FPEXT_F64_F128, "_Q_dtoq");
       setLibcallName(RTLIB::FPROUND_F128_F32, "_Q_qtos");
@@ -2075,6 +2079,37 @@ static SDValue LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG,
   return DAG.getNode(SPISD::ITOF, dl, Op.getValueType(), Tmp);
 }
 
+static SDValue LowerFP_TO_UINT(SDValue Op, SelectionDAG &DAG,
+                               const SparcTargetLowering &TLI,
+                               bool hasHardQuad) {
+  // Expand if it does not involve f128 or the target has support for
+  // quad floating point instructions.
+  if (Op.getOperand(0).getValueType() != MVT::f128 || hasHardQuad)
+    return SDValue(0, 0);
+
+  SDLoc dl(Op);
+  assert(Op.getValueType() == MVT::i32);
+
+  return TLI.LowerF128Op(Op, DAG,
+                         TLI.getLibcallName(RTLIB::FPTOUINT_F128_I32), 1);
+}
+
+
+static SDValue LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG,
+                               const SparcTargetLowering &TLI,
+                               bool hasHardQuad) {
+  // Expand if it does not involve f128 or the target has support for
+  // quad floating point instructions.
+  if (Op.getValueType() != MVT::f128 || hasHardQuad)
+    return SDValue(0, 0);
+
+  SDLoc dl(Op);
+  assert(Op.getOperand(0).getValueType() == MVT::i32);
+
+  return TLI.LowerF128Op(Op, DAG,
+                         TLI.getLibcallName(RTLIB::UINTTOFP_I32_F128), 1);
+}
+
 static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG,
                           const SparcTargetLowering &TLI,
                           bool hasHardQuad) {
@@ -2517,6 +2552,10 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG, *this,
                                                        hasHardQuad);
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG, *this,
+                                                       hasHardQuad);
+  case ISD::FP_TO_UINT:         return LowerFP_TO_UINT(Op, DAG, *this,
+                                                       hasHardQuad);
+  case ISD::UINT_TO_FP:         return LowerUINT_TO_FP(Op, DAG, *this,
                                                        hasHardQuad);
   case ISD::BR_CC:              return LowerBR_CC(Op, DAG, *this,
                                                   hasHardQuad);
