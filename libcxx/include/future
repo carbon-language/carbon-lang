@@ -2331,7 +2331,7 @@ private:
     }
 };
 
-bool __does_policy_contain(launch __policy, launch __value )
+inline bool __does_policy_contain(launch __policy, launch __value )
 { return (int(__policy) & int(__value)) != 0; }
 
 template <class _Fp, class... _Args>
