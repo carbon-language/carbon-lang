@@ -92,7 +92,7 @@ CAMLprim value llvm_preferred_align_of_global(LLVMTargetDataRef TD,
 /* DataLayout.t -> Llvm.lltype -> Int64.t -> int */
 CAMLprim value llvm_element_at_offset(LLVMTargetDataRef TD, LLVMTypeRef Ty,
                                       value Offset) {
-  return Val_int(LLVMElementAtOffset(TD, Ty, Int_val(Offset)));
+  return Val_int(LLVMElementAtOffset(TD, Ty, Int64_val(Offset)));
 }
 
 /* DataLayout.t -> Llvm.lltype -> int -> Int64.t */
