@@ -1239,7 +1239,12 @@ void CXXNameMangler::mangleNestedName(const NamedDecl *ND,
 
   Out << 'N';
   if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(ND)) {
-    mangleQualifiers(Qualifiers::fromCVRMask(Method->getTypeQualifiers()));
+    Qualifiers MethodQuals =
+        Qualifiers::fromCVRMask(Method->getTypeQualifiers());
+    // We do not consider restrict a distinguishing attribute for overloading
+    // purposes so we must not mangle it.
+    MethodQuals.removeRestrict();
+    mangleQualifiers(MethodQuals);
     mangleRefQualifier(Method->getRefQualifier());
   }
   

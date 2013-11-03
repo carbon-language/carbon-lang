@@ -1071,11 +1071,16 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
     // function yet (because we haven't yet resolved whether this is a static
     // or non-static member function). Add it now, on the assumption that this
     // is a redeclaration of OldMethod.
+    unsigned OldQuals = OldMethod->getTypeQualifiers();
     unsigned NewQuals = NewMethod->getTypeQualifiers();
     if (!getLangOpts().CPlusPlus1y && NewMethod->isConstexpr() &&
         !isa<CXXConstructorDecl>(NewMethod))
       NewQuals |= Qualifiers::Const;
-    if (OldMethod->getTypeQualifiers() != NewQuals)
+
+    // We do not allow overloading based off of '__restrict'.
+    OldQuals &= ~Qualifiers::Restrict;
+    NewQuals &= ~Qualifiers::Restrict;
+    if (OldQuals != NewQuals)
       return true;
   }
 
