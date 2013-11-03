@@ -1620,9 +1620,22 @@ Value *BoUpSLP::vectorizeTree() {
   return VectorizableTree[0].VectorizedValue;
 }
 
+class DTCmp {
+  const DominatorTree *DT;
+
+public:
+  DTCmp(const DominatorTree *DT) : DT(DT) {}
+  bool operator()(const BasicBlock *A, const BasicBlock *B) const {
+    return DT->dominates(A, B);
+  }
+};
+
 void BoUpSLP::optimizeGatherSequence() {
   DEBUG(dbgs() << "SLP: Optimizing " << GatherSeq.size()
         << " gather sequences instructions.\n");
+  // Keep a list of visited BBs to run CSE on. It is typically small.
+  SmallPtrSet<BasicBlock *, 4> VisitedBBs;
+  SmallVector<BasicBlock *, 4> CSEWorkList;
   // LICM InsertElementInst sequences.
   for (SetVector<Instruction *>::iterator it = GatherSeq.begin(),
        e = GatherSeq.end(); it != e; ++it) {
@@ -1630,6 +1643,9 @@ void BoUpSLP::optimizeGatherSequence() {
 
     if (!Insert)
       continue;
+
+    if (VisitedBBs.insert(Insert->getParent()))
+      CSEWorkList.push_back(Insert->getParent());
 
     // Check if this block is inside a loop.
     Loop *L = LI->getLoopFor(Insert->getParent());
@@ -1655,44 +1671,45 @@ void BoUpSLP::optimizeGatherSequence() {
     Insert->moveBefore(PreHeader->getTerminator());
   }
 
+  // Sort blocks by domination. This ensures we visit a block after all blocks
+  // dominating it are visited.
+  std::stable_sort(CSEWorkList.begin(), CSEWorkList.end(), DTCmp(DT));
+
   // Perform O(N^2) search over the gather sequences and merge identical
   // instructions. TODO: We can further optimize this scan if we split the
   // instructions into different buckets based on the insert lane.
-  SmallPtrSet<Instruction*, 16> Visited;
-  SmallVector<Instruction*, 16> ToRemove;
-  ReversePostOrderTraversal<Function*> RPOT(F);
-  for (ReversePostOrderTraversal<Function*>::rpo_iterator I = RPOT.begin(),
-       E = RPOT.end(); I != E; ++I) {
+  SmallVector<Instruction *, 16> Visited;
+  for (SmallVectorImpl<BasicBlock *>::iterator I = CSEWorkList.begin(),
+                                               E = CSEWorkList.end();
+       I != E; ++I) {
+    assert(I == CSEWorkList.begin() || !DT->dominates(*I, *llvm::prior(I)) &&
+           "Worklist not sorted properly!");
     BasicBlock *BB = *I;
-    // For all instructions in the function:
-    for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
-      Instruction *In = it;
+    // For all instructions in blocks containing gather sequences:
+    for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e;) {
+      Instruction *In = it++;
       if ((!isa<InsertElementInst>(In) && !isa<ExtractElementInst>(In)) ||
           !GatherSeq.count(In))
         continue;
 
       // Check if we can replace this instruction with any of the
       // visited instructions.
-      for (SmallPtrSet<Instruction*, 16>::iterator v = Visited.begin(),
-           ve = Visited.end(); v != ve; ++v) {
+      for (SmallVectorImpl<Instruction *>::iterator v = Visited.begin(),
+                                                    ve = Visited.end();
+           v != ve; ++v) {
         if (In->isIdenticalTo(*v) &&
             DT->dominates((*v)->getParent(), In->getParent())) {
           In->replaceAllUsesWith(*v);
-          ToRemove.push_back(In);
+          In->eraseFromParent();
           In = 0;
           break;
         }
       }
-      if (In)
-        Visited.insert(In);
+      if (In) {
+        assert(std::find(Visited.begin(), Visited.end(), In) == Visited.end());
+        Visited.push_back(In);
+      }
     }
-  }
-
-  // Erase all of the instructions that we RAUWed.
-  for (SmallVectorImpl<Instruction *>::iterator v = ToRemove.begin(),
-       ve = ToRemove.end(); v != ve; ++v) {
-    assert((*v)->getNumUses() == 0 && "Can't remove instructions with uses");
-    (*v)->eraseFromParent();
   }
 }
 
