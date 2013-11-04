@@ -67,6 +67,7 @@ module TypeKind : sig
   | Pointer
   | Vector
   | Metadata
+  | X86_mmx
 end
 
 (** The linkage of a global value, accessed with {!linkage} and
@@ -77,6 +78,7 @@ module Linkage : sig
   | Available_externally
   | Link_once
   | Link_once_odr
+  | Link_once_odr_auto_hide
   | Weak
   | Weak_odr
   | Appending
@@ -88,6 +90,7 @@ module Linkage : sig
   | Ghost
   | Common
   | Linker_private
+  | Linker_private_weak
 end
 
 (** The linker visibility of a global value, accessed with {!visibility} and
@@ -252,7 +255,57 @@ module Opcode : sig
   | AtomicRMW
   | Resume
   | LandingPad
-  | Unwind
+end
+
+(** The type of a clause of a [landingpad] instruction.
+    See [llvm::LandingPadInst::ClauseType]. *)
+module LandingPadClauseTy : sig
+  type t =
+  | Catch
+  | Filter
+end
+
+(** The thread local mode of a global value, accessed with {!thread_local_mode}
+    and {!set_thread_local_mode}.
+    See [llvm::GlobalVariable::ThreadLocalMode]. *)
+module ThreadLocalMode : sig
+  type t =
+  | None
+  | GeneralDynamic
+  | LocalDynamic
+  | InitialExec
+  | LocalExec
+end
+
+(** The ordering of an atomic [load], [store], [cmpxchg], [atomicrmw] or
+    [fence] instruction. See [llvm::AtomicOrdering]. *)
+module AtomicOrdering : sig
+  type t =
+  | NotAtomic
+  | Unordered
+  | Monotonic
+  | Invalid (* removed due to API changes *)
+  | Acquire
+  | Release
+  | AcqiureRelease
+  | SequentiallyConsistent
+end
+
+(** The opcode of an [atomicrmw] instruction.
+    See [llvm::AtomicRMWInst::BinOp]. *)
+module AtomicRMWBinOp : sig
+  type t =
+  | Xchg
+  | Add
+  | Sub
+  | And
+  | Nand
+  | Or
+  | Xor
+  | Max
+  | Min
+  | UMax
+  | UMin
 end
 
 (** The kind of an [llvalue], the result of [classify_value v].
@@ -358,6 +411,14 @@ val set_data_layout: string -> llmodule -> unit
     error. See the method [llvm::Module::dump]. *)
 val dump_module : llmodule -> unit
 
+(** [print_module f m] prints the .ll representation of the module [m]
+    to file [f]. See the method [llvm::Module::print]. *)
+val print_module : string -> llmodule -> unit
+
+(** [string_of_llmodule m] returns the .ll representation of the module [m]
+    as a string. See the method [llvm::Module::print]. *)
+val string_of_llmodule : llmodule -> string
+
 (** [set_module_inline_asm m asm] sets the inline assembler for the module. See
     the method [llvm::Module::setModuleInlineAsm]. *)
 val set_module_inline_asm : llmodule -> string -> unit
@@ -381,6 +442,10 @@ val type_is_sized : lltype -> bool
 (** [type_context ty] returns the {!llcontext} corresponding to the type [ty].
     See the method [llvm::Type::getContext]. *)
 val type_context : lltype -> llcontext
+
+(** [dump_type ty] prints the .ll representation of the type [ty] to standard
+    error. See the method [llvm::Type::dump]. *)
+val dump_type : lltype -> unit
 
 (** [string_of_lltype ty] returns a string describing the type [ty]. *)
 val string_of_lltype : lltype -> string
@@ -552,6 +617,10 @@ val void_type : llcontext -> lltype
     [llvm::Type::LabelTy]. *)
 val label_type : llcontext -> lltype
 
+(** [x86_mmx_type c] returns the x86 64-bit MMX register type in the
+    context [c]. See [llvm::Type::X86_MMXTy]. *)
+val x86_mmx_type : llcontext -> lltype
+
 (** [type_by_name m name] returns the specified type from the current module
     if it exists.
     See the method [llvm::Module::getTypeByName] *)
@@ -706,6 +775,13 @@ val get_mdstring : llvalue -> string option
     metadata (if any).
     See the method [llvm::NamedMDNode::getOperand]. *)
 val get_named_metadata : llmodule -> string -> llvalue array
+
+(** [add_named_metadata_operand m name v] adds [v] as the last operand of
+    metadata named [name] in module [m]. If the metadata does not exist,
+    it is created.
+    See the methods [llvm::Module::getNamedMetadata()] and
+    [llvm::MDNode::addOperand()]. *)
+val add_named_metadata_operand : llmodule -> string -> llvalue -> unit
 
 
 (** {7 Operations on scalar constants} *)
@@ -1243,6 +1319,26 @@ val is_thread_local : llvalue -> bool
     See the method [llvm::GlobalVariable::setThreadLocal]. *)
 val set_thread_local : bool -> llvalue -> unit
 
+(** [is_thread_local gv] returns the thread local mode of the global
+    variable [gv].
+    See the method [llvm::GlobalVariable::getThreadLocalMode]. *)
+val thread_local_mode : llvalue -> ThreadLocalMode.t
+
+(** [set_thread_local c gv] sets the thread local mode of the global
+    variable [gv].
+    See the method [llvm::GlobalVariable::setThreadLocalMode]. *)
+val set_thread_local_mode : ThreadLocalMode.t -> llvalue -> unit
+
+(** [is_externally_initialized gv] returns [true] if the global
+    variable [gv] is externally initialized and [false] otherwise.
+    See the method [llvm::GlobalVariable::isExternallyInitialized]. *)
+val is_externally_initialized : llvalue -> bool
+
+(** [set_externally_initialized c gv] sets the global variable [gv] to be
+    externally initialized if [c] is [true] and not otherwise.
+    See the method [llvm::GlobalVariable::setExternallyInitialized]. *)
+val set_externally_initialized : bool -> llvalue -> unit
+
 
 (** {7 Operations on aliases} *)
 
@@ -1338,6 +1434,10 @@ val set_gc : string option -> llvalue -> unit
     [f]. *)
 val add_function_attr : llvalue -> Attribute.t -> unit
 
+(** [add_target_dependent_function_attr f a] adds target-dependent attribute
+    [a] to function [f]. *)
+val add_target_dependent_function_attr : llvalue -> string -> string -> unit
+
 (** [function_attr f] returns the function attribute for the function [f].
     See the method [llvm::Function::getAttributes] *)
 val function_attr : llvalue -> Attribute.t list
@@ -1426,6 +1526,18 @@ val entry_block : llvalue -> llbasicblock
 (** [delete_block bb] deletes the basic block [bb].
     See the method [llvm::BasicBlock::eraseFromParent]. *)
 val delete_block : llbasicblock -> unit
+
+(** [remove_block bb] removes the basic block [bb] from its parent function.
+    See the method [llvm::BasicBlock::removeFromParent]. *)
+val remove_block : llbasicblock -> unit
+
+(** [move_block_before pos bb] moves the basic block [bb] before [pos].
+    See the method [llvm::BasicBlock::moveBefore]. *)
+val move_block_before : llbasicblock -> llbasicblock -> unit
+
+(** [move_block_after pos bb] moves the basic block [bb] after [pos].
+    See the method [llvm::BasicBlock::moveAfter]. *)
+val move_block_after : llbasicblock -> llbasicblock -> unit
 
 (** [append_block c name f] creates a new basic block named [name] at the end of
     function [f] in the context [c].
@@ -1572,6 +1684,21 @@ val is_tail_call : llvalue -> bool
     call optimization if [tc] is [true], clears otherwise.
     See the method [llvm::CallInst::setTailCall]. *)
 val set_tail_call : bool -> llvalue -> unit
+
+
+(** {7 Operations on load/store instructions (only)} *)
+
+(** [is_volatile i] is [true] if the load or store instruction [i] is marked
+    as volatile.
+    See the methods [llvm::LoadInst::isVolatile] and
+    [llvm::StoreInst::isVolatile]. *)
+val is_volatile : llvalue -> bool
+
+(** [set_volatile v i] marks the load or store instruction [i] as volatile
+    if [v] is [true], unmarks otherwise.
+    See the methods [llvm::LoadInst::setVolatile] and
+    [llvm::StoreInst::setVolatile]. *)
+val set_volatile : bool -> llvalue -> unit
 
 
 (** {7 Operations on phi nodes} *)
@@ -1981,6 +2108,14 @@ val build_load : llvalue -> string -> llbuilder -> llvalue
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateStore]. *)
 val build_store : llvalue -> llvalue -> llbuilder -> llvalue
+
+(** [build_atomicrmw op ptr val o st b] creates an [atomicrmw] instruction with
+    operation [op] performed on pointer [ptr] and value [val] with ordering [o]
+    and singlethread flag set to [st] at the position specified by
+    the instruction builder [b].
+    See the method [llvm::IRBuilder::CreateAtomicRMW]. *)
+val build_atomicrmw : AtomicRMWBinOp.t -> llvalue -> llvalue ->
+                      AtomicOrdering.t -> bool -> string -> llbuilder -> llvalue
 
 (** [build_gep p indices name b] creates a
     [%name = getelementptr %p, indices...]

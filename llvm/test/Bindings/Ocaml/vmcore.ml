@@ -452,10 +452,24 @@ let test_global_variables () =
           set_thread_local true in
   insist (is_thread_local g);
 
-  (* CHECK-NOWHERE-NOT: GVar05
+  (* CHECK: GVar05{{.*}}thread_local(initialexec)
+   *)
+  group "threadlocal_mode";
+  let g = define_global "GVar05" fourty_two32 m ++
+          set_thread_local_mode ThreadLocalMode.InitialExec in
+  insist ((thread_local_mode g) = ThreadLocalMode.InitialExec);
+
+  (* CHECK: GVar06{{.*}}externally_initialized
+   *)
+  group "externally_initialized";
+  let g = define_global "GVar06" fourty_two32 m ++
+          set_externally_initialized true in
+  insist (is_externally_initialized g);
+
+  (* CHECK-NOWHERE-NOT: GVar07
    *)
   group "delete";
-  let g = define_global "GVar05" fourty_two32 m in
+  let g = define_global "GVar07" fourty_two32 m in
   delete_global g;
 
   (* CHECK: ConstGlobalVar{{.*}}constant
@@ -1027,6 +1041,16 @@ let test_builder () =
     set_metadata i kind md
   end;
 
+  group "named metadata"; begin
+    (* !md is emitted at EOF. *)
+    let n1 = const_int i32_type 1 in
+    let n2 = mdstring context "metadata test" in
+    let md = mdnode context [| n1; n2 |] in
+    add_named_metadata_operand m "md" md;
+
+    insist ((get_named_metadata m "md") = [| md |])
+  end;
+
   group "dbg"; begin
     (* CHECK: %dbg = add i32 %P1, %P2, !dbg !1
      * !1 is metadata emitted at EOF.
@@ -1237,22 +1261,38 @@ let test_builder () =
 
     (* CHECK: %build_alloca = alloca i32
      * CHECK: %build_array_alloca = alloca i32, i32 %P2
-     * CHECK: %build_load = load i32* %build_array_alloca
-     * CHECK: store i32 %P2, i32* %build_alloca
+     * CHECK: %build_load = load volatile i32* %build_array_alloca, align 4
+     * CHECK: store volatile i32 %P2, i32* %build_alloca, align 4
      * CHECK: %build_gep = getelementptr i32* %build_array_alloca, i32 %P2
      * CHECK: %build_in_bounds_gep = getelementptr inbounds i32* %build_array_alloca, i32 %P2
      * CHECK: %build_struct_gep = getelementptr inbounds{{.*}}%build_alloca2, i32 0, i32 1
+     * CHECK: %build_atomicrmw = atomicrmw xchg i8* %p, i8 42 seq_cst
      *)
     let alloca = build_alloca i32_type "build_alloca" b in
     let array_alloca = build_array_alloca i32_type p2 "build_array_alloca" b in
-    ignore(build_load array_alloca "build_load" b);
-    ignore(build_store p2 alloca b);
+
+    let load = build_load array_alloca "build_load" b in
+    ignore(set_alignment 4 load);
+    ignore(set_volatile true load);
+    insist(true = is_volatile load);
+    insist(4 = alignment load);
+
+    let store = build_store p2 alloca b in
+    ignore(set_volatile true store);
+    ignore(set_alignment 4 store);
+    insist(true = is_volatile store);
+    insist(4 = alignment store);
     ignore(build_gep array_alloca [| p2 |] "build_gep" b);
     ignore(build_in_bounds_gep array_alloca [| p2 |] "build_in_bounds_gep" b);
 
     let sty = struct_type context [| i32_type; i8_type |] in
     let alloca2 = build_alloca sty "build_alloca2" b in
     ignore(build_struct_gep alloca2 1 "build_struct_gep" b);
+
+    let p = build_alloca i8_type "p" b in
+    ignore(build_atomicrmw AtomicRMWBinOp.Xchg p (const_int i8_type 42)
+              AtomicOrdering.SequentiallyConsistent false "build_atomicrmw"
+              b);
 
     ignore(build_unreachable b)
   end;
@@ -1292,6 +1332,7 @@ let test_builder () =
 
 (* End-of-file checks for things like metdata and attributes.
  * CHECK: attributes #0 = {{.*}}uwtable{{.*}}
+ * CHECK: !md = !{!0}
  * CHECK: !0 = metadata !{i32 1, metadata !"metadata test"}
  * CHECK: !1 = metadata !{i32 2, i32 3, metadata !2, metadata !2}
  *)

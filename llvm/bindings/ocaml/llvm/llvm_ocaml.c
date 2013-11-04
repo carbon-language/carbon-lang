@@ -158,6 +158,27 @@ CAMLprim value llvm_dump_module(LLVMModuleRef M) {
   return Val_unit;
 }
 
+/* string -> llmodule -> unit */
+CAMLprim value llvm_print_module(value Filename, LLVMModuleRef M) {
+  char* Message;
+  if(LLVMPrintModuleToFile(M, String_val(Filename), &Message)) {
+    llvm_raise(llvm_ioerror_exn, Message);
+  }
+
+  return Val_unit;
+}
+
+/* llmodule -> string */
+CAMLprim value llvm_string_of_llmodule(LLVMModuleRef M) {
+  char* ModuleCStr;
+  ModuleCStr = LLVMPrintModuleToString(M);
+
+  value ModuleStr = caml_copy_string(ModuleCStr);
+  LLVMDisposeMessage(ModuleCStr);
+
+  return ModuleStr;
+}
+
 /* llmodule -> string -> unit */
 CAMLprim value llvm_set_module_inline_asm(LLVMModuleRef M, value Asm) {
   LLVMSetModuleInlineAsm(M, String_val(Asm));
@@ -178,6 +199,23 @@ CAMLprim value llvm_type_is_sized(LLVMTypeRef Ty) {
 /* lltype -> llcontext */
 CAMLprim LLVMContextRef llvm_type_context(LLVMTypeRef Ty) {
   return LLVMGetTypeContext(Ty);
+}
+
+/* lltype -> unit */
+CAMLprim value llvm_dump_type(LLVMTypeRef Val) {
+  LLVMDumpType(Val);
+  return Val_unit;
+}
+
+/* lltype -> string */
+CAMLprim value llvm_string_of_lltype(LLVMTypeRef M) {
+  char* TypeCStr;
+  TypeCStr = LLVMPrintTypeToString(M);
+
+  value TypeStr = caml_copy_string(TypeCStr);
+  LLVMDisposeMessage(TypeCStr);
+
+  return TypeStr;
 }
 
 /*--... Operations on integer types ........................................--*/
@@ -242,11 +280,6 @@ CAMLprim LLVMTypeRef llvm_fp128_type(LLVMContextRef Context) {
 /* llcontext -> lltype */
 CAMLprim LLVMTypeRef llvm_ppc_fp128_type(LLVMContextRef Context) {
   return LLVMPPCFP128TypeInContext(Context);
-}
-
-/* llcontext -> lltype */
-CAMLprim LLVMTypeRef llvm_x86mmx_type(LLVMContextRef Context) {
-  return LLVMX86MMXTypeInContext(Context);
 }
 
 /*--... Operations on function types .......................................--*/
@@ -384,6 +417,11 @@ CAMLprim LLVMTypeRef llvm_void_type (LLVMContextRef Context) {
 /* llcontext -> lltype */
 CAMLprim LLVMTypeRef llvm_label_type(LLVMContextRef Context) {
   return LLVMLabelTypeInContext(Context);
+}
+
+/* llcontext -> lltype */
+CAMLprim LLVMTypeRef llvm_x86_mmx_type(LLVMContextRef Context) {
+  return LLVMX86MMXTypeInContext(Context);
 }
 
 CAMLprim value llvm_type_by_name(LLVMModuleRef M, value Name)
@@ -605,6 +643,13 @@ CAMLprim value llvm_get_namedmd(LLVMModuleRef M, value Name)
   LLVMGetNamedMetadataOperands(M, String_val(Name), (LLVMValueRef *) Nodes);
   CAMLreturn(Nodes);
 }
+
+/* llmodule -> string -> llvalue -> unit */
+CAMLprim value llvm_append_namedmd(LLVMModuleRef M, value Name, LLVMValueRef Val) {
+  LLVMAddNamedMetadataOperand(M, String_val(Name), Val);
+  return Val_unit;
+}
+
 /*--... Operations on scalar constants .....................................--*/
 
 /* lltype -> int -> llvalue */
@@ -952,6 +997,30 @@ CAMLprim value llvm_set_thread_local(value IsThreadLocal,
   return Val_unit;
 }
 
+/* llvalue -> ThreadLocalMode.t */
+CAMLprim value llvm_thread_local_mode(LLVMValueRef GlobalVar) {
+  return Val_int(LLVMGetThreadLocalMode(GlobalVar));
+}
+
+/* ThreadLocalMode.t -> llvalue -> unit */
+CAMLprim value llvm_set_thread_local_mode(value ThreadLocalMode,
+                                          LLVMValueRef GlobalVar) {
+  LLVMSetThreadLocalMode(GlobalVar, Int_val(ThreadLocalMode));
+  return Val_unit;
+}
+
+/* llvalue -> bool */
+CAMLprim value llvm_is_externally_initialized(LLVMValueRef GlobalVar) {
+  return Val_bool(LLVMIsExternallyInitialized(GlobalVar));
+}
+
+/* bool -> llvalue -> unit */
+CAMLprim value llvm_set_externally_initialized(value IsExternallyInitialized,
+                                               LLVMValueRef GlobalVar) {
+  LLVMSetExternallyInitialized(GlobalVar, Bool_val(IsExternallyInitialized));
+  return Val_unit;
+}
+
 /* llvalue -> bool */
 CAMLprim value llvm_is_global_constant(LLVMValueRef GlobalVar) {
   return Val_bool(LLVMIsGlobalConstant(GlobalVar));
@@ -1058,6 +1127,13 @@ CAMLprim value llvm_add_function_attr(LLVMValueRef Arg, value PA) {
   return Val_unit;
 }
 
+/* llvalue -> string -> string -> unit */
+CAMLprim value llvm_add_target_dependent_function_attr(
+                  LLVMValueRef Arg, value A, value V) {
+  LLVMAddTargetDependentFunctionAttr(Arg, String_val(A), String_val(V));
+  return Val_unit;
+}
+
 /* llvalue -> int32 */
 CAMLprim value llvm_function_attr(LLVMValueRef Fn)
 {
@@ -1139,6 +1215,24 @@ CAMLprim value llvm_basic_blocks(LLVMValueRef Fn) {
 /* llbasicblock -> unit */
 CAMLprim value llvm_delete_block(LLVMBasicBlockRef BB) {
   LLVMDeleteBasicBlock(BB);
+  return Val_unit;
+}
+
+/* llbasicblock -> unit */
+CAMLprim value llvm_remove_block(LLVMBasicBlockRef BB) {
+  LLVMRemoveBasicBlockFromParent(BB);
+  return Val_unit;
+}
+
+/* llbasicblock -> llbasicblock -> unit */
+CAMLprim value llvm_move_block_before(LLVMBasicBlockRef Pos, LLVMBasicBlockRef BB) {
+  LLVMMoveBasicBlockBefore(BB, Pos);
+  return Val_unit;
+}
+
+/* llbasicblock -> llbasicblock -> unit */
+CAMLprim value llvm_move_block_after(LLVMBasicBlockRef Pos, LLVMBasicBlockRef BB) {
+  LLVMMoveBasicBlockAfter(BB, Pos);
   return Val_unit;
 }
 
@@ -1227,6 +1321,20 @@ CAMLprim value llvm_is_tail_call(LLVMValueRef CallInst) {
 CAMLprim value llvm_set_tail_call(value IsTailCall,
                                   LLVMValueRef CallInst) {
   LLVMSetTailCall(CallInst, Bool_val(IsTailCall));
+  return Val_unit;
+}
+
+/*--... Operations on load/store instructions (only)........................--*/
+
+/* llvalue -> bool */
+CAMLprim value llvm_is_volatile(LLVMValueRef MemoryInst) {
+  return Val_bool(LLVMGetVolatile(MemoryInst));
+}
+
+/* bool -> llvalue -> unit */
+CAMLprim value llvm_set_volatile(value IsVolatile,
+                                  LLVMValueRef MemoryInst) {
+  LLVMSetVolatile(MemoryInst, Bool_val(IsVolatile));
   return Val_unit;
 }
 
@@ -1699,6 +1807,24 @@ CAMLprim LLVMValueRef llvm_build_load(LLVMValueRef Pointer,
 CAMLprim LLVMValueRef llvm_build_store(LLVMValueRef Value, LLVMValueRef Pointer,
                                        value B) {
   return LLVMBuildStore(Builder_val(B), Value, Pointer);
+}
+
+/* AtomicRMWBinOp.t -> llvalue -> llvalue -> AtomicOrdering.t ->
+   bool -> llbuilder -> llvalue */
+CAMLprim LLVMValueRef llvm_build_atomicrmw_native(value BinOp, LLVMValueRef Ptr,
+                                                  LLVMValueRef Val, value Ord,
+                                                  value ST, value Name, value B) {
+  LLVMValueRef Instr;
+  Instr = LLVMBuildAtomicRMW(Builder_val(B), Int_val(BinOp),
+                             Ptr, Val, Int_val(Ord), Bool_val(ST));
+  LLVMSetValueName(Instr, String_val(Name));
+  return Instr;
+}
+
+CAMLprim LLVMValueRef llvm_build_atomicrmw_bytecode(value *argv, int argn) {
+  return llvm_build_atomicrmw_native(argv[0], (LLVMValueRef) argv[1],
+                                     (LLVMValueRef) argv[2], argv[3],
+                                     argv[4], argv[5], argv[6]);
 }
 
 /* llvalue -> llvalue array -> string -> llbuilder -> llvalue */

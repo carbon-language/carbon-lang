@@ -34,6 +34,7 @@ module TypeKind = struct
   | Pointer
   | Vector
   | Metadata
+  | X86_mmx
 end
 
 module Linkage = struct
@@ -42,6 +43,7 @@ module Linkage = struct
   | Available_externally
   | Link_once
   | Link_once_odr
+  | Link_once_odr_auto_hide
   | Weak
   | Weak_odr
   | Appending
@@ -53,6 +55,7 @@ module Linkage = struct
   | Ghost
   | Common
   | Linker_private
+  | Linker_private_weak
 end
 
 module Visibility = struct
@@ -202,7 +205,48 @@ module Opcode  = struct
   | AtomicRMW
   | Resume
   | LandingPad
-  | Unwind
+end
+
+module LandingPadClauseTy = struct
+  type t =
+  | Catch
+  | Filter
+end
+
+module ThreadLocalMode = struct
+  type t =
+  | None
+  | GeneralDynamic
+  | LocalDynamic
+  | InitialExec
+  | LocalExec
+end
+
+module AtomicOrdering = struct
+  type t =
+  | NotAtomic
+  | Unordered
+  | Monotonic
+  | Invalid
+  | Acquire
+  | Release
+  | AcqiureRelease
+  | SequentiallyConsistent
+end
+
+module AtomicRMWBinOp = struct
+  type t =
+  | Xchg
+  | Add
+  | Sub
+  | And
+  | Nand
+  | Or
+  | Xor
+  | Max
+  | Min
+  | UMax
+  | UMin
 end
 
 module ValueKind = struct
@@ -260,6 +304,8 @@ external data_layout: llmodule -> string
 external set_data_layout: string -> llmodule -> unit
                         = "llvm_set_data_layout"
 external dump_module : llmodule -> unit = "llvm_dump_module"
+external print_module : string -> llmodule -> unit = "llvm_print_module"
+external string_of_llmodule : llmodule -> string = "llvm_string_of_llmodule"
 external set_module_inline_asm : llmodule -> string -> unit
                                = "llvm_set_module_inline_asm"
 external module_context : llmodule -> llcontext = "LLVMGetModuleContext"
@@ -268,6 +314,8 @@ external module_context : llmodule -> llcontext = "LLVMGetModuleContext"
 external classify_type : lltype -> TypeKind.t = "llvm_classify_type"
 external type_context : lltype -> llcontext = "llvm_type_context"
 external type_is_sized : lltype -> bool = "llvm_type_is_sized"
+external dump_type : lltype -> unit = "llvm_dump_type"
+external string_of_lltype : lltype -> string = "llvm_string_of_lltype"
 
 (*--... Operations on integer types ........................................--*)
 external i1_type : llcontext -> lltype = "llvm_i1_type"
@@ -323,6 +371,7 @@ external vector_size : lltype -> int = "llvm_vector_size"
 (*--... Operations on other types ..........................................--*)
 external void_type : llcontext -> lltype = "llvm_void_type"
 external label_type : llcontext -> lltype = "llvm_label_type"
+external x86_mmx_type : llcontext -> lltype = "llvm_x86_mmx_type"
 external type_by_name : llmodule -> string -> lltype option = "llvm_type_by_name"
 
 external classify_value : llvalue -> ValueKind.t = "llvm_classify_value"
@@ -391,7 +440,10 @@ external clear_metadata : llvalue -> int -> unit = "llvm_clear_metadata"
 external mdstring : llcontext -> string -> llvalue = "llvm_mdstring"
 external mdnode : llcontext -> llvalue array -> llvalue = "llvm_mdnode"
 external get_mdstring : llvalue -> string option = "llvm_get_mdstring"
-external get_named_metadata : llmodule -> string -> llvalue array = "llvm_get_namedmd"
+external get_named_metadata : llmodule -> string -> llvalue array
+                            = "llvm_get_namedmd"
+external add_named_metadata_operand : llmodule -> string -> llvalue -> unit
+                                    = "llvm_append_namedmd"
 
 (*--... Operations on scalar constants .....................................--*)
 external const_int : lltype -> int -> llvalue = "llvm_const_int"
@@ -530,6 +582,14 @@ external set_initializer : llvalue -> llvalue -> unit = "llvm_set_initializer"
 external remove_initializer : llvalue -> unit = "llvm_remove_initializer"
 external is_thread_local : llvalue -> bool = "llvm_is_thread_local"
 external set_thread_local : bool -> llvalue -> unit = "llvm_set_thread_local"
+external thread_local_mode : llvalue -> ThreadLocalMode.t
+                           = "llvm_thread_local_mode"
+external set_thread_local_mode : ThreadLocalMode.t -> llvalue -> unit
+                               = "llvm_set_thread_local_mode"
+external is_externally_initialized : llvalue -> bool
+                                   = "llvm_is_externally_initialized"
+external set_externally_initialized : bool -> llvalue -> unit
+                                    = "llvm_set_externally_initialized"
 external global_begin : llmodule -> (llmodule, llvalue) llpos
                       = "llvm_global_begin"
 external global_succ : llvalue -> (llmodule, llvalue) llpos
@@ -725,6 +785,10 @@ let unpack_attr (a : int32) : Attribute.t list =
 let add_function_attr llval attr =
   llvm_add_function_attr llval (pack_attr attr)
 
+external add_target_dependent_function_attr
+    : llvalue -> string -> string -> unit
+    = "llvm_add_target_dependent_function_attr"
+
 let remove_function_attr llval attr =
   llvm_remove_function_attr llval (pack_attr attr)
 
@@ -803,6 +867,11 @@ external block_parent : llbasicblock -> llvalue = "LLVMGetBasicBlockParent"
 external basic_blocks : llvalue -> llbasicblock array = "llvm_basic_blocks"
 external entry_block : llvalue -> llbasicblock = "LLVMGetEntryBasicBlock"
 external delete_block : llbasicblock -> unit = "llvm_delete_block"
+external remove_block : llbasicblock -> unit = "llvm_remove_block"
+external move_block_before : llbasicblock -> llbasicblock -> unit
+                           = "llvm_move_block_before"
+external move_block_after : llbasicblock -> llbasicblock -> unit
+                          = "llvm_move_block_after"
 external append_block : llcontext -> string -> llvalue -> llbasicblock
                       = "llvm_append_block"
 external insert_block : llcontext -> string -> llbasicblock -> llbasicblock
@@ -872,8 +941,6 @@ external instr_pred : llvalue -> (llbasicblock, llvalue) llrev_pos
 external instr_opcode : llvalue -> Opcode.t = "llvm_instr_get_opcode"
 external icmp_predicate : llvalue -> Icmp.t option = "llvm_instr_icmp_predicate"
 
-external icmp_predicate : llvalue -> Icmp.t option = "llvm_instr_icmp_predicate"
-
 let rec iter_instrs_range f i e =
   if i = e then () else
   match i with
@@ -935,6 +1002,10 @@ let remove_instruction_param_attr llval i attr =
 (*--... Operations on call instructions (only) .............................--*)
 external is_tail_call : llvalue -> bool = "llvm_is_tail_call"
 external set_tail_call : bool -> llvalue -> unit = "llvm_set_tail_call"
+
+(*--... Operations on load/store instructions (only) .......................--*)
+external is_volatile : llvalue -> bool = "llvm_is_volatile"
+external set_volatile : bool -> llvalue -> unit = "llvm_set_volatile"
 
 (*--... Operations on phi nodes ............................................--*)
 external add_incoming : (llvalue * llbasicblock) -> llvalue -> unit
@@ -1078,6 +1149,11 @@ external build_load : llvalue -> string -> llbuilder -> llvalue
                     = "llvm_build_load"
 external build_store : llvalue -> llvalue -> llbuilder -> llvalue
                      = "llvm_build_store"
+external build_atomicrmw : AtomicRMWBinOp.t -> llvalue -> llvalue ->
+                           AtomicOrdering.t -> bool -> string -> llbuilder ->
+                           llvalue
+                         = "llvm_build_atomicrmw_bytecode"
+                           "llvm_build_atomicrmw_native"
 external build_gep : llvalue -> llvalue array -> string -> llbuilder -> llvalue
                    = "llvm_build_gep"
 external build_in_bounds_gep : llvalue -> llvalue array -> string ->
@@ -1167,7 +1243,8 @@ external build_ptrdiff : llvalue -> llvalue -> string -> llbuilder -> llvalue
 module MemoryBuffer = struct
   external of_file : string -> llmemorybuffer = "llvm_memorybuffer_of_file"
   external of_stdin : unit -> llmemorybuffer = "llvm_memorybuffer_of_stdin"
-  external of_string : ?name:string -> string -> llmemorybuffer = "llvm_memorybuffer_of_string"
+  external of_string : ?name:string -> string -> llmemorybuffer
+                     = "llvm_memorybuffer_of_string"
   external as_string : llmemorybuffer -> string = "llvm_memorybuffer_as_string"
   external dispose : llmemorybuffer -> unit = "llvm_memorybuffer_dispose"
 end
@@ -1189,54 +1266,3 @@ module PassManager = struct
   external finalize : [ `Function ] t -> bool = "llvm_passmanager_finalize"
   external dispose : [< any ] t -> unit = "llvm_passmanager_dispose"
 end
-
-
-(*===-- Non-Externs -------------------------------------------------------===*)
-(* These functions are built using the externals, so must be declared late.   *)
-
-let concat2 sep arr =
-  let s = ref "" in
-  if 0 < Array.length arr then begin
-    s := !s ^ arr.(0);
-    for i = 1 to (Array.length arr) - 1 do
-      s := !s ^ sep ^ arr.(i)
-    done
-  end;
-  !s
-
-let rec string_of_lltype ty =
-  (* FIXME: stop infinite recursion! :) *)
-  match classify_type ty with
-    TypeKind.Integer -> "i" ^ string_of_int (integer_bitwidth ty)
-  | TypeKind.Pointer ->
-      (let ety = element_type ty in
-      match classify_type ety with
-      | TypeKind.Struct ->
-          (match struct_name ety with
-          | None -> (string_of_lltype ety)
-          | Some s -> s) ^ "*"
-      | _ -> (string_of_lltype (element_type ty)) ^ "*")
-  | TypeKind.Struct ->
-      let s = "{ " ^ (concat2 ", " (
-                Array.map string_of_lltype (struct_element_types ty)
-              )) ^ " }" in
-      if is_packed ty
-        then "<" ^ s ^ ">"
-        else s
-  | TypeKind.Array -> "["   ^ (string_of_int (array_length ty)) ^
-                      " x " ^ (string_of_lltype (element_type ty)) ^ "]"
-  | TypeKind.Vector -> "<"   ^ (string_of_int (vector_size ty)) ^
-                       " x " ^ (string_of_lltype (element_type ty)) ^ ">"
-  | TypeKind.Function -> string_of_lltype (return_type ty) ^
-                         " (" ^ (concat2 ", " (
-                           Array.map string_of_lltype (param_types ty)
-                         )) ^ ")"
-  | TypeKind.Label -> "label"
-  | TypeKind.Ppc_fp128 -> "ppc_fp128"
-  | TypeKind.Fp128 -> "fp128"
-  | TypeKind.X86fp80 -> "x86_fp80"
-  | TypeKind.Double -> "double"
-  | TypeKind.Float -> "float"
-  | TypeKind.Half -> "half"
-  | TypeKind.Void -> "void"
-  | TypeKind.Metadata -> "metadata"
