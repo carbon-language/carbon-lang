@@ -126,13 +126,8 @@ public:
     ///     The execution context to use when looking up entities that
     ///     are needed for parsing (locations of variables, etc.)
     ///
-    /// @param[in] unwind_on_error
-    ///     If true, and the execution stops before completion, we unwind the
-    ///     function call, and return the program state to what it was before the
-    ///     execution.  If false, we leave the program in the stopped state.
-    ///
-    /// @param[in] ignore_breakpoints
-    ///     If true, ignore breakpoints while executing the expression.
+    /// @param[in] options
+    ///     Expression evaluation options.
     ///
     /// @param[in] shared_ptr_to_me
     ///     This is a shared pointer to this ClangUserExpression.  This is
@@ -145,29 +140,15 @@ public:
     ///     A pointer to direct at the persistent variable in which the
     ///     expression's result is stored.
     ///
-    /// @param[in] try_all_threads
-    ///     If true, then we will try to run all threads if the function doesn't complete on
-    ///     one thread.  See timeout_usec for the interaction of this variable and
-    ///     the timeout.
-    ///
-    /// @param[in] timeout_usec
-    ///     Timeout value (0 for no timeout). If try_all_threads is true, then we
-    ///     will try on one thread for the lesser of .25 sec and half the total timeout.
-    ///     then switch to running all threads, otherwise this will be the total timeout.
-    ///
-    ///
     /// @return
     ///     A Process::Execution results value.
     //------------------------------------------------------------------
     ExecutionResults
     Execute (Stream &error_stream,
              ExecutionContext &exe_ctx,
-             bool unwind_on_error,
-             bool ignore_breakpoints,
+             const EvaluateExpressionOptions& options,
              ClangUserExpressionSP &shared_ptr_to_me,
-             lldb::ClangExpressionVariableSP &result,
-             bool try_all_threads,
-             uint32_t timeout_usec);
+             lldb::ClangExpressionVariableSP &result);
              
     ThreadPlan *
     GetThreadPlanToExecuteJITExpression (Stream &error_stream,
@@ -300,25 +281,8 @@ public:
     /// @param[in] exe_ctx
     ///     The execution context to use when evaluating the expression.
     ///
-    /// @param[in] execution_policy
-    ///     Determines whether or not to try using the IR interpreter to
-    ///     avoid running the expression on the parser.
-    ///
-    /// @param[in] language
-    ///     If not eLanguageTypeUnknown, a language to use when parsing
-    ///     the expression.  Currently restricted to those languages 
-    ///     supported by Clang.
-    ///
-    /// @param[in] unwind_on_error
-    ///     True if the thread's state should be restored in the case 
-    ///     of an error.
-    ///
-    /// @param[in] ignore_breakpoints
-    ///     If true, ignore breakpoints while executing the expression.
-    ///
-    /// @param[in] result_type
-    ///     If not eResultTypeAny, the type of the desired result.  Will
-    ///     result in parse errors if impossible.
+    /// @param[in] options
+    ///     Expression evaluation options.
     ///
     /// @param[in] expr_cstr
     ///     A C string containing the expression to be evaluated.
@@ -330,45 +294,20 @@ public:
     /// @param[in/out] result_valobj_sp
     ///      If execution is successful, the result valobj is placed here.
     ///
-    /// @param[in] try_all_threads
-    ///     If true, then we will try to run all threads if the function doesn't complete on
-    ///     one thread.  See timeout_usec for the interaction of this variable and
-    ///     the timeout.
-    ///
-    /// @param[in] timeout_usec
-    ///     Timeout value (0 for no timeout). If try_all_threads is true, then we
-    ///     will try on one thread for the lesser of .25 sec and half the total timeout.
-    ///     then switch to running all threads, otherwise this will be the total timeout.
+    /// @param[out]
+    ///     Filled in with an error in case the expression evaluation
+    ///     fails to parse, run, or evaluated.
     ///
     /// @result
     ///      A Process::ExecutionResults value.  eExecutionCompleted for success.
     //------------------------------------------------------------------
     static ExecutionResults
     Evaluate (ExecutionContext &exe_ctx,
-              lldb_private::ExecutionPolicy execution_policy,
-              lldb::LanguageType language,
-              ResultType desired_type,
-              bool unwind_on_error,
-              bool ignore_breakpoints,
+              const EvaluateExpressionOptions& options,
               const char *expr_cstr,
               const char *expr_prefix,
               lldb::ValueObjectSP &result_valobj_sp,
-              bool try_all_threads,
-              uint32_t timeout_usec);
-              
-    static ExecutionResults
-    EvaluateWithError (ExecutionContext &exe_ctx,
-                       lldb_private::ExecutionPolicy execution_policy,
-                       lldb::LanguageType language,
-                       ResultType desired_type,
-                       bool unwind_on_error,
-                       bool ignore_breakpoints,
-                       const char *expr_cstr,
-                       const char *expr_prefix,
-                       lldb::ValueObjectSP &result_valobj_sp,
-                       Error &error,
-                       bool try_all_threads,
-                       uint32_t timeout_usec);
+              Error &error);
     
     static const Error::ValueType kNoResult = 0x1001; ///< ValueObject::GetError() returns this if there is no result from the expression.
 private:

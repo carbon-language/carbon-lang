@@ -55,6 +55,7 @@ public:
         bool        ignore_breakpoints;
         bool        show_types;
         bool        show_summary;
+        bool        debug;
         uint32_t    timeout;
         bool        try_all_threads;
         LanguageRuntimeDescriptionDisplayVerbosity m_verbosity;

@@ -64,6 +64,7 @@ CommandObjectExpression::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "ignore-breakpoints", 'i', OptionParser::eRequiredArgument, NULL, 0, eArgTypeBoolean,    "Ignore breakpoint hits while running expressions"},
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "timeout",            't', OptionParser::eRequiredArgument, NULL, 0, eArgTypeUnsignedInteger,  "Timeout value (in microseconds) for running the expression."},
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "unwind-on-error",    'u', OptionParser::eRequiredArgument, NULL, 0, eArgTypeBoolean,    "Clean up program state if the expression causes a crash, or raises a signal.  Note, unlike gdb hitting a breakpoint is controlled by another option (-i)."},
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "debug",              'g', OptionParser::eNoArgument      , NULL, 0, eArgTypeNone,       "When specified, debug the JIT code by setting a breakpoint on the first instruction and forcing breakpoints to not be ignored (-i0) and no unwinding to happen on error (-u0)."},
     { LLDB_OPT_SET_1, false, "description-verbosity", 'v', OptionParser::eOptionalArgument, g_description_verbosity_type, 0, eArgTypeDescriptionVerbosity,        "How verbose should the output of this expression be, if the object description is asked for."},
 };
 
@@ -147,7 +148,13 @@ CommandObjectExpression::CommandOptions::SetOptionValue (CommandInterpreter &int
         if (!error.Success())
             error.SetErrorStringWithFormat ("unrecognized value for description-verbosity '%s'", option_arg);
         break;
-            
+    
+    case 'g':
+        debug = true;
+        unwind_on_error = false;
+        ignore_breakpoints = false;
+        break;
+
     default:
         error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
         break;
@@ -174,6 +181,7 @@ CommandObjectExpression::CommandOptions::OptionParsingStarting (CommandInterpret
     show_summary = true;
     try_all_threads = true;
     timeout = 0;
+    debug = false;
     m_verbosity = eLanguageRuntimeDescriptionDisplayVerbosityCompact;
 }
 
@@ -361,7 +369,10 @@ CommandObjectExpression::EvaluateExpression
         .SetKeepInMemory(keep_in_memory)
         .SetUseDynamic(m_varobj_options.use_dynamic)
         .SetRunOthers(m_command_options.try_all_threads)
-        .SetTimeoutUsec(m_command_options.timeout);
+        .SetDebug(m_command_options.debug);
+        
+        if (m_command_options.timeout > 0)
+            options.SetTimeoutUsec(m_command_options.timeout);
         
         exe_results = target->EvaluateExpression (expr, 
                                                   exe_ctx.GetFramePtr(),

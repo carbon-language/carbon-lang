@@ -184,11 +184,13 @@ public:
     static const uint32_t default_timeout = 500000;
     EvaluateExpressionOptions() :
         m_execution_policy(eExecutionPolicyOnlyWhenNeeded),
+        m_language (lldb::eLanguageTypeUnknown),
         m_coerce_to_id(false),
         m_unwind_on_error(true),
         m_ignore_breakpoints (false),
         m_keep_in_memory(false),
         m_run_others(true),
+        m_debug(false),
         m_use_dynamic(lldb::eNoDynamicValues),
         m_timeout_usec(default_timeout)
     {}
@@ -203,6 +205,19 @@ public:
     SetExecutionPolicy (ExecutionPolicy policy = eExecutionPolicyAlways)
     {
         m_execution_policy = policy;
+        return *this;
+    }
+    
+    lldb::LanguageType
+    GetLanguage() const
+    {
+        return m_language;
+    }
+    
+    EvaluateExpressionOptions&
+    SetLanguage(lldb::LanguageType language)
+    {
+        m_language = language;
         return *this;
     }
     
@@ -297,13 +312,28 @@ public:
         return *this;
     }
     
+    bool
+    GetDebug() const
+    {
+        return m_debug;
+    }
+    
+    EvaluateExpressionOptions&
+    SetDebug(bool b)
+    {
+        m_debug = b;
+        return *this;
+    }
+
 private:
     ExecutionPolicy m_execution_policy;
+    lldb::LanguageType m_language;
     bool m_coerce_to_id;
     bool m_unwind_on_error;
     bool m_ignore_breakpoints;
     bool m_keep_in_memory;
     bool m_run_others;
+    bool m_debug;
     lldb::DynamicValueType m_use_dynamic;
     uint32_t m_timeout_usec;
 };

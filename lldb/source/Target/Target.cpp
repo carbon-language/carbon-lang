@@ -1879,18 +1879,13 @@ Target::EvaluateExpression
     else
     {
         const char *prefix = GetExpressionPrefixContentsAsCString();
-                
+        Error error;
         execution_results = ClangUserExpression::Evaluate (exe_ctx, 
-                                                           options.GetExecutionPolicy(),
-                                                           lldb::eLanguageTypeUnknown,
-                                                           options.DoesCoerceToId() ? ClangUserExpression::eResultTypeId : ClangUserExpression::eResultTypeAny,
-                                                           options.DoesUnwindOnError(),
-                                                           options.DoesIgnoreBreakpoints(),
-                                                           expr_cstr, 
+                                                           options,
+                                                           expr_cstr,
                                                            prefix, 
                                                            result_valobj_sp,
-                                                           options.GetRunOthers(),
-                                                           options.GetTimeoutUsec());
+                                                           error);
     }
     
     m_suppress_stop_hooks = old_suppress_value;

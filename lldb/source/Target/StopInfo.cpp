@@ -694,22 +694,17 @@ protected:
                     // We need to make sure the user sees any parse errors in their condition, so we'll hook the
                     // constructor errors up to the debugger's Async I/O.
                     ExecutionResults result_code;
+                    EvaluateExpressionOptions expr_options;
+                    expr_options.SetUnwindOnError(true);
+                    expr_options.SetIgnoreBreakpoints(true);
                     ValueObjectSP result_value_sp;
-                    const bool unwind_on_error = true;
-                    const bool ignore_breakpoints = true;
                     Error error;
-                    result_code = ClangUserExpression::EvaluateWithError (exe_ctx,
-                                                                          eExecutionPolicyOnlyWhenNeeded,
-                                                                          lldb::eLanguageTypeUnknown,
-                                                                          ClangUserExpression::eResultTypeAny,
-                                                                          unwind_on_error,
-                                                                          ignore_breakpoints,
-                                                                          wp_sp->GetConditionText(),
-                                                                          NULL,
-                                                                          result_value_sp,
-                                                                          error,
-                                                                          true,
-                                                                          ClangUserExpression::kDefaultTimeout);
+                    result_code = ClangUserExpression::Evaluate (exe_ctx,
+                                                                 expr_options,
+                                                                 wp_sp->GetConditionText(),
+                                                                 NULL,
+                                                                 result_value_sp,
+                                                                 error);
                     if (result_code == eExecutionCompleted)
                     {
                         if (result_value_sp)

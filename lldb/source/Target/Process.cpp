@@ -1814,35 +1814,36 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
             {
                 ExecutionContext exe_ctx;
                 frame_sp->CalculateExecutionContext (exe_ctx);
-                const bool unwind_on_error = true;
-                const bool ignore_breakpoints = true;
+                EvaluateExpressionOptions expr_options;
+                expr_options.SetUnwindOnError(true);
+                expr_options.SetIgnoreBreakpoints(true);
+                expr_options.SetExecutionPolicy(eExecutionPolicyAlways);
                 StreamString expr;
                 expr.Printf("dlopen (\"%s\", 2)", path);
                 const char *prefix = "extern \"C\" void* dlopen (const char *path, int mode);\n";
                 lldb::ValueObjectSP result_valobj_sp;
+                Error expr_error;
                 ClangUserExpression::Evaluate (exe_ctx,
-                                               eExecutionPolicyAlways,
-                                               lldb::eLanguageTypeUnknown,
-                                               ClangUserExpression::eResultTypeAny,
-                                               unwind_on_error,
-                                               ignore_breakpoints,
+                                               expr_options,
                                                expr.GetData(),
                                                prefix,
                                                result_valobj_sp,
-                                               true,
-                                               ClangUserExpression::kDefaultTimeout);
-                error = result_valobj_sp->GetError();
-                if (error.Success())
+                                               expr_error);
+                if (expr_error.Success())
                 {
-                    Scalar scalar;
-                    if (result_valobj_sp->ResolveValue (scalar))
+                    error = result_valobj_sp->GetError();
+                    if (error.Success())
                     {
-                        addr_t image_ptr = scalar.ULongLong(LLDB_INVALID_ADDRESS);
-                        if (image_ptr != 0 && image_ptr != LLDB_INVALID_ADDRESS)
+                        Scalar scalar;
+                        if (result_valobj_sp->ResolveValue (scalar))
                         {
-                            uint32_t image_token = m_image_tokens.size();
-                            m_image_tokens.push_back (image_ptr);
-                            return image_token;
+                            addr_t image_ptr = scalar.ULongLong(LLDB_INVALID_ADDRESS);
+                            if (image_ptr != 0 && image_ptr != LLDB_INVALID_ADDRESS)
+                            {
+                                uint32_t image_token = m_image_tokens.size();
+                                m_image_tokens.push_back (image_ptr);
+                                return image_token;
+                            }
                         }
                     }
                 }
@@ -1891,23 +1892,21 @@ Process::UnloadImage (uint32_t image_token)
                     {
                         ExecutionContext exe_ctx;
                         frame_sp->CalculateExecutionContext (exe_ctx);
-                        const bool unwind_on_error = true;
-                        const bool ignore_breakpoints = true;
+                        EvaluateExpressionOptions expr_options;
+                        expr_options.SetUnwindOnError(true);
+                        expr_options.SetIgnoreBreakpoints(true);
+                        expr_options.SetExecutionPolicy(eExecutionPolicyAlways);
                         StreamString expr;
                         expr.Printf("dlclose ((void *)0x%" PRIx64 ")", image_addr);
                         const char *prefix = "extern \"C\" int dlclose(void* handle);\n";
                         lldb::ValueObjectSP result_valobj_sp;
+                        Error expr_error;
                         ClangUserExpression::Evaluate (exe_ctx,
-                                                       eExecutionPolicyAlways,
-                                                       lldb::eLanguageTypeUnknown,
-                                                       ClangUserExpression::eResultTypeAny,
-                                                       unwind_on_error,
-                                                       ignore_breakpoints,
+                                                       expr_options,
                                                        expr.GetData(),
                                                        prefix,
                                                        result_valobj_sp,
-                                                       true,
-                                                       ClangUserExpression::kDefaultTimeout);
+                                                       expr_error);
                         if (result_valobj_sp->GetError().Success())
                         {
                             Scalar scalar;

@@ -291,9 +291,11 @@ BreakpointLocation::ConditionSaysStop (ExecutionContext &exe_ctx, Error &error)
     // constructor errors up to the debugger's Async I/O.
         
     ValueObjectSP result_value_sp;
-    const bool unwind_on_error = true;
-    const bool ignore_breakpoints = true;
-    const bool try_all_threads = true;
+    
+    EvaluateExpressionOptions options;
+    options.SetUnwindOnError(true);
+    options.SetIgnoreBreakpoints(true);
+    options.SetRunOthers(true);
     
     Error expr_error;
     
@@ -304,12 +306,9 @@ BreakpointLocation::ConditionSaysStop (ExecutionContext &exe_ctx, Error &error)
     ExecutionResults result_code =
     m_user_expression_sp->Execute(execution_errors,
                                   exe_ctx,
-                                  unwind_on_error,
-                                  ignore_breakpoints,
+                                  options,
                                   m_user_expression_sp,
-                                  result_variable_sp,
-                                  try_all_threads,
-                                  ClangUserExpression::kDefaultTimeout);
+                                  result_variable_sp);
     
     bool ret;
     
