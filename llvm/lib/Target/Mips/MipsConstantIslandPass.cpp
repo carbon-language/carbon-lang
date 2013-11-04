@@ -433,6 +433,7 @@ bool MipsConstantIslands::runOnMachineFunction(MachineFunction &mf) {
   // Iteratively place constant pool entries and fix up branches until there
   // is no change.
   unsigned NoCPIters = 0, NoBRIters = 0;
+  (void)NoBRIters;
   while (true) {
     DEBUG(dbgs() << "Beginning CP iteration #" << NoCPIters << '\n');
     bool CPChange = false;
