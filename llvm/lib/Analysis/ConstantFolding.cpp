@@ -224,7 +224,8 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
                                        APInt &Offset, const DataLayout &TD) {
   // Trivial case, constant is the global.
   if ((GV = dyn_cast<GlobalValue>(C))) {
-    Offset.clearAllBits();
+    unsigned BitWidth = TD.getPointerTypeSizeInBits(GV->getType());
+    Offset = APInt(BitWidth, 0);
     return true;
   }
 
@@ -238,16 +239,23 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
     return IsConstantOffsetFromGlobal(CE->getOperand(0), GV, Offset, TD);
 
   // i32* getelementptr ([5 x i32]* @a, i32 0, i32 5)
-  if (GEPOperator *GEP = dyn_cast<GEPOperator>(CE)) {
-    // If the base isn't a global+constant, we aren't either.
-    if (!IsConstantOffsetFromGlobal(CE->getOperand(0), GV, Offset, TD))
-      return false;
+  GEPOperator *GEP = dyn_cast<GEPOperator>(CE);
+  if (!GEP)
+    return false;
 
-    // Otherwise, add any offset that our operands provide.
-    return GEP->accumulateConstantOffset(TD, Offset);
-  }
+  unsigned BitWidth = TD.getPointerTypeSizeInBits(GEP->getType());
+  APInt TmpOffset(BitWidth, 0);
 
-  return false;
+  // If the base isn't a global+constant, we aren't either.
+  if (!IsConstantOffsetFromGlobal(CE->getOperand(0), GV, TmpOffset, TD))
+    return false;
+
+  // Otherwise, add any offset that our operands provide.
+  if (!GEP->accumulateConstantOffset(TD, TmpOffset))
+    return false;
+
+  Offset = TmpOffset;
+  return true;
 }
 
 /// ReadDataFromGlobal - Recursive helper to read bits out of global.  C is the
@@ -416,7 +424,7 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
     return 0;
 
   GlobalValue *GVal;
-  APInt Offset(TD.getPointerTypeSizeInBits(PTy), 0);
+  APInt Offset;
   if (!IsConstantOffsetFromGlobal(C, GVal, Offset, TD))
     return 0;
 
@@ -585,8 +593,7 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
   // constant.  This happens frequently when iterating over a global array.
   if (Opc == Instruction::Sub && DL) {
     GlobalValue *GV1, *GV2;
-    unsigned PtrSize = DL->getPointerSizeInBits();
-    APInt Offs1(PtrSize, 0), Offs2(PtrSize, 0);
+    APInt Offs1, Offs2;
 
     if (IsConstantOffsetFromGlobal(Op0, GV1, Offs1, *DL))
       if (IsConstantOffsetFromGlobal(Op1, GV2, Offs2, *DL) &&

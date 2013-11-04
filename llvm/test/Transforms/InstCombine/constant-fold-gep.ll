@@ -1,5 +1,5 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
-target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64"
+target datalayout = "E-p:64:64:64-p1:16:16:16-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64"
 
 ; Constant folding should fix notionally out-of-bounds indices
 ; and add inbounds keywords.
@@ -71,4 +71,22 @@ entry:
 
   ret i64 %E
   ; CHECK: ret i64 1000
+}
+
+@X_as1 = addrspace(1) global [1000 x i8] zeroinitializer, align 16
+
+define i16 @test2_as1() {
+; CHECK-LABEL: @test2_as1(
+  ; CHECK: ret i16 1000
+
+entry:
+  %A = bitcast i8 addrspace(1)* getelementptr inbounds ([1000 x i8] addrspace(1)* @X_as1, i64 1, i64 0) to i8 addrspace(1)*
+  %B = bitcast i8 addrspace(1)* getelementptr inbounds ([1000 x i8] addrspace(1)* @X_as1, i64 0, i64 0) to i8 addrspace(1)*
+
+  %B2 = ptrtoint i8 addrspace(1)* %B to i16
+  %C = sub i16 0, %B2
+  %D = getelementptr i8 addrspace(1)* %A, i16 %C
+  %E = ptrtoint i8 addrspace(1)* %D to i16
+
+  ret i16 %E
 }
