@@ -60,11 +60,6 @@ class FRI16_ins<bits<5> op, string asmstr,
                 InstrItinClass itin>:
   FRI16_ins_base<op, asmstr, "\t$rx, $imm \t# 16 bit inst", itin>;
 
-class FRI16_TCP_ins<bits<5> _op, string asmstr,
-                    InstrItinClass itin>:
-  FRI16<_op, (outs CPU16Regs:$rx), (ins pcrel16:$imm, i32imm:$size),
-            !strconcat(asmstr, "\t$rx, $imm\t# 16 bit inst"), [], itin>;
-            
 class FRI16R_ins_base<bits<5> op, string asmstr, string asmstr2,
                      InstrItinClass itin>:
   FRI16<op, (outs), (ins CPU16Regs:$rx, simm16:$imm),
@@ -179,7 +174,7 @@ class FEXT_RI16_B_ins<bits<5> _op, string asmstr,
 
 class FEXT_RI16_TCP_ins<bits<5> _op, string asmstr,
                         InstrItinClass itin>:
-  FEXT_RI16<_op, (outs CPU16Regs:$rx), (ins pcrel16:$imm, i32imm:$size),
+  FEXT_RI16<_op, (outs CPU16Regs:$rx), (ins pcrel16:$imm),
             !strconcat(asmstr, "\t$rx, $imm"), [], itin>;
 
 class FEXT_2RI16_ins<bits<5> _op, string asmstr,
@@ -806,8 +801,6 @@ def LwRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10011, "lw", mem16, IILoad>, MayLoad{
 def LwRxSpImmX16: FEXT_RI16_SP_explicit_ins<0b10010, "lw", IILoad>, MayLoad{
   let Uses = [SP];
 }
-
-def LwRxPcTcp16: FRI16_TCP_ins<0b10110, "lw", IILoad>, MayLoad;
 
 def LwRxPcTcpX16: FEXT_RI16_TCP_ins<0b10110, "lw", IILoad>, MayLoad;
 //
@@ -1876,4 +1869,3 @@ let neverHasSideEffects = 1, isNotDuplicable = 1 in
 def CONSTPOOL_ENTRY :
 MipsPseudo16<(outs), (ins cpinst_operand:$instid, cpinst_operand:$cpidx,
                       i32imm:$size), "foo", []>;
-
