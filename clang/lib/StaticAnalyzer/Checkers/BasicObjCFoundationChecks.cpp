@@ -1000,7 +1000,8 @@ void ObjCLoopChecker::checkPostObjCMessage(const ObjCMethodCall &M,
   FoundationClass Class = findKnownClass(ClassID);
   if (Class != FC_NSDictionary &&
       Class != FC_NSArray &&
-      Class != FC_NSSet)
+      Class != FC_NSSet &&
+      Class != FC_NSOrderedSet)
     return;
 
   SymbolRef ContainerS = M.getReceiverSVal().getAsSymbol();

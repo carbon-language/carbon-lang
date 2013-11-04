@@ -90,6 +90,12 @@ typedef struct {
 
 @end
 
+@interface NSOrderedSet : NSObject <NSFastEnumeration>
+@end
+@interface NSOrderedSet (NSOrderedSetCreation)
+- (NSUInteger)count;
+@end
+
 @interface NSString : NSObject <NSCopying, NSMutableCopying, NSSecureCoding>
 
 @end
@@ -260,4 +266,13 @@ void testCollectionIsNotEmptyWhenCountIsGreaterThanZero(NSMutableDictionary *D){
   }
 }
 
+void testCountAwareNSOrderedSet(NSOrderedSet *containers, int *validptr) {
+	int *x = 0;
+  NSUInteger containerCount = [containers count];
+  if (containerCount > 0)    
+		x = validptr;
+	for (id c in containers) {
+		*x = 1; // no warning
+	}
+}
 
