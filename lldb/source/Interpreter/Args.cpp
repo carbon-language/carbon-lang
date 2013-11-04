@@ -23,7 +23,7 @@
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Target/Process.h"
 //#include "lldb/Target/RegisterContext.h"
-#include "lldb/Target/Frame.h"
+#include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 //#include "lldb/Target/Thread.h"
 

@@ -465,7 +465,7 @@ protected:
         
         if (m_step_type == eStepTypeInto)
         {
-            Frame *frame = thread->GetStackFrameAtIndex(0).get();
+            StackFrame *frame = thread->GetStackFrameAtIndex(0).get();
 
             if (frame->HasDebugInformation ())
             {
@@ -487,7 +487,7 @@ protected:
         }
         else if (m_step_type == eStepTypeOver)
         {
-            Frame *frame = thread->GetStackFrameAtIndex(0).get();
+            StackFrame *frame = thread->GetStackFrameAtIndex(0).get();
 
             if (frame->HasDebugInformation())
                 new_plan_sp = thread->QueueThreadPlanForStepOverRange (abort_other_plans,
@@ -999,7 +999,7 @@ protected:
 
             const bool abort_other_plans = false;
 
-            Frame *frame = thread->GetStackFrameAtIndex(m_options.m_frame_idx).get();
+            StackFrame *frame = thread->GetStackFrameAtIndex(m_options.m_frame_idx).get();
             if (frame == NULL)
             {
 
@@ -1411,7 +1411,7 @@ protected:
         
         ValueObjectSP return_valobj_sp;
         
-        FrameSP frame_sp = m_exe_ctx.GetFrameSP();
+        StackFrameSP frame_sp = m_exe_ctx.GetFrameSP();
         uint32_t frame_idx = frame_sp->GetFrameIndex();
         
         if (frame_sp->IsInlined())
@@ -1588,7 +1588,7 @@ protected:
     bool DoExecute (Args& args, CommandReturnObject &result)
     {
         RegisterContext *reg_ctx = m_exe_ctx.GetRegisterContext();
-        Frame *frame = m_exe_ctx.GetFramePtr();
+        StackFrame *frame = m_exe_ctx.GetFramePtr();
         Thread *thread = m_exe_ctx.GetThreadPtr();
         Target *target = m_exe_ctx.GetTargetPtr();
         const SymbolContext &sym_ctx = frame->GetSymbolContext (eSymbolContextLineEntry);

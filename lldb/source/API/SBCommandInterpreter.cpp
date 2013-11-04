@@ -392,13 +392,13 @@ init_lldb(void);
 extern "C" bool
 LLDBSwigPythonBreakpointCallbackFunction (const char *python_function_name,
                                           const char *session_dictionary_name,
-                                          const lldb::FrameSP& sb_frame,
+                                          const lldb::StackFrameSP& sb_frame,
                                           const lldb::BreakpointLocationSP& sb_bp_loc);
 
 extern "C" bool
 LLDBSwigPythonWatchpointCallbackFunction (const char *python_function_name,
                                           const char *session_dictionary_name,
-                                          const lldb::FrameSP& sb_frame,
+                                          const lldb::StackFrameSP& sb_frame,
                                           const lldb::WatchpointSP& sb_wp);
 
 extern "C" bool
@@ -473,7 +473,7 @@ LLDBSWIGPythonRunScriptKeywordTarget (const char* python_function_name,
 extern "C" bool
 LLDBSWIGPythonRunScriptKeywordFrame (const char* python_function_name,
                                      const char* session_dictionary_name,
-                                     lldb::FrameSP& frame,
+                                     lldb::StackFrameSP& frame,
                                      std::string& output);
 
 extern "C" void*

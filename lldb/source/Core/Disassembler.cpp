@@ -35,7 +35,7 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
-#include "lldb/Target/Frame.h"
+#include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 
 #define DEFAULT_DISASM_BYTE_SIZE 32
@@ -410,7 +410,7 @@ Disassembler::PrintInstructions
     AddressRange sc_range;
     const Address *pc_addr_ptr = NULL;
     ExecutionContextScope *exe_scope = exe_ctx.GetBestExecutionContextScope();
-    Frame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = exe_ctx.GetFramePtr();
 
     TargetSP target_sp (exe_ctx.GetTargetSP());
     SourceManager &source_manager = target_sp ? target_sp->GetSourceManager() : debugger.GetSourceManager();
@@ -518,7 +518,7 @@ Disassembler::Disassemble
 )
 {
     AddressRange range;
-    Frame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = exe_ctx.GetFramePtr();
     if (frame)
     {
         SymbolContext sc(frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextSymbol));

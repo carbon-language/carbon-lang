@@ -292,7 +292,7 @@ EmulateInstruction::ReadMemoryFrame (EmulateInstruction *instruction,
     if (!baton || dst == NULL || dst_len == 0)
         return 0;
 
-    Frame *frame = (Frame *) baton;
+    StackFrame *frame = (StackFrame *) baton;
 
     ProcessSP process_sp (frame->CalculateProcess());
     if (process_sp)
@@ -314,7 +314,7 @@ EmulateInstruction::WriteMemoryFrame (EmulateInstruction *instruction,
     if (!baton || src == NULL || src_len == 0)
         return 0;
     
-    Frame *frame = (Frame *) baton;
+    StackFrame *frame = (StackFrame *) baton;
 
     ProcessSP process_sp (frame->CalculateProcess());
     if (process_sp)
@@ -335,7 +335,7 @@ EmulateInstruction::ReadRegisterFrame  (EmulateInstruction *instruction,
     if (!baton)
         return false;
         
-    Frame *frame = (Frame *) baton;
+    StackFrame *frame = (StackFrame *) baton;
     return frame->GetRegisterContext()->ReadRegister (reg_info, reg_value);
 }
 
@@ -349,7 +349,7 @@ EmulateInstruction::WriteRegisterFrame (EmulateInstruction *instruction,
     if (!baton)
         return false;
         
-    Frame *frame = (Frame *) baton;
+    StackFrame *frame = (StackFrame *) baton;
     return frame->GetRegisterContext()->WriteRegister (reg_info, reg_value);
 }
 

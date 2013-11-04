@@ -263,7 +263,7 @@ ValueObjectVariable::IsInScope ()
     if (exe_ctx_ref.HasFrameRef())
     {
         ExecutionContext exe_ctx (exe_ctx_ref);
-        Frame *frame = exe_ctx.GetFramePtr();
+        StackFrame *frame = exe_ctx.GetFramePtr();
         if (frame)
         {
             return m_variable_sp->IsInScope (frame);

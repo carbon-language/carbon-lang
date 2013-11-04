@@ -77,7 +77,7 @@ ValueObjectRegisterContext::UpdateValue ()
 {
     m_error.Clear();
     ExecutionContext exe_ctx(GetExecutionContextRef());
-    Frame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = exe_ctx.GetFramePtr();
     if (frame)
         m_reg_ctx_sp = frame->GetRegisterContext();
     else
@@ -177,7 +177,7 @@ ValueObjectRegisterSet::UpdateValue ()
     m_error.Clear();
     SetValueDidChange (false);
     ExecutionContext exe_ctx(GetExecutionContextRef());
-    Frame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = exe_ctx.GetFramePtr();
     if (frame == NULL)
         m_reg_ctx_sp.reset();
     else
@@ -346,7 +346,7 @@ ValueObjectRegister::UpdateValue ()
 {
     m_error.Clear();
     ExecutionContext exe_ctx(GetExecutionContextRef());
-    Frame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = exe_ctx.GetFramePtr();
     if (frame == NULL)
     {
         m_reg_ctx_sp.reset();

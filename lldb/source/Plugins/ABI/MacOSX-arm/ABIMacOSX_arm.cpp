@@ -504,7 +504,7 @@ ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
 }
 
 Error
-ABIMacOSX_arm::SetReturnValueObject(lldb::FrameSP &frame_sp, lldb::ValueObjectSP &new_value_sp)
+ABIMacOSX_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value_sp)
 {
     Error error;
     if (!new_value_sp)

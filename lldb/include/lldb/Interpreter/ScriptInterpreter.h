@@ -86,12 +86,12 @@ public:
 
     typedef bool (*SWIGBreakpointCallbackFunction) (const char *python_function_name,
                                                     const char *session_dictionary_name,
-                                                    const lldb::FrameSP& frame_sp,
+                                                    const lldb::StackFrameSP& frame_sp,
                                                     const lldb::BreakpointLocationSP &bp_loc_sp);
     
     typedef bool (*SWIGWatchpointCallbackFunction) (const char *python_function_name,
                                                     const char *session_dictionary_name,
-                                                    const lldb::FrameSP& frame_sp,
+                                                    const lldb::StackFrameSP& frame_sp,
                                                     const lldb::WatchpointSP &wp_sp);
     
     typedef bool (*SWIGPythonTypeScriptCallbackFunction) (const char *python_function_name,
@@ -143,7 +143,7 @@ public:
 
     typedef bool            (*SWIGPythonScriptKeyword_Frame)    (const char* python_function_name,
                                                                  const char* session_dictionary_name,
-                                                                 lldb::FrameSP& frame,
+                                                                 lldb::StackFrameSP& frame,
                                                                  std::string& output);
     
     typedef void*           (*SWIGPython_GetDynamicSetting)     (void* module,
@@ -468,7 +468,7 @@ public:
     
     virtual bool
     RunScriptFormatKeyword (const char* impl_function,
-                            Frame* frame,
+                            StackFrame* frame,
                             std::string& output,
                             Error& error)
     {

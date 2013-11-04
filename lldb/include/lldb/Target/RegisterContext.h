@@ -178,8 +178,8 @@ public:
     virtual lldb::ThreadSP
     CalculateThread ();
     
-    virtual lldb::FrameSP
-    CalculateFrame ();
+    virtual lldb::StackFrameSP
+    CalculateStackFrame ();
 
     virtual void
     CalculateExecutionContext (ExecutionContext &exe_ctx);

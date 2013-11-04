@@ -1808,7 +1808,7 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
         
         if (thread_sp)
         {
-            FrameSP frame_sp (thread_sp->GetStackFrameAtIndex (0));
+            StackFrameSP frame_sp (thread_sp->GetStackFrameAtIndex (0));
             
             if (frame_sp)
             {
@@ -1885,7 +1885,7 @@ Process::UnloadImage (uint32_t image_token)
                 
                 if (thread_sp)
                 {
-                    FrameSP frame_sp (thread_sp->GetStackFrameAtIndex (0));
+                    StackFrameSP frame_sp (thread_sp->GetStackFrameAtIndex (0));
                     
                     if (frame_sp)
                     {
@@ -4723,7 +4723,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     
     // Save the thread & frame from the exe_ctx for restoration after we run
     const uint32_t thread_idx_id = thread->GetIndexID();
-    FrameSP selected_frame_sp = thread->GetSelectedFrame();
+    StackFrameSP selected_frame_sp = thread->GetSelectedFrame();
     if (!selected_frame_sp)
     {
         thread->SetSelectedFrame(0);
@@ -5451,7 +5451,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             {
                 // We were able to restore the selected thread, now restore the frame:
                 Mutex::Locker lock(GetThreadList().GetMutex());
-                FrameSP old_frame_sp = GetThreadList().GetSelectedThread()->GetFrameWithStackID(selected_stack_id);
+                StackFrameSP old_frame_sp = GetThreadList().GetSelectedThread()->GetFrameWithStackID(selected_stack_id);
                 if (old_frame_sp)
                     GetThreadList().GetSelectedThread()->SetSelectedFrame(old_frame_sp.get());
             }

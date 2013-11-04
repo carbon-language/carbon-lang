@@ -109,15 +109,13 @@ public:
 
 protected:
 
-    friend class Frame;
     friend class StackFrame;
-    
+
     void
     SetPC (lldb::addr_t pc)
     {
         m_pc = pc;
     }
-
 
     //------------------------------------------------------------------
     // Classes that inherit from StackID can see and modify these

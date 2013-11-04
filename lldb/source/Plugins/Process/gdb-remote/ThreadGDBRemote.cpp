@@ -187,7 +187,7 @@ ThreadGDBRemote::GetRegisterContext ()
 }
 
 lldb::RegisterContextSP
-ThreadGDBRemote::CreateRegisterContextForFrame (Frame *frame)
+ThreadGDBRemote::CreateRegisterContextForFrame (StackFrame *frame)
 {
     lldb::RegisterContextSP reg_ctx_sp;
     uint32_t concrete_frame_idx = 0;

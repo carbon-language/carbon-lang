@@ -3478,10 +3478,10 @@ public:
         return lldb::ThreadSP();
     }
     
-    virtual lldb::FrameSP
-    CalculateFrame ()
+    virtual lldb::StackFrameSP
+    CalculateStackFrame ()
     {
-        return lldb::FrameSP();
+        return lldb::StackFrameSP();
     }
 
     virtual void

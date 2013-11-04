@@ -26,7 +26,7 @@
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Interpreter/CommandCompletions.h"
-#include "lldb/Target/Frame.h"
+#include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadSpec.h"
 
@@ -581,7 +581,7 @@ private:
         // Then use the current stack frame's file.
         if (!target->GetSourceManager().GetDefaultFileAndLine(file, default_line))
         {
-            Frame *cur_frame = m_exe_ctx.GetFramePtr();
+            StackFrame *cur_frame = m_exe_ctx.GetFramePtr();
             if (cur_frame == NULL)
             {
                 result.AppendError ("No selected frame to use to find the default file.");

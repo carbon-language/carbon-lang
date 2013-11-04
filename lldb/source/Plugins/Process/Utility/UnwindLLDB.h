@@ -75,7 +75,7 @@ protected:
                          lldb::addr_t& start_pc);
     
     lldb::RegisterContextSP
-    DoCreateRegisterContextForFrame (lldb_private::Frame *frame);
+    DoCreateRegisterContextForFrame (lldb_private::StackFrame *frame);
 
     typedef std::shared_ptr<RegisterContextLLDB> RegisterContextLLDBSP;
 

@@ -19,7 +19,7 @@
 #include "lldb/Symbol/Variable.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/RegisterContext.h"
-#include "lldb/Target/Frame.h"
+#include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
@@ -146,7 +146,7 @@ public:
         }
     }
     
-    void Materialize (lldb::FrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
+    void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
     {
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
@@ -191,7 +191,7 @@ public:
         }
     }
     
-    void Dematerialize (lldb::FrameSP &frame_sp,
+    void Dematerialize (lldb::StackFrameSP &frame_sp,
                         IRMemoryMap &map,
                         lldb::addr_t process_address,
                         lldb::addr_t frame_top,
@@ -418,7 +418,7 @@ public:
         m_is_reference = m_variable_sp->GetType()->GetClangForwardType().IsReferenceType();
     }
     
-    void Materialize (lldb::FrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
+    void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
     {
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
         
@@ -533,7 +533,7 @@ public:
         }
     }
     
-    void Dematerialize (lldb::FrameSP &frame_sp,
+    void Dematerialize (lldb::StackFrameSP &frame_sp,
                         IRMemoryMap &map,
                         lldb::addr_t process_address,
                         lldb::addr_t frame_top,
@@ -720,7 +720,7 @@ public:
         m_alignment = 8;
     }
     
-    void Materialize (lldb::FrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
+    void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
     {
         if (!m_is_program_reference)
         {
@@ -758,7 +758,7 @@ public:
         }
     }
     
-    void Dematerialize (lldb::FrameSP &frame_sp,
+    void Dematerialize (lldb::StackFrameSP &frame_sp,
                         IRMemoryMap &map,
                         lldb::addr_t process_address,
                         lldb::addr_t frame_top,
@@ -769,7 +769,7 @@ public:
     }
     
     void Dematerialize (lldb::ClangExpressionVariableSP &result_variable_sp,
-                        lldb::FrameSP &frame_sp,
+                        lldb::StackFrameSP &frame_sp,
                         IRMemoryMap &map,
                         lldb::addr_t process_address,
                         lldb::addr_t frame_top,
@@ -987,7 +987,7 @@ public:
         m_alignment = 8;
     }
     
-    void Materialize (lldb::FrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
+    void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
     {
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
@@ -1031,7 +1031,7 @@ public:
         }
     }
     
-    void Dematerialize (lldb::FrameSP &frame_sp,
+    void Dematerialize (lldb::StackFrameSP &frame_sp,
                         IRMemoryMap &map,
                         lldb::addr_t process_address,
                         lldb::addr_t frame_top,
@@ -1115,7 +1115,7 @@ public:
         m_alignment = m_register_info.byte_size;
     }
     
-    void Materialize (lldb::FrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
+    void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
     {
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
         
@@ -1171,7 +1171,7 @@ public:
         }
     }
     
-    void Dematerialize (lldb::FrameSP &frame_sp,
+    void Dematerialize (lldb::StackFrameSP &frame_sp,
                         IRMemoryMap &map,
                         lldb::addr_t process_address,
                         lldb::addr_t frame_top,
@@ -1298,7 +1298,7 @@ Materializer::~Materializer ()
 }
 
 Materializer::DematerializerSP
-Materializer::Materialize (lldb::FrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &error)
+Materializer::Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &error)
 {
     ExecutionContextScope *exe_scope = frame_sp.get();
         
@@ -1344,7 +1344,7 @@ Materializer::Materialize (lldb::FrameSP &frame_sp, IRMemoryMap &map, lldb::addr
 void
 Materializer::Dematerializer::Dematerialize (Error &error, lldb::ClangExpressionVariableSP &result_sp, lldb::addr_t frame_bottom, lldb::addr_t frame_top)
 {
-    lldb::FrameSP frame_sp;
+    lldb::StackFrameSP frame_sp;
 
     lldb::ThreadSP thread_sp = m_thread_wp.lock();
     if (thread_sp)

@@ -676,7 +676,7 @@ ABIMacOSX_i386::GetArgumentValues (Thread &thread,
 }
 
 Error
-ABIMacOSX_i386::SetReturnValueObject(lldb::FrameSP &frame_sp, lldb::ValueObjectSP &new_value_sp)
+ABIMacOSX_i386::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value_sp)
 {
     Error error;
     if (!new_value_sp)

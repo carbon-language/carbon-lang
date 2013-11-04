@@ -57,8 +57,8 @@ ThreadPlanStepOut::ThreadPlanStepOut
 {
     m_step_from_insn = m_thread.GetRegisterContext()->GetPC(0);
 
-    FrameSP return_frame_sp (m_thread.GetStackFrameAtIndex(frame_idx + 1));
-    FrameSP immediate_return_from_sp (m_thread.GetStackFrameAtIndex (frame_idx));
+    StackFrameSP return_frame_sp (m_thread.GetStackFrameAtIndex(frame_idx + 1));
+    StackFrameSP immediate_return_from_sp (m_thread.GetStackFrameAtIndex (frame_idx));
     
     if (!return_frame_sp || !immediate_return_from_sp)
         return; // we can't do anything here.  ValidatePlan() will return false.
@@ -401,7 +401,7 @@ ThreadPlanStepOut::QueueInlinedStepPlan (bool queue_now)
     // Now figure out the range of this inlined block, and set up a "step through range"
     // plan for that.  If we've been provided with a context, then use the block in that
     // context.  
-    FrameSP immediate_return_from_sp (m_thread.GetStackFrameAtIndex (0));
+    StackFrameSP immediate_return_from_sp (m_thread.GetStackFrameAtIndex (0));
     if (!immediate_return_from_sp)
         return false;
         

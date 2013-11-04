@@ -109,7 +109,7 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
                     call_plan_sp->SetIsMasterPlan (true);
                     call_plan_sp->SetOkayToDiscard(true);
                     
-                    Frame *frame = thread->GetStackFrameAtIndex (0).get();
+                    StackFrame *frame = thread->GetStackFrameAtIndex (0).get();
                     if (frame)
                     {
                         ExecutionContext exe_ctx;
@@ -195,7 +195,7 @@ bool lldb_private::InferiorCallMunmap(Process *process, addr_t addr,
                    call_plan_sp->SetIsMasterPlan (true);
                    call_plan_sp->SetOkayToDiscard(true);
                    
-                   Frame *frame = thread->GetStackFrameAtIndex (0).get();
+                   StackFrame *frame = thread->GetStackFrameAtIndex (0).get();
                    if (frame)
                    {
                        ExecutionContext exe_ctx;
@@ -249,7 +249,7 @@ bool lldb_private::InferiorCall(Process *process, const Address *address, addr_t
         call_plan_sp->SetIsMasterPlan (true);
         call_plan_sp->SetOkayToDiscard(true);
 
-        Frame *frame = thread->GetStackFrameAtIndex (0).get();
+        StackFrame *frame = thread->GetStackFrameAtIndex (0).get();
         if (frame)
         {
             ExecutionContext exe_ctx;

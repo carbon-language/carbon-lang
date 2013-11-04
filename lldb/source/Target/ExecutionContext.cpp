@@ -11,7 +11,7 @@
 
 #include "lldb/Core/State.h"
 #include "lldb/Target/ExecutionContextScope.h"
-#include "lldb/Target/Frame.h"
+#include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
@@ -64,7 +64,7 @@ ExecutionContext::ExecutionContext (const lldb::ThreadSP &thread_sp) :
         SetContext (thread_sp);
 }
 
-ExecutionContext::ExecutionContext (const lldb::FrameSP &frame_sp) :
+ExecutionContext::ExecutionContext (const lldb::StackFrameSP &frame_sp) :
     m_target_sp (),
     m_process_sp (),
     m_thread_sp (),
@@ -107,13 +107,13 @@ ExecutionContext::ExecutionContext (const lldb::ThreadWP &thread_wp) :
         SetContext (thread_sp);
 }
 
-ExecutionContext::ExecutionContext (const lldb::FrameWP &frame_wp) :
+ExecutionContext::ExecutionContext (const lldb::StackFrameWP &frame_wp) :
     m_target_sp (),
     m_process_sp (),
     m_thread_sp (),
     m_frame_sp ()
 {
-    lldb::FrameSP frame_sp(frame_wp.lock());
+    lldb::StackFrameSP frame_sp(frame_wp.lock());
     if (frame_sp)
         SetContext (frame_sp);
 }
@@ -136,7 +136,7 @@ ExecutionContext::ExecutionContext (Target* t, bool fill_current_process_thread_
     }
 }
 
-ExecutionContext::ExecutionContext(Process* process, Thread *thread, Frame *frame) :
+ExecutionContext::ExecutionContext(Process* process, Thread *thread, StackFrame *frame) :
     m_target_sp (),
     m_process_sp (process->shared_from_this()),
     m_thread_sp (thread->shared_from_this()),
@@ -320,7 +320,7 @@ ExecutionContext::GetThreadRef () const
     return *m_thread_sp;
 }
 
-Frame &
+StackFrame &
 ExecutionContext::GetFrameRef () const
 {
 #if defined (LLDB_CONFIGURATION_DEBUG) || defined (LLDB_CONFIGURATION_RELEASE)
@@ -348,7 +348,7 @@ ExecutionContext::SetThreadSP (const lldb::ThreadSP &thread_sp)
 }
 
 void
-ExecutionContext::SetFrameSP (const lldb::FrameSP &frame_sp)
+ExecutionContext::SetFrameSP (const lldb::StackFrameSP &frame_sp)
 {
     m_frame_sp = frame_sp;
 }
@@ -381,7 +381,7 @@ ExecutionContext::SetThreadPtr (Thread *thread)
 }
 
 void
-ExecutionContext::SetFramePtr (Frame *frame)
+ExecutionContext::SetFramePtr (StackFrame *frame)
 {
     if (frame)
         m_frame_sp = frame->shared_from_this();
@@ -434,7 +434,7 @@ ExecutionContext::SetContext (const lldb::ThreadSP &thread_sp)
 }
 
 void
-ExecutionContext::SetContext (const lldb::FrameSP &frame_sp)
+ExecutionContext::SetContext (const lldb::StackFrameSP &frame_sp)
 {
     m_frame_sp = frame_sp;
     if (frame_sp)
@@ -606,7 +606,7 @@ ExecutionContextRef::operator =(const ExecutionContext &exe_ctx)
         m_tid = thread_sp->GetID();
     else
         m_tid = LLDB_INVALID_THREAD_ID;
-    lldb::FrameSP frame_sp (exe_ctx.GetFrameSP());
+    lldb::StackFrameSP frame_sp (exe_ctx.GetFrameSP());
     if (frame_sp)
         m_stack_id = frame_sp->GetStackID();
     else
@@ -666,7 +666,7 @@ ExecutionContextRef::SetThreadSP (const lldb::ThreadSP &thread_sp)
 }
 
 void
-ExecutionContextRef::SetFrameSP (const lldb::FrameSP &frame_sp)
+ExecutionContextRef::SetFrameSP (const lldb::StackFrameSP &frame_sp)
 {
     if (frame_sp)
     {
@@ -711,7 +711,7 @@ ExecutionContextRef::SetTargetPtr (Target* target, bool adopt_selected)
                             if (thread_sp)
                             {
                                 SetThreadSP (thread_sp);
-                                lldb::FrameSP frame_sp (thread_sp->GetSelectedFrame());
+                                lldb::StackFrameSP frame_sp (thread_sp->GetSelectedFrame());
                                 if (!frame_sp)
                                     frame_sp = thread_sp->GetStackFrameAtIndex(0);
                                 if (frame_sp)
@@ -755,7 +755,7 @@ ExecutionContextRef::SetThreadPtr (Thread *thread)
 }
 
 void
-ExecutionContextRef::SetFramePtr (Frame *frame)
+ExecutionContextRef::SetFramePtr (StackFrame *frame)
 {
     if (frame)
         SetFrameSP (frame->shared_from_this());
@@ -811,7 +811,7 @@ ExecutionContextRef::GetThreadSP () const
     return thread_sp;
 }
 
-lldb::FrameSP
+lldb::StackFrameSP
 ExecutionContextRef::GetFrameSP () const
 {
     if (m_stack_id.IsValid())
@@ -820,7 +820,7 @@ ExecutionContextRef::GetFrameSP () const
         if (thread_sp)
             return thread_sp->GetFrameWithStackID (m_stack_id);
     }
-    return lldb::FrameSP();
+    return lldb::StackFrameSP();
 }
 
 ExecutionContext

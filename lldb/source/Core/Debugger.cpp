@@ -1137,7 +1137,7 @@ Debugger::FindDebuggerWithID (lldb::user_id_t id)
 }
 
 static void
-TestPromptFormats (Frame *frame)
+TestPromptFormats (StackFrame *frame)
 {
     if (frame == NULL)
         return;
@@ -1359,7 +1359,7 @@ static bool RunScriptFormatKeyword(Stream &s, ScriptInterpreter *script_interpre
 static ValueObjectSP
 ExpandIndexedExpression (ValueObject* valobj,
                          size_t index,
-                         Frame* frame,
+                         StackFrame* frame,
                          bool deref_pointer)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
@@ -2112,7 +2112,7 @@ FormatPromptRecurse
                             {
                                 if (exe_ctx)
                                 {
-                                    Frame *frame = exe_ctx->GetFramePtr();
+                                    StackFrame *frame = exe_ctx->GetFramePtr();
                                     if (frame)
                                     {
                                         var_name_begin += ::strlen ("frame.");
@@ -2338,7 +2338,7 @@ FormatPromptRecurse
                                     }
                                     else if (IsToken (var_name_begin, "pc-offset}"))
                                     {
-                                        Frame *frame = exe_ctx->GetFramePtr();
+                                        StackFrame *frame = exe_ctx->GetFramePtr();
                                         var_success = frame != NULL;
                                         if (var_success)
                                         {
@@ -2397,7 +2397,7 @@ FormatPromptRecurse
                             // If format addr is valid, then we need to print an address
                             if (reg_num != LLDB_INVALID_REGNUM)
                             {
-                                Frame *frame = exe_ctx->GetFramePtr();
+                                StackFrame *frame = exe_ctx->GetFramePtr();
                                 // We have a register value to display...
                                 if (reg_num == LLDB_REGNUM_GENERIC_PC && reg_kind == eRegisterKindGeneric)
                                 {

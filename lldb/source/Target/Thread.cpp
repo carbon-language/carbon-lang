@@ -211,11 +211,11 @@ Thread::ThreadEventData::GetStackIDFromEvent (const Event *event_ptr)
     return stack_id;
 }
 
-FrameSP
+StackFrameSP
 Thread::ThreadEventData::GetStackFrameFromEvent (const Event *event_ptr)
 {
     const ThreadEventData *event_data = GetEventDataFromEvent (event_ptr);
-    FrameSP frame_sp;
+    StackFrameSP frame_sp;
     if (event_data)
     {
         ThreadSP thread_sp = event_data->GetThread();
@@ -321,7 +321,7 @@ Thread::BroadcastSelectedFrameChange(StackID &new_frame_id)
 }
 
 uint32_t
-Thread::SetSelectedFrame (lldb_private::Frame *frame, bool broadcast)
+Thread::SetSelectedFrame (lldb_private::StackFrame *frame, bool broadcast)
 {
     uint32_t ret_value = GetStackFrameList()->SetSelectedFrame(frame);
     if (broadcast)
@@ -332,7 +332,7 @@ Thread::SetSelectedFrame (lldb_private::Frame *frame, bool broadcast)
 bool
 Thread::SetSelectedFrameByIndex (uint32_t frame_idx, bool broadcast)
 {
-    FrameSP frame_sp(GetStackFrameList()->GetFrameAtIndex (frame_idx));
+    StackFrameSP frame_sp(GetStackFrameList()->GetFrameAtIndex (frame_idx));
     if (frame_sp)
     {
         GetStackFrameList()->SetSelectedFrame(frame_sp.get());
@@ -351,7 +351,7 @@ Thread::SetSelectedFrameByIndexNoisily (uint32_t frame_idx, Stream &output_strea
     bool success = SetSelectedFrameByIndex (frame_idx, broadcast);
     if (success)
     {
-        FrameSP frame_sp = GetSelectedFrame();
+        StackFrameSP frame_sp = GetSelectedFrame();
         if (frame_sp)
         {
             bool already_shown = false;
@@ -1591,10 +1591,10 @@ Thread::CalculateThread ()
     return shared_from_this();
 }
 
-FrameSP
-Thread::CalculateFrame ()
+StackFrameSP
+Thread::CalculateStackFrame ()
 {
-    return FrameSP();
+    return StackFrameSP();
 }
 
 void
@@ -1638,7 +1638,7 @@ Thread::ClearStackFrames ()
     m_curr_frames_sp.reset();
 }
 
-lldb::FrameSP
+lldb::StackFrameSP
 Thread::GetFrameWithConcreteFrameIndex (uint32_t unwind_idx)
 {
     return GetStackFrameList()->GetFrameWithConcreteFrameIndex (unwind_idx);
@@ -1648,7 +1648,7 @@ Thread::GetFrameWithConcreteFrameIndex (uint32_t unwind_idx)
 Error
 Thread::ReturnFromFrameWithIndex (uint32_t frame_idx, lldb::ValueObjectSP return_value_sp, bool broadcast)
 {
-    FrameSP frame_sp = GetStackFrameAtIndex (frame_idx);
+    StackFrameSP frame_sp = GetStackFrameAtIndex (frame_idx);
     Error return_error;
     
     if (!frame_sp)
@@ -1660,7 +1660,7 @@ Thread::ReturnFromFrameWithIndex (uint32_t frame_idx, lldb::ValueObjectSP return
 }
 
 Error
-Thread::ReturnFromFrame (lldb::FrameSP frame_sp, lldb::ValueObjectSP return_value_sp, bool broadcast)
+Thread::ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return_value_sp, bool broadcast)
 {
     Error return_error;
     
@@ -1672,7 +1672,7 @@ Thread::ReturnFromFrame (lldb::FrameSP frame_sp, lldb::ValueObjectSP return_valu
     
     Thread *thread = frame_sp->GetThread().get();
     uint32_t older_frame_idx = frame_sp->GetFrameIndex() + 1;
-    FrameSP older_frame_sp = thread->GetStackFrameAtIndex(older_frame_idx);
+    StackFrameSP older_frame_sp = thread->GetStackFrameAtIndex(older_frame_idx);
     if (!older_frame_sp)
     {
         return_error.SetErrorString("No older frame to return to.");
@@ -1720,7 +1720,7 @@ Thread::ReturnFromFrame (lldb::FrameSP frame_sp, lldb::ValueObjectSP return_valu
     // Note, we can't use ReadAllRegisterValues->WriteAllRegisterValues, since the read & write
     // cook their data
     
-    FrameSP youngest_frame_sp = thread->GetStackFrameAtIndex(0);
+    StackFrameSP youngest_frame_sp = thread->GetStackFrameAtIndex(0);
     if (youngest_frame_sp)
     {
         lldb::RegisterContextSP reg_ctx_sp (youngest_frame_sp->GetRegisterContext());
@@ -1768,7 +1768,7 @@ Thread::JumpToLine (const FileSpec &file, uint32_t line, bool can_leave_function
     Target *target = exe_ctx.GetTargetPtr();
     TargetSP target_sp = exe_ctx.GetTargetSP();
     RegisterContext *reg_ctx = exe_ctx.GetRegisterContext();
-    Frame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = exe_ctx.GetFramePtr();
     const SymbolContext &sc = frame->GetSymbolContext(eSymbolContextFunction);
 
     // Find candidate locations.
@@ -1832,7 +1832,7 @@ Thread::DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx)
     if (process == NULL)
         return;
 
-    FrameSP frame_sp;
+    StackFrameSP frame_sp;
     SymbolContext frame_sc;
     if (frame_idx != LLDB_INVALID_INDEX32)
     {
@@ -1881,10 +1881,10 @@ Thread::GetThreadLocalData (const ModuleSP module)
         return LLDB_INVALID_ADDRESS;
 }
 
-lldb::FrameSP
-Thread::GetFrameSPForFramePtr (Frame *stack_frame_ptr)
+lldb::StackFrameSP
+Thread::GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr)
 {
-    return GetStackFrameList()->GetFrameSPForFramePtr (stack_frame_ptr);
+    return GetStackFrameList()->GetStackFrameSPForStackFramePtr (stack_frame_ptr);
 }
 
 const char *
@@ -1942,7 +1942,7 @@ Thread::GetStatus (Stream &strm, uint32_t start_frame, uint32_t num_frames, uint
     strm.Printf("%c ", is_selected ? '*' : ' ');
     if (target && target->GetDebugger().GetUseExternalEditor())
     {
-        FrameSP frame_sp = GetStackFrameAtIndex(start_frame);
+        StackFrameSP frame_sp = GetStackFrameAtIndex(start_frame);
         if (frame_sp)
         {
             SymbolContext frame_sc(frame_sp->GetSymbolContext (eSymbolContextLineEntry));
@@ -1997,7 +1997,7 @@ Thread::GetStackFrameStatus (Stream& strm,
 bool
 Thread::SaveFrameZeroState (RegisterCheckpoint &checkpoint)
 {
-    lldb::FrameSP frame_sp(GetStackFrameAtIndex (0));
+    lldb::StackFrameSP frame_sp(GetStackFrameAtIndex (0));
     if (frame_sp)
     {
         checkpoint.SetStackID(frame_sp->GetStackID());
@@ -2017,7 +2017,7 @@ Thread::RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint)
 bool
 Thread::ResetFrameZeroRegisters (lldb::DataBufferSP register_data_sp)
 {
-    lldb::FrameSP frame_sp(GetStackFrameAtIndex (0));
+    lldb::StackFrameSP frame_sp(GetStackFrameAtIndex (0));
     if (frame_sp)
     {
         lldb::RegisterContextSP reg_ctx_sp (frame_sp->GetRegisterContext());

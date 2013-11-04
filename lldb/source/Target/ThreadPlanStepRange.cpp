@@ -148,7 +148,7 @@ ThreadPlanStepRange::InRange ()
     if (!ret_value)
     {
         // See if we've just stepped to another part of the same line number...
-        Frame *frame = m_thread.GetStackFrameAtIndex(0).get();
+        StackFrame *frame = m_thread.GetStackFrameAtIndex(0).get();
         
         SymbolContext new_context(frame->GetSymbolContext(eSymbolContextEverything));
         if (m_addr_context.line_entry.IsValid() && new_context.line_entry.IsValid())

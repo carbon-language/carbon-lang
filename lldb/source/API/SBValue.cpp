@@ -38,7 +38,7 @@
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
-#include "lldb/Target/Frame.h"
+#include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
@@ -199,13 +199,13 @@ public:
             return ThreadSP();
     }
     
-    FrameSP
+    StackFrameSP
     GetFrameSP ()
     {
         if (m_valobj_sp)
             return m_valobj_sp->GetFrameSP();
         else
-            return FrameSP();
+            return StackFrameSP();
     }
     
 private:
@@ -1252,7 +1252,7 @@ lldb::SBFrame
 SBValue::GetFrame()
 {
     SBFrame sb_frame;
-    FrameSP frame_sp;
+    StackFrameSP frame_sp;
     if (m_opaque_sp)
     {
         frame_sp = m_opaque_sp->GetFrameSP();

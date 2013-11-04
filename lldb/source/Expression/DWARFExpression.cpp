@@ -36,7 +36,7 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
-#include "lldb/Target/Frame.h"
+#include "lldb/Target/StackFrame.h"
 #include "lldb/Target/StackID.h"
 #include "lldb/Target/Thread.h"
 
@@ -1240,7 +1240,7 @@ DWARFExpression::Evaluate
     {
         lldb::offset_t offset = 0;
         addr_t pc;
-        Frame *frame = NULL;
+        StackFrame *frame = NULL;
         if (reg_ctx)
             pc = reg_ctx->GetPC();
         else
@@ -1327,7 +1327,7 @@ DWARFExpression::Evaluate
     std::vector<Value> stack;
 
     Process *process = NULL;
-    Frame *frame = NULL;
+    StackFrame *frame = NULL;
     
     if (exe_ctx)
     {

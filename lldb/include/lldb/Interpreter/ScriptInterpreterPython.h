@@ -202,7 +202,7 @@ public:
     
     virtual bool
     RunScriptFormatKeyword (const char* impl_function,
-                            Frame* frame,
+                            StackFrame* frame,
                             std::string& output,
                             Error& error);
     

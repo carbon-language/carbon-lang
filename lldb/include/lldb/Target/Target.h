@@ -961,8 +961,8 @@ public:
     virtual lldb::ThreadSP
     CalculateThread ();
     
-    virtual lldb::FrameSP
-    CalculateFrame ();
+    virtual lldb::StackFrameSP
+    CalculateStackFrame ();
 
     virtual void
     CalculateExecutionContext (ExecutionContext &exe_ctx);
@@ -984,7 +984,7 @@ public:
     // in in th execution context. 
     ExecutionResults
     EvaluateExpression (const char *expression,
-                        Frame *frame,
+                        StackFrame *frame,
                         lldb::ValueObjectSP &result_valobj_sp,
                         const EvaluateExpressionOptions& options = EvaluateExpressionOptions());
 

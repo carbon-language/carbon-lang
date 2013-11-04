@@ -310,7 +310,7 @@ public:
     ///  @param[in] reg_ctx
     ///     An optional parameter which provides a RegisterContext for use
     ///     when evaluating the expression (i.e. for fetching register values).
-    ///     Normally this will come from the ExecutionContext's Frame but
+    ///     Normally this will come from the ExecutionContext's StackFrame but
     ///     in the case where an expression needs to be evaluated while building
     ///     the stack frame list, this short-cut is available.
     ///

@@ -42,7 +42,7 @@ public:
     ClearPseudoMemory ();
     
     bool
-    LoadPseudoRegistersFromFrame (lldb_private::Frame &frame);
+    LoadPseudoRegistersFromFrame (lldb_private::StackFrame &frame);
     
     bool
     LoadStateFromDictionary (lldb_private::OptionValueDictionary *test_data);

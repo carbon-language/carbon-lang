@@ -23,7 +23,6 @@
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
-#include "lldb/Target/Frame.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
@@ -285,7 +284,7 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
             }
         }
         
-        FrameSP unwind_frame_sp;
+        StackFrameSP unwind_frame_sp;
         do
         {
             uint32_t idx = m_concrete_frames_fetched++;
@@ -325,7 +324,7 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
                 else
                 {
                     unwind_frame_sp = m_frames.front();
-                    cfa = unwind_frame_sp->GetStackID().GetCallFrameAddress();
+                    cfa = unwind_frame_sp->m_id.GetCallFrameAddress();
                 }
             }
             else
@@ -359,7 +358,7 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
                 
                 while (unwind_sc.GetParentOfInlinedScope(curr_frame_address, next_frame_sc, next_frame_address))
                 {
-                        FrameSP frame_sp(new StackFrame (m_thread.shared_from_this(),
+                        StackFrameSP frame_sp(new StackFrame (m_thread.shared_from_this(),
                                                               m_frames.size(),
                                                               idx,
                                                               unwind_frame_sp->GetRegisterContextSP (),
@@ -399,8 +398,8 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
             {
                 const size_t curr_frame_idx = curr_frame_num-1;
                 const size_t prev_frame_idx = prev_frame_num-1;
-                FrameSP curr_frame_sp (curr_frames->m_frames[curr_frame_idx]);
-                FrameSP prev_frame_sp (prev_frames->m_frames[prev_frame_idx]);
+                StackFrameSP curr_frame_sp (curr_frames->m_frames[curr_frame_idx]);
+                StackFrameSP prev_frame_sp (prev_frames->m_frames[prev_frame_idx]);
 
 #if defined (DEBUG_STACK_FRAMES)
                 s.Printf("\n\nCurr frame #%u ", curr_frame_idx);
@@ -415,8 +414,8 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
                     s.PutCString("NULL");
 #endif
 
-                Frame *curr_frame = curr_frame_sp.get();
-                Frame *prev_frame = prev_frame_sp.get();
+                StackFrame *curr_frame = curr_frame_sp.get();
+                StackFrame *prev_frame = prev_frame_sp.get();
                 
                 if (curr_frame == NULL || prev_frame == NULL)
                     break;
@@ -485,7 +484,7 @@ StackFrameList::Dump (Stream *s)
     const_iterator pos, begin = m_frames.begin(), end = m_frames.end();
     for (pos = begin; pos != end; ++pos)
     {
-        Frame *frame = (*pos).get();
+        StackFrame *frame = (*pos).get();
         s->Printf("%p: ", frame);
         if (frame)
         {
@@ -499,10 +498,10 @@ StackFrameList::Dump (Stream *s)
     s->EOL();
 }
 
-FrameSP
+StackFrameSP
 StackFrameList::GetFrameAtIndex (uint32_t idx)
 {
-    FrameSP frame_sp;
+    StackFrameSP frame_sp;
     Mutex::Locker locker (m_mutex);
     uint32_t original_idx = idx;
     
@@ -576,7 +575,7 @@ StackFrameList::GetFrameAtIndex (uint32_t idx)
     return frame_sp;
 }
 
-FrameSP
+StackFrameSP
 StackFrameList::GetFrameWithConcreteFrameIndex (uint32_t unwind_idx)
 {
     // First try assuming the unwind index is the same as the frame index. The 
@@ -586,7 +585,7 @@ StackFrameList::GetFrameWithConcreteFrameIndex (uint32_t unwind_idx)
     // frames after we make all the inlined frames. Most of the time the unwind
     // frame index (or the concrete frame index) is the same as the frame index.
     uint32_t frame_idx = unwind_idx;
-    FrameSP frame_sp (GetFrameAtIndex (frame_idx));
+    StackFrameSP frame_sp (GetFrameAtIndex (frame_idx));
     while (frame_sp)
     {
         if (frame_sp->GetFrameIndex() == unwind_idx)
@@ -597,15 +596,15 @@ StackFrameList::GetFrameWithConcreteFrameIndex (uint32_t unwind_idx)
 }
 
 static bool
-CompareStackID (const FrameSP &stack_sp, const StackID &stack_id)
+CompareStackID (const StackFrameSP &stack_sp, const StackID &stack_id)
 {
     return stack_sp->GetStackID() < stack_id;
 }
 
-FrameSP
+StackFrameSP
 StackFrameList::GetFrameWithStackID (const StackID &stack_id)
 {
-    FrameSP frame_sp;
+    StackFrameSP frame_sp;
     
     if (stack_id.IsValid())
     {
@@ -636,7 +635,7 @@ StackFrameList::GetFrameWithStackID (const StackID &stack_id)
 }
 
 bool
-StackFrameList::SetFrameAtIndex (uint32_t idx, FrameSP &frame_sp)
+StackFrameList::SetFrameAtIndex (uint32_t idx, StackFrameSP &frame_sp)
 {
     if (idx >= m_frames.size())
         m_frames.resize(idx + 1);
@@ -658,7 +657,7 @@ StackFrameList::GetSelectedFrameIndex () const
 
 
 uint32_t
-StackFrameList::SetSelectedFrame (lldb_private::Frame *frame)
+StackFrameList::SetSelectedFrame (lldb_private::StackFrame *frame)
 {
     Mutex::Locker locker (m_mutex);
     const_iterator pos;
@@ -685,7 +684,7 @@ bool
 StackFrameList::SetSelectedFrameByIndex (uint32_t idx)
 {
     Mutex::Locker locker (m_mutex);
-    FrameSP frame_sp (GetFrameAtIndex (idx));
+    StackFrameSP frame_sp (GetFrameAtIndex (idx));
     if (frame_sp)
     {
         SetSelectedFrame(frame_sp.get());
@@ -700,7 +699,7 @@ StackFrameList::SetDefaultFileAndLineToSelectedFrame()
 {
     if (m_thread.GetID() == m_thread.GetProcess()->GetThreadList().GetSelectedThread()->GetID())
     {
-        FrameSP frame_sp (GetFrameAtIndex (GetSelectedFrameIndex()));
+        StackFrameSP frame_sp (GetFrameAtIndex (GetSelectedFrameIndex()));
         if (frame_sp)
         {
             SymbolContext sc = frame_sp->GetSymbolContext(eSymbolContextLineEntry);
@@ -800,8 +799,8 @@ StackFrameList::Merge (std::unique_ptr<StackFrameList>& curr_ap, lldb::StackFram
         return;
     }
 
-    FrameSP prev_frame_zero_sp(prev_sp->GetFrameAtIndex (0));
-    FrameSP curr_frame_zero_sp(curr_ap->GetFrameAtIndex (0));
+    StackFrameSP prev_frame_zero_sp(prev_sp->GetFrameAtIndex (0));
+    StackFrameSP curr_frame_zero_sp(curr_ap->GetFrameAtIndex (0));
     StackID curr_stack_id (curr_frame_zero_sp->GetStackID());
     StackID prev_stack_id (prev_frame_zero_sp->GetStackID());
 
@@ -840,13 +839,13 @@ StackFrameList::Merge (std::unique_ptr<StackFrameList>& curr_ap, lldb::StackFram
 
 }
 
-lldb::FrameSP
-StackFrameList::GetFrameSPForFramePtr (Frame *stack_frame_ptr)
+lldb::StackFrameSP
+StackFrameList::GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr)
 {
     const_iterator pos;
     const_iterator begin = m_frames.begin();
     const_iterator end = m_frames.end();
-    lldb::FrameSP ret_sp;
+    lldb::StackFrameSP ret_sp;
     
     for (pos = begin; pos != end; ++pos)
     {
@@ -872,7 +871,7 @@ StackFrameList::GetStatus (Stream& strm,
     if (num_frames == 0)
         return 0;
     
-    FrameSP frame_sp;
+    StackFrameSP frame_sp;
     uint32_t frame_idx = 0;
     uint32_t last_frame;
     
@@ -882,7 +881,7 @@ StackFrameList::GetStatus (Stream& strm,
     else
         last_frame = first_frame + num_frames;
     
-    FrameSP selected_frame_sp = m_thread.GetSelectedFrame();
+    StackFrameSP selected_frame_sp = m_thread.GetSelectedFrame();
     const char *unselected_marker = NULL;
     std::string buffer;
     if (selected_frame_marker)

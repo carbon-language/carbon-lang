@@ -335,7 +335,7 @@ StopInfoMachException::CreateStopReasonWithMachException
 //                        {
 //                            // We have a SIGTRAP, make sure we didn't exec by checking
 //                            // for the PC being at "_dyld_start"...
-//                            lldb::FrameSP frame_sp (thread.GetStackFrameAtIndex(0));
+//                            lldb::StackFrameSP frame_sp (thread.GetStackFrameAtIndex(0));
 //                            if (frame_sp)
 //                            {
 //                                const Symbol *symbol = frame_sp->GetSymbolContext(eSymbolContextSymbol).symbol;

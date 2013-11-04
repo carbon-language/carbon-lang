@@ -137,7 +137,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
         // start function really is our start function...
         for(uint32_t i = 1;; ++i)
         {
-            FrameSP older_frame_sp = m_thread.GetStackFrameAtIndex(i);
+            StackFrameSP older_frame_sp = m_thread.GetStackFrameAtIndex(i);
             if (!older_frame_sp) {
                 // We can't unwind the next frame we should just get out of here & stop...
                 break;
@@ -192,7 +192,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
             if (m_addr_context.line_entry.IsValid())
             {
                 SymbolContext sc;
-                FrameSP frame_sp = m_thread.GetStackFrameAtIndex(0);
+                StackFrameSP frame_sp = m_thread.GetStackFrameAtIndex(0);
                 sc = frame_sp->GetSymbolContext (eSymbolContextEverything);
                 if (sc.line_entry.IsValid())
                 {
@@ -357,7 +357,7 @@ ThreadPlanStepOverRange::DoWillResume (lldb::StateType resume_state, bool curren
                 if (log)
                     log->Printf ("ThreadPlanStepInRange::DoWillResume: adjusting range to the frame at inlined depth %d.",
                                  m_thread.GetCurrentInlinedDepth());
-                FrameSP stack_sp = m_thread.GetStackFrameAtIndex(0);
+                StackFrameSP stack_sp = m_thread.GetStackFrameAtIndex(0);
                 if (stack_sp)
                 {
                     Block *frame_block = stack_sp->GetFrameBlock();

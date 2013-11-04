@@ -873,7 +873,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
         // We are decoding a method dispatch.  
         // First job is to pull the arguments out:
         
-        lldb::FrameSP thread_cur_frame = thread.GetStackFrameAtIndex(0);
+        lldb::StackFrameSP thread_cur_frame = thread.GetStackFrameAtIndex(0);
         
         const ABI *abi = NULL;
         ProcessSP process_sp (thread.CalculateProcess());

@@ -35,7 +35,7 @@ public:
     GetRegisterContext ();
 
     virtual lldb::RegisterContextSP
-    CreateRegisterContextForFrame (lldb_private::Frame *frame);
+    CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
 
     static bool
     ThreadIDIsValid (lldb::tid_t thread);

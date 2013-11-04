@@ -42,7 +42,7 @@ public:
                        lldb_private::ValueList &values) const;
     
     virtual lldb_private::Error
-    SetReturnValueObject(lldb::FrameSP &frame_sp, lldb::ValueObjectSP &new_value);
+    SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value);
 
 protected:
     virtual lldb::ValueObjectSP

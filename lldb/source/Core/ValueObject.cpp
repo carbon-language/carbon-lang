@@ -3732,7 +3732,7 @@ ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope,
             {
                 m_exe_ctx_ref.SetThreadSP(thread_sp);
                 
-                FrameSP frame_sp (exe_ctx.GetFrameSP());
+                StackFrameSP frame_sp (exe_ctx.GetFrameSP());
                 if (!frame_sp)
                 {
                     if (use_selected)
@@ -3816,7 +3816,7 @@ ValueObject::EvaluationPoint::SyncWithProcessState()
         {
             if (m_exe_ctx_ref.HasFrameRef())
             {
-                FrameSP frame_sp (m_exe_ctx_ref.GetFrameSP());
+                StackFrameSP frame_sp (m_exe_ctx_ref.GetFrameSP());
                 if (!frame_sp)
                 {
                     // We used to have a frame, but now it is gone

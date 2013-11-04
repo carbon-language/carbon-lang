@@ -22,7 +22,7 @@
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
-#include "lldb/Target/Frame.h"
+#include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Target.h"
 
@@ -207,7 +207,7 @@ Variable::CalculateSymbolContext (SymbolContext *sc)
 }
 
 bool
-Variable::LocationIsValidForFrame (Frame *frame)
+Variable::LocationIsValidForFrame (StackFrame *frame)
 {
     // Is the variable is described by a single location?
     if (!m_location.IsLocationList())
@@ -271,7 +271,7 @@ Variable::LocationIsValidForAddress (const Address &address)
 }
 
 bool
-Variable::IsInScope (Frame *frame)
+Variable::IsInScope (StackFrame *frame)
 {
     switch (m_scope)
     {
@@ -520,7 +520,7 @@ Variable::DumpLocationForAddress (Stream *s, const Address &address)
 
 
 static void
-PrivateAutoComplete (Frame *frame,
+PrivateAutoComplete (StackFrame *frame,
                      const std::string &partial_path,
                      const std::string &prefix_path, // Anything that has been resolved already will be in here
                      const ClangASTType& clang_type,
@@ -528,7 +528,7 @@ PrivateAutoComplete (Frame *frame,
                      bool &word_complete);
 
 static void
-PrivateAutoCompleteMembers (Frame *frame,
+PrivateAutoCompleteMembers (StackFrame *frame,
                             const std::string &partial_member_name,
                             const std::string &partial_path,
                             const std::string &prefix_path, // Anything that has been resolved already will be in here
@@ -537,7 +537,7 @@ PrivateAutoCompleteMembers (Frame *frame,
                             bool &word_complete);
 
 static void
-PrivateAutoCompleteMembers (Frame *frame,
+PrivateAutoCompleteMembers (StackFrame *frame,
                             const std::string &partial_member_name,
                             const std::string &partial_path,
                             const std::string &prefix_path, // Anything that has been resolved already will be in here
@@ -616,7 +616,7 @@ PrivateAutoCompleteMembers (Frame *frame,
 }
 
 static void
-PrivateAutoComplete (Frame *frame,
+PrivateAutoComplete (StackFrame *frame,
                      const std::string &partial_path,
                      const std::string &prefix_path, // Anything that has been resolved already will be in here
                      const ClangASTType& clang_type,

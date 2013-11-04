@@ -44,12 +44,12 @@ ThreadPlanStepInstruction::ThreadPlanStepInstruction
     m_step_over (step_over)
 {
     m_instruction_addr = m_thread.GetRegisterContext()->GetPC(0);
-    FrameSP m_start_frame_sp(m_thread.GetStackFrameAtIndex(0));
+    StackFrameSP m_start_frame_sp(m_thread.GetStackFrameAtIndex(0));
     m_stack_id = m_start_frame_sp->GetStackID();
     
     m_start_has_symbol = m_start_frame_sp->GetSymbolContext(eSymbolContextSymbol).symbol != NULL;
     
-    FrameSP parent_frame_sp = m_thread.GetStackFrameAtIndex(1);
+    StackFrameSP parent_frame_sp = m_thread.GetStackFrameAtIndex(1);
     if (parent_frame_sp)
         m_parent_frame_id = parent_frame_sp->GetStackID();
 }
@@ -127,7 +127,7 @@ ThreadPlanStepInstruction::ShouldStop (Event *event_ptr)
         else
         {
             // We've stepped in, step back out again:
-            Frame *return_frame = m_thread.GetStackFrameAtIndex(1).get();
+            StackFrame *return_frame = m_thread.GetStackFrameAtIndex(1).get();
             if (return_frame)
             {
                 if (return_frame->GetStackID() != m_parent_frame_id || m_start_has_symbol)

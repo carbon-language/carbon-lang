@@ -202,7 +202,7 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
         
         if (!m_sub_plan_sp && frame_order == eFrameCompareYounger && m_step_past_prologue)
         {
-            lldb::FrameSP curr_frame = m_thread.GetStackFrameAtIndex(0);
+            lldb::StackFrameSP curr_frame = m_thread.GetStackFrameAtIndex(0);
             if (curr_frame)
             {
                 size_t bytes_to_skip = 0;
@@ -275,7 +275,7 @@ ThreadPlanStepInRange::SetDefaultFlagValue (uint32_t new_value)
 bool
 ThreadPlanStepInRange::FrameMatchesAvoidRegexp ()
 {
-    Frame *frame = GetThread().GetStackFrameAtIndex(0).get();
+    StackFrame *frame = GetThread().GetStackFrameAtIndex(0).get();
 
     const RegularExpression *avoid_regexp_to_use = m_avoid_regexp_ap.get();
     if (avoid_regexp_to_use == NULL)
@@ -321,7 +321,7 @@ ThreadPlanSP
 ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, Flags &flags, void *baton)
 {
     bool should_step_out = false;
-    Frame *frame = current_plan->GetThread().GetStackFrameAtIndex(0).get();
+    StackFrame *frame = current_plan->GetThread().GetStackFrameAtIndex(0).get();
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (flags.Test(eAvoidNoDebug))

@@ -51,7 +51,7 @@ ThreadPlanStepThrough::ThreadPlanStepThrough (Thread &thread, StackID &m_stack_i
         // We are going to return back to the concrete frame 1, we might pass by some inlined code that we're in 
         // the middle of by doing this, but it's easier than trying to figure out where the inlined code might return to.
             
-        FrameSP return_frame_sp = m_thread.GetFrameWithStackID (m_stack_id);
+        StackFrameSP return_frame_sp = m_thread.GetFrameWithStackID (m_stack_id);
         
         if (return_frame_sp)
         {
