@@ -71,7 +71,6 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     ImplicitCopyAssignmentHasConstParam(true),
     HasDeclaredCopyConstructorWithConstParam(false),
     HasDeclaredCopyAssignmentWithConstParam(false),
-    FailedImplicitMoveConstructor(false), FailedImplicitMoveAssignment(false),
     IsLambda(false), NumBases(0), NumVBases(0), Bases(), VBases(),
     Definition(D), FirstFriend() {
 }

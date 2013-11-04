@@ -71,7 +71,7 @@ namespace dr109 { // dr109: yes
 
 namespace dr111 { // dr111: dup 535
   struct A { A(); A(volatile A&, int = 0); A(A&, const char * = "foo"); };
-  struct B : A { B(); }; // expected-note {{would lose const qualifier}} expected-note {{requires 0 arguments}}
+  struct B : A { B(); }; // expected-note +{{would lose const qualifier}} expected-note {{requires 0 arguments}}
   const B b1;
   B b2(b1); // expected-error {{no matching constructor}}
 }

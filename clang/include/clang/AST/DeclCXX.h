@@ -444,14 +444,6 @@ class CXXRecordDecl : public RecordDecl {
     /// const-qualified reference parameter or a non-reference parameter.
     bool HasDeclaredCopyAssignmentWithConstParam : 1;
 
-    /// \brief Whether an implicit move constructor was attempted to be declared
-    /// but would have been deleted.
-    bool FailedImplicitMoveConstructor : 1;
-
-    /// \brief Whether an implicit move assignment operator was attempted to be
-    /// declared but would have been deleted.
-    bool FailedImplicitMoveAssignment : 1;
-
     /// \brief Whether this class describes a C++ lambda.
     bool IsLambda : 1;
 
@@ -773,12 +765,14 @@ public:
   /// \brief \c true if we know for sure that this class has a single,
   /// accessible, unambiguous move constructor that is not deleted.
   bool hasSimpleMoveConstructor() const {
-    return !hasUserDeclaredMoveConstructor() && hasMoveConstructor();
+    return !hasUserDeclaredMoveConstructor() && hasMoveConstructor() &&
+           !data().DefaultedMoveConstructorIsDeleted;
   }
   /// \brief \c true if we know for sure that this class has a single,
   /// accessible, unambiguous move assignment operator that is not deleted.
   bool hasSimpleMoveAssignment() const {
-    return !hasUserDeclaredMoveAssignment() && hasMoveAssignment();
+    return !hasUserDeclaredMoveAssignment() && hasMoveAssignment() &&
+           !data().DefaultedMoveAssignmentIsDeleted;
   }
   /// \brief \c true if we know for sure that this class has an accessible
   /// destructor that is not deleted.
@@ -870,28 +864,23 @@ public:
            needsImplicitMoveConstructor();
   }
 
-  /// \brief Determine whether implicit move constructor generation for this
-  /// class has failed before.
-  bool hasFailedImplicitMoveConstructor() const {
-    return data().FailedImplicitMoveConstructor;
-  }
-
-  /// \brief Set whether implicit move constructor generation for this class
-  /// has failed before.
-  void setFailedImplicitMoveConstructor(bool Failed = true) {
-    data().FailedImplicitMoveConstructor = Failed;
+  /// \brief Set that we attempted to declare an implicitly move
+  /// constructor, but overload resolution failed so we deleted it.
+  void setImplicitMoveConstructorIsDeleted() {
+    assert((data().DefaultedMoveConstructorIsDeleted ||
+            needsOverloadResolutionForMoveConstructor()) &&
+           "move constructor should not be deleted");
+    data().DefaultedMoveConstructorIsDeleted = true;
   }
 
   /// \brief Determine whether this class should get an implicit move
   /// constructor or if any existing special member function inhibits this.
   bool needsImplicitMoveConstructor() const {
-    return !hasFailedImplicitMoveConstructor() &&
-           !(data().DeclaredSpecialMembers & SMF_MoveConstructor) &&
+    return !(data().DeclaredSpecialMembers & SMF_MoveConstructor) &&
            !hasUserDeclaredCopyConstructor() &&
            !hasUserDeclaredCopyAssignment() &&
            !hasUserDeclaredMoveAssignment() &&
-           !hasUserDeclaredDestructor() &&
-           !data().DefaultedMoveConstructorIsDeleted;
+           !hasUserDeclaredDestructor();
   }
 
   /// \brief Determine whether we need to eagerly declare a defaulted move
@@ -947,29 +936,24 @@ public:
            needsImplicitMoveAssignment();
   }
 
-  /// \brief Determine whether implicit move assignment generation for this
-  /// class has failed before.
-  bool hasFailedImplicitMoveAssignment() const {
-    return data().FailedImplicitMoveAssignment;
-  }
-
-  /// \brief Set whether implicit move assignment generation for this class
-  /// has failed before.
-  void setFailedImplicitMoveAssignment(bool Failed = true) {
-    data().FailedImplicitMoveAssignment = Failed;
+  /// \brief Set that we attempted to declare an implicit move assignment
+  /// operator, but overload resolution failed so we deleted it.
+  void setImplicitMoveAssignmentIsDeleted() {
+    assert((data().DefaultedMoveAssignmentIsDeleted ||
+            needsOverloadResolutionForMoveAssignment()) &&
+           "move assignment should not be deleted");
+    data().DefaultedMoveAssignmentIsDeleted = true;
   }
 
   /// \brief Determine whether this class should get an implicit move
   /// assignment operator or if any existing special member function inhibits
   /// this.
   bool needsImplicitMoveAssignment() const {
-    return !hasFailedImplicitMoveAssignment() &&
-           !(data().DeclaredSpecialMembers & SMF_MoveAssignment) &&
+    return !(data().DeclaredSpecialMembers & SMF_MoveAssignment) &&
            !hasUserDeclaredCopyConstructor() &&
            !hasUserDeclaredCopyAssignment() &&
            !hasUserDeclaredMoveConstructor() &&
-           !hasUserDeclaredDestructor() &&
-           !data().DefaultedMoveAssignmentIsDeleted;
+           !hasUserDeclaredDestructor();
   }
 
   /// \brief Determine whether we need to eagerly declare a move assignment

@@ -22,7 +22,7 @@ struct H;
 struct D {
   virtual E &operator=(const E &); // expected-note {{here}}
   virtual F &operator=(const F &);
-  virtual G &operator=(G&&);
+  virtual G &operator=(G&&); // expected-note {{here}}
   virtual H &operator=(H&&); // expected-note {{here}}
   friend struct F;
 
@@ -34,8 +34,8 @@ private:
 struct E : D {}; // expected-error {{deleted function '~E' cannot override a non-deleted function}} \
                  // expected-error {{deleted function 'operator=' cannot override a non-deleted function}}
 struct F : D {};
-// No move ctor here, because it would be deleted.
 struct G : D {}; // expected-error {{deleted function '~G' cannot override a non-deleted function}}
+                 // expected-error@-1 {{deleted function 'operator=' cannot override a non-deleted function}}
 struct H : D {
   H &operator=(H&&) = default; // expected-error {{deleted function 'operator=' cannot override a non-deleted function}}
   ~H();

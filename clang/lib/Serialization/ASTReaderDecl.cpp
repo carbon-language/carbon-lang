@@ -1208,8 +1208,6 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Data.ImplicitCopyAssignmentHasConstParam = Record[Idx++];
   Data.HasDeclaredCopyConstructorWithConstParam = Record[Idx++];
   Data.HasDeclaredCopyAssignmentWithConstParam = Record[Idx++];
-  Data.FailedImplicitMoveConstructor = Record[Idx++];
-  Data.FailedImplicitMoveAssignment = Record[Idx++];
 
   Data.NumBases = Record[Idx++];
   if (Data.NumBases)

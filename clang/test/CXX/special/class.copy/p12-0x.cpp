@@ -157,8 +157,8 @@ namespace TrivialityDependsOnImplicitDeletion {
 
   struct NoAccess {
     PrivateMove pm;
-    // NoAccess's move would be deleted, so is suppressed,
-    // so moves of it use PrivateMove's copy ctor, which is trivial.
+    // NoAccess's move is deleted, so moves of it use PrivateMove's copy ctor,
+    // which is trivial.
   };
   static_assert(__is_trivially_constructible(NoAccess, const NoAccess &), "");
   static_assert(__is_trivially_constructible(NoAccess, NoAccess &&), "");

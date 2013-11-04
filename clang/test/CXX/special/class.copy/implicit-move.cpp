@@ -190,49 +190,59 @@ namespace DR1402 {
     NonTrivialMoveAssignVBase &operator=(NonTrivialMoveAssignVBase &&) = default;
   };
 
-  // A non-movable, non-trivially-copyable class type as a subobject inhibits
-  // the declaration of a move operation.
-  struct NoMove1 { NonTrivialCopyCtor ntcc; }; // expected-note 2{{'const DR1402::NoMove1 &'}}
-  struct NoMove2 { NonTrivialCopyAssign ntcc; }; // expected-note 2{{'const DR1402::NoMove2 &'}}
-  struct NoMove3 : NonTrivialCopyCtor {}; // expected-note 2{{'const DR1402::NoMove3 &'}}
-  struct NoMove4 : NonTrivialCopyAssign {}; // expected-note 2{{'const DR1402::NoMove4 &'}}
-  struct NoMove5 : virtual NonTrivialCopyCtor {}; // expected-note 2{{'const DR1402::NoMove5 &'}}
-  struct NoMove6 : virtual NonTrivialCopyAssign {}; // expected-note 2{{'const DR1402::NoMove6 &'}}
-  struct NoMove7 : NonTrivialCopyCtorVBase {}; // expected-note 2{{'const DR1402::NoMove7 &'}}
-  struct NoMove8 : NonTrivialCopyAssignVBase {}; // expected-note 2{{'const DR1402::NoMove8 &'}}
+  // DR1402: A non-movable, non-trivially-copyable class type as a subobject no
+  // longer inhibits the declaration of a move operation.
+  struct NoMove1 { NonTrivialCopyCtor ntcc; };
+  struct NoMove2 { NonTrivialCopyAssign ntcc; };
+  struct NoMove3 : NonTrivialCopyCtor {};
+  struct NoMove4 : NonTrivialCopyAssign {};
+  struct NoMove5 : virtual NonTrivialCopyCtor {};
+  struct NoMove6 : virtual NonTrivialCopyAssign {};
+  struct NoMove7 : NonTrivialCopyCtorVBase {};
+  struct NoMove8 : NonTrivialCopyAssignVBase {};
 
-  // A non-trivially-move-assignable virtual base class inhibits the declaration
-  // of a move assignment (which might move-assign the base class multiple
-  // times).
+  // DR1402: A non-trivially-move-assignable virtual base class no longer
+  // inhibits the declaration of a move assignment (even though it might
+  // move-assign the base class multiple times).
   struct NoMove9 : NonTrivialMoveAssign {};
-  struct NoMove10 : virtual NonTrivialMoveAssign {}; // expected-note {{'const DR1402::NoMove10 &'}}
-  struct NoMove11 : NonTrivialMoveAssignVBase {}; // expected-note {{'const DR1402::NoMove11 &'}}
+  struct NoMove10 : virtual NonTrivialMoveAssign {};
+  struct NoMove11 : NonTrivialMoveAssignVBase {};
 
-  struct Test {
-    friend NoMove1::NoMove1(NoMove1 &&); // expected-error {{does not match}}
-    friend NoMove2::NoMove2(NoMove2 &&); // expected-error {{does not match}}
-    friend NoMove3::NoMove3(NoMove3 &&); // expected-error {{does not match}}
-    friend NoMove4::NoMove4(NoMove4 &&); // expected-error {{does not match}}
-    friend NoMove5::NoMove5(NoMove5 &&); // expected-error {{does not match}}
-    friend NoMove6::NoMove6(NoMove6 &&); // expected-error {{does not match}}
-    friend NoMove7::NoMove7(NoMove7 &&); // expected-error {{does not match}}
-    friend NoMove8::NoMove8(NoMove8 &&); // expected-error {{does not match}}
-    friend NoMove9::NoMove9(NoMove9 &&);
-    friend NoMove10::NoMove10(NoMove10 &&);
-    friend NoMove11::NoMove11(NoMove11 &&);
+  template<typename T> void test(T t) {
+    (void)T(static_cast<T&&>(t)); // ok
+    t = static_cast<T&&>(t); // ok
+  }
+  template void test(NoMove1);
+  template void test(NoMove2);
+  template void test(NoMove3);
+  template void test(NoMove4);
+  template void test(NoMove5);
+  template void test(NoMove6);
+  template void test(NoMove7);
+  template void test(NoMove8);
+  template void test(NoMove9);
+  template void test(NoMove10);
+  template void test(NoMove11);
 
-    friend NoMove1 &NoMove1::operator=(NoMove1 &&); // expected-error {{does not match}}
-    friend NoMove2 &NoMove2::operator=(NoMove2 &&); // expected-error {{does not match}}
-    friend NoMove3 &NoMove3::operator=(NoMove3 &&); // expected-error {{does not match}}
-    friend NoMove4 &NoMove4::operator=(NoMove4 &&); // expected-error {{does not match}}
-    friend NoMove5 &NoMove5::operator=(NoMove5 &&); // expected-error {{does not match}}
-    friend NoMove6 &NoMove6::operator=(NoMove6 &&); // expected-error {{does not match}}
-    friend NoMove7 &NoMove7::operator=(NoMove7 &&); // expected-error {{does not match}}
-    friend NoMove8 &NoMove8::operator=(NoMove8 &&); // expected-error {{does not match}}
-    friend NoMove9 &NoMove9::operator=(NoMove9 &&);
-    friend NoMove10 &NoMove10::operator=(NoMove10 &&); // expected-error {{does not match}}
-    friend NoMove11 &NoMove11::operator=(NoMove11 &&); // expected-error {{does not match}}
+  struct CopyOnly {
+    CopyOnly(const CopyOnly&);
+    CopyOnly &operator=(const CopyOnly&);
   };
+  struct MoveOnly {
+    MoveOnly(MoveOnly&&); // expected-note {{user-declared move}}
+    MoveOnly &operator=(MoveOnly&&);
+  };
+  template void test(CopyOnly); // ok, copies
+  template void test(MoveOnly); // ok, moves
+  struct CopyAndMove { // expected-note {{implicitly deleted}}
+    CopyOnly co;
+    MoveOnly mo; // expected-note {{deleted copy}}
+  };
+  template void test(CopyAndMove); // ok, copies co, moves mo
+  void test2(CopyAndMove cm) {
+    (void)CopyAndMove(cm); // expected-error {{deleted}}
+    cm = cm; // expected-error {{deleted}}
+  }
 }
 
 namespace PR12625 {

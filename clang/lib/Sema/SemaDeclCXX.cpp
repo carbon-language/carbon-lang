@@ -9231,11 +9231,6 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
       ? SpecialMemberIsTrivial(CopyAssignment, CXXCopyAssignment)
       : ClassDecl->hasTrivialCopyAssignment());
 
-  // C++11 [class.copy]p19:
-  //   ....  If the class definition does not explicitly declare a copy
-  //   assignment operator, there is no user-declared move constructor, and
-  //   there is no user-declared move assignment operator, a copy assignment
-  //   operator is implicitly declared as defaulted.
   if (ShouldDeleteSpecialMember(CopyAssignment, CXXCopyAssignment))
     SetDeclDeleted(CopyAssignment, ClassLoc);
 
@@ -9572,119 +9567,12 @@ Sema::ComputeDefaultedMoveAssignmentExceptionSpec(CXXMethodDecl *MD) {
   return ExceptSpec;
 }
 
-/// Determine whether the class type has any direct or indirect virtual base
-/// classes which have a non-trivial move assignment operator.
-static bool
-hasVirtualBaseWithNonTrivialMoveAssignment(Sema &S, CXXRecordDecl *ClassDecl) {
-  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->vbases_begin(),
-                                          BaseEnd = ClassDecl->vbases_end();
-       Base != BaseEnd; ++Base) {
-    CXXRecordDecl *BaseClass =
-        cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-
-    // Try to declare the move assignment. If it would be deleted, then the
-    // class does not have a non-trivial move assignment.
-    if (BaseClass->needsImplicitMoveAssignment())
-      S.DeclareImplicitMoveAssignment(BaseClass);
-
-    if (BaseClass->hasNonTrivialMoveAssignment())
-      return true;
-  }
-
-  return false;
-}
-
-/// Determine whether the given type either has a move constructor or is
-/// trivially copyable.
-static bool
-hasMoveOrIsTriviallyCopyable(Sema &S, QualType Type, bool IsConstructor) {
-  Type = S.Context.getBaseElementType(Type);
-
-  // FIXME: Technically, non-trivially-copyable non-class types, such as
-  // reference types, are supposed to return false here, but that appears
-  // to be a standard defect.
-  CXXRecordDecl *ClassDecl = Type->getAsCXXRecordDecl();
-  if (!ClassDecl || !ClassDecl->getDefinition() || ClassDecl->isInvalidDecl())
-    return true;
-
-  if (Type.isTriviallyCopyableType(S.Context))
-    return true;
-
-  if (IsConstructor) {
-    // FIXME: Need this because otherwise hasMoveConstructor isn't guaranteed to
-    // give the right answer.
-    if (ClassDecl->needsImplicitMoveConstructor())
-      S.DeclareImplicitMoveConstructor(ClassDecl);
-    return ClassDecl->hasMoveConstructor();
-  }
-
-  // FIXME: Need this because otherwise hasMoveAssignment isn't guaranteed to
-  // give the right answer.
-  if (ClassDecl->needsImplicitMoveAssignment())
-    S.DeclareImplicitMoveAssignment(ClassDecl);
-  return ClassDecl->hasMoveAssignment();
-}
-
-/// Determine whether all non-static data members and direct or virtual bases
-/// of class \p ClassDecl have either a move operation, or are trivially
-/// copyable.
-static bool subobjectsHaveMoveOrTrivialCopy(Sema &S, CXXRecordDecl *ClassDecl,
-                                            bool IsConstructor) {
-  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
-                                          BaseEnd = ClassDecl->bases_end();
-       Base != BaseEnd; ++Base) {
-    if (Base->isVirtual())
-      continue;
-
-    if (!hasMoveOrIsTriviallyCopyable(S, Base->getType(), IsConstructor))
-      return false;
-  }
-
-  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->vbases_begin(),
-                                          BaseEnd = ClassDecl->vbases_end();
-       Base != BaseEnd; ++Base) {
-    if (!hasMoveOrIsTriviallyCopyable(S, Base->getType(), IsConstructor))
-      return false;
-  }
-
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-                                     FieldEnd = ClassDecl->field_end();
-       Field != FieldEnd; ++Field) {
-    if (!hasMoveOrIsTriviallyCopyable(S, Field->getType(), IsConstructor))
-      return false;
-  }
-
-  return true;
-}
-
 CXXMethodDecl *Sema::DeclareImplicitMoveAssignment(CXXRecordDecl *ClassDecl) {
-  // C++11 [class.copy]p20:
-  //   If the definition of a class X does not explicitly declare a move
-  //   assignment operator, one will be implicitly declared as defaulted
-  //   if and only if:
-  //
-  //   - [first 4 bullets]
   assert(ClassDecl->needsImplicitMoveAssignment());
 
   DeclaringSpecialMember DSM(*this, ClassDecl, CXXMoveAssignment);
   if (DSM.isAlreadyBeingDeclared())
     return 0;
-
-  // [Checked after we build the declaration]
-  //   - the move assignment operator would not be implicitly defined as
-  //     deleted,
-
-  // [DR1402]:
-  //   - X has no direct or indirect virtual base class with a non-trivial
-  //     move assignment operator, and
-  //   - each of X's non-static data members and direct or virtual base classes
-  //     has a type that either has a move assignment operator or is trivially
-  //     copyable.
-  if (hasVirtualBaseWithNonTrivialMoveAssignment(*this, ClassDecl) ||
-      !subobjectsHaveMoveOrTrivialCopy(*this, ClassDecl,/*Constructor*/false)) {
-    ClassDecl->setFailedImplicitMoveAssignment();
-    return 0;
-  }
 
   // Note: The following rules are largely analoguous to the move
   // constructor rules.
@@ -9729,18 +9617,9 @@ CXXMethodDecl *Sema::DeclareImplicitMoveAssignment(CXXRecordDecl *ClassDecl) {
       ? SpecialMemberIsTrivial(MoveAssignment, CXXMoveAssignment)
       : ClassDecl->hasTrivialMoveAssignment());
 
-  // C++0x [class.copy]p9:
-  //   If the definition of a class X does not explicitly declare a move
-  //   assignment operator, one will be implicitly declared as defaulted if and
-  //   only if:
-  //   [...]
-  //   - the move assignment operator would not be implicitly defined as
-  //     deleted.
   if (ShouldDeleteSpecialMember(MoveAssignment, CXXMoveAssignment)) {
-    // Cache this result so that we don't try to generate this over and over
-    // on every lookup, leaking memory and wasting time.
-    ClassDecl->setFailedImplicitMoveAssignment();
-    return 0;
+    ClassDecl->setImplicitMoveAssignmentIsDeleted();
+    SetDeclDeleted(MoveAssignment, ClassLoc);
   }
 
   // Note that we have added this copy-assignment operator.
@@ -9781,6 +9660,17 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
   //   base-specifier-list, and then the immediate non-static data members of X
   //   are assigned, in the order in which they were declared in the class
   //   definition.
+
+  // FIXME: Issue a warning if our implicit move assignment operator will move
+  // from a virtual base more than once. For instance, given:
+  //
+  //   struct A { A &operator=(A&&); };
+  //   struct B : virtual A {};
+  //   struct C : virtual A {};
+  //   struct D : B, C {};
+  //
+  // If the move assignment operator of D is synthesized, we should warn,
+  // because the A vbase will be moved from multiple times.
 
   // The statements that form the synthesized function body.
   SmallVector<Stmt*, 8> Statements;
@@ -10071,11 +9961,6 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
       ? SpecialMemberIsTrivial(CopyConstructor, CXXCopyConstructor)
       : ClassDecl->hasTrivialCopyConstructor());
 
-  // C++11 [class.copy]p8:
-  //   ... If the class definition does not explicitly declare a copy
-  //   constructor, there is no user-declared move constructor, and there is no
-  //   user-declared move assignment operator, a copy constructor is implicitly
-  //   declared as defaulted.
   if (ShouldDeleteSpecialMember(CopyConstructor, CXXCopyConstructor))
     SetDeclDeleted(CopyConstructor, ClassLoc);
 
@@ -10195,28 +10080,11 @@ Sema::ComputeDefaultedMoveCtorExceptionSpec(CXXMethodDecl *MD) {
 
 CXXConstructorDecl *Sema::DeclareImplicitMoveConstructor(
                                                     CXXRecordDecl *ClassDecl) {
-  // C++11 [class.copy]p9:
-  //   If the definition of a class X does not explicitly declare a move
-  //   constructor, one will be implicitly declared as defaulted if and only if:
-  //
-  //   - [first 4 bullets]
   assert(ClassDecl->needsImplicitMoveConstructor());
 
   DeclaringSpecialMember DSM(*this, ClassDecl, CXXMoveConstructor);
   if (DSM.isAlreadyBeingDeclared())
     return 0;
-
-  // [Checked after we build the declaration]
-  //   - the move assignment operator would not be implicitly defined as
-  //     deleted,
-
-  // [DR1402]:
-  //   - each of X's non-static data members and direct or virtual base classes
-  //     has a type that either has a move constructor or is trivially copyable.
-  if (!subobjectsHaveMoveOrTrivialCopy(*this, ClassDecl, /*Constructor*/true)) {
-    ClassDecl->setFailedImplicitMoveConstructor();
-    return 0;
-  }
 
   QualType ClassType = Context.getTypeDeclType(ClassDecl);
   QualType ArgType = Context.getRValueReferenceType(ClassType);
@@ -10260,16 +10128,9 @@ CXXConstructorDecl *Sema::DeclareImplicitMoveConstructor(
       ? SpecialMemberIsTrivial(MoveConstructor, CXXMoveConstructor)
       : ClassDecl->hasTrivialMoveConstructor());
 
-  // C++0x [class.copy]p9:
-  //   If the definition of a class X does not explicitly declare a move
-  //   constructor, one will be implicitly declared as defaulted if and only if:
-  //   [...]
-  //   - the move constructor would not be implicitly defined as deleted.
   if (ShouldDeleteSpecialMember(MoveConstructor, CXXMoveConstructor)) {
-    // Cache this result so that we don't try to generate this over and over
-    // on every lookup, leaking memory and wasting time.
-    ClassDecl->setFailedImplicitMoveConstructor();
-    return 0;
+    ClassDecl->setImplicitMoveConstructorIsDeleted();
+    SetDeclDeleted(MoveConstructor, ClassLoc);
   }
 
   // Note that we have declared this constructor.
