@@ -499,6 +499,9 @@ def ext_abstract_pack_declarator_parens : ExtWarn<
 def err_function_is_not_record : Error<
   "unexpected '%select{.|->}0' in function call; perhaps remove the "
   "'%select{.|->}0'?">;
+def err_mistyped_arrow_in_member_access : Error<
+  "use of undeclared identifier %0; did you mean '->' instead of "
+  "'%select{-|>}1'?">;
 
 // C++ derived classes
 def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;
