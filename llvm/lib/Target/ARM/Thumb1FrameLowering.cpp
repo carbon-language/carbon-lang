@@ -127,7 +127,6 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
     case ARM::LR:
       if (Reg == FramePtr)
         FramePtrSpillFI = FI;
-      AFI->addGPRCalleeSavedArea1Frame(FI);
       GPRCS1Size += 4;
       break;
     case ARM::R8:
@@ -136,16 +135,12 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
     case ARM::R11:
       if (Reg == FramePtr)
         FramePtrSpillFI = FI;
-      if (STI.isTargetIOS()) {
-        AFI->addGPRCalleeSavedArea2Frame(FI);
+      if (STI.isTargetIOS())
         GPRCS2Size += 4;
-      } else {
-        AFI->addGPRCalleeSavedArea1Frame(FI);
+      else
         GPRCS1Size += 4;
-      }
       break;
     default:
-      AFI->addDPRCalleeSavedAreaFrame(FI);
       DPRCSSize += 8;
     }
   }
@@ -171,8 +166,9 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // Adjust FP so it point to the stack slot that contains the previous FP.
   if (HasFP) {
+    int FramePtrOffset = MFI->getObjectOffset(FramePtrSpillFI) + GPRCS1Size;
     AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
-      .addFrameIndex(FramePtrSpillFI).addImm(0)
+      .addReg(ARM::SP).addImm(FramePtrOffset / 4)
       .setMIFlags(MachineInstr::FrameSetup));
     if (NumBytes > 508)
       // If offset is > 508 then sp cannot be adjusted in a single instruction,

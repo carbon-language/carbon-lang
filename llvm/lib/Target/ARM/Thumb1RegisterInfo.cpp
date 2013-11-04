@@ -573,11 +573,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
                MF.getFrameInfo()->getStackSize() + SPAdj;
 
-  if (AFI->isGPRCalleeSavedArea1Frame(FrameIndex))
-    Offset -= AFI->getGPRCalleeSavedArea1Offset();
-  else if (AFI->isGPRCalleeSavedArea2Frame(FrameIndex))
-    Offset -= AFI->getGPRCalleeSavedArea2Offset();
-  else if (MF.getFrameInfo()->hasVarSizedObjects()) {
+  if (MF.getFrameInfo()->hasVarSizedObjects()) {
     assert(SPAdj == 0 && MF.getTarget().getFrameLowering()->hasFP(MF) &&
            "Unexpected");
     // There are alloca()'s in this function, must reference off the frame

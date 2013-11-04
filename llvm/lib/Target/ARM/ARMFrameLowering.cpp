@@ -115,18 +115,29 @@ static bool isCSRestore(MachineInstr *MI,
   return false;
 }
 
-static void
-emitSPUpdate(bool isARM,
-             MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
-             DebugLoc dl, const ARMBaseInstrInfo &TII,
-             int NumBytes, unsigned MIFlags = MachineInstr::NoFlags,
-             ARMCC::CondCodes Pred = ARMCC::AL, unsigned PredReg = 0) {
+static void emitRegPlusImmediate(bool isARM, MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator &MBBI, DebugLoc dl,
+                                 const ARMBaseInstrInfo &TII, unsigned DestReg,
+                                 unsigned SrcReg, int NumBytes,
+                                 unsigned MIFlags = MachineInstr::NoFlags,
+                                 ARMCC::CondCodes Pred = ARMCC::AL,
+                                 unsigned PredReg = 0) {
   if (isARM)
-    emitARMRegPlusImmediate(MBB, MBBI, dl, ARM::SP, ARM::SP, NumBytes,
+    emitARMRegPlusImmediate(MBB, MBBI, dl, DestReg, SrcReg, NumBytes,
                             Pred, PredReg, TII, MIFlags);
   else
-    emitT2RegPlusImmediate(MBB, MBBI, dl, ARM::SP, ARM::SP, NumBytes,
+    emitT2RegPlusImmediate(MBB, MBBI, dl, DestReg, SrcReg, NumBytes,
                            Pred, PredReg, TII, MIFlags);
+}
+
+static void emitSPUpdate(bool isARM, MachineBasicBlock &MBB,
+                         MachineBasicBlock::iterator &MBBI, DebugLoc dl,
+                         const ARMBaseInstrInfo &TII, int NumBytes,
+                         unsigned MIFlags = MachineInstr::NoFlags,
+                         ARMCC::CondCodes Pred = ARMCC::AL,
+                         unsigned PredReg = 0) {
+  emitRegPlusImmediate(isARM, MBB, MBBI, dl, TII, ARM::SP, ARM::SP, NumBytes,
+                       MIFlags, Pred, PredReg);
 }
 
 void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
@@ -186,7 +197,6 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
     case ARM::LR:
       if (Reg == FramePtr)
         FramePtrSpillFI = FI;
-      AFI->addGPRCalleeSavedArea1Frame(FI);
       GPRCS1Size += 4;
       break;
     case ARM::R8:
@@ -196,47 +206,25 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
     case ARM::R12:
       if (Reg == FramePtr)
         FramePtrSpillFI = FI;
-      if (STI.isTargetIOS()) {
-        AFI->addGPRCalleeSavedArea2Frame(FI);
+      if (STI.isTargetIOS())
         GPRCS2Size += 4;
-      } else {
-        AFI->addGPRCalleeSavedArea1Frame(FI);
+      else
         GPRCS1Size += 4;
-      }
       break;
     default:
       // This is a DPR. Exclude the aligned DPRCS2 spills.
       if (Reg == ARM::D8)
         D8SpillFI = FI;
-      if (Reg < ARM::D8 || Reg >= ARM::D8 + AFI->getNumAlignedDPRCS2Regs()) {
-        AFI->addDPRCalleeSavedAreaFrame(FI);
+      if (Reg < ARM::D8 || Reg >= ARM::D8 + AFI->getNumAlignedDPRCS2Regs())
         DPRCSSize += 8;
-      }
     }
   }
 
   // Move past area 1.
   if (GPRCS1Size > 0) MBBI++;
 
-  // Set FP to point to the stack slot that contains the previous FP.
-  // For iOS, FP is R7, which has now been stored in spill area 1.
-  // Otherwise, if this is not iOS, all the callee-saved registers go
-  // into spill area 1, including the FP in R11.  In either case, it is
-  // now safe to emit this assignment.
-  bool HasFP = hasFP(MF);
-  if (HasFP) {
-    unsigned ADDriOpc = !AFI->isThumbFunction() ? ARM::ADDri : ARM::t2ADDri;
-    MachineInstrBuilder MIB =
-      BuildMI(MBB, MBBI, dl, TII.get(ADDriOpc), FramePtr)
-      .addFrameIndex(FramePtrSpillFI).addImm(0)
-      .setMIFlag(MachineInstr::FrameSetup);
-    AddDefaultCC(AddDefaultPred(MIB));
-  }
-
-  // Move past area 2.
-  if (GPRCS2Size > 0) MBBI++;
-
   // Determine starting offsets of spill areas.
+  bool HasFP = hasFP(MF);
   unsigned DPRCSOffset  = NumBytes - (GPRCS1Size + GPRCS2Size + DPRCSSize);
   unsigned GPRCS2Offset = DPRCSOffset + DPRCSSize;
   unsigned GPRCS1Offset = GPRCS2Offset + GPRCS2Size;
@@ -246,6 +234,21 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   AFI->setGPRCalleeSavedArea1Offset(GPRCS1Offset);
   AFI->setGPRCalleeSavedArea2Offset(GPRCS2Offset);
   AFI->setDPRCalleeSavedAreaOffset(DPRCSOffset);
+
+  // Set FP to point to the stack slot that contains the previous FP.
+  // For iOS, FP is R7, which has now been stored in spill area 1.
+  // Otherwise, if this is not iOS, all the callee-saved registers go
+  // into spill area 1, including the FP in R11.  In either case, it is
+  // now safe to emit this assignment.
+  if (HasFP) {
+    int FramePtrOffset = MFI->getObjectOffset(FramePtrSpillFI) + GPRCS1Size;
+    emitRegPlusImmediate(!AFI->isThumbFunction(), MBB, MBBI, dl, TII,
+                         FramePtr, ARM::SP, FramePtrOffset,
+                         MachineInstr::FrameSetup);
+  }
+
+  // Move past area 2.
+  if (GPRCS2Size > 0) MBBI++;
 
   // Move past area 3.
   if (DPRCSSize > 0) {
@@ -506,12 +509,6 @@ ARMFrameLowering::ResolveFrameIndexReference(const MachineFunction &MF,
 
   FrameReg = ARM::SP;
   Offset += SPAdj;
-  if (AFI->isGPRCalleeSavedArea1Frame(FI))
-    return Offset - AFI->getGPRCalleeSavedArea1Offset();
-  else if (AFI->isGPRCalleeSavedArea2Frame(FI))
-    return Offset - AFI->getGPRCalleeSavedArea2Offset();
-  else if (AFI->isDPRCalleeSavedAreaFrame(FI))
-    return Offset - AFI->getDPRCalleeSavedAreaOffset();
 
   // SP can move around if there are allocas.  We may also lose track of SP
   // when emergency spilling inside a non-reserved call frame setup.
