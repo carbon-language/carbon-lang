@@ -1114,7 +1114,7 @@ ABISysV_x86_64::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
     UnwindPlan::RowSP row(new UnwindPlan::Row);
 
     const int32_t ptr_size = 8;
-    row->SetCFARegister (LLDB_REGNUM_GENERIC_FP);
+    row->SetCFARegister (gcc_dwarf_rbp);
     row->SetCFAOffset (2 * ptr_size);
     row->SetOffset (0);
     
