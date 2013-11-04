@@ -62,6 +62,14 @@ package "vectorize" (
     archive(native) = "llvm_vectorize.cmxa"
 )
 
+package "passmgr_builder" (
+    requires = "llvm"
+    version = "@PACKAGE_VERSION@"
+    description = "Pass Manager Builder for LLVM"
+    archive(byte) = "llvm_passmgr_builder.cma"
+    archive(native) = "llvm_passmgr_builder.cmxa"
+)
+
 package "target" (
     requires = "llvm"
     version  = "@PACKAGE_VERSION@"
