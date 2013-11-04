@@ -22,6 +22,11 @@ define void @test_inline_modifier_L() nounwind {
 ; CHECK: ldr x0, [x0, #:gottprel_lo12:var_tlsie]
 ; CHECK: add x0, x0, #:tprel_lo12:var_tlsle
 
+  call void asm sideeffect "add x0, x0, ${0:L}", "Si,~{x0}"(i32 64)
+  call void asm sideeffect "ldr x0, [x0, ${0:L}]", "Si,~{x0}"(i32 64)
+; CHECK: add x0, x0, #64
+; CHECK: ldr x0, [x0, #64]
+
   ret void
 }
 
@@ -32,6 +37,8 @@ define void @test_inline_modifier_G() nounwind {
 ; CHECK: add x0, x0, #:dtprel_hi12:var_tlsld, lsl #12
 ; CHECK: add x0, x0, #:tprel_hi12:var_tlsle, lsl #12
 
+  call void asm sideeffect "add x0, x0, ${0:G}", "Si,~{x0}"(i32 42)
+; CHECK: add x0, x0, #42
   ret void
 }
 
@@ -46,6 +53,9 @@ define void @test_inline_modifier_A() nounwind {
 ; CHECK: adrp x0, :got:var_got
 ; CHECK: adrp x0, :tlsdesc:var_tlsgd
 ; CHECK: adrp x0, :gottprel:var_tlsie
+
+  call void asm sideeffect "adrp x0, ${0:A}", "Si,~{x0}"(i32 40)
+; CHECK: adrp x0, #40
 
   ret void
 }
@@ -71,6 +81,12 @@ define void @test_inline_modifier_wx(i32 %small, i64 %big) nounwind {
   call i32 asm sideeffect "add ${0:x}, ${1:x}, ${1:x}", "=r,r"(i32 0)
 ; CHECK: add {{w[0-9]+}}, wzr, wzr
 ; CHECK: add {{x[0-9]+}}, xzr, xzr
+
+  call i32 asm sideeffect "add ${0:w}, ${0:w}, ${1:w}", "=r,Ir,0"(i32 123, i32 %small)
+  call i64 asm sideeffect "add ${0:x}, ${0:x}, ${1:x}", "=r,Ir,0"(i32 456, i64 %big)
+; CHECK: add {{w[0-9]+}}, {{w[0-9]+}}, #123
+; CHECK: add {{x[0-9]+}}, {{x[0-9]+}}, #456
+
   ret void
 }
 
@@ -97,6 +113,18 @@ define void @test_inline_modifier_bhsdq() nounwind {
 ; CHECK: ldr s0, [sp]
 ; CHECK: ldr d0, [sp]
 ; CHECK: ldr q0, [sp]
+
+  call void asm sideeffect "fcmp b0, ${0:b}", "Yw"(float 0.0)
+  call void asm sideeffect "fcmp h0, ${0:h}", "Yw"(float 0.0)
+  call void asm sideeffect "fcmp s0, ${0:s}", "Yw"(float 0.0)
+  call void asm sideeffect "fcmp d0, ${0:d}", "Yw"(float 0.0)
+  call void asm sideeffect "fcmp q0, ${0:q}", "Yw"(float 0.0)
+; CHECK: fcmp b0, #0
+; CHECK: fcmp h0, #0
+; CHECK: fcmp s0, #0
+; CHECK: fcmp d0, #0
+; CHECK: fcmp q0, #0
+
   ret void
 }
 
@@ -116,3 +144,4 @@ define void @test_inline_modifier_a() nounwind {
 ; CHECK: prfm pldl1keep, [x[[VARADDR]]]
   ret void
 }
+

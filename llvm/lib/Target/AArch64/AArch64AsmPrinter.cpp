@@ -82,7 +82,7 @@ bool AArch64AsmPrinter::printSymbolicAddress(const MachineOperand &MO,
   StringRef Modifier;
   switch (MO.getType()) {
   default:
-    llvm_unreachable("Unexpected operand for symbolic address constraint");
+    return true;
   case MachineOperand::MO_GlobalAddress:
     Name = getSymbol(MO.getGlobal())->getName();
 
@@ -146,57 +146,33 @@ bool AArch64AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
                                         unsigned AsmVariant,
                                         const char *ExtraCode, raw_ostream &O) {
   const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
-  if (!ExtraCode || !ExtraCode[0]) {
-    // There's actually no operand modifier, which leads to a slightly eclectic
-    // set of behaviour which we have to handle here.
-    const MachineOperand &MO = MI->getOperand(OpNum);
-    switch (MO.getType()) {
-    default:
-      llvm_unreachable("Unexpected operand for inline assembly");
-    case MachineOperand::MO_Register:
-      // GCC prints the unmodified operand of a 'w' constraint as the vector
-      // register. Technically, we could allocate the argument as a VPR128, but
-      // that leads to extremely dodgy copies being generated to get the data
-      // there.
-      if (printModifiedFPRAsmOperand(MO, TRI, 'v', O))
-        O << AArch64InstPrinter::getRegisterName(MO.getReg());
-      break;
-    case MachineOperand::MO_Immediate:
-      O << '#' << MO.getImm();
-      break;
-    case MachineOperand::MO_FPImmediate:
-      assert(MO.getFPImm()->isExactlyValue(0.0) && "Only FP 0.0 expected");
-      O << "#0.0";
-      break;
-    case MachineOperand::MO_BlockAddress:
-    case MachineOperand::MO_ConstantPoolIndex:
-    case MachineOperand::MO_GlobalAddress:
-    case MachineOperand::MO_ExternalSymbol:
-      return printSymbolicAddress(MO, false, "", O);
-    }
-    return false;
-  }
 
-  // We have a real modifier to handle.
+  if (!ExtraCode)
+    ExtraCode = "";
+
   switch(ExtraCode[0]) {
   default:
-    // See if this is a generic operand
-    return AsmPrinter::PrintAsmOperand(MI, OpNum, AsmVariant, ExtraCode, O);
+    break;
   case 'c': // Don't print "#" before an immediate operand.
-    if (!MI->getOperand(OpNum).isImm())
-      return true;
-    O << MI->getOperand(OpNum).getImm();
-    return false;
+    if (MI->getOperand(OpNum).isImm()) {
+      O << MI->getOperand(OpNum).getImm();
+      return false;
+    }
+    break;
   case 'w':
     // Output 32-bit general register operand, constant zero as wzr, or stack
     // pointer as wsp. Ignored when used with other operand types.
-    return printModifiedGPRAsmOperand(MI->getOperand(OpNum), TRI,
-                                      AArch64::GPR32RegClass, O);
+    if (!printModifiedGPRAsmOperand(MI->getOperand(OpNum), TRI,
+                                    AArch64::GPR32RegClass, O))
+      return false;
+    break;
   case 'x':
     // Output 64-bit general register operand, constant zero as xzr, or stack
     // pointer as sp. Ignored when used with other operand types.
-    return printModifiedGPRAsmOperand(MI->getOperand(OpNum), TRI,
-                                      AArch64::GPR64RegClass, O);
+    if (!printModifiedGPRAsmOperand(MI->getOperand(OpNum), TRI,
+                                    AArch64::GPR64RegClass, O))
+      return false;
+    break;
   case 'H':
     // Output higher numbered of a 64-bit general register pair
   case 'Q':
@@ -216,25 +192,61 @@ bool AArch64AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
   case 's':
   case 'd':
   case 'q':
-    return printModifiedFPRAsmOperand(MI->getOperand(OpNum), TRI,
-                                      ExtraCode[0], O);
+    if (!printModifiedFPRAsmOperand(MI->getOperand(OpNum), TRI,
+                                    ExtraCode[0], O))
+      return false;
+    break;
   case 'A':
     // Output symbolic address with appropriate relocation modifier (also
     // suitable for ADRP).
-    return printSymbolicAddress(MI->getOperand(OpNum), false, "", O);
+    if (!printSymbolicAddress(MI->getOperand(OpNum), false, "", O))
+      return false;
+    break;
   case 'L':
     // Output bits 11:0 of symbolic address with appropriate :lo12: relocation
     // modifier.
-    return printSymbolicAddress(MI->getOperand(OpNum), true, "lo12", O);
+    if (!printSymbolicAddress(MI->getOperand(OpNum), true, "lo12", O))
+      return false;
+    break;
   case 'G':
     // Output bits 23:12 of symbolic address with appropriate :hi12: relocation
     // modifier (currently only for TLS local exec).
-    return printSymbolicAddress(MI->getOperand(OpNum), true, "hi12", O);
+    if (!printSymbolicAddress(MI->getOperand(OpNum), true, "hi12", O))
+      return false;
+    break;
   case 'a':
     return PrintAsmMemoryOperand(MI, OpNum, AsmVariant, ExtraCode, O);
   }
 
+  // There's actually no operand modifier, which leads to a slightly eclectic
+  // set of behaviour which we have to handle here.
+  const MachineOperand &MO = MI->getOperand(OpNum);
+  switch (MO.getType()) {
+  default:
+    llvm_unreachable("Unexpected operand for inline assembly");
+  case MachineOperand::MO_Register:
+    // GCC prints the unmodified operand of a 'w' constraint as the vector
+    // register. Technically, we could allocate the argument as a VPR128, but
+    // that leads to extremely dodgy copies being generated to get the data
+    // there.
+    if (printModifiedFPRAsmOperand(MO, TRI, 'v', O))
+      O << AArch64InstPrinter::getRegisterName(MO.getReg());
+    break;
+  case MachineOperand::MO_Immediate:
+    O << '#' << MO.getImm();
+    break;
+  case MachineOperand::MO_FPImmediate:
+    assert(MO.getFPImm()->isExactlyValue(0.0) && "Only FP 0.0 expected");
+    O << "#0.0";
+    break;
+  case MachineOperand::MO_BlockAddress:
+  case MachineOperand::MO_ConstantPoolIndex:
+  case MachineOperand::MO_GlobalAddress:
+  case MachineOperand::MO_ExternalSymbol:
+    return printSymbolicAddress(MO, false, "", O);
+  }
 
+  return false;
 }
 
 bool AArch64AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
