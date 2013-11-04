@@ -311,6 +311,8 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     // Set CodeGen options
     m_compiler->getCodeGenOpts().EmitDeclMetadata = true;
     m_compiler->getCodeGenOpts().InstrumentFunctions = false;
+    m_compiler->getCodeGenOpts().DisableFPElim = true;
+    m_compiler->getCodeGenOpts().OmitLeafFramePointer = false;
     
     // Disable some warnings.
     m_compiler->getDiagnostics().setDiagnosticGroupMapping("unused-value", clang::diag::MAP_IGNORE, SourceLocation());
