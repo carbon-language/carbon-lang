@@ -5576,9 +5576,9 @@ bool Sema::SpecialMemberIsTrivial(CXXMethodDecl *MD, CXXSpecialMember CSM,
 
   bool ConstArg = false;
 
-  // C++11 [class.copy]p12, p25:
-  //   A [special member] is trivial if its declared parameter type is the same
-  //   as if it had been implicitly declared [...]
+  // C++11 [class.copy]p12, p25: [DR1593]
+  //   A [special member] is trivial if [...] its parameter-type-list is
+  //   equivalent to the parameter-type-list of an implicit declaration [...]
   switch (CSM) {
   case CXXDefaultConstructor:
   case CXXDestructor:
@@ -5622,11 +5622,6 @@ bool Sema::SpecialMemberIsTrivial(CXXMethodDecl *MD, CXXSpecialMember CSM,
     llvm_unreachable("not a special member");
   }
 
-  // FIXME: We require that the parameter-declaration-clause is equivalent to
-  // that of an implicit declaration, not just that the declared parameter type
-  // matches, in order to prevent absuridities like a function simultaneously
-  // being a trivial copy constructor and a non-trivial default constructor.
-  // This issue has not yet been assigned a core issue number.
   if (MD->getMinRequiredArguments() < MD->getNumParams()) {
     if (Diagnose)
       Diag(MD->getParamDecl(MD->getMinRequiredArguments())->getLocation(),
