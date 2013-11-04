@@ -118,6 +118,8 @@ module CallConv : sig
                               convention from C. *)
 end
 
+(** The attribute kind of a function parameter, result or the function itself.
+    See [llvm::Attribute::AttrKind]. *)
 module Attribute : sig
   type t =
   | Zext
@@ -633,6 +635,7 @@ val type_by_name : llmodule -> string -> lltype option
     See the method [llvm::Value::getType]. *)
 val type_of : llvalue -> lltype
 
+(** [classify_value v] returns the kind of the value [v]. *)
 val classify_value : llvalue -> ValueKind.t
 
 (** [value_name v] returns the name of the value [v]. For global values, this is
@@ -732,6 +735,8 @@ val is_null : llvalue -> bool
     otherwise. Similar to [llvm::isa<UndefValue>]. *)
 val is_undef : llvalue -> bool
 
+(** [constexpr_opcode v] returns an [Opcode.t] corresponding to constexpr
+    value [v], or [Opcode.Invalid] if [v] is not a constexpr. *)
 val constexpr_opcode : llvalue -> Opcode.t
 
 
@@ -771,7 +776,7 @@ val mdnode : llcontext -> llvalue array -> llvalue
     See the method [llvm::MDString::getString] *)
 val get_mdstring : llvalue -> string option
 
-(** [get_named_metadata m name] return all the MDNodes belonging to the named
+(** [get_named_metadata m name] returns all the MDNodes belonging to the named
     metadata (if any).
     See the method [llvm::NamedMDNode::getOperand]. *)
 val get_named_metadata : llmodule -> string -> llvalue array
@@ -1578,10 +1583,11 @@ val fold_left_blocks : ('a -> llbasicblock -> 'a) -> 'a -> llvalue -> 'a
     See the method [llvm::Function::end]. *)
 val block_end : llvalue -> (llvalue, llbasicblock) llrev_pos
 
-(** [block_pred gv] returns the function list position preceding [After gv].
+(** [block_pred bb] returns the basic block list position preceding [After bb].
     See the method [llvm::Function::iterator::operator--]. *)
 val block_pred : llbasicblock -> (llvalue, llbasicblock) llrev_pos
 
+(** [block_terminator bb] returns the terminator of the basic block [bb]. *)
 val block_terminator : llbasicblock -> llvalue option
 
 (** [rev_iter_blocks f fn] applies function [f] to each of the basic blocks
@@ -1609,6 +1615,10 @@ val block_of_value : llvalue -> llbasicblock
 (** [instr_parent i] is the enclosing basic block of the instruction [i].
     See the method [llvm::Instruction::getParent]. *)
 val instr_parent : llvalue -> llbasicblock
+
+(** [delete_instruction i] deletes the instruction [i].
+ * See the method [llvm::Instruction::eraseFromParent]. *)
+val delete_instruction : llvalue -> unit
 
 (** [instr_begin bb] returns the first position in the instruction list of the
     basic block [bb]. [instr_begin] and [instr_succ] can be used to iterate over
@@ -1642,8 +1652,12 @@ val instr_pred : llvalue -> (llbasicblock, llvalue) llrev_pos
     [f1,...,fN] are the instructions of basic block [bb]. Tail recursive. *)
 val fold_right_instrs: (llvalue -> 'a -> 'a) -> llbasicblock -> 'a -> 'a
 
+(** [inst_opcode i] returns the [Opcode.t] corresponding to instruction [i],
+    or [Opcode.Invalid] if [i] is not an instruction. *)
 val instr_opcode : llvalue -> Opcode.t
 
+(** [icmp_predicate i] returns the [Icmp.t] corresponding to an [icmp]
+    instruction [i]. *)
 val icmp_predicate : llvalue -> Icmp.t option
 
 
@@ -1673,7 +1687,7 @@ val add_instruction_param_attr : llvalue -> int -> Attribute.t -> unit
 val remove_instruction_param_attr : llvalue -> int -> Attribute.t -> unit
 
 
-(** {Operations on call instructions (only)} *)
+(** {7 Operations on call instructions (only)} *)
 
 (** [is_tail_call ci] is [true] if the call instruction [ci] is flagged as
     eligible for tail call optimization, [false] otherwise.
@@ -1711,9 +1725,6 @@ val add_incoming : (llvalue * llbasicblock) -> llvalue -> unit
     See the method [llvm::PHINode::getIncomingValue]. *)
 val incoming : llvalue -> (llvalue * llbasicblock) list
 
-(** [delete_instruction i] deletes the instruction [i].
- * See the method [llvm::Instruction::eraseFromParent]. *)
-val delete_instruction : llvalue -> unit
 
 
 (** {6 Instruction builders} *)

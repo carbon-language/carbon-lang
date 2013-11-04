@@ -635,6 +635,7 @@ CAMLprim value llvm_get_mdstring(LLVMValueRef V) {
   CAMLreturn(Val_int(0));
 }
 
+/* llmodule -> string -> llvalue array */
 CAMLprim value llvm_get_namedmd(LLVMModuleRef M, value Name)
 {
   CAMLparam1(Name);
@@ -1268,7 +1269,7 @@ CAMLprim value llvm_instr_get_opcode(LLVMValueRef Inst) {
   return Val_int(o);
 }
 
-/* llvalue -> ICmp.t */
+/* llvalue -> ICmp.t option */
 CAMLprim value llvm_instr_icmp_predicate(LLVMValueRef Val) {
   CAMLparam0();
   int x = LLVMGetICmpPredicate(Val);
