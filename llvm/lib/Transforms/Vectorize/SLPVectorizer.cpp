@@ -1626,7 +1626,7 @@ class DTCmp {
 public:
   DTCmp(const DominatorTree *DT) : DT(DT) {}
   bool operator()(const BasicBlock *A, const BasicBlock *B) const {
-    return DT->dominates(A, B);
+    return DT->properlyDominates(A, B);
   }
 };
 
