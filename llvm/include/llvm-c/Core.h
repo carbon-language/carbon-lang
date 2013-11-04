@@ -434,13 +434,11 @@ void LLVMInstallFatalErrorHandler(LLVMFatalErrorHandler Handler);
 void LLVMResetFatalErrorHandler(void);
 
 /**
- * Disable LLVM's built-in stack trace code. This must be called before any
- * other LLVM APIs; otherwise the results are undefined.
- *
- * FIXME: This API should be replaced by a LLVMEnablePrettyStackTrace()
- * function; the default should be that pretty stack traces are disabled.
+ * Enable LLVM's built-in stack trace code. This intercepts the OS's crash
+ * signals and prints which component of LLVM you were in at the time if the
+ * crash.
  */
-void LLVMDisablePrettyStackTrace(void);
+void LLVMEnablePrettyStackTrace(void);
 
 /**
  * @defgroup LLVMCCoreContext Contexts

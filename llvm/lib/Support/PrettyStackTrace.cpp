@@ -28,10 +28,6 @@
 
 using namespace llvm;
 
-namespace llvm {
-  bool DisablePrettyStackTrace = false;
-}
-
 static ManagedStatic<sys::ThreadLocal<const PrettyStackTraceEntry> > PrettyStackTraceHead;
 
 static unsigned PrintStack(const PrettyStackTraceEntry *Entry, raw_ostream &OS){
@@ -103,17 +99,7 @@ static void CrashHandler(void *) {
 #endif
 }
 
-static bool RegisterCrashPrinter() {
-  if (!DisablePrettyStackTrace)
-    sys::AddSignalHandler(CrashHandler, 0);
-  return false;
-}
-
 PrettyStackTraceEntry::PrettyStackTraceEntry() {
-  // The first time this is called, we register the crash printer.
-  static bool HandlerRegistered = RegisterCrashPrinter();
-  (void)HandlerRegistered;
-    
   // Link ourselves.
   NextEntry = PrettyStackTraceHead->get();
   PrettyStackTraceHead->set(this);
@@ -149,6 +135,17 @@ void PrettyStackTraceProgram::print(raw_ostream &OS) const {
   OS << '\n';
 }
 
-void LLVMDisablePrettyStackTrace() {
-  DisablePrettyStackTrace = true;
+static bool RegisterCrashPrinter() {
+  sys::AddSignalHandler(CrashHandler, 0);
+  return false;
+}
+
+void llvm::EnablePrettyStackTrace() {
+  // The first time this is called, we register the crash printer.
+  static bool HandlerRegistered = RegisterCrashPrinter();
+  (void)HandlerRegistered;
+}
+
+void LLVMEnablePrettyStackTrace() {
+  EnablePrettyStackTrace();
 }
