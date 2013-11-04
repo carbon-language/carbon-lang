@@ -9627,6 +9627,94 @@ CXXMethodDecl *Sema::DeclareImplicitMoveAssignment(CXXRecordDecl *ClassDecl) {
   return MoveAssignment;
 }
 
+/// Check if we're implicitly defining a move assignment operator for a class
+/// with virtual bases. Such a move assignment might move-assign the virtual
+/// base multiple times.
+static void checkMoveAssignmentForRepeatedMove(Sema &S, CXXRecordDecl *Class,
+                                               SourceLocation CurrentLocation) {
+  assert(!Class->isDependentContext() && "should not define dependent move");
+
+  // Only a virtual base could get implicitly move-assigned multiple times.
+  // Only a non-trivial move assignment can observe this. We only want to
+  // diagnose if we implicitly define an assignment operator that assigns
+  // two base classes, both of which move-assign the same virtual base.
+  if (Class->getNumVBases() == 0 || Class->hasTrivialMoveAssignment() ||
+      Class->getNumBases() < 2)
+    return;
+
+  llvm::SmallVector<CXXBaseSpecifier *, 16> Worklist;
+  typedef llvm::DenseMap<CXXRecordDecl*, CXXBaseSpecifier*> VBaseMap;
+  VBaseMap VBases;
+
+  for (CXXRecordDecl::base_class_iterator BI = Class->bases_begin(),
+                                          BE = Class->bases_end();
+       BI != BE; ++BI) {
+    Worklist.push_back(&*BI);
+    while (!Worklist.empty()) {
+      CXXBaseSpecifier *BaseSpec = Worklist.pop_back_val();
+      CXXRecordDecl *Base = BaseSpec->getType()->getAsCXXRecordDecl();
+
+      // If the base has no non-trivial move assignment operators,
+      // we don't care about moves from it.
+      if (!Base->hasNonTrivialMoveAssignment())
+        continue;
+
+      // If there's nothing virtual here, skip it.
+      if (!BaseSpec->isVirtual() && !Base->getNumVBases())
+        continue;
+
+      // If we're not actually going to call a move assignment for this base,
+      // or the selected move assignment is trivial, skip it.
+      Sema::SpecialMemberOverloadResult *SMOR =
+        S.LookupSpecialMember(Base, Sema::CXXMoveAssignment,
+                              /*ConstArg*/false, /*VolatileArg*/false,
+                              /*RValueThis*/true, /*ConstThis*/false,
+                              /*VolatileThis*/false);
+      if (!SMOR->getMethod() || SMOR->getMethod()->isTrivial() ||
+          !SMOR->getMethod()->isMoveAssignmentOperator())
+        continue;
+
+      if (BaseSpec->isVirtual()) {
+        // We're going to move-assign this virtual base, and its move
+        // assignment operator is not trivial. If this can happen for
+        // multiple distinct direct bases of Class, diagnose it. (If it
+        // only happens in one base, we'll diagnose it when synthesizing
+        // that base class's move assignment operator.)
+        CXXBaseSpecifier *&Existing =
+            VBases.insert(std::make_pair(Base->getCanonicalDecl(), BI))
+                .first->second;
+        if (Existing && Existing != BI) {
+          S.Diag(CurrentLocation, diag::warn_vbase_moved_multiple_times)
+            << Class << Base;
+          S.Diag(Existing->getLocStart(), diag::note_vbase_moved_here)
+            << (Base->getCanonicalDecl() ==
+                Existing->getType()->getAsCXXRecordDecl()->getCanonicalDecl())
+            << Base << Existing->getType() << Existing->getSourceRange();
+          S.Diag(BI->getLocStart(), diag::note_vbase_moved_here)
+            << (Base->getCanonicalDecl() ==
+                BI->getType()->getAsCXXRecordDecl()->getCanonicalDecl())
+            << Base << BI->getType() << BaseSpec->getSourceRange();
+
+          // Only diagnose each vbase once.
+          Existing = 0;
+        }
+      } else {
+        // Only walk over bases that have defaulted move assignment operators.
+        // We assume that any user-provided move assignment operator handles
+        // the multiple-moves-of-vbase case itself somehow.
+        if (!SMOR->getMethod()->isDefaulted())
+          continue;
+
+        // We're going to move the base classes of Base. Add them to the list.
+        for (CXXRecordDecl::base_class_iterator BI = Base->bases_begin(),
+                                                BE = Base->bases_end();
+             BI != BE; ++BI)
+          Worklist.push_back(&*BI);
+      }
+    }
+  }
+}
+
 void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
                                         CXXMethodDecl *MoveAssignOperator) {
   assert((MoveAssignOperator->isDefaulted() && 
@@ -9656,16 +9744,9 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
   //   are assigned, in the order in which they were declared in the class
   //   definition.
 
-  // FIXME: Issue a warning if our implicit move assignment operator will move
-  // from a virtual base more than once. For instance, given:
-  //
-  //   struct A { A &operator=(A&&); };
-  //   struct B : virtual A {};
-  //   struct C : virtual A {};
-  //   struct D : B, C {};
-  //
-  // If the move assignment operator of D is synthesized, we should warn,
-  // because the A vbase will be moved from multiple times.
+  // Issue a warning if our implicit move assignment operator will move
+  // from a virtual base more than once.
+  checkMoveAssignmentForRepeatedMove(*this, ClassDecl, CurrentLocation);
 
   // The statements that form the synthesized function body.
   SmallVector<Stmt*, 8> Statements;
@@ -9692,6 +9773,14 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
   bool Invalid = false;
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
        E = ClassDecl->bases_end(); Base != E; ++Base) {
+    // C++11 [class.copy]p28:
+    //   It is unspecified whether subobjects representing virtual base classes
+    //   are assigned more than once by the implicitly-defined copy assignment
+    //   operator.
+    // FIXME: Do not assign to a vbase that will be assigned by some other base
+    // class. For a move-assignment, this can result in the vbase being moved
+    // multiple times.
+
     // Form the assignment:
     //   static_cast<Base*>(this)->Base::operator=(static_cast<Base&&>(other));
     QualType BaseType = Base->getType().getUnqualifiedType();

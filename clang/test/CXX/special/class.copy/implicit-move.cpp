@@ -243,6 +243,61 @@ namespace DR1402 {
     (void)CopyAndMove(cm); // expected-error {{deleted}}
     cm = cm; // expected-error {{deleted}}
   }
+
+  namespace VbaseMove {
+    struct A {};
+    struct B { B &operator=(B&&); };
+    struct C { C &operator=(const C&); };
+    struct D { B b; };
+
+    template<typename T, unsigned I, bool NonTrivialMove = false>
+    struct E : virtual T {};
+
+    template<typename T, unsigned I>
+    struct E<T, I, true> : virtual T { E &operator=(E&&); };
+
+    template<typename T>
+    struct F :
+      E<T, 0>, // expected-note-re 2{{'[BD]' is a virtual base class of base class 'E<}}
+      E<T, 1> {}; // expected-note-re 2{{'[BD]' is a virtual base class of base class 'E<}}
+
+    template<typename T>
+    struct G : E<T, 0, true>, E<T, 0> {};
+
+    template<typename T>
+    struct H : E<T, 0, true>, E<T, 1, true> {};
+
+    template<typename T>
+    struct I : E<T, 0>, T {};
+
+    template<typename T>
+    struct J :
+      E<T, 0>, // expected-note-re 2{{'[BD]' is a virtual base class of base class 'E<}}
+      virtual T {}; // expected-note-re 2{{virtual base class '[BD]' declared here}}
+
+    template<typename T> void move(T t) { t = static_cast<T&&>(t); }
+    // expected-warning-re@-1 4{{defaulted move assignment operator of .* will move assign virtual base class '[BD]' multiple times}}
+    template void move(F<A>);
+    template void move(F<B>); // expected-note {{in instantiation of}}
+    template void move(F<C>);
+    template void move(F<D>); // expected-note {{in instantiation of}}
+    template void move(G<A>);
+    template void move(G<B>);
+    template void move(G<C>);
+    template void move(G<D>);
+    template void move(H<A>);
+    template void move(H<B>);
+    template void move(H<C>);
+    template void move(H<D>);
+    template void move(I<A>);
+    template void move(I<B>);
+    template void move(I<C>);
+    template void move(I<D>);
+    template void move(J<A>);
+    template void move(J<B>); // expected-note {{in instantiation of}}
+    template void move(J<C>);
+    template void move(J<D>); // expected-note {{in instantiation of}}
+  }
 }
 
 namespace PR12625 {
