@@ -263,3 +263,21 @@ module using_decl {
   module a { header "using-decl-a.h" export * }
   module b { header "using-decl-b.h" export * }
 }
+
+module recursive_visibility_a1 {
+  module inner { header "recursive_visibility_a1_inner.h" }
+}
+module recursive_visibility_a2 {
+  module inner {
+    module more_inner {
+      header "recursive_visibility_a2_more_inner.h"
+    }
+  }
+}
+module recursive_visibility_b {
+  header "recursive_visibility_b.h"
+  export *
+}
+module recursive_visibility_c {
+  header "recursive_visibility_c.h"
+}

@@ -194,6 +194,16 @@ static void printModuleId(raw_ostream &OS, const ModuleId &Id) {
 }
 
 void Module::getExportedModules(SmallVectorImpl<Module *> &Exported) const {
+  // All non-explicit submodules are exported.
+  for (std::vector<Module *>::const_iterator I = SubModules.begin(),
+                                             E = SubModules.end();
+       I != E; ++I) {
+    Module *Mod = *I;
+    if (!Mod->IsExplicit)
+      Exported.push_back(Mod);
+  }
+
+  // Find re-exported modules by filtering the list of imported modules.
   bool AnyWildcard = false;
   bool UnrestrictedWildcard = false;
   SmallVector<Module *, 4> WildcardRestrictions;

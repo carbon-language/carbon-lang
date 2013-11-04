@@ -2845,16 +2845,7 @@ void ASTReader::makeModuleVisible(Module *Mod,
       makeNamesVisible(Hidden->second, Hidden->first);
       HiddenNamesMap.erase(Hidden);
     }
-    
-    // Push any non-explicit submodules onto the stack to be marked as
-    // visible.
-    for (Module::submodule_iterator Sub = Mod->submodule_begin(),
-                                 SubEnd = Mod->submodule_end();
-         Sub != SubEnd; ++Sub) {
-      if (!(*Sub)->IsExplicit && Visited.insert(*Sub))
-        Stack.push_back(*Sub);
-    }
-    
+
     // Push any exported modules onto the stack to be marked as visible.
     SmallVector<Module *, 16> Exports;
     Mod->getExportedModules(Exports);
