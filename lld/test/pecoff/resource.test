@@ -5,5 +5,5 @@
 # RUN: lld -flavor link /out:%t.exe /subsystem:console /entry:start /opt:noref \
 # RUN:   -- %t.obj %p/Inputs/resource.res
 
-# Check if the binary contains UTF-16 string "Hello" copied from resource.res.
-# cat %t.exe | grep 'H.e.l.l.o'
+# Check if the binary contains UTF-16LE string "Hello" copied from resource.res.
+# RUN: cat %t.exe | grep 'H.e.l.l.o'
