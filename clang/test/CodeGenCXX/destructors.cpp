@@ -9,6 +9,7 @@
 // CHECK-DAG: @_ZN5test312_GLOBAL__N_11DD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11DD2Ev
 // CHECK-DAG: @_ZN5test312_GLOBAL__N_11DD2Ev = alias internal bitcast {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
 // CHECK-DAG: @_ZN5test312_GLOBAL__N_11CD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
+// CHECK-DAG: @_ZN6PR752617allocator_derivedD1Ev = alias weak_odr void (%"struct.PR7526::allocator_derived"*)* @_ZN6PR752617allocator_derivedD2Ev
 
 struct A {
   int a;
@@ -44,9 +45,6 @@ namespace PR7526 {
   // CHECK: call void @__cxa_call_unexpected
   allocator::~allocator() throw() { foo(); }
 
-  // CHECK-LABEL: define linkonce_odr void @_ZN6PR752617allocator_derivedD1Ev(%"struct.PR7526::allocator_derived"* %this) unnamed_addr
-  // CHECK-NOT: call void @__cxa_call_unexpected
-  // CHECK:     }
   void foo() {
     allocator_derived ad;
   }
@@ -396,6 +394,11 @@ namespace test9 {
   // CHECK: call void @_ZN5test31AD2Ev(
   // CHECK: ret void
 
+  // CHECK-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
+  // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
+  // CHECK: call void @_ZN5test312_GLOBAL__N_11CD1Ev(
+  // CHECK: ret void
+
   // CHECK: declare void @_ZN5test31BD2Ev(
   // CHECK: declare void @_ZN5test31AD2Ev(
 
@@ -407,11 +410,6 @@ namespace test9 {
   // CHECK-NEXT: cleanup
   // CHECK: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK: resume { i8*, i32 }
-
-  // CHECK-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
-  // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
-  // CHECK: call void @_ZN5test312_GLOBAL__N_11CD1Ev(
-  // CHECK: ret void
 
   // CHECK-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD0Ev(
   // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8

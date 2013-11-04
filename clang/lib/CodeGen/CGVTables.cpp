@@ -387,10 +387,6 @@ void CodeGenVTables::emitThunk(GlobalDecl GD, const ThunkInfo &Thunk,
       return;
     }
 
-    // If a function has a body, it should have available_externally linkage.
-    assert(ThunkFn->hasAvailableExternallyLinkage() &&
-           "Function should have available_externally linkage!");
-
     // Change the linkage.
     CGM.setFunctionLinkage(GD, ThunkFn);
     return;
