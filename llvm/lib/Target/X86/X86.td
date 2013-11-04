@@ -308,6 +308,14 @@ def : Proc<"bdver2",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureF16C, FeatureLZCNT,
                                FeaturePOPCNT, FeatureBMI,  FeatureTBM,
                                FeatureFMA]>;
+
+// Steamroller
+def : Proc<"bdver3",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
+                               FeatureAES, FeaturePRFCHW, FeaturePCLMUL,
+                               FeatureF16C, FeatureLZCNT,
+                               FeaturePOPCNT, FeatureBMI,  FeatureTBM,
+                               FeatureFMA, FeatureFSGSBase]>;
+
 def : Proc<"geode",           [Feature3DNowA]>;
 
 def : Proc<"winchip-c6",      [FeatureMMX]>;

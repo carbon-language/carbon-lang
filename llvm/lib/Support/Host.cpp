@@ -348,9 +348,11 @@ std::string sys::getHostCPUName() {
       case 21:
         if (!HasAVX) // If the OS doesn't support AVX provide a sane fallback.
           return "btver1";
-        if (Model > 15 && Model <= 31)
-          return "bdver2";
-        return "bdver1";
+        if (Model >= 0x30)
+          return "bdver3"; // 30h-3Fh: Steamroller
+        if (Model >= 0x10)
+          return "bdver2"; // 10h-1Fh: Piledriver
+        return "bdver1";   // 00h-0Fh: Bulldozer
       case 22:
         if (!HasAVX) // If the OS doesn't support AVX provide a sane fallback.
           return "btver1";
