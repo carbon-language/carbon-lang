@@ -638,13 +638,10 @@ public:
   /// \brief Get the symbol table index for an Atom. If it's not in the symbol
   /// table, return STN_UNDEF.
   uint32_t getSymbolTableIndex(const Atom *a) const {
-    auto entry = std::find_if(_symbolTable.begin(), _symbolTable.end(),
-                           [=](const SymbolEntry &se) {
-      return se._atom == a;
-    });
-    if (entry == _symbolTable.end())
-      return STN_UNDEF;
-    return std::distance(_symbolTable.begin(), entry);
+    for (size_t i = 0, e = _symbolTable.size(); i < e; ++i)
+      if (_symbolTable[i]._atom == a)
+        return i;
+    return STN_UNDEF;
   }
 
   virtual void finalize() { finalize(true); }
