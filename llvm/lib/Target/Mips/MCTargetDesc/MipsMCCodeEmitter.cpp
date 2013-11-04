@@ -96,6 +96,12 @@ public:
   unsigned getBranchTargetOpValue(const MCInst &MI, unsigned OpNo,
                                   SmallVectorImpl<MCFixup> &Fixups) const;
 
+  // getBranchTargetOpValue - Return binary encoding of the microMIPS branch
+  // target operand. If the machine operand requires relocation,
+  // record the relocation and return zero.
+  unsigned getBranchTargetOpValueMM(const MCInst &MI, unsigned OpNo,
+                                    SmallVectorImpl<MCFixup> &Fixups) const;
+
    // getMachineOpValue - Return binary encoding of operand. If the machin
    // operand requires relocation, record the relocation and return zero.
   unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO,
@@ -273,6 +279,28 @@ getBranchTargetOpValue(const MCInst &MI, unsigned OpNo,
   const MCExpr *Expr = MO.getExpr();
   Fixups.push_back(MCFixup::Create(0, Expr,
                                    MCFixupKind(Mips::fixup_Mips_PC16)));
+  return 0;
+}
+
+/// getBranchTargetOpValue - Return binary encoding of the microMIPS branch
+/// target operand. If the machine operand requires relocation,
+/// record the relocation and return zero.
+unsigned MipsMCCodeEmitter::
+getBranchTargetOpValueMM(const MCInst &MI, unsigned OpNo,
+                         SmallVectorImpl<MCFixup> &Fixups) const {
+
+  const MCOperand &MO = MI.getOperand(OpNo);
+
+  // If the destination is an immediate, divide by 2.
+  if (MO.isImm()) return MO.getImm() >> 1;
+
+  assert(MO.isExpr() &&
+         "getBranchTargetOpValueMM expects only expressions or immediates");
+
+  const MCExpr *Expr = MO.getExpr();
+  Fixups.push_back(MCFixup::Create(0, Expr,
+                   MCFixupKind(Mips::
+                               fixup_MICROMIPS_PC16_S1)));
   return 0;
 }
 

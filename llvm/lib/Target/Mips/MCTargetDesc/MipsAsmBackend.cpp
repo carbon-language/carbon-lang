@@ -84,6 +84,10 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case Mips::fixup_MICROMIPS_26_S1:
     Value >>= 1;
     break;
+  case Mips::fixup_MICROMIPS_PC16_S1:
+    Value -= 4;
+    Value >>= 1;
+    break;
   }
 
   return Value;
@@ -201,6 +205,7 @@ public:
       { "fixup_MICROMIPS_HI16",    0,     16,   0 },
       { "fixup_MICROMIPS_LO16",    0,     16,   0 },
       { "fixup_MICROMIPS_GOT16",   0,     16,   0 },
+      { "fixup_MICROMIPS_PC16_S1", 0,     16,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_MICROMIPS_CALL16",  0,     16,   0 },
       { "fixup_MICROMIPS_GOT_DISP",        0,     16,   0 },
       { "fixup_MICROMIPS_GOT_PAGE",        0,     16,   0 },
