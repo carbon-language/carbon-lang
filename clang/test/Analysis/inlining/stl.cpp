@@ -33,3 +33,8 @@ void testList_pop_front(std::list<int> list) {
     list.pop_front();  // no-warning
 }
 
+void testBasicStringSuppression() {
+  std::basic_string<uint8_t> v;
+  v.push_back(1); // no-warning
+}
+

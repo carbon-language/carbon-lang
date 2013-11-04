@@ -5,6 +5,8 @@
 // suppressed.
 #pragma clang system_header
 
+typedef unsigned char uint8_t;
+
 namespace std {
   template <class T1, class T2>
   struct pair {
@@ -137,6 +139,20 @@ namespace std {
     bool empty() const;
   };
 
+  // basic_string
+  template<class _CharT>
+  class __attribute__ ((__type_visibility__("default"))) basic_string {
+  public:
+    void push_back(int c);
+  };
+  template <class _CharT>
+  void basic_string<_CharT>::push_back(int __c) {
+        // Fake error trigger.
+        // No warning is expected as we are suppressing warning comming
+        // out of std::basic_string.
+        int z = 0;
+        z = 5/z;
+  }
 }
 
 void* operator new(std::size_t, const std::nothrow_t&) throw();

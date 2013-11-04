@@ -1549,6 +1549,18 @@ LikelyFalsePositiveSuppressionBRVisitor::getEndPath(BugReporterContext &BRC,
           return 0;
         }
       }
+      // The analyzer issues a false positive on
+      //   std::basic_string<uint8_t> v; v.push_back(1);
+      // because we cannot reason about the internal invariants of the
+      // datastructure.
+      if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+        const CXXRecordDecl *CD = MD->getParent();
+        if (CD->getName() == "basic_string") {
+          BR.markInvalid(getTag(), 0);
+          return 0;
+        }
+      }
+
     }
   }
 

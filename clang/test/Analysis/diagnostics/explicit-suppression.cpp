@@ -12,6 +12,6 @@ void clang_analyzer_eval(bool);
 void testCopyNull(int *I, int *E) {
   std::copy(I, E, (int *)0);
 #ifndef SUPPRESSED
-  // expected-warning@../Inputs/system-header-simulator-cxx.h:108 {{Dereference of null pointer}}
+  // expected-warning@../Inputs/system-header-simulator-cxx.h:110 {{Dereference of null pointer}}
 #endif
 }
