@@ -256,7 +256,7 @@ module Opcode : sig
 end
 
 (** The kind of an [llvalue], the result of [classify_value v].
- * See the various [LLVMIsA*] functions. *)
+    See the various [LLVMIsA*] functions. *)
 module ValueKind : sig
   type t =
   | NullValue
@@ -280,6 +280,7 @@ module ValueKind : sig
   | UndefValue
   | Instruction of Opcode.t
 end
+
 
 (** {6 Iteration} *)
 
@@ -340,17 +341,14 @@ val dispose_module : llmodule -> unit
     [i686-apple-darwin8]. See the method [llvm::Module::getTargetTriple]. *)
 val target_triple: llmodule -> string
 
-
 (** [target_triple triple m] changes the target specifier for the module [m] to
     the string [triple]. See the method [llvm::Module::setTargetTriple]. *)
 val set_target_triple: string -> llmodule -> unit
-
 
 (** [data_layout m] is the data layout specifier for the module [m], something
     like [e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-...-a0:0:64-f80:128:128]. See the
     method [llvm::Module::getDataLayout]. *)
 val data_layout: llmodule -> string
-
 
 (** [set_data_layout s m] changes the data layout specifier for the module [m]
     to the string [s]. See the method [llvm::Module::setDataLayout]. *)
@@ -365,8 +363,9 @@ val dump_module : llmodule -> unit
 val set_module_inline_asm : llmodule -> string -> unit
 
 (** [module_context m] returns the context of the specified module.
- * See the method [llvm::Module::getContext] *)
+    See the method [llvm::Module::getContext] *)
 val module_context : llmodule -> llcontext
+
 
 (** {6 Types} *)
 
@@ -375,8 +374,8 @@ val module_context : llmodule -> llcontext
 val classify_type : lltype -> TypeKind.t
 
 (** [type_is_sized ty] returns whether the type has a size or not.
- * If it doesn't then it is not safe to call the [DataLayout::] methods on it.
- * *)
+    If it doesn't then it is not safe to call the [DataLayout::] methods on it.
+    *)
 val type_is_sized : lltype -> bool
 
 (** [type_context ty] returns the {!llcontext} corresponding to the type [ty].
@@ -385,6 +384,7 @@ val type_context : lltype -> llcontext
 
 (** [string_of_lltype ty] returns a string describing the type [ty]. *)
 val string_of_lltype : lltype -> string
+
 
 (** {7 Operations on integer types} *)
 
@@ -453,7 +453,6 @@ val function_type : lltype -> lltype array -> lltype
     See the method [llvm::FunctionType::get]. *)
 val var_arg_function_type : lltype -> lltype array -> lltype
 
-
 (** [is_var_arg fty] returns [true] if [fty] is a varargs function type, [false]
     otherwise. See the method [llvm::FunctionType::isVarArg]. *)
 val is_var_arg : lltype -> bool
@@ -474,30 +473,28 @@ val param_types : lltype -> lltype array
     [llvm::StructType::get]. *)
 val struct_type : llcontext -> lltype array -> lltype
 
-
 (** [packed_struct_type context ys] returns the packed structure type in the
     context [context] containing in the types in the array [tys]. See the method
     [llvm::StructType::get]. *)
 val packed_struct_type : llcontext -> lltype array -> lltype
 
 (** [struct_name ty] returns the name of the named structure type [ty],
- * or None if the structure type is not named *)
+    or None if the structure type is not named *)
 val struct_name : lltype -> string option
 
 (** [named_struct_type context name] returns the named structure type [name]
- * in the context [context].
- * See the method [llvm::StructType::get]. *)
+    in the context [context].
+    See the method [llvm::StructType::get]. *)
 val named_struct_type : llcontext -> string -> lltype
 
 (** [struct_set_body ty elts ispacked] sets the body of the named struct [ty]
- * to the [elts] elements.
- * See the moethd [llvm::StructType::setBody]. *)
+    to the [elts] elements.
+    See the moethd [llvm::StructType::setBody]. *)
 val struct_set_body : lltype -> lltype array -> bool -> unit
 
 (** [struct_element_types sty] returns the constituent types of the struct type
     [sty]. See the method [llvm::StructType::getElementType]. *)
 val struct_element_types : lltype -> lltype array
-
 
 (** [is_packed sty] returns [true] if the structure type [sty] is packed,
     [false] otherwise. See the method [llvm::StructType::isPacked]. *)
@@ -506,6 +503,7 @@ val is_packed : lltype -> bool
 (** [is_opaque sty] returns [true] if the structure type [sty] is opaque.
     [false] otherwise. See the method [llvm::StructType::isOpaque]. *)
 val is_opaque : lltype -> bool
+
 
 (** {7 Operations on pointer, vector, and array types} *)
 
@@ -522,7 +520,6 @@ val pointer_type : lltype -> lltype
     of type [ty] in address space [as].
     See the method [llvm::PointerType::get]. *)
 val qualified_pointer_type : lltype -> int -> lltype
-
 
 (** [vector_type ty n] returns the array type containing [n] elements of the
     primitive type [ty]. See the method [llvm::ArrayType::get]. *)
@@ -556,9 +553,10 @@ val void_type : llcontext -> lltype
 val label_type : llcontext -> lltype
 
 (** [type_by_name m name] returns the specified type from the current module
- * if it exists.
- * See the method [llvm::Module::getTypeByName] *)
+    if it exists.
+    See the method [llvm::Module::getTypeByName] *)
 val type_by_name : llmodule -> string -> lltype option
+
 
 (* {6 Values} *)
 
@@ -583,9 +581,8 @@ val set_value_name : string -> llvalue -> unit
 val dump_value : llvalue -> unit
 
 (** [replace_all_uses_with old new] replaces all uses of the value [old]
- * with the value [new]. See the method [llvm::Value::replaceAllUsesWith]. *)
+    with the value [new]. See the method [llvm::Value::replaceAllUsesWith]. *)
 val replace_all_uses_with : llvalue -> llvalue -> unit
-
 
 
 (* {6 Uses} *)
@@ -635,6 +632,7 @@ val set_operand : llvalue -> int -> llvalue -> unit
     See the method [llvm::User::getNumOperands]. *)
 val num_operands : llvalue -> int
 
+
 (** {7 Operations on constants of (mostly) any type} *)
 
 (** [is_constant v] returns [true] if the value [v] is a constant, [false]
@@ -666,6 +664,8 @@ val is_null : llvalue -> bool
 val is_undef : llvalue -> bool
 
 val constexpr_opcode : llvalue -> Opcode.t
+
+
 (** {7 Operations on instructions} *)
 
 (** [has_metadata i] returns whether or not the instruction [i] has any
@@ -699,13 +699,14 @@ val mdstring : llcontext -> string -> llvalue
 val mdnode : llcontext -> llvalue array -> llvalue
 
 (** [get_mdstring v] returns the MDString.
- * See the method [llvm::MDString::getString] *)
+    See the method [llvm::MDString::getString] *)
 val get_mdstring : llvalue -> string option
 
 (** [get_named_metadata m name] return all the MDNodes belonging to the named
- * metadata (if any).
- * See the method [llvm::NamedMDNode::getOperand]. *)
+    metadata (if any).
+    See the method [llvm::NamedMDNode::getOperand]. *)
 val get_named_metadata : llmodule -> string -> llvalue array
+
 
 (** {7 Operations on scalar constants} *)
 
@@ -718,14 +719,13 @@ val const_int : lltype -> int -> llvalue
 val const_of_int64 : lltype -> Int64.t -> bool -> llvalue
 
 (** [int64_of_const c] returns the int64 value of the [c] constant integer.
- * None is returned if this is not an integer constant, or bitwidth exceeds 64.
- * See the method [llvm::ConstantInt::getSExtValue].*)
+    None is returned if this is not an integer constant, or bitwidth exceeds 64.
+    See the method [llvm::ConstantInt::getSExtValue].*)
 val int64_of_const : llvalue -> Int64.t option
 
 (** [const_int_of_string ty s r] returns the integer constant of type [ty] and
- * value [s], with the radix [r]. See the method [llvm::ConstantInt::get]. *)
+    value [s], with the radix [r]. See the method [llvm::ConstantInt::get]. *)
 val const_int_of_string : lltype -> string -> int -> llvalue
-
 
 (** [const_float ty n] returns the floating point constant of type [ty] and
     value [n]. See the method [llvm::ConstantFP::get]. *)
@@ -734,7 +734,6 @@ val const_float : lltype -> float -> llvalue
 (** [const_float_of_string ty s] returns the floating point constant of type
     [ty] and value [n]. See the method [llvm::ConstantFP::get]. *)
 val const_float_of_string : lltype -> string -> llvalue
-
 
 
 (** {7 Operations on composite constants} *)
@@ -776,7 +775,6 @@ val const_named_struct : lltype -> llvalue array -> llvalue
     the initializer for a global variable. See the method
     [llvm::ConstantStruct::get]. *)
 val const_packed_struct : llcontext -> llvalue array -> llvalue
-
 
 (** [const_vector elts] returns the vector constant of type
     [vector_type (type_of elts.(0)) (Array.length elts)] and containing the
@@ -929,12 +927,10 @@ val const_xor : llvalue -> llvalue -> llvalue
     See the method [llvm::ConstantExpr::getICmp]. *)
 val const_icmp : Icmp.t -> llvalue -> llvalue -> llvalue
 
-
 (** [const_fcmp pred c1 c2] returns the constant comparison of two floating
     point constants, [c1 pred c2].
     See the method [llvm::ConstantExpr::getFCmp]. *)
 val const_fcmp : Fcmp.t -> llvalue -> llvalue -> llvalue
-
 
 (** [const_shl c1 c2] returns the constant integer [c1] left-shifted by the
     constant integer [c2].
@@ -960,7 +956,6 @@ val const_gep : llvalue -> llvalue array -> llvalue
     with the constant integers indices from the array [indices].
     See the method [llvm::ConstantExpr::getInBoundsGetElementPtr]. *)
 val const_in_bounds_gep : llvalue -> llvalue array -> llvalue
-
 
 (** [const_trunc c ty] returns the constant truncation of integer constant [c]
     to the smaller integer type [ty].
@@ -1027,49 +1022,41 @@ val const_bitcast : llvalue -> lltype -> llvalue
     See the method [llvm::ConstantExpr::getZExtOrBitCast]. *)
 val const_zext_or_bitcast : llvalue -> lltype -> llvalue
 
-
 (** [const_sext_or_bitcast c ty] returns a constant sext or bitwise cast
     conversion of constant [c] to type [ty].
     See the method [llvm::ConstantExpr::getSExtOrBitCast]. *)
 val const_sext_or_bitcast : llvalue -> lltype -> llvalue
-
 
 (** [const_trunc_or_bitcast c ty] returns a constant trunc or bitwise cast
     conversion of constant [c] to type [ty].
     See the method [llvm::ConstantExpr::getTruncOrBitCast]. *)
 val const_trunc_or_bitcast : llvalue -> lltype -> llvalue
 
-
 (** [const_pointercast c ty] returns a constant bitcast or a pointer-to-int
     cast conversion of constant [c] to type [ty] of equal size.
     See the method [llvm::ConstantExpr::getPointerCast]. *)
 val const_pointercast : llvalue -> lltype -> llvalue
-
 
 (** [const_intcast c ty] returns a constant zext, bitcast, or trunc for integer
     -> integer casts of constant [c] to type [ty].
     See the method [llvm::ConstantExpr::getIntCast]. *)
 val const_intcast : llvalue -> lltype -> llvalue
 
-
 (** [const_fpcast c ty] returns a constant fpext, bitcast, or fptrunc for fp ->
     fp casts of constant [c] to type [ty].
     See the method [llvm::ConstantExpr::getFPCast]. *)
 val const_fpcast : llvalue -> lltype -> llvalue
-
 
 (** [const_select cond t f] returns the constant conditional which returns value
     [t] if the boolean constant [cond] is true and the value [f] otherwise.
     See the method [llvm::ConstantExpr::getSelect]. *)
 val const_select : llvalue -> llvalue -> llvalue -> llvalue
 
-
 (** [const_extractelement vec i] returns the constant [i]th element of
     constant vector [vec]. [i] must be a constant [i32] value unsigned less than
     the size of the vector.
     See the method [llvm::ConstantExpr::getExtractElement]. *)
 val const_extractelement : llvalue -> llvalue -> llvalue
-
 
 (** [const_insertelement vec v i] returns the constant vector with the same
     elements as constant vector [v] but the [i]th element replaced by the
@@ -1079,31 +1066,25 @@ val const_extractelement : llvalue -> llvalue -> llvalue
     See the method [llvm::ConstantExpr::getInsertElement]. *)
 val const_insertelement : llvalue -> llvalue -> llvalue -> llvalue
 
-
 (** [const_shufflevector a b mask] returns a constant [shufflevector].
     See the LLVM Language Reference for details on the [shufflevector]
     instruction.
     See the method [llvm::ConstantExpr::getShuffleVector]. *)
 val const_shufflevector : llvalue -> llvalue -> llvalue -> llvalue
 
-
 (** [const_extractvalue agg idxs] returns the constant [idxs]th value of
     constant aggregate [agg]. Each [idxs] must be less than the size of the
     aggregate.  See the method [llvm::ConstantExpr::getExtractValue]. *)
 val const_extractvalue : llvalue -> int array -> llvalue
-
 
 (** [const_insertvalue agg val idxs] inserts the value [val] in the specified
     indexs [idxs] in the aggegate [agg]. Each [idxs] must be less than the size
     of the aggregate. See the method [llvm::ConstantExpr::getInsertValue]. *)
 val const_insertvalue : llvalue -> llvalue -> int array -> llvalue
 
-
 (** [const_inline_asm ty asm con side align] inserts a inline assembly string.
     See the method [llvm::InlineAsm::get]. *)
-val const_inline_asm : lltype -> string -> string -> bool -> bool ->
-                            llvalue
-
+val const_inline_asm : lltype -> string -> string -> bool -> bool -> llvalue
 
 (** [block_address f bb] returns the address of the basic block [bb] in the
     function [f]. See the method [llvm::BasicBlock::get]. *)
@@ -1145,7 +1126,6 @@ val visibility : llvalue -> Visibility.t
     [v]. See the method [llvm::GlobalValue::setVisibility]. *)
 val set_visibility : Visibility.t -> llvalue -> unit
 
-
 (** [alignment g] returns the required alignment of the global value [g].
     See the method [llvm::GlobalValue::getAlignment]. *)
 val alignment : llvalue -> int
@@ -1163,15 +1143,12 @@ val set_alignment : int -> llvalue -> unit
     global differs, then a bitcast to [ty] is returned. *)
 val declare_global : lltype -> string -> llmodule -> llvalue
 
-
 (** [declare_qualified_global ty name addrspace m] returns a new global variable
     of type [ty] and with name [name] in module [m] in the address space
     [addrspace]. If such a global variable already exists, it is returned. If
     the type of the existing global differs, then a bitcast to [ty] is
     returned. *)
-val declare_qualified_global : lltype -> string -> int -> llmodule ->
-                                    llvalue
-
+val declare_qualified_global : lltype -> string -> int -> llmodule -> llvalue
 
 (** [define_global name init m] returns a new global with name [name] and
     initializer [init] in module [m] in the default address space (0). If the
@@ -1179,20 +1156,16 @@ val declare_qualified_global : lltype -> string -> int -> llmodule ->
     See the constructor of [llvm::GlobalVariable]. *)
 val define_global : string -> llvalue -> llmodule -> llvalue
 
-
 (** [define_qualified_global name init addrspace m] returns a new global with
     name [name] and initializer [init] in module [m] in the address space
     [addrspace]. If the named global already exists, it is renamed.
     See the constructor of [llvm::GlobalVariable]. *)
-val define_qualified_global : string -> llvalue -> int -> llmodule ->
-                                   llvalue
-
+val define_qualified_global : string -> llvalue -> int -> llmodule -> llvalue
 
 (** [lookup_global name m] returns [Some g] if a global variable with name
     [name] exists in module [m]. If no such global exists, returns [None].
     See the [llvm::GlobalVariable] constructor. *)
 val lookup_global : string -> llmodule -> llvalue option
-
 
 (** [delete_global gv] destroys the global variable [gv].
     See the method [llvm::GlobalVariable::eraseFromParent]. *)
@@ -1204,12 +1177,10 @@ val delete_global : llvalue -> unit
     See the method [llvm::Module::global_begin]. *)
 val global_begin : llmodule -> (llmodule, llvalue) llpos
 
-
 (** [global_succ gv] returns the global variable list position succeeding
     [Before gv].
     See the method [llvm::Module::global_iterator::operator++]. *)
 val global_succ : llvalue -> (llmodule, llvalue) llpos
-
 
 (** [iter_globals f m] applies function [f] to each of the global variables of
     module [m] in order. Tail recursive. *)
@@ -1225,12 +1196,10 @@ val fold_left_globals : ('a -> llvalue -> 'a) -> 'a -> llmodule -> 'a
     See the method [llvm::Module::global_end]. *)
 val global_end : llmodule -> (llmodule, llvalue) llrev_pos
 
-
 (** [global_pred gv] returns the global variable list position preceding
     [After gv].
     See the method [llvm::Module::global_iterator::operator--]. *)
 val global_pred : llvalue -> (llmodule, llvalue) llrev_pos
-
 
 (** [rev_iter_globals f m] applies function [f] to each of the global variables
     of module [m] in reverse order. Tail recursive. *)
@@ -1249,7 +1218,6 @@ val is_global_constant : llvalue -> bool
     [c] is [true] and not if [c] is [false].
     See the method [llvm::GlobalVariable::setConstant]. *)
 val set_global_constant : bool -> llvalue -> unit
-
 
 (** [global_initializer gv] returns the initializer for the global variable
     [gv]. See the method [llvm::GlobalVariable::getInitializer]. *)
@@ -1284,7 +1252,6 @@ val set_thread_local : bool -> llvalue -> unit
 val add_alias : llmodule -> lltype -> llvalue -> string -> llvalue
 
 
-
 (** {7 Operations on functions} *)
 
 (** [declare_function name ty m] returns a new function of type [ty] and
@@ -1293,19 +1260,16 @@ val add_alias : llmodule -> lltype -> llvalue -> string -> llvalue
     to [ty] is returned. *)
 val declare_function : string -> lltype -> llmodule -> llvalue
 
-
 (** [define_function name ty m] creates a new function with name [name] and
     type [ty] in module [m]. If the named function already exists, it is
     renamed. An entry basic block is created in the function.
     See the constructor of [llvm::GlobalVariable]. *)
 val define_function : string -> lltype -> llmodule -> llvalue
 
-
 (** [lookup_function name m] returns [Some f] if a function with name
     [name] exists in module [m]. If no such function exists, returns [None].
     See the method [llvm::Module] constructor. *)
 val lookup_function : string -> llmodule -> llvalue option
-
 
 (** [delete_function f] destroys the function [f].
     See the method [llvm::Function::eraseFromParent]. *)
@@ -1317,12 +1281,10 @@ val delete_function : llvalue -> unit
     See the method [llvm::Module::begin]. *)
 val function_begin : llmodule -> (llmodule, llvalue) llpos
 
-
 (** [function_succ gv] returns the function list position succeeding
     [Before gv].
     See the method [llvm::Module::iterator::operator++]. *)
 val function_succ : llvalue -> (llmodule, llvalue) llpos
-
 
 (** [iter_functions f m] applies function [f] to each of the functions of module
     [m] in order. Tail recursive. *)
@@ -1338,11 +1300,9 @@ val fold_left_functions : ('a -> llvalue -> 'a) -> 'a -> llmodule -> 'a
     See the method [llvm::Module::end]. *)
 val function_end : llmodule -> (llmodule, llvalue) llrev_pos
 
-
 (** [function_pred gv] returns the function list position preceding [After gv].
     See the method [llvm::Module::iterator::operator--]. *)
 val function_pred : llvalue -> (llmodule, llvalue) llrev_pos
-
 
 (** [rev_iter_functions f fn] applies function [f] to each of the functions of
     module [m] in reverse order. Tail recursive. *)
@@ -1365,7 +1325,6 @@ val function_call_conv : llvalue -> int
     See the method [llvm::Function::setCallingConv]. *)
 val set_function_call_conv : int -> llvalue -> unit
 
-
 (** [gc f] returns [Some name] if the function [f] has a garbage
     collection algorithm specified and [None] otherwise.
     See the method [llvm::Function::getGC]. *)
@@ -1380,12 +1339,13 @@ val set_gc : string option -> llvalue -> unit
 val add_function_attr : llvalue -> Attribute.t -> unit
 
 (** [function_attr f] returns the function attribute for the function [f].
- * See the method [llvm::Function::getAttributes] *)
+    See the method [llvm::Function::getAttributes] *)
 val function_attr : llvalue -> Attribute.t list
 
 (** [remove_function_attr f a] removes attribute [a] from the return type of
     function [f]. *)
 val remove_function_attr : llvalue -> Attribute.t -> unit
+
 
 (** {7 Operations on params} *)
 
@@ -1398,8 +1358,8 @@ val params : llvalue -> llvalue array
 val param : llvalue -> int -> llvalue
 
 (** [param_attr p] returns the attributes of parameter [p].
- * See the methods [llvm::Function::getAttributes] and
- * [llvm::Attributes::getParamAttributes] *)
+    See the methods [llvm::Function::getAttributes] and
+    [llvm::Attributes::getParamAttributes] *)
 val param_attr : llvalue -> Attribute.t list
 
 (** [param_parent p] returns the parent function that owns the parameter.
@@ -1434,7 +1394,6 @@ val param_end : llvalue -> (llvalue, llvalue) llrev_pos
 (** [param_pred gv] returns the function list position preceding [After gv].
     See the method [llvm::Function::arg_iterator::operator--]. *)
 val param_pred : llvalue -> (llvalue, llvalue) llrev_pos
-
 
 (** [rev_iter_params f fn] applies function [f] to each of the parameters
     of function [fn] in reverse order. Tail recursive. *)
@@ -1473,12 +1432,10 @@ val delete_block : llbasicblock -> unit
     See the constructor of [llvm::BasicBlock]. *)
 val append_block : llcontext -> string -> llvalue -> llbasicblock
 
-
 (** [insert_block c name bb] creates a new basic block named [name] before the
     basic block [bb] in the context [c].
     See the constructor of [llvm::BasicBlock]. *)
 val insert_block : llcontext -> string -> llbasicblock -> llbasicblock
-
 
 (** [block_parent bb] returns the parent function that owns the basic block.
     See the method [llvm::BasicBlock::getParent]. *)
@@ -1490,12 +1447,10 @@ val block_parent : llbasicblock -> llvalue
     See the method [llvm::Function::begin]. *)
 val block_begin : llvalue -> (llvalue, llbasicblock) llpos
 
-
 (** [block_succ bb] returns the basic block list position succeeding
     [Before bb].
     See the method [llvm::Function::iterator::operator++]. *)
 val block_succ : llbasicblock -> (llvalue, llbasicblock) llpos
-
 
 (** [iter_blocks f fn] applies function [f] to each of the basic blocks
     of function [fn] in order. Tail recursive. *)
@@ -1510,7 +1465,6 @@ val fold_left_blocks : ('a -> llbasicblock -> 'a) -> 'a -> llvalue -> 'a
     over the basic block list in reverse.
     See the method [llvm::Function::end]. *)
 val block_end : llvalue -> (llvalue, llbasicblock) llrev_pos
-
 
 (** [block_pred gv] returns the function list position preceding [After gv].
     See the method [llvm::Function::iterator::operator--]. *)
@@ -1550,11 +1504,9 @@ val instr_parent : llvalue -> llbasicblock
     See the method [llvm::BasicBlock::begin]. *)
 val instr_begin : llbasicblock -> (llbasicblock, llvalue) llpos
 
-
 (** [instr_succ i] returns the instruction list position succeeding [Before i].
     See the method [llvm::BasicBlock::iterator::operator++]. *)
 val instr_succ : llvalue -> (llbasicblock, llvalue) llpos
-
 
 (** [iter_instrs f bb] applies function [f] to each of the instructions of basic
     block [bb] in order. Tail recursive. *)
@@ -1570,11 +1522,9 @@ val fold_left_instrs: ('a -> llvalue -> 'a) -> 'a -> llbasicblock -> 'a
     See the method [llvm::BasicBlock::end]. *)
 val instr_end : llbasicblock -> (llbasicblock, llvalue) llrev_pos
 
-
 (** [instr_pred i] returns the instruction list position preceding [After i].
     See the method [llvm::BasicBlock::iterator::operator--]. *)
 val instr_pred : llvalue -> (llbasicblock, llvalue) llrev_pos
-
 
 (** [fold_right_instrs f bb init] is [f (... (f init fN) ...) f1] where
     [f1,...,fN] are the instructions of basic block [bb]. Tail recursive. *)
@@ -1584,6 +1534,7 @@ val instr_opcode : llvalue -> Opcode.t
 
 val icmp_predicate : llvalue -> Icmp.t option
 
+
 (** {7 Operations on call sites} *)
 
 (** [instruction_call_conv ci] is the calling convention for the call or invoke
@@ -1592,14 +1543,12 @@ val icmp_predicate : llvalue -> Icmp.t option
     [llvm::InvokeInst::getCallingConv]. *)
 val instruction_call_conv: llvalue -> int
 
-
 (** [set_instruction_call_conv cc ci] sets the calling convention for the call
     or invoke instruction [ci] to the integer [cc], which can be one of the
     values from the module {!CallConv}.
     See the method [llvm::CallInst::setCallingConv]
     and [llvm::InvokeInst::setCallingConv]. *)
 val set_instruction_call_conv: int -> llvalue -> unit
-
 
 (** [add_instruction_param_attr ci i a] adds attribute [a] to the [i]th
     parameter of the call or invoke instruction [ci]. [i]=0 denotes the return
@@ -1610,6 +1559,7 @@ val add_instruction_param_attr : llvalue -> int -> Attribute.t -> unit
     [i]th parameter of the call or invoke instruction [ci]. [i]=0 denotes the
     return value. *)
 val remove_instruction_param_attr : llvalue -> int -> Attribute.t -> unit
+
 
 (** {Operations on call instructions (only)} *)
 
@@ -1623,12 +1573,12 @@ val is_tail_call : llvalue -> bool
     See the method [llvm::CallInst::setTailCall]. *)
 val set_tail_call : bool -> llvalue -> unit
 
+
 (** {7 Operations on phi nodes} *)
 
 (** [add_incoming (v, bb) pn] adds the value [v] to the phi node [pn] for use
     with branches from [bb]. See the method [llvm::PHINode::addIncoming]. *)
 val add_incoming : (llvalue * llbasicblock) -> llvalue -> unit
-
 
 (** [incoming pn] returns the list of value-block pairs for phi node [pn].
     See the method [llvm::PHINode::getIncomingValue]. *)
@@ -1637,6 +1587,7 @@ val incoming : llvalue -> (llvalue * llbasicblock) list
 (** [delete_instruction i] deletes the instruction [i].
  * See the method [llvm::Instruction::eraseFromParent]. *)
 val delete_instruction : llvalue -> unit
+
 
 (** {6 Instruction builders} *)
 
@@ -1662,7 +1613,6 @@ val builder_at_end : llcontext -> llbasicblock -> llbuilder
     [ip].
     See the constructor for [llvm::LLVMBuilder]. *)
 val position_builder : (llbasicblock, llvalue) llpos -> llbuilder -> unit
-
 
 (** [position_before ins b] moves the instruction builder [b] to before the
     instruction [isn]. See the method [llvm::LLVMBuilder::SetInsertPoint]. *)
@@ -1691,17 +1641,14 @@ val insert_into_builder : llvalue -> string -> llbuilder -> unit
     See the method [llvm::IRBuilder::SetDebugLocation]. *)
 val set_current_debug_location : llbuilder -> llvalue -> unit
 
-
 (** [clear_current_debug_location b] clears the current debug location in the
     builder [b]. *)
 val clear_current_debug_location : llbuilder -> unit
-
 
 (** [current_debug_location b] returns the current debug location, or None
     if none is currently set.
     See the method [llvm::IRBuilder::GetDebugLocation]. *)
 val current_debug_location : llbuilder -> llvalue option
-
 
 (** [set_inst_debug_location b i] sets the current debug location of the builder
     [b] to the instruction [i].
@@ -1728,7 +1675,6 @@ val build_ret : llvalue -> llbuilder -> llvalue
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateAggregateRet]. *)
 val build_aggregate_ret : llvalue array -> llbuilder -> llvalue
-
 
 (** [build_br bb b] creates a
     [br %bb]
@@ -1771,8 +1717,8 @@ val build_free : llvalue -> llbuilder -> llvalue
 val add_case : llvalue -> llvalue -> llbasicblock -> unit
 
 (** [switch_default_dest sw] returns the default destination of the [switch]
- * instruction.
- * See the method [llvm:;SwitchInst::getDefaultDest]. **)
+    instruction.
+    See the method [llvm:;SwitchInst::getDefaultDest]. **)
 val switch_default_dest : llvalue -> llbasicblock
 
 (** [build_indirect_br addr count b] creates a
@@ -1782,12 +1728,10 @@ val switch_default_dest : llvalue -> llbasicblock
     See the method [llvm::LLVMBuilder::CreateIndirectBr]. *)
 val build_indirect_br : llvalue -> int -> llbuilder -> llvalue
 
-
 (** [add_destination br bb] adds the basic block [bb] as a possible branch
     location for the indirectbr instruction [br].
     See the method [llvm::IndirectBrInst::addDestination]. **)
 val add_destination : llvalue -> llbasicblock -> unit
-
 
 (** [build_invoke fn args tobb unwindbb name b] creates an
     [%name = invoke %fn(args) to %tobb unwind %unwindbb]
@@ -1811,9 +1755,9 @@ val set_cleanup : llvalue -> bool -> unit
     See the method [llvm::LandingPadInst::addClause]. *)
 val add_clause : llvalue -> llvalue -> unit
 
-(* [build_resume exn b] builds a [resume exn] instruction
- * at the position specified by the instruction builder [b].
- * See the method [llvm::LLVMBuilder::CreateResume] *)
+(** [build_resume exn b] builds a [resume exn] instruction
+    at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateResume] *)
 val build_resume : llvalue -> llbuilder -> llvalue
 
 (** [build_unreachable b] creates an
@@ -1831,13 +1775,11 @@ val build_unreachable : llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateAdd]. *)
 val build_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_nsw_add x y name b] creates a
     [%name = nsw add %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateNSWAdd]. *)
 val build_nsw_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
-
 
 (** [build_nuw_add x y name b] creates a
     [%name = nuw add %x, %y]
@@ -1845,13 +1787,11 @@ val build_nsw_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateNUWAdd]. *)
 val build_nuw_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_fadd x y name b] creates a
     [%name = fadd %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFAdd]. *)
 val build_fadd : llvalue -> llvalue -> string -> llbuilder -> llvalue
-
 
 (** [build_sub x y name b] creates a
     [%name = sub %x, %y]
@@ -1859,13 +1799,11 @@ val build_fadd : llvalue -> llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateSub]. *)
 val build_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_nsw_sub x y name b] creates a
     [%name = nsw sub %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateNSWSub]. *)
 val build_nsw_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
-
 
 (** [build_nuw_sub x y name b] creates a
     [%name = nuw sub %x, %y]
@@ -1873,13 +1811,11 @@ val build_nsw_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateNUWSub]. *)
 val build_nuw_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_fsub x y name b] creates a
     [%name = fsub %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFSub]. *)
 val build_fsub : llvalue -> llvalue -> string -> llbuilder -> llvalue
-
 
 (** [build_mul x y name b] creates a
     [%name = mul %x, %y]
@@ -1887,13 +1823,11 @@ val build_fsub : llvalue -> llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateMul]. *)
 val build_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_nsw_mul x y name b] creates a
     [%name = nsw mul %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateNSWMul]. *)
 val build_nsw_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
-
 
 (** [build_nuw_mul x y name b] creates a
     [%name = nuw mul %x, %y]
@@ -1901,13 +1835,11 @@ val build_nsw_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateNUWMul]. *)
 val build_nuw_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_fmul x y name b] creates a
     [%name = fmul %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFMul]. *)
 val build_fmul : llvalue -> llvalue -> string -> llbuilder -> llvalue
-
 
 (** [build_udiv x y name b] creates a
     [%name = udiv %x, %y]
@@ -1915,13 +1847,11 @@ val build_fmul : llvalue -> llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateUDiv]. *)
 val build_udiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_sdiv x y name b] creates a
     [%name = sdiv %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateSDiv]. *)
 val build_sdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
-
 
 (** [build_exact_sdiv x y name b] creates a
     [%name = exact sdiv %x, %y]
@@ -1929,13 +1859,11 @@ val build_sdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateExactSDiv]. *)
 val build_exact_sdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_fdiv x y name b] creates a
     [%name = fdiv %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFDiv]. *)
 val build_fdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
-
 
 (** [build_urem x y name b] creates a
     [%name = urem %x, %y]
@@ -1943,13 +1871,11 @@ val build_fdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateURem]. *)
 val build_urem : llvalue -> llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_SRem x y name b] creates a
     [%name = srem %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateSRem]. *)
 val build_srem : llvalue -> llvalue -> string -> llbuilder -> llvalue
-
 
 (** [build_frem x y name b] creates a
     [%name = frem %x, %y]
@@ -1957,13 +1883,11 @@ val build_srem : llvalue -> llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateFRem]. *)
 val build_frem : llvalue -> llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_shl x y name b] creates a
     [%name = shl %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateShl]. *)
 val build_shl : llvalue -> llvalue -> string -> llbuilder -> llvalue
-
 
 (** [build_lshr x y name b] creates a
     [%name = lshr %x, %y]
@@ -1971,13 +1895,11 @@ val build_shl : llvalue -> llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateLShr]. *)
 val build_lshr : llvalue -> llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_ashr x y name b] creates a
     [%name = ashr %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateAShr]. *)
 val build_ashr : llvalue -> llvalue -> string -> llbuilder -> llvalue
-
 
 (** [build_and x y name b] creates a
     [%name = and %x, %y]
@@ -1985,20 +1907,17 @@ val build_ashr : llvalue -> llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateAnd]. *)
 val build_and : llvalue -> llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_or x y name b] creates a
     [%name = or %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateOr]. *)
 val build_or : llvalue -> llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_xor x y name b] creates a
     [%name = xor %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateXor]. *)
 val build_xor : llvalue -> llvalue -> string -> llbuilder -> llvalue
-
 
 (** [build_neg x name b] creates a
     [%name = sub 0, %x]
@@ -2007,14 +1926,12 @@ val build_xor : llvalue -> llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateNeg]. *)
 val build_neg : llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_nsw_neg x name b] creates a
     [%name = nsw sub 0, %x]
     instruction at the position specified by the instruction builder [b].
     [-0.0] is used for floating point types to compute the correct sign.
     See the method [llvm::LLVMBuilder::CreateNeg]. *)
 val build_nsw_neg : llvalue -> string -> llbuilder -> llvalue
-
 
 (** [build_nuw_neg x name b] creates a
     [%name = nuw sub 0, %x]
@@ -2023,14 +1940,12 @@ val build_nsw_neg : llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateNeg]. *)
 val build_nuw_neg : llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_fneg x name b] creates a
     [%name = fsub 0, %x]
     instruction at the position specified by the instruction builder [b].
     [-0.0] is used for floating point types to compute the correct sign.
     See the method [llvm::LLVMBuilder::CreateFNeg]. *)
 val build_fneg : llvalue -> string -> llbuilder -> llvalue
-
 
 (** [build_xor x name b] creates a
     [%name = xor %x, -1]
@@ -2040,7 +1955,6 @@ val build_fneg : llvalue -> string -> llbuilder -> llvalue
 val build_not : llvalue -> string -> llbuilder -> llvalue
 
 
-
 (** {7 Memory} *)
 
 (** [build_alloca ty name b] creates a
@@ -2048,7 +1962,6 @@ val build_not : llvalue -> string -> llbuilder -> llvalue
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateAlloca]. *)
 val build_alloca : lltype -> string -> llbuilder -> llvalue
-
 
 (** [build_array_alloca ty n name b] creates a
     [%name = alloca %ty, %n]
@@ -2063,20 +1976,17 @@ val build_array_alloca : lltype -> llvalue -> string -> llbuilder ->
     See the method [llvm::LLVMBuilder::CreateLoad]. *)
 val build_load : llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_store v p b] creates a
     [store %v, %p]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateStore]. *)
 val build_store : llvalue -> llvalue -> llbuilder -> llvalue
 
-
 (** [build_gep p indices name b] creates a
     [%name = getelementptr %p, indices...]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateGetElementPtr]. *)
 val build_gep : llvalue -> llvalue array -> string -> llbuilder -> llvalue
-
 
 (** [build_in_bounds_gep p indices name b] creates a
     [%name = gelementptr inbounds %p, indices...]
@@ -2097,13 +2007,11 @@ val build_struct_gep : llvalue -> int -> string -> llbuilder ->
     See the method [llvm::LLVMBuilder::CreateGlobalString]. *)
 val build_global_string : string -> string -> llbuilder -> llvalue
 
-
 (** [build_global_stringptr str name b] creates a series of instructions that
     adds a global string pointer at the position specified by the instruction
     builder [b].
     See the method [llvm::LLVMBuilder::CreateGlobalStringPtr]. *)
 val build_global_stringptr : string -> string -> llbuilder -> llvalue
-
 
 
 (** {7 Casts} *)
@@ -2114,13 +2022,11 @@ val build_global_stringptr : string -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateTrunc]. *)
 val build_trunc : llvalue -> lltype -> string -> llbuilder -> llvalue
 
-
 (** [build_zext v ty name b] creates a
     [%name = zext %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateZExt]. *)
 val build_zext : llvalue -> lltype -> string -> llbuilder -> llvalue
-
 
 (** [build_sext v ty name b] creates a
     [%name = sext %p to %ty]
@@ -2128,13 +2034,11 @@ val build_zext : llvalue -> lltype -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateSExt]. *)
 val build_sext : llvalue -> lltype -> string -> llbuilder -> llvalue
 
-
 (** [build_fptoui v ty name b] creates a
     [%name = fptoui %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFPToUI]. *)
 val build_fptoui : llvalue -> lltype -> string -> llbuilder -> llvalue
-
 
 (** [build_fptosi v ty name b] creates a
     [%name = fptosi %p to %ty]
@@ -2142,13 +2046,11 @@ val build_fptoui : llvalue -> lltype -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateFPToSI]. *)
 val build_fptosi : llvalue -> lltype -> string -> llbuilder -> llvalue
 
-
 (** [build_uitofp v ty name b] creates a
     [%name = uitofp %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateUIToFP]. *)
 val build_uitofp : llvalue -> lltype -> string -> llbuilder -> llvalue
-
 
 (** [build_sitofp v ty name b] creates a
     [%name = sitofp %p to %ty]
@@ -2156,13 +2058,11 @@ val build_uitofp : llvalue -> lltype -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateSIToFP]. *)
 val build_sitofp : llvalue -> lltype -> string -> llbuilder -> llvalue
 
-
 (** [build_fptrunc v ty name b] creates a
     [%name = fptrunc %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFPTrunc]. *)
 val build_fptrunc : llvalue -> lltype -> string -> llbuilder -> llvalue
-
 
 (** [build_fpext v ty name b] creates a
     [%name = fpext %p to %ty]
@@ -2170,13 +2070,11 @@ val build_fptrunc : llvalue -> lltype -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateFPExt]. *)
 val build_fpext : llvalue -> lltype -> string -> llbuilder -> llvalue
 
-
 (** [build_ptrtoint v ty name b] creates a
     [%name = prtotint %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreatePtrToInt]. *)
 val build_ptrtoint : llvalue -> lltype -> string -> llbuilder -> llvalue
-
 
 (** [build_inttoptr v ty name b] creates a
     [%name = inttoptr %p to %ty]
@@ -2184,13 +2082,11 @@ val build_ptrtoint : llvalue -> lltype -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateIntToPtr]. *)
 val build_inttoptr : llvalue -> lltype -> string -> llbuilder -> llvalue
 
-
 (** [build_bitcast v ty name b] creates a
     [%name = bitcast %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateBitCast]. *)
 val build_bitcast : llvalue -> lltype -> string -> llbuilder -> llvalue
-
 
 (** [build_zext_or_bitcast v ty name b] creates a zext or bitcast
     instruction at the position specified by the instruction builder [b].
@@ -2215,18 +2111,15 @@ val build_trunc_or_bitcast : llvalue -> lltype -> string -> llbuilder ->
     See the method [llvm::LLVMBuilder::CreatePointerCast]. *)
 val build_pointercast : llvalue -> lltype -> string -> llbuilder -> llvalue
 
-
 (** [build_intcast v ty name b] creates a zext, bitcast, or trunc
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateIntCast]. *)
 val build_intcast : llvalue -> lltype -> string -> llbuilder -> llvalue
 
-
 (** [build_fpcast v ty name b] creates a fpext, bitcast, or fptrunc
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFPCast]. *)
 val build_fpcast : llvalue -> lltype -> string -> llbuilder -> llvalue
-
 
 
 (** {7 Comparisons} *)
@@ -2262,7 +2155,6 @@ val build_phi : (llvalue * llbasicblock) list -> string -> llbuilder ->
     See the method [llvm::LLVMBuilder::CreateCall]. *)
 val build_call : llvalue -> llvalue array -> string -> llbuilder -> llvalue
 
-
 (** [build_select cond thenv elsev name b] creates a
     [%name = select %cond, %thenv, %elsev]
     instruction at the position specified by the instruction builder [b].
@@ -2275,7 +2167,6 @@ val build_select : llvalue -> llvalue -> llvalue -> string -> llbuilder ->
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateVAArg]. *)
 val build_va_arg : llvalue -> lltype -> string -> llbuilder -> llvalue
-
 
 (** [build_extractelement vec i name b] creates a
     [%name = extractelement %vec, %i]
@@ -2318,20 +2209,17 @@ val build_insertvalue : llvalue -> llvalue -> int -> string -> llbuilder ->
     See the method [llvm::LLVMBuilder::CreateIsNull]. *)
 val build_is_null : llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_is_not_null val name b] creates a
     [%name = icmp ne %val, null]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateIsNotNull]. *)
 val build_is_not_null : llvalue -> string -> llbuilder -> llvalue
 
-
 (** [build_ptrdiff lhs rhs name b] creates a series of instructions that measure
     the difference between two pointer values at the position specified by the
     instruction builder [b].
     See the method [llvm::LLVMBuilder::CreatePtrDiff]. *)
 val build_ptrdiff : llvalue -> llvalue -> string -> llbuilder -> llvalue
-
 
 
 (** {6 Memory buffers} *)
@@ -2378,14 +2266,12 @@ module PassManager : sig
       See the constructor of [llvm::FunctionPassManager]. *)
   val create_function : llmodule -> [ `Function ] t
 
-  
   (** [run_module m pm] initializes, executes on the module [m], and finalizes
       all of the passes scheduled in the pass manager [pm]. Returns [true] if
       any of the passes modified the module, [false] otherwise.
       See the [llvm::PassManager::run] method. *)
   val run_module : llmodule -> [ `Module ] t -> bool
 
-  
   (** [initialize fpm] initializes all of the function passes scheduled in the
       function pass manager [fpm]. Returns [true] if any of the passes modified
       the module, [false] otherwise.
@@ -2397,7 +2283,6 @@ module PassManager : sig
       of the passes modified [f], [false] otherwise.
       See the [llvm::FunctionPassManager::run] method. *)
   val run_function : llvalue -> [ `Function ] t -> bool
-
   
   (** [finalize fpm] finalizes all of the function passes scheduled in in the
       function pass manager [fpm]. Returns [true] if any of the passes

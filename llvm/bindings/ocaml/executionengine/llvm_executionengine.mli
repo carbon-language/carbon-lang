@@ -43,7 +43,6 @@ module GenericValue: sig
       bitwidth [w]. See the field [llvm::GenericValue::IntVal]. *)
   val of_nativeint : Llvm.lltype -> nativeint -> t
 
-
   (** [of_int64 n w] boxes the int64 [i] in a generic value with the bitwidth
       [w]. See the field [llvm::GenericValue::IntVal]. *)
   val of_int64 : Llvm.lltype -> int64 -> t
@@ -110,7 +109,7 @@ module ExecutionEngine: sig
   (** [dispose ee] releases the memory used by the execution engine and must be
       invoked to avoid memory leaks. *)
   val dispose : t -> unit
-  
+
   (** [add_module m ee] adds the module [m] to the execution engine [ee]. *)
   val add_module : Llvm.llmodule -> t -> unit
   
@@ -119,19 +118,16 @@ module ExecutionEngine: sig
       [Error msg] if an error occurs. *)
   val remove_module : Llvm.llmodule -> t -> Llvm.llmodule
 
-  
   (** [find_function n ee] finds the function named [n] defined in any of the
       modules owned by the execution engine [ee]. Returns [None] if the function
       is not found and [Some f] otherwise. *)
   val find_function : string -> t -> Llvm.llvalue option
-
   
   (** [run_function f args ee] synchronously executes the function [f] with the
       arguments [args], which must be compatible with the parameter types. *)
   val run_function : Llvm.llvalue -> GenericValue.t array -> t ->
                      GenericValue.t
 
-  
   (** [run_static_ctors ee] executes the static constructors of each module in
       the execution engine [ee]. *)
   val run_static_ctors : t -> unit
@@ -147,17 +143,13 @@ module ExecutionEngine: sig
   val run_function_as_main : Llvm.llvalue -> string array ->
                                   (string * string) array -> t -> int
 
-  
   (** [free_machine_code f ee] releases the memory in the execution engine [ee]
       used to store the machine code for the function [f]. *)
   val free_machine_code : Llvm.llvalue -> t -> unit
 
-
   (** [target_data ee] is the target data owned by the execution engine
       [ee]. *)
   val target_data : t -> Llvm_target.DataLayout.t
-
 end
 
 val initialize_native_target : unit -> bool
-

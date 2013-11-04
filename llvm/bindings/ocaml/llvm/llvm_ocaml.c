@@ -597,12 +597,12 @@ CAMLprim value llvm_get_mdstring(LLVMValueRef V) {
   CAMLreturn(Val_int(0));
 }
 
-CAMLprim value llvm_get_namedmd(LLVMModuleRef M, value name)
+CAMLprim value llvm_get_namedmd(LLVMModuleRef M, value Name)
 {
-  CAMLparam1(name);
+  CAMLparam1(Name);
   CAMLlocal1(Nodes);
-  Nodes = alloc(LLVMGetNamedMetadataNumOperands(M, String_val(name)), 0);
-  LLVMGetNamedMetadataOperands(M, String_val(name), (LLVMValueRef *) Nodes);
+  Nodes = alloc(LLVMGetNamedMetadataNumOperands(M, String_val(Name)), 0);
+  LLVMGetNamedMetadataOperands(M, String_val(Name), (LLVMValueRef *) Nodes);
   CAMLreturn(Nodes);
 }
 /*--... Operations on scalar constants .....................................--*/
@@ -1966,7 +1966,6 @@ CAMLprim LLVMValueRef llvm_build_ptrdiff(LLVMValueRef LHS, LLVMValueRef RHS,
                                          value Name, value B) {
   return LLVMBuildPtrDiff(Builder_val(B), LHS, RHS, String_val(Name));
 }
-
 
 /*===-- Memory buffers ----------------------------------------------------===*/
 
