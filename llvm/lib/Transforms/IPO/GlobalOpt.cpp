@@ -97,12 +97,6 @@ INITIALIZE_PASS_END(GlobalOpt, "globalopt",
 
 ModulePass *llvm::createGlobalOptimizerPass() { return new GlobalOpt(); }
 
-namespace {
-
-
-
-}
-
 /// isLeakCheckerRoot - Is this global variable possibly used by a leak checker
 /// as a root?  If so, we might not really want to eliminate the stores to it.
 static bool isLeakCheckerRoot(GlobalVariable *GV) {
