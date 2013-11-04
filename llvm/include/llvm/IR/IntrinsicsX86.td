@@ -2997,29 +2997,29 @@ let TargetPrefix = "x86" in {
 
 // AVX-512 conflict detection
 let TargetPrefix = "x86" in {
-  def int_x86_avx512_conflict_d_512 : GCCBuiltin<"__builtin_ia32_condlictd512">,
+  def int_x86_avx512_conflict_d_512 : GCCBuiltin<"__builtin_ia32_conflictd512">,
           Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty],
           []>;
   def int_x86_avx512_conflict_d_mask_512 :
-          GCCBuiltin<"__builtin_ia32_mask_condlictd512">,
+          GCCBuiltin<"__builtin_ia32_mask_conflictd512">,
           Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,
                     llvm_v16i1_ty, llvm_v16i32_ty],
                     []>;
   def int_x86_avx512_conflict_d_maskz_512:
-          GCCBuiltin<"__builtin_ia32_maskz_condlictd512">,
+          GCCBuiltin<"__builtin_ia32_maskz_conflictd512">,
           Intrinsic<[llvm_v16i32_ty], [llvm_v16i1_ty, llvm_v16i32_ty],
                     []>;
 
-  def int_x86_avx512_conflict_q_512 : GCCBuiltin<"__builtin_ia32_condlictq512">,
+  def int_x86_avx512_conflict_q_512 : GCCBuiltin<"__builtin_ia32_conflictq512">,
           Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty],
           []>;
   def int_x86_avx512_conflict_q_mask_512 :
-          GCCBuiltin<"__builtin_ia32_mask_condlictq512">,
+          GCCBuiltin<"__builtin_ia32_mask_conflictq512">,
           Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty,
                     llvm_v8i1_ty, llvm_v8i64_ty],
                     []>;
   def int_x86_avx512_conflict_q_maskz_512:
-          GCCBuiltin<"__builtin_ia32_maskz_condlictq512">,
+          GCCBuiltin<"__builtin_ia32_maskz_conflictq512">,
           Intrinsic<[llvm_v8i64_ty], [llvm_v8i1_ty, llvm_v8i64_ty],
                     []>;
 }
