@@ -662,7 +662,7 @@ static bool IsARMArchitecture(std::vector<const char*> Args) {
          I = Args.begin(), E = Args.end(); I != E; ++I) {
     if (StringRef(*I).equals_lower("-arch")) {
       ++I;
-      if (I != E && StringRef(*I).substr(0, strlen("arm")).equals_lower("arm"))
+      if (I != E && StringRef(*I).startswith_lower("arm"))
         return true;
     }
   }

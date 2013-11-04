@@ -175,13 +175,6 @@ static bool isInput(const llvm::StringSet<> &Prefixes, StringRef Arg) {
   return true;
 }
 
-// Returns true if X starts with Y, ignoring case.
-static bool startsWithIgnoreCase(StringRef X, StringRef Y) {
-  if (X.size() < Y.size())
-    return false;
-  return X.substr(0, Y.size()).equals_lower(Y);
-}
-
 /// \returns Matched size. 0 means no match.
 static unsigned matchOption(const OptTable::Info *I, StringRef Str,
                             bool IgnoreCase) {
@@ -190,7 +183,7 @@ static unsigned matchOption(const OptTable::Info *I, StringRef Str,
     if (Str.startswith(Prefix)) {
       StringRef Rest = Str.substr(Prefix.size());
       bool Matched = IgnoreCase
-          ? startsWithIgnoreCase(Rest, I->Name)
+          ? Rest.startswith_lower(I->Name)
           : Rest.startswith(I->Name);
       if (Matched)
         return Prefix.size() + StringRef(I->Name).size();
