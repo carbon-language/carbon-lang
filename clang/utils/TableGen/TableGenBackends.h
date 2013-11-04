@@ -31,6 +31,7 @@ void EmitClangASTNodes(RecordKeeper &RK, raw_ostream &OS,
 
 void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrIdentifierArgList(RecordKeeper &Records, raw_ostream &OS);
+void EmitClangAttrTypeArgList(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrImpl(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrList(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrPCHRead(RecordKeeper &Records, raw_ostream &OS);

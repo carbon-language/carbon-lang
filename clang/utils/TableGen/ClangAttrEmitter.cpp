@@ -1195,6 +1195,37 @@ static bool isIdentifierArgument(Record *Arg) {
              .Default(false);
 }
 
+/// \brief Emits the first-argument-is-type property for attributes.
+void EmitClangAttrTypeArgList(RecordKeeper &Records, raw_ostream &OS) {
+  emitSourceFileHeader("llvm::StringSwitch code to match attributes with a "
+                       "type argument", OS);
+
+  std::vector<Record *> Attrs = Records.getAllDerivedDefinitions("Attr");
+
+  for (std::vector<Record *>::iterator I = Attrs.begin(), E = Attrs.end();
+       I != E; ++I) {
+    Record &Attr = **I;
+
+    // Determine whether the first argument is a type.
+    std::vector<Record *> Args = Attr.getValueAsListOfDefs("Args");
+    if (Args.empty())
+      continue;
+
+    if (Args[0]->getSuperClasses().back()->getName() != "TypeArgument")
+      continue;
+
+    // All these spellings take a single type argument.
+    std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
+    std::set<std::string> Emitted;
+    for (std::vector<Record*>::const_iterator I = Spellings.begin(),
+         E = Spellings.end(); I != E; ++I) {
+      if (Emitted.insert((*I)->getValueAsString("Name")).second)
+        OS << ".Case(\"" << (*I)->getValueAsString("Name") << "\", "
+           << "true" << ")\n";
+    }
+  }
+}
+
 // Emits the first-argument-is-identifier property for attributes.
 void EmitClangAttrIdentifierArgList(RecordKeeper &Records, raw_ostream &OS) {
   emitSourceFileHeader("llvm::StringSwitch code to match attributes with "

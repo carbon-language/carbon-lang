@@ -181,13 +181,24 @@ void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
   }
 }
 
-/// \brief Determine whether the given attribute has an identifier argument.
-static bool attributeHasIdentifierArg(const IdentifierInfo &II) {
-  StringRef Name = II.getName();
+/// \brief Normalizes an attribute name by dropping prefixed and suffixed __.
+static StringRef normalizeAttrName(StringRef Name) {
   if (Name.size() >= 4 && Name.startswith("__") && Name.endswith("__"))
     Name = Name.drop_front(2).drop_back(2);
-  return llvm::StringSwitch<bool>(Name)
+  return Name;
+}
+
+/// \brief Determine whether the given attribute has an identifier argument.
+static bool attributeHasIdentifierArg(const IdentifierInfo &II) {
+  return llvm::StringSwitch<bool>(normalizeAttrName(II.getName()))
 #include "clang/Parse/AttrIdentifierArg.inc"
+           .Default(false);
+}
+
+/// \brief Determine whether the given attribute parses a type argument.
+static bool attributeIsTypeArgAttr(const IdentifierInfo &II) {
+  return llvm::StringSwitch<bool>(normalizeAttrName(II.getName()))
+#include "clang/Parse/AttrTypeArg.inc"
            .Default(false);
 }
 
@@ -260,9 +271,8 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
     ParseTypeTagForDatatypeAttribute(*AttrName, AttrNameLoc, Attrs, EndLoc);
     return;
   }
-  // __attribute__((vec_type_hint)) and iboutletcollection expect a type arg.
-  if (AttrKind == AttributeList::AT_VecTypeHint ||
-      AttrKind == AttributeList::AT_IBOutletCollection) {
+  // Some attributes expect solely a type parameter.
+  if (attributeIsTypeArgAttr(*AttrName)) {
     ParseAttributeWithTypeArg(*AttrName, AttrNameLoc, Attrs, EndLoc);
     return;
   }
