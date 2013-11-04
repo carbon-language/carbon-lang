@@ -633,7 +633,7 @@ private:
                                      - _sharedLibraryAtoms._elementCount;
       if ( abIndex < _absoluteAtoms._elementCount ) {
         const uint8_t* p = _absoluteAtoms._arrayStart
-                                  + slIndex * _absoluteAtoms._elementSize;
+                                  + abIndex * _absoluteAtoms._elementSize;
         this->_targetsTable[i] = reinterpret_cast<const AbsoluteAtom*>(p);
         continue;
       }
