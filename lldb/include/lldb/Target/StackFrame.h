@@ -26,9 +26,21 @@
 
 namespace lldb_private {
 
+/// @class StackFrame StackFrame.h "lldb/Target/StackFrame.h"
+///
+/// @brief This base class provides an interface to stack frames.
+///
+/// StackFrames may have a Canonical Frame Address (CFA) or not.  
+/// A frame may have a plain pc value or it may have a pc value + stop_id 
+/// to indicate a specific point in the debug session so the correct section 
+/// load list is used for symbolication.
+///
+/// Local variables may be available, or not.  A register context may be
+/// available, or not.
+
 class StackFrame :
-    public std::enable_shared_from_this<StackFrame>,
-    public ExecutionContextScope
+    public ExecutionContextScope,
+    public std::enable_shared_from_this<StackFrame>
 {
 public:
     enum ExpressionPathOption
@@ -39,14 +51,72 @@ public:
         eExpressionPathOptionsNoSyntheticArrayRange = (1u << 3),
         eExpressionPathOptionsAllowDirectIVarAccess = (1u << 4)
     };
+
     //------------------------------------------------------------------
-    // Constructors and Destructors
+    /// Construct a StackFrame object without supplying a RegisterContextSP.
+    ///
+    /// This is the one constructor that doesn't take a RegisterContext
+    /// parameter.  This ctor may be called when creating a history StackFrame;
+    /// these are used if we've collected a stack trace of pc addresses at
+    /// some point in the past.  We may only have pc values.  We may have pc
+    /// values and the stop_id when the stack trace was recorded.  We may have a
+    /// CFA, or more likely, we won't.
+    ///
+    /// @param [in] thread_sp
+    ///   The Thread that this frame belongs to.
+    ///
+    /// @param [in] frame_idx
+    ///   This StackFrame's frame index number in the Thread.  If inlined stack
+    ///   frames are being created, this may differ from the concrete_frame_idx
+    ///   which is the frame index without any inlined stack frames.
+    ///
+    /// @param [in] concrete_frame_idx
+    ///   The StackFrame's frame index number in the Thread without any inlined
+    ///   stack frames being included in the index.  
+    ///
+    /// @param [in] cfa
+    ///   The Canonical Frame Address (this terminology from DWARF) for this
+    ///   stack frame.  The CFA for a stack frame does not change over the
+    ///   span of the stack frame's existence.  It is often the value of the
+    ///   caller's stack pointer before the call instruction into this frame's
+    ///   function.  It is usually not the same as the frame pointer register's
+    ///   value.
+    ///
+    /// @param [in] cfa_is_valid
+    ///   A history stack frame may not have a CFA value collected.  We want to
+    ///   distinguish between "no CFA available" and a CFA of 
+    ///   LLDB_INVALID_ADDRESS.
+    ///
+    /// @param [in] pc
+    ///   The current pc value of this stack frame.
+    ///
+    /// @param [in] stop_id
+    ///   The stop_id which should be used when looking up symbols for the pc value,
+    ///   if appropriate.  This argument is ignored if stop_id_is_valid is false.
+    ///
+    /// @param [in] stop_id_is_valid
+    ///   If the stop_id argument provided is not needed for this StackFrame, this
+    ///   should be false.  If this is a history stack frame and we know the stop_id
+    ///   when the pc value was collected, that stop_id should be provided and this
+    ///   will be true.
+    ///
+    /// @param [in] is_history_frame
+    ///   If this is a historical stack frame -- possibly without CFA or registers or
+    ///   local variables -- then this should be set to true.
+    ///
+    /// @param [in] sc_ptr
+    ///   Optionally seed the StackFrame with the SymbolContext information that has
+    ///   already been discovered.
     //------------------------------------------------------------------
     StackFrame (const lldb::ThreadSP &thread_sp,
                 lldb::user_id_t frame_idx, 
                 lldb::user_id_t concrete_frame_idx, 
                 lldb::addr_t cfa, 
+                bool cfa_is_valid,
                 lldb::addr_t pc, 
+                uint32_t stop_id,
+                bool stop_id_is_valid,
+                bool is_history_frame,
                 const SymbolContext *sc_ptr);
 
     StackFrame (const lldb::ThreadSP &thread_sp,
@@ -76,21 +146,103 @@ public:
     StackID&
     GetStackID();
 
+    //------------------------------------------------------------------
+    /// Get an Address for the current pc value in this StackFrame.
+    ///
+    /// May not be the same as the actual PC value for inlined stack frames.
+    ///
+    /// @return
+    ///   The Address object set to the current PC value.
+    //------------------------------------------------------------------
     const Address&
     GetFrameCodeAddress();
-    
-    void
+
+    //------------------------------------------------------------------
+    /// Change the pc value for a given thread.
+    ///
+    /// Change the current pc value for the frame on this thread.
+    ///
+    /// @param[in] pc
+    ///     The load address that the pc will be set to.
+    ///
+    /// @return
+    ///     true if the pc was changed.  false if this failed -- possibly
+    ///     because this frame is not a live StackFrame.
+    //------------------------------------------------------------------
+    bool
     ChangePC (lldb::addr_t pc);
 
+    //------------------------------------------------------------------
+    /// Provide a SymbolContext for this StackFrame's current pc value.
+    ///
+    /// The StackFrame maintains this SymbolContext and adds additional information
+    /// to it on an as-needed basis.  This helps to avoid different functions
+    /// looking up symbolic information for a given pc value multple times.
+    ///
+    /// @params [in] resolve_scope
+    ///   Flags from the SymbolContextItem enumerated type which specify what
+    ///   type of symbol context is needed by this caller.
+    ///
+    /// @return
+    ///   A SymbolContext reference which includes the types of information
+    ///   requested by resolve_scope, if they are available.
+    //------------------------------------------------------------------
     const SymbolContext&
     GetSymbolContext (uint32_t resolve_scope);
 
+    //------------------------------------------------------------------
+    /// Return the Canonical Frame Address (DWARF term) for this frame.
+    ///
+    /// The CFA is typically the value of the stack pointer register before
+    /// the call invocation is made.  It will not change during the lifetime
+    /// of a stack frame.  It is often not the same thing as the frame pointer
+    /// register value.
+    ///
+    /// Live StackFrames will always have a CFA but other types of frames may
+    /// not be able to supply one.
+    ///
+    /// @param [out] value
+    ///   The address of the CFA for this frame, if available.
+    ///
+    /// @param [out] error_ptr
+    ///   If there is an error determining the CFA address, this may contain a
+    ///   string explaining the failure.
+    ///
+    /// @return
+    ///   Returns true if the CFA value was successfully set in value.  Some
+    ///   frames may be unable to provide this value; they will return false.
+    //------------------------------------------------------------------
     bool
     GetFrameBaseValue(Scalar &value, Error *error_ptr);
 
+    //------------------------------------------------------------------
+    /// Get the current lexical scope block for this StackFrame, if possible.
+    ///
+    /// If debug information is available for this stack frame, return a
+    /// pointer to the innermost lexical Block that the frame is currently
+    /// executing.
+    ///
+    /// @return
+    ///   A pointer to the current Block.  NULL is returned if this can
+    ///   not be provided.
+    //------------------------------------------------------------------
     Block *
     GetFrameBlock ();
 
+    //------------------------------------------------------------------
+    /// Get the RegisterContext for this frame, if possible.
+    ///
+    /// Returns a shared pointer to the RegisterContext for this stack frame.
+    /// Only a live StackFrame object will be able to return a RegisterContext -
+    /// callers must be prepared for an empty shared pointer being returned.
+    ///
+    /// Even a live StackFrame RegisterContext may not be able to provide all
+    /// registers.  Only the currently executing frame (frame 0) can reliably
+    /// provide every register in the register context.
+    ///
+    /// @return
+    ///   The RegisterContext shared point for this frame.
+    //------------------------------------------------------------------
     lldb::RegisterContextSP
     GetRegisterContext ();
 
@@ -100,74 +252,237 @@ public:
         return m_reg_context_sp;
     }
 
+    //------------------------------------------------------------------
+    /// Retrieve the list of variables that are in scope at this StackFrame's pc.
+    ///
+    /// A frame that is not live may return an empty VariableList for a given
+    /// pc value even though variables would be available at this point if
+    /// it were a live stack frame.
+    ///
+    /// @param[in] get_file_globals
+    ///     Whether to also retrieve compilation-unit scoped variables
+    ///     that are visisble to the entire compilation unit (e.g. file
+    ///     static in C, globals that are homed in this CU).
+    ///
+    /// @return
+    ///     A pointer to a list of variables.
+    //------------------------------------------------------------------
     VariableList *
     GetVariableList (bool get_file_globals);
 
+    //------------------------------------------------------------------
+    /// Retrieve the list of variables that are in scope at this StackFrame's pc.
+    ///
+    /// A frame that is not live may return an empty VariableListSP for a
+    /// given pc value even though variables would be available at this point
+    /// if it were a live stack frame.
+    ///
+    /// @param[in] get_file_globals
+    ///     Whether to also retrieve compilation-unit scoped variables
+    ///     that are visisble to the entire compilation unit (e.g. file
+    ///     static in C, globals that are homed in this CU).
+    ///
+    /// @return
+    ///     A pointer to a list of variables.
+    //------------------------------------------------------------------
     lldb::VariableListSP
     GetInScopeVariableList (bool get_file_globals);
 
-    // See ExpressionPathOption enumeration for "options" values
+    //------------------------------------------------------------------
+    /// Create a ValueObject for a variable name / pathname, possibly
+    /// including simple dereference/child selection syntax.
+    ///
+    /// @param[in] var_expr
+    ///     The string specifying a variable to base the VariableObject off
+    ///     of.
+    ///
+    /// @param[in] use_dynamic
+    ///     Whether the correct dynamic type of an object pointer should be
+    ///     determined before creating the object, or if the static type is
+    ///     sufficient.  One of the DynamicValueType enumerated values.
+    ///
+    /// @param[in] options
+    ///     An unsigned integer of flags, values from StackFrame::ExpressionPathOption
+    ///     enum.
+    /// @param[in] var_sp
+    ///     A VariableSP that will be set to the variable described in the
+    ///     var_expr path.
+    ///
+    /// @param[in] error
+    ///     Record any errors encountered while evaluating var_expr.
+    ///
+    /// @return
+    ///     A shared pointer to the ValueObject described by var_expr.
+    //------------------------------------------------------------------
     lldb::ValueObjectSP
-    GetValueForVariableExpressionPath (const char *var_expr, 
-                                       lldb::DynamicValueType use_dynamic, 
+    GetValueForVariableExpressionPath (const char *var_expr,
+                                       lldb::DynamicValueType use_dynamic,
                                        uint32_t options,
                                        lldb::VariableSP &var_sp,
                                        Error &error);
 
+    //------------------------------------------------------------------
+    /// Determine whether this StackFrame has debug information available or not
+    ///
+    /// @return
+    //    true if debug information is available for this frame (function,
+    //    compilation unit, block, etc.)
+    //------------------------------------------------------------------
     bool
     HasDebugInformation ();
 
+    //------------------------------------------------------------------
+    /// Return the disassembly for the instructions of this StackFrame's function
+    /// as a single C string.
+    ///
+    /// @return
+    //    C string with the assembly instructions for this function.
+    //------------------------------------------------------------------
     const char *
     Disassemble ();
 
+    //------------------------------------------------------------------
+    /// Print a description for this frame using the frame-format formatter settings.
+    ///
+    /// @param [in] strm
+    ///   The Stream to print the description to.
+    ///
+    /// @param [in] frame_marker
+    ///   Optional string that will be prepended to the frame output description.
+    //------------------------------------------------------------------
     void
     DumpUsingSettingsFormat (Stream *strm, const char *frame_marker = NULL);
-    
+
+    //------------------------------------------------------------------
+    /// Print a description for this frame using a default format.
+    ///
+    /// @param [in] strm
+    ///   The Stream to print the description to.
+    ///
+    /// @param [in] show_frame_index
+    ///   Whether to print the frame number or not.
+    ///
+    /// @param [in] show_fullpaths
+    ///   Whether to print the full source paths or just the file base name.
+    //------------------------------------------------------------------
     void
     Dump (Stream *strm, bool show_frame_index, bool show_fullpaths);
-    
-    bool
-    IsInlined ();
 
-    uint32_t
-    GetFrameIndex () const;
-
-    uint32_t
-    GetConcreteFrameIndex () const
-    {
-        return m_concrete_frame_index;
-    }
-    
-    lldb::ValueObjectSP
-    GetValueObjectForFrameVariable (const lldb::VariableSP &variable_sp, lldb::DynamicValueType use_dynamic);
-
-    lldb::ValueObjectSP
-    TrackGlobalVariable (const lldb::VariableSP &variable_sp, lldb::DynamicValueType use_dynamic);
-    
     //------------------------------------------------------------------
-    // lldb::ExecutionContextScope pure virtual functions
+    /// Print a description of this stack frame and/or the source context/assembly
+    /// for this stack frame.
+    ///
+    /// @param[in] strm
+    ///   The Stream to send the output to.
+    ///
+    /// @param[in] show_frame_info
+    ///   If true, print the frame info by calling DumpUsingSettingsFormat().
+    ///
+    /// @param[in] show_source
+    ///   If true, print source or disassembly as per the user's settings.
+    ///
+    /// @param[in] frame_marker 
+    ///   Passed to DumpUsingSettingsFormat() for the frame info printing.
+    ///
+    /// @return
+    ///   Returns true if successful.
     //------------------------------------------------------------------
-    virtual lldb::TargetSP
-    CalculateTarget ();
-    
-    virtual lldb::ProcessSP
-    CalculateProcess ();
-    
-    virtual lldb::ThreadSP
-    CalculateThread ();
-    
-    virtual lldb::StackFrameSP
-    CalculateStackFrame ();
-
-    virtual void
-    CalculateExecutionContext (ExecutionContext &exe_ctx);
-    
     bool
     GetStatus (Stream &strm,
                bool show_frame_info,
                bool show_source,
                const char *frame_marker = NULL);
-    
+
+    //------------------------------------------------------------------
+    /// Query whether this frame is a concrete frame on the call stack,
+    /// or if it is an inlined frame derived from the debug information
+    /// and presented by the debugger.
+    ///
+    /// @return
+    ///   true if this is an inlined frame.
+    //------------------------------------------------------------------
+    bool
+    IsInlined ();
+
+    //------------------------------------------------------------------
+    /// Query this frame to find what frame it is in this Thread's StackFrameList.
+    ///
+    /// @return
+    ///   StackFrame index 0 indicates the currently-executing function.  Inline
+    ///   frames are included in this frame index count.
+    //------------------------------------------------------------------
+    uint32_t
+    GetFrameIndex () const;
+
+    //------------------------------------------------------------------
+    /// Query this frame to find what frame it is in this Thread's StackFrameList,
+    /// not counting inlined frames.
+    ///
+    /// @return
+    ///   StackFrame index 0 indicates the currently-executing function.  Inline
+    ///   frames are not included in this frame index count; their concrete
+    ///   frame index will be the same as the concrete frame that they are
+    ///   derived from.
+    //------------------------------------------------------------------
+    uint32_t
+    GetConcreteFrameIndex () const
+    {
+        return m_concrete_frame_index;
+    }
+
+    //------------------------------------------------------------------
+    /// Create a ValueObject for a given Variable in this StackFrame.
+    ///
+    /// @params [in] variable_sp
+    ///   The Variable to base this ValueObject on
+    ///
+    /// @params [in] use_dynamic
+    ///     Whether the correct dynamic type of the variable should be
+    ///     determined before creating the ValueObject, or if the static type
+    ///     is sufficient.  One of the DynamicValueType enumerated values.
+    ///
+    /// @return
+    //    A ValueObject for this variable.
+    //------------------------------------------------------------------
+    lldb::ValueObjectSP
+    GetValueObjectForFrameVariable (const lldb::VariableSP &variable_sp, lldb::DynamicValueType use_dynamic);
+
+    //------------------------------------------------------------------
+    /// Add an arbitrary Variable object (e.g. one that specifics a global or static)
+    /// to a StackFrame's list of ValueObjects.
+    ///
+    /// @params [in] variable_sp
+    ///   The Variable to base this ValueObject on
+    ///
+    /// @params [in] use_dynamic
+    ///     Whether the correct dynamic type of the variable should be
+    ///     determined before creating the ValueObject, or if the static type
+    ///     is sufficient.  One of the DynamicValueType enumerated values.
+    ///
+    /// @return
+    //    A ValueObject for this variable.
+    //------------------------------------------------------------------
+    lldb::ValueObjectSP
+    TrackGlobalVariable (const lldb::VariableSP &variable_sp, lldb::DynamicValueType use_dynamic);
+
+    //------------------------------------------------------------------
+    // lldb::ExecutionContextScope pure virtual functions
+    //------------------------------------------------------------------
+    virtual lldb::TargetSP
+    CalculateTarget ();
+
+    virtual lldb::ProcessSP
+    CalculateProcess ();
+
+    virtual lldb::ThreadSP
+    CalculateThread ();
+
+    virtual lldb::StackFrameSP
+    CalculateStackFrame ();
+
+    void
+    CalculateExecutionContext (ExecutionContext &exe_ctx);
+
 protected:
     friend class StackFrameList;
 
@@ -176,7 +491,7 @@ protected:
 
     void
     UpdateCurrentFrameFromPreviousFrame (StackFrame &prev_frame);
-    
+
     void
     UpdatePreviousFrameFromCurrentFrame (StackFrame &curr_frame);
 
@@ -197,6 +512,10 @@ private:
     Flags m_flags;
     Scalar m_frame_base;
     Error m_frame_base_error;
+    bool m_cfa_is_valid;        // Does this frame have a CFA?  Different from CFA == LLDB_INVALID_ADDRESS
+    uint32_t m_stop_id;
+    bool m_stop_id_is_valid;      // Does this frame have a stop_id?  Use it when referring to the m_frame_code_addr.
+    bool m_is_history_frame;
     lldb::VariableListSP m_variable_list_sp;
     ValueObjectList m_variable_list_value_objects;  // Value objects for each variable in m_variable_list_sp
     StreamString m_disassembly;

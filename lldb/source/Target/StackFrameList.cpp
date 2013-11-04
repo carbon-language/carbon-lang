@@ -336,7 +336,10 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
                     SetAllFramesFetched();
                     break;
                 }
-                unwind_frame_sp.reset (new StackFrame (m_thread.shared_from_this(), m_frames.size(), idx, cfa, pc, NULL));
+                const bool cfa_is_valid = true;
+                const bool stop_id_is_valid = false;
+                const bool is_history_frame = false;
+                unwind_frame_sp.reset (new StackFrame (m_thread.shared_from_this(), m_frames.size(), idx, cfa, cfa_is_valid, pc, 0, stop_id_is_valid, is_history_frame, NULL));
                 m_frames.push_back (unwind_frame_sp);
             }
             
@@ -534,7 +537,10 @@ StackFrameList::GetFrameAtIndex (uint32_t idx)
                 addr_t pc, cfa;
                 if (unwinder->GetFrameInfoAtIndex(idx, cfa, pc))
                 {
-                    frame_sp.reset (new StackFrame (m_thread.shared_from_this(), idx, idx, cfa, pc, NULL));
+                    const bool cfa_is_valid = true;
+                    const bool stop_id_is_valid = false;
+                    const bool is_history_frame = false;
+                    frame_sp.reset (new StackFrame (m_thread.shared_from_this(), idx, idx, cfa, cfa_is_valid, pc, 0, stop_id_is_valid, is_history_frame, NULL));
                     
                     Function *function = frame_sp->GetSymbolContext (eSymbolContextFunction).function;
                     if (function)

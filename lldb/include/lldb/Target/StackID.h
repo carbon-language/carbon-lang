@@ -117,6 +117,12 @@ protected:
         m_pc = pc;
     }
 
+    void
+    SetCFA (lldb::addr_t cfa)
+    {
+        m_cfa = cfa;
+    }
+
     //------------------------------------------------------------------
     // Classes that inherit from StackID can see and modify these
     //------------------------------------------------------------------
