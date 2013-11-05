@@ -1120,7 +1120,7 @@ ABISysV_x86_64::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
     
     row->SetRegisterLocationToAtCFAPlusOffset(fp_reg_num, ptr_size * -2, true);
     row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, ptr_size * -1, true);
-    row->SetRegisterLocationToAtCFAPlusOffset(sp_reg_num, ptr_size *  0, true);
+    row->SetRegisterLocationToIsCFAPlusOffset(sp_reg_num, 0, true);
 
     unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("x86_64 default unwind plan");
