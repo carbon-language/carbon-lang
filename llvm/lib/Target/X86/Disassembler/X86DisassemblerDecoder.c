@@ -25,8 +25,6 @@
 #define TRUE  1
 #define FALSE 0
 
-typedef int8_t bool;
-
 #ifndef NDEBUG
 #define debug(s) do { x86DisassemblerDebug(__FILE__, __LINE__, s); } while (0)
 #else
