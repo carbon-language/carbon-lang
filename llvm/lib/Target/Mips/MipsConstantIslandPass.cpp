@@ -766,23 +766,8 @@ void MipsConstantIslands::updateForInsertedWaterBlock
   WaterList.insert(IP, NewBB);
 }
 
-/// getUserOffset - Compute the offset of U.MI as seen by the hardware
-/// displacement computation.  Update U.KnownAlignment to match its current
-/// basic block location.
 unsigned MipsConstantIslands::getUserOffset(CPUser &U) const {
-  unsigned UserOffset = getOffsetOf(U.MI);
-  const BasicBlockInfo &BBI = BBInfo[U.MI->getParent()->getNumber()];
-  unsigned KnownBits = BBI.internalKnownBits();
-
-  // The value read from PC is offset from the actual instruction address.
-
-
-  // Because of inline assembly, we may not know the alignment (mod 4) of U.MI.
-  // Make sure U.getMaxDisp() returns a constrained range.
-  U.KnownAlignment = (KnownBits >= 2);
-
-
-  return UserOffset;
+  return getOffsetOf(U.MI);
 }
 
 /// Split the basic block containing MI into two blocks, which are joined by
