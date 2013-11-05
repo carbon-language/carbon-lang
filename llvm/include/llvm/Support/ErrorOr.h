@@ -108,30 +108,28 @@ private:
   typedef typename remove_reference<T>::type *pointer;
 
 public:
-  ErrorOr() : IsValid(false) {}
-
   template <class E>
   ErrorOr(E ErrorCode, typename enable_if_c<is_error_code_enum<E>::value ||
                                             is_error_condition_enum<E>::value,
                                             void *>::type = 0)
-      : HasError(true), IsValid(true) {
+      : HasError(true) {
     new (getError()) error_code(make_error_code(ErrorCode));
   }
 
-  ErrorOr(llvm::error_code EC) : HasError(true), IsValid(true) {
+  ErrorOr(llvm::error_code EC) : HasError(true) {
     new (getError()) error_code(EC);
   }
 
-  ErrorOr(T Val) : HasError(false), IsValid(true) {
+  ErrorOr(T Val) : HasError(false) {
     new (get()) storage_type(moveIfMoveConstructible<storage_type>(Val));
   }
 
-  ErrorOr(const ErrorOr &Other) : IsValid(false) {
+  ErrorOr(const ErrorOr &Other) {
     copyConstruct(Other);
   }
 
   template <class OtherT>
-  ErrorOr(const ErrorOr<OtherT> &Other) : IsValid(false) {
+  ErrorOr(const ErrorOr<OtherT> &Other) {
     copyConstruct(Other);
   }
 
@@ -147,12 +145,12 @@ public:
   }
 
 #if LLVM_HAS_RVALUE_REFERENCES
-  ErrorOr(ErrorOr &&Other) : IsValid(false) {
+  ErrorOr(ErrorOr &&Other) {
     moveConstruct(std::move(Other));
   }
 
   template <class OtherT>
-  ErrorOr(ErrorOr<OtherT> &&Other) : IsValid(false) {
+  ErrorOr(ErrorOr<OtherT> &&Other) {
     moveConstruct(std::move(Other));
   }
 
@@ -169,8 +167,6 @@ public:
 #endif
 
   ~ErrorOr() {
-    if (!IsValid)
-      return;
     if (!HasError)
       get()->~storage_type();
   }
@@ -180,12 +176,10 @@ public:
 
   /// \brief Return false if there is an error.
   operator unspecified_bool_type() const {
-    assert(IsValid && "Can't do anything on a default constructed ErrorOr!");
     return HasError ? 0 : unspecified_bool_true;
   }
 
   operator llvm::error_code() const {
-    assert(IsValid && "Can't do anything on a default constructed ErrorOr!");
     return HasError ? *getError() : llvm::error_code::success();
   }
 
@@ -200,10 +194,6 @@ public:
 private:
   template <class OtherT>
   void copyConstruct(const ErrorOr<OtherT> &Other) {
-    // Construct an invalid ErrorOr if other is invalid.
-    if (!Other.IsValid)
-      return;
-    IsValid = true;
     if (!Other.HasError) {
       // Get the other value.
       HasError = false;
@@ -237,22 +227,14 @@ private:
 #if LLVM_HAS_RVALUE_REFERENCES
   template <class OtherT>
   void moveConstruct(ErrorOr<OtherT> &&Other) {
-    // Construct an invalid ErrorOr if other is invalid.
-    if (!Other.IsValid)
-      return;
-    IsValid = true;
     if (!Other.HasError) {
       // Get the other value.
       HasError = false;
       new (get()) storage_type(std::move(*Other.get()));
-      // Tell other not to do any destruction.
-      Other.IsValid = false;
     } else {
       // Get other's error.
       HasError = true;
       new (getError()) error_code(Other);
-      // Tell other not to do any destruction.
-      Other.IsValid = false;
     }
   }
 
@@ -275,19 +257,16 @@ private:
   }
 
   storage_type *get() {
-    assert(IsValid && "Can't do anything on a default constructed ErrorOr!");
     assert(!HasError && "Cannot get value when an error exists!");
     return reinterpret_cast<storage_type*>(TStorage.buffer);
   }
 
   const storage_type *get() const {
-    assert(IsValid && "Can't do anything on a default constructed ErrorOr!");
     assert(!HasError && "Cannot get value when an error exists!");
     return reinterpret_cast<const storage_type*>(TStorage.buffer);
   }
 
   error_code *getError() {
-    assert(IsValid && "Can't do anything on a default constructed ErrorOr!");
     assert(HasError && "Cannot get error when a value exists!");
     return reinterpret_cast<error_code*>(ErrorStorage.buffer);
   }
@@ -302,7 +281,6 @@ private:
     AlignedCharArrayUnion<error_code> ErrorStorage;
   };
   bool HasError : 1;
-  bool IsValid : 1;
 };
 
 template<class T, class E>
