@@ -3049,17 +3049,18 @@ OutOfRecordLoop:
   return error_code::success();
 }
 
-/// FindFunctionInStream - Find the function body in the bitcode stream
-bool BitcodeReader::FindFunctionInStream(Function *F,
+/// Find the function body in the bitcode stream
+error_code BitcodeReader::FindFunctionInStream(Function *F,
        DenseMap<Function*, uint64_t>::iterator DeferredFunctionInfoIterator) {
   while (DeferredFunctionInfoIterator->second == 0) {
     if (Stream.AtEndOfStream())
       return Error(CouldNotFindFunctionInStream);
     // ParseModule will parse the next body in the stream and set its
     // position in the DeferredFunctionInfo map.
-    if (ParseModule(true)) return true;
+    if (error_code EC = ParseModule(true))
+      return EC;
   }
-  return false;
+  return error_code::success();
 }
 
 //===----------------------------------------------------------------------===//

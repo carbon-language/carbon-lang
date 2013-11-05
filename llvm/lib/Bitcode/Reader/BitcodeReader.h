@@ -366,7 +366,7 @@ private:
   error_code InitStream();
   error_code InitStreamFromBuffer();
   error_code InitLazyStream();
-  bool FindFunctionInStream(Function *F,
+  error_code FindFunctionInStream(Function *F,
          DenseMap<Function*, uint64_t>::iterator DeferredFunctionInfoIterator);
 };
 
