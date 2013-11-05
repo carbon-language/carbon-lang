@@ -26,6 +26,7 @@
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/SystemRuntime.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
@@ -1256,4 +1257,38 @@ SBProcess::UnloadImage (uint32_t image_token)
     else
         sb_error.SetErrorString("invalid process");
     return sb_error;
+}
+
+uint32_t
+SBProcess::GetNumThreadOriginExtendedBacktraceTypes ()
+{
+    ProcessSP process_sp(GetSP());
+    if (process_sp && process_sp->GetSystemRuntime())
+    {
+        SystemRuntime *runtime = process_sp->GetSystemRuntime();
+        return runtime->GetThreadOriginExtendedBacktraceTypes().size();
+    }
+    return 0;
+}
+
+const char *
+SBProcess::GetThreadOriginExtendedBacktraceTypeAtIndex (uint32_t idx)
+{
+    ProcessSP process_sp(GetSP());
+    if (process_sp && process_sp->GetSystemRuntime())
+    {
+        SystemRuntime *runtime = process_sp->GetSystemRuntime();
+        std::vector<ConstString> names = runtime->GetThreadOriginExtendedBacktraceTypes();
+        if (idx < names.size())
+        {
+            return names[idx].AsCString();
+        }
+        else
+        {
+            Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            if (log)
+                log->Printf("SBProcess(%p)::GetThreadOriginExtendedBacktraceTypeAtIndex() => error: requested extended backtrace name out of bounds", process_sp.get());
+        }
+    }
+    return NULL;
 }

@@ -354,6 +354,26 @@ public:
     lldb::SBError
     UnloadImage (uint32_t image_token);
 
+    %feature("autodoc", "
+    Return the number of different thread-origin extended backtraces
+    this process can support as a uint32_t.
+    When the process is stopped and you have an SBThread, lldb may be
+    able to show a backtrace of when that thread was originally created,
+    or the work item was enqueued to it (in the case of a libdispatch 
+    queue).
+    ") GetNumThreadOriginExtendedBacktraceTypes;
+    
+    uint32_t
+    GetNumThreadOriginExtendedBacktraceTypes ();
+
+    %feature("autodoc", "
+    Takes an index argument, returns the name of one of the thread-origin 
+    extended backtrace methods as a str.
+    ") GetThreadOriginExtendedBacktraceTypeAtIndex;
+
+    const char *
+    GetThreadOriginExtendedBacktraceTypeAtIndex (uint32_t idx);
+
     %pythoncode %{
         def __get_is_alive__(self):
             '''Returns "True" if the process is currently alive, "False" otherwise'''

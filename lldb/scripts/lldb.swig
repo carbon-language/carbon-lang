@@ -10,7 +10,7 @@
 %define DOCSTRING
 "The lldb module contains the public APIs for Python binding.
 
-Some of the important classes are describe here:
+Some of the important classes are described here:
 
 o SBTarget: Represents the target program running under the debugger.
 o SBProcess: Represents the process associated with the target program.

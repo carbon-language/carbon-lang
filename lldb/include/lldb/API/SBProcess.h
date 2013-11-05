@@ -269,6 +269,38 @@ public:
     lldb::SBError
     UnloadImage (uint32_t image_token);
     
+    //------------------------------------------------------------------
+    /// Return the number of different thread-origin extended backtraces
+    /// this process can support.
+    ///
+    /// When the process is stopped and you have an SBThread, lldb may be
+    /// able to show a backtrace of when that thread was originally created,
+    /// or the work item was enqueued to it (in the case of a libdispatch 
+    /// queue).
+    ///
+    /// @return
+    ///   The number of thread-origin extended backtrace types that may be
+    ///   available.
+    //------------------------------------------------------------------
+    uint32_t
+    GetNumThreadOriginExtendedBacktraceTypes ();
+
+    //------------------------------------------------------------------
+    /// Return the name of one of the thread-origin extended backtrace 
+    /// methods.
+    ///
+    /// @param [in] idx
+    ///   The index of the name to return.  They will be returned in
+    ///   the order that the user will most likely want to see them.
+    ///   e.g. if the type at index 0 is not available for a thread, 
+    ///   see if the type at index 1 provides an extended backtrace.
+    ///
+    /// @return
+    ///   The name at that index.
+    //------------------------------------------------------------------
+    const char *
+    GetThreadOriginExtendedBacktraceTypeAtIndex (uint32_t idx);
+
 protected:
     friend class SBAddress;
     friend class SBBreakpoint;

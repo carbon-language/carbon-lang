@@ -130,8 +130,18 @@ public:
     const char *
     GetName () const;
 
+    %feature("autodoc", "
+    Return the queue name associated with this thread, if any, as a str.
+    For example, with a libdispatch (aka Grand Central Dispatch) queue.
+    ") GetQueueName;
+
     const char *
     GetQueueName() const;
+
+    %feature("autodoc", "
+    Return the dispatch_queue_id for this thread, if any, as a lldb::queue_id_t.
+    For example, with a libdispatch (aka Grand Central Dispatch) queue.
+    ") GetQueueID;
 
     lldb::queue_id_t
     GetQueueID() const;
