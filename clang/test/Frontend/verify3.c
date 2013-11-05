@@ -24,7 +24,7 @@
 #endif
 
 // RUN: not %clang_cc1 -DTEST3 -verify %s 2>&1 | FileCheck -check-prefix=CHECK3 %s
-// RUN: not %clang_cc1 -verify 2>&1 | FileCheck -check-prefix=CHECK3 %s
+// RUN: not %clang_cc1 -verify %s 2>&1 | FileCheck -check-prefix=CHECK3 %s
 #ifdef TEST3
 // no directives
 
