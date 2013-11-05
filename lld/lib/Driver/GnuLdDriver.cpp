@@ -256,15 +256,13 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     case OPT_start_group: {
       std::unique_ptr<InputElement> controlStart(new ELFGroup(*ctx, index++));
       controlNodeStack.push(controlStart.get());
-      (dyn_cast<ControlNode>)(controlNodeStack.top())
-          ->processControlEnter();
+      dyn_cast<ControlNode>(controlNodeStack.top())->processControlEnter();
       inputGraph->addInputElement(std::move(controlStart));
       break;
     }
 
     case OPT_end_group:
-      (dyn_cast<ControlNode>)(controlNodeStack.top())
-          ->processControlExit();
+      dyn_cast<ControlNode>(controlNodeStack.top())->processControlExit();
       controlNodeStack.pop();
       break;
 
@@ -276,7 +274,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       if (controlNodeStack.empty())
         inputGraph->addInputElement(std::move(inputFile));
       else
-        (dyn_cast<ControlNode>)(controlNodeStack.top())
+        dyn_cast<ControlNode>(controlNodeStack.top())
             ->processInputElement(std::move(inputFile));
       break;
     }
