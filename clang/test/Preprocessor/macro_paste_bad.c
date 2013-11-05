@@ -32,5 +32,5 @@ XX     // expected-error {{attempt to use a poisoned identifier}}
 #define VA __VA_ ## ARGS__
 int VA;   // expected-warning {{__VA_ARGS__ can only appear in the expansion of a C99 variadic macro}}
 
-#define LOG_ON_ERROR(lvl) ::X x## #__LINE__; // expected-error {{'#' is not followed by a macro parameter}}
+#define LOG_ON_ERROR(x) x ## #y; // expected-error {{'#' is not followed by a macro parameter}}
 LOG_ON_ERROR(0);
