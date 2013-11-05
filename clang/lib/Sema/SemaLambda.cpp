@@ -1241,6 +1241,11 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
     //   A conditional-expression e is a core constant expression unless the
     //   evaluation of e, following the rules of the abstract machine, would
     //   evaluate [...] a lambda-expression.
+    //
+    // This is technically incorrect, there are some constant evaluated contexts
+    // where this should be allowed.  We should probably fix this when DR1607 is
+    // ratified, it lays out the exact set of conditions where we shouldn't
+    // allow a lambda-expression.
     case ConstantEvaluated:
       // We don't actually diagnose this case immediately, because we
       // could be within a context where we might find out later that
