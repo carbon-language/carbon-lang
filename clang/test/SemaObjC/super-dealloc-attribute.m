@@ -40,9 +40,9 @@
   [super MyDealloc];
 } // expected-warning {{method possibly missing a [super XXX] call}}
 
-- (void) MyDeallocMeth {} // expected-warning {{method possibly missing a [super MyDeallocMeth] call}}
+- (void) MyDeallocMeth {} 
 - (void) AnnotMyDeallocMeth{} // expected-warning {{method possibly missing a [super AnnotMyDeallocMeth] call}}
-- (void) AnnotMeth{}; // expected-warning {{method possibly missing a [super AnnotMeth] call}}
+- (void) AnnotMeth{};
 
 + (void)registerClass:(id)name {} // expected-warning {{method possibly missing a [super registerClass:] call}}
 @end
@@ -66,7 +66,7 @@
 - (void) AnnotMyDeallocMeth{} // expected-warning {{method possibly missing a [super AnnotMyDeallocMeth] call}}
 - (void) AnnotMeth{};  // expected-warning {{method possibly missing a [super AnnotMeth] call}}
 - (void) AnnotMyDeallocMethCAT{}; // expected-warning {{method possibly missing a [super AnnotMyDeallocMethCAT] call}}
-- (void) AnnotMethCAT {}; // expected-warning {{method possibly missing a [super AnnotMethCAT] call}}
+- (void) AnnotMethCAT {};
 @end
 
 
@@ -101,11 +101,32 @@
 @implementation ViewController
 - (void) someMethodRequiringSuper
 {
-} // expected-warning {{method possibly missing a [super someMethodRequiringSuper] call}}
+}
 - (IBAction) someAction
 {
 }
 - (IBAction) someActionRequiringSuper
 {
-} // expected-warning {{method possibly missing a [super someActionRequiringSuper] call}}
+} 
+@end
+
+// rdar://15385981
+@interface Barn
+- (void)openDoor __attribute__((objc_requires_super));
+@end
+
+@implementation Barn
+- (void) openDoor
+{
+    ;
+}
+@end
+
+@interface HorseBarn:Barn @end
+
+@implementation HorseBarn
+- (void) openDoor
+{
+    ;
+}	// expected-warning {{method possibly missing a [super openDoor] call}}
 @end

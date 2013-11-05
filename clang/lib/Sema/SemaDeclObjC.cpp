@@ -406,9 +406,7 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
         if (Context.getLangOpts().getGC() != LangOptions::NonGC)
           getCurFunction()->ObjCShouldCallSuper = true;
         
-      } else if (MDecl->hasAttr<ObjCRequiresSuperAttr>())
-        getCurFunction()->ObjCShouldCallSuper = true;
-      else {
+      } else {
         const ObjCMethodDecl *SuperMethod =
           SuperClass->lookupMethod(MDecl->getSelector(),
                                    MDecl->isInstanceMethod());
