@@ -66,17 +66,6 @@ static cl::opt<int> ConstantIslandsSmallOffset(
   cl::desc("Make small offsets be this amount for testing purposes"),
   cl::Hidden);
 
-/// UnknownPadding - Return the worst case padding that could result from
-/// unknown offset bits.  This does not include alignment padding caused by
-/// known offset bits.
-///
-/// @param LogAlign log2(alignment)
-/// @param KnownBits Number of known low offset bits.
-static inline unsigned UnknownPadding(unsigned LogAlign, unsigned KnownBits) {
-  if (KnownBits < LogAlign)
-    return (1u << LogAlign) - (1u << KnownBits);
-  return 0;
-}
 
 namespace {
 
@@ -119,52 +108,15 @@ namespace {
       /// beginning of the block, or from an aligned jump table at the end.
       unsigned Size;
 
-      /// KnownBits - The number of low bits in Offset that are known to be
-      /// exact.  The remaining bits of Offset are an upper bound.
-      uint8_t KnownBits;
-
-      /// Unalign - When non-zero, the block contains instructions (inline asm)
-      /// of unknown size.  The real size may be smaller than Size bytes by a
-      /// multiple of 1 << Unalign.
-      uint8_t Unalign;
-
-      /// PostAlign - When non-zero, the block terminator contains a .align
-      /// directive, so the end of the block is aligned to 1 << PostAlign
-      /// bytes.
-      uint8_t PostAlign;
-
-      BasicBlockInfo() : Offset(0), Size(0), KnownBits(0), Unalign(0),
-        PostAlign(0) {}
-
-      /// Compute the number of known offset bits internally to this block.
-      /// This number should be used to predict worst case padding when
-      /// splitting the block.
-      unsigned internalKnownBits() const {
-        unsigned Bits = Unalign ? Unalign : KnownBits;
-        // If the block size isn't a multiple of the known bits, assume the
-        // worst case padding.
-        if (Size & ((1u << Bits) - 1))
-          Bits = countTrailingZeros(Size);
-        return Bits;
-      }
-
-      /// Compute the offset immediately following this block.  If LogAlign is
-      /// specified, return the offset the successor block will get if it has
-      /// this alignment.
+      // FIXME: ignore LogAlign for this patch
+      //
       unsigned postOffset(unsigned LogAlign = 0) const {
         unsigned PO = Offset + Size;
         return PO;
       }
 
-      /// Compute the number of known low bits of postOffset.  If this block
-      /// contains inline asm, the number of known bits drops to the
-      /// instruction alignment.  An aligned terminator may increase the number
-      /// of know bits.
-      /// If LogAlign is given, also consider the alignment of the next block.
-      unsigned postKnownBits(unsigned LogAlign = 0) const {
-        return std::max(std::max(unsigned(PostAlign), LogAlign),
-                        internalKnownBits());
-      }
+      BasicBlockInfo() : Offset(0), Size(0) {}
+
     };
 
     std::vector<BasicBlockInfo> BBInfo;
@@ -203,25 +155,22 @@ namespace {
       unsigned LongFormOpcode;
     public:
       bool NegOk;
-      bool KnownAlignment;
       CPUser(MachineInstr *mi, MachineInstr *cpemi, unsigned maxdisp,
              bool neg,
              unsigned longformmaxdisp, unsigned longformopcode)
         : MI(mi), CPEMI(cpemi), MaxDisp(maxdisp),
           LongFormMaxDisp(longformmaxdisp), LongFormOpcode(longformopcode),
-          NegOk(neg), KnownAlignment(false)  {
+          NegOk(neg){
         HighWaterMark = CPEMI->getParent();
       }
       /// getMaxDisp - Returns the maximum displacement supported by MI.
-      /// Correct for unknown alignment.
-      /// Conservatively subtract 2 bytes to handle weird alignment effects.
       unsigned getMaxDisp() const {
         unsigned xMaxDisp = ConstantIslandsSmallOffset?
                             ConstantIslandsSmallOffset: MaxDisp;
-        return (KnownAlignment ? xMaxDisp : xMaxDisp - 2) - 2;
+        return xMaxDisp;
       }
       unsigned getLongFormMaxDisp() const {
-        return (KnownAlignment ? LongFormMaxDisp : LongFormMaxDisp - 2) - 2;
+        return LongFormMaxDisp;
       }
       unsigned getLongFormOpcode() const {
           return LongFormOpcode;
@@ -377,9 +326,6 @@ void MipsConstantIslands::dumpBBs() {
     for (unsigned J = 0, E = BBInfo.size(); J !=E; ++J) {
       const BasicBlockInfo &BBI = BBInfo[J];
       dbgs() << format("%08x BB#%u\t", BBI.Offset, J)
-             << " kb=" << unsigned(BBI.KnownBits)
-             << " ua=" << unsigned(BBI.Unalign)
-             << " pa=" << unsigned(BBI.PostAlign)
              << format(" size=%#x\n", BBInfo[J].Size);
     }
   });
@@ -609,9 +555,6 @@ initializeFunctionInfo(const std::vector<MachineInstr*> &CPEMIs) {
   for (MachineFunction::iterator I = MF->begin(), E = MF->end(); I != E; ++I)
     computeBlockSize(I);
 
-  // The known bits of the entry block offset are determined by the function
-  // alignment.
-  BBInfo.front().KnownBits = MF->getAlignment();
 
   // Compute block offsets.
   adjustBBOffsetsAfter(MF->begin());
@@ -708,8 +651,6 @@ initializeFunctionInfo(const std::vector<MachineInstr*> &CPEMIs) {
 void MipsConstantIslands::computeBlockSize(MachineBasicBlock *MBB) {
   BasicBlockInfo &BBI = BBInfo[MBB->getNumber()];
   BBI.Size = 0;
-  BBI.Unalign = 0;
-  BBI.PostAlign = 0;
 
   for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E;
        ++I)
@@ -892,7 +833,7 @@ bool MipsConstantIslands::isWaterInRange(unsigned UserOffset,
     // the offset of the instruction. Also account for unknown alignment padding
     // in blocks between CPE and the user.
     if (CPEOffset < UserOffset)
-      UserOffset += Growth + UnknownPadding(MF->getAlignment(), CPELogAlign);
+      UserOffset += Growth;
   } else
     // CPE fits in existing padding.
     Growth = 0;
@@ -945,7 +886,7 @@ void MipsConstantIslands::adjustBBOffsetsAfter(MachineBasicBlock *BB) {
   for(unsigned i = BBNum + 1, e = MF->getNumBlockIDs(); i < e; ++i) {
     // Get the offset and known bits at the end of the layout predecessor.
     // Include the alignment of the current block.
-    unsigned Offset = BBInfo[i - 1].postOffset();
+    unsigned Offset = BBInfo[i - 1].Offset + BBInfo[i - 1].Size;
     BBInfo[i].Offset = Offset;
   }
 }
@@ -1183,9 +1124,7 @@ void MipsConstantIslands::createNewWater(unsigned CPUserIndex,
   // LogAlign which is the largest possible alignment in the function.
   unsigned LogAlign = MF->getAlignment();
   assert(LogAlign >= CPELogAlign && "Over-aligned constant pool entry");
-  unsigned KnownBits = UserBBI.internalKnownBits();
-  unsigned UPad = UnknownPadding(LogAlign, KnownBits);
-  unsigned BaseInsertOffset = UserOffset + U.getMaxDisp() - UPad;
+  unsigned BaseInsertOffset = UserOffset + U.getMaxDisp();
   DEBUG(dbgs() << format("Split in middle of big block before %#x",
                          BaseInsertOffset));
 
@@ -1195,19 +1134,17 @@ void MipsConstantIslands::createNewWater(unsigned CPUserIndex,
   BaseInsertOffset -= 4;
 
   DEBUG(dbgs() << format(", adjusted to %#x", BaseInsertOffset)
-               << " la=" << LogAlign
-               << " kb=" << KnownBits
-               << " up=" << UPad << '\n');
+               << " la=" << LogAlign << '\n');
 
   // This could point off the end of the block if we've already got constant
   // pool entries following this block; only the last one is in the water list.
   // Back past any possible branches (allow for a conditional and a maximally
   // long unconditional).
   if (BaseInsertOffset + 8 >= UserBBI.postOffset()) {
-    BaseInsertOffset = UserBBI.postOffset() - UPad - 8;
+    BaseInsertOffset = UserBBI.postOffset() - 8;
     DEBUG(dbgs() << format("Move inside block: %#x\n", BaseInsertOffset));
   }
-  unsigned EndInsertOffset = BaseInsertOffset + 4 + UPad +
+  unsigned EndInsertOffset = BaseInsertOffset + 4 +
     CPEMI->getOperand(2).getImm();
   MachineBasicBlock::iterator MI = UserMI;
   ++MI;
