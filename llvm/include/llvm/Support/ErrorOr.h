@@ -115,11 +115,11 @@ public:
                                             is_error_condition_enum<E>::value,
                                             void *>::type = 0)
       : HasError(true), IsValid(true) {
-    Error = make_error_code(ErrorCode);
+    new (getError()) error_code(make_error_code(ErrorCode));
   }
 
   ErrorOr(llvm::error_code EC) : HasError(true), IsValid(true) {
-    Error = EC;
+    new (getError()) error_code(EC);
   }
 
   ErrorOr(T Val) : HasError(false), IsValid(true) {
@@ -186,7 +186,7 @@ public:
 
   operator llvm::error_code() const {
     assert(IsValid && "Can't do anything on a default constructed ErrorOr!");
-    return HasError ? Error : llvm::error_code::success();
+    return HasError ? *getError() : llvm::error_code::success();
   }
 
   pointer operator ->() {
@@ -210,8 +210,8 @@ private:
       new (get()) storage_type(*Other.get());
     } else {
       // Get other's error.
-      Error = Other.Error;
       HasError = true;
+      new (getError()) error_code(Other);
     }
   }
 
@@ -249,8 +249,8 @@ private:
       Other.IsValid = false;
     } else {
       // Get other's error.
-      Error = Other.Error;
       HasError = true;
+      new (getError()) error_code(Other);
       // Tell other not to do any destruction.
       Other.IsValid = false;
     }
@@ -286,9 +286,20 @@ private:
     return reinterpret_cast<const storage_type*>(TStorage.buffer);
   }
 
+  error_code *getError() {
+    assert(IsValid && "Can't do anything on a default constructed ErrorOr!");
+    assert(HasError && "Cannot get error when a value exists!");
+    return reinterpret_cast<error_code*>(ErrorStorage.buffer);
+  }
+
+  const error_code *getError() const {
+    return const_cast<ErrorOr<T> *>(this)->getError();
+  }
+
+
   union {
     AlignedCharArrayUnion<storage_type> TStorage;
-    error_code Error;
+    AlignedCharArrayUnion<error_code> ErrorStorage;
   };
   bool HasError : 1;
   bool IsValid : 1;
