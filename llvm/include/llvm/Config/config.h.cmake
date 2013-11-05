@@ -129,13 +129,13 @@
 #cmakedefine HAVE_LOG10 ${HAVE_LOG10}
 
 /* Define to 1 if you have the `exp' function. */
-#cmakedefine HAVE_EXP ${HAVE_LOG}
+#cmakedefine HAVE_EXP ${HAVE_EXP}
 
 /* Define to 1 if you have the `exp2' function. */
-#cmakedefine HAVE_EXP2 ${HAVE_LOG2}
+#cmakedefine HAVE_EXP2 ${HAVE_EXP2}
 
 /* Define to 1 if you have the `exp10' function. */
-#cmakedefine HAVE_EXP10 ${HAVE_LOG10}
+#cmakedefine HAVE_EXP10 ${HAVE_EXP10}
 
 /* Define to 1 if you have the `fmodf' function. */
 #cmakedefine HAVE_FMODF ${HAVE_FMODF}
