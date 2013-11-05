@@ -4142,3 +4142,87 @@ public:
 
 }  // end namespace LogicalConditionalTryLock
 
+
+
+namespace PtGuardedByTest {
+
+void doSomething();
+
+class Cell {
+  public:
+  int a;
+};
+
+
+// This mainly duplicates earlier tests, but just to make sure...
+class PtGuardedBySanityTest {
+  Mutex mu1;
+  Mutex mu2;
+  int*  a GUARDED_BY(mu1) PT_GUARDED_BY(mu2);
+  Cell* c GUARDED_BY(mu1) PT_GUARDED_BY(mu2);
+
+  void test1() {
+    mu1.Lock();
+    if (a == 0) doSomething();  // OK, we don't dereference.
+    a = 0;
+    c = 0;
+    mu1.Unlock();
+  }
+
+  void test2() {
+    mu1.ReaderLock();
+    if (*a == 0) doSomething();      // expected-warning {{reading the value pointed to by 'a' requires locking 'mu2'}}
+    *a = 0;                          // expected-warning {{writing the value pointed to by 'a' requires locking 'mu2' exclusively}}
+
+    if (c->a == 0) doSomething();    // expected-warning {{reading the value pointed to by 'c' requires locking 'mu2'}}
+    c->a = 0;                        // expected-warning {{writing the value pointed to by 'c' requires locking 'mu2' exclusively}}
+
+    if ((*c).a == 0) doSomething();  // expected-warning {{reading the value pointed to by 'c' requires locking 'mu2'}}
+    (*c).a = 0;                      // expected-warning {{writing the value pointed to by 'c' requires locking 'mu2' exclusively}}
+    mu1.Unlock();
+  }
+
+  void test3() {
+    mu2.Lock();
+    if (*a == 0) doSomething();      // expected-warning {{reading variable 'a' requires locking 'mu1'}}
+    *a = 0;                          // expected-warning {{reading variable 'a' requires locking 'mu1'}}
+
+    if (c->a == 0) doSomething();    // expected-warning {{reading variable 'c' requires locking 'mu1'}}
+    c->a = 0;                        // expected-warning {{reading variable 'c' requires locking 'mu1'}}
+
+    if ((*c).a == 0) doSomething();  // expected-warning {{reading variable 'c' requires locking 'mu1'}}
+    (*c).a = 0;                      // expected-warning {{reading variable 'c' requires locking 'mu1'}}
+    mu2.Unlock();
+  }
+
+  void test4() {
+    mu1.ReaderLock();    // OK -- correct use.
+    mu2.Lock();
+    if (*a == 0) doSomething();
+    *a = 0;
+
+    if (c->a == 0) doSomething();
+    c->a = 0;
+
+    if ((*c).a == 0) doSomething();
+    (*c).a = 0;
+    mu2.Unlock();
+    mu1.Unlock();
+  }
+};
+
+
+class SmartPtr_PtGuardedBy_Test {
+  Mutex mu2;
+  SmartPtr<int>  sp PT_GUARDED_BY(mu2);
+  SmartPtr<Cell> sq PT_GUARDED_BY(mu2);
+
+  void test() {
+    sp.get();   // OK -- no GUARDED_BY
+    *sp = 0;    // expected-warning {{reading the value pointed to by 'sp' requires locking 'mu2'}}
+    sq->a = 0;  // expected-warning {{reading the value pointed to by 'sq' requires locking 'mu2'}}
+  }
+};
+
+}  // end namespace PtGuardedByTest
+

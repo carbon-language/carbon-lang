@@ -2134,6 +2134,14 @@ void BuildLockset::VisitCallExpr(CallExpr *Exp) {
         checkAccess(Source, AK_Read);
         break;
       }
+      case OO_Star:
+      case OO_Arrow: {
+        if (Analyzer->Handler.issueBetaWarnings()) {
+          const Expr *Target = OE->getArg(0);
+          checkPtAccess(Target, AK_Read);
+        }
+        break;
+      }
       default: {
         const Expr *Source = OE->getArg(0);
         checkAccess(Source, AK_Read);
