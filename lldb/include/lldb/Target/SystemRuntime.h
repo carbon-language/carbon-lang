@@ -14,7 +14,10 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include <vector>
+
 #include "lldb/lldb-public.h"
+#include "lldb/Core/ConstString.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/lldb-private.h"
@@ -100,12 +103,32 @@ public:
     virtual void
     ModulesDidLoad(lldb_private::ModuleList &module_list);
 
+
     //------------------------------------------------------------------
-    /// Call this method to print the backtrace of where this thread was
-    /// enqueued, if at all.  Returns the number of frames printed.
+    /// Return a list of thread origin extended backtraces that may 
+    /// be available.
+    ///
+    /// A System Runtime may be able to provide a backtrace of when this
+    /// thread was originally created.  Furthermore, it may be able to 
+    /// provide that extended backtrace for different styles of creation.
+    /// On a system with both pthreads and libdispatch, aka Grand Central 
+    /// Dispatch, queues, the system runtime may be able to provide the
+    /// pthread creation of the thread and it may also be able to provide
+    /// the backtrace of when this GCD queue work block was enqueued.
+    /// The caller may request these different origins by name.
+    ///
+    /// The names will be provided in the order that they are most likely
+    /// to be requested.  For instance, a most natural order may be to 
+    /// request the GCD libdispatch queue origin.  If there is none, then 
+    /// request the pthread origin.
+    ///
+    /// @return
+    ///   A vector of ConstStrings with names like "pthread" or "libdispatch".
+    ///   An empty vector may be returned if no thread origin extended 
+    ///   backtrace capabilities are available.
     //------------------------------------------------------------------
-    virtual uint32_t
-    GetStatus (lldb_private::Stream &strm, lldb_private::ExecutionContext &exe_ctx);
+    virtual std::vector<ConstString>
+    GetThreadOriginExtendedBacktraceTypes ();
 
 protected:
     //------------------------------------------------------------------

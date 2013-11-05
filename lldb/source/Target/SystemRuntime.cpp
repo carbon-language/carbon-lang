@@ -59,9 +59,9 @@ SystemRuntime::ModulesDidLoad (ModuleList &module_list)
 {
 }
 
-uint32_t
-SystemRuntime::GetStatus (Stream &strm, ExecutionContext &exe_ctx)
+std::vector<ConstString>
+SystemRuntime::GetThreadOriginExtendedBacktraceTypes ()
 {
-    return 0;
+    std::vector<ConstString> types;
+    return types;
 }
-
