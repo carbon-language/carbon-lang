@@ -405,7 +405,8 @@ let test_global_variables () =
   let fourty_two32 = const_int i32_type 42 in
 
   group "declarations"; begin
-    (* CHECK: GVar01{{.*}}external
+    (* CHECK: @GVar01 = external global i32
+     * CHECK: @QGVar01 = external addrspace(3) global i32
      *)
     insist (None == lookup_global "GVar01" m);
     let g = declare_global i32_type "GVar01" m in
@@ -427,8 +428,10 @@ let test_global_variables () =
   end;
   
   group "definitions"; begin
-    (* CHECK: GVar02{{.*}}42
-     * CHECK: GVar03{{.*}}42
+    (* CHECK: @GVar02 = global i32 42
+     * CHECK: @GVar03 = global i32 42
+     * CHECK: @QGVar02 = addrspace(3) global i32 42
+     * CHECK: @QGVar03 = addrspace(3) global i32 42
      *)
     let g = define_global "GVar02" fourty_two32 m in
     let g2 = declare_global i32_type "GVar03" m ++

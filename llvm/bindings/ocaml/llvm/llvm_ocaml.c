@@ -930,7 +930,8 @@ CAMLprim LLVMValueRef llvm_declare_qualified_global(LLVMTypeRef Ty, value Name,
                               LLVMPointerType(Ty, Int_val(AddressSpace)));
     return GlobalVar;
   }
-  return LLVMAddGlobal(M, Ty, String_val(Name));
+  return LLVMAddGlobalInAddressSpace(M, Ty, String_val(Name),
+                                     Int_val(AddressSpace));
 }
 
 /* string -> llmodule -> llvalue option */
