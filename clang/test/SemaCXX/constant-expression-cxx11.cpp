@@ -1794,3 +1794,20 @@ namespace BadDefaultInit {
     int k; // expected-note {{not initialized}}
   };
 }
+
+namespace NeverConstantTwoWays {
+  // If we see something non-constant but foldable followed by something
+  // non-constant and not foldable, we want the first diagnostic, not the
+  // second.
+  constexpr int f(int n) { // expected-error {{never produces a constant expression}}
+    return (int *)(long)&n == &n ? // expected-note {{reinterpret_cast}}
+        1 / 0 : // expected-warning {{division by zero}}
+        0;
+  }
+
+  // FIXME: We should diagnose the cast to long here, not the division by zero.
+  constexpr int n = // expected-error {{must be initialized by a constant expression}}
+      (int *)(long)&n == &n ?
+        1 / 0 : // expected-warning {{division by zero}} expected-note {{division by zero}}
+        0;
+}

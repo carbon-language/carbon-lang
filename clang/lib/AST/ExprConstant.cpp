@@ -452,22 +452,49 @@ namespace {
     /// notes attached to it will also be stored, otherwise they will not be.
     bool HasActiveDiagnostic;
 
-    /// CheckingPotentialConstantExpression - Are we checking whether the
-    /// expression is a potential constant expression? If so, some diagnostics
-    /// are suppressed.
-    bool CheckingPotentialConstantExpression;
+    enum EvaluationMode {
+      /// Evaluate as a constant expression. Stop if we find that the expression
+      /// is not a constant expression.
+      EM_ConstantExpression,
 
-    bool IntOverflowCheckMode;
+      /// Evaluate as a potential constant expression. Keep going if we hit a
+      /// construct that we can't evaluate yet (because we don't yet know the
+      /// value of something) but stop if we hit something that could never be
+      /// a constant expression.
+      EM_PotentialConstantExpression,
 
-    EvalInfo(const ASTContext &C, Expr::EvalStatus &S,
-             bool OverflowCheckMode = false)
+      /// Fold the expression to a constant. Stop if we hit a side-effect that
+      /// we can't model.
+      EM_ConstantFold,
+
+      /// Evaluate the expression looking for integer overflow and similar
+      /// issues. Don't worry about side-effects, and try to visit all
+      /// subexpressions.
+      EM_EvaluateForOverflow,
+
+      /// Evaluate in any way we know how. Don't worry about side-effects that
+      /// can't be modeled.
+      EM_IgnoreSideEffects
+    } EvalMode;
+
+    /// Are we checking whether the expression is a potential constant
+    /// expression?
+    bool checkingPotentialConstantExpression() const {
+      return EvalMode == EM_PotentialConstantExpression;
+    }
+
+    /// Are we checking an expression for overflow?
+    // FIXME: We should check for any kind of undefined or suspicious behavior
+    // in such constructs, not just overflow.
+    bool checkingForOverflow() { return EvalMode == EM_EvaluateForOverflow; }
+
+    EvalInfo(const ASTContext &C, Expr::EvalStatus &S, EvaluationMode Mode)
       : Ctx(const_cast<ASTContext&>(C)), EvalStatus(S), CurrentCall(0),
         CallStackDepth(0), NextCallIndex(1),
         StepsLeft(getLangOpts().ConstexprStepLimit),
         BottomFrame(*this, SourceLocation(), 0, 0, 0),
         EvaluatingDecl((const ValueDecl*)0), EvaluatingDeclValue(0),
-        HasActiveDiagnostic(false), CheckingPotentialConstantExpression(false),
-        IntOverflowCheckMode(OverflowCheckMode) {}
+        HasActiveDiagnostic(false), EvalMode(Mode) {}
 
     void setEvaluatingDecl(APValue::LValueBase Base, APValue &Value) {
       EvaluatingDecl = Base;
@@ -479,7 +506,7 @@ namespace {
     bool CheckCallLimit(SourceLocation Loc) {
       // Don't perform any constexpr calls (other than the call we're checking)
       // when checking a potential constant expression.
-      if (CheckingPotentialConstantExpression && CallStackDepth > 1)
+      if (checkingPotentialConstantExpression() && CallStackDepth > 1)
         return false;
       if (NextCallIndex == 0) {
         // NextCallIndex has wrapped around.
@@ -528,22 +555,39 @@ namespace {
     OptionalDiagnostic Diag(SourceLocation Loc, diag::kind DiagId
                               = diag::note_invalid_subexpr_in_const_expr,
                             unsigned ExtraNotes = 0) {
-      // If we have a prior diagnostic, it will be noting that the expression
-      // isn't a constant expression. This diagnostic is more important.
-      // FIXME: We might want to show both diagnostics to the user.
       if (EvalStatus.Diag) {
+        // If we have a prior diagnostic, it will be noting that the expression
+        // isn't a constant expression. This diagnostic is more important,
+        // unless we require this evaluation to produce a constant expression.
+        //
+        // FIXME: We might want to show both diagnostics to the user in
+        // EM_ConstantFold mode.
+        if (!EvalStatus.Diag->empty()) {
+          switch (EvalMode) {
+          case EM_ConstantExpression:
+          case EM_PotentialConstantExpression:
+          case EM_EvaluateForOverflow:
+            HasActiveDiagnostic = false;
+            return OptionalDiagnostic();
+
+          case EM_ConstantFold:
+          case EM_IgnoreSideEffects:
+            break;
+          }
+        }
+
         unsigned CallStackNotes = CallStackDepth - 1;
         unsigned Limit = Ctx.getDiagnostics().getConstexprBacktraceLimit();
         if (Limit)
           CallStackNotes = std::min(CallStackNotes, Limit + 1);
-        if (CheckingPotentialConstantExpression)
+        if (checkingPotentialConstantExpression())
           CallStackNotes = 0;
 
         HasActiveDiagnostic = true;
         EvalStatus.Diag->clear();
         EvalStatus.Diag->reserve(1 + ExtraNotes + CallStackNotes);
         addDiag(Loc, DiagId);
-        if (!CheckingPotentialConstantExpression)
+        if (!checkingPotentialConstantExpression())
           addCallStack(Limit);
         return OptionalDiagnostic(&(*EvalStatus.Diag)[0].second);
       }
@@ -560,16 +604,19 @@ namespace {
       return OptionalDiagnostic();
     }
 
-    bool getIntOverflowCheckMode() { return IntOverflowCheckMode; }
-    
     /// Diagnose that the evaluation does not produce a C++11 core constant
     /// expression.
+    ///
+    /// FIXME: Stop evaluating if we're in EM_ConstantExpression or
+    /// EM_PotentialConstantExpression mode and we produce one of these.
     template<typename LocArg>
     OptionalDiagnostic CCEDiag(LocArg Loc, diag::kind DiagId
                                  = diag::note_invalid_subexpr_in_const_expr,
                                unsigned ExtraNotes = 0) {
-      // Don't override a previous diagnostic.
-      if (!EvalStatus.Diag || !EvalStatus.Diag->empty()) {
+      // Don't override a previous diagnostic. Don't bother collecting
+      // diagnostics if we're evaluating for overflow.
+      if (!EvalStatus.Diag || !EvalStatus.Diag->empty() ||
+          EvalMode == EM_EvaluateForOverflow) {
         HasActiveDiagnostic = false;
         return OptionalDiagnostic();
       }
@@ -591,30 +638,70 @@ namespace {
       }
     }
 
+    /// Should we continue evaluation after encountering a side-effect that we
+    /// couldn't model?
+    bool keepEvaluatingAfterSideEffect() {
+      switch (EvalMode) {
+      case EM_EvaluateForOverflow:
+      case EM_IgnoreSideEffects:
+        return true;
+
+      case EM_PotentialConstantExpression:
+      case EM_ConstantExpression:
+      case EM_ConstantFold:
+        return false;
+      }
+    }
+
+    /// Note that we have had a side-effect, and determine whether we should
+    /// keep evaluating.
+    bool noteSideEffect() {
+      EvalStatus.HasSideEffects = true;
+      return keepEvaluatingAfterSideEffect();
+    }
+
     /// Should we continue evaluation as much as possible after encountering a
-    /// construct which can't be folded?
+    /// construct which can't be reduced to a value?
     bool keepEvaluatingAfterFailure() {
-      // Should return true in IntOverflowCheckMode, so that we check for
-      // overflow even if some subexpressions can't be evaluated as constants.
-      return StepsLeft && (IntOverflowCheckMode ||
-                           (CheckingPotentialConstantExpression &&
-                            EvalStatus.Diag && EvalStatus.Diag->empty()));
+      if (!StepsLeft)
+        return false;
+
+      switch (EvalMode) {
+      case EM_PotentialConstantExpression:
+      case EM_EvaluateForOverflow:
+        return true;
+
+      case EM_ConstantExpression:
+      case EM_ConstantFold:
+      case EM_IgnoreSideEffects:
+        return false;
+      }
     }
   };
 
   /// Object used to treat all foldable expressions as constant expressions.
   struct FoldConstant {
+    EvalInfo &Info;
     bool Enabled;
+    bool HadNoPriorDiags;
+    EvalInfo::EvaluationMode OldMode;
 
-    explicit FoldConstant(EvalInfo &Info)
-      : Enabled(Info.EvalStatus.Diag && Info.EvalStatus.Diag->empty() &&
-                !Info.EvalStatus.HasSideEffects) {
+    explicit FoldConstant(EvalInfo &Info, bool Enabled)
+      : Info(Info),
+        Enabled(Enabled),
+        HadNoPriorDiags(Info.EvalStatus.Diag &&
+                        Info.EvalStatus.Diag->empty() &&
+                        !Info.EvalStatus.HasSideEffects),
+        OldMode(Info.EvalMode) {
+      if (Enabled && Info.EvalMode == EvalInfo::EM_ConstantExpression)
+        Info.EvalMode = EvalInfo::EM_ConstantFold;
     }
-    // Treat the value we've computed since this object was created as constant.
-    void Fold(EvalInfo &Info) {
-      if (Enabled && !Info.EvalStatus.Diag->empty() &&
+    void keepDiagnostics() { Enabled = false; }
+    ~FoldConstant() {
+      if (Enabled && HadNoPriorDiags && !Info.EvalStatus.Diag->empty() &&
           !Info.EvalStatus.HasSideEffects)
         Info.EvalStatus.Diag->clear();
+      Info.EvalMode = OldMode;
     }
   };
 
@@ -629,6 +716,9 @@ namespace {
                               SmallVectorImpl<PartialDiagnosticAt> *NewDiag = 0)
       : Info(Info), Old(Info.EvalStatus) {
       Info.EvalStatus.Diag = NewDiag;
+      // If we're speculatively evaluating, we may have skipped over some
+      // evaluations and missed out a side effect.
+      Info.EvalStatus.HasSideEffects = true;
     }
     ~SpeculativeEvaluationRAII() {
       Info.EvalStatus = Old;
@@ -1036,6 +1126,7 @@ static bool EvaluateIgnoredValue(EvalInfo &Info, const Expr *E) {
   if (!Evaluate(Scratch, Info, E)) {
     Info.EvalStatus.HasSideEffects = true;
     return Info.keepEvaluatingAfterFailure();
+    // FIXME: return Info.noteSideEffect();
   }
   return true;
 }
@@ -1146,7 +1237,7 @@ static bool CheckLValueConstantExpression(EvalInfo &Info, SourceLocation Loc,
     // Don't allow references to temporaries to escape.
     return false;
   }
-  assert((Info.CheckingPotentialConstantExpression ||
+  assert((Info.checkingPotentialConstantExpression() ||
           LVal.getLValueCallIndex() == 0) &&
          "have call index for global lvalue");
 
@@ -1476,7 +1567,7 @@ static APSInt CheckedIntArithmetic(EvalInfo &Info, const Expr *E,
   APSInt Value(Op(LHS.extend(BitWidth), RHS.extend(BitWidth)), false);
   APSInt Result = Value.trunc(LHS.getBitWidth());
   if (Result.extend(BitWidth) != Value) {
-    if (Info.getIntOverflowCheckMode())
+    if (Info.checkingForOverflow())
       Info.Ctx.getDiagnostics().Report(E->getExprLoc(),
         diag::warn_integer_constant_overflow)
           << Result.toString(10) << E->getType();
@@ -1796,7 +1887,7 @@ static bool evaluateVarDeclInit(EvalInfo &Info, const Expr *E,
   if (const ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(VD)) {
     // Assume arguments of a potential constant expression are unknown
     // constant expressions.
-    if (Info.CheckingPotentialConstantExpression)
+    if (Info.checkingPotentialConstantExpression())
       return false;
     if (!Frame || !Frame->Arguments) {
       Info.Diag(E, diag::note_invalid_subexpr_in_const_expr);
@@ -1818,7 +1909,7 @@ static bool evaluateVarDeclInit(EvalInfo &Info, const Expr *E,
   if (!Init || Init->isValueDependent()) {
     // If we're checking a potential constant expression, the variable could be
     // initialized later.
-    if (!Info.CheckingPotentialConstantExpression)
+    if (!Info.checkingPotentialConstantExpression())
       Info.Diag(E, diag::note_invalid_subexpr_in_const_expr);
     return false;
   }
@@ -1988,7 +2079,7 @@ findSubobject(EvalInfo &Info, const Expr *E, const CompleteObject &Obj,
   // Walk the designator's path to find the subobject.
   for (unsigned I = 0, N = Sub.Entries.size(); /**/; ++I) {
     if (O->isUninit()) {
-      if (!Info.CheckingPotentialConstantExpression)
+      if (!Info.checkingPotentialConstantExpression())
         Info.Diag(E, diag::note_constexpr_access_uninit) << handler.AccessKind;
       return handler.failed();
     }
@@ -2461,10 +2552,13 @@ CompleteObject findCompleteObject(EvalInfo &Info, const Expr *E, AccessKinds AK,
     BaseType.removeLocalConst();
   }
 
-  // In C++1y, we can't safely access any mutable state when checking a
-  // potential constant expression.
+  // In C++1y, we can't safely access any mutable state when we might be
+  // evaluating after an unmodeled side effect or an evaluation failure.
+  //
+  // FIXME: Not all local state is mutable. Allow local constant subobjects
+  // to be read here (but take care with 'mutable' fields).
   if (Frame && Info.getLangOpts().CPlusPlus1y &&
-      Info.CheckingPotentialConstantExpression)
+      (Info.EvalStatus.HasSideEffects || Info.keepEvaluatingAfterFailure()))
     return CompleteObject();
 
   return CompleteObject(BaseVal, BaseType);
@@ -3414,7 +3508,7 @@ static bool CheckConstexprFunction(EvalInfo &Info, SourceLocation CallLoc,
                                    const FunctionDecl *Definition) {
   // Potential constant expressions can contain calls to declared, but not yet
   // defined, constexpr functions.
-  if (Info.CheckingPotentialConstantExpression && !Definition &&
+  if (Info.checkingPotentialConstantExpression() && !Definition &&
       Declaration->isConstexpr())
     return false;
 
@@ -3661,7 +3755,7 @@ private:
   // expression, then the conditional operator is not either.
   template<typename ConditionalOperator>
   void CheckPotentialConstantConditional(const ConditionalOperator *E) {
-    assert(Info.CheckingPotentialConstantExpression);
+    assert(Info.checkingPotentialConstantExpression());
 
     // Speculatively evaluate both arms.
     {
@@ -3686,7 +3780,7 @@ private:
   bool HandleConditionalOperator(const ConditionalOperator *E) {
     bool BoolResult;
     if (!EvaluateAsBooleanCondition(E->getCond(), BoolResult, Info)) {
-      if (Info.CheckingPotentialConstantExpression)
+      if (Info.checkingPotentialConstantExpression())
         CheckPotentialConstantConditional(E);
       return false;
     }
@@ -3807,16 +3901,14 @@ public:
 
     // Always assume __builtin_constant_p(...) ? ... : ... is a potential
     // constant expression; we can't check whether it's potentially foldable.
-    if (Info.CheckingPotentialConstantExpression && IsBcpCall)
+    if (Info.checkingPotentialConstantExpression() && IsBcpCall)
       return false;
 
-    FoldConstant Fold(Info);
-
-    if (!HandleConditionalOperator(E))
+    FoldConstant Fold(Info, IsBcpCall);
+    if (!HandleConditionalOperator(E)) {
+      Fold.keepDiagnostics();
       return false;
-
-    if (IsBcpCall)
-      Fold.Fold(Info);
+    }
 
     return true;
   }
@@ -4020,7 +4112,7 @@ public:
   RetTy VisitStmtExpr(const StmtExpr *E) {
     // We will have checked the full-expressions inside the statement expression
     // when they were completed, and don't need to check them again now.
-    if (Info.getIntOverflowCheckMode())
+    if (Info.checkingForOverflow())
       return Error(E);
 
     BlockScopeRAII Scope(Info);
@@ -4276,7 +4368,7 @@ bool LValueExprEvaluator::VisitVarDecl(const Expr *E, const VarDecl *VD) {
   if (!evaluateVarDeclInit(Info, E, VD, Frame, V))
     return false;
   if (V->isUninit()) {
-    if (!Info.CheckingPotentialConstantExpression)
+    if (!Info.checkingPotentialConstantExpression())
       Info.Diag(E, diag::note_constexpr_use_uninit_reference);
     return false;
   }
@@ -4525,7 +4617,7 @@ public:
   }
   bool VisitCXXThisExpr(const CXXThisExpr *E) {
     // Can't look at 'this' when checking a potential constant expression.
-    if (Info.CheckingPotentialConstantExpression)
+    if (Info.checkingPotentialConstantExpression())
       return false;
     if (!Info.CurrentCall->This)
       return Error(E);
@@ -5820,7 +5912,7 @@ static bool EvaluateBuiltinConstantP(ASTContext &Ctx, const Expr *Arg) {
   } else if (ArgType->isPointerType() || Arg->isGLValue()) {
     LValue LV;
     Expr::EvalStatus Status;
-    EvalInfo Info(Ctx, Status);
+    EvalInfo Info(Ctx, Status, EvalInfo::EM_ConstantFold);
     if ((Arg->isGLValue() ? EvaluateLValue(Arg, LV, Info)
                           : EvaluatePointer(Arg, LV, Info)) &&
         !Status.HasSideEffects)
@@ -7945,7 +8037,7 @@ bool Expr::EvaluateAsRValue(EvalResult &Result, const ASTContext &Ctx) const {
   if (FastEvaluateAsRValue(this, Result, Ctx, IsConst))
     return IsConst;
   
-  EvalInfo Info(Ctx, Result);
+  EvalInfo Info(Ctx, Result, EvalInfo::EM_IgnoreSideEffects);
   return ::EvaluateAsRValue(Info, this, Result.Val);
 }
 
@@ -7971,7 +8063,7 @@ bool Expr::EvaluateAsInt(APSInt &Result, const ASTContext &Ctx,
 }
 
 bool Expr::EvaluateAsLValue(EvalResult &Result, const ASTContext &Ctx) const {
-  EvalInfo Info(Ctx, Result);
+  EvalInfo Info(Ctx, Result, EvalInfo::EM_ConstantFold);
 
   LValue LV;
   if (!EvaluateLValue(this, LV, Info) || Result.HasSideEffects ||
@@ -7995,7 +8087,7 @@ bool Expr::EvaluateAsInitializer(APValue &Value, const ASTContext &Ctx,
   Expr::EvalStatus EStatus;
   EStatus.Diag = &Notes;
 
-  EvalInfo InitInfo(Ctx, EStatus);
+  EvalInfo InitInfo(Ctx, EStatus, EvalInfo::EM_ConstantFold);
   InitInfo.setEvaluatingDecl(VD, Value);
 
   LValue LVal;
@@ -8047,7 +8139,7 @@ void Expr::EvaluateForOverflow(const ASTContext &Ctx,
   EvalResult EvalResult;
   EvalResult.Diag = Diags;
   if (!FastEvaluateAsRValue(this, EvalResult, Ctx, IsConst)) {
-    EvalInfo Info(Ctx, EvalResult, true);
+    EvalInfo Info(Ctx, EvalResult, EvalInfo::EM_EvaluateForOverflow);
     (void)::EvaluateAsRValue(Info, this, EvalResult.Val);
   }
 }
@@ -8527,7 +8619,7 @@ bool Expr::isCXX11ConstantExpr(const ASTContext &Ctx, APValue *Result,
   Expr::EvalStatus Status;
   SmallVector<PartialDiagnosticAt, 8> Diags;
   Status.Diag = &Diags;
-  EvalInfo Info(Ctx, Status);
+  EvalInfo Info(Ctx, Status, EvalInfo::EM_ConstantExpression);
 
   APValue Scratch;
   bool IsConstExpr = ::EvaluateAsRValue(Info, this, Result ? *Result : Scratch);
@@ -8555,8 +8647,8 @@ bool Expr::isPotentialConstantExpr(const FunctionDecl *FD,
   Expr::EvalStatus Status;
   Status.Diag = &Diags;
 
-  EvalInfo Info(FD->getASTContext(), Status);
-  Info.CheckingPotentialConstantExpression = true;
+  EvalInfo Info(FD->getASTContext(), Status,
+                EvalInfo::EM_PotentialConstantExpression);
 
   const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD);
   const CXXRecordDecl *RD = MD ? MD->getParent()->getCanonicalDecl() : 0;
