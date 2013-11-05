@@ -1387,7 +1387,7 @@ static void llvm_finalize_builder(value B) {
 }
 
 static struct custom_operations builder_ops = {
-  (char *) "IRBuilder",
+  (char *) "LLVMIRBuilder",
   llvm_finalize_builder,
   custom_compare_default,
   custom_hash_default,
