@@ -49,14 +49,16 @@ namespace {
   class LoopUnroll : public LoopPass {
   public:
     static char ID; // Pass ID, replacement for typeid
-    LoopUnroll(int T = -1, int C = -1,  int P = -1) : LoopPass(ID) {
+    LoopUnroll(int T = -1, int C = -1, int P = -1, int R = -1) : LoopPass(ID) {
       CurrentThreshold = (T == -1) ? UnrollThreshold : unsigned(T);
       CurrentCount = (C == -1) ? UnrollCount : unsigned(C);
       CurrentAllowPartial = (P == -1) ? UnrollAllowPartial : (bool)P;
+      CurrentRuntime = (R == -1) ? UnrollRuntime : (bool)R;
 
       UserThreshold = (T != -1) || (UnrollThreshold.getNumOccurrences() > 0);
       UserAllowPartial = (P != -1) ||
                          (UnrollAllowPartial.getNumOccurrences() > 0);
+      UserRuntime = (R != -1) || (UnrollRuntime.getNumOccurrences() > 0);
       UserCount = (C != -1) || (UnrollCount.getNumOccurrences() > 0);
 
       initializeLoopUnrollPass(*PassRegistry::getPassRegistry());
@@ -78,9 +80,11 @@ namespace {
     unsigned CurrentCount;
     unsigned CurrentThreshold;
     bool     CurrentAllowPartial;
+    bool     CurrentRuntime;
     bool     UserCount;            // CurrentCount is user-specified.
     bool     UserThreshold;        // CurrentThreshold is user-specified.
     bool     UserAllowPartial;     // CurrentAllowPartial is user-specified.
+    bool     UserRuntime;          // CurrentRuntime is user-specified.
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
 
@@ -115,8 +119,9 @@ INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_END(LoopUnroll, "loop-unroll", "Unroll loops", false, false)
 
-Pass *llvm::createLoopUnrollPass(int Threshold, int Count, int AllowPartial) {
-  return new LoopUnroll(Threshold, Count, AllowPartial);
+Pass *llvm::createLoopUnrollPass(int Threshold, int Count, int AllowPartial,
+                                 int Runtime) {
+  return new LoopUnroll(Threshold, Count, AllowPartial, Runtime);
 }
 
 /// ApproximateLoopSize - Approximate the size of the loop.
@@ -155,7 +160,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   UP.OptSizeThreshold = OptSizeUnrollThreshold;
   UP.Count = CurrentCount;
   UP.Partial = CurrentAllowPartial;
-  UP.Runtime = UnrollRuntime;
+  UP.Runtime = CurrentRuntime;
   TTI.getUnrollingPreferences(L, UP);
 
   // Determine the current unrolling threshold.  While this is normally set
@@ -181,8 +186,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     TripMultiple = SE->getSmallConstantTripMultiple(L, LatchBlock);
   }
 
-  bool Runtime = UnrollRuntime.getNumOccurrences() == 0 ?
-                 UP.Runtime : UnrollRuntime;
+  bool Runtime = UserRuntime ? CurrentRuntime : UP.Runtime;
 
   // Use a default unroll-count if the user doesn't specify a value
   // and the trip count is a run-time value.  The default is different
