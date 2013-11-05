@@ -5045,19 +5045,12 @@ def INSsw_pattern : Neon_INS_main_pattern<v2i32, v4i32, GPR32, i32,
 def INSdx_pattern : Neon_INS_main_pattern<v1i64, v2i64, GPR64, i64,
                                           neon_uimm0_bare, INSdx>;
 
-class NeonI_INS_element<string asmop, string Res, ValueType ResTy,
-                        Operand ResImm, ValueType MidTy>
+class NeonI_INS_element<string asmop, string Res, Operand ResImm>
   : NeonI_insert<0b1, 0b1,
                  (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn, 
                  ResImm:$Immd, ResImm:$Immn),
                  asmop # "\t$Rd." # Res # "[$Immd], $Rn." # Res # "[$Immn]",
-                 [(set (ResTy VPR128:$Rd),
-                    (ResTy (vector_insert
-                      (ResTy VPR128:$src),
-                      (MidTy (vector_extract
-                        (ResTy VPR128:$Rn),
-                        (ResImm:$Immn))),
-                      (ResImm:$Immd))))],
+                 [],
                  NoItinerary> {
   let Constraints = "$src = $Rd";
   bits<4> Immd;
@@ -5065,39 +5058,92 @@ class NeonI_INS_element<string asmop, string Res, ValueType ResTy,
 }
 
 //Insert element (vector, from element)
-def INSELb : NeonI_INS_element<"ins", "b", v16i8, neon_uimm4_bare, i32> {
+def INSELb : NeonI_INS_element<"ins", "b", neon_uimm4_bare> {
   let Inst{20-16} = {Immd{3}, Immd{2}, Immd{1}, Immd{0}, 0b1};
   let Inst{14-11} = {Immn{3}, Immn{2}, Immn{1}, Immn{0}};
 }
-def INSELh : NeonI_INS_element<"ins", "h", v8i16, neon_uimm3_bare, i32> {
+def INSELh : NeonI_INS_element<"ins", "h", neon_uimm3_bare> {
   let Inst{20-16} = {Immd{2}, Immd{1}, Immd{0}, 0b1, 0b0};
   let Inst{14-12} = {Immn{2}, Immn{1}, Immn{0}};
   // bit 11 is unspecified.
 }
-def INSELs : NeonI_INS_element<"ins", "s", v4i32, neon_uimm2_bare, i32> {
+def INSELs : NeonI_INS_element<"ins", "s", neon_uimm2_bare> {
   let Inst{20-16} = {Immd{1}, Immd{0}, 0b1, 0b0, 0b0};
   let Inst{14-13} = {Immn{1}, Immn{0}};
   // bits 11-12 are unspecified.
 }
-def INSELd : NeonI_INS_element<"ins", "d", v2i64, neon_uimm1_bare, i64> {
+def INSELd : NeonI_INS_element<"ins", "d", neon_uimm1_bare> {
   let Inst{20-16} = {Immd, 0b1, 0b0, 0b0, 0b0};
   let Inst{14} = Immn{0};
   // bits 11-13 are unspecified.
 }
 
+multiclass Neon_INS_elt_pattern<ValueType ResTy, ValueType NaTy,
+                                ValueType MidTy, Operand StImm, Operand NaImm,
+                                Instruction INS> {
+def : Pat<(ResTy (vector_insert
+            (ResTy VPR128:$src),
+            (MidTy (vector_extract
+              (ResTy VPR128:$Rn),
+              (StImm:$Immn))),
+            (StImm:$Immd))),
+          (INS (ResTy VPR128:$src), (ResTy VPR128:$Rn),
+              StImm:$Immd, StImm:$Immn)>;
+
+def : Pat <(ResTy (vector_insert
+             (ResTy VPR128:$src),
+             (MidTy (vector_extract
+               (NaTy VPR64:$Rn),
+               (NaImm:$Immn))),
+             (StImm:$Immd))),
+           (INS (ResTy VPR128:$src),
+             (ResTy (SUBREG_TO_REG (i64 0), (NaTy VPR64:$Rn), sub_64)),
+             StImm:$Immd, NaImm:$Immn)>;
+
+def : Pat <(NaTy (vector_insert
+             (NaTy VPR64:$src),
+             (MidTy (vector_extract
+               (ResTy VPR128:$Rn),
+               (StImm:$Immn))),
+             (NaImm:$Immd))),
+           (NaTy (EXTRACT_SUBREG
+             (ResTy (INS
+               (ResTy (SUBREG_TO_REG (i64 0), (NaTy VPR64:$src), sub_64)),
+               (ResTy VPR128:$Rn),
+               NaImm:$Immd, StImm:$Immn)),
+             sub_64))>;
+
+def : Pat <(NaTy (vector_insert
+             (NaTy VPR64:$src),
+             (MidTy (vector_extract
+               (NaTy VPR64:$Rn),
+               (NaImm:$Immn))),
+             (NaImm:$Immd))),
+           (NaTy (EXTRACT_SUBREG
+             (ResTy (INS
+               (ResTy (SUBREG_TO_REG (i64 0), (NaTy VPR64:$src), sub_64)),
+               (ResTy (SUBREG_TO_REG (i64 0), (NaTy VPR64:$Rn), sub_64)),
+               NaImm:$Immd, NaImm:$Immn)),
+             sub_64))>;
+}
+
+defm : Neon_INS_elt_pattern<v4f32, v2f32, f32, neon_uimm2_bare,
+                            neon_uimm1_bare, INSELs>;
+defm : Neon_INS_elt_pattern<v2f64, v1f64, f64, neon_uimm1_bare,
+                            neon_uimm0_bare, INSELd>;
+defm : Neon_INS_elt_pattern<v16i8, v8i8, i32, neon_uimm4_bare,
+                            neon_uimm3_bare, INSELb>;
+defm : Neon_INS_elt_pattern<v8i16, v4i16, i32, neon_uimm3_bare,
+                            neon_uimm2_bare, INSELh>;
+defm : Neon_INS_elt_pattern<v4i32, v2i32, i32, neon_uimm2_bare,
+                            neon_uimm1_bare, INSELs>;
+defm : Neon_INS_elt_pattern<v2i64, v1i64, i64, neon_uimm1_bare,
+                            neon_uimm0_bare, INSELd>;
+
 multiclass Neon_INS_elt_float_pattern<ValueType ResTy, ValueType NaTy,
                                       ValueType MidTy,
                                       RegisterClass OpFPR, Operand ResImm,
                                       SubRegIndex SubIndex, Instruction INS> {
-def : Pat<(ResTy (vector_insert
-          (ResTy VPR128:$src),
-          (MidTy (vector_extract
-            (ResTy VPR128:$Rn),
-            (ResImm:$Immn))),
-          (ResImm:$Immd))),
-        (INS (ResTy VPR128:$src), (ResTy VPR128:$Rn),
-          ResImm:$Immd, ResImm:$Immn)>;
-
 def : Pat <(ResTy (vector_insert
              (ResTy VPR128:$src),
              (MidTy OpFPR:$Rn),
@@ -5124,60 +5170,6 @@ defm : Neon_INS_elt_float_pattern<v4f32, v2f32, f32, FPR32, neon_uimm2_bare,
                                   sub_32, INSELs>;
 defm : Neon_INS_elt_float_pattern<v2f64, v1f64, f64, FPR64, neon_uimm1_bare,
                                   sub_64, INSELd>;
-
-multiclass Neon_INS_elt_pattern <ValueType NaTy, Operand NaImm,
-                                ValueType MidTy, ValueType StTy,
-                                Operand StImm, Instruction INS> { 
-def : Pat<(NaTy (vector_insert
-            (NaTy VPR64:$src),
-            (MidTy (vector_extract
-              (StTy VPR128:$Rn),
-              (StImm:$Immn))),
-            (NaImm:$Immd))),
-          (NaTy (EXTRACT_SUBREG
-            (StTy (INS 
-              (StTy (SUBREG_TO_REG (i64 0), VPR64:$src, sub_64)),
-              (StTy VPR128:$Rn),
-              NaImm:$Immd,
-              StImm:$Immn)),
-          sub_64))>;
-
-def : Pat<(StTy (vector_insert
-            (StTy VPR128:$src),
-            (MidTy (vector_extract
-              (NaTy VPR64:$Rn),
-              (NaImm:$Immn))),
-            (StImm:$Immd))),
-          (StTy (INS 
-            (StTy VPR128:$src),
-            (StTy (SUBREG_TO_REG (i64 0), VPR64:$Rn, sub_64)),
-            StImm:$Immd,
-            NaImm:$Immn))>;
-
-def : Pat<(NaTy (vector_insert
-            (NaTy VPR64:$src),
-            (MidTy (vector_extract
-              (NaTy VPR64:$Rn),
-              (NaImm:$Immn))),
-            (NaImm:$Immd))),
-          (NaTy (EXTRACT_SUBREG
-            (StTy (INS 
-              (StTy (SUBREG_TO_REG (i64 0), VPR64:$src, sub_64)),
-              (StTy (SUBREG_TO_REG (i64 0), VPR64:$Rn, sub_64)),
-              NaImm:$Immd,
-              NaImm:$Immn)),
-          sub_64))>;
-}
-
-defm : Neon_INS_elt_pattern<v8i8, neon_uimm3_bare, i32,
-                            v16i8, neon_uimm4_bare, INSELb>;
-defm : Neon_INS_elt_pattern<v4i16, neon_uimm2_bare, i32,
-                            v8i16, neon_uimm3_bare, INSELh>;
-defm : Neon_INS_elt_pattern<v2i32, neon_uimm1_bare, i32,
-                            v4i32, neon_uimm2_bare, INSELs>;
-defm : Neon_INS_elt_pattern<v1i64, neon_uimm0_bare, i64,
-                            v2i64, neon_uimm1_bare, INSELd>;
-
 
 class NeonI_SMOV<string asmop, string Res, bit Q,
                  ValueType OpTy, ValueType eleTy,
@@ -5408,8 +5400,7 @@ def : Pat<(v2f64 (scalar_to_vector (f64 FPR64:$src))),
                          (f64 FPR64:$src), sub_64)>;
 
 class NeonI_DUP_Elt<bit Q, string asmop, string rdlane,  string rnlane,
-                    RegisterOperand ResVPR, ValueType ResTy,
-                    ValueType OpTy, Operand OpImm>
+                    RegisterOperand ResVPR, Operand OpImm>
   : NeonI_copy<Q, 0b0, 0b0000, (outs ResVPR:$Rd),
                (ins VPR128:$Rn, OpImm:$Imm),
                asmop # "\t$Rd" # rdlane # ", $Rn" # rnlane # "[$Imm]",
@@ -5418,37 +5409,37 @@ class NeonI_DUP_Elt<bit Q, string asmop, string rdlane,  string rnlane,
   bits<4> Imm;
 }
 
-def DUPELT16b : NeonI_DUP_Elt<0b1, "dup", ".16b", ".b", VPR128, v16i8, v16i8,
+def DUPELT16b : NeonI_DUP_Elt<0b1, "dup", ".16b", ".b", VPR128,
                               neon_uimm4_bare> {
   let Inst{20-16} = {Imm{3}, Imm{2}, Imm{1}, Imm{0}, 0b1};
 }
 
-def DUPELT8h : NeonI_DUP_Elt<0b1, "dup", ".8h", ".h", VPR128, v8i16, v8i16,
+def DUPELT8h : NeonI_DUP_Elt<0b1, "dup", ".8h", ".h", VPR128,
                               neon_uimm3_bare> {
   let Inst{20-16} = {Imm{2}, Imm{1}, Imm{0}, 0b1, 0b0};
 }
 
-def DUPELT4s : NeonI_DUP_Elt<0b1, "dup", ".4s", ".s", VPR128, v4i32, v4i32,
+def DUPELT4s : NeonI_DUP_Elt<0b1, "dup", ".4s", ".s", VPR128,
                               neon_uimm2_bare> {
   let Inst{20-16} = {Imm{1}, Imm{0}, 0b1, 0b0, 0b0};
 }
 
-def DUPELT2d : NeonI_DUP_Elt<0b1, "dup", ".2d", ".d", VPR128, v2i64, v2i64,
+def DUPELT2d : NeonI_DUP_Elt<0b1, "dup", ".2d", ".d", VPR128,
                               neon_uimm1_bare> {
   let Inst{20-16} = {Imm, 0b1, 0b0, 0b0, 0b0};
 }
 
-def DUPELT8b : NeonI_DUP_Elt<0b0, "dup", ".8b", ".b", VPR64, v8i8, v16i8,
+def DUPELT8b : NeonI_DUP_Elt<0b0, "dup", ".8b", ".b", VPR64,
                               neon_uimm4_bare> {
   let Inst{20-16} = {Imm{3}, Imm{2}, Imm{1}, Imm{0}, 0b1};
 }
 
-def DUPELT4h : NeonI_DUP_Elt<0b0, "dup", ".4h", ".h", VPR64, v4i16, v8i16,
+def DUPELT4h : NeonI_DUP_Elt<0b0, "dup", ".4h", ".h", VPR64,
                               neon_uimm3_bare> {
   let Inst{20-16} = {Imm{2}, Imm{1}, Imm{0}, 0b1, 0b0};
 }
 
-def DUPELT2s : NeonI_DUP_Elt<0b0, "dup", ".2s", ".s", VPR64, v2i32, v4i32,
+def DUPELT2s : NeonI_DUP_Elt<0b0, "dup", ".2s", ".s", VPR64,
                               neon_uimm2_bare> {
   let Inst{20-16} = {Imm{1}, Imm{0}, 0b1, 0b0, 0b0};
 }

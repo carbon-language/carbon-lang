@@ -3756,9 +3756,12 @@ AArch64TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
       // Any value type smaller than i32 is illegal in AArch64, and this lower
       // function is called after legalize pass, so we need to legalize
       // the result here.
-      EVT EltVT = MVT::i32;
-      if(EltSize == 64)
-        EltVT = MVT::i64;
+      EVT EltVT;
+      if (VT.getVectorElementType().isFloatingPoint())
+        EltVT = (EltSize == 64) ? MVT::f64 : MVT::f32;
+      else
+        EltVT = (EltSize == 64) ? MVT::i64 : MVT::i32;
+
       PassN = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, ExtV,
                           DAG.getConstant(Mask, MVT::i64));
       PassN = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, InsV, PassN,
