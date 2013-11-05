@@ -148,9 +148,10 @@ public:
 
   bool isBigEndian() const { return !IsLittleEndian; }
   bool isLittleEndian() const { return IsLittleEndian; }
-  // Return the pointer type for the given address space, defaults to
-  // the pointer type from the data layout.
-  // FIXME: The default needs to be removed once all the code is updated.
+
+  /// Return the pointer type for the given address space, defaults to
+  /// the pointer type from the data layout.
+  /// FIXME: The default needs to be removed once all the code is updated.
   virtual MVT getPointerTy(uint32_t /*AS*/ = 0) const;
   unsigned getPointerSizeInBits(uint32_t AS = 0) const;
   unsigned getPointerTypeSizeInBits(Type *Ty) const;
@@ -2251,12 +2252,12 @@ public:
   // Instruction Emitting Hooks
   //
 
-  // This method should be implemented by targets that mark instructions with
-  // the 'usesCustomInserter' flag.  These instructions are special in various
-  // ways, which require special support to insert.  The specified MachineInstr
-  // is created but not inserted into any basic blocks, and this method is
-  // called to expand it into a sequence of instructions, potentially also
-  // creating new basic blocks and control flow.
+  /// This method should be implemented by targets that mark instructions with
+  /// the 'usesCustomInserter' flag.  These instructions are special in various
+  /// ways, which require special support to insert.  The specified MachineInstr
+  /// is created but not inserted into any basic blocks, and this method is
+  /// called to expand it into a sequence of instructions, potentially also
+  /// creating new basic blocks and control flow.
   virtual MachineBasicBlock *
     EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const;
 
