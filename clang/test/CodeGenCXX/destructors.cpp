@@ -9,7 +9,6 @@
 // CHECK-DAG: @_ZN5test312_GLOBAL__N_11DD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11DD2Ev
 // CHECK-DAG: @_ZN5test312_GLOBAL__N_11DD2Ev = alias internal bitcast {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
 // CHECK-DAG: @_ZN5test312_GLOBAL__N_11CD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
-// CHECK-DAG: @_ZN6PR752617allocator_derivedD1Ev = alias weak_odr void (%"struct.PR7526::allocator_derived"*)* @_ZN6PR752617allocator_derivedD2Ev
 
 struct A {
   int a;
@@ -44,6 +43,9 @@ namespace PR7526 {
   // CHECK-LABEL: define void @_ZN6PR75269allocatorD2Ev(%"struct.PR7526::allocator"* %this) unnamed_addr
   // CHECK: call void @__cxa_call_unexpected
   allocator::~allocator() throw() { foo(); }
+
+  // CHECK-LABEL: define void @_ZN6PR75263fooEv()
+  // CHECK: call void @_ZN6PR752617allocator_derivedD2Ev
 
   void foo() {
     allocator_derived ad;
