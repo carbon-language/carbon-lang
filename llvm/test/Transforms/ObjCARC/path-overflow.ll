@@ -2,6 +2,7 @@
 ; rdar://12277446
 ; rdar://12480535
 ; rdar://14590914
+; rdar://15377890
 
 ; The total number of paths grows exponentially with the number of branches, and a
 ; computation of this number can overflow any reasonable fixed-sized
@@ -15,6 +16,7 @@ target triple = "thumbv7-apple-ios5.0.0"
 %struct.CGPoint = type { float, float }
 
 @_unnamed_cfstring = external constant %struct.NSConstantString, section "__DATA,__cfstring"
+@_unnamed_cfstring_2 = external constant %struct.NSConstantString, section "__DATA,__cfstring"
 
 declare i8* @objc_retain(i8*) nonlazybind
 declare i8* @objc_retainAutoreleasedReturnValue(i8*) nonlazybind
@@ -24,6 +26,7 @@ declare i8* @objc_msgSend(i8*, i8*, ...) nonlazybind
 declare void @NSLog(i8*, ...)
 declare void @objc_msgSend_stret(i8*, i8*, ...)
 declare i32 @__gxx_personality_sj0(...)
+declare i32 @__objc_personality_v0(...)
 
 
 define hidden void @test1() {
@@ -1913,5 +1916,278 @@ lpad580:                                          ; preds = %invoke.cont572
 eh.resume:                                        ; preds = %lpad580, %ehcleanup560, %lpad360, %lpad220
   resume { i8*, i32 } undef
 }
+
+@"OBJC_EHTYPE_$_NSException" = external global i8
+
+define void @test4() {
+entry:
+  br i1 undef, label %if.end13, label %if.then10
+
+if.then10:                                        ; preds = %entry
+  br label %if.end13
+
+if.end13:                                         ; preds = %if.then10, %entry
+  %0 = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*, i8*, i64, i8*, i8)*)(i8* undef, i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i64 2, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring_2 to i8*), i8 signext 0), !clang.arc.no_objc_arc_exceptions !0
+  br i1 undef, label %if.then17, label %if.end18
+
+if.then17:                                        ; preds = %if.end13
+  br label %if.end18
+
+if.end18:                                         ; preds = %if.then17, %if.end13
+  br i1 undef, label %if.then64, label %if.end73
+
+if.then64:                                        ; preds = %if.end18
+  br i1 undef, label %cond.end71, label %cond.true68
+
+cond.true68:                                      ; preds = %if.then64
+  br label %cond.end71
+
+cond.end71:                                       ; preds = %cond.true68, %if.then64
+  br i1 undef, label %cleanup.action, label %cleanup.done
+
+cleanup.action:                                   ; preds = %cond.end71
+  br label %cleanup.done
+
+cleanup.done:                                     ; preds = %cleanup.action, %cond.end71
+  br label %if.end73
+
+if.end73:                                         ; preds = %cleanup.done, %if.end18
+  br i1 undef, label %forcoll.empty, label %forcoll.loopinit
+
+forcoll.loopinit:                                 ; preds = %if.end73
+  br label %forcoll.loopbody.outer
+
+forcoll.loopbody.outer:                           ; preds = %forcoll.refetch, %forcoll.loopinit
+  br label %forcoll.loopbody
+
+forcoll.loopbody:                                 ; preds = %forcoll.notmutated, %forcoll.loopbody.outer
+  br i1 undef, label %forcoll.notmutated, label %forcoll.mutated
+
+forcoll.mutated:                                  ; preds = %forcoll.loopbody
+  br label %forcoll.notmutated
+
+forcoll.notmutated:                               ; preds = %forcoll.mutated, %forcoll.loopbody
+  br i1 undef, label %forcoll.loopbody, label %forcoll.refetch
+
+forcoll.refetch:                                  ; preds = %forcoll.notmutated
+  br i1 undef, label %forcoll.empty, label %forcoll.loopbody.outer
+
+forcoll.empty:                                    ; preds = %forcoll.refetch, %if.end73
+  br i1 undef, label %if.end85, label %if.then82
+
+if.then82:                                        ; preds = %forcoll.empty
+  br label %if.end85
+
+if.end85:                                         ; preds = %if.then82, %forcoll.empty
+  br i1 undef, label %if.then87, label %if.end102
+
+if.then87:                                        ; preds = %if.end85
+  br i1 undef, label %if.end94, label %if.then91
+
+if.then91:                                        ; preds = %if.then87
+  br label %if.end94
+
+if.end94:                                         ; preds = %if.then91, %if.then87
+  br i1 undef, label %if.end101, label %if.then98
+
+if.then98:                                        ; preds = %if.end94
+  br label %if.end101
+
+if.end101:                                        ; preds = %if.then98, %if.end94
+  br label %if.end102
+
+if.end102:                                        ; preds = %if.end101, %if.end85
+  br i1 undef, label %do.body113, label %if.then107
+
+if.then107:                                       ; preds = %if.end102
+  br label %do.body113
+
+do.body113:                                       ; preds = %if.then107, %if.end102
+  br i1 undef, label %if.then116, label %if.end117
+
+if.then116:                                       ; preds = %do.body113
+  br label %if.end117
+
+if.end117:                                        ; preds = %if.then116, %do.body113
+  br i1 undef, label %if.then125, label %if.end126
+
+if.then125:                                       ; preds = %if.end117
+  br label %if.end126
+
+if.end126:                                        ; preds = %if.then125, %if.end117
+  br i1 undef, label %do.end166, label %cond.true132
+
+cond.true132:                                     ; preds = %if.end126
+  br i1 undef, label %do.body148, label %cond.true151
+
+do.body148:                                       ; preds = %cond.true132
+  br i1 undef, label %do.end166, label %cond.true151
+
+cond.true151:                                     ; preds = %do.body148, %cond.true132
+  br i1 undef, label %if.then162, label %do.end166
+
+if.then162:                                       ; preds = %cond.true151
+  br label %do.end166
+
+do.end166:                                        ; preds = %if.then162, %cond.true151, %do.body148, %if.end126
+  br i1 undef, label %if.then304, label %if.then170
+
+if.then170:                                       ; preds = %do.end166
+  br i1 undef, label %do.end193, label %cond.true179
+
+cond.true179:                                     ; preds = %if.then170
+  br i1 undef, label %if.then190, label %do.end193
+
+if.then190:                                       ; preds = %cond.true179
+  br label %do.end193
+
+do.end193:                                        ; preds = %if.then190, %cond.true179, %if.then170
+  br i1 undef, label %do.body200, label %do.body283
+
+do.body200:                                       ; preds = %do.end193
+  br i1 undef, label %do.end254, label %cond.true203
+
+cond.true203:                                     ; preds = %do.body200
+  br i1 undef, label %do.body218, label %cond.true221
+
+do.body218:                                       ; preds = %cond.true203
+  br i1 undef, label %do.end254, label %cond.true221
+
+cond.true221:                                     ; preds = %do.body218, %cond.true203
+  br i1 undef, label %if.then232, label %do.body236
+
+if.then232:                                       ; preds = %cond.true221
+  br label %do.body236
+
+do.body236:                                       ; preds = %if.then232, %cond.true221
+  br i1 undef, label %do.end254, label %cond.true239
+
+cond.true239:                                     ; preds = %do.body236
+  br i1 undef, label %if.then250, label %do.end254
+
+if.then250:                                       ; preds = %cond.true239
+  br label %do.end254
+
+do.end254:                                        ; preds = %if.then250, %cond.true239, %do.body236, %do.body218, %do.body200
+  br i1 undef, label %do.end277, label %cond.true263
+
+cond.true263:                                     ; preds = %do.end254
+  br i1 undef, label %if.then274, label %do.end277
+
+if.then274:                                       ; preds = %cond.true263
+  unreachable
+
+do.end277:                                        ; preds = %cond.true263, %do.end254
+  br i1 undef, label %if.then280, label %do.body283
+
+if.then280:                                       ; preds = %do.end277
+  br label %do.body283
+
+do.body283:                                       ; preds = %if.then280, %do.end277, %do.end193
+  br i1 undef, label %if.end301, label %cond.true286
+
+cond.true286:                                     ; preds = %do.body283
+  br i1 undef, label %if.then297, label %if.end301
+
+if.then297:                                       ; preds = %cond.true286
+  br label %if.end301
+
+if.end301:                                        ; preds = %if.then297, %cond.true286, %do.body283
+  br i1 undef, label %if.then304, label %do.body351
+
+if.then304:                                       ; preds = %if.end301, %do.end166
+  br i1 undef, label %do.body309.lr.ph, label %do.body351
+
+do.body309.lr.ph:                                 ; preds = %if.then304
+  br label %do.body309
+
+do.body309:                                       ; preds = %for.cond.backedge, %do.body309.lr.ph
+  br i1 undef, label %do.end328, label %cond.true312
+
+cond.true312:                                     ; preds = %do.body309
+  br i1 undef, label %if.then323, label %do.end328
+
+if.then323:                                       ; preds = %cond.true312
+  br label %do.end328
+
+do.end328:                                        ; preds = %if.then323, %cond.true312, %do.body309
+  br i1 undef, label %for.cond.backedge, label %cond.true335
+
+for.cond.backedge:                                ; preds = %if.then346, %cond.true335, %do.end328
+  br i1 undef, label %do.body309, label %do.body351
+
+cond.true335:                                     ; preds = %do.end328
+  br i1 undef, label %if.then346, label %for.cond.backedge
+
+if.then346:                                       ; preds = %cond.true335
+  br label %for.cond.backedge
+
+do.body351:                                       ; preds = %for.cond.backedge, %if.then304, %if.end301
+  br i1 undef, label %if.then354, label %if.end355
+
+if.then354:                                       ; preds = %do.body351
+  br label %if.end355
+
+if.end355:                                        ; preds = %if.then354, %do.body351
+  br i1 undef, label %if.else, label %if.then364
+
+if.then364:                                       ; preds = %if.end355
+  br label %do.body366
+
+if.else:                                          ; preds = %if.end355
+  br label %do.body366
+
+do.body366:                                       ; preds = %if.else, %if.then364
+  br i1 undef, label %if.then369, label %if.end377.critedge
+
+if.then369:                                       ; preds = %do.body366
+  br label %if.end377
+
+if.end377.critedge:                               ; preds = %do.body366
+  br label %if.end377
+
+if.end377:                                        ; preds = %if.end377.critedge, %if.then369
+  br i1 undef, label %if.then383, label %if.end392.critedge
+
+if.then383:                                       ; preds = %if.end377
+  br label %if.end392
+
+if.end392.critedge:                               ; preds = %if.end377
+  br label %if.end392
+
+if.end392:                                        ; preds = %if.end392.critedge, %if.then383
+  br i1 undef, label %if.then398, label %if.end399
+
+if.then398:                                       ; preds = %if.end392
+  br label %if.end399
+
+if.end399:                                        ; preds = %if.then398, %if.end392
+  invoke void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*)*)(i8* undef, i8* undef)
+          to label %eh.cont unwind label %lpad, !clang.arc.no_objc_arc_exceptions !0
+
+eh.cont:                                          ; preds = %if.end399
+  br i1 undef, label %if.then430, label %if.end439.critedge
+
+if.then430:                                       ; preds = %eh.cont
+  %1 = call i8* @objc_retain(i8* %0)
+  br label %if.end439
+
+lpad:                                             ; preds = %if.end399
+  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+          catch i8* @"OBJC_EHTYPE_$_NSException"
+  unreachable
+
+if.end439.critedge:                               ; preds = %eh.cont
+  %3 = call i8* @objc_retain(i8* %0)
+  br label %if.end439
+
+if.end439:                                        ; preds = %if.end439.critedge, %if.then430
+  call void @objc_release(i8* %0), !clang.imprecise_release !0
+  unreachable
+
+return:                                           ; No predecessors!
+  ret void
+}
+
 
 !0 = metadata !{}

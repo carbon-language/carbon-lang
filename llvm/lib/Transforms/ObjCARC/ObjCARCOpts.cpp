@@ -2405,7 +2405,15 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
         if (Jt == Releases.end())
           return false;
         const RRInfo &NewRetainReleaseRRI = Jt->second;
-        assert(NewRetainReleaseRRI.Calls.count(NewRetain));
+
+        // If the release does not have a reference to the retain as well,
+        // something happened which is unaccounted for. Do not do anything.
+        //
+        // This can happen if we catch an additive overflow during path count
+        // merging.
+        if (!NewRetainReleaseRRI.Calls.count(NewRetain))
+          return false;
+
         if (ReleasesToMove.Calls.insert(NewRetainRelease)) {
 
           // If we overflow when we compute the path count, don't remove/move
@@ -2481,9 +2489,16 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
         if (Jt == Retains.end())
           return false;
         const RRInfo &NewReleaseRetainRRI = Jt->second;
-        assert(NewReleaseRetainRRI.Calls.count(NewRelease));
-        if (RetainsToMove.Calls.insert(NewReleaseRetain)) {
 
+        // If the retain does not have a reference to the release as well,
+        // something happened which is unaccounted for. Do not do anything.
+        //
+        // This can happen if we catch an additive overflow during path count
+        // merging.
+        if (!NewReleaseRetainRRI.Calls.count(NewRelease))
+          return false;
+
+        if (RetainsToMove.Calls.insert(NewReleaseRetain)) {
           // If we overflow when we compute the path count, don't remove/move
           // anything.
           const BBState &NRRBBState = BBStates[NewReleaseRetain->getParent()];
