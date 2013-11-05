@@ -1,0 +1,6 @@
+# RUN: yaml2obj %p/Inputs/unknown-drectve.obj.yaml > %t.obj
+#
+# RUN: not lld -flavor link /out:%t.exe -- %t.obj >& %t.log
+# RUN: FileCheck -check-prefix=ERROR %s < %t.log
+
+ERROR: Failed to parse '/nosuchoption:foobar'

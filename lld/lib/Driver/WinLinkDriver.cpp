@@ -862,8 +862,8 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   // has already done.
   if (isReadingDirectiveSection)
     for (auto &e : inputElements)
-      if (error_code ec = e->parse(ctx, diagnostics))
-        return ec;
+      if (e->parse(ctx, diagnostics))
+        return false;
 
   // Add the input files to the input graph.
   if (!ctx.hasInputGraph())

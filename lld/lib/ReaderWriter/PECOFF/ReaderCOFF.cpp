@@ -767,7 +767,7 @@ private:
   //
   // The section mainly contains /defaultlib (-l in Unix), but can contain any
   // options as long as they are valid.
-  void handleDirectiveSection(StringRef directives) const {
+  error_code handleDirectiveSection(StringRef directives) const {
     DEBUG({
       llvm::dbgs() << ".drectve: " << directives << "\n";
     });
@@ -790,13 +790,13 @@ private:
 
     // Print error message if error.
     if (parseFailed) {
-      auto msg =
-          Twine("Failed to parse '") + directives + "': " + errorMessage + "\n";
-      llvm::report_fatal_error(msg);
+      llvm::errs() << "Failed to parse '" << directives << "'\n";
+      return make_error_code(llvm::object::object_error::invalid_file_type);
     }
     if (!errorMessage.empty()) {
       llvm::errs() << "lld warning: " << errorMessage << "\n";
     }
+    return error_code::success();
   }
 
   //
@@ -919,7 +919,8 @@ private:
     // Interpret .drectve section if the section has contents.
     StringRef directives = file->getLinkerDirectives();
     if (!directives.empty())
-      handleDirectiveSection(directives);
+      if (error_code ec = handleDirectiveSection(directives))
+        return ec;
 
     result.push_back(std::move(file));
     return error_code::success();
