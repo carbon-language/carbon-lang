@@ -20,6 +20,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
+#include <unistd.h>
 using namespace llvm;
 
 static cl::opt<bool>
@@ -34,6 +35,9 @@ InputGCDA("gcda", cl::desc("<input gcda file>"), cl::init(""));
 static cl::opt<std::string>
 OutputFile("o", cl::desc("<output llvm-cov file>"), cl::init("-"));
 
+static cl::opt<std::string>
+WorkingDir("C", cl::desc("change path of working directory"),
+           cl::init(""));
 
 //===----------------------------------------------------------------------===//
 int main(int argc, char **argv) {
@@ -43,6 +47,13 @@ int main(int argc, char **argv) {
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
   cl::ParseCommandLineOptions(argc, argv, "llvm coverage tool\n");
+
+  if (!WorkingDir.empty()) {
+    if (chdir(WorkingDir.c_str()) == -1) {
+      errs() << "Cannot change to directory: " << WorkingDir << ".\n";
+      return 1;
+    }
+  }
 
   std::string ErrorInfo;
   raw_fd_ostream OS(OutputFile.c_str(), ErrorInfo);
@@ -76,7 +87,6 @@ int main(int argc, char **argv) {
       return 1;
     }
   }
-
 
   if (DumpGCOV)
     GF.dump();
