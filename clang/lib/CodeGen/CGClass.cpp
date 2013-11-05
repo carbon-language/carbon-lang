@@ -2180,7 +2180,7 @@ void CodeGenFunction::EmitLambdaToBlockPointerBody(FunctionArgList &Args) {
     return;
   }
 
-  EmitFunctionBody(Args);
+  EmitFunctionBody(Args, cast<FunctionDecl>(CurGD.getDecl())->getBody());
 }
 
 void CodeGenFunction::EmitLambdaDelegatingInvokeBody(const CXXMethodDecl *MD) {

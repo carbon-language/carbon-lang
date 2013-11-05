@@ -643,13 +643,12 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
     DI->EmitLocation(Builder, StartLoc);
 }
 
-void CodeGenFunction::EmitFunctionBody(FunctionArgList &Args) {
-  const FunctionDecl *FD = cast<FunctionDecl>(CurGD.getDecl());
-  assert(FD->getBody());
-  if (const CompoundStmt *S = dyn_cast<CompoundStmt>(FD->getBody()))
+void CodeGenFunction::EmitFunctionBody(FunctionArgList &Args,
+                                       const Stmt *Body) {
+  if (const CompoundStmt *S = dyn_cast<CompoundStmt>(Body))
     EmitCompoundStmtWithoutScope(*S);
   else
-    EmitStmt(FD->getBody());
+    EmitStmt(Body);
 }
 
 /// Tries to mark the given function nounwind based on the
@@ -670,6 +669,17 @@ static void TryMarkNoThrow(llvm::Function *F) {
         return;
       }
   F->setDoesNotThrow();
+}
+
+static void EmitSizedDeallocationFunction(CodeGenFunction &CGF,
+                                          const FunctionDecl *UnsizedDealloc) {
+  // This is a weak discardable definition of the sized deallocation function.
+  CGF.CurFn->setLinkage(llvm::Function::LinkOnceAnyLinkage);
+
+  // Call the unsized deallocation function and forward the first argument
+  // unchanged.
+  llvm::Constant *Unsized = CGF.CGM.GetAddrOfFunction(UnsizedDealloc);
+  CGF.Builder.CreateCall(Unsized, &*CGF.CurFn->arg_begin());
 }
 
 void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
@@ -726,9 +736,15 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
     // Implicit copy-assignment gets the same special treatment as implicit
     // copy-constructors.
     emitImplicitAssignmentOperatorBody(Args);
-  }
-  else
-    EmitFunctionBody(Args);
+  } else if (Stmt *Body = FD->getBody()) {
+    EmitFunctionBody(Args, Body);
+  } else if (FunctionDecl *UnsizedDealloc =
+                 FD->getCorrespondingUnsizedGlobalDeallocationFunction()) {
+    // Global sized deallocation functions get an implicit weak definition if
+    // they don't have an explicit definition.
+    EmitSizedDeallocationFunction(*this, UnsizedDealloc);
+  } else
+    llvm_unreachable("no definition for emitted function");
 
   // C++11 [stmt.return]p2:
   //   Flowing off the end of a function [...] results in undefined behavior in

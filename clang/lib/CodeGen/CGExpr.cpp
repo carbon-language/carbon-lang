@@ -1824,8 +1824,8 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     return LV;
   }
 
-  if (const FunctionDecl *fn = dyn_cast<FunctionDecl>(ND))
-    return EmitFunctionDeclLValue(*this, E, fn);
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND))
+    return EmitFunctionDeclLValue(*this, E, FD);
 
   llvm_unreachable("Unhandled DeclRefExpr");
 }

@@ -1406,6 +1406,12 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
     DeferredDeclsToEmit.push_back(DDI->second);
     DeferredDecls.erase(DDI);
 
+  // Otherwise, if this is a sized deallocation function, emit a weak definition
+  // for it at the end of the translation unit.
+  } else if (D && cast<FunctionDecl>(D)
+                      ->getCorrespondingUnsizedGlobalDeallocationFunction()) {
+    DeferredDeclsToEmit.push_back(GD);
+
   // Otherwise, there are cases we have to worry about where we're
   // using a declaration for which we must emit a definition but where
   // we might not find a top-level definition:
