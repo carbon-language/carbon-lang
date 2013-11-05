@@ -2005,13 +2005,8 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok,
             MI->getReplacementToken(NumTokens-1).is(tok::comma))
           MI->setHasCommaPasting();
 
-        // Things look ok, add the '##' and param name tokens to the macro.
+        // Things look ok, add the '##' token to the macro.
         MI->AddTokenToBody(LastTok);
-        MI->AddTokenToBody(Tok);
-        LastTok = Tok;
-
-        // Get the next token of the macro.
-        LexUnexpandedToken(Tok);
         continue;
       }
 
