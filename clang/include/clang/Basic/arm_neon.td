@@ -769,6 +769,25 @@ def FMAXNMV : SInst<"vmaxnmv", "sd", "Qf">;
 def FMINNMV : SInst<"vminnmv", "sd", "Qf">;
 
 ////////////////////////////////////////////////////////////////////////////////
+// Crypto
+def AESE : SInst<"vaese", "ddd", "QUc">;
+def AESD : SInst<"vaesd", "ddd", "QUc">;
+def AESMC : SInst<"vaesmc", "dd", "QUc">;
+def AESIMC : SInst<"vaesimc", "dd", "QUc">;
+
+def SHA1H : SInst<"vsha1h", "ss", "Ui">;
+def SHA1SU1 : SInst<"vsha1su1", "ddd", "QUi">;
+def SHA256SU0 : SInst<"vsha256su0", "ddd", "QUi">;
+
+def SHA1C : SInst<"vsha1c", "ddsd", "QUi">;
+def SHA1P : SInst<"vsha1p", "ddsd", "QUi">;
+def SHA1M : SInst<"vsha1m", "ddsd", "QUi">;
+def SHA1SU0 : SInst<"vsha1su0", "dddd", "QUi">;
+def SHA256H : SInst<"vsha256h", "dddd", "QUi">;
+def SHA256H2 : SInst<"vsha256h2", "dddd", "QUi">;
+def SHA256SU1 : SInst<"vsha256su1", "dddd", "QUi">;
+
+////////////////////////////////////////////////////////////////////////////////
 // Scalar Arithmetic
 
 // Scalar Addition
