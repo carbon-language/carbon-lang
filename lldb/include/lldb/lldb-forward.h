@@ -106,6 +106,7 @@ class   Instruction;
 class   InstructionList;
 class   IRExecutionUnit;
 class   LanguageRuntime;
+class   SystemRuntime;
 class   LineTable;
 class   Listener;
 class   Log;
@@ -297,6 +298,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::InputReader> InputReaderSP;
     typedef std::shared_ptr<lldb_private::Instruction> InstructionSP;
     typedef std::shared_ptr<lldb_private::LanguageRuntime> LanguageRuntimeSP;
+    typedef std::shared_ptr<lldb_private::SystemRuntime> SystemRuntimeSP;
     typedef std::shared_ptr<lldb_private::LineTable> LineTableSP;
     typedef std::shared_ptr<lldb_private::Listener> ListenerSP;
     typedef std::shared_ptr<lldb_private::LogChannel> LogChannelSP;

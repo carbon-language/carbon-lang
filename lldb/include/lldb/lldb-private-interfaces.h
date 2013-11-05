@@ -27,6 +27,7 @@ namespace lldb_private
     typedef EmulateInstruction * (*EmulateInstructionCreateInstance) (const ArchSpec &arch, InstructionType inst_type);
     typedef OperatingSystem* (*OperatingSystemCreateInstance) (Process *process, bool force);
     typedef LanguageRuntime *(*LanguageRuntimeCreateInstance) (Process *process, lldb::LanguageType language);
+    typedef SystemRuntime *(*SystemRuntimeCreateInstance) (Process *process);
     typedef Platform* (*PlatformCreateInstance) (bool force, const ArchSpec *arch);
     typedef lldb::ProcessSP (*ProcessCreateInstance) (Target &target, Listener &listener, const FileSpec *crash_file_path);
     typedef SymbolFile* (*SymbolFileCreateInstance) (ObjectFile* obj_file);

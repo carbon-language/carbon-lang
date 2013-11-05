@@ -19,6 +19,7 @@ add_lldb_library(lldbTarget
   StackFrameList.cpp
   StackID.cpp
   StopInfo.cpp
+  SystemRuntime.cpp
   Target.cpp
   TargetList.cpp
   Thread.cpp

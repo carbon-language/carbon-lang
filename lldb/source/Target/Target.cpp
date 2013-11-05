@@ -43,6 +43,7 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
+#include "lldb/Target/SystemRuntime.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadSpec.h"
 
@@ -1155,6 +1156,14 @@ Target::ModulesDidLoad (ModuleList &module_list)
     if (module_list.GetSize())
     {
         m_breakpoint_list.UpdateBreakpoints (module_list, true);
+        if (m_process_sp)
+        {
+            SystemRuntime *sys_runtime = m_process_sp->GetSystemRuntime();
+            if (sys_runtime)
+            {
+                sys_runtime->ModulesDidLoad (module_list);
+            }
+        }
         // TODO: make event data that packages up the module_list
         BroadcastEvent (eBroadcastBitModulesLoaded, NULL);
     }

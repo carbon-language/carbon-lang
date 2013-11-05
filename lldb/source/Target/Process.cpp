@@ -35,6 +35,7 @@
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"
+#include "lldb/Target/SystemRuntime.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/TargetList.h"
 #include "lldb/Target/Thread.h"
@@ -1143,6 +1144,7 @@ Process::Finalize()
     m_dynamic_checkers_ap.reset();
     m_abi_sp.reset();
     m_os_ap.reset();
+    m_system_runtime_ap.reset();
     m_dyld_ap.reset();
     m_thread_list_real.Destroy();
     m_thread_list.Destroy();
@@ -2876,6 +2878,7 @@ Process::Launch (const ProcessLaunchInfo &launch_info)
     Error error;
     m_abi_sp.reset();
     m_dyld_ap.reset();
+    m_system_runtime_ap.reset();
     m_os_ap.reset();
     m_process_input_reader.reset();
 
@@ -2944,6 +2947,10 @@ Process::Launch (const ProcessLaunchInfo &launch_info)
                         if (dyld)
                             dyld->DidLaunch();
 
+                        SystemRuntime *system_runtime = GetSystemRuntime ();
+                        if (system_runtime)
+                            system_runtime->DidLaunch();
+
                         m_os_ap.reset (OperatingSystem::FindPlugin (this, NULL));
                         // This delays passing the stopped event to listeners till DidLaunch gets
                         // a chance to complete...
@@ -2987,6 +2994,10 @@ Process::LoadCore ()
         if (dyld)
             dyld->DidAttach();
         
+        SystemRuntime *system_runtime = GetSystemRuntime ();
+        if (system_runtime)
+            system_runtime->DidAttach();
+
         m_os_ap.reset (OperatingSystem::FindPlugin (this, NULL));
         // We successfully loaded a core file, now pretend we stopped so we can
         // show all of the threads in the core file and explore the crashed
@@ -3003,6 +3014,14 @@ Process::GetDynamicLoader ()
     if (m_dyld_ap.get() == NULL)
         m_dyld_ap.reset (DynamicLoader::FindPlugin(this, NULL));
     return m_dyld_ap.get();
+}
+
+SystemRuntime *
+Process::GetSystemRuntime ()
+{
+    if (m_system_runtime_ap.get() == NULL)
+        m_system_runtime_ap.reset (SystemRuntime::FindPlugin(this));
+    return m_system_runtime_ap.get();
 }
 
 
@@ -3067,6 +3086,7 @@ Process::Attach (ProcessAttachInfo &attach_info)
     m_abi_sp.reset();
     m_process_input_reader.reset();
     m_dyld_ap.reset();
+    m_system_runtime_ap.reset();
     m_os_ap.reset();
     
     lldb::pid_t attach_pid = attach_info.GetProcessID();
@@ -3238,6 +3258,10 @@ Process::CompleteAttach ()
     DynamicLoader *dyld = GetDynamicLoader ();
     if (dyld)
         dyld->DidAttach();
+
+    SystemRuntime *system_runtime = GetSystemRuntime ();
+    if (system_runtime)
+        system_runtime->DidAttach();
 
     m_os_ap.reset (OperatingSystem::FindPlugin (this, NULL));
     // Figure out which one is the executable, and set that in our target:
@@ -5614,6 +5638,7 @@ Process::DidExec ()
     target.GetSectionLoadList().Clear();
     m_dynamic_checkers_ap.reset();
     m_abi_sp.reset();
+    m_system_runtime_ap.reset();
     m_os_ap.reset();
     m_dyld_ap.reset();
     m_image_tokens.clear();

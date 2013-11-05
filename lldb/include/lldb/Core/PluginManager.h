@@ -132,6 +132,24 @@ public:
 
 
     //------------------------------------------------------------------
+    // SystemRuntime
+    //------------------------------------------------------------------
+    static bool
+    RegisterPlugin (const ConstString &name,
+                    const char *description,
+                    SystemRuntimeCreateInstance create_callback);
+
+    static bool
+    UnregisterPlugin (SystemRuntimeCreateInstance create_callback);
+
+    static SystemRuntimeCreateInstance
+    GetSystemRuntimeCreateCallbackAtIndex (uint32_t idx);
+
+    static SystemRuntimeCreateInstance
+    GetSystemRuntimeCreateCallbackForPluginName (const ConstString &name);
+
+
+    //------------------------------------------------------------------
     // ObjectFile
     //------------------------------------------------------------------
     static bool

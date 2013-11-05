@@ -1757,7 +1757,7 @@ public:
         error.SetErrorStringWithFormat("error: %s does not support loading core files.", GetPluginName().GetCString());
         return error;
     }
-    
+
     //------------------------------------------------------------------
     /// Get the dynamic loader plug-in for this process. 
     ///
@@ -1769,6 +1769,16 @@ public:
     //------------------------------------------------------------------
     virtual DynamicLoader *
     GetDynamicLoader ();
+
+    //------------------------------------------------------------------
+    /// Get the system runtime plug-in for this process. 
+    ///
+    /// @return
+    ///   Returns a pointer to the SystemRuntime plugin for this Process
+    ///   if one is available.  Else returns NULL.
+    //------------------------------------------------------------------
+    virtual SystemRuntime *
+    GetSystemRuntime ();
 
     //------------------------------------------------------------------
     /// Attach to an existing process using the process attach info.
@@ -3667,6 +3677,7 @@ protected:
     std::unique_ptr<DynamicLoader> m_dyld_ap;
     std::unique_ptr<DynamicCheckerFunctions> m_dynamic_checkers_ap; ///< The functions used by the expression parser to validate data that expressions use.
     std::unique_ptr<OperatingSystem> m_os_ap;
+    std::unique_ptr<SystemRuntime> m_system_runtime_ap;
     UnixSignals                 m_unix_signals;         /// This is the current signal set for this process.
     lldb::ABISP                 m_abi_sp;
     lldb::InputReaderSP         m_process_input_reader;
