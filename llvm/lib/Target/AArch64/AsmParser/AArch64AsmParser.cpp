@@ -815,6 +815,17 @@ public:
     return true;
   }
 
+  // if value == N, return true
+  template<int N>
+  bool isExactImm() const {
+    if (!isImm()) return false;
+
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+
+    return CE->getValue() == N;
+  }
+
   static AArch64Operand *CreateImmWithLSL(const MCExpr *Val,
                                           unsigned ShiftAmount,
                                           bool ImplicitAmount,

@@ -90,6 +90,8 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
   setTargetDAGCombine(ISD::SHL);
 
   setTargetDAGCombine(ISD::INTRINSIC_WO_CHAIN);
+  setTargetDAGCombine(ISD::INTRINSIC_VOID);
+  setTargetDAGCombine(ISD::INTRINSIC_W_CHAIN);
 
   // AArch64 does not have i1 loads, or much of anything for i1 really.
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
@@ -889,6 +891,22 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "AArch64ISD::NEON_VDUP";
   case AArch64ISD::NEON_VDUPLANE:
     return "AArch64ISD::NEON_VDUPLANE";
+  case AArch64ISD::NEON_LD1_UPD:
+    return "AArch64ISD::NEON_LD1_UPD";
+  case AArch64ISD::NEON_LD2_UPD:
+    return "AArch64ISD::NEON_LD2_UPD";
+  case AArch64ISD::NEON_LD3_UPD:
+    return "AArch64ISD::NEON_LD3_UPD";
+  case AArch64ISD::NEON_LD4_UPD:
+    return "AArch64ISD::NEON_LD4_UPD";
+  case AArch64ISD::NEON_ST1_UPD:
+    return "AArch64ISD::NEON_ST1_UPD";
+  case AArch64ISD::NEON_ST2_UPD:
+    return "AArch64ISD::NEON_ST2_UPD";
+  case AArch64ISD::NEON_ST3_UPD:
+    return "AArch64ISD::NEON_ST3_UPD";
+  case AArch64ISD::NEON_ST4_UPD:
+    return "AArch64ISD::NEON_ST4_UPD";
   default:
     return NULL;
   }
@@ -3448,6 +3466,108 @@ static SDValue PerformIntrinsicCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
+/// Target-specific DAG combine function for NEON load/store intrinsics
+/// to merge base address updates.
+static SDValue CombineBaseUpdate(SDNode *N,
+                                 TargetLowering::DAGCombinerInfo &DCI) {
+  if (DCI.isBeforeLegalize() || DCI.isCalledByLegalizer())
+    return SDValue();
+
+  SelectionDAG &DAG = DCI.DAG;
+  unsigned AddrOpIdx = 2;
+  SDValue Addr = N->getOperand(AddrOpIdx);
+
+  // Search for a use of the address operand that is an increment.
+  for (SDNode::use_iterator UI = Addr.getNode()->use_begin(),
+       UE = Addr.getNode()->use_end(); UI != UE; ++UI) {
+    SDNode *User = *UI;
+    if (User->getOpcode() != ISD::ADD ||
+        UI.getUse().getResNo() != Addr.getResNo())
+      continue;
+
+    // Check that the add is independent of the load/store.  Otherwise, folding
+    // it would create a cycle.
+    if (User->isPredecessorOf(N) || N->isPredecessorOf(User))
+      continue;
+
+    // Find the new opcode for the updating load/store.
+    bool isLoad = true;
+    unsigned NewOpc = 0;
+    unsigned NumVecs = 0;
+    unsigned IntNo = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
+    switch (IntNo) {
+    default: llvm_unreachable("unexpected intrinsic for Neon base update");
+    case Intrinsic::arm_neon_vld1:     NewOpc = AArch64ISD::NEON_LD1_UPD;
+      NumVecs = 1; break;
+    case Intrinsic::arm_neon_vld2:     NewOpc = AArch64ISD::NEON_LD2_UPD;
+      NumVecs = 2; break;
+    case Intrinsic::arm_neon_vld3:     NewOpc = AArch64ISD::NEON_LD3_UPD;
+      NumVecs = 3; break;
+    case Intrinsic::arm_neon_vld4:     NewOpc = AArch64ISD::NEON_LD4_UPD;
+      NumVecs = 4; break;
+    case Intrinsic::arm_neon_vst1:     NewOpc = AArch64ISD::NEON_ST1_UPD;
+      NumVecs = 1; isLoad = false; break;
+    case Intrinsic::arm_neon_vst2:     NewOpc = AArch64ISD::NEON_ST2_UPD;
+      NumVecs = 2; isLoad = false; break;
+    case Intrinsic::arm_neon_vst3:     NewOpc = AArch64ISD::NEON_ST3_UPD;
+      NumVecs = 3; isLoad = false; break;
+    case Intrinsic::arm_neon_vst4:     NewOpc = AArch64ISD::NEON_ST4_UPD;
+      NumVecs = 4; isLoad = false; break;
+    }
+
+    // Find the size of memory referenced by the load/store.
+    EVT VecTy;
+    if (isLoad)
+      VecTy = N->getValueType(0);
+    else
+      VecTy = N->getOperand(AddrOpIdx + 1).getValueType();
+    unsigned NumBytes = NumVecs * VecTy.getSizeInBits() / 8;
+
+    // If the increment is a constant, it must match the memory ref size.
+    SDValue Inc = User->getOperand(User->getOperand(0) == Addr ? 1 : 0);
+    if (ConstantSDNode *CInc = dyn_cast<ConstantSDNode>(Inc.getNode())) {
+      uint32_t IncVal = CInc->getZExtValue();
+      if (IncVal != NumBytes)
+        continue;
+      Inc = DAG.getTargetConstant(IncVal, MVT::i32);
+    }
+
+    // Create the new updating load/store node.
+    EVT Tys[6];
+    unsigned NumResultVecs = (isLoad ? NumVecs : 0);
+    unsigned n;
+    for (n = 0; n < NumResultVecs; ++n)
+      Tys[n] = VecTy;
+    Tys[n++] = MVT::i64;
+    Tys[n] = MVT::Other;
+    SDVTList SDTys = DAG.getVTList(Tys, NumResultVecs + 2);
+    SmallVector<SDValue, 8> Ops;
+    Ops.push_back(N->getOperand(0)); // incoming chain
+    Ops.push_back(N->getOperand(AddrOpIdx));
+    Ops.push_back(Inc);
+    for (unsigned i = AddrOpIdx + 1; i < N->getNumOperands(); ++i) {
+      Ops.push_back(N->getOperand(i));
+    }
+    MemIntrinsicSDNode *MemInt = cast<MemIntrinsicSDNode>(N);
+    SDValue UpdN = DAG.getMemIntrinsicNode(NewOpc, SDLoc(N), SDTys,
+                                           Ops.data(), Ops.size(),
+                                           MemInt->getMemoryVT(),
+                                           MemInt->getMemOperand());
+
+    // Update the uses.
+    std::vector<SDValue> NewResults;
+    for (unsigned i = 0; i < NumResultVecs; ++i) {
+      NewResults.push_back(SDValue(UpdN.getNode(), i));
+    }
+    NewResults.push_back(SDValue(UpdN.getNode(), NumResultVecs + 1)); // chain
+    DCI.CombineTo(N, NewResults);
+    DCI.CombineTo(User, SDValue(UpdN.getNode(), NumResultVecs));
+
+    break;
+  }
+  return SDValue();
+}
+
 SDValue
 AArch64TargetLowering::PerformDAGCombine(SDNode *N,
                                          DAGCombinerInfo &DCI) const {
@@ -3461,6 +3581,21 @@ AArch64TargetLowering::PerformDAGCombine(SDNode *N,
     return PerformShiftCombine(N, DCI, getSubtarget());
   case ISD::INTRINSIC_WO_CHAIN:
     return PerformIntrinsicCombine(N, DCI.DAG);
+  case ISD::INTRINSIC_VOID:
+  case ISD::INTRINSIC_W_CHAIN:
+    switch (cast<ConstantSDNode>(N->getOperand(1))->getZExtValue()) {
+    case Intrinsic::arm_neon_vld1:
+    case Intrinsic::arm_neon_vld2:
+    case Intrinsic::arm_neon_vld3:
+    case Intrinsic::arm_neon_vld4:
+    case Intrinsic::arm_neon_vst1:
+    case Intrinsic::arm_neon_vst2:
+    case Intrinsic::arm_neon_vst3:
+    case Intrinsic::arm_neon_vst4:
+      return CombineBaseUpdate(N, DCI);
+    default:
+      break;
+    }
   }
   return SDValue();
 }

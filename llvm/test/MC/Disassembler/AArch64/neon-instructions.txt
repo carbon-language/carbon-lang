@@ -1,4 +1,4 @@
-# RUN: llvm-mc  -triple aarch64-none-linux-gnu -mattr=+neon -disassemble < %s | FileCheck %s
+G# RUN: llvm-mc  -triple aarch64-none-linux-gnu -mattr=+neon -disassemble < %s | FileCheck %s
 
 #------------------------------------------------------------------------------
 # Vector Integer Add/Sub
@@ -1971,3 +1971,74 @@
 # CHECK: ucvtf d21, d14, #64
 0xb6,0xe5,0x20,0x7f
 0xd5,0xe5,0x40,0x7f
+
+#----------------------------------------------------------------------
+# Vector load/store multiple N-element structure
+#----------------------------------------------------------------------
+# CHECK: ld1 {v0.16b}, [x0]
+# CHECK: ld1 {v15.8h, v16.8h}, [x15]
+# CHECK: ld1 {v31.4s, v0.4s, v1.4s}, [sp]
+# CHECK: ld1 {v0.2d, v1.2d, v2.2d, v3.2d}, [x0]
+0x00,0x70,0x40,0x4c
+0xef,0xa5,0x40,0x4c
+0xff,0x6b,0x40,0x4c
+0x00,0x2c,0x40,0x4c
+
+# CHECK: ld2 {v0.8b, v1.8b}, [x0]
+# CHECK: ld3 {v15.4h, v16.4h, v17.4h}, [x15]
+# CHECK: ld4 {v31.2s, v0.2s, v1.2s, v2.2s}, [sp]
+0x00,0x80,0x40,0x0c
+0xef,0x45,0x40,0x0c
+0xff,0x0b,0x40,0x0c
+
+# CHECK: st1 {v0.16b}, [x0]
+# CHECK: st1 {v15.8h, v16.8h}, [x15]
+# CHECK: st1 {v31.4s, v0.4s, v1.4s}, [sp]
+# CHECK: st1 {v0.2d, v1.2d, v2.2d, v3.2d}, [x0]
+0x00,0x70,0x00,0x4c
+0xef,0xa5,0x00,0x4c
+0xff,0x6b,0x00,0x4c
+0x00,0x2c,0x00,0x4c
+
+# CHECK: st2 {v0.8b, v1.8b}, [x0]
+# CHECK: st3 {v15.4h, v16.4h, v17.4h}, [x15]
+# CHECK: st4 {v31.2s, v0.2s, v1.2s, v2.2s}, [sp]
+0x00,0x80,0x00,0x0c
+0xef,0x45,0x00,0x0c
+0xff,0x0b,0x00,0x0c
+
+#----------------------------------------------------------------------
+# Vector load/store multiple N-element structure (post-index)
+#----------------------------------------------------------------------
+# CHECK: ld1 {v15.8h}, [x15], x2
+# CHECK: ld1 {v31.4s, v0.4s}, [sp], #32
+# CHECK: ld1 {v0.2d, v1.2d, v2.2d}, [x0], #48
+# CHECK: ld1 {v0.8b, v1.8b, v2.8b, v3.8b}, [x0], x3
+0xef,0x75,0xc2,0x4c
+0xff,0xab,0xdf,0x4c
+0x00,0x6c,0xdf,0x4c
+0x00,0x20,0xc3,0x0c
+
+# CHECK: ld2 {v0.16b, v1.16b}, [x0], x1
+# CHECK: ld3 {v15.8h, v16.8h, v17.8h}, [x15], x2
+# CHECK: ld4 {v31.4s, v0.4s, v1.4s, v2.4s}, [sp], #64
+0x00,0x80,0xc1,0x4c
+0xef,0x45,0xc2,0x4c
+0xff,0x0b,0xdf,0x4c
+
+
+# CHECK: st1 {v15.8h}, [x15], x2
+# CHECK: st1 {v31.4s, v0.4s}, [sp], #32
+# CHECK: st1 {v0.2d, v1.2d, v2.2d}, [x0], #48
+# CHECK: st1 {v0.8b, v1.8b, v2.8b, v3.8b}, [x0], x3
+0xef,0x75,0x82,0x4c
+0xff,0xab,0x9f,0x4c
+0x00,0x6c,0x9f,0x4c
+0x00,0x20,0x83,0x0c
+
+# CHECK: st2 {v0.16b, v1.16b}, [x0], x1
+# CHECK: st3 {v15.8h, v16.8h, v17.8h}, [x15], x2
+# CHECK: st4 {v31.4s, v0.4s, v1.4s, v2.4s}, [sp], #64
+0x00,0x80,0x81,0x4c
+0xef,0x45,0x82,0x4c
+0xff,0x0b,0x9f,0x4c

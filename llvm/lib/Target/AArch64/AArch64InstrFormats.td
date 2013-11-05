@@ -120,6 +120,14 @@ class A64InstRdnm<dag outs, dag ins, string asmstr,
   let Inst{20-16} = Rm;
 }
 
+class A64InstRtnm<dag outs, dag ins, string asmstr,
+                  list<dag> patterns, InstrItinClass itin>
+  : A64InstRtn<outs, ins, asmstr, patterns, itin> {
+  bits<5> Rm;
+
+  let Inst{20-16} = Rm;
+}
+
 //===----------------------------------------------------------------------===//
 //
 // Actual A64 Instruction Formats
@@ -1212,6 +1220,24 @@ class NeonI_LdStMult<bit q, bit l, bits<4> opcode, bits<2> size,
   let Inst{15-12} = opcode;
   let Inst{11-10} = size;
   
+  // Inherit Rn in 9-5
+  // Inherit Rt in 4-0
+}
+
+// Format AdvSIMD vector load/store multiple N-element structure (post-index)
+class NeonI_LdStMult_Post<bit q, bit l, bits<4> opcode, bits<2> size,
+                         dag outs, dag ins, string asmstr,
+                         list<dag> patterns, InstrItinClass itin>
+  : A64InstRtnm<outs, ins, asmstr, patterns, itin>
+{
+  let Inst{31} = 0b0;
+  let Inst{30} = q;
+  let Inst{29-23} = 0b0011001;
+  let Inst{22} = l;
+  let Inst{21} = 0b0;
+  // Inherit Rm in 20-16
+  let Inst{15-12} = opcode;
+  let Inst{11-10} = size;
   // Inherit Rn in 9-5
   // Inherit Rt in 4-0
 }

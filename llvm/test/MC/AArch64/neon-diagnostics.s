@@ -4102,6 +4102,62 @@
 // CHECK-ERROR:        st4 {v31.2s-v1.2s}, [x31]
 // CHECK-ERROR:            ^
 
+//----------------------------------------------------------------------
+// Vector post-index load/store multiple N-element structure
+// (class SIMD lselem-post)
+//----------------------------------------------------------------------
+         ld1 {v0.16b}, [x0], #8
+         ld1 {v0.8h, v1.16h}, [x0], x1
+         ld1 {v0.8b, v1.8b, v2.8b, v3.8b}, [x0], #24
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          ld1 {v0.16b}, [x0], #8
+// CHECK-ERROR:                              ^
+// CHECK-ERROR:  error: expected vector type register
+// CHECK-ERROR:          ld1 {v0.8h, v1.16h}, [x0], x1
+// CHECK-ERROR:                      ^
+// CHECK-ERROR:  error: invalid operand for instruction
+// CHECK-ERROR:          ld1 {v0.8b, v1.8b, v2.8b, v3.8b}, [x0], #24
+// CHECK-ERROR:                                                  ^
+
+         ld2 {v0.16b, v1.16b}, [x0], #16
+         ld3 {v5.2s, v6.2s, v7.2s}, [x1], #48
+         ld4 {v31.2d, v0.2d, v1.2d, v2.1d}, [x3], x1
+// CHECK-ERROR:  error: invalid operand for instruction
+// CHECK-ERROR:          ld2 {v0.16b, v1.16b}, [x0], #16
+// CHECK-ERROR:                                      ^
+// CHECK-ERROR:  error: invalid operand for instruction
+// CHECK-ERROR:          ld3 {v5.2s, v6.2s, v7.2s}, [x1], #48
+// CHECK-ERROR:                                           ^
+// CHECK-ERROR:  error: invalid space between two vectors
+// CHECK-ERROR:          ld4 {v31.2d, v0.2d, v1.2d, v2.1d}, [x3], x1
+// CHECK-ERROR:                                     ^
+
+         st1 {v0.16b}, [x0], #8
+         st1 {v0.8h, v1.16h}, [x0], x1
+         st1 {v0.8b, v1.8b, v2.8b, v3.8b}, [x0], #24
+// CHECK-ERROR:  error: invalid operand for instruction
+// CHECK-ERROR:          st1 {v0.16b}, [x0], #8
+// CHECK-ERROR:                              ^
+// CHECK-ERROR:  error: expected vector type register
+// CHECK-ERROR:          st1 {v0.8h, v1.16h}, [x0], x1
+// CHECK-ERROR:                      ^
+// CHECK-ERROR:  error: invalid operand for instruction
+// CHECK-ERROR:          st1 {v0.8b, v1.8b, v2.8b, v3.8b}, [x0], #24
+                                                 ^
+
+         st2 {v0.16b, v1.16b}, [x0], #16
+         st3 {v5.2s, v6.2s, v7.2s}, [x1], #48
+         st4 {v31.2d, v0.2d, v1.2d, v2.1d}, [x3], x1
+// CHECK-ERROR:  error: invalid operand for instruction
+// CHECK-ERROR:          st2 {v0.16b, v1.16b}, [x0], #16
+// CHECK-ERROR:                                      ^
+// CHECK-ERROR:  error: invalid operand for instruction
+// CHECK-ERROR:          st3 {v5.2s, v6.2s, v7.2s}, [x1], #48
+// CHECK-ERROR:                                           ^
+// CHECK-ERROR:  error: invalid space between two vectors
+// CHECK-ERROR:          st4 {v31.2d, v0.2d, v1.2d, v2.1d}, [x3], x1
+// CHECK-ERROR:                                     ^
+
          ins v2.b[16], w1
          ins v7.h[8], w14
          ins v20.s[5], w30

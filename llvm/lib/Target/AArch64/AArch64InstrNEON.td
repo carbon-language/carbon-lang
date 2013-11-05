@@ -3088,6 +3088,230 @@ def ST1_4V_1D : NeonI_STVList<0, 0b0010, 0b11, VQuad1D_operand, "st1">;
 
 // End of vector load/store multiple N-element structure(class SIMD lselem)
 
+// The followings are post-index vector load/store multiple N-element
+// structure(class SIMD lselem-post)
+def exact8_asmoperand : AsmOperandClass {
+  let Name = "Exact8";
+  let PredicateMethod = "isExactImm<8>";
+  let RenderMethod = "addImmOperands";
+}
+def uimm_exact8 : Operand<i32>, ImmLeaf<i32, [{return Imm == 8;}]> {
+  let ParserMatchClass = exact8_asmoperand;
+}
+
+def exact16_asmoperand : AsmOperandClass {
+  let Name = "Exact16";
+  let PredicateMethod = "isExactImm<16>";
+  let RenderMethod = "addImmOperands";
+}
+def uimm_exact16 : Operand<i32>, ImmLeaf<i32, [{return Imm == 16;}]> {
+  let ParserMatchClass = exact16_asmoperand;
+}
+
+def exact24_asmoperand : AsmOperandClass {
+  let Name = "Exact24";
+  let PredicateMethod = "isExactImm<24>";
+  let RenderMethod = "addImmOperands";
+}
+def uimm_exact24 : Operand<i32>, ImmLeaf<i32, [{return Imm == 24;}]> {
+  let ParserMatchClass = exact24_asmoperand;
+}
+
+def exact32_asmoperand : AsmOperandClass {
+  let Name = "Exact32";
+  let PredicateMethod = "isExactImm<32>";
+  let RenderMethod = "addImmOperands";
+}
+def uimm_exact32 : Operand<i32>, ImmLeaf<i32, [{return Imm == 32;}]> {
+  let ParserMatchClass = exact32_asmoperand;
+}
+
+def exact48_asmoperand : AsmOperandClass {
+  let Name = "Exact48";
+  let PredicateMethod = "isExactImm<48>";
+  let RenderMethod = "addImmOperands";
+}
+def uimm_exact48 : Operand<i32>, ImmLeaf<i32, [{return Imm == 48;}]> {
+  let ParserMatchClass = exact48_asmoperand;
+}
+
+def exact64_asmoperand : AsmOperandClass {
+  let Name = "Exact64";
+  let PredicateMethod = "isExactImm<64>";
+  let RenderMethod = "addImmOperands";
+}
+def uimm_exact64 : Operand<i32>, ImmLeaf<i32, [{return Imm == 64;}]> {
+  let ParserMatchClass = exact64_asmoperand;
+}
+
+multiclass NeonI_LDWB_VList<bit q, bits<4> opcode, bits<2> size,
+                           RegisterOperand VecList, Operand ImmTy,
+                           string asmop> {
+  let Constraints = "$Rn = $wb", mayLoad = 1, neverHasSideEffects = 1, 
+      DecoderMethod = "DecodeVLDSTPostInstruction" in {
+    def _fixed : NeonI_LdStMult_Post<q, 1, opcode, size,
+                     (outs VecList:$Rt, GPR64xsp:$wb),
+                     (ins GPR64xsp:$Rn, ImmTy:$amt), 
+                     asmop # "\t$Rt, [$Rn], $amt",
+                     [],
+                     NoItinerary> {
+      let Rm = 0b11111;
+    }
+
+    def _register : NeonI_LdStMult_Post<q, 1, opcode, size,
+                        (outs VecList:$Rt, GPR64xsp:$wb),
+                        (ins GPR64xsp:$Rn, GPR64noxzr:$Rm), 
+                        asmop # "\t$Rt, [$Rn], $Rm",
+                        [],
+                        NoItinerary>;
+  }
+}
+
+multiclass LDWB_VList_BHSD<bits<4> opcode, string List, Operand ImmTy,
+    Operand ImmTy2, string asmop> {
+  defm _8B : NeonI_LDWB_VList<0, opcode, 0b00,
+                              !cast<RegisterOperand>(List # "8B_operand"),
+                              ImmTy, asmop>;
+
+  defm _4H : NeonI_LDWB_VList<0, opcode, 0b01,
+                              !cast<RegisterOperand>(List # "4H_operand"),
+                              ImmTy, asmop>;
+
+  defm _2S : NeonI_LDWB_VList<0, opcode, 0b10,
+                              !cast<RegisterOperand>(List # "2S_operand"),
+                              ImmTy, asmop>;
+
+  defm _16B : NeonI_LDWB_VList<1, opcode, 0b00,
+                               !cast<RegisterOperand>(List # "16B_operand"),
+                               ImmTy2, asmop>;
+
+  defm _8H : NeonI_LDWB_VList<1, opcode, 0b01,
+                              !cast<RegisterOperand>(List # "8H_operand"),
+                              ImmTy2, asmop>;
+
+  defm _4S : NeonI_LDWB_VList<1, opcode, 0b10,
+                              !cast<RegisterOperand>(List # "4S_operand"),
+                              ImmTy2, asmop>;
+
+  defm _2D : NeonI_LDWB_VList<1, opcode, 0b11,
+                              !cast<RegisterOperand>(List # "2D_operand"),
+                              ImmTy2, asmop>;
+}
+
+// Post-index load multiple N-element structures from N registers (N = 1,2,3,4)
+defm LD1WB : LDWB_VList_BHSD<0b0111, "VOne", uimm_exact8, uimm_exact16, "ld1">;
+defm LD1WB_1D : NeonI_LDWB_VList<0, 0b0111, 0b11, VOne1D_operand, uimm_exact8,
+                                 "ld1">;
+
+defm LD2WB : LDWB_VList_BHSD<0b1000, "VPair", uimm_exact16, uimm_exact32, "ld2">;
+
+defm LD3WB : LDWB_VList_BHSD<0b0100, "VTriple", uimm_exact24, uimm_exact48,
+                             "ld3">;
+
+defm LD4WB : LDWB_VList_BHSD<0b0000, "VQuad", uimm_exact32, uimm_exact64, "ld4">;
+
+// Post-index load multiple 1-element structures from N consecutive registers
+// (N = 2,3,4)
+defm LD1WB2V : LDWB_VList_BHSD<0b1010, "VPair", uimm_exact16, uimm_exact32,
+                               "ld1">;
+defm LD1WB2V_1D : NeonI_LDWB_VList<0, 0b1010, 0b11, VPair1D_operand,
+                                   uimm_exact16, "ld1">;
+
+defm LD1WB3V : LDWB_VList_BHSD<0b0110, "VTriple", uimm_exact24, uimm_exact48,
+                               "ld1">;
+defm LD1WB3V_1D : NeonI_LDWB_VList<0, 0b0110, 0b11, VTriple1D_operand,
+                                   uimm_exact24, "ld1">;
+
+defm LD1WB_4V : LDWB_VList_BHSD<0b0010, "VQuad", uimm_exact32, uimm_exact64,
+                                "ld1">;
+defm LD1WB4V_1D : NeonI_LDWB_VList<0, 0b0010, 0b11, VQuad1D_operand,
+                                   uimm_exact32, "ld1">;
+
+multiclass NeonI_STWB_VList<bit q, bits<4> opcode, bits<2> size,
+                            RegisterOperand VecList, Operand ImmTy,
+                            string asmop> {
+  let Constraints = "$Rn = $wb", mayStore = 1, neverHasSideEffects = 1,
+      DecoderMethod = "DecodeVLDSTPostInstruction" in {
+    def _fixed : NeonI_LdStMult_Post<q, 0, opcode, size,
+                     (outs GPR64xsp:$wb),
+                     (ins GPR64xsp:$Rn, ImmTy:$amt, VecList:$Rt),
+                     asmop # "\t$Rt, [$Rn], $amt",
+                     [],
+                     NoItinerary> {
+      let Rm = 0b11111;
+    }
+
+    def _register : NeonI_LdStMult_Post<q, 0, opcode, size,
+                      (outs GPR64xsp:$wb),
+                      (ins GPR64xsp:$Rn, GPR64noxzr:$Rm, VecList:$Rt), 
+                      asmop # "\t$Rt, [$Rn], $Rm",
+                      [],
+                      NoItinerary>;
+  }
+}
+
+multiclass STWB_VList_BHSD<bits<4> opcode, string List, Operand ImmTy,
+                           Operand ImmTy2, string asmop> {
+  defm _8B : NeonI_STWB_VList<0, opcode, 0b00,
+                 !cast<RegisterOperand>(List # "8B_operand"), ImmTy, asmop>;
+
+  defm _4H : NeonI_STWB_VList<0, opcode, 0b01,
+                              !cast<RegisterOperand>(List # "4H_operand"),
+                              ImmTy, asmop>;
+
+  defm _2S : NeonI_STWB_VList<0, opcode, 0b10,
+                              !cast<RegisterOperand>(List # "2S_operand"),
+                              ImmTy, asmop>;
+
+  defm _16B : NeonI_STWB_VList<1, opcode, 0b00,
+                               !cast<RegisterOperand>(List # "16B_operand"),
+                               ImmTy2, asmop>;
+
+  defm _8H : NeonI_STWB_VList<1, opcode, 0b01,
+                              !cast<RegisterOperand>(List # "8H_operand"),
+                              ImmTy2, asmop>;
+
+  defm _4S : NeonI_STWB_VList<1, opcode, 0b10,
+                              !cast<RegisterOperand>(List # "4S_operand"),
+                              ImmTy2, asmop>;
+
+  defm _2D : NeonI_STWB_VList<1, opcode, 0b11,
+                              !cast<RegisterOperand>(List # "2D_operand"),
+                              ImmTy2, asmop>;
+}
+
+// Post-index load multiple N-element structures from N registers (N = 1,2,3,4)
+defm ST1WB : STWB_VList_BHSD<0b0111, "VOne", uimm_exact8, uimm_exact16, "st1">;
+defm ST1WB_1D : NeonI_STWB_VList<0, 0b0111, 0b11, VOne1D_operand, uimm_exact8,
+                                 "st1">;
+
+defm ST2WB : STWB_VList_BHSD<0b1000, "VPair", uimm_exact16, uimm_exact32, "st2">;
+
+defm ST3WB : STWB_VList_BHSD<0b0100, "VTriple", uimm_exact24, uimm_exact48,
+                             "st3">;
+
+defm ST4WB : STWB_VList_BHSD<0b0000, "VQuad", uimm_exact32, uimm_exact64, "st4">;
+
+// Post-index load multiple 1-element structures from N consecutive registers
+// (N = 2,3,4)
+defm ST1WB2V : STWB_VList_BHSD<0b1010, "VPair", uimm_exact16, uimm_exact32,
+                               "st1">;
+defm ST1WB2V_1D : NeonI_STWB_VList<0, 0b1010, 0b11, VPair1D_operand,
+                                   uimm_exact16, "st1">;
+
+defm ST1WB3V : STWB_VList_BHSD<0b0110, "VTriple", uimm_exact24, uimm_exact48,
+                               "st1">;
+defm ST1WB3V_1D : NeonI_STWB_VList<0, 0b0110, 0b11, VTriple1D_operand,
+                                   uimm_exact24, "st1">;
+
+defm ST1WB4V : STWB_VList_BHSD<0b0010, "VQuad", uimm_exact32, uimm_exact64,
+                               "st1">;
+defm ST1WB4V_1D : NeonI_STWB_VList<0, 0b0010, 0b11, VQuad1D_operand,
+                                   uimm_exact32, "st1">;
+
+// End of post-index vector load/store multiple N-element structure
+// (class SIMD lselem-post)
+
 // Scalar Three Same
 
 class NeonI_Scalar3Same_size<bit u, bits<2> size, bits<5> opcode, string asmop,
