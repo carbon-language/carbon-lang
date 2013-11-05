@@ -195,15 +195,13 @@ void VBTableInfo::EmitVBTableDefinition(
   const ASTRecordLayout &DerivedLayout =
     CGM.getContext().getASTRecordLayout(RD);
 
-  SmallVector<llvm::Constant *, 4> Offsets;
+  SmallVector<llvm::Constant *, 4> Offsets(1 + ReusingBase->getNumVBases(), 0);
 
   // The offset from ReusingBase's vbptr to itself always leads.
   CharUnits VBPtrOffset = BaseLayout.getVBPtrOffset();
-  Offsets.push_back(
-      llvm::ConstantInt::get(CGM.IntTy, -VBPtrOffset.getQuantity()));
+  Offsets[0] = llvm::ConstantInt::get(CGM.IntTy, -VBPtrOffset.getQuantity());
 
-  // These are laid out in the same order as in Itanium, which is the same as
-  // the order of the vbase iterator.
+  MicrosoftVTableContext &Context = CGM.getMicrosoftVTableContext();
   for (CXXRecordDecl::base_class_const_iterator I = ReusingBase->vbases_begin(),
        E = ReusingBase->vbases_end(); I != E; ++I) {
     const CXXRecordDecl *VBase = I->getType()->getAsCXXRecordDecl();
@@ -211,7 +209,9 @@ void VBTableInfo::EmitVBTableDefinition(
     assert(!Offset.isNegative());
     // Make it relative to the subobject vbptr.
     Offset -= VBPtrSubobject.getBaseOffset() + VBPtrOffset;
-    Offsets.push_back(llvm::ConstantInt::get(CGM.IntTy, Offset.getQuantity()));
+    unsigned VBIndex = Context.getVBTableIndex(ReusingBase, VBase);
+    assert(Offsets[VBIndex] == 0 && "The same vbindex seen twice?");
+    Offsets[VBIndex] = llvm::ConstantInt::get(CGM.IntTy, Offset.getQuantity());
   }
 
   assert(Offsets.size() ==

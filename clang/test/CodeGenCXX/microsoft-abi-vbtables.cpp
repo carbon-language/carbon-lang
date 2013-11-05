@@ -410,3 +410,70 @@ H h;
 // CHECK-DAG: @"\01??_8B@Test21@@7B@" =
 // CHECK-DAG: @"\01??_8C@Test21@@7B@" =
 }
+
+namespace Test22 {
+struct A { int a; };
+struct B : virtual A { int b; };
+struct C { int c; };
+struct D : B, virtual C { int d; };
+D d;
+
+// CHECK-DAG: @"\01??_8D@Test22@@7B@" = linkonce_odr unnamed_addr constant [3 x i32] [i32 0, i32 12, i32 16]
+// CHECK-DAG: @"\01??_8B@Test22@@7B@" = linkonce_odr unnamed_addr constant [2 x i32] [i32 0, i32 8]
+}
+
+namespace Test23 {
+struct A { int a; };
+struct B : virtual A { int b; };
+struct C { int c; };
+// Note the unusual order of bases. It forces C to be laid out before A.
+struct D : virtual C, B { int d; };
+D d;
+
+// CHECK-DAG: @"\01??_8D@Test23@@7B@" = linkonce_odr unnamed_addr constant [3 x i32] [i32 0, i32 16, i32 12]
+// CHECK-DAG: @"\01??_8B@Test23@@7B@" = linkonce_odr unnamed_addr constant [2 x i32] [i32 0, i32 8]
+}
+
+namespace Test24 {
+struct A { int a; };
+struct B : virtual A { int b; };
+struct C { int c; };
+struct D : virtual C, B {
+  virtual void f();  // Issues a vfptr, but the vbptr is still shared with B.
+  int d;
+};
+D d;
+
+// CHECK-DAG: @"\01??_8D@Test24@@7B@" = linkonce_odr unnamed_addr constant [3 x i32] [i32 0, i32 16, i32 12]
+// CHECK-DAG: @"\01??_8B@Test24@@7B@" = linkonce_odr unnamed_addr constant [2 x i32] [i32 0, i32 8]
+}
+
+namespace Test25 {
+struct A { int a; };
+struct B : virtual A {
+  virtual void f();  // Issues a vfptr.
+  int b;
+};
+struct C { int c; };
+struct D : virtual C, B { int d; };
+D d;
+
+// CHECK-DAG: @"\01??_8D@Test25@@7B@" = linkonce_odr unnamed_addr constant [3 x i32] [i32 -4, i32 16, i32 12]
+// CHECK-DAG: @"\01??_8B@Test25@@7B@" = linkonce_odr unnamed_addr constant [2 x i32] [i32 -4, i32 8]
+}
+
+namespace Test26 {
+struct A { int a; };
+struct B { int b; };
+struct C { int c; };
+struct D : virtual A { int d; };
+struct E : virtual B {
+  virtual void foo();  // Issues a vfptr.
+  int e;
+};
+struct F: virtual C, D, E { int f; };
+F f;
+// F reuses the D's vbptr, even though D is laid out after E.
+// CHECK-DAG: @"\01??_8F@Test26@@7BD@1@@" = linkonce_odr unnamed_addr constant [4 x i32] [i32 0, i32 16, i32 12, i32 20]
+// CHECK-DAG: @"\01??_8F@Test26@@7BE@1@@" = linkonce_odr unnamed_addr constant [2 x i32] [i32 -4, i32 28]
+}

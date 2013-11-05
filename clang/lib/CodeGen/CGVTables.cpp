@@ -30,12 +30,12 @@ using namespace clang;
 using namespace CodeGen;
 
 CodeGenVTables::CodeGenVTables(CodeGenModule &CGM)
-  : CGM(CGM), VTContext(CGM.getContext()) {
+  : CGM(CGM), ItaniumVTContext(CGM.getContext()) {
   if (CGM.getTarget().getCXXABI().isMicrosoft()) {
     // FIXME: Eventually, we should only have one of V*TContexts available.
     // Today we use both in the Microsoft ABI as MicrosoftVFTableContext
     // is not completely supported in CodeGen yet.
-    VFTContext.reset(new MicrosoftVFTableContext(CGM.getContext()));
+    MicrosoftVTContext.reset(new MicrosoftVTableContext(CGM.getContext()));
   }
 }
 
@@ -439,10 +439,10 @@ void CodeGenVTables::EmitThunks(GlobalDecl GD)
     return;
 
   const VTableContextBase::ThunkInfoVectorTy *ThunkInfoVector;
-  if (VFTContext.isValid()) {
-    ThunkInfoVector = VFTContext->getThunkInfo(GD);
+  if (MicrosoftVTContext.isValid()) {
+    ThunkInfoVector = MicrosoftVTContext->getThunkInfo(GD);
   } else {
-    ThunkInfoVector = VTContext.getThunkInfo(GD);
+    ThunkInfoVector = ItaniumVTContext.getThunkInfo(GD);
   }
 
   if (!ThunkInfoVector)
@@ -581,9 +581,8 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
     DI->completeClassData(Base.getBase());
 
   OwningPtr<VTableLayout> VTLayout(
-    VTContext.createConstructionVTableLayout(Base.getBase(),
-                                             Base.getBaseOffset(),
-                                             BaseIsVirtual, RD));
+      ItaniumVTContext.createConstructionVTableLayout(
+          Base.getBase(), Base.getBaseOffset(), BaseIsVirtual, RD));
 
   // Add the address points.
   AddressPoints = VTLayout->getAddressPoints();

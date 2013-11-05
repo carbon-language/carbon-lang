@@ -1062,7 +1062,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
     // lookup if we have multiple or virtual inheritance.
     if (!isa<CXXDestructorDecl>(Method) &&
         !CGM.getTarget().getCXXABI().isMicrosoft())
-      VIndex = CGM.getVTableContext().getMethodVTableIndex(Method);
+      VIndex = CGM.getItaniumVTableContext().getMethodVTableIndex(Method);
     ContainingType = RecordTy;
   }
 
@@ -1168,7 +1168,7 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
       // virtual base offset offset is -ve. The code generator emits dwarf
       // expression where it expects +ve number.
       BaseOffset =
-        0 - CGM.getVTableContext()
+        0 - CGM.getItaniumVTableContext()
                .getVirtualBaseOffsetOffset(RD, Base).getQuantity();
       BFlags = llvm::DIDescriptor::FlagVirtual;
     } else

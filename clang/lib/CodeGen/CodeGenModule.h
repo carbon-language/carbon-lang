@@ -523,12 +523,12 @@ public:
  
   CodeGenVTables &getVTables() { return VTables; }
 
-  ItaniumVTableContext &getVTableContext() {
-    return VTables.getVTableContext();
+  ItaniumVTableContext &getItaniumVTableContext() {
+    return VTables.getItaniumVTableContext();
   }
 
-  MicrosoftVFTableContext &getVFTableContext() {
-    return VTables.getVFTableContext();
+  MicrosoftVTableContext &getMicrosoftVTableContext() {
+    return VTables.getMicrosoftVTableContext();
   }
 
   llvm::MDNode *getTBAAInfo(QualType QTy);

@@ -846,7 +846,7 @@ void RTTIBuilder::BuildVMIClassTypeInfo(const CXXRecordDecl *RD) {
     CharUnits Offset;
     if (Base->isVirtual())
       Offset = 
-        CGM.getVTableContext().getVirtualBaseOffsetOffset(RD, BaseDecl);
+        CGM.getItaniumVTableContext().getVirtualBaseOffsetOffset(RD, BaseDecl);
     else {
       const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
       Offset = Layout.getBaseClassOffset(BaseDecl);

@@ -570,7 +570,7 @@ llvm::Constant *ItaniumCXXABI::BuildMemberPointer(const CXXMethodDecl *MD,
   // Get the function pointer (or index if this is a virtual function).
   llvm::Constant *MemPtr[2];
   if (MD->isVirtual()) {
-    uint64_t Index = CGM.getVTableContext().getMethodVTableIndex(MD);
+    uint64_t Index = CGM.getItaniumVTableContext().getMethodVTableIndex(MD);
 
     const ASTContext &Context = getContext();
     CharUnits PointerWidth =
@@ -780,7 +780,8 @@ ItaniumCXXABI::GetVirtualBaseClassOffset(CodeGenFunction &CGF,
                                          const CXXRecordDecl *BaseClassDecl) {
   llvm::Value *VTablePtr = CGF.GetVTablePtr(This, CGM.Int8PtrTy);
   CharUnits VBaseOffsetOffset =
-    CGM.getVTableContext().getVirtualBaseOffsetOffset(ClassDecl, BaseClassDecl);
+      CGM.getItaniumVTableContext().getVirtualBaseOffsetOffset(ClassDecl,
+                                                               BaseClassDecl);
 
   llvm::Value *VBaseOffsetPtr =
     CGF.Builder.CreateConstGEP1_64(VTablePtr, VBaseOffsetOffset.getQuantity(),
@@ -927,7 +928,7 @@ void ItaniumCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
   if (VTable->hasInitializer())
     return;
 
-  ItaniumVTableContext &VTContext = CGM.getVTableContext();
+  ItaniumVTableContext &VTContext = CGM.getItaniumVTableContext();
   const VTableLayout &VTLayout = VTContext.getVTableLayout(RD);
   llvm::GlobalVariable::LinkageTypes Linkage = CGM.getVTableLinkage(RD);
 
@@ -977,8 +978,9 @@ llvm::Value *ItaniumCXXABI::getVTableAddressPointInStructor(
   } else {
     llvm::Constant *VTable =
         CGM.getCXXABI().getAddrOfVTable(VTableClass, CharUnits());
-    uint64_t AddressPoint = CGM.getVTableContext().getVTableLayout(VTableClass)
-        .getAddressPoint(Base);
+    uint64_t AddressPoint = CGM.getItaniumVTableContext()
+                                .getVTableLayout(VTableClass)
+                                .getAddressPoint(Base);
     VTableAddressPoint =
         CGF.Builder.CreateConstInBoundsGEP2_64(VTable, 0, AddressPoint);
   }
@@ -991,8 +993,9 @@ llvm::Constant *ItaniumCXXABI::getVTableAddressPointForConstExpr(
   llvm::Constant *VTable = getAddrOfVTable(VTableClass, CharUnits());
 
   // Find the appropriate vtable within the vtable group.
-  uint64_t AddressPoint =
-    CGM.getVTableContext().getVTableLayout(VTableClass).getAddressPoint(Base);
+  uint64_t AddressPoint = CGM.getItaniumVTableContext()
+                              .getVTableLayout(VTableClass)
+                              .getAddressPoint(Base);
   llvm::Value *Indices[] = {
     llvm::ConstantInt::get(CGM.Int64Ty, 0),
     llvm::ConstantInt::get(CGM.Int64Ty, AddressPoint)
@@ -1018,7 +1021,7 @@ llvm::GlobalVariable *ItaniumCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
   Out.flush();
   StringRef Name = OutName.str();
 
-  ItaniumVTableContext &VTContext = CGM.getVTableContext();
+  ItaniumVTableContext &VTContext = CGM.getItaniumVTableContext();
   llvm::ArrayType *ArrayType = llvm::ArrayType::get(
       CGM.Int8PtrTy, VTContext.getVTableLayout(RD).getNumVTableComponents());
 
@@ -1036,7 +1039,7 @@ llvm::Value *ItaniumCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
   Ty = Ty->getPointerTo()->getPointerTo();
   llvm::Value *VTable = CGF.GetVTablePtr(This, Ty);
 
-  uint64_t VTableIndex = CGM.getVTableContext().getMethodVTableIndex(GD);
+  uint64_t VTableIndex = CGM.getItaniumVTableContext().getMethodVTableIndex(GD);
   llvm::Value *VFuncPtr =
       CGF.Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfn");
   return CGF.Builder.CreateLoad(VFuncPtr);

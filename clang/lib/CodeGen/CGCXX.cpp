@@ -295,9 +295,9 @@ static llvm::Value *BuildAppleKextVirtualCall(CodeGenFunction &CGF,
   Ty = Ty->getPointerTo()->getPointerTo();
   VTable = CGF.Builder.CreateBitCast(VTable, Ty);
   assert(VTable && "BuildVirtualCall = kext vtbl pointer is null");
-  uint64_t VTableIndex = CGM.getVTableContext().getMethodVTableIndex(GD);
+  uint64_t VTableIndex = CGM.getItaniumVTableContext().getMethodVTableIndex(GD);
   uint64_t AddressPoint =
-    CGM.getVTableContext().getVTableLayout(RD)
+    CGM.getItaniumVTableContext().getVTableLayout(RD)
        .getAddressPoint(BaseSubobject(RD, CharUnits::Zero()));
   VTableIndex += AddressPoint;
   llvm::Value *VFuncPtr =
