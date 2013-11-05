@@ -6806,11 +6806,19 @@ void SelectionDAGBuilder::visitStackmap(const CallInst &CI) {
   if (hasGlue)
     Ops.push_back(*(Call->op_end()-1));
 
-  // Replace the target specific call node with STACKMAP in-place. This way we
-  // don't have to call ReplaceAllUsesWith and STACKMAP will take the call's
-  // place in the chain.
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
-  DAG.SelectNodeTo(Call, TargetOpcode::STACKMAP, NodeTys, &Ops[0], Ops.size());
+
+  // Replace the target specific call node with a STACKMAP node.
+  MachineSDNode *MN = DAG.getMachineNode(TargetOpcode::STACKMAP, getCurSDLoc(),
+                                         NodeTys, Ops);
+
+  // StackMap generates no value, so nothing goes in the NodeMap.
+
+  // Fixup the consumers of the intrinsic. The chain and glue may be used in the
+  // call sequence.
+  DAG.ReplaceAllUsesWith(Call, MN);
+
+  DAG.DeleteNode(Call);
 }
 
 /// \brief Lower llvm.experimental.patchpoint directly to its target opcode.
@@ -6898,12 +6906,22 @@ void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
   if (hasGlue)
     Ops.push_back(*(Call->op_end()-1));
 
-  // Replace the target specific call node with PATCHPOINT in-place. This
-  // way we don't have to call ReplaceAllUsesWith and PATCHPOINT will
-  // take the call's place in the chain.
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
-  DAG.SelectNodeTo(Call, TargetOpcode::PATCHPOINT, NodeTys, &Ops[0],
-                   Ops.size());
+
+  // Replace the target specific call node with a STACKMAP node.
+  MachineSDNode *MN = DAG.getMachineNode(TargetOpcode::PATCHPOINT,
+                                         getCurSDLoc(), NodeTys, Ops);
+
+  // PatchPoint generates no value, so nothing goes in the NodeMap.
+  //
+  // FIXME: with anyregcc calling convention it will need to be in the NodeMap
+  // and replace values.
+
+  // Fixup the consumers of the intrinsic. The chain and glue may be used in the
+  // call sequence.
+  DAG.ReplaceAllUsesWith(Call, MN);
+
+  DAG.DeleteNode(Call);
 }
 
 /// TargetLowering::LowerCallTo - This is the default LowerCallTo

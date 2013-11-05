@@ -63,6 +63,26 @@ entry:
   ret void
 }
 
+; Test patchpoints reusing the same TargetConstant.
+; <rdar:15390785> Assertion failed: (CI.getNumArgOperands() >= NumArgs + 4)
+; There is no way to verify this, since it depends on memory allocation.
+; But I think it's useful to include as a working example.
+define i64 @testLowerConstant(i64 %arg, i64 %tmp2, i64 %tmp10, i64* %tmp33, i64 %tmp79) {
+entry:
+  %tmp80 = add i64 %tmp79, -16
+  %tmp81 = inttoptr i64 %tmp80 to i64*
+  %tmp82 = load i64* %tmp81, align 8
+  tail call void (i32, i32, ...)* @llvm.experimental.stackmap(i32 14, i32 5, i64 %arg, i64 %tmp2, i64 %tmp10, i64 %tmp82)
+  tail call void (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i32 15, i32 30, i8* null, i32 3, i64 %arg, i64 %tmp10, i64 %tmp82)
+  %tmp83 = load i64* %tmp33, align 8
+  %tmp84 = add i64 %tmp83, -24
+  %tmp85 = inttoptr i64 %tmp84 to i64*
+  %tmp86 = load i64* %tmp85, align 8
+  tail call void (i32, i32, ...)* @llvm.experimental.stackmap(i32 17, i32 5, i64 %arg, i64 %tmp10, i64 %tmp86)
+  tail call void (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i32 18, i32 30, i8* null, i32 3, i64 %arg, i64 %tmp10, i64 %tmp86)
+  ret i64 10
+}
+
 declare void @llvm.experimental.stackmap(i32, i32, ...)
 declare void @llvm.experimental.patchpoint.void(i32, i32, i8*, i32, ...)
 declare i64 @llvm.experimental.patchpoint.i64(i32, i32, i8*, i32, ...)
