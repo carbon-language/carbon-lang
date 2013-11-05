@@ -81,6 +81,15 @@ RegisterContext::GetRegisterInfoByName (const char *reg_name, uint32_t start_idx
     return NULL;
 }
 
+const RegisterInfo *
+RegisterContext::GetRegisterInfo (uint32_t kind, uint32_t num)
+{
+    const uint32_t reg_num = ConvertRegisterKindToRegisterNumber(kind, num);
+    if (reg_num == LLDB_INVALID_REGNUM)
+        return NULL;
+    return GetRegisterInfoAtIndex (reg_num);
+}
+
 const char *
 RegisterContext::GetRegisterName (uint32_t reg)
 {
