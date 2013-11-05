@@ -2447,6 +2447,45 @@ TEST_F(FormatTest, LayoutNestedBlocks) {
                    "  // comment\n"
                    "  int  j;\n"
                    "});"));
+
+  verifyFormat("DEBUG({\n"
+               "  if (a)\n"
+               "    return;\n"
+               "});");
+  verifyGoogleFormat("DEBUG({\n"
+                     "  if (a) return;\n"
+                     "});");
+  FormatStyle Style = getGoogleStyle();
+  Style.ColumnLimit = 45;
+  verifyFormat("Debug(aaaaa, {\n"
+               "               if (aaaaaaaaaaaaaaaaaaaaaaaa)\n"
+               "                 return;\n"
+               "             },\n"
+               "      a);", Style);
+
+  EXPECT_EQ("Debug({\n"
+            "        if (aaaaaaaaaaaaaaaaaaaaaaaa)\n"
+            "          return;\n"
+            "      },\n"
+            "      a);",
+            format("Debug({\n"
+                   "        if (aaaaaaaaaaaaaaaaaaaaaaaa)\n"
+                   "             return;\n"
+                   "      },\n"
+                   "      a);",
+                   50, 1, getLLVMStyle()));
+}
+
+TEST_F(FormatTest, IndividualStatementsOfNestedBlocks) {
+  EXPECT_EQ("DEBUG({\n"
+            "  int        i;\n"
+            "  int j;\n"
+            "});",
+            format("DEBUG(   {\n"
+                   "  int        i;\n"
+                   "  int        j;\n"
+                   "}   )  ;",
+                   40, 1, getLLVMStyle()));
 }
 
 TEST_F(FormatTest, PutEmptyBlocksIntoOneLine) {

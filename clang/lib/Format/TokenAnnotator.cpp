@@ -1013,22 +1013,21 @@ private:
 
 void
 TokenAnnotator::setCommentLineLevels(SmallVectorImpl<AnnotatedLine *> &Lines) {
-  if (Lines.empty())
-    return;
-
   const AnnotatedLine *NextNonCommentLine = NULL;
-  for (unsigned i = Lines.size() - 1; i > 0; --i) {
-    if (NextNonCommentLine && Lines[i]->First->is(tok::comment) &&
-        !Lines[i]->First->Next)
-      Lines[i]->Level = NextNonCommentLine->Level;
+  for (SmallVectorImpl<AnnotatedLine *>::reverse_iterator I = Lines.rbegin(),
+                                                          E = Lines.rend();
+       I != E; ++I) {
+    if (NextNonCommentLine && (*I)->First->is(tok::comment) &&
+        (*I)->First->Next == NULL)
+      (*I)->Level = NextNonCommentLine->Level;
     else
-      NextNonCommentLine =
-          Lines[i]->First->isNot(tok::r_brace) ? Lines[i] : NULL;
+      NextNonCommentLine = (*I)->First->isNot(tok::r_brace) ? (*I) : NULL;
+
+    setCommentLineLevels((*I)->Children);
   }
 }
 
 void TokenAnnotator::annotate(AnnotatedLine &Line) {
-  setCommentLineLevels(Line.Children);
   for (SmallVectorImpl<AnnotatedLine *>::iterator I = Line.Children.begin(),
                                                   E = Line.Children.end();
        I != E; ++I) {
