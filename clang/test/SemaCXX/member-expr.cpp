@@ -224,16 +224,3 @@ namespace pr16676 {
         .i;  // expected-error {{member reference type 'pr16676::S *' is a pointer; maybe you meant to use '->'}}
   }
 }
-
-namespace PR9054 {
-struct Foo {
-  void bar(int);
-  int fiz;
-};
-
-int test(struct Foo *foo) {
-  foo-bar(5);  // expected-error {{use of undeclared identifier 'bar'; did you mean '->' instead of '-'?}}
-  foo>baz(4);  // expected-error-re {{use of undeclared identifier 'baz'$}}
-  return foo>fiz;  // expected-error {{use of undeclared identifier 'fiz'; did you mean '->' instead of '>'?}}
-}
-}

@@ -166,46 +166,6 @@ ExprResult Parser::ParseAssignmentExpression(TypeCastState isTypeCast) {
   ExprResult LHS = ParseCastExpression(/*isUnaryExpression=*/false,
                                        /*isAddressOfOperand=*/false,
                                        isTypeCast);
-
-  // Check for a possible typo of "-" or ">" instead of "->" after a
-  // pointer to a struct or class, while recovery is still possible.
-  if (LHS.isUsable() && (Tok.is(tok::minus) || Tok.is(tok::greater))) {
-    QualType LHSType = LHS.get()->getType();
-    const RecordType *Pointee =
-        LHSType->isPointerType()
-            ? LHSType->getPointeeType()->getAsStructureType()
-            : 0;
-    const RecordDecl *RD = Pointee ? Pointee->getDecl() : 0;
-    const Token &NextTok = NextToken();
-    if (RD && NextTok.is(tok::identifier)) {
-      UnqualifiedId Name;
-      CXXScopeSpec ScopeSpec;
-      SourceLocation TemplateKWLoc;
-      NoTypoCorrectionCCC NoTCValidator;
-      Name.setIdentifier(NextTok.getIdentifierInfo(), NextTok.getLocation());
-      Sema::SFINAETrap Trap(Actions);
-      ExprResult Res =
-          Actions.ActOnIdExpression(getCurScope(), ScopeSpec, TemplateKWLoc,
-                                    Name, false, false, &NoTCValidator);
-      if (Res.isInvalid()) {
-        Token OpTok = Tok;
-        Tok.setKind(tok::arrow);
-        PP.EnableBacktrackAtThisPos();
-        Res = ParsePostfixExpressionSuffix(LHS);
-        if (Res.isUsable()) {
-          LHS = Res;
-          PP.CommitBacktrackedTokens();
-          Diag(OpTok, diag::err_mistyped_arrow_in_member_access)
-              << NextTok.getIdentifierInfo() << OpTok.is(tok::greater)
-              << FixItHint::CreateReplacement(OpTok.getLocation(), "->");
-        } else {
-          Tok = OpTok;
-          PP.Backtrack();
-        }
-      }
-    }
-  }
-
   return ParseRHSOfBinaryExpression(LHS, prec::Assignment);
 }
 
