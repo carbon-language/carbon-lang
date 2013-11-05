@@ -339,6 +339,9 @@ expression:
             (* Eat the binop. *)
             Stream.junk stream;
 
+            (* Parse the primary expression after the binary operator *)
+            let rhs = parse_primary stream in
+
             (* Okay, we know this is a binop. *)
             let rhs =
               match Stream.peek stream with
