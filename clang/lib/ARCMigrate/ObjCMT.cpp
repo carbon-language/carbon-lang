@@ -416,6 +416,9 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
     if (ASTMigrateActions & FrontendOptions::ObjCMT_Annotation)
       migrateNsReturnsInnerPointer(Ctx, Method);
   }
+  if (!(ASTMigrateActions & FrontendOptions::ObjCMT_ReturnsInnerPointerProperty))
+    return;
+  
   for (ObjCContainerDecl::prop_iterator P = D->prop_begin(),
        E = D->prop_end(); P != E; ++P) {
     ObjCPropertyDecl *Prop = *P;

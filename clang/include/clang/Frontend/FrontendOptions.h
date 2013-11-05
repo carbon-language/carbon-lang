@@ -175,13 +175,16 @@ public:
     ObjCMT_ProtocolConformance = 0x80,
     /// \brief prefer 'atomic' property over 'nonatomic'.
     ObjCMT_AtomicProperty = 0x100,
+    /// \brief annotate property with NS_RETURNS_INNER_POINTER
+    ObjCMT_ReturnsInnerPointerProperty = 0x200,
     ObjCMT_MigrateDecls = (ObjCMT_ReadonlyProperty | ObjCMT_ReadwriteProperty |
                            ObjCMT_Annotation | ObjCMT_Instancetype |
                            ObjCMT_NsMacros | ObjCMT_ProtocolConformance),
     ObjCMT_MigrateAll = (ObjCMT_Literals | ObjCMT_Subscripting |
                          ObjCMT_ReadonlyProperty | ObjCMT_ReadwriteProperty |
                          ObjCMT_Annotation | ObjCMT_Instancetype |
-                         ObjCMT_NsMacros | ObjCMT_ProtocolConformance)
+                         ObjCMT_NsMacros | ObjCMT_ProtocolConformance |
+                         ObjCMT_ReturnsInnerPointerProperty)
   };
   unsigned ObjCMTAction;
 
