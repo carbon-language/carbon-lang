@@ -566,12 +566,12 @@ namespace {
           switch (EvalMode) {
           case EM_ConstantExpression:
           case EM_PotentialConstantExpression:
-          case EM_EvaluateForOverflow:
             HasActiveDiagnostic = false;
             return OptionalDiagnostic();
 
           case EM_ConstantFold:
           case EM_IgnoreSideEffects:
+          case EM_EvaluateForOverflow:
             break;
           }
         }
@@ -615,8 +615,7 @@ namespace {
                                unsigned ExtraNotes = 0) {
       // Don't override a previous diagnostic. Don't bother collecting
       // diagnostics if we're evaluating for overflow.
-      if (!EvalStatus.Diag || !EvalStatus.Diag->empty() ||
-          EvalMode == EM_EvaluateForOverflow) {
+      if (!EvalStatus.Diag || !EvalStatus.Diag->empty()) {
         HasActiveDiagnostic = false;
         return OptionalDiagnostic();
       }
@@ -8133,11 +8132,9 @@ APSInt Expr::EvaluateKnownConstInt(const ASTContext &Ctx,
   return EvalResult.Val.getInt();
 }
 
-void Expr::EvaluateForOverflow(const ASTContext &Ctx,
-                    SmallVectorImpl<PartialDiagnosticAt> *Diags) const {
+void Expr::EvaluateForOverflow(const ASTContext &Ctx) const {
   bool IsConst;
   EvalResult EvalResult;
-  EvalResult.Diag = Diags;
   if (!FastEvaluateAsRValue(this, EvalResult, Ctx, IsConst)) {
     EvalInfo Info(Ctx, EvalResult, EvalInfo::EM_EvaluateForOverflow);
     (void)::EvaluateAsRValue(Info, this, EvalResult.Val);
