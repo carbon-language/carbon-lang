@@ -1,2 +1,0 @@
-RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda -C=%p/Inputs/ \
-RUN:   | diff %p/Inputs/test.cpp.gcov -
