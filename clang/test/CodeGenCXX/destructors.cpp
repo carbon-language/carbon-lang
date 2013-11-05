@@ -364,6 +364,19 @@ namespace test9 {
   // CHECK: call void @_ZN5test92f2Ev()
 }
 
+namespace test10 {
+  // Test that we don't crash.
+  struct Option {
+    virtual ~Option() {}
+  };
+  template <class DataType> class opt : public Option {};
+  template class opt<int>;
+  bool handleOccurrence() {
+    Option x;
+    return true;
+  }
+}
+
 // Checks from test3:
 
   // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(%"struct.test3::<anonymous namespace>::D"* %this) unnamed_addr
