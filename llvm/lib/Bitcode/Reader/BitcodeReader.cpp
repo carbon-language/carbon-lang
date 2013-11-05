@@ -3076,26 +3076,25 @@ bool BitcodeReader::isMaterializable(const GlobalValue *GV) const {
   return false;
 }
 
-bool BitcodeReader::Materialize(GlobalValue *GV, std::string *ErrInfo) {
+error_code BitcodeReader::Materialize(GlobalValue *GV) {
   Function *F = dyn_cast<Function>(GV);
   // If it's not a function or is already material, ignore the request.
-  if (!F || !F->isMaterializable()) return false;
+  if (!F || !F->isMaterializable())
+    return error_code::success();
 
   DenseMap<Function*, uint64_t>::iterator DFII = DeferredFunctionInfo.find(F);
   assert(DFII != DeferredFunctionInfo.end() && "Deferred function not found!");
   // If its position is recorded as 0, its body is somewhere in the stream
   // but we haven't seen it yet.
-  if (DFII->second == 0)
-    if (LazyStreamer && FindFunctionInStream(F, DFII)) return true;
+  if (DFII->second == 0 && LazyStreamer)
+    if (error_code EC = FindFunctionInStream(F, DFII))
+      return EC;
 
   // Move the bit stream to the saved position of the deferred function body.
   Stream.JumpToBit(DFII->second);
 
-  if (error_code EC = ParseFunctionBody(F)) {
-    if (ErrInfo)
-      *ErrInfo = EC.message();
-    return true;
-  }
+  if (error_code EC = ParseFunctionBody(F))
+    return EC;
 
   // Upgrade any old intrinsic calls in the function.
   for (UpgradedIntrinsicMap::iterator I = UpgradedIntrinsics.begin(),
@@ -3109,7 +3108,7 @@ bool BitcodeReader::Materialize(GlobalValue *GV, std::string *ErrInfo) {
     }
   }
 
-  return false;
+  return error_code::success();
 }
 
 bool BitcodeReader::isDematerializable(const GlobalValue *GV) const {
@@ -3132,17 +3131,18 @@ void BitcodeReader::Dematerialize(GlobalValue *GV) {
 }
 
 
-bool BitcodeReader::MaterializeModule(Module *M, std::string *ErrInfo) {
+error_code BitcodeReader::MaterializeModule(Module *M) {
   assert(M == TheModule &&
          "Can only Materialize the Module this BitcodeReader is attached to.");
   // Iterate over the module, deserializing any functions that are still on
   // disk.
   for (Module::iterator F = TheModule->begin(), E = TheModule->end();
-       F != E; ++F)
-    if (F->isMaterializable() &&
-        Materialize(F, ErrInfo))
-      return true;
-
+       F != E; ++F) {
+    if (F->isMaterializable()) {
+      if (error_code EC = Materialize(F))
+        return EC;
+    }
+  }
   // At this point, if there are any function bodies, the current bit is
   // pointing to the END_BLOCK record after them. Now make sure the rest
   // of the bits in the module have been read.
@@ -3171,7 +3171,7 @@ bool BitcodeReader::MaterializeModule(Module *M, std::string *ErrInfo) {
   for (unsigned I = 0, E = InstsWithTBAATag.size(); I < E; I++)
     UpgradeInstWithTBAATag(InstsWithTBAATag[I]);
 
-  return false;
+  return error_code::success();
 }
 
 error_code BitcodeReader::InitStream() {

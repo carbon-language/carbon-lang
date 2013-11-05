@@ -401,9 +401,15 @@ bool Module::isDematerializable(const GlobalValue *GV) const {
 }
 
 bool Module::Materialize(GlobalValue *GV, std::string *ErrInfo) {
-  if (Materializer)
-    return Materializer->Materialize(GV, ErrInfo);
-  return false;
+  if (!Materializer)
+    return false;
+
+  error_code EC = Materializer->Materialize(GV);
+  if (!EC)
+    return false;
+  if (ErrInfo)
+    *ErrInfo = EC.message();
+  return true;
 }
 
 void Module::Dematerialize(GlobalValue *GV) {
@@ -414,7 +420,12 @@ void Module::Dematerialize(GlobalValue *GV) {
 bool Module::MaterializeAll(std::string *ErrInfo) {
   if (!Materializer)
     return false;
-  return Materializer->MaterializeModule(this, ErrInfo);
+  error_code EC = Materializer->MaterializeModule(this);
+  if (!EC)
+    return false;
+  if (ErrInfo)
+    *ErrInfo = EC.message();
+  return true;
 }
 
 bool Module::MaterializeAllPermanently(std::string *ErrInfo) {
