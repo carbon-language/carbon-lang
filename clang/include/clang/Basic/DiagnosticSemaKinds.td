@@ -6670,7 +6670,7 @@ def err_wrong_sampler_addressspace: Error<
   "sampler type cannot be used with the __local and __global address space qualifiers">;
 def err_opencl_global_invalid_addr_space : Error<
   "global variables must have a constant address space qualifier">;
-
+def err_opencl_no_main : Error<"%select{function|kernel}0 cannot be called 'main'">;
 } // end of sema category
 
 let CategoryName = "OpenMP Issue" in {

@@ -7694,6 +7694,13 @@ void Sema::CheckMain(FunctionDecl* FD, const DeclSpec& DS) {
     FD->setConstexpr(false);
   }
 
+  if (getLangOpts().OpenCL) {
+    Diag(FD->getLocation(), diag::err_opencl_no_main)
+        << FD->hasAttr<OpenCLKernelAttr>();
+    FD->setInvalidDecl();
+    return;
+  }
+
   QualType T = FD->getType();
   assert(T->isFunctionType() && "function decl is not of function type");
   const FunctionType* FT = T->castAs<FunctionType>();
