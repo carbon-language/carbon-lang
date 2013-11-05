@@ -13,11 +13,12 @@ template struct foobar<void>;
 }
 
 namespace test2 {
-// test that when the destrucor is linkonce_odr we just replace every use of
-// C1 with C2.
+// test that we produce an alias when the destrucor is linkonce_odr. Note that
+// the alias itself is weak_odr to make sure we don't get a translation unit
+// with just _ZN5test26foobarIvEC2Ev in it.
 
+// CHECK-DAG: @_ZN5test26foobarIvEC1Ev = alias weak_odr void (%"struct.test2::foobar"*)* @_ZN5test26foobarIvEC2Ev
 // CHECK-DAG: define linkonce_odr void @_ZN5test26foobarIvEC2Ev(
-// CHECK-DAG: call void @_ZN5test26foobarIvEC2Ev
 void g();
 template <typename T> struct foobar {
   foobar() { g(); }
@@ -47,7 +48,9 @@ namespace test4 {
   // Test that we don't produce aliases from B to A. We cannot because we cannot
   // guarantee that they will be present in every TU.
 
+  // CHECK-DAG: @_ZN5test41BD1Ev = alias weak_odr void (%"struct.test4::B"*)* @_ZN5test41BD2Ev
   // CHECK-DAG: define linkonce_odr void @_ZN5test41BD2Ev(
+  // CHECK-DAG: @_ZN5test41AD1Ev = alias weak_odr void (%"struct.test4::A"*)* @_ZN5test41AD2Ev
   // CHECK-DAG: define linkonce_odr void @_ZN5test41AD2Ev(
   struct A {
     virtual ~A() {}
