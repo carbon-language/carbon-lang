@@ -286,6 +286,7 @@ let test_constants () =
    * CHECK: const_ptrtoint{{.*}}ptrtoint
    * CHECK: const_inttoptr{{.*}}inttoptr
    * CHECK: const_bitcast{{.*}}bitcast
+   * CHECK: const_intcast{{.*}}zext
    *)
   let i128_type = integer_type context 128 in
   ignore (define_global "const_trunc" (const_trunc (const_add foldbomb five)
@@ -305,6 +306,8 @@ let test_constants () =
   ignore (define_global "const_inttoptr" (const_inttoptr (const_add foldbomb five)
                                                   void_ptr) m);
   ignore (define_global "const_bitcast" (const_bitcast ffoldbomb i64_type) m);
+  ignore (define_global "const_intcast"
+          (const_intcast foldbomb i128_type ~is_signed:false) m);
   
   group "misc constants";
   (* CHECK: const_size_of{{.*}}getelementptr{{.*}}null

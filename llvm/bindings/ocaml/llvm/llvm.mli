@@ -1118,10 +1118,12 @@ val const_trunc_or_bitcast : llvalue -> lltype -> llvalue
     See the method [llvm::ConstantExpr::getPointerCast]. *)
 val const_pointercast : llvalue -> lltype -> llvalue
 
-(** [const_intcast c ty] returns a constant zext, bitcast, or trunc for integer
-    -> integer casts of constant [c] to type [ty].
-    See the method [llvm::ConstantExpr::getIntCast]. *)
-val const_intcast : llvalue -> lltype -> llvalue
+(** [const_intcast c ty ~is_signed] returns a constant sext/zext, bitcast,
+    or trunc for integer -> integer casts of constant [c] to type [ty].
+    When converting a narrower value to a wider one, whether sext or zext
+    will be used is controlled by [is_signed].
+    See the method [llvm::ConstantExpr::getIntegerCast]. *)
+val const_intcast : llvalue -> lltype -> is_signed:bool -> llvalue
 
 (** [const_fpcast c ty] returns a constant fpext, bitcast, or fptrunc for fp ->
     fp casts of constant [c] to type [ty].

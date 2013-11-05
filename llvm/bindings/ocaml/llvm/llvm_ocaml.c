@@ -771,6 +771,12 @@ CAMLprim LLVMValueRef llvm_const_in_bounds_gep(LLVMValueRef ConstantVal,
                               Wosize_val(Indices));
 }
 
+/* llvalue -> lltype -> is_signed:bool -> llvalue */
+CAMLprim LLVMValueRef llvm_const_intcast(LLVMValueRef CV, LLVMTypeRef T,
+                                         value IsSigned) {
+  return LLVMConstIntCast(CV, T, Bool_val(IsSigned));
+}
+
 /* llvalue -> int array -> llvalue */
 CAMLprim LLVMValueRef llvm_const_extractvalue(LLVMValueRef Aggregate,
                                               value Indices) {

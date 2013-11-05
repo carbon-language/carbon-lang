@@ -529,7 +529,8 @@ external const_trunc_or_bitcast : llvalue -> lltype -> llvalue
                               = "LLVMConstTruncOrBitCast"
 external const_pointercast : llvalue -> lltype -> llvalue
                            = "LLVMConstPointerCast"
-external const_intcast : llvalue -> lltype -> llvalue = "LLVMConstIntCast"
+external const_intcast : llvalue -> lltype -> is_signed:bool -> llvalue
+                       = "llvm_const_intcast"
 external const_fpcast : llvalue -> lltype -> llvalue = "LLVMConstFPCast"
 external const_select : llvalue -> llvalue -> llvalue -> llvalue
                       = "LLVMConstSelect"
