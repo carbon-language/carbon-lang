@@ -24,9 +24,9 @@ public:
   PPCTargetRelocationHandler(const PPCLinkingContext &context)
       : _context(context) {}
 
-  virtual ErrorOr<void> applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                                        const lld::AtomLayout &,
-                                        const Reference &)const;
+  virtual error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
+                                     const lld::AtomLayout &,
+                                     const Reference &) const;
 
 private:
   const PPCLinkingContext &_context;

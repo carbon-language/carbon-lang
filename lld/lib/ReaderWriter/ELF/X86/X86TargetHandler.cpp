@@ -33,7 +33,7 @@ int relocPC32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 }
 } // end anon namespace
 
-ErrorOr<void> X86TargetRelocationHandler::applyRelocation(
+error_code X86TargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;

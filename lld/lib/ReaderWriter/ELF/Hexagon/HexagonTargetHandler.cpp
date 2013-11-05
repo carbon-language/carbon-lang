@@ -278,13 +278,13 @@ public:
     return ga;
   }
 
-  ErrorOr<void> handleGOTREL(const Reference &ref) {
+  error_code handleGOTREL(const Reference &ref) {
     // Turn this so that the target is set to the GOT entry
     const_cast<Reference &>(ref).setTarget(getGOTEntry(ref.target()));
     return error_code::success();
   }
 
-  ErrorOr<void> handlePLT32(const Reference &ref) {
+  error_code handlePLT32(const Reference &ref) {
     // Turn this into a PC32 to the PLT entry.
     const_cast<Reference &>(ref).setKind(R_HEX_B22_PCREL);
     const_cast<Reference &>(ref).setTarget(getPLTEntry(ref.target()));

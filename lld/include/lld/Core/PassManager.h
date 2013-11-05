@@ -32,7 +32,7 @@ public:
     _passes.push_back(std::move(pass));
   }
 
-  ErrorOr<void> runOnFile(std::unique_ptr<MutableFile> &);
+  error_code runOnFile(std::unique_ptr<MutableFile> &);
 
 private:
   /// \brief Passes in the order they should run.

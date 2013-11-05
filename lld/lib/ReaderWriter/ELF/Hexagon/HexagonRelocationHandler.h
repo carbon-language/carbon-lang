@@ -28,7 +28,7 @@ public:
       const HexagonTargetLayout<HexagonELFType> &layout)
       : _context(context), _targetHandler(tH), _targetLayout(layout) {}
 
-  virtual ErrorOr<void>
+  virtual error_code
   applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                   const lld::AtomLayout &, const Reference &) const;
 private:

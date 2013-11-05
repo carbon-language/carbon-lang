@@ -134,27 +134,27 @@ public:
 
     // Read input sections from the input file that need to be converted to
     // atoms
-    if (auto err = createAtomizableSections()) ; else {
+    if (auto err = createAtomizableSections()) {
       EC = err;
       return;
     }
 
     // For mergeable strings, we would need to split the section into various
     // atoms
-    if (auto err = createMergeableAtoms()) ; else {
+    if (auto err = createMergeableAtoms()) {
       EC = err;
       return;
     }
 
     // Create the necessary symbols that are part of the section that we
     // created in createAtomizableSections function
-    if (auto err = createSymbolsFromAtomizableSections()) ; else {
+    if (auto err = createSymbolsFromAtomizableSections()) {
       EC = err;
       return;
     }
 
     // Create the appropriate atoms from the file
-    if (auto err = createAtoms()) ; else {
+    if (auto err = createAtoms()) {
       EC = err;
       return;
     }
@@ -162,7 +162,7 @@ public:
 
   /// \brief Read input sections and populate necessary data structures
   /// to read them later and create atoms
-  ErrorOr<void> createAtomizableSections() {
+  error_code createAtomizableSections() {
     // Handle: SHT_REL and SHT_RELA sections:
     // Increment over the sections, when REL/RELA section types are found add
     // the contents to the RelocationReferences map.
@@ -220,7 +220,7 @@ public:
 
   /// \brief Create mergeable atoms from sections that have the merge attribute
   /// set
-  ErrorOr<void> createMergeableAtoms() {
+  error_code createMergeableAtoms() {
     // Divide the section that contains mergeable strings into tokens
     // TODO
     // a) add resolver support to recognize multibyte chars
@@ -268,7 +268,7 @@ public:
   /// \brief Add the symbols that the sections contain. The symbols will be
   /// converted to atoms for
   /// Undefined symbols, absolute symbols
-  ErrorOr<void> createSymbolsFromAtomizableSections() {
+  error_code createSymbolsFromAtomizableSections() {
     // Increment over all the symbols collecting atoms and symbol names for
     // later use.
     auto SymI = _objFile->begin_symbols(),
@@ -327,7 +327,7 @@ public:
   }
 
   /// \brief Create individual atoms
-  ErrorOr<void> createAtoms() {
+  error_code createAtoms() {
     for (auto &i : _sectionSymbols) {
       const Elf_Shdr *section = i.first;
       std::vector<Elf_Sym_Iter> &symbols = i.second;

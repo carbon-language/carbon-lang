@@ -77,7 +77,7 @@ ErrorOr<InputElement *> InputGraph::getNextInputElement() {
 }
 
 /// \brief Set the index on what inputElement has to be returned
-ErrorOr<void> InputGraph::setNextElementIndex(uint32_t index) {
+error_code InputGraph::setNextElementIndex(uint32_t index) {
   if (index > _inputArgs.size())
     return make_error_code(llvm::errc::invalid_argument);
   _nextElementIndex = index;

@@ -146,7 +146,7 @@ protected:
   ///
   /// This create a PLT and GOT entry for the IFUNC if one does not exist. The
   /// GOT entry and a IRELATIVE relocation to the original target resolver.
-  ErrorOr<void> handleIFUNC(const Reference &ref) {
+  error_code handleIFUNC(const Reference &ref) {
     auto target = dyn_cast_or_null<const DefinedAtom>(ref.target());
     if (target && target->contentType() == DefinedAtom::typeResolver)
       const_cast<Reference &>(ref).setTarget(getIFUNCPLTEntry(target));
@@ -297,9 +297,9 @@ public:
   StaticRelocationPass(const elf::X86_64LinkingContext &ctx)
       : RelocationPass(ctx) {}
 
-  ErrorOr<void> handlePlain(const Reference &ref) { return handleIFUNC(ref); }
+  error_code handlePlain(const Reference &ref) { return handleIFUNC(ref); }
 
-  ErrorOr<void> handlePLT32(const Reference &ref) {
+  error_code handlePLT32(const Reference &ref) {
     // __tls_get_addr is handled elsewhere.
     if (ref.target() && ref.target()->name() == "__tls_get_addr") {
       const_cast<Reference &>(ref).setKind(R_X86_64_NONE);
@@ -315,7 +315,7 @@ public:
     return error_code::success();
   }
 
-  ErrorOr<void> handleGOT(const Reference &ref) {
+  error_code handleGOT(const Reference &ref) {
     if (isa<UndefinedAtom>(ref.target()))
       const_cast<Reference &>(ref).setTarget(getNullGOT());
     else if (const DefinedAtom *da = dyn_cast<const DefinedAtom>(ref.target()))
@@ -390,7 +390,7 @@ public:
     return oa;
   }
 
-  ErrorOr<void> handlePlain(const Reference &ref) {
+  error_code handlePlain(const Reference &ref) {
     if (!ref.target())
       return error_code::success();
     if (auto sla = dyn_cast<SharedLibraryAtom>(ref.target())) {
@@ -403,7 +403,7 @@ public:
     return error_code::success();
   }
 
-  ErrorOr<void> handlePLT32(const Reference &ref) {
+  error_code handlePLT32(const Reference &ref) {
     // Turn this into a PC32 to the PLT entry.
     const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
     // Handle IFUNC.
@@ -432,7 +432,7 @@ public:
     return got->second;
   }
 
-  ErrorOr<void> handleGOT(const Reference &ref) {
+  error_code handleGOT(const Reference &ref) {
     if (isa<UndefinedAtom>(ref.target()))
       const_cast<Reference &>(ref).setTarget(getNullGOT());
     else if (const DefinedAtom *da = dyn_cast<const DefinedAtom>(ref.target()))

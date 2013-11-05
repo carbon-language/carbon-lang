@@ -24,9 +24,9 @@ public:
   X86TargetRelocationHandler(const X86LinkingContext &context)
       : _context(context) {}
 
-  virtual ErrorOr<void> applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                                        const lld::AtomLayout &,
-                                        const Reference &)const;
+  virtual error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
+                                     const lld::AtomLayout &,
+                                     const Reference &) const;
 
 private:
   const X86LinkingContext &_context;

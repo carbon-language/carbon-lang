@@ -24,9 +24,9 @@ public:
   X86_64TargetRelocationHandler(const X86_64LinkingContext &context)
       : _tlsSize(0), _context(context) {}
 
-  virtual ErrorOr<void> applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                                        const lld::AtomLayout &,
-                                        const Reference &) const;
+  virtual error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
+                                     const lld::AtomLayout &,
+                                     const Reference &) const;
 
   virtual int64_t relocAddend(const Reference &) const;
 

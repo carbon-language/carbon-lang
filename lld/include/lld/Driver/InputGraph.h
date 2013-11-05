@@ -105,11 +105,11 @@ public:
   virtual ErrorOr<InputElement *> getNextInputElement();
 
   /// \brief Set the index on what inputElement has to be returned
-  virtual ErrorOr<void> setNextElementIndex(uint32_t index = 0);
+  virtual error_code setNextElementIndex(uint32_t index = 0);
 
   /// \brief Reset the inputGraph for the inputGraph to start processing
   /// files from the beginning
-  virtual ErrorOr<void> reset() { return setNextElementIndex(0); }
+  virtual error_code reset() { return setNextElementIndex(0); }
 
 protected:
   // Input arguments

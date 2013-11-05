@@ -69,7 +69,7 @@ public:
 
 template <class ELFT> class TargetRelocationHandler {
 public:
-  virtual ErrorOr<void>
+  virtual error_code
   applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                   const lld::AtomLayout &, const Reference &) const = 0;
 
