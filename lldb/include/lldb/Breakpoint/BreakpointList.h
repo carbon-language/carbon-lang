@@ -149,11 +149,17 @@ public:
     /// @param[in] module_list
     ///   The module list that has changed.
     ///
-    /// @param[in] added
+    /// @param[in] load
     ///   \b true if the modules are loaded, \b false if unloaded.
+    ///
+    /// @param[in] delete_locations
+    ///   If \a load is \b false, then delete breakpoint locations when
+    ///   when updating breakpoints.
     //------------------------------------------------------------------
     void
-    UpdateBreakpoints (ModuleList &module_list, bool added);
+    UpdateBreakpoints (ModuleList &module_list,
+                       bool load,
+                       bool delete_locations);
     
     void
     UpdateBreakpointsWhenModuleIsReplaced (lldb::ModuleSP old_module_sp, lldb::ModuleSP new_module_sp);

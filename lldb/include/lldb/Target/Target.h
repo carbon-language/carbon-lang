@@ -735,11 +735,14 @@ public:
     ModulesDidLoad (ModuleList &module_list);
 
     void
-    ModulesDidUnload (ModuleList &module_list);
+    ModulesDidUnload (ModuleList &module_list, bool delete_locations);
     
     void
     SymbolsDidLoad (ModuleList &module_list);
     
+    void
+    ClearModules();
+
     //------------------------------------------------------------------
     /// Gets the module for the main executable.
     ///

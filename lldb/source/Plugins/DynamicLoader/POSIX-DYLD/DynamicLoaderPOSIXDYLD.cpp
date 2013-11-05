@@ -370,7 +370,7 @@ DynamicLoaderPOSIXDYLD::RefreshModules()
             }
         }
         loaded_modules.Remove(old_modules);
-        m_process->GetTarget().ModulesDidUnload(old_modules);
+        m_process->GetTarget().ModulesDidUnload(old_modules, false);
     }
 }
 

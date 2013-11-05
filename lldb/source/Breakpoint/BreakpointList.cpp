@@ -204,13 +204,13 @@ BreakpointList::GetBreakpointAtIndex (size_t i) const
 }
 
 void
-BreakpointList::UpdateBreakpoints (ModuleList& module_list, bool added)
+BreakpointList::UpdateBreakpoints (ModuleList& module_list, bool added, bool delete_locations)
 {
     Mutex::Locker locker(m_mutex);
     bp_collection::iterator end = m_breakpoints.end();
     bp_collection::iterator pos;
     for (pos = m_breakpoints.begin(); pos != end; ++pos)
-        (*pos)->ModulesChanged (module_list, added);
+        (*pos)->ModulesChanged (module_list, added, delete_locations);
 
 }
 

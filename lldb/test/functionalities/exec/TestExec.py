@@ -24,7 +24,6 @@ class ExecTestCase(TestBase):
         
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
-    @unittest2.expectedFailure("rdar://15367122")
     def test_with_dsym (self):
         if self.getArchitecture() == 'x86_64':
             source = os.path.join (os.getcwd(), "main.cpp")
@@ -38,7 +37,6 @@ class ExecTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test
-    @unittest2.expectedFailure("rdar://15367122")
     def test_with_dwarf (self):
         if self.getArchitecture() == 'x86_64':
             source = os.path.join (os.getcwd(), "main.cpp")

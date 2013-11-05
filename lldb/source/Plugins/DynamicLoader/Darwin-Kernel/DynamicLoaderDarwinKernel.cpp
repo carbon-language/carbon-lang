@@ -1335,7 +1335,7 @@ DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr,
                     // the to_be_removed bool vector; leaving it in place once Cleared() is relatively harmless.
                 }
             }
-            m_process->GetTarget().ModulesDidUnload (unloaded_module_list);
+            m_process->GetTarget().ModulesDidUnload (unloaded_module_list, false);
         }
     }
 

@@ -5633,9 +5633,7 @@ Process::DidExec ()
 {
     Target &target = GetTarget();
     target.CleanupProcess ();
-    ModuleList unloaded_modules (target.GetImages());
-    target.ModulesDidUnload (unloaded_modules);
-    target.GetSectionLoadList().Clear();
+    target.ClearModules();
     m_dynamic_checkers_ap.reset();
     m_abi_sp.reset();
     m_system_runtime_ap.reset();
@@ -5648,4 +5646,8 @@ Process::DidExec ()
     m_memory_cache.Clear(true);
     DoDidExec();
     CompleteAttach ();
+    // Flush the process (threads and all stack frames) after running CompleteAttach()
+    // in case the dynamic loader loaded things in new locations.
+    Flush();
 }
+
