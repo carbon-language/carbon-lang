@@ -245,7 +245,14 @@ protected:
             if (command.GetArgumentCount() == 1)
             {
                 const char *frame_idx_cstr = command.GetArgumentAtIndex(0);
-                frame_idx = Args::StringToUInt32 (frame_idx_cstr, UINT32_MAX, 0);
+                bool success = false;
+                frame_idx = Args::StringToUInt32 (frame_idx_cstr, UINT32_MAX, 0, &success);
+                if (!success)
+                {
+                    result.AppendErrorWithFormat ("invalid frame index argument '%s'", frame_idx_cstr);
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
             }
             else if (command.GetArgumentCount() == 0)
             {
