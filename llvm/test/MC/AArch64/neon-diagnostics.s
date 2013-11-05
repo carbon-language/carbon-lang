@@ -5088,3 +5088,109 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        ucvtf d21, s14, #64
 // CHECK-ERROR:                   ^
+
+//----------------------------------------------------------------------
+// Scalar Unsigned Saturating Extract Narrow
+//----------------------------------------------------------------------
+
+        aese v0.8h, v1.8h
+        aese v0.4s, v1.4s
+        aese v0.2d, v1.2d
+        aesd v0.8h, v1.8h
+        aesmc v0.8h, v1.8h
+        aesimc v0.8h, v1.8h
+
+// CHECK:  error: invalid operand for instruction
+// CHECK:         aese v0.8h, v1.8h
+// CHECK:                 ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         aese v0.4s, v1.4s
+// CHECK:                 ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         aese v0.2d, v1.2d
+// CHECK:                 ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         aesd v0.8h, v1.8h
+// CHECK:                 ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         aesmc v0.8h, v1.8h
+// CHECK:                  ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         aesimc v0.8h, v1.8h
+// CHECK:                   ^
+
+        sha1h b0, b1
+        sha1h h0, h1
+        sha1h d0, d1
+        sha1h q0, q1
+        sha1su1 v0.16b, v1.16b
+        sha1su1 v0.8h, v1.8h
+        sha1su1 v0.2d, v1.2d
+        sha256su0 v0.16b, v1.16b
+
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha1h b0, b1
+// CHECK:               ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha1h h0, h1
+// CHECK:               ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha1h d0, d1
+// CHECK:               ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha1h q0, q1
+// CHECK:               ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha1su1 v0.16b, v1.16b
+// CHECK:                    ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha1su1 v0.8h, v1.8h
+// CHECK:                    ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha1su1 v0.2d, v1.2d
+// CHECK:                    ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha256su0 v0.16b, v1.16b
+// CHECK:                      ^
+
+        sha1c q0, q1, v2.4s
+        sha1p q0, q1, v2.4s
+        sha1m q0, q1, v2.4s
+        sha1su0 v0.16b, v1.16b, v2.16b
+        sha1su0 v0.8h, v1.8h, v2.8h
+        sha1su0 v0.2d, v1.2d, v2.2d
+        sha256h q0, q1, q2
+        sha256h v0.4s, v1.4s, v2.4s
+        sha256h2 q0, q1, q2
+        sha256su1 v0.16b, v1.16b, v2.16b
+
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha1c q0, q1, v2.4s
+// CHECK:                   ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha1p q0, q1, v2.4s
+// CHECK:                   ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha1m q0, q1, v2.4s
+// CHECK:                   ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha1su0 v0.16b, v1.16b, v2.16b
+// CHECK:                    ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha1su0 v0.8h, v1.8h, v2.8h
+// CHECK:                    ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha1su0 v0.2d, v1.2d, v2.2d
+// CHECK:                    ^
+// CHECK:  error: too few operands for instruction
+// CHECK:         sha256h q0, q1, q2
+// CHECK:         ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha256h v0.4s, v1.4s, v2.4s
+// CHECK:                    ^
+// CHECK:  error: too few operands for instruction
+// CHECK:         sha256h2 q0, q1, q2
+// CHECK:         ^
+// CHECK:  error: invalid operand for instruction
+// CHECK:         sha256su1 v0.16b, v1.16b, v2.16b
+// CHECK:                      ^

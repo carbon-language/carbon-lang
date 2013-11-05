@@ -2663,11 +2663,14 @@ defm UABDLvvv : NeonI_3VDL_zext<0b1, 0b0111, "uabdl", int_arm_neon_vabdu, 1>;
 
 multiclass NeonI_Op_High<SDPatternOperator op> {
   def _16B : PatFrag<(ops node:$Rn, node:$Rm),
-                     (op (v8i8 (Neon_High16B node:$Rn)), (v8i8 (Neon_High16B node:$Rm)))>;
+                     (op (v8i8 (Neon_High16B node:$Rn)),
+                         (v8i8 (Neon_High16B node:$Rm)))>;
   def _8H  : PatFrag<(ops node:$Rn, node:$Rm),
-                     (op (v4i16 (Neon_High8H node:$Rn)), (v4i16 (Neon_High8H node:$Rm)))>;
+                     (op (v4i16 (Neon_High8H node:$Rn)),
+                         (v4i16 (Neon_High8H node:$Rm)))>;
   def _4S  : PatFrag<(ops node:$Rn, node:$Rm),
-                     (op (v2i32 (Neon_High4S node:$Rn)), (v2i32 (Neon_High4S node:$Rm)))>;
+                     (op (v2i32 (Neon_High4S node:$Rn)),
+                         (v2i32 (Neon_High4S node:$Rm)))>;
 }
 
 defm NI_sabdl_hi : NeonI_Op_High<int_arm_neon_vabds>;
@@ -5793,3 +5796,116 @@ def : Pat<(v2f32 (extract_subvector (v4f32 VPR128:$Rn), (i64 0))),
           (v2f32 (EXTRACT_SUBREG VPR128:$Rn, sub_64))>;
 def : Pat<(v1f64 (extract_subvector (v2f64 VPR128:$Rn), (i64 0))),
           (v1f64 (EXTRACT_SUBREG VPR128:$Rn, sub_64))>;
+
+// Crypto Class
+class NeonI_Cryptoaes_2v<bits<2> size, bits<5> opcode,
+                         string asmop, SDPatternOperator opnode>
+  : NeonI_Crypto_AES<size, opcode,
+                     (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn),
+                     asmop # "\t$Rd.16b, $Rn.16b",
+                     [(set (v16i8 VPR128:$Rd),
+                        (v16i8 (opnode (v16i8 VPR128:$src),
+                                       (v16i8 VPR128:$Rn))))],
+                     NoItinerary>{
+  let Constraints = "$src = $Rd";
+}
+
+def AESE : NeonI_Cryptoaes_2v<0b00, 0b00100, "aese", int_arm_neon_aese>;
+def AESD : NeonI_Cryptoaes_2v<0b00, 0b00101, "aesd", int_arm_neon_aesd>;
+
+class NeonI_Cryptoaes<bits<2> size, bits<5> opcode,
+                      string asmop, SDPatternOperator opnode>
+  : NeonI_Crypto_AES<size, opcode,
+                     (outs VPR128:$Rd), (ins VPR128:$Rn),
+                     asmop # "\t$Rd.16b, $Rn.16b",
+                     [(set (v16i8 VPR128:$Rd),
+                        (v16i8 (opnode (v16i8 VPR128:$Rn))))],
+                     NoItinerary>;
+
+def AESMC : NeonI_Cryptoaes<0b00, 0b00110, "aesmc", int_arm_neon_aesmc>;
+def AESIMC : NeonI_Cryptoaes<0b00, 0b00111, "aesimc", int_arm_neon_aesimc>;
+
+class NeonI_Cryptosha_vv<bits<2> size, bits<5> opcode,
+                         string asmop, SDPatternOperator opnode>
+  : NeonI_Crypto_SHA<size, opcode,
+                     (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn),
+                     asmop # "\t$Rd.4s, $Rn.4s",
+                     [(set (v4i32 VPR128:$Rd),
+                        (v4i32 (opnode (v4i32 VPR128:$src),
+                                       (v4i32 VPR128:$Rn))))],
+                     NoItinerary> {
+  let Constraints = "$src = $Rd";
+}
+
+def SHA1SU1 : NeonI_Cryptosha_vv<0b00, 0b00001, "sha1su1",
+                                 int_arm_neon_sha1su1>;
+def SHA256SU0 : NeonI_Cryptosha_vv<0b00, 0b00010, "sha256su0",
+                                   int_arm_neon_sha256su0>;
+
+class NeonI_Cryptosha_ss<bits<2> size, bits<5> opcode,
+                         string asmop, SDPatternOperator opnode>
+  : NeonI_Crypto_SHA<size, opcode,
+                     (outs FPR32:$Rd), (ins FPR32:$Rn),
+                     asmop # "\t$Rd, $Rn",
+                     [(set (v1i32 FPR32:$Rd),
+                        (v1i32 (opnode (v1i32 FPR32:$Rn))))],
+                     NoItinerary>;
+
+def SHA1H : NeonI_Cryptosha_ss<0b00, 0b00000, "sha1h", int_arm_neon_sha1h>;
+
+class NeonI_Cryptosha3_vvv<bits<2> size, bits<3> opcode, string asmop,
+                           SDPatternOperator opnode>
+  : NeonI_Crypto_3VSHA<size, opcode,
+                       (outs VPR128:$Rd),
+                       (ins VPR128:$src, VPR128:$Rn, VPR128:$Rm),
+                       asmop # "\t$Rd.4s, $Rn.4s, $Rm.4s",
+                       [(set (v4i32 VPR128:$Rd),
+                          (v4i32 (opnode (v4i32 VPR128:$src),
+                                         (v4i32 VPR128:$Rn),
+                                         (v4i32 VPR128:$Rm))))],
+                       NoItinerary> {
+  let Constraints = "$src = $Rd";
+}
+
+def SHA1SU0 : NeonI_Cryptosha3_vvv<0b00, 0b011, "sha1su0",
+                                   int_arm_neon_sha1su0>;
+def SHA256SU1 : NeonI_Cryptosha3_vvv<0b00, 0b110, "sha256su1",
+                                     int_arm_neon_sha256su1>;
+
+class NeonI_Cryptosha3_qqv<bits<2> size, bits<3> opcode, string asmop,
+                           SDPatternOperator opnode>
+  : NeonI_Crypto_3VSHA<size, opcode,
+                       (outs FPR128:$Rd),
+                       (ins FPR128:$src, FPR128:$Rn, VPR128:$Rm),
+                       asmop # "\t$Rd, $Rn, $Rm.4s",
+                       [(set (v4i32 FPR128:$Rd),
+                          (v4i32 (opnode (v4i32 FPR128:$src),
+                                         (v4i32 FPR128:$Rn),
+                                         (v4i32 VPR128:$Rm))))],
+                       NoItinerary> {
+  let Constraints = "$src = $Rd";
+}
+
+def SHA256H : NeonI_Cryptosha3_qqv<0b00, 0b100, "sha256h",
+                                   int_arm_neon_sha256h>;
+def SHA256H2 : NeonI_Cryptosha3_qqv<0b00, 0b101, "sha256h2",
+                                    int_arm_neon_sha256h2>;
+
+class NeonI_Cryptosha3_qsv<bits<2> size, bits<3> opcode, string asmop,
+                           SDPatternOperator opnode>
+  : NeonI_Crypto_3VSHA<size, opcode,
+                       (outs FPR128:$Rd),
+                       (ins FPR128:$src, FPR32:$Rn, VPR128:$Rm),
+                       asmop # "\t$Rd, $Rn, $Rm.4s",
+                       [(set (v4i32 FPR128:$Rd),
+                          (v4i32 (opnode (v4i32 FPR128:$src),
+                                         (v1i32 FPR32:$Rn),
+                                         (v4i32 VPR128:$Rm))))],
+                       NoItinerary> {
+  let Constraints = "$src = $Rd";
+}
+
+def SHA1C : NeonI_Cryptosha3_qsv<0b00, 0b000, "sha1c", int_aarch64_neon_sha1c>;
+def SHA1P : NeonI_Cryptosha3_qsv<0b00, 0b001, "sha1p", int_aarch64_neon_sha1p>;
+def SHA1M : NeonI_Cryptosha3_qsv<0b00, 0b010, "sha1m", int_aarch64_neon_sha1m>;
+

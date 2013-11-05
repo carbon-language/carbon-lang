@@ -1279,5 +1279,49 @@ class NeonI_ScalarShiftImm<bit u, bits<5> opcode,
   // Inherit Rd in 4-0
 }
 
+// Format AdvSIMD crypto AES
+class NeonI_Crypto_AES<bits<2> size, bits<5> opcode,
+                       dag outs, dag ins, string asmstr,
+                       list<dag> patterns, InstrItinClass itin>
+  : A64InstRdn<outs, ins, asmstr, patterns, itin> {
+  let Inst{31-24} = 0b01001110;
+  let Inst{23-22} = size;
+  let Inst{21-17} = 0b10100;
+  let Inst{16-12} = opcode;
+  let Inst{11-10} = 0b10;
+  // Inherit Rn in 9-5
+  // Inherit Rd in 4-0
+}
+
+// Format AdvSIMD crypto SHA
+class NeonI_Crypto_SHA<bits<2> size, bits<5> opcode,
+                       dag outs, dag ins, string asmstr,
+                       list<dag> patterns, InstrItinClass itin>
+  : A64InstRdn<outs, ins, asmstr, patterns, itin> {
+  let Inst{31-24} = 0b01011110;
+  let Inst{23-22} = size;
+  let Inst{21-17} = 0b10100;
+  let Inst{16-12} = opcode;
+  let Inst{11-10} = 0b10;
+  // Inherit Rn in 9-5
+  // Inherit Rd in 4-0
+}
+
+// Format AdvSIMD crypto 3V SHA
+class NeonI_Crypto_3VSHA<bits<2> size, bits<3> opcode,
+                         dag outs, dag ins, string asmstr,
+                         list<dag> patterns, InstrItinClass itin>
+  : A64InstRdnm<outs, ins, asmstr, patterns, itin> {
+  let Inst{31-24} = 0b01011110;
+  let Inst{23-22} = size;
+  let Inst{21} = 0b0;
+  // Inherit Rm in 20-16
+  let Inst{15} = 0b0;
+  let Inst{14-12} = opcode;
+  let Inst{11-10} = 0b00;
+  // Inherit Rn in 9-5
+  // Inherit Rd in 4-0
+}
+
 }
 
