@@ -23,5 +23,4 @@ end
 
 (** [link_modules dst src mode] links [src] into [dst], raising [Error]
     if the linking fails. *)
-external link_modules : Llvm.llmodule -> Llvm.llmodule -> Mode.t -> unit
-                      = "llvm_link_modules"
+val link_modules : Llvm.llmodule -> Llvm.llmodule -> Mode.t -> unit
