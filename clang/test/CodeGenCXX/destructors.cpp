@@ -10,6 +10,7 @@
 // CHECK-DAG: @_ZN5test312_GLOBAL__N_11DD2Ev = alias internal bitcast {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
 // CHECK-DAG: @_ZN5test312_GLOBAL__N_11CD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
 // CHECK-DAG: @_ZN6PR752617allocator_derivedD1Ev = alias weak_odr void (%"struct.PR7526::allocator_derived"*)* @_ZN6PR752617allocator_derivedD2Ev
+// CHECK-DAG: @_ZN6test106OptionD1Ev = alias weak_odr void (%"struct.test10::Option"*)* @_ZN6test106OptionD2Ev
 
 struct A {
   int a;
@@ -365,7 +366,9 @@ namespace test9 {
 }
 
 namespace test10 {
-  // Test that we don't crash.
+  // We used to crash trying to replace _ZN6test106OptionD1Ev with
+  // _ZN6test106OptionD2Ev twice. For now check that we don't try and produce
+  // an alias instead (check at the top of the file).
   struct Option {
     virtual ~Option() {}
   };
