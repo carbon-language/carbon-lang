@@ -140,14 +140,14 @@ private:
 
 public:
   FileCOFF(const LinkingContext &context,
-           std::unique_ptr<llvm::MemoryBuffer> mb, error_code &ec)
+           std::unique_ptr<MemoryBuffer> mb, error_code &ec)
       : File(mb->getBufferIdentifier(), kindObject), _context(context) {
-    llvm::OwningPtr<llvm::object::Binary> bin;
+    OwningPtr<llvm::object::Binary> bin;
     ec = llvm::object::createBinary(mb.release(), bin);
     if (ec)
       return;
 
-    _obj.reset(llvm::dyn_cast<const llvm::object::COFFObjectFile>(bin.get()));
+    _obj.reset(dyn_cast<const llvm::object::COFFObjectFile>(bin.get()));
     if (!_obj) {
       ec = make_error_code(llvm::object::object_error::invalid_file_type);
       return;
@@ -887,10 +887,10 @@ private:
     llvm::FileRemover coffFileRemover(*coffFilePath);
 
     // Read and parse the COFF
-    OwningPtr<llvm::MemoryBuffer> opmb;
-    if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(*coffFilePath, opmb))
+    OwningPtr<MemoryBuffer> opmb;
+    if (error_code ec = MemoryBuffer::getFileOrSTDIN(*coffFilePath, opmb))
       return ec;
-    std::unique_ptr<llvm::MemoryBuffer> newmb(opmb.take());
+    std::unique_ptr<MemoryBuffer> newmb(opmb.take());
     return parseCOFFFile(newmb, result);
   }
 

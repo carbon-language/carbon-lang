@@ -41,13 +41,13 @@ public:
   }
 
   /// \brief Parse the input file to lld::File.
-  llvm::error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
+  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
     // Read the file to _buffer.
     bool isYaml = false;
     if (error_code ec = readFile(ctx, diagnostics, isYaml))
       return ec;
     (void) (_isWholeArchive);
-    return llvm::error_code::success();
+    return error_code::success();
   }
 
   /// \brief Return the file that has to be processed by the resolver

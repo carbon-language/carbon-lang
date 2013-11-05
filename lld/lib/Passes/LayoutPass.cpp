@@ -223,7 +223,7 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
     for (const Reference *r : *ai) {
       if (r->kind() != lld::Reference::kindLayoutAfter)
         continue;
-      const DefinedAtom *targetAtom = llvm::dyn_cast<DefinedAtom>(r->target());
+      const DefinedAtom *targetAtom = dyn_cast<DefinedAtom>(r->target());
       _followOnNexts[ai] = targetAtom;
 
       // If we find a followon for the first time, lets make that atom as the
@@ -283,7 +283,7 @@ void LayoutPass::buildInGroupTable(MutableFile::DefinedAtomRange &range) {
   for (const DefinedAtom *ai : range) {
     for (const Reference *r : *ai) {
       if (r->kind() == lld::Reference::kindInGroup) {
-        const DefinedAtom *rootAtom = llvm::dyn_cast<DefinedAtom>(r->target());
+        const DefinedAtom *rootAtom = dyn_cast<DefinedAtom>(r->target());
         // If the root atom is not part of any root
         // create a new root
         if (_followOnRoots.count(rootAtom) == 0) {
@@ -355,7 +355,7 @@ void LayoutPass::buildPrecededByTable(MutableFile::DefinedAtomRange &range) {
   for (const DefinedAtom *ai : range) {
     for (const Reference *r : *ai) {
       if (r->kind() == lld::Reference::kindLayoutBefore) {
-        const DefinedAtom *targetAtom = llvm::dyn_cast<DefinedAtom>(r->target());
+        const DefinedAtom *targetAtom = dyn_cast<DefinedAtom>(r->target());
         // Is the targetAtom not chained
         if (_followOnRoots.count(targetAtom) == 0) {
           // Is the current atom not part of any root ?
@@ -428,7 +428,7 @@ namespace {
 typedef llvm::DenseMap<const DefinedAtom *, const DefinedAtom *> AtomToAtomT;
 
 std::string atomToDebugString(const Atom *atom) {
-  const DefinedAtom *definedAtom = llvm::dyn_cast<DefinedAtom>(atom);
+  const DefinedAtom *definedAtom = dyn_cast<DefinedAtom>(atom);
   std::string str;
   llvm::raw_string_ostream s(str);
   if (definedAtom->name().empty())

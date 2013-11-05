@@ -35,7 +35,7 @@ public:
     return a->kind() == InputElement::Kind::File;
   }
 
-  virtual llvm::ErrorOr<StringRef> getPath(const LinkingContext &ctx) const;
+  virtual ErrorOr<StringRef> getPath(const LinkingContext &ctx) const;
 
   /// \brief Parse the input file to lld::File.
   error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
@@ -87,7 +87,7 @@ public:
   PECOFFLibraryNode(PECOFFLinkingContext &ctx, StringRef path)
       : PECOFFFileNode(ctx, path) {}
 
-  virtual llvm::ErrorOr<StringRef> getPath(const LinkingContext &ctx) const;
+  virtual ErrorOr<StringRef> getPath(const LinkingContext &ctx) const;
 };
 
 } // namespace lld

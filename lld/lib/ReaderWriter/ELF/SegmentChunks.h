@@ -548,7 +548,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t &addr) {
       // Check if the segment is of type TLS
       // The sections that belong to the TLS segment have their
       // virtual addresses that are relative To TP
-      Section<ELFT> *currentSection = llvm::dyn_cast<Section<ELFT> >(section);
+      Section<ELFT> *currentSection = dyn_cast<Section<ELFT> >(section);
       if (currentSection)
         isTLSSegment = (currentSection->getSegmentType() == llvm::ELF::PT_TLS);
 

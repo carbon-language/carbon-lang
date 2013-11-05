@@ -734,7 +734,7 @@ private:
   }
 
   // private constructor, only called by make()
-  File(const LinkingContext &context, std::unique_ptr<llvm::MemoryBuffer> mb,
+  File(const LinkingContext &context, std::unique_ptr<MemoryBuffer> mb,
        StringRef path)
       : lld::File(path, kindObject),
         _buffer(std::move(mb)), // Reader now takes ownership of buffer
@@ -787,7 +787,7 @@ private:
   };
 
 
-  std::unique_ptr<llvm::MemoryBuffer> _buffer;
+  std::unique_ptr<MemoryBuffer> _buffer;
   const NativeFileHeader*         _header;
   AtomArray<DefinedAtom>          _definedAtoms;
   AtomArray<UndefinedAtom>        _undefinedAtoms;

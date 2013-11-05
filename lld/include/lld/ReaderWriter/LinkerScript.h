@@ -44,7 +44,7 @@ public:
   Token() : _kind(unknown) {}
   Token(StringRef range, Kind kind) : _range(range), _kind(kind) {}
 
-  void dump(llvm::raw_ostream &os) const;
+  void dump(raw_ostream &os) const;
 
   StringRef _range;
   Kind _kind;
@@ -52,7 +52,7 @@ public:
 
 class Lexer {
 public:
-  explicit Lexer(std::unique_ptr<llvm::MemoryBuffer> mb)
+  explicit Lexer(std::unique_ptr<MemoryBuffer> mb)
       : _buffer(mb->getBuffer()) {
     _sourceManager.AddNewSourceBuffer(mb.release(), llvm::SMLoc());
   }
@@ -83,7 +83,7 @@ public:
 
   Kind getKind() const { return _kind; }
 
-  virtual void dump(llvm::raw_ostream &os) const = 0;
+  virtual void dump(raw_ostream &os) const = 0;
 
   virtual ~Command() {}
 
@@ -103,7 +103,7 @@ public:
     return c->getKind() == Kind::OutputFormat;
   }
 
-  virtual void dump(llvm::raw_ostream &os) const {
+  virtual void dump(raw_ostream &os) const {
     os << "OUTPUT_FORMAT(" << getFormat() << ")\n";
   }
 
@@ -133,7 +133,7 @@ public:
 
   static bool classof(const Command *c) { return c->getKind() == Kind::Group; }
 
-  virtual void dump(llvm::raw_ostream &os) const {
+  virtual void dump(raw_ostream &os) const {
     os << "GROUP(";
     bool first = true;
     for (const auto &path : getPaths()) {
@@ -165,7 +165,7 @@ public:
     return c->getKind() == Kind::Entry;
   }
 
-  virtual void dump(llvm::raw_ostream &os) const {
+  virtual void dump(raw_ostream &os) const {
     os << "ENTRY(" << _entryName << ")\n";
   }
 
@@ -179,7 +179,7 @@ private:
 
 class LinkerScript {
 public:
-  void dump(llvm::raw_ostream &os) const {
+  void dump(raw_ostream &os) const {
     for (const auto &c : _commands)
       c->dump(os);
   }

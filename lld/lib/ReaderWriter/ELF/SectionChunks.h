@@ -378,7 +378,7 @@ void AtomSection<ELFT>::write(ELFWriter *writer,
     if (!definedAtom->occupiesDiskSpace())
       return;
     // Copy raw content of atom to file buffer.
-    llvm::ArrayRef<uint8_t> content = definedAtom->rawContent();
+    ArrayRef<uint8_t> content = definedAtom->rawContent();
     uint64_t contentSize = content.size();
     if (contentSize == 0)
       return;
@@ -817,9 +817,9 @@ void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
   else if (const AbsoluteAtom *aa = dyn_cast<const AbsoluteAtom>(atom))
     addAbsoluteAtom(symbol, aa, addr);
   else if (isa<const SharedLibraryAtom>(atom))
-    addSharedLibAtom(symbol, llvm::dyn_cast<SharedLibraryAtom>(atom));
+    addSharedLibAtom(symbol, dyn_cast<SharedLibraryAtom>(atom));
   else
-    addUndefinedAtom(symbol, llvm::dyn_cast<UndefinedAtom>(atom));
+    addUndefinedAtom(symbol, dyn_cast<UndefinedAtom>(atom));
 
   _symbolTable.push_back(SymbolEntry(atom, symbol, atomLayout));
   this->_fsize += sizeof(Elf_Sym);

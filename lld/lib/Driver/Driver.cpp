@@ -62,7 +62,7 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
       llvm::raw_string_ostream stream(buf);
 
       if (error_code ec = ie->parse(context, stream)) {
-        FileNode *fileNode = llvm::dyn_cast<FileNode>(ie.get());
+        FileNode *fileNode = dyn_cast<FileNode>(ie.get());
         stream << fileNode->errStr(ec) << "\n";
         fail = true;
       }

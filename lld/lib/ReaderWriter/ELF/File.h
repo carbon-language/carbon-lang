@@ -122,7 +122,7 @@ public:
       : File(name, kindObject), _elfLinkingContext(context) {}
 
   ELFFile(const ELFLinkingContext &context,
-          std::unique_ptr<llvm::MemoryBuffer> MB, llvm::error_code &EC)
+          std::unique_ptr<MemoryBuffer> MB, error_code &EC)
       : File(MB->getBufferIdentifier(), kindObject),
         _elfLinkingContext(context), _ordinal(0), _doStringsMerge(false) {
     _objFile.reset(new llvm::object::ELFFile<ELFT>(MB.release(), EC));

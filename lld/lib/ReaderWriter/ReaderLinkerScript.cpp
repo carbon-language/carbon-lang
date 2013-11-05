@@ -21,7 +21,7 @@ class LinkerScriptFile : public File {
 public:
   static ErrorOr<std::unique_ptr<LinkerScriptFile> >
   create(const LinkingContext &context,
-         std::unique_ptr<llvm::MemoryBuffer> mb) {
+         std::unique_ptr<MemoryBuffer> mb) {
     std::unique_ptr<LinkerScriptFile> file(
         new LinkerScriptFile(context, std::move(mb)));
     file->_script = file->_parser.parse();
@@ -56,7 +56,7 @@ public:
 
 private:
   LinkerScriptFile(const LinkingContext &context,
-                   std::unique_ptr<llvm::MemoryBuffer> mb)
+                   std::unique_ptr<MemoryBuffer> mb)
       : File(mb->getBufferIdentifier(), kindLinkerScript), _context(context),
         _lexer(std::move(mb)), _parser(_lexer), _script(nullptr) {}
 
@@ -83,11 +83,11 @@ error_code ReaderLinkerScript::parseFile(
   for (const auto &c : ls->_commands) {
     if (auto group = dyn_cast<lld::script::Group>(c))
       for (const auto &path : group->getPaths()) {
-        OwningPtr<llvm::MemoryBuffer> opmb;
+        OwningPtr<MemoryBuffer> opmb;
         if (error_code ec =
-                llvm::MemoryBuffer::getFileOrSTDIN(path._path, opmb))
+                MemoryBuffer::getFileOrSTDIN(path._path, opmb))
           return ec;
-        std::unique_ptr<llvm::MemoryBuffer> eachMB(opmb.take());
+        std::unique_ptr<MemoryBuffer> eachMB(opmb.take());
         if (error_code ec =
                 _context.getDefaultReader().parseFile(eachMB, result))
           return ec;

@@ -170,7 +170,7 @@ public:
                  StringRef sectionName,
                  const Elf_Sym *symbol,
                  const Elf_Shdr *section,
-                 llvm::ArrayRef<uint8_t> contentData,
+                 ArrayRef<uint8_t> contentData,
                  unsigned int referenceStart,
                  unsigned int referenceEnd,
                  std::vector<ELFReference<ELFT>*> &referenceList)
@@ -482,7 +482,7 @@ public:
     return false;
   }
 
-  virtual llvm::ArrayRef<uint8_t> rawContent() const {
+  virtual ArrayRef<uint8_t> rawContent() const {
     return _contentData;
   }
 
@@ -525,7 +525,7 @@ private:
   const Elf_Sym *_symbol;
   const Elf_Shdr *_section;
   /// \brief Holds the bits that make up the atom.
-  llvm::ArrayRef<uint8_t> _contentData;
+  ArrayRef<uint8_t> _contentData;
 
   uint64_t _ordinal;
   unsigned int _referenceStartIndex;
@@ -543,7 +543,7 @@ template <class ELFT> class ELFMergeAtom LLVM_FINAL : public DefinedAtom {
 
 public:
   ELFMergeAtom(const ELFFile<ELFT> &file, StringRef sectionName,
-               const Elf_Shdr *section, llvm::ArrayRef<uint8_t> contentData,
+               const Elf_Shdr *section, ArrayRef<uint8_t> contentData,
                uint64_t offset)
       : _owningFile(file), _sectionName(sectionName), _section(section),
         _contentData(contentData), _offset(offset) {
@@ -593,7 +593,7 @@ public:
 
   virtual bool isAlias() const { return false; }
 
-  virtual llvm::ArrayRef<uint8_t> rawContent() const { return _contentData; }
+  virtual ArrayRef<uint8_t> rawContent() const { return _contentData; }
 
   DefinedAtom::reference_iterator begin() const {
     uintptr_t index = 0;
@@ -617,7 +617,7 @@ private:
   StringRef _sectionName;
   const Elf_Shdr *_section;
   /// \brief Holds the bits that make up the atom.
-  llvm::ArrayRef<uint8_t> _contentData;
+  ArrayRef<uint8_t> _contentData;
   uint64_t _ordinal;
   uint64_t _offset;
 };

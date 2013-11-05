@@ -48,7 +48,7 @@ public:
   virtual bool validate() { return true; }
 
   /// \brief create an error string for printing purposes
-  virtual std::string errStr(llvm::error_code);
+  virtual std::string errStr(error_code);
 
   /// \brief Dump the Input Element
   virtual bool dump(raw_ostream &diagnostics) {
@@ -71,7 +71,7 @@ public:
   }
 
   /// \brief Parse the input file to lld::File.
-  llvm::error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
+  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
     // Read the file to _buffer.
     bool isYaml = false;
     if (error_code ec = readFile(ctx, diagnostics, isYaml))
@@ -162,10 +162,10 @@ public:
   }
 
   /// \brief Dump the ELFGroup
-  virtual bool dump(llvm::raw_ostream &) { return true; }
+  virtual bool dump(raw_ostream &) { return true; }
 
   /// \brief Parse the group members.
-  llvm::error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
+  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
     for (auto &ei : _elements)
       if (error_code ec = ei->parse(ctx, diagnostics))
         return ec;

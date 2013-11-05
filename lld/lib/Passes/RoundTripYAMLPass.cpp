@@ -30,8 +30,8 @@ void RoundTripYAMLPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   // The file that is written would be kept around if there is a problem
   // writing to the file or when reading atoms back from the file.
   yamlWriter->writeFile(*mergedFile, tmpYAMLFile.str());
-  llvm::OwningPtr<llvm::MemoryBuffer> buff;
-  if (llvm::MemoryBuffer::getFileOrSTDIN(tmpYAMLFile.str(), buff))
+  OwningPtr<MemoryBuffer> buff;
+  if (MemoryBuffer::getFileOrSTDIN(tmpYAMLFile.str(), buff))
     return;
 
   std::unique_ptr<MemoryBuffer> mb(buff.take());

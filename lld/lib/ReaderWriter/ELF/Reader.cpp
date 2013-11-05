@@ -90,7 +90,7 @@ public:
     std::size_t MaxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
 
-    llvm::error_code ec;
+    error_code ec;
     switch (FileType) {
     case llvm::sys::fs::file_magic::elf_relocatable: {
       std::unique_ptr<File> f(createELF<ELFFileCreateELFTraits>(

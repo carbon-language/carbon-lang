@@ -134,7 +134,7 @@ ELFLinkingContext::create(llvm::Triple triple) {
   }
 }
 
-llvm::ErrorOr<StringRef> ELFLinkingContext::searchLibrary(
+ErrorOr<StringRef> ELFLinkingContext::searchLibrary(
     StringRef libName, const std::vector<StringRef> &searchPath) const {
   bool foundFile = false;
   StringRef pathref;

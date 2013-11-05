@@ -107,9 +107,9 @@ FileNode::readFile(const LinkingContext &ctx, raw_ostream &diagnostics,
     return make_error_code(llvm::errc::no_such_file_or_directory);
 
   // Create a memory buffer
-  OwningPtr<llvm::MemoryBuffer> opmb;
+  OwningPtr<MemoryBuffer> opmb;
 
-  if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(*filePath, opmb))
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(*filePath, opmb))
     return ec;
 
   std::unique_ptr<MemoryBuffer> mb(opmb.take());

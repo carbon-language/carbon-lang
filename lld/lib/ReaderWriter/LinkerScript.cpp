@@ -16,7 +16,7 @@
 
 namespace lld {
 namespace script {
-void Token::dump(llvm::raw_ostream &os) const {
+void Token::dump(raw_ostream &os) const {
   switch (_kind) {
 #define CASE(name)                              \
   case Token::name:                             \

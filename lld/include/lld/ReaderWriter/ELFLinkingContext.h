@@ -156,7 +156,7 @@ public:
   virtual void setNoAllowDynamicLibraries() { _noAllowDynamicLibraries = true; }
 
   /// Searches directories for a match on the input File
-  llvm::ErrorOr<StringRef>
+  ErrorOr<StringRef>
   searchLibrary(StringRef libName,
                 const std::vector<StringRef> &searchPath) const;
 

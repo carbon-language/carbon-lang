@@ -31,8 +31,8 @@ void RoundTripNativePass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   // The file that is written would be kept around if there is a problem
   // writing to the file or when reading atoms back from the file.
   nativeWriter->writeFile(*mergedFile, tmpNativeFile.str());
-  llvm::OwningPtr<llvm::MemoryBuffer> buff;
-  if (llvm::MemoryBuffer::getFileOrSTDIN(tmpNativeFile.str(), buff))
+  OwningPtr<MemoryBuffer> buff;
+  if (MemoryBuffer::getFileOrSTDIN(tmpNativeFile.str(), buff))
     return;
 
   std::unique_ptr<MemoryBuffer> mb(buff.take());

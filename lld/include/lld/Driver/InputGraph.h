@@ -159,7 +159,7 @@ public:
   virtual bool dump(raw_ostream &diagnostics) = 0;
 
   /// \brief parse the input element
-  virtual llvm::error_code parse(const LinkingContext &, raw_ostream &) = 0;
+  virtual error_code parse(const LinkingContext &, raw_ostream &) = 0;
 
   /// \brief functions for the resolver to use
 
@@ -263,20 +263,20 @@ public:
   }
 
   /// \brief create an error string for printing purposes
-  virtual std::string errStr(llvm::error_code errc) {
+  virtual std::string errStr(error_code errc) {
     std::string msg = errc.message();
     Twine twine = Twine("Cannot open ") + _path + ": " + msg;
     return twine.str();
   }
 
   /// \brief Memory buffer pointed by the file.
-  llvm::MemoryBuffer &getBuffer() const {
+  MemoryBuffer &getBuffer() const {
     assert(_buffer);
     return *_buffer;
   }
 
   /// \brief Return the memory buffer and transfer ownership.
-  std::unique_ptr<llvm::MemoryBuffer> takeBuffer() {
+  std::unique_ptr<MemoryBuffer> takeBuffer() {
     assert(_buffer);
     return std::move(_buffer);
   }
@@ -314,7 +314,7 @@ protected:
 
   StringRef _path;                             // The path of the Input file
   InputGraph::FileVectorT _files;              // A vector of lld File objects
-  std::unique_ptr<llvm::MemoryBuffer> _buffer; // Memory buffer to actual
+  std::unique_ptr<MemoryBuffer> _buffer; // Memory buffer to actual
                                                // contents
   uint32_t _resolveState;                      // The resolve state of the file
   uint32_t _nextFileIndex; // The next file that would be processed by the
@@ -348,7 +348,7 @@ class SimpleFileNode : public InputElement {
 public:
   SimpleFileNode(StringRef path, int64_t ordinal = -1);
 
-  virtual llvm::ErrorOr<StringRef> path(const LinkingContext &) const {
+  virtual ErrorOr<StringRef> path(const LinkingContext &) const {
     return _path;
   }
 
@@ -389,7 +389,7 @@ public:
   virtual bool dump(raw_ostream &) { return true; }
 
   /// \brief parse the input element
-  virtual llvm::error_code parse(const LinkingContext &, raw_ostream &) {
+  virtual error_code parse(const LinkingContext &, raw_ostream &) {
     return error_code::success();
   }
 

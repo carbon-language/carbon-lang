@@ -416,7 +416,7 @@ struct MappingTraits<Symbol> {
 // Custom mapping for VMProtect (e.g. "r-x").
 template <>
 struct ScalarTraits<VMProtect> {
-  static void output(const VMProtect &value, void*, llvm::raw_ostream &out) {
+  static void output(const VMProtect &value, void*, raw_ostream &out) {
     out << ( (value & llvm::MachO::VM_PROT_READ)    ? 'r' : '-');
     out << ( (value & llvm::MachO::VM_PROT_WRITE)   ? 'w' : '-');
     out << ( (value & llvm::MachO::VM_PROT_EXECUTE) ? 'x' : '-');
@@ -641,7 +641,7 @@ readYaml(std::unique_ptr<MemoryBuffer> &mb) {
 
 /// Writes a yaml encoded mach-o files from an in-memory normalized view.
 error_code 
-writeYaml(const NormalizedFile &file, llvm::raw_ostream &out) {
+writeYaml(const NormalizedFile &file, raw_ostream &out) {
   // YAML I/O is not const aware, so need to cast away ;-(
   NormalizedFile *f = const_cast<NormalizedFile*>(&file);
 

@@ -182,8 +182,8 @@ std::vector<uint8_t> FuncAtom::rawContent(
 class FileImportLibrary : public File {
 public:
   FileImportLibrary(const LinkingContext &context,
-                    std::unique_ptr<llvm::MemoryBuffer> mb,
-                    llvm::error_code &ec)
+                    std::unique_ptr<MemoryBuffer> mb,
+                    error_code &ec)
       : File(mb->getBufferIdentifier(), kindSharedLibrary), _context(context) {
     const char *buf = mb->getBufferStart();
     const char *end = mb->getBufferEnd();

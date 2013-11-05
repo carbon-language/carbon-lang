@@ -75,7 +75,7 @@ llvm::ErrorOr<StringRef> ELFFileNode::getPath(const LinkingContext &) const {
   return _elfLinkingContext.searchLibrary(_path, _libraryPaths);
 }
 
-std::string ELFFileNode::errStr(llvm::error_code errc) {
+std::string ELFFileNode::errStr(error_code errc) {
   if (errc == llvm::errc::no_such_file_or_directory) {
     if (_isDashlPrefix)
       return (Twine("Unable to find library -l") + _path).str();
@@ -256,14 +256,14 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     case OPT_start_group: {
       std::unique_ptr<InputElement> controlStart(new ELFGroup(*ctx, index++));
       controlNodeStack.push(controlStart.get());
-      (llvm::dyn_cast<ControlNode>)(controlNodeStack.top())
+      (dyn_cast<ControlNode>)(controlNodeStack.top())
           ->processControlEnter();
       inputGraph->addInputElement(std::move(controlStart));
       break;
     }
 
     case OPT_end_group:
-      (llvm::dyn_cast<ControlNode>)(controlNodeStack.top())
+      (dyn_cast<ControlNode>)(controlNodeStack.top())
           ->processControlExit();
       controlNodeStack.pop();
       break;
@@ -276,7 +276,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       if (controlNodeStack.empty())
         inputGraph->addInputElement(std::move(inputFile));
       else
-        (llvm::dyn_cast<ControlNode>)(controlNodeStack.top())
+        (dyn_cast<ControlNode>)(controlNodeStack.top())
             ->processInputElement(std::move(inputFile));
       break;
     }
