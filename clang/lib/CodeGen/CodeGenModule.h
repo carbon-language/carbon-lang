@@ -279,6 +279,9 @@ class CodeGenModule : public CodeGenTypeCache {
   /// is defined once we get to the end of the of the translation unit.
   std::vector<GlobalDecl> Aliases;
 
+  typedef llvm::StringMap<llvm::TrackingVH<llvm::Constant> > ReplacementsTy;
+  ReplacementsTy Replacements;
+
   /// DeferredVTables - A queue of (optional) vtables to consider emitting.
   std::vector<const CXXRecordDecl*> DeferredVTables;
 
@@ -1081,6 +1084,9 @@ private:
   /// EmitDeferred - Emit any needed decls for which code generation
   /// was deferred.
   void EmitDeferred();
+
+  /// Call replaceAllUsesWith on all pairs in Replacements.
+  void applyReplacements();
 
   void checkAliases();
 

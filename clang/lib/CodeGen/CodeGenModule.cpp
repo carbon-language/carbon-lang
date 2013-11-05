@@ -172,6 +172,20 @@ void CodeGenModule::createCUDARuntime() {
   CUDARuntime = CreateNVCUDARuntime(*this);
 }
 
+void CodeGenModule::applyReplacements() {
+  for (ReplacementsTy::iterator I = Replacements.begin(),
+                                E = Replacements.end();
+       I != E; ++I) {
+    StringRef MangledName = I->first();
+    llvm::Constant *Replacement = I->second;
+    llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
+    if (!Entry)
+      continue;
+    Entry->replaceAllUsesWith(Replacement);
+    Entry->eraseFromParent();
+  }
+}
+
 void CodeGenModule::checkAliases() {
   bool Error = false;
   for (std::vector<GlobalDecl>::iterator I = Aliases.begin(),
@@ -207,6 +221,7 @@ void CodeGenModule::checkAliases() {
 
 void CodeGenModule::Release() {
   EmitDeferred();
+  applyReplacements();
   checkAliases();
   EmitCXXGlobalInitFunc();
   EmitCXXGlobalDtorFunc();

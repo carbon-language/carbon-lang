@@ -112,32 +112,19 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   // support aliases with that linkage, fail.
   llvm::GlobalValue::LinkageTypes Linkage = getFunctionLinkage(AliasDecl);
 
-  llvm::GlobalValue::LinkageTypes TargetLinkage
-    = getFunctionLinkage(TargetDecl);
-
-  // Don't create an alias to a linker weak symbol unless we know we can do
-  // that in every TU. This avoids producing different COMDATs in different
-  // TUs.
-  if (llvm::GlobalValue::isWeakForLinker(TargetLinkage)) {
-    if (!InEveryTU)
-      return true;
-
-    // In addition to making sure we produce it in every TU, we have to make
-    // sure llvm keeps it.
-    // FIXME: Instead of outputting an alias we could just replace every use of
-    // AliasDecl with TargetDecl.
-    assert(Linkage == TargetLinkage);
-    Linkage = llvm::GlobalValue::WeakODRLinkage;
-  }
-
   // We can't use an alias if the linkage is not valid for one.
   if (!llvm::GlobalAlias::isValidLinkage(Linkage))
     return true;
+
+  llvm::GlobalValue::LinkageTypes TargetLinkage =
+      getFunctionLinkage(TargetDecl);
 
   // Check if we have it already.
   StringRef MangledName = getMangledName(AliasDecl);
   llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
   if (Entry && !Entry->isDeclaration())
+    return false;
+  if (Replacements.count(MangledName))
     return false;
 
   // Derive the type for the alias.
@@ -151,6 +138,22 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   llvm::Constant *Aliasee = Ref;
   if (Ref->getType() != AliasType)
     Aliasee = llvm::ConstantExpr::getBitCast(Ref, AliasType);
+
+  // Don't create an alias to a linker weak symbol unless we know we can do
+  // that in every TU. This avoids producing different COMDATs in different
+  // TUs.
+  if (llvm::GlobalValue::isWeakForLinker(TargetLinkage)) {
+    if (!InEveryTU)
+      return true;
+
+    assert(Linkage == TargetLinkage);
+    // Instead of creating as alias to a linkonce_odr, replace all of the uses
+    // of the aliassee.
+    if (TargetLinkage == llvm::GlobalValue::LinkOnceODRLinkage) {
+      Replacements[MangledName] = Aliasee;
+      return false;
+    }
+  }
 
   // Create the alias with no name.
   llvm::GlobalAlias *Alias = 
