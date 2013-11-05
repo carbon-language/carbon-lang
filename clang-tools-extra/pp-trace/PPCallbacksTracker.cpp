@@ -166,7 +166,7 @@ void PPCallbacksTracker::Ident(clang::SourceLocation Loc,
                                const std::string &Str) {
   beginCallback("Ident");
   appendArgument("Loc", Loc);
-  appendArgument("Path", Str);
+  appendQuotedArgument("Str", Str);
 }
 
 // Callback invoked when start reading any pragma directive.
@@ -175,7 +175,7 @@ PPCallbacksTracker::PragmaDirective(clang::SourceLocation Loc,
                                     clang::PragmaIntroducerKind Introducer) {
   beginCallback("PragmaDirective");
   appendArgument("Loc", Loc);
-  appendArgument("Path", Introducer, PragmaIntroducerKindStrings);
+  appendArgument("Introducer", Introducer, PragmaIntroducerKindStrings);
 }
 
 // Callback invoked when a #pragma comment directive is read.

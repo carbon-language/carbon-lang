@@ -160,9 +160,6 @@ public:
   /// \brief Append a string to the top trace item.
   void append(const char *Str);
 
-  /// \brief Format and append a string to the top trace item.
-  void appendFormatted(const char *Format, ...);
-
   /// \brief Append a bool argument to the top trace item.
   void appendArgument(const char *Name, bool Value);
 
