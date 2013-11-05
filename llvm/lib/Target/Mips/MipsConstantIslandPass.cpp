@@ -9,9 +9,7 @@
 //
 //
 // This pass is used to make Pc relative loads of constants.
-// For now, only Mips16 will use this. While it has the same name and
-// uses many ideas from the LLVM ARM Constant Island Pass, it's not intended
-// to reuse any of the code from the ARM version.
+// For now, only Mips16 will use this. 
 //
 // Loading constants inline is expensive on Mips16 and it's in general better
 // to place the constant nearby in code space and then it can be loaded with a
@@ -783,10 +781,6 @@ unsigned MipsConstantIslands::getUserOffset(CPUser &U) const {
   // Make sure U.getMaxDisp() returns a constrained range.
   U.KnownAlignment = (KnownBits >= 2);
 
-  // On Thumb, offsets==2 mod 4 are rounded down by the hardware for
-  // purposes of the displacement computation; compensate for that here.
-  // For unknown alignments, getMaxDisp() constrains the range instead.
-
 
   return UserOffset;
 }
@@ -1115,8 +1109,8 @@ static inline unsigned getUnconditionalBrDisp(int Opc) {
 /// findAvailableWater - Look for an existing entry in the WaterList in which
 /// we can place the CPE referenced from U so it's within range of U's MI.
 /// Returns true if found, false if not.  If it returns true, WaterIter
-/// is set to the WaterList entry.  For Thumb, prefer water that will not
-/// introduce padding to water that will.  To ensure that this pass
+/// is set to the WaterList entry.  
+/// To ensure that this pass
 /// terminates, the CPE location for a particular CPUser is only allowed to
 /// move to a lower address, so search backward from the end of the list and
 /// prefer the first water that is in range.
@@ -1175,9 +1169,7 @@ void MipsConstantIslands::createNewWater(unsigned CPUserIndex,
   const BasicBlockInfo &UserBBI = BBInfo[UserMBB->getNumber()];
 
   // If the block does not end in an unconditional branch already, and if the
-  // end of the block is within range, make new water there.  (The addition
-  // below is for the unconditional branch we will be adding: 4 bytes on ARM +
-  // Thumb2, 2 on Thumb1.
+  // end of the block is within range, make new water there.  
   if (BBHasFallthrough(UserMBB)) {
     // Size of branch to insert.
     unsigned Delta = 2;
@@ -1204,17 +1196,7 @@ void MipsConstantIslands::createNewWater(unsigned CPUserIndex,
     }
   }
 
-  // What a big block.  Find a place within the block to split it.  This is a
-  // little tricky on Thumb1 since instructions are 2 bytes and constant pool
-  // entries are 4 bytes: if instruction I references island CPE, and
-  // instruction I+1 references CPE', it will not work well to put CPE as far
-  // forward as possible, since then CPE' cannot immediately follow it (that
-  // location is 2 bytes farther away from I+1 than CPE was from I) and we'd
-  // need to create a new island.  So, we make a first guess, then walk through
-  // the instructions between the one currently being looked at and the
-  // possible insertion point, and make sure any other instructions that
-  // reference CPEs will be able to use the same island area; if not, we back
-  // up the insertion point.
+  // What a big block.  Find a place within the block to split it.  
 
   // Try to split the block so it's fully aligned.  Compute the latest split
   // point where we can add a 4-byte branch instruction, and then align to
@@ -1228,7 +1210,7 @@ void MipsConstantIslands::createNewWater(unsigned CPUserIndex,
                          BaseInsertOffset));
 
   // The 4 in the following is for the unconditional branch we'll be inserting
-  // (allows for long branch on Thumb1).  Alignment of the island is handled
+  // Alignment of the island is handled
   // inside isOffsetInRange.
   BaseInsertOffset -= 4;
 
