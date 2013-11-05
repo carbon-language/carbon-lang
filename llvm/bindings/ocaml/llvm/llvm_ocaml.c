@@ -454,6 +454,8 @@ enum ValueKind {
   BlockAddress,
   ConstantAggregateZero,
   ConstantArray,
+  ConstantDataArray,
+  ConstantDataVector,
   ConstantExpr,
   ConstantFP,
   ConstantInt,
@@ -479,6 +481,8 @@ CAMLprim value llvm_classify_value(LLVMValueRef Val) {
     DEFINE_CASE(Val, BlockAddress);
     DEFINE_CASE(Val, ConstantAggregateZero);
     DEFINE_CASE(Val, ConstantArray);
+    DEFINE_CASE(Val, ConstantDataArray);
+    DEFINE_CASE(Val, ConstantDataVector);
     DEFINE_CASE(Val, ConstantExpr);
     DEFINE_CASE(Val, ConstantFP);
     DEFINE_CASE(Val, ConstantInt);

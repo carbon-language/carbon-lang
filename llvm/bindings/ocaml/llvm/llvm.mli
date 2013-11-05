@@ -323,6 +323,8 @@ module ValueKind : sig
   | BlockAddress
   | ConstantAggregateZero
   | ConstantArray
+  | ConstantDataArray
+  | ConstantDataVector
   | ConstantExpr
   | ConstantFP
   | ConstantInt

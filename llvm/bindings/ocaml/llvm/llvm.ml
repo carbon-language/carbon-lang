@@ -260,6 +260,8 @@ module ValueKind = struct
   | BlockAddress
   | ConstantAggregateZero
   | ConstantArray
+  | ConstantDataArray
+  | ConstantDataVector
   | ConstantExpr
   | ConstantFP
   | ConstantInt
