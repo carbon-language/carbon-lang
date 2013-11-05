@@ -120,7 +120,9 @@ enum OpKind {
   OpLongHi,
   OpNarrowHi,
   OpMovlHi,
-  OpCopy
+  OpCopyLane,
+  OpCopyQLane,
+  OpCopyLaneQ
 };
 
 enum ClassKind {
@@ -265,7 +267,9 @@ public:
     OpMap["OP_LONG_HI"] = OpLongHi;
     OpMap["OP_NARROW_HI"] = OpNarrowHi;
     OpMap["OP_MOVL_HI"] = OpMovlHi;
-    OpMap["OP_COPY"] = OpCopy;
+    OpMap["OP_COPY_LN"] = OpCopyLane;
+    OpMap["OP_COPYQ_LN"] = OpCopyQLane;
+    OpMap["OP_COPY_LNQ"] = OpCopyLaneQ;
 
     Record *SI = R.getClass("SInst");
     Record *II = R.getClass("IInst");
@@ -1358,7 +1362,7 @@ static std::string GenArgs(const std::string &proto, StringRef typestr,
     }
     s.push_back(arg);
     //To avoid argument being multiple defined, add extra number for renaming.
-    if (name == "vcopy_lane")
+    if (name == "vcopy_lane" || name == "vcopy_laneq")
       s.push_back('1');
     if ((i + 1) < e)
       s += ", ";
@@ -1383,7 +1387,7 @@ static std::string GenMacroLocals(const std::string &proto, StringRef typestr,
       continue;
     generatedLocal = true;
     bool extranumber = false;
-    if(name == "vcopy_lane")
+    if (name == "vcopy_lane" || name == "vcopy_laneq")
       extranumber = true;
 
     s += TypeString(proto[i], typestr) + " __";
@@ -1854,10 +1858,24 @@ static std::string GenOpString(const std::string &name, OpKind op,
          MangleName(RemoveHigh(name), typestr, ClassS) + "(__b, __c));";
     break;
   }
-  case OpCopy: {
+  case OpCopyLane: {
     s += TypeString('s', typestr) + " __c2 = " +
          MangleName("vget_lane", typestr, ClassS) + "(__c1, __d1); \\\n  " +
          MangleName("vset_lane", typestr, ClassS) + "(__c2, __a1, __b1);";
+    break;
+  }
+  case OpCopyQLane: {
+    std::string typeCode = "";
+    InstructionTypeCode(typestr, ClassS, quad, typeCode);
+    s += TypeString('s', typestr) + " __c2 = vget_lane_" + typeCode +
+         "(__c1, __d1); \\\n  vsetq_lane_" + typeCode + "(__c2, __a1, __b1);";
+    break;
+  }
+  case OpCopyLaneQ: {
+    std::string typeCode = "";
+    InstructionTypeCode(typestr, ClassS, quad, typeCode);
+    s += TypeString('s', typestr) + " __c2 = vgetq_lane_" + typeCode +
+         "(__c1, __d1); \\\n  vset_lane_" + typeCode + "(__c2, __a1, __b1);";
     break;
   }
   default:

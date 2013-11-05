@@ -2441,23 +2441,25 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case AArch64::BI__builtin_neon_vget_lane_i16:
   case AArch64::BI__builtin_neon_vget_lane_i32:
   case AArch64::BI__builtin_neon_vget_lane_i64:
+  case AArch64::BI__builtin_neon_vget_lane_f32:
+  case AArch64::BI__builtin_neon_vget_lane_f64:
   case AArch64::BI__builtin_neon_vgetq_lane_i8:
   case AArch64::BI__builtin_neon_vgetq_lane_i16:
   case AArch64::BI__builtin_neon_vgetq_lane_i32:
   case AArch64::BI__builtin_neon_vgetq_lane_i64:
+  case AArch64::BI__builtin_neon_vgetq_lane_f32:
+  case AArch64::BI__builtin_neon_vgetq_lane_f64:
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vget_lane_i8, E);
   case AArch64::BI__builtin_neon_vset_lane_i8:
   case AArch64::BI__builtin_neon_vset_lane_i16:
   case AArch64::BI__builtin_neon_vset_lane_i32:
   case AArch64::BI__builtin_neon_vset_lane_i64:
-  case AArch64::BI__builtin_neon_vset_lane_f16:
   case AArch64::BI__builtin_neon_vset_lane_f32:
   case AArch64::BI__builtin_neon_vset_lane_f64:
   case AArch64::BI__builtin_neon_vsetq_lane_i8:
   case AArch64::BI__builtin_neon_vsetq_lane_i16:
   case AArch64::BI__builtin_neon_vsetq_lane_i32:
   case AArch64::BI__builtin_neon_vsetq_lane_i64:
-  case AArch64::BI__builtin_neon_vsetq_lane_f16:
   case AArch64::BI__builtin_neon_vsetq_lane_f32:
   case AArch64::BI__builtin_neon_vsetq_lane_f64:
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vset_lane_i8, E);

@@ -98,7 +98,9 @@ def OP_DIV  : Op;
 def OP_LONG_HI : Op;
 def OP_NARROW_HI : Op;
 def OP_MOVL_HI : Op;
-def OP_COPY : Op;
+def OP_COPY_LN : Op;
+def OP_COPYQ_LN : Op;
+def OP_COPY_LNQ : Op;
 
 class Inst <string n, string p, string t, Op o> {
   string Name = n;
@@ -669,13 +671,18 @@ def VQDMLSL_HIGH : SOpInst<"vqdmlsl_high", "wwkk", "si", OP_QDMLSLHi>;
 ////////////////////////////////////////////////////////////////////////////////
 // Extract or insert element from vector
 def GET_LANE : IInst<"vget_lane", "sdi",
-                        "csilPcPsUcUsUiUlQcQsQiQlQUcQUsQUiQUlPcPsQPcQPs">;
+                     "csilPcPsUcUsUiUlQcQsQiQlQUcQUsQUiQUlPcPsQPcQPsfdQfQd">;
 def SET_LANE : IInst<"vset_lane", "dsdi",
-                 "csilPcPsUiUlUcUsUiUlQcQsQiQlQUcQUsQUiQUlPcPsQPcQPshfdQhQfQd">;
+                     "csilPcPsUcUsUiUlQcQsQiQlQUcQUsQUiQUlPcPsQPcQPsfdQfQd">;
 def COPY_LANE : IOpInst<"vcopy_lane", "ddidi",
-                     "csilPcPsUcUsUiUlQcQsQiQlQUcQUsQUiQUlPcPsQPcQPs", OP_COPY>;
-def COPY_LANEQ : IOpInst<"vcopy_laneq", "ggidi",
-                     "QcQsQiQlQUcQUsQUiQUlQPcQPs", OP_COPY>;
+                        "csiPcPsUcUsUiPcPsf", OP_COPY_LN>;
+def COPYQ_LANE : IOpInst<"vcopy_lane", "ddigi",
+                        "QcQsQiQlQUcQUsQUiQUlQPcQPsQfQd", OP_COPYQ_LN>;
+def COPY_LANEQ : IOpInst<"vcopy_laneq", "ddiki",
+                     "csiPcPsUcUsUif", OP_COPY_LNQ>;
+def COPYQ_LANEQ : IOpInst<"vcopy_laneq", "ddidi",
+                     "QcQsQiQlQUcQUsQUiQUlQPcQPsQfd", OP_COPY_LN>;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Set all lanes to same value
