@@ -59,8 +59,18 @@ bool GCOVFile::read(GCOVBuffer &Buffer) {
       (void)ReadGCDA;
       assert(ReadGCDA && ".gcda data does not match .gcno data");
     }
-    while (Buffer.readProgramTag())
+    if (Buffer.readObjectTag()) {
+      uint32_t Length = Buffer.readInt();
+      Buffer.readInt(); // checksum
+      Buffer.readInt(); // num
+      RunCount = Buffer.readInt();
+      Buffer.advanceCursor(Length-3);
+    }
+    while (Buffer.readProgramTag()) {
+      uint32_t Length = Buffer.readInt();
+      Buffer.advanceCursor(Length);
       ++ProgramCount;
+    }
   }
 
   return true;
@@ -79,6 +89,7 @@ void GCOVFile::collectLineCounts(FileInfo &FI) {
   for (SmallVectorImpl<GCOVFunction *>::iterator I = Functions.begin(),
          E = Functions.end(); I != E; ++I) 
     (*I)->collectLineCounts(FI);
+  FI.setRunCount(RunCount);
   FI.setProgramCount(ProgramCount);
 }
 
@@ -258,6 +269,7 @@ void FileInfo::print(raw_fd_ostream &OS, StringRef gcnoFile,
     OS << "        -:    0:Source:" << Filename << "\n";
     OS << "        -:    0:Graph:" << gcnoFile << "\n";
     OS << "        -:    0:Data:" << gcdaFile << "\n";
+    OS << "        -:    0:Runs:" << RunCount << "\n";
     OS << "        -:    0:Programs:" << ProgramCount << "\n";
     LineCounts &L = LineInfo[Filename];
     OwningPtr<MemoryBuffer> Buff;

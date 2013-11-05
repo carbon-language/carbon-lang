@@ -126,6 +126,19 @@ public:
     return true;
   }
 
+  /// readObjectTag - If cursor points to an object summary tag then increment
+  /// the cursor and return true otherwise return false.
+  bool readObjectTag() {
+    StringRef Tag = Buffer->getBuffer().slice(Cursor, Cursor+4);
+    if (Tag.empty() ||
+        Tag[0] != '\0' || Tag[1] != '\0' ||
+        Tag[2] != '\0' || Tag[3] != '\xa1') {
+      return false;
+    }
+    Cursor += 4;
+    return true;
+  }
+
   /// readProgramTag - If cursor points to a program summary tag then increment
   /// the cursor and return true otherwise return false.
   bool readProgramTag() {
@@ -163,6 +176,7 @@ public:
   }
 
   uint64_t getCursor() const { return Cursor; }
+  void advanceCursor(uint32_t n) { Cursor += n*4; }
 private:
   MemoryBuffer *Buffer;
   uint64_t Cursor;
@@ -172,13 +186,14 @@ private:
 /// (.gcno and .gcda).
 class GCOVFile {
 public:
-  GCOVFile() : Functions(), ProgramCount(0) {}
+  GCOVFile() : Functions(), RunCount(0), ProgramCount(0) {}
   ~GCOVFile();
   bool read(GCOVBuffer &Buffer);
   void dump();
   void collectLineCounts(FileInfo &FI);
 private:
   SmallVector<GCOVFunction *, 16> Functions;
+  uint32_t RunCount;
   uint32_t ProgramCount;
 };
 
@@ -234,10 +249,12 @@ public:
   void addLineCount(StringRef Filename, uint32_t Line, uint64_t Count) {
     LineInfo[Filename][Line-1] += Count;
   }
-  void setProgramCount(uint32_t PC) { ProgramCount = PC; }
+  void setRunCount(uint32_t Runs) { RunCount = Runs; }
+  void setProgramCount(uint32_t Programs) { ProgramCount = Programs; }
   void print(raw_fd_ostream &OS, StringRef gcnoFile, StringRef gcdaFile);
 private:
   StringMap<LineCounts> LineInfo;
+  uint32_t RunCount;
   uint32_t ProgramCount;
 };
 
