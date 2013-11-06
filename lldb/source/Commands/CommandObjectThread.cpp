@@ -183,24 +183,23 @@ protected:
         else if (command.GetArgumentCount() == 1 && ::strcmp (command.GetArgumentAtIndex(0), "all") == 0)
         {
             Process *process = m_exe_ctx.GetProcessPtr();
-            Mutex::Locker locker (process->GetThreadList().GetMutex());
-            uint32_t num_threads = process->GetThreadList().GetSize();
-            for (uint32_t i = 0; i < num_threads; i++)
+            uint32_t idx = 0;
+            for (ThreadSP thread_sp : process->Threads())
             {
-                ThreadSP thread_sp = process->GetThreadList().GetThreadAtIndex(i);
+                if (idx != 0)
+                    result.AppendMessage("");
+
                 if (!thread_sp->GetStatus (strm,
                                            m_options.m_start,
                                            m_options.m_count,
                                            num_frames_with_source))
                 {
-                    result.AppendErrorWithFormat ("error displaying backtrace for thread: \"0x%4.4x\"\n", i);
+                    result.AppendErrorWithFormat ("error displaying backtrace for thread: \"0x%4.4x\"\n", idx);
                     result.SetStatus (eReturnStatusFailed);
                     return false;
                 }
                 
-                if (i < num_threads - 1)
-                    result.AppendMessage("");
-                    
+                ++idx;
             }
         }
         else

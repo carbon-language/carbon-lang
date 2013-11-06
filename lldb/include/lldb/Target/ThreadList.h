@@ -14,6 +14,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/UserID.h"
+#include "lldb/Utility/Iterable.h"
 
 
 // FIXME: Currently this is a thread list with lots of functionality for use only by
@@ -69,6 +70,15 @@ public:
     // is a unique index assigned
     lldb::ThreadSP
     GetThreadAtIndex (uint32_t idx, bool can_update = true);
+    
+    typedef std::vector<lldb::ThreadSP> collection;
+    typedef LockingAdaptedIterable<collection, lldb::ThreadSP, vector_adapter> ThreadIterable;
+    
+    ThreadIterable
+    Threads ()
+    {
+        return ThreadIterable(m_threads, GetMutex());
+    }
 
     lldb::ThreadSP
     FindThreadByID (lldb::tid_t tid, bool can_update = true);
@@ -145,7 +155,6 @@ protected:
     void
     NotifySelectedThreadChanged (lldb::tid_t tid);
 
-    typedef std::vector<lldb::ThreadSP> collection;
     //------------------------------------------------------------------
     // Classes that inherit from Process can see and modify these
     //------------------------------------------------------------------

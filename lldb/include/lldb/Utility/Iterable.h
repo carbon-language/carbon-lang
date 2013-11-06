@@ -1,0 +1,225 @@
+//===-- Iterable.h ----------------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef liblldb_Iterable_h_
+#define liblldb_Iterable_h_
+
+#include "lldb/Host/Mutex.h"
+
+namespace lldb_private
+{
+    
+template <typename I, typename E> E map_adapter(I &iter)
+{
+    return iter->second;
+}
+    
+template <typename I, typename E> E vector_adapter(I &iter)
+{
+    return *iter;
+}
+    
+template <typename C, typename E, E (*A)(typename C::const_iterator &)> class AdaptedConstIterator
+{
+public:
+    typedef typename C::const_iterator BackingIterator;
+private:
+    BackingIterator m_iter;
+public:
+    // Wrapping constructor
+    AdaptedConstIterator (BackingIterator backing_iterator) :
+        m_iter(backing_iterator)
+    {
+    }
+    
+    // Default-constructible
+    AdaptedConstIterator () :
+        m_iter()
+    {
+    }
+    
+    // Copy-constructible
+    AdaptedConstIterator (const AdaptedConstIterator &rhs) :
+        m_iter(rhs.m_iter)
+    {
+    }
+    
+    // Copy-assignable
+    AdaptedConstIterator &operator= (const AdaptedConstIterator &rhs)
+    {
+        m_iter = rhs.m_iter;
+        return *this;
+    }
+    
+    // Destructible
+    ~AdaptedConstIterator () { }
+    
+    // Comparable
+    bool operator== (const AdaptedConstIterator &rhs)
+    {
+        return m_iter == rhs.m_iter;
+    }
+    
+    bool operator!= (const AdaptedConstIterator &rhs)
+    {
+        return m_iter != rhs.m_iter;
+    }
+    
+    // Rvalue dereferenceable
+    E operator* ()
+    {
+        return (*A)(m_iter);
+    }
+    
+    E operator-> ()
+    {
+        return (*A)(m_iter);
+    }
+    
+    // Offset dereferenceable
+    E operator[] (typename BackingIterator::difference_type offset)
+    {
+        return AdaptedConstIterator(m_iter + offset);
+    }
+    
+    // Incrementable
+    AdaptedConstIterator &operator++ ()
+    {
+        m_iter++;
+        return *this;
+    }
+    
+    // Decrementable
+    AdaptedConstIterator &operator-- ()
+    {
+        m_iter--;
+        return *this;
+    }
+    
+    // Compound assignment
+    AdaptedConstIterator &operator+= (typename BackingIterator::difference_type offset)
+    {
+        m_iter += offset;
+        return *this;
+    }
+    
+    AdaptedConstIterator &operator-= (typename BackingIterator::difference_type offset)
+    {
+        m_iter -= offset;
+        return *this;
+    }
+    
+    // Arithmetic
+    AdaptedConstIterator operator+ (typename BackingIterator::difference_type offset)
+    {
+        return AdaptedConstIterator(m_iter + offset);
+    }
+    
+    AdaptedConstIterator operator- (typename BackingIterator::difference_type offset)
+    {
+        return AdaptedConstIterator(m_iter - offset);
+    }
+    
+    // Comparable
+    bool operator< (AdaptedConstIterator &rhs)
+    {
+        return m_iter < rhs.m_iter;
+    }
+    
+    bool operator<= (AdaptedConstIterator &rhs)
+    {
+        return m_iter <= rhs.m_iter;
+    }
+    
+    bool operator> (AdaptedConstIterator &rhs)
+    {
+        return m_iter > rhs.m_iter;
+    }
+    
+    bool operator>= (AdaptedConstIterator &rhs)
+    {
+        return m_iter >= rhs.m_iter;
+    }
+    
+    friend AdaptedConstIterator operator+(typename BackingIterator::difference_type, AdaptedConstIterator &);
+    friend typename BackingIterator::difference_type operator-(AdaptedConstIterator &, AdaptedConstIterator &);
+    friend void swap(AdaptedConstIterator &, AdaptedConstIterator &);
+};
+    
+template <typename C, typename E, E (*A)(typename C::const_iterator &)>
+AdaptedConstIterator<C, E, A> operator+ (typename AdaptedConstIterator<C, E, A>::BackingIterator::difference_type offset, AdaptedConstIterator<C, E, A> &rhs)
+{
+    return rhs.operator+(offset);
+}
+
+template <typename C, typename E, E (*A)(typename C::const_iterator &)>
+typename AdaptedConstIterator<C, E, A>::BackingIterator::difference_type operator- (AdaptedConstIterator<C, E, A> &lhs, AdaptedConstIterator<C, E, A> &rhs)
+{
+    return(lhs.m_iter - rhs.m_iter);
+}
+
+template <typename C, typename E, E (*A)(typename C::const_iterator &)>
+void swap (AdaptedConstIterator<C, E, A> &lhs, AdaptedConstIterator<C, E, A> &rhs)
+{
+    std::swap(lhs.m_iter, rhs.m_iter);
+}
+    
+template <typename C, typename E, E (*A)(typename C::const_iterator &)> class AdaptedIterable
+{
+private:
+    const C &m_container;
+public:
+    AdaptedIterable (const C &container) :
+        m_container(container)
+    {
+    }
+    
+    AdaptedConstIterator<C, E, A> begin ()
+    {
+        return AdaptedConstIterator<C, E, A>(m_container.begin());
+    }
+    
+    AdaptedConstIterator<C, E, A> end ()
+    {
+        return AdaptedConstIterator<C, E, A>(m_container.end());
+    }
+};
+    
+template <typename C, typename E, E (*A)(typename C::const_iterator &)> class LockingAdaptedIterable : public AdaptedIterable<C, E, A>
+{
+private:
+    Mutex *m_mutex = nullptr;
+public:
+    LockingAdaptedIterable (C &container, Mutex &mutex) :
+        AdaptedIterable<C,E,A>(container),
+        m_mutex(&mutex)
+    {
+        m_mutex->Lock();
+    }
+    
+    LockingAdaptedIterable (LockingAdaptedIterable &&rhs) :
+        AdaptedIterable<C,E,A>(rhs),
+        m_mutex(rhs.m_mutex)
+    {
+        rhs.m_mutex = NULL;
+    }
+    
+    ~LockingAdaptedIterable ()
+    {
+        if (m_mutex)
+            m_mutex->Unlock();
+    }
+    
+private:
+    DISALLOW_COPY_AND_ASSIGN(LockingAdaptedIterable);
+};
+    
+}
+
+#endif

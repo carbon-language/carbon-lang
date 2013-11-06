@@ -1796,10 +1796,8 @@ LookupTypeInModule (CommandInterpreter &interpreter,
             strm.Printf("%zu match%s found in ", num_matches, num_matches > 1 ? "es" : "");
             DumpFullpath (strm, &module->GetFileSpec(), 0);
             strm.PutCString(":\n");
-            const uint32_t num_types = type_list.GetSize();
-            for (uint32_t i=0; i<num_types; ++i)
+            for (TypeSP type_sp : type_list.Types())
             {
-                TypeSP type_sp (type_list.GetTypeAtIndex(i));
                 if (type_sp)
                 {
                     // Resolve the clang type so that any forward references

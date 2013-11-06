@@ -3305,6 +3305,12 @@ public:
         return m_thread_list;
     }
     
+    ThreadList::ThreadIterable
+    Threads ()
+    {
+        return m_thread_list.Threads();
+    }
+    
     uint32_t
     GetNextThreadIndexID (uint64_t thread_id);
     
