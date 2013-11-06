@@ -5,7 +5,7 @@
 // We do *not* want to report init-order bug in this case.
 
 // RUN: %clangxx_asan -O0 %s %p/Helpers/init-order-atexit-extra.cc -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true:strict_init_order=true not %t 2>&1 | FileCheck %s
+// RUN: ASAN_OPTIONS=strict_init_order=true not %t 2>&1 | FileCheck %s
 
 #include <stdio.h>
 #include <stdlib.h>

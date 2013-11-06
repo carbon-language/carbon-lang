@@ -12,7 +12,7 @@
 // FIXME: find a better solution.
 // RUN: %clangxx_asan -O0 %s -o %t -Wl,--export-dynamic || \
 // RUN:     %clangxx_asan -O0 %s -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true:strict_init_order=true %t 2>&1 | FileCheck %s
+// RUN: ASAN_OPTIONS=strict_init_order=true %t 2>&1 | FileCheck %s
 #include <dlfcn.h>
 #include <pthread.h>
 #include <stdio.h>

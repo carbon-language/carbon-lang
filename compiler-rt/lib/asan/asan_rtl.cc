@@ -148,7 +148,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->redzone = 16;
   f->debug = false;
   f->report_globals = 1;
-  f->check_initialization_order = true;
+  f->check_initialization_order = false;
   f->replace_str = true;
   f->replace_intrin = true;
   f->mac_ignore_invalid_free = false;
@@ -199,6 +199,12 @@ void InitializeFlags(Flags *f, const char *env) {
     cf->detect_leaks = false;
   }
 #endif
+
+  // Make "strict_init_order" imply "check_initialization_order".
+  // TODO(samsonov): Use a single runtime flag for an init-order checker.
+  if (f->strict_init_order) {
+    f->check_initialization_order = true;
+  }
 }
 
 // -------------------------- Globals --------------------- {{{1

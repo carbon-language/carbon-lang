@@ -2,7 +2,7 @@
 // called.
 
 // RUN: %clangxx_asan %s %p/Helpers/init-order-pthread-create-extra.cc -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true:strict_init_order=true %t
+// RUN: ASAN_OPTIONS=strict_init_order=true %t
 
 #include <stdio.h>
 #include <pthread.h>
