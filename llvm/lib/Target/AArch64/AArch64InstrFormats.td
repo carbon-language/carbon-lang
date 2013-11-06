@@ -1001,6 +1001,24 @@ class NeonI_BitExtract<bit q, bits<2> op2,
   // Inherit Rd in 4-0
 }
 
+// Format AdvSIMD perm
+class NeonI_Perm<bit q, bits<2> size, bits<3> opcode,
+                 dag outs, dag ins, string asmstr,
+                 list<dag> patterns, InstrItinClass itin>
+  : A64InstRdnm<outs, ins, asmstr, patterns, itin> {
+  let Inst{31} = 0b0;
+  let Inst{30} = q;
+  let Inst{29-24} = 0b001110;
+  let Inst{23-22} = size;
+  let Inst{21} = 0b0;
+  // Inherit Rm in 20-16
+  let Inst{15} = 0b0;
+  let Inst{14-12} = opcode;
+  let Inst{11-10} = 0b10;
+  // Inherit Rn in 9-5
+  // Inherit Rd in 4-0
+}
+
 // Format AdvSIMD 3 vector registers with same vector type
 class NeonI_3VSame<bit q, bit u, bits<2> size, bits<5> opcode,
                    dag outs, dag ins, string asmstr,
