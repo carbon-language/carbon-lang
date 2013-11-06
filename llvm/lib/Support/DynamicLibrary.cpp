@@ -19,6 +19,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Mutex.h"
+#include "llvm-c/Core.h"
 #include <cstdio>
 #include <cstring>
 
@@ -169,3 +170,11 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char *symbolName) {
 }
 
 #endif // LLVM_ON_WIN32
+
+//===----------------------------------------------------------------------===//
+// C API.
+//===----------------------------------------------------------------------===//
+
+LLVMBool LLVMLoadLibraryPermanently(const char* Filename) {
+  return sys::DynamicLibrary::LoadLibraryPermanently(Filename);
+}
