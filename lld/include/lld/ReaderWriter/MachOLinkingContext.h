@@ -147,7 +147,7 @@ private:
   };
 
   static ArchInfo _s_archInfos[];
-  const uint64_t unspecifiedPageZeroSize = UINT64_MAX;
+  static const uint64_t unspecifiedPageZeroSize = UINT64_MAX;
 
   HeaderFileType _outputFileType;   // e.g MH_EXECUTE
   bool _outputFileTypeStatic; // Disambiguate static vs dynamic prog
