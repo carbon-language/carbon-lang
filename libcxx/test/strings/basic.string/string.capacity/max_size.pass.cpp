@@ -18,15 +18,45 @@
 
 template <class S>
 void
+test1(const S& s)
+{
+    S s2(s);
+    const size_t sz = s2.max_size() - 1;
+    try { s2.resize(sz, 'x'); }
+    catch ( const std::bad_alloc & ) { return ; }
+    assert ( s2.size() ==  sz );
+}
+
+template <class S>
+void
+test2(const S& s)
+{
+    S s2(s);
+    const size_t sz = s2.max_size();
+    try { s2.resize(sz, 'x'); }
+    catch ( const std::bad_alloc & ) { return ; }
+    assert ( s.size() ==  sz );
+}
+
+template <class S>
+void
+test3(const S& s)
+{
+    S s2(s);
+    const size_t sz = s2.max_size() + 1;
+    try { s2.resize(sz, 'x'); }
+    catch ( const std::length_error & ) { return ; }
+    assert ( false );
+}
+
+template <class S>
+void
 test(const S& s)
 {
     assert(s.max_size() >= s.size());
-    {
-    S s2;
-    try { s2.resize(s2.max_size() - 1, 'x'); }
-    catch ( const std::bad_alloc & ) { return ; }
-    assert ( false );
-    }
+    test1(s);
+    test2(s);
+    test3(s);
 }
 
 int main()
