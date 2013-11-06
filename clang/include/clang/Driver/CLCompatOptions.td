@@ -27,7 +27,7 @@ class CLCompileFlag<string name> : Option<["/", "-"], name, KIND_FLAG>,
   Group<cl_compile_Group>, Flags<[CLOption, DriverOption]>;
 
 class CLIgnoredFlag<string name> : Option<["/", "-"], name, KIND_FLAG>,
-  Group<cl_ignored_Group>, Flags<[CLOption, DriverOption]>;
+  Group<cl_ignored_Group>, Flags<[CLOption, DriverOption, HelpHidden]>;
 
 class CLJoined<string name> : Option<["/", "-"], name, KIND_JOINED>,
   Group<cl_Group>, Flags<[CLOption, DriverOption]>;
