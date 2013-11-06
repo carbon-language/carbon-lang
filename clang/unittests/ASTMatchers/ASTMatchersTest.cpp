@@ -659,6 +659,7 @@ public:
   }
 
   virtual bool run(const BoundNodes *Nodes) {
+    const BoundNodes::IDToNodeMap &M = Nodes->getMap();
     if (Nodes->getNodeAs<T>(Id)) {
       ++Count;
       if (const NamedDecl *Named = Nodes->getNodeAs<NamedDecl>(Id)) {
@@ -668,8 +669,13 @@ public:
         llvm::raw_string_ostream OS(Name);
         NNS->print(OS, PrintingPolicy(LangOptions()));
       }
+      BoundNodes::IDToNodeMap::const_iterator I = M.find(Id);
+      EXPECT_NE(M.end(), I);
+      if (I != M.end())
+        EXPECT_EQ(Nodes->getNodeAs<T>(Id), I->second.get<T>());
       return true;
     }
+    EXPECT_TRUE(M.count(Id) == 0 || M.find(Id)->second.template get<T>() == 0);
     return false;
   }
 

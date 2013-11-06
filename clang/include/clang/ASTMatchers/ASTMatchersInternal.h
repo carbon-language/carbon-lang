@@ -98,7 +98,6 @@ public:
     return NodeMap < Other.NodeMap;
   }
 
-private:
   /// \brief A map from IDs to the bound nodes.
   ///
   /// Note that we're using std::map here, as for memoization:
@@ -106,6 +105,11 @@ private:
   /// - we need an assignment operator
   typedef std::map<std::string, ast_type_traits::DynTypedNode> IDToNodeMap;
 
+  const IDToNodeMap &getMap() const {
+    return NodeMap;
+  }
+
+private:
   IDToNodeMap NodeMap;
 };
 
