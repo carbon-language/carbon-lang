@@ -198,9 +198,7 @@ public:
   virtual MVT getScalarShiftAmountTy(EVT LHSTy) const LLVM_OVERRIDE {
     return MVT::i32;
   }
-  virtual EVT getSetCCResultType(LLVMContext &, EVT) const LLVM_OVERRIDE {
-    return MVT::i32;
-  }
+  virtual EVT getSetCCResultType(LLVMContext &, EVT) const LLVM_OVERRIDE;
   virtual bool isFMAFasterThanFMulAndFAdd(EVT VT) const LLVM_OVERRIDE;
   virtual bool isFPImmLegal(const APFloat &Imm, EVT VT) const LLVM_OVERRIDE;
   virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty) const

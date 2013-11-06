@@ -279,8 +279,13 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
   MaxStoresPerMemsetOptSize = 0;
 }
 
-bool
-SystemZTargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
+EVT SystemZTargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
+  if (!VT.isVector())
+    return MVT::i32;
+  return VT.changeVectorElementTypeToInteger();
+}
+
+bool SystemZTargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
   VT = VT.getScalarType();
 
   if (!VT.isSimple())
