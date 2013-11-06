@@ -144,6 +144,9 @@ namespace AArch64ISD {
     // Vector dup by lane
     NEON_VDUPLANE,
 
+    // Vector extract
+    NEON_VEXTRACT,
+
     // NEON loads with post-increment base updates:
     NEON_LD1_UPD = ISD::FIRST_TARGET_MEMORY_OPCODE,
     NEON_LD2_UPD,

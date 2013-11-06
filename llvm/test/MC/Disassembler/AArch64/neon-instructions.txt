@@ -2042,3 +2042,12 @@ G# RUN: llvm-mc  -triple aarch64-none-linux-gnu -mattr=+neon -disassemble < %s |
 0x00,0x80,0x81,0x4c
 0xef,0x45,0x82,0x4c
 0xff,0x0b,0x9f,0x4c
+
+#----------------------------------------------------------------------
+# Bitwise extract
+#----------------------------------------------------------------------
+0x20,0x18,0x02,0x2e
+0x20,0x18,0x02,0x6e
+# CHECK: ext v0.8b, v1.8b, v2.8b, #0x3
+# CHECK: ext v0.16b, v1.16b, v2.16b, #0x3
+

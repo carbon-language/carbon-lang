@@ -5194,3 +5194,44 @@
 // CHECK:  error: invalid operand for instruction
 // CHECK:         sha256su1 v0.16b, v1.16b, v2.16b
 // CHECK:                      ^
+
+//----------------------------------------------------------------------
+// Bitwise extract
+//----------------------------------------------------------------------
+
+        ext v0.8b, v1.8b, v2.4h, #0x3
+        ext v0.4h, v1.4h, v2.4h, #0x3
+        ext v0.2s, v1.2s, v2.2s, #0x1
+        ext v0.1d, v1.1d, v2.1d, #0x0
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ext v0.8b, v1.8b, v2.4h, #0x3
+// CHECK-ERROR:                              ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ext v0.4h, v1.4h, v2.4h, #0x3
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ext v0.2s, v1.2s, v2.2s, #0x1
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ext v0.1d, v1.1d, v2.1d, #0x0
+// CHECK-ERROR:                ^
+
+        ext v0.16b, v1.16b, v2.8h, #0x3
+        ext v0.8h, v1.8h, v2.8h, #0x3
+        ext v0.4s, v1.4s, v2.4s, #0x1
+        ext v0.2d, v1.2d, v2.2d, #0x0
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ext v0.16b, v1.16b, v2.8h, #0x3
+// CHECK-ERROR:                                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ext v0.8h, v1.8h, v2.8h, #0x3
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ext v0.4s, v1.4s, v2.4s, #0x1
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ext v0.2d, v1.2d, v2.2d, #0x0
+// CHECK-ERROR:                ^
+

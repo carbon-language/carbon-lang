@@ -462,8 +462,8 @@ void AArch64InstPrinter::printNeonUImm0Operand(const MCInst *MI, unsigned OpNum,
   o << "#0x0";
 }
 
-void AArch64InstPrinter::printNeonUImm8Operand(const MCInst *MI, unsigned OpNum,
-                                               raw_ostream &O) {
+void AArch64InstPrinter::printUImmHexOperand(const MCInst *MI, unsigned OpNum,
+                                             raw_ostream &O) {
   const MCOperand &MOUImm = MI->getOperand(OpNum);
 
   assert(MOUImm.isImm() &&
@@ -475,9 +475,9 @@ void AArch64InstPrinter::printNeonUImm8Operand(const MCInst *MI, unsigned OpNum,
   O.write_hex(Imm);
 }
 
-void AArch64InstPrinter::printNeonUImm8OperandBare(const MCInst *MI,
-                                               unsigned OpNum,
-                                               raw_ostream &O) {
+void AArch64InstPrinter::printUImmBareOperand(const MCInst *MI,
+                                              unsigned OpNum,
+                                              raw_ostream &O) {
   const MCOperand &MOUImm = MI->getOperand(OpNum);
 
   assert(MOUImm.isImm()
