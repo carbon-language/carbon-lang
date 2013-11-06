@@ -146,6 +146,42 @@ static inline LLVMBool LLVMInitializeNativeTarget(void) {
 #endif
 }
 
+/** LLVMInitializeNativeTargetAsmParser - The main program should call this
+    function to initialize the parser for the native target corresponding to the
+    host. */
+static inline LLVMBool LLVMInitializeNativeTargetAsmParser(void) {
+#ifdef LLVM_NATIVE_TARGET
+  LLVM_NATIVE_ASMPARSER();
+  return 0;
+#else
+  return 1;
+#endif
+}
+
+/** LLVMInitializeNativeTargetAsmPrinter - The main program should call this
+    function to initialize the printer for the native target corresponding to
+    the host. */
+static inline LLVMBool LLVMInitializeNativeTargetAsmPrinter(void) {
+#ifdef LLVM_NATIVE_TARGET
+  LLVM_NATIVE_ASMPRINTER();
+  return 0;
+#else
+  return 1;
+#endif
+}
+
+/** LLVMInitializeNativeTargetDisassembler - The main program should call this
+    function to initialize the disassembler for the native target corresponding
+    to the host. */
+static inline LLVMBool LLVMInitializeNativeTargetDisassembler(void) {
+#ifdef LLVM_NATIVE_TARGET
+  LLVM_NATIVE_DISASSEMBLER();
+  return 0;
+#else
+  return 1;
+#endif
+}
+
 /*===-- Target Data -------------------------------------------------------===*/
 
 /** Creates target data from a target layout string.
