@@ -2497,6 +2497,10 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   // AArch64 builtins mapping to legacy ARM v7 builtins.
   // FIXME: the mapped builtins listed correspond to what has been tested
   // in aarch64-neon-intrinsics.c so far.
+  case AArch64::BI__builtin_neon_vext_v:
+    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vext_v, E);
+  case AArch64::BI__builtin_neon_vextq_v:
+    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vextq_v, E);
   case AArch64::BI__builtin_neon_vmul_v:
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vmul_v, E);
   case AArch64::BI__builtin_neon_vmulq_v:

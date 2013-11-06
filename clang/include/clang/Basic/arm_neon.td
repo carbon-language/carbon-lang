@@ -767,6 +767,11 @@ def VMINV   : SInst<"vminv", "sd", "csiUcUsUiQcQsQiQUcQUsQUiQf">;
 def VADDV   : SInst<"vaddv", "sd", "csiUcUsUiQcQsQiQUcQUsQUi">;
 def FMAXNMV : SInst<"vmaxnmv", "sd", "Qf">;
 def FMINNMV : SInst<"vminnmv", "sd", "Qf">;
+ 
+////////////////////////////////////////////////////////////////////////////////
+// Newly added Vector Extract for f64
+def VEXT_A64 : WInst<"vext", "dddi",
+                     "cUcPcsUsPsiUilUlfdQcQUcQPcQsQUsQPsQiQUiQlQUlQfQd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Crypto
