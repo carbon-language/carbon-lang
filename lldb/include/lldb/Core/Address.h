@@ -540,6 +540,18 @@ protected:
     //------------------------------------------------------------------
     lldb::SectionWP m_section_wp;   ///< The section for the address, can be NULL.
     std::atomic<lldb::addr_t> m_offset;      ///< Offset into section if \a m_section_wp is valid...
+    
+    //------------------------------------------------------------------
+    // Returns true if the m_section_wp once had a reference to a valid
+    // section shared pointer, but no longer does. This can happen if
+    // we have an address from a module that gets unloaded and deleted.
+    // This function should only be called if GetSection() returns an
+    // empty shared pointer and you want to know if this address used to
+    // have a valid section.
+    //------------------------------------------------------------------
+    bool
+    SectionWasDeleted() const;
+
 };
 
 

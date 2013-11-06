@@ -280,6 +280,12 @@ Address::GetFileAddress () const
         // address by adding the file base address to our offset
         return sect_file_addr + m_offset;
     }
+    else if (SectionWasDeleted())
+    {
+        // Used to have a valid section but it got deleted so the
+        // offset doesn't mean anything without the section
+        return LLDB_INVALID_ADDRESS;
+    }
     // No section, we just return the offset since it is the value in this case
     return m_offset;
 }
@@ -288,25 +294,33 @@ addr_t
 Address::GetLoadAddress (Target *target) const
 {
     SectionSP section_sp (GetSection());
-    if (!section_sp)
+    if (section_sp)
     {
-        // No section, we just return the offset since it is the value in this case
-        return m_offset;
-    }
-    
-    if (target)
-    {
-        addr_t sect_load_addr = section_sp->GetLoadBaseAddress (target);
-
-        if (sect_load_addr != LLDB_INVALID_ADDRESS)
+        if (target)
         {
-            // We have a valid file range, so we can return the file based
-            // address by adding the file base address to our offset
-            return sect_load_addr + m_offset;
+            addr_t sect_load_addr = section_sp->GetLoadBaseAddress (target);
+
+            if (sect_load_addr != LLDB_INVALID_ADDRESS)
+            {
+                // We have a valid file range, so we can return the file based
+                // address by adding the file base address to our offset
+                return sect_load_addr + m_offset;
+            }
         }
     }
-    // The section isn't resolved or no process was supplied so we can't
-    // return a valid file address.
+    else if (SectionWasDeleted())
+    {
+        // Used to have a valid section but it got deleted so the
+        // offset doesn't mean anything without the section
+        return LLDB_INVALID_ADDRESS;
+    }
+    else
+    {
+        // We don't have a section so the offset is the load address
+        return m_offset;
+    }
+    // The section isn't resolved or an invalid target was passed in
+    // so we can't return a valid load address.
     return LLDB_INVALID_ADDRESS;
 }
 
@@ -764,6 +778,19 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
     }
 
     return true;
+}
+
+bool
+Address::SectionWasDeleted() const
+{
+    lldb::SectionWP empty_section_wp;
+
+    // If either call to "std::weak_ptr::owner_before(...) value returns true, this
+    // indicates that m_section_wp once contained (possibly still does) a reference
+    // to a valid shared pointer. This helps us know if we had a valid reference to
+    // a section which is now invalid because the module it was in was unloaded/deleted,
+    // or if the address doesn't have a valid reference to a section.
+    return empty_section_wp.owner_before(m_section_wp) || m_section_wp.owner_before(empty_section_wp);
 }
 
 uint32_t
