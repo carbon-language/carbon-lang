@@ -32,5 +32,5 @@ shared-library-atoms:
 ...
 
 # CHECK:	{{[0-9a-f]+}} T _main
-# CHECK:	00000000 u _printf
-# CHECK:	00000000 u dyld_stub_binder
+# CHECK:	00000000 U _printf
+# CHECK:	00000000 U dyld_stub_binder

@@ -1,5 +1,7 @@
 
 add_lld_unittest(lldMachOTests
+  MachONormalizedFileBinaryReaderTests.cpp
+  MachONormalizedFileBinaryWriterTests.cpp
   MachONormalizedFileYAMLTests.cpp
   )
 
