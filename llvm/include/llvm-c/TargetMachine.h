@@ -62,6 +62,16 @@ LLVMTargetRef LLVMGetFirstTarget(void);
 LLVMTargetRef LLVMGetNextTarget(LLVMTargetRef T);
 
 /*===-- Target ------------------------------------------------------------===*/
+/** Finds the target corresponding to the given name and stores it in \p T. 
+  Returns 0 on success. */
+LLVMBool LLVMGetTargetFromName(const char *Name, LLVMTargetRef *T);
+
+/** Finds the target corresponding to the given triple and stores it in \p T.
+  Returns 0 on success. Optionally returns any error in ErrorMessage.
+  Use LLVMDisposeMessage to dispose the message. */
+LLVMBool LLVMGetTargetFromTriple(const char* Triple, LLVMTargetRef *T,
+                                 char **ErrorMessage);
+
 /** Returns the name of a target. See llvm::Target::getName */
 const char *LLVMGetTargetName(LLVMTargetRef T);
 
@@ -108,6 +118,10 @@ char *LLVMGetTargetMachineFeatureString(LLVMTargetMachineRef T);
 /** Returns the llvm::DataLayout used for this llvm:TargetMachine. */
 LLVMTargetDataRef LLVMGetTargetMachineData(LLVMTargetMachineRef T);
 
+/** Set the target machine's ASM verbosity. */
+void LLVMSetTargetMachineAsmVerbosity(LLVMTargetMachineRef T,
+                                      LLVMBool VerboseAsm);
+
 /** Emits an asm or object file for the given module to the filename. This
   wraps several c++ only classes (among them a file stream). Returns any
   error in ErrorMessage. Use LLVMDisposeMessage to dispose the message. */
@@ -117,6 +131,12 @@ LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M,
 /** Compile the LLVM IR stored in \p M and store the result in \p OutMemBuf. */
 LLVMBool LLVMTargetMachineEmitToMemoryBuffer(LLVMTargetMachineRef T, LLVMModuleRef M,
   LLVMCodeGenFileType codegen, char** ErrorMessage, LLVMMemoryBufferRef *OutMemBuf);
+
+/*===-- Triple ------------------------------------------------------------===*/
+/** Get a triple for the host machine as a string. The result needs to be
+  disposed with LLVMDisposeMessage. */
+char* LLVMGetDefaultTargetTriple(void);
+
 #ifdef __cplusplus
 }
 #endif

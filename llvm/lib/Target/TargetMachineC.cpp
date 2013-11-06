@@ -21,6 +21,7 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Host.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cassert>
 #include <cstdlib>
@@ -69,6 +70,35 @@ LLVMTargetRef LLVMGetFirstTarget() {
 }
 LLVMTargetRef LLVMGetNextTarget(LLVMTargetRef T) {
   return wrap(unwrap(T)->getNext());
+}
+
+LLVMBool LLVMGetTargetFromName(const char *Name, LLVMTargetRef *T) {
+  for (TargetRegistry::iterator IT = TargetRegistry::begin(),
+                                IE = TargetRegistry::end(); IT != IE; ++IT) {
+    if (IT->getName() == Name) {
+      *T = wrap(&*IT);
+
+      return 0;
+    }
+  }
+  
+  return 1;
+}
+
+LLVMBool LLVMGetTargetFromTriple(const char* TripleStr, LLVMTargetRef *T,
+                                 char **ErrorMessage) {
+  std::string Error;
+  
+  *T = wrap(TargetRegistry::lookupTarget(TripleStr, Error));
+  
+  if (!*T) {
+    if (ErrorMessage)
+      *ErrorMessage = strdup(Error.c_str());
+
+    return 1;
+  }
+  
+  return 0;
 }
 
 const char * LLVMGetTargetName(LLVMTargetRef T) {
@@ -162,6 +192,11 @@ LLVMTargetDataRef LLVMGetTargetMachineData(LLVMTargetMachineRef T) {
   return wrap(unwrap(T)->getDataLayout());
 }
 
+void LLVMSetTargetMachineAsmVerbosity(LLVMTargetMachineRef T,
+                                      LLVMBool VerboseAsm) {
+  unwrap(T)->setAsmVerbosityDefault(VerboseAsm);
+}
+
 static LLVMBool LLVMTargetMachineEmit(LLVMTargetMachineRef T, LLVMModuleRef M,
   formatted_raw_ostream &OS, LLVMCodeGenFileType codegen, char **ErrorMessage) {
   TargetMachine* TM = unwrap(T);
@@ -228,4 +263,8 @@ LLVMBool LLVMTargetMachineEmitToMemoryBuffer(LLVMTargetMachineRef T,
   *OutMemBuf = LLVMCreateMemoryBufferWithMemoryRangeCopy(Data.c_str(),
                                                      Data.length(), "");
   return Result;
+}
+
+char *LLVMGetDefaultTargetTriple(void) {
+  return strdup(sys::getDefaultTargetTriple().c_str());
 }
