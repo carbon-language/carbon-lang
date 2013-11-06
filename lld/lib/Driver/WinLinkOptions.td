@@ -31,6 +31,7 @@ def stack   : P<"stack", "Size of the stack">;
 def machine : P<"machine", "Specify target platform">;
 def version : P<"version", "Specify a version number in the PE header">;
 def merge   : P<"merge", "Combine sections">;
+def section : P<"section", "Specify section attributes">;
 def subsystem : P<"subsystem", "Specify subsystem">;
 
 def manifest : F<"manifest">;

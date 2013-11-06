@@ -15,6 +15,7 @@
 #include "DriverTest.h"
 
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/Support/COFF.h"
 
 #include <vector>
@@ -218,6 +219,37 @@ TEST_F(WinLinkParserTest, InvalidHeapSize) {
 TEST_F(WinLinkParserTest, SectionAlignment) {
   EXPECT_TRUE(parse("link.exe", "/align:8192", "a.obj", nullptr));
   EXPECT_EQ(8192U, _context.getSectionAlignment());
+}
+
+TEST_F(WinLinkParserTest, Section) {
+  EXPECT_TRUE(parse("link.exe", "/section:.teXT,dekpRSW", "a.obj", nullptr));
+  uint32_t expect = llvm::COFF::IMAGE_SCN_MEM_DISCARDABLE |
+      llvm::COFF::IMAGE_SCN_MEM_NOT_CACHED |
+      llvm::COFF::IMAGE_SCN_MEM_NOT_PAGED |
+      llvm::COFF::IMAGE_SCN_MEM_SHARED |
+      llvm::COFF::IMAGE_SCN_MEM_EXECUTE |
+      llvm::COFF::IMAGE_SCN_MEM_READ |
+      llvm::COFF::IMAGE_SCN_MEM_WRITE;
+  llvm::Optional<uint32_t> val = _context.getSectionAttributes(".teXT");
+  EXPECT_TRUE(val.hasValue());
+  EXPECT_EQ(expect, *val);
+
+  EXPECT_EQ(0U, _context.getSectionAttributeMask(".teXT"));
+}
+
+TEST_F(WinLinkParserTest, SectionNegative) {
+  EXPECT_TRUE(parse("link.exe", "/section:.teXT,!dekpRSW", "a.obj", nullptr));
+  llvm::Optional<uint32_t> val = _context.getSectionAttributes(".teXT");
+  EXPECT_FALSE(val.hasValue());
+
+  uint32_t expect = llvm::COFF::IMAGE_SCN_MEM_DISCARDABLE |
+      llvm::COFF::IMAGE_SCN_MEM_NOT_CACHED |
+      llvm::COFF::IMAGE_SCN_MEM_NOT_PAGED |
+      llvm::COFF::IMAGE_SCN_MEM_SHARED |
+      llvm::COFF::IMAGE_SCN_MEM_EXECUTE |
+      llvm::COFF::IMAGE_SCN_MEM_READ |
+      llvm::COFF::IMAGE_SCN_MEM_WRITE;
+  EXPECT_EQ(expect, _context.getSectionAttributeMask(".teXT"));
 }
 
 TEST_F(WinLinkParserTest, InvalidAlignment) {

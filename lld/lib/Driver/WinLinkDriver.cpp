@@ -13,6 +13,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include <cctype>
 #include <sstream>
 #include <map>
 
@@ -147,6 +148,59 @@ llvm::COFF::MachineTypes stringToMachineType(StringRef str) {
       .Case("x64", llvm::COFF::IMAGE_FILE_MACHINE_AMD64)
       .Case("x86", llvm::COFF::IMAGE_FILE_MACHINE_I386)
       .Default(llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN);
+}
+
+// Parse /section:name,[[!]{DEKPRSW}]
+//
+// /section option is to set non-default bits in the Characteristics fields of
+// the section header. D, E, K, P, R, S, and W represent discardable,
+// not_cachable, not_pageable, shared, execute, read, and write bits,
+// respectively. You can specify multiple flags in one /section option.
+//
+// If the flag starts with "!", the flags represent a mask that should be turned
+// off regardless of the default value. You can even create a section which is
+// not readable, writable nor executable with this -- although it's probably
+// useless.
+bool parseSection(StringRef option, std::string &section,
+                  llvm::Optional<uint32_t> &flags,
+                  llvm::Optional<uint32_t> &mask) {
+  StringRef flagString;
+  llvm::tie(section, flagString) = option.split(",");
+
+  bool negative = false;
+  if (flagString.startswith("!")) {
+    negative = true;
+    flagString = flagString.substr(1);
+  }
+  if (flagString.empty())
+    return false;
+
+  uint32_t attribs = 0;
+  for (size_t i = 0, e = flagString.size(); i < e; ++i) {
+    switch (tolower(flagString[i])) {
+#define CASE(c, flag)                           \
+    case c:                                     \
+      attribs |= flag;                          \
+      break
+    CASE('d', llvm::COFF::IMAGE_SCN_MEM_DISCARDABLE);
+    CASE('e', llvm::COFF::IMAGE_SCN_MEM_NOT_CACHED);
+    CASE('k', llvm::COFF::IMAGE_SCN_MEM_NOT_PAGED);
+    CASE('p', llvm::COFF::IMAGE_SCN_MEM_SHARED);
+    CASE('r', llvm::COFF::IMAGE_SCN_MEM_EXECUTE);
+    CASE('s', llvm::COFF::IMAGE_SCN_MEM_READ);
+    CASE('w', llvm::COFF::IMAGE_SCN_MEM_WRITE);
+#undef CASE
+    default:
+      return false;
+    }
+  }
+
+  if (negative) {
+    mask = attribs;
+  } else {
+    flags = attribs;
+  }
+  return true;
 }
 
 // Parse /manifest:EMBED[,ID=#]|NO.
@@ -655,6 +709,22 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
         return false;
       }
       ctx.setSubsystem(subsystem);
+      break;
+    }
+
+    case OPT_section: {
+      // Parse /section:name,[[!]{DEKPRSW}]
+      std::string section;
+      llvm::Optional<uint32_t> flags, mask;
+      if (!parseSection(inputArg->getValue(), section, flags, mask)) {
+        diagnostics << "Unknown argument for /section: "
+                    << inputArg->getValue() << "\n";
+        return false;
+      }
+      if (flags.hasValue())
+        ctx.setSectionAttributes(section, *flags);
+      if (mask.hasValue())
+        ctx.setSectionAttributeMask(section, *mask);
       break;
     }
 

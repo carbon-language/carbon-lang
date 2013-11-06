@@ -18,6 +18,7 @@
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
 
+#include "llvm/ADT/Optional.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -205,6 +206,26 @@ public:
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
+  void setSectionAttributes(StringRef sectionName, uint32_t flags) {
+    _sectionAttributes[sectionName] = flags;
+  }
+
+  llvm::Optional<uint32_t> getSectionAttributes(StringRef sectionName) const {
+    auto it = _sectionAttributes.find(sectionName);
+    if (it == _sectionAttributes.end())
+      return llvm::None;
+    return it->second;
+  }
+
+  void setSectionAttributeMask(StringRef sectionName, uint32_t flags) {
+    _sectionAttributeMask[sectionName] = flags;
+  }
+
+  uint32_t getSectionAttributeMask(StringRef sectionName) const {
+    auto it = _sectionAttributeMask.find(sectionName);
+    return it == _sectionAttributeMask.end() ? 0 : it->second;
+  }
+
   StringRef allocateString(StringRef ref) const {
     char *x = _allocator.Allocate<char>(ref.size() + 1);
     memcpy(x, ref.data(), ref.size());
@@ -274,6 +295,15 @@ private:
   // whose value is .rdata -> .text, the section contens of .rdata will be
   // merged to .text in the resulting executable.
   std::map<std::string, std::string> _renamedSections;
+
+  // Section attributes specified by /section option. The uint32_t value will be
+  // copied to the Characteristics field of the section header.
+  std::map<std::string, uint32_t> _sectionAttributes;
+
+  // Section attributes specified by /section option in conjunction with the
+  // negative flag "!". The uint32_t value is a mask of section attributes that
+  // should be disabled.
+  std::map<std::string, uint32_t> _sectionAttributeMask;
 
   // List of files that will be removed on destruction.
   std::vector<std::unique_ptr<llvm::FileRemover> > _tempFiles;
