@@ -48,7 +48,7 @@ namespace __sanitizer {
   unsigned iocb_cmd_pread = IOCB_CMD_PREAD;
   unsigned iocb_cmd_pwrite = IOCB_CMD_PWRITE;
 
-#ifndef _LP64
+#if !defined(_LP64) && !defined(__x86_64__)
   unsigned struct_kernel_stat64_sz = sizeof(struct stat64);
 #else
   unsigned struct_kernel_stat64_sz = 0;

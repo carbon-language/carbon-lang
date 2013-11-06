@@ -79,14 +79,15 @@ namespace __sanitizer {
 uptr internal_mmap(void *addr, uptr length, int prot, int flags,
                     int fd, u64 offset) {
 #if SANITIZER_LINUX_USES_64BIT_SYSCALLS
-  return internal_syscall(__NR_mmap, addr, length, prot, flags, fd, offset);
+  return internal_syscall(__NR_mmap, (uptr)addr, length, prot, flags, fd,
+                          offset);
 #else
   return internal_syscall(__NR_mmap2, addr, length, prot, flags, fd, offset);
 #endif
 }
 
 uptr internal_munmap(void *addr, uptr length) {
-  return internal_syscall(__NR_munmap, addr, length);
+  return internal_syscall(__NR_munmap, (uptr)addr, length);
 }
 
 uptr internal_close(fd_t fd) {
@@ -94,11 +95,11 @@ uptr internal_close(fd_t fd) {
 }
 
 uptr internal_open(const char *filename, int flags) {
-  return internal_syscall(__NR_open, filename, flags);
+  return internal_syscall(__NR_open, (uptr)filename, flags);
 }
 
 uptr internal_open(const char *filename, int flags, u32 mode) {
-  return internal_syscall(__NR_open, filename, flags, mode);
+  return internal_syscall(__NR_open, (uptr)filename, flags, mode);
 }
 
 uptr OpenFile(const char *filename, bool write) {
@@ -108,13 +109,13 @@ uptr OpenFile(const char *filename, bool write) {
 
 uptr internal_read(fd_t fd, void *buf, uptr count) {
   sptr res;
-  HANDLE_EINTR(res, (sptr)internal_syscall(__NR_read, fd, buf, count));
+  HANDLE_EINTR(res, (sptr)internal_syscall(__NR_read, fd, (uptr)buf, count));
   return res;
 }
 
 uptr internal_write(fd_t fd, const void *buf, uptr count) {
   sptr res;
-  HANDLE_EINTR(res, (sptr)internal_syscall(__NR_write, fd, buf, count));
+  HANDLE_EINTR(res, (sptr)internal_syscall(__NR_write, fd, (uptr)buf, count));
   return res;
 }
 
@@ -140,7 +141,7 @@ static void stat64_to_stat(struct stat64 *in, struct stat *out) {
 
 uptr internal_stat(const char *path, void *buf) {
 #if SANITIZER_LINUX_USES_64BIT_SYSCALLS
-  return internal_syscall(__NR_stat, path, buf);
+  return internal_syscall(__NR_stat, (uptr)path, (uptr)buf);
 #else
   struct stat64 buf64;
   int res = internal_syscall(__NR_stat64, path, &buf64);
@@ -151,7 +152,7 @@ uptr internal_stat(const char *path, void *buf) {
 
 uptr internal_lstat(const char *path, void *buf) {
 #if SANITIZER_LINUX_USES_64BIT_SYSCALLS
-  return internal_syscall(__NR_lstat, path, buf);
+  return internal_syscall(__NR_lstat, (uptr)path, (uptr)buf);
 #else
   struct stat64 buf64;
   int res = internal_syscall(__NR_lstat64, path, &buf64);
@@ -162,7 +163,7 @@ uptr internal_lstat(const char *path, void *buf) {
 
 uptr internal_fstat(fd_t fd, void *buf) {
 #if SANITIZER_LINUX_USES_64BIT_SYSCALLS
-  return internal_syscall(__NR_fstat, fd, buf);
+  return internal_syscall(__NR_fstat, fd, (uptr)buf);
 #else
   struct stat64 buf64;
   int res = internal_syscall(__NR_fstat64, fd, &buf64);
@@ -183,11 +184,11 @@ uptr internal_dup2(int oldfd, int newfd) {
 }
 
 uptr internal_readlink(const char *path, char *buf, uptr bufsize) {
-  return internal_syscall(__NR_readlink, path, buf, bufsize);
+  return internal_syscall(__NR_readlink, (uptr)path, (uptr)buf, bufsize);
 }
 
 uptr internal_unlink(const char *path) {
-  return internal_syscall(__NR_unlink, path);
+  return internal_syscall(__NR_unlink, (uptr)path);
 }
 
 uptr internal_sched_yield() {
@@ -201,7 +202,7 @@ void internal__exit(int exitcode) {
 
 uptr internal_execve(const char *filename, char *const argv[],
                      char *const envp[]) {
-  return internal_syscall(__NR_execve, filename, argv, envp);
+  return internal_syscall(__NR_execve, (uptr)filename, (uptr)argv, (uptr)envp);
 }
 
 // ----------------- sanitizer_common.h
@@ -220,7 +221,7 @@ uptr GetTid() {
 u64 NanoTime() {
   kernel_timeval tv;
   internal_memset(&tv, 0, sizeof(tv));
-  internal_syscall(__NR_gettimeofday, &tv, 0);
+  internal_syscall(__NR_gettimeofday, (uptr)&tv, 0);
   return (u64)tv.tv_sec * 1000*1000*1000 + tv.tv_usec * 1000;
 }
 
@@ -543,7 +544,7 @@ void BlockingMutex::Lock() {
   if (atomic_exchange(m, MtxLocked, memory_order_acquire) == MtxUnlocked)
     return;
   while (atomic_exchange(m, MtxSleeping, memory_order_acquire) != MtxUnlocked)
-    internal_syscall(__NR_futex, m, FUTEX_WAIT, MtxSleeping, 0, 0, 0);
+    internal_syscall(__NR_futex, (uptr)m, FUTEX_WAIT, MtxSleeping, 0, 0, 0);
 }
 
 void BlockingMutex::Unlock() {
@@ -551,7 +552,7 @@ void BlockingMutex::Unlock() {
   u32 v = atomic_exchange(m, MtxUnlocked, memory_order_relaxed);
   CHECK_NE(v, MtxUnlocked);
   if (v == MtxSleeping)
-    internal_syscall(__NR_futex, m, FUTEX_WAKE, 1, 0, 0, 0);
+    internal_syscall(__NR_futex, (uptr)m, FUTEX_WAKE, 1, 0, 0, 0);
 }
 
 void BlockingMutex::CheckLocked() {
@@ -572,11 +573,12 @@ struct linux_dirent {
 
 // Syscall wrappers.
 uptr internal_ptrace(int request, int pid, void *addr, void *data) {
-  return internal_syscall(__NR_ptrace, request, pid, addr, data);
+  return internal_syscall(__NR_ptrace, request, pid, (uptr)addr, (uptr)data);
 }
 
 uptr internal_waitpid(int pid, int *status, int options) {
-  return internal_syscall(__NR_wait4, pid, status, options, 0 /* rusage */);
+  return internal_syscall(__NR_wait4, pid, (uptr)status, options,
+                          0 /* rusage */);
 }
 
 uptr internal_getpid() {
@@ -588,7 +590,7 @@ uptr internal_getppid() {
 }
 
 uptr internal_getdents(fd_t fd, struct linux_dirent *dirp, unsigned int count) {
-  return internal_syscall(__NR_getdents, fd, dirp, count);
+  return internal_syscall(__NR_getdents, fd, (uptr)dirp, count);
 }
 
 uptr internal_lseek(fd_t fd, OFF_T offset, int whence) {
@@ -601,7 +603,7 @@ uptr internal_prctl(int option, uptr arg2, uptr arg3, uptr arg4, uptr arg5) {
 
 uptr internal_sigaltstack(const struct sigaltstack *ss,
                          struct sigaltstack *oss) {
-  return internal_syscall(__NR_sigaltstack, ss, oss);
+  return internal_syscall(__NR_sigaltstack, (uptr)ss, (uptr)oss);
 }
 
 uptr internal_sigaction(int signum, const __sanitizer_kernel_sigaction_t *act,
@@ -801,9 +803,11 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
   if (!fn || !child_stack)
     return -EINVAL;
   CHECK_EQ(0, (uptr)child_stack % 16);
-  child_stack = (char *)child_stack - 2 * sizeof(void *);
-  ((void **)child_stack)[0] = (void *)(uptr)fn;
-  ((void **)child_stack)[1] = arg;
+  child_stack = (char *)child_stack - 2 * sizeof(unsigned long long);
+  ((unsigned long long *)child_stack)[0] = (uptr)fn;
+  ((unsigned long long *)child_stack)[1] = (uptr)arg;
+  register void *r8 __asm__("r8") = newtls;
+  register int *r10 __asm__("r10") = child_tidptr;
   __asm__ __volatile__(
                        /* %rax = syscall(%rax = __NR_clone,
                         *                %rdi = flags,
@@ -812,8 +816,6 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
                         *                %r8  = new_tls,
                         *                %r10 = child_tidptr)
                         */
-                       "movq   %6,%%r8\n"
-                       "movq   %7,%%r10\n"
                        "syscall\n"
 
                        /* if (%rax != 0)
@@ -845,9 +847,9 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
                          "S"(child_stack),
                          "D"(flags),
                          "d"(parent_tidptr),
-                         "r"(newtls),
-                         "r"(child_tidptr)
-                       : "rsp", "memory", "r8", "r10", "r11", "rcx");
+                         "r"(r8),
+                         "r"(r10)
+                       : "rsp", "memory", "r11", "rcx");
   return res;
 }
 #endif  // defined(__x86_64__)

@@ -220,7 +220,7 @@ namespace __sanitizer {
     unsigned short d_reclen;
     // more fields that we don't care about
   };
-#elif SANITIZER_ANDROID
+#elif SANITIZER_ANDROID || defined(__x86_64__)
   struct __sanitizer_dirent {
     unsigned long long d_ino;
     unsigned long long d_off;
@@ -246,16 +246,17 @@ namespace __sanitizer {
 #endif
 
 #if SANITIZER_LINUX
-#ifdef _LP64
+#if defined(_LP64) || defined(__x86_64__)
   typedef unsigned __sanitizer___kernel_uid_t;
   typedef unsigned __sanitizer___kernel_gid_t;
+  typedef long long __sanitizer___kernel_off_t;
 #else
   typedef unsigned short __sanitizer___kernel_uid_t;
   typedef unsigned short __sanitizer___kernel_gid_t;
+  typedef long __sanitizer___kernel_off_t;
 #endif
   typedef unsigned short __sanitizer___kernel_old_uid_t;
   typedef unsigned short __sanitizer___kernel_old_gid_t;
-  typedef long __sanitizer___kernel_off_t;
   typedef long long __sanitizer___kernel_loff_t;
   typedef struct {
     unsigned long fds_bits[1024 / (8 * sizeof(long))];
