@@ -496,6 +496,7 @@ uint8_t Util::scopeBits(const DefinedAtom* atom) {
   case Atom::scopeGlobal:
     return N_EXT;
   }
+  llvm_unreachable("Unknown scope");
 }
 
 bool Util::AtomSorter::operator()(const AtomAndIndex &left, 
