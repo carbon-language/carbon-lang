@@ -202,7 +202,7 @@ public:
     GetStatus (lldb::SBStream &status) const;
 
     SBThread
-    GetThreadOriginExtendedBacktrace (const char *type);
+    GetExtendedBacktrace (const char *type);
 
 protected:
     friend class SBBreakpoint;

@@ -283,7 +283,7 @@ public:
     ///   available.
     //------------------------------------------------------------------
     uint32_t
-    GetNumThreadOriginExtendedBacktraceTypes ();
+    GetNumExtendedBacktraceTypes ();
 
     //------------------------------------------------------------------
     /// Return the name of one of the thread-origin extended backtrace 
@@ -299,7 +299,7 @@ public:
     ///   The name at that index.
     //------------------------------------------------------------------
     const char *
-    GetThreadOriginExtendedBacktraceTypeAtIndex (uint32_t idx);
+    GetExtendedBacktraceTypeAtIndex (uint32_t idx);
 
 protected:
     friend class SBAddress;

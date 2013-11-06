@@ -1283,7 +1283,7 @@ SBThread::GetDescription (SBStream &description) const
 }
 
 SBThread
-SBThread::GetThreadOriginExtendedBacktrace (const char *type)
+SBThread::GetExtendedBacktrace (const char *type)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     Mutex::Locker api_locker;
@@ -1302,7 +1302,7 @@ SBThread::GetThreadOriginExtendedBacktrace (const char *type)
                 SystemRuntime *runtime = exe_ctx.GetProcessPtr()->GetSystemRuntime();
                 if (runtime)
                 {
-                    ThreadSP origin_thread = runtime->GetThreadOriginExtendedBacktrace (real_thread, type_const);
+                    ThreadSP origin_thread = runtime->GetExtendedBacktrace (real_thread, type_const);
                     sb_origin_thread.SetThread (origin_thread);
                 }
             }
@@ -1310,7 +1310,7 @@ SBThread::GetThreadOriginExtendedBacktrace (const char *type)
         else
         {
             if (log)
-                log->Printf ("SBThread(%p)::GetThreadOriginExtendedBacktrace() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::GetExtendedBacktrace() => error: process is running", exe_ctx.GetThreadPtr());
         }
     }
 

@@ -128,7 +128,7 @@ public:
     ///   backtrace capabilities are available.
     //------------------------------------------------------------------
     virtual std::vector<ConstString>
-    GetThreadOriginExtendedBacktraceTypes ();
+    GetExtendedBacktraceTypes ();
 
     //------------------------------------------------------------------
     /// Return a Thread which shows the origin of this thread's creation.
@@ -147,7 +147,7 @@ public:
     ///
     /// @param [in] type
     ///   The type of thread origin being requested.  The types supported
-    ///   are returned from SystemRuntime::GetThreadOriginExtendedBacktraceTypes.
+    ///   are returned from SystemRuntime::GetExtendedBacktraceTypes.
     ///
     /// @return
     ///   A ThreadSP which will have a StackList of frames.  This Thread will
@@ -158,7 +158,7 @@ public:
     ///   An empty ThreadSP will be returned if no thread origin is available.
     //------------------------------------------------------------------
     virtual lldb::ThreadSP
-    GetThreadOriginExtendedBacktrace (lldb::ThreadSP thread, ConstString type);
+    GetExtendedBacktrace (lldb::ThreadSP thread, ConstString type);
 
 protected:
     //------------------------------------------------------------------

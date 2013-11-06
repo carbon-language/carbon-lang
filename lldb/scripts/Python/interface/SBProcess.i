@@ -361,18 +361,18 @@ public:
     able to show a backtrace of when that thread was originally created,
     or the work item was enqueued to it (in the case of a libdispatch 
     queue).
-    ") GetNumThreadOriginExtendedBacktraceTypes;
+    ") GetNumExtendedBacktraceTypes;
     
     uint32_t
-    GetNumThreadOriginExtendedBacktraceTypes ();
+    GetNumExtendedBacktraceTypes ();
 
     %feature("autodoc", "
     Takes an index argument, returns the name of one of the thread-origin 
     extended backtrace methods as a str.
-    ") GetThreadOriginExtendedBacktraceTypeAtIndex;
+    ") GetExtendedBacktraceTypeAtIndex;
 
     const char *
-    GetThreadOriginExtendedBacktraceTypeAtIndex (uint32_t idx);
+    GetExtendedBacktraceTypeAtIndex (uint32_t idx);
 
     %pythoncode %{
         def __get_is_alive__(self):

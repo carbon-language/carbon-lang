@@ -60,14 +60,14 @@ SystemRuntime::ModulesDidLoad (ModuleList &module_list)
 }
 
 std::vector<ConstString>
-SystemRuntime::GetThreadOriginExtendedBacktraceTypes ()
+SystemRuntime::GetExtendedBacktraceTypes ()
 {
     std::vector<ConstString> types;
     return types;
 }
 
 ThreadSP
-SystemRuntime::GetThreadOriginExtendedBacktrace (ThreadSP thread, ConstString type)
+SystemRuntime::GetExtendedBacktrace (ThreadSP thread, ConstString type)
 {
     return ThreadSP();
 }

@@ -1260,25 +1260,25 @@ SBProcess::UnloadImage (uint32_t image_token)
 }
 
 uint32_t
-SBProcess::GetNumThreadOriginExtendedBacktraceTypes ()
+SBProcess::GetNumExtendedBacktraceTypes ()
 {
     ProcessSP process_sp(GetSP());
     if (process_sp && process_sp->GetSystemRuntime())
     {
         SystemRuntime *runtime = process_sp->GetSystemRuntime();
-        return runtime->GetThreadOriginExtendedBacktraceTypes().size();
+        return runtime->GetExtendedBacktraceTypes().size();
     }
     return 0;
 }
 
 const char *
-SBProcess::GetThreadOriginExtendedBacktraceTypeAtIndex (uint32_t idx)
+SBProcess::GetExtendedBacktraceTypeAtIndex (uint32_t idx)
 {
     ProcessSP process_sp(GetSP());
     if (process_sp && process_sp->GetSystemRuntime())
     {
         SystemRuntime *runtime = process_sp->GetSystemRuntime();
-        std::vector<ConstString> names = runtime->GetThreadOriginExtendedBacktraceTypes();
+        std::vector<ConstString> names = runtime->GetExtendedBacktraceTypes();
         if (idx < names.size())
         {
             return names[idx].AsCString();
@@ -1287,7 +1287,7 @@ SBProcess::GetThreadOriginExtendedBacktraceTypeAtIndex (uint32_t idx)
         {
             Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf("SBProcess(%p)::GetThreadOriginExtendedBacktraceTypeAtIndex() => error: requested extended backtrace name out of bounds", process_sp.get());
+                log->Printf("SBProcess(%p)::GetExtendedBacktraceTypeAtIndex() => error: requested extended backtrace name out of bounds", process_sp.get());
         }
     }
     return NULL;
