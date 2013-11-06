@@ -5219,7 +5219,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
     while (BaseType->isRecordType()) {
       if (OperatorArrows.size() >= getLangOpts().ArrowDepth) {
         Diag(OpLoc, diag::err_operator_arrow_depth_exceeded)
-          << BaseType << getLangOpts().ArrowDepth << Base->getSourceRange();
+          << StartingType << getLangOpts().ArrowDepth << Base->getSourceRange();
         noteOperatorArrows(*this, OperatorArrows);
         Diag(OpLoc, diag::note_operator_arrow_depth)
           << getLangOpts().ArrowDepth;
@@ -5239,7 +5239,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
         if (NoArrowOperatorFound) {
           if (FirstIteration) {
             Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
-              << StartingType << 1 << Base->getSourceRange()
+              << BaseType << 1 << Base->getSourceRange()
               << FixItHint::CreateReplacement(OpLoc, ".");
             OpKind = tok::period;
             break;
