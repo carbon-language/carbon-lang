@@ -151,6 +151,7 @@ def _SLASH_TP : CLCompileFlag<"TP">, HelpText<"Treat all source files as C++">;
 
 def _SLASH_analyze_ : CLIgnoredFlag<"analyze-">;
 def _SLASH_errorReport : CLIgnoredJoined<"errorReport">;
+def _SLASH_FS : CLIgnoredFlag<"FS">, HelpText<"Force synchronous PDB writes">;
 def _SLASH_GF : CLIgnoredFlag<"GF">;
 def _SLASH_GS_ : CLIgnoredFlag<"GS-">;
 def _SLASH_nologo : CLIgnoredFlag<"nologo">;
