@@ -10,12 +10,14 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclGroup.h"
+#include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Tooling/Tooling.h"
 #include "gtest/gtest.h"
+#include "llvm/ADT/STLExtras.h"
 #include <string>
 
 namespace clang {
@@ -83,6 +85,18 @@ class FindClassDeclXConsumer : public clang::ASTConsumer {
  private:
   bool *FoundClassDeclX;
 };
+bool FindClassDeclX(ASTUnit *AST) {
+  for (std::vector<Decl *>::iterator i = AST->top_level_begin(),
+                                     e = AST->top_level_end();
+       i != e; ++i) {
+    if (CXXRecordDecl* Record = dyn_cast<clang::CXXRecordDecl>(*i)) {
+      if (Record->getName() == "X") {
+        return true;
+      }
+    }
+  }
+  return false;
+}
 } // end namespace
 
 TEST(runToolOnCode, FindsClassDecl) {
@@ -95,6 +109,16 @@ TEST(runToolOnCode, FindsClassDecl) {
   EXPECT_TRUE(runToolOnCode(new TestAction(
       new FindClassDeclXConsumer(&FoundClassDeclX)), "class Y;"));
   EXPECT_FALSE(FoundClassDeclX);
+}
+
+TEST(buildASTFromCode, FindsClassDecl) {
+  OwningPtr<ASTUnit> AST(buildASTFromCode("class X;"));
+  ASSERT_TRUE(AST.get());
+  EXPECT_TRUE(FindClassDeclX(AST.get()));
+
+  AST.reset(buildASTFromCode("class Y;"));
+  ASSERT_TRUE(AST.get());
+  EXPECT_FALSE(FindClassDeclX(AST.get()));
 }
 
 TEST(newFrontendActionFactory, CreatesFrontendActionFactoryFromType) {
@@ -119,13 +143,15 @@ TEST(newFrontendActionFactory, CreatesFrontendActionFactoryFromFactoryType) {
 }
 
 TEST(ToolInvocation, TestMapVirtualFile) {
-  clang::FileManager Files((clang::FileSystemOptions()));
+  IntrusiveRefCntPtr<clang::FileManager> Files(
+      new clang::FileManager(clang::FileSystemOptions()));
   std::vector<std::string> Args;
   Args.push_back("tool-executable");
   Args.push_back("-Idef");
   Args.push_back("-fsyntax-only");
   Args.push_back("test.cpp");
-  clang::tooling::ToolInvocation Invocation(Args, new SyntaxOnlyAction, &Files);
+  clang::tooling::ToolInvocation Invocation(Args, new SyntaxOnlyAction,
+                                            Files.getPtr());
   Invocation.mapVirtualFile("test.cpp", "#include <abc>\n");
   Invocation.mapVirtualFile("def/abc", "\n");
   EXPECT_TRUE(Invocation.run());
@@ -136,13 +162,15 @@ TEST(ToolInvocation, TestVirtualModulesCompilation) {
   // mapped module.map is found on the include path. In the future, expand this
   // test to run a full modules enabled compilation, so we make sure we can
   // rerun modules compilations with a virtual file system.
-  clang::FileManager Files((clang::FileSystemOptions()));
+  IntrusiveRefCntPtr<clang::FileManager> Files(
+      new clang::FileManager(clang::FileSystemOptions()));
   std::vector<std::string> Args;
   Args.push_back("tool-executable");
   Args.push_back("-Idef");
   Args.push_back("-fsyntax-only");
   Args.push_back("test.cpp");
-  clang::tooling::ToolInvocation Invocation(Args, new SyntaxOnlyAction, &Files);
+  clang::tooling::ToolInvocation Invocation(Args, new SyntaxOnlyAction,
+                                            Files.getPtr());
   Invocation.mapVirtualFile("test.cpp", "#include <abc>\n");
   Invocation.mapVirtualFile("def/abc", "\n");
   // Add a module.map file in the include directory of our header, so we trigger
@@ -252,6 +280,24 @@ TEST(ClangToolTest, ArgumentAdjusters) {
   Tool.run(newFrontendActionFactory<SyntaxOnlyAction>());
   EXPECT_TRUE(Ran);
   EXPECT_FALSE(Found);
+}
+
+TEST(ClangToolTest, BuildASTs) {
+  FixedCompilationDatabase Compilations("/", std::vector<std::string>());
+
+  std::vector<std::string> Sources;
+  Sources.push_back("/a.cc");
+  Sources.push_back("/b.cc");
+  ClangTool Tool(Compilations, Sources);
+
+  Tool.mapVirtualFile("/a.cc", "void a() {}");
+  Tool.mapVirtualFile("/b.cc", "void b() {}");
+
+  std::vector<ASTUnit *> ASTs;
+  EXPECT_EQ(0, Tool.buildASTs(ASTs));
+  EXPECT_EQ(2u, ASTs.size());
+
+  llvm::DeleteContainerPointers(ASTs);
 }
 
 } // end namespace tooling

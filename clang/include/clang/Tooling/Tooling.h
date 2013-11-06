@@ -53,13 +53,32 @@ class FrontendAction;
 
 namespace tooling {
 
+/// \brief Interface to process a clang::CompilerInvocation.
+///
+/// If your tool is based on FrontendAction, you should be deriving from
+/// FrontendActionFactory instead.
+class ToolAction {
+public:
+  virtual ~ToolAction();
+
+  /// \brief Perform an action for an invocation.
+  virtual bool runInvocation(clang::CompilerInvocation *Invocation,
+                             FileManager *Files) = 0;
+};
+
 /// \brief Interface to generate clang::FrontendActions.
 ///
 /// Having a factory interface allows, for example, a new FrontendAction to be
-/// created for each translation unit processed by ClangTool.
-class FrontendActionFactory {
+/// created for each translation unit processed by ClangTool.  This class is
+/// also a ToolAction which uses the FrontendActions created by create() to
+/// process each translation unit.
+class FrontendActionFactory : public ToolAction {
 public:
   virtual ~FrontendActionFactory();
+
+  /// \brief Invokes the compiler with a FrontendAction created by create().
+  bool runInvocation(clang::CompilerInvocation *Invocation,
+                     FileManager *Files);
 
   /// \brief Returns a new clang::FrontendAction.
   ///
@@ -133,6 +152,26 @@ bool runToolOnCodeWithArgs(clang::FrontendAction *ToolAction, const Twine &Code,
                            const std::vector<std::string> &Args,
                            const Twine &FileName = "input.cc");
 
+/// \brief Builds an AST for 'Code'.
+///
+/// \param Code C++ code.
+/// \param FileName The file name which 'Code' will be mapped as.
+///
+/// \return The resulting AST or null if an error occurred.
+ASTUnit *buildASTFromCode(const Twine &Code,
+                          const Twine &FileName = "input.cc");
+
+/// \brief Builds an AST for 'Code' with additional flags.
+///
+/// \param Code C++ code.
+/// \param Args Additional flags to pass on.
+/// \param FileName The file name which 'Code' will be mapped as.
+///
+/// \return The resulting AST or null if an error occurred.
+ASTUnit *buildASTFromCodeWithArgs(const Twine &Code,
+                                  const std::vector<std::string> &Args,
+                                  const Twine &FileName = "input.cc");
+
 /// \brief Utility to run a FrontendAction in a single clang invocation.
 class ToolInvocation {
  public:
@@ -145,8 +184,18 @@ class ToolInvocation {
   /// \param ToolAction The action to be executed. Class takes ownership.
   /// \param Files The FileManager used for the execution. Class does not take
   /// ownership.
-  ToolInvocation(ArrayRef<std::string> CommandLine, FrontendAction *ToolAction,
+  ToolInvocation(ArrayRef<std::string> CommandLine, FrontendAction *FAction,
                  FileManager *Files);
+
+  /// \brief Create a tool invocation.
+  ///
+  /// \param CommandLine The command line arguments to clang.
+  /// \param Action The action to be executed.
+  /// \param Files The FileManager used for the execution.
+  ToolInvocation(ArrayRef<std::string> CommandLine, ToolAction *Action,
+                 FileManager *Files);
+
+  ~ToolInvocation();
 
   /// \brief Map a virtual file to be used while running the tool.
   ///
@@ -167,7 +216,8 @@ class ToolInvocation {
                      clang::CompilerInvocation *Invocation);
 
   std::vector<std::string> CommandLine;
-  OwningPtr<FrontendAction> ToolAction;
+  ToolAction *Action;
+  bool OwnsAction;
   FileManager *Files;
   // Maps <file name> -> <file content>.
   llvm::StringMap<StringRef> MappedFileContents;
@@ -216,23 +266,25 @@ class ClangTool {
   /// \brief Clear the command line arguments adjuster chain.
   void clearArgumentsAdjusters();
 
-  /// Runs a frontend action over all files specified in the command line.
+  /// Runs an action over all files specified in the command line.
   ///
-  /// \param ActionFactory Factory generating the frontend actions. The function
-  /// takes ownership of this parameter. A new action is generated for every
-  /// processed translation unit.
-  virtual int run(FrontendActionFactory *ActionFactory);
+  /// \param Action Tool action.
+  int run(ToolAction *Action);
+
+  /// \brief Create an AST for each file specified in the command line and
+  /// append them to ASTs.
+  int buildASTs(std::vector<ASTUnit *> &ASTs);
 
   /// \brief Returns the file manager used in the tool.
   ///
   /// The file manager is shared between all translation units.
-  FileManager &getFiles() { return Files; }
+  FileManager &getFiles() { return *Files; }
 
  private:
   // We store compile commands as pair (file name, compile command).
   std::vector< std::pair<std::string, CompileCommand> > CompileCommands;
 
-  FileManager Files;
+  llvm::IntrusiveRefCntPtr<FileManager> Files;
   // Contains a list of pairs (<file name>, <file content>).
   std::vector< std::pair<StringRef, StringRef> > MappedFileContents;
 
