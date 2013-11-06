@@ -827,14 +827,18 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
           std::unique_ptr<InputElement>(new PECOFFFileNode(ctx, value)));
   }
 
-  // Add the libraries specified by /defaultlib unless they are blacklisted by
-  // /nodefaultlib.
-  if (!ctx.getNoDefaultLibAll())
-    for (const StringRef defaultLibPath : defaultLibs)
-      if (ctx.getNoDefaultLibs().find(defaultLibPath) ==
-          ctx.getNoDefaultLibs().end())
+  // Add the libraries specified by /defaultlib unless they are already added
+  // nor blacklisted by /nodefaultlib.
+  if (!ctx.getNoDefaultLibAll()) {
+    for (const StringRef path : defaultLibs) {
+      if (ctx.getNoDefaultLibs().find(path) == ctx.getNoDefaultLibs().end() &&
+	  !ctx.hasDefaultLib(path)) {
         inputElements.push_back(std::unique_ptr<InputElement>(
-            new PECOFFLibraryNode(ctx, defaultLibPath)));
+            new PECOFFLibraryNode(ctx, path)));
+	ctx.addDefaultLib(path);
+      }
+    }
+  }
 
   if (inputElements.size() == 0 && !isReadingDirectiveSection) {
     diagnostics << "No input files\n";

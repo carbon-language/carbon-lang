@@ -259,6 +259,14 @@ TEST_F(WinLinkParserTest, DefaultLib) {
   EXPECT_EQ("kernel32.lib", inputFile(2));
 }
 
+TEST_F(WinLinkParserTest, DefaultLibDuplicates) {
+  EXPECT_TRUE(parse("link.exe", "/defaultlib:user32.lib",
+                    "/defaultlib:user32.lib", "a.obj", nullptr));
+  EXPECT_EQ(2, inputFileCount());
+  EXPECT_EQ("a.obj", inputFile(0));
+  EXPECT_EQ("user32.lib", inputFile(1));
+}
+
 TEST_F(WinLinkParserTest, NoDefaultLib) {
   EXPECT_TRUE(parse("link.exe", "/defaultlib:user32.lib",
                     "/defaultlib:kernel32", "/nodefaultlib:user32.lib", "a.obj",

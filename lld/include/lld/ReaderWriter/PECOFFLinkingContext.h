@@ -194,6 +194,11 @@ public:
     return _noDefaultLibs;
   }
 
+  void addDefaultLib(StringRef path) { _defaultLibs.insert(path); }
+  bool hasDefaultLib(StringRef path) const {
+    return _defaultLibs.count(path) == 1;
+  }
+
   void setNoDefaultLibAll(bool val) { _noDefaultLibAll = val; }
   bool getNoDefaultLibAll() const { return _noDefaultLibAll; }
 
@@ -255,6 +260,11 @@ private:
 
   // The set to store /nodefaultlib arguments.
   std::set<std::string> _noDefaultLibs;
+
+  // A set containing all the library files specified by /defaultlib. This is to
+  // keep track what files are already added to the input graph, in order to
+  // prevent adding the same file more than once to the input graph.
+  std::set<std::string> _defaultLibs;
 
   std::vector<StringRef> _inputSearchPaths;
   std::unique_ptr<Reader> _reader;
