@@ -59,6 +59,12 @@ def OP_QDMULH_LN : Op;
 def OP_QRDMULH_LN : Op;
 def OP_FMS_LN : Op;
 def OP_FMS_LNQ : Op;
+def OP_TRN1  : Op;
+def OP_ZIP1  : Op;
+def OP_UZP1  : Op;
+def OP_TRN2  : Op;
+def OP_ZIP2  : Op;
+def OP_UZP2  : Op;
 def OP_EQ    : Op;
 def OP_GE    : Op;
 def OP_LE    : Op;
@@ -791,6 +797,21 @@ def SHA1SU0 : SInst<"vsha1su0", "dddd", "QUi">;
 def SHA256H : SInst<"vsha256h", "dddd", "QUi">;
 def SHA256H2 : SInst<"vsha256h2", "dddd", "QUi">;
 def SHA256SU1 : SInst<"vsha256su1", "dddd", "QUi">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Permutation
+def VTRN1 : SOpInst<"vtrn1", "ddd",
+                    "csiUcUsUifPcPsQcQsQiQlQUcQUsQUiQUlQfQdQPcQPs", OP_TRN1>;
+def VZIP1 : SOpInst<"vzip1", "ddd",
+                    "csiUcUsUifPcPsQcQsQiQlQUcQUsQUiQUlQfQdQPcQPs", OP_ZIP1>;
+def VUZP1 : SOpInst<"vuzp1", "ddd",
+                    "csiUcUsUifPcPsQcQsQiQlQUcQUsQUiQUlQfQdQPcQPs", OP_UZP1>;
+def VTRN2 : SOpInst<"vtrn2", "ddd",
+                    "csiUcUsUifPcPsQcQsQiQlQUcQUsQUiQUlQfQdQPcQPs", OP_TRN2>;
+def VZIP2 : SOpInst<"vzip2", "ddd",
+                    "csiUcUsUifPcPsQcQsQiQlQUcQUsQUiQUlQfQdQPcQPs", OP_ZIP2>;
+def VUZP2 : SOpInst<"vuzp2", "ddd",
+                    "csiUcUsUifPcPsQcQsQiQlQUcQUsQUiQUlQfQdQPcQPs", OP_UZP2>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Arithmetic

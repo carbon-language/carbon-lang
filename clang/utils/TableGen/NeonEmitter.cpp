@@ -81,6 +81,12 @@ enum OpKind {
   OpQRDMulhLane,
   OpFMSLane,
   OpFMSLaneQ,
+  OpTrn1,
+  OpZip1,
+  OpUzp1,
+  OpTrn2,
+  OpZip2,
+  OpUzp2,
   OpEq,
   OpGe,
   OpLe,
@@ -228,6 +234,12 @@ public:
     OpMap["OP_QRDMULH_LN"] = OpQRDMulhLane;
     OpMap["OP_FMS_LN"] = OpFMSLane;
     OpMap["OP_FMS_LNQ"] = OpFMSLaneQ;
+    OpMap["OP_TRN1"]  = OpTrn1;
+    OpMap["OP_ZIP1"]  = OpZip1;
+    OpMap["OP_UZP1"]  = OpUzp1;
+    OpMap["OP_TRN2"]  = OpTrn2;
+    OpMap["OP_ZIP2"]  = OpZip2;
+    OpMap["OP_UZP2"]  = OpUzp2;
     OpMap["OP_EQ"]    = OpEq;
     OpMap["OP_GE"]    = OpGe;
     OpMap["OP_LE"]    = OpLe;
@@ -1776,6 +1788,42 @@ static std::string GenOpString(const std::string &name, OpKind op,
     s += ");";
     break;
   }
+  case OpUzp1:
+    s += "__builtin_shufflevector(__a, __b";
+    for (unsigned i = 0; i < nElts; i++)
+      s += ", " + utostr(2*i);
+    s += ");";
+    break;
+  case OpUzp2:
+    s += "__builtin_shufflevector(__a, __b";
+    for (unsigned i = 0; i < nElts; i++)
+      s += ", " + utostr(2*i+1);
+    s += ");";
+    break;
+  case OpZip1:
+    s += "__builtin_shufflevector(__a, __b";
+    for (unsigned i = 0; i < (nElts/2); i++)
+       s += ", " + utostr(i) + ", " + utostr(i+nElts);
+    s += ");";
+    break;
+  case OpZip2:
+    s += "__builtin_shufflevector(__a, __b";
+    for (unsigned i = nElts/2; i < nElts; i++)
+       s += ", " + utostr(i) + ", " + utostr(i+nElts);
+    s += ");";
+    break;
+  case OpTrn1:
+    s += "__builtin_shufflevector(__a, __b";
+    for (unsigned i = 0; i < (nElts/2); i++)
+       s += ", " + utostr(2*i) + ", " + utostr(2*i+nElts);
+    s += ");";
+    break;
+  case OpTrn2:
+    s += "__builtin_shufflevector(__a, __b";
+    for (unsigned i = 0; i < (nElts/2); i++)
+       s += ", " + utostr(2*i+1) + ", " + utostr(2*i+1+nElts);
+    s += ");";
+    break;
   case OpAbdl: {
     std::string abd = MangleName("vabd", typestr, ClassS) + "(__a, __b)";
     if (typestr[0] != 'U') {
