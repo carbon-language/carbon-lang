@@ -34,7 +34,7 @@ public:
   PECOFFLinkingContext()
       : _baseAddress(0x400000), _stackReserve(1024 * 1024), _stackCommit(4096),
         _heapReserve(1024 * 1024), _heapCommit(4096), _noDefaultLibAll(false),
-        _sectionAlignment(4096),
+        _sectionDefaultAlignment(4096),
         _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN),
         _machineType(llvm::COFF::IMAGE_FILE_MACHINE_I386), _imageVersion(0, 0),
         _minOSVersion(6, 0), _nxCompat(true), _largeAddressAware(false),
@@ -116,8 +116,12 @@ public:
   uint64_t getHeapReserve() const { return _heapReserve; }
   uint64_t getHeapCommit() const { return _heapCommit; }
 
-  void setSectionAlignment(uint32_t val) { _sectionAlignment = val; }
-  uint32_t getSectionAlignment() const { return _sectionAlignment; }
+  void setSectionDefaultAlignment(uint32_t val) {
+    _sectionDefaultAlignment = val;
+  }
+  uint32_t getSectionDefaultAlignment() const {
+    return _sectionDefaultAlignment;
+  }
 
   void setSubsystem(WindowsSubsystem ss) { _subsystem = ss; }
   WindowsSubsystem getSubsystem() const { return _subsystem; }
@@ -256,7 +260,7 @@ private:
   uint64_t _heapReserve;
   uint64_t _heapCommit;
   bool _noDefaultLibAll;
-  uint32_t _sectionAlignment;
+  uint32_t _sectionDefaultAlignment;
   WindowsSubsystem _subsystem;
   MachineTypes _machineType;
   Version _imageVersion;

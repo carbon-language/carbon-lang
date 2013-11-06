@@ -651,7 +651,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
         diagnostics << "error: invalid value for /align: " << arg << "\n";
         return false;
       }
-      ctx.setSectionAlignment(align);
+      ctx.setSectionDefaultAlignment(align);
       break;
     }
 

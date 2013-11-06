@@ -50,7 +50,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_EQ(0x400000U, _context.getBaseAddress());
   EXPECT_EQ(1024 * 1024U, _context.getStackReserve());
   EXPECT_EQ(4096U, _context.getStackCommit());
-  EXPECT_EQ(4096U, _context.getSectionAlignment());
+  EXPECT_EQ(4096U, _context.getSectionDefaultAlignment());
   EXPECT_FALSE(_context.allowRemainingUndefines());
   EXPECT_TRUE(_context.isNxCompat());
   EXPECT_FALSE(_context.getLargeAddressAware());
@@ -218,7 +218,7 @@ TEST_F(WinLinkParserTest, InvalidHeapSize) {
 
 TEST_F(WinLinkParserTest, SectionAlignment) {
   EXPECT_TRUE(parse("link.exe", "/align:8192", "a.obj", nullptr));
-  EXPECT_EQ(8192U, _context.getSectionAlignment());
+  EXPECT_EQ(8192U, _context.getSectionDefaultAlignment());
 }
 
 TEST_F(WinLinkParserTest, Section) {

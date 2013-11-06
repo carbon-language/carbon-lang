@@ -174,7 +174,7 @@ public:
 
     // Sections should be page-aligned when loaded into memory, which is 4KB on
     // x86.
-    _peHeader.SectionAlignment = context.getSectionAlignment();
+    _peHeader.SectionAlignment = context.getSectionDefaultAlignment();
 
     // Sections in an executable file on disk should be sector-aligned (512 byte).
     _peHeader.FileAlignment = SECTOR_SIZE;

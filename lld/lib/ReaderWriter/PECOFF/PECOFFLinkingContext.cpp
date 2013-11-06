@@ -53,10 +53,10 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     return false;
   }
 
-  std::bitset<64> alignment(_sectionAlignment);
+  std::bitset<64> alignment(_sectionDefaultAlignment);
   if (alignment.count() != 1) {
     diagnostics << "Section alignment must be a power of 2, but got "
-                << _sectionAlignment << "\n";
+                << _sectionDefaultAlignment << "\n";
     return false;
   }
 
