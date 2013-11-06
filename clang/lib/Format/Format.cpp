@@ -370,6 +370,158 @@ private:
   ContinuationIndenter *Indenter;
 };
 
+class LineJoiner {
+public:
+  LineJoiner(const FormatStyle &Style) : Style(Style) {}
+
+  /// \brief Calculates how many lines can be merged into 1 starting at \p I.
+  unsigned
+  tryFitMultipleLinesInOne(unsigned Indent,
+                           SmallVectorImpl<AnnotatedLine *>::const_iterator &I,
+                           SmallVectorImpl<AnnotatedLine *>::const_iterator E) {
+    // We can never merge stuff if there are trailing line comments.
+    AnnotatedLine *TheLine = *I;
+    if (TheLine->Last->Type == TT_LineComment)
+      return 0;
+
+    if (Indent > Style.ColumnLimit)
+      return 0;
+
+    unsigned Limit = Style.ColumnLimit - Indent;
+    // If we already exceed the column limit, we set 'Limit' to 0. The different
+    // tryMerge..() functions can then decide whether to still do merging.
+    Limit = TheLine->Last->TotalLength > Limit
+                ? 0
+                : Limit - TheLine->Last->TotalLength;
+
+    if (I + 1 == E || (*(I + 1))->Type == LT_Invalid)
+      return 0;
+
+    if (TheLine->Last->is(tok::l_brace)) {
+      return tryMergeSimpleBlock(I, E, Limit);
+    } else if (Style.AllowShortIfStatementsOnASingleLine &&
+               TheLine->First->is(tok::kw_if)) {
+      return tryMergeSimpleControlStatement(I, E, Limit);
+    } else if (Style.AllowShortLoopsOnASingleLine &&
+               TheLine->First->isOneOf(tok::kw_for, tok::kw_while)) {
+      return tryMergeSimpleControlStatement(I, E, Limit);
+    } else if (TheLine->InPPDirective && (TheLine->First->HasUnescapedNewline ||
+                                          TheLine->First->IsFirst)) {
+      return tryMergeSimplePPDirective(I, E, Limit);
+    }
+    return 0;
+  }
+
+private:
+  unsigned
+  tryMergeSimplePPDirective(SmallVectorImpl<AnnotatedLine *>::const_iterator &I,
+                            SmallVectorImpl<AnnotatedLine *>::const_iterator E,
+                            unsigned Limit) {
+    if (Limit == 0)
+      return 0;
+    if (!(*(I + 1))->InPPDirective || (*(I + 1))->First->HasUnescapedNewline)
+      return 0;
+    if (I + 2 != E && (*(I + 2))->InPPDirective &&
+        !(*(I + 2))->First->HasUnescapedNewline)
+      return 0;
+    if (1 + (*(I + 1))->Last->TotalLength > Limit)
+      return 0;
+    return 1;
+  }
+
+  unsigned tryMergeSimpleControlStatement(
+      SmallVectorImpl<AnnotatedLine *>::const_iterator &I,
+      SmallVectorImpl<AnnotatedLine *>::const_iterator E, unsigned Limit) {
+    if (Limit == 0)
+      return 0;
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Allman &&
+        (*(I + 1))->First->is(tok::l_brace))
+      return 0;
+    if ((*(I + 1))->InPPDirective != (*I)->InPPDirective ||
+        ((*(I + 1))->InPPDirective && (*(I + 1))->First->HasUnescapedNewline))
+      return 0;
+    AnnotatedLine &Line = **I;
+    if (Line.Last->isNot(tok::r_paren))
+      return 0;
+    if (1 + (*(I + 1))->Last->TotalLength > Limit)
+      return 0;
+    if ((*(I + 1))->First->isOneOf(tok::semi, tok::kw_if, tok::kw_for,
+                                   tok::kw_while) ||
+        (*(I + 1))->First->Type == TT_LineComment)
+      return 0;
+    // Only inline simple if's (no nested if or else).
+    if (I + 2 != E && Line.First->is(tok::kw_if) &&
+        (*(I + 2))->First->is(tok::kw_else))
+      return 0;
+    return 1;
+  }
+
+  unsigned
+  tryMergeSimpleBlock(SmallVectorImpl<AnnotatedLine *>::const_iterator &I,
+                      SmallVectorImpl<AnnotatedLine *>::const_iterator E,
+                      unsigned Limit) {
+    // No merging if the brace already is on the next line.
+    if (Style.BreakBeforeBraces != FormatStyle::BS_Attach)
+      return 0;
+
+    // First, check that the current line allows merging. This is the case if
+    // we're not in a control flow statement and the last token is an opening
+    // brace.
+    AnnotatedLine &Line = **I;
+    if (Line.First->isOneOf(tok::kw_if, tok::kw_while, tok::kw_do, tok::r_brace,
+                            tok::kw_else, tok::kw_try, tok::kw_catch,
+                            tok::kw_for,
+                            // This gets rid of all ObjC @ keywords and methods.
+                            tok::at, tok::minus, tok::plus))
+      return 0;
+
+    FormatToken *Tok = (*(I + 1))->First;
+    if (Tok->is(tok::r_brace) && !Tok->MustBreakBefore &&
+        (Tok->getNextNonComment() == NULL ||
+         Tok->getNextNonComment()->is(tok::semi))) {
+      // We merge empty blocks even if the line exceeds the column limit.
+      Tok->SpacesRequiredBefore = 0;
+      Tok->CanBreakBefore = true;
+      return 1;
+    } else if (Limit != 0 && Line.First->isNot(tok::kw_namespace)) {
+      // Check that we still have three lines and they fit into the limit.
+      if (I + 2 == E || (*(I + 2))->Type == LT_Invalid)
+        return 0;
+
+      if (!nextTwoLinesFitInto(I, Limit))
+        return 0;
+
+      // Second, check that the next line does not contain any braces - if it
+      // does, readability declines when putting it into a single line.
+      if ((*(I + 1))->Last->Type == TT_LineComment || Tok->MustBreakBefore)
+        return 0;
+      do {
+        if (Tok->isOneOf(tok::l_brace, tok::r_brace))
+          return 0;
+        Tok = Tok->Next;
+      } while (Tok != NULL);
+
+      // Last, check that the third line contains a single closing brace.
+      Tok = (*(I + 2))->First;
+      if (Tok->getNextNonComment() != NULL || Tok->isNot(tok::r_brace) ||
+          Tok->MustBreakBefore)
+        return 0;
+
+      return 2;
+    }
+    return 0;
+  }
+
+  bool nextTwoLinesFitInto(SmallVectorImpl<AnnotatedLine *>::const_iterator I,
+                           unsigned Limit) {
+    return 1 + (*(I + 1))->Last->TotalLength + 1 +
+               (*(I + 2))->Last->TotalLength <=
+           Limit;
+  }
+
+  const FormatStyle &Style;
+};
+
 class UnwrappedLineFormatter {
 public:
   UnwrappedLineFormatter(SourceManager &SourceMgr,
@@ -378,9 +530,9 @@ public:
                          WhitespaceManager *Whitespaces,
                          const FormatStyle &Style)
       : SourceMgr(SourceMgr), Ranges(Ranges), Indenter(Indenter),
-        Whitespaces(Whitespaces), Style(Style) {}
+        Whitespaces(Whitespaces), Style(Style), Joiner(Style) {}
 
-  unsigned format(SmallVectorImpl<AnnotatedLine *> &Lines, bool DryRun,
+  unsigned format(const SmallVectorImpl<AnnotatedLine *> &Lines, bool DryRun,
                   int AdditionalIndent = 0) {
     assert(!Lines.empty());
     unsigned Penalty = 0;
@@ -390,8 +542,8 @@ public:
     bool PreviousLineWasTouched = false;
     const AnnotatedLine *PreviousLine = NULL;
     bool FormatPPDirective = false;
-    for (SmallVectorImpl<AnnotatedLine *>::iterator I = Lines.begin(),
-                                                    E = Lines.end();
+    for (SmallVectorImpl<AnnotatedLine *>::const_iterator I = Lines.begin(),
+                                                          E = Lines.end();
          I != E; ++I) {
       const AnnotatedLine &TheLine = **I;
       const FormatToken *FirstTok = TheLine.First;
@@ -411,8 +563,13 @@ public:
       unsigned Indent = getIndent(IndentForLevel, TheLine.Level);
       if (static_cast<int>(Indent) + Offset >= 0)
         Indent += Offset;
-      if (!DryRun)
-        tryFitMultipleLinesInOne(Indent, I, E);
+      unsigned MergedLines = Joiner.tryFitMultipleLinesInOne(Indent, I, E);
+      if (!DryRun) {
+        for (unsigned i = 0; i < MergedLines; ++i) {
+          join(**(I + i), **(I + i + 1));
+        }
+      }
+      I += MergedLines;
 
       bool WasMoved = PreviousLineWasTouched && FirstTok->NewlinesBefore == 0;
       if (TheLine.First->is(tok::eof)) {
@@ -589,151 +746,6 @@ private:
     if (Level == 0)
       return 0;
     return getIndent(IndentForLevel, Level - 1) + Style.IndentWidth;
-  }
-
-  /// \brief Tries to merge lines into one.
-  ///
-  /// This will change \c Line and \c AnnotatedLine to contain the merged line,
-  /// if possible; note that \c I will be incremented when lines are merged.
-  void tryFitMultipleLinesInOne(unsigned Indent,
-                                SmallVectorImpl<AnnotatedLine *>::iterator &I,
-                                SmallVectorImpl<AnnotatedLine *>::iterator E) {
-    // We can never merge stuff if there are trailing line comments.
-    AnnotatedLine *TheLine = *I;
-    if (TheLine->Last->Type == TT_LineComment)
-      return;
-
-    if (Indent > Style.ColumnLimit)
-      return;
-
-    unsigned Limit = Style.ColumnLimit - Indent;
-    // If we already exceed the column limit, we set 'Limit' to 0. The different
-    // tryMerge..() functions can then decide whether to still do merging.
-    Limit = TheLine->Last->TotalLength > Limit
-                ? 0
-                : Limit - TheLine->Last->TotalLength;
-
-    if (I + 1 == E || (*(I + 1))->Type == LT_Invalid)
-      return;
-
-    if (TheLine->Last->is(tok::l_brace)) {
-      tryMergeSimpleBlock(I, E, Limit);
-    } else if (Style.AllowShortIfStatementsOnASingleLine &&
-               TheLine->First->is(tok::kw_if)) {
-      tryMergeSimpleControlStatement(I, E, Limit);
-    } else if (Style.AllowShortLoopsOnASingleLine &&
-               TheLine->First->isOneOf(tok::kw_for, tok::kw_while)) {
-      tryMergeSimpleControlStatement(I, E, Limit);
-    } else if (TheLine->InPPDirective && (TheLine->First->HasUnescapedNewline ||
-                                          TheLine->First->IsFirst)) {
-      tryMergeSimplePPDirective(I, E, Limit);
-    }
-  }
-
-  void tryMergeSimplePPDirective(SmallVectorImpl<AnnotatedLine *>::iterator &I,
-                                 SmallVectorImpl<AnnotatedLine *>::iterator E,
-                                 unsigned Limit) {
-    if (Limit == 0)
-      return;
-    AnnotatedLine &Line = **I;
-    if (!(*(I + 1))->InPPDirective || (*(I + 1))->First->HasUnescapedNewline)
-      return;
-    if (I + 2 != E && (*(I + 2))->InPPDirective &&
-        !(*(I + 2))->First->HasUnescapedNewline)
-      return;
-    if (1 + (*(I + 1))->Last->TotalLength > Limit)
-      return;
-    join(Line, **(++I));
-  }
-
-  void
-  tryMergeSimpleControlStatement(SmallVectorImpl<AnnotatedLine *>::iterator &I,
-                                 SmallVectorImpl<AnnotatedLine *>::iterator E,
-                                 unsigned Limit) {
-    if (Limit == 0)
-      return;
-    if (Style.BreakBeforeBraces == FormatStyle::BS_Allman &&
-        (*(I + 1))->First->is(tok::l_brace))
-      return;
-    if ((*(I + 1))->InPPDirective != (*I)->InPPDirective ||
-        ((*(I + 1))->InPPDirective && (*(I + 1))->First->HasUnescapedNewline))
-      return;
-    AnnotatedLine &Line = **I;
-    if (Line.Last->isNot(tok::r_paren))
-      return;
-    if (1 + (*(I + 1))->Last->TotalLength > Limit)
-      return;
-    if ((*(I + 1))->First->isOneOf(tok::semi, tok::kw_if, tok::kw_for,
-                                   tok::kw_while) ||
-        (*(I + 1))->First->Type == TT_LineComment)
-      return;
-    // Only inline simple if's (no nested if or else).
-    if (I + 2 != E && Line.First->is(tok::kw_if) &&
-        (*(I + 2))->First->is(tok::kw_else))
-      return;
-    join(Line, **(++I));
-  }
-
-  void tryMergeSimpleBlock(SmallVectorImpl<AnnotatedLine *>::iterator &I,
-                           SmallVectorImpl<AnnotatedLine *>::iterator E,
-                           unsigned Limit) {
-    // No merging if the brace already is on the next line.
-    if (Style.BreakBeforeBraces != FormatStyle::BS_Attach)
-      return;
-
-    // First, check that the current line allows merging. This is the case if
-    // we're not in a control flow statement and the last token is an opening
-    // brace.
-    AnnotatedLine &Line = **I;
-    if (Line.First->isOneOf(tok::kw_if, tok::kw_while, tok::kw_do, tok::r_brace,
-                            tok::kw_else, tok::kw_try, tok::kw_catch,
-                            tok::kw_for,
-                            // This gets rid of all ObjC @ keywords and methods.
-                            tok::at, tok::minus, tok::plus))
-      return;
-
-    FormatToken *Tok = (*(I + 1))->First;
-    if (Tok->is(tok::r_brace) && !Tok->MustBreakBefore &&
-        (Tok->getNextNonComment() == NULL ||
-         Tok->getNextNonComment()->is(tok::semi))) {
-      // We merge empty blocks even if the line exceeds the column limit.
-      Tok->SpacesRequiredBefore = 0;
-      Tok->CanBreakBefore = true;
-      join(Line, **(I + 1));
-      I += 1;
-    } else if (Limit != 0 && Line.First->isNot(tok::kw_namespace)) {
-      // Check that we still have three lines and they fit into the limit.
-      if (I + 2 == E || (*(I + 2))->Type == LT_Invalid ||
-          !nextTwoLinesFitInto(I, Limit))
-        return;
-
-      // Second, check that the next line does not contain any braces - if it
-      // does, readability declines when putting it into a single line.
-      if ((*(I + 1))->Last->Type == TT_LineComment || Tok->MustBreakBefore)
-        return;
-      do {
-        if (Tok->isOneOf(tok::l_brace, tok::r_brace))
-          return;
-        Tok = Tok->Next;
-      } while (Tok != NULL);
-
-      // Last, check that the third line contains a single closing brace.
-      Tok = (*(I + 2))->First;
-      if (Tok->getNextNonComment() != NULL || Tok->isNot(tok::r_brace) ||
-          Tok->MustBreakBefore)
-        return;
-
-      join(Line, **(I + 1));
-      join(Line, **(I + 2));
-      I += 2;
-    }
-  }
-
-  bool nextTwoLinesFitInto(SmallVectorImpl<AnnotatedLine *>::iterator I,
-                           unsigned Limit) {
-    return 1 + (*(I + 1))->Last->TotalLength + 1 +
-               (*(I + 2))->Last->TotalLength <=
-           Limit;
   }
 
   void join(AnnotatedLine &A, const AnnotatedLine &B) {
@@ -969,6 +981,7 @@ private:
   ContinuationIndenter *Indenter;
   WhitespaceManager *Whitespaces;
   FormatStyle Style;
+  LineJoiner Joiner;
 
   llvm::SpecificBumpPtrAllocator<StateNode> Allocator;
 };
