@@ -614,12 +614,13 @@ initializeFunctionInfo(const std::vector<MachineInstr*> &CPEMIs) {
             llvm_unreachable("Unknown addressing mode for CP reference!");
           case Mips::LwRxPcTcp16:
             Bits = 8;
-            Scale = 2;
+            Scale = 4;
             LongFormOpcode = Mips::LwRxPcTcpX16;
             break;
           case Mips::LwRxPcTcpX16:
             Bits = 16;
-            Scale = 2;
+            Scale = 1;
+            NegOk = true;
             break;
           }
           // Remember that this is a user of a CP entry.
@@ -782,9 +783,6 @@ MachineBasicBlock *MipsConstantIslands::splitBlockBeforeInstr
 /// isOffsetInRange - Checks whether UserOffset (the location of a constant pool
 /// reference) is within MaxDisp of TrialOffset (a proposed location of a
 /// constant pool entry).
-/// UserOffset is computed by getUserOffset above to include PC adjustments. If
-/// the mod 4 alignment of UserOffset is not known, the uncertainty must be
-/// subtracted from MaxDisp instead. CPUser::getMaxDisp() does that.
 bool MipsConstantIslands::isOffsetInRange(unsigned UserOffset,
                                          unsigned TrialOffset, unsigned MaxDisp,
                                          bool NegativeOK) {
