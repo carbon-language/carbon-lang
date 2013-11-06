@@ -625,13 +625,13 @@ SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
   SDValue Remainder_GE_Den = DAG.getSelectCC(DL, Remainder, Den,
                                                  DAG.getConstant(-1, VT),
                                                  DAG.getConstant(0, VT),
-                                                 ISD::SETGE);
-  // Remainder_GE_Zero = (Remainder >= 0 ? -1 : 0)
-  SDValue Remainder_GE_Zero = DAG.getSelectCC(DL, Remainder,
-                                                  DAG.getConstant(0, VT),
+                                                 ISD::SETUGE);
+  // Remainder_GE_Zero = (Num >= Num_S_Remainder ? -1 : 0)
+  SDValue Remainder_GE_Zero = DAG.getSelectCC(DL, Num,
+                                                  Num_S_Remainder,
                                                   DAG.getConstant(-1, VT),
                                                   DAG.getConstant(0, VT),
-                                                  ISD::SETGE);
+                                                  ISD::SETUGE);
   // Tmp1 = Remainder_GE_Den & Remainder_GE_Zero
   SDValue Tmp1 = DAG.getNode(ISD::AND, DL, VT, Remainder_GE_Den,
                                                Remainder_GE_Zero);
