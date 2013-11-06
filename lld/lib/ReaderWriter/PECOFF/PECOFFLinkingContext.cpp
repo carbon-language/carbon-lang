@@ -174,34 +174,33 @@ StringRef PECOFFLinkingContext::searchLibraryFile(StringRef filename) const {
 
 Writer &PECOFFLinkingContext::writer() const { return *_writer; }
 
-#define LLD_CASE(name) .Case(#name, llvm::COFF::name)
-
 ErrorOr<Reference::Kind>
 PECOFFLinkingContext::relocKindFromString(StringRef str) const {
+#define LLD_CASE(name) .Case(#name, llvm::COFF::name)
   int32_t ret = llvm::StringSwitch<int32_t>(str)
         LLD_CASE(IMAGE_REL_I386_ABSOLUTE)
         LLD_CASE(IMAGE_REL_I386_DIR32)
         LLD_CASE(IMAGE_REL_I386_DIR32NB)
         LLD_CASE(IMAGE_REL_I386_REL32)
         .Default(-1);
+#undef LLD_CASE
   if (ret == -1)
     return make_error_code(YamlReaderError::illegal_value);
   return ret;
 }
 
-#undef LLD_CASE
-
-#define LLD_CASE(name)                                                         \
-  case llvm::COFF::name:                                                        \
-  return std::string(#name);
-
 ErrorOr<std::string>
 PECOFFLinkingContext::stringFromRelocKind(Reference::Kind kind) const {
   switch (kind) {
+#define LLD_CASE(name)                          \
+    case llvm::COFF::name:                      \
+      return std::string(#name);
+
     LLD_CASE(IMAGE_REL_I386_ABSOLUTE)
     LLD_CASE(IMAGE_REL_I386_DIR32)
     LLD_CASE(IMAGE_REL_I386_DIR32NB)
     LLD_CASE(IMAGE_REL_I386_REL32)
+#undef LLD_CASE
   }
   return make_error_code(YamlReaderError::illegal_value);
 }
