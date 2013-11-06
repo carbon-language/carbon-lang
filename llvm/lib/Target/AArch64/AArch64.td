@@ -36,8 +36,7 @@ def FeatureCrypto : SubtargetFeature<"crypto", "HasCrypto", "true",
 
 include "AArch64Schedule.td"
 
-def : Processor<"generic", GenericItineraries,
-                [FeatureFPARMv8, FeatureNEON, FeatureCrypto]>;
+def : Processor<"generic", GenericItineraries, [FeatureFPARMv8]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
