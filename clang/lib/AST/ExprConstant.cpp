@@ -652,6 +652,7 @@ namespace {
       case EM_ConstantFold:
         return false;
       }
+      llvm_unreachable("Missed EvalMode case");
     }
 
     /// Note that we have had a side-effect, and determine whether we should
@@ -677,6 +678,7 @@ namespace {
       case EM_IgnoreSideEffects:
         return false;
       }
+      llvm_unreachable("Missed EvalMode case");
     }
   };
 
