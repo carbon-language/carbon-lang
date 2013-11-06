@@ -25,7 +25,16 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/Support/AlignOf.h"
 
+namespace llvm {
+
+class raw_ostream;
+
+}
+
 namespace clang {
+
+struct PrintingPolicy;
+
 namespace ast_type_traits {
 
 /// \brief Kind identifier.
@@ -167,6 +176,16 @@ public:
   /// that don't have a pointer-defined identity inside the AST, this
   /// method returns NULL.
   const void *getMemoizationData() const;
+
+  /// \brief Prints the node to the given output stream.
+  void print(llvm::raw_ostream &OS, const PrintingPolicy &PP) const;
+
+  /// \brief Dumps the node to the given output stream.
+  void dump(llvm::raw_ostream &OS, SourceManager &SM) const;
+
+  /// \brief For nodes which represent textual entities in the source code,
+  /// return their SourceRange.  For all other nodes, return SourceRange().
+  SourceRange getSourceRange() const;
 
   /// @{
   /// \brief Imposes an order on \c DynTypedNode.

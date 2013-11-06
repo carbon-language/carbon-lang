@@ -125,6 +125,20 @@ void MatchVerifier<NodeType>::run(const MatchFinder::MatchResult &Result) {
   }
 }
 
+template <>
+inline void MatchVerifier<ast_type_traits::DynTypedNode>::run(
+    const MatchFinder::MatchResult &Result) {
+  BoundNodes::IDToNodeMap M = Result.Nodes.getMap();
+  BoundNodes::IDToNodeMap::const_iterator I = M.find("");
+  if (I == M.end()) {
+    setFailure("Node was not bound");
+  } else {
+    // Callback has been called, default to success.
+    setSuccess();
+    verify(Result, I->second);
+  }
+}
+
 /// \brief Verify whether a node has the correct source location.
 ///
 /// By default, Node.getSourceLocation() is checked. This can be changed
@@ -205,6 +219,60 @@ protected:
 
 private:
   unsigned ExpectBeginLine, ExpectBeginColumn, ExpectEndLine, ExpectEndColumn;
+};
+
+/// \brief Verify whether a node's dump contains a given substring.
+class DumpVerifier : public MatchVerifier<ast_type_traits::DynTypedNode> {
+public:
+  void expectSubstring(const std::string &Str) {
+    ExpectSubstring = Str;
+  }
+
+protected:
+  void verify(const MatchFinder::MatchResult &Result,
+              const ast_type_traits::DynTypedNode &Node) {
+    std::string DumpStr;
+    llvm::raw_string_ostream Dump(DumpStr);
+    Node.dump(Dump, *Result.SourceManager);
+
+    if (Dump.str().find(ExpectSubstring) == std::string::npos) {
+      std::string MsgStr;
+      llvm::raw_string_ostream Msg(MsgStr);
+      Msg << "Expected dump substring <" << ExpectSubstring << ">, found <"
+          << Dump.str() << '>';
+      this->setFailure(Msg.str());
+    }
+  }
+
+private:
+  std::string ExpectSubstring;
+};
+
+/// \brief Verify whether a node's pretty print matches a given string.
+class PrintVerifier : public MatchVerifier<ast_type_traits::DynTypedNode> {
+public:
+  void expectString(const std::string &Str) {
+    ExpectString = Str;
+  }
+
+protected:
+  void verify(const MatchFinder::MatchResult &Result,
+              const ast_type_traits::DynTypedNode &Node) {
+    std::string PrintStr;
+    llvm::raw_string_ostream Print(PrintStr);
+    Node.print(Print, Result.Context->getPrintingPolicy());
+
+    if (Print.str() != ExpectString) {
+      std::string MsgStr;
+      llvm::raw_string_ostream Msg(MsgStr);
+      Msg << "Expected pretty print <" << ExpectString << ">, found <"
+          << Print.str() << '>';
+      this->setFailure(Msg.str());
+    }
+  }
+
+private:
+  std::string ExpectString;
 };
 
 } // end namespace ast_matchers

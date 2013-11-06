@@ -10,6 +10,9 @@
 
 #include "clang/AST/ASTTypeTraits.h"
 #include "gtest/gtest.h"
+#include "MatchVerifier.h"
+
+using namespace clang::ast_matchers;
 
 namespace clang {
 namespace ast_type_traits {
@@ -56,6 +59,55 @@ TEST(ASTNodeKind, Name) {
   EXPECT_EQ("CallExpr", DNT<CallExpr>().asStringRef());
   EXPECT_EQ("ConstantArrayType", DNT<ConstantArrayType>().asStringRef());
   EXPECT_EQ("<None>", ASTNodeKind().asStringRef());
+}
+
+TEST(DynTypedNode, DeclSourceRange) {
+  RangeVerifier<DynTypedNode> Verifier;
+  Verifier.expectRange(1, 1, 1, 11);
+  EXPECT_TRUE(Verifier.match("void f() {}", decl()));
+}
+
+TEST(DynTypedNode, StmtSourceRange) {
+  RangeVerifier<DynTypedNode> Verifier;
+  Verifier.expectRange(1, 10, 1, 11);
+  EXPECT_TRUE(Verifier.match("void f() {}", stmt()));
+}
+
+TEST(DynTypedNode, TypeLocSourceRange) {
+  RangeVerifier<DynTypedNode> Verifier;
+  Verifier.expectRange(1, 1, 1, 8);
+  EXPECT_TRUE(Verifier.match("void f() {}", typeLoc(loc(functionType()))));
+}
+
+TEST(DynTypedNode, NNSLocSourceRange) {
+  RangeVerifier<DynTypedNode> Verifier;
+  Verifier.expectRange(1, 33, 1, 34);
+  EXPECT_TRUE(Verifier.match("namespace N { typedef void T; } N::T f() {}",
+                             nestedNameSpecifierLoc()));
+}
+
+TEST(DynTypedNode, DeclDump) {
+  DumpVerifier Verifier;
+  Verifier.expectSubstring("FunctionDecl");
+  EXPECT_TRUE(Verifier.match("void f() {}", functionDecl()));
+}
+
+TEST(DynTypedNode, StmtDump) {
+  DumpVerifier Verifier;
+  Verifier.expectSubstring("CompoundStmt");
+  EXPECT_TRUE(Verifier.match("void f() {}", stmt()));
+}
+
+TEST(DynTypedNode, DeclPrint) {
+  PrintVerifier Verifier;
+  Verifier.expectString("void f() {\n}\n\n");
+  EXPECT_TRUE(Verifier.match("void f() {}", functionDecl()));
+}
+
+TEST(DynTypedNode, StmtPrint) {
+  PrintVerifier Verifier;
+  Verifier.expectString("{\n}\n");
+  EXPECT_TRUE(Verifier.match("void f() {}", stmt()));
 }
 
 }  // namespace ast_type_traits
