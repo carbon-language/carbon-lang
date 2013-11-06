@@ -142,14 +142,14 @@ bool PECOFFLinkingContext::addSectionRenaming(raw_ostream &diagnostics,
     std::set<StringRef> visited;
     visited.insert(sectionName);
     for (;;) {
-      auto it = _renamedSections.find(sectionName);
-      if (it == _renamedSections.end())
+      auto pos = _renamedSections.find(sectionName);
+      if (pos == _renamedSections.end())
         break;
-      if (visited.count(it->second)) {
+      if (visited.count(pos->second)) {
         diagnostics << "/merge:" << from << "=" << to << " makes a cycle";
         return false;
       }
-      sectionName = it->second;
+      sectionName = pos->second;
       visited.insert(sectionName);
     }
   }
