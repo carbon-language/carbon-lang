@@ -1,5 +1,4 @@
 ; RUN: opt < %s -analyze -scalar-evolution 2>&1 | FileCheck %s
-; XFAIL: *
 
 ; CHECK: /u 5
 

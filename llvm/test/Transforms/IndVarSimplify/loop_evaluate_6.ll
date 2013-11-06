@@ -1,9 +1,4 @@
 ; RUN: opt < %s -indvars -loop-deletion -S | grep phi | count 1
-; XFAIL: *
-
-; Indvars can't evaluate this loop, because ScalarEvolution can't compute
-; an exact trip count, because it doesn't know if dividing by the stride will
-; have a remainder. It could be done with more aggressive VRP though.
 
 define i32 @test(i32 %x_offs) nounwind readnone {
 entry:

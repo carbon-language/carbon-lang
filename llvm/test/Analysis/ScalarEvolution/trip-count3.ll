@@ -4,7 +4,8 @@
 ; dividing by the stride will have a remainder. This could theoretically
 ; be teaching it how to use a more elaborate trip count computation.
 
-; CHECK: Loop %bb3.i: Unpredictable backedge-taken count.
+; CHECK: Loop %bb3.i: backedge-taken count is ((64 + (-64 smax (-1 + (-1 * %0))) + %0) /u 64)
+; CHECK: Loop %bb3.i: max backedge-taken count is 33554431
 
 %struct.FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct.FILE*, i32, i32, i64, i16, i8, [1 x i8], i8*, i64, i8*, i8*, i8*, i8*, i64, i32, [20 x i8] }
 %struct.SHA_INFO = type { [5 x i32], i32, i32, [16 x i32] }

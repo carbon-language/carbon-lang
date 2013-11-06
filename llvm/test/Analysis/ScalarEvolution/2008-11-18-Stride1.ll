@@ -1,6 +1,8 @@
 ; RUN: opt < %s -analyze -scalar-evolution | FileCheck %s
 
-; CHECK: Loop %bb: Unpredictable backedge-taken count.
+; CHECK: Loop %bb: backedge-taken count is ((-5 + %x) /u 3)
+; CHECK: Loop %bb: max backedge-taken count is 1431655764
+
 
 ; ScalarEvolution can't compute a trip count because it doesn't know if
 ; dividing by the stride will have a remainder. This could theoretically

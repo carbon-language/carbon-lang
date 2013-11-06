@@ -3102,6 +3102,12 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
                   if (isKnownPositive(getMinusSCEV(getSCEV(GEP), Ptr)))
                     Flags = setFlags(Flags, SCEV::FlagNUW);
                 }
+              } else if (const SubOperator *OBO =
+                           dyn_cast<SubOperator>(BEValueV)) {
+                if (OBO->hasNoUnsignedWrap())
+                  Flags = setFlags(Flags, SCEV::FlagNUW);
+                if (OBO->hasNoSignedWrap())
+                  Flags = setFlags(Flags, SCEV::FlagNSW);
               }
 
               const SCEV *StartVal = getSCEV(StartValueV);
@@ -4605,25 +4611,17 @@ ScalarEvolution::ComputeExitLimitFromICmp(const Loop *L,
     if (EL.hasAnyInfo()) return EL;
     break;
   }
-  case ICmpInst::ICMP_SLT: {
-    ExitLimit EL = HowManyLessThans(LHS, RHS, L, true, IsSubExpr);
+  case ICmpInst::ICMP_SLT:
+  case ICmpInst::ICMP_ULT: {                    // while (X < Y)
+    bool IsSigned = Cond == ICmpInst::ICMP_SLT;
+    ExitLimit EL = HowManyLessThans(LHS, RHS, L, IsSigned, IsSubExpr);
     if (EL.hasAnyInfo()) return EL;
     break;
   }
-  case ICmpInst::ICMP_SGT: {
-    ExitLimit EL = HowManyLessThans(getNotSCEV(LHS),
-                                    getNotSCEV(RHS), L, true, IsSubExpr);
-    if (EL.hasAnyInfo()) return EL;
-    break;
-  }
-  case ICmpInst::ICMP_ULT: {
-    ExitLimit EL = HowManyLessThans(LHS, RHS, L, false, IsSubExpr);
-    if (EL.hasAnyInfo()) return EL;
-    break;
-  }
-  case ICmpInst::ICMP_UGT: {
-    ExitLimit EL = HowManyLessThans(getNotSCEV(LHS),
-                                    getNotSCEV(RHS), L, false, IsSubExpr);
+  case ICmpInst::ICMP_SGT:
+  case ICmpInst::ICMP_UGT: {                    // while (X > Y)
+    bool IsSigned = Cond == ICmpInst::ICMP_SGT;
+    ExitLimit EL = HowManyGreaterThans(LHS, RHS, L, IsSigned, IsSubExpr);
     if (EL.hasAnyInfo()) return EL;
     break;
   }
@@ -6330,45 +6328,72 @@ ScalarEvolution::isImpliedCondOperandsHelper(ICmpInst::Predicate Pred,
   return false;
 }
 
-/// getBECount - Subtract the end and start values and divide by the step,
-/// rounding up, to get the number of times the backedge is executed. Return
-/// CouldNotCompute if an intermediate computation overflows.
-const SCEV *ScalarEvolution::getBECount(const SCEV *Start,
-                                        const SCEV *End,
-                                        const SCEV *Step,
-                                        bool NoWrap) {
-  assert(!isKnownNegative(Step) &&
-         "This code doesn't handle negative strides yet!");
+// Verify if an linear IV with positive stride can overflow when in a 
+// less-than comparison, knowing the invariant term of the comparison, the 
+// stride and the knowledge of NSW/NUW flags on the recurrence.
+bool ScalarEvolution::doesIVOverflowOnLT(const SCEV *RHS, const SCEV *Stride,
+                                         bool IsSigned, bool NoWrap) {
+  if (NoWrap) return false;
 
-  Type *Ty = Start->getType();
+  unsigned BitWidth = getTypeSizeInBits(RHS->getType());
+  const SCEV *One = getConstant(Stride->getType(), 1);
 
-  // When Start == End, we have an exact BECount == 0. Short-circuit this case
-  // here because SCEV may not be able to determine that the unsigned division
-  // after rounding is zero.
-  if (Start == End)
-    return getConstant(Ty, 0);
+  if (IsSigned) {
+    APInt MaxRHS = getSignedRange(RHS).getSignedMax();
+    APInt MaxValue = APInt::getSignedMaxValue(BitWidth);
+    APInt MaxStrideMinusOne = getSignedRange(getMinusSCEV(Stride, One))
+                                .getSignedMax();
 
-  const SCEV *NegOne = getConstant(Ty, (uint64_t)-1);
-  const SCEV *Diff = getMinusSCEV(End, Start);
-  const SCEV *RoundUp = getAddExpr(Step, NegOne);
-
-  // Add an adjustment to the difference between End and Start so that
-  // the division will effectively round up.
-  const SCEV *Add = getAddExpr(Diff, RoundUp);
-
-  if (!NoWrap) {
-    // Check Add for unsigned overflow.
-    // TODO: More sophisticated things could be done here.
-    Type *WideTy = IntegerType::get(getContext(),
-                                          getTypeSizeInBits(Ty) + 1);
-    const SCEV *EDiff = getZeroExtendExpr(Diff, WideTy);
-    const SCEV *ERoundUp = getZeroExtendExpr(RoundUp, WideTy);
-    const SCEV *OperandExtendedAdd = getAddExpr(EDiff, ERoundUp);
-    if (getZeroExtendExpr(Add, WideTy) != OperandExtendedAdd)
-      return getCouldNotCompute();
+    // SMaxRHS + SMaxStrideMinusOne > SMaxValue => overflow!
+    return (MaxValue - MaxStrideMinusOne).slt(MaxRHS);
   }
 
-  return getUDivExpr(Add, Step);
+  APInt MaxRHS = getUnsignedRange(RHS).getUnsignedMax();
+  APInt MaxValue = APInt::getMaxValue(BitWidth);
+  APInt MaxStrideMinusOne = getUnsignedRange(getMinusSCEV(Stride, One))
+                              .getUnsignedMax();
+
+  // UMaxRHS + UMaxStrideMinusOne > UMaxValue => overflow!
+  return (MaxValue - MaxStrideMinusOne).ult(MaxRHS);
+}
+
+// Verify if an linear IV with negative stride can overflow when in a 
+// greater-than comparison, knowing the invariant term of the comparison,
+// the stride and the knowledge of NSW/NUW flags on the recurrence.
+bool ScalarEvolution::doesIVOverflowOnGT(const SCEV *RHS, const SCEV *Stride,
+                                         bool IsSigned, bool NoWrap) {
+  if (NoWrap) return false;
+
+  unsigned BitWidth = getTypeSizeInBits(RHS->getType());
+  const SCEV *One = getConstant(Stride->getType(), 1);
+
+  if (IsSigned) {
+    APInt MinRHS = getSignedRange(RHS).getSignedMin();
+    APInt MinValue = APInt::getSignedMinValue(BitWidth);
+    APInt MaxStrideMinusOne = getSignedRange(getMinusSCEV(Stride, One))
+                               .getSignedMax();
+
+    // SMinRHS - SMaxStrideMinusOne < SMinValue => overflow!
+    return (MinValue + MaxStrideMinusOne).sgt(MinRHS);
+  }
+
+  APInt MinRHS = getUnsignedRange(RHS).getUnsignedMin();
+  APInt MinValue = APInt::getMinValue(BitWidth);
+  APInt MaxStrideMinusOne = getUnsignedRange(getMinusSCEV(Stride, One))
+                            .getUnsignedMax();
+
+  // UMinRHS - UMaxStrideMinusOne < UMinValue => overflow!
+  return (MinValue + MaxStrideMinusOne).ugt(MinRHS);
+}
+
+// Compute the backedge taken count knowing the interval difference, the
+// stride and presence of the equality in the comparison.
+const SCEV *ScalarEvolution::computeBECount(const SCEV *Delta, const SCEV *Step, 
+                                            bool Equality) {
+  const SCEV *One = getConstant(Step->getType(), 1);
+  Delta = Equality ? getAddExpr(Delta, Step)
+                   : getAddExpr(Delta, getMinusSCEV(Step, One));
+  return getUDivExpr(Delta, Step);
 }
 
 /// HowManyLessThans - Return the number of times a backedge containing the
@@ -6380,125 +6405,144 @@ const SCEV *ScalarEvolution::getBECount(const SCEV *Start,
 /// a subexpression that cannot overflow before evaluating true.
 ScalarEvolution::ExitLimit
 ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
-                                  const Loop *L, bool isSigned,
+                                  const Loop *L, bool IsSigned,
                                   bool IsSubExpr) {
-  // Only handle:  "ADDREC < LoopInvariant".
-  if (!isLoopInvariant(RHS, L)) return getCouldNotCompute();
-
-  const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(LHS);
-  if (!AddRec || AddRec->getLoop() != L)
+  // We handle only IV < Invariant
+  if (!isLoopInvariant(RHS, L))
     return getCouldNotCompute();
 
-  if (AddRec->isAffine()) {
-    unsigned BitWidth = getTypeSizeInBits(AddRec->getType());
-    const SCEV *Step = AddRec->getStepRecurrence(*this);
+  const SCEVAddRecExpr *IV = dyn_cast<SCEVAddRecExpr>(LHS);
 
-    if (Step->isZero())
-      return getCouldNotCompute();
-    if (Step->isOne()) {
-      // With unit stride, the iteration never steps past the limit value.
-    } else if (isKnownPositive(Step)) {
-      // Test whether a positive iteration can step past the limit value and
-      // past the maximum value for its type in a single step. Constant negative
-      // stride should be rare because LHS > RHS comparisons are canonicalized
-      // to -LHS < -RHS.
-      //
-      // NSW/NUW flags imply that stepping past RHS would immediately result in
-      // undefined behavior. No self-wrap is not useful here because the loop
-      // counter may signed or unsigned wrap but continue iterating and
-      // terminate with defined behavior without ever self-wrapping.
-      const SCEV *One = getConstant(Step->getType(), 1);
-      if (isSigned) {
-        if (!AddRec->getNoWrapFlags(SCEV::FlagNSW)) {
-          APInt Max = APInt::getSignedMaxValue(BitWidth);
-          if ((Max - getSignedRange(getMinusSCEV(Step, One)).getSignedMax())
-              .slt(getSignedRange(RHS).getSignedMax()))
-            return getCouldNotCompute();
-        }
-      } else if (!AddRec->getNoWrapFlags(SCEV::FlagNUW)){
-        APInt Max = APInt::getMaxValue(BitWidth);
-        if ((Max - getUnsignedRange(getMinusSCEV(Step, One)).getUnsignedMax())
-              .ult(getUnsignedRange(RHS).getUnsignedMax()))
-          return getCouldNotCompute();
-      }
-    } else {
-      // Cannot handle variable stride.
-      return getCouldNotCompute();
-    }
-    // We know the LHS is of the form {n,+,s} and the RHS is some loop-invariant
-    // m.  So, we count the number of iterations in which {n,+,s} < m is true.
-    // Note that we cannot simply return max(m-n,0)/s because it's not safe to
-    // treat m-n as signed nor unsigned due to overflow possibility.
+  // Avoid weird loops
+  if (!IV || IV->getLoop() != L || !IV->isAffine())
+    return getCouldNotCompute();
 
-    // First, we get the value of the LHS in the first iteration: n
-    const SCEV *Start = AddRec->getOperand(0);
+  bool NoWrap = !IsSubExpr &&
+                IV->getNoWrapFlags(IsSigned ? SCEV::FlagNSW : SCEV::FlagNUW);
 
-    // Determine the minimum constant start value.
-    const SCEV *MinStart = getConstant(isSigned ?
-      getSignedRange(Start).getSignedMin() :
-      getUnsignedRange(Start).getUnsignedMin());
+  const SCEV *Stride = IV->getStepRecurrence(*this);
 
-    // If we know that the condition is true in order to enter the loop,
-    // then we know that it will run exactly (m-n)/s times. Otherwise, we
-    // only know that it will execute (max(m,n)-n)/s times. In both cases,
-    // the division must round up.
-    const SCEV *End = RHS;
-    if (!isLoopEntryGuardedByCond(L,
-                                  isSigned ? ICmpInst::ICMP_SLT :
-                                             ICmpInst::ICMP_ULT,
-                                  getMinusSCEV(Start, Step), RHS))
-      End = isSigned ? getSMaxExpr(RHS, Start)
-                     : getUMaxExpr(RHS, Start);
+  // Avoid negative or zero stride values
+  if (!isKnownPositive(Stride))
+    return getCouldNotCompute();
 
-    // Determine the maximum constant end value.
-    const SCEV *MaxEnd = getConstant(isSigned ?
-      getSignedRange(End).getSignedMax() :
-      getUnsignedRange(End).getUnsignedMax());
+  // Avoid proven overflow cases: this will ensure that the backedge taken count
+  // will not generate any unsigned overflow. Relaxed no-overflow conditions
+  // exploit NoWrapFlags, allowing to optimize in presence of undefined 
+  // behaviors like the case of C language.
+  if (!Stride->isOne() && doesIVOverflowOnLT(RHS, Stride, IsSigned, NoWrap))
+    return getCouldNotCompute();
 
-    // If MaxEnd is within a step of the maximum integer value in its type,
-    // adjust it down to the minimum value which would produce the same effect.
-    // This allows the subsequent ceiling division of (N+(step-1))/step to
-    // compute the correct value.
-    const SCEV *StepMinusOne = getMinusSCEV(Step,
-                                            getConstant(Step->getType(), 1));
-    MaxEnd = isSigned ?
-      getSMinExpr(MaxEnd,
-                  getMinusSCEV(getConstant(APInt::getSignedMaxValue(BitWidth)),
-                               StepMinusOne)) :
-      getUMinExpr(MaxEnd,
-                  getMinusSCEV(getConstant(APInt::getMaxValue(BitWidth)),
-                               StepMinusOne));
+  ICmpInst::Predicate Cond = IsSigned ? ICmpInst::ICMP_SLT
+                                      : ICmpInst::ICMP_ULT;
+  const SCEV *Start = IV->getStart();
+  const SCEV *End = RHS;
+  if (!isLoopEntryGuardedByCond(L, Cond, getMinusSCEV(Start, Stride), RHS))
+    End = IsSigned ? getSMaxExpr(RHS, Start)
+                   : getUMaxExpr(RHS, Start);
 
-    // If the loop counter does not self-wrap, then the trip count may be
-    // computed by dividing the distance by the step. This is independent of
-    // signed or unsigned wrap.
-    bool NoWrap = false;
-    if (!IsSubExpr) {
-      NoWrap = AddRec->getNoWrapFlags(
-        (SCEV::NoWrapFlags)(((isSigned ? SCEV::FlagNSW : SCEV::FlagNUW))
-                            | SCEV::FlagNW));
-    }
-    // Finally, we subtract these two values and divide, rounding up, to get
-    // the number of times the backedge is executed.
-    const SCEV *BECount = getBECount(Start, End, Step, NoWrap);
+  const SCEV *BECount = computeBECount(getMinusSCEV(End, Start), Stride, false);
 
-    // The maximum backedge count is similar, except using the minimum start
-    // value and the maximum end value.
-    // If we already have an exact constant BECount, use it instead.
-    const SCEV *MaxBECount = isa<SCEVConstant>(BECount) ? BECount
-      : getBECount(MinStart, MaxEnd, Step, NoWrap);
+  APInt MinStart = IsSigned ? getSignedRange(Start).getSignedMin()
+                            : getUnsignedRange(Start).getUnsignedMin();
 
-    // If the stride is nonconstant, and NoWrap == true, then
-    // getBECount(MinStart, MaxEnd) may not compute. This would result in an
-    // exact BECount and invalid MaxBECount, which should be avoided to catch
-    // more optimization opportunities.
-    if (isa<SCEVCouldNotCompute>(MaxBECount))
-      MaxBECount = BECount;
+  APInt MinStride = IsSigned ? getSignedRange(Stride).getSignedMin()
+                             : getUnsignedRange(Stride).getUnsignedMin();
 
-    return ExitLimit(BECount, MaxBECount);
-  }
+  unsigned BitWidth = getTypeSizeInBits(LHS->getType());
+  APInt Limit = IsSigned ? APInt::getSignedMaxValue(BitWidth) - (MinStride - 1)
+                         : APInt::getMaxValue(BitWidth) - (MinStride - 1);
 
-  return getCouldNotCompute();
+  // Although End can be a MAX expression we estimate MaxEnd considering only
+  // the case End = RHS. This is safe because in the other case (End - Start)
+  // is zero, leading to a zero maximum backedge taken count.
+  APInt MaxEnd =
+    IsSigned ? APIntOps::smin(getSignedRange(RHS).getSignedMax(), Limit)
+             : APIntOps::umin(getUnsignedRange(RHS).getUnsignedMax(), Limit);
+
+  const SCEV *MaxBECount = getCouldNotCompute();
+  if (isa<SCEVConstant>(BECount))
+    MaxBECount = BECount;
+  else
+    MaxBECount = computeBECount(getConstant(MaxEnd - MinStart),
+                                getConstant(MinStride), false);
+
+  if (isa<SCEVCouldNotCompute>(MaxBECount))
+    MaxBECount = BECount;
+
+  return ExitLimit(BECount, MaxBECount);
+}
+
+ScalarEvolution::ExitLimit
+ScalarEvolution::HowManyGreaterThans(const SCEV *LHS, const SCEV *RHS,
+                                     const Loop *L, bool IsSigned,
+                                     bool IsSubExpr) {
+  // We handle only IV > Invariant
+  if (!isLoopInvariant(RHS, L))
+    return getCouldNotCompute();
+
+  const SCEVAddRecExpr *IV = dyn_cast<SCEVAddRecExpr>(LHS);
+
+  // Avoid weird loops
+  if (!IV || IV->getLoop() != L || !IV->isAffine())
+    return getCouldNotCompute();
+
+  bool NoWrap = !IsSubExpr &&
+                IV->getNoWrapFlags(IsSigned ? SCEV::FlagNSW : SCEV::FlagNUW);
+
+  const SCEV *Stride = getNegativeSCEV(IV->getStepRecurrence(*this));
+
+  // Avoid negative or zero stride values
+  if (!isKnownPositive(Stride))
+    return getCouldNotCompute();
+
+  // Avoid proven overflow cases: this will ensure that the backedge taken count
+  // will not generate any unsigned overflow. Relaxed no-overflow conditions
+  // exploit NoWrapFlags, allowing to optimize in presence of undefined 
+  // behaviors like the case of C language.
+  if (!Stride->isOne() && doesIVOverflowOnGT(RHS, Stride, IsSigned, NoWrap))
+    return getCouldNotCompute();
+
+  ICmpInst::Predicate Cond = IsSigned ? ICmpInst::ICMP_SGT
+                                      : ICmpInst::ICMP_UGT;
+
+  const SCEV *Start = IV->getStart();
+  const SCEV *End = RHS;
+  if (!isLoopEntryGuardedByCond(L, Cond, getAddExpr(Start, Stride), RHS))
+    End = IsSigned ? getSMinExpr(RHS, Start)
+                   : getUMinExpr(RHS, Start);
+
+  const SCEV *BECount = computeBECount(getMinusSCEV(Start, End), Stride, false);
+
+  APInt MaxStart = IsSigned ? getSignedRange(Start).getSignedMax()
+                            : getUnsignedRange(Start).getUnsignedMax();
+
+  APInt MinStride = IsSigned ? getSignedRange(Stride).getSignedMin()
+                             : getUnsignedRange(Stride).getUnsignedMin();
+
+  unsigned BitWidth = getTypeSizeInBits(LHS->getType());
+  APInt Limit = IsSigned ? APInt::getSignedMinValue(BitWidth) + (MinStride - 1)
+                         : APInt::getMinValue(BitWidth) + (MinStride - 1);
+
+  // Although End can be a MIN expression we estimate MinEnd considering only
+  // the case End = RHS. This is safe because in the other case (Start - End)
+  // is zero, leading to a zero maximum backedge taken count.
+  APInt MinEnd =
+    IsSigned ? APIntOps::smax(getSignedRange(RHS).getSignedMin(), Limit)
+             : APIntOps::umax(getUnsignedRange(RHS).getUnsignedMin(), Limit);
+
+
+  const SCEV *MaxBECount = getCouldNotCompute();
+  if (isa<SCEVConstant>(BECount))
+    MaxBECount = BECount;
+  else
+    MaxBECount = computeBECount(getConstant(MaxStart - MinEnd), 
+                                getConstant(MinStride), false);
+
+  if (isa<SCEVCouldNotCompute>(MaxBECount))
+    MaxBECount = BECount;
+
+  return ExitLimit(BECount, MaxBECount);
 }
 
 /// getNumIterationsInRange - Return the number of iterations of this loop that

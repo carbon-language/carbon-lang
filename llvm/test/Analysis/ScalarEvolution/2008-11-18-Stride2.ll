@@ -1,7 +1,8 @@
 ; RUN: opt < %s -analyze -scalar-evolution 2>&1 | FileCheck %s
-; XFAIL: *
 
-; CHECK: /u 3
+; CHECK: Loop %bb: backedge-taken count is ((999 + (-1 * %x)) /u 3)
+; CHECK: Loop %bb: max backedge-taken count is 334
+
 
 ; This is a tricky testcase for unsigned wrap detection which ScalarEvolution
 ; doesn't yet know how to do.
