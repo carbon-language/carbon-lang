@@ -240,6 +240,19 @@ public:
     bool
     operator != (const lldb::SBThread &rhs) const;
              
+    %feature("autodoc","
+    Given an argument of str to specify the type of thread-origin extended
+    backtrace to retrieve, query whether the origin of this thread is 
+    available.  An SBThread is retured; SBThread.IsValid will return true
+    if an extended backtrace was available.  The returned SBThread is not
+    a part of the SBProcess' thread list and it cannot be manipulated like
+    normal threads -- you cannot step or resume it, for instance -- it is
+    intended to used primarily for generating a backtrace.  You may request
+    the returned thread's own thread origin in turn.
+    ") GetThreadOriginExtendedBacktrace;
+    lldb::SBThread
+    GetThreadOriginExtendedBacktrace (const char *type);
+
     %pythoncode %{
         class frames_access(object):
             '''A helper object that will lazily hand out frames for a thread when supplied an index.'''

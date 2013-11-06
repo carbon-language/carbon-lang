@@ -20,6 +20,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Target/SystemRuntime.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Symbol/SymbolContext.h"
@@ -1279,4 +1280,39 @@ SBThread::GetDescription (SBStream &description) const
         strm.PutCString ("No value");
     
     return true;
+}
+
+SBThread
+SBThread::GetThreadOriginExtendedBacktrace (const char *type)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+    SBThread sb_origin_thread;
+
+    if (exe_ctx.HasThreadScope())
+    {
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        {
+            ThreadSP real_thread(exe_ctx.GetThreadPtr());
+            if (real_thread)
+            {
+                ConstString type_const (type);
+                SystemRuntime *runtime = exe_ctx.GetProcessPtr()->GetSystemRuntime();
+                if (runtime)
+                {
+                    ThreadSP origin_thread = runtime->GetThreadOriginExtendedBacktrace (real_thread, type_const);
+                    sb_origin_thread.SetThread (origin_thread);
+                }
+            }
+        }
+        else
+        {
+            if (log)
+                log->Printf ("SBThread(%p)::GetThreadOriginExtendedBacktrace() => error: process is running", exe_ctx.GetThreadPtr());
+        }
+    }
+
+    return sb_origin_thread;
 }

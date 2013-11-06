@@ -65,3 +65,9 @@ SystemRuntime::GetThreadOriginExtendedBacktraceTypes ()
     std::vector<ConstString> types;
     return types;
 }
+
+ThreadSP
+SystemRuntime::GetThreadOriginExtendedBacktrace (ThreadSP thread, ConstString type)
+{
+    return ThreadSP();
+}

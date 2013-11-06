@@ -130,6 +130,36 @@ public:
     virtual std::vector<ConstString>
     GetThreadOriginExtendedBacktraceTypes ();
 
+    //------------------------------------------------------------------
+    /// Return a Thread which shows the origin of this thread's creation.
+    ///
+    /// This likely returns a HistoryThread which shows how thread was
+    /// originally created (e.g. "pthread" type), or how the work that
+    /// is currently executing on it was originally enqueued (e.g. 
+    /// "libdispatch" type).
+    ///
+    /// There may be a chain of thread-origins; it may be informative to
+    /// the end user to query the returned ThreadSP for its origins as 
+    /// well.
+    ///
+    /// @param [in] thread
+    ///   The thread to examine.
+    ///
+    /// @param [in] type
+    ///   The type of thread origin being requested.  The types supported
+    ///   are returned from SystemRuntime::GetThreadOriginExtendedBacktraceTypes.
+    ///
+    /// @return
+    ///   A ThreadSP which will have a StackList of frames.  This Thread will
+    ///   not appear in the Process' list of current threads.  Normal thread 
+    ///   operations like stepping will not be available.  This is a historical
+    ///   view thread and may be only useful for showing a backtrace.
+    ///
+    ///   An empty ThreadSP will be returned if no thread origin is available.
+    //------------------------------------------------------------------
+    virtual lldb::ThreadSP
+    GetThreadOriginExtendedBacktrace (lldb::ThreadSP thread, ConstString type);
+
 protected:
     //------------------------------------------------------------------
     // Member variables.
