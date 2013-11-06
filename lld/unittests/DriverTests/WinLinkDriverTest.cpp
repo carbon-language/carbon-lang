@@ -463,9 +463,9 @@ TEST_F(WinLinkParserTest, Ignore) {
   // compatibility with link.exe.
   EXPECT_TRUE(parse("link.exe", "/nologo", "/errorreport:prompt",
                     "/incremental", "/incremental:no", "/delay:unload",
-                    "/delayload:user32", "/pdb:foo", "/pdbaltpath:bar",
-                    "/verbose", "/verbose:icf", "/wx", "/wx:no", "a.obj",
-                    nullptr));
+                    "/disallowlib:foo", "/delayload:user32", "/pdb:foo",
+                    "/pdbaltpath:bar", "/verbose", "/verbose:icf", "/wx",
+                    "/wx:no", "a.obj", nullptr));
   EXPECT_EQ("", errorMessage());
   EXPECT_EQ(1, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));

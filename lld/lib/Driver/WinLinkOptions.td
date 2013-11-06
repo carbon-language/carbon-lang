@@ -92,6 +92,7 @@ def verbose : F<"verbose">;
 
 def delay : QF<"delay">;
 def delayload : QF<"delayload">;
+def disallowlib : QF<"disallowlib">;
 def errorreport : QF<"errorreport">;
 def pdb : QF<"pdb">;
 def pdbaltpath : QF<"pdbaltpath">;
