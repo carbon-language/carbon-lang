@@ -527,6 +527,17 @@ CAMLprim value llvm_dump_value(LLVMValueRef Val) {
   return Val_unit;
 }
 
+/* llvalue -> string */
+CAMLprim value llvm_string_of_llvalue(LLVMTypeRef M) {
+  char* TypeCStr;
+  TypeCStr = LLVMPrintValueToString(M);
+
+  value TypeStr = caml_copy_string(TypeCStr);
+  LLVMDisposeMessage(TypeCStr);
+
+  return TypeStr;
+}
+
 /* llvalue -> llvalue -> unit */
 CAMLprim value llvm_replace_all_uses_with(LLVMValueRef OldVal,
                                           LLVMValueRef NewVal) {

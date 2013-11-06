@@ -382,6 +382,7 @@ external type_of : llvalue -> lltype = "llvm_type_of"
 external value_name : llvalue -> string = "llvm_value_name"
 external set_value_name : string -> llvalue -> unit = "llvm_set_value_name"
 external dump_value : llvalue -> unit = "llvm_dump_value"
+external string_of_llvalue : llvalue -> string = "llvm_string_of_llvalue"
 external replace_all_uses_with : llvalue -> llvalue -> unit
                                = "llvm_replace_all_uses_with"
 

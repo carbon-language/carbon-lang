@@ -654,6 +654,9 @@ val set_value_name : string -> llvalue -> unit
     error. See the method [llvm::Value::dump]. *)
 val dump_value : llvalue -> unit
 
+(** [string_of_llvalue v] returns a string describing the value [v]. *)
+val string_of_llvalue : llvalue -> string
+
 (** [replace_all_uses_with old new] replaces all uses of the value [old]
     with the value [new]. See the method [llvm::Value::replaceAllUsesWith]. *)
 val replace_all_uses_with : llvalue -> llvalue -> unit

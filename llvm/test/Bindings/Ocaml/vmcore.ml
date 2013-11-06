@@ -67,6 +67,14 @@ let filename = Sys.argv.(1)
 let m = create_module context filename
 
 
+(*===-- Conversion --------------------------------------------------------===*)
+
+let test_conversion () =
+  insist ("i32" = (string_of_lltype i32_type));
+  let c = const_int i32_type 42 in
+  insist ("i32 42" = (string_of_llvalue c))
+
+
 (*===-- Target ------------------------------------------------------------===*)
 
 let test_target () =
@@ -1392,6 +1400,7 @@ let test_writer () =
 (*===-- Driver ------------------------------------------------------------===*)
 
 let _ =
+  suite "conversion"       test_conversion;
   suite "target"           test_target;
   suite "constants"        test_constants;
   suite "global values"    test_global_values;
