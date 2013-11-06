@@ -106,18 +106,53 @@ struct ThisAdjustment {
   /// nearest virtual base.
   int64_t NonVirtual;
 
-  /// \brief The offset (in bytes), relative to the address point,
-  /// of the virtual call offset.
-  int64_t VCallOffsetOffset;
-  
-  ThisAdjustment() : NonVirtual(0), VCallOffsetOffset(0) { }
+  /// \brief Holds the ABI-specific information about the virtual this
+  /// adjustment, if needed.
+  union VirtualAdjustment {
+    // Itanium ABI
+    struct {
+      /// \brief The offset (in bytes), relative to the address point,
+      /// of the virtual call offset.
+      int64_t VCallOffsetOffset;
+    } Itanium;
 
-  bool isEmpty() const { return !NonVirtual && !VCallOffsetOffset; }
+    struct {
+      /// \brief The offset of the vtordisp (in bytes), relative to the ECX.
+      int32_t VtordispOffset;
+
+      /// \brief The offset of the vbptr of the derived class (in bytes),
+      /// relative to the ECX after vtordisp adjustment.
+      int32_t VBPtrOffset;
+
+      /// \brief The offset (in bytes) of the vbase offset in the vbtable.
+      int32_t VBOffsetOffset;
+    } Microsoft;
+
+    VirtualAdjustment() {
+      memset(this, 0, sizeof(*this));
+    }
+
+    bool Equals(const VirtualAdjustment &Other) const {
+      return memcmp(this, &Other, sizeof(Other)) == 0;
+    }
+
+    bool isEmpty() const {
+      VirtualAdjustment Zero;
+      return Equals(Zero);
+    }
+
+    bool Less(const VirtualAdjustment &RHS) const {
+      return memcmp(this, &RHS, sizeof(RHS)) < 0;
+    }
+  } Virtual;
+  
+  ThisAdjustment() : NonVirtual(0) { }
+
+  bool isEmpty() const { return !NonVirtual && Virtual.isEmpty(); }
 
   friend bool operator==(const ThisAdjustment &LHS, 
                          const ThisAdjustment &RHS) {
-    return LHS.NonVirtual == RHS.NonVirtual && 
-      LHS.VCallOffsetOffset == RHS.VCallOffsetOffset;
+    return LHS.NonVirtual == RHS.NonVirtual && LHS.Virtual.Equals(RHS.Virtual);
   }
 
   friend bool operator!=(const ThisAdjustment &LHS, const ThisAdjustment &RHS) {
@@ -129,8 +164,7 @@ struct ThisAdjustment {
     if (LHS.NonVirtual < RHS.NonVirtual)
       return true;
     
-    return LHS.NonVirtual == RHS.NonVirtual && 
-      LHS.VCallOffsetOffset < RHS.VCallOffsetOffset;
+    return LHS.NonVirtual == RHS.NonVirtual && LHS.Virtual.Less(RHS.Virtual);
   }
 };
 

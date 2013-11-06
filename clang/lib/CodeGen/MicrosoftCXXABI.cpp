@@ -988,8 +988,29 @@ llvm::Value *MicrosoftCXXABI::performThisAdjustment(CodeGenFunction &CGF,
 
   llvm::Value *V = CGF.Builder.CreateBitCast(This, CGF.Int8PtrTy);
 
-  assert(TA.VCallOffsetOffset == 0 &&
-         "VtorDisp adjustment is not supported yet");
+  if (!TA.Virtual.isEmpty()) {
+    assert(TA.Virtual.Microsoft.VtordispOffset < 0);
+    // Adjust the this argument based on the vtordisp value.
+    llvm::Value *VtorDispPtr =
+        CGF.Builder.CreateConstGEP1_32(V, TA.Virtual.Microsoft.VtordispOffset);
+    VtorDispPtr =
+        CGF.Builder.CreateBitCast(VtorDispPtr, CGF.Int32Ty->getPointerTo());
+    llvm::Value *VtorDisp = CGF.Builder.CreateLoad(VtorDispPtr, "vtordisp");
+    V = CGF.Builder.CreateGEP(V, CGF.Builder.CreateNeg(VtorDisp));
+
+    if (TA.Virtual.Microsoft.VBPtrOffset) {
+      // If the final overrider is defined in a virtual base other than the one
+      // that holds the vfptr, we have to use a vtordispex thunk which looks up
+      // the vbtable of the derived class.
+      assert(TA.Virtual.Microsoft.VBPtrOffset > 0);
+      assert(TA.Virtual.Microsoft.VBOffsetOffset >= 0);
+      llvm::Value *VBPtr;
+      llvm::Value *VBaseOffset =
+          GetVBaseOffsetFromVBPtr(CGF, V, -TA.Virtual.Microsoft.VBPtrOffset,
+                                  TA.Virtual.Microsoft.VBOffsetOffset, &VBPtr);
+      V = CGF.Builder.CreateInBoundsGEP(VBPtr, VBaseOffset);
+    }
+  }
 
   if (TA.NonVirtual) {
     // Non-virtual adjustment might result in a pointer outside the allocated

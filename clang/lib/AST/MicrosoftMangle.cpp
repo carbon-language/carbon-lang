@@ -121,7 +121,7 @@ public:
   void mangleDeclaration(const NamedDecl *ND);
   void mangleFunctionEncoding(const FunctionDecl *FD);
   void mangleVariableEncoding(const VarDecl *VD);
-  void mangleNumber(int64_t Number);
+  void mangleNumber(uint32_t Number);
   void mangleNumber(const llvm::APSInt &Value);
   void mangleType(QualType T, SourceRange Range,
                   QualifierMangleMode QMM = QMM_Mangle);
@@ -387,8 +387,8 @@ void MicrosoftCXXNameMangler::mangleName(const NamedDecl *ND) {
   Out << '@';
 }
 
-void MicrosoftCXXNameMangler::mangleNumber(int64_t Number) {
-  llvm::APSInt APSNumber(/*BitWidth=*/64, /*isUnsigned=*/false);
+void MicrosoftCXXNameMangler::mangleNumber(uint32_t Number) {
+  llvm::APSInt APSNumber(/*BitWidth=*/32, /*isUnsigned=*/true);
   APSNumber = Number;
   mangleNumber(APSNumber);
 }
@@ -836,7 +836,7 @@ void MicrosoftCXXNameMangler::mangleLocalName(const FunctionDecl *FD) {
   // functions. You could have a method baz of class C inside a function bar
   // inside a function foo, like so:
   // ?baz@C@?3??bar@?1??foo@@YAXXZ@YAXXZ@QAEXXZ
-  int NestLevel = getLocalNestingLevel(FD);
+  unsigned NestLevel = getLocalNestingLevel(FD);
   Out << '?';
   mangleNumber(NestLevel);
   Out << '?';
@@ -1367,24 +1367,18 @@ void MicrosoftCXXNameMangler::mangleFunctionClass(const FunctionDecl *FD) {
   //                   ::= D # private: static far
   //                   ::= E # private: virtual near
   //                   ::= F # private: virtual far
-  //                   ::= G # private: thunk near
-  //                   ::= H # private: thunk far
   //                   ::= I # protected: near
   //                   ::= J # protected: far
   //                   ::= K # protected: static near
   //                   ::= L # protected: static far
   //                   ::= M # protected: virtual near
   //                   ::= N # protected: virtual far
-  //                   ::= O # protected: thunk near
-  //                   ::= P # protected: thunk far
   //                   ::= Q # public: near
   //                   ::= R # public: far
   //                   ::= S # public: static near
   //                   ::= T # public: static far
   //                   ::= U # public: virtual near
   //                   ::= V # public: virtual far
-  //                   ::= W # public: thunk near
-  //                   ::= X # public: thunk far
   // <global-function> ::= Y # global near
   //                   ::= Z # global far
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
@@ -1843,12 +1837,61 @@ void MicrosoftMangleContextImpl::mangleCXXName(const NamedDecl *D,
   return Mangler.mangle(D);
 }
 
+// <this-adjustment> ::= <no-adjustment> | <static-adjustment> |
+//                       <virtual-adjustment>
+// <no-adjustment>      ::= A # private near
+//                      ::= B # private far
+//                      ::= I # protected near
+//                      ::= J # protected far
+//                      ::= Q # public near
+//                      ::= R # public far
+// <static-adjustment>  ::= G <static-offset> # private near
+//                      ::= H <static-offset> # private far
+//                      ::= O <static-offset> # protected near
+//                      ::= P <static-offset> # protected far
+//                      ::= W <static-offset> # public near
+//                      ::= X <static-offset> # public far
+// <virtual-adjustment> ::= $0 <virtual-shift> <static-offset> # private near
+//                      ::= $1 <virtual-shift> <static-offset> # private far
+//                      ::= $2 <virtual-shift> <static-offset> # protected near
+//                      ::= $3 <virtual-shift> <static-offset> # protected far
+//                      ::= $4 <virtual-shift> <static-offset> # public near
+//                      ::= $5 <virtual-shift> <static-offset> # public far
+// <virtual-shift>      ::= <vtordisp-shift> | <vtordispex-shift>
+// <vtordisp-shift>     ::= <offset-to-vtordisp>
+// <vtordispex-shift>   ::= <offset-to-vbptr> <vbase-offset-offset>
+//                          <offset-to-vtordisp>
 static void mangleThunkThisAdjustment(const CXXMethodDecl *MD,
                                       const ThisAdjustment &Adjustment,
                                       MicrosoftCXXNameMangler &Mangler,
                                       raw_ostream &Out) {
-  // FIXME: add support for vtordisp thunks.
-  if (Adjustment.NonVirtual != 0) {
+  if (!Adjustment.Virtual.isEmpty()) {
+    Out << '$';
+    char AccessSpec;
+    switch (MD->getAccess()) {
+    case AS_none:
+      llvm_unreachable("Unsupported access specifier");
+    case AS_private:
+      AccessSpec = '0';
+      break;
+    case AS_protected:
+      AccessSpec = '2';
+      break;
+    case AS_public:
+      AccessSpec = '4';
+    }
+    if (Adjustment.Virtual.Microsoft.VBPtrOffset) {
+      Out << 'R' << AccessSpec;
+      Mangler.mangleNumber(Adjustment.Virtual.Microsoft.VBPtrOffset);
+      Mangler.mangleNumber(Adjustment.Virtual.Microsoft.VBOffsetOffset);
+      Mangler.mangleNumber(Adjustment.Virtual.Microsoft.VtordispOffset);
+      Mangler.mangleNumber(Adjustment.NonVirtual);
+    } else {
+      Out << AccessSpec;
+      Mangler.mangleNumber(Adjustment.Virtual.Microsoft.VtordispOffset);
+      Mangler.mangleNumber(-Adjustment.NonVirtual);
+    }
+  } else if (Adjustment.NonVirtual != 0) {
     switch (MD->getAccess()) {
     case AS_none:
       llvm_unreachable("Unsupported access specifier");
@@ -1861,9 +1904,7 @@ static void mangleThunkThisAdjustment(const CXXMethodDecl *MD,
     case AS_public:
       Out << 'W';
     }
-    llvm::APSInt APSNumber(/*BitWidth=*/32, /*isUnsigned=*/true);
-    APSNumber = -Adjustment.NonVirtual;
-    Mangler.mangleNumber(APSNumber);
+    Mangler.mangleNumber(-Adjustment.NonVirtual);
   } else {
     switch (MD->getAccess()) {
     case AS_none:

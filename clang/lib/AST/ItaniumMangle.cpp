@@ -3657,8 +3657,9 @@ void ItaniumMangleContextImpl::mangleThunk(const CXXMethodDecl *MD,
     Mangler.getStream() << 'c';
   
   // Mangle the 'this' pointer adjustment.
-  Mangler.mangleCallOffset(Thunk.This.NonVirtual, Thunk.This.VCallOffsetOffset);
-  
+  Mangler.mangleCallOffset(Thunk.This.NonVirtual,
+                           Thunk.This.Virtual.Itanium.VCallOffsetOffset);
+
   // Mangle the return pointer adjustment if there is one.
   if (!Thunk.Return.isEmpty())
     Mangler.mangleCallOffset(Thunk.Return.NonVirtual,
@@ -3677,7 +3678,7 @@ void ItaniumMangleContextImpl::mangleCXXDtorThunk(
 
   // Mangle the 'this' pointer adjustment.
   Mangler.mangleCallOffset(ThisAdjustment.NonVirtual, 
-                           ThisAdjustment.VCallOffsetOffset);
+                           ThisAdjustment.Virtual.Itanium.VCallOffsetOffset);
 
   Mangler.mangleFunctionEncoding(DD);
 }

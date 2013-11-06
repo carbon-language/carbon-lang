@@ -1118,7 +1118,8 @@ static llvm::Value *performTypeAdjustment(CodeGenFunction &CGF,
 llvm::Value *ItaniumCXXABI::performThisAdjustment(CodeGenFunction &CGF,
                                                   llvm::Value *This,
                                                   const ThisAdjustment &TA) {
-  return performTypeAdjustment(CGF, This, TA.NonVirtual, TA.VCallOffsetOffset,
+  return performTypeAdjustment(CGF, This, TA.NonVirtual,
+                               TA.Virtual.Itanium.VCallOffsetOffset,
                                /*IsReturnAdjustment=*/false);
 }
 

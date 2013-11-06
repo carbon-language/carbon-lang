@@ -138,8 +138,6 @@ I::I() {}  // Emits vftable and forces thunk generation.
 // CODEGEN: phi %struct.F* {{.*}} %[[RES]]
 // CODEGEN: ret %struct.{{[BF]}}*
 
-// FIXME: Write vtordisp adjusting thunk tests
-
 namespace CrashOnThunksForAttributedType {
 // We used to crash on this because the type of foo is an AttributedType, not
 // FunctionType, and we had to look through the sugar.
