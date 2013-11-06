@@ -46,6 +46,14 @@ package "ipo" (
     archive(native) = "llvm_ipo.cmxa"
 )
 
+package "irreader" (
+    requires = "llvm"
+    version  = "@PACKAGE_VERSION@"
+    description = "IR assembly reader for LLVM"
+    archive(byte) = "llvm_irreader.cma"
+    archive(native) = "llvm_irreader.cmxa"
+)
+
 package "scalar_opts" (
     requires = "llvm"
     version = "@PACKAGE_VERSION@"

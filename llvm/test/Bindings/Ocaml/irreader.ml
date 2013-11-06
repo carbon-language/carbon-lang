@@ -1,0 +1,59 @@
+(* RUN: rm -rf %t.builddir
+ * RUN: mkdir -p %t.builddir
+ * RUN: cp %s %t.builddir
+ * RUN: %ocamlopt -g -warn-error A llvm.cmxa llvm_irreader.cmxa %t.builddir/irreader.ml -o %t
+ * RUN: %t
+ * XFAIL: vg_leak
+ *)
+
+(* Note: It takes several seconds for ocamlopt to link an executable with
+         libLLVMCore.a, so it's better to write a big test than a bunch of
+         little ones. *)
+
+open Llvm
+open Llvm_irreader
+
+let context = global_context ()
+
+(* Tiny unit test framework - really just to help find which line is busted *)
+let print_checkpoints = false
+
+let suite name f =
+  if print_checkpoints then
+    prerr_endline (name ^ ":");
+  f ()
+
+let _ =
+  Printexc.record_backtrace true
+
+let insist cond =
+  if not cond then failwith "insist"
+
+
+(*===-- IR Reader ---------------------------------------------------------===*)
+
+let test_irreader () =
+  begin
+    let buf = MemoryBuffer.of_string "@foo = global i32 42" in
+    let m   = parse_ir context buf in
+    match lookup_global "foo" m with
+    | Some foo ->
+        insist ((global_initializer foo) = (const_int (i32_type context) 42))
+    | None ->
+        failwith "global"
+  end;
+
+  begin
+    let buf = MemoryBuffer.of_string "@foo = global garble" in
+    try
+      ignore (parse_ir context buf);
+      failwith "parsed"
+    with Llvm_irreader.Error _ ->
+      ()
+  end
+
+
+(*===-- Driver ------------------------------------------------------------===*)
+
+let _ =
+  suite "irreader" test_irreader
