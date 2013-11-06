@@ -283,6 +283,15 @@ TEST_F(WinLinkParserTest, NoDefaultLibAll) {
   EXPECT_EQ("a.obj", inputFile(0));
 }
 
+TEST_F(WinLinkParserTest, DisallowLib) {
+  EXPECT_TRUE(parse("link.exe", "/defaultlib:user32.lib",
+                    "/defaultlib:kernel32", "/disallowlib:user32.lib", "a.obj",
+                    nullptr));
+  EXPECT_EQ(2, inputFileCount());
+  EXPECT_EQ("a.obj", inputFile(0));
+  EXPECT_EQ("kernel32.lib", inputFile(1));
+}
+
 //
 // Tests for boolean flags.
 //

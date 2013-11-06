@@ -18,6 +18,7 @@ multiclass B<string name, string help> {
 def base    : P<"base", "Base address of the program">;
 def defaultlib : P<"defaultlib", "Add the library to the list of input files">;
 def nodefaultlib : P<"nodefaultlib", "Remove a default library">;
+def disallowlib : Joined<["/", "-", "-?"], "disallowlib:">, Alias<nodefaultlib>;
 def entry   : P<"entry", "Name of entry point symbol">;
 // No help text because /failifmismatch is not intended to be used by the user.
 def failifmismatch : P<"failifmismatch", "">;
@@ -92,7 +93,6 @@ def verbose : F<"verbose">;
 
 def delay : QF<"delay">;
 def delayload : QF<"delayload">;
-def disallowlib : QF<"disallowlib">;
 def errorreport : QF<"errorreport">;
 def pdb : QF<"pdb">;
 def pdbaltpath : QF<"pdbaltpath">;
