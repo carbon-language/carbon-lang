@@ -1212,6 +1212,14 @@ void LLVMSetValueName(LLVMValueRef Val, const char *Name);
 void LLVMDumpValue(LLVMValueRef Val);
 
 /**
+ * Return a string representation of the value. Use
+ * LLVMDisposeMessage to free the string.
+ *
+ * @see llvm::Value::print()
+ */
+char *LLVMPrintValueToString(LLVMValueRef Val);
+
+/**
  * Replace all uses of a value with another one.
  *
  * @see llvm::Value::replaceAllUsesWith()
