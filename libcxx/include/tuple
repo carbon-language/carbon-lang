@@ -270,7 +270,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     _LIBCPP_CONSTEXPR_AFTER_CXX11
     __tuple_leaf(__tuple_leaf&& __t) _NOEXCEPT_(is_nothrow_move_constructible<_Hp>::value)
-        : value(_VSTD::move(__t.get()))
+        : value(_VSTD::forward<_Hp>(__t.get()))
         {}
 
     template <class _Tp>
@@ -457,13 +457,24 @@ struct __tuple_impl<__tuple_indices<_Indx...>, _Tp...>
             return *this;
         }
 
-        _LIBCPP_INLINE_VISIBILITY
-        __tuple_impl&
-        operator=(const __tuple_impl& __t) _NOEXCEPT_((__all<is_nothrow_copy_assignable<_Tp>::value...>::value))
-        {
-            __swallow(__tuple_leaf<_Indx, _Tp>::operator=(static_cast<const __tuple_leaf<_Indx, _Tp>&>(__t).get())...);
-            return *this;
-        }
+    __tuple_impl(const __tuple_impl&) = default;
+    __tuple_impl(__tuple_impl&&) = default;
+
+    _LIBCPP_INLINE_VISIBILITY
+    __tuple_impl&
+    operator=(const __tuple_impl& __t) _NOEXCEPT_((__all<is_nothrow_copy_assignable<_Tp>::value...>::value))
+    {
+        __swallow(__tuple_leaf<_Indx, _Tp>::operator=(static_cast<const __tuple_leaf<_Indx, _Tp>&>(__t).get())...);
+        return *this;
+    }
+
+    _LIBCPP_INLINE_VISIBILITY
+    __tuple_impl&
+    operator=(__tuple_impl&& __t) _NOEXCEPT_((__all<is_nothrow_move_assignable<_Tp>::value...>::value))
+    {
+        __swallow(__tuple_leaf<_Indx, _Tp>::operator=(_VSTD::forward<_Tp>(static_cast<__tuple_leaf<_Indx, _Tp>&>(__t).get()))...);
+        return *this;
+    }
 
     _LIBCPP_INLINE_VISIBILITY
     void swap(__tuple_impl& __t)
