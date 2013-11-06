@@ -363,37 +363,35 @@ void Util::assignAddressesToSections() {
         layoutSectionsInSegment(seg, address);
     }
     DEBUG_WITH_TYPE("WriterMachO-norm", 
-                    llvm::dbgs() << "assignAddressesToSections()\n");
-    for (SegmentInfo *sgi : _segmentInfos) {
-      DEBUG_WITH_TYPE("WriterMachO-norm", llvm::dbgs()
-                      << "   address=" << llvm::format("0x%08llX", sgi->address)
+      llvm::dbgs() << "assignAddressesToSections()\n";
+      for (SegmentInfo *sgi : _segmentInfos) {
+        llvm::dbgs()  << "   address=" << llvm::format("0x%08llX", sgi->address)
                       << ", size="  << llvm::format("0x%08llX", sgi->size)
                       << ", segment-name='" << sgi->name 
-                      << "'\n");
-    for (SectionInfo *si : sgi->sections) {
-        DEBUG_WITH_TYPE("WriterMachO-norm", llvm::dbgs()
-                      << "      addr="  << llvm::format("0x%08llX", si->address)
+                      << "'\n";
+        for (SectionInfo *si : sgi->sections) {
+          llvm::dbgs()<< "      addr="  << llvm::format("0x%08llX", si->address)
                       << ", size="  << llvm::format("0x%08llX", si->size)
                       << ", section-name='" << si->sectionName 
-                      << "\n");
+                      << "\n";
+        }
       }
-    }
+    );
   } else {
     for (SectionInfo *sect : _sectionInfos) {
       sect->address = alignTo(address, sect->alignment);
       address = sect->address + sect->size;
     }
     DEBUG_WITH_TYPE("WriterMachO-norm", 
-                     llvm::dbgs() << "assignAddressesToSections()\n");
-    for (SectionInfo *si : _sectionInfos) {
-      DEBUG_WITH_TYPE("WriterMachO-norm", llvm::dbgs()
-                      << "      section=" << si->sectionName 
+      llvm::dbgs() << "assignAddressesToSections()\n";
+      for (SectionInfo *si : _sectionInfos) {
+        llvm::dbgs()  << "      section=" << si->sectionName 
                       << " address= "  << llvm::format("0x%08X", si->address)
                       << " size= "  << llvm::format("0x%08X", si->size)
-                      << "\n");
-    }
+                      << "\n";
+      }
+    );
   }
-
 }
 
 
