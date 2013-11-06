@@ -146,13 +146,13 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     if (!InEveryTU)
       return true;
 
-    assert(Linkage == TargetLinkage);
     // Instead of creating as alias to a linkonce_odr, replace all of the uses
     // of the aliassee.
-    if (TargetLinkage == llvm::GlobalValue::LinkOnceODRLinkage) {
+    if (Linkage == llvm::GlobalValue::LinkOnceODRLinkage) {
       Replacements[MangledName] = Aliasee;
       return false;
     }
+    assert(Linkage == TargetLinkage);
   }
 
   // Create the alias with no name.
