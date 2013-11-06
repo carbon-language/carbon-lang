@@ -831,8 +831,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   // nor blacklisted by /nodefaultlib.
   if (!ctx.getNoDefaultLibAll()) {
     for (const StringRef path : defaultLibs) {
-      if (ctx.getNoDefaultLibs().find(path) == ctx.getNoDefaultLibs().end() &&
-	  !ctx.hasDefaultLib(path)) {
+      if (!ctx.hasNoDefaultLib(path) && !ctx.hasDefaultLib(path)) {
         inputElements.push_back(std::unique_ptr<InputElement>(
             new PECOFFLibraryNode(ctx, path)));
 	ctx.addDefaultLib(path);

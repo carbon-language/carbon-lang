@@ -189,9 +189,9 @@ public:
   bool addSectionRenaming(raw_ostream &diagnostics,
                           StringRef from, StringRef to);
 
-  void addNoDefaultLib(StringRef libName) { _noDefaultLibs.insert(libName); }
-  const std::set<std::string> &getNoDefaultLibs() const {
-    return _noDefaultLibs;
+  void addNoDefaultLib(StringRef path) { _noDefaultLibs.insert(path); }
+  bool hasNoDefaultLib(StringRef path) const {
+    return _noDefaultLibs.count(path) == 1;
   }
 
   void addDefaultLib(StringRef path) { _defaultLibs.insert(path); }
