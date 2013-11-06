@@ -349,6 +349,7 @@ KEYWORD(__PRETTY_FUNCTION__         , KEYALL)
 KEYWORD(typeof                      , KEYGNU)
 
 // MS Extensions
+KEYWORD(__FUNCDNAME__               , KEYMS)
 KEYWORD(L__FUNCTION__               , KEYMS)
 KEYWORD(__is_interface_class        , KEYMS)
 KEYWORD(__is_sealed                 , KEYMS)

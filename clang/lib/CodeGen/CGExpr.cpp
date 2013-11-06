@@ -1944,6 +1944,7 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   case PredefinedExpr::Func:
   case PredefinedExpr::Function:
   case PredefinedExpr::LFunction:
+  case PredefinedExpr::FuncDName:
   case PredefinedExpr::PrettyFunction: {
     PredefinedExpr::IdentType IdentType = E->getIdentType();
     std::string GlobalVarName;
@@ -1955,6 +1956,9 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
       break;
     case PredefinedExpr::Function:
       GlobalVarName = "__FUNCTION__.";
+      break;
+    case PredefinedExpr::FuncDName:
+      GlobalVarName = "__FUNCDNAME__.";
       break;
     case PredefinedExpr::LFunction:
       GlobalVarName = "L__FUNCTION__.";

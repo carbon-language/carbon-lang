@@ -940,6 +940,7 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
   case tok::kw___imag:
   case tok::kw___real:
   case tok::kw___FUNCTION__:
+  case tok::kw___FUNCDNAME__:
   case tok::kw_L__FUNCTION__:
   case tok::kw___PRETTY_FUNCTION__:
   case tok::kw___has_nothrow_assign:
