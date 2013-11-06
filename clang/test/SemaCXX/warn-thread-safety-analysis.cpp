@@ -4213,14 +4213,44 @@ class PtGuardedBySanityTest {
 
 
 class SmartPtr_PtGuardedBy_Test {
+  Mutex mu1;
   Mutex mu2;
-  SmartPtr<int>  sp PT_GUARDED_BY(mu2);
-  SmartPtr<Cell> sq PT_GUARDED_BY(mu2);
+  SmartPtr<int>  sp GUARDED_BY(mu1) PT_GUARDED_BY(mu2);
+  SmartPtr<Cell> sq GUARDED_BY(mu1) PT_GUARDED_BY(mu2);
 
-  void test() {
-    sp.get();   // OK -- no GUARDED_BY
-    *sp = 0;    // expected-warning {{reading the value pointed to by 'sp' requires locking 'mu2'}}
-    sq->a = 0;  // expected-warning {{reading the value pointed to by 'sq' requires locking 'mu2'}}
+  void test1() {
+    mu1.ReaderLock();
+    mu2.Lock();
+
+    sp.get();
+    if (*sp == 0) doSomething();
+    *sp = 0;
+    sq->a = 0;
+
+    mu2.Unlock();
+    mu1.Unlock();
+  }
+
+  void test2() {
+    mu2.Lock();
+
+    sp.get();                     // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
+    if (*sp == 0) doSomething();  // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
+    *sp = 0;                      // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
+    sq->a = 0;                    // expected-warning {{reading variable 'sq' requires locking 'mu1'}}
+
+    mu2.Unlock();
+  }
+
+  void test3() {
+    mu1.Lock();
+
+    sp.get();
+    if (*sp == 0) doSomething();  // expected-warning {{reading the value pointed to by 'sp' requires locking 'mu2'}}
+    *sp = 0;                      // expected-warning {{reading the value pointed to by 'sp' requires locking 'mu2'}}
+    sq->a = 0;                    // expected-warning {{reading the value pointed to by 'sq' requires locking 'mu2'}}
+
+    mu1.Unlock();
   }
 };
 
