@@ -71,6 +71,8 @@ set(GENERATED_HEADERS
   ClangStmtNodes
   )
 
+set(EXPORTED_SYMBOL_FILE ${CMAKE_CURRENT_SOURCE_DIR}/libclang.exports)
+
 if( LLVM_ENABLE_PIC )
   set(SHARED_LIBRARY TRUE)
   add_clang_library(libclang ${SOURCES})
@@ -93,11 +95,17 @@ if( LLVM_ENABLE_PIC )
 
   if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(LIBCLANG_LINK_FLAGS
-      "-Wl,-compatibility_version -Wl,1 -Wl,-dead_strip")
+      " -Wl,-compatibility_version -Wl,1 -Wl,-dead_strip")
+    if (DEFINED ${LLVM_SUBMIT_VERSION})
+      set(LIBCLANG_LINK_FLAGS
+        "${LIBCLANG_LINK_FLAGS} -Wl,-current_version -Wl,${LLVM_SUBMIT_VERSION}.${LLVM_SUBMIT_SUBVERSION}")
+    endif()
+
+    set_property(TARGET libclang APPEND_STRING PROPERTY
+                 LINK_FLAGS ${LIBCLANG_LINK_FLAGS})
     set_target_properties(libclang
       PROPERTIES
-      LINK_FLAGS "${LIBCLANG_LINK_FLAGS}"
-      INSTALL_NAME_DIR "@executable_path/../lib")
+      INSTALL_NAME_DIR "@rpath")
   endif()
 
 
