@@ -242,7 +242,7 @@ TEST(BinaryReaderTest, hello_obj_x86_64) {
   EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS 
                                       | S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(text.alignment, 4U);
-  EXPECT_EQ(text.address, 0x0ULL);
+  EXPECT_EQ(text.address, Hex64(0x0));
   EXPECT_EQ(text.content.size(), 45UL);
   EXPECT_EQ((int)(text.content[0]), 0x55);
   EXPECT_EQ((int)(text.content[1]), 0x48);
@@ -267,7 +267,7 @@ TEST(BinaryReaderTest, hello_obj_x86_64) {
   EXPECT_EQ(cstring.type, S_CSTRING_LITERALS);
   EXPECT_EQ(cstring.attributes, SectionAttr(0));
   EXPECT_EQ(cstring.alignment, 0U);
-  EXPECT_EQ(cstring.address, 0x02DULL);
+  EXPECT_EQ(cstring.address, Hex64(0x02D));
   EXPECT_EQ(cstring.content.size(), 7UL);
   EXPECT_EQ((int)(cstring.content[0]), 0x68);
   EXPECT_EQ((int)(cstring.content[1]), 0x65);
@@ -367,7 +367,7 @@ TEST(BinaryReaderTest, hello_obj_x86) {
   EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS 
                                       | S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(text.alignment, 4U);
-  EXPECT_EQ(text.address, 0x0ULL);
+  EXPECT_EQ(text.address, Hex64(0x0));
   EXPECT_EQ(text.content.size(), 48UL);
   EXPECT_EQ((int)(text.content[0]), 0x55);
   EXPECT_EQ((int)(text.content[1]), 0x89);
@@ -402,7 +402,7 @@ TEST(BinaryReaderTest, hello_obj_x86) {
   EXPECT_EQ(cstring.type, S_CSTRING_LITERALS);
   EXPECT_EQ(cstring.attributes, SectionAttr(0));
   EXPECT_EQ(cstring.alignment, 0U);
-  EXPECT_EQ(cstring.address, 0x030ULL);
+  EXPECT_EQ(cstring.address, Hex64(0x030));
   EXPECT_EQ(cstring.content.size(), 7UL);
   EXPECT_EQ((int)(cstring.content[0]), 0x68);
   EXPECT_EQ((int)(cstring.content[1]), 0x65);
@@ -499,7 +499,7 @@ TEST(BinaryReaderTest, hello_obj_armv7) {
   EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS 
                                       | S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(text.alignment, 2U);
-  EXPECT_EQ(text.address, 0x0ULL);
+  EXPECT_EQ(text.address, Hex64(0x0));
   EXPECT_EQ(text.content.size(), 42UL);
   EXPECT_EQ((int)(text.content[0]), 0x80);
   EXPECT_EQ((int)(text.content[1]), 0xB5);
@@ -543,7 +543,7 @@ TEST(BinaryReaderTest, hello_obj_armv7) {
   EXPECT_EQ(cstring.type, S_CSTRING_LITERALS);
   EXPECT_EQ(cstring.attributes, SectionAttr(0));
   EXPECT_EQ(cstring.alignment, 0U);
-  EXPECT_EQ(cstring.address, 0x02AULL);
+  EXPECT_EQ(cstring.address, Hex64(0x02A));
   EXPECT_EQ(cstring.content.size(), 7UL);
   EXPECT_EQ((int)(cstring.content[0]), 0x68);
   EXPECT_EQ((int)(cstring.content[1]), 0x65);
@@ -643,7 +643,7 @@ TEST(BinaryReaderTest, hello_obj_ppc) {
   EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS 
                                       | S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(text.alignment, 2U);
-  EXPECT_EQ(text.address, 0x0ULL);
+  EXPECT_EQ(text.address, Hex64(0x0));
   EXPECT_EQ(text.content.size(), 68UL);
   EXPECT_EQ((int)(text.content[0]), 0x7C);
   EXPECT_EQ((int)(text.content[1]), 0x08);
@@ -686,7 +686,7 @@ TEST(BinaryReaderTest, hello_obj_ppc) {
   EXPECT_EQ(cstring.type, S_CSTRING_LITERALS);
   EXPECT_EQ(cstring.attributes, SectionAttr(0));
   EXPECT_EQ(cstring.alignment, 2U);
-  EXPECT_EQ(cstring.address, 0x044ULL);
+  EXPECT_EQ(cstring.address, Hex64(0x044));
   EXPECT_EQ(cstring.content.size(), 7UL);
   EXPECT_EQ((int)(cstring.content[0]), 0x68);
   EXPECT_EQ((int)(cstring.content[1]), 0x65);
