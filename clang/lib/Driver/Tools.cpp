@@ -2832,6 +2832,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue());
   }
 
+  if (Arg *A = Args.getLastArg(options::OPT_foperator_arrow_depth_EQ)) {
+    CmdArgs.push_back("-foperator-arrow-depth");
+    CmdArgs.push_back(A->getValue());
+  }
+
   if (Arg *A = Args.getLastArg(options::OPT_fconstexpr_depth_EQ)) {
     CmdArgs.push_back("-fconstexpr-depth");
     CmdArgs.push_back(A->getValue());

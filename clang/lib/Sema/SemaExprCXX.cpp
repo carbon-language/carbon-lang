@@ -5149,6 +5149,32 @@ ExprResult Sema::ActOnDecltypeExpression(Expr *E) {
   return Owned(E);
 }
 
+/// Note a set of 'operator->' functions that were used for a member access.
+static void noteOperatorArrows(Sema &S,
+                               llvm::ArrayRef<FunctionDecl *> OperatorArrows) {
+  unsigned SkipStart = OperatorArrows.size(), SkipCount = 0;
+  // FIXME: Make this configurable?
+  unsigned Limit = 9;
+  if (OperatorArrows.size() > Limit) {
+    // Produce Limit-1 normal notes and one 'skipping' note.
+    SkipStart = (Limit - 1) / 2 + (Limit - 1) % 2;
+    SkipCount = OperatorArrows.size() - (Limit - 1);
+  }
+
+  for (unsigned I = 0; I < OperatorArrows.size(); /**/) {
+    if (I == SkipStart) {
+      S.Diag(OperatorArrows[I]->getLocation(),
+             diag::note_operator_arrows_suppressed)
+          << SkipCount;
+      I += SkipCount;
+    } else {
+      S.Diag(OperatorArrows[I]->getLocation(), diag::note_operator_arrow_here)
+          << OperatorArrows[I]->getCallResultType();
+      ++I;
+    }
+  }
+}
+
 ExprResult
 Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
                                    tok::TokenKind OpKind, ParsedType &ObjectType,
@@ -5181,15 +5207,25 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
   //   [...] When operator->returns, the operator-> is applied  to the value
   //   returned, with the original second operand.
   if (OpKind == tok::arrow) {
+    QualType StartingType = BaseType;
     bool NoArrowOperatorFound = false;
     bool FirstIteration = true;
     FunctionDecl *CurFD = dyn_cast<FunctionDecl>(CurContext);
     // The set of types we've considered so far.
     llvm::SmallPtrSet<CanQualType,8> CTypes;
-    SmallVector<SourceLocation, 8> Locations;
+    SmallVector<FunctionDecl*, 8> OperatorArrows;
     CTypes.insert(Context.getCanonicalType(BaseType));
 
     while (BaseType->isRecordType()) {
+      if (OperatorArrows.size() >= getLangOpts().ArrowDepth) {
+        Diag(OpLoc, diag::err_operator_arrow_depth_exceeded)
+          << BaseType << getLangOpts().ArrowDepth << Base->getSourceRange();
+        noteOperatorArrows(*this, OperatorArrows);
+        Diag(OpLoc, diag::note_operator_arrow_depth)
+          << getLangOpts().ArrowDepth;
+        return ExprError();
+      }
+
       Result = BuildOverloadedArrowExpr(
           S, Base, OpLoc,
           // When in a template specialization and on the first loop iteration,
@@ -5203,7 +5239,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
         if (NoArrowOperatorFound) {
           if (FirstIteration) {
             Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
-              << BaseType << 1 << Base->getSourceRange()
+              << StartingType << 1 << Base->getSourceRange()
               << FixItHint::CreateReplacement(OpLoc, ".");
             OpKind = tok::period;
             break;
@@ -5220,13 +5256,12 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
       }
       Base = Result.get();
       if (CXXOperatorCallExpr *OpCall = dyn_cast<CXXOperatorCallExpr>(Base))
-        Locations.push_back(OpCall->getDirectCallee()->getLocation());
+        OperatorArrows.push_back(OpCall->getDirectCallee());
       BaseType = Base->getType();
       CanQualType CBaseType = Context.getCanonicalType(BaseType);
       if (!CTypes.insert(CBaseType)) {
-        Diag(OpLoc, diag::err_operator_arrow_circular);
-        for (unsigned i = 0; i < Locations.size(); i++)
-          Diag(Locations[i], diag::note_declared_at);
+        Diag(OpLoc, diag::err_operator_arrow_circular) << StartingType;
+        noteOperatorArrows(*this, OperatorArrows);
         return ExprError();
       }
       FirstIteration = false;

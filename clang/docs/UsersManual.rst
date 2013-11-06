@@ -1299,7 +1299,12 @@ Controlling implementation limits
 .. option:: -ftemplate-depth=N
 
   Sets the limit for recursively nested template instantiations to N.  The
-  default is 1024.
+  default is 256.
+
+.. option:: -foperator-arrow-depth=N
+
+  Sets the limit for iterative calls to 'operator->' functions to N.  The
+  default is 256.
 
 .. _objc:
 

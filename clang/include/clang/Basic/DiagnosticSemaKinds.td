@@ -5144,6 +5144,16 @@ def err_capture_block_variable : Error<
 
 def err_operator_arrow_circular : Error<
   "circular pointer delegation detected">;
+def err_operator_arrow_depth_exceeded : Error<
+  "use of 'operator->' on type %0 would invoke a sequence of more than %1 "
+  "'operator->' calls">;
+def note_operator_arrow_here : Note<
+  "'operator->' declared here produces an object of type %0">;
+def note_operator_arrows_suppressed : Note<
+  "(skipping %0 'operator->'%s0 in backtrace)">;
+def note_operator_arrow_depth : Note<
+  "use -foperator-arrow-depth=N to increase 'operator->' limit">;
+
 def err_pseudo_dtor_base_not_scalar : Error<
   "object expression of non-scalar type %0 cannot be used in a "
   "pseudo-destructor expression">;

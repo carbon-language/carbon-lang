@@ -1322,6 +1322,8 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.MathErrno = !Opts.OpenCL && Args.hasArg(OPT_fmath_errno);
   Opts.InstantiationDepth =
       getLastArgIntValue(Args, OPT_ftemplate_depth, 256, Diags);
+  Opts.ArrowDepth =
+      getLastArgIntValue(Args, OPT_foperator_arrow_depth, 256, Diags);
   Opts.ConstexprCallDepth =
       getLastArgIntValue(Args, OPT_fconstexpr_depth, 512, Diags);
   Opts.ConstexprStepLimit =

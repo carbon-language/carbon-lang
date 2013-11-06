@@ -161,6 +161,8 @@ ENUM_LANGOPT(StackProtector, StackProtectorMode, 2, SSPOff,
 ENUM_LANGOPT(SignedOverflowBehavior, SignedOverflowBehaviorTy, 2, SOB_Undefined,
              "signed integer overflow handling")
 
+BENIGN_LANGOPT(ArrowDepth, 32, 256,
+               "maximum number of operator->s to follow")
 BENIGN_LANGOPT(InstantiationDepth, 32, 256,
                "maximum template instantiation depth")
 BENIGN_LANGOPT(ConstexprCallDepth, 32, 512,
