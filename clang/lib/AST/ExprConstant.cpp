@@ -564,15 +564,17 @@ namespace {
         // EM_ConstantFold mode.
         if (!EvalStatus.Diag->empty()) {
           switch (EvalMode) {
+          case EM_ConstantFold:
+          case EM_IgnoreSideEffects:
+          case EM_EvaluateForOverflow:
+            if (!EvalStatus.HasSideEffects)
+              break;
+            // We've had side-effects; we want the diagnostic from them, not
+            // some later problem.
           case EM_ConstantExpression:
           case EM_PotentialConstantExpression:
             HasActiveDiagnostic = false;
             return OptionalDiagnostic();
-
-          case EM_ConstantFold:
-          case EM_IgnoreSideEffects:
-          case EM_EvaluateForOverflow:
-            break;
           }
         }
 
@@ -641,11 +643,11 @@ namespace {
     /// couldn't model?
     bool keepEvaluatingAfterSideEffect() {
       switch (EvalMode) {
+      case EM_PotentialConstantExpression:
       case EM_EvaluateForOverflow:
       case EM_IgnoreSideEffects:
         return true;
 
-      case EM_PotentialConstantExpression:
       case EM_ConstantExpression:
       case EM_ConstantFold:
         return false;
@@ -1122,11 +1124,9 @@ static void describeCall(CallStackFrame *Frame, raw_ostream &Out) {
 /// \return \c true if the caller should keep evaluating.
 static bool EvaluateIgnoredValue(EvalInfo &Info, const Expr *E) {
   APValue Scratch;
-  if (!Evaluate(Scratch, Info, E)) {
-    Info.EvalStatus.HasSideEffects = true;
-    return Info.keepEvaluatingAfterFailure();
-    // FIXME: return Info.noteSideEffect();
-  }
+  if (!Evaluate(Scratch, Info, E))
+    // We don't need the value, but we might have skipped a side effect here.
+    return Info.noteSideEffect();
   return true;
 }
 
@@ -6336,36 +6336,39 @@ bool DataRecursiveIntBinOpEvaluator::
   if (E->getOpcode() == BO_Comma) {
     // Ignore LHS but note if we could not evaluate it.
     if (LHSResult.Failed)
-      Info.EvalStatus.HasSideEffects = true;
+      return Info.noteSideEffect();
     return true;
   }
-  
+
   if (E->isLogicalOp()) {
-    bool lhsResult;
-    if (HandleConversionToBool(LHSResult.Val, lhsResult)) {
+    bool LHSAsBool;
+    if (!LHSResult.Failed && HandleConversionToBool(LHSResult.Val, LHSAsBool)) {
       // We were able to evaluate the LHS, see if we can get away with not
       // evaluating the RHS: 0 && X -> 0, 1 || X -> 1
-      if (lhsResult == (E->getOpcode() == BO_LOr)) {
-        Success(lhsResult, E, LHSResult.Val);
+      if (LHSAsBool == (E->getOpcode() == BO_LOr)) {
+        Success(LHSAsBool, E, LHSResult.Val);
         return false; // Ignore RHS
       }
     } else {
+      LHSResult.Failed = true;
+
       // Since we weren't able to evaluate the left hand side, it
       // must have had side effects.
-      Info.EvalStatus.HasSideEffects = true;
-      
+      if (!Info.noteSideEffect())
+        return false;
+
       // We can't evaluate the LHS; however, sometimes the result
       // is determined by the RHS: X && 0 -> 0, X || 1 -> 1.
       // Don't ignore RHS and suppress diagnostics from this arm.
       SuppressRHSDiags = true;
     }
-    
+
     return true;
   }
-  
+
   assert(E->getLHS()->getType()->isIntegralOrEnumerationType() &&
          E->getRHS()->getType()->isIntegralOrEnumerationType());
-  
+
   if (LHSResult.Failed && !Info.keepEvaluatingAfterFailure())
     return false; // Ignore RHS;
 

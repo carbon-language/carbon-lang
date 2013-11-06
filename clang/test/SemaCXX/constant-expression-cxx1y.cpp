@@ -128,10 +128,10 @@ constexpr int namespace_alias() {
 namespace assign {
   constexpr int a = 0;
   const int b = 0;
-  int c = 0; // expected-note 2{{here}}
+  int c = 0; // expected-note {{here}}
 
   constexpr void set(const int &a, int b) {
-    const_cast<int&>(a) = b; // expected-note 2{{constant expression cannot modify an object that is visible outside that expression}}
+    const_cast<int&>(a) = b; // expected-note 3{{constant expression cannot modify an object that is visible outside that expression}}
   }
   constexpr int wrap(int a, int b) {
     set(a, b);
@@ -140,7 +140,7 @@ namespace assign {
 
   static_assert((set(a, 1), a) == 1, ""); // expected-error {{constant expression}} expected-note {{in call to 'set(a, 1)'}}
   static_assert((set(b, 1), b) == 1, ""); // expected-error {{constant expression}} expected-note {{in call to 'set(b, 1)'}}
-  static_assert((set(c, 1), c) == 1, ""); // expected-error {{constant expression}} expected-note {{read of non-const variable 'c'}}
+  static_assert((set(c, 1), c) == 1, ""); // expected-error {{constant expression}} expected-note {{in call to 'set(c, 1)'}}
 
   static_assert(wrap(a, 1) == 1, "");
   static_assert(wrap(b, 1) == 1, "");
