@@ -2014,6 +2014,10 @@ static bool isMsLayout(const RecordDecl* D) {
 //   one.
 // * The last zero size virtual base may be placed at the end of the struct.
 //   and can potentially alias a zero sized type in the next struct.
+// * If the last field is a non-zero length bitfield and we have any virtual
+//   bases then some extra padding is added before the virtual bases for no
+//   obvious reason.
+
 
 namespace {
 struct MicrosoftRecordLayoutBuilder {
@@ -2498,6 +2502,11 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
 
   llvm::SmallPtrSet<const CXXRecordDecl *, 2> HasVtordisp =
       computeVtorDispSet(RD);
+
+  // If the last field we laid out was a non-zero length bitfield then add some
+  // extra padding for no obvious reason.
+  if (LastFieldIsNonZeroWidthBitfield)
+    Size += CurrentBitfieldSize;
 
   // Iterate through the virtual bases and lay them out.
   for (CXXRecordDecl::base_class_const_iterator i = RD->vbases_begin(),
