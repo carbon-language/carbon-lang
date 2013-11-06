@@ -181,7 +181,7 @@ class ToolInvocation {
   /// uses its binary name (CommandLine[0]) to locate its builtin headers.
   /// Callers have to ensure that they are installed in a compatible location
   /// (see clang driver implementation) or mapped in via mapVirtualFile.
-  /// \param ToolAction The action to be executed. Class takes ownership.
+  /// \param FAction The action to be executed. Class takes ownership.
   /// \param Files The FileManager used for the execution. Class does not take
   /// ownership.
   ToolInvocation(ArrayRef<std::string> CommandLine, FrontendAction *FAction,
