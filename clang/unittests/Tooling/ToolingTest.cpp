@@ -282,6 +282,7 @@ TEST(ClangToolTest, ArgumentAdjusters) {
   EXPECT_FALSE(Found);
 }
 
+#ifndef _WIN32
 TEST(ClangToolTest, BuildASTs) {
   FixedCompilationDatabase Compilations("/", std::vector<std::string>());
 
@@ -299,6 +300,7 @@ TEST(ClangToolTest, BuildASTs) {
 
   llvm::DeleteContainerPointers(ASTs);
 }
+#endif
 
 } // end namespace tooling
 } // end namespace clang
