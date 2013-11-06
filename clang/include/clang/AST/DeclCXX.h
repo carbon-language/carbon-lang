@@ -639,14 +639,16 @@ public:
   }
 
   CXXRecordDecl *getPreviousDecl() {
-    return cast_or_null<CXXRecordDecl>(RecordDecl::getPreviousDecl());
+    return cast_or_null<CXXRecordDecl>(
+            static_cast<RecordDecl *>(this)->getPreviousDecl());
   }
   const CXXRecordDecl *getPreviousDecl() const {
     return const_cast<CXXRecordDecl*>(this)->getPreviousDecl();
   }
 
   CXXRecordDecl *getMostRecentDecl() {
-    return cast<CXXRecordDecl>(RecordDecl::getMostRecentDecl());
+    return cast<CXXRecordDecl>(
+            static_cast<RecordDecl *>(this)->getMostRecentDecl());
   }
 
   const CXXRecordDecl *getMostRecentDecl() const {
@@ -1709,7 +1711,8 @@ public:
   }
 
   CXXMethodDecl *getMostRecentDecl() {
-    return cast<CXXMethodDecl>(FunctionDecl::getMostRecentDecl());
+    return cast<CXXMethodDecl>(
+            static_cast<FunctionDecl *>(this)->getMostRecentDecl());
   }
   const CXXMethodDecl *getMostRecentDecl() const {
     return const_cast<CXXMethodDecl*>(this)->getMostRecentDecl();

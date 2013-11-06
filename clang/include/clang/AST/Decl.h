@@ -274,7 +274,7 @@ public:
   }
 
   NamedDecl *getMostRecentDecl() {
-    return cast<NamedDecl>(Decl::getMostRecentDecl());
+    return cast<NamedDecl>(static_cast<Decl *>(this)->getMostRecentDecl());
   }
   const NamedDecl *getMostRecentDecl() const {
     return const_cast<NamedDecl*>(this)->getMostRecentDecl();
@@ -2827,14 +2827,15 @@ public:
   }
 
   EnumDecl *getPreviousDecl() {
-    return cast_or_null<EnumDecl>(TagDecl::getPreviousDecl());
+    return cast_or_null<EnumDecl>(
+            static_cast<TagDecl *>(this)->getPreviousDecl());
   }
   const EnumDecl *getPreviousDecl() const {
     return const_cast<EnumDecl*>(this)->getPreviousDecl();
   }
 
   EnumDecl *getMostRecentDecl() {
-    return cast<EnumDecl>(TagDecl::getMostRecentDecl());
+    return cast<EnumDecl>(static_cast<TagDecl *>(this)->getMostRecentDecl());
   }
   const EnumDecl *getMostRecentDecl() const {
     return const_cast<EnumDecl*>(this)->getMostRecentDecl();
@@ -3034,14 +3035,15 @@ public:
   static RecordDecl *CreateDeserialized(const ASTContext &C, unsigned ID);
 
   RecordDecl *getPreviousDecl() {
-    return cast_or_null<RecordDecl>(TagDecl::getPreviousDecl());
+    return cast_or_null<RecordDecl>(
+            static_cast<TagDecl *>(this)->getPreviousDecl());
   }
   const RecordDecl *getPreviousDecl() const {
     return const_cast<RecordDecl*>(this)->getPreviousDecl();
   }
 
   RecordDecl *getMostRecentDecl() {
-    return cast<RecordDecl>(TagDecl::getMostRecentDecl());
+    return cast<RecordDecl>(static_cast<TagDecl *>(this)->getMostRecentDecl());
   }
   const RecordDecl *getMostRecentDecl() const {
     return const_cast<RecordDecl*>(this)->getMostRecentDecl();
