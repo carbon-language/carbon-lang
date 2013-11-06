@@ -176,5 +176,5 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char *symbolName) {
 //===----------------------------------------------------------------------===//
 
 LLVMBool LLVMLoadLibraryPermanently(const char* Filename) {
-  return sys::DynamicLibrary::LoadLibraryPermanently(Filename);
+  return llvm::sys::DynamicLibrary::LoadLibraryPermanently(Filename);
 }
