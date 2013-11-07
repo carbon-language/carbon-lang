@@ -201,4 +201,12 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
                   BGEZAL_FM_MM<0x03>;
   def BLTZAL_MM : MMRel, BGEZAL_FT<"bltzal", brtarget_mm, GPR32Opnd>,
                   BGEZAL_FM_MM<0x01>;
+
+  /// Trap Instructions
+  def TEQ_MM  : MMRel, TEQ_FT<"teq", GPR32Opnd>, TEQ_FM_MM<0x0>;
+  def TGE_MM  : MMRel, TEQ_FT<"tge", GPR32Opnd>, TEQ_FM_MM<0x08>;
+  def TGEU_MM : MMRel, TEQ_FT<"tgeu", GPR32Opnd>, TEQ_FM_MM<0x10>;
+  def TLT_MM  : MMRel, TEQ_FT<"tlt", GPR32Opnd>, TEQ_FM_MM<0x20>;
+  def TLTU_MM : MMRel, TEQ_FT<"tltu", GPR32Opnd>, TEQ_FM_MM<0x28>;
+  def TNE_MM  : MMRel, TEQ_FT<"tne", GPR32Opnd>, TEQ_FM_MM<0x30>;
 }

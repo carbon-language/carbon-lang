@@ -275,3 +275,18 @@ class BGEZAL_FM_MM<bits<5> funct> : MMArch {
   let Inst{20-16} = rs;
   let Inst{15-0}  = offset;
 }
+
+class TEQ_FM_MM<bits<6> funct> : MMArch {
+  bits<5> rs;
+  bits<5> rt;
+  bits<4> code_;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x00;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = rs;
+  let Inst{15-12} = code_;
+  let Inst{11-6}  = funct;
+  let Inst{5-0}   = 0x3c;
+}

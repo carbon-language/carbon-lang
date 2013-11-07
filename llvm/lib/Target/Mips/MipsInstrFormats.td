@@ -454,7 +454,7 @@ class RDHWR_FM {
   let Inst{5-0}   = 0x3b;
 }
 
-class TEQ_FM<bits<6> funct> {
+class TEQ_FM<bits<6> funct> : StdArch {
   bits<5> rs;
   bits<5> rt;
   bits<10> code_;

@@ -658,7 +658,8 @@ class SYNC_FT :
 let hasSideEffects = 1 in
 class TEQ_FT<string opstr, RegisterOperand RO> :
   InstSE<(outs), (ins RO:$rs, RO:$rt, uimm16:$code_),
-         !strconcat(opstr, "\t$rs, $rt, $code_"), [], NoItinerary, FrmI>;
+         !strconcat(opstr, "\t$rs, $rt, $code_"), [], NoItinerary,
+         FrmI, opstr>;
 
 class TEQI_FT<string opstr, RegisterOperand RO> :
   InstSE<(outs), (ins RO:$rs, uimm16:$imm16),
@@ -963,12 +964,12 @@ def SWL : StoreLeftRight<"swl", MipsSWL, GPR32Opnd, IIStore>, LW_FM<0x2a>;
 def SWR : StoreLeftRight<"swr", MipsSWR, GPR32Opnd, IIStore>, LW_FM<0x2e>;
 
 def SYNC : SYNC_FT, SYNC_FM;
-def TEQ : TEQ_FT<"teq", GPR32Opnd>, TEQ_FM<0x34>;
-def TGE : TEQ_FT<"tge", GPR32Opnd>, TEQ_FM<0x30>;
-def TGEU : TEQ_FT<"tgeu", GPR32Opnd>, TEQ_FM<0x31>;
-def TLT : TEQ_FT<"tlt", GPR32Opnd>, TEQ_FM<0x32>;
-def TLTU : TEQ_FT<"tltu", GPR32Opnd>, TEQ_FM<0x33>;
-def TNE : TEQ_FT<"tne", GPR32Opnd>, TEQ_FM<0x36>;
+def TEQ : MMRel, TEQ_FT<"teq", GPR32Opnd>, TEQ_FM<0x34>;
+def TGE : MMRel, TEQ_FT<"tge", GPR32Opnd>, TEQ_FM<0x30>;
+def TGEU : MMRel, TEQ_FT<"tgeu", GPR32Opnd>, TEQ_FM<0x31>;
+def TLT : MMRel, TEQ_FT<"tlt", GPR32Opnd>, TEQ_FM<0x32>;
+def TLTU : MMRel, TEQ_FT<"tltu", GPR32Opnd>, TEQ_FM<0x33>;
+def TNE : MMRel, TEQ_FT<"tne", GPR32Opnd>, TEQ_FM<0x36>;
 
 def TEQI : TEQI_FT<"teqi", GPR32Opnd>, TEQI_FM<0xc>;
 def TGEI : TEQI_FT<"tgei", GPR32Opnd>, TEQI_FM<0x8>;
