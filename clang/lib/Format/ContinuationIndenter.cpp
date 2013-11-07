@@ -499,7 +499,8 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   // is special cased.
   bool SkipFirstExtraIndent =
       (Previous && (Previous->opensScope() || Previous->is(tok::kw_return) ||
-                    Previous->getPrecedence() == prec::Assignment));
+                    Previous->getPrecedence() == prec::Assignment ||
+                    Previous->Type == TT_ObjCMethodExpr));
   for (SmallVectorImpl<prec::Level>::const_reverse_iterator
            I = Current.FakeLParens.rbegin(),
            E = Current.FakeLParens.rend();

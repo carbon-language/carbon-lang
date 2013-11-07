@@ -871,8 +871,11 @@ public:
 
   /// \brief Parse expressions with the given operatore precedence.
   void parse(int Precedence = 0) {
-    // Skip 'return' as it is not part of a binary expression.
-    while (Current && Current->is(tok::kw_return))
+    // Skip 'return' and ObjC selector colons as they are not part of a binary
+    // expression.
+    while (Current &&
+           (Current->is(tok::kw_return) ||
+            (Current->is(tok::colon) && Current->Type == TT_ObjCMethodExpr)))
       next();
 
     if (Current == NULL || Precedence > PrecedenceArrowAndPeriod)
@@ -944,12 +947,11 @@ private:
     if (Current) {
       if (Current->Type == TT_ConditionalExpr)
         return prec::Conditional;
-      else if (Current->is(tok::semi) || Current->Type == TT_InlineASMColon)
+      else if (Current->is(tok::semi) || Current->Type == TT_InlineASMColon ||
+               Current->Type == TT_ObjCSelectorName)
         return 0;
       else if (Current->Type == TT_BinaryOperator || Current->is(tok::comma))
         return Current->getPrecedence();
-      else if (Current->Type == TT_ObjCSelectorName)
-        return prec::Assignment;
       else if (Current->isOneOf(tok::period, tok::arrow))
         return PrecedenceArrowAndPeriod;
     }

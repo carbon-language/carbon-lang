@@ -5373,10 +5373,18 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
                "    aaaaaaaaaa:bbbbbbbbbbbbbbbbb\n"
                "         aaaaa:bbbbbbbbbbb + bbbbbbbbbbbb\n"
                "          aaaa:bbb];");
+  verifyFormat(
+      "[self aaaaaaaaaa:aaaaaaaaaaaaaaa | aaaaaaaaaaaaaaa | aaaaaaaaaaaaaaa |\n"
+      "                 aaaaaaaaaaaaaaa | aaaaaaaaaaaaaaa | aaaaaaaaaaaaaaa |\n"
+      "                 aaaaaaaaaaaaaaa | aaaaaaaaaaaaaaa];");
 
   // Variadic parameters.
   verifyFormat(
       "NSArray *myStrings = [NSArray stringarray:@\"a\", @\"b\", nil];");
+  verifyFormat(
+      "[self aaaaaaaaaaaaa:aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaa,\n"
+      "                    aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaa,\n"
+      "                    aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaa];");
 }
 
 TEST_F(FormatTest, ObjCAt) {
