@@ -185,7 +185,7 @@ void FunctionScopeInfo::markSafeWeakUse(const Expr *E) {
 }
 
 void LambdaScopeInfo::getPotentialVariableCapture(unsigned Idx, VarDecl *&VD, Expr *&E) {
-  assert((Idx >= 0 && Idx < getNumPotentialVariableCaptures()) &&
+  assert(Idx < getNumPotentialVariableCaptures() &&
     "Index of potential capture must be within 0 to less than the "
     "number of captures!");
   E = PotentiallyCapturingExprs[Idx];
