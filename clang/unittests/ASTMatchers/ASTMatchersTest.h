@@ -26,6 +26,7 @@ public:
   virtual ~BoundNodesCallback() {}
   virtual bool run(const BoundNodes *BoundNodes) = 0;
   virtual bool run(const BoundNodes *BoundNodes, ASTContext *Context) = 0;
+  virtual void onEndOfTranslationUnit() {}
 };
 
 // If 'FindResultVerifier' is not NULL, sets *Verified to the result of
@@ -44,6 +45,11 @@ public:
     }
   }
 
+  void onEndOfTranslationUnit() LLVM_OVERRIDE {
+    if (FindResultReviewer)
+      FindResultReviewer->onEndOfTranslationUnit();
+  }
+
 private:
   bool *const Verified;
   BoundNodesCallback *const FindResultReviewer;
@@ -54,14 +60,22 @@ testing::AssertionResult matchesConditionally(const std::string &Code,
                                               const T &AMatcher,
                                               bool ExpectMatch,
                                               llvm::StringRef CompileArg) {
-  bool Found = false;
+  bool Found = false, DynamicFound = false;
   MatchFinder Finder;
   Finder.addMatcher(AMatcher, new VerifyMatch(0, &Found));
+  if (!Finder.addDynamicMatcher(AMatcher, new VerifyMatch(0, &DynamicFound)))
+    return testing::AssertionFailure() << "Could not add dynamic matcher";
   OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
   // Some tests use typeof, which is a gnu extension.
   std::vector<std::string> Args(1, CompileArg);
   if (!runToolOnCodeWithArgs(Factory->create(), Code, Args)) {
     return testing::AssertionFailure() << "Parsing error in \"" << Code << "\"";
+  }
+  if (Found != DynamicFound) {
+    return testing::AssertionFailure() << "Dynamic match result ("
+                                       << DynamicFound
+                                       << ") does not match static result ("
+                                       << Found << ")";
   }
   if (!Found && ExpectMatch) {
     return testing::AssertionFailure()

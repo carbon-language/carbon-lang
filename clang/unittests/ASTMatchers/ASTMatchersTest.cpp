@@ -40,6 +40,18 @@ TEST(IsDerivedFromDeathTest, DiesOnEmptyBaseName) {
 }
 #endif
 
+TEST(Finder, DynamicOnlyAcceptsSomeMatchers) {
+  MatchFinder Finder;
+  EXPECT_TRUE(Finder.addDynamicMatcher(decl(), NULL));
+  EXPECT_TRUE(Finder.addDynamicMatcher(callExpr(), NULL));
+  EXPECT_TRUE(Finder.addDynamicMatcher(constantArrayType(hasSize(42)), NULL));
+
+  // Do not accept non-toplevel matchers.
+  EXPECT_FALSE(Finder.addDynamicMatcher(isArrow(), NULL));
+  EXPECT_FALSE(Finder.addDynamicMatcher(hasSize(2), NULL));
+  EXPECT_FALSE(Finder.addDynamicMatcher(hasName("x"), NULL));
+}
+
 TEST(Decl, MatchesDeclarations) {
   EXPECT_TRUE(notMatches("", decl(usingDecl())));
   EXPECT_TRUE(matches("namespace x { class X {}; } using x::X;",
@@ -651,11 +663,18 @@ public:
       : Id(Id), ExpectedCount(ExpectedCount), Count(0),
         ExpectedName(ExpectedName) {}
 
-  ~VerifyIdIsBoundTo() {
+  void onEndOfTranslationUnit() LLVM_OVERRIDE {
     if (ExpectedCount != -1)
       EXPECT_EQ(ExpectedCount, Count);
     if (!ExpectedName.empty())
       EXPECT_EQ(ExpectedName, Name);
+    Count = 0;
+    Name.clear();
+  }
+
+  ~VerifyIdIsBoundTo() {
+    EXPECT_EQ(0, Count);
+    EXPECT_EQ("", Name);
   }
 
   virtual bool run(const BoundNodes *Nodes) {

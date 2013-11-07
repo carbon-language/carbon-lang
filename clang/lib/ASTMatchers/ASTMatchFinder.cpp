@@ -811,6 +811,30 @@ void MatchFinder::addMatcher(const TypeLocMatcher &NodeMatch,
   MatcherCallbackPairs.push_back(std::make_pair(NodeMatch, Action));
 }
 
+bool MatchFinder::addDynamicMatcher(const internal::DynTypedMatcher &NodeMatch,
+                                    MatchCallback *Action) {
+  if (NodeMatch.canConvertTo<Decl>()) {
+    addMatcher(NodeMatch.convertTo<Decl>(), Action);
+    return true;
+  } else if (NodeMatch.canConvertTo<QualType>()) {
+    addMatcher(NodeMatch.convertTo<QualType>(), Action);
+    return true;
+  } else if (NodeMatch.canConvertTo<Stmt>()) {
+    addMatcher(NodeMatch.convertTo<Stmt>(), Action);
+    return true;
+  } else if (NodeMatch.canConvertTo<NestedNameSpecifier>()) {
+    addMatcher(NodeMatch.convertTo<NestedNameSpecifier>(), Action);
+    return true;
+  } else if (NodeMatch.canConvertTo<NestedNameSpecifierLoc>()) {
+    addMatcher(NodeMatch.convertTo<NestedNameSpecifierLoc>(), Action);
+    return true;
+  } else if (NodeMatch.canConvertTo<TypeLoc>()) {
+    addMatcher(NodeMatch.convertTo<TypeLoc>(), Action);
+    return true;
+  }
+  return false;
+}
+
 ASTConsumer *MatchFinder::newASTConsumer() {
   return new internal::MatchASTConsumer(&MatcherCallbackPairs, ParsingDone);
 }
