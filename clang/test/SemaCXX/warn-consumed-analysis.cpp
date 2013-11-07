@@ -608,6 +608,8 @@ void testWhileLoop1() {
   *var0; // expected-warning {{invalid invocation of method 'operator*' on object 'var0' while it is in the 'consumed' state}}
 }
 
+typedef const int*& IntegerPointerReference;
+void testIsRValueRefishAndCanonicalType(IntegerPointerReference a) {}
 
 namespace ContinueICETest {
 
