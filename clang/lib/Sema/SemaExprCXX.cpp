@@ -5882,12 +5882,9 @@ static void CheckLambdaCaptures(Expr *const FE,
     //   - a generic-or-non-generic lambda call operator that is enclosed
     //     within a non-dependent context.
     unsigned FunctionScopeIndexOfCapturableLambda = 0;
-    CXXMethodDecl *NearestCapturableCallOp = 0;
-    if (NearestCapturableCallOp = 
-                          GetInnermostEnclosingCapturableLambda(
-                                  S.FunctionScopes,
-                                  FunctionScopeIndexOfCapturableLambda,
-                                  S.CurContext, Var, S)) { 
+    if (GetInnermostEnclosingCapturableLambda(
+            S.FunctionScopes, FunctionScopeIndexOfCapturableLambda,
+            S.CurContext, Var, S)) {
       MarkVarDeclODRUsed(Var, VarExpr->getExprLoc(), 
           S, &FunctionScopeIndexOfCapturableLambda);
     } 
@@ -5918,11 +5915,9 @@ static void CheckLambdaCaptures(Expr *const FE,
 
   if (CurrentLSI->hasPotentialThisCapture()) {
     unsigned FunctionScopeIndexOfCapturableLambda = 0;
-    if (CXXMethodDecl *NearestCapturableCallOp = 
-                          GetInnermostEnclosingCapturableLambda(
-                                  S.FunctionScopes,
-                                  FunctionScopeIndexOfCapturableLambda,
-                                  S.CurContext, /*0 is 'this'*/ 0, S)) {        
+    if (GetInnermostEnclosingCapturableLambda(
+            S.FunctionScopes, FunctionScopeIndexOfCapturableLambda,
+            S.CurContext, /*0 is 'this'*/ 0, S)) {
       S.CheckCXXThisCapture(CurrentLSI->PotentialThisCaptureLocation, 
           /*Explicit*/false, /*BuildAndDiagnose*/true,  
           &FunctionScopeIndexOfCapturableLambda);
