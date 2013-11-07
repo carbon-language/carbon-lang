@@ -382,7 +382,7 @@ void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
   // FIXME: CaptureStackBackTrace might be too slow for us.
   // FIXME: Compare with StackWalk64.
   // FIXME: Look at LLVMUnhandledExceptionFilter in Signals.inc
-  uptr cs_ret = CaptureStackBackTrace(1, max_depth, tmp, 0);
+  uptr cs_ret = CaptureStackBackTrace(2, max_depth, tmp, 0);
   uptr offset = 0;
   // Skip the RTL frames by searching for the PC in the stacktrace.
   // FIXME: this doesn't work well for the malloc/free stacks yet.
