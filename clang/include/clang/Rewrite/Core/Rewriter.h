@@ -40,10 +40,9 @@ class RewriteBuffer {
   /// Deltas - Keep track of all the deltas in the source code due to insertions
   /// and deletions.
   DeltaTree Deltas;
-  typedef RewriteRope BufferTy;
-  BufferTy Buffer;
+  RewriteRope Buffer;
 public:
-  typedef BufferTy::const_iterator iterator;
+  typedef RewriteRope::const_iterator iterator;
   iterator begin() const { return Buffer.begin(); }
   iterator end() const { return Buffer.end(); }
   unsigned size() const { return Buffer.size(); }
