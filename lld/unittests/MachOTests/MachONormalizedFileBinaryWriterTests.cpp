@@ -29,21 +29,22 @@ using llvm::error_code;
 using namespace llvm::MachO;
 using namespace lld::mach_o::normalized;
 
+// Parses binary mach-o file at specified path and returns
+// ownership of buffer to mb parameter and ownership of
+// Normalized file to nf parameter.
+static void 
+fromBinary(StringRef path, std::unique_ptr<MemoryBuffer> &mb, 
+                           std::unique_ptr<NormalizedFile> &nf) {
 
-static std::unique_ptr<NormalizedFile> 
-fromBinary(StringRef path) {
-
-  OwningPtr<MemoryBuffer> result;
-  error_code ec = MemoryBuffer::getFile(path, result);
+  OwningPtr<MemoryBuffer> opmb;
+  error_code ec = MemoryBuffer::getFile(path, opmb);
   EXPECT_FALSE(ec);
-  
+  mb.reset(opmb.take());
 
-  
-  std::unique_ptr<MemoryBuffer> mb(result.take());
   ErrorOr<std::unique_ptr<NormalizedFile>> r 
                                     = lld::mach_o::normalized::readBinary(mb);
   EXPECT_FALSE(!r);
-  return std::move(*r);
+  nf.reset(r->release());
 }
 
 
@@ -155,7 +156,11 @@ TEST(BinaryWriterTest, obj_relocs_x86_64) {
     ec = writeBinary(f, tmpFl);
     EXPECT_FALSE(ec);
   }
-  std::unique_ptr<NormalizedFile> f2 = fromBinary(tmpFl);
+  
+  std::unique_ptr<MemoryBuffer> bufferOwner;
+  std::unique_ptr<NormalizedFile> f2;
+  fromBinary(tmpFl, bufferOwner, f2);
+
   EXPECT_EQ(lld::MachOLinkingContext::arch_x86_64, f2->arch);
   EXPECT_EQ(MH_OBJECT, f2->fileType);
   EXPECT_EQ(FileFlags(MH_SUBSECTIONS_VIA_SYMBOLS), f2->flags);
@@ -262,7 +267,10 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
     ec = writeBinary(f, tmpFl);
     EXPECT_FALSE(ec);
   }
-  std::unique_ptr<NormalizedFile> f2 = fromBinary(tmpFl);
+  std::unique_ptr<MemoryBuffer> bufferOwner;
+  std::unique_ptr<NormalizedFile> f2;
+  fromBinary(tmpFl, bufferOwner, f2);
+
   EXPECT_EQ(lld::MachOLinkingContext::arch_x86, f2->arch);
   EXPECT_EQ(MH_OBJECT, f2->fileType);
   EXPECT_EQ(FileFlags(MH_SUBSECTIONS_VIA_SYMBOLS), f2->flags);
@@ -394,7 +402,10 @@ TEST(BinaryWriterTest, obj_relocs_armv7) {
     ec = writeBinary(f, tmpFl);
     EXPECT_FALSE(ec);
   }
-  std::unique_ptr<NormalizedFile> f2 = fromBinary(tmpFl);
+  std::unique_ptr<MemoryBuffer> bufferOwner;
+  std::unique_ptr<NormalizedFile> f2;
+  fromBinary(tmpFl, bufferOwner, f2);
+
   EXPECT_EQ(lld::MachOLinkingContext::arch_armv7, f2->arch);
   EXPECT_EQ(MH_OBJECT, f2->fileType);
   EXPECT_EQ(FileFlags(MH_SUBSECTIONS_VIA_SYMBOLS), f2->flags);
@@ -546,7 +557,10 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
     ec = writeBinary(f, tmpFl);
     EXPECT_FALSE(ec);
   }
-  std::unique_ptr<NormalizedFile> f2 = fromBinary(tmpFl);
+  std::unique_ptr<MemoryBuffer> bufferOwner;
+  std::unique_ptr<NormalizedFile> f2;
+  fromBinary(tmpFl, bufferOwner, f2);
+
   EXPECT_EQ(lld::MachOLinkingContext::arch_ppc, f2->arch);
   EXPECT_EQ(MH_OBJECT, f2->fileType);
   EXPECT_EQ(FileFlags(MH_SUBSECTIONS_VIA_SYMBOLS), f2->flags);
