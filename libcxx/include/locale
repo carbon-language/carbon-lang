@@ -791,33 +791,63 @@ protected:
     _LIBCPP_ALWAYS_INLINE
     ~num_get() {}
 
-    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
-                             ios_base::iostate& __err, bool& __v) const;
-    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
-                             ios_base::iostate& __err, long& __v) const;
-    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
-                             ios_base::iostate& __err, long long& __v) const;
-    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
-                             ios_base::iostate& __err, unsigned short& __v) const;
-    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
-                             ios_base::iostate& __err, unsigned int& __v) const;
-    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
-                             ios_base::iostate& __err, unsigned long& __v) const;
-    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
-                             ios_base::iostate& __err, unsigned long long& __v) const;
-    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
-                             ios_base::iostate& __err, float& __v) const;
-    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
-                             ios_base::iostate& __err, double& __v) const;
-    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
-                             ios_base::iostate& __err, long double& __v) const;
-    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
-                             ios_base::iostate& __err, void*& __v) const;
-
     template <class _Fp>
     iter_type __do_get_floating_point
                             (iter_type __b, iter_type __e, ios_base& __iob,
                              ios_base::iostate& __err, _Fp& __v) const;
+
+    template <class _Signed>
+    iter_type __do_get_signed
+                            (iter_type __b, iter_type __e, ios_base& __iob,
+                             ios_base::iostate& __err, _Signed& __v) const;
+
+    template <class _Unsigned>
+    iter_type __do_get_unsigned
+                            (iter_type __b, iter_type __e, ios_base& __iob,
+                             ios_base::iostate& __err, _Unsigned& __v) const;
+
+
+    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
+                             ios_base::iostate& __err, bool& __v) const;
+
+    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
+                             ios_base::iostate& __err, long& __v) const
+    { return this->__do_get_signed ( __b, __e, __iob, __err, __v ); }
+
+    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
+                             ios_base::iostate& __err, long long& __v) const
+    { return this->__do_get_signed ( __b, __e, __iob, __err, __v ); }
+
+    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
+                             ios_base::iostate& __err, unsigned short& __v) const
+    { return this->__do_get_unsigned ( __b, __e, __iob, __err, __v ); }
+
+    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
+                             ios_base::iostate& __err, unsigned int& __v) const
+    { return this->__do_get_unsigned ( __b, __e, __iob, __err, __v ); }
+
+    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
+                             ios_base::iostate& __err, unsigned long& __v) const
+    { return this->__do_get_unsigned ( __b, __e, __iob, __err, __v ); }
+
+    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
+                             ios_base::iostate& __err, unsigned long long& __v) const
+    { return this->__do_get_unsigned ( __b, __e, __iob, __err, __v ); }
+
+    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
+                             ios_base::iostate& __err, float& __v) const
+    { return this->__do_get_floating_point ( __b, __e, __iob, __err, __v ); }
+
+    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
+                             ios_base::iostate& __err, double& __v) const
+    { return this->__do_get_floating_point ( __b, __e, __iob, __err, __v ); }
+
+    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
+                             ios_base::iostate& __err, long double& __v) const
+    { return this->__do_get_floating_point ( __b, __e, __iob, __err, __v ); }
+
+    virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
+                             ios_base::iostate& __err, void*& __v) const;
 };
 
 template <class _CharT, class _InputIterator>
@@ -957,12 +987,15 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     return __b;
 }
 
+// signed
+
 template <class _CharT, class _InputIterator>
+template <class _Signed>
 _InputIterator
-num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
+num_get<_CharT, _InputIterator>::__do_get_signed(iter_type __b, iter_type __e,
                                         ios_base& __iob,
                                         ios_base::iostate& __err,
-                                        long& __v) const
+                                        _Signed& __v) const
 {
     // Stage 1
     int __base = this->__get_base(__iob);
@@ -995,7 +1028,7 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     if (__grouping.size() != 0 && __g_end-__g < __num_get_base::__num_get_buf_sz)
         *__g_end++ = __dc;
     // Stage 3
-    __v = __num_get_signed_integral<long>(__a, __a_end, __err, __base);
+    __v = __num_get_signed_integral<_Signed>(__a, __a_end, __err, __base);
     // Digit grouping checked
     __check_grouping(__grouping, __g, __g_end, __err);
     // EOF checked
@@ -1004,59 +1037,15 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     return __b;
 }
 
-template <class _CharT, class _InputIterator>
-_InputIterator
-num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
-                                        ios_base& __iob,
-                                        ios_base::iostate& __err,
-                                        long long& __v) const
-{
-    // Stage 1
-    int __base = this->__get_base(__iob);
-    // Stage 2
-    char_type __atoms[26];
-    char_type __thousands_sep;
-    string __grouping = this->__stage2_int_prep(__iob, __atoms, __thousands_sep);
-    string __buf;
-    __buf.resize(__buf.capacity());
-    char* __a = &__buf[0];
-    char* __a_end = __a;
-    unsigned __g[__num_get_base::__num_get_buf_sz];
-    unsigned* __g_end = __g;
-    unsigned __dc = 0;
-    for (; __b != __e; ++__b)
-    {
-        if (__a_end - __a == __buf.size())
-        {
-            size_t __tmp = __buf.size();
-            __buf.resize(2*__buf.size());
-            __buf.resize(__buf.capacity());
-            __a = &__buf[0];
-            __a_end = __a + __tmp;
-        }
-        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
-                                    __thousands_sep, __grouping, __g, __g_end,
-                                    __atoms))
-            break;
-    }
-    if (__grouping.size() != 0 && __g_end-__g < __num_get_base::__num_get_buf_sz)
-        *__g_end++ = __dc;
-    // Stage 3
-    __v = __num_get_signed_integral<long long>(__a, __a_end, __err, __base);
-    // Digit grouping checked
-    __check_grouping(__grouping, __g, __g_end, __err);
-    // EOF checked
-    if (__b == __e)
-        __err |= ios_base::eofbit;
-    return __b;
-}
+// unsigned
 
 template <class _CharT, class _InputIterator>
+template <class _Unsigned>
 _InputIterator
-num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
+num_get<_CharT, _InputIterator>::__do_get_unsigned(iter_type __b, iter_type __e,
                                         ios_base& __iob,
                                         ios_base::iostate& __err,
-                                        unsigned short& __v) const
+                                        _Unsigned& __v) const
 {
     // Stage 1
     int __base = this->__get_base(__iob);
@@ -1089,148 +1078,7 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     if (__grouping.size() != 0 && __g_end-__g < __num_get_base::__num_get_buf_sz)
         *__g_end++ = __dc;
     // Stage 3
-    __v = __num_get_unsigned_integral<unsigned short>(__a, __a_end, __err, __base);
-    // Digit grouping checked
-    __check_grouping(__grouping, __g, __g_end, __err);
-    // EOF checked
-    if (__b == __e)
-        __err |= ios_base::eofbit;
-    return __b;
-}
-
-template <class _CharT, class _InputIterator>
-_InputIterator
-num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
-                                        ios_base& __iob,
-                                        ios_base::iostate& __err,
-                                        unsigned int& __v) const
-{
-    // Stage 1
-    int __base = this->__get_base(__iob);
-    // Stage 2
-    char_type __atoms[26];
-    char_type __thousands_sep;
-    string __grouping = this->__stage2_int_prep(__iob, __atoms, __thousands_sep);
-    string __buf;
-    __buf.resize(__buf.capacity());
-    char* __a = &__buf[0];
-    char* __a_end = __a;
-    unsigned __g[__num_get_base::__num_get_buf_sz];
-    unsigned* __g_end = __g;
-    unsigned __dc = 0;
-    for (; __b != __e; ++__b)
-    {
-        if (__a_end - __a == __buf.size())
-        {
-            size_t __tmp = __buf.size();
-            __buf.resize(2*__buf.size());
-            __buf.resize(__buf.capacity());
-            __a = &__buf[0];
-            __a_end = __a + __tmp;
-        }
-        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
-                                    __thousands_sep, __grouping, __g, __g_end,
-                                    __atoms))
-            break;
-    }
-    if (__grouping.size() != 0 && __g_end-__g < __num_get_base::__num_get_buf_sz)
-        *__g_end++ = __dc;
-    // Stage 3
-    __v = __num_get_unsigned_integral<unsigned int>(__a, __a_end, __err, __base);
-    // Digit grouping checked
-    __check_grouping(__grouping, __g, __g_end, __err);
-    // EOF checked
-    if (__b == __e)
-        __err |= ios_base::eofbit;
-    return __b;
-}
-
-template <class _CharT, class _InputIterator>
-_InputIterator
-num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
-                                        ios_base& __iob,
-                                        ios_base::iostate& __err,
-                                        unsigned long& __v) const
-{
-    // Stage 1
-    int __base = this->__get_base(__iob);
-    // Stage 2
-    char_type __atoms[26];
-    char_type __thousands_sep;
-    string __grouping = this->__stage2_int_prep(__iob, __atoms, __thousands_sep);
-    string __buf;
-    __buf.resize(__buf.capacity());
-    char* __a = &__buf[0];
-    char* __a_end = __a;
-    unsigned __g[__num_get_base::__num_get_buf_sz];
-    unsigned* __g_end = __g;
-    unsigned __dc = 0;
-    for (; __b != __e; ++__b)
-    {
-        if (__a_end - __a == __buf.size())
-        {
-            size_t __tmp = __buf.size();
-            __buf.resize(2*__buf.size());
-            __buf.resize(__buf.capacity());
-            __a = &__buf[0];
-            __a_end = __a + __tmp;
-        }
-        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
-                                    __thousands_sep, __grouping, __g, __g_end,
-                                    __atoms))
-            break;
-    }
-    if (__grouping.size() != 0 && __g_end-__g < __num_get_base::__num_get_buf_sz)
-        *__g_end++ = __dc;
-    // Stage 3
-    __v = __num_get_unsigned_integral<unsigned long>(__a, __a_end, __err, __base);
-    // Digit grouping checked
-    __check_grouping(__grouping, __g, __g_end, __err);
-    // EOF checked
-    if (__b == __e)
-        __err |= ios_base::eofbit;
-    return __b;
-}
-
-template <class _CharT, class _InputIterator>
-_InputIterator
-num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
-                                        ios_base& __iob,
-                                        ios_base::iostate& __err,
-                                        unsigned long long& __v) const
-{
-    // Stage 1
-    int __base = this->__get_base(__iob);
-    // Stage 2
-    char_type __atoms[26];
-    char_type __thousands_sep;
-    string __grouping = this->__stage2_int_prep(__iob, __atoms, __thousands_sep);
-    string __buf;
-    __buf.resize(__buf.capacity());
-    char* __a = &__buf[0];
-    char* __a_end = __a;
-    unsigned __g[__num_get_base::__num_get_buf_sz];
-    unsigned* __g_end = __g;
-    unsigned __dc = 0;
-    for (; __b != __e; ++__b)
-    {
-        if (__a_end - __a == __buf.size())
-        {
-            size_t __tmp = __buf.size();
-            __buf.resize(2*__buf.size());
-            __buf.resize(__buf.capacity());
-            __a = &__buf[0];
-            __a_end = __a + __tmp;
-        }
-        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
-                                    __thousands_sep, __grouping, __g, __g_end,
-                                    __atoms))
-            break;
-    }
-    if (__grouping.size() != 0 && __g_end-__g < __num_get_base::__num_get_buf_sz)
-        *__g_end++ = __dc;
-    // Stage 3
-    __v = __num_get_unsigned_integral<unsigned long long>(__a, __a_end, __err, __base);
+    __v = __num_get_unsigned_integral<_Unsigned>(__a, __a_end, __err, __base);
     // Digit grouping checked
     __check_grouping(__grouping, __g, __g_end, __err);
     // EOF checked
@@ -1292,36 +1140,6 @@ num_get<_CharT, _InputIterator>::__do_get_floating_point(iter_type __b, iter_typ
     if (__b == __e)
         __err |= ios_base::eofbit;
     return __b;
-}
-
-template <class _CharT, class _InputIterator>
-_InputIterator
-num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
-                                        ios_base& __iob,
-                                        ios_base::iostate& __err,
-                                        float& __v) const
-{
-    return this->__do_get_floating_point(__b, __e, __iob, __err, __v );
-}
-
-template <class _CharT, class _InputIterator>
-_InputIterator
-num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
-                                        ios_base& __iob,
-                                        ios_base::iostate& __err,
-                                        double& __v) const
-{
-    return this->__do_get_floating_point(__b, __e, __iob, __err, __v );
-}
-
-template <class _CharT, class _InputIterator>
-_InputIterator
-num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
-                                        ios_base& __iob,
-                                        ios_base::iostate& __err,
-                                        long double& __v) const
-{
-    return this->__do_get_floating_point(__b, __e, __iob, __err, __v );
 }
 
 template <class _CharT, class _InputIterator>
