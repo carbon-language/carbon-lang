@@ -41,6 +41,16 @@ Non-comprehensive list of changes in this release
    functionality, or simply have a lot to talk about), see the `NOTE` below
    for adding a new subsection.
 
+* This is expected to be the last release of LLVM which compiles using a C++98
+  toolchain. We expect to start using some C++11 features in LLVM and other
+  sub-projects starting after this release. That said, we are committed to
+  supporting a reasonable set of modern C++ toolchains as the host compiler on
+  all of the platforms. This will at least include Visual Studio 2012 on
+  Windows, and Clang 3.1 or GCC 4.7.x on Mac and Linux. The final set of
+  compilers (and the C++11 features they support) is not set in stone, but we
+  wanted users of LLVM to have a heads up that the next release will involve
+  a substantial change in the host toolchain requirements.
+
 * The regression tests now fail if any command in a pipe fails. To disable it in
   a directory, just add ``config.pipefail = False`` to its ``lit.local.cfg``.
   See :doc:`Lit <CommandGuide/lit>` for the details.
