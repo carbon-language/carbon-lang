@@ -24,9 +24,8 @@ protected:
   virtual void SetUp() {
     LLVMContext &Ctx = getGlobalContext();
     M.reset(new Module("MyModule", Ctx));
-    FunctionType *FTy = FunctionType::get(Type::getInt8PtrTy(Ctx),
-                                          Type::getInt32Ty(Ctx),
-                                          false /*=isVarArg*/);
+    FunctionType *FTy = FunctionType::get(
+        Type::getInt8PtrTy(Ctx), Type::getInt32Ty(Ctx), false /*=isVarArg*/);
     F = Function::Create(FTy, Function::ExternalLinkage, "ba_func", M.get());
     F->setCallingConv(CallingConv::C);
 
@@ -38,12 +37,10 @@ protected:
     ArrayType *AT = ArrayType::get(Type::getInt8PtrTy(Ctx), 3);
 
     GV = new GlobalVariable(*M.get(), AT, false /*=isConstant*/,
-                            GlobalValue::InternalLinkage,
-                            0, "switch.bas");
-
+                            GlobalValue::InternalLinkage, 0, "switch.bas");
 
     // Global Initializer
-    std::vector<Constant*> Init;
+    std::vector<Constant *> Init;
     Constant *SwitchCase1BA = BlockAddress::get(SwitchCase1BB);
     Init.push_back(SwitchCase1BA);
 
@@ -51,16 +48,14 @@ protected:
     Init.push_back(SwitchCase2BA);
 
     ConstantInt *One = ConstantInt::get(Type::getInt32Ty(Ctx), 1);
-    Constant *OnePtr = ConstantExpr::getCast(Instruction::IntToPtr,
-                                             One, Type::getInt8PtrTy(Ctx));
+    Constant *OnePtr = ConstantExpr::getCast(Instruction::IntToPtr, One,
+                                             Type::getInt8PtrTy(Ctx));
     Init.push_back(OnePtr);
 
     GV->setInitializer(ConstantArray::get(AT, Init));
   }
 
-  virtual void TearDown() {
-    M.reset();
-  }
+  virtual void TearDown() { M.reset(); }
 
   OwningPtr<Module> M;
   Function *F;
@@ -75,7 +70,7 @@ TEST_F(LinkModuleTest, BlockAddress) {
   LLVMContext &Ctx = getGlobalContext();
   IRBuilder<> Builder(EntryBB);
 
-  std::vector<Value*> GEPIndices;
+  std::vector<Value *> GEPIndices;
   GEPIndices.push_back(ConstantInt::get(Type::getInt32Ty(Ctx), 0));
   GEPIndices.push_back(F->arg_begin());
 
@@ -117,7 +112,7 @@ TEST_F(LinkModuleTest, BlockAddress) {
             LinkedModule->getFunction("ba_func"));
   EXPECT_EQ(cast<BlockAddress>(Elem)->getBasicBlock()->getParent(),
             LinkedModule->getFunction("ba_func"));
-  
+
   Elem = Init->getOperand(1);
   ASSERT_TRUE(isa<BlockAddress>(Elem));
   EXPECT_EQ(cast<BlockAddress>(Elem)->getFunction(),
