@@ -110,7 +110,8 @@ public:
 
 private:
   /// \brief Calculate the penalty for splitting before \c Tok.
-  unsigned splitPenalty(const AnnotatedLine &Line, const FormatToken &Tok);
+  unsigned splitPenalty(const AnnotatedLine &Line, const FormatToken &Tok,
+                        bool InFunctionDecl);
 
   bool spaceRequiredBetween(const AnnotatedLine &Line, const FormatToken &Left,
                             const FormatToken &Right);

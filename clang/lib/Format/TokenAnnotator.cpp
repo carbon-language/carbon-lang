@@ -1056,6 +1056,7 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
   if (!Line.First->Next)
     return;
   FormatToken *Current = Line.First->Next;
+  bool InFunctionDecl = Line.MightBeFunctionDecl;
   while (Current != NULL) {
     if (Current->Type == TT_LineComment)
       Current->SpacesRequiredBefore = Style.SpacesBeforeTrailingComments;
@@ -1075,11 +1076,15 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
       Current->TotalLength = Current->Previous->TotalLength +
                              Current->ColumnWidth +
                              Current->SpacesRequiredBefore;
+
+    if (Current->Type == TT_CtorInitializerColon)
+      InFunctionDecl = false;
+
     // FIXME: Only calculate this if CanBreakBefore is true once static
     // initializers etc. are sorted out.
     // FIXME: Move magic numbers to a better place.
-    Current->SplitPenalty =
-        20 * Current->BindingStrength + splitPenalty(Line, *Current);
+    Current->SplitPenalty = 20 * Current->BindingStrength +
+                            splitPenalty(Line, *Current, InFunctionDecl);
 
     Current = Current->Next;
   }
@@ -1116,7 +1121,8 @@ void TokenAnnotator::calculateUnbreakableTailLengths(AnnotatedLine &Line) {
 }
 
 unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
-                                      const FormatToken &Tok) {
+                                      const FormatToken &Tok,
+                                      bool InFunctionDecl) {
   const FormatToken &Left = *Tok.Previous;
   const FormatToken &Right = Tok;
 
@@ -1132,7 +1138,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
       return 3;
     if (Left.Type == TT_StartOfName)
       return 20;
-    if (Line.MightBeFunctionDecl && Right.BindingStrength == 1)
+    if (InFunctionDecl && Right.BindingStrength == 1)
       // FIXME: Clean up hack of using BindingStrength to find top-level names.
       return Style.PenaltyReturnTypeOnItsOwnLine;
     return 200;
@@ -1174,7 +1180,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   if (Left.is(tok::colon) && Left.Type == TT_ObjCMethodExpr)
     return 20;
 
-  if (Left.is(tok::l_paren) && Line.MightBeFunctionDecl)
+  if (Left.is(tok::l_paren) && InFunctionDecl)
     return 100;
   if (Left.opensScope())
     return Left.ParameterCount > 1 ? Style.PenaltyBreakBeforeFirstCallParameter
