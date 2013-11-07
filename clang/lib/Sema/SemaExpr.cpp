@@ -12057,8 +12057,8 @@ void Sema::CleanupVarDeclMarking() {
 
 static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
                                     VarDecl *Var, Expr *E) {
-  assert(!E || isa<DeclRefExpr>(E) || isa<MemberExpr>(E) 
-    && "Invalid Expr argument to DoMarkVarDeclReferenced");
+  assert((!E || isa<DeclRefExpr>(E) || isa<MemberExpr>(E)) &&
+         "Invalid Expr argument to DoMarkVarDeclReferenced");
   Var->setReferenced();
 
   // If the context is not PotentiallyEvaluated and not Unevaluated 
