@@ -556,3 +556,117 @@ namespace dr148 { // dr148: yes
 }
 
 // dr149: na
+
+namespace dr151 { // dr151: yes
+  struct X {};
+  typedef int X::*p;
+#if __cplusplus < 201103L
+#define fold(x) (__builtin_constant_p(0) ? (x) : (x))
+#else
+#define fold
+#endif
+  int check[fold(p() == 0) ? 1 : -1];
+#undef fold
+}
+
+namespace dr152 { // dr152: yes
+  struct A {
+    A(); // expected-note {{not viable}}
+    explicit A(const A&);
+  };
+  A a1 = A(); // expected-error {{no matching constructor}}
+  A a2((A()));
+}
+
+// dr153: na
+
+namespace dr154 { // dr154: yes
+  union { int a; }; // expected-error {{must be declared 'static'}}
+  namespace {
+    union { int b; };
+  }
+  static union { int c; };
+}
+
+namespace dr155 { // dr155: dup 632
+  struct S { int n; } s = { { 1 } }; // expected-warning {{braces around scalar initializer}}
+}
+
+namespace dr159 { // dr159: no
+  namespace X { void f(); }
+  void f();
+  // FIXME: This should be accepted.
+  void dr159::f() {} // expected-error {{extra qualification}}
+  void dr159::X::f() {}
+}
+
+// dr160: na
+
+namespace dr161 { // dr161: yes
+  class A {
+  protected:
+    struct B { int n; } b; // expected-note 2{{here}}
+    static B bs;
+    void f(); // expected-note {{here}}
+    static void sf();
+  };
+  struct C : A {};
+  struct D : A {
+    void g(C c) {
+      (void)b.n;
+      B b1;
+      C::B b2; // ok, accessible as a member of A
+      (void)&C::b; // expected-error {{protected}}
+      (void)&C::bs;
+      (void)c.b; // expected-error {{protected}}
+      (void)c.bs;
+      f();
+      sf();
+      c.f(); // expected-error {{protected}}
+      c.sf();
+      A::f();
+      D::f();
+      A::sf();
+      C::sf();
+      D::sf();
+    }
+  };
+}
+
+namespace dr162 { // dr162: no
+  struct A {
+    char &f(char);
+    static int &f(int);
+
+    void g() {
+      int &a = (&A::f)(0); // FIXME: expected-error {{could not be resolved}}
+      char &b = (&A::f)('0'); // expected-error {{could not be resolved}}
+    }
+  };
+
+  int &c = (&A::f)(0); // FIXME: expected-error {{could not be resolved}}
+  char &d = (&A::f)('0'); // expected-error {{could not be resolved}}
+}
+
+// dr163: na
+
+namespace dr164 { // dr164: yes
+  void f(int);
+  template <class T> int g(T t) { return f(t); }
+
+  enum E { e };
+  int f(E);
+
+  int k = g(e);
+}
+
+namespace dr165 { // dr165: no
+  namespace N {
+    struct A { friend struct B; };
+    void f() { void g(); }
+  }
+  // FIXME: dr1477 says this is ok, dr165 says it's ill-formed
+  struct N::B {};
+  // FIXME: dr165 says this is ill-formed, but the argument in dr1477 says it's ok
+  void N::g() {}
+}
