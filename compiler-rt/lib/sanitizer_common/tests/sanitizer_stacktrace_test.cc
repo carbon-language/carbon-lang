@@ -20,6 +20,13 @@ namespace __sanitizer {
 class FastUnwindTest : public ::testing::Test {
  protected:
   virtual void SetUp();
+  bool TryFastUnwind(uptr max_depth) {
+    if (!StackTrace::WillUseFastUnwind(true))
+      return false;
+    trace.Unwind(max_depth, start_pc, (uptr)&fake_stack[0], fake_top,
+                 fake_bottom, true);
+    return true;
+  }
 
   uptr fake_stack[10];
   uptr start_pc;
@@ -50,8 +57,8 @@ void FastUnwindTest::SetUp() {
 }
 
 TEST_F(FastUnwindTest, Basic) {
-  trace.FastUnwindStack(start_pc, (uptr)&fake_stack[0],
-                        fake_top, fake_bottom, kStackTraceMax);
+  if (!TryFastUnwind(kStackTraceMax))
+    return;
   // Should get all on-stack retaddrs and start_pc.
   EXPECT_EQ(6U, trace.size);
   EXPECT_EQ(start_pc, trace.trace[0]);
@@ -64,8 +71,8 @@ TEST_F(FastUnwindTest, Basic) {
 TEST_F(FastUnwindTest, FramePointerLoop) {
   // Make one fp point to itself.
   fake_stack[4] = (uptr)&fake_stack[4];
-  trace.FastUnwindStack(start_pc, (uptr)&fake_stack[0],
-                        fake_top, fake_bottom, kStackTraceMax);
+  if (!TryFastUnwind(kStackTraceMax))
+    return;
   // Should get all on-stack retaddrs up to the 4th slot and start_pc.
   EXPECT_EQ(4U, trace.size);
   EXPECT_EQ(start_pc, trace.trace[0]);
@@ -77,8 +84,8 @@ TEST_F(FastUnwindTest, FramePointerLoop) {
 TEST_F(FastUnwindTest, MisalignedFramePointer) {
   // Make one fp misaligned.
   fake_stack[4] += 3;
-  trace.FastUnwindStack(start_pc, (uptr)&fake_stack[0],
-                        fake_top, fake_bottom, kStackTraceMax);
+  if (!TryFastUnwind(kStackTraceMax))
+    return;
   // Should get all on-stack retaddrs up to the 4th slot and start_pc.
   EXPECT_EQ(4U, trace.size);
   EXPECT_EQ(start_pc, trace.trace[0]);
@@ -88,8 +95,8 @@ TEST_F(FastUnwindTest, MisalignedFramePointer) {
 }
 
 TEST_F(FastUnwindTest, OneFrameStackTrace) {
-  trace.FastUnwindStack(start_pc, (uptr)&fake_stack[0],
-                        fake_top, fake_bottom, 1);
+  if (!TryFastUnwind(1))
+    return;
   EXPECT_EQ(1U, trace.size);
   EXPECT_EQ(start_pc, trace.trace[0]);
 }

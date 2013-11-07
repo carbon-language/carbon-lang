@@ -16,14 +16,8 @@
 namespace __sanitizer {
 
 void StackTrace::Unwind(uptr max_depth, uptr pc, uptr bp, uptr stack_top,
-                        uptr stack_bottom, bool fast) {
-  // Check if fast unwind is available. Fast unwind is the only option on Mac.
-  if (!SANITIZER_CAN_FAST_UNWIND)
-    fast = false;
-  else if (SANITIZER_MAC)
-    fast = true;
-
-  if (!fast)
+                        uptr stack_bottom, bool request_fast_unwind) {
+  if (!WillUseFastUnwind(request_fast_unwind))
     SlowUnwindStack(pc, max_depth);
   else
     FastUnwindStack(pc, bp, stack_top, stack_bottom, max_depth);

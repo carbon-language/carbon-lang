@@ -72,7 +72,7 @@ void PrintWarning(uptr pc, uptr bp);
 void PrintWarningWithOrigin(uptr pc, uptr bp, u32 origin);
 
 void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
-                   bool fast);
+                   bool request_fast_unwind);
 
 void ReportUMR(StackTrace *stack, u32 origin);
 void ReportExpectedUMRNotFound(StackTrace *stack);
