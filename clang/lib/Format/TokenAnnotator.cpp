@@ -32,8 +32,7 @@ public:
   AnnotatingParser(const FormatStyle &Style, AnnotatedLine &Line,
                    IdentifierInfo &Ident_in)
       : Style(Style), Line(Line), CurrentToken(Line.First),
-        KeywordVirtualFound(false), NameFound(false), AutoFound(false),
-        Ident_in(Ident_in) {
+        KeywordVirtualFound(false), AutoFound(false), Ident_in(Ident_in) {
     Contexts.push_back(Context(tok::unknown, 1, /*IsExpression=*/false));
   }
 
@@ -367,7 +366,8 @@ private:
     case tok::l_paren:
       if (!parseParens())
         return false;
-      if (Line.MustBeDeclaration && NameFound && !Contexts.back().IsExpression)
+      if (Line.MustBeDeclaration && Contexts.size() == 1 &&
+          !Contexts.back().IsExpression)
         Line.MightBeFunctionDecl = true;
       break;
     case tok::l_square:
@@ -632,7 +632,6 @@ private:
       if (isStartOfName(Current) && !Line.MightBeFunctionDecl) {
         Contexts.back().FirstStartOfName = &Current;
         Current.Type = TT_StartOfName;
-        NameFound = true;
       } else if (Current.is(tok::kw_auto)) {
         AutoFound = true;
       } else if (Current.is(tok::arrow) && AutoFound &&
@@ -853,7 +852,6 @@ private:
   AnnotatedLine &Line;
   FormatToken *CurrentToken;
   bool KeywordVirtualFound;
-  bool NameFound;
   bool AutoFound;
   IdentifierInfo &Ident_in;
 };

@@ -2500,9 +2500,11 @@ TEST_F(FormatTest, PutEmptyBlocksIntoOneLine) {
 
 TEST_F(FormatTest, PreventConfusingIndents) {
   verifyFormat(
-      "SomeLongMethodName(SomeReallyLongMethod(CallOtherReallyLongMethod(\n"
-      "                       parameter, parameter, parameter)),\n"
-      "                   SecondLongCall(parameter));");
+      "void f() {\n"
+      "  SomeLongMethodName(SomeReallyLongMethod(CallOtherReallyLongMethod(\n"
+      "                         parameter, parameter, parameter)),\n"
+      "                     SecondLongCall(parameter));\n"
+      "}");
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaa(\n"
@@ -3078,8 +3080,10 @@ TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
   verifyFormat("aaaaaaaaaaaaaaa(aaaaaaaaa, aaaaaaaaa, aaaaaaaaaaaaaaaaaaaaa)\n"
                "    .aaaaaaaaaaaaaaaaaa();",
                NoBinPacking);
-  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
-               "    aaaaaaaaaa, aaaaaaaaaa, aaaaaaaaaa, aaaaaaaaaaa);",
+  verifyFormat("void f() {\n"
+               "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "      aaaaaaaaaa, aaaaaaaaaa, aaaaaaaaaa, aaaaaaaaaaa);\n"
+               "}",
                NoBinPacking);
 
   verifyFormat(
@@ -3168,7 +3172,8 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
       "              aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
       "        ->aaaaaaaaaaaaaaaaa();");
   verifyGoogleFormat(
-      "someobj->Add((new util::filetools::Handler(dir))\n"
+      "void f() {\n"
+      "  someo->Add((new util::filetools::Handler(dir))\n"
       "                 ->OnEvent1(NewPermanentCallback(\n"
       "                       this, &HandlerHolderClass::EventHandlerCBA))\n"
       "                 ->OnEvent2(NewPermanentCallback(\n"
@@ -3178,7 +3183,8 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
       "                 ->OnEvent5(NewPermanentCallback(\n"
       "                       this, &HandlerHolderClass::EventHandlerCBD))\n"
       "                 ->OnEvent6(NewPermanentCallback(\n"
-      "                       this, &HandlerHolderClass::EventHandlerCBE)));");
+      "                       this, &HandlerHolderClass::EventHandlerCBE)));\n"
+      "}");
 
   verifyFormat(
       "aaaaaaaaaaa().aaaaaaaaaaa().aaaaaaaaaaa().aaaaaaaaaaa().aaaaaaaaaaa();");
@@ -3638,8 +3644,10 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
   verifyFormat("aaaaa(aaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
                "            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa).aaaaa(aaaaa),\n"
                "      aaaaaaaaaaaaaaaaaaaaa);");
-  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaa(\n"
-               "    aaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaa)->aaaaaaaaa());");
+  verifyFormat("void f() {\n"
+               "  aaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "      aaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaa)->aaaaaaaaa());\n"
+               "}");
   verifyFormat(
       "aaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
       "      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
@@ -3723,8 +3731,10 @@ TEST_F(FormatTest, WrapsTemplateDeclarations) {
       "aaaaaaaaaaaaaaaaaaaaaaaa<aaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaa>(\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 
-  verifyFormat("a<aaaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaa>(\n"
-               "    a(aaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaa));");
+  verifyFormat("void f() {\n"
+               "  a<aaaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaa>(\n"
+               "      a(aaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaa));\n"
+               "}");
 
   verifyFormat("template <typename T> class C {};");
   verifyFormat("template <typename T> void f();");
@@ -4251,6 +4261,9 @@ TEST_F(FormatTest, FormatsFunctionTypes) {
 TEST_F(FormatTest, BreaksLongDeclarations) {
   verifyFormat("typedef LoooooooooooooooooooooooooooooooooooooooongType\n"
                "    AnotherNameForTheLongType;",
+               getGoogleStyle());
+  verifyFormat("typedef LongTemplateType<aaaaaaaaaaaaaaaaaaa()>\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;",
                getGoogleStyle());
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongType\n"
                "    LoooooooooooooooooooooooooooooooooooooooongVariable;",
