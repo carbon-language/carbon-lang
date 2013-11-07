@@ -3623,8 +3623,11 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
   // If it's a delegating constructor, just delegate.
   if (Definition->isDelegatingConstructor()) {
     CXXConstructorDecl::init_const_iterator I = Definition->init_begin();
-    if (!EvaluateInPlace(Result, Info, This, (*I)->getInit()))
-      return false;
+    {
+      FullExpressionRAII InitScope(Info);
+      if (!EvaluateInPlace(Result, Info, This, (*I)->getInit()))
+        return false;
+    }
     return EvaluateStmt(Result, Info, Definition->getBody()) != ESR_Failed;
   }
 

@@ -887,3 +887,14 @@ namespace Bitfields {
   }
   static_assert(test(), "");
 }
+
+namespace PR17615 {
+  struct A {
+    int &&r;
+    constexpr A(int &&r) : r(static_cast<int &&>(r)) {}
+    constexpr A() : A(0) {
+      (void)+r; // expected-note {{outside its lifetime}}
+    }
+  };
+  constexpr int k = A().r; // expected-error {{constant expression}} expected-note {{in call to}}
+}
