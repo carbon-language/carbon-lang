@@ -1940,7 +1940,43 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
            I != E; ++I)
         LastTy = *I;
 
-      if ((LastTy && isa<SequentialType>(LastTy)) || Idx0->isNullValue()) {
+      // We cannot combine indices if doing so would take us outside of an
+      // array or vector.  Doing otherwise could trick us if we evaluated such a
+      // GEP as part of a load.
+      //
+      // e.g. Consider if the original GEP was:
+      // i8* getelementptr ({ [2 x i8], i32, i8, [3 x i8] }* @main.c,
+      //                    i32 0, i32 0, i64 0)
+      //
+      // If we then tried to offset it by '8' to get to the third element,
+      // an i8, we should *not* get:
+      // i8* getelementptr ({ [2 x i8], i32, i8, [3 x i8] }* @main.c,
+      //                    i32 0, i32 0, i64 8)
+      //
+      // This GEP tries to index array element '8  which runs out-of-bounds.
+      // Subsequent evaluation would get confused and produce erroneous results.
+      //
+      // The following prohibits such a GEP from being formed by checking to see
+      // if the index is in-range with respect to an array or vector.
+      bool IsSequentialAccessInRange = false;
+      if (LastTy && isa<SequentialType>(LastTy)) {
+        uint64_t NumElements = 0;
+        if (ArrayType *ATy = dyn_cast<ArrayType>(LastTy))
+          NumElements = ATy->getNumElements();
+        else if (VectorType *VTy = dyn_cast<VectorType>(LastTy))
+          NumElements = VTy->getNumElements();
+
+        if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx0)) {
+          int64_t Idx0Val = CI->getSExtValue();
+          if (NumElements > 0 && Idx0Val >= 0 &&
+              (uint64_t)Idx0Val < NumElements)
+            IsSequentialAccessInRange = true;
+        } else if (PointerType *PTy = dyn_cast<PointerType>(LastTy))
+          // Only handle pointers to sized types, not pointers to functions.
+          if (PTy->getElementType()->isSized())
+            IsSequentialAccessInRange = true;
+      }
+      if (IsSequentialAccessInRange || Idx0->isNullValue()) {
         SmallVector<Value*, 16> NewIndices;
         NewIndices.reserve(Idxs.size() + CE->getNumOperands());
         for (unsigned i = 1, e = CE->getNumOperands()-1; i != e; ++i)
