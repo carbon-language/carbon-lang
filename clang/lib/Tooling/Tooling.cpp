@@ -165,18 +165,27 @@ public:
 
 ToolInvocation::ToolInvocation(ArrayRef<std::string> CommandLine,
                                ToolAction *Action, FileManager *Files)
-    : CommandLine(CommandLine.vec()), Action(Action), OwnsAction(false),
-      Files(Files) {}
+    : CommandLine(CommandLine.vec()),
+      Action(Action),
+      OwnsAction(false),
+      Files(Files),
+      DiagConsumer(NULL) {}
 
 ToolInvocation::ToolInvocation(ArrayRef<std::string> CommandLine,
                                FrontendAction *FAction, FileManager *Files)
     : CommandLine(CommandLine.vec()),
-      Action(new SingleFrontendActionFactory(FAction)), OwnsAction(true),
-      Files(Files) {}
+      Action(new SingleFrontendActionFactory(FAction)),
+      OwnsAction(true),
+      Files(Files),
+      DiagConsumer(NULL) {}
 
 ToolInvocation::~ToolInvocation() {
   if (OwnsAction)
     delete Action;
+}
+
+void ToolInvocation::setDiagnosticConsumer(DiagnosticConsumer *D) {
+  DiagConsumer = D;
 }
 
 void ToolInvocation::mapVirtualFile(StringRef FilePath, StringRef Content) {
@@ -194,8 +203,8 @@ bool ToolInvocation::run() {
   TextDiagnosticPrinter DiagnosticPrinter(
       llvm::errs(), &*DiagOpts);
   DiagnosticsEngine Diagnostics(
-    IntrusiveRefCntPtr<clang::DiagnosticIDs>(new DiagnosticIDs()),
-    &*DiagOpts, &DiagnosticPrinter, false);
+      IntrusiveRefCntPtr<clang::DiagnosticIDs>(new DiagnosticIDs()), &*DiagOpts,
+      DiagConsumer ? DiagConsumer : &DiagnosticPrinter, false);
 
   const OwningPtr<clang::driver::Driver> Driver(
       newDriver(&Diagnostics, BinaryName));
@@ -232,11 +241,12 @@ bool ToolInvocation::runInvocation(
     llvm::errs() << "\n";
   }
 
-  return Action->runInvocation(Invocation, Files);
+  return Action->runInvocation(Invocation, Files, DiagConsumer);
 }
 
 bool FrontendActionFactory::runInvocation(CompilerInvocation *Invocation,
-                                          FileManager *Files) {
+                                          FileManager *Files,
+                                          DiagnosticConsumer *DiagConsumer) {
   // Create a compiler instance to handle the actual work.
   clang::CompilerInstance Compiler;
   Compiler.setInvocation(Invocation);
@@ -248,7 +258,7 @@ bool FrontendActionFactory::runInvocation(CompilerInvocation *Invocation,
   OwningPtr<FrontendAction> ScopedToolAction(create());
 
   // Create the compilers actual diagnostics engine.
-  Compiler.createDiagnostics();
+  Compiler.createDiagnostics(DiagConsumer, /*ShouldOwnClient=*/false);
   if (!Compiler.hasDiagnostics())
     return false;
 
@@ -262,7 +272,7 @@ bool FrontendActionFactory::runInvocation(CompilerInvocation *Invocation,
 
 ClangTool::ClangTool(const CompilationDatabase &Compilations,
                      ArrayRef<std::string> SourcePaths)
-    : Files(new FileManager(FileSystemOptions())) {
+    : Files(new FileManager(FileSystemOptions())), DiagConsumer(NULL) {
   ArgsAdjusters.push_back(new ClangStripOutputAdjuster());
   ArgsAdjusters.push_back(new ClangSyntaxOnlyAdjuster());
   for (unsigned I = 0, E = SourcePaths.size(); I != E; ++I) {
@@ -284,6 +294,10 @@ ClangTool::ClangTool(const CompilationDatabase &Compilations,
       llvm::outs() << "Skipping " << File << ". Command line not found.\n";
     }
   }
+}
+
+void ClangTool::setDiagnosticConsumer(DiagnosticConsumer *D) {
+  DiagConsumer = D;
 }
 
 void ClangTool::mapVirtualFile(StringRef FilePath, StringRef Content) {
@@ -341,6 +355,7 @@ int ClangTool::run(ToolAction *Action) {
       llvm::dbgs() << "Processing: " << File << ".\n";
     });
     ToolInvocation Invocation(CommandLine, Action, Files.getPtr());
+    Invocation.setDiagnosticConsumer(DiagConsumer);
     for (int I = 0, E = MappedFileContents.size(); I != E; ++I) {
       Invocation.mapVirtualFile(MappedFileContents[I].first,
                                 MappedFileContents[I].second);
@@ -362,12 +377,13 @@ class ASTBuilderAction : public ToolAction {
 public:
   ASTBuilderAction(std::vector<ASTUnit *> &ASTs) : ASTs(ASTs) {}
 
-  bool runInvocation(CompilerInvocation *Invocation,
-                     FileManager *Files) {
+  bool runInvocation(CompilerInvocation *Invocation, FileManager *Files,
+                     DiagnosticConsumer *DiagConsumer) {
     // FIXME: This should use the provided FileManager.
     ASTUnit *AST = ASTUnit::LoadFromCompilerInvocation(
-        Invocation,
-        CompilerInstance::createDiagnostics(&Invocation->getDiagnosticOpts()));
+        Invocation, CompilerInstance::createDiagnostics(
+                        &Invocation->getDiagnosticOpts(), DiagConsumer,
+                        /*ShouldOwnClient=*/false));
     if (!AST)
       return false;
 

@@ -302,5 +302,24 @@ TEST(ClangToolTest, BuildASTs) {
 }
 #endif
 
+struct TestDiagnosticConsumer : public DiagnosticConsumer {
+  TestDiagnosticConsumer() : NumDiagnosticsSeen(0) {}
+  virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
+                                const Diagnostic &Info) {
+    ++NumDiagnosticsSeen;
+  }
+  unsigned NumDiagnosticsSeen;
+};
+
+TEST(ClangToolTest, InjectDiagnosticConsumer) {
+  FixedCompilationDatabase Compilations("/", std::vector<std::string>());
+  ClangTool Tool(Compilations, std::vector<std::string>(1, "/a.cc"));
+  Tool.mapVirtualFile("/a.cc", "int x = undeclared;");
+  TestDiagnosticConsumer Consumer;
+  Tool.setDiagnosticConsumer(&Consumer);
+  Tool.run(newFrontendActionFactory<SyntaxOnlyAction>());
+  EXPECT_EQ(1u, Consumer.NumDiagnosticsSeen);
+}
+
 } // end namespace tooling
 } // end namespace clang

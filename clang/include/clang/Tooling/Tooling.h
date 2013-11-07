@@ -30,6 +30,7 @@
 #ifndef LLVM_CLANG_TOOLING_TOOLING_H
 #define LLVM_CLANG_TOOLING_TOOLING_H
 
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Driver/Util.h"
@@ -63,7 +64,8 @@ public:
 
   /// \brief Perform an action for an invocation.
   virtual bool runInvocation(clang::CompilerInvocation *Invocation,
-                             FileManager *Files) = 0;
+                             FileManager *Files,
+                             DiagnosticConsumer *DiagConsumer) = 0;
 };
 
 /// \brief Interface to generate clang::FrontendActions.
@@ -77,8 +79,8 @@ public:
   virtual ~FrontendActionFactory();
 
   /// \brief Invokes the compiler with a FrontendAction created by create().
-  bool runInvocation(clang::CompilerInvocation *Invocation,
-                     FileManager *Files);
+  bool runInvocation(clang::CompilerInvocation *Invocation, FileManager *Files,
+                     DiagnosticConsumer *DiagConsumer);
 
   /// \brief Returns a new clang::FrontendAction.
   ///
@@ -197,6 +199,9 @@ class ToolInvocation {
 
   ~ToolInvocation();
 
+  /// \brief Set a \c DiagnosticConsumer to use during parsing.
+  void setDiagnosticConsumer(DiagnosticConsumer *DiagConsumer);
+
   /// \brief Map a virtual file to be used while running the tool.
   ///
   /// \param FilePath The path at which the content will be mapped.
@@ -221,6 +226,7 @@ class ToolInvocation {
   FileManager *Files;
   // Maps <file name> -> <file content>.
   llvm::StringMap<StringRef> MappedFileContents;
+  DiagnosticConsumer *DiagConsumer;
 };
 
 /// \brief Utility to run a FrontendAction over a set of files.
@@ -242,6 +248,9 @@ class ClangTool {
             ArrayRef<std::string> SourcePaths);
 
   virtual ~ClangTool() { clearArgumentsAdjusters(); }
+
+  /// \brief Set a \c DiagnosticConsumer to use during parsing.
+  void setDiagnosticConsumer(DiagnosticConsumer *DiagConsumer);
 
   /// \brief Map a virtual file to be used while running the tool.
   ///
@@ -289,6 +298,8 @@ class ClangTool {
   std::vector< std::pair<StringRef, StringRef> > MappedFileContents;
 
   SmallVector<ArgumentsAdjuster *, 2> ArgsAdjusters;
+
+  DiagnosticConsumer *DiagConsumer;
 };
 
 template <typename T>
