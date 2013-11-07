@@ -4543,6 +4543,11 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
                  "  T member = {arg1, arg2};\n"
                  "};",
                  NoSpaces);
+    verifyFormat("Constructor::Constructor()\n"
+                 "    : some_value{ //\n"
+                 "          aaaaaaa //\n"
+                 "      } {}",
+                 NoSpaces);
 }
 
 TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
