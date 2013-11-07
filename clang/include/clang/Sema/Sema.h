@@ -2149,12 +2149,14 @@ public:
                               DeclAccessPair FoundDecl,
                               CXXRecordDecl *ActingContext,
                               Expr *From, QualType ToType,
-                              OverloadCandidateSet& CandidateSet);
+                              OverloadCandidateSet& CandidateSet,
+                              bool AllowObjCConversionOnExplicit = false);
   void AddTemplateConversionCandidate(FunctionTemplateDecl *FunctionTemplate,
                                       DeclAccessPair FoundDecl,
                                       CXXRecordDecl *ActingContext,
                                       Expr *From, QualType ToType,
-                                      OverloadCandidateSet &CandidateSet);
+                                      OverloadCandidateSet &CandidateSet,
+                                    bool AllowObjCConversionOnExplicit = false);
   void AddSurrogateCandidate(CXXConversionDecl *Conversion,
                              DeclAccessPair FoundDecl,
                              CXXRecordDecl *ActingContext,

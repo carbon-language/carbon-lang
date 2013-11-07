@@ -2285,6 +2285,11 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
       }
       ReceiverType = Receiver->getType();
     } else if (getLangOpts().CPlusPlus) {
+      // The receiver must be a complete type.
+      if (RequireCompleteType(Loc, Receiver->getType(),
+                              diag::err_incomplete_receiver_type))
+        return ExprError();
+
       ExprResult result = PerformContextuallyConvertToObjCPointer(Receiver);
       if (result.isUsable()) {
         Receiver = result.take();
