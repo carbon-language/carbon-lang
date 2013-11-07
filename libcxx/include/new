@@ -94,6 +94,7 @@ public:
 };
 
 #if defined(_LIBCPP_BUILDING_NEW) || (_LIBCPP_STD_VER > 11)
+
 class _LIBCPP_EXCEPTION_ABI bad_array_length
     : public bad_alloc
 {
@@ -102,7 +103,10 @@ public:
     virtual ~bad_array_length() _NOEXCEPT;
     virtual const char* what() const _NOEXCEPT;
 };
-#endif
+
+#define _LIBCPP_BAD_ARRAY_LENGTH_DEFINED
+
+#endif  // defined(_LIBCPP_BUILDING_NEW) || (_LIBCPP_STD_VER > 11)
 
 _LIBCPP_FUNC_VIS void __throw_bad_alloc();  // not in C++ spec
 
