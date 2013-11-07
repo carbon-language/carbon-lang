@@ -232,6 +232,19 @@ bad_array_new_length::what() const _NOEXCEPT
 
 // bad_array_length
 
+#ifndef _LIBCPP_BAD_ARRAY_LENGTH_DEFINED
+
+class _LIBCPP_EXCEPTION_ABI bad_array_length
+    : public bad_alloc
+{
+public:
+    bad_array_length() _NOEXCEPT;
+    virtual ~bad_array_length() _NOEXCEPT;
+    virtual const char* what() const _NOEXCEPT;
+};
+
+#endif  // _LIBCPP_BAD_ARRAY_LENGTH_DEFINED
+
 bad_array_length::bad_array_length() _NOEXCEPT
 {
 }
