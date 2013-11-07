@@ -4697,11 +4697,7 @@ Process::SettingsTerminate ()
 ExecutionResults
 Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         lldb::ThreadPlanSP &thread_plan_sp,
-                        bool stop_others,
-                        bool run_others,
-                        bool unwind_on_error,
-                        bool ignore_breakpoints,
-                        uint32_t timeout_usec,
+                        const EvaluateExpressionOptions &options,
                         Stream &errors)
 {
     ExecutionResults return_value = eExecutionSetupError;
@@ -4812,6 +4808,17 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     
     thread->QueueThreadPlan(thread_plan_sp, false); // This used to pass "true" does that make sense?
     
+    if (options.GetDebug())
+    {
+        // In this case, we aren't actually going to run, we just want to stop right away.
+        // Flush this thread so we will refetch the stacks and show the correct backtrace.
+        // FIXME: To make this prettier we should invent some stop reason for this, but that
+        // is only cosmetic, and this functionality is only of use to lldb developers who can
+        // live with not pretty...
+        thread->Flush();
+        return eExecutionStoppedForDebug;
+    }
+    
     Listener listener("lldb.process.listener.run-thread-plan");
     
     lldb::EventSP event_to_broadcast_sp;
@@ -4853,11 +4860,12 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         TimeValue one_thread_timeout = TimeValue::Now();
         TimeValue final_timeout = one_thread_timeout;
         
-        if (run_others)
+        uint32_t timeout_usec = options.GetTimeoutUsec();
+        if (options.GetTryAllThreads())
         {
             // If we are running all threads then we take half the time to run all threads, bounded by
             // .25 sec.
-            if (timeout_usec == 0)
+            if (options.GetTimeoutUsec() == 0)
                 one_thread_timeout.OffsetWithMicroSeconds(default_one_thread_timeout_usec);
             else
             {
@@ -4969,7 +4977,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         
             if (before_first_timeout)
             {
-                if (run_others)
+                if (options.GetTryAllThreads())
                     timeout_ptr = &one_thread_timeout;
                 else
                 {
@@ -5085,7 +5093,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                                 if (log)
                                                     log->Printf ("Process::RunThreadPlan() stopped for breakpoint: %s.", stop_info_sp->GetDescription());
                                                 return_value = eExecutionHitBreakpoint;
-                                                if (!ignore_breakpoints)
+                                                if (!options.DoesIgnoreBreakpoints())
                                                 {
                                                     event_to_broadcast_sp = event_sp;
                                                 }
@@ -5094,7 +5102,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                             {
                                                 if (log)
                                                     log->PutCString ("Process::RunThreadPlan(): thread plan didn't successfully complete.");
-                                                if (!unwind_on_error)
+                                                if (!options.DoesUnwindOnError())
                                                     event_to_broadcast_sp = event_sp;
                                                 return_value = eExecutionInterrupted;
                                             }
@@ -5145,7 +5153,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 // either exit, or try with all threads running for the same timeout.
                 
                 if (log) {
-                    if (run_others)
+                    if (options.GetTryAllThreads())
                     {
                         uint64_t remaining_time = final_timeout - TimeValue::Now();
                         if (before_first_timeout)
@@ -5228,7 +5236,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                     continue;
                                 }
 
-                                if (!run_others)
+                                if (!options.GetTryAllThreads())
                                 {
                                     if (log)
                                         log->PutCString ("Process::RunThreadPlan(): try_all_threads was false, we stopped so now we're quitting.");
@@ -5301,8 +5309,8 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         // 1) The execution successfully completed
         // 2) We hit a breakpoint, and ignore_breakpoints was true
         // 3) We got some other error, and discard_on_error was true
-        bool should_unwind = (return_value == eExecutionInterrupted && unwind_on_error)
-                             || (return_value == eExecutionHitBreakpoint && ignore_breakpoints);
+        bool should_unwind = (return_value == eExecutionInterrupted && options.DoesUnwindOnError())
+                             || (return_value == eExecutionHitBreakpoint && options.DoesIgnoreBreakpoints());
         
         if (return_value == eExecutionCompleted
             || should_unwind)
@@ -5422,7 +5430,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             if (log)
                 log->PutCString("Process::RunThreadPlan(): execution set up error.");
                 
-            if (unwind_on_error)
+            if (options.DoesUnwindOnError())
             {
                 thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
                 thread_plan_sp->SetPrivate (orig_plan_private);
@@ -5446,7 +5454,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             {
                 if (log)
                     log->PutCString("Process::RunThreadPlan(): thread plan stopped in mid course");
-                if (unwind_on_error && thread_plan_sp)
+                if (options.DoesUnwindOnError() && thread_plan_sp)
                 {
                     if (log)
                         log->PutCString("Process::RunThreadPlan(): discarding thread plan 'cause unwind_on_error is set.");
@@ -5517,6 +5525,9 @@ Process::ExecutionResultAsCString (ExecutionResults result)
             break;
         case eExecutionTimedOut:
             result_name = "eExecutionTimedOut";
+            break;
+        case eExecutionStoppedForDebug:
+            result_name = "eExecutionStoppedForDebug";
             break;
     }
     return result_name;

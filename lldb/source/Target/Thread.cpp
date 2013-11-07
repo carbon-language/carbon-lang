@@ -1420,14 +1420,6 @@ Thread::QueueThreadPlanForStepInRange
 
 
 ThreadPlanSP
-Thread::QueueThreadPlanForStepOverBreakpointPlan (bool abort_other_plans)
-{
-    ThreadPlanSP thread_plan_sp (new ThreadPlanStepOverBreakpoint (*this));
-    QueueThreadPlan (thread_plan_sp, abort_other_plans);
-    return thread_plan_sp;
-}
-
-ThreadPlanSP
 Thread::QueueThreadPlanForStepOut 
 (
     bool abort_other_plans, 
@@ -1465,25 +1457,6 @@ Thread::QueueThreadPlanForStepThrough (StackID &return_stack_id, bool abort_othe
     if (!thread_plan_sp || !thread_plan_sp->ValidatePlan (NULL))
         return ThreadPlanSP();
 
-    QueueThreadPlan (thread_plan_sp, abort_other_plans);
-    return thread_plan_sp;
-}
-
-ThreadPlanSP
-Thread::QueueThreadPlanForCallFunction (bool abort_other_plans,
-                                        Address& function,
-                                        lldb::addr_t arg,
-                                        bool stop_other_threads,
-                                        bool unwind_on_error,
-                                        bool ignore_breakpoints)
-{
-    ThreadPlanSP thread_plan_sp (new ThreadPlanCallFunction (*this,
-                                                             function,
-                                                             ClangASTType(),
-                                                             arg,
-                                                             stop_other_threads,
-                                                             unwind_on_error,
-                                                             ignore_breakpoints));
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
     return thread_plan_sp;
 }

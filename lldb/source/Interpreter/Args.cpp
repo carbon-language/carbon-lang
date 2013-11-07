@@ -815,7 +815,7 @@ Args::StringToAddress (const ExecutionContext *exe_ctx, const char *s, lldb::add
                 options.SetCoerceToId(false);
                 options.SetUnwindOnError(true);
                 options.SetKeepInMemory(false);
-                options.SetRunOthers(true);
+                options.SetTryAllThreads(true);
                 
                 ExecutionResults expr_result = target->EvaluateExpression(s,
                                                                           exe_ctx->GetFramePtr(),

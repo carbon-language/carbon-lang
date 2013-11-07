@@ -34,10 +34,10 @@ m_options()
 {
     if (valobj_sp)
         Update();
-    m_options.SetCoerceToId(false)
-    .SetUnwindOnError(true)
-    .SetKeepInMemory(true)
-    .SetUseDynamic(lldb::eDynamicCanRunTarget);
+    m_options.SetCoerceToId(false);
+    m_options.SetUnwindOnError(true);
+    m_options.SetKeepInMemory(true);
+    m_options.SetUseDynamic(lldb::eDynamicCanRunTarget);
 }
 
 size_t
@@ -215,10 +215,10 @@ lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::LibstdcppMapIte
 {
     if (valobj_sp)
         Update();
-    m_options.SetCoerceToId(false)
-    .SetUnwindOnError(true)
-    .SetKeepInMemory(true)
-    .SetUseDynamic(lldb::eDynamicCanRunTarget);
+    m_options.SetCoerceToId(false);
+    m_options.SetUnwindOnError(true);
+    m_options.SetKeepInMemory(true);
+    m_options.SetUseDynamic(lldb::eDynamicCanRunTarget);
 }
 
 bool

@@ -71,6 +71,9 @@ namespace lldb_private {
         ClearExceptionBreakpoints ();
         
         virtual bool
+        ExceptionBreakpointsAreSet ();
+        
+        virtual bool
         ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason);
 
         virtual lldb::BreakpointResolverSP

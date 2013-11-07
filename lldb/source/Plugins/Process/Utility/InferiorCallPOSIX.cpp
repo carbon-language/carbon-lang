@@ -59,11 +59,13 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
         {
             const uint32_t range_scope = eSymbolContextFunction | eSymbolContextSymbol;
             const bool use_inline_block_range = false;
-            const bool stop_other_threads = true;
-            const bool unwind_on_error = true;
-            const bool ignore_breakpoints = true;
-            const bool try_all_threads = true;
-            const uint32_t timeout_usec = 500000;
+            EvaluateExpressionOptions options;
+            options.SetStopOthers(true);
+            options.SetUnwindOnError(true);
+            options.SetIgnoreBreakpoints(true);
+            options.SetTryAllThreads(true);
+            options.SetDebug (false);
+            options.SetTimeoutUsec(500000);
 
             addr_t prot_arg, flags_arg = 0;
             if (prot == eMmapProtNone)
@@ -92,9 +94,7 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
                   = new ThreadPlanCallFunction (*thread,
                                                 mmap_range.GetBaseAddress(),
                                                 clang_void_ptr_type,
-                                                stop_other_threads,
-                                                unwind_on_error,
-                                                ignore_breakpoints,
+                                                options,
                                                 &addr,
                                                 &length,
                                                 &prot_arg,
@@ -115,12 +115,8 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
                         ExecutionContext exe_ctx;
                         frame->CalculateExecutionContext (exe_ctx);
                         ExecutionResults result = process->RunThreadPlan (exe_ctx,
-                                                                          call_plan_sp,        
-                                                                          stop_other_threads,
-                                                                          try_all_threads,
-                                                                          unwind_on_error,
-                                                                          ignore_breakpoints,
-                                                                          timeout_usec,
+                                                                          call_plan_sp,
+                                                                          options,
                                                                           error_strm);
                         if (result == eExecutionCompleted)
                         {
@@ -169,56 +165,52 @@ bool lldb_private::InferiorCallMunmap(Process *process, addr_t addr,
        SymbolContext sc;
        if (sc_list.GetContextAtIndex(0, sc))
        {
-           const uint32_t range_scope = eSymbolContextFunction | eSymbolContextSymbol;
-           const bool use_inline_block_range = false;
-           const bool stop_other_threads = true;
-           const bool unwind_on_error = true;
-           const bool ignore_breakpoints = true;
-           const bool try_all_threads = true;
-           const uint32_t timeout_usec = 500000;
+            const uint32_t range_scope = eSymbolContextFunction | eSymbolContextSymbol;
+            const bool use_inline_block_range = false;
+            EvaluateExpressionOptions options;
+            options.SetStopOthers(true);
+            options.SetUnwindOnError(true);
+            options.SetIgnoreBreakpoints(true);
+            options.SetTryAllThreads(true);
+            options.SetDebug (false);
+            options.SetTimeoutUsec(500000);
            
-           AddressRange munmap_range;
-           if (sc.GetAddressRange(range_scope, 0, use_inline_block_range, munmap_range))
-           {
-               lldb::ThreadPlanSP call_plan_sp (new ThreadPlanCallFunction (*thread,
+            AddressRange munmap_range;
+            if (sc.GetAddressRange(range_scope, 0, use_inline_block_range, munmap_range))
+            {
+                lldb::ThreadPlanSP call_plan_sp (new ThreadPlanCallFunction (*thread,
                                                                             munmap_range.GetBaseAddress(),
                                                                             ClangASTType(),
-                                                                            stop_other_threads,
-                                                                            unwind_on_error,
-                                                                            ignore_breakpoints,
+                                                                            options,
                                                                             &addr,
                                                                             &length));
-               if (call_plan_sp)
-               {
-                   StreamFile error_strm;
-                   // This plan is a utility plan, so set it to discard itself when done.
-                   call_plan_sp->SetIsMasterPlan (true);
-                   call_plan_sp->SetOkayToDiscard(true);
+                if (call_plan_sp)
+                {
+                    StreamFile error_strm;
+                    // This plan is a utility plan, so set it to discard itself when done.
+                    call_plan_sp->SetIsMasterPlan (true);
+                    call_plan_sp->SetOkayToDiscard(true);
                    
-                   StackFrame *frame = thread->GetStackFrameAtIndex (0).get();
-                   if (frame)
-                   {
-                       ExecutionContext exe_ctx;
-                       frame->CalculateExecutionContext (exe_ctx);
-                       ExecutionResults result = process->RunThreadPlan (exe_ctx,
-                                                                         call_plan_sp,        
-                                                                         stop_other_threads,
-                                                                         try_all_threads,
-                                                                         unwind_on_error,
-                                                                         ignore_breakpoints,
-                                                                         timeout_usec,
-                                                                         error_strm);
-                       if (result == eExecutionCompleted)
-                       {
-                           return true;
-                       }
-                   }
-               }
-           }
-       }
-   }
+                    StackFrame *frame = thread->GetStackFrameAtIndex (0).get();
+                    if (frame)
+                    {
+                        ExecutionContext exe_ctx;
+                        frame->CalculateExecutionContext (exe_ctx);
+                        ExecutionResults result = process->RunThreadPlan (exe_ctx,
+                                                                          call_plan_sp,
+                                                                          options,
+                                                                          error_strm);
+                        if (result == eExecutionCompleted)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-   return false;
+    return false;
 }
 
 bool lldb_private::InferiorCall(Process *process, const Address *address, addr_t &returned_func) {
@@ -226,11 +218,13 @@ bool lldb_private::InferiorCall(Process *process, const Address *address, addr_t
     if (thread == NULL || address == NULL)
         return false;
 
-    const bool stop_other_threads = true;
-    const bool unwind_on_error = true;
-    const bool ignore_breakpoints = true;
-    const bool try_all_threads = true;
-    const uint32_t timeout_usec = 500000;
+    EvaluateExpressionOptions options;
+    options.SetStopOthers(true);
+    options.SetUnwindOnError(true);
+    options.SetIgnoreBreakpoints(true);
+    options.SetTryAllThreads(true);
+    options.SetDebug (false);
+    options.SetTimeoutUsec(500000);
 
     ClangASTContext *clang_ast_context = process->GetTarget().GetScratchClangASTContext();
     ClangASTType clang_void_ptr_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
@@ -238,9 +232,7 @@ bool lldb_private::InferiorCall(Process *process, const Address *address, addr_t
         = new ThreadPlanCallFunction (*thread,
                                       *address,
                                       clang_void_ptr_type,
-                                      stop_other_threads,
-                                      unwind_on_error,
-                                      ignore_breakpoints);
+                                      options);
     lldb::ThreadPlanSP call_plan_sp (call_function_thread_plan);
     if (call_plan_sp)
     {
@@ -256,11 +248,7 @@ bool lldb_private::InferiorCall(Process *process, const Address *address, addr_t
             frame->CalculateExecutionContext (exe_ctx);
             ExecutionResults result = process->RunThreadPlan (exe_ctx,
                                                               call_plan_sp,
-                                                              stop_other_threads,
-                                                              try_all_threads,
-                                                              unwind_on_error,
-                                                              ignore_breakpoints,
-                                                              timeout_usec,
+                                                              options,
                                                               error_strm);
             if (result == eExecutionCompleted)
             {

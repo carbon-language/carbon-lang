@@ -363,13 +363,13 @@ CommandObjectExpression::EvaluateExpression
         bool keep_in_memory = true;
 
         EvaluateExpressionOptions options;
-        options.SetCoerceToId(m_varobj_options.use_objc)
-        .SetUnwindOnError(m_command_options.unwind_on_error)
-        .SetIgnoreBreakpoints (m_command_options.ignore_breakpoints)
-        .SetKeepInMemory(keep_in_memory)
-        .SetUseDynamic(m_varobj_options.use_dynamic)
-        .SetRunOthers(m_command_options.try_all_threads)
-        .SetDebug(m_command_options.debug);
+        options.SetCoerceToId(m_varobj_options.use_objc);
+        options.SetUnwindOnError(m_command_options.unwind_on_error);
+        options.SetIgnoreBreakpoints (m_command_options.ignore_breakpoints);
+        options.SetKeepInMemory(keep_in_memory);
+        options.SetUseDynamic(m_varobj_options.use_dynamic);
+        options.SetTryAllThreads(m_command_options.try_all_threads);
+        options.SetDebug(m_command_options.debug);
         
         if (m_command_options.timeout > 0)
             options.SetTimeoutUsec(m_command_options.timeout);

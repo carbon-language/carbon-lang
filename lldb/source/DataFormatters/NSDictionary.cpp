@@ -218,8 +218,10 @@ lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::GetChildAtIn
     StreamString object_fetcher_expr;
     object_fetcher_expr.Printf("struct __lldb_autogen_nspair { id key; id value; } _lldb_valgen_item; _lldb_valgen_item.key = %s; _lldb_valgen_item.value = %s; _lldb_valgen_item;",key_fetcher_expr.GetData(),value_fetcher_expr.GetData());
     lldb::ValueObjectSP child_sp;
+    EvaluateExpressionOptions options;
+    options.SetKeepInMemory(true);
     m_backend.GetTargetSP()->EvaluateExpression(object_fetcher_expr.GetData(), m_backend.GetFrameSP().get(), child_sp,
-                                                EvaluateExpressionOptions().SetKeepInMemory(true));
+                                                options);
     if (child_sp)
         child_sp->SetName(ConstString(idx_name.GetData()));
     return child_sp;

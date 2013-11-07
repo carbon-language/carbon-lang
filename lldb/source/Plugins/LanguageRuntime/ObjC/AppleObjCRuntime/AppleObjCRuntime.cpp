@@ -137,19 +137,17 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     lldb::addr_t wrapper_struct_addr = LLDB_INVALID_ADDRESS;
     func.InsertFunction(exe_ctx, wrapper_struct_addr, error_stream);
 
-    const bool unwind_on_error = true;
-    const bool try_all_threads = true;
-    const bool stop_others = true;
-    const bool ignore_breakpoints = true;
+    EvaluateExpressionOptions options;
+    options.SetUnwindOnError(true);
+    options.SetTryAllThreads(true);
+    options.SetStopOthers(true);
+    options.SetIgnoreBreakpoints(true);
+    options.SetTimeoutUsec(PO_FUNCTION_TIMEOUT_USEC);
     
     ExecutionResults results = func.ExecuteFunction (exe_ctx, 
-                                                     &wrapper_struct_addr, 
+                                                     &wrapper_struct_addr,
+                                                     options,
                                                      error_stream, 
-                                                     stop_others, 
-                                                     PO_FUNCTION_TIMEOUT_USEC /* 15 secs timeout */,
-                                                     try_all_threads, 
-                                                     unwind_on_error,
-                                                     ignore_breakpoints,
                                                      ret);
     if (results != eExecutionCompleted)
     {
@@ -359,6 +357,12 @@ AppleObjCRuntime::ClearExceptionBreakpoints ()
     {
         m_objc_exception_bp_sp->SetEnabled (false);
     }
+}
+
+bool
+AppleObjCRuntime::ExceptionBreakpointsAreSet ()
+{
+    return m_objc_exception_bp_sp && m_objc_exception_bp_sp->IsEnabled();
 }
 
 bool

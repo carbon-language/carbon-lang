@@ -189,8 +189,10 @@ public:
         m_unwind_on_error(true),
         m_ignore_breakpoints (false),
         m_keep_in_memory(false),
-        m_run_others(true),
+        m_try_others(true),
+        m_stop_others(true),
         m_debug(false),
+        m_trap_exceptions(true),
         m_use_dynamic(lldb::eNoDynamicValues),
         m_timeout_usec(default_timeout)
     {}
@@ -201,11 +203,10 @@ public:
         return m_execution_policy;
     }
     
-    EvaluateExpressionOptions&
+    void
     SetExecutionPolicy (ExecutionPolicy policy = eExecutionPolicyAlways)
     {
         m_execution_policy = policy;
-        return *this;
     }
     
     lldb::LanguageType
@@ -214,11 +215,10 @@ public:
         return m_language;
     }
     
-    EvaluateExpressionOptions&
+    void
     SetLanguage(lldb::LanguageType language)
     {
         m_language = language;
-        return *this;
     }
     
     bool
@@ -227,11 +227,10 @@ public:
         return m_coerce_to_id;
     }
     
-    EvaluateExpressionOptions&
+    void
     SetCoerceToId (bool coerce = true)
     {
         m_coerce_to_id = coerce;
-        return *this;
     }
     
     bool
@@ -240,11 +239,10 @@ public:
         return m_unwind_on_error;
     }
     
-    EvaluateExpressionOptions&
+    void
     SetUnwindOnError (bool unwind = false)
     {
         m_unwind_on_error = unwind;
-        return *this;
     }
     
     bool
@@ -253,11 +251,10 @@ public:
         return m_ignore_breakpoints;
     }
     
-    EvaluateExpressionOptions&
+    void
     SetIgnoreBreakpoints (bool ignore = false)
     {
         m_ignore_breakpoints = ignore;
-        return *this;
     }
     
     bool
@@ -266,11 +263,10 @@ public:
         return m_keep_in_memory;
     }
     
-    EvaluateExpressionOptions&
+    void
     SetKeepInMemory (bool keep = true)
     {
         m_keep_in_memory = keep;
-        return *this;
     }
     
     lldb::DynamicValueType
@@ -279,11 +275,10 @@ public:
         return m_use_dynamic;
     }
     
-    EvaluateExpressionOptions&
+    void
     SetUseDynamic (lldb::DynamicValueType dynamic = lldb::eDynamicCanRunTarget)
     {
         m_use_dynamic = dynamic;
-        return *this;
     }
     
     uint32_t
@@ -292,24 +287,34 @@ public:
         return m_timeout_usec;
     }
     
-    EvaluateExpressionOptions&
+    void
     SetTimeoutUsec (uint32_t timeout = 0)
     {
         m_timeout_usec = timeout;
-        return *this;
     }
     
     bool
-    GetRunOthers () const
+    GetTryAllThreads () const
     {
-        return m_run_others;
+        return m_try_others;
     }
     
-    EvaluateExpressionOptions&
-    SetRunOthers (bool run_others = true)
+    void
+    SetTryAllThreads (bool try_others = true)
     {
-        m_run_others = run_others;
-        return *this;
+        m_try_others = try_others;
+    }
+    
+    bool
+    GetStopOthers () const
+    {
+        return m_stop_others;
+    }
+    
+    void
+    SetStopOthers (bool stop_others = true)
+    {
+        m_stop_others = stop_others;
     }
     
     bool
@@ -318,11 +323,22 @@ public:
         return m_debug;
     }
     
-    EvaluateExpressionOptions&
+    void
     SetDebug(bool b)
     {
         m_debug = b;
-        return *this;
+    }
+    
+    bool
+    GetTrapExceptions() const
+    {
+        return m_trap_exceptions;
+    }
+    
+    void
+    SetTrapExceptions (bool b)
+    {
+        m_trap_exceptions = b;
     }
 
 private:
@@ -332,8 +348,10 @@ private:
     bool m_unwind_on_error;
     bool m_ignore_breakpoints;
     bool m_keep_in_memory;
-    bool m_run_others;
+    bool m_try_others;
+    bool m_stop_others;
     bool m_debug;
+    bool m_trap_exceptions;
     lldb::DynamicValueType m_use_dynamic;
     uint32_t m_timeout_usec;
 };

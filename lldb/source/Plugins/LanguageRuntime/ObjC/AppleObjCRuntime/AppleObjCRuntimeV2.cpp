@@ -1829,10 +1829,12 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
                                                            arguments,
                                                            errors))
     {
-        bool stop_others = true;
-        bool try_all_threads = false;
-        bool unwind_on_error = true;
-        bool ignore_breakpoints = true;
+        EvaluateExpressionOptions options;
+        options.SetUnwindOnError(true);
+        options.SetTryAllThreads(false);
+        options.SetStopOthers(true);
+        options.SetIgnoreBreakpoints(true);
+        options.SetTimeoutUsec(UTILITY_FUNCTION_TIMEOUT_USEC);
         
         Value return_value;
         return_value.SetValueType (Value::eValueTypeScalar);
@@ -1845,12 +1847,8 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
         // Run the function
         ExecutionResults results = m_get_class_info_function->ExecuteFunction (exe_ctx,
                                                                                &m_get_class_info_args,
+                                                                               options,
                                                                                errors,
-                                                                               stop_others,
-                                                                               UTILITY_FUNCTION_TIMEOUT_USEC,
-                                                                               try_all_threads,
-                                                                               unwind_on_error,
-                                                                               ignore_breakpoints,
                                                                                return_value);
         
         if (results == eExecutionCompleted)
@@ -2080,10 +2078,12 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
                                                                         arguments,
                                                                         errors))
     {
-        bool stop_others = true;
-        bool try_all_threads = false;
-        bool unwind_on_error = true;
-        bool ignore_breakpoints = true;
+        EvaluateExpressionOptions options;
+        options.SetUnwindOnError(true);
+        options.SetTryAllThreads(false);
+        options.SetStopOthers(true);
+        options.SetIgnoreBreakpoints(true);
+        options.SetTimeoutUsec(UTILITY_FUNCTION_TIMEOUT_USEC);
         
         Value return_value;
         return_value.SetValueType (Value::eValueTypeScalar);
@@ -2096,12 +2096,8 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
         // Run the function
         ExecutionResults results = m_get_shared_cache_class_info_function->ExecuteFunction (exe_ctx,
                                                                                             &m_get_shared_cache_class_info_args,
+                                                                                            options,
                                                                                             errors,
-                                                                                            stop_others,
-                                                                                            UTILITY_FUNCTION_TIMEOUT_USEC,
-                                                                                            try_all_threads,
-                                                                                            unwind_on_error,
-                                                                                            ignore_breakpoints,
                                                                                             return_value);
         
         if (results == eExecutionCompleted)

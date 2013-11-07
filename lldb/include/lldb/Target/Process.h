@@ -2502,11 +2502,7 @@ public:
     ExecutionResults
     RunThreadPlan (ExecutionContext &exe_ctx,    
                     lldb::ThreadPlanSP &thread_plan_sp,
-                    bool stop_others,
-                    bool run_others,
-                    bool unwind_on_error,
-                    bool ignore_breakpoints,
-                    uint32_t timeout_usec,
+                    const EvaluateExpressionOptions &options,
                     Stream &errors);
 
     static const char *

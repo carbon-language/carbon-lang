@@ -67,6 +67,12 @@ public:
     }
     
     virtual bool
+    ExceptionBreakpointsAreSet ()
+    {
+        return false;
+    }
+    
+    virtual bool
     ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason)
     {
         return false;

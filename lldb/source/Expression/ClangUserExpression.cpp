@@ -716,35 +716,6 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
     return true;
 }
 
-ThreadPlan *
-ClangUserExpression::GetThreadPlanToExecuteJITExpression (Stream &error_stream,
-                                                          ExecutionContext &exe_ctx)
-{
-    lldb::addr_t struct_address;
-            
-    lldb::addr_t object_ptr = 0;
-    lldb::addr_t cmd_ptr = 0;
-    
-    PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr, cmd_ptr);
-    
-    // FIXME: This should really return a ThreadPlanCallUserExpression, in order to make sure that we don't release the
-    // ClangUserExpression resources before the thread plan finishes execution in the target.  But because we are 
-    // forcing unwind_on_error to be true here, in practical terms that can't happen.
-    
-    const bool stop_others = true;
-    const bool unwind_on_error = true;
-    const bool ignore_breakpoints = false;
-    return ClangFunction::GetThreadPlanToCallFunction (exe_ctx, 
-                                                       m_jit_start_addr, 
-                                                       struct_address, 
-                                                       error_stream,
-                                                       stop_others,
-                                                       unwind_on_error,
-                                                       ignore_breakpoints,
-                                                       (m_needs_object_ptr ? &object_ptr : NULL),
-                                                       (m_needs_object_ptr && m_objectivec) ? &cmd_ptr : NULL);
-}
-
 bool
 ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
                                            ExecutionContext &exe_ctx,
@@ -852,25 +823,11 @@ ClangUserExpression::Execute (Stream &error_stream,
         }
         else
         {
-            const uint32_t timeout_usec = options.GetTimeoutUsec();
-            const bool debug = options.GetDebug();
-            const bool unwind_on_error = debug ? false : options.DoesUnwindOnError();
-            const bool ignore_breakpoints = debug ? false : options.DoesIgnoreBreakpoints();
-            const bool stop_others = true;
-            const bool try_all_threads = options.GetRunOthers();
-            lldb::BreakpointSP debug_bkpt_sp;
-            if (debug)
-            {
-                // TODO: push this down into the thread plan and let the plan manage it
-                debug_bkpt_sp = exe_ctx.GetTargetRef().CreateBreakpoint(m_jit_start_addr, false, false);
-            }
             Address wrapper_address (m_jit_start_addr);
             lldb::ThreadPlanSP call_plan_sp(new ThreadPlanCallUserExpression (exe_ctx.GetThreadRef(), 
                                                                               wrapper_address, 
-                                                                              struct_address, 
-                                                                              stop_others, 
-                                                                              unwind_on_error,
-                                                                              ignore_breakpoints,
+                                                                              struct_address,
+                                                                              options,
                                                                               (m_needs_object_ptr ? &object_ptr : NULL),
                                                                               ((m_needs_object_ptr && m_objectivec) ? &cmd_ptr : NULL),
                                                                               shared_ptr_to_me));
@@ -890,19 +847,10 @@ ClangUserExpression::Execute (Stream &error_stream,
                 exe_ctx.GetProcessPtr()->SetRunningUserExpression(true);
                 
             ExecutionResults execution_result = exe_ctx.GetProcessRef().RunThreadPlan (exe_ctx, 
-                                                                                       call_plan_sp, 
-                                                                                       stop_others, 
-                                                                                       try_all_threads, 
-                                                                                       unwind_on_error,
-                                                                                       ignore_breakpoints,
-                                                                                       timeout_usec, 
+                                                                                       call_plan_sp,
+                                                                                       options,
                                                                                        error_stream);
             
-            if (debug_bkpt_sp)
-            {
-                exe_ctx.GetTargetRef().RemoveBreakpointByID(debug_bkpt_sp->GetID());
-            }
-
             if (exe_ctx.GetProcessPtr())
                 exe_ctx.GetProcessPtr()->SetRunningUserExpression(false);
                 
@@ -922,15 +870,21 @@ ClangUserExpression::Execute (Stream &error_stream,
                 if (error_desc)
                     error_stream.Printf ("Execution was interrupted, reason: %s.", error_desc);
                 else
-                    error_stream.Printf ("Execution was interrupted.");
+                    error_stream.PutCString ("Execution was interrupted.");
                     
-                if ((execution_result == eExecutionInterrupted && unwind_on_error)
-                    || (execution_result == eExecutionHitBreakpoint && ignore_breakpoints))
-                    error_stream.Printf ("\nThe process has been returned to the state before expression evaluation.");
+                if ((execution_result == eExecutionInterrupted && options.DoesUnwindOnError())
+                    || (execution_result == eExecutionHitBreakpoint && options.DoesIgnoreBreakpoints()))
+                    error_stream.PutCString ("\nThe process has been returned to the state before expression evaluation.");
                 else
-                    error_stream.Printf ("\nThe process has been left at the point where it was interrupted, use \"thread return -x\" to return to the state before expression evaluation.");
+                    error_stream.PutCString ("\nThe process has been left at the point where it was interrupted, use \"thread return -x\" to return to the state before expression evaluation.");
 
                 return execution_result;
+            }
+            else if (execution_result == eExecutionStoppedForDebug)
+            {
+                    error_stream.PutCString ("Execution was halted at the first instruction of the expression function because \"debug\" was requested.\n"
+                                             "Use \"thread return -x\" to return to the state before expression evaluation.");
+                    return execution_result;
             }
             else if (execution_result != eExecutionCompleted)
             {

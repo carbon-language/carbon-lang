@@ -529,21 +529,6 @@ public:
     QueueFundamentalPlan (bool abort_other_plans);
 
     //------------------------------------------------------------------
-    /// Queues the plan used to step over a breakpoint at the current PC of \a thread.
-    /// The default version returned by Process handles trap based breakpoints, and
-    /// will disable the breakpoint, single step over it, then re-enable it.
-    ///
-    /// @param[in] abort_other_plans
-    ///    \b true if we discard the currently queued plans and replace them with this one.
-    ///    Otherwise this plan will go on the end of the plan stack.
-    ///
-    /// @return
-    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
-    //------------------------------------------------------------------
-    virtual lldb::ThreadPlanSP
-    QueueThreadPlanForStepOverBreakpointPlan (bool abort_other_plans);
-
-    //------------------------------------------------------------------
     /// Queues the plan used to step one instruction from the current PC of \a thread.
     ///
     /// @param[in] step_over
@@ -728,14 +713,6 @@ public:
                                  bool stop_others,
                                  uint32_t frame_idx);
 
-    virtual lldb::ThreadPlanSP
-    QueueThreadPlanForCallFunction (bool abort_other_plans,
-                                    Address& function,
-                                    lldb::addr_t arg,
-                                    bool stop_other_threads,
-                                    bool unwind_on_error = false,
-                                    bool ignore_breakpoints = true);
-                                            
     //------------------------------------------------------------------
     // Thread Plan accessors:
     //------------------------------------------------------------------

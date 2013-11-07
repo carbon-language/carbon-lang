@@ -133,7 +133,8 @@ typedef enum ExecutionResults
     eExecutionDiscarded,
     eExecutionInterrupted,
     eExecutionHitBreakpoint,
-    eExecutionTimedOut
+    eExecutionTimedOut,
+    eExecutionStoppedForDebug
 } ExecutionResults;
 
 typedef enum ObjCRuntimeVersions {

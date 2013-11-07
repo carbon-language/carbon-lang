@@ -28,9 +28,7 @@ public:
     ThreadPlanCallUserExpression (Thread &thread,
                                   Address &function,
                                   lldb::addr_t arg,
-                                  bool stop_other_threads,
-                                  bool unwind_on_error,
-                                  bool ignore_breakpoints,
+                                  const EvaluateExpressionOptions &options,
                                   lldb::addr_t *this_arg,
                                   lldb::addr_t *cmd_arg,
                                   ClangUserExpression::ClangUserExpressionSP &user_expression_sp);

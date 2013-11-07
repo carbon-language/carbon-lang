@@ -49,9 +49,9 @@ lldb_private::formatters::ExtractValueFromObjCExpression (ValueObject &valobj,
         return false;
     
     EvaluateExpressionOptions options;
-    options.SetCoerceToId(false)
-    .SetUnwindOnError(true)
-    .SetKeepInMemory(true);
+    options.SetCoerceToId(false);
+    options.SetUnwindOnError(true);
+    options.SetKeepInMemory(true);
     
     target->EvaluateExpression(expr.GetData(),
                                stack_frame,
@@ -83,10 +83,10 @@ lldb_private::formatters::ExtractSummaryFromObjCExpression (ValueObject &valobj,
         return false;
     
     EvaluateExpressionOptions options;
-    options.SetCoerceToId(false)
-    .SetUnwindOnError(true)
-    .SetKeepInMemory(true)
-    .SetUseDynamic(lldb::eDynamicCanRunTarget);
+    options.SetCoerceToId(false);
+    options.SetUnwindOnError(true);
+    options.SetKeepInMemory(true);
+    options.SetUseDynamic(lldb::eDynamicCanRunTarget);
     
     target->EvaluateExpression(expr.GetData(),
                                stack_frame,
@@ -121,10 +121,10 @@ lldb_private::formatters::CallSelectorOnObject (ValueObject &valobj,
         return valobj_sp;
     
     EvaluateExpressionOptions options;
-    options.SetCoerceToId(false)
-    .SetUnwindOnError(true)
-    .SetKeepInMemory(true)
-    .SetUseDynamic(lldb::eDynamicCanRunTarget);
+    options.SetCoerceToId(false);
+    options.SetUnwindOnError(true);
+    options.SetKeepInMemory(true);
+    options.SetUseDynamic(lldb::eDynamicCanRunTarget);
     
     target->EvaluateExpression(expr.GetData(),
                                stack_frame,
@@ -158,10 +158,10 @@ lldb_private::formatters::CallSelectorOnObject (ValueObject &valobj,
         return valobj_sp;
     
     EvaluateExpressionOptions options;
-    options.SetCoerceToId(false)
-    .SetUnwindOnError(true)
-    .SetKeepInMemory(true)
-    .SetUseDynamic(lldb::eDynamicCanRunTarget);
+    options.SetCoerceToId(false);
+    options.SetUnwindOnError(true);
+    options.SetKeepInMemory(true);
+    options.SetUseDynamic(lldb::eDynamicCanRunTarget);
     
     target->EvaluateExpression(expr.GetData(),
                                stack_frame,

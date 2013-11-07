@@ -98,6 +98,17 @@ class ExprCommandWithThrowTestCase(TestBase):
         self.assertTrue (value.IsValid() and value.GetError().Success() == False)
         self.check_after_call()
 
+
+        # Now turn off exception trapping, and call a function that catches the exceptions,
+        # and make sure the function actually completes, and we get the right value:
+        options.SetTrapExceptions(False)
+        value = frame.EvaluateExpression ("[my_class iCatchMyself]", options)
+        self.assertTrue (value.IsValid())
+        self.assertTrue (value.GetError().Success() == True)
+        self.assertTrue (value.GetValueAsUnsigned() == 57)
+        self.check_after_call()
+        options.SetTrapExceptions(True)
+
         # Now set this unwind on error to false, and make sure that we stop where the exception was thrown
         options.SetUnwindOnError(False)
         value = frame.EvaluateExpression ("[my_class callMeIThrow]", options)

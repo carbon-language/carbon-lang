@@ -95,6 +95,9 @@ public:
     ClearExceptionBreakpoints ();
     
     virtual bool
+    ExceptionBreakpointsAreSet ();
+    
+    virtual bool
     ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason);
     
     virtual lldb::SearchFilterSP

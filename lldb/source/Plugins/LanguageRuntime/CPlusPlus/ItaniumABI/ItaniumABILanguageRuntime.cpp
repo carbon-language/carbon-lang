@@ -445,6 +445,12 @@ ItaniumABILanguageRuntime::ClearExceptionBreakpoints ()
 }
 
 bool
+ItaniumABILanguageRuntime::ExceptionBreakpointsAreSet ()
+{
+    return m_cxx_exception_bp_sp && m_cxx_exception_bp_sp->IsEnabled();
+}
+
+bool
 ItaniumABILanguageRuntime::ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason)
 {
     if (!m_process)

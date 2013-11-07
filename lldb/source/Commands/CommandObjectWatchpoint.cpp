@@ -1256,11 +1256,11 @@ protected:
 
         // Use expression evaluation to arrive at the address to watch.
         EvaluateExpressionOptions options;
-        options.SetCoerceToId(false)
-        .SetUnwindOnError(true)
-        .SetKeepInMemory(false)
-        .SetRunOthers(true)
-        .SetTimeoutUsec(0);
+        options.SetCoerceToId(false);
+        options.SetUnwindOnError(true);
+        options.SetKeepInMemory(false);
+        options.SetTryAllThreads(true);
+        options.SetTimeoutUsec(0);
         
         ExecutionResults expr_result = target->EvaluateExpression (expr, 
                                                                    frame, 

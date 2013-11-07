@@ -150,10 +150,6 @@ public:
              ClangUserExpressionSP &shared_ptr_to_me,
              lldb::ClangExpressionVariableSP &result);
              
-    ThreadPlan *
-    GetThreadPlanToExecuteJITExpression (Stream &error_stream,
-                                         ExecutionContext &exe_ctx);
-    
     //------------------------------------------------------------------
     /// Apply the side effects of the function to program state.
     ///

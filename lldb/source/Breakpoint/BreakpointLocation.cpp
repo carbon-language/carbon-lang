@@ -295,7 +295,7 @@ BreakpointLocation::ConditionSaysStop (ExecutionContext &exe_ctx, Error &error)
     EvaluateExpressionOptions options;
     options.SetUnwindOnError(true);
     options.SetIgnoreBreakpoints(true);
-    options.SetRunOthers(true);
+    options.SetTryAllThreads(true);
     
     Error expr_error;
     
