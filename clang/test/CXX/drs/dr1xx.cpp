@@ -670,3 +670,57 @@ namespace dr165 { // dr165: no
   // FIXME: dr165 says this is ill-formed, but the argument in dr1477 says it's ok
   void N::g() {}
 }
+
+namespace dr166 { // dr166: yes
+  namespace A { class X; }
+
+  template<typename T> int f(T t) { return t.n; }
+  int g(A::X);
+  template<typename T> int h(T t) { return t.n; } // expected-error {{private}}
+  int i(A::X);
+
+  namespace A {
+    class X {
+      friend int f<X>(X);
+      friend int dr166::g(X);
+      friend int h(X);
+      friend int i(X);
+      int n; // expected-note 2{{here}}
+    };
+
+    int h(X x) { return x.n; }
+    int i(X x) { return x.n; }
+  }
+
+  template int f(A::X);
+  int g(A::X x) { return x.n; }
+  template int h(A::X); // expected-note {{instantiation}}
+  int i(A::X x) { return x.n; } // expected-error {{private}}
+}
+
+// dr167: sup 1012
+
+namespace dr168 { // dr168: no
+  extern "C" typedef int (*p)();
+  extern "C++" typedef int (*q)();
+  struct S {
+    static int f();
+  };
+  p a = &S::f; // FIXME: this should fail.
+  q b = &S::f;
+}
+
+namespace dr169 { // dr169: yes
+  template<typename> struct A { int n; };
+  struct B {
+    template<typename> struct C;
+    template<typename> void f();
+    template<typename> static int n; // expected-error 0-1{{extension}}
+  };
+  struct D : A<int>, B {
+    using A<int>::n;
+    using B::C<int>; // expected-error {{using declaration can not refer to a template specialization}}
+    using B::f<int>; // expected-error {{using declaration can not refer to a template specialization}}
+    using B::n<int>; // expected-error {{using declaration can not refer to a template specialization}}
+  };
+}
