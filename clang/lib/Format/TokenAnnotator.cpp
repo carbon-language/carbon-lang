@@ -620,7 +620,7 @@ private:
       Contexts.back().InCtorInitializer = true;
     } else if (Current.is(tok::kw_new)) {
       Contexts.back().CanBeExpression = false;
-    } else if (Current.is(tok::semi)) {
+    } else if (Current.is(tok::semi) || Current.is(tok::exclaim)) {
       // This should be the condition or increment in a for-loop.
       Contexts.back().IsExpression = true;
     }

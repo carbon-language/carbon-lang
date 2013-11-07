@@ -4081,6 +4081,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("for (int i = 0; i < a * a; ++i) {\n}");
   verifyGoogleFormat("for (int i = 0; i * 2 < z; i *= 2) {\n}");
 
+  verifyFormat("#define A (!a * b)");
   verifyFormat("#define MACRO     \\\n"
                "  int *i = a * b; \\\n"
                "  void f(a *b);",
