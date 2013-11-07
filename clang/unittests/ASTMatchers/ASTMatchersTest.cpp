@@ -4114,6 +4114,12 @@ TEST(MatchFinder, InterceptsStartOfTranslationUnit) {
   OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
   ASSERT_TRUE(tooling::runToolOnCode(Factory->create(), "int x;"));
   EXPECT_TRUE(VerifyCallback.Called);
+
+  VerifyCallback.Called = false;
+  OwningPtr<ASTUnit> AST(tooling::buildASTFromCode("int x;"));
+  ASSERT_TRUE(AST.get());
+  Finder.matchAST(AST->getASTContext());
+  EXPECT_TRUE(VerifyCallback.Called);
 }
 
 class VerifyEndOfTranslationUnit : public MatchFinder::MatchCallback {
@@ -4134,6 +4140,12 @@ TEST(MatchFinder, InterceptsEndOfTranslationUnit) {
   Finder.addMatcher(decl(), &VerifyCallback);
   OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
   ASSERT_TRUE(tooling::runToolOnCode(Factory->create(), "int x;"));
+  EXPECT_TRUE(VerifyCallback.Called);
+
+  VerifyCallback.Called = false;
+  OwningPtr<ASTUnit> AST(tooling::buildASTFromCode("int x;"));
+  ASSERT_TRUE(AST.get());
+  Finder.matchAST(AST->getASTContext());
   EXPECT_TRUE(VerifyCallback.Called);
 }
 

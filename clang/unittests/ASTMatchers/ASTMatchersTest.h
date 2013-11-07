@@ -11,12 +11,14 @@
 #define LLVM_CLANG_UNITTESTS_AST_MATCHERS_AST_MATCHERS_TEST_H
 
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/Frontend/ASTUnit.h"
 #include "clang/Tooling/Tooling.h"
 #include "gtest/gtest.h"
 
 namespace clang {
 namespace ast_matchers {
 
+using clang::tooling::buildASTFromCodeWithArgs;
 using clang::tooling::newFrontendActionFactory;
 using clang::tooling::runToolOnCodeWithArgs;
 using clang::tooling::FrontendActionFactory;
@@ -121,6 +123,21 @@ matchAndVerifyResultConditionally(const std::string &Code, const T &AMatcher,
     return testing::AssertionFailure()
       << "Verified unexpected result in \"" << Code << "\"";
   }
+
+  VerifiedResult = false;
+  OwningPtr<ASTUnit> AST(buildASTFromCodeWithArgs(Code, Args));
+  if (!AST.get())
+    return testing::AssertionFailure() << "Parsing error in \"" << Code
+                                       << "\" while building AST";
+  Finder.matchAST(AST->getASTContext());
+  if (!VerifiedResult && ExpectResult) {
+    return testing::AssertionFailure()
+      << "Could not verify result in \"" << Code << "\" with AST";
+  } else if (VerifiedResult && !ExpectResult) {
+    return testing::AssertionFailure()
+      << "Verified unexpected result in \"" << Code << "\" with AST";
+  }
+
   return testing::AssertionSuccess();
 }
 

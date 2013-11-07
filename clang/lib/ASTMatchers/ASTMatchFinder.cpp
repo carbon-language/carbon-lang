@@ -744,25 +744,19 @@ bool MatchASTVisitor::TraverseNestedNameSpecifierLoc(
 
 class MatchASTConsumer : public ASTConsumer {
 public:
-  MatchASTConsumer(
-      std::vector<std::pair<internal::DynTypedMatcher, MatchCallback *> > *
-          MatcherCallbackPairs,
-      MatchFinder::ParsingDoneTestCallback *ParsingDone)
-      : Visitor(MatcherCallbackPairs), ParsingDone(ParsingDone) {}
+  MatchASTConsumer(MatchFinder *Finder,
+                   MatchFinder::ParsingDoneTestCallback *ParsingDone)
+      : Finder(Finder), ParsingDone(ParsingDone) {}
 
 private:
   virtual void HandleTranslationUnit(ASTContext &Context) {
     if (ParsingDone != NULL) {
       ParsingDone->run();
     }
-    Visitor.set_active_ast_context(&Context);
-    Visitor.onStartOfTranslationUnit();
-    Visitor.TraverseDecl(Context.getTranslationUnitDecl());
-    Visitor.onEndOfTranslationUnit();
-    Visitor.set_active_ast_context(NULL);
+    Finder->matchAST(Context);
   }
 
-  MatchASTVisitor Visitor;
+  MatchFinder *Finder;
   MatchFinder::ParsingDoneTestCallback *ParsingDone;
 };
 
@@ -836,7 +830,7 @@ bool MatchFinder::addDynamicMatcher(const internal::DynTypedMatcher &NodeMatch,
 }
 
 ASTConsumer *MatchFinder::newASTConsumer() {
-  return new internal::MatchASTConsumer(&MatcherCallbackPairs, ParsingDone);
+  return new internal::MatchASTConsumer(this, ParsingDone);
 }
 
 void MatchFinder::match(const clang::ast_type_traits::DynTypedNode &Node,
@@ -844,6 +838,14 @@ void MatchFinder::match(const clang::ast_type_traits::DynTypedNode &Node,
   internal::MatchASTVisitor Visitor(&MatcherCallbackPairs);
   Visitor.set_active_ast_context(&Context);
   Visitor.match(Node);
+}
+
+void MatchFinder::matchAST(ASTContext &Context) {
+  internal::MatchASTVisitor Visitor(&MatcherCallbackPairs);
+  Visitor.set_active_ast_context(&Context);
+  Visitor.onStartOfTranslationUnit();
+  Visitor.TraverseDecl(Context.getTranslationUnitDecl());
+  Visitor.onEndOfTranslationUnit();
 }
 
 void MatchFinder::registerTestCallbackAfterParsing(
