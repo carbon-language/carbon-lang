@@ -1966,11 +1966,12 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
         else if (VectorType *VTy = dyn_cast<VectorType>(LastTy))
           NumElements = VTy->getNumElements();
 
-        if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx0)) {
-          int64_t Idx0Val = CI->getSExtValue();
-          if (NumElements > 0 && Idx0Val >= 0 &&
-              (uint64_t)Idx0Val < NumElements)
-            IsSequentialAccessInRange = true;
+        if (NumElements > 0) {
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx0)) {
+            int64_t Idx0Val = CI->getSExtValue();
+            if (Idx0Val >= 0 && (uint64_t)Idx0Val < NumElements)
+              IsSequentialAccessInRange = true;
+          }
         } else if (PointerType *PTy = dyn_cast<PointerType>(LastTy))
           // Only handle pointers to sized types, not pointers to functions.
           if (PTy->getElementType()->isSized())
