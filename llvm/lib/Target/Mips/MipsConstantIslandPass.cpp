@@ -574,12 +574,12 @@ initializeFunctionInfo(const std::vector<MachineInstr*> &CPEMIs) {
         continue;
 
       int Opc = I->getOpcode();
+#ifdef IN_PROGRESS
       if (I->isBranch()) {
         bool isCond = false;
         unsigned Bits = 0;
         unsigned Scale = 1;
         int UOpc = Opc;
-
         switch (Opc) {
         default:
           continue;  // Ignore other JT branches
@@ -587,9 +587,8 @@ initializeFunctionInfo(const std::vector<MachineInstr*> &CPEMIs) {
         // Record this immediate branch.
         unsigned MaxOffs = ((1 << (Bits-1))-1) * Scale;
         ImmBranches.push_back(ImmBranch(I, MaxOffs, isCond, UOpc));
-
       }
-
+#endif
 
       if (Opc == Mips::CONSTPOOL_ENTRY)
         continue;
