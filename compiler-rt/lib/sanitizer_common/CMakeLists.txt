@@ -79,11 +79,13 @@ endif()
 set(SANITIZER_RUNTIME_LIBRARIES)
 if(APPLE)
   # Build universal binary on APPLE.
-  add_compiler_rt_osx_object_library(RTSanitizerCommon
-    ARCH ${SANITIZER_COMMON_SUPPORTED_ARCH}
-    SOURCES ${SANITIZER_SOURCES} ${SANITIZER_LIBCDEP_SOURCES}
-    CFLAGS ${SANITIZER_CFLAGS})
-  list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.osx)
+  foreach(os ${SANITIZER_COMMON_SUPPORTED_DARWIN_OS})
+    add_compiler_rt_darwin_object_library(RTSanitizerCommon ${os}
+      ARCH ${SANITIZER_COMMON_SUPPORTED_ARCH}
+      SOURCES ${SANITIZER_SOURCES} ${SANITIZER_LIBCDEP_SOURCES}
+      CFLAGS ${SANITIZER_CFLAGS})
+    list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.${os})
+  endforeach()
 elseif(ANDROID)
   add_library(RTSanitizerCommon.arm.android OBJECT
     ${SANITIZER_SOURCES} ${SANITIZER_LIBCDEP_SOURCES})

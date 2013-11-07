@@ -21,17 +21,17 @@ macro(add_compiler_rt_object_library name arch)
   endif()
 endmacro()
 
-# Same as above, but adds universal osx library with name "<name>.osx"
-# targeting multiple architectures.
-# add_compiler_rt_osx_object_library(<name> ARCH <architectures>
-#                                           SOURCES <source files>
-#                                           CFLAGS <compile flags>)
-#                                           DEFS <compile definitions>)
-macro(add_compiler_rt_osx_object_library name)
+# Same as above, but adds universal osx library for either OSX or iOS simulator
+# with name "<name>.<os>" targeting multiple architectures.
+# add_compiler_rt_darwin_object_library(<name> <os> ARCH <architectures>
+#                                                   SOURCES <source files>
+#                                                   CFLAGS <compile flags>
+#                                                   DEFS <compile definitions>)
+macro(add_compiler_rt_darwin_object_library name os)
   parse_arguments(LIB "ARCH;SOURCES;CFLAGS;DEFS" "" ${ARGN})
-  set(libname "${name}.osx")
+  set(libname "${name}.${os}")
   add_library(${libname} OBJECT ${LIB_SOURCES})
-  set_target_compile_flags(${libname} ${LIB_CFLAGS})
+  set_target_compile_flags(${libname} ${LIB_CFLAGS} ${DARWIN_${os}_CFLAGS})
   set_target_properties(${libname} PROPERTIES OSX_ARCHITECTURES "${LIB_ARCH}")
   set_property(TARGET ${libname} APPEND PROPERTY
     COMPILE_DEFINITIONS ${LIB_DEFS})
@@ -84,17 +84,19 @@ macro(add_compiler_rt_osx_static_runtime name)
   add_dependencies(compiler-rt ${name})
 endmacro()
 
-# Adds dynamic runtime library on osx, which supports multiple architectures.
-# add_compiler_rt_osx_dynamic_runtime(<name> ARCH <architectures>
-#                                     SOURCES <source files>
-#                                     CFLAGS <compile flags>
-#                                     DEFS <compile definitions>
-#                                     LINKFLAGS <link flags>)
-macro(add_compiler_rt_osx_dynamic_runtime name)
+# Adds dynamic runtime library on osx/iossim, which supports multiple
+# architectures.
+# add_compiler_rt_darwin_dynamic_runtime(<name> <os>
+#                                        ARCH <architectures>
+#                                        SOURCES <source files>
+#                                        CFLAGS <compile flags>
+#                                        DEFS <compile definitions>
+#                                        LINKFLAGS <link flags>)
+macro(add_compiler_rt_darwin_dynamic_runtime name os)
   parse_arguments(LIB "ARCH;SOURCES;CFLAGS;DEFS;LINKFLAGS" "" ${ARGN})
   add_library(${name} SHARED ${LIB_SOURCES})
-  set_target_compile_flags(${name} ${LIB_CFLAGS})
-  set_target_link_flags(${name} ${LIB_LINKFLAGS})
+  set_target_compile_flags(${name} ${LIB_CFLAGS} ${DARWIN_${os}_CFLAGS})
+  set_target_link_flags(${name} ${LIB_LINKFLAGS} ${DARWIN_${os}_LINKFLAGS})
   set_property(TARGET ${name} APPEND PROPERTY
     COMPILE_DEFINITIONS ${LIB_DEFS})
   set_target_properties(${name} PROPERTIES

@@ -180,15 +180,31 @@ endif()
 check_cxx_compiler_flag(-Wglobal-constructors SUPPORTS_GLOBAL_CONSTRUCTORS_FLAG)
 # Not all sanitizers forbid global constructors.
 
-# Setup min Mac OS X version.
 if(APPLE)
+  # Obtain the iOS Simulator SDK path from xcodebuild.
+  execute_process(
+    COMMAND xcodebuild -version -sdk iphonesimulator Path
+    OUTPUT_VARIABLE IOSSIM_SDK_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  set(SANITIZER_COMMON_SUPPORTED_DARWIN_OS osx)
+  if (IOSSIM_SDK_DIR)
+    list(APPEND SANITIZER_COMMON_SUPPORTED_DARWIN_OS iossim)
+  endif()
+
   if(COMPILER_RT_USES_LIBCXX)
     set(SANITIZER_MIN_OSX_VERSION 10.7)
   else()
     set(SANITIZER_MIN_OSX_VERSION 10.6)
   endif()
-  list(APPEND SANITIZER_COMMON_CFLAGS
-    -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION})
+  set(DARWIN_osx_CFLAGS -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION})
+  set(DARWIN_iossim_CFLAGS 
+    -mios-simulator-version-min=7.0 -isysroot ${IOSSIM_SDK_DIR})
+  set(DARWIN_osx_LINKFLAGS)
+  set(DARWIN_iossim_LINKFLAGS
+    -Wl,-ios_simulator_version_min,7.0.0
+    -mios-simulator-version-min=7.0
+    -Wl,-syslibroot,${IOSSIM_SDK_DIR})
 endif()
 
 # Architectures supported by Sanitizer runtimes. Specific sanitizers may

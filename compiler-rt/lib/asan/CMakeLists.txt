@@ -57,11 +57,13 @@ filter_available_targets(ASAN_SUPPORTED_ARCH
 
 # Compile ASan sources into an object library.
 if(APPLE)
-  add_compiler_rt_osx_object_library(RTAsan
-    ARCH ${ASAN_SUPPORTED_ARCH}
-    SOURCES ${ASAN_SOURCES}
-    CFLAGS ${ASAN_CFLAGS}
-    DEFS ${ASAN_COMMON_DEFINITIONS})
+  foreach(os ${SANITIZER_COMMON_SUPPORTED_DARWIN_OS})
+    add_compiler_rt_darwin_object_library(RTAsan ${os}
+      ARCH ${ASAN_SUPPORTED_ARCH}
+      SOURCES ${ASAN_SOURCES}
+      CFLAGS ${ASAN_CFLAGS}
+      DEFS ${ASAN_COMMON_DEFINITIONS})
+  endforeach()
 elseif(ANDROID)
   add_library(RTAsan.arm.android OBJECT ${ASAN_SOURCES})
   set_target_compile_flags(RTAsan.arm.android ${ASAN_CFLAGS})
@@ -78,19 +80,26 @@ endif()
 # Build ASan runtimes shipped with Clang.
 set(ASAN_RUNTIME_LIBRARIES)
 if(APPLE)
-  add_compiler_rt_osx_dynamic_runtime(clang_rt.asan_osx_dynamic
-    ARCH ${ASAN_SUPPORTED_ARCH}
-    SOURCES $<TARGET_OBJECTS:RTAsan.osx>
-            $<TARGET_OBJECTS:RTInterception.osx>
-            $<TARGET_OBJECTS:RTSanitizerCommon.osx>
-            $<TARGET_OBJECTS:RTLSanCommon.osx>
-    CFLAGS ${ASAN_CFLAGS}
-    DEFS ${ASAN_COMMON_DEFINITIONS}
+  foreach (os ${SANITIZER_COMMON_SUPPORTED_DARWIN_OS})
     # Dynamic lookup is needed because shadow scale and offset are
     # provided by the instrumented modules.
-    LINKFLAGS "-framework Foundation"
-              "-undefined dynamic_lookup")
-  list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan_osx_dynamic)
+    set(ASAN_RUNTIME_LDFLAGS
+        "-undefined dynamic_lookup")
+    if (os STREQUAL "osx")
+      list(APPEND ASAN_RUNTIME_LDFLAGS "-framework Foundation")
+    endif()
+    add_compiler_rt_darwin_dynamic_runtime(clang_rt.asan_${os}_dynamic ${os}
+      ARCH ${ASAN_SUPPORTED_ARCH}
+      SOURCES $<TARGET_OBJECTS:RTAsan.${os}>
+              $<TARGET_OBJECTS:RTInterception.${os}>
+              $<TARGET_OBJECTS:RTSanitizerCommon.${os}>
+              $<TARGET_OBJECTS:RTLSanCommon.${os}>
+      CFLAGS ${ASAN_CFLAGS}
+      DEFS ${ASAN_COMMON_DEFINITIONS}
+      LINKFLAGS ${ASAN_RUNTIME_LDFLAGS})
+    list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan_${os}_dynamic)
+  endforeach()
+
 elseif(ANDROID)
   add_library(clang_rt.asan-arm-android SHARED
     $<TARGET_OBJECTS:RTAsan.arm.android>
