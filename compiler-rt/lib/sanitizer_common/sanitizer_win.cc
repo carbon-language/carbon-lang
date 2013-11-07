@@ -376,11 +376,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 #endif
 }
 
-void StackTrace::Unwind(uptr max_depth, uptr pc, uptr bp, uptr stack_top,
-                        uptr stack_bottom, bool fast) {
-  (void)fast;
-  (void)stack_top;
-  (void)stack_bottom;
+void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
   void *tmp[kStackTraceMax];
 
   // FIXME: CaptureStackBackTrace might be too slow for us.

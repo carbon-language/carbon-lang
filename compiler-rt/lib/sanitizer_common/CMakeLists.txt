@@ -25,6 +25,7 @@ set(SANITIZER_LIBCDEP_SOURCES
   sanitizer_common_libcdep.cc
   sanitizer_linux_libcdep.cc
   sanitizer_posix_libcdep.cc
+  sanitizer_stacktrace_libcdep.cc
   sanitizer_stoptheworld_linux_libcdep.cc
   sanitizer_symbolizer_libcdep.cc
   sanitizer_symbolizer_posix_libcdep.cc)

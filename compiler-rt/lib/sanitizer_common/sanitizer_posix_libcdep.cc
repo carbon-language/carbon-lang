@@ -89,22 +89,6 @@ int internal_isatty(fd_t fd) {
   return isatty(fd);
 }
 
-#ifndef SANITIZER_GO
-void StackTrace::Unwind(uptr max_depth, uptr pc, uptr bp, uptr stack_top,
-                        uptr stack_bottom, bool fast) {
-  // Check if fast unwind is available. Fast unwind is the only option on Mac.
-  if (!SANITIZER_CAN_FAST_UNWIND)
-    fast = false;
-  else if (SANITIZER_MAC)
-    fast = true;
-
-  if (!fast)
-    SlowUnwindStack(pc, max_depth);
-  else
-    FastUnwindStack(pc, bp, stack_top, stack_bottom, max_depth);
-}
-#endif  // SANITIZER_GO
-
 }  // namespace __sanitizer
 
 #endif
