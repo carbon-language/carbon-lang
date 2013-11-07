@@ -18,8 +18,11 @@
 #include "clang/AST/Type.h"
 #include "clang/Basic/CapturedStmt.h"
 #include "clang/Basic/PartialDiagnostic.h"
+#include "clang/Sema/Ownership.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include <algorithm>
 
 namespace clang {
 
@@ -39,6 +42,7 @@ class TemplateTypeParmDecl;
 class TemplateParameterList;
 class VarDecl;
 class DeclRefExpr;
+class MemberExpr;
 class ObjCIvarRefExpr;
 class ObjCPropertyRefExpr;
 class ObjCMessageExpr;
@@ -614,13 +618,36 @@ public:
   /// list has been created (from the AutoTemplateParams) then
   /// store a reference to it (cache it to avoid reconstructing it).
   TemplateParameterList *GLTemplateParameterList;
+  
+  /// \brief Contains all variable-referring-expressions (i.e. DeclRefExprs
+  ///  or MemberExprs) that refer to local variables in a generic lambda
+  ///  or a lambda in a potentially-evaluated-if-used context.
+  ///  
+  ///  Potentially capturable variables of a nested lambda that might need 
+  ///   to be captured by the lambda are housed here.  
+  ///  This is specifically useful for generic lambdas or
+  ///  lambdas within a a potentially evaluated-if-used context.
+  ///  If an enclosing variable is named in an expression of a lambda nested
+  ///  within a generic lambda, we don't always know know whether the variable 
+  ///  will truly be odr-used (i.e. need to be captured) by that nested lambda,
+  ///  until its instantiation. But we still need to capture it in the 
+  ///  enclosing lambda if all intervening lambdas can capture the variable.
+
+  llvm::SmallVector<Expr*, 4> PotentiallyCapturingExprs;
+
+  /// \brief Contains all variable-referring-expressions that refer
+  ///  to local variables that are usable as constant expressions and
+  ///  do not involve an odr-use (they may still need to be captured
+  ///  if the enclosing full-expression is instantiation dependent).
+  llvm::SmallSet<Expr*, 8> NonODRUsedCapturingExprs; 
+
+  SourceLocation PotentialThisCaptureLocation;
 
   LambdaScopeInfo(DiagnosticsEngine &Diag)
     : CapturingScopeInfo(Diag, ImpCap_None), Lambda(0),
       CallOperator(0), NumExplicitCaptures(0), Mutable(false),
       ExprNeedsCleanups(false), ContainsUnexpandedParameterPack(false),
-      AutoTemplateParameterDepth(0),
-      GLTemplateParameterList(0)
+      AutoTemplateParameterDepth(0), GLTemplateParameterList(0)
   {
     Kind = SK_Lambda;
   }
@@ -635,6 +662,110 @@ public:
   static bool classof(const FunctionScopeInfo *FSI) {
     return FSI->Kind == SK_Lambda;
   }
+
+  ///
+  /// \brief Add a variable that might potentially be captured by the 
+  /// lambda and therefore the enclosing lambdas. 
+  /// 
+  /// This is also used by enclosing lambda's to speculatively capture 
+  /// variables that nested lambda's - depending on their enclosing
+  /// specialization - might need to capture.
+  /// Consider:
+  /// void f(int, int); <-- don't capture
+  /// void f(const int&, double); <-- capture
+  /// void foo() {
+  ///   const int x = 10;
+  ///   auto L = [=](auto a) { // capture 'x'
+  ///      return [=](auto b) { 
+  ///        f(x, a);  // we may or may not need to capture 'x'
+  ///      };
+  ///   };
+  /// }
+  void addPotentialCapture(Expr *VarExpr) {
+    assert(isa<DeclRefExpr>(VarExpr) || isa<MemberExpr>(VarExpr));
+    PotentiallyCapturingExprs.push_back(VarExpr);
+  }
+  
+  void addPotentialThisCapture(SourceLocation Loc) {
+    PotentialThisCaptureLocation = Loc;
+  }
+  bool hasPotentialThisCapture() const { 
+    return PotentialThisCaptureLocation.isValid(); 
+  }
+
+  /// \brief Mark a variable's reference in a lambda as non-odr using.
+  ///
+  /// For generic lambdas, if a variable is named in a potentially evaluated 
+  /// expression, where the enclosing full expression is dependent then we 
+  /// must capture the variable (given a default capture).
+  /// This is accomplished by recording all references to variables 
+  /// (DeclRefExprs or MemberExprs) within said nested lambda in its array of 
+  /// PotentialCaptures. All such variables have to be captured by that lambda,
+  /// except for as described below.
+  /// If that variable is usable as a constant expression and is named in a 
+  /// manner that does not involve its odr-use (e.g. undergoes 
+  /// lvalue-to-rvalue conversion, or discarded) record that it is so. Upon the
+  /// act of analyzing the enclosing full expression (ActOnFinishFullExpr)
+  /// if we can determine that the full expression is not instantiation-
+  /// dependent, then we can entirely avoid its capture. 
+  ///
+  ///   const int n = 0;
+  ///   [&] (auto x) {
+  ///     (void)+n + x;
+  ///   };
+  /// Interestingly, this strategy would involve a capture of n, even though 
+  /// it's obviously not odr-used here, because the full-expression is 
+  /// instantiation-dependent.  It could be useful to avoid capturing such
+  /// variables, even when they are referred to in an instantiation-dependent
+  /// expression, if we can unambiguously determine that they shall never be
+  /// odr-used.  This would involve removal of the variable-referring-expression
+  /// from the array of PotentialCaptures during the lvalue-to-rvalue 
+  /// conversions.  But per the working draft N3797, (post-chicago 2013) we must
+  /// capture such variables. 
+  /// Before anyone is tempted to implement a strategy for not-capturing 'n',
+  /// consider the insightful warning in: 
+  ///    /cfe-commits/Week-of-Mon-20131104/092596.html
+  /// "The problem is that the set of captures for a lambda is part of the ABI
+  ///  (since lambda layout can be made visible through inline functions and the
+  ///  like), and there are no guarantees as to which cases we'll manage to build
+  ///  an lvalue-to-rvalue conversion in, when parsing a template -- some
+  ///  seemingly harmless change elsewhere in Sema could cause us to start or stop
+  ///  building such a node. So we need a rule that anyone can implement and get
+  ///  exactly the same result".
+  ///    
+  void markVariableExprAsNonODRUsed(Expr *CapturingVarExpr) {
+    assert(isa<DeclRefExpr>(CapturingVarExpr) 
+        || isa<MemberExpr>(CapturingVarExpr));
+    NonODRUsedCapturingExprs.insert(CapturingVarExpr);
+  }
+  bool isVariableExprMarkedAsNonODRUsed(Expr *CapturingVarExpr) {
+    assert(isa<DeclRefExpr>(CapturingVarExpr) 
+      || isa<MemberExpr>(CapturingVarExpr));
+    return NonODRUsedCapturingExprs.count(CapturingVarExpr);
+  }
+  void removePotentialCapture(Expr *E) {
+    PotentiallyCapturingExprs.erase(
+        std::remove(PotentiallyCapturingExprs.begin(), 
+            PotentiallyCapturingExprs.end(), E), 
+        PotentiallyCapturingExprs.end());
+  }
+  void clearPotentialCaptures() {
+    PotentiallyCapturingExprs.clear();
+    PotentialThisCaptureLocation = SourceLocation();
+  }
+  unsigned getNumPotentialVariableCaptures() const { 
+    return PotentiallyCapturingExprs.size(); 
+  }
+
+  bool hasPotentialCaptures() const { 
+    return getNumPotentialVariableCaptures() || 
+                                  PotentialThisCaptureLocation.isValid(); 
+  }
+  
+  // When passed the index, returns the VarDecl and Expr associated 
+  // with the index.
+  void getPotentialVariableCapture(unsigned Idx, VarDecl *&VD, Expr *&E);
+ 
 };
 
 

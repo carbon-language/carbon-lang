@@ -14,10 +14,12 @@ struct P {
   virtual ~P();
 };
 
-void unevaluated_operand(P &p, int i) {
+void unevaluated_operand(P &p, int i) { //expected-note{{declared here}}
   // FIXME: this should only emit one error.
   int i2 = sizeof([](auto a, auto b)->void{}(3, '4')); // expected-error{{lambda expression in an unevaluated operand}} \
                                                        // expected-error{{invalid application of 'sizeof'}}
   const std::type_info &ti1 = typeid([](auto &a) -> P& { static P p; return p; }(i));
-  const std::type_info &ti2 = typeid([](auto) -> int { return i; }(i));  // expected-error{{lambda expression in an unevaluated operand}}
+  const std::type_info &ti2 = typeid([](auto) -> int { return i; }(i));  // expected-error{{lambda expression in an unevaluated operand}}\
+                                                                         // expected-error{{cannot be implicitly captured}}\
+                                                                         // expected-note{{begins here}}
 }

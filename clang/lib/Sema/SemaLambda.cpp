@@ -20,10 +20,117 @@
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/SemaInternal.h"
+#include "clang/Sema/SemaLambda.h"
 #include "TypeLocBuilder.h"
 using namespace clang;
 using namespace sema;
 
+// returns -1 if none of the lambdas on the scope stack can capture.
+// A lambda 'L' is capture-ready for a certain variable 'V' if,
+//  - its enclosing context is non-dependent
+//  - and if the chain of lambdas between L and the lambda in which 
+//    V is potentially used, call all capture or have captured V.
+static inline int GetScopeIndexOfNearestCaptureReadyLambda(
+    ArrayRef<clang::sema::FunctionScopeInfo*> FunctionScopes,
+    DeclContext *const CurContext, VarDecl *VD) {
+  
+  DeclContext *EnclosingDC = CurContext;
+  // If VD is null, we are attempting to capture 'this'
+  const bool IsCapturingThis = !VD;
+  const bool IsCapturingVariable = !IsCapturingThis;
+  int RetIndex = -1;
+  unsigned CurScopeIndex = FunctionScopes.size() - 1;
+  while (!EnclosingDC->isTranslationUnit() && 
+      EnclosingDC->isDependentContext() && isLambdaCallOperator(EnclosingDC)) {
+    RetIndex = CurScopeIndex;
+    clang::sema::LambdaScopeInfo *LSI = 
+          cast<sema::LambdaScopeInfo>(FunctionScopes[CurScopeIndex]);
+    // We have crawled up to an intervening lambda that contains the 
+    // variable declaration - so not only does it not need to capture;
+    // none of the enclosing lambdas need to capture it, and since all
+    // other nested lambdas are dependent (otherwise we wouldn't have
+    // arrived here) - we don't yet have a lambda that can capture the
+    // variable.
+    if (IsCapturingVariable && VD->getDeclContext()->Equals(EnclosingDC)) 
+      return -1;
+    // All intervening lambda call operators have to be able to capture.
+    // If they do not have a default implicit capture, check to see
+    // if the entity has already been explicitly captured.
+    // If even a single dependent enclosing lambda lacks the capability 
+    // to ever capture this variable, there is no further enclosing 
+    // non-dependent lambda that can capture this variable.
+    if (LSI->ImpCaptureStyle == sema::LambdaScopeInfo::ImpCap_None) {
+      if (IsCapturingVariable && !LSI->isCaptured(VD)) 
+        return -1;
+      if (IsCapturingThis && !LSI->isCXXThisCaptured())
+        return -1;
+    }
+    EnclosingDC = getLambdaAwareParentOfDeclContext(EnclosingDC);
+    --CurScopeIndex;
+  }
+  // If the enclosingDC is not dependent, then the immediately nested lambda
+  // is capture-ready.
+  if (!EnclosingDC->isDependentContext())
+    return RetIndex;
+  return -1;
+}
+// Given a lambda's call operator and a variable (or null for 'this'), 
+// compute the nearest enclosing lambda that is capture-ready (i.e 
+// the enclosing context is not dependent, and all intervening lambdas can 
+// either implicitly or explicitly capture Var)
+// 
+// The approach is as follows, for the entity VD ('this' if null):
+//   - start with the current lambda
+//     - if it is non-dependent and can capture VD, return it. 
+//     - if it is dependent and has an implicit or explicit capture, check its parent 
+//       whether the parent is non-depdendent and all its intervening lambdas
+//       can capture, if so return the child.
+//       [Note: When we hit a generic lambda specialization, do not climb up
+//         the scope stack any further since not only do we not need to,
+//         the scope stack will often not be synchronized with any lambdas 
+//         enclosing the specialized generic lambda]
+//       
+// Return the CallOperator of the capturable lambda and set function scope 
+// index to the correct index within the function scope stack to correspond 
+// to the capturable lambda.
+// If VarDecl *VD is null, we check for 'this' capture.
+CXXMethodDecl* clang::GetInnermostEnclosingCapturableLambda(
+                             ArrayRef<sema::FunctionScopeInfo*> FunctionScopes,
+                             unsigned &FunctionScopeIndex, 
+                             DeclContext *const CurContext, VarDecl *VD, 
+                             Sema &S) {
+
+  const int IndexOfCaptureReadyLambda = 
+      GetScopeIndexOfNearestCaptureReadyLambda(FunctionScopes,CurContext, VD);
+  if (IndexOfCaptureReadyLambda == -1) return 0;
+  assert(IndexOfCaptureReadyLambda >= 0);
+  const unsigned IndexOfCaptureReadyLambdaU = 
+      static_cast<unsigned>(IndexOfCaptureReadyLambda);
+  sema::LambdaScopeInfo *const CaptureReadyLambdaLSI = 
+      cast<sema::LambdaScopeInfo>(FunctionScopes[IndexOfCaptureReadyLambdaU]);
+  // If VD is null, we are attempting to capture 'this'
+  const bool IsCapturingThis = !VD;
+  const bool IsCapturingVariable = !IsCapturingThis;
+
+  if (IsCapturingVariable) {
+    // Now check to see if this lambda can truly capture, and also
+    // if all enclosing lambdas of this lambda allow this capture.
+    QualType CaptureType, DeclRefType;
+    const bool CanCaptureVariable = !S.tryCaptureVariable(VD, 
+      /*ExprVarIsUsedInLoc*/SourceLocation(), clang::Sema::TryCapture_Implicit,
+      /*EllipsisLoc*/ SourceLocation(), 
+      /*BuildAndDiagnose*/false, CaptureType, DeclRefType, 
+      &IndexOfCaptureReadyLambdaU);
+    if (!CanCaptureVariable) return 0;
+  } else { 
+    const bool CanCaptureThis = !S.CheckCXXThisCapture(
+        CaptureReadyLambdaLSI->PotentialThisCaptureLocation, false, false, 
+        &IndexOfCaptureReadyLambdaU);
+    if (!CanCaptureThis) return 0;      
+  } // end 'this' capture test
+  FunctionScopeIndex = IndexOfCaptureReadyLambdaU;
+  return CaptureReadyLambdaLSI->CallOperator;
+}
 
 static inline TemplateParameterList *
 getGenericLambdaTemplateParameterList(LambdaScopeInfo *LSI, Sema &SemaRef) {
@@ -1258,15 +1365,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
       break;
     }
   }
-  // TODO: Implement capturing.
-  if (Lambda->isGenericLambda()) {
-    if (!Captures.empty() || Lambda->getCaptureDefault() != LCD_None) {
-      Diag(Lambda->getIntroducerRange().getBegin(), 
-        diag::err_glambda_not_fully_implemented) 
-        << " capturing not implemented yet";
-      return ExprError();
-    }
-  }
+
   return MaybeBindToTemporary(Lambda);
 }
 

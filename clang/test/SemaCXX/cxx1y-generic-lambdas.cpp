@@ -12,6 +12,108 @@ int test() {
 }  
 } //end ns
 
+namespace test_conversion_to_fptr_2 {
+
+template<class T> struct X {
+
+  T (*fp)(T) = [](auto a) { return a; };
+  
+};
+
+X<int> xi;
+
+template<class T> 
+void fooT(T t, T (*fp)(T) = [](auto a) { return a; }) {
+  fp(t);
+}
+
+int test() {
+{
+  auto L = [](auto a) { return a; };
+  int (*fp)(int) = L;
+  fp(5);
+  L(3);
+  char (*fc)(char) = L;
+  fc('b');
+  L('c');
+  double (*fd)(double) = L;
+  fd(3.14);
+  fd(6.26);
+  L(4.25);
+}
+{
+  auto L = [](auto a) ->int { return a; }; //expected-note 2{{candidate template ignored}}
+  int (*fp)(int) = L;
+  char (*fc)(char) = L; //expected-error{{no viable conversion}}
+  double (*fd)(double) = L; //expected-error{{no viable conversion}}
+}
+{
+  int x = 5;
+  auto L = [=](auto b, char c = 'x') {
+    int i = x;
+    return [](auto a) ->decltype(a) { return a; };
+  };
+  int (*fp)(int) = L(8);
+  fp(5);
+  L(3);
+  char (*fc)(char) = L('a');
+  fc('b');
+  L('c');
+  double (*fd)(double) = L(3.14);
+  fd(3.14);
+  fd(6.26);
+
+}
+{
+ auto L = [=](auto b) {
+    return [](auto a) ->decltype(b)* { return (decltype(b)*)0; };
+  };
+  int* (*fp)(int) = L(8);
+  fp(5);
+  L(3);
+  char* (*fc)(char) = L('a');
+  fc('b');
+  L('c');
+  double* (*fd)(double) = L(3.14);
+  fd(3.14);
+  fd(6.26);
+}
+{
+ auto L = [=](auto b) {
+    return [](auto a) ->decltype(b)* { return (decltype(b)*)0; }; //expected-note{{candidate template ignored}}
+  };
+  char* (*fp)(int) = L('8');
+  fp(5);
+  char* (*fc)(char) = L('a');
+  fc('b');
+  double* (*fi)(int) = L(3.14);
+  fi(5);
+  int* (*fi2)(int) = L(3.14); //expected-error{{no viable conversion}}
+}
+
+{
+ auto L = [=](auto b) {
+    return [](auto a) { 
+      return [=](auto c) { 
+        return [](auto d) ->decltype(a + b + c + d) { return d; }; 
+      }; 
+    }; 
+  };
+  int (*fp)(int) = L('8')(3)(short{});
+  double (*fs)(char) = L(3.14)(short{})('4');
+}
+
+  fooT(3);
+  fooT('a');
+  fooT(3.14);
+  fooT("abcdefg");
+  return 0;
+}
+int run2 = test();
+
+}
+
+
 namespace test_conversion_to_fptr {
 
 void f1(int (*)(int)) { }
@@ -129,15 +231,24 @@ int test() {
   M(4.15);
  }
 {
-  int i = 10; //expected-note{{declared here}}
+  int i = 10; //expected-note 3{{declared here}}
   auto L = [](auto a) {
-    return [](auto b) { //expected-note{{begins here}}
-      i = b;  //expected-error{{cannot be implicitly captured}}
+    return [](auto b) { //expected-note 3{{begins here}}
+      i = b;  //expected-error 3{{cannot be implicitly captured}}
       return b;
     };
   };
-  auto M = L(3);
+  auto M = L(3); //expected-note{{instantiation}}
   M(4.15); //expected-note{{instantiation}}
+ }
+ {
+  int i = 10; 
+  auto L = [](auto a) {
+    return [](auto b) { 
+      b = sizeof(i);  //ok 
+      return b;
+    };
+  };
  }
  {
   auto L = [](auto a) {

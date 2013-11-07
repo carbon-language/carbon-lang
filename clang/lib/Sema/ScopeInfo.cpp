@@ -184,6 +184,21 @@ void FunctionScopeInfo::markSafeWeakUse(const Expr *E) {
   ThisUse->markSafe();
 }
 
+void LambdaScopeInfo::getPotentialVariableCapture(unsigned Idx, VarDecl *&VD, Expr *&E) {
+  assert((Idx >= 0 && Idx < getNumPotentialVariableCaptures()) &&
+    "Index of potential capture must be within 0 to less than the "
+    "number of captures!");
+  E = PotentiallyCapturingExprs[Idx];
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
+    VD = dyn_cast<VarDecl>(DRE->getFoundDecl());
+  else if (MemberExpr *ME = dyn_cast<MemberExpr>(E))
+    VD = dyn_cast<VarDecl>(ME->getMemberDecl());
+  else
+    llvm_unreachable("Only DeclRefExprs or MemberExprs should be added for "
+    "potential captures");
+  assert(VD);
+}
+
 FunctionScopeInfo::~FunctionScopeInfo() { }
 BlockScopeInfo::~BlockScopeInfo() { }
 LambdaScopeInfo::~LambdaScopeInfo() { }

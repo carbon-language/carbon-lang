@@ -112,7 +112,7 @@ void test2() {
 namespace nested_lambdas {
   int test() {
     auto L = [](auto a) {
-                 return [=](auto b) {  //expected-error{{unimplemented}}
+                 return [=](auto b) {  
                            return a + b;
                         };
               };

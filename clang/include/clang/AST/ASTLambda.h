@@ -65,6 +65,16 @@ inline bool isGenericLambdaCallOperatorSpecialization(DeclContext *DC) {
                                           dyn_cast<CXXMethodDecl>(DC));
 }
 
+
+// This returns the parent DeclContext ensuring that the correct
+// parent DeclContext is returned for Lambdas
+inline DeclContext *getLambdaAwareParentOfDeclContext(DeclContext *DC) {
+  if (isLambdaCallOperator(DC))
+    return DC->getParent()->getParent();
+  else 
+    return DC->getParent();
+}
+
 } // clang
 
 #endif // LLVM_CLANG_AST_LAMBDA_H
