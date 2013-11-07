@@ -8,3 +8,12 @@
 int main() {
   return 0;
 }
+
+// <rdar://problem/15084587>
+@interface A
+-method;
+@end
+
+void testImport(A *import) {
+  [import method];
+}

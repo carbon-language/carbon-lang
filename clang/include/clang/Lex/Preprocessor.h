@@ -222,7 +222,10 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
 
   /// \brief The module import path that we're currently processing.
   SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> ModuleImportPath;
-  
+
+  /// \brief Whether the last token we lexed was an '@'.
+  bool LastTokenWasAt;
+
   /// \brief Whether the module import expectes an identifier next. Otherwise,
   /// it expects a '.' or ';'.
   bool ModuleImportExpectsIdentifier;
