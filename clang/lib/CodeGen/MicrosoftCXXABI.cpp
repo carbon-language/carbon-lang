@@ -128,7 +128,7 @@ public:
       // In this case, we just use a generic pointer type.
       // FIXME: might want to have a more precise type in the non-virtual
       // multiple inheritance case.
-      if (ML.VBase || !ML.VFTableOffset.isZero())
+      if (ML.VBase || !ML.VFPtrOffset.isZero())
         return 0;
     }
     return MD->getParent();
@@ -600,7 +600,7 @@ llvm::Value *MicrosoftCXXABI::adjustThisArgumentForVirtualCall(
 
   unsigned AS = cast<llvm::PointerType>(This->getType())->getAddressSpace();
   llvm::Type *charPtrTy = CGF.Int8Ty->getPointerTo(AS);
-  CharUnits StaticOffset = ML.VFTableOffset;
+  CharUnits StaticOffset = ML.VFPtrOffset;
   if (ML.VBase) {
     bool AvoidVirtualOffset = false;
     if (isa<CXXDestructorDecl>(MD) && GD.getDtorType() == Dtor_Base) {
@@ -723,7 +723,7 @@ llvm::Value *MicrosoftCXXABI::adjustThisParameterInVirtualFunctionPrologue(
 
   MicrosoftVTableContext::MethodVFTableLocation ML =
       CGM.getMicrosoftVTableContext().getMethodVFTableLocation(LookupGD);
-  CharUnits Adjustment = ML.VFTableOffset;
+  CharUnits Adjustment = ML.VFPtrOffset;
   if (ML.VBase) {
     const ASTRecordLayout &DerivedLayout =
         CGF.getContext().getASTRecordLayout(MD->getParent());

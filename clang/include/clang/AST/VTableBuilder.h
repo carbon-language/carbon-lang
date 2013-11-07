@@ -233,23 +233,21 @@ public:
   }
 
   vtable_component_iterator vtable_component_begin() const {
-   return VTableComponents.get();
+    return VTableComponents.get();
   }
 
   vtable_component_iterator vtable_component_end() const {
-   return VTableComponents.get()+NumVTableComponents;
+    return VTableComponents.get() + NumVTableComponents;
   }
 
-  uint64_t getNumVTableThunks() const {
-    return NumVTableThunks;
-  }
+  uint64_t getNumVTableThunks() const { return NumVTableThunks; }
 
   vtable_thunk_iterator vtable_thunk_begin() const {
-   return VTableThunks.get();
+    return VTableThunks.get();
   }
 
   vtable_thunk_iterator vtable_thunk_end() const {
-   return VTableThunks.get()+NumVTableThunks;
+    return VTableThunks.get() + NumVTableThunks;
   }
 
   uint64_t getAddressPoint(BaseSubobject Base) const {
@@ -414,27 +412,27 @@ public:
 
     /// This is the offset of the vfptr from the start of the last vbase, or the
     /// complete type if there are no virtual bases.
-    CharUnits VFTableOffset;
+    CharUnits VFPtrOffset;
 
     /// Method's index in the vftable.
     uint64_t Index;
 
     MethodVFTableLocation()
-        : VBTableIndex(0), VBase(0), VFTableOffset(CharUnits::Zero()),
+        : VBTableIndex(0), VBase(0), VFPtrOffset(CharUnits::Zero()),
           Index(0) {}
 
     MethodVFTableLocation(uint64_t VBTableIndex, const CXXRecordDecl *VBase,
-                          CharUnits VFTableOffset, uint64_t Index)
+                          CharUnits VFPtrOffset, uint64_t Index)
         : VBTableIndex(VBTableIndex), VBase(VBase),
-          VFTableOffset(VFTableOffset), Index(Index) {}
+          VFPtrOffset(VFPtrOffset), Index(Index) {}
 
     bool operator<(const MethodVFTableLocation &other) const {
       if (VBTableIndex != other.VBTableIndex) {
         assert(VBase != other.VBase);
         return VBTableIndex < other.VBTableIndex;
       }
-      if (VFTableOffset != other.VFTableOffset)
-        return VFTableOffset < other.VFTableOffset;
+      if (VFPtrOffset != other.VFPtrOffset)
+        return VFPtrOffset < other.VFPtrOffset;
       if (Index != other.Index)
         return Index < other.Index;
       return false;

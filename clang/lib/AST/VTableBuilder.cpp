@@ -3317,7 +3317,7 @@ void MicrosoftVTableContext::dumpMethodLocations(
       IndicesMap[I->second] = MethodName;
     }
 
-    if (!I->second.VFTableOffset.isZero() || I->second.VBTableIndex != 0)
+    if (!I->second.VFPtrOffset.isZero() || I->second.VBTableIndex != 0)
       HasNonzeroOffset = true;
   }
 
@@ -3333,7 +3333,7 @@ void MicrosoftVTableContext::dumpMethodLocations(
              I = IndicesMap.begin(),
              E = IndicesMap.end();
          I != E; ++I) {
-      CharUnits VFPtrOffset = I->first.VFTableOffset;
+      CharUnits VFPtrOffset = I->first.VFPtrOffset;
       uint64_t VBIndex = I->first.VBTableIndex;
       if (HasNonzeroOffset &&
           (VFPtrOffset != LastVFPtrOffset || VBIndex != LastVBIndex)) {
