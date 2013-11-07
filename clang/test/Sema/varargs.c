@@ -76,3 +76,10 @@ void f9(__builtin_va_list args)
     (void)__builtin_va_arg(args, short); // expected-warning {{second argument to 'va_arg' is of promotable type 'short'}}
     (void)__builtin_va_arg(args, char); // expected-warning {{second argument to 'va_arg' is of promotable type 'char'}}
 }
+
+void f10(int a, ...) {
+  int i;
+  __builtin_va_list ap;
+  i = __builtin_va_start(ap, a); // expected-error {{assigning to 'int' from incompatible type 'void'}}
+  __builtin_va_end(ap);
+}
