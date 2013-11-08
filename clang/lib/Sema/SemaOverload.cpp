@@ -3006,7 +3006,7 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
                         OverloadCandidateSet &CandidateSet,
                         bool AllowExplicit,
                         bool AllowObjCConversionOnExplicit) {
-  assert(!AllowExplicit || !AllowObjCConversionOnExplicit);
+  assert(AllowExplicit || !AllowObjCConversionOnExplicit);
 
   // Whether we will only visit constructors.
   bool ConstructorsOnly = false;
