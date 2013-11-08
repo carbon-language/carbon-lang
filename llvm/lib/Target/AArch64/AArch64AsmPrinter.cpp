@@ -152,12 +152,8 @@ bool AArch64AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
 
   switch(ExtraCode[0]) {
   default:
-    break;
-  case 'c': // Don't print "#" before an immediate operand.
-    if (MI->getOperand(OpNum).isImm()) {
-      O << MI->getOperand(OpNum).getImm();
-      return false;
-    }
+    if (!AsmPrinter::PrintAsmOperand(MI, OpNum, AsmVariant, ExtraCode, O))
+        return false;
     break;
   case 'w':
     // Output 32-bit general register operand, constant zero as wzr, or stack
