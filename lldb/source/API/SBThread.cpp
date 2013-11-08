@@ -1303,7 +1303,8 @@ SBThread::GetExtendedBacktrace (const char *type)
                 if (runtime)
                 {
                     ThreadSP origin_thread = runtime->GetExtendedBacktrace (real_thread, type_const);
-                    sb_origin_thread.SetThread (origin_thread);
+                    if (origin_thread && origin_thread->IsValid())
+                        sb_origin_thread.SetThread (origin_thread);
                 }
             }
         }
