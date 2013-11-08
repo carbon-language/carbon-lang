@@ -4676,7 +4676,8 @@ def CDP : ABI<0b1110, (outs), (ins p_imm:$cop, imm0_15:$opc1,
             c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, imm0_7:$opc2),
             NoItinerary, "cdp", "\t$cop, $opc1, $CRd, $CRn, $CRm, $opc2",
             [(int_arm_cdp imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
-                          imm:$CRm, imm:$opc2)]> {
+                          imm:$CRm, imm:$opc2)]>,
+            Requires<[PreV8]> {
   bits<4> opc1;
   bits<4> CRn;
   bits<4> CRd;
@@ -4697,7 +4698,8 @@ def CDP2 : ABXI<0b1110, (outs), (ins p_imm:$cop, imm0_15:$opc1,
                c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, imm0_7:$opc2),
                NoItinerary, "cdp2\t$cop, $opc1, $CRd, $CRn, $CRm, $opc2",
                [(int_arm_cdp2 imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
-                              imm:$CRm, imm:$opc2)]> {
+                              imm:$CRm, imm:$opc2)]>,
+               Requires<[PreV8]> {
   let Inst{31-28} = 0b1111;
   bits<4> opc1;
   bits<4> CRn;
@@ -4875,10 +4877,10 @@ defm LDC   : LdStCop <1, 0, "ldc">;
 defm LDCL  : LdStCop <1, 1, "ldcl">;
 defm STC   : LdStCop <0, 0, "stc">;
 defm STCL  : LdStCop <0, 1, "stcl">;
-defm LDC2  : LdSt2Cop<1, 0, "ldc2">;
-defm LDC2L : LdSt2Cop<1, 1, "ldc2l">;
-defm STC2  : LdSt2Cop<0, 0, "stc2">;
-defm STC2L : LdSt2Cop<0, 1, "stc2l">;
+defm LDC2  : LdSt2Cop<1, 0, "ldc2">, Requires<[PreV8]>;
+defm LDC2L : LdSt2Cop<1, 1, "ldc2l">, Requires<[PreV8]>;
+defm STC2  : LdSt2Cop<0, 0, "stc2">, Requires<[PreV8]>;
+defm STC2L : LdSt2Cop<0, 1, "stc2l">, Requires<[PreV8]>;
 
 //===----------------------------------------------------------------------===//
 // Move between coprocessor and ARM core register.
@@ -4955,14 +4957,16 @@ def MCR2 : MovRCopro2<"mcr2", 0 /* from ARM core register to coprocessor */,
                       (ins p_imm:$cop, imm0_7:$opc1, GPR:$Rt, c_imm:$CRn,
                            c_imm:$CRm, imm0_7:$opc2),
                       [(int_arm_mcr2 imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
-                                     imm:$CRm, imm:$opc2)]>;
+                                     imm:$CRm, imm:$opc2)]>,
+                      Requires<[PreV8]>;
 def : ARMInstAlias<"mcr2$ $cop, $opc1, $Rt, $CRn, $CRm",
                    (MCR2 p_imm:$cop, imm0_7:$opc1, GPR:$Rt, c_imm:$CRn,
                          c_imm:$CRm, 0)>;
 def MRC2 : MovRCopro2<"mrc2", 1 /* from coprocessor to ARM core register */,
                       (outs GPRwithAPSR:$Rt),
                       (ins p_imm:$cop, imm0_7:$opc1, c_imm:$CRn, c_imm:$CRm,
-                           imm0_7:$opc2), []>;
+                           imm0_7:$opc2), []>,
+                      Requires<[PreV8]>;
 def : ARMInstAlias<"mrc2$ $cop, $opc1, $Rt, $CRn, $CRm",
                    (MRC2 GPRwithAPSR:$Rt, p_imm:$cop, imm0_7:$opc1, c_imm:$CRn,
                          c_imm:$CRm, 0)>;
@@ -4999,7 +5003,8 @@ def MRRC : MovRRCopro<"mrrc", 1 /* from coprocessor to ARM core register */>;
 class MovRRCopro2<string opc, bit direction, list<dag> pattern = []>
   : ABXI<0b1100, (outs), (ins p_imm:$cop, imm0_15:$opc1,
          GPRnopc:$Rt, GPRnopc:$Rt2, c_imm:$CRm), NoItinerary,
-         !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"), pattern> {
+         !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"), pattern>,
+    Requires<[PreV8]> {
   let Inst{31-28} = 0b1111;
   let Inst{23-21} = 0b010;
   let Inst{20} = direction;

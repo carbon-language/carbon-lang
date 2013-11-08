@@ -1363,6 +1363,11 @@ static DecodeStatus DecodeCopMemInstruction(MCInst &Inst, unsigned Insn,
       break;
   }
 
+  uint64_t featureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
+                                                          .getFeatureBits();
+  if ((featureBits & ARM::HasV8Ops) && (coproc != 14))
+    return MCDisassembler::Fail;
+
   Inst.addOperand(MCOperand::CreateImm(coproc));
   Inst.addOperand(MCOperand::CreateImm(CRd));
   if (!Check(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)))
@@ -3812,6 +3817,11 @@ static DecodeStatus DecodeThumbBLXOffset(MCInst &Inst, unsigned Val,
 static DecodeStatus DecodeCoprocessor(MCInst &Inst, unsigned Val,
                               uint64_t Address, const void *Decoder) {
   if (Val == 0xA || Val == 0xB)
+    return MCDisassembler::Fail;
+
+  uint64_t featureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
+                                                          .getFeatureBits();
+  if ((featureBits & ARM::HasV8Ops) && !(Val == 14 || Val == 15))
     return MCDisassembler::Fail;
 
   Inst.addOperand(MCOperand::CreateImm(Val));
