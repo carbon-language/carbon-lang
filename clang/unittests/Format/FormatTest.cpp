@@ -5432,6 +5432,16 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
       "                  backing:NSBackingStoreBuffered\n"
       "                    defer:NO]);\n"
       "}");
+  verifyFormat(
+      "void f() {\n"
+      "  popup_wdow_.reset([[RenderWidgetPopupWindow alloc]\n"
+      "      iniithContentRect:NSMakRet(origin_global.x, origin_global.y,\n"
+      "                                 pos.width(), pos.height())\n"
+      "                syeMask:NSBorderlessWindowMask\n"
+      "                  bking:NSBackingStoreBuffered\n"
+      "                    der:NO]);\n"
+      "}",
+      getLLVMStyleWithColumns(70));
   verifyFormat("[contentsContainer replaceSubview:[subviews objectAtIndex:0]\n"
                "                             with:contentsNativeView];");
 
@@ -5462,6 +5472,8 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
                "    aaaaaaaaaa:bbbbbbbbbbbbbbbbb\n"
                "         aaaaa:bbbbbbbbbbb + bbbbbbbbbbbb\n"
                "          aaaa:bbb];");
+  verifyFormat("[self param:function( //\n"
+               "                parameter)]");
   verifyFormat(
       "[self aaaaaaaaaa:aaaaaaaaaaaaaaa | aaaaaaaaaaaaaaa | aaaaaaaaaaaaaaa |\n"
       "                 aaaaaaaaaaaaaaa | aaaaaaaaaaaaaaa | aaaaaaaaaaaaaaa |\n"

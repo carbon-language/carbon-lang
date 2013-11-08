@@ -1180,7 +1180,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   if (Right.Type == TT_ObjCSelectorName)
     return 0;
   if (Left.is(tok::colon) && Left.Type == TT_ObjCMethodExpr)
-    return 20;
+    return 50;
 
   if (Left.is(tok::l_paren) && InFunctionDecl)
     return 100;
