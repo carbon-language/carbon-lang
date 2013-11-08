@@ -1492,35 +1492,31 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
         // but it actually has a definition. Most likely, this was
         // meant to be an explicit specialization, but the user forgot
         // the '<>' after 'template'.
-	// It this is friend declaration however, since it cannot have a
-	// template header, it is most likely that the user meant to
-	// remove the 'template' keyword.
+        // It this is friend declaration however, since it cannot have a
+        // template header, it is most likely that the user meant to
+        // remove the 'template' keyword.
         assert((TUK == Sema::TUK_Definition || TUK == Sema::TUK_Friend) &&
-	       "Expected a definition here");
+               "Expected a definition here");
 
-	if (TUK == Sema::TUK_Friend) {
-	  Diag(DS.getFriendSpecLoc(), 
-	       diag::err_friend_explicit_instantiation);
-	  TemplateParams = 0;
-	} else {
-	  SourceLocation LAngleLoc
-	    = PP.getLocForEndOfToken(TemplateInfo.TemplateLoc);
-	  Diag(TemplateId->TemplateNameLoc,
-	       diag::err_explicit_instantiation_with_definition)
-	    << SourceRange(TemplateInfo.TemplateLoc)
-	    << FixItHint::CreateInsertion(LAngleLoc, "<>");
-	  
-	  // Create a fake template parameter list that contains only
-	  // "template<>", so that we treat this construct as a class
-	  // template specialization.
-	  FakedParamLists.push_back(
-	    Actions.ActOnTemplateParameterList(0, SourceLocation(),
-					       TemplateInfo.TemplateLoc,
-					       LAngleLoc,
-					       0, 0,
-					       LAngleLoc));
-	  TemplateParams = &FakedParamLists;
-	}
+        if (TUK == Sema::TUK_Friend) {
+          Diag(DS.getFriendSpecLoc(), diag::err_friend_explicit_instantiation);
+          TemplateParams = 0;
+        } else {
+          SourceLocation LAngleLoc =
+              PP.getLocForEndOfToken(TemplateInfo.TemplateLoc);
+          Diag(TemplateId->TemplateNameLoc,
+               diag::err_explicit_instantiation_with_definition)
+              << SourceRange(TemplateInfo.TemplateLoc)
+              << FixItHint::CreateInsertion(LAngleLoc, "<>");
+
+          // Create a fake template parameter list that contains only
+          // "template<>", so that we treat this construct as a class
+          // template specialization.
+          FakedParamLists.push_back(Actions.ActOnTemplateParameterList(
+              0, SourceLocation(), TemplateInfo.TemplateLoc, LAngleLoc, 0, 0,
+              LAngleLoc));
+          TemplateParams = &FakedParamLists;
+        }
       }
 
       // Build the class template specialization.
@@ -1566,7 +1562,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   } else {
     if (TUK != Sema::TUK_Declaration && TUK != Sema::TUK_Definition)
       ProhibitAttributes(attrs);
-    
+
     if (TUK == Sema::TUK_Definition &&
         TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation) {
       // If the declarator-id is not a template-id, issue a diagnostic and
