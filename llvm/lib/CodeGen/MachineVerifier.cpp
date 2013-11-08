@@ -1096,6 +1096,14 @@ void MachineVerifier::checkLiveness(const MachineOperand *MO, unsigned MONum) {
           report("No live segment at def", MO, MONum);
           *OS << DefIdx << " is not live in " << LI << '\n';
         }
+        // Check that, if the dead def flag is present, LiveInts agree.
+        if (MO->isDead()) {
+          LiveQueryResult LRQ = LI.Query(DefIdx);
+          if (!LRQ.isDeadDef()) {
+            report("Live range continues after dead def flag", MO, MONum);
+            *OS << "Live range: " << LI << '\n';
+          }
+        }
       } else {
         report("Virtual register has no Live interval", MO, MONum);
       }
@@ -1517,22 +1525,13 @@ void MachineVerifier::verifyLiveRangeSegment(const LiveRange &LR,
     // A live segment can end with either a redefinition, a kill flag on a
     // use, or a dead flag on a def.
     bool hasRead = false;
-    bool hasDeadDef = false;
     for (ConstMIBundleOperands MOI(MI); MOI.isValid(); ++MOI) {
       if (!MOI->isReg() || MOI->getReg() != Reg)
         continue;
       if (MOI->readsReg())
         hasRead = true;
-      if (MOI->isDef() && MOI->isDead())
-        hasDeadDef = true;
     }
-
-    if (S.end.isDead()) {
-      if (!hasDeadDef) {
-        report("Instruction doesn't have a dead def operand", MI);
-        *OS << S << " in " << LR << '\n';
-      }
-    } else {
+    if (!S.end.isDead()) {
       if (!hasRead) {
         report("Instruction ending live segment doesn't read the register", MI);
         *OS << S << " in " << LR << '\n';

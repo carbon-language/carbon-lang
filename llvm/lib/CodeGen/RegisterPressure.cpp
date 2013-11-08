@@ -498,10 +498,20 @@ bool RegPressureTracker::recede(SmallVectorImpl<unsigned> *LiveUses,
   // TODO: consider earlyclobbers?
   for (unsigned i = 0, e = RegOpers.Defs.size(); i < e; ++i) {
     unsigned Reg = RegOpers.Defs[i];
-    if (LiveRegs.erase(Reg))
-      decreaseRegPressure(Reg);
-    else
-      discoverLiveOut(Reg);
+    bool DeadDef = false;
+    if (RequireIntervals) {
+      const LiveRange *LR = getLiveRange(Reg);
+      if (LR) {
+        LiveQueryResult LRQ = LR->Query(SlotIdx);
+        DeadDef = LRQ.isDeadDef();
+      }
+    }
+    if (!DeadDef) {
+      if (LiveRegs.erase(Reg))
+        decreaseRegPressure(Reg);
+      else
+        discoverLiveOut(Reg);
+    }
   }
 
   // Generate liveness for uses.
@@ -702,8 +712,19 @@ void RegPressureTracker::bumpUpwardPressure(const MachineInstr *MI) {
   // Kill liveness at live defs.
   for (unsigned i = 0, e = RegOpers.Defs.size(); i < e; ++i) {
     unsigned Reg = RegOpers.Defs[i];
-    if (!containsReg(RegOpers.Uses, Reg))
-      decreaseRegPressure(Reg);
+    bool DeadDef = false;
+    if (RequireIntervals) {
+      const LiveRange *LR = getLiveRange(Reg);
+      if (LR) {
+        SlotIndex SlotIdx = LIS->getInstructionIndex(MI);
+        LiveQueryResult LRQ = LR->Query(SlotIdx);
+        DeadDef = LRQ.isDeadDef();
+      }
+    }
+    if (!DeadDef) {
+      if (!containsReg(RegOpers.Uses, Reg))
+        decreaseRegPressure(Reg);
+    }
   }
   // Generate liveness for uses.
   for (unsigned i = 0, e = RegOpers.Uses.size(); i < e; ++i) {
