@@ -142,6 +142,8 @@ protected:
   /// ELF and MachO only.
   const MCSection *TLSBSSSection;         // Defaults to ".tbss".
 
+  /// StackMap section.
+  const MCSection *StackMapSection;
 
   /// EHFrameSection - EH frame section. It is initialized on demand so it
   /// can be overwritten (with uniquing).
@@ -284,6 +286,8 @@ public:
   }
   const MCSection *getTLSDataSection() const { return TLSDataSection; }
   const MCSection *getTLSBSSSection() const { return TLSBSSSection; }
+
+  const MCSection *getStackMapSection() const { return StackMapSection; }
 
   /// ELF specific sections.
   ///

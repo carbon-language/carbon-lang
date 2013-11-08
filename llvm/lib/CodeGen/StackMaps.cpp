@@ -97,8 +97,7 @@ void StackMaps::serializeToStackMapSection() {
 
   // Create the section.
   const MCSection *StackMapSection =
-    OutContext.getMachOSection("__LLVM_STACKMAPS", "__llvm_stackmaps", 0,
-                               SectionKind::getMetadata());
+    OutContext.getObjectFileInfo().getStackMapSection();
   AP.OutStreamer.SwitchSection(StackMapSection);
 
   // Emit a dummy symbol to force section inclusion.

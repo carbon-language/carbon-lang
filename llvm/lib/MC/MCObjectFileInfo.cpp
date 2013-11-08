@@ -234,6 +234,9 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
     Ctx->getMachOSection("__DWARF", "__debug_inlined",
                          MCSectionMachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
+  StackMapSection =
+    Ctx->getMachOSection("__LLVM_STACKMAPS", "__llvm_stackmaps", 0,
+                         SectionKind::getMetadata());
 
   TLSExtraDataSection = TLSTLVSection;
 }
