@@ -3023,22 +3023,15 @@ Value *ScalarExprEmitter::VisitBinComma(const BinaryOperator *E) {
 /// flow into selects in some cases.
 static bool isCheapEnoughToEvaluateUnconditionally(const Expr *E,
                                                    CodeGenFunction &CGF) {
-  E = E->IgnoreParens();
-
   // Anything that is an integer or floating point constant is fine.
-  if (E->isEvaluatable(CGF.getContext()))
-    return true;
+  return E->IgnoreParens()->isEvaluatable(CGF.getContext());
 
-  // Non-volatile automatic variables too, to get "cond ? X : Y" where
-  // X and Y are local variables.
-  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
-    if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl()))
-      if (VD->hasLocalStorage() && !(CGF.getContext()
-                                     .getCanonicalType(VD->getType())
-                                     .isVolatileQualified()))
-        return true;
-
-  return false;
+  // Even non-volatile automatic variables can't be evaluated unconditionally.
+  // Referencing a thread_local may cause non-trivial initialization work to
+  // occur. If we're inside a lambda and one of the variables is from the scope
+  // outside the lambda, that function may have returned already. Reading its
+  // locals is a bad idea. Also, these reads may introduce races there didn't
+  // exist in the source-level program.
 }
 
 
