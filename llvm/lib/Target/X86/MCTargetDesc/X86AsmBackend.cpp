@@ -450,7 +450,9 @@ protected:
 
       switch (Inst.getOperation()) {
       default:
-        llvm_unreachable("cannot handle CFI directive for compact unwind!");
+        // Any other CFI directives indicate a frame that we aren't prepared
+        // to represent via compact unwind, so just bail out.
+        return 0;
       case MCCFIInstruction::OpDefCfaRegister: {
         // Defines a frame pointer. E.g.
         //
