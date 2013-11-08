@@ -7,6 +7,7 @@ void clang_analyzer_eval(int);
 typedef unsigned long NSUInteger;
 @protocol NSFastEnumeration
 - (int)countByEnumeratingWithState:(void *)state objects:(id *)objects count:(unsigned)count;
+- (void)protocolMethod;
 @end
 
 @interface NSObject
@@ -23,9 +24,19 @@ typedef unsigned long NSUInteger;
 
 @interface NSDictionary : NSObject <NSFastEnumeration>
 - (NSUInteger)count;
+- (id)objectForKey:(id)key;
+@end
+
+@interface NSDictionary (SomeCategory)
+- (void)categoryMethodOnNSDictionary;
 @end
 
 @interface NSMutableDictionary : NSDictionary
+- (void)setObject:(id)obj forKey:(id)key;
+@end
+
+@interface NSMutableArray : NSArray
+- (void)addObject:(id)obj;
 @end
 
 @interface NSSet : NSObject <NSFastEnumeration>
@@ -169,10 +180,13 @@ void onlySuppressLoopExitAfterZeroIterations_WithBreak(NSMutableDictionary *D) {
   }
 }
 
-int consistencyBetweenLoopsWhenCountIsUnconstrained(NSMutableDictionary *D) {
-  // Note, The current limitation is that we need to have a count.
-  // TODO: This should work even when we do not call count.
-  int count = [D count];
+int consistencyBetweenLoopsWhenCountIsUnconstrained(NSMutableDictionary *D,
+                                                    int shouldUseCount) {
+  // Test with or without an initial count.
+  int count;
+  if (shouldUseCount)
+    count = [D count];
+
   int i;
   int j = 0;
   for (NSString *key in D) {
@@ -185,8 +199,12 @@ int consistencyBetweenLoopsWhenCountIsUnconstrained(NSMutableDictionary *D) {
   return 0;
 }
 
-int consistencyBetweenLoopsWhenCountIsUnconstrained_dual(NSMutableDictionary *D) {
-  int count = [D count];
+int consistencyBetweenLoopsWhenCountIsUnconstrained_dual(NSMutableDictionary *D,
+                                                         int shouldUseCount) {
+  int count;
+  if (shouldUseCount)
+    count = [D count];
+
   int i = 8;
   int j = 1;
   for (NSString *key in D) {
@@ -198,4 +216,111 @@ int consistencyBetweenLoopsWhenCountIsUnconstrained_dual(NSMutableDictionary *D)
     j++;
   }
   return 5/i;
+}
+
+int consistencyCountThenLoop(NSArray *array) {
+  if ([array count] == 0)
+    return 0;
+
+  int x;
+  for (id y in array)
+    x = 0;
+  return x; // no-warning
+}
+
+int consistencyLoopThenCount(NSArray *array) {
+  int x;
+  for (id y in array)
+    x = 0;
+
+  if ([array count] == 0)
+    return 0;
+
+  return x; // no-warning
+}
+
+void nonMutatingMethodsDoNotInvalidateCountDictionary(NSMutableDictionary *dict,
+                                                      NSMutableArray *other) {
+  if ([dict count])
+    return;
+
+  for (id key in dict)
+    clang_analyzer_eval(0); // no-warning
+
+  (void)[dict objectForKey:@""];
+
+  for (id key in dict)
+    clang_analyzer_eval(0); // no-warning
+
+  [dict categoryMethodOnNSDictionary];
+
+  for (id key in dict)
+    clang_analyzer_eval(0); // no-warning
+
+  [dict setObject:@"" forKey:@""];
+
+  for (id key in dict)
+    clang_analyzer_eval(0); // expected-warning{{FALSE}}
+
+  // Reset.
+  if ([dict count])
+    return;
+
+  for (id key in dict)
+    clang_analyzer_eval(0); // no-warning
+
+  [other addObject:dict];
+
+  for (id key in dict)
+    clang_analyzer_eval(0); // expected-warning{{FALSE}}
+}
+
+void nonMutatingMethodsDoNotInvalidateCountArray(NSMutableArray *array,
+                                                 NSMutableArray *other) {
+  if ([array count])
+    return;
+
+  for (id key in array)
+    clang_analyzer_eval(0); // no-warning
+
+  (void)[array objectEnumerator];
+
+  for (id key in array)
+    clang_analyzer_eval(0); // no-warning
+
+  [array addObject:@""];
+
+  for (id key in array)
+    clang_analyzer_eval(0); // expected-warning{{FALSE}}
+
+  // Reset.
+  if ([array count])
+    return;
+
+  for (id key in array)
+    clang_analyzer_eval(0); // no-warning
+
+  [other addObject:array];
+
+  for (id key in array)
+    clang_analyzer_eval(0); // expected-warning{{FALSE}}
+}
+
+void protocolMethods(NSMutableArray *array) {
+  if ([array count])
+    return;
+
+  for (id key in array)
+    clang_analyzer_eval(0); // no-warning
+
+  NSArray *immutableArray = array;
+  [immutableArray protocolMethod];
+
+  for (id key in array)
+    clang_analyzer_eval(0); // no-warning
+
+  [array protocolMethod];
+
+  for (id key in array)
+    clang_analyzer_eval(0); // expected-warning{{FALSE}}
 }
