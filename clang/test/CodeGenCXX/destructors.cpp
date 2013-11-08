@@ -45,7 +45,7 @@ namespace PR7526 {
   allocator::~allocator() throw() { foo(); }
 
   // CHECK-LABEL: define void @_ZN6PR75263fooEv()
-  // CHECK: call void @_ZN6PR752617allocator_derivedD2Ev
+  // CHECK: call void {{.*}} @_ZN6PR75269allocatorD2Ev
 
   void foo() {
     allocator_derived ad;

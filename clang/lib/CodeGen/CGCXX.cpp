@@ -139,6 +139,13 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   if (Ref->getType() != AliasType)
     Aliasee = llvm::ConstantExpr::getBitCast(Ref, AliasType);
 
+  // Instead of creating as alias to a linkonce_odr, replace all of the uses
+  // of the aliassee.
+  if (Linkage == llvm::GlobalValue::LinkOnceODRLinkage) {
+    Replacements[MangledName] = Aliasee;
+    return false;
+  }
+
   // Don't create an alias to a linker weak symbol unless we know we can do
   // that in every TU. This avoids producing different COMDATs in different
   // TUs.
@@ -146,12 +153,6 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     if (!InEveryTU)
       return true;
 
-    // Instead of creating as alias to a linkonce_odr, replace all of the uses
-    // of the aliassee.
-    if (Linkage == llvm::GlobalValue::LinkOnceODRLinkage) {
-      Replacements[MangledName] = Aliasee;
-      return false;
-    }
     assert(Linkage == TargetLinkage);
   }
 

@@ -45,10 +45,11 @@ B x;
 
 namespace test4 {
   // Test that we don't produce aliases from B to A. We cannot because we cannot
-  // guarantee that they will be present in every TU.
+  // guarantee that they will be present in every TU. Instead, we just call
+  // A's destructor directly.
 
-  // CHECK-DAG: define linkonce_odr void @_ZN5test41BD2Ev(
   // CHECK-DAG: define linkonce_odr void @_ZN5test41AD2Ev(
+  // CHECK-DAG: call i32 @__cxa_atexit{{.*}}_ZN5test41AD2Ev
   struct A {
     virtual ~A() {}
   };
