@@ -782,6 +782,13 @@ static void performWriteOperation(ArchiveOperation Operation,
       sys::fs::file_status Status;
       failIfError(sys::fs::status(FD, Status), FileName);
 
+      // Opening a directory doesn't make sense. Let it failed.
+      // Linux cannot open directories with open(2), although
+      // cygwin and *bsd can.
+      if (Status.type() == sys::fs::file_type::directory_file)
+        failIfError(error_code(errc::is_a_directory, posix_category()),
+                    FileName);
+
       OwningPtr<MemoryBuffer> File;
       failIfError(MemoryBuffer::getOpenFile(FD, FileName, File,
                                             Status.getSize(), false),
