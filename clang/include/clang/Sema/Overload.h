@@ -242,7 +242,7 @@ namespace clang {
                                    QualType &ConstantType) const;
     bool isPointerConversionToBool() const;
     bool isPointerConversionToVoidPointer(ASTContext& Context) const;
-    void DebugPrint() const;
+    void dump() const;
   };
 
   /// UserDefinedConversionSequence - Represents a user-defined
@@ -288,7 +288,7 @@ namespace clang {
     /// that refers to \c ConversionFunction.
     DeclAccessPair FoundConversionFunction;
 
-    void DebugPrint() const;
+    void dump() const;
   };
 
   /// Represents an ambiguous user-defined conversion sequence.
@@ -554,7 +554,7 @@ namespace clang {
                                      SourceLocation CaretLoc,
                                      const PartialDiagnostic &PDiag) const;
 
-    void DebugPrint() const;
+    void dump() const;
   };
 
   enum OverloadFailureKind {

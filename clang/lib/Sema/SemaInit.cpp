@@ -6858,13 +6858,13 @@ void InitializationSequence::dump(raw_ostream &OS) const {
 
     case SK_ConversionSequence:
       OS << "implicit conversion sequence (";
-      S->ICS->DebugPrint(); // FIXME: use OS
+      S->ICS->dump(); // FIXME: use OS
       OS << ")";
       break;
 
     case SK_ConversionSequenceNoNarrowing:
       OS << "implicit conversion sequence with narrowing prohibited (";
-      S->ICS->DebugPrint(); // FIXME: use OS
+      S->ICS->dump(); // FIXME: use OS
       OS << ")";
       break;
 

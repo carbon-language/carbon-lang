@@ -450,9 +450,9 @@ StandardConversionSequence::getNarrowingKind(ASTContext &Ctx,
   }
 }
 
-/// DebugPrint - Print this standard conversion sequence to standard
+/// dump - Print this standard conversion sequence to standard
 /// error. Useful for debugging overloading issues.
-void StandardConversionSequence::DebugPrint() const {
+void StandardConversionSequence::dump() const {
   raw_ostream &OS = llvm::errs();
   bool PrintedSomething = false;
   if (First != ICK_Identity) {
@@ -489,12 +489,12 @@ void StandardConversionSequence::DebugPrint() const {
   }
 }
 
-/// DebugPrint - Print this user-defined conversion sequence to standard
+/// dump - Print this user-defined conversion sequence to standard
 /// error. Useful for debugging overloading issues.
-void UserDefinedConversionSequence::DebugPrint() const {
+void UserDefinedConversionSequence::dump() const {
   raw_ostream &OS = llvm::errs();
   if (Before.First || Before.Second || Before.Third) {
-    Before.DebugPrint();
+    Before.dump();
     OS << " -> ";
   }
   if (ConversionFunction)
@@ -503,24 +503,24 @@ void UserDefinedConversionSequence::DebugPrint() const {
     OS << "aggregate initialization";
   if (After.First || After.Second || After.Third) {
     OS << " -> ";
-    After.DebugPrint();
+    After.dump();
   }
 }
 
-/// DebugPrint - Print this implicit conversion sequence to standard
+/// dump - Print this implicit conversion sequence to standard
 /// error. Useful for debugging overloading issues.
-void ImplicitConversionSequence::DebugPrint() const {
+void ImplicitConversionSequence::dump() const {
   raw_ostream &OS = llvm::errs();
   if (isStdInitializerListElement())
     OS << "Worst std::initializer_list element conversion: ";
   switch (ConversionKind) {
   case StandardConversion:
     OS << "Standard conversion: ";
-    Standard.DebugPrint();
+    Standard.dump();
     break;
   case UserDefinedConversion:
     OS << "User-defined conversion: ";
-    UserDefined.DebugPrint();
+    UserDefined.dump();
     break;
   case EllipsisConversion:
     OS << "Ellipsis conversion";
