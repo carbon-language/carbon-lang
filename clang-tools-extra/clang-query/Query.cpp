@@ -124,5 +124,10 @@ bool MatchQuery::run(llvm::raw_ostream &OS, QuerySession &QS) const {
   return true;
 }
 
+#ifndef _MSC_VER
+const QueryKind SetQueryKind<bool>::value;
+const QueryKind SetQueryKind<OutputKind>::value;
+#endif
+
 } // namespace query
 } // namespace clang
