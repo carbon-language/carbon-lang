@@ -1498,6 +1498,9 @@ CommandInterpreter::PreprocessCommand (std::string &command)
                                 case eExecutionTimedOut:
                                     error.SetErrorStringWithFormat("expression timed out for the expression '%s'", expr_str.c_str());
                                     break;
+                                case eExecutionStoppedForDebug:
+                                    error.SetErrorStringWithFormat("expression stop at entry point for debugging for the expression '%s'", expr_str.c_str());
+                                    break;
                             }
                         }
                     }
