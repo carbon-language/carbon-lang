@@ -5474,6 +5474,9 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
       "[self aaaaaaaaaaaaa:aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaa,\n"
       "                    aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaa,\n"
       "                    aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaa];");
+  verifyFormat("[self // break\n"
+               "      a:a\n"
+               "    aaa:aaa];");
 }
 
 TEST_F(FormatTest, ObjCAt) {

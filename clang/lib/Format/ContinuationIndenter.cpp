@@ -375,7 +375,11 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
                State.Line->StartsDefinition))) {
     State.Column = State.Stack.back().Indent;
   } else if (Current.Type == TT_ObjCSelectorName) {
-    if (State.Stack.back().ColonPos > Current.ColumnWidth) {
+    if (State.Stack.back().ColonPos == 0) {
+      State.Stack.back().ColonPos =
+          State.Stack.back().Indent + Current.LongestObjCSelectorName;
+      State.Column = State.Stack.back().ColonPos - Current.ColumnWidth;
+    } else if (State.Stack.back().ColonPos > Current.ColumnWidth) {
       State.Column = State.Stack.back().ColonPos - Current.ColumnWidth;
     } else {
       State.Column = State.Stack.back().Indent;
