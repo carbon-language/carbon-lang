@@ -2687,13 +2687,16 @@ CheckOriginalCallArgDeduction(Sema &S, Sema::OriginalCallArg OriginalArg,
     Qualifiers AQuals = A.getQualifiers();
     Qualifiers DeducedAQuals = DeducedA.getQualifiers();
 
-    // Under Objective-C++ ARC, the deduced type may have implicitly been
-    // given strong lifetime. If so, update the original qualifiers to
-    // include this strong lifetime.
+    // Under Objective-C++ ARC, the deduced type may have implicitly
+    // been given strong or (when dealing with a const reference)
+    // unsafe_unretained lifetime. If so, update the original
+    // qualifiers to include this lifetime.
     if (S.getLangOpts().ObjCAutoRefCount &&
-        DeducedAQuals.getObjCLifetime() == Qualifiers::OCL_Strong &&
-        AQuals.getObjCLifetime() == Qualifiers::OCL_None) {
-      AQuals.setObjCLifetime(Qualifiers::OCL_Strong);
+        ((DeducedAQuals.getObjCLifetime() == Qualifiers::OCL_Strong &&
+          AQuals.getObjCLifetime() == Qualifiers::OCL_None) ||
+         (DeducedAQuals.hasConst() &&
+          DeducedAQuals.getObjCLifetime() == Qualifiers::OCL_ExplicitNone))) {
+      AQuals.setObjCLifetime(DeducedAQuals.getObjCLifetime());
     }
 
     if (AQuals == DeducedAQuals) {
@@ -2714,7 +2717,7 @@ CheckOriginalCallArgDeduction(Sema &S, Sema::OriginalCallArg OriginalArg,
   //
   // Also allow conversions which merely strip [[noreturn]] from function types
   // (recursively) as an extension.
-  // FIXME: Currently, this doesn't place nicely with qualfication conversions.
+  // FIXME: Currently, this doesn't play nicely with qualification conversions.
   bool ObjCLifetimeConversion = false;
   QualType ResultTy;
   if ((A->isAnyPointerType() || A->isMemberPointerType()) &&

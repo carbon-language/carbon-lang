@@ -2790,6 +2790,18 @@ bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
   return false;
 }
 
+/// Determine whether the lifetime conversion between the two given
+/// qualifiers sets is nontrivial.
+static bool isNonTrivialObjCLifetimeConversion(Qualifiers FromQuals,
+                                               Qualifiers ToQuals) {
+  // Converting anything to const __unsafe_unretained is trivial.
+  if (ToQuals.hasConst() && 
+      ToQuals.getObjCLifetime() == Qualifiers::OCL_ExplicitNone)
+    return false;
+
+  return true;
+}
+
 /// IsQualificationConversion - Determines whether the conversion from
 /// an rvalue of type FromType to ToType is a qualification conversion
 /// (C++ 4.4).
@@ -2831,7 +2843,8 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType,
     if (FromQuals.getObjCLifetime() != ToQuals.getObjCLifetime() &&
         UnwrappedAnyPointer) {
       if (ToQuals.compatiblyIncludesObjCLifetime(FromQuals)) {
-        ObjCLifetimeConversion = true;
+        if (isNonTrivialObjCLifetimeConversion(FromQuals, ToQuals))
+          ObjCLifetimeConversion = true;
         FromQuals.removeObjCLifetime();
         ToQuals.removeObjCLifetime();
       } else {
@@ -3996,9 +4009,11 @@ Sema::CompareReferenceRelationship(SourceLocation Loc,
   // space 2.
   if (T1Quals.getObjCLifetime() != T2Quals.getObjCLifetime() &&
       T1Quals.compatiblyIncludesObjCLifetime(T2Quals)) {
+    if (isNonTrivialObjCLifetimeConversion(T2Quals, T1Quals))
+      ObjCLifetimeConversion = true;
+
     T1Quals.removeObjCLifetime();
     T2Quals.removeObjCLifetime();    
-    ObjCLifetimeConversion = true;
   }
     
   if (T1Quals == T2Quals)

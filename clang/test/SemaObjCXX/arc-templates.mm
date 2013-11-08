@@ -292,3 +292,13 @@ namespace rdar12367446 {
     A<id()> value;
   }
 }
+
+namespace rdar14467941 {
+  template<typename T> int &takePtr(const T &);
+  template<typename T> float &takePtr(T * const &);
+
+  void testTakePtr(A *a) {
+    float &fr1 = takePtr(a);
+    float &fr2 = takePtr<A>(a);
+  }
+}
