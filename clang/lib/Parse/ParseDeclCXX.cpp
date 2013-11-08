@@ -1249,7 +1249,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
         << (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation)
         << (TagType == DeclSpec::TST_class? 0
             : TagType == DeclSpec::TST_struct? 1
-            : TagType == DeclSpec::TST_interface? 2
+            : TagType == DeclSpec::TST_union? 2
             : 3)
         << Name
         << SourceRange(LAngleLoc, RAngleLoc);
