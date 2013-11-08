@@ -1875,6 +1875,13 @@ void BuildLockset::checkAccess(const Expr *Exp, AccessKind AK) {
     return;
   }
 
+  if (const ArraySubscriptExpr *AE = dyn_cast<ArraySubscriptExpr>(Exp)) {
+    if (Analyzer->Handler.issueBetaWarnings()) {
+      checkPtAccess(AE->getLHS(), AK);
+      return;
+    }
+  }
+
   if (const MemberExpr *ME = dyn_cast<MemberExpr>(Exp)) {
     if (ME->isArrow())
       checkPtAccess(ME->getBase(), AK);
@@ -1898,7 +1905,27 @@ void BuildLockset::checkAccess(const Expr *Exp, AccessKind AK) {
 
 /// \brief Checks pt_guarded_by and pt_guarded_var attributes.
 void BuildLockset::checkPtAccess(const Expr *Exp, AccessKind AK) {
-  Exp = Exp->IgnoreParenCasts();
+  if (Analyzer->Handler.issueBetaWarnings()) {
+    while (true) {
+      if (const ParenExpr *PE = dyn_cast<ParenExpr>(Exp)) {
+        Exp = PE->getSubExpr();
+        continue;
+      }
+      if (const CastExpr *CE = dyn_cast<CastExpr>(Exp)) {
+        if (CE->getCastKind() == CK_ArrayToPointerDecay) {
+          // If it's an actual array, and not a pointer, then it's elements
+          // are protected by GUARDED_BY, not PT_GUARDED_BY;
+          checkAccess(CE->getSubExpr(), AK);
+          return;
+        }
+        Exp = CE->getSubExpr();
+        continue;
+      }
+      break;
+    }
+  }
+  else
+    Exp = Exp->IgnoreParenCasts();
 
   const ValueDecl *D = getValueDecl(Exp);
   if (!D || !D->hasAttrs())
@@ -2095,6 +2122,7 @@ void BuildLockset::VisitBinaryOperator(BinaryOperator *BO) {
   checkAccess(BO->getLHS(), AK_Written);
 }
 
+
 /// Whenever we do an LValue to Rvalue cast, we are reading a variable and
 /// need to ensure we hold any required mutexes.
 /// FIXME: Deal with non-primitive types.
@@ -2135,7 +2163,8 @@ void BuildLockset::VisitCallExpr(CallExpr *Exp) {
         break;
       }
       case OO_Star:
-      case OO_Arrow: {
+      case OO_Arrow:
+      case OO_Subscript: {
         if (Analyzer->Handler.issueBetaWarnings()) {
           const Expr *Obj = OE->getArg(0);
           checkAccess(Obj, AK_Read);

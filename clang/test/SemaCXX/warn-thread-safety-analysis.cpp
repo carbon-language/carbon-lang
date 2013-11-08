@@ -80,6 +80,7 @@ public:
   T* get()        const { return ptr_; }
   T* operator->() const { return ptr_; }
   T& operator*()  const { return *ptr_; }
+  T& operator[](int i) const { return ptr_[i]; }
 
 private:
   T* ptr_;
@@ -4156,16 +4157,22 @@ class Cell {
 
 // This mainly duplicates earlier tests, but just to make sure...
 class PtGuardedBySanityTest {
-  Mutex mu1;
-  Mutex mu2;
-  int*  a GUARDED_BY(mu1) PT_GUARDED_BY(mu2);
-  Cell* c GUARDED_BY(mu1) PT_GUARDED_BY(mu2);
+  Mutex  mu1;
+  Mutex  mu2;
+  int*   a GUARDED_BY(mu1) PT_GUARDED_BY(mu2);
+  Cell*  c GUARDED_BY(mu1) PT_GUARDED_BY(mu2);
+  int    sa[10] GUARDED_BY(mu1);
+  Cell   sc[10] GUARDED_BY(mu1);
 
   void test1() {
     mu1.Lock();
     if (a == 0) doSomething();  // OK, we don't dereference.
     a = 0;
     c = 0;
+    if (sa[0] == 42) doSomething();
+    sa[0] = 57;
+    if (sc[0].a == 42) doSomething();
+    sc[0].a = 57;
     mu1.Unlock();
   }
 
@@ -4179,6 +4186,11 @@ class PtGuardedBySanityTest {
 
     if ((*c).a == 0) doSomething();  // expected-warning {{reading the value pointed to by 'c' requires locking 'mu2'}}
     (*c).a = 0;                      // expected-warning {{writing the value pointed to by 'c' requires locking 'mu2' exclusively}}
+
+    if (a[0] == 42) doSomething();     // expected-warning {{reading the value pointed to by 'a' requires locking 'mu2'}}
+    a[0] = 57;                         // expected-warning {{writing the value pointed to by 'a' requires locking 'mu2' exclusively}}
+    if (c[0].a == 42) doSomething();   // expected-warning {{reading the value pointed to by 'c' requires locking 'mu2'}}
+    c[0].a = 57;                       // expected-warning {{writing the value pointed to by 'c' requires locking 'mu2' exclusively}}
     mu1.Unlock();
   }
 
@@ -4192,10 +4204,29 @@ class PtGuardedBySanityTest {
 
     if ((*c).a == 0) doSomething();  // expected-warning {{reading variable 'c' requires locking 'mu1'}}
     (*c).a = 0;                      // expected-warning {{reading variable 'c' requires locking 'mu1'}}
+
+    if (a[0] == 42) doSomething();     // expected-warning {{reading variable 'a' requires locking 'mu1'}}
+    a[0] = 57;                         // expected-warning {{reading variable 'a' requires locking 'mu1'}}
+    if (c[0].a == 42) doSomething();   // expected-warning {{reading variable 'c' requires locking 'mu1'}}
+    c[0].a = 57;                       // expected-warning {{reading variable 'c' requires locking 'mu1'}}
     mu2.Unlock();
   }
 
-  void test4() {
+  void test4() {  // Literal arrays
+    if (sa[0] == 42) doSomething();     // expected-warning {{reading variable 'sa' requires locking 'mu1'}}
+    sa[0] = 57;                         // expected-warning {{writing variable 'sa' requires locking 'mu1' exclusively}}
+    if (sc[0].a == 42) doSomething();   // expected-warning {{reading variable 'sc' requires locking 'mu1'}}
+    sc[0].a = 57;                       // expected-warning {{writing variable 'sc' requires locking 'mu1' exclusively}}
+
+    if (*sa == 42) doSomething();       // expected-warning {{reading variable 'sa' requires locking 'mu1'}}
+    *sa = 57;                           // expected-warning {{writing variable 'sa' requires locking 'mu1' exclusively}}
+    if ((*sc).a == 42) doSomething();   // expected-warning {{reading variable 'sc' requires locking 'mu1'}}
+    (*sc).a = 57;                       // expected-warning {{writing variable 'sc' requires locking 'mu1' exclusively}}
+    if (sc->a == 42) doSomething();     // expected-warning {{reading variable 'sc' requires locking 'mu1'}}
+    sc->a = 57;                         // expected-warning {{writing variable 'sc' requires locking 'mu1' exclusively}}
+  }
+
+  void test5() {
     mu1.ReaderLock();    // OK -- correct use.
     mu2.Lock();
     if (*a == 0) doSomething();
@@ -4227,6 +4258,9 @@ class SmartPtr_PtGuardedBy_Test {
     *sp = 0;
     sq->a = 0;
 
+    if (sp[0] == 0) doSomething();
+    sp[0] = 0;
+
     mu2.Unlock();
     mu1.Unlock();
   }
@@ -4234,10 +4268,15 @@ class SmartPtr_PtGuardedBy_Test {
   void test2() {
     mu2.Lock();
 
-    sp.get();                     // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
-    if (*sp == 0) doSomething();  // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
-    *sp = 0;                      // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
-    sq->a = 0;                    // expected-warning {{reading variable 'sq' requires locking 'mu1'}}
+    sp.get();                      // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
+    if (*sp == 0) doSomething();   // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
+    *sp = 0;                       // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
+    sq->a = 0;                     // expected-warning {{reading variable 'sq' requires locking 'mu1'}}
+
+    if (sp[0] == 0) doSomething();   // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
+    sp[0] = 0;                       // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
+    if (sq[0].a == 0) doSomething(); // expected-warning {{reading variable 'sq' requires locking 'mu1'}}
+    sq[0].a = 0;                     // expected-warning {{reading variable 'sq' requires locking 'mu1'}}
 
     mu2.Unlock();
   }
@@ -4246,9 +4285,14 @@ class SmartPtr_PtGuardedBy_Test {
     mu1.Lock();
 
     sp.get();
-    if (*sp == 0) doSomething();  // expected-warning {{reading the value pointed to by 'sp' requires locking 'mu2'}}
-    *sp = 0;                      // expected-warning {{reading the value pointed to by 'sp' requires locking 'mu2'}}
-    sq->a = 0;                    // expected-warning {{reading the value pointed to by 'sq' requires locking 'mu2'}}
+    if (*sp == 0) doSomething();   // expected-warning {{reading the value pointed to by 'sp' requires locking 'mu2'}}
+    *sp = 0;                       // expected-warning {{reading the value pointed to by 'sp' requires locking 'mu2'}}
+    sq->a = 0;                     // expected-warning {{reading the value pointed to by 'sq' requires locking 'mu2'}}
+
+    if (sp[0] == 0) doSomething();   // expected-warning {{reading the value pointed to by 'sp' requires locking 'mu2'}}
+    sp[0] = 0;                       // expected-warning {{reading the value pointed to by 'sp' requires locking 'mu2'}}
+    if (sq[0].a == 0) doSomething(); // expected-warning {{reading the value pointed to by 'sq' requires locking 'mu2'}}
+    sq[0].a = 0;                     // expected-warning {{reading the value pointed to by 'sq' requires locking 'mu2'}}
 
     mu1.Unlock();
   }
