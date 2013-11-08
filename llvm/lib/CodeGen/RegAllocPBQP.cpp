@@ -95,6 +95,7 @@ public:
       : MachineFunctionPass(ID), builder(b.take()), customPassID(cPassID) {
     initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
     initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
+    initializeCalculateSpillWeightsPass(*PassRegistry::getPassRegistry());
     initializeLiveStacksPass(*PassRegistry::getPassRegistry());
     initializeVirtRegMapPass(*PassRegistry::getPassRegistry());
   }
@@ -431,6 +432,7 @@ void RegAllocPBQP::getAnalysisUsage(AnalysisUsage &au) const {
   //au.addRequiredID(SplitCriticalEdgesID);
   if (customPassID)
     au.addRequiredID(*customPassID);
+  au.addRequired<CalculateSpillWeights>();
   au.addRequired<LiveStacks>();
   au.addPreserved<LiveStacks>();
   au.addRequired<MachineBlockFrequencyInfo>();
@@ -548,8 +550,6 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
   lis = &getAnalysis<LiveIntervals>();
   lss = &getAnalysis<LiveStacks>();
   mbfi = &getAnalysis<MachineBlockFrequencyInfo>();
-
-  calculateSpillWeights(*lis, MF, getAnalysis<MachineLoopInfo>(), *mbfi);
 
   vrm = &getAnalysis<VirtRegMap>();
   spiller.reset(createInlineSpiller(*this, MF, *vrm));

@@ -22,21 +22,38 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
 
-void llvm::calculateSpillWeights(LiveIntervals &LIS,
-                           MachineFunction &MF,
-                           const MachineLoopInfo &MLI,
-                           const MachineBlockFrequencyInfo &MBFI) {
+char CalculateSpillWeights::ID = 0;
+INITIALIZE_PASS_BEGIN(CalculateSpillWeights, "calcspillweights",
+                "Calculate spill weights", false, false)
+INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
+INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
+INITIALIZE_PASS_END(CalculateSpillWeights, "calcspillweights",
+                "Calculate spill weights", false, false)
+
+void CalculateSpillWeights::getAnalysisUsage(AnalysisUsage &au) const {
+  au.addRequired<LiveIntervals>();
+  au.addRequired<MachineBlockFrequencyInfo>();
+  au.addRequired<MachineLoopInfo>();
+  au.setPreservesAll();
+  MachineFunctionPass::getAnalysisUsage(au);
+}
+
+bool CalculateSpillWeights::runOnMachineFunction(MachineFunction &MF) {
+
   DEBUG(dbgs() << "********** Compute Spill Weights **********\n"
                << "********** Function: " << MF.getName() << '\n');
 
+  LiveIntervals &LIS = getAnalysis<LiveIntervals>();
   MachineRegisterInfo &MRI = MF.getRegInfo();
-  VirtRegAuxInfo VRAI(MF, LIS, MLI, MBFI);
+  VirtRegAuxInfo VRAI(MF, LIS, getAnalysis<MachineLoopInfo>(),
+                      getAnalysis<MachineBlockFrequencyInfo>());
   for (unsigned i = 0, e = MRI.getNumVirtRegs(); i != e; ++i) {
     unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
     if (MRI.reg_nodbg_empty(Reg))
       continue;
     VRAI.CalculateWeightAndHint(LIS.getInterval(Reg));
   }
+  return false;
 }
 
 // Return the preferred allocation register for reg, given a COPY instruction.
