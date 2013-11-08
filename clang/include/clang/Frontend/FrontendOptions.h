@@ -183,8 +183,7 @@ public:
     ObjCMT_MigrateAll = (ObjCMT_Literals | ObjCMT_Subscripting |
                          ObjCMT_ReadonlyProperty | ObjCMT_ReadwriteProperty |
                          ObjCMT_Annotation | ObjCMT_Instancetype |
-                         ObjCMT_NsMacros | ObjCMT_ProtocolConformance |
-                         ObjCMT_ReturnsInnerPointerProperty)
+                         ObjCMT_NsMacros | ObjCMT_ProtocolConformance)
   };
   unsigned ObjCMTAction;
 
