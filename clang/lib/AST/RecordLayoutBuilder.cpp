@@ -2673,11 +2673,11 @@ ASTContext::BuildMicrosoftASTRecordLayout(const RecordDecl *D) const {
     return new (*this) ASTRecordLayout(
         *this, Builder.Size, Builder.Alignment,
         Builder.HasVFPtr && !Builder.PrimaryBase, Builder.HasVFPtr,
-        Builder.HasVBPtr && !Builder.SharedVBPtrBase, Builder.VBPtrOffset,
-        Builder.DataSize, Builder.FieldOffsets.data(),
+        Builder.VBPtrOffset, Builder.DataSize, Builder.FieldOffsets.data(),
         Builder.FieldOffsets.size(), Builder.DataSize,
         Builder.NonVirtualAlignment, CharUnits::Zero(), Builder.PrimaryBase,
-        false, Builder.AlignAfterVBases, Builder.Bases, Builder.VBases);
+        false, Builder.SharedVBPtrBase, Builder.AlignAfterVBases, Builder.Bases,
+        Builder.VBases);
   } else {
     Builder.layout(D);
     return new (*this) ASTRecordLayout(
@@ -2735,7 +2735,6 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
                                   Builder.Alignment,
                                   Builder.HasOwnVFPtr,
                                   RD->isDynamicClass(),
-                                  false,
                                   CharUnits::fromQuantity(-1),
                                   DataSize, 
                                   Builder.FieldOffsets.data(),
@@ -2745,7 +2744,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
                                   EmptySubobjects.SizeOfLargestEmptySubobject,
                                   Builder.PrimaryBase,
                                   Builder.PrimaryBaseIsVirtual,
-                                  true,
+                                  0, true,
                                   Builder.Bases, Builder.VBases);
   } else {
     RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/0);

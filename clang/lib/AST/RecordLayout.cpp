@@ -44,7 +44,6 @@ ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx, CharUnits size,
 ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx,
                                  CharUnits size, CharUnits alignment,
                                  bool hasOwnVFPtr, bool hasVFPtr,
-                                 bool hasOwnVBPtr,
                                  CharUnits vbptroffset,
                                  CharUnits datasize,
                                  const uint64_t *fieldoffsets,
@@ -54,6 +53,7 @@ ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx,
                                  CharUnits SizeOfLargestEmptySubobject,
                                  const CXXRecordDecl *PrimaryBase,
                                  bool IsPrimaryBaseVirtual,
+                                 const CXXRecordDecl *BaseSharingVBPtr,
                                  bool AlignAfterVBases,
                                  const BaseOffsetsMapTy& BaseOffsets,
                                  const VBaseOffsetsMapTy& VBaseOffsets)
@@ -75,7 +75,7 @@ ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx,
   CXXInfo->HasOwnVFPtr = hasOwnVFPtr;
   CXXInfo->VBPtrOffset = vbptroffset;
   CXXInfo->HasVFPtr = hasVFPtr;
-  CXXInfo->HasOwnVBPtr = hasOwnVBPtr;
+  CXXInfo->BaseSharingVBPtr = BaseSharingVBPtr;
   CXXInfo->AlignAfterVBases = AlignAfterVBases;
 
 

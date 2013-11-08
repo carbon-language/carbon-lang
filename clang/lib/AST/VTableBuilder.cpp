@@ -3363,30 +3363,17 @@ void MicrosoftVTableContext::computeVBTableRelatedInformation(
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
   BasesSetVectorTy VisitedBases;
 
-  // First, see if the Derived class shared the vbptr
-  // with the first non-virtual base.
-  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-       E = RD->bases_end(); I != E; ++I) {
-    if (I->isVirtual())
-      continue;
-
-    const CXXRecordDecl *CurBase = I->getType()->getAsCXXRecordDecl();
-    CharUnits DerivedVBPtrOffset = Layout.getVBPtrOffset(),
-              BaseOffset = Layout.getBaseClassOffset(CurBase);
-    const ASTRecordLayout &BaseLayout = Context.getASTRecordLayout(CurBase);
-    if (!BaseLayout.hasVBPtr() ||
-        DerivedVBPtrOffset != BaseOffset + BaseLayout.getVBPtrOffset())
-      continue;
-
+  // First, see if the Derived class shared the vbptr with a non-virtual base.
+  if (const CXXRecordDecl *VBPtrBase = Layout.getBaseSharingVBPtr()) {
     // If the Derived class shares the vbptr with a non-virtual base,
     // it inherits its vbase indices.
-    computeVBTableRelatedInformation(CurBase);
-    for (CXXRecordDecl::base_class_const_iterator J = CurBase->vbases_begin(),
-         F = CurBase->vbases_end(); J != F; ++J) {
-      const CXXRecordDecl *SubVBase = J->getType()->getAsCXXRecordDecl();
-      assert(VBTableIndices.count(ClassPairTy(CurBase, SubVBase)));
+    computeVBTableRelatedInformation(VBPtrBase);
+    for (CXXRecordDecl::base_class_const_iterator I = VBPtrBase->vbases_begin(),
+         E = VBPtrBase->vbases_end(); I != E; ++I) {
+      const CXXRecordDecl *SubVBase = I->getType()->getAsCXXRecordDecl();
+      assert(VBTableIndices.count(ClassPairTy(VBPtrBase, SubVBase)));
       VBTableIndices[ClassPairTy(RD, SubVBase)] =
-          VBTableIndices[ClassPairTy(CurBase, SubVBase)];
+          VBTableIndices[ClassPairTy(VBPtrBase, SubVBase)];
       VisitedBases.insert(SubVBase);
     }
   }
