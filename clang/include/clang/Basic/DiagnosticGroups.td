@@ -333,6 +333,7 @@ def UnknownAttributes : DiagGroup<"attributes">;
 def IgnoredAttributes : DiagGroup<"ignored-attributes">;
 def UnnamedTypeTemplateArgs : DiagGroup<"unnamed-type-template-args",
                                         [CXX98CompatUnnamedTypeTemplateArgs]>;
+def UnsupportedFriend : DiagGroup<"unsupported-friend">;
 def UnusedArgument : DiagGroup<"unused-argument">;
 def UnusedSanitizeArgument : DiagGroup<"unused-sanitize-argument">;
 def UnusedCommandLineArgument : DiagGroup<"unused-command-line-argument",

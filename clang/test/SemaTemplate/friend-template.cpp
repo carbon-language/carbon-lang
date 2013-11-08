@@ -232,16 +232,23 @@ namespace PR10660 {
 }
 
 namespace rdar11147355 {
-  template <class T> 
+  template <class T>
   struct A {
     template <class U> class B;
-    template <class S> template <class U> friend class A<S>::B; 
+    template <class S> template <class U> friend class A<S>::B; // expected-warning {{dependent nested name specifier 'A<S>::' for friend template declaration is not supported; ignoring this friend declaration}}
+  private:
+    int n; // expected-note {{here}}
   };
-  
+
   template <class S> template <class U> class A<S>::B {
-  }; 
-  
+  public:
+    // FIXME: This should be permitted.
+    int f(A<S*> a) { return a.n; } // expected-error {{private}}
+  };
+
   A<double>::B<double>  ab;
+  A<double*> a;
+  int k = ab.f(a); // expected-note {{instantiation of}}
 }
 
 namespace RedeclUnrelated {

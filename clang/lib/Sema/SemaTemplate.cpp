@@ -877,10 +877,11 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
       // FIXME: Horrible, horrible hack! We can't currently represent this
       // in the AST, and historically we have just ignored such friend
       // class templates, so don't complain here.
-      if (TUK != TUK_Friend)
-        Diag(NameLoc, diag::err_template_qualified_declarator_no_match)
+      Diag(NameLoc, TUK == TUK_Friend
+                        ? diag::warn_template_qualified_friend_ignored
+                        : diag::err_template_qualified_declarator_no_match)
           << SS.getScopeRep() << SS.getRange();
-      return true;
+      return TUK != TUK_Friend;
     }
 
     if (RequireCompleteDeclContext(SS, SemanticContext))

@@ -36,10 +36,17 @@ class A {
 public:
   class foo {};
   static int y;
-  template <typename S> friend class B<S>::ty;
+  template <typename S> friend class B<S>::ty; // expected-warning {{dependent nested name specifier 'B<S>::' for friend class declaration is not supported}}
 };
 
-template <typename T> class B { typedef int ty; };
+template<typename T> class B { typedef int ty; };
+
+template<> class B<int> {
+  class ty {
+    static int f(A<int> &a) { return a.y; } // ok, befriended
+  };
+};
+int f(A<char> &a) { return a.y; } // FIXME: should be an error
 
 struct {
   // Ill-formed
@@ -56,7 +63,7 @@ struct {
       friend
 
   float;
-  template<typename T> friend class A<T>::foo;
+  template<typename T> friend class A<T>::foo; // expected-warning {{not supported}}
 } a;
 
 void testA() { (void)sizeof(A<int>); }

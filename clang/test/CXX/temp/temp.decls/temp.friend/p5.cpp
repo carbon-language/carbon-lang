@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
-// expected-no-diagnostics
 
 namespace test0 {
   template <class T> class A {
@@ -7,7 +6,8 @@ namespace test0 {
   };
 
   class B {
-    template <class T> friend class A<T>::Member;
+    template <class T> friend class A<T>::Member; // expected-warning {{not supported}}
+    int n;
   };
 
   A<int> a;
@@ -68,7 +68,7 @@ namespace test3 {
 
   template <class U> class C {
     int i;
-    template <class T> friend struct A<T>::Inner;
+    template <class T> friend struct A<T>::Inner; // expected-warning {{not supported}}
   };
 
   template <class T> int A<T>::Inner::foo() {

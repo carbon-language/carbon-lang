@@ -11410,6 +11410,8 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
   // Handle the case of a templated-scope friend class.  e.g.
   //   template <class T> class A<T>::B;
   // FIXME: we don't support these right now.
+  Diag(NameLoc, diag::warn_template_qualified_friend_unsupported)
+    << SS.getScopeRep() << SS.getRange() << cast<CXXRecordDecl>(CurContext);
   ElaboratedTypeKeyword ETK = TypeWithKeyword::getKeywordForTagTypeKind(Kind);
   QualType T = Context.getDependentNameType(ETK, SS.getScopeRep(), Name);
   TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
