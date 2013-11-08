@@ -2925,9 +2925,9 @@ namespace rdar14960554 {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when collection is empty</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when collection is empty</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -12896,9 +12896,9 @@ namespace rdar14960554 {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when collection is empty</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when collection is empty</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -13415,9 +13415,9 @@ namespace rdar14960554 {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when range is empty</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when range is empty</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -14150,9 +14150,9 @@ namespace rdar14960554 {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when collection is empty</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when collection is empty</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -14669,9 +14669,9 @@ namespace rdar14960554 {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when range is empty</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when range is empty</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -15467,9 +15467,9 @@ namespace rdar14960554 {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when collection is empty</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when collection is empty</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -15986,9 +15986,9 @@ namespace rdar14960554 {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when range is empty</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when range is empty</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -16881,9 +16881,9 @@ namespace rdar14960554 {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when collection is empty</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when collection is empty</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -17400,9 +17400,9 @@ namespace rdar14960554 {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when range is empty</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when range is empty</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>

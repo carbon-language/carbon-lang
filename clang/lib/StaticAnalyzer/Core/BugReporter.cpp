@@ -1629,6 +1629,10 @@ static const Stmt *getTerminatorCondition(const CFGBlock *B) {
 
 static const char StrEnteringLoop[] = "Entering loop body";
 static const char StrLoopBodyZero[] = "Loop body executed 0 times";
+static const char StrLoopRangeEmpty[] =
+  "Loop body skipped when range is empty";
+static const char StrLoopCollectionEmpty[] =
+  "Loop body skipped when collection is empty";
 
 static bool
 GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
@@ -1827,7 +1831,13 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
 
             if (isJumpToFalseBranch(&*BE)) {
               if (!IsInLoopBody) {
-                str = StrLoopBodyZero;
+                if (isa<ObjCForCollectionStmt>(Term)) {
+                  str = StrLoopCollectionEmpty;
+                } else if (isa<CXXForRangeStmt>(Term)) {
+                  str = StrLoopRangeEmpty;
+                } else {
+                  str = StrLoopBodyZero;
+                }
               }
             } else {
               str = StrEnteringLoop;
@@ -2072,7 +2082,8 @@ static void simplifySimpleBranches(PathPieces &pieces) {
       PathDiagnosticEventPiece *EV = dyn_cast<PathDiagnosticEventPiece>(*NextI);
       if (EV) {
         StringRef S = EV->getString();
-        if (S == StrEnteringLoop || S == StrLoopBodyZero) {
+        if (S == StrEnteringLoop || S == StrLoopBodyZero ||
+            S == StrLoopCollectionEmpty || S == StrLoopRangeEmpty) {
           ++NextI;
           continue;
         }

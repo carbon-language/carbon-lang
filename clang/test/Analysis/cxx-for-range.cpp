@@ -1133,9 +1133,9 @@ void testLoopErrorInRange() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when range is empty</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when range is empty</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1550,9 +1550,9 @@ void testLoopErrorInRange() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when range is empty</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Loop body executed 0 times</string>
+// CHECK-NEXT:      <string>Loop body skipped when range is empty</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
