@@ -123,6 +123,8 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
                    Style.AlwaysBreakBeforeMultilineStrings);
     IO.mapOptional("BreakBeforeBinaryOperators",
                    Style.BreakBeforeBinaryOperators);
+    IO.mapOptional("BreakBeforeTernaryOperators",
+                   Style.BreakBeforeTernaryOperators);
     IO.mapOptional("BreakConstructorInitializersBeforeComma",
                    Style.BreakConstructorInitializersBeforeComma);
     IO.mapOptional("BinPackParameters", Style.BinPackParameters);
@@ -194,6 +196,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.AlwaysBreakTemplateDeclarations = false;
   LLVMStyle.BinPackParameters = true;
   LLVMStyle.BreakBeforeBinaryOperators = false;
+  LLVMStyle.BreakBeforeTernaryOperators = true;
   LLVMStyle.BreakBeforeBraces = FormatStyle::BS_Attach;
   LLVMStyle.BreakConstructorInitializersBeforeComma = false;
   LLVMStyle.ColumnLimit = 80;
@@ -240,6 +243,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.AlwaysBreakTemplateDeclarations = true;
   GoogleStyle.BinPackParameters = true;
   GoogleStyle.BreakBeforeBinaryOperators = false;
+  GoogleStyle.BreakBeforeTernaryOperators = true;
   GoogleStyle.BreakBeforeBraces = FormatStyle::BS_Attach;
   GoogleStyle.BreakConstructorInitializersBeforeComma = false;
   GoogleStyle.ColumnLimit = 80;

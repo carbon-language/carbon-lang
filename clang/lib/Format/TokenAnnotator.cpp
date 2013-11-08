@@ -1417,6 +1417,16 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   const FormatToken &Left = *Right.Previous;
   if (Right.Type == TT_StartOfName || Right.is(tok::kw_operator))
     return true;
+  if (Right.isTrailingComment())
+    // We rely on MustBreakBefore being set correctly here as we should not
+    // change the "binding" behavior of a comment.
+    return false;
+  if (Left.is(tok::question) && Right.is(tok::colon))
+    return false;
+  if (Right.Type == TT_ConditionalExpr || Right.is(tok::question))
+    return Style.BreakBeforeTernaryOperators;
+  if (Left.Type == TT_ConditionalExpr || Left.is(tok::question))
+    return !Style.BreakBeforeTernaryOperators;
   if (Right.is(tok::colon) &&
       (Right.Type == TT_DictLiteral || Right.Type == TT_ObjCMethodExpr))
     return false;
@@ -1429,10 +1439,6 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return true;
   if (Left.ClosesTemplateDeclaration)
     return true;
-  if ((Right.Type == TT_ConditionalExpr &&
-       !(Right.is(tok::colon) && Left.is(tok::question))) ||
-      Right.is(tok::question))
-    return true;
   if (Right.Type == TT_RangeBasedForLoopColon ||
       Right.Type == TT_OverloadedOperatorLParen ||
       Right.Type == TT_OverloadedOperator)
@@ -1442,8 +1448,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   if (Right.Type == TT_RangeBasedForLoopColon)
     return false;
   if (Left.Type == TT_PointerOrReference || Left.Type == TT_TemplateCloser ||
-      Left.Type == TT_UnaryOperator || Left.Type == TT_ConditionalExpr ||
-      Left.isOneOf(tok::question, tok::kw_operator))
+      Left.Type == TT_UnaryOperator || Left.is(tok::kw_operator))
     return false;
   if (Left.is(tok::equal) && Line.Type == LT_VirtualFunctionDecl)
     return false;
@@ -1456,10 +1461,6 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
       return false;
   }
   if (Right.Type == TT_ImplicitStringLiteral)
-    return false;
-  if (Right.isTrailingComment())
-    // We rely on MustBreakBefore being set correctly here as we should not
-    // change the "binding" behavior of a comment.
     return false;
 
   if (Right.is(tok::r_paren) || Right.Type == TT_TemplateCloser)

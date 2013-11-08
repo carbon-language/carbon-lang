@@ -186,6 +186,9 @@ struct FormatStyle {
   /// \brief If \c true, binary operators will be placed after line breaks.
   bool BreakBeforeBinaryOperators;
 
+  /// \brief If \c true, ternary operators will be placed after line breaks.
+  bool BreakBeforeTernaryOperators;
+
   /// \brief Different ways to attach braces to their surrounding context.
   enum BraceBreakingStyle {
     /// Always attach braces to surrounding context.
@@ -261,6 +264,7 @@ struct FormatStyle {
                R.AlwaysBreakBeforeMultilineStrings &&
            BinPackParameters == R.BinPackParameters &&
            BreakBeforeBinaryOperators == R.BreakBeforeBinaryOperators &&
+           BreakBeforeTernaryOperators == R.BreakBeforeTernaryOperators &&
            BreakBeforeBraces == R.BreakBeforeBraces &&
            BreakConstructorInitializersBeforeComma ==
                R.BreakConstructorInitializersBeforeComma &&
