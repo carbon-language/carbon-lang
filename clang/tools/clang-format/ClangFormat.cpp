@@ -213,18 +213,8 @@ static bool format(std::string FileName) {
     Rewriter Rewrite(Sources, LangOptions());
     tooling::applyAllReplacements(Replaces, Rewrite);
     if (Inplace) {
-      if (Replaces.size() == 0)
-        return false; // Nothing changed, don't touch the file.
-
-      std::string ErrorInfo;
-      llvm::raw_fd_ostream FileStream(FileName.c_str(), ErrorInfo,
-                                      llvm::sys::fs::F_Binary);
-      if (!ErrorInfo.empty()) {
-        llvm::errs() << "Error while writing file: " << ErrorInfo << "\n";
+      if (Rewrite.overwriteChangedFiles())
         return true;
-      }
-      Rewrite.getEditBuffer(ID).write(FileStream);
-      FileStream.flush();
     } else {
       if (Cursor.getNumOccurrences() != 0)
         outs() << "{ \"Cursor\": " << tooling::shiftedCodePosition(
