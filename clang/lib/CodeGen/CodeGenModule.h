@@ -318,6 +318,9 @@ class CodeGenModule : public CodeGenTypeCache {
   llvm::DenseMap<QualType, llvm::Constant *> AtomicSetterHelperFnMap;
   llvm::DenseMap<QualType, llvm::Constant *> AtomicGetterHelperFnMap;
 
+  /// Map used to get unique type descriptor constants for sanitizers.
+  llvm::DenseMap<QualType, llvm::Constant *> TypeDescriptorMap;
+
   /// Map used to track internal linkage functions declared within
   /// extern "C" regions.
   typedef llvm::MapVector<IdentifierInfo *,
@@ -496,6 +499,13 @@ public:
   void setAtomicGetterHelperFnMap(QualType Ty,
                             llvm::Constant *Fn) {
     AtomicGetterHelperFnMap[Ty] = Fn;
+  }
+
+  llvm::Constant *getTypeDescriptor(QualType Ty) {
+    return TypeDescriptorMap[Ty];
+  }
+  void setTypeDescriptor(QualType Ty, llvm::Constant *C) {
+    TypeDescriptorMap[Ty] = C;
   }
 
   CGDebugInfo *getModuleDebugInfo() { return DebugInfo; }

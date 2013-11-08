@@ -7,8 +7,7 @@
 // CHECK: @[[LINE_100:.*]] = private unnamed_addr global {{.*}}, i32 100, i32 5 {{.*}} @[[INT]]
 // CHECK: @[[UINT:.*]] = private unnamed_addr constant { i16, i16, [15 x i8] } { i16 0, i16 10, [15 x i8] c"'unsigned int'\00" }
 // CHECK: @[[LINE_200:.*]] = private unnamed_addr global {{.*}}, i32 200, i32 5 {{.*}} @[[UINT]]
-// CHECK: @[[DIVINT:.*]] = private unnamed_addr constant { i16, i16, [6 x i8] } { i16 0, i16 11, [6 x i8] c"'int'\00" }
-// CHECK: @[[LINE_300:.*]] = private unnamed_addr global {{.*}}, i32 300, i32 5 {{.*}} @[[DIVINT]]
+// CHECK: @[[LINE_300:.*]] = private unnamed_addr global {{.*}}, i32 300, i32 5 {{.*}} @[[INT]]
 
 int32_t x;
 
