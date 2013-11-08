@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/Debug.h"
@@ -97,7 +98,7 @@ void StackMaps::serializeToStackMapSection() {
 
   // Create the section.
   const MCSection *StackMapSection =
-    OutContext.getObjectFileInfo().getStackMapSection();
+    OutContext.getObjectFileInfo()->getStackMapSection();
   AP.OutStreamer.SwitchSection(StackMapSection);
 
   // Emit a dummy symbol to force section inclusion.
