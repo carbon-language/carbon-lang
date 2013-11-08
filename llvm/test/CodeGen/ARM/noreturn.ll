@@ -2,8 +2,7 @@
 ; Test case from PR16882.
 target triple = "thumbv7s-apple-ios"
 
-; Function Attrs: noreturn
-define i32 @test1() #0 {
+define i32 @test1() {
 ; CHECK-LABEL: @test1
 ; CHECK-NOT: push
 entry:
@@ -11,7 +10,7 @@ entry:
   unreachable
 }
 
-; Function Attrs: noreturn
+; Function Attrs: noreturn nounwind
 declare void @overflow() #0
 
 define i32 @test2(i32 %x, i32 %y) {
@@ -35,4 +34,17 @@ if.end:                                           ; preds = %entry
   ret i32 %conv2
 }
 
-attributes #0 = { noreturn }
+; Test case for PR17825.
+define i32 @test3() {
+; CHECK-LABEL: @test3
+; CHECK: push
+entry:
+  tail call void @overflow_with_unwind() #1
+  unreachable
+}
+
+; Function Attrs: noreturn
+declare void @overflow_with_unwind() #1
+
+attributes #0 = { noreturn nounwind }
+attributes #1 = { noreturn }

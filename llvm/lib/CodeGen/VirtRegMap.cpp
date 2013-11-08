@@ -285,7 +285,11 @@ void VirtRegRewriter::rewrite() {
           if (!MO.isGlobal())
             continue;
           const Function *Func = dyn_cast<Function>(MO.getGlobal());
-          if (!Func || !Func->hasFnAttribute(Attribute::NoReturn))
+          if (!Func || !Func->hasFnAttribute(Attribute::NoReturn) ||
+              // We need to keep correct unwind information
+              // even if the function will not return, since the
+              // runtime may need it.
+              !Func->hasFnAttribute(Attribute::NoUnwind))
             continue;
           NoReturnInsts.insert(MI);
           break;
