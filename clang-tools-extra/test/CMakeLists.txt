@@ -38,6 +38,10 @@ set(CLANG_TOOLS_TEST_DEPS
   ExtraToolsUnitTests
   )
 
+if(HAVE_LIBEDIT)
+  list(APPEND CLANG_TOOLS_TEST_DEPS clang-query)
+endif()
+
 add_lit_testsuite(check-clang-tools "Running the Clang extra tools' regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}
   DEPENDS ${CLANG_TOOLS_TEST_DEPS}

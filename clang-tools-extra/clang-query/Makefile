@@ -1,4 +1,4 @@
-##===- tools/extra/test/Unit/Makefile ----------------------*- Makefile -*-===##
+##===- tools/extra/clang-query/Makefile --------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,8 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL := ../../..
+LIBRARYNAME := clangQuery
 include $(CLANG_LEVEL)/../../Makefile.config
-
-PARALLEL_DIRS := clang-apply-replacements clang-modernize clang-query clang-tidy
 
 include $(CLANG_LEVEL)/Makefile
