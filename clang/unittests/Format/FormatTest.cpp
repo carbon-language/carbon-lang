@@ -7081,6 +7081,15 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
             "    i++;\n"
             "}",
             format("if (aaaaaaaaaaaaaaa || bbbbbbbbbbbbbbb) { i++; }", Style));
+
+  // Don't automatically break all macro definitions (llvm.org/PR17842).
+  verifyFormat("#define aNumber 10", Style);
+  // However, generally keep the line breaks that the user authored.
+  EXPECT_EQ("#define aNumber \\\n"
+            "    10",
+            format("#define aNumber \\\n"
+                   " 10",
+                   Style));
 }
 
 TEST_F(FormatTest, FormatsProtocolBufferDefinitions) {

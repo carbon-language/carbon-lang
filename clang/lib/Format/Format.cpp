@@ -391,7 +391,8 @@ public:
     if (Indent > Style.ColumnLimit)
       return 0;
 
-    unsigned Limit = Style.ColumnLimit - Indent;
+    unsigned Limit =
+        Style.ColumnLimit == 0 ? UINT_MAX : Style.ColumnLimit - Indent;
     // If we already exceed the column limit, we set 'Limit' to 0. The different
     // tryMerge..() functions can then decide whether to still do merging.
     Limit = TheLine->Last->TotalLength > Limit
@@ -757,6 +758,7 @@ private:
     assert(!B.First->Previous);
     A.Last->Next = B.First;
     B.First->Previous = A.Last;
+    B.First->CanBreakBefore = true;
     unsigned LengthA = A.Last->TotalLength + B.First->SpacesRequiredBefore;
     for (FormatToken *Tok = B.First; Tok; Tok = Tok->Next) {
       Tok->TotalLength += LengthA;
