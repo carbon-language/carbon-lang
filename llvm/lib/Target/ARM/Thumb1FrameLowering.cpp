@@ -164,11 +164,17 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   AFI->setDPRCalleeSavedAreaOffset(DPRCSOffset);
   NumBytes = DPRCSOffset;
 
+  int FramePtrOffsetInBlock = 0;
+  if (tryFoldSPUpdateIntoPushPop(MF, prior(MBBI), NumBytes)) {
+    FramePtrOffsetInBlock = NumBytes;
+    NumBytes = 0;
+  }
+
   // Adjust FP so it point to the stack slot that contains the previous FP.
   if (HasFP) {
-    int FramePtrOffset = MFI->getObjectOffset(FramePtrSpillFI) + GPRCS1Size;
+    FramePtrOffsetInBlock += MFI->getObjectOffset(FramePtrSpillFI) + GPRCS1Size;
     AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
-      .addReg(ARM::SP).addImm(FramePtrOffset / 4)
+      .addReg(ARM::SP).addImm(FramePtrOffsetInBlock / 4)
       .setMIFlags(MachineInstr::FrameSetup));
     if (NumBytes > 508)
       // If offset is > 508 then sp cannot be adjusted in a single instruction,
@@ -292,8 +298,9 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
           &MBB.front() != MBBI &&
           prior(MBBI)->getOpcode() == ARM::tPOP) {
         MachineBasicBlock::iterator PMBBI = prior(MBBI);
-        emitSPUpdate(MBB, PMBBI, TII, dl, *RegInfo, NumBytes);
-      } else
+        if (!tryFoldSPUpdateIntoPushPop(MF, PMBBI, NumBytes))
+          emitSPUpdate(MBB, PMBBI, TII, dl, *RegInfo, NumBytes);
+      } else if (!tryFoldSPUpdateIntoPushPop(MF, MBBI, NumBytes))
         emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, NumBytes);
     }
   }

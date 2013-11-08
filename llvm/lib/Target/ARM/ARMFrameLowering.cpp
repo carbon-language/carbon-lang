@@ -93,11 +93,7 @@ static bool isCSRestore(MachineInstr *MI,
                         const ARMBaseInstrInfo &TII,
                         const uint16_t *CSRegs) {
   // Integer spill area is handled with "pop".
-  if (MI->getOpcode() == ARM::LDMIA_RET ||
-      MI->getOpcode() == ARM::t2LDMIA_RET ||
-      MI->getOpcode() == ARM::LDMIA_UPD ||
-      MI->getOpcode() == ARM::t2LDMIA_UPD ||
-      MI->getOpcode() == ARM::VLDMDIA_UPD) {
+  if (isPopOpcode(MI->getOpcode())) {
     // The first two operands are predicates. The last two are
     // imp-def and imp-use of SP. Check everything in between.
     for (int i = 5, e = MI->getNumOperands(); i != e; ++i)
@@ -221,42 +217,37 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   }
 
   // Move past area 1.
-  if (GPRCS1Size > 0) MBBI++;
+  MachineBasicBlock::iterator LastPush = MBB.end(), FramePtrPush;
+  if (GPRCS1Size > 0)
+    FramePtrPush = LastPush = MBBI++;
 
   // Determine starting offsets of spill areas.
   bool HasFP = hasFP(MF);
   unsigned DPRCSOffset  = NumBytes - (GPRCS1Size + GPRCS2Size + DPRCSSize);
   unsigned GPRCS2Offset = DPRCSOffset + DPRCSSize;
   unsigned GPRCS1Offset = GPRCS2Offset + GPRCS2Size;
-  if (HasFP)
+  int FramePtrOffsetInPush = 0;
+  if (HasFP) {
+    FramePtrOffsetInPush = MFI->getObjectOffset(FramePtrSpillFI) + GPRCS1Size;
     AFI->setFramePtrSpillOffset(MFI->getObjectOffset(FramePtrSpillFI) +
                                 NumBytes);
+  }
   AFI->setGPRCalleeSavedArea1Offset(GPRCS1Offset);
   AFI->setGPRCalleeSavedArea2Offset(GPRCS2Offset);
   AFI->setDPRCalleeSavedAreaOffset(DPRCSOffset);
 
-  // Set FP to point to the stack slot that contains the previous FP.
-  // For iOS, FP is R7, which has now been stored in spill area 1.
-  // Otherwise, if this is not iOS, all the callee-saved registers go
-  // into spill area 1, including the FP in R11.  In either case, it is
-  // now safe to emit this assignment.
-  if (HasFP) {
-    int FramePtrOffset = MFI->getObjectOffset(FramePtrSpillFI) + GPRCS1Size;
-    emitRegPlusImmediate(!AFI->isThumbFunction(), MBB, MBBI, dl, TII,
-                         FramePtr, ARM::SP, FramePtrOffset,
-                         MachineInstr::FrameSetup);
-  }
-
   // Move past area 2.
-  if (GPRCS2Size > 0) MBBI++;
+  if (GPRCS2Size > 0) {
+    LastPush = MBBI++;
+  }
 
   // Move past area 3.
   if (DPRCSSize > 0) {
-    MBBI++;
+    LastPush = MBBI++;
     // Since vpush register list cannot have gaps, there may be multiple vpush
     // instructions in the prologue.
     while (MBBI->getOpcode() == ARM::VSTMDDB_UPD)
-      MBBI++;
+      LastPush = MBBI++;
   }
 
   // Move past the aligned DPRCS2 area.
@@ -272,8 +263,12 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   if (NumBytes) {
     // Adjust SP after all the callee-save spills.
-    emitSPUpdate(isARM, MBB, MBBI, dl, TII, -NumBytes,
-                 MachineInstr::FrameSetup);
+    if (tryFoldSPUpdateIntoPushPop(MF, LastPush, NumBytes))
+      FramePtrOffsetInPush += NumBytes;
+    else
+      emitSPUpdate(isARM, MBB, MBBI, dl, TII, -NumBytes,
+                   MachineInstr::FrameSetup);
+
     if (HasFP && isARM)
       // Restore from fp only in ARM mode: e.g. sub sp, r7, #24
       // Note it's not safe to do this in Thumb2 mode because it would have
@@ -285,6 +280,18 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
       // The interrupt handler can end up clobbering the registers.
       AFI->setShouldRestoreSPFromFP(true);
   }
+
+  // Set FP to point to the stack slot that contains the previous FP.
+  // For iOS, FP is R7, which has now been stored in spill area 1.
+  // Otherwise, if this is not iOS, all the callee-saved registers go
+  // into spill area 1, including the FP in R11.  In either case, it
+  // is in area one and the adjustment needs to take place just after
+  // that push.
+  if (HasFP)
+    emitRegPlusImmediate(!AFI->isThumbFunction(), MBB, ++FramePtrPush, dl, TII,
+                         FramePtr, ARM::SP, FramePtrOffsetInPush,
+                         MachineInstr::FrameSetup);
+
 
   if (STI.isTargetELF() && hasFP(MF))
     MFI->setOffsetAdjustment(MFI->getOffsetAdjustment() -
@@ -380,12 +387,17 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
     if (NumBytes != 0)
       emitSPUpdate(isARM, MBB, MBBI, dl, TII, NumBytes);
   } else {
+    MachineBasicBlock::iterator FirstPop = MBBI;
+
     // Unwind MBBI to point to first LDR / VLDRD.
     const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs(&MF);
     if (MBBI != MBB.begin()) {
-      do
+      do {
+        if (isPopOpcode(MBBI->getOpcode()))
+          FirstPop = MBBI;
+
         --MBBI;
-      while (MBBI != MBB.begin() && isCSRestore(MBBI, TII, CSRegs));
+      } while (MBBI != MBB.begin() && isCSRestore(MBBI, TII, CSRegs));
       if (!isCSRestore(MBBI, TII, CSRegs))
         ++MBBI;
     }
@@ -429,8 +441,8 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
                                  ARM::SP)
             .addReg(FramePtr));
       }
-    } else if (NumBytes)
-      emitSPUpdate(isARM, MBB, MBBI, dl, TII, NumBytes);
+    } else if (NumBytes && !tryFoldSPUpdateIntoPushPop(MF, FirstPop, NumBytes))
+        emitSPUpdate(isARM, MBB, MBBI, dl, TII, NumBytes);
 
     // Increment past our save areas.
     if (AFI->getDPRCalleeSavedAreaSize()) {

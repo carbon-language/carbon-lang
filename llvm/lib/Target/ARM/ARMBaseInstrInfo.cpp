@@ -1857,6 +1857,103 @@ void llvm::emitARMRegPlusImmediate(MachineBasicBlock &MBB,
   }
 }
 
+bool llvm::tryFoldSPUpdateIntoPushPop(MachineFunction &MF,
+                                      MachineInstr *MI,
+                                      unsigned NumBytes) {
+  // This optimisation potentially adds lots of load and store
+  // micro-operations, it's only really a great benefit to code-size.
+  if (!MF.getFunction()->hasFnAttribute(Attribute::MinSize))
+    return false;
+
+  // If only one register is pushed/popped, LLVM can use an LDR/STR
+  // instead. We can't modify those so make sure we're dealing with an
+  // instruction we understand.
+  bool IsPop = isPopOpcode(MI->getOpcode());
+  bool IsPush = isPushOpcode(MI->getOpcode());
+  if (!IsPush && !IsPop)
+    return false;
+
+  bool IsVFPPushPop = MI->getOpcode() == ARM::VSTMDDB_UPD ||
+                      MI->getOpcode() == ARM::VLDMDIA_UPD;
+  bool IsT1PushPop = MI->getOpcode() == ARM::tPUSH ||
+                     MI->getOpcode() == ARM::tPOP ||
+                     MI->getOpcode() == ARM::tPOP_RET;
+
+  assert((IsT1PushPop || (MI->getOperand(0).getReg() == ARM::SP &&
+                          MI->getOperand(1).getReg() == ARM::SP)) &&
+         "trying to fold sp update into non-sp-updating push/pop");
+
+  // The VFP push & pop act on D-registers, so we can only fold an adjustment
+  // by a multiple of 8 bytes in correctly. Similarly rN is 4-bytes. Don't try
+  // if this is violated.
+  if (NumBytes % (IsVFPPushPop ? 8 : 4) != 0)
+    return false;
+
+  // ARM and Thumb2 push/pop insts have explicit "sp, sp" operands (+
+  // pred) so the list starts at 4. Thumb1 starts after the predicate.
+  int RegListIdx = IsT1PushPop ? 2 : 4;
+
+  // Calculate the space we'll need in terms of registers.
+  unsigned FirstReg = MI->getOperand(RegListIdx).getReg();
+  unsigned RD0Reg, RegsNeeded;
+  if (IsVFPPushPop) {
+    RD0Reg = ARM::D0;
+    RegsNeeded = NumBytes / 8;
+  } else {
+    RD0Reg = ARM::R0;
+    RegsNeeded = NumBytes / 4;
+  }
+
+  // We're going to have to strip all list operands off before
+  // re-adding them since the order matters, so save the existing ones
+  // for later.
+  SmallVector<MachineOperand, 4> RegList;
+  for (int i = MI->getNumOperands() - 1; i >= RegListIdx; --i)
+    RegList.push_back(MI->getOperand(i));
+
+  MachineBasicBlock *MBB = MI->getParent();
+  const TargetRegisterInfo *TRI = MF.getRegInfo().getTargetRegisterInfo();
+
+  // Now try to find enough space in the reglist to allocate NumBytes.
+  for (unsigned CurReg = FirstReg - 1; CurReg >= RD0Reg && RegsNeeded;
+       --CurReg, --RegsNeeded) {
+    if (!IsPop) {
+      // Pushing any register is completely harmless, mark the
+      // register involved as undef since we don't care about it in
+      // the slightest.
+      RegList.push_back(MachineOperand::CreateReg(CurReg, false, false,
+                                                  false, false, true));
+      continue;
+    }
+
+    // However, we can only pop an extra register if it's not live. Otherwise we
+    // might clobber a return value register. We assume that once we find a live
+    // return register all lower ones will be too so there's no use proceeding.
+    if (MBB->computeRegisterLiveness(TRI, CurReg, MI) !=
+        MachineBasicBlock::LQR_Dead)
+      return false;
+
+    // Mark the unimportant registers as <def,dead> in the POP.
+    RegList.push_back(MachineOperand::CreateReg(CurReg, true, false, true));
+  }
+
+  if (RegsNeeded > 0)
+    return false;
+
+  // Finally we know we can profitably perform the optimisation so go
+  // ahead: strip all existing registers off and add them back again
+  // in the right order.
+  for (int i = MI->getNumOperands() - 1; i >= RegListIdx; --i)
+    MI->RemoveOperand(i);
+
+  // Add the complete list back in.
+  MachineInstrBuilder MIB(MF, &*MI);
+  for (int i = RegList.size() - 1; i >= 0; --i)
+    MIB.addOperand(RegList[i]);
+
+  return true;
+}
+
 bool llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
                                 unsigned FrameReg, int &Offset,
                                 const ARMBaseInstrInfo &TII) {
