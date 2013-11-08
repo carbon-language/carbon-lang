@@ -790,7 +790,7 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
 // The map from container symbol to the container count symbol.
 // We currently will remember the last countainer count symbol encountered.
 REGISTER_MAP_WITH_PROGRAMSTATE(ContainerCountMap, SymbolRef, SymbolRef)
-REGISTER_MAP_WITH_PROGRAMSTATE(ContainerNonEmptyMap, SymbolRef, int)
+REGISTER_MAP_WITH_PROGRAMSTATE(ContainerNonEmptyMap, SymbolRef, bool)
 
 namespace {
 class ObjCLoopChecker
@@ -906,7 +906,7 @@ assumeCollectionNonEmpty(CheckerContext &C, ProgramStateRef State,
 
   const SymbolRef *CountS = State->get<ContainerCountMap>(CollectionS);
   if (!CountS) {
-    const int *KnownNonEmpty = State->get<ContainerNonEmptyMap>(CollectionS);
+    const bool *KnownNonEmpty = State->get<ContainerNonEmptyMap>(CollectionS);
     if (!KnownNonEmpty)
       return State->set<ContainerNonEmptyMap>(CollectionS, Assumption);
     return (Assumption == *KnownNonEmpty) ? State : NULL;
@@ -1036,7 +1036,7 @@ void ObjCLoopChecker::checkPostObjCMessage(const ObjCMethodCall &M,
     C.getSymbolManager().addSymbolDependency(ContainerS, CountS);
     State = State->set<ContainerCountMap>(ContainerS, CountS);
 
-    if (const int *NonEmpty = State->get<ContainerNonEmptyMap>(ContainerS)) {
+    if (const bool *NonEmpty = State->get<ContainerNonEmptyMap>(ContainerS)) {
       State = State->remove<ContainerNonEmptyMap>(ContainerS);
       State = assumeCollectionNonEmpty(C, State, ContainerS, *NonEmpty);
     }
