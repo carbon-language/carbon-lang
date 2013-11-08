@@ -2668,6 +2668,14 @@ TEST_F(FormatTest, ExpressionIndentationBreakingBeforeOperators) {
                "                    > ccccc) {\n"
                "}",
                Style);
+
+  // Forced by comments.
+  verifyFormat(
+      "unsigned ContentSize =\n"
+      "    sizeof(int16_t)   // DWARF ARange version number\n"
+      "    + sizeof(int32_t) // Offset of CU in the .debug_info section\n"
+      "    + sizeof(int8_t)  // Pointer Size (in bytes)\n"
+      "    + sizeof(int8_t); // Segment Size (in bytes)");
 }
 
 TEST_F(FormatTest, ConstructorInitializers) {

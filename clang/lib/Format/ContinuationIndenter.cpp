@@ -439,10 +439,12 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
   for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
     State.Stack[i].BreakBeforeParameter = true;
   }
-  const FormatToken *TokenBefore = Current.getPreviousNonComment();
-  if (TokenBefore && !TokenBefore->isOneOf(tok::comma, tok::semi) &&
-      TokenBefore->Type != TT_TemplateCloser &&
-      TokenBefore->Type != TT_BinaryOperator && !TokenBefore->opensScope())
+  if (PreviousNonComment &&
+      !PreviousNonComment->isOneOf(tok::comma, tok::semi) &&
+      PreviousNonComment->Type != TT_TemplateCloser &&
+      PreviousNonComment->Type != TT_BinaryOperator &&
+      Current.Type != TT_BinaryOperator && 
+      !PreviousNonComment->opensScope())
     State.Stack.back().BreakBeforeParameter = true;
 
   // If we break after { or the [ of an array initializer, we should also break
