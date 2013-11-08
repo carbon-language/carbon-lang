@@ -159,6 +159,8 @@ QueryRef ParseQuery(StringRef Line) {
   case PQK_Invalid:
     return new InvalidQuery("unknown command: " + CommandStr);
   }
+
+  llvm_unreachable("Invalid query kind");
 }
 
 } // namespace query
