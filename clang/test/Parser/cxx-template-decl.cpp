@@ -116,7 +116,7 @@ void f2() {
 
 // PR3844
 template <> struct S<int> { }; // expected-error{{explicit specialization of non-template struct 'S'}}
-template <> union U<int> { }; // expected-error{{explicit specialization of non-template union 'S'}}
+template <> union U<int> { }; // expected-error{{explicit specialization of non-template union 'U'}}
 
 namespace PR6184 {
   namespace N {
