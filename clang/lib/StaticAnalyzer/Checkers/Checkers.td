@@ -100,6 +100,10 @@ def CastToStructChecker : Checker<"CastToStruct">,
   HelpText<"Check for cast from non-struct pointer to struct pointer">,
   DescFile<"CastToStructChecker.cpp">;
 
+def IdenticalExprChecker : Checker<"IdenticalExpr">,
+  HelpText<"Warn about unintended use of identical expressions in operators">,
+  DescFile<"IdenticalExprChecker.cpp">;
+
 def FixedAddressChecker : Checker<"FixedAddr">,
   HelpText<"Check for assignment of a fixed address to a pointer">,
   DescFile<"FixedAddressChecker.cpp">;

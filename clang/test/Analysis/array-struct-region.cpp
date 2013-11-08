@@ -21,7 +21,7 @@ struct S {
 
 #if __cplusplus
 const struct S *operator -(const struct S &s) { return &s; }
-bool operator ~(const struct S &s) { return &s != &s; }
+bool operator ~(const struct S &s) { return (&s) != &s; }
 #endif
 
 
