@@ -418,7 +418,8 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
     // to do unless -objcmt-returns-innerpointer-property  option is on.
     if (!PropertyInferred ||
         (ASTMigrateActions & FrontendOptions::ObjCMT_ReturnsInnerPointerProperty))
-      migrateNsReturnsInnerPointer(Ctx, Method);
+      if (ASTMigrateActions & FrontendOptions::ObjCMT_Annotation)
+        migrateNsReturnsInnerPointer(Ctx, Method);
   }
   if (!(ASTMigrateActions & FrontendOptions::ObjCMT_ReturnsInnerPointerProperty))
     return;
