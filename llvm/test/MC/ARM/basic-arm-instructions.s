@@ -460,11 +460,11 @@ Lforward:
 @------------------------------------------------------------------------------
         cdp  p7, #1, c1, c1, c1, #4
         cdp2  p7, #1, c1, c1, c1, #4
-        cdp2   p10, #0, c6, c12, c0, #7
+        cdp2   p12, #0, c6, c12, c0, #7
 
 @ CHECK: cdp  p7, #1, c1, c1, c1, #4     @ encoding: [0x81,0x17,0x11,0xee]
 @ CHECK: cdp2  p7, #1, c1, c1, c1, #4    @ encoding: [0x81,0x17,0x11,0xfe]
-@ CHECK: cdp2  p10, #0, c6, c12, c0, #7   @ encoding: [0xe0,0x6a,0x0c,0xfe]
+@ CHECK: cdp2  p12, #0, c6, c12, c0, #7   @ encoding: [0xe0,0x6c,0x0c,0xfe]
 
         cdpne  p7, #1, c1, c1, c1, #4
 @ CHECK: cdpne  p7, #1, c1, c1, c1, #4     @ encoding: [0x81,0x17,0x11,0x1e]
@@ -805,8 +805,8 @@ Lforward:
         ldc2l p7, c1, [r8]
         ldc2l p8, c0, [r9, #-224]
         ldc2l p9, c1, [r10, #-120]!
-        ldc2l p10, c2, [r11], #16
-        ldc2l p11, c3, [r12], #-72
+        ldc2l p0, c2, [r11], #16
+        ldc2l p1, c3, [r12], #-72
 
         ldc p12, c4, [r0, #4]
         ldc p13, c5, [r1]
@@ -846,8 +846,8 @@ Lforward:
 @ CHECK: ldc2l	p7, c1, [r8]            @ encoding: [0x00,0x17,0xd8,0xfd]
 @ CHECK: ldc2l	p8, c0, [r9, #-224]     @ encoding: [0x38,0x08,0x59,0xfd]
 @ CHECK: ldc2l	p9, c1, [r10, #-120]!   @ encoding: [0x1e,0x19,0x7a,0xfd]
-@ CHECK: ldc2l	p10, c2, [r11], #16     @ encoding: [0x04,0x2a,0xfb,0xfc]
-@ CHECK: ldc2l	p11, c3, [r12], #-72    @ encoding: [0x12,0x3b,0x7c,0xfc]
+@ CHECK: ldc2l	p0, c2, [r11], #16      @ encoding: [0x04,0x20,0xfb,0xfc]
+@ CHECK: ldc2l	p1, c3, [r12], #-72     @ encoding: [0x12,0x31,0x7c,0xfc]
 
 @ CHECK: ldc	p12, c4, [r0, #4]       @ encoding: [0x01,0x4c,0x90,0xed]
 @ CHECK: ldc	p13, c5, [r1]           @ encoding: [0x00,0x5d,0x91,0xed]
@@ -1078,12 +1078,12 @@ Lforward:
         mrc  p14, #0, r1, c1, c2, #4
         mrc  p15, #7, apsr_nzcv, c15, c6, #6
         mrc2  p14, #0, r1, c1, c2, #4
-        mrc2  p10, #7, apsr_nzcv, c15, c0, #1
+        mrc2  p9, #7, apsr_nzcv, c15, c0, #1
 
 @ CHECK: mrc  p14, #0, r1, c1, c2, #4             @ encoding: [0x92,0x1e,0x11,0xee]
 @ CHECK: mrc  p15, #7, apsr_nzcv, c15, c6, #6     @ encoding: [0xd6,0xff,0xff,0xee]
 @ CHECK: mrc2  p14, #0, r1, c1, c2, #4            @ encoding: [0x92,0x1e,0x11,0xfe]
-@ CHECK: mrc2  p10, #7, apsr_nzcv, c15, c0, #1    @ encoding: [0x30,0xfa,0xff,0xfe]
+@ CHECK: mrc2  p9, #7, apsr_nzcv, c15, c0, #1     @ encoding: [0x30,0xf9,0xff,0xfe]
 
          mrceq  p15, #7, apsr_nzcv, c15, c6, #6
 @ CHECK: mrceq  p15, #7, apsr_nzcv, c15, c6, #6   @ encoding: [0xd6,0xff,0xff,0x0e]
@@ -2240,8 +2240,8 @@ Lforward:
         stc2l p7, c1, [r8]
         stc2l p8, c0, [r9, #-224]
         stc2l p9, c1, [r10, #-120]!
-        stc2l p10, c2, [r11], #16
-        stc2l p11, c3, [r12], #-72
+        stc2l p0, c2, [r11], #16
+        stc2l p1, c3, [r12], #-72
 
         stc p12, c4, [r0, #4]
         stc p13, c5, [r1]
@@ -2281,8 +2281,8 @@ Lforward:
 @ CHECK: stc2l	p7, c1, [r8]            @ encoding: [0x00,0x17,0xc8,0xfd]
 @ CHECK: stc2l	p8, c0, [r9, #-224]     @ encoding: [0x38,0x08,0x49,0xfd]
 @ CHECK: stc2l	p9, c1, [r10, #-120]!   @ encoding: [0x1e,0x19,0x6a,0xfd]
-@ CHECK: stc2l	p10, c2, [r11], #16     @ encoding: [0x04,0x2a,0xeb,0xfc]
-@ CHECK: stc2l	p11, c3, [r12], #-72    @ encoding: [0x12,0x3b,0x6c,0xfc]
+@ CHECK: stc2l	p0, c2, [r11], #16      @ encoding: [0x04,0x20,0xeb,0xfc]
+@ CHECK: stc2l	p1, c3, [r12], #-72     @ encoding: [0x12,0x31,0x6c,0xfc]
 
 @ CHECK: stc	p12, c4, [r0, #4]       @ encoding: [0x01,0x4c,0x80,0xed]
 @ CHECK: stc	p13, c5, [r1]           @ encoding: [0x00,0x5d,0x81,0xed]

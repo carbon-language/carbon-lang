@@ -40,10 +40,10 @@
 @ CHECK-NEXT: mcrr2gt  p7, #15, r5, r4, c1
 
         ite eq
-        mrceq p11, #1, r1, c2, c2
+        mrceq p9, #1, r1, c2, c2
         mrc2ne p12, #3, r3, c3, c4
 @ CHECK: ite eq
-@ CHECK-NEXT: mrceq p11, #1, r1, c2, c2
+@ CHECK-NEXT: mrceq p9, #1, r1, c2, c2
 @ CHECK-NEXT: mrc2ne p12, #3, r3, c3, c4
 
         itt lo
