@@ -12,6 +12,7 @@
 # It operates on the current, potentially unsaved buffer and does not create
 # or save any files. To revert a formatting, just undo.
 
+from __future__ import print_function
 import sublime
 import sublime_plugin
 import subprocess
@@ -45,7 +46,7 @@ class ClangFormatCommand(sublime_plugin.TextCommand):
                          stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     output, error = p.communicate(buf.encode(encoding))
     if error:
-      print error
+      print(error)
     self.view.replace(
         edit, sublime.Region(0, self.view.size()),
         output.decode(encoding))
