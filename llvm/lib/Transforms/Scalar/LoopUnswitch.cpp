@@ -212,8 +212,6 @@ namespace {
                                         Instruction *InsertPt);
 
     void SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L);
-    void RemoveBlockIfDead(BasicBlock *BB,
-                           std::vector<Instruction*> &Worklist, Loop *l);
     void RemoveLoopFromHierarchy(Loop *L);
     bool IsTrivialUnswitchCondition(Value *Cond, Constant **Val = 0,
                                     BasicBlock **LoopExit = 0);
@@ -946,114 +944,6 @@ static void ReplaceUsesOfWith(Instruction *I, Value *V,
   ++NumSimplify;
 }
 
-/// RemoveBlockIfDead - If the specified block is dead, remove it, update loop
-/// information, and remove any dead successors it has.
-///
-void LoopUnswitch::RemoveBlockIfDead(BasicBlock *BB,
-                                     std::vector<Instruction*> &Worklist,
-                                     Loop *L) {
-  if (pred_begin(BB) != pred_end(BB)) {
-    // This block isn't dead, since an edge to BB was just removed, see if there
-    // are any easy simplifications we can do now.
-    if (BasicBlock *Pred = BB->getSinglePredecessor()) {
-      // If it has one pred, fold phi nodes in BB.
-      while (PHINode *PN = dyn_cast<PHINode>(BB->begin()))
-        ReplaceUsesOfWith(PN, PN->getIncomingValue(0), Worklist, L, LPM);
-
-      // If this is the header of a loop and the only pred is the latch, we now
-      // have an unreachable loop.
-      if (Loop *L = LI->getLoopFor(BB))
-        if (loopHeader == BB && L->contains(Pred)) {
-          // Remove the branch from the latch to the header block, this makes
-          // the header dead, which will make the latch dead (because the header
-          // dominates the latch).
-          LPM->deleteSimpleAnalysisValue(Pred->getTerminator(), L);
-          Pred->getTerminator()->eraseFromParent();
-          new UnreachableInst(BB->getContext(), Pred);
-
-          // The loop is now broken, remove it from LI.
-          RemoveLoopFromHierarchy(L);
-
-          // Reprocess the header, which now IS dead.
-          RemoveBlockIfDead(BB, Worklist, L);
-          return;
-        }
-
-      // If pred ends in a uncond branch, add uncond branch to worklist so that
-      // the two blocks will get merged.
-      if (BranchInst *BI = dyn_cast<BranchInst>(Pred->getTerminator()))
-        if (BI->isUnconditional())
-          Worklist.push_back(BI);
-    }
-    return;
-  }
-
-  DEBUG(dbgs() << "Nuking dead block: " << *BB);
-
-  // Remove the instructions in the basic block from the worklist.
-  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-    RemoveFromWorklist(I, Worklist);
-
-    // Anything that uses the instructions in this basic block should have their
-    // uses replaced with undefs.
-    // If I is not void type then replaceAllUsesWith undef.
-    // This allows ValueHandlers and custom metadata to adjust itself.
-    if (!I->getType()->isVoidTy())
-      I->replaceAllUsesWith(UndefValue::get(I->getType()));
-  }
-
-  // If this is the edge to the header block for a loop, remove the loop and
-  // promote all subloops.
-  if (Loop *BBLoop = LI->getLoopFor(BB)) {
-    if (BBLoop->getLoopLatch() == BB) {
-      RemoveLoopFromHierarchy(BBLoop);
-      if (currentLoop == BBLoop) {
-        currentLoop = 0;
-        redoLoop = false;
-      }
-    }
-  }
-
-  // Remove the block from the loop info, which removes it from any loops it
-  // was in.
-  LI->removeBlock(BB);
-
-  // Remove phi node entries in successors for this block.
-  TerminatorInst *TI = BB->getTerminator();
-  SmallVector<BasicBlock*, 4> Succs;
-  for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i) {
-    Succs.push_back(TI->getSuccessor(i));
-    TI->getSuccessor(i)->removePredecessor(BB);
-  }
-
-  // Unique the successors, remove anything with multiple uses.
-  array_pod_sort(Succs.begin(), Succs.end());
-  Succs.erase(std::unique(Succs.begin(), Succs.end()), Succs.end());
-
-  // Remove the basic block, including all of the instructions contained in it.
-  LPM->deleteSimpleAnalysisValue(BB, L);
-  BB->eraseFromParent();
-  // Remove successor blocks here that are not dead, so that we know we only
-  // have dead blocks in this list.  Nondead blocks have a way of becoming dead,
-  // then getting removed before we revisit them, which is badness.
-  //
-  for (unsigned i = 0; i != Succs.size(); ++i)
-    if (pred_begin(Succs[i]) != pred_end(Succs[i])) {
-      // One exception is loop headers.  If this block was the preheader for a
-      // loop, then we DO want to visit the loop so the loop gets deleted.
-      // We know that if the successor is a loop header, that this loop had to
-      // be the preheader: the case where this was the latch block was handled
-      // above and headers can only have two predecessors.
-      if (!LI->isLoopHeader(Succs[i])) {
-        Succs.erase(Succs.begin()+i);
-        --i;
-      }
-    }
-
-  for (unsigned i = 0, e = Succs.size(); i != e; ++i)
-    RemoveBlockIfDead(Succs[i], Worklist, L);
-}
-
 /// RemoveLoopFromHierarchy - We have discovered that the specified loop has
 /// become unwrapped, either because the backedge was deleted, or because the
 /// edge into the header was removed.  If the edge into the header from the
@@ -1262,23 +1152,6 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
         continue;
       }
 
-      if (ConstantInt *CB = dyn_cast<ConstantInt>(BI->getCondition())){
-        // Conditional branch.  Turn it into an unconditional branch, then
-        // remove dead blocks.
-        continue;  // FIXME: Enable.
-
-        DEBUG(dbgs() << "Folded branch: " << *BI);
-        BasicBlock *DeadSucc = BI->getSuccessor(CB->getZExtValue());
-        BasicBlock *LiveSucc = BI->getSuccessor(!CB->getZExtValue());
-        DeadSucc->removePredecessor(BI->getParent(), true);
-        Worklist.push_back(BranchInst::Create(LiveSucc, BI));
-        LPM->deleteSimpleAnalysisValue(BI, L);
-        BI->eraseFromParent();
-        RemoveFromWorklist(BI, Worklist);
-        ++NumSimplify;
-
-        RemoveBlockIfDead(DeadSucc, Worklist, L);
-      }
       continue;
     }
   }
