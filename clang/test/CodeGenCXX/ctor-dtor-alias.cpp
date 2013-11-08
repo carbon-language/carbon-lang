@@ -26,12 +26,11 @@ foobar<void> x;
 }
 
 namespace test3 {
-// test that these alias are internal.
+// test that instead of an internal alias we just use the other destructor
+// directly.
 
-// CHECK-DAG: @_ZN5test312_GLOBAL__N_11AD1Ev = alias internal void (%"struct.test3::<anonymous namespace>::A"*)* @_ZN5test312_GLOBAL__N_11AD2Ev
-// CHECK-DAG: @_ZN5test312_GLOBAL__N_11BD2Ev = alias internal bitcast (void (%"struct.test3::<anonymous namespace>::A"*)* @_ZN5test312_GLOBAL__N_11AD2Ev to void (%"struct.test3::<anonymous namespace>::B"*)*)
-// CHECK-DAG: @_ZN5test312_GLOBAL__N_11BD1Ev = alias internal void (%"struct.test3::<anonymous namespace>::B"*)* @_ZN5test312_GLOBAL__N_11BD2Ev
 // CHECK-DAG: define internal void @_ZN5test312_GLOBAL__N_11AD2Ev(
+// CHECK-DAG: call i32 @__cxa_atexit{{.*}}_ZN5test312_GLOBAL__N_11AD2Ev
 namespace {
 struct A {
   ~A() {}
@@ -56,5 +55,21 @@ namespace test4 {
   struct B : public A{
     ~B() {}
   };
+  B X;
+}
+
+namespace test5 {
+  // similar to test4, but with an internal B.
+
+  // CHECK-DAG: define linkonce_odr void @_ZN5test51AD2Ev(
+  // CHECK-DAG: call i32 @__cxa_atexit{{.*}}_ZN5test51AD2Ev
+  struct A {
+    virtual ~A() {}
+  };
+  namespace {
+  struct B : public A{
+    ~B() {}
+  };
+  }
   B X;
 }

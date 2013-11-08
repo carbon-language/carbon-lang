@@ -6,10 +6,6 @@
 // CHECK-DAG: @_ZN5test11OD2Ev = alias {{.*}} @_ZN5test11AD2Ev
 // CHECK-DAG: @_ZN5test11SD2Ev = alias bitcast {{.*}} @_ZN5test11AD2Ev
 
-// CHECK-DAG: @_ZN5test312_GLOBAL__N_11DD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11DD2Ev
-// CHECK-DAG: @_ZN5test312_GLOBAL__N_11DD2Ev = alias internal bitcast {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
-// CHECK-DAG: @_ZN5test312_GLOBAL__N_11CD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
-
 struct A {
   int a;
   
@@ -184,12 +180,6 @@ namespace test3 {
   void test() {
     new D; // Force emission of D's vtable
   }
-
-  // Checked at top of file:
-  // @_ZN5test312_GLOBAL__N_11CD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
-
-  // More checks at end of file.
-
 }
 
 namespace test4 {
@@ -385,7 +375,7 @@ namespace test10 {
 // Checks from test3:
 
   // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(%"struct.test3::<anonymous namespace>::D"* %this) unnamed_addr
-  // CHECK: invoke void @_ZN5test312_GLOBAL__N_11DD1Ev(
+  // CHECK: invoke void {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
   // CHECK: call void @_ZdlPv({{.*}}) [[NUW:#[0-9]+]]
   // CHECK: ret void
   // CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
@@ -393,13 +383,9 @@ namespace test10 {
   // CHECK: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK: resume { i8*, i32 }
 
-  // Checked at top of file:
-  // @_ZN5test312_GLOBAL__N_11DD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11DD2Ev
-  // @_ZN5test312_GLOBAL__N_11DD2Ev = alias internal bitcast {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
-
   // CHECK-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11DD1Ev(
   // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
-  // CHECK: call void @_ZN5test312_GLOBAL__N_11DD1Ev(
+  // CHECK: call void {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
   // CHECK: ret void
 
   // CHECK-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11DD0Ev(
@@ -414,14 +400,14 @@ namespace test10 {
 
   // CHECK-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
   // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
-  // CHECK: call void @_ZN5test312_GLOBAL__N_11CD1Ev(
+  // CHECK: call void @_ZN5test312_GLOBAL__N_11CD2Ev(
   // CHECK: ret void
 
   // CHECK: declare void @_ZN5test31BD2Ev(
   // CHECK: declare void @_ZN5test31AD2Ev(
 
   // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD0Ev(%"struct.test3::<anonymous namespace>::C"* %this) unnamed_addr
-  // CHECK: invoke void @_ZN5test312_GLOBAL__N_11CD1Ev(
+  // CHECK: invoke void @_ZN5test312_GLOBAL__N_11CD2Ev(
   // CHECK: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK: ret void
   // CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)

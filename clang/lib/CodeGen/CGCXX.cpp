@@ -141,7 +141,7 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
 
   // Instead of creating as alias to a linkonce_odr, replace all of the uses
   // of the aliassee.
-  if (Linkage == llvm::GlobalValue::LinkOnceODRLinkage) {
+  if (llvm::GlobalValue::isDiscardableIfUnused(Linkage)) {
     Replacements[MangledName] = Aliasee;
     return false;
   }
