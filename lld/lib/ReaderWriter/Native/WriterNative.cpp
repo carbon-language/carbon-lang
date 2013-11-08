@@ -444,6 +444,7 @@ private:
     attrs.sectionChoiceAndPosition
                           = atom.sectionChoice() << 4 | atom.sectionPosition();
     attrs.deadStrip         = atom.deadStrip();
+    attrs.dynamicExport     = atom.dynamicExport();
     attrs.permissions       = atom.permissions();
     attrs.alias             = atom.isAlias();
   }

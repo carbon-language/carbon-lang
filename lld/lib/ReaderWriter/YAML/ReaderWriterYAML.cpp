@@ -384,6 +384,13 @@ template <> struct ScalarEnumerationTraits<lld::DefinedAtom::DeadStripKind> {
   }
 };
 
+template <> struct ScalarEnumerationTraits<lld::DefinedAtom::DynamicExport> {
+  static void enumeration(IO &io, lld::DefinedAtom::DynamicExport &value) {
+    io.enumCase(value, "normal", lld::DefinedAtom::dynamicExportNormal);
+    io.enumCase(value, "always", lld::DefinedAtom::dynamicExportAlways);
+  }
+};
+
 template <>
 struct ScalarEnumerationTraits<lld::DefinedAtom::ContentPermissions> {
   static void enumeration(IO &io, lld::DefinedAtom::ContentPermissions &value) {
@@ -812,8 +819,9 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
           _merge(atom->merge()), _contentType(atom->contentType()),
           _alignment(atom->alignment()), _sectionChoice(atom->sectionChoice()),
           _sectionPosition(atom->sectionPosition()),
-          _deadStrip(atom->deadStrip()), _permissions(atom->permissions()),
-          _size(atom->size()), _sectionName(atom->customSectionName()) {
+          _deadStrip(atom->deadStrip()), _dynamicExport(atom->dynamicExport()),
+          _permissions(atom->permissions()), _size(atom->size()),
+          _sectionName(atom->customSectionName()) {
       for (const lld::Reference *r : *atom)
         _references.push_back(r);
       if (!atom->occupiesDiskSpace())
@@ -862,6 +870,7 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     virtual StringRef customSectionName() const { return _sectionName; }
     virtual SectionPosition sectionPosition() const { return _sectionPosition; }
     virtual DeadStripKind deadStrip() const { return _deadStrip; }
+    virtual DynamicExport dynamicExport() const { return _dynamicExport; }
     virtual ContentPermissions permissions() const { return _permissions; }
     virtual bool isAlias() const { return false; }
     ArrayRef<uint8_t> rawContent() const {
@@ -905,6 +914,7 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     SectionChoice _sectionChoice;
     SectionPosition _sectionPosition;
     DeadStripKind _deadStrip;
+    DynamicExport _dynamicExport;
     ContentPermissions _permissions;
     uint32_t _ordinal;
     std::vector<ImplicitHex8> _content;
@@ -949,6 +959,8 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
                    lld::DefinedAtom::sectionPositionAny);
     io.mapOptional("dead-strip", keys->_deadStrip,
                    lld::DefinedAtom::deadStripNormal);
+    io.mapOptional("dynamic-export", keys->_dynamicExport,
+                   lld::DefinedAtom::dynamicExportNormal);
     // default permissions based on content type
     io.mapOptional("permissions", keys->_permissions,
                    lld::DefinedAtom::permissions(keys->_contentType));

@@ -185,6 +185,14 @@ public:
     deadStripAlways         // linker must remove this atom if unused
   };
 
+  enum DynamicExport {
+    /// \brief The linker may or may not export this atom dynamically depending
+    ///   on the output type and other context of the link.
+    dynamicExportNormal,
+    /// \brief The linker will always export this atom dynamically.
+    dynamicExportAlways,
+  };
+
   struct Alignment {
     Alignment(int p2, int m = 0)
       : powerOf2(p2)
@@ -251,6 +259,11 @@ public:
 
   /// \brief constraints on whether the linker may dead strip away this atom.
   virtual DeadStripKind deadStrip() const = 0;
+
+  /// \brief Under which conditions should this atom be dynamically exported.
+  virtual DynamicExport dynamicExport() const {
+    return dynamicExportNormal;
+  }
 
   /// \brief Returns the OS memory protections required for this atom's content
   /// at runtime.

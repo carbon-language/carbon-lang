@@ -91,6 +91,10 @@ public:
      return (DefinedAtom::DeadStripKind)(attributes().deadStrip);
   }
 
+  virtual DynamicExport dynamicExport() const {
+    return (DynamicExport)attributes().dynamicExport;
+  }
+
   virtual DefinedAtom::ContentPermissions permissions() const {
      return (DefinedAtom::ContentPermissions)(attributes().permissions);
   }

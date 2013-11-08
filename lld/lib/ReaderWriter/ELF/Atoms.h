@@ -809,6 +809,8 @@ public:
 
   virtual uint64_t size() const { return _size; }
 
+  virtual DynamicExport dynamicExport() const { return dynamicExportAlways; }
+
   virtual ContentPermissions permissions() const { return permRW_; }
 
   virtual ArrayRef<uint8_t> rawContent() const {

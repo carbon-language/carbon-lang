@@ -152,6 +152,7 @@ struct NativeAtomAttributesV1 {
   uint8_t   contentType;
   uint8_t   sectionChoiceAndPosition; // high nibble is choice, low is position
   uint8_t   deadStrip;
+  uint8_t   dynamicExport;
   uint8_t   permissions;
   uint8_t   alias;
 };
