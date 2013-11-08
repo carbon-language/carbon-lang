@@ -5133,10 +5133,6 @@ let CategoryName = "Lambda Issue" in {
     "cannot deduce type for lambda capture %0 from initializer list">;
 }
 
-// C++1y Generic Lambdas
-def err_glambda_not_fully_implemented : Error<
-  "unimplemented generic lambda feature: %0">;
-    
 def err_return_in_captured_stmt : Error<
   "cannot return from %0">;
 def err_capture_block_variable : Error<
