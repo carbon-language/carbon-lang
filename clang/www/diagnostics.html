@@ -313,7 +313,7 @@ and also shows how some of the other pieces work in a bigger example.</p>
   t.c:80:3: <span class="err">error:</span> invalid operands to binary expression ('typeof(P)' (aka 'struct mystruct') and 'typeof(F)' (aka 'float'))
   <span class="snip">  X = MYMAX(P, F);</span>
   <span class="point">      ^~~~~~~~~~~</span>
-  t.c:76:94: note: instantiated from:
+  t.c:76:94: note: expanded from:
   <span class="snip">#define MYMAX(A,B)    __extension__ ({ __typeof__(A) __a = (A); __typeof__(B) __b = (B); __a &lt; __b ? __b : __a; })</span>
   <span class="point">                                                                                         ~~~ ^ ~~~</span>
 </pre>
@@ -326,10 +326,10 @@ implements the "wwopen" class of APIs):</p>
   t.c:22:2: <span class="warn">warning:</span> type specifier missing, defaults to 'int'
   <span class="snip">        ILPAD();</span>
   <span class="point">        ^</span>
-  t.c:17:17: note: instantiated from:
+  t.c:17:17: note: expanded from:
   <span class="snip">#define ILPAD() PAD((NROW - tt.tt_row) * 10)    /* 1 ms per char */</span>
   <span class="point">                ^</span>
-  t.c:14:2: note: instantiated from:
+  t.c:14:2: note: expanded from:
   <span class="snip">        register i; \</span>
   <span class="point">        ^</span>
 </pre>
