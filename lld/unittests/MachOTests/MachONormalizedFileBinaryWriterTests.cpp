@@ -283,12 +283,6 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
   EXPECT_EQ(N_UNDF, barUndef.type);
   EXPECT_EQ(SymbolScope(N_EXT), barUndef.scope);
   const Symbol& tbarUndef = f2->undefinedSymbols[1];
-  // BEGIN debug
-  if (!tbarUndef.name.equals("_tbar")) {
-    llvm::errs() << "obj_relocs_x86 _tbar is actually '" 
-                 << tbarUndef.name << "'\n";
-  }
-  // END debug
   EXPECT_TRUE(tbarUndef.name.equals("_tbar"));
   EXPECT_EQ(N_UNDF, tbarUndef.type);
   EXPECT_EQ(SymbolScope(N_EXT), tbarUndef.scope);
@@ -296,19 +290,7 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
   EXPECT_EQ(1UL, f2->sections.size());
   const Section& text = f2->sections[0];
   EXPECT_TRUE(text.segmentName.equals("__TEXT"));
-  // BEGIN debug
-  if (!text.segmentName.equals("__TEXT")) {
-    llvm::errs() << "obj_relocs_x86 __TEXT is actually '" 
-                 << text.segmentName << "'\n";
-  }
-  // END debug
   EXPECT_TRUE(text.sectionName.equals("__text"));
-  // BEGIN debug
-  if (!text.sectionName.equals("__text")) {
-    llvm::errs() << "obj_relocs_x86 __text is actually '" 
-                 << text.sectionName << "'\n";
-  }
-  // END debug
   EXPECT_EQ(S_REGULAR, text.type);
   EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS 
                                       | S_ATTR_SOME_INSTRUCTIONS));
