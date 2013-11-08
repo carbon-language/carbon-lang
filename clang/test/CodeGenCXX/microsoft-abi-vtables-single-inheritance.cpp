@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 %s -fno-rtti -cxx-abi microsoft -triple=i386-pc-win32 -emit-llvm -fdump-vtable-layouts -o - > %t 2>&1
-// RUN: FileCheck --check-prefix=EMITS-VFTABLE %s < %t
-// RUN: FileCheck --check-prefix=NO-VFTABLE %s < %t
+// RUN: %clang_cc1 %s -fno-rtti -cxx-abi microsoft -triple=i386-pc-win32 -emit-llvm -fdump-vtable-layouts -o %t.ll > %t
+// RUN: FileCheck --check-prefix=EMITS-VFTABLE %s < %t.ll
+// RUN: FileCheck --check-prefix=NO-VFTABLE %s < %t.ll
 // RUN: FileCheck --check-prefix=CHECK-A %s < %t
 // RUN: FileCheck --check-prefix=CHECK-B %s < %t
 // RUN: FileCheck --check-prefix=CHECK-C %s < %t

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fno-rtti -cxx-abi microsoft -triple=i386-pc-win32 -emit-llvm -fdump-vtable-layouts -o - >%t 2>&1
+// RUN: %clang_cc1 %s -fno-rtti -cxx-abi microsoft -triple=i386-pc-win32 -emit-llvm -o %t.ll -fdump-vtable-layouts >%t
 
 // RUN: FileCheck --check-prefix=NO-THUNKS-Test1 %s < %t
 // RUN: FileCheck --check-prefix=NO-THUNKS-Test2 %s < %t
@@ -24,7 +24,7 @@
 // RUN: FileCheck --check-prefix=RET-THUNKS-Test5 %s < %t
 // RUN: FileCheck --check-prefix=RET-THUNKS-Test6 %s < %t
 
-// RUN: FileCheck --check-prefix=MANGLING %s < %t
+// RUN: FileCheck --check-prefix=MANGLING %s < %t.ll
 
 struct Empty {
   // Doesn't have a vftable!

@@ -997,7 +997,7 @@ public:
     LayoutVTable();
 
     if (Context.getLangOpts().DumpVTableLayouts)
-      dumpLayout(llvm::errs());
+      dumpLayout(llvm::outs());
   }
 
   uint64_t getNumThunks() const {
@@ -2596,7 +2596,7 @@ public:
     LayoutVFTable();
 
     if (Context.getLangOpts().DumpVTableLayouts)
-      dumpLayout(llvm::errs());
+      dumpLayout(llvm::outs());
   }
 
   uint64_t getNumThunks() const { return Thunks.size(); }
@@ -3292,7 +3292,7 @@ void MicrosoftVTableContext::computeVTableRelatedInformation(
   MethodVFTableLocations.insert(NewMethodLocations.begin(),
                                 NewMethodLocations.end());
   if (Context.getLangOpts().DumpVTableLayouts)
-    dumpMethodLocations(RD, NewMethodLocations, llvm::errs());
+    dumpMethodLocations(RD, NewMethodLocations, llvm::outs());
 }
 
 void MicrosoftVTableContext::dumpMethodLocations(

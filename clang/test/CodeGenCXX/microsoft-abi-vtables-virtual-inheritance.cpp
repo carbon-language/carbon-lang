@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fno-rtti -emit-llvm -fdump-vtable-layouts %s -o - -cxx-abi microsoft -triple=i386-pc-win32 >%t 2>&1
+// RUN: %clang_cc1 -fno-rtti -emit-llvm -o %t.ll -fdump-vtable-layouts %s -cxx-abi microsoft -triple=i386-pc-win32 >%t
 
 // RUN: FileCheck --check-prefix=VTABLE-C %s < %t
 // RUN: FileCheck --check-prefix=VTABLE-D %s < %t
@@ -24,7 +24,7 @@
 // RUN: FileCheck --check-prefix=RET-T %s < %t
 // RUN: FileCheck --check-prefix=RET-V %s < %t
 
-// RUN: FileCheck --check-prefix=MANGLING %s < %t
+// RUN: FileCheck --check-prefix=MANGLING %s < %t.ll
 
 struct Empty { };
 

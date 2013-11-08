@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fno-rtti -emit-llvm -fdump-vtable-layouts %s -o - -cxx-abi microsoft -triple=i386-pc-win32 >%t 2>&1
+// RUN: %clang_cc1 -fno-rtti -emit-llvm -fdump-vtable-layouts %s -o %t.ll -cxx-abi microsoft -triple=i386-pc-win32 >%t
 // RUN: FileCheck --check-prefix=VTABLE-SIMPLE-A %s < %t
 // RUN: FileCheck --check-prefix=VTABLE-SIMPLE-B %s < %t
 // RUN: FileCheck --check-prefix=VTABLE-SIMPLE-C %s < %t
@@ -10,10 +10,10 @@
 // RUN: FileCheck --check-prefix=VTABLE-EXTENDED-G %s < %t
 // RUN: FileCheck --check-prefix=VTABLE-EXTENDED-H %s < %t
 // RUN: FileCheck --check-prefix=VTABLE-PR17738-A %s < %t
-// RUN: FileCheck --check-prefix=MANGLING %s < %t
+// RUN: FileCheck --check-prefix=MANGLING %s < %t.ll
 
 // For now, just make sure x86_64 doesn't crash.
-// RUN: %clang_cc1 -fno-rtti -emit-llvm -fdump-vtable-layouts %s -o - -cxx-abi microsoft -triple=x86_64-pc-win32 >%t 2>&1
+// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -fdump-vtable-layouts %s -cxx-abi microsoft -triple=x86_64-pc-win32 >/dev/null
 
 struct V1 {
   virtual void f();
