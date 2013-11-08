@@ -18,6 +18,8 @@
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
 
+#include "llvm/ADT/ArrayRef.h"
+
 namespace lldb_private {
 
 class ThreadPlanCallFunction : public ThreadPlan
@@ -29,21 +31,8 @@ public:
     ThreadPlanCallFunction (Thread &thread,
                             const Address &function,
                             const ClangASTType &return_type,
-                            lldb::addr_t arg,
-                            const EvaluateExpressionOptions &options,
-                            lldb::addr_t *this_arg = 0,
-                            lldb::addr_t *cmd_arg = 0);
-
-    ThreadPlanCallFunction (Thread &thread,
-                            const Address &function,
-                            const ClangASTType &return_type,
-                            const EvaluateExpressionOptions &options,
-                            lldb::addr_t *arg1_ptr = NULL,
-                            lldb::addr_t *arg2_ptr = NULL,
-                            lldb::addr_t *arg3_ptr = NULL,
-                            lldb::addr_t *arg4_ptr = NULL,
-                            lldb::addr_t *arg5_ptr = NULL,
-                            lldb::addr_t *arg6_ptr = NULL);
+                            llvm::ArrayRef<lldb::addr_t> args,
+                            const EvaluateExpressionOptions &options);
 
     virtual
     ~ThreadPlanCallFunction ();

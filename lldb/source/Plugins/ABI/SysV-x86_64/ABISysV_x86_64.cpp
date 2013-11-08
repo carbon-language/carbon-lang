@@ -303,12 +303,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
                                     addr_t sp, 
                                     addr_t func_addr, 
                                     addr_t return_addr, 
-                                    addr_t *arg1_ptr,
-                                    addr_t *arg2_ptr,
-                                    addr_t *arg3_ptr,
-                                    addr_t *arg4_ptr,
-                                    addr_t *arg5_ptr,
-                                    addr_t *arg6_ptr) const
+                                    llvm::ArrayRef<addr_t> args) const
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
@@ -321,28 +316,8 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
                     (uint64_t)func_addr,
                     (uint64_t)return_addr);
 
-        if (arg1_ptr)
-        {
-            s.Printf (", arg1 = 0x%" PRIx64, (uint64_t)*arg1_ptr);
-            if (arg2_ptr)
-            {
-                s.Printf (", arg2 = 0x%" PRIx64, (uint64_t)*arg2_ptr);
-                if (arg3_ptr)
-                {
-                    s.Printf (", arg3 = 0x%" PRIx64, (uint64_t)*arg3_ptr);
-                    if (arg4_ptr)
-                    {
-                        s.Printf (", arg4 = 0x%" PRIx64, (uint64_t)*arg4_ptr);
-                        if (arg5_ptr)
-                        {
-                            s.Printf (", arg5 = 0x%" PRIx64, (uint64_t)*arg5_ptr);
-                            if (arg6_ptr)
-                                s.Printf (", arg6 = 0x%" PRIx64, (uint64_t)*arg6_ptr);
-                        }
-                    }
-                }
-            }
-        }
+        for (int i = 0; i < args.size(); ++i)
+            s.Printf (", arg%d = 0x%" PRIx64, i + 1, args[i]);
         s.PutCString (")");
         log->PutCString(s.GetString().c_str());
     }
@@ -352,61 +327,18 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
         return false;
     
     const RegisterInfo *reg_info = NULL;
-    if (arg1_ptr)
+    
+    if (args.size() > 6) // TODO handle more than 6 arguments
+        return false;
+    
+    for (int i = 0; i < args.size(); ++i)
     {
-        reg_info = reg_ctx->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1);
+        reg_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1 + i);
         if (log)
-            log->Printf("About to write arg1 (0x%" PRIx64 ") into %s", (uint64_t)*arg1_ptr, reg_info->name);
-
-        if (!reg_ctx->WriteRegisterFromUnsigned (reg_info, *arg1_ptr))
+            log->Printf("About to write arg%d (0x%" PRIx64 ") into %s", i + 1, args[i], reg_info->name);
+        if (!reg_ctx->WriteRegisterFromUnsigned(reg_info, args[i]))
             return false;
-
-        if (arg2_ptr)
-        {
-            reg_info = reg_ctx->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG2);
-            if (log)
-                log->Printf("About to write arg2 (0x%" PRIx64 ") into %s", (uint64_t)*arg2_ptr, reg_info->name);
-            if (!reg_ctx->WriteRegisterFromUnsigned (reg_info, *arg2_ptr))
-                return false;
-
-            if (arg3_ptr)
-            {
-                reg_info = reg_ctx->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG3);
-                if (log)
-                    log->Printf("About to write arg3 (0x%" PRIx64 ") into %s", (uint64_t)*arg3_ptr, reg_info->name);
-                if (!reg_ctx->WriteRegisterFromUnsigned (reg_info, *arg3_ptr))
-                    return false;
-
-                if (arg4_ptr)
-                {
-                    reg_info = reg_ctx->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG4);
-                    if (log)
-                        log->Printf("About to write arg4 (0x%" PRIx64 ") into %s", (uint64_t)*arg4_ptr, reg_info->name);
-                    if (!reg_ctx->WriteRegisterFromUnsigned (reg_info, *arg4_ptr))
-                        return false;
-
-                    if (arg5_ptr)
-                    {
-                        reg_info = reg_ctx->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG5);
-                        if (log)
-                            log->Printf("About to write arg5 (0x%" PRIx64 ") into %s", (uint64_t)*arg5_ptr, reg_info->name);
-                        if (!reg_ctx->WriteRegisterFromUnsigned (reg_info, *arg5_ptr))
-                            return false;
-
-                        if (arg6_ptr)
-                        {
-                            reg_info = reg_ctx->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG6);
-                            if (log)
-                                log->Printf("About to write arg6 (0x%" PRIx64 ") into %s", (uint64_t)*arg6_ptr, reg_info->name);
-                            if (!reg_ctx->WriteRegisterFromUnsigned (reg_info, *arg6_ptr))
-                                return false;
-                        }
-                    }
-                }
-            }
-        }
     }
-
 
     // First, align the SP
 

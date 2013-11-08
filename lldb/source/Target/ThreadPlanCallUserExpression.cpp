@@ -38,12 +38,10 @@ using namespace lldb_private;
 
 ThreadPlanCallUserExpression::ThreadPlanCallUserExpression (Thread &thread,
                                                 Address &function,
-                                                lldb::addr_t arg,
+                                                llvm::ArrayRef<lldb::addr_t> args,
                                                 const EvaluateExpressionOptions &options,
-                                                lldb::addr_t *this_arg,
-                                                lldb::addr_t *cmd_arg,
                                                 ClangUserExpression::ClangUserExpressionSP &user_expression_sp) :
-    ThreadPlanCallFunction (thread, function, ClangASTType(), arg, options, this_arg, cmd_arg),
+    ThreadPlanCallFunction (thread, function, ClangASTType(), args, options),
     m_user_expression_sp (user_expression_sp)
 {
     // User expressions are generally "User generated" so we should set them up to stop when done.

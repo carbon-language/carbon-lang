@@ -394,7 +394,7 @@ ClangFunction::InsertFunction (ExecutionContext &exe_ctx, lldb::addr_t &args_add
 
 ThreadPlan *
 ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx, 
-                                            lldb::addr_t &args_addr,
+                                            lldb::addr_t args_addr,
                                             const EvaluateExpressionOptions &options,
                                             Stream &errors)
 {
@@ -414,13 +414,14 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx,
     // Okay, now run the function:
 
     Address wrapper_address (m_jit_start_addr);
+    
+    lldb::addr_t args = { args_addr };
+    
     ThreadPlan *new_plan = new ThreadPlanCallFunction (*thread, 
                                                        wrapper_address,
                                                        ClangASTType(),
-                                                       args_addr,
-                                                       options,
-                                                       0,
-                                                       0);
+                                                       args,
+                                                       options);
     new_plan->SetIsMasterPlan(true);
     new_plan->SetOkayToDiscard (false);
     return new_plan;

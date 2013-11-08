@@ -270,8 +270,8 @@ public:
     /// @param[in] func_addr
     ///     The address of the function in the target process.
     ///
-    /// @param[in] args_addr_ref
-    ///     The value of the void* parameter.
+    /// @param[in] args_addr
+    ///     The address of the argument struct.
     ///
     /// @param[in] errors
     ///     The stream to write errors to.
@@ -287,7 +287,7 @@ public:
     //------------------------------------------------------------------
     ThreadPlan *
     GetThreadPlanToCallFunction (ExecutionContext &exe_ctx, 
-                                 lldb::addr_t &args_addr_ref,
+                                 lldb::addr_t args_addr,
                                  const EvaluateExpressionOptions &options,
                                  Stream &errors);
     

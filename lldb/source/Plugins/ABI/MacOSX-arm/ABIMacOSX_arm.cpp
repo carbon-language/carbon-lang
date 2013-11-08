@@ -198,12 +198,7 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
                                    addr_t sp, 
                                    addr_t function_addr, 
                                    addr_t return_addr, 
-                                   addr_t *arg1_ptr,
-                                   addr_t *arg2_ptr,
-                                   addr_t *arg3_ptr,
-                                   addr_t *arg4_ptr,
-                                   addr_t *arg5_ptr,
-                                   addr_t *arg6_ptr) const
+                                   llvm::ArrayRef<addr_t> args) const
 {
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
@@ -215,50 +210,45 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
 
     RegisterValue reg_value;
 
-    if (arg1_ptr)
+    const char *reg_names[] = { "r0", "r1", "r2", "r3" };
+    
+    llvm::ArrayRef<addr_t>::iterator ai = args.begin(), ae = args.end();
+    
+    for (size_t i = 0; i < (sizeof(reg_names) / sizeof(reg_names[0])); ++i)
     {
-        reg_value.SetUInt32(*arg1_ptr);
-        if (!reg_ctx->WriteRegister (reg_ctx->GetRegisterInfoByName("r0"), reg_value))
+        if (ai == ae)
+            break;
+        
+        reg_value.SetUInt32(*ai);
+        if (!reg_ctx->WriteRegister(reg_ctx->GetRegisterInfoByName(reg_names[i]), reg_value))
             return false;
-
-        if (arg2_ptr)
+        
+        ++ai;
+    }
+    
+    if (ai != ae)
+    {
+        // Spill onto the stack
+        size_t num_stack_regs = ae - ai;
+        
+        sp -= (num_stack_regs * 4);
+        // Keep the stack 8 byte aligned, not that we need to
+        sp &= ~(8ull-1ull);
+        
+        // just using arg1 to get the right size
+        const RegisterInfo *reg_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1);
+        
+        addr_t arg_pos = sp;
+        
+        for (; ai != ae; ++ai)
         {
-            reg_value.SetUInt32(*arg2_ptr);
-            if (!reg_ctx->WriteRegister (reg_ctx->GetRegisterInfoByName("r1"), reg_value))
+            reg_value.SetUInt32(*ai);
+            if (reg_ctx->WriteRegisterValueToMemory(reg_info, arg_pos, reg_info->byte_size, reg_value).Fail())
                 return false;
-
-            if (arg3_ptr)
-            {
-                reg_value.SetUInt32(*arg3_ptr);
-                if (!reg_ctx->WriteRegister (reg_ctx->GetRegisterInfoByName("r2"), reg_value))
-                    return false;
-                if (arg4_ptr)
-                {
-                    reg_value.SetUInt32(*arg4_ptr);
-                    const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoByName("r3");
-                    if (!reg_ctx->WriteRegister (reg_info, reg_value))
-                        return false;
-                    if (arg5_ptr)
-                    {
-                        // Keep the stack 8 byte aligned, not that we need to
-                        sp -= 8;
-                        sp &= ~(8ull-1ull);
-                        reg_value.SetUInt32(*arg5_ptr);
-                        if (reg_ctx->WriteRegisterValueToMemory (reg_info, sp, reg_info->byte_size, reg_value).Fail())
-                            return false;
-                        if (arg6_ptr)
-                        {
-                            reg_value.SetUInt32(*arg6_ptr);
-                            if (reg_ctx->WriteRegisterValueToMemory (reg_info, sp + 4, reg_info->byte_size, reg_value).Fail())
-                                return false;
-                        }
-                    }
-                }
-            }            
+            arg_pos += reg_info->byte_size;
         }
     }
     
-
     TargetSP target_sp (thread.CalculateTarget());
     Address so_addr;
 

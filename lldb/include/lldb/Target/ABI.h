@@ -18,6 +18,8 @@
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/lldb-private.h"
 
+#include "llvm/ADT/ArrayRef.h"
+
 namespace lldb_private {
 
 class ABI :
@@ -35,12 +37,7 @@ public:
                         lldb::addr_t sp,
                         lldb::addr_t functionAddress,
                         lldb::addr_t returnAddress, 
-                        lldb::addr_t *arg1_ptr = NULL,
-                        lldb::addr_t *arg2_ptr = NULL,
-                        lldb::addr_t *arg3_ptr = NULL,
-                        lldb::addr_t *arg4_ptr = NULL,
-                        lldb::addr_t *arg5_ptr = NULL,
-                        lldb::addr_t *arg6_ptr = NULL) const = 0;
+                        llvm::ArrayRef<lldb::addr_t> args) const = 0;
 
     virtual bool
     GetArgumentValues (Thread &thread,

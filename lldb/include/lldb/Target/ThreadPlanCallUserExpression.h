@@ -20,6 +20,8 @@
 #include "lldb/Target/ThreadPlan.h"
 #include "lldb/Target/ThreadPlanCallFunction.h"
 
+#include "llvm/ADT/ArrayRef.h"
+
 namespace lldb_private {
 
 class ThreadPlanCallUserExpression : public ThreadPlanCallFunction
@@ -27,10 +29,8 @@ class ThreadPlanCallUserExpression : public ThreadPlanCallFunction
 public:
     ThreadPlanCallUserExpression (Thread &thread,
                                   Address &function,
-                                  lldb::addr_t arg,
+                                  llvm::ArrayRef<lldb::addr_t> args,
                                   const EvaluateExpressionOptions &options,
-                                  lldb::addr_t *this_arg,
-                                  lldb::addr_t *cmd_arg,
                                   ClangUserExpression::ClangUserExpressionSP &user_expression_sp);
     
     virtual

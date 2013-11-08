@@ -34,12 +34,7 @@ public:
                         lldb::addr_t sp,
                         lldb::addr_t functionAddress,
                         lldb::addr_t returnAddress, 
-                        lldb::addr_t *arg1_ptr = NULL,
-                        lldb::addr_t *arg2_ptr = NULL,
-                        lldb::addr_t *arg3_ptr = NULL,
-                        lldb::addr_t *arg4_ptr = NULL,
-                        lldb::addr_t *arg5_ptr = NULL,
-                        lldb::addr_t *arg6_ptr = NULL) const;
+                        llvm::ArrayRef<lldb::addr_t> args) const;
     
     virtual bool
     GetArgumentValues (lldb_private::Thread &thread,

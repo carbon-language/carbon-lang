@@ -824,12 +824,21 @@ ClangUserExpression::Execute (Stream &error_stream,
         else
         {
             Address wrapper_address (m_jit_start_addr);
+            
+            llvm::SmallVector <lldb::addr_t, 3> args;
+            
+            if (m_needs_object_ptr) {
+                args.push_back(object_ptr);
+                if (m_objectivec)
+                    args.push_back(cmd_ptr);
+            }
+            
+            args.push_back(struct_address);
+            
             lldb::ThreadPlanSP call_plan_sp(new ThreadPlanCallUserExpression (exe_ctx.GetThreadRef(), 
                                                                               wrapper_address, 
-                                                                              struct_address,
+                                                                              args,
                                                                               options,
-                                                                              (m_needs_object_ptr ? &object_ptr : NULL),
-                                                                              ((m_needs_object_ptr && m_objectivec) ? &cmd_ptr : NULL),
                                                                               shared_ptr_to_me));
             
             if (!call_plan_sp || !call_plan_sp->ValidatePlan (&error_stream))

@@ -126,10 +126,8 @@ ThreadPlanCallFunction::ConstructorSetup (Thread &thread,
 ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                                 const Address &function,
                                                 const ClangASTType &return_type,
-                                                addr_t arg,
-                                                const EvaluateExpressionOptions &options,
-                                                addr_t *this_arg,
-                                                addr_t *cmd_arg) :
+                                                llvm::ArrayRef<addr_t> args,
+                                                const EvaluateExpressionOptions &options) :
     ThreadPlan (ThreadPlan::eKindCallFunction, "Call function plan", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_valid (false),
     m_stop_other_threads (options.GetStopOthers()),
@@ -150,86 +148,13 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     lldb::addr_t function_load_addr;
     if (!ConstructorSetup (thread, abi, start_load_addr, function_load_addr))
         return;
-
-    if (this_arg && cmd_arg)
-    {
-        if (!abi->PrepareTrivialCall (thread, 
-                                      m_function_sp, 
-                                      function_load_addr, 
-                                      start_load_addr, 
-                                      this_arg,
-                                      cmd_arg,
-                                      &arg))
-            return;
-    }
-    else if (this_arg)
-    {
-        if (!abi->PrepareTrivialCall (thread, 
-                                      m_function_sp, 
-                                      function_load_addr, 
-                                      start_load_addr, 
-                                      this_arg,
-                                      &arg))
-            return;
-    }
-    else
-    {
-        if (!abi->PrepareTrivialCall (thread, 
-                                      m_function_sp, 
-                                      function_load_addr, 
-                                      start_load_addr, 
-                                      &arg))
-            return;
-    }
     
-    ReportRegisterState ("Function call was set up.  Register state was:");
-    
-    m_valid = true;    
-}
-
-
-ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
-                                                const Address &function,
-                                                const ClangASTType &return_type,
-                                                const EvaluateExpressionOptions &options,
-                                                addr_t *arg1_ptr,
-                                                addr_t *arg2_ptr,
-                                                addr_t *arg3_ptr,
-                                                addr_t *arg4_ptr,
-                                                addr_t *arg5_ptr,
-                                                addr_t *arg6_ptr) :
-    ThreadPlan (ThreadPlan::eKindCallFunction, "Call function plan", thread, eVoteNoOpinion, eVoteNoOpinion),
-    m_valid (false),
-    m_stop_other_threads (options.GetStopOthers()),
-    m_unwind_on_error (options.DoesUnwindOnError()),
-    m_ignore_breakpoints (options.DoesIgnoreBreakpoints()),
-    m_debug_execution (options.GetDebug()),
-    m_trap_exceptions (options.GetTrapExceptions()),
-    m_function_addr (function),
-    m_function_sp (0),
-    m_return_type (return_type),
-    m_takedown_done (false),
-    m_stop_address (LLDB_INVALID_ADDRESS)
-{
-    lldb::addr_t start_load_addr;
-    ABI *abi;
-    lldb::addr_t function_load_addr;
-    if (!ConstructorSetup (thread, abi, start_load_addr, function_load_addr))
+    if (!abi->PrepareTrivialCall(thread,
+                                 m_function_sp,
+                                 function_load_addr,
+                                 start_load_addr,
+                                 args))
         return;
-    
-    if (!abi->PrepareTrivialCall (thread, 
-                                  m_function_sp,
-                                  function_load_addr, 
-                                  start_load_addr, 
-                                  arg1_ptr,
-                                  arg2_ptr,
-                                  arg3_ptr,
-                                  arg4_ptr,
-                                  arg5_ptr,
-                                  arg6_ptr))
-    {
-            return;
-    }
     
     ReportRegisterState ("Function call was set up.  Register state was:");
     
