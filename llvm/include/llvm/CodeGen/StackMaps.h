@@ -50,10 +50,12 @@ public:
   /// This should be called by the MC lowering code _immediately_ before
   /// lowering the MI to an MCInst. It records where the operands for the
   /// instruction are stored, and outputs a label to record the offset of
-  /// the call from the start of the text section.
+  /// the call from the start of the text section. In special cases (e.g. AnyReg
+  /// calling convention) the return register is also recorded if requested.
   void recordStackMap(const MachineInstr &MI, uint32_t ID,
                       MachineInstr::const_mop_iterator MOI,
-                      MachineInstr::const_mop_iterator MOE);
+                      MachineInstr::const_mop_iterator MOE,
+                      bool recordResult = false);
 
   /// If there is any stack map data, create a stack map section and serialize
   /// the map info into it. This clears the stack map data structures

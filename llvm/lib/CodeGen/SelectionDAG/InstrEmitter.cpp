@@ -211,6 +211,7 @@ void InstrEmitter::CreateVirtualRegisters(SDNode *Node,
   assert(Node->getMachineOpcode() != TargetOpcode::IMPLICIT_DEF &&
          "IMPLICIT_DEF should have been handled as a special case elsewhere!");
 
+  unsigned NumResults = CountResults(Node);
   for (unsigned i = 0; i < II.getNumDefs(); ++i) {
     // If the specific node value is only used by a CopyToReg and the dest reg
     // is a vreg in the same register class, use the CopyToReg'd destination
@@ -218,6 +219,10 @@ void InstrEmitter::CreateVirtualRegisters(SDNode *Node,
     unsigned VRBase = 0;
     const TargetRegisterClass *RC =
       TRI->getAllocatableClass(TII->getRegClass(II, i, TRI, *MF));
+    // If the register class is unknown for the given definition, then try to
+    // infer one from the value type.
+    if (!RC && i < NumResults)
+      RC = TLI->getRegClassFor(Node->getSimpleValueType(i));
     if (II.OpInfo[i].isOptionalDef()) {
       // Optional def must be a physical register.
       unsigned NumResults = CountResults(Node);
@@ -722,10 +727,16 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
 
   const MCInstrDesc &II = TII->get(Opc);
   unsigned NumResults = CountResults(Node);
+  unsigned NumDefs = II.getNumDefs();
+
+  // Handle PATCHPOINT specially and then use the generic code.
+  if (Opc == TargetOpcode::PATCHPOINT)
+    NumDefs = NumResults;
+
   unsigned NumImpUses = 0;
   unsigned NodeOperands =
-    countOperands(Node, II.getNumOperands() - II.getNumDefs(), NumImpUses);
-  bool HasPhysRegOuts = NumResults > II.getNumDefs() && II.getImplicitDefs()!=0;
+    countOperands(Node, II.getNumOperands() - NumDefs, NumImpUses);
+  bool HasPhysRegOuts = NumResults > NumDefs && II.getImplicitDefs()!=0;
 #ifndef NDEBUG
   unsigned NumMIOperands = NodeOperands + NumResults;
   if (II.isVariadic())
@@ -748,12 +759,12 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
 
   // Emit all of the actual operands of this instruction, adding them to the
   // instruction as appropriate.
-  bool HasOptPRefs = II.getNumDefs() > NumResults;
+  bool HasOptPRefs = NumDefs > NumResults;
   assert((!HasOptPRefs || !HasPhysRegOuts) &&
          "Unable to cope with optional defs and phys regs defs!");
-  unsigned NumSkip = HasOptPRefs ? II.getNumDefs() - NumResults : 0;
+  unsigned NumSkip = HasOptPRefs ? NumDefs - NumResults : 0;
   for (unsigned i = NumSkip; i != NodeOperands; ++i)
-    AddOperand(MIB, Node->getOperand(i), i-NumSkip+II.getNumDefs(), &II,
+    AddOperand(MIB, Node->getOperand(i), i-NumSkip+NumDefs, &II,
                VRBaseMap, /*IsDebug=*/false, IsClone, IsCloned);
 
   // Transfer all of the memory reference descriptions of this instruction.
@@ -784,8 +795,8 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
 
   // Additional results must be physical register defs.
   if (HasPhysRegOuts) {
-    for (unsigned i = II.getNumDefs(); i < NumResults; ++i) {
-      unsigned Reg = II.getImplicitDefs()[i - II.getNumDefs()];
+    for (unsigned i = NumDefs; i < NumResults; ++i) {
+      unsigned Reg = II.getImplicitDefs()[i - NumDefs];
       if (!Node->hasAnyUseOfValue(i))
         continue;
       // This implicitly defined physreg has a use.

@@ -622,7 +622,8 @@ public:
   std::pair<SDValue, SDValue> LowerCallOperands(const CallInst &CI,
                                                 unsigned ArgIdx,
                                                 unsigned NumArgs,
-                                                SDValue Callee);
+                                                SDValue Callee,
+                                                bool useVoidTy = false);
 
   /// UpdateSplitBlock - When an MBB was split during scheduling, update the
   /// references that ned to refer to the last resulting block.

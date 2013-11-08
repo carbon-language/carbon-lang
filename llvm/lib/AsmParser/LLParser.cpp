@@ -1343,6 +1343,7 @@ bool LLParser::ParseOptionalVisibility(unsigned &Res) {
 ///   ::= 'x86_64_sysvcc'
 ///   ::= 'x86_64_win64cc'
 ///   ::= 'webkit_jscc'
+///   ::= 'anyregcc'
 ///   ::= 'cc' UINT
 ///
 bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
@@ -1366,6 +1367,7 @@ bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
   case lltok::kw_x86_64_sysvcc:  CC = CallingConv::X86_64_SysV; break;
   case lltok::kw_x86_64_win64cc: CC = CallingConv::X86_64_Win64; break;
   case lltok::kw_webkit_jscc:    CC = CallingConv::WebKit_JS; break;
+  case lltok::kw_anyregcc:       CC = CallingConv::AnyReg; break;
   case lltok::kw_cc: {
       unsigned ArbitraryCC;
       Lex.Lex();

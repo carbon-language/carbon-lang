@@ -30,13 +30,24 @@ using namespace llvm;
 
 void StackMaps::recordStackMap(const MachineInstr &MI, uint32_t ID,
                                MachineInstr::const_mop_iterator MOI,
-                               MachineInstr::const_mop_iterator MOE) {
+                               MachineInstr::const_mop_iterator MOE,
+                               bool recordResult) {
 
   MCContext &OutContext = AP.OutStreamer.getContext();
   MCSymbol *MILabel = OutContext.CreateTempSymbol();
   AP.OutStreamer.EmitLabel(MILabel);
 
   LocationVec CallsiteLocs;
+
+  if (recordResult) {
+    std::pair<Location, MachineInstr::const_mop_iterator> ParseResult =
+      OpParser(MI.operands_begin(), llvm::next(MI.operands_begin(), 1));
+
+    Location &Loc = ParseResult.first;
+    assert(Loc.LocType == Location::Register &&
+           "Stackmap return location must be a register.");
+    CallsiteLocs.push_back(Loc);
+  }
 
   while (MOI != MOE) {
     std::pair<Location, MachineInstr::const_mop_iterator> ParseResult =

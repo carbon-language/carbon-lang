@@ -16,6 +16,7 @@
 #include "X86ISelLowering.h"
 #include "Utils/X86ShuffleDecode.h"
 #include "X86.h"
+#include "X86CallingConv.h"
 #include "X86InstrBuilder.h"
 #include "X86TargetMachine.h"
 #include "X86TargetObjectFile.h"

@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86.h"
+#include "X86CallingConv.h"
 #include "X86ISelLowering.h"
 #include "X86InstrBuilder.h"
 #include "X86RegisterInfo.h"

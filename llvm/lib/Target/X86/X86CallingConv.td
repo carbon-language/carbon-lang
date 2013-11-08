@@ -160,6 +160,17 @@ def RetCC_X86_64_WebKit_JS : CallingConv<[
   CCIfType<[i64], CCAssignToReg<[RAX]>>
 ]>;
 
+// X86-64 AnyReg return-value convention. No explicit register is specified for
+// the return-value. The register allocator is allowed and expected to choose
+// any free register.
+//
+// This calling convention is currently only supported by the stackmap and
+// patchpoint intrinsics. All other uses will result in an assert on Debug
+// builds. On Release builds we fallback to the X86 C calling convention.
+def RetCC_X86_64_AnyReg : CallingConv<[
+  CCCustom<"CC_X86_AnyReg_Error">
+]>;
+
 // This is the root return-value convention for the X86-32 backend.
 def RetCC_X86_32 : CallingConv<[
   // If FastCC, use RetCC_X86_32_Fast.
@@ -178,6 +189,7 @@ def RetCC_X86_64 : CallingConv<[
 
   // Handle JavaScript calls.
   CCIfCC<"CallingConv::WebKit_JS", CCDelegateTo<RetCC_X86_64_WebKit_JS>>,
+  CCIfCC<"CallingConv::AnyReg", CCDelegateTo<RetCC_X86_64_AnyReg>>,
 
   // Handle explicit CC selection
   CCIfCC<"CallingConv::X86_64_Win64", CCDelegateTo<RetCC_X86_Win64_C>>,
@@ -348,6 +360,16 @@ def CC_X86_64_WebKit_JS : CallingConv<[
   // Integer/FP values are always stored in stack slots that are 8 bytes in size
   // and 8-byte aligned.
   CCIfType<[i32, i64, f32, f64], CCAssignToStack<8, 8>>
+]>;
+
+// No explicit register is specified for the AnyReg calling convention. The
+// register allocator may assign the arguments to any free register.
+//
+// This calling convention is currently only supported by the stackmap and
+// patchpoint intrinsics. All other uses will result in an assert on Debug
+// builds. On Release builds we fallback to the X86 C calling convention.
+def CC_X86_64_AnyReg : CallingConv<[
+  CCCustom<"CC_X86_AnyReg_Error">
 ]>;
 
 //===----------------------------------------------------------------------===//
@@ -542,6 +564,7 @@ def CC_X86_64 : CallingConv<[
   CCIfCC<"CallingConv::GHC", CCDelegateTo<CC_X86_64_GHC>>,
   CCIfCC<"CallingConv::HiPE", CCDelegateTo<CC_X86_64_HiPE>>,
   CCIfCC<"CallingConv::WebKit_JS", CCDelegateTo<CC_X86_64_WebKit_JS>>,
+  CCIfCC<"CallingConv::AnyReg", CCDelegateTo<CC_X86_64_AnyReg>>,
   CCIfCC<"CallingConv::X86_64_Win64", CCDelegateTo<CC_X86_Win64_C>>,
   CCIfCC<"CallingConv::X86_64_SysV", CCDelegateTo<CC_X86_64_C>>,
 

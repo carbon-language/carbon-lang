@@ -4198,14 +4198,20 @@ static MachineInstr* foldPatchpoint(MachineFunction &MF,
                                     const SmallVectorImpl<unsigned> &Ops,
                                     int FrameIndex,
                                     const TargetInstrInfo &TII) {
+  bool hasDef = MI->getOperand(0).isReg() && MI->getOperand(0).isDef() &&
+                !MI->getOperand(0).isImplicit();
+  unsigned StartIdx = hasDef ? 1 : 0;
+
   MachineInstr *NewMI =
     MF.CreateMachineInstr(TII.get(MI->getOpcode()), MI->getDebugLoc(), true);
   MachineInstrBuilder MIB(MF, NewMI);
 
   bool isPatchPoint = MI->getOpcode() == TargetOpcode::PATCHPOINT;
-  unsigned StartIdx = isPatchPoint ? MI->getOperand(3).getImm() + 4 : 2;
+  StartIdx = isPatchPoint ?
+             StartIdx + MI->getOperand(StartIdx+3).getImm() + 5 :
+             StartIdx + 2;
 
-  // No need to fold the meta data and function arguments
+  // No need to fold return, the meta data, and function arguments
   for (unsigned i = 0; i < StartIdx; ++i)
     MIB.addOperand(MI->getOperand(i));
 
