@@ -141,19 +141,21 @@ void WhitespaceManager::alignTrailingComments() {
       bool FollowsRBraceInColumn0 = i > 0 && Changes[i].NewlinesBefore == 0 &&
                                     Changes[i - 1].Kind == tok::r_brace &&
                                     Changes[i - 1].StartOfTokenColumn == 0;
-      bool WasAlignedWithStartOfNextLine =
-          // A comment on its own line.
-          Changes[i].NewlinesBefore == 1 &&
-          // Not the last line.
-          i + 1 != e &&
-          // The start of the next token was previously aligned with
-          // the start of this comment.
-          (SourceMgr.getSpellingColumnNumber(
-               Changes[i].OriginalWhitespaceRange.getEnd()) ==
-           SourceMgr.getSpellingColumnNumber(
-               Changes[i + 1].OriginalWhitespaceRange.getEnd())) &&
-          // Which is not a comment itself.
-          Changes[i + 1].Kind != tok::comment;
+      bool WasAlignedWithStartOfNextLine = false;
+      if (Changes[i].NewlinesBefore == 1) { // A comment on its own line.
+        for (unsigned j = i + 1; j != e; ++j) {
+          if (Changes[j].Kind != tok::comment) { // Skip over comments.
+            // The start of the next token was previously aligned with the
+            // start of this comment.
+            WasAlignedWithStartOfNextLine =
+                (SourceMgr.getSpellingColumnNumber(
+                     Changes[i].OriginalWhitespaceRange.getEnd()) ==
+                 SourceMgr.getSpellingColumnNumber(
+                     Changes[j].OriginalWhitespaceRange.getEnd()));
+            break;
+          }
+        }
+      }
       if (!Style.AlignTrailingComments || FollowsRBraceInColumn0) {
         alignTrailingComments(StartOfSequence, i, MinColumn);
         MinColumn = ChangeMinColumn;
