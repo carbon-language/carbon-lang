@@ -29,8 +29,6 @@
 
 namespace lld {
 
-namespace {} // anonymous namespace
-
 bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
   if (_stackReserve < _stackCommit) {
     diagnostics << "Invalid stack size: reserve size must be equal to or "
