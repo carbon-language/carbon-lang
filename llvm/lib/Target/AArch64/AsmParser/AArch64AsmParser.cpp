@@ -1491,7 +1491,7 @@ AArch64AsmParser::ParseImmWithLSLOperand(
 
   // The optional operand must be "lsl #N" where N is non-negative.
   if (Parser.getTok().is(AsmToken::Identifier)
-      && Parser.getTok().getIdentifier().lower() == "lsl") {
+      && Parser.getTok().getIdentifier().equals_lower("lsl")) {
     Parser.Lex();
 
     if (Parser.getTok().is(AsmToken::Hash)) {
@@ -1548,9 +1548,8 @@ AArch64AsmParser::ParseCRxOperand(
     return MatchOperand_ParseFail;
   }
 
-  std::string LowerTok = Parser.getTok().getIdentifier().lower();
-  StringRef Tok(LowerTok);
-  if (Tok[0] != 'c') {
+  StringRef Tok = Parser.getTok().getIdentifier();
+  if (Tok[0] != 'c' && Tok[0] != 'C') {
     Error(S, "Expected cN operand where 0 <= N <= 15");
     return MatchOperand_ParseFail;
   }
@@ -1636,7 +1635,7 @@ AArch64AsmParser::IdentifyRegister(unsigned &RegNum, SMLoc &RegEndLoc,
     // gives us a permanent string to use in the token (a pointer into LowerReg
     // would go out of scope when we return).
     LayoutLoc = SMLoc::getFromPointer(S.getPointer() + DotPos + 1);
-    std::string LayoutText = LowerReg.substr(DotPos, StringRef::npos);
+    StringRef LayoutText = StringRef(LowerReg).substr(DotPos);
 
     // See if it's a 128-bit layout first.
     Layout = StringSwitch<const char *>(LayoutText)
