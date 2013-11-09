@@ -383,8 +383,6 @@ void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
   size = CaptureStackBackTrace(2, Min(max_depth, kStackTraceMax),
                                (void**)trace, 0);
   // Skip the RTL frames by searching for the PC in the stacktrace.
-  // FIXME: this doesn't work well for the malloc/free stacks yet - consider
-  // adjusting the pc_threshold.
   uptr pc_location = LocatePcInTrace(pc);
   PopStackFrames(pc_location);
 }
