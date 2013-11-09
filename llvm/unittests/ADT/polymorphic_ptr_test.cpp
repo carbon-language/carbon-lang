@@ -15,12 +15,12 @@ using namespace llvm;
 
 namespace {
 
-TEST(polymorphic_ptr_test, Basic) {
-  struct S {
-    S(int x) : x(x) {}
-    int x;
-  };
+struct S {
+  S(int x) : x(x) {}
+  int x;
+};
 
+TEST(polymorphic_ptr_test, Basic) {
   polymorphic_ptr<S> null;
   EXPECT_FALSE((bool)null);
   EXPECT_TRUE(!null);
