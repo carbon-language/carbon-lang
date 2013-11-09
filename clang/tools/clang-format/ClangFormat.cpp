@@ -174,7 +174,7 @@ static bool fillRanges(SourceManager &Sources, FileID ID,
 }
 
 // Returns true on error.
-static bool format(std::string FileName) {
+static bool format(StringRef FileName) {
   FileManager Files((FileSystemOptions()));
   DiagnosticsEngine Diagnostics(
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
