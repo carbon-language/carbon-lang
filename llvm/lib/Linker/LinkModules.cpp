@@ -1251,6 +1251,10 @@ bool ModuleLinker::run() {
   for (unsigned i = 0, e = AppendingVars.size(); i != e; ++i)
     linkAppendingVarInit(AppendingVars[i]);
   
+  // Update the initializers in the DstM module now that all globals that may
+  // be referenced are in DstM.
+  linkGlobalInits();
+
   // Link in the function bodies that are defined in the source module into
   // DstM.
   for (Module::iterator SF = SrcM->begin(), E = SrcM->end(); SF != E; ++SF) {
@@ -1332,10 +1336,6 @@ bool ModuleLinker::run() {
     }
   } while (LinkedInAnyFunctions);
   
-  // Update the initializers in the DstM module now that all globals that may
-  // be referenced are in DstM.
-  linkGlobalInits();
-
   // Now that all of the types from the source are used, resolve any structs
   // copied over to the dest that didn't exist there.
   TypeMap.linkDefinedTypeBodies();
