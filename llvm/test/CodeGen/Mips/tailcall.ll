@@ -243,3 +243,16 @@ entry:
   ret i32 %call
 }
 
+; Check that there is a chain edge between the load and store nodes.
+;
+; PIC32-LABEL: caller14:
+; PIC32: lw ${{[0-9]+}}, 16($sp)
+; PIC32: sw $4, 16($sp)
+
+define void @caller14(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e) {
+entry:
+  tail call void @callee14(i32 %e, i32 %b, i32 %c, i32 %d, i32 %a)
+  ret void
+}
+
+declare void @callee14(i32, i32, i32, i32, i32)

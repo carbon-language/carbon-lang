@@ -2650,9 +2650,11 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
       // Create load nodes to retrieve arguments from the stack
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
-      InVals.push_back(DAG.getLoad(ValVT, DL, Chain, FIN,
-                                   MachinePointerInfo::getFixedStack(FI),
-                                   false, false, false, 0));
+      SDValue Load = DAG.getLoad(ValVT, DL, Chain, FIN,
+                                 MachinePointerInfo::getFixedStack(FI),
+                                 false, false, false, 0);
+      InVals.push_back(Load);
+      OutChains.push_back(Load.getValue(1));
     }
   }
 
