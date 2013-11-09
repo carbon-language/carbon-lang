@@ -73,3 +73,18 @@ namespace test5 {
   }
   B X;
 }
+
+namespace test6 {
+  // Test that we use ~A directly, even when ~A is not defined. The symbol for
+  // ~B would have been internal and still contain a reference to ~A.
+  struct A {
+    virtual ~A();
+  };
+  namespace {
+  struct B : public A {
+    ~B() {}
+  };
+  }
+  B X;
+  // CHECK-DAG: call i32 @__cxa_atexit({{.*}}@_ZN5test61AD2Ev
+}

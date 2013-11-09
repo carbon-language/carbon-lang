@@ -82,18 +82,12 @@ bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
   if (!UniqueBase)
     return true;
 
-  /// If we don't have a definition for the destructor yet, don't
-  /// emit.  We can't emit aliases to declarations; that's just not
-  /// how aliases work.
-  const CXXDestructorDecl *BaseD = UniqueBase->getDestructor();
-  if (!BaseD->isImplicit() && !BaseD->hasBody())
-    return true;
-
   // If the base is at a non-zero offset, give up.
   const ASTRecordLayout &ClassLayout = Context.getASTRecordLayout(Class);
   if (!ClassLayout.getBaseClassOffset(UniqueBase).isZero())
     return true;
 
+  const CXXDestructorDecl *BaseD = UniqueBase->getDestructor();
   return TryEmitDefinitionAsAlias(GlobalDecl(D, Dtor_Base),
                                   GlobalDecl(BaseD, Dtor_Base),
                                   false);
@@ -146,14 +140,20 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     return false;
   }
 
-  // Don't create an alias to a linker weak symbol unless we know we can do
-  // that in every TU. This avoids producing different COMDATs in different
-  // TUs.
-  if (llvm::GlobalValue::isWeakForLinker(TargetLinkage)) {
-    if (!InEveryTU)
+  if (!InEveryTU) {
+    /// If we don't have a definition for the destructor yet, don't
+    /// emit.  We can't emit aliases to declarations; that's just not
+    /// how aliases work.
+    if (Ref->isDeclaration())
       return true;
 
-    assert(Linkage == TargetLinkage);
+    // Don't create an alias to a linker weak symbol unless we know we can do
+    // that in every TU. This avoids producing different COMDATs in different
+    // TUs.
+    if (llvm::GlobalValue::isWeakForLinker(TargetLinkage)) {
+      assert(Linkage == TargetLinkage);
+      return true;
+    }
   }
 
   // Create the alias with no name.
