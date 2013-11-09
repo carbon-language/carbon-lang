@@ -35,6 +35,7 @@ set(ADTSources
   TripleTest.cpp
   TwineTest.cpp
   VariadicFunctionTest.cpp
+  polymorphic_ptr_test.cpp
  )
 
 # They cannot be compiled on MSVC9 due to its bug.
