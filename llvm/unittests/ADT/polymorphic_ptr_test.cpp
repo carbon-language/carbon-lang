@@ -113,6 +113,11 @@ TEST(polymorphic_ptr_test, Polymorphism) {
   copy = dummy_copy(b);
   EXPECT_NE(b, copy);
   EXPECT_EQ("DerivedB", copy->name());
+
+  // Test creating a copy out of a temporary directly.
+  copy = dummy_copy<polymorphic_ptr<Base> >(new DerivedA());
+  EXPECT_NE(a, copy);
+  EXPECT_EQ("DerivedA", copy->name());
 }
 
 }
