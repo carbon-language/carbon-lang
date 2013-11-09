@@ -27,7 +27,7 @@ namespace PBQP {
 
     /// \brief PBQP Heuristic which applies an allocability test based on
     ///        Briggs.
-    /// 
+    ///
     /// This heuristic assumes that the elements of cost vectors in the PBQP
     /// problem represent storage options, with the first being the spill
     /// option and subsequent elements representing legal registers for the
@@ -39,8 +39,8 @@ namespace PBQP {
     /// solver stack. If no nodes can be proven allocable then the node with
     /// the lowest estimated spill cost is selected and push to the solver stack
     /// instead.
-    /// 
-    /// This implementation is built on top of HeuristicBase.       
+    ///
+    /// This implementation is built on top of HeuristicBase.
     class Briggs : public HeuristicBase<Briggs> {
     private:
 
@@ -80,7 +80,7 @@ namespace PBQP {
       typedef std::list<Graph::NodeId> RNAllocableList;
       typedef RNAllocableList::iterator RNAllocableListItr;
 
-      typedef std::list<Graph::NodeId> RNUnallocableList;  
+      typedef std::list<Graph::NodeId> RNUnallocableList;
       typedef RNUnallocableList::iterator RNUnallocableListItr;
 
     public:
@@ -179,7 +179,7 @@ namespace PBQP {
       }
 
       /// \brief Prepare a change in the costs on the given edge.
-      /// @param eItr Edge iterator.    
+      /// @param eItr Edge iterator.
       void preUpdateEdgeCosts(Graph::EdgeId eId) {
         Graph &g = getGraph();
         Graph::NodeId n1Id = g.getEdgeNode1(eId),
@@ -316,7 +316,7 @@ namespace PBQP {
                  numReverseRegs = eCosts.getCols() - 1;
 
         std::vector<unsigned> rowInfCounts(numRegs, 0),
-                              colInfCounts(numReverseRegs, 0);        
+                              colInfCounts(numReverseRegs, 0);
 
         ed.worst = 0;
         ed.reverseWorst = 0;
@@ -348,7 +348,7 @@ namespace PBQP {
         ed.isUpToDate = true;
       }
 
-      // Add the contributions of the given edge to the given node's 
+      // Add the contributions of the given edge to the given node's
       // numDenied and safe members. No action is taken other than to update
       // these member values. Once updated these numbers can be used by clients
       // to update the node's allocability.
@@ -359,7 +359,7 @@ namespace PBQP {
 
         NodeData &nd = getHeuristicNodeData(nId);
         unsigned numRegs = getGraph().getNodeCosts(nId).getLength() - 1;
-        
+
         bool nIsNode1 = nId == getGraph().getEdgeNode1(eId);
         EdgeData::UnsafeArray &unsafe =
           nIsNode1 ? ed.unsafe : ed.reverseUnsafe;
@@ -375,7 +375,7 @@ namespace PBQP {
         }
       }
 
-      // Subtract the contributions of the given edge to the given node's 
+      // Subtract the contributions of the given edge to the given node's
       // numDenied and safe members. No action is taken other than to update
       // these member values. Once updated these numbers can be used by clients
       // to update the node's allocability.
@@ -386,14 +386,14 @@ namespace PBQP {
 
         NodeData &nd = getHeuristicNodeData(nId);
         unsigned numRegs = getGraph().getNodeCosts(nId).getLength() - 1;
-        
+
         bool nIsNode1 = nId == getGraph().getEdgeNode1(eId);
         EdgeData::UnsafeArray &unsafe =
           nIsNode1 ? ed.unsafe : ed.reverseUnsafe;
         nd.numDenied -= nIsNode1 ? ed.worst : ed.reverseWorst;
 
         for (unsigned r = 0; r < numRegs; ++r) {
-          if (unsafe[r]) { 
+          if (unsafe[r]) {
             if (nd.unsafeDegrees[r] == 1) {
               ++nd.numSafe;
             }
@@ -431,7 +431,7 @@ namespace PBQP {
         for (SolverEdgeItr aeItr = getSolver().solverEdgesBegin(nId),
                            aeEnd = getSolver().solverEdgesEnd(nId);
              aeItr != aeEnd; ++aeItr) {
-          
+
           Graph::EdgeId eId = *aeItr;
           computeEdgeContributions(eId);
           addEdgeContributions(eId, nId);

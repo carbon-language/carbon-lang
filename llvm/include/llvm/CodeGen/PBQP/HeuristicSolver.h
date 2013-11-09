@@ -9,7 +9,7 @@
 //
 // Heuristic PBQP solver. This solver is able to perform optimal reductions for
 // nodes of degree 0, 1 or 2. For nodes of degree >2 a plugable heuristic is
-// used to select a node for reduction. 
+// used to select a node for reduction.
 //
 //===----------------------------------------------------------------------===//
 
@@ -43,7 +43,7 @@ namespace PBQP {
     typedef std::list<Graph::EdgeId> SolverEdges;
 
   public:
-  
+
     /// \brief Iterator type for edges in the solver graph.
     typedef SolverEdges::iterator SolverEdgeItr;
 
@@ -70,15 +70,15 @@ namespace PBQP {
       unsigned getSolverDegree() const { return solverDegree; }
       void clearSolverEdges() {
         solverDegree = 0;
-        solverEdges.clear(); 
+        solverEdges.clear();
       }
-      
+
     private:
       HeuristicNodeData hData;
       unsigned solverDegree;
       SolverEdges solverEdges;
     };
- 
+
     class EdgeData {
     public:
       HeuristicEdgeData& getHeuristicData() { return hData; }
@@ -117,7 +117,7 @@ namespace PBQP {
     /// \brief Construct a heuristic solver implementation to solve the given
     ///        graph.
     /// @param g The graph representing the problem instance to be solved.
-    HeuristicSolverImpl(Graph &g) : g(g), h(*this) {}  
+    HeuristicSolverImpl(Graph &g) : g(g), h(*this) {}
 
     /// \brief Get the graph being solved by this solver.
     /// @return The graph representing the problem instance being solved by this
@@ -142,7 +142,7 @@ namespace PBQP {
     ///        the solver graph.
     /// @param nItr Node iterator.
     /// @return Begin iterator for the set of edges adjacent to the given node
-    ///         in the solver graph. 
+    ///         in the solver graph.
     SolverEdgeItr solverEdgesBegin(Graph::NodeId nId) {
       return getSolverNodeData(nId).solverEdgesBegin();
     }
@@ -151,7 +151,7 @@ namespace PBQP {
     ///        the solver graph.
     /// @param nItr Node iterator.
     /// @return End iterator for the set of edges adjacent to the given node in
-    ///         the solver graph. 
+    ///         the solver graph.
     SolverEdgeItr solverEdgesEnd(Graph::NodeId nId) {
       return getSolverNodeData(nId).solverEdgesEnd();
     }
@@ -243,7 +243,7 @@ namespace PBQP {
 
       const Matrix &eCosts = g.getEdgeCosts(eId);
       const Vector &xCosts = g.getNodeCosts(xnId);
-      
+
       // Duplicate a little to avoid transposing matrices.
       if (xnId == g.getEdgeNode1(eId)) {
         Graph::NodeId ynId = g.getEdgeNode2(eId);
@@ -311,7 +311,7 @@ namespace PBQP {
       unsigned xLen = xCosts.getLength(),
                yLen = yxeCosts->getRows(),
                zLen = zxeCosts->getRows();
-               
+
       Matrix delta(yLen, zLen);
 
       for (unsigned i = 0; i < yLen; ++i) {
@@ -355,7 +355,7 @@ namespace PBQP {
         // If we modified the edge costs let the heuristic know.
         h.postUpdateEdgeCosts(yzeId);
       }
- 
+
       if (nullCostEdge) {
         // If this edge ended up null remove it.
         if (!addedEdge) {
@@ -387,7 +387,7 @@ namespace PBQP {
     /// \brief Record an application of the RN rule.
     ///
     /// For use by the HeuristicBase.
-    void recordRN() { s.recordRN(); } 
+    void recordRN() { s.recordRN(); }
 
   private:
 
@@ -497,7 +497,7 @@ namespace PBQP {
     bool tryToEliminateEdge(Graph::EdgeId eId) {
       if (tryNormaliseEdgeMatrix(eId)) {
         g.removeEdge(eId);
-        return true; 
+        return true;
       }
       return false;
     }

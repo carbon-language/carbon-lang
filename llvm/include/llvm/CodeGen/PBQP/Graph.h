@@ -44,7 +44,7 @@ namespace PBQP {
 
     class NodeEntry {
     private:
-      Vector costs;      
+      Vector costs;
       AdjEdgeList adjEdges;
       void *data;
       NodeEntry() : costs(0, 0) {}
@@ -222,7 +222,7 @@ namespace PBQP {
       assert(getNodeCosts(n1Id).getLength() == costs.getRows() &&
              getNodeCosts(n2Id).getLength() == costs.getCols() &&
              "Matrix dimensions mismatch.");
-      return addConstructedEdge(EdgeEntry(n1Id, n2Id, costs)); 
+      return addConstructedEdge(EdgeEntry(n1Id, n2Id, costs));
     }
 
     /// \brief Get the number of nodes in the graph.
@@ -256,7 +256,7 @@ namespace PBQP {
     /// @param nItr Node iterator.
     /// @return Pointer to node data.
     void* getNodeData(NodeId nId) { return getNode(nId).getData(); }
-    
+
     /// \brief Get an edge's cost matrix.
     /// @param eItr Edge iterator.
     /// @return Edge cost matrix.
@@ -278,7 +278,7 @@ namespace PBQP {
 
     /// \brief Get an edge's data pointer.
     /// @param eItr Edge iterator.
-    /// @return Pointer to edge data. 
+    /// @return Pointer to edge data.
     void* getEdgeData(EdgeId eId) { return getEdge(eId).getData(); }
 
     /// \brief Get a node's degree.
@@ -316,22 +316,22 @@ namespace PBQP {
 
     /// \brief Get the first node connected to this edge.
     /// @param eItr Edge iterator.
-    /// @return The first node connected to the given edge. 
+    /// @return The first node connected to the given edge.
     NodeId getEdgeNode1(EdgeId eId) {
       return getEdge(eId).getNode1();
     }
 
     /// \brief Get the second node connected to this edge.
     /// @param eItr Edge iterator.
-    /// @return The second node connected to the given edge. 
+    /// @return The second node connected to the given edge.
     NodeId getEdgeNode2(EdgeId eId) {
       return getEdge(eId).getNode2();
-    } 
+    }
 
     /// \brief Get the "other" node connected to this edge.
     /// @param eItr Edge iterator.
     /// @param nItr Node iterator for the "given" node.
-    /// @return The iterator for the "other" node connected to this edge. 
+    /// @return The iterator for the "other" node connected to this edge.
     NodeId getEdgeOtherNode(EdgeId eId, NodeId nId) {
       EdgeEntry &e = getEdge(eId);
       if (e.getNode1() == nId) {
@@ -366,7 +366,7 @@ namespace PBQP {
       NodeEntry &n = getNode(nId);
       for (AdjEdgeItr itr = n.edgesBegin(), end = n.edgesEnd(); itr != end; ++itr) {
         EdgeId eId = *itr;
-        removeEdge(eId); 
+        removeEdge(eId);
       }
       freeNodes.push_back(nId);
     }
@@ -431,7 +431,7 @@ namespace PBQP {
     /// @param os Output stream to print on.
     template <typename OStream>
     void printDot(OStream &os) {
-    
+
       os << "graph {\n";
 
       for (NodeItr nodeItr = nodesBegin(), nodeEnd = nodesEnd();
@@ -470,7 +470,7 @@ namespace PBQP {
 //                              nEnd = other.nodesEnd();
 //          nItr != nEnd; ++nItr) {
 //       nodeMap[nItr] = addNode(other.getNodeCosts(nItr));
-//     }      
+//     }
 //  }
 
 }

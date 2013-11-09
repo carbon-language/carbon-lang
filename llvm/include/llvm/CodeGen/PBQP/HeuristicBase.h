@@ -27,7 +27,7 @@ namespace PBQP {
   ///   <li> void heuristicReduce() : Perform a single heuristic reduction.
   ///   <li> void preUpdateEdgeCosts(Graph::EdgeItr) : Handle the (imminent)
   ///        change to the cost matrix on the given edge (by R2).
-  ///   <li> void postUpdateEdgeCostts(Graph::EdgeItr) : Handle the new 
+  ///   <li> void postUpdateEdgeCostts(Graph::EdgeItr) : Handle the new
   ///        costs on the given edge.
   ///   <li> void handleAddEdge(Graph::EdgeItr) : Handle the addition of a new
   ///        edge into the PBQP graph (by R2).
@@ -39,7 +39,7 @@ namespace PBQP {
   ///
   /// These methods are implemented in this class for documentation purposes,
   /// but will assert if called.
-  /// 
+  ///
   /// Note that this class uses the curiously recursive template idiom to
   /// forward calls to the derived class. These methods need not be made
   /// virtual, and indeed probably shouldn't for performance reasons.
@@ -62,7 +62,7 @@ namespace PBQP {
     HImpl& impl() { return static_cast<HImpl&>(*this); }
 
     // Add the given node to the optimal reductions list. Keep an iterator to
-    // its location for fast removal. 
+    // its location for fast removal.
     void addToOptimalReductionList(Graph::NodeId nId) {
       optimalList.insert(optimalList.end(), nId);
     }
@@ -94,7 +94,7 @@ namespace PBQP {
     /// behaviour.
     bool solverRunSimplify() const { return true; }
 
-    /// \brief Decide whether a node should be optimally or heuristically 
+    /// \brief Decide whether a node should be optimally or heuristically
     ///        reduced.
     /// @return Whether or not the given node should be listed for optimal
     ///         reduction (via R0, R1 or R2).
@@ -199,7 +199,7 @@ namespace PBQP {
     }
 
     /// \brief Prepare a change in the costs on the given edge.
-    /// @param eItr Edge iterator.    
+    /// @param eItr Edge iterator.
     void preUpdateEdgeCosts(Graph::EdgeId eId) {
       llvm_unreachable("Must be implemented in derived class.");
     }
