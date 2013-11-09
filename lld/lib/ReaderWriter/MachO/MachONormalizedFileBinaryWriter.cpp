@@ -87,11 +87,25 @@ private:
   uint32_t    indirectSymbolIndex(const Section &sect, uint32_t &index);
   uint32_t    indirectSymbolElementSize(const Section &sect);
 
-  error_code  writeSingleSegment32LoadCommand(uint8_t *&lc);
-  error_code  writeSingleSegment64LoadCommand(uint8_t *&lc);
-  error_code  writeSegment32LoadCommands(uint8_t *&lc);
-  error_code  writeSegment64LoadCommands(uint8_t *&lc);
+  // For use as template parameter to load command methods.
+  struct MachO64Trait {
+    typedef llvm::MachO::segment_command_64 command;
+    typedef llvm::MachO::section_64         section;
+    enum { LC = llvm::MachO::LC_SEGMENT_64 };
+  };
+
+  // For use as template parameter to load command methods.
+  struct MachO32Trait {
+    typedef llvm::MachO::segment_command   command;
+    typedef llvm::MachO::section           section;
+    enum { LC = llvm::MachO::LC_SEGMENT };
+  };
   
+  template <typename T>
+  error_code writeSingleSegmentLoadCommand(uint8_t *&lc);
+  template <typename T>
+  error_code writeSegmentLoadCommands(uint8_t *&lc);
+
   uint32_t pointerAlign(uint32_t value);
   static StringRef dyldPath();
   
@@ -504,55 +518,14 @@ uint32_t MachOFileLayout::indirectSymbolElementSize(const Section &sect) {
   return sect.content.size() / sect.indirectSymbols.size();
 }
 
-error_code MachOFileLayout::writeSingleSegment64LoadCommand(uint8_t *&lc) {
-  segment_command_64* seg = reinterpret_cast<segment_command_64*>(lc);
-  seg->cmd = LC_SEGMENT_64;
-  seg->cmdsize = sizeof(segment_command_64) 
-                                  + _file.sections.size() * sizeof(section_64);
-  uint8_t *next = lc + seg->cmdsize;
-  memset(seg->segname, 0, 16);
-  seg->vmaddr = 0;
-  seg->vmsize = _endOfSectionsContent - _endOfLoadCommands;
-  seg->fileoff = _endOfLoadCommands;
-  seg->filesize = seg->vmsize;
-  seg->maxprot = VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE;
-  seg->initprot = VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE;
-  seg->nsects = _file.sections.size();
-  seg->flags = 0;
-  if (_swap)
-    swapStruct(*seg);
-  section_64 *sout = reinterpret_cast<section_64*>
-                                              (lc+sizeof(segment_command_64));
-  uint32_t relOffset = _startOfRelocations;
-  uint32_t contentOffset = _startOfSectionsContent;
-  uint32_t indirectSymRunningIndex = 0;
-  for (const Section &sin : _file.sections) {
-    setString16(sin.sectionName, sout->sectname);
-    setString16(sin.segmentName, sout->segname);
-    sout->addr = sin.address;
-    sout->size = sin.content.size();
-    sout->offset = contentOffset;
-    sout->align = sin.alignment;
-    sout->reloff = sin.relocations.empty() ? 0 : relOffset;
-    sout->nreloc = sin.relocations.size();
-    sout->flags = sin.type | sin.attributes;
-    sout->reserved1 = indirectSymbolIndex(sin, indirectSymRunningIndex);
-    sout->reserved2 = indirectSymbolElementSize(sin);
-    relOffset += sin.relocations.size() * sizeof(any_relocation_info);
-    contentOffset += sin.content.size();
-    if (_swap)
-      swapStruct(*sout);
-    ++sout;
-  }
-  lc = next;
-  return error_code::success();
-}
 
-error_code MachOFileLayout::writeSingleSegment32LoadCommand(uint8_t *&lc) {
-  segment_command* seg = reinterpret_cast<segment_command*>(lc);
-  seg->cmd = LC_SEGMENT;
-  seg->cmdsize = sizeof(segment_command) 
-                              + _file.sections.size() * sizeof(section);
+
+template <typename T>
+error_code MachOFileLayout::writeSingleSegmentLoadCommand(uint8_t *&lc) {
+  typename T::command* seg = reinterpret_cast<typename T::command*>(lc);
+  seg->cmd = T::LC;
+  seg->cmdsize = sizeof(typename T::command) 
+                          + _file.sections.size() * sizeof(typename T::section);
   uint8_t *next = lc + seg->cmdsize;
   memset(seg->segname, 0, 16);
   seg->vmaddr = 0;
@@ -565,7 +538,8 @@ error_code MachOFileLayout::writeSingleSegment32LoadCommand(uint8_t *&lc) {
   seg->flags = 0;
   if (_swap)
     swapStruct(*seg);
-  section *sout = reinterpret_cast<section*>(lc+sizeof(segment_command));
+  typename T::section *sout = reinterpret_cast<typename T::section*>
+                                              (lc+sizeof(typename T::command));
   uint32_t relOffset = _startOfRelocations;
   uint32_t contentOffset = _startOfSectionsContent;
   uint32_t indirectSymRunningIndex = 0;
@@ -592,29 +566,30 @@ error_code MachOFileLayout::writeSingleSegment32LoadCommand(uint8_t *&lc) {
 }
 
 
-error_code MachOFileLayout::writeSegment64LoadCommands(uint8_t *&lc) {
+template <typename T>
+error_code MachOFileLayout::writeSegmentLoadCommands(uint8_t *&lc) {
   uint32_t indirectSymRunningIndex = 0;
   for (const Segment &seg : _file.segments) {
     // Write segment command with trailing sections.
     SegExtraInfo &segInfo = _segInfo[&seg];
-    segment_command_64* cmd = reinterpret_cast<segment_command_64*>(lc);
-    cmd->cmd = LC_SEGMENT_64;
-    cmd->cmdsize = sizeof(segment_command_64) 
-                                + segInfo.sections.size() * sizeof(section_64);
+    typename T::command* cmd = reinterpret_cast<typename T::command*>(lc);
+    cmd->cmd = T::LC;
+    cmd->cmdsize = sizeof(typename T::command) 
+                        + segInfo.sections.size() * sizeof(typename T::section);
     uint8_t *next = lc + cmd->cmdsize;
     setString16(seg.name, cmd->segname);
     cmd->vmaddr   = seg.address;
     cmd->vmsize   = seg.size;
     cmd->fileoff  = segInfo.fileOffset;
-    cmd->filesize = seg.access ? (uint64_t)seg.size : 0;
+    cmd->filesize = seg.access ? seg.size : Hex64(0);
     cmd->maxprot  = seg.access;
     cmd->initprot = seg.access;
     cmd->nsects   = segInfo.sections.size();
     cmd->flags    = 0;
     if (_swap)
       swapStruct(*cmd);
-    section_64 *sect = reinterpret_cast<section_64*>
-                                                (lc+sizeof(segment_command_64));
+    typename T::section *sect = reinterpret_cast<typename T::section*>
+                                               (lc+sizeof(typename T::command));
     for (const Section *section : segInfo.sections) {
       setString16(section->sectionName, sect->sectname);
       setString16(section->segmentName, sect->segname);
@@ -634,9 +609,9 @@ error_code MachOFileLayout::writeSegment64LoadCommands(uint8_t *&lc) {
     lc = reinterpret_cast<uint8_t*>(next);
   }
   // Add implicit __LINKEDIT segment
-  segment_command_64* cmd = reinterpret_cast<segment_command_64*>(lc);
-  cmd->cmd = LC_SEGMENT_64;
-  cmd->cmdsize = sizeof(segment_command_64);
+  typename T::command* cmd = reinterpret_cast<typename T::command*>(lc);
+  cmd->cmd = T::LC;
+  cmd->cmdsize = sizeof(typename T::command);
   uint8_t *next = lc + cmd->cmdsize;
   setString16("__LINKEDIT", cmd->segname);
   cmd->vmaddr   = _addressOfLinkEdit;
@@ -653,51 +628,6 @@ error_code MachOFileLayout::writeSegment64LoadCommands(uint8_t *&lc) {
   return error_code::success();
 }
 
-// FIXME:  See if this can be combined with writeSegment64LoadCommands
-// by using templates.
-error_code MachOFileLayout::writeSegment32LoadCommands(uint8_t *&lc) {
-  uint32_t indirectSymRunningIndex = 0;
-  for (const Segment &seg : _file.segments) {
-    // Write segment command with trailing sections.
-    SegExtraInfo &segInfo = _segInfo[&seg];
-    segment_command* cmd = reinterpret_cast<segment_command*>(lc);
-    cmd->cmd = LC_SEGMENT;
-    cmd->cmdsize = sizeof(segment_command) 
-                                + segInfo.sections.size() * sizeof(section);
-    uint8_t *next = lc + cmd->cmdsize;
-    setString16(seg.name, cmd->segname);
-    cmd->vmaddr   = seg.address;
-    cmd->vmsize   = seg.size;
-    cmd->fileoff  = segInfo.fileOffset;
-    cmd->filesize = seg.access ? (uint32_t)seg.size : 0;
-    cmd->maxprot  = seg.access;
-    cmd->initprot = seg.access;
-    cmd->nsects   = segInfo.sections.size();
-    cmd->flags    = 0;
-    if (_swap)
-      swapStruct(*cmd);
-    section *sect = reinterpret_cast<section*>(lc+sizeof(segment_command));
-    for (const Section *section : segInfo.sections) {
-      setString16(section->sectionName, sect->sectname);
-      setString16(section->segmentName, sect->segname);
-      sect->addr      = section->address;
-      sect->size      = section->content.size();
-      sect->offset    = section->address - seg.address + segInfo.fileOffset;
-      sect->align     = section->alignment;
-      sect->reloff    = 0;
-      sect->nreloc    = 0;
-      sect->flags     = section->type | section->attributes;
-      sect->reserved1 = indirectSymbolIndex(*section, indirectSymRunningIndex);
-      sect->reserved2 = indirectSymbolElementSize(*section);
-      if (_swap)
-        swapStruct(*sect);
-      ++sect;
-    }      
-    lc = reinterpret_cast<uint8_t*>(next);
-  }
-  return error_code::success();
-}
-
 
 error_code MachOFileLayout::writeLoadCommands() {
   error_code ec;
@@ -705,9 +635,9 @@ error_code MachOFileLayout::writeLoadCommands() {
   if (_file.fileType == llvm::MachO::MH_OBJECT) {
     // Object files have one unnamed segment which holds all sections.
     if (_is64)
-      ec = writeSingleSegment64LoadCommand(lc);
+      ec = writeSingleSegmentLoadCommand<MachO64Trait>(lc);
     else
-      ec = writeSingleSegment32LoadCommand(lc);
+      ec = writeSingleSegmentLoadCommand<MachO32Trait>(lc);
     // Add LC_SYMTAB with symbol table info
     symtab_command* st = reinterpret_cast<symtab_command*>(lc);
     st->cmd     = LC_SYMTAB;
@@ -722,9 +652,9 @@ error_code MachOFileLayout::writeLoadCommands() {
   } else {
     // Final linked images have sections under segments.
     if (_is64)
-      ec = writeSegment64LoadCommands(lc);
+      ec = writeSegmentLoadCommands<MachO64Trait>(lc);
     else
-      ec = writeSegment32LoadCommands(lc);
+      ec = writeSegmentLoadCommands<MachO32Trait>(lc);
     
     // Add LC_DYLD_INFO_ONLY.
     dyld_info_command* di = reinterpret_cast<dyld_info_command*>(lc);
