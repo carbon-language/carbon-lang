@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-pc-win32 -cxx-abi microsoft -fexceptions -fno-rtti | FileCheck -check-prefix WIN32 %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-pc-win32 -mconstructor-aliases -cxx-abi microsoft -fexceptions -fno-rtti | FileCheck -check-prefix WIN32 %s
 
 struct A {
   A();
