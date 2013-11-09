@@ -40,7 +40,7 @@ namespace PBQP {
     typedef typename HImpl::NodeData HeuristicNodeData;
     typedef typename HImpl::EdgeData HeuristicEdgeData;
 
-    typedef std::list<Graph::EdgeId> SolverEdges;
+    typedef std::list<Graph::EdgeItr> SolverEdges;
 
   public:
   
@@ -55,9 +55,9 @@ namespace PBQP {
 
       HeuristicNodeData& getHeuristicData() { return hData; }
 
-      SolverEdgeItr addSolverEdge(Graph::EdgeId eId) {
+      SolverEdgeItr addSolverEdge(Graph::EdgeItr eItr) {
         ++solverDegree;
-        return solverEdges.insert(solverEdges.end(), eId);
+        return solverEdges.insert(solverEdges.end(), eItr);
       }
 
       void removeSolverEdge(SolverEdgeItr seItr) {
@@ -104,7 +104,7 @@ namespace PBQP {
     Graph &g;
     HImpl h;
     Solution s;
-    std::vector<Graph::NodeId> stack;
+    std::vector<Graph::NodeItr> stack;
 
     typedef std::list<NodeData> NodeDataList;
     NodeDataList nodeDataList;
@@ -127,15 +127,15 @@ namespace PBQP {
     /// \brief Get the heuristic data attached to the given node.
     /// @param nItr Node iterator.
     /// @return The heuristic data attached to the given node.
-    HeuristicNodeData& getHeuristicNodeData(Graph::NodeId nId) {
-      return getSolverNodeData(nId).getHeuristicData();
+    HeuristicNodeData& getHeuristicNodeData(Graph::NodeItr nItr) {
+      return getSolverNodeData(nItr).getHeuristicData();
     }
 
     /// \brief Get the heuristic data attached to the given edge.
     /// @param eItr Edge iterator.
     /// @return The heuristic data attached to the given node.
-    HeuristicEdgeData& getHeuristicEdgeData(Graph::EdgeId eId) {
-      return getSolverEdgeData(eId).getHeuristicData();
+    HeuristicEdgeData& getHeuristicEdgeData(Graph::EdgeItr eItr) {
+      return getSolverEdgeData(eItr).getHeuristicData();
     }
 
     /// \brief Begin iterator for the set of edges adjacent to the given node in
@@ -143,8 +143,8 @@ namespace PBQP {
     /// @param nItr Node iterator.
     /// @return Begin iterator for the set of edges adjacent to the given node
     ///         in the solver graph. 
-    SolverEdgeItr solverEdgesBegin(Graph::NodeId nId) {
-      return getSolverNodeData(nId).solverEdgesBegin();
+    SolverEdgeItr solverEdgesBegin(Graph::NodeItr nItr) {
+      return getSolverNodeData(nItr).solverEdgesBegin();
     }
 
     /// \brief End iterator for the set of edges adjacent to the given node in
@@ -152,8 +152,8 @@ namespace PBQP {
     /// @param nItr Node iterator.
     /// @return End iterator for the set of edges adjacent to the given node in
     ///         the solver graph. 
-    SolverEdgeItr solverEdgesEnd(Graph::NodeId nId) {
-      return getSolverNodeData(nId).solverEdgesEnd();
+    SolverEdgeItr solverEdgesEnd(Graph::NodeItr nItr) {
+      return getSolverNodeData(nItr).solverEdgesEnd();
     }
 
     /// \brief Remove a node from the solver graph.
@@ -161,10 +161,10 @@ namespace PBQP {
     ///
     /// Does <i>not</i> notify the heuristic of the removal. That should be
     /// done manually if necessary.
-    void removeSolverEdge(Graph::EdgeId eId) {
-      EdgeData &eData = getSolverEdgeData(eId);
-      NodeData &n1Data = getSolverNodeData(g.getEdgeNode1(eId)),
-               &n2Data = getSolverNodeData(g.getEdgeNode2(eId));
+    void removeSolverEdge(Graph::EdgeItr eItr) {
+      EdgeData &eData = getSolverEdgeData(eItr);
+      NodeData &n1Data = getSolverNodeData(g.getEdgeNode1(eItr)),
+               &n2Data = getSolverNodeData(g.getEdgeNode2(eItr));
 
       n1Data.removeSolverEdge(eData.getN1SolverEdgeItr());
       n2Data.removeSolverEdge(eData.getN2SolverEdgeItr());
@@ -189,30 +189,30 @@ namespace PBQP {
 
     /// \brief Add to the end of the stack.
     /// @param nItr Node iterator to add to the reduction stack.
-    void pushToStack(Graph::NodeId nId) {
-      getSolverNodeData(nId).clearSolverEdges();
-      stack.push_back(nId);
+    void pushToStack(Graph::NodeItr nItr) {
+      getSolverNodeData(nItr).clearSolverEdges();
+      stack.push_back(nItr);
     }
 
     /// \brief Returns the solver degree of the given node.
     /// @param nItr Node iterator for which degree is requested.
     /// @return Node degree in the <i>solver</i> graph (not the original graph).
-    unsigned getSolverDegree(Graph::NodeId nId) {
-      return  getSolverNodeData(nId).getSolverDegree();
+    unsigned getSolverDegree(Graph::NodeItr nItr) {
+      return  getSolverNodeData(nItr).getSolverDegree();
     }
 
     /// \brief Set the solution of the given node.
     /// @param nItr Node iterator to set solution for.
     /// @param selection Selection for node.
-    void setSolution(const Graph::NodeId &nId, unsigned selection) {
-      s.setSelection(nId, selection);
+    void setSolution(const Graph::NodeItr &nItr, unsigned selection) {
+      s.setSelection(nItr, selection);
 
-      for (Graph::AdjEdgeItr aeItr = g.adjEdgesBegin(nId),
-                             aeEnd = g.adjEdgesEnd(nId);
+      for (Graph::AdjEdgeItr aeItr = g.adjEdgesBegin(nItr),
+                             aeEnd = g.adjEdgesEnd(nItr);
            aeItr != aeEnd; ++aeItr) {
-        Graph::EdgeId eId(*aeItr);
-        Graph::NodeId anId(g.getEdgeOtherNode(eId, nId));
-        getSolverNodeData(anId).addSolverEdge(eId);
+        Graph::EdgeItr eItr(*aeItr);
+        Graph::NodeItr anItr(g.getEdgeOtherNode(eItr, nItr));
+        getSolverNodeData(anItr).addSolverEdge(eItr);
       }
     }
 
@@ -220,12 +220,12 @@ namespace PBQP {
     /// @param nItr Node iterator for node to apply R0 to.
     ///
     /// Node will be automatically pushed to the solver stack.
-    void applyR0(Graph::NodeId nId) {
-      assert(getSolverNodeData(nId).getSolverDegree() == 0 &&
+    void applyR0(Graph::NodeItr nItr) {
+      assert(getSolverNodeData(nItr).getSolverDegree() == 0 &&
              "R0 applied to node with degree != 0.");
 
       // Nothing to do. Just push the node onto the reduction stack.
-      pushToStack(nId);
+      pushToStack(nItr);
 
       s.recordR0();
     }
@@ -234,20 +234,20 @@ namespace PBQP {
     /// @param xnItr Node iterator for node to apply R1 to.
     ///
     /// Node will be automatically pushed to the solver stack.
-    void applyR1(Graph::NodeId xnId) {
-      NodeData &nd = getSolverNodeData(xnId);
+    void applyR1(Graph::NodeItr xnItr) {
+      NodeData &nd = getSolverNodeData(xnItr);
       assert(nd.getSolverDegree() == 1 &&
              "R1 applied to node with degree != 1.");
 
-      Graph::EdgeId eId = *nd.solverEdgesBegin();
+      Graph::EdgeItr eItr = *nd.solverEdgesBegin();
 
-      const Matrix &eCosts = g.getEdgeCosts(eId);
-      const Vector &xCosts = g.getNodeCosts(xnId);
+      const Matrix &eCosts = g.getEdgeCosts(eItr);
+      const Vector &xCosts = g.getNodeCosts(xnItr);
       
       // Duplicate a little to avoid transposing matrices.
-      if (xnId == g.getEdgeNode1(eId)) {
-        Graph::NodeId ynId = g.getEdgeNode2(eId);
-        Vector &yCosts = g.getNodeCosts(ynId);
+      if (xnItr == g.getEdgeNode1(eItr)) {
+        Graph::NodeItr ynItr = g.getEdgeNode2(eItr);
+        Vector &yCosts = g.getNodeCosts(ynItr);
         for (unsigned j = 0; j < yCosts.getLength(); ++j) {
           PBQPNum min = eCosts[0][j] + xCosts[0];
           for (unsigned i = 1; i < xCosts.getLength(); ++i) {
@@ -257,10 +257,10 @@ namespace PBQP {
           }
           yCosts[j] += min;
         }
-        h.handleRemoveEdge(eId, ynId);
+        h.handleRemoveEdge(eItr, ynItr);
      } else {
-        Graph::NodeId ynId = g.getEdgeNode1(eId);
-        Vector &yCosts = g.getNodeCosts(ynId);
+        Graph::NodeItr ynItr = g.getEdgeNode1(eItr);
+        Vector &yCosts = g.getNodeCosts(ynItr);
         for (unsigned i = 0; i < yCosts.getLength(); ++i) {
           PBQPNum min = eCosts[i][0] + xCosts[0];
           for (unsigned j = 1; j < xCosts.getLength(); ++j) {
@@ -270,12 +270,12 @@ namespace PBQP {
           }
           yCosts[i] += min;
         }
-        h.handleRemoveEdge(eId, ynId);
+        h.handleRemoveEdge(eItr, ynItr);
       }
-      removeSolverEdge(eId);
+      removeSolverEdge(eItr);
       assert(nd.getSolverDegree() == 0 &&
              "Degree 1 with edge removed should be 0.");
-      pushToStack(xnId);
+      pushToStack(xnItr);
       s.recordR1();
     }
 
@@ -283,30 +283,30 @@ namespace PBQP {
     /// @param xnItr Node iterator for node to apply R2 to.
     ///
     /// Node will be automatically pushed to the solver stack.
-    void applyR2(Graph::NodeId xnId) {
-      assert(getSolverNodeData(xnId).getSolverDegree() == 2 &&
+    void applyR2(Graph::NodeItr xnItr) {
+      assert(getSolverNodeData(xnItr).getSolverDegree() == 2 &&
              "R2 applied to node with degree != 2.");
 
-      NodeData &nd = getSolverNodeData(xnId);
-      const Vector &xCosts = g.getNodeCosts(xnId);
+      NodeData &nd = getSolverNodeData(xnItr);
+      const Vector &xCosts = g.getNodeCosts(xnItr);
 
       SolverEdgeItr aeItr = nd.solverEdgesBegin();
-      Graph::EdgeId yxeId = *aeItr,
-                    zxeId = *(++aeItr);
+      Graph::EdgeItr yxeItr = *aeItr,
+                     zxeItr = *(++aeItr);
 
-      Graph::NodeId ynId = g.getEdgeOtherNode(yxeId, xnId),
-                    znId = g.getEdgeOtherNode(zxeId, xnId);
+      Graph::NodeItr ynItr = g.getEdgeOtherNode(yxeItr, xnItr),
+                     znItr = g.getEdgeOtherNode(zxeItr, xnItr);
 
-      bool flipEdge1 = (g.getEdgeNode1(yxeId) == xnId),
-           flipEdge2 = (g.getEdgeNode1(zxeId) == xnId);
+      bool flipEdge1 = (g.getEdgeNode1(yxeItr) == xnItr),
+           flipEdge2 = (g.getEdgeNode1(zxeItr) == xnItr);
 
       const Matrix *yxeCosts = flipEdge1 ?
-        new Matrix(g.getEdgeCosts(yxeId).transpose()) :
-        &g.getEdgeCosts(yxeId);
+        new Matrix(g.getEdgeCosts(yxeItr).transpose()) :
+        &g.getEdgeCosts(yxeItr);
 
       const Matrix *zxeCosts = flipEdge2 ?
-        new Matrix(g.getEdgeCosts(zxeId).transpose()) :
-        &g.getEdgeCosts(zxeId);
+        new Matrix(g.getEdgeCosts(zxeItr).transpose()) :
+        &g.getEdgeCosts(zxeItr);
 
       unsigned xLen = xCosts.getLength(),
                yLen = yxeCosts->getRows(),
@@ -333,27 +333,27 @@ namespace PBQP {
       if (flipEdge2)
         delete zxeCosts;
 
-      Graph::EdgeId yzeId = g.findEdge(ynId, znId);
+      Graph::EdgeItr yzeItr = g.findEdge(ynItr, znItr);
       bool addedEdge = false;
 
-      if (yzeId == g.invalidEdgeId()) {
-        yzeId = g.addEdge(ynId, znId, delta);
+      if (yzeItr == g.edgesEnd()) {
+        yzeItr = g.addEdge(ynItr, znItr, delta);
         addedEdge = true;
       } else {
-        Matrix &yzeCosts = g.getEdgeCosts(yzeId);
-        h.preUpdateEdgeCosts(yzeId);
-        if (ynId == g.getEdgeNode1(yzeId)) {
+        Matrix &yzeCosts = g.getEdgeCosts(yzeItr);
+        h.preUpdateEdgeCosts(yzeItr);
+        if (ynItr == g.getEdgeNode1(yzeItr)) {
           yzeCosts += delta;
         } else {
           yzeCosts += delta.transpose();
         }
       }
 
-      bool nullCostEdge = tryNormaliseEdgeMatrix(yzeId);
+      bool nullCostEdge = tryNormaliseEdgeMatrix(yzeItr);
 
       if (!addedEdge) {
         // If we modified the edge costs let the heuristic know.
-        h.postUpdateEdgeCosts(yzeId);
+        h.postUpdateEdgeCosts(yzeItr);
       }
  
       if (nullCostEdge) {
@@ -361,26 +361,26 @@ namespace PBQP {
         if (!addedEdge) {
           // We didn't just add it, so we need to notify the heuristic
           // and remove it from the solver.
-          h.handleRemoveEdge(yzeId, ynId);
-          h.handleRemoveEdge(yzeId, znId);
-          removeSolverEdge(yzeId);
+          h.handleRemoveEdge(yzeItr, ynItr);
+          h.handleRemoveEdge(yzeItr, znItr);
+          removeSolverEdge(yzeItr);
         }
-        g.removeEdge(yzeId);
+        g.removeEdge(yzeItr);
       } else if (addedEdge) {
         // If the edge was added, and non-null, finish setting it up, add it to
         // the solver & notify heuristic.
         edgeDataList.push_back(EdgeData());
-        g.setEdgeData(yzeId, &edgeDataList.back());
-        addSolverEdge(yzeId);
-        h.handleAddEdge(yzeId);
+        g.setEdgeData(yzeItr, &edgeDataList.back());
+        addSolverEdge(yzeItr);
+        h.handleAddEdge(yzeItr);
       }
 
-      h.handleRemoveEdge(yxeId, ynId);
-      removeSolverEdge(yxeId);
-      h.handleRemoveEdge(zxeId, znId);
-      removeSolverEdge(zxeId);
+      h.handleRemoveEdge(yxeItr, ynItr);
+      removeSolverEdge(yxeItr);
+      h.handleRemoveEdge(zxeItr, znItr);
+      removeSolverEdge(zxeItr);
 
-      pushToStack(xnId);
+      pushToStack(xnItr);
       s.recordR2();
     }
 
@@ -391,21 +391,21 @@ namespace PBQP {
 
   private:
 
-    NodeData& getSolverNodeData(Graph::NodeId nId) {
-      return *static_cast<NodeData*>(g.getNodeData(nId));
+    NodeData& getSolverNodeData(Graph::NodeItr nItr) {
+      return *static_cast<NodeData*>(g.getNodeData(nItr));
     }
 
-    EdgeData& getSolverEdgeData(Graph::EdgeId eId) {
-      return *static_cast<EdgeData*>(g.getEdgeData(eId));
+    EdgeData& getSolverEdgeData(Graph::EdgeItr eItr) {
+      return *static_cast<EdgeData*>(g.getEdgeData(eItr));
     }
 
-    void addSolverEdge(Graph::EdgeId eId) {
-      EdgeData &eData = getSolverEdgeData(eId);
-      NodeData &n1Data = getSolverNodeData(g.getEdgeNode1(eId)),
-               &n2Data = getSolverNodeData(g.getEdgeNode2(eId));
+    void addSolverEdge(Graph::EdgeItr eItr) {
+      EdgeData &eData = getSolverEdgeData(eItr);
+      NodeData &n1Data = getSolverNodeData(g.getEdgeNode1(eItr)),
+               &n2Data = getSolverNodeData(g.getEdgeNode2(eItr));
 
-      eData.setN1SolverEdgeItr(n1Data.addSolverEdge(eId));
-      eData.setN2SolverEdgeItr(n2Data.addSolverEdge(eId));
+      eData.setN1SolverEdgeItr(n1Data.addSolverEdge(eItr));
+      eData.setN2SolverEdgeItr(n2Data.addSolverEdge(eItr));
     }
 
     void setup() {
@@ -417,15 +417,15 @@ namespace PBQP {
       for (Graph::NodeItr nItr = g.nodesBegin(), nEnd = g.nodesEnd();
            nItr != nEnd; ++nItr) {
         nodeDataList.push_back(NodeData());
-        g.setNodeData(*nItr, &nodeDataList.back());
+        g.setNodeData(nItr, &nodeDataList.back());
       }
 
       // Create edge data objects.
       for (Graph::EdgeItr eItr = g.edgesBegin(), eEnd = g.edgesEnd();
            eItr != eEnd; ++eItr) {
         edgeDataList.push_back(EdgeData());
-        g.setEdgeData(*eItr, &edgeDataList.back());
-        addSolverEdge(*eItr);
+        g.setEdgeData(eItr, &edgeDataList.back());
+        addSolverEdge(eItr);
       }
     }
 
@@ -441,30 +441,28 @@ namespace PBQP {
       for (Graph::NodeItr nItr = g.nodesBegin(), nEnd = g.nodesEnd();
            nItr != nEnd; ++nItr) {
 
-        Graph::NodeId nId = *nItr;
+        if (g.getNodeCosts(nItr).getLength() == 1) {
 
-        if (g.getNodeCosts(nId).getLength() == 1) {
+          std::vector<Graph::EdgeItr> edgesToRemove;
 
-          std::vector<Graph::EdgeId> edgesToRemove;
-
-          for (Graph::AdjEdgeItr aeItr = g.adjEdgesBegin(nId),
-                                 aeEnd = g.adjEdgesEnd(nId);
+          for (Graph::AdjEdgeItr aeItr = g.adjEdgesBegin(nItr),
+                                 aeEnd = g.adjEdgesEnd(nItr);
                aeItr != aeEnd; ++aeItr) {
 
-            Graph::EdgeId eId = *aeItr;
+            Graph::EdgeItr eItr = *aeItr;
 
-            if (g.getEdgeNode1(eId) == nId) {
-              Graph::NodeId otherNodeId = g.getEdgeNode2(eId);
-              g.getNodeCosts(otherNodeId) +=
-                g.getEdgeCosts(eId).getRowAsVector(0);
+            if (g.getEdgeNode1(eItr) == nItr) {
+              Graph::NodeItr otherNodeItr = g.getEdgeNode2(eItr);
+              g.getNodeCosts(otherNodeItr) +=
+                g.getEdgeCosts(eItr).getRowAsVector(0);
             }
             else {
-              Graph::NodeId otherNodeId = g.getEdgeNode1(eId);
-              g.getNodeCosts(otherNodeId) +=
-                g.getEdgeCosts(eId).getColAsVector(0);
+              Graph::NodeItr otherNodeItr = g.getEdgeNode1(eItr);
+              g.getNodeCosts(otherNodeItr) +=
+                g.getEdgeCosts(eItr).getColAsVector(0);
             }
 
-            edgesToRemove.push_back(eId);
+            edgesToRemove.push_back(eItr);
           }
 
           if (!edgesToRemove.empty())
@@ -479,12 +477,12 @@ namespace PBQP {
     }
 
     void eliminateIndependentEdges() {
-      std::vector<Graph::EdgeId> edgesToProcess;
+      std::vector<Graph::EdgeItr> edgesToProcess;
       unsigned numEliminated = 0;
 
       for (Graph::EdgeItr eItr = g.edgesBegin(), eEnd = g.edgesEnd();
            eItr != eEnd; ++eItr) {
-        edgesToProcess.push_back(*eItr);
+        edgesToProcess.push_back(eItr);
       }
 
       while (!edgesToProcess.empty()) {
@@ -494,21 +492,21 @@ namespace PBQP {
       }
     }
 
-    bool tryToEliminateEdge(Graph::EdgeId eId) {
-      if (tryNormaliseEdgeMatrix(eId)) {
-        g.removeEdge(eId);
+    bool tryToEliminateEdge(Graph::EdgeItr eItr) {
+      if (tryNormaliseEdgeMatrix(eItr)) {
+        g.removeEdge(eItr);
         return true; 
       }
       return false;
     }
 
-    bool tryNormaliseEdgeMatrix(Graph::EdgeId &eId) {
+    bool tryNormaliseEdgeMatrix(Graph::EdgeItr &eItr) {
 
       const PBQPNum infinity = std::numeric_limits<PBQPNum>::infinity();
 
-      Matrix &edgeCosts = g.getEdgeCosts(eId);
-      Vector &uCosts = g.getNodeCosts(g.getEdgeNode1(eId)),
-             &vCosts = g.getNodeCosts(g.getEdgeNode2(eId));
+      Matrix &edgeCosts = g.getEdgeCosts(eItr);
+      Vector &uCosts = g.getNodeCosts(g.getEdgeNode1(eItr)),
+             &vCosts = g.getNodeCosts(g.getEdgeNode2(eItr));
 
       for (unsigned r = 0; r < edgeCosts.getRows(); ++r) {
         PBQPNum rowMin = infinity;
@@ -556,34 +554,34 @@ namespace PBQP {
       }
     }
 
-    void computeSolution(Graph::NodeId nId) {
+    void computeSolution(Graph::NodeItr nItr) {
 
-      NodeData &nodeData = getSolverNodeData(nId);
+      NodeData &nodeData = getSolverNodeData(nItr);
 
-      Vector v(g.getNodeCosts(nId));
+      Vector v(g.getNodeCosts(nItr));
 
       // Solve based on existing solved edges.
       for (SolverEdgeItr solvedEdgeItr = nodeData.solverEdgesBegin(),
                          solvedEdgeEnd = nodeData.solverEdgesEnd();
            solvedEdgeItr != solvedEdgeEnd; ++solvedEdgeItr) {
 
-        Graph::EdgeId eId(*solvedEdgeItr);
-        Matrix &edgeCosts = g.getEdgeCosts(eId);
+        Graph::EdgeItr eItr(*solvedEdgeItr);
+        Matrix &edgeCosts = g.getEdgeCosts(eItr);
 
-        if (nId == g.getEdgeNode1(eId)) {
-          Graph::NodeId adjNode(g.getEdgeNode2(eId));
+        if (nItr == g.getEdgeNode1(eItr)) {
+          Graph::NodeItr adjNode(g.getEdgeNode2(eItr));
           unsigned adjSolution = s.getSelection(adjNode);
           v += edgeCosts.getColAsVector(adjSolution);
         }
         else {
-          Graph::NodeId adjNode(g.getEdgeNode1(eId));
+          Graph::NodeItr adjNode(g.getEdgeNode1(eItr));
           unsigned adjSolution = s.getSelection(adjNode);
           v += edgeCosts.getRowAsVector(adjSolution);
         }
 
       }
 
-      setSolution(nId, v.minIndex());
+      setSolution(nItr, v.minIndex());
     }
 
     void cleanup() {

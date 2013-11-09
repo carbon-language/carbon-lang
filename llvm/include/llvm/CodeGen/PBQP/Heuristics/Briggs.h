@@ -47,8 +47,8 @@ namespace PBQP {
       class LinkDegreeComparator {
       public:
         LinkDegreeComparator(HeuristicSolverImpl<Briggs> &s) : s(&s) {}
-        bool operator()(Graph::NodeId n1Id, Graph::NodeId n2Id) const {
-          if (s->getSolverDegree(n1Id) > s->getSolverDegree(n2Id))
+        bool operator()(Graph::NodeItr n1Itr, Graph::NodeItr n2Itr) const {
+          if (s->getSolverDegree(n1Itr) > s->getSolverDegree(n2Itr))
             return true;
           return false;
         }
@@ -60,12 +60,12 @@ namespace PBQP {
       public:
         SpillCostComparator(HeuristicSolverImpl<Briggs> &s)
           : s(&s), g(&s.getGraph()) {}
-        bool operator()(Graph::NodeId n1Id, Graph::NodeId n2Id) const {
-          const PBQP::Vector &cv1 = g->getNodeCosts(n1Id);
-          const PBQP::Vector &cv2 = g->getNodeCosts(n2Id);
+        bool operator()(Graph::NodeItr n1Itr, Graph::NodeItr n2Itr) const {
+          const PBQP::Vector &cv1 = g->getNodeCosts(n1Itr);
+          const PBQP::Vector &cv2 = g->getNodeCosts(n2Itr);
 
-          PBQPNum cost1 = cv1[0] / s->getSolverDegree(n1Id);
-          PBQPNum cost2 = cv2[0] / s->getSolverDegree(n2Id);
+          PBQPNum cost1 = cv1[0] / s->getSolverDegree(n1Itr);
+          PBQPNum cost2 = cv2[0] / s->getSolverDegree(n2Itr);
 
           if (cost1 < cost2)
             return true;
@@ -77,10 +77,10 @@ namespace PBQP {
         Graph *g;
       };
 
-      typedef std::list<Graph::NodeId> RNAllocableList;
+      typedef std::list<Graph::NodeItr> RNAllocableList;
       typedef RNAllocableList::iterator RNAllocableListItr;
 
-      typedef std::list<Graph::NodeId> RNUnallocableList;  
+      typedef std::list<Graph::NodeItr> RNUnallocableList;  
       typedef RNUnallocableList::iterator RNUnallocableListItr;
 
     public:
@@ -123,8 +123,8 @@ namespace PBQP {
       /// infinite are checked for allocability first. Allocable nodes may be
       /// optimally reduced, but nodes whose allocability cannot be proven are
       /// selected for heuristic reduction instead.
-      bool shouldOptimallyReduce(Graph::NodeId nId) {
-        if (getSolver().getSolverDegree(nId) < 3) {
+      bool shouldOptimallyReduce(Graph::NodeItr nItr) {
+        if (getSolver().getSolverDegree(nItr) < 3) {
           return true;
         }
         // else
@@ -133,14 +133,14 @@ namespace PBQP {
 
       /// \brief Add a node to the heuristic reduce list.
       /// @param nItr Node iterator to add to the heuristic reduce list.
-      void addToHeuristicReduceList(Graph::NodeId nId) {
-        NodeData &nd = getHeuristicNodeData(nId);
-        initializeNode(nId);
+      void addToHeuristicReduceList(Graph::NodeItr nItr) {
+        NodeData &nd = getHeuristicNodeData(nItr);
+        initializeNode(nItr);
         nd.isHeuristic = true;
         if (nd.isAllocable) {
-          nd.rnaItr = rnAllocableList.insert(rnAllocableList.end(), nId);
+          nd.rnaItr = rnAllocableList.insert(rnAllocableList.end(), nItr);
         } else {
-          nd.rnuItr = rnUnallocableList.insert(rnUnallocableList.end(), nId);
+          nd.rnuItr = rnUnallocableList.insert(rnUnallocableList.end(), nItr);
         }
       }
 
@@ -159,19 +159,19 @@ namespace PBQP {
           RNAllocableListItr rnaItr =
             min_element(rnAllocableList.begin(), rnAllocableList.end(),
                         LinkDegreeComparator(getSolver()));
-          Graph::NodeId nId = *rnaItr;
+          Graph::NodeItr nItr = *rnaItr;
           rnAllocableList.erase(rnaItr);
-          handleRemoveNode(nId);
-          getSolver().pushToStack(nId);
+          handleRemoveNode(nItr);
+          getSolver().pushToStack(nItr);
           return true;
         } else if (!rnUnallocableList.empty()) {
           RNUnallocableListItr rnuItr =
             min_element(rnUnallocableList.begin(), rnUnallocableList.end(),
                         SpillCostComparator(getSolver()));
-          Graph::NodeId nId = *rnuItr;
+          Graph::NodeItr nItr = *rnuItr;
           rnUnallocableList.erase(rnuItr);
-          handleRemoveNode(nId);
-          getSolver().pushToStack(nId);
+          handleRemoveNode(nItr);
+          getSolver().pushToStack(nItr);
           return true;
         }
         // else
@@ -180,28 +180,28 @@ namespace PBQP {
 
       /// \brief Prepare a change in the costs on the given edge.
       /// @param eItr Edge iterator.    
-      void preUpdateEdgeCosts(Graph::EdgeId eId) {
+      void preUpdateEdgeCosts(Graph::EdgeItr eItr) {
         Graph &g = getGraph();
-        Graph::NodeId n1Id = g.getEdgeNode1(eId),
-                      n2Id = g.getEdgeNode2(eId);
-        NodeData &n1 = getHeuristicNodeData(n1Id),
-                 &n2 = getHeuristicNodeData(n2Id);
+        Graph::NodeItr n1Itr = g.getEdgeNode1(eItr),
+                       n2Itr = g.getEdgeNode2(eItr);
+        NodeData &n1 = getHeuristicNodeData(n1Itr),
+                 &n2 = getHeuristicNodeData(n2Itr);
 
         if (n1.isHeuristic)
-          subtractEdgeContributions(eId, getGraph().getEdgeNode1(eId));
+          subtractEdgeContributions(eItr, getGraph().getEdgeNode1(eItr));
         if (n2.isHeuristic)
-          subtractEdgeContributions(eId, getGraph().getEdgeNode2(eId));
+          subtractEdgeContributions(eItr, getGraph().getEdgeNode2(eItr));
 
-        EdgeData &ed = getHeuristicEdgeData(eId);
+        EdgeData &ed = getHeuristicEdgeData(eItr);
         ed.isUpToDate = false;
       }
 
       /// \brief Handle the change in the costs on the given edge.
       /// @param eItr Edge iterator.
-      void postUpdateEdgeCosts(Graph::EdgeId eId) {
+      void postUpdateEdgeCosts(Graph::EdgeItr eItr) {
         // This is effectively the same as adding a new edge now, since
         // we've factored out the costs of the old one.
-        handleAddEdge(eId);
+        handleAddEdge(eItr);
       }
 
       /// \brief Handle the addition of a new edge into the PBQP graph.
@@ -210,12 +210,12 @@ namespace PBQP {
       /// Updates allocability of any nodes connected by this edge which are
       /// being managed by the heuristic. If allocability changes they are
       /// moved to the appropriate list.
-      void handleAddEdge(Graph::EdgeId eId) {
+      void handleAddEdge(Graph::EdgeItr eItr) {
         Graph &g = getGraph();
-        Graph::NodeId n1Id = g.getEdgeNode1(eId),
-                      n2Id = g.getEdgeNode2(eId);
-        NodeData &n1 = getHeuristicNodeData(n1Id),
-                 &n2 = getHeuristicNodeData(n2Id);
+        Graph::NodeItr n1Itr = g.getEdgeNode1(eItr),
+                       n2Itr = g.getEdgeNode2(eItr);
+        NodeData &n1 = getHeuristicNodeData(n1Itr),
+                 &n2 = getHeuristicNodeData(n2Itr);
 
         // If neither node is managed by the heuristic there's nothing to be
         // done.
@@ -223,29 +223,29 @@ namespace PBQP {
           return;
 
         // Ok - we need to update at least one node.
-        computeEdgeContributions(eId);
+        computeEdgeContributions(eItr);
 
         // Update node 1 if it's managed by the heuristic.
         if (n1.isHeuristic) {
           bool n1WasAllocable = n1.isAllocable;
-          addEdgeContributions(eId, n1Id);
-          updateAllocability(n1Id);
+          addEdgeContributions(eItr, n1Itr);
+          updateAllocability(n1Itr);
           if (n1WasAllocable && !n1.isAllocable) {
             rnAllocableList.erase(n1.rnaItr);
             n1.rnuItr =
-              rnUnallocableList.insert(rnUnallocableList.end(), n1Id);
+              rnUnallocableList.insert(rnUnallocableList.end(), n1Itr);
           }
         }
 
         // Likewise for node 2.
         if (n2.isHeuristic) {
           bool n2WasAllocable = n2.isAllocable;
-          addEdgeContributions(eId, n2Id);
-          updateAllocability(n2Id);
+          addEdgeContributions(eItr, n2Itr);
+          updateAllocability(n2Itr);
           if (n2WasAllocable && !n2.isAllocable) {
             rnAllocableList.erase(n2.rnaItr);
             n2.rnuItr =
-              rnUnallocableList.insert(rnUnallocableList.end(), n2Id);
+              rnUnallocableList.insert(rnUnallocableList.end(), n2Itr);
           }
         }
       }
@@ -256,27 +256,27 @@ namespace PBQP {
       ///
       /// Updates allocability of the given node and, if appropriate, moves the
       /// node to a new list.
-      void handleRemoveEdge(Graph::EdgeId eId, Graph::NodeId nId) {
-        NodeData &nd =getHeuristicNodeData(nId);
+      void handleRemoveEdge(Graph::EdgeItr eItr, Graph::NodeItr nItr) {
+        NodeData &nd = getHeuristicNodeData(nItr);
 
         // If the node is not managed by the heuristic there's nothing to be
         // done.
         if (!nd.isHeuristic)
           return;
 
-        EdgeData &ed = getHeuristicEdgeData(eId);
+        EdgeData &ed = getHeuristicEdgeData(eItr);
         (void)ed;
         assert(ed.isUpToDate && "Edge data is not up to date.");
 
         // Update node.
         bool ndWasAllocable = nd.isAllocable;
-        subtractEdgeContributions(eId, nId);
-        updateAllocability(nId);
+        subtractEdgeContributions(eItr, nItr);
+        updateAllocability(nItr);
 
         // If the node has gone optimal...
-        if (shouldOptimallyReduce(nId)) {
+        if (shouldOptimallyReduce(nItr)) {
           nd.isHeuristic = false;
-          addToOptimalReduceList(nId);
+          addToOptimalReduceList(nItr);
           if (ndWasAllocable) {
             rnAllocableList.erase(nd.rnaItr);
           } else {
@@ -287,30 +287,30 @@ namespace PBQP {
           // from "unallocable" to "allocable".
           if (!ndWasAllocable && nd.isAllocable) {
             rnUnallocableList.erase(nd.rnuItr);
-            nd.rnaItr = rnAllocableList.insert(rnAllocableList.end(), nId);
+            nd.rnaItr = rnAllocableList.insert(rnAllocableList.end(), nItr);
           }
         }
       }
 
     private:
 
-      NodeData& getHeuristicNodeData(Graph::NodeId nId) {
-        return getSolver().getHeuristicNodeData(nId);
+      NodeData& getHeuristicNodeData(Graph::NodeItr nItr) {
+        return getSolver().getHeuristicNodeData(nItr);
       }
 
-      EdgeData& getHeuristicEdgeData(Graph::EdgeId eId) {
-        return getSolver().getHeuristicEdgeData(eId);
+      EdgeData& getHeuristicEdgeData(Graph::EdgeItr eItr) {
+        return getSolver().getHeuristicEdgeData(eItr);
       }
 
       // Work out what this edge will contribute to the allocability of the
       // nodes connected to it.
-      void computeEdgeContributions(Graph::EdgeId eId) {
-        EdgeData &ed = getHeuristicEdgeData(eId);
+      void computeEdgeContributions(Graph::EdgeItr eItr) {
+        EdgeData &ed = getHeuristicEdgeData(eItr);
 
         if (ed.isUpToDate)
           return; // Edge data is already up to date.
 
-        Matrix &eCosts = getGraph().getEdgeCosts(eId);
+        Matrix &eCosts = getGraph().getEdgeCosts(eItr);
 
         unsigned numRegs = eCosts.getRows() - 1,
                  numReverseRegs = eCosts.getCols() - 1;
@@ -352,15 +352,15 @@ namespace PBQP {
       // numDenied and safe members. No action is taken other than to update
       // these member values. Once updated these numbers can be used by clients
       // to update the node's allocability.
-      void addEdgeContributions(Graph::EdgeId eId, Graph::NodeId nId) {
-        EdgeData &ed = getHeuristicEdgeData(eId);
+      void addEdgeContributions(Graph::EdgeItr eItr, Graph::NodeItr nItr) {
+        EdgeData &ed = getHeuristicEdgeData(eItr);
 
         assert(ed.isUpToDate && "Using out-of-date edge numbers.");
 
-        NodeData &nd = getHeuristicNodeData(nId);
-        unsigned numRegs = getGraph().getNodeCosts(nId).getLength() - 1;
+        NodeData &nd = getHeuristicNodeData(nItr);
+        unsigned numRegs = getGraph().getNodeCosts(nItr).getLength() - 1;
         
-        bool nIsNode1 = nId == getGraph().getEdgeNode1(eId);
+        bool nIsNode1 = nItr == getGraph().getEdgeNode1(eItr);
         EdgeData::UnsafeArray &unsafe =
           nIsNode1 ? ed.unsafe : ed.reverseUnsafe;
         nd.numDenied += nIsNode1 ? ed.worst : ed.reverseWorst;
@@ -379,15 +379,15 @@ namespace PBQP {
       // numDenied and safe members. No action is taken other than to update
       // these member values. Once updated these numbers can be used by clients
       // to update the node's allocability.
-      void subtractEdgeContributions(Graph::EdgeId eId, Graph::NodeId nId) {
-        EdgeData &ed = getHeuristicEdgeData(eId);
+      void subtractEdgeContributions(Graph::EdgeItr eItr, Graph::NodeItr nItr) {
+        EdgeData &ed = getHeuristicEdgeData(eItr);
 
         assert(ed.isUpToDate && "Using out-of-date edge numbers.");
 
-        NodeData &nd = getHeuristicNodeData(nId);
-        unsigned numRegs = getGraph().getNodeCosts(nId).getLength() - 1;
+        NodeData &nd = getHeuristicNodeData(nItr);
+        unsigned numRegs = getGraph().getNodeCosts(nItr).getLength() - 1;
         
-        bool nIsNode1 = nId == getGraph().getEdgeNode1(eId);
+        bool nIsNode1 = nItr == getGraph().getEdgeNode1(eItr);
         EdgeData::UnsafeArray &unsafe =
           nIsNode1 ? ed.unsafe : ed.reverseUnsafe;
         nd.numDenied -= nIsNode1 ? ed.worst : ed.reverseWorst;
@@ -402,22 +402,22 @@ namespace PBQP {
         }
       }
 
-      void updateAllocability(Graph::NodeId nId) {
-        NodeData &nd = getHeuristicNodeData(nId);
-        unsigned numRegs = getGraph().getNodeCosts(nId).getLength() - 1;
+      void updateAllocability(Graph::NodeItr nItr) {
+        NodeData &nd = getHeuristicNodeData(nItr);
+        unsigned numRegs = getGraph().getNodeCosts(nItr).getLength() - 1;
         nd.isAllocable = nd.numDenied < numRegs || nd.numSafe > 0;
       }
 
-      void initializeNode(Graph::NodeId nId) {
-        NodeData &nd = getHeuristicNodeData(nId);
+      void initializeNode(Graph::NodeItr nItr) {
+        NodeData &nd = getHeuristicNodeData(nItr);
 
         if (nd.isInitialized)
           return; // Node data is already up to date.
 
-        unsigned numRegs = getGraph().getNodeCosts(nId).getLength() - 1;
+        unsigned numRegs = getGraph().getNodeCosts(nItr).getLength() - 1;
 
         nd.numDenied = 0;
-        const Vector& nCosts = getGraph().getNodeCosts(nId);
+        const Vector& nCosts = getGraph().getNodeCosts(nItr);
         for (unsigned i = 1; i < nCosts.getLength(); ++i) {
           if (nCosts[i] == std::numeric_limits<PBQPNum>::infinity())
             ++nd.numDenied;
@@ -428,27 +428,27 @@ namespace PBQP {
 
         typedef HeuristicSolverImpl<Briggs>::SolverEdgeItr SolverEdgeItr;
 
-        for (SolverEdgeItr aeItr = getSolver().solverEdgesBegin(nId),
-                           aeEnd = getSolver().solverEdgesEnd(nId);
+        for (SolverEdgeItr aeItr = getSolver().solverEdgesBegin(nItr),
+                           aeEnd = getSolver().solverEdgesEnd(nItr);
              aeItr != aeEnd; ++aeItr) {
           
-          Graph::EdgeId eId = *aeItr;
-          computeEdgeContributions(eId);
-          addEdgeContributions(eId, nId);
+          Graph::EdgeItr eItr = *aeItr;
+          computeEdgeContributions(eItr);
+          addEdgeContributions(eItr, nItr);
         }
 
-        updateAllocability(nId);
+        updateAllocability(nItr);
         nd.isInitialized = true;
       }
 
-      void handleRemoveNode(Graph::NodeId xnId) {
+      void handleRemoveNode(Graph::NodeItr xnItr) {
         typedef HeuristicSolverImpl<Briggs>::SolverEdgeItr SolverEdgeItr;
-        std::vector<Graph::EdgeId> edgesToRemove;
-        for (SolverEdgeItr aeItr = getSolver().solverEdgesBegin(xnId),
-                           aeEnd = getSolver().solverEdgesEnd(xnId);
+        std::vector<Graph::EdgeItr> edgesToRemove;
+        for (SolverEdgeItr aeItr = getSolver().solverEdgesBegin(xnItr),
+                           aeEnd = getSolver().solverEdgesEnd(xnItr);
              aeItr != aeEnd; ++aeItr) {
-          Graph::NodeId ynId = getGraph().getEdgeOtherNode(*aeItr, xnId);
-          handleRemoveEdge(*aeItr, ynId);
+          Graph::NodeItr ynItr = getGraph().getEdgeOtherNode(*aeItr, xnItr);
+          handleRemoveEdge(*aeItr, ynItr);
           edgesToRemove.push_back(*aeItr);
         }
         while (!edgesToRemove.empty()) {

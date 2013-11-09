@@ -158,13 +158,13 @@ char RegAllocPBQP::ID = 0;
 
 } // End anonymous namespace.
 
-unsigned PBQPRAProblem::getVRegForNode(PBQP::Graph::NodeId node) const {
+unsigned PBQPRAProblem::getVRegForNode(PBQP::Graph::ConstNodeItr node) const {
   Node2VReg::const_iterator vregItr = node2VReg.find(node);
   assert(vregItr != node2VReg.end() && "No vreg for node.");
   return vregItr->second;
 }
 
-PBQP::Graph::NodeId PBQPRAProblem::getNodeForVReg(unsigned vreg) const {
+PBQP::Graph::NodeItr PBQPRAProblem::getNodeForVReg(unsigned vreg) const {
   VReg2Node::const_iterator nodeItr = vreg2Node.find(vreg);
   assert(nodeItr != vreg2Node.end() && "No node for vreg.");
   return nodeItr->second;
@@ -247,7 +247,7 @@ PBQPRAProblem *PBQPBuilder::build(MachineFunction *mf, const LiveIntervals *lis,
     }
 
     // Construct the node.
-    PBQP::Graph::NodeId node =
+    PBQP::Graph::NodeItr node =
       g.addNode(PBQP::Vector(vrAllowed.size() + 1, 0));
 
     // Record the mapping and allowed set in the problem.
@@ -273,7 +273,7 @@ PBQPRAProblem *PBQPBuilder::build(MachineFunction *mf, const LiveIntervals *lis,
 
       assert(!l2.empty() && "Empty interval in vreg set?");
       if (l1.overlaps(l2)) {
-        PBQP::Graph::EdgeId edge =
+        PBQP::Graph::EdgeItr edge =
           g.addEdge(p->getNodeForVReg(vr1), p->getNodeForVReg(vr2),
                     PBQP::Matrix(vr1Allowed.size()+1, vr2Allowed.size()+1, 0));
 
@@ -364,16 +364,16 @@ PBQPRAProblem *PBQPBuilderWithCoalescing::build(MachineFunction *mf,
         }
         if (pregOpt < allowed.size()) {
           ++pregOpt; // +1 to account for spill option.
-          PBQP::Graph::NodeId node = p->getNodeForVReg(src);
+          PBQP::Graph::NodeItr node = p->getNodeForVReg(src);
           addPhysRegCoalesce(g.getNodeCosts(node), pregOpt, cBenefit);
         }
       } else {
         const PBQPRAProblem::AllowedSet *allowed1 = &p->getAllowedSet(dst);
         const PBQPRAProblem::AllowedSet *allowed2 = &p->getAllowedSet(src);
-        PBQP::Graph::NodeId node1 = p->getNodeForVReg(dst);
-        PBQP::Graph::NodeId node2 = p->getNodeForVReg(src);
-        PBQP::Graph::EdgeId edge = g.findEdge(node1, node2);
-        if (edge == g.invalidEdgeId()) {
+        PBQP::Graph::NodeItr node1 = p->getNodeForVReg(dst);
+        PBQP::Graph::NodeItr node2 = p->getNodeForVReg(src);
+        PBQP::Graph::EdgeItr edge = g.findEdge(node1, node2);
+        if (edge == g.edgesEnd()) {
           edge = g.addEdge(node1, node2, PBQP::Matrix(allowed1->size() + 1,
                                                       allowed2->size() + 1,
                                                       0));
@@ -477,11 +477,11 @@ bool RegAllocPBQP::mapPBQPToRegAlloc(const PBQPRAProblem &problem,
   const PBQP::Graph &g = problem.getGraph();
   // Iterate over the nodes mapping the PBQP solution to a register
   // assignment.
-  for (PBQP::Graph::NodeItr nodeItr = g.nodesBegin(),
-                            nodeEnd = g.nodesEnd();
-       nodeItr != nodeEnd; ++nodeItr) {
-    unsigned vreg = problem.getVRegForNode(*nodeItr);
-    unsigned alloc = solution.getSelection(*nodeItr);
+  for (PBQP::Graph::ConstNodeItr node = g.nodesBegin(),
+                                 nodeEnd = g.nodesEnd();
+       node != nodeEnd; ++node) {
+    unsigned vreg = problem.getVRegForNode(node);
+    unsigned alloc = solution.getSelection(node);
 
     if (problem.isPRegOption(vreg, alloc)) {
       unsigned preg = problem.getPRegForOption(vreg, alloc);

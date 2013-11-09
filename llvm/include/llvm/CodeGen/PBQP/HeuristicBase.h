@@ -52,7 +52,7 @@ namespace PBQP {
   class HeuristicBase {
   private:
 
-    typedef std::list<Graph::NodeId> OptimalList;
+    typedef std::list<Graph::NodeItr> OptimalList;
 
     HeuristicSolverImpl<HImpl> &s;
     Graph &g;
@@ -63,8 +63,8 @@ namespace PBQP {
 
     // Add the given node to the optimal reductions list. Keep an iterator to
     // its location for fast removal. 
-    void addToOptimalReductionList(Graph::NodeId nId) {
-      optimalList.insert(optimalList.end(), nId);
+    void addToOptimalReductionList(Graph::NodeItr nItr) {
+      optimalList.insert(optimalList.end(), nItr);
     }
 
   public:
@@ -105,8 +105,8 @@ namespace PBQP {
     /// criteria. Note however that your criteria for selecting optimal nodes
     /// should be <i>at least</i> as strong as this. I.e. Nodes of degree 3 or
     /// higher should not be selected under any circumstances.
-    bool shouldOptimallyReduce(Graph::NodeId nId) {
-      if (g.getNodeDegree(nId) < 3)
+    bool shouldOptimallyReduce(Graph::NodeItr nItr) {
+      if (g.getNodeDegree(nItr) < 3)
         return true;
       // else
       return false;
@@ -118,8 +118,8 @@ namespace PBQP {
     /// You probably don't want to over-ride this, except perhaps to record
     /// statistics before calling this implementation. HeuristicBase relies on
     /// its behaviour.
-    void addToOptimalReduceList(Graph::NodeId nId) {
-      optimalList.push_back(nId);
+    void addToOptimalReduceList(Graph::NodeItr nItr) {
+      optimalList.push_back(nItr);
     }
 
     /// \brief Initialise the heuristic.
@@ -132,10 +132,10 @@ namespace PBQP {
     void setup() {
       for (Graph::NodeItr nItr = g.nodesBegin(), nEnd = g.nodesEnd();
            nItr != nEnd; ++nItr) {
-        if (impl().shouldOptimallyReduce(*nItr)) {
-          addToOptimalReduceList(*nItr);
+        if (impl().shouldOptimallyReduce(nItr)) {
+          addToOptimalReduceList(nItr);
         } else {
-          impl().addToHeuristicReduceList(*nItr);
+          impl().addToHeuristicReduceList(nItr);
         }
       }
     }
@@ -150,13 +150,13 @@ namespace PBQP {
       if (optimalList.empty())
         return false;
 
-      Graph::NodeId nId = optimalList.front();
+      Graph::NodeItr nItr = optimalList.front();
       optimalList.pop_front();
 
-      switch (s.getSolverDegree(nId)) {
-        case 0: s.applyR0(nId); break;
-        case 1: s.applyR1(nId); break;
-        case 2: s.applyR2(nId); break;
+      switch (s.getSolverDegree(nItr)) {
+        case 0: s.applyR0(nItr); break;
+        case 1: s.applyR1(nItr); break;
+        case 2: s.applyR2(nItr); break;
         default: llvm_unreachable(
                         "Optimal reductions of degree > 2 nodes is invalid.");
       }
@@ -185,7 +185,7 @@ namespace PBQP {
 
     /// \brief Add a node to the heuristic reduce list.
     /// @param nItr Node iterator to add to the heuristic reduce list.
-    void addToHeuristicList(Graph::NodeId nId) {
+    void addToHeuristicList(Graph::NodeItr nItr) {
       llvm_unreachable("Must be implemented in derived class.");
     }
 
@@ -200,19 +200,19 @@ namespace PBQP {
 
     /// \brief Prepare a change in the costs on the given edge.
     /// @param eItr Edge iterator.    
-    void preUpdateEdgeCosts(Graph::EdgeId eId) {
+    void preUpdateEdgeCosts(Graph::EdgeItr eItr) {
       llvm_unreachable("Must be implemented in derived class.");
     }
 
     /// \brief Handle the change in the costs on the given edge.
     /// @param eItr Edge iterator.
-    void postUpdateEdgeCostts(Graph::EdgeId eId) {
+    void postUpdateEdgeCostts(Graph::EdgeItr eItr) {
       llvm_unreachable("Must be implemented in derived class.");
     }
 
     /// \brief Handle the addition of a new edge into the PBQP graph.
     /// @param eItr Edge iterator for the added edge.
-    void handleAddEdge(Graph::EdgeId eId) {
+    void handleAddEdge(Graph::EdgeItr eItr) {
       llvm_unreachable("Must be implemented in derived class.");
     }
 
@@ -223,7 +223,7 @@ namespace PBQP {
     /// Edges are frequently removed due to the removal of a node. This
     /// method allows for the effect to be computed only for the remaining
     /// node in the graph.
-    void handleRemoveEdge(Graph::EdgeId eId, Graph::NodeId nId) {
+    void handleRemoveEdge(Graph::EdgeItr eItr, Graph::NodeItr nItr) {
       llvm_unreachable("Must be implemented in derived class.");
     }
 
