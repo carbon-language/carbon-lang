@@ -35,6 +35,17 @@ constexpr int foo();
 
 5int m = { l }, n = m; // expected-error {{unqualified-id}}
 
+namespace MissingBrace {
+  struct S { // expected-error {{missing '}' at end of definition of 'MissingBrace::S'}}
+    int f();
+  // };
+
+  namespace N { int g(); } // expected-note {{still within definition of 'MissingBrace::S' here}}
+
+  int k1 = S().h(); // expected-error {{no member named 'h' in 'MissingBrace::S'}}
+  int k2 = S().f() + N::g();
+}
+
 namespace N {
   int
 } // expected-error {{unqualified-id}}

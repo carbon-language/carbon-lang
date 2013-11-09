@@ -1953,12 +1953,12 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       Diag(Tok, diag::err_at_defs_cxx);
     else
       Diag(Tok, diag::err_at_in_class);
-    
+
     ConsumeToken();
     SkipUntil(tok::r_brace);
     return;
   }
-  
+
   // Access declarations.
   bool MalformedTypeSpec = false;
   if (!TemplateInfo.Kind &&
@@ -2421,7 +2421,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 ///     assignment-expression
 ///     braced-init-list
 ///
-///   defaulted/deleted function-definition:                                                                                                                                                                                               
+///   defaulted/deleted function-definition:
 ///     '=' 'default'
 ///     '=' 'delete'
 ///
@@ -2625,6 +2625,12 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
         continue;
       }
 
+      // If we see a namespace here, a close brace was missing somewhere.
+      if (Tok.is(tok::kw_namespace)) {
+        DiagnoseUnexpectedNamespace(cast<DeclContext>(TagDecl));
+        break;
+      }
+
       AccessSpecifier AS = getAccessSpecifierIfPresent();
       if (AS != AS_none) {
         // Current token is a C++ access specifier.
@@ -2665,8 +2671,6 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 
         continue;
       }
-
-      // FIXME: Make sure we don't have a template here.
 
       // Parse all the comma separated declarators.
       ParseCXXClassMemberDeclaration(CurAS, AccessAttrs.getList());
@@ -2716,6 +2720,27 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   // Leave the class scope.
   ParsingDef.Pop();
   ClassScope.Exit();
+}
+
+void Parser::DiagnoseUnexpectedNamespace(DeclContext *Ctx) {
+  assert(Tok.is(tok::kw_namespace));
+
+  // FIXME: Suggest where the close brace should have gone by looking
+  // at indentation changes within the definition body.
+  Diag(cast<Decl>(Ctx)->getLocation(),
+       diag::err_missing_end_of_definition) << Ctx;
+  Diag(Tok.getLocation(),
+       diag::note_missing_end_of_definition_before) << Ctx;
+
+  // Push '};' onto the token stream to recover.
+  PP.EnterToken(Tok);
+
+  Tok.startToken();
+  Tok.setLocation(PP.getLocForEndOfToken(PrevTokLocation));
+  Tok.setKind(tok::semi);
+  PP.EnterToken(Tok);
+
+  Tok.setKind(tok::r_brace);
 }
 
 /// ParseConstructorInitializer - Parse a C++ constructor initializer,
