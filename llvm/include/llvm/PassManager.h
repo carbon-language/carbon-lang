@@ -7,101 +7,33 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the PassManager class.  This class is used to hold,
-// maintain, and optimize execution of Passes.  The PassManager class ensures
-// that analysis results are available before a pass runs, and that Pass's are
-// destroyed when the PassManager is destroyed.
+// This is a legacy redirect header for the old PassManager. It is intended to
+// be used by clients that have not been converted to be aware of the new pass
+// management infrastructure being built for LLVM, which is every client
+// initially. Eventually this header (and the legacy management layer) will go
+// away, but we want to minimize changes to out-of-tree users of LLVM in the
+// interim.
+//
+// Note that this header *must not* be included into the same file as the new
+// pass management infrastructure is included. Things will break spectacularly.
+// If you are starting that conversion, you should switch to explicitly
+// including LegacyPassManager.h and using the legacy namespace.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_PASSMANAGER_H
 #define LLVM_PASSMANAGER_H
 
-#include "llvm/Pass.h"
-#include "llvm/Support/CBindingWrapping.h"
+#include "llvm/IR/LegacyPassManager.h"
 
 namespace llvm {
 
-class Pass;
-class Module;
+// Pull these into the llvm namespace so that existing code that expects it
+// there can find it.
+using legacy::PassManagerBase;
+using legacy::PassManager;
+using legacy::FunctionPassManager;
 
-class PassManagerImpl;
-class FunctionPassManagerImpl;
-
-/// PassManagerBase - An abstract interface to allow code to add passes to
-/// a pass manager without having to hard-code what kind of pass manager
-/// it is.
-class PassManagerBase {
-public:
-  virtual ~PassManagerBase();
-
-  /// add - Add a pass to the queue of passes to run.  This passes ownership of
-  /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
-  /// will be destroyed as well, so there is no need to delete the pass.  This
-  /// implies that all passes MUST be allocated with 'new'.
-  virtual void add(Pass *P) = 0;
-};
-
-/// PassManager manages ModulePassManagers
-class PassManager : public PassManagerBase {
-public:
-
-  PassManager();
-  ~PassManager();
-
-  /// add - Add a pass to the queue of passes to run.  This passes ownership of
-  /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
-  /// will be destroyed as well, so there is no need to delete the pass.  This
-  /// implies that all passes MUST be allocated with 'new'.
-  void add(Pass *P);
-
-  /// run - Execute all of the passes scheduled for execution.  Keep track of
-  /// whether any of the passes modifies the module, and if so, return true.
-  bool run(Module &M);
-
-private:
-  /// PassManagerImpl_New is the actual class. PassManager is just the
-  /// wraper to publish simple pass manager interface
-  PassManagerImpl *PM;
-};
-
-/// FunctionPassManager manages FunctionPasses and BasicBlockPassManagers.
-class FunctionPassManager : public PassManagerBase {
-public:
-  /// FunctionPassManager ctor - This initializes the pass manager.  It needs,
-  /// but does not take ownership of, the specified Module.
-  explicit FunctionPassManager(Module *M);
-  ~FunctionPassManager();
-
-  /// add - Add a pass to the queue of passes to run.  This passes
-  /// ownership of the Pass to the PassManager.  When the
-  /// PassManager_X is destroyed, the pass will be destroyed as well, so
-  /// there is no need to delete the pass.
-  /// This implies that all passes MUST be allocated with 'new'.
-  void add(Pass *P);
-
-  /// run - Execute all of the passes scheduled for execution.  Keep
-  /// track of whether any of the passes modifies the function, and if
-  /// so, return true.
-  ///
-  bool run(Function &F);
-
-  /// doInitialization - Run all of the initializers for the function passes.
-  ///
-  bool doInitialization();
-
-  /// doFinalization - Run all of the finalizers for the function passes.
-  ///
-  bool doFinalization();
-
-private:
-  FunctionPassManagerImpl *FPM;
-  Module *M;
-};
-
-// Create wrappers for C Binding types (see CBindingWrapping.h).
-DEFINE_STDCXX_CONVERSION_FUNCTIONS(PassManagerBase, LLVMPassManagerRef)
-
-} // End llvm namespace
+}
 
 #endif

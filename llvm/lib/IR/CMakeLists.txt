@@ -6,10 +6,10 @@ add_llvm_library(LLVMCore
   ConstantFold.cpp
   Constants.cpp
   Core.cpp
+  DIBuilder.cpp
   DataLayout.cpp
   DebugInfo.cpp
   DebugLoc.cpp
-  DIBuilder.cpp
   Dominators.cpp
   Function.cpp
   GCOV.cpp
@@ -23,10 +23,10 @@ add_llvm_library(LLVMCore
   LLVMContext.cpp
   LLVMContextImpl.cpp
   LeakDetector.cpp
+  LegacyPassManager.cpp
   Metadata.cpp
   Module.cpp
   Pass.cpp
-  PassManager.cpp
   PassRegistry.cpp
   PrintModulePass.cpp
   Type.cpp

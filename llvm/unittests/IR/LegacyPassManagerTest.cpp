@@ -1,9 +1,16 @@
-//===- llvm/unittest/IR/PassManager.cpp - PassManager unit tests ----------===//
+//===- llvm/unittest/IR/LegacyPassManager.cpp - Legacy PassManager tests --===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This unit test exercises the legacy pass manager infrastructure. We use the
+// old names as well to ensure that the source-level compatibility wrapper
+// works for out-of-tree code that expects to include llvm/PassManager.h and
+// subclass the core pass classes.
 //
 //===----------------------------------------------------------------------===//
 

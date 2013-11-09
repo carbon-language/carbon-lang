@@ -29,7 +29,6 @@ class GlobalValue;
 class MCAsmInfo;
 class MCCodeGenInfo;
 class MCContext;
-class PassManagerBase;
 class Target;
 class DataLayout;
 class TargetLibraryInfo;
@@ -46,6 +45,12 @@ class ScalarTargetTransformInfo;
 class VectorTargetTransformInfo;
 class formatted_raw_ostream;
 class raw_ostream;
+
+// The old pass manager infrastructure is hidden in a legacy namespace now.
+namespace legacy {
+class PassManagerBase;
+}
+using legacy::PassManagerBase;
 
 //===----------------------------------------------------------------------===//
 ///

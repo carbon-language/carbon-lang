@@ -18,8 +18,8 @@
 
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/LegacyPassManagers.h"
 #include "llvm/Pass.h"
-#include "llvm/PassManagers.h"
 #include <deque>
 
 namespace llvm {

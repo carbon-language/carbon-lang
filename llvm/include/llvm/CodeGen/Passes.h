@@ -25,13 +25,18 @@ class FunctionPass;
 class MachineFunctionPass;
 class PassConfigImpl;
 class PassInfo;
-class PassManagerBase;
 class ScheduleDAGInstrs;
 class TargetLowering;
 class TargetLoweringBase;
 class TargetRegisterClass;
 class raw_ostream;
 struct MachineSchedContext;
+
+// The old pass manager infrastructure is hidden in a legacy namespace now.
+namespace legacy {
+class PassManagerBase;
+}
+using legacy::PassManagerBase;
 
 /// Discriminated union of Pass ID types.
 ///

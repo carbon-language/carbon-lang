@@ -22,7 +22,7 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/PassManagers.h"
+#include "llvm/IR/LegacyPassManagers.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Timer.h"
