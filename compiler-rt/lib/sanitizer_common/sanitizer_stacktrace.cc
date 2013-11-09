@@ -147,4 +147,17 @@ void StackTrace::PopStackFrames(uptr count) {
   }
 }
 
+static bool MatchPc(uptr cur_pc, uptr trace_pc, uptr threshold) {
+  return cur_pc - trace_pc <= threshold || trace_pc - cur_pc <= threshold;
+}
+
+uptr
+StackTrace::LocatePcInTrace(uptr pc, uptr pc_threshold, uptr max_pc_depth) {
+  for (uptr i = 0; i < max_pc_depth && i < size; ++i) {
+    if (MatchPc(pc, trace[i], pc_threshold))
+      return i;
+  }
+  return 0;
+}
+
 }  // namespace __sanitizer

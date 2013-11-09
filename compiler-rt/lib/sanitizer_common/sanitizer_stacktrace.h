@@ -67,6 +67,7 @@ struct StackTrace {
                        uptr max_depth);
   void SlowUnwindStack(uptr pc, uptr max_depth);
   void PopStackFrames(uptr count);
+  uptr LocatePcInTrace(uptr pc, uptr pc_threshold = 0, uptr max_pc_depth = -1);
 };
 
 }  // namespace __sanitizer

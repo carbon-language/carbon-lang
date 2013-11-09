@@ -377,23 +377,16 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 }
 
 void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
-  void *tmp[kStackTraceMax];
-
   // FIXME: CaptureStackBackTrace might be too slow for us.
   // FIXME: Compare with StackWalk64.
   // FIXME: Look at LLVMUnhandledExceptionFilter in Signals.inc
-  uptr cs_ret = CaptureStackBackTrace(2, max_depth, tmp, 0);
-  uptr offset = 0;
+  size = CaptureStackBackTrace(2, Min(max_depth, kStackTraceMax),
+                               (void**)trace, 0);
   // Skip the RTL frames by searching for the PC in the stacktrace.
-  // FIXME: this doesn't work well for the malloc/free stacks yet.
-  for (uptr i = 0; i < cs_ret; i++) {
-    if (pc != (uptr)tmp[i])
-      continue;
-    offset = i;
-    break;
-  }
-
-  CopyFrom((uptr*)&tmp[offset], cs_ret - offset);
+  // FIXME: this doesn't work well for the malloc/free stacks yet - consider
+  // adjusting the pc_threshold.
+  uptr pc_location = LocatePcInTrace(pc);
+  PopStackFrames(pc_location);
 }
 
 void MaybeOpenReportFile() {
