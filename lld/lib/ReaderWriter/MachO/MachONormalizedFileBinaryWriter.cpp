@@ -35,6 +35,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/LEB128.h"
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -111,18 +112,37 @@ private:
   
   class ByteBuffer {
   public:
-    ByteBuffer();
-    void append_byte(uint8_t);
-    void append_uleb128(uint64_t);
-    void append_sleb128(int64_t);
-    void append_string(StringRef);
-    void align(unsigned);
-    size_t size();
-    const uint8_t *bytes();
+    ByteBuffer() : _ostream(_bytes) { }
+    void append_byte(uint8_t b) {
+      _ostream << b;
+    }
+    void append_uleb128(uint64_t value) {
+      llvm::encodeULEB128(value, _ostream);
+    }
+    void append_sleb128(int64_t value) {
+      llvm::encodeSLEB128(value, _ostream);
+    }
+    void append_string(StringRef str) {
+      _ostream << str;
+      append_byte(0);
+    }
+    void align(unsigned alignment) {
+      while ( (_ostream.tell() % alignment) != 0 )
+        append_byte(0);
+    }
+    size_t size() {
+      return _ostream.tell();
+    }
+    const uint8_t *bytes() {
+      return reinterpret_cast<const uint8_t*>(_ostream.str().data());
+    }
   private:
-    std::vector<uint8_t> _bytes;
+    SmallVector<char, 128>        _bytes;
+    // Stream ivar must be after SmallVector ivar to construct properly.
+    llvm::raw_svector_ostream     _ostream;
   };
   
+
   struct SegExtraInfo {
     uint32_t                    fileOffset;
     std::vector<const Section*> sections;
@@ -188,64 +208,6 @@ StringRef MachOFileLayout::dyldPath() {
 uint32_t MachOFileLayout::pointerAlign(uint32_t value) {
   return llvm::RoundUpToAlignment(value, _is64 ? 8 : 4);
 }  
-
-
-MachOFileLayout::ByteBuffer::ByteBuffer() {
-  _bytes.reserve(256);
-}
-
-void MachOFileLayout::ByteBuffer::append_byte(uint8_t b) {
-  _bytes.push_back(b);
-}
-
-
-void MachOFileLayout::ByteBuffer::append_uleb128(uint64_t value) {
-  uint8_t byte;
-  do {
-    byte = value & 0x7F;
-    value &= ~0x7F;
-    if ( value != 0 )
-      byte |= 0x80;
-    _bytes.push_back(byte);
-    value = value >> 7;
-  } while( byte >= 0x80 );
-}
-
-void MachOFileLayout::ByteBuffer::append_sleb128(int64_t value) {
-  bool isNeg = ( value < 0 );
-  uint8_t byte;
-  bool more;
-  do {
-    byte = value & 0x7F;
-    value = value >> 7;
-    if ( isNeg ) 
-      more = ( (value != -1) || ((byte & 0x40) == 0) );
-    else
-      more = ( (value != 0) || ((byte & 0x40) != 0) );
-    if ( more )
-      byte |= 0x80;
-    _bytes.push_back(byte);
-  } 
-  while( more );
-}
-
-void MachOFileLayout::ByteBuffer::append_string(StringRef str) {
-  _bytes.insert(_bytes.end(), str.begin(), str.end());
-  _bytes.push_back('\0');
-}
-
-void MachOFileLayout::ByteBuffer::align(unsigned alignment) {
-  while ( (_bytes.size() % alignment) != 0 )
-    _bytes.push_back(0);
-}
-
-const uint8_t *MachOFileLayout::ByteBuffer::bytes() {
-  return &_bytes[0];
-}
-
-size_t MachOFileLayout::ByteBuffer::size() {
-  return _bytes.size();
-}
 
 
  
