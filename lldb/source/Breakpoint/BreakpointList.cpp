@@ -69,12 +69,20 @@ BreakpointList::Remove (break_id_t break_id, bool notify)
 }
 
 void
+BreakpointList::RemoveInvalidLocations (const ArchSpec &arch)
+{
+    Mutex::Locker locker(m_mutex);
+    for (const auto &bp_sp : m_breakpoints)
+        bp_sp->RemoveInvalidLocations(arch);
+}
+
+
+void
 BreakpointList::SetEnabledAll (bool enabled)
 {
     Mutex::Locker locker(m_mutex);
-    bp_collection::iterator pos, end = m_breakpoints.end();
-    for (pos = m_breakpoints.begin(); pos != end; ++pos)
-        (*pos)->SetEnabled (enabled);
+    for (const auto &bp_sp : m_breakpoints)
+        bp_sp->SetEnabled (enabled);
 }
 
 
@@ -163,10 +171,8 @@ BreakpointList::Dump (Stream *s) const
     s->Indent();
     s->Printf("BreakpointList with %u Breakpoints:\n", (uint32_t)m_breakpoints.size());
     s->IndentMore();
-    bp_collection::const_iterator pos;
-    bp_collection::const_iterator end = m_breakpoints.end();
-    for (pos = m_breakpoints.begin(); pos != end; ++pos)
-        (*pos)->Dump(s);
+    for (const auto &bp_sp : m_breakpoints)
+        bp_sp->Dump(s);
     s->IndentLess();
 }
 
@@ -207,10 +213,8 @@ void
 BreakpointList::UpdateBreakpoints (ModuleList& module_list, bool added, bool delete_locations)
 {
     Mutex::Locker locker(m_mutex);
-    bp_collection::iterator end = m_breakpoints.end();
-    bp_collection::iterator pos;
-    for (pos = m_breakpoints.begin(); pos != end; ++pos)
-        (*pos)->ModulesChanged (module_list, added, delete_locations);
+    for (const auto &bp_sp : m_breakpoints)
+        bp_sp->ModulesChanged (module_list, added, delete_locations);
 
 }
 
@@ -218,10 +222,8 @@ void
 BreakpointList::UpdateBreakpointsWhenModuleIsReplaced (ModuleSP old_module_sp, ModuleSP new_module_sp)
 {
     Mutex::Locker locker(m_mutex);
-    bp_collection::iterator end = m_breakpoints.end();
-    bp_collection::iterator pos;
-    for (pos = m_breakpoints.begin(); pos != end; ++pos)
-        (*pos)->ModuleReplaced (old_module_sp, new_module_sp);
+    for (const auto &bp_sp : m_breakpoints)
+        bp_sp->ModuleReplaced (old_module_sp, new_module_sp);
 
 }
 
@@ -229,10 +231,8 @@ void
 BreakpointList::ClearAllBreakpointSites ()
 {
     Mutex::Locker locker(m_mutex);
-    bp_collection::iterator end = m_breakpoints.end();
-    bp_collection::iterator pos;
-    for (pos = m_breakpoints.begin(); pos != end; ++pos)
-        (*pos)->ClearAllBreakpointSites ();
+    for (const auto &bp_sp : m_breakpoints)
+        bp_sp->ClearAllBreakpointSites ();
 
 }
 

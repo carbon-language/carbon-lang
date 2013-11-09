@@ -534,6 +534,16 @@ public:
     bool
     CalculateSymbolContextLineEntry (LineEntry &line_entry) const;
 
+    //------------------------------------------------------------------
+    // Returns true if the section should be valid, but isn't because
+    // the shared pointer to the section can't be reconstructed from
+    // a weak pointer that contains a valid weak reference to a section.
+    // Returns false if the section weak pointer has no reference to
+    // a section, or if the section is still valid
+    //------------------------------------------------------------------
+    bool
+    SectionWasDeleted() const;
+
 protected:
     //------------------------------------------------------------------
     // Member variables.
@@ -550,7 +560,7 @@ protected:
     // have a valid section.
     //------------------------------------------------------------------
     bool
-    SectionWasDeleted() const;
+    SectionWasDeletedPrivate() const;
 
 };
 

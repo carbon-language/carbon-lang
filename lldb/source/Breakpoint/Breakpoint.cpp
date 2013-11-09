@@ -114,6 +114,12 @@ Breakpoint::GetLocationAtIndex (size_t index)
     return m_locations.GetByIndex(index);
 }
 
+void
+Breakpoint::RemoveInvalidLocations (const ArchSpec &arch)
+{
+    m_locations.RemoveInvalidLocations(arch);
+}
+
 // For each of the overall options we need to decide how they propagate to
 // the location options.  This will determine the precedence of options on
 // the breakpoint vs. its locations.

@@ -280,7 +280,7 @@ Address::GetFileAddress () const
         // address by adding the file base address to our offset
         return sect_file_addr + m_offset;
     }
-    else if (SectionWasDeleted())
+    else if (SectionWasDeletedPrivate())
     {
         // Used to have a valid section but it got deleted so the
         // offset doesn't mean anything without the section
@@ -308,7 +308,7 @@ Address::GetLoadAddress (Target *target) const
             }
         }
     }
-    else if (SectionWasDeleted())
+    else if (SectionWasDeletedPrivate())
     {
         // Used to have a valid section but it got deleted so the
         // offset doesn't mean anything without the section
@@ -782,6 +782,14 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
 
 bool
 Address::SectionWasDeleted() const
+{
+    if (GetSection())
+        return false;
+    return SectionWasDeletedPrivate();
+}
+
+bool
+Address::SectionWasDeletedPrivate() const
 {
     lldb::SectionWP empty_section_wp;
 

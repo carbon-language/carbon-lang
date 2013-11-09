@@ -250,6 +250,9 @@ protected:
 
     bool
     RemoveLocation (const lldb::BreakpointLocationSP &bp_loc_sp);
+    
+    void
+    RemoveInvalidLocations (const ArchSpec &arch);
 
     typedef std::vector<lldb::BreakpointLocationSP> collection;
     typedef std::map<lldb_private::Address,

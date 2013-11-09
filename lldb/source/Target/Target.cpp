@@ -192,7 +192,7 @@ Target::Destroy()
     DeleteCurrentProcess ();
     m_platform_sp.reset();
     m_arch.Clear();
-    ClearModules();
+    ClearModules(true);
     m_section_load_list.Clear();
     const bool notify = false;
     m_breakpoint_list.RemoveAll(notify);
@@ -1014,9 +1014,9 @@ LoadScriptingResourceForModule (const ModuleSP &module_sp, Target *target)
 }
 
 void
-Target::ClearModules()
+Target::ClearModules(bool delete_locations)
 {
-    ModulesDidUnload (m_images, true);
+    ModulesDidUnload (m_images, delete_locations);
     GetSectionLoadList().Clear();
     m_images.Clear();
     m_scratch_ast_context_ap.reset();
@@ -1025,10 +1025,18 @@ Target::ClearModules()
 }
 
 void
+Target::DidExec ()
+{
+    // When a process exec's we need to know about it so we can do some cleanup. 
+    m_breakpoint_list.RemoveInvalidLocations(m_arch);
+    m_internal_breakpoint_list.RemoveInvalidLocations(m_arch);
+}
+
+void
 Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TARGET));
-    ClearModules();
+    ClearModules(false);
     
     if (executable_sp.get())
     {
@@ -1098,7 +1106,7 @@ Target::SetArchitecture (const ArchSpec &arch_spec)
         m_arch = arch_spec;
         ModuleSP executable_sp = GetExecutableModule ();
 
-        ClearModules();
+        ClearModules(true);
         // Need to do something about unsetting breakpoints.
         
         if (executable_sp)

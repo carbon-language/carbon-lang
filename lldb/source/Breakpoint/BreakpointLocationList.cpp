@@ -13,8 +13,11 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Breakpoint/BreakpointLocationList.h"
+
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/Breakpoint.h"
+#include "lldb/Core/ArchSpec.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Target/Target.h"
 
@@ -286,7 +289,41 @@ BreakpointLocationList::RemoveLocation (const lldb::BreakpointLocationSP &bp_loc
     return false;
 }
 
-
+void
+BreakpointLocationList::RemoveInvalidLocations (const ArchSpec &arch)
+{
+    Mutex::Locker locker (m_mutex);
+    size_t idx = 0;
+    // Don't cache m_location.size() as it will change since we might
+    // remove locations from our vector...
+    while (idx < m_locations.size())
+    {
+        BreakpointLocation *bp_loc = m_locations[idx].get();
+        if (bp_loc->GetAddress().SectionWasDeleted())
+        {
+            // Section was deleted which means this breakpoint comes from a module
+            // that is no longer valid, so we should remove it.
+            m_locations.erase(m_locations.begin() + idx);
+            continue;
+        }
+        if (arch.IsValid())
+        {
+            ModuleSP module_sp (bp_loc->GetAddress().GetModule());
+            if (module_sp)
+            {
+                if (!arch.IsCompatibleMatch(module_sp->GetArchitecture()))
+                {
+                    // The breakpoint was in a module whose architecture is no longer
+                    // compatible with "arch", so we need to remove it
+                    m_locations.erase(m_locations.begin() + idx);
+                    continue;
+                }
+            }
+        }
+        // Only increment the index if we didn't remove the locations at index "idx"
+        ++idx;
+    }
+}
 
 void
 BreakpointLocationList::StartRecordingNewLocations (BreakpointLocationCollection &new_locations)

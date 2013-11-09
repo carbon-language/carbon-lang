@@ -759,8 +759,22 @@ public:
     SymbolsDidLoad (ModuleList &module_list);
     
     void
-    ClearModules();
+    ClearModules(bool delete_locations);
 
+    //------------------------------------------------------------------
+    /// Called as the last function in Process::DidExec().
+    ///
+    /// Process::DidExec() will clear a lot of state in the process,
+    /// then try to reload a dynamic loader plugin to discover what
+    /// binaries are currently available and then this function should
+    /// be called to allow the target to do any cleanup after everything
+    /// has been figured out. It can remove breakpoints that no longer
+    /// make sense as the exec might have changed the target
+    /// architecture, and unloaded some modules that might get deleted.
+    //------------------------------------------------------------------
+    void
+    DidExec ();
+    
     //------------------------------------------------------------------
     /// Gets the module for the main executable.
     ///

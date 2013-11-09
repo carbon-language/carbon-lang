@@ -311,6 +311,24 @@ public:
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
     GetLocationAtIndex (size_t index);
+    
+    //------------------------------------------------------------------
+    /// Removes all invalid breakpoint locations.
+    ///
+    /// Removes all breakpoint locations with architectures that aren't
+    /// compatible with \a arch. Also remove any breakpoint locations
+    /// with whose locations have address where the section has been
+    /// deleted (module and object files no longer exist).
+    ///
+    /// This is typically used after the process calls exec, or anytime
+    /// the architecture of the target changes.
+    ///
+    /// @param[in] arch
+    ///     If valid, check the module in each breakpoint to make sure
+    ///     they are compatible, otherwise, ignore architecture.
+    //------------------------------------------------------------------
+    void
+    RemoveInvalidLocations (const ArchSpec &arch);
 
     //------------------------------------------------------------------
     // The next section deals with various breakpoint options.
