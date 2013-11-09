@@ -3636,6 +3636,13 @@ TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
                    "b\\\n"
                    "c\";",
                    Break));
+
+  // Exempt ObjC strings for now.
+  EXPECT_EQ("NSString *const kString = @\"aaaa\"\n"
+            "                           \"bbbb\";",
+            format("NSString *const kString = @\"aaaa\"\n"
+                   "\"bbbb\";",
+                   Break));
 }
 
 TEST_F(FormatTest, AlignsPipes) {
