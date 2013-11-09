@@ -210,6 +210,7 @@ def RelatedAlso : VerbatimLineCommand<"relatedalso">;
 //===----------------------------------------------------------------------===//
 
 // Doxygen commands.
+def Def       : DeclarationVerbatimLineCommand<"def">;
 def Fn        : DeclarationVerbatimLineCommand<"fn">;
 def Namespace : DeclarationVerbatimLineCommand<"namespace">;
 def Overload  : DeclarationVerbatimLineCommand<"overload">;

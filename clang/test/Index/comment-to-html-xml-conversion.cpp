@@ -457,10 +457,17 @@ void comment_to_html_conversion_25();
 // CHECK-NEXT:         (CXComment_VerbatimBlockLine Text=[ <a href="http://example.com/">Aaa</a>])
 // CHECK-NEXT:         (CXComment_VerbatimBlockLine Text=[ <a href='http://example.com/'>Aaa</a>])))]
 
-/// \function foo
-/// \class foo
-/// \method foo
-/// \interface foo
+/// \def foo_def
+/// \fn foo_fn
+/// \namespace foo_namespace
+/// \overload foo_overload
+/// \property foo_property
+/// \typedef foo_typedef
+/// \var foo_var
+/// \function foo_function
+/// \class foo_class
+/// \method foo_method
+/// \interface foo_interface
 /// Blah blah.
 void comment_to_html_conversion_26();
 
@@ -469,16 +476,37 @@ void comment_to_html_conversion_26();
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace))
-// CHECK-NEXT:       (CXComment_VerbatimLine Text=[ foo])
+// CHECK-NEXT:       (CXComment_VerbatimLine Text=[ foo_def])
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace))
-// CHECK-NEXT:       (CXComment_VerbatimLine Text=[ foo])
+// CHECK-NEXT:       (CXComment_VerbatimLine Text=[ foo_fn])
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace))
-// CHECK-NEXT:       (CXComment_VerbatimLine Text=[ foo])
+// CHECK-NEXT:       (CXComment_VerbatimLine Text=[ foo_namespace])
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace))
-// CHECK-NEXT:       (CXComment_VerbatimLine Text=[ foo])
+// CHECK-NEXT:       (CXComment_VerbatimLine Text=[ foo_overload])
+// CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace))
+// CHECK-NEXT:       (CXComment_VerbatimLine Text=[ foo_property])
+// CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace))
+// CHECK-NEXT:       (CXComment_VerbatimLine Text=[ foo_typedef])
+// CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace))
+// CHECK-NEXT:       (CXComment_VerbatimLine Text=[ foo_var])
+// CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace))
+// CHECK-NEXT:       (CXComment_VerbatimLine Text=[ foo_function])
+// CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace))
+// CHECK-NEXT:       (CXComment_VerbatimLine Text=[ foo_class])
+// CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace))
+// CHECK-NEXT:       (CXComment_VerbatimLine Text=[ foo_method])
+// CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace))
+// CHECK-NEXT:       (CXComment_VerbatimLine Text=[ foo_interface])
 // CHECK-NEXT:       (CXComment_Paragraph
 // CHECK-NEXT:         (CXComment_Text Text=[ Blah blah.])))]
 
