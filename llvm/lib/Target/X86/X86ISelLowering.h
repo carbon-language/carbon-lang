@@ -925,6 +925,8 @@ namespace llvm {
                    const SmallVectorImpl<ISD::OutputArg> &Outs,
                    LLVMContext &Context) const;
 
+    virtual const uint16_t *getScratchRegisters(CallingConv::ID CC) const;
+
     /// Utility function to emit atomic-load-arith operations (and, or, xor,
     /// nand, max, min, umax, umin). It takes the corresponding instruction to
     /// expand, the associated machine basic block, and the associated X86

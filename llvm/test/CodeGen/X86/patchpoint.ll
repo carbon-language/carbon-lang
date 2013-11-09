@@ -2,25 +2,21 @@
 
 ; Trivial patchpoint codegen
 ;
-; FIXME: We should verify that the call target is materialize after
-; the label immediately before the call.
-; <rdar://15187295> [JS] llvm.webkit.patchpoint call target should be
-; materialized in nop slide.
 define i64 @trivial_patchpoint_codegen(i64 %p1, i64 %p2, i64 %p3, i64 %p4) {
 entry:
-; CHECK-LABEL: _trivial_patchpoint_codegen:
-; CHECK:      Ltmp
-; CHECK:      callq *%rax
+; CHECK-LABEL: trivial_patchpoint_codegen:
+; CHECK:      movabsq $-559038736, %r11
+; CHECK-NEXT: callq *%r11
 ; CHECK-NEXT: nop
 ; CHECK:      movq %rax, %[[REG:r.+]]
-; CHECK:      callq *%rax
+; CHECK:      callq *%r11
 ; CHECK-NEXT: nop
 ; CHECK:      movq %[[REG]], %rax
 ; CHECK:      ret
   %resolveCall2 = inttoptr i64 -559038736 to i8*
-  %result = tail call i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 2, i32 12, i8* %resolveCall2, i32 4, i64 %p1, i64 %p2, i64 %p3, i64 %p4)
+  %result = tail call i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 2, i32 15, i8* %resolveCall2, i32 4, i64 %p1, i64 %p2, i64 %p3, i64 %p4)
   %resolveCall3 = inttoptr i64 -559038737 to i8*
-  tail call void (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i32 3, i32 12, i8* %resolveCall3, i32 2, i64 %p1, i64 %result)
+  tail call void (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i32 3, i32 15, i8* %resolveCall3, i32 2, i64 %p1, i64 %result)
   ret i64 %result
 }
 
@@ -48,18 +44,18 @@ entry:
 define void @jscall_patchpoint_codegen(i64 %p1, i64 %p2, i64 %p3, i64 %p4) {
 entry:
 ; CHECK-LABEL: jscall_patchpoint_codegen:
-; CHECK: Ltmp
-; CHECK: movq %r{{.+}}, 8(%rsp)
-; CHECK: movq %r{{.+}}, (%rsp)
-; CHECK: movq $-559038736, %rax
-; CHECK: Ltmp
-; CHECK: callq *%rax
-; CHECK: movq %rax, 8(%rsp)
-; CHECK: callq
+; CHECK:      Ltmp
+; CHECK:      movq %r{{.+}}, 8(%rsp)
+; CHECK:      movq %r{{.+}}, (%rsp)
+; CHECK:      Ltmp
+; CHECK-NEXT: movabsq $-559038736, %r11
+; CHECK-NEXT: callq *%r11
+; CHECK:      movq %rax, 8(%rsp)
+; CHECK:      callq
   %resolveCall2 = inttoptr i64 -559038736 to i8*
-  %result = tail call webkit_jscc i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 5, i32 12, i8* %resolveCall2, i32 2, i64 %p1, i64 %p2)
+  %result = tail call webkit_jscc i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 5, i32 15, i8* %resolveCall2, i32 2, i64 %p1, i64 %p2)
   %resolveCall3 = inttoptr i64 -559038737 to i8*
-  tail call webkit_jscc void (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i32 6, i32 12, i8* %resolveCall3, i32 2, i64 %p1, i64 %result)
+  tail call webkit_jscc void (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i32 6, i32 15, i8* %resolveCall3, i32 2, i64 %p1, i64 %result)
   ret void
 }
 

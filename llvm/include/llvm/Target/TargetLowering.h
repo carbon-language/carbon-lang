@@ -2056,6 +2056,12 @@ public:
     return VT.bitsLT(MinVT) ? MinVT : VT;
   }
 
+  /// Returns a 0 terminated array of registers that can be safely used as
+  /// scratch registers.
+  virtual const uint16_t *getScratchRegisters(CallingConv::ID CC) const {
+    return NULL;
+  }
+
   /// This callback is invoked by the type legalizer to legalize nodes with an
   /// illegal operand type but legal result types.  It replaces the
   /// LowerOperation callback in the type Legalizer.  The reason we can not do

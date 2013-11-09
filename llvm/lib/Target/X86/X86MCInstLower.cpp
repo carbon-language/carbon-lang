@@ -785,6 +785,7 @@ static void LowerPATCHPOINT(MCStreamer &OutStreamer,
                 !MI.getOperand(0).isImplicit();
   unsigned StartIdx = hasDef ? 1 : 0;
 #ifndef NDEBUG
+  {
   unsigned StartIdx2 = 0, e = MI.getNumOperands();
   while (StartIdx2 < e && MI.getOperand(StartIdx2).isReg() &&
          MI.getOperand(StartIdx2).isDef() &&
@@ -793,7 +794,19 @@ static void LowerPATCHPOINT(MCStreamer &OutStreamer,
 
   assert(StartIdx == StartIdx2 &&
          "Unexpected additonal definition in Patchpoint intrinsic.");
+  }
 #endif
+
+  // Find the first scratch register (implicit def and early clobber)
+  unsigned ScratchIdx = StartIdx, e = MI.getNumOperands();
+  while (ScratchIdx < e &&
+         !(MI.getOperand(ScratchIdx).isReg() &&
+           MI.getOperand(ScratchIdx).isDef() &&
+           MI.getOperand(ScratchIdx).isImplicit() &&
+           MI.getOperand(ScratchIdx).isEarlyClobber()))
+    ++ScratchIdx;
+
+  assert(ScratchIdx != e && "No scratch register available");
 
   int64_t ID = MI.getOperand(StartIdx).getImm();
   assert((int32_t)ID == ID && "Stack maps hold 32-bit IDs");
@@ -812,10 +825,16 @@ static void LowerPATCHPOINT(MCStreamer &OutStreamer,
                     getStackMapEndMOP(MI.operands_begin(), MI.operands_end()),
                     isAnyRegCC && hasDef);
 
-  // Emit call. We need to know how many bytes we encoded here.
-  unsigned EncodedBytes = 2;
+  // Emit MOV to materialize the target address and the CALL to target.
+  // This is encoded with 12-13 bytes, depending on which register is used.
+  // We conservatively assume that it is 12 bytes and emit in worst case one
+  // extra NOP byte.
+  unsigned EncodedBytes = 12;
+  OutStreamer.EmitInstruction(MCInstBuilder(X86::MOV64ri)
+                              .addReg(MI.getOperand(ScratchIdx).getReg())
+                              .addImm(MI.getOperand(StartIdx + 2).getImm()));
   OutStreamer.EmitInstruction(MCInstBuilder(X86::CALL64r)
-                              .addReg(MI.getOperand(StartIdx + 2).getReg()));
+                              .addReg(MI.getOperand(ScratchIdx).getReg()));
 
   // Emit padding.
   unsigned NumNOPBytes = MI.getOperand(StartIdx + 1).getImm();

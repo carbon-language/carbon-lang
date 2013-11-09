@@ -728,10 +728,14 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
   const MCInstrDesc &II = TII->get(Opc);
   unsigned NumResults = CountResults(Node);
   unsigned NumDefs = II.getNumDefs();
+  const uint16_t *ScratchRegs = NULL;
 
   // Handle PATCHPOINT specially and then use the generic code.
-  if (Opc == TargetOpcode::PATCHPOINT)
+  if (Opc == TargetOpcode::PATCHPOINT) {
+    unsigned CC = Node->getConstantOperandVal(4);
     NumDefs = NumResults;
+    ScratchRegs = TLI->getScratchRegisters((CallingConv::ID) CC);
+  }
 
   unsigned NumImpUses = 0;
   unsigned NodeOperands =
@@ -766,6 +770,12 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
   for (unsigned i = NumSkip; i != NodeOperands; ++i)
     AddOperand(MIB, Node->getOperand(i), i-NumSkip+NumDefs, &II,
                VRBaseMap, /*IsDebug=*/false, IsClone, IsCloned);
+
+  // Add scratch registers as implicit def and early clobber
+  if (ScratchRegs)
+    for (unsigned i = 0; ScratchRegs[i]; ++i)
+      MIB.addReg(ScratchRegs[i], RegState::ImplicitDefine |
+                                 RegState::EarlyClobber);
 
   // Transfer all of the memory reference descriptions of this instruction.
   MIB.setMemRefs(cast<MachineSDNode>(Node)->memoperands_begin(),

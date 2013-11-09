@@ -1773,6 +1773,11 @@ X86TargetLowering::CanLowerReturn(CallingConv::ID CallConv,
   return CCInfo.CheckReturn(Outs, RetCC_X86);
 }
 
+const uint16_t *X86TargetLowering::getScratchRegisters(CallingConv::ID) const {
+  static const uint16_t ScratchRegs[] = { X86::R11, 0 };
+  return ScratchRegs;
+}
+
 SDValue
 X86TargetLowering::LowerReturn(SDValue Chain,
                                CallingConv::ID CallConv, bool isVarArg,

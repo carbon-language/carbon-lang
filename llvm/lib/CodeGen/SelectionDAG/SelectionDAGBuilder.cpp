@@ -6832,7 +6832,7 @@ void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
   //                                                 [Args...],
   //                                                 [live variables...])
 
-  unsigned CC = CI.getCallingConv();
+  CallingConv::ID CC = CI.getCallingConv();
   bool isAnyRegCC = CC == CallingConv::AnyReg;
   bool hasDef = !CI.getType()->isVoidTy();
   SDValue Callee = getValue(CI.getOperand(2)); // <target>
@@ -6876,7 +6876,8 @@ void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
   }
   // Assume that the Callee is a constant address.
   Ops.push_back(
-    DAG.getIntPtrConstant(cast<ConstantSDNode>(Callee)->getZExtValue()));
+    DAG.getIntPtrConstant(cast<ConstantSDNode>(Callee)->getZExtValue(),
+                          /*isTarget=*/true));
 
   // Adjust <numArgs> to account for any arguments that have been passed on the
   // stack instead.
@@ -6886,7 +6887,7 @@ void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
   Ops.push_back(DAG.getTargetConstant(NumCallRegArgs, MVT::i32));
 
   // Add the calling convention
-  Ops.push_back(DAG.getTargetConstant(CC, MVT::i32));
+  Ops.push_back(DAG.getTargetConstant((unsigned)CC, MVT::i32));
 
   // Add the arguments we omitted previously. The register allocator should
   // place these in any free register.
