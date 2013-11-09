@@ -146,28 +146,6 @@ std::string ToolChain::GetProgramPath(const char *Name) const {
   return D.GetProgramPath(Name, *this);
 }
 
-std::string ToolChain::GetLinkerPath() const {
-  if (Arg *A = Args.getLastArg(options::OPT_fuse_ld_EQ)) {
-    StringRef Value = A->getValue();
-    // If we're passed -fuse-ld= with no argument, or with the argument ld,
-    // then use whatever the default system linker is.
-    if (Value.empty() || Value == "ld")
-      return GetProgramPath("ld");
-    std::string LinkerName = Value.str();
-    std::string LD("ld.");
-    LD += LinkerName;
-    std::string LinkerPath = GetProgramPath(LD.c_str());
-    bool Exists;
-    if (!llvm::sys::fs::exists(LinkerPath, Exists) && Exists)
-      return LinkerPath;
-    getDriver().Diag(diag::err_drv_invalid_linker_name)
-      << A->getAsString(Args);
-    return "";
-  }
-  return GetProgramPath("ld");
-}
-
-
 types::ID ToolChain::LookupTypeForExtension(const char *Ext) const {
   return types::lookupTypeForExtension(Ext);
 }
