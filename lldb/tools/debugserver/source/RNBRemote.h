@@ -234,11 +234,6 @@ public:
     RNBContext&     Context() { return m_ctx; }
     RNBSocket&      Comm() { return m_comm; }
 
-    void
-    SetUseNativeRegisters (bool b)
-    {
-        m_use_native_regs = b;
-    }
 private:
     // Outlaw some contructors
     RNBRemote (const RNBRemote &);
@@ -317,7 +312,6 @@ protected:
     uint32_t        m_max_payload_size;  // the maximum sized payload we should send to gdb
     bool            m_extended_mode;   // are we in extended mode?
     bool            m_noack_mode;      // are we in no-ack mode?
-    bool            m_use_native_regs; // Use native registers by querying DNB layer for register definitions?
     bool            m_thread_suffix_supported; // Set to true if the 'p', 'P', 'g', and 'G' packets should be prefixed with the thread ID and colon:
                                                                 // "$pRR;thread:TTTT;" instead of "$pRR"
                                                                 // "$PRR=VVVVVVVV;thread:TTTT;" instead of "$PRR=VVVVVVVV"

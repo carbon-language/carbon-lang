@@ -1027,7 +1027,7 @@ main (int argc, char *argv[])
                 break;
 
             case 'r':
-                remote->SetUseNativeRegisters (true);
+                // Do nothing, native regs is the default these days
                 break;
 
             case 'v':

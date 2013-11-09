@@ -63,7 +63,7 @@
 #define WATCHPOINT_OCCURRED     ((uint32_t)(10u))
 
 static const uint8_t g_arm_breakpoint_opcode[] = { 0xFE, 0xDE, 0xFF, 0xE7 };
-static const uint8_t g_thumb_breakpooint_opcode[] = { 0xFE, 0xDE };
+static const uint8_t g_thumb_breakpoint_opcode[] = { 0xFE, 0xDE };
 
 // ARM constants used during decoding
 #define REG_RD          0
@@ -126,7 +126,7 @@ DNBArchMachARM::SoftwareBreakpointOpcode (nub_size_t byte_size)
 {
     switch (byte_size)
     {
-    case 2: return g_thumb_breakpooint_opcode;
+    case 2: return g_thumb_breakpoint_opcode;
     case 4: return g_arm_breakpoint_opcode;
     }
     return NULL;
@@ -260,7 +260,8 @@ static void
 DumpDBGState(const DNBArchMachARM::DBG& dbg)
 {
     uint32_t i = 0;
-    for (i=0; i<16; i++) {
+    for (i=0; i<16; i++) 
+    {
         DNBLogThreadedIf(LOG_STEP, "BVR%-2u/BCR%-2u = { 0x%8.8x, 0x%8.8x } WVR%-2u/WCR%-2u = { 0x%8.8x, 0x%8.8x }",
             i, i, dbg.__bvr[i], dbg.__bcr[i],
             i, i, dbg.__wvr[i], dbg.__wcr[i]);
@@ -481,7 +482,7 @@ DNBArchMachARM::StepNotComplete ()
         {
             if (m_state.context.gpr.__pc == m_hw_single_chained_step_addr)
             {
-                DNBLogThreadedIf(LOG_STEP, "Need to step some more at 0x%8.8x", m_hw_single_chained_step_addr);
+                DNBLogThreadedIf(LOG_STEP, "Need to step some more at 0x%8.8llx", (uint64_t) m_hw_single_chained_step_addr);
                 return true;
             }
         }
@@ -879,7 +880,8 @@ static uint32_t LoHi[16] = { 0 };
 uint32_t
 DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write, bool also_set_on_task)
 {
-    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint(addr = 0x%8.8llx, size = %llu, read = %u, write = %u)", (uint64_t)addr, (uint64_t)size, read, write);
+
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint(addr = 0x%8.8llx, size = %zu, read = %u, write = %u)", (uint64_t)addr, size, read, write);
 
     const uint32_t num_hw_watchpoints = NumSupportedHardwareWatchpoints();
 
@@ -1183,7 +1185,7 @@ enum gpr_regnums
 
 enum 
 {
-    vfp_s0 = 17, // match the g_gdb_register_map_arm table in RNBRemote.cpp
+    vfp_s0 = 0,
     vfp_s1,
     vfp_s2,
     vfp_s3,
@@ -1214,12 +1216,8 @@ enum
     vfp_s28,
     vfp_s29,
     vfp_s30,
-    vfp_s31
-};
-
-enum
-{
-    vfp_d0 = 49, // match the g_gdb_register_map_arm table in RNBRemote.cpp
+    vfp_s31,
+    vfp_d0,
     vfp_d1,
     vfp_d2,
     vfp_d3,
@@ -1250,12 +1248,8 @@ enum
     vfp_d28,
     vfp_d29,
     vfp_d30,
-    vfp_d31
-};
-
-enum
-{
-    vfp_q0 = 81, // match the g_gdb_register_map_arm table in RNBRemote.cpp
+    vfp_d31,
+    vfp_q0,
     vfp_q1,
     vfp_q2,
     vfp_q3,
@@ -1298,15 +1292,7 @@ enum
 // FIQ, SYS, USR, etc..), we should invalidate r8-r14 if the CPSR
 // gets modified.
 
-uint32_t g_invalidate_cpsr[] = {
-    gpr_r8,
-    gpr_r9,
-    gpr_r10,
-    gpr_r11,
-    gpr_r12,
-    gpr_sp,
-    gpr_lr,
-    INVALID_NUB_REGNUM };
+const char * g_invalidate_cpsr[] = { "r8", "r9", "r10", "r11", "r12", "sp", "lr", NULL };
 
 // General purpose registers
 const DNBRegisterInfo
@@ -1331,39 +1317,39 @@ DNBArchMachARM::g_gpr_registers[] =
     DEFINE_GPR_NAME (cpsr, "flags", GENERIC_REGNUM_FLAGS, g_invalidate_cpsr)
 };
 
-uint32_t g_contained_q0[] {vfp_q0, INVALID_NUB_REGNUM };
-uint32_t g_contained_q1[] {vfp_q1, INVALID_NUB_REGNUM };
-uint32_t g_contained_q2[] {vfp_q2, INVALID_NUB_REGNUM };
-uint32_t g_contained_q3[] {vfp_q3, INVALID_NUB_REGNUM };
-uint32_t g_contained_q4[] {vfp_q4, INVALID_NUB_REGNUM };
-uint32_t g_contained_q5[] {vfp_q5, INVALID_NUB_REGNUM };
-uint32_t g_contained_q6[] {vfp_q6, INVALID_NUB_REGNUM };
-uint32_t g_contained_q7[] {vfp_q7, INVALID_NUB_REGNUM };
-uint32_t g_contained_q8[] {vfp_q8, INVALID_NUB_REGNUM };
-uint32_t g_contained_q9[] {vfp_q9, INVALID_NUB_REGNUM };
-uint32_t g_contained_q10[] {vfp_q10, INVALID_NUB_REGNUM };
-uint32_t g_contained_q11[] {vfp_q11, INVALID_NUB_REGNUM };
-uint32_t g_contained_q12[] {vfp_q12, INVALID_NUB_REGNUM };
-uint32_t g_contained_q13[] {vfp_q13, INVALID_NUB_REGNUM };
-uint32_t g_contained_q14[] {vfp_q14, INVALID_NUB_REGNUM };
-uint32_t g_contained_q15[] {vfp_q15, INVALID_NUB_REGNUM };
+const char *g_contained_q0 [] { "q0", NULL };
+const char *g_contained_q1 [] { "q1", NULL };
+const char *g_contained_q2 [] { "q2", NULL };
+const char *g_contained_q3 [] { "q3", NULL };
+const char *g_contained_q4 [] { "q4", NULL };
+const char *g_contained_q5 [] { "q5", NULL };
+const char *g_contained_q6 [] { "q6", NULL };
+const char *g_contained_q7 [] { "q7", NULL };
+const char *g_contained_q8 [] { "q8", NULL };
+const char *g_contained_q9 [] { "q9", NULL };
+const char *g_contained_q10[] { "q10", NULL };
+const char *g_contained_q11[] { "q11", NULL };
+const char *g_contained_q12[] { "q12", NULL };
+const char *g_contained_q13[] { "q13", NULL };
+const char *g_contained_q14[] { "q14", NULL };
+const char *g_contained_q15[] { "q15", NULL };
 
-uint32_t g_invalidate_q0[]  {vfp_q0,   vfp_d0, vfp_d1,    vfp_s0, vfp_s1, vfp_s2, vfp_s3,        INVALID_NUB_REGNUM };
-uint32_t g_invalidate_q1[]  {vfp_q1,   vfp_d2, vfp_d3,    vfp_s4, vfp_s5, vfp_s6, vfp_s7,        INVALID_NUB_REGNUM };
-uint32_t g_invalidate_q2[]  {vfp_q2,   vfp_d4, vfp_d5,    vfp_s8, vfp_s9, vfp_s10, vfp_s11,      INVALID_NUB_REGNUM };
-uint32_t g_invalidate_q3[]  {vfp_q3,   vfp_d6, vfp_d7,    vfp_s12, vfp_s13, vfp_s14, vfp_s15,    INVALID_NUB_REGNUM };
-uint32_t g_invalidate_q4[]  {vfp_q4,   vfp_d8, vfp_d9,    vfp_s16, vfp_s17, vfp_s18, vfp_s19,    INVALID_NUB_REGNUM };
-uint32_t g_invalidate_q5[]  {vfp_q5,   vfp_d10, vfp_d11,  vfp_s20, vfp_s21, vfp_s22, vfp_s23,    INVALID_NUB_REGNUM };
-uint32_t g_invalidate_q6[]  {vfp_q6,   vfp_d12, vfp_d13,  vfp_s24, vfp_s25, vfp_s26, vfp_s27,    INVALID_NUB_REGNUM };
-uint32_t g_invalidate_q7[]  {vfp_q7,   vfp_d14, vfp_d15,  vfp_s28, vfp_s29, vfp_s30, vfp_s31,    INVALID_NUB_REGNUM };
-uint32_t g_invalidate_q8[]  {vfp_q8,   vfp_d16, vfp_d17,  INVALID_NUB_REGNUM };
-uint32_t g_invalidate_q9[]  {vfp_q9,   vfp_d18, vfp_d19,  INVALID_NUB_REGNUM };
-uint32_t g_invalidate_q10[] {vfp_q10,  vfp_d20, vfp_d21,  INVALID_NUB_REGNUM };
-uint32_t g_invalidate_q11[] {vfp_q11,  vfp_d22, vfp_d23,  INVALID_NUB_REGNUM };
-uint32_t g_invalidate_q12[] {vfp_q12,  vfp_d24, vfp_d25,  INVALID_NUB_REGNUM };
-uint32_t g_invalidate_q13[] {vfp_q13,  vfp_d26, vfp_d27,  INVALID_NUB_REGNUM };
-uint32_t g_invalidate_q14[] {vfp_q14,  vfp_d28, vfp_d29,  INVALID_NUB_REGNUM };
-uint32_t g_invalidate_q15[] {vfp_q15,  vfp_d30, vfp_d31,  INVALID_NUB_REGNUM };
+const char *g_invalidate_q0[]  { "q0",   "d0" , "d1" ,  "s0" , "s1" , "s2" , "s3" , NULL };
+const char *g_invalidate_q1[]  { "q1",   "d2" , "d3" ,  "s4" , "s5" , "s6" , "s7" , NULL };
+const char *g_invalidate_q2[]  { "q2",   "d4" , "d5" ,  "s8" , "s9" , "s10", "s11", NULL };
+const char *g_invalidate_q3[]  { "q3",   "d6" , "d7" ,  "s12", "s13", "s14", "s15", NULL };
+const char *g_invalidate_q4[]  { "q4",   "d8" , "d9" ,  "s16", "s17", "s18", "s19", NULL };
+const char *g_invalidate_q5[]  { "q5",   "d10", "d11",  "s20", "s21", "s22", "s23", NULL };
+const char *g_invalidate_q6[]  { "q6",   "d12", "d13",  "s24", "s25", "s26", "s27", NULL };
+const char *g_invalidate_q7[]  { "q7",   "d14", "d15",  "s28", "s29", "s30", "s31", NULL };
+const char *g_invalidate_q8[]  { "q8",   "d16", "d17",  NULL };
+const char *g_invalidate_q9[]  { "q9",   "d18", "d19",  NULL };
+const char *g_invalidate_q10[] { "q10",  "d20", "d21",  NULL };
+const char *g_invalidate_q11[] { "q11",  "d22", "d23",  NULL };
+const char *g_invalidate_q12[] { "q12",  "d24", "d25",  NULL };
+const char *g_invalidate_q13[] { "q13",  "d26", "d27",  NULL };
+const char *g_invalidate_q14[] { "q14",  "d28", "d29",  NULL };
+const char *g_invalidate_q15[] { "q15",  "d30", "d31",  NULL };
 
 #define VFP_S_OFFSET_IDX(idx) (offsetof (DNBArchMachARM::FPU, __r[(idx)]) + offsetof (DNBArchMachARM::Context, vfp))
 #define VFP_D_OFFSET_IDX(idx) (VFP_S_OFFSET_IDX ((idx) * 2))
@@ -1373,9 +1359,9 @@ uint32_t g_invalidate_q15[] {vfp_q15,  vfp_d30, vfp_d31,  INVALID_NUB_REGNUM };
 
 #define FLOAT_FORMAT Float
 
-#define DEFINE_VFP_S_IDX(idx)  e_regSetVFP, vfp_s##idx - vfp_s0, "s" #idx, NULL, IEEE754, FLOAT_FORMAT, 4, VFP_S_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_s##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM
-#define DEFINE_VFP_D_IDX(idx)  e_regSetVFP, vfp_d##idx - vfp_s0, "d" #idx, NULL, IEEE754, FLOAT_FORMAT, 8, VFP_D_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_d##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM
-#define DEFINE_VFP_Q_IDX(idx)  e_regSetVFP, vfp_q##idx - vfp_s0, "q" #idx, NULL, Vector, VectorOfUInt8, 16, VFP_Q_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_q##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM
+#define DEFINE_VFP_S_IDX(idx)  e_regSetVFP, vfp_s##idx, "s" #idx, NULL, IEEE754, FLOAT_FORMAT, 4, 0, INVALID_NUB_REGNUM, dwarf_s##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM
+#define DEFINE_VFP_D_IDX(idx)  e_regSetVFP, vfp_d##idx, "d" #idx, NULL, IEEE754, FLOAT_FORMAT, 8, 0, INVALID_NUB_REGNUM, dwarf_d##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM
+#define DEFINE_VFP_Q_IDX(idx)  e_regSetVFP, vfp_q##idx, "q" #idx, NULL, Vector, VectorOfUInt8, 16, VFP_Q_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_q##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM
 
 // Floating point registers
 const DNBRegisterInfo
@@ -1565,10 +1551,9 @@ DNBArchMachARM::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
             // "reg" is an index into the floating point register set at this point.
             // We need to translate it up so entry 0 in the fp reg set is the same as vfp_s0 
             // in the enumerated values for case statement below.
-            reg += vfp_s0;
             if (reg >= vfp_s0 && reg <= vfp_s31)
             {
-                value->value.uint32 = m_state.context.vfp.__r[reg - vfp_s0];
+                value->value.uint32 = m_state.context.vfp.__r[reg];
                 return true;
             }
             else if (reg >= vfp_d0 && reg <= vfp_d31)
@@ -1585,7 +1570,6 @@ DNBArchMachARM::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
                 memcpy (&value->value.v_uint8, (uint8_t *) &m_state.context.vfp.__r[s_reg_idx], 16);
                 return true;
             }
-
             else if (reg == vfp_fpscr)
             {
                 value->value.uint32 = m_state.context.vfp.__fpscr;
@@ -1663,11 +1647,9 @@ DNBArchMachARM::SetRegisterValue(int set, int reg, const DNBRegisterValue *value
             // "reg" is an index into the floating point register set at this point.
             // We need to translate it up so entry 0 in the fp reg set is the same as vfp_s0 
             // in the enumerated values for case statement below.
-            reg += vfp_s0;
-
             if (reg >= vfp_s0 && reg <= vfp_s31)
             {
-                m_state.context.vfp.__r[reg - vfp_s0] = value->value.uint32;
+                m_state.context.vfp.__r[reg] = value->value.uint32;
                 success = true;
             }
             else if (reg >= vfp_d0 && reg <= vfp_d31)
@@ -1757,7 +1739,9 @@ DNBArchMachARM::RegisterSetStateIsValid (int set) const
 nub_size_t
 DNBArchMachARM::GetRegisterContext (void *buf, nub_size_t buf_len)
 {
-    nub_size_t size = sizeof (m_state.context);
+    nub_size_t size = sizeof (m_state.context.gpr) +
+                      sizeof (m_state.context.vfp) +
+                      sizeof (m_state.context.exc);
     
     if (buf && buf_len)
     {
@@ -1767,7 +1751,19 @@ DNBArchMachARM::GetRegisterContext (void *buf, nub_size_t buf_len)
         bool force = false;
         if (GetGPRState(force) | GetVFPState(force) | GetEXCState(force))
             return 0;
-        ::memcpy (buf, &m_state.context, size);
+        
+        // Copy each struct individually to avoid any padding that might be between the structs in m_state.context
+        uint8_t *p = (uint8_t *)buf;
+        ::memcpy (p, &m_state.context.gpr, sizeof(m_state.context.gpr));
+        p += sizeof(m_state.context.gpr);
+        ::memcpy (p, &m_state.context.vfp, sizeof(m_state.context.vfp));
+        p += sizeof(m_state.context.vfp);
+        ::memcpy (p, &m_state.context.exc, sizeof(m_state.context.exc));
+        p += sizeof(m_state.context.exc);
+
+        size_t bytes_written = p - (uint8_t *)buf;
+        assert (bytes_written == size);
+
     }
     DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::GetRegisterContext (buf = %p, len = %llu) => %llu", buf, (uint64_t)buf_len, (uint64_t)size);
     // Return the size of the register context even if NULL was passed in
@@ -1777,7 +1773,10 @@ DNBArchMachARM::GetRegisterContext (void *buf, nub_size_t buf_len)
 nub_size_t
 DNBArchMachARM::SetRegisterContext (const void *buf, nub_size_t buf_len)
 {
-    nub_size_t size = sizeof (m_state.context);
+    nub_size_t size = sizeof (m_state.context.gpr) +
+                      sizeof (m_state.context.vfp) +
+                      sizeof (m_state.context.exc);
+
     if (buf == NULL || buf_len == 0)
         size = 0;
     
@@ -1786,10 +1785,20 @@ DNBArchMachARM::SetRegisterContext (const void *buf, nub_size_t buf_len)
         if (size > buf_len)
             size = buf_len;
 
-        ::memcpy (&m_state.context, buf, size);
-        SetGPRState();
-        SetVFPState();
-        SetEXCState();
+        // Copy each struct individually to avoid any padding that might be between the structs in m_state.context
+        uint8_t *p = (uint8_t *)buf;
+        ::memcpy (&m_state.context.gpr, p, sizeof(m_state.context.gpr));
+        p += sizeof(m_state.context.gpr);
+        ::memcpy (&m_state.context.vfp, p, sizeof(m_state.context.vfp));
+        p += sizeof(m_state.context.vfp);
+        ::memcpy (&m_state.context.exc, p, sizeof(m_state.context.exc));
+        p += sizeof(m_state.context.exc);
+        
+        size_t bytes_written = p - (uint8_t *)buf;
+        assert (bytes_written == size);
+
+        if (SetGPRState() | SetVFPState() | SetEXCState())
+            return 0;
     }
     DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::SetRegisterContext (buf = %p, len = %llu) => %llu", buf, (uint64_t)buf_len, (uint64_t)size);
     return size;

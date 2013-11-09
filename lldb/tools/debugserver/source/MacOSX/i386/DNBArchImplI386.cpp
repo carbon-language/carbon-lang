@@ -1011,9 +1011,9 @@ DNBArchImplI386::EnableHardwareSingleStep (bool enable)
 // Register information defintions
 //----------------------------------------------------------------------
 
-#define DEFINE_GPR_PSEUDO_16(reg16,reg32) { e_regSetGPR, gpr_##reg16, #reg16, NULL, Uint, Hex, 2, GPR_OFFSET(reg32)  ,INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, g_contained_##reg32, g_invalidate_##reg32 }
-#define DEFINE_GPR_PSEUDO_8H(reg8,reg32)  { e_regSetGPR, gpr_##reg8 , #reg8 , NULL, Uint, Hex, 1, GPR_OFFSET(reg32)+1,INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, g_contained_##reg32, g_invalidate_##reg32 }
-#define DEFINE_GPR_PSEUDO_8L(reg8,reg32)  { e_regSetGPR, gpr_##reg8 , #reg8 , NULL, Uint, Hex, 1, GPR_OFFSET(reg32)  ,INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, g_contained_##reg32, g_invalidate_##reg32 }
+#define DEFINE_GPR_PSEUDO_16(reg16,reg32) { e_regSetGPR, gpr_##reg16, #reg16, NULL, Uint, Hex, 2, 0,INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, g_contained_##reg32, g_invalidate_##reg32 }
+#define DEFINE_GPR_PSEUDO_8H(reg8,reg32)  { e_regSetGPR, gpr_##reg8 , #reg8 , NULL, Uint, Hex, 1, 1,INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, g_contained_##reg32, g_invalidate_##reg32 }
+#define DEFINE_GPR_PSEUDO_8L(reg8,reg32)  { e_regSetGPR, gpr_##reg8 , #reg8 , NULL, Uint, Hex, 1, 0,INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, g_contained_##reg32, g_invalidate_##reg32 }
 
 
 #define GPR_OFFSET(reg) (offsetof (DNBArchImplI386::GPR, __##reg))
@@ -1040,23 +1040,23 @@ DNBArchImplI386::EnableHardwareSingleStep (bool enable)
 // the register state structures are defined correctly and have the correct
 // sizes and offsets.
 
-uint32_t g_contained_eax[] = { gpr_eax, INVALID_NUB_REGNUM };
-uint32_t g_contained_ebx[] = { gpr_ebx, INVALID_NUB_REGNUM };
-uint32_t g_contained_ecx[] = { gpr_ecx, INVALID_NUB_REGNUM };
-uint32_t g_contained_edx[] = { gpr_edx, INVALID_NUB_REGNUM };
-uint32_t g_contained_edi[] = { gpr_edi, INVALID_NUB_REGNUM };
-uint32_t g_contained_esi[] = { gpr_esi, INVALID_NUB_REGNUM };
-uint32_t g_contained_ebp[] = { gpr_ebp, INVALID_NUB_REGNUM };
-uint32_t g_contained_esp[] = { gpr_esp, INVALID_NUB_REGNUM };
+const char * g_contained_eax[] = { "eax", NULL };
+const char * g_contained_ebx[] = { "ebx", NULL };
+const char * g_contained_ecx[] = { "ecx", NULL };
+const char * g_contained_edx[] = { "edx", NULL };
+const char * g_contained_edi[] = { "edi", NULL };
+const char * g_contained_esi[] = { "esi", NULL };
+const char * g_contained_ebp[] = { "ebp", NULL };
+const char * g_contained_esp[] = { "esp", NULL };
 
-uint32_t g_invalidate_eax[] = { gpr_eax , gpr_ax  , gpr_ah  , gpr_al, INVALID_NUB_REGNUM };
-uint32_t g_invalidate_ebx[] = { gpr_ebx , gpr_bx  , gpr_bh  , gpr_bl, INVALID_NUB_REGNUM };
-uint32_t g_invalidate_ecx[] = { gpr_ecx , gpr_cx  , gpr_ch  , gpr_cl, INVALID_NUB_REGNUM };
-uint32_t g_invalidate_edx[] = { gpr_edx , gpr_dx  , gpr_dh  , gpr_dl, INVALID_NUB_REGNUM };
-uint32_t g_invalidate_edi[] = { gpr_edi , gpr_di  , gpr_dil , INVALID_NUB_REGNUM };
-uint32_t g_invalidate_esi[] = { gpr_esi , gpr_si  , gpr_sil , INVALID_NUB_REGNUM };
-uint32_t g_invalidate_ebp[] = { gpr_ebp , gpr_bp  , gpr_bpl , INVALID_NUB_REGNUM };
-uint32_t g_invalidate_esp[] = { gpr_esp , gpr_sp  , gpr_spl , INVALID_NUB_REGNUM };
+const char * g_invalidate_eax[] = { "eax", "ax", "ah", "al", NULL };
+const char * g_invalidate_ebx[] = { "ebx", "bx", "bh", "bl", NULL };
+const char * g_invalidate_ecx[] = { "ecx", "cx", "ch", "cl", NULL };
+const char * g_invalidate_edx[] = { "edx", "dx", "dh", "dl", NULL };
+const char * g_invalidate_edi[] = { "edi", "di", "dil", NULL };
+const char * g_invalidate_esi[] = { "esi", "si", "sil", NULL };
+const char * g_invalidate_ebp[] = { "ebp", "bp", "bpl", NULL };
+const char * g_invalidate_esp[] = { "esp", "sp", "spl", NULL };
 
 // General purpose registers for 64 bit
 const DNBRegisterInfo
@@ -1134,6 +1134,17 @@ DNBArchImplI386::g_fpu_registers_no_avx[] =
 { e_regSetFPU, fpu_xmm7, "xmm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm7), FPU_OFFSET(xmm7), INVALID_NUB_REGNUM, dwarf_xmm7, INVALID_NUB_REGNUM, gdb_xmm7, NULL, NULL }
 };
 
+
+static const char *g_contained_ymm0 [] = { "ymm0", NULL };
+static const char *g_contained_ymm1 [] = { "ymm1", NULL };
+static const char *g_contained_ymm2 [] = { "ymm2", NULL };
+static const char *g_contained_ymm3 [] = { "ymm3", NULL };
+static const char *g_contained_ymm4 [] = { "ymm4", NULL };
+static const char *g_contained_ymm5 [] = { "ymm5", NULL };
+static const char *g_contained_ymm6 [] = { "ymm6", NULL };
+static const char *g_contained_ymm7 [] = { "ymm7", NULL };
+
+
 const DNBRegisterInfo
 DNBArchImplI386::g_fpu_registers_avx[] =
 {
@@ -1157,15 +1168,6 @@ DNBArchImplI386::g_fpu_registers_avx[] =
 { e_regSetFPU, fpu_stmm6, "stmm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm6), AVX_OFFSET(stmm6), INVALID_NUB_REGNUM, dwarf_stmm6, INVALID_NUB_REGNUM, gdb_stmm6, NULL, NULL },
 { e_regSetFPU, fpu_stmm7, "stmm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm7), AVX_OFFSET(stmm7), INVALID_NUB_REGNUM, dwarf_stmm7, INVALID_NUB_REGNUM, gdb_stmm7, NULL, NULL },
 
-{ e_regSetFPU, fpu_xmm0, "xmm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm0), AVX_OFFSET(xmm0), INVALID_NUB_REGNUM, dwarf_xmm0, INVALID_NUB_REGNUM, gdb_xmm0, NULL, NULL },
-{ e_regSetFPU, fpu_xmm1, "xmm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm1), AVX_OFFSET(xmm1), INVALID_NUB_REGNUM, dwarf_xmm1, INVALID_NUB_REGNUM, gdb_xmm1, NULL, NULL },
-{ e_regSetFPU, fpu_xmm2, "xmm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm2), AVX_OFFSET(xmm2), INVALID_NUB_REGNUM, dwarf_xmm2, INVALID_NUB_REGNUM, gdb_xmm2, NULL, NULL },
-{ e_regSetFPU, fpu_xmm3, "xmm3", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm3), AVX_OFFSET(xmm3), INVALID_NUB_REGNUM, dwarf_xmm3, INVALID_NUB_REGNUM, gdb_xmm3, NULL, NULL },
-{ e_regSetFPU, fpu_xmm4, "xmm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm4), AVX_OFFSET(xmm4), INVALID_NUB_REGNUM, dwarf_xmm4, INVALID_NUB_REGNUM, gdb_xmm4, NULL, NULL },
-{ e_regSetFPU, fpu_xmm5, "xmm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm5), AVX_OFFSET(xmm5), INVALID_NUB_REGNUM, dwarf_xmm5, INVALID_NUB_REGNUM, gdb_xmm5, NULL, NULL },
-{ e_regSetFPU, fpu_xmm6, "xmm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm6), AVX_OFFSET(xmm6), INVALID_NUB_REGNUM, dwarf_xmm6, INVALID_NUB_REGNUM, gdb_xmm6, NULL, NULL },
-{ e_regSetFPU, fpu_xmm7, "xmm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm7), AVX_OFFSET(xmm7), INVALID_NUB_REGNUM, dwarf_xmm7, INVALID_NUB_REGNUM, gdb_xmm7, NULL, NULL },
-
 { e_regSetFPU, fpu_ymm0, "ymm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm0), AVX_OFFSET_YMM(0), INVALID_NUB_REGNUM, dwarf_ymm0, INVALID_NUB_REGNUM, gdb_ymm0, NULL, NULL },
 { e_regSetFPU, fpu_ymm1, "ymm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm1), AVX_OFFSET_YMM(1), INVALID_NUB_REGNUM, dwarf_ymm1, INVALID_NUB_REGNUM, gdb_ymm1, NULL, NULL },
 { e_regSetFPU, fpu_ymm2, "ymm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm2), AVX_OFFSET_YMM(2), INVALID_NUB_REGNUM, dwarf_ymm2, INVALID_NUB_REGNUM, gdb_ymm2, NULL, NULL },
@@ -1173,7 +1175,17 @@ DNBArchImplI386::g_fpu_registers_avx[] =
 { e_regSetFPU, fpu_ymm4, "ymm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm4), AVX_OFFSET_YMM(4), INVALID_NUB_REGNUM, dwarf_ymm4, INVALID_NUB_REGNUM, gdb_ymm4, NULL, NULL },
 { e_regSetFPU, fpu_ymm5, "ymm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm5), AVX_OFFSET_YMM(5), INVALID_NUB_REGNUM, dwarf_ymm5, INVALID_NUB_REGNUM, gdb_ymm5, NULL, NULL },
 { e_regSetFPU, fpu_ymm6, "ymm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm6), AVX_OFFSET_YMM(6), INVALID_NUB_REGNUM, dwarf_ymm6, INVALID_NUB_REGNUM, gdb_ymm6, NULL, NULL },
-{ e_regSetFPU, fpu_ymm7, "ymm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm7), AVX_OFFSET_YMM(7), INVALID_NUB_REGNUM, dwarf_ymm7, INVALID_NUB_REGNUM, gdb_ymm7, NULL, NULL }
+{ e_regSetFPU, fpu_ymm7, "ymm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm7), AVX_OFFSET_YMM(7), INVALID_NUB_REGNUM, dwarf_ymm7, INVALID_NUB_REGNUM, gdb_ymm7, NULL, NULL },
+
+{ e_regSetFPU, fpu_xmm0, "xmm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm0), 0, INVALID_NUB_REGNUM, dwarf_xmm0, INVALID_NUB_REGNUM, gdb_xmm0, g_contained_ymm0, NULL },
+{ e_regSetFPU, fpu_xmm1, "xmm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm1), 0, INVALID_NUB_REGNUM, dwarf_xmm1, INVALID_NUB_REGNUM, gdb_xmm1, g_contained_ymm1, NULL },
+{ e_regSetFPU, fpu_xmm2, "xmm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm2), 0, INVALID_NUB_REGNUM, dwarf_xmm2, INVALID_NUB_REGNUM, gdb_xmm2, g_contained_ymm2, NULL },
+{ e_regSetFPU, fpu_xmm3, "xmm3", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm3), 0, INVALID_NUB_REGNUM, dwarf_xmm3, INVALID_NUB_REGNUM, gdb_xmm3, g_contained_ymm3, NULL },
+{ e_regSetFPU, fpu_xmm4, "xmm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm4), 0, INVALID_NUB_REGNUM, dwarf_xmm4, INVALID_NUB_REGNUM, gdb_xmm4, g_contained_ymm4, NULL },
+{ e_regSetFPU, fpu_xmm5, "xmm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm5), 0, INVALID_NUB_REGNUM, dwarf_xmm5, INVALID_NUB_REGNUM, gdb_xmm5, g_contained_ymm5, NULL },
+{ e_regSetFPU, fpu_xmm6, "xmm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm6), 0, INVALID_NUB_REGNUM, dwarf_xmm6, INVALID_NUB_REGNUM, gdb_xmm6, g_contained_ymm6, NULL },
+{ e_regSetFPU, fpu_xmm7, "xmm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm7), 0, INVALID_NUB_REGNUM, dwarf_xmm7, INVALID_NUB_REGNUM, gdb_xmm7, g_contained_ymm7, NULL },
+
 };
 
 const DNBRegisterInfo
@@ -1557,10 +1569,41 @@ DNBArchImplI386::SetRegisterValue(int set, int reg, const DNBRegisterValue *valu
 }
 
 
+uint32_t
+DNBArchImplI386::GetRegisterContextSize()
+{
+    static uint32_t g_cached_size = 0;
+    if (g_cached_size == 0)
+    {
+        if (CPUHasAVX() || FORCE_AVX_REGS)
+        {
+            for (size_t i=0; i<k_num_fpu_registers_avx; ++i)
+            {
+                if (g_fpu_registers_avx[i].value_regs == NULL)
+                    g_cached_size += g_fpu_registers_avx[i].size;
+            }
+        }
+        else
+        {
+            for (size_t i=0; i<k_num_fpu_registers_no_avx; ++i)
+            {
+                if (g_fpu_registers_no_avx[i].value_regs == NULL)
+                    g_cached_size += g_fpu_registers_no_avx[i].size;
+            }
+        }
+        DNBLogThreaded ("DNBArchImplX86_64::GetRegisterContextSize() - GPR = %zu, FPU = %u, EXC = %zu", sizeof(GPR), g_cached_size, sizeof(EXC));
+        g_cached_size += sizeof(GPR);
+        g_cached_size += sizeof(EXC);
+        DNBLogThreaded ("DNBArchImplX86_64::GetRegisterContextSize() - GPR + FPU + EXC = %u", g_cached_size);
+    }
+    return g_cached_size;
+}
+
+
 nub_size_t
 DNBArchImplI386::GetRegisterContext (void *buf, nub_size_t buf_len)
 {
-    nub_size_t size = sizeof (m_state.context);
+    uint32_t size = GetRegisterContextSize();
     
     if (buf && buf_len)
     {
@@ -1586,8 +1629,72 @@ DNBArchImplI386::GetRegisterContext (void *buf, nub_size_t buf_len)
         }
         else
         {
-            // Success
-            ::memcpy (buf, &m_state.context, size);
+            uint8_t *p = (uint8_t *)buf;
+            // Copy the GPR registers
+            memcpy(p, &m_state.context.gpr, sizeof(GPR));
+            p += sizeof(GPR);
+            
+            if (CPUHasAVX() || FORCE_AVX_REGS)
+            {
+                // Walk around the gaps in the FPU regs
+                memcpy(p, &m_state.context.fpu.avx.__fpu_fcw, 5);
+                p += 5;
+                memcpy(p, &m_state.context.fpu.avx.__fpu_fop, 8);
+                p += 8;
+                memcpy(p, &m_state.context.fpu.avx.__fpu_dp, 6);
+                p += 6;
+                memcpy(p, &m_state.context.fpu.avx.__fpu_mxcsr, 8);
+                p += 8;
+                
+                // Work around the padding between the stmm registers as they are 16
+                // byte structs with 10 bytes of the value in each
+                for (size_t i=0; i<8; ++i)
+                {
+                    memcpy(p, &m_state.context.fpu.avx.__fpu_stmm0 + i, 10);
+                    p += 10;
+                }
+                
+                // Interleave the XMM and YMMH registers to make the YMM registers
+                for (size_t i=0; i<8; ++i)
+                {
+                    memcpy(p, &m_state.context.fpu.avx.__fpu_xmm0 + i, 16);
+                    p += 16;
+                    memcpy(p, &m_state.context.fpu.avx.__fpu_ymmh0 + i, 16);
+                    p += 16;
+                }
+            }
+            else
+            {
+                // Walk around the gaps in the FPU regs
+                memcpy(p, &m_state.context.fpu.no_avx.__fpu_fcw, 5);
+                p += 5;
+                memcpy(p, &m_state.context.fpu.no_avx.__fpu_fop, 8);
+                p += 8;
+                memcpy(p, &m_state.context.fpu.no_avx.__fpu_dp, 6);
+                p += 6;
+                memcpy(p, &m_state.context.fpu.no_avx.__fpu_mxcsr, 8);
+                p += 8;
+                
+                // Work around the padding between the stmm registers as they are 16
+                // byte structs with 10 bytes of the value in each
+                for (size_t i=0; i<8; ++i)
+                {
+                    memcpy(p, &m_state.context.fpu.no_avx.__fpu_stmm0 + i, 10);
+                    p += 10;
+                }
+                
+                // Copy the XMM registers in a single block
+                memcpy(p, &m_state.context.fpu.no_avx.__fpu_xmm0, 8 * 16);
+                p += 8 * 16;
+            }
+            
+            // Copy the exception registers
+            memcpy(p, &m_state.context.exc, sizeof(EXC));
+            p += sizeof(EXC);
+            
+            // make sure we end up with exactly what we think we should have
+            size_t bytes_written = p - (uint8_t *)buf;
+            assert (bytes_written == size);
         }
     }
     DNBLogThreadedIf (LOG_THREAD, "DNBArchImplI386::GetRegisterContext (buf = %p, len = %llu) => %llu", buf, (uint64_t)buf_len, (uint64_t)size);
@@ -1607,7 +1714,72 @@ DNBArchImplI386::SetRegisterContext (const void *buf, nub_size_t buf_len)
         if (size > buf_len)
             size = buf_len;
 
-        ::memcpy (&m_state.context, buf, size);
+        uint8_t *p = (uint8_t *)buf;
+        // Copy the GPR registers
+        memcpy(&m_state.context.gpr, p, sizeof(GPR));
+        p += sizeof(GPR);
+        
+        if (CPUHasAVX() || FORCE_AVX_REGS)
+        {
+            // Walk around the gaps in the FPU regs
+            memcpy(&m_state.context.fpu.avx.__fpu_fcw, p, 5);
+            p += 5;
+            memcpy(&m_state.context.fpu.avx.__fpu_fop, p, 8);
+            p += 8;
+            memcpy(&m_state.context.fpu.avx.__fpu_dp, p, 6);
+            p += 6;
+            memcpy(&m_state.context.fpu.avx.__fpu_mxcsr, p, 8);
+            p += 8;
+            
+            // Work around the padding between the stmm registers as they are 16
+            // byte structs with 10 bytes of the value in each
+            for (size_t i=0; i<8; ++i)
+            {
+                memcpy(&m_state.context.fpu.avx.__fpu_stmm0 + i, p, 10);
+                p += 10;
+            }
+            
+            // Interleave the XMM and YMMH registers to make the YMM registers
+            for (size_t i=0; i<8; ++i)
+            {
+                memcpy(&m_state.context.fpu.avx.__fpu_xmm0 + i, p, 16);
+                p += 16;
+                memcpy(&m_state.context.fpu.avx.__fpu_ymmh0 + i, p, 16);
+                p += 16;
+            }
+        }
+        else
+        {
+            // Copy fcw through mxcsrmask as there is no padding
+            memcpy(&m_state.context.fpu.no_avx.__fpu_fcw, p, 5);
+            p += 5;
+            memcpy(&m_state.context.fpu.no_avx.__fpu_fop, p, 8);
+            p += 8;
+            memcpy(&m_state.context.fpu.no_avx.__fpu_dp, p, 6);
+            p += 6;
+            memcpy(&m_state.context.fpu.no_avx.__fpu_mxcsr, p, 8);
+            p += 8;
+            
+            // Work around the padding between the stmm registers as they are 16
+            // byte structs with 10 bytes of the value in each
+            for (size_t i=0; i<8; ++i)
+            {
+                memcpy(&m_state.context.fpu.no_avx.__fpu_stmm0 + i, p, 10);
+                p += 10;
+            }
+            
+            // Copy the XMM registers in a single block
+            memcpy(&m_state.context.fpu.no_avx.__fpu_xmm0, p, 8 * 16);
+            p += 8 * 16;
+        }
+        
+        // Copy the exception registers
+        memcpy(&m_state.context.exc, p, sizeof(EXC));
+        p += sizeof(EXC);
+        
+        // make sure we end up with exactly what we think we should have
+        size_t bytes_written = p - (uint8_t *)buf;
+        assert (bytes_written == size);
         kern_return_t kret;
         if ((kret = SetGPRState()) != KERN_SUCCESS)
             DNBLogThreadedIf (LOG_THREAD, "DNBArchImplI386::SetRegisterContext (buf = %p, len = %llu) error: GPR regs failed to write: %u", buf, (uint64_t)buf_len, kret);

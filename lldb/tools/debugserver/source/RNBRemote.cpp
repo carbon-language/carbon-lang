@@ -74,7 +74,6 @@ RNBRemote::RNBRemote () :
     m_max_payload_size(DEFAULT_GDB_REMOTE_PROTOCOL_BUFSIZE - 4),
     m_extended_mode(false),
     m_noack_mode(false),
-    m_use_native_regs (false),
     m_thread_suffix_supported (false),
     m_list_threads_in_stop_reply (false)
 {
@@ -842,11 +841,10 @@ decode_binary_data (const char *str, size_t len)
 typedef struct register_map_entry
 {
     uint32_t        gdb_regnum; // gdb register number
-    uint32_t        gdb_size;   // gdb register size in bytes (can be greater than or less than to debugnub size...)
-    const char *    gdb_name;   // gdb register name
+    uint32_t        offset;     // Offset in bytes into the register context data with no padding between register values
     DNBRegisterInfo nub_info;   // debugnub register info
-    const uint8_t*  fail_value; // Value to print if case we fail to reg this register (if this is NULL, we will return an error)
-    int             expedite;   // expedite delivery of this register in last stop reply packets
+    std::vector<uint32_t> value_regnums;
+    std::vector<uint32_t> invalidate_regnums;
 } register_map_entry_t;
 
 
@@ -859,242 +857,6 @@ static const uint8_t k_zero_bytes[MAX_REGISTER_BYTE_SIZE] = {0};
 static std::vector<register_map_entry_t> g_dynamic_register_map;
 static register_map_entry_t *g_reg_entries = NULL;
 static size_t g_num_reg_entries = 0;
-
-static void
-RegisterEntryNotAvailable (register_map_entry_t *reg_entry)
-{
-    reg_entry->fail_value = k_zero_bytes;
-    reg_entry->nub_info.set = INVALID_NUB_REGNUM;
-    reg_entry->nub_info.reg = INVALID_NUB_REGNUM;
-    reg_entry->nub_info.name = NULL;
-    reg_entry->nub_info.alt = NULL;
-    reg_entry->nub_info.type = InvalidRegType;
-    reg_entry->nub_info.format = InvalidRegFormat;
-    reg_entry->nub_info.size = 0;
-    reg_entry->nub_info.offset = 0;
-    reg_entry->nub_info.reg_gcc = INVALID_NUB_REGNUM;
-    reg_entry->nub_info.reg_dwarf = INVALID_NUB_REGNUM;
-    reg_entry->nub_info.reg_generic = INVALID_NUB_REGNUM;
-    reg_entry->nub_info.reg_gdb = INVALID_NUB_REGNUM;
-    reg_entry->nub_info.pseudo_regs = NULL;
-    reg_entry->nub_info.update_regs = NULL;
-}
-
-
-//----------------------------------------------------------------------
-// ARM regiseter sets as gdb knows them
-//----------------------------------------------------------------------
-register_map_entry_t
-g_gdb_register_map_arm[] =
-{
-    {  0,  4,  "r0",    {0}, NULL, 1},
-    {  1,  4,  "r1",    {0}, NULL, 1},
-    {  2,  4,  "r2",    {0}, NULL, 1},
-    {  3,  4,  "r3",    {0}, NULL, 1},
-    {  4,  4,  "r4",    {0}, NULL, 1},
-    {  5,  4,  "r5",    {0}, NULL, 1},
-    {  6,  4,  "r6",    {0}, NULL, 1},
-    {  7,  4,  "r7",    {0}, NULL, 1},
-    {  8,  4,  "r8",    {0}, NULL, 1},
-    {  9,  4,  "r9",    {0}, NULL, 1},
-    { 10,  4, "r10",    {0}, NULL, 1},
-    { 11,  4, "r11",    {0}, NULL, 1},
-    { 12,  4, "r12",    {0}, NULL, 1},
-    { 13,  4,  "sp",    {0}, NULL, 1},
-    { 14,  4,  "lr",    {0}, NULL, 1},
-    { 15,  4,  "pc",    {0}, NULL, 1},
-    { 16,  4,"cpsr",    {0}, NULL, 1},               // current program status register
-    { 17,  4,  "s0",    {0}, NULL, 0},
-    { 18,  4,  "s1",    {0}, NULL, 0},
-    { 19,  4,  "s2",    {0}, NULL, 0},
-    { 20,  4,  "s3",    {0}, NULL, 0},
-    { 21,  4,  "s4",    {0}, NULL, 0},
-    { 22,  4,  "s5",    {0}, NULL, 0},
-    { 23,  4,  "s6",    {0}, NULL, 0},
-    { 24,  4,  "s7",    {0}, NULL, 0},
-    { 25,  4,  "s8",    {0}, NULL, 0},
-    { 26,  4,  "s9",    {0}, NULL, 0},
-    { 27,  4, "s10",    {0}, NULL, 0},
-    { 28,  4, "s11",    {0}, NULL, 0},
-    { 29,  4, "s12",    {0}, NULL, 0},
-    { 30,  4, "s13",    {0}, NULL, 0},
-    { 31,  4, "s14",    {0}, NULL, 0},
-    { 32,  4, "s15",    {0}, NULL, 0},
-    { 33,  4, "s16",    {0}, NULL, 0},
-    { 34,  4, "s17",    {0}, NULL, 0},
-    { 35,  4, "s18",    {0}, NULL, 0},
-    { 36,  4, "s19",    {0}, NULL, 0},
-    { 37,  4, "s20",    {0}, NULL, 0},
-    { 38,  4, "s21",    {0}, NULL, 0},
-    { 39,  4, "s22",    {0}, NULL, 0},
-    { 40,  4, "s23",    {0}, NULL, 0},
-    { 41,  4, "s24",    {0}, NULL, 0},
-    { 42,  4, "s25",    {0}, NULL, 0},
-    { 43,  4, "s26",    {0}, NULL, 0},
-    { 44,  4, "s27",    {0}, NULL, 0},
-    { 45,  4, "s28",    {0}, NULL, 0},
-    { 46,  4, "s29",    {0}, NULL, 0},
-    { 47,  4, "s30",    {0}, NULL, 0},
-    { 48,  4, "s31",    {0}, NULL, 0},
-    { 49,  8, "d0",     {0}, NULL, 0},
-    { 50,  8, "d1",     {0}, NULL, 0},
-    { 51,  8, "d2",     {0}, NULL, 0},
-    { 52,  8, "d3",     {0}, NULL, 0},
-    { 53,  8, "d4",     {0}, NULL, 0},
-    { 54,  8, "d5",     {0}, NULL, 0},
-    { 55,  8, "d6",     {0}, NULL, 0},
-    { 56,  8, "d7",     {0}, NULL, 0},
-    { 57,  8, "d8",     {0}, NULL, 0},
-    { 58,  8, "d9",     {0}, NULL, 0},
-    { 59,  8, "d10",    {0}, NULL, 0},
-    { 60,  8, "d11",    {0}, NULL, 0},
-    { 61,  8, "d12",    {0}, NULL, 0},
-    { 62,  8, "d13",    {0}, NULL, 0},
-    { 63,  8, "d14",    {0}, NULL, 0},
-    { 64,  8, "d15",    {0}, NULL, 0},
-    { 65,  8, "d16",    {0}, NULL, 0},
-    { 66,  8, "d17",    {0}, NULL, 0},
-    { 67,  8, "d18",    {0}, NULL, 0},
-    { 68,  8, "d19",    {0}, NULL, 0},
-    { 69,  8, "d20",    {0}, NULL, 0},
-    { 70,  8, "d21",    {0}, NULL, 0},
-    { 71,  8, "d22",    {0}, NULL, 0},
-    { 72,  8, "d23",    {0}, NULL, 0},
-    { 73,  8, "d24",    {0}, NULL, 0},
-    { 74,  8, "d25",    {0}, NULL, 0},
-    { 75,  8, "d26",    {0}, NULL, 0},
-    { 76,  8, "d27",    {0}, NULL, 0},
-    { 77,  8, "d28",    {0}, NULL, 0},
-    { 78,  8, "d29",    {0}, NULL, 0},
-    { 79,  8, "d30",    {0}, NULL, 0},
-    { 80,  8, "d31",    {0}, NULL, 0},
-    { 81, 16, "q0",     {0}, NULL, 0},
-    { 82, 16, "q1",     {0}, NULL, 0},
-    { 83, 16, "q2",     {0}, NULL, 0},
-    { 84, 16, "q3",     {0}, NULL, 0},
-    { 85, 16, "q4",     {0}, NULL, 0},
-    { 86, 16, "q5",     {0}, NULL, 0},
-    { 87, 16, "q6",     {0}, NULL, 0},
-    { 88, 16, "q7",     {0}, NULL, 0},
-    { 89, 16, "q8",     {0}, NULL, 0},
-    { 90, 16, "q9",     {0}, NULL, 0},
-    { 91, 16, "q10",    {0}, NULL, 0},
-    { 92, 16, "q11",    {0}, NULL, 0},
-    { 93, 16, "q12",    {0}, NULL, 0},
-    { 94, 16, "q13",    {0}, NULL, 0},
-    { 95, 16, "q14",    {0}, NULL, 0},
-    { 96, 16, "q15",    {0}, NULL, 0},
-    { 97,  4, "fpscr",  {0}, NULL, 0}
-};
-
-register_map_entry_t
-g_gdb_register_map_i386[] =
-{
-    {  0,   4, "eax"    , {0}, NULL, 0 },
-    {  1,   4, "ecx"    , {0}, NULL, 0 },
-    {  2,   4, "edx"    , {0}, NULL, 0 },
-    {  3,   4, "ebx"    , {0}, NULL, 0 },
-    {  4,   4, "esp"    , {0}, NULL, 1 },
-    {  5,   4, "ebp"    , {0}, NULL, 1 },
-    {  6,   4, "esi"    , {0}, NULL, 0 },
-    {  7,   4, "edi"    , {0}, NULL, 0 },
-    {  8,   4, "eip"    , {0}, NULL, 1 },
-    {  9,   4, "eflags" , {0}, NULL, 0 },
-    { 10,   4, "cs"     , {0}, NULL, 0 },
-    { 11,   4, "ss"     , {0}, NULL, 0 },
-    { 12,   4, "ds"     , {0}, NULL, 0 },
-    { 13,   4, "es"     , {0}, NULL, 0 },
-    { 14,   4, "fs"     , {0}, NULL, 0 },
-    { 15,   4, "gs"     , {0}, NULL, 0 },
-    { 16,  10, "stmm0"  , {0}, NULL, 0 },
-    { 17,  10, "stmm1"  , {0}, NULL, 0 },
-    { 18,  10, "stmm2"  , {0}, NULL, 0 },
-    { 19,  10, "stmm3"  , {0}, NULL, 0 },
-    { 20,  10, "stmm4"  , {0}, NULL, 0 },
-    { 21,  10, "stmm5"  , {0}, NULL, 0 },
-    { 22,  10, "stmm6"  , {0}, NULL, 0 },
-    { 23,  10, "stmm7"  , {0}, NULL, 0 },
-    { 24,   4, "fctrl"  , {0}, NULL, 0 },
-    { 25,   4, "fstat"  , {0}, NULL, 0 },
-    { 26,   4, "ftag"   , {0}, NULL, 0 },
-    { 27,   4, "fiseg"  , {0}, NULL, 0 },
-    { 28,   4, "fioff"  , {0}, NULL, 0 },
-    { 29,   4, "foseg"  , {0}, NULL, 0 },
-    { 30,   4, "fooff"  , {0}, NULL, 0 },
-    { 31,   4, "fop"    , {0}, NULL, 0 },
-    { 32,  16, "xmm0"   , {0}, NULL, 0 },
-    { 33,  16, "xmm1"   , {0}, NULL, 0 },
-    { 34,  16, "xmm2"   , {0}, NULL, 0 },
-    { 35,  16, "xmm3"   , {0}, NULL, 0 },
-    { 36,  16, "xmm4"   , {0}, NULL, 0 },
-    { 37,  16, "xmm5"   , {0}, NULL, 0 },
-    { 38,  16, "xmm6"   , {0}, NULL, 0 },
-    { 39,  16, "xmm7"   , {0}, NULL, 0 },
-    { 40,   4, "mxcsr"  , {0}, NULL, 0 },
-};
-
-register_map_entry_t
-g_gdb_register_map_x86_64[] =
-{
-    {  0,   8, "rax"   , {0}, NULL, 0 },
-    {  1,   8, "rbx"   , {0}, NULL, 0 },
-    {  2,   8, "rcx"   , {0}, NULL, 0 },
-    {  3,   8, "rdx"   , {0}, NULL, 0 },
-    {  4,   8, "rsi"   , {0}, NULL, 0 },
-    {  5,   8, "rdi"   , {0}, NULL, 0 },
-    {  6,   8, "rbp"   , {0}, NULL, 1 },
-    {  7,   8, "rsp"   , {0}, NULL, 1 },
-    {  8,   8, "r8"    , {0}, NULL, 0 },
-    {  9,   8, "r9"    , {0}, NULL, 0 },
-    { 10,   8, "r10"   , {0}, NULL, 0 },
-    { 11,   8, "r11"   , {0}, NULL, 0 },
-    { 12,   8, "r12"   , {0}, NULL, 0 },
-    { 13,   8, "r13"   , {0}, NULL, 0 },
-    { 14,   8, "r14"   , {0}, NULL, 0 },
-    { 15,   8, "r15"   , {0}, NULL, 0 },
-    { 16,   8, "rip"   , {0}, NULL, 1 },
-    { 17,   4, "rflags", {0}, NULL, 0 },
-    { 18,   4, "cs"    , {0}, NULL, 0 },
-    { 19,   4, "ss"    , {0}, NULL, 0 },
-    { 20,   4, "ds"    , {0}, NULL, 0 },
-    { 21,   4, "es"    , {0}, NULL, 0 },
-    { 22,   4, "fs"    , {0}, NULL, 0 },
-    { 23,   4, "gs"    , {0}, NULL, 0 },
-    { 24,  10, "stmm0" , {0}, NULL, 0 },
-    { 25,  10, "stmm1" , {0}, NULL, 0 },
-    { 26,  10, "stmm2" , {0}, NULL, 0 },
-    { 27,  10, "stmm3" , {0}, NULL, 0 },
-    { 28,  10, "stmm4" , {0}, NULL, 0 },
-    { 29,  10, "stmm5" , {0}, NULL, 0 },
-    { 30,  10, "stmm6" , {0}, NULL, 0 },
-    { 31,  10, "stmm7" , {0}, NULL, 0 },
-    { 32,   4, "fctrl" , {0}, NULL, 0 },
-    { 33,   4, "fstat" , {0}, NULL, 0 },
-    { 34,   4, "ftag"  , {0}, NULL, 0 },
-    { 35,   4, "fiseg" , {0}, NULL, 0 },
-    { 36,   4, "fioff" , {0}, NULL, 0 },
-    { 37,   4, "foseg" , {0}, NULL, 0 },
-    { 38,   4, "fooff" , {0}, NULL, 0 },
-    { 39,   4, "fop"   , {0}, NULL, 0 },
-    { 40,  16, "xmm0"  , {0}, NULL, 0 },
-    { 41,  16, "xmm1"  , {0}, NULL, 0 },
-    { 42,  16, "xmm2"  , {0}, NULL, 0 },
-    { 43,  16, "xmm3"  , {0}, NULL, 0 },
-    { 44,  16, "xmm4"  , {0}, NULL, 0 },
-    { 45,  16, "xmm5"  , {0}, NULL, 0 },
-    { 46,  16, "xmm6"  , {0}, NULL, 0 },
-    { 47,  16, "xmm7"  , {0}, NULL, 0 },
-    { 48,  16, "xmm8"  , {0}, NULL, 0 },
-    { 49,  16, "xmm9"  , {0}, NULL, 0 },
-    { 50,  16, "xmm10" , {0}, NULL, 0 },
-    { 51,  16, "xmm11" , {0}, NULL, 0 },
-    { 52,  16, "xmm12" , {0}, NULL, 0 },
-    { 53,  16, "xmm13" , {0}, NULL, 0 },
-    { 54,  16, "xmm14" , {0}, NULL, 0 },
-    { 55,  16, "xmm15" , {0}, NULL, 0 },
-    { 56,   4, "mxcsr" , {0}, NULL, 0 }
-};
-
 
 void
 RNBRemote::Initialize()
@@ -1110,112 +872,120 @@ RNBRemote::InitializeRegisters (bool force)
     if (pid == INVALID_NUB_PROCESS)
         return false;
 
-    if (m_use_native_regs)
+    DNBLogThreadedIf (LOG_RNB_PROC, "RNBRemote::%s() getting native registers from DNB interface", __FUNCTION__);
+    // Discover the registers by querying the DNB interface and letting it
+    // state the registers that it would like to export. This allows the
+    // registers to be discovered using multiple qRegisterInfo calls to get
+    // all register information after the architecture for the process is
+    // determined.
+    if (force)
     {
-        DNBLogThreadedIf (LOG_RNB_PROC, "RNBRemote::%s() getting native registers from DNB interface", __FUNCTION__);
-        // Discover the registers by querying the DNB interface and letting it
-        // state the registers that it would like to export. This allows the
-        // registers to be discovered using multiple qRegisterInfo calls to get
-        // all register information after the architecture for the process is
-        // determined.
-        if (force)
-        {
-            g_dynamic_register_map.clear();
-            g_reg_entries = NULL;
-            g_num_reg_entries = 0;
-        }
-
-        if (g_dynamic_register_map.empty())
-        {
-            nub_size_t num_reg_sets = 0;
-            const DNBRegisterSetInfo *reg_sets = DNBGetRegisterSetInfo (&num_reg_sets);
-
-            assert (num_reg_sets > 0 && reg_sets != NULL);
-
-            uint32_t regnum = 0;
-            for (nub_size_t set = 0; set < num_reg_sets; ++set)
-            {
-                if (reg_sets[set].registers == NULL)
-                    continue;
-
-                for (uint32_t reg=0; reg < reg_sets[set].num_registers; ++reg)
-                {
-                    register_map_entry_t reg_entry = {
-                        regnum++,                           // register number starts at zero and goes up with no gaps
-                        reg_sets[set].registers[reg].size,  // register size in bytes
-                        reg_sets[set].registers[reg].name,  // register name
-                        reg_sets[set].registers[reg],       // DNBRegisterInfo
-                        NULL,                               // Value to print if case we fail to reg this register (if this is NULL, we will return an error)
-                        reg_sets[set].registers[reg].reg_generic != INVALID_NUB_REGNUM};
-
-                    g_dynamic_register_map.push_back (reg_entry);
-                }
-            }
-            g_reg_entries = g_dynamic_register_map.data();
-            g_num_reg_entries = g_dynamic_register_map.size();
-        }
-        return true;
+        g_dynamic_register_map.clear();
+        g_reg_entries = NULL;
+        g_num_reg_entries = 0;
     }
-    else
+
+    if (g_dynamic_register_map.empty())
     {
-        uint32_t cpu_type = DNBProcessGetCPUType (pid);
-        if (cpu_type == 0)
-        {
-            DNBLog ("Unable to get the process cpu_type, making a best guess.");
-            cpu_type = best_guess_cpu_type ();
-        }
+        nub_size_t num_reg_sets = 0;
+        const DNBRegisterSetInfo *reg_sets = DNBGetRegisterSetInfo (&num_reg_sets);
 
-        DNBLogThreadedIf (LOG_RNB_PROC, "RNBRemote::%s() getting gdb registers(%s)", __FUNCTION__, m_arch.c_str());
-#if defined (__i386__) || defined (__x86_64__)
-        if (cpu_type == CPU_TYPE_X86_64)
+        assert (num_reg_sets > 0 && reg_sets != NULL);
+
+        uint32_t regnum = 0;
+        uint32_t reg_data_offset = 0;
+        typedef std::map<std::string, uint32_t> NameToRegNum;
+        NameToRegNum name_to_regnum;
+        for (nub_size_t set = 0; set < num_reg_sets; ++set)
         {
-            const size_t num_regs = sizeof (g_gdb_register_map_x86_64) / sizeof (register_map_entry_t);
-            for (uint32_t i=0; i<num_regs; ++i)
+            if (reg_sets[set].registers == NULL)
+                continue;
+
+            for (uint32_t reg=0; reg < reg_sets[set].num_registers; ++reg)
             {
-                if (!DNBGetRegisterInfoByName (g_gdb_register_map_x86_64[i].gdb_name, &g_gdb_register_map_x86_64[i].nub_info))
+                register_map_entry_t reg_entry = {
+                    regnum++,                           // register number starts at zero and goes up with no gaps
+                    reg_data_offset,                    // Offset into register context data, no gaps between registers
+                    reg_sets[set].registers[reg]        // DNBRegisterInfo
+                };
+
+                name_to_regnum[reg_entry.nub_info.name] = reg_entry.gdb_regnum;
+
+                if (reg_entry.nub_info.value_regs == NULL)
                 {
-                    RegisterEntryNotAvailable (&g_gdb_register_map_x86_64[i]);
-                    assert (g_gdb_register_map_x86_64[i].gdb_size < MAX_REGISTER_BYTE_SIZE);
+                    DNBLogThreaded("%s -> %u", reg_entry.nub_info.name, reg_data_offset);
+                    reg_data_offset += reg_entry.nub_info.size;
+                }
+
+                g_dynamic_register_map.push_back (reg_entry);
+            }
+        }
+        
+        // Now we must find any regsiters whose values are in other registers and fix up
+        // the offsets since we removed all gaps...
+        for (auto &reg_entry: g_dynamic_register_map)
+        {
+            if (reg_entry.nub_info.value_regs)
+            {
+                uint32_t new_offset = UINT32_MAX;
+                for (size_t i=0; reg_entry.nub_info.value_regs[i] != NULL; ++i)
+                {
+                    const char *name = reg_entry.nub_info.value_regs[i];
+                    auto pos = name_to_regnum.find(name);
+                    if (pos != name_to_regnum.end())
+                    {
+                        regnum = pos->second;
+                        reg_entry.value_regnums.push_back(regnum);
+                        if (regnum < g_dynamic_register_map.size())
+                        {
+                            // The offset for value_regs registers is the offset within the register with the lowest offset
+                            const uint32_t reg_offset = g_dynamic_register_map[regnum].offset + reg_entry.nub_info.offset;
+                            if (new_offset > reg_offset)
+                                new_offset = reg_offset;
+                        }
+                    }
+                }
+                
+                if (new_offset != UINT32_MAX)
+                {
+                    reg_entry.offset = new_offset;
+                }
+                else
+                {
+                    DNBLogThreaded("no offset was calculated entry for register %s", reg_entry.nub_info.name);
+                    reg_entry.offset = UINT32_MAX;
                 }
             }
-            g_reg_entries = g_gdb_register_map_x86_64;
-            g_num_reg_entries = sizeof (g_gdb_register_map_x86_64) / sizeof (register_map_entry_t);
-            return true;
-        }
-        else if (cpu_type == CPU_TYPE_I386)
-        {
-            const size_t num_regs = sizeof (g_gdb_register_map_i386) / sizeof (register_map_entry_t);
-            for (uint32_t i=0; i<num_regs; ++i)
+
+            if (reg_entry.nub_info.update_regs)
             {
-                if (!DNBGetRegisterInfoByName (g_gdb_register_map_i386[i].gdb_name, &g_gdb_register_map_i386[i].nub_info))
+                for (size_t i=0; reg_entry.nub_info.update_regs[i] != NULL; ++i)
                 {
-                    RegisterEntryNotAvailable (&g_gdb_register_map_i386[i]);
-                    assert (g_gdb_register_map_i386[i].gdb_size <= MAX_REGISTER_BYTE_SIZE);
+                    const char *name = reg_entry.nub_info.update_regs[i];
+                    auto pos = name_to_regnum.find(name);
+                    if (pos != name_to_regnum.end())
+                    {
+                        regnum = pos->second;
+                        reg_entry.invalidate_regnums.push_back(regnum);
+                    }
                 }
             }
-            g_reg_entries = g_gdb_register_map_i386;
-            g_num_reg_entries = sizeof (g_gdb_register_map_i386) / sizeof (register_map_entry_t);
-            return true;
         }
-#elif defined (__arm__)
-        if (cpu_type == CPU_TYPE_ARM)
-        {
-            const size_t num_regs = sizeof (g_gdb_register_map_arm) / sizeof (register_map_entry_t);
-            for (uint32_t i=0; i<num_regs; ++i)
-            {
-                if (!DNBGetRegisterInfoByName (g_gdb_register_map_arm[i].gdb_name, &g_gdb_register_map_arm[i].nub_info))
-                {
-                    RegisterEntryNotAvailable (&g_gdb_register_map_arm[i]);
-                    assert (g_gdb_register_map_arm[i].gdb_size <= MAX_REGISTER_BYTE_SIZE);
-                }
-            }
-            g_reg_entries = g_gdb_register_map_arm;
-            g_num_reg_entries = sizeof (g_gdb_register_map_arm) / sizeof (register_map_entry_t);
-            return true;
-        }
-#endif
+        
+        
+//        for (auto &reg_entry: g_dynamic_register_map)
+//        {
+//            DNBLogThreaded("%4i: size = %3u, pseudo = %i, name = %s",
+//                           reg_entry.offset,
+//                           reg_entry.nub_info.size,
+//                           reg_entry.nub_info.value_regs != NULL,
+//                           reg_entry.nub_info.name);
+//        }
+
+        g_reg_entries = g_dynamic_register_map.data();
+        g_num_reg_entries = g_dynamic_register_map.size();
     }
-    return false;
+    return true;
 }
 
 /* The inferior has stopped executing; send a packet
@@ -1669,15 +1439,13 @@ RNBRemote::HandlePacket_qRegisterInfo (const char *p)
     {
         const register_map_entry_t *reg_entry = &g_reg_entries[reg_num];
         std::ostringstream ostrm;
-        ostrm << "name:" << reg_entry->gdb_name << ';';
-
-        if (reg_entry->nub_info.name && ::strcmp (reg_entry->gdb_name, reg_entry->nub_info.name))
-            ostrm << "alt-name:" << reg_entry->nub_info.name << ';';
-        else if (reg_entry->nub_info.alt && ::strcmp (reg_entry->gdb_name, reg_entry->nub_info.alt))
+        if (reg_entry->nub_info.name)
+            ostrm << "name:" << reg_entry->nub_info.name << ';';
+        if (reg_entry->nub_info.alt)
             ostrm << "alt-name:" << reg_entry->nub_info.alt << ';';
 
-        ostrm << "bitsize:" << std::dec << reg_entry->gdb_size * 8 << ';';
-        ostrm << "offset:" << std::dec << reg_entry->nub_info.offset << ';';
+        ostrm << "bitsize:" << std::dec << reg_entry->nub_info.size * 8 << ';';
+        ostrm << "offset:" << std::dec << reg_entry->offset << ';';
 
         switch (reg_entry->nub_info.type)
         {
@@ -1706,22 +1474,11 @@ RNBRemote::HandlePacket_qRegisterInfo (const char *p)
         if (reg_set_info && reg_entry->nub_info.set < num_reg_sets)
             ostrm << "set:" << reg_set_info[reg_entry->nub_info.set].name << ';';
 
-
-        if (g_reg_entries != g_dynamic_register_map.data())
-        {
-            if (reg_entry->nub_info.reg_gdb != INVALID_NUB_REGNUM && reg_entry->nub_info.reg_gdb != reg_num)
-            {
-                printf("register %s is getting gdb reg_num of %u when the register info says %u\n",
-                       reg_entry->gdb_name, reg_num, reg_entry->nub_info.reg_gdb);
-            }
-        }
-
         if (reg_entry->nub_info.reg_gcc != INVALID_NUB_REGNUM)
             ostrm << "gcc:" << std::dec << reg_entry->nub_info.reg_gcc << ';';
 
         if (reg_entry->nub_info.reg_dwarf != INVALID_NUB_REGNUM)
             ostrm << "dwarf:" << std::dec << reg_entry->nub_info.reg_dwarf << ';';
-
 
         switch (reg_entry->nub_info.reg_generic)
         {
@@ -1741,26 +1498,26 @@ RNBRemote::HandlePacket_qRegisterInfo (const char *p)
             default: break;
         }
         
-        if (reg_entry->nub_info.pseudo_regs && reg_entry->nub_info.pseudo_regs[0] != INVALID_NUB_REGNUM)
+        if (!reg_entry->value_regnums.empty())
         {
             ostrm << "container-regs:";
-            for (unsigned i=0; reg_entry->nub_info.pseudo_regs[i] != INVALID_NUB_REGNUM; ++i)
+            for (size_t i=0, n=reg_entry->value_regnums.size(); i < n; ++i)
             {
                 if (i > 0)
                     ostrm << ',';
-                ostrm << RAW_HEXBASE << reg_entry->nub_info.pseudo_regs[i];
+                ostrm << RAW_HEXBASE << reg_entry->value_regnums[i];
             }
             ostrm << ';';
         }
 
-        if (reg_entry->nub_info.update_regs && reg_entry->nub_info.update_regs[0] != INVALID_NUB_REGNUM)
+        if (!reg_entry->invalidate_regnums.empty())
         {
             ostrm << "invalidate-regs:";
-            for (unsigned i=0; reg_entry->nub_info.update_regs[i] != INVALID_NUB_REGNUM; ++i)
+            for (size_t i=0, n=reg_entry->invalidate_regnums.size(); i < n; ++i)
             {
                 if (i > 0)
                     ostrm << ',';
-                ostrm << RAW_HEXBASE << reg_entry->nub_info.update_regs[i];
+                ostrm << RAW_HEXBASE << reg_entry->invalidate_regnums[i];
             }
             ostrm << ';';
         }
@@ -2362,24 +2119,17 @@ register_value_in_hex_fixed_width (std::ostream& ostrm,
         
         if (reg_value_ptr)
         {
-            append_hex_value (ostrm, reg_value_ptr->value.v_uint8, reg->gdb_size, false);
+            append_hex_value (ostrm, reg_value_ptr->value.v_uint8, reg->nub_info.size, false);
         }
         else
         {
             // If we fail to read a regiser value, check if it has a default
             // fail value. If it does, return this instead in case some of
             // the registers are not available on the current system.
-            if (reg->gdb_size > 0)
+            if (reg->nub_info.size > 0)
             {
-                if (reg->fail_value != NULL)
-                {
-                    append_hex_value (ostrm, reg->fail_value, reg->gdb_size, false);
-                }
-                else
-                {
-                    std::basic_string<uint8_t> zeros(reg->gdb_size, '\0');
-                    append_hex_value (ostrm, zeros.data(), zeros.size(), false);
-                }
+                std::basic_string<uint8_t> zeros(reg->nub_info.size, '\0');
+                append_hex_value (ostrm, zeros.data(), zeros.size(), false);
             }
         }
     }
@@ -2510,7 +2260,10 @@ RNBRemote::SendStopReplyPacketForThread (nub_thread_t tid)
             DNBRegisterValue reg_value;
             for (uint32_t reg = 0; reg < g_num_reg_entries; reg++)
             {
-                if (g_reg_entries[reg].expedite)
+                // Expedite all registers in the first register set that aren't
+                // contained in other registers
+                if (g_reg_entries[reg].nub_info.set == 1 &&
+                    g_reg_entries[reg].nub_info.value_regs == NULL)
                 {
                     if (!DNBThreadGetRegisterValueByID (pid, tid, g_reg_entries[reg].nub_info.set, g_reg_entries[reg].nub_info.reg, &reg_value))
                         continue;
@@ -2815,30 +2568,22 @@ RNBRemote::HandlePacket_g (const char *p)
     if (tid == INVALID_NUB_THREAD)
         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "No thread specified in p packet");
 
-    if (m_use_native_regs)
+    // Get the register context size first by calling with NULL buffer
+    nub_size_t reg_ctx_size = DNBThreadGetRegisterContext(pid, tid, NULL, 0);
+    if (reg_ctx_size)
     {
-        // Get the register context size first by calling with NULL buffer
-        nub_size_t reg_ctx_size = DNBThreadGetRegisterContext(pid, tid, NULL, 0);
+        // Now allocate enough space for the entire register context
+        std::vector<uint8_t> reg_ctx;
+        reg_ctx.resize(reg_ctx_size);
+        // Now read the register context
+        reg_ctx_size = DNBThreadGetRegisterContext(pid, tid, &reg_ctx[0], reg_ctx.size());
         if (reg_ctx_size)
         {
-            // Now allocate enough space for the entire register context
-            std::vector<uint8_t> reg_ctx;
-            reg_ctx.resize(reg_ctx_size);
-            // Now read the register context
-            reg_ctx_size = DNBThreadGetRegisterContext(pid, tid, &reg_ctx[0], reg_ctx.size());
-            if (reg_ctx_size)
-            {
-                append_hex_value (ostrm, reg_ctx.data(), reg_ctx.size(), false);
-                return SendPacket (ostrm.str ());
-            }
+            append_hex_value (ostrm, reg_ctx.data(), reg_ctx.size(), false);
+            return SendPacket (ostrm.str ());
         }
     }
-    
-    for (uint32_t reg = 0; reg < g_num_reg_entries; reg++)
-        if (g_reg_entries[reg].nub_info.pseudo_regs == NULL) // skip registers that are a slice of a real register
-            register_value_in_hex_fixed_width (ostrm, pid, tid, &g_reg_entries[reg], NULL);
-
-    return SendPacket (ostrm.str ());
+    return SendPacket ("E74");
 }
 
 /* 'G XXX...' -- write registers
@@ -2864,55 +2609,31 @@ RNBRemote::HandlePacket_G (const char *p)
     if (tid == INVALID_NUB_THREAD)
         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "No thread specified in p packet");
 
-    if (m_use_native_regs)
+    // Get the register context size first by calling with NULL buffer
+    nub_size_t reg_ctx_size = DNBThreadGetRegisterContext(pid, tid, NULL, 0);
+    if (reg_ctx_size)
     {
-        // Get the register context size first by calling with NULL buffer
-        nub_size_t reg_ctx_size = DNBThreadGetRegisterContext(pid, tid, NULL, 0);
-        if (reg_ctx_size)
+        // Now allocate enough space for the entire register context
+        std::vector<uint8_t> reg_ctx;
+        reg_ctx.resize(reg_ctx_size);
+        
+        const nub_size_t bytes_extracted = packet.GetHexBytes (&reg_ctx[0], reg_ctx.size(), 0xcc);
+        if (bytes_extracted == reg_ctx.size())
         {
-            // Now allocate enough space for the entire register context
-            std::vector<uint8_t> reg_ctx;
-            reg_ctx.resize(reg_ctx_size);
-            
-            const nub_size_t bytes_extracted = packet.GetHexBytes (&reg_ctx[0], reg_ctx.size(), 0xcc);
-            if (bytes_extracted == reg_ctx.size())
-            {
-                // Now write the register context
-                reg_ctx_size = DNBThreadSetRegisterContext(pid, tid, reg_ctx.data(), reg_ctx.size());
-                if (reg_ctx_size == reg_ctx.size())
-                    return SendPacket ("OK");
-                else 
-                    return SendPacket ("E55");
-            }
-            else
-            {
-                DNBLogError("RNBRemote::HandlePacket_G(%s): extracted %llu of %llu bytes, size mismatch\n", p, (uint64_t)bytes_extracted, (uint64_t)reg_ctx_size);
-                return SendPacket ("E64");
-            }
+            // Now write the register context
+            reg_ctx_size = DNBThreadSetRegisterContext(pid, tid, reg_ctx.data(), reg_ctx.size());
+            if (reg_ctx_size == reg_ctx.size())
+                return SendPacket ("OK");
+            else 
+                return SendPacket ("E55");
         }
         else
-            return SendPacket ("E65");
-    }
-
-
-    DNBRegisterValue reg_value;
-    for (uint32_t reg = 0; reg < g_num_reg_entries; reg++)
-    {
-        const register_map_entry_t *reg_entry = &g_reg_entries[reg];
-        if (reg_entry->nub_info.pseudo_regs == NULL) // skip registers that are a slice of a real register
         {
-            reg_value.info = reg_entry->nub_info;
-            if (packet.GetHexBytes (reg_value.value.v_sint8, reg_entry->gdb_size, 0xcc) != reg_entry->gdb_size)
-                break;
-    
-            if (reg_entry->fail_value == NULL)
-            {
-                if (!DNBThreadSetRegisterValueByID (pid, tid, reg_entry->nub_info.set, reg_entry->nub_info.reg, &reg_value))
-                    return SendPacket ("E15");
-            }
+            DNBLogError("RNBRemote::HandlePacket_G(%s): extracted %llu of %llu bytes, size mismatch\n", p, (uint64_t)bytes_extracted, (uint64_t)reg_ctx_size);
+            return SendPacket ("E64");
         }
     }
-    return SendPacket ("OK");
+    return SendPacket ("E65");
 }
 
 static bool
@@ -3440,17 +3161,10 @@ RNBRemote::HandlePacket_p (const char *p)
     }
     else if (reg_entry->nub_info.reg == -1)
     {
-        if (reg_entry->gdb_size > 0)
+        if (reg_entry->nub_info.size > 0)
         {
-            if (reg_entry->fail_value != NULL)
-            {
-                append_hex_value(ostrm, reg_entry->fail_value, reg_entry->gdb_size, false);
-            }
-            else
-            {
-                std::basic_string<uint8_t> zeros(reg_entry->gdb_size, '\0');
-                append_hex_value(ostrm, zeros.data(), zeros.size(), false);
-            }
+            std::basic_string<uint8_t> zeros(reg_entry->nub_info.size, '\0');
+            append_hex_value(ostrm, zeros.data(), zeros.size(), false);
         }
     }
     else
@@ -3512,7 +3226,7 @@ RNBRemote::HandlePacket_P (const char *p)
 
     DNBRegisterValue reg_value;
     reg_value.info = reg_entry->nub_info;
-    packet.GetHexBytes (reg_value.value.v_sint8, reg_entry->gdb_size, 0xcc);
+    packet.GetHexBytes (reg_value.value.v_sint8, reg_entry->nub_info.size, 0xcc);
 
     nub_thread_t tid = ExtractThreadIDFromThreadSuffix (p);
     if (tid == INVALID_NUB_THREAD)
