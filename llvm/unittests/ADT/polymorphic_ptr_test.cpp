@@ -22,7 +22,8 @@ struct S {
 };
 
 // A function that forces the return of a copy.
-polymorphic_ptr<S> dummy_copy(const polymorphic_ptr<S> &arg) { return arg; }
+template <typename T>
+T dummy_copy(const T &arg) { return arg; }
 
 TEST(polymorphic_ptr_test, Basic) {
   polymorphic_ptr<S> null;
@@ -81,6 +82,37 @@ TEST(polymorphic_ptr_test, Basic) {
   EXPECT_FALSE(!p3);
   EXPECT_NE(s, &*p3);
   EXPECT_EQ(42, p3->x);
+}
+
+struct Base {
+  virtual ~Base() {}
+  virtual Base *clone() = 0;
+  virtual StringRef name() { return "Base"; }
+};
+
+struct DerivedA : Base {
+  virtual DerivedA *clone() { return new DerivedA(); }
+  virtual StringRef name() { return "DerivedA"; }
+};
+struct DerivedB : Base {
+  virtual DerivedB *clone() { return new DerivedB(); }
+  virtual StringRef name() { return "DerivedB"; }
+};
+
+TEST(polymorphic_ptr_test, Polymorphism) {
+  polymorphic_ptr<Base> a(new DerivedA());
+  polymorphic_ptr<Base> b(new DerivedB());
+
+  EXPECT_EQ("DerivedA", a->name());
+  EXPECT_EQ("DerivedB", b->name());
+
+  polymorphic_ptr<Base> copy = dummy_copy(a);
+  EXPECT_NE(a, copy);
+  EXPECT_EQ("DerivedA", copy->name());
+
+  copy = dummy_copy(b);
+  EXPECT_NE(b, copy);
+  EXPECT_EQ("DerivedB", copy->name());
 }
 
 }
