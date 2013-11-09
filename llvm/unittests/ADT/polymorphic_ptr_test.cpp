@@ -17,8 +17,12 @@ namespace {
 
 struct S {
   S(int x) : x(x) {}
+  S *clone() { return new S(*this); }
   int x;
 };
+
+// A function that forces the return of a copy.
+polymorphic_ptr<S> dummy_copy(const polymorphic_ptr<S> &arg) { return arg; }
 
 TEST(polymorphic_ptr_test, Basic) {
   polymorphic_ptr<S> null;
@@ -66,6 +70,13 @@ TEST(polymorphic_ptr_test, Basic) {
   EXPECT_EQ(s, &*p);
   EXPECT_FALSE((bool)p2);
   EXPECT_TRUE(!p2);
+
+  // Force copies and that everything survives.
+  polymorphic_ptr<S> p3 = dummy_copy(polymorphic_ptr<S>(p));
+  EXPECT_TRUE((bool)p3);
+  EXPECT_FALSE(!p3);
+  EXPECT_NE(s, &*p3);
+  EXPECT_EQ(42, p3->x);
 }
 
 }
