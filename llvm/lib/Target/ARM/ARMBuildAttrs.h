@@ -105,11 +105,15 @@ namespace ARMBuildAttrs {
 
   // The following have a lot of common use cases
   enum {
-    //ARMISAUse (=8), uleb128  and THUMBISAUse (=9), uleb128
     Not_Allowed = 0,
     Allowed = 1,
 
-    // FP_arch (=10), uleb128 (formerly Tag_VFP_arch = 10)
+    // Tag_ARM_ISA_use (=8), uleb128
+
+    // Tag_THUMB_ISA_use, (=9), uleb128
+    AllowThumb32 = 2, // 32-bit Thumb (implies 16-bit instructions)
+
+    // Tag_FP_arch (=10), uleb128 (formerly Tag_VFP_arch = 10)
     AllowFPv2  = 2, // v2 FP ISA permitted (implies use of the v1 FP ISA)
     AllowFPv3A = 3, // v3 FP ISA permitted (implies use of the v2 FP ISA)
     AllowFPv3B = 4, // v3 FP ISA permitted, but only D0-D15, S0-S31
@@ -119,10 +123,8 @@ namespace ARMBuildAttrs {
     AllowFPARMv8B = 8, // Use of the ARM v8-A FP ISA was permitted, but only D0-D15, S0-S31
 
     // Tag_WMMX_arch, (=11), uleb128
-    AllowThumb32 = 2, // 32-bit Thumb (implies 16-bit instructions)
-
-    // Tag_WMMX_arch, (=11), uleb128
-    AllowWMMXv1 = 2,  // The user permitted this entity to use WMMX v2
+    AllowWMMXv1 = 1,  // The user permitted this entity to use WMMX v1
+    AllowWMMXv2 = 2,  // The user permitted this entity to use WMMX v2
 
     // Tag_Advanced_SIMD_arch, (=12), uleb128
     AllowNeon = 1, // SIMDv1 was permitted
