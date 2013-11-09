@@ -114,7 +114,7 @@ namespace PBQP {
 
       /// \brief Determine whether a node should be reduced using optimal
       ///        reduction.
-      /// @param nItr Node iterator to be considered.
+      /// @param nId Node id to be considered.
       /// @return True if the given node should be optimally reduced, false
       ///         otherwise.
       ///
@@ -132,7 +132,7 @@ namespace PBQP {
       }
 
       /// \brief Add a node to the heuristic reduce list.
-      /// @param nItr Node iterator to add to the heuristic reduce list.
+      /// @param nId Node id to add to the heuristic reduce list.
       void addToHeuristicReduceList(Graph::NodeId nId) {
         NodeData &nd = getHeuristicNodeData(nId);
         initializeNode(nId);
@@ -179,7 +179,7 @@ namespace PBQP {
       }
 
       /// \brief Prepare a change in the costs on the given edge.
-      /// @param eItr Edge iterator.
+      /// @param eId Edge id.
       void preUpdateEdgeCosts(Graph::EdgeId eId) {
         Graph &g = getGraph();
         Graph::NodeId n1Id = g.getEdgeNode1(eId),
@@ -197,7 +197,7 @@ namespace PBQP {
       }
 
       /// \brief Handle the change in the costs on the given edge.
-      /// @param eItr Edge iterator.
+      /// @param eId Edge id.
       void postUpdateEdgeCosts(Graph::EdgeId eId) {
         // This is effectively the same as adding a new edge now, since
         // we've factored out the costs of the old one.
@@ -205,7 +205,7 @@ namespace PBQP {
       }
 
       /// \brief Handle the addition of a new edge into the PBQP graph.
-      /// @param eItr Edge iterator for the added edge.
+      /// @param eId Edge id for the added edge.
       ///
       /// Updates allocability of any nodes connected by this edge which are
       /// being managed by the heuristic. If allocability changes they are
@@ -251,8 +251,8 @@ namespace PBQP {
       }
 
       /// \brief Handle disconnection of an edge from a node.
-      /// @param eItr Edge iterator for edge being disconnected.
-      /// @param nItr Node iterator for the node being disconnected from.
+      /// @param eId Edge id for edge being disconnected.
+      /// @param nId Node id for the node being disconnected from.
       ///
       /// Updates allocability of the given node and, if appropriate, moves the
       /// node to a new list.

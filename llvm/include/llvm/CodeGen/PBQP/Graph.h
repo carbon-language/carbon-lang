@@ -215,8 +215,8 @@ namespace PBQP {
     }
 
     /// \brief Add an edge between the given nodes with the given costs.
-    /// @param n1Itr First node.
-    /// @param n2Itr Second node.
+    /// @param n1Id First node.
+    /// @param n2Id Second node.
     /// @return Edge iterator for the added edge.
     EdgeId addEdge(NodeId n1Id, NodeId n2Id, const Matrix &costs) {
       assert(getNodeCosts(n1Id).getLength() == costs.getRows() &&
@@ -234,55 +234,55 @@ namespace PBQP {
     unsigned getNumEdges() const { return edges.size() - freeEdges.size(); }
 
     /// \brief Get a node's cost vector.
-    /// @param nItr Node iterator.
+    /// @param nId Node id.
     /// @return Node cost vector.
     Vector& getNodeCosts(NodeId nId) { return getNode(nId).getCosts(); }
 
     /// \brief Get a node's cost vector (const version).
-    /// @param nItr Node iterator.
+    /// @param nId Node id.
     /// @return Node cost vector.
     const Vector& getNodeCosts(NodeId nId) const {
       return getNode(nId).getCosts();
     }
 
     /// \brief Set a node's data pointer.
-    /// @param nItr Node iterator.
+    /// @param nId Node id.
     /// @param data Pointer to node data.
     ///
     /// Typically used by a PBQP solver to attach data to aid in solution.
     void setNodeData(NodeId nId, void *data) { getNode(nId).setData(data); }
 
     /// \brief Get the node's data pointer.
-    /// @param nItr Node iterator.
+    /// @param nId Node id.
     /// @return Pointer to node data.
     void* getNodeData(NodeId nId) { return getNode(nId).getData(); }
 
     /// \brief Get an edge's cost matrix.
-    /// @param eItr Edge iterator.
+    /// @param eId Edge id.
     /// @return Edge cost matrix.
     Matrix& getEdgeCosts(EdgeId eId) { return getEdge(eId).getCosts(); }
 
     /// \brief Get an edge's cost matrix (const version).
-    /// @param eItr Edge iterator.
+    /// @param eId Edge id.
     /// @return Edge cost matrix.
     const Matrix& getEdgeCosts(EdgeId eId) const {
       return getEdge(eId).getCosts();
     }
 
     /// \brief Set an edge's data pointer.
-    /// @param eItr Edge iterator.
+    /// @param eId Edge id.
     /// @param data Pointer to edge data.
     ///
     /// Typically used by a PBQP solver to attach data to aid in solution.
     void setEdgeData(EdgeId eId, void *data) { getEdge(eId).setData(data); }
 
     /// \brief Get an edge's data pointer.
-    /// @param eItr Edge iterator.
+    /// @param eId Edge id.
     /// @return Pointer to edge data.
     void* getEdgeData(EdgeId eId) { return getEdge(eId).getData(); }
 
     /// \brief Get a node's degree.
-    /// @param nItr Node iterator.
+    /// @param nId Node id.
     /// @return The degree of the node.
     unsigned getNodeDegree(NodeId nId) const {
       return getNode(nId).getDegree();
@@ -301,36 +301,36 @@ namespace PBQP {
     EdgeItr edgesEnd() const { return EdgeItr(edges.size(), *this); }
 
     /// \brief Get begin iterator for adjacent edge set.
-    /// @param nItr Node iterator.
+    /// @param nId Node id.
     /// @return Begin iterator for the set of edges connected to the given node.
     AdjEdgeItr adjEdgesBegin(NodeId nId) {
       return getNode(nId).edgesBegin();
     }
 
     /// \brief Get end iterator for adjacent edge set.
-    /// @param nItr Node iterator.
+    /// @param nId Node id.
     /// @return End iterator for the set of edges connected to the given node.
     AdjEdgeItr adjEdgesEnd(NodeId nId) {
       return getNode(nId).edgesEnd();
     }
 
     /// \brief Get the first node connected to this edge.
-    /// @param eItr Edge iterator.
+    /// @param eId Edge id.
     /// @return The first node connected to the given edge.
     NodeId getEdgeNode1(EdgeId eId) {
       return getEdge(eId).getNode1();
     }
 
     /// \brief Get the second node connected to this edge.
-    /// @param eItr Edge iterator.
+    /// @param eId Edge id.
     /// @return The second node connected to the given edge.
     NodeId getEdgeNode2(EdgeId eId) {
       return getEdge(eId).getNode2();
     }
 
     /// \brief Get the "other" node connected to this edge.
-    /// @param eItr Edge iterator.
-    /// @param nItr Node iterator for the "given" node.
+    /// @param eId Edge id.
+    /// @param nId Node id for the "given" node.
     /// @return The iterator for the "other" node connected to this edge.
     NodeId getEdgeOtherNode(EdgeId eId, NodeId nId) {
       EdgeEntry &e = getEdge(eId);
@@ -361,7 +361,7 @@ namespace PBQP {
     }
 
     /// \brief Remove a node from the graph.
-    /// @param nItr Node id.
+    /// @param nId Node id.
     void removeNode(NodeId nId) {
       NodeEntry &n = getNode(nId);
       for (AdjEdgeItr itr = n.edgesBegin(), end = n.edgesEnd(); itr != end; ++itr) {
@@ -372,7 +372,7 @@ namespace PBQP {
     }
 
     /// \brief Remove an edge from the graph.
-    /// @param eItr Edge iterator.
+    /// @param eId Edge id.
     void removeEdge(EdgeId eId) {
       EdgeEntry &e = getEdge(eId);
       NodeEntry &n1 = getNode(e.getNode1());

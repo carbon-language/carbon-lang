@@ -125,14 +125,14 @@ namespace PBQP {
     Graph& getGraph() { return g; }
 
     /// \brief Get the heuristic data attached to the given node.
-    /// @param nItr Node iterator.
+    /// @param nId Node id.
     /// @return The heuristic data attached to the given node.
     HeuristicNodeData& getHeuristicNodeData(Graph::NodeId nId) {
       return getSolverNodeData(nId).getHeuristicData();
     }
 
     /// \brief Get the heuristic data attached to the given edge.
-    /// @param eItr Edge iterator.
+    /// @param eId Edge id.
     /// @return The heuristic data attached to the given node.
     HeuristicEdgeData& getHeuristicEdgeData(Graph::EdgeId eId) {
       return getSolverEdgeData(eId).getHeuristicData();
@@ -140,7 +140,7 @@ namespace PBQP {
 
     /// \brief Begin iterator for the set of edges adjacent to the given node in
     ///        the solver graph.
-    /// @param nItr Node iterator.
+    /// @param nId Node id.
     /// @return Begin iterator for the set of edges adjacent to the given node
     ///         in the solver graph.
     SolverEdgeItr solverEdgesBegin(Graph::NodeId nId) {
@@ -149,7 +149,7 @@ namespace PBQP {
 
     /// \brief End iterator for the set of edges adjacent to the given node in
     ///        the solver graph.
-    /// @param nItr Node iterator.
+    /// @param nId Node id.
     /// @return End iterator for the set of edges adjacent to the given node in
     ///         the solver graph.
     SolverEdgeItr solverEdgesEnd(Graph::NodeId nId) {
@@ -157,7 +157,7 @@ namespace PBQP {
     }
 
     /// \brief Remove a node from the solver graph.
-    /// @param eItr Edge iterator for edge to be removed.
+    /// @param eId Edge id for edge to be removed.
     ///
     /// Does <i>not</i> notify the heuristic of the removal. That should be
     /// done manually if necessary.
@@ -188,21 +188,21 @@ namespace PBQP {
     }
 
     /// \brief Add to the end of the stack.
-    /// @param nItr Node iterator to add to the reduction stack.
+    /// @param nId Node id to add to the reduction stack.
     void pushToStack(Graph::NodeId nId) {
       getSolverNodeData(nId).clearSolverEdges();
       stack.push_back(nId);
     }
 
     /// \brief Returns the solver degree of the given node.
-    /// @param nItr Node iterator for which degree is requested.
+    /// @param nId Node id for which degree is requested.
     /// @return Node degree in the <i>solver</i> graph (not the original graph).
     unsigned getSolverDegree(Graph::NodeId nId) {
       return  getSolverNodeData(nId).getSolverDegree();
     }
 
     /// \brief Set the solution of the given node.
-    /// @param nItr Node iterator to set solution for.
+    /// @param nId Node id to set solution for.
     /// @param selection Selection for node.
     void setSolution(const Graph::NodeId &nId, unsigned selection) {
       s.setSelection(nId, selection);
@@ -217,7 +217,7 @@ namespace PBQP {
     }
 
     /// \brief Apply rule R0.
-    /// @param nItr Node iterator for node to apply R0 to.
+    /// @param nId Node id for node to apply R0 to.
     ///
     /// Node will be automatically pushed to the solver stack.
     void applyR0(Graph::NodeId nId) {
@@ -231,7 +231,7 @@ namespace PBQP {
     }
 
     /// \brief Apply rule R1.
-    /// @param xnItr Node iterator for node to apply R1 to.
+    /// @param xnId Node id for node to apply R1 to.
     ///
     /// Node will be automatically pushed to the solver stack.
     void applyR1(Graph::NodeId xnId) {
@@ -280,7 +280,7 @@ namespace PBQP {
     }
 
     /// \brief Apply rule R2.
-    /// @param xnItr Node iterator for node to apply R2 to.
+    /// @param xnId Node id for node to apply R2 to.
     ///
     /// Node will be automatically pushed to the solver stack.
     void applyR2(Graph::NodeId xnId) {

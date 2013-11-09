@@ -113,7 +113,7 @@ namespace PBQP {
     }
 
     /// \brief Add the given node to the list of nodes to be optimally reduced.
-    /// @param nItr Node iterator to be added.
+    /// @param nId Node id to be added.
     ///
     /// You probably don't want to over-ride this, except perhaps to record
     /// statistics before calling this implementation. HeuristicBase relies on
@@ -184,7 +184,7 @@ namespace PBQP {
     }
 
     /// \brief Add a node to the heuristic reduce list.
-    /// @param nItr Node iterator to add to the heuristic reduce list.
+    /// @param nId Node id to add to the heuristic reduce list.
     void addToHeuristicList(Graph::NodeId nId) {
       llvm_unreachable("Must be implemented in derived class.");
     }
@@ -199,26 +199,26 @@ namespace PBQP {
     }
 
     /// \brief Prepare a change in the costs on the given edge.
-    /// @param eItr Edge iterator.
+    /// @param eId Edge id.
     void preUpdateEdgeCosts(Graph::EdgeId eId) {
       llvm_unreachable("Must be implemented in derived class.");
     }
 
     /// \brief Handle the change in the costs on the given edge.
-    /// @param eItr Edge iterator.
+    /// @param eId Edge id.
     void postUpdateEdgeCostts(Graph::EdgeId eId) {
       llvm_unreachable("Must be implemented in derived class.");
     }
 
     /// \brief Handle the addition of a new edge into the PBQP graph.
-    /// @param eItr Edge iterator for the added edge.
+    /// @param eId Edge id for the added edge.
     void handleAddEdge(Graph::EdgeId eId) {
       llvm_unreachable("Must be implemented in derived class.");
     }
 
     /// \brief Handle disconnection of an edge from a node.
-    /// @param eItr Edge iterator for edge being disconnected.
-    /// @param nItr Node iterator for the node being disconnected from.
+    /// @param eId Edge id for edge being disconnected.
+    /// @param nId Node id for the node being disconnected from.
     ///
     /// Edges are frequently removed due to the removal of a node. This
     /// method allows for the effect to be computed only for the remaining

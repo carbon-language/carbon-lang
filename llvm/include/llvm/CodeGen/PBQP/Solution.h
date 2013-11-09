@@ -70,15 +70,15 @@ namespace PBQP {
     unsigned numRNReductions() const { return rNReductions; }
 
     /// \brief Set the selection for a given node.
-    /// @param nItr Node iterator.
-    /// @param selection Selection for nItr.
+    /// @param nodeId Node id.
+    /// @param selection Selection for nodeId.
     void setSelection(Graph::NodeId nodeId, unsigned selection) {
       selections[nodeId] = selection;
     }
 
     /// \brief Get a node's selection.
-    /// @param nItr Node iterator.
-    /// @return The selection for nItr;
+    /// @param nodeId Node id.
+    /// @return The selection for nodeId;
     unsigned getSelection(Graph::NodeId nodeId) const {
       SelectionsMap::const_iterator sItr = selections.find(nodeId);
       assert(sItr != selections.end() && "No selection for node.");
