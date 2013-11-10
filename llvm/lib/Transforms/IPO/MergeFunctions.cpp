@@ -214,9 +214,12 @@ bool FunctionComparator::isEquivalentType(Type *Ty1, Type *Ty2) const {
     return true;
   if (Ty1->getTypeID() != Ty2->getTypeID()) {
     if (TD) {
-      LLVMContext &Ctx = Ty1->getContext();
-      if (isa<PointerType>(Ty1) && Ty2 == TD->getIntPtrType(Ctx)) return true;
-      if (isa<PointerType>(Ty2) && Ty1 == TD->getIntPtrType(Ctx)) return true;
+
+      if (isa<PointerType>(Ty1) && Ty2 == TD->getIntPtrType(Ty1))
+        return true;
+
+      if (isa<PointerType>(Ty2) && Ty1 == TD->getIntPtrType(Ty2))
+        return true;
     }
     return false;
   }
@@ -352,14 +355,19 @@ bool FunctionComparator::isEquivalentOperation(const Instruction *I1,
 // Determine whether two GEP operations perform the same underlying arithmetic.
 bool FunctionComparator::isEquivalentGEP(const GEPOperator *GEP1,
                                          const GEPOperator *GEP2) {
-  // When we have target data, we can reduce the GEP down to the value in bytes
-  // added to the address.
-  unsigned BitWidth = TD ? TD->getPointerSizeInBits() : 1;
-  APInt Offset1(BitWidth, 0), Offset2(BitWidth, 0);
-  if (TD &&
-      GEP1->accumulateConstantOffset(*TD, Offset1) &&
-      GEP2->accumulateConstantOffset(*TD, Offset2)) {
-    return Offset1 == Offset2;
+  unsigned AS = GEP1->getPointerAddressSpace();
+  if (AS != GEP2->getPointerAddressSpace())
+    return false;
+
+  if (TD) {
+    // When we have target data, we can reduce the GEP down to the value in bytes
+    // added to the address.
+    unsigned BitWidth = TD ? TD->getPointerSizeInBits(AS) : 1;
+    APInt Offset1(BitWidth, 0), Offset2(BitWidth, 0);
+    if (GEP1->accumulateConstantOffset(*TD, Offset1) &&
+        GEP2->accumulateConstantOffset(*TD, Offset2)) {
+      return Offset1 == Offset2;
+    }
   }
 
   if (GEP1->getPointerOperand()->getType() !=
