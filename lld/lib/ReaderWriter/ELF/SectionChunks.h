@@ -614,12 +614,12 @@ class SymbolTable : public Section<ELFT> {
   struct SymbolEntry {
     SymbolEntry(const Atom *a, const Elf_Sym &sym,
                 const lld::AtomLayout *layout)
-        : _atom(a), _symbol(sym), _atomLayout(layout) {}
+        : _atom(a), _atomLayout(layout), _symbol(sym) {}
     SymbolEntry() : _atom(nullptr) {}
 
     const Atom *_atom;
-    Elf_Sym _symbol;
     const lld::AtomLayout *_atomLayout;
+    Elf_Sym _symbol;
   };
 
 public:
