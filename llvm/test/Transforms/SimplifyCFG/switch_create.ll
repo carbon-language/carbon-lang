@@ -1,7 +1,5 @@
 ; RUN: opt -S -simplifycfg < %s | FileCheck -check-prefix=CHECK %s
-; RUN: opt -S -default-data-layout="p:32:32-p1:16:16" -simplifycfg < %s | FileCheck -check-prefix=DL %s
-
-; TODO: Other tests should also have check lines with datalayout
+; RUN: opt -S -default-data-layout="p:32:32-p1:16:16" -simplifycfg < %s | FileCheck -check-prefix=CHECK -check-prefix=DL %s
 
 declare void @foo1()
 
@@ -36,7 +34,7 @@ T:              ; preds = %0
 F:              ; preds = %0
         call void @foo2( )
         ret void
-; DL-LABEL: @test1_ptr(
+; CHECK-LABEL: @test1_ptr(
 ; DL:  %magicptr = ptrtoint i32* %V to i32
 ; DL:  switch i32 %magicptr, label %F [
 ; DL:    i32 17, label %T
@@ -55,7 +53,7 @@ T:              ; preds = %0
 F:              ; preds = %0
         call void @foo2( )
         ret void
-; DL-LABEL: @test1_ptr_as1(
+; CHECK-LABEL: @test1_ptr_as1(
 ; DL:  %magicptr = ptrtoint i32 addrspace(1)* %V to i16
 ; DL:  switch i16 %magicptr, label %F [
 ; DL:    i16 17, label %T
