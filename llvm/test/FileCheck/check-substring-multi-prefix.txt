@@ -1,0 +1,9 @@
+// RUN: FileCheck -check-prefix=AAAOVERLAP -check-prefix=OVERLAP -input-file %s %s
+
+foo
+bar
+buzz
+
+OVERLAP: foo
+AAAOVERLAP: bar
+OVERLAP: buzz

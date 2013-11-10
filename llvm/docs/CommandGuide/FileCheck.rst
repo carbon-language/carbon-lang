@@ -30,11 +30,13 @@ OPTIONS
 
 .. option:: --check-prefix prefix
 
- FileCheck searches the contents of ``match-filename`` for patterns to match.
- By default, these patterns are prefixed with "``CHECK:``".  If you'd like to
- use a different prefix (e.g. because the same input file is checking multiple
- different tool or options), the :option:`--check-prefix` argument allows you
- to specify a specific prefix to match.
+ FileCheck searches the contents of ``match-filename`` for patterns to
+ match.  By default, these patterns are prefixed with "``CHECK:``".
+ If you'd like to use a different prefix (e.g. because the same input
+ file is checking multiple different tool or options), the
+ :option:`--check-prefix` argument allows you to specify one or more
+ prefixes to match. Multiple prefixes are useful for tests which might
+ change for different run options, but most lines remain the same.
 
 .. option:: --input-file filename
 
