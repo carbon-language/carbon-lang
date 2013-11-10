@@ -485,11 +485,12 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
   case Intrinsic::memset: {
-    Type *IntPtr = TD.getIntPtrType(Context);
+    Value *Op0 = CI->getArgOperand(0);
+    Type *IntPtr = TD.getIntPtrType(Op0->getType());
     Value *Size = Builder.CreateIntCast(CI->getArgOperand(2), IntPtr,
                                         /* isSigned */ false);
     Value *Ops[3];
-    Ops[0] = CI->getArgOperand(0);
+    Ops[0] = Op0;
     // Extend the amount to i32.
     Ops[1] = Builder.CreateIntCast(CI->getArgOperand(1),
                                    Type::getInt32Ty(Context),

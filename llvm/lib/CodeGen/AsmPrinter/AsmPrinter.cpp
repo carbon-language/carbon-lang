@@ -417,7 +417,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     //   - __tlv_bootstrap - used to make sure support exists
     //   - spare pointer, used when mapped by the runtime
     //   - pointer to mangled symbol above with initializer
-    unsigned PtrSize = DL->getPointerSizeInBits()/8;
+    unsigned PtrSize = DL->getPointerTypeSize(GV->getType());
     OutStreamer.EmitSymbolValue(GetExternalSymbolSymbol("_tlv_bootstrap"),
                                 PtrSize);
     OutStreamer.EmitIntValue(0, PtrSize);

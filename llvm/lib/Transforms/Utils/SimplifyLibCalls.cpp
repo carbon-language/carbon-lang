@@ -1047,7 +1047,7 @@ struct MemSetOpt : public LibCallOptimization {
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         !FT->getParamType(0)->isPointerTy() ||
         !FT->getParamType(1)->isIntegerTy() ||
-        FT->getParamType(2) != TD->getIntPtrType(*Context))
+        FT->getParamType(2) != TD->getIntPtrType(FT->getParamType(0)))
       return 0;
 
     // memset(p, v, n) -> llvm.memset(p, v, n, 1)
