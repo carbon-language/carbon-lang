@@ -210,59 +210,43 @@ void Sema::checkContainerDecl(const BlockCommandComment *Comment) {
     << Comment->getSourceRange();
 }
 
+/// \brief Turn a string into the corresponding PassDirection or -1 if it's not
+/// valid.
+static int getParamPassDirection(StringRef Arg) {
+  return llvm::StringSwitch<int>(Arg)
+      .Case("[in]", ParamCommandComment::In)
+      .Case("[out]", ParamCommandComment::Out)
+      .Cases("[in,out]", "[out,in]", ParamCommandComment::InOut)
+      .Default(-1);
+}
+
 void Sema::actOnParamCommandDirectionArg(ParamCommandComment *Command,
                                          SourceLocation ArgLocBegin,
                                          SourceLocation ArgLocEnd,
                                          StringRef Arg) {
-  ParamCommandComment::PassDirection Direction;
   std::string ArgLower = Arg.lower();
-  // TODO: optimize: lower Name first (need an API in SmallString for that),
-  // after that StringSwitch.
-  if (ArgLower == "[in]")
-    Direction = ParamCommandComment::In;
-  else if (ArgLower == "[out]")
-    Direction = ParamCommandComment::Out;
-  else if (ArgLower == "[in,out]" || ArgLower == "[out,in]")
-    Direction = ParamCommandComment::InOut;
-  else {
-    // Remove spaces.
-    std::string::iterator O = ArgLower.begin();
-    for (std::string::iterator I = ArgLower.begin(), E = ArgLower.end();
-         I != E; ++I) {
-      const char C = *I;
-      if (C != ' ' && C != '\n' && C != '\r' &&
-          C != '\t' && C != '\v' && C != '\f')
-        *O++ = C;
-    }
-    ArgLower.resize(O - ArgLower.begin());
+  int Direction = getParamPassDirection(ArgLower);
 
-    bool RemovingWhitespaceHelped = false;
-    if (ArgLower == "[in]") {
-      Direction = ParamCommandComment::In;
-      RemovingWhitespaceHelped = true;
-    } else if (ArgLower == "[out]") {
-      Direction = ParamCommandComment::Out;
-      RemovingWhitespaceHelped = true;
-    } else if (ArgLower == "[in,out]" || ArgLower == "[out,in]") {
-      Direction = ParamCommandComment::InOut;
-      RemovingWhitespaceHelped = true;
-    } else {
-      Direction = ParamCommandComment::In;
-      RemovingWhitespaceHelped = false;
-    }
+  if (Direction == -1) {
+    // Try again with whitespace removed.
+    ArgLower.erase(
+        std::remove_if(ArgLower.begin(), ArgLower.end(), clang::isWhitespace),
+        ArgLower.end());
+    Direction = getParamPassDirection(ArgLower);
 
     SourceRange ArgRange(ArgLocBegin, ArgLocEnd);
-    if (RemovingWhitespaceHelped)
+    if (Direction != -1) {
+      const char *FixedName = ParamCommandComment::getDirectionAsString(
+          (ParamCommandComment::PassDirection)Direction);
       Diag(ArgLocBegin, diag::warn_doc_param_spaces_in_direction)
-        << ArgRange
-        << FixItHint::CreateReplacement(
-                          ArgRange,
-                          ParamCommandComment::getDirectionAsString(Direction));
-    else
-      Diag(ArgLocBegin, diag::warn_doc_param_invalid_direction)
-        << ArgRange;
+          << ArgRange << FixItHint::CreateReplacement(ArgRange, FixedName);
+    } else {
+      Diag(ArgLocBegin, diag::warn_doc_param_invalid_direction) << ArgRange;
+      Direction = ParamCommandComment::In; // Sane fall back.
+    }
   }
-  Command->setDirection(Direction, /* Explicit = */ true);
+  Command->setDirection((ParamCommandComment::PassDirection)Direction,
+                        /*Explicit=*/true);
 }
 
 void Sema::actOnParamCommandParamNameArg(ParamCommandComment *Command,
