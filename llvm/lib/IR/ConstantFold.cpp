@@ -1897,6 +1897,37 @@ static bool isInBoundsIndices(ArrayRef<IndexTy> Idxs) {
   return true;
 }
 
+/// \brief Test whether a given ConstantInt is in-range for a SequentialType.
+static bool isIndexInRangeOfSequentialType(const SequentialType *STy,
+                                           const ConstantInt *CI) {
+  if (const PointerType *PTy = dyn_cast<PointerType>(STy))
+    // Only handle pointers to sized types, not pointers to functions.
+    return PTy->getElementType()->isSized();
+
+  uint64_t NumElements = 0;
+  // Determine the number of elements in our sequential type.
+  if (const ArrayType *ATy = dyn_cast<ArrayType>(STy))
+    NumElements = ATy->getNumElements();
+  else if (const VectorType *VTy = dyn_cast<VectorType>(STy))
+    NumElements = VTy->getNumElements();
+
+  assert((isa<ArrayType>(STy) || NumElements > 0) &&
+         "didn't expect non-array type to have zero elements!");
+
+  // We cannot bounds check the index if it doesn't fit in an int64_t.
+  if (CI->getValue().getActiveBits() > 64)
+    return false;
+
+  // A negative index or an index past the end of our sequential type is
+  // considered out-of-range.
+  int64_t IndexVal = CI->getSExtValue();
+  if (IndexVal < 0 || (NumElements > 0 && (uint64_t)IndexVal >= NumElements))
+    return false;
+
+  // Otherwise, it is in-range.
+  return true;
+}
+
 template<typename IndexTy>
 static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
                                                bool inBounds,
@@ -1958,26 +1989,14 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
       //
       // The following prohibits such a GEP from being formed by checking to see
       // if the index is in-range with respect to an array or vector.
-      bool IsSequentialAccessInRange = false;
-      if (LastTy && isa<SequentialType>(LastTy)) {
-        uint64_t NumElements = 0;
-        if (ArrayType *ATy = dyn_cast<ArrayType>(LastTy))
-          NumElements = ATy->getNumElements();
-        else if (VectorType *VTy = dyn_cast<VectorType>(LastTy))
-          NumElements = VTy->getNumElements();
+      bool PerformFold = false;
+      if (Idx0->isNullValue())
+        PerformFold = true;
+      else if (SequentialType *STy = dyn_cast_or_null<SequentialType>(LastTy))
+        if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx0))
+          PerformFold = isIndexInRangeOfSequentialType(STy, CI);
 
-        if (NumElements > 0) {
-          if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx0)) {
-            int64_t Idx0Val = CI->getSExtValue();
-            if (Idx0Val >= 0 && (uint64_t)Idx0Val < NumElements)
-              IsSequentialAccessInRange = true;
-          }
-        } else if (PointerType *PTy = dyn_cast<PointerType>(LastTy))
-          // Only handle pointers to sized types, not pointers to functions.
-          if (PTy->getElementType()->isSized())
-            IsSequentialAccessInRange = true;
-      }
-      if (IsSequentialAccessInRange || Idx0->isNullValue()) {
+      if (PerformFold) {
         SmallVector<Value*, 16> NewIndices;
         NewIndices.reserve(Idxs.size() + CE->getNumOperands());
         for (unsigned i = 1, e = CE->getNumOperands()-1; i != e; ++i)
@@ -2037,8 +2056,8 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
   }
 
   // Check to see if any array indices are not within the corresponding
-  // notional array bounds. If so, try to determine if they can be factored
-  // out into preceding dimensions.
+  // notional array or vector bounds. If so, try to determine if they can be
+  // factored out into preceding dimensions.
   bool Unknown = false;
   SmallVector<Constant *, 8> NewIdxs;
   Type *Ty = C->getType();
@@ -2046,16 +2065,20 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
   for (unsigned i = 0, e = Idxs.size(); i != e;
        Prev = Ty, Ty = cast<CompositeType>(Ty)->getTypeAtIndex(Idxs[i]), ++i) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Idxs[i])) {
-      if (ArrayType *ATy = dyn_cast<ArrayType>(Ty))
-        if (ATy->getNumElements() <= INT64_MAX &&
-            ATy->getNumElements() != 0 &&
-            CI->getSExtValue() >= (int64_t)ATy->getNumElements()) {
+      if (isa<ArrayType>(Ty) || isa<VectorType>(Ty))
+        if (CI->getSExtValue() > 0 &&
+            !isIndexInRangeOfSequentialType(cast<SequentialType>(Ty), CI)) {
           if (isa<SequentialType>(Prev)) {
             // It's out of range, but we can factor it into the prior
             // dimension.
             NewIdxs.resize(Idxs.size());
-            ConstantInt *Factor = ConstantInt::get(CI->getType(),
-                                                   ATy->getNumElements());
+            uint64_t NumElements = 0;
+            if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty))
+              NumElements = ATy->getNumElements();
+            else
+              NumElements = cast<VectorType>(Ty)->getNumElements();
+
+            ConstantInt *Factor = ConstantInt::get(CI->getType(), NumElements);
             NewIdxs[i] = ConstantExpr::getSRem(CI, Factor);
 
             Constant *PrevIdx = cast<Constant>(Idxs[i-1]);
