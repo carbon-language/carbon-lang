@@ -66,6 +66,16 @@ static cl::opt<int> ConstantIslandsSmallOffset(
   cl::desc("Make small offsets be this amount for testing purposes"),
   cl::Hidden);
 
+//
+// For testing purposes we tell it to not use relaxed load forms so that it
+// will split blocks.
+//
+static cl::opt<bool> NoLoadRelaxation(
+  "mips-constant-islands-no-load-relaxation",
+  cl::init(false),
+  cl::desc("Don't relax loads to long loads - for testing purposes"),
+  cl::Hidden);
+
 
 namespace {
 
@@ -168,6 +178,9 @@ namespace {
         unsigned xMaxDisp = ConstantIslandsSmallOffset?
                             ConstantIslandsSmallOffset: MaxDisp;
         return xMaxDisp;
+      }
+      void setMaxDisp(unsigned val) {
+        MaxDisp = val;
       }
       unsigned getLongFormMaxDisp() const {
         return LongFormMaxDisp;
@@ -615,6 +628,8 @@ initializeFunctionInfo(const std::vector<MachineInstr*> &CPEMIs) {
             Bits = 8;
             Scale = 4;
             LongFormOpcode = Mips::LwRxPcTcpX16;
+            LongFormBits = 16;
+            LongFormScale = 1;
             break;
           case Mips::LwRxPcTcpX16:
             Bits = 16;
@@ -977,6 +992,7 @@ int MipsConstantIslands::findLongFormInRangeCPEntry
                        true)) {
     DEBUG(dbgs() << "In range\n");
     UserMI->setDesc(TII->get(U.getLongFormOpcode()));
+    U.setMaxDisp(U.getLongFormMaxDisp());
     return 2;  // instruction is longer length now
   }
 
@@ -1214,9 +1230,10 @@ bool MipsConstantIslands::handleConstantPoolUser(unsigned CPUserIndex) {
     // No water found.
     // we first see if a longer form of the instrucion could have reached
     // the constant. in that case we won't bother to split
-#ifdef IN_PROGRESS
-    result = findLongFormInRangeCPEntry(U, UserOffset);
-#endif
+    if (!NoLoadRelaxation) {
+      result = findLongFormInRangeCPEntry(U, UserOffset);
+      if (result != 0) return true;
+    }
     DEBUG(dbgs() << "No water found\n");
     createNewWater(CPUserIndex, UserOffset, NewMBB);
 
