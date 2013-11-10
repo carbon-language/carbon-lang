@@ -207,7 +207,7 @@ void Lint::visitCallSite(CallSite CS) {
             &I);
 
     FunctionType *FT = F->getFunctionType();
-    unsigned NumActualArgs = unsigned(CS.arg_end()-CS.arg_begin());
+    unsigned NumActualArgs = CS.arg_size();
 
     Assert1(FT->isVarArg() ?
               FT->getNumParams() <= NumActualArgs :
