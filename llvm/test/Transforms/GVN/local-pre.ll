@@ -1,9 +1,9 @@
 ; RUN: opt < %s -gvn -enable-pre -S | grep "b.pre"
 
-define i32 @main(i32 %p, i32 %q) {
+define i32 @main(i32 %p) {
 block1:
-    %cmp = icmp eq i32 %p, %q 
-	br i1 %cmp, label %block2, label %block3
+  
+	br i1 true, label %block2, label %block3
 
 block2:
  %a = add i32 %p, 1

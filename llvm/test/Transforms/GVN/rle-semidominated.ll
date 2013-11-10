@@ -1,10 +1,9 @@
 ; RUN: opt < %s -basicaa -gvn -S | grep "DEAD = phi i32 "
 
-define i32 @main(i32* %p, i32 %x, i32 %y) {
+define i32 @main(i32* %p) {
 block1:
   %z = load i32* %p
-  %cmp = icmp eq i32 %x, %y
-	br i1 %cmp, label %block2, label %block3
+	br i1 true, label %block2, label %block3
 
 block2:
  br label %block4

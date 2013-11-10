@@ -369,14 +369,13 @@ Cont:
 ; CHECK: ret i8 %A
 }
 
-define i32 @chained_load(i32** %p, i32 %x, i32 %y) {
+define i32 @chained_load(i32** %p) {
 block1:
   %A = alloca i32*
 
   %z = load i32** %p
   store i32* %z, i32** %A
-  %cmp = icmp eq i32 %x, %y
-  br i1 %cmp, label %block2, label %block3
+  br i1 true, label %block2, label %block3
 
 block2:
  %a = load i32** %p
@@ -440,11 +439,10 @@ TY:
   ret i32 0
 }
 
-define i32 @phi_trans3(i32* %p, i32 %x, i32 %y, i32 %z) {
+define i32 @phi_trans3(i32* %p) {
 ; CHECK-LABEL: @phi_trans3(
 block1:
-  %cmpxy = icmp eq i32 %x, %y
-  br i1 %cmpxy, label %block2, label %block3
+  br i1 true, label %block2, label %block3
 
 block2:
  store i32 87, i32* %p
@@ -457,7 +455,7 @@ block3:
 
 block4:
   %A = phi i32 [-1, %block2], [42, %block3]
-  br i1 %cmpxy, label %block5, label %exit
+  br i1 true, label %block5, label %exit
   
 ; CHECK: block4:
 ; CHECK-NEXT: %D = phi i32 [ 87, %block2 ], [ 97, %block3 ]  
@@ -465,11 +463,11 @@ block4:
 
 block5:
   %B = add i32 %A, 1
-  br i1 %cmpxy, label %block6, label %exit
+  br i1 true, label %block6, label %exit
   
 block6:
   %C = getelementptr i32* %p, i32 %B
-  br i1 %cmpxy, label %block7, label %exit
+  br i1 true, label %block7, label %exit
   
 block7:
   %D = load i32* %C
