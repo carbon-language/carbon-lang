@@ -1,4 +1,4 @@
-//===-- AMDGPUAsmPrinter.h - Print AMDGPU assembly code -------------------===//
+//===-- AMDGPUAsmPrinter.h - Print AMDGPU assembly code ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
