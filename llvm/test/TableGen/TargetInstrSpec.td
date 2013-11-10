@@ -1,4 +1,5 @@
 // RUN: llvm-tblgen %s | FileCheck %s
+// XFAIL: vg_leak
 
 // CHECK: [(set VR128:$dst, (int_x86_sse2_add_pd VR128:$src1, VR128:$src2))]
 // CHECK-NOT: [(set VR128:$dst, (int_x86_sse2_add_pd VR128:$src1, VR128:$src2))]

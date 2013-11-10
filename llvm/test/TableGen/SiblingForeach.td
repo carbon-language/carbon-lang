@@ -1,4 +1,5 @@
 // RUN: llvm-tblgen %s | FileCheck %s
+// XFAIL: vg_leak
 
 class Set<int i = 0, int j = 0, int k = 0> {
   int I = i;

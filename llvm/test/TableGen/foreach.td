@@ -1,4 +1,5 @@
 // RUN: llvm-tblgen %s | FileCheck %s
+// XFAIL: vg_leak
 
 // CHECK: Classes
 // CHECK: Sr

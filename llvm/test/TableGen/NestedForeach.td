@@ -1,4 +1,5 @@
 // RUN: llvm-tblgen %s | FileCheck %s
+// XFAIL: vg_leak
 
 class Droid<string series, int release, string model, int patchlevel> {
   string Series = series;
