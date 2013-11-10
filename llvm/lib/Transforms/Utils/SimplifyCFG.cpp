@@ -2096,7 +2096,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
       for (Instruction::op_iterator OI = BonusInst->op_begin(),
            OE = BonusInst->op_end(); OI != OE; ++OI) {
         Value *V = *OI;
-        if (!isa<Constant>(V))
+        if (!isa<Constant>(V) && !isa<Argument>(V))
           UsedValues.insert(V);
       }
 
