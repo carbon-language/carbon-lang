@@ -314,17 +314,15 @@ void Sema::actOnTParamCommandParamNameArg(TParamCommandComment *Command,
   SmallVector<unsigned, 2> Position;
   if (resolveTParamReference(Arg, TemplateParameters, &Position)) {
     Command->setPosition(copyArray(llvm::makeArrayRef(Position)));
-    llvm::StringMap<TParamCommandComment *>::iterator PrevCommandIt =
-        TemplateParameterDocs.find(Arg);
-    if (PrevCommandIt != TemplateParameterDocs.end()) {
+    TParamCommandComment *&PrevCommand = TemplateParameterDocs[Arg];
+    if (PrevCommand) {
       SourceRange ArgRange(ArgLocBegin, ArgLocEnd);
       Diag(ArgLocBegin, diag::warn_doc_tparam_duplicate)
         << Arg << ArgRange;
-      TParamCommandComment *PrevCommand = PrevCommandIt->second;
       Diag(PrevCommand->getLocation(), diag::note_doc_tparam_previous)
         << PrevCommand->getParamNameRange();
     }
-    TemplateParameterDocs[Arg] = Command;
+    PrevCommand = Command;
     return;
   }
 
