@@ -19,10 +19,10 @@ bb1:
   br i1 undef, label %bb3, label %bb15
 
 ; CHECK: bb1:
-; CHECK: %tmp16 = phi i8* [ getelementptr (i8* null, i64 undef), %bb10 ], [ null, %bb ]
+; CHECK: [[TMP:%.*]] = phi i8* [ getelementptr (i8* null, i64 undef), %bb10 ], [ null, %bb ]
 
 ; CHECK: bb1.bb15_crit_edge:
-; CHECK: %tmp17.pre = load i8* %tmp16, align 1
+; CHECK: %tmp17.pre = load i8* [[TMP]], align 1
 
 bb3:
   call void @isalnum()
