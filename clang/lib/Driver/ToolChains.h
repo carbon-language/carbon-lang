@@ -514,6 +514,7 @@ class LLVM_LIBRARY_VISIBILITY FreeBSD : public Generic_ELF {
 public:
   FreeBSD(const Driver &D, const llvm::Triple &Triple,
           const llvm::opt::ArgList &Args);
+  virtual bool HasNativeLLVMSupport() const;
 
   virtual bool IsMathErrnoDefault() const { return false; }
   virtual bool IsObjCNonFragileABIDefault() const { return true; }

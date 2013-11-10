@@ -2497,6 +2497,10 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   addPathIfExists(SysRoot + "/usr/lib", Paths);
 }
 
+bool FreeBSD::HasNativeLLVMSupport() const {
+  return true;
+}
+
 bool Linux::HasNativeLLVMSupport() const {
   return true;
 }
