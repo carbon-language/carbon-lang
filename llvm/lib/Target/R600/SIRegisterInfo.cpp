@@ -72,7 +72,7 @@ const TargetRegisterClass *SIRegisterInfo::getPhysRegClass(unsigned Reg) const {
   return NULL;
 }
 
-bool SIRegisterInfo::isSGPRClass(const TargetRegisterClass *RC) const {
+bool SIRegisterInfo::isSGPRClass(const TargetRegisterClass *RC) {
   if (!RC) {
     return false;
   }

@@ -47,7 +47,7 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
   const TargetRegisterClass *getPhysRegClass(unsigned Reg) const;
 
   /// \returns true if this class contains only SGPR registers
-  bool isSGPRClass(const TargetRegisterClass *RC) const;
+  static bool isSGPRClass(const TargetRegisterClass *RC);
 };
 
 } // End namespace llvm
