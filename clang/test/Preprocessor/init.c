@@ -729,6 +729,112 @@
 // I386-LINUX:#define __i386__ 1
 // I386-LINUX:#define i386 1
 //
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-netbsd < /dev/null | FileCheck -check-prefix I386-NETBSD %s
+//
+// I386-NETBSD-NOT:#define _LP64
+// I386-NETBSD:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
+// I386-NETBSD:#define __CHAR16_TYPE__ unsigned short
+// I386-NETBSD:#define __CHAR32_TYPE__ unsigned int
+// I386-NETBSD:#define __CHAR_BIT__ 8
+// I386-NETBSD:#define __DBL_DENORM_MIN__ 4.9406564584124654e-324
+// I386-NETBSD:#define __DBL_DIG__ 15
+// I386-NETBSD:#define __DBL_EPSILON__ 2.2204460492503131e-16
+// I386-NETBSD:#define __DBL_HAS_DENORM__ 1
+// I386-NETBSD:#define __DBL_HAS_INFINITY__ 1
+// I386-NETBSD:#define __DBL_HAS_QUIET_NAN__ 1
+// I386-NETBSD:#define __DBL_MANT_DIG__ 53
+// I386-NETBSD:#define __DBL_MAX_10_EXP__ 308
+// I386-NETBSD:#define __DBL_MAX_EXP__ 1024
+// I386-NETBSD:#define __DBL_MAX__ 1.7976931348623157e+308
+// I386-NETBSD:#define __DBL_MIN_10_EXP__ (-307)
+// I386-NETBSD:#define __DBL_MIN_EXP__ (-1021)
+// I386-NETBSD:#define __DBL_MIN__ 2.2250738585072014e-308
+// I386-NETBSD:#define __DECIMAL_DIG__ 21
+// I386-NETBSD:#define __FLT_DENORM_MIN__ 1.40129846e-45F
+// I386-NETBSD:#define __FLT_DIG__ 6
+// I386-NETBSD:#define __FLT_EPSILON__ 1.19209290e-7F
+// I386-NETBSD:#define __FLT_EVAL_METHOD__ 2
+// I386-NETBSD:#define __FLT_HAS_DENORM__ 1
+// I386-NETBSD:#define __FLT_HAS_INFINITY__ 1
+// I386-NETBSD:#define __FLT_HAS_QUIET_NAN__ 1
+// I386-NETBSD:#define __FLT_MANT_DIG__ 24
+// I386-NETBSD:#define __FLT_MAX_10_EXP__ 38
+// I386-NETBSD:#define __FLT_MAX_EXP__ 128
+// I386-NETBSD:#define __FLT_MAX__ 3.40282347e+38F
+// I386-NETBSD:#define __FLT_MIN_10_EXP__ (-37)
+// I386-NETBSD:#define __FLT_MIN_EXP__ (-125)
+// I386-NETBSD:#define __FLT_MIN__ 1.17549435e-38F
+// I386-NETBSD:#define __FLT_RADIX__ 2
+// I386-NETBSD:#define __INT16_TYPE__ short
+// I386-NETBSD:#define __INT32_TYPE__ int
+// I386-NETBSD:#define __INT64_C_SUFFIX__ LL
+// I386-NETBSD:#define __INT64_TYPE__ long long int
+// I386-NETBSD:#define __INT8_TYPE__ char
+// I386-NETBSD:#define __INTMAX_MAX__ 9223372036854775807LL
+// I386-NETBSD:#define __INTMAX_TYPE__ long long int
+// I386-NETBSD:#define __INTMAX_WIDTH__ 64
+// I386-NETBSD:#define __INTPTR_TYPE__ int
+// I386-NETBSD:#define __INTPTR_WIDTH__ 32
+// I386-NETBSD:#define __INT_MAX__ 2147483647
+// I386-NETBSD:#define __LDBL_DENORM_MIN__ 3.64519953188247460253e-4951L
+// I386-NETBSD:#define __LDBL_DIG__ 18
+// I386-NETBSD:#define __LDBL_EPSILON__ 1.08420217248550443401e-19L
+// I386-NETBSD:#define __LDBL_HAS_DENORM__ 1
+// I386-NETBSD:#define __LDBL_HAS_INFINITY__ 1
+// I386-NETBSD:#define __LDBL_HAS_QUIET_NAN__ 1
+// I386-NETBSD:#define __LDBL_MANT_DIG__ 64
+// I386-NETBSD:#define __LDBL_MAX_10_EXP__ 4932
+// I386-NETBSD:#define __LDBL_MAX_EXP__ 16384
+// I386-NETBSD:#define __LDBL_MAX__ 1.18973149535723176502e+4932L
+// I386-NETBSD:#define __LDBL_MIN_10_EXP__ (-4931)
+// I386-NETBSD:#define __LDBL_MIN_EXP__ (-16381)
+// I386-NETBSD:#define __LDBL_MIN__ 3.36210314311209350626e-4932L
+// I386-NETBSD:#define __LITTLE_ENDIAN__ 1
+// I386-NETBSD:#define __LONG_LONG_MAX__ 9223372036854775807LL
+// I386-NETBSD:#define __LONG_MAX__ 2147483647L
+// I386-NETBSD-NOT:#define __LP64__
+// I386-NETBSD:#define __NO_MATH_INLINES 1
+// I386-NETBSD:#define __POINTER_WIDTH__ 32
+// I386-NETBSD:#define __PTRDIFF_TYPE__ int
+// I386-NETBSD:#define __PTRDIFF_WIDTH__ 32
+// I386-NETBSD:#define __REGISTER_PREFIX__ 
+// I386-NETBSD:#define __SCHAR_MAX__ 127
+// I386-NETBSD:#define __SHRT_MAX__ 32767
+// I386-NETBSD:#define __SIG_ATOMIC_WIDTH__ 32
+// I386-NETBSD:#define __SIZEOF_DOUBLE__ 8
+// I386-NETBSD:#define __SIZEOF_FLOAT__ 4
+// I386-NETBSD:#define __SIZEOF_INT__ 4
+// I386-NETBSD:#define __SIZEOF_LONG_DOUBLE__ 12
+// I386-NETBSD:#define __SIZEOF_LONG_LONG__ 8
+// I386-NETBSD:#define __SIZEOF_LONG__ 4
+// I386-NETBSD:#define __SIZEOF_POINTER__ 4
+// I386-NETBSD:#define __SIZEOF_PTRDIFF_T__ 4
+// I386-NETBSD:#define __SIZEOF_SHORT__ 2
+// I386-NETBSD:#define __SIZEOF_SIZE_T__ 4
+// I386-NETBSD:#define __SIZEOF_WCHAR_T__ 4
+// I386-NETBSD:#define __SIZEOF_WINT_T__ 4
+// I386-NETBSD:#define __SIZE_MAX__ 4294967295U
+// I386-NETBSD:#define __SIZE_TYPE__ unsigned int
+// I386-NETBSD:#define __SIZE_WIDTH__ 32
+// I386-NETBSD:#define __UINTMAX_TYPE__ long long unsigned int
+// I386-NETBSD:#define __USER_LABEL_PREFIX__
+// I386-NETBSD:#define __WCHAR_MAX__ 2147483647
+// I386-NETBSD:#define __WCHAR_TYPE__ int
+// I386-NETBSD:#define __WCHAR_WIDTH__ 32
+// I386-NETBSD:#define __WINT_TYPE__ int
+// I386-NETBSD:#define __WINT_WIDTH__ 32
+// I386-NETBSD:#define __i386 1
+// I386-NETBSD:#define __i386__ 1
+// I386-NETBSD:#define i386 1
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-netbsd -target-feature +sse2 < /dev/null | FileCheck -check-prefix I386-NETBSD-SSE %s
+// I386-NETBSD-SSE:#define __FLT_EVAL_METHOD__ 0
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-netbsd6  < /dev/null | FileCheck -check-prefix I386-NETBSD6 %s
+// I386-NETBSD6:#define __FLT_EVAL_METHOD__ 1
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-netbsd6 -target-feature +sse2 < /dev/null | FileCheck -check-prefix I386-NETBSD6-SSE %s
+// I386-NETBSD6-SSE:#define __FLT_EVAL_METHOD__ 1
+
+//
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips-none-none < /dev/null | FileCheck -check-prefix MIPS32BE %s
 //
 // MIPS32BE:#define MIPSEB 1
@@ -2996,6 +3102,110 @@
 // X86_64-FREEBSD:#define __FreeBSD__ 9
 // X86_64-FREEBSD:#define __FreeBSD_cc_version 900001
 // X86_64-FREEBSD:#define __STDC_MB_MIGHT_NEQ_WC__ 1
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=x86_64-netbsd < /dev/null | FileCheck -check-prefix X86_64-NETBSD %s
+//
+// X86_64-NETBSD:#define _LP64 1
+// X86_64-NETBSD:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
+// X86_64-NETBSD:#define __CHAR16_TYPE__ unsigned short
+// X86_64-NETBSD:#define __CHAR32_TYPE__ unsigned int
+// X86_64-NETBSD:#define __CHAR_BIT__ 8
+// X86_64-NETBSD:#define __DBL_DENORM_MIN__ 4.9406564584124654e-324
+// X86_64-NETBSD:#define __DBL_DIG__ 15
+// X86_64-NETBSD:#define __DBL_EPSILON__ 2.2204460492503131e-16
+// X86_64-NETBSD:#define __DBL_HAS_DENORM__ 1
+// X86_64-NETBSD:#define __DBL_HAS_INFINITY__ 1
+// X86_64-NETBSD:#define __DBL_HAS_QUIET_NAN__ 1
+// X86_64-NETBSD:#define __DBL_MANT_DIG__ 53
+// X86_64-NETBSD:#define __DBL_MAX_10_EXP__ 308
+// X86_64-NETBSD:#define __DBL_MAX_EXP__ 1024
+// X86_64-NETBSD:#define __DBL_MAX__ 1.7976931348623157e+308
+// X86_64-NETBSD:#define __DBL_MIN_10_EXP__ (-307)
+// X86_64-NETBSD:#define __DBL_MIN_EXP__ (-1021)
+// X86_64-NETBSD:#define __DBL_MIN__ 2.2250738585072014e-308
+// X86_64-NETBSD:#define __DECIMAL_DIG__ 21
+// X86_64-NETBSD:#define __FLT_DENORM_MIN__ 1.40129846e-45F
+// X86_64-NETBSD:#define __FLT_DIG__ 6
+// X86_64-NETBSD:#define __FLT_EPSILON__ 1.19209290e-7F
+// X86_64-NETBSD:#define __FLT_EVAL_METHOD__ 0
+// X86_64-NETBSD:#define __FLT_HAS_DENORM__ 1
+// X86_64-NETBSD:#define __FLT_HAS_INFINITY__ 1
+// X86_64-NETBSD:#define __FLT_HAS_QUIET_NAN__ 1
+// X86_64-NETBSD:#define __FLT_MANT_DIG__ 24
+// X86_64-NETBSD:#define __FLT_MAX_10_EXP__ 38
+// X86_64-NETBSD:#define __FLT_MAX_EXP__ 128
+// X86_64-NETBSD:#define __FLT_MAX__ 3.40282347e+38F
+// X86_64-NETBSD:#define __FLT_MIN_10_EXP__ (-37)
+// X86_64-NETBSD:#define __FLT_MIN_EXP__ (-125)
+// X86_64-NETBSD:#define __FLT_MIN__ 1.17549435e-38F
+// X86_64-NETBSD:#define __FLT_RADIX__ 2
+// X86_64-NETBSD:#define __INT16_TYPE__ short
+// X86_64-NETBSD:#define __INT32_TYPE__ int
+// X86_64-NETBSD:#define __INT64_C_SUFFIX__ L
+// X86_64-NETBSD:#define __INT64_TYPE__ long int
+// X86_64-NETBSD:#define __INT8_TYPE__ char
+// X86_64-NETBSD:#define __INTMAX_MAX__ 9223372036854775807L
+// X86_64-NETBSD:#define __INTMAX_TYPE__ long int
+// X86_64-NETBSD:#define __INTMAX_WIDTH__ 64
+// X86_64-NETBSD:#define __INTPTR_TYPE__ long int
+// X86_64-NETBSD:#define __INTPTR_WIDTH__ 64
+// X86_64-NETBSD:#define __INT_MAX__ 2147483647
+// X86_64-NETBSD:#define __LDBL_DENORM_MIN__ 3.64519953188247460253e-4951L
+// X86_64-NETBSD:#define __LDBL_DIG__ 18
+// X86_64-NETBSD:#define __LDBL_EPSILON__ 1.08420217248550443401e-19L
+// X86_64-NETBSD:#define __LDBL_HAS_DENORM__ 1
+// X86_64-NETBSD:#define __LDBL_HAS_INFINITY__ 1
+// X86_64-NETBSD:#define __LDBL_HAS_QUIET_NAN__ 1
+// X86_64-NETBSD:#define __LDBL_MANT_DIG__ 64
+// X86_64-NETBSD:#define __LDBL_MAX_10_EXP__ 4932
+// X86_64-NETBSD:#define __LDBL_MAX_EXP__ 16384
+// X86_64-NETBSD:#define __LDBL_MAX__ 1.18973149535723176502e+4932L
+// X86_64-NETBSD:#define __LDBL_MIN_10_EXP__ (-4931)
+// X86_64-NETBSD:#define __LDBL_MIN_EXP__ (-16381)
+// X86_64-NETBSD:#define __LDBL_MIN__ 3.36210314311209350626e-4932L
+// X86_64-NETBSD:#define __LITTLE_ENDIAN__ 1
+// X86_64-NETBSD:#define __LONG_LONG_MAX__ 9223372036854775807LL
+// X86_64-NETBSD:#define __LONG_MAX__ 9223372036854775807L
+// X86_64-NETBSD:#define __LP64__ 1
+// X86_64-NETBSD:#define __MMX__ 1
+// X86_64-NETBSD:#define __NO_MATH_INLINES 1
+// X86_64-NETBSD:#define __POINTER_WIDTH__ 64
+// X86_64-NETBSD:#define __PTRDIFF_TYPE__ long int
+// X86_64-NETBSD:#define __PTRDIFF_WIDTH__ 64
+// X86_64-NETBSD:#define __REGISTER_PREFIX__ 
+// X86_64-NETBSD:#define __SCHAR_MAX__ 127
+// X86_64-NETBSD:#define __SHRT_MAX__ 32767
+// X86_64-NETBSD:#define __SIG_ATOMIC_WIDTH__ 32
+// X86_64-NETBSD:#define __SIZEOF_DOUBLE__ 8
+// X86_64-NETBSD:#define __SIZEOF_FLOAT__ 4
+// X86_64-NETBSD:#define __SIZEOF_INT__ 4
+// X86_64-NETBSD:#define __SIZEOF_LONG_DOUBLE__ 16
+// X86_64-NETBSD:#define __SIZEOF_LONG_LONG__ 8
+// X86_64-NETBSD:#define __SIZEOF_LONG__ 8
+// X86_64-NETBSD:#define __SIZEOF_POINTER__ 8
+// X86_64-NETBSD:#define __SIZEOF_PTRDIFF_T__ 8
+// X86_64-NETBSD:#define __SIZEOF_SHORT__ 2
+// X86_64-NETBSD:#define __SIZEOF_SIZE_T__ 8
+// X86_64-NETBSD:#define __SIZEOF_WCHAR_T__ 4
+// X86_64-NETBSD:#define __SIZEOF_WINT_T__ 4
+// X86_64-NETBSD:#define __SIZE_MAX__ 18446744073709551615UL
+// X86_64-NETBSD:#define __SIZE_TYPE__ long unsigned int
+// X86_64-NETBSD:#define __SIZE_WIDTH__ 64
+// X86_64-NETBSD:#define __SSE2_MATH__ 1
+// X86_64-NETBSD:#define __SSE2__ 1
+// X86_64-NETBSD:#define __SSE_MATH__ 1
+// X86_64-NETBSD:#define __SSE__ 1
+// X86_64-NETBSD:#define __UINTMAX_TYPE__ long unsigned int
+// X86_64-NETBSD:#define __USER_LABEL_PREFIX__
+// X86_64-NETBSD:#define __WCHAR_MAX__ 2147483647
+// X86_64-NETBSD:#define __WCHAR_TYPE__ int
+// X86_64-NETBSD:#define __WCHAR_WIDTH__ 32
+// X86_64-NETBSD:#define __WINT_TYPE__ int
+// X86_64-NETBSD:#define __WINT_WIDTH__ 32
+// X86_64-NETBSD:#define __amd64 1
+// X86_64-NETBSD:#define __amd64__ 1
+// X86_64-NETBSD:#define __x86_64 1
+// X86_64-NETBSD:#define __x86_64__ 1
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc64-none-none < /dev/null | FileCheck -check-prefix SPARCV9 %s
 // SPARCV9:#define __INT64_TYPE__ long int

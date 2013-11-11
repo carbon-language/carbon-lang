@@ -2995,7 +2995,12 @@ public:
       : NetBSDTargetInfo<X86_32TargetInfo>(Triple) {}
 
   virtual unsigned getFloatEvalMethod() const {
-    // NetBSD defaults to "double" rounding
+    unsigned Major, Minor, Micro;
+    getTriple().getOSVersion(Major, Minor, Micro);
+    // New NetBSD uses the default rounding mode.
+    if (Major >= 7 || (Major == 6 && Minor == 99 && Micro >= 26) || Major == 0)
+      return X86_32TargetInfo::getFloatEvalMethod();
+    // NetBSD before 6.99.26 defaults to "double" rounding.
     return 1;
   }
 };
