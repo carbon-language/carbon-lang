@@ -33,7 +33,8 @@
 DEFINE_COMPILERRT_PRIVATE_FUNCTION(__switchu8)
 	ldrb    ip, [lr, #-1]           // get first byte in table
 	cmp     r0, ip                  // compare with index
-	ldrbcc  r0, [lr, r0]            // get indexed byte out of table
+	ite lo
+	ldrblo  r0, [lr, r0]            // get indexed byte out of table
 	ldrbhs  r0, [lr, ip]            // if out of range, use last entry in table
 	add     ip, lr, r0, lsl #1      // compute label = lr + element*2
 	bx      ip                      // jump to computed label

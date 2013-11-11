@@ -73,14 +73,17 @@ LOCAL_LABEL(mainLoop):
 //  this way, we can merge the two branches which is a substantial win for
 //  such a tight loop on current ARM architectures.
     subs    r,      a,  b, lsl i
+    itt hs
     orrhs   q,      q,one, lsl i
     movhs   a,      r
+    it ne
     subsne  i,      i, #1
     bhi     LOCAL_LABEL(mainLoop)
 
 //  Do the final test subtraction and update of quotient (i == 0), as it is
 //  not performed in the main loop.
     subs    r,      a,  b
+    it hs
     orrhs   q,      #1
 
 LOCAL_LABEL(return):

@@ -59,12 +59,14 @@ DEFINE_COMPILERRT_FUNCTION(__nesf2)
     
     // Next, we check if a and b have the same or different signs.  If they have
     // opposite signs, this eor will set the N flag.
+    it ne
     eorsne  r12,    r0, r1
     
     // If a and b are equal (either both zeros or bit identical; again, we're
     // ignoring NaNs for now), this subtract will zero out r0.  If they have the
     // same sign, the flags are updated as they would be for a comparison of the
     // absolute values of a and b.
+    it pl
     subspl  r0,     r2, r3
     
     // If a is smaller in magnitude than b and both have the same sign, place
@@ -77,23 +79,27 @@ DEFINE_COMPILERRT_FUNCTION(__nesf2)
     // still clear from the shift argument in orrs; if a is positive and b
     // negative, this places 0 in r0; if a is negative and b positive, -1 is
     // placed in r0.
+    it lo
     mvnlo   r0,         r1, asr #31
 
     // If a is greater in magnitude than b and both have the same sign, place
     // the sign of b in r0.  Thus, if both are negative and a < b, -1 is placed
     // in r0, which is the desired result.  Conversely, if both are positive
     // and a > b, zero is placed in r0.
+    it hi
     movhi   r0,         r1, asr #31
     
     // If you've been keeping track, at this point r0 contains -1 if a < b and
     // 0 if a >= b.  All that remains to be done is to set it to 1 if a > b.
     // If a == b, then the Z flag is set, so we can get the correct final value
     // into r0 by simply or'ing with 1 if Z is clear.
-	orrne	r0,     r0, #1
+    it ne
+    orrne	r0,     r0, #1
     
     // Finally, we need to deal with NaNs.  If either argument is NaN, replace
     // the value in r0 with 1.
     cmp     r2,         #0xff000000
+    ite ls
     cmpls   r3,         #0xff000000
     movhi   r0,         #1
     bx      lr
@@ -108,12 +114,18 @@ DEFINE_COMPILERRT_FUNCTION(__gtsf2)
     mov     r2,         r0, lsl #1
     mov     r3,         r1, lsl #1
     orrs    r12,    r2, r3, lsr #1
+    it ne
     eorsne  r12,    r0, r1
+    it pl
     subspl  r0,     r2, r3
+    it lo
     mvnlo   r0,         r1, asr #31
+    it hi
     movhi   r0,         r1, asr #31
-	orrne	r0,     r0, #1
+    it ne
+    orrne	r0,     r0, #1
     cmp     r2,         #0xff000000
+    ite ls
     cmpls   r3,         #0xff000000
     movhi   r0,         #-1
     bx      lr
@@ -125,6 +137,7 @@ DEFINE_COMPILERRT_FUNCTION(__unordsf2)
     mov     r3,         r1, lsl #1
     mov     r0,         #0
     cmp     r2,         #0xff000000
+    ite ls
     cmpls   r3,         #0xff000000
     movhi   r0,         #1
     bx      lr
