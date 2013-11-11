@@ -2727,7 +2727,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // preprocessed inputs and configure concludes that -fPIC is not supported.
   Args.ClaimAllArgs(options::OPT_D);
 
-  // Manually translate -O4 to -O3; let clang reject others.
+  // Manually translate -O4 to -O3; let clang fall back on -O3 for others
   if (Arg *A = Args.getLastArg(options::OPT_O_Group)) {
     if (A->getOption().matches(options::OPT_O4)) {
       CmdArgs.push_back("-O3");
