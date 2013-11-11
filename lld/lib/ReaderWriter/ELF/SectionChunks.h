@@ -615,7 +615,6 @@ class SymbolTable : public Section<ELFT> {
     SymbolEntry(const Atom *a, const Elf_Sym &sym,
                 const lld::AtomLayout *layout)
         : _atom(a), _atomLayout(layout), _symbol(sym) {}
-    SymbolEntry() : _atom(nullptr) {}
 
     const Atom *_atom;
     const lld::AtomLayout *_atomLayout;
