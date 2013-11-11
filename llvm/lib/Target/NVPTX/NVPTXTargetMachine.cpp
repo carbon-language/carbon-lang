@@ -126,6 +126,7 @@ void NVPTXPassConfig::addIRPasses() {
   disablePass(&PrologEpilogCodeInserterID);
   disablePass(&MachineCopyPropagationID);
   disablePass(&BranchFolderPassID);
+  disablePass(&TailDuplicateID);
 
   TargetPassConfig::addIRPasses();
   addPass(createGenericToNVVMPass());
