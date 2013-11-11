@@ -65,9 +65,7 @@ let test_transforms () =
            ++ add_strip_dead_prototypes
            ++ add_strip_symbols
            ++ PassManager.run_module m
-           ++ PassManager.dispose);
-
-  DataLayout.dispose td
+           ++ PassManager.dispose)
 
 
 (*===-- Driver ------------------------------------------------------------===*)

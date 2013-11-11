@@ -80,9 +80,7 @@ let test_transforms () =
            ++ PassManager.initialize
            ++ PassManager.run_function fn
            ++ PassManager.finalize
-           ++ PassManager.dispose);
-  
-  DataLayout.dispose td
+           ++ PassManager.dispose)
 
 
 (*===-- Driver ------------------------------------------------------------===*)

@@ -84,11 +84,10 @@ module ExecutionEngine = struct
     = "llvm_ee_free_machine_code"
 
   external target_data: t -> Llvm_target.DataLayout.t
-    = "LLVMGetExecutionEngineTargetData"
+    = "llvm_ee_get_target_data"
   
   (* The following are not bound. Patches are welcome.
   
-  get_target_data: t -> lltargetdata
   add_global_mapping: llvalue -> llgenericvalue -> t -> unit
   clear_all_global_mappings: t -> unit
   update_global_mapping: llvalue -> llgenericvalue -> t -> unit

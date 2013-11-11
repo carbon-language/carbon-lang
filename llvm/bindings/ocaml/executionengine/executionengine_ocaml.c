@@ -324,3 +324,10 @@ CAMLprim value llvm_ee_free_machine_code(LLVMValueRef F,
   return Val_unit;
 }
 
+extern value llvm_alloc_target_data(LLVMTargetDataRef TargetData);
+
+/* ExecutionEngine.t -> Llvm_target.TargetData.t */
+CAMLprim value llvm_ee_get_target_data(LLVMExecutionEngineRef EE) {
+  LLVMTargetDataRef TD = LLVMGetExecutionEngineTargetData(EE);
+  return llvm_alloc_target_data(TD);
+}

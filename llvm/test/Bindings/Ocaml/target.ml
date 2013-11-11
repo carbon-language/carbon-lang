@@ -54,8 +54,7 @@ let test_target_data () =
   assert_equal (preferred_align td sty) 8;
   assert_equal (preferred_align_of_global td (declare_global sty "g" m)) 8;
   assert_equal (element_at_offset td sty (Int64.of_int 1)) 0;
-  assert_equal (offset_of_element td sty 1) (Int64.of_int 4);
-  DataLayout.dispose td
+  assert_equal (offset_of_element td sty 1) (Int64.of_int 4)
 
 
 (*===-- Driver ------------------------------------------------------------===*)

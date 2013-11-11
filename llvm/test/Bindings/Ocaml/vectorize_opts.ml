@@ -49,9 +49,7 @@ let test_transforms () =
            ++ add_loop_vectorize
            ++ add_slp_vectorize
            ++ PassManager.run_module m
-           ++ PassManager.dispose);
-
-  DataLayout.dispose td
+           ++ PassManager.dispose)
 
 
 (*===-- Driver ------------------------------------------------------------===*)

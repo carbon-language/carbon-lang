@@ -34,10 +34,6 @@ module DataLayout : sig
   (** [as_string td] is the string representation of the target data [td].
       See the constructor llvm::DataLayout::DataLayout. *)
   external as_string : t -> string = "llvm_targetdata_as_string"
-
-  (** Deallocates a DataLayout.
-      See the destructor llvm::DataLayout::~DataLayout. *)
-  external dispose : t -> unit = "llvm_targetdata_dispose"
 end
 
 (** Returns the byte order of a target, either LLVMBigEndian or
@@ -51,7 +47,7 @@ external pointer_size : DataLayout.t -> int = "llvm_pointer_size"
 
 (** Returns the integer type that is the same size as a pointer on a target.
     See the method llvm::DataLayout::getIntPtrType. *)
-external intptr_type : DataLayout.t -> Llvm.lltype = "LLVMIntPtrType"
+external intptr_type : DataLayout.t -> Llvm.lltype = "llvm_intptr_type"
 
 (** Computes the size of a type in bits for a target.
     See the method llvm::DataLayout::getTypeSizeInBits. *)
