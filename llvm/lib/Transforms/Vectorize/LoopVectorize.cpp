@@ -965,15 +965,12 @@ struct LoopVectorize : public LoopPass {
     unsigned UF = CM.selectUnrollFactor(OptForSize, Hints.Unroll, VF.Width,
                                         VF.Cost);
 
-    if (VF.Width == 1) {
-      DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
-    }
-
     DEBUG(dbgs() << "LV: Found a vectorizable loop ("<< VF.Width << ") in "<<
           F->getParent()->getModuleIdentifier() << '\n');
     DEBUG(dbgs() << "LV: Unroll Factor is " << UF << '\n');
 
     if (VF.Width == 1) {
+      DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
       if (UF == 1)
         return false;
       // We decided not to vectorize, but we may want to unroll.
