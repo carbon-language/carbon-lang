@@ -1546,6 +1546,8 @@ let Uses = [FPSCR] in {
                               "vmrs", "\t$Rt, mvfr0", []>;
   def VMRS_MVFR1 : MovFromVFP<0b0110 /* mvfr1 */, (outs GPR:$Rt), (ins),
                               "vmrs", "\t$Rt, mvfr1", []>;
+  def VMRS_MVFR2 : MovFromVFP<0b0101 /* mvfr2 */, (outs GPR:$Rt), (ins),
+                              "vmrs", "\t$Rt, mvfr2", []>, Requires<[HasFPARMv8]>;
   def VMRS_FPINST : MovFromVFP<0b1001 /* fpinst */, (outs GPR:$Rt), (ins),
                               "vmrs", "\t$Rt, fpinst", []>;
   def VMRS_FPINST2 : MovFromVFP<0b1010 /* fpinst2 */, (outs GPR:$Rt), (ins),

@@ -122,3 +122,8 @@
 @ CHECK: vrintm.f64 d3, d4     @ encoding: [0x44,0x3b,0xbb,0xfe]
   vrintm.f32 s12, s1
 @ CHECK: vrintm.f32 s12, s1    @ encoding: [0x60,0x6a,0xbb,0xfe]
+
+@ MVFR2
+
+  vmrs sp, mvfr2
+@ CHECK: vmrs sp, mvfr2        @ encoding: [0x10,0xda,0xf5,0xee]
