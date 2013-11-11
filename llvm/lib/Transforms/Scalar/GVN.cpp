@@ -21,6 +21,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CFG.h"
@@ -507,7 +508,9 @@ namespace {
     enum ValType {
       SimpleVal,  // A simple offsetted value that is accessed.
       LoadVal,    // A value produced by a load.
-      MemIntrin   // A memory intrinsic which is loaded from.
+      MemIntrin,  // A memory intrinsic which is loaded from.
+      UndefVal    // A UndefValue representing a value from dead block (which
+                  // is not yet physically removed from the CFG). 
     };
   
     /// V - The value that is live out of the block.
@@ -545,10 +548,20 @@ namespace {
       Res.Offset = Offset;
       return Res;
     }
-  
+
+    static AvailableValueInBlock getUndef(BasicBlock *BB) {
+      AvailableValueInBlock Res;
+      Res.BB = BB;
+      Res.Val.setPointer(0);
+      Res.Val.setInt(UndefVal);
+      Res.Offset = 0;
+      return Res;
+    }
+
     bool isSimpleValue() const { return Val.getInt() == SimpleVal; }
     bool isCoercedLoadValue() const { return Val.getInt() == LoadVal; }
     bool isMemIntrinValue() const { return Val.getInt() == MemIntrin; }
+    bool isUndefValue() const { return Val.getInt() == UndefVal; }
   
     Value *getSimpleValue() const {
       assert(isSimpleValue() && "Wrong accessor");
@@ -576,6 +589,7 @@ namespace {
     DominatorTree *DT;
     const DataLayout *TD;
     const TargetLibraryInfo *TLI;
+    SetVector<BasicBlock *> DeadBlocks;
 
     ValueTable VN;
 
@@ -698,6 +712,9 @@ namespace {
     unsigned replaceAllDominatedUsesWith(Value *From, Value *To,
                                          const BasicBlockEdge &Root);
     bool propagateEquality(Value *LHS, Value *RHS, const BasicBlockEdge &Root);
+    bool processFoldableCondBr(BranchInst *BI);
+    void addDeadBlock(BasicBlock *BB);
+    void assignValNumForDeadCode();
   };
 
   char GVN::ID = 0;
@@ -1255,8 +1272,10 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
   // just use the dominating value directly.
   if (ValuesPerBlock.size() == 1 &&
       gvn.getDominatorTree().properlyDominates(ValuesPerBlock[0].BB,
-                                               LI->getParent()))
+                                               LI->getParent())) {
+    assert(!ValuesPerBlock[0].isUndefValue() && "Dead BB dominate this block");
     return ValuesPerBlock[0].MaterializeAdjustedValue(LI->getType(), gvn);
+  }
 
   // Otherwise, we have to construct SSA form.
   SmallVector<PHINode*, 8> NewPHIs;
@@ -1326,7 +1345,7 @@ Value *AvailableValueInBlock::MaterializeAdjustedValue(Type *LoadTy, GVN &gvn) c
                    << *getCoercedLoadValue() << '\n'
                    << *Res << '\n' << "\n\n\n");
     }
-  } else {
+  } else if (isMemIntrinValue()) {
     const DataLayout *TD = gvn.getDataLayout();
     assert(TD && "Need target data to handle type mismatch case");
     Res = GetMemInstValueForLoad(getMemIntrinValue(), Offset,
@@ -1334,6 +1353,10 @@ Value *AvailableValueInBlock::MaterializeAdjustedValue(Type *LoadTy, GVN &gvn) c
     DEBUG(dbgs() << "GVN COERCED NONLOCAL MEM INTRIN:\nOffset: " << Offset
                  << "  " << *getMemIntrinValue() << '\n'
                  << *Res << '\n' << "\n\n\n");
+  } else {
+    assert(isUndefValue() && "Should be UndefVal");
+    DEBUG(dbgs() << "GVN COERCED NONLOCAL Undef:\n";);
+    return UndefValue::get(LoadTy);
   }
   return Res;
 }
@@ -1356,6 +1379,13 @@ void GVN::AnalyzeLoadAvailability(LoadInst *LI, LoadDepVect &Deps,
   for (unsigned i = 0, e = NumDeps; i != e; ++i) {
     BasicBlock *DepBB = Deps[i].getBB();
     MemDepResult DepInfo = Deps[i].getResult();
+
+    if (DeadBlocks.count(DepBB)) {
+      // Dead dependent mem-op disguise as a load evaluating the same value
+      // as the load in question.
+      ValuesPerBlock.push_back(AvailableValueInBlock::getUndef(DepBB));
+      continue;
+    }
 
     if (!DepInfo.isDef() && !DepInfo.isClobber()) {
       UnavailableBlocks.push_back(DepBB);
@@ -2193,11 +2223,13 @@ bool GVN::processInstruction(Instruction *I) {
   // For conditional branches, we can perform simple conditional propagation on
   // the condition value itself.
   if (BranchInst *BI = dyn_cast<BranchInst>(I)) {
-    if (!BI->isConditional() || isa<Constant>(BI->getCondition()))
+    if (!BI->isConditional())
       return false;
 
-    Value *BranchCond = BI->getCondition();
+    if (isa<Constant>(BI->getCondition()))
+      return processFoldableCondBr(BI);
 
+    Value *BranchCond = BI->getCondition();
     BasicBlock *TrueSucc = BI->getSuccessor(0);
     BasicBlock *FalseSucc = BI->getSuccessor(1);
     // Avoid multiple edges early.
@@ -2314,6 +2346,9 @@ bool GVN::runOnFunction(Function& F) {
   }
 
   if (EnablePRE) {
+    // Fabricate val-num for dead-code in order to suppress assertion in
+    // performPRE().
+    assignValNumForDeadCode();
     bool PREChanged = true;
     while (PREChanged) {
       PREChanged = performPRE(F);
@@ -2327,6 +2362,9 @@ bool GVN::runOnFunction(Function& F) {
   // Actually, when this happens, we should just fully integrate PRE into GVN.
 
   cleanupGlobalSets();
+  // Do not cleanup DeadBlocks in cleanupGlobalSets() as it's called for each
+  // iteration. 
+  DeadBlocks.clear();
 
   return Changed;
 }
@@ -2337,6 +2375,9 @@ bool GVN::processBlock(BasicBlock *BB) {
   // (and incrementing BI before processing an instruction).
   assert(InstrsToErase.empty() &&
          "We expect InstrsToErase to be empty across iterations");
+  if (DeadBlocks.count(BB))
+    return false;
+
   bool ChangedFunction = false;
 
   for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
@@ -2627,6 +2668,134 @@ void GVN::verifyRemoved(const Instruction *Inst) const {
     while (Node->Next) {
       Node = Node->Next;
       assert(Node->Val != Inst && "Inst still in value numbering scope!");
+    }
+  }
+}
+
+// BB is declared dead, which implied other blocks become dead as well. This
+// function is to add all these blocks to "DeadBlocks". For the dead blocks'
+// live successors, update their phi nodes by replacing the operands
+// corresponding to dead blocks with UndefVal.
+//
+void GVN::addDeadBlock(BasicBlock *BB) {
+  SmallVector<BasicBlock *, 4> NewDead;
+  SmallSetVector<BasicBlock *, 4> DF;
+
+  NewDead.push_back(BB);
+  while (!NewDead.empty()) {
+    BasicBlock *D = NewDead.pop_back_val();
+    if (DeadBlocks.count(D))
+      continue;
+
+    // All blocks dominated by D are dead.
+    SmallVector<BasicBlock *, 8> Dom;
+    DT->getDescendants(D, Dom);
+    DeadBlocks.insert(Dom.begin(), Dom.end());
+    
+    // Figure out the dominance-frontier(D).
+    for (SmallVectorImpl<BasicBlock *>::iterator I = Dom.begin(),
+           E = Dom.end(); I != E; I++) {
+      BasicBlock *B = *I;
+      for (succ_iterator SI = succ_begin(B), SE = succ_end(B); SI != SE; SI++) {
+        BasicBlock *S = *SI;
+        if (DeadBlocks.count(S))
+          continue;
+
+        bool AllPredDead = true;
+        for (pred_iterator PI = pred_begin(S), PE = pred_end(S); PI != PE; PI++)
+          if (!DeadBlocks.count(*PI)) {
+            AllPredDead = false;
+            break;
+          }
+
+        if (!AllPredDead) {
+          // S could be proved dead later on. That is why we don't update phi
+          // operands at this moment.
+          DF.insert(S);
+        } else {
+          // While S is not dominated by D, it is dead by now. This could take
+          // place if S already have a dead predecessor before D is declared
+          // dead.
+          NewDead.push_back(S);
+        }
+      }
+    }
+  }
+
+  // For the dead blocks' live successors, update their phi nodes by replacing
+  // the operands corresponding to dead blocks with UndefVal.
+  for(SmallSetVector<BasicBlock *, 4>::iterator I = DF.begin(), E = DF.end();
+        I != E; I++) {
+    BasicBlock *B = *I;
+    if (DeadBlocks.count(B))
+      continue;
+
+    for (pred_iterator PI = pred_begin(B), PE = pred_end(B); PI != PE; PI++) {
+      BasicBlock *P = *PI;
+
+      if (!DeadBlocks.count(P))
+        continue;
+
+      if (isCriticalEdge(P->getTerminator(), GetSuccessorNumber(P, B))) {
+        if (BasicBlock *S = splitCriticalEdges(P, B))
+          DeadBlocks.insert(P = S);
+      }
+
+      for (BasicBlock::iterator II = B->begin(); isa<PHINode>(II); ++II) {
+        PHINode &Phi = cast<PHINode>(*II);
+        Phi.setIncomingValue(Phi.getBasicBlockIndex(P),
+                             UndefValue::get(Phi.getType()));
+      }
+    }
+  }
+}
+
+// If the given branch is recognized as a foldable branch (i.e. conditional
+// branch with constant condition), it will perform following analyses and
+// transformation.
+//  1) If the dead out-coming edge is a critical-edge, split it. Let 
+//     R be the target of the dead out-coming edge.
+//  1) Identify the set of dead blocks implied by the branch's dead outcoming
+//     edge. The result of this step will be {X| X is dominated by R}
+//  2) Identify those blocks which haves at least one dead prodecessor. The
+//     result of this step will be dominance-frontier(R).
+//  3) Update the PHIs in DF(R) by replacing the operands corresponding to 
+//     dead blocks with "UndefVal" in an hope these PHIs will optimized away.
+//
+// Return true iff *NEW* dead code are found.
+bool GVN::processFoldableCondBr(BranchInst *BI) {
+  if (!BI || BI->isUnconditional())
+    return false;
+
+  ConstantInt *Cond = dyn_cast<ConstantInt>(BI->getCondition());
+  if (!Cond)
+    return false;
+
+  BasicBlock *DeadRoot = Cond->getZExtValue() ? 
+                         BI->getSuccessor(1) : BI->getSuccessor(0);
+  if (DeadBlocks.count(DeadRoot))
+    return false;
+
+  if (!DeadRoot->getSinglePredecessor())
+    DeadRoot = splitCriticalEdges(BI->getParent(), DeadRoot);
+
+  addDeadBlock(DeadRoot);
+  return true;
+}
+
+// performPRE() will trigger assert if it come across an instruciton without
+// associated val-num. As it normally has far more live instructions than dead
+// instructions, it makes more sense just to "fabricate" a val-number for the
+// dead code than checking if instruction involved is dead or not.
+void GVN::assignValNumForDeadCode() {
+  for (SetVector<BasicBlock *>::iterator I = DeadBlocks.begin(),
+        E = DeadBlocks.end(); I != E; I++) {
+    BasicBlock *BB = *I;
+    for (BasicBlock::iterator II = BB->begin(), EE = BB->end();
+          II != EE; II++) {
+      Instruction *Inst = &*II;
+      unsigned ValNum = VN.lookup_or_add(Inst);
+      addToLeaderTable(ValNum, Inst, BB);
     }
   }
 }
