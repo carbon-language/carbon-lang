@@ -4647,9 +4647,9 @@ class MipsABIInfo : public ABIInfo {
   llvm::Type* returnAggregateInRegs(QualType RetTy, uint64_t Size) const;
   llvm::Type* getPaddingType(uint64_t Align, uint64_t Offset) const;
 public:
-  MipsABIInfo(CodeGenTypes &CGT, bool _IsO32, bool HasFP64) :
+  MipsABIInfo(CodeGenTypes &CGT, bool _IsO32) :
     ABIInfo(CGT), IsO32(_IsO32), MinABIStackAlignInBytes(IsO32 ? 4 : 8),
-    StackAlignInBytes(IsO32 && !HasFP64 ? 8 : 16) {}
+    StackAlignInBytes(IsO32 ? 8 : 16) {}
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType RetTy, uint64_t &Offset) const;
@@ -4661,8 +4661,8 @@ public:
 class MIPSTargetCodeGenInfo : public TargetCodeGenInfo {
   unsigned SizeOfUnwindException;
 public:
-  MIPSTargetCodeGenInfo(CodeGenTypes &CGT, bool IsO32, const TargetInfo &Info)
-    : TargetCodeGenInfo(new MipsABIInfo(CGT, IsO32, Info.hasFeature("fp64"))),
+  MIPSTargetCodeGenInfo(CodeGenTypes &CGT, bool IsO32)
+    : TargetCodeGenInfo(new MipsABIInfo(CGT, IsO32)),
       SizeOfUnwindException(IsO32 ? 24 : 32) {}
 
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &CGM) const {
@@ -5507,12 +5507,12 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     return *(TheTargetCodeGenInfo = new PNaClTargetCodeGenInfo(Types));
   case llvm::Triple::mips:
   case llvm::Triple::mipsel:
-    return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo(Types, true,
-                                                              getTarget()));
+    return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo(Types, true));
+
   case llvm::Triple::mips64:
   case llvm::Triple::mips64el:
-    return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo(Types, false,
-                                                              getTarget()));
+    return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo(Types, false));
+
   case llvm::Triple::aarch64:
     return *(TheTargetCodeGenInfo = new AArch64TargetCodeGenInfo(Types));
 

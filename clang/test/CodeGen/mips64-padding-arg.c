@@ -1,6 +1,6 @@
 // RUN: %clang -target mipsel-unknown-linux -O3 -S -o - -emit-llvm %s | FileCheck %s -check-prefix=O32
 // RUN: %clang -target mips64el-unknown-linux -O3 -S -mabi=n64 -o - -emit-llvm %s | FileCheck %s -check-prefix=N64
-// RUN: %clang -target mipsel-unknown-linux -mfp64 -O3 -S -o - -emit-llvm %s | FileCheck %s -check-prefix=O32-FP64
+// RUN: %clang -target mipsel-unknown-linux -mfp64 -O3 -S -o - -emit-llvm %s | FileCheck %s -check-prefix=O32
 
 typedef struct {
   double d;
@@ -56,8 +56,6 @@ void foo7(float a0, double a1) {
 
 // O32-LABEL: define void @foo9()
 // O32: declare void @foo10(i32, i32
-// O32-FP64-LABEL: define void @foo9()
-// O32-FP64: declare void @foo10(i32, i96
 
 typedef struct __attribute__((aligned(16))) {
   int a;
