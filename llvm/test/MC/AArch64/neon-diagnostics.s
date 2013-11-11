@@ -5090,6 +5090,42 @@
 // CHECK-ERROR:                   ^
 
 //----------------------------------------------------------------------
+// Scalar Floating-point Convert To Signed Fixed-point (Immediate)
+//----------------------------------------------------------------------
+
+    fcvtzs s21, s12, #0
+    fcvtzs d21, d12, #65
+    fcvtzs s21, d12, #1
+
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:        fcvtzs s21, s12, #0
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:        fcvtzs d21, d12, #65
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        fcvtzs s21, d12, #1
+// CHECK-ERROR:                    ^
+
+//----------------------------------------------------------------------
+// Scalar Floating-point Convert To Unsigned Fixed-point (Immediate)
+//----------------------------------------------------------------------
+
+    fcvtzu s21, s12, #33
+    fcvtzu d21, d12, #0
+    fcvtzu s21, d12, #1
+
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:        fcvtzu s21, s12, #33
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:        fcvtzu d21, d12, #0
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        fcvtzu s21, d12, #1
+// CHECK-ERROR:                    ^
+
+//----------------------------------------------------------------------
 // Scalar Unsigned Saturating Extract Narrow
 //----------------------------------------------------------------------
 

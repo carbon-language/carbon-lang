@@ -272,6 +272,18 @@ def int_aarch64_neon_vcvtf32_n_u32 :
 def int_aarch64_neon_vcvtf64_n_u64 :
   Intrinsic<[llvm_v1f64_ty], [llvm_v1i64_ty, llvm_i32_ty], [IntrNoMem]>;
 
+// Scalar Floating-point Convert To Signed Fixed-point (Immediate)
+def int_aarch64_neon_vcvts_n_s32_f32 :
+  Intrinsic<[llvm_v1i32_ty], [llvm_v1f32_ty, llvm_i32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vcvtd_n_s64_f64 :
+  Intrinsic<[llvm_v1i64_ty], [llvm_v1f64_ty, llvm_i32_ty], [IntrNoMem]>;
+
+// Scalar Floating-point Convert To Unsigned Fixed-point (Immediate)
+def int_aarch64_neon_vcvts_n_u32_f32 :
+  Intrinsic<[llvm_v1i32_ty], [llvm_v1f32_ty, llvm_i32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vcvtd_n_u64_f64 :
+  Intrinsic<[llvm_v1i64_ty], [llvm_v1f64_ty, llvm_i32_ty], [IntrNoMem]>;
+
 class Neon_SHA_Intrinsic
   : Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v1i32_ty, llvm_v4i32_ty],
               [IntrNoMem]>;

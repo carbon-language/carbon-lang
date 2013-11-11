@@ -41,3 +41,23 @@
 
 // CHECK: ucvtf s22, s13, #32  // encoding: [0xb6,0xe5,0x20,0x7f]
 // CHECK: ucvtf d21, d14, #64  // encoding: [0xd5,0xe5,0x40,0x7f]
+
+//----------------------------------------------------------------------
+// Scalar Floating-point Convert To Signed Fixed-point (Immediate)
+//----------------------------------------------------------------------
+
+    fcvtzs s21, s12, #1
+    fcvtzs d21, d12, #1
+
+// CHECK: fcvtzs s21, s12, #1  // encoding: [0x95,0xfd,0x3f,0x5f]
+// CHECK: fcvtzs d21, d12, #1  // encoding: [0x95,0xfd,0x7f,0x5f]
+        
+//----------------------------------------------------------------------
+// Scalar Floating-point Convert To Unsigned Fixed-point (Immediate)
+//----------------------------------------------------------------------
+
+    fcvtzu s21, s12, #1
+    fcvtzu d21, d12, #1
+
+// CHECK: fcvtzu s21, s12, #1  // encoding: [0x95,0xfd,0x3f,0x7f]
+// CHECK: fcvtzu d21, d12, #1  // encoding: [0x95,0xfd,0x7f,0x7f]
