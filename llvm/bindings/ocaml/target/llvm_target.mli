@@ -50,6 +50,18 @@ external pointer_size : DataLayout.t -> int = "llvm_pointer_size"
 external intptr_type : DataLayout.t -> Llvm.llcontext -> Llvm.lltype
                      = "llvm_intptr_type"
 
+(** Returns the pointer size in bytes for a target in a given address space.
+    See the method llvm::DataLayout::getPointerSize. *)
+external qualified_pointer_size : DataLayout.t -> int -> int
+                                = "llvm_qualified_pointer_size"
+
+(** Returns the integer type that is the same size as a pointer on a target
+    in a given address space.
+    See the method llvm::DataLayout::getIntPtrType. *)
+external qualified_intptr_type : DataLayout.t -> Llvm.llcontext ->
+                                 int -> Llvm.lltype
+                               = "llvm_qualified_intptr_type"
+
 (** Computes the size of a type in bits for a target.
     See the method llvm::DataLayout::getTypeSizeInBits. *)
 external size_in_bits : DataLayout.t -> Llvm.lltype -> Int64.t

@@ -26,6 +26,11 @@ external byte_order : DataLayout.t -> Endian.t = "llvm_byte_order"
 external pointer_size : DataLayout.t -> int = "llvm_pointer_size"
 external intptr_type : DataLayout.t -> Llvm.llcontext -> Llvm.lltype
                      = "llvm_intptr_type"
+external qualified_pointer_size : DataLayout.t -> int -> int
+                                = "llvm_qualified_pointer_size"
+external qualified_intptr_type : DataLayout.t -> Llvm.llcontext ->
+                                 int -> Llvm.lltype
+                               = "llvm_qualified_intptr_type"
 external size_in_bits : DataLayout.t -> Llvm.lltype -> Int64.t
                       = "llvm_size_in_bits"
 external store_size : DataLayout.t -> Llvm.lltype -> Int64.t = "llvm_store_size"
