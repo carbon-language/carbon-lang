@@ -269,18 +269,6 @@ public:
     return twine.str();
   }
 
-  /// \brief Memory buffer pointed by the file.
-  MemoryBuffer &getBuffer() const {
-    assert(_buffer);
-    return *_buffer;
-  }
-
-  /// \brief Return the memory buffer and transfer ownership.
-  std::unique_ptr<MemoryBuffer> takeBuffer() {
-    assert(_buffer);
-    return std::move(_buffer);
-  }
-
   /// \brief Get the list of files
   range<InputGraph::FileIterT> files() {
     return make_range(_files.begin(), _files.end());
