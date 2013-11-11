@@ -1838,7 +1838,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   SpillPlacer = &getAnalysis<SpillPlacement>();
   DebugVars = &getAnalysis<LiveDebugVariables>();
 
-  calculateSpillWeights(*LIS, mf, *Loops, *MBFI);
+  calculateSpillWeightsAndHints(*LIS, mf, *Loops, *MBFI);
 
   DEBUG(LIS->dump());
 

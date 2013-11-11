@@ -278,9 +278,9 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
                      getAnalysis<LiveIntervals>(),
                      getAnalysis<LiveRegMatrix>());
 
-  calculateSpillWeights(*LIS, *MF,
-                        getAnalysis<MachineLoopInfo>(),
-                        getAnalysis<MachineBlockFrequencyInfo>());
+  calculateSpillWeightsAndHints(*LIS, *MF,
+                                getAnalysis<MachineLoopInfo>(),
+                                getAnalysis<MachineBlockFrequencyInfo>());
 
   SpillerInstance.reset(createInlineSpiller(*this, *MF, *VRM));
 

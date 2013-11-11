@@ -414,6 +414,6 @@ LiveRangeEdit::calculateRegClassAndHint(MachineFunction &MF,
     if (MRI.recomputeRegClass(LI.reg, MF.getTarget()))
       DEBUG(dbgs() << "Inflated " << PrintReg(LI.reg) << " to "
                    << MRI.getRegClass(LI.reg)->getName() << '\n');
-    VRAI.CalculateWeightAndHint(LI);
+    VRAI.calculateSpillWeightAndHint(LI);
   }
 }

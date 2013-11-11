@@ -22,7 +22,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
 
-void llvm::calculateSpillWeights(LiveIntervals &LIS,
+void llvm::calculateSpillWeightsAndHints(LiveIntervals &LIS,
                            MachineFunction &MF,
                            const MachineLoopInfo &MLI,
                            const MachineBlockFrequencyInfo &MBFI) {
@@ -35,7 +35,7 @@ void llvm::calculateSpillWeights(LiveIntervals &LIS,
     unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
     if (MRI.reg_nodbg_empty(Reg))
       continue;
-    VRAI.CalculateWeightAndHint(LIS.getInterval(Reg));
+    VRAI.calculateSpillWeightAndHint(LIS.getInterval(Reg));
   }
 }
 
@@ -92,7 +92,7 @@ static bool isRematerializable(const LiveInterval &LI,
 }
 
 void
-VirtRegAuxInfo::CalculateWeightAndHint(LiveInterval &li) {
+VirtRegAuxInfo::calculateSpillWeightAndHint(LiveInterval &li) {
   MachineRegisterInfo &mri = MF.getRegInfo();
   const TargetRegisterInfo &tri = *MF.getTarget().getRegisterInfo();
   MachineBasicBlock *mbb = 0;

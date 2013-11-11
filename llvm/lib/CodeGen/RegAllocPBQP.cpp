@@ -549,7 +549,8 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
   lss = &getAnalysis<LiveStacks>();
   mbfi = &getAnalysis<MachineBlockFrequencyInfo>();
 
-  calculateSpillWeights(*lis, MF, getAnalysis<MachineLoopInfo>(), *mbfi);
+  calculateSpillWeightsAndHints(*lis, MF, getAnalysis<MachineLoopInfo>(),
+                                *mbfi);
 
   vrm = &getAnalysis<VirtRegMap>();
   spiller.reset(createInlineSpiller(*this, MF, *vrm));

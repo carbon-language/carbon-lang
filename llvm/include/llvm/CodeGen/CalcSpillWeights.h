@@ -55,16 +55,14 @@ namespace llvm {
         : MF(mf), LIS(lis), Loops(loops), MBFI(mbfi) {}
 
     /// \brief (re)compute li's spill weight and allocation hint.
-    void CalculateWeightAndHint(LiveInterval &li);
+    void calculateSpillWeightAndHint(LiveInterval &li);
   };
 
   /// \brief Compute spill weights and allocation hints for all virtual register
   /// live intervals.
-  void calculateSpillWeights(LiveIntervals &LIS,
-                             MachineFunction &MF,
-                             const MachineLoopInfo &MLI,
-                             const MachineBlockFrequencyInfo &MBFI);
-
+  void calculateSpillWeightsAndHints(LiveIntervals &LIS, MachineFunction &MF,
+                                     const MachineLoopInfo &MLI,
+                                     const MachineBlockFrequencyInfo &MBFI);
 }
 
 #endif // LLVM_CODEGEN_CALCSPILLWEIGHTS_H
