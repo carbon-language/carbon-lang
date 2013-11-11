@@ -18,9 +18,16 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOpcodes.h"
 using namespace llvm;
+
+// FIXME: Once the integrated assembler supports full register names, tie this
+// to the verbose-asm setting.
+static cl::opt<bool>
+FullRegNames("ppc-asm-full-reg-names", cl::Hidden, cl::init(false),
+             cl::desc("Use full register names when printing assembly"));
 
 #include "PPCGenAsmWriter.inc"
 
@@ -297,6 +304,9 @@ void PPCInstPrinter::printTLSCall(const MCInst *MI, unsigned OpNo,
 /// stripRegisterPrefix - This method strips the character prefix from a
 /// register name so that only the number is left.  Used by for linux asm.
 static const char *stripRegisterPrefix(const char *RegName) {
+  if (FullRegNames)
+    return RegName;
+
   switch (RegName[0]) {
   case 'r':
   case 'f':
