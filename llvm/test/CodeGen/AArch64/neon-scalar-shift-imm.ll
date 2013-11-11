@@ -266,47 +266,51 @@ entry:
 
 declare <1 x i64> @llvm.aarch64.neon.vqshlus.n.v1i64(<1 x i64>, i32)
 
-define i64 @test_vsrid_n_s64(i64 %a) {
+define i64 @test_vsrid_n_s64(i64 %a, i64 %b) {
 ; CHECK: test_vsrid_n_s64
 ; CHECK: sri {{d[0-9]+}}, {{d[0-9]+}}, #63
 entry:
   %vsri = insertelement <1 x i64> undef, i64 %a, i32 0
-  %vsri1 = call <1 x i64> @llvm.aarch64.neon.vsrid.n(<1 x i64> %vsri, i32 63)
-  %0 = extractelement <1 x i64> %vsri1, i32 0
+  %vsri1 = insertelement <1 x i64> undef, i64 %b, i32 0
+  %vsri2 = call <1 x i64> @llvm.aarch64.neon.vsrid.n(<1 x i64> %vsri, <1 x i64> %vsri1, i32 63)
+  %0 = extractelement <1 x i64> %vsri2, i32 0
   ret i64 %0
 }
 
-declare <1 x i64> @llvm.aarch64.neon.vsrid.n(<1 x i64>, i32)
+declare <1 x i64> @llvm.aarch64.neon.vsrid.n(<1 x i64>, <1 x i64>, i32)
 
-define i64 @test_vsrid_n_u64(i64 %a) {
+define i64 @test_vsrid_n_u64(i64 %a, i64 %b) {
 ; CHECK: test_vsrid_n_u64
 ; CHECK: sri {{d[0-9]+}}, {{d[0-9]+}}, #63
 entry:
   %vsri = insertelement <1 x i64> undef, i64 %a, i32 0
-  %vsri1 = call <1 x i64> @llvm.aarch64.neon.vsrid.n(<1 x i64> %vsri, i32 63)
-  %0 = extractelement <1 x i64> %vsri1, i32 0
+  %vsri1 = insertelement <1 x i64> undef, i64 %b, i32 0
+  %vsri2 = call <1 x i64> @llvm.aarch64.neon.vsrid.n(<1 x i64> %vsri, <1 x i64> %vsri1, i32 63)
+  %0 = extractelement <1 x i64> %vsri2, i32 0
   ret i64 %0
 }
 
-define i64 @test_vslid_n_s64(i64 %a) {
+define i64 @test_vslid_n_s64(i64 %a, i64 %b) {
 ; CHECK: test_vslid_n_s64
 ; CHECK: sli {{d[0-9]+}}, {{d[0-9]+}}, #63
 entry:
   %vsli = insertelement <1 x i64> undef, i64 %a, i32 0
-  %vsli1 = call <1 x i64> @llvm.aarch64.neon.vslid.n(<1 x i64> %vsli, i32 63)
-  %0 = extractelement <1 x i64> %vsli1, i32 0
+  %vsli1 = insertelement <1 x i64> undef, i64 %b, i32 0
+  %vsli2 = call <1 x i64> @llvm.aarch64.neon.vslid.n(<1 x i64> %vsli, <1 x i64> %vsli1, i32 63)
+  %0 = extractelement <1 x i64> %vsli2, i32 0
   ret i64 %0
 }
 
-declare <1 x i64> @llvm.aarch64.neon.vslid.n(<1 x i64>, i32)
+declare <1 x i64> @llvm.aarch64.neon.vslid.n(<1 x i64>, <1 x i64>, i32)
 
-define i64 @test_vslid_n_u64(i64 %a) {
+define i64 @test_vslid_n_u64(i64 %a, i64 %b) {
 ; CHECK: test_vslid_n_u64
 ; CHECK: sli {{d[0-9]+}}, {{d[0-9]+}}, #63
 entry:
   %vsli = insertelement <1 x i64> undef, i64 %a, i32 0
-  %vsli1 = call <1 x i64> @llvm.aarch64.neon.vslid.n(<1 x i64> %vsli, i32 63)
-  %0 = extractelement <1 x i64> %vsli1, i32 0
+  %vsli1 = insertelement <1 x i64> undef, i64 %b, i32 0
+  %vsli2 = call <1 x i64> @llvm.aarch64.neon.vslid.n(<1 x i64> %vsli, <1 x i64> %vsli1, i32 63)
+  %0 = extractelement <1 x i64> %vsli2, i32 0
   ret i64 %0
 }
 

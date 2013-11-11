@@ -4017,9 +4017,20 @@ multiclass NeonI_ScalarShiftLeftImm_BHSD_size<bit u, bits<5> opcode,
   }
 }
 
-class NeonI_ScalarShiftImm_accum_D_size<bit u, bits<5> opcode, string asmop>
+class NeonI_ScalarShiftRightImm_accum_D_size<bit u, bits<5> opcode, string asmop>
   : NeonI_ScalarShiftImm<u, opcode,
                          (outs FPR64:$Rd), (ins FPR64:$Src, FPR64:$Rn, shr_imm64:$Imm),
+                         !strconcat(asmop, "\t$Rd, $Rn, $Imm"),
+                         [], NoItinerary> {
+    bits<6> Imm;
+    let Inst{22} = 0b1; // immh:immb = 1xxxxxx
+    let Inst{21-16} = Imm;
+    let Constraints = "$Src = $Rd";
+}
+
+class NeonI_ScalarShiftLeftImm_accum_D_size<bit u, bits<5> opcode, string asmop>
+  : NeonI_ScalarShiftImm<u, opcode,
+                         (outs FPR64:$Rd), (ins FPR64:$Src, FPR64:$Rn, shl_imm64:$Imm),
                          !strconcat(asmop, "\t$Rd, $Rn, $Imm"),
                          [], NoItinerary> {
     bits<6> Imm;
@@ -4092,7 +4103,7 @@ multiclass Neon_ScalarShiftImm_BHSD_size_patterns<SDPatternOperator opnode,
 }
 
 class Neon_ScalarShiftImm_accum_D_size_patterns<SDPatternOperator opnode,
-                                          Instruction INSTD>
+                                                Instruction INSTD>
   : Pat<(v1i64 (opnode (v1i64 FPR64:$Src), (v1i64 FPR64:$Rn), (i32 imm:$Imm))),
         (INSTD FPR64:$Src, FPR64:$Rn, imm:$Imm)>;
 
@@ -4146,19 +4157,19 @@ defm URSHR : NeonI_ScalarShiftRightImm_D_size<0b1, 0b00100, "urshr">;
 defm : Neon_ScalarShiftImm_D_size_patterns<int_aarch64_neon_vrshrdu_n, URSHRddi>;
 
 // Scalar Signed Shift Right and Accumulate (Immediate)
-def SSRA : NeonI_ScalarShiftImm_accum_D_size<0b0, 0b00010, "ssra">;
+def SSRA : NeonI_ScalarShiftRightImm_accum_D_size<0b0, 0b00010, "ssra">;
 def : Neon_ScalarShiftImm_accum_D_size_patterns<int_aarch64_neon_vsrads_n, SSRA>;
 
 // Scalar Unsigned Shift Right and Accumulate (Immediate)
-def USRA : NeonI_ScalarShiftImm_accum_D_size<0b1, 0b00010, "usra">;
+def USRA : NeonI_ScalarShiftRightImm_accum_D_size<0b1, 0b00010, "usra">;
 def : Neon_ScalarShiftImm_accum_D_size_patterns<int_aarch64_neon_vsradu_n, USRA>;
 
 // Scalar Signed Rounding Shift Right and Accumulate (Immediate)
-def SRSRA : NeonI_ScalarShiftImm_accum_D_size<0b0, 0b00110, "srsra">;
+def SRSRA : NeonI_ScalarShiftRightImm_accum_D_size<0b0, 0b00110, "srsra">;
 def : Neon_ScalarShiftImm_accum_D_size_patterns<int_aarch64_neon_vrsrads_n, SRSRA>;
 
 // Scalar Unsigned Rounding Shift Right and Accumulate (Immediate)
-def URSRA : NeonI_ScalarShiftImm_accum_D_size<0b1, 0b00110, "ursra">;
+def URSRA : NeonI_ScalarShiftRightImm_accum_D_size<0b1, 0b00110, "ursra">;
 def : Neon_ScalarShiftImm_accum_D_size_patterns<int_aarch64_neon_vrsradu_n, URSRA>;
 
 // Scalar Shift Left (Immediate)
@@ -4184,12 +4195,12 @@ defm : Neon_ScalarShiftImm_BHSD_size_patterns<int_aarch64_neon_vqshlus_n,
                                               SQSHLUssi, SQSHLUddi>;
 
 // Shift Right And Insert (Immediate)
-defm SRI : NeonI_ScalarShiftRightImm_D_size<0b1, 0b01000, "sri">;
-defm : Neon_ScalarShiftImm_D_size_patterns<int_aarch64_neon_vsrid_n, SRIddi>;
+def SRI : NeonI_ScalarShiftRightImm_accum_D_size<0b1, 0b01000, "sri">;
+def : Neon_ScalarShiftImm_accum_D_size_patterns<int_aarch64_neon_vsrid_n, SRI>;
 
 // Shift Left And Insert (Immediate)
-defm SLI : NeonI_ScalarShiftLeftImm_D_size<0b1, 0b01010, "sli">;
-defm : Neon_ScalarShiftImm_D_size_patterns<int_aarch64_neon_vslid_n, SLIddi>;
+def SLI : NeonI_ScalarShiftLeftImm_accum_D_size<0b1, 0b01010, "sli">;
+def : Neon_ScalarShiftImm_accum_D_size_patterns<int_aarch64_neon_vslid_n, SLI>;
 
 // Signed Saturating Shift Right Narrow (Immediate)
 defm SQSHRN : NeonI_ScalarShiftImm_narrow_HSD_size<0b0, 0b10010, "sqshrn">;
