@@ -494,10 +494,10 @@ void RuntimeDyldImpl::resolveExternalSymbols() {
     StringMap<RelocationList>::iterator i = ExternalSymbolRelocations.begin();
 
     StringRef Name = i->first();
-    RelocationList &Relocs = i->second;
     if (Name.size() == 0) {
       // This is an absolute symbol, use an address of zero.
       DEBUG(dbgs() << "Resolving absolute relocations." << "\n");
+      RelocationList &Relocs = i->second;
       resolveRelocationList(Relocs, 0);
     } else {
       uint64_t Addr = 0;
@@ -506,6 +506,13 @@ void RuntimeDyldImpl::resolveExternalSymbols() {
           // This is an external symbol, try to get its address from
           // MemoryManager.
           Addr = MemMgr->getSymbolAddress(Name.data());
+          // The call to getSymbolAddress may have caused additional modules to
+          // be loaded, which may have added new entries to the
+          // ExternalSymbolRelocations map.  Consquently, we need to update our
+          // iterator.  This is also why retrieval of the relocation list
+          // associated with this symbol is deferred until below this point.
+          // New entries may have been added to the relocation list.
+          i = ExternalSymbolRelocations.find(Name);
       } else {
         // We found the symbol in our global table.  It was probably in a
         // Module that we loaded previously.
@@ -522,10 +529,13 @@ void RuntimeDyldImpl::resolveExternalSymbols() {
       DEBUG(dbgs() << "Resolving relocations Name: " << Name
               << "\t" << format("0x%lx", Addr)
               << "\n");
+      // This list may have been updated when we called getSymbolAddress, so
+      // don't change this code to get the list earlier.
+      RelocationList &Relocs = i->second;
       resolveRelocationList(Relocs, Addr);
     }
 
-    ExternalSymbolRelocations.erase(i->first());
+    ExternalSymbolRelocations.erase(i);
   }
 }
 
