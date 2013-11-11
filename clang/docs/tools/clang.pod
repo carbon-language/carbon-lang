@@ -304,13 +304,9 @@ Like B<-Os> (and thus B<-O2>), but reduces code size further.
 
 Equivalent to B<-O2>.
 
-=item B<-O4>
+=item B<-O4> and higher
 
-Equivalent to B<-O3>.
-
-=item B<-O5> and upper
-
-Fall back on B<-O3>.
+Currently equivalent to B<-O3>
 
 =back
 
