@@ -2059,7 +2059,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     Value *ResShadow = IRB.CreateExtractValue(AggShadow, I.getIndices());
     DEBUG(dbgs() << "   ResShadow:  " << *ResShadow << "\n");
     setShadow(&I, ResShadow);
-    setOrigin(&I, getCleanOrigin());
+    setOriginForNaryOp(I);
   }
 
   void visitInsertValueInst(InsertValueInst &I) {
@@ -2072,7 +2072,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     Value *Res = IRB.CreateInsertValue(AggShadow, InsShadow, I.getIndices());
     DEBUG(dbgs() << "   Res:        " << *Res << "\n");
     setShadow(&I, Res);
-    setOrigin(&I, getCleanOrigin());
+    setOriginForNaryOp(I);
   }
 
   void dumpInst(Instruction &I) {

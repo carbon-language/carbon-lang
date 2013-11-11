@@ -775,3 +775,29 @@ entry:
 ; CHECK-AA: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* {{.*}}, i64 2, i32 2, i1 false)
 ; CHECK-AA: ret i16
 
+
+; Test origin propagation for insertvalue
+
+define { i64, i32 } @make_pair_64_32(i64 %x, i32 %y) sanitize_memory {
+entry:
+  %a = insertvalue { i64, i32 } undef, i64 %x, 0
+  %b = insertvalue { i64, i32 } %a, i32 %y, 1
+  ret { i64, i32 } %b
+}
+
+; CHECK-ORIGINS: @make_pair_64_32
+; First element shadow
+; CHECK-ORIGINS: insertvalue { i64, i32 } { i64 -1, i32 -1 }, i64 {{.*}}, 0
+; First element origin
+; CHECK-ORIGINS: icmp ne i64
+; CHECK-ORIGINS: select i1
+; First element app value
+; CHECK-ORIGINS: insertvalue { i64, i32 } undef, i64 {{.*}}, 0
+; Second element shadow
+; CHECK-ORIGINS: insertvalue { i64, i32 } {{.*}}, i32 {{.*}}, 1
+; Second element origin
+; CHECK-ORIGINS: icmp ne i32
+; CHECK-ORIGINS: select i1
+; Second element app value
+; CHECK-ORIGINS: insertvalue { i64, i32 } {{.*}}, i32 {{.*}}, 1
+; CHECK-ORIGINS: ret { i64, i32 }
