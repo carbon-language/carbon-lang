@@ -4207,10 +4207,19 @@ static MachineInstr* foldPatchpoint(MachineFunction &MF,
   MachineInstrBuilder MIB(MF, NewMI);
 
   bool isPatchPoint = MI->getOpcode() == TargetOpcode::PATCHPOINT;
+  // For PatchPoint, the call args are not foldable.
+  unsigned NumCallArgs = MI->getOperand(StartIdx+3).getImm();
   StartIdx = isPatchPoint ?
-             StartIdx + MI->getOperand(StartIdx+3).getImm() + 5 :
+             StartIdx + NumCallArgs + 5 :
              StartIdx + 2;
 
+  // Return false if any operands requested for folding are not foldable (not
+  // part of the stackmap's live values).
+  for (SmallVectorImpl<unsigned>::const_iterator I = Ops.begin(), E = Ops.end();
+       I != E; ++I) {
+    if (*I < StartIdx)
+      return 0;
+  }
   // No need to fold return, the meta data, and function arguments
   for (unsigned i = 0; i < StartIdx; ++i)
     MIB.addOperand(MI->getOperand(i));
