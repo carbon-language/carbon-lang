@@ -112,6 +112,13 @@ Objective-C Language Changes in Clang
 
 ...
 
+OpenCL C Language Changes in Clang
+----------------------------------
+
+- OpenCL C "long" now always has a size of 64 bit, and all OpenCL C
+  types are aligned as specified in the OpenCL C standard. Also,
+  "char" is now always signed.
+
 Internal API Changes
 --------------------
 
