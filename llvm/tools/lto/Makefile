@@ -46,7 +46,7 @@ ifeq ($(HOST_OS),Darwin)
     ifneq ($(DARWIN_VERS),8)
        LLVMLibsOptions    := $(LLVMLibsOptions)  \
                             -Wl,-install_name \
-                            -Wl,"@rpath/lib$(LIBRARYNAME)$(SHLIBEXT)"
+                            -Wl,"@executable_path/../lib/lib$(LIBRARYNAME)$(SHLIBEXT)"
     endif
 
     # If we're doing an Apple-style build, add the LTO object path.
