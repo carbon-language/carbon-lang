@@ -1,3 +1,11 @@
+if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
+  set(LLDB_DEFAULT_DISABLE_PYTHON 1)
+else()
+  set(LLDB_DEFAULT_DISABLE_PYTHON 0)
+endif()
+set(LLDB_DISABLE_PYTHON ${LLDB_DEFAULT_DISABLE_PYTHON} CACHE BOOL
+  "Disables the Python scripting integration.")
+
 # If we are not building as a part of LLVM, build LLDB as an
 # standalone project, using LLVM as an external library:
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -13,8 +21,6 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     "Path to Clang source code. Not necessary if using an installed Clang.")
   set(LLDB_PATH_TO_CLANG_BUILD "" CACHE PATH
     "Path to the directory where Clang was built or installed.")    
-
-  set(LLDB_DISABLE_PYTHON 1 BOOL "Disables the Python scripting integration.")
 
   if (LLDB_PATH_TO_LLVM_SOURCE)
     if (NOT EXISTS "${LLDB_PATH_TO_LLVM_SOURCE}/cmake/config-ix.cmake")
@@ -65,15 +71,11 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
   set(LLDB_BUILT_STANDALONE 1)
-  
-  if (LLDB_DISABLE_PYTHON)
-    add_definitions( -DLLDB_DISABLE_PYTHON )
-  endif() 
 endif()
 
-if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
+if (LLDB_DISABLE_PYTHON)
   add_definitions( -DLLDB_DISABLE_PYTHON )
-endif ()
+endif()
 
 macro(add_lldb_definitions)
   # We don't want no semicolons on LLDB_DEFINITIONS:

@@ -162,6 +162,7 @@ set( LLVM_LINK_COMPONENTS
   core
   mcdisassembler
   executionengine
+  option
   )
 
 set_source_files_properties(${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp PROPERTIES GENERATED 1)
