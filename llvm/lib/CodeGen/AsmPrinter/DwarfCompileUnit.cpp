@@ -1137,21 +1137,9 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   case dwarf::DW_TAG_array_type:
     constructArrayTypeDIE(Buffer, CTy);
     break;
-  case dwarf::DW_TAG_enumeration_type: {
-    DIArray Elements = CTy.getTypeArray();
-
-    // Add enumerators to enumeration type.
-    for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
-      DIDescriptor Enum(Elements.getElement(i));
-      if (Enum.isEnumerator())
-        constructEnumTypeDIE(Buffer, DIEnumerator(Enum));
-    }
-    DIType DTy = resolve(CTy.getTypeDerivedFrom());
-    if (DTy) {
-      addType(&Buffer, DTy);
-      addFlag(&Buffer, dwarf::DW_AT_enum_class);
-    }
-  } break;
+  case dwarf::DW_TAG_enumeration_type:
+    constructEnumTypeDIE(Buffer, CTy);
+    break;
   case dwarf::DW_TAG_subroutine_type: {
     // Add return type. A void return won't have a type.
     DIArray Elements = CTy.getTypeArray();
@@ -1720,13 +1708,27 @@ void CompileUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy) {
   }
 }
 
-/// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
-void CompileUnit::constructEnumTypeDIE(DIE &Buffer, DIEnumerator ETy) {
-  DIE *Enumerator = createAndAddDIE(dwarf::DW_TAG_enumerator, Buffer);
-  StringRef Name = ETy.getName();
-  addString(Enumerator, dwarf::DW_AT_name, Name);
-  int64_t Value = ETy.getEnumValue();
-  addSInt(Enumerator, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata, Value);
+/// constructEnumTypeDIE - Construct an enum type DIE from DICompositeType.
+void CompileUnit::constructEnumTypeDIE(DIE &Buffer, DICompositeType CTy) {
+  DIArray Elements = CTy.getTypeArray();
+
+  // Add enumerators to enumeration type.
+  for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
+    DIDescriptor Enum(Elements.getElement(i));
+    DIEnumerator ETy = DIEnumerator(Enum);
+    if (Enum.isEnumerator()) {
+      DIE *Enumerator = createAndAddDIE(dwarf::DW_TAG_enumerator, Buffer);
+      StringRef Name = ETy.getName();
+      addString(Enumerator, dwarf::DW_AT_name, Name);
+      int64_t Value = ETy.getEnumValue();
+      addSInt(Enumerator, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata, Value);
+    }
+  }
+  DIType DTy = resolve(CTy.getTypeDerivedFrom());
+  if (DTy) {
+    addType(&Buffer, DTy);
+    addFlag(&Buffer, dwarf::DW_AT_enum_class);
+  }
 }
 
 /// constructContainingTypeDIEs - Construct DIEs for types that contain

@@ -351,7 +351,7 @@ private:
   void constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy);
 
   /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
-  void constructEnumTypeDIE(DIE &Buffer, DIEnumerator ETy);
+  void constructEnumTypeDIE(DIE &Buffer, DICompositeType CTy);
 
   /// constructMemberDIE - Construct member DIE from DIDerivedType.
   void constructMemberDIE(DIE &Buffer, DIDerivedType DT);
