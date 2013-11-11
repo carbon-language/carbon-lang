@@ -150,10 +150,8 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     // Don't create an alias to a linker weak symbol unless we know we can do
     // that in every TU. This avoids producing different COMDATs in different
     // TUs.
-    if (llvm::GlobalValue::isWeakForLinker(TargetLinkage)) {
-      assert(Linkage == TargetLinkage);
+    if (llvm::GlobalValue::isWeakForLinker(TargetLinkage))
       return true;
-    }
   }
 
   // Create the alias with no name.

@@ -88,3 +88,18 @@ namespace test6 {
   B X;
   // CHECK-DAG: call i32 @__cxa_atexit({{.*}}@_ZN5test61AD2Ev
 }
+
+namespace test7 {
+  // Test that we don't produce an alias from ~B to ~A<int> (or crash figuring
+  // out if we should).
+  // pr17875.
+  // CHECK-DAG: define void @_ZN5test71BD2Ev
+  template <typename> struct A {
+    ~A() {}
+  };
+  class B : A<int> {
+    ~B();
+  };
+  template class A<int>;
+  B::~B() {}
+}
