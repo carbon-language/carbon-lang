@@ -297,8 +297,7 @@ public:
 
 protected:
   /// \brief Read the file into _buffer.
-  error_code readFile(const LinkingContext &ctx, raw_ostream &diagnostics,
-                      bool &isYaml);
+  error_code getBuffer(StringRef filePath);
 
   StringRef _path;                             // The path of the Input file
   InputGraph::FileVectorT _files;              // A vector of lld File objects

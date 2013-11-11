@@ -42,10 +42,19 @@ public:
 
   /// \brief Parse the input file to lld::File.
   error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
-    // Read the file to _buffer.
-    bool isYaml = false;
-    if (error_code ec = readFile(ctx, diagnostics, isYaml))
+    ErrorOr<StringRef> filePath = getPath(ctx);
+    if (!filePath)
+      return error_code(filePath);
+
+    if (error_code ec = getBuffer(*filePath))
       return ec;
+
+    if (ctx.logInputFiles())
+      diagnostics << *filePath << "\n";
+
+    if (filePath->endswith(".objtxt"))
+      return ctx.getYAMLReader().parseFile(_buffer, _files);
+
     (void) (_isWholeArchive);
     return error_code::success();
   }

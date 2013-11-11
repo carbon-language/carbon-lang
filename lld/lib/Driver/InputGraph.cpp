@@ -98,33 +98,16 @@ FileNode::FileNode(StringRef path, int64_t ordinal)
       _resolveState(Resolver::StateNoChange), _nextFileIndex(0) {}
 
 /// \brief Read the file into _buffer.
-error_code
-FileNode::readFile(const LinkingContext &ctx, raw_ostream &diagnostics,
-                   bool &isYaml) {
-  ErrorOr<StringRef> filePath = getPath(ctx);
-  if (!filePath &&
-      error_code(filePath) == llvm::errc::no_such_file_or_directory)
-    return make_error_code(llvm::errc::no_such_file_or_directory);
-
+error_code FileNode::getBuffer(StringRef filePath) {
   // Create a memory buffer
   OwningPtr<MemoryBuffer> opmb;
 
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(*filePath, opmb))
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(filePath, opmb))
     return ec;
 
   std::unique_ptr<MemoryBuffer> mb(opmb.take());
   _buffer = std::move(mb);
 
-  if (ctx.logInputFiles())
-    diagnostics << _buffer->getBufferIdentifier() << "\n";
-
-  // YAML file is identified by a .objtxt extension
-  // FIXME : Identify YAML files by using a magic
-  if (filePath->endswith(".objtxt")) {
-    if (error_code ec = ctx.getYAMLReader().parseFile(_buffer, _files))
-      return ec;
-    isYaml = true;
-  }
   return error_code::success();
 }
 
