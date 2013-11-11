@@ -107,3 +107,7 @@
 // CHECK-ARM-EABI-NOT: clang{{.*}}" "-cc1"{{.*}}" "-fsjlj-exceptions"
 // CHECK-ARM-EABI: as{{.*}}" "-mfpu=softvfp" "-meabi=5"
 // CHECK-ARM-EABI-NOT: as{{.*}}" "-matpcs"
+
+// RUN: %clang -target x86_64-pc-freebsd8 %s -### -flto -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-LTO %s
+// CHECK-LTO: ld{{.*}}" "-plugin{{.*}}LLVMgold.so
