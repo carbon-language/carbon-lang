@@ -294,14 +294,16 @@ void __msan_init() {
 
   SetDieCallback(MsanDie);
   InitTlsSize();
+
+  const char *msan_options = GetEnv("MSAN_OPTIONS");
+  InitializeFlags(&msan_flags, msan_options);
+  __sanitizer_set_report_path(common_flags()->log_path);
+
   InitializeInterceptors();
   InstallAtExitHandler(); // Needs __cxa_atexit interceptor.
 
   if (MSAN_REPLACE_OPERATORS_NEW_AND_DELETE)
     ReplaceOperatorsNewAndDelete();
-  const char *msan_options = GetEnv("MSAN_OPTIONS");
-  InitializeFlags(&msan_flags, msan_options);
-  __sanitizer_set_report_path(common_flags()->log_path);
   if (StackSizeIsUnlimited()) {
     if (common_flags()->verbosity)
       Printf("Unlimited stack, doing reexec\n");

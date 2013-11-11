@@ -107,6 +107,19 @@ using namespace __asan;  // NOLINT
 DECLARE_REAL_AND_INTERCEPTOR(void *, malloc, uptr)
 DECLARE_REAL_AND_INTERCEPTOR(void, free, void *)
 
+#if !SANITIZER_MAC
+#define ASAN_INTERCEPT_FUNC(name)                                      \
+  do {                                                                 \
+    if ((!INTERCEPT_FUNCTION(name) || !REAL(name)) &&                  \
+        common_flags()->verbosity > 0)                                 \
+      Report("AddressSanitizer: failed to intercept '" #name "'\n");   \
+  } while (0)
+#else
+// OS X interceptors don't need to be initialized with INTERCEPT_FUNCTION.
+#define ASAN_INTERCEPT_FUNC(name)
+#endif  // SANITIZER_MAC
+
+#define COMMON_INTERCEPT_FUNCTION(name) ASAN_INTERCEPT_FUNC(name)
 #define COMMON_INTERCEPTOR_UNPOISON_PARAM(ctx, count) \
   do {                                                \
   } while (false)
@@ -652,16 +665,6 @@ INTERCEPTOR(int, __cxa_atexit, void (*func)(void *), void *arg,
   return res;
 }
 #endif  // ASAN_INTERCEPT___CXA_ATEXIT
-
-#if !SANITIZER_MAC
-#define ASAN_INTERCEPT_FUNC(name) do { \
-      if (!INTERCEPT_FUNCTION(name) && common_flags()->verbosity > 0) \
-        Report("AddressSanitizer: failed to intercept '" #name "'\n"); \
-    } while (0)
-#else
-// OS X interceptors don't need to be initialized with INTERCEPT_FUNCTION.
-#define ASAN_INTERCEPT_FUNC(name)
-#endif  // SANITIZER_MAC
 
 #if SANITIZER_WINDOWS
 INTERCEPTOR_WINAPI(DWORD, CreateThread,

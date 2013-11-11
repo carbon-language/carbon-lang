@@ -1234,7 +1234,7 @@ int OnExit() {
 
 extern "C" int *__errno_location(void);
 
-// A version of CHECK_UNPOISED using a saved scope value. Used in common
+// A version of CHECK_UNPOISONED using a saved scope value. Used in common
 // interceptors.
 #define CHECK_UNPOISONED_CTX(ctx, x, n)                         \
   do {                                                          \
@@ -1242,6 +1242,14 @@ extern "C" int *__errno_location(void);
       CHECK_UNPOISONED_0(x, n);                                 \
   } while (0)
 
+#define MSAN_INTERCEPT_FUNC(name)                                   \
+  do {                                                              \
+    if ((!INTERCEPT_FUNCTION(name) || !REAL(name)) &&               \
+        common_flags()->verbosity > 0)                              \
+      Report("MemorySanitizer: failed to intercept '" #name "'\n"); \
+  } while (0)
+
+#define COMMON_INTERCEPT_FUNCTION(name) MSAN_INTERCEPT_FUNC(name)
 #define COMMON_INTERCEPTOR_UNPOISON_PARAM(ctx, count)  \
   UnpoisonParam(count)
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) \
