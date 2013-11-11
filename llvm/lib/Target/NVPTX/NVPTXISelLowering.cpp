@@ -471,22 +471,47 @@ NVPTXTargetLowering::getArgumentAlignment(SDValue Callee,
                                           Type *Ty,
                                           unsigned Idx) const {
   const DataLayout *TD = getDataLayout();
-  unsigned align = 0;
-  GlobalAddressSDNode *Func = dyn_cast<GlobalAddressSDNode>(Callee.getNode());
+  unsigned Align = 0;
+  const Value *DirectCallee = CS->getCalledFunction();
 
-  if (Func) { // direct call
-    assert(CS->getCalledFunction() &&
-           "direct call cannot find callee");
-    if (!llvm::getAlign(*(CS->getCalledFunction()), Idx, align))
-      align = TD->getABITypeAlignment(Ty);
-  }
-  else { // indirect call
-    const CallInst *CallI = dyn_cast<CallInst>(CS->getInstruction());
-    if (!llvm::getAlign(*CallI, Idx, align))
-      align = TD->getABITypeAlignment(Ty);
+  if (!DirectCallee) {
+    // We don't have a direct function symbol, but that may be because of
+    // constant cast instructions in the call.
+    const Instruction *CalleeI = CS->getInstruction();
+    assert(CalleeI && "Call target is not a function or derived value?");
+
+    // With bitcast'd call targets, the instruction will be the call
+    if (isa<CallInst>(CalleeI)) {
+      // Check if we have call alignment metadata
+      if (llvm::getAlign(*cast<CallInst>(CalleeI), Idx, Align))
+        return Align;
+
+      const Value *CalleeV = cast<CallInst>(CalleeI)->getCalledValue();
+      // Ignore any bitcast instructions
+      while(isa<ConstantExpr>(CalleeV)) {
+        const ConstantExpr *CE = cast<ConstantExpr>(CalleeV);
+        if (!CE->isCast())
+          break;
+        // Look through the bitcast
+        CalleeV = cast<ConstantExpr>(CalleeV)->getOperand(0);
+      }
+
+      // We have now looked past all of the bitcasts.  Do we finally have a
+      // Function?
+      if (isa<Function>(CalleeV))
+        DirectCallee = CalleeV;
+    }
   }
 
-  return align;
+  // Check for function alignment information if we found that the
+  // ultimate target is a Function
+  if (DirectCallee)
+    if (llvm::getAlign(*cast<Function>(DirectCallee), Idx, Align))
+      return Align;
+
+  // Call is indirect or alignment information is not available, fall back to
+  // the ABI type alignment
+  return TD->getABITypeAlignment(Ty);
 }
 
 SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
