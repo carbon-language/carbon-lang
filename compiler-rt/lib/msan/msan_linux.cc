@@ -45,6 +45,12 @@ static const uptr kOriginsBeg = kBad2Beg;
 static const uptr kOriginsEnd = kBad2End;
 
 bool InitShadow(bool prot1, bool prot2, bool map_shadow, bool init_origins) {
+  if ((uptr) & InitShadow < kMemBeg) {
+    Printf("FATAL: Code below application range: %p < %p. Non-PIE build?\n",
+           &InitShadow, (void *)kMemBeg);
+    return false;
+  }
+
   if (common_flags()->verbosity) {
     Printf("__msan_init %p\n", &__msan_init);
     Printf("Memory   : %p %p\n", kMemBeg, kMemEnd);
