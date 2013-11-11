@@ -3300,7 +3300,18 @@ public:
     {
         return m_thread_list;
     }
-    
+
+    // When ExtendedBacktraces are requested, the HistoryThreads that are
+    // created need an owner -- they're saved here in the Process.  The
+    // threads in this list are not iterated over - driver programs need to
+    // request the extended backtrace calls starting from a root concrete
+    // thread one by one.
+    ThreadList &
+    GetExtendedThreadList ()
+    {
+        return m_extended_thread_list;
+    }
+
     ThreadList::ThreadIterable
     Threads ()
     {
@@ -3672,6 +3683,7 @@ protected:
     ThreadList                  m_thread_list_real;     ///< The threads for this process as are known to the protocol we are debugging with
     ThreadList                  m_thread_list;          ///< The threads for this process as the user will see them. This is usually the same as
                                                         ///< m_thread_list_real, but might be different if there is an OS plug-in creating memory threads
+    ThreadList                  m_extended_thread_list; ///< Owner for extended threads that may be generated, cleared on public stops
     std::vector<Notifications>  m_notifications;        ///< The list of notifications that this process can deliver.
     std::vector<lldb::addr_t>   m_image_tokens;
     Listener                    &m_listener;

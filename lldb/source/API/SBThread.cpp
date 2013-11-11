@@ -1295,16 +1295,22 @@ SBThread::GetExtendedBacktrace (const char *type)
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            ThreadSP real_thread(exe_ctx.GetThreadPtr());
+            ThreadSP real_thread(exe_ctx.GetThreadSP());
             if (real_thread)
             {
                 ConstString type_const (type);
-                SystemRuntime *runtime = exe_ctx.GetProcessPtr()->GetSystemRuntime();
-                if (runtime)
+                Process *process = exe_ctx.GetProcessPtr();
+                if (process)
                 {
-                    ThreadSP origin_thread = runtime->GetExtendedBacktrace (real_thread, type_const);
-                    if (origin_thread && origin_thread->IsValid())
-                        sb_origin_thread.SetThread (origin_thread);
+                    SystemRuntime *runtime = process->GetSystemRuntime();
+                    if (runtime)
+                    {
+                        ThreadSP new_thread_sp (runtime->GetExtendedBacktrace (real_thread, type_const));
+                        // Save this in the Process' ExtendedThreadList so a strong pointer retains the
+                        // object.
+                        process->GetExtendedThreadList().AddThread (new_thread_sp);
+                        sb_origin_thread.SetThread (new_thread_sp);
+                    }
                 }
             }
         }
