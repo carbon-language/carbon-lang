@@ -403,4 +403,13 @@
 # define LLVM_ENUM_INT_TYPE(intty)
 #endif
 
+/// \brief Does the compiler support generalized initializers (using braced
+/// lists and std::initializer_list).
+#if (__has_feature(cxx_generalized_initializers)   \
+|| defined(__GXX_EXPERIMENTAL_CXX0X__))
+#define LLVM_HAS_INITIALIZER_LISTS 1
+#else
+#define LLVM_HAS_INITIALIZER_LISTS 0
+#endif
+
 #endif
