@@ -275,7 +275,8 @@ void CompileUnit::addDelta(DIE *Die, dwarf::Attribute Attribute,
 
 /// addDIEEntry - Add a DIE attribute data and value.
 ///
-void CompileUnit::addDIEEntry(DIE *Die, dwarf::Attribute Attribute, DIE *Entry) {
+void CompileUnit::addDIEEntry(DIE *Die, dwarf::Attribute Attribute,
+                              DIE *Entry) {
   addDIEEntry(Die, Attribute, createDIEEntry(Entry));
 }
 
@@ -773,8 +774,7 @@ void CompileUnit::addConstantFPValue(DIE *Die, const MachineOperand &MO) {
 
   // Output the constant to DWARF one byte at a time.
   for (; Start != Stop; Start += Incr)
-    addUInt(Block, dwarf::DW_FORM_data1,
-            (unsigned char)0xFF & FltPtr[Start]);
+    addUInt(Block, dwarf::DW_FORM_data1, (unsigned char)0xFF & FltPtr[Start]);
 
   addBlock(Die, dwarf::DW_AT_const_value, Block);
 }
@@ -1462,8 +1462,8 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
     addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
     addUInt(Block, dwarf::DW_FORM_udata, SP.getVirtualIndex());
     addBlock(SPDie, dwarf::DW_AT_vtable_elem_location, Block);
-    ContainingTypeMap.insert(std::make_pair(SPDie,
-                                            resolve(SP.getContainingType())));
+    ContainingTypeMap.insert(
+        std::make_pair(SPDie, resolve(SP.getContainingType())));
   }
 
   if (!SP.isDefinition()) {
@@ -1685,7 +1685,8 @@ void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR,
   if (Count != -1 && Count != 0)
     // FIXME: An unbounded array should reference the expression that defines
     // the array.
-    addUInt(DW_Subrange, dwarf::DW_AT_upper_bound, None, LowerBound + Count - 1);
+    addUInt(DW_Subrange, dwarf::DW_AT_upper_bound, None,
+            LowerBound + Count - 1);
 }
 
 /// constructArrayTypeDIE - Construct array type DIE from DICompositeType.
@@ -1832,7 +1833,6 @@ void CompileUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
   DIEBlock *MemLocationDie = new (DIEValueAllocator) DIEBlock();
   addUInt(MemLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
 
-
   if (DT.getTag() == dwarf::DW_TAG_inheritance && DT.isVirtual()) {
 
     // For C++, virtual base classes are not at fixed offset. Use following
@@ -1877,8 +1877,7 @@ void CompileUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
     } else
       // This is not a bitfield.
       OffsetInBytes = DT.getOffsetInBits() >> 3;
-    addUInt(MemberDie, dwarf::DW_AT_data_member_location, None,
-            OffsetInBytes);
+    addUInt(MemberDie, dwarf::DW_AT_data_member_location, None, OffsetInBytes);
   }
 
   if (DT.isProtected())
