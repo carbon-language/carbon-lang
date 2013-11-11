@@ -170,7 +170,8 @@ void CompileUnit::addSInt(DIEBlock *Die, Optional<dwarf::Form> Form,
 /// more predictable sizes. In the case of split dwarf we emit an index
 /// into another table which gets us the static offset into the string
 /// table.
-void CompileUnit::addString(DIE *Die, dwarf::Attribute Attribute, StringRef String) {
+void CompileUnit::addString(DIE *Die, dwarf::Attribute Attribute,
+                            StringRef String) {
   DIEValue *Value;
   dwarf::Form Form;
   if (!DD->useSplitDwarf()) {
@@ -215,8 +216,8 @@ void CompileUnit::addExpr(DIEBlock *Die, dwarf::Form Form, const MCExpr *Expr) {
 
 /// addLabel - Add a Dwarf label attribute data and value.
 ///
-void CompileUnit::addLabel(DIE *Die, dwarf::Attribute Attribute, dwarf::Form Form,
-                           const MCSymbol *Label) {
+void CompileUnit::addLabel(DIE *Die, dwarf::Attribute Attribute,
+                           dwarf::Form Form, const MCSymbol *Label) {
   DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
   Die->addValue(Attribute, Form, Value);
 }
@@ -265,8 +266,9 @@ void CompileUnit::addOpAddress(DIEBlock *Die, const MCSymbol *Sym) {
 
 /// addDelta - Add a label delta attribute data and value.
 ///
-void CompileUnit::addDelta(DIE *Die, dwarf::Attribute Attribute, dwarf::Form Form,
-                           const MCSymbol *Hi, const MCSymbol *Lo) {
+void CompileUnit::addDelta(DIE *Die, dwarf::Attribute Attribute,
+                           dwarf::Form Form, const MCSymbol *Hi,
+                           const MCSymbol *Lo) {
   DIEValue *Value = new (DIEValueAllocator) DIEDelta(Hi, Lo);
   Die->addValue(Attribute, Form, Value);
 }
