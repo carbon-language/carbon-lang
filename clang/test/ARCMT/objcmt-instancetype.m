@@ -15,6 +15,11 @@ typedef signed char BOOL;
 - (id)initWithString:(NSString *)aString;
 @end
 
+@implementation NSString : NSObject
++ (id)stringWithString:(NSString *)string { return 0; };
+- (instancetype)initWithString:(NSString *)aString { return 0; };
+@end
+
 @interface NSArray : NSObject
 - (id)objectAtIndex:(unsigned long)index;
 - (id)objectAtIndexedSubscript:(int)index;
@@ -32,6 +37,25 @@ typedef signed char BOOL;
 - (id)initWithArray:(NSArray *)array;
 
 - (id)objectAtIndex:(unsigned long)index;
+@end
+
+@implementation NSArray (NSArrayCreation)
++ (id)array { return 0; }
++ (id)arrayWithObject:(id)anObject {
+  return anObject;
+}
++ (id)arrayWithObjects:(const id [])objects count:(unsigned long)cnt { return 0; }
++ (id)arrayWithObjects:(id)firstObj, ... {
+  return 0; }
++ arrayWithArray:(NSArray *)array {
+  return 0;
+}
+
+- (id)initWithObjects:(const id [])objects count:(unsigned long)cnt { return 0; }
+- (id)initWithObjects:(id)firstObj, ... { return 0; }
+- (id)initWithArray:(NSArray *)array { return 0; }
+
+- (id)objectAtIndex:(unsigned long)index { return 0; }
 @end
 
 @interface NSMutableArray : NSArray
@@ -69,6 +93,10 @@ typedef signed char BOOL;
 
 @interface NSNumber (NSNumberCreation)
 + (NSNumber *)numberWithInt:(int)value;
+@end
+
+@implementation NSNumber (NSNumberCreation)
++ (NSNumber *)numberWithInt:(int)value { return 0; }
 @end
 
 #define M(x) (x)
