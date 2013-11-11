@@ -616,11 +616,7 @@ bool StructType::isLayoutIdentical(StructType *Other) const {
 /// getTypeByName - Return the type with the specified name, or null if there
 /// is none by that name.
 StructType *Module::getTypeByName(StringRef Name) const {
-  StringMap<StructType*>::iterator I =
-    getContext().pImpl->NamedStructTypes.find(Name);
-  if (I != getContext().pImpl->NamedStructTypes.end())
-    return I->second;
-  return 0;
+  return getContext().pImpl->NamedStructTypes.lookup(Name);
 }
 
 
