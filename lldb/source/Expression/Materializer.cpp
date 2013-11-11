@@ -492,7 +492,7 @@ public:
                     }
                     else
                     {
-                        err.SetErrorStringWithFormat("size of variable %s disagrees with the ValueObject's size", m_variable_sp->GetName().AsCString());
+                        err.SetErrorStringWithFormat("size of variable %s (%zu) disagrees with the ValueObject's size (%zu)", m_variable_sp->GetName().AsCString(), m_variable_sp->GetType()->GetByteSize(), data.GetByteSize());
                     }
                     return;
                 }
