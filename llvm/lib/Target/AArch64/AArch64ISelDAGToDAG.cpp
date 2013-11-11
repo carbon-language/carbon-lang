@@ -117,17 +117,17 @@ private:
   SDNode *SelectVST(SDNode *N, unsigned NumVecs, bool isUpdating,
                     const uint16_t *Opcodes);
 
-  // Form pairs of consecutive 64-bit/128-bit registers.
-  SDNode *createDPairNode(SDValue V0, SDValue V1);
-  SDNode *createQPairNode(SDValue V0, SDValue V1);
+  /// Form sequences of consecutive 64/128-bit registers for use in NEON
+  /// instructions making use of a vector-list (e.g. ldN, tbl). Vecs must have
+  /// between 1 and 4 elements. If it contains a single element that is returned
+  /// unchanged; otherwise a REG_SEQUENCE value is returned.
+  SDValue createDTuple(ArrayRef<SDValue> Vecs);
+  SDValue createQTuple(ArrayRef<SDValue> Vecs);
 
-  // Form sequences of 3 consecutive 64-bit/128-bit registers.
-  SDNode *createDTripleNode(SDValue V0, SDValue V1, SDValue V2);
-  SDNode *createQTripleNode(SDValue V0, SDValue V1, SDValue V2);
-
-  // Form sequences of 4 consecutive 64-bit/128-bit registers.
-  SDNode *createDQuadNode(SDValue V0, SDValue V1, SDValue V2, SDValue V3);
-  SDNode *createQQuadNode(SDValue V0, SDValue V1, SDValue V2, SDValue V3);
+  /// Generic helper for the createDTuple/createQTuple
+  /// functions. Those should almost always be called instead.
+  SDValue createTuple(ArrayRef<SDValue> Vecs, unsigned RegClassIDs[],
+                      unsigned SubRegs[]);
 };
 }
 
@@ -409,83 +409,55 @@ SDNode *AArch64DAGToDAGISel::SelectAtomic(SDNode *Node, unsigned Op8,
                               &Ops[0], Ops.size());
 }
 
-SDNode *AArch64DAGToDAGISel::createDPairNode(SDValue V0, SDValue V1) {
-  SDLoc dl(V0.getNode());
-  SDValue RegClass =
-      CurDAG->getTargetConstant(AArch64::DPairRegClassID, MVT::i32);
-  SDValue SubReg0 = CurDAG->getTargetConstant(AArch64::dsub_0, MVT::i32);
-  SDValue SubReg1 = CurDAG->getTargetConstant(AArch64::dsub_1, MVT::i32);
-  const SDValue Ops[] = { RegClass, V0, SubReg0, V1, SubReg1 };
-  return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, MVT::v2i64,
-                                Ops);
+SDValue AArch64DAGToDAGISel::createDTuple(ArrayRef<SDValue> Regs) {
+  static unsigned RegClassIDs[] = { AArch64::DPairRegClassID,
+                                    AArch64::DTripleRegClassID,
+                                    AArch64::DQuadRegClassID };
+  static unsigned SubRegs[] = { AArch64::dsub_0, AArch64::dsub_1,
+                                AArch64::dsub_2, AArch64::dsub_3 };
+
+  return createTuple(Regs, RegClassIDs, SubRegs);
 }
 
-SDNode *AArch64DAGToDAGISel::createQPairNode(SDValue V0, SDValue V1) {
-  SDLoc dl(V0.getNode());
-  SDValue RegClass =
-      CurDAG->getTargetConstant(AArch64::QPairRegClassID, MVT::i32);
-  SDValue SubReg0 = CurDAG->getTargetConstant(AArch64::qsub_0, MVT::i32);
-  SDValue SubReg1 = CurDAG->getTargetConstant(AArch64::qsub_1, MVT::i32);
-  const SDValue Ops[] = { RegClass, V0, SubReg0, V1, SubReg1 };
-  return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, MVT::v4i64,
-                                Ops);
+SDValue AArch64DAGToDAGISel::createQTuple(ArrayRef<SDValue> Regs) {
+  static unsigned RegClassIDs[] = { AArch64::QPairRegClassID,
+                                    AArch64::QTripleRegClassID,
+                                    AArch64::QQuadRegClassID };
+  static unsigned SubRegs[] = { AArch64::qsub_0, AArch64::qsub_1,
+                                AArch64::qsub_2, AArch64::qsub_3 };
+
+  return createTuple(Regs, RegClassIDs, SubRegs);
 }
 
-SDNode *AArch64DAGToDAGISel::createDTripleNode(SDValue V0, SDValue V1,
-                                               SDValue V2) {
-  SDLoc dl(V0.getNode());
-  SDValue RegClass =
-      CurDAG->getTargetConstant(AArch64::DTripleRegClassID, MVT::i32);
-  SDValue SubReg0 = CurDAG->getTargetConstant(AArch64::dsub_0, MVT::i32);
-  SDValue SubReg1 = CurDAG->getTargetConstant(AArch64::dsub_1, MVT::i32);
-  SDValue SubReg2 = CurDAG->getTargetConstant(AArch64::dsub_2, MVT::i32);
-  const SDValue Ops[] = { RegClass, V0, SubReg0, V1, SubReg1, V2, SubReg2 };
-  return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, MVT::Untyped,
-                                Ops);
+SDValue AArch64DAGToDAGISel::createTuple(ArrayRef<SDValue> Regs,
+                                         unsigned RegClassIDs[],
+                                         unsigned SubRegs[]) {
+  // There's no special register-class for a vector-list of 1 element: it's just
+  // a vector.
+  if (Regs.size() == 1)
+    return Regs[0];
+
+  assert(Regs.size() >= 2 && Regs.size() <= 4);
+
+  SDLoc DL(Regs[0].getNode());
+
+  SmallVector<SDValue, 4> Ops;
+
+  // First operand of REG_SEQUENCE is the desired RegClass.
+  Ops.push_back(
+      CurDAG->getTargetConstant(RegClassIDs[Regs.size() - 2], MVT::i32));
+
+  // Then we get pairs of source & subregister-position for the components.
+  for (unsigned i = 0; i < Regs.size(); ++i) {
+    Ops.push_back(Regs[i]);
+    Ops.push_back(CurDAG->getTargetConstant(SubRegs[i], MVT::i32));
+  }
+
+  SDNode *N =
+      CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, DL, MVT::Untyped, Ops);
+  return SDValue(N, 0);
 }
 
-SDNode *AArch64DAGToDAGISel::createQTripleNode(SDValue V0, SDValue V1,
-                                               SDValue V2) {
-  SDLoc dl(V0.getNode());
-  SDValue RegClass =
-      CurDAG->getTargetConstant(AArch64::QTripleRegClassID, MVT::i32);
-  SDValue SubReg0 = CurDAG->getTargetConstant(AArch64::qsub_0, MVT::i32);
-  SDValue SubReg1 = CurDAG->getTargetConstant(AArch64::qsub_1, MVT::i32);
-  SDValue SubReg2 = CurDAG->getTargetConstant(AArch64::qsub_2, MVT::i32);
-  const SDValue Ops[] = { RegClass, V0, SubReg0, V1, SubReg1, V2, SubReg2 };
-  return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, MVT::Untyped,
-                                Ops);
-}
-
-SDNode *AArch64DAGToDAGISel::createDQuadNode(SDValue V0, SDValue V1, SDValue V2,
-                                             SDValue V3) {
-  SDLoc dl(V0.getNode());
-  SDValue RegClass =
-      CurDAG->getTargetConstant(AArch64::DQuadRegClassID, MVT::i32);
-  SDValue SubReg0 = CurDAG->getTargetConstant(AArch64::dsub_0, MVT::i32);
-  SDValue SubReg1 = CurDAG->getTargetConstant(AArch64::dsub_1, MVT::i32);
-  SDValue SubReg2 = CurDAG->getTargetConstant(AArch64::dsub_2, MVT::i32);
-  SDValue SubReg3 = CurDAG->getTargetConstant(AArch64::dsub_3, MVT::i32);
-  const SDValue Ops[] = { RegClass, V0, SubReg0, V1, SubReg1, V2, SubReg2,  V3,
-                          SubReg3 };
-  return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, MVT::v4i64,
-                                Ops);
-}
-
-SDNode *AArch64DAGToDAGISel::createQQuadNode(SDValue V0, SDValue V1, SDValue V2,
-                                             SDValue V3) {
-  SDLoc dl(V0.getNode());
-  SDValue RegClass =
-      CurDAG->getTargetConstant(AArch64::QQuadRegClassID, MVT::i32);
-  SDValue SubReg0 = CurDAG->getTargetConstant(AArch64::qsub_0, MVT::i32);
-  SDValue SubReg1 = CurDAG->getTargetConstant(AArch64::qsub_1, MVT::i32);
-  SDValue SubReg2 = CurDAG->getTargetConstant(AArch64::qsub_2, MVT::i32);
-  SDValue SubReg3 = CurDAG->getTargetConstant(AArch64::qsub_3, MVT::i32);
-  const SDValue Ops[] = { RegClass, V0, SubReg0, V1, SubReg1, V2, SubReg2,  V3,
-                          SubReg3 };
-  return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, MVT::v8i64,
-                                Ops);
-}
 
 // Get the register stride update opcode of a VLD/VST instruction that
 // is otherwise equivalent to the given fixed stride updating instruction.
@@ -695,27 +667,9 @@ SDNode *AArch64DAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
   }
   bool is64BitVector = VT.is64BitVector();
 
-  SDValue V0 = N->getOperand(Vec0Idx + 0);
-  SDValue SrcReg;
-  if (NumVecs == 1)
-    SrcReg = V0;
-  else {
-    SDValue V1 = N->getOperand(Vec0Idx + 1);
-    if (NumVecs == 2)
-      SrcReg = is64BitVector ? SDValue(createDPairNode(V0, V1), 0)
-                             : SDValue(createQPairNode(V0, V1), 0);
-    else {
-      SDValue V2 = N->getOperand(Vec0Idx + 2);
-      if (NumVecs == 3)
-        SrcReg = is64BitVector ? SDValue(createDTripleNode(V0, V1, V2), 0)
-                               : SDValue(createQTripleNode(V0, V1, V2), 0);
-      else {
-        SDValue V3 = N->getOperand(Vec0Idx + 3);
-        SrcReg = is64BitVector ? SDValue(createDQuadNode(V0, V1, V2, V3), 0)
-                               : SDValue(createQQuadNode(V0, V1, V2, V3), 0);
-      }
-    }
-  }
+  SmallVector<SDValue, 4> Regs(N->op_begin() + Vec0Idx,
+                               N->op_begin() + Vec0Idx + NumVecs);
+  SDValue SrcReg = is64BitVector ? createDTuple(Regs) : createQTuple(Regs);
   Ops.push_back(SrcReg);
 
   // Push back the Chain
