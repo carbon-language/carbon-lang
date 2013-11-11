@@ -166,7 +166,7 @@ INTERCEPTOR(int, pthread_create, void *thread,
   GET_STACK_TRACE_THREAD;
   int detached = 0;
   if (attr != 0)
-    pthread_attr_getdetachstate(attr, &detached);
+    REAL(pthread_attr_getdetachstate)(attr, &detached);
 
   u32 current_tid = GetCurrentTidOrInvalid();
   AsanThread *t = AsanThread::Create(start_routine, arg);
