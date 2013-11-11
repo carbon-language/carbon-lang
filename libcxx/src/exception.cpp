@@ -24,7 +24,7 @@
   #ifndef _LIBCPPABI_VERSION
     using namespace __cxxabiapple;
     // On Darwin, there are two STL shared libraries and a lower level ABI
-    // shared libray.  The globals holding the current terminate handler and
+    // shared library.  The globals holding the current terminate handler and
     // current unexpected handler are in the ABI library.
     #define __terminate_handler  __cxxabiapple::__cxa_terminate_handler
     #define __unexpected_handler __cxxabiapple::__cxa_unexpected_handler

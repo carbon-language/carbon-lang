@@ -22,7 +22,7 @@
 
     #ifndef _LIBCPPABI_VERSION
         // On Darwin, there are two STL shared libraries and a lower level ABI
-        // shared libray.  The global holding the current new handler is
+        // shared library.  The global holding the current new handler is
         // in the ABI library and named __cxa_new_handler.
         #define __new_handler __cxxabiapple::__cxa_new_handler
     #endif
