@@ -1133,7 +1133,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
 
   switch (Tag) {
   case dwarf::DW_TAG_array_type:
-    constructArrayTypeDIE(Buffer, &CTy);
+    constructArrayTypeDIE(Buffer, CTy);
     break;
   case dwarf::DW_TAG_enumeration_type: {
     DIArray Elements = CTy.getTypeArray();
@@ -1687,12 +1687,12 @@ void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR,
 }
 
 /// constructArrayTypeDIE - Construct array type DIE from DICompositeType.
-void CompileUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType *CTy) {
-  if (CTy->isVector())
+void CompileUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy) {
+  if (CTy.isVector())
     addFlag(&Buffer, dwarf::DW_AT_GNU_vector);
 
   // Emit the element type.
-  addType(&Buffer, resolve(CTy->getTypeDerivedFrom()));
+  addType(&Buffer, resolve(CTy.getTypeDerivedFrom()));
 
   // Get an anonymous type for index type.
   // FIXME: This type should be passed down from the front end
@@ -1709,7 +1709,7 @@ void CompileUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType *CTy) {
   }
 
   // Add subranges to array type.
-  DIArray Elements = CTy->getTypeArray();
+  DIArray Elements = CTy.getTypeArray();
   for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
     DIDescriptor Element = Elements.getElement(i);
     if (Element.getTag() == dwarf::DW_TAG_subrange_type)

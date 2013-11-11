@@ -348,7 +348,7 @@ private:
   void constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy);
 
   /// constructArrayTypeDIE - Construct array type DIE from DICompositeType.
-  void constructArrayTypeDIE(DIE &Buffer, DICompositeType *CTy);
+  void constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy);
 
   /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
   void constructEnumTypeDIE(DIE &Buffer, DIEnumerator ETy);
