@@ -1595,7 +1595,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
             }
             Ofst += TD->getTypeAllocSize(VecVT.getTypeForEVT(F->getContext()));
           }
-          InsIdx += VecSize;
+          InsIdx += NumElts;
         }
 
         if (NumElts > 0)
