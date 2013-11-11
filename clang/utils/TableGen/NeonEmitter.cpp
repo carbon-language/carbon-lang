@@ -468,6 +468,8 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
       if (type == 'd')
         type = 'l';
       break;
+    case '$':
+      scal = true;
     case 'x':
       usgn = false;
       poly = false;
@@ -2547,8 +2549,10 @@ NeonEmitter::genIntrinsicRangeCheckCode(raw_ostream &OS,
               "Fixed point convert name should contains \"32\" or \"64\"");
 
       } else if (R->getValueAsBit("isScalarShift")) {
-        // Right shifts have an 'r' in the name, left shifts do not.
-        if (name.find('r') != std::string::npos)
+        // Right shifts have an 'r' in the name, left shifts do not.  Convert
+        // instructions have the same bounds and right shifts.
+        if (name.find('r') != std::string::npos ||
+            name.find("cvt") != std::string::npos)
           rangestr = "l = 1; ";
 
         rangestr += "u = " +

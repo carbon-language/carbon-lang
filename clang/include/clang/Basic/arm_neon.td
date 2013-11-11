@@ -179,6 +179,7 @@ class NoTestOpInst<string n, string p, string t, Op o> : Inst<n, p, t, o> {}
 // r: scalar of double width element type, signed
 // a: scalar of element type (splat to vector type)
 // b: scalar of unsigned integer/long type (int/float args)
+// $: scalar of signed integer/long type (int/float args)
 // y: scalar of float
 // o: scalar of double
 // k: default elt width, double num elts
@@ -870,7 +871,6 @@ def SCALAR_SQRSHRN_N: SInst<"vqrshrn_n", "zsi", "SsSiSlSUsSUiSUl">;
 def SCALAR_SQSHRUN_N: SInst<"vqshrun_n", "zsi", "SsSiSl">;
 // Signed Saturating Rounded Shift Right Unsigned Narrow (Immediate)
 def SCALAR_SQRSHRUN_N: SInst<"vqrshrun_n", "zsi", "SsSiSl">;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Signed/Unsigned Fixed-point Convert To Floating-Point (Immediate)
@@ -879,10 +879,11 @@ def SCALAR_SCVTF_N_F64: SInst<"vcvt_n_f64", "osi", "SlSUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Floating-point Convert To Signed/Unsigned Fixed-point (Immediate)
-def SCALAR_FCVTZS_N_S32 : SInst<"vcvt_n_s32", "xsi", "Sf">;
-def SCALAR_FCVTZU_N_U32 : SInst<"vcvt_n_u32", "usi", "Sf">;
-def SCALAR_FCVTZS_N_S64 : SInst<"vcvt_n_s64", "xsi", "Sd">;
-def SCALAR_FCVTZU_N_U64 : SInst<"vcvt_n_u64", "usi", "Sd">;
+def SCALAR_FCVTZS_N_S32 : SInst<"vcvt_n_s32", "$si", "Sf">;
+def SCALAR_FCVTZU_N_U32 : SInst<"vcvt_n_u32", "bsi", "Sf">;
+def SCALAR_FCVTZS_N_S64 : SInst<"vcvt_n_s64", "$si", "Sd">;
+def SCALAR_FCVTZU_N_U64 : SInst<"vcvt_n_u64", "bsi", "Sd">;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Reduce Pairwise Addition (Scalar and Floating Point)

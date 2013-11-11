@@ -2384,6 +2384,20 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vcvtd_n_f64_u64:
     Int = Intrinsic::aarch64_neon_vcvtf64_n_u64;
     s = "vcvtf"; OverloadInt = false; break;
+  // Scalar Floating-point Convert To Signed Fixed-point (Immediate)
+  case AArch64::BI__builtin_neon_vcvts_n_s32_f32:
+    Int = Intrinsic::aarch64_neon_vcvts_n_s32_f32;
+    s = "fcvtzs"; OverloadInt = false; break;
+  case AArch64::BI__builtin_neon_vcvtd_n_s64_f64:
+    Int = Intrinsic::aarch64_neon_vcvtd_n_s64_f64;
+    s = "fcvtzs"; OverloadInt = false; break;
+  // Scalar Floating-point Convert To Unsigned Fixed-point (Immediate)
+  case AArch64::BI__builtin_neon_vcvts_n_u32_f32:
+    Int = Intrinsic::aarch64_neon_vcvts_n_u32_f32;
+    s = "fcvtzu"; OverloadInt = false; break;
+  case AArch64::BI__builtin_neon_vcvtd_n_u64_f64:
+    Int = Intrinsic::aarch64_neon_vcvtd_n_u64_f64;
+    s = "fcvtzu"; OverloadInt = false; break;
   }
 
   if (!Int)
