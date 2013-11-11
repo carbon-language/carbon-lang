@@ -10,12 +10,12 @@
 ;CHECK: EXPORT T{{[0-9]}}.0000
 
 
-define void @main() #0 {
+define void @main(<4 x float> inreg %reg0, <4 x float> inreg %reg1) #0 {
 main_body:
-  %0 = call float @llvm.R600.load.input(i32 4)
-  %1 = call float @llvm.R600.load.input(i32 5)
-  %2 = call float @llvm.R600.load.input(i32 6)
-  %3 = call float @llvm.R600.load.input(i32 7)
+  %0 = extractelement <4 x float> %reg1, i32 0
+  %1 = extractelement <4 x float> %reg1, i32 1
+  %2 = extractelement <4 x float> %reg1, i32 2
+  %3 = extractelement <4 x float> %reg1, i32 3
   %4 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 4)
   %5 = extractelement <4 x float> %4, i32 0
   %6 = fmul float %5, %0
@@ -137,10 +137,6 @@ main_body:
   ret void
 }
 
-; Function Attrs: readnone
-declare float @llvm.R600.load.input(i32) #1
-
 declare void @llvm.R600.store.swizzle(<4 x float>, i32, i32)
 
 attributes #0 = { "ShaderType"="1" }
-attributes #1 = { readnone }

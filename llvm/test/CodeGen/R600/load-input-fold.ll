@@ -1,20 +1,20 @@
 ;RUN: llc < %s -march=r600 -mcpu=cayman
 ;REQUIRES: asserts
 
-define void @main() #0 {
+define void @main(<4 x float> inreg %reg0, <4 x float> inreg %reg1, <4 x float> inreg %reg2, <4 x float> inreg %reg3) #0 {
 main_body:
-  %0 = call float @llvm.R600.load.input(i32 4)
-  %1 = call float @llvm.R600.load.input(i32 5)
-  %2 = call float @llvm.R600.load.input(i32 6)
-  %3 = call float @llvm.R600.load.input(i32 7)
-  %4 = call float @llvm.R600.load.input(i32 8)
-  %5 = call float @llvm.R600.load.input(i32 9)
-  %6 = call float @llvm.R600.load.input(i32 10)
-  %7 = call float @llvm.R600.load.input(i32 11)
-  %8 = call float @llvm.R600.load.input(i32 12)
-  %9 = call float @llvm.R600.load.input(i32 13)
-  %10 = call float @llvm.R600.load.input(i32 14)
-  %11 = call float @llvm.R600.load.input(i32 15)
+  %0 = extractelement <4 x float> %reg1, i32 0
+  %1 = extractelement <4 x float> %reg1, i32 1
+  %2 = extractelement <4 x float> %reg1, i32 2
+  %3 = extractelement <4 x float> %reg1, i32 3
+  %4 = extractelement <4 x float> %reg2, i32 0
+  %5 = extractelement <4 x float> %reg2, i32 1
+  %6 = extractelement <4 x float> %reg2, i32 2
+  %7 = extractelement <4 x float> %reg2, i32 3
+  %8 = extractelement <4 x float> %reg3, i32 0
+  %9 = extractelement <4 x float> %reg3, i32 1
+  %10 = extractelement <4 x float> %reg3, i32 2
+  %11 = extractelement <4 x float> %reg3, i32 3
   %12 = load <4 x float> addrspace(8)* null
   %13 = extractelement <4 x float> %12, i32 0
   %14 = fmul float %0, %13
@@ -94,9 +94,6 @@ main_body:
   call void @llvm.R600.store.swizzle(<4 x float> %87, i32 2, i32 2)
   ret void
 }
-
-; Function Attrs: readnone
-declare float @llvm.R600.load.input(i32) #1
 
 ; Function Attrs: readnone
 declare float @llvm.AMDGPU.dp4(<4 x float>, <4 x float>) #1

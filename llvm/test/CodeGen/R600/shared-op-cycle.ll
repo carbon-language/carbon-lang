@@ -4,10 +4,10 @@
 ; CHECK: MULADD_IEEE *
 ; CHECK-NOT: MULADD_IEEE *
 
-define void @main() {
-   %w0 = call float @llvm.R600.load.input(i32 3)
-   %w1 = call float @llvm.R600.load.input(i32 7)
-   %w2 = call float @llvm.R600.load.input(i32 11)
+define void @main(<4 x float> inreg %reg0, <4 x float> inreg %reg1, <4 x float> inreg %reg2) #0 {
+   %w0 = extractelement <4 x float> %reg0, i32 3
+   %w1 = extractelement <4 x float> %reg1, i32 3
+   %w2 = extractelement <4 x float> %reg2, i32 3
    %sq0 = fmul float %w0, %w0
    %r0 = fadd float %sq0, 2.0
    %sq1 = fmul float %w1, %w1
@@ -24,15 +24,9 @@ define void @main() {
 }
 
 ; Function Attrs: readnone
-declare float @llvm.R600.load.input(i32) #1
-
-; Function Attrs: readnone
 declare float @llvm.AMDGPU.dp4(<4 x float>, <4 x float>) #1
-
 
 declare void @llvm.R600.store.swizzle(<4 x float>, i32, i32)
 
 attributes #0 = { "ShaderType"="1" }
 attributes #1 = { readnone }
-attributes #2 = { readonly }
-attributes #3 = { nounwind readonly }

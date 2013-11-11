@@ -3,17 +3,17 @@
 ;CHECK: DOT4  T{{[0-9]\.X}}
 ;CHECK: MULADD_IEEE * T{{[0-9]\.W}}
 
-define void @main() #0 {
+define void @main(<4 x float> inreg %reg0, <4 x float> inreg %reg1, <4 x float> inreg %reg2, <4 x float> inreg %reg3) #0 {
 main_body:
-  %0 = call float @llvm.R600.load.input(i32 4)
-  %1 = call float @llvm.R600.load.input(i32 5)
-  %2 = call float @llvm.R600.load.input(i32 6)
-  %3 = call float @llvm.R600.load.input(i32 8)
-  %4 = call float @llvm.R600.load.input(i32 9)
-  %5 = call float @llvm.R600.load.input(i32 10)
-  %6 = call float @llvm.R600.load.input(i32 12)
-  %7 = call float @llvm.R600.load.input(i32 13)
-  %8 = call float @llvm.R600.load.input(i32 14)
+  %0 = extractelement <4 x float> %reg1, i32 0
+  %1 = extractelement <4 x float> %reg1, i32 1
+  %2 = extractelement <4 x float> %reg1, i32 2
+  %3 = extractelement <4 x float> %reg2, i32 0
+  %4 = extractelement <4 x float> %reg2, i32 1
+  %5 = extractelement <4 x float> %reg2, i32 2
+  %6 = extractelement <4 x float> %reg3, i32 0
+  %7 = extractelement <4 x float> %reg3, i32 1
+  %8 = extractelement <4 x float> %reg3, i32 2
   %9 = load <4 x float> addrspace(8)* null
   %10 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 1)
   %11 = call float @llvm.AMDGPU.dp4(<4 x float> %9, <4 x float> %9)
@@ -36,9 +36,6 @@ main_body:
 }
 
 ; Function Attrs: readnone
-declare float @llvm.R600.load.input(i32) #1
-
-; Function Attrs: readnone
 declare float @llvm.AMDGPU.dp4(<4 x float>, <4 x float>) #1
 
 
@@ -46,5 +43,3 @@ declare void @llvm.R600.store.swizzle(<4 x float>, i32, i32)
 
 attributes #0 = { "ShaderType"="1" }
 attributes #1 = { readnone }
-attributes #2 = { readonly }
-attributes #3 = { nounwind readonly }

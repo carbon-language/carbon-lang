@@ -10,15 +10,16 @@
 ; R600-CHECK: @test
 ; R600-CHECK: MUL_IEEE {{[ *TXYZWPVxyzw.,0-9]+}} ; encoding: [{{0x[0-9a-f]+,0x[0-9a-f]+,0x[0-9a-f]+,0x[0-9a-f]+,0x10,0x02,0x[0-9a-f]+,0x[0-9a-f]+}}]
 
-define void @test() {
+define void @test(<4 x float> inreg %reg0) #0 {
 entry:
-  %0 = call float @llvm.R600.load.input(i32 0)
-  %1 = call float @llvm.R600.load.input(i32 1)
-  %2 = fmul float %0, %1
-  call void @llvm.AMDGPU.store.output(float %2, i32 0)
+  %r0 = extractelement <4 x float> %reg0, i32 0
+  %r1 = extractelement <4 x float> %reg0, i32 1
+  %r2 = fmul float %r0, %r1
+  %vec = insertelement <4 x float> undef, float %r2, i32 0
+  call void @llvm.R600.store.swizzle(<4 x float> %vec, i32 0, i32 0)
   ret void
 }
 
-declare float @llvm.R600.load.input(i32) readnone
+declare void @llvm.R600.store.swizzle(<4 x float>, i32, i32)
 
-declare void @llvm.AMDGPU.store.output(float, i32)
+attributes #0 = { "ShaderType"="0" }

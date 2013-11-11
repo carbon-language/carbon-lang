@@ -418,7 +418,7 @@ def INTERP_VEC_LOAD :  AMDGPUShaderInst <
   (outs R600_Reg128:$dst),
   (ins i32imm:$src0),
   "INTERP_LOAD $src0 : $dst",
-  []>;
+  [(set R600_Reg128:$dst, (int_R600_interp_const imm:$src0))]>;
 
 def INTERP_XY : R600_2OP <0xD6, "INTERP_XY", []> {
   let bank_swizzle = 5;

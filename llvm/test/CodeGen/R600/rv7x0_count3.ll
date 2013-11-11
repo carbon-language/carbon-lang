@@ -1,12 +1,12 @@
 ; RUN: llc < %s -march=r600 -show-mc-encoding  -mcpu=rv710 | FileCheck %s
 
-; CHECK: TEX 9 @4 ;  encoding: [0x04,0x00,0x00,0x00,0x00,0x04,0x88,0x80]
+; CHECK: TEX 9 @6 ;  encoding: [0x06,0x00,0x00,0x00,0x00,0x04,0x88,0x80]
 
-define void @test(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {
-   %1 = call float @llvm.R600.load.input(i32 4)
-   %2 = call float @llvm.R600.load.input(i32 5)
-   %3 = call float @llvm.R600.load.input(i32 6)
-   %4 = call float @llvm.R600.load.input(i32 7)
+define void @test(<4 x float> inreg %reg0, <4 x float> inreg %reg1) #0 {
+   %1 = extractelement <4 x float> %reg1, i32 0
+   %2 = extractelement <4 x float> %reg1, i32 1
+   %3 = extractelement <4 x float> %reg1, i32 2
+   %4 = extractelement <4 x float> %reg1, i32 3
    %5 = insertelement <4 x float> undef, float %1, i32 0
    %6 = insertelement <4 x float> %5, float %2, i32 1
    %7 = insertelement <4 x float> %6, float %3, i32 2
@@ -36,9 +36,6 @@ define void @test(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in)
 
 declare <4 x float> @llvm.AMDGPU.tex(<4 x float>, i32, i32, i32) readnone
 
-; Function Attrs: readnone
-declare float @llvm.R600.load.input(i32) #1
-
-
 declare void @llvm.R600.store.swizzle(<4 x float>, i32, i32)
-attributes #1 = { readnone }
+
+attributes #0 = { "ShaderType"="1" }

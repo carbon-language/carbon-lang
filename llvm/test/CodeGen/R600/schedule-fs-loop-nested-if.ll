@@ -1,12 +1,12 @@
 ;RUN: llc < %s -march=r600 -mcpu=cayman -stress-sched -verify-misched -verify-machineinstrs
 ;REQUIRES: asserts
 
-define void @main() {
+define void @main(<4 x float> inreg %reg0, <4 x float> inreg %reg1) #1 {
 main_body:
-  %0 = call float @llvm.R600.interp.input(i32 0, i32 0)
-  %1 = call float @llvm.R600.interp.input(i32 1, i32 0)
-  %2 = call float @llvm.R600.interp.input(i32 2, i32 0)
-  %3 = call float @llvm.R600.interp.input(i32 3, i32 0)
+  %0 = extractelement <4 x float> %reg1, i32 0
+  %1 = extractelement <4 x float> %reg1, i32 1
+  %2 = extractelement <4 x float> %reg1, i32 2
+  %3 = extractelement <4 x float> %reg1, i32 3
   %4 = fcmp ult float %1, 0.000000e+00
   %5 = select i1 %4, float 1.000000e+00, float 0.000000e+00
   %6 = fsub float -0.000000e+00, %5
@@ -74,10 +74,9 @@ ELSE17:                                           ; preds = %ELSE
   br label %ENDIF
 }
 
-declare float @llvm.R600.interp.input(i32, i32) #0
-
 declare float @llvm.AMDIL.clamp.(float, float, float) #0
 
 declare void @llvm.R600.store.swizzle(<4 x float>, i32, i32)
 
 attributes #0 = { readnone }
+attributes #1 = { "ShaderType"="1" }

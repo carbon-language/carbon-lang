@@ -3,36 +3,36 @@
 ;CHECK: DOT4 * T{{[0-9]\.W}} (MASKED)
 ;CHECK: MAX T{{[0-9].[XYZW]}}, 0.0, PV.X
 
-define void @main() #0 {
+define void @main(<4 x float> inreg %reg0, <4 x float> inreg %reg1, <4 x float> inreg %reg2, <4 x float> inreg %reg3, <4 x float> inreg %reg4, <4 x float> inreg %reg5, <4 x float> inreg %reg6, <4 x float> inreg %reg7) #0 {
 main_body:
-  %0 = call float @llvm.R600.load.input(i32 4)
-  %1 = call float @llvm.R600.load.input(i32 5)
-  %2 = call float @llvm.R600.load.input(i32 6)
-  %3 = call float @llvm.R600.load.input(i32 7)
-  %4 = call float @llvm.R600.load.input(i32 8)
-  %5 = call float @llvm.R600.load.input(i32 9)
-  %6 = call float @llvm.R600.load.input(i32 10)
-  %7 = call float @llvm.R600.load.input(i32 11)
-  %8 = call float @llvm.R600.load.input(i32 12)
-  %9 = call float @llvm.R600.load.input(i32 13)
-  %10 = call float @llvm.R600.load.input(i32 14)
-  %11 = call float @llvm.R600.load.input(i32 15)
-  %12 = call float @llvm.R600.load.input(i32 16)
-  %13 = call float @llvm.R600.load.input(i32 17)
-  %14 = call float @llvm.R600.load.input(i32 18)
-  %15 = call float @llvm.R600.load.input(i32 19)
-  %16 = call float @llvm.R600.load.input(i32 20)
-  %17 = call float @llvm.R600.load.input(i32 21)
-  %18 = call float @llvm.R600.load.input(i32 22)
-  %19 = call float @llvm.R600.load.input(i32 23)
-  %20 = call float @llvm.R600.load.input(i32 24)
-  %21 = call float @llvm.R600.load.input(i32 25)
-  %22 = call float @llvm.R600.load.input(i32 26)
-  %23 = call float @llvm.R600.load.input(i32 27)
-  %24 = call float @llvm.R600.load.input(i32 28)
-  %25 = call float @llvm.R600.load.input(i32 29)
-  %26 = call float @llvm.R600.load.input(i32 30)
-  %27 = call float @llvm.R600.load.input(i32 31)
+  %0 = extractelement <4 x float> %reg1, i32 0
+  %1 = extractelement <4 x float> %reg1, i32 1
+  %2 = extractelement <4 x float> %reg1, i32 2
+  %3 = extractelement <4 x float> %reg1, i32 3
+  %4 = extractelement <4 x float> %reg2, i32 0
+  %5 = extractelement <4 x float> %reg2, i32 1
+  %6 = extractelement <4 x float> %reg2, i32 2
+  %7 = extractelement <4 x float> %reg2, i32 3
+  %8 = extractelement <4 x float> %reg3, i32 0
+  %9 = extractelement <4 x float> %reg3, i32 1
+  %10 = extractelement <4 x float> %reg3, i32 2
+  %11 = extractelement <4 x float> %reg3, i32 3
+  %12 = extractelement <4 x float> %reg4, i32 0
+  %13 = extractelement <4 x float> %reg4, i32 1
+  %14 = extractelement <4 x float> %reg4, i32 2
+  %15 = extractelement <4 x float> %reg4, i32 3
+  %16 = extractelement <4 x float> %reg5, i32 0
+  %17 = extractelement <4 x float> %reg5, i32 1
+  %18 = extractelement <4 x float> %reg5, i32 2
+  %19 = extractelement <4 x float> %reg5, i32 3
+  %20 = extractelement <4 x float> %reg6, i32 0
+  %21 = extractelement <4 x float> %reg6, i32 1
+  %22 = extractelement <4 x float> %reg6, i32 2
+  %23 = extractelement <4 x float> %reg6, i32 3
+  %24 = extractelement <4 x float> %reg7, i32 0
+  %25 = extractelement <4 x float> %reg7, i32 1
+  %26 = extractelement <4 x float> %reg7, i32 2
+  %27 = extractelement <4 x float> %reg7, i32 3
   %28 = load <4 x float> addrspace(8)* null
   %29 = extractelement <4 x float> %28, i32 0
   %30 = fmul float %0, %29
@@ -217,9 +217,6 @@ main_body:
   call void @llvm.R600.store.swizzle(<4 x float> %207, i32 0, i32 2)
   ret void
 }
-
-; Function Attrs: readnone
-declare float @llvm.R600.load.input(i32) #1
 
 ; Function Attrs: readnone
 declare float @llvm.AMDGPU.dp4(<4 x float>, <4 x float>) #1

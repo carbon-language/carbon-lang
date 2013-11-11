@@ -6,12 +6,12 @@
 ;EG-CHECK: EXPORT T{{[0-9]+}}.XXWX
 ;EG-CHECK: EXPORT T{{[0-9]+}}.XXXW
 
-define void @main() #0 {
+define void @main(<4 x float> inreg %reg0, <4 x float> inreg %reg1) #0 {
 main_body:
-  %0 = call float @llvm.R600.load.input(i32 4)
-  %1 = call float @llvm.R600.load.input(i32 5)
-  %2 = call float @llvm.R600.load.input(i32 6)
-  %3 = call float @llvm.R600.load.input(i32 7)
+  %0 = extractelement <4 x float> %reg1, i32 0
+  %1 = extractelement <4 x float> %reg1, i32 1
+  %2 = extractelement <4 x float> %reg1, i32 2
+  %3 = extractelement <4 x float> %reg1, i32 3
   %4 = load <4 x float> addrspace(8)* null
   %5 = extractelement <4 x float> %4, i32 1
   %6 = load <4 x float> addrspace(8)* null
@@ -96,12 +96,12 @@ main_body:
 ; EG-CHECK: T{{[0-9]+}}.XY__
 ; EG-CHECK: T{{[0-9]+}}.YXZ0
 
-define void @main2() #0 {
+define void @main2(<4 x float> inreg %reg0, <4 x float> inreg %reg1) #0 {
 main_body:
-  %0 = call float @llvm.R600.load.input(i32 4)
-  %1 = call float @llvm.R600.load.input(i32 5)
-  %2 = call float @llvm.R600.load.input(i32 6)
-  %3 = call float @llvm.R600.load.input(i32 7)
+  %0 = extractelement <4 x float> %reg1, i32 0
+  %1 = extractelement <4 x float> %reg1, i32 1
+  %2 = fadd float %0, 2.5
+  %3 = fmul float %1, 3.5
   %4 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 1)
   %5 = extractelement <4 x float> %4, i32 0
   %6 = call float @llvm.cos.f32(float %5)
@@ -109,8 +109,8 @@ main_body:
   %8 = extractelement <4 x float> %7, i32 0
   %9 = load <4 x float> addrspace(8)* null
   %10 = extractelement <4 x float> %9, i32 1
-  %11 = insertelement <4 x float> undef, float %0, i32 0
-  %12 = insertelement <4 x float> %11, float %1, i32 1
+  %11 = insertelement <4 x float> undef, float %2, i32 0
+  %12 = insertelement <4 x float> %11, float %3, i32 1
   call void @llvm.R600.store.swizzle(<4 x float> %12, i32 60, i32 1)
   %13 = insertelement <4 x float> undef, float %6, i32 0
   %14 = insertelement <4 x float> %13, float %8, i32 1
@@ -120,14 +120,10 @@ main_body:
   ret void
 }
 
-; Function Attrs: readnone
-declare float @llvm.R600.load.input(i32) #1
-
 ; Function Attrs: nounwind readonly
-declare float @llvm.cos.f32(float) #2
+declare float @llvm.cos.f32(float) #1
 
 declare void @llvm.R600.store.swizzle(<4 x float>, i32, i32)
 
 attributes #0 = { "ShaderType"="1" }
-attributes #1 = { readnone }
-attributes #2 = { nounwind readonly }
+attributes #1 = { nounwind readonly }

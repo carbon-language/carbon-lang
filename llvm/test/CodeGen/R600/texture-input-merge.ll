@@ -2,11 +2,11 @@
 
 ;CHECK-NOT: MOV
 
-define void @test() {
-  %1 = call float @llvm.R600.load.input(i32 0)
-  %2 = call float @llvm.R600.load.input(i32 1)
-  %3 = call float @llvm.R600.load.input(i32 2)
-  %4 = call float @llvm.R600.load.input(i32 3)
+define void @test(<4 x float> inreg %reg0) #0 {
+  %1 = extractelement <4 x float> %reg0, i32 0
+  %2 = extractelement <4 x float> %reg0, i32 1
+  %3 = extractelement <4 x float> %reg0, i32 2
+  %4 = extractelement <4 x float> %reg0, i32 3
   %5 = fmul float %1, 3.0
   %6 = fmul float %2, 3.0
   %7 = fmul float %3, 3.0
@@ -25,6 +25,7 @@ define void @test() {
   ret void
 }
 
-declare float @llvm.R600.load.input(i32) readnone
 declare <4 x float> @llvm.R600.tex(<4 x float>, i32, i32, i32, i32, i32, i32, i32, i32, i32) readnone
 declare void @llvm.R600.store.swizzle(<4 x float>, i32, i32)
+
+attributes #0 = { "ShaderType"="1" }

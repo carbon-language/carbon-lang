@@ -3,13 +3,13 @@
 ; CHECK: @main
 ; CHECK: ADD *
 
-define void @main() #0 {
+define void @main(<4 x float> inreg %reg0, <4 x float> inreg %reg1, <4 x float> inreg %reg2) #0 {
 main_body:
-  %0 = call float @llvm.R600.load.input(i32 4)
-  %1 = call float @llvm.R600.load.input(i32 5)
-  %2 = call float @llvm.R600.load.input(i32 6)
-  %3 = call float @llvm.R600.load.input(i32 7)
-  %4 = call float @llvm.R600.load.input(i32 8)
+  %0 = extractelement <4 x float> %reg1, i32 0
+  %1 = extractelement <4 x float> %reg1, i32 1
+  %2 = extractelement <4 x float> %reg1, i32 2
+  %3 = extractelement <4 x float> %reg1, i32 3
+  %4 = extractelement <4 x float> %reg2, i32 0
   %5 = fadd float %0, 2.0
   %6 = fadd float %1, 3.0
   %7 = fadd float %2, 4.0
@@ -32,13 +32,13 @@ main_body:
 ; CHECK: @main
 ; CHECK-NOT: ADD *
 
-define void @main2() #0 {
+define void @main2(<4 x float> inreg %reg0, <4 x float> inreg %reg1, <4 x float> inreg %reg2) #0 {
 main_body:
-  %0 = call float @llvm.R600.load.input(i32 4)
-  %1 = call float @llvm.R600.load.input(i32 5)
-  %2 = call float @llvm.R600.load.input(i32 6)
-  %3 = call float @llvm.R600.load.input(i32 7)
-  %4 = call float @llvm.R600.load.input(i32 8)
+  %0 = extractelement <4 x float> %reg1, i32 0
+  %1 = extractelement <4 x float> %reg1, i32 1
+  %2 = extractelement <4 x float> %reg1, i32 2
+  %3 = extractelement <4 x float> %reg1, i32 3
+  %4 = extractelement <4 x float> %reg2, i32 0
   %5 = fadd float %0, 2.0
   %6 = fadd float %1, 3.0
   %7 = fadd float %2, 4.0
@@ -59,7 +59,6 @@ main_body:
 }
 
 ; Function Attrs: readnone
-declare float @llvm.R600.load.input(i32) #1
 declare float @llvm.AMDGPU.dp4(<4 x float>, <4 x float>) #1
 
 declare void @llvm.R600.store.swizzle(<4 x float>, i32, i32)

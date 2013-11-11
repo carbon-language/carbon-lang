@@ -1,12 +1,12 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood
 ;REQUIRES: asserts
 
-define void @main() #0 {
+define void @main(<4 x float> inreg %reg0, <4 x float> inreg %reg1) #0 {
 main_body:
-  %0 = call float @llvm.R600.load.input(i32 4)
-  %1 = call float @llvm.R600.load.input(i32 5)
-  %2 = call float @llvm.R600.load.input(i32 6)
-  %3 = call float @llvm.R600.load.input(i32 7)
+  %0 = extractelement <4 x float> %reg1, i32 0
+  %1 = extractelement <4 x float> %reg1, i32 1
+  %2 = extractelement <4 x float> %reg1, i32 2
+  %3 = extractelement <4 x float> %reg1, i32 3
   %4 = bitcast float %0 to i32
   %5 = icmp eq i32 %4, 0
   %6 = sext i1 %5 to i32
@@ -113,12 +113,8 @@ ENDIF48:                                          ; preds = %LOOP47
   br label %LOOP47
 }
 
-; Function Attrs: readnone
-declare float @llvm.R600.load.input(i32) #1
-
 declare void @llvm.R600.store.stream.output(<4 x float>, i32, i32, i32)
 
 declare void @llvm.R600.store.swizzle(<4 x float>, i32, i32)
 
 attributes #0 = { "ShaderType"="1" }
-attributes #1 = { readnone }
