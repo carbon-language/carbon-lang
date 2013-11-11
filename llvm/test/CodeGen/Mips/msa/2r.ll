@@ -16,9 +16,11 @@ entry:
 declare <16 x i8> @llvm.mips.nloc.b(<16 x i8>) nounwind
 
 ; CHECK: llvm_mips_nloc_b_test:
-; CHECK: ld.b
-; CHECK: nloc.b
-; CHECK: st.b
+; CHECK-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_nloc_b_ARG1)
+; CHECK-DAG: ld.b [[WS:\$w[0-9]+]], 0([[R1]])
+; CHECK-DAG: nloc.b [[WD:\$w[0-9]+]], [[WS]]
+; CHECK-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_nloc_b_RES)
+; CHECK-DAG: st.b [[WD]], 0([[R2]])
 ; CHECK: .size llvm_mips_nloc_b_test
 ;
 @llvm_mips_nloc_h_ARG1 = global <8 x i16> <i16 0, i16 1, i16 2, i16 3, i16 4, i16 5, i16 6, i16 7>, align 16
@@ -35,9 +37,11 @@ entry:
 declare <8 x i16> @llvm.mips.nloc.h(<8 x i16>) nounwind
 
 ; CHECK: llvm_mips_nloc_h_test:
-; CHECK: ld.h
-; CHECK: nloc.h
-; CHECK: st.h
+; CHECK-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_nloc_h_ARG1)
+; CHECK-DAG: ld.h [[WS:\$w[0-9]+]], 0([[R1]])
+; CHECK-DAG: nloc.h [[WD:\$w[0-9]+]], [[WS]]
+; CHECK-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_nloc_h_RES)
+; CHECK-DAG: st.h [[WD]], 0([[R2]])
 ; CHECK: .size llvm_mips_nloc_h_test
 ;
 @llvm_mips_nloc_w_ARG1 = global <4 x i32> <i32 0, i32 1, i32 2, i32 3>, align 16
@@ -54,9 +58,11 @@ entry:
 declare <4 x i32> @llvm.mips.nloc.w(<4 x i32>) nounwind
 
 ; CHECK: llvm_mips_nloc_w_test:
-; CHECK: ld.w
-; CHECK: nloc.w
-; CHECK: st.w
+; CHECK-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_nloc_w_ARG1)
+; CHECK-DAG: ld.w [[WS:\$w[0-9]+]], 0([[R1]])
+; CHECK-DAG: nloc.w [[WD:\$w[0-9]+]], [[WS]]
+; CHECK-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_nloc_w_RES)
+; CHECK-DAG: st.w [[WD]], 0([[R2]])
 ; CHECK: .size llvm_mips_nloc_w_test
 ;
 @llvm_mips_nloc_d_ARG1 = global <2 x i64> <i64 0, i64 1>, align 16
@@ -73,9 +79,11 @@ entry:
 declare <2 x i64> @llvm.mips.nloc.d(<2 x i64>) nounwind
 
 ; CHECK: llvm_mips_nloc_d_test:
-; CHECK: ld.d
-; CHECK: nloc.d
-; CHECK: st.d
+; CHECK-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_nloc_d_ARG1)
+; CHECK-DAG: ld.d [[WS:\$w[0-9]+]], 0([[R1]])
+; CHECK-DAG: nloc.d [[WD:\$w[0-9]+]], [[WS]]
+; CHECK-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_nloc_d_RES)
+; CHECK-DAG: st.d [[WD]], 0([[R2]])
 ; CHECK: .size llvm_mips_nloc_d_test
 ;
 @llvm_mips_nlzc_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
@@ -92,9 +100,11 @@ entry:
 declare <16 x i8> @llvm.mips.nlzc.b(<16 x i8>) nounwind
 
 ; CHECK: llvm_mips_nlzc_b_test:
-; CHECK: ld.b
-; CHECK: nlzc.b
-; CHECK: st.b
+; CHECK-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_nlzc_b_ARG1)
+; CHECK-DAG: ld.b [[WS:\$w[0-9]+]], 0([[R1]])
+; CHECK-DAG: nlzc.b [[WD:\$w[0-9]+]], [[WS]]
+; CHECK-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_nlzc_b_RES)
+; CHECK-DAG: st.b [[WD]], 0([[R2]])
 ; CHECK: .size llvm_mips_nlzc_b_test
 ;
 @llvm_mips_nlzc_h_ARG1 = global <8 x i16> <i16 0, i16 1, i16 2, i16 3, i16 4, i16 5, i16 6, i16 7>, align 16
@@ -111,9 +121,11 @@ entry:
 declare <8 x i16> @llvm.mips.nlzc.h(<8 x i16>) nounwind
 
 ; CHECK: llvm_mips_nlzc_h_test:
-; CHECK: ld.h
-; CHECK: nlzc.h
-; CHECK: st.h
+; CHECK-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_nlzc_h_ARG1)
+; CHECK-DAG: ld.h [[WS:\$w[0-9]+]], 0([[R1]])
+; CHECK-DAG: nlzc.h [[WD:\$w[0-9]+]], [[WS]]
+; CHECK-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_nlzc_h_RES)
+; CHECK-DAG: st.h [[WD]], 0([[R2]])
 ; CHECK: .size llvm_mips_nlzc_h_test
 ;
 @llvm_mips_nlzc_w_ARG1 = global <4 x i32> <i32 0, i32 1, i32 2, i32 3>, align 16
@@ -130,9 +142,11 @@ entry:
 declare <4 x i32> @llvm.mips.nlzc.w(<4 x i32>) nounwind
 
 ; CHECK: llvm_mips_nlzc_w_test:
-; CHECK: ld.w
-; CHECK: nlzc.w
-; CHECK: st.w
+; CHECK-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_nlzc_w_ARG1)
+; CHECK-DAG: ld.w [[WS:\$w[0-9]+]], 0([[R1]])
+; CHECK-DAG: nlzc.w [[WD:\$w[0-9]+]], [[WS]]
+; CHECK-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_nlzc_w_RES)
+; CHECK-DAG: st.w [[WD]], 0([[R2]])
 ; CHECK: .size llvm_mips_nlzc_w_test
 ;
 @llvm_mips_nlzc_d_ARG1 = global <2 x i64> <i64 0, i64 1>, align 16
@@ -149,9 +163,11 @@ entry:
 declare <2 x i64> @llvm.mips.nlzc.d(<2 x i64>) nounwind
 
 ; CHECK: llvm_mips_nlzc_d_test:
-; CHECK: ld.d
-; CHECK: nlzc.d
-; CHECK: st.d
+; CHECK-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_nlzc_d_ARG1)
+; CHECK-DAG: ld.d [[WS:\$w[0-9]+]], 0([[R1]])
+; CHECK-DAG: nlzc.d [[WD:\$w[0-9]+]], [[WS]]
+; CHECK-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_nlzc_d_RES)
+; CHECK-DAG: st.d [[WD]], 0([[R2]])
 ; CHECK: .size llvm_mips_nlzc_d_test
 ;
 @llvm_mips_pcnt_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
@@ -168,9 +184,11 @@ entry:
 declare <16 x i8> @llvm.mips.pcnt.b(<16 x i8>) nounwind
 
 ; CHECK: llvm_mips_pcnt_b_test:
-; CHECK: ld.b
-; CHECK: pcnt.b
-; CHECK: st.b
+; CHECK-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_pcnt_b_ARG1)
+; CHECK-DAG: ld.b [[WS:\$w[0-9]+]], 0([[R1]])
+; CHECK-DAG: pcnt.b [[WD:\$w[0-9]+]], [[WS]]
+; CHECK-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_pcnt_b_RES)
+; CHECK-DAG: st.b [[WD]], 0([[R2]])
 ; CHECK: .size llvm_mips_pcnt_b_test
 ;
 @llvm_mips_pcnt_h_ARG1 = global <8 x i16> <i16 0, i16 1, i16 2, i16 3, i16 4, i16 5, i16 6, i16 7>, align 16
@@ -187,9 +205,11 @@ entry:
 declare <8 x i16> @llvm.mips.pcnt.h(<8 x i16>) nounwind
 
 ; CHECK: llvm_mips_pcnt_h_test:
-; CHECK: ld.h
-; CHECK: pcnt.h
-; CHECK: st.h
+; CHECK-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_pcnt_h_ARG1)
+; CHECK-DAG: ld.h [[WS:\$w[0-9]+]], 0([[R1]])
+; CHECK-DAG: pcnt.h [[WD:\$w[0-9]+]], [[WS]]
+; CHECK-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_pcnt_h_RES)
+; CHECK-DAG: st.h [[WD]], 0([[R2]])
 ; CHECK: .size llvm_mips_pcnt_h_test
 ;
 @llvm_mips_pcnt_w_ARG1 = global <4 x i32> <i32 0, i32 1, i32 2, i32 3>, align 16
@@ -206,9 +226,11 @@ entry:
 declare <4 x i32> @llvm.mips.pcnt.w(<4 x i32>) nounwind
 
 ; CHECK: llvm_mips_pcnt_w_test:
-; CHECK: ld.w
-; CHECK: pcnt.w
-; CHECK: st.w
+; CHECK-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_pcnt_w_ARG1)
+; CHECK-DAG: ld.w [[WS:\$w[0-9]+]], 0([[R1]])
+; CHECK-DAG: pcnt.w [[WD:\$w[0-9]+]], [[WS]]
+; CHECK-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_pcnt_w_RES)
+; CHECK-DAG: st.w [[WD]], 0([[R2]])
 ; CHECK: .size llvm_mips_pcnt_w_test
 ;
 @llvm_mips_pcnt_d_ARG1 = global <2 x i64> <i64 0, i64 1>, align 16
@@ -225,8 +247,10 @@ entry:
 declare <2 x i64> @llvm.mips.pcnt.d(<2 x i64>) nounwind
 
 ; CHECK: llvm_mips_pcnt_d_test:
-; CHECK: ld.d
-; CHECK: pcnt.d
-; CHECK: st.d
+; CHECK-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_pcnt_d_ARG1)
+; CHECK-DAG: ld.d [[WS:\$w[0-9]+]], 0([[R1]])
+; CHECK-DAG: pcnt.d [[WD:\$w[0-9]+]], [[WS]]
+; CHECK-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_pcnt_d_RES)
+; CHECK-DAG: st.d [[WD]], 0([[R2]])
 ; CHECK: .size llvm_mips_pcnt_d_test
 ;
