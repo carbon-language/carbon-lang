@@ -3691,6 +3691,12 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   EVT VT = N0.getValueType();
   unsigned OpSizeInBits = VT.getScalarType().getSizeInBits();
 
+  // fold vector ops
+  if (VT.isVector()) {
+    SDValue FoldedVOp = SimplifyVBinOp(N);
+    if (FoldedVOp.getNode()) return FoldedVOp;
+  }
+
   // fold (shl c1, c2) -> c1<<c2
   if (N0C && N1C)
     return DAG.FoldConstantArithmetic(ISD::SHL, VT, N0C, N1C);
@@ -3842,6 +3848,12 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
   EVT VT = N0.getValueType();
   unsigned OpSizeInBits = VT.getScalarType().getSizeInBits();
 
+  // fold vector ops
+  if (VT.isVector()) {
+    SDValue FoldedVOp = SimplifyVBinOp(N);
+    if (FoldedVOp.getNode()) return FoldedVOp;
+  }
+
   // fold (sra c1, c2) -> (sra c1, c2)
   if (N0C && N1C)
     return DAG.FoldConstantArithmetic(ISD::SRA, VT, N0C, N1C);
@@ -3986,6 +3998,12 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   EVT VT = N0.getValueType();
   unsigned OpSizeInBits = VT.getScalarType().getSizeInBits();
+
+  // fold vector ops
+  if (VT.isVector()) {
+    SDValue FoldedVOp = SimplifyVBinOp(N);
+    if (FoldedVOp.getNode()) return FoldedVOp;
+  }
 
   // fold (srl c1, c2) -> c1 >>u c2
   if (N0C && N1C)
