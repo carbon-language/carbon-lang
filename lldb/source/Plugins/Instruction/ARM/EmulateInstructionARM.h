@@ -1,4 +1,4 @@
-//===-- lldb_EmulateInstructionARM.h ------------------------------------*- C++ -*-===//
+//===-- lldb_EmulateInstructionARM.h ----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
