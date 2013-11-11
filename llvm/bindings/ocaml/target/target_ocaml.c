@@ -72,9 +72,9 @@ CAMLprim value llvm_pointer_size(value TD) {
   return Val_int(LLVMPointerSize(TargetData_val(TD)));
 }
 
-/* DataLayout.t -> int -> Llvm.lltype */
-CAMLprim LLVMTypeRef llvm_intptr_type(value TD) {
-  return LLVMIntPtrType(TargetData_val(TD));;
+/* DataLayout.t -> Llvm.llcontext -> Llvm.lltype */
+CAMLprim LLVMTypeRef llvm_intptr_type(value TD, LLVMContextRef C) {
+  return LLVMIntPtrTypeInContext(C, TargetData_val(TD));;
 }
 
 /* DataLayout.t -> Llvm.lltype -> Int64.t */

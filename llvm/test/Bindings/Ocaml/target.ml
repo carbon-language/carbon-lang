@@ -46,7 +46,7 @@ let test_target_data () =
   assert_equal (DataLayout.as_string td) layout;
   assert_equal (byte_order td) Endian.Little;
   assert_equal (pointer_size td) 4;
-  assert_equal (intptr_type td) i32_type;
+  assert_equal (intptr_type td context) i32_type;
   assert_equal (size_in_bits td sty) (Int64.of_int 96);
   assert_equal (store_size td sty) (Int64.of_int 12);
   assert_equal (abi_size td sty) (Int64.of_int 12);

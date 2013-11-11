@@ -107,7 +107,7 @@ let test_executionengine () =
   let td = ExecutionEngine.target_data ee in
 
   (* Demonstrate that a garbage pointer wasn't returned. *)
-  let ty = intptr_type td in
+  let ty = intptr_type td context in
   if ty != i32_type && ty != i64_type then bomb "target_data did not work";
   
   (* dispose *)
