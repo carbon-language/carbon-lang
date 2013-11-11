@@ -7616,28 +7616,28 @@ int64_t test_vqshlud_n_s64(int64_t a) {
   return (int64_t)vqshlud_n_s64(a, 63);
 }
 
-int64_t test_vsrid_n_s64(int64_t a) {
+int64_t test_vsrid_n_s64(int64_t a, int64_t b) {
 // CHECK-LABEL: test_vsrid_n_s64
 // CHECK: sri {{d[0-9]+}}, {{d[0-9]+}}, #63
-  return (int64_t)vsrid_n_s64(a, 63);
+  return (int64_t)vsrid_n_s64(a, b, 63);
 }
 
-uint64_t test_vsrid_n_u64(uint64_t a) {
+uint64_t test_vsrid_n_u64(uint64_t a, uint64_t b) {
 // CHECK-LABEL: test_vsrid_n_u64
 // CHECK: sri {{d[0-9]+}}, {{d[0-9]+}}, #63
-  return (uint64_t)vsrid_n_u64(a, 63);
+  return (uint64_t)vsrid_n_u64(a, b, 63);
 }
 
-int64_t test_vslid_n_s64(int64_t a) {
+int64_t test_vslid_n_s64(int64_t a, int64_t b) {
 // CHECK-LABEL: test_vslid_n_s64
 // CHECK: sli {{d[0-9]+}}, {{d[0-9]+}}, #63
-  return (int64_t)vslid_n_s64(a, 63);
+  return (int64_t)vslid_n_s64(a, b, 63);
 }
 
-uint64_t test_vslid_n_u64(uint64_t a) {
+uint64_t test_vslid_n_u64(uint64_t a, uint64_t b) {
 // CHECK-LABEL: test_vslid_n_u64
 // CHECK: sli {{d[0-9]+}}, {{d[0-9]+}}, #63
-  return (uint64_t)vslid_n_u64(a, 63);
+  return (uint64_t)vslid_n_u64(a, b, 63);
 }
 
 int8_t test_vqshrnh_n_s16(int16_t a) {

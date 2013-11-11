@@ -859,9 +859,9 @@ def SCALAR_SQSHL_N: SInst<"vqshl_n", "ssi", "ScSsSiSlSUcSUsSUiSUl">;
 def SCALAR_SQSHLU_N: SInst<"vqshlu_n", "ssi", "ScSsSiSl">;
 
 // Shift Right And Insert (Immediate)
-def SCALAR_SRI_N: SInst<"vsri_n", "ssi", "SlSUl">;
+def SCALAR_SRI_N: SInst<"vsri_n", "sssi", "SlSUl">;
 // Shift Left And Insert (Immediate)
-def SCALAR_SLI_N: SInst<"vsli_n", "ssi", "SlSUl">;
+def SCALAR_SLI_N: SInst<"vsli_n", "sssi", "SlSUl">;
 
 // Signed/Unsigned Saturating Shift Right Narrow (Immediate)
 def SCALAR_SQSHRN_N: SInst<"vqshrn_n", "zsi", "SsSiSlSUsSUiSUl">;
