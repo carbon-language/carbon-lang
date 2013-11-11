@@ -181,20 +181,8 @@ void CodeGenModule::applyReplacements() {
     llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
     if (!Entry)
       continue;
-    llvm::Function *OldF = cast<llvm::Function>(Entry);
-    llvm::Function *NewF = dyn_cast<llvm::Function>(Replacement);
-    if (!NewF) {
-      llvm::ConstantExpr *CE = cast<llvm::ConstantExpr>(Replacement);
-      assert(CE->getOpcode() == llvm::Instruction::BitCast ||
-             CE->getOpcode() == llvm::Instruction::GetElementPtr);
-      NewF = cast<llvm::Function>(CE->getOperand(0));
-    }
-
-    // Replace old with new, but keep the old order.
-    OldF->replaceAllUsesWith(Replacement);
-    NewF->removeFromParent();
-    OldF->getParent()->getFunctionList().insertAfter(OldF, NewF);
-    OldF->eraseFromParent();
+    Entry->replaceAllUsesWith(Replacement);
+    Entry->eraseFromParent();
   }
 }
 

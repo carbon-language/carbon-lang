@@ -36,12 +36,12 @@ namespace PR7526 {
 
   struct allocator_derived : allocator { };
 
-  // CHECK-LABEL: define void @_ZN6PR75263fooEv()
-  // CHECK: call void {{.*}} @_ZN6PR75269allocatorD2Ev
-
   // CHECK-LABEL: define void @_ZN6PR75269allocatorD2Ev(%"struct.PR7526::allocator"* %this) unnamed_addr
   // CHECK: call void @__cxa_call_unexpected
   allocator::~allocator() throw() { foo(); }
+
+  // CHECK-LABEL: define void @_ZN6PR75263fooEv()
+  // CHECK: call void {{.*}} @_ZN6PR75269allocatorD2Ev
 
   void foo() {
     allocator_derived ad;
@@ -393,14 +393,14 @@ namespace test10 {
   // CHECK: call void @_ZN5test312_GLOBAL__N_11DD0Ev(
   // CHECK: ret void
 
-  // CHECK-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
-  // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
-  // CHECK: call void @_ZN5test312_GLOBAL__N_11CD2Ev(
-  // CHECK: ret void
-
   // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(%"struct.test3::<anonymous namespace>::C"* %this) unnamed_addr
   // CHECK: invoke void @_ZN5test31BD2Ev(
   // CHECK: call void @_ZN5test31AD2Ev(
+  // CHECK: ret void
+
+  // CHECK-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
+  // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
+  // CHECK: call void @_ZN5test312_GLOBAL__N_11CD2Ev(
   // CHECK: ret void
 
   // CHECK: declare void @_ZN5test31BD2Ev(
