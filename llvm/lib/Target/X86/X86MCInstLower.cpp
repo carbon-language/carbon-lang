@@ -593,18 +593,6 @@ ReSimplify:
   case X86::MOVSX64rr32:
     SimplifyMOVSX(OutMI);
     break;
-
-  case X86::MORESTACK_RET:
-    OutMI.setOpcode(X86::RET);
-    break;
-
-  case X86::MORESTACK_RET_RESTORE_R10:
-    OutMI.setOpcode(X86::MOV64rr);
-    OutMI.addOperand(MCOperand::CreateReg(X86::R10));
-    OutMI.addOperand(MCOperand::CreateReg(X86::RAX));
-
-    AsmPrinter.OutStreamer.EmitInstruction(MCInstBuilder(X86::RET));
-    break;
   }
 }
 
@@ -940,6 +928,18 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   case TargetOpcode::PATCHPOINT:
     return LowerPATCHPOINT(OutStreamer, MCInstLowering, SM, *MI);
+
+  case X86::MORESTACK_RET:
+    OutStreamer.EmitInstruction(MCInstBuilder(X86::RET));
+    return;
+
+  case X86::MORESTACK_RET_RESTORE_R10:
+    // Return, then restore R10.
+    OutStreamer.EmitInstruction(MCInstBuilder(X86::RET));
+    OutStreamer.EmitInstruction(MCInstBuilder(X86::MOV64rr)
+      .addReg(X86::R10)
+      .addReg(X86::RAX));
+    return;
   }
 
   MCInst TmpInst;
