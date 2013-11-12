@@ -5958,9 +5958,9 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FE, SourceLocation CC,
 
   CheckCompletedExpr(FullExpr.get(), CC, IsConstexpr);
 
-  // At the end of this full expression (which could be a deeply nested lambda),
-  // if there is a potential capture within the nested lambda, have the outer 
-  // capture-able lambda try and capture it.
+  // At the end of this full expression (which could be a deeply nested 
+  // lambda), if there is a potential capture within the nested lambda, 
+  // have the outer capture-able lambda try and capture it.
   // Consider the following code:
   // void f(int, int);
   // void f(const int&, double);
@@ -5983,10 +5983,10 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FE, SourceLocation CC,
   //     };
   //   }
   // 
-  //   Here, we see +n, and then the full-expression 0; ends, so we don't capture n 
-  //   (and instead remove it from our list of potential captures), and then the 
-  //   full-expression +n + ({ 0; }); ends, but it's too late for us to see that 
-  //   we need to capture n after all.
+  // Here, we see +n, and then the full-expression 0; ends, so we don't 
+  // capture n (and instead remove it from our list of potential captures), 
+  // and then the full-expression +n + ({ 0; }); ends, but it's too late 
+  // for us to see that we need to capture n after all.
 
   LambdaScopeInfo *const CurrentLSI = getCurLambda();
   // FIXME: PR 17877 showed that getCurLambda() can return a valid pointer 
