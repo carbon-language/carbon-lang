@@ -734,6 +734,7 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
 
   llvm::OwningPtr<BreakableToken> Token;
   unsigned StartColumn = State.Column - Current.ColumnWidth;
+  unsigned ColumnLimit = getColumnLimit(State);
 
   if (Current.isOneOf(tok::string_literal, tok::wide_string_literal,
                       tok::utf8_string_literal, tok::utf16_string_literal,
@@ -778,16 +779,17 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
              (Current.Previous == NULL ||
               Current.Previous->Type != TT_ImplicitStringLiteral)) {
     Token.reset(new BreakableLineComment(Current, State.Line->Level,
-                                         StartColumn, State.Line->InPPDirective,
+                                         StartColumn, /*InPPDirective=*/false,
                                          Encoding, Style));
+    // We don't insert backslashes when breaking line comments.
+    ColumnLimit = Style.ColumnLimit;
   } else {
     return 0;
   }
-  if (Current.UnbreakableTailLength >= getColumnLimit(State))
+  if (Current.UnbreakableTailLength >= ColumnLimit)
     return 0;
 
-  unsigned RemainingSpace =
-      getColumnLimit(State) - Current.UnbreakableTailLength;
+  unsigned RemainingSpace = ColumnLimit - Current.UnbreakableTailLength;
   bool BreakInserted = false;
   unsigned Penalty = 0;
   unsigned RemainingTokenColumns = 0;
@@ -800,7 +802,7 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
         Token->getLineLengthAfterSplit(LineIndex, TailOffset, StringRef::npos);
     while (RemainingTokenColumns > RemainingSpace) {
       BreakableToken::Split Split =
-          Token->getSplit(LineIndex, TailOffset, getColumnLimit(State));
+          Token->getSplit(LineIndex, TailOffset, ColumnLimit);
       if (Split.first == StringRef::npos) {
         // The last line's penalty is handled in addNextStateToQueue().
         if (LineIndex < EndIndex - 1)
@@ -817,9 +819,8 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
       Penalty += Current.SplitPenalty;
       unsigned ColumnsUsed =
           Token->getLineLengthAfterSplit(LineIndex, TailOffset, Split.first);
-      if (ColumnsUsed > getColumnLimit(State)) {
-        Penalty += Style.PenaltyExcessCharacter *
-                   (ColumnsUsed - getColumnLimit(State));
+      if (ColumnsUsed > ColumnLimit) {
+        Penalty += Style.PenaltyExcessCharacter * (ColumnsUsed - ColumnLimit);
       }
       TailOffset += Split.first + Split.second;
       RemainingTokenColumns = NewRemainingTokenColumns;

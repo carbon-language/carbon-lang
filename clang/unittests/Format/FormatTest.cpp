@@ -1005,6 +1005,14 @@ TEST_F(FormatTest, SplitsLongCxxComments) {
   EXPECT_EQ("//\t aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             format("//\t aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                    getLLVMStyleWithColumns(20)));
+  EXPECT_EQ(
+      "#define XXX // a b c d\n"
+      "            // e f g h",
+      format("#define XXX // a b c d e f g h", getLLVMStyleWithColumns(22)));
+  EXPECT_EQ(
+      "#define XXX // q w e r\n"
+      "            // t y u i",
+      format("#define XXX //q w e r t y u i", getLLVMStyleWithColumns(22)));
 }
 
 TEST_F(FormatTest, DontSplitLineCommentsWithEscapedNewlines) {
