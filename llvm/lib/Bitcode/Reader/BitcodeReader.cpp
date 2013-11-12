@@ -508,123 +508,94 @@ error_code BitcodeReader::ParseAttributeBlock() {
   }
 }
 
+// Returns Attribute::None on unrecognized codes.
+static Attribute::AttrKind GetAttrFromCode(uint64_t Code) {
+  switch (Code) {
+  default:
+    return Attribute::None;
+  case bitc::ATTR_KIND_ALIGNMENT:
+    return Attribute::Alignment;
+  case bitc::ATTR_KIND_ALWAYS_INLINE:
+    return Attribute::AlwaysInline;
+  case bitc::ATTR_KIND_BUILTIN:
+    return Attribute::Builtin;
+  case bitc::ATTR_KIND_BY_VAL:
+    return Attribute::ByVal;
+  case bitc::ATTR_KIND_COLD:
+    return Attribute::Cold;
+  case bitc::ATTR_KIND_INLINE_HINT:
+    return Attribute::InlineHint;
+  case bitc::ATTR_KIND_IN_REG:
+    return Attribute::InReg;
+  case bitc::ATTR_KIND_MIN_SIZE:
+    return Attribute::MinSize;
+  case bitc::ATTR_KIND_NAKED:
+    return Attribute::Naked;
+  case bitc::ATTR_KIND_NEST:
+    return Attribute::Nest;
+  case bitc::ATTR_KIND_NO_ALIAS:
+    return Attribute::NoAlias;
+  case bitc::ATTR_KIND_NO_BUILTIN:
+    return Attribute::NoBuiltin;
+  case bitc::ATTR_KIND_NO_CAPTURE:
+    return Attribute::NoCapture;
+  case bitc::ATTR_KIND_NO_DUPLICATE:
+    return Attribute::NoDuplicate;
+  case bitc::ATTR_KIND_NO_IMPLICIT_FLOAT:
+    return Attribute::NoImplicitFloat;
+  case bitc::ATTR_KIND_NO_INLINE:
+    return Attribute::NoInline;
+  case bitc::ATTR_KIND_NON_LAZY_BIND:
+    return Attribute::NonLazyBind;
+  case bitc::ATTR_KIND_NO_RED_ZONE:
+    return Attribute::NoRedZone;
+  case bitc::ATTR_KIND_NO_RETURN:
+    return Attribute::NoReturn;
+  case bitc::ATTR_KIND_NO_UNWIND:
+    return Attribute::NoUnwind;
+  case bitc::ATTR_KIND_OPTIMIZE_FOR_SIZE:
+    return Attribute::OptimizeForSize;
+  case bitc::ATTR_KIND_OPTIMIZE_NONE:
+    return Attribute::OptimizeNone;
+  case bitc::ATTR_KIND_READ_NONE:
+    return Attribute::ReadNone;
+  case bitc::ATTR_KIND_READ_ONLY:
+    return Attribute::ReadOnly;
+  case bitc::ATTR_KIND_RETURNED:
+    return Attribute::Returned;
+  case bitc::ATTR_KIND_RETURNS_TWICE:
+    return Attribute::ReturnsTwice;
+  case bitc::ATTR_KIND_S_EXT:
+    return Attribute::SExt;
+  case bitc::ATTR_KIND_STACK_ALIGNMENT:
+    return Attribute::StackAlignment;
+  case bitc::ATTR_KIND_STACK_PROTECT:
+    return Attribute::StackProtect;
+  case bitc::ATTR_KIND_STACK_PROTECT_REQ:
+    return Attribute::StackProtectReq;
+  case bitc::ATTR_KIND_STACK_PROTECT_STRONG:
+    return Attribute::StackProtectStrong;
+  case bitc::ATTR_KIND_STRUCT_RET:
+    return Attribute::StructRet;
+  case bitc::ATTR_KIND_SANITIZE_ADDRESS:
+    return Attribute::SanitizeAddress;
+  case bitc::ATTR_KIND_SANITIZE_THREAD:
+    return Attribute::SanitizeThread;
+  case bitc::ATTR_KIND_SANITIZE_MEMORY:
+    return Attribute::SanitizeMemory;
+  case bitc::ATTR_KIND_UW_TABLE:
+    return Attribute::UWTable;
+  case bitc::ATTR_KIND_Z_EXT:
+    return Attribute::ZExt;
+  }
+}
+
 error_code BitcodeReader::ParseAttrKind(uint64_t Code,
                                         Attribute::AttrKind *Kind) {
-  switch (Code) {
-  case bitc::ATTR_KIND_ALIGNMENT:
-    *Kind = Attribute::Alignment;
-    return error_code::success();
-  case bitc::ATTR_KIND_ALWAYS_INLINE:
-    *Kind = Attribute::AlwaysInline;
-    return error_code::success();
-  case bitc::ATTR_KIND_BUILTIN:
-    *Kind = Attribute::Builtin;
-    return error_code::success();
-  case bitc::ATTR_KIND_BY_VAL:
-    *Kind = Attribute::ByVal;
-    return error_code::success();
-  case bitc::ATTR_KIND_COLD:
-    *Kind = Attribute::Cold;
-    return error_code::success();
-  case bitc::ATTR_KIND_INLINE_HINT:
-    *Kind = Attribute::InlineHint;
-    return error_code::success();
-  case bitc::ATTR_KIND_IN_REG:
-    *Kind = Attribute::InReg;
-    return error_code::success();
-  case bitc::ATTR_KIND_MIN_SIZE:
-    *Kind = Attribute::MinSize;
-    return error_code::success();
-  case bitc::ATTR_KIND_NAKED:
-    *Kind = Attribute::Naked;
-    return error_code::success();
-  case bitc::ATTR_KIND_NEST:
-    *Kind = Attribute::Nest;
-    return error_code::success();
-  case bitc::ATTR_KIND_NO_ALIAS:
-    *Kind = Attribute::NoAlias;
-    return error_code::success();
-  case bitc::ATTR_KIND_NO_BUILTIN:
-    *Kind = Attribute::NoBuiltin;
-    return error_code::success();
-  case bitc::ATTR_KIND_NO_CAPTURE:
-    *Kind = Attribute::NoCapture;
-    return error_code::success();
-  case bitc::ATTR_KIND_NO_DUPLICATE:
-    *Kind = Attribute::NoDuplicate;
-    return error_code::success();
-  case bitc::ATTR_KIND_NO_IMPLICIT_FLOAT:
-    *Kind = Attribute::NoImplicitFloat;
-    return error_code::success();
-  case bitc::ATTR_KIND_NO_INLINE:
-    *Kind = Attribute::NoInline;
-    return error_code::success();
-  case bitc::ATTR_KIND_NON_LAZY_BIND:
-    *Kind = Attribute::NonLazyBind;
-    return error_code::success();
-  case bitc::ATTR_KIND_NO_RED_ZONE:
-    *Kind = Attribute::NoRedZone;
-    return error_code::success();
-  case bitc::ATTR_KIND_NO_RETURN:
-    *Kind = Attribute::NoReturn;
-    return error_code::success();
-  case bitc::ATTR_KIND_NO_UNWIND:
-    *Kind = Attribute::NoUnwind;
-    return error_code::success();
-  case bitc::ATTR_KIND_OPTIMIZE_FOR_SIZE:
-    *Kind = Attribute::OptimizeForSize;
-    return error_code::success();
-  case bitc::ATTR_KIND_OPTIMIZE_NONE:
-    *Kind = Attribute::OptimizeNone;
-    return error_code::success();
-  case bitc::ATTR_KIND_READ_NONE:
-    *Kind = Attribute::ReadNone;
-    return error_code::success();
-  case bitc::ATTR_KIND_READ_ONLY:
-    *Kind = Attribute::ReadOnly;
-    return error_code::success();
-  case bitc::ATTR_KIND_RETURNED:
-    *Kind = Attribute::Returned;
-    return error_code::success();
-  case bitc::ATTR_KIND_RETURNS_TWICE:
-    *Kind = Attribute::ReturnsTwice;
-    return error_code::success();
-  case bitc::ATTR_KIND_S_EXT:
-    *Kind = Attribute::SExt;
-    return error_code::success();
-  case bitc::ATTR_KIND_STACK_ALIGNMENT:
-    *Kind = Attribute::StackAlignment;
-    return error_code::success();
-  case bitc::ATTR_KIND_STACK_PROTECT:
-    *Kind = Attribute::StackProtect;
-    return error_code::success();
-  case bitc::ATTR_KIND_STACK_PROTECT_REQ:
-    *Kind = Attribute::StackProtectReq;
-    return error_code::success();
-  case bitc::ATTR_KIND_STACK_PROTECT_STRONG:
-    *Kind = Attribute::StackProtectStrong;
-    return error_code::success();
-  case bitc::ATTR_KIND_STRUCT_RET:
-    *Kind = Attribute::StructRet;
-    return error_code::success();
-  case bitc::ATTR_KIND_SANITIZE_ADDRESS:
-    *Kind = Attribute::SanitizeAddress;
-    return error_code::success();
-  case bitc::ATTR_KIND_SANITIZE_THREAD:
-    *Kind = Attribute::SanitizeThread;
-    return error_code::success();
-  case bitc::ATTR_KIND_SANITIZE_MEMORY:
-    *Kind = Attribute::SanitizeMemory;
-    return error_code::success();
-  case bitc::ATTR_KIND_UW_TABLE:
-    *Kind = Attribute::UWTable;
-    return error_code::success();
-  case bitc::ATTR_KIND_Z_EXT:
-    *Kind = Attribute::ZExt;
-    return error_code::success();
-  default:
+  *Kind = GetAttrFromCode(Code);
+  if (*Kind == Attribute::None)
     return Error(InvalidValue);
-  }
+  return error_code::success();
 }
 
 error_code BitcodeReader::ParseAttributeGroupBlock() {
