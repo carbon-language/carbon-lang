@@ -1346,14 +1346,13 @@ static SDValue lowerMSABitClear(SDValue Op, SelectionDAG &DAG) {
 static SDValue lowerMSABitClearImm(SDValue Op, SelectionDAG &DAG) {
   SDLoc DL(Op);
   EVT ResTy = Op->getValueType(0);
-  unsigned ResTyNumElements = ResTy.getVectorNumElements();
   SDValue SHAmount = Op->getOperand(2);
   EVT ImmTy = SHAmount->getValueType(0);
   SDValue Bit =
       DAG.getNode(ISD::SHL, DL, ImmTy, DAG.getConstant(1, ImmTy), SHAmount);
   SDValue BitMask = DAG.getNOT(DL, Bit, ImmTy);
 
-  assert(ResTyNumElements <= 16);
+  assert(ResTy.getVectorNumElements() <= 16);
 
   BitMask = lowerMSASplatImm(DL, ResTy, BitMask, DAG);
 
