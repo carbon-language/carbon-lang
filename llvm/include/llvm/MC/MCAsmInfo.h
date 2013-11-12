@@ -160,10 +160,6 @@ namespace llvm {
     /// names. Defaults to false.
     bool AllowAtInName;
 
-    /// AllowUTF8 - This is true if the assembler accepts UTF-8 input.
-    // FIXME: Make this a more general encoding setting?
-    bool AllowUTF8;
-
     /// UseDataRegionDirectives - This is true if data region markers should
     /// be printed as ".data_region/.end_data_region" directives. If false,
     /// use "$d/$a" labels instead.
@@ -482,9 +478,6 @@ namespace llvm {
     }
     bool doesAllowAtInName() const {
       return AllowAtInName;
-    }
-    bool doesAllowUTF8() const {
-      return AllowUTF8;
     }
     bool doesSupportDataRegionDirectives() const {
       return UseDataRegionDirectives;

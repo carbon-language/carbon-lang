@@ -54,7 +54,6 @@ MCAsmInfo::MCAsmInfo() {
   AllowNameToStartWithDigit = false;
   AllowPeriodsInName = true;
   AllowAtInName = false;
-  AllowUTF8 = true;
   UseDataRegionDirectives = false;
   ZeroDirective = "\t.zero\t";
   AsciiDirective = "\t.ascii\t";
