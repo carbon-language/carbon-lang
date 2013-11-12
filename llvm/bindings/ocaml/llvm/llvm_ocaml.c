@@ -528,14 +528,14 @@ CAMLprim value llvm_dump_value(LLVMValueRef Val) {
 }
 
 /* llvalue -> string */
-CAMLprim value llvm_string_of_llvalue(LLVMTypeRef M) {
-  char* TypeCStr;
-  TypeCStr = LLVMPrintValueToString(M);
+CAMLprim value llvm_string_of_llvalue(LLVMValueRef M) {
+  char* ValueCStr;
+  ValueCStr = LLVMPrintValueToString(M);
 
-  value TypeStr = caml_copy_string(TypeCStr);
-  LLVMDisposeMessage(TypeCStr);
+  value ValueStr = caml_copy_string(ValueCStr);
+  LLVMDisposeMessage(ValueCStr);
 
-  return TypeStr;
+  return ValueStr;
 }
 
 /* llvalue -> llvalue -> unit */
