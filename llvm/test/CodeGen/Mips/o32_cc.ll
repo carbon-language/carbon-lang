@@ -4,9 +4,9 @@
 ; RUN: llc -march=mipsel -mattr=+fp64 < %s | FileCheck -check-prefix=FP64EL %s
 
 ; $f12, $f14
-; FP32EL-LABEL: testlowercall0:
-; FP32EL-DAG: ldc1 $f12, %lo
-; FP32EL-DAG: ldc1 $f14, %lo
+; CHECK-LABEL: testlowercall0:
+; CHECK-DAG: ldc1 $f12, %lo
+; CHECK-DAG: ldc1 $f14, %lo
 define void @testlowercall0() nounwind {
 entry:
   tail call void @f0(double 5.000000e+00, double 6.000000e+00) nounwind
@@ -28,9 +28,9 @@ entry:
 declare void @f1(float, float)
 
 ; $f12, $f14
-; FP32EL-LABEL: testlowercall2:
-; FP32EL-DAG: lwc1 $f12, %lo
-; FP32EL-DAG: ldc1 $f14, %lo
+; CHECK-LABEL: testlowercall2:
+; CHECK-DAG: lwc1 $f12, %lo
+; CHECK-DAG: ldc1 $f14, %lo
 define void @testlowercall2() nounwind {
 entry:
   tail call void @f2(float 8.000000e+00, double 6.000000e+00) nounwind
