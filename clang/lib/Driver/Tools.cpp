@@ -3300,7 +3300,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // When ObjectiveC legacy runtime is in effect on MacOSX,
   // turn on the option to do Array/Dictionary subscripting
   // by default.
-  if (objcRuntime.getKind() == ObjCRuntime::FragileMacOSX &&
+  if (getToolChain().getTriple().getArch() == llvm::Triple::x86 &&
+      getToolChain().getTriple().isMacOSX() &&
+      !getToolChain().getTriple().isMacOSXVersionLT(10, 7) &&
+      objcRuntime.getKind() == ObjCRuntime::FragileMacOSX &&
       objcRuntime.isNeXTFamily())
     CmdArgs.push_back("-fobjc-subscripting-legacy-runtime");
   
