@@ -4,9 +4,10 @@
 // CHECK: "-momit-leaf-frame-pointer"
 // CHECK-NOT: "-mdisable-fp-elim"
 // CHECK: "-fno-signed-char"
+// CHECK: "-fno-use-cxa-atexit"
 // CHECK: "-fno-common"
 // CHECH: xcc" "-o"
 // CHECK: "-c" "-g" "A1Arg" "A2Arg"
 // CHECK: xcc" "-o"
-// CHEXK: "L1Arg" "L2Arg"
+// CHECK: "L1Arg" "L2Arg"
 
