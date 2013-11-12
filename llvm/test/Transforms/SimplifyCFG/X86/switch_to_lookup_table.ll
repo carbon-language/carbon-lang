@@ -711,7 +711,7 @@ return:
   ret i32 %retval.0
 }
 
-define i32 @cprop(i32 %x) {
+define i32 @cprop(i32 %x, i32 %y) {
 entry:
   switch i32 %x, label %sw.default [
     i32 1, label %return
@@ -727,7 +727,8 @@ sw.bb1: br label %return
 
 sw.bb2:
   %and = and i32 %x, 1
-  %tobool = icmp ne i32 %and, 0
+  %and.ptr = inttoptr i32 %and to i8*
+  %tobool = icmp ne i8* %and.ptr, null
   %cond = select i1 %tobool, i32 -123, i32 456
   %sub = sub nsw i32 %x, %cond
   br label %return
@@ -735,13 +736,15 @@ sw.bb2:
 sw.bb3:
   %trunc = trunc i32 %x to i8
   %sext = sext i8 %trunc to i32
+  %select.i = icmp sgt i32 %sext, 0
+  %select = select i1 %select.i, i32 %sext, i32 %y
   br label %return
 
 sw.default:
   br label %return
 
 return:
-  %retval.0 = phi i32 [ 123, %sw.default ], [ %sext, %sw.bb3 ], [ %sub, %sw.bb2 ], [ 42, %sw.bb1 ], [ 5, %entry ]
+  %retval.0 = phi i32 [ 123, %sw.default ], [ %select, %sw.bb3 ], [ %sub, %sw.bb2 ], [ 42, %sw.bb1 ], [ 5, %entry ]
   ret i32 %retval.0
 
 ; CHECK-LABEL: @cprop(

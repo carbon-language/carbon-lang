@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -3323,28 +3324,10 @@ static Constant *LookupConstant(Value *V,
 /// simple instructions such as binary operations where both operands are
 /// constant or can be replaced by constants from the ConstantPool. Returns the
 /// resulting constant on success, 0 otherwise.
-static Constant *ConstantFold(Instruction *I,
-                         const SmallDenseMap<Value*, Constant*>& ConstantPool) {
-  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
-    Constant *A = LookupConstant(BO->getOperand(0), ConstantPool);
-    if (!A)
-      return 0;
-    Constant *B = LookupConstant(BO->getOperand(1), ConstantPool);
-    if (!B)
-      return 0;
-    return ConstantExpr::get(BO->getOpcode(), A, B);
-  }
-
-  if (CmpInst *Cmp = dyn_cast<CmpInst>(I)) {
-    Constant *A = LookupConstant(I->getOperand(0), ConstantPool);
-    if (!A)
-      return 0;
-    Constant *B = LookupConstant(I->getOperand(1), ConstantPool);
-    if (!B)
-      return 0;
-    return ConstantExpr::getCompare(Cmp->getPredicate(), A, B);
-  }
-
+static Constant *
+ConstantFold(Instruction *I,
+             const SmallDenseMap<Value *, Constant *> &ConstantPool,
+             const DataLayout *DL) {
   if (SelectInst *Select = dyn_cast<SelectInst>(I)) {
     Constant *A = LookupConstant(Select->getCondition(), ConstantPool);
     if (!A)
@@ -3356,14 +3339,19 @@ static Constant *ConstantFold(Instruction *I,
     return 0;
   }
 
-  if (CastInst *Cast = dyn_cast<CastInst>(I)) {
-    Constant *A = LookupConstant(I->getOperand(0), ConstantPool);
-    if (!A)
+  SmallVector<Constant *, 4> COps;
+  for (unsigned N = 0, E = I->getNumOperands(); N != E; ++N) {
+    if (Constant *A = LookupConstant(I->getOperand(N), ConstantPool))
+      COps.push_back(A);
+    else
       return 0;
-    return ConstantExpr::getCast(Cast->getOpcode(), A, Cast->getDestTy());
   }
 
-  return 0;
+  if (CmpInst *Cmp = dyn_cast<CmpInst>(I))
+    return ConstantFoldCompareInstOperands(Cmp->getPredicate(), COps[0],
+                                           COps[1], DL);
+
+  return ConstantFoldInstOperands(I->getOpcode(), I->getType(), COps, DL);
 }
 
 /// GetCaseResults - Try to determine the resulting constant values in phi nodes
@@ -3375,7 +3363,8 @@ GetCaseResults(SwitchInst *SI,
                ConstantInt *CaseVal,
                BasicBlock *CaseDest,
                BasicBlock **CommonDest,
-               SmallVectorImpl<std::pair<PHINode*,Constant*> > &Res) {
+               SmallVectorImpl<std::pair<PHINode *, Constant *> > &Res,
+               const DataLayout *DL) {
   // The block from which we enter the common destination.
   BasicBlock *Pred = SI->getParent();
 
@@ -3394,7 +3383,7 @@ GetCaseResults(SwitchInst *SI,
     } else if (isa<DbgInfoIntrinsic>(I)) {
       // Skip debug intrinsic.
       continue;
-    } else if (Constant *C = ConstantFold(I, ConstantPool)) {
+    } else if (Constant *C = ConstantFold(I, ConstantPool, DL)) {
       // Instruction is side-effect free and constant.
       ConstantPool.insert(std::make_pair(I, C));
     } else {
@@ -3718,7 +3707,7 @@ static bool SwitchToLookupTable(SwitchInst *SI,
     typedef SmallVector<std::pair<PHINode*, Constant*>, 4> ResultsTy;
     ResultsTy Results;
     if (!GetCaseResults(SI, CaseVal, CI.getCaseSuccessor(), &CommonDest,
-                        Results))
+                        Results, TD))
       return false;
 
     // Append the result from this case to the list for each phi.
@@ -3732,7 +3721,7 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   // Get the resulting values for the default case.
   SmallVector<std::pair<PHINode*, Constant*>, 4> DefaultResultsList;
   if (!GetCaseResults(SI, 0, SI->getDefaultDest(), &CommonDest,
-                      DefaultResultsList))
+                      DefaultResultsList, TD))
     return false;
   for (size_t I = 0, E = DefaultResultsList.size(); I != E; ++I) {
     PHINode *PHI = DefaultResultsList[I].first;
