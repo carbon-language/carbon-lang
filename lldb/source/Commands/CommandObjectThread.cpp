@@ -28,6 +28,7 @@
 #include "lldb/Symbol/LineEntry.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/SystemRuntime.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
@@ -92,6 +93,13 @@ public:
                     if (!success)
                         error.SetErrorStringWithFormat("invalid integer value for option '%c'", short_option);
                 }
+                case 'e':
+                {
+                    bool success;
+                    m_extended_backtrace =  Args::StringToBoolean (option_arg, false, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("invalid boolean value for option '%c'", short_option);
+                }
                 break;
                 default:
                     error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
@@ -106,6 +114,7 @@ public:
         {
             m_count = UINT32_MAX;
             m_start = 0;
+            m_extended_backtrace = false;
         }
 
         const OptionDefinition*
@@ -121,6 +130,7 @@ public:
         // Instance variables to hold the values for command options.
         uint32_t m_count;
         uint32_t m_start;
+        bool     m_extended_backtrace;
     };
 
     CommandObjectThreadBacktrace (CommandInterpreter &interpreter) :
@@ -160,6 +170,32 @@ public:
     }
 
 protected:
+    void
+    DoExtendedBacktrace (Thread *thread, CommandReturnObject &result)
+    {
+        SystemRuntime *runtime = thread->GetProcess()->GetSystemRuntime();
+        if (runtime)
+        {
+            Stream &strm = result.GetOutputStream();
+            const std::vector<ConstString> &types = runtime->GetExtendedBacktraceTypes();
+            for (auto type : types)
+            {
+                ThreadSP ext_thread_sp = runtime->GetExtendedBacktrace (thread->shared_from_this(), type);
+                if (ext_thread_sp && ext_thread_sp->IsValid ())
+                {
+                    const uint32_t num_frames_with_source = 0;
+                    if (ext_thread_sp->GetStatus (strm, 
+                        m_options.m_start, 
+                        m_options.m_count, 
+                        num_frames_with_source))
+                    {
+                        DoExtendedBacktrace (ext_thread_sp.get(), result);
+                    }
+                }
+            }
+        }
+    }
+
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {        
@@ -178,6 +214,10 @@ protected:
                                    num_frames_with_source))
             {
                 result.SetStatus (eReturnStatusSuccessFinishResult);
+                if (m_options.m_extended_backtrace)
+                {
+                    DoExtendedBacktrace (thread, result);
+                }
             }
         }
         else if (command.GetArgumentCount() == 1 && ::strcmp (command.GetArgumentAtIndex(0), "all") == 0)
@@ -197,6 +237,10 @@ protected:
                     result.AppendErrorWithFormat ("error displaying backtrace for thread: \"0x%4.4x\"\n", idx);
                     result.SetStatus (eReturnStatusFailed);
                     return false;
+                }
+                if (m_options.m_extended_backtrace)
+                {
+                    DoExtendedBacktrace (thread_sp.get(), result);
                 }
                 
                 ++idx;
@@ -243,6 +287,10 @@ protected:
                     result.SetStatus (eReturnStatusFailed);
                     return false;
                 }
+                if (m_options.m_extended_backtrace)
+                {
+                    DoExtendedBacktrace (thread_sps[i].get(), result);
+                }
                 
                 if (i < num_args - 1)
                     result.AppendMessage("");
@@ -259,6 +307,7 @@ CommandObjectThreadBacktrace::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "count", 'c', OptionParser::eRequiredArgument, NULL, 0, eArgTypeCount, "How many frames to display (-1 for all)"},
 { LLDB_OPT_SET_1, false, "start", 's', OptionParser::eRequiredArgument, NULL, 0, eArgTypeFrameIndex, "Frame in which to start the backtrace"},
+{ LLDB_OPT_SET_1, false, "extended", 'e', OptionParser::eRequiredArgument, NULL, 0, eArgTypeBoolean, "Show the extended backtrace, if available"},
 { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 

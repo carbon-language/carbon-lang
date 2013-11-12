@@ -127,7 +127,7 @@ public:
     ///   An empty vector may be returned if no thread origin extended 
     ///   backtrace capabilities are available.
     //------------------------------------------------------------------
-    virtual std::vector<ConstString>
+    virtual const std::vector<ConstString> &
     GetExtendedBacktraceTypes ();
 
     //------------------------------------------------------------------
@@ -165,6 +165,9 @@ protected:
     // Member variables.
     //------------------------------------------------------------------
     Process *m_process;
+
+    std::vector<ConstString> m_types;
+
 private:
     DISALLOW_COPY_AND_ASSIGN (SystemRuntime);
 };

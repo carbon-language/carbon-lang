@@ -33,7 +33,8 @@ SystemRuntime::FindPlugin (Process *process)
 // SystemRuntime constructor
 //----------------------------------------------------------------------
 SystemRuntime::SystemRuntime(Process *process) :
-    m_process (process)
+    m_process (process),
+    m_types ()
 {
 }
 
@@ -59,11 +60,10 @@ SystemRuntime::ModulesDidLoad (ModuleList &module_list)
 {
 }
 
-std::vector<ConstString>
+const std::vector<ConstString> &
 SystemRuntime::GetExtendedBacktraceTypes ()
 {
-    std::vector<ConstString> types;
-    return types;
+    return m_types;
 }
 
 ThreadSP
