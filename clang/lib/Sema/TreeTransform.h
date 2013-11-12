@@ -8276,8 +8276,7 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
  
-  getSema().PushLambdaScope();
-  LambdaScopeInfo *LSI = getSema().getCurLambda();
+  LambdaScopeInfo *LSI = getSema().PushLambdaScope();
   // Transform the template parameters, and add them to the current
   // instantiation scope. The null case is handled correctly.
   LSI->GLTemplateParameterList = getDerived().TransformTemplateParameterList(

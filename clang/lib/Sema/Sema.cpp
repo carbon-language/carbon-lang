@@ -1029,8 +1029,10 @@ void Sema::PushBlockScope(Scope *BlockScope, BlockDecl *Block) {
                                               BlockScope, Block));
 }
 
-void Sema::PushLambdaScope() {
-  FunctionScopes.push_back(new LambdaScopeInfo(getDiagnostics()));
+LambdaScopeInfo* Sema::PushLambdaScope() {
+  LambdaScopeInfo *const LSI = new LambdaScopeInfo(getDiagnostics());
+  FunctionScopes.push_back(LSI);
+  return LSI;
 }
 
 void Sema::RecordParsingTemplateParameterDepth(unsigned Depth) {

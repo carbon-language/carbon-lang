@@ -9434,8 +9434,8 @@ Sema::CheckForFunctionRedefinition(FunctionDecl *FD,
 static void RebuildLambdaScopeInfo(CXXMethodDecl *CallOperator, 
                                    Sema &S) {
   CXXRecordDecl *const LambdaClass = CallOperator->getParent();
-  S.PushLambdaScope();
-  LambdaScopeInfo *LSI = S.getCurLambda();
+  
+  LambdaScopeInfo *LSI = S.PushLambdaScope();
   LSI->CallOperator = CallOperator;
   LSI->Lambda = LambdaClass;
   LSI->ReturnType = CallOperator->getResultType();
