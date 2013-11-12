@@ -68,7 +68,7 @@ static const StaticDiagInfoRec StaticDiagInfo[] = {
 #define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP,               \
              SFINAE,NOWERROR,SHOWINSYSHEADER,CATEGORY)            \
   { diag::ENUM, DEFAULT_MAPPING, CLASS,                           \
-    DiagnosticIDs::SFINAEResponse::SFINAE,                        \
+    DiagnosticIDs::SFINAE,                                        \
     NOWERROR, SHOWINSYSHEADER, CATEGORY, GROUP,                   \
     STR_SIZE(DESC, uint16_t), DESC },
 #include "clang/Basic/DiagnosticCommonKinds.inc"
