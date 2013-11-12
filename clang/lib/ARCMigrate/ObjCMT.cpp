@@ -282,7 +282,10 @@ static void rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   ASTContext &Context = NS.getASTContext();
   bool LParenAdded = false;
   std::string PropertyString = "@property ";
-  if (!Atomic) {
+  if (Context.Idents.get("NS_NONATOMIC_IOSONLY").hasMacroDefinition()) {
+    PropertyString += "(NS_NONATOMIC_IOSONLY";
+    LParenAdded = true;
+  } else if (!Atomic) {
     PropertyString += "(nonatomic";
     LParenAdded = true;
   }
