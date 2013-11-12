@@ -23,6 +23,10 @@ include $(LEVEL)/Makefile.config
 CXX.Flags += -I"$(shell $(OCAMLC) -where)"
 C.Flags += -I"$(shell $(OCAMLC) -where)"
 
+ifeq ($(ENABLE_SHARED),1)
+LINK_COMPONENTS := all
+endif
+
 include $(LEVEL)/Makefile.common
 
 # Intentionally ignore PROJ_prefix here. We want the ocaml stdlib. However, the
@@ -35,6 +39,18 @@ ifndef IS_CLEANING_TARGET
 ifdef UsedComponents
 UsedLibs = $(shell $(LLVM_CONFIG) --libs $(UsedComponents))
 UsedLibNames = $(shell $(LLVM_CONFIG) --libnames $(UsedComponents))
+endif
+endif
+
+# How do we link OCaml executables with LLVM?
+# 1) If this is a --enable-shared build, build stub libraries. This also allows
+#    to use LLVM from toplevels.
+# 2) If this is a --disable-shared build, embed ocamlc options for building
+#    a custom runtime and a static executable. It is not possible to use LLVM
+#    from toplevels.
+ifneq ($(ObjectsO),)
+ifeq ($(ENABLE_SHARED),1)
+OCAMLSTUBS := 1
 endif
 endif
 
@@ -60,11 +76,23 @@ endif
 
 Compile.CMI  := $(strip $(OCAMLC) -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
 Compile.CMO  := $(strip $(OCAMLC) -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
+Compile.CMX  := $(strip $(OCAMLOPT) -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
+
+ifdef OCAMLSTUBS
+Archive.CMA  := $(strip $(OCAMLC) -a -dllib -l$(LIBRARYNAME) $(OCAMLDEBUGFLAG) \
+                                  -o)
+else
 Archive.CMA  := $(strip $(OCAMLC) -a -custom $(OCAMLAFLAGS) $(OCAMLDEBUGFLAG) \
                                   -o)
+endif
 
-Compile.CMX  := $(strip $(OCAMLOPT) -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
+ifdef OCAMLSTUBS
+Archive.CMXA := $(strip $(OCAMLOPT) -a $(patsubst %,-cclib %, \
+                                    $(LLVMLibsOptions) -l$(LIBRARYNAME)) \
+                                    $(OCAMLDEBUGFLAG) -o)
+else
 Archive.CMXA := $(strip $(OCAMLOPT) -a $(OCAMLAFLAGS) $(OCAMLDEBUGFLAG) -o)
+endif
 
 ifdef OCAMLOPT
 Archive.EXE := $(strip $(OCAMLOPT) -cc $(CXX) $(OCAMLCFLAGS) $(UsedOcamlLibs:%=%.cmxa) $(OCAMLDEBUGFLAG) -o)
@@ -113,6 +141,10 @@ OutputCMA  := $(LibraryCMA:$(ObjDir)/%.cma=$(OcamlDir)/%.cma)
 OutputCMXA := $(LibraryCMXA:$(ObjDir)/%.cmxa=$(OcamlDir)/%.cmxa)
 endif
 
+ifdef OCAMLSTUBS
+SharedLib := $(OcamlDir)/dll$(LIBRARYNAME).$(SHLIBEXT)
+endif
+
 ifdef TOOLNAME
 ifdef EXAMPLE_TOOL
 OutputEXE := $(ExmplDir)/$(strip $(TOOLNAME))$(EXEEXT)
@@ -128,6 +160,10 @@ ifdef LIBRARYNAME
 DestA    := $(PROJ_libocamldir)/lib$(LIBRARYNAME).a
 DestCMA  := $(PROJ_libocamldir)/$(LIBRARYNAME).cma
 DestCMXA := $(PROJ_libocamldir)/$(LIBRARYNAME).cmxa
+endif
+
+ifdef OCAMLSTUBS
+DestSharedLib := $(PROJ_libocamldir)/dll$(LIBRARYNAME).$(SHLIBEXT)
 endif
 
 ##===- Dependencies -------------------------------------------------------===##
@@ -184,6 +220,34 @@ install-a:: $(LibraryA)
 uninstall-a::
 	$(Echo) "Uninstalling $(DestA)"
 	-$(Verb) $(RM) -f $(DestA)
+endif
+
+
+##===- Build stub library from C sources ----------------------------------===##
+
+ifdef SharedLib
+all-local:: $(SharedLib)
+clean-local:: clean-shared
+install-local:: install-shared
+uninstall-local:: uninstall-shared
+
+$(SharedLib): $(ObjectsO) $(OcamlDir)/.dir
+	$(Echo) "Building $(BuildMode) $(notdir $@)"
+	$(Verb) $(Link) $(SharedLinkOptions) $(LLVMLibsOptions) \
+			-o $@ $(ObjectsO)
+
+clean-shared::
+	-$(Verb) $(RM) -f $(SharedLib)
+
+install-shared:: $(SharedLib)
+	$(Echo) "Installing $(BuildMode) $(DestSharedLib)"
+	$(Verb) $(MKDIR) $(PROJ_libocamldir)
+	$(Verb) $(INSTALL) $(SharedLib) $(DestSharedLib)
+	$(Verb)
+
+uninstall-shared::
+	$(Echo) "Uninstalling $(DestSharedLib)"
+	-$(Verb) $(RM) -f $(DestSharedLib)
 endif
 
 
@@ -391,6 +455,7 @@ printcamlvars::
 	$(Echo) "CAML_LIBDIR  : " '$(CAML_LIBDIR)'
 	$(Echo) "LibraryCMA   : " '$(LibraryCMA)'
 	$(Echo) "LibraryCMXA  : " '$(LibraryCMXA)'
+	$(Echo) "SharedLib    : " '$(SharedLib)'
 	$(Echo) "OcamlSources1: " '$(OcamlSources1)'
 	$(Echo) "OcamlSources2: " '$(OcamlSources2)'
 	$(Echo) "OcamlSources : " '$(OcamlSources)'
@@ -404,6 +469,7 @@ printcamlvars::
 	$(Echo) "DestA        : " '$(DestA)'
 	$(Echo) "DestCMA      : " '$(DestCMA)'
 	$(Echo) "DestCMXA     : " '$(DestCMXA)'
+	$(Echo) "DestSharedLib: " '$(DestSharedLib)'
 	$(Echo) "UsedLibs     : " '$(UsedLibs)'
 	$(Echo) "UsedLibNames : " '$(UsedLibNames)'
 
