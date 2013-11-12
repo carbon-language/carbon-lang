@@ -1,10 +1,14 @@
 // RUN: %clang_cc1 %s -triple x86_64-linux -emit-llvm -o - -mconstructor-aliases | FileCheck %s
 
 namespace test1 {
-// test that we produce an alias when the destructor is weak_odr
+// test that we don't produce an alias when the destructor is weak_odr. The
+// reason to avoid it that another TU might have no explicit template
+// instantiation definition or declaration, causing it to to output only
+// one of the destructors as linkonce_odr, producing a different comdat.
 
-// CHECK-DAG: @_ZN5test16foobarIvEC1Ev = alias weak_odr void (%"struct.test1::foobar"*)* @_ZN5test16foobarIvEC2Ev
-// CHECK-DAG: define weak_odr void @_ZN5test16foobarIvEC2Ev(
+// CHECK-DAG: define weak_odr void @_ZN5test16foobarIvEC2Ev
+// CHECK-DAG: define weak_odr void @_ZN5test16foobarIvEC1Ev
+
 template <typename T> struct foobar {
   foobar() {}
 };

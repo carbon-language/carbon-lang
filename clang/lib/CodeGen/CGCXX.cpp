@@ -146,13 +146,14 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     /// how aliases work.
     if (Ref->isDeclaration())
       return true;
-
-    // Don't create an alias to a linker weak symbol unless we know we can do
-    // that in every TU. This avoids producing different COMDATs in different
-    // TUs.
-    if (llvm::GlobalValue::isWeakForLinker(TargetLinkage))
-      return true;
   }
+
+  // Don't create an alias to a linker weak symbol. This avoids producing
+  // different COMDATs in different TUs. Another option would be to
+  // output the alias both for weak_odr and linkonce_odr, but that
+  // requires explicit comdat support in the IL.
+  if (llvm::GlobalValue::isWeakForLinker(TargetLinkage))
+    return true;
 
   // Create the alias with no name.
   llvm::GlobalAlias *Alias = 
