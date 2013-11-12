@@ -15,6 +15,7 @@ entry:
   %cmp4 = icmp eq i64 %n1, 0
   br i1 %cmp4, label %for.cond1.preheader, label %for.body.preheader
 
+; CHECK: 'Dependence Analysis' for function 'symbolicrdiv0'
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
@@ -77,6 +78,7 @@ entry:
   %cmp4 = icmp eq i64 %n1, 0
   br i1 %cmp4, label %for.cond2.preheader, label %for.body.preheader
 
+; CHECK: 'Dependence Analysis' for function 'symbolicrdiv1'
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
@@ -141,6 +143,7 @@ entry:
   %cmp4 = icmp eq i64 %n1, 0
   br i1 %cmp4, label %for.cond1.preheader, label %for.body.preheader
 
+; CHECK: 'Dependence Analysis' for function 'symbolicrdiv2'
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
@@ -203,6 +206,7 @@ entry:
   %cmp4 = icmp eq i64 %n1, 0
   br i1 %cmp4, label %for.cond1.preheader, label %for.body.preheader
 
+; CHECK: 'Dependence Analysis' for function 'symbolicrdiv3'
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
@@ -263,6 +267,7 @@ entry:
   %cmp4 = icmp eq i64 %n1, 0
   br i1 %cmp4, label %for.cond1.preheader, label %for.body.preheader
 
+; CHECK: 'Dependence Analysis' for function 'symbolicrdiv4'
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
@@ -324,6 +329,7 @@ entry:
   %cmp4 = icmp eq i64 %n1, 0
   br i1 %cmp4, label %for.cond1.preheader, label %for.body.preheader
 
+; CHECK: 'Dependence Analysis' for function 'symbolicrdiv5'
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
@@ -385,6 +391,7 @@ entry:
   %cmp4 = icmp eq i64 %n1, 0
   br i1 %cmp4, label %for.end7, label %for.cond1.preheader.preheader
 
+; CHECK: 'Dependence Analysis' for function 'symbolicrdiv6'
 ; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!

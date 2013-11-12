@@ -13,7 +13,7 @@ target triple = "x86_64-apple-macosx10.6.0"
 define void @banerjee0(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
-
+; CHECK: 'Dependence Analysis' for function 'banerjee0':
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [<= <>]!
 ; CHECK: da analyze - confused!
@@ -65,6 +65,7 @@ entry:
   %cmp4 = icmp sgt i64 %n, 0
   br i1 %cmp4, label %for.cond1.preheader.preheader, label %for.end9
 
+; CHECK: 'Dependence Analysis' for function 'banerjee1':
 ; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - flow [* <>]!
 ; CHECK: da analyze - confused!
@@ -131,6 +132,7 @@ define void @banerjee2(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'banerjee2':
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
@@ -181,6 +183,7 @@ define void @banerjee3(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'banerjee3':
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [> >]!
 ; CHECK: da analyze - confused!
@@ -231,6 +234,7 @@ define void @banerjee4(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'banerjee4':
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
@@ -281,6 +285,7 @@ define void @banerjee5(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'banerjee5':
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [< <]!
 ; CHECK: da analyze - confused!
@@ -331,6 +336,7 @@ define void @banerjee6(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'banerjee6':
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [=> <>]!
 ; CHECK: da analyze - confused!
@@ -381,6 +387,7 @@ define void @banerjee7(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'banerjee7':
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [> <=]!
 ; CHECK: da analyze - confused!
@@ -431,6 +438,7 @@ define void @banerjee8(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'banerjee8':
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [> <>]!
 ; CHECK: da analyze - confused!
@@ -481,6 +489,7 @@ define void @banerjee9(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'banerjee9':
 ; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - flow [<= =|<]!
 ; CHECK: da analyze - confused!
@@ -532,6 +541,7 @@ define void @banerjee10(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'banerjee10':
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [<> =]!
 ; CHECK: da analyze - confused!
@@ -582,6 +592,7 @@ define void @banerjee11(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'banerjee11':
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [<= <>]!
 ; CHECK: da analyze - confused!
@@ -632,6 +643,7 @@ define void @banerjee12(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'banerjee12':
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [= <>]!
 ; CHECK: da analyze - confused!

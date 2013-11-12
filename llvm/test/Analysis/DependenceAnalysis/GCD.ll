@@ -14,6 +14,7 @@ define void @gcd0(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'gcd0'
 ; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - flow [=> *|<]!
 ; CHECK: da analyze - confused!
@@ -66,6 +67,7 @@ define void @gcd1(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'gcd1'
 ; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
@@ -119,6 +121,7 @@ define void @gcd2(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'gcd2'
 ; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
@@ -172,6 +175,7 @@ define void @gcd3(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'gcd3'
 ; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - flow [<> *]!
 ; CHECK: da analyze - confused!
@@ -223,6 +227,7 @@ define void @gcd4(i32* %A, i32* %B, i64 %M, i64 %N) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'gcd4'
 ; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
@@ -284,6 +289,7 @@ define void @gcd5(i32* %A, i32* %B, i64 %M, i64 %N) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: 'Dependence Analysis' for function 'gcd5'
 ; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - flow [<> *]!
 ; CHECK: da analyze - confused!
@@ -346,6 +352,7 @@ entry:
   %cmp4 = icmp sgt i64 %n, 0
   br i1 %cmp4, label %for.cond1.preheader.preheader, label %for.end12
 
+; CHECK: 'Dependence Analysis' for function 'gcd6'
 ; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
@@ -417,6 +424,7 @@ entry:
   %cmp4 = icmp sgt i32 %n, 0
   br i1 %cmp4, label %for.cond1.preheader.preheader, label %for.end15
 
+; CHECK: 'Dependence Analysis' for function 'gcd7'
 ; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - flow [* *|<]!
 ; CHECK: da analyze - confused!
@@ -500,6 +508,7 @@ entry:
   %cmp4 = icmp sgt i32 %n, 0
   br i1 %cmp4, label %for.cond1.preheader.preheader, label %for.end15
 
+; CHECK: 'Dependence Analysis' for function 'gcd8'
 ; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
@@ -578,6 +587,7 @@ entry:
   %cmp4 = icmp eq i32 %n, 0
   br i1 %cmp4, label %for.end15, label %for.cond1.preheader.preheader
 
+; CHECK: 'Dependence Analysis' for function 'gcd9'
 ; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - flow [* *|<]!
 ; CHECK: da analyze - confused!
