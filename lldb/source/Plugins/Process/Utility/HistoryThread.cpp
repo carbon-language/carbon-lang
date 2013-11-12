@@ -13,6 +13,7 @@
 #include "Plugins/Process/Utility/HistoryThread.h"
 #include "Plugins/Process/Utility/RegisterContextHistory.h"
 
+#include "lldb/Core/Log.h"
 #include "lldb/Target/StackFrameList.h"
 #include "lldb/Target/Process.h"
 
@@ -31,10 +32,17 @@ HistoryThread::HistoryThread (lldb_private::Process &process,
         m_stop_id_is_valid (stop_id_is_valid)
 {
     m_unwinder_ap.reset (new HistoryUnwind (*this, pcs, stop_id, stop_id_is_valid));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    if (log)
+        log->Printf ("%p HistoryThread::HistoryThread", this);
 }
 
 HistoryThread::~HistoryThread ()
 {
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    if (log)
+        log->Printf ("%p HistoryThread::~HistoryThread (tid=0x%" PRIx64 ")", this, GetID());
+    DestroyThread();
 }
 
 lldb::RegisterContextSP
