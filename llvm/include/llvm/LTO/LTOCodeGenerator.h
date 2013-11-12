@@ -38,6 +38,7 @@
 #include "llvm-c/lto.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Linker.h"
 #include "llvm/Target/TargetOptions.h"
 #include <string>
@@ -48,6 +49,7 @@ namespace llvm {
   class GlobalValue;
   class Mangler;
   class MemoryBuffer;
+  class TargetLibraryInfo;
   class TargetMachine;
   class raw_ostream;
 }
@@ -125,6 +127,7 @@ private:
                           std::string &errMsg);
   void applyScopeRestrictions();
   void applyRestriction(llvm::GlobalValue &GV,
+                        const llvm::ArrayRef<llvm::StringRef> &Libcalls,
                         std::vector<const char*> &MustPreserveList,
                         llvm::SmallPtrSet<llvm::GlobalValue*, 8> &AsmUsed,
                         llvm::Mangler &Mangler);
