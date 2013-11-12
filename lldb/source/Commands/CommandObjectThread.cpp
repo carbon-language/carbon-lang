@@ -180,7 +180,7 @@ protected:
             const std::vector<ConstString> &types = runtime->GetExtendedBacktraceTypes();
             for (auto type : types)
             {
-                ThreadSP ext_thread_sp = runtime->GetExtendedBacktrace (thread->shared_from_this(), type);
+                ThreadSP ext_thread_sp = runtime->GetExtendedBacktraceThread (thread->shared_from_this(), type);
                 if (ext_thread_sp && ext_thread_sp->IsValid ())
                 {
                     const uint32_t num_frames_with_source = 0;

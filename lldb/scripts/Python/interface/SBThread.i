@@ -249,9 +249,9 @@ public:
     normal threads -- you cannot step or resume it, for instance -- it is
     intended to used primarily for generating a backtrace.  You may request
     the returned thread's own thread origin in turn.
-    ") GetExtendedBacktrace;
+    ") GetExtendedBacktraceThread;
     lldb::SBThread
-    GetExtendedBacktrace (const char *type);
+    GetExtendedBacktraceThread (const char *type);
 
     %pythoncode %{
         class frames_access(object):

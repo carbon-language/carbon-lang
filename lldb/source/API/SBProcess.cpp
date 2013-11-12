@@ -1278,7 +1278,7 @@ SBProcess::GetExtendedBacktraceTypeAtIndex (uint32_t idx)
     if (process_sp && process_sp->GetSystemRuntime())
     {
         SystemRuntime *runtime = process_sp->GetSystemRuntime();
-        std::vector<ConstString> names = runtime->GetExtendedBacktraceTypes();
+        const std::vector<ConstString> &names = runtime->GetExtendedBacktraceTypes();
         if (idx < names.size())
         {
             return names[idx].AsCString();

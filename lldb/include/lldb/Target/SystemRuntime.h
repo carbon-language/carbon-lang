@@ -158,7 +158,7 @@ public:
     ///   An empty ThreadSP will be returned if no thread origin is available.
     //------------------------------------------------------------------
     virtual lldb::ThreadSP
-    GetExtendedBacktrace (lldb::ThreadSP thread, ConstString type);
+    GetExtendedBacktraceThread (lldb::ThreadSP thread, ConstString type);
 
 protected:
     //------------------------------------------------------------------

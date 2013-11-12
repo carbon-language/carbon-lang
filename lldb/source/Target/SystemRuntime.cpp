@@ -67,7 +67,7 @@ SystemRuntime::GetExtendedBacktraceTypes ()
 }
 
 ThreadSP
-SystemRuntime::GetExtendedBacktrace (ThreadSP thread, ConstString type)
+SystemRuntime::GetExtendedBacktraceThread (ThreadSP thread, ConstString type)
 {
     return ThreadSP();
 }

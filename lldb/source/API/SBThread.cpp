@@ -433,7 +433,6 @@ SBThread::SetThread (const ThreadSP& lldb_object_sp)
     m_opaque_sp->SetThreadSP (lldb_object_sp);
 }
 
-
 lldb::tid_t
 SBThread::GetThreadID () const
 {
@@ -1283,7 +1282,7 @@ SBThread::GetDescription (SBStream &description) const
 }
 
 SBThread
-SBThread::GetExtendedBacktrace (const char *type)
+SBThread::GetExtendedBacktraceThread (const char *type)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     Mutex::Locker api_locker;
@@ -1305,7 +1304,7 @@ SBThread::GetExtendedBacktrace (const char *type)
                     SystemRuntime *runtime = process->GetSystemRuntime();
                     if (runtime)
                     {
-                        ThreadSP new_thread_sp (runtime->GetExtendedBacktrace (real_thread, type_const));
+                        ThreadSP new_thread_sp (runtime->GetExtendedBacktraceThread (real_thread, type_const));
                         // Save this in the Process' ExtendedThreadList so a strong pointer retains the
                         // object.
                         process->GetExtendedThreadList().AddThread (new_thread_sp);
