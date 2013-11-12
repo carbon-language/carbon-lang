@@ -32,6 +32,16 @@ def mem16_ea : Operand<i32> {
 }
 
 //
+// I-type instruction format
+//
+// this is only used by bimm. the actual assembly value is a 12 bit signed
+// number
+//
+class FI16_ins<bits<5> op, string asmstr, InstrItinClass itin>:
+  FI16<op, (outs), (ins brtarget:$imm16),
+            !strconcat(asmstr, "\t$imm16 # 16 bit inst"), [], itin>;
+
+//
 //
 // I8 instruction format
 //
@@ -576,6 +586,14 @@ def BeqzRxImm16: FRI16_B_ins<0b00100, "beqz", IIAlu>, cbranch16;
 // To test a GPR then do a PC-relative conditional branch.
 //
 def BeqzRxImmX16: FEXT_RI16_B_ins<0b00100, "beqz", IIAlu>, cbranch16;
+
+//
+// Format: B offset MIPS16e
+// Purpose: Unconditional Branch (Extended)
+// To do an unconditional PC-relative branch.
+//
+
+def Bimm16: FI16_ins<0b00010, "b", IIAlu>, branch16;
 
 // Format: B offset MIPS16e
 // Purpose: Unconditional Branch
@@ -1509,7 +1527,7 @@ def: Mips16Pat
 //   (BtnezT8SltuX16 CPU16Regs:$rx, CPU16Regs:$ry,  bb:$imm16)
 //  >;
 
-def: UncondBranch16_pat<br, BimmX16>;
+def: UncondBranch16_pat<br, Bimm16>;
 
 // Small immediates
 def: Mips16Pat<(i32 immSExt16:$in),

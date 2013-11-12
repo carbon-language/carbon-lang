@@ -743,7 +743,7 @@ MachineBasicBlock *MipsConstantIslands::splitBlockBeforeInstr
   // Note the new unconditional branch is not being recorded.
   // There doesn't seem to be meaningful DebugInfo available; this doesn't
   // correspond to anything in the source.
-  BuildMI(OrigBB, DebugLoc(), TII->get(Mips::BimmX16)).addMBB(NewBB);
+  BuildMI(OrigBB, DebugLoc(), TII->get(Mips::Bimm16)).addMBB(NewBB);
   ++NumSplit;
 
   // Update the CFG.  All succs of OrigBB are now succs of NewBB.
@@ -887,7 +887,7 @@ static bool BBIsJumpedOver(MachineBasicBlock *MBB) {
   MachineBasicBlock *Succ = *MBB->succ_begin();
   MachineBasicBlock *Pred = *MBB->pred_begin();
   MachineInstr *PredMI = &Pred->back();
-  if (PredMI->getOpcode() == Mips::BimmX16)
+  if (PredMI->getOpcode() == Mips::Bimm16)
     return PredMI->getOperand(0).getMBB() == Succ;
   return false;
 }
@@ -1032,6 +1032,8 @@ int MipsConstantIslands::findLongFormInRangeCPEntry
 /// the specific unconditional branch instruction.
 static inline unsigned getUnconditionalBrDisp(int Opc) {
   switch (Opc) {
+  case Mips::Bimm16:
+    return ((1<<10)-1)*2;
   case Mips::BimmX16:
     return ((1<<16)-1)*2;
   default:
@@ -1119,7 +1121,7 @@ void MipsConstantIslands::createNewWater(unsigned CPUserIndex,
       // but if the preceding conditional branch is out of range, the targets
       // will be exchanged, and the altered branch may be out of range, so the
       // machinery has to know about it.
-      int UncondBr = Mips::BimmX16;
+      int UncondBr = Mips::Bimm16;
       BuildMI(UserMBB, DebugLoc(), TII->get(UncondBr)).addMBB(NewMBB);
       unsigned MaxDisp = getUnconditionalBrDisp(UncondBr);
       ImmBranches.push_back(ImmBranch(&UserMBB->back(),

@@ -36,7 +36,7 @@ static cl::opt<bool> NeverUseSaveRestore(
 
 
 Mips16InstrInfo::Mips16InstrInfo(MipsTargetMachine &tm)
-  : MipsInstrInfo(tm, Mips::BimmX16),
+  : MipsInstrInfo(tm, Mips::Bimm16),
     RI(*tm.getSubtargetImpl()) {}
 
 const MipsRegisterInfo &Mips16InstrInfo::getRegisterInfo() const {
@@ -439,6 +439,7 @@ Mips16InstrInfo::basicLoadImmediate(
 
 unsigned Mips16InstrInfo::getAnalyzableBrOpc(unsigned Opc) const {
   return (Opc == Mips::BeqzRxImmX16   || Opc == Mips::BimmX16  ||
+          Opc == Mips::Bimm16  ||
           Opc == Mips::BnezRxImmX16   || Opc == Mips::BteqzX16 ||
           Opc == Mips::BteqzT8CmpX16  || Opc == Mips::BteqzT8CmpiX16 ||
           Opc == Mips::BteqzT8SltX16  || Opc == Mips::BteqzT8SltuX16  ||
