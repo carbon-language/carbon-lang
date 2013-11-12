@@ -44,7 +44,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
     return OS.str();
   }
 
-  static std::string getCompleteNodeLabel(const BasicBlock *Node, 
+  static std::string getCompleteNodeLabel(const BasicBlock *Node,
                                           const Function *) {
     std::string Str;
     raw_string_ostream OS(Str);
@@ -86,20 +86,20 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
     if (const BranchInst *BI = dyn_cast<BranchInst>(Node->getTerminator()))
       if (BI->isConditional())
         return (I == succ_begin(Node)) ? "T" : "F";
-    
+
     // Label source of switch edges with the associated value.
     if (const SwitchInst *SI = dyn_cast<SwitchInst>(Node->getTerminator())) {
       unsigned SuccNo = I.getSuccessorIndex();
 
       if (SuccNo == 0) return "def";
-      
+
       std::string Str;
       raw_string_ostream OS(Str);
       SwitchInst::ConstCaseIt Case =
-          SwitchInst::ConstCaseIt::fromSuccessorIndex(SI, SuccNo); 
+          SwitchInst::ConstCaseIt::fromSuccessorIndex(SI, SuccNo);
       OS << Case.getCaseValue()->getValue();
       return OS.str();
-    }    
+    }
     return "";
   }
 };
