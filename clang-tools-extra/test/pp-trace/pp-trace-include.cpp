@@ -107,6 +107,28 @@
 // CHECK-NEXT:   Reason: EnterFile
 // CHECK-NEXT:   FileType: C_User
 // CHECK-NEXT:   PrevFID: (invalid)
+// CHECK-NEXT: - Callback: InclusionDirective
+// CHECK-NEXT:   IncludeTok: include
+// CHECK-NEXT:   FileName: "Level2B.h"
+// CHECK-NEXT:   IsAngled: false
+// CHECK-NEXT:   FilenameRange: "Level2B.h"
+// CHECK-NEXT:   File: "{{.*}}{{[/\\]}}Inputs/Level2B.h"
+// CHECK-NEXT:   SearchPath: "{{.*}}{{[/\\]}}Inputs"
+// CHECK-NEXT:   RelativePath: "Level2B.h"
+// CHECK-NEXT:   Imported: (null)
+// CHECK-NEXT: - Callback: FileChanged
+// CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}Inputs/Level2B.h:1:1"
+// CHECK-NEXT:   Reason: EnterFile
+// CHECK-NEXT:   FileType: C_User
+// CHECK-NEXT:   PrevFID: (invalid)
+// CHECK-NEXT: - Callback: MacroDefined
+// CHECK-NEXT:   MacroNameTok: MACRO_2B
+// CHECK-NEXT:   MacroDirective: MD_Define
+// CHECK-NEXT: - Callback: FileChanged
+// CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}Inputs/Level1B.h:2:1"
+// CHECK-NEXT:   Reason: ExitFile
+// CHECK-NEXT:   FileType: C_User
+// CHECK-NEXT:   PrevFID: "{{.*}}{{[/\\]}}Inputs/Level2B.h"
 // CHECK-NEXT: - Callback: MacroDefined
 // CHECK-NEXT:   MacroNameTok: MACRO_1B
 // CHECK-NEXT:   MacroDirective: MD_Define
