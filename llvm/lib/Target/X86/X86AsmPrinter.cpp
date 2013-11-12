@@ -394,6 +394,7 @@ bool X86AsmPrinter::printAsmMRegister(const MachineOperand &MO, char Mode,
     Reg = getX86SubSuperRegister(Reg, MVT::i32);
     break;
   case 'q': // Print DImode register
+    // FIXME: gcc will actually print e instead of r for 32-bit.
     Reg = getX86SubSuperRegister(Reg, MVT::i64);
     break;
   }
