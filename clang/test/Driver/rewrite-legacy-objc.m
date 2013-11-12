@@ -7,4 +7,4 @@
 // FIXME: CHECK-NOT is broken somehow, it doesn't work here. Check adjacency instead.
 // TEST0: "-fmessage-length" "0" "-stack-protector" "1" "-mstackrealign" "-fblocks" "-fobjc-runtime=macosx-fragile" "-fobjc-subscripting-legacy-runtime" "-fencode-extended-block-signature" "-fno-objc-infer-related-result-type" "-fobjc-exceptions" "-fexceptions" "-fdiagnostics-show-option"
 // TEST0: rewrite-legacy-objc.m"
-// TEST1: "-fmessage-length" "0" "-stack-protector" "1" "-mstackrealign" "-fblocks" "-fobjc-runtime=macosx-fragile" "-fobjc-subscripting-legacy-runtime" 
+// TEST1: "-stack-protector" "1" "-mstackrealign" "-fblocks" "-fobjc-runtime=macosx-fragile" "-fobjc-subscripting-legacy-runtime" 
