@@ -703,6 +703,9 @@ void ARMAsmPrinter::emitAttributes() {
 
   // FIXME: Should we signal R9 usage?
 
+  if (Subtarget->hasFP16())
+      ATS.emitAttribute(ARMBuildAttrs::FP_HP_extension, ARMBuildAttrs::AllowHPFP);
+
   if (Subtarget->hasMPExtension())
       ATS.emitAttribute(ARMBuildAttrs::MPextension_use, ARMBuildAttrs::AllowMP);
 

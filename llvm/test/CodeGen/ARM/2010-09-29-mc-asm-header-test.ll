@@ -29,6 +29,7 @@
 ; V6:   .eabi_attribute 25, 1
 ; V6-NOT:   .eabi_attribute 27
 ; V6-NOT:   .eabi_attribute 28
+; V6-NOT:    .eabi_attribute 36
 ; V6-NOT:    .eabi_attribute 42
 ; V6-NOT:    .eabi_attribute 68
 
@@ -40,6 +41,7 @@
 ; V6M:  .eabi_attribute 25, 1
 ; V6M-NOT:  .eabi_attribute 27
 ; V6M-NOT:  .eabi_attribute 28
+; V6M-NOT:  .eabi_attribute 36
 ; V6M-NOT:  .eabi_attribute 42
 ; V6M-NOT:  .eabi_attribute 68
 
@@ -55,6 +57,7 @@
 ; ARM1156T2F-S: .eabi_attribute 25, 1
 ; ARM1156T2F-S-NOT: .eabi_attribute 27
 ; ARM1156T2F-S-NOT: .eabi_attribute 28
+; ARM1156T2F-S-NOT: .eabi_attribute 36
 ; ARM1156T2F-S-NOT:    .eabi_attribute 42
 ; ARM1156T2F-S-NOT:    .eabi_attribute 68
 
@@ -66,6 +69,7 @@
 ; V7M:  .eabi_attribute 25, 1
 ; V7M-NOT:  .eabi_attribute 27
 ; V7M-NOT:  .eabi_attribute 28
+; V7M-NOT:  .eabi_attribute 36
 ; V7M-NOT:  .eabi_attribute 42
 ; V7M:  .eabi_attribute 44, 0
 ; V7M-NOT:  .eabi_attribute 68
@@ -79,6 +83,7 @@
 ; V7: .eabi_attribute 25, 1
 ; V7-NOT: .eabi_attribute 27
 ; V7-NOT: .eabi_attribute 28
+; V7-NOT: .eabi_attribute 36
 ; V7-NOT:    .eabi_attribute 42
 ; V7-NOT:    .eabi_attribute 68
 
@@ -120,6 +125,7 @@
 ; CORTEX-A9-SOFT:  .eabi_attribute 25, 1
 ; CORTEX-A9-SOFT-NOT:  .eabi_attribute 27
 ; CORTEX-A9-SOFT-NOT:  .eabi_attribute 28
+; CORTEX-A9-SOFT:  .eabi_attribute 36, 1
 ; CORTEX-A9-SOFT-NOT:  .eabi_attribute 42
 ; CORTEX-A9-SOFT:  .eabi_attribute 68, 1
 
@@ -136,6 +142,7 @@
 ; CORTEX-A9-HARD:  .eabi_attribute 25, 1
 ; CORTEX-A9-HARD-NOT:  .eabi_attribute 27
 ; CORTEX-A9-HARD:  .eabi_attribute 28, 1
+; CORTEX-A9-HARD:  .eabi_attribute 36, 1
 ; CORTEX-A9-HARD-NOT:  .eabi_attribute 42
 ; CORTEX-A9-HARD:  .eabi_attribute 68, 1
 
@@ -152,6 +159,7 @@
 ; CORTEX-A9-MP:  .eabi_attribute 25, 1
 ; CORTEX-A9-NOT:  .eabi_attribute 27
 ; CORTEX-A9-NOT:  .eabi_attribute 28
+; CORTEX-A9-MP:  .eabi_attribute 36, 1
 ; CORTEX-A9-MP:  .eabi_attribute 42, 1
 ; CORTEX-A9-MP:  .eabi_attribute 68, 1
 
@@ -166,10 +174,11 @@
 ; CORTEX-A15: .eabi_attribute 23, 3
 ; CORTEX-A15: .eabi_attribute 24, 1
 ; CORTEX-A15: .eabi_attribute 25, 1
-; CORTEX-A15: .eabi_attribute 42, 1
-; CORTEX-A15: .eabi_attribute 44, 2
 ; CORTEX-A15-NOT: .eabi_attribute 27
 ; CORTEX-A15-NOT: .eabi_attribute 28
+; CORTEX-A15: .eabi_attribute 36, 1
+; CORTEX-A15: .eabi_attribute 42, 1
+; CORTEX-A15: .eabi_attribute 44, 2
 ; CORTEX-A15: .eabi_attribute 68, 3
 
 ; CORTEX-M0:  .cpu cortex-m0
@@ -181,6 +190,7 @@
 ; CORTEX-M0:  .eabi_attribute 25, 1
 ; CORTEX-M0-NOT:  .eabi_attribute 27
 ; CORTEX-M0-NOT:  .eabi_attribute 28
+; CORTEX-M0-NOT:  .eabi_attribute 36
 ; CORTEX-M0-NOT:  .eabi_attribute 42
 ; CORTEX-M0-NOT:  .eabi_attribute 68
 
@@ -197,6 +207,7 @@
 ; CORTEX-M4-SOFT:  .eabi_attribute 25, 1
 ; CORTEX-M4-SOFT:  .eabi_attribute 27, 1
 ; CORTEX-M4-SOFT-NOT:  .eabi_attribute 28
+; CORTEX-M4-SOFT:  .eabi_attribute 36, 1
 ; CORTEX-M4-SOFT-NOT:  .eabi_attribute 42
 ; CORTEX-M4-SOFT:  .eabi_attribute 44, 0
 ; CORTEX-M4-SOFT-NOT:  .eabi_attribute 68
@@ -214,6 +225,7 @@
 ; CORTEX-M4-HARD:  .eabi_attribute 25, 1
 ; CORTEX-M4-HARD:  .eabi_attribute 27, 1
 ; CORTEX-M4-HARD:  .eabi_attribute 28, 1
+; CORTEX-M4-HARD:  .eabi_attribute 36, 1
 ; CORTEX-M4-HARD-NOT:  .eabi_attribute 42
 ; CORTEX-M4-HARD:  .eabi_attribute 44, 0
 ; CORTEX-M4-HRAD-NOT:  .eabi_attribute 68
@@ -231,6 +243,7 @@
 ; CORTEX-R5:  .eabi_attribute 25, 1
 ; CORTEX-R5:  .eabi_attribute 27, 1
 ; CORTEX-R5-NOT:  .eabi_attribute 28
+; CORTEX-R5-NOT:  .eabi_attribute 36
 ; CORTEX-R5-NOT:  .eabi_attribute 42
 ; CORTEX-R5:  .eabi_attribute 44, 2
 ; CORTEX-R5-NOT:  .eabi_attribute 68
@@ -246,6 +259,7 @@
 ; CORTEX-A53:  .eabi_attribute 25, 1
 ; CORTEX-A53-NOT:  .eabi_attribute 27
 ; CORTEX-A53-NOT:  .eabi_attribute 28
+; CORTEX-A53:  .eabi_attribute 36, 1
 ; CORTEX-A53:  .eabi_attribute 42, 1
 ; CORTEX-A53:  .eabi_attribute 44, 2
 ; CORTEX-A53:  .eabi_attribute 68, 3
@@ -261,6 +275,7 @@
 ; CORTEX-A57:  .eabi_attribute 25, 1
 ; CORTEX-A57-NOT:  .eabi_attribute 27
 ; CORTEX-A57-NOT:  .eabi_attribute 28
+; CORTEX-A57:  .eabi_attribute 36, 1
 ; CORTEX-A57:  .eabi_attribute 42, 1
 ; CORTEX-A57:  .eabi_attribute 44, 2
 ; CORTEX-A57:  .eabi_attribute 68, 3

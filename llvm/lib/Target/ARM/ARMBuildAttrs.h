@@ -59,7 +59,7 @@ namespace ARMBuildAttrs {
     ABI_FP_optimization_goals = 31,
     compatibility             = 32,
     CPU_unaligned_access      = 34,
-    VFP_HP_extension          = 36,
+    FP_HP_extension           = 36,
     ABI_FP_16bit_format       = 38,
     MPextension_use           = 42, // was 70, 2.08 ABI
     DIV_use                   = 44,
@@ -145,6 +145,9 @@ namespace ARMBuildAttrs {
     // Tag_ABI_VFP_args, (=28), uleb128
     BaseAAPCS = 0,
     HardFPAAPCS = 1,
+
+    // Tag_FP_HP_extension, (=36), uleb128
+    AllowHPFP = 1, // Allow use of Half Precision FP
 
     // Tag_MPextension_use, (=42), uleb128
     AllowMP = 1, // Allow use of MP extensions

@@ -45,6 +45,9 @@
 // Tag_ABI_VFP_args (=28)
 .eabi_attribute 28, 1
 
+// Tag_FP_HP_extension (=36)
+.eabi_attribute 36, 1
+
 // Tag_MPextension_use (=42)
 .eabi_attribute 42, 1
 
@@ -68,15 +71,15 @@
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
 // CHECK-NEXT:     Offset: 0x34
-// CHECK-NEXT:     Size: 68
+// CHECK-NEXT:     Size: 70
 // CHECK-NEXT:     Link: 0
 // CHECK-NEXT:     Info: 0
 // CHECK-NEXT:     AddressAlignment: 1
 // CHECK-NEXT:     EntrySize: 0
 // CHECK-NEXT:     SectionData (
-// CHECK-NEXT:       0000: 41430000 00616561 62690001 39000000
+// CHECK-NEXT:       0000: 41450000 00616561 62690001 3B000000
 // CHECK-NEXT:       0010: 05434F52 5445582D 41380006 0A074108
 // CHECK-NEXT:       0020: 0109020A 030C0214 01150117 01180119
-// CHECK-NEXT:       0030: 011B001C 012A012C 0244036E A0018101
-// CHECK-NEXT:       0040: 01FA0101
+// CHECK-NEXT:       0030: 011B001C 0124012A 012C0244 036EA001
+// CHECK-NEXT:       0040: 810101FA 0101
 // CHECK-NEXT:     )
