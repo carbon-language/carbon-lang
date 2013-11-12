@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=tahiti -verify-machineinstrs | FileCheck %s
 
 ; CHECK: @flt_f64
-; CHECK: V_CMP_LT_F64_e64 {{SGPR[0-9]+_SGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+}}
+; CHECK: V_CMP_LT_F64_e64 {{s[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+]}}
 
 define void @flt_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                      double addrspace(1)* %in2) {
@@ -14,7 +14,7 @@ define void @flt_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
 }
 
 ; CHECK: @fle_f64
-; CHECK: V_CMP_LE_F64_e64 {{SGPR[0-9]+_SGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+}}
+; CHECK: V_CMP_LE_F64_e64 {{s[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+]}}
 
 define void @fle_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                      double addrspace(1)* %in2) {
@@ -27,7 +27,7 @@ define void @fle_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
 }
 
 ; CHECK: @fgt_f64
-; CHECK: V_CMP_GT_F64_e64 {{SGPR[0-9]+_SGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+}}
+; CHECK: V_CMP_GT_F64_e64 {{s[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+]}}
 
 define void @fgt_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                      double addrspace(1)* %in2) {
@@ -40,7 +40,7 @@ define void @fgt_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
 }
 
 ; CHECK: @fge_f64
-; CHECK: V_CMP_GE_F64_e64 {{SGPR[0-9]+_SGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+}}
+; CHECK: V_CMP_GE_F64_e64 {{s[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+]}}
 
 define void @fge_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                      double addrspace(1)* %in2) {
@@ -53,7 +53,7 @@ define void @fge_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
 }
 
 ; CHECK: @fne_f64
-; CHECK: V_CMP_NEQ_F64_e64 {{SGPR[0-9]+_SGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+}}
+; CHECK: V_CMP_NEQ_F64_e64 {{s[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+]}}
 
 define void @fne_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                      double addrspace(1)* %in2) {
@@ -66,7 +66,7 @@ define void @fne_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
 }
 
 ; CHECK: @feq_f64
-; CHECK: V_CMP_EQ_F64_e64 {{SGPR[0-9]+_SGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+}}
+; CHECK: V_CMP_EQ_F64_e64 {{s[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+]}}
 
 define void @feq_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                      double addrspace(1)* %in2) {

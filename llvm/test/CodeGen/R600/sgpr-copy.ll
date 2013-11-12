@@ -3,8 +3,8 @@
 ; This test checks that no VGPR to SGPR copies are created by the register
 ; allocator.
 ; CHECK-LABEL: @phi1
-; CHECK: S_BUFFER_LOAD_DWORD [[DST:SGPR[0-9]]], {{[SGPR_[0-9]+}}, 0
-; CHECK: V_MOV_B32_e32 VGPR{{[0-9]}}, [[DST]]
+; CHECK: S_BUFFER_LOAD_DWORD [[DST:s[0-9]]], {{s\[[0-9]+:[0-9]+\]}}, 0
+; CHECK: V_MOV_B32_e32 v{{[0-9]}}, [[DST]]
 
 define void @phi1(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:

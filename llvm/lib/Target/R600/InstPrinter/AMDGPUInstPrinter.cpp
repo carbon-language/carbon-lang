@@ -23,6 +23,63 @@ void AMDGPUInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
   printAnnotation(OS, Annot);
 }
 
+void AMDGPUInstPrinter::printRegOperand(unsigned reg, raw_ostream &O) {
+  switch (reg) {
+  case AMDGPU::VCC:
+    O << "vcc";
+    return;
+  case AMDGPU::SCC:
+    O << "scc";
+    return;
+  case AMDGPU::EXEC:
+    O << "exec";
+    return;
+  case AMDGPU::M0:
+    O << "m0";
+    return;
+  default:
+    break;
+  }
+
+  // It's seems there's no way to use SIRegisterInfo here, and dealing with the
+  // giant enum of all the different shifted sets of registers is pretty
+  // unmanagable, so parse the name and reformat it to be prettier.
+  StringRef Name(getRegisterName(reg));
+
+  std::pair<StringRef, StringRef> Split = Name.split('_');
+  StringRef SubRegName = Split.first;
+  StringRef Rest = Split.second;
+
+  if (SubRegName.size() <= 4) { // Must at least be as long as "SGPR"/"VGPR".
+    O << Name;
+    return;
+  }
+
+  unsigned RegIndex;
+  StringRef RegIndexStr = SubRegName.drop_front(4);
+
+  if (RegIndexStr.getAsInteger(10, RegIndex)) {
+    O << Name;
+    return;
+  }
+
+  if (SubRegName.front() == 'V')
+    O << 'v';
+  else if (SubRegName.front() == 'S')
+    O << 's';
+  else {
+    O << Name;
+    return;
+  }
+
+  if (Rest.empty()) // Only 1 32-bit register
+    O << RegIndex;
+  else {
+    unsigned NumReg = Rest.count('_') + 2;
+    O << '[' << RegIndex << ':' << (RegIndex + NumReg - 1) << ']';
+  }
+}
+
 void AMDGPUInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                      raw_ostream &O) {
 
@@ -30,8 +87,12 @@ void AMDGPUInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   if (Op.isReg()) {
     switch (Op.getReg()) {
     // This is the default predicate state, so we don't need to print it.
-    case AMDGPU::PRED_SEL_OFF: break;
-    default: O << getRegisterName(Op.getReg()); break;
+    case AMDGPU::PRED_SEL_OFF:
+      break;
+
+    default:
+      printRegOperand(Op.getReg(), O);
+      break;
     }
   } else if (Op.isImm()) {
     O << Op.getImm();

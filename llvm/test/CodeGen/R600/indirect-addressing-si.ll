@@ -4,7 +4,7 @@
 ; indexing of vectors.
 
 ; CHECK: extract_w_offset
-; CHECK: S_MOV_B32 M0
+; CHECK: S_MOV_B32 m0
 ; CHECK-NEXT: V_MOVRELS_B32_e32
 define void @extract_w_offset(float addrspace(1)* %out, i32 %in) {
 entry:
@@ -15,7 +15,7 @@ entry:
 }
 
 ; CHECK: extract_wo_offset
-; CHECK: S_MOV_B32 M0
+; CHECK: S_MOV_B32 m0
 ; CHECK-NEXT: V_MOVRELS_B32_e32
 define void @extract_wo_offset(float addrspace(1)* %out, i32 %in) {
 entry:
@@ -25,7 +25,7 @@ entry:
 }
 
 ; CHECK: insert_w_offset
-; CHECK: S_MOV_B32 M0
+; CHECK: S_MOV_B32 m0
 ; CHECK-NEXT: V_MOVRELD_B32_e32
 define void @insert_w_offset(float addrspace(1)* %out, i32 %in) {
 entry:
@@ -37,7 +37,7 @@ entry:
 }
 
 ; CHECK: insert_wo_offset
-; CHECK: S_MOV_B32 M0
+; CHECK: S_MOV_B32 m0
 ; CHECK-NEXT: V_MOVRELD_B32_e32
 define void @insert_wo_offset(float addrspace(1)* %out, i32 %in) {
 entry:

@@ -6,8 +6,8 @@
 ; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW
 
 ; SI-CHECK: @test
-; SI-CHECK: V_MOV_B32_e32 [[ZERO:VGPR[0-9]]], 0
-; SI-CHECK: BUFFER_STORE_DWORDX2 VGPR0_[[ZERO]]
+; SI-CHECK: V_MOV_B32_e32 v[[ZERO:[0-9]]], 0
+; SI-CHECK: BUFFER_STORE_DWORDX2 v[0:[[ZERO]]{{\]}}
 define void @test(i64 addrspace(1)* %out, i32 %a, i32 %b, i32 %c) {
 entry:
   %0 = mul i32 %a, %b

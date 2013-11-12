@@ -5,8 +5,8 @@
 %struct.foo = type { [3 x float], [3 x float] }
 
 ; CHECK-LABEL: @do_as_ptr_calcs:
-; CHECK: V_ADD_I32_e64 {{VGPR[0-9]+}},
-; CHECK: V_ADD_I32_e64 [[REG1:VGPR[0-9]+]],
+; CHECK: V_ADD_I32_e64 {{v[0-9]+}},
+; CHECK: V_ADD_I32_e64 [[REG1:v[0-9]+]],
 ; CHECK: DS_READ_B32 [[REG1]],
 define void @do_as_ptr_calcs(%struct.foo addrspace(3)* nocapture %ptr) nounwind {
 entry:

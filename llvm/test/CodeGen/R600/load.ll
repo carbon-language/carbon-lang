@@ -11,7 +11,7 @@
 ; R600-CHECK: VTX_READ_8 T{{[0-9]+\.X, T[0-9]+\.X}}
 
 ; SI-CHECK: @load_i8
-; SI-CHECK: BUFFER_LOAD_UBYTE VGPR{{[0-9]+}},
+; SI-CHECK: BUFFER_LOAD_UBYTE v{{[0-9]+}},
 define void @load_i8(i32 addrspace(1)* %out, i8 addrspace(1)* %in) {
   %1 = load i8 addrspace(1)* %in
   %2 = zext i8 %1 to i32
@@ -245,7 +245,7 @@ entry:
 ; R600-CHECK: VTX_READ_32 T{{[0-9]+}}.X, T{{[0-9]+}}.X, 0
 
 ; SI-CHECK: @load_i32
-; SI-CHECK: BUFFER_LOAD_DWORD VGPR{{[0-9]+}}
+; SI-CHECK: BUFFER_LOAD_DWORD v{{[0-9]+}}
 define void @load_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:
   %0 = load i32 addrspace(1)* %in
@@ -258,7 +258,7 @@ entry:
 ; R600-CHECK: VTX_READ_32 T{{[0-9]+}}.X, T{{[0-9]+}}.X, 0
 
 ; SI-CHECK: @load_f32
-; SI-CHECK: BUFFER_LOAD_DWORD VGPR{{[0-9]+}}
+; SI-CHECK: BUFFER_LOAD_DWORD v{{[0-9]+}}
 define void @load_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
 entry:
   %0 = load float addrspace(1)* %in
@@ -298,9 +298,9 @@ entry:
 ; R600-CHECK: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, T{{[0-9]\.[XYZW]}},  literal.x
 ; R600-CHECK: 31
 ; SI-CHECK: @load_i64_sext
-; SI-CHECK: BUFFER_LOAD_DWORDX2 [[VAL:VGPR[0-9]_VGPR[0-9]]]
-; SI-CHECK: V_LSHL_B64 [[LSHL:VGPR[0-9]_VGPR[0-9]]], [[VAL]], 32
-; SI-CHECK: V_ASHR_I64 VGPR{{[0-9]}}_VGPR{{[0-9]}}, [[LSHL]], 32
+; SI-CHECK: BUFFER_LOAD_DWORDX2 [[VAL:v\[[0-9]:[0-9]\]]]
+; SI-CHECK: V_LSHL_B64 [[LSHL:v\[[0-9]:[0-9]\]]], [[VAL]], 32
+; SI-CHECK: V_ASHR_I64 v{{\[[0-9]:[0-9]\]}}, [[LSHL]], 32
 
 define void @load_i64_sext(i64 addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:
@@ -333,7 +333,7 @@ entry:
 ; R600-CHECK: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_CHAN]]
 ; R600-CHECK: 24
 ; SI-CHECK: @load_const_i8_sext
-; SI-CHECK: BUFFER_LOAD_SBYTE VGPR{{[0-9]+}},
+; SI-CHECK: BUFFER_LOAD_SBYTE v{{[0-9]+}},
 define void @load_const_i8_sext(i32 addrspace(1)* %out, i8 addrspace(2)* %in) {
 entry:
   %0 = load i8 addrspace(2)* %in
@@ -346,7 +346,7 @@ entry:
 ; R600-CHECK: @load_const_i8_aligned
 ; R600-CHECK: VTX_READ_8 T{{[0-9]+\.X, T[0-9]+\.X}}
 ; SI-CHECK: @load_const_i8_aligned
-; SI-CHECK: BUFFER_LOAD_UBYTE VGPR{{[0-9]+}},
+; SI-CHECK: BUFFER_LOAD_UBYTE v{{[0-9]+}},
 define void @load_const_i8_aligned(i32 addrspace(1)* %out, i8 addrspace(2)* %in) {
 entry:
   %0 = load i8 addrspace(2)* %in
@@ -359,7 +359,7 @@ entry:
 ; R600-CHECK: @load_const_i8_unaligned
 ; R600-CHECK: VTX_READ_8 T{{[0-9]+\.X, T[0-9]+\.X}}
 ; SI-CHECK: @load_const_i8_unaligned
-; SI-CHECK: BUFFER_LOAD_UBYTE VGPR{{[0-9]+}},
+; SI-CHECK: BUFFER_LOAD_UBYTE v{{[0-9]+}},
 define void @load_const_i8_unaligned(i32 addrspace(1)* %out, i8 addrspace(2)* %in) {
 entry:
   %0 = getelementptr i8 addrspace(2)* %in, i32 1
@@ -418,7 +418,7 @@ entry:
 ; R600-CHECK: VTX_READ_32 T{{[0-9]+}}.X, T{{[0-9]+}}.X, 0
 
 ; SI-CHECK: @load_const_addrspace_i32
-; SI-CHECK: S_LOAD_DWORD SGPR{{[0-9]+}}
+; SI-CHECK: S_LOAD_DWORD s{{[0-9]+}}
 define void @load_const_addrspace_i32(i32 addrspace(1)* %out, i32 addrspace(2)* %in) {
 entry:
   %0 = load i32 addrspace(2)* %in
@@ -431,7 +431,7 @@ entry:
 ; R600-CHECK: VTX_READ_32 T{{[0-9]+}}.X, T{{[0-9]+}}.X, 0
 
 ; SI-CHECK: @load_const_addrspace_f32
-; SI-CHECK: S_LOAD_DWORD SGPR{{[0-9]+}}
+; SI-CHECK: S_LOAD_DWORD s{{[0-9]+}}
 define void @load_const_addrspace_f32(float addrspace(1)* %out, float addrspace(2)* %in) {
   %1 = load float addrspace(2)* %in
   store float %1, float addrspace(1)* %out

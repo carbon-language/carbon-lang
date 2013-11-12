@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s
 
 ; CHECK: @fmuladd_f32
-; CHECK: V_MAD_F32 {{VGPR[0-9]+, VGPR[0-9]+, VGPR[0-9]+, VGPR[0-9]+}}
+; CHECK: V_MAD_F32 {{v[0-9]+, v[0-9]+, v[0-9]+, v[0-9]+}}
 
 define void @fmuladd_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
                          float addrspace(1)* %in2, float addrspace(1)* %in3) {
@@ -16,7 +16,7 @@ define void @fmuladd_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
 declare float @llvm.fmuladd.f32(float, float, float)
 
 ; CHECK: @fmuladd_f64
-; CHECK: V_FMA_F64 {{VGPR[0-9]+_VGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+}}
+; CHECK: V_FMA_F64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\]}}
 
 define void @fmuladd_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                          double addrspace(1)* %in2, double addrspace(1)* %in3) {

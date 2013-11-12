@@ -16,10 +16,10 @@ entry:
 ; R600-CHECK: -PV
 ; R600-CHECK: -PV
 ; SI-CHECK-LABEL: @fneg_v4
-; SI-CHECK: V_ADD_F32_e64 VGPR{{[0-9]}}, SGPR{{[0-9]}}, 0, 0, 0, 0, 1
-; SI-CHECK: V_ADD_F32_e64 VGPR{{[0-9]}}, SGPR{{[0-9]}}, 0, 0, 0, 0, 1
-; SI-CHECK: V_ADD_F32_e64 VGPR{{[0-9]}}, SGPR{{[0-9]}}, 0, 0, 0, 0, 1
-; SI-CHECK: V_ADD_F32_e64 VGPR{{[0-9]}}, SGPR{{[0-9]}}, 0, 0, 0, 0, 1
+; SI-CHECK: V_ADD_F32_e64 v{{[0-9]}}, s{{[0-9]}}, 0, 0, 0, 0, 1
+; SI-CHECK: V_ADD_F32_e64 v{{[0-9]}}, s{{[0-9]}}, 0, 0, 0, 0, 1
+; SI-CHECK: V_ADD_F32_e64 v{{[0-9]}}, s{{[0-9]}}, 0, 0, 0, 0, 1
+; SI-CHECK: V_ADD_F32_e64 v{{[0-9]}}, s{{[0-9]}}, 0, 0, 0, 0, 1
 define void @fneg_v4(<4 x float> addrspace(1)* nocapture %out, <4 x float> %in) {
 entry:
   %0 = fsub <4 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %in

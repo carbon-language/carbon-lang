@@ -1,8 +1,8 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
-;CHECK: V_MOV_B32_e32 VGPR{{[0-9]+}}, -1431655765
-;CHECK: V_MUL_HI_U32 VGPR0, {{[SV]GPR[0-9]+}}, {{VGPR[0-9]+}}
-;CHECK-NEXT: V_LSHRREV_B32_e32 VGPR0, 1, VGPR0
+;CHECK: V_MOV_B32_e32 v{{[0-9]+}}, -1431655765
+;CHECK: V_MUL_HI_U32 v0, {{[sv][0-9]+}}, {{v[0-9]+}}
+;CHECK-NEXT: V_LSHRREV_B32_e32 v0, 1, v0
 
 define void @test(i32 %p) {
    %i = udiv i32 %p, 3

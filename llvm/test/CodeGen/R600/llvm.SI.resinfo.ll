@@ -1,21 +1,21 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 15, 0, 0, -1
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+_VGPR[0-9]+}}, 3, 0, 0, 0
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+}}, 2, 0, 0, 0
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+}}, 1, 0, 0, 0
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+}}, 4, 0, 0, 0
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+}}, 8, 0, 0, 0
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+_VGPR[0-9]+}}, 5, 0, 0, 0
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+_VGPR[0-9]+}}, 9, 0, 0, 0
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+_VGPR[0-9]+}}, 6, 0, 0, 0
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+_VGPR[0-9]+}}, 10, 0, 0, -1
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+_VGPR[0-9]+}}, 12, 0, 0, -1
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 7, 0, 0, 0
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 11, 0, 0, 0
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 13, 0, 0, 0
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 14, 0, 0, 0
-;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+}}, 8, 0, 0, -1
+;CHECK: IMAGE_GET_RESINFO {{v\[[0-9]+:[0-9]+\]}}, 15, 0, 0, -1
+;CHECK: IMAGE_GET_RESINFO {{v\[[0-9]+:[0-9]+\]}}, 3, 0, 0, 0
+;CHECK: IMAGE_GET_RESINFO {{v[0-9]+}}, 2, 0, 0, 0
+;CHECK: IMAGE_GET_RESINFO {{v[0-9]+}}, 1, 0, 0, 0
+;CHECK: IMAGE_GET_RESINFO {{v[0-9]+}}, 4, 0, 0, 0
+;CHECK: IMAGE_GET_RESINFO {{v[0-9]+}}, 8, 0, 0, 0
+;CHECK: IMAGE_GET_RESINFO {{v\[[0-9]+:[0-9]+\]}}, 5, 0, 0, 0
+;CHECK: IMAGE_GET_RESINFO {{v\[[0-9]+:[0-9]+\]}}, 9, 0, 0, 0
+;CHECK: IMAGE_GET_RESINFO {{v\[[0-9]+:[0-9]+\]}}, 6, 0, 0, 0
+;CHECK: IMAGE_GET_RESINFO {{v\[[0-9]+:[0-9]+\]}}, 10, 0, 0, -1
+;CHECK: IMAGE_GET_RESINFO {{v\[[0-9]+:[0-9]+\]}}, 12, 0, 0, -1
+;CHECK: IMAGE_GET_RESINFO {{v\[[0-9]+:[0-9]+\]}}, 7, 0, 0, 0
+;CHECK: IMAGE_GET_RESINFO {{v\[[0-9]+:[0-9]+\]}}, 11, 0, 0, 0
+;CHECK: IMAGE_GET_RESINFO {{v\[[0-9]+:[0-9]+\]}}, 13, 0, 0, 0
+;CHECK: IMAGE_GET_RESINFO {{v\[[0-9]+:[0-9]+\]}}, 14, 0, 0, 0
+;CHECK: IMAGE_GET_RESINFO {{v[0-9]+}}, 8, 0, 0, -1
 
 define void @test(i32 %a1, i32 %a2, i32 %a3, i32 %a4, i32 %a5, i32 %a6, i32 %a7, i32 %a8,
 		  i32 %a9, i32 %a10, i32 %a11, i32 %a12, i32 %a13, i32 %a14, i32 %a15, i32 %a16) {

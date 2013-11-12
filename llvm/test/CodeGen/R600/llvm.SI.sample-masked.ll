@@ -1,7 +1,7 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
 
 ; CHECK-LABEL: @v1
-; CHECK: IMAGE_SAMPLE VGPR{{[[0-9]}}_VGPR{{[0-9]}}_VGPR{{[0-9]}}, 13
+; CHECK: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 13
 define void @v1(i32 %a1) {
 entry:
   %0 = insertelement <1 x i32> undef, i32 %a1, i32 0
@@ -14,7 +14,7 @@ entry:
 }
 
 ; CHECK-LABEL: @v2
-; CHECK: IMAGE_SAMPLE VGPR{{[[0-9]}}_VGPR{{[0-9]}}_VGPR{{[0-9]}}, 11
+; CHECK: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 11
 define void @v2(i32 %a1) {
 entry:
   %0 = insertelement <1 x i32> undef, i32 %a1, i32 0
@@ -27,7 +27,7 @@ entry:
 }
 
 ; CHECK-LABEL: @v3
-; CHECK: IMAGE_SAMPLE VGPR{{[[0-9]}}_VGPR{{[0-9]}}_VGPR{{[0-9]}}, 14
+; CHECK: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 14
 define void @v3(i32 %a1) {
 entry:
   %0 = insertelement <1 x i32> undef, i32 %a1, i32 0
@@ -40,7 +40,7 @@ entry:
 }
 
 ; CHECK-LABEL: @v4
-; CHECK: IMAGE_SAMPLE VGPR{{[[0-9]}}_VGPR{{[0-9]}}_VGPR{{[0-9]}}, 7
+; CHECK: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 7
 define void @v4(i32 %a1) {
 entry:
   %0 = insertelement <1 x i32> undef, i32 %a1, i32 0
@@ -53,7 +53,7 @@ entry:
 }
 
 ; CHECK-LABEL: @v5
-; CHECK: IMAGE_SAMPLE VGPR{{[[0-9]}}_VGPR{{[0-9]}}, 10
+; CHECK: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 10
 define void @v5(i32 %a1) {
 entry:
   %0 = insertelement <1 x i32> undef, i32 %a1, i32 0
@@ -65,7 +65,7 @@ entry:
 }
 
 ; CHECK-LABEL: @v6
-; CHECK: IMAGE_SAMPLE VGPR{{[[0-9]}}_VGPR{{[0-9]}}, 6
+; CHECK: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 6
 define void @v6(i32 %a1) {
 entry:
   %0 = insertelement <1 x i32> undef, i32 %a1, i32 0
@@ -77,7 +77,7 @@ entry:
 }
 
 ; CHECK-LABEL: @v7
-; CHECK: IMAGE_SAMPLE VGPR{{[[0-9]}}_VGPR{{[0-9]}}, 9
+; CHECK: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 9
 define void @v7(i32 %a1) {
 entry:
   %0 = insertelement <1 x i32> undef, i32 %a1, i32 0

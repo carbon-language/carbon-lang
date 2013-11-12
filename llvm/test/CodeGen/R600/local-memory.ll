@@ -26,7 +26,7 @@
 ; SI-CHECK: S_BARRIER
 
 ; EG-CHECK: LDS_READ_RET
-; SI-CHECK: DS_READ_B32 {{VGPR[0-9]+}}, 0
+; SI-CHECK: DS_READ_B32 {{v[0-9]+}}, 0
 
 define void @local_memory(i32 addrspace(1)* %out) {
 entry:

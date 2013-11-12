@@ -10,7 +10,7 @@
 ; instructions with B64, U64, and I64 take 64-bit operands.
 
 ; CHECK-LABEL: @local_address_load
-; CHECK: V_MOV_B32_e{{32|64}} [[PTR:VGPR[0-9]]]
+; CHECK: V_MOV_B32_e{{32|64}} [[PTR:v[0-9]]]
 ; CHECK: DS_READ_B32 [[PTR]]
 define void @local_address_load(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
 entry:
@@ -20,7 +20,7 @@ entry:
 }
 
 ; CHECK-LABEL: @local_address_gep
-; CHECK: V_ADD_I32_e{{32|64}} [[PTR:VGPR[0-9]]]
+; CHECK: V_ADD_I32_e{{32|64}} [[PTR:v[0-9]]]
 ; CHECK: DS_READ_B32 [[PTR]]
 define void @local_address_gep(i32 addrspace(1)* %out, i32 addrspace(3)* %in, i32 %offset) {
 entry:
@@ -31,7 +31,7 @@ entry:
 }
 
 ; CHECK-LABEL: @local_address_gep_const_offset
-; CHECK: V_ADD_I32_e{{32|64}} [[PTR:VGPR[0-9]]]
+; CHECK: V_ADD_I32_e{{32|64}} [[PTR:v[0-9]]]
 ; CHECK: DS_READ_B32 [[PTR]]
 define void @local_address_gep_const_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
 entry:

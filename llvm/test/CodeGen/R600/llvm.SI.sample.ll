@@ -1,21 +1,21 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
-;CHECK-DAG: IMAGE_SAMPLE {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 15
-;CHECK-DAG: IMAGE_SAMPLE {{VGPR[0-9]+_VGPR[0-9]+}}, 3
-;CHECK-DAG: IMAGE_SAMPLE {{VGPR[0-9]+}}, 2
-;CHECK-DAG: IMAGE_SAMPLE {{VGPR[0-9]+}}, 1
-;CHECK-DAG: IMAGE_SAMPLE {{VGPR[0-9]+}}, 4
-;CHECK-DAG: IMAGE_SAMPLE {{VGPR[0-9]+}}, 8
-;CHECK-DAG: IMAGE_SAMPLE_C {{VGPR[0-9]+_VGPR[0-9]+}}, 5
-;CHECK-DAG: IMAGE_SAMPLE_C {{VGPR[0-9]+_VGPR[0-9]+}}, 9
-;CHECK-DAG: IMAGE_SAMPLE_C {{VGPR[0-9]+_VGPR[0-9]+}}, 6
-;CHECK-DAG: IMAGE_SAMPLE {{VGPR[0-9]+_VGPR[0-9]+}}, 10
-;CHECK-DAG: IMAGE_SAMPLE {{VGPR[0-9]+_VGPR[0-9]+}}, 12
-;CHECK-DAG: IMAGE_SAMPLE_C {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 7
-;CHECK-DAG: IMAGE_SAMPLE_C {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 11
-;CHECK-DAG: IMAGE_SAMPLE_C {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 13
-;CHECK-DAG: IMAGE_SAMPLE {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 14
-;CHECK-DAG: IMAGE_SAMPLE {{VGPR[0-9]+}}, 8
+;CHECK-DAG: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 15
+;CHECK-DAG: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 3
+;CHECK-DAG: IMAGE_SAMPLE {{v[0-9]+}}, 2
+;CHECK-DAG: IMAGE_SAMPLE {{v[0-9]+}}, 1
+;CHECK-DAG: IMAGE_SAMPLE {{v[0-9]+}}, 4
+;CHECK-DAG: IMAGE_SAMPLE {{v[0-9]+}}, 8
+;CHECK-DAG: IMAGE_SAMPLE_C {{v\[[0-9]+:[0-9]+\]}}, 5
+;CHECK-DAG: IMAGE_SAMPLE_C {{v\[[0-9]+:[0-9]+\]}}, 9
+;CHECK-DAG: IMAGE_SAMPLE_C {{v\[[0-9]+:[0-9]+\]}}, 6
+;CHECK-DAG: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 10
+;CHECK-DAG: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 12
+;CHECK-DAG: IMAGE_SAMPLE_C {{v\[[0-9]+:[0-9]+\]}}, 7
+;CHECK-DAG: IMAGE_SAMPLE_C {{v\[[0-9]+:[0-9]+\]}}, 11
+;CHECK-DAG: IMAGE_SAMPLE_C {{v\[[0-9]+:[0-9]+\]}}, 13
+;CHECK-DAG: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 14
+;CHECK-DAG: IMAGE_SAMPLE {{v[0-9]+}}, 8
 
 define void @test(i32 %a1, i32 %a2, i32 %a3, i32 %a4) {
    %v1 = insertelement <4 x i32> undef, i32 %a1, i32 0
@@ -136,7 +136,7 @@ define void @test(i32 %a1, i32 %a2, i32 %a3, i32 %a4) {
 }
 
 ; CHECK: @v1
-; CHECK: IMAGE_SAMPLE VGPR{{[[0-9]}}_VGPR{{[0-9]}}_VGPR{{[0-9]}}_VGPR{{[0-9]}}, 15
+; CHECK: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 15
 define void @v1(i32 %a1) {
 entry:
   %0 = insertelement <1 x i32> undef, i32 %a1, i32 0

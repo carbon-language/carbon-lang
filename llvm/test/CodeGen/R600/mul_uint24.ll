@@ -29,9 +29,9 @@ entry:
 ; EG-CHECK: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_CHAN]], literal.x
 ; EG-CHECK: 16
 ; SI-CHECK: @i16_mul24
-; SI-CHECK: V_MUL_U32_U24_e{{(32|64)}} [[MUL:VGPR[0-9]]], {{[SV]GPR[0-9], [SV]GPR[0-9]}}
-; SI-CHECK: V_LSHLREV_B32_e32 [[LSHL:VGPR[0-9]]], 16, [[MUL]]
-; SI-CHECK: V_ASHRREV_I32_e32 VGPR{{[0-9]}}, 16, [[LSHL]]
+; SI-CHECK: V_MUL_U32_U24_e{{(32|64)}} [[MUL:v[0-9]]], {{[sv][0-9], [sv][0-9]}}
+; SI-CHECK: V_LSHLREV_B32_e32 [[LSHL:v[0-9]]], 16, [[MUL]]
+; SI-CHECK: V_ASHRREV_I32_e32 v{{[0-9]}}, 16, [[LSHL]]
 
 define void @i16_mul24(i32 addrspace(1)* %out, i16 %a, i16 %b) {
 entry:
@@ -52,9 +52,9 @@ entry:
 ; EG-CHECK: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_CHAN]], literal.x
 ; EG-CHECK: 24
 ; SI-CHECK: @i8_mul24
-; SI-CHECK: V_MUL_U32_U24_e{{(32|64)}} [[MUL:VGPR[0-9]]], {{[SV]GPR[0-9], [SV]GPR[0-9]}}
-; SI-CHECK: V_LSHLREV_B32_e32 [[LSHL:VGPR[0-9]]], 24, [[MUL]]
-; SI-CHECK: V_ASHRREV_I32_e32 VGPR{{[0-9]}}, 24, [[LSHL]]
+; SI-CHECK: V_MUL_U32_U24_e{{(32|64)}} [[MUL:v[0-9]]], {{[sv][0-9], [sv][0-9]}}
+; SI-CHECK: V_LSHLREV_B32_e32 [[LSHL:v[0-9]]], 24, [[MUL]]
+; SI-CHECK: V_ASHRREV_I32_e32 v{{[0-9]}}, 24, [[LSHL]]
 
 define void @i8_mul24(i32 addrspace(1)* %out, i8 %a, i8 %b) {
 entry:

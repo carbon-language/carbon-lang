@@ -9,7 +9,7 @@
 ; R600-CHECK-NOT: AND
 ; R600-CHECK: |PV.{{[XYZW]}}|
 ; SI-CHECK: @fabs_free
-; SI-CHECK: V_ADD_F32_e64 VGPR{{[0-9]}}, SGPR{{[0-9]}}, 0, 1, 0, 0, 0
+; SI-CHECK: V_ADD_F32_e64 v{{[0-9]}}, s{{[0-9]}}, 0, 1, 0, 0, 0
 
 define void @fabs_free(float addrspace(1)* %out, i32 %in) {
 entry:

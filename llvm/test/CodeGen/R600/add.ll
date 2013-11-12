@@ -5,7 +5,7 @@
 ;EG-CHECK: ADD_INT {{[* ]*}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 ;SI-CHECK-LABEL: @test1:
-;SI-CHECK: V_ADD_I32_e32 [[REG:VGPR[0-9]+]], {{VGPR[0-9]+, VGPR[0-9]+}}
+;SI-CHECK: V_ADD_I32_e32 [[REG:v[0-9]+]], {{v[0-9]+, v[0-9]+}}
 ;SI-CHECK-NOT: [[REG]]
 ;SI-CHECK: BUFFER_STORE_DWORD [[REG]],
 define void @test1(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
@@ -22,8 +22,8 @@ define void @test1(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 ;EG-CHECK: ADD_INT {{[* ]*}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 ;SI-CHECK-LABEL: @test2:
-;SI-CHECK: V_ADD_I32_e32 VGPR{{[0-9]+, VGPR[0-9]+, VGPR[0-9]+}}
-;SI-CHECK: V_ADD_I32_e32 VGPR{{[0-9]+, VGPR[0-9]+, VGPR[0-9]+}}
+;SI-CHECK: V_ADD_I32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+;SI-CHECK: V_ADD_I32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 
 define void @test2(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
   %b_ptr = getelementptr <2 x i32> addrspace(1)* %in, i32 1
@@ -41,10 +41,10 @@ define void @test2(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
 ;EG-CHECK: ADD_INT {{[* ]*}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 ;SI-CHECK-LABEL: @test4:
-;SI-CHECK: V_ADD_I32_e32 VGPR{{[0-9]+, VGPR[0-9]+, VGPR[0-9]+}}
-;SI-CHECK: V_ADD_I32_e32 VGPR{{[0-9]+, VGPR[0-9]+, VGPR[0-9]+}}
-;SI-CHECK: V_ADD_I32_e32 VGPR{{[0-9]+, VGPR[0-9]+, VGPR[0-9]+}}
-;SI-CHECK: V_ADD_I32_e32 VGPR{{[0-9]+, VGPR[0-9]+, VGPR[0-9]+}}
+;SI-CHECK: V_ADD_I32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+;SI-CHECK: V_ADD_I32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+;SI-CHECK: V_ADD_I32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+;SI-CHECK: V_ADD_I32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 
 define void @test4(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
   %b_ptr = getelementptr <4 x i32> addrspace(1)* %in, i32 1
