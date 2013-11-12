@@ -6677,7 +6677,478 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
   return SE.getCouldNotCompute();
 }
 
+static const APInt gcd(const SCEVConstant *C1, const SCEVConstant *C2) {
+  APInt A = C1->getValue()->getValue().abs();
+  APInt B = C2->getValue()->getValue().abs();
+  uint32_t ABW = A.getBitWidth();
+  uint32_t BBW = B.getBitWidth();
 
+  if (ABW > BBW)
+    B.zext(ABW);
+  else if (ABW < BBW)
+    A.zext(BBW);
+
+  return APIntOps::GreatestCommonDivisor(A, B);
+}
+
+static const APInt srem(const SCEVConstant *C1, const SCEVConstant *C2) {
+  APInt A = C1->getValue()->getValue();
+  APInt B = C2->getValue()->getValue();
+  uint32_t ABW = A.getBitWidth();
+  uint32_t BBW = B.getBitWidth();
+
+  if (ABW > BBW)
+    B.sext(ABW);
+  else if (ABW < BBW)
+    A.sext(BBW);
+
+  return APIntOps::srem(A, B);
+}
+
+static const APInt sdiv(const SCEVConstant *C1, const SCEVConstant *C2) {
+  APInt A = C1->getValue()->getValue();
+  APInt B = C2->getValue()->getValue();
+  uint32_t ABW = A.getBitWidth();
+  uint32_t BBW = B.getBitWidth();
+
+  if (ABW > BBW)
+    B.sext(ABW);
+  else if (ABW < BBW)
+    A.sext(BBW);
+
+  return APIntOps::sdiv(A, B);
+}
+
+namespace {
+struct SCEVGCD : public SCEVVisitor<SCEVGCD, const SCEV *> {
+public:
+  // Pattern match Step into Start. When Step is a multiply expression, find
+  // the largest subexpression of Step that appears in Start. When Start is an
+  // add expression, try to match Step in the subexpressions of Start, non
+  // matching subexpressions are returned under Remainder.
+  static const SCEV *findGCD(ScalarEvolution &SE, const SCEV *Start,
+                             const SCEV *Step, const SCEV **Remainder) {
+    assert(Remainder && "Remainder should not be NULL");
+    SCEVGCD R(SE, Step, SE.getConstant(Step->getType(), 0));
+    const SCEV *Res = R.visit(Start);
+    *Remainder = R.Remainder;
+    return Res;
+  }
+
+  SCEVGCD(ScalarEvolution &S, const SCEV *G, const SCEV *R)
+      : SE(S), GCD(G), Remainder(R) {
+    Zero = SE.getConstant(GCD->getType(), 0);
+    One = SE.getConstant(GCD->getType(), 1);
+  }
+
+  const SCEV *visitConstant(const SCEVConstant *Constant) {
+    if (GCD == Constant || Constant == Zero)
+      return GCD;
+
+    if (const SCEVConstant *CGCD = dyn_cast<SCEVConstant>(GCD)) {
+      const SCEV *Res = SE.getConstant(gcd(Constant, CGCD));
+      if (Res != One)
+        return Res;
+
+      Remainder = SE.getConstant(srem(Constant, CGCD));
+      Constant = cast<SCEVConstant>(SE.getMinusSCEV(Constant, Remainder));
+      Res = SE.getConstant(gcd(Constant, CGCD));
+      return Res;
+    }
+
+    // When GCD is not a constant, it could be that the GCD is an Add, Mul,
+    // AddRec, etc., in which case we want to find out how many times the
+    // Constant divides the GCD: we then return that as the new GCD.
+    const SCEV *Rem = Zero;
+    const SCEV *Res = findGCD(SE, GCD, Constant, &Rem);
+
+    if (Res == One || Rem != Zero) {
+      Remainder = Constant;
+      return One;
+    }
+
+    assert(isa<SCEVConstant>(Res) && "Res should be a constant");
+    Remainder = SE.getConstant(srem(Constant, cast<SCEVConstant>(Res)));
+    return Res;
+  }
+
+  const SCEV *visitTruncateExpr(const SCEVTruncateExpr *Expr) {
+    if (GCD != Expr)
+      Remainder = Expr;
+    return GCD;
+  }
+
+  const SCEV *visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
+    if (GCD != Expr)
+      Remainder = Expr;
+    return GCD;
+  }
+
+  const SCEV *visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
+    if (GCD != Expr)
+      Remainder = Expr;
+    return GCD;
+  }
+
+  const SCEV *visitAddExpr(const SCEVAddExpr *Expr) {
+    if (GCD == Expr)
+      return GCD;
+
+    for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
+      const SCEV *Rem = Zero;
+      const SCEV *Res = findGCD(SE, Expr->getOperand(e - 1 - i), GCD, &Rem);
+
+      // FIXME: There may be ambiguous situations: for instance,
+      // GCD(-4 + (3 * %m), 2 * %m) where 2 divides -4 and %m divides (3 * %m).
+      // The order in which the AddExpr is traversed computes a different GCD
+      // and Remainder.
+      if (Res != One)
+        GCD = Res;
+      if (Rem != Zero)
+        Remainder = SE.getAddExpr(Remainder, Rem);
+    }
+
+    return GCD;
+  }
+
+  const SCEV *visitMulExpr(const SCEVMulExpr *Expr) {
+    if (GCD == Expr)
+      return GCD;
+
+    for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
+      if (Expr->getOperand(i) == GCD)
+        return GCD;
+    }
+
+    // If we have not returned yet, it means that GCD is not part of Expr.
+    const SCEV *PartialGCD = One;
+    for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
+      const SCEV *Rem = Zero;
+      const SCEV *Res = findGCD(SE, Expr->getOperand(i), GCD, &Rem);
+      if (Rem != Zero)
+        // GCD does not divide Expr->getOperand(i).
+        continue;
+
+      if (Res == GCD)
+        return GCD;
+      PartialGCD = SE.getMulExpr(PartialGCD, Res);
+      if (PartialGCD == GCD)
+        return GCD;
+    }
+
+    if (PartialGCD != One)
+      return PartialGCD;
+
+    Remainder = Expr;
+    const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(GCD);
+    if (!Mul)
+      return PartialGCD;
+
+    // When the GCD is a multiply expression, try to decompose it:
+    // this occurs when Step does not divide the Start expression
+    // as in: {(-4 + (3 * %m)),+,(2 * %m)}
+    for (int i = 0, e = Mul->getNumOperands(); i < e; ++i) {
+      const SCEV *Rem = Zero;
+      const SCEV *Res = findGCD(SE, Expr, Mul->getOperand(i), &Rem);
+      if (Rem == Zero) {
+        Remainder = Rem;
+        return Res;
+      }
+    }
+
+    return PartialGCD;
+  }
+
+  const SCEV *visitUDivExpr(const SCEVUDivExpr *Expr) {
+    if (GCD != Expr)
+      Remainder = Expr;
+    return GCD;
+  }
+
+  const SCEV *visitAddRecExpr(const SCEVAddRecExpr *Expr) {
+    if (GCD == Expr)
+      return GCD;
+
+    if (!Expr->isAffine()) {
+      Remainder = Expr;
+      return GCD;
+    }
+
+    const SCEV *Rem = Zero;
+    const SCEV *Res = findGCD(SE, Expr->getOperand(0), GCD, &Rem);
+    if (Rem != Zero)
+      Remainder = SE.getAddExpr(Remainder, Rem);
+
+    Rem = Zero;
+    Res = findGCD(SE, Expr->getOperand(1), Res, &Rem);
+    if (Rem != Zero) {
+      Remainder = Expr;
+      return GCD;
+    }
+
+    return Res;
+  }
+
+  const SCEV *visitSMaxExpr(const SCEVSMaxExpr *Expr) {
+    if (GCD != Expr)
+      Remainder = Expr;
+    return GCD;
+  }
+
+  const SCEV *visitUMaxExpr(const SCEVUMaxExpr *Expr) {
+    if (GCD != Expr)
+      Remainder = Expr;
+    return GCD;
+  }
+
+  const SCEV *visitUnknown(const SCEVUnknown *Expr) {
+    if (GCD != Expr)
+      Remainder = Expr;
+    return GCD;
+  }
+
+  const SCEV *visitCouldNotCompute(const SCEVCouldNotCompute *Expr) {
+    return One;
+  }
+
+private:
+  ScalarEvolution &SE;
+  const SCEV *GCD, *Remainder, *Zero, *One;
+};
+
+struct SCEVDivision : public SCEVVisitor<SCEVDivision, const SCEV *> {
+public:
+  // Remove from Start all multiples of Step.
+  static const SCEV *divide(ScalarEvolution &SE, const SCEV *Start,
+                            const SCEV *Step) {
+    SCEVDivision D(SE, Step);
+    const SCEV *Rem = D.Zero;
+    (void)Rem;
+    // The division is guaranteed to succeed: Step should divide Start with no
+    // remainder.
+    assert(Step == SCEVGCD::findGCD(SE, Start, Step, &Rem) && Rem == D.Zero &&
+           "Step should divide Start with no remainder.");
+    return D.visit(Start);
+  }
+
+  SCEVDivision(ScalarEvolution &S, const SCEV *G) : SE(S), GCD(G) {
+    Zero = SE.getConstant(GCD->getType(), 0);
+    One = SE.getConstant(GCD->getType(), 1);
+  }
+
+  const SCEV *visitConstant(const SCEVConstant *Constant) {
+    if (GCD == Constant)
+      return One;
+
+    if (const SCEVConstant *CGCD = dyn_cast<SCEVConstant>(GCD))
+      return SE.getConstant(sdiv(Constant, CGCD));
+    return Constant;
+  }
+
+  const SCEV *visitTruncateExpr(const SCEVTruncateExpr *Expr) {
+    if (GCD == Expr)
+      return One;
+    return Expr;
+  }
+
+  const SCEV *visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
+    if (GCD == Expr)
+      return One;
+    return Expr;
+  }
+
+  const SCEV *visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
+    if (GCD == Expr)
+      return One;
+    return Expr;
+  }
+
+  const SCEV *visitAddExpr(const SCEVAddExpr *Expr) {
+    if (GCD == Expr)
+      return One;
+
+    SmallVector<const SCEV *, 2> Operands;
+    for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
+      Operands.push_back(divide(SE, Expr->getOperand(i), GCD));
+
+    if (Operands.size() == 1)
+      return Operands[0];
+    return SE.getAddExpr(Operands);
+  }
+
+  const SCEV *visitMulExpr(const SCEVMulExpr *Expr) {
+    if (GCD == Expr)
+      return One;
+
+    bool FoundGCDTerm = false;
+    for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
+      if (Expr->getOperand(i) == GCD)
+        FoundGCDTerm = true;
+
+    SmallVector<const SCEV *, 2> Operands;
+    if (FoundGCDTerm) {
+      FoundGCDTerm = false;
+      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
+        if (FoundGCDTerm)
+          Operands.push_back(Expr->getOperand(i));
+        else if (Expr->getOperand(i) == GCD)
+          FoundGCDTerm = true;
+        else
+          Operands.push_back(Expr->getOperand(i));
+      }
+    } else {
+      FoundGCDTerm = false;
+      const SCEV *PartialGCD = One;
+      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
+        if (PartialGCD == GCD) {
+          Operands.push_back(Expr->getOperand(i));
+          continue;
+        }
+
+        const SCEV *Rem = Zero;
+        const SCEV *Res = SCEVGCD::findGCD(SE, Expr->getOperand(i), GCD, &Rem);
+        if (Rem == Zero) {
+          PartialGCD = SE.getMulExpr(PartialGCD, Res);
+          Operands.push_back(divide(SE, Expr->getOperand(i), GCD));
+        } else {
+          Operands.push_back(Expr->getOperand(i));
+        }
+      }
+    }
+
+    if (Operands.size() == 1)
+      return Operands[0];
+    return SE.getMulExpr(Operands);
+  }
+
+  const SCEV *visitUDivExpr(const SCEVUDivExpr *Expr) {
+    if (GCD == Expr)
+      return One;
+    return Expr;
+  }
+
+  const SCEV *visitAddRecExpr(const SCEVAddRecExpr *Expr) {
+    if (GCD == Expr)
+      return One;
+
+    assert(Expr->isAffine() && "Expr should be affine");
+
+    const SCEV *Start = divide(SE, Expr->getStart(), GCD);
+    const SCEV *Step = divide(SE, Expr->getStepRecurrence(SE), GCD);
+
+    return SE.getAddRecExpr(Start, Step, Expr->getLoop(),
+                            Expr->getNoWrapFlags());
+  }
+
+  const SCEV *visitSMaxExpr(const SCEVSMaxExpr *Expr) {
+    if (GCD == Expr)
+      return One;
+    return Expr;
+  }
+
+  const SCEV *visitUMaxExpr(const SCEVUMaxExpr *Expr) {
+    if (GCD == Expr)
+      return One;
+    return Expr;
+  }
+
+  const SCEV *visitUnknown(const SCEVUnknown *Expr) {
+    if (GCD == Expr)
+      return One;
+    return Expr;
+  }
+
+  const SCEV *visitCouldNotCompute(const SCEVCouldNotCompute *Expr) {
+    return Expr;
+  }
+
+private:
+  ScalarEvolution &SE;
+  const SCEV *GCD, *Zero, *One;
+};
+}
+
+/// Splits the SCEV into two vectors of SCEVs representing the subscripts and
+/// sizes of an array access. Returns the remainder of the delinearization that
+/// is the offset start of the array. For example
+/// delinearize ({(((-4 + (3 * %m)))),+,(%m)}<%for.i>) {
+///   IV: {0,+,1}<%for.i>
+///   Start: -4 + (3 * %m)
+///   Step: %m
+///   SCEVUDiv (Start, Step) = 3 remainder -4
+///   rem = delinearize (3) = 3
+///   Subscripts.push_back(IV + rem)
+///   Sizes.push_back(Step)
+///   return remainder -4
+/// }
+/// When delinearize fails, it returns the SCEV unchanged.
+const SCEV *
+SCEVAddRecExpr::delinearize(ScalarEvolution &SE,
+                            SmallVectorImpl<const SCEV *> &Subscripts,
+                            SmallVectorImpl<const SCEV *> &Sizes) const {
+  if (!this->isAffine())
+    return this;
+
+  const SCEV *Start = this->getStart();
+  const SCEV *Step = this->getStepRecurrence(SE);
+  const SCEV *Zero = SE.getConstant(this->getType(), 0);
+  const SCEV *One = SE.getConstant(this->getType(), 1);
+  const SCEV *IV =
+      SE.getAddRecExpr(Zero, One, this->getLoop(), this->getNoWrapFlags());
+
+  DEBUG(dbgs() << "(delinearize: " << *this << "\n");
+
+  if (Step == One) {
+    DEBUG(dbgs() << "failed to delinearize " << *this << "\n)\n");
+    return this;
+  }
+
+  const SCEV *Remainder = NULL;
+  const SCEV *GCD = SCEVGCD::findGCD(SE, Start, Step, &Remainder);
+
+  DEBUG(dbgs() << "GCD: " << *GCD << "\n");
+  DEBUG(dbgs() << "Remainder: " << *Remainder << "\n");
+
+  if (GCD == One) {
+    DEBUG(dbgs() << "failed to delinearize " << *this << "\n)\n");
+    return this;
+  }
+
+  const SCEV *Quotient =
+      SCEVDivision::divide(SE, SE.getMinusSCEV(Start, Remainder), GCD);
+  DEBUG(dbgs() << "Quotient: " << *Quotient << "\n");
+
+  const SCEV *Rem;
+  if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Quotient))
+    Rem = AR->delinearize(SE, Subscripts, Sizes);
+  else
+    Rem = Quotient;
+
+  if (Step != GCD) {
+    Step = SCEVDivision::divide(SE, Step, GCD);
+    IV = SE.getMulExpr(IV, Step);
+  }
+  const SCEV *Index = SE.getAddExpr(IV, Rem);
+
+  Subscripts.push_back(Index);
+  Sizes.push_back(GCD);
+
+#ifndef NDEBUG
+  int Size = Sizes.size();
+  DEBUG(dbgs() << "succeeded to delinearize " << *this << "\n");
+  DEBUG(dbgs() << "ArrayDecl[UnknownSize]");
+  for (int i = 0; i < Size - 1; i++)
+    DEBUG(dbgs() << "[" << *Sizes[i] << "]");
+  DEBUG(dbgs() << " with elements of " << *Sizes[Size - 1] << " bytes.\n");
+
+  DEBUG(dbgs() << "ArrayRef");
+  for (int i = 0; i < Size; i++)
+    DEBUG(dbgs() << "[" << *Subscripts[i] << "]");
+  DEBUG(dbgs() << "\n)\n");
+#endif
+
+  return Remainder;
+}
 
 //===----------------------------------------------------------------------===//
 //                   SCEVCallbackVH Class Implementation

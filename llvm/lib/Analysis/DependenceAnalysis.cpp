@@ -61,6 +61,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/InstIterator.h"
@@ -103,6 +104,10 @@ STATISTIC(GCDindependence, "GCD independence");
 STATISTIC(BanerjeeApplications, "Banerjee applications");
 STATISTIC(BanerjeeIndependence, "Banerjee independence");
 STATISTIC(BanerjeeSuccesses, "Banerjee successes");
+
+static cl::opt<bool>
+Delinearize("da-delinearize", cl::init(false), cl::Hidden, cl::ZeroOrMore,
+            cl::desc("Try to delinearize array references."));
 
 //===----------------------------------------------------------------------===//
 // basics
@@ -3171,6 +3176,44 @@ void DependenceAnalysis::updateDirection(Dependence::DVEntry &Level,
     llvm_unreachable("constraint has unexpected kind");
 }
 
+/// Check if we can delinearize the subscripts. If the SCEVs representing the
+/// source and destination array references are recurrences on a nested loop,
+/// this function flattens the nested recurrences into seperate recurrences
+/// for each loop level.
+bool
+DependenceAnalysis::tryDelinearize(const SCEV *SrcSCEV, const SCEV *DstSCEV,
+                                   SmallVectorImpl<Subscript> &Pair) const {
+  const SCEVAddRecExpr *SrcAR = dyn_cast<SCEVAddRecExpr>(SrcSCEV);
+  const SCEVAddRecExpr *DstAR = dyn_cast<SCEVAddRecExpr>(DstSCEV);
+  if (!SrcAR || !DstAR || !SrcAR->isAffine() || !DstAR->isAffine())
+    return false;
+
+  SmallVector<const SCEV *, 4> SrcSubscripts, DstSubscripts, SrcSizes, DstSizes;
+  SrcAR->delinearize(*SE, SrcSubscripts, SrcSizes);
+  DstAR->delinearize(*SE, DstSubscripts, DstSizes);
+
+  int size = SrcSubscripts.size();
+  int dstSize = DstSubscripts.size();
+  if (size != dstSize || size < 2)
+    return false;
+
+#ifndef NDEBUG
+  DEBUG(errs() << "\nSrcSubscripts: ");
+  for (int i = 0; i < size; i++)
+    DEBUG(errs() << *SrcSubscripts[i]);
+  DEBUG(errs() << "\nDstSubscripts: ");
+  for (int i = 0; i < size; i++)
+    DEBUG(errs() << *DstSubscripts[i]);
+#endif
+
+  Pair.resize(size);
+  for (int i = 0; i < size; ++i) {
+    Pair[i].Src = SrcSubscripts[i];
+    Pair[i].Dst = DstSubscripts[i];
+  }
+
+  return true;
+}
 
 //===----------------------------------------------------------------------===//
 
@@ -3278,6 +3321,12 @@ Dependence *DependenceAnalysis::depends(Instruction *Src,
     DEBUG(dbgs() << "    DstSCEV = " << *DstSCEV << "\n");
     Pair[0].Src = SrcSCEV;
     Pair[0].Dst = DstSCEV;
+  }
+
+  if (Delinearize && Pairs == 1 && CommonLevels > 1 &&
+      tryDelinearize(Pair[0].Src, Pair[0].Dst, Pair)) {
+    DEBUG(dbgs() << "    delinerized GEP\n");
+    Pairs = Pair.size();
   }
 
   for (unsigned P = 0; P < Pairs; ++P) {
@@ -3696,6 +3745,12 @@ const  SCEV *DependenceAnalysis::getSplitIteration(const Dependence *Dep,
     const SCEV *DstSCEV = SE->getSCEV(DstPtr);
     Pair[0].Src = SrcSCEV;
     Pair[0].Dst = DstSCEV;
+  }
+
+  if (Delinearize && Pairs == 1 && CommonLevels > 1 &&
+      tryDelinearize(Pair[0].Src, Pair[0].Dst, Pair)) {
+    DEBUG(dbgs() << "    delinerized GEP\n");
+    Pairs = Pair.size();
   }
 
   for (unsigned P = 0; P < Pairs; ++P) {

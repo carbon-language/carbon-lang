@@ -136,6 +136,13 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
+  // createDelinearizationPass - This pass implements attempts to restore
+  // multidimensional array indices from linearized expressions.
+  //
+  FunctionPass *createDelinearizationPass();
+
+  //===--------------------------------------------------------------------===//
+  //
   // Minor pass prototypes, allowing us to expose them through bugpoint and
   // analyze.
   FunctionPass *createInstCountPass();

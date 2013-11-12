@@ -351,8 +351,14 @@ namespace llvm {
     static inline bool classof(const SCEV *S) {
       return S->getSCEVType() == scAddRecExpr;
     }
-  };
 
+    /// Splits the SCEV into two vectors of SCEVs representing the subscripts
+    /// and sizes of an array access. Returns the remainder of the
+    /// delinearization that is the offset start of the array.
+    const SCEV *delinearize(ScalarEvolution &SE,
+                            SmallVectorImpl<const SCEV *> &Subscripts,
+                            SmallVectorImpl<const SCEV *> &Sizes) const;
+  };
 
   //===--------------------------------------------------------------------===//
   /// SCEVSMaxExpr - This class represents a signed maximum selection.
