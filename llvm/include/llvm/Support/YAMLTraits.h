@@ -1069,7 +1069,6 @@ operator<<(Output &yout, T &seq) {
           seq.resize(index+1);                                              \
         return seq[index];                                                  \
       }                                                                     \
-      static const bool flow = true;                                        \
     };                                                                      \
   }                                                                         \
   }
