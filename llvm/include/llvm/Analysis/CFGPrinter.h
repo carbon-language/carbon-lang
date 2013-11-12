@@ -46,6 +46,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
 
   static std::string getCompleteNodeLabel(const BasicBlock *Node,
                                           const Function *) {
+    enum { MaxColumns = 80 };
     std::string Str;
     raw_string_ostream OS(Str);
 
@@ -59,16 +60,32 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
     if (OutStr[0] == '\n') OutStr.erase(OutStr.begin());
 
     // Process string output to make it nicer...
-    for (unsigned i = 0; i != OutStr.length(); ++i)
+    unsigned ColNum = 0;
+    unsigned LastSpace = 0;
+    for (unsigned i = 0; i != OutStr.length(); ++i) {
       if (OutStr[i] == '\n') {                            // Left justify
         OutStr[i] = '\\';
         OutStr.insert(OutStr.begin()+i+1, 'l');
+        ColNum = 0;
+        LastSpace = 0;
       } else if (OutStr[i] == ';') {                      // Delete comments!
         unsigned Idx = OutStr.find('\n', i+1);            // Find end of line
         OutStr.erase(OutStr.begin()+i, OutStr.begin()+Idx);
         --i;
+      } else if (ColNum == MaxColumns) {                  // Wrap lines.
+        if (LastSpace) {
+          OutStr.insert(LastSpace, "\\l...");
+          ColNum = i - LastSpace;
+          LastSpace = 0;
+          i += 3; // The loop will advance 'i' again.
+        }
+        // Else keep trying to find a space.
       }
-
+      else
+        ++ColNum;
+      if (OutStr[i] == ' ')
+        LastSpace = i;
+    }
     return OutStr;
   }
 
