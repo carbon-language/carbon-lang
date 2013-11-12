@@ -1224,7 +1224,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
        ArgDI != ArgDE; ++ArgDI) {
     if (ArgDI->Flags.isByVal() && ArgDI->Flags.getByValSize()) {
       unsigned Size = ArgDI->Flags.getByValSize();
-      unsigned Align = ArgDI->Flags.getByValAlign();
+      unsigned Align = std::max(StackSlotSize, ArgDI->Flags.getByValAlign());
       // Create a new object on the stack and copy the pointee into it.
       int FI = MFI->CreateStackObject(Size, Align, false, false);
       SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);

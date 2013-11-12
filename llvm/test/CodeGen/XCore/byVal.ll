@@ -56,3 +56,18 @@ entry:
   call void @f2(i32 %i, %struct.st2* %s2)
   ret void
 }
+
+; CHECK-LABEL: f3Test
+; CHECK: entsp 2
+; CHECK: ldc r1, 0
+; CHECK: ld8u r2, r0[r1]
+; CHECK: ldaw r0, sp[1]
+; CHECK: st8 r2, r0[r1]
+; CHECK: bl f
+; CHECK: retsp 2
+declare void @f3(i8*) nounwind
+define void @f3Test(i8* byval %v) nounwind {
+entry:
+  call void @f3(i8* %v) nounwind
+  ret void
+}
