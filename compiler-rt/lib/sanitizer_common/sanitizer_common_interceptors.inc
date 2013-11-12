@@ -2231,13 +2231,13 @@ INTERCEPTOR(int, pthread_cond_broadcast, void *c) {
 }
 
 #define INIT_PTHREAD_COND_WAIT \
-  INTERCEPT_FUNCTION_VER(pthread_cond_wait, GLIBC_2.3.2)
+  INTERCEPT_FUNCTION_VER(pthread_cond_wait, "GLIBC_2.3.2")
 #define INIT_PTHREAD_COND_INIT \
-  INTERCEPT_FUNCTION_VER(pthread_cond_init, GLIBC_2.3.2)
+  INTERCEPT_FUNCTION_VER(pthread_cond_init, "GLIBC_2.3.2")
 #define INIT_PTHREAD_COND_SIGNAL \
-  INTERCEPT_FUNCTION_VER(pthread_cond_signal, GLIBC_2.3.2)
+  INTERCEPT_FUNCTION_VER(pthread_cond_signal, "GLIBC_2.3.2")
 #define INIT_PTHREAD_COND_BROADCAST \
-  INTERCEPT_FUNCTION_VER(pthread_cond_broadcast, GLIBC_2.3.2)
+  INTERCEPT_FUNCTION_VER(pthread_cond_broadcast, "GLIBC_2.3.2")
 #else
 #define INIT_PTHREAD_COND_WAIT
 #define INIT_PTHREAD_COND_INIT
