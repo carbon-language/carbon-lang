@@ -2208,7 +2208,7 @@ static bool CC_MipsO32_FP32(unsigned ValNo, MVT ValVT,
 static bool CC_MipsO32_FP64(unsigned ValNo, MVT ValVT,
                             MVT LocVT, CCValAssign::LocInfo LocInfo,
                             ISD::ArgFlagsTy ArgFlags, CCState &State) {
-  static const uint16_t F64Regs[] = { Mips::D12_64, Mips::D12_64 };
+  static const uint16_t F64Regs[] = { Mips::D12_64, Mips::D14_64 };
 
   return CC_MipsO32(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State, F64Regs);
 }
