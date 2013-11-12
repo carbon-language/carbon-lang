@@ -1,7 +1,7 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClangFormat", "ClangFormat\ClangFormat.csproj", "{70E9F7C8-C51D-436C-A16E-135A9DBE1266}"
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClangFormat", "ClangFormat\ClangFormat.csproj", "{7FD1783E-2D31-4D05-BF23-6EBE1B42B608}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,10 +9,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{70E9F7C8-C51D-436C-A16E-135A9DBE1266}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{70E9F7C8-C51D-436C-A16E-135A9DBE1266}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{70E9F7C8-C51D-436C-A16E-135A9DBE1266}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{70E9F7C8-C51D-436C-A16E-135A9DBE1266}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7FD1783E-2D31-4D05-BF23-6EBE1B42B608}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7FD1783E-2D31-4D05-BF23-6EBE1B42B608}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7FD1783E-2D31-4D05-BF23-6EBE1B42B608}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7FD1783E-2D31-4D05-BF23-6EBE1B42B608}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
