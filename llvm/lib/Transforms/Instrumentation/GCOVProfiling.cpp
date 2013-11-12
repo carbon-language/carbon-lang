@@ -102,6 +102,7 @@ namespace {
     Constant *getIncrementIndirectCounterFunc();
     Constant *getEmitFunctionFunc();
     Constant *getEmitArcsFunc();
+    Constant *getSummaryInfoFunc();
     Constant *getDeleteWriteoutFunctionListFunc();
     Constant *getDeleteFlushFunctionListFunc();
     Constant *getEndFileFunc();
@@ -700,6 +701,11 @@ Constant *GCOVProfiler::getEmitArcsFunc() {
   return M->getOrInsertFunction("llvm_gcda_emit_arcs", FTy);
 }
 
+Constant *GCOVProfiler::getSummaryInfoFunc() {
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
+  return M->getOrInsertFunction("llvm_gcda_summary_info", FTy);
+}
+
 Constant *GCOVProfiler::getDeleteWriteoutFunctionListFunc() {
   FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
   return M->getOrInsertFunction("llvm_delete_writeout_function_list", FTy);
@@ -746,6 +752,7 @@ Function *GCOVProfiler::insertCounterWriteout(
   Constant *StartFile = getStartFileFunc();
   Constant *EmitFunction = getEmitFunctionFunc();
   Constant *EmitArcs = getEmitArcsFunc();
+  Constant *SummaryInfo = getSummaryInfoFunc();
   Constant *EndFile = getEndFileFunc();
 
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
@@ -772,6 +779,7 @@ Function *GCOVProfiler::insertCounterWriteout(
                             Builder.getInt32(Arcs),
                             Builder.CreateConstGEP2_64(GV, 0, 0));
       }
+      Builder.CreateCall(SummaryInfo);
       Builder.CreateCall(EndFile);
     }
   }
