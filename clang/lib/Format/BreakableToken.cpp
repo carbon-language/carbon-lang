@@ -215,7 +215,16 @@ void BreakableLineComment::insertBreak(unsigned LineIndex, unsigned TailOffset,
                                        WhitespaceManager &Whitespaces) {
   Whitespaces.replaceWhitespaceInToken(
       Tok, OriginalPrefix.size() + TailOffset + Split.first, Split.second,
-      Postfix, Prefix, InPPDirective, 1, IndentLevel, StartColumn);
+      Postfix, Prefix, InPPDirective, /*Newlines=*/1, IndentLevel, StartColumn);
+}
+
+void BreakableLineComment::replaceWhitespace(unsigned LineIndex,
+                                             unsigned TailOffset, Split Split,
+                                             WhitespaceManager &Whitespaces) {
+  Whitespaces.replaceWhitespaceInToken(
+      Tok, OriginalPrefix.size() + TailOffset + Split.first, Split.second, "",
+      "", /*InPPDirective=*/false, /*Newlines=*/0, /*IndentLevel=*/0,
+      /*Spaces=*/1);
 }
 
 void
@@ -223,7 +232,9 @@ BreakableLineComment::replaceWhitespaceBefore(unsigned LineIndex,
                                               WhitespaceManager &Whitespaces) {
   if (OriginalPrefix != Prefix) {
     Whitespaces.replaceWhitespaceInToken(Tok, OriginalPrefix.size(), 0, "", "",
-                                         false, 0, /*IndentLevel=*/0, 1);
+                                         /*InPPDirective=*/false,
+                                         /*Newlines=*/0, /*IndentLevel=*/0,
+                                         /*Spaces=*/1);
   }
 }
 
@@ -372,6 +383,18 @@ void BreakableBlockComment::insertBreak(unsigned LineIndex, unsigned TailOffset,
   Whitespaces.replaceWhitespaceInToken(
       Tok, BreakOffsetInToken, CharsToRemove, "", Prefix, InPPDirective, 1,
       IndentLevel, IndentAtLineBreak - Decoration.size());
+}
+
+void BreakableBlockComment::replaceWhitespace(unsigned LineIndex,
+                                              unsigned TailOffset, Split Split,
+                                              WhitespaceManager &Whitespaces) {
+  StringRef Text = Lines[LineIndex].substr(TailOffset);
+  unsigned BreakOffsetInToken =
+      Text.data() - Tok.TokenText.data() + Split.first;
+  unsigned CharsToRemove = Split.second;
+  Whitespaces.replaceWhitespaceInToken(
+      Tok, BreakOffsetInToken, CharsToRemove, "", "", /*InPPDirective=*/false,
+      /*Newlines=*/0, /*IndentLevel=*/0, /*Spaces=*/1);
 }
 
 void

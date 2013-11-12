@@ -813,6 +813,15 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
       assert(Split.first != 0);
       unsigned NewRemainingTokenColumns = Token->getLineLengthAfterSplit(
           LineIndex, TailOffset + Split.first + Split.second, StringRef::npos);
+
+      // We can remove extra whitespace instead of breaking the line.
+      if (RemainingTokenColumns + 1 - Split.second <= RemainingSpace) {
+        RemainingTokenColumns = 0;
+        if (!DryRun)
+          Token->replaceWhitespace(LineIndex, TailOffset, Split, Whitespaces);
+        break;
+      }
+
       assert(NewRemainingTokenColumns < RemainingTokenColumns);
       if (!DryRun)
         Token->insertBreak(LineIndex, TailOffset, Split, Whitespaces);

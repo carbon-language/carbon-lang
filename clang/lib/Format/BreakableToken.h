@@ -61,6 +61,12 @@ public:
   virtual void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
                            WhitespaceManager &Whitespaces) = 0;
 
+  /// \brief Replaces the whitespace range described by \p Split with a single
+  /// space.
+  virtual void replaceWhitespace(unsigned LineIndex, unsigned TailOffset,
+                                 Split Split,
+                                 WhitespaceManager &Whitespaces) = 0;
+
   /// \brief Replaces the whitespace between \p LineIndex-1 and \p LineIndex.
   virtual void replaceWhitespaceBefore(unsigned LineIndex,
                                        WhitespaceManager &Whitespaces) {}
@@ -121,6 +127,9 @@ public:
                          unsigned ColumnLimit) const;
   virtual void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
                            WhitespaceManager &Whitespaces);
+  virtual void replaceWhitespace(unsigned LineIndex, unsigned TailOffset,
+                                 Split Split,
+                                 WhitespaceManager &Whitespaces) {}
 };
 
 class BreakableLineComment : public BreakableSingleLineToken {
@@ -137,6 +146,9 @@ public:
                          unsigned ColumnLimit) const;
   virtual void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
                            WhitespaceManager &Whitespaces);
+  virtual void replaceWhitespace(unsigned LineIndex, unsigned TailOffset,
+                                 Split Split,
+                                 WhitespaceManager &Whitespaces);
   virtual void replaceWhitespaceBefore(unsigned LineIndex,
                                        WhitespaceManager &Whitespaces);
 
@@ -166,6 +178,9 @@ public:
                          unsigned ColumnLimit) const;
   virtual void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
                            WhitespaceManager &Whitespaces);
+  virtual void replaceWhitespace(unsigned LineIndex, unsigned TailOffset,
+                                 Split Split,
+                                 WhitespaceManager &Whitespaces);
   virtual void replaceWhitespaceBefore(unsigned LineIndex,
                                        WhitespaceManager &Whitespaces);
 
