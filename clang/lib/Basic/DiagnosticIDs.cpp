@@ -39,8 +39,7 @@ struct StaticDiagInfoRec {
   uint16_t DiagID;
   unsigned Mapping : 3;
   unsigned Class : 3;
-  unsigned SFINAE : 1;
-  unsigned AccessControl : 1;
+  unsigned SFINAE : 2;
   unsigned WarnNoWerror : 1;
   unsigned WarnShowInSystemHeader : 1;
   unsigned Category : 5;
@@ -67,9 +66,9 @@ struct StaticDiagInfoRec {
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
 #define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP,               \
-             SFINAE,ACCESS,NOWERROR,SHOWINSYSHEADER,              \
-             CATEGORY)                                            \
-  { diag::ENUM, DEFAULT_MAPPING, CLASS, SFINAE, ACCESS,           \
+             SFINAE,NOWERROR,SHOWINSYSHEADER,CATEGORY)            \
+  { diag::ENUM, DEFAULT_MAPPING, CLASS,                           \
+    DiagnosticIDs::SFINAEResponse::SFINAE,                        \
     NOWERROR, SHOWINSYSHEADER, CATEGORY, GROUP,                   \
     STR_SIZE(DESC, uint16_t), DESC },
 #include "clang/Basic/DiagnosticCommonKinds.inc"
@@ -235,22 +234,10 @@ StringRef DiagnosticIDs::getCategoryNameFromID(unsigned CategoryID) {
 
 
 
-DiagnosticIDs::SFINAEResponse 
+DiagnosticIDs::SFINAEResponse
 DiagnosticIDs::getDiagnosticSFINAEResponse(unsigned DiagID) {
-  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID)) {
-    if (Info->AccessControl)
-      return SFINAE_AccessControl;
-    
-    if (!Info->SFINAE)
-      return SFINAE_Report;
-
-    if (Info->Class == CLASS_ERROR)
-      return SFINAE_SubstitutionFailure;
-    
-    // Suppress notes, warnings, and extensions;
-    return SFINAE_Suppress;
-  }
-  
+  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
+    return static_cast<DiagnosticIDs::SFINAEResponse>(Info->SFINAE);
   return SFINAE_Report;
 }
 

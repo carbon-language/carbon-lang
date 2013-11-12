@@ -26,6 +26,13 @@ def CLASS_WARNING   : DiagClass;
 def CLASS_EXTENSION : DiagClass;
 def CLASS_ERROR     : DiagClass;
 
+// Responses to a diagnostic in a SFINAE context.
+class SFINAEResponse;
+def SFINAE_SubstitutionFailure : SFINAEResponse;
+def SFINAE_Suppress            : SFINAEResponse;
+def SFINAE_Report              : SFINAEResponse;
+def SFINAE_AccessControl       : SFINAEResponse;
+
 // Diagnostic Categories.  These can be applied to groups or individual
 // diagnostics to specify a category.
 class DiagCategory<string Name> {
@@ -52,19 +59,30 @@ include "DiagnosticGroups.td"
 // All diagnostics emitted by the compiler are an indirect subclass of this.
 class Diagnostic<string text, DiagClass DC, DiagMapping defaultmapping> {
   /// Component is specified by the file with a big let directive.
-  string      Component = ?;
-  string      Text = text;
-  DiagClass   Class = DC;
-  bit         SFINAE = 1;
-  bit         AccessControl = 0;
-  bit         WarningNoWerror = 0;
-  bit         WarningShowInSystemHeader = 0;
-  DiagMapping DefaultMapping = defaultmapping;
-  DiagGroup   Group;
-  string      CategoryName = "";
+  string         Component = ?;
+  string         Text = text;
+  DiagClass      Class = DC;
+  SFINAEResponse SFINAE = SFINAE_Suppress;
+  bit            AccessControl = 0;
+  bit            WarningNoWerror = 0;
+  bit            WarningShowInSystemHeader = 0;
+  DiagMapping    DefaultMapping = defaultmapping;
+  DiagGroup      Group;
+  string         CategoryName = "";
 }
 
-class Error<string str>     : Diagnostic<str, CLASS_ERROR, MAP_ERROR>;
+class SFINAEFailure {
+  SFINAEResponse SFINAE = SFINAE_SubstitutionFailure;
+}
+class NoSFINAE {
+  SFINAEResponse SFINAE = SFINAE_Report;
+}
+class AccessControl {
+  SFINAEResponse SFINAE = SFINAE_AccessControl;
+}
+
+// FIXME: ExtWarn and Extension should also be SFINAEFailure by default.
+class Error<string str>     : Diagnostic<str, CLASS_ERROR, MAP_ERROR>, SFINAEFailure;
 class Warning<string str>   : Diagnostic<str, CLASS_WARNING, MAP_WARNING>;
 class Extension<string str> : Diagnostic<str, CLASS_EXTENSION, MAP_IGNORE>;
 class ExtWarn<string str>   : Diagnostic<str, CLASS_EXTENSION, MAP_WARNING>;
@@ -81,9 +99,6 @@ class DefaultWarnNoWerror {
 class DefaultWarnShowInSystemHeader {
   bit WarningShowInSystemHeader = 1;
 }
-
-class NoSFINAE { bit SFINAE = 0; }
-class AccessControl { bit AccessControl = 1; }
 
 // Definitions for Diagnostics.
 include "DiagnosticASTKinds.td"

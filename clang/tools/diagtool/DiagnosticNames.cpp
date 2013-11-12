@@ -29,8 +29,7 @@ llvm::ArrayRef<DiagnosticRecord> diagtool::getBuiltinDiagnosticsByName() {
 // out of sync easily?
 static const DiagnosticRecord BuiltinDiagnosticsByID[] = {
 #define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP,               \
-             SFINAE,ACCESS,NOWERROR,SHOWINSYSHEADER,              \
-             CATEGORY)                                            \
+             SFINAE,NOWERROR,SHOWINSYSHEADER,CATEGORY)            \
   { #ENUM, diag::ENUM, STR_SIZE(#ENUM, uint8_t) },
 #include "clang/Basic/DiagnosticCommonKinds.inc"
 #include "clang/Basic/DiagnosticDriverKinds.inc"

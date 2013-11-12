@@ -546,33 +546,20 @@ void EmitClangDiagsDefs(RecordKeeper &Records, raw_ostream &OS,
       OS << ", 0";
     }
 
-    // SFINAE bit
-    if (R.getValueAsBit("SFINAE"))
+    // SFINAE response.
+    OS << ", " << R.getValueAsDef("SFINAE")->getName();
+
+    // Default warning has no Werror bit.
+    if (R.getValueAsBit("WarningNoWerror"))
       OS << ", true";
     else
       OS << ", false";
 
-    // Access control bit
-    if (R.getValueAsBit("AccessControl"))
+    // Default warning show in system header bit.
+    if (R.getValueAsBit("WarningShowInSystemHeader"))
       OS << ", true";
     else
       OS << ", false";
-
-    // FIXME: This condition is just to avoid temporary revlock, it can be
-    // removed.
-    if (R.getValue("WarningNoWerror")) {
-      // Default warning has no Werror bit.
-      if (R.getValueAsBit("WarningNoWerror"))
-        OS << ", true";
-      else
-        OS << ", false";
-
-      // Default warning show in system header bit.
-      if (R.getValueAsBit("WarningShowInSystemHeader"))
-        OS << ", true";
-      else
-        OS << ", false";
-    }
 
     // Category number.
     OS << ", " << CategoryIDs.getID(getDiagnosticCategory(&R, DGParentMap));

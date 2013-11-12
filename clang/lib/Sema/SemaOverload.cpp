@@ -5000,17 +5000,13 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
     break;
 
   case NK_Constant_Narrowing:
-    Diag(From->getLocStart(),
-         isSFINAEContext() ? diag::err_cce_narrowing_sfinae :
-                             diag::err_cce_narrowing)
+    Diag(From->getLocStart(), diag::ext_cce_narrowing)
       << CCE << /*Constant*/1
       << PreNarrowingValue.getAsString(Context, PreNarrowingType) << T;
     break;
 
   case NK_Type_Narrowing:
-    Diag(From->getLocStart(),
-         isSFINAEContext() ? diag::err_cce_narrowing_sfinae :
-                             diag::err_cce_narrowing)
+    Diag(From->getLocStart(), diag::ext_cce_narrowing)
       << CCE << /*Constant*/0 << From->getType() << T;
     break;
   }
