@@ -7,6 +7,8 @@
     Includes:
     - GPR
     - FPU
+    - MSA
+
     Any bad names will make the frontend choke.
  */
 
@@ -113,4 +115,36 @@ main()
     __asm__ __volatile__ ("fadd.s $f30,77":::"$f30");
     __asm__ __volatile__ ("fadd.s $f31,77":::"$f31");
 
+    __asm__ __volatile__ ("ldi.w $w0,77":::"$w0");
+    __asm__ __volatile__ ("ldi.w $w1,77":::"$w1");
+    __asm__ __volatile__ ("ldi.w $w2,77":::"$w2");
+    __asm__ __volatile__ ("ldi.w $w3,77":::"$w3");
+    __asm__ __volatile__ ("ldi.w $w4,77":::"$w4");
+    __asm__ __volatile__ ("ldi.w $w5,77":::"$w5");
+    __asm__ __volatile__ ("ldi.w $w6,77":::"$w6");
+    __asm__ __volatile__ ("ldi.w $w7,77":::"$w7");
+    __asm__ __volatile__ ("ldi.w $w8,77":::"$w8");
+    __asm__ __volatile__ ("ldi.w $w9,77":::"$w9");
+    __asm__ __volatile__ ("ldi.w $w10,77":::"$w10");
+    __asm__ __volatile__ ("ldi.w $w11,77":::"$w10");
+    __asm__ __volatile__ ("ldi.w $w12,77":::"$w12");
+    __asm__ __volatile__ ("ldi.w $w13,77":::"$w13");
+    __asm__ __volatile__ ("ldi.w $w14,77":::"$w14");
+    __asm__ __volatile__ ("ldi.w $w15,77":::"$w15");
+    __asm__ __volatile__ ("ldi.w $w16,77":::"$w16");
+    __asm__ __volatile__ ("ldi.w $w17,77":::"$w17");
+    __asm__ __volatile__ ("ldi.w $w18,77":::"$w18");
+    __asm__ __volatile__ ("ldi.w $w19,77":::"$w19");
+    __asm__ __volatile__ ("ldi.w $w20,77":::"$w20");
+    __asm__ __volatile__ ("ldi.w $w21,77":::"$w21");
+    __asm__ __volatile__ ("ldi.w $w22,77":::"$w22");
+    __asm__ __volatile__ ("ldi.w $w23,77":::"$w23");
+    __asm__ __volatile__ ("ldi.w $w24,77":::"$w24");
+    __asm__ __volatile__ ("ldi.w $w25,77":::"$w25");
+    __asm__ __volatile__ ("ldi.w $w26,77":::"$w26");
+    __asm__ __volatile__ ("ldi.w $w27,77":::"$w27");
+    __asm__ __volatile__ ("ldi.w $w28,77":::"$w28");
+    __asm__ __volatile__ ("ldi.w $w29,77":::"$w29");
+    __asm__ __volatile__ ("ldi.w $w30,77":::"$w30");
+    __asm__ __volatile__ ("ldi.w $w31,77":::"$w31");
 }

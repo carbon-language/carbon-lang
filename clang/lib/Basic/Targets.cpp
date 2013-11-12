@@ -4916,7 +4916,7 @@ public:
   }
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const {
-    static const char * const GCCRegNames[] = {
+    static const char *const GCCRegNames[] = {
       // CPU register names
       // Must match second column of GCCRegAliases
       "$0",   "$1",   "$2",   "$3",   "$4",   "$5",   "$6",   "$7",
@@ -4930,7 +4930,15 @@ public:
       "$f24", "$f25", "$f26", "$f27", "$f28", "$f29", "$f30", "$f31",
       // Hi/lo and condition register names
       "hi",   "lo",   "",     "$fcc0","$fcc1","$fcc2","$fcc3","$fcc4",
-      "$fcc5","$fcc6","$fcc7"
+      "$fcc5","$fcc6","$fcc7",
+      // MSA register names
+      "$w0",  "$w1",  "$w2",  "$w3",  "$w4",  "$w5",  "$w6",  "$w7",
+      "$w8",  "$w9",  "$w10", "$w11", "$w12", "$w13", "$w14", "$w15",
+      "$w16", "$w17", "$w18", "$w19", "$w20", "$w21", "$w22", "$w23",
+      "$w24", "$w25", "$w26", "$w27", "$w28", "$w29", "$w30", "$w31",
+      // MSA control register names
+      "$msair",      "$msacsr", "$msaaccess", "$msasave", "$msamodify",
+      "$msarequest", "$msamap", "$msaunmap"
     };
     Names = GCCRegNames;
     NumNames = llvm::array_lengthof(GCCRegNames);
