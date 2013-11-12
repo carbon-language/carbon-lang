@@ -14,6 +14,8 @@
 #ifndef POLLY_REGISTER_PASSES_H
 #define POLLY_REGISTER_PASSES_H
 namespace llvm {
+namespace legacy {
 class PassManagerBase;
+}
 }
 #endif
