@@ -221,14 +221,12 @@ bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
   if ((_outputFileType == MH_EXECUTE) && _entrySymbolName.empty()){
     if (_outputFileTypeStatic) {
       _entrySymbolName = "start";
-    } else {
-      // If targeting newer OS, use _main
-      if (addEntryPointLoadCommand())
-        _entrySymbolName = "_main";
-
+    } else if (addUnixThreadLoadCommand()) {
       // If targeting older OS, use start (in crt1.o)
-      if (addUnixThreadLoadCommand())
-        _entrySymbolName = "start";
+      _entrySymbolName = "start";
+    } else if (addEntryPointLoadCommand()) {
+      // If targeting newer OS, use _main
+      _entrySymbolName = "_main";
     }
   }
 
