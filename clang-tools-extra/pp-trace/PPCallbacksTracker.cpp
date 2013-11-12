@@ -166,7 +166,7 @@ void PPCallbacksTracker::Ident(clang::SourceLocation Loc,
                                const std::string &Str) {
   beginCallback("Ident");
   appendArgument("Loc", Loc);
-  appendQuotedArgument("Str", Str);
+  appendArgument("Str", Str);
 }
 
 // Callback invoked when start reading any pragma directive.
@@ -527,7 +527,7 @@ void PPCallbacksTracker::appendArgument(const char *Name,
       SS << ", ";
     SS << "{"
        << "Name: " << Value[I].first->getName() << ", "
-       << "Loc:" << getSourceLocationString(PP, Value[I].second) << "}";
+       << "Loc: " << getSourceLocationString(PP, Value[I].second) << "}";
   }
   SS << "]";
   appendArgument(Name, SS.str());

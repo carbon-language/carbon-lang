@@ -5,7 +5,7 @@
 // CHECK: ---
 // CHECK-NEXT: - Callback: moduleImport
 // CHECK-NEXT:   ImportLoc: "{{.*}}{{[/\\]}}pp-trace-modules.cpp:3:2"
-// CHECK-NEXT:   Path: [{Name: Level1A, Loc:"{{.*}}{{[/\\]}}pp-trace-modules.cpp:3:9"}]
+// CHECK-NEXT:   Path: [{Name: Level1A, Loc: "{{.*}}{{[/\\]}}pp-trace-modules.cpp:3:9"}]
 // CHECK-NEXT:   Imported: Level1A
 // CHECK-NEXT: - Callback: EndOfMainFile
 // CHECK-NEXT: ...
