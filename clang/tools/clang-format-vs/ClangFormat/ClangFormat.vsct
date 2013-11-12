@@ -88,7 +88,7 @@
 
 
   <KeyBindings>
-    <KeyBinding guid="guidClangFormatCmdSet" id="cmdidClangFormat" editor="guidVSStd97" key1="R" mod1="Control" key2="F" mod2="Control"/>
+    <KeyBinding guid="guidClangFormatCmdSet" id="cmdidClangFormat" editor="guidTextEditor" key1="R" mod1="Control" key2="F" mod2="Control"/>
   </KeyBindings>
 
 
@@ -103,9 +103,10 @@
       <IDSymbol name="MyMenuGroup" value="0x1020" />
       <IDSymbol name="cmdidClangFormat" value="0x0100" />
     </GuidSymbol>
-    
-    
-    
+
+    <GuidSymbol name="guidTextEditor" value="{8B382828-6202-11d1-8870-0000F87579D2}" />
+
+
     <GuidSymbol name="guidImages" value="{6d53937b-9ae1-42e1-8849-d876dcdbad7b}" >
       <IDSymbol name="bmpPic1" value="1" />
       <IDSymbol name="bmpPic2" value="2" />
