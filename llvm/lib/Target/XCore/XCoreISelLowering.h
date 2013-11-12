@@ -70,7 +70,10 @@ namespace llvm {
       BR_JT,
 
       // Jumptable branch using long branches for each entry.
-      BR_JT32
+      BR_JT32,
+
+      // Memory barrier.
+      MEMBARRIER
     };
   }
 
@@ -158,6 +161,7 @@ namespace llvm {
     SDValue LowerINIT_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerADJUST_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerATOMIC_FENCE(SDValue Op, SelectionDAG &DAG) const;
 
     // Inline asm support
     std::pair<unsigned, const TargetRegisterClass*>

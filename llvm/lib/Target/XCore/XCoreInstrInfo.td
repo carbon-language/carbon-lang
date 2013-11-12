@@ -70,6 +70,11 @@ def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_XCoreCallSeqStart,
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_XCoreCallSeqEnd,
                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
+def SDT_XCoreMEMBARRIER : SDTypeProfile<0, 0, []>;
+
+def XCoreMemBarrier : SDNode<"XCoreISD::MEMBARRIER", SDT_XCoreMEMBARRIER,
+                             [SDNPHasChain]>;
+
 //===----------------------------------------------------------------------===//
 // Instruction Pattern Stuff
 //===----------------------------------------------------------------------===//
@@ -342,6 +347,10 @@ let usesCustomInserter = 1 in {
                               [(set GRRegs:$dst,
                                  (select GRRegs:$cond, GRRegs:$T, GRRegs:$F))]>;
 }
+
+let hasSideEffects = 1 in
+def Int_MemBarrier : PseudoInstXCore<(outs), (ins), "#MEMBARRIER",
+                                     [(XCoreMemBarrier)]>;
 
 //===----------------------------------------------------------------------===//
 // Instructions
