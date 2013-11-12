@@ -5059,15 +5059,21 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
 /// original value V is returned.
 const SCEV *ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
   // Check to see if we've folded this expression at this loop before.
-  std::map<const Loop *, const SCEV *> &Values = ValuesAtScopes[V];
-  std::pair<std::map<const Loop *, const SCEV *>::iterator, bool> Pair =
-    Values.insert(std::make_pair(L, static_cast<const SCEV *>(0)));
-  if (!Pair.second)
-    return Pair.first->second ? Pair.first->second : V;
-
+  SmallVector<std::pair<const Loop *, const SCEV *>, 2> &Values = ValuesAtScopes[V];
+  for (unsigned u = 0; u < Values.size(); u++) {
+    if (Values[u].first == L)
+      return Values[u].second ? Values[u].second : V;
+  }
+  Values.push_back(std::make_pair(L, static_cast<const SCEV *>(0)));
   // Otherwise compute it.
   const SCEV *C = computeSCEVAtScope(V, L);
-  ValuesAtScopes[V][L] = C;
+  SmallVector<std::pair<const Loop *, const SCEV *>, 2> &Values2 = ValuesAtScopes[V];
+  for (unsigned u = Values2.size(); u > 0; u--) {
+    if (Values2[u - 1].first == L) {
+      Values2[u - 1].second = C;
+      break;
+    }
+  }
   return C;
 }
 
@@ -6727,7 +6733,7 @@ ScalarEvolution::SCEVCallbackVH::SCEVCallbackVH(Value *V, ScalarEvolution *se)
 //===----------------------------------------------------------------------===//
 
 ScalarEvolution::ScalarEvolution()
-  : FunctionPass(ID), FirstUnknown(0) {
+  : FunctionPass(ID), ValuesAtScopes(64), LoopDispositions(64), BlockDispositions(64), FirstUnknown(0) {
   initializeScalarEvolutionPass(*PassRegistry::getPassRegistry());
 }
 
@@ -6865,14 +6871,21 @@ void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
 
 ScalarEvolution::LoopDisposition
 ScalarEvolution::getLoopDisposition(const SCEV *S, const Loop *L) {
-  std::map<const Loop *, LoopDisposition> &Values = LoopDispositions[S];
-  std::pair<std::map<const Loop *, LoopDisposition>::iterator, bool> Pair =
-    Values.insert(std::make_pair(L, LoopVariant));
-  if (!Pair.second)
-    return Pair.first->second;
-
+  SmallVector<std::pair<const Loop *, LoopDisposition>, 2> &Values = LoopDispositions[S];
+  for (unsigned u = 0; u < Values.size(); u++) {
+    if (Values[u].first == L)
+      return Values[u].second;
+  }
+  Values.push_back(std::make_pair(L, LoopVariant));
   LoopDisposition D = computeLoopDisposition(S, L);
-  return LoopDispositions[S][L] = D;
+  SmallVector<std::pair<const Loop *, LoopDisposition>, 2> &Values2 = LoopDispositions[S];
+  for (unsigned u = Values2.size(); u > 0; u--) {
+    if (Values2[u - 1].first == L) {
+      Values2[u - 1].second = D;
+      break;
+    }
+  }
+  return D;
 }
 
 ScalarEvolution::LoopDisposition
@@ -6964,14 +6977,21 @@ bool ScalarEvolution::hasComputableLoopEvolution(const SCEV *S, const Loop *L) {
 
 ScalarEvolution::BlockDisposition
 ScalarEvolution::getBlockDisposition(const SCEV *S, const BasicBlock *BB) {
-  std::map<const BasicBlock *, BlockDisposition> &Values = BlockDispositions[S];
-  std::pair<std::map<const BasicBlock *, BlockDisposition>::iterator, bool>
-    Pair = Values.insert(std::make_pair(BB, DoesNotDominateBlock));
-  if (!Pair.second)
-    return Pair.first->second;
-
+  SmallVector<std::pair<const BasicBlock *, BlockDisposition>, 2> &Values = BlockDispositions[S];
+  for (unsigned u = 0; u < Values.size(); u++) {
+    if (Values[u].first == BB)
+      return Values[u].second;
+  }
+  Values.push_back(std::make_pair(BB, DoesNotDominateBlock));
   BlockDisposition D = computeBlockDisposition(S, BB);
-  return BlockDispositions[S][BB] = D;
+  SmallVector<std::pair<const BasicBlock *, BlockDisposition>, 2> &Values2 = BlockDispositions[S];
+  for (unsigned u = Values2.size(); u > 0; u--) {
+    if (Values2[u - 1].first == BB) {
+      Values2[u - 1].second = D;
+      break;
+    }
+  }
+  return D;
 }
 
 ScalarEvolution::BlockDisposition

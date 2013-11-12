@@ -361,18 +361,18 @@ namespace llvm {
     /// that we attempt to compute getSCEVAtScope information for, which can
     /// be expensive in extreme cases.
     DenseMap<const SCEV *,
-             std::map<const Loop *, const SCEV *> > ValuesAtScopes;
+             SmallVector<std::pair<const Loop *, const SCEV *>, 2> > ValuesAtScopes;
 
     /// LoopDispositions - Memoized computeLoopDisposition results.
     DenseMap<const SCEV *,
-             std::map<const Loop *, LoopDisposition> > LoopDispositions;
+             SmallVector<std::pair<const Loop *, LoopDisposition>, 2> > LoopDispositions;
 
     /// computeLoopDisposition - Compute a LoopDisposition value.
     LoopDisposition computeLoopDisposition(const SCEV *S, const Loop *L);
 
     /// BlockDispositions - Memoized computeBlockDisposition results.
     DenseMap<const SCEV *,
-             std::map<const BasicBlock *, BlockDisposition> > BlockDispositions;
+             SmallVector<std::pair<const BasicBlock *, BlockDisposition>, 2> > BlockDispositions;
 
     /// computeBlockDisposition - Compute a BlockDisposition value.
     BlockDisposition computeBlockDisposition(const SCEV *S, const BasicBlock *BB);
