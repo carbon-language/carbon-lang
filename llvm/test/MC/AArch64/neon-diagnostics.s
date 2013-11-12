@@ -4667,7 +4667,7 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        sqdmlal s17, h27, s12
 // CHECK-ERROR:                          ^
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: too few operands for instruction
 // CHECK-ERROR:        sqdmlal d19, s24, d12
 // CHECK-ERROR:                          ^
 
@@ -4681,7 +4681,7 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        sqdmlsl s14, h12, s25
 // CHECK-ERROR:                          ^
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: too few operands for instruction
 // CHECK-ERROR:        sqdmlsl d12, s23, d13
 // CHECK-ERROR:                          ^
 
@@ -4695,7 +4695,7 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        sqdmull s12, h22, s12
 // CHECK-ERROR:                          ^
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: too few operands for instruction
 // CHECK-ERROR:        sqdmull d15, s22, d12
 // CHECK-ERROR:                          ^
 
@@ -5687,3 +5687,244 @@
 // CHECK-ERROR <stdin>:4341:17: error: invalid operand for instruction
 // CHECK-ERROR         trn2 v0.1d, v1.1d, v2.1d
 // CHECK-ERROR                 ^
+
+//----------------------------------------------------------------------
+// Floating Point  multiply (scalar, by element)
+//----------------------------------------------------------------------
+      // mismatched and invalid vector types
+      fmul    s0, s1, v1.h[0]
+      fmul    h0, h1, v1.s[0]
+      // invalid lane
+      fmul    s2, s29, v10.s[4]
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fmul    s0, s1, v1.h[0]
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fmul    h0, h1, v1.s[0]
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error:  lane number incompatible with layout
+// CHECK-ERROR:          fmul    s2, s29, v10.s[4]
+// CHECK-ERROR:                                 ^
+
+//----------------------------------------------------------------------
+// Floating Point  multiply extended (scalar, by element)
+//----------------------------------------------------------------------
+      // mismatched and invalid vector types
+      fmulx    d0, d1, v1.b[0]
+      fmulx    h0, h1, v1.d[0]
+      // invalid lane
+      fmulx    d2, d29, v10.d[3]
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fmulx    d0, d1, v1.b[0]
+// CHECK-ERROR:                              ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fmulx    h0, h1, v1.d[0]
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error:  lane number incompatible with layout
+// CHECK-ERROR:          fmulx    d2, d29, v10.d[3]
+// CHECK-ERROR:                                  ^
+
+//----------------------------------------------------------------------
+// Floating Point fused multiply-add (scalar, by element)
+//----------------------------------------------------------------------
+      // mismatched and invalid vector types
+      fmla    b0, b1, v1.b[0]
+      fmla    d30, s11, v1.d[1]
+      // invalid lane
+      fmla    s16, s22, v16.s[5]
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fmla    b0, b1, v1.b[0]
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fmla    d30, s11, v1.d[1]
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error:  lane number incompatible with layout
+// CHECK-ERROR:          fmla    s16, s22, v16.s[5]
+// CHECK-ERROR:                                  ^
+
+//----------------------------------------------------------------------
+// Floating Point fused multiply-subtract (scalar, by element)
+//----------------------------------------------------------------------
+    // mismatched and invalid vector types
+    fmls    s29, h10, v28.s[1]
+    fmls    h7, h17, v26.s[2]
+    // invalid lane
+    fmls    d16, d22, v16.d[-1]
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fmls    s29, h10, v28.s[1]
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fmls    h7, h17, v26.s[2]
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error:  expected lane number
+// CHECK-ERROR:          fmls    d16, d22, v16.d[-1]
+// CHECK-ERROR:                                  ^
+
+//----------------------------------------------------------------------
+// Scalar Signed saturating doubling multiply-add long
+// (scalar, by element)
+//----------------------------------------------------------------------
+    // mismatched and invalid vector types
+    sqdmlal s0, h0, v0.s[0]
+    sqdmlal s8, s9, v14.s[1]
+    // invalid lane
+    sqdmlal s4, s5, v1.s[5]
+    // invalid vector index
+    sqdmlal s0, h0, v17.h[0]
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          sqdmlal s0, h0, v0.s[0]
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          sqdmlal s8, s9, v14.s[1]
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: lane number incompatible with layout
+// CHECK-ERROR:          sqdmlal s4, s5, v1.s[5]
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          sqdmlal s0, h0, v17.h[0]
+// CHECK-ERROR:                           ^
+
+//----------------------------------------------------------------------
+// Scalar Signed saturating doubling multiply-subtract long
+// (scalar, by element)
+//----------------------------------------------------------------------
+    // mismatched and invalid vector types
+    sqdmlsl s1, h1, v1.d[0]
+    sqdmlsl d1, h1, v13.s[0]
+    // invalid lane
+    sqdmlsl d1, s1, v13.s[4]
+    // invalid vector index
+    sqdmlsl s1, h1, v20.h[7]
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          sqdmlsl s1, h1, v1.d[0]
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          sqdmlsl d1, h1, v13.s[0]
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: lane number incompatible with layout
+// CHECK-ERROR:          sqdmlsl d1, s1, v13.s[4]
+// CHECK-ERROR:                                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          sqdmlsl s1, h1, v20.h[7]
+// CHECK-ERROR:                           ^
+
+//----------------------------------------------------------------------
+// Scalar Signed saturating doubling multiply long (scalar, by element)
+//----------------------------------------------------------------------
+    // mismatched and invalid vector types
+    // invalid lane
+    // invalid vector index
+    // mismatched and invalid vector types
+    sqdmull s1, h1, v1.s[1]
+    sqdmull s1, s1, v4.s[0]
+    // invalid lane
+    sqdmull s12, h17, v9.h[9]
+    // invalid vector index
+    sqdmull s1, h1, v16.h[5]
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          sqdmull s1, h1, v1.s[1]
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          sqdmull s1, s1, v4.s[0]
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: lane number incompatible with layout
+// CHECK-ERROR:          sqdmull s12, h17, v9.h[9]
+// CHECK-ERROR:                                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          sqdmull s1, h1, v16.h[5]
+// CHECK-ERROR:                           ^
+
+//----------------------------------------------------------------------
+// Scalar Signed saturating doubling multiply returning
+// high half (scalar, by element)
+//----------------------------------------------------------------------
+    // mismatched and invalid vector types
+    sqdmulh h0, s1, v0.h[0]
+    sqdmulh s25, s26, v27.h[3]
+    // invalid lane
+    sqdmulh s25, s26, v27.s[4]
+    // invalid vector index
+    sqdmulh s0, h1, v30.h[0]
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          sqdmulh h0, s1, v0.h[0]
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          sqdmulh s25, s26, v27.h[3]
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: lane number incompatible with layout
+// CHECK-ERROR:          sqdmulh s25, s26, v27.s[4]
+// CHECK-ERROR:                                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          sqdmulh s0, h1, v30.h[0]
+// CHECK-ERROR:                      ^
+
+//----------------------------------------------------------------------
+// Scalar Signed saturating rounding doubling multiply
+// returning high half (scalar, by element)
+//----------------------------------------------------------------------
+    // mismatched and invalid vector types
+    sqrdmulh h31, h30, v14.s[2]
+    sqrdmulh s5, h6, v7.s[2]
+    // invalid lane
+    sqrdmulh h31, h30, v14.h[9]
+    // invalid vector index
+    sqrdmulh h31, h30, v20.h[4]
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          sqrdmulh h31, h30, v14.s[2]
+// CHECK-ERROR:                                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          sqrdmulh s5, h6, v7.s[2]
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: lane number incompatible with layout
+// CHECK-ERROR:          sqrdmulh h31, h30, v14.h[9]
+// CHECK-ERROR:                                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          sqrdmulh h31, h30, v20.h[4]
+// CHECK-ERROR:                              ^
+
+//----------------------------------------------------------------------
+// Scalar Duplicate element (scalar)
+//----------------------------------------------------------------------
+      // mismatched and invalid vector types
+      dup b0, v1.d[0]
+      dup h0, v31.b[8]
+      dup s0, v2.h[4]
+      dup d0, v17.s[3]
+      // invalid  lane
+      dup d0, v17.d[4]
+      dup s0, v1.s[7]
+      dup h0, v31.h[16]
+      dup b1, v3.b[16]
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          dup b0, v1.d[0]
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          dup h0, v31.b[8]
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          dup s0, v2.h[4]
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          dup d0, v17.s[3]
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: lane number incompatible with layout
+// CHECK-ERROR:          dup d0, v17.d[4]
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: lane number incompatible with layout
+// CHECK-ERROR:          dup s0, v1.s[7]
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: lane number incompatible with layout
+// CHECK-ERROR:          dup h0, v31.h[16]
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: lane number incompatible with layout
+// CHECK-ERROR:          dup b1, v3.b[16]
+// CHECK-ERROR:                       ^

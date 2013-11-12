@@ -4671,6 +4671,294 @@ defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vpfmaxnm,
 defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vpfminnm, 
   int_aarch64_neon_vpfminnmq, FMINNMPvv_S_2S, FMINNMPvv_D_2D>;
 
+def neon_uimm0_bare : Operand<i64>,
+                        ImmLeaf<i64, [{return Imm == 0;}]> {
+  let ParserMatchClass = neon_uimm0_asmoperand;
+  let PrintMethod = "printUImmBareOperand";
+}
+
+def neon_uimm1_bare : Operand<i64>,
+                        ImmLeaf<i64, [{(void)Imm; return true;}]> {
+  let ParserMatchClass = neon_uimm1_asmoperand;
+  let PrintMethod = "printUImmBareOperand";
+}
+
+def neon_uimm2_bare : Operand<i64>,
+                        ImmLeaf<i64, [{(void)Imm; return true;}]> {
+  let ParserMatchClass = neon_uimm2_asmoperand;
+  let PrintMethod = "printUImmBareOperand";
+}
+
+def neon_uimm3_bare : Operand<i64>,
+                        ImmLeaf<i64, [{(void)Imm; return true;}]> {
+  let ParserMatchClass = uimm3_asmoperand;
+  let PrintMethod = "printUImmBareOperand";
+}
+
+def neon_uimm4_bare : Operand<i64>,
+                        ImmLeaf<i64, [{(void)Imm; return true;}]> {
+  let ParserMatchClass = uimm4_asmoperand;
+  let PrintMethod = "printUImmBareOperand";
+}
+
+
+// Scalar by element Arithmetic
+
+class NeonI_ScalarXIndexedElemArith<string asmop, bits<4> opcode,
+                                    string rmlane, bit u, bit szhi, bit szlo,
+                                    RegisterClass ResFPR, RegisterClass OpFPR,
+                                    RegisterOperand OpVPR, Operand OpImm>
+  : NeonI_ScalarXIndexedElem<u, szhi, szlo, opcode,
+                             (outs ResFPR:$Rd),
+                             (ins OpFPR:$Rn, OpVPR:$MRm, OpImm:$Imm),
+                             asmop # "\t$Rd, $Rn, $MRm" # rmlane # "[$Imm]",
+                             [],
+                             NoItinerary> {
+  bits<3> Imm;
+  bits<5> MRm;
+}
+
+class NeonI_ScalarXIndexedElemArith_Constraint_Impl<string asmop, bits<4> opcode,
+                                                    string rmlane,
+                                                    bit u, bit szhi, bit szlo,
+                                                    RegisterClass ResFPR,
+                                                    RegisterClass OpFPR,
+                                                    RegisterOperand OpVPR,
+                                                    Operand OpImm>
+  : NeonI_ScalarXIndexedElem<u, szhi, szlo, opcode,
+                             (outs ResFPR:$Rd),
+                             (ins ResFPR:$src, OpFPR:$Rn, OpVPR:$MRm, OpImm:$Imm),
+                             asmop # "\t$Rd, $Rn, $MRm" # rmlane # "[$Imm]",
+                             [],
+                             NoItinerary> {
+  let Constraints = "$src = $Rd";
+  bits<3> Imm;
+  bits<5> MRm;
+}
+
+// Scalar Floating Point  multiply (scalar, by element)
+def FMULssv_4S : NeonI_ScalarXIndexedElemArith<"fmul",
+  0b1001, ".s", 0b0, 0b1, 0b0, FPR32, FPR32, VPR128, neon_uimm2_bare> {
+  let Inst{11} = Imm{1}; // h
+  let Inst{21} = Imm{0}; // l
+  let Inst{20-16} = MRm;
+}
+def FMULddv_2D : NeonI_ScalarXIndexedElemArith<"fmul",
+  0b1001, ".d", 0b0, 0b1, 0b1, FPR64, FPR64, VPR128, neon_uimm1_bare> {
+  let Inst{11} = Imm{0}; // h
+  let Inst{21} = 0b0;    // l
+  let Inst{20-16} = MRm;
+}
+
+// Scalar Floating Point  multiply extended (scalar, by element)
+def FMULXssv_4S : NeonI_ScalarXIndexedElemArith<"fmulx",
+  0b1001, ".s", 0b1, 0b1, 0b0, FPR32, FPR32, VPR128, neon_uimm2_bare> {
+  let Inst{11} = Imm{1}; // h
+  let Inst{21} = Imm{0}; // l
+  let Inst{20-16} = MRm;
+}
+def FMULXddv_2D : NeonI_ScalarXIndexedElemArith<"fmulx",
+  0b1001, ".d", 0b1, 0b1, 0b1, FPR64, FPR64, VPR128, neon_uimm1_bare> {
+  let Inst{11} = Imm{0}; // h
+  let Inst{21} = 0b0;    // l
+  let Inst{20-16} = MRm;
+}
+
+// Scalar Floating Point fused multiply-add (scalar, by element)
+def FMLAssv_4S : NeonI_ScalarXIndexedElemArith_Constraint_Impl<"fmla",
+  0b0001, ".s", 0b0, 0b1, 0b0, FPR32, FPR32, VPR128, neon_uimm2_bare> {
+  let Inst{11} = Imm{1}; // h
+  let Inst{21} = Imm{0}; // l
+  let Inst{20-16} = MRm;
+}
+def FMLAddv_2D : NeonI_ScalarXIndexedElemArith_Constraint_Impl<"fmla",
+  0b0001, ".d", 0b0, 0b1, 0b1, FPR64, FPR64, VPR128, neon_uimm1_bare> {
+  let Inst{11} = Imm{0}; // h
+  let Inst{21} = 0b0;    // l
+  let Inst{20-16} = MRm;
+}
+
+// Scalar Floating Point fused multiply-subtract (scalar, by element)
+def FMLSssv_4S : NeonI_ScalarXIndexedElemArith_Constraint_Impl<"fmls",
+  0b0101, ".s", 0b0, 0b1, 0b0, FPR32, FPR32, VPR128, neon_uimm2_bare> {
+  let Inst{11} = Imm{1}; // h
+  let Inst{21} = Imm{0}; // l
+  let Inst{20-16} = MRm;
+}
+def FMLSddv_2D : NeonI_ScalarXIndexedElemArith_Constraint_Impl<"fmls",
+  0b0101, ".d", 0b0, 0b1, 0b1, FPR64, FPR64, VPR128, neon_uimm1_bare> {
+  let Inst{11} = Imm{0}; // h
+  let Inst{21} = 0b0;    // l
+  let Inst{20-16} = MRm;
+}
+
+// Scalar Signed saturating doubling multiply-add long (scalar, by element)
+def SQDMLALshv_4H : NeonI_ScalarXIndexedElemArith_Constraint_Impl<"sqdmlal",
+  0b0011, ".h", 0b0, 0b0, 0b1, FPR32, FPR16, VPR64Lo, neon_uimm2_bare> {
+  let Inst{11} = 0b0; // h
+  let Inst{21} = Imm{1}; // l
+  let Inst{20} = Imm{0}; // m
+  let Inst{19-16} = MRm{3-0};
+}
+def SQDMLALshv_8H : NeonI_ScalarXIndexedElemArith_Constraint_Impl<"sqdmlal",
+  0b0011, ".h", 0b0, 0b0, 0b1, FPR32, FPR16, VPR128Lo, neon_uimm3_bare> {
+  let Inst{11} = Imm{2}; // h
+  let Inst{21} = Imm{1}; // l
+  let Inst{20} = Imm{0}; // m
+  let Inst{19-16} = MRm{3-0};
+}
+def SQDMLALdsv_2S : NeonI_ScalarXIndexedElemArith_Constraint_Impl<"sqdmlal",
+  0b0011, ".s", 0b0, 0b1, 0b0, FPR64, FPR32, VPR64, neon_uimm1_bare> {
+  let Inst{11} = 0b0;    // h
+  let Inst{21} = Imm{0}; // l
+  let Inst{20-16} = MRm;
+}
+def SQDMLALdsv_4S : NeonI_ScalarXIndexedElemArith_Constraint_Impl<"sqdmlal",
+  0b0011, ".s", 0b0, 0b1, 0b0, FPR64, FPR32, VPR128, neon_uimm2_bare> {
+  let Inst{11} = Imm{1};    // h
+  let Inst{21} = Imm{0};    // l
+  let Inst{20-16} = MRm;
+}
+
+// Scalar Signed saturating doubling
+// multiply-subtract long (scalar, by element)
+def SQDMLSLshv_4H : NeonI_ScalarXIndexedElemArith_Constraint_Impl<"sqdmlsl",
+  0b0111, ".h", 0b0, 0b0, 0b1, FPR32, FPR16, VPR64Lo, neon_uimm2_bare> {
+  let Inst{11} = 0b0; // h
+  let Inst{21} = Imm{1}; // l
+  let Inst{20} = Imm{0}; // m
+  let Inst{19-16} = MRm{3-0};
+}
+def SQDMLSLshv_8H : NeonI_ScalarXIndexedElemArith_Constraint_Impl<"sqdmlsl",
+  0b0111, ".h", 0b0, 0b0, 0b1, FPR32, FPR16, VPR128Lo, neon_uimm3_bare> {
+  let Inst{11} = Imm{2}; // h
+  let Inst{21} = Imm{1}; // l
+  let Inst{20} = Imm{0}; // m
+  let Inst{19-16} = MRm{3-0};
+}
+def SQDMLSLdsv_2S : NeonI_ScalarXIndexedElemArith_Constraint_Impl<"sqdmlsl",
+  0b0111, ".s", 0b0, 0b1, 0b0, FPR64, FPR32, VPR64, neon_uimm1_bare> {
+  let Inst{11} = 0b0;    // h
+  let Inst{21} = Imm{0}; // l
+  let Inst{20-16} = MRm;
+}
+def SQDMLSLdsv_4S : NeonI_ScalarXIndexedElemArith_Constraint_Impl<"sqdmlsl",
+  0b0111, ".s", 0b0, 0b1, 0b0, FPR64, FPR32, VPR128, neon_uimm2_bare> {
+  let Inst{11} = Imm{1};    // h
+  let Inst{21} = Imm{0};    // l
+  let Inst{20-16} = MRm;
+}
+
+// Scalar Signed saturating doubling multiply long (scalar, by element)
+def SQDMULLshv_4H : NeonI_ScalarXIndexedElemArith<"sqdmull",
+  0b1011, ".h", 0b0, 0b0, 0b1, FPR32, FPR16, VPR64Lo, neon_uimm2_bare> {
+  let Inst{11} = 0b0; // h
+  let Inst{21} = Imm{1}; // l
+  let Inst{20} = Imm{0}; // m
+  let Inst{19-16} = MRm{3-0};
+}
+def SQDMULLshv_8H : NeonI_ScalarXIndexedElemArith<"sqdmull",
+  0b1011, ".h", 0b0, 0b0, 0b1, FPR32, FPR16, VPR128Lo, neon_uimm3_bare> {
+  let Inst{11} = Imm{2}; // h
+  let Inst{21} = Imm{1}; // l
+  let Inst{20} = Imm{0}; // m
+  let Inst{19-16} = MRm{3-0};
+}
+def SQDMULLdsv_2S : NeonI_ScalarXIndexedElemArith<"sqdmull",
+  0b1011, ".s", 0b0, 0b1, 0b0, FPR64, FPR32, VPR64, neon_uimm1_bare> {
+  let Inst{11} = 0b0;    // h
+  let Inst{21} = Imm{0}; // l
+  let Inst{20-16} = MRm;
+}
+def SQDMULLdsv_4S : NeonI_ScalarXIndexedElemArith<"sqdmull",
+  0b1011, ".s", 0b0, 0b1, 0b0, FPR64, FPR32, VPR128, neon_uimm2_bare> {
+  let Inst{11} = Imm{1};    // h
+  let Inst{21} = Imm{0};    // l
+  let Inst{20-16} = MRm;
+}
+
+// Scalar Signed saturating doubling multiply returning
+// high half (scalar, by element)
+def SQDMULHhhv_4H : NeonI_ScalarXIndexedElemArith<"sqdmulh",
+  0b1100, ".h", 0b0, 0b0, 0b1, FPR16, FPR16, VPR64Lo, neon_uimm2_bare> {
+  let Inst{11} = 0b0; // h
+  let Inst{21} = Imm{1}; // l
+  let Inst{20} = Imm{0}; // m
+  let Inst{19-16} = MRm{3-0};
+}
+def SQDMULHhhv_8H : NeonI_ScalarXIndexedElemArith<"sqdmulh",
+  0b1100, ".h", 0b0, 0b0, 0b1, FPR16, FPR16, VPR128Lo, neon_uimm3_bare> {
+  let Inst{11} = Imm{2}; // h
+  let Inst{21} = Imm{1}; // l
+  let Inst{20} = Imm{0}; // m
+  let Inst{19-16} = MRm{3-0};
+}
+def SQDMULHssv_2S : NeonI_ScalarXIndexedElemArith<"sqdmulh",
+  0b1100, ".s", 0b0, 0b1, 0b0, FPR32, FPR32, VPR64, neon_uimm1_bare> {
+  let Inst{11} = 0b0;    // h
+  let Inst{21} = Imm{0}; // l
+  let Inst{20-16} = MRm;
+}
+def SQDMULHssv_4S : NeonI_ScalarXIndexedElemArith<"sqdmulh",
+  0b1100, ".s", 0b0, 0b1, 0b0, FPR32, FPR32, VPR128, neon_uimm2_bare> {
+  let Inst{11} = Imm{1};    // h
+  let Inst{21} = Imm{0};    // l
+  let Inst{20-16} = MRm;
+}
+
+// Scalar Signed saturating rounding doubling multiply
+// returning high half (scalar, by element)
+def SQRDMULHhhv_4H : NeonI_ScalarXIndexedElemArith<"sqrdmulh",
+  0b1101, ".h", 0b0, 0b0, 0b1, FPR16, FPR16, VPR64Lo, neon_uimm2_bare> {
+  let Inst{11} = 0b0; // h
+  let Inst{21} = Imm{1}; // l
+  let Inst{20} = Imm{0}; // m
+  let Inst{19-16} = MRm{3-0};
+}
+def SQRDMULHhhv_8H : NeonI_ScalarXIndexedElemArith<"sqrdmulh",
+  0b1101, ".h", 0b0, 0b0, 0b1, FPR16, FPR16, VPR128Lo, neon_uimm3_bare> {
+  let Inst{11} = Imm{2}; // h
+  let Inst{21} = Imm{1}; // l
+  let Inst{20} = Imm{0}; // m
+  let Inst{19-16} = MRm{3-0};
+}
+def SQRDMULHssv_2S : NeonI_ScalarXIndexedElemArith<"sqrdmulh",
+  0b1101, ".s", 0b0, 0b1, 0b0, FPR32, FPR32, VPR64, neon_uimm1_bare> {
+  let Inst{11} = 0b0;    // h
+  let Inst{21} = Imm{0}; // l
+  let Inst{20-16} = MRm;
+}
+def SQRDMULHssv_4S : NeonI_ScalarXIndexedElemArith<"sqrdmulh",
+  0b1101, ".s", 0b0, 0b1, 0b0, FPR32, FPR32, VPR128, neon_uimm2_bare> {
+  let Inst{11} = Imm{1};    // h
+  let Inst{21} = Imm{0};    // l
+  let Inst{20-16} = MRm;
+}
+
+
+// Scalar Copy - DUP element to scalar
+class NeonI_Scalar_DUP<string asmop, string asmlane,
+                       RegisterClass ResRC, RegisterOperand VPRC,
+                       Operand OpImm>
+  : NeonI_ScalarCopy<(outs ResRC:$Rd), (ins VPRC:$Rn, OpImm:$Imm),
+                     asmop # "\t$Rd, $Rn." # asmlane # "[$Imm]",
+                     [],
+                     NoItinerary> {
+  bits<4> Imm;
+}
+
+def DUPbv_B : NeonI_Scalar_DUP<"dup", "b", FPR8, VPR128, neon_uimm4_bare> {
+  let Inst{20-16} = {Imm{3}, Imm{2}, Imm{1}, Imm{0}, 0b1};
+}
+def DUPhv_H : NeonI_Scalar_DUP<"dup", "h", FPR16, VPR128, neon_uimm3_bare> {
+  let Inst{20-16} = {Imm{2}, Imm{1}, Imm{0}, 0b1, 0b0};
+}
+def DUPsv_S : NeonI_Scalar_DUP<"dup", "s", FPR32, VPR128, neon_uimm2_bare> {
+  let Inst{20-16} = {Imm{1}, Imm{0}, 0b1, 0b0, 0b0};
+}
+def DUPdv_D : NeonI_Scalar_DUP<"dup", "d", FPR64, VPR128, neon_uimm1_bare> {
+  let Inst{20-16} = {Imm, 0b1, 0b0, 0b0, 0b0};
+}
 
 
 //===----------------------------------------------------------------------===//
@@ -4791,36 +5079,6 @@ def : Pat<(v4i32  (bitconvert (f128   FPR128:$src))), (v4i32 FPR128:$src)>;
 def : Pat<(v2i64  (bitconvert (f128   FPR128:$src))), (v2i64 FPR128:$src)>;
 def : Pat<(v4f32  (bitconvert (f128   FPR128:$src))), (v4f32 FPR128:$src)>;
 def : Pat<(v2f64  (bitconvert (f128   FPR128:$src))), (v2f64 FPR128:$src)>;
-
-def neon_uimm0_bare : Operand<i64>,
-                        ImmLeaf<i64, [{return Imm == 0;}]> {
-  let ParserMatchClass = neon_uimm0_asmoperand;
-  let PrintMethod = "printUImmBareOperand";
-}
-
-def neon_uimm1_bare : Operand<i64>,
-                        ImmLeaf<i64, [{(void)Imm; return true;}]> {
-  let ParserMatchClass = neon_uimm1_asmoperand;
-  let PrintMethod = "printUImmBareOperand";
-}
-
-def neon_uimm2_bare : Operand<i64>,
-                        ImmLeaf<i64, [{(void)Imm; return true;}]> {
-  let ParserMatchClass = neon_uimm2_asmoperand;
-  let PrintMethod = "printUImmBareOperand";
-}
-
-def neon_uimm3_bare : Operand<i64>,
-                        ImmLeaf<i64, [{(void)Imm; return true;}]> {
-  let ParserMatchClass = uimm3_asmoperand;
-  let PrintMethod = "printUImmBareOperand";
-}
-
-def neon_uimm4_bare : Operand<i64>,
-                        ImmLeaf<i64, [{(void)Imm; return true;}]> {
-  let ParserMatchClass = uimm4_asmoperand;
-  let PrintMethod = "printUImmBareOperand";
-}
 
 def neon_uimm3 : Operand<i64>,
                    ImmLeaf<i64, [{(void)Imm; return true;}]> {

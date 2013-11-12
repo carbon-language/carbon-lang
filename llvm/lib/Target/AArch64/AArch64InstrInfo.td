@@ -1278,7 +1278,7 @@ def : Pat<(i64 (sext_inreg (anyext i32:$Rn), i1)),
 
 // UBFX makes sense as an implementation of a 64-bit zero-extension too. Could
 // use either 64-bit or 32-bit variant, but 32-bit might be more efficient.
-def : Pat<(zext i32:$Rn), (SUBREG_TO_REG (i64 0), (UBFXwwii $Rn, 0, 31),
+def : Pat<(i64 (zext i32:$Rn)), (SUBREG_TO_REG (i64 0), (UBFXwwii $Rn, 0, 31),
                                          sub_32)>;
 
 //===-------------------------------
