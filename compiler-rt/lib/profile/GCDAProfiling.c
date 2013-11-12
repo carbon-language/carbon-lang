@@ -366,7 +366,7 @@ void llvm_gcda_emit_arcs(uint32_t num_counters, uint64_t *counters) {
   if (val != (uint32_t)-1) {
     /* There are counters present in the file. Merge them. */
     if (val != 0x01a10000) {
-      fprintf(stderr, "profiling:invalid magic number (0x%08x)\n", val);
+      fprintf(stderr, "profiling:invalid arc tag (0x%08x)\n", val);
       return;
     }
 
@@ -397,6 +397,55 @@ void llvm_gcda_emit_arcs(uint32_t num_counters, uint64_t *counters) {
   fprintf(stderr, "llvmgcda:   %u arcs\n", num_counters);
   for (i = 0; i < num_counters; ++i)
     fprintf(stderr, "llvmgcda:   %llu\n", (unsigned long long)counters[i]);
+#endif
+}
+
+void llvm_gcda_summary_info() {
+  const int obj_summary_len = 9; // length for gcov compatibility
+  uint32_t i;
+  uint32_t runs = 1;
+  uint32_t val = 0;
+  uint64_t save_cur_pos = cur_pos;
+
+  if (!output_file) return;
+
+  val = read_32bit_value();
+
+  if (val != (uint32_t)-1) {
+    /* There are counters present in the file. Merge them. */
+    if (val != 0xa1000000) {
+      fprintf(stderr, "profiling:invalid object tag (0x%08x)\n", val);
+      return;
+    }
+
+    val = read_32bit_value(); // length
+    if (val != obj_summary_len) {
+      fprintf(stderr, "profiling:invalid object length (%d)\n", val); // length
+      return;
+    }
+
+    read_32bit_value(); // checksum, unused
+    read_32bit_value(); // num, unused
+    runs += read_32bit_value(); // add previous run count to new counter
+  }
+
+  cur_pos = save_cur_pos;
+
+  /* Object summary tag */
+  write_bytes("\0\0\0\xa1", 4);
+  write_32bit_value(obj_summary_len);
+  write_32bit_value(0); // checksum, unused
+  write_32bit_value(0); // num, unused
+  write_32bit_value(runs);
+  for (i = 3; i < obj_summary_len; ++i) 
+    write_32bit_value(0);
+
+  /* Program summary tag */
+  write_bytes("\0\0\0\xa3", 4); // tag indicates 1 program
+  write_32bit_value(0); // 0 length
+
+#ifdef DEBUG_GCDAPROFILING
+  fprintf(stderr, "llvmgcda:   %u runs\n", runs);
 #endif
 }
 
