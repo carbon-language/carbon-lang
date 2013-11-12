@@ -22,5 +22,9 @@ void test_eh_return_data_regno()
 void sevl() {
   __builtin_arm_sevl();
 }
-
 // CHECK: call {{.*}} @llvm.arm.sevl
+
+void test_barrier() {
+  __builtin_arm_dmb(1); //CHECK: call {{.*}} @llvm.arm.dmb(i32 1)
+  __builtin_arm_dsb(2); //CHECK: call {{.*}} @llvm.arm.dsb(i32 2)
+}
