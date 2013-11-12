@@ -182,6 +182,7 @@ def _SLASH_GL_ : CLFlag<"GL-">;
 def _SLASH_Gm : CLFlag<"Gm">;
 def _SLASH_Gm_ : CLFlag<"Gm-">;
 def _SLASH_GS : CLFlag<"GS">;
+def _SLASH_GT : CLFlag<"GT">;
 def _SLASH_Gy : CLFlag<"Gy">;
 def _SLASH_Gy_ : CLFlag<"Gy-">;
 def _SLASH_GZ : CLFlag<"GZ">;
