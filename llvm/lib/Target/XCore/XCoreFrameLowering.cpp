@@ -93,6 +93,10 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
 
+  if (MFI->getMaxAlignment() > getStackAlignment())
+    report_fatal_error("emitPrologue unsupported alignment: "
+                       + Twine(MFI->getMaxAlignment()));
+
   bool FP = hasFP(MF);
   const AttributeSet &PAL = MF.getFunction()->getAttributes();
 
