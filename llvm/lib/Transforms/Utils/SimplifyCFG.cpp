@@ -2090,8 +2090,13 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     // Ensure that any values used in the bonus instruction are also used
     // by the terminator of the predecessor.  This means that those values
     // must already have been resolved, so we won't be inhibiting the
-    // out-of-order core by speculating them earlier.
-    if (BonusInst) {
+    // out-of-order core by speculating them earlier. We also allow
+    // instructions that are used by the terminator's condition because it
+    // exposes more merging opportunities.
+    bool UsedByBranch = (BonusInst && BonusInst->hasOneUse() &&
+                         *BonusInst->use_begin() == Cond);
+
+    if (BonusInst && !UsedByBranch) {
       // Collect the values used by the bonus inst
       SmallPtrSet<Value*, 4> UsedValues;
       for (Instruction::op_iterator OI = BonusInst->op_begin(),
