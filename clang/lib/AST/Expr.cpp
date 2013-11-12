@@ -3051,7 +3051,8 @@ bool Expr::hasNonTrivialCall(ASTContext &Ctx) {
 Expr::NullPointerConstantKind
 Expr::isNullPointerConstant(ASTContext &Ctx,
                             NullPointerConstantValueDependence NPC) const {
-  if (isValueDependent() && !Ctx.getLangOpts().CPlusPlus11) {
+  if (isValueDependent() &&
+      (!Ctx.getLangOpts().CPlusPlus11 || Ctx.getLangOpts().MicrosoftMode)) {
     switch (NPC) {
     case NPC_NeverValueDependent:
       llvm_unreachable("Unexpected value dependent expression!");
@@ -3133,8 +3134,13 @@ Expr::isNullPointerConstant(ASTContext &Ctx,
   if (Ctx.getLangOpts().CPlusPlus11) {
     // C++11 [conv.ptr]p1: A null pointer constant is an integer literal with
     // value zero or a prvalue of type std::nullptr_t.
+    // Microsoft mode permits C++98 rules reflecting MSVC behavior.
     const IntegerLiteral *Lit = dyn_cast<IntegerLiteral>(this);
-    return (Lit && !Lit->getValue()) ? NPCK_ZeroLiteral : NPCK_NotNull;
+    if (Lit && !Lit->getValue())
+      return NPCK_ZeroLiteral;
+    else if (!Ctx.getLangOpts().MicrosoftMode ||
+             !isCXX98IntegralConstantExpr(Ctx))
+      return NPCK_NotNull;
   } else {
     // If we have an integer constant expression, we need to *evaluate* it and
     // test for the value 0.

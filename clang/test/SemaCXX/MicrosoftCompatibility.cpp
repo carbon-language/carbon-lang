@@ -178,3 +178,19 @@ namespace PR11791 {
     del((void*)a);  // expected-note {{in instantiation of function template specialization}}
   }
 }
+
+namespace IntToNullPtrConv {
+  struct Foo {
+    static const int ZERO = 0;
+    typedef void (Foo::*MemberFcnPtr)();
+  };
+
+  struct Bar {
+    const Foo::MemberFcnPtr pB;
+  };
+
+  Bar g_bar = { (Foo::MemberFcnPtr)Foo::ZERO };
+
+  template<int N> int *get_n() { return N; }   // expected-warning {{expression which evaluates to zero treated as a null pointer constant}}
+  int *g_nullptr = get_n<0>();  // expected-note {{in instantiation of function template specialization}}
+}
