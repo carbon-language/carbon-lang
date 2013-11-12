@@ -1243,6 +1243,254 @@ define void @binsr_v2i64_i(<2 x i64>* %c, <2 x i64>* %a, <2 x i64>* %b) nounwind
   ; CHECK: .size binsr_v2i64_i
 }
 
+define void @bset_v16i8(<16 x i8>* %c, <16 x i8>* %a, <16 x i8>* %b) nounwind {
+  ; CHECK: bset_v16i8:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <16 x i8>* %b
+  ; CHECK-DAG: ld.b [[R2:\$w[0-9]+]], 0($6)
+  %3 = shl <16 x i8> <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>, %2
+  %4 = or <16 x i8> %1, %3
+  ; CHECK-DAG: bset.b [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <16 x i8> %4, <16 x i8>* %c
+  ; CHECK-DAG: st.b [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bset_v16i8
+}
+
+define void @bset_v8i16(<8 x i16>* %c, <8 x i16>* %a, <8 x i16>* %b) nounwind {
+  ; CHECK: bset_v8i16:
+
+  %1 = load <8 x i16>* %a
+  ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <8 x i16>* %b
+  ; CHECK-DAG: ld.h [[R2:\$w[0-9]+]], 0($6)
+  %3 = shl <8 x i16> <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>, %2
+  %4 = or <8 x i16> %1, %3
+  ; CHECK-DAG: bset.h [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <8 x i16> %4, <8 x i16>* %c
+  ; CHECK-DAG: st.h [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bset_v8i16
+}
+
+define void @bset_v4i32(<4 x i32>* %c, <4 x i32>* %a, <4 x i32>* %b) nounwind {
+  ; CHECK: bset_v4i32:
+
+  %1 = load <4 x i32>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <4 x i32>* %b
+  ; CHECK-DAG: ld.w [[R2:\$w[0-9]+]], 0($6)
+  %3 = shl <4 x i32> <i32 1, i32 1, i32 1, i32 1>, %2
+  %4 = or <4 x i32> %1, %3
+  ; CHECK-DAG: bset.w [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <4 x i32> %4, <4 x i32>* %c
+  ; CHECK-DAG: st.w [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bset_v4i32
+}
+
+define void @bset_v2i64(<2 x i64>* %c, <2 x i64>* %a, <2 x i64>* %b) nounwind {
+  ; CHECK: bset_v2i64:
+
+  %1 = load <2 x i64>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <2 x i64>* %b
+  ; CHECK-DAG: ld.d [[R2:\$w[0-9]+]], 0($6)
+  %3 = shl <2 x i64> <i64 1, i64 1>, %2
+  %4 = or <2 x i64> %1, %3
+  ; CHECK-DAG: bset.d [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <2 x i64> %4, <2 x i64>* %c
+  ; CHECK-DAG: st.d [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bset_v2i64
+}
+
+define void @bneg_v16i8(<16 x i8>* %c, <16 x i8>* %a, <16 x i8>* %b) nounwind {
+  ; CHECK: bneg_v16i8:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <16 x i8>* %b
+  ; CHECK-DAG: ld.b [[R2:\$w[0-9]+]], 0($6)
+  %3 = shl <16 x i8> <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>, %2
+  %4 = xor <16 x i8> %1, %3
+  ; CHECK-DAG: bneg.b [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <16 x i8> %4, <16 x i8>* %c
+  ; CHECK-DAG: st.b [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bneg_v16i8
+}
+
+define void @bneg_v8i16(<8 x i16>* %c, <8 x i16>* %a, <8 x i16>* %b) nounwind {
+  ; CHECK: bneg_v8i16:
+
+  %1 = load <8 x i16>* %a
+  ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <8 x i16>* %b
+  ; CHECK-DAG: ld.h [[R2:\$w[0-9]+]], 0($6)
+  %3 = shl <8 x i16> <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>, %2
+  %4 = xor <8 x i16> %1, %3
+  ; CHECK-DAG: bneg.h [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <8 x i16> %4, <8 x i16>* %c
+  ; CHECK-DAG: st.h [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bneg_v8i16
+}
+
+define void @bneg_v4i32(<4 x i32>* %c, <4 x i32>* %a, <4 x i32>* %b) nounwind {
+  ; CHECK: bneg_v4i32:
+
+  %1 = load <4 x i32>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <4 x i32>* %b
+  ; CHECK-DAG: ld.w [[R2:\$w[0-9]+]], 0($6)
+  %3 = shl <4 x i32> <i32 1, i32 1, i32 1, i32 1>, %2
+  %4 = xor <4 x i32> %1, %3
+  ; CHECK-DAG: bneg.w [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <4 x i32> %4, <4 x i32>* %c
+  ; CHECK-DAG: st.w [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bneg_v4i32
+}
+
+define void @bneg_v2i64(<2 x i64>* %c, <2 x i64>* %a, <2 x i64>* %b) nounwind {
+  ; CHECK: bneg_v2i64:
+
+  %1 = load <2 x i64>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <2 x i64>* %b
+  ; CHECK-DAG: ld.d [[R2:\$w[0-9]+]], 0($6)
+  %3 = shl <2 x i64> <i64 1, i64 1>, %2
+  %4 = xor <2 x i64> %1, %3
+  ; CHECK-DAG: bneg.d [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <2 x i64> %4, <2 x i64>* %c
+  ; CHECK-DAG: st.d [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bneg_v2i64
+}
+
+define void @bseti_v16i8(<16 x i8>* %c, <16 x i8>* %a) nounwind {
+  ; CHECK: bseti_v16i8:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = or <16 x i8> %1, <i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8>
+  ; CHECK-DAG: bseti.b [[R3:\$w[0-9]+]], [[R1]], 3
+  store <16 x i8> %2, <16 x i8>* %c
+  ; CHECK-DAG: st.b [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bseti_v16i8
+}
+
+define void @bseti_v8i16(<8 x i16>* %c, <8 x i16>* %a) nounwind {
+  ; CHECK: bseti_v8i16:
+
+  %1 = load <8 x i16>* %a
+  ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
+  %2 = or <8 x i16> %1, <i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8>
+  ; CHECK-DAG: bseti.h [[R3:\$w[0-9]+]], [[R1]], 3
+  store <8 x i16> %2, <8 x i16>* %c
+  ; CHECK-DAG: st.h [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bseti_v8i16
+}
+
+define void @bseti_v4i32(<4 x i32>* %c, <4 x i32>* %a) nounwind {
+  ; CHECK: bseti_v4i32:
+
+  %1 = load <4 x i32>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = or <4 x i32> %1, <i32 8, i32 8, i32 8, i32 8>
+  ; CHECK-DAG: bseti.w [[R3:\$w[0-9]+]], [[R1]], 3
+  store <4 x i32> %2, <4 x i32>* %c
+  ; CHECK-DAG: st.w [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bseti_v4i32
+}
+
+define void @bseti_v2i64(<2 x i64>* %c, <2 x i64>* %a) nounwind {
+  ; CHECK: bseti_v2i64:
+
+  %1 = load <2 x i64>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = or <2 x i64> %1, <i64 8, i64 8>
+  ; CHECK-DAG: bseti.d [[R3:\$w[0-9]+]], [[R1]], 3
+  store <2 x i64> %2, <2 x i64>* %c
+  ; CHECK-DAG: st.d [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bseti_v2i64
+}
+
+define void @bnegi_v16i8(<16 x i8>* %c, <16 x i8>* %a) nounwind {
+  ; CHECK: bnegi_v16i8:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = xor <16 x i8> %1, <i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8>
+  ; CHECK-DAG: bnegi.b [[R3:\$w[0-9]+]], [[R1]], 3
+  store <16 x i8> %2, <16 x i8>* %c
+  ; CHECK-DAG: st.b [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bnegi_v16i8
+}
+
+define void @bnegi_v8i16(<8 x i16>* %c, <8 x i16>* %a) nounwind {
+  ; CHECK: bnegi_v8i16:
+
+  %1 = load <8 x i16>* %a
+  ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
+  %2 = xor <8 x i16> %1, <i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8>
+  ; CHECK-DAG: bnegi.h [[R3:\$w[0-9]+]], [[R1]], 3
+  store <8 x i16> %2, <8 x i16>* %c
+  ; CHECK-DAG: st.h [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bnegi_v8i16
+}
+
+define void @bnegi_v4i32(<4 x i32>* %c, <4 x i32>* %a) nounwind {
+  ; CHECK: bnegi_v4i32:
+
+  %1 = load <4 x i32>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = xor <4 x i32> %1, <i32 8, i32 8, i32 8, i32 8>
+  ; CHECK-DAG: bnegi.w [[R3:\$w[0-9]+]], [[R1]], 3
+  store <4 x i32> %2, <4 x i32>* %c
+  ; CHECK-DAG: st.w [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bnegi_v4i32
+}
+
+define void @bnegi_v2i64(<2 x i64>* %c, <2 x i64>* %a) nounwind {
+  ; CHECK: bnegi_v2i64:
+
+  %1 = load <2 x i64>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = xor <2 x i64> %1, <i64 8, i64 8>
+  ; CHECK-DAG: bnegi.d [[R3:\$w[0-9]+]], [[R1]], 3
+  store <2 x i64> %2, <2 x i64>* %c
+  ; CHECK-DAG: st.d [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size bnegi_v2i64
+}
+
 declare <16 x i8> @llvm.ctpop.v16i8(<16 x i8> %val)
 declare <8 x i16> @llvm.ctpop.v8i16(<8 x i16> %val)
 declare <4 x i32> @llvm.ctpop.v4i32(<4 x i32> %val)
