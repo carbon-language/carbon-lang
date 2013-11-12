@@ -80,6 +80,9 @@ Non-comprehensive list of changes in this release
 * llvm-ar now uses the new Object library and produces archives and
   symbol tables in the gnu format.
 
+* FileCheck now allows specifing -check-prefix multiple times. This
+  helps reduce duplicate check lines when using multiple RUN lines.
+
 * ... next change ...
 
 .. NOTE
