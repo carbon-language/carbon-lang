@@ -6,6 +6,7 @@
 
     Includes:
     - GPR
+    - FPU
     Any bad names will make the frontend choke.
  */
 
@@ -78,5 +79,38 @@ main()
     __asm__ __volatile__ ("addi $7,$29,77":::"$29");
     __asm__ __volatile__ ("addi $7,$30,77":::"$30");
     __asm__ __volatile__ ("addi $7,$31,77":::"$31");
+
+    __asm__ __volatile__ ("fadd.s $f0,77":::"$f0");
+    __asm__ __volatile__ ("fadd.s $f1,77":::"$f1");
+    __asm__ __volatile__ ("fadd.s $f2,77":::"$f2");
+    __asm__ __volatile__ ("fadd.s $f3,77":::"$f3");
+    __asm__ __volatile__ ("fadd.s $f4,77":::"$f4");
+    __asm__ __volatile__ ("fadd.s $f5,77":::"$f5");
+    __asm__ __volatile__ ("fadd.s $f6,77":::"$f6");
+    __asm__ __volatile__ ("fadd.s $f7,77":::"$f7");
+    __asm__ __volatile__ ("fadd.s $f8,77":::"$f8");
+    __asm__ __volatile__ ("fadd.s $f9,77":::"$f9");
+    __asm__ __volatile__ ("fadd.s $f10,77":::"$f10");
+    __asm__ __volatile__ ("fadd.s $f11,77":::"$f11");
+    __asm__ __volatile__ ("fadd.s $f12,77":::"$f12");
+    __asm__ __volatile__ ("fadd.s $f13,77":::"$f13");
+    __asm__ __volatile__ ("fadd.s $f14,77":::"$f14");
+    __asm__ __volatile__ ("fadd.s $f15,77":::"$f15");
+    __asm__ __volatile__ ("fadd.s $f16,77":::"$f16");
+    __asm__ __volatile__ ("fadd.s $f17,77":::"$f17");
+    __asm__ __volatile__ ("fadd.s $f18,77":::"$f18");
+    __asm__ __volatile__ ("fadd.s $f19,77":::"$f19");
+    __asm__ __volatile__ ("fadd.s $f20,77":::"$f20");
+    __asm__ __volatile__ ("fadd.s $f21,77":::"$f21");
+    __asm__ __volatile__ ("fadd.s $f22,77":::"$f22");
+    __asm__ __volatile__ ("fadd.s $f23,77":::"$f23");
+    __asm__ __volatile__ ("fadd.s $f24,77":::"$f24");
+    __asm__ __volatile__ ("fadd.s $f25,77":::"$f25");
+    __asm__ __volatile__ ("fadd.s $f26,77":::"$f26");
+    __asm__ __volatile__ ("fadd.s $f27,77":::"$f27");
+    __asm__ __volatile__ ("fadd.s $f28,77":::"$f28");
+    __asm__ __volatile__ ("fadd.s $f29,77":::"$f29");
+    __asm__ __volatile__ ("fadd.s $f30,77":::"$f30");
+    __asm__ __volatile__ ("fadd.s $f31,77":::"$f31");
 
 }
