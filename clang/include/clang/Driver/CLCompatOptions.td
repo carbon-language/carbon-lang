@@ -192,6 +192,7 @@ def _SLASH_vmb : CLFlag<"vmb">;
 def _SLASH_vmm : CLFlag<"vmm">;
 def _SLASH_vms : CLFlag<"vms">;
 def _SLASH_vmv : CLFlag<"vmv">;
+def _SLASH_Yc : CLJoined<"Yc">;
 def _SLASH_Yu : CLJoined<"Yu">;
 def _SLASH_Za : CLFlag<"Za">;
 def _SLASH_Zc : CLJoined<"Zc:">;
