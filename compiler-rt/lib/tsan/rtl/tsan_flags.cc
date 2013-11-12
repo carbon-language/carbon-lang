@@ -91,21 +91,20 @@ void InitializeFlags(Flags *f, const char *env) {
   f->history_size = kGoMode ? 1 : 2;  // There are a lot of goroutines in Go.
   f->io_sync = 1;
 
-  ParseCommonFlagsFromString("strip_path_prefix=");
-  ParseCommonFlagsFromString("log_path=stderr");
-  ParseCommonFlagsFromString("external_symbolizer_path=");
-  ParseCommonFlagsFromString("allocator_may_return_null=0");
-  ParseCommonFlagsFromString("verbosity=0");
-  *static_cast<CommonFlags*>(f) = *common_flags();
+  CommonFlags *cf = common_flags();
+  SetCommonFlagDefaults();
+  *static_cast<CommonFlags*>(f) = *cf;
 
   // Let a frontend override.
   OverrideFlags(f);
   ParseFlags(f, __tsan_default_options());
   ParseCommonFlagsFromString(__tsan_default_options());
-
   // Override from command line.
   ParseFlags(f, env);
+  ParseCommonFlagsFromString(env);
+  *static_cast<CommonFlags*>(f) = *cf;
 
+  // Sanity check.
   if (!f->report_bugs) {
     f->report_thread_leaks = false;
     f->report_destroy_locked = false;
@@ -123,10 +122,6 @@ void InitializeFlags(Flags *f, const char *env) {
            " (must be [0..2])\n");
     Die();
   }
-
-  *common_flags() = *f;
-  ParseCommonFlagsFromString(env);
-  *static_cast<CommonFlags*>(f) = *common_flags();
 }
 
 }  // namespace __tsan

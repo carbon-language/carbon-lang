@@ -58,6 +58,7 @@ inline CommonFlags *common_flags() {
   return &f;
 }
 
+void SetCommonFlagDefaults();
 void ParseCommonFlagsFromString(const char *str);
 
 }  // namespace __sanitizer

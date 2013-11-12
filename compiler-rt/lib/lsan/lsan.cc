@@ -24,13 +24,10 @@ namespace __lsan {
 
 static void InitializeCommonFlags() {
   CommonFlags *cf = common_flags();
+  SetCommonFlagDefaults();
   cf->external_symbolizer_path = GetEnv("LSAN_SYMBOLIZER_PATH");
-  cf->symbolize = true;
-  cf->strip_path_prefix = "";
-  cf->fast_unwind_on_malloc = true;
   cf->malloc_context_size = 30;
   cf->detect_leaks = true;
-  cf->leak_check_at_exit = true;
 
   ParseCommonFlagsFromString(GetEnv("LSAN_OPTIONS"));
 }
