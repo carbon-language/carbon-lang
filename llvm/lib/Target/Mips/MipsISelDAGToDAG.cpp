@@ -149,6 +149,11 @@ bool MipsDAGToDAGISel::selectVSplatUimmPow2(SDValue N, SDValue &Imm) const {
   return false;
 }
 
+bool MipsDAGToDAGISel::selectVSplatUimmInvPow2(SDValue N, SDValue &Imm) const {
+  llvm_unreachable("Unimplemented function.");
+  return false;
+}
+
 bool MipsDAGToDAGISel::selectVSplatMaskL(SDValue N, SDValue &Imm) const {
   llvm_unreachable("Unimplemented function.");
   return false;

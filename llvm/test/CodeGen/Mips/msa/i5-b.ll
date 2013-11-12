@@ -18,7 +18,8 @@ declare <16 x i8> @llvm.mips.bclri.b(<16 x i8>, i32) nounwind
 
 ; CHECK: llvm_mips_bclri_b_test:
 ; CHECK: ld.b
-; CHECK: bclri.b
+; andi.b is equivalent to bclri.b
+; CHECK: andi.b {{\$w[0-9]}}, {{\$w[0-9]}}, 127
 ; CHECK: st.b
 ; CHECK: .size llvm_mips_bclri_b_test
 ;

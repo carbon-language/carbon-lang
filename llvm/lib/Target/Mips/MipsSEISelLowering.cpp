@@ -1321,6 +1321,45 @@ static SDValue lowerMSABinaryBitImmIntr(SDValue Op, SelectionDAG &DAG,
   return DAG.getNode(Opc, DL, VecTy, Op->getOperand(1), Exp2Imm);
 }
 
+static SDValue lowerMSABitClear(SDValue Op, SelectionDAG &DAG) {
+  EVT ResTy = Op->getValueType(0);
+  EVT ViaVecTy = ResTy == MVT::v2i64 ? MVT::v4i32 : ResTy;
+  SDLoc DL(Op);
+  SDValue One = lowerMSASplatImm(DL, ResTy, DAG.getConstant(1, MVT::i32), DAG);
+  SDValue Bit = DAG.getNode(ISD::SHL, DL, ResTy, One, Op->getOperand(2));
+
+  SDValue AllOnes = DAG.getConstant(-1, MVT::i32);
+  SDValue AllOnesOperands[16] = { AllOnes, AllOnes, AllOnes, AllOnes,
+                                  AllOnes, AllOnes, AllOnes, AllOnes,
+                                  AllOnes, AllOnes, AllOnes, AllOnes,
+                                  AllOnes, AllOnes, AllOnes, AllOnes };
+  AllOnes = DAG.getNode(ISD::BUILD_VECTOR, DL, ViaVecTy, AllOnesOperands,
+                        ViaVecTy.getVectorNumElements());
+  if (ResTy != ViaVecTy)
+    AllOnes = DAG.getNode(ISD::BITCAST, DL, ResTy, AllOnes);
+
+  Bit = DAG.getNode(ISD::XOR, DL, ResTy, Bit, AllOnes);
+
+  return DAG.getNode(ISD::AND, DL, ResTy, Op->getOperand(1), Bit);
+}
+
+static SDValue lowerMSABitClearImm(SDValue Op, SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  EVT ResTy = Op->getValueType(0);
+  unsigned ResTyNumElements = ResTy.getVectorNumElements();
+  SDValue SHAmount = Op->getOperand(2);
+  EVT ImmTy = SHAmount->getValueType(0);
+  SDValue Bit =
+      DAG.getNode(ISD::SHL, DL, ImmTy, DAG.getConstant(1, ImmTy), SHAmount);
+  SDValue BitMask = DAG.getNOT(DL, Bit, ImmTy);
+
+  assert(ResTyNumElements <= 16);
+
+  BitMask = lowerMSASplatImm(DL, ResTy, BitMask, DAG);
+
+  return DAG.getNode(ISD::AND, DL, ResTy, Op->getOperand(1), BitMask);
+}
+
 SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
                                                       SelectionDAG &DAG) const {
   SDLoc DL(Op);
@@ -1378,6 +1417,16 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_andi_b:
     return DAG.getNode(ISD::AND, DL, Op->getValueType(0), Op->getOperand(1),
                        lowerMSASplatImm(Op, 2, DAG));
+  case Intrinsic::mips_bclr_b:
+  case Intrinsic::mips_bclr_h:
+  case Intrinsic::mips_bclr_w:
+  case Intrinsic::mips_bclr_d:
+    return lowerMSABitClear(Op, DAG);
+  case Intrinsic::mips_bclri_b:
+  case Intrinsic::mips_bclri_h:
+  case Intrinsic::mips_bclri_w:
+  case Intrinsic::mips_bclri_d:
+    return lowerMSABitClearImm(Op, DAG);
   case Intrinsic::mips_binsli_b:
   case Intrinsic::mips_binsli_h:
   case Intrinsic::mips_binsli_w:

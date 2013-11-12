@@ -579,6 +579,27 @@ bool MipsSEDAGToDAGISel::selectVSplatMaskR(SDValue N, SDValue &Imm) const {
   return false;
 }
 
+bool MipsSEDAGToDAGISel::selectVSplatUimmInvPow2(SDValue N,
+                                                 SDValue &Imm) const {
+  APInt ImmValue;
+  EVT EltTy = N->getValueType(0).getVectorElementType();
+
+  if (N->getOpcode() == ISD::BITCAST)
+    N = N->getOperand(0);
+
+  if (selectVSplat(N.getNode(), ImmValue) &&
+      ImmValue.getBitWidth() == EltTy.getSizeInBits()) {
+    int32_t Log2 = (~ImmValue).exactLogBase2();
+
+    if (Log2 != -1) {
+      Imm = CurDAG->getTargetConstant(Log2, EltTy);
+      return true;
+    }
+  }
+
+  return false;
+}
+
 std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
   unsigned Opcode = Node->getOpcode();
   SDLoc DL(Node);

@@ -14,6 +14,11 @@ This section describes any quirks of instruction selection for MSA. For
 example, two instructions might be equally valid for some given IR and one is
 chosen in preference to the other.
 
+bclri.b:
+        It is not possible to emit bclri.b since andi.b covers exactly the
+        same cases. andi.b should use fractionally less power than bclri.b in
+        most hardware implementations so it is used in preference to bclri.b.
+
 vshf.w:
         It is not possible to emit vshf.w when the shuffle description is
         constant since shf.w covers exactly the same cases. shf.w is used

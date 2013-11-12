@@ -66,15 +66,15 @@ def uimm2 : Operand<i32> {
 }
 
 def uimm3 : Operand<i32> {
-  let PrintMethod = "printUnsignedImm";
+  let PrintMethod = "printUnsignedImm8";
 }
 
 def uimm4 : Operand<i32> {
-  let PrintMethod = "printUnsignedImm";
+  let PrintMethod = "printUnsignedImm8";
 }
 
 def uimm8 : Operand<i32> {
-  let PrintMethod = "printUnsignedImm";
+  let PrintMethod = "printUnsignedImm8";
 }
 
 def simm5 : Operand<i32>;
@@ -90,23 +90,23 @@ def vsplat_uimm2 : Operand<vAny> {
 }
 
 def vsplat_uimm3 : Operand<vAny> {
-  let PrintMethod = "printUnsignedImm";
+  let PrintMethod = "printUnsignedImm8";
 }
 
 def vsplat_uimm4 : Operand<vAny> {
-  let PrintMethod = "printUnsignedImm";
+  let PrintMethod = "printUnsignedImm8";
 }
 
 def vsplat_uimm5 : Operand<vAny> {
-  let PrintMethod = "printUnsignedImm";
+  let PrintMethod = "printUnsignedImm8";
 }
 
 def vsplat_uimm6 : Operand<vAny> {
-  let PrintMethod = "printUnsignedImm";
+  let PrintMethod = "printUnsignedImm8";
 }
 
 def vsplat_uimm8 : Operand<vAny> {
-  let PrintMethod = "printUnsignedImm";
+  let PrintMethod = "printUnsignedImm8";
 }
 
 def vsplat_simm5 : Operand<vAny>;
@@ -315,6 +315,11 @@ def vsplati64_simm5 : SplatComplexPattern<vsplat_simm5, v2i64, 1,
 def vsplat_uimm_pow2 : ComplexPattern<vAny, 1, "selectVSplatUimmPow2",
                                       [build_vector, bitconvert]>;
 
+// Any build_vector that is a constant splat with a value that is the bitwise
+// inverse of an exact power of 2
+def vsplat_uimm_inv_pow2 : ComplexPattern<vAny, 1, "selectVSplatUimmInvPow2",
+                                          [build_vector, bitconvert]>;
+
 // Any build_vector that is a constant splat with only a consecutive sequence
 // of left-most bits set.
 def vsplat_maskl_bits : SplatComplexPattern<vsplat_uimm8, vAny, 1,
@@ -328,7 +333,7 @@ def vsplat_maskr_bits : SplatComplexPattern<vsplat_uimm8, vAny, 1,
                                             [build_vector, bitconvert]>;
 
 // Any build_vector that is a constant splat with a value that equals 1
-// FIXME: This should be a ComplexPattern but we can't use them because the
+// FIXME: These should be a ComplexPattern but we can't use them because the
 //        ISel generator requires the uses to have a name, but providing a name
 //        causes other errors ("used in pattern but not operand list")
 def vsplat_imm_eq_1 : PatLeaf<(build_vector), [{
@@ -348,6 +353,20 @@ def vsplati64_imm_eq_1 : PatLeaf<(bitconvert (v4i32 (build_vector))), [{
          Imm.getBitWidth() == EltTy.getSizeInBits() && Imm == 1;
 }]>;
 
+def vbclr_b : PatFrag<(ops node:$ws, node:$wt),
+                      (and node:$ws, (xor (shl vsplat_imm_eq_1, node:$wt),
+                                          immAllOnesV))>;
+def vbclr_h : PatFrag<(ops node:$ws, node:$wt),
+                      (and node:$ws, (xor (shl vsplat_imm_eq_1, node:$wt),
+                                          immAllOnesV))>;
+def vbclr_w : PatFrag<(ops node:$ws, node:$wt),
+                      (and node:$ws, (xor (shl vsplat_imm_eq_1, node:$wt),
+                                          immAllOnesV))>;
+def vbclr_d : PatFrag<(ops node:$ws, node:$wt),
+                      (and node:$ws, (xor (shl (v2i64 vsplati64_imm_eq_1),
+                                               node:$wt),
+                                          (bitconvert (v4i32 immAllOnesV))))>;
+
 def vbneg_b : PatFrag<(ops node:$ws, node:$wt),
                       (xor node:$ws, (shl vsplat_imm_eq_1, node:$wt))>;
 def vbneg_h : PatFrag<(ops node:$ws, node:$wt),
@@ -366,7 +385,7 @@ def vbset_w : PatFrag<(ops node:$ws, node:$wt),
                       (or node:$ws, (shl vsplat_imm_eq_1, node:$wt))>;
 def vbset_d : PatFrag<(ops node:$ws, node:$wt),
                       (or node:$ws, (shl (v2i64 vsplati64_imm_eq_1),
-                                    node:$wt))>;
+                                         node:$wt))>;
 
 def fms : PatFrag<(ops node:$wd, node:$ws, node:$wt),
                   (fsub node:$wd, (fmul node:$ws, node:$wt))>;
@@ -1093,42 +1112,46 @@ class XORI_B_ENC : MSA_I8_FMT<0b11, 0b000000>;
 
 // Instruction desc.
 class MSA_BIT_B_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                          RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
+                          ComplexPattern Imm, RegisterOperand ROWD,
+                          RegisterOperand ROWS = ROWD,
                           InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs ROWD:$wd);
   dag InOperandList = (ins ROWS:$ws, vsplat_uimm3:$m);
   string AsmString = !strconcat(instr_asm, "\t$wd, $ws, $m");
-  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, vsplat_uimm_pow2:$m))];
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, Imm:$m))];
   InstrItinClass Itinerary = itin;
 }
 
 class MSA_BIT_H_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                          RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
+                          ComplexPattern Imm, RegisterOperand ROWD,
+                          RegisterOperand ROWS = ROWD,
                           InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs ROWD:$wd);
   dag InOperandList = (ins ROWS:$ws, vsplat_uimm4:$m);
   string AsmString = !strconcat(instr_asm, "\t$wd, $ws, $m");
-  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, vsplat_uimm_pow2:$m))];
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, Imm:$m))];
   InstrItinClass Itinerary = itin;
 }
 
 class MSA_BIT_W_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                          RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
+                          ComplexPattern Imm, RegisterOperand ROWD,
+                          RegisterOperand ROWS = ROWD,
                           InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs ROWD:$wd);
   dag InOperandList = (ins ROWS:$ws, vsplat_uimm5:$m);
   string AsmString = !strconcat(instr_asm, "\t$wd, $ws, $m");
-  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, vsplat_uimm_pow2:$m))];
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, Imm:$m))];
   InstrItinClass Itinerary = itin;
 }
 
 class MSA_BIT_D_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                          RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
+                          ComplexPattern Imm, RegisterOperand ROWD,
+                          RegisterOperand ROWS = ROWD,
                           InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs ROWD:$wd);
   dag InOperandList = (ins ROWS:$ws, vsplat_uimm6:$m);
   string AsmString = !strconcat(instr_asm, "\t$wd, $ws, $m");
-  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, vsplat_uimm_pow2:$m))];
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, Imm:$m))];
   InstrItinClass Itinerary = itin;
 }
 
@@ -1602,19 +1625,19 @@ class AVER_U_W_DESC : MSA_3R_DESC_BASE<"aver_u.w", int_mips_aver_u_w,
 class AVER_U_D_DESC : MSA_3R_DESC_BASE<"aver_u.d", int_mips_aver_u_d,
                                        MSA128DOpnd>, IsCommutable;
 
-class BCLR_B_DESC : MSA_3R_DESC_BASE<"bclr.b", int_mips_bclr_b, MSA128BOpnd>;
-class BCLR_H_DESC : MSA_3R_DESC_BASE<"bclr.h", int_mips_bclr_h, MSA128HOpnd>;
-class BCLR_W_DESC : MSA_3R_DESC_BASE<"bclr.w", int_mips_bclr_w, MSA128WOpnd>;
-class BCLR_D_DESC : MSA_3R_DESC_BASE<"bclr.d", int_mips_bclr_d, MSA128DOpnd>;
+class BCLR_B_DESC : MSA_3R_DESC_BASE<"bclr.b", vbclr_b, MSA128BOpnd>;
+class BCLR_H_DESC : MSA_3R_DESC_BASE<"bclr.h", vbclr_h, MSA128HOpnd>;
+class BCLR_W_DESC : MSA_3R_DESC_BASE<"bclr.w", vbclr_w, MSA128WOpnd>;
+class BCLR_D_DESC : MSA_3R_DESC_BASE<"bclr.d", vbclr_d, MSA128DOpnd>;
 
-class BCLRI_B_DESC : MSA_BIT_B_X_DESC_BASE<"bclri.b", int_mips_bclri_b,
-                                           MSA128BOpnd>;
-class BCLRI_H_DESC : MSA_BIT_H_X_DESC_BASE<"bclri.h", int_mips_bclri_h,
-                                           MSA128HOpnd>;
-class BCLRI_W_DESC : MSA_BIT_W_X_DESC_BASE<"bclri.w", int_mips_bclri_w,
-                                           MSA128WOpnd>;
-class BCLRI_D_DESC : MSA_BIT_D_X_DESC_BASE<"bclri.d", int_mips_bclri_d,
-                                           MSA128DOpnd>;
+class BCLRI_B_DESC : MSA_BIT_B_DESC_BASE<"bclri.b", and, vsplat_uimm_inv_pow2,
+                                         MSA128BOpnd>;
+class BCLRI_H_DESC : MSA_BIT_H_DESC_BASE<"bclri.h", and, vsplat_uimm_inv_pow2,
+                                         MSA128HOpnd>;
+class BCLRI_W_DESC : MSA_BIT_W_DESC_BASE<"bclri.w", and, vsplat_uimm_inv_pow2,
+                                         MSA128WOpnd>;
+class BCLRI_D_DESC : MSA_BIT_D_DESC_BASE<"bclri.d", and, vsplat_uimm_inv_pow2,
+                                         MSA128DOpnd>;
 
 class BINSL_B_DESC : MSA_3R_BINSX_DESC_BASE<"binsl.b", int_mips_binsl_b,
                                             MSA128BOpnd>;
@@ -1697,10 +1720,10 @@ class BNEG_H_DESC : MSA_3R_DESC_BASE<"bneg.h", vbneg_h, MSA128HOpnd>;
 class BNEG_W_DESC : MSA_3R_DESC_BASE<"bneg.w", vbneg_w, MSA128WOpnd>;
 class BNEG_D_DESC : MSA_3R_DESC_BASE<"bneg.d", vbneg_d, MSA128DOpnd>;
 
-class BNEGI_B_DESC : MSA_BIT_B_DESC_BASE<"bnegi.b", xor, MSA128BOpnd>;
-class BNEGI_H_DESC : MSA_BIT_H_DESC_BASE<"bnegi.h", xor, MSA128HOpnd>;
-class BNEGI_W_DESC : MSA_BIT_W_DESC_BASE<"bnegi.w", xor, MSA128WOpnd>;
-class BNEGI_D_DESC : MSA_BIT_D_DESC_BASE<"bnegi.d", xor, MSA128DOpnd>;
+class BNEGI_B_DESC : MSA_BIT_B_DESC_BASE<"bnegi.b", xor, vsplat_uimm_pow2, MSA128BOpnd>;
+class BNEGI_H_DESC : MSA_BIT_H_DESC_BASE<"bnegi.h", xor, vsplat_uimm_pow2, MSA128HOpnd>;
+class BNEGI_W_DESC : MSA_BIT_W_DESC_BASE<"bnegi.w", xor, vsplat_uimm_pow2, MSA128WOpnd>;
+class BNEGI_D_DESC : MSA_BIT_D_DESC_BASE<"bnegi.d", xor, vsplat_uimm_pow2, MSA128DOpnd>;
 
 class BNZ_B_DESC : MSA_CBRANCH_DESC_BASE<"bnz.b", MSA128BOpnd>;
 class BNZ_H_DESC : MSA_CBRANCH_DESC_BASE<"bnz.h", MSA128HOpnd>;
@@ -1738,10 +1761,14 @@ class BSET_H_DESC : MSA_3R_DESC_BASE<"bset.h", vbset_h, MSA128HOpnd>;
 class BSET_W_DESC : MSA_3R_DESC_BASE<"bset.w", vbset_w, MSA128WOpnd>;
 class BSET_D_DESC : MSA_3R_DESC_BASE<"bset.d", vbset_d, MSA128DOpnd>;
 
-class BSETI_B_DESC : MSA_BIT_B_DESC_BASE<"bseti.b", or, MSA128BOpnd>;
-class BSETI_H_DESC : MSA_BIT_H_DESC_BASE<"bseti.h", or, MSA128HOpnd>;
-class BSETI_W_DESC : MSA_BIT_W_DESC_BASE<"bseti.w", or, MSA128WOpnd>;
-class BSETI_D_DESC : MSA_BIT_D_DESC_BASE<"bseti.d", or, MSA128DOpnd>;
+class BSETI_B_DESC : MSA_BIT_B_DESC_BASE<"bseti.b", or, vsplat_uimm_pow2,
+                                         MSA128BOpnd>;
+class BSETI_H_DESC : MSA_BIT_H_DESC_BASE<"bseti.h", or, vsplat_uimm_pow2,
+                                         MSA128HOpnd>;
+class BSETI_W_DESC : MSA_BIT_W_DESC_BASE<"bseti.w", or, vsplat_uimm_pow2,
+                                         MSA128WOpnd>;
+class BSETI_D_DESC : MSA_BIT_D_DESC_BASE<"bseti.d", or, vsplat_uimm_pow2,
+                                         MSA128DOpnd>;
 
 class BZ_B_DESC : MSA_CBRANCH_DESC_BASE<"bz.b", MSA128BOpnd>;
 class BZ_H_DESC : MSA_CBRANCH_DESC_BASE<"bz.h", MSA128HOpnd>;

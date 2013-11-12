@@ -569,6 +569,15 @@ void MipsAsmPrinter::printUnsignedImm(const MachineInstr *MI, int opNum,
     printOperand(MI, opNum, O);
 }
 
+void MipsAsmPrinter::printUnsignedImm8(const MachineInstr *MI, int opNum,
+                                       raw_ostream &O) {
+  const MachineOperand &MO = MI->getOperand(opNum);
+  if (MO.isImm())
+    O << (unsigned short int)(unsigned char)MO.getImm();
+  else
+    printOperand(MI, opNum, O);
+}
+
 void MipsAsmPrinter::
 printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O) {
   // Load/Store memory operands -- imm($reg)
