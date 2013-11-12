@@ -460,3 +460,8 @@
 @ CHECK-ERRORS: error: instruction requires: FPARMv8
 @ CHECK-ERRORS: error: instruction requires: FPARMv8
 @ CHECK-ERRORS: error: instruction requires: FPARMv8
+
+        stm sp!, {r0, pc}^
+        ldm sp!, {r0}^
+@ CHECK-ERRORS: error: system STM cannot have writeback register
+@ CHECK-ERRORS: error: writeback register only allowed on system LDM if PC in register-list
