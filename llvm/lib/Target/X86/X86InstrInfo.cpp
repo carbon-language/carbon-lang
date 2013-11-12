@@ -4206,12 +4206,18 @@ static MachineInstr* foldPatchpoint(MachineFunction &MF,
     MF.CreateMachineInstr(TII.get(MI->getOpcode()), MI->getDebugLoc(), true);
   MachineInstrBuilder MIB(MF, NewMI);
 
-  bool isPatchPoint = MI->getOpcode() == TargetOpcode::PATCHPOINT;
-  // For PatchPoint, the call args are not foldable.
-  unsigned NumCallArgs = MI->getOperand(StartIdx+3).getImm();
-  StartIdx = isPatchPoint ?
-             StartIdx + NumCallArgs + 5 :
-             StartIdx + 2;
+  switch (MI->getOpcode()) {
+  case TargetOpcode::STACKMAP:
+    StartIdx += 2; // Skip ID, nShadowBytes.
+    break;
+  case TargetOpcode::PATCHPOINT:
+    // Skip ID, numBytes, Target, numArgs.
+    // For PatchPoint, the call args are not foldable.
+    StartIdx += MI->getOperand(StartIdx+3).getImm() + 4;
+    break;
+  default:
+    llvm_unreachable("unexpected stackmap opcode");
+  }
 
   // Return false if any operands requested for folding are not foldable (not
   // part of the stackmap's live values).
