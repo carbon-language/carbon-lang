@@ -5445,6 +5445,11 @@ public:
     LongLongAlign = 32;
     SuitableAlign = 32;
     DoubleAlign = LongDoubleAlign = 32;
+    SizeType = UnsignedInt;
+    PtrDiffType = SignedInt;
+    IntPtrType = SignedInt;
+    WCharType = UnsignedChar;
+    WIntType = UnsignedInt;
     UseZeroLengthBitfieldAlignment = true;
     DescriptionString = "e-p:32:32:32-a0:0:32-n32"
                         "-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32"
