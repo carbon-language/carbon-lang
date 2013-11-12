@@ -1409,6 +1409,8 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::CTLZ , MVT::i64, Expand);
     setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Expand);
     setOperationAction(ISD::BSWAP, MVT::i64, Expand);
+    setOperationAction(ISD::ROTL , MVT::i64, Expand);
+    setOperationAction(ISD::ROTR , MVT::i64, Expand);
   }
 
   // FIXME: There are instructions available for ATOMIC_FENCE
