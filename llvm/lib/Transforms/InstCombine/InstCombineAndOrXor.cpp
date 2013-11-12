@@ -1543,9 +1543,59 @@ static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
   return 0;
 }
 
+/// IsSingleBitValue - Returns true for "one-hot" values (values where at most
+/// one bit can be set).
+static bool IsOneHotValue(Value *V) {
+  // Match 1<<K.
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(V))
+    if (BO->getOpcode() == Instruction::Shl) {
+      ConstantInt *One = dyn_cast<ConstantInt>(BO->getOperand(0));
+      return One && One->isOne();
+    }
+
+  // Check for power of two integer constants.
+  if (ConstantInt *K = dyn_cast<ConstantInt>(V))
+    return K->getValue().isPowerOf2();
+
+  return false;
+}
+
 /// FoldOrOfICmps - Fold (icmp)|(icmp) if possible.
 Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
   ICmpInst::Predicate LHSCC = LHS->getPredicate(), RHSCC = RHS->getPredicate();
+
+  // Fold (iszero(A & K1) | iszero(A & K2)) ->  (A & (K1 | K2)) != (K1 | K2)
+  // if K1 and K2 are a one-bit mask.
+  ConstantInt *LHSCst = dyn_cast<ConstantInt>(LHS->getOperand(1));
+  ConstantInt *RHSCst = dyn_cast<ConstantInt>(RHS->getOperand(1));
+
+  if (LHS->getPredicate() == ICmpInst::ICMP_EQ && LHSCst && LHSCst->isZero() &&
+      RHS->getPredicate() == ICmpInst::ICMP_EQ && RHSCst && RHSCst->isZero()) {
+
+    BinaryOperator *LAnd = dyn_cast<BinaryOperator>(LHS->getOperand(0));
+    BinaryOperator *RAnd = dyn_cast<BinaryOperator>(RHS->getOperand(0));
+    if (LAnd && RAnd && LAnd->hasOneUse() && RHS->hasOneUse() &&
+        LAnd->getOpcode() == Instruction::And &&
+        RAnd->getOpcode() == Instruction::And) {
+
+      Value *Mask = 0;
+      Value *Masked = 0;
+      if (LAnd->getOperand(0) == RAnd->getOperand(0) &&
+          IsOneHotValue(LAnd->getOperand(1)) &&
+          IsOneHotValue(RAnd->getOperand(1))) {
+        Mask = Builder->CreateOr(LAnd->getOperand(1), RAnd->getOperand(1));
+        Masked = Builder->CreateAnd(LAnd->getOperand(0), Mask);
+      } else if (LAnd->getOperand(1) == RAnd->getOperand(1) &&
+                 IsOneHotValue(LAnd->getOperand(0)) &&
+                 IsOneHotValue(RAnd->getOperand(0))) {
+        Mask = Builder->CreateOr(LAnd->getOperand(0), RAnd->getOperand(0));
+        Masked = Builder->CreateAnd(LAnd->getOperand(1), Mask);
+      }
+
+      if (Masked)
+        return Builder->CreateICmp(ICmpInst::ICMP_NE, Masked, Mask);
+    }
+  }
 
   // (icmp1 A, B) | (icmp2 A, B) --> (icmp3 A, B)
   if (PredicatesFoldable(LHSCC, RHSCC)) {
@@ -1567,9 +1617,6 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
     return V;
 
   Value *Val = LHS->getOperand(0), *Val2 = RHS->getOperand(0);
-  ConstantInt *LHSCst = dyn_cast<ConstantInt>(LHS->getOperand(1));
-  ConstantInt *RHSCst = dyn_cast<ConstantInt>(RHS->getOperand(1));
-
   if (LHS->hasOneUse() || RHS->hasOneUse()) {
     // (icmp eq B, 0) | (icmp ult A, B) -> (icmp ule A, B-1)
     // (icmp eq B, 0) | (icmp ugt B, A) -> (icmp ule A, B-1)
