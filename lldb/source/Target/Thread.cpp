@@ -511,8 +511,7 @@ Thread::CheckpointThreadState (ThreadStateCheckpoint &saved_state)
 bool
 Thread::RestoreRegisterStateFromCheckpoint (ThreadStateCheckpoint &saved_state)
 {
-    RestoreSaveFrameZero(saved_state.register_backup);
-    return true;
+    return RestoreSaveFrameZero(saved_state.register_backup);
 }
 
 bool

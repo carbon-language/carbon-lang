@@ -224,7 +224,11 @@ ThreadPlanCallFunction::DoTakedown (bool success)
         m_takedown_done = true;
         m_stop_address = m_thread.GetStackFrameAtIndex(0)->GetRegisterContext()->GetPC();
         m_real_stop_info_sp = GetPrivateStopInfo ();
-        m_thread.RestoreRegisterStateFromCheckpoint(m_stored_thread_state);
+        if (!m_thread.RestoreRegisterStateFromCheckpoint(m_stored_thread_state))
+        {
+            if (log)
+                log->Printf("ThreadPlanCallFunction(%p): DoTakedown failed to restore register state", this);
+        }
         SetPlanComplete(success);
         ClearBreakpoints();
         if (log && log->GetVerbose())
