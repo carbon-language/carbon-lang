@@ -91,9 +91,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}/../clang/include")
 
 # lldb requires c++11 to build. Make sure that we have a compiler and standard
 # library combination that can do that.
-if (MSVC11 OR MSVC12)
-  # Do nothing, we're good.
-elseif (NOT MSVC)
+if (NOT MSVC)
   # gcc and clang require the -std=c++0x or -std=c++11 flag.
   if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR
       "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
@@ -112,7 +110,7 @@ elseif (NOT MSVC)
       endif()
     endif()
   endif()
-else()
+elseif (MSVC_VERSION LESS 1700)
   message(FATAL_ERROR "The selected compiler does not support c++11 which is "
           "required to build lldb.")
 endif()
