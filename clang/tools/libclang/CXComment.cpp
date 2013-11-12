@@ -25,6 +25,7 @@
 #include "clang/Lex/Lexer.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <climits>
@@ -424,6 +425,7 @@ struct FullCommentParts {
   SmallVector<const BlockCommandComment *, 4> Returns;
   SmallVector<const ParamCommandComment *, 8> Params;
   SmallVector<const TParamCommandComment *, 4> TParams;
+  llvm::TinyPtrVector<const BlockCommandComment *> Exceptions;
   SmallVector<const BlockContentComment *, 8> MiscBlocks;
 };
 
@@ -463,6 +465,10 @@ FullCommentParts::FullCommentParts(const FullComment *C,
       }
       if (Info->IsReturnsCommand) {
         Returns.push_back(BCC);
+        break;
+      }
+      if (Info->IsThrowsCommand) {
+        Exceptions.push_back(BCC);
         break;
       }
       MiscBlocks.push_back(BCC);
@@ -1320,6 +1326,13 @@ void CommentASTToXMLConverter::visitFullComment(const FullComment *C) {
     for (unsigned i = 0, e = Parts.Params.size(); i != e; ++i)
       visit(Parts.Params[i]);
     Result << "</Parameters>";
+  }
+
+  if (Parts.Exceptions.size() != 0) {
+    Result << "<Exceptions>";
+    for (unsigned i = 0, e = Parts.Exceptions.size(); i != e; ++i)
+      visit(Parts.Exceptions[i]);
+    Result << "</Exceptions>";
   }
 
   if (Parts.Returns.size() != 0) {

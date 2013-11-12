@@ -27,13 +27,17 @@
     <Discussion><Para>Eee</Para></Discussion>
   </Parameter>
 </Parameters>
-<ResultDiscussion>
+<Exceptions>
   <Para>Fff.</Para>
   <Para>Ggg</Para>
+</Exceptions>
+<ResultDiscussion>
+  <Para>Hhh.</Para>
+  <Para>Iii</Para>
 </ResultDiscussion>
 <Discussion>
-  <Para>Hhh</Para>
-  <Verbatim xml:space="preserve" kind="verbatim">Iii</Verbatim>
+  <Para>Jjj</Para>
+  <Verbatim xml:space="preserve" kind="verbatim">Kkk</Verbatim>
 </Discussion>
 </Function>
 

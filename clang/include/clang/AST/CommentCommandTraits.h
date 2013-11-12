@@ -67,6 +67,9 @@ struct CommandInfo {
   /// a template parameter (\\tparam or an alias).
   unsigned IsTParamCommand : 1;
 
+  /// True if this command is \\throws or an alias.
+  unsigned IsThrowsCommand : 1;
+
   /// True if this command is \\deprecated or an alias.
   unsigned IsDeprecatedCommand : 1;
 

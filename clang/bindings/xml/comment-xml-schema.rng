@@ -75,7 +75,6 @@
       <optional>
         <ref name="USR" />
       </optional>
-      <!-- TODO: Add exception specification. -->
       <optional>
         <ref name="Headerfile" />
       </optional>
@@ -90,6 +89,9 @@
       </optional>
       <optional>
         <ref name="Parameters" />
+      </optional>
+      <optional>
+        <ref name="Exceptions" />
       </optional>
       <zeroOrMore>
         <ref name="Availability" />
@@ -436,6 +438,14 @@
             <ref name="TextBlockContent" />
           </element>
         </element>
+      </oneOrMore>
+    </element>
+  </define>
+
+  <define name="Exceptions">
+    <element name="Exceptions">
+      <oneOrMore>
+        <ref name="TextBlockContent" />
       </oneOrMore>
     </element>
   </define>

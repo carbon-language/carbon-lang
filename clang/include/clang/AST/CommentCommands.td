@@ -15,6 +15,7 @@ class Command<string name> {
   bit IsReturnsCommand = 0;
   bit IsParamCommand = 0;
   bit IsTParamCommand = 0;
+  bit IsThrowsCommand = 0;
   bit IsDeprecatedCommand = 0;
   bit IsHeaderfileCommand = 0;
 
@@ -108,6 +109,10 @@ def Tparam : BlockCommand<"tparam"> { let IsTParamCommand = 1; }
 
 // HeaderDoc command for template parameter documentation.
 def Templatefield : BlockCommand<"templatefield"> { let IsTParamCommand = 1; }
+
+def Throws    : BlockCommand<"throws"> { let IsThrowsCommand = 1; }
+def Throw     : BlockCommand<"throw"> { let IsThrowsCommand = 1; }
+def Exception : BlockCommand<"exception"> { let IsThrowsCommand = 1; }
 
 def Deprecated : BlockCommand<"deprecated"> {
   let IsEmptyParagraphAllowed = 1;
