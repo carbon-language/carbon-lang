@@ -825,3 +825,24 @@ void finalizeDefaultAtomValues() {
 void f() { finalizeDefaultAtomValues<char>(); }
 
 } 
+
+namespace PR17877_lambda_declcontext_and_get_cur_lambda_disconnect {
+
+
+template<class T> struct U {
+  int t = 0;
+};
+
+template<class T>
+struct V { 
+  U<T> size() const { return U<T>{}; }
+};
+
+template<typename T>
+void Do() {
+  V<int> v{};
+  [=] { v.size(); };
+}
+
+
+}
