@@ -506,8 +506,8 @@ void MicrosoftCXXABI::initializeHiddenVirtualInheritanceMembers(
     if (!I->second.hasVtorDisp())
       continue;
 
-    llvm::Value *VBaseOffset = CGM.getCXXABI().GetVirtualBaseClassOffset(
-        CGF, getThisValue(CGF), RD, I->first);
+    llvm::Value *VBaseOffset =
+        GetVirtualBaseClassOffset(CGF, getThisValue(CGF), RD, I->first);
     // FIXME: it doesn't look right that we SExt in GetVirtualBaseClassOffset()
     // just to Trunc back immediately.
     VBaseOffset = Builder.CreateTruncOrBitCast(VBaseOffset, CGF.Int32Ty);
@@ -642,8 +642,8 @@ llvm::Value *MicrosoftCXXABI::adjustThisArgumentForVirtualCall(
       StaticOffset += Layout.getVBaseClassOffset(ML.VBase);
     } else {
       This = CGF.Builder.CreateBitCast(This, charPtrTy);
-      llvm::Value *VBaseOffset = CGM.getCXXABI()
-          .GetVirtualBaseClassOffset(CGF, This, MD->getParent(), ML.VBase);
+      llvm::Value *VBaseOffset =
+          GetVirtualBaseClassOffset(CGF, This, MD->getParent(), ML.VBase);
       This = CGF.Builder.CreateInBoundsGEP(This, VBaseOffset);
     }
   }
