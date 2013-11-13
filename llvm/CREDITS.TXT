@@ -253,7 +253,8 @@ D: Release manager (1.7+)
 
 N: Sylvestre Ledru
 E: sylvestre@debian.org
-W: http://sylvesre.ledru.info/
+W: http://sylvestre.ledru.info/
+W: http://llvm.org/apt/
 D: Debian and Ubuntu packaging
 D: Continous integration with jenkins
 
