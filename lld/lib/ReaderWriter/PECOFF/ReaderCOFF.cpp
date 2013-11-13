@@ -666,6 +666,9 @@ private:
       array = array.slice(3);
     }
 
+    if (array.size() == 0)
+      return "";
+
     size_t len = 0;
     size_t e = array.size();
     while (len < e && array[len] != '\0')
