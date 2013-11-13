@@ -207,6 +207,12 @@ static inline bool isCFStringType(QualType T, ASTContext &Ctx) {
   return RD->getIdentifier() == &Ctx.Idents.get("__CFString");
 }
 
+static inline bool isCFRefType(TypedefNameDecl *TD, ASTContext &Ctx) {
+  StringRef TDName = TD->getIdentifier()->getName();
+  return ((TDName.startswith("CF") || TDName.startswith("CG")) &&
+          (TDName.rfind("Ref") != StringRef::npos));
+}
+
 static unsigned getNumAttributeArgs(const AttributeList &Attr) {
   // FIXME: Include the type in the argument list.
   return Attr.getNumArgs() + Attr.hasParsedType();
@@ -4389,6 +4395,50 @@ static void handleNSBridgedAttr(Sema &S, Scope *Sc, Decl *D,
                            Attr.getAttributeSpellingListIndex()));
 }
 
+static void handleObjCBridgeAttr(Sema &S, Scope *Sc, Decl *D,
+                                const AttributeList &Attr) {
+  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
+    QualType T = TD->getUnderlyingType();
+    if (T->isPointerType()) {
+      T = T->getPointeeType();
+      if (T->isRecordType()) {
+        RecordDecl *RD = T->getAs<RecordType>()->getDecl();
+        if (!RD || RD->isUnion()) {
+          S.Diag(D->getLocStart(), diag::err_attribute_wrong_decl_type)
+          << Attr.getRange() << Attr.getName() << ExpectedStruct;
+          return;
+        }
+      }
+    } else {
+      S.Diag(TD->getLocStart(), diag::err_objc_bridge_not_pointertype);
+      return;
+    }
+    // Check for T being a CFType goes here.
+    if (!isCFRefType(TD, S.Context)) {
+      S.Diag(TD->getLocStart(), diag::err_objc_bridge_not_cftype);
+      return;
+    }
+  }
+  else {
+    S.Diag(D->getLocStart(), diag::err_objc_bridge_attribute);
+    return;
+  }
+  
+  if (Attr.getNumArgs() != 1) {
+    S.Diag(D->getLocStart(), diag::err_objc_bridge_not_id);
+    return;
+  }
+  IdentifierLoc *Parm = Attr.isArgIdent(0) ? Attr.getArgAsIdent(0) : 0;
+  if (!Parm) {
+    S.Diag(D->getLocStart(), diag::err_objc_bridge_not_id);
+    return;
+  }
+  
+  D->addAttr(::new (S.Context)
+             ObjCBridgeAttr(Attr.getRange(), S.Context, Parm ? Parm->Ident : 0,
+                           Attr.getAttributeSpellingListIndex()));
+}
+
 static void handleObjCOwnershipAttr(Sema &S, Decl *D,
                                     const AttributeList &Attr) {
   if (hasDeclarator(D)) return;
@@ -4675,6 +4725,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
       
   case AttributeList::AT_NSBridged:
     handleNSBridgedAttr(S, scope, D, Attr); break;
+      
+  case AttributeList::AT_ObjCBridge:
+    handleObjCBridgeAttr(S, scope, D, Attr); break;
 
   case AttributeList::AT_CFAuditedTransfer:
   case AttributeList::AT_CFUnknownTransfer:
