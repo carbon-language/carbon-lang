@@ -43,7 +43,7 @@ ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx, CharUnits size,
 // Constructor for C++ records.
 ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx,
                                  CharUnits size, CharUnits alignment,
-                                 bool hasOwnVFPtr, bool hasVFPtr,
+                                 bool hasOwnVFPtr, bool hasExtendableVFPtr,
                                  CharUnits vbptroffset,
                                  CharUnits datasize,
                                  const uint64_t *fieldoffsets,
@@ -74,7 +74,7 @@ ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx,
   CXXInfo->VBaseOffsets = VBaseOffsets;
   CXXInfo->HasOwnVFPtr = hasOwnVFPtr;
   CXXInfo->VBPtrOffset = vbptroffset;
-  CXXInfo->HasVFPtr = hasVFPtr;
+  CXXInfo->HasExtendableVFPtr = hasExtendableVFPtr;
   CXXInfo->BaseSharingVBPtr = BaseSharingVBPtr;
   CXXInfo->AlignAfterVBases = AlignAfterVBases;
 

@@ -95,9 +95,10 @@ private:
     /// its base classes?
     bool HasOwnVFPtr : 1;
 
-    /// HasVFPtr - Does this class have a vftable at all (could be inherited
-    /// from its primary base.)
-    bool HasVFPtr : 1;
+    /// HasVFPtr - Does this class have a vftable that could be extended by
+    /// a derived class.  The class may have inherited this pointer from
+    /// a primary base class.
+    bool HasExtendableVFPtr : 1;
 
     /// AlignAfterVBases - Force appropriate alignment after virtual bases are
     /// laid out in MS-C++-ABI.
@@ -133,7 +134,7 @@ private:
   typedef CXXRecordLayoutInfo::BaseOffsetsMapTy BaseOffsetsMapTy;
   ASTRecordLayout(const ASTContext &Ctx,
                   CharUnits size, CharUnits alignment,
-                  bool hasOwnVFPtr, bool hasVFPtr,
+                  bool hasOwnVFPtr, bool hasExtendableVFPtr,
                   CharUnits vbptroffset,
                   CharUnits datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount,
@@ -240,10 +241,12 @@ public:
     return CXXInfo->HasOwnVFPtr;
   }
 
-  /// hasVFPtr - Does this class have a virtual function table pointer.
-  bool hasVFPtr() const {
+  /// hasVFPtr - Does this class have a virtual function table pointer
+  /// that can be extended by a derived class?  This is synonymous with
+  /// this class having a VFPtr at offset zero.
+  bool hasExtendableVFPtr() const {
     assert(CXXInfo && "Record layout does not have C++ specific info!");
-    return CXXInfo->HasVFPtr;
+    return CXXInfo->HasExtendableVFPtr;
   }
   
   /// hasOwnVBPtr - Does this class provide its own virtual-base
