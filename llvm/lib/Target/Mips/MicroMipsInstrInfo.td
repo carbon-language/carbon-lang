@@ -209,4 +209,11 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def TLT_MM  : MMRel, TEQ_FT<"tlt", GPR32Opnd>, TEQ_FM_MM<0x20>;
   def TLTU_MM : MMRel, TEQ_FT<"tltu", GPR32Opnd>, TEQ_FM_MM<0x28>;
   def TNE_MM  : MMRel, TEQ_FT<"tne", GPR32Opnd>, TEQ_FM_MM<0x30>;
+
+  def TEQI_MM  : MMRel, TEQI_FT<"teqi", GPR32Opnd>, TEQI_FM_MM<0x0e>;
+  def TGEI_MM  : MMRel, TEQI_FT<"tgei", GPR32Opnd>, TEQI_FM_MM<0x09>;
+  def TGEIU_MM : MMRel, TEQI_FT<"tgeiu", GPR32Opnd>, TEQI_FM_MM<0x0b>;
+  def TLTI_MM  : MMRel, TEQI_FT<"tlti", GPR32Opnd>, TEQI_FM_MM<0x08>;
+  def TLTIU_MM : MMRel, TEQI_FT<"tltiu", GPR32Opnd>, TEQI_FM_MM<0x0a>;
+  def TNEI_MM  : MMRel, TEQI_FT<"tnei", GPR32Opnd>, TEQI_FM_MM<0x0c>;
 }

@@ -663,7 +663,7 @@ class TEQ_FT<string opstr, RegisterOperand RO> :
 
 class TEQI_FT<string opstr, RegisterOperand RO> :
   InstSE<(outs), (ins RO:$rs, uimm16:$imm16),
-         !strconcat(opstr, "\t$rs, $imm16"), [], NoItinerary, FrmOther>;
+         !strconcat(opstr, "\t$rs, $imm16"), [], NoItinerary, FrmOther, opstr>;
 // Mul, Div
 class Mult<string opstr, InstrItinClass itin, RegisterOperand RO,
            list<Register> DefRegs> :
@@ -971,12 +971,12 @@ def TLT : MMRel, TEQ_FT<"tlt", GPR32Opnd>, TEQ_FM<0x32>;
 def TLTU : MMRel, TEQ_FT<"tltu", GPR32Opnd>, TEQ_FM<0x33>;
 def TNE : MMRel, TEQ_FT<"tne", GPR32Opnd>, TEQ_FM<0x36>;
 
-def TEQI : TEQI_FT<"teqi", GPR32Opnd>, TEQI_FM<0xc>;
-def TGEI : TEQI_FT<"tgei", GPR32Opnd>, TEQI_FM<0x8>;
-def TGEIU : TEQI_FT<"tgeiu", GPR32Opnd>, TEQI_FM<0x9>;
-def TLTI : TEQI_FT<"tlti", GPR32Opnd>, TEQI_FM<0xa>;
-def TTLTIU : TEQI_FT<"tltiu", GPR32Opnd>, TEQI_FM<0xb>;
-def TNEI : TEQI_FT<"tnei", GPR32Opnd>, TEQI_FM<0xe>;
+def TEQI : MMRel, TEQI_FT<"teqi", GPR32Opnd>, TEQI_FM<0xc>;
+def TGEI : MMRel, TEQI_FT<"tgei", GPR32Opnd>, TEQI_FM<0x8>;
+def TGEIU : MMRel, TEQI_FT<"tgeiu", GPR32Opnd>, TEQI_FM<0x9>;
+def TLTI : MMRel, TEQI_FT<"tlti", GPR32Opnd>, TEQI_FM<0xa>;
+def TTLTIU : MMRel, TEQI_FT<"tltiu", GPR32Opnd>, TEQI_FM<0xb>;
+def TNEI : MMRel, TEQI_FT<"tnei", GPR32Opnd>, TEQI_FM<0xe>;
 
 def BREAK : BRK_FT<"break">, BRK_FM<0xd>;
 def SYSCALL : SYS_FT<"syscall">, SYS_FM<0xc>;

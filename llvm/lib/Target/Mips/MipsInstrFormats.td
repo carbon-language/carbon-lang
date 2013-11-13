@@ -468,7 +468,7 @@ class TEQ_FM<bits<6> funct> : StdArch {
   let Inst{5-0}   = funct;
 }
 
-class TEQI_FM<bits<5> funct> {
+class TEQI_FM<bits<5> funct> : StdArch {
   bits<5> rs;
   bits<16> imm16;
 

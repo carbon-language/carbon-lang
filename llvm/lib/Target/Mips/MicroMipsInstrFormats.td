@@ -290,3 +290,15 @@ class TEQ_FM_MM<bits<6> funct> : MMArch {
   let Inst{11-6}  = funct;
   let Inst{5-0}   = 0x3c;
 }
+
+class TEQI_FM_MM<bits<5> funct> : MMArch {
+  bits<5> rs;
+  bits<16> imm16;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x10;
+  let Inst{25-21} = funct;
+  let Inst{20-16} = rs;
+  let Inst{15-0}  = imm16;
+}
