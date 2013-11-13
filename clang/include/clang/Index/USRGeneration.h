@@ -47,7 +47,7 @@ void generateUSRForObjCProperty(StringRef Prop, raw_ostream &OS);
 /// \brief Generate a USR fragment for an Objective-C protocol.
 void generateUSRForObjCProtocol(StringRef Prot, raw_ostream &OS);
 
-} // namespace ide
+} // namespace index
 } // namespace clang
 
 #endif // LLVM_CLANG_IDE_USRGENERATION_H
