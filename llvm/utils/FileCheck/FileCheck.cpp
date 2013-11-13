@@ -794,12 +794,12 @@ static StringRef FindFirstCandidateMatch(StringRef &Buffer,
       continue;
 
     Check::CheckType Ty = FindCheckType(Rest, Prefix);
-    if (Ty == Check::CheckNone)
-      continue;
 
     FirstLoc = PrefixLoc;
     FirstTy = Ty;
-    FirstPrefix = Prefix;
+    // We've found the first matching check prefix. If it is invalid, we should
+    // continue the search after it.
+    FirstPrefix = (Ty == Check::CheckNone) ? "" : Prefix;
   }
 
   if (FirstPrefix.empty()) {
