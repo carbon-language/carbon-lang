@@ -1547,7 +1547,16 @@ void X86TargetLowering::resetOperationActions() {
 }
 
 EVT X86TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
-  if (!VT.isVector()) return MVT::i8;
+  if (!VT.isVector())
+    return MVT::i8;
+
+  const TargetMachine &TM = getTargetMachine();
+  if (!TM.Options.UseSoftFloat && Subtarget->hasAVX512())
+    switch(VT.getVectorNumElements()) {
+    case  8: return MVT::v8i1;
+    case 16: return MVT::v16i1;
+    }
+
   return VT.changeVectorElementTypeToInteger();
 }
 

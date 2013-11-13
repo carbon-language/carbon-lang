@@ -141,8 +141,11 @@ namespace llvm {
 
     SDValue  LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
     SDValue  LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
-    virtual EVT getSetCCResultType(LLVMContext &, EVT) const {
-      return MVT::i1;
+    virtual EVT getSetCCResultType(LLVMContext &C, EVT VT) const {
+      if (!VT.isVector())
+        return MVT::i1;
+      else
+        return EVT::getVectorVT(C, MVT::i1, VT.getVectorNumElements());
     }
 
     virtual bool getPostIndexedAddressParts(SDNode *N, SDNode *Op,
