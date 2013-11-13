@@ -300,7 +300,6 @@ TEST(ClangToolTest, BuildASTs) {
 
   llvm::DeleteContainerPointers(ASTs);
 }
-#endif
 
 struct TestDiagnosticConsumer : public DiagnosticConsumer {
   TestDiagnosticConsumer() : NumDiagnosticsSeen(0) {}
@@ -332,6 +331,7 @@ TEST(ClangToolTest, InjectDiagnosticConsumerInBuildASTs) {
   EXPECT_EQ(1u, ASTs.size());
   EXPECT_EQ(1u, Consumer.NumDiagnosticsSeen);
 }
+#endif
 
 } // end namespace tooling
 } // end namespace clang
