@@ -492,7 +492,10 @@ public:
                     }
                     else
                     {
-                        err.SetErrorStringWithFormat("size of variable %s (%zu) disagrees with the ValueObject's size (%zu)", m_variable_sp->GetName().AsCString(), m_variable_sp->GetType()->GetByteSize(), data.GetByteSize());
+                        err.SetErrorStringWithFormat("size of variable %s (%" PRIu64 ") disagrees with the ValueObject's size (%" PRIu64 ")",
+                                                     m_variable_sp->GetName().AsCString(),
+                                                     m_variable_sp->GetType()->GetByteSize(),
+                                                     data.GetByteSize());
                     }
                     return;
                 }
