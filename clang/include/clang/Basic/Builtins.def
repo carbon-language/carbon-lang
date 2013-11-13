@@ -675,6 +675,7 @@ BUILTIN(__builtin_index, "c*cC*i", "Fn")
 BUILTIN(__builtin_rindex, "c*cC*i", "Fn")
 
 // Microsoft builtins.  These are only active with -fms-extensions.
+LANGBUILTIN(_alloca,      "v*z", "n", ALL_MS_LANGUAGES)
 LANGBUILTIN(__assume,     "vb",  "n", ALL_MS_LANGUAGES)
 LANGBUILTIN(__noop,       "v.",  "n", ALL_MS_LANGUAGES)
 LANGBUILTIN(__debugbreak, "v",   "n", ALL_MS_LANGUAGES)
