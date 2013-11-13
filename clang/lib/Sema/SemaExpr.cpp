@@ -10614,8 +10614,17 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
 
   switch (ConvTy) {
   case Compatible:
-      DiagnoseAssignmentEnum(DstType, SrcType, SrcExpr);
-      return false;
+    // See if a proper null pointer constant is to be assigned.
+    if (DstType->isAnyPointerType() && !SrcType->isAnyPointerType() &&
+        SrcExpr->isNullPointerConstant(Context,
+                                       Expr::NPC_NeverValueDependent) ==
+            Expr::NPCK_ZeroExpression &&
+        !isUnevaluatedContext())
+      Diag(SrcExpr->getExprLoc(), diag::warn_non_literal_null_pointer)
+        << DstType << SrcExpr->getSourceRange();
+
+    DiagnoseAssignmentEnum(DstType, SrcType, SrcExpr);
+    return false;
 
   case PointerToInt:
     DiagKind = diag::ext_typecheck_convert_pointer_int;
