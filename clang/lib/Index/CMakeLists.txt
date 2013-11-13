@@ -1,4 +1,6 @@
 add_clang_library(clangIndex
+  CommentToXML.cpp
+  SimpleFormatContext.h
   USRGeneration.cpp
   )
 

@@ -27,6 +27,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 namespace clang {
+namespace index {
 
 /// \brief A small class to be used by libclang clients to format
 /// a declaration string in memory. This object is instantiated once
@@ -35,7 +36,7 @@ class SimpleFormatContext {
 public:
   SimpleFormatContext(LangOptions Options)
       : DiagOpts(new DiagnosticOptions()),
-        Diagnostics(new DiagnosticsEngine(new DiagnosticIDs, 
+        Diagnostics(new DiagnosticsEngine(new DiagnosticIDs,
                                           DiagOpts.getPtr())),
         Files((FileSystemOptions())),
         Sources(*Diagnostics, Files),
@@ -47,9 +48,9 @@ public:
 
   FileID createInMemoryFile(StringRef Name, StringRef Content) {
     const llvm::MemoryBuffer *Source =
-      llvm::MemoryBuffer::getMemBuffer(Content);
+        llvm::MemoryBuffer::getMemBuffer(Content);
     const FileEntry *Entry =
-      Files.getVirtualFile(Name, Source->getBufferSize(), 0);
+        Files.getVirtualFile(Name, Source->getBufferSize(), 0);
     Sources.overrideFileContents(Entry, Source, true);
     assert(Entry != NULL);
     return Sources.createFileID(Entry, SourceLocation(), SrcMgr::C_User);
@@ -70,6 +71,7 @@ public:
   Rewriter Rewrite;
 };
 
+} // end namespace index
 } // end namespace clang
 
 #endif

@@ -39,7 +39,6 @@ set(SOURCES
   Indexing.cpp
   IndexingContext.cpp
   IndexingContext.h
-  SimpleFormatContext.h
   ../../include/clang-c/Index.h
   )
 

@@ -22,7 +22,6 @@
 #include "CXTranslationUnit.h"
 #include "CXType.h"
 #include "CursorVisitor.h"
-#include "SimpleFormatContext.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/Diagnostic.h"
@@ -30,6 +29,7 @@
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Index/CommentToXML.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/PreprocessingRecord.h"
@@ -68,8 +68,7 @@ CXTranslationUnit cxtu::MakeCXTranslationUnit(CIndexer *CIdx, ASTUnit *AU) {
   D->StringPool = new cxstring::CXStringPool();
   D->Diagnostics = 0;
   D->OverridenCursorsPool = createOverridenCXCursorsPool();
-  D->FormatContext = 0;
-  D->FormatInMemoryUniqueId = 0;
+  D->CommentToXML = 0;
   return D;
 }
 
@@ -2904,7 +2903,7 @@ void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
     delete CTUnit->StringPool;
     delete static_cast<CXDiagnosticSetImpl *>(CTUnit->Diagnostics);
     disposeOverridenCXCursorsPool(CTUnit->OverridenCursorsPool);
-    delete CTUnit->FormatContext;
+    delete CTUnit->CommentToXML;
     delete CTUnit;
   }
 }
