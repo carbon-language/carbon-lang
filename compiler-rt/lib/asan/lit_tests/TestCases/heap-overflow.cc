@@ -1,11 +1,7 @@
-// RUN: %clangxx_asan -O0 %s -o %t && not %t 2>%t.out
-// RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-%os < %t.out
-// RUN: %clangxx_asan -O1 %s -o %t && not %t 2>%t.out
-// RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-%os < %t.out
-// RUN: %clangxx_asan -O2 %s -o %t && not %t 2>%t.out
-// RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-%os < %t.out
-// RUN: %clangxx_asan -O3 %s -o %t && not %t 2>%t.out
-// RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-%os < %t.out
+// RUN: %clangxx_asan -O0 %s -o %t && not %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os --check-prefix=CHECK
+// RUN: %clangxx_asan -O1 %s -o %t && not %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os --check-prefix=CHECK
+// RUN: %clangxx_asan -O2 %s -o %t && not %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os --check-prefix=CHECK
+// RUN: %clangxx_asan -O3 %s -o %t && not %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os --check-prefix=CHECK
 
 #include <stdlib.h>
 #include <string.h>
@@ -19,10 +15,10 @@ int main(int argc, char **argv) {
   // CHECK: {{allocated by thread T0 here:}}
 
   // CHECK-Linux: {{    #0 0x.* in .*malloc}}
-  // CHECK-Linux: {{    #1 0x.* in main .*heap-overflow.cc:13}}
+  // CHECK-Linux: {{    #1 0x.* in main .*heap-overflow.cc:9}}
 
   // CHECK-Darwin: {{    #0 0x.* in wrap_malloc.*}}
-  // CHECK-Darwin: {{    #1 0x.* in main .*heap-overflow.cc:13}}
+  // CHECK-Darwin: {{    #1 0x.* in main .*heap-overflow.cc:9}}
   free(x);
   return res;
 }
