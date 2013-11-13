@@ -81,10 +81,10 @@ class SampleProfile {
 public:
   SampleProfile(StringRef F) : Profiles(0), Filename(F) {}
 
-  virtual void dump();
-  virtual void loadText();
-  virtual void loadNative() { llvm_unreachable("not implemented"); }
-  virtual bool emitAnnotations(Function &F);
+  void dump();
+  void loadText();
+  void loadNative() { llvm_unreachable("not implemented"); }
+  bool emitAnnotations(Function &F);
   void printFunctionProfile(raw_ostream &OS, StringRef FName);
   void dumpFunctionProfile(StringRef FName);
 
