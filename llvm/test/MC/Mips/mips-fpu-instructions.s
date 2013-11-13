@@ -138,6 +138,8 @@
 #------------------------------------------------------------------------------
 # FP move instructions
 #------------------------------------------------------------------------------
+# CHECK: bc1f    $BB_1                 # encoding: [A,A,0x00,0x45]
+# CHECK: #   fixup A - offset: 0, value: ($BB_1), kind: fixup_Mips_PC16
 
 # CHECK:  cfc1    $6, $0               # encoding: [0x00,0x00,0x46,0x44]
 # CHECK:  ctc1    $10, $31             # encoding: [0x00,0xf8,0xca,0x44]
@@ -173,7 +175,7 @@
 # CHECK:  sdc2    $4, 16($sp)             # encoding: [0x10,0x00,0xa4,0xfb]
 # CHECK:  lwc2    $11, 12($ra)            # encoding: [0x0c,0x00,0xeb,0xcb]
 # CHECK:  ldc2    $11, 12($ra)            # encoding: [0x0c,0x00,0xeb,0xdb]
-
+   bc1f    $fcc0, $BB_1
    cfc1    $a2,$0
    ctc1    $10,$31
    mfc1    $a2,$f7

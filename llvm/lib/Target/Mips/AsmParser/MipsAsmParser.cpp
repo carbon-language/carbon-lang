@@ -1159,9 +1159,7 @@ MipsAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand *> &Operands,
       return true;
 
     SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-
     MCSymbol *Sym = getContext().GetOrCreateSymbol("$" + Identifier);
-
     // Otherwise create a symbol reference.
     const MCExpr *Res =
         MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None, getContext());
@@ -1170,6 +1168,25 @@ MipsAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand *> &Operands,
     return false;
   }
   case AsmToken::Identifier:
+    // For instruction aliases like "bc1f $Label" dedicated parser will
+    // eat the '$' sign before failing. So in order to look for appropriate
+    // label we must check first if we have already consumed '$'.
+    if (hasConsumedDollar) {
+      hasConsumedDollar = false;
+      SMLoc S = Parser.getTok().getLoc();
+      StringRef Identifier;
+      if (Parser.parseIdentifier(Identifier))
+        return true;
+      SMLoc E =
+          SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
+      MCSymbol *Sym = getContext().GetOrCreateSymbol("$" + Identifier);
+      // Create a symbol reference.
+      const MCExpr *Res =
+          MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None, getContext());
+
+      Operands.push_back(MipsOperand::CreateImm(Res, S, E));
+      return false;
+    }
     // Look for the existing symbol, we should check if
     // we need to assigne the propper RegisterKind.
     if (searchSymbolAlias(Operands, MipsOperand::Kind_None))
