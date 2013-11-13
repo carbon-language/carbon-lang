@@ -1,4 +1,4 @@
 RUN: cd %p/Inputs && llvm-cov -gcno=test.gcno -gcda=test.gcda \
 RUN:   | diff test.cpp.gcov -
 
-XFAIL: ppc64-linux-gnu, s390x-linux-gnu, arm
+XFAIL: powerpc64, s390x, arm
