@@ -23,6 +23,7 @@ add_llvm_library(LLVMScalarOpts
   PartiallyInlineLibCalls.cpp
   Reassociate.cpp
   Reg2Mem.cpp
+  SampleProfile.cpp
   SCCP.cpp
   SROA.cpp
   Scalar.cpp

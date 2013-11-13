@@ -15,6 +15,8 @@
 #ifndef LLVM_TRANSFORMS_SCALAR_H
 #define LLVM_TRANSFORMS_SCALAR_H
 
+#include "llvm/ADT/StringRef.h"
+
 namespace llvm {
 
 class FunctionPass;
@@ -354,6 +356,13 @@ FunctionPass *createLowerExpectIntrinsicPass();
 // calls such as sqrt.
 //
 FunctionPass *createPartiallyInlineLibCallsPass();
+
+//===----------------------------------------------------------------------===//
+//
+// SampleProfilePass - Loads sample profile data from disk and generates
+// IR metadata to reflect the profile.
+FunctionPass *createSampleProfileLoaderPass();
+FunctionPass *createSampleProfileLoaderPass(StringRef Name);
 
 } // End llvm namespace
 

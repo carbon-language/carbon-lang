@@ -28,6 +28,7 @@ using namespace llvm;
 /// ScalarOpts library.
 void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeADCEPass(Registry);
+  initializeSampleProfileLoaderPass(Registry);
   initializeCodeGenPreparePass(Registry);
   initializeConstantPropagationPass(Registry);
   initializeCorrelatedValuePropagationPass(Registry);
