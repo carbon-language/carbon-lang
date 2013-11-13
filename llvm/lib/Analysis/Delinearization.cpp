@@ -83,6 +83,8 @@ void Delinearization::print(raw_ostream &O, const Module *) const {
   O << "Delinearization on function " << F->getName() << ":\n";
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     Instruction *Inst = &(*I);
+
+    // Only analyze loads and stores.
     if (!isa<StoreInst>(Inst) && !isa<LoadInst>(Inst) &&
         !isa<GetElementPtrInst>(Inst))
       continue;
@@ -93,6 +95,8 @@ void Delinearization::print(raw_ostream &O, const Module *) const {
     for (Loop *L = LI->getLoopFor(BB); L != NULL; L = L->getParentLoop()) {
       const SCEV *AccessFn = SE->getSCEVAtScope(getPointerOperand(*Inst), L);
       const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(AccessFn);
+
+      // Do not try to delinearize memory accesses that are not AddRecs.
       if (!AR)
         break;
 

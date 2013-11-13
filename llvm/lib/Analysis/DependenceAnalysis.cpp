@@ -24,11 +24,11 @@
 // Both of these are conservative weaknesses;
 // that is, not a source of correctness problems.
 //
-// The implementation depends on the GEP instruction to
-// differentiate subscripts. Since Clang linearizes subscripts
-// for most arrays, we give up some precision (though the existing MIV tests
-// will help). We trust that the GEP instruction will eventually be extended.
-// In the meantime, we should explore Maslov's ideas about delinearization.
+// The implementation depends on the GEP instruction to differentiate
+// subscripts. Since Clang linearizes some array subscripts, the dependence
+// analysis is using SCEV->delinearize to recover the representation of multiple
+// subscripts, and thus avoid the more expensive and less precise MIV tests. The
+// delinearization is controlled by the flag -da-delinearize.
 //
 // We should pay some careful attention to the possibility of integer overflow
 // in the implementation of the various tests. This could happen with Add,
@@ -3206,10 +3206,21 @@ DependenceAnalysis::tryDelinearize(const SCEV *SrcSCEV, const SCEV *DstSCEV,
     DEBUG(errs() << *DstSubscripts[i]);
 #endif
 
+  // The delinearization transforms a single-subscript MIV dependence test into
+  // a multi-subscript SIV dependence test that is easier to compute. So we
+  // resize Pair to contain as many pairs of subscripts as the delinearization
+  // has found, and then initialize the pairs following the delinearization.
   Pair.resize(size);
   for (int i = 0; i < size; ++i) {
     Pair[i].Src = SrcSubscripts[i];
     Pair[i].Dst = DstSubscripts[i];
+
+    // FIXME: we should record the bounds SrcSizes[i] and DstSizes[i] that the
+    // delinearization has found, and add these constraints to the dependence
+    // check to avoid memory accesses overflow from one dimension into another.
+    // This is related to the problem of determining the existence of data
+    // dependences in array accesses using a different number of subscripts: in
+    // C one can access an array A[100][100]; as A[0][9999], *A[9999], etc.
   }
 
   return true;

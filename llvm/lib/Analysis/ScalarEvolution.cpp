@@ -7070,27 +7070,66 @@ private:
 
 /// Splits the SCEV into two vectors of SCEVs representing the subscripts and
 /// sizes of an array access. Returns the remainder of the delinearization that
-/// is the offset start of the array. For example
-/// delinearize ({(((-4 + (3 * %m)))),+,(%m)}<%for.i>) {
-///   IV: {0,+,1}<%for.i>
-///   Start: -4 + (3 * %m)
-///   Step: %m
-///   SCEVUDiv (Start, Step) = 3 remainder -4
-///   rem = delinearize (3) = 3
-///   Subscripts.push_back(IV + rem)
-///   Sizes.push_back(Step)
-///   return remainder -4
-/// }
-/// When delinearize fails, it returns the SCEV unchanged.
+/// is the offset start of the array.  The SCEV->delinearize algorithm computes
+/// the multiples of SCEV coefficients: that is a pattern matching of sub
+/// expressions in the stride and base of a SCEV corresponding to the
+/// computation of a GCD (greatest common divisor) of base and stride.  When
+/// SCEV->delinearize fails, it returns the SCEV unchanged.
+///
+/// For example: when analyzing the memory access A[i][j][k] in this loop nest
+///
+///  void foo(long n, long m, long o, double A[n][m][o]) {
+///
+///    for (long i = 0; i < n; i++)
+///      for (long j = 0; j < m; j++)
+///        for (long k = 0; k < o; k++)
+///          A[i][j][k] = 1.0;
+///  }
+///
+/// the delinearization input is the following AddRec SCEV:
+///
+///  AddRec: {{{%A,+,(8 * %m * %o)}<%for.i>,+,(8 * %o)}<%for.j>,+,8}<%for.k>
+///
+/// From this SCEV, we are able to say that the base offset of the access is %A
+/// because it appears as an offset that does not divide any of the strides in
+/// the loops:
+///
+///  CHECK: Base offset: %A
+///
+/// and then SCEV->delinearize determines the size of some of the dimensions of
+/// the array as these are the multiples by which the strides are happening:
+///
+///  CHECK: ArrayDecl[UnknownSize][%m][%o] with elements of sizeof(double) bytes.
+///
+/// Note that the outermost dimension remains of UnknownSize because there are
+/// no strides that would help identifying the size of the last dimension: when
+/// the array has been statically allocated, one could compute the size of that
+/// dimension by dividing the overall size of the array by the size of the known
+/// dimensions: %m * %o * 8.
+///
+/// Finally delinearize provides the access functions for the array reference
+/// that does correspond to A[i][j][k] of the above C testcase:
+///
+///  CHECK: ArrayRef[{0,+,1}<%for.i>][{0,+,1}<%for.j>][{0,+,1}<%for.k>]
+///
+/// The testcases are checking the output of a function pass:
+/// DelinearizationPass that walks through all loads and stores of a function
+/// asking for the SCEV of the memory access with respect to all enclosing
+/// loops, calling SCEV->delinearize on that and printing the results.
+
 const SCEV *
 SCEVAddRecExpr::delinearize(ScalarEvolution &SE,
                             SmallVectorImpl<const SCEV *> &Subscripts,
                             SmallVectorImpl<const SCEV *> &Sizes) const {
+  // Early exit in case this SCEV is not an affine multivariate function.
   if (!this->isAffine())
     return this;
 
   const SCEV *Start = this->getStart();
   const SCEV *Step = this->getStepRecurrence(SE);
+
+  // Build the SCEV representation of the cannonical induction variable in the
+  // loop of this SCEV.
   const SCEV *Zero = SE.getConstant(this->getType(), 0);
   const SCEV *One = SE.getConstant(this->getType(), 1);
   const SCEV *IV =
@@ -7098,38 +7137,55 @@ SCEVAddRecExpr::delinearize(ScalarEvolution &SE,
 
   DEBUG(dbgs() << "(delinearize: " << *this << "\n");
 
+  // Currently we fail to delinearize when the stride of this SCEV is 1. We
+  // could decide to not fail in this case: we could just return 1 for the size
+  // of the subscript, and this same SCEV for the access function.
   if (Step == One) {
     DEBUG(dbgs() << "failed to delinearize " << *this << "\n)\n");
     return this;
   }
 
+  // Find the GCD and Remainder of the Start and Step coefficients of this SCEV.
   const SCEV *Remainder = NULL;
   const SCEV *GCD = SCEVGCD::findGCD(SE, Start, Step, &Remainder);
 
   DEBUG(dbgs() << "GCD: " << *GCD << "\n");
   DEBUG(dbgs() << "Remainder: " << *Remainder << "\n");
 
+  // Same remark as above: we currently fail the delinearization, although we
+  // can very well handle this special case.
   if (GCD == One) {
     DEBUG(dbgs() << "failed to delinearize " << *this << "\n)\n");
     return this;
   }
 
+  // As findGCD computed Remainder, GCD divides "Start - Remainder." The
+  // Quotient is then this SCEV without Remainder, scaled down by the GCD.  The
+  // Quotient is what will be used in the next subscript delinearization.
   const SCEV *Quotient =
       SCEVDivision::divide(SE, SE.getMinusSCEV(Start, Remainder), GCD);
   DEBUG(dbgs() << "Quotient: " << *Quotient << "\n");
 
   const SCEV *Rem;
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Quotient))
+    // Recursively call delinearize on the Quotient until there are no more
+    // multiples that can be recognized.
     Rem = AR->delinearize(SE, Subscripts, Sizes);
   else
     Rem = Quotient;
 
+  // Scale up the cannonical induction variable IV by whatever remains from the
+  // Step after division by the GCD: the GCD is the size of all the sub-array.
   if (Step != GCD) {
     Step = SCEVDivision::divide(SE, Step, GCD);
     IV = SE.getMulExpr(IV, Step);
   }
+  // The access function in the current subscript is computed as the cannonical
+  // induction variable IV (potentially scaled up by the step) and offset by
+  // Rem, the offset of delinearization in the sub-array.
   const SCEV *Index = SE.getAddExpr(IV, Rem);
 
+  // Record the access function and the size of the current subscript.
   Subscripts.push_back(Index);
   Sizes.push_back(GCD);
 
