@@ -47,7 +47,20 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
   const TargetRegisterClass *getPhysRegClass(unsigned Reg) const;
 
   /// \returns true if this class contains only SGPR registers
-  static bool isSGPRClass(const TargetRegisterClass *RC);
+  bool isSGPRClass(const TargetRegisterClass *RC) const;
+
+  /// \returns true if this class contains VGPR registers.
+  bool hasVGPRs(const TargetRegisterClass *RC) const;
+
+  /// \returns A VGPR reg class with the same width as \p SRC
+  const TargetRegisterClass *getEquivalentVGPRClass(
+                                          const TargetRegisterClass *SRC) const;
+
+  /// \returns The register class that is used for a sub-register of \p RC for
+  /// the given \p SubIdx.  If \p SubIdx equals NoSubRegister, \p RC will
+  /// be returned.
+  const TargetRegisterClass *getSubRegClass(const TargetRegisterClass *RC,
+                                            unsigned SubIdx) const;
 };
 
 } // End namespace llvm

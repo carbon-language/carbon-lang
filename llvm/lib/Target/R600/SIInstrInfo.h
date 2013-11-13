@@ -62,6 +62,42 @@ public:
 
   virtual int getIndirectIndexEnd(const MachineFunction &MF) const;
 
+  bool isSALUInstr(const MachineInstr &MI) const;
+  unsigned getVALUOp(const MachineInstr &MI) const;
+  bool isSALUOpSupportedOnVALU(const MachineInstr &MI) const;
+
+  /// \brief Return the correct register class for \p OpNo.  For target-specific
+  /// instructions, this will return the register class that has been defined
+  /// in tablegen.  For generic instructions, like REG_SEQUENCE it will return
+  /// the register class of its machine operand.
+  /// to infer the correct register class base on the other operands.
+  const TargetRegisterClass *getOpRegClass(const MachineInstr &MI,
+                                           unsigned OpNo) const;\
+
+  /// \returns true if it is legal for the operand at index \p OpNo
+  /// to read a VGPR.
+  bool canReadVGPR(const MachineInstr &MI, unsigned OpNo) const;
+
+  /// \brief Legalize the \p OpIndex operand of this instruction by inserting
+  /// a MOV.  For example:
+  /// ADD_I32_e32 VGPR0, 15
+  /// to
+  /// MOV VGPR1, 15
+  /// ADD_I32_e32 VGPR0, VGPR1
+  ///
+  /// If the operand being legalized is a register, then a COPY will be used
+  /// instead of MOV.
+  void legalizeOpWithMove(MachineInstr *MI, unsigned OpIdx) const;
+
+  /// \brief Legalize all operands in this instruction.  This function may
+  /// create new instruction and insert them before \p MI.
+  void legalizeOperands(MachineInstr *MI) const;
+
+  /// \brief Replace this instruction's opcode with the equivalent VALU
+  /// opcode.  This function will also move the users of \p MI to the
+  /// VALU if necessary.
+  void moveToVALU(MachineInstr &MI) const;
+
   virtual unsigned calculateIndirectAddress(unsigned RegIndex,
                                             unsigned Channel) const;
 

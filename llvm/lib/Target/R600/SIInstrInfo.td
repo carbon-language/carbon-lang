@@ -172,6 +172,11 @@ class SOP2_64 <bits<7> op, string opName, list<dag> pattern> : SOP2 <
   opName#" $dst, $src0, $src1", pattern
 >;
 
+class SOP2_SHIFT_64 <bits<7> op, string opName, list<dag> pattern> : SOP2 <
+  op, (outs SReg_64:$dst), (ins SSrc_64:$src0, SSrc_32:$src1),
+  opName#" $dst, $src0, $src1", pattern
+>;
+
 class SOPC_32 <bits<7> op, string opName, list<dag> pattern> : SOPC <
   op, (outs SCCReg:$dst), (ins SSrc_32:$src0, SSrc_32:$src1),
   opName#" $dst, $src0, $src1", pattern

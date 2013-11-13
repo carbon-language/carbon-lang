@@ -941,9 +941,13 @@ defm V_ASHR_I32 : VOP2_32 <0x00000017, "V_ASHR_I32",
 >;
 defm V_ASHRREV_I32 : VOP2_32 <0x00000018, "V_ASHRREV_I32", [], "V_ASHR_I32">;
 
+let hasPostISelHook = 1 in {
+
 defm V_LSHL_B32 : VOP2_32 <0x00000019, "V_LSHL_B32",
   [(set i32:$dst, (shl i32:$src0, i32:$src1))]
 >;
+
+}
 defm V_LSHLREV_B32 : VOP2_32 <0x0000001a, "V_LSHLREV_B32", [], "V_LSHL_B32">;
 
 defm V_AND_B32 : VOP2_32 <0x0000001b, "V_AND_B32",
@@ -1172,12 +1176,31 @@ def S_NOR_B32 : SOP2_32 <0x0000001a, "S_NOR_B32", []>;
 def S_NOR_B64 : SOP2_64 <0x0000001b, "S_NOR_B64", []>;
 def S_XNOR_B32 : SOP2_32 <0x0000001c, "S_XNOR_B32", []>;
 def S_XNOR_B64 : SOP2_64 <0x0000001d, "S_XNOR_B64", []>;
-def S_LSHL_B32 : SOP2_32 <0x0000001e, "S_LSHL_B32", []>;
-def S_LSHL_B64 : SOP2_64 <0x0000001f, "S_LSHL_B64", []>;
-def S_LSHR_B32 : SOP2_32 <0x00000020, "S_LSHR_B32", []>;
-def S_LSHR_B64 : SOP2_64 <0x00000021, "S_LSHR_B64", []>;
-def S_ASHR_I32 : SOP2_32 <0x00000022, "S_ASHR_I32", []>;
-def S_ASHR_I64 : SOP2_64 <0x00000023, "S_ASHR_I64", []>;
+
+// Use added complexity so these patterns are preferred to the VALU patterns.
+let AddedComplexity = 1 in {
+
+def S_LSHL_B32 : SOP2_32 <0x0000001e, "S_LSHL_B32",
+  [(set i32:$dst, (shl i32:$src0, i32:$src1))]
+>;
+def S_LSHL_B64 : SOP2_SHIFT_64 <0x0000001f, "S_LSHL_B64",
+  [(set i64:$dst, (shl i64:$src0, i32:$src1))]
+>;
+def S_LSHR_B32 : SOP2_32 <0x00000020, "S_LSHR_B32",
+  [(set i32:$dst, (srl i32:$src0, i32:$src1))]
+>;
+def S_LSHR_B64 : SOP2_SHIFT_64 <0x00000021, "S_LSHR_B64",
+  [(set i64:$dst, (srl i64:$src0, i32:$src1))]
+>;
+def S_ASHR_I32 : SOP2_32 <0x00000022, "S_ASHR_I32",
+  [(set i32:$dst, (sra i32:$src0, i32:$src1))]
+>;
+def S_ASHR_I64 : SOP2_SHIFT_64 <0x00000023, "S_ASHR_I64",
+  [(set i64:$dst, (sra i64:$src0, i32:$src1))]
+>;
+
+} // End AddedComplexity = 1
+
 def S_BFM_B32 : SOP2_32 <0x00000024, "S_BFM_B32", []>;
 def S_BFM_B64 : SOP2_64 <0x00000025, "S_BFM_B64", []>;
 def S_MUL_I32 : SOP2_32 <0x00000026, "S_MUL_I32", []>;

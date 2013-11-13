@@ -72,13 +72,49 @@ const TargetRegisterClass *SIRegisterInfo::getPhysRegClass(unsigned Reg) const {
   return NULL;
 }
 
-bool SIRegisterInfo::isSGPRClass(const TargetRegisterClass *RC) {
+bool SIRegisterInfo::isSGPRClass(const TargetRegisterClass *RC) const {
   if (!RC) {
     return false;
   }
-  return RC == &AMDGPU::SReg_32RegClass ||
-         RC == &AMDGPU::SReg_64RegClass ||
-         RC == &AMDGPU::SReg_128RegClass ||
-         RC == &AMDGPU::SReg_256RegClass ||
-         RC == &AMDGPU::SReg_512RegClass;
+  return !hasVGPRs(RC);
+}
+
+bool SIRegisterInfo::hasVGPRs(const TargetRegisterClass *RC) const {
+  return getCommonSubClass(&AMDGPU::VReg_32RegClass, RC) ||
+         getCommonSubClass(&AMDGPU::VReg_64RegClass, RC) ||
+         getCommonSubClass(&AMDGPU::VReg_128RegClass, RC) ||
+         getCommonSubClass(&AMDGPU::VReg_256RegClass, RC) ||
+         getCommonSubClass(&AMDGPU::VReg_512RegClass, RC);
+}
+
+const TargetRegisterClass *SIRegisterInfo::getEquivalentVGPRClass(
+                                         const TargetRegisterClass *SRC) const {
+    if (hasVGPRs(SRC)) {
+      return SRC;
+    } else if (getCommonSubClass(SRC, &AMDGPU::SGPR_32RegClass)) {
+      return &AMDGPU::VReg_32RegClass;
+    } else if (getCommonSubClass(SRC, &AMDGPU::SGPR_64RegClass)) {
+      return &AMDGPU::VReg_64RegClass;
+    } else if (getCommonSubClass(SRC, &AMDGPU::SReg_128RegClass)) {
+      return &AMDGPU::VReg_128RegClass;
+    } else if (getCommonSubClass(SRC, &AMDGPU::SReg_256RegClass)) {
+      return &AMDGPU::VReg_256RegClass;
+    } else if (getCommonSubClass(SRC, &AMDGPU::SReg_512RegClass)) {
+      return &AMDGPU::VReg_512RegClass;
+    }
+    return NULL;
+}
+
+const TargetRegisterClass *SIRegisterInfo::getSubRegClass(
+                         const TargetRegisterClass *RC, unsigned SubIdx) const {
+  if (SubIdx == AMDGPU::NoSubRegister)
+    return RC;
+
+  // If this register has a sub-register, we can safely assume it is a 32-bit
+  // register, becuase all of SI's sub-registers are 32-bit.
+  if (isSGPRClass(RC)) {
+    return &AMDGPU::SGPR_32RegClass;
+  } else {
+    return &AMDGPU::VGPR_32RegClass;
+  }
 }

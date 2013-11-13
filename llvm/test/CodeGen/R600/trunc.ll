@@ -19,7 +19,8 @@ define void @trunc_i64_to_i32_store(i32 addrspace(1)* %out, i64 %in) {
 ; SI-LABEL: @trunc_shl_i64:
 ; SI: S_LOAD_DWORDX2
 ; SI: S_LOAD_DWORDX2 [[SREG:s\[[0-9]+:[0-9]+\]]]
-; SI: V_LSHL_B64 v{{\[}}[[LO_VREG:[0-9]+]]:{{[0-9]+\]}}, [[SREG]], 2
+; SI: S_LSHL_B64 s{{\[}}[[LO_SREG:[0-9]+]]:{{[0-9]+\]}}, [[SREG]], 2
+; SI: MOV_B32_e32 v[[LO_VREG:[0-9]+]], s[[LO_SREG]]
 ; SI: BUFFER_STORE_DWORD v[[LO_VREG]],
 define void @trunc_shl_i64(i32 addrspace(1)* %out, i64 %a) {
   %b = shl i64 %a, 2
