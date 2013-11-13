@@ -27,20 +27,20 @@ namespace comments {
 
 namespace cxcomment {
 
-inline CXComment createCXComment(const comments::Comment *C,
-                                 CXTranslationUnit TU) {
+static inline CXComment createCXComment(const comments::Comment *C,
+                                        CXTranslationUnit TU) {
   CXComment Result;
   Result.ASTNode = C;
   Result.TranslationUnit = TU;
   return Result;
 }
 
-inline const comments::Comment *getASTNode(CXComment CXC) {
+static inline const comments::Comment *getASTNode(CXComment CXC) {
   return static_cast<const comments::Comment *>(CXC.ASTNode);
 }
 
 template<typename T>
-inline const T *getASTNodeAs(CXComment CXC) {
+static inline const T *getASTNodeAs(CXComment CXC) {
   const comments::Comment *C = getASTNode(CXC);
   if (!C)
     return NULL;
@@ -48,11 +48,11 @@ inline const T *getASTNodeAs(CXComment CXC) {
   return dyn_cast<T>(C);
 }
 
-inline ASTContext &getASTContext(CXComment CXC) {
+static inline ASTContext &getASTContext(CXComment CXC) {
   return cxtu::getASTUnit(CXC.TranslationUnit)->getASTContext();
 }
 
-inline comments::CommandTraits &getCommandTraits(CXComment CXC) {
+static inline comments::CommandTraits &getCommandTraits(CXComment CXC) {
   return getASTContext(CXC).getCommentCommandTraits();
 }
 
