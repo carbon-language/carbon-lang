@@ -38,3 +38,9 @@ namespace addressof {
 
   S *ptmp = __builtin_addressof(S{}); // expected-error {{taking the address of a temporary}}
 }
+
+void no_ms_builtins() {
+  __assume(1); // expected-error {{use of undeclared}}
+  __noop(1); // expected-error {{use of undeclared}}
+  __debugbreak(); // expected-error {{use of undeclared}}
+}

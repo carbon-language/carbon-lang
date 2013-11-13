@@ -22,6 +22,7 @@ using namespace clang;
 static const Builtin::Info BuiltinInfo[] = {
   { "not a builtin function", 0, 0, 0, ALL_LANGUAGES },
 #define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
+#define LANGBUILTIN(ID, TYPE, ATTRS, BUILTIN_LANG) { #ID, TYPE, ATTRS, 0, BUILTIN_LANG },
 #define LIBBUILTIN(ID, TYPE, ATTRS, HEADER, BUILTIN_LANG) { #ID, TYPE, ATTRS, HEADER,\
                                                             BUILTIN_LANG },
 #include "clang/Basic/Builtins.def"
@@ -54,10 +55,12 @@ bool Builtin::Context::BuiltinIsSupported(const Builtin::Info &BuiltinInfo,
     llvm::StringRef(BuiltinInfo.HeaderName).equals("math.h");
   bool GnuModeUnsupported = !LangOpts.GNUMode &&
                             (BuiltinInfo.builtin_lang & GNU_LANG);
+  bool MSModeUnsupported = !LangOpts.MicrosoftExt &&
+                           (BuiltinInfo.builtin_lang & MS_LANG);
   bool ObjCUnsupported = !LangOpts.ObjC1 &&
                          BuiltinInfo.builtin_lang == OBJC_LANG;
   return !BuiltinsUnsupported && !MathBuiltinsUnsupported &&
-         !GnuModeUnsupported && !ObjCUnsupported;
+         !GnuModeUnsupported && !MSModeUnsupported && !ObjCUnsupported;
 }
 
 /// InitializeBuiltins - Mark the identifiers for all the builtins with their

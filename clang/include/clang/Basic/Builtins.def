@@ -92,6 +92,10 @@
 #  define LIBBUILTIN(ID, TYPE, ATTRS, HEADER, BUILTIN_LANG) BUILTIN(ID, TYPE, ATTRS)
 #endif
 
+#if defined(BUILTIN) && !defined(LANGBUILTIN)
+#  define LANGBUILTIN(ID, TYPE, ATTRS, BUILTIN_LANG) BUILTIN(ID, TYPE, ATTRS)
+#endif
+
 // Standard libc/libm functions:
 BUILTIN(__builtin_atan2 , "ddd"  , "Fnc")
 BUILTIN(__builtin_atan2f, "fff"  , "Fnc")
@@ -670,11 +674,10 @@ BUILTIN(__builtin_abort, "v", "Fnr")
 BUILTIN(__builtin_index, "c*cC*i", "Fn")
 BUILTIN(__builtin_rindex, "c*cC*i", "Fn")
 
-// Microsoft builtins.
-BUILTIN(__assume, "vb", "n")
-BUILTIN(__noop, "v.", "n")
-BUILTIN(__debugbreak, "v", "n")
-
+// Microsoft builtins.  These are only active with -fms-extensions.
+LANGBUILTIN(__assume,     "vb",  "n", ALL_MS_LANGUAGES)
+LANGBUILTIN(__noop,       "v.",  "n", ALL_MS_LANGUAGES)
+LANGBUILTIN(__debugbreak, "v",   "n", ALL_MS_LANGUAGES)
 
 // C99 library functions
 // C99 stdlib.h
@@ -1178,3 +1181,4 @@ BUILTIN(__builtin_addressof, "v*v&", "nct")
 
 #undef BUILTIN
 #undef LIBBUILTIN
+#undef LANGBUILTIN
