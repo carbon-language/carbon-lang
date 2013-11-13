@@ -856,6 +856,61 @@ for this region.
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
+// QSaveRegisterState
+// QSaveRegisterState;thread:XXXX;
+//
+// BRIEF
+//  The QSaveRegisterState packet tells the remote debugserver to save
+//  all registers and return a non-zero unique integer ID that 
+//  represents these save registers. If thread suffixes are enabled the
+//  second form of this packet is used, otherwise the first form is 
+//  used. This packet is called prior to executing an expression, so
+//  the remote GDB server should do anything it needs to in order to 
+//  ensure the registers that are saved are correct. On MacOSX this
+//  involves calling "thread_abort_safely(mach_port_t thread)" to 
+//  ensure we get the correct registers for a thread in case it is
+//  currently having code run on its behalf in the kernel.
+//
+// RESPONSE
+//  unsigned - The save_id result is a non-zero unsigned integer value
+//             that can be passed back to the GDB server using a
+//             QRestoreRegisterState packet to restore the registers
+//             one time.
+//  "EXX" - or an error code in the form of EXX where XX is a
+//  hex error code.
+//
+// PRIORITY TO IMPLEMENT
+//  Low, this is mostly a convenience packet to avoid having to send all
+//  registers via a g packet. It should only be implemented if support
+//  for the QRestoreRegisterState is added.
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+// QRestoreRegisterState:<save_id>
+// QRestoreRegisterState:<save_id>;thread:XXXX;
+//
+// BRIEF
+//  The QRestoreRegisterState packet tells the remote debugserver to 
+//  restore all registers using the "save_id" which is an unsigned
+//  integer that was returned from a previous call to 
+//  QSaveRegisterState. The restoration process can only be done once
+//  as the data backing the register state will be freed upon the 
+//  completion of the QRestoreRegisterState command.
+//
+//  If thread suffixes are enabled the second form of this packet is 
+//  used, otherwise the first form is used.
+//
+// RESPONSE
+//  "OK" - if all registers were successfully restored
+//  "EXX" - for any errors
+//
+// PRIORITY TO IMPLEMENT
+//  Low, this is mostly a convenience packet to avoid having to send all
+//  registers via a g packet. It should only be implemented if support
+//  for the QSaveRegisterState is added.
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
 // Stop reply packet extensions
 //
 // BRIEF
