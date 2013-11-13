@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 %s -triple x86_64-linux -emit-llvm -o - -mconstructor-aliases | FileCheck %s
+// RUN: %clang_cc1 %s -triple x86_64-linux -emit-llvm -o - -mconstructor-aliases -O1 -disable-llvm-optzns | FileCheck %s
+// RUN: %clang_cc1 %s -triple x86_64-linux -emit-llvm -o - -mconstructor-aliases | FileCheck --check-prefix=NOOPT %s
 
 namespace test1 {
 // test that we don't produce an alias when the destructor is weak_odr. The
@@ -53,6 +54,11 @@ namespace test4 {
 
   // CHECK-DAG: define linkonce_odr void @_ZN5test41AD2Ev(
   // CHECK-DAG: call i32 @__cxa_atexit{{.*}}_ZN5test41AD2Ev
+
+  // test that we don't do this optimization at -O0 so that the debugger can
+  // see both destructors.
+  // NOOPT-DAG: call i32 @__cxa_atexit{{.*}}@_ZN5test41BD2Ev
+  // NOOOPT-DAG: define linkonce_odr void @_ZN5test41BD2Ev
   struct A {
     virtual ~A() {}
   };

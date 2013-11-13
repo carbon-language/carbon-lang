@@ -34,6 +34,11 @@ bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
   if (!getCodeGenOpts().CXXCtorDtorAliases)
     return true;
 
+  // Producing an alias to a base class ctor/dtor can degrade debug quality
+  // as the debugger cannot tell them appart.
+  if (getCodeGenOpts().OptimizationLevel == 0)
+    return true;
+
   // If the destructor doesn't have a trivial body, we have to emit it
   // separately.
   if (!D->hasTrivialBody())
