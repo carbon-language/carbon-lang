@@ -50,6 +50,16 @@ struct CompileCommand {
 
   /// \brief The command line that was executed.
   std::vector<std::string> CommandLine;
+
+  /// \brief An optional mapping from each file's path to its content for all
+  /// files needed for the compilation that are not available via the file
+  /// system.
+  ///
+  /// Note that a tool implementation is required to fall back to the file
+  /// system if a source file is not provided in the mapped sources, as
+  /// compilation databases will usually not provide all files in mapped sources
+  /// for performance reasons.
+  std::vector<std::pair<std::string, std::string> > MappedSources;
 };
 
 /// \brief Interface for compilation databases.
@@ -108,6 +118,10 @@ public:
 
   /// \brief Returns all compile commands for all the files in the compilation
   /// database.
+  ///
+  /// FIXME: Add a layer in Tooling that provides an interface to run a tool
+  /// over all files in a compilation database. Not all build systems have the
+  /// ability to provide a feasible implementation for \c getAllCompileCommands.
   virtual std::vector<CompileCommand> getAllCompileCommands() const = 0;
 };
 
