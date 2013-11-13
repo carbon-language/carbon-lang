@@ -541,12 +541,12 @@ namespace llvm {
 
     /// isSpillable - Can this interval be spilled?
     bool isSpillable() const {
-      return weight != HUGE_VALF;
+      return weight != llvm::huge_valf;
     }
 
     /// markNotSpillable - Mark interval as not spillable
     void markNotSpillable() {
-      weight = HUGE_VALF;
+      weight = llvm::huge_valf;
     }
 
     bool operator<(const LiveInterval& other) const {

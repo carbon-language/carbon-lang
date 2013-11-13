@@ -77,7 +77,7 @@ protected:
 
     DEBUG(dbgs() << "Spilling everywhere " << *li << "\n");
 
-    assert(li->weight != HUGE_VALF &&
+    assert(li->weight != llvm::huge_valf &&
            "Attempting to spill already spilled value.");
 
     assert(!TargetRegisterInfo::isStackSlot(li->reg) &&

@@ -1477,7 +1477,7 @@ void RAGreedy::calcGapWeights(unsigned PhysReg,
         break;
 
       for (; Gap != NumGaps; ++Gap) {
-        GapWeight[Gap] = HUGE_VALF;
+        GapWeight[Gap] = llvm::huge_valf;
         if (Uses[Gap+1].getBaseIndex() >= I->end)
           break;
       }
@@ -1583,7 +1583,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     // Remove any gaps with regmask clobbers.
     if (Matrix->checkRegMaskInterference(VirtReg, PhysReg))
       for (unsigned i = 0, e = RegMaskGaps.size(); i != e; ++i)
-        GapWeight[RegMaskGaps[i]] = HUGE_VALF;
+        GapWeight[RegMaskGaps[i]] = llvm::huge_valf;
 
     // Try to find the best sequence of gaps to close.
     // The new spill weight must be larger than any gap interference.
@@ -1618,7 +1618,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
       // Legally, without causing looping?
       bool Legal = !ProgressRequired || NewGaps < NumGaps;
 
-      if (Legal && MaxGap < HUGE_VALF) {
+      if (Legal && MaxGap < llvm::huge_valf) {
         // Estimate the new spill weight. Each instruction reads or writes the
         // register. Conservatively assume there are no read-modify-write
         // instructions.

@@ -170,7 +170,8 @@ void LiveIntervals::dumpInstrs() const {
 #endif
 
 LiveInterval* LiveIntervals::createInterval(unsigned reg) {
-  float Weight = TargetRegisterInfo::isPhysicalRegister(reg) ? HUGE_VALF : 0.0F;
+  float Weight = TargetRegisterInfo::isPhysicalRegister(reg) ?
+                  llvm::huge_valf : 0.0F;
   return new LiveInterval(reg, Weight);
 }
 
