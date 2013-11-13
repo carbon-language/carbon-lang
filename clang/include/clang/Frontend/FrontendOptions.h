@@ -177,13 +177,13 @@ public:
     ObjCMT_AtomicProperty = 0x100,
     /// \brief annotate property with NS_RETURNS_INNER_POINTER
     ObjCMT_ReturnsInnerPointerProperty = 0x200,
+    /// \brief use NS_NONATOMIC_IOSONLY for property 'atomic' attribute
+    ObjCMT_NsAtomicIOSOnlyProperty = 0x400,
     ObjCMT_MigrateDecls = (ObjCMT_ReadonlyProperty | ObjCMT_ReadwriteProperty |
                            ObjCMT_Annotation | ObjCMT_Instancetype |
-                           ObjCMT_NsMacros | ObjCMT_ProtocolConformance),
-    ObjCMT_MigrateAll = (ObjCMT_Literals | ObjCMT_Subscripting |
-                         ObjCMT_ReadonlyProperty | ObjCMT_ReadwriteProperty |
-                         ObjCMT_Annotation | ObjCMT_Instancetype |
-                         ObjCMT_NsMacros | ObjCMT_ProtocolConformance)
+                           ObjCMT_NsMacros | ObjCMT_ProtocolConformance |
+                           ObjCMT_NsAtomicIOSOnlyProperty),
+    ObjCMT_MigrateAll = (ObjCMT_Literals | ObjCMT_Subscripting | ObjCMT_MigrateDecls)
   };
   unsigned ObjCMTAction;
 
