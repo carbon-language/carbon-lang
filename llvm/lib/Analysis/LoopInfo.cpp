@@ -216,12 +216,12 @@ bool Loop::isSafeToClone() const {
   // Return false if any loop blocks contain indirectbrs, or there are any calls
   // to noduplicate functions.
   for (Loop::block_iterator I = block_begin(), E = block_end(); I != E; ++I) {
-    if (isa<IndirectBrInst>((*I)->getTerminator())) {
+    if (isa<IndirectBrInst>((*I)->getTerminator()))
       return false;
-    } else if (const InvokeInst *II = dyn_cast<InvokeInst>((*I)->getTerminator())) {
+
+    if (const InvokeInst *II = dyn_cast<InvokeInst>((*I)->getTerminator()))
       if (II->hasFnAttr(Attribute::NoDuplicate))
         return false;
-    }
 
     for (BasicBlock::iterator BI = (*I)->begin(), BE = (*I)->end(); BI != BE; ++BI) {
       if (const CallInst *CI = dyn_cast<CallInst>(BI)) {
@@ -305,15 +305,15 @@ bool Loop::isAnnotatedParallel() const {
       if (!II->mayReadOrWriteMemory())
         continue;
 
-      if (!II->getMetadata("llvm.mem.parallel_loop_access"))
-        return false;
-
       // The memory instruction can refer to the loop identifier metadata
       // directly or indirectly through another list metadata (in case of
       // nested parallel loops). The loop identifier metadata refers to
       // itself so we can check both cases with the same routine.
-      MDNode *loopIdMD =
-          dyn_cast<MDNode>(II->getMetadata("llvm.mem.parallel_loop_access"));
+      MDNode *loopIdMD = II->getMetadata("llvm.mem.parallel_loop_access");
+
+      if (!loopIdMD)
+        return false;
+
       bool loopIdMDFound = false;
       for (unsigned i = 0, e = loopIdMD->getNumOperands(); i < e; ++i) {
         if (loopIdMD->getOperand(i) == desiredLoopIdMetadata) {
