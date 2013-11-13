@@ -10,8 +10,6 @@
 // This file contains the Mips16 implementation of the TargetInstrInfo class.
 //
 //===----------------------------------------------------------------------===//
-#include <ctype.h>
-#include <stdlib.h>
 #include "Mips16InstrInfo.h"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MipsMachineFunction.h"
@@ -26,6 +24,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
+#include <cctype>
 
 using namespace llvm;
 
