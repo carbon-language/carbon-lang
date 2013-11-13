@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios -mcpu=cortex-a8 | FileCheck %s
 ; RUN: llc < %s -mtriple=thumbv8 | FileCheck -check-prefix=CHECK-V8 %s
+; RUN: llc < %s -mtriple=thumbv7 -arm-restrict-it | FileCheck -check-prefix=CHECK-V8 %s
 ; rdar://13782395
 
 define i32 @t1(i32 %a, i32 %b, i8** %retaddr) {

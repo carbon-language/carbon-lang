@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin | FileCheck %s
-
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -arm-default-it | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv8 -arm-no-restrict-it |FileCheck %s
 define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
 ; CHECK-LABEL: t1:
 ; CHECK: ittt ne
@@ -74,7 +75,7 @@ entry:
 ; CHECK-LABEL: t3:
 ; CHECK: itt ge
 ; CHECK: movge r0, r1
-; CHECK: blge  _foo
+; CHECK: blge  {{_?}}foo
 	%tmp1 = icmp sgt i32 %a, 10		; <i1> [#uses=1]
 	br i1 %tmp1, label %cond_true, label %UnifiedReturnBlock
 

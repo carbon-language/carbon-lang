@@ -28,7 +28,7 @@ namespace {
     static char ID;
     Thumb2ITBlockPass() : MachineFunctionPass(ID) {}
 
-    bool hasV8Ops;
+    bool restrictIT;
     const Thumb2InstrInfo *TII;
     const TargetRegisterInfo *TRI;
     ARMFunctionInfo *AFI;
@@ -194,8 +194,9 @@ bool Thumb2ITBlockPass::InsertITInstructions(MachineBasicBlock &MBB) {
     ARMCC::CondCodes OCC = ARMCC::getOppositeCondition(CC);
     unsigned Mask = 0, Pos = 3;
 
-    // v8 IT blocks are limited to one conditional op: skip the loop
-    if (!hasV8Ops) {
+    // v8 IT blocks are limited to one conditional op unless -arm-no-restrict-it
+    // is set: skip the loop
+    if (!restrictIT) {
       // Branches, including tricky ones like LDM_RET, need to end an IT
       // block so check the instruction we just put in the block.
       for (; MBBI != E && Pos &&
@@ -255,7 +256,7 @@ bool Thumb2ITBlockPass::runOnMachineFunction(MachineFunction &Fn) {
   AFI = Fn.getInfo<ARMFunctionInfo>();
   TII = static_cast<const Thumb2InstrInfo*>(TM.getInstrInfo());
   TRI = TM.getRegisterInfo();
-  hasV8Ops = TM.getSubtarget<ARMSubtarget>().hasV8Ops();
+  restrictIT = TM.getSubtarget<ARMSubtarget>().restrictIT();
 
   if (!AFI->isThumbFunction())
     return false;

@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=thumbv8 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7 -arm-restrict-it | FileCheck %s
 
 	%struct.quad_struct = type { i32, i32, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct* }
 

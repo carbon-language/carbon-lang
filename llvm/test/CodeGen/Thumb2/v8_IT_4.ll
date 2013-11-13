@@ -1,5 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv8-eabi -float-abi=hard | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-eabi -float-abi=hard -arm-restrict-it | FileCheck %s
 ; RUN: llc < %s -mtriple=thumbv8-eabi -float-abi=hard -regalloc=basic | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-eabi -float-abi=hard -regalloc=basic -arm-restrict-it | FileCheck %s
 
 %"struct.__gnu_cxx::__normal_iterator<char*,std::basic_string<char, std::char_traits<char>, std::allocator<char> > >" = type { i8* }
 %"struct.__gnu_cxx::new_allocator<char>" = type <{ i8 }>

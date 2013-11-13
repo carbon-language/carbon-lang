@@ -198,7 +198,7 @@ bool ARMPassConfig::addPreSched2() {
   if (getOptLevel() != CodeGenOpt::None) {
     if (!getARMSubtarget().isThumb1Only()) {
       // in v8, IfConversion depends on Thumb instruction widths
-      if (getARMSubtarget().hasV8Ops() &&
+      if (getARMSubtarget().restrictIT() &&
           !getARMSubtarget().prefers32BitThumb())
         addPass(createThumb2SizeReductionPass());
       addPass(&IfConverterID);

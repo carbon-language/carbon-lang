@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=thumbv8 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7 -arm-restrict-it | FileCheck %s
 ; CHECK: it	ne
 ; CHECK-NEXT: cmpne
 ; CHECK-NEXT: beq

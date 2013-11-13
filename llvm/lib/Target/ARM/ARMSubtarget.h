@@ -177,6 +177,10 @@ protected:
   /// ARMTargetLowering::allowsUnalignedMemoryAccesses().
   bool AllowsUnalignedMem;
 
+  /// RestrictIT - If true, the subtarget disallows generation of deprecated IT
+  ///  blocks to conform to ARMv8 rule.
+  bool RestrictIT;
+
   /// Thumb2DSP - If true, the subtarget supports the v7 DSP (saturating arith
   /// and such) instructions in Thumb2 code.
   bool Thumb2DSP;
@@ -326,6 +330,8 @@ public:
   bool supportsTailCall() const { return SupportsTailCall; }
 
   bool allowsUnalignedMem() const { return AllowsUnalignedMem; }
+
+  bool restrictIT() const { return RestrictIT; }
 
   const std::string & getCPUString() const { return CPUString; }
 

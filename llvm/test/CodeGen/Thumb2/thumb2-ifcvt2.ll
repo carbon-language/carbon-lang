@@ -1,4 +1,6 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-ios -arm-default-it | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv8-apple-ios -arm-no-restrict-it | FileCheck %s
 
 define void @foo(i32 %X, i32 %Y) {
 entry:

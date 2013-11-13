@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=thumbv8 -mattr=+neon | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7 -mattr=+neon -arm-restrict-it | FileCheck %s
 
 ;CHECK-LABEL: select_s_v_v:
 ;CHECK-NOT: it

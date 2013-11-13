@@ -1,4 +1,6 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -arm-default-it | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv8-apple-darwin -arm-no-restrict-it | FileCheck %s
 
 ; There shouldn't be a unconditional branch at end of bb52.
 ; rdar://7184787
