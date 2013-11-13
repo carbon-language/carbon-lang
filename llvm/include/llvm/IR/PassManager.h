@@ -30,6 +30,7 @@
 /// Polymorphism" talk (or its abbreviated sibling "Inheritance Is The Base
 /// Class of Evil") by Sean Parent:
 /// * http://github.com/sean-parent/sean-parent.github.com/wiki/Papers-and-Presentations
+/// * http://www.youtube.com/watch?v=_BpMYeUFXv8
 /// * http://channel9.msdn.com/Events/GoingNative/2013/Inheritance-Is-The-Base-Class-of-Evil
 ///
 //===----------------------------------------------------------------------===//
