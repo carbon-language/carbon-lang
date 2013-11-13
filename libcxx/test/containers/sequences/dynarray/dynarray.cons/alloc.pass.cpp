@@ -25,7 +25,7 @@
 
 #if _LIBCPP_STD_VER > 11
 
-#include <dynarray>
+#include <experimental/dynarray>
 #include <cassert>
 
 #include <algorithm>
@@ -33,15 +33,17 @@
 #include <string>
 #include "../../../test_allocator.h"
 
+using std::experimental::dynarray;
+
 template <class T, class Allocator>
-void check_allocator ( const std::dynarray<T> &dyn, const Allocator &alloc ) {
+void check_allocator ( const dynarray<T> &dyn, const Allocator &alloc ) {
     for ( int i = 0; i < dyn.size (); ++i )
         assert ( dyn[i].get_allocator() == alloc );
 }
 
 template <class T, class Allocator>
 void test ( const std::initializer_list<T> &vals, const Allocator &alloc ) {
-    typedef std::dynarray<T> dynA;
+    typedef dynarray<T> dynA;
     
     dynA d1 ( vals, alloc );
     assert ( d1.size () == vals.size() );
@@ -52,7 +54,7 @@ void test ( const std::initializer_list<T> &vals, const Allocator &alloc ) {
 
 template <class T, class Allocator>
 void test ( const T &val, const Allocator &alloc1, const Allocator &alloc2 ) {
-    typedef std::dynarray<T> dynA;
+    typedef dynarray<T> dynA;
     
     dynA d1 ( 4, alloc1 );
     assert ( d1.size () == 4 );

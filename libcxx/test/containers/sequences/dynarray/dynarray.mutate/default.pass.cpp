@@ -17,17 +17,18 @@
 
 #if _LIBCPP_STD_VER > 11
 
-#include <dynarray>
+#include <experimental/dynarray>
 #include <cassert>
 
 #include <algorithm>
 #include <complex>
 #include <string>
 
+using std::experimental::dynarray;
 
 template <class T>
 void test ( const T &val ) {
-    typedef std::dynarray<T> dynA;
+    typedef dynarray<T> dynA;
     
     dynA d1 ( 4 );
     d1.fill ( val );

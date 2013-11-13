@@ -16,15 +16,17 @@
 
 #if _LIBCPP_STD_VER > 11
 
-#include <dynarray>
+#include <experimental/dynarray>
 #include <cassert>
 
 #include <algorithm>
 #include <complex>
 #include <string>
 
+using std::experimental::dynarray;
+
 template <class T>
-void dyn_test_const ( const std::dynarray<T> &dyn, const std::initializer_list<T> &vals ) {
+void dyn_test_const ( const dynarray<T> &dyn, const std::initializer_list<T> &vals ) {
     const T *data = dyn.data ();
     auto it = vals.begin ();
     for ( size_t i = 0; i < dyn.size(); ++i, ++it ) {
@@ -34,7 +36,7 @@ void dyn_test_const ( const std::dynarray<T> &dyn, const std::initializer_list<T
     }
 
 template <class T>
-void dyn_test ( std::dynarray<T> &dyn, const std::initializer_list<T> &vals ) {
+void dyn_test ( dynarray<T> &dyn, const std::initializer_list<T> &vals ) {
     T *data = dyn.data ();
     auto it = vals.begin ();
     for ( size_t i = 0; i < dyn.size(); ++i, ++it ) {
@@ -46,7 +48,7 @@ void dyn_test ( std::dynarray<T> &dyn, const std::initializer_list<T> &vals ) {
 
 template <class T>
 void test ( std::initializer_list<T> vals ) {
-    typedef std::dynarray<T> dynA;
+    typedef dynarray<T> dynA;
     
     dynA d1 ( vals );
     dyn_test ( d1, vals );

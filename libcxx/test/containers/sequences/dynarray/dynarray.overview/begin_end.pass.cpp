@@ -29,15 +29,17 @@
 
 #if _LIBCPP_STD_VER > 11
 
-#include <dynarray>
+#include <experimental/dynarray>
 #include <cassert>
 
 #include <algorithm>
 #include <complex>
 #include <string>
 
+using std::experimental::dynarray;
+
 template <class T>
-void dyn_test_const ( const std::dynarray<T> &dyn ) {
+void dyn_test_const ( const dynarray<T> &dyn ) {
     const T *data = dyn.data ();
     assert ( data == &*dyn.begin ());
     assert ( data == &*dyn.cbegin ());
@@ -59,7 +61,7 @@ void dyn_test_const ( const std::dynarray<T> &dyn ) {
     }
 
 template <class T>
-void dyn_test ( std::dynarray<T> &dyn ) {
+void dyn_test ( dynarray<T> &dyn ) {
     T *data = dyn.data ();
     assert ( data == &*dyn.begin ());
     assert ( data == &*dyn.cbegin ());
@@ -83,7 +85,7 @@ void dyn_test ( std::dynarray<T> &dyn ) {
 
 template <class T>
 void test ( const T &val ) {
-    typedef std::dynarray<T> dynA;
+    typedef dynarray<T> dynA;
     
     dynA d1 ( 4 );
     dyn_test ( d1 );

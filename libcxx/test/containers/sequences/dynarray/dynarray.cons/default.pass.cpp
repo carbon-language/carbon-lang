@@ -21,16 +21,18 @@
 
 #if _LIBCPP_STD_VER > 11
 
-#include <dynarray>
+#include <experimental/dynarray>
 #include <cassert>
 
 #include <algorithm>
 #include <complex>
 #include <string>
 
+using std::experimental::dynarray;
+
 template <class T>
 void test ( const std::initializer_list<T> &vals ) {
-    typedef std::dynarray<T> dynA;
+    typedef dynarray<T> dynA;
     
     dynA d1 ( vals );
     assert ( d1.size () == vals.size() );
@@ -40,7 +42,7 @@ void test ( const std::initializer_list<T> &vals ) {
 
 template <class T>
 void test ( const T &val ) {
-    typedef std::dynarray<T> dynA;
+    typedef dynarray<T> dynA;
     
     dynA d1 ( 4 );
     assert ( d1.size () == 4 );
@@ -56,13 +58,13 @@ void test ( const T &val ) {
     }
 
 void test_bad_length () {
-    try { std::dynarray<int> ( std::numeric_limits<size_t>::max() / sizeof ( int ) + 1 ); }
+    try { dynarray<int> ( std::numeric_limits<size_t>::max() / sizeof ( int ) + 1 ); }
     catch ( std::bad_array_length & ) { return ; }
     assert ( false );
     }
 
 void test_bad_alloc () {
-    try { std::dynarray<int> ( std::numeric_limits<size_t>::max() / sizeof ( int ) - 1 ); }
+    try { dynarray<int> ( std::numeric_limits<size_t>::max() / sizeof ( int ) - 1 ); }
     catch ( std::bad_alloc & ) { return ; }
     assert ( false );
     }
@@ -81,7 +83,7 @@ int main()
                 std::string("5"), std::string("8")} );
     
 //  Make sure we don't pick up the Allocator version here
-    std::dynarray<long> d1 ( 20, 3 );
+    dynarray<long> d1 ( 20, 3 );
     assert ( d1.size() == 20 );
     assert ( std::all_of ( d1.begin (), d1.end (), []( long item ){ return item == 3L; } ));
 

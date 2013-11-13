@@ -17,15 +17,17 @@
 
 #if _LIBCPP_STD_VER > 11
 
-#include <dynarray>
+#include <experimental/dynarray>
 #include <cassert>
 
 #include <algorithm>
 #include <complex>
 #include <string>
 
+using std::experimental::dynarray;
+
 template <class T>
-void dyn_test ( const std::dynarray<T> &dyn, size_t sz ) {
+void dyn_test ( const dynarray<T> &dyn, size_t sz ) {
     assert ( dyn.size ()     == sz );
     assert ( dyn.max_size () == sz );
     assert ( dyn.empty () == ( sz == 0 ));
@@ -33,7 +35,7 @@ void dyn_test ( const std::dynarray<T> &dyn, size_t sz ) {
 
 template <class T>
 void test ( std::initializer_list<T> vals ) {
-    typedef std::dynarray<T> dynA;
+    typedef dynarray<T> dynA;
     
     dynA d1 ( vals );
     dyn_test ( d1, vals.size ());

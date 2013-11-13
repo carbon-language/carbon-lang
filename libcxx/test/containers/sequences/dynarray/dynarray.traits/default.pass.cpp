@@ -17,12 +17,14 @@
 
 #if _LIBCPP_STD_VER > 11
 
-#include <dynarray>
+#include <experimental/dynarray>
 #include "../../../test_allocator.h"
+
+using std::experimental::dynarray;
 
 int main()
 {
-    static_assert ( std::uses_allocator<std::dynarray<int>, test_allocator<int>>::value, "" );
+    static_assert ( std::uses_allocator<dynarray<int>, test_allocator<int>>::value, "" );
 }
 #else
 int main() {}
