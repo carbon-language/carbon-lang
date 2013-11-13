@@ -126,12 +126,13 @@ DECLARE_REAL_AND_INTERCEPTOR(void, free, void *)
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) \
   ASAN_WRITE_RANGE(ptr, size)
 #define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size) ASAN_READ_RANGE(ptr, size)
-#define COMMON_INTERCEPTOR_ENTER(ctx, func, ...)              \
-  do {                                                        \
-    if (asan_init_is_running) return REAL(func)(__VA_ARGS__); \
-    ctx = 0;                                                  \
-    (void) ctx;                                               \
-    ENSURE_ASAN_INITED();                                     \
+#define COMMON_INTERCEPTOR_ENTER(ctx, func, ...)                       \
+  do {                                                                 \
+    if (asan_init_is_running) return REAL(func)(__VA_ARGS__);          \
+    ctx = 0;                                                           \
+    (void) ctx;                                                        \
+    if (SANITIZER_MAC && !asan_inited) return REAL(func)(__VA_ARGS__); \
+    ENSURE_ASAN_INITED();                                              \
   } while (false)
 #define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) \
   do {                                         \
@@ -659,6 +660,9 @@ static void AtCxaAtexit(void *unused) {
 #if ASAN_INTERCEPT___CXA_ATEXIT
 INTERCEPTOR(int, __cxa_atexit, void (*func)(void *), void *arg,
             void *dso_handle) {
+#if SANITIZER_MAC
+  if (!asan_inited) return REAL(__cxa_atexit)(func, arg, dso_handle);
+#endif
   ENSURE_ASAN_INITED();
   int res = REAL(__cxa_atexit)(func, arg, dso_handle);
   REAL(__cxa_atexit)(AtCxaAtexit, 0, 0);

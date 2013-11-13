@@ -145,7 +145,11 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
 
 const char *GetEnv(const char *name) {
   char ***env_ptr = _NSGetEnviron();
-  CHECK(env_ptr);
+  if (!env_ptr) {
+    Report("_NSGetEnviron() returned NULL. Please make sure __asan_init() is "
+           "called after libSystem_initializer().\n");
+    CHECK(env_ptr);
+  }
   char **environ = *env_ptr;
   CHECK(environ);
   uptr name_len = internal_strlen(name);
