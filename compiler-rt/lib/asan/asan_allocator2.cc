@@ -664,12 +664,13 @@ int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
   return 0;
 }
 
-uptr asan_malloc_usable_size(void *ptr, StackTrace *stack) {
-  CHECK(stack);
+uptr asan_malloc_usable_size(void *ptr, uptr pc, uptr bp) {
   if (ptr == 0) return 0;
   uptr usable_size = AllocationSize(reinterpret_cast<uptr>(ptr));
-  if (flags()->check_malloc_usable_size && (usable_size == 0))
-    ReportMallocUsableSizeNotOwned((uptr)ptr, stack);
+  if (flags()->check_malloc_usable_size && (usable_size == 0)) {
+    GET_STACK_TRACE_FATAL(pc, bp);
+    ReportMallocUsableSizeNotOwned((uptr)ptr, &stack);
+  }
   return usable_size;
 }
 

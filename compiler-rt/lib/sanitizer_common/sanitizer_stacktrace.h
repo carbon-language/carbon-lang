@@ -33,6 +33,7 @@ static const uptr kStackTraceMax = 256;
 struct StackTrace {
   typedef bool (*SymbolizeCallback)(const void *pc, char *out_buffer,
                                      int out_size);
+  uptr top_frame_bp;
   uptr size;
   uptr trace[kStackTraceMax];
 
@@ -41,6 +42,7 @@ struct StackTrace {
                          SymbolizeCallback symbolize_callback = 0);
 
   void CopyFrom(const uptr *src, uptr src_size) {
+    top_frame_bp = 0;
     size = src_size;
     if (size > kStackTraceMax) size = kStackTraceMax;
     for (uptr i = 0; i < size; i++)

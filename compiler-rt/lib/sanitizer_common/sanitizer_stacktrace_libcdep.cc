@@ -21,6 +21,8 @@ void StackTrace::Unwind(uptr max_depth, uptr pc, uptr bp, uptr stack_top,
     SlowUnwindStack(pc, max_depth);
   else
     FastUnwindStack(pc, bp, stack_top, stack_bottom, max_depth);
+
+  top_frame_bp = size ? bp : 0;
 }
 
 }  // namespace __sanitizer

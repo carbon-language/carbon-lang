@@ -99,6 +99,7 @@ TEST_F(FastUnwindTest, OneFrameStackTrace) {
     return;
   EXPECT_EQ(1U, trace.size);
   EXPECT_EQ(start_pc, trace.trace[0]);
+  EXPECT_EQ((uptr)&fake_stack[0], trace.top_frame_bp);
 }
 
 }  // namespace __sanitizer

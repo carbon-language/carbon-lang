@@ -115,7 +115,7 @@ void *asan_pvalloc(uptr size, StackTrace *stack);
 
 int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
                           StackTrace *stack);
-uptr asan_malloc_usable_size(void *ptr, StackTrace *stack);
+uptr asan_malloc_usable_size(void *ptr, uptr pc, uptr bp);
 
 uptr asan_mz_size(const void *ptr);
 void asan_mz_force_lock();

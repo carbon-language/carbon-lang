@@ -1,4 +1,9 @@
-// RUN: %clangxx_asan -O0 %s -o %t && not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -o %t
+// RUN: not %t 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=MALLOC-CTX
+
+// Also works if no malloc context is available.
+// RUN: ASAN_OPTIONS=malloc_context_size=0:fast_unwind_on_malloc=0 not %t 2>&1 | FileCheck %s
+// RUN: ASAN_OPTIONS=malloc_context_size=0:fast_unwind_on_malloc=1 not %t 2>&1 | FileCheck %s
 
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +16,6 @@ int main(int argc, char **argv) {
   // CHECK: invalid-free.cc:[[@LINE-2]]
   // CHECK: is located 5 bytes inside of 10-byte region
   // CHECK: allocated by thread T0 here:
-  // CHECK: invalid-free.cc:[[@LINE-8]]
+  // MALLOC-CTX: invalid-free.cc:[[@LINE-8]]
   return res;
 }
