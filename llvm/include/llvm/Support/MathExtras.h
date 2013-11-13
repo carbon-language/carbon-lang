@@ -608,12 +608,8 @@ inline int64_t SignExtend64(uint64_t X, unsigned B) {
   // Visual Studio defines the HUGE_VAL class of macros using purposeful
   // constant arithmetic overflow, which it then warns on when encountered.
   const float huge_valf = std::numeric_limits<float>::infinity();
-  const double huge_vald = std::numeric_limits<double>::infinity();
-  const long double huge_vall = std::numeric_limits<long double>::infinity();
 #else
   const float huge_valf = HUGE_VALF;
-  const double huge_vald = HUGE_VALD;
-  const long double huge_vall = HUGE_VALL;
 #endif
 } // End llvm namespace
 
