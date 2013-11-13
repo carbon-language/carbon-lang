@@ -1,0 +1,5 @@
+// RUN: FileCheck -check-prefix=CHECKER -check-prefix=CHECK -input-file %s %s
+// RUN: FileCheck -check-prefix=CHECK -check-prefix=CHECKER -input-file %s %s
+
+foo
+; CHECKER: fo{{o}}
