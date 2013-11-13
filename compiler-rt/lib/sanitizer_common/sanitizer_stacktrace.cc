@@ -152,9 +152,12 @@ static bool MatchPc(uptr cur_pc, uptr trace_pc, uptr threshold) {
 }
 
 uptr
-StackTrace::LocatePcInTrace(uptr pc, uptr pc_threshold, uptr max_pc_depth) {
+StackTrace::LocatePcInTrace(uptr pc, uptr max_pc_depth) {
+  // Use threshold to find PC in stack trace, as PC we want to unwind from may
+  // slightly differ from return address in the actual unwinded stack trace.
+  const int kPcThreshold = 64;
   for (uptr i = 0; i < max_pc_depth && i < size; ++i) {
-    if (MatchPc(pc, trace[i], pc_threshold))
+    if (MatchPc(pc, trace[i], kPcThreshold))
       return i;
   }
   return 0;
