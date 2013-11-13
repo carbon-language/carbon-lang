@@ -19,7 +19,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Mutex.h"
-#include "llvm-c/Core.h"
+#include "llvm-c/Support.h"
 #include <cstdio>
 #include <cstring>
 

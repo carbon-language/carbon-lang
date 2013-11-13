@@ -15,7 +15,6 @@
 #define LLVM_C_SUPPORT_H
 
 #include "llvm-c/Core.h"
-#include "llvm/Support/DynamicLibrary.h"
 
 #ifdef __cplusplus
 extern "C" {
