@@ -3074,6 +3074,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Forward -f options with positive and negative forms; we translate
   // these by hand.
+  if (Arg *A = Args.getLastArg(options::OPT_fprofile_sample_use_EQ)) {
+    StringRef fname = A->getValue();
+    if (!llvm::sys::fs::exists(fname))
+      D.Diag(diag::err_drv_no_such_file) << fname;
+    else
+      A->render(Args, CmdArgs);
+  }
 
   if (Args.hasArg(options::OPT_mkernel)) {
     if (!Args.hasArg(options::OPT_fapple_kext) && types::isCXX(InputType))

@@ -154,6 +154,14 @@ static void addObjCARCOptPass(const PassManagerBuilder &Builder, PassManagerBase
     PM.add(createObjCARCOptPass());
 }
 
+static void addSampleProfileLoaderPass(const PassManagerBuilder &Builder,
+                                       PassManagerBase &PM) {
+  const PassManagerBuilderWrapper &BuilderWrapper =
+      static_cast<const PassManagerBuilderWrapper &>(Builder);
+  const CodeGenOptions &CGOpts = BuilderWrapper.getCGOpts();
+  PM.add(createSampleProfileLoaderPass(CGOpts.SampleProfileFile));
+}
+
 static void addBoundsCheckingPass(const PassManagerBuilder &Builder,
                                     PassManagerBase &PM) {
   PM.add(createBoundsCheckingPass());
@@ -234,6 +242,10 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
 
   PMBuilder.DisableUnitAtATime = !CodeGenOpts.UnitAtATime;
   PMBuilder.DisableUnrollLoops = !CodeGenOpts.UnrollLoops;
+
+  if (!CodeGenOpts.SampleProfileFile.empty())
+    PMBuilder.addExtension(PassManagerBuilder::EP_EarlyAsPossible,
+                           addSampleProfileLoaderPass);
 
   // In ObjC ARC mode, add the main ARC optimization passes.
   if (LangOpts.ObjCAutoRefCount) {

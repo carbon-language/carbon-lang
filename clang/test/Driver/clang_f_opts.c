@@ -44,6 +44,9 @@
 // CHECK-UNROLL-LOOPS: "-funroll-loops"
 // CHECK-NO-UNROLL-LOOPS: "-fno-unroll-loops"
 
+// RUN: %clang -### -S -fprofile-sample-use=%S/Inputs/file.prof %s 2>&1 | FileCheck -check-prefix=CHECK-SAMPLE-PROFILE %s
+// CHECK-SAMPLE-PROFILE: "-fprofile-sample-use={{.*}}/file.prof"
+
 // RUN: %clang -### -S -fvectorize %s 2>&1 | FileCheck -check-prefix=CHECK-VECTORIZE %s
 // RUN: %clang -### -S -fno-vectorize -fvectorize %s 2>&1 | FileCheck -check-prefix=CHECK-VECTORIZE %s
 // RUN: %clang -### -S -fno-vectorize %s 2>&1 | FileCheck -check-prefix=CHECK-NO-VECTORIZE %s

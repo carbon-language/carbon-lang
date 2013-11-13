@@ -365,6 +365,10 @@ def fno_autolink : Flag <["-"], "fno-autolink">, Group<f_Group>,
   Flags<[DriverOption, CC1Option]>,
   HelpText<"Disable generation of linker directives for automatic library linking">;
 
+def fprofile_sample_use_EQ : Joined<["-"], "fprofile-sample-use=">,
+    Group<f_Group>, Flags<[DriverOption, CC1Option]>,
+    HelpText<"Enable sample-based profile guided optimizations">;
+
 def fblocks : Flag<["-"], "fblocks">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Enable the 'blocks' language feature">;
 def fbootclasspath_EQ : Joined<["-"], "fbootclasspath=">, Group<f_Group>;
