@@ -29,24 +29,24 @@ define i64 @test_vrshrd_n_s64(i64 %a) {
 ; CHECK: srshr {{d[0-9]+}}, {{d[0-9]+}}, #63
 entry:
   %vsrshr = insertelement <1 x i64> undef, i64 %a, i32 0
-  %vsrshr1 = call <1 x i64> @llvm.aarch64.neon.vrshrds.n(<1 x i64> %vsrshr, i32 63)
+  %vsrshr1 = call <1 x i64> @llvm.aarch64.neon.vsrshr.v1i64(<1 x i64> %vsrshr, i32 63)
   %0 = extractelement <1 x i64> %vsrshr1, i32 0
   ret i64 %0
 }
 
-declare <1 x i64> @llvm.aarch64.neon.vrshrds.n(<1 x i64>, i32)
+declare <1 x i64> @llvm.aarch64.neon.vsrshr.v1i64(<1 x i64>, i32)
 
 define i64 @test_vrshrd_n_u64(i64 %a) {
 ; CHECK: test_vrshrd_n_u64
 ; CHECK: urshr {{d[0-9]+}}, {{d[0-9]+}}, #63
 entry:
   %vurshr = insertelement <1 x i64> undef, i64 %a, i32 0
-  %vurshr1 = call <1 x i64> @llvm.aarch64.neon.vrshrdu.n(<1 x i64> %vurshr, i32 63)
+  %vurshr1 = call <1 x i64> @llvm.aarch64.neon.vurshr.v1i64(<1 x i64> %vurshr, i32 63)
   %0 = extractelement <1 x i64> %vurshr1, i32 0
   ret i64 %0
 }
 
-declare <1 x i64> @llvm.aarch64.neon.vrshrdu.n(<1 x i64>, i32)
+declare <1 x i64> @llvm.aarch64.neon.vurshr.v1i64(<1 x i64>, i32)
 
 define i64 @test_vsrad_n_s64(i64 %a, i64 %b) {
 ; CHECK: test_vsrad_n_s64
@@ -223,48 +223,48 @@ define i8 @test_vqshlub_n_s8(i8 %a) {
 ; CHECK: sqshlu {{b[0-9]+}}, {{b[0-9]+}}, #7
 entry:
   %vsqshlu = insertelement <1 x i8> undef, i8 %a, i32 0
-  %vsqshlu1 = call <1 x i8> @llvm.aarch64.neon.vqshlus.n.v1i8(<1 x i8> %vsqshlu, i32 7)
+  %vsqshlu1 = call <1 x i8> @llvm.aarch64.neon.vsqshlu.v1i8(<1 x i8> %vsqshlu, i32 7)
   %0 = extractelement <1 x i8> %vsqshlu1, i32 0
   ret i8 %0
 }
 
-declare <1 x i8> @llvm.aarch64.neon.vqshlus.n.v1i8(<1 x i8>, i32)
+declare <1 x i8> @llvm.aarch64.neon.vsqshlu.v1i8(<1 x i8>, i32)
 
 define i16 @test_vqshluh_n_s16(i16 %a) {
 ; CHECK: test_vqshluh_n_s16
 ; CHECK: sqshlu {{h[0-9]+}}, {{h[0-9]+}}, #15
 entry:
   %vsqshlu = insertelement <1 x i16> undef, i16 %a, i32 0
-  %vsqshlu1 = call <1 x i16> @llvm.aarch64.neon.vqshlus.n.v1i16(<1 x i16> %vsqshlu, i32 15)
+  %vsqshlu1 = call <1 x i16> @llvm.aarch64.neon.vsqshlu.v1i16(<1 x i16> %vsqshlu, i32 15)
   %0 = extractelement <1 x i16> %vsqshlu1, i32 0
   ret i16 %0
 }
 
-declare <1 x i16> @llvm.aarch64.neon.vqshlus.n.v1i16(<1 x i16>, i32)
+declare <1 x i16> @llvm.aarch64.neon.vsqshlu.v1i16(<1 x i16>, i32)
 
 define i32 @test_vqshlus_n_s32(i32 %a) {
 ; CHECK: test_vqshlus_n_s32
 ; CHECK: sqshlu {{s[0-9]+}}, {{s[0-9]+}}, #31
 entry:
   %vsqshlu = insertelement <1 x i32> undef, i32 %a, i32 0
-  %vsqshlu1 = call <1 x i32> @llvm.aarch64.neon.vqshlus.n.v1i32(<1 x i32> %vsqshlu, i32 31)
+  %vsqshlu1 = call <1 x i32> @llvm.aarch64.neon.vsqshlu.v1i32(<1 x i32> %vsqshlu, i32 31)
   %0 = extractelement <1 x i32> %vsqshlu1, i32 0
   ret i32 %0
 }
 
-declare <1 x i32> @llvm.aarch64.neon.vqshlus.n.v1i32(<1 x i32>, i32)
+declare <1 x i32> @llvm.aarch64.neon.vsqshlu.v1i32(<1 x i32>, i32)
 
 define i64 @test_vqshlud_n_s64(i64 %a) {
 ; CHECK: test_vqshlud_n_s64
 ; CHECK: sqshlu {{d[0-9]+}}, {{d[0-9]+}}, #63
 entry:
   %vsqshlu = insertelement <1 x i64> undef, i64 %a, i32 0
-  %vsqshlu1 = call <1 x i64> @llvm.aarch64.neon.vqshlus.n.v1i64(<1 x i64> %vsqshlu, i32 63)
+  %vsqshlu1 = call <1 x i64> @llvm.aarch64.neon.vsqshlu.v1i64(<1 x i64> %vsqshlu, i32 63)
   %0 = extractelement <1 x i64> %vsqshlu1, i32 0
   ret i64 %0
 }
 
-declare <1 x i64> @llvm.aarch64.neon.vqshlus.n.v1i64(<1 x i64>, i32)
+declare <1 x i64> @llvm.aarch64.neon.vsqshlu.v1i64(<1 x i64>, i32)
 
 define i64 @test_vsrid_n_s64(i64 %a, i64 %b) {
 ; CHECK: test_vsrid_n_s64
@@ -272,12 +272,12 @@ define i64 @test_vsrid_n_s64(i64 %a, i64 %b) {
 entry:
   %vsri = insertelement <1 x i64> undef, i64 %a, i32 0
   %vsri1 = insertelement <1 x i64> undef, i64 %b, i32 0
-  %vsri2 = call <1 x i64> @llvm.aarch64.neon.vsrid.n(<1 x i64> %vsri, <1 x i64> %vsri1, i32 63)
+  %vsri2 = call <1 x i64> @llvm.aarch64.neon.vsri.v1i64(<1 x i64> %vsri, <1 x i64> %vsri1, i32 63)
   %0 = extractelement <1 x i64> %vsri2, i32 0
   ret i64 %0
 }
 
-declare <1 x i64> @llvm.aarch64.neon.vsrid.n(<1 x i64>, <1 x i64>, i32)
+declare <1 x i64> @llvm.aarch64.neon.vsri.v1i64(<1 x i64>, <1 x i64>, i32)
 
 define i64 @test_vsrid_n_u64(i64 %a, i64 %b) {
 ; CHECK: test_vsrid_n_u64
@@ -285,7 +285,7 @@ define i64 @test_vsrid_n_u64(i64 %a, i64 %b) {
 entry:
   %vsri = insertelement <1 x i64> undef, i64 %a, i32 0
   %vsri1 = insertelement <1 x i64> undef, i64 %b, i32 0
-  %vsri2 = call <1 x i64> @llvm.aarch64.neon.vsrid.n(<1 x i64> %vsri, <1 x i64> %vsri1, i32 63)
+  %vsri2 = call <1 x i64> @llvm.aarch64.neon.vsri.v1i64(<1 x i64> %vsri, <1 x i64> %vsri1, i32 63)
   %0 = extractelement <1 x i64> %vsri2, i32 0
   ret i64 %0
 }
@@ -296,12 +296,12 @@ define i64 @test_vslid_n_s64(i64 %a, i64 %b) {
 entry:
   %vsli = insertelement <1 x i64> undef, i64 %a, i32 0
   %vsli1 = insertelement <1 x i64> undef, i64 %b, i32 0
-  %vsli2 = call <1 x i64> @llvm.aarch64.neon.vslid.n(<1 x i64> %vsli, <1 x i64> %vsli1, i32 63)
+  %vsli2 = call <1 x i64> @llvm.aarch64.neon.vsli.v1i64(<1 x i64> %vsli, <1 x i64> %vsli1, i32 63)
   %0 = extractelement <1 x i64> %vsli2, i32 0
   ret i64 %0
 }
 
-declare <1 x i64> @llvm.aarch64.neon.vslid.n(<1 x i64>, <1 x i64>, i32)
+declare <1 x i64> @llvm.aarch64.neon.vsli.v1i64(<1 x i64>, <1 x i64>, i32)
 
 define i64 @test_vslid_n_u64(i64 %a, i64 %b) {
 ; CHECK: test_vslid_n_u64
@@ -309,7 +309,7 @@ define i64 @test_vslid_n_u64(i64 %a, i64 %b) {
 entry:
   %vsli = insertelement <1 x i64> undef, i64 %a, i32 0
   %vsli1 = insertelement <1 x i64> undef, i64 %b, i32 0
-  %vsli2 = call <1 x i64> @llvm.aarch64.neon.vslid.n(<1 x i64> %vsli, <1 x i64> %vsli1, i32 63)
+  %vsli2 = call <1 x i64> @llvm.aarch64.neon.vsli.v1i64(<1 x i64> %vsli, <1 x i64> %vsli1, i32 63)
   %0 = extractelement <1 x i64> %vsli2, i32 0
   ret i64 %0
 }
