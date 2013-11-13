@@ -1711,7 +1711,7 @@ ASTConsumer *MigrateSourceAction::CreateASTConsumer(CompilerInstance &CI,
     PPRec = new PPConditionalDirectiveRecord(CI.getSourceManager());
   CI.getPreprocessor().addPPCallbacks(PPRec);
   return new ObjCMigrateASTConsumer(CI.getFrontendOpts().OutputFile,
-                                    FrontendOptions::ObjCMT_MigrateAll,
+                                    CI.getFrontendOpts().ObjCMTAction,
                                     Remapper,
                                     CI.getFileManager(),
                                     PPRec,

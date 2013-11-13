@@ -2712,6 +2712,20 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_subscripting);
       Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_property);
     }
+  } else {
+    Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_literals);
+    Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_subscripting);
+    Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_property);
+    Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_all);
+    Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_readonly_property);
+    Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_readwrite_property);
+    Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_annotation);
+    Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_instancetype);
+    Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_nsmacros);
+    Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_protocol_conformance);
+    Args.AddLastArg(CmdArgs, options::OPT_objcmt_atomic_property);
+    Args.AddLastArg(CmdArgs, options::OPT_objcmt_returns_innerpointer_property);
+    Args.AddLastArg(CmdArgs, options::OPT_objcmt_ns_nonatomic_iosonly);
   }
 
   // Add preprocessing options like -I, -D, etc. if we are using the
