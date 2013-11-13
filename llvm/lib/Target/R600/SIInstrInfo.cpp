@@ -656,18 +656,18 @@ void SIInstrInfo::reserveIndirectRegisters(BitVector &Reserved,
   for (int Index = Begin; Index <= End; ++Index)
     Reserved.set(AMDGPU::VReg_32RegClass.getRegister(Index));
 
-  for (int Index = std::max(0, Index - 1); Index <= End; ++Index)
+  for (int Index = std::max(0, Begin - 1); Index <= End; ++Index)
     Reserved.set(AMDGPU::VReg_64RegClass.getRegister(Index));
 
-  for (int Index = std::max(0, Index - 2); Index <= End; ++Index)
+  for (int Index = std::max(0, Begin - 2); Index <= End; ++Index)
     Reserved.set(AMDGPU::VReg_96RegClass.getRegister(Index));
 
-  for (int Index = std::max(0, Index - 3); Index <= End; ++Index)
+  for (int Index = std::max(0, Begin - 3); Index <= End; ++Index)
     Reserved.set(AMDGPU::VReg_128RegClass.getRegister(Index));
 
-  for (int Index = std::max(0, Index - 7); Index <= End; ++Index)
+  for (int Index = std::max(0, Begin - 7); Index <= End; ++Index)
     Reserved.set(AMDGPU::VReg_256RegClass.getRegister(Index));
 
-  for (int Index = std::max(0, Index - 15); Index <= End; ++Index)
+  for (int Index = std::max(0, Begin - 15); Index <= End; ++Index)
     Reserved.set(AMDGPU::VReg_512RegClass.getRegister(Index));
 }
