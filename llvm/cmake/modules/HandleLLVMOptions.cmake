@@ -5,7 +5,6 @@
 include(AddLLVMDefinitions)
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
-include(LLVMProcessSources)
 
 if( CMAKE_COMPILER_IS_GNUCXX )
   set(LLVM_COMPILER_IS_GCC_COMPATIBLE ON)
@@ -40,18 +39,6 @@ else()
     endif()
   endif()
 endif()
-
-if(MSVC AND LLVM_STATIC_MSVC_RUNTIME)
-  # Link against the static runtime.
-  foreach(flag CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_RELWITHDEBINFO
-      CMAKE_C_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELEASE
-      CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_MINSIZEREL)
-    llvm_replace_compiler_option("${flag}" "/MD" "/MT")
-  endforeach()
-  foreach(flag CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
-    llvm_replace_compiler_option("${flag}" "/MDd" "/MTd")
-  endforeach()
-endif()  
 
 if(WIN32)
   if(CYGWIN)

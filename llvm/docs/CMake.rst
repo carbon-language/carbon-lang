@@ -280,11 +280,6 @@ LLVM-specific variables
   are ``Address``, ``Memory`` and ``MemoryWithOrigins``. Defaults to empty
   string.
 
-**LLVM_STATIC_MSVC_RUNTIME**:BOOL
-  When building with MSVC, link against the static runtime library (/MT or /MTd
-  for release and debug builds, respectively) instead of the dynamic one.
-  Defaults to OFF.
-
 Executing the test suite
 ========================
 
