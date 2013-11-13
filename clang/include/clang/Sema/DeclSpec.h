@@ -337,6 +337,7 @@ private:
 
   // function-specifier
   unsigned FS_inline_specified : 1;
+  unsigned FS_forceinline_specified: 1;
   unsigned FS_virtual_specified : 1;
   unsigned FS_explicit_specified : 1;
   unsigned FS_noreturn_specified : 1;
@@ -381,6 +382,7 @@ private:
   SourceRange TypeofParensRange;
   SourceLocation TQ_constLoc, TQ_restrictLoc, TQ_volatileLoc, TQ_atomicLoc;
   SourceLocation FS_inlineLoc, FS_virtualLoc, FS_explicitLoc, FS_noreturnLoc;
+  SourceLocation FS_forceinlineLoc;
   SourceLocation FriendLoc, ModulePrivateLoc, ConstexprLoc;
 
   WrittenBuiltinSpecs writtenBS;
@@ -419,6 +421,7 @@ public:
       TypeSpecOwned(false),
       TypeQualifiers(TQ_unspecified),
       FS_inline_specified(false),
+      FS_forceinline_specified(false),
       FS_virtual_specified(false),
       FS_explicit_specified(false),
       FS_noreturn_specified(false),
@@ -532,8 +535,12 @@ public:
   }
 
   // function-specifier
-  bool isInlineSpecified() const { return FS_inline_specified; }
-  SourceLocation getInlineSpecLoc() const { return FS_inlineLoc; }
+  bool isInlineSpecified() const {
+    return FS_inline_specified | FS_forceinline_specified;
+  }
+  SourceLocation getInlineSpecLoc() const {
+    return FS_inline_specified ? FS_inlineLoc : FS_forceinlineLoc;
+  }
 
   bool isVirtualSpecified() const { return FS_virtual_specified; }
   SourceLocation getVirtualSpecLoc() const { return FS_virtualLoc; }
@@ -547,6 +554,8 @@ public:
   void ClearFunctionSpecs() {
     FS_inline_specified = false;
     FS_inlineLoc = SourceLocation();
+    FS_forceinline_specified = false;
+    FS_forceinlineLoc = SourceLocation();
     FS_virtual_specified = false;
     FS_virtualLoc = SourceLocation();
     FS_explicit_specified = false;
@@ -634,10 +643,16 @@ public:
   bool SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
                    unsigned &DiagID, const LangOptions &Lang);
 
-  bool setFunctionSpecInline(SourceLocation Loc);
-  bool setFunctionSpecVirtual(SourceLocation Loc);
-  bool setFunctionSpecExplicit(SourceLocation Loc);
-  bool setFunctionSpecNoreturn(SourceLocation Loc);
+  bool setFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec,
+                             unsigned &DiagID);
+  bool setFunctionSpecForceInline(SourceLocation Loc, const char *&PrevSpec,
+                                  unsigned &DiagID);
+  bool setFunctionSpecVirtual(SourceLocation Loc, const char *&PrevSpec,
+                              unsigned &DiagID);
+  bool setFunctionSpecExplicit(SourceLocation Loc, const char *&PrevSpec,
+                               unsigned &DiagID);
+  bool setFunctionSpecNoreturn(SourceLocation Loc, const char *&PrevSpec,
+                               unsigned &DiagID);
 
   bool SetFriendSpec(SourceLocation Loc, const char *&PrevSpec,
                      unsigned &DiagID);

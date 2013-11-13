@@ -30,6 +30,20 @@ void __forceinline InterlockedBitTestAndSet (long *Base, long Bit)
   };
 #endif
 }
+
+// Both inline and __forceinline is OK.
+inline void __forceinline pr8264() {
+}
+__forceinline void inline pr8264_1() {
+}
+void inline __forceinline pr8264_2() {
+}
+void __forceinline inline pr8264_3() {
+}
+// But duplicate __forceinline causes warning.
+void __forceinline __forceinline pr8264_4() {  // expected-warning{{duplicate '__forceinline' declaration specifier}}
+}
+
 _inline int foo99() { return 99; }
 
 void test_ms_alignof_alias() {

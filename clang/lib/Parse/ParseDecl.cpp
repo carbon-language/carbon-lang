@@ -2730,7 +2730,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
     // Microsoft single token adornments.
     case tok::kw___forceinline: {
-      isInvalid = DS.setFunctionSpecInline(Loc);
+      isInvalid = DS.setFunctionSpecForceInline(Loc, PrevSpec, DiagID);
       IdentifierInfo *AttrName = Tok.getIdentifierInfo();
       SourceLocation AttrNameLoc = Tok.getLocation();
       // FIXME: This does not work correctly if it is set to be a declspec
@@ -2822,18 +2822,18 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
     // function-specifier
     case tok::kw_inline:
-      isInvalid = DS.setFunctionSpecInline(Loc);
+      isInvalid = DS.setFunctionSpecInline(Loc, PrevSpec, DiagID);
       break;
     case tok::kw_virtual:
-      isInvalid = DS.setFunctionSpecVirtual(Loc);
+      isInvalid = DS.setFunctionSpecVirtual(Loc, PrevSpec, DiagID);
       break;
     case tok::kw_explicit:
-      isInvalid = DS.setFunctionSpecExplicit(Loc);
+      isInvalid = DS.setFunctionSpecExplicit(Loc, PrevSpec, DiagID);
       break;
     case tok::kw__Noreturn:
       if (!getLangOpts().C11)
         Diag(Loc, diag::ext_c11_noreturn);
-      isInvalid = DS.setFunctionSpecNoreturn(Loc);
+      isInvalid = DS.setFunctionSpecNoreturn(Loc, PrevSpec, DiagID);
       break;
 
     // alignment-specifier

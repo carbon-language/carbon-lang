@@ -36,3 +36,16 @@ void test2() {}
 struct test3s {
 } // expected-error {{expected ';' after struct}}
 typedef int test3g;
+
+// PR8264
+const const int pr8264_1 = 0;  // expected-warning {{duplicate 'const' declaration specifier}}
+volatile volatile int pr8264_2;  // expected-warning {{duplicate 'volatile' declaration specifier}}
+char * restrict restrict pr8264_3;  // expected-warning {{duplicate 'restrict' declaration specifier}}
+
+extern extern int pr8264_4;  // expected-warning {{duplicate 'extern' declaration specifier}}
+void pr8264_5() {
+  register register int x;  // expected-warning {{duplicate 'register' declaration specifier}}
+}
+
+inline inline void pr8264_6() {}  // expected-warning {{duplicate 'inline' declaration specifier}}
+_Noreturn _Noreturn void pr8264_7();  // expected-warning {{duplicate '_Noreturn' declaration specifier}}

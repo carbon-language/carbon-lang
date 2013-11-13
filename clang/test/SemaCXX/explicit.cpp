@@ -240,3 +240,9 @@ namespace Conversion {
     nfp(1); // expected-error {{type 'NotFP' does not provide a call operator}}
   }
 }
+
+namespace pr8264 {
+  struct Test {
+  explicit explicit Test(int x);  // expected-warning{{duplicate 'explicit' declaration specifier}}
+  };
+}

@@ -349,7 +349,7 @@ unsigned DeclSpec::getParsedSpecifiers() const {
     Res |= PQ_TypeSpecifier;
 
   if (FS_inline_specified || FS_virtual_specified || FS_explicit_specified ||
-      FS_noreturn_specified)
+      FS_noreturn_specified || FS_forceinline_specified)
     Res |= PQ_FunctionSpecifier;
   return Res;
 }
@@ -739,9 +739,10 @@ bool DeclSpec::SetTypeSpecError() {
 
 bool DeclSpec::SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
                            unsigned &DiagID, const LangOptions &Lang) {
-  // Duplicates are permitted in C99, but are not permitted in C++. However,
-  // since this is likely not what the user intended, we will always warn.  We
-  // do not need to set the qualifier's location since we already have it.
+  // Duplicates are permitted in C99 onwards, but are not permitted in C89 or
+  // C++.  However, since this is likely not what the user intended, we will
+  // always warn.  We do not need to set the qualifier's location since we
+  // already have it.
   if (TypeQualifiers & T) {
     bool IsExtension = true;
     if (Lang.C99)
@@ -761,29 +762,72 @@ bool DeclSpec::SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
   llvm_unreachable("Unknown type qualifier!");
 }
 
-bool DeclSpec::setFunctionSpecInline(SourceLocation Loc) {
-  // 'inline inline' is ok.
+bool DeclSpec::setFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec,
+                                     unsigned &DiagID) {
+  // 'inline inline' is ok.  However, since this is likely not what the user
+  // intended, we will always warn, similar to duplicates of type qualifiers.
+  if (FS_inline_specified) {
+    DiagID = diag::warn_duplicate_declspec;
+    PrevSpec = "inline";
+    return true;
+  }
   FS_inline_specified = true;
   FS_inlineLoc = Loc;
   return false;
 }
 
-bool DeclSpec::setFunctionSpecVirtual(SourceLocation Loc) {
-  // 'virtual virtual' is ok.
+bool DeclSpec::setFunctionSpecForceInline(SourceLocation Loc, const char *&PrevSpec,
+                                          unsigned &DiagID) {
+  if (FS_forceinline_specified) {
+    DiagID = diag::warn_duplicate_declspec;
+    PrevSpec = "__forceinline";
+    return true;
+  }
+  FS_forceinline_specified = true;
+  FS_forceinlineLoc = Loc;
+  return false;
+}
+
+bool DeclSpec::setFunctionSpecVirtual(SourceLocation Loc,
+                                      const char *&PrevSpec,
+                                      unsigned &DiagID) {
+  // 'virtual virtual' is ok, but warn as this is likely not what the user
+  // intended.
+  if (FS_virtual_specified) {
+    DiagID = diag::warn_duplicate_declspec;
+    PrevSpec = "virtual";
+    return true;
+  }
   FS_virtual_specified = true;
   FS_virtualLoc = Loc;
   return false;
 }
 
-bool DeclSpec::setFunctionSpecExplicit(SourceLocation Loc) {
-  // 'explicit explicit' is ok.
+bool DeclSpec::setFunctionSpecExplicit(SourceLocation Loc,
+                                       const char *&PrevSpec,
+                                       unsigned &DiagID) {
+  // 'explicit explicit' is ok, but warn as this is likely not what the user
+  // intended.
+  if (FS_explicit_specified) {
+    DiagID = diag::warn_duplicate_declspec;
+    PrevSpec = "explicit";
+    return true;
+  }
   FS_explicit_specified = true;
   FS_explicitLoc = Loc;
   return false;
 }
 
-bool DeclSpec::setFunctionSpecNoreturn(SourceLocation Loc) {
-  // '_Noreturn _Noreturn' is ok.
+bool DeclSpec::setFunctionSpecNoreturn(SourceLocation Loc,
+                                       const char *&PrevSpec,
+                                       unsigned &DiagID) {
+  // '_Noreturn _Noreturn' is ok, but warn as this is likely not what the user
+  // intended.
+  if (FS_noreturn_specified) {
+    DiagID = diag::warn_duplicate_declspec;
+    PrevSpec = "_Noreturn";
+    return true;
+  }
   FS_noreturn_specified = true;
   FS_noreturnLoc = Loc;
   return false;
