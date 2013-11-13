@@ -25,6 +25,13 @@
 ///   a Function.
 /// * ModulePassManager must be directly run, runs each pass over the Module.
 ///
+/// Note that the implementations of the pass managers use concept-based
+/// polymorphism as outlined in the "Value Semantics and Concept-based
+/// Polymorphism" talk (or its abbreviated sibling "Inheritance Is The Base
+/// Class of Evil") by Sean Parent:
+/// * http://github.com/sean-parent/sean-parent.github.com/wiki/Papers-and-Presentations
+/// * http://channel9.msdn.com/Events/GoingNative/2013/Inheritance-Is-The-Base-Class-of-Evil
+///
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/DenseMap.h"
