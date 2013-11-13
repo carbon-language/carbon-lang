@@ -149,6 +149,10 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
 
+  // Exception handling
+  setExceptionPointerRegister(XCore::R0);
+  setExceptionSelectorRegister(XCore::R1);
+
   // Atomic operations
   setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Custom);
 

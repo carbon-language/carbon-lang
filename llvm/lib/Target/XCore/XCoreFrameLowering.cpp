@@ -88,6 +88,7 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo *MMI = &MF.getMMI();
+  const MCRegisterInfo *MRI = MMI->getContext().getRegisterInfo();
   const XCoreInstrInfo &TII =
     *static_cast<const XCoreInstrInfo*>(MF.getTarget().getInstrInfo());
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
@@ -119,21 +120,28 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
   bool saveLR = XFI->getUsesLR();
   // Do we need to allocate space on the stack?
   if (FrameSize) {
+    bool LRSavedOnEntry = false;
     int Opcode;
     if (saveLR && (MFI->getObjectOffset(XFI->getLRSpillSlot()) == 0)) {
       Opcode = (isU6) ? XCore::ENTSP_u6 : XCore::ENTSP_lu6;
       MBB.addLiveIn(XCore::LR);
       saveLR = false;
+      LRSavedOnEntry = true;
     } else {
       Opcode = (isU6) ? XCore::EXTSP_u6 : XCore::EXTSP_lu6;
     }
     BuildMI(MBB, MBBI, dl, TII.get(Opcode)).addImm(FrameSize);
 
     if (emitFrameMoves) {
-
       // Show update of SP.
       MCSymbol *FrameLabel = MMI->getContext().CreateTempSymbol();
       BuildMI(MBB, MBBI, dl, TII.get(XCore::PROLOG_LABEL)).addSym(FrameLabel);
+      MMI->addFrameInst(MCCFIInstruction::createDefCfaOffset(FrameLabel,
+                                                             -FrameSize*4));
+      if (LRSavedOnEntry) {
+        unsigned Reg = MRI->getDwarfRegNum(XCore::LR, true);
+        MMI->addFrameInst(MCCFIInstruction::createOffset(FrameLabel, Reg, 0));
+      }
     }
   }
   if (saveLR) {
@@ -144,6 +152,9 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
     if (emitFrameMoves) {
       MCSymbol *SaveLRLabel = MMI->getContext().CreateTempSymbol();
       BuildMI(MBB, MBBI, dl, TII.get(XCore::PROLOG_LABEL)).addSym(SaveLRLabel);
+      unsigned Reg = MRI->getDwarfRegNum(XCore::LR, true);
+      MMI->addFrameInst(MCCFIInstruction::createOffset(SaveLRLabel, Reg,
+                                                       LRSpillOffset));
     }
   }
 
@@ -156,15 +167,34 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
     if (emitFrameMoves) {
       MCSymbol *SaveR10Label = MMI->getContext().CreateTempSymbol();
       BuildMI(MBB, MBBI, dl, TII.get(XCore::PROLOG_LABEL)).addSym(SaveR10Label);
+      unsigned Reg = MRI->getDwarfRegNum(XCore::R10, true);
+      MMI->addFrameInst(MCCFIInstruction::createOffset(SaveR10Label, Reg,
+                                                       FPSpillOffset));
     }
     // Set the FP from the SP.
     unsigned FramePtr = XCore::R10;
-    BuildMI(MBB, MBBI, dl, TII.get(XCore::LDAWSP_ru6), FramePtr)
-      .addImm(0);
+    BuildMI(MBB, MBBI, dl, TII.get(XCore::LDAWSP_ru6), FramePtr).addImm(0);
     if (emitFrameMoves) {
       // Show FP is now valid.
       MCSymbol *FrameLabel = MMI->getContext().CreateTempSymbol();
       BuildMI(MBB, MBBI, dl, TII.get(XCore::PROLOG_LABEL)).addSym(FrameLabel);
+      unsigned Reg = MRI->getDwarfRegNum(FramePtr, true);
+      MMI->addFrameInst(MCCFIInstruction::createDefCfaRegister(FrameLabel,
+                                                               Reg));
+    }
+  }
+
+  if (emitFrameMoves) {
+    // Frame moves for callee saved.
+    std::vector<std::pair<MCSymbol*, CalleeSavedInfo> >&SpillLabels =
+        XFI->getSpillLabels();
+    for (unsigned I = 0, E = SpillLabels.size(); I != E; ++I) {
+      MCSymbol *SpillLabel = SpillLabels[I].first;
+      CalleeSavedInfo &CSI = SpillLabels[I].second;
+      int Offset = MFI->getObjectOffset(CSI.getFrameIdx());
+      unsigned Reg = MRI->getDwarfRegNum(CSI.getReg(), true);
+      MMI->addFrameInst(MCCFIInstruction::createOffset(SpillLabel, Reg,
+                                                       Offset));
     }
   }
 }

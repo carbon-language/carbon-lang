@@ -30,5 +30,7 @@ XCoreMCAsmInfo::XCoreMCAsmInfo(StringRef TT) {
 
   // Debug
   HasLEB128 = true;
+  ExceptionsType = ExceptionHandling::DwarfCFI;
+  DwarfRegNumForCFI = true;
 }
 
