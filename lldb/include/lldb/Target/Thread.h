@@ -17,6 +17,7 @@
 #include "lldb/Core/UserID.h"
 #include "lldb/Core/UserSettingsController.h"
 #include "lldb/Target/ExecutionContextScope.h"
+#include "lldb/Target/RegisterCheckpoint.h"
 #include "lldb/Target/StackFrameList.h"
 
 #define LLDB_THREAD_MAX_STOP_EXC_DATA 8
@@ -130,79 +131,12 @@ public:
     DISALLOW_COPY_AND_ASSIGN (ThreadEventData);
     };
     
-    // TODO: You shouldn't just checkpoint the register state alone, so this should get
-    // moved to protected.  To do that ThreadStateCheckpoint needs to be returned as a token...
-    class RegisterCheckpoint
-    {
-    public:
-
-        RegisterCheckpoint() :
-            m_stack_id (),
-            m_data_sp ()
-        {
-        }
-
-        RegisterCheckpoint (const StackID &stack_id) :
-            m_stack_id (stack_id),
-            m_data_sp ()
-        {
-        }
-
-        ~RegisterCheckpoint()
-        {
-        }
-
-        const RegisterCheckpoint&
-        operator= (const RegisterCheckpoint &rhs)
-        {
-            if (this != &rhs)
-            {
-                this->m_stack_id = rhs.m_stack_id;
-                this->m_data_sp  = rhs.m_data_sp;
-            }
-            return *this;
-        }
-        
-        RegisterCheckpoint (const RegisterCheckpoint &rhs) :
-            m_stack_id (rhs.m_stack_id),
-            m_data_sp (rhs.m_data_sp)
-        {
-        }
-        
-        const StackID &
-        GetStackID()
-        {
-            return m_stack_id;
-        }
-
-        void
-        SetStackID (const StackID &stack_id)
-        {
-            m_stack_id = stack_id;
-        }
-
-        lldb::DataBufferSP &
-        GetData()
-        {
-            return m_data_sp;
-        }
-
-        const lldb::DataBufferSP &
-        GetData() const
-        {
-            return m_data_sp;
-        }
-
-    protected:
-        StackID m_stack_id;
-        lldb::DataBufferSP m_data_sp;
-    };
 
     struct ThreadStateCheckpoint
     {
         uint32_t           orig_stop_id;  // Dunno if I need this yet but it is an interesting bit of data.
         lldb::StopInfoSP   stop_info_sp;  // You have to restore the stop info or you might continue with the wrong signals.
-        RegisterCheckpoint register_backup;  // You need to restore the registers, of course...
+        lldb::RegisterCheckpointSP register_backup_sp;  // You need to restore the registers, of course...
         uint32_t           current_inlined_depth;
         lldb::addr_t       current_inlined_pc;
     };
@@ -1004,16 +938,6 @@ protected:
 
     typedef std::vector<lldb::ThreadPlanSP> plan_stack;
 
-    virtual bool
-    SaveFrameZeroState (RegisterCheckpoint &checkpoint);
-
-    virtual bool
-    RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint);
-    
-    // register_data_sp must be a DataSP passed to ReadAllRegisterValues.
-    bool
-    ResetFrameZeroRegisters (lldb::DataBufferSP register_data_sp);
-
     virtual lldb_private::Unwind *
     GetUnwinder ();
 
@@ -1035,12 +959,6 @@ protected:
     lldb::StackFrameListSP
     GetStackFrameList ();
     
-    struct ThreadState
-    {
-        uint32_t           orig_stop_id;
-        lldb::StopInfoSP   stop_info_sp;
-        RegisterCheckpoint register_backup;
-    };
 
     //------------------------------------------------------------------
     // Classes that inherit from Process can see and modify these

@@ -162,6 +162,7 @@ class   PythonDictionary;
 class   PythonInteger;
 class   PythonObject;
 class   PythonString;
+class   RegisterCheckpoint;
 class   RegisterContext;
 class   RegisterLocation;
 class   RegisterLocationList;
@@ -329,6 +330,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::ProcessLaunchInfo> ProcessLaunchInfoSP;
     typedef std::weak_ptr<lldb_private::Process> ProcessWP;
     typedef std::shared_ptr<lldb_private::Property> PropertySP;
+    typedef std::shared_ptr<lldb_private::RegisterCheckpoint> RegisterCheckpointSP;
     typedef std::shared_ptr<lldb_private::RegisterContext> RegisterContextSP;
     typedef std::shared_ptr<lldb_private::RegularExpression> RegularExpressionSP;
     typedef std::shared_ptr<lldb_private::ScriptInterpreterObject> ScriptInterpreterObjectSP;

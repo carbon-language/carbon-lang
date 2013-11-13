@@ -1765,6 +1765,31 @@ DNBThreadSetRegisterContext (nub_process_t pid, nub_thread_t tid, const void *bu
     return 0;
 }
 
+uint32_t
+DNBThreadSaveRegisterState (nub_process_t pid, nub_thread_t tid)
+{
+    if (tid != INVALID_NUB_THREAD)
+    {
+        MachProcessSP procSP;
+        if (GetProcessSP (pid, procSP))
+            return procSP->GetThreadList().SaveRegisterState (tid);
+    }
+    return 0;    
+}
+nub_bool_t
+DNBThreadRestoreRegisterState (nub_process_t pid, nub_thread_t tid, uint32_t save_id)
+{
+    if (tid != INVALID_NUB_THREAD)
+    {
+        MachProcessSP procSP;
+        if (GetProcessSP (pid, procSP))
+            return procSP->GetThreadList().RestoreRegisterState (tid, save_id);
+    }
+    return false;
+}
+
+
+
 //----------------------------------------------------------------------
 // Read a register value by name.
 //----------------------------------------------------------------------

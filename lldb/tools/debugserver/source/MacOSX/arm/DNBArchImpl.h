@@ -18,6 +18,8 @@
 
 #include "DNBArch.h"
 
+#include <map>
+
 class MachThread;
 
 class DNBArchMachARM : public DNBArchProtocol

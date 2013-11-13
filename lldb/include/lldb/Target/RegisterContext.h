@@ -59,6 +59,18 @@ public:
     virtual bool
     WriteRegister (const RegisterInfo *reg_info, const RegisterValue &reg_value) = 0;
     
+    virtual bool
+    ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
+    {
+        return false;
+    }
+    
+    virtual bool
+    WriteAllRegisterValues (const lldb::DataBufferSP &data_sp)
+    {
+        return false;
+    }
+
     // These two functions are used to implement "push" and "pop" of register states.  They are used primarily
     // for expression evaluation, where we need to push a new state (storing the old one in data_sp) and then
     // restoring the original state by passing the data_sp we got from ReadAllRegisters to WriteAllRegisterValues.
@@ -67,10 +79,10 @@ public:
     // so these API's should only be used when this behavior is needed.
     
     virtual bool
-    ReadAllRegisterValues (lldb::DataBufferSP &data_sp) = 0;
-
+    ReadAllRegisterValues (lldb_private::RegisterCheckpoint &reg_checkpoint);
+    
     virtual bool
-    WriteAllRegisterValues (const lldb::DataBufferSP &data_sp) = 0;
+    WriteAllRegisterValues (const lldb_private::RegisterCheckpoint &reg_checkpoint);
     
     bool
     CopyFromRegisterContext (lldb::RegisterContextSP context);

@@ -58,10 +58,22 @@ public:
     static bool
     SetArchitecture (uint32_t cpu_type);
     
+    DNBArchProtocol () :
+        m_save_id(0)
+    {
+        
+    }
+    
+    virtual ~DNBArchProtocol ()
+    {
+        
+    }
     virtual bool            GetRegisterValue (int set, int reg, DNBRegisterValue *value) = 0;
     virtual bool            SetRegisterValue (int set, int reg, const DNBRegisterValue *value) = 0;
     virtual nub_size_t      GetRegisterContext (void *buf, nub_size_t buf_len) = 0;
     virtual nub_size_t      SetRegisterContext (const void *buf, nub_size_t buf_len) = 0;
+    virtual uint32_t        SaveRegisterState () = 0;
+    virtual bool            RestoreRegisterState (uint32_t save_id) = 0;
 
     virtual kern_return_t   GetRegisterState (int set, bool force) = 0;
     virtual kern_return_t   SetRegisterState (int set) = 0;
@@ -85,6 +97,11 @@ public:
 protected:
     friend class MachThread;
 
+    uint32_t                GetNextRegisterStateSaveID ()
+                            {
+                                return ++m_save_id;
+                            }
+
     enum
     {
         Trans_Pending = 0,      // Transaction is pending, and checkpoint state has been snapshotted.
@@ -94,6 +111,9 @@ protected:
     virtual bool StartTransForHWP() { return true; }
     virtual bool RollbackTransForHWP() { return true; }
     virtual bool FinishTransForHWP() { return true; }
+    
+    uint32_t m_save_id;         // An always incrementing integer ID used with SaveRegisterState/RestoreRegisterState
+
 };
 
 

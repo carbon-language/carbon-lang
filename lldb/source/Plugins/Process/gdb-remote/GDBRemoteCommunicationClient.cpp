@@ -65,6 +65,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_attach_or_wait_reply(eLazyBoolCalculate),
     m_prepare_for_reg_writing_reply (eLazyBoolCalculate),
     m_supports_p (eLazyBoolCalculate),
+    m_supports_QSaveRegisterState (eLazyBoolCalculate),
     m_supports_qProcessInfoPID (true),
     m_supports_qfProcessInfo (true),
     m_supports_qUserName (true),
@@ -208,6 +209,7 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_vCont_s = eLazyBoolCalculate;
     m_supports_vCont_S = eLazyBoolCalculate;
     m_supports_p = eLazyBoolCalculate;
+    m_supports_QSaveRegisterState = eLazyBoolCalculate;
     m_qHostInfo_is_valid = eLazyBoolCalculate;
     m_qProcessInfo_is_valid = eLazyBoolCalculate;
     m_supports_alloc_dealloc_memory = eLazyBoolCalculate;
@@ -2806,6 +2808,137 @@ GDBRemoteCommunicationClient::CalculateMD5 (const lldb_private::FileSpec& file_s
         low = response.GetHexMaxU64(false, UINT64_MAX);
         high = response.GetHexMaxU64(false, UINT64_MAX);
         return true;
+    }
+    return false;
+}
+
+bool
+GDBRemoteCommunicationClient::ReadRegister(lldb::tid_t tid, uint32_t reg, StringExtractorGDBRemote &response)
+{
+    Mutex::Locker locker;
+    if (GetSequenceMutex (locker, "Didn't get sequence mutex for p packet."))
+    {
+        const bool thread_suffix_supported = GetThreadSuffixSupported();
+        
+        if (thread_suffix_supported || SetCurrentThread(tid))
+        {
+            char packet[64];
+            int packet_len = 0;
+            if (thread_suffix_supported)
+                packet_len = ::snprintf (packet, sizeof(packet), "p%x;thread:%4.4" PRIx64 ";", reg, tid);
+            else
+                packet_len = ::snprintf (packet, sizeof(packet), "p%x", reg);
+            assert (packet_len < ((int)sizeof(packet) - 1));
+            return SendPacketAndWaitForResponse(packet, response, false);
+        }
+    }
+    return false;
+
+}
+
+
+bool
+GDBRemoteCommunicationClient::ReadAllRegisters (lldb::tid_t tid, StringExtractorGDBRemote &response)
+{
+    Mutex::Locker locker;
+    if (GetSequenceMutex (locker, "Didn't get sequence mutex for g packet."))
+    {
+        const bool thread_suffix_supported = GetThreadSuffixSupported();
+
+        if (thread_suffix_supported || SetCurrentThread(tid))
+        {
+            char packet[64];
+            int packet_len = 0;
+            // Get all registers in one packet
+            if (thread_suffix_supported)
+                packet_len = ::snprintf (packet, sizeof(packet), "g;thread:%4.4" PRIx64 ";", tid);
+            else
+                packet_len = ::snprintf (packet, sizeof(packet), "g");
+            assert (packet_len < ((int)sizeof(packet) - 1));
+            return SendPacketAndWaitForResponse(packet, response, false);
+        }
+    }
+    return false;
+}
+bool
+GDBRemoteCommunicationClient::SaveRegisterState (lldb::tid_t tid, uint32_t &save_id)
+{
+    save_id = 0; // Set to invalid save ID
+    if (m_supports_QSaveRegisterState == eLazyBoolNo)
+        return false;
+    
+    m_supports_QSaveRegisterState = eLazyBoolYes;
+    Mutex::Locker locker;
+    if (GetSequenceMutex (locker, "Didn't get sequence mutex for QSaveRegisterState."))
+    {
+        const bool thread_suffix_supported = GetThreadSuffixSupported();
+        if (thread_suffix_supported || SetCurrentThread(tid))
+        {
+            char packet[256];
+            if (thread_suffix_supported)
+                ::snprintf (packet, sizeof(packet), "QSaveRegisterState;thread:%4.4" PRIx64 ";", tid);
+            else
+                ::strncpy (packet, "QSaveRegisterState", sizeof(packet));
+            
+            StringExtractorGDBRemote response;
+
+            if (SendPacketAndWaitForResponse(packet, response, false))
+            {
+                if (response.IsUnsupportedResponse())
+                {
+                    // This packet isn't supported, don't try calling it again
+                    m_supports_QSaveRegisterState = eLazyBoolNo;
+                }
+                    
+                const uint32_t response_save_id = response.GetU32(0);
+                if (response_save_id != 0)
+                {
+                    save_id = response_save_id;
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool
+GDBRemoteCommunicationClient::RestoreRegisterState (lldb::tid_t tid, uint32_t save_id)
+{
+    // We use the "m_supports_QSaveRegisterState" variable here becuase the
+    // QSaveRegisterState and QRestoreRegisterState packets must both be supported in
+    // order to be useful
+    if (m_supports_QSaveRegisterState == eLazyBoolNo)
+        return false;
+    
+    Mutex::Locker locker;
+    if (GetSequenceMutex (locker, "Didn't get sequence mutex for QRestoreRegisterState."))
+    {
+        const bool thread_suffix_supported = GetThreadSuffixSupported();
+        if (thread_suffix_supported || SetCurrentThread(tid))
+        {
+            char packet[256];
+            if (thread_suffix_supported)
+                ::snprintf (packet, sizeof(packet), "QRestoreRegisterState:%u;thread:%4.4" PRIx64 ";", save_id, tid);
+            else
+                ::snprintf (packet, sizeof(packet), "QRestoreRegisterState:%u" PRIx64 ";", save_id);
+            
+            StringExtractorGDBRemote response;
+            
+            if (SendPacketAndWaitForResponse(packet, response, false))
+            {
+                if (response.IsOKResponse())
+                {
+                    return true;
+                }
+                else if (response.IsUnsupportedResponse())
+                {
+                    // This packet isn't supported, don't try calling this packet or
+                    // QSaveRegisterState again...
+                    m_supports_QSaveRegisterState = eLazyBoolNo;
+                }
+            }
+        }
     }
     return false;
 }

@@ -119,7 +119,9 @@ public:
         watchpoint_support_info,        // 'qWatchpointSupportInfo:'
         allocate_memory,                // '_M'
         deallocate_memory,              // '_m'
-
+        save_register_state,            // '_g'
+        restore_register_state,         // '_G'
+        
         unknown_type
     } PacketEnum;
 
@@ -216,6 +218,8 @@ public:
     rnb_err_t HandlePacket_ILLFORMED (const char *file, int line, const char *p, const char *description);
     rnb_err_t HandlePacket_AllocateMemory (const char *p);
     rnb_err_t HandlePacket_DeallocateMemory (const char *p);
+    rnb_err_t HandlePacket_SaveRegisterState (const char *p);
+    rnb_err_t HandlePacket_RestoreRegisterState (const char *p);
     rnb_err_t HandlePacket_MemoryRegionInfo (const char *p);
     rnb_err_t HandlePacket_GetProfileData(const char *p);
     rnb_err_t HandlePacket_SetEnableAsyncProfiling(const char *p);

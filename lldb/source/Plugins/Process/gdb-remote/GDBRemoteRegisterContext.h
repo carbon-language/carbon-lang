@@ -91,6 +91,12 @@ public:
     virtual bool
     WriteAllRegisterValues (const lldb::DataBufferSP &data_sp);
 
+    virtual bool
+    ReadAllRegisterValues (lldb_private::RegisterCheckpoint &reg_checkpoint);
+
+    virtual bool
+    WriteAllRegisterValues (const lldb_private::RegisterCheckpoint &reg_checkpoint);
+
     virtual uint32_t
     ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num);
 

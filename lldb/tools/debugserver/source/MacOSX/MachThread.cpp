@@ -617,6 +617,18 @@ MachThread::SetRegisterContext (const void *buf, nub_size_t buf_len)
 }
 
 uint32_t
+MachThread::SaveRegisterState ()
+{
+    return m_arch_ap->SaveRegisterState();
+    
+}
+bool
+MachThread::RestoreRegisterState (uint32_t save_id)
+{
+    return m_arch_ap->RestoreRegisterState(save_id);
+}
+
+uint32_t
 MachThread::EnableHardwareBreakpoint (const DNBBreakpoint *bp)
 {
     if (bp != NULL && bp->IsBreakpoint())

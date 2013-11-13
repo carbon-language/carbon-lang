@@ -447,7 +447,7 @@ kern_return_t
 DNBArchImplX86_64::SetGPRState()
 {
     kern_return_t kret = ::thread_abort_safely(m_thread->MachPortNumber());
-    DNBLogThreadedIf (LOG_THREAD, "thread = 0x%4.4x calling thread_abort_safely (tid) => %u (SetGPRState() for stop_count = %u)", m_thread->MachPortNumber(), kret, m_thread->Process()->StopCount());    
+    DNBLogThreadedIf (LOG_THREAD, "thread = 0x%4.4x calling thread_abort_safely (tid) => %u (SetGPRState() for stop_count = %u)", m_thread->MachPortNumber(), kret, m_thread->Process()->StopCount());
 
     m_state.SetError(e_regSetGPR, Write, ::thread_set_state(m_thread->MachPortNumber(), __x86_64_THREAD_STATE, (thread_state_t)&m_state.context.gpr, e_regSetWordSizeGPR));
     DNBLogThreadedIf (LOG_THREAD, "::thread_set_state (0x%4.4x, %u, &gpr, %u) => 0x%8.8x"
@@ -2187,6 +2187,59 @@ DNBArchImplX86_64::SetRegisterContext (const void *buf, nub_size_t buf_len)
     }
     DNBLogThreadedIf (LOG_THREAD, "DNBArchImplX86_64::SetRegisterContext (buf = %p, len = %llu) => %llu", buf, (uint64_t)buf_len, (uint64_t)size);
     return size;
+}
+
+uint32_t
+DNBArchImplX86_64::SaveRegisterState ()
+{
+    kern_return_t kret = ::thread_abort_safely(m_thread->MachPortNumber());
+    DNBLogThreadedIf (LOG_THREAD, "thread = 0x%4.4x calling thread_abort_safely (tid) => %u (SetGPRState() for stop_count = %u)", m_thread->MachPortNumber(), kret, m_thread->Process()->StopCount());
+
+    // Always re-read the registers because above we call thread_abort_safely();
+    bool force = true;
+    
+    if ((kret = GetGPRState(force)) != KERN_SUCCESS)
+    {
+        DNBLogThreadedIf (LOG_THREAD, "DNBArchImplX86_64::SaveRegisterState () error: GPR regs failed to read: %u ", kret);
+    }
+    else if ((kret = GetFPUState(force)) != KERN_SUCCESS)
+    {
+        DNBLogThreadedIf (LOG_THREAD, "DNBArchImplX86_64::SaveRegisterState () error: %s regs failed to read: %u", CPUHasAVX() ? "AVX" : "FPU", kret);
+    }
+    else
+    {
+        const uint32_t save_id = GetNextRegisterStateSaveID ();
+        m_saved_register_states[save_id] = m_state.context;
+        return save_id;
+    }
+    return 0;
+}
+bool
+DNBArchImplX86_64::RestoreRegisterState (uint32_t save_id)
+{
+    SaveRegiterStates::iterator pos = m_saved_register_states.find(save_id);
+    if (pos != m_saved_register_states.end())
+    {
+        m_state.context.gpr = pos->second.gpr;
+        m_state.context.fpu = pos->second.fpu;
+        m_state.SetError(e_regSetGPR, Read, 0);
+        m_state.SetError(e_regSetFPU, Read, 0);
+        kern_return_t kret;
+        bool success = true;
+        if ((kret = SetGPRState()) != KERN_SUCCESS)
+        {
+            DNBLogThreadedIf (LOG_THREAD, "DNBArchImplX86_64::RestoreRegisterState (save_id = %u) error: GPR regs failed to write: %u", save_id, kret);
+            success = false;
+        }
+        else if ((kret = SetFPUState()) != KERN_SUCCESS)
+        {
+            DNBLogThreadedIf (LOG_THREAD, "DNBArchImplX86_64::RestoreRegisterState (save_id = %u) error: %s regs failed to write: %u", save_id, CPUHasAVX() ? "AVX" : "FPU", kret);
+            success = false;
+        }
+        m_saved_register_states.erase(pos);
+        return success;
+    }
+    return false;
 }
 
 

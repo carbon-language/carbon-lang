@@ -191,6 +191,8 @@ RNBRemote::CreatePacketTable  ()
 //  t.push_back (Packet (pass_signals_to_inferior,      &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "QPassSignals:", "Specify which signals are passed to the inferior"));
     t.push_back (Packet (allocate_memory,               &RNBRemote::HandlePacket_AllocateMemory, NULL, "_M", "Allocate memory in the inferior process."));
     t.push_back (Packet (deallocate_memory,             &RNBRemote::HandlePacket_DeallocateMemory, NULL, "_m", "Deallocate memory in the inferior process."));
+    t.push_back (Packet (save_register_state,           &RNBRemote::HandlePacket_SaveRegisterState, NULL, "QSaveRegisterState", "Save the register state for the current thread and return a decimal save ID."));
+    t.push_back (Packet (restore_register_state,        &RNBRemote::HandlePacket_RestoreRegisterState, NULL, "QRestoreRegisterState:", "Restore the register state given a save ID previosly returned from a call to QSaveRegisterState."));
     t.push_back (Packet (memory_region_info,            &RNBRemote::HandlePacket_MemoryRegionInfo, NULL, "qMemoryRegionInfo", "Return size and attributes of a memory region that contains the given address"));
     t.push_back (Packet (get_profile_data,              &RNBRemote::HandlePacket_GetProfileData, NULL, "qGetProfileData", "Return profiling data of the current target."));
     t.push_back (Packet (set_enable_profiling,          &RNBRemote::HandlePacket_SetEnableAsyncProfiling, NULL, "QSetEnableAsyncProfiling", "Enable or disable the profiling of current target."));
@@ -2728,6 +2730,88 @@ RNBRemote::HandlePacket_DeallocateMemory (const char *p)
             return SendPacket ("OK");
     }
     return SendPacket ("E54");
+}
+
+
+// FORMAT: QSaveRegisterState;thread:TTTT;  (when thread suffix is supported)
+// FORMAT: QSaveRegisterState               (when thread suffix is NOT supported)
+//      TTTT: thread ID in hex
+//
+// RESPONSE:
+//      SAVEID: Where SAVEID is a decimal number that represents the save ID
+//              that can be passed back into a "QRestoreRegisterState" packet
+//      EXX: error code
+//
+// EXAMPLES:
+//      QSaveRegisterState;thread:1E34;     (when thread suffix is supported)
+//      QSaveRegisterState                  (when thread suffix is NOT supported)
+
+rnb_err_t
+RNBRemote::HandlePacket_SaveRegisterState (const char *p)
+{
+    nub_process_t pid = m_ctx.ProcessID ();
+    nub_thread_t tid = ExtractThreadIDFromThreadSuffix (p);
+    if (tid == INVALID_NUB_THREAD)
+    {
+        if (m_thread_suffix_supported)
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "No thread specified in QSaveRegisterState packet");
+        else
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "No thread was is set with the Hg packet");
+    }
+    
+    // Get the register context size first by calling with NULL buffer
+    const uint32_t save_id = DNBThreadSaveRegisterState(pid, tid);
+    if (save_id != 0)
+    {
+        char response[64];
+        snprintf (response, sizeof(response), "%u", save_id);
+        return SendPacket (response);
+    }
+    else
+    {
+        return SendPacket ("E75");
+    }
+}
+// FORMAT: QRestoreRegisterState:SAVEID;thread:TTTT;  (when thread suffix is supported)
+// FORMAT: QRestoreRegisterState:SAVEID               (when thread suffix is NOT supported)
+//      TTTT: thread ID in hex
+//      SAVEID: a decimal number that represents the save ID that was
+//              returned from a call to "QSaveRegisterState"
+//
+// RESPONSE:
+//      OK: successfully restored registers for the specified thread
+//      EXX: error code
+//
+// EXAMPLES:
+//      QRestoreRegisterState:1;thread:1E34;     (when thread suffix is supported)
+//      QRestoreRegisterState:1                  (when thread suffix is NOT supported)
+
+rnb_err_t
+RNBRemote::HandlePacket_RestoreRegisterState (const char *p)
+{
+    nub_process_t pid = m_ctx.ProcessID ();
+    nub_thread_t tid = ExtractThreadIDFromThreadSuffix (p);
+    if (tid == INVALID_NUB_THREAD)
+    {
+        if (m_thread_suffix_supported)
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "No thread specified in QSaveRegisterState packet");
+        else
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "No thread was is set with the Hg packet");
+    }
+    
+    StringExtractor packet (p);
+    packet.SetFilePos(strlen("QRestoreRegisterState:")); // Skip the "QRestoreRegisterState:"
+    const uint32_t save_id = packet.GetU32(0);
+                      
+    if (save_id != 0)
+    {
+        // Get the register context size first by calling with NULL buffer
+        if (DNBThreadRestoreRegisterState(pid, tid, save_id))
+            return SendPacket ("OK");
+        else
+            return SendPacket ("E77");
+    }
+    return SendPacket ("E76");
 }
 
 static bool

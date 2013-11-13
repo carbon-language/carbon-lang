@@ -153,20 +153,13 @@ bool
 GDBRemoteRegisterContext::GetPrimordialRegister(const lldb_private::RegisterInfo *reg_info,
                                                 GDBRemoteCommunicationClient &gdb_comm)
 {
-    char packet[64];
-    StringExtractorGDBRemote response;
-    int packet_len = 0;
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
-    if (gdb_comm.GetThreadSuffixSupported())
-        packet_len = ::snprintf (packet, sizeof(packet), "p%x;thread:%4.4" PRIx64 ";", reg, m_thread.GetProtocolID());
-    else
-        packet_len = ::snprintf (packet, sizeof(packet), "p%x", reg);
-    assert (packet_len < ((int)sizeof(packet) - 1));
-    if (gdb_comm.SendPacketAndWaitForResponse(packet, response, false))
+    StringExtractorGDBRemote response;
+    if (gdb_comm.ReadRegister(m_thread.GetProtocolID(), reg, response))
         return PrivateSetRegisterValue (reg, response);
-
     return false;
 }
+
 bool
 GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataExtractor &data)
 {
@@ -185,93 +178,51 @@ GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataE
 
     if (!GetRegisterIsValid(reg))
     {
-        Mutex::Locker locker;
-        if (gdb_comm.GetSequenceMutex (locker, "Didn't get sequence mutex for read register."))
+        if (m_read_all_at_once)
         {
-            const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
-            ProcessSP process_sp (m_thread.GetProcess());
-            if (thread_suffix_supported || static_cast<ProcessGDBRemote *>(process_sp.get())->GetGDBRemote().SetCurrentThread(m_thread.GetProtocolID()))
+            StringExtractorGDBRemote response;
+            if (!gdb_comm.ReadAllRegisters(m_thread.GetProtocolID(), response))
+                return false;
+            if (response.IsNormalResponse())
+                if (response.GetHexBytes ((void *)m_reg_data.GetDataStart(), m_reg_data.GetByteSize(), '\xcc') == m_reg_data.GetByteSize())
+                    SetAllRegisterValid (true);
+        }
+        else if (reg_info->value_regs)
+        {
+            // Process this composite register request by delegating to the constituent
+            // primordial registers.
+            
+            // Index of the primordial register.
+            bool success = true;
+            for (uint32_t idx = 0; success; ++idx)
             {
-                char packet[64];
-                StringExtractorGDBRemote response;
-                int packet_len = 0;
-                if (m_read_all_at_once)
-                {
-                    // Get all registers in one packet
-                    if (thread_suffix_supported)
-                        packet_len = ::snprintf (packet, sizeof(packet), "g;thread:%4.4" PRIx64 ";", m_thread.GetProtocolID());
-                    else
-                        packet_len = ::snprintf (packet, sizeof(packet), "g");
-                    assert (packet_len < ((int)sizeof(packet) - 1));
-                    if (gdb_comm.SendPacketAndWaitForResponse(packet, response, false))
-                    {
-                        if (response.IsNormalResponse())
-                            if (response.GetHexBytes ((void *)m_reg_data.GetDataStart(), m_reg_data.GetByteSize(), '\xcc') == m_reg_data.GetByteSize())
-                                SetAllRegisterValid (true);
-                    }
-                }
-                else if (reg_info->value_regs)
-                {
-                    // Process this composite register request by delegating to the constituent
-                    // primordial registers.
-                    
-                    // Index of the primordial register.
-                    bool success = true;
-                    for (uint32_t idx = 0; success; ++idx)
-                    {
-                        const uint32_t prim_reg = reg_info->value_regs[idx];
-                        if (prim_reg == LLDB_INVALID_REGNUM)
-                            break;
-                        // We have a valid primordial regsiter as our constituent.
-                        // Grab the corresponding register info.
-                        const RegisterInfo *prim_reg_info = GetRegisterInfoAtIndex(prim_reg);
-                        if (prim_reg_info == NULL)
-                            success = false;
-                        else
-                        {
-                            // Read the containing register if it hasn't already been read
-                            if (!GetRegisterIsValid(prim_reg))
-                                success = GetPrimordialRegister(prim_reg_info, gdb_comm);
-                        }
-                    }
-
-                    if (success)
-                    {
-                        // If we reach this point, all primordial register requests have succeeded.
-                        // Validate this composite register.
-                        SetRegisterIsValid (reg_info, true);
-                    }
-                }
+                const uint32_t prim_reg = reg_info->value_regs[idx];
+                if (prim_reg == LLDB_INVALID_REGNUM)
+                    break;
+                // We have a valid primordial regsiter as our constituent.
+                // Grab the corresponding register info.
+                const RegisterInfo *prim_reg_info = GetRegisterInfoAtIndex(prim_reg);
+                if (prim_reg_info == NULL)
+                    success = false;
                 else
                 {
-                    // Get each register individually
-                    GetPrimordialRegister(reg_info, gdb_comm);
+                    // Read the containing register if it hasn't already been read
+                    if (!GetRegisterIsValid(prim_reg))
+                        success = GetPrimordialRegister(prim_reg_info, gdb_comm);
                 }
+            }
+
+            if (success)
+            {
+                // If we reach this point, all primordial register requests have succeeded.
+                // Validate this composite register.
+                SetRegisterIsValid (reg_info, true);
             }
         }
         else
         {
-#if LLDB_CONFIGURATION_DEBUG
-            StreamString strm;
-            gdb_comm.DumpHistory(strm);
-            Host::SetCrashDescription (strm.GetData());
-            assert (!"Didn't get sequence mutex for read register.");
-#else
-            Log *log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
-            if (log)
-            {
-                if (log->GetVerbose())
-                {
-                    StreamString strm;
-                    gdb_comm.DumpHistory(strm);
-                    log->Printf("error: failed to get packet sequence mutex, not sending read register for \"%s\":\n%s", reg_info->name, strm.GetData());
-                }
-                else
-                {
-                    log->Printf("error: failed to get packet sequence mutex, not sending read register for \"%s\"", reg_info->name);
-                }
-            }
-#endif
+            // Get each register individually
+            GetPrimordialRegister(reg_info, gdb_comm);
         }
 
         // Make sure we got a valid register value after reading it
@@ -488,6 +439,54 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
     return false;
 }
 
+bool
+GDBRemoteRegisterContext::ReadAllRegisterValues (lldb_private::RegisterCheckpoint &reg_checkpoint)
+{
+    ExecutionContext exe_ctx (CalculateThread());
+    
+    Process *process = exe_ctx.GetProcessPtr();
+    Thread *thread = exe_ctx.GetThreadPtr();
+    if (process == NULL || thread == NULL)
+        return false;
+    
+    GDBRemoteCommunicationClient &gdb_comm (((ProcessGDBRemote *)process)->GetGDBRemote());
+
+    uint32_t save_id = 0;
+    if (gdb_comm.SaveRegisterState(thread->GetProtocolID(), save_id))
+    {
+        reg_checkpoint.SetID(save_id);
+        reg_checkpoint.GetData().reset();
+        return true;
+    }
+    else
+    {
+        reg_checkpoint.SetID(0); // Invalid save ID is zero
+        return ReadAllRegisterValues(reg_checkpoint.GetData());
+    }
+}
+
+bool
+GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb_private::RegisterCheckpoint &reg_checkpoint)
+{
+    uint32_t save_id = reg_checkpoint.GetID();
+    if (save_id != 0)
+    {
+        ExecutionContext exe_ctx (CalculateThread());
+        
+        Process *process = exe_ctx.GetProcessPtr();
+        Thread *thread = exe_ctx.GetThreadPtr();
+        if (process == NULL || thread == NULL)
+            return false;
+        
+        GDBRemoteCommunicationClient &gdb_comm (((ProcessGDBRemote *)process)->GetGDBRemote());
+        
+        return gdb_comm.RestoreRegisterState(m_thread.GetProtocolID(), save_id);
+    }
+    else
+    {
+        return WriteAllRegisterValues(reg_checkpoint.GetData());
+    }
+}
 
 bool
 GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)

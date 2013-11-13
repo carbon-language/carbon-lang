@@ -200,6 +200,25 @@ MachThreadList::SetRegisterContext (nub_thread_t tid, const void *buf, size_t bu
     return 0;
 }
 
+uint32_t
+MachThreadList::SaveRegisterState (nub_thread_t tid)
+{
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+        return thread_sp->SaveRegisterState ();
+    return 0;
+}
+
+bool
+MachThreadList::RestoreRegisterState (nub_thread_t tid, uint32_t save_id)
+{
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+        return thread_sp->RestoreRegisterState (save_id);
+    return 0;
+}
+
+
 nub_size_t
 MachThreadList::NumThreads () const
 {

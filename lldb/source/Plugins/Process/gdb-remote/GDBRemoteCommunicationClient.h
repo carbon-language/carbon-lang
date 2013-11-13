@@ -411,6 +411,21 @@ public:
     HarmonizeThreadIdsForProfileData (ProcessGDBRemote *process,
                                       StringExtractorGDBRemote &inputStringExtractor);
 
+    bool
+    ReadRegister(lldb::tid_t tid,
+                 uint32_t reg_num,
+                 StringExtractorGDBRemote &response);
+
+    bool
+    ReadAllRegisters (lldb::tid_t tid,
+                      StringExtractorGDBRemote &response);
+
+    bool
+    SaveRegisterState (lldb::tid_t tid, uint32_t &save_id);
+    
+    bool
+    RestoreRegisterState (lldb::tid_t tid, uint32_t save_id);
+    
 protected:
 
     bool
@@ -438,6 +453,7 @@ protected:
     lldb_private::LazyBool m_attach_or_wait_reply;
     lldb_private::LazyBool m_prepare_for_reg_writing_reply;
     lldb_private::LazyBool m_supports_p;
+    lldb_private::LazyBool m_supports_QSaveRegisterState;
     
     bool
         m_supports_qProcessInfoPID:1,

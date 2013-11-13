@@ -92,6 +92,9 @@ public:
     bool            SetRegisterValue ( uint32_t reg_set_idx, uint32_t reg_idx, const DNBRegisterValue *reg_value );
     nub_size_t      GetRegisterContext (void *buf, nub_size_t buf_len);
     nub_size_t      SetRegisterContext (const void *buf, nub_size_t buf_len);
+    uint32_t        SaveRegisterState ();
+    bool            RestoreRegisterState (uint32_t save_id);
+
     void            NotifyBreakpointChanged (const DNBBreakpoint *bp)
                     {
                     }

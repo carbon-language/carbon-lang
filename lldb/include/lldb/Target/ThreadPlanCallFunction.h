@@ -163,7 +163,6 @@ private:
     Address                                         m_function_addr;
     Address                                         m_start_addr;
     lldb::addr_t                                    m_function_sp;
-    Thread::RegisterCheckpoint                      m_register_backup;
     lldb::ThreadPlanSP                              m_subplan_sp;
     LanguageRuntime                                *m_cxx_language_runtime;
     LanguageRuntime                                *m_objc_language_runtime;

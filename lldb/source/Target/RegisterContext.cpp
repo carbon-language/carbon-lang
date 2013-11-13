@@ -440,6 +440,18 @@ RegisterContext::WriteRegisterValueToMemory (const RegisterInfo *reg_info,
 
 }
 
+bool
+RegisterContext::ReadAllRegisterValues (lldb_private::RegisterCheckpoint &reg_checkpoint)
+{
+    return ReadAllRegisterValues(reg_checkpoint.GetData());
+}
+
+bool
+RegisterContext::WriteAllRegisterValues (const lldb_private::RegisterCheckpoint &reg_checkpoint)
+{
+    return WriteAllRegisterValues(reg_checkpoint.GetData());
+}
+
 TargetSP
 RegisterContext::CalculateTarget ()
 {

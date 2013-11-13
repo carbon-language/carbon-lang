@@ -30,6 +30,8 @@ public:
     bool            SetRegisterValue (nub_thread_t tid, uint32_t reg_set_idx, uint32_t reg_idx, const DNBRegisterValue *reg_value) const;
     nub_size_t      GetRegisterContext (nub_thread_t tid, void *buf, size_t buf_len);
     nub_size_t      SetRegisterContext (nub_thread_t tid, const void *buf, size_t buf_len);
+    uint32_t        SaveRegisterState (nub_thread_t tid);
+    bool            RestoreRegisterState (nub_thread_t tid, uint32_t save_id);
     const char *    GetThreadInfo (nub_thread_t tid) const;
     void            ProcessWillResume (MachProcess *process, const DNBThreadResumeActions &thread_actions);
     uint32_t        ProcessDidStop (MachProcess *process);

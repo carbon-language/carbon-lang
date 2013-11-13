@@ -34,29 +34,27 @@ extern "C" {
 
 #if defined (DNBLOG_ENABLED)
 
-#define DNB_EXPORT __attribute__((visibility("default")))
-
-void        _DNBLog(uint32_t flags, const char *format, ...) __attribute__ ((format (printf, 2, 3))) DNB_EXPORT;
-void        _DNBLogDebug (const char *fmt, ...) __attribute__ ((format (printf, 1, 2))) DNB_EXPORT;
-void        _DNBLogDebugVerbose (const char *fmt, ...) __attribute__ ((format (printf, 1, 2))) DNB_EXPORT;
-void        _DNBLogThreaded (const char *fmt, ...) __attribute__ ((format (printf, 1, 2))) DNB_EXPORT;
-void        _DNBLogThreadedIf (uint32_t mask, const char *fmt, ...) __attribute__ ((format (printf, 2, 3))) DNB_EXPORT;
-void        _DNBLogError (const char *fmt, ...) __attribute__ ((format (printf, 1, 2))) DNB_EXPORT;
-void        _DNBLogFatalError (int err, const char *fmt, ...) __attribute__ ((format (printf, 2, 3))) DNB_EXPORT;
-void        _DNBLogVerbose (const char *fmt, ...) __attribute__ ((format (printf, 1, 2))) DNB_EXPORT;
-void        _DNBLogWarning (const char *fmt, ...) __attribute__ ((format (printf, 1, 2))) DNB_EXPORT;
-void        _DNBLogWarningVerbose (const char *fmt, ...) __attribute__ ((format (printf, 1, 2))) DNB_EXPORT;
-bool        DNBLogCheckLogBit (uint32_t bit) DNB_EXPORT;
-uint32_t    DNBLogSetLogMask (uint32_t mask) DNB_EXPORT;
-uint32_t    DNBLogGetLogMask () DNB_EXPORT;
-void        DNBLogSetLogCallback (DNBCallbackLog callback, void *baton) DNB_EXPORT;
-DNBCallbackLog DNBLogGetLogCallback () DNB_EXPORT;
-bool        DNBLogEnabled () DNB_EXPORT;
-bool        DNBLogEnabledForAny (uint32_t mask) DNB_EXPORT;
-int         DNBLogGetDebug () DNB_EXPORT;
-void        DNBLogSetDebug (int g) DNB_EXPORT;
-int         DNBLogGetVerbose () DNB_EXPORT;
-void        DNBLogSetVerbose (int g) DNB_EXPORT;
+void        _DNBLog(uint32_t flags, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
+void        _DNBLogDebug (const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+void        _DNBLogDebugVerbose (const char *fmt, ...) __attribute__ ((format (printf, 1, 2))) ;
+void        _DNBLogThreaded (const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+void        _DNBLogThreadedIf (uint32_t mask, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+void        _DNBLogError (const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+void        _DNBLogFatalError (int err, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+void        _DNBLogVerbose (const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+void        _DNBLogWarning (const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+void        _DNBLogWarningVerbose (const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+bool        DNBLogCheckLogBit (uint32_t bit);
+uint32_t    DNBLogSetLogMask (uint32_t mask);
+uint32_t    DNBLogGetLogMask ();
+void        DNBLogSetLogCallback (DNBCallbackLog callback, void *baton);
+DNBCallbackLog DNBLogGetLogCallback ();
+bool        DNBLogEnabled ();
+bool        DNBLogEnabledForAny (uint32_t mask);
+int         DNBLogGetDebug ();
+void        DNBLogSetDebug (int g);
+int         DNBLogGetVerbose ();
+void        DNBLogSetVerbose (int g);
 
 #define     DNBLog(fmt, ...)                    do { if (DNBLogEnabled()) { _DNBLog(0, fmt, ## __VA_ARGS__);                 } } while (0)
 #define     DNBLogDebug(fmt, ...)               do { if (DNBLogEnabled()) { _DNBLogDebug(fmt, ## __VA_ARGS__);               } } while (0)

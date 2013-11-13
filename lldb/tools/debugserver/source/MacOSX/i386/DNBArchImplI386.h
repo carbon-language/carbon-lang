@@ -20,16 +20,20 @@
 #include "../HasAVX.h"
 #include "MachRegisterStatesI386.h"
 
+#include <map>
+
 class MachThread;
 
 class DNBArchImplI386 : public DNBArchProtocol
 {
 public:
     DNBArchImplI386(MachThread *thread) :
+        DNBArchProtocol(),
         m_thread(thread),
         m_state(),
         m_2pc_dbg_checkpoint(),
-        m_2pc_trans_state(Trans_Done)
+        m_2pc_trans_state(Trans_Done),
+        m_saved_register_states()
     {
     }
     virtual ~DNBArchImplI386()
@@ -42,6 +46,9 @@ public:
     virtual bool            SetRegisterValue(int set, int reg, const DNBRegisterValue *value);
     virtual nub_size_t      GetRegisterContext (void *buf, nub_size_t buf_len);
     virtual nub_size_t      SetRegisterContext (const void *buf, nub_size_t buf_len);
+    virtual uint32_t        SaveRegisterState ();
+    virtual bool            RestoreRegisterState (uint32_t save_id);
+
     virtual kern_return_t   GetRegisterState  (int set, bool force);
     virtual kern_return_t   SetRegisterState  (int set);
     virtual bool            RegisterSetStateIsValid (int set) const;
@@ -240,6 +247,8 @@ protected:
     State       m_state;
     DBG         m_2pc_dbg_checkpoint;
     uint32_t    m_2pc_trans_state; // Is transaction of DBG state change: Pedning (0), Done (1), or Rolled Back (2)?
+    typedef std::map<uint32_t, Context> SaveRegiterStates;
+    SaveRegiterStates m_saved_register_states;
 };
 
 #endif    // #if defined (__i386__) || defined (__x86_64__)
