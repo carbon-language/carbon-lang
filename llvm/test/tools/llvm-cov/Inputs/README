@@ -1,0 +1,7 @@
+These inputs were pre-generated to allow for easier testing of llvm-cov.
+
+test.gcno and test.gcda were create by running clang:
+  clang++ -g -ftest-coverage -fprofile-arcs test.cpp
+
+test.cpp.gcov was created by running gcov 4.2.1:
+  gcov test.cpp
