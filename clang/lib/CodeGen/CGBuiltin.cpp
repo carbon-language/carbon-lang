@@ -2276,12 +2276,12 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
     s = "vushr"; OverloadInt = false; break;
   // Scalar Signed Rounding Shift Right (Immediate)
   case AArch64::BI__builtin_neon_vrshrd_n_s64:
-    Int = Intrinsic::aarch64_neon_vrshrds_n;
-    s = "vsrshr"; OverloadInt = false; break;
+    Int = Intrinsic::aarch64_neon_vsrshr;
+    s = "vsrshr"; OverloadInt = true; break;
   // Scalar Unsigned Rounding Shift Right (Immediate)
   case AArch64::BI__builtin_neon_vrshrd_n_u64:
-    Int = Intrinsic::aarch64_neon_vrshrdu_n;
-    s = "vurshr"; OverloadInt = false; break;
+    Int = Intrinsic::aarch64_neon_vurshr;
+    s = "vurshr"; OverloadInt = true; break;
   // Scalar Signed Shift Right and Accumulate (Immediate)
   case AArch64::BI__builtin_neon_vsrad_n_s64:
     Int = Intrinsic::aarch64_neon_vsrads_n;
@@ -2322,18 +2322,18 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vqshluh_n_s16:
   case AArch64::BI__builtin_neon_vqshlus_n_s32:
   case AArch64::BI__builtin_neon_vqshlud_n_s64:
-    Int = Intrinsic::aarch64_neon_vqshlus_n;
+    Int = Intrinsic::aarch64_neon_vsqshlu;
     s = "vsqshlu"; OverloadInt = true; break;
   // Shift Right And Insert (Immediate)
   case AArch64::BI__builtin_neon_vsrid_n_s64:
   case AArch64::BI__builtin_neon_vsrid_n_u64:
-    Int = Intrinsic::aarch64_neon_vsrid_n;
-    s = "vsri"; OverloadInt = false; break;
+    Int = Intrinsic::aarch64_neon_vsri;
+    s = "vsri"; OverloadInt = true; break;
   // Shift Left And Insert (Immediate)
   case AArch64::BI__builtin_neon_vslid_n_s64:
   case AArch64::BI__builtin_neon_vslid_n_u64:
-    Int = Intrinsic::aarch64_neon_vslid_n;
-    s = "vsli"; OverloadInt = false; break;
+    Int = Intrinsic::aarch64_neon_vsli;
+    s = "vsli"; OverloadInt = true; break;
   // Signed Saturating Shift Right Narrow (Immediate)
   case AArch64::BI__builtin_neon_vqshrnh_n_s16:
   case AArch64::BI__builtin_neon_vqshrns_n_s32:
