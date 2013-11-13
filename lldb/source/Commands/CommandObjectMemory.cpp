@@ -918,11 +918,10 @@ OptionDefinition
 g_memory_find_option_table[] =
 {
     { LLDB_OPT_SET_1, false, "expression", 'e', OptionParser::eRequiredArgument, NULL, 0, eArgTypeExpression, "Evaluate an expression to obtain a byte pattern."},
-    { LLDB_OPT_SET_1, false, "string", 's', OptionParser::eRequiredArgument, NULL, 0, eArgTypeName,   "Use text to find a byte pattern."},
-    { LLDB_OPT_SET_1, false, "count", 'c', OptionParser::eRequiredArgument, NULL, 0, eArgTypeCount,   "How many times to perform the search."},
-    { LLDB_OPT_SET_1, false, "do-read-on-match", 'r', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,   "Should we do a memory read at each match."},
+    { LLDB_OPT_SET_2, false, "string", 's', OptionParser::eRequiredArgument, NULL, 0, eArgTypeName,   "Use text to find a byte pattern."},
+    { LLDB_OPT_SET_1|LLDB_OPT_SET_2, false, "count", 'c', OptionParser::eRequiredArgument, NULL, 0, eArgTypeCount,   "How many times to perform the search."},
+    { LLDB_OPT_SET_1|LLDB_OPT_SET_2, false, "dump-offset", 'o', OptionParser::eRequiredArgument, NULL, 0, eArgTypeOffset,   "When dumping memory for a match, an offset from the match location to start dumping from."},
 };
-
 
 //----------------------------------------------------------------------
 // Find the specified data in memory
@@ -937,7 +936,7 @@ public:
     OptionGroupFindMemory () :
       OptionGroup(),
       m_count(1),
-      m_do_read(false)
+      m_offset(0)
     {
     }
     
@@ -981,11 +980,11 @@ public:
                   error.SetErrorString("unrecognized value for count");
               break;
                 
-                
-        case 'r':
-              m_do_read.SetValueFromCString("true");
-              break;
-                
+        case 'o':
+               if (m_offset.SetValueFromCString(option_arg).Fail())
+                   error.SetErrorString("unrecognized value for dump-offset");
+                break;
+
         default:
               error.SetErrorStringWithFormat("unrecognized short option '%c'", short_option);
               break;
@@ -999,13 +998,12 @@ public:
         m_expr.Clear();
         m_string.Clear();
         m_count.Clear();
-        m_do_read.Clear();
     }
     
       OptionValueString m_expr;
       OptionValueString m_string;
       OptionValueUInt64 m_count;
-      OptionValueBoolean m_do_read;
+      OptionValueUInt64 m_offset;
   };
   
   CommandObjectMemoryFind (CommandInterpreter &interpreter) :
@@ -1165,12 +1163,16 @@ protected:
               break;
           }
           result.AppendMessageWithFormat("Your data was found at location: 0x%" PRIx64 "\n", found_location);
-          if (m_memory_options.m_do_read.GetCurrentValue())
+
+          DataBufferHeap dumpbuffer(32,0);
+          process->ReadMemory(found_location+m_memory_options.m_offset.GetCurrentValue(), dumpbuffer.GetBytes(), dumpbuffer.GetByteSize(), error);
+          if (!error.Fail())
           {
-              StreamString cmd_buffer;
-              cmd_buffer.Printf("memory read 0x%" PRIx64, found_location);
-              m_interpreter.HandleCommand(cmd_buffer.GetData(), eLazyBoolNo, result);
+              DataExtractor data(dumpbuffer.GetBytes(), dumpbuffer.GetByteSize(), process->GetByteOrder(), process->GetAddressByteSize());
+              data.Dump(&result.GetOutputStream(), 0, lldb::eFormatBytesWithASCII, 1, dumpbuffer.GetByteSize(), 16, found_location+m_memory_options.m_offset.GetCurrentValue(), 0, 0);
+              result.GetOutputStream().EOL();
           }
+
           --count;
           found_location++;
           ever_found = true;
