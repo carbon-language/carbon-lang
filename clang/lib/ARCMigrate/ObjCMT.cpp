@@ -1709,9 +1709,16 @@ ASTConsumer *MigrateSourceAction::CreateASTConsumer(CompilerInstance &CI,
                                                   StringRef InFile) {
   PPConditionalDirectiveRecord *
     PPRec = new PPConditionalDirectiveRecord(CI.getSourceManager());
+  unsigned ObjCMTAction = CI.getFrontendOpts().ObjCMTAction;
+  if (ObjCMTAction == FrontendOptions::ObjCMT_None) {
+    // If no specific option was given, enable literals+subscripting transforms
+    // by default.
+    ObjCMTAction = FrontendOptions::ObjCMT_Literals |
+                   FrontendOptions::ObjCMT_Subscripting;
+  }
   CI.getPreprocessor().addPPCallbacks(PPRec);
   return new ObjCMigrateASTConsumer(CI.getFrontendOpts().OutputFile,
-                                    CI.getFrontendOpts().ObjCMTAction,
+                                    ObjCMTAction,
                                     Remapper,
                                     CI.getFileManager(),
                                     PPRec,
