@@ -25,6 +25,7 @@
 
 #include "Mips.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
+#include "Mips16InstrInfo.h"
 #include "MipsMachineFunction.h"
 #include "MipsTargetMachine.h"
 #include "llvm/ADT/Statistic.h"
@@ -237,7 +238,7 @@ namespace {
   bool IsPIC;
   unsigned ABI;
   const MipsSubtarget *STI;
-  const MipsInstrInfo *TII;
+  const Mips16InstrInfo *TII;
   MipsFunctionInfo *MFI;
   MachineFunction *MF;
   MachineConstantPool *MCP;
@@ -359,7 +360,7 @@ bool MipsConstantIslands::runOnMachineFunction(MachineFunction &mf) {
       !MipsSubtarget::useConstantIslands()) {
     return false;
   }
-  TII = (const MipsInstrInfo*)MF->getTarget().getInstrInfo();
+  TII = (const Mips16InstrInfo*)MF->getTarget().getInstrInfo();
   MFI = MF->getInfo<MipsFunctionInfo>();
   DEBUG(dbgs() << "constant island processing " << "\n");
   //
