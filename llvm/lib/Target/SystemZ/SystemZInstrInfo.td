@@ -67,6 +67,8 @@ let isBranch = 1, isTerminator = 1, Uses = [CC] in {
                       "brc\t$R1, $I2", []>;
   def AsmBRCL : InstRIL<0xC04, (outs), (ins uimm8zx4:$R1, brtarget32:$I2),
                         "brcl\t$R1, $I2", []>;
+  def AsmBCR : InstRR<0x07, (outs), (ins uimm8zx4:$R1, GR64:$R2),
+                      "bcr\t$R1, $R2", []>;
 }
 
 // Fused compare-and-branch instructions.  As for normal branches,
@@ -117,6 +119,7 @@ multiclass CondExtendedMnemonic<bits<4> ccmask, string name> {
                    "j"##name##"\t$I2", []>;
     def JG : InstRIL<0xC04, (outs), (ins brtarget32:$I2),
                      "jg"##name##"\t$I2", []>;
+    def BR : InstRR<0x07, (outs), (ins ADDR64:$R2), "b"##name##"r\t$R2", []>;
   }
   def LOCR  : FixedCondUnaryRRF<"locr"##name,  0xB9F2, GR32, GR32, ccmask>;
   def LOCGR : FixedCondUnaryRRF<"locgr"##name, 0xB9E2, GR64, GR64, ccmask>;

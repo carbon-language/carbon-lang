@@ -527,11 +527,102 @@
 	basr	%r14,%r9
 	basr	%r15,%r1
 
+#CHECK: bcr	0, %r0			# encoding: [0x07,0x00]
+#CHECK:	bcr	0, %r15			# encoding: [0x07,0x0f]
 
+	bcr	0, %r0
+	bcr	0, %r15
+
+#CHECK:	bcr	1, %r7			# encoding: [0x07,0x17]
+#CHECK:	bor	%r15			# encoding: [0x07,0x1f]
+
+	bcr	1, %r7
+	bor	%r15
+
+#CHECK:	bcr	2, %r7			# encoding: [0x07,0x27]
+#CHECK:	bhr	%r15			# encoding: [0x07,0x2f]
+
+	bcr	2, %r7
+	bhr	%r15
+
+#CHECK:	bcr	3, %r7			# encoding: [0x07,0x37]
+#CHECK:	bnler	%r15			# encoding: [0x07,0x3f]
+
+	bcr	3, %r7
+	bnler	%r15
+
+#CHECK:	bcr	4, %r7			# encoding: [0x07,0x47]
+#CHECK:	blr	%r15			# encoding: [0x07,0x4f]
+
+	bcr	4, %r7
+	blr	%r15
+
+#CHECK:	bcr	5, %r7			# encoding: [0x07,0x57]
+#CHECK:	bnher	%r15			# encoding: [0x07,0x5f]
+
+	bcr	5, %r7
+	bnher	%r15
+
+#CHECK:	bcr	6, %r7			# encoding: [0x07,0x67]
+#CHECK:	blhr	%r15			# encoding: [0x07,0x6f]
+
+	bcr	6, %r7
+	blhr	%r15
+
+#CHECK:	bcr	7, %r7			# encoding: [0x07,0x77]
+#CHECK:	bner	%r15			# encoding: [0x07,0x7f]
+
+	bcr	7, %r7
+	bner	%r15
+
+#CHECK:	bcr	8, %r7			# encoding: [0x07,0x87]
+#CHECK:	ber	%r15			# encoding: [0x07,0x8f]
+
+	bcr	8, %r7
+	ber	%r15
+
+#CHECK:	bcr	9, %r7			# encoding: [0x07,0x97]
+#CHECK:	bnlhr	%r15			# encoding: [0x07,0x9f]
+
+	bcr	9, %r7
+	bnlhr	%r15
+
+#CHECK:	bcr	10, %r7			# encoding: [0x07,0xa7]
+#CHECK:	bher	%r15			# encoding: [0x07,0xaf]
+
+	bcr	10, %r7
+	bher	%r15
+
+#CHECK:	bcr	11, %r7			# encoding: [0x07,0xb7]
+#CHECK:	bnlr	%r15			# encoding: [0x07,0xbf]
+
+	bcr	11, %r7
+	bnlr	%r15
+
+#CHECK:	bcr	12, %r7			# encoding: [0x07,0xc7]
+#CHECK:	bler	%r15			# encoding: [0x07,0xcf]
+
+	bcr	12, %r7
+	bler	%r15
+
+#CHECK:	bcr	13, %r7			# encoding: [0x07,0xd7]
+#CHECK:	bnhr	%r15			# encoding: [0x07,0xdf]
+
+	bcr	13, %r7
+	bnhr	%r15
+
+#CHECK:	bcr	14, %r7			# encoding: [0x07,0xe7]
+#CHECK:	bnor	%r15			# encoding: [0x07,0xef]
+
+	bcr	14, %r7
+	bnor	%r15
+
+#CHECK:	bcr	15, %r7			# encoding: [0x07,0xf7]
 #CHECK: br	%r1                     # encoding: [0x07,0xf1]
 #CHECK: br	%r14                    # encoding: [0x07,0xfe]
 #CHECK: br	%r15                    # encoding: [0x07,0xff]
 
+	bcr	15, %r7
 	br	%r1
 	br	%r14
 	br	%r15

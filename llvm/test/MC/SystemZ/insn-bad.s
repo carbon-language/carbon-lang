@@ -256,6 +256,14 @@
 	ay	%r0, -524289
 	ay	%r0, 524288
 
+#CHECK: error: invalid operand
+#CHECK: bcr	-1, %r1
+#CHECK: error: invalid operand
+#CHECK: bcr	16, %r1
+
+	bcr	-1, %r1
+	bcr	16, %r1
+
 #CHECK: error: offset out of range
 #CHECK: bras	%r0, -0x100002
 #CHECK: error: offset out of range
