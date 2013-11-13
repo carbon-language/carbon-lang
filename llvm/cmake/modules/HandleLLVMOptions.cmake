@@ -41,12 +41,15 @@ else()
   endif()
 endif()
 
-if(MSVC)
-  # Link release builds against the static runtime.
+if(MSVC AND LLVM_STATIC_MSVC_RUNTIME)
+  # Link against the static runtime.
   foreach(flag CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_RELWITHDEBINFO
       CMAKE_C_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELEASE
       CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_MINSIZEREL)
     llvm_replace_compiler_option("${flag}" "/MD" "/MT")
+  endforeach()
+  foreach(flag CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
+    llvm_replace_compiler_option("${flag}" "/MDd" "/MTd")
   endforeach()
 endif()  
 
