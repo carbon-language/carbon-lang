@@ -56,7 +56,6 @@ set(LIBRARIES
   clangLex
   clangTooling
   clangBasic
-  clangFormat
   )
 
 set(GENERATED_HEADERS

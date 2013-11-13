@@ -7,4 +7,5 @@ add_clang_library(clangIndex
 target_link_libraries(clangIndex
   clangBasic
   clangAST
+  clangFormat
   )
