@@ -1954,7 +1954,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(_T1_param __t1, _T2_param __t2)
         : __first_(_VSTD::forward<_T1_param>(__t1)), __second_(_VSTD::forward<_T2_param>(__t2)) {}
 
-#ifdef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#if defined(_LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS) && !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
 
     _LIBCPP_INLINE_VISIBILITY
     __libcpp_compressed_pair_imp(const __libcpp_compressed_pair_imp& __p)
@@ -1973,8 +1973,6 @@ public:
             return *this;
         }
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
     _LIBCPP_INLINE_VISIBILITY
     __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
         _NOEXCEPT_(is_nothrow_move_constructible<_T1>::value &&
@@ -1992,9 +1990,7 @@ public:
             return *this;
         }
 
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#endif  // defined(_LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS) && !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
@@ -2051,7 +2047,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(_T1_param __t1, _T2_param __t2)
         : _T1(_VSTD::forward<_T1_param>(__t1)), __second_(_VSTD::forward<_T2_param>(__t2)) {}
 
-#ifdef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#if defined(_LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS) && !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
 
     _LIBCPP_INLINE_VISIBILITY
     __libcpp_compressed_pair_imp(const __libcpp_compressed_pair_imp& __p)
@@ -2069,8 +2065,6 @@ public:
             return *this;
         }
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
     _LIBCPP_INLINE_VISIBILITY
     __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
         _NOEXCEPT_(is_nothrow_move_constructible<_T1>::value &&
@@ -2087,9 +2081,7 @@ public:
             return *this;
         }
 
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#endif  // defined(_LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS) && !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
@@ -2147,7 +2139,7 @@ public:
                    is_nothrow_move_constructible<_T2>::value)
         : _T2(_VSTD::forward<_T2_param>(__t2)), __first_(_VSTD::forward<_T1_param>(__t1)) {}
 
-#ifdef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#if defined(_LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS) && !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
 
     _LIBCPP_INLINE_VISIBILITY
     __libcpp_compressed_pair_imp(const __libcpp_compressed_pair_imp& __p)
@@ -2165,8 +2157,6 @@ public:
             return *this;
         }
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
     _LIBCPP_INLINE_VISIBILITY
     __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
         _NOEXCEPT_(is_nothrow_move_constructible<_T1>::value &&
@@ -2183,9 +2173,7 @@ public:
             return *this;
         }
 
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#endif  // defined(_LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS) && !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
@@ -2241,7 +2229,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(_T1_param __t1, _T2_param __t2)
         : _T1(_VSTD::forward<_T1_param>(__t1)), _T2(_VSTD::forward<_T2_param>(__t2)) {}
 
-#ifdef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#if defined(_LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS) && !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
 
     _LIBCPP_INLINE_VISIBILITY
     __libcpp_compressed_pair_imp(const __libcpp_compressed_pair_imp& __p)
@@ -2259,8 +2247,6 @@ public:
             return *this;
         }
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
     _LIBCPP_INLINE_VISIBILITY
     __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
         _NOEXCEPT_(is_nothrow_move_constructible<_T1>::value &&
@@ -2277,9 +2263,7 @@ public:
             return *this;
         }
 
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#endif  // defined(_LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS) && !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
@@ -2332,7 +2316,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY __compressed_pair(_T1_param __t1, _T2_param __t2)
         : base(_VSTD::forward<_T1_param>(__t1), _VSTD::forward<_T2_param>(__t2)) {}
 
-#ifdef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#if defined(_LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS) && !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
 
     _LIBCPP_INLINE_VISIBILITY
     __compressed_pair(const __compressed_pair& __p)
@@ -2349,7 +2333,6 @@ public:
             return *this;
         }
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     __compressed_pair(__compressed_pair&& __p)
         _NOEXCEPT_(is_nothrow_move_constructible<_T1>::value &&
@@ -2365,9 +2348,7 @@ public:
             return *this;
         }
 
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#endif  // defined(_LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS) && !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 

@@ -2437,7 +2437,7 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_default_construct
 // is_trivially_copy_constructible
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_copy_constructible
-    : public is_trivially_constructible<_Tp, const typename add_lvalue_reference<_Tp>::type>
+    : public is_trivially_constructible<_Tp, typename add_lvalue_reference<const _Tp>::type>
     {};
 
 // is_trivially_move_constructible
