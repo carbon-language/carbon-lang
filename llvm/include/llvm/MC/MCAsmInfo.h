@@ -144,18 +144,6 @@ namespace llvm {
     /// AssemblerDialect - Which dialect of an assembler variant to use.
     unsigned AssemblerDialect;               // Defaults to 0
 
-    /// AllowQuotesInName - This is true if the assembler allows for complex
-    /// symbol names to be surrounded in quotes.  This defaults to false.
-    bool AllowQuotesInName;
-
-    /// AllowNameToStartWithDigit - This is true if the assembler allows symbol
-    /// names to start with a digit (e.g., "0x0021").  This defaults to false.
-    bool AllowNameToStartWithDigit;
-
-    /// AllowPeriodsInName - This is true if the assembler allows periods in
-    /// symbol names.  This defaults to true.
-    bool AllowPeriodsInName;
-
     /// \brief This is true if the assembler allows @ characters in symbol
     /// names. Defaults to false.
     bool AllowAtInName;
@@ -466,15 +454,6 @@ namespace llvm {
     }
     unsigned getAssemblerDialect() const {
       return AssemblerDialect;
-    }
-    bool doesAllowQuotesInName() const {
-      return AllowQuotesInName;
-    }
-    bool doesAllowNameToStartWithDigit() const {
-      return AllowNameToStartWithDigit;
-    }
-    bool doesAllowPeriodsInName() const {
-      return AllowPeriodsInName;
     }
     bool doesAllowAtInName() const {
       return AllowAtInName;

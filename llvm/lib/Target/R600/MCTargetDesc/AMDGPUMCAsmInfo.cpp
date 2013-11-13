@@ -31,9 +31,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   InlineAsmStart = ";#ASMSTART";
   InlineAsmEnd = ";#ASMEND";
   AssemblerDialect = 0;
-  AllowQuotesInName = false;
-  AllowNameToStartWithDigit = false;
-  AllowPeriodsInName = false;
 
   //===--- Data Emission Directives -------------------------------------===//
   ZeroDirective = ".zero";

@@ -23,17 +23,6 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-static bool isAcceptableChar(char C, bool AllowPeriod) {
-  if ((C < 'a' || C > 'z') &&
-      (C < 'A' || C > 'Z') &&
-      (C < '0' || C > '9') &&
-      C != '_' && C != '$' && C != '@' &&
-      !(AllowPeriod && C == '.') &&
-      !(C & 0x80))
-    return false;
-  return true;
-}
-
 static char HexDigit(int V) {
   return V < 10 ? V+'0' : V+'A'-10;
 }
@@ -44,46 +33,6 @@ static void MangleLetter(SmallVectorImpl<char> &OutName, unsigned char C) {
   OutName.push_back(HexDigit(C & 15));
   OutName.push_back('_');
 }
-
-/// NameNeedsEscaping - Return true if the identifier \p Str needs quotes
-/// for this assembler.
-static bool NameNeedsEscaping(StringRef Str, const MCAsmInfo *MAI) {
-  assert(!Str.empty() && "Cannot create an empty MCSymbol");
-  
-  // If the first character is a number and the target does not allow this, we
-  // need quotes.
-  if (!MAI->doesAllowNameToStartWithDigit() && Str[0] >= '0' && Str[0] <= '9')
-    return true;
-  
-  // If any of the characters in the string is an unacceptable character, force
-  // quotes.
-  bool AllowPeriod = MAI->doesAllowPeriodsInName();
-  for (unsigned i = 0, e = Str.size(); i != e; ++i)
-    if (!isAcceptableChar(Str[i], AllowPeriod))
-      return true;
-  return false;
-}
-
-/// appendMangledName - Add the specified string in mangled form if it uses
-/// any unusual characters.
-static void appendMangledName(SmallVectorImpl<char> &OutName, StringRef Str,
-                              const MCAsmInfo *MAI) {
-  // The first character is not allowed to be a number unless the target
-  // explicitly allows it.
-  if (!MAI->doesAllowNameToStartWithDigit() && Str[0] >= '0' && Str[0] <= '9') {
-    MangleLetter(OutName, Str[0]);
-    Str = Str.substr(1);
-  }
-
-  bool AllowPeriod = MAI->doesAllowPeriodsInName();
-  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
-    if (!isAcceptableChar(Str[i], AllowPeriod))
-      MangleLetter(OutName, Str[i]);
-    else
-      OutName.push_back(Str[i]);
-  }
-}
-
 
 /// appendMangledQuotedName - On systems that support quoted symbols, we still
 /// have to escape some (obscure) characters like " and \n which would break the
@@ -134,22 +83,14 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
         OutName.append(Prefix, Prefix+strlen(Prefix));
     }
   }
-  
+
   // If this is a simple string that doesn't need escaping, just append it.
-  if (!NameNeedsEscaping(Name, MAI) ||
-      // If quotes are supported, they can be used unless the string contains
-      // a quote or newline.
-      (MAI->doesAllowQuotesInName() &&
-       Name.find_first_of("\n\"") == StringRef::npos)) {
+  // Quotes can be used unless the string contains a quote or newline.
+  if (Name.find_first_of("\n\"") == StringRef::npos) {
     OutName.append(Name.begin(), Name.end());
     return;
   }
-  
-  // On systems that do not allow quoted names, we need to mangle most
-  // strange characters.
-  if (!MAI->doesAllowQuotesInName())
-    return appendMangledName(OutName, Name, MAI);
-  
+
   // Okay, the system allows quoted strings.  We can quote most anything, the
   // only characters that need escaping are " and \n.
   assert(Name.find_first_of("\n\"") != StringRef::npos);

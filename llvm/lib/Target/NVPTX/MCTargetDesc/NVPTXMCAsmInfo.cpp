@@ -35,8 +35,6 @@ NVPTXMCAsmInfo::NVPTXMCAsmInfo(const StringRef &TT) {
 
   PrivateGlobalPrefix = "$L__";
 
-  AllowPeriodsInName = false;
-
   HasSetDirective = false;
 
   HasSingleParameterDotFile = false;

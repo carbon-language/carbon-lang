@@ -24,6 +24,5 @@ MSP430MCAsmInfo::MSP430MCAsmInfo(StringRef TT) {
   CommentString = ";";
 
   AlignmentIsInBytes = false;
-  AllowNameToStartWithDigit = true;
   UsesELFSectionDirectiveForBSS = true;
 }

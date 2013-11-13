@@ -50,9 +50,6 @@ MCAsmInfo::MCAsmInfo() {
   Code32Directive = ".code32";
   Code64Directive = ".code64";
   AssemblerDialect = 0;
-  AllowQuotesInName = false;
-  AllowNameToStartWithDigit = false;
-  AllowPeriodsInName = true;
   AllowAtInName = false;
   UseDataRegionDirectives = false;
   ZeroDirective = "\t.zero\t";

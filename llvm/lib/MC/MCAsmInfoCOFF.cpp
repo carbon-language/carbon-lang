@@ -43,7 +43,6 @@ MCAsmInfoCOFF::MCAsmInfoCOFF() {
 void MCAsmInfoMicrosoft::anchor() { }
 
 MCAsmInfoMicrosoft::MCAsmInfoMicrosoft() {
-  AllowQuotesInName = true;
 }
 
 void MCAsmInfoGNUCOFF::anchor() { }

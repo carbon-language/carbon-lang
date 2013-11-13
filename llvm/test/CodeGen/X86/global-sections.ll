@@ -65,10 +65,10 @@
 ; PR4584
 @"foo bar" = linkonce global i32 42
 
-; LINUX: .type	foo_20_bar,@object
-; LINUX: .section .data.foo_20_bar,"aGw",@progbits,foo_20_bar,comdat
-; LINUX: .weak	foo_20_bar
-; LINUX: foo_20_bar:
+; LINUX: .type	"foo bar",@object
+; LINUX: .section ".data.foo bar","aGw",@progbits,"foo bar",comdat
+; LINUX: .weak	"foo bar"
+; LINUX: "foo bar":
 
 ; DARWIN: .section		__DATA,__datacoal_nt,coalesced
 ; DARWIN: .globl	"_foo bar"
