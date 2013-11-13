@@ -193,14 +193,9 @@ namespace llvm {
   virtual int getInstrLatency(const InstrItineraryData *ItinData,
                               SDNode *Node) const { return 1;}
 
-  /// \returns a list of all the registers that may be accesed using indirect
-  /// addressing.
-  std::vector<unsigned> getIndirectReservedRegs(const MachineFunction &MF) const;
-
-  virtual int getIndirectIndexBegin(const MachineFunction &MF) const;
-
-  virtual int getIndirectIndexEnd(const MachineFunction &MF) const;
-
+  /// \brief Reserve the registers that may be accesed using indirect addressing.
+  void reserveIndirectRegisters(BitVector &Reserved,
+                                const MachineFunction &MF) const;
 
   virtual unsigned calculateIndirectAddress(unsigned RegIndex,
                                             unsigned Channel) const;

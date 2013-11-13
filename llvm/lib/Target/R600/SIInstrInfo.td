@@ -121,6 +121,10 @@ class SGPRImm <dag frag> : PatLeaf<frag, [{
   return false;
 }]>;
 
+def FRAMEri64 : Operand<iPTR> {
+  let MIOperandInfo = (ops SReg_32:$ptr, i32imm:$index);
+}
+
 //===----------------------------------------------------------------------===//
 // SI assembler operands
 //===----------------------------------------------------------------------===//

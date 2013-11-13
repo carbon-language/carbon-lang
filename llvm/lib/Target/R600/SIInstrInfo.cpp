@@ -230,7 +230,8 @@ MachineInstr *SIInstrInfo::buildMovInstr(MachineBasicBlock *MBB,
                                          MachineBasicBlock::iterator I,
                                          unsigned DstReg,
                                          unsigned SrcReg) const {
-  llvm_unreachable("Not Implemented");
+  return BuildMI(*MBB, I, MBB->findDebugLoc(I), get(AMDGPU::V_MOV_B32_e32),
+                 DstReg) .addReg(SrcReg);
 }
 
 bool SIInstrInfo::isMov(unsigned Opcode) const {
@@ -603,17 +604,8 @@ unsigned SIInstrInfo::calculateIndirectAddress(unsigned RegIndex,
   return RegIndex;
 }
 
-
-int SIInstrInfo::getIndirectIndexBegin(const MachineFunction &MF) const {
-  llvm_unreachable("Unimplemented");
-}
-
-int SIInstrInfo::getIndirectIndexEnd(const MachineFunction &MF) const {
-  llvm_unreachable("Unimplemented");
-}
-
 const TargetRegisterClass *SIInstrInfo::getIndirectAddrRegClass() const {
-  llvm_unreachable("Unimplemented");
+  return &AMDGPU::VReg_32RegClass;
 }
 
 MachineInstrBuilder SIInstrInfo::buildIndirectWrite(
@@ -621,7 +613,17 @@ MachineInstrBuilder SIInstrInfo::buildIndirectWrite(
                                    MachineBasicBlock::iterator I,
                                    unsigned ValueReg,
                                    unsigned Address, unsigned OffsetReg) const {
-  llvm_unreachable("Unimplemented");
+  const DebugLoc &DL = MBB->findDebugLoc(I);
+  unsigned IndirectBaseReg = AMDGPU::VReg_32RegClass.getRegister(
+                                      getIndirectIndexBegin(*MBB->getParent()));
+
+  return BuildMI(*MBB, I, DL, get(AMDGPU::SI_INDIRECT_DST_V1))
+          .addReg(IndirectBaseReg, RegState::Define)
+          .addOperand(I->getOperand(0))
+          .addReg(IndirectBaseReg)
+          .addReg(OffsetReg)
+          .addImm(0)
+          .addReg(ValueReg);
 }
 
 MachineInstrBuilder SIInstrInfo::buildIndirectRead(
@@ -629,5 +631,43 @@ MachineInstrBuilder SIInstrInfo::buildIndirectRead(
                                    MachineBasicBlock::iterator I,
                                    unsigned ValueReg,
                                    unsigned Address, unsigned OffsetReg) const {
-  llvm_unreachable("Unimplemented");
+  const DebugLoc &DL = MBB->findDebugLoc(I);
+  unsigned IndirectBaseReg = AMDGPU::VReg_32RegClass.getRegister(
+                                      getIndirectIndexBegin(*MBB->getParent()));
+
+  return BuildMI(*MBB, I, DL, get(AMDGPU::SI_INDIRECT_SRC))
+          .addOperand(I->getOperand(0))
+          .addOperand(I->getOperand(1))
+          .addReg(IndirectBaseReg)
+          .addReg(OffsetReg)
+          .addImm(0);
+
+}
+
+void SIInstrInfo::reserveIndirectRegisters(BitVector &Reserved,
+                                            const MachineFunction &MF) const {
+  int End = getIndirectIndexEnd(MF);
+  int Begin = getIndirectIndexBegin(MF);
+
+  if (End == -1)
+    return;
+
+
+  for (int Index = Begin; Index <= End; ++Index)
+    Reserved.set(AMDGPU::VReg_32RegClass.getRegister(Index));
+
+  for (int Index = std::max(0, Index - 1); Index <= End; ++Index)
+    Reserved.set(AMDGPU::VReg_64RegClass.getRegister(Index));
+
+  for (int Index = std::max(0, Index - 2); Index <= End; ++Index)
+    Reserved.set(AMDGPU::VReg_96RegClass.getRegister(Index));
+
+  for (int Index = std::max(0, Index - 3); Index <= End; ++Index)
+    Reserved.set(AMDGPU::VReg_128RegClass.getRegister(Index));
+
+  for (int Index = std::max(0, Index - 7); Index <= End; ++Index)
+    Reserved.set(AMDGPU::VReg_256RegClass.getRegister(Index));
+
+  for (int Index = std::max(0, Index - 15); Index <= End; ++Index)
+    Reserved.set(AMDGPU::VReg_512RegClass.getRegister(Index));
 }

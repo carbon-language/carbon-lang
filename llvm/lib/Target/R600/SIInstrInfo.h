@@ -25,6 +25,14 @@ class SIInstrInfo : public AMDGPUInstrInfo {
 private:
   const SIRegisterInfo RI;
 
+  MachineInstrBuilder buildIndirectIndexLoop(MachineBasicBlock &MBB,
+                                             MachineBasicBlock::iterator I,
+                                             unsigned OffsetVGPR,
+                                             unsigned MovRelOp,
+                                             unsigned Dst,
+                                             unsigned Src0) const;
+  // If you add or remove instructions from this function, you will
+
 public:
   explicit SIInstrInfo(AMDGPUTargetMachine &tm);
 
@@ -58,9 +66,6 @@ public:
 
   virtual bool verifyInstruction(const MachineInstr *MI,
                                  StringRef &ErrInfo) const;
-  virtual int getIndirectIndexBegin(const MachineFunction &MF) const;
-
-  virtual int getIndirectIndexEnd(const MachineFunction &MF) const;
 
   bool isSALUInstr(const MachineInstr &MI) const;
   unsigned getVALUOp(const MachineInstr &MI) const;
@@ -114,7 +119,12 @@ public:
                                                 unsigned ValueReg,
                                                 unsigned Address,
                                                 unsigned OffsetReg) const;
-  };
+  void reserveIndirectRegisters(BitVector &Reserved,
+                                const MachineFunction &MF) const;
+
+  void LoadM0(MachineInstr *MoveRel, MachineBasicBlock::iterator I,
+              unsigned SavReg, unsigned IndexReg) const;
+};
 
 namespace AMDGPU {
 

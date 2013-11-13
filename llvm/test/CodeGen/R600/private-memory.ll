@@ -1,16 +1,24 @@
-; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s --check-prefix=R600-CHECK
+; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s --check-prefix=SI-CHECK
 
 ; This test checks that uses and defs of the AR register happen in the same
 ; instruction clause.
 
-; CHECK: @mova_same_clause
-; CHECK: MOVA_INT
-; CHECK-NOT: ALU clause
-; CHECK: 0 + AR.x
-; CHECK: MOVA_INT
-; CHECK-NOT: ALU clause
-; CHECK: 0 + AR.x
+; R600-CHECK-LABEL: @mova_same_clause
+; R600-CHECK: MOVA_INT
+; R600-CHECK-NOT: ALU clause
+; R600-CHECK: 0 + AR.x
+; R600-CHECK: MOVA_INT
+; R600-CHECK-NOT: ALU clause
+; R600-CHECK: 0 + AR.x
 
+; SI-CHECK-LABEL: @mova_same_clause
+; SI-CHECK: V_READFIRSTLANE
+; SI-CHECK: V_MOVRELD
+; SI-CHECK: S_CBRANCH
+; SI-CHECK: V_READFIRSTLANE
+; SI-CHECK: V_MOVRELD
+; SI-CHECK: S_CBRANCH
 define void @mova_same_clause(i32 addrspace(1)* nocapture %out, i32 addrspace(1)* nocapture %in) {
 entry:
   %stack = alloca [5 x i32], align 4
@@ -38,9 +46,10 @@ entry:
 ; XXX: This generated code has unnecessary MOVs, we should be able to optimize
 ; this.
 
-; CHECK: @multiple_structs
-; CHECK-NOT: MOVA_INT
-
+; R600-CHECK-LABEL: @multiple_structs
+; R600-CHECK-NOT: MOVA_INT
+; SI-CHECK-LABEL: @multiple_structs
+; SI-CHECK-NOT: V_MOVREL
 %struct.point = type { i32, i32 }
 
 define void @multiple_structs(i32 addrspace(1)* %out) {
@@ -68,8 +77,10 @@ entry:
 ; loads and stores should be lowered to copies, so there shouldn't be any
 ; MOVA instructions.
 
-; CHECK: @direct_loop
-; CHECK-NOT: MOVA_INT
+; R600-CHECK-LABLE: @direct_loop
+; R600-CHECK-NOT: MOVA_INT
+; SI-CHECK-LABEL: @direct_loop
+; SI-CHECK-NOT: V_MOVREL
 
 define void @direct_loop(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:

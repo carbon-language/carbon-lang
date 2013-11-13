@@ -15,6 +15,7 @@
 
 #include "SIRegisterInfo.h"
 #include "AMDGPUTargetMachine.h"
+#include "SIInstrInfo.h"
 
 using namespace llvm;
 
@@ -26,6 +27,9 @@ SIRegisterInfo::SIRegisterInfo(AMDGPUTargetMachine &tm)
 BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   Reserved.set(AMDGPU::EXEC);
+  Reserved.set(AMDGPU::INDIRECT_BASE_ADDR);
+  const SIInstrInfo *TII = static_cast<const SIInstrInfo*>(TM.getInstrInfo());
+  TII->reserveIndirectRegisters(Reserved, MF);
   return Reserved;
 }
 
@@ -49,6 +53,10 @@ const TargetRegisterClass * SIRegisterInfo::getCFGStructurizerRegClass(
     default:
     case MVT::i32: return &AMDGPU::VReg_32RegClass;
   }
+}
+
+unsigned SIRegisterInfo::getHWRegIndex(unsigned Reg) const {
+  return getEncodingValue(Reg);
 }
 
 const TargetRegisterClass *SIRegisterInfo::getPhysRegClass(unsigned Reg) const {

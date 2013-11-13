@@ -186,7 +186,7 @@ bool SIInsertWaits::isOpRelevant(MachineOperand &Op) {
 
 RegInterval SIInsertWaits::getRegInterval(MachineOperand &Op) {
 
-  if (!Op.isReg())
+  if (!Op.isReg() || !TRI->isInAllocatableClass(Op.getReg()))
     return std::make_pair(0, 0);
 
   unsigned Reg = Op.getReg();

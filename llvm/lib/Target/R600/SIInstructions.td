@@ -1293,6 +1293,36 @@ def SI_KILL : InstSI <
 
 let Uses = [EXEC], Defs = [EXEC,VCC,M0] in {
 
+//defm SI_ : RegisterLoadStore <VReg_32, FRAMEri64, ADDRIndirect>;
+
+let UseNamedOperandTable = 1 in {
+
+def SI_RegisterLoad : AMDGPUShaderInst <
+  (outs VReg_32:$dst, SReg_64:$temp),
+  (ins FRAMEri64:$addr, i32imm:$chan),
+  "", []
+> {
+  let isRegisterLoad = 1;
+  let mayLoad = 1;
+}
+
+class SIRegStore<dag outs> : AMDGPUShaderInst <
+  outs,
+  (ins VReg_32:$val, FRAMEri64:$addr, i32imm:$chan),
+  "", []
+> {
+  let isRegisterStore = 1;
+  let mayStore = 1;
+}
+
+let usesCustomInserter = 1 in {
+def SI_RegisterStorePseudo : SIRegStore<(outs)>;
+} // End usesCustomInserter = 1
+def SI_RegisterStore : SIRegStore<(outs SReg_64:$temp)>;
+
+
+} // End UseNamedOperandTable = 1
+
 def SI_INDIRECT_SRC : InstSI <
   (outs VReg_32:$dst, SReg_64:$temp),
   (ins unknown:$src, VSrc_32:$idx, i32imm:$off),
@@ -1309,6 +1339,7 @@ class SI_INDIRECT_DST<RegisterClass rc> : InstSI <
   let Constraints = "$src = $dst";
 }
 
+def SI_INDIRECT_DST_V1 : SI_INDIRECT_DST<VReg_32>;
 def SI_INDIRECT_DST_V2 : SI_INDIRECT_DST<VReg_64>;
 def SI_INDIRECT_DST_V4 : SI_INDIRECT_DST<VReg_128>;
 def SI_INDIRECT_DST_V8 : SI_INDIRECT_DST<VReg_256>;
@@ -1988,7 +2019,7 @@ def : Pat<
   (V_CMP_U_F32_e64 $src0, $src1)
 >;
 
-//============================================================================//
+//===----------------------------------------------------------------------===//
 // Miscellaneous Patterns
 //===----------------------------------------------------------------------===//
 
@@ -1997,6 +2028,11 @@ def : Pat <
   (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
     (i32 (EXTRACT_SUBREG $x, sub0)), sub0),
     (i32 (EXTRACT_SUBREG $x, sub1)), sub1)
+>;
+
+def : Pat <
+  (i32 (trunc i64:$a)),
+  (EXTRACT_SUBREG $a, sub0)
 >;
 
 def : Pat <

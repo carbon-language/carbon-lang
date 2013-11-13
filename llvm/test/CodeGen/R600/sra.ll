@@ -43,7 +43,7 @@ define void @ashr_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %i
 ;EG-CHECK: ASHR
 
 ;SI-CHECK-LABEL: @ashr_i64
-;SI-CHECK: V_ASHR_I64
+;SI-CHECK: S_ASHR_I64 s[{{[0-9]}}:{{[0-9]}}], s[{{[0-9]}}:{{[0-9]}}], 8
 define void @ashr_i64(i64 addrspace(1)* %out, i32 %in) {
 entry:
   %0 = sext i32 %in to i64

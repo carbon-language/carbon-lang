@@ -99,6 +99,14 @@ protected:
                                       MachineInstr *MI,
                                       const SmallVectorImpl<unsigned> &Ops,
                                       MachineInstr *LoadMI) const;
+  /// \returns the smallest register index that will be accessed by an indirect
+  /// read or write or -1 if indirect addressing is not used by this program.
+  virtual int getIndirectIndexBegin(const MachineFunction &MF) const;
+
+  /// \returns the largest register index that will be accessed by an indirect
+  /// read or write or -1 if indirect addressing is not used by this program.
+  virtual int getIndirectIndexEnd(const MachineFunction &MF) const;
+
 public:
   bool canFoldMemoryOperand(const MachineInstr *MI,
                             const SmallVectorImpl<unsigned> &Ops) const;
@@ -143,14 +151,6 @@ public:
 
   virtual unsigned getIEQOpcode() const = 0;
   virtual bool isMov(unsigned opcode) const = 0;
-
-  /// \returns the smallest register index that will be accessed by an indirect
-  /// read or write or -1 if indirect addressing is not used by this program.
-  virtual int getIndirectIndexBegin(const MachineFunction &MF) const = 0;
-
-  /// \returns the largest register index that will be accessed by an indirect
-  /// read or write or -1 if indirect addressing is not used by this program.
-  virtual int getIndirectIndexEnd(const MachineFunction &MF) const = 0;
 
   /// \brief Calculate the "Indirect Address" for the given \p RegIndex and
   ///        \p Channel

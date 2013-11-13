@@ -15,6 +15,7 @@
 
 #include "AMDGPUISelLowering.h"
 #include "AMDGPU.h"
+#include "AMDGPUFrameLowering.h"
 #include "AMDGPURegisterInfo.h"
 #include "AMDGPUSubtarget.h"
 #include "AMDILIntrinsicInfo.h"
@@ -250,8 +251,8 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   // AMDGPU DAG lowering
   case ISD::CONCAT_VECTORS: return LowerCONCAT_VECTORS(Op, DAG);
   case ISD::EXTRACT_SUBVECTOR: return LowerEXTRACT_SUBVECTOR(Op, DAG);
+  case ISD::FrameIndex: return LowerFrameIndex(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
-  case ISD::STORE: return LowerSTORE(Op, DAG);
   case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
   case ISD::UINT_TO_FP: return LowerUINT_TO_FP(Op, DAG);
   }
@@ -326,6 +327,21 @@ SDValue AMDGPUTargetLowering::LowerEXTRACT_SUBVECTOR(SDValue Op,
                      &Args[0], Args.size());
 }
 
+SDValue AMDGPUTargetLowering::LowerFrameIndex(SDValue Op,
+                                              SelectionDAG &DAG) const {
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  const AMDGPUFrameLowering *TFL =
+   static_cast<const AMDGPUFrameLowering*>(getTargetMachine().getFrameLowering());
+
+  FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Op);
+  assert(FIN);
+
+  unsigned FrameIndex = FIN->getIndex();
+  unsigned Offset = TFL->getFrameIndexOffset(MF, FrameIndex);
+  return DAG.getConstant(Offset * 4 * TFL->getStackWidth(MF),
+                         Op.getValueType());
+}
 
 SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     SelectionDAG &DAG) const {
@@ -563,7 +579,8 @@ SDValue AMDGPUTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   }
 
   StoreSDNode *Store = cast<StoreSDNode>(Op);
-  if (Store->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS &&
+  if ((Store->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS ||
+       Store->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS) &&
       Store->getValue().getValueType().isVector()) {
     return SplitVectorStore(Op, DAG);
   }

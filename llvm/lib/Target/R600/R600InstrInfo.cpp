@@ -1024,67 +1024,25 @@ unsigned int R600InstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
   return 2;
 }
 
-int R600InstrInfo::getIndirectIndexBegin(const MachineFunction &MF) const {
-  const MachineRegisterInfo &MRI = MF.getRegInfo();
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  int Offset = 0;
-
-  if (MFI->getNumObjects() == 0) {
-    return -1;
-  }
-
-  if (MRI.livein_empty()) {
-    return 0;
-  }
-
-  for (MachineRegisterInfo::livein_iterator LI = MRI.livein_begin(),
-                                            LE = MRI.livein_end();
-                                            LI != LE; ++LI) {
-    Offset = std::max(Offset,
-                      GET_REG_INDEX(RI.getEncodingValue(LI->first)));
-  }
-
-  return Offset + 1;
-}
-
-int R600InstrInfo::getIndirectIndexEnd(const MachineFunction &MF) const {
-  int Offset = 0;
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-
-  // Variable sized objects are not supported
-  assert(!MFI->hasVarSizedObjects());
-
-  if (MFI->getNumObjects() == 0) {
-    return -1;
-  }
-
-  Offset = TM.getFrameLowering()->getFrameIndexOffset(MF, -1);
-
-  return getIndirectIndexBegin(MF) + Offset;
-}
-
-std::vector<unsigned> R600InstrInfo::getIndirectReservedRegs(
+void  R600InstrInfo::reserveIndirectRegisters(BitVector &Reserved,
                                              const MachineFunction &MF) const {
   const AMDGPUFrameLowering *TFL =
                  static_cast<const AMDGPUFrameLowering*>(TM.getFrameLowering());
-  std::vector<unsigned> Regs;
 
   unsigned StackWidth = TFL->getStackWidth(MF);
   int End = getIndirectIndexEnd(MF);
 
-  if (End == -1) {
-    return Regs;
-  }
+  if (End == -1)
+    return;
 
   for (int Index = getIndirectIndexBegin(MF); Index <= End; ++Index) {
     unsigned SuperReg = AMDGPU::R600_Reg128RegClass.getRegister(Index);
-    Regs.push_back(SuperReg);
+    Reserved.set(SuperReg);
     for (unsigned Chan = 0; Chan < StackWidth; ++Chan) {
       unsigned Reg = AMDGPU::R600_TReg32RegClass.getRegister((4 * Index) + Chan);
-      Regs.push_back(Reg);
+      Reserved.set(Reg);
     }
   }
-  return Regs;
 }
 
 unsigned R600InstrInfo::calculateIndirectAddress(unsigned RegIndex,

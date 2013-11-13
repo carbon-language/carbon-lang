@@ -35,6 +35,7 @@ class AMDGPUShaderInst <dag outs, dag ins, string asm, list<dag> pattern>
 }
 
 def InstFlag : OperandWithDefaultOps <i32, (ops (i32 0))>;
+def ADDRIndirect : ComplexPattern<iPTR, 2, "SelectADDRIndirect", [], []>;
 
 def COND_EQ : PatLeaf <
   (cond),
@@ -277,6 +278,8 @@ class FNEG <RegisterClass rc> : AMDGPUShaderInst <
 
 multiclass RegisterLoadStore <RegisterClass dstClass, Operand addrClass,
                     ComplexPattern addrPat> {
+let UseNamedOperandTable = 1 in {
+
   def RegisterLoad : AMDGPUShaderInst <
     (outs dstClass:$dst),
     (ins addrClass:$addr, i32imm:$chan),
@@ -294,6 +297,7 @@ multiclass RegisterLoadStore <RegisterClass dstClass, Operand addrClass,
   > {
     let isRegisterStore = 1;
   }
+}
 }
 
 } // End isCodeGenOnly = 1, isPseudo = 1

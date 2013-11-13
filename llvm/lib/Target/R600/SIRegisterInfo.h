@@ -42,6 +42,8 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
   /// CFGStructurizer
   virtual const TargetRegisterClass * getCFGStructurizerRegClass(MVT VT) const;
 
+  virtual unsigned getHWRegIndex(unsigned Reg) const;
+
   /// \brief Return the 'base' register class for this register.
   /// e.g. SGPR0 => SReg_32, VGPR => VReg_32 SGPR0_SGPR1 -> SReg_32, etc.
   const TargetRegisterClass *getPhysRegClass(unsigned Reg) const;

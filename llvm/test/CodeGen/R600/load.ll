@@ -299,8 +299,6 @@ entry:
 ; R600-CHECK: 31
 ; SI-CHECK-LABEL: @load_i64_sext
 ; SI-CHECK: BUFFER_LOAD_DWORDX2 [[VAL:v\[[0-9]:[0-9]\]]]
-; SI-CHECK: V_LSHL_B64 [[LSHL:v\[[0-9]:[0-9]\]]], [[VAL]], 32
-; SI-CHECK: V_ASHR_I64 v{{\[[0-9]:[0-9]\]}}, [[LSHL]], 32
 
 define void @load_i64_sext(i64 addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:
