@@ -2402,7 +2402,6 @@ bool llvm::verifyFunction(const Function &f, VerifierFailureAction action) {
   FPM.add(V);
   FPM.doInitialization();
   FPM.run(F);
-  FPM.doFinalization();
   return V->Broken;
 }
 
