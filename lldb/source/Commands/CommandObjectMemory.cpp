@@ -917,10 +917,10 @@ protected:
 OptionDefinition
 g_memory_find_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "expr", 'e', OptionParser::eRequiredArgument, NULL, 0, eArgTypeExpression, "Evaluate an expression to obtain a byte pattern."},
+    { LLDB_OPT_SET_1, false, "expression", 'e', OptionParser::eRequiredArgument, NULL, 0, eArgTypeExpression, "Evaluate an expression to obtain a byte pattern."},
     { LLDB_OPT_SET_1, false, "string", 's', OptionParser::eRequiredArgument, NULL, 0, eArgTypeName,   "Use text to find a byte pattern."},
     { LLDB_OPT_SET_1, false, "count", 'c', OptionParser::eRequiredArgument, NULL, 0, eArgTypeCount,   "How many times to perform the search."},
-    { LLDB_OPT_SET_1, false, "do-read", 'r', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,   "Should we do a memory read at each match."},
+    { LLDB_OPT_SET_1, false, "do-read-on-match", 'r', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,   "Should we do a memory read at each match."},
 };
 
 
@@ -1066,7 +1066,7 @@ protected:
 
       if (argc != 2)
       {
-          result.AppendError("Two addressed needed for memory find");
+          result.AppendError("two addresses needed for memory find");
           return false;
       }
 
