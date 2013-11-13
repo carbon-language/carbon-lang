@@ -2379,13 +2379,11 @@ bool MipsAsmParser::parseDirectiveGpWord() {
   // method to evaluate the expression.
   if (getParser().parseExpression(Value))
     return true;
-
   getParser().getStreamer().EmitGPRel32Value(Value);
-  Parser.Lex(); // Eat last token.
 
-  if (getLexer().is(AsmToken::EndOfStatement))
+  if (getLexer().isNot(AsmToken::EndOfStatement))
     return Error(getLexer().getLoc(), "unexpected token in directive");
-
+  Parser.Lex(); // Eat EndOfStatement token.
   return false;
 }
 

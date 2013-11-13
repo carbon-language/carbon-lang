@@ -19,10 +19,11 @@ $BB0_2:
     .set    noat
 $JTI0_0:
     .gpword    ($BB0_2)
+
     .word 0x77fffffc
 # CHECK: $JTI0_0:
 # CHECK: .gpword ($BB0_2)
-# CHECK-NEXT:     .4byte    2013265916
+# CHECK:     .4byte    2013265916
     .set  at=$12
     .set macro
 # CHECK:   b 1332               # encoding: [0x10,0x00,0x01,0x4d]
