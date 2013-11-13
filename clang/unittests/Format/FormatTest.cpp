@@ -6911,6 +6911,14 @@ TEST_F(FormatTest, WorksFor8bitEncodings) {
                    getLLVMStyleWithColumns(12)));
 }
 
+TEST_F(FormatTest, HandlesUTF8BOM) {
+  EXPECT_EQ("\xef\xbb\xbf", format("\xef\xbb\xbf"));
+  EXPECT_EQ("\xef\xbb\xbf#include <iostream>",
+            format("\xef\xbb\xbf#include <iostream>"));
+  EXPECT_EQ("\xef\xbb\xbf\n#include <iostream>",
+            format("\xef\xbb\xbf\n#include <iostream>"));
+}
+
 // FIXME: Encode Cyrillic and CJK characters below to appease MS compilers.
 #if !defined(_MSC_VER)
 

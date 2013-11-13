@@ -996,7 +996,7 @@ class FormatTokenLexer {
 public:
   FormatTokenLexer(Lexer &Lex, SourceManager &SourceMgr, FormatStyle &Style,
                    encoding::Encoding Encoding)
-      : FormatTok(NULL), GreaterStashed(false), Column(0),
+      : FormatTok(NULL), IsFirstToken(true), GreaterStashed(false), Column(0),
         TrailingWhitespace(0), Lex(Lex), SourceMgr(SourceMgr), Style(Style),
         IdentTable(getFormattingLangOpts()), Encoding(Encoding) {
     Lex.SetKeepWhitespaceMode(true);
@@ -1069,8 +1069,8 @@ private:
     readRawToken(*FormatTok);
     SourceLocation WhitespaceStart =
         FormatTok->Tok.getLocation().getLocWithOffset(-TrailingWhitespace);
-    if (SourceMgr.getFileOffset(WhitespaceStart) == 0)
-      FormatTok->IsFirst = true;
+    FormatTok->IsFirst = IsFirstToken;
+    IsFirstToken = false;
 
     // Consume and record whitespace until we find a significant token.
     unsigned WhitespaceLength = TrailingWhitespace;
@@ -1181,6 +1181,7 @@ private:
   }
 
   FormatToken *FormatTok;
+  bool IsFirstToken;
   bool GreaterStashed;
   unsigned Column;
   unsigned TrailingWhitespace;
