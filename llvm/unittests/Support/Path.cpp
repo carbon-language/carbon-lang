@@ -500,7 +500,7 @@ TEST_F(FileSystemTest, FileMapping) {
     mfr.data()[Val.size()] = 0;
     // Unmap temp file
   }
-  
+
   // Map it back in read-only
   fs::mapped_file_region mfr(Twine(TempPath),
                              fs::mapped_file_region::readonly,
@@ -508,10 +508,10 @@ TEST_F(FileSystemTest, FileMapping) {
                              0,
                              EC);
   ASSERT_NO_ERROR(EC);
-  
+
   // Verify content
   EXPECT_EQ(StringRef(mfr.const_data()), Val);
-  
+
   // Unmap temp file
 
 #if LLVM_HAS_RVALUE_REFERENCES
