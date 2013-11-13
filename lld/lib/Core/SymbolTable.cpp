@@ -232,9 +232,13 @@ void SymbolTable::addByName(const Atom & newAtom) {
       }
     }
     break;
+  case NCR_Error:
+    llvm::errs() << "SymbolTable: error while merging " << name << "\n";
+    // FALLTHRU
   default:
     llvm::report_fatal_error("SymbolTable::addByName(): unhandled switch clause");
   }
+
   if (useNew) {
     // Update name table to use new atom.
     _nameTable[name] = &newAtom;
