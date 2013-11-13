@@ -34,6 +34,8 @@
 
 using namespace llvm;
 
+namespace {
+
 class Delinearization : public FunctionPass {
   Delinearization(const Delinearization &); // do not implement
 protected:
@@ -51,6 +53,8 @@ public:
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
   virtual void print(raw_ostream &O, const Module *M = 0) const;
 };
+
+} // end anonymous namespace
 
 void Delinearization::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
