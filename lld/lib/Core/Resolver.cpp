@@ -227,7 +227,7 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
   switch ( atom.sectionPosition() ) {
   case DefinedAtom::sectionPositionStart:
   case DefinedAtom::sectionPositionEnd:
-    assert(atom.empty());
+    assert(atom.size() == 0);
     break;
   case DefinedAtom::sectionPositionEarly:
   case DefinedAtom::sectionPositionAny:

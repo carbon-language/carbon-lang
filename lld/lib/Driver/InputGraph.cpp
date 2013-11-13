@@ -133,7 +133,7 @@ uint32_t ControlNode::getResolveState() const {
 /// \brief Set the resolve state for the current element
 /// thats processed by the resolver.
 void ControlNode::setResolveState(uint32_t resolveState) {
-  if (_elements.empty())
+  if (_elements.size() == 0)
     return;
   _elements[_currentElementIndex]->setResolveState(resolveState);
 }
@@ -151,7 +151,7 @@ SimpleFileNode::SimpleFileNode(StringRef path, int64_t ordinal)
 /// of the input elements contained in the group.
 ErrorOr<File &> Group::getNextFile() {
   // If there are no elements, move on to the next input element
-  if (_elements.empty())
+  if (_elements.size() == 0)
     return make_error_code(InputGraphError::no_more_files);
 
   for (;;) {

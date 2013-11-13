@@ -666,7 +666,7 @@ private:
       array = array.slice(3);
     }
 
-    if (array.empty())
+    if (array.size() == 0)
       return "";
 
     size_t len = 0;
