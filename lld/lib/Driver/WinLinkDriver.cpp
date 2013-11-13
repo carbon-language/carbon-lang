@@ -911,7 +911,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
     }
   }
 
-  if (inputElements.size() == 0 && !isReadingDirectiveSection) {
+  if (inputElements.empty() && !isReadingDirectiveSection) {
     diagnostics << "No input files\n";
     return false;
   }
