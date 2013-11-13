@@ -99,6 +99,8 @@ void AsanThread::Destroy() {
     Report("T%d exited\n", tid());
   }
 
+  malloc_storage().CommitBack();
+  if (flags()->use_sigaltstack) UnsetAlternateSignalStack();
   asanThreadRegistry().FinishThread(tid());
   FlushToDeadThreadStats(&stats_);
   // We also clear the shadow on thread destruction because
@@ -165,8 +167,6 @@ thread_return_t AsanThread::ThreadStart(uptr os_id) {
   }
 
   thread_return_t res = start_routine_(arg_);
-  malloc_storage().CommitBack();
-  if (flags()->use_sigaltstack) UnsetAlternateSignalStack();
 
   // On POSIX systems we defer this to the TSD destructor. LSan will consider
   // the thread's memory as non-live from the moment we call Destroy(), even
