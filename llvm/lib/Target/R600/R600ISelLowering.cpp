@@ -90,10 +90,16 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::LOAD, MVT::i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v2i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
+
+  // EXTLOAD should be the same as ZEXTLOAD. It is legal for some address
+  // spaces, so it is custom lowered to handle those where it isn't.
   setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Custom);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Custom);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i8, Custom);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Custom);
+  setLoadExtAction(ISD::EXTLOAD, MVT::i8, Custom);
+  setLoadExtAction(ISD::EXTLOAD, MVT::i16, Custom);
+
   setOperationAction(ISD::STORE, MVT::i8, Custom);
   setOperationAction(ISD::STORE, MVT::i32, Custom);
   setOperationAction(ISD::STORE, MVT::v2i32, Custom);
@@ -1226,7 +1232,9 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
   }
 
   int ConstantBlock = ConstantAddressBlock(LoadNode->getAddressSpace());
-  if (ConstantBlock > -1 && LoadNode->getExtensionType() != ISD::SEXTLOAD) {
+  if (ConstantBlock > -1 &&
+      ((LoadNode->getExtensionType() == ISD::NON_EXTLOAD) ||
+       (LoadNode->getExtensionType() == ISD::ZEXTLOAD))) {
     SDValue Result;
     if (isa<ConstantExpr>(LoadNode->getSrcValue()) ||
         isa<Constant>(LoadNode->getSrcValue()) ||
