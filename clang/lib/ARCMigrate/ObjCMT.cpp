@@ -78,7 +78,7 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
 public:
   std::string MigrateDir;
   unsigned ASTMigrateActions;
-  unsigned  FileId;
+  FileID FileId;
   const TypedefDecl *NSIntegerTypedefed;
   const TypedefDecl *NSUIntegerTypedefed;
   OwningPtr<NSAPI> NSAPIObj;
@@ -100,7 +100,7 @@ public:
                          bool isOutputFile = false)
   : MigrateDir(migrateDir),
     ASTMigrateActions(astMigrateActions),
-    FileId(0), NSIntegerTypedefed(0), NSUIntegerTypedefed(0),
+    NSIntegerTypedefed(0), NSUIntegerTypedefed(0),
     Remapper(remapper), FileMgr(fileMgr), PPRec(PPRec), PP(PP),
     IsOutputFile(isOutputFile) { }
 
@@ -762,10 +762,10 @@ bool ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
     }
     else
       return false;
-    unsigned FileIdOfTypedefDcl =
-      PP.getSourceManager().getFileID(TypedefDcl->getLocation()).getHashValue();
-    unsigned FileIdOfEnumDcl =
-      PP.getSourceManager().getFileID(EnumDcl->getLocation()).getHashValue();
+    FileID FileIdOfTypedefDcl =
+      PP.getSourceManager().getFileID(TypedefDcl->getLocation());
+    FileID FileIdOfEnumDcl =
+      PP.getSourceManager().getFileID(EnumDcl->getLocation());
     if (FileIdOfTypedefDcl != FileIdOfEnumDcl)
       return false;
   }
@@ -1247,7 +1247,7 @@ void ObjCMigrateASTConsumer::AnnotateImplicitBridging(ASTContext &Ctx) {
     return;
   if (!Ctx.Idents.get("CF_IMPLICIT_BRIDGING_ENABLED").hasMacroDefinition()) {
     CFFunctionIBCandidates.clear();
-    FileId = 0;
+    FileId = FileID();
     return;
   }
   // Insert CF_IMPLICIT_BRIDGING_ENABLE/CF_IMPLICIT_BRIDGING_DISABLED
@@ -1272,7 +1272,7 @@ void ObjCMigrateASTConsumer::AnnotateImplicitBridging(ASTContext &Ctx) {
   }
   commit.insertAfterToken(EndLoc, PragmaString);
   Editor->commit(commit);
-  FileId = 0;
+  FileId = FileID();
   CFFunctionIBCandidates.clear();
 }
 
@@ -1292,14 +1292,14 @@ void ObjCMigrateASTConsumer::migrateCFAnnotation(ASTContext &Ctx, const Decl *De
     CF_BRIDGING_KIND AuditKind = migrateAddFunctionAnnotation(Ctx, FuncDecl);
     if (AuditKind == CF_BRIDGING_ENABLE) {
       CFFunctionIBCandidates.push_back(Decl);
-      if (!FileId)
-        FileId = PP.getSourceManager().getFileID(Decl->getLocation()).getHashValue();
+      if (FileId.isInvalid())
+        FileId = PP.getSourceManager().getFileID(Decl->getLocation());
     }
     else if (AuditKind == CF_BRIDGING_MAY_INCLUDE) {
       if (!CFFunctionIBCandidates.empty()) {
         CFFunctionIBCandidates.push_back(Decl);
-        if (!FileId)
-          FileId = PP.getSourceManager().getFileID(Decl->getLocation()).getHashValue();
+        if (FileId.isInvalid())
+          FileId = PP.getSourceManager().getFileID(Decl->getLocation());
       }
     }
     else
@@ -1596,9 +1596,9 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
   if (ASTMigrateActions & FrontendOptions::ObjCMT_MigrateDecls) {
     for (DeclContext::decl_iterator D = TU->decls_begin(), DEnd = TU->decls_end();
          D != DEnd; ++D) {
-      if (unsigned FID =
-            PP.getSourceManager().getFileID((*D)->getLocation()).getHashValue())
-        if (FileId && FileId != FID) {
+      FileID FID = PP.getSourceManager().getFileID((*D)->getLocation());
+      if (!FID.isInvalid())
+        if (!FileId.isInvalid() && FileId != FID) {
           if (ASTMigrateActions & FrontendOptions::ObjCMT_Annotation)
             AnnotateImplicitBridging(Ctx);
         }
