@@ -576,7 +576,7 @@ StringTable<ELFT>::StringTable(const ELFLinkingContext &context,
 
 template <class ELFT> uint64_t StringTable<ELFT>::addString(StringRef symname) {
 
-  if (symname.size() == 0)
+  if (symname.empty())
     return 0;
   StringMapTIter stringIter = _stringMap.find(symname);
   if (stringIter == _stringMap.end()) {
