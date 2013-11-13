@@ -3072,6 +3072,17 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
+  if (Arg *A = Args.getLastArg(options::OPT_mrestrict_it,
+                               options::OPT_mno_restrict_it)) {
+    if (A->getOption().matches(options::OPT_mrestrict_it)) {
+      CmdArgs.push_back("-backend-option");
+      CmdArgs.push_back("-arm-restrict-it");
+    } else {
+      CmdArgs.push_back("-backend-option");
+      CmdArgs.push_back("-arm-no-restrict-it");
+    }
+  }
+
   // Forward -f options with positive and negative forms; we translate
   // these by hand.
   if (Arg *A = Args.getLastArg(options::OPT_fprofile_sample_use_EQ)) {
