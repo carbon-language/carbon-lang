@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "DIE.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/MD5.h"
 
