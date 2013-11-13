@@ -842,7 +842,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
 
     case OPT_INPUT:
       inputElements.push_back(std::unique_ptr<InputElement>(
-          new PECOFFFileNode(ctx, inputArg->getValue())));
+          new PECOFFFileNode(ctx, ctx.allocateString(inputArg->getValue()))));
       break;
 
 #define DEFINE_BOOLEAN_FLAG(name, setter)       \
@@ -892,9 +892,11 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   // start with a hypen or a slash. This is not compatible with link.exe
   // but useful for us to test lld on Unix.
   if (llvm::opt::Arg *dashdash = parsedArgs->getLastArg(OPT_DASH_DASH)) {
-    for (const StringRef value : dashdash->getValues())
-      inputElements.push_back(
-          std::unique_ptr<InputElement>(new PECOFFFileNode(ctx, value)));
+    for (const StringRef value : dashdash->getValues()) {
+      std::unique_ptr<InputElement> elem(
+          new PECOFFFileNode(ctx, ctx.allocateString(value)));
+      inputElements.push_back(std::move(elem));
+    }
   }
 
   // Add the libraries specified by /defaultlib unless they are already added
