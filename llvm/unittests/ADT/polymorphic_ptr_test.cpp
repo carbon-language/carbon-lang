@@ -82,6 +82,12 @@ TEST(polymorphic_ptr_test, Basic) {
   EXPECT_FALSE(!p3);
   EXPECT_NE(s, &*p3);
   EXPECT_EQ(42, p3->x);
+
+  // Force copies of null without trying to dereference anything.
+  polymorphic_ptr<S> null_copy = dummy_copy(polymorphic_ptr<S>(null));
+  EXPECT_FALSE((bool)null_copy);
+  EXPECT_TRUE(!null_copy);
+  EXPECT_EQ(null, null_copy);
 }
 
 struct Base {
