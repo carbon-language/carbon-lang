@@ -85,9 +85,6 @@ if(APPLE)
     # provided by the instrumented modules.
     set(ASAN_RUNTIME_LDFLAGS
         "-undefined dynamic_lookup")
-    if (os STREQUAL "osx")
-      list(APPEND ASAN_RUNTIME_LDFLAGS "-framework Foundation")
-    endif()
     add_compiler_rt_darwin_dynamic_runtime(clang_rt.asan_${os}_dynamic ${os}
       ARCH ${ASAN_SUPPORTED_ARCH}
       SOURCES $<TARGET_OBJECTS:RTAsan.${os}>

@@ -174,7 +174,7 @@ CFLAGS.profile_ios.armv7s := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 
 # Configure the asan_osx_dynamic library to be built shared.
 SHARED_LIBRARY.asan_osx_dynamic := 1
-LDFLAGS.asan_osx_dynamic := -framework Foundation -lstdc++ -undefined dynamic_lookup
+LDFLAGS.asan_osx_dynamic := -lstdc++ -undefined dynamic_lookup
 
 FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
