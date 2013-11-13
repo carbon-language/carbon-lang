@@ -27,6 +27,7 @@ add_llvm_library(LLVMCore
   Metadata.cpp
   Module.cpp
   Pass.cpp
+  PassManager.cpp
   PassRegistry.cpp
   PrintModulePass.cpp
   Type.cpp

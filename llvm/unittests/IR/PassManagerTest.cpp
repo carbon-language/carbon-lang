@@ -19,6 +19,36 @@ using namespace llvm;
 
 namespace {
 
+class TestAnalysisPass {
+public:
+  typedef Function IRUnitT;
+
+  struct Result {
+    Result(int Count) : InstructionCount(Count) {}
+    bool invalidate(Function *) { return true; }
+    int InstructionCount;
+  };
+
+  /// \brief Returns an opaque, unique ID for this pass type.
+  static void *ID() { return (void *)&PassID; }
+
+  /// \brief Run the analysis pass over the function and return a result.
+  Result run(Function *F) {
+    int Count = 0;
+    for (Function::iterator BBI = F->begin(), BBE = F->end(); BBI != BBE; ++BBI)
+      for (BasicBlock::iterator II = BBI->begin(), IE = BBI->end(); II != IE;
+           ++II)
+        ++Count;
+    return Result(Count);
+  }
+
+private:
+  /// \brief Private static data to provide unique ID.
+  static char PassID;
+};
+
+char TestAnalysisPass::PassID;
+
 struct TestModulePass {
   TestModulePass(int &RunCount) : RunCount(RunCount) {}
 
@@ -31,14 +61,23 @@ struct TestModulePass {
 };
 
 struct TestFunctionPass {
-  TestFunctionPass(int &RunCount) : RunCount(RunCount) {}
+  TestFunctionPass(AnalysisManager &AM, int &RunCount, int &AnalyzedInstrCount)
+      : AM(AM), RunCount(RunCount), AnalyzedInstrCount(AnalyzedInstrCount) {
+    AM.requireAnalysisPass<TestAnalysisPass>();
+  }
 
   bool run(Function *F) {
     ++RunCount;
+
+    const TestAnalysisPass::Result &AR = AM.getResult<TestAnalysisPass>(F);
+    AnalyzedInstrCount += AR.InstructionCount;
+
     return true;
   }
 
+  AnalysisManager &AM;
   int &RunCount;
+  int &AnalyzedInstrCount;
 };
 
 Module *parseIR(const char *IR) {
@@ -68,8 +107,11 @@ public:
 };
 
 TEST_F(PassManagerTest, Basic) {
-  ModulePassManager MPM(M.get());
-  FunctionPassManager FPM;
+  AnalysisManager AM(M.get());
+  AM.registerAnalysisPass(TestAnalysisPass());
+
+  ModulePassManager MPM(M.get(), &AM);
+  FunctionPassManager FPM(&AM);
 
   // Count the runs over a module.
   int ModulePassRunCount = 0;
@@ -77,12 +119,14 @@ TEST_F(PassManagerTest, Basic) {
 
   // Count the runs over a Function.
   int FunctionPassRunCount = 0;
-  FPM.addPass(TestFunctionPass(FunctionPassRunCount));
+  int AnalyzedInstrCount = 0;
+  FPM.addPass(TestFunctionPass(AM, FunctionPassRunCount, AnalyzedInstrCount));
   MPM.addPass(FPM);
 
   MPM.run();
   EXPECT_EQ(1, ModulePassRunCount);
   EXPECT_EQ(3, FunctionPassRunCount);
+  EXPECT_EQ(5, AnalyzedInstrCount);
 }
 
 }
