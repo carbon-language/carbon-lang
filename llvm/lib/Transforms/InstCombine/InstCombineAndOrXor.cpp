@@ -1543,7 +1543,7 @@ static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
   return 0;
 }
 
-/// IsSingleBitValue - Returns true for "one-hot" values (values where at most
+/// IsOneHotValue - Returns true for "one-hot" values (values where at most
 /// one bit can be set).
 static bool IsOneHotValue(Value *V) {
   // Match 1<<K.
