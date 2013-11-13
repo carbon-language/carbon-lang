@@ -417,13 +417,11 @@ bool MipsConstantIslands::runOnMachineFunction(MachineFunction &mf) {
 
     DEBUG(dbgs() << "Beginning BR iteration #" << NoBRIters << '\n');
     bool BRChange = false;
-#ifdef IN_PROGRESS
     for (unsigned i = 0, e = ImmBranches.size(); i != e; ++i)
       BRChange |= fixupImmediateBr(ImmBranches[i]);
     if (BRChange && ++NoBRIters > 30)
       report_fatal_error("Branch Fix Up pass failed to converge!");
     DEBUG(dumpBBs());
-#endif
     if (!CPChange && !BRChange)
       break;
     MadeChange = true;
@@ -588,7 +586,6 @@ initializeFunctionInfo(const std::vector<MachineInstr*> &CPEMIs) {
         continue;
 
       int Opc = I->getOpcode();
-#ifdef IN_PROGRESS
       if (I->isBranch()) {
         bool isCond = false;
         unsigned Bits = 0;
@@ -596,13 +593,21 @@ initializeFunctionInfo(const std::vector<MachineInstr*> &CPEMIs) {
         int UOpc = Opc;
         switch (Opc) {
         default:
-          continue;  // Ignore other JT branches
+          continue;  // Ignore other branches for now
+        case Mips::Bimm16:
+          Bits = 11;
+          Scale = 2;
+          isCond = false;
+          break;
+        case Mips::BimmX16:
+          Bits = 16;
+          Scale = 2;
+          isCond = false;
         }
         // Record this immediate branch.
         unsigned MaxOffs = ((1 << (Bits-1))-1) * Scale;
         ImmBranches.push_back(ImmBranch(I, MaxOffs, isCond, UOpc));
       }
-#endif
 
       if (Opc == Mips::CONSTPOOL_ENTRY)
         continue;
