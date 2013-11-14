@@ -315,6 +315,9 @@ static void computeDeclRefDependence(const ASTContext &Ctx, NamedDecl *D,
         Var->getDeclContext()->isDependentContext()) {
       ValueDependent = true;
       InstantiationDependent = true;
+      TypeSourceInfo *TInfo = Var->getFirstDecl()->getTypeSourceInfo();
+      if (TInfo->getType()->isIncompleteArrayType())
+        TypeDependent = true;
     }
     
     return;
