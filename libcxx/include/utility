@@ -272,10 +272,10 @@ struct _LIBCPP_TYPE_VIS_ONLY pair
                                       )
             : first(__p.first), second(__p.second) {}
 
-#ifndef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#if !defined(_LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS) && _LIBCPP_TRIVIAL_PAIR_COPY_CTOR
     _LIBCPP_INLINE_VISIBILITY
     pair(const pair& __p) = default;
-#elif !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)  // default the copy ctor in C++03
+#elif !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) || !_LIBCPP_TRIVIAL_PAIR_COPY_CTOR
     _LIBCPP_INLINE_VISIBILITY
     pair(const pair& __p)
         _NOEXCEPT_(is_nothrow_copy_constructible<first_type>::value &&

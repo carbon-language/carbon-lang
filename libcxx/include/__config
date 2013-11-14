@@ -567,6 +567,16 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_WCTYPE_IS_MASK
 #endif
 
+#if defined(__APPLE__)
+#ifndef _LIBCPP_TRIVIAL_PAIR_COPY_CTOR
+#  define _LIBCPP_TRIVIAL_PAIR_COPY_CTOR 0
+#endif
+#endif
+
+#ifndef _LIBCPP_TRIVIAL_PAIR_COPY_CTOR
+#  define _LIBCPP_TRIVIAL_PAIR_COPY_CTOR 1
+#endif
+
 #ifndef _LIBCPP_STD_VER
 #  if  __cplusplus <= 201103L
 #    define _LIBCPP_STD_VER 11
