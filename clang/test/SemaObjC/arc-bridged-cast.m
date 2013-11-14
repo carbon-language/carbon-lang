@@ -62,3 +62,15 @@ CFTypeRef fixitsWithSpace(id obj) {
   // CHECK: fix-it:"{{.*}}":{59:9-59:9}:"(__bridge CFTypeRef)"
   // CHECK: fix-it:"{{.*}}":{59:9-59:9}:" CFBridgingRetain"
 }
+
+// <rdar://problem/15432770>
+// Suppressed -Wunused-variable when the initializer is a bridge cast.
+#pragma clang diagnostic push
+#pragma clang diagnostic warning "-Wunused-variable"
+void rdar15432770() {
+  void (^block1)() = ^ { };
+  void *ptr = (__bridge_retained void *)(block1);
+  void (^block2)() = (__bridge_transfer void(^)())ptr; // no-warning
+  int x = 1; // expected-warning {{unused variable}}
+}
+#pragma clang diagnostic pop
