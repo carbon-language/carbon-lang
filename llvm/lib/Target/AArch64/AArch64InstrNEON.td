@@ -4484,6 +4484,14 @@ defm : Neon_Scalar2SameMisc_SD_size_patterns<int_arm_neon_vrsqrte,
 def CMEQddd: NeonI_Scalar3Same_D_size<0b1, 0b10001, "cmeq">;
 def : Neon_Scalar3Same_cmp_D_size_patterns<int_aarch64_neon_vceq, CMEQddd>;
 
+class Neon_Scalar3Same_cmp_D_size_v1_patterns<SDPatternOperator opnode,
+                                              Instruction INSTD,
+                                              CondCode CC>
+  : Pat<(v1i64 (opnode (v1i64 FPR64:$Rn), (v1i64 FPR64:$Rm), CC)),
+        (INSTD FPR64:$Rn, FPR64:$Rm)>;
+
+def : Neon_Scalar3Same_cmp_D_size_v1_patterns<Neon_cmp, CMEQddd, SETEQ>;
+
 // Scalar Compare Signed Greather Than Or Equal
 def CMGEddd: NeonI_Scalar3Same_D_size<0b0, 0b00111, "cmge">;
 def : Neon_Scalar3Same_cmp_D_size_patterns<int_aarch64_neon_vcge, CMGEddd>;
@@ -4503,6 +4511,7 @@ def : Neon_Scalar3Same_cmp_D_size_patterns<int_aarch64_neon_vcgt, CMGTddd>;
 // Scalar Compare Bitwise Test Bits
 def CMTSTddd: NeonI_Scalar3Same_D_size<0b0, 0b10001, "cmtst">;
 def : Neon_Scalar3Same_cmp_D_size_patterns<int_aarch64_neon_vtstd, CMTSTddd>;
+def : Neon_Scalar3Same_cmp_D_size_patterns<Neon_tst, CMTSTddd>;
 
 // Scalar Compare Bitwise Equal To Zero
 def CMEQddi: NeonI_Scalar2SameMisc_cmpz_D_size<0b0, 0b01001, "cmeq">;

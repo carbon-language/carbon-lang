@@ -325,6 +325,9 @@ def int_aarch64_neon_vshld_n : Neon_2Arg_ShiftImm_Intrinsic;
 def int_aarch64_neon_vqshls_n : Neon_N2V_Intrinsic;
 def int_aarch64_neon_vqshlu_n : Neon_N2V_Intrinsic;
 
+// Scalar Signed Saturating Shift Left Unsigned (Immediate)
+def int_aarch64_neon_vqshlus_n : Neon_N2V_Intrinsic;
+
 // Scalar Signed Fixed-point Convert To Floating-Point (Immediate)
 def int_aarch64_neon_vcvtf32_n_s32 :
   Intrinsic<[llvm_v1f32_ty], [llvm_v1i32_ty, llvm_i32_ty], [IntrNoMem]>;
