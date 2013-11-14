@@ -109,6 +109,12 @@ enum OpKind {
   OpRev16,
   OpRev32,
   OpRev64,
+  OpXtnHi,
+  OpSqxtunHi,
+  OpQxtnHi,
+  OpFcvtnHi,
+  OpFcvtlHi,
+  OpFcvtxnHi,
   OpReinterpret,
   OpAddhnHi,
   OpRAddhnHi,
@@ -262,6 +268,12 @@ public:
     OpMap["OP_REV16"] = OpRev16;
     OpMap["OP_REV32"] = OpRev32;
     OpMap["OP_REV64"] = OpRev64;
+    OpMap["OP_XTN"] = OpXtnHi;
+    OpMap["OP_SQXTUN"] = OpSqxtunHi;
+    OpMap["OP_QXTN"] = OpQxtnHi;
+    OpMap["OP_VCVT_NA_HI"] = OpFcvtnHi;
+    OpMap["OP_VCVT_EX_HI"] = OpFcvtlHi;
+    OpMap["OP_VCVTX_HI"] = OpFcvtxnHi;
     OpMap["OP_REINT"] = OpReinterpret;
     OpMap["OP_ADDHNHi"] = OpAddhnHi;
     OpMap["OP_RADDHNHi"] = OpRAddhnHi;
@@ -372,6 +384,8 @@ static char Widen(const char t) {
       return 'l';
     case 'h':
       return 'f';
+    case 'f':
+      return 'd';
     default:
       PrintFatalError("unhandled type in widen!");
   }
@@ -389,6 +403,8 @@ static char Narrow(const char t) {
       return 'i';
     case 'f':
       return 'h';
+    case 'd':
+      return 'f';
     default:
       PrintFatalError("unhandled type in narrow!");
   }
@@ -858,7 +874,7 @@ static char Insert_BHSD_Suffix(StringRef typestr){
 /// Insert proper 'b' 'h' 's' 'd' if prefix 'S' is used.
 static std::string MangleName(const std::string &name, StringRef typestr,
                               ClassKind ck) {
-  if (name == "vcvt_f32_f16")
+  if (name == "vcvt_f32_f16" || name == "vcvt_f32_f64")
     return name;
 
   bool quad = false;
@@ -1794,6 +1810,58 @@ static std::string GenOpString(const std::string &name, OpKind op,
     for (unsigned i = DblWordElts; i <= nElts; i += DblWordElts)
       for (unsigned j = 0; j != DblWordElts; ++j)
         s += ", " + utostr(i - j - 1);
+    s += ");";
+    break;
+  }
+  case OpXtnHi: {
+    s = TypeString(proto[1], typestr) + " __a1 = " +
+        MangleName("vmovn", typestr, ClassS) + "(__b);\n  " +
+        "return __builtin_shufflevector(__a, __a1";
+    for (unsigned i = 0; i < nElts * 4; ++i)
+      s += ", " + utostr(i);
+    s += ");";
+    break;
+  }
+  case OpSqxtunHi: {
+    s = TypeString(proto[1], typestr) + " __a1 = " +
+        MangleName("vqmovun", typestr, ClassS) + "(__b);\n  " +
+        "return __builtin_shufflevector(__a, __a1";
+    for (unsigned i = 0; i < nElts * 4; ++i)
+      s += ", " + utostr(i);
+    s += ");";
+    break;
+  }
+  case OpQxtnHi: {
+    s = TypeString(proto[1], typestr) + " __a1 = " +
+        MangleName("vqmovn", typestr, ClassS) + "(__b);\n  " +
+        "return __builtin_shufflevector(__a, __a1";
+    for (unsigned i = 0; i < nElts * 4; ++i)
+      s += ", " + utostr(i);
+    s += ");";
+    break;
+  }
+  case OpFcvtnHi: {
+    std::string FName = (nElts == 1) ? "vcvt_f32" : "vcvt_f16";
+    s = TypeString(proto[1], typestr) + " __a1 = " +
+        MangleName(FName, typestr, ClassS) + "(__b);\n  " +
+        "return __builtin_shufflevector(__a, __a1";
+    for (unsigned i = 0; i < nElts * 4; ++i)
+      s += ", " + utostr(i);
+    s += ");";
+    break;
+  }
+  case OpFcvtlHi: {
+    std::string FName = (nElts == 2) ? "vcvt_f64" : "vcvt_f32";
+    s = TypeString('d', typestr) + " __a1 = " + GetHigh("__a", typestr) +
+        ";\n  return " + MangleName(FName, typestr, ClassS) + "(__a1);";
+    break;
+  }
+  case OpFcvtxnHi: {
+    s = TypeString(proto[1], typestr) + " __a1 = " +
+        MangleName("vcvtx_f32", typestr, ClassS) + "(__b);\n  " +
+        "return __builtin_shufflevector(__a, __a1";
+    for (unsigned i = 0; i < nElts * 4; ++i)
+      s += ", " + utostr(i);
     s += ");";
     break;
   }

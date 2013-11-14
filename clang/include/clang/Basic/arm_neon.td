@@ -87,6 +87,12 @@ def OP_SEL   : Op;
 def OP_REV64 : Op;
 def OP_REV32 : Op;
 def OP_REV16 : Op;
+def OP_XTN : Op;
+def OP_SQXTUN : Op;
+def OP_QXTN : Op;
+def OP_VCVT_NA_HI : Op;
+def OP_VCVT_EX_HI : Op;
+def OP_VCVTX_HI : Op;
 def OP_REINT : Op;
 def OP_ADDHNHi : Op;
 def OP_RADDHNHi : Op;
@@ -573,10 +579,82 @@ def BSL : SInst<"vbsl", "dudd", "csilUcUsUiUlfPcPsQcQsQiQlQUcQUsQUiQUlQfQPcQPsQd
 def ABD  : SInst<"vabd", "ddd",  "csiUcUsUifQcQsQiQUcQUsQUiQfQd">;
 
 ////////////////////////////////////////////////////////////////////////////////
+// saturating absolute/negate
+// With additional Qd/Ql type.
+def ABS    : SInst<"vabs", "dd", "csifQcQsQiQfQlQd">;
+def QABS   : SInst<"vqabs", "dd", "csiQcQsQiQl">;
+def NEG    : SOpInst<"vneg", "dd", "csifQcQsQiQfQdQl", OP_NEG>;
+def QNEG   : SInst<"vqneg", "dd", "csiQcQsQiQl">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Signed Saturating Accumulated of Unsigned Value
+def SUQADD : SInst<"vuqadd", "ddd", "csiQcQsQiQl">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Unsigned Saturating Accumulated of Signed Value
+def USQADD : SInst<"vsqadd", "ddd", "UcUsUiQUcQUsQUiQUl">;
+
+////////////////////////////////////////////////////////////////////////////////
 // Reciprocal/Sqrt
 // With additional Qd type.
 def FRECPS  : IInst<"vrecps", "ddd", "fQfQd">;
 def FRSQRTS : IInst<"vrsqrts", "ddd", "fQfQd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// bitwise reverse
+def RBIT : IInst<"vrbit", "dd", "cUcPcQcQUcQPc">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Integer extract and narrow to high
+def XTN2 : SOpInst<"vmovn_high", "qhk", "silUsUiUl", OP_XTN>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Signed integer saturating extract and unsigned narrow to high
+def SQXTUN2 : SOpInst<"vqmovun_high", "qhk", "sil", OP_SQXTUN>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Integer saturating extract and narrow to high
+def QXTN2 : SOpInst<"vqmovn_high", "qhk", "silUsUiUl", OP_QXTN>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Converting vectors
+def VCVT_HIGH_F16 : SOpInst<"vcvt_high_f16", "qhj", "f", OP_VCVT_NA_HI>;
+def VCVT_HIGH_F32_F16 : SOpInst<"vcvt_high_f32", "wk", "h", OP_VCVT_EX_HI>;
+def VCVT_F32_F64 : SInst<"vcvt_f32_f64", "fj", "d">;
+def VCVT_HIGH_F32_F64 : SOpInst<"vcvt_high_f32", "qfj", "d", OP_VCVT_NA_HI>;
+def VCVT_F64_F32 : SInst<"vcvt_f64", "wd", "f">;
+def VCVT_F64 : SInst<"vcvt_f64", "fd",  "QlQUl">;
+def VCVT_HIGH_F64_F32 : SOpInst<"vcvt_high_f64", "wj", "f", OP_VCVT_EX_HI>;
+def VCVTX_F32_F64 : SInst<"vcvtx_f32", "fj",  "d">;
+def VCVTX_HIGH_F32_F64 : SOpInst<"vcvtx_high_f32", "qfj", "d", OP_VCVTX_HI>;
+def FRINTN : SInst<"vrndn", "dd", "fQfQd">;
+def FRINTA : SInst<"vrnda", "dd", "fQfQd">;
+def FRINTP : SInst<"vrndp", "dd", "fQfQd">;
+def FRINTM : SInst<"vrndm", "dd", "fQfQd">;
+def FRINTX : SInst<"vrndx", "dd", "fQfQd">;
+def FRINTZ : SInst<"vrnd", "dd", "fQfQd">;
+def FRINTI : SInst<"vrndi", "dd", "fQfQd">;
+def VCVT_S64 : SInst<"vcvt_s64", "xd",  "Qd">;
+def VCVT_U64 : SInst<"vcvt_u64", "ud",  "Qd">;
+def FCVTNS_S32 : SInst<"vcvtn_s32", "xd", "fQf">;
+def FCVTNS_S64 : SInst<"vcvtn_s64", "xd", "Qd">;
+def FCVTNU_S32 : SInst<"vcvtn_u32", "ud", "fQf">;
+def FCVTNU_S64 : SInst<"vcvtn_u64", "ud", "Qd">;
+def FCVTPS_S32 : SInst<"vcvtp_s32", "xd", "fQf">;
+def FCVTPS_S64 : SInst<"vcvtp_s64", "xd", "Qd">;
+def FCVTPU_S32 : SInst<"vcvtp_u32", "ud", "fQf">;
+def FCVTPU_S64 : SInst<"vcvtp_u64", "ud", "Qd">;
+def FCVTMS_S32 : SInst<"vcvtm_s32", "xd", "fQf">;
+def FCVTMS_S64 : SInst<"vcvtm_s64", "xd", "Qd">;
+def FCVTMU_S32 : SInst<"vcvtm_u32", "ud", "fQf">;
+def FCVTMU_S64 : SInst<"vcvtm_u64", "ud", "Qd">;
+def FCVTAS_S32 : SInst<"vcvta_s32", "xd", "fQf">;
+def FCVTAS_S64 : SInst<"vcvta_s64", "xd", "Qd">;
+def FCVTAU_S32 : SInst<"vcvta_u32", "ud", "fQf">;
+def FCVTAU_S64 : SInst<"vcvta_u64", "ud", "Qd">;
+def FRECPE  : SInst<"vrecpe", "dd", "fUiQfQUiQd">;
+def FRSQRTE : SInst<"vrsqrte", "dd", "fUiQfQUiQd">;
+def FSQRT   : SInst<"vsqrt", "dd", "fQfQd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Comparison
@@ -593,6 +671,13 @@ def CFMGE  : SOpInst<"vcge", "udd", "csifUcUsUiQcQsQiQlQfQUcQUsQUiQUlQd", OP_GE>
 def CFMLE  : SOpInst<"vcle", "udd", "csifUcUsUiQcQsQiQlQfQUcQUsQUiQUlQd", OP_LE>;
 def CFMGT  : SOpInst<"vcgt", "udd", "csifUcUsUiQcQsQiQlQfQUcQUsQUiQUlQd", OP_GT>;
 def CFMLT  : SOpInst<"vclt", "udd", "csifUcUsUiQcQsQiQlQfQUcQUsQUiQUlQd", OP_LT>;
+
+def CMEQ  : SInst<"vceqz", "ud",
+                  "csifUcUsUiPcPsQcQsQiQlQfQUcQUsQUiQUlQPcQPsQd">;
+def CMGE  : SInst<"vcgez", "ud", "csifdQcQsQiQlQfQd">;
+def CMLE  : SInst<"vclez", "ud", "csifdQcQsQiQlQfQd">;
+def CMGT  : SInst<"vcgtz", "ud", "csifdQcQsQiQlQfQd">;
+def CMLT  : SInst<"vcltz", "ud", "csifdQcQsQiQlQfQd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Max/Min Integer
