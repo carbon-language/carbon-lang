@@ -361,6 +361,21 @@ type ('a, 'b) llrev_pos =
 exception IoError of string
 
 
+(** {6 Global configuration} *)
+
+(** [enable_pretty_stacktraces ()] enables LLVM's built-in stack trace code.
+    This intercepts the OS's crash signals and prints which component of LLVM
+    you were in at the time of the crash. *)
+val enable_pretty_stacktrace : unit -> unit
+
+(** [install_fatal_error_handler f] installs [f] as LLVM's fatal error handler.
+    The handler will receive the reason for termination as a string. After
+    the handler has been executed, LLVM calls [exit(1)]. *)
+val install_fatal_error_handler : (string -> unit) -> unit
+
+(** [reset_fatal_error_handler ()] resets LLVM's fatal error handler. *)
+val reset_fatal_error_handler : unit -> unit
+
 (** {6 Contexts} *)
 
 (** [create_context ()] creates a context for storing the "global" state in

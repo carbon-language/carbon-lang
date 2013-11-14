@@ -280,6 +280,13 @@ exception IoError of string
 external register_exns : exn -> unit = "llvm_register_core_exns"
 let _ = register_exns (IoError "")
 
+external install_fatal_error_handler : (string -> unit) -> unit
+                                     = "llvm_install_fatal_error_handler"
+external reset_fatal_error_handler : unit -> unit
+                                   = "llvm_reset_fatal_error_handler"
+external enable_pretty_stacktrace : unit -> unit
+                                  = "llvm_enable_pretty_stacktrace"
+
 type ('a, 'b) llpos =
 | At_end of 'a
 | Before of 'b
