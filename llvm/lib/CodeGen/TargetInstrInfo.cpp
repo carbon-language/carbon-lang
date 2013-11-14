@@ -364,6 +364,7 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
 
   // Ask the target to do the actual folding.
   if (MachineInstr *NewMI = foldMemoryOperandImpl(MF, MI, Ops, FI)) {
+    NewMI->setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
     // Add a memory operand, foldMemoryOperandImpl doesn't do that.
     assert((!(Flags & MachineMemOperand::MOStore) ||
             NewMI->mayStore()) &&
@@ -424,9 +425,19 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
   NewMI = MBB.insert(MI, NewMI);
 
   // Copy the memoperands from the load to the folded instruction.
-  NewMI->setMemRefs(LoadMI->memoperands_begin(),
-                    LoadMI->memoperands_end());
-
+  if (MI->memoperands_empty()) {
+    NewMI->setMemRefs(LoadMI->memoperands_begin(),
+                      LoadMI->memoperands_end());
+  }
+  else {
+    // Handle the rare case of folding multiple loads.
+    NewMI->setMemRefs(MI->memoperands_begin(),
+                      MI->memoperands_end());
+    for (MachineInstr::mmo_iterator I = LoadMI->memoperands_begin(),
+           E = LoadMI->memoperands_end(); I != E; ++I) {
+      NewMI->addMemOperand(MF, *I);
+    }
+  }
   return NewMI;
 }
 
