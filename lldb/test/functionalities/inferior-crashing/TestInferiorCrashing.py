@@ -81,7 +81,7 @@ class CrashingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_crashing_expr_step_expr()
 
-    @expectedFailureFreeBSD('llvm.org/pr17184')
+    @expectedFailureFreeBSD('llvm.org/pr15989') # Couldn't allocate space for the stack frame
     @expectedFailureLinux # due to llvm.org/pr15989 -- expression fails after crash and step
     def test_inferior_crashing_expr_step_and_expr_dwarf(self):
         """Test that lldb expressions work before and after stepping after a crash."""
