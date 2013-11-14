@@ -207,10 +207,9 @@ static inline bool isCFStringType(QualType T, ASTContext &Ctx) {
   return RD->getIdentifier() == &Ctx.Idents.get("__CFString");
 }
 
-static inline bool isCFRefType(TypedefNameDecl *TD, ASTContext &Ctx) {
+static inline bool isTollFreeBridgeCFRefType(TypedefNameDecl *TD, ASTContext &Ctx) {
   StringRef TDName = TD->getIdentifier()->getName();
-  return ((TDName.startswith("CF") || TDName.startswith("CG")) &&
-          (TDName.rfind("Ref") != StringRef::npos));
+  return (TDName.startswith("CF") && TDName.endswith("Ref"));
 }
 
 static unsigned getNumAttributeArgs(const AttributeList &Attr) {
@@ -4414,7 +4413,7 @@ static void handleObjCBridgeAttr(Sema &S, Scope *Sc, Decl *D,
       return;
     }
     // Check for T being a CFType goes here.
-    if (!isCFRefType(TD, S.Context)) {
+    if (!isTollFreeBridgeCFRefType(TD, S.Context)) {
       S.Diag(TD->getLocStart(), diag::err_objc_bridge_not_cftype);
       return;
     }
