@@ -178,13 +178,14 @@ def objcmt_migrate_nsmacros : Flag<["-"], "objcmt-migrate-ns-macros">, Flags<[CC
   HelpText<"Enable migration to NS_ENUM/NS_OPTIONS macros">;
 def objcmt_migrate_protocol_conformance : Flag<["-"], "objcmt-migrate-protocol-conformance">, Flags<[CC1Option]>,
   HelpText<"Enable migration to add protocol conformance on classes">;
-def objcmt_atomic_property : Flag<["-"], "objcmt-atomic-property">,
-  Flags<[CC1Option]>,
+def objcmt_atomic_property : Flag<["-"], "objcmt-atomic-property">, Flags<[CC1Option]>,
   HelpText<"Make migration to 'atomic' properties">;
 def objcmt_returns_innerpointer_property : Flag<["-"], "objcmt-returns-innerpointer-property">, Flags<[CC1Option]>,
   HelpText<"Enable migration to annotate property with NS_RETURNS_INNER_POINTER">;
 def objcmt_ns_nonatomic_iosonly: Flag<["-"], "objcmt-ns-nonatomic-iosonly">, Flags<[CC1Option]>,
   HelpText<"Enable migration to use NS_NONATOMIC_IOSONLY macro for setting property's 'atomic' attribute">;
+def objcmt_white_list_dir_path: Joined<["-"], "objcmt-white-list-dir-path=">, Flags<[CC1Option]>,
+  HelpText<"Only modify files with a filename contained in the provided directory path">;
 
 // Make sure all other -ccc- options are rejected.
 def ccc_ : Joined<["-"], "ccc-">, Group<internal_Group>, Flags<[Unsupported]>;

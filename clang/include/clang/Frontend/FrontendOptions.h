@@ -186,6 +186,7 @@ public:
     ObjCMT_MigrateAll = (ObjCMT_Literals | ObjCMT_Subscripting | ObjCMT_MigrateDecls)
   };
   unsigned ObjCMTAction;
+  std::string ObjCMTWhiteListPath;
 
   std::string MTMigrateDir;
   std::string ARCMTMigrateReportOut;
