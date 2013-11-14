@@ -5089,6 +5089,1040 @@
 // CHECK-ERROR:        ucvtf d21, s14, #64
 // CHECK-ERROR:                   ^
 
+//------------------------------------------------------------------------------
+// Element reverse
+//------------------------------------------------------------------------------
+         rev64 v6.2d, v8.2d
+         rev32 v30.2s, v31.2s
+         rev32 v30.4s, v31.4s
+         rev32 v30.2d, v31.2d
+         rev16 v21.4h, v1.4h
+         rev16 v21.8h, v1.8h
+         rev16 v21.2s, v1.2s
+         rev16 v21.4s, v1.4s
+         rev16 v21.2d, v1.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rev64 v6.2d, v8.2d
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rev32 v30.2s, v31.2s
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rev32 v30.4s, v31.4s
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rev32 v30.2d, v31.2d
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rev16 v21.4h, v1.4h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rev16 v21.8h, v1.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rev16 v21.2s, v1.2s
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rev16 v21.4s, v1.4s
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rev16 v21.2d, v1.2d
+// CHECK-ERROR:                   ^
+
+//------------------------------------------------------------------------------
+// Signed integer pairwise add long
+//------------------------------------------------------------------------------
+
+         saddlp v3.8h, v21.8h
+         saddlp v8.8b, v5.8b
+         saddlp v9.8h, v1.4s
+         saddlp v0.4s, v1.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         saddlp v3.8h, v21.8h
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         saddlp v8.8b, v5.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         saddlp v9.8h, v1.4s
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         saddlp v0.4s, v1.2d
+// CHECK-ERROR:                          ^
+
+//------------------------------------------------------------------------------
+// Unsigned integer pairwise add long
+//------------------------------------------------------------------------------
+
+         uaddlp v3.8h, v21.8h
+         uaddlp v8.8b, v5.8b
+         uaddlp v9.8h, v1.4s
+         uaddlp v0.4s, v1.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uaddlp v3.8h, v21.8h
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uaddlp v8.8b, v5.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uaddlp v9.8h, v1.4s
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uaddlp v0.4s, v1.2d
+// CHECK-ERROR:                          ^
+
+//------------------------------------------------------------------------------
+// Signed integer pairwise add and accumulate long
+//------------------------------------------------------------------------------
+
+         sadalp v3.16b, v21.16b
+         sadalp v8.4h, v5.4h
+         sadalp v9.4s, v1.4s
+         sadalp v0.4h, v1.2s
+         sadalp v12.2d, v4.8h
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sadalp v3.16b, v21.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sadalp v8.4h, v5.4h
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sadalp v9.4s, v1.4s
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sadalp v0.4h, v1.2s
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sadalp v12.2d, v4.8h
+// CHECK-ERROR:                           ^
+
+//------------------------------------------------------------------------------
+// Unsigned integer pairwise add and accumulate long
+//------------------------------------------------------------------------------
+
+         uadalp v3.16b, v21.16b
+         uadalp v8.4h, v5.4h
+         uadalp v9.4s, v1.4s
+         uadalp v0.4h, v1.2s
+         uadalp v12.2d, v4.8h
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uadalp v3.16b, v21.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uadalp v8.4h, v5.4h
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uadalp v9.4s, v1.4s
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uadalp v0.4h, v1.2s
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uadalp v12.2d, v4.8h
+// CHECK-ERROR:                           ^
+
+//------------------------------------------------------------------------------
+// Signed integer saturating accumulate of unsigned value
+//------------------------------------------------------------------------------
+
+         suqadd v0.16b, v31.8b
+         suqadd v1.8b, v9.8h
+         suqadd v13.4h, v21.4s
+         suqadd v4.2s, v0.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         suqadd v0.16b, v31.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         suqadd v1.8b, v9.8h
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         suqadd v13.4h, v21.4s
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         suqadd v4.2s, v0.2d
+// CHECK-ERROR:                       ^
+
+//------------------------------------------------------------------------------
+// Unsigned integer saturating accumulate of signed value
+//------------------------------------------------------------------------------
+
+         usqadd v0.16b, v31.8b
+         usqadd v2.8h, v4.4h
+         usqadd v13.4h, v21.4s
+         usqadd v4.2s, v0.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         usqadd v0.16b, v31.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         usqadd v2.8h, v4.4h
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         usqadd v13.4h, v21.4s
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         usqadd v4.2s, v0.2d
+// CHECK-ERROR:                       ^
+
+//------------------------------------------------------------------------------
+// Integer saturating absolute
+//------------------------------------------------------------------------------
+
+         sqabs v0.16b, v31.8b
+         sqabs v2.8h, v4.4h
+         sqabs v6.4s, v8.2s
+         sqabs v6.2d, v8.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqabs v0.16b, v31.8b
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqabs v2.8h, v4.4h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqabs v6.4s, v8.2s
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqabs v6.2d, v8.2s
+// CHECK-ERROR:                      ^
+
+//------------------------------------------------------------------------------
+// Signed integer saturating negate
+//------------------------------------------------------------------------------
+
+         sqneg v0.16b, v31.8b
+         sqneg v2.8h, v4.4h
+         sqneg v6.4s, v8.2s
+         sqneg v6.2d, v8.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqneg v0.16b, v31.8b
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqneg v2.8h, v4.4h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqneg v6.4s, v8.2s
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqneg v6.2d, v8.2s
+// CHECK-ERROR:                      ^
+
+//------------------------------------------------------------------------------
+// Integer absolute
+//------------------------------------------------------------------------------
+
+         abs v0.16b, v31.8b
+         abs v2.8h, v4.4h
+         abs v6.4s, v8.2s
+         abs v6.2d, v8.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         abs v0.16b, v31.8b
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         abs v2.8h, v4.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         abs v6.4s, v8.2s
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         abs v6.2d, v8.2s
+// CHECK-ERROR:                    ^
+
+//------------------------------------------------------------------------------
+// Integer count leading sign bits
+//------------------------------------------------------------------------------
+
+         cls v0.2d, v31.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         cls v0.2d, v31.2d
+// CHECK-ERROR:                ^
+
+//------------------------------------------------------------------------------
+// Integer count leading zeros
+//------------------------------------------------------------------------------
+
+         clz v0.2d, v31.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         clz v0.2d, v31.2d
+// CHECK-ERROR:                ^
+
+//------------------------------------------------------------------------------
+// Population count
+//------------------------------------------------------------------------------
+
+         cnt v2.8h, v4.8h
+         cnt v6.4s, v8.4s
+         cnt v6.2d, v8.2d
+         cnt v13.4h, v21.4h
+         cnt v4.2s, v0.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         cnt v2.8h, v4.8h
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         cnt v6.4s, v8.4s
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         cnt v6.2d, v8.2d
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         cnt v13.4h, v21.4h
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         cnt v4.2s, v0.2s
+// CHECK-ERROR:                ^
+
+
+//------------------------------------------------------------------------------
+// Bitwise NOT
+//------------------------------------------------------------------------------
+
+         not v2.8h, v4.8h
+         not v6.4s, v8.4s
+         not v6.2d, v8.2d
+         not v13.4h, v21.4h
+         not v4.2s, v0.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         not v2.8h, v4.8h
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         not v6.4s, v8.4s
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         not v6.2d, v8.2d
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         not v13.4h, v21.4h
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         not v4.2s, v0.2s
+// CHECK-ERROR:                ^
+
+//------------------------------------------------------------------------------
+// Bitwise reverse
+//------------------------------------------------------------------------------
+
+         rbit v2.8h, v4.8h
+         rbit v6.4s, v8.4s
+         rbit v6.2d, v8.2d
+         rbit v13.4h, v21.4h
+         rbit v4.2s, v0.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rbit v2.8h, v4.8h
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rbit v6.4s, v8.4s
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rbit v6.2d, v8.2d
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rbit v13.4h, v21.4h
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rbit v4.2s, v0.2s
+// CHECK-ERROR:                 ^
+
+//------------------------------------------------------------------------------
+// Floating-point absolute
+//------------------------------------------------------------------------------
+
+         fabs v0.16b, v31.16b
+         fabs v2.8h, v4.8h
+         fabs v1.8b, v9.8b
+         fabs v13.4h, v21.4h
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fabs v0.16b, v31.16b
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fabs v2.8h, v4.8h
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fabs v1.8b, v9.8b
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fabs v13.4h, v21.4h
+// CHECK-ERROR:                  ^
+
+//------------------------------------------------------------------------------
+// Floating-point negate
+//------------------------------------------------------------------------------
+
+         fneg v0.16b, v31.16b
+         fneg v2.8h, v4.8h
+         fneg v1.8b, v9.8b
+         fneg v13.4h, v21.4h
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fneg v0.16b, v31.16b
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fneg v2.8h, v4.8h
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fneg v1.8b, v9.8b
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fneg v13.4h, v21.4h
+// CHECK-ERROR:                  ^
+
+//------------------------------------------------------------------------------
+// Integer extract and narrow
+//------------------------------------------------------------------------------
+
+         xtn v0.16b, v31.8h
+         xtn v2.8h, v4.4s
+         xtn v6.4s, v8.2d
+         xtn2 v1.8b, v9.8h
+         xtn2 v13.4h, v21.4s
+         xtn2 v4.2s, v0.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         xtn v0.16b, v31.8h
+// CHECK-ERROR:             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         xtn v2.8h, v4.4s
+// CHECK-ERROR:             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         xtn v6.4s, v8.2d
+// CHECK-ERROR:             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         xtn2 v1.8b, v9.8h
+// CHECK-ERROR:              ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         xtn2 v13.4h, v21.4s
+// CHECK-ERROR:              ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         xtn2 v4.2s, v0.2d
+// CHECK-ERROR:              ^
+
+//------------------------------------------------------------------------------
+// Signed integer saturating extract and unsigned narrow
+//------------------------------------------------------------------------------
+
+         sqxtun v0.16b, v31.8h
+         sqxtun v2.8h, v4.4s
+         sqxtun v6.4s, v8.2d
+         sqxtun2 v1.8b, v9.8h
+         sqxtun2 v13.4h, v21.4s
+         sqxtun2 v4.2s, v0.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqxtun v0.16b, v31.8h
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqxtun v2.8h, v4.4s
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqxtun v6.4s, v8.2d
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqxtun2 v1.8b, v9.8h
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqxtun2 v13.4h, v21.4s
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqxtun2 v4.2s, v0.2d
+// CHECK-ERROR:                 ^
+
+//------------------------------------------------------------------------------
+// Signed integer saturating extract and narrow
+//------------------------------------------------------------------------------
+
+         sqxtn v0.16b, v31.8h
+         sqxtn v2.8h, v4.4s
+         sqxtn v6.4s, v8.2d
+         sqxtn2 v1.8b, v9.8h
+         sqxtn2 v13.4h, v21.4s
+         sqxtn2 v4.2s, v0.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqxtn v0.16b, v31.8h
+// CHECK-ERROR:               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqxtn v2.8h, v4.4s
+// CHECK-ERROR:               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqxtn v6.4s, v8.2d
+// CHECK-ERROR:               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqxtn2 v1.8b, v9.8h
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqxtn2 v13.4h, v21.4s
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqxtn2 v4.2s, v0.2d
+// CHECK-ERROR:                ^
+
+//------------------------------------------------------------------------------
+// Unsigned integer saturating extract and narrow
+//------------------------------------------------------------------------------
+
+         uqxtn v0.16b, v31.8h
+         uqxtn v2.8h, v4.4s
+         uqxtn v6.4s, v8.2d
+         uqxtn2 v1.8b, v9.8h
+         uqxtn2 v13.4h, v21.4s
+         uqxtn2 v4.2s, v0.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uqxtn v0.16b, v31.8h
+// CHECK-ERROR:               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uqxtn v2.8h, v4.4s
+// CHECK-ERROR:               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uqxtn v6.4s, v8.2d
+// CHECK-ERROR:               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uqxtn2 v1.8b, v9.8h
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uqxtn2 v13.4h, v21.4s
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uqxtn2 v4.2s, v0.2d
+// CHECK-ERROR:                ^
+
+//------------------------------------------------------------------------------
+// Integer shift left long
+//------------------------------------------------------------------------------
+
+         shll2 v2.8h, v4.16b, #7
+         shll2 v6.4s, v8.8h, #15
+         shll2 v6.2d, v8.4s, #31
+         shll v2.8h, v4.16b, #8
+         shll v6.4s, v8.8h, #16
+         shll v6.2d, v8.4s, #32
+         shll v2.8h, v4.8b, #8
+         shll v6.4s, v8.4h, #16
+         shll v6.2d, v8.2s, #32
+         shll2 v2.8h, v4.8b, #5
+         shll2 v6.4s, v8.4h, #14
+         shll2 v6.2d, v8.2s, #1
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         shll2 v2.8h, v4.16b, #7
+// CHECK-ERROR:                              ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         shll2 v6.4s, v8.8h, #15
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         shll2 v6.2d, v8.4s, #31
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         shll v2.8h, v4.16b, #8
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         shll v6.4s, v8.8h, #16
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         shll v6.2d, v8.4s, #32
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         shll2 v2.8h, v4.8b, #5
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         shll2 v6.4s, v8.4h, #14
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         shll2 v6.2d, v8.2s, #1
+// CHECK-ERROR:                      ^
+
+//------------------------------------------------------------------------------
+// Floating-point convert downsize
+//------------------------------------------------------------------------------
+
+         fcvtn v2.8h, v4.4s
+         fcvtn v6.4s, v8.2d
+         fcvtn2 v13.4h, v21.4s
+         fcvtn2 v4.2s, v0.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtn v2.8h, v4.4s
+// CHECK-ERROR:               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtn v6.4s, v8.2d
+// CHECK-ERROR:               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtn2 v13.4h, v21.4s
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtn2 v4.2s, v0.2d
+// CHECK-ERROR:                ^
+
+//------------------------------------------------------------------------------
+// Floating-point convert downsize with inexact
+//------------------------------------------------------------------------------
+
+         fcvtxn v6.4s, v8.2d
+         fcvtxn2 v4.2s, v0.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtxn v6.4s, v8.2d
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtxn2 v4.2s, v0.2d
+// CHECK-ERROR:                 ^
+
+//------------------------------------------------------------------------------
+// Floating-point convert upsize
+//------------------------------------------------------------------------------
+
+         fcvtl2 v9.4s, v1.4h
+         fcvtl2 v0.2d, v1.2s
+         fcvtl v12.4s, v4.8h
+         fcvtl v17.2d, v28.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtl2 v9.4s, v1.4h
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtl2 v0.2d, v1.2s
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtl v12.4s, v4.8h
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtl v17.2d, v28.4s
+// CHECK-ERROR:                       ^
+
+//------------------------------------------------------------------------------
+// Floating-point round to integral
+//------------------------------------------------------------------------------
+
+         frintn v0.16b, v31.16b
+         frintn v2.8h, v4.8h
+         frintn v1.8b, v9.8b
+         frintn v13.4h, v21.4h
+
+         frinta v0.16b, v31.16b
+         frinta v2.8h, v4.8h
+         frinta v1.8b, v9.8b
+         frinta v13.4h, v21.4h
+
+         frintp v0.16b, v31.16b
+         frintp v2.8h, v4.8h
+         frintp v1.8b, v9.8b
+         frintp v13.4h, v21.4h
+
+         frintm v0.16b, v31.16b
+         frintm v2.8h, v4.8h
+         frintm v1.8b, v9.8b
+         frintm v13.4h, v21.4h
+
+         frintx v0.16b, v31.16b
+         frintx v2.8h, v4.8h
+         frintx v1.8b, v9.8b
+         frintx v13.4h, v21.4h
+
+         frintz v0.16b, v31.16b
+         frintz v2.8h, v4.8h
+         frintz v1.8b, v9.8b
+         frintz v13.4h, v21.4h
+
+         frinti v0.16b, v31.16b
+         frinti v2.8h, v4.8h
+         frinti v1.8b, v9.8b
+         frinti v13.4h, v21.4h
+
+         fcvtns v0.16b, v31.16b
+         fcvtns v2.8h, v4.8h
+         fcvtns v1.8b, v9.8b
+         fcvtns v13.4h, v21.4h
+
+         fcvtnu v0.16b, v31.16b
+         fcvtnu v2.8h, v4.8h
+         fcvtnu v1.8b, v9.8b
+         fcvtnu v13.4h, v21.4h
+
+         fcvtps v0.16b, v31.16b
+         fcvtps v2.8h, v4.8h
+         fcvtps v1.8b, v9.8b
+         fcvtps v13.4h, v21.4h
+
+         fcvtpu v0.16b, v31.16b
+         fcvtpu v2.8h, v4.8h
+         fcvtpu v1.8b, v9.8b
+         fcvtpu v13.4h, v21.4h
+
+         fcvtms v0.16b, v31.16b
+         fcvtms v2.8h, v4.8h
+         fcvtms v1.8b, v9.8b
+         fcvtms v13.4h, v21.4h
+
+         fcvtmu v0.16b, v31.16b
+         fcvtmu v2.8h, v4.8h
+         fcvtmu v1.8b, v9.8b
+         fcvtmu v13.4h, v21.4h
+
+         fcvtzs v0.16b, v31.16b
+         fcvtzs v2.8h, v4.8h
+         fcvtzs v1.8b, v9.8b
+         fcvtzs v13.4h, v21.4h
+
+         fcvtzu v0.16b, v31.16b
+         fcvtzu v2.8h, v4.8h
+         fcvtzu v1.8b, v9.8b
+         fcvtzu v13.4h, v21.4h
+
+         fcvtas v0.16b, v31.16b
+         fcvtas v2.8h, v4.8h
+         fcvtas v1.8b, v9.8b
+         fcvtas v13.4h, v21.4h
+
+         fcvtau v0.16b, v31.16b
+         fcvtau v2.8h, v4.8h
+         fcvtau v1.8b, v9.8b
+         fcvtau v13.4h, v21.4h
+
+         urecpe v0.16b, v31.16b
+         urecpe v2.8h, v4.8h
+         urecpe v1.8b, v9.8b
+         urecpe v13.4h, v21.4h
+         urecpe v1.2d, v9.2d
+
+         ursqrte v0.16b, v31.16b
+         ursqrte v2.8h, v4.8h
+         ursqrte v1.8b, v9.8b
+         ursqrte v13.4h, v21.4h
+         ursqrte v1.2d, v9.2d
+
+         scvtf v0.16b, v31.16b
+         scvtf v2.8h, v4.8h
+         scvtf v1.8b, v9.8b
+         scvtf v13.4h, v21.4h
+
+         ucvtf v0.16b, v31.16b
+         ucvtf v2.8h, v4.8h
+         ucvtf v1.8b, v9.8b
+         ucvtf v13.4h, v21.4h
+
+         frecpe v0.16b, v31.16b
+         frecpe v2.8h, v4.8h
+         frecpe v1.8b, v9.8b
+         frecpe v13.4h, v21.4h
+
+         frsqrte v0.16b, v31.16b
+         frsqrte v2.8h, v4.8h
+         frsqrte v1.8b, v9.8b
+         frsqrte v13.4h, v21.4h
+
+         fsqrt v0.16b, v31.16b
+         fsqrt v2.8h, v4.8h
+         fsqrt v1.8b, v9.8b
+         fsqrt v13.4h, v21.4h
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintn v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintn v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintn v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintn v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frinta v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frinta v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frinta v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frinta v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintp v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintp v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintp v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintp v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintm v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintm v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintm v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintm v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintx v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintx v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintx v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintx v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintz v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintz v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintz v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frintz v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frinti v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frinti v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frinti v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frinti v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtns v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtns v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtns v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtns v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtnu v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtnu v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtnu v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtnu v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtps v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtps v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtps v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtps v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtpu v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtpu v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtpu v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtpu v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtms v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtms v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtms v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtms v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtmu v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtmu v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtmu v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtmu v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtzs v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtzs v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtzs v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtzs v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtzu v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtzu v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtzu v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtzu v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtas v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtas v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtas v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtas v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtau v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtau v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtau v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtau v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         urecpe v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         urecpe v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         urecpe v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         urecpe v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         urecpe v1.2d, v9.2d
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ursqrte v0.16b, v31.16b
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ursqrte v2.8h, v4.8h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ursqrte v1.8b, v9.8b
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ursqrte v13.4h, v21.4h
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ursqrte v1.2d, v9.2d
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         scvtf v0.16b, v31.16b
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         scvtf v2.8h, v4.8h
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         scvtf v1.8b, v9.8b
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         scvtf v13.4h, v21.4h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ucvtf v0.16b, v31.16b
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ucvtf v2.8h, v4.8h
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ucvtf v1.8b, v9.8b
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ucvtf v13.4h, v21.4h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frecpe v0.16b, v31.16b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frecpe v2.8h, v4.8h
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frecpe v1.8b, v9.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frecpe v13.4h, v21.4h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frsqrte v0.16b, v31.16b
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frsqrte v2.8h, v4.8h
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frsqrte v1.8b, v9.8b
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         frsqrte v13.4h, v21.4h
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fsqrt v0.16b, v31.16b
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fsqrt v2.8h, v4.8h
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fsqrt v1.8b, v9.8b
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fsqrt v13.4h, v21.4h
+// CHECK-ERROR:                   ^
+
 //----------------------------------------------------------------------
 // Scalar Floating-point Convert To Signed Fixed-point (Immediate)
 //----------------------------------------------------------------------

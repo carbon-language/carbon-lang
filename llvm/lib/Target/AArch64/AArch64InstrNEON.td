@@ -46,6 +46,10 @@ def SDTARMVSH : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0, 1>,
 def Neon_sqrshlImm   : SDNode<"AArch64ISD::NEON_QSHLs", SDTARMVSH>;
 def Neon_uqrshlImm   : SDNode<"AArch64ISD::NEON_QSHLu", SDTARMVSH>;
 
+def SDTVSHUF : SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisSameAs<0, 1>]>;
+def Neon_rev64    : SDNode<"AArch64ISD::NEON_REV64", SDTVSHUF>;
+def Neon_rev32    : SDNode<"AArch64ISD::NEON_REV32", SDTVSHUF>;
+def Neon_rev16    : SDNode<"AArch64ISD::NEON_REV16", SDTVSHUF>;
 def Neon_vdup : SDNode<"AArch64ISD::NEON_VDUP", SDTypeProfile<1, 1,
                        [SDTCisVec<0>]>>;
 def Neon_vduplane : SDNode<"AArch64ISD::NEON_VDUPLANE", SDTypeProfile<1, 2,
@@ -1610,6 +1614,21 @@ def Neon_low4f : PatFrag<(ops node:$in),
                          (v2f32 (extract_subvector (v4f32 node:$in),
                                                    (iPTR 0)))>;
 
+def neon_uimm3_shift : Operand<i32>,
+                         ImmLeaf<i32, [{return Imm < 8;}]> {
+  let ParserMatchClass = uimm3_asmoperand;
+}
+
+def neon_uimm4_shift : Operand<i32>,
+                         ImmLeaf<i32, [{return Imm < 16;}]> {
+  let ParserMatchClass = uimm4_asmoperand;
+}
+
+def neon_uimm5_shift : Operand<i32>,
+                         ImmLeaf<i32, [{return Imm < 32;}]> {
+  let ParserMatchClass = uimm5_asmoperand;
+}
+
 class N2VShiftLong<bit q, bit u, bits<5> opcode, string asmop, string DestT,
                    string SrcT, ValueType DestTy, ValueType SrcTy,
                    Operand ImmTy, SDPatternOperator ExtOp>
@@ -1619,7 +1638,7 @@ class N2VShiftLong<bit q, bit u, bits<5> opcode, string asmop, string DestT,
                      [(set (DestTy VPR128:$Rd),
                         (DestTy (shl
                           (DestTy (ExtOp (SrcTy VPR64:$Rn))),
-                            (DestTy (Neon_vdup (i32 imm:$Imm))))))],
+                            (DestTy (Neon_vdup (i32 ImmTy:$Imm))))))],
                      NoItinerary>;
 
 class N2VShiftLongHigh<bit q, bit u, bits<5> opcode, string asmop, string DestT,
@@ -1633,40 +1652,40 @@ class N2VShiftLongHigh<bit q, bit u, bits<5> opcode, string asmop, string DestT,
                         (DestTy (shl
                           (DestTy (ExtOp
                             (SrcTy (getTop VPR128:$Rn)))),
-                              (DestTy (Neon_vdup (i32 imm:$Imm))))))],
+                              (DestTy (Neon_vdup (i32 ImmTy:$Imm))))))],
                      NoItinerary>;
 
 multiclass NeonI_N2VShLL<string prefix, bit u, bits<5> opcode, string asmop,
                          SDNode ExtOp> {
   // 64-bit vector types.
   def _8B : N2VShiftLong<0b0, u, opcode, asmop, "8h", "8b", v8i16, v8i8,
-                         uimm3, ExtOp> {
+                         neon_uimm3_shift, ExtOp> {
     let Inst{22-19} = 0b0001;  // immh:immb = 0001xxx
   }
 
   def _4H : N2VShiftLong<0b0, u, opcode, asmop, "4s", "4h", v4i32, v4i16,
-                         uimm4, ExtOp> {
+                         neon_uimm4_shift, ExtOp> {
     let Inst{22-20} = 0b001;   // immh:immb = 001xxxx
   }
 
   def _2S : N2VShiftLong<0b0, u, opcode, asmop, "2d", "2s", v2i64, v2i32,
-                         uimm5, ExtOp> {
+                         neon_uimm5_shift, ExtOp> {
     let Inst{22-21} = 0b01;    // immh:immb = 01xxxxx
   }
 
   // 128-bit vector types
-  def _16B : N2VShiftLongHigh<0b1, u, opcode, asmop, "8h", "16b",
-                              v8i16, v8i8, 8, uimm3, ExtOp, Neon_High16B> {
+  def _16B : N2VShiftLongHigh<0b1, u, opcode, asmop, "8h", "16b", v8i16, v8i8,
+                              8, neon_uimm3_shift, ExtOp, Neon_High16B> {
     let Inst{22-19} = 0b0001;  // immh:immb = 0001xxx
   }
 
-  def _8H : N2VShiftLongHigh<0b1, u, opcode, asmop, "4s", "8h",
-                             v4i32, v4i16, 4, uimm4, ExtOp, Neon_High8H> {
+  def _8H : N2VShiftLongHigh<0b1, u, opcode, asmop, "4s", "8h", v4i32, v4i16,
+                             4, neon_uimm4_shift, ExtOp, Neon_High8H> {
     let Inst{22-20} = 0b001;   // immh:immb = 001xxxx
   }
 
-  def _4S : N2VShiftLongHigh<0b1, u, opcode, asmop, "2d", "4s",
-                             v2i64, v2i32, 2, uimm5, ExtOp, Neon_High4S> {
+  def _4S : N2VShiftLongHigh<0b1, u, opcode, asmop, "2d", "4s", v2i64, v2i32,
+                             2, neon_uimm5_shift, ExtOp, Neon_High4S> {
     let Inst{22-21} = 0b01;    // immh:immb = 01xxxxx
   }
 
@@ -4693,25 +4712,25 @@ def neon_uimm0_bare : Operand<i64>,
 }
 
 def neon_uimm1_bare : Operand<i64>,
-                        ImmLeaf<i64, [{(void)Imm; return true;}]> {
+                        ImmLeaf<i64, [{return Imm < 2;}]> {
   let ParserMatchClass = neon_uimm1_asmoperand;
   let PrintMethod = "printUImmBareOperand";
 }
 
 def neon_uimm2_bare : Operand<i64>,
-                        ImmLeaf<i64, [{(void)Imm; return true;}]> {
+                        ImmLeaf<i64, [{return Imm < 4;}]> {
   let ParserMatchClass = neon_uimm2_asmoperand;
   let PrintMethod = "printUImmBareOperand";
 }
 
 def neon_uimm3_bare : Operand<i64>,
-                        ImmLeaf<i64, [{(void)Imm; return true;}]> {
+                        ImmLeaf<i64, [{return Imm < 8;}]> {
   let ParserMatchClass = uimm3_asmoperand;
   let PrintMethod = "printUImmBareOperand";
 }
 
 def neon_uimm4_bare : Operand<i64>,
-                        ImmLeaf<i64, [{(void)Imm; return true;}]> {
+                        ImmLeaf<i64, [{return Imm < 16;}]> {
   let ParserMatchClass = uimm4_asmoperand;
   let PrintMethod = "printUImmBareOperand";
 }
@@ -5096,13 +5115,13 @@ def : Pat<(v4f32  (bitconvert (f128   FPR128:$src))), (v4f32 FPR128:$src)>;
 def : Pat<(v2f64  (bitconvert (f128   FPR128:$src))), (v2f64 FPR128:$src)>;
 
 def neon_uimm3 : Operand<i64>,
-                   ImmLeaf<i64, [{(void)Imm; return true;}]> {
+                   ImmLeaf<i64, [{return Imm < 8;}]> {
   let ParserMatchClass = uimm3_asmoperand;
   let PrintMethod = "printUImmHexOperand";
 }
 
 def neon_uimm4 : Operand<i64>,
-                   ImmLeaf<i64, [{(void)Imm; return true;}]> {
+                   ImmLeaf<i64, [{return Imm < 16;}]> {
   let ParserMatchClass = uimm4_asmoperand;
   let PrintMethod = "printUImmHexOperand";
 }
@@ -6537,6 +6556,855 @@ def : Pat<(v2f32 (extract_subvector (v4f32 VPR128:$Rn), (i64 0))),
           (v2f32 (EXTRACT_SUBREG VPR128:$Rn, sub_64))>;
 def : Pat<(v1f64 (extract_subvector (v2f64 VPR128:$Rn), (i64 0))),
           (v1f64 (EXTRACT_SUBREG VPR128:$Rn, sub_64))>;
+
+class NeonI_REV<string asmop, string Res, bits<2> size, bit Q, bit U,
+                bits<5> opcode, RegisterOperand ResVPR, ValueType ResTy,
+                SDPatternOperator Neon_Rev>
+  : NeonI_2VMisc<Q, U, size, opcode,
+               (outs ResVPR:$Rd), (ins ResVPR:$Rn),
+               asmop # "\t$Rd." # Res # ", $Rn." # Res,
+               [(set (ResTy ResVPR:$Rd),
+                  (ResTy (Neon_Rev (ResTy ResVPR:$Rn))))],
+               NoItinerary> ;
+
+def REV64_16b : NeonI_REV<"rev64", "16b", 0b00, 0b1, 0b0, 0b00000, VPR128,
+                          v16i8, Neon_rev64>;
+def REV64_8h : NeonI_REV<"rev64", "8h", 0b01, 0b1, 0b0, 0b00000, VPR128,
+                         v8i16, Neon_rev64>;
+def REV64_4s : NeonI_REV<"rev64", "4s", 0b10, 0b1, 0b0, 0b00000, VPR128,
+                         v4i32, Neon_rev64>;
+def REV64_8b : NeonI_REV<"rev64", "8b", 0b00, 0b0, 0b0, 0b00000, VPR64,
+                         v8i8, Neon_rev64>;
+def REV64_4h : NeonI_REV<"rev64", "4h", 0b01, 0b0, 0b0, 0b00000, VPR64,
+                         v4i16, Neon_rev64>;
+def REV64_2s : NeonI_REV<"rev64", "2s", 0b10, 0b0, 0b0, 0b00000, VPR64,
+                         v2i32, Neon_rev64>;
+
+def : Pat<(v4f32 (Neon_rev64 (v4f32 VPR128:$Rn))), (REV64_4s VPR128:$Rn)>;
+def : Pat<(v2f32 (Neon_rev64 (v2f32 VPR64:$Rn))), (REV64_2s VPR64:$Rn)>;
+
+def REV32_16b : NeonI_REV<"rev32", "16b", 0b00, 0b1, 0b1, 0b00000, VPR128,
+                          v16i8, Neon_rev32>;
+def REV32_8h : NeonI_REV<"rev32", "8h", 0b01, 0b1, 0b1, 0b00000, VPR128,
+                          v8i16, Neon_rev32>;
+def REV32_8b : NeonI_REV<"rev32", "8b", 0b00, 0b0, 0b1, 0b00000, VPR64,
+                         v8i8, Neon_rev32>;
+def REV32_4h : NeonI_REV<"rev32", "4h", 0b01, 0b0, 0b1, 0b00000, VPR64,
+                         v4i16, Neon_rev32>;
+
+def REV16_16b : NeonI_REV<"rev16", "16b", 0b00, 0b1, 0b0, 0b00001, VPR128,
+                          v16i8, Neon_rev16>;
+def REV16_8b : NeonI_REV<"rev16", "8b", 0b00, 0b0, 0b0, 0b00001, VPR64,
+                         v8i8, Neon_rev16>;
+
+multiclass NeonI_PairwiseAdd<string asmop, bit U, bits<5> opcode,
+                             SDPatternOperator Neon_Padd> {
+  def 16b8h : NeonI_2VMisc<0b1, U, 0b00, opcode,
+                           (outs VPR128:$Rd), (ins VPR128:$Rn),
+                           asmop # "\t$Rd.8h, $Rn.16b",
+                           [(set (v8i16 VPR128:$Rd),
+                              (v8i16 (Neon_Padd (v16i8 VPR128:$Rn))))],
+                           NoItinerary>;
+  
+  def 8b4h : NeonI_2VMisc<0b0, U, 0b00, opcode,
+                          (outs VPR64:$Rd), (ins VPR64:$Rn),
+                          asmop # "\t$Rd.4h, $Rn.8b",
+                          [(set (v4i16 VPR64:$Rd),
+                             (v4i16 (Neon_Padd (v8i8 VPR64:$Rn))))],
+                          NoItinerary>;
+  
+  def 8h4s : NeonI_2VMisc<0b1, U, 0b01, opcode,
+                           (outs VPR128:$Rd), (ins VPR128:$Rn),
+                           asmop # "\t$Rd.4s, $Rn.8h",
+                           [(set (v4i32 VPR128:$Rd),
+                              (v4i32 (Neon_Padd (v8i16 VPR128:$Rn))))],
+                           NoItinerary>;
+  
+  def 4h2s : NeonI_2VMisc<0b0, U, 0b01, opcode,
+                          (outs VPR64:$Rd), (ins VPR64:$Rn),
+                          asmop # "\t$Rd.2s, $Rn.4h",
+                          [(set (v2i32 VPR64:$Rd),
+                             (v2i32 (Neon_Padd (v4i16 VPR64:$Rn))))],
+                          NoItinerary>;
+  
+  def 4s2d : NeonI_2VMisc<0b1, U, 0b10, opcode,
+                           (outs VPR128:$Rd), (ins VPR128:$Rn),
+                           asmop # "\t$Rd.2d, $Rn.4s",
+                           [(set (v2i64 VPR128:$Rd),
+                              (v2i64 (Neon_Padd (v4i32 VPR128:$Rn))))],
+                           NoItinerary>;
+  
+  def 2s1d : NeonI_2VMisc<0b0, U, 0b10, opcode,
+                          (outs VPR64:$Rd), (ins VPR64:$Rn),
+                          asmop # "\t$Rd.1d, $Rn.2s",
+                          [(set (v1i64 VPR64:$Rd),
+                             (v1i64 (Neon_Padd (v2i32 VPR64:$Rn))))],
+                          NoItinerary>;
+}
+
+defm SADDLP : NeonI_PairwiseAdd<"saddlp", 0b0, 0b00010,
+                                int_arm_neon_vpaddls>;
+defm UADDLP : NeonI_PairwiseAdd<"uaddlp", 0b1, 0b00010,
+                                int_arm_neon_vpaddlu>;
+
+multiclass NeonI_PairwiseAddAcc<string asmop, bit U, bits<5> opcode,
+                             SDPatternOperator Neon_Padd> {
+  let Constraints = "$src = $Rd" in {
+    def 16b8h : NeonI_2VMisc<0b1, U, 0b00, opcode,
+                             (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn),
+                             asmop # "\t$Rd.8h, $Rn.16b",
+                             [(set (v8i16 VPR128:$Rd),
+                                (v8i16 (Neon_Padd 
+                                  (v8i16 VPR128:$src), (v16i8 VPR128:$Rn))))],
+                             NoItinerary>;
+    
+    def 8b4h : NeonI_2VMisc<0b0, U, 0b00, opcode,
+                            (outs VPR64:$Rd), (ins VPR64:$src, VPR64:$Rn),
+                            asmop # "\t$Rd.4h, $Rn.8b",
+                            [(set (v4i16 VPR64:$Rd),
+                               (v4i16 (Neon_Padd 
+                                 (v4i16 VPR64:$src), (v8i8 VPR64:$Rn))))],
+                            NoItinerary>;
+    
+    def 8h4s : NeonI_2VMisc<0b1, U, 0b01, opcode,
+                            (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn),
+                            asmop # "\t$Rd.4s, $Rn.8h",
+                            [(set (v4i32 VPR128:$Rd),
+                               (v4i32 (Neon_Padd
+                                 (v4i32 VPR128:$src), (v8i16 VPR128:$Rn))))],
+                            NoItinerary>;
+    
+    def 4h2s : NeonI_2VMisc<0b0, U, 0b01, opcode,
+                            (outs VPR64:$Rd), (ins VPR64:$src, VPR64:$Rn),
+                            asmop # "\t$Rd.2s, $Rn.4h",
+                            [(set (v2i32 VPR64:$Rd),
+                               (v2i32 (Neon_Padd
+                                 (v2i32 VPR64:$src), (v4i16 VPR64:$Rn))))],
+                            NoItinerary>;
+    
+    def 4s2d : NeonI_2VMisc<0b1, U, 0b10, opcode,
+                            (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn),
+                            asmop # "\t$Rd.2d, $Rn.4s",
+                            [(set (v2i64 VPR128:$Rd),
+                               (v2i64 (Neon_Padd
+                                 (v2i64 VPR128:$src), (v4i32 VPR128:$Rn))))],
+                            NoItinerary>;
+    
+    def 2s1d : NeonI_2VMisc<0b0, U, 0b10, opcode,
+                            (outs VPR64:$Rd), (ins VPR64:$src, VPR64:$Rn),
+                            asmop # "\t$Rd.1d, $Rn.2s",
+                            [(set (v1i64 VPR64:$Rd),
+                               (v1i64 (Neon_Padd
+                                 (v1i64 VPR64:$src), (v2i32 VPR64:$Rn))))],
+                            NoItinerary>;
+  }
+}
+
+defm SADALP : NeonI_PairwiseAddAcc<"sadalp", 0b0, 0b00110,
+                                   int_arm_neon_vpadals>;
+defm UADALP : NeonI_PairwiseAddAcc<"uadalp", 0b1, 0b00110,
+                                   int_arm_neon_vpadalu>;
+
+multiclass NeonI_2VMisc_BHSDsize_1Arg<string asmop, bit U, bits<5> opcode> {
+  def 16b : NeonI_2VMisc<0b1, U, 0b00, opcode,
+                         (outs VPR128:$Rd), (ins VPR128:$Rn),
+                         asmop # "\t$Rd.16b, $Rn.16b",
+                         [], NoItinerary>;
+  
+  def 8h : NeonI_2VMisc<0b1, U, 0b01, opcode,
+                        (outs VPR128:$Rd), (ins VPR128:$Rn),
+                        asmop # "\t$Rd.8h, $Rn.8h",
+                        [], NoItinerary>;
+  
+  def 4s : NeonI_2VMisc<0b1, U, 0b10, opcode,
+                        (outs VPR128:$Rd), (ins VPR128:$Rn),
+                        asmop # "\t$Rd.4s, $Rn.4s",
+                        [], NoItinerary>;
+  
+  def 2d : NeonI_2VMisc<0b1, U, 0b11, opcode,
+                        (outs VPR128:$Rd), (ins VPR128:$Rn),
+                        asmop # "\t$Rd.2d, $Rn.2d",
+                        [], NoItinerary>;
+  
+  def 8b : NeonI_2VMisc<0b0, U, 0b00, opcode,
+                         (outs VPR64:$Rd), (ins VPR64:$Rn),
+                         asmop # "\t$Rd.8b, $Rn.8b",
+                         [], NoItinerary>;
+  
+  def 4h : NeonI_2VMisc<0b0, U, 0b01, opcode,
+                        (outs VPR64:$Rd), (ins VPR64:$Rn),
+                        asmop # "\t$Rd.4h, $Rn.4h",
+                        [], NoItinerary>;
+  
+  def 2s : NeonI_2VMisc<0b0, U, 0b10, opcode,
+                        (outs VPR64:$Rd), (ins VPR64:$Rn),
+                        asmop # "\t$Rd.2s, $Rn.2s",
+                        [], NoItinerary>;
+}
+
+defm SQABS : NeonI_2VMisc_BHSDsize_1Arg<"sqabs", 0b0, 0b00111>;
+defm SQNEG : NeonI_2VMisc_BHSDsize_1Arg<"sqneg", 0b1, 0b00111>;
+defm ABS : NeonI_2VMisc_BHSDsize_1Arg<"abs", 0b0, 0b01011>;
+defm NEG : NeonI_2VMisc_BHSDsize_1Arg<"neg", 0b1, 0b01011>;
+
+multiclass NeonI_2VMisc_BHSD_1Arg_Pattern<string Prefix,
+                                          SDPatternOperator Neon_Op> {
+  def : Pat<(v16i8 (Neon_Op (v16i8 VPR128:$Rn))),
+            (v16i8 (!cast<Instruction>(Prefix # 16b) (v16i8 VPR128:$Rn)))>;
+
+  def : Pat<(v8i16 (Neon_Op (v8i16 VPR128:$Rn))),
+            (v8i16 (!cast<Instruction>(Prefix # 8h) (v8i16 VPR128:$Rn)))>;
+
+  def : Pat<(v4i32 (Neon_Op (v4i32 VPR128:$Rn))),
+            (v4i32 (!cast<Instruction>(Prefix # 4s) (v4i32 VPR128:$Rn)))>;
+
+  def : Pat<(v2i64 (Neon_Op (v2i64 VPR128:$Rn))),
+            (v2i64 (!cast<Instruction>(Prefix # 2d) (v2i64 VPR128:$Rn)))>;
+
+  def : Pat<(v8i8 (Neon_Op (v8i8 VPR64:$Rn))),
+            (v8i8 (!cast<Instruction>(Prefix # 8b) (v8i8 VPR64:$Rn)))>;
+
+  def : Pat<(v4i16 (Neon_Op (v4i16 VPR64:$Rn))),
+            (v4i16 (!cast<Instruction>(Prefix # 4h) (v4i16 VPR64:$Rn)))>;
+
+  def : Pat<(v2i32 (Neon_Op (v2i32 VPR64:$Rn))),
+            (v2i32 (!cast<Instruction>(Prefix # 2s) (v2i32 VPR64:$Rn)))>;
+}
+
+defm : NeonI_2VMisc_BHSD_1Arg_Pattern<"SQABS", int_arm_neon_vqabs>;
+defm : NeonI_2VMisc_BHSD_1Arg_Pattern<"SQNEG", int_arm_neon_vqneg>;
+defm : NeonI_2VMisc_BHSD_1Arg_Pattern<"ABS", int_arm_neon_vabs>;
+
+def Neon_AllZero : PatFrag<(ops), (Neon_movi (i32 0), (i32 14))>;
+def Neon_AllOne : PatFrag<(ops), (Neon_movi (i32 255), (i32 14))>;
+
+def : Pat<(v16i8 (sub 
+            (v16i8 Neon_AllZero),
+            (v16i8 VPR128:$Rn))),
+          (v16i8 (NEG16b (v16i8 VPR128:$Rn)))>;
+def : Pat<(v8i8 (sub 
+            (v8i8 Neon_AllZero),
+            (v8i8 VPR64:$Rn))),
+          (v8i8 (NEG8b (v8i8 VPR64:$Rn)))>;
+def : Pat<(v8i16 (sub 
+            (v8i16 (bitconvert (v16i8 Neon_AllZero))),
+            (v8i16 VPR128:$Rn))),
+          (v8i16 (NEG8h (v8i16 VPR128:$Rn)))>;
+def : Pat<(v4i16 (sub 
+            (v4i16 (bitconvert (v8i8 Neon_AllZero))),
+            (v4i16 VPR64:$Rn))),
+          (v4i16 (NEG4h (v4i16 VPR64:$Rn)))>;
+def : Pat<(v4i32 (sub 
+            (v4i32 (bitconvert (v16i8 Neon_AllZero))),
+            (v4i32 VPR128:$Rn))),
+          (v4i32 (NEG4s (v4i32 VPR128:$Rn)))>;
+def : Pat<(v2i32 (sub 
+            (v2i32 (bitconvert (v8i8 Neon_AllZero))),
+            (v2i32 VPR64:$Rn))),
+          (v2i32 (NEG2s (v2i32 VPR64:$Rn)))>;
+def : Pat<(v2i64 (sub 
+            (v2i64 (bitconvert (v16i8 Neon_AllZero))),
+            (v2i64 VPR128:$Rn))),
+          (v2i64 (NEG2d (v2i64 VPR128:$Rn)))>;
+
+multiclass NeonI_2VMisc_BHSDsize_2Args<string asmop, bit U, bits<5> opcode> {
+  let Constraints = "$src = $Rd" in {
+    def 16b : NeonI_2VMisc<0b1, U, 0b00, opcode,
+                           (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn),
+                           asmop # "\t$Rd.16b, $Rn.16b",
+                           [], NoItinerary>;
+    
+    def 8h : NeonI_2VMisc<0b1, U, 0b01, opcode,
+                          (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn),
+                          asmop # "\t$Rd.8h, $Rn.8h",
+                          [], NoItinerary>;
+    
+    def 4s : NeonI_2VMisc<0b1, U, 0b10, opcode,
+                          (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn),
+                          asmop # "\t$Rd.4s, $Rn.4s",
+                          [], NoItinerary>;
+    
+    def 2d : NeonI_2VMisc<0b1, U, 0b11, opcode,
+                          (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn),
+                          asmop # "\t$Rd.2d, $Rn.2d",
+                          [], NoItinerary>;
+    
+    def 8b : NeonI_2VMisc<0b0, U, 0b00, opcode,
+                          (outs VPR64:$Rd), (ins VPR64:$src, VPR64:$Rn),
+                          asmop # "\t$Rd.8b, $Rn.8b",
+                          [], NoItinerary>;
+    
+    def 4h : NeonI_2VMisc<0b0, U, 0b01, opcode,
+                          (outs VPR64:$Rd), (ins VPR64:$src, VPR64:$Rn),
+                          asmop # "\t$Rd.4h, $Rn.4h",
+                          [], NoItinerary>;
+    
+    def 2s : NeonI_2VMisc<0b0, U, 0b10, opcode,
+                          (outs VPR64:$Rd), (ins VPR64:$src, VPR64:$Rn),
+                          asmop # "\t$Rd.2s, $Rn.2s",
+                          [], NoItinerary>;
+  }
+}
+
+defm SUQADD : NeonI_2VMisc_BHSDsize_2Args<"suqadd", 0b0, 0b00011>;
+defm USQADD : NeonI_2VMisc_BHSDsize_2Args<"usqadd", 0b1, 0b00011>;
+
+multiclass NeonI_2VMisc_BHSD_2Args_Pattern<string Prefix,
+                                           SDPatternOperator Neon_Op> {
+  def : Pat<(v16i8 (Neon_Op (v16i8 VPR128:$src), (v16i8 VPR128:$Rn))),
+            (v16i8 (!cast<Instruction>(Prefix # 16b)
+              (v16i8 VPR128:$src), (v16i8 VPR128:$Rn)))>;
+
+  def : Pat<(v8i16 (Neon_Op (v8i16 VPR128:$src), (v8i16 VPR128:$Rn))),
+            (v8i16 (!cast<Instruction>(Prefix # 8h)
+              (v8i16 VPR128:$src), (v8i16 VPR128:$Rn)))>;
+
+  def : Pat<(v4i32 (Neon_Op (v4i32 VPR128:$src), (v4i32 VPR128:$Rn))),
+            (v4i32 (!cast<Instruction>(Prefix # 4s)
+              (v4i32 VPR128:$src), (v4i32 VPR128:$Rn)))>;
+
+  def : Pat<(v2i64 (Neon_Op (v2i64 VPR128:$src), (v2i64 VPR128:$Rn))),
+            (v2i64 (!cast<Instruction>(Prefix # 2d)
+              (v2i64 VPR128:$src), (v2i64 VPR128:$Rn)))>;
+
+  def : Pat<(v8i8 (Neon_Op (v8i8 VPR64:$src), (v8i8 VPR64:$Rn))),
+            (v8i8 (!cast<Instruction>(Prefix # 8b)
+              (v8i8 VPR64:$src), (v8i8 VPR64:$Rn)))>;
+
+  def : Pat<(v4i16 (Neon_Op (v4i16 VPR64:$src), (v4i16 VPR64:$Rn))),
+            (v4i16 (!cast<Instruction>(Prefix # 4h)
+              (v4i16 VPR64:$src), (v4i16 VPR64:$Rn)))>;
+
+  def : Pat<(v2i32 (Neon_Op (v2i32 VPR64:$src), (v2i32 VPR64:$Rn))),
+            (v2i32 (!cast<Instruction>(Prefix # 2s)
+              (v2i32 VPR64:$src), (v2i32 VPR64:$Rn)))>;
+}
+
+defm : NeonI_2VMisc_BHSD_2Args_Pattern<"SUQADD", int_aarch64_neon_suqadd>;
+defm : NeonI_2VMisc_BHSD_2Args_Pattern<"USQADD", int_aarch64_neon_usqadd>;
+
+multiclass NeonI_2VMisc_BHSsizes<string asmop, bit U,
+                          SDPatternOperator Neon_Op> {
+  def 16b : NeonI_2VMisc<0b1, U, 0b00, 0b00100,
+                         (outs VPR128:$Rd), (ins VPR128:$Rn),
+                         asmop # "\t$Rd.16b, $Rn.16b",
+                         [(set (v16i8 VPR128:$Rd),
+                            (v16i8 (Neon_Op (v16i8 VPR128:$Rn))))],
+                         NoItinerary>;
+  
+  def 8h : NeonI_2VMisc<0b1, U, 0b01, 0b00100,
+                        (outs VPR128:$Rd), (ins VPR128:$Rn),
+                        asmop # "\t$Rd.8h, $Rn.8h",
+                        [(set (v8i16 VPR128:$Rd),
+                           (v8i16 (Neon_Op (v8i16 VPR128:$Rn))))],
+                        NoItinerary>;
+  
+  def 4s : NeonI_2VMisc<0b1, U, 0b10, 0b00100,
+                        (outs VPR128:$Rd), (ins VPR128:$Rn),
+                        asmop # "\t$Rd.4s, $Rn.4s",
+                        [(set (v4i32 VPR128:$Rd),
+                           (v4i32 (Neon_Op (v4i32 VPR128:$Rn))))],
+                        NoItinerary>;
+  
+  def 8b : NeonI_2VMisc<0b0, U, 0b00, 0b00100,
+                        (outs VPR64:$Rd), (ins VPR64:$Rn),
+                        asmop # "\t$Rd.8b, $Rn.8b",
+                        [(set (v8i8 VPR64:$Rd),
+                           (v8i8 (Neon_Op (v8i8 VPR64:$Rn))))],
+                        NoItinerary>;
+  
+  def 4h : NeonI_2VMisc<0b0, U, 0b01, 0b00100,
+                        (outs VPR64:$Rd), (ins VPR64:$Rn),
+                        asmop # "\t$Rd.4h, $Rn.4h",
+                        [(set (v4i16 VPR64:$Rd),
+                           (v4i16 (Neon_Op (v4i16 VPR64:$Rn))))],
+                        NoItinerary>;
+  
+  def 2s : NeonI_2VMisc<0b0, U, 0b10, 0b00100,
+                        (outs VPR64:$Rd), (ins VPR64:$Rn),
+                        asmop # "\t$Rd.2s, $Rn.2s",
+                        [(set (v2i32 VPR64:$Rd),
+                           (v2i32 (Neon_Op (v2i32 VPR64:$Rn))))],
+                        NoItinerary>;
+}
+
+defm CLS : NeonI_2VMisc_BHSsizes<"cls", 0b0, int_arm_neon_vcls>;
+defm CLZ : NeonI_2VMisc_BHSsizes<"clz", 0b1, ctlz>;
+
+multiclass NeonI_2VMisc_Bsize<string asmop, bit U, bits<2> size,
+                              bits<5> Opcode> {
+  def 16b : NeonI_2VMisc<0b1, U, size, Opcode,
+                         (outs VPR128:$Rd), (ins VPR128:$Rn),
+                         asmop # "\t$Rd.16b, $Rn.16b",
+                         [], NoItinerary>;
+  
+  def 8b : NeonI_2VMisc<0b0, U, size, Opcode,
+                        (outs VPR64:$Rd), (ins VPR64:$Rn),
+                        asmop # "\t$Rd.8b, $Rn.8b",
+                        [], NoItinerary>;
+}
+
+defm CNT : NeonI_2VMisc_Bsize<"cnt", 0b0, 0b00, 0b00101>;
+defm NOT : NeonI_2VMisc_Bsize<"not", 0b1, 0b00, 0b00101>;
+defm RBIT : NeonI_2VMisc_Bsize<"rbit", 0b1, 0b01, 0b00101>;
+
+def : NeonInstAlias<"mvn $Rd.16b, $Rn.16b",
+                    (NOT16b VPR128:$Rd, VPR128:$Rn), 0>;
+def : NeonInstAlias<"mvn $Rd.8b, $Rn.8b",
+                    (NOT8b VPR64:$Rd, VPR64:$Rn), 0>;
+
+def : Pat<(v16i8 (ctpop (v16i8 VPR128:$Rn))),
+          (v16i8 (CNT16b (v16i8 VPR128:$Rn)))>;
+def : Pat<(v8i8 (ctpop (v8i8 VPR64:$Rn))),
+          (v8i8 (CNT8b (v8i8 VPR64:$Rn)))>;
+
+def : Pat<(v16i8 (xor 
+            (v16i8 VPR128:$Rn),
+            (v16i8 Neon_AllOne))),
+          (v16i8 (NOT16b (v16i8 VPR128:$Rn)))>;
+def : Pat<(v8i8 (xor 
+            (v8i8 VPR64:$Rn),
+            (v8i8 Neon_AllOne))),
+          (v8i8 (NOT8b (v8i8 VPR64:$Rn)))>;
+def : Pat<(v8i16 (xor 
+            (v8i16 VPR128:$Rn),
+            (v8i16 (bitconvert (v16i8 Neon_AllOne))))),
+          (NOT16b VPR128:$Rn)>;
+def : Pat<(v4i16 (xor 
+            (v4i16 VPR64:$Rn),
+            (v4i16 (bitconvert (v8i8 Neon_AllOne))))),
+          (NOT8b VPR64:$Rn)>;
+def : Pat<(v4i32 (xor 
+            (v4i32 VPR128:$Rn),
+            (v4i32 (bitconvert (v16i8 Neon_AllOne))))),
+          (NOT16b VPR128:$Rn)>;
+def : Pat<(v2i32 (xor 
+            (v2i32 VPR64:$Rn),
+            (v2i32 (bitconvert (v8i8 Neon_AllOne))))),
+          (NOT8b VPR64:$Rn)>;
+def : Pat<(v2i64 (xor 
+            (v2i64 VPR128:$Rn),
+            (v2i64 (bitconvert (v16i8 Neon_AllOne))))),
+          (NOT16b VPR128:$Rn)>;
+
+def : Pat<(v16i8 (int_aarch64_neon_rbit (v16i8 VPR128:$Rn))),
+          (v16i8 (RBIT16b (v16i8 VPR128:$Rn)))>;
+def : Pat<(v8i8 (int_aarch64_neon_rbit (v8i8 VPR64:$Rn))),
+          (v8i8 (RBIT8b (v8i8 VPR64:$Rn)))>;
+
+multiclass NeonI_2VMisc_SDsizes<string asmop, bit U, bits<5> opcode,
+                                SDPatternOperator Neon_Op> {
+  def 4s : NeonI_2VMisc<0b1, U, 0b10, opcode,
+                        (outs VPR128:$Rd), (ins VPR128:$Rn),
+                        asmop # "\t$Rd.4s, $Rn.4s",
+                        [(set (v4f32 VPR128:$Rd),
+                           (v4f32 (Neon_Op (v4f32 VPR128:$Rn))))],
+                        NoItinerary>;
+  
+  def 2d : NeonI_2VMisc<0b1, U, 0b11, opcode,
+                        (outs VPR128:$Rd), (ins VPR128:$Rn),
+                        asmop # "\t$Rd.2d, $Rn.2d",
+                        [(set (v2f64 VPR128:$Rd),
+                           (v2f64 (Neon_Op (v2f64 VPR128:$Rn))))],
+                        NoItinerary>;
+  
+  def 2s : NeonI_2VMisc<0b0, U, 0b10, opcode,
+                        (outs VPR64:$Rd), (ins VPR64:$Rn),
+                        asmop # "\t$Rd.2s, $Rn.2s",
+                        [(set (v2f32 VPR64:$Rd),
+                           (v2f32 (Neon_Op (v2f32 VPR64:$Rn))))],
+                        NoItinerary>;
+}
+
+defm FABS : NeonI_2VMisc_SDsizes<"fabs", 0b0, 0b01111, fabs>;
+defm FNEG : NeonI_2VMisc_SDsizes<"fneg", 0b1, 0b01111, fneg>;
+
+multiclass NeonI_2VMisc_HSD_Narrow<string asmop, bit U, bits<5> opcode> {
+  def 8h8b : NeonI_2VMisc<0b0, U, 0b00, opcode,
+                          (outs VPR64:$Rd), (ins VPR128:$Rn),
+                          asmop # "\t$Rd.8b, $Rn.8h",
+                          [], NoItinerary>;
+
+  def 4s4h : NeonI_2VMisc<0b0, U, 0b01, opcode,
+                          (outs VPR64:$Rd), (ins VPR128:$Rn),
+                          asmop # "\t$Rd.4h, $Rn.4s",
+                          [], NoItinerary>;
+
+  def 2d2s : NeonI_2VMisc<0b0, U, 0b10, opcode,
+                          (outs VPR64:$Rd), (ins VPR128:$Rn),
+                          asmop # "\t$Rd.2s, $Rn.2d",
+                          [], NoItinerary>;
+
+  let Constraints = "$Rd = $src" in {
+    def 8h16b : NeonI_2VMisc<0b1, U, 0b00, opcode,
+                             (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn),
+                             asmop # "2\t$Rd.16b, $Rn.8h",
+                             [], NoItinerary>;
+  
+    def 4s8h : NeonI_2VMisc<0b1, U, 0b01, opcode,
+                            (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn),
+                            asmop # "2\t$Rd.8h, $Rn.4s",
+                            [], NoItinerary>;
+  
+    def 2d4s : NeonI_2VMisc<0b1, U, 0b10, opcode,
+                            (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn),
+                            asmop # "2\t$Rd.4s, $Rn.2d",
+                            [], NoItinerary>;
+  }
+}
+
+defm XTN : NeonI_2VMisc_HSD_Narrow<"xtn", 0b0, 0b10010>;
+defm SQXTUN : NeonI_2VMisc_HSD_Narrow<"sqxtun", 0b1, 0b10010>;
+defm SQXTN : NeonI_2VMisc_HSD_Narrow<"sqxtn", 0b0, 0b10100>;
+defm UQXTN : NeonI_2VMisc_HSD_Narrow<"uqxtn", 0b1, 0b10100>;
+
+multiclass NeonI_2VMisc_Narrow_Patterns<string Prefix, 
+                                        SDPatternOperator Neon_Op> {
+  def : Pat<(v8i8 (Neon_Op (v8i16 VPR128:$Rn))),
+            (v8i8 (!cast<Instruction>(Prefix # 8h8b) (v8i16 VPR128:$Rn)))>;
+
+  def : Pat<(v4i16 (Neon_Op (v4i32 VPR128:$Rn))),
+            (v4i16 (!cast<Instruction>(Prefix # 4s4h) (v4i32 VPR128:$Rn)))>;
+
+  def : Pat<(v2i32 (Neon_Op (v2i64 VPR128:$Rn))),
+            (v2i32 (!cast<Instruction>(Prefix # 2d2s) (v2i64 VPR128:$Rn)))>;
+  
+  def : Pat<(v16i8 (concat_vectors
+              (v8i8 VPR64:$src),
+              (v8i8 (Neon_Op (v8i16 VPR128:$Rn))))),
+            (!cast<Instruction>(Prefix # 8h16b) 
+              (SUBREG_TO_REG (i32 0), VPR64:$src, sub_64),
+              VPR128:$Rn)>;
+
+  def : Pat<(v8i16 (concat_vectors
+              (v4i16 VPR64:$src),
+              (v4i16 (Neon_Op (v4i32 VPR128:$Rn))))),
+            (!cast<Instruction>(Prefix # 4s8h)
+              (SUBREG_TO_REG (i32 0), VPR64:$src, sub_64),
+              VPR128:$Rn)>;
+
+  def : Pat<(v4i32 (concat_vectors
+              (v2i32 VPR64:$src),
+              (v2i32 (Neon_Op (v2i64 VPR128:$Rn))))),
+            (!cast<Instruction>(Prefix # 2d4s)
+              (SUBREG_TO_REG (i32 0), VPR64:$src, sub_64),
+              VPR128:$Rn)>;
+}
+
+defm : NeonI_2VMisc_Narrow_Patterns<"XTN", trunc>;
+defm : NeonI_2VMisc_Narrow_Patterns<"SQXTUN", int_arm_neon_vqmovnsu>;
+defm : NeonI_2VMisc_Narrow_Patterns<"SQXTN", int_arm_neon_vqmovns>;
+defm : NeonI_2VMisc_Narrow_Patterns<"UQXTN", int_arm_neon_vqmovnu>;
+
+multiclass NeonI_2VMisc_SHIFT<string asmop, bit U, bits<5> opcode> {
+  def 8b8h : NeonI_2VMisc<0b0, U, 0b00, opcode,
+                          (outs VPR128:$Rd),
+                          (ins VPR64:$Rn, uimm_exact8:$Imm),
+                          asmop # "\t$Rd.8h, $Rn.8b, $Imm",
+                          [], NoItinerary>;
+
+  def 4h4s : NeonI_2VMisc<0b0, U, 0b01, opcode,
+                          (outs VPR128:$Rd),
+                          (ins VPR64:$Rn, uimm_exact16:$Imm),
+                          asmop # "\t$Rd.4s, $Rn.4h, $Imm",
+                          [], NoItinerary>;
+
+  def 2s2d : NeonI_2VMisc<0b0, U, 0b10, opcode,
+                          (outs VPR128:$Rd),
+                          (ins VPR64:$Rn, uimm_exact32:$Imm),
+                          asmop # "\t$Rd.2d, $Rn.2s, $Imm",
+                          [], NoItinerary>;
+
+  def 16b8h : NeonI_2VMisc<0b1, U, 0b00, opcode,
+                          (outs VPR128:$Rd),
+                          (ins VPR128:$Rn, uimm_exact8:$Imm),
+                          asmop # "2\t$Rd.8h, $Rn.16b, $Imm",
+                          [], NoItinerary>;
+
+  def 8h4s : NeonI_2VMisc<0b1, U, 0b01, opcode,
+                          (outs VPR128:$Rd),
+                          (ins VPR128:$Rn, uimm_exact16:$Imm),
+                          asmop # "2\t$Rd.4s, $Rn.8h, $Imm",
+                          [], NoItinerary>;
+
+  def 4s2d : NeonI_2VMisc<0b1, U, 0b10, opcode,
+                          (outs VPR128:$Rd),
+                          (ins VPR128:$Rn, uimm_exact32:$Imm),
+                          asmop # "2\t$Rd.2d, $Rn.4s, $Imm",
+                          [], NoItinerary>;
+}
+
+defm SHLL : NeonI_2VMisc_SHIFT<"shll", 0b1, 0b10011>;
+
+class NeonI_SHLL_Patterns<ValueType OpTy, ValueType DesTy,
+                          SDPatternOperator ExtOp, Operand Neon_Imm,
+                          string suffix> 
+  : Pat<(DesTy (shl
+          (DesTy (ExtOp (OpTy VPR64:$Rn))),
+            (DesTy (Neon_vdup
+              (i32 Neon_Imm:$Imm))))),
+        (!cast<Instruction>("SHLL" # suffix) VPR64:$Rn, Neon_Imm:$Imm)>;
+    
+class NeonI_SHLL_High_Patterns<ValueType OpTy, ValueType DesTy,
+                               SDPatternOperator ExtOp, Operand Neon_Imm,
+                               string suffix, PatFrag GetHigh> 
+  : Pat<(DesTy (shl
+          (DesTy (ExtOp
+            (OpTy (GetHigh VPR128:$Rn)))),
+              (DesTy (Neon_vdup
+                (i32 Neon_Imm:$Imm))))),
+        (!cast<Instruction>("SHLL" # suffix) VPR128:$Rn, Neon_Imm:$Imm)>;
+
+def : NeonI_SHLL_Patterns<v8i8, v8i16, zext, uimm_exact8, "8b8h">;
+def : NeonI_SHLL_Patterns<v8i8, v8i16, sext, uimm_exact8, "8b8h">;
+def : NeonI_SHLL_Patterns<v4i16, v4i32, zext, uimm_exact16, "4h4s">;
+def : NeonI_SHLL_Patterns<v4i16, v4i32, sext, uimm_exact16, "4h4s">;
+def : NeonI_SHLL_Patterns<v2i32, v2i64, zext, uimm_exact32, "2s2d">;
+def : NeonI_SHLL_Patterns<v2i32, v2i64, sext, uimm_exact32, "2s2d">;
+def : NeonI_SHLL_High_Patterns<v8i8, v8i16, zext, uimm_exact8, "16b8h",
+                               Neon_High16B>;
+def : NeonI_SHLL_High_Patterns<v8i8, v8i16, sext, uimm_exact8, "16b8h",
+                               Neon_High16B>;
+def : NeonI_SHLL_High_Patterns<v4i16, v4i32, zext, uimm_exact16, "8h4s",
+                               Neon_High8H>;
+def : NeonI_SHLL_High_Patterns<v4i16, v4i32, sext, uimm_exact16, "8h4s",
+                               Neon_High8H>;
+def : NeonI_SHLL_High_Patterns<v2i32, v2i64, zext, uimm_exact32, "4s2d",
+                               Neon_High4S>;
+def : NeonI_SHLL_High_Patterns<v2i32, v2i64, sext, uimm_exact32, "4s2d",
+                               Neon_High4S>;
+
+multiclass NeonI_2VMisc_SD_Narrow<string asmop, bit U, bits<5> opcode> {
+  def 4s4h : NeonI_2VMisc<0b0, U, 0b00, opcode,
+                          (outs VPR64:$Rd), (ins VPR128:$Rn),
+                          asmop # "\t$Rd.4h, $Rn.4s",
+                          [], NoItinerary>;
+
+  def 2d2s : NeonI_2VMisc<0b0, U, 0b01, opcode,
+                          (outs VPR64:$Rd), (ins VPR128:$Rn),
+                          asmop # "\t$Rd.2s, $Rn.2d",
+                          [], NoItinerary>;
+  
+  let Constraints = "$src = $Rd" in {
+    def 4s8h : NeonI_2VMisc<0b1, U, 0b00, opcode,
+                            (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn),
+                            asmop # "2\t$Rd.8h, $Rn.4s",
+                            [], NoItinerary>;
+  
+    def 2d4s : NeonI_2VMisc<0b1, U, 0b01, opcode,
+                            (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn),
+                            asmop # "2\t$Rd.4s, $Rn.2d",
+                            [], NoItinerary>;
+  }
+}
+
+defm FCVTN : NeonI_2VMisc_SD_Narrow<"fcvtn", 0b0, 0b10110>;
+
+multiclass NeonI_2VMisc_Narrow_Pattern<string prefix,
+                                       SDPatternOperator f32_to_f16_Op,
+                                       SDPatternOperator f64_to_f32_Op> {
+  
+  def : Pat<(v4i16 (f32_to_f16_Op (v4f32 VPR128:$Rn))),
+              (!cast<Instruction>(prefix # "4s4h") (v4f32 VPR128:$Rn))>;
+  
+  def : Pat<(v8i16 (concat_vectors
+                (v4i16 VPR64:$src),
+                (v4i16 (f32_to_f16_Op (v4f32 VPR128:$Rn))))),
+                  (!cast<Instruction>(prefix # "4s8h")
+                    (v4f32 (SUBREG_TO_REG (i32 0), VPR64:$src, sub_64)),
+                    (v4f32 VPR128:$Rn))>;  
+    
+  def : Pat<(v2f32 (f64_to_f32_Op (v2f64 VPR128:$Rn))),
+            (!cast<Instruction>(prefix # "2d2s") (v2f64 VPR128:$Rn))>;
+  
+  def : Pat<(v4f32 (concat_vectors
+              (v2f32 VPR64:$src),
+              (v2f32 (f64_to_f32_Op (v2f64 VPR128:$Rn))))),
+                (!cast<Instruction>(prefix # "2d4s")
+                  (v4f32 (SUBREG_TO_REG (i32 0), VPR64:$src, sub_64)),
+                  (v2f64 VPR128:$Rn))>;
+}
+
+defm : NeonI_2VMisc_Narrow_Pattern<"FCVTN", int_arm_neon_vcvtfp2hf, fround>;
+
+multiclass NeonI_2VMisc_D_Narrow<string asmop, string prefix, bit U,
+                                 bits<5> opcode> {
+  def 2d2s : NeonI_2VMisc<0b0, U, 0b01, opcode,
+                          (outs VPR64:$Rd), (ins VPR128:$Rn),
+                          asmop # "\t$Rd.2s, $Rn.2d",
+                          [], NoItinerary>;
+
+  def 2d4s : NeonI_2VMisc<0b1, U, 0b01, opcode,
+                          (outs VPR128:$Rd), (ins VPR128:$src, VPR128:$Rn),
+                          asmop # "2\t$Rd.4s, $Rn.2d",
+                          [], NoItinerary> {
+    let Constraints = "$src = $Rd";
+  }
+  
+  def : Pat<(v2f32 (int_aarch64_neon_fcvtxn (v2f64 VPR128:$Rn))),
+            (!cast<Instruction>(prefix # "2d2s") VPR128:$Rn)>;
+
+  def : Pat<(v4f32 (concat_vectors
+              (v2f32 VPR64:$src),
+              (v2f32 (int_aarch64_neon_fcvtxn (v2f64 VPR128:$Rn))))),
+            (!cast<Instruction>(prefix # "2d4s")
+               (v4f32 (SUBREG_TO_REG (i32 0), VPR64:$src, sub_64)),
+               VPR128:$Rn)>;
+}
+
+defm FCVTXN : NeonI_2VMisc_D_Narrow<"fcvtxn","FCVTXN", 0b1, 0b10110>;
+
+def Neon_High4Float : PatFrag<(ops node:$in),
+                              (extract_subvector (v4f32 node:$in), (iPTR 2))>;
+
+multiclass NeonI_2VMisc_HS_Extend<string asmop, bit U, bits<5> opcode> {
+  def 4h4s : NeonI_2VMisc<0b0, U, 0b00, opcode,
+                          (outs VPR128:$Rd), (ins VPR64:$Rn),
+                          asmop # "\t$Rd.4s, $Rn.4h",
+                          [], NoItinerary>;
+
+  def 2s2d : NeonI_2VMisc<0b0, U, 0b01, opcode,
+                          (outs VPR128:$Rd), (ins VPR64:$Rn),
+                          asmop # "\t$Rd.2d, $Rn.2s",
+                          [], NoItinerary>;
+
+  def 8h4s : NeonI_2VMisc<0b1, U, 0b00, opcode,
+                          (outs VPR128:$Rd), (ins VPR128:$Rn),
+                          asmop # "2\t$Rd.4s, $Rn.8h",
+                          [], NoItinerary>;
+
+  def 4s2d : NeonI_2VMisc<0b1, U, 0b01, opcode,
+                          (outs VPR128:$Rd), (ins VPR128:$Rn),
+                          asmop # "2\t$Rd.2d, $Rn.4s",
+                          [], NoItinerary>;
+}
+
+defm FCVTL : NeonI_2VMisc_HS_Extend<"fcvtl", 0b0, 0b10111>;
+
+multiclass NeonI_2VMisc_Extend_Pattern<string prefix> {
+  def : Pat<(v4f32 (int_arm_neon_vcvthf2fp (v4i16 VPR64:$Rn))),
+            (!cast<Instruction>(prefix # "4h4s") VPR64:$Rn)>;
+  
+  def : Pat<(v4f32 (int_arm_neon_vcvthf2fp
+              (v4i16 (Neon_High8H
+                (v8i16 VPR128:$Rn))))),
+            (!cast<Instruction>(prefix # "8h4s") VPR128:$Rn)>;
+  
+  def : Pat<(v2f64 (fextend (v2f32 VPR64:$Rn))),
+            (!cast<Instruction>(prefix # "2s2d") VPR64:$Rn)>;
+  
+  def : Pat<(v2f64 (fextend
+              (v2f32 (Neon_High4Float
+                (v4f32 VPR128:$Rn))))),
+            (!cast<Instruction>(prefix # "4s2d") VPR128:$Rn)>;
+}
+
+defm : NeonI_2VMisc_Extend_Pattern<"FCVTL">;
+
+multiclass NeonI_2VMisc_SD_Conv<string asmop, bit Size, bit U, bits<5> opcode,
+                                ValueType ResTy4s, ValueType OpTy4s,
+                                ValueType ResTy2d, ValueType OpTy2d,
+                                ValueType ResTy2s, ValueType OpTy2s,
+                                SDPatternOperator Neon_Op> {
+  
+  def 4s : NeonI_2VMisc<0b1, U, {Size, 0b0}, opcode,
+                        (outs VPR128:$Rd), (ins VPR128:$Rn),
+                        asmop # "\t$Rd.4s, $Rn.4s",
+                        [(set (ResTy4s VPR128:$Rd),
+                           (ResTy4s (Neon_Op (OpTy4s VPR128:$Rn))))],
+                        NoItinerary>;
+
+  def 2d : NeonI_2VMisc<0b1, U, {Size, 0b1}, opcode,
+                        (outs VPR128:$Rd), (ins VPR128:$Rn),
+                        asmop # "\t$Rd.2d, $Rn.2d",
+                        [(set (ResTy2d VPR128:$Rd),
+                           (ResTy2d (Neon_Op (OpTy2d VPR128:$Rn))))],
+                        NoItinerary>;
+  
+  def 2s : NeonI_2VMisc<0b0, U, {Size, 0b0}, opcode,
+                        (outs VPR64:$Rd), (ins VPR64:$Rn),
+                        asmop # "\t$Rd.2s, $Rn.2s",
+                        [(set (ResTy2s VPR64:$Rd),
+                           (ResTy2s (Neon_Op (OpTy2s VPR64:$Rn))))],
+                        NoItinerary>;
+}
+
+multiclass NeonI_2VMisc_fp_to_int<string asmop, bit Size, bit U,
+                                  bits<5> opcode, SDPatternOperator Neon_Op> {
+  defm _ : NeonI_2VMisc_SD_Conv<asmop, Size, U, opcode, v4i32, v4f32, v2i64,
+                                v2f64, v2i32, v2f32, Neon_Op>;
+}
+
+defm FCVTNS : NeonI_2VMisc_fp_to_int<"fcvtns", 0b0, 0b0, 0b11010,
+                                     int_aarch64_neon_fcvtns>;
+defm FCVTNU : NeonI_2VMisc_fp_to_int<"fcvtnu", 0b0, 0b1, 0b11010,
+                                     int_aarch64_neon_fcvtnu>;
+defm FCVTPS : NeonI_2VMisc_fp_to_int<"fcvtps", 0b1, 0b0, 0b11010,
+                                     int_aarch64_neon_fcvtps>;
+defm FCVTPU : NeonI_2VMisc_fp_to_int<"fcvtpu", 0b1, 0b1, 0b11010,
+                                     int_aarch64_neon_fcvtpu>;
+defm FCVTMS : NeonI_2VMisc_fp_to_int<"fcvtms", 0b0, 0b0, 0b11011,
+                                     int_aarch64_neon_fcvtms>;
+defm FCVTMU : NeonI_2VMisc_fp_to_int<"fcvtmu", 0b0, 0b1, 0b11011,
+                                     int_aarch64_neon_fcvtmu>;
+defm FCVTZS : NeonI_2VMisc_fp_to_int<"fcvtzs", 0b1, 0b0, 0b11011, fp_to_sint>;
+defm FCVTZU : NeonI_2VMisc_fp_to_int<"fcvtzu", 0b1, 0b1, 0b11011, fp_to_uint>;
+defm FCVTAS : NeonI_2VMisc_fp_to_int<"fcvtas", 0b0, 0b0, 0b11100,
+                                     int_aarch64_neon_fcvtas>;
+defm FCVTAU : NeonI_2VMisc_fp_to_int<"fcvtau", 0b0, 0b1, 0b11100,
+                                     int_aarch64_neon_fcvtau>;
+
+multiclass NeonI_2VMisc_int_to_fp<string asmop, bit Size, bit U,
+                                  bits<5> opcode, SDPatternOperator Neon_Op> {
+  defm _ : NeonI_2VMisc_SD_Conv<asmop, Size, U, opcode, v4f32, v4i32, v2f64,
+                                v2i64, v2f32, v2i32, Neon_Op>;
+}
+
+defm SCVTF : NeonI_2VMisc_int_to_fp<"scvtf", 0b0, 0b0, 0b11101, sint_to_fp>;
+defm UCVTF : NeonI_2VMisc_int_to_fp<"ucvtf", 0b0, 0b1, 0b11101, uint_to_fp>;
+
+multiclass NeonI_2VMisc_fp_to_fp<string asmop, bit Size, bit U,
+                                 bits<5> opcode, SDPatternOperator Neon_Op> {
+  defm _ : NeonI_2VMisc_SD_Conv<asmop, Size, U, opcode, v4f32, v4f32, v2f64,
+                                v2f64, v2f32, v2f32, Neon_Op>;
+}
+
+defm FRINTN : NeonI_2VMisc_fp_to_fp<"frintn", 0b0, 0b0, 0b11000,
+                                     int_aarch64_neon_frintn>;
+defm FRINTA : NeonI_2VMisc_fp_to_fp<"frinta", 0b0, 0b1, 0b11000, frnd>;
+defm FRINTP : NeonI_2VMisc_fp_to_fp<"frintp", 0b1, 0b0, 0b11000, fceil>;
+defm FRINTM : NeonI_2VMisc_fp_to_fp<"frintm", 0b0, 0b0, 0b11001, ffloor>;
+defm FRINTX : NeonI_2VMisc_fp_to_fp<"frintx", 0b0, 0b1, 0b11001, frint>;
+defm FRINTZ : NeonI_2VMisc_fp_to_fp<"frintz", 0b1, 0b0, 0b11001, ftrunc>;
+defm FRINTI : NeonI_2VMisc_fp_to_fp<"frinti", 0b1, 0b1, 0b11001, fnearbyint>;
+defm FRECPE : NeonI_2VMisc_fp_to_fp<"frecpe", 0b1, 0b0, 0b11101,
+                                    int_arm_neon_vrecpe>;
+defm FRSQRTE : NeonI_2VMisc_fp_to_fp<"frsqrte", 0b1, 0b1, 0b11101,
+                                     int_arm_neon_vrsqrte>;
+defm FSQRT : NeonI_2VMisc_fp_to_fp<"fsqrt", 0b1, 0b1, 0b11111,
+                                   int_aarch64_neon_fsqrt>;
+
+multiclass NeonI_2VMisc_S_Conv<string asmop, bit Size, bit U,
+                               bits<5> opcode, SDPatternOperator Neon_Op> {
+  def 4s : NeonI_2VMisc<0b1, U, {Size, 0b0}, opcode,
+                        (outs VPR128:$Rd), (ins VPR128:$Rn),
+                        asmop # "\t$Rd.4s, $Rn.4s",
+                        [(set (v4i32 VPR128:$Rd),
+                           (v4i32 (Neon_Op (v4i32 VPR128:$Rn))))],
+                        NoItinerary>;
+  
+  def 2s : NeonI_2VMisc<0b0, U, {Size, 0b0}, opcode,
+                        (outs VPR64:$Rd), (ins VPR64:$Rn),
+                        asmop # "\t$Rd.2s, $Rn.2s",
+                        [(set (v2i32 VPR64:$Rd),
+                           (v2i32 (Neon_Op (v2i32 VPR64:$Rn))))],
+                        NoItinerary>;
+}
+
+defm URECPE : NeonI_2VMisc_S_Conv<"urecpe", 0b1, 0b0, 0b11100,
+                                  int_arm_neon_vrecpe>;
+defm URSQRTE : NeonI_2VMisc_S_Conv<"ursqrte", 0b1, 0b1, 0b11100,
+                                   int_arm_neon_vrsqrte>;
 
 // Crypto Class
 class NeonI_Cryptoaes_2v<bits<2> size, bits<5> opcode,

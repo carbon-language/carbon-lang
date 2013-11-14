@@ -338,6 +338,30 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::SETCC, MVT::v4f32, Custom);
     setOperationAction(ISD::SETCC, MVT::v1f64, Custom);
     setOperationAction(ISD::SETCC, MVT::v2f64, Custom);
+
+    setOperationAction(ISD::FFLOOR, MVT::v2f32, Legal);
+    setOperationAction(ISD::FFLOOR, MVT::v4f32, Legal);
+    setOperationAction(ISD::FFLOOR, MVT::v2f64, Legal);
+
+    setOperationAction(ISD::FCEIL, MVT::v2f32, Legal);
+    setOperationAction(ISD::FCEIL, MVT::v4f32, Legal);
+    setOperationAction(ISD::FCEIL, MVT::v2f64, Legal);
+
+    setOperationAction(ISD::FTRUNC, MVT::v2f32, Legal);
+    setOperationAction(ISD::FTRUNC, MVT::v4f32, Legal);
+    setOperationAction(ISD::FTRUNC, MVT::v2f64, Legal);
+
+    setOperationAction(ISD::FRINT, MVT::v2f32, Legal);
+    setOperationAction(ISD::FRINT, MVT::v4f32, Legal);
+    setOperationAction(ISD::FRINT, MVT::v2f64, Legal);
+
+    setOperationAction(ISD::FNEARBYINT, MVT::v2f32, Legal);
+    setOperationAction(ISD::FNEARBYINT, MVT::v4f32, Legal);
+    setOperationAction(ISD::FNEARBYINT, MVT::v2f64, Legal);
+
+    setOperationAction(ISD::FROUND, MVT::v2f32, Legal);
+    setOperationAction(ISD::FROUND, MVT::v4f32, Legal);
+    setOperationAction(ISD::FROUND, MVT::v2f64, Legal);
   }
 }
 
@@ -891,6 +915,12 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "AArch64ISD::NEON_VDUP";
   case AArch64ISD::NEON_VDUPLANE:
     return "AArch64ISD::NEON_VDUPLANE";
+  case AArch64ISD::NEON_REV16:
+    return "AArch64ISD::NEON_REV16";
+  case AArch64ISD::NEON_REV32:
+    return "AArch64ISD::NEON_REV32";
+  case AArch64ISD::NEON_REV64:
+    return "AArch64ISD::NEON_REV64";
   case AArch64ISD::NEON_LD1_UPD:
     return "AArch64ISD::NEON_LD1_UPD";
   case AArch64ISD::NEON_LD2_UPD:
@@ -3797,6 +3827,36 @@ AArch64TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// isREVMask - Check if a vector shuffle corresponds to a REV
+/// instruction with the specified blocksize.  (The order of the elements
+/// within each block of the vector is reversed.)
+static bool isREVMask(ArrayRef<int> M, EVT VT, unsigned BlockSize) {
+  assert((BlockSize == 16 || BlockSize == 32 || BlockSize == 64) &&
+         "Only possible block sizes for REV are: 16, 32, 64");
+
+  unsigned EltSz = VT.getVectorElementType().getSizeInBits();
+  if (EltSz == 64)
+    return false;
+
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned BlockElts = M[0] + 1;
+  // If the first shuffle index is UNDEF, be optimistic.
+  if (M[0] < 0)
+    BlockElts = BlockSize / EltSz;
+
+  if (BlockSize <= EltSz || BlockSize != BlockElts * EltSz)
+    return false;
+
+  for (unsigned i = 0; i < NumElts; ++i) {
+    if (M[i] < 0)
+      continue; // ignore UNDEF indices
+    if ((unsigned)M[i] != (i - i % BlockElts) + (BlockElts - 1 - i % BlockElts))
+      return false;
+  }
+
+  return true;
+}
+
 SDValue
 AArch64TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
                                            SelectionDAG &DAG) const {
@@ -3815,6 +3875,13 @@ AArch64TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
   unsigned EltSize = VT.getVectorElementType().getSizeInBits();
   if (EltSize > 64)
     return SDValue();
+
+  if (isREVMask(ShuffleMask, VT, 64))
+    return DAG.getNode(AArch64ISD::NEON_REV64, dl, VT, V1);
+  if (isREVMask(ShuffleMask, VT, 32))
+    return DAG.getNode(AArch64ISD::NEON_REV32, dl, VT, V1);
+  if (isREVMask(ShuffleMask, VT, 16))
+    return DAG.getNode(AArch64ISD::NEON_REV16, dl, VT, V1);
 
   // If the element of shuffle mask are all the same constant, we can
   // transform it into either NEON_VDUP or NEON_VDUPLANE

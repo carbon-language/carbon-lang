@@ -22,6 +22,39 @@ def int_aarch64_neon_vacgeq :
 def int_aarch64_neon_vacgtq :
   Intrinsic<[llvm_v2i64_ty], [llvm_v2f64_ty, llvm_v2f64_ty], [IntrNoMem]>;
 
+// Vector saturating accumulate
+def int_aarch64_neon_suqadd : Neon_2Arg_Intrinsic;
+def int_aarch64_neon_usqadd : Neon_2Arg_Intrinsic;
+
+// Vector Bitwise reverse
+def int_aarch64_neon_rbit : Neon_1Arg_Intrinsic;
+
+// Vector extract and narrow
+def int_aarch64_neon_xtn : 
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+
+// Vector floating-point convert
+def int_aarch64_neon_frintn : Neon_1Arg_Intrinsic;
+def int_aarch64_neon_fsqrt : Neon_1Arg_Intrinsic;
+def int_aarch64_neon_fcvtxn :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtns : 
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtnu :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtps :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtpu :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtms :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtmu :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtas :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtau :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+
 // Vector maxNum (Floating Point)
 def int_aarch64_neon_vmaxnm : Neon_2Arg_Intrinsic;
 

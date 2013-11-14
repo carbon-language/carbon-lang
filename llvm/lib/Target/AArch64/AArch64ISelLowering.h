@@ -125,6 +125,11 @@ namespace AArch64ISD {
     // Vector FP move immediate
     NEON_FMOVIMM,
 
+    // Vector Element reverse
+    NEON_REV64,
+    NEON_REV32,
+    NEON_REV16,
+
     // Vector compare
     NEON_CMP,
 
