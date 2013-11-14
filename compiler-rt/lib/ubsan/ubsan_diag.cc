@@ -77,27 +77,29 @@ static void PrintHex(UIntMax Val) {
 }
 
 static void renderLocation(Location Loc) {
+  InternalScopedString LocBuffer(1024);
   switch (Loc.getKind()) {
   case Location::LK_Source: {
     SourceLocation SLoc = Loc.getSourceLocation();
     if (SLoc.isInvalid())
-      Printf("<unknown>");
+      LocBuffer.append("<unknown>");
     else
-      PrintSourceLocation(SLoc.getFilename(), SLoc.getLine(), SLoc.getColumn());
+      PrintSourceLocation(&LocBuffer, SLoc.getFilename(), SLoc.getLine(),
+                          SLoc.getColumn());
     break;
   }
   case Location::LK_Module:
-    PrintModuleAndOffset(Loc.getModuleLocation().getModuleName(),
+    PrintModuleAndOffset(&LocBuffer, Loc.getModuleLocation().getModuleName(),
                          Loc.getModuleLocation().getOffset());
     break;
   case Location::LK_Memory:
-    Printf("%p", Loc.getMemoryLocation());
+    LocBuffer.append("%p", Loc.getMemoryLocation());
     break;
   case Location::LK_Null:
-    Printf("<unknown>");
+    LocBuffer.append("<unknown>");
     break;
   }
-  Printf(":");
+  Printf("%s:", LocBuffer.data());
 }
 
 static void renderText(const char *Message, const Diag::Arg *Args) {
