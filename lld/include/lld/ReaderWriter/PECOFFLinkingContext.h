@@ -43,7 +43,7 @@ public:
         _terminalServerAware(true), _dynamicBaseEnabled(true),
         _createManifest(true), _embedManifest(false), _manifestId(1),
         _manifestLevel("'asInvoker'"), _manifestUiAccess("'false'"),
-        _imageType(ImageType::IMAGE_EXE) {
+        _imageType(ImageType::IMAGE_EXE), _dosStub(_defaultDosStub) {
     setDeadStripping(true);
   }
 
@@ -230,6 +230,10 @@ public:
     return it == _sectionAttributeMask.end() ? 0 : it->second;
   }
 
+  const std::vector<uint8_t> &getDosStub() const {
+    return _dosStub;
+  }
+
   StringRef allocateString(StringRef ref) const {
     char *x = _allocator.Allocate<char>(ref.size() + 1);
     memcpy(x, ref.data(), ref.size());
@@ -311,6 +315,13 @@ private:
 
   // List of files that will be removed on destruction.
   std::vector<std::unique_ptr<llvm::FileRemover> > _tempFiles;
+
+  // DOS Stub. DOS stub is data located at the beginning of PE/COFF file.
+  // Windows loader do not really care about DOS stub contents, but it's usually
+  // a small DOS program that prints out a message "This program requires
+  // Microsoft Windows." This feature was somewhat useful before Windows 95.
+  std::vector<uint8_t> _dosStub;
+  static const std::vector<uint8_t> _defaultDosStub;
 };
 
 } // end namespace lld

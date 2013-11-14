@@ -106,29 +106,19 @@ public:
 /// of PE/COFF files.
 class DOSStubChunk : public HeaderChunk {
 public:
-  DOSStubChunk() : HeaderChunk() {
-    // Make the DOS stub occupy the first 128 bytes of an exe. Technically
-    // this can be as small as 64 bytes, but GNU binutil's objdump cannot
-    // parse such irregular header.
-    _size = 128;
-
-    // A DOS stub is usually a small valid DOS program that prints out a message
-    // "This program requires Microsoft Windows" to help user who accidentally
-    // run a Windows executable on DOS. That's not a technical requirement, so
-    // we don't bother to emit such code, at least for now. We simply fill the
-    // DOS stub with null bytes.
-    std::memset(&_dosHeader, 0, sizeof(_dosHeader));
-
-    _dosHeader.Magic = 'M' | ('Z' << 8);
-    _dosHeader.AddressOfNewExeHeader = _size;
+  DOSStubChunk(const PECOFFLinkingContext &ctx)
+      : HeaderChunk(), _dosStub(ctx.getDosStub()) {
+    auto *header = reinterpret_cast<llvm::object::dos_header *>(&_dosStub[0]);
+    header->AddressOfNewExeHeader = _dosStub.size();
+    _size = _dosStub.size();
   }
 
   virtual void write(uint8_t *fileBuffer) {
-    std::memcpy(fileBuffer, &_dosHeader, sizeof(_dosHeader));
+    std::memcpy(fileBuffer, &_dosStub[0], _dosStub.size());
   }
 
 private:
-  llvm::object::dos_header _dosHeader;
+  std::vector<uint8_t> _dosStub;
 };
 
 /// A PEHeaderChunk represents PE header including COFF header.
@@ -810,7 +800,7 @@ public:
   // Create all chunks that consist of the output file.
   void build(const File &linkedFile) {
     // Create file chunks and add them to the list.
-    auto *dosStub = new DOSStubChunk();
+    auto *dosStub = new DOSStubChunk(_PECOFFLinkingContext);
     auto *peHeader = new PEHeaderChunk(_PECOFFLinkingContext);
     auto *dataDirectory = new DataDirectoryChunk(linkedFile);
     auto *sectionTable = new SectionHeaderTableChunk();
