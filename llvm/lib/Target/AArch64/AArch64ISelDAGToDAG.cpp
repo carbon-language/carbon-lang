@@ -733,9 +733,7 @@ SDNode *AArch64DAGToDAGISel::SelectVTBL(SDNode *N, unsigned NumVecs,
 
   // Check the element of look up table is 64-bit or not
   unsigned Vec0Idx = IsExt ? 2 : 1;
-  SDValue V0 = N->getOperand(Vec0Idx + 0);
-  EVT VT = V0.getValueType();
-  assert(!VT.is64BitVector() &&
+  assert(!N->getOperand(Vec0Idx + 0).getValueType().is64BitVector() &&
          "The element of lookup table for vtbl and vtbx must be 128-bit");
 
   // Check the return value type is 64-bit or not
