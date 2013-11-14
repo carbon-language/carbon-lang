@@ -152,11 +152,11 @@ public:
   }
 
   bool readInt(uint32_t &Val) {
-    StringRef Str = Buffer->getBuffer().slice(Cursor, Cursor+4);
-    if (Str.empty()) {
+    if (Buffer->getBuffer().size() < Cursor+4) {
       errs() << "Unexpected end of memory buffer: " << Cursor+4 << ".\n";
       return false;
     }
+    StringRef Str = Buffer->getBuffer().slice(Cursor, Cursor+4);
     Cursor += 4;
     Val = *(const uint32_t *)(Str.data());
     return true;

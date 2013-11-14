@@ -135,6 +135,10 @@ bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
     // This for loop adds the counts for each block. A second nested loop is
     // required to combine the edge counts that are contained in the GCDA file.
     for (uint32_t Line = 0; Count > 0; ++Line) {
+      if (Line >= Blocks.size()) {
+        errs() << "Unexpected number of edges.\n";
+        return false;
+      }
       GCOVBlock &Block = *Blocks[Line];
       for (size_t Edge = 0, End = Block.getNumEdges(); Edge < End; ++Edge) {
         if (Count == 0) {
