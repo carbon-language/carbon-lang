@@ -865,12 +865,11 @@ void CompileUnit::addTemplateParams(DIE &Buffer, DIArray TParams) {
 DIE *CompileUnit::getOrCreateContextDIE(DIScope Context) {
   if (Context.isType())
     return getOrCreateTypeDIE(DIType(Context));
-  else if (Context.isNameSpace())
+  if (Context.isNameSpace())
     return getOrCreateNameSpace(DINameSpace(Context));
-  else if (Context.isSubprogram())
+  if (Context.isSubprogram())
     return getOrCreateSubprogramDIE(DISubprogram(Context));
-  else
-    return getDIE(Context);
+  return getDIE(Context);
 }
 
 /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
