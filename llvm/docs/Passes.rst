@@ -476,7 +476,7 @@ transformation obviously invalidates the CFG, but can update forward dominator
 -------------------------------------------------
 
 This pass munges the code in the input function to better prepare it for
-SelectionDAG-based code generation.  This works around limitations in it's
+SelectionDAG-based code generation.  This works around limitations in its
 basic-block-at-a-time approach.  It should eventually be removed.
 
 ``-constmerge``: Merge Duplicate Global Constants

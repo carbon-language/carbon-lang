@@ -1172,7 +1172,7 @@ The drawback of SetVector is that it requires twice as much space as a normal
 set and has the sum of constant factors from the set-like container and the
 sequential container that it uses.  Use it **only** if you need to iterate over
 the elements in a deterministic order.  SetVector is also expensive to delete
-elements out of (linear time), unless you use it's "pop_back" method, which is
+elements out of (linear time), unless you use its "pop_back" method, which is
 faster.
 
 ``SetVector`` is an adapter class that defaults to using ``std::vector`` and a
@@ -2080,7 +2080,7 @@ the ``llvm_stop_multithreaded()`` call.  You can also use the
 
 Note that both of these calls must be made *in isolation*.  That is to say that
 no other LLVM API calls may be executing at any time during the execution of
-``llvm_start_multithreaded()`` or ``llvm_stop_multithreaded``.  It's is the
+``llvm_start_multithreaded()`` or ``llvm_stop_multithreaded``.  It is the
 client's responsibility to enforce this isolation.
 
 The return value of ``llvm_start_multithreaded()`` indicates the success or
