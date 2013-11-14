@@ -15,6 +15,11 @@
 
 #include "llvm/Support/Path.h"
 
+// Skip YAML files larger than this to avoid OOM error. The YAML reader consumes
+// excessively large amount of memory when parsing a large file.
+// TODO: Fix the YAML reader to reduce memory footprint.
+static const size_t MAX_YAML_FILE_SIZE = 50 * 1024 * 1024;
+
 using namespace lld;
 
 /// Perform the actual pass
@@ -34,10 +39,11 @@ void RoundTripYAMLPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   if (MemoryBuffer::getFileOrSTDIN(tmpYAMLFile.str(), buff))
     return;
 
-  std::unique_ptr<MemoryBuffer> mb(buff.take());
-  _context.getYAMLReader().parseFile(mb, _yamlFile);
-
-  mergedFile.reset(new FileToMutable(_context, *_yamlFile[0].get()));
+  if (buff->getBufferSize() < MAX_YAML_FILE_SIZE) {
+    std::unique_ptr<MemoryBuffer> mb(buff.take());
+    _context.getYAMLReader().parseFile(mb, _yamlFile);
+    mergedFile.reset(new FileToMutable(_context, *_yamlFile[0].get()));
+  }
 
   llvm::sys::fs::remove(tmpYAMLFile.str());
 }
