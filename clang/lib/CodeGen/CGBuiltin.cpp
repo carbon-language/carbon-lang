@@ -2913,10 +2913,21 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
                : Intrinsic::aarch64_neon_vsrshr;
     return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vrshr_n");
   case AArch64::BI__builtin_neon_vsra_n_v:
+    if (VTy->getElementType()->isIntegerTy(64)) {
+      Int = usgn ? Intrinsic::aarch64_neon_vsradu_n
+                 : Intrinsic::aarch64_neon_vsrads_n;
+      return EmitNeonCall(CGM.getIntrinsic(Int), Ops, "vsra_n");
+    }
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vsra_n_v, E);
   case AArch64::BI__builtin_neon_vsraq_n_v:
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vsraq_n_v, E);
   case AArch64::BI__builtin_neon_vrsra_n_v:
+    if (VTy->getElementType()->isIntegerTy(64)) {
+      Int = usgn ? Intrinsic::aarch64_neon_vrsradu_n
+                 : Intrinsic::aarch64_neon_vrsrads_n;
+      return EmitNeonCall(CGM.getIntrinsic(Int), Ops, "vrsra_n");
+    }
+    // fall through
   case AArch64::BI__builtin_neon_vrsraq_n_v: {
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
     Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
