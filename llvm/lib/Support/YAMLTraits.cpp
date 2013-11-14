@@ -59,7 +59,7 @@ void Input::setDiagHandler(SourceMgr::DiagHandlerTy Handler, void *Ctxt) {
   SrcMgr.setDiagHandler(Handler, Ctxt);
 }
 
-bool Input::outputting() {
+bool Input::outputting() const {
   return false;
 }
 
@@ -382,7 +382,7 @@ Output::Output(raw_ostream &yout, void *context)
 Output::~Output() {
 }
 
-bool Output::outputting() {
+bool Output::outputting() const {
   return true;
 }
 

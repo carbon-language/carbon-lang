@@ -1074,6 +1074,76 @@ TEST(YAMLIO, TestTaggedDocumentsWriteAndRead) {
 }
 
 
+//===----------------------------------------------------------------------===//
+//  Test dyn_cast<> on IO object 
+//===----------------------------------------------------------------------===//
+
+struct DynCast {
+  int value;
+};
+typedef std::vector<DynCast> DynCastSequence;
+
+LLVM_YAML_IS_SEQUENCE_VECTOR(DynCast)
+
+namespace llvm {
+namespace yaml {
+  template <>
+  struct MappingTraits<DynCast> {
+    static void mapping(IO &io, DynCast& info) {
+      // Change 10 to 13 when writing yaml.
+      if (Output *output = dyn_cast<Output>(&io)) {
+        (void)output;
+        if (info.value == 10)
+          info.value = 13;
+      }
+      io.mapRequired("value", info.value);
+      // Change 20 to 23 when parsing yaml.
+      if (Input *input = dyn_cast<Input>(&io)) {
+        (void)input;
+        if (info.value == 20)
+          info.value = 23;
+      }
+    }
+  };
+}
+}
+
+//
+// Test writing then reading back a sequence of mappings
+//
+TEST(YAMLIO, TestDynCast) {
+  std::string intermediate;
+  {
+    DynCast entry1;
+    entry1.value = 10;
+    DynCast entry2;
+    entry2.value = 20;
+    DynCast entry3;
+    entry3.value = 30;
+    DynCastSequence seq;
+    seq.push_back(entry1);
+    seq.push_back(entry2);
+    seq.push_back(entry3);
+
+    llvm::raw_string_ostream ostr(intermediate);
+    Output yout(ostr);
+    yout << seq;
+  }
+
+  {
+    Input yin(intermediate);
+    DynCastSequence seq2;
+    yin >> seq2;
+
+    EXPECT_FALSE(yin.error());
+    EXPECT_EQ(seq2.size(), 3UL);
+    EXPECT_EQ(seq2[0].value, 13);   // Verify changed to 13.
+    EXPECT_EQ(seq2[1].value, 23);   // Verify changed to 23.
+    EXPECT_EQ(seq2[2].value, 30);   // Verify stays same.
+  }
+}
+
+
 
 //===----------------------------------------------------------------------===//
 //  Test error handling
