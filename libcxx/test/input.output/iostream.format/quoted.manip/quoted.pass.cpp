@@ -18,6 +18,16 @@
 
 #if _LIBCPP_STD_VER > 11
 
+void both_ways ( const char *p ) {
+	std::string str(p);
+	auto q = std::quoted(s);
+
+    std::stringstream ss;
+    bool skippingws = is_skipws ( &ss );
+	ss << q;
+	ss >> q;
+    }
+
 bool is_skipws ( const std::istream *is ) {
     return ( is->flags() & std::ios_base::skipws ) != 0;
     }
@@ -140,6 +150,8 @@ std::wstring unquote ( const wchar_t *p, wchar_t delim='"', wchar_t escape='\\' 
 
 int main()
 {
+    both_ways ( "" );   // This is a compilation check
+
     round_trip    (  "" );
     round_trip_ws (  "" );
     round_trip_d  (  "", 'q' );

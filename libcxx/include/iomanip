@@ -14,6 +14,8 @@
 /*
     iomanip synopsis
 
+namespace std {
+
 // types T1, T2, ... are unspecified implementation types
 T1 resetiosflags(ios_base::fmtflags mask);
 T2 setiosflags (ios_base::fmtflags mask);
@@ -604,7 +606,7 @@ basic_ostream<_CharT, _Traits>& operator<<(
         basic_ostream<_CharT, _Traits>& __os, 
         const __quoted_proxy<_CharT, _Traits, _Allocator> & __proxy)
 {
-    return __quoted_output (__os, __proxy.string.cbegin (), __proxy.string.cend (), __proxy.__delim, __proxy.__escape);
+    return __quoted_output (__os, __proxy.__string.cbegin (), __proxy.__string.cend (), __proxy.__delim, __proxy.__escape);
 }
 
 //  extractor for non-const basic_string& proxies
