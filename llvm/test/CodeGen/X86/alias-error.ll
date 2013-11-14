@@ -1,4 +1,4 @@
-; RUN: not llc < %s -mtriple=i686-pc-linux-gnu %s 2>&1 | FileCheck %s
+; RUN: not llc -mtriple=i686-pc-linux-gnu %s 2>&1 | FileCheck %s
 
 @a = external global i32
 @b = alias i32* @a
