@@ -29,7 +29,6 @@ class AssertingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_asserting_registers()
 
-    @expectedFailureFreeBSD('llvm.org/pr17184')
     def test_inferior_asserting_register_dwarf(self):
         """Test that lldb reliably reads registers from the inferior after asserting (command)."""
         self.buildDwarf()

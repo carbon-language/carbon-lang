@@ -26,7 +26,6 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.buildDsym()
         self.recursive_inferior_crashing_registers()
 
-    @expectedFailureFreeBSD('llvm.org/pr17184')
     def test_recursive_inferior_crashing_register_dwarf(self):
         """Test that lldb reliably reads registers from the inferior after crashing (command)."""
         self.buildDwarf()
@@ -44,7 +43,6 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.buildDsym()
         self.recursive_inferior_crashing_expr()
 
-    @expectedFailureFreeBSD('llvm.org/pr17184')
     def test_recursive_inferior_crashing_expr_dwarf(self):
         """Test that the lldb expression interpreter can read from the inferior after crashing (command)."""
         self.buildDwarf()
