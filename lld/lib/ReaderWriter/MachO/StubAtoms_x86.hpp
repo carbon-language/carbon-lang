@@ -19,9 +19,10 @@
 
 #include "ReferenceKinds.h"
 
+using llvm::makeArrayRef;
+
 namespace lld {
 namespace mach_o {
-
 
 //
 // X86 Stub Atom created by the stubs pass.
@@ -49,7 +50,7 @@ public:
     static const uint8_t instructions[] =
               { 0xFF, 0x25, 0x00, 0x00, 0x00, 0x00 }; // jmp *lazyPointer
     assert(sizeof(instructions) == this->size());
-    return ArrayRef<uint8_t>(instructions, sizeof(instructions));
+    return makeArrayRef(instructions);
   }
 
 };
@@ -85,7 +86,7 @@ public:
       0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,   // jmp *_fast_lazy_bind
       0x90 };                               // nop
     assert(sizeof(instructions) == this->size());
-    return ArrayRef<uint8_t>(instructions, sizeof(instructions));
+    return makeArrayRef(instructions);
   }
 
 };
@@ -120,7 +121,7 @@ public:
               { 0x68, 0x00, 0x00, 0x00, 0x00,   // pushq $lazy-info-offset
                 0xE9, 0x00, 0x00, 0x00, 0x00 }; // jmp helperhelper
     assert(sizeof(instructions) == this->size());
-    return ArrayRef<uint8_t>(instructions, sizeof(instructions));
+    return makeArrayRef(instructions);
   }
 
 };
@@ -156,7 +157,7 @@ public:
 
   virtual ArrayRef<uint8_t> rawContent() const {
     static const uint8_t bytes[] = { 0x00, 0x00, 0x00, 0x00 };
-    return ArrayRef<uint8_t>(bytes, 4);
+    return makeArrayRef(bytes);
   }
 
 };
@@ -194,7 +195,7 @@ public:
 
   virtual ArrayRef<uint8_t> rawContent() const {
     static const uint8_t bytes[] = { 0x00, 0x00, 0x00, 0x0 };
-    return ArrayRef<uint8_t>(bytes, 4);
+    return makeArrayRef(bytes);
   }
 
 };
