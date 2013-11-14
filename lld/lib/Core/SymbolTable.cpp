@@ -234,6 +234,8 @@ void SymbolTable::addByName(const Atom & newAtom) {
     break;
   case NCR_Error:
     llvm::errs() << "SymbolTable: error while merging " << name << "\n";
+    llvm::report_fatal_error("duplicate symbol error");
+    break;
   }
 
   if (useNew) {
