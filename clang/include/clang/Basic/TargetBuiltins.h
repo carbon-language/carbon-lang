@@ -90,6 +90,7 @@ namespace clang {
       Int64,
       Poly8,
       Poly16,
+      Poly64,
       Float16,
       Float32,
       Float64

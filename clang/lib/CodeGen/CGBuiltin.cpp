@@ -1622,6 +1622,7 @@ static llvm::VectorType *GetNeonType(CodeGenFunction *CGF,
   case NeonTypeFlags::Int32:
     return llvm::VectorType::get(CGF->Int32Ty, V1Ty ? 1 : (2 << IsQuad));
   case NeonTypeFlags::Int64:
+  case NeonTypeFlags::Poly64:
     return llvm::VectorType::get(CGF->Int64Ty, V1Ty ? 1 : (1 << IsQuad));
   case NeonTypeFlags::Float32:
     return llvm::VectorType::get(CGF->FloatTy, V1Ty ? 1 : (2 << IsQuad));

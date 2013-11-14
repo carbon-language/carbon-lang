@@ -170,6 +170,7 @@ public:
     Int64,
     Poly8,
     Poly16,
+    Poly64,
     Float16,
     Float32,
     Float64
@@ -626,7 +627,7 @@ static std::string TypeString(const char mod, StringRef typestr) {
       s += quad ? "x4" : "x2";
       break;
     case 'l':
-      s += "int64";
+      s += (poly && !usgn)? "poly64" : "int64";
       if (scal)
         break;
       s += quad ? "x2" : "x1";
@@ -810,7 +811,7 @@ static void InstructionTypeCode(const StringRef &typeStr,
     break;
   case 'l':
     switch (ck) {
-    case ClassS: typeCode = usgn ? "u64" : "s64"; break;
+    case ClassS: typeCode = poly ? "p64" : usgn ? "u64" : "s64"; break;
     case ClassI: typeCode = "i64"; break;
     case ClassW: typeCode = "64"; break;
     default: break;
@@ -2040,7 +2041,7 @@ static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
       ET = NeonTypeFlags::Int32;
       break;
     case 'l':
-      ET = NeonTypeFlags::Int64;
+      ET = poly ? NeonTypeFlags::Poly64 : NeonTypeFlags::Int64;
       break;
     case 'h':
       ET = NeonTypeFlags::Float16;
@@ -2325,6 +2326,7 @@ void NeonEmitter::run(raw_ostream &OS) {
   OS << "#ifdef __aarch64__\n";
   OS << "typedef uint8_t poly8_t;\n";
   OS << "typedef uint16_t poly16_t;\n";
+  OS << "typedef uint64_t poly64_t;\n";
   OS << "#else\n";
   OS << "typedef int8_t poly8_t;\n";
   OS << "typedef int16_t poly16_t;\n";
@@ -2332,19 +2334,21 @@ void NeonEmitter::run(raw_ostream &OS) {
 
   // Emit Neon vector typedefs.
   std::string TypedefTypes(
-      "cQcsQsiQilQlUcQUcUsQUsUiQUiUlQUlhQhfQfdQdPcQPcPsQPs");
+      "cQcsQsiQilQlUcQUcUsQUsUiQUiUlQUlhQhfQfdQdPcQPcPsQPsPlQPl");
   SmallVector<StringRef, 24> TDTypeVec;
   ParseTypes(0, TypedefTypes, TDTypeVec);
 
   // Emit vector typedefs.
   bool isA64 = false;
+  bool preinsert;
+  bool postinsert;
   for (unsigned i = 0, e = TDTypeVec.size(); i != e; ++i) {
     bool dummy, quad = false, poly = false;
     char type = ClassifyType(TDTypeVec[i], quad, poly, dummy);
-    bool preinsert = false;
-    bool postinsert = false;
+    preinsert = false;
+    postinsert = false;
 
-    if (type == 'd') {
+    if (type == 'd' || (type == 'l' && poly)) {
       preinsert = isA64? false: true;
       isA64 = true;
     } else {
@@ -2370,6 +2374,9 @@ void NeonEmitter::run(raw_ostream &OS) {
     OS << " " << TypeString('d', TDTypeVec[i]) << ";\n";
 
   }
+  postinsert = isA64? true: false;
+  if (postinsert)
+    OS << "#endif\n";
   OS << "\n";
 
   // Emit struct typedefs.
@@ -2378,10 +2385,10 @@ void NeonEmitter::run(raw_ostream &OS) {
     for (unsigned i = 0, e = TDTypeVec.size(); i != e; ++i) {
       bool dummy, quad = false, poly = false;
       char type = ClassifyType(TDTypeVec[i], quad, poly, dummy);
-      bool preinsert = false;
-      bool postinsert = false;
+      preinsert = false;
+      postinsert = false;
 
-      if (type == 'd') {
+      if (type == 'd' || (type == 'l' && poly)) {
         preinsert = isA64? false: true;
         isA64 = true;
       } else {
@@ -2403,6 +2410,10 @@ void NeonEmitter::run(raw_ostream &OS) {
       OS << "\n";
     }
   }
+  postinsert = isA64? true: false;
+  if (postinsert)
+    OS << "#endif\n";
+  OS << "\n";
 
   OS<<"#define __ai static inline __attribute__((__always_inline__, __nodebug__))\n\n";
 

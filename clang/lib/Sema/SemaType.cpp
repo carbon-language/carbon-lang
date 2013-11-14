@@ -4766,9 +4766,10 @@ static bool isPermittedNeonBaseType(QualType &Ty,
 
   if (VecKind == VectorType::NeonPolyVector) {
     if (IsAArch64) {
-      // AArch64 polynomial vectors are unsigned
+      // AArch64 polynomial vectors are unsigned and support poly64.
       return BTy->getKind() == BuiltinType::UChar ||
-             BTy->getKind() == BuiltinType::UShort;
+             BTy->getKind() == BuiltinType::UShort ||
+             BTy->getKind() == BuiltinType::ULongLong;
     } else {
       // AArch32 polynomial vector are signed.
       return BTy->getKind() == BuiltinType::SChar ||
