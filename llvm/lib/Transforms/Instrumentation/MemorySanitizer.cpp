@@ -190,6 +190,10 @@ static cl::opt<std::string> ClWrapIndirectCalls("msan-wrap-indirect-calls",
        cl::desc("Wrap indirect calls with a given function"),
        cl::Hidden);
 
+static cl::opt<bool> ClWrapIndirectCallsFast("msan-wrap-indirect-calls-fast",
+       cl::desc("Do not wrap indirect calls with target in the same module"),
+       cl::Hidden, cl::init(true));
+
 namespace {
 
 /// \brief An instrumentation pass implementing detection of uninitialized
@@ -239,6 +243,9 @@ class MemorySanitizer : public FunctionPass {
   /// \brief Thread-local space used to pass origin value to the UMR reporting
   /// function.
   GlobalVariable *OriginTLS;
+
+  GlobalVariable *MsandrModuleStart;
+  GlobalVariable *MsandrModuleEnd;
 
   /// \brief The run-time callback to print a warning.
   Value *WarningFn;
@@ -375,6 +382,17 @@ void MemorySanitizer::initializeCallbacks(Module &M) {
     IndirectCallWrapperFn = M.getOrInsertFunction(
         ClWrapIndirectCalls, AnyFunctionPtrTy, AnyFunctionPtrTy, NULL);
   }
+
+  if (ClWrapIndirectCallsFast) {
+    MsandrModuleStart = new GlobalVariable(
+        M, IRB.getInt32Ty(), false, GlobalValue::ExternalLinkage,
+        0, "__executable_start");
+    MsandrModuleStart->setVisibility(GlobalVariable::HiddenVisibility);
+    MsandrModuleEnd = new GlobalVariable(
+        M, IRB.getInt32Ty(), false, GlobalValue::ExternalLinkage,
+        0, "_end");
+    MsandrModuleEnd->setVisibility(GlobalVariable::HiddenVisibility);
+  }
 }
 
 /// \brief Module-level initialization.
@@ -489,6 +507,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   };
   SmallVector<ShadowOriginAndInsertPoint, 16> InstrumentationList;
   SmallVector<Instruction*, 16> StoreList;
+  SmallVector<CallSite, 16> IndirectCallList;
 
   MemorySanitizerVisitor(Function &F, MemorySanitizer &MS)
       : F(F), MS(MS), VAHelper(CreateVarArgHelper(F, MS, *this)) {
@@ -588,6 +607,48 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     DEBUG(dbgs() << "DONE:\n" << F);
   }
 
+  void materializeIndirectCalls() {
+    for (size_t i = 0, n = IndirectCallList.size(); i < n; i++) {
+      CallSite CS = IndirectCallList[i];
+      Instruction *I = CS.getInstruction();
+      BasicBlock *B = I->getParent();
+      IRBuilder<> IRB(I);
+      Value *Fn0 = CS.getCalledValue();
+      Value *Fn = IRB.CreateBitCast(Fn0, MS.AnyFunctionPtrTy);
+
+      if (ClWrapIndirectCallsFast) {
+        // Check that call target is inside this module limits.
+        Value *Start =
+            IRB.CreateBitCast(MS.MsandrModuleStart, MS.AnyFunctionPtrTy);
+        Value *End = IRB.CreateBitCast(MS.MsandrModuleEnd, MS.AnyFunctionPtrTy);
+
+        Value *NotInThisModule = IRB.CreateOr(IRB.CreateICmpULT(Fn, Start),
+                                              IRB.CreateICmpUGE(Fn, End));
+
+        PHINode *NewFnPhi =
+            IRB.CreatePHI(Fn0->getType(), 2, "msandr.indirect_target");
+
+        Instruction *CheckTerm = SplitBlockAndInsertIfThen(
+            cast<Instruction>(NotInThisModule),
+            /* Unreachable */ false, MS.ColdCallWeights);
+
+        IRB.SetInsertPoint(CheckTerm);
+        // Slow path: call wrapper function to possibly transform the call
+        // target.
+        Value *NewFn = IRB.CreateBitCast(
+            IRB.CreateCall(MS.IndirectCallWrapperFn, Fn), Fn0->getType());
+
+        NewFnPhi->addIncoming(Fn0, B);
+        NewFnPhi->addIncoming(NewFn, dyn_cast<Instruction>(NewFn)->getParent());
+        CS.setCalledFunction(NewFnPhi);
+      } else {
+        Value *NewFn = IRB.CreateBitCast(
+            IRB.CreateCall(MS.IndirectCallWrapperFn, Fn), Fn0->getType());
+        CS.setCalledFunction(NewFn);
+      }
+    }
+  }
+
   /// \brief Add MemorySanitizer instrumentation to a function.
   bool runOnFunction() {
     MS.initializeCallbacks(*F.getParent());
@@ -629,6 +690,9 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
     // Insert shadow value checks.
     materializeChecks();
+
+    // Wrap indirect calls.
+    materializeIndirectCalls();
 
     return true;
   }
@@ -1809,17 +1873,6 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     }
   }
 
-  // Replace call to (*Fn) with a call to (*IndirectCallWrapperFn(Fn)).
-  void wrapIndirectCall(IRBuilder<> &IRB, CallSite CS) {
-    Value *Fn = CS.getCalledValue();
-    Value *NewFn = IRB.CreateBitCast(
-        IRB.CreateCall(MS.IndirectCallWrapperFn,
-                       IRB.CreateBitCast(Fn, MS.AnyFunctionPtrTy)),
-        Fn->getType());
-    setShadow(NewFn, getShadow(Fn));
-    CS.setCalledFunction(NewFn);
-  }
-
   void visitCallSite(CallSite CS) {
     Instruction &I = *CS.getInstruction();
     assert((CS.isCall() || CS.isInvoke()) && "Unknown type of CallSite");
@@ -1860,7 +1913,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     IRBuilder<> IRB(&I);
 
     if (MS.WrapIndirectCalls && !CS.getCalledFunction())
-      wrapIndirectCall(IRB, CS);
+      IndirectCallList.push_back(CS);
 
     unsigned ArgOffset = 0;
     DEBUG(dbgs() << "  CallSite: " << I << "\n");
