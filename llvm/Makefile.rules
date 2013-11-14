@@ -776,8 +776,10 @@ Sources += $(filter %.cpp %.c %.cc,$(BUILT_SOURCES))
 endif
 
 BaseNameSources := $(sort $(basename $(Sources)))
+SourceDirs := $(sort $(dir $(Sources)))
 
 ObjectsO  := $(BaseNameSources:%=$(ObjDir)/%.o)
+ObjectDirs := $(SourceDirs:%=$(ObjDir)/%)
 
 #----------------------------------------------------------
 # For Mingw MSYS bash and Python/w32:
@@ -814,8 +816,17 @@ $(DESTDIR)$(PROJ_bindir) $(DESTDIR)$(PROJ_libdir) $(DESTDIR)$(PROJ_includedir) $
 	$(Verb) $(MKDIR) $* > /dev/null
 	$(Verb) $(DOTDIR_TIMESTAMP_COMMAND) > $@
 
-.PRECIOUS: $(ObjDir)/.dir $(LibDir)/.dir $(ToolDir)/.dir $(ExmplDir)/.dir
+.PRECIOUS: $(LibDir)/.dir $(ToolDir)/.dir $(ExmplDir)/.dir
 .PRECIOUS: $(LLVMLibDir)/.dir $(LLVMToolDir)/.dir $(LLVMExmplDir)/.dir
+
+#---------------------------------------------------------
+# Collect the object directories (as there may be more
+# than one if the source code is spread across
+# subdirectories).
+#---------------------------------------------------------
+
+OBJECT_DIRS := $(ObjDir)/.dir $(ObjectDirs:%=%/.dir)
+.PRECIOUS: $(OBJECT_DIRS)
 
 #---------------------------------------------------------
 # Handle the DIRS options for sequential construction
@@ -1432,6 +1443,8 @@ ifeq ($(HOST_OS),HP-UX)
   DISABLE_AUTO_DEPENDENCIES=1
 endif
 
+COMPILE_DEPS = $(OBJECT_DIRS) $(BUILT_SOURCES) $(PROJ_MAKEFILE)
+
 # Provide rule sets for when dependency generation is enabled
 ifndef DISABLE_AUTO_DEPENDENCIES
 
@@ -1447,27 +1460,27 @@ DEPEND_OPTIONS = -MMD -MP -MF "$(ObjDir)/$*.d.tmp" \
 DEPEND_MOVEFILE = then $(MV) -f "$(ObjDir)/$*.d.tmp" "$(ObjDir)/$*.d"; \
                   else $(RM) "$(ObjDir)/$*.d.tmp"; exit 1; fi
 
-$(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_MAKEFILE)
+$(ObjDir)/%.o: %.cpp $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build" $(PIC_FLAG)
 	$(Verb) if $(Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
 
-$(ObjDir)/%.o: %.mm $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_MAKEFILE)
+$(ObjDir)/%.o: %.mm $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.mm for $(BuildMode) build" $(PIC_FLAG)
 	$(Verb) if $(Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
 
-$(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_MAKEFILE)
+$(ObjDir)/%.o: %.cc $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build" $(PIC_FLAG)
 	$(Verb) if $(Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
 
-$(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_MAKEFILE)
+$(ObjDir)/%.o: %.c $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.c for $(BuildMode) build" $(PIC_FLAG)
 	$(Verb) if $(Compile.C) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
 
-$(ObjDir)/%.o: %.m $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_MAKEFILE)
+$(ObjDir)/%.o: %.m $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.m for $(BuildMode) build" $(PIC_FLAG)
 	$(Verb) if $(Compile.C) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
@@ -1475,67 +1488,67 @@ $(ObjDir)/%.o: %.m $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_MAKEFILE)
 # Provide alternate rule sets if dependencies are disabled
 else
 
-$(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.o: %.cpp $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build" $(PIC_FLAG)
 	$(Compile.CXX) $< -o $@
 
-$(ObjDir)/%.o: %.mm $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.o: %.mm $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.mm for $(BuildMode) build" $(PIC_FLAG)
 	$(Compile.CXX) $< -o $@
 
-$(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.o: %.cc $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build" $(PIC_FLAG)
 	$(Compile.CXX) $< -o $@
 
-$(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.o: %.c $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.c for $(BuildMode) build" $(PIC_FLAG)
 	$(Compile.C) $< -o $@
 
-$(ObjDir)/%.o: %.m $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.o: %.m $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.m for $(BuildMode) build" $(PIC_FLAG)
 	$(Compile.C) $< -o $@
 endif
 
 
 ## Rules for building preprocessed (.i/.ii) outputs.
-$(BuildMode)/%.ii: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
+$(BuildMode)/%.ii: %.cpp $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build to .ii file"
 	$(Verb) $(Preprocess.CXX) $< -o $@
 
-$(BuildMode)/%.ii: %.mm $(ObjDir)/.dir $(BUILT_SOURCES)
+$(BuildMode)/%.ii: %.mm $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.mm for $(BuildMode) build to .ii file"
 	$(Verb) $(Preprocess.CXX) $< -o $@
 
-$(BuildMode)/%.ii: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
+$(BuildMode)/%.ii: %.cc $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build to .ii file"
 	$(Verb) $(Preprocess.CXX) $< -o $@
 
-$(BuildMode)/%.i: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
+$(BuildMode)/%.i: %.c $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.c for $(BuildMode) build to .i file"
 	$(Verb) $(Preprocess.C) $< -o $@
 
-$(BuildMode)/%.i: %.m $(ObjDir)/.dir $(BUILT_SOURCES)
+$(BuildMode)/%.i: %.m $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.m for $(BuildMode) build to .i file"
 	$(Verb) $(Preprocess.C) $< -o $@
 
 
-$(ObjDir)/%.s: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.s: %.cpp $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.cpp to asm for $(BuildMode) build" $(PIC_FLAG)
 	$(Compile.CXX) $< -o $@ -S
 
-$(ObjDir)/%.s: %.mm $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.s: %.mm $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.mm to asm for $(BuildMode) build" $(PIC_FLAG)
 	$(Compile.CXX) $< -o $@ -S
 
-$(ObjDir)/%.s: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.s: %.cc $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.cc to asm for $(BuildMode) build" $(PIC_FLAG)
 	$(Compile.CXX) $< -o $@ -S
 
-$(ObjDir)/%.s: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.s: %.c $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.c to asm for $(BuildMode) build" $(PIC_FLAG)
 	$(Compile.C) $< -o $@ -S
 
-$(ObjDir)/%.s: %.m $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.s: %.m $(COMPILE_DEPS)
 	$(Echo) "Compiling $*.m to asm for $(BuildMode) build" $(PIC_FLAG)
 	$(Compile.C) $< -o $@ -S
 
