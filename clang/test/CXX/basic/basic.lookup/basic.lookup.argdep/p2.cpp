@@ -72,7 +72,7 @@ namespace O {
 }
 
 extern "C" {
-  struct L { };
+  struct L { int x; };
 }
 
 void h(L); // expected-note{{candidate function}}

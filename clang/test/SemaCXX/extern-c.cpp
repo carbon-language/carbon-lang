@@ -140,7 +140,7 @@ namespace N2 {
 
 // We allow all these even though the standard says they are ill-formed.
 extern "C" {
-  struct stat {};
+  struct stat {};   // expected-warning{{empty struct has size 0 in C, size 1 in C++}}
   void stat(struct stat);
 }
 namespace X {
@@ -187,3 +187,20 @@ namespace X {
   extern "C" double global_var_vs_extern_c_var_2; // expected-note {{here}}
 }
 int global_var_vs_extern_c_var_2; // expected-error {{conflicts with declaration with C language linkage}}
+
+template <class T> struct pr5065_n1 {};
+extern "C" {
+  union pr5065_1 {}; // expected-warning{{empty union has size 0 in C, size 1 in C++}}
+  struct pr5065_2 { int: 0; }; // expected-warning{{struct has size 0 in C, size 1 in C++}}
+  struct pr5065_3 {}; // expected-warning{{empty struct has size 0 in C, size 1 in C++}}
+  struct pr5065_4 { // expected-warning{{empty struct has size 0 in C, size 1 in C++}}
+    struct Inner {}; // expected-warning{{empty struct has size 0 in C, size 1 in C++}}
+  };
+  // These should not warn
+  class pr5065_n3 {};
+  pr5065_n1<int> pr5065_v;
+  struct pr5065_n4 { void m() {} };
+  struct pr5065_n5 : public pr5065_3 {};
+  struct pr5065_n6 : public virtual pr5065_3 {};
+}
+struct pr5065_n7 {};

@@ -806,6 +806,24 @@ bool DeclContext::isTransparentContext() const {
   return false;
 }
 
+static bool isLinkageSpecContext(const DeclContext *DC,
+                                 LinkageSpecDecl::LanguageIDs ID) {
+  while (DC->getDeclKind() != Decl::TranslationUnit) {
+    if (DC->getDeclKind() == Decl::LinkageSpec)
+      return cast<LinkageSpecDecl>(DC)->getLanguage() == ID;
+    DC = DC->getParent();
+  }
+  return false;
+}
+
+bool DeclContext::isExternCContext() const {
+  return isLinkageSpecContext(this, clang::LinkageSpecDecl::lang_c);
+}
+
+bool DeclContext::isExternCXXContext() const {
+  return isLinkageSpecContext(this, clang::LinkageSpecDecl::lang_cxx);
+}
+
 bool DeclContext::Encloses(const DeclContext *DC) const {
   if (getPrimaryContext() != this)
     return getPrimaryContext()->Encloses(DC);

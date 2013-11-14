@@ -49,6 +49,7 @@ def BuiltinMacroRedefined : DiagGroup<"builtin-macro-redefined">;
 def BuiltinRequiresHeader : DiagGroup<"builtin-requires-header">;
 def C99Compat : DiagGroup<"c99-compat">;
 def CXXCompat: DiagGroup<"c++-compat">;
+def ExternCCompat : DiagGroup<"extern-c-compat">;
 def GNUCaseRange : DiagGroup<"gnu-case-range">;
 def CastAlign : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;
@@ -494,7 +495,8 @@ def Most : DiagGroup<"most", [
     ObjCMissingSuperCalls,
     OverloadedVirtual,
     PrivateExtern,
-    SelTypeCast
+    SelTypeCast,
+    ExternCCompat
  ]>;
 
 // Thread Safety warnings 

@@ -12085,8 +12085,21 @@ void Sema::ActOnFields(Scope *S, SourceLocation RecLoc, Decl *EnclosingDecl,
     if (Record->hasAttrs())
       CheckAlignasUnderalignment(Record);
 
-    // Check if the structure/union declaration is a language extension.
+    // Check if the structure/union declaration is a type that can have zero
+    // size in C. For C this is a language extension, for C++ it may cause
+    // compatibility problems.
+    bool CheckForZeroSize;
     if (!getLangOpts().CPlusPlus) {
+      CheckForZeroSize = true;
+    } else {
+      // For C++ filter out types that cannot be referenced in C code.
+      CXXRecordDecl *CXXRecord = cast<CXXRecordDecl>(Record);
+      CheckForZeroSize =
+          CXXRecord->getLexicalDeclContext()->isExternCContext() &&
+          !CXXRecord->isDependentType() &&
+          CXXRecord->isCLike();
+    }
+    if (CheckForZeroSize) {
       bool ZeroSize = true;
       bool IsEmpty = true;
       unsigned NonBitFields = 0;
@@ -12106,19 +12119,22 @@ void Sema::ActOnFields(Scope *S, SourceLocation RecLoc, Decl *EnclosingDecl,
         }
       }
 
-      // Empty structs are an extension in C (C99 6.7.2.1p7), but are allowed in
-      // C++.
-      if (ZeroSize)
-        Diag(RecLoc, diag::warn_zero_size_struct_union_compat) << IsEmpty
-            << Record->isUnion() << (NonBitFields > 1);
+      // Empty structs are an extension in C (C99 6.7.2.1p7). They are
+      // allowed in C++, but warn if its declaration is inside
+      // extern "C" block.
+      if (ZeroSize) {
+        Diag(RecLoc, getLangOpts().CPlusPlus ?
+                         diag::warn_zero_size_struct_union_in_extern_c :
+                         diag::warn_zero_size_struct_union_compat)
+          << IsEmpty << Record->isUnion() << (NonBitFields > 1);
+      }
 
-      // Structs without named members are extension in C (C99 6.7.2.1p7), but
-      // are accepted by GCC.
-      if (NonBitFields == 0) {
-        if (IsEmpty)
-          Diag(RecLoc, diag::ext_empty_struct_union) << Record->isUnion();
-        else
-          Diag(RecLoc, diag::ext_no_named_members_in_struct_union) << Record->isUnion();
+      // Structs without named members are extension in C (C99 6.7.2.1p7),
+      // but are accepted by GCC.
+      if (NonBitFields == 0 && !getLangOpts().CPlusPlus) {
+        Diag(RecLoc, IsEmpty ? diag::ext_empty_struct_union :
+                               diag::ext_no_named_members_in_struct_union)
+          << Record->isUnion();
       }
     }
   } else {

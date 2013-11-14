@@ -5728,6 +5728,9 @@ def ext_no_named_members_in_struct_union : Extension<
 def warn_zero_size_struct_union_compat : Warning<"%select{|empty }0"
   "%select{struct|union}1 has size 0 in C, %select{size 1|non-zero size}2 in C++">,
   InGroup<CXXCompat>, DefaultIgnore;
+def warn_zero_size_struct_union_in_extern_c : Warning<"%select{|empty }0"
+  "%select{struct|union}1 has size 0 in C, %select{size 1|non-zero size}2 in C++">,
+  InGroup<ExternCCompat>;
 } // End of general sema category.
 
 // inline asm.

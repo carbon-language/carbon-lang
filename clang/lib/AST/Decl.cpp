@@ -1698,27 +1698,12 @@ bool VarDecl::isExternC() const {
   return isExternCTemplate(*this);
 }
 
-static bool isLinkageSpecContext(const DeclContext *DC,
-                                 LinkageSpecDecl::LanguageIDs ID) {
-  while (DC->getDeclKind() != Decl::TranslationUnit) {
-    if (DC->getDeclKind() == Decl::LinkageSpec)
-      return cast<LinkageSpecDecl>(DC)->getLanguage() == ID;
-    DC = DC->getParent();
-  }
-  return false;
-}
-
-template <typename T>
-static bool isInLanguageSpecContext(T *D, LinkageSpecDecl::LanguageIDs ID) {
-  return isLinkageSpecContext(D->getLexicalDeclContext(), ID);
-}
-
 bool VarDecl::isInExternCContext() const {
-  return isInLanguageSpecContext(this, LinkageSpecDecl::lang_c);
+  return getLexicalDeclContext()->isExternCContext();
 }
 
 bool VarDecl::isInExternCXXContext() const {
-  return isInLanguageSpecContext(this, LinkageSpecDecl::lang_cxx);
+  return getLexicalDeclContext()->isExternCXXContext();
 }
 
 VarDecl *VarDecl::getCanonicalDecl() { return getFirstDecl(); }
@@ -2407,11 +2392,11 @@ bool FunctionDecl::isExternC() const {
 }
 
 bool FunctionDecl::isInExternCContext() const {
-  return isInLanguageSpecContext(this, LinkageSpecDecl::lang_c);
+  return getLexicalDeclContext()->isExternCContext();
 }
 
 bool FunctionDecl::isInExternCXXContext() const {
-  return isInLanguageSpecContext(this, LinkageSpecDecl::lang_cxx);
+  return getLexicalDeclContext()->isExternCXXContext();
 }
 
 bool FunctionDecl::isGlobal() const {
