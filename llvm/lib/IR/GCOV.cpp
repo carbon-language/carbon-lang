@@ -47,27 +47,34 @@ bool GCOVFile::read(GCOVBuffer &Buffer) {
 
   if (isGCNOFile(Format)) {
     while (true) {
+      if (!Buffer.readFunctionTag()) break;
       GCOVFunction *GFun = new GCOVFunction();
       if (!GFun->read(Buffer, Format))
-        break;
+        return false;
       Functions.push_back(GFun);
     }
   }
   else if (isGCDAFile(Format)) {
     for (size_t i = 0, e = Functions.size(); i < e; ++i) {
-      bool ReadGCDA = Functions[i]->read(Buffer, Format);
-      (void)ReadGCDA;
-      assert(ReadGCDA && ".gcda data does not match .gcno data");
+      if (!Buffer.readFunctionTag()) {
+        errs() << "Unexpected number of functions.\n";
+        return false;
+      }
+      if (!Functions[i]->read(Buffer, Format))
+        return false;
     }
     if (Buffer.readObjectTag()) {
-      uint32_t Length = Buffer.readInt();
-      Buffer.readInt(); // checksum
-      Buffer.readInt(); // num
-      RunCount = Buffer.readInt();
+      uint32_t Length;
+      uint32_t Dummy;
+      if (!Buffer.readInt(Length)) return false;
+      if (!Buffer.readInt(Dummy)) return false; // checksum
+      if (!Buffer.readInt(Dummy)) return false; // num
+      if (!Buffer.readInt(RunCount)) return false;;
       Buffer.advanceCursor(Length-3);
     }
     while (Buffer.readProgramTag()) {
-      uint32_t Length = Buffer.readInt();
+      uint32_t Length;
+      if (!Buffer.readInt(Length)) return false;
       Buffer.advanceCursor(Length);
       ++ProgramCount;
     }
@@ -104,75 +111,103 @@ GCOVFunction::~GCOVFunction() {
 /// read - Read a function from the buffer. Return false if buffer cursor
 /// does not point to a function tag.
 bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
-  if (!Buff.readFunctionTag())
-    return false;
-
-  Buff.readInt(); // Function header length
-  Ident = Buff.readInt(); 
-  Buff.readInt(); // Checksum #1
+  uint32_t Dummy;
+  if (!Buff.readInt(Dummy)) return false; // Function header length
+  if (!Buff.readInt(Ident)) return false;
+  if (!Buff.readInt(Dummy)) return false; // Checksum #1
   if (Format != GCOV::GCNO_402 && Format != GCOV::GCDA_402)
-    Buff.readInt(); // Checksum #2
+    if (!Buff.readInt(Dummy)) return false; // Checksum #2
 
-  Name = Buff.readString();
+  if (!Buff.readString(Name)) return false;
+
   if (Format == GCOV::GCNO_402 || Format == GCOV::GCNO_404)
-    Filename = Buff.readString();
+    if (!Buff.readString(Filename)) return false;
 
   if (Format == GCOV::GCDA_402 || Format == GCOV::GCDA_404) {
-    Buff.readArcTag();
-    uint32_t i = 0;
-    uint32_t Count = Buff.readInt() / 2;
+    if (!Buff.readArcTag()) {
+      errs() << "Arc tag not found.\n";
+      return false;
+    }
+    uint32_t Count;
+    if (!Buff.readInt(Count)) return false;
+    Count /= 2;
 
     // This for loop adds the counts for each block. A second nested loop is
     // required to combine the edge counts that are contained in the GCDA file.
-    for (uint32_t Line = 0; i < Count; ++Line) {
+    for (uint32_t Line = 0; Count > 0; ++Line) {
       GCOVBlock &Block = *Blocks[Line];
       for (size_t Edge = 0, End = Block.getNumEdges(); Edge < End; ++Edge) {
-        assert(i < Count && "Unexpected number of Edges!");
-        Block.addCount(Buff.readInt64());
-        ++i;
+        if (Count == 0) {
+          errs() << "Unexpected number of edges.\n";
+          return false;
+        }
+        uint64_t ArcCount;
+        if (!Buff.readInt64(ArcCount)) return false;
+        Block.addCount(ArcCount);
+        --Count;
       }
     }
     return true;
   }
 
-  LineNumber = Buff.readInt();
+  if (!Buff.readInt(LineNumber)) return false;
 
   // read blocks.
-  bool BlockTagFound = Buff.readBlockTag();
-  (void)BlockTagFound;
-  assert(BlockTagFound && "Block Tag not found!");
-  uint32_t BlockCount = Buff.readInt();
+  if (!Buff.readBlockTag()) {
+    errs() << "Block tag not found.\n";
+    return false;
+  }
+  uint32_t BlockCount;
+  if (!Buff.readInt(BlockCount)) return false;
   for (uint32_t i = 0, e = BlockCount; i != e; ++i) {
-    Buff.readInt(); // Block flags;
+    if (!Buff.readInt(Dummy)) return false; // Block flags;
     Blocks.push_back(new GCOVBlock(i));
   }
 
   // read edges.
   while (Buff.readEdgeTag()) {
-    uint32_t EdgeCount = (Buff.readInt() - 1) / 2;
-    uint32_t BlockNo = Buff.readInt();
-    assert(BlockNo < BlockCount && "Unexpected Block number!");
+    uint32_t EdgeCount;
+    if (!Buff.readInt(EdgeCount)) return false;
+    EdgeCount = (EdgeCount - 1) / 2;
+    uint32_t BlockNo;
+    if (!Buff.readInt(BlockNo)) return false;
+    if (BlockNo >= BlockCount) {
+      errs() << "Unexpected block number.\n";
+      return false;
+    }
     for (uint32_t i = 0, e = EdgeCount; i != e; ++i) {
-      Blocks[BlockNo]->addEdge(Buff.readInt());
-      Buff.readInt(); // Edge flag
+      uint32_t Dst;
+      if (!Buff.readInt(Dst)) return false;
+      Blocks[BlockNo]->addEdge(Dst);
+      if (!Buff.readInt(Dummy)) return false; // Edge flag
     }
   }
 
   // read line table.
   while (Buff.readLineTag()) {
-    uint32_t LineTableLength = Buff.readInt();
+    uint32_t LineTableLength;
+    if (!Buff.readInt(LineTableLength)) return false;
     uint32_t EndPos = Buff.getCursor() + LineTableLength*4;
-    uint32_t BlockNo = Buff.readInt();
-    assert(BlockNo < BlockCount && "Unexpected Block number!");
-    GCOVBlock *Block = Blocks[BlockNo];
-    Buff.readInt(); // flag
-    while (Buff.getCursor() != (EndPos - 4)) {
-      StringRef Filename = Buff.readString();
-      if (Buff.getCursor() == (EndPos - 4)) break;
-      while (uint32_t L = Buff.readInt())
-        Block->addLine(Filename, L);
+    uint32_t BlockNo;
+    if (!Buff.readInt(BlockNo)) return false;
+    if (BlockNo >= BlockCount) {
+      errs() << "Unexpected block number.\n";
+      return false;
     }
-    Buff.readInt(); // flag
+    GCOVBlock *Block = Blocks[BlockNo];
+    if (!Buff.readInt(Dummy)) return false; // flag
+    while (Buff.getCursor() != (EndPos - 4)) {
+      StringRef Filename;
+      if (!Buff.readString(Filename)) return false;
+      if (Buff.getCursor() == (EndPos - 4)) break;
+      while (true) {
+        uint32_t Line;
+        if (!Buff.readInt(Line)) return false;
+        if (!Line) break;
+        Block->addLine(Filename, Line);
+      }
+    }
+    if (!Buff.readInt(Dummy)) return false; // flag
   }
   return true;
 }

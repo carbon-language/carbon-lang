@@ -1,4 +1,8 @@
-RUN: cd %p/Inputs && llvm-cov -gcno=test.gcno -gcda=test.gcda \
+RUN: cd %p/Inputs
+
+RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda \
 RUN:   | diff test.cpp.gcov -
+
+RUN: not llvm-cov -gcno=test_read_fail.gcno -gcda=test.gcda
 
 XFAIL: powerpc64, s390x, arm

@@ -152,27 +152,35 @@ public:
     return true;
   }
 
-  uint32_t readInt() {
-    uint32_t Result;
+  bool readInt(uint32_t &Val) {
     StringRef Str = Buffer->getBuffer().slice(Cursor, Cursor+4);
-    assert (Str.empty() == false && "Unexpected memory buffer end!");
+    if (Str.empty()) {
+      errs() << "Unexpected end of memory buffer: " << Cursor+4 << ".\n";
+      return false;
+    }
     Cursor += 4;
-    Result = *(const uint32_t *)(Str.data());
-    return Result;
+    Val = *(const uint32_t *)(Str.data());
+    return true;
   }
 
-  uint64_t readInt64() {
-    uint64_t Lo = readInt();
-    uint64_t Hi = readInt();
-    uint64_t Result = Lo | (Hi << 32);
-    return Result;
+  bool readInt64(uint64_t &Val) {
+    uint32_t Lo, Hi;
+    if (!readInt(Lo) || !readInt(Hi)) return false;
+    Val = ((uint64_t)Hi << 32) | Lo;
+    return true;
   }
 
-  StringRef readString() {
-    uint32_t Len = readInt() * 4;
-    StringRef Str = Buffer->getBuffer().slice(Cursor, Cursor+Len);
+  bool readString(StringRef &Str) {
+    uint32_t Len;
+    if (!readInt(Len)) return false;
+    Len *= 4;
+    if (Buffer->getBuffer().size() < Cursor+Len) {
+      errs() << "Unexpected end of memory buffer: " << Cursor+Len << ".\n";
+      return false;
+    }
+    Str = Buffer->getBuffer().slice(Cursor, Cursor+Len).split('\0').first;
     Cursor += Len;
-    return Str.split('\0').first;
+    return true;
   }
 
   uint64_t getCursor() const { return Cursor; }
