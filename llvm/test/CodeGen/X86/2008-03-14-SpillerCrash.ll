@@ -45,4 +45,6 @@ bb383:		; preds = %bb374.us, %bb311.split
 	ret i64 0
 }
 
-declare i64 @__wcstoll_l(i32*, i32**, i32, %struct.__locale_struct*) nounwind 
+define i64 @__wcstoll_l(i32*, i32**, i32, %struct.__locale_struct*) nounwind {
+  ret i64 0
+}

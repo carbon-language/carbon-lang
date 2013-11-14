@@ -9,4 +9,6 @@ entry:
         ret void
 }
 
-declare extern_weak i32 @f()
+define weak i32 @f() {
+  ret i32 42
+}

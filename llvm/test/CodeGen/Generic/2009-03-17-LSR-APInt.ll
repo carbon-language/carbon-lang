@@ -63,30 +63,58 @@ bb47:		; preds = %bb46, %bb44
 	br label %bb44
 }
 
-declare i32 @pthread_once(i32*, void ()*)
+define i32 @pthread_once(i32*, void ()*) {
+  ret i32 0
+}
 
-declare i8* @pthread_getspecific(i32)
+define i8* @pthread_getspecific(i32) {
+  ret i8* null
+}
 
-declare i32 @pthread_setspecific(i32, i8*)
+define i32 @pthread_setspecific(i32, i8*) {
+  ret i32 0
+}
 
-declare i32 @pthread_create(i64*, %struct.pthread_attr_t*, i8* (i8*)*, i8*)
+define i32 @pthread_create(i64*, %struct.pthread_attr_t*, i8* (i8*)*, i8*) {
+  ret i32 0
+}
 
-declare i32 @pthread_cancel(i64)
+define i32 @pthread_cancel(i64) {
+  ret i32 0
+}
 
-declare i32 @pthread_mutex_lock(%struct.pthread_mutex_t*)
+define i32 @pthread_mutex_lock(%struct.pthread_mutex_t*) {
+  ret i32 0
+}
 
-declare i32 @pthread_mutex_trylock(%struct.pthread_mutex_t*)
+define i32 @pthread_mutex_trylock(%struct.pthread_mutex_t*) {
+  ret i32 0
+}
 
-declare i32 @pthread_mutex_unlock(%struct.pthread_mutex_t*)
+define i32 @pthread_mutex_unlock(%struct.pthread_mutex_t*) {
+  ret i32 0
+}
 
-declare i32 @pthread_mutex_init(%struct.pthread_mutex_t*, %struct.Alignment*)
+define i32 @pthread_mutex_init(%struct.pthread_mutex_t*, %struct.Alignment*) {
+  ret i32 0
+}
 
-declare i32 @pthread_key_create(i32*, void (i8*)*)
+define i32 @pthread_key_create(i32*, void (i8*)*) {
+  ret i32 0
+}
 
-declare i32 @pthread_key_delete(i32)
+define i32 @pthread_key_delete(i32) {
+  ret i32 0
+}
 
-declare i32 @pthread_mutexattr_init(%struct.Alignment*)
+define i32 @pthread_mutexattr_init(%struct.Alignment*) {
+  ret i32 0
+}
 
-declare i32 @pthread_mutexattr_settype(%struct.Alignment*, i32)
+define i32 @pthread_mutexattr_settype(%struct.Alignment*, i32) {
+  ret i32 0
+}
 
-declare i32 @pthread_mutexattr_destroy(%struct.Alignment*)
+define i32 @pthread_mutexattr_destroy(%struct.Alignment*) {
+  ret i32 0
+}

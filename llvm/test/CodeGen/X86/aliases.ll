@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=i686-pc-linux-gnu -asm-verbose=false | FileCheck %s
 
-@bar = external global i32
+@bar = global i32 42
 
 ; CHECK-DAG: .globl	foo1
 @foo1 = alias i32* @bar
@@ -10,7 +10,9 @@
 
 %FunTy = type i32()
 
-declare i32 @foo_f()
+define i32 @foo_f() {
+  ret i32 0
+}
 ; CHECK-DAG: .weak	bar_f
 @bar_f = alias weak %FunTy* @foo_f
 

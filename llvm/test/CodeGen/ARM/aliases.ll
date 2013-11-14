@@ -16,13 +16,15 @@
 ; CHECK: .globl	A
 ; CHECK: A = bar
 
-@bar = external global i32
+@bar = global i32 42
 @foo1 = alias i32* @bar
 @foo2 = alias i32* @bar
 
 %FunTy = type i32()
 
-declare i32 @foo_f()
+define i32 @foo_f() {
+  ret i32 0
+}
 @bar_f = alias weak %FunTy* @foo_f
 
 @bar_i = alias internal i32* @bar
