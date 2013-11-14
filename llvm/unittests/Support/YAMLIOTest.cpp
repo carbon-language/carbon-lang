@@ -999,7 +999,7 @@ struct MyDouble {
   double value;
 };
 
-LLVM_YAML_IS_DOCUMENT_LIST_VECTOR(MyDouble);
+LLVM_YAML_IS_DOCUMENT_LIST_VECTOR(MyDouble)
 
 
 namespace llvm {
