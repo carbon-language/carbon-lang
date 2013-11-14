@@ -23,8 +23,8 @@ entry:
 
 ; CHECK-FAST: @func
 ; CHECK-FAST: bitcast i32 (i32, i32)* %f to void ()*
-; CHECK-FAST: icmp ult void ()* {{.*}}, bitcast (i32* @__executable_start to void ()*)
-; CHECK-FAST: icmp uge void ()* {{.*}}, bitcast (i32* @_end to void ()*)
+; CHECK-FAST-DAG: icmp ult void ()* {{.*}}, bitcast (i32* @__executable_start to void ()*)
+; CHECK-FAST-DAG: icmp uge void ()* {{.*}}, bitcast (i32* @_end to void ()*)
 ; CHECK-FAST: or i1
 ; CHECK-FAST: br i1
 ; CHECK-FAST: call void ()* (void ()*)* @zzz(void ()*
