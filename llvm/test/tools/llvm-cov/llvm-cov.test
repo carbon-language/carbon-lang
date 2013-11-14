@@ -7,4 +7,4 @@ RUN:   | diff -aub test.cpp.gcov -
 
 RUN: not llvm-cov -gcno=test_read_fail.gcno -gcda=test.gcda
 
-XFAIL: powerpc64, s390x, arm
+XFAIL: powerpc64, s390x
