@@ -27,8 +27,7 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS)
   # Run ASan tests only if we're sure we may produce working binaries.
   set(ASAN_TEST_DEPS
     ${SANITIZER_COMMON_LIT_TEST_DEPS}
-    ${ASAN_RUNTIME_LIBRARIES}
-    asan_blacklist)
+    asan_runtime_libraries)
   set(ASAN_TEST_PARAMS
     asan_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg)
   if(LLVM_INCLUDE_TESTS)

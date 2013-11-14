@@ -106,7 +106,7 @@ macro(asan_compile obj_list source arch)
   get_target_flags_for_arch(${arch} TARGET_CFLAGS)
   clang_compile(${output_obj} ${source}
                 CFLAGS ${ARGN} ${TARGET_CFLAGS}
-                DEPS gtest ${ASAN_RUNTIME_LIBRARIES}
+                DEPS gtest asan_runtime_libraries
                            ${ASAN_UNITTEST_HEADERS}
                            ${ASAN_BLACKLIST_FILE})
   list(APPEND ${obj_list} ${output_obj})
@@ -117,7 +117,7 @@ endmacro()
 macro(add_asan_test test_suite test_name arch)
   parse_arguments(TEST "OBJECTS;LINKFLAGS" "WITH_TEST_RUNTIME" ${ARGN})
   get_target_flags_for_arch(${arch} TARGET_LINK_FLAGS)
-  set(TEST_DEPS ${ASAN_RUNTIME_LIBRARIES} ${TEST_OBJECTS})
+  set(TEST_DEPS asan_runtime_libraries ${TEST_OBJECTS})
   if(TEST_WITH_TEST_RUNTIME)
     list(APPEND TEST_DEPS ${ASAN_TEST_RUNTIME})
     list(APPEND TEST_OBJECTS lib${ASAN_TEST_RUNTIME}.a)
