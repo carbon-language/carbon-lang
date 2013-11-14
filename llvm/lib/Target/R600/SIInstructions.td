@@ -128,8 +128,11 @@ def S_CMPK_LT_U32 : SOPK_32 <0x0000000d, "S_CMPK_LT_U32", []>;
 def S_CMPK_LE_U32 : SOPK_32 <0x0000000e, "S_CMPK_LE_U32", []>;
 } // End isCompare = 1
 
-def S_ADDK_I32 : SOPK_32 <0x0000000f, "S_ADDK_I32", []>;
-def S_MULK_I32 : SOPK_32 <0x00000010, "S_MULK_I32", []>;
+let Defs = [SCC], isCommutable = 1 in {
+  def S_ADDK_I32 : SOPK_32 <0x0000000f, "S_ADDK_I32", []>;
+  def S_MULK_I32 : SOPK_32 <0x00000010, "S_MULK_I32", []>;
+}
+
 //def S_CBRANCH_I_FORK : SOPK_ <0x00000011, "S_CBRANCH_I_FORK", []>;
 def S_GETREG_B32 : SOPK_32 <0x00000012, "S_GETREG_B32", []>;
 def S_SETREG_B32 : SOPK_32 <0x00000013, "S_SETREG_B32", []>;
