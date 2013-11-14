@@ -2075,6 +2075,38 @@ defm VMOVDDUPZ : avx512_movddup<"vmovddup", VR512, v8f64, f512mem, memopv8f64>,
 def : Pat<(X86Movddup (v8f64 (scalar_to_vector (loadf64 addr:$src)))),
           (VMOVDDUPZrm addr:$src)>;
 
+//===---------------------------------------------------------------------===//
+// Replicate Single FP - MOVSHDUP and MOVSLDUP
+//===---------------------------------------------------------------------===//
+multiclass avx512_replicate_sfp<bits<8> op, SDNode OpNode, string OpcodeStr,
+                              ValueType vt, RegisterClass RC, PatFrag mem_frag,
+                              X86MemOperand x86memop> {
+  def rr : AVX512XSI<op, MRMSrcReg, (outs RC:$dst), (ins RC:$src),
+                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                      [(set RC:$dst, (vt (OpNode RC:$src)))]>, EVEX;
+  let mayLoad = 1 in
+  def rm : AVX512XSI<op, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
+                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                      [(set RC:$dst, (OpNode (mem_frag addr:$src)))]>, EVEX;
+}
+
+defm VMOVSHDUPZ  : avx512_replicate_sfp<0x16, X86Movshdup, "vmovshdup",
+                       v16f32, VR512, memopv16f32, f512mem>, EVEX_V512,
+                       EVEX_CD8<32, CD8VF>;
+defm VMOVSLDUPZ  : avx512_replicate_sfp<0x12, X86Movsldup, "vmovsldup",
+                       v16f32, VR512, memopv16f32, f512mem>, EVEX_V512,
+                       EVEX_CD8<32, CD8VF>;
+
+def : Pat<(v16i32 (X86Movshdup VR512:$src)), (VMOVSHDUPZrr VR512:$src)>;
+def : Pat<(v16i32 (X86Movshdup (memopv16i32 addr:$src))),
+           (VMOVSHDUPZrm addr:$src)>;
+def : Pat<(v16i32 (X86Movsldup VR512:$src)), (VMOVSLDUPZrr VR512:$src)>;
+def : Pat<(v16i32 (X86Movsldup (memopv16i32 addr:$src))),
+           (VMOVSLDUPZrm addr:$src)>;
+
+//===----------------------------------------------------------------------===//
+// Move Low to High and High to Low packed FP Instructions
+//===----------------------------------------------------------------------===//
 def VMOVLHPSZrr : AVX512PSI<0x16, MRMSrcReg, (outs VR128X:$dst),
           (ins VR128X:$src1, VR128X:$src2),
           "vmovlhps{z}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
@@ -3385,6 +3417,7 @@ multiclass avx512_alignr<string OpcodeStr, RegisterClass RC,
                      !strconcat(OpcodeStr,
                      "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
                      []>, EVEX_4V;
+  let mayLoad = 1 in
   def rmi : AVX512AIi8<0x03, MRMSrcMem, (outs RC:$dst),
                      (ins RC:$src1, x86memop:$src2, i8imm:$src3),
                      !strconcat(OpcodeStr,

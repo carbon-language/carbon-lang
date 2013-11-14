@@ -3165,7 +3165,8 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
     assert(X86::RFP80RegClass.hasSubClassEq(RC) && "Unknown 10-byte regclass");
     return load ? X86::LD_Fp80m : X86::ST_FpP80m;
   case 16: {
-    assert(X86::VR128RegClass.hasSubClassEq(RC) && "Unknown 16-byte regclass");
+    assert((X86::VR128RegClass.hasSubClassEq(RC) ||
+            X86::VR128XRegClass.hasSubClassEq(RC))&& "Unknown 16-byte regclass");
     // If stack is realigned we can use aligned stores.
     if (isStackAligned)
       return load ?
@@ -3177,7 +3178,8 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
         (HasAVX ? X86::VMOVUPSmr : X86::MOVUPSmr);
   }
   case 32:
-    assert(X86::VR256RegClass.hasSubClassEq(RC) && "Unknown 32-byte regclass");
+    assert((X86::VR256RegClass.hasSubClassEq(RC) ||
+            X86::VR256XRegClass.hasSubClassEq(RC)) && "Unknown 32-byte regclass");
     // If stack is realigned we can use aligned stores.
     if (isStackAligned)
       return load ? X86::VMOVAPSYrm : X86::VMOVAPSYmr;
