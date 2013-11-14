@@ -1,4 +1,4 @@
-G# RUN: llvm-mc  -triple aarch64-none-linux-gnu -mattr=+neon -disassemble < %s | FileCheck %s
+# RUN: llvm-mc  -triple aarch64-none-linux-gnu -mattr=+neon -disassemble < %s | FileCheck %s
 
 #------------------------------------------------------------------------------
 # Vector Integer Add/Sub
@@ -2386,4 +2386,43 @@ G# RUN: llvm-mc  -triple aarch64-none-linux-gnu -mattr=+neon -disassemble < %s |
 0xe2 0x07 0x16 0x5e
 0x51 0x04 0x14 0x5e
 0x86 0x05 0x18 0x5e
+
+#----------------------------------------------------------------------
+# Table look up
+#----------------------------------------------------------------------
+0x20,0x00,0x02,0x0e
+0xf0,0x23,0x02,0x0e
+0x20,0x40,0x02,0x0e
+0xf0,0x62,0x02,0x0e
+# CHECK: tbl v0.8b, {v1.16b}, v2.8b
+# CHECK: tbl v16.8b, {v31.16b, v0.16b}, v2.8b
+# CHECK: tbl v0.8b, {v1.16b, v2.16b, v3.16b}, v2.8b
+# CHECK: tbl v16.8b, {v23.16b, v24.16b, v25.16b, v26.16b}, v2.8b
+
+0x20,0x00,0x02,0x4e
+0xf0,0x23,0x02,0x4e
+0x20,0x40,0x02,0x4e
+0xe0,0x63,0x02,0x4e
+# CHECK: tbl v0.16b, {v1.16b}, v2.16b
+# CHECK: tbl v16.16b, {v31.16b, v0.16b}, v2.16b
+# CHECK: tbl v0.16b, {v1.16b, v2.16b, v3.16b}, v2.16b
+# CHECK: tbl v0.16b, {v31.16b, v0.16b, v1.16b, v2.16b}, v2.16b
+
+0x20,0x10,0x02,0x0e
+0xf0,0x33,0x02,0x0e
+0x20,0x50,0x02,0x0e
+0xf0,0x72,0x02,0x0e
+# CHECK: tbx v0.8b, {v1.16b}, v2.8b
+# CHECK: tbx v16.8b, {v31.16b, v0.16b}, v2.8b
+# CHECK: tbx v0.8b, {v1.16b, v2.16b, v3.16b}, v2.8b
+# CHECK: tbx v16.8b, {v23.16b, v24.16b, v25.16b, v26.16b}, v2.8b
+
+0x20,0x10,0x02,0x4e
+0xf0,0x33,0x02,0x4e
+0x20,0x50,0x02,0x4e
+0xf0,0x73,0x02,0x4e
+# CHECK: tbx v0.16b, {v1.16b}, v2.16b
+# CHECK: tbx v16.16b, {v31.16b, v0.16b}, v2.16b
+# CHECK: tbx v0.16b, {v1.16b, v2.16b, v3.16b}, v2.16b
+# CHECK: tbx v16.16b, {v31.16b, v0.16b, v1.16b, v2.16b}, v2.16b
 

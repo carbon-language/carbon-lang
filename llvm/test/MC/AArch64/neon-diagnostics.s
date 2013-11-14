@@ -5928,3 +5928,51 @@
 // CHECK-ERROR: error: lane number incompatible with layout
 // CHECK-ERROR:          dup b1, v3.b[16]
 // CHECK-ERROR:                       ^
+
+//----------------------------------------------------------------------
+// Table look up
+//----------------------------------------------------------------------
+
+        tbl v0.8b, {v1.8b}, v2.8b
+        tbl v0.8b, {v1.8b, v2.8b}, v2.8b
+        tbl v0.8b, {v1.8b, v2.8b, v3.8b}, v2.8b
+        tbl v0.8b, {v1.8b, v2.8b, v3.8b, v4.8b}, v2.8b
+        tbl v0.8b, {v1.16b, v2.16b, v3.16b, v4.16b, v5.16b}, v2.8b
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        tbl v0.8b, {v1.8b}, v2.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        tbl v0.8b, {v1.8b, v2.8b}, v2.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        tbl v0.8b, {v1.8b, v2.8b, v3.8b}, v2.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        tbl v0.8b, {v1.8b, v2.8b, v3.8b, v4.8b}, v2.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid number of vectors
+// CHECK-ERROR:        tbl v0.8b, {v1.16b, v2.16b, v3.16b, v4.16b, v5.16b}, v2.8b
+// CHECK-ERROR:                                                    ^
+
+        tbx v0.8b, {v1.8b}, v2.8b
+        tbx v0.8b, {v1.8b, v2.8b}, v2.8b
+        tbx v0.8b, {v1.8b, v2.8b, v3.8b}, v2.8b
+        tbx v0.8b, {v1.8b, v2.8b, v3.8b, v4.8b}, v2.8b
+        tbx v0.8b, {v1.16b, v2.16b, v3.16b, v4.16b, v5.16b}, v2.8b
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        tbx v0.8b, {v1.8b}, v2.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        tbx v0.8b, {v1.8b, v2.8b}, v2.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        tbx v0.8b, {v1.8b, v2.8b, v3.8b}, v2.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        tbx v0.8b, {v1.8b, v2.8b, v3.8b, v4.8b}, v2.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid number of vectors
+// CHECK-ERROR:        tbx v0.8b, {v1.16b, v2.16b, v3.16b, v4.16b, v5.16b}, v2.8b
+// CHECK-ERROR:                                                    ^

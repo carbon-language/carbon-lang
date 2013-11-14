@@ -109,6 +109,13 @@ public:
 
   SDNode* Select(SDNode*);
 private:
+  /// Get the opcode for table lookup instruction
+  unsigned getTBLOpc(bool IsExt, bool Is64Bit, unsigned NumOfVec);
+
+  /// Select NEON table lookup intrinsics.  NumVecs should be 1, 2, 3 or 4.
+  /// IsExt is to indicate if the result will be extended with an argument.
+  SDNode *SelectVTBL(SDNode *N, unsigned NumVecs, bool IsExt);
+
   /// Select NEON load intrinsics.  NumVecs should be 1, 2, 3 or 4.
   SDNode *SelectVLD(SDNode *N, unsigned NumVecs, bool isUpdating,
                     const uint16_t *Opcode);
@@ -682,6 +689,73 @@ SDNode *AArch64DAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
   return VSt;
 }
 
+unsigned AArch64DAGToDAGISel::getTBLOpc(bool IsExt, bool Is64Bit,
+                                        unsigned NumOfVec) {
+  assert(NumOfVec >= 1 && NumOfVec <= 4 && "VST NumVecs out-of-range");
+
+  unsigned Opc = 0;
+  switch (NumOfVec) {
+  default:
+    break;
+  case 1:
+    if (IsExt)
+      Opc = Is64Bit ? AArch64::TBX1_8b : AArch64::TBX1_16b;
+    else
+      Opc = Is64Bit ? AArch64::TBL1_8b : AArch64::TBL1_16b;
+    break;
+  case 2:
+    if (IsExt)
+      Opc = Is64Bit ? AArch64::TBX2_8b : AArch64::TBX2_16b;
+    else
+      Opc = Is64Bit ? AArch64::TBL2_8b : AArch64::TBL2_16b;
+    break;
+  case 3:
+    if (IsExt)
+      Opc = Is64Bit ? AArch64::TBX3_8b : AArch64::TBX3_16b;
+    else
+      Opc = Is64Bit ? AArch64::TBL3_8b : AArch64::TBL3_16b;
+    break;
+  case 4:
+    if (IsExt)
+      Opc = Is64Bit ? AArch64::TBX4_8b : AArch64::TBX4_16b;
+    else
+      Opc = Is64Bit ? AArch64::TBL4_8b : AArch64::TBL4_16b;
+    break;
+  }
+
+  return Opc;
+}
+
+SDNode *AArch64DAGToDAGISel::SelectVTBL(SDNode *N, unsigned NumVecs,
+                                        bool IsExt) {
+  assert(NumVecs >= 1 && NumVecs <= 4 && "VST NumVecs out-of-range");
+  SDLoc dl(N);
+
+  // Check the element of look up table is 64-bit or not
+  unsigned Vec0Idx = IsExt ? 2 : 1;
+  SDValue V0 = N->getOperand(Vec0Idx + 0);
+  EVT VT = V0.getValueType();
+  assert(!VT.is64BitVector() &&
+         "The element of lookup table for vtbl and vtbx must be 128-bit");
+
+  // Check the return value type is 64-bit or not
+  EVT ResVT = N->getValueType(0);
+  bool is64BitRes = ResVT.is64BitVector();
+
+  // Create new SDValue for vector list
+  SmallVector<SDValue, 4> Regs(N->op_begin() + Vec0Idx,
+                               N->op_begin() + Vec0Idx + NumVecs);
+  SDValue TblReg = createQTuple(Regs);
+  unsigned Opc = getTBLOpc(IsExt, is64BitRes, NumVecs);
+
+  SmallVector<SDValue, 3> Ops;
+  if (IsExt)
+    Ops.push_back(N->getOperand(1));
+  Ops.push_back(TblReg);
+  Ops.push_back(N->getOperand(Vec0Idx + NumVecs));
+  return CurDAG->getMachineNode(Opc, dl, ResVT, Ops);
+}
+
 SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   // Dump information about the Node being selected
   DEBUG(dbgs() << "Selecting: "; Node->dump(CurDAG); dbgs() << "\n");
@@ -899,6 +973,31 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       AArch64::ST4WB_4S_fixed,  AArch64::ST4WB_2D_fixed
     };
     return SelectVST(Node, 4, true, Opcodes);
+  }
+  case ISD::INTRINSIC_WO_CHAIN: {
+    unsigned IntNo = cast<ConstantSDNode>(Node->getOperand(0))->getZExtValue();
+    bool IsExt = false;
+    switch (IntNo) {
+      default:
+        break;
+      case Intrinsic::aarch64_neon_vtbx1:
+        IsExt = true;
+      case Intrinsic::aarch64_neon_vtbl1:
+        return SelectVTBL(Node, 1, IsExt);
+      case Intrinsic::aarch64_neon_vtbx2:
+        IsExt = true;
+      case Intrinsic::aarch64_neon_vtbl2:
+        return SelectVTBL(Node, 2, IsExt);
+      case Intrinsic::aarch64_neon_vtbx3:
+        IsExt = true;
+      case Intrinsic::aarch64_neon_vtbl3:
+        return SelectVTBL(Node, 3, IsExt);
+      case Intrinsic::aarch64_neon_vtbx4:
+        IsExt = true;
+      case Intrinsic::aarch64_neon_vtbl4:
+        return SelectVTBL(Node, 4, IsExt);
+    }
+    break;
   }
   case ISD::INTRINSIC_VOID:
   case ISD::INTRINSIC_W_CHAIN: {

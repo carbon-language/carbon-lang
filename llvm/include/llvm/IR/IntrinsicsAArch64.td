@@ -84,6 +84,51 @@ def int_aarch64_neon_vminv  : Neon_Across_Intrinsic;
 def int_aarch64_neon_vmaxnmv : Neon_Across_Intrinsic;
 def int_aarch64_neon_vminnmv : Neon_Across_Intrinsic;
 
+// Vector Table Lookup.
+def int_aarch64_neon_vtbl1 :
+  Intrinsic<[llvm_anyvector_ty],
+            [llvm_anyvector_ty, LLVMMatchType<0>], [IntrNoMem]>;
+
+def int_aarch64_neon_vtbl2 :
+  Intrinsic<[llvm_anyvector_ty],
+            [llvm_anyvector_ty, LLVMMatchType<1>, LLVMMatchType<0>],
+            [IntrNoMem]>;
+
+def int_aarch64_neon_vtbl3 :
+  Intrinsic<[llvm_anyvector_ty],
+            [llvm_anyvector_ty, LLVMMatchType<1>, LLVMMatchType<1>,
+            LLVMMatchType<0>], [IntrNoMem]>;
+
+def int_aarch64_neon_vtbl4 :
+  Intrinsic<[llvm_anyvector_ty],
+            [llvm_anyvector_ty, LLVMMatchType<1>, LLVMMatchType<1>,
+            LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
+
+// Vector Table Extension.
+// Some elements of the destination vector may not be updated, so the original
+// value of that vector is passed as the first argument.  The next 1-4
+// arguments after that are the table.
+def int_aarch64_neon_vtbx1 :
+  Intrinsic<[llvm_anyvector_ty],
+            [LLVMMatchType<0>, llvm_anyvector_ty, LLVMMatchType<0>],
+            [IntrNoMem]>;
+
+def int_aarch64_neon_vtbx2 :
+  Intrinsic<[llvm_anyvector_ty],
+            [LLVMMatchType<0>, llvm_anyvector_ty, LLVMMatchType<1>,
+            LLVMMatchType<0>], [IntrNoMem]>;
+
+def int_aarch64_neon_vtbx3 :
+  Intrinsic<[llvm_anyvector_ty],
+            [LLVMMatchType<0>, llvm_anyvector_ty, LLVMMatchType<1>,
+            LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
+
+def int_aarch64_neon_vtbx4 :
+  Intrinsic<[llvm_anyvector_ty],
+            [LLVMMatchType<0>, llvm_anyvector_ty,  LLVMMatchType<1>,
+            LLVMMatchType<1>,  LLVMMatchType<1>, LLVMMatchType<0>],
+            [IntrNoMem]>;
+
 // Scalar Add
 def int_aarch64_neon_vaddds :
   Intrinsic<[llvm_v1i64_ty], [llvm_v1i64_ty, llvm_v1i64_ty], [IntrNoMem]>;

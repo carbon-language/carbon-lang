@@ -5163,6 +5163,56 @@ def : NI_Extract<v2i64, VPR128, EXTvvvi_16b, neon_uimm4>;
 def : NI_Extract<v4f32, VPR128, EXTvvvi_16b, neon_uimm4>;
 def : NI_Extract<v2f64, VPR128, EXTvvvi_16b, neon_uimm4>;
 
+// Table lookup
+class NI_TBL<bit q, bits<2> op2, bits<2> len, bit op,
+             string asmop, string OpS, RegisterOperand OpVPR,
+             RegisterOperand VecList>
+  : NeonI_TBL<q, op2, len, op,
+              (outs OpVPR:$Rd), (ins VecList:$Rn, OpVPR:$Rm),
+              asmop # "\t$Rd." # OpS # ", $Rn, $Rm." # OpS,
+              [],
+              NoItinerary>;
+
+// The vectors in look up table are always 16b
+multiclass NI_TBL_pat<bits<2> len, bit op, string asmop, string List> {
+  def _8b  : NI_TBL<0, 0b00, len, op, asmop, "8b", VPR64,
+                    !cast<RegisterOperand>(List # "16B_operand")>;
+
+  def _16b : NI_TBL<1, 0b00, len, op, asmop, "16b", VPR128,
+                    !cast<RegisterOperand>(List # "16B_operand")>;
+}
+
+defm TBL1 : NI_TBL_pat<0b00, 0b0, "tbl", "VOne">;
+defm TBL2 : NI_TBL_pat<0b01, 0b0, "tbl", "VPair">;
+defm TBL3 : NI_TBL_pat<0b10, 0b0, "tbl", "VTriple">;
+defm TBL4 : NI_TBL_pat<0b11, 0b0, "tbl", "VQuad">;
+
+// Table lookup extention
+class NI_TBX<bit q, bits<2> op2, bits<2> len, bit op,
+             string asmop, string OpS, RegisterOperand OpVPR,
+             RegisterOperand VecList>
+  : NeonI_TBL<q, op2, len, op,
+              (outs OpVPR:$Rd), (ins OpVPR:$src, VecList:$Rn, OpVPR:$Rm),
+              asmop # "\t$Rd." # OpS # ", $Rn, $Rm." # OpS,
+              [],
+              NoItinerary> {
+  let Constraints = "$src = $Rd";
+}
+
+// The vectors in look up table are always 16b
+multiclass NI_TBX_pat<bits<2> len, bit op, string asmop, string List> {
+  def _8b  : NI_TBX<0, 0b00, len, op, asmop, "8b", VPR64,
+                    !cast<RegisterOperand>(List # "16B_operand")>;
+
+  def _16b : NI_TBX<1, 0b00, len, op, asmop, "16b", VPR128,
+                    !cast<RegisterOperand>(List # "16B_operand")>;
+}
+
+defm TBX1 : NI_TBX_pat<0b00, 0b1, "tbx", "VOne">;
+defm TBX2 : NI_TBX_pat<0b01, 0b1, "tbx", "VPair">;
+defm TBX3 : NI_TBX_pat<0b10, 0b1, "tbx", "VTriple">;
+defm TBX4 : NI_TBX_pat<0b11, 0b1, "tbx", "VQuad">;
+
 // The followings are for instruction class (3V Elem)
 
 // Variant 1
