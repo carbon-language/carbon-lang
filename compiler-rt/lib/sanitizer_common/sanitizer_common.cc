@@ -166,6 +166,8 @@ void PrintModuleAndOffset(const char *module, uptr offset) {
 }
 
 void ReportErrorSummary(const char *error_message) {
+  if (!common_flags()->print_summary)
+    return;
   InternalScopedBuffer<char> buff(kMaxSummaryLength);
   internal_snprintf(buff.data(), buff.size(),
                     "SUMMARY: %s: %s", SanitizerToolName, error_message);
@@ -174,6 +176,8 @@ void ReportErrorSummary(const char *error_message) {
 
 void ReportErrorSummary(const char *error_type, const char *file,
                         int line, const char *function) {
+  if (!common_flags()->print_summary)
+    return;
   InternalScopedBuffer<char> buff(kMaxSummaryLength);
   internal_snprintf(
       buff.data(), buff.size(), "%s %s:%d %s", error_type,
@@ -183,6 +187,8 @@ void ReportErrorSummary(const char *error_type, const char *file,
 }
 
 void ReportErrorSummary(const char *error_type, StackTrace *stack) {
+  if (!common_flags()->print_summary)
+    return;
   AddressInfo ai;
 #if !SANITIZER_GO
   if (stack->size > 0 && Symbolizer::Get()->IsAvailable()) {

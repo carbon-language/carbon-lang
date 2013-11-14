@@ -51,6 +51,8 @@ struct CommonFlags {
   bool leak_check_at_exit;
   // If false, the allocator will crash instead of returning 0 on out-of-memory.
   bool allocator_may_return_null;
+  // If false, disable printing error summaries in addition to error reports.
+  bool print_summary;
 };
 
 inline CommonFlags *common_flags() {
