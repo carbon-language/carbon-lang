@@ -80,14 +80,14 @@ typedef char BOOL;
 
 - (void) Nothing;
 @property (readonly) int Length;
-@property (readonly) id object;
+@property (readonly, retain) id object;
 + (double) D;
 @property (readonly) void *JSObject WEBKIT_OBJC_METHOD_ANNOTATION(AVAILABLE_WEBKIT_VERSION_3_0_AND_LATER);
 @property (getter=isIgnoringInteractionEvents, readonly) BOOL ignoringInteractionEvents;
 
 @property (getter=getStringValue, retain) NSString *stringValue;
 @property (getter=getCounterValue, readonly) BOOL counterValue;
-@property (getter=getns_dixtionary, readonly) NSDictionary *ns_dixtionary;
+@property (getter=getns_dixtionary, readonly, retain) NSDictionary *ns_dixtionary;
 
 - (BOOL)is3bar; // watch out
 - (NSString *)get3foo; // watch out
@@ -124,7 +124,7 @@ typedef char BOOL;
 
 - (void) Nothing;
 @property (readonly) int Length;
-@property (readonly) id object;
+@property (readonly, retain) id object;
 + (double) D;
 
 - (BOOL)is3bar; // watch out
@@ -170,7 +170,7 @@ DEPRECATED
 @property (retain) NSURL *appStoreReceiptURLY ;
 - (void) setAppStoreReceiptURLY : (NSURL *)object NS_AVAILABLE;
 
-@property (readonly) id OkToInfer NS_AVAILABLE;
+@property (readonly, retain) id OkToInfer NS_AVAILABLE;
 
 // Do not infer a property.
 @property (retain) NSURL *appStoreReceiptURLZ ;
@@ -195,7 +195,7 @@ DEPRECATED
 @class NSMutableDictionary;
 
 @interface NSArray
-@property (readonly) id (^expressionBlock)(id, NSArray *, NSMutableDictionary *);
+@property (readonly, copy) id (^expressionBlock)(id, NSArray *, NSMutableDictionary *);
 @property (copy) id (^MyBlock)(id, NSArray *, NSMutableDictionary *);
 @property (readonly) id (*expressionFuncptr)(id, NSArray *, NSMutableDictionary *);
 @property  id (*MyFuncptr)(id, NSArray *, NSMutableDictionary *);

@@ -291,6 +291,29 @@ void MigrateBlockOrFunctionPointerTypeVariable(std::string & PropertyString,
   }
 }
 
+static const char *PropertyMemoryAttribute(ASTContext &Context, QualType ArgType) {
+  Qualifiers::ObjCLifetime propertyLifetime = ArgType.getObjCLifetime();
+  bool RetainableObject = ArgType->isObjCRetainableType();
+  if (RetainableObject && propertyLifetime == Qualifiers::OCL_Strong) {
+    if (const ObjCObjectPointerType *ObjPtrTy =
+        ArgType->getAs<ObjCObjectPointerType>()) {
+      ObjCInterfaceDecl *IDecl = ObjPtrTy->getObjectType()->getInterface();
+      if (IDecl &&
+          IDecl->lookupNestedProtocol(&Context.Idents.get("NSCopying")))
+        return "copy";
+      else
+        return "retain";
+    }
+    else if (ArgType->isBlockPointerType())
+      return "copy";
+  } else if (propertyLifetime == Qualifiers::OCL_Weak)
+    // TODO. More precise determination of 'weak' attribute requires
+    // looking into setter's implementation for backing weak ivar.
+    return "weak";
+  else if (RetainableObject)
+    return ArgType->isBlockPointerType() ? "copy" : "retain";
+  return 0;
+}
 
 static void rewriteToObjCProperty(const ObjCMethodDecl *Getter,
                                   const ObjCMethodDecl *Setter,
@@ -322,12 +345,10 @@ static void rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   }
   // Property with no setter may be suggested as a 'readonly' property.
   if (!Setter) {
-    if (!LParenAdded) {
-      PropertyString += "(readonly";
-      LParenAdded = true;
-    }
-    else
-      append_attr(PropertyString, "readonly", LParenAdded);
+    append_attr(PropertyString, "readonly", LParenAdded);
+    QualType ResType = Context.getCanonicalType(Getter->getResultType());
+    if (const char *MemoryManagementAttr = PropertyMemoryAttribute(Context, ResType))
+      append_attr(PropertyString, MemoryManagementAttr, LParenAdded);
   }
   
   // Short circuit 'delegate' properties that contain the name "delegate" or
@@ -342,27 +363,8 @@ static void rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   else if (Setter) {
     const ParmVarDecl *argDecl = *Setter->param_begin();
     QualType ArgType = Context.getCanonicalType(argDecl->getType());
-    Qualifiers::ObjCLifetime propertyLifetime = ArgType.getObjCLifetime();
-    bool RetainableObject = ArgType->isObjCRetainableType();
-    if (RetainableObject && propertyLifetime == Qualifiers::OCL_Strong) {
-      if (const ObjCObjectPointerType *ObjPtrTy =
-          ArgType->getAs<ObjCObjectPointerType>()) {
-        ObjCInterfaceDecl *IDecl = ObjPtrTy->getObjectType()->getInterface();
-        if (IDecl &&
-            IDecl->lookupNestedProtocol(&Context.Idents.get("NSCopying")))
-          append_attr(PropertyString, "copy", LParenAdded);
-        else
-          append_attr(PropertyString, "retain", LParenAdded);
-      }
-      else if (ArgType->isBlockPointerType())
-        append_attr(PropertyString, "copy", LParenAdded);
-    } else if (propertyLifetime == Qualifiers::OCL_Weak)
-      // TODO. More precise determination of 'weak' attribute requires
-      // looking into setter's implementation for backing weak ivar.
-      append_attr(PropertyString, "weak", LParenAdded);
-    else if (RetainableObject)
-      append_attr(PropertyString,
-                  ArgType->isBlockPointerType() ? "copy" : "retain", LParenAdded);
+    if (const char *MemoryManagementAttr = PropertyMemoryAttribute(Context, ArgType))
+      append_attr(PropertyString, MemoryManagementAttr, LParenAdded);
   }
   if (LParenAdded)
     PropertyString += ')';

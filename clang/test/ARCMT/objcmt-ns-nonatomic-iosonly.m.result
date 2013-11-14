@@ -87,14 +87,14 @@ typedef char BOOL;
 
 - (void) Nothing;
 @property (NS_NONATOMIC_IOSONLY, readonly) int Length;
-@property (NS_NONATOMIC_IOSONLY, readonly) id object;
+@property (NS_NONATOMIC_IOSONLY, readonly, retain) id object;
 + (double) D;
 @property (NS_NONATOMIC_IOSONLY, readonly) void *JSObject WEBKIT_OBJC_METHOD_ANNOTATION(AVAILABLE_WEBKIT_VERSION_3_0_AND_LATER);
 @property (NS_NONATOMIC_IOSONLY, getter=isIgnoringInteractionEvents, readonly) BOOL ignoringInteractionEvents;
 
 @property (NS_NONATOMIC_IOSONLY, getter=getStringValue, retain) NSString *stringValue;
 @property (NS_NONATOMIC_IOSONLY, getter=getCounterValue, readonly) BOOL counterValue;
-@property (NS_NONATOMIC_IOSONLY, getter=getns_dixtionary, readonly) NSDictionary *ns_dixtionary;
+@property (NS_NONATOMIC_IOSONLY, getter=getns_dixtionary, readonly, retain) NSDictionary *ns_dixtionary;
 
 - (BOOL)is3bar; // watch out
 - (NSString *)get3foo; // watch out
@@ -131,7 +131,7 @@ typedef char BOOL;
 
 - (void) Nothing;
 @property (NS_NONATOMIC_IOSONLY, readonly) int Length;
-@property (NS_NONATOMIC_IOSONLY, readonly) id object;
+@property (NS_NONATOMIC_IOSONLY, readonly, retain) id object;
 + (double) D;
 
 - (BOOL)is3bar; // watch out
@@ -177,7 +177,7 @@ DEPRECATED
 @property (NS_NONATOMIC_IOSONLY, retain) NSURL *appStoreReceiptURLY ;
 - (void) setAppStoreReceiptURLY : (NSURL *)object NS_AVAILABLE;
 
-@property (NS_NONATOMIC_IOSONLY, readonly) id OkToInfer NS_AVAILABLE;
+@property (NS_NONATOMIC_IOSONLY, readonly, retain) id OkToInfer NS_AVAILABLE;
 
 // Do not infer a property.
 @property (NS_NONATOMIC_IOSONLY, retain) NSURL *appStoreReceiptURLZ ;
@@ -202,7 +202,7 @@ DEPRECATED
 @class NSMutableDictionary;
 
 @interface NSArray
-@property (NS_NONATOMIC_IOSONLY, readonly) id (^expressionBlock)(id, NSArray *, NSMutableDictionary *);
+@property (NS_NONATOMIC_IOSONLY, readonly, copy) id (^expressionBlock)(id, NSArray *, NSMutableDictionary *);
 @property (NS_NONATOMIC_IOSONLY, copy) id (^MyBlock)(id, NSArray *, NSMutableDictionary *);
 @property (NS_NONATOMIC_IOSONLY, readonly) id (*expressionFuncptr)(id, NSArray *, NSMutableDictionary *);
 @property (NS_NONATOMIC_IOSONLY) id (*MyFuncptr)(id, NSArray *, NSMutableDictionary *);

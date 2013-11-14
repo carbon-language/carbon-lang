@@ -80,14 +80,14 @@ typedef char BOOL;
 
 - (void) Nothing;
 @property (nonatomic, readonly) int Length;
-@property (nonatomic, readonly) id object;
+@property (nonatomic, readonly, retain) id object;
 + (double) D;
 @property (nonatomic, readonly) void *JSObject WEBKIT_OBJC_METHOD_ANNOTATION(AVAILABLE_WEBKIT_VERSION_3_0_AND_LATER);
 @property (nonatomic, getter=isIgnoringInteractionEvents, readonly) BOOL ignoringInteractionEvents;
 
 @property (nonatomic, getter=getStringValue, retain) NSString *stringValue;
 @property (nonatomic, getter=getCounterValue, readonly) BOOL counterValue;
-@property (nonatomic, getter=getns_dixtionary, readonly) NSDictionary *ns_dixtionary;
+@property (nonatomic, getter=getns_dixtionary, readonly, retain) NSDictionary *ns_dixtionary;
 
 - (BOOL)is3bar; // watch out
 - (NSString *)get3foo; // watch out
@@ -124,7 +124,7 @@ typedef char BOOL;
 
 - (void) Nothing;
 @property (nonatomic, readonly) int Length;
-@property (nonatomic, readonly) id object;
+@property (nonatomic, readonly, retain) id object;
 + (double) D;
 
 - (BOOL)is3bar; // watch out
@@ -170,7 +170,7 @@ DEPRECATED
 @property (nonatomic, retain) NSURL *appStoreReceiptURLY ;
 - (void) setAppStoreReceiptURLY : (NSURL *)object NS_AVAILABLE;
 
-@property (nonatomic, readonly) id OkToInfer NS_AVAILABLE;
+@property (nonatomic, readonly, retain) id OkToInfer NS_AVAILABLE;
 
 // Do not infer a property.
 @property (nonatomic, retain) NSURL *appStoreReceiptURLZ ;
@@ -195,7 +195,7 @@ DEPRECATED
 @class NSMutableDictionary;
 
 @interface NSArray
-@property (nonatomic, readonly) id (^expressionBlock)(id, NSArray *, NSMutableDictionary *);
+@property (nonatomic, readonly, copy) id (^expressionBlock)(id, NSArray *, NSMutableDictionary *);
 @property (nonatomic, copy) id (^MyBlock)(id, NSArray *, NSMutableDictionary *);
 @property (nonatomic, readonly) id (*expressionFuncptr)(id, NSArray *, NSMutableDictionary *);
 @property (nonatomic) id (*MyFuncptr)(id, NSArray *, NSMutableDictionary *);
