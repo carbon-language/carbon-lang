@@ -144,8 +144,13 @@ DECLARE_REAL_AND_INTERCEPTOR(void, free, void *)
   do {                                                      \
   } while (false)
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) SetThreadName(name)
+// Should be asanThreadRegistry().SetThreadNameByUserId(thread, name)
+// But asan does not remember UserId's for threads (pthread_t);
+// and remembers all ever existed threads, so the linear search by UserId
+// can be slow.
 #define COMMON_INTERCEPTOR_SET_PTHREAD_NAME(ctx, thread, name) \
-    asanThreadRegistry().SetThreadNameByUserId(thread, name)
+  do {                                                         \
+  } while (false)
 #define COMMON_INTERCEPTOR_BLOCK_REAL(name) REAL(name)
 #define COMMON_INTERCEPTOR_ON_EXIT(ctx) OnExit()
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
