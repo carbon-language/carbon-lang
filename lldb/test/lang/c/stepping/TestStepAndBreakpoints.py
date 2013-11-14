@@ -21,7 +21,7 @@ class TestCStepping(TestBase):
         self.buildDsym()
         self.step_over_stepping()
 
-    @expectedFailureFreeBSD('llvm.org/pr17226')
+    @expectedFailureFreeBSD('llvm.org/pr17932')
     @expectedFailureLinux # llvm.org/pr14437
     @python_api_test
     @dwarf_test
