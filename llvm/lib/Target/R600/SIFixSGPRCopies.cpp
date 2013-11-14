@@ -251,7 +251,7 @@ bool SIFixSGPRCopies::runOnMachineFunction(MachineFunction &MF) {
             !hasVGPROperands(MI, TRI))
           continue;
 
-        DEBUG(dbgs() << "Fixing REG_SEQUENCE: \n");
+        DEBUG(dbgs() << "Fixing REG_SEQUENCE:\n");
         DEBUG(MI.print(dbgs()));
 
         TII->moveToVALU(MI);
