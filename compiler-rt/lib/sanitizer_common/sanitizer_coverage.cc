@@ -106,6 +106,8 @@ void CovDump() {
 }  // namespace __sanitizer
 
 extern "C" {
-SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov(uptr pc) { CovAdd(pc); }
+SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov(void *pc) {
+  CovAdd(reinterpret_cast<uptr>(pc));
+}
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump() { CovDump(); }
 }  // extern "C"

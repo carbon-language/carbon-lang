@@ -48,7 +48,6 @@ extern "C" {
   void __sanitizer_unaligned_store64(void *p, uint64_t x);
 
   // Record and dump coverage info.
-  void __sanitizer_cov(void *pc);
   void __sanitizer_cov_dump();
 
 #ifdef __cplusplus
