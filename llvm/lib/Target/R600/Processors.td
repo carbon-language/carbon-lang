@@ -51,3 +51,4 @@ def : Proc<"hainan",     SI_Itin, [FeatureSouthernIslands]>;
 def : Proc<"bonaire",    SI_Itin, [FeatureSeaIslands]>;
 def : Proc<"kabini",     SI_Itin, [FeatureSeaIslands]>;
 def : Proc<"kaveri",     SI_Itin, [FeatureSeaIslands]>;
+def : Proc<"hawaii",     SI_Itin, [FeatureSeaIslands]>;
