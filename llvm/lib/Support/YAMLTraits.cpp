@@ -81,7 +81,7 @@ bool Input::setCurrentDocument() {
 void Input::nextDocument() {
   ++DocIterator;
 }
-  
+
 bool Input::mapTag(StringRef Tag, bool Default) {
   StringRef foundTag = CurrentNode->_node->getVerbatimTag();
   if (foundTag.empty()) {
