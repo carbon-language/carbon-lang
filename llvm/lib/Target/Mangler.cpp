@@ -23,31 +23,6 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-static char HexDigit(int V) {
-  return V < 10 ? V+'0' : V+'A'-10;
-}
-
-static void MangleLetter(SmallVectorImpl<char> &OutName, unsigned char C) {
-  OutName.push_back('_');
-  OutName.push_back(HexDigit(C >> 4));
-  OutName.push_back(HexDigit(C & 15));
-  OutName.push_back('_');
-}
-
-/// appendMangledQuotedName - On systems that support quoted symbols, we still
-/// have to escape some (obscure) characters like " and \n which would break the
-/// assembler's lexing.
-static void appendMangledQuotedName(SmallVectorImpl<char> &OutName,
-                                   StringRef Str) {
-  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
-    if (Str[i] == '"' || Str[i] == '\n')
-      MangleLetter(OutName, Str[i]);
-    else
-      OutName.push_back(Str[i]);
-  }
-}
-
-
 /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
 /// and the specified name as the global variable name.  GVName must not be
 /// empty.
@@ -85,16 +60,7 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   }
 
   // If this is a simple string that doesn't need escaping, just append it.
-  // Quotes can be used unless the string contains a quote or newline.
-  if (Name.find_first_of("\n\"") == StringRef::npos) {
-    OutName.append(Name.begin(), Name.end());
-    return;
-  }
-
-  // Okay, the system allows quoted strings.  We can quote most anything, the
-  // only characters that need escaping are " and \n.
-  assert(Name.find_first_of("\n\"") != StringRef::npos);
-  return appendMangledQuotedName(OutName, Name);
+  OutName.append(Name.begin(), Name.end());
 }
 
 /// AddFastCallStdCallSuffix - Microsoft fastcall and stdcall functions require
