@@ -1,0 +1,9 @@
+// RUN: %clang_cc1 %s -emit-llvm -o - -ffake-address-space-map | FileCheck %s
+
+__constant char * __constant x = "hello world";
+__constant char * __constant y = "hello world";
+
+// CHECK: addrspace(3) unnamed_addr constant
+// CHECK-NOT: addrspace(3) unnamed_addr constant
+// CHECK: @x = addrspace(3) global i8 addrspace(3)*
+// CHECK: @y = addrspace(3) global i8 addrspace(3)*
