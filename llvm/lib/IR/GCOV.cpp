@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// GCOV implements the interface to read and write coverage files that use 
+// GCOV implements the interface to read and write coverage files that use
 // 'gcov' format.
 //
 //===----------------------------------------------------------------------===//
@@ -94,7 +94,7 @@ void GCOVFile::dump() {
 /// reading .gcno and .gcda files.
 void GCOVFile::collectLineCounts(FileInfo &FI) {
   for (SmallVectorImpl<GCOVFunction *>::iterator I = Functions.begin(),
-         E = Functions.end(); I != E; ++I) 
+         E = Functions.end(); I != E; ++I)
     (*I)->collectLineCounts(FI);
   FI.setRunCount(RunCount);
   FI.setProgramCount(ProgramCount);
@@ -312,4 +312,3 @@ void FileInfo::print(raw_fd_ostream &OS, StringRef gcnoFile,
     }
   }
 }
-
