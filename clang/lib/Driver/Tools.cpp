@@ -1707,6 +1707,13 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
     if (UseRelaxAll(C, Args))
       CmdArgs.push_back("-mrelax-all");
 
+    // When passing -I arguments to the assembler we sometimes need to
+    // uncontionally take the next argument.  For example, when parsing
+    // '-Wa,-I -Wa,foo' we need to accept the -Wa,foo arg after seeing the
+    // -Wa,-I arg and when parsing '-Wa,-I,foo' we need to accept the 'foo'
+    // arg after parsing the '-I' arg.
+    bool TakeNextArg = false;
+
     // When using an integrated assembler, translate -Wa, and -Xassembler
     // options.
     for (arg_iterator it = Args.filtered_begin(options::OPT_Wa_COMMA,
@@ -1717,6 +1724,11 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
 
       for (unsigned i = 0, e = A->getNumValues(); i != e; ++i) {
         StringRef Value = A->getValue(i);
+        if (TakeNextArg) {
+          CmdArgs.push_back(Value.data());
+          TakeNextArg = false;
+          continue;
+        }
 
         if (Value == "-force_cpusubtype_ALL") {
           // Do nothing, this is the default and we don't support anything else.
@@ -1727,6 +1739,12 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
           CmdArgs.push_back("-fatal-assembler-warnings");
         } else if (Value == "--noexecstack") {
           CmdArgs.push_back("-mnoexecstack");
+        } else if (Value.startswith("-I")) {
+          CmdArgs.push_back(Value.data());
+          // We need to consume the next argument if the current arg is a plain
+          // -I. The next arg will be the include directory.
+          if (Value == "-I")
+            TakeNextArg = true;
         } else {
           D.Diag(diag::err_drv_unsupported_option_argument)
             << A->getOption().getName() << Value;
