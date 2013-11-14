@@ -418,6 +418,7 @@ TEST_F(FileSystemTest, DirectoryIteration) {
 
 const char archive[] = "!<arch>\x0A";
 const char bitcode[] = "\xde\xc0\x17\x0b";
+const char coff_object[] = "\x00\x00......";
 const char elf_relocatable[] = { 0x7f, 'E', 'L', 'F', 1, 2, 1, 0, 0,
                                  0,    0,   0,   0,   0, 0, 0, 0, 1 };
 const char macho_universal_binary[] = "\xca\xfe\xba\xbe...\0x00";
@@ -445,6 +446,7 @@ TEST_F(FileSystemTest, Magic) {
     { #magic, magic, sizeof(magic), fs::file_magic::magic }
     DEFINE(archive),
     DEFINE(bitcode),
+    DEFINE(coff_object),
     DEFINE(elf_relocatable),
     DEFINE(macho_universal_binary),
     DEFINE(macho_object),

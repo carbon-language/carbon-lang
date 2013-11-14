@@ -853,6 +853,9 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
       if (Magic.size() >= sizeof(Expected) &&
           memcmp(Magic.data(), Expected, sizeof(Expected)) == 0)
         return file_magic::windows_resource;
+      // 0x0000 = COFF unknown machine type
+      if (Magic[1] == 0)
+        return file_magic::coff_object;
       break;
     }
     case 0xDE:  // 0x0B17C0DE = BC wraper

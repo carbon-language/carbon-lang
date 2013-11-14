@@ -8,6 +8,8 @@ RUN: llvm-readobj -h %p/Inputs/trivial.obj.elf-i386 \
 RUN:   | FileCheck %s -check-prefix ELF32
 RUN: llvm-readobj -h %p/Inputs/trivial.obj.elf-x86-64 \
 RUN:   | FileCheck %s -check-prefix ELF64
+RUN: llvm-readobj -h %p/Inputs/magic.coff-unknown \
+RUN:   | FileCheck %s -check-prefix COFF-UNKNOWN
 
 COFF32:      File: {{(.*[/\\])?}}trivial.obj.coff-i386
 COFF32-NEXT: Format: COFF-i386
@@ -183,3 +185,17 @@ PE32-NEXT:     ReservedRVA: 0x0
 PE32-NEXT:     ReservedSize: 0x0
 PE32-NEXT:   }
 PE32-NEXT: }
+
+COFF-UNKNOWN:      Format: COFF-<unknown arch>
+COFF-UNKNOWN-NEXT: Arch: unknown
+COFF-UNKNOWN-NEXT: AddressSize: 32bit
+COFF-UNKNOWN-NEXT: ImageFileHeader {
+COFF-UNKNOWN-NEXT:   Machine: IMAGE_FILE_MACHINE_UNKNOWN (0x0)
+COFF-UNKNOWN-NEXT:   SectionCount: 3
+COFF-UNKNOWN-NEXT:   TimeDateStamp: 2013-11-14 21:19:28 (0x52853E60)
+COFF-UNKNOWN-NEXT:   PointerToSymbolTable: 0xF8
+COFF-UNKNOWN-NEXT:   SymbolCount: 11
+COFF-UNKNOWN-NEXT:   OptionalHeaderSize: 0
+COFF-UNKNOWN-NEXT:   Characteristics [ (0x0)
+COFF-UNKNOWN-NEXT:   ]
+COFF-UNKNOWN-NEXT: }
