@@ -81,6 +81,16 @@ bool Input::setCurrentDocument() {
 void Input::nextDocument() {
   ++DocIterator;
 }
+  
+bool Input::mapTag(StringRef Tag, bool Default) {
+  StringRef foundTag = CurrentNode->_node->getVerbatimTag();
+  if (foundTag.empty()) {
+    // If no tag found and 'Tag' is the default, say it was found.
+    return Default;
+  }
+  // Return true iff found tag matches supplied tag.
+  return Tag.equals(foundTag);
+}
 
 void Input::beginMapping() {
   if (EC)
@@ -379,6 +389,14 @@ bool Output::outputting() {
 void Output::beginMapping() {
   StateStack.push_back(inMapFirstKey);
   NeedsNewLine = true;
+}
+
+bool Output::mapTag(StringRef Tag, bool Use) {
+  if (Use) {
+    this->output(" ");
+    this->output(Tag);
+  }
+  return Use;
 }
 
 void Output::endMapping() {
