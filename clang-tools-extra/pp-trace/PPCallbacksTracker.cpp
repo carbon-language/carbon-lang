@@ -276,6 +276,7 @@ void PPCallbacksTracker::PragmaWarning(clang::SourceLocation Loc,
       SS << ", ";
     SS << Ids[i];
   }
+  SS << "]";
   appendArgument("Ids", SS.str());
 }
 
