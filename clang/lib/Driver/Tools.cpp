@@ -1708,7 +1708,7 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
       CmdArgs.push_back("-mrelax-all");
 
     // When passing -I arguments to the assembler we sometimes need to
-    // uncontionally take the next argument.  For example, when parsing
+    // unconditionally take the next argument.  For example, when parsing
     // '-Wa,-I -Wa,foo' we need to accept the -Wa,foo arg after seeing the
     // -Wa,-I arg and when parsing '-Wa,-I,foo' we need to accept the 'foo'
     // arg after parsing the '-I' arg.
