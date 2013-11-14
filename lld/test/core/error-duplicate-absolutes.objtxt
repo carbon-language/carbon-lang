@@ -1,0 +1,24 @@
+# RUN: not lld -core %s 2> %t.err
+# RUN: FileCheck %s < %t.err
+
+#
+# Test that duplicate absolute atoms produces a readable error.
+#
+
+---
+absolute-atoms:
+    - name:         absatom
+      value:        0
+      scope:        global
+undefined-atoms:
+    - name:         undefatom
+---
+absolute-atoms:
+    - name:         absatom
+      value:        0
+      scope:        global
+...
+
+
+# CHECK: SymbolTable: error while merging absatom
+# CHECK: LLVM ERROR: duplicate symbol error
