@@ -3,7 +3,7 @@ RUN: cd %p/Inputs
 REQUIRES: shell
 
 RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda \
-RUN:   | diff test.cpp.gcov -
+RUN:   | diff -aub test.cpp.gcov -
 
 RUN: not llvm-cov -gcno=test_read_fail.gcno -gcda=test.gcda
 
