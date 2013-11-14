@@ -23,9 +23,9 @@
 ///    %vreg3 <vsrc> = COPY %vreg2 <vgpr>
 ///  BB2:
 ///    %vreg4 <vsrc> = PHI %vreg1 <vsrc>, <BB#0>, %vreg3 <vrsc>, <BB#1>
-///    %vreg5 <vgpr> = VECTOR_INST %vreg4 <vsrc> 
+///    %vreg5 <vgpr> = VECTOR_INST %vreg4 <vsrc>
 ///
-/// 
+///
 /// The coalescer will begin at BB0 and eliminate its copy, then the resulting
 /// code will look like this:
 ///
@@ -43,7 +43,7 @@
 /// Now that the result of the PHI instruction is an SGPR, the register
 /// allocator is now forced to constrain the register class of %vreg3 to
 /// <sgpr> so we end up with final code like this:
-/// 
+///
 /// BB0:
 ///   %vreg0 <sgpr> = SCALAR_INST
 ///    ...
@@ -55,7 +55,7 @@
 ///   %vreg4 <sgpr> = PHI %vreg0 <sgpr>, <BB#0>, %vreg3 <sgpr>, <BB#1>
 ///   %vreg5 <vgpr> = VECTOR_INST %vreg4 <sgpr>
 ///
-/// Now this code contains an illegal copy from a VGPR to an SGPR. 
+/// Now this code contains an illegal copy from a VGPR to an SGPR.
 ///
 /// In order to avoid this problem, this pass searches for PHI instructions
 /// which define a <vsrc> register and constrains its definition class to
