@@ -1,4 +1,4 @@
-//=======-------- BlockFrequencyInfo.cpp - Block Frequency Analysis -------=======//
+//=======-------- BlockFrequencyInfo.cpp - Block Frequency Analysis -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -20,11 +20,11 @@
 
 using namespace llvm;
 
-INITIALIZE_PASS_BEGIN(BlockFrequencyInfo, "block-freq", "Block Frequency Analysis",
-                      true, true)
+INITIALIZE_PASS_BEGIN(BlockFrequencyInfo, "block-freq",
+                      "Block Frequency Analysis", true, true)
 INITIALIZE_PASS_DEPENDENCY(BranchProbabilityInfo)
-INITIALIZE_PASS_END(BlockFrequencyInfo, "block-freq", "Block Frequency Analysis",
-                    true, true)
+INITIALIZE_PASS_END(BlockFrequencyInfo, "block-freq",
+                    "Block Frequency Analysis", true, true)
 
 char BlockFrequencyInfo::ID = 0;
 
