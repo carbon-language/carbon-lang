@@ -8,7 +8,7 @@ extern "C" int printf(const char *fmt, ...);
 struct B0 { char a; B0() : a(0xB0) {} };
 struct __declspec(align(1)) B1 {};
 
-struct A : virtual B0 {} b;
+struct A : virtual B0 {};
 
 // CHECK: *** Dumping AST Record Layout
 // CHECK:    0 | struct A
