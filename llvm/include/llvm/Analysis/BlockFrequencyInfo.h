@@ -41,6 +41,8 @@ public:
 
   bool runOnFunction(Function &F);
   void print(raw_ostream &O, const Module *M) const;
+  const Function *getFunction() const;
+  void view() const;
 
   /// getblockFreq - Return block frequency. Return 0 if we don't have the
   /// information. Please note that initial frequency is equal to ENTRY_FREQ. It
