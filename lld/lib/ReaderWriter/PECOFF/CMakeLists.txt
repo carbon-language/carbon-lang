@@ -7,4 +7,5 @@ add_lld_library(lldPECOFF
 
 target_link_libraries(lldPECOFF
   lldReaderWriter
+  lldDriver
   )
