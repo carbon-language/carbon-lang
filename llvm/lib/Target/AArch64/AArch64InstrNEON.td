@@ -332,29 +332,16 @@ def : NeonInstAlias<"mov $Rd.8b, $Rn.8b",
 def : NeonInstAlias<"mov $Rd.16b, $Rn.16b",
                     (ORRvvv_16B VPR128:$Rd, VPR128:$Rn, VPR128:$Rn), 0>;
 
-def Neon_immAllOnes: PatLeaf<(Neon_movi (i32 timm), (i32 imm)), [{
-  ConstantSDNode *ImmConstVal = cast<ConstantSDNode>(N->getOperand(0));
-  ConstantSDNode *OpCmodeConstVal = cast<ConstantSDNode>(N->getOperand(1));
-  unsigned EltBits;
-  uint64_t EltVal = A64Imms::decodeNeonModImm(ImmConstVal->getZExtValue(),
-    OpCmodeConstVal->getZExtValue(), EltBits);
-  return (EltBits == 8 && EltVal == 0xff);
-}]>;
-
-def Neon_immAllZeros: PatLeaf<(Neon_movi (i32 timm), (i32 imm)), [{
-  ConstantSDNode *ImmConstVal = cast<ConstantSDNode>(N->getOperand(0));
-  ConstantSDNode *OpCmodeConstVal = cast<ConstantSDNode>(N->getOperand(1));
-  unsigned EltBits;
-  uint64_t EltVal = A64Imms::decodeNeonModImm(ImmConstVal->getZExtValue(),
-    OpCmodeConstVal->getZExtValue(), EltBits);
-  return (EltBits == 8 && EltVal == 0x0);
-}]>;
-
+// The MOVI instruction takes two immediate operands.  The first is the
+// immediate encoding, while the second is the cmode.  A cmode of 14, or
+// 0b1110, produces a MOVI operation, rather than a MVNI, ORR, or BIC.
+def Neon_AllZero : PatFrag<(ops), (Neon_movi (i32 0), (i32 14))>;
+def Neon_AllOne : PatFrag<(ops), (Neon_movi (i32 255), (i32 14))>;
 
 def Neon_not8B  : PatFrag<(ops node:$in),
-                          (xor node:$in, (bitconvert (v8i8 Neon_immAllOnes)))>;
+                          (xor node:$in, (bitconvert (v8i8 Neon_AllOne)))>;
 def Neon_not16B : PatFrag<(ops node:$in),
-                          (xor node:$in, (bitconvert (v16i8 Neon_immAllOnes)))>;
+                          (xor node:$in, (bitconvert (v16i8 Neon_AllOne)))>;
 
 def Neon_orn8B : PatFrag<(ops node:$Rn, node:$Rm),
                          (or node:$Rn, (Neon_not8B node:$Rm))>;
@@ -3905,7 +3892,7 @@ multiclass NeonI_Scalar2SameMisc_cmpz_SD_size<bit u, bits<5> opcode,
 class Neon_Scalar2SameMisc_cmpz_D_size_patterns<SDPatternOperator opnode,
                                                 Instruction INSTD>
   : Pat<(v1i64 (opnode (v1i64 FPR64:$Rn),
-                       (v1i64 (bitconvert (v8i8 Neon_immAllZeros))))),
+                       (v1i64 (bitconvert (v8i8 Neon_AllZero))))),
         (INSTD FPR64:$Rn, 0)>;
 
 multiclass Neon_Scalar2SameMisc_cmpz_SD_size_patterns<SDPatternOperator opnode,
@@ -3915,7 +3902,7 @@ multiclass Neon_Scalar2SameMisc_cmpz_SD_size_patterns<SDPatternOperator opnode,
                            (v1f32 (scalar_to_vector (f32 fpimm:$FPImm))))),
             (INSTS FPR32:$Rn, fpimm:$FPImm)>;
   def : Pat<(v1i64 (opnode (v1f64 FPR64:$Rn),
-                           (v1f64 (bitconvert (v8i8 Neon_immAllZeros))))),
+                           (v1f64 (bitconvert (v8i8 Neon_AllZero))))),
             (INSTD FPR64:$Rn, 0)>;
 }
 
@@ -6783,9 +6770,6 @@ multiclass NeonI_2VMisc_BHSD_1Arg_Pattern<string Prefix,
 defm : NeonI_2VMisc_BHSD_1Arg_Pattern<"SQABS", int_arm_neon_vqabs>;
 defm : NeonI_2VMisc_BHSD_1Arg_Pattern<"SQNEG", int_arm_neon_vqneg>;
 defm : NeonI_2VMisc_BHSD_1Arg_Pattern<"ABS", int_arm_neon_vabs>;
-
-def Neon_AllZero : PatFrag<(ops), (Neon_movi (i32 0), (i32 14))>;
-def Neon_AllOne : PatFrag<(ops), (Neon_movi (i32 255), (i32 14))>;
 
 def : Pat<(v16i8 (sub 
             (v16i8 Neon_AllZero),
