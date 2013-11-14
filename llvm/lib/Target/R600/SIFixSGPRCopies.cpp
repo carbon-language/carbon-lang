@@ -127,7 +127,7 @@ static bool hasVGPROperands(const MachineInstr &MI, const SIRegisterInfo *TRI) {
 
 /// This functions walks the use list of Reg until it finds an Instruction
 /// that isn't a COPY returns the register class of that instruction.
-/// \param[out] The register defined by the first non-COPY instruction.
+/// \return The register defined by the first non-COPY instruction.
 const TargetRegisterClass *SIFixSGPRCopies::inferRegClassFromUses(
                                                  const SIRegisterInfo *TRI,
                                                  const MachineRegisterInfo &MRI,
