@@ -281,7 +281,3 @@ poly64x2_t test_vsriq_n_p64(poly64x2_t a, poly64x2_t b) {
   // CHECK: sri {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #64
 }
 
-uint64x1_t test_vceqz_p64(poly64x1_t a) {
-  // CHECK: test_vceqz_p64
-  return vceqz_p64(a);
-}
