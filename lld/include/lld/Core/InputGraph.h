@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_DRIVER_INPUT_GRAPH_H
-#define LLD_DRIVER_INPUT_GRAPH_H
+#ifndef LLD_CORE_INPUT_GRAPH_H
+#define LLD_CORE_INPUT_GRAPH_H
 
 #include "lld/Core/File.h"
 #include "llvm/ADT/StringRef.h"

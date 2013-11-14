@@ -1,4 +1,4 @@
-//===- lib/Driver/InputGraph.cpp ------------------------------------------===//
+//===- lib/Core/InputGraph.cpp --------------------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -6,8 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+
+#include "lld/Core/InputGraph.h"
+
 #include "lld/Core/Resolver.h"
-#include "lld/Driver/InputGraph.h"
 
 using namespace lld;
 

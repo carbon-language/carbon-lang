@@ -17,8 +17,8 @@
 #ifndef LLD_DRIVER_GNU_LD_INPUT_GRAPH_H
 #define LLD_DRIVER_GNU_LD_INPUT_GRAPH_H
 
+#include "lld/Core/InputGraph.h"
 #include "lld/Core/Resolver.h"
-#include "lld/Driver/InputGraph.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "lld/ReaderWriter/FileArchive.h"
 

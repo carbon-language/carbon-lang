@@ -17,7 +17,7 @@
 #ifndef LLD_DRIVER_WIN_LINK_INPUT_GRAPH_H
 #define LLD_DRIVER_WIN_LINK_INPUT_GRAPH_H
 
-#include "lld/Driver/InputGraph.h"
+#include "lld/Core/InputGraph.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "lld/ReaderWriter/FileArchive.h"
 

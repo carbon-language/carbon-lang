@@ -17,7 +17,7 @@
 #ifndef LLD_DRIVER_DARWIN_INPUT_GRAPH_H
 #define LLD_DRIVER_DARWIN_INPUT_GRAPH_H
 
-#include "lld/Driver/InputGraph.h"
+#include "lld/Core/InputGraph.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
 
 #include <map>

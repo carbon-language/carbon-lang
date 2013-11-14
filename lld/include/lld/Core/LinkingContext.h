@@ -11,11 +11,11 @@
 #define LLD_CORE_TARGET_INFO_H
 
 #include "lld/Core/Error.h"
+#include "lld/Core/InputGraph.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/range.h"
 #include "lld/Core/Reference.h"
 
-#include "lld/Driver/InputGraph.h"
 #include "lld/ReaderWriter/Reader.h"
 
 #include "llvm/Support/ErrorOr.h"
