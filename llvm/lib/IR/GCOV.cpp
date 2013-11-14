@@ -161,7 +161,7 @@ bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
   if (!Buff.readInt(BlockCount)) return false;
   for (uint32_t i = 0, e = BlockCount; i != e; ++i) {
     if (!Buff.readInt(Dummy)) return false; // Block flags;
-    Blocks.push_back(new GCOVBlock(i));
+    Blocks.push_back(new GCOVBlock(*this, i));
   }
 
   // read edges.
@@ -197,14 +197,18 @@ bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
     GCOVBlock *Block = Blocks[BlockNo];
     if (!Buff.readInt(Dummy)) return false; // flag
     while (Buff.getCursor() != (EndPos - 4)) {
-      StringRef Filename;
-      if (!Buff.readString(Filename)) return false;
+      StringRef F;
+      if (!Buff.readString(F)) return false;
+      if (F != Filename) {
+        errs() << "Multiple sources for a single basic block.\n";
+        return false;
+      }
       if (Buff.getCursor() == (EndPos - 4)) break;
       while (true) {
         uint32_t Line;
         if (!Buff.readInt(Line)) return false;
         if (!Line) break;
-        Block->addLine(Filename, Line);
+        Block->addLine(Line);
       }
     }
     if (!Buff.readInt(Dummy)) return false; // flag
@@ -234,22 +238,15 @@ void GCOVFunction::collectLineCounts(FileInfo &FI) {
 /// ~GCOVBlock - Delete GCOVBlock and its content.
 GCOVBlock::~GCOVBlock() {
   Edges.clear();
-  DeleteContainerSeconds(Lines);
-}
-
-void GCOVBlock::addLine(StringRef Filename, uint32_t LineNo) {
-  GCOVLines *&LinesForFile = Lines[Filename];
-  if (!LinesForFile)
-    LinesForFile = new GCOVLines();
-  LinesForFile->add(LineNo);
+  Lines.clear();
 }
 
 /// collectLineCounts - Collect line counts. This must be used after
 /// reading .gcno and .gcda files.
 void GCOVBlock::collectLineCounts(FileInfo &FI) {
-  for (StringMap<GCOVLines *>::iterator I = Lines.begin(),
+  for (SmallVectorImpl<uint32_t>::iterator I = Lines.begin(),
          E = Lines.end(); I != E; ++I)
-    I->second->collectLineCounts(FI, I->first(), Counter);
+    FI.addLineCount(Parent.getFilename(), *I, Counter);
 }
 
 /// dump - Dump GCOVBlock content to dbgs() for debugging purposes.
@@ -264,32 +261,11 @@ void GCOVBlock::dump() {
   }
   if (!Lines.empty()) {
     dbgs() << "\tLines : ";
-    for (StringMap<GCOVLines *>::iterator LI = Lines.begin(),
-           LE = Lines.end(); LI != LE; ++LI) {
-      dbgs() << LI->first() << " -> ";
-      LI->second->dump();
-      dbgs() << "\n";
-    }
+    for (SmallVectorImpl<uint32_t>::iterator I = Lines.begin(),
+           E = Lines.end(); I != E; ++I)
+      dbgs() << (*I) << ",";
+    dbgs() << "\n";
   }
-}
-
-//===----------------------------------------------------------------------===//
-// GCOVLines implementation.
-
-/// collectLineCounts - Collect line counts. This must be used after
-/// reading .gcno and .gcda files.
-void GCOVLines::collectLineCounts(FileInfo &FI, StringRef Filename, 
-                                  uint64_t Count) {
-  for (SmallVectorImpl<uint32_t>::iterator I = Lines.begin(),
-         E = Lines.end(); I != E; ++I)
-    FI.addLineCount(Filename, *I, Count);
-}
-
-/// dump - Dump GCOVLines content to dbgs() for debugging purposes.
-void GCOVLines::dump() {
-  for (SmallVectorImpl<uint32_t>::iterator I = Lines.begin(),
-         E = Lines.end(); I != E; ++I)
-    dbgs() << (*I) << ",";
 }
 
 //===----------------------------------------------------------------------===//

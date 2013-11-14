@@ -25,7 +25,6 @@ namespace llvm {
 
 class GCOVFunction;
 class GCOVBlock;
-class GCOVLines;
 class FileInfo;
 
 namespace GCOV {
@@ -211,6 +210,7 @@ public:
   GCOVFunction() : Ident(0), LineNumber(0) {}
   ~GCOVFunction();
   bool read(GCOVBuffer &Buffer, GCOV::GCOVFormat Format);
+  StringRef getFilename() const { return Filename; }
   void dump();
   void collectLineCounts(FileInfo &FI);
 private:
@@ -224,31 +224,21 @@ private:
 /// GCOVBlock - Collects block information.
 class GCOVBlock {
 public:
-  GCOVBlock(uint32_t N) : Number(N), Counter(0) {}
+  GCOVBlock(GCOVFunction &P, uint32_t N) :
+    Parent(P), Number(N), Counter(0), Edges(), Lines() {}
   ~GCOVBlock();
   void addEdge(uint32_t N) { Edges.push_back(N); }
-  void addLine(StringRef Filename, uint32_t LineNo);
+  void addLine(uint32_t N) { Lines.push_back(N); }
   void addCount(uint64_t N) { Counter += N; }
   size_t getNumEdges() { return Edges.size(); }
   void dump();
   void collectLineCounts(FileInfo &FI);
 private:
+  GCOVFunction &Parent;
   uint32_t Number;
   uint64_t Counter;
   SmallVector<uint32_t, 16> Edges;
-  StringMap<GCOVLines *> Lines;
-};
-
-/// GCOVLines - A wrapper around a vector of int to keep track of line nos.
-class GCOVLines {
-public:
-  ~GCOVLines() { Lines.clear(); }
-  void add(uint32_t N) { Lines.push_back(N); }
-  void collectLineCounts(FileInfo &FI, StringRef Filename, uint64_t Count);
-  void dump();
-
-private:
-  SmallVector<uint32_t, 4> Lines;
+  SmallVector<uint32_t, 16> Lines;
 };
 
 typedef DenseMap<uint32_t, uint64_t> LineCounts;
