@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_platform.h"
 #include "gtest/gtest.h"
@@ -190,6 +191,69 @@ TEST(SanitizerCommon, StripPathPrefix) {
                StripPathPrefix("/usr/lib/dir/file.cc", "/usr/lib/"));
   EXPECT_STREQ("/file.cc", StripPathPrefix("/usr/myroot/file.cc", "/myroot"));
   EXPECT_STREQ("file.h", StripPathPrefix("/usr/lib/./file.h", "/usr/lib/"));
+}
+
+TEST(SanitizerCommon, InternalScopedString) {
+  InternalScopedString str(10);
+  EXPECT_EQ(0U, str.length());
+  EXPECT_STREQ("", str.data());
+
+  str.append("foo");
+  EXPECT_EQ(3U, str.length());
+  EXPECT_STREQ("foo", str.data());
+
+  int x = 1234;
+  str.append("%d", x);
+  EXPECT_EQ(7U, str.length());
+  EXPECT_STREQ("foo1234", str.data());
+
+  str.append("%d", x);
+  EXPECT_EQ(9U, str.length());
+  EXPECT_STREQ("foo123412", str.data());
+
+  str.clear();
+  EXPECT_EQ(0U, str.length());
+  EXPECT_STREQ("", str.data());
+
+  str.append("0123456789");
+  EXPECT_EQ(9U, str.length());
+  EXPECT_STREQ("012345678", str.data());
+}
+
+TEST(SanitizerCommon, PrintSourceLocation) {
+  InternalScopedString str(128);
+  PrintSourceLocation(&str, "/dir/file.cc", 10, 5);
+  EXPECT_STREQ("/dir/file.cc:10:5", str.data());
+
+  str.clear();
+  PrintSourceLocation(&str, "/dir/file.cc", 11, 0);
+  EXPECT_STREQ("/dir/file.cc:11", str.data());
+
+  str.clear();
+  PrintSourceLocation(&str, "/dir/file.cc", 0, 0);
+  EXPECT_STREQ("/dir/file.cc", str.data());
+
+  // Check that we strip file prefix if necessary.
+  const char *old_strip_path_prefix = common_flags()->strip_path_prefix;
+  common_flags()->strip_path_prefix = "/dir/";
+  str.clear();
+  PrintSourceLocation(&str, "/dir/file.cc", 10, 5);
+  EXPECT_STREQ("file.cc:10:5", str.data());
+  common_flags()->strip_path_prefix = old_strip_path_prefix;
+}
+
+TEST(SanitizerCommon, PrintModuleAndOffset) {
+  InternalScopedString str(128);
+  PrintModuleAndOffset(&str, "/dir/exe", 0x123);
+  EXPECT_STREQ("(/dir/exe+0x123)", str.data());
+
+  // Check that we strip file prefix if necessary.
+  const char *old_strip_path_prefix = common_flags()->strip_path_prefix;
+  common_flags()->strip_path_prefix = "/dir/";
+  str.clear();
+  PrintModuleAndOffset(&str, "/dir/exe", 0x123);
+  EXPECT_STREQ("(exe+0x123)", str.data());
+  common_flags()->strip_path_prefix = old_strip_path_prefix;
 }
 
 }  // namespace __sanitizer

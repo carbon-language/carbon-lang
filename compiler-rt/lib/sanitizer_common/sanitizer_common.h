@@ -87,6 +87,23 @@ class InternalScopedBuffer {
   void operator=(const InternalScopedBuffer&);
 };
 
+class InternalScopedString : public InternalScopedBuffer<char> {
+ public:
+  explicit InternalScopedString(uptr max_length)
+      : InternalScopedBuffer<char>(max_length), length_(0) {
+    (*this)[0] = '\0';
+  }
+  uptr length() { return length_; }
+  void clear() {
+    (*this)[0] = '\0';
+    length_ = 0;
+  }
+  void append(const char *format, ...);
+
+ private:
+  uptr length_;
+};
+
 // Simple low-level (mmap-based) allocator for internal use. Doesn't have
 // constructor, so all instances of LowLevelAllocator should be
 // linker initialized.
@@ -111,6 +128,7 @@ bool PrintsToTtyCached();
 void Printf(const char *format, ...);
 void Report(const char *format, ...);
 void SetPrintfAndReportCallback(void (*callback)(const char *));
+
 // Can be used to prevent mixing error reports from different sanitizers.
 extern StaticSpinMutex CommonSanitizerReportMutex;
 void MaybeOpenReportFile();
@@ -134,9 +152,10 @@ void *MapFileToMemory(const char *file_name, uptr *buff_size);
 // Error report formatting.
 const char *StripPathPrefix(const char *filepath,
                             const char *strip_file_prefix);
-void PrintSourceLocation(const char *file, int line, int column);
-void PrintModuleAndOffset(const char *module, uptr offset);
-
+void PrintSourceLocation(InternalScopedString *buffer, const char *file,
+                         int line, int column);
+void PrintModuleAndOffset(InternalScopedString *buffer,
+                          const char *module, uptr offset);
 
 // OS
 void DisableCoreDumper();

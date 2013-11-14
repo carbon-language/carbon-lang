@@ -294,4 +294,13 @@ int internal_snprintf(char *buffer, uptr length, const char *format, ...) {
   return needed_length;
 }
 
+void InternalScopedString::append(const char *format, ...) {
+  CHECK_LT(length_, size());
+  va_list args;
+  va_start(args, format);
+  VSNPrintf(data() + length_, size() - length_, format, args);
+  va_end(args);
+  length_ += internal_strlen(data() + length_);
+}
+
 }  // namespace __sanitizer
