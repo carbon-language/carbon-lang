@@ -10860,6 +10860,8 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     case 'r':
       return RCPair(0U, &ARM::GPRRegClass);
     case 'w':
+      if (VT == MVT::Other)
+        break;
       if (VT == MVT::f32)
         return RCPair(0U, &ARM::SPRRegClass);
       if (VT.getSizeInBits() == 64)
@@ -10868,6 +10870,8 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
         return RCPair(0U, &ARM::QPRRegClass);
       break;
     case 'x':
+      if (VT == MVT::Other)
+        break;
       if (VT == MVT::f32)
         return RCPair(0U, &ARM::SPR_8RegClass);
       if (VT.getSizeInBits() == 64)
