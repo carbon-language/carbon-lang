@@ -36,7 +36,7 @@ void RoundTripYAMLPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   // writing to the file or when reading atoms back from the file.
   yamlWriter->writeFile(*mergedFile, tmpYAMLFile.str());
   OwningPtr<MemoryBuffer> buff;
-  if (MemoryBuffer::getFileOrSTDIN(tmpYAMLFile.str(), buff))
+  if (MemoryBuffer::getFile(tmpYAMLFile.str(), buff))
     return;
 
   if (buff->getBufferSize() < MAX_YAML_FILE_SIZE) {

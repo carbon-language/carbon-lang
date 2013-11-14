@@ -891,7 +891,7 @@ private:
 
     // Read and parse the COFF
     OwningPtr<MemoryBuffer> opmb;
-    if (error_code ec = MemoryBuffer::getFileOrSTDIN(*coffFilePath, opmb))
+    if (error_code ec = MemoryBuffer::getFile(*coffFilePath, opmb))
       return ec;
     std::unique_ptr<MemoryBuffer> newmb(opmb.take());
     return parseCOFFFile(newmb, result);
