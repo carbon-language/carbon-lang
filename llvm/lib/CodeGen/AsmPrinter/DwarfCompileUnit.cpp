@@ -877,9 +877,11 @@ DIE *CompileUnit::getOrCreateContextDIE(DIScope Context) {
 /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
 /// given DIType.
 DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
-  DIType Ty(TyNode);
-  if (!Ty.isType())
+  if (!TyNode)
     return NULL;
+
+  DIType Ty(TyNode);
+  assert(Ty.isType());
 
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE.
