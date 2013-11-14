@@ -120,6 +120,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->print_stats, "print_stats");
   ParseFlag(str, &f->print_legend, "print_legend");
   ParseFlag(str, &f->atexit, "atexit");
+  ParseFlag(str, &f->coverage, "coverage");
   ParseFlag(str, &f->disable_core, "disable_core");
   ParseFlag(str, &f->allow_reexec, "allow_reexec");
   ParseFlag(str, &f->print_full_thread_history, "print_full_thread_history");
@@ -161,6 +162,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->print_stats = false;
   f->print_legend = true;
   f->atexit = false;
+  f->coverage = false;
   f->disable_core = (SANITIZER_WORDSIZE == 64);
   f->allow_reexec = true;
   f->print_full_thread_history = true;
@@ -540,6 +542,9 @@ void __asan_init() {
 
   if (flags()->atexit)
     Atexit(asan_atexit);
+
+  if (flags()->coverage)
+    Atexit(__sanitizer_cov_dump);
 
   // interceptors
   InitTlsSize();

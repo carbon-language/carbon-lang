@@ -180,6 +180,9 @@ void SleepForMillis(int millis);
 u64 NanoTime();
 int Atexit(void (*function)(void));
 void SortArray(uptr *array, uptr size);
+// Strip the directories from the module name, return a new string allocated
+// with internal_strdup.
+char *StripModuleName(const char *module);
 
 // Exit
 void NORETURN Abort();
@@ -358,6 +361,8 @@ class InternalMmapVector {
   uptr capacity() const {
     return capacity_;
   }
+
+  void clear() { size_ = 0; }
 
  private:
   void Resize(uptr new_capacity) {

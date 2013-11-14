@@ -110,6 +110,9 @@ extern "C" {
   // the error message. This function can be overridden by the client.
   SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
   void __sanitizer_report_error_summary(const char *error_summary);
+
+  SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov(__sanitizer::uptr pc);
+  SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump();
 }  // extern "C"
 
 
