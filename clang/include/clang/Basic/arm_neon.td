@@ -183,7 +183,8 @@ class NoTestOpInst<string n, string p, string t, Op o> : Inst<n, p, t, o> {}
 // y: scalar of float
 // o: scalar of double
 // k: default elt width, double num elts
-// #: array of default vectors
+// 2,3,4: array of default vectors
+// B,C,D: array of default elts, force 'Q' size modifier.
 // p: pointer type
 // c: const pointer type
 
@@ -813,6 +814,21 @@ def VZIP2 : SOpInst<"vzip2", "ddd",
                     "csiUcUsUifPcPsQcQsQiQlQUcQUsQUiQUlQfQdQPcQPs", OP_ZIP2>;
 def VUZP2 : SOpInst<"vuzp2", "ddd",
                     "csiUcUsUifPcPsQcQsQiQlQUcQUsQUiQUlQfQdQPcQPs", OP_UZP2>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Table lookup
+let InstName = "vtbl" in {
+def VQTBL1_A64 : WInst<"vqtbl1", "djt",  "UccPcQUcQcQPc">;
+def VQTBL2_A64 : WInst<"vqtbl2", "dBt",  "UccPcQUcQcQPc">;
+def VQTBL3_A64 : WInst<"vqtbl3", "dCt",  "UccPcQUcQcQPc">;
+def VQTBL4_A64 : WInst<"vqtbl4", "dDt",  "UccPcQUcQcQPc">;
+}
+let InstName = "vtbx" in {
+def VQTBX1_A64 : WInst<"vqtbx1", "ddjt", "UccPcQUcQcQPc">;
+def VQTBX2_A64 : WInst<"vqtbx2", "ddBt", "UccPcQUcQcQPc">;
+def VQTBX3_A64 : WInst<"vqtbx3", "ddCt", "UccPcQUcQcQPc">;
+def VQTBX4_A64 : WInst<"vqtbx4", "ddDt", "UccPcQUcQcQPc">;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Arithmetic

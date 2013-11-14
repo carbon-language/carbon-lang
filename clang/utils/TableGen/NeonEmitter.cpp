@@ -494,6 +494,9 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
     case 'g':
       quad = false;
       break;
+    case 'B':
+    case 'C':
+    case 'D':
     case 'j':
       quad = true;
       break;
@@ -555,6 +558,10 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
       break;
   }
   return type;
+}
+
+static bool IsMultiVecProto(const char p) {
+  return ((p >= '2' && p <= '4') || (p >= 'B' && p <= 'D'));
 }
 
 /// TypeString - for a modifier and type, generate the name of the typedef for
@@ -631,11 +638,11 @@ static std::string TypeString(const char mod, StringRef typestr) {
       PrintFatalError("unhandled type!");
   }
 
-  if (mod == '2')
+  if (mod == '2' || mod == 'B')
     s += "x2";
-  if (mod == '3')
+  if (mod == '3' || mod == 'C')
     s += "x3";
-  if (mod == '4')
+  if (mod == '4' || mod == 'D')
     s += "x4";
 
   // Append _t, finishing the type string typedef type.
@@ -712,7 +719,7 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
   // returning structs of 2, 3, or 4 vectors which are returned in a sret-like
   // fashion, storing them to a pointer arg.
   if (ret) {
-    if (mod >= '2' && mod <= '4')
+    if (IsMultiVecProto(mod))
       return "vv*"; // void result with void* first argument
     if (mod == 'f' || (ck != ClassB && type == 'f'))
       return quad ? "V4f" : "V2f";
@@ -729,11 +736,11 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
   }
 
   // Non-return array types are passed as individual vectors.
-  if (mod == '2')
+  if (mod == '2' || mod == 'B')
     return quad ? "V16ScV16Sc" : "V8ScV8Sc";
-  if (mod == '3')
+  if (mod == '3' || mod == 'C')
     return quad ? "V16ScV16ScV16Sc" : "V8ScV8ScV8Sc";
-  if (mod == '4')
+  if (mod == '4' || mod == 'D')
     return quad ? "V16ScV16ScV16ScV16Sc" : "V8ScV8ScV8ScV8Sc";
 
   if (mod == 'f' || (ck != ClassB && type == 'f'))
@@ -1996,7 +2003,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
 
   // If this builtin returns a struct 2, 3, or 4 vectors, pass it as an implicit
   // sret-like argument.
-  bool sret = (proto[0] >= '2' && proto[0] <= '4');
+  bool sret = IsMultiVecProto(proto[0]);
 
   bool define = UseMacro(proto);
 
@@ -2056,12 +2063,19 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
 
     // Handle multiple-vector values specially, emitting each subvector as an
     // argument to the __builtin.
+    unsigned NumOfVec = 0;
     if (proto[i] >= '2' && proto[i] <= '4') {
+      NumOfVec = proto[i] - '0';
+    } else if (proto[i] >= 'B' && proto[i] <= 'D') {
+      NumOfVec = proto[i] - 'A' + 1;
+    }
+    
+    if (NumOfVec > 0) {
       // Check if an explicit cast is needed.
       if (argType != 'c' || argPoly || argUsgn)
         args = (argQuad ? "(int8x16_t)" : "(int8x8_t)") + args;
 
-      for (unsigned vi = 0, ve = proto[i] - '0'; vi != ve; ++vi) {
+      for (unsigned vi = 0, ve = NumOfVec; vi != ve; ++vi) {
         s += args + ".val[" + utostr(vi) + "]";
         if ((vi + 1) < ve)
           s += ", ";
@@ -2586,7 +2600,7 @@ NeonEmitter::genIntrinsicRangeCheckCode(raw_ostream &OS,
 
       // Builtins that return a struct of multiple vectors have an extra
       // leading arg for the struct return.
-      if (Proto[0] >= '2' && Proto[0] <= '4')
+      if (IsMultiVecProto(Proto[0]))
         ++immidx;
 
       // Add one to the index for each argument until we reach the immediate
@@ -2597,12 +2611,15 @@ NeonEmitter::genIntrinsicRangeCheckCode(raw_ostream &OS,
           immidx += 1;
           break;
         case '2':
+        case 'B':
           immidx += 2;
           break;
         case '3':
+        case 'C':
           immidx += 3;
           break;
         case '4':
+        case 'D':
           immidx += 4;
           break;
         case 'i':
@@ -2710,7 +2727,7 @@ NeonEmitter::genOverloadTypeCheckCode(raw_ostream &OS,
       }
     }
     // For sret builtins, adjust the pointer argument index.
-    if (PtrArgNum >= 0 && (Proto[0] >= '2' && Proto[0] <= '4'))
+    if (PtrArgNum >= 0 && IsMultiVecProto(Proto[0]))
       PtrArgNum += 1;
 
     // Omit type checking for the pointer arguments of vld1_lane, vld1_dup,

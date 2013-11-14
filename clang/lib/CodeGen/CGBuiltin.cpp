@@ -2463,11 +2463,238 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   return CGF.Builder.CreateBitCast(Result, ResultType, s);
 }
 
-Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
-                                                     const CallExpr *E) {
+static Value *packTBLDVectorList(CodeGenFunction &CGF, ArrayRef<Value *> Ops,
+                                 Value *ExtOp, Value *IndexOp,
+                                 llvm::Type *ResTy, unsigned IntID,
+                                 const char *Name) {
+  SmallVector<Value *, 2> TblOps;
+  if (ExtOp)
+    TblOps.push_back(ExtOp);
 
+  // Build a vector containing sequential number like (0, 1, 2, ..., 15)  
+  SmallVector<Constant*, 16> Indices;
+  llvm::VectorType *TblTy = cast<llvm::VectorType>(Ops[0]->getType());
+  for (unsigned i = 0, e = TblTy->getNumElements(); i != e; ++i) {
+    Indices.push_back(ConstantInt::get(CGF.Int32Ty, 2*i));
+    Indices.push_back(ConstantInt::get(CGF.Int32Ty, 2*i+1));
+  }
+  Value *SV = llvm::ConstantVector::get(Indices);
+
+  int PairPos = 0, End = Ops.size() - 1;
+  while (PairPos < End) {
+    TblOps.push_back(CGF.Builder.CreateShuffleVector(Ops[PairPos],
+                                                     Ops[PairPos+1], SV, Name));
+    PairPos += 2;
+  }
+
+  // If there's an odd number of 64-bit lookup table, fill the high 64-bit
+  // of the 128-bit lookup table with zero.
+  if (PairPos == End) {
+    Value *ZeroTbl = ConstantAggregateZero::get(TblTy);
+    TblOps.push_back(CGF.Builder.CreateShuffleVector(Ops[PairPos],
+                                                     ZeroTbl, SV, Name));
+  }
+
+  TblTy = llvm::VectorType::get(TblTy->getElementType(),
+                                2*TblTy->getNumElements());
+  llvm::Type *Tys[2] = { ResTy, TblTy };
+
+  Function *TblF;
+  TblOps.push_back(IndexOp);
+  TblF = CGF.CGM.getIntrinsic(IntID, Tys);
+  
+  return CGF.EmitNeonCall(TblF, TblOps, Name);
+}
+
+static Value *EmitAArch64TblBuiltinExpr(CodeGenFunction &CGF,
+                                        unsigned BuiltinID,
+                                        const CallExpr *E) {
+  unsigned int Int = 0;
+  const char *s = NULL;
+
+  unsigned TblPos;
+  switch (BuiltinID) {
+  default:
+    return 0;
+  case AArch64::BI__builtin_neon_vtbl1_v:
+  case AArch64::BI__builtin_neon_vqtbl1_v:
+  case AArch64::BI__builtin_neon_vqtbl1q_v:
+  case AArch64::BI__builtin_neon_vtbl2_v:
+  case AArch64::BI__builtin_neon_vqtbl2_v:
+  case AArch64::BI__builtin_neon_vqtbl2q_v:
+  case AArch64::BI__builtin_neon_vtbl3_v:
+  case AArch64::BI__builtin_neon_vqtbl3_v:
+  case AArch64::BI__builtin_neon_vqtbl3q_v:
+  case AArch64::BI__builtin_neon_vtbl4_v:
+  case AArch64::BI__builtin_neon_vqtbl4_v:
+  case AArch64::BI__builtin_neon_vqtbl4q_v:
+    TblPos = 0;
+    break;
+  case AArch64::BI__builtin_neon_vtbx1_v:
+  case AArch64::BI__builtin_neon_vqtbx1_v:
+  case AArch64::BI__builtin_neon_vqtbx1q_v:
+  case AArch64::BI__builtin_neon_vtbx2_v:
+  case AArch64::BI__builtin_neon_vqtbx2_v:
+  case AArch64::BI__builtin_neon_vqtbx2q_v:
+  case AArch64::BI__builtin_neon_vtbx3_v:
+  case AArch64::BI__builtin_neon_vqtbx3_v:
+  case AArch64::BI__builtin_neon_vqtbx3q_v:
+  case AArch64::BI__builtin_neon_vtbx4_v:
+  case AArch64::BI__builtin_neon_vqtbx4_v:
+  case AArch64::BI__builtin_neon_vqtbx4q_v:
+    TblPos = 1;
+    break;
+  }
+
+  assert(E->getNumArgs() >= 3);
+
+  // Get the last argument, which specifies the vector type.
+  llvm::APSInt Result;
+  const Expr *Arg = E->getArg(E->getNumArgs() - 1);
+  if (!Arg->isIntegerConstantExpr(Result, CGF.getContext()))
+    return 0;
+
+  // Determine the type of this overloaded NEON intrinsic.
+  NeonTypeFlags Type(Result.getZExtValue());
+  llvm::VectorType *VTy = GetNeonType(&CGF, Type);
+  llvm::Type *Ty = VTy;
+  if (!Ty)
+    return 0;
+
+  SmallVector<Value *, 4> Ops;
+  for (unsigned i = 0, e = E->getNumArgs() - 1; i != e; i++) {
+    Ops.push_back(CGF.EmitScalarExpr(E->getArg(i)));
+  }
+
+  Arg = E->getArg(TblPos);
+  llvm::Type *TblTy = CGF.ConvertType(Arg->getType());
+  llvm::VectorType *VTblTy = cast<llvm::VectorType>(TblTy);
+  llvm::Type *Tys[2] = { Ty, VTblTy };
+  unsigned nElts = VTy->getNumElements();  
+
+  // AArch64 scalar builtins are not overloaded, they do not have an extra
+  // argument that specifies the vector type, need to handle each case.
+  SmallVector<Value *, 2> TblOps;
+  switch (BuiltinID) {
+  case AArch64::BI__builtin_neon_vtbl1_v: {
+    TblOps.push_back(Ops[0]);
+    return packTBLDVectorList(CGF, TblOps, 0, Ops[1], Ty,
+                              Intrinsic::aarch64_neon_vtbl1, "vtbl1");
+  }
+  case AArch64::BI__builtin_neon_vtbl2_v: {
+    TblOps.push_back(Ops[0]);
+    TblOps.push_back(Ops[1]);
+    return packTBLDVectorList(CGF, TblOps, 0, Ops[2], Ty,
+                              Intrinsic::aarch64_neon_vtbl1, "vtbl1");
+  }
+  case AArch64::BI__builtin_neon_vtbl3_v: {
+    TblOps.push_back(Ops[0]);
+    TblOps.push_back(Ops[1]);
+    TblOps.push_back(Ops[2]);
+    return packTBLDVectorList(CGF, TblOps, 0, Ops[3], Ty,
+                              Intrinsic::aarch64_neon_vtbl2, "vtbl2");
+  }
+  case AArch64::BI__builtin_neon_vtbl4_v: {
+    TblOps.push_back(Ops[0]);
+    TblOps.push_back(Ops[1]);
+    TblOps.push_back(Ops[2]);
+    TblOps.push_back(Ops[3]);
+    return packTBLDVectorList(CGF, TblOps, 0, Ops[4], Ty,
+                              Intrinsic::aarch64_neon_vtbl2, "vtbl2");
+  }
+  case AArch64::BI__builtin_neon_vtbx1_v: {
+    TblOps.push_back(Ops[1]);
+    Value *TblRes = packTBLDVectorList(CGF, TblOps, 0, Ops[2], Ty,
+                                    Intrinsic::aarch64_neon_vtbl1, "vtbl1");
+
+    llvm::Constant *Eight = ConstantInt::get(VTy->getElementType(), 8);
+    Value* EightV = llvm::ConstantVector::getSplat(nElts, Eight);
+    Value *CmpRes = CGF.Builder.CreateICmp(ICmpInst::ICMP_UGE, Ops[2], EightV);
+    CmpRes = CGF.Builder.CreateSExt(CmpRes, Ty);
+
+    SmallVector<Value *, 4> BslOps;
+    BslOps.push_back(CmpRes);
+    BslOps.push_back(Ops[0]);
+    BslOps.push_back(TblRes);
+    Function *BslF = CGF.CGM.getIntrinsic(Intrinsic::arm_neon_vbsl, Ty);
+    return CGF.EmitNeonCall(BslF, BslOps, "vbsl");
+  }
+  case AArch64::BI__builtin_neon_vtbx2_v: {
+    TblOps.push_back(Ops[1]);
+    TblOps.push_back(Ops[2]);
+    return packTBLDVectorList(CGF, TblOps, Ops[0], Ops[3], Ty,
+                              Intrinsic::aarch64_neon_vtbx1, "vtbx1");
+  }
+  case AArch64::BI__builtin_neon_vtbx3_v: {
+    TblOps.push_back(Ops[1]);
+    TblOps.push_back(Ops[2]);
+    TblOps.push_back(Ops[3]);
+    Value *TblRes = packTBLDVectorList(CGF, TblOps, 0, Ops[4], Ty,
+                                       Intrinsic::aarch64_neon_vtbl2, "vtbl2");
+
+    llvm::Constant *TwentyFour = ConstantInt::get(VTy->getElementType(), 24);
+    Value* TwentyFourV = llvm::ConstantVector::getSplat(nElts, TwentyFour);
+    Value *CmpRes = CGF.Builder.CreateICmp(ICmpInst::ICMP_UGE, Ops[4],
+                                           TwentyFourV);
+    CmpRes = CGF.Builder.CreateSExt(CmpRes, Ty);
+  
+    SmallVector<Value *, 4> BslOps;
+    BslOps.push_back(CmpRes);
+    BslOps.push_back(Ops[0]);
+    BslOps.push_back(TblRes);
+    Function *BslF = CGF.CGM.getIntrinsic(Intrinsic::arm_neon_vbsl, Ty);
+    return CGF.EmitNeonCall(BslF, BslOps, "vbsl");
+  }
+  case AArch64::BI__builtin_neon_vtbx4_v: {
+    TblOps.push_back(Ops[1]);
+    TblOps.push_back(Ops[2]);
+    TblOps.push_back(Ops[3]);
+    TblOps.push_back(Ops[4]);
+    return packTBLDVectorList(CGF, TblOps, Ops[0], Ops[5], Ty,
+                              Intrinsic::aarch64_neon_vtbx2, "vtbx2");
+  }
+  case AArch64::BI__builtin_neon_vqtbl1_v:
+  case AArch64::BI__builtin_neon_vqtbl1q_v:
+    Int = Intrinsic::aarch64_neon_vtbl1; s = "vtbl1"; break;
+  case AArch64::BI__builtin_neon_vqtbl2_v:
+  case AArch64::BI__builtin_neon_vqtbl2q_v: {
+    Int = Intrinsic::aarch64_neon_vtbl2; s = "vtbl2"; break;
+  case AArch64::BI__builtin_neon_vqtbl3_v:
+  case AArch64::BI__builtin_neon_vqtbl3q_v:
+    Int = Intrinsic::aarch64_neon_vtbl3; s = "vtbl3"; break;
+  case AArch64::BI__builtin_neon_vqtbl4_v:
+  case AArch64::BI__builtin_neon_vqtbl4q_v:
+    Int = Intrinsic::aarch64_neon_vtbl4; s = "vtbl4"; break;
+  case AArch64::BI__builtin_neon_vqtbx1_v:
+  case AArch64::BI__builtin_neon_vqtbx1q_v:
+    Int = Intrinsic::aarch64_neon_vtbx1; s = "vtbx1"; break;
+  case AArch64::BI__builtin_neon_vqtbx2_v:
+  case AArch64::BI__builtin_neon_vqtbx2q_v:
+    Int = Intrinsic::aarch64_neon_vtbx2; s = "vtbx2"; break;
+  case AArch64::BI__builtin_neon_vqtbx3_v:
+  case AArch64::BI__builtin_neon_vqtbx3q_v:
+    Int = Intrinsic::aarch64_neon_vtbx3; s = "vtbx3"; break;
+  case AArch64::BI__builtin_neon_vqtbx4_v:
+  case AArch64::BI__builtin_neon_vqtbx4q_v:
+    Int = Intrinsic::aarch64_neon_vtbx4; s = "vtbx4"; break;
+  }
+  }
+
+  if (!Int)
+    return 0;
+
+  Function *F = CGF.CGM.getIntrinsic(Int, Tys);
+  return CGF.EmitNeonCall(F, Ops, s);
+}
+
+Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
+                                               const CallExpr *E) {
   // Process AArch64 scalar builtins
   if (Value *Result = EmitAArch64ScalarBuiltinExpr(*this, BuiltinID, E))
+    return Result;
+
+  // Process AArch64 table lookup builtins
+  if (Value *Result = EmitAArch64TblBuiltinExpr(*this, BuiltinID, E))
     return Result;
 
   if (BuiltinID == AArch64::BI__clear_cache) {
