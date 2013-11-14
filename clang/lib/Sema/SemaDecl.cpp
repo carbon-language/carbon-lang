@@ -1313,18 +1313,6 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
       }
     }
 
-    // Under ARC, some users use __bridge_transfer to automate memory
-    // reclamation of objects that were referenced via C pointers.
-    const Expr *Init = VD->getInit();
-    if (Init) {
-      if (const ExprWithCleanups *EC = dyn_cast<ExprWithCleanups>(Init))
-        Init = EC->getSubExpr();
-      Init = Init->IgnoreParens();
-      if (const ImplicitCastExpr *IC = dyn_cast<ImplicitCastExpr>(Init))
-        if (IC->getCastKind() == CK_ARCConsumeObject)
-          return false;
-    }
-
     // TODO: __attribute__((unused)) templates?
   }
   
