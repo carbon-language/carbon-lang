@@ -1313,26 +1313,16 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
       }
     }
 
-    // Under ARC, bridged casts can have side-effects on memory
-    // management semantics.  Some users assign a bridged
-    // value to a temporary to adjust reference counts.
+    // Under ARC, some users use __bridge_transfer to automate memory
+    // reclamation of objects that were referenced via C pointers.
     const Expr *Init = VD->getInit();
     if (Init) {
       if (const ExprWithCleanups *EC = dyn_cast<ExprWithCleanups>(Init))
         Init = EC->getSubExpr();
       Init = Init->IgnoreParens();
-      if (const ImplicitCastExpr *IC = dyn_cast<ImplicitCastExpr>(Init)) {
-        switch (IC->getCastKind()) {
-        case CK_ARCProduceObject:
-        case CK_ARCConsumeObject:
-        case CK_ARCReclaimReturnedObject:
-        case CK_ARCExtendBlockObject:
-        case CK_CopyAndAutoreleaseBlockObject:
+      if (const ImplicitCastExpr *IC = dyn_cast<ImplicitCastExpr>(Init))
+        if (IC->getCastKind() == CK_ARCConsumeObject)
           return false;
-        default:
-          break;
-        }
-      }
     }
 
     // TODO: __attribute__((unused)) templates?

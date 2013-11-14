@@ -64,13 +64,12 @@ CFTypeRef fixitsWithSpace(id obj) {
 }
 
 // <rdar://problem/15432770>
-// Suppressed -Wunused-variable when the initializer is a bridge cast.
+// Suppressed -Wunused-variable when the initializer is a __bridge_transfer cast.
 #pragma clang diagnostic push
 #pragma clang diagnostic warning "-Wunused-variable"
-void rdar15432770() {
-  void (^block1)() = ^ { };
-  void *ptr = (__bridge_retained void *)(block1);
-  void (^block2)() = (__bridge_transfer void(^)())ptr; // no-warning
-  int x = 1; // expected-warning {{unused variable}}
+void rdar15432770_ptr_release(const void *ptr) {
+  void (^block)() = (__bridge_transfer void(^)())ptr; // no-warning
+  // Test that warning is active.
+  int x = 1; // expected-warning {{unused}}
 }
 #pragma clang diagnostic pop
