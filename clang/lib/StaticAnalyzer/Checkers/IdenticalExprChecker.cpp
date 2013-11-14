@@ -31,6 +31,7 @@ static bool isIdenticalExpr(const ASTContext &Ctx, const Expr *Expr1,
 // FindIdenticalExprVisitor - Identify nodes using identical expressions.
 //===----------------------------------------------------------------------===//
 
+namespace {
 class FindIdenticalExprVisitor
     : public RecursiveASTVisitor<FindIdenticalExprVisitor> {
 public:
@@ -44,6 +45,7 @@ private:
   BugReporter &BR;
   AnalysisDeclContext *AC;
 };
+} // end anonymous namespace
 
 bool FindIdenticalExprVisitor::VisitBinaryOperator(const BinaryOperator *B) {
   BinaryOperator::Opcode Op = B->getOpcode();
@@ -208,6 +210,7 @@ static bool isIdenticalExpr(const ASTContext &Ctx, const Expr *Expr1,
 // FindIdenticalExprChecker
 //===----------------------------------------------------------------------===//
 
+namespace {
 class FindIdenticalExprChecker : public Checker<check::ASTCodeBody> {
 public:
   void checkASTCodeBody(const Decl *D, AnalysisManager &Mgr,
@@ -216,6 +219,7 @@ public:
     Visitor.TraverseDecl(const_cast<Decl *>(D));
   }
 };
+} // end anonymous namespace
 
 void ento::registerIdenticalExprChecker(CheckerManager &Mgr) {
   Mgr.registerChecker<FindIdenticalExprChecker>();
