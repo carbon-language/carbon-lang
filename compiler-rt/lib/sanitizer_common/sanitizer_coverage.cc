@@ -63,6 +63,7 @@ static inline bool CompareLess(const uptr &a, const uptr &b) {
 
 // Dump the coverage on disk.
 void CovDump() {
+#if !SANITIZER_WINDOWS
   BlockingMutexLock lock(&cov_data->mu);
   InternalMmapVector<uptr> &v = cov_data->v;
   InternalSort(&v, v.size(), CompareLess);
@@ -99,6 +100,7 @@ void CovDump() {
         Report(" CovDump: %s: %zd PCs written\n", path.data(), vb - old_vb);
     }
   }
+#endif  // !SANITIZER_WINDOWS
 }
 
 }  // namespace __sanitizer
