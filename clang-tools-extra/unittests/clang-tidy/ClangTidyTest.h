@@ -36,6 +36,7 @@ protected:
     OwningPtr<tooling::FrontendActionFactory> Factory(
         tooling::newFrontendActionFactory(&Finder));
     EXPECT_TRUE(tooling::runToolOnCode(Factory->create(), Code));
+    DiagConsumer.finish();
     tooling::Replacements Fixes;
     for (SmallVector<ClangTidyError, 16>::const_iterator I = Errors.begin(),
                                                          E = Errors.end();

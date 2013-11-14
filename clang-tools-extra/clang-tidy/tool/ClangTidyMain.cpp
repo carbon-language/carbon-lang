@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "../ClangTidy.h"
+#include "clang/Tooling/CommonOptionsParser.h"
 #include "llvm/Support/CommandLine.h"
 #include <vector>
 
@@ -26,8 +27,7 @@ using namespace llvm;
 
 cl::OptionCategory ClangTidyCategory("clang-tidy options");
 
-cl::list<std::string>
-Ranges(cl::Positional, cl::desc("<range0> [... <rangeN>]"), cl::OneOrMore);
+static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 
 static cl::opt<std::string> Checks(
     "checks",
@@ -39,15 +39,11 @@ static cl::opt<bool> Fix("fix", cl::desc("Fix detected errors if possible."),
 // FIXME: Add option to list name/description of all checks.
 
 int main(int argc, const char **argv) {
-  cl::ParseCommandLineOptions(argc, argv, "TBD\n");
-  OwningPtr<clang::tooling::CompilationDatabase> Compilations(
-      FixedCompilationDatabase::loadFromCommandLine(argc, argv));
-  if (!Compilations)
-    return 0;
-  // FIXME: Load other compilation databases.
+  CommonOptionsParser OptionsParser(argc, argv);
 
   SmallVector<clang::tidy::ClangTidyError, 16> Errors;
-  clang::tidy::runClangTidy(Checks, *Compilations, Ranges, &Errors);
+  clang::tidy::runClangTidy(Checks, OptionsParser.getCompilations(),
+                            OptionsParser.getSourcePathList(), &Errors);
   clang::tidy::handleErrors(Errors, Fix);
 
   return 0;

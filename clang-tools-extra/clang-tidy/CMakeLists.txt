@@ -14,6 +14,8 @@ target_link_libraries(clangTidy
   clangTooling
   clangBasic
   clangRewriteFrontend
+  clangStaticAnalyzerFrontend
+  clangStaticAnalyzerCheckers
   )
 
 add_subdirectory(tool)

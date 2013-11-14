@@ -14,6 +14,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Tooling/Refactoring.h"
+#include "ClangTidyDiagnosticConsumer.h"
 
 namespace clang {
 
@@ -26,64 +27,6 @@ class CompilationDatabase;
 }
 
 namespace tidy {
-
-/// \brief A detected error complete with information to display diagnostic and
-/// automatic fix.
-///
-/// This is used as an intermediate format to transport Diagnostics without a
-/// dependency on a SourceManager.
-///
-/// FIXME: Make Diagnostics flexible enough to support this directly.
-struct ClangTidyError {
-  ClangTidyError(const SourceManager &Sources, SourceLocation Loc,
-                 StringRef Message, const tooling::Replacements &Fix);
-
-  std::string Message;
-  unsigned FileOffset;
-  std::string FilePath;
-  tooling::Replacements Fix;
-};
-
-/// \brief Every \c ClangTidyCheck reports errors through a \c DiagnosticEngine
-/// provided by this context.
-///
-/// A \c ClangTidyCheck always has access to the active context to report
-/// warnings like:
-/// \code
-/// Context->Diag(Loc, "Single-argument constructors must be explicit")
-///     << FixItHint::CreateInsertion(Loc, "explicit ");
-/// \endcode
-class ClangTidyContext {
-public:
-  ClangTidyContext(SmallVectorImpl<ClangTidyError> *Errors) : Errors(Errors) {}
-
-  /// \brief Report any errors detected using this method.
-  ///
-  /// This is still under heavy development and will likely change towards using
-  /// tablegen'd diagnostic IDs.
-  /// FIXME: Figure out a way to manage ID spaces.
-  DiagnosticBuilder Diag(SourceLocation Loc, StringRef Message);
-
-  /// \brief Sets the \c DiagnosticsEngine so that Diagnostics can be generated
-  /// correctly.
-  ///
-  /// This is called from the \c ClangTidyCheck base class.
-  void setDiagnosticsEngine(DiagnosticsEngine *Engine);
-
-  /// \brief Sets the \c SourceManager of the used \c DiagnosticsEngine.
-  ///
-  /// This is called from the \c ClangTidyCheck base class.
-  void setSourceManager(SourceManager *SourceMgr);
-
-private:
-  friend class ClangTidyDiagnosticConsumer; // Calls storeError().
-
-  /// \brief Store a \c ClangTidyError.
-  void storeError(const ClangTidyError &Error);
-
-  SmallVectorImpl<ClangTidyError> *Errors;
-  DiagnosticsEngine *DiagEngine;
-};
 
 /// \brief Base class for all clang-tidy checks.
 ///
@@ -141,6 +84,11 @@ protected:
 private:
   virtual void run(const ast_matchers::MatchFinder::MatchResult &Result);
 };
+
+/// \brief Returns an action factory that runs the specified clang-tidy checks.
+tooling::FrontendActionFactory *
+createClangTidyActionFactory(StringRef CheckRegexString,
+                             ClangTidyContext &Context);
 
 /// \brief Run a set of clang-tidy checks on a set of files.
 void runClangTidy(StringRef CheckRegexString,
