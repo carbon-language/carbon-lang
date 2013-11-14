@@ -6826,7 +6826,7 @@ void SelectionDAGBuilder::visitStackmap(const CallInst &CI) {
 /// \brief Lower llvm.experimental.patchpoint directly to its target opcode.
 void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
   // void|i64 @llvm.experimental.patchpoint.void|i64(i32 <id>,
-  //                                                 i32 <numNopBytes>,
+  //                                                 i32 <numBytes>,
   //                                                 i8* <target>,
   //                                                 i32 <numArgs>,
   //                                                 [Args...],
