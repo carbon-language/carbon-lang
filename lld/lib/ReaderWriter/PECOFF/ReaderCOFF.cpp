@@ -930,7 +930,8 @@ private:
   }
 
   static bool isImportLibrary(StringRef magic) {
-    return magic[2] == (char)0xff && magic[3] == (char)0xff;
+    return (magic[0] == 0          && magic[1] == 0 &&
+            magic[2] == (char)0xff && magic[3] == (char)0xff);
   }
 
   PECOFFLinkingContext &_PECOFFLinkingContext;
