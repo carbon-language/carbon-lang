@@ -172,7 +172,6 @@ SIInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 }
 
 unsigned SIInstrInfo::commuteOpcode(unsigned Opcode) const {
-
   int NewOpc;
 
   // Try to map original to commuted opcode
@@ -419,7 +418,7 @@ void SIInstrInfo::legalizeOpWithMove(MachineInstr *MI, unsigned OpIdx) const {
   if (MO.isReg()) {
     Opcode = AMDGPU::COPY;
   } else if (RI.isSGPRClass(RC)) {
-      Opcode = AMDGPU::S_MOV_B32;
+    Opcode = AMDGPU::S_MOV_B32;
   }
 
   unsigned Reg = MRI.createVirtualRegister(RI.getRegClass(RCID));

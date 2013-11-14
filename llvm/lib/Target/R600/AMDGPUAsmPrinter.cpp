@@ -183,7 +183,7 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF) {
 
       unsigned numOperands = MI.getNumOperands();
       for (unsigned op_idx = 0; op_idx < numOperands; op_idx++) {
-        MachineOperand & MO = MI.getOperand(op_idx);
+        MachineOperand &MO = MI.getOperand(op_idx);
         unsigned maxUsed;
         unsigned width = 0;
         bool isSGPR = false;
