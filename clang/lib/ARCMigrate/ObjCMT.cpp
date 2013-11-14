@@ -1710,11 +1710,15 @@ ASTConsumer *MigrateSourceAction::CreateASTConsumer(CompilerInstance &CI,
   PPConditionalDirectiveRecord *
     PPRec = new PPConditionalDirectiveRecord(CI.getSourceManager());
   unsigned ObjCMTAction = CI.getFrontendOpts().ObjCMTAction;
-  if (ObjCMTAction == FrontendOptions::ObjCMT_None) {
+  unsigned ObjCMTOpts = ObjCMTAction;
+  // These are companion flags, they do not enable transformations.
+  ObjCMTOpts &= ~(FrontendOptions::ObjCMT_AtomicProperty |
+                  FrontendOptions::ObjCMT_NsAtomicIOSOnlyProperty);
+  if (ObjCMTOpts == FrontendOptions::ObjCMT_None) {
     // If no specific option was given, enable literals+subscripting transforms
     // by default.
-    ObjCMTAction = FrontendOptions::ObjCMT_Literals |
-                   FrontendOptions::ObjCMT_Subscripting;
+    ObjCMTAction |= FrontendOptions::ObjCMT_Literals |
+                    FrontendOptions::ObjCMT_Subscripting;
   }
   CI.getPreprocessor().addPPCallbacks(PPRec);
   return new ObjCMigrateASTConsumer(CI.getFrontendOpts().OutputFile,
