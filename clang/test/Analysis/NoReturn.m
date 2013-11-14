@@ -123,3 +123,11 @@ void PR11959(int *p) {
   *p = 0xDEADBEEF; // no-warning
 }
 
+// Test that hard-coded Microsoft _wassert name is recognized as a noreturn
+#define assert(_Expression) (void)( (!!(_Expression)) || (_wassert(#_Expression, __FILE__, __LINE__), 0) )
+extern void _wassert(const char * _Message, const char *_File, unsigned _Line);
+void test_wassert() {
+  assert(0);
+  int *p = 0;
+  *p = 0xDEADBEEF; // no-warning
+}
