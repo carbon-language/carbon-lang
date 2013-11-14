@@ -83,7 +83,7 @@ void Input::nextDocument() {
 }
 
 bool Input::mapTag(StringRef Tag, bool Default) {
-  StringRef foundTag = CurrentNode->_node->getVerbatimTag();
+  std::string foundTag = CurrentNode->_node->getVerbatimTag();
   if (foundTag.empty()) {
     // If no tag found and 'Tag' is the default, say it was found.
     return Default;
