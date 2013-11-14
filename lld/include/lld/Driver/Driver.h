@@ -57,7 +57,6 @@ private:
   UniversalDriver() LLVM_DELETED_FUNCTION;
 };
 
-
 /// Driver for gnu/binutil 'ld' command line options.
 class GnuLdDriver : public Driver {
 public:
@@ -78,7 +77,6 @@ private:
   GnuLdDriver() LLVM_DELETED_FUNCTION;
 };
 
-
 /// Driver for darwin/ld64 'ld' command line options.
 class DarwinLdDriver : public Driver {
 public:
@@ -95,7 +93,6 @@ public:
 private:
   DarwinLdDriver() LLVM_DELETED_FUNCTION;
 };
-
 
 /// Driver for Windows 'link.exe' command line options
 class WinLinkDriver : public Driver {
@@ -114,7 +111,6 @@ public:
 private:
   WinLinkDriver() LLVM_DELETED_FUNCTION;
 };
-
 
 /// Driver for lld unit tests
 class CoreDriver : public Driver {
