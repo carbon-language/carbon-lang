@@ -299,7 +299,7 @@ void FileInfo::print(raw_fd_ostream &OS, StringRef gcnoFile,
         if (L[i] == 0)
           OS << "    #####:";
         else
-          OS << format("%9lu:", L[i]);
+          OS << format("%9" PRIu64 ":", L[i]);
       } else {
         OS << "        -:";
       }
