@@ -355,7 +355,7 @@ CXString clang_HTMLTagComment_getAsString(CXComment CXC) {
 
   CXTranslationUnit TU = CXC.TranslationUnit;
   if (!TU->CommentToXML)
-    TU->CommentToXML = new index::CommentToXMLConverter();
+    TU->CommentToXML = new clang::index::CommentToXMLConverter();
 
   SmallString<128> Text;
   TU->CommentToXML->convertHTMLTagNodeToText(
@@ -370,7 +370,7 @@ CXString clang_FullComment_getAsHTML(CXComment CXC) {
 
   CXTranslationUnit TU = CXC.TranslationUnit;
   if (!TU->CommentToXML)
-    TU->CommentToXML = new index::CommentToXMLConverter();
+    TU->CommentToXML = new clang::index::CommentToXMLConverter();
 
   SmallString<1024> HTML;
   TU->CommentToXML
@@ -385,7 +385,7 @@ CXString clang_FullComment_getAsXML(CXComment CXC) {
 
   CXTranslationUnit TU = CXC.TranslationUnit;
   if (!TU->CommentToXML)
-    TU->CommentToXML = new index::CommentToXMLConverter();
+    TU->CommentToXML = new clang::index::CommentToXMLConverter();
 
   SmallString<1024> XML;
   TU->CommentToXML
