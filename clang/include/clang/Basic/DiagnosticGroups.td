@@ -66,11 +66,15 @@ def GNUStringLiteralOperatorTemplate :
 def DeleteNonVirtualDtor : DiagGroup<"delete-non-virtual-dtor">;
 def AbstractFinalClass : DiagGroup<"abstract-final-class">;
 
+def CXX11CompatDeprecatedWritableStr :
+  DiagGroup<"c++11-compat-deprecated-writable-strings">;
+
 def DeprecatedDeclarations : DiagGroup<"deprecated-declarations">;
 def DeprecatedImplementations :DiagGroup<"deprecated-implementations">;
 def DeprecatedIncrementBool : DiagGroup<"deprecated-increment-bool">;
 def DeprecatedRegister : DiagGroup<"deprecated-register">;
-def DeprecatedWritableStr : DiagGroup<"deprecated-writable-strings">;
+def DeprecatedWritableStr : DiagGroup<"deprecated-writable-strings",
+                                      [CXX11CompatDeprecatedWritableStr]>;
 // FIXME: Why are DeprecatedImplementations and DeprecatedWritableStr
 // not in this group?
 def Deprecated : DiagGroup<"deprecated", [DeprecatedDeclarations,
@@ -143,6 +147,7 @@ def ReservedUserDefinedLiteral :
 def CXX11Compat : DiagGroup<"c++11-compat",
                             [CXX11Narrowing,
                              CXX11CompatReservedUserDefinedLiteral,
+                             CXX11CompatDeprecatedWritableStr,
                              CXXPre1yCompat]>;
 def : DiagGroup<"c++0x-compat", [CXX11Compat]>;
 def CXX11CompatPedantic : DiagGroup<"c++11-compat-pedantic",
