@@ -1,4 +1,4 @@
-//===- PassManager.h - LegacyContainer for Passes --------------*- C++ -*-===//
+//===- PassManager.h - Pass management infrastructure -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
