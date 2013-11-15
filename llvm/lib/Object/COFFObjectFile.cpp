@@ -507,9 +507,10 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
     CurPtr += COFFHeader->SizeOfOptionalHeader;
   }
 
-  if ((ec = getObject(SectionTable, Data, base() + CurPtr,
-                      COFFHeader->NumberOfSections * sizeof(coff_section))))
-    return;
+  if (!COFFHeader->isImportLibrary())
+    if ((ec = getObject(SectionTable, Data, base() + CurPtr,
+                        COFFHeader->NumberOfSections * sizeof(coff_section))))
+      return;
 
   // Initialize the pointer to the symbol table.
   if (COFFHeader->PointerToSymbolTable != 0)
@@ -586,7 +587,9 @@ section_iterator COFFObjectFile::begin_sections() const {
 
 section_iterator COFFObjectFile::end_sections() const {
   DataRefImpl ret;
-  ret.p = reinterpret_cast<uintptr_t>(SectionTable + COFFHeader->NumberOfSections);
+  int numSections = COFFHeader->isImportLibrary()
+      ? 0 : COFFHeader->NumberOfSections;
+  ret.p = reinterpret_cast<uintptr_t>(SectionTable + numSections);
   return section_iterator(SectionRef(ret, this));
 }
 

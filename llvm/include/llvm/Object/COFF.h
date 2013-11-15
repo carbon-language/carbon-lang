@@ -57,6 +57,8 @@ struct coff_file_header {
   support::ulittle32_t NumberOfSymbols;
   support::ulittle16_t SizeOfOptionalHeader;
   support::ulittle16_t Characteristics;
+
+  bool isImportLibrary() const { return NumberOfSections == 0xffff; }
 };
 
 /// The 32-bit PE header that follows the COFF header.
