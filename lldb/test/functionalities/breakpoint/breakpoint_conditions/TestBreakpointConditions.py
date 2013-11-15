@@ -34,14 +34,12 @@ class BreakpointConditionsTestCase(TestBase):
         self.buildDsym()
         self.breakpoint_conditions_python()
 
-    @expectedFailureFreeBSD('llvm.org/pr17213')
     @dwarf_test
     def test_breakpoint_condition_with_dwarf_and_run_command(self):
         """Exercise breakpoint condition with 'breakpoint modify -c <expr> id'."""
         self.buildDwarf()
         self.breakpoint_conditions()
 
-    @expectedFailureFreeBSD('llvm.org/pr17213')
     @dwarf_test
     def test_breakpoint_condition_inline_with_dwarf_and_run_command(self):
         """Exercise breakpoint condition inline with 'breakpoint set'."""
