@@ -111,7 +111,7 @@ public:
       : HeaderChunk(), _context(ctx) {
     // Minimum size of DOS stub is 64 bytes. The next block (PE header) needs to
     // be aligned on 8 byte boundary.
-    _size = std::max(_context.getDosStub().size(), 64UL);
+    _size = std::max(_context.getDosStub().size(), (size_t)64);
     _size = llvm::RoundUpToAlignment(_size, 8);
   }
 
