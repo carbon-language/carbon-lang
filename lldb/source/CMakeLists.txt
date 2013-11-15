@@ -119,6 +119,7 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Darwin" )
     lldbPluginDynamicLoaderDarwinKernel
     lldbPluginProcessMacOSXKernel
     lldbPluginSymbolVendorMacOSX
+    lldbPluginSystemRuntimeMacOSX
     )
 endif()
 

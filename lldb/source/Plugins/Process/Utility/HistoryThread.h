@@ -41,6 +41,30 @@ public:
     bool
     CalculateStopInfo () { return false; }
 
+    void 
+    SetExtendedBacktraceToken (uint64_t token)
+    {
+        m_extended_unwind_token = token;
+    }
+
+    uint64_t
+    GetExtendedBacktraceToken ()
+    {
+        return m_extended_unwind_token;
+    }
+
+    const char *
+    GetQueueName ()
+    {
+        return m_queue_name.c_str();
+    }
+
+    void
+    SetQueueName (const char *name)
+    {
+        m_queue_name = name;
+    }
+
 protected:
     virtual lldb::StackFrameListSP
     GetStackFrameList ();
@@ -50,6 +74,9 @@ protected:
     std::vector<lldb::addr_t>   m_pcs;
     uint32_t                    m_stop_id;
     bool                        m_stop_id_is_valid;
+
+    uint64_t                    m_extended_unwind_token;
+    std::string                 m_queue_name;
 };
 
 } // namespace lldb_private

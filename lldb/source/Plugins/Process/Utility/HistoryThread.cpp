@@ -29,7 +29,8 @@ HistoryThread::HistoryThread (lldb_private::Process &process,
         m_framelist(),
         m_pcs (pcs),
         m_stop_id (stop_id),
-        m_stop_id_is_valid (stop_id_is_valid)
+        m_stop_id_is_valid (stop_id_is_valid),
+        m_extended_unwind_token (LLDB_INVALID_ADDRESS)
 {
     m_unwinder_ap.reset (new HistoryUnwind (*this, pcs, stop_id, stop_id_is_valid));
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));

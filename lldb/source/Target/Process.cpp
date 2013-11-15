@@ -2354,6 +2354,7 @@ Process::DisableSoftwareBreakpoint (BreakpointSite *bp_site)
 size_t
 Process::ReadMemory (addr_t addr, void *buf, size_t size, Error &error)
 {
+    error.Clear();
     if (!GetDisableMemoryCache())
     {        
 #if defined (VERIFY_MEMORY_READS)

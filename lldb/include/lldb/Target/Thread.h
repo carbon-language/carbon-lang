@@ -285,6 +285,11 @@ public:
         return NULL;
     }
 
+    virtual void
+    SetQueueName (const char *name)
+    {
+    }
+
     virtual uint32_t
     GetStackFrameCount()
     {
@@ -911,6 +916,33 @@ public:
 
     void
     SetShouldReportStop (Vote vote);
+
+    //----------------------------------------------------------------------
+    /// Sets the extended backtrace token for this thread
+    ///
+    /// Some Thread subclasses may maintain a token to help with providing
+    /// an extended backtrace.  The SystemRuntime plugin will set/request this.
+    ///
+    /// @param [in] token
+    //----------------------------------------------------------------------
+    virtual void
+    SetExtendedBacktraceToken (uint64_t token) { }
+
+    //----------------------------------------------------------------------
+    /// Gets the extended backtrace token for this thread
+    ///
+    /// Some Thread subclasses may maintain a token to help with providing
+    /// an extended backtrace.  The SystemRuntime plugin will set/request this.
+    ///
+    /// @return
+    ///     The token needed by the SystemRuntime to create an extended backtrace.
+    ///     LLDB_INVALID_ADDRESS is returned if no token is available.
+    //----------------------------------------------------------------------
+    virtual uint64_t
+    GetExtendedBacktraceToken ()
+    {
+        return LLDB_INVALID_ADDRESS;
+    }
 
 protected:
 
