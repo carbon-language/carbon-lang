@@ -2,6 +2,9 @@
 
 # RUN: echo "MZ Hello world" > %t.stub
 # RUN: lld -flavor link /out:%t.exe /entry:start /stub:%t.stub -- %t.obj
-# RUN: FileCheck %s < %t.exe
+# RUN: FileCheck -check-prefix=FILE %s < %t.exe
+# RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=READOBJ %s
 
-CHECK: MZ Hello world
+FILE: MZ Hello world
+
+READOBJ: Format: COFF-i386

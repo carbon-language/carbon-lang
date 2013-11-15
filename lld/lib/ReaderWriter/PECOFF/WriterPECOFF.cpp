@@ -22,6 +22,7 @@
 
 #define DEBUG_TYPE "WriterPECOFF"
 
+#include <algorithm>
 #include <map>
 #include <time.h>
 #include <vector>
@@ -108,14 +109,17 @@ class DOSStubChunk : public HeaderChunk {
 public:
   DOSStubChunk(const PECOFFLinkingContext &ctx)
       : HeaderChunk(), _context(ctx) {
-    _size = _context.getDosStub().size();
+    // Minimum size of DOS stub is 64 bytes. The next block (PE header) needs to
+    // be aligned on 8 byte boundary.
+    _size = std::max(_context.getDosStub().size(), 64UL);
+    _size = llvm::RoundUpToAlignment(_size, 8);
   }
 
   virtual void write(uint8_t *fileBuffer) {
     ArrayRef<uint8_t> array = _context.getDosStub();
     std::memcpy(fileBuffer, array.data(), array.size());
     auto *header = reinterpret_cast<llvm::object::dos_header *>(fileBuffer);
-    header->AddressOfNewExeHeader = array.size();
+    header->AddressOfNewExeHeader = _size;
   }
 
 private:
