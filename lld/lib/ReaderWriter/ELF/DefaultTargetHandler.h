@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_DEFAULT_TARGETHANDLER_H
-#define LLD_READER_WRITER_ELF_DEFAULT_TARGETHANDLER_H
+#ifndef LLD_READER_WRITER_ELF_DEFAULT_TARGET_HANDLER_H
+#define LLD_READER_WRITER_ELF_DEFAULT_TARGET_HANDLER_H
 
 #include "DefaultLayout.h"
 #include "TargetHandler.h"

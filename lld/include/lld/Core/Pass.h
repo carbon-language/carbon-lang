@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_CORE_PASS_H_
-#define LLD_CORE_PASS_H_
+#ifndef LLD_CORE_PASS_H
+#define LLD_CORE_PASS_H
 
 #include "lld/Core/Atom.h"
 #include "lld/Core/File.h"
@@ -115,4 +115,4 @@ public:
 
 } // namespace lld
 
-#endif // LLD_CORE_PASS_H_
+#endif // LLD_CORE_PASS_H

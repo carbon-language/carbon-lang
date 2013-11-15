@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_MACHO_LINKER_CONTEXT_H
-#define LLD_READER_WRITER_MACHO_LINKER_CONTEXT_H
+#ifndef LLD_READER_WRITER_MACHO_LINKING_CONTEXT_H
+#define LLD_READER_WRITER_MACHO_LINKING_CONTEXT_H
 
 #include "lld/Core/LinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"

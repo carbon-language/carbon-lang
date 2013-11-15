@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_CORE_SHARED_LIBRARY_FILE_H_
-#define LLD_CORE_SHARED_LIBRARY_FILE_H_
+#ifndef LLD_CORE_SHARED_LIBRARY_FILE_H
+#define LLD_CORE_SHARED_LIBRARY_FILE_H
 
 #include "lld/Core/File.h"
 #include "lld/Core/SharedLibraryAtom.h"
@@ -39,4 +39,4 @@ protected:
 
 } // namespace lld
 
-#endif // LLD_CORE_SHARED_LIBRARY_FILE_H_
+#endif // LLD_CORE_SHARED_LIBRARY_FILE_H

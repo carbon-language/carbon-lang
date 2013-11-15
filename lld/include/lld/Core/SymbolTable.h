@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_CORE_SYMBOL_TABLE_H_
-#define LLD_CORE_SYMBOL_TABLE_H_
+#ifndef LLD_CORE_SYMBOL_TABLE_H
+#define LLD_CORE_SYMBOL_TABLE_H
 
 #include "lld/Core/LLVM.h"
 
@@ -107,4 +107,4 @@ private:
 
 } // namespace lld
 
-#endif // LLD_CORE_SYMBOL_TABLE_H_
+#endif // LLD_CORE_SYMBOL_TABLE_H

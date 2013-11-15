@@ -16,8 +16,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_PE_COFF_IDATA_PASS_H_
-#define LLD_READER_WRITER_PE_COFF_IDATA_PASS_H_
+#ifndef LLD_READER_WRITER_PE_COFF_IDATA_PASS_H
+#define LLD_READER_WRITER_PE_COFF_IDATA_PASS_H
 
 #include "Atoms.h"
 

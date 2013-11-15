@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_CORE_UNDEFINED_ATOM_H_
-#define LLD_CORE_UNDEFINED_ATOM_H_
+#ifndef LLD_CORE_UNDEFINED_ATOM_H
+#define LLD_CORE_UNDEFINED_ATOM_H
 
 #include "lld/Core/Atom.h"
 
@@ -71,4 +71,4 @@ protected:
 
 } // namespace lld
 
-#endif // LLD_CORE_UNDEFINED_ATOM_H_
+#endif // LLD_CORE_UNDEFINED_ATOM_H

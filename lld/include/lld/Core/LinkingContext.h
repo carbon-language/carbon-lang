@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_CORE_TARGET_INFO_H
-#define LLD_CORE_TARGET_INFO_H
+#ifndef LLD_CORE_LINKING_CONTEXT_H
+#define LLD_CORE_LINKING_CONTEXT_H
 
 #include "lld/Core/Error.h"
 #include "lld/Core/InputGraph.h"

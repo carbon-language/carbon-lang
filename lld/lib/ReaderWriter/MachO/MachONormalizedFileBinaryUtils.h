@@ -20,8 +20,8 @@
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/system_error.h"
 
-#ifndef LLD_READER_WRITER_MACHO_NORMALIZED_UILS_H_
-#define LLD_READER_WRITER_MACHO_NORMALIZED_UILS_H_
+#ifndef LLD_READER_WRITER_MACHO_NORMALIZED_FILE_BINARY_UTILS_H
+#define LLD_READER_WRITER_MACHO_NORMALIZED_FILE_BINARY_UTILS_H
 
 namespace lld {
 namespace mach_o {
@@ -290,4 +290,4 @@ inline void setString16(StringRef str, char s[16]) {
 } // namespace mach_o
 } // namespace lld
 
-#endif // LLD_READER_WRITER_MACHO_NORMALIZED_UILS_H_
+#endif // LLD_READER_WRITER_MACHO_NORMALIZED_FILE_BINARY_UTILS_H

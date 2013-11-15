@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_CORE_ATOM_H_
-#define LLD_CORE_ATOM_H_
+#ifndef LLD_CORE_ATOM_H
+#define LLD_CORE_ATOM_H
 
 #include "lld/Core/LLVM.h"
 
@@ -81,4 +81,4 @@ private:
 
 } // namespace lld
 
-#endif // LLD_CORE_ATOM_H_
+#endif // LLD_CORE_ATOM_H

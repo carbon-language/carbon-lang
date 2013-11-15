@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READERWRITER_READER_H
-#define LLD_READERWRITER_READER_H
+#ifndef LLD_READER_WRITER_READER_H
+#define LLD_READER_WRITER_READER_H
 
 #include "lld/Core/LLVM.h"
 

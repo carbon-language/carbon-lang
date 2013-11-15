@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_CORE_REFERENCES_H_
-#define LLD_CORE_REFERENCES_H_
+#ifndef LLD_CORE_REFERENCES_H
+#define LLD_CORE_REFERENCES_H
 
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -109,4 +109,4 @@ protected:
 
 } // namespace lld
 
-#endif // LLD_CORE_REFERENCES_H_
+#endif // LLD_CORE_REFERENCES_H

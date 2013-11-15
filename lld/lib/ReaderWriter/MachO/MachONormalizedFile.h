@@ -49,8 +49,8 @@
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/YAMLTraits.h"
 
-#ifndef LLD_READER_WRITER_MACHO_NORMALIZED_H_
-#define LLD_READER_WRITER_MACHO_NORMALIZED_H_
+#ifndef LLD_READER_WRITER_MACHO_NORMALIZE_FILE_H
+#define LLD_READER_WRITER_MACHO_NORMALIZE_FILE_H
 
 using llvm::yaml::Hex64;
 using llvm::yaml::Hex32;
@@ -272,7 +272,7 @@ normalizedFromAtoms(const lld::File &atomFile, const MachOLinkingContext &ctxt);
 } // namespace mach_o
 } // namespace lld
 
-#endif // LLD_READER_WRITER_MACHO_NORMALIZED_H_
+#endif // LLD_READER_WRITER_MACHO_NORMALIZE_FILE_H
 
 
 

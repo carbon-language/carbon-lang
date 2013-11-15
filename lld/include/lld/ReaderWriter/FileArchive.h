@@ -6,8 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===---------------------------------------------------------------------===//
-#ifndef LLD_FILEARCHIVE_H
-#define LLD_FILEARCHIVE_H
+#ifndef LLD_READER_WRITER_FILE_ARCHIVE_H
+#define LLD_READER_WRITER_FILE_ARCHIVE_H
 
 #include "lld/Core/ArchiveLibraryFile.h"
 
@@ -173,4 +173,4 @@ public:
 
 } // end namespace lld
 
-#endif // LLD_FILEARCHIVE_H
+#endif // LLD_READER_WRITER_FILE_ARCHIVE_H

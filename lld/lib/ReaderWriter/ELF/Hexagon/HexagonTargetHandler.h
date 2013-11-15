@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_HEXAGON_TARGET_HANDLER_H
-#define LLD_READER_WRITER_ELF_HEXAGON_TARGET_HANDLER_H
+#ifndef LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_TARGET_HANDLER_H
+#define LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_TARGET_HANDLER_H
 
 #include "DefaultTargetHandler.h"
 #include "HexagonExecutableAtoms.h"

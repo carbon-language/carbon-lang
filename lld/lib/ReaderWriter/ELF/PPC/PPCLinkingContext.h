@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_PPC_TARGETINFO_H
-#define LLD_READER_WRITER_ELF_PPC_TARGETINFO_H
+#ifndef LLD_READER_WRITER_ELF_PPC_PPC_LINKING_CONTEXT_H
+#define LLD_READER_WRITER_ELF_PPC_PPC_LINKING_CONTEXT_H
 
 #include "PPCTargetHandler.h"
 
@@ -37,4 +37,4 @@ public:
 } // elf
 } // lld
 
-#endif // LLD_READER_WRITER_ELF_PPC_TARGETINFO_H
+#endif // LLD_READER_WRITER_ELF_PPC_PPC_LINKING_CONTEXT_H

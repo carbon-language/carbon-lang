@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_PECOFF_LINKER_CONTEXT_H
-#define LLD_READER_WRITER_PECOFF_LINKER_CONTEXT_H
+#ifndef LLD_READER_WRITER_PECOFF_LINKING_CONTEXT_H
+#define LLD_READER_WRITER_PECOFF_LINKING_CONTEXT_H
 
 #include <map>
 #include <set>

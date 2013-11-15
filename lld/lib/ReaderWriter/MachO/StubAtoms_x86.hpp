@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_MACHO_STUB_ATOM_X86_H_
-#define LLD_READER_WRITER_MACHO_STUB_ATOM_X86_H_
+#ifndef LLD_READER_WRITER_MACHO_STUB_ATOMS_X86_H
+#define LLD_READER_WRITER_MACHO_STUB_ATOMS_X86_H
 
 #include "llvm/ADT/ArrayRef.h"
 
@@ -196,4 +196,4 @@ public:
 } // namespace lld
 
 
-#endif // LLD_READER_WRITER_MACHO_STUB_ATOM_X86_H_
+#endif // LLD_READER_WRITER_MACHO_STUB_ATOMS_X86_H

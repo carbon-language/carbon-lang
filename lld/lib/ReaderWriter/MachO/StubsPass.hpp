@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_MACHO_STUBS_PASS_H_
-#define LLD_READER_WRITER_MACHO_STUBS_PASS_H_
+#ifndef LLD_READER_WRITER_MACHO_STUBS_PASS_H
+#define LLD_READER_WRITER_MACHO_STUBS_PASS_H
 
 #include "llvm/ADT/DenseMap.h"
 
@@ -170,4 +170,4 @@ private:
 } // namespace lld
 
 
-#endif // LLD_READER_WRITER_MACHO_STUBS_PASS_H_
+#endif // LLD_READER_WRITER_MACHO_STUBS_PASS_H

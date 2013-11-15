@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_MACHO_EXECUTABLE_ATOM_H_
-#define LLD_READER_WRITER_MACHO_EXECUTABLE_ATOM_H_
+#ifndef LLD_READER_WRITER_MACHO_EXECUTABLE_ATOMS_H
+#define LLD_READER_WRITER_MACHO_EXECUTABLE_ATOMS_H
 
 #include "llvm/Support/MachO.h"
 
@@ -45,4 +45,4 @@ private:
 } // namespace mach_o
 } // namespace lld
 
-#endif // LLD_READER_WRITER_MACHO_EXECUTABLE_ATOM_H_
+#endif // LLD_READER_WRITER_MACHO_EXECUTABLE_ATOMS_H

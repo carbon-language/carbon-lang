@@ -6,8 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLD_READER_WRITER_OUTPUT_ELF_WRITER_H
-#define LLD_READER_WRITER_OUTPUT_ELF_WRITER_H
+#ifndef LLD_READER_WRITER_ELF_OUTPUT_WRITER_H
+#define LLD_READER_WRITER_ELF_OUTPUT_WRITER_H
 
 #include "lld/Core/Instrumentation.h"
 #include "lld/Core/Parallel.h"
@@ -427,4 +427,4 @@ error_code OutputELFWriter<ELFT>::writeFile(const File &file, StringRef path) {
 } // namespace elf
 } // namespace lld
 
-#endif // LLD_READER_WRITER_OUTPUT_ELF_WRITER_H
+#endif // LLD_READER_WRITER_ELF_OUTPUT_WRITER_H

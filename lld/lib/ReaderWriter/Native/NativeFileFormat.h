@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_NATIVE_FILE_FORMAT_H_
-#define LLD_READER_WRITER_NATIVE_FILE_FORMAT_H_
+#ifndef LLD_READER_WRITER_NATIVE_NATIVE_FILE_FORMAT_H
+#define LLD_READER_WRITER_NATIVE_NATIVE_FILE_FORMAT_H
 
 #include "llvm/Support/DataTypes.h"
 
@@ -245,4 +245,4 @@ struct NativeReferenceIvarsV2 {
 
 } // namespace lld
 
-#endif // LLD_READER_WRITER_NATIVE_FILE_FORMAT_H_
+#endif // LLD_READER_WRITER_NATIVE_NATIVE_FILE_FORMAT_H

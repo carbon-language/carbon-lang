@@ -14,8 +14,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_ADT_RANGE_H
-#define LLD_ADT_RANGE_H
+#ifndef LLD_CORE_RANGE_H
+#define LLD_CORE_RANGE_H
 
 #include "llvm/Support/Compiler.h"
 

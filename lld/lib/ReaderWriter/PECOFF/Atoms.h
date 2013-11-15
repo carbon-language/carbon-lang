@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_PE_COFF_ATOMS_H_
-#define LLD_READER_WRITER_PE_COFF_ATOMS_H_
+#ifndef LLD_READER_WRITER_PE_COFF_ATOMS_H
+#define LLD_READER_WRITER_PE_COFF_ATOMS_H
 
 #include "lld/Core/File.h"
 #include "llvm/ADT/ArrayRef.h"

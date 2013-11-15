@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_CORE_RESOLVER_H_
-#define LLD_CORE_RESOLVER_H_
+#ifndef LLD_CORE_RESOLVER_H
+#define LLD_CORE_RESOLVER_H
 
 #include "lld/Core/File.h"
 #include "lld/Core/SharedLibraryFile.h"
@@ -123,4 +123,4 @@ private:
 
 } // namespace lld
 
-#endif // LLD_CORE_RESOLVER_H_
+#endif // LLD_CORE_RESOLVER_H

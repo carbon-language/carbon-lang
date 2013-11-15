@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_X86_64_LINKER_CONTEXT_H
-#define LLD_READER_WRITER_ELF_X86_64_LINKER_CONTEXT_H
+#ifndef LLD_READER_WRITER_ELF_X86_64_X86_64_LINKING_CONTEXT_H
+#define LLD_READER_WRITER_ELF_X86_64_X86_64_LINKING_CONTEXT_H
 
 #include "X86_64TargetHandler.h"
 

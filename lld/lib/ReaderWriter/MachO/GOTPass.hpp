@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_MACHO_GOT_PASS_H_
-#define LLD_READER_WRITER_MACHO_GOT_PASS_H_
+#ifndef LLD_READER_WRITER_MACHO_GOT_PASS_H
+#define LLD_READER_WRITER_MACHO_GOT_PASS_H
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/SharedLibraryAtom.h"
@@ -48,4 +48,4 @@ public:
 } // namespace lld 
 
 
-#endif // LLD_READER_WRITER_MACHO_GOT_PASS_H_
+#endif // LLD_READER_WRITER_MACHO_GOT_PASS_H
