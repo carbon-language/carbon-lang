@@ -1549,18 +1549,32 @@ LikelyFalsePositiveSuppressionBRVisitor::getEndPath(BugReporterContext &BRC,
           return 0;
         }
       }
+
       // The analyzer issues a false positive on
       //   std::basic_string<uint8_t> v; v.push_back(1);
+      // and
+      //   std::u16string s; s += u'a';
       // because we cannot reason about the internal invariants of the
       // datastructure.
-      if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+      const LocationContext *LCtx = N->getLocationContext();
+      do {
+        const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(LCtx->getDecl());
+        if (!MD)
+          break;
+
         const CXXRecordDecl *CD = MD->getParent();
         if (CD->getName() == "basic_string") {
           BR.markInvalid(getTag(), 0);
           return 0;
+        } else if (CD->getName().find("allocator") == StringRef::npos) {
+          // Only keep searching if the current method is in a class with the
+          // word "allocator" in its name, e.g. std::allocator or
+          // allocator_traits.
+          break;
         }
-      }
 
+        LCtx = LCtx->getParent();
+      } while (LCtx);
     }
   }
 

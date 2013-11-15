@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,debug.ExprInspection -analyzer-config c++-container-inlining=true -analyzer-config c++-stdlib-inlining=false -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,debug.ExprInspection -analyzer-config c++-container-inlining=true -analyzer-config c++-stdlib-inlining=true -DINLINE=1 -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,cplusplus.NewDelete,debug.ExprInspection -analyzer-config c++-container-inlining=true -analyzer-config c++-stdlib-inlining=false -std=c++11 -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,cplusplus.NewDelete,debug.ExprInspection -analyzer-config c++-container-inlining=true -analyzer-config c++-stdlib-inlining=true -std=c++11 -DINLINE=1 -verify %s
 
 #include "../Inputs/system-header-simulator-cxx.h"
 
@@ -38,3 +38,7 @@ void testBasicStringSuppression() {
   v.push_back(1); // no-warning
 }
 
+void testBasicStringSuppression_append() {
+  std::basic_string<char32_t> v;
+  v += 'c'; // no-warning
+}

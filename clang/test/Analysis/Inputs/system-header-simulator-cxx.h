@@ -118,7 +118,20 @@ namespace std {
   struct random_access_iterator_tag : public bidirectional_iterator_tag { };
 
   template <class _Tp>
-  class allocator {};
+  class allocator {
+  public:
+    void deallocate(void *p) {
+      ::delete p;
+    }
+  };
+
+  template <class _Alloc>
+  class allocator_traits {
+  public:
+    static void deallocate(void *p) {
+      _Alloc().deallocate(p);
+    }
+  };
 
   template <class _Tp, class _Alloc>
   class __list_imp
@@ -140,19 +153,28 @@ namespace std {
   };
 
   // basic_string
-  template<class _CharT>
+  template<class _CharT, class _Alloc = allocator<_CharT> >
   class __attribute__ ((__type_visibility__("default"))) basic_string {
+    _CharT localStorage[4];
+
+    typedef allocator_traits<_Alloc> __alloc_traits;
+
   public:
-    void push_back(int c);
+    void push_back(int c) {
+      // Fake error trigger.
+      // No warning is expected as we are suppressing warning comming
+      // out of std::basic_string.
+      int z = 0;
+      z = 5/z;
+    }
+
+    basic_string &operator +=(int c) {
+      // Fake deallocate stack-based storage.
+      // No warning is expected as we are suppressing warnings within
+      // allocators being used by std::basic_string.
+      __alloc_traits::deallocate(&localStorage);
+    }
   };
-  template <class _CharT>
-  void basic_string<_CharT>::push_back(int __c) {
-        // Fake error trigger.
-        // No warning is expected as we are suppressing warning comming
-        // out of std::basic_string.
-        int z = 0;
-        z = 5/z;
-  }
 }
 
 void* operator new(std::size_t, const std::nothrow_t&) throw();
