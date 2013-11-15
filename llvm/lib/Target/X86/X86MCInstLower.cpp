@@ -750,7 +750,6 @@ getStackMapEndMOP(MachineInstr::const_mop_iterator MOI,
 }
 
 static void LowerSTACKMAP(MCStreamer &OutStreamer,
-                          X86MCInstLower &MCInstLowering,
                           StackMaps &SM,
                           const MachineInstr &MI)
 {
@@ -768,7 +767,6 @@ static void LowerSTACKMAP(MCStreamer &OutStreamer,
 // Lower a patchpoint of the form:
 // [<def>], <id>, <numBytes>, <target>, <numArgs>
 static void LowerPATCHPOINT(MCStreamer &OutStreamer,
-                            X86MCInstLower &MCInstLowering,
                             StackMaps &SM,
                             const MachineInstr &MI) {
   bool hasDef = MI.getOperand(0).isReg() && MI.getOperand(0).isDef() &&
@@ -929,10 +927,10 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
 
   case TargetOpcode::STACKMAP:
-    return LowerSTACKMAP(OutStreamer, MCInstLowering, SM, *MI);
+    return LowerSTACKMAP(OutStreamer, SM, *MI);
 
   case TargetOpcode::PATCHPOINT:
-    return LowerPATCHPOINT(OutStreamer, MCInstLowering, SM, *MI);
+    return LowerPATCHPOINT(OutStreamer, SM, *MI);
 
   case X86::MORESTACK_RET:
     OutStreamer.EmitInstruction(MCInstBuilder(X86::RET));
