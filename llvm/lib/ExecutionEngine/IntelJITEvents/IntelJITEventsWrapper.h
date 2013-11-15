@@ -61,7 +61,7 @@ public:
     GetNewMethodIDFunc(GetNewMethodIDImpl) {
   }
 
-  // Sends an event anncouncing that a function has been emitted
+  // Sends an event announcing that a function has been emitted
   //   return values are event-specific.  See Intel documentation for details.
   int  iJIT_NotifyEvent(iJIT_JVM_EVENT EventType, void *EventSpecificData) {
     if (!NotifyEventFunc)
