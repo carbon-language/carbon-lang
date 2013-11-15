@@ -98,12 +98,19 @@ private:
     AnalyzerOptionsRef Options = Compiler.getAnalyzerOpts();
     llvm::Regex CheckRegex(CheckRegexString);
 
+    // Always add all core checkers if any other static analyzer checks are
+    // enabled. This is currently necessary, as other path sensitive checks rely
+    // on the core checkers.
+    if (CheckRegex.match("clang-analyzer-"))
+      Options->CheckersControlList.push_back(std::make_pair("core", true));
+
 // Run our regex against all possible static analyzer checkers.
 // Note that debug checkers print values / run programs to visualize the CFG
 // and are thus not applicable to clang-tidy in general.
 #define GET_CHECKERS
 #define CHECKER(FULLNAME, CLASS, DESCFILE, HELPTEXT, GROUPINDEX, HIDDEN)       \
-  if (!StringRef(FULLNAME).startswith("debug") &&                              \
+  if (!StringRef(FULLNAME).startswith("core") &&                               \
+      !StringRef(FULLNAME).startswith("debug") &&                              \
       CheckRegex.match("clang-analyzer-" FULLNAME))                            \
     Options->CheckersControlList.push_back(std::make_pair(FULLNAME, true));
 #include "../../../lib/StaticAnalyzer/Checkers/Checkers.inc"
