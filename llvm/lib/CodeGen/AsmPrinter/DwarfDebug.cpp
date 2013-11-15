@@ -366,17 +366,15 @@ bool DwarfDebug::isSubprogramContext(const MDNode *Context) {
 // Find DIE for the given subprogram and attach appropriate DW_AT_low_pc
 // and DW_AT_high_pc attributes. If there are global variables in this
 // scope then create and insert DIEs for these variables.
-DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
-                                          const MDNode *SPNode) {
-  DIE *SPDie = SPCU->getDIE(DIDescriptor(SPNode));
+DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU, DISubprogram SP) {
+  DIE *SPDie = SPCU->getDIE(SP);
 
   assert(SPDie && "Unable to find subprogram DIE!");
-  DISubprogram SP(SPNode);
 
   // If we're updating an abstract DIE, then we will be adding the children and
   // object pointer later on. But what we don't want to do is process the
   // concrete DIE twice.
-  if (DIE *AbsSPDIE = AbstractSPDies.lookup(SPNode)) {
+  if (DIE *AbsSPDIE = AbstractSPDies.lookup(SP)) {
     // Pick up abstract subprogram DIE.
     SPDie = SPCU->createAndAddDIE(dwarf::DW_TAG_subprogram, *SPCU->getCUDie());
     SPCU->addDIEEntry(SPDie, dwarf::DW_AT_abstract_origin, AbsSPDIE);
@@ -624,7 +622,7 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
         AbstractSPDies.insert(std::make_pair(DS, ScopeDIE));
     }
     else
-      ScopeDIE = updateSubprogramScopeDIE(TheCU, DS);
+      ScopeDIE = updateSubprogramScopeDIE(TheCU, DISubprogram(DS));
   }
   else {
     // Early exit when we know the scope DIE is going to be null.
