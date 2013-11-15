@@ -77,6 +77,7 @@ public:
   virtual bool isFAbsFree(EVT VT) const;
   virtual bool isFNegFree(EVT VT) const;
   virtual MVT getVectorIdxTy() const;
+  virtual bool isLoadBitCastBeneficial(EVT, EVT) const LLVM_OVERRIDE;
   virtual SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv,
                               bool isVarArg,
                               const SmallVectorImpl<ISD::OutputArg> &Outs,

@@ -196,6 +196,18 @@ MVT AMDGPUTargetLowering::getVectorIdxTy() const {
   return MVT::i32;
 }
 
+bool AMDGPUTargetLowering::isLoadBitCastBeneficial(EVT LoadTy,
+                                                   EVT CastTy) const {
+  if (LoadTy.getSizeInBits() != CastTy.getSizeInBits())
+    return true;
+
+  unsigned LScalarSize = LoadTy.getScalarType().getSizeInBits();
+  unsigned CastScalarSize = CastTy.getScalarType().getSizeInBits();
+
+  return ((LScalarSize <= CastScalarSize) ||
+          (CastScalarSize >= 32) ||
+          (LScalarSize < 32));
+}
 
 //===---------------------------------------------------------------------===//
 // Target Properties

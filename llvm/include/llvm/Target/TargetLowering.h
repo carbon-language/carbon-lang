@@ -204,6 +204,17 @@ public:
     return PredictableSelectIsExpensive;
   }
 
+  /// isLoadBitCastBeneficial() - Return true if the following transform
+  /// is beneficial.
+  /// fold (conv (load x)) -> (load (conv*)x)
+  /// On architectures that don't natively support some vector loads efficiently,
+  /// casting the load to a smaller vector of larger types and loading
+  /// is more efficient, however, this can be undone by optimizations in
+  /// dag combiner.
+  virtual bool isLoadBitCastBeneficial(EVT /* Load */, EVT /* Bitcast */) const {
+    return true;
+  }
+
   /// Return the ValueType of the result of SETCC operations.  Also used to
   /// obtain the target's preferred type for the condition operand of SELECT and
   /// BRCOND nodes.  In the case of BRCOND the argument passed is MVT::Other
