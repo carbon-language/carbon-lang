@@ -9,7 +9,7 @@ if(LLVM_USE_SANITIZER STREQUAL "")
     add_subdirectory(asan)
     add_subdirectory(interception)
     add_subdirectory(sanitizer_common)
-    if(NOT ANDROID AND NOT MSVC)
+    if(NOT ANDROID AND NOT WIN32)
       add_subdirectory(lsan)
       add_subdirectory(profile)
       add_subdirectory(ubsan)
@@ -186,7 +186,7 @@ set(i386_SOURCES
   i386/umoddi3.S
   ${GENERIC_SOURCES})
 
-if (NOT MSVC)
+if (NOT WIN32)
   foreach(arch x86_64 i386)
     if(CAN_TARGET_${arch})
       add_compiler_rt_static_runtime(clang_rt.${arch} ${arch}
