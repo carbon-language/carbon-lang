@@ -2950,12 +2950,11 @@ void DwarfDebug::emitDebugMacInfo() {
 CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
-  CompileUnit *NewCU =
-      new CompileUnit(CU->getUniqueID(), Die, DICompileUnit(CU->getNode()), Asm,
-                      this, &SkeletonHolder);
+  CompileUnit *NewCU = new CompileUnit(CU->getUniqueID(), Die, CU->getNode(),
+                                       Asm, this, &SkeletonHolder);
 
   NewCU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name,
-                        DICompileUnit(CU->getNode()).getSplitDebugFilename());
+                        CU->getNode().getSplitDebugFilename());
 
   // Relocate to the beginning of the addr_base section, else 0 for the
   // beginning of the one for this compile unit.

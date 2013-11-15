@@ -101,7 +101,7 @@ public:
   // Accessors.
   unsigned getUniqueID() const { return UniqueID; }
   uint16_t getLanguage() const { return Node.getLanguage(); }
-  const MDNode *getNode() const { return Node; }
+  DICompileUnit getNode() const { return Node; }
   DIE *getCUDie() const { return CUDie.get(); }
   const StringMap<DIE *> &getGlobalNames() const { return GlobalNames; }
   const StringMap<DIE *> &getGlobalTypes() const { return GlobalTypes; }
