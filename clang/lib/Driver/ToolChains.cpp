@@ -329,8 +329,17 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
         // The ASAN runtime library requires C++.
         AddCXXStdlibLibArgs(Args, CmdArgs);
       }
-      AddLinkRuntimeLib(Args, CmdArgs,
-                        "libclang_rt.asan_osx_dynamic.dylib", true);
+      if (isTargetMacOS()) {
+        AddLinkRuntimeLib(Args, CmdArgs,
+                          "libclang_rt.asan_osx_dynamic.dylib",
+                          true);
+      } else {
+        if (isTargetIOSSimulator()) {
+          AddLinkRuntimeLib(Args, CmdArgs,
+                            "libclang_rt.asan_iossim_dynamic.dylib",
+                            true);
+        }
+      }
     }
   }
 

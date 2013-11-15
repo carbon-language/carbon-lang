@@ -9,6 +9,14 @@
 // CHECK-ASAN: libclang_rt.asan_osx_dynamic.dylib"
 
 // RUN: %clang -no-canonical-prefixes -### -target x86_64-darwin \
+// RUN:   -fsanitize=address -mios-simulator-version-min=7.0 %s -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-ASAN-IOSSIM %s
+
+// CHECK-ASAN-IOSSIM: "{{.*}}ld{{(.exe)?}}"
+// CHECK-ASAN-IOSSIM: stdc++
+// CHECK-ASAN-IOSSIM: libclang_rt.asan_iossim_dynamic.dylib"
+
+// RUN: %clang -no-canonical-prefixes -### -target x86_64-darwin \
 // RUN:   -fPIC -shared -fsanitize=address %s -o %t.so 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-DYN-ASAN %s
 
