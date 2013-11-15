@@ -3,6 +3,7 @@
  * RUN: cp %s %t.builddir
  * RUN: %ocamlopt -g -warn-error A llvm.cmxa llvm_target.cmxa llvm_executionengine.cmxa %t.builddir/target.ml -o %t
  * RUN: %t %t.bc
+ * REQUIRES: native, object-emission
  * XFAIL: vg_leak
  *)
 
