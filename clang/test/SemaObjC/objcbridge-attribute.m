@@ -33,6 +33,21 @@ typedef union __CFUColor * __attribute__((objc_bridge(NSUColor))) CFUColorRef; /
 
 typedef struct __CFError * __attribute__((objc_bridge(NSTesting))) CFTestingRef; // expected-note {{declared here}}
 
-id foo(CFTestingRef cf) {
+id Test1(CFTestingRef cf) {
   return (NSString *)cf; // expected-error {{CF object of type 'CFTestingRef' (aka 'struct __CFError *') with 'objc_bridge' attribute which has parameter that does not name an Objective-C class}}
+}
+
+typedef CFErrorRef CFErrorRef1;
+
+typedef CFErrorRef1 CFErrorRef2;
+
+@interface NSError @end
+
+@interface MyError : NSError
+@end
+
+@class NSString;
+
+id Test2(CFErrorRef2 cf) {
+  return (NSString *)cf;
 }
