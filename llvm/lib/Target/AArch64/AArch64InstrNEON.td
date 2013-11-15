@@ -3853,9 +3853,9 @@ multiclass Neon_Scalar2SameMisc_cvt_SD_size_patterns<SDPatternOperator Sopnode,
                                                      SDPatternOperator Dopnode,
                                                      Instruction INSTS,
                                                      Instruction INSTD> {
-  def : Pat<(v1f32 (Sopnode (v1i32 FPR32:$Rn))),
+  def : Pat<(f32 (Sopnode (v1i32 FPR32:$Rn))),
             (INSTS FPR32:$Rn)>;
-  def : Pat<(v1f64 (Dopnode (v1i64 FPR64:$Rn))),
+  def : Pat<(f64 (Dopnode (v1i64 FPR64:$Rn))),
             (INSTD FPR64:$Rn)>;
 }
 
@@ -4135,9 +4135,9 @@ multiclass Neon_ScalarShiftImm_scvtf_SD_size_patterns<SDPatternOperator Sopnode,
                                                       SDPatternOperator Dopnode,
                                                       Instruction INSTS,
                                                       Instruction INSTD> {
-  def ssi : Pat<(v1f32 (Sopnode (v1i32 FPR32:$Rn), (i32 imm:$Imm))),
+  def ssi : Pat<(f32 (Sopnode (v1i32 FPR32:$Rn), (i32 imm:$Imm))),
                 (INSTS FPR32:$Rn, imm:$Imm)>;
-  def ddi : Pat<(v1f64 (Dopnode (v1i64 FPR64:$Rn), (i32 imm:$Imm))),
+  def ddi : Pat<(f64 (Dopnode (v1i64 FPR64:$Rn), (i32 imm:$Imm))),
                 (INSTD FPR64:$Rn, imm:$Imm)>;
 }
 
