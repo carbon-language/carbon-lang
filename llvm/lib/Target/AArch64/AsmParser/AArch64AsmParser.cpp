@@ -1963,12 +1963,12 @@ bool AArch64AsmParser::TryParseVector(uint32_t &RegNum, SMLoc &RegEndLoc,
 
   if (!IdentifyRegister(RegNum, RegEndLoc, Layout, LayoutLoc))
     IsVector = false;
-
-  if (!AArch64MCRegisterClasses[AArch64::FPR64RegClassID].contains(RegNum) &&
-      !AArch64MCRegisterClasses[AArch64::FPR128RegClassID].contains(RegNum))
+  else if (!AArch64MCRegisterClasses[AArch64::FPR64RegClassID]
+                .contains(RegNum) &&
+           !AArch64MCRegisterClasses[AArch64::FPR128RegClassID]
+                .contains(RegNum))
     IsVector = false;
-
-  if (Layout.size() == 0)
+  else if (Layout.size() == 0)
     IsVector = false;
 
   if (!IsVector)
