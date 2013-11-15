@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -verify -Wno-objc-root-class %s
 // rdar://15454846
 
 typedef struct __CFErrorRef * __attribute__ ((objc_bridge(NSError))) CFErrorRef;
@@ -27,3 +27,12 @@ typedef union __CFUColor * __attribute__((objc_bridge(NSUColor))) CFUColorRef; /
 
 }
 @end
+
+@protocol NSTesting @end
+@class NSString;
+
+typedef struct __CFError * __attribute__((objc_bridge(NSTesting))) CFTestingRef; // expected-note {{declared here}}
+
+id foo(CFTestingRef cf) {
+  return (NSString *)cf; // expected-error {{CF object of type 'CFTestingRef' (aka 'struct __CFError *') with 'objc_bridge' attribute which has parameter that does not name an Objective-C class}}
+}

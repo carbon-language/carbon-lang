@@ -2435,18 +2435,21 @@ def warn_objc_requires_super_protocol : Warning<
 def note_protocol_decl : Note<
   "protocol is declared here">;
 
-// objc_bridge attribute diagnostics.
 def err_ns_bridged_not_interface : Error<
   "parameter of 'ns_bridged' attribute does not name an Objective-C class">;
+  
+// objc_bridge attribute diagnostics.
 def err_objc_bridge_not_id : Error<
   "parameter of 'objc_bridge' attribute must be a single name of an Objective-C class">;
 def err_objc_bridge_attribute : Error<
   "'objc_bridge' attribute must be put on a typedef only">;
 def err_objc_bridge_not_cftype : Error<
   "'objc_bridge' attribute must be applied to definition of CF types">;
-  
 def err_objc_bridge_not_pointertype : Error<
   "'objc_bridge' attribute must be applied to a pointer type">;
+def err_objc_bridged_not_interface : Error<
+  "CF object of type %0 with 'objc_bridge' attribute which has parameter that"
+  " does not name an Objective-C class">;
 
 // Function Parameter Semantic Analysis.
 def err_param_with_void_type : Error<"argument may not have 'void' type">;
