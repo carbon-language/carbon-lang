@@ -1,0 +1,7 @@
+# RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
+
+# RUN: echo "MZ Hello world" > %t.stub
+# RUN: lld -flavor link /out:%t.exe /entry:start /stub:%t.stub -- %t.obj
+# RUN: FileCheck %s < %t.exe
+
+CHECK: MZ Hello world
