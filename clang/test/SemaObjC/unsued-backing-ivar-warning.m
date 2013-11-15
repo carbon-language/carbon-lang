@@ -49,3 +49,28 @@
     okIvar = newT;
 }
 @end
+
+// rdar://15473432
+typedef char BOOL;
+@interface CalDAVServerVersion {
+  BOOL _supportsTimeRangeFilterWithoutEndDate;
+}
+@property (nonatomic, readonly,nonatomic) BOOL supportsTimeRangeFilterWithoutEndDate;
+@end
+
+@interface CalDAVConcreteServerVersion : CalDAVServerVersion {
+}
+@end
+
+@interface CalendarServerVersion : CalDAVConcreteServerVersion
+@end
+
+@implementation CalDAVServerVersion
+@synthesize supportsTimeRangeFilterWithoutEndDate=_supportsTimeRangeFilterWithoutEndDate;
+@end
+
+@implementation CalendarServerVersion
+-(BOOL)supportsTimeRangeFilterWithoutEndDate {
+  return 0;
+}
+@end

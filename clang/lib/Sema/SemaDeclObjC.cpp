@@ -3510,8 +3510,17 @@ Sema::GetIvarBackingPropertyAccessor(const ObjCMethodDecl *Method,
   Method = IDecl->lookupMethod(Method->getSelector(), true);
   if (!Method || !Method->isPropertyAccessor())
     return 0;
-  if ((PDecl = Method->findPropertyDecl()))
+  if ((PDecl = Method->findPropertyDecl())) {
+    if (!PDecl->getDeclContext())
+      return 0;
+    // Make sure property belongs to accessor's class and not to
+    // one of its super classes.
+    if (const ObjCInterfaceDecl *CID =
+        dyn_cast<ObjCInterfaceDecl>(PDecl->getDeclContext()))
+      if (CID != IDecl)
+        return 0;
     return PDecl->getPropertyIvarDecl();
+  }
   return 0;
 }
 
