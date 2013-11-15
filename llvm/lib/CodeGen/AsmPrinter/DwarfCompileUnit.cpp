@@ -99,11 +99,11 @@ int64_t CompileUnit::getDefaultLowerBound() const {
 }
 
 /// Check whether the DIE for this MDNode can be shared across CUs.
-static bool isShareableAcrossCUs(const MDNode *N) {
+static bool isShareableAcrossCUs(DIDescriptor D) {
   // When the MDNode can be part of the type system, the DIE can be
   // shared across CUs.
-  return DIDescriptor(N).isType() ||
-         (DIDescriptor(N).isSubprogram() && !DISubprogram(N).isDefinition());
+  return D.isType() ||
+         (D.isSubprogram() && !DISubprogram(D).isDefinition());
 }
 
 /// getDIE - Returns the debug information entry map slot for the
@@ -111,7 +111,7 @@ static bool isShareableAcrossCUs(const MDNode *N) {
 /// when the DIE for this MDNode can be shared across CUs. The mappings
 /// will be kept in DwarfDebug for shareable DIEs.
 DIE *CompileUnit::getDIE(const MDNode *N) const {
-  if (isShareableAcrossCUs(N))
+  if (isShareableAcrossCUs(DIDescriptor(N)))
     return DD->getDIE(N);
   return MDNodeToDieMap.lookup(N);
 }
@@ -120,7 +120,7 @@ DIE *CompileUnit::getDIE(const MDNode *N) const {
 /// when the DIE for this MDNode can be shared across CUs. The mappings
 /// will be kept in DwarfDebug for shareable DIEs.
 void CompileUnit::insertDIE(const MDNode *N, DIE *D) {
-  if (isShareableAcrossCUs(N)) {
+  if (isShareableAcrossCUs(DIDescriptor(N))) {
     DD->insertDIE(N, D);
     return;
   }
