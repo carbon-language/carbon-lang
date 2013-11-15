@@ -226,17 +226,6 @@ bool LoadedModule::containsAddress(uptr address) const {
   return false;
 }
 
-char *StripModuleName(const char *module) {
-  if (module == 0)
-    return 0;
-  const char *short_module_name = internal_strrchr(module, '/');
-  if (short_module_name)
-    short_module_name += 1;
-  else
-    short_module_name = module;
-  return internal_strdup(short_module_name);
-}
-
 }  // namespace __sanitizer
 
 using namespace __sanitizer;  // NOLINT

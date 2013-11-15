@@ -83,9 +83,6 @@ struct Flags {
   bool print_legend;
   // If set, prints ASan exit stats even after program terminates successfully.
   bool atexit;
-  // If set, coverage information will be dumped at shutdown time if the
-  // appropriate instrumentation was enabled.
-  bool coverage;
   // By default, disable core dumper on 64-bit - it makes little sense
   // to dump 16T+ core.
   bool disable_core;
