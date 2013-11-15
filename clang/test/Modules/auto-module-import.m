@@ -82,3 +82,7 @@ int getNoUmbrellaBPrivateFail() { return no_umbrella_B_private; } // expected-er
 int getNotInModule() {
   return not_in_module;
 }
+
+void includeNotAtTopLevel() {
+  #include <NoUmbrella/A.h> // expected-warning {{treating #include as an import}} expected-error {{expected expression}}
+}

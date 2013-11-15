@@ -657,6 +657,11 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
       // -traditional-cpp the lexer keeps /all/ whitespace, including comments.
       SourceLocation StartLoc = Tok.getLocation();
       Callbacks->MoveToLine(StartLoc.getLocWithOffset(Tok.getLength()));
+    } else if (Tok.is(tok::annot_module_include)) {
+      // PrintPPOutputPPCallbacks::InclusionDirective handles producing
+      // appropriate output here. Ignore this token entirely.
+      PP.Lex(Tok);
+      continue;
     } else if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
       OS << II->getName();
     } else if (Tok.isLiteral() && !Tok.needsCleaning() &&

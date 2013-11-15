@@ -12913,6 +12913,12 @@ DeclResult Sema::ActOnModuleImport(SourceLocation AtLoc,
   return Import;
 }
 
+void Sema::ActOnModuleInclude(SourceLocation DirectiveLoc, Module *Mod) {
+  // FIXME: Should we synthesize an ImportDecl here?
+  PP.getModuleLoader().makeModuleVisible(Mod, Module::AllVisible, DirectiveLoc,
+                                         /*Complain=*/true);
+}
+
 void Sema::createImplicitModuleImport(SourceLocation Loc, Module *Mod) {
   // Create the implicit import declaration.
   TranslationUnitDecl *TU = getASTContext().getTranslationUnitDecl();
