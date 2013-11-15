@@ -221,6 +221,10 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
        << path.back()->getLocation().asLocation().getExpansionLineNumber()
        << " -->\n";
 
+    os << "\n<!-- BUGCOLUMN "
+      << path.back()->getLocation().asLocation().getExpansionColumnNumber()
+      << " -->\n";
+
     os << "\n<!-- BUGPATHLENGTH " << path.size() << " -->\n";
 
     // Mark the end of the tags.
