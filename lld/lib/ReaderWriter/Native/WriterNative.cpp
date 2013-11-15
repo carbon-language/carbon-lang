@@ -283,13 +283,11 @@ private:
 
   // check if name is already in pool or append and return offset
   uint32_t getSharedLibraryNameOffset(StringRef name) {
-    assert( ! name.empty() );
+    assert(!name.empty());
     // look to see if this library name was used by another atom
-    for(NameToOffsetVector::iterator it = _sharedLibraryNames.begin();
-                                    it != _sharedLibraryNames.end(); ++it) {
-      if ( name.equals(it->first) )
-        return it->second;
-    }
+    for (auto &it : _sharedLibraryNames)
+      if (name.equals(it.first))
+        return it.second;
     // first use of this library name
     uint32_t result = this->getNameOffset(name);
     _sharedLibraryNames.push_back(std::make_pair(name, result));
@@ -349,16 +347,14 @@ private:
 
   uint32_t sectionNameOffset(const DefinedAtom& atom) {
     // if section based on content, then no custom section name available
-    if ( atom.sectionChoice() == DefinedAtom::sectionBasedOnContent )
+    if (atom.sectionChoice() == DefinedAtom::sectionBasedOnContent)
       return 0;
     StringRef name = atom.customSectionName();
-    assert( ! name.empty() );
+    assert(!name.empty());
     // look to see if this section name was used by another atom
-    for(NameToOffsetVector::iterator it=_sectionNames.begin();
-                                            it != _sectionNames.end(); ++it) {
-      if ( name.equals(it->first) )
-        return it->second;
-    }
+    for (auto &it : _sectionNames)
+      if (name.equals(it.first))
+        return it.second;
     // first use of this section name
     uint32_t result = this->getNameOffset(name);
     _sectionNames.push_back(std::make_pair(name, result));
@@ -424,10 +420,9 @@ private:
     uint32_t maxTargetIndex = _targetsTableIndex.size();
     assert(maxTargetIndex > 0);
     std::vector<uint32_t> targetIndexes(maxTargetIndex);
-    for (TargetToIndex::iterator it = _targetsTableIndex.begin();
-                                 it != _targetsTableIndex.end(); ++it) {
-      const Atom* atom = it->first;
-      uint32_t targetIndex = it->second;
+    for (auto &it : _targetsTableIndex) {
+      const Atom* atom = it.first;
+      uint32_t targetIndex = it.second;
       assert(targetIndex < maxTargetIndex);
       uint32_t atomIndex = 0;
       TargetToIndex::iterator pos = _definedAtomIndex.find(atom);
@@ -479,10 +474,9 @@ private:
     // Build table of addends
     uint32_t maxAddendIndex = _addendsTableIndex.size();
     std::vector<Reference::Addend> addends(maxAddendIndex);
-    for (AddendToIndex::iterator it = _addendsTableIndex.begin();
-                                 it != _addendsTableIndex.end(); ++it) {
-      Reference::Addend addend = it->first;
-      uint32_t index = it->second;
+    for (auto &it : _addendsTableIndex) {
+      Reference::Addend addend = it.first;
+      uint32_t index = it.second;
       assert(index <= maxAddendIndex);
       addends[index-1] = addend;
     }
