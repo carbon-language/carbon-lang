@@ -886,10 +886,7 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE.
   DIE *ContextDIE = getOrCreateContextDIE(resolve(Ty.getContext()));
-  // TODO: Investigate if this beavior is intentional and possibly
-  // replace it with an assert.
-  if (!ContextDIE)
-    ContextDIE = getCUDie();
+  assert(ContextDIE);
 
   DIE *TyDIE = getDIE(Ty);
   if (TyDIE)
