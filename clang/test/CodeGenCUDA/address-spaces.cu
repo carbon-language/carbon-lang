@@ -12,13 +12,13 @@ __constant__ int j;
 __shared__ int k;
 
 __device__ void foo() {
-  // CHECK: load i32* bitcast (i32 addrspace(1)* @i to i32*)
+  // CHECK: load i32* addrspacecast (i32 addrspace(1)* @i to i32*)
   i++;
 
-  // CHECK: load i32* bitcast (i32 addrspace(4)* @j to i32*)
+  // CHECK: load i32* addrspacecast (i32 addrspace(4)* @j to i32*)
   j++;
 
-  // CHECK: load i32* bitcast (i32 addrspace(3)* @k to i32*)
+  // CHECK: load i32* addrspacecast (i32 addrspace(3)* @k to i32*)
   k++;
 
   static int li;

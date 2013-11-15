@@ -1557,6 +1557,9 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
       return Entry;
 
     // Make sure the result is of the correct type.
+    if (Entry->getType()->getAddressSpace() != Ty->getAddressSpace())
+      return llvm::ConstantExpr::getAddrSpaceCast(Entry, Ty);
+
     return llvm::ConstantExpr::getBitCast(Entry, Ty);
   }
 
@@ -1607,9 +1610,9 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
   }
 
   if (AddrSpace != Ty->getAddressSpace())
-    return llvm::ConstantExpr::getBitCast(GV, Ty);
-  else
-    return GV;
+    return llvm::ConstantExpr::getAddrSpaceCast(GV, Ty);
+
+  return GV;
 }
 
 
@@ -1802,7 +1805,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   // Strip off a bitcast if we got one back.
   if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(Entry)) {
     assert(CE->getOpcode() == llvm::Instruction::BitCast ||
-           // all zero index gep.
+           CE->getOpcode() == llvm::Instruction::AddrSpaceCast ||
+           // All zero index gep.
            CE->getOpcode() == llvm::Instruction::GetElementPtr);
     Entry = CE->getOperand(0);
   }
