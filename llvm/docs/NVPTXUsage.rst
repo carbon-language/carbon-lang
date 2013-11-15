@@ -479,7 +479,7 @@ We can use the LLVM ``llc`` tool to directly run the NVPTX code generator:
 .. note::
 
   If you want to generate 32-bit code, change ``p:64:64:64`` to ``p:32:32:32``
-  in the module data layout string and use ``nvptx64-nvidia-cuda`` as the
+  in the module data layout string and use ``nvptx-nvidia-cuda`` as the
   target triple.
 
 
