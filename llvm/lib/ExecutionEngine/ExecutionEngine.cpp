@@ -1289,6 +1289,10 @@ void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
   if (GA == 0) {
     // If it's not already specified, allocate memory for the global.
     GA = getMemoryForGV(GV);
+
+    // If we failed to allocate memory for this global, return.
+    if (GA == 0) return;
+
     addGlobalMapping(GV, GA);
   }
 
