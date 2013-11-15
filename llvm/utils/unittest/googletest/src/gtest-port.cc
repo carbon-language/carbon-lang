@@ -746,8 +746,10 @@ const char* StringFromGTestEnv(const char* flag, const char* default_value) {
   return value == NULL ? default_value : value;
 }
 
+#if GTEST_HAS_PTHREAD
 ThreadWithParamBase::~ThreadWithParamBase() {}
 ThreadLocalValueHolderBase::~ThreadLocalValueHolderBase() {}
+#endif
 TestFactoryBase::~TestFactoryBase() {}
 
 }  // namespace internal
