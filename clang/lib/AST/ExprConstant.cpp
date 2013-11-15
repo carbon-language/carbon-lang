@@ -6133,22 +6133,47 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     else
       Info.CCEDiag(E, diag::note_invalid_subexpr_in_const_expr);
     // Fall through.
-  case Builtin::BI__builtin_strlen:
-    // As an extension, we support strlen() and __builtin_strlen() as constant
-    // expressions when the argument is a string literal.
-    if (const StringLiteral *S
-               = dyn_cast<StringLiteral>(E->getArg(0)->IgnoreParenImpCasts())) {
+  case Builtin::BI__builtin_strlen: {
+    // As an extension, we support __builtin_strlen() as a constant expression,
+    // and support folding strlen() to a constant.
+    LValue String;
+    if (!EvaluatePointer(E->getArg(0), String, Info))
+      return false;
+
+    // Fast path: if it's a string literal, search the string value.
+    if (const StringLiteral *S = dyn_cast_or_null<StringLiteral>(
+            String.getLValueBase().dyn_cast<const Expr *>())) {
       // The string literal may have embedded null characters. Find the first
       // one and truncate there.
-      StringRef Str = S->getString();
-      StringRef::size_type Pos = Str.find(0);
-      if (Pos != StringRef::npos)
-        Str = Str.substr(0, Pos);
-      
-      return Success(Str.size(), E);
+      StringRef Str = S->getBytes();
+      int64_t Off = String.Offset.getQuantity();
+      if (Off >= 0 && (uint64_t)Off <= (uint64_t)Str.size() &&
+          S->getCharByteWidth() == 1) {
+        Str = Str.substr(Off);
+
+        StringRef::size_type Pos = Str.find(0);
+        if (Pos != StringRef::npos)
+          Str = Str.substr(0, Pos);
+
+        return Success(Str.size(), E);
+      }
+
+      // Fall through to slow path to issue appropriate diagnostic.
     }
-      
-    return Error(E);
+
+    // Slow path: scan the bytes of the string looking for the terminating 0.
+    QualType CharTy = E->getArg(0)->getType()->getPointeeType();
+    for (uint64_t Strlen = 0; /**/; ++Strlen) {
+      APValue Char;
+      if (!handleLValueToRValueConversion(Info, E, CharTy, String, Char) ||
+          !Char.isInt())
+        return false;
+      if (!Char.getInt())
+        return Success(Strlen, E);
+      if (!HandleLValueArrayAdjustment(Info, E, String, CharTy, 1))
+        return false;
+    }
+  }
 
   case Builtin::BI__atomic_always_lock_free:
   case Builtin::BI__atomic_is_lock_free:
@@ -6426,8 +6451,8 @@ bool DataRecursiveIntBinOpEvaluator::
   // Handle cases like (unsigned long)&a + 4.
   if (E->isAdditiveOp() && LHSVal.isLValue() && RHSVal.isInt()) {
     Result = LHSVal;
-    CharUnits AdditionalOffset = CharUnits::fromQuantity(
-                                                         RHSVal.getInt().getZExtValue());
+    CharUnits AdditionalOffset =
+        CharUnits::fromQuantity(RHSVal.getInt().getZExtValue());
     if (E->getOpcode() == BO_Add)
       Result.getLValueOffset() += AdditionalOffset;
     else
@@ -6439,8 +6464,8 @@ bool DataRecursiveIntBinOpEvaluator::
   if (E->getOpcode() == BO_Add &&
       RHSVal.isLValue() && LHSVal.isInt()) {
     Result = RHSVal;
-    Result.getLValueOffset() += CharUnits::fromQuantity(
-                                                        LHSVal.getInt().getZExtValue());
+    Result.getLValueOffset() +=
+        CharUnits::fromQuantity(LHSVal.getInt().getZExtValue());
     return true;
   }
   
