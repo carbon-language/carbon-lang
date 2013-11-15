@@ -1205,6 +1205,10 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
   Type *DataTy = VectorType::get(ScalarDataTy, VF);
   Value *Ptr = LI ? LI->getPointerOperand() : SI->getPointerOperand();
   unsigned Alignment = LI ? LI->getAlignment() : SI->getAlignment();
+  // An alignment of 0 means target abi alignment. We need to use the scalar's
+  // target abi alignment in such a case.
+  if (!Alignment)
+    Alignment = DL->getABITypeAlignment(ScalarDataTy);
   unsigned AddressSpace = Ptr->getType()->getPointerAddressSpace();
   unsigned ScalarAllocatedSize = DL->getTypeAllocSize(ScalarDataTy);
   unsigned VectorElementSize = DL->getTypeStoreSize(DataTy)/VF;
