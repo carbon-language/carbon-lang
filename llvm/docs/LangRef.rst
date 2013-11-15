@@ -5785,9 +5785,9 @@ Example:
 
 .. code-block:: llvm
 
-      %X = addrspacecast i32* %x to addrspace(1) i32*    ; yields addrspace(1) i32*:%x
-      %Y = addrspacecast addrspace(1) <2 x i32>* %y to addrspace(2) i64*    ; yields addrspace(2) i32*:%y
-      %Z = addrspacecast <4 x i32*> %z to <4 x float addrspace(3)*>    ; yelds <4 x float addrspace(3)*>:%z
+      %X = addrspacecast i32* %x to i32 addrspace(1)*    ; yields i32 addrspace(1)*:%x
+      %Y = addrspacecast i32 addrspace(1)* %y to i64 addrspace(2)*    ; yields i64 addrspace(2)*:%y
+      %Z = addrspacecast <4 x i32*> %z to <4 x float addrspace(3)*>   ; yields <4 x float addrspace(3)*>:%z
 
 .. _otherops:
 
