@@ -516,11 +516,40 @@ StmtResult Parser::ParseLabeledStatement(ParsedAttributesWithRange &attrs) {
   // identifier ':' statement
   SourceLocation ColonLoc = ConsumeToken();
 
-  // Read label attributes, if present. attrs will contain both C++11 and GNU
-  // attributes (if present) after this point.
-  MaybeParseGNUAttributes(attrs);
+  // Read label attributes, if present.
+  StmtResult SubStmt;
+  if (Tok.is(tok::kw___attribute)) {
+    ParsedAttributesWithRange TempAttrs(AttrFactory);
+    ParseGNUAttributes(TempAttrs);
 
-  StmtResult SubStmt(ParseStatement());
+    // In C++, GNU attributes only apply to the label if they are followed by a
+    // semicolon, to disambiguate label attributes from attributes on a labeled
+    // declaration.
+    //
+    // This doesn't quite match what GCC does; if the attribute list is empty
+    // and followed by a semicolon, GCC will reject (it appears to parse the
+    // attributes as part of a statement in that case). That looks like a bug.
+    if (!getLangOpts().CPlusPlus || Tok.is(tok::semi))
+      attrs.takeAllFrom(TempAttrs);
+    else if (isDeclarationStatement()) {
+      StmtVector Stmts;
+      // FIXME: We should do this whether or not we have a declaration
+      // statement, but that doesn't work correctly (because ProhibitAttributes
+      // can't handle GNU attributes), so only call it in the one case where
+      // GNU attributes are allowed.
+      SubStmt = ParseStatementOrDeclarationAfterAttributes(
+          Stmts, /*OnlyStmts*/ true, 0, TempAttrs);
+      if (!TempAttrs.empty() && !SubStmt.isInvalid())
+        SubStmt = Actions.ProcessStmtAttributes(
+            SubStmt.get(), TempAttrs.getList(), TempAttrs.Range);
+    } else {
+      Diag(Tok, diag::err_expected_semi_after) << "__attribute__";
+    }
+  }
+
+  // If we've not parsed a statement yet, parse one now.
+  if (!SubStmt.isInvalid() && !SubStmt.isUsable())
+    SubStmt = ParseStatement();
 
   // Broken substmt shouldn't prevent the label from being added to the AST.
   if (SubStmt.isInvalid())
@@ -557,7 +586,7 @@ StmtResult Parser::ParseCaseStatement(bool MissingCase, ExprResult Expr) {
   // out of stack space in our recursive descent parser.  As a special case,
   // flatten this recursion into an iterative loop.  This is complex and gross,
   // but all the grossness is constrained to ParseCaseStatement (and some
-  // wierdness in the actions), so this is just local grossness :).
+  // weirdness in the actions), so this is just local grossness :).
 
   // TopLevelCase - This is the highest level we have parsed.  'case 1' in the
   // example above.
