@@ -317,7 +317,7 @@ public:
   void constructContainingTypeDIEs();
 
   /// constructVariableDIE - Construct a DIE for the given DbgVariable.
-  DIE *constructVariableDIE(DbgVariable *DV, bool isScopeAbstract);
+  DIE *constructVariableDIE(DbgVariable &DV, bool isScopeAbstract);
 
   /// Create a DIE with the given Tag, add the DIE to its parent, and
   /// call insertDIE if MD is not null.

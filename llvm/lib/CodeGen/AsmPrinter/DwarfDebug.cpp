@@ -578,7 +578,7 @@ DIE *DwarfDebug::createScopeChildrenDIE(CompileUnit *TheCU, LexicalScope *Scope,
     for (unsigned i = 0, N = CurrentFnArguments.size(); i < N; ++i)
       if (DbgVariable *ArgDV = CurrentFnArguments[i])
         if (DIE *Arg =
-            TheCU->constructVariableDIE(ArgDV, Scope->isAbstractScope())) {
+            TheCU->constructVariableDIE(*ArgDV, Scope->isAbstractScope())) {
           Children.push_back(Arg);
           if (ArgDV->isObjectPointer()) ObjectPointer = Arg;
         }
@@ -587,7 +587,7 @@ DIE *DwarfDebug::createScopeChildrenDIE(CompileUnit *TheCU, LexicalScope *Scope,
   const SmallVectorImpl<DbgVariable *> &Variables =ScopeVariables.lookup(Scope);
   for (unsigned i = 0, N = Variables.size(); i < N; ++i)
     if (DIE *Variable =
-        TheCU->constructVariableDIE(Variables[i], Scope->isAbstractScope())) {
+        TheCU->constructVariableDIE(*Variables[i], Scope->isAbstractScope())) {
       Children.push_back(Variable);
       if (Variables[i]->isObjectPointer()) ObjectPointer = Variable;
     }
@@ -999,7 +999,7 @@ void DwarfDebug::collectDeadVariables() {
             continue;
           DbgVariable NewVar(DV, NULL, this);
           if (DIE *VariableDIE =
-                  SPCU->constructVariableDIE(&NewVar, false))
+                  SPCU->constructVariableDIE(NewVar, false))
             SPDIE->addChild(VariableDIE);
         }
       }
