@@ -38,7 +38,7 @@ CompileUnit::CompileUnit(unsigned UID, DIE *D, const MDNode *N, AsmPrinter *A,
     : UniqueID(UID), Node(N), CUDie(D), Asm(A), DD(DW), DU(DWU), IndexTyDie(0),
       DebugInfoOffset(0) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
-  insertDIE(N, D);
+  insertDIE(DIDescriptor(N), D);
 }
 
 /// ~CompileUnit - Destructor for compile unit.
@@ -110,21 +110,21 @@ static bool isShareableAcrossCUs(DIDescriptor D) {
 /// specified debug variable. We delegate the request to DwarfDebug
 /// when the DIE for this MDNode can be shared across CUs. The mappings
 /// will be kept in DwarfDebug for shareable DIEs.
-DIE *CompileUnit::getDIE(const MDNode *N) const {
-  if (isShareableAcrossCUs(DIDescriptor(N)))
-    return DD->getDIE(N);
-  return MDNodeToDieMap.lookup(N);
+DIE *CompileUnit::getDIE(DIDescriptor D) const {
+  if (isShareableAcrossCUs(D))
+    return DD->getDIE(D);
+  return MDNodeToDieMap.lookup(D);
 }
 
 /// insertDIE - Insert DIE into the map. We delegate the request to DwarfDebug
 /// when the DIE for this MDNode can be shared across CUs. The mappings
 /// will be kept in DwarfDebug for shareable DIEs.
-void CompileUnit::insertDIE(const MDNode *N, DIE *D) {
-  if (isShareableAcrossCUs(DIDescriptor(N))) {
-    DD->insertDIE(N, D);
+void CompileUnit::insertDIE(DIDescriptor Desc, DIE *D) {
+  if (isShareableAcrossCUs(Desc)) {
+    DD->insertDIE(Desc, D);
     return;
   }
-  MDNodeToDieMap.insert(std::make_pair(N, D));
+  MDNodeToDieMap.insert(std::make_pair(Desc, D));
 }
 
 /// addFlag - Add a flag that is true.
@@ -300,7 +300,7 @@ DIE *CompileUnit::createAndAddDIE(unsigned Tag, DIE &Parent, const MDNode *MD) {
   DIE *Die = new DIE(Tag);
   Parent.addChild(Die);
   if (MD)
-    insertDIE(MD, Die);
+    insertDIE(DIDescriptor(MD), Die);
   return Die;
 }
 
@@ -1512,11 +1512,12 @@ static const ConstantExpr *getMergedGlobalExpr(const Value *V) {
 
 /// createGlobalVariableDIE - create global variable DIE.
 void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
+  DIGlobalVariable GV(N);
+
   // Check for pre-existence.
-  if (getDIE(N))
+  if (getDIE(GV))
     return;
 
-  DIGlobalVariable GV(N);
   if (!GV.isGlobalVariable())
     return;
 
@@ -1735,10 +1736,10 @@ void CompileUnit::constructContainingTypeDIEs() {
                                                  CE = ContainingTypeMap.end();
        CI != CE; ++CI) {
     DIE *SPDie = CI->first;
-    const MDNode *N = CI->second;
-    if (!N)
+    DIDescriptor D(CI->second);
+    if (!D)
       continue;
-    DIE *NDie = getDIE(N);
+    DIE *NDie = getDIE(D);
     if (!NDie)
       continue;
     addDIEEntry(SPDie, dwarf::DW_AT_containing_type, NDie);
@@ -1904,7 +1905,7 @@ void CompileUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
 }
 
 /// getOrCreateStaticMemberDIE - Create new DIE for C++ static member.
-DIE *CompileUnit::getOrCreateStaticMemberDIE(const DIDerivedType DT) {
+DIE *CompileUnit::getOrCreateStaticMemberDIE(DIDerivedType DT) {
   if (!DT.Verify())
     return NULL;
 

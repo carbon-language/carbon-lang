@@ -159,7 +159,7 @@ public:
   /// when the MDNode can be part of the type system, since DIEs for
   /// the type system can be shared across CUs and the mappings are
   /// kept in DwarfDebug.
-  DIE *getDIE(const MDNode *N) const;
+  DIE *getDIE(DIDescriptor D) const;
 
   DIEBlock *getDIEBlock() { return new (DIEValueAllocator) DIEBlock(); }
 
@@ -167,7 +167,7 @@ public:
   /// when the MDNode can be part of the type system, since DIEs for
   /// the type system can be shared across CUs and the mappings are
   /// kept in DwarfDebug.
-  void insertDIE(const MDNode *N, DIE *D);
+  void insertDIE(DIDescriptor Desc, DIE *D);
 
   /// addDie - Adds or interns the DIE to the compile unit.
   ///
