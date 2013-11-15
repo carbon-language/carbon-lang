@@ -1,6 +1,4 @@
-// RUN: %clang_cc1 %s -O900 2> %t.log
+// RUN: not %clang_cc1 %s -O900 2> %t.log
 // RUN: FileCheck %s -input-file=%t.log
 
-// CHECK: warning: optimization level '-O900' is unsupported; using '-O3' instead.
-
-
+// CHECK: invalid value '900' in '-O900'
