@@ -103,6 +103,9 @@
 // CHECK-MAX-O: warning: -O4 is equivalent to -O3
 // CHECK-MAX-O: -O3
 
+// RUN: %clang -S -O20 %s 2>&1 | FileCheck -check-prefix=CHECK-INVALID-O %s
+// CHECK-INVALID-O: warning: optimization level '-O20' is unsupported; using '-O3' instead.
+
 // Test that we don't error on these.
 // RUN: %clang -### -S -Werror                                                \
 // RUN:     -falign-functions -falign-functions=2 -fno-align-functions        \
