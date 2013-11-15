@@ -222,3 +222,49 @@ declare float @llvm.pow.f32(float, float) #4
 
 ; Function Attrs: nounwind readnone
 declare i32 @llvm.SI.packf16(float, float) #1
+
+; This checks for a bug in the FixSGPRCopies pass where VReg96
+; registers were being identified as an SGPR regclass which was causing
+; an assertion failure.
+
+; CHECK-LABEL: @sample_v3
+; CHECK: IMAGE_SAMPLE
+; CHECK: IMAGE_SAMPLE
+; CHECK: EXP
+; CHECK: S_ENDPGM
+define void @sample_v3([17 x <16 x i8>] addrspace(2)* byval, [32 x <16 x i8>] addrspace(2)* byval, [16 x <32 x i8>] addrspace(2)* byval, float inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
+
+entry:
+  %21 = getelementptr [17 x <16 x i8>] addrspace(2)* %0, i64 0, i32 0
+  %22 = load <16 x i8> addrspace(2)* %21, !tbaa !2
+  %23 = call float @llvm.SI.load.const(<16 x i8> %22, i32 16)
+  %24 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 0
+  %25 = load <32 x i8> addrspace(2)* %24, !tbaa !2
+  %26 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 0
+  %27 = load <16 x i8> addrspace(2)* %26, !tbaa !2
+  %28 = fcmp oeq float %23, 0.0
+  br i1 %28, label %if, label %else
+
+if:
+  %val.if = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> <i32 0, i32 0>, <32 x i8> %25, <16 x i8> %27, i32 2)
+  %val.if.0 = extractelement <4 x float> %val.if, i32 0
+  %val.if.1 = extractelement <4 x float> %val.if, i32 1
+  %val.if.2 = extractelement <4 x float> %val.if, i32 2
+  br label %endif
+
+else:
+  %val.else = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> <i32 1, i32 0>, <32 x i8> %25, <16 x i8> %27, i32 2)
+  %val.else.0 = extractelement <4 x float> %val.else, i32 0
+  %val.else.1 = extractelement <4 x float> %val.else, i32 1
+  %val.else.2 = extractelement <4 x float> %val.else, i32 2
+  br label %endif
+
+endif:
+  %val.0 = phi float [%val.if.0, %if], [%val.else.0, %else]
+  %val.1 = phi float [%val.if.1, %if], [%val.else.1, %else]
+  %val.2 = phi float [%val.if.2, %if], [%val.else.2, %else]
+  call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 1, float %val.0, float %val.1, float %val.2, float 0.0)
+  ret void
+}
+
+!2 = metadata !{metadata !"const", null, i32 1}
