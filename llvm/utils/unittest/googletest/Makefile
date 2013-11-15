@@ -19,6 +19,7 @@ REQUIRES_RTTI = 1
 # unittests/Makefile.unittest and ../UnitTestMain/Makefile; ensure that any
 # changes are made to both.
 CPP.Flags += -I$(LLVM_SRC_ROOT)/utils/unittest/googletest/include
+CPP.Flags += -I$(LLVM_SRC_ROOT)/utils/unittest/googletest
 CPP.Flags += $(NO_MISSING_FIELD_INITIALIZERS) $(NO_VARIADIC_MACROS)
 CPP.Flags += -DGTEST_HAS_RTTI=0
 # libstdc++'s TR1 <tuple> header depends on RTTI and uses C++'0x features not
@@ -36,6 +37,6 @@ endif
 
 NO_INSTALL = 1
 
-SOURCES = $(filter-out gtest-all.cc, $(notdir $(wildcard $(PROJ_SRC_DIR)/*.cc)))
+SOURCES = src/gtest-all.cc
 
 include $(LEVEL)/Makefile.common
