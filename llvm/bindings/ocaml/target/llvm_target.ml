@@ -13,6 +13,43 @@ module Endian = struct
   | Little
 end
 
+module CodeGenOptLevel = struct
+  type t =
+  | None
+  | Less
+  | Default
+  | Aggressive
+end
+
+module RelocMode = struct
+  type t =
+  | Default
+  | Static
+  | PIC
+  | DynamicNoPIC
+end
+
+module CodeModel = struct
+  type t =
+  | Default
+  | JITDefault
+  | Small
+  | Kernel
+  | Medium
+  | Large
+end
+
+module CodeGenFileType = struct
+  type t =
+  | AssemblyFile
+  | ObjectFile
+end
+
+exception Error of string
+
+external register_exns : exn -> unit = "llvm_register_target_exns"
+let _ = register_exns (Error "")
+
 module DataLayout = struct
   type t
 
@@ -49,3 +86,53 @@ module DataLayout = struct
                              = "llvm_datalayout_offset_of_element"
 end
 
+module Target = struct
+  type t
+
+  external default_triple : unit -> string = "llvm_target_default_triple"
+  external first : unit -> t option = "llvm_target_first"
+  external succ : t -> t option = "llvm_target_succ"
+  external by_name : string -> t option = "llvm_target_by_name"
+  external by_triple : string -> t = "llvm_target_by_triple"
+  external name : t -> string = "llvm_target_name"
+  external description : t -> string = "llvm_target_description"
+  external has_jit : t -> bool = "llvm_target_has_jit"
+  external has_target_machine : t -> bool = "llvm_target_has_target_machine"
+  external has_asm_backend : t -> bool = "llvm_target_has_asm_backend"
+
+  let all () =
+    let rec step elem lst =
+      match elem with
+      | Some target -> step (succ target) (target :: lst)
+      | None        -> lst
+    in
+    step (first ()) []
+end
+
+module TargetMachine = struct
+  type t
+
+  external create : triple:string -> ?cpu:string -> ?features:string ->
+                    ?level:CodeGenOptLevel.t -> ?reloc_mode:RelocMode.t ->
+                    ?code_model:CodeModel.t -> Target.t -> t
+                  = "llvm_create_targetmachine_bytecode"
+                    "llvm_create_targetmachine_native"
+  external target : t -> Target.t
+                  = "llvm_targetmachine_target"
+  external triple : t -> string
+                  = "llvm_targetmachine_triple"
+  external cpu : t -> string
+               = "llvm_targetmachine_cpu"
+  external features : t -> string
+                    = "llvm_targetmachine_features"
+  external data_layout : t -> DataLayout.t
+                       = "llvm_targetmachine_data_layout"
+  external set_verbose_asm : bool -> t -> unit
+                           = "llvm_targetmachine_set_verbose_asm"
+  external emit_to_file : Llvm.llmodule -> CodeGenFileType.t -> string ->
+                          t -> unit
+                        = "llvm_targetmachine_emit_to_file"
+  external emit_to_memory_buffer : Llvm.llmodule -> CodeGenFileType.t ->
+                                   t -> Llvm.llmemorybuffer
+                                 = "llvm_targetmachine_emit_to_memory_buffer"
+end

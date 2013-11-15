@@ -1,7 +1,7 @@
 (* RUN: rm -rf %t.builddir
  * RUN: mkdir -p %t.builddir
  * RUN: cp %s %t.builddir
- * RUN: %ocamlopt -g -warn-error A llvm.cmxa llvm_target.cmxa %t.builddir/target.ml -o %t
+ * RUN: %ocamlopt -g -warn-error A llvm.cmxa llvm_target.cmxa llvm_X86.cmxa %t.builddir/target.ml -o %t
  * RUN: %t %t.bc
  * XFAIL: vg_leak
  *)
@@ -13,6 +13,7 @@
 open Llvm
 open Llvm_target
 
+let _ = Llvm_X86.initialize ()
 
 let context = global_context ()
 let i32_type = Llvm.i32_type context
@@ -33,8 +34,15 @@ let assert_equal a b =
 let filename = Sys.argv.(1)
 let m = create_module context filename
 
+let target =
+  match Target.by_name "x86" with
+  | Some t -> t
+  | None -> failwith "need a target"
 
-(*===-- Target Data -------------------------------------------------------===*)
+let machine =
+  TargetMachine.create ~triple:"i686-linux-gnu" ~cpu:"core2" target
+
+(*===-- Data Layout -------------------------------------------------------===*)
 
 let test_target_data () =
   let module DL = DataLayout in
@@ -63,8 +71,50 @@ let test_target_data () =
   ignore (DL.add_to_pass_manager pm dl)
 
 
+(*===-- Target ------------------------------------------------------------===*)
+
+let test_target () =
+  let module T = Target in
+  ignore (T.succ target);
+  assert_equal (T.name target) "x86";
+  assert_equal (T.description target) "32-bit X86: Pentium-Pro and above";
+  assert_equal (T.has_jit target) true;
+  assert_equal (T.has_target_machine target) true;
+  assert_equal (T.has_asm_backend target) true
+
+
+(*===-- Target Machine ----------------------------------------------------===*)
+
+let test_target_machine () =
+  let module TM = TargetMachine in
+  assert_equal (TM.target machine) target;
+  assert_equal (TM.triple machine) "i686-linux-gnu";
+  assert_equal (TM.cpu machine) "core2";
+  assert_equal (TM.features machine) "";
+  ignore (TM.data_layout machine)
+
+
+(*===-- Code Emission -----------------------------------------------------===*)
+
+let test_code_emission () =
+  TargetMachine.emit_to_file m CodeGenFileType.ObjectFile filename machine;
+  try
+    TargetMachine.emit_to_file m CodeGenFileType.ObjectFile
+                               "/nonexistent/file" machine;
+    failwith "must raise"
+  with Llvm_target.Error _ ->
+    ();
+
+  let buf = TargetMachine.emit_to_memory_buffer m CodeGenFileType.ObjectFile
+                                                machine in
+  Llvm.MemoryBuffer.dispose buf
+
+
 (*===-- Driver ------------------------------------------------------------===*)
 
 let _ =
   test_target_data ();
+  test_target ();
+  test_target_machine ();
+  (* test_code_emission (); *) (* broken without AsmParser support *)
   dispose_module m
