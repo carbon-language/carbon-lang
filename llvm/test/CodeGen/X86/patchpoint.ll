@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7 -disable-fp-elim | FileCheck %s
 
 ; Trivial patchpoint codegen
 ;
@@ -24,9 +24,9 @@ entry:
 ; as a leaf function.
 ;
 ; CHECK-LABEL: caller_meta_leaf
-; CHECK: subq $24, %rsp
+; CHECK: subq $32, %rsp
 ; CHECK: Ltmp
-; CHECK: addq $24, %rsp
+; CHECK: addq $32, %rsp
 ; CHECK: ret
 define void @caller_meta_leaf() {
 entry:
