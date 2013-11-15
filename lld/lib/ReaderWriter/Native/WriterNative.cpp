@@ -174,7 +174,8 @@ private:
     NativeChunk *chunks =
       reinterpret_cast<NativeChunk*>(reinterpret_cast<char*>(_headerBuffer)
                                      + sizeof(NativeFileHeader));
-    memcpy(_headerBuffer->magic, NATIVE_FILE_HEADER_MAGIC, 16);
+    memcpy(_headerBuffer->magic, NATIVE_FILE_HEADER_MAGIC,
+           sizeof(_headerBuffer->magic));
     _headerBuffer->endian = NFH_LittleEndian;
     _headerBuffer->architecture = 0;
     _headerBuffer->fileSize = 0;
