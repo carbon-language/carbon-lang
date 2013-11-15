@@ -67,8 +67,9 @@ def int_aarch64_neon_vpmaxnm : Neon_2Arg_Intrinsic;
 // Vector Pairwise minNum (Floating Point)
 def int_aarch64_neon_vpminnm : Neon_2Arg_Intrinsic;
 
-// Vector Multiply Extended (Floating Point)
-def int_aarch64_neon_vmulx : Neon_2Arg_Intrinsic;
+// Vector Multiply Extended and Scalar Multiply Extended (Floating Point)
+def int_aarch64_neon_vmulx  :
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, LLVMMatchType<0>]>;
 
 class Neon_N2V_Intrinsic
   : Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>, llvm_i32_ty],

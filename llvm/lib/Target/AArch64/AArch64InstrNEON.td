@@ -3653,6 +3653,8 @@ defm ST1WB4V_1D : NeonI_STWB_VList<0, 0b0010, 0b11, VQuad1D_operand,
 // End of post-index vector load/store multiple N-element structure
 // (class SIMD lselem-post)
 
+
+// Neon Scalar instructions implementation
 // Scalar Three Same
 
 class NeonI_Scalar3Same_size<bit u, bits<2> size, bits<5> opcode, string asmop,
@@ -4360,8 +4362,17 @@ defm : Neon_Scalar3Same_SD_size_patterns<int_arm_neon_vrsqrts, FRSQRTSsss,
 
 // Patterns to match llvm.aarch64.* intrinsic for
 // Scalar Floating-point Multiply Extended,
-defm : Neon_Scalar3Same_SD_size_patterns<int_aarch64_neon_vmulx, FMULXsss,
-                                         FMULXddd>;
+multiclass Neon_Scalar3Same_MULX_SD_size_patterns<SDPatternOperator opnode,
+                                                  Instruction INSTS,
+                                                  Instruction INSTD> {
+  def : Pat<(f32 (opnode (f32 FPR32:$Rn), (f32 FPR32:$Rm))),
+            (INSTS FPR32:$Rn, FPR32:$Rm)>;
+  def : Pat<(f64 (opnode (f64 FPR64:$Rn), (f64 FPR64:$Rm))),
+            (INSTD FPR64:$Rn, FPR64:$Rm)>;
+}
+
+defm : Neon_Scalar3Same_MULX_SD_size_patterns<int_aarch64_neon_vmulx,
+                                              FMULXsss,FMULXddd>;
 
 // Scalar Integer Shift Left (Signed, Unsigned)
 def SSHLddd : NeonI_Scalar3Same_D_size<0b0, 0b01000, "sshl">;
@@ -4794,6 +4805,51 @@ def FMULXddv_2D : NeonI_ScalarXIndexedElemArith<"fmulx",
   let Inst{20-16} = MRm;
 }
 
+multiclass Neon_ScalarXIndexedElem_MUL_MULX_Patterns<
+  SDPatternOperator opnode,
+  Instruction INST,
+  ValueType ResTy, RegisterClass FPRC, ValueType OpTy, Operand OpImm,
+  ValueType OpNTy, ValueType ExTy, Operand OpNImm> {
+
+  def  : Pat<(ResTy (opnode (ResTy FPRC:$Rn),
+               (ResTy (vector_extract (OpTy VPR128:$MRm), OpImm:$Imm)))),
+             (ResTy (INST (ResTy FPRC:$Rn), (OpTy VPR128:$MRm), OpImm:$Imm))>;
+
+  def  : Pat<(ResTy (opnode (ResTy FPRC:$Rn),
+               (ResTy (vector_extract (OpNTy VPR64:$MRm), OpNImm:$Imm)))),
+             (ResTy (INST (ResTy FPRC:$Rn),
+               (ExTy (SUBREG_TO_REG (i64 0), VPR64:$MRm, sub_64)),
+               OpNImm:$Imm))>;
+
+  // swapped operands
+  def  : Pat<(ResTy (opnode
+               (ResTy (vector_extract (OpTy VPR128:$MRm), OpImm:$Imm)),
+               (ResTy FPRC:$Rn))),
+             (ResTy (INST (ResTy FPRC:$Rn), (OpTy VPR128:$MRm), OpImm:$Imm))>;
+
+  def  : Pat<(ResTy (opnode
+               (ResTy (vector_extract (OpNTy VPR64:$MRm), OpNImm:$Imm)),
+               (ResTy FPRC:$Rn))),
+             (ResTy (INST (ResTy FPRC:$Rn),
+               (ExTy (SUBREG_TO_REG (i64 0), VPR64:$MRm, sub_64)),
+               OpNImm:$Imm))>;
+}
+
+// Patterns for Scalar Floating Point  multiply (scalar, by element)
+defm : Neon_ScalarXIndexedElem_MUL_MULX_Patterns<fmul, FMULssv_4S,
+  f32, FPR32, v4f32, neon_uimm2_bare, v2f32, v4f32, neon_uimm1_bare>;
+defm : Neon_ScalarXIndexedElem_MUL_MULX_Patterns<fmul, FMULddv_2D,
+  f64, FPR64, v2f64, neon_uimm1_bare, v1f64, v2f64, neon_uimm0_bare>;
+
+// Patterns for Scalar Floating Point  multiply extended (scalar, by element)
+defm : Neon_ScalarXIndexedElem_MUL_MULX_Patterns<int_aarch64_neon_vmulx,
+  FMULXssv_4S, f32, FPR32, v4f32, neon_uimm2_bare,
+  v2f32, v4f32, neon_uimm1_bare>;
+defm : Neon_ScalarXIndexedElem_MUL_MULX_Patterns<int_aarch64_neon_vmulx,
+  FMULXddv_2D, f64, FPR64, v2f64, neon_uimm1_bare,
+  v1f64, v2f64, neon_uimm0_bare>;
+
+
 // Scalar Floating Point fused multiply-add (scalar, by element)
 def FMLAssv_4S : NeonI_ScalarXIndexedElemArith_Constraint_Impl<"fmla",
   0b0001, ".s", 0b0, 0b1, 0b0, FPR32, FPR32, VPR128, neon_uimm2_bare> {
@@ -4821,6 +4877,83 @@ def FMLSddv_2D : NeonI_ScalarXIndexedElemArith_Constraint_Impl<"fmls",
   let Inst{21} = 0b0;    // l
   let Inst{20-16} = MRm;
 }
+// We are allowed to match the fma instruction regardless of compile options.
+multiclass Neon_ScalarXIndexedElem_FMA_Patterns<
+  Instruction FMLAI, Instruction FMLSI,
+  ValueType ResTy, RegisterClass FPRC, ValueType OpTy, Operand OpImm,
+  ValueType OpNTy, ValueType ExTy, Operand OpNImm> {
+  // fmla
+  def  : Pat<(ResTy (fma (ResTy FPRC:$Rn),
+               (ResTy (vector_extract (OpTy VPR128:$MRm), OpImm:$Imm)),
+               (ResTy FPRC:$Ra))),
+             (ResTy (FMLAI (ResTy FPRC:$Ra),
+               (ResTy FPRC:$Rn), (OpTy VPR128:$MRm), OpImm:$Imm))>;
+
+  def  : Pat<(ResTy (fma (ResTy FPRC:$Rn),
+               (ResTy (vector_extract (OpNTy VPR64:$MRm), OpNImm:$Imm)),
+               (ResTy FPRC:$Ra))),
+             (ResTy (FMLAI (ResTy FPRC:$Ra),
+               (ResTy FPRC:$Rn),
+               (ExTy (SUBREG_TO_REG (i64 0), VPR64:$MRm, sub_64)),
+               OpNImm:$Imm))>;
+
+  // swapped fmla operands
+  def  : Pat<(ResTy (fma
+               (ResTy (vector_extract (OpTy VPR128:$MRm), OpImm:$Imm)),
+               (ResTy FPRC:$Rn),
+               (ResTy FPRC:$Ra))),
+             (ResTy (FMLAI (ResTy FPRC:$Ra),
+               (ResTy FPRC:$Rn), (OpTy VPR128:$MRm), OpImm:$Imm))>;
+
+  def  : Pat<(ResTy (fma
+               (ResTy (vector_extract (OpNTy VPR64:$MRm), OpNImm:$Imm)),
+               (ResTy FPRC:$Rn),
+               (ResTy FPRC:$Ra))),
+             (ResTy (FMLAI (ResTy FPRC:$Ra),
+               (ResTy FPRC:$Rn),
+               (ExTy (SUBREG_TO_REG (i64 0), VPR64:$MRm, sub_64)),
+               OpNImm:$Imm))>;
+
+  // fmls
+  def  : Pat<(ResTy (fma (ResTy FPRC:$Rn),
+               (fneg (ResTy (vector_extract (OpTy VPR128:$MRm), OpImm:$Imm))),
+               (ResTy FPRC:$Ra))),
+             (ResTy (FMLSI (ResTy FPRC:$Ra),
+               (ResTy FPRC:$Rn), (OpTy VPR128:$MRm), OpImm:$Imm))>;
+
+  def  : Pat<(ResTy (fma (ResTy FPRC:$Rn),
+               (fneg (ResTy (vector_extract (OpNTy VPR64:$MRm), OpNImm:$Imm))),
+               (ResTy FPRC:$Ra))),
+             (ResTy (FMLSI (ResTy FPRC:$Ra),
+               (ResTy FPRC:$Rn),
+               (ExTy (SUBREG_TO_REG (i64 0), VPR64:$MRm, sub_64)),
+               OpNImm:$Imm))>;
+
+  // swapped fmls operands
+  def  : Pat<(ResTy (fma
+               (fneg (ResTy (vector_extract (OpTy VPR128:$MRm), OpImm:$Imm))),
+               (ResTy FPRC:$Rn),
+               (ResTy FPRC:$Ra))),
+             (ResTy (FMLSI (ResTy FPRC:$Ra),
+               (ResTy FPRC:$Rn), (OpTy VPR128:$MRm), OpImm:$Imm))>;
+
+  def  : Pat<(ResTy (fma
+               (fneg (ResTy (vector_extract (OpNTy VPR64:$MRm), OpNImm:$Imm))),
+               (ResTy FPRC:$Rn),
+               (ResTy FPRC:$Ra))),
+             (ResTy (FMLSI (ResTy FPRC:$Ra),
+               (ResTy FPRC:$Rn),
+               (ExTy (SUBREG_TO_REG (i64 0), VPR64:$MRm, sub_64)),
+               OpNImm:$Imm))>;
+}
+
+// Scalar Floating Point fused multiply-add and multiply-subtract (scalar, by element)
+defm : Neon_ScalarXIndexedElem_FMA_Patterns<FMLAssv_4S, FMLSssv_4S,
+  f32, FPR32, v4f32, neon_uimm2_bare, v2f32, v4f32, neon_uimm1_bare>;
+defm : Neon_ScalarXIndexedElem_FMA_Patterns<FMLAddv_2D, FMLSddv_2D,
+  f64, FPR64, v2f64, neon_uimm1_bare, v1f64, v2f64, neon_uimm0_bare>;
+defm : Neon_ScalarXIndexedElem_FMA_Patterns<FMLAddv_2D, FMLSddv_2D,
+  f64, FPR64, v2f64, neon_uimm1_bare, v1f64, v2f64, neon_uimm0_bare>;
 
 // Scalar Signed saturating doubling multiply-add long (scalar, by element)
 def SQDMLALshv_4H : NeonI_ScalarXIndexedElemArith_Constraint_Impl<"sqdmlal",
@@ -4989,6 +5122,40 @@ def DUPsv_S : NeonI_Scalar_DUP<"dup", "s", FPR32, VPR128, neon_uimm2_bare> {
 def DUPdv_D : NeonI_Scalar_DUP<"dup", "d", FPR64, VPR128, neon_uimm1_bare> {
   let Inst{20-16} = {Imm, 0b1, 0b0, 0b0, 0b0};
 }
+
+multiclass NeonI_Scalar_DUP_Elt_pattern<Instruction DUPI, ValueType ResTy,
+  ValueType OpTy, Operand OpImm,
+  ValueType OpNTy, ValueType ExTy, Operand OpNImm> {
+
+  def  : Pat<(ResTy (vector_extract (OpTy VPR128:$Rn), OpImm:$Imm)),
+             (ResTy (DUPI (OpTy VPR128:$Rn), OpImm:$Imm))>;
+
+  def : Pat<(ResTy (vector_extract (OpNTy VPR64:$Rn), OpNImm:$Imm)),
+            (ResTy (DUPI
+              (ExTy (SUBREG_TO_REG (i64 0), VPR64:$Rn, sub_64)),
+                OpNImm:$Imm))>;
+}
+
+// Patterns  for vector extract of FP data using scalar DUP instructions
+defm : NeonI_Scalar_DUP_Elt_pattern<DUPsv_S, f32,
+  v4f32, neon_uimm2_bare, v2f32, v4f32, neon_uimm1_bare>;
+defm : NeonI_Scalar_DUP_Elt_pattern<DUPdv_D, f64,
+  v2f64, neon_uimm1_bare, v1f64, v2f64, neon_uimm0_bare>;
+
+multiclass NeonI_Scalar_DUP_alias<string asmop, string asmlane,
+                                  Instruction DUPI, Operand OpImm,
+                                  RegisterClass ResRC> {
+  def : NeonInstAlias<!strconcat(asmop, "$Rd, $Rn." # asmlane # "[$Imm]"),
+          (DUPI ResRC:$Rd, VPR128:$Rn, OpImm:$Imm), 0b0>;
+}
+
+// Aliases for Scalar copy - DUP element (scalar)
+// FIXME: This is actually the preferred syntax but TableGen can't deal with
+// custom printing of aliases.
+defm : NeonI_Scalar_DUP_alias<"mov", ".b", DUPbv_B, neon_uimm4_bare, FPR8>;
+defm : NeonI_Scalar_DUP_alias<"mov", ".h", DUPhv_H, neon_uimm3_bare, FPR16>;
+defm : NeonI_Scalar_DUP_alias<"mov", ".s", DUPsv_S, neon_uimm2_bare, FPR32>;
+defm : NeonI_Scalar_DUP_alias<"mov", ".d", DUPdv_D, neon_uimm1_bare, FPR64>;
 
 
 //===----------------------------------------------------------------------===//
