@@ -18,6 +18,7 @@
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/COFF.h"
@@ -26,6 +27,8 @@
 
 using llvm::COFF::MachineTypes;
 using llvm::COFF::WindowsSubsystem;
+
+static const uint8_t DEFAULT_DOS_STUB[128] = {'M', 'Z'};
 
 namespace lld {
 
@@ -43,7 +46,8 @@ public:
         _terminalServerAware(true), _dynamicBaseEnabled(true),
         _createManifest(true), _embedManifest(false), _manifestId(1),
         _manifestLevel("'asInvoker'"), _manifestUiAccess("'false'"),
-        _imageType(ImageType::IMAGE_EXE), _dosStub(_defaultDosStub) {
+        _imageType(ImageType::IMAGE_EXE),
+        _dosStub(llvm::makeArrayRef(DEFAULT_DOS_STUB)) {
     setDeadStripping(true);
   }
 
@@ -230,14 +234,21 @@ public:
     return it == _sectionAttributeMask.end() ? 0 : it->second;
   }
 
-  void setDosStub(std::vector<uint8_t> &data) { _dosStub = std::move(data); }
-  const std::vector<uint8_t> &getDosStub() const { return _dosStub; }
+  void setDosStub(ArrayRef<uint8_t> data) { _dosStub = data; }
+  ArrayRef<uint8_t> getDosStub() const { return _dosStub; }
 
   StringRef allocateString(StringRef ref) const {
     char *x = _allocator.Allocate<char>(ref.size() + 1);
     memcpy(x, ref.data(), ref.size());
     x[ref.size()] = '\0';
     return x;
+  }
+
+  ArrayRef<uint8_t> allocate(ArrayRef<uint8_t> array) const {
+    size_t size = array.size();
+    uint8_t *p = _allocator.Allocate<uint8_t>(size);
+    memcpy(p, array.data(), size);
+    return ArrayRef<uint8_t>(p, p + array.size());
   }
 
   virtual bool hasInputGraph() {
@@ -319,8 +330,7 @@ private:
   // Windows loader do not really care about DOS stub contents, but it's usually
   // a small DOS program that prints out a message "This program requires
   // Microsoft Windows." This feature was somewhat useful before Windows 95.
-  std::vector<uint8_t> _dosStub;
-  static const std::vector<uint8_t> _defaultDosStub;
+  ArrayRef<uint8_t> _dosStub;
 };
 
 } // end namespace lld

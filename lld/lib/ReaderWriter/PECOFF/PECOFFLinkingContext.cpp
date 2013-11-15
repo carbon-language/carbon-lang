@@ -29,13 +29,6 @@
 
 namespace lld {
 
-namespace {
-uint8_t DefaultDosStub[128] = {'M', 'Z'};
-};
-
-const std::vector<uint8_t> PECOFFLinkingContext::_defaultDosStub(
-    DefaultDosStub, DefaultDosStub + sizeof(DefaultDosStub));
-
 bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
   if (_stackReserve < _stackCommit) {
     diagnostics << "Invalid stack size: reserve size must be equal to or "

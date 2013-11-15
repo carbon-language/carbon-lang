@@ -107,18 +107,19 @@ public:
 class DOSStubChunk : public HeaderChunk {
 public:
   DOSStubChunk(const PECOFFLinkingContext &ctx)
-      : HeaderChunk(), _dosStub(ctx.getDosStub()) {
-    auto *header = reinterpret_cast<llvm::object::dos_header *>(&_dosStub[0]);
-    header->AddressOfNewExeHeader = _dosStub.size();
-    _size = _dosStub.size();
+      : HeaderChunk(), _context(ctx) {
+    _size = _context.getDosStub().size();
   }
 
   virtual void write(uint8_t *fileBuffer) {
-    std::memcpy(fileBuffer, &_dosStub[0], _dosStub.size());
+    ArrayRef<uint8_t> array = _context.getDosStub();
+    std::memcpy(fileBuffer, array.data(), array.size());
+    auto *header = reinterpret_cast<llvm::object::dos_header *>(fileBuffer);
+    header->AddressOfNewExeHeader = array.size();
   }
 
 private:
-  std::vector<uint8_t> _dosStub;
+  const PECOFFLinkingContext &_context;
 };
 
 /// A PEHeaderChunk represents PE header including COFF header.

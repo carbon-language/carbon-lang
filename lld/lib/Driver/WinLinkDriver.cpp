@@ -21,6 +21,7 @@
 #include "lld/Driver/WinLinkInputGraph.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -203,11 +204,14 @@ bool parseSection(StringRef option, std::string &section,
   return true;
 }
 
-bool readFile(StringRef path, std::vector<uint8_t> &result) {
+bool readFile(PECOFFLinkingContext &ctx, StringRef path,
+              ArrayRef<uint8_t> &result) {
   OwningPtr<MemoryBuffer> buf;
   if (MemoryBuffer::getFile(path, buf))
     return false;
-  result = std::vector<uint8_t>(buf->getBufferStart(), buf->getBufferEnd());
+  result = ctx.allocate(ArrayRef<uint8_t>(
+      reinterpret_cast<const uint8_t *>(buf->getBufferStart()),
+      buf->getBufferSize()));
   return true;
 }
 
@@ -837,8 +841,8 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       break;
 
     case OPT_stub: {
-      std::vector<uint8_t> contents;
-      if (!readFile(inputArg->getValue(), contents)) {
+      ArrayRef<uint8_t> contents;
+      if (!readFile(ctx, inputArg->getValue(), contents)) {
         diagnostics << "Failed to read DOS stub file "
                     << inputArg->getValue() << "\n";
         return false;
