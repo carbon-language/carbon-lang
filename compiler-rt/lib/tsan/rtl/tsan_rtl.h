@@ -727,11 +727,11 @@ void AcquireReleaseImpl(ThreadState *thr, uptr pc, SyncClock *c);
 // so we create a reserve stack frame for it (1024b must be enough).
 #define HACKY_CALL(f) \
   __asm__ __volatile__("sub $1024, %%rsp;" \
-                       "/*.cfi_adjust_cfa_offset 1024;*/" \
+                       ".cfi_adjust_cfa_offset 1024;" \
                        ".hidden " #f "_thunk;" \
                        "call " #f "_thunk;" \
                        "add $1024, %%rsp;" \
-                       "/*.cfi_adjust_cfa_offset -1024;*/" \
+                       ".cfi_adjust_cfa_offset -1024;" \
                        ::: "memory", "cc");
 #else
 #define HACKY_CALL(f) f()
