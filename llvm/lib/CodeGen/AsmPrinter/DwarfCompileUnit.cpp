@@ -57,7 +57,7 @@ DIEEntry *CompileUnit::createDIEEntry(DIE *Entry) {
 /// getDefaultLowerBound - Return the default lower bound for an array. If the
 /// DWARF version doesn't handle the language, return -1.
 int64_t CompileUnit::getDefaultLowerBound() const {
-  switch (DICompileUnit(Node).getLanguage()) {
+  switch (getLanguage()) {
   default:
     break;
 
@@ -1165,7 +1165,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     }
     // Add prototype flag if we're dealing with a C language and the
     // function has been prototyped.
-    uint16_t Language = DICompileUnit(Node).getLanguage();
+    uint16_t Language = getLanguage();
     if (isPrototyped &&
         (Language == dwarf::DW_LANG_C89 || Language == dwarf::DW_LANG_C99 ||
          Language == dwarf::DW_LANG_ObjC))
@@ -1423,7 +1423,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
   // Add the prototype if we have a prototype and we have a C like
   // language.
-  uint16_t Language = DICompileUnit(Node).getLanguage();
+  uint16_t Language = getLanguage();
   if (SP.isPrototyped() &&
       (Language == dwarf::DW_LANG_C89 || Language == dwarf::DW_LANG_C99 ||
        Language == dwarf::DW_LANG_ObjC))
