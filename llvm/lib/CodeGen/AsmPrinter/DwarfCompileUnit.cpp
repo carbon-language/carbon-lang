@@ -871,9 +871,7 @@ DIE *CompileUnit::getOrCreateContextDIE(DIScope Context) {
     return getOrCreateNameSpace(DINameSpace(Context));
   if (Context.isSubprogram())
     return getOrCreateSubprogramDIE(DISubprogram(Context));
-  if (DIE *ContextDIE = getDIE(Context))
-    return ContextDIE;
-  return getCUDie();
+  return getDIE(Context);
 }
 
 /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
@@ -888,6 +886,10 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE.
   DIE *ContextDIE = getOrCreateContextDIE(resolve(Ty.getContext()));
+  // TODO: Investigate if this beavior is intentional and possibly
+  // replace it with an assert.
+  if (!ContextDIE)
+    ContextDIE = getCUDie();
 
   DIE *TyDIE = getDIE(Ty);
   if (TyDIE)
