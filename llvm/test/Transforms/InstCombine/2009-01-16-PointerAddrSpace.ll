@@ -5,7 +5,7 @@ target triple = "i386-apple-darwin9.6"
 
 define i32 @test(i32* %P) nounwind {
 entry:
-  %Q = bitcast i32* %P to i32 addrspace(1)*
+  %Q = addrspacecast i32* %P to i32 addrspace(1)*
   store i32 0, i32 addrspace(1)* %Q, align 4
   ret i32 0
 }

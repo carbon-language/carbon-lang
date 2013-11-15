@@ -1033,6 +1033,12 @@ LLVMValueRef LLVMConstBitCast(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {
                                        unwrap(ToType)));
 }
 
+LLVMValueRef LLVMConstAddrSpaceCast(LLVMValueRef ConstantVal,
+                                    LLVMTypeRef ToType) {
+  return wrap(ConstantExpr::getAddrSpaceCast(unwrap<Constant>(ConstantVal),
+                                             unwrap(ToType)));
+}
+
 LLVMValueRef LLVMConstZExtOrBitCast(LLVMValueRef ConstantVal,
                                     LLVMTypeRef ToType) {
   return wrap(ConstantExpr::getZExtOrBitCast(unwrap<Constant>(ConstantVal),
@@ -2316,6 +2322,11 @@ LLVMValueRef LLVMBuildIntToPtr(LLVMBuilderRef B, LLVMValueRef Val,
 LLVMValueRef LLVMBuildBitCast(LLVMBuilderRef B, LLVMValueRef Val,
                               LLVMTypeRef DestTy, const char *Name) {
   return wrap(unwrap(B)->CreateBitCast(unwrap(Val), unwrap(DestTy), Name));
+}
+
+LLVMValueRef LLVMBuildAddrSpaceCast(LLVMBuilderRef B, LLVMValueRef Val,
+                                    LLVMTypeRef DestTy, const char *Name) {
+  return wrap(unwrap(B)->CreateAddrSpaceCast(unwrap(Val), unwrap(DestTy), Name));
 }
 
 LLVMValueRef LLVMBuildZExtOrBitCast(LLVMBuilderRef B, LLVMValueRef Val,

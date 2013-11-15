@@ -862,6 +862,7 @@ public:
   static Constant *getPtrToInt(Constant *C, Type *Ty);
   static Constant *getIntToPtr(Constant *C, Type *Ty);
   static Constant *getBitCast (Constant *C, Type *Ty);
+  static Constant *getAddrSpaceCast (Constant *C, Type *Ty);
 
   static Constant *getNSWNeg(Constant *C) { return getNeg(C, false, true); }
   static Constant *getNUWNeg(Constant *C) { return getNeg(C, true, false); }

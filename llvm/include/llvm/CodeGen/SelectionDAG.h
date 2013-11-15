@@ -802,6 +802,10 @@ public:
   /// getMDNode - Return an MDNodeSDNode which holds an MDNode.
   SDValue getMDNode(const MDNode *MD);
 
+  /// getAddrSpaceCast - Return an AddrSpaceCastSDNode.
+  SDValue getAddrSpaceCast(SDLoc dl, EVT VT, SDValue Ptr,
+                           unsigned SrcAS, unsigned DestAS);
+
   /// getShiftAmountOperand - Return the specified value casted to
   /// the target's desired shift amount type.
   SDValue getShiftAmountOperand(EVT LHSTy, SDValue Op);

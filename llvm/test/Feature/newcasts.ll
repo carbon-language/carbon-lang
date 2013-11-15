@@ -20,6 +20,9 @@ define void @"NewCasts" (i16 %x) {
   %p = uitofp <4 x i32> %n to <4 x float>
   %q = fptosi <4 x float> %p to <4 x i32>
   %r = fptoui <4 x float> %p to <4 x i32>
+  %s = inttoptr <4 x i32> %n to <4 x i32*>
+  %t = addrspacecast <4 x i32*> %s to <4 x i32 addrspace(1)*>
+  %z = addrspacecast <4 x i32*> %s to <4 x float addrspace(2)*>
   ret void
 }
 

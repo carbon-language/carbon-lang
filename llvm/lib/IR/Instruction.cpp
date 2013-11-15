@@ -223,18 +223,19 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case GetElementPtr: return "getelementptr";
 
   // Convert instructions...
-  case Trunc:     return "trunc";
-  case ZExt:      return "zext";
-  case SExt:      return "sext";
-  case FPTrunc:   return "fptrunc";
-  case FPExt:     return "fpext";
-  case FPToUI:    return "fptoui";
-  case FPToSI:    return "fptosi";
-  case UIToFP:    return "uitofp";
-  case SIToFP:    return "sitofp";
-  case IntToPtr:  return "inttoptr";
-  case PtrToInt:  return "ptrtoint";
-  case BitCast:   return "bitcast";
+  case Trunc:         return "trunc";
+  case ZExt:          return "zext";
+  case SExt:          return "sext";
+  case FPTrunc:       return "fptrunc";
+  case FPExt:         return "fpext";
+  case FPToUI:        return "fptoui";
+  case FPToSI:        return "fptosi";
+  case UIToFP:        return "uitofp";
+  case SIToFP:        return "sitofp";
+  case IntToPtr:      return "inttoptr";
+  case PtrToInt:      return "ptrtoint";
+  case BitCast:       return "bitcast";
+  case AddrSpaceCast: return "addrspacecast";
 
   // Other instructions...
   case ICmp:           return "icmp";

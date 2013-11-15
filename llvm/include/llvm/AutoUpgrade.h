@@ -15,11 +15,14 @@
 #define LLVM_AUTOUPGRADE_H
 
 namespace llvm {
+  class Constant;
   class Module;
   class GlobalVariable;
   class Function;
   class CallInst;
   class Instruction;
+  class Value;
+  class Type;
 
   /// This is a more granular function that simply checks an intrinsic function
   /// for upgrading, and returns true if it requires upgrading. It may return
@@ -44,6 +47,16 @@ namespace llvm {
   /// If the TBAA tag for the given instruction uses the scalar TBAA format,
   /// we upgrade it to the struct-path aware TBAA format.
   void UpgradeInstWithTBAATag(Instruction *I);
+
+  /// This is an auto-upgrade for bitcast between pointers with different
+  /// address spaces: the instruction is replaced by a pair ptrtoint+inttoptr.
+  Instruction *UpgradeBitCastInst(unsigned Opc, Value *V, Type *DestTy,
+                                  Instruction *&Temp);
+
+  /// This is an auto-upgrade for bitcast constant expression between pointers
+  /// with different address spaces: the instruction is replaced by a pair
+  /// ptrtoint+inttoptr.
+  Value *UpgradeBitCastExpr(unsigned Opc, Constant *C, Type *DestTy);
 } // End llvm namespace
 
 #endif

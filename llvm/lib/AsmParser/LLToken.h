@@ -150,6 +150,7 @@ namespace lltok {
     kw_phi, kw_call,
     kw_trunc, kw_zext, kw_sext, kw_fptrunc, kw_fpext, kw_uitofp, kw_sitofp,
     kw_fptoui, kw_fptosi, kw_inttoptr, kw_ptrtoint, kw_bitcast,
+    kw_addrspacecast,
     kw_select, kw_va_arg,
 
     kw_landingpad, kw_personality, kw_cleanup, kw_catch, kw_filter,

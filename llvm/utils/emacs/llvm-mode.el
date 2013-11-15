@@ -43,7 +43,7 @@
    ;; Memory operators
    `(,(regexp-opt '("malloc" "alloca" "free" "load" "store" "getelementptr" "fence" "cmpxchg" "atomicrmw") 'words) . font-lock-keyword-face)
    ;; Casts
-   `(,(regexp-opt '("bitcast" "inttoptr" "ptrtoint" "trunc" "zext" "sext" "fptrunc" "fpext" "fptoui" "fptosi" "uitofp" "sitofp") 'words) . font-lock-keyword-face)
+   `(,(regexp-opt '("bitcast" "inttoptr" "ptrtoint" "trunc" "zext" "sext" "fptrunc" "fpext" "fptoui" "fptosi" "uitofp" "sitofp" "addrspacecast") 'words) . font-lock-keyword-face)
    ;; Vector ops
    `(,(regexp-opt '("extractelement" "insertelement" "shufflevector") 'words) . font-lock-keyword-face)
    ;; Aggregate ops

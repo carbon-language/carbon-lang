@@ -663,7 +663,7 @@ static Constant* StripPtrCastKeepAS(Constant* Ptr) {
   if (NewPtrTy->getAddressSpace() != OldPtrTy->getAddressSpace()) {
     NewPtrTy = NewPtrTy->getElementType()->getPointerTo(
       OldPtrTy->getAddressSpace());
-    Ptr = ConstantExpr::getBitCast(Ptr, NewPtrTy);
+    Ptr = ConstantExpr::getPointerCast(Ptr, NewPtrTy);
   }
   return Ptr;
 }
@@ -995,8 +995,9 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
     return ConstantExpr::getCast(Opcode, Ops[0], DestTy);
   case Instruction::IntToPtr:
     // If the input is a ptrtoint, turn the pair into a ptr to ptr bitcast if
-    // the int size is >= the ptr size.  This requires knowing the width of a
-    // pointer, so it can't be done in ConstantExpr::getCast.
+    // the int size is >= the ptr size and the address spaces are the same.
+    // This requires knowing the width of a pointer, so it can't be done in
+    // ConstantExpr::getCast.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0])) {
       if (TD && CE->getOpcode() == Instruction::PtrToInt) {
         Constant *SrcPtr = CE->getOperand(0);
@@ -1004,8 +1005,8 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
         unsigned MidIntSize = CE->getType()->getScalarSizeInBits();
 
         if (MidIntSize >= SrcPtrSize) {
-          unsigned DestPtrSize = TD->getPointerTypeSizeInBits(DestTy);
-          if (SrcPtrSize == DestPtrSize)
+          unsigned SrcAS = SrcPtr->getType()->getPointerAddressSpace();
+          if (SrcAS == DestTy->getPointerAddressSpace())
             return FoldBitCast(CE->getOperand(0), DestTy, *TD);
         }
       }
@@ -1021,6 +1022,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
   case Instruction::SIToFP:
   case Instruction::FPToUI:
   case Instruction::FPToSI:
+  case Instruction::AddrSpaceCast:
       return ConstantExpr::getCast(Opcode, Ops[0], DestTy);
   case Instruction::BitCast:
     if (TD)

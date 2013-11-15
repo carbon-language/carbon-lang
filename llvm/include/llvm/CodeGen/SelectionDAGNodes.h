@@ -950,6 +950,23 @@ public:
   const SDValue &getValue() const { return Op; }
 };
 
+class AddrSpaceCastSDNode : public UnarySDNode {
+private:
+  unsigned SrcAddrSpace;
+  unsigned DestAddrSpace;
+
+public:
+  AddrSpaceCastSDNode(unsigned Order, DebugLoc dl, EVT VT, SDValue X,
+                      unsigned SrcAS, unsigned DestAS);
+
+  unsigned getSrcAddressSpace() const { return SrcAddrSpace; }
+  unsigned getDestAddressSpace() const { return DestAddrSpace; }
+
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::ADDRSPACECAST;
+  }
+};
+
 /// Abstact virtual class for operations for memory operations
 class MemSDNode : public SDNode {
 private:

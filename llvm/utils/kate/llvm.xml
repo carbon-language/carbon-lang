@@ -157,6 +157,7 @@
       <item> ptrtoint </item>
       <item> inttoptr </item>
       <item> bitcast </item>
+      <item> addrspacecast </item>
       <item> icmp </item>
       <item> fcmp </item>
       <item> phi </item>

@@ -454,10 +454,10 @@ define i32* @fZ() nounwind {
 
 define i8* @different_addrspace() nounwind noinline {
 ; OPT: different_addrspace
-  %p = getelementptr inbounds i8* bitcast ([4 x i8] addrspace(12)* @p12 to i8*),
+  %p = getelementptr inbounds i8* addrspacecast ([4 x i8] addrspace(12)* @p12 to i8*),
                                   i32 2
   ret i8* %p
-; OPT: ret i8* getelementptr (i8* bitcast ([4 x i8] addrspace(12)* @p12 to i8*), i32 2)
+; OPT: ret i8* getelementptr (i8* addrspacecast ([4 x i8] addrspace(12)* @p12 to i8*), i32 2)
 }
 
 define i8* @same_addrspace() nounwind noinline {

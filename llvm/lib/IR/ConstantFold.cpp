@@ -689,6 +689,8 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
   }
   case Instruction::BitCast:
     return FoldBitCast(V, DestTy);
+  case Instruction::AddrSpaceCast:
+    return 0;
   }
 }
 

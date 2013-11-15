@@ -92,7 +92,7 @@ static SDValue ExtractSubVector(SDValue Vec, unsigned IdxVal,
                                VecIdx);
 
   return Result;
-  
+
 }
 /// Generate a DAG to grab 128-bits from a vector > 128 bits.  This
 /// sets things up to match to an AVX VEXTRACTF128 / VEXTRACTI128
@@ -1763,6 +1763,13 @@ bool X86TargetLowering::getStackCookieLocation(unsigned &AddressSpace,
     AddressSpace = 256;
   }
   return true;
+}
+
+bool X86TargetLowering::isNoopAddrSpaceCast(unsigned SrcAS,
+                                            unsigned DestAS) const {
+  assert(SrcAS != DestAS && "Expected different address spaces!");
+
+  return SrcAS < 256 && DestAS < 256;
 }
 
 //===----------------------------------------------------------------------===//

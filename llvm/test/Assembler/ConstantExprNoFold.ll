@@ -21,3 +21,6 @@ target datalayout = "p:32:32"
 
 ; CHECK: @D = global i1 icmp eq (i64* getelementptr inbounds (i64* @A, i64 1), i64* getelementptr inbounds (i64* @B, i64 2))
 @D = global i1 icmp eq (i64* getelementptr inbounds (i64* @A, i64 1), i64* getelementptr inbounds (i64* @B, i64 2))
+
+; CHECK: @E = global i64 addrspace(1)* addrspacecast (i64* @A to i64 addrspace(1)*)
+@E = global i64 addrspace(1)* addrspacecast(i64* @A to i64 addrspace(1)*)

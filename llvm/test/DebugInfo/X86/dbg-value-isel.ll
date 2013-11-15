@@ -9,7 +9,7 @@ target triple = "x86_64-apple-darwin10.0.0"
 @sgv = internal addrspace(2) constant [1 x i8] zeroinitializer
 @fgv = internal addrspace(2) constant [1 x i8] zeroinitializer
 @lvgv = internal constant [0 x i8*] zeroinitializer
-@llvm.global.annotations = appending global [1 x %0] [%0 { i8* bitcast (void (i32 addrspace(1)*)* @__OpenCL_nbt02_kernel to i8*), i8* bitcast ([1 x i8] addrspace(2)* @sgv to i8*), i8* bitcast ([1 x i8] addrspace(2)* @fgv to i8*), i8* bitcast ([0 x i8*]* @lvgv to i8*), i32 0 }], section "llvm.metadata"
+@llvm.global.annotations = appending global [1 x %0] [%0 { i8* bitcast (void (i32 addrspace(1)*)* @__OpenCL_nbt02_kernel to i8*), i8* addrspacecast ([1 x i8] addrspace(2)* @sgv to i8*), i8* addrspacecast ([1 x i8] addrspace(2)* @fgv to i8*), i8* bitcast ([0 x i8*]* @lvgv to i8*), i32 0 }], section "llvm.metadata"
 
 define void @__OpenCL_nbt02_kernel(i32 addrspace(1)* %ip) nounwind {
 entry:

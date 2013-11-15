@@ -26,6 +26,7 @@
 
 namespace llvm {
 
+class AddrSpaceCastInst;
 class AliasAnalysis;
 class AllocaInst;
 class BasicBlock;
@@ -720,6 +721,7 @@ private:
   void visitPtrToInt(const User &I);
   void visitIntToPtr(const User &I);
   void visitBitCast(const User &I);
+  void visitAddrSpaceCast(const User &I);
 
   void visitExtractElement(const User &I);
   void visitInsertElement(const User &I);

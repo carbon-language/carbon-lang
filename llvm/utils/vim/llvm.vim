@@ -22,17 +22,18 @@ syn match   llvmType /\<i\d\+\>/
 " Instructions.
 " The true and false tokens can be used for comparison opcodes, but it's
 " much more common for these tokens to be used for boolean constants.
-syn keyword llvmStatement add alloca and arcp ashr atomicrmw bitcast br call
-syn keyword llvmStatement cmpxchg eq exact extractelement extractvalue fadd fast
-syn keyword llvmStatement fcmp fdiv fence fmul fpext fptosi fptoui fptrunc free
-syn keyword llvmStatement frem fsub getelementptr icmp inbounds indirectbr
-syn keyword llvmStatement insertelement insertvalue inttoptr invoke landingpad
-syn keyword llvmStatement load lshr malloc max min mul nand ne ninf nnan nsw nsz
-syn keyword llvmStatement nuw oeq oge ogt ole olt one or ord phi ptrtoint resume
-syn keyword llvmStatement ret sdiv select sext sge sgt shl shufflevector sitofp
-syn keyword llvmStatement sle slt srem store sub switch trunc udiv ueq uge ugt
-syn keyword llvmStatement uitofp ule ult umax umin une uno unreachable unwind
-syn keyword llvmStatement urem va_arg xchg xor zext
+syn keyword llvmStatement add addrspacecast alloca and arcp ashr atomicrmw
+syn keyword llvmStatement bitcast br call cmpxchg eq exact extractelement
+syn keyword llvmStatement extractvalue fadd fast fcmp fdiv fence fmul fpext
+syn keyword llvmStatement fptosi fptoui fptrunc free frem fsub getelementptr
+syn keyword llvmStatement icmp inbounds indirectbr insertelement insertvalue
+syn keyword llvmStatement inttoptr invoke landingpad load lshr malloc max min
+syn keyword llvmStatement mul nand ne ninf nnan nsw nsz nuw oeq oge ogt ole
+syn keyword llvmStatement olt one or ord phi ptrtoint resume ret sdiv select
+syn keyword llvmStatement sext sge sgt shl shufflevector sitofp sle slt srem
+syn keyword llvmStatement store sub switch trunc udiv ueq uge ugt uitofp ule ult
+syn keyword llvmStatement umax umin une uno unreachable unwind urem va_arg
+syn keyword llvmStatement xchg xor zext
 
 " Keywords.
 syn keyword llvmKeyword acq_rel acquire sanitize_address addrspace alias align

@@ -142,7 +142,7 @@ bool GenericToNVVM::runOnModule(Module &M) {
     GlobalVariable *GV = I->first;
     GlobalVariable *NewGV = I->second;
     ++I;
-    Constant *BitCastNewGV = ConstantExpr::getBitCast(NewGV, GV->getType());
+    Constant *BitCastNewGV = ConstantExpr::getPointerCast(NewGV, GV->getType());
     // At this point, the remaining uses of GV should be found only in global
     // variable initializers, as other uses have been already been removed
     // while walking through the instructions in function definitions.

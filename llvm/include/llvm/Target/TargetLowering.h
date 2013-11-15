@@ -827,6 +827,11 @@ public:
     return 0;
   }
 
+  /// Returns true if a cast between SrcAS and DestAS is a noop.
+  virtual bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const {
+    return false;
+  }
+
   //===--------------------------------------------------------------------===//
   /// \name Helpers for TargetTransformInfo implementations
   /// @{

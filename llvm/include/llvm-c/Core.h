@@ -222,6 +222,7 @@ typedef enum {
   LLVMPtrToInt       = 39,
   LLVMIntToPtr       = 40,
   LLVMBitCast        = 41,
+  LLVMAddrSpaceCast  = 60,
 
   /* Other Operators */
   LLVMICmp           = 42,
@@ -1159,6 +1160,7 @@ LLVMTypeRef LLVMX86MMXType(void);
       macro(UnaryInstruction)               \
         macro(AllocaInst)                   \
         macro(CastInst)                     \
+          macro(AddrSpaceCastInst)          \
           macro(BitCastInst)                \
           macro(FPExtInst)                  \
           macro(FPToSIInst)                 \
@@ -1630,6 +1632,7 @@ LLVMValueRef LLVMConstFPToSI(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
 LLVMValueRef LLVMConstPtrToInt(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
 LLVMValueRef LLVMConstIntToPtr(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
 LLVMValueRef LLVMConstBitCast(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstAddrSpaceCast(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
 LLVMValueRef LLVMConstZExtOrBitCast(LLVMValueRef ConstantVal,
                                     LLVMTypeRef ToType);
 LLVMValueRef LLVMConstSExtOrBitCast(LLVMValueRef ConstantVal,
@@ -2605,6 +2608,8 @@ LLVMValueRef LLVMBuildIntToPtr(LLVMBuilderRef, LLVMValueRef Val,
                                LLVMTypeRef DestTy, const char *Name);
 LLVMValueRef LLVMBuildBitCast(LLVMBuilderRef, LLVMValueRef Val,
                               LLVMTypeRef DestTy, const char *Name);
+LLVMValueRef LLVMBuildAddrSpaceCast(LLVMBuilderRef, LLVMValueRef Val,
+                                    LLVMTypeRef DestTy, const char *Name);
 LLVMValueRef LLVMBuildZExtOrBitCast(LLVMBuilderRef, LLVMValueRef Val,
                                     LLVMTypeRef DestTy, const char *Name);
 LLVMValueRef LLVMBuildSExtOrBitCast(LLVMBuilderRef, LLVMValueRef Val,

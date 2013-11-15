@@ -1133,6 +1133,10 @@ public:
                        const Twine &Name = "") {
     return CreateCast(Instruction::BitCast, V, DestTy, Name);
   }
+  Value *CreateAddrSpaceCast(Value *V, Type *DestTy,
+                             const Twine &Name = "") {
+    return CreateCast(Instruction::AddrSpaceCast, V, DestTy, Name);
+  }
   Value *CreateZExtOrBitCast(Value *V, Type *DestTy,
                              const Twine &Name = "") {
     if (V->getType() == DestTy)

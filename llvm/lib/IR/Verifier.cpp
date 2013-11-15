@@ -283,6 +283,7 @@ namespace {
     void visitIntToPtrInst(IntToPtrInst &I);
     void visitPtrToIntInst(PtrToIntInst &I);
     void visitBitCastInst(BitCastInst &I);
+    void visitAddrSpaceCastInst(AddrSpaceCastInst &I);
     void visitPHINode(PHINode &PN);
     void visitBinaryOperator(BinaryOperator &B);
     void visitICmpInst(ICmpInst &IC);
@@ -965,11 +966,9 @@ void Verifier::VerifyBitcastType(const Value *V, Type *DestTy, Type *SrcTy) {
   unsigned SrcAS = SrcTy->getPointerAddressSpace();
   unsigned DstAS = DestTy->getPointerAddressSpace();
 
-  unsigned SrcASSize = DL->getPointerSizeInBits(SrcAS);
-  unsigned DstASSize = DL->getPointerSizeInBits(DstAS);
-  Assert1(SrcASSize == DstASSize,
-          "Bitcasts between pointers of different address spaces must have "
-          "the same size pointers, otherwise use PtrToInt/IntToPtr.", V);
+  Assert1(SrcAS == DstAS,
+          "Bitcasts between pointers of different address spaces is not legal."
+          "Use AddrSpaceCast instead.", V);
 }
 
 void Verifier::VerifyConstantExprBitcastType(const ConstantExpr *CE) {
@@ -1452,6 +1451,22 @@ void Verifier::visitBitCastInst(BitCastInst &I) {
   Type *SrcTy = I.getOperand(0)->getType();
   Type *DestTy = I.getType();
   VerifyBitcastType(&I, DestTy, SrcTy);
+  visitInstruction(I);
+}
+
+void Verifier::visitAddrSpaceCastInst(AddrSpaceCastInst &I) {
+  Type *SrcTy = I.getOperand(0)->getType();
+  Type *DestTy = I.getType();
+
+  Assert1(SrcTy->isPtrOrPtrVectorTy(),
+          "AddrSpaceCast source must be a pointer", &I);
+  Assert1(DestTy->isPtrOrPtrVectorTy(),
+          "AddrSpaceCast result must be a pointer", &I);
+  Assert1(SrcTy->getPointerAddressSpace() != DestTy->getPointerAddressSpace(),
+          "AddrSpaceCast must be between different address spaces", &I);
+  if (SrcTy->isVectorTy())
+    Assert1(SrcTy->getVectorNumElements() == DestTy->getVectorNumElements(),
+            "AddrSpaceCast vector pointer number of elements mismatch", &I);
   visitInstruction(I);
 }
 

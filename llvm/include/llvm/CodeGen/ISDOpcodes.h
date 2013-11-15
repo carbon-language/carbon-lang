@@ -419,6 +419,10 @@ namespace ISD {
     /// getNode().
     BITCAST,
 
+    /// ADDRSPACECAST - This operator converts between pointers of different
+    /// address spaces.
+    ADDRSPACECAST,
+
     /// CONVERT_RNDSAT - This operator is used to support various conversions
     /// between various types (float, signed, unsigned and vectors of those
     /// types) with rounding and saturation. NOTE: Avoid using this operator as

@@ -12,3 +12,5 @@
 @F = global i32* inttoptr (i32 add (i32 5, i32 -5) to i32*)
 @G = global i32* inttoptr (i32 sub (i32 5, i32 5) to i32*)
 
+; Address space cast AS0 null-> AS1 null
+@H = global i32 addrspace(1)* addrspacecast(i32* null to i32 addrspace(1)*)

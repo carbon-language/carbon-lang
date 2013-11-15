@@ -49,7 +49,7 @@ define i32 @array_as2_size() {
 define i32 @pointer_array_as1() {
 ; CHECK-LABEL: @pointer_array_as1(
 ; CHECK-NEXT: ret i32 80
-  %bc = bitcast [10 x i32 addrspace(1)*]* @array_as1_pointers to i8 addrspace(1)*
+  %bc = addrspacecast [10 x i32 addrspace(1)*]* @array_as1_pointers to i8 addrspace(1)*
   %1 = call i32 @llvm.objectsize.i32.p1i8(i8 addrspace(1)* %bc, i1 false)
   ret i32 %1
 }

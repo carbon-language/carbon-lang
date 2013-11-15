@@ -32,10 +32,10 @@ define i32 addrspace(2)* @test_constant_fold_inttoptr_as_pointer_smaller() {
 }
 
 ; Different address spaces that are the same size, but they are
-; different so there should be a bitcast.
+; different so nothing should happen
 define i32 addrspace(4)* @test_constant_fold_inttoptr_as_pointer_smaller_different_as() {
 ; CHECK-LABEL: @test_constant_fold_inttoptr_as_pointer_smaller_different_as(
-; CHECK-NEXT: ret i32 addrspace(4)* bitcast (i32 addrspace(3)* @const_zero_i32_as3 to i32 addrspace(4)*)
+; CHECK-NEXT: ret i32 addrspace(4)* inttoptr (i16 ptrtoint (i32 addrspace(3)* @const_zero_i32_as3 to i16) to i32 addrspace(4)*)
   %x = ptrtoint i32 addrspace(3)* @const_zero_i32_as3 to i16
   %y = inttoptr i16 %x to i32 addrspace(4)*
   ret i32 addrspace(4)* %y

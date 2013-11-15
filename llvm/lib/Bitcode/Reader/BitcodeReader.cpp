@@ -128,6 +128,7 @@ static int GetDecodedCastOpcode(unsigned Val) {
   case bitc::CAST_PTRTOINT: return Instruction::PtrToInt;
   case bitc::CAST_INTTOPTR: return Instruction::IntToPtr;
   case bitc::CAST_BITCAST : return Instruction::BitCast;
+  case bitc::CAST_ADDRSPACECAST : return Instruction::AddrSpaceCast;
   }
 }
 static int GetDecodedBinaryOpcode(unsigned Val, Type *Ty) {
@@ -1356,7 +1357,8 @@ error_code BitcodeReader::ParseConstants() {
         if (!OpTy)
           return Error(InvalidRecord);
         Constant *Op = ValueList.getConstantFwdRef(Record[2], OpTy);
-        V = ConstantExpr::getCast(Opc, Op, CurTy);
+        V = UpgradeBitCastExpr(Opc, Op, CurTy);
+        if (!V) V = ConstantExpr::getCast(Opc, Op, CurTy);
       }
       break;
     }
@@ -2296,7 +2298,15 @@ error_code BitcodeReader::ParseFunctionBody(Function *F) {
       int Opc = GetDecodedCastOpcode(Record[OpNum+1]);
       if (Opc == -1 || ResTy == 0)
         return Error(InvalidRecord);
-      I = CastInst::Create((Instruction::CastOps)Opc, Op, ResTy);
+      Instruction *Temp = 0;
+      if ((I = UpgradeBitCastInst(Opc, Op, ResTy, Temp))) {
+        if (Temp) {
+          InstructionList.push_back(Temp);
+          CurBB->getInstList().push_back(Temp);
+        }
+      } else {
+        I = CastInst::Create((Instruction::CastOps)Opc, Op, ResTy);
+      }
       InstructionList.push_back(I);
       break;
     }

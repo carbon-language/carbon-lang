@@ -447,3 +447,45 @@ void llvm::UpgradeInstWithTBAATag(Instruction *I) {
     I->setMetadata(LLVMContext::MD_tbaa, MDNode::get(I->getContext(), Elts));
   }
 }
+
+Instruction *llvm::UpgradeBitCastInst(unsigned Opc, Value *V, Type *DestTy,
+                                      Instruction *&Temp) {
+  if (Opc != Instruction::BitCast)
+    return 0;
+
+  Temp = 0;
+  Type *SrcTy = V->getType();
+  if (SrcTy->isPtrOrPtrVectorTy() && DestTy->isPtrOrPtrVectorTy() &&
+      SrcTy->getPointerAddressSpace() != DestTy->getPointerAddressSpace()) {
+    LLVMContext &Context = V->getContext();
+
+    // We have no information about target data layout, so we assume that
+    // the maximum pointer size is 64bit.
+    Type *MidTy = Type::getInt64Ty(Context);
+    Temp = CastInst::Create(Instruction::PtrToInt, V, MidTy);
+
+    return CastInst::Create(Instruction::IntToPtr, Temp, DestTy);
+  }
+
+  return 0;
+}
+
+Value *llvm::UpgradeBitCastExpr(unsigned Opc, Constant *C, Type *DestTy) {
+  if (Opc != Instruction::BitCast)
+    return 0;
+
+  Type *SrcTy = C->getType();
+  if (SrcTy->isPtrOrPtrVectorTy() && DestTy->isPtrOrPtrVectorTy() &&
+      SrcTy->getPointerAddressSpace() != DestTy->getPointerAddressSpace()) {
+    LLVMContext &Context = C->getContext();
+
+    // We have no information about target data layout, so we assume that
+    // the maximum pointer size is 64bit.
+    Type *MidTy = Type::getInt64Ty(Context);
+
+    return ConstantExpr::getIntToPtr(ConstantExpr::getPtrToInt(C, MidTy),
+                                     DestTy);
+  }
+
+  return 0;
+}

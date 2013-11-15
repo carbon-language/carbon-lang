@@ -1507,6 +1507,26 @@ SDValue SelectionDAG::getMDNode(const MDNode *MD) {
   return SDValue(N, 0);
 }
 
+/// getAddrSpaceCast - Return an AddrSpaceCastSDNode.
+SDValue SelectionDAG::getAddrSpaceCast(SDLoc dl, EVT VT, SDValue Ptr,
+                                       unsigned SrcAS, unsigned DestAS) {
+  SDValue Ops[] = {Ptr};
+  FoldingSetNodeID ID;
+  AddNodeIDNode(ID, ISD::ADDRSPACECAST, getVTList(VT), &Ops[0], 1);
+  ID.AddInteger(SrcAS);
+  ID.AddInteger(DestAS);
+
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDValue(E, 0);
+
+  SDNode *N = new (NodeAllocator) AddrSpaceCastSDNode(dl.getIROrder(),
+                                                      dl.getDebugLoc(),
+                                                      VT, Ptr, SrcAS, DestAS);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDValue(N, 0);
+}
 
 /// getShiftAmountOperand - Return the specified value casted to
 /// the target's desired shift amount type.
@@ -5977,6 +5997,12 @@ GlobalAddressSDNode::GlobalAddressSDNode(unsigned Opc, unsigned Order,
   : SDNode(Opc, Order, DL, getSDVTList(VT)), Offset(o), TargetFlags(TF) {
   TheGlobal = GA;
 }
+
+AddrSpaceCastSDNode::AddrSpaceCastSDNode(unsigned Order, DebugLoc dl, EVT VT,
+                                         SDValue X, unsigned SrcAS,
+                                         unsigned DestAS)
+ : UnarySDNode(ISD::ADDRSPACECAST, Order, dl, getSDVTList(VT), X),
+   SrcAddrSpace(SrcAS), DestAddrSpace(DestAS) {}
 
 MemSDNode::MemSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
                      EVT memvt, MachineMemOperand *mmo)

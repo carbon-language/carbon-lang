@@ -149,6 +149,8 @@ TEST(InstructionsTest, CastInst) {
   const Constant* c8 = Constant::getNullValue(V8x8Ty);
   const Constant* c64 = Constant::getNullValue(V8x64Ty);
 
+  const Constant *v2ptr32 = Constant::getNullValue(V2Int32PtrTy);
+
   EXPECT_TRUE(CastInst::isCastable(V8x8Ty, X86MMXTy));
   EXPECT_TRUE(CastInst::isCastable(X86MMXTy, V8x8Ty));
   EXPECT_FALSE(CastInst::isCastable(Int64Ty, X86MMXTy));
@@ -169,6 +171,10 @@ TEST(InstructionsTest, CastInst) {
   EXPECT_FALSE(CastInst::isBitCastable(V2Int32PtrTy, V2Int32PtrAS1Ty));
   EXPECT_FALSE(CastInst::isBitCastable(V2Int32PtrAS1Ty, V2Int32PtrTy));
   EXPECT_TRUE(CastInst::isBitCastable(V2Int32PtrAS1Ty, V2Int64PtrAS1Ty));
+  EXPECT_TRUE(CastInst::isCastable(V2Int32PtrAS1Ty, V2Int32PtrTy));
+  EXPECT_EQ(CastInst::AddrSpaceCast, CastInst::getCastOpcode(v2ptr32, true,
+                                                             V2Int32PtrAS1Ty,
+                                                             true));
 
   // Test mismatched number of elements for pointers
   EXPECT_FALSE(CastInst::isBitCastable(V2Int32PtrAS1Ty, V4Int64PtrAS1Ty));
@@ -371,7 +377,6 @@ TEST(InstructionsTest, isEliminableCastPair) {
                                            0, Int32Ty, 0),
             0U);
 
-
   // Test that we don't eliminate bitcasts between different address spaces,
   // or if we don't have available pointer size information.
   DataLayout DL("e-p:32:32:32-p1:16:16:16-p2:64:64:64-i1:8:8-i8:8:8-i16:16:16"
@@ -384,26 +389,18 @@ TEST(InstructionsTest, isEliminableCastPair) {
   IntegerType *Int16SizePtr = DL.getIntPtrType(C, 1);
   IntegerType *Int64SizePtr = DL.getIntPtrType(C, 2);
 
-  // Fail since the ptr int types are not provided
+  // Cannot simplify inttoptr, addrspacecast
   EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::IntToPtr,
-                                           CastInst::BitCast,
-                                           Int16Ty, Int64PtrTyAS1, Int64PtrTyAS2,
-                                           0, 0, 0),
-            0U);
-
-  // Fail since the the bitcast is between different sized address spaces
-  EXPECT_EQ(CastInst::isEliminableCastPair(
-              CastInst::IntToPtr,
-              CastInst::BitCast,
-              Int16Ty, Int64PtrTyAS1, Int64PtrTyAS2,
-              0, Int16SizePtr, Int64SizePtr),
-            0U);
-
-  // Fail since the the bitcast is between different sized address spaces
-  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::IntToPtr,
-                                           CastInst::BitCast,
+                                           CastInst::AddrSpaceCast,
                                            Int16Ty, Int64PtrTyAS1, Int64PtrTyAS2,
                                            0, Int16SizePtr, Int64SizePtr),
+            0U);
+
+  // Cannot simplify addrspacecast, ptrtoint
+  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::AddrSpaceCast,
+                                           CastInst::PtrToInt,
+                                           Int64PtrTyAS1, Int64PtrTyAS2, Int16Ty,
+                                           Int64SizePtr, Int16SizePtr, 0),
             0U);
 
   // Pass since the bitcast address spaces are the same
@@ -413,28 +410,6 @@ TEST(InstructionsTest, isEliminableCastPair) {
                                            0, 0, 0),
             CastInst::IntToPtr);
 
-
-  // Fail without known pointer sizes and different address spaces
-  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::BitCast,
-                                           CastInst::PtrToInt,
-                                           Int64PtrTyAS1, Int64PtrTyAS2, Int16Ty,
-                                           0, 0, 0),
-            0U);
-
-  // Pass since the address spaces are the same, even though the pointer sizes
-  // are unknown
-  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::BitCast,
-                                           CastInst::PtrToInt,
-                                           Int64PtrTyAS1, Int64PtrTyAS1, Int32Ty,
-                                           0, 0, 0),
-            Instruction::PtrToInt);
-
-  // Fail since the bitcast is the wrong size
-  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::BitCast,
-                                           CastInst::PtrToInt,
-                                           Int64PtrTyAS1, Int64PtrTyAS2, Int64Ty,
-                                           Int16SizePtr, Int64SizePtr, 0),
-            0U);
 }
 
 }  // end anonymous namespace

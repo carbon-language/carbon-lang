@@ -100,7 +100,7 @@ define %unop* @test5(%op* %O) {
 
 define i8 @test6(i8 addrspace(1)* %source) {
 entry:
-  %arrayidx223 = bitcast i8 addrspace(1)* %source to i8*
+  %arrayidx223 = addrspacecast i8 addrspace(1)* %source to i8*
   %tmp4 = load i8* %arrayidx223
   ret i8 %tmp4
 ; CHECK-LABEL: @test6(
