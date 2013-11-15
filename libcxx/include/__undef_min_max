@@ -10,7 +10,8 @@
 
 #ifdef min
 #if defined(_MSC_VER) && ! defined(__clang__)
-_LIBCPP_WARNING("macro min is incompatible with C++.  #undefing min")
+_LIBCPP_WARNING("macro min is incompatible with C++.  Try #define NOMINMAX "
+                "before any Windows header. #undefing min")
 #else
 #warning: macro min is incompatible with C++.  #undefing min
 #endif
@@ -19,7 +20,8 @@ _LIBCPP_WARNING("macro min is incompatible with C++.  #undefing min")
 
 #ifdef max
 #if defined(_MSC_VER) && ! defined(__clang__)
-_LIBCPP_WARNING("macro max is incompatible with C++.  #undefing max")
+_LIBCPP_WARNING("macro max is incompatible with C++.  Try #define NOMINMAX "
+                "before any Windows header. #undefing max")
 #else
 #warning: macro max is incompatible with C++.  #undefing max
 #endif
