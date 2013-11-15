@@ -94,6 +94,10 @@ ACTIVE_SDK_PATH := $(shell xcrun --show-sdk-path 2> /dev/null)
 ifneq ($(ACTIVE_SDK_PATH),)
 COMPILERRT_MAKE_FLAGS := SDKROOT=$(ACTIVE_SDK_PATH)
 endif
+IOSSIM_SDK_PATH := $(shell xcrun --show-sdk-path -sdk iphonesimulator 2> /dev/null)
+ifneq ($(IOSSIM_SDK_PATH),)
+RuntimeLibrary.darwin.Configs += asan_iossim_dynamic.dylib
+endif
 
 endif
 
