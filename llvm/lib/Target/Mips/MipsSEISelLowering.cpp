@@ -1368,24 +1368,12 @@ static SDValue lowerMSABinaryBitImmIntr(SDValue Op, SelectionDAG &DAG,
 
 static SDValue lowerMSABitClear(SDValue Op, SelectionDAG &DAG) {
   EVT ResTy = Op->getValueType(0);
-  EVT ViaVecTy = ResTy == MVT::v2i64 ? MVT::v4i32 : ResTy;
   SDLoc DL(Op);
   SDValue One = DAG.getConstant(1, ResTy);
   SDValue Bit = DAG.getNode(ISD::SHL, DL, ResTy, One, Op->getOperand(2));
 
-  SDValue AllOnes = DAG.getConstant(-1, MVT::i32);
-  SDValue AllOnesOperands[16] = { AllOnes, AllOnes, AllOnes, AllOnes,
-                                  AllOnes, AllOnes, AllOnes, AllOnes,
-                                  AllOnes, AllOnes, AllOnes, AllOnes,
-                                  AllOnes, AllOnes, AllOnes, AllOnes };
-  AllOnes = DAG.getNode(ISD::BUILD_VECTOR, DL, ViaVecTy, AllOnesOperands,
-                        ViaVecTy.getVectorNumElements());
-  if (ResTy != ViaVecTy)
-    AllOnes = DAG.getNode(ISD::BITCAST, DL, ResTy, AllOnes);
-
-  Bit = DAG.getNode(ISD::XOR, DL, ResTy, Bit, AllOnes);
-
-  return DAG.getNode(ISD::AND, DL, ResTy, Op->getOperand(1), Bit);
+  return DAG.getNode(ISD::AND, DL, ResTy, Op->getOperand(1),
+                     DAG.getNOT(DL, Bit, ResTy));
 }
 
 static SDValue lowerMSABitClearImm(SDValue Op, SelectionDAG &DAG) {
