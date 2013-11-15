@@ -1851,3 +1851,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
     return commonPointerCastTransforms(CI);
   return commonCastTransforms(CI);
 }
+
+Instruction *InstCombiner::visitAddrSpaceCast(AddrSpaceCastInst &CI) {
+  return commonCastTransforms(CI);
+}

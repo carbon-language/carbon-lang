@@ -178,6 +178,7 @@ public:
   Instruction *visitPtrToInt(PtrToIntInst &CI);
   Instruction *visitIntToPtr(IntToPtrInst &CI);
   Instruction *visitBitCast(BitCastInst &CI);
+  Instruction *visitAddrSpaceCast(AddrSpaceCastInst &CI);
   Instruction *FoldSelectOpOp(SelectInst &SI, Instruction *TI,
                               Instruction *FI);
   Instruction *FoldSelectIntoOp(SelectInst &SI, Value*, Value*);
