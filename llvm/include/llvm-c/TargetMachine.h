@@ -64,7 +64,7 @@ LLVMTargetRef LLVMGetNextTarget(LLVMTargetRef T);
 /*===-- Target ------------------------------------------------------------===*/
 /** Finds the target corresponding to the given name and stores it in \p T. 
   Returns 0 on success. */
-LLVMBool LLVMGetTargetFromName(const char *Name, LLVMTargetRef *T);
+LLVMTargetRef LLVMGetTargetFromName(const char *Name);
 
 /** Finds the target corresponding to the given triple and stores it in \p T.
   Returns 0 on success. Optionally returns any error in ErrorMessage.

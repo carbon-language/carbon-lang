@@ -72,17 +72,14 @@ LLVMTargetRef LLVMGetNextTarget(LLVMTargetRef T) {
   return wrap(unwrap(T)->getNext());
 }
 
-LLVMBool LLVMGetTargetFromName(const char *Name, LLVMTargetRef *T) {
+LLVMTargetRef LLVMGetTargetFromName(const char *Name) {
   for (TargetRegistry::iterator IT = TargetRegistry::begin(),
                                 IE = TargetRegistry::end(); IT != IE; ++IT) {
-    if (IT->getName() == Name) {
-      *T = wrap(&*IT);
-
-      return 0;
-    }
+    if (IT->getName() == Name)
+      return wrap(&*IT);
   }
   
-  return 1;
+  return NULL;
 }
 
 LLVMBool LLVMGetTargetFromTriple(const char* TripleStr, LLVMTargetRef *T,
