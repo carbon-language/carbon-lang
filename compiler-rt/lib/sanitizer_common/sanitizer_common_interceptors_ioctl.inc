@@ -88,7 +88,7 @@ static void ioctl_table_fill() {
   _(TIOCSTI, READ, sizeof(char));
   _(TIOCSWINSZ, READ, struct_winsize_sz);
 
-#if (SANITIZER_LINUX && !SANITIZER_ANDROID) || SANITIZER_MAC
+#if (SANITIZER_LINUX && !SANITIZER_ANDROID)
   _(SIOCGETSGCNT, WRITE, struct_sioc_sg_req_sz);
   _(SIOCGETVIFCNT, WRITE, struct_sioc_vif_req_sz);
 #endif

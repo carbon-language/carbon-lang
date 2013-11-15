@@ -114,7 +114,6 @@
 
 #if SANITIZER_MAC
 #include <net/ethernet.h>
-#include <netinet/ip_mroute.h>
 #include <sys/filio.h>
 #include <sys/mount.h>
 #include <sys/sockio.h>
@@ -325,7 +324,7 @@ namespace __sanitizer {
   unsigned struct_unimapinit_sz = sizeof(struct unimapinit);
 #endif
 
-#if !SANITIZER_ANDROID
+#if !SANITIZER_ANDROID && !SANITIZER_MAC
   unsigned struct_sioc_sg_req_sz = sizeof(struct sioc_sg_req);
   unsigned struct_sioc_vif_req_sz = sizeof(struct sioc_vif_req);
 #endif
@@ -376,7 +375,7 @@ namespace __sanitizer {
   unsigned IOCTL_TIOCSPGRP = TIOCSPGRP;
   unsigned IOCTL_TIOCSTI = TIOCSTI;
   unsigned IOCTL_TIOCSWINSZ = TIOCSWINSZ;
-#if (SANITIZER_LINUX && !SANITIZER_ANDROID) || SANITIZER_MAC
+#if (SANITIZER_LINUX && !SANITIZER_ANDROID)
   unsigned IOCTL_SIOCGETSGCNT = SIOCGETSGCNT;
   unsigned IOCTL_SIOCGETVIFCNT = SIOCGETVIFCNT;
 #endif
