@@ -273,8 +273,7 @@ private:
       if ( chunks[i].signature == signature )
         return chunks[i];
     }
-    assert(0 && "findChunk() signature not found");
-    static NativeChunk x; return x; // suppress warning
+    llvm_unreachable("findChunk() signature not found");
   }
 
   // append atom name to string pool and return offset
