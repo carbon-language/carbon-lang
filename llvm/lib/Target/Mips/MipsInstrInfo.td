@@ -179,7 +179,7 @@ def RelocPIC    :     Predicate<"TM.getRelocationModel() == Reloc::PIC_">,
 def NoNaNsFPMath :    Predicate<"TM.Options.NoNaNsFPMath">,
                       AssemblerPredicate<"FeatureMips32">;
 def HasStdEnc :       Predicate<"Subtarget.hasStandardEncoding()">,
-                      AssemblerPredicate<"!FeatureMips16,!FeatureMicroMips">;
+                      AssemblerPredicate<"!FeatureMips16">;
 def NotDSP :          Predicate<"!Subtarget.hasDSP()">;
 def InMicroMips    :  Predicate<"Subtarget.inMicroMipsMode()">,
                       AssemblerPredicate<"FeatureMicroMips">;
@@ -958,10 +958,12 @@ def SH  : Store<"sh", GPR32Opnd, truncstorei16, IIStore>, MMRel, LW_FM<0x29>;
 def SW  : Store<"sw", GPR32Opnd, store, IIStore>, MMRel, LW_FM<0x2b>;
 
 /// load/store left/right
+let Predicates = [NotInMicroMips] in {
 def LWL : LoadLeftRight<"lwl", MipsLWL, GPR32Opnd, IILoad>, LW_FM<0x22>;
 def LWR : LoadLeftRight<"lwr", MipsLWR, GPR32Opnd, IILoad>, LW_FM<0x26>;
 def SWL : StoreLeftRight<"swl", MipsSWL, GPR32Opnd, IIStore>, LW_FM<0x2a>;
 def SWR : StoreLeftRight<"swr", MipsSWR, GPR32Opnd, IIStore>, LW_FM<0x2e>;
+}
 
 def SYNC : SYNC_FT, SYNC_FM;
 def TEQ : MMRel, TEQ_FT<"teq", GPR32Opnd>, TEQ_FM<0x34>;
@@ -1049,8 +1051,10 @@ def MULT  : MMRel, Mult<"mult", IIImult, GPR32Opnd, [HI0, LO0]>,
             MULT_FM<0, 0x18>;
 def MULTu : MMRel, Mult<"multu", IIImult, GPR32Opnd, [HI0, LO0]>,
             MULT_FM<0, 0x19>;
-def SDIV  : Div<"div", IIIdiv, GPR32Opnd, [HI0, LO0]>, MULT_FM<0, 0x1a>;
-def UDIV  : Div<"divu", IIIdiv, GPR32Opnd, [HI0, LO0]>, MULT_FM<0, 0x1b>;
+def SDIV  : MMRel, Div<"div", IIIdiv, GPR32Opnd, [HI0, LO0]>,
+            MULT_FM<0, 0x1a>;
+def UDIV  : MMRel, Div<"divu", IIIdiv, GPR32Opnd, [HI0, LO0]>,
+            MULT_FM<0, 0x1b>;
 
 def MTHI : MMRel, MoveToLOHI<"mthi", GPR32Opnd, [HI0]>, MTLO_FM<0x11>;
 def MTLO : MMRel, MoveToLOHI<"mtlo", GPR32Opnd, [LO0]>, MTLO_FM<0x13>;

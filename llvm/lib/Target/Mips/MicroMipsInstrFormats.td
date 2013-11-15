@@ -39,8 +39,8 @@ class SLTI_FM_MM<bits<6> op> : MMArch {
   bits<32> Inst;
 
   let Inst{31-26} = op;
-  let Inst{25-21} = rs;
-  let Inst{20-16} = rt;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = rs;
   let Inst{15-0}  = imm16;
 }
 
