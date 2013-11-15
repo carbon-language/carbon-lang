@@ -1,7 +1,7 @@
 (* RUN: rm -rf %t.builddir
  * RUN: mkdir -p %t.builddir
  * RUN: cp %s %t.builddir
- * RUN: %ocamlopt -g -warn-error A llvm.cmxa llvm_target.cmxa llvm_X86.cmxa %t.builddir/target.ml -o %t
+ * RUN: %ocamlopt -g -warn-error A llvm.cmxa llvm_target.cmxa llvm_executionengine.cmxa %t.builddir/target.ml -o %t
  * RUN: %t %t.bc
  * XFAIL: vg_leak
  *)
@@ -13,7 +13,7 @@
 open Llvm
 open Llvm_target
 
-let _ = Llvm_X86.initialize ()
+let _ = Llvm_executionengine.initialize_native_target ()
 
 let context = global_context ()
 let i32_type = Llvm.i32_type context
@@ -34,13 +34,9 @@ let assert_equal a b =
 let filename = Sys.argv.(1)
 let m = create_module context filename
 
-let target =
-  match Target.by_name "x86" with
-  | Some t -> t
-  | None -> failwith "need a target"
+let target = Target.by_triple (Target.default_triple ())
 
-let machine =
-  TargetMachine.create ~triple:"i686-linux-gnu" ~cpu:"core2" target
+let machine = TargetMachine.create (Target.default_triple ()) target
 
 (*===-- Data Layout -------------------------------------------------------===*)
 
@@ -76,11 +72,11 @@ let test_target_data () =
 let test_target () =
   let module T = Target in
   ignore (T.succ target);
-  assert_equal (T.name target) "x86";
-  assert_equal (T.description target) "32-bit X86: Pentium-Pro and above";
-  assert_equal (T.has_jit target) true;
-  assert_equal (T.has_target_machine target) true;
-  assert_equal (T.has_asm_backend target) true
+  ignore (T.name target);
+  ignore (T.description target);
+  ignore (T.has_jit target);
+  ignore (T.has_target_machine target);
+  ignore (T.has_asm_backend target)
 
 
 (*===-- Target Machine ----------------------------------------------------===*)
@@ -88,8 +84,8 @@ let test_target () =
 let test_target_machine () =
   let module TM = TargetMachine in
   assert_equal (TM.target machine) target;
-  assert_equal (TM.triple machine) "i686-linux-gnu";
-  assert_equal (TM.cpu machine) "core2";
+  assert_equal (TM.triple machine) (Target.default_triple ());
+  assert_equal (TM.cpu machine) "";
   assert_equal (TM.features machine) "";
   ignore (TM.data_layout machine)
 
