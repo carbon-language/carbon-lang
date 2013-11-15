@@ -1,4 +1,5 @@
-# RUN: lld -core %s | FileCheck %s
+# RUN: lld -core %s 2> %t.err | FileCheck %s
+# RUN: FileCheck -check-prefix=ERROR %s < %t.err
 
 #
 # Test that undefined symbols preserve their attributes and merge properly
@@ -8,86 +9,75 @@
 undefined-atoms:
     - name:              regular_func
       can-be-null:       never
-
     - name:              weak_import_func
       can-be-null:       at-runtime
-      
     - name:              weak_func
       can-be-null:       at-buildtime
-      
     - name:              bar1
       can-be-null:       never
-      
     - name:              bar2
       can-be-null:       at-runtime
-      
     - name:              bar3
       can-be-null:       at-buildtime
-      
     - name:              bar4
       can-be-null:       never
-      
     - name:              bar5
       can-be-null:       at-runtime
-      
     - name:              bar6
       can-be-null:       at-buildtime
-      
     - name:              bar7
       can-be-null:       never
-      
     - name:              bar8
       can-be-null:       at-runtime
-      
+      fallback:
+        name: baz1
     - name:              bar9
       can-be-null:       at-buildtime
-      
+      fallback:
+        name: baz2
 ---
 undefined-atoms:
     - name:              bar1
       can-be-null:       never
-      
     - name:              bar2
       can-be-null:       at-runtime
-      
     - name:              bar3
       can-be-null:       at-buildtime
-      
     - name:              bar4
       can-be-null:       at-runtime
-      
     - name:              bar5
       can-be-null:       at-buildtime
-      
     - name:              bar6
       can-be-null:       never
-      
     - name:              bar7
       can-be-null:       at-buildtime
-      
     - name:              bar8
       can-be-null:       never
-      
     - name:              bar9
       can-be-null:       at-runtime
+      fallback:
+        name: baz3
 ...
 
-# CHECK:   - name:       regular_func
-# CHECK:   - name:       weak_import_func
-# CHECK:     can-be-null:  at-runtime
-# CHECK:   - name:       weak_func
-# CHECK:     can-be-null:  at-buildtime
-# CHECK:   - name:       bar1
-# CHECK:   - name:       bar2
-# CHECK:     can-be-null:  at-runtime
-# CHECK:   - name:       bar3
-# CHECK:     can-be-null:  at-buildtime
-# CHECK:   - name:       bar4
-# CHECK:   - name:       bar5
-# CHECK:     can-be-null:  at-runtime
-# CHECK:   - name:       bar7
-# CHECK:   - name:       bar6
-# CHECK:   - name:       bar8
-# CHECK:   - name:       bar9
-# CHECK:     can-be-null:  at-runtime
-# CHECK:       ...
+# CHECK:       - name:            regular_func
+# CHECK-NEXT:  - name:            weak_import_func
+# CHECK-NEXT:    can-be-null:     at-runtime
+# CHECK-NEXT:  - name:            weak_func
+# CHECK-NEXT:    can-be-null:     at-buildtime
+# CHECK-NEXT:  - name:            bar1
+# CHECK-NEXT:  - name:            bar2
+# CHECK-NEXT:    can-be-null:     at-runtime
+# CHECK-NEXT:  - name:            bar3
+# CHECK-NEXT:    can-be-null:     at-buildtime
+# CHECK-NEXT:  - name:            bar4
+# CHECK-NEXT:  - name:            bar5
+# CHECK-NEXT:    can-be-null:     at-runtime
+# CHECK-NEXT:  - name:            bar7
+# CHECK-NEXT:  - name:            bar6
+# CHECK-NEXT:  - name:            bar8
+# CHECK-NEXT:  - name:            bar9
+# CHECK-NEXT:    can-be-null:     at-runtime
+# CHECK-NEXT:    fallback:
+# CHECK-NEXT:      name:            baz3
+
+# ERROR: undefined symbol bar9 has different fallback: baz2 in and baz3 in

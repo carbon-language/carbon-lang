@@ -172,28 +172,42 @@ void SymbolTable::addByName(const Atom & newAtom) {
     }
     break;
   case NCR_DupUndef: {
-      const UndefinedAtom* existingUndef =
-        dyn_cast<UndefinedAtom>(existing);
-      const UndefinedAtom* newUndef =
-        dyn_cast<UndefinedAtom>(&newAtom);
-      assert(existingUndef != nullptr);
-      assert(newUndef != nullptr);
-      if (existingUndef->canBeNull() == newUndef->canBeNull()) {
-        useNew = false;
-      } else {
-        if (_context.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
-          // FIXME: need diagonstics interface for writing warning messages
-          llvm::errs() << "lld warning: undefined symbol "
-                       << existingUndef->name()
-                       << " has different weakness in "
-                       << existingUndef->file().path()
-                       << " and in "
-                       << newUndef->file().path();
-        }
-        useNew = (newUndef->canBeNull() < existingUndef->canBeNull());
-      }
+    const UndefinedAtom* existingUndef = dyn_cast<UndefinedAtom>(existing);
+    const UndefinedAtom* newUndef = dyn_cast<UndefinedAtom>(&newAtom);
+    assert(existingUndef != nullptr);
+    assert(newUndef != nullptr);
+
+    bool sameCanBeNull = (existingUndef->canBeNull() == newUndef->canBeNull());
+    if (!sameCanBeNull &&
+        _context.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
+      llvm::errs() << "lld warning: undefined symbol "
+                   << existingUndef->name()
+                   << " has different weakness in "
+                   << existingUndef->file().path()
+                   << " and in " << newUndef->file().path() << "\n";
     }
+
+    const UndefinedAtom *existingFallback = existingUndef->fallback();
+    const UndefinedAtom *newFallback = newUndef->fallback();
+    bool hasDifferentFallback =
+        (existingFallback && newFallback &&
+         existingFallback->name() != newFallback->name());
+    if (hasDifferentFallback) {
+      llvm::errs() << "lld warning: undefined symbol "
+                   << existingUndef->name() << " has different fallback: "
+                   << existingFallback->name() << " in "
+                   << existingUndef->file().path() << " and "
+                   << newFallback->name() << " in "
+                   << newUndef->file().path() << "\n";
+    }
+
+    bool hasNewFallback = newUndef->fallback();
+    if (sameCanBeNull)
+      useNew = hasNewFallback;
+    else
+      useNew = (newUndef->canBeNull() < existingUndef->canBeNull());
     break;
+  }
   case NCR_DupShLib: {
       const SharedLibraryAtom* curShLib =
         dyn_cast<SharedLibraryAtom>(existing);
