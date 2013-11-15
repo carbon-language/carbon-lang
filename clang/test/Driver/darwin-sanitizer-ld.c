@@ -13,7 +13,7 @@
 // RUN:   | FileCheck --check-prefix=CHECK-ASAN-IOSSIM %s
 
 // CHECK-ASAN-IOSSIM: "{{.*}}ld{{(.exe)?}}"
-// CHECK-ASAN-IOSSIM: stdc++
+// CHECK-ASAN-IOSSIM: lc++
 // CHECK-ASAN-IOSSIM: libclang_rt.asan_iossim_dynamic.dylib"
 
 // RUN: %clang -no-canonical-prefixes -### -target x86_64-darwin \
