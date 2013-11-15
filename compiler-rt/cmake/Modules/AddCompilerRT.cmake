@@ -109,10 +109,11 @@ endmacro()
 
 # Unittests support.
 set(COMPILER_RT_GTEST_PATH ${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest)
-set(COMPILER_RT_GTEST_SOURCE ${COMPILER_RT_GTEST_PATH}/gtest-all.cc)
+set(COMPILER_RT_GTEST_SOURCE ${COMPILER_RT_GTEST_PATH}/src/gtest-all.cc)
 set(COMPILER_RT_GTEST_INCLUDE_CFLAGS
   -DGTEST_NO_LLVM_RAW_OSTREAM=1
   -I${COMPILER_RT_GTEST_PATH}/include
+  -I${COMPILER_RT_GTEST_PATH}
 )
 
 # Use Clang to link objects into a single executable with just-built
