@@ -871,7 +871,9 @@ DIE *CompileUnit::getOrCreateContextDIE(DIScope Context) {
     return getOrCreateNameSpace(DINameSpace(Context));
   if (Context.isSubprogram())
     return getOrCreateSubprogramDIE(DISubprogram(Context));
-  return getDIE(Context);
+  if (DIE *ContextDIE = getDIE(Context))
+    return ContextDIE;
+  return getCUDie();
 }
 
 /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
