@@ -118,9 +118,10 @@ LLVMBool LLVMTargetHasAsmBackend(LLVMTargetRef T) {
   return unwrap(T)->hasMCAsmBackend();
 }
 
-LLVMTargetMachineRef LLVMCreateTargetMachine(LLVMTargetRef T, char* Triple,
-  char* CPU, char* Features, LLVMCodeGenOptLevel Level, LLVMRelocMode Reloc,
-  LLVMCodeModel CodeModel) {
+LLVMTargetMachineRef LLVMCreateTargetMachine(LLVMTargetRef T,
+        const char* Triple, const char* CPU, const char* Features,
+        LLVMCodeGenOptLevel Level, LLVMRelocMode Reloc,
+        LLVMCodeModel CodeModel) {
   Reloc::Model RM;
   switch (Reloc){
     case LLVMRelocStatic:
