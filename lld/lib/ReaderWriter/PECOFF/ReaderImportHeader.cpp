@@ -152,7 +152,7 @@ namespace {
 
 uint8_t FuncAtomContent[] = {
   0xff, 0x25, 0x00, 0x00, 0x00, 0x00,  // jmp *0x0
-  0x90, 0x90                           // nop; nop
+  0xcc, 0xcc                           // int 3; int 3
 };
 
 /// The defined atom for jump table.
