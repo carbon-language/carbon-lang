@@ -794,7 +794,7 @@ static void runAtExitHandlers() {
 // not inlined, and hiding their real definitions in a separate archive file
 // that the dynamic linker can't see. For more info, search for
 // 'libc_nonshared.a' on Google, or read http://llvm.org/PR274.
-#if defined(__linux__)
+#if defined(__linux__) && defined(__GLIBC__)
 /* stat functions are redirecting to __xstat with a version number.  On x86-64
  * linking with libc_nonshared.a and -Wl,--export-dynamic doesn't make 'stat'
  * available as an exported symbol, so we have to add it explicitly.

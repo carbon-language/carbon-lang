@@ -141,11 +141,81 @@ static int jit_noop() {
   return 0;
 }
 
+// ARM math functions are statically linked on Android from libgcc.a, but not
+// available at runtime for dynamic linking. On Linux these are usually placed
+// in libgcc_s.so so can be found by normal dynamic lookup.
+#if defined(__BIONIC__) && defined(__arm__)
+// List of functions which are statically linked on Android and can be generated
+// by LLVM. This is done as a nested macro which is used once to declare the
+// imported functions with ARM_MATH_DECL and once to compare them to the
+// user-requested symbol in getSymbolAddress with ARM_MATH_CHECK. The test
+// assumes that all functions start with __aeabi_ and getSymbolAddress must be
+// modified if that changes.
+#define ARM_MATH_IMPORTS(PP) \
+  PP(__aeabi_d2f) \
+  PP(__aeabi_d2iz) \
+  PP(__aeabi_d2lz) \
+  PP(__aeabi_d2uiz) \
+  PP(__aeabi_d2ulz) \
+  PP(__aeabi_dadd) \
+  PP(__aeabi_dcmpeq) \
+  PP(__aeabi_dcmpge) \
+  PP(__aeabi_dcmpgt) \
+  PP(__aeabi_dcmple) \
+  PP(__aeabi_dcmplt) \
+  PP(__aeabi_dcmpun) \
+  PP(__aeabi_ddiv) \
+  PP(__aeabi_dmul) \
+  PP(__aeabi_dsub) \
+  PP(__aeabi_f2d) \
+  PP(__aeabi_f2iz) \
+  PP(__aeabi_f2lz) \
+  PP(__aeabi_f2uiz) \
+  PP(__aeabi_f2ulz) \
+  PP(__aeabi_fadd) \
+  PP(__aeabi_fcmpeq) \
+  PP(__aeabi_fcmpge) \
+  PP(__aeabi_fcmpgt) \
+  PP(__aeabi_fcmple) \
+  PP(__aeabi_fcmplt) \
+  PP(__aeabi_fcmpun) \
+  PP(__aeabi_fdiv) \
+  PP(__aeabi_fmul) \
+  PP(__aeabi_fsub) \
+  PP(__aeabi_i2d) \
+  PP(__aeabi_i2f) \
+  PP(__aeabi_idiv) \
+  PP(__aeabi_idivmod) \
+  PP(__aeabi_l2d) \
+  PP(__aeabi_l2f) \
+  PP(__aeabi_lasr) \
+  PP(__aeabi_ldivmod) \
+  PP(__aeabi_llsl) \
+  PP(__aeabi_llsr) \
+  PP(__aeabi_lmul) \
+  PP(__aeabi_ui2d) \
+  PP(__aeabi_ui2f) \
+  PP(__aeabi_uidiv) \
+  PP(__aeabi_uidivmod) \
+  PP(__aeabi_ul2d) \
+  PP(__aeabi_ul2f) \
+  PP(__aeabi_uldivmod)
+
+// Declare statically linked math functions on ARM. The function declarations
+// here do not have the correct prototypes for each function in
+// ARM_MATH_IMPORTS, but it doesn't matter because only the symbol addresses are
+// needed. In particular the __aeabi_*divmod functions do not have calling
+// conventions which match any C prototype.
+#define ARM_MATH_DECL(name) extern "C" void name();
+ARM_MATH_IMPORTS(ARM_MATH_DECL)
+#undef ARM_MATH_DECL
+#endif
+
 uint64_t RTDyldMemoryManager::getSymbolAddress(const std::string &Name) {
   // This implementation assumes that the host program is the target.
   // Clients generating code for a remote target should implement their own
   // memory manager.
-#if defined(__linux__)
+#if defined(__linux__) && defined(__GLIBC__)
   //===--------------------------------------------------------------------===//
   // Function stubs that are invoked instead of certain library calls
   //
@@ -163,7 +233,18 @@ uint64_t RTDyldMemoryManager::getSymbolAddress(const std::string &Name) {
   if (Name == "lstat64") return (uint64_t)&lstat64;
   if (Name == "atexit") return (uint64_t)&atexit;
   if (Name == "mknod") return (uint64_t)&mknod;
-#endif // __linux__
+#endif // __linux__ && __GLIBC__
+  
+  // See ARM_MATH_IMPORTS definition for explanation
+#if defined(__BIONIC__) && defined(__arm__)
+  if (Name.compare(0, 8, "__aeabi_") == 0) {
+    // Check if the user has requested any of the functions listed in
+    // ARM_MATH_IMPORTS, and if so redirect to the statically linked symbol.
+#define ARM_MATH_CHECK(fn) if (Name == #fn) return (uint64_t)&fn;
+    ARM_MATH_IMPORTS(ARM_MATH_CHECK)
+#undef ARM_MATH_CHECK
+  }
+#endif
 
   // We should not invoke parent's ctors/dtors from generated main()!
   // On Mingw and Cygwin, the symbol __main is resolved to
