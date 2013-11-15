@@ -4403,13 +4403,18 @@ static void handleObjCBridgeAttr(Sema &S, Scope *Sc, Decl *D,
       if (T->isRecordType()) {
         RecordDecl *RD = T->getAs<RecordType>()->getDecl();
         if (!RD || RD->isUnion()) {
-          S.Diag(D->getLocStart(), diag::err_attribute_wrong_decl_type)
-          << Attr.getRange() << Attr.getName() << ExpectedStruct;
+          S.Diag(D->getLocStart(), diag::err_objc_bridge_not_pointert_to_struct)
+          << Attr.getRange();
           return;
         }
+      } else {
+        S.Diag(TD->getLocStart(), diag::err_objc_bridge_not_pointert_to_struct)
+        << Attr.getRange();
+        return;
       }
     } else {
-      S.Diag(TD->getLocStart(), diag::err_objc_bridge_not_pointertype);
+      S.Diag(TD->getLocStart(), diag::err_objc_bridge_not_pointert_to_struct)
+            << Attr.getRange();
       return;
     }
     // Check for T being a CFType goes here.

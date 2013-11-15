@@ -3180,13 +3180,13 @@ static bool CheckObjCBridgeCast(Sema &S, QualType castType, Expr *castExpr) {
           NamedDecl *Target = R.getFoundDecl();
           if (Target && !isa<ObjCInterfaceDecl>(Target)) {
             S.Diag(castExpr->getLocStart(), diag::err_objc_bridged_not_interface)
-                    << castExpr->getType();
+                    << castExpr->getType() << Parm->getName();
             S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
             S.Diag(Target->getLocStart(), diag::note_declared_at);
           }
         } else {
           S.Diag(castExpr->getLocStart(), diag::err_objc_bridged_not_interface)
-                  << castExpr->getType();
+                  << castExpr->getType() << Parm->getName();
           S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
         }
       }

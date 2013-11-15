@@ -7,19 +7,19 @@ typedef struct __CFMyColor  * __attribute__((objc_bridge(12))) CFMyColorRef; // 
 
 typedef struct __CFArray *  __attribute__ ((objc_bridge)) CFArrayRef; // expected-error {{parameter of 'objc_bridge' attribute must be a single name of an Objective-C class}}
 
-typedef void *  __attribute__ ((objc_bridge(NSURL))) CFURLRef; 
+typedef void *  __attribute__ ((objc_bridge(NSURL))) CFURLRef;  // expected-error {{'objc_bridge' attribute must be applied to a pointer to struct type}}
 
-typedef void * CFStringRef __attribute__ ((objc_bridge(NSString)));
+typedef void * CFStringRef __attribute__ ((objc_bridge(NSString))); // expected-error {{'objc_bridge' attribute must be applied to a pointer to struct type}}
 
 typedef struct __CFLocale * __attribute__((objc_bridge(NSLocale, NSError))) CFLocaleRef;// expected-error {{use of undeclared identifier 'NSError'}}
 
-typedef struct __CFData __attribute__((objc_bridge(NSData))) CFDataRef; // expected-error {{'objc_bridge' attribute must be applied to a pointer type}}
+typedef struct __CFData __attribute__((objc_bridge(NSData))) CFDataRef; // expected-error {{'objc_bridge' attribute must be applied to a pointer to struct type}}
 
 typedef struct __attribute__((objc_bridge(NSDictionary))) __CFDictionary * CFDictionaryRef; // expected-error {{'objc_bridge' attribute must be put on a typedef only}}
 
 typedef struct __CFSetRef * CFSetRef __attribute__((objc_bridge(NSSet)));
 
-typedef union __CFUColor * __attribute__((objc_bridge(NSUColor))) CFUColorRef; // expected-error {{'objc_bridge' attribute only applies to structs}}
+typedef union __CFUColor * __attribute__((objc_bridge(NSUColor))) CFUColorRef; // expected-error {{'objc_bridge' attribute must be applied to a pointer to struct type}}
 
 @interface I
 {
@@ -34,7 +34,7 @@ typedef union __CFUColor * __attribute__((objc_bridge(NSUColor))) CFUColorRef; /
 typedef struct __CFError * __attribute__((objc_bridge(NSTesting))) CFTestingRef; // expected-note {{declared here}}
 
 id Test1(CFTestingRef cf) {
-  return (NSString *)cf; // expected-error {{CF object of type 'CFTestingRef' (aka 'struct __CFError *') with 'objc_bridge' attribute which has parameter that does not name an Objective-C class}}
+  return (NSString *)cf; // expected-error {{CF object of type 'CFTestingRef' (aka 'struct __CFError *') is bridged to 'NSTesting', which is not an Objective-C class}}
 }
 
 typedef CFErrorRef CFErrorRef1;
