@@ -152,13 +152,17 @@ unsigned Mips16InstrInfo::getOppositeBranchOpc(unsigned Opc) const {
   default:  llvm_unreachable("Illegal opcode!");
   case Mips::BeqzRxImmX16: return Mips::BnezRxImmX16;
   case Mips::BnezRxImmX16: return Mips::BeqzRxImmX16;
+  case Mips::BeqzRxImm16: return Mips::BnezRxImm16;
+  case Mips::BnezRxImm16: return Mips::BeqzRxImm16;
   case Mips::BteqzT8CmpX16: return Mips::BtnezT8CmpX16;
   case Mips::BteqzT8SltX16: return Mips::BtnezT8SltX16;
   case Mips::BteqzT8SltiX16: return Mips::BtnezT8SltiX16;
+  case Mips::Btnez16: return Mips::Bteqz16;
   case Mips::BtnezX16: return Mips::BteqzX16;
   case Mips::BtnezT8CmpiX16: return Mips::BteqzT8CmpiX16;
   case Mips::BtnezT8SltuX16: return Mips::BteqzT8SltuX16;
   case Mips::BtnezT8SltiuX16: return Mips::BteqzT8SltiuX16;
+  case Mips::Bteqz16: return Mips::Btnez16;
   case Mips::BteqzX16: return Mips::BtnezX16;
   case Mips::BteqzT8CmpiX16: return Mips::BtnezT8CmpiX16;
   case Mips::BteqzT8SltuX16: return Mips::BtnezT8SltuX16;
@@ -441,6 +445,8 @@ Mips16InstrInfo::basicLoadImmediate(
 unsigned Mips16InstrInfo::getAnalyzableBrOpc(unsigned Opc) const {
   return (Opc == Mips::BeqzRxImmX16   || Opc == Mips::BimmX16  ||
           Opc == Mips::Bimm16  ||
+          Opc == Mips::Bteqz16        || Opc == Mips::Btnez16 ||
+          Opc == Mips::BeqzRxImm16    || Opc == Mips::BnezRxImm16   ||
           Opc == Mips::BnezRxImmX16   || Opc == Mips::BteqzX16 ||
           Opc == Mips::BteqzT8CmpX16  || Opc == Mips::BteqzT8CmpiX16 ||
           Opc == Mips::BteqzT8SltX16  || Opc == Mips::BteqzT8SltuX16  ||

@@ -51,7 +51,10 @@ class FI816_ins_base<bits<3> _func, string asmstr,
   FI816<_func, (outs), (ins simm16:$imm), !strconcat(asmstr, asmstr2),
         [], itin>;
 
-
+class FI816_ins<bits<3> _func, string asmstr,
+                InstrItinClass itin>:
+  FI816_ins_base<_func, asmstr, "\t$imm  # 16 bit inst", itin>;
+ 
 class FI816_SP_ins<bits<3> _func, string asmstr,
                    InstrItinClass itin>:
   FI816_ins_base<_func, asmstr, "\t$$sp, $imm # 16 bit inst", itin>;
@@ -627,6 +630,10 @@ def Break16: FRRBreakNull16_ins<"break 0", NoItinerary>;
 // Purpose: Branch on T Equal to Zero (Extended)
 // To test special register T then do a PC-relative conditional branch.
 //
+def Bteqz16: FI816_ins<0b000, "bteqz", IIAlu>, cbranch16 {
+  let Uses = [T8];
+}
+
 def BteqzX16: FEXT_I816_ins<0b000, "bteqz", IIAlu>, cbranch16 {
   let Uses = [T8];
 }
@@ -650,6 +657,11 @@ def BteqzT8SltiuX16: FEXT_T8I8I16_ins<"bteqz", "sltiu">,
 // Purpose: Branch on T Not Equal to Zero (Extended)
 // To test special register T then do a PC-relative conditional branch.
 //
+
+def Btnez16: FI816_ins<0b001, "btnez", IIAlu>, cbranch16 {
+  let Uses = [T8];
+}
+
 def BtnezX16: FEXT_I816_ins<0b001, "btnez", IIAlu> ,cbranch16 {
   let Uses = [T8];
 }
@@ -1427,7 +1439,7 @@ def: Mips16Pat
 
 def: Mips16Pat
   <(brcond (i32 (seteq CPU16Regs:$rx, 0)), bb:$targ16),
-   (BeqzRxImmX16 CPU16Regs:$rx, bb:$targ16)
+   (BeqzRxImm16 CPU16Regs:$rx, bb:$targ16)
   >;
 
 //
@@ -1489,7 +1501,7 @@ def: Mips16Pat
 
 def: Mips16Pat
   <(brcond (i32 (setne CPU16Regs:$rx, 0)), bb:$targ16),
-   (BnezRxImmX16 CPU16Regs:$rx, bb:$targ16)
+   (BnezRxImm16 CPU16Regs:$rx, bb:$targ16)
   >;
 
 //
@@ -1497,7 +1509,7 @@ def: Mips16Pat
 //
 def: Mips16Pat
   <(brcond CPU16Regs:$rx, bb:$targ16),
-   (BnezRxImmX16 CPU16Regs:$rx, bb:$targ16)
+   (BnezRxImm16 CPU16Regs:$rx, bb:$targ16)
   >;
 
 //
