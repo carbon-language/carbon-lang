@@ -31,7 +31,7 @@ void compilerrt_abort_impl(const char *file, int line, const char *function) {
   panic("%s:%d: abort in %s", file, line, function);
 }
 
-#elif __APPLE__ && !__STATIC__
+#elif __APPLE__
 
 /* from libSystem.dylib */
 extern void __assert_rtn(const char *func, const char *file, 
@@ -44,7 +44,6 @@ __attribute__((visibility("hidden")))
 void compilerrt_abort_impl(const char *file, int line, const char *function) {
   __assert_rtn(function, file, line, "libcompiler_rt abort");
 }
-
 
 #else
 
