@@ -224,6 +224,16 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
   s->mtx.Unlock();
 }
 
+void MutexRepair(ThreadState *thr, uptr pc, uptr addr) {
+  Context *ctx = CTX();
+  CHECK_GT(thr->in_rtl, 0);
+  DPrintf("#%d: MutexRepair %zx\n", thr->tid, addr);
+  SyncVar *s = ctx->synctab.GetOrCreateAndLock(thr, pc, addr, true);
+  s->owner_tid = SyncVar::kInvalidTid;
+  s->recursion = 0;
+  s->mtx.Unlock();
+}
+
 void Acquire(ThreadState *thr, uptr pc, uptr addr) {
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: Acquire %zx\n", thr->tid, addr);

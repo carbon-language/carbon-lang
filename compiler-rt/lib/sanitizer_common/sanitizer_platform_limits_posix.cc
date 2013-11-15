@@ -21,6 +21,7 @@
 
 #include <arpa/inet.h>
 #include <dirent.h>
+#include <errno.h>
 #include <grp.h>
 #include <limits.h>
 #include <net/if.h>
@@ -762,6 +763,8 @@ namespace __sanitizer {
   unsigned IOCTL_TIOCSERSETMULTI = TIOCSERSETMULTI;
   unsigned IOCTL_TIOCSSERIAL = TIOCSSERIAL;
 #endif
+
+  extern const int errno_EOWNERDEAD = EOWNERDEAD;
 }  // namespace __sanitizer
 
 COMPILER_CHECK(sizeof(__sanitizer_pthread_attr_t) >= sizeof(pthread_attr_t));

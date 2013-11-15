@@ -23,6 +23,7 @@
 //   COMMON_INTERCEPTOR_ON_EXIT
 //   COMMON_INTERCEPTOR_MUTEX_LOCK
 //   COMMON_INTERCEPTOR_MUTEX_UNLOCK
+//   COMMON_INTERCEPTOR_MUTEX_REPAIR
 //   COMMON_INTERCEPTOR_SET_PTHREAD_NAME
 //===----------------------------------------------------------------------===//
 #include "interception/interception.h"
@@ -48,6 +49,10 @@
 
 #ifndef COMMON_INTERCEPTOR_MUTEX_UNLOCK
 #define COMMON_INTERCEPTOR_MUTEX_UNLOCK(ctx, m) {}
+#endif
+
+#ifndef COMMON_INTERCEPTOR_MUTEX_REPAIR
+#define COMMON_INTERCEPTOR_MUTEX_REPAIR(ctx, m) {}
 #endif
 
 #if SANITIZER_INTERCEPT_STRCMP
@@ -2179,7 +2184,10 @@ INTERCEPTOR(int, pthread_mutex_lock, void *m) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, pthread_mutex_lock, m);
   int res = REAL(pthread_mutex_lock)(m);
-  if (res == 0) COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m);
+  if (res == errno_EOWNERDEAD)
+    COMMON_INTERCEPTOR_MUTEX_REPAIR(ctx, m);
+  if (res == 0 || res == errno_EOWNERDEAD)
+    COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m);
   return res;
 }
 

@@ -66,6 +66,7 @@ const int PTHREAD_MUTEX_RECURSIVE = 1;
 const int PTHREAD_MUTEX_RECURSIVE_NP = 1;
 const int EINVAL = 22;
 const int EBUSY = 16;
+const int EOWNERDEAD = 130;
 const int EPOLL_CTL_ADD = 1;
 const int SIGILL = 4;
 const int SIGABRT = 6;
@@ -948,9 +949,10 @@ TSAN_INTERCEPTOR(int, pthread_mutex_destroy, void *m) {
 TSAN_INTERCEPTOR(int, pthread_mutex_trylock, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_mutex_trylock, m);
   int res = REAL(pthread_mutex_trylock)(m);
-  if (res == 0) {
+  if (res == EOWNERDEAD)
+    MutexRepair(thr, pc, (uptr)m);
+  if (res == 0 || res == EOWNERDEAD)
     MutexLock(thr, pc, (uptr)m);
-  }
   return res;
 }
 
@@ -1890,6 +1892,10 @@ struct TsanInterceptorContext {
 
 #define COMMON_INTERCEPTOR_MUTEX_UNLOCK(ctx, m) \
   MutexUnlock(((TsanInterceptorContext *)ctx)->thr, \
+            ((TsanInterceptorContext *)ctx)->pc, (uptr)m)
+
+#define COMMON_INTERCEPTOR_MUTEX_REPAIR(ctx, m) \
+  MutexRepair(((TsanInterceptorContext *)ctx)->thr, \
             ((TsanInterceptorContext *)ctx)->pc, (uptr)m)
 
 #include "sanitizer_common/sanitizer_common_interceptors.inc"

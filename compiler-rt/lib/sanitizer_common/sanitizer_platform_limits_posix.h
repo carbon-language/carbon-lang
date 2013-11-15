@@ -921,6 +921,7 @@ namespace __sanitizer {
   extern unsigned IOCTL_TIOCSSERIAL;
 #endif
 
+  extern const int errno_EOWNERDEAD;
 }  // namespace __sanitizer
 
 #define CHECK_TYPE_SIZE(TYPE) \

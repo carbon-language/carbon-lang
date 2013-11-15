@@ -705,6 +705,7 @@ int  MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all = false);
 void MutexReadLock(ThreadState *thr, uptr pc, uptr addr);
 void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr);
 void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr);
+void MutexRepair(ThreadState *thr, uptr pc, uptr addr);  // call on EOWNERDEAD
 
 void Acquire(ThreadState *thr, uptr pc, uptr addr);
 void AcquireGlobal(ThreadState *thr, uptr pc);
