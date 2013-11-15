@@ -367,7 +367,7 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
   return true;
 }
 
-unsigned SIInstrInfo::getVALUOp(const MachineInstr &MI) const {
+unsigned SIInstrInfo::getVALUOp(const MachineInstr &MI) {
   switch (MI.getOpcode()) {
   default: return AMDGPU::INSTRUCTION_LIST_END;
   case AMDGPU::REG_SEQUENCE: return AMDGPU::REG_SEQUENCE;

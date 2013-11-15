@@ -68,7 +68,7 @@ public:
                                  StringRef &ErrInfo) const;
 
   bool isSALUInstr(const MachineInstr &MI) const;
-  unsigned getVALUOp(const MachineInstr &MI) const;
+  static unsigned getVALUOp(const MachineInstr &MI);
   bool isSALUOpSupportedOnVALU(const MachineInstr &MI) const;
 
   /// \brief Return the correct register class for \p OpNo.  For target-specific
