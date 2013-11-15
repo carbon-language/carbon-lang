@@ -722,6 +722,14 @@ float32x2_t test_vmul_lane_f32(float32x2_t a, float32x2_t v) {
   // CHECK: fmul {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.s[1]
 }
 
+
+float64x1_t test_vmul_lane_f64(float64x1_t a, float64x1_t v) {
+  // CHECK: test_vmul_lane_f64
+  return vmul_lane_f64(a, v, 0);
+  // CHECK: fmul {{d[0-9]+}}, {{d[0-9]+}}, {{v[0-9]+}}.d[0]
+}
+
+
 float32x4_t test_vmulq_lane_f32(float32x4_t a, float32x2_t v) {
   // CHECK: test_vmulq_lane_f32
   return vmulq_lane_f32(a, v, 1);
@@ -739,6 +747,13 @@ float32x2_t test_vmul_laneq_f32(float32x2_t a, float32x4_t v) {
   return vmul_laneq_f32(a, v, 1);
   // CHECK: fmul {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.s[1]
 }
+
+float64x1_t test_vmul_laneq_f64_0(float64x1_t a, float64x2_t v) {
+  // CHECK: test_vmul_laneq_f64_0
+  return vmul_laneq_f64(a, v, 0);
+  // CHECK: fmul {{d[0-9]+}}, {{d[0-9]+}}, {{v[0-9]+}}.d[0]
+}
+
 
 float32x4_t test_vmulq_laneq_f32(float32x4_t a, float32x4_t v) {
   // CHECK: test_vmulq_laneq_f32

@@ -134,7 +134,13 @@ enum OpKind {
   OpMovlHi,
   OpCopyLane,
   OpCopyQLane,
-  OpCopyLaneQ
+  OpCopyLaneQ,
+  OpScalarMulLane,
+  OpScalarMulLaneQ,
+  OpScalarMulXLane,
+  OpScalarMulXLaneQ,
+  OpScalarVMulXLane,
+  OpScalarVMulXLaneQ
 };
 
 enum ClassKind {
@@ -295,6 +301,12 @@ public:
     OpMap["OP_COPY_LN"] = OpCopyLane;
     OpMap["OP_COPYQ_LN"] = OpCopyQLane;
     OpMap["OP_COPY_LNQ"] = OpCopyLaneQ;
+    OpMap["OP_SCALAR_MUL_LN"]= OpScalarMulLane;
+    OpMap["OP_SCALAR_MUL_LNQ"]= OpScalarMulLaneQ;
+    OpMap["OP_SCALAR_MULX_LN"]= OpScalarMulXLane;
+    OpMap["OP_SCALAR_MULX_LNQ"]= OpScalarMulXLaneQ;
+    OpMap["OP_SCALAR_VMULX_LN"]= OpScalarVMulXLane;
+    OpMap["OP_SCALAR_VMULX_LNQ"]= OpScalarVMulXLaneQ;
 
     Record *SI = R.getClass("SInst");
     Record *II = R.getClass("IInst");
@@ -2004,6 +2016,77 @@ static std::string GenOpString(const std::string &name, OpKind op,
          "(__c1, __d1); \\\n  vset_lane_" + typeCode + "(__c2, __a1, __b1);";
     break;
   }
+  case OpScalarMulLane: {
+    std::string typeCode = "";
+    InstructionTypeCode(typestr, ClassS, quad, typeCode);
+	s += TypeString('s', typestr) + " __d1 = vget_lane_" + typeCode +
+	  "(__b, __c);\\\n  __a * __d1;";
+    break;
+  }
+  case OpScalarMulLaneQ: {
+    std::string typeCode = "";
+    InstructionTypeCode(typestr, ClassS, quad, typeCode);
+        s += TypeString('s', typestr) + " __d1 = vgetq_lane_" + typeCode +
+          "(__b, __c);\\\n  __a * __d1;";
+    break;
+  }
+  case OpScalarMulXLane: {
+    bool dummy = false;
+    char type = ClassifyType(typestr, dummy, dummy, dummy);
+    if (type == 'f') type = 's';
+    std::string typeCode = "";
+    InstructionTypeCode(typestr, ClassS, quad, typeCode);
+    s += TypeString('s', typestr) + " __d1 = vget_lane_" + typeCode +
+      "(__b, __c);\\\n  vmulx" + type + "_" +
+      typeCode +  "(__a, __d1);";
+    break;
+  }
+  case OpScalarMulXLaneQ: {
+    bool dummy = false;
+    char type = ClassifyType(typestr, dummy, dummy, dummy);
+    if (type == 'f') type = 's';
+    std::string typeCode = "";
+    InstructionTypeCode(typestr, ClassS, quad, typeCode);
+    s += TypeString('s', typestr) + " __d1 = vgetq_lane_" +
+      typeCode + "(__b, __c);\\\n  vmulx" + type +
+      "_" + typeCode +  "(__a, __d1);";
+    break;
+  }
+
+  case OpScalarVMulXLane: {
+    bool dummy = false;
+    char type = ClassifyType(typestr, dummy, dummy, dummy);
+    if (type == 'f') type = 's';
+    std::string typeCode = "";
+    InstructionTypeCode(typestr, ClassS, quad, typeCode);
+    s += TypeString('s', typestr) + " __d1 = vget_lane_" +
+      typeCode + "(__a, 0);\\\n" +
+      "  " + TypeString('s', typestr) + " __e1 = vget_lane_" +
+      typeCode + "(__b, __c);\\\n" +
+      "  " + TypeString('s', typestr) + " __f1 = vmulx" + type + "_" +
+      typeCode + "(__d1, __e1);\\\n" +
+      "  " + TypeString('d', typestr) + " __g1;\\\n" +
+      "  vset_lane_" + typeCode + "(__f1, __g1, __c);";
+    break;
+  }
+
+  case OpScalarVMulXLaneQ: {
+    bool dummy = false;
+    char type = ClassifyType(typestr, dummy, dummy, dummy);
+    if (type == 'f') type = 's';
+    std::string typeCode = "";
+    InstructionTypeCode(typestr, ClassS, quad, typeCode);
+    s += TypeString('s', typestr) + " __d1 = vget_lane_" +
+      typeCode + "(__a, 0);\\\n" +
+      "  " + TypeString('s', typestr) + " __e1 = vgetq_lane_" +
+      typeCode + "(__b, __c);\\\n" +
+      "  " + TypeString('s', typestr) + " __f1 = vmulx" + type + "_" +
+      typeCode + "(__d1, __e1);\\\n" +
+      "  " + TypeString('d', typestr) + " __g1;\\\n" +
+      "  vset_lane_" + typeCode + "(__f1, __g1, 0);";
+    break;
+  }
+
   default:
     PrintFatalError("unknown OpKind!");
   }
@@ -2972,8 +3055,8 @@ static std::string GenTest(const std::string &name,
                            StringRef outTypeStr, StringRef inTypeStr,
                            bool isShift, bool isHiddenLOp,
                            ClassKind ck, const std::string &InstName,
-						   bool isA64,
-						   std::string & testFuncProto) {
+                           bool isA64,
+                           std::string & testFuncProto) {
   assert(!proto.empty() && "");
   std::string s;
 

@@ -113,6 +113,12 @@ def OP_MOVL_HI : Op;
 def OP_COPY_LN : Op;
 def OP_COPYQ_LN : Op;
 def OP_COPY_LNQ : Op;
+def OP_SCALAR_MUL_LN : Op;
+def OP_SCALAR_MUL_LNQ : Op;
+def OP_SCALAR_MULX_LN : Op;
+def OP_SCALAR_MULX_LNQ : Op;
+def OP_SCALAR_VMULX_LN : Op;
+def OP_SCALAR_VMULX_LNQ : Op;
 
 class Inst <string n, string p, string t, Op o> {
   string Name = n;
@@ -845,10 +851,12 @@ def VQDMLSL_HIGH_LANEQ  : SOpInst<"vqdmlsl_high_laneq", "wwkki", "si",
                                 OP_QDMLSLHi_LN>;
 
 // Newly add double parameter for vmul_lane in aarch64
-def VMUL_LANE_A64 : IOpInst<"vmul_lane", "ddgi", "dQd", OP_MUL_LN>;
+// Note: d type is handled by SCALAR_VMUL_LANE
+def VMUL_LANE_A64 : IOpInst<"vmul_lane", "ddgi", "Qd", OP_MUL_LN>;
 
+// Note: d type is handled by SCALAR_VMUL_LANEQ
 def VMUL_LANEQ   : IOpInst<"vmul_laneq", "ddji",
-                           "sifdUsUiQsQiQfQUsQUiQfQd", OP_MUL_LN>;
+                           "sifUsUiQsQiQfQUsQUiQfQd", OP_MUL_LN>;
 def VMULL_LANEQ  : SOpInst<"vmull_laneq", "wdki", "siUsUi", OP_MULL_LN>;
 def VMULL_HIGH_LANE   : SOpInst<"vmull_high_lane", "wkdi", "siUsUi",
                                 OP_MULLHi_LN>;
@@ -864,8 +872,10 @@ def VQDMULL_HIGH_LANEQ  : SOpInst<"vqdmull_high_laneq", "wkki", "si",
 def VQDMULH_LANEQ  : SOpInst<"vqdmulh_laneq", "ddji", "siQsQi", OP_QDMULH_LN>;
 def VQRDMULH_LANEQ : SOpInst<"vqrdmulh_laneq", "ddji", "siQsQi", OP_QRDMULH_LN>;
 
-def VMULX_LANE : IOpInst<"vmulx_lane", "ddgi", "fdQfQd", OP_MULX_LN>;
-def VMULX_LANEQ : IOpInst<"vmulx_laneq", "ddji", "fdQfQd", OP_MULX_LN>;
+// Note: d type implemented by SCALAR_VMULX_LANE
+def VMULX_LANE : IOpInst<"vmulx_lane", "ddgi", "fQfQd", OP_MULX_LN>;
+// Note: d type is implemented by SCALAR_VMULX_LANEQ
+def VMULX_LANEQ : IOpInst<"vmulx_laneq", "ddji", "fQfQd", OP_MULX_LN>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Across vectors class
@@ -1145,4 +1155,34 @@ def SCALAR_SQXTN : SInst<"vqmovn", "zs", "SsSiSl">;
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Unsigned Saturating Extract Narrow
 def SCALAR_UQXTN : SInst<"vqmovn", "zs", "SUsSUiSUl">;
+
+// Scalar Floating Point  multiply (scalar, by element)
+def SCALAR_FMUL_LANE : IOpInst<"vmul_lane", "ssdi", "SfSd", OP_SCALAR_MUL_LN>;
+def SCALAR_FMUL_LANEQ : IOpInst<"vmul_laneq", "ssji", "SfSd", OP_SCALAR_MUL_LNQ>;
+
+// Scalar Floating Point  multiply extended (scalar, by element)
+def SCALAR_FMULX_LANE : IOpInst<"vmulx_lane", "ssdi", "SfSd", OP_SCALAR_MULX_LN>;
+def SCALAR_FMULX_LANEQ : IOpInst<"vmulx_laneq", "ssji", "SfSd", OP_SCALAR_MULX_LNQ>;
+
+def SCALAR_VMUL_N : IInst<"vmul_n", "dds", "d">;
+
+// VMUL_LANE_A64 d type implemented using scalar mul lane
+def SCALAR_VMUL_LANE : IInst<"vmul_lane", "ddgi", "d">;
+
+// VMUL_LANEQ d type implemented using scalar mul lane
+def SCALAR_VMUL_LANEQ   : IInst<"vmul_laneq", "ddji", "d">;
+
+// VMULX_LANE d type implemented using scalar vmulx_lane
+def SCALAR_VMULX_LANE : IOpInst<"vmulx_lane", "ddgi", "d", OP_SCALAR_VMULX_LN>;
+
+// VMULX_LANEQ d type implemented using scalar vmulx_laneq
+def SCALAR_VMULX_LANEQ : IOpInst<"vmulx_laneq", "ddji", "d", OP_SCALAR_VMULX_LNQ>;
+
+// Scalar Floating Point fused multiply-add (scalar, by element)
+def SCALAR_FMLA_LANE : IInst<"vfma_lane", "sssdi", "SfSd">;
+def SCALAR_FMLA_LANEQ : IInst<"vfma_laneq", "sssji", "SfSd">;
+
+// Scalar Floating Point fused multiply-subtract (scalar, by element)
+def SCALAR_FMLS_LANE : IOpInst<"vfms_lane", "sssdi", "SfSd", OP_FMS_LN>;
+def SCALAR_FMLS_LANEQ : IOpInst<"vfms_laneq", "sssji", "SfSd", OP_FMS_LNQ>;
 }
