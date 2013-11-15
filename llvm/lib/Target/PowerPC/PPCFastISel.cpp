@@ -336,13 +336,8 @@ bool PPCFastISel::PPCComputeAddress(const Value *Obj, Address &Addr) {
               TmpOffset += CI->getSExtValue() * S;
               break;
             }
-            if (isa<AddOperator>(Op) &&
-                (!isa<Instruction>(Op) ||
-                 FuncInfo.MBBMap[cast<Instruction>(Op)->getParent()]
-                 == FuncInfo.MBB) &&
-                isa<ConstantInt>(cast<AddOperator>(Op)->getOperand(1))) {
-              // An add (in the same block) with a constant operand. Fold the
-              // constant.
+            if (canFoldAddIntoGEP(U, Op)) {
+              // A compatible add with a constant operand. Fold the constant.
               ConstantInt *CI =
               cast<ConstantInt>(cast<AddOperator>(Op)->getOperand(1));
               TmpOffset += CI->getSExtValue() * S;

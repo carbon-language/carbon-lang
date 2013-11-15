@@ -358,6 +358,15 @@ protected:
     return 0;
   }
 
+  /// \brief Check if \c Add is an add that can be safely folded into \c GEP.
+  ///
+  /// \c Add can be folded into \c GEP if:
+  /// - \c Add is an add,
+  /// - \c Add's size matches \c GEP's,
+  /// - \c Add is in the same basic block as \c GEP, and
+  /// - \c Add has a constant operand.
+  bool canFoldAddIntoGEP(const User *GEP, const Value *Add);
+
 private:
   bool SelectBinaryOp(const User *I, unsigned ISDOpcode);
 

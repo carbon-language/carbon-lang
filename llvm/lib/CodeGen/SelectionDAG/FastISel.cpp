@@ -1571,4 +1571,19 @@ bool FastISel::tryToFoldLoad(const LoadInst *LI, const Instruction *FoldInst) {
   return tryToFoldLoadIntoMI(User, RI.getOperandNo(), LI);
 }
 
+bool FastISel::canFoldAddIntoGEP(const User *GEP, const Value *Add) {
+  // Must be an add.
+  if (!isa<AddOperator>(Add))
+    return false;
+  // Type size needs to match.
+  if (TD.getTypeSizeInBits(GEP->getType()) !=
+      TD.getTypeSizeInBits(Add->getType()))
+    return false;
+  // Must be in the same basic block.
+  if (isa<Instruction>(Add) &&
+      FuncInfo.MBBMap[cast<Instruction>(Add)->getParent()] != FuncInfo.MBB)
+    return false;
+  // Must have a constant operand.
+  return isa<ConstantInt>(cast<AddOperator>(Add)->getOperand(1));
+}
 
