@@ -114,7 +114,7 @@ private:
                        RecordDecl::field_iterator &FI,
                        RecordDecl::field_iterator FE);
 
-  /// LayoutField - try to layout all fields in the record decl.
+  /// LayoutFields - try to layout all fields in the record decl.
   /// Returns false if the operation failed because the struct is not packed.
   bool LayoutFields(const RecordDecl *D);
 
