@@ -18,6 +18,9 @@
 
 using namespace llvm;
 
+// pin vtabel to this file
+void SystemZSubtarget::anchor() {}
+
 SystemZSubtarget::SystemZSubtarget(const std::string &TT,
                                    const std::string &CPU,
                                    const std::string &FS)

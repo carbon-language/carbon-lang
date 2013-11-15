@@ -96,6 +96,15 @@ static EncodingInfo getUnicodeEncoding(StringRef Input) {
 
 namespace llvm {
 namespace yaml {
+/// pin the vtables to this file
+void Node::anchor() {}
+void NullNode::anchor() {}
+void ScalarNode::anchor() {}
+void KeyValueNode::anchor() {}
+void MappingNode::anchor() {}
+void SequenceNode::anchor() {}
+void AliasNode::anchor() {}
+
 /// Token - A single YAML token.
 struct Token : ilist_node<Token> {
   enum TokenKind {

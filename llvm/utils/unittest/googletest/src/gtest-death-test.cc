@@ -300,6 +300,8 @@ DeathTest::DeathTest() {
   }
 }
 
+DeathTest::~DeathTest() {}
+
 // Creates and returns a death test by dispatching to the current
 // death test factory.
 bool DeathTest::Create(const char* statement, const RE* regex,
@@ -732,6 +734,8 @@ DeathTest::TestRole WindowsDeathTest::AssumeRole() {
   return OVERSEE_TEST;
 }
 # else  // We are not on Windows.
+
+DeathTestFactory::~DeathTestFactory() {}
 
 // ForkingDeathTest provides implementations for most of the abstract
 // methods of the DeathTest interface.  Only the AssumeRole method is

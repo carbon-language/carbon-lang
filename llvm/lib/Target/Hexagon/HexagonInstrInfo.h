@@ -30,6 +30,8 @@ class HexagonInstrInfo : public HexagonGenInstrInfo {
   const HexagonSubtarget &Subtarget;
   typedef unsigned Opcode_t;
 
+  virtual void anchor();
+
 public:
   explicit HexagonInstrInfo(HexagonSubtarget &ST);
 

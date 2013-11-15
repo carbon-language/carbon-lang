@@ -19,6 +19,8 @@ namespace llvm {
   class MCWinCOFFObjectTargetWriter {
     const unsigned Machine;
 
+    virtual void anchor();
+
   protected:
     MCWinCOFFObjectTargetWriter(unsigned Machine_);
 

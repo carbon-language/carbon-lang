@@ -42,6 +42,9 @@ using namespace llvm;
 static cl::opt<bool> PrintHackDirectives("print-hack-directives",
                                          cl::init(false), cl::Hidden);
 
+// pin vtable to this file
+void MipsTargetStreamer::anchor() {}
+
 static std::string ParseMipsTriple(StringRef TT, StringRef CPU) {
   std::string MipsArchFeature;
   size_t DashPosition = 0;

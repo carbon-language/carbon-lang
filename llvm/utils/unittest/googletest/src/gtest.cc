@@ -4863,4 +4863,13 @@ void InitGoogleTest(int* argc, wchar_t** argv) {
   internal::InitGoogleTestImpl(argc, argv);
 }
 
+Environment::~Environment() {}
+TestPartResultReporterInterface::~TestPartResultReporterInterface() {}
+TestEventListener::~TestEventListener() {}
+void EmptyTestEventListener::anchor() {}
+namespace internal {
+OsStackTraceGetterInterface::~OsStackTraceGetterInterface() {}
+ParameterizedTestCaseInfoBase::~ParameterizedTestCaseInfoBase() {}
+}
+
 }  // namespace testing

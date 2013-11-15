@@ -6,6 +6,9 @@ using namespace llvm;
 
 static const char *const ShaderTypeAttribute = "ShaderType";
 
+// pin vtable to this file
+void AMDGPUMachineFunction::anchor() {}
+
 AMDGPUMachineFunction::AMDGPUMachineFunction(const MachineFunction &MF) :
     MachineFunctionInfo() {
   ShaderType = ShaderType::COMPUTE;

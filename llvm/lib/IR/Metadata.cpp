@@ -65,7 +65,7 @@ class MDNodeOperand : public CallbackVH {
 
 public:
   MDNodeOperand(Value *V) : CallbackVH(V) {}
-  ~MDNodeOperand() {}
+  virtual ~MDNodeOperand();
 
   void set(Value *V) {
     unsigned IsFirst = this->getValPtrInt();
@@ -81,6 +81,8 @@ public:
   virtual void allUsesReplacedWith(Value *NV);
 };
 } // end namespace llvm.
+
+MDNodeOperand::~MDNodeOperand() {}
 
 
 void MDNodeOperand::deleted() {

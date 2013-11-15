@@ -286,8 +286,6 @@ bool Attribute::operator<(Attribute A) const {
 // AttributeImpl Definition
 //===----------------------------------------------------------------------===//
 
-AttributeImpl::~AttributeImpl() {}
-
 bool AttributeImpl::hasAttribute(Attribute::AttrKind A) const {
   if (isStringAttribute()) return false;
   return getKindAsEnum() == A;

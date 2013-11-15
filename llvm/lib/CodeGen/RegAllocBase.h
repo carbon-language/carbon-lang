@@ -57,6 +57,7 @@ class Spiller;
 /// live range splitting. They must also override enqueue/dequeue to provide an
 /// assignment order.
 class RegAllocBase {
+  virtual void anchor();
 protected:
   const TargetRegisterInfo *TRI;
   MachineRegisterInfo *MRI;

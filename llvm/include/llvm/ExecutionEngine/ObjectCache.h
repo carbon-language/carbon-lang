@@ -20,6 +20,7 @@ class Module;
 /// ExecutionEngine for the purpose of avoiding compilation for Modules that
 /// have already been compiled and an object file is available.
 class ObjectCache {
+  virtual void anchor();
 public:
   ObjectCache() { }
 

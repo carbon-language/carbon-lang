@@ -86,3 +86,4 @@ HexagonSubtarget::HexagonSubtarget(StringRef TT, StringRef CPU, StringRef FS):
     ModeIEEERndNear = false;
 }
 
+HexagonSubtarget::~HexagonSubtarget() {}

@@ -1577,8 +1577,10 @@ public:
                                  std::runtime_error::operator=(toCopy)));
   }
 
-  ~OurCppRunException (void) throw () {}
+  ~OurCppRunException (void) throw ();
 };
+
+OurCppRunException::~OurCppRunException() throw () {}
 
 
 /// Throws foreign C++ exception.

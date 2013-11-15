@@ -78,6 +78,7 @@ class PPCInstrInfo : public PPCGenInstrInfo {
                             const TargetRegisterClass *RC,
                             SmallVectorImpl<MachineInstr*> &NewMIs,
                             bool &NonRI, bool &SpillsVRS) const;
+  virtual void anchor();
 public:
   explicit PPCInstrInfo(PPCTargetMachine &TM);
 

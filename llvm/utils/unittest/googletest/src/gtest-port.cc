@@ -746,5 +746,15 @@ const char* StringFromGTestEnv(const char* flag, const char* default_value) {
   return value == NULL ? default_value : value;
 }
 
+ThreadWithParamBase::~ThreadWithParamBase() {}
+ThreadLocalValueHolderBase::~ThreadLocalValueHolderBase() {}
+TestFactoryBase::~TestFactoryBase() {}
+
 }  // namespace internal
 }  // namespace testing
+
+#if !GTEST_NO_LLVM_RAW_OSTREAM
+namespace llvm {
+void convertible_fwd_ostream::anchor() {}
+}
+#endif

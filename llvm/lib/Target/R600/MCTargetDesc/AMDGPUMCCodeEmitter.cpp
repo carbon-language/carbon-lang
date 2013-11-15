@@ -1,22 +1,21 @@
-//===-- SIMachineFunctionInfo.cpp - SI Machine Function Info -------===//
+//===-- AMDGPUCodeEmitter.cpp - AMDGPU Code Emitter interface -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
+//===----------------------------------------------------------------------===//
+//
 /// \file
+/// \brief CodeEmitter interface for R600 and SI codegen.
+//
 //===----------------------------------------------------------------------===//
 
-
-#include "SIMachineFunctionInfo.h"
+#include "AMDGPUMCCodeEmitter.h"
 
 using namespace llvm;
 
-
 // pin vtable to this file
-void SIMachineFunctionInfo::anchor() {}
+void AMDGPUMCCodeEmitter::anchor() {}
 
-SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
-  : AMDGPUMachineFunction(MF),
-    PSInputAddr(0) { }

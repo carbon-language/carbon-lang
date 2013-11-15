@@ -84,9 +84,11 @@ static int gettok() {
 /// ExprAST - Base class for all expression nodes.
 class ExprAST {
 public:
-  virtual ~ExprAST() {}
+  virtual ~ExprAST();
   virtual Value *Codegen() = 0;
 };
+
+ExprAST::~ExprAST() {}
 
 /// NumberExprAST - Expression class for numeric literals like "1.0".
 class NumberExprAST : public ExprAST {

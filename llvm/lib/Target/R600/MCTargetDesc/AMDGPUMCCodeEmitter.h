@@ -24,6 +24,7 @@ class MCInst;
 class MCOperand;
 
 class AMDGPUMCCodeEmitter : public MCCodeEmitter {
+  virtual void anchor();
 public:
 
   uint64_t getBinaryCodeForInstr(const MCInst &MI,

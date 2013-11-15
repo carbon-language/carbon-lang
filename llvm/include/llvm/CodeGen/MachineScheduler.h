@@ -164,6 +164,7 @@ struct MachineSchedPolicy {
 /// Initialization sequence:
 ///   initPolicy -> shouldTrackPressure -> initialize(DAG) -> registerRoots
 class MachineSchedStrategy {
+  virtual void anchor();
 public:
   virtual ~MachineSchedStrategy() {}
 
@@ -262,6 +263,7 @@ public:
 
 /// Mutate the DAG as a postpass after normal DAG building.
 class ScheduleDAGMutation {
+  virtual void anchor();
 public:
   virtual ~ScheduleDAGMutation() {}
 

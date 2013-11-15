@@ -14,6 +14,9 @@
 
 using namespace llvm;
 
+// pin vtable to this file
+void MCAtom::anchor() {}
+
 void MCAtom::remap(uint64_t NewBegin, uint64_t NewEnd) {
   Parent->remap(this, NewBegin, NewEnd);
 }

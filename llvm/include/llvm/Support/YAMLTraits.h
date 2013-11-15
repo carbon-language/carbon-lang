@@ -723,6 +723,7 @@ private:
   virtual bool canElideEmptySequence();
 
   class HNode {
+    virtual void anchor();
   public:
     HNode(Node *n) : _node(n) { }
     virtual ~HNode() { }
@@ -732,9 +733,9 @@ private:
   };
 
   class EmptyHNode : public HNode {
+    virtual void anchor();
   public:
     EmptyHNode(Node *n) : HNode(n) { }
-    virtual ~EmptyHNode() {}
     static inline bool classof(const HNode *n) {
       return NullNode::classof(n->_node);
     }
@@ -742,9 +743,9 @@ private:
   };
 
   class ScalarHNode : public HNode {
+    virtual void anchor();
   public:
     ScalarHNode(Node *n, StringRef s) : HNode(n), _value(s) { }
-    virtual ~ScalarHNode() { }
 
     StringRef value() const { return _value; }
 
@@ -757,6 +758,7 @@ private:
   };
 
   class MapHNode : public HNode {
+    virtual void anchor();
   public:
     MapHNode(Node *n) : HNode(n) { }
     virtual ~MapHNode();
@@ -775,6 +777,7 @@ private:
   };
 
   class SequenceHNode : public HNode {
+    virtual void anchor();
   public:
     SequenceHNode(Node *n) : HNode(n) { }
     virtual ~SequenceHNode();

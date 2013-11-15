@@ -127,6 +127,7 @@ class SystemZInstrInfo : public SystemZGenInstrInfo {
   void emitGRX32Move(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                      DebugLoc DL, unsigned DestReg, unsigned SrcReg,
                      unsigned LowLowOpcode, unsigned Size, bool KillSrc) const;
+  virtual void anchor();
   
 public:
   explicit SystemZInstrInfo(SystemZTargetMachine &TM);

@@ -33,7 +33,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 #define GET_INSTRMAP_INFO
-#define GET_INSTRINFO_CTOR
+#define GET_INSTRINFO_CTOR_DTOR
 #include "PPCGenInstrInfo.inc"
 
 using namespace llvm;
@@ -44,6 +44,9 @@ opt<bool> DisableCTRLoopAnal("disable-ppc-ctrloop-analysis", cl::Hidden,
 
 static cl::opt<bool> DisableCmpOpt("disable-ppc-cmp-opt",
 cl::desc("Disable compare instruction optimization"), cl::Hidden);
+
+//pin vtable to this file
+void PPCInstrInfo::anchor() {}
 
 PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
   : PPCGenInstrInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),

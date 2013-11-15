@@ -16,6 +16,7 @@ namespace llvm {
 
 /// Global access point for the JIT debugging interface.
 class JITRegistrar {
+  virtual void anchor();
 public:
   /// Instantiates the JIT service.
   JITRegistrar() {}

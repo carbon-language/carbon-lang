@@ -27,6 +27,7 @@
 namespace llvm {
 
 class MipsInstrInfo : public MipsGenInstrInfo {
+  virtual void anchor();
 protected:
   MipsTargetMachine &TM;
   unsigned UncondBrOpc;

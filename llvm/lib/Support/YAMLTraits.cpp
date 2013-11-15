@@ -59,6 +59,13 @@ void Input::setDiagHandler(SourceMgr::DiagHandlerTy Handler, void *Ctxt) {
   SrcMgr.setDiagHandler(Handler, Ctxt);
 }
 
+/// pin the vtables to this file
+void Input::HNode::anchor() {}
+void Input::EmptyHNode::anchor() {}
+void Input::ScalarHNode::anchor() {}
+void Input::MapHNode::anchor() {}
+void Input::SequenceHNode::anchor() {}
+
 bool Input::outputting() const {
   return false;
 }

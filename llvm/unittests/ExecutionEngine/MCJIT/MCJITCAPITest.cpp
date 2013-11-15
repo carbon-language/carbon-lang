@@ -83,14 +83,8 @@ protected:
     UnsupportedOSs.push_back(Triple::Cygwin);
   }
   
-  virtual void SetUp() {
-    didCallAllocateCodeSection = false;
-    Module = 0;
-    Function = 0;
-    Engine = 0;
-    Error = 0;
-  }
-  
+  virtual void SetUp();
+
   virtual void TearDown() {
     if (Engine)
       LLVMDisposeExecutionEngine(Engine);
@@ -156,6 +150,14 @@ protected:
   LLVMExecutionEngineRef Engine;
   char *Error;
 };
+
+void MCJITCAPITest::SetUp() {
+  didCallAllocateCodeSection = false;
+  Module = 0;
+  Function = 0;
+  Engine = 0;
+  Error = 0;
+}
 
 TEST_F(MCJITCAPITest, simple_function) {
   SKIP_UNSUPPORTED_PLATFORM;

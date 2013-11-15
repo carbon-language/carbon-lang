@@ -46,8 +46,6 @@ protected:
   AttributeImpl(AttrEntryKind KindID) : KindID(KindID) {}
 
 public:
-  virtual ~AttributeImpl();
-
   bool isEnumAttribute() const { return KindID == EnumAttrEntry; }
   bool isAlignAttribute() const { return KindID == AlignAttrEntry; }
   bool isStringAttribute() const { return KindID == StringAttrEntry; }

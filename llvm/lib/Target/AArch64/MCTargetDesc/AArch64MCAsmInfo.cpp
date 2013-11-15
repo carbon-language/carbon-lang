@@ -37,3 +37,5 @@ AArch64ELFMCAsmInfo::AArch64ELFMCAsmInfo() {
   // Exceptions handling
   ExceptionsType = ExceptionHandling::DwarfCFI;
 }
+
+void AArch64ELFMCAsmInfo::anchor() {}
