@@ -68,6 +68,23 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
       MachineInstr &MI = *I;
       I = llvm::next(I);
 
+      // Expand LDS_*_RET instructions
+      if (TII->isLDSRetInstr(MI.getOpcode())) {
+        int DstIdx = TII->getOperandIdx(MI.getOpcode(), AMDGPU::OpName::dst);
+        assert(DstIdx != -1);
+        MachineOperand &DstOp = MI.getOperand(DstIdx);
+        MachineInstr *Mov = TII->buildMovInstr(&MBB, I,
+                                               DstOp.getReg(), AMDGPU::OQAP);
+        DstOp.setReg(AMDGPU::OQAP);
+        int LDSPredSelIdx = TII->getOperandIdx(MI.getOpcode(),
+                                           AMDGPU::OpName::pred_sel);
+        int MovPredSelIdx = TII->getOperandIdx(Mov->getOpcode(),
+                                           AMDGPU::OpName::pred_sel);
+        // Copy the pred_sel bit
+        Mov->getOperand(MovPredSelIdx).setReg(
+            MI.getOperand(LDSPredSelIdx).getReg());
+      }
+
       switch (MI.getOpcode()) {
       default: break;
       // Expand PRED_X to one of the PRED_SET instructions.

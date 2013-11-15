@@ -12,9 +12,11 @@
 ; SI-CHECK: .long 47180
 ; SI-CHECK-NEXT: .long 32768
 
-; Make sure the lds writes are using different addresses.
-; EG-CHECK: LDS_WRITE {{[*]*}} {{PV|T}}[[ADDRW:[0-9]*\.[XYZW]]]
-; EG-CHECK-NOT: LDS_WRITE {{[*]*}} T[[ADDRW]]
+; We would like to check the the lds writes are using different
+; addresses, but due to variations in the scheduler, we can't do
+; this consistently on evergreen GPUs.
+; EG-CHECK: LDS_WRITE
+; EG-CHECK: LDS_WRITE
 ; SI-CHECK: DS_WRITE_B32 0, {{v[0-9]*}}, v[[ADDRW:[0-9]*]]
 ; SI-CHECK-NOT: DS_WRITE_B32 0, {{v[0-9]*}}, v[[ADDRW]]
 

@@ -85,3 +85,16 @@ const RegClassWeight &R600RegisterInfo::getRegClassWeight(
   const TargetRegisterClass *RC) const {
   return RCW;
 }
+
+bool R600RegisterInfo::isPhysRegLiveAcrossClauses(unsigned Reg) const {
+  assert(!TargetRegisterInfo::isVirtualRegister(Reg));
+
+  switch (Reg) {
+  case AMDGPU::OQAP:
+  case AMDGPU::OQBP:
+  case AMDGPU::AR_X:
+    return false;
+  default:
+    return true;
+  }
+}

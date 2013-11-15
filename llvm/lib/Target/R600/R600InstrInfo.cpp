@@ -141,6 +141,14 @@ bool R600InstrInfo::isLDSInstr(unsigned Opcode) const {
           (TargetFlags & R600_InstFlag::LDS_1A2D));
 }
 
+bool R600InstrInfo::isLDSNoRetInstr(unsigned Opcode) const {
+  return isLDSInstr(Opcode) && getOperandIdx(Opcode, AMDGPU::OpName::dst) == -1;
+}
+
+bool R600InstrInfo::isLDSRetInstr(unsigned Opcode) const {
+  return isLDSInstr(Opcode) && getOperandIdx(Opcode, AMDGPU::OpName::dst) != -1;
+}
+
 bool R600InstrInfo::canBeConsideredALU(const MachineInstr *MI) const {
   if (isALUInstr(MI->getOpcode()))
     return true;

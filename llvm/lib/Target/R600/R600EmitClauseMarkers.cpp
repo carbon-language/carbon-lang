@@ -47,6 +47,11 @@ private:
       break;
     }
 
+    // These will be expanded to two ALU instructions in the
+    // ExpandSpecialInstructions pass.
+    if (TII->isLDSRetInstr(MI->getOpcode()))
+      return 2;
+
     if(TII->isVector(*MI) ||
         TII->isCubeOp(MI->getOpcode()) ||
         TII->isReductionOp(MI->getOpcode()))
@@ -106,8 +111,13 @@ private:
   }
 
   bool SubstituteKCacheBank(MachineInstr *MI,
-      std::vector<std::pair<unsigned, unsigned> > &CachedConsts) const {
+      std::vector<std::pair<unsigned, unsigned> > &CachedConsts,
+      bool UpdateInstr = true) const {
     std::vector<std::pair<unsigned, unsigned> > UsedKCache;
+
+    if (!TII->isALUInstr(MI->getOpcode()) && MI->getOpcode() != AMDGPU::DOT_4)
+      return true;
+
     const SmallVectorImpl<std::pair<MachineOperand *, int64_t> > &Consts =
         TII->getSrcs(MI);
     assert((TII->isALUInstr(MI->getOpcode()) ||
@@ -140,6 +150,9 @@ private:
       return false;
     }
 
+    if (!UpdateInstr)
+      return true;
+
     for (unsigned i = 0, j = 0, n = Consts.size(); i < n; ++i) {
       if (Consts[i].first->getReg() != AMDGPU::ALU_CONST)
         continue;
@@ -156,6 +169,52 @@ private:
         llvm_unreachable("Wrong Cache Line");
       }
       j++;
+    }
+    return true;
+  }
+
+  bool canClauseLocalKillFitInClause(
+                        unsigned AluInstCount,
+                        std::vector<std::pair<unsigned, unsigned> > KCacheBanks,
+                        MachineBasicBlock::iterator Def,
+                        MachineBasicBlock::iterator BBEnd) {
+    const R600RegisterInfo &TRI = TII->getRegisterInfo();
+    for (MachineInstr::const_mop_iterator
+           MOI = Def->operands_begin(),
+           MOE = Def->operands_end(); MOI != MOE; ++MOI) {
+      if (!MOI->isReg() || !MOI->isDef() ||
+          TRI.isPhysRegLiveAcrossClauses(MOI->getReg()))
+        continue;
+
+      // Def defines a clause local register, so check that its use will fit
+      // in the clause.
+      unsigned LastUseCount = 0;
+      for (MachineBasicBlock::iterator UseI = Def; UseI != BBEnd; ++UseI) {
+        AluInstCount += OccupiedDwords(UseI);
+        // Make sure we won't need to end the clause due to KCache limitations.
+        if (!SubstituteKCacheBank(UseI, KCacheBanks, false))
+          return false;
+
+        // We have reached the maximum instruction limit before finding the
+        // use that kills this register, so we cannot use this def in the
+        // current clause.
+        if (AluInstCount >= TII->getMaxAlusPerClause())
+          return false;
+
+        // Register kill flags have been cleared by the time we get to this
+        // pass, but it is safe to assume that all uses of this register
+        // occur in the same basic block as its definition, because
+        // it is illegal for the scheduler to schedule them in
+        // different blocks.
+        if (UseI->findRegisterUseOperandIdx(MOI->getReg()))
+          LastUseCount = AluInstCount;
+
+        if (UseI != Def && UseI->findRegisterDefOperandIdx(MOI->getReg()) != -1)
+          break;
+      }
+      if (LastUseCount)
+        return LastUseCount <= TII->getMaxAlusPerClause();
+      llvm_unreachable("Clause local register live at end of clause.");
     }
     return true;
   }
@@ -198,11 +257,13 @@ private:
         I++;
         break;
       }
-      if (TII->isALUInstr(I->getOpcode()) &&
-          !SubstituteKCacheBank(I, KCacheBanks))
+
+      // If this instruction defines a clause local register, make sure
+      // its use can fit in this clause.
+      if (!canClauseLocalKillFitInClause(AluInstCount, KCacheBanks, I, E))
         break;
-      if (I->getOpcode() == AMDGPU::DOT_4 &&
-          !SubstituteKCacheBank(I, KCacheBanks))
+
+      if (!SubstituteKCacheBank(I, KCacheBanks))
         break;
       AluInstCount += OccupiedDwords(I);
     }
