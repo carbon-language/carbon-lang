@@ -880,7 +880,7 @@ static bool CheckConstexprDeclStmt(Sema &SemaRef, const FunctionDecl *Dcl,
               diag::err_constexpr_local_var_non_literal_type,
               isa<CXXConstructorDecl>(Dcl)))
           return false;
-        if (!VD->hasInit()) {
+        if (!VD->hasInit() && !VD->isCXXForRangeDecl()) {
           SemaRef.Diag(VD->getLocation(),
                        diag::err_constexpr_local_var_no_init)
             << isa<CXXConstructorDecl>(Dcl);
