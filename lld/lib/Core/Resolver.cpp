@@ -95,9 +95,8 @@ void Resolver::handleFile(const File &file) {
   _context.setResolverState(resolverState);
 }
 
-void Resolver::handleArchiveFile(const File &file) {
-  const ArchiveLibraryFile *archiveFile = dyn_cast<ArchiveLibraryFile>(&file);
-
+void
+Resolver::forEachUndefines(UndefCallback callback, bool searchForOverrides) {
   // Handle normal archives
   int64_t undefineGenCount = 0;
   do {
@@ -107,12 +106,8 @@ void Resolver::handleArchiveFile(const File &file) {
     for (const UndefinedAtom *undefAtom : undefines) {
       StringRef undefName = undefAtom->name();
       // load for previous undefine may also have loaded this undefine
-      if (!_symbolTable.isDefined(undefName)) {
-        if (const File *member = archiveFile->find(undefName, false)) {
-          member->setOrdinal(_context.getNextOrdinalAndIncrement());
-          handleFile(*member);
-        }
-      }
+      if (!_symbolTable.isDefined(undefName))
+        callback(undefName, false);
       // If the undefined symbol has an alternative name, try to resolve the
       // symbol with the name to give it a second chance. This feature is used
       // for COFF "weak external" symbol.
@@ -124,7 +119,7 @@ void Resolver::handleArchiveFile(const File &file) {
       }
     }
     // search libraries for overrides of common symbols
-    if (_context.searchArchivesToOverrideTentativeDefinitions()) {
+    if (searchForOverrides) {
       std::vector<StringRef> tentDefNames;
       _symbolTable.tentativeDefinitions(tentDefNames);
       for (StringRef tentDefName : tentDefNames) {
@@ -133,65 +128,39 @@ void Resolver::handleArchiveFile(const File &file) {
         const Atom *curAtom = _symbolTable.findByName(tentDefName);
         assert(curAtom != nullptr);
         if (const DefinedAtom *curDefAtom = dyn_cast<DefinedAtom>(curAtom)) {
-          if (curDefAtom->merge() == DefinedAtom::mergeAsTentative) {
-            if (const File *member = archiveFile->find(tentDefName, true)) {
-              member->setOrdinal(_context.getNextOrdinalAndIncrement());
-              handleFile(*member);
-            }
-          }
+          if (curDefAtom->merge() == DefinedAtom::mergeAsTentative)
+            callback(tentDefName, true);
         }
       }
     }
   } while (undefineGenCount != _symbolTable.size());
 }
 
-void Resolver::handleSharedLibrary(const File &file) {
-  const SharedLibraryFile *sharedLibrary = dyn_cast<SharedLibraryFile>(&file);
-  int64_t undefineGenCount = 0;
+void Resolver::handleArchiveFile(const File &file) {
+  const ArchiveLibraryFile *archiveFile = dyn_cast<ArchiveLibraryFile>(&file);
+  auto callback = [&](StringRef undefName, bool dataSymbolOnly) {
+    if (const File *member = archiveFile->find(undefName, dataSymbolOnly)) {
+      member->setOrdinal(_context.getNextOrdinalAndIncrement());
+      handleFile(*member);
+    }
+  };
+  bool searchForOverrides = _context.searchArchivesToOverrideTentativeDefinitions();
+  forEachUndefines(callback, searchForOverrides);
+}
 
+void Resolver::handleSharedLibrary(const File &file) {
   // Add all the atoms from the shared library
+  const SharedLibraryFile *sharedLibrary = dyn_cast<SharedLibraryFile>(&file);
   handleFile(*sharedLibrary);
-  do {
-    undefineGenCount = _symbolTable.size();
-    std::vector<const UndefinedAtom *> undefines;
-    _symbolTable.undefines(undefines);
-    for (const UndefinedAtom *undefAtom : undefines) {
-      StringRef undefName = undefAtom->name();
-      // load for previous undefine may also have loaded this undefine
-      if (!_symbolTable.isDefined(undefName)) {
-        if (const SharedLibraryAtom *shAtom =
-                sharedLibrary->exports(undefName, false))
-          doSharedLibraryAtom(*shAtom);
-      }
-      // If the undefined symbol has an alternative name, try to resolve the
-      // symbol with the name to give it a second chance. This feature is used
-      // for COFF "weak external" symbol.
-      if (!_symbolTable.isDefined(undefName)) {
-        if (const UndefinedAtom *fallbackUndefAtom = undefAtom->fallback()) {
-          _symbolTable.addReplacement(undefAtom, fallbackUndefAtom);
-          _symbolTable.add(*fallbackUndefAtom);
-        }
-      }
-    }
-    // search libraries for overrides of common symbols
-    if (_context.searchSharedLibrariesToOverrideTentativeDefinitions()) {
-      std::vector<StringRef> tentDefNames;
-      _symbolTable.tentativeDefinitions(tentDefNames);
-      for (StringRef tentDefName : tentDefNames) {
-        // Load for previous tentative may also have loaded
-        // something that overrode this tentative, so always check.
-        const Atom *curAtom = _symbolTable.findByName(tentDefName);
-        assert(curAtom != nullptr);
-        if (const DefinedAtom *curDefAtom = dyn_cast<DefinedAtom>(curAtom)) {
-          if (curDefAtom->merge() == DefinedAtom::mergeAsTentative) {
-            if (const SharedLibraryAtom *shAtom =
-                    sharedLibrary->exports(tentDefName, true))
-              doSharedLibraryAtom(*shAtom);
-          }
-        }
-      }
-    }
-  } while (undefineGenCount != _symbolTable.size());
+
+  auto callback = [&](StringRef undefName, bool dataSymbolOnly) {
+    if (const SharedLibraryAtom *shAtom = sharedLibrary->exports(
+            undefName, dataSymbolOnly))
+      doSharedLibraryAtom(*shAtom);
+  };
+  bool searchForOverrides =
+      _context.searchSharedLibrariesToOverrideTentativeDefinitions();
+  forEachUndefines(callback, searchForOverrides);
 }
 
 void Resolver::doUndefinedAtom(const UndefinedAtom& atom) {

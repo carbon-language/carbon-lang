@@ -66,6 +66,7 @@ public:
   std::unique_ptr<MutableFile> resultFile() { return std::move(_result); }
 
 private:
+  typedef std::function<void(StringRef, bool)> UndefCallback;
 
   /// \brief The main function that iterates over the files to resolve
   bool resolveUndefines();
@@ -76,6 +77,7 @@ private:
   void checkDylibSymbolCollisions();
   void linkTimeOptimize();
   void tweakAtoms();
+  void forEachUndefines(UndefCallback callback, bool searchForOverrides);
 
   void markLive(const Atom &atom);
   void addAtoms(const std::vector<const DefinedAtom *>&);
