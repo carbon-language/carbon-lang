@@ -111,3 +111,109 @@ namespace dr215 { // dr215: yes
     void foo() { (void)+X<Y>().n; }
   };
 }
+
+namespace dr216 { // dr216: no
+  // FIXME: Should reject this: 'f' has linkage but its type does not,
+  // and 'f' is odr-used but not defined in this TU.
+  typedef enum { e } *E;
+  void f(E);
+  void g(E e) { f(e); }
+
+  struct S {
+    // FIXME: Should reject this: 'f' has linkage but its type does not,
+    // and 'f' is odr-used but not defined in this TU.
+    typedef enum { e } *E;
+    void f(E);
+  };
+  void g(S s, S::E e) { s.f(e); }
+}
+
+namespace dr217 { // dr217: yes
+  template<typename T> struct S {
+    void f(int);
+  };
+  template<typename T> void S<T>::f(int = 0) {} // expected-error {{default arguments cannot be added}}
+}
+
+namespace dr218 { // dr218: yes
+  namespace A {
+    struct S {};
+    void f(S);
+  }
+  namespace B {
+    struct S {};
+    void f(S);
+  }
+
+  struct C {
+    int f;
+    void test1(A::S as) { f(as); } // expected-error {{called object type 'int'}}
+    void test2(A::S as) { void f(); f(as); } // expected-error {{too many arguments}} expected-note {{}}
+    void test3(A::S as) { using A::f; f(as); } // ok
+    void test4(A::S as) { using B::f; f(as); } // ok
+    void test5(A::S as) { int f; f(as); } // expected-error {{called object type 'int'}}
+    void test6(A::S as) { struct f {}; (void) f(as); } // expected-error {{no matching conversion}} expected-note +{{}}
+  };
+
+  namespace D {
+    struct S {};
+    struct X { void operator()(S); } f;
+  }
+  void testD(D::S ds) { f(ds); } // expected-error {{undeclared identifier}}
+
+  namespace E {
+    struct S {};
+    struct f { f(S); };
+  }
+  void testE(E::S es) { f(es); } // expected-error {{undeclared identifier}}
+
+  namespace F {
+    struct S {
+      template<typename T> friend void f(S, T) {}
+    };
+  }
+  void testF(F::S fs) { f(fs, 0); }
+
+  namespace G {
+    namespace X {
+      int f;
+      struct A {};
+    }
+    namespace Y {
+      template<typename T> void f(T);
+      struct B {};
+    }
+    template<typename A, typename B> struct C {};
+  }
+  void testG(G::C<G::X::A, G::Y::B> gc) { f(gc); }
+}
+
+// dr219: na
+// dr220: na
+
+namespace dr221 { // dr221: yes
+  struct A {
+    A &operator=(int&);
+    A &operator+=(int&);
+    static A &operator=(A&, double&); // expected-error {{cannot be a static member}}
+    static A &operator+=(A&, double&); // expected-error {{cannot be a static member}}
+    friend A &operator=(A&, char&); // expected-error {{must be a non-static member function}}
+    friend A &operator+=(A&, char&);
+  };
+  A &operator=(A&, float&); // expected-error {{must be a non-static member function}}
+  A &operator+=(A&, float&);
+
+  void test(A a, int n, char c, float f) {
+    a = n;
+    a += n;
+    a = c;
+    a += c;
+    a = f;
+    a += f;
+  }
+}
+
+// dr222 is a mystery -- it lists no changes to the standard, and yet was
+// apparently both voted into the WP and acted upon by the editor.
+
+// dr223: na
