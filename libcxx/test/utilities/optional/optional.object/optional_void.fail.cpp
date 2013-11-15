@@ -11,12 +11,14 @@
 
 // T shall be an object type and shall satisfy the requirements of Destructible
 
-#include <optional>
+#include <experimental/optional>
 
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-    std::optional<void> opt;
+    using std::experimental::optional;
+
+    optional<void> opt;
 #else
 #error
 #endif  // _LIBCPP_STD_VER > 11

@@ -11,11 +11,14 @@
 
 // T& optional<T>::value();
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
+using std::experimental::bad_optional_access;
 
 struct X
 {
@@ -31,18 +34,18 @@ int main()
 {
 #if _LIBCPP_STD_VER > 11
     {
-        std::optional<X> opt;
+        optional<X> opt;
         opt.emplace();
         assert(opt.value().test() == 4);
     }
     {
-        std::optional<X> opt;
+        optional<X> opt;
         try
         {
             opt.value();
             assert(false);
         }
-        catch (const std::bad_optional_access&)
+        catch (const bad_optional_access&)
         {
         }
     }

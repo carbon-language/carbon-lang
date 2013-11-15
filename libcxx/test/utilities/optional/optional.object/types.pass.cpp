@@ -16,10 +16,12 @@
 //     typedef T value_type;
 //     ...
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
 
 template <class Opt, class T>
 void
@@ -33,9 +35,9 @@ test()
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-    test<std::optional<int>, int>();
-    test<std::optional<const int>, const int>();
-    test<std::optional<double>, double>();
-    test<std::optional<const double>, const double>();
+    test<optional<int>, int>();
+    test<optional<const int>, const int>();
+    test<optional<double>, double>();
+    test<optional<const double>, const double>();
 #endif  // _LIBCPP_STD_VER > 11
 }

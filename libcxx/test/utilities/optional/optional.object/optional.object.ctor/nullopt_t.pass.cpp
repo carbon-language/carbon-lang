@@ -11,18 +11,22 @@
 
 // constexpr optional(nullopt_t) noexcept;
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 
 #if _LIBCPP_STD_VER > 11
 
+using std::experimental::optional;
+using std::experimental::nullopt_t;
+using std::experimental::nullopt;
+
 template <class Opt>
 void
 test_constexpr()
 {
-    static_assert(noexcept(Opt(std::nullopt)), "");
-    constexpr Opt opt(std::nullopt);
+    static_assert(noexcept(Opt(nullopt)), "");
+    constexpr Opt opt(nullopt);
     static_assert(static_cast<bool>(opt) == false, "");
 
     struct test_constexpr_ctor
@@ -36,8 +40,8 @@ template <class Opt>
 void
 test()
 {
-    static_assert(noexcept(Opt(std::nullopt)), "");
-    Opt opt(std::nullopt);
+    static_assert(noexcept(Opt(nullopt)), "");
+    Opt opt(nullopt);
     assert(static_cast<bool>(opt) == false);
 
     struct test_constexpr_ctor
@@ -57,8 +61,8 @@ struct X
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-    test_constexpr<std::optional<int>>();
-    test_constexpr<std::optional<int*>>();
-    test<std::optional<X>>();
+    test_constexpr<optional<int>>();
+    test_constexpr<optional<int*>>();
+    test<optional<X>>();
 #endif  // _LIBCPP_STD_VER > 11
 }

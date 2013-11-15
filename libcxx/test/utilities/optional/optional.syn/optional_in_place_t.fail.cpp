@@ -12,12 +12,16 @@
 // A program that necessitates the instantiation of template optional for
 // (possibly cv-qualified) in_place_t is ill-formed.
 
-#include <optional>
+#include <experimental/optional>
 
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-    std::optional<std::inplace_t> opt;
+    using std::experimental::optional;
+    using std::experimental::in_place_t;
+    using std::experimental::in_place;
+
+    optional<in_place_t> opt;
 #else
 #error
 #endif  // _LIBCPP_STD_VER > 11

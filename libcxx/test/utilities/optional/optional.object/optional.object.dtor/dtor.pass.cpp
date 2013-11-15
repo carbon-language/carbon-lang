@@ -11,11 +11,13 @@
 
 // ~optional();
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
 
 class X
 {
@@ -35,20 +37,20 @@ int main()
     {
         typedef int T;
         static_assert(std::is_trivially_destructible<T>::value, "");
-        static_assert(std::is_trivially_destructible<std::optional<T>>::value, "");
+        static_assert(std::is_trivially_destructible<optional<T>>::value, "");
     }
     {
         typedef double T;
         static_assert(std::is_trivially_destructible<T>::value, "");
-        static_assert(std::is_trivially_destructible<std::optional<T>>::value, "");
+        static_assert(std::is_trivially_destructible<optional<T>>::value, "");
     }
     {
         typedef X T;
         static_assert(!std::is_trivially_destructible<T>::value, "");
-        static_assert(!std::is_trivially_destructible<std::optional<T>>::value, "");
+        static_assert(!std::is_trivially_destructible<optional<T>>::value, "");
         {
             X x;
-            std::optional<X> opt{x};
+            optional<X> opt{x};
             assert(X::dtor_called == false);
         }
         assert(X::dtor_called == true);

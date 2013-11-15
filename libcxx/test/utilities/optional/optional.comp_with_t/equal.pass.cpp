@@ -12,9 +12,11 @@
 // template <class T> constexpr bool operator==(const optional<T>& x, const T& v);
 // template <class T> constexpr bool operator==(const T& v, const optional<T>& x);
 
-#include <optional>
+#include <experimental/optional>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
 
 struct X
 {
@@ -33,7 +35,7 @@ int main()
 #if _LIBCPP_STD_VER > 11
     {
     typedef X T;
-    typedef std::optional<T> O;
+    typedef optional<T> O;
     
     constexpr T val(2);
     constexpr O o1;     // disengaged

@@ -12,12 +12,14 @@
 // A program that necessitates the instantiation of template optional for a
 // reference type is ill-formed.
 
-#include <optional>
+#include <experimental/optional>
 
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-    std::optional<const int&> opt;
+    using std::experimental::optional;
+
+    optional<const int&> opt;
 #else
 #error
 #endif  // _LIBCPP_STD_VER > 11

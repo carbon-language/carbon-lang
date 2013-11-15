@@ -12,12 +12,14 @@
 // template <class U, class... Args>
 //   void optional<T>::emplace(initializer_list<U> il, Args&&... args);
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 #include <vector>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
 
 class X
 {
@@ -75,7 +77,7 @@ int main()
     {
         X x;
         {
-            std::optional<X> opt(x);
+            optional<X> opt(x);
             assert(X::dtor_called == false);
             opt.emplace({1, 2});
             assert(X::dtor_called == true);
@@ -83,20 +85,20 @@ int main()
         }
     }
     {
-        std::optional<std::vector<int>> opt;
+        optional<std::vector<int>> opt;
         opt.emplace({1, 2, 3}, std::allocator<int>());
         assert(static_cast<bool>(opt) == true);
         assert(*opt == std::vector<int>({1, 2, 3}));
     }
     {
-        std::optional<Y> opt;
+        optional<Y> opt;
         opt.emplace({1, 2});
         assert(static_cast<bool>(opt) == true);
         assert(*opt == Y({1, 2}));
     }
     {
         Z z;
-        std::optional<Z> opt(z);
+        optional<Z> opt(z);
         try
         {
             assert(static_cast<bool>(opt) == true);

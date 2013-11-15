@@ -13,12 +13,16 @@
 //     constexpr
 //     explicit optional(in_place_t, initializer_list<U> il, Args&&... args);
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <vector>
 #include <cassert>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
+using std::experimental::in_place_t;
+using std::experimental::in_place;
 
 class X
 {
@@ -70,39 +74,39 @@ int main()
 #if _LIBCPP_STD_VER > 11
     {
         static_assert(!std::is_constructible<X, std::initializer_list<int>&>::value, "");
-        static_assert(!std::is_constructible<std::optional<X>, std::initializer_list<int>&>::value, "");
+        static_assert(!std::is_constructible<optional<X>, std::initializer_list<int>&>::value, "");
     }
     {
-        std::optional<std::vector<int>> opt(std::in_place, {3, 1});
+        optional<std::vector<int>> opt(in_place, {3, 1});
         assert(static_cast<bool>(opt) == true);
         assert((*opt == std::vector<int>{3, 1}));
         assert(opt->size() == 2);
     }
     {
-        std::optional<std::vector<int>> opt(std::in_place, {3, 1}, std::allocator<int>());
+        optional<std::vector<int>> opt(in_place, {3, 1}, std::allocator<int>());
         assert(static_cast<bool>(opt) == true);
         assert((*opt == std::vector<int>{3, 1}));
         assert(opt->size() == 2);
     }
     {
-        static_assert(std::is_constructible<std::optional<Y>, std::initializer_list<int>&>::value, "");
-        constexpr std::optional<Y> opt(std::in_place, {3, 1});
+        static_assert(std::is_constructible<optional<Y>, std::initializer_list<int>&>::value, "");
+        constexpr optional<Y> opt(in_place, {3, 1});
         static_assert(static_cast<bool>(opt) == true, "");
         static_assert(*opt == Y{3, 1}, "");
 
         struct test_constexpr_ctor
-            : public std::optional<Y>
+            : public optional<Y>
         {
-            constexpr test_constexpr_ctor(std::in_place_t, std::initializer_list<int> i) 
-                : std::optional<Y>(std::in_place, i) {}
+            constexpr test_constexpr_ctor(in_place_t, std::initializer_list<int> i) 
+                : optional<Y>(in_place, i) {}
         };
 
     }
     {
-        static_assert(std::is_constructible<std::optional<Z>, std::initializer_list<int>&>::value, "");
+        static_assert(std::is_constructible<optional<Z>, std::initializer_list<int>&>::value, "");
         try
         {
-            std::optional<Z> opt(std::in_place, {3, 1});
+            optional<Z> opt(in_place, {3, 1});
             assert(false);
         }
         catch (int i)
@@ -111,10 +115,10 @@ int main()
         }
 
         struct test_constexpr_ctor
-            : public std::optional<Z>
+            : public optional<Z>
         {
-            constexpr test_constexpr_ctor(std::in_place_t, std::initializer_list<int> i) 
-                : std::optional<Z>(std::in_place, i) {}
+            constexpr test_constexpr_ctor(in_place_t, std::initializer_list<int> i) 
+                : optional<Z>(in_place, i) {}
         };
 
     }

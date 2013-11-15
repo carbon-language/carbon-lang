@@ -14,36 +14,35 @@
 //   optional<typename decay<T>::type>
 //   make_optional(T&& v);
 
-#include <optional>
+#include <experimental/optional>
 #include <string>
 #include <memory>
 #include <cassert>
 
-#if _LIBCPP_STD_VER > 11
-
-#endif  // _LIBCPP_STD_VER > 11
-
 int main()
 {
 #if _LIBCPP_STD_VER > 11
+    using std::experimental::optional;
+    using std::experimental::make_optional;
+
     {
-        std::optional<int> opt = std::make_optional(2);
+        optional<int> opt = make_optional(2);
         assert(*opt == 2);
     }
     {
         std::string s("123");
-        std::optional<std::string> opt = std::make_optional(s);
+        optional<std::string> opt = make_optional(s);
         assert(*opt == s);
     }
     {
         std::string s("123");
-        std::optional<std::string> opt = std::make_optional(std::move(s));
+        optional<std::string> opt = make_optional(std::move(s));
         assert(*opt == "123");
         assert(s.empty());
     }
     {
         std::unique_ptr<int> s(new int(3));
-        std::optional<std::unique_ptr<int>> opt = std::make_optional(std::move(s));
+        optional<std::unique_ptr<int>> opt = make_optional(std::move(s));
         assert(**opt == 3);
         assert(s == nullptr);
     }

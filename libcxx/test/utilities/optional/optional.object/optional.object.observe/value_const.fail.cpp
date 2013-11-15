@@ -11,11 +11,13 @@
 
 // constexpr const T& optional<T>::value() const;
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
 
 struct X
 {
@@ -29,7 +31,7 @@ int main()
 {
 #if _LIBCPP_STD_VER > 11
     {
-        constexpr std::optional<X> opt;
+        constexpr optional<X> opt;
         static_assert(opt.value().test() == 3, "");
     }
 #else

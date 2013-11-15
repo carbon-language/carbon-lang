@@ -13,25 +13,29 @@
 // template <class T> constexpr bool operator<(const optional<T>& x, nullopt_t) noexcept;
 // template <class T> constexpr bool operator<(nullopt_t, const optional<T>& x) noexcept;
 
-#include <optional>
+#include <experimental/optional>
 
 int main()
 {
 #if _LIBCPP_STD_VER > 11
+	using std::experimental::optional;
+	using std::experimental::nullopt_t;
+	using std::experimental::nullopt;
+
     {
     typedef int T;
-    typedef std::optional<T> O;
+    typedef optional<T> O;
     
     constexpr O o1;     // disengaged
     constexpr O o2{1};  // engaged
 
-    static_assert ( !(std::nullopt < o1), "" );
-    static_assert (   std::nullopt < o2 , "" );
-    static_assert ( !(o1 < std::nullopt), "" );
-    static_assert ( !(o2 < std::nullopt), "" );
+    static_assert ( !(nullopt < o1), "" );
+    static_assert (   nullopt < o2 , "" );
+    static_assert ( !(o1 < nullopt), "" );
+    static_assert ( !(o2 < nullopt), "" );
 
-    static_assert (noexcept(std::nullopt < o1), "");
-    static_assert (noexcept(o1 < std::nullopt), "");
+    static_assert (noexcept(nullopt < o1), "");
+    static_assert (noexcept(o1 < nullopt), "");
     }
 #endif
 }

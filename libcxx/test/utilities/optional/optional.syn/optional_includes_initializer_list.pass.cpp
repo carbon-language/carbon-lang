@@ -11,11 +11,13 @@
 
 // #include <initializer_list>
 
-#include <optional>
+#include <experimental/optional>
 
 int main()
 {
 #if _LIBCPP_STD_VER > 11
+    using std::experimental::optional;
+
     std::initializer_list<int> list;
 #endif  // _LIBCPP_STD_VER > 11
 }

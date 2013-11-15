@@ -11,11 +11,13 @@
 
 // template <class U> constexpr T optional<T>::value_or(U&& v) const&;
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
 
 struct Y
 {
@@ -41,39 +43,39 @@ int main()
 {
 #if _LIBCPP_STD_VER > 11
     {
-        constexpr std::optional<X> opt(2);
+        constexpr optional<X> opt(2);
         constexpr Y y(3);
         static_assert(opt.value_or(y) == 2, "");
     }
     {
-        constexpr std::optional<X> opt(2);
+        constexpr optional<X> opt(2);
         static_assert(opt.value_or(Y(3)) == 2, "");
     }
     {
-        constexpr std::optional<X> opt;
+        constexpr optional<X> opt;
         constexpr Y y(3);
         static_assert(opt.value_or(y) == 3, "");
     }
     {
-        constexpr std::optional<X> opt;
+        constexpr optional<X> opt;
         static_assert(opt.value_or(Y(3)) == 4, "");
     }
     {
-        const std::optional<X> opt(2);
+        const optional<X> opt(2);
         const Y y(3);
         assert(opt.value_or(y) == 2);
     }
     {
-        const std::optional<X> opt(2);
+        const optional<X> opt(2);
         assert(opt.value_or(Y(3)) == 2);
     }
     {
-        const std::optional<X> opt;
+        const optional<X> opt;
         const Y y(3);
         assert(opt.value_or(y) == 3);
     }
     {
-        const std::optional<X> opt;
+        const optional<X> opt;
         assert(opt.value_or(Y(3)) == 4);
     }
 #endif  // _LIBCPP_STD_VER > 11

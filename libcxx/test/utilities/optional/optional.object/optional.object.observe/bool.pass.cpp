@@ -11,19 +11,21 @@
 
 // constexpr explicit optional<T>::operator bool() const noexcept;
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 
 int main()
 {
 #if _LIBCPP_STD_VER > 11
+    using std::experimental::optional;
+
     {
-        constexpr std::optional<int> opt;
+        constexpr optional<int> opt;
         static_assert(!opt, "");
     }
     {
-        constexpr std::optional<int> opt(0);
+        constexpr optional<int> opt(0);
         static_assert(opt, "");
     }
 #endif  // _LIBCPP_STD_VER > 11

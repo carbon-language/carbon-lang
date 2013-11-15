@@ -12,14 +12,18 @@
 // struct nullopt_t{see below};
 // constexpr nullopt_t nullopt(unspecified);
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 
 #if _LIBCPP_STD_VER > 11
 
+using std::experimental::optional;
+using std::experimental::nullopt_t;
+using std::experimental::nullopt;
+
 constexpr
 int
-test(const std::nullopt_t&)
+test(const nullopt_t&)
 {
     return 3;
 }
@@ -29,11 +33,11 @@ test(const std::nullopt_t&)
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-    static_assert((std::is_class<std::nullopt_t>::value), "");
-    static_assert((std::is_empty<std::nullopt_t>::value), "");
-    static_assert((std::is_literal_type<std::nullopt_t>::value), "");
-    static_assert((!std::is_default_constructible<std::nullopt_t>::value), "");
+    static_assert((std::is_class<nullopt_t>::value), "");
+    static_assert((std::is_empty<nullopt_t>::value), "");
+    static_assert((std::is_literal_type<nullopt_t>::value), "");
+    static_assert((!std::is_default_constructible<nullopt_t>::value), "");
     
-    static_assert(test(std::nullopt) == 3, "");
+    static_assert(test(nullopt) == 3, "");
 #endif
 }

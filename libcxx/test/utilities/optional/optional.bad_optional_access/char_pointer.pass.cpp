@@ -12,20 +12,18 @@
 // class bad_optional_access;
 // explicit bad_optional_access(const char* what_arg);
 
-#include <optional>
+#include <experimental/optional>
 #include <string>
 #include <cstring>
 #include <cassert>
 
-#if _LIBCPP_STD_VER > 11
-
-#endif  // _LIBCPP_STD_VER > 11
-
 int main()
 {
 #if _LIBCPP_STD_VER > 11
+    using std::experimental::bad_optional_access;
+
     const char* s = "message";
-    std::bad_optional_access e(s);
+    bad_optional_access e(s);
     assert(std::strcmp(e.what(), s) == 0);
 #endif  // _LIBCPP_STD_VER > 11
 }

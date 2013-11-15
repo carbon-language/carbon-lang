@@ -11,11 +11,16 @@
 
 // constexpr const T& optional<T>::value() const;
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
+using std::experimental::in_place_t;
+using std::experimental::in_place;
+using std::experimental::bad_optional_access;
 
 struct X
 {
@@ -31,21 +36,21 @@ int main()
 {
 #if _LIBCPP_STD_VER > 11
     {
-        constexpr std::optional<X> opt(std::in_place);
+        constexpr optional<X> opt(in_place);
         static_assert(opt.value().test() == 3, "");
     }
     {
-        const std::optional<X> opt(std::in_place);
+        const optional<X> opt(in_place);
         assert(opt.value().test() == 3);
     }
     {
-        const std::optional<X> opt;
+        const optional<X> opt;
         try
         {
             opt.value();
             assert(false);
         }
-        catch (const std::bad_optional_access&)
+        catch (const bad_optional_access&)
         {
         }
     }

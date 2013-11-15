@@ -11,20 +11,22 @@
 
 // optional(const optional<T>& rhs);
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 
 #if _LIBCPP_STD_VER > 11
 
+using std::experimental::optional;
+
 template <class T>
 void
-test(const std::optional<T>& rhs, bool is_going_to_throw = false)
+test(const optional<T>& rhs, bool is_going_to_throw = false)
 {
     bool rhs_engaged = static_cast<bool>(rhs);
     try
     {
-        std::optional<T> lhs = rhs;
+        optional<T> lhs = rhs;
         assert(is_going_to_throw == false);
         assert(static_cast<bool>(lhs) == rhs_engaged);
         if (rhs_engaged)
@@ -80,42 +82,42 @@ int main()
 #if _LIBCPP_STD_VER > 11
     {
         typedef int T;
-        std::optional<T> rhs;
+        optional<T> rhs;
         test(rhs);
     }
     {
         typedef int T;
-        std::optional<T> rhs(3);
+        optional<T> rhs(3);
         test(rhs);
     }
     {
         typedef X T;
-        std::optional<T> rhs;
+        optional<T> rhs;
         test(rhs);
     }
     {
         typedef X T;
-        std::optional<T> rhs(X(3));
+        optional<T> rhs(X(3));
         test(rhs);
     }
     {
         typedef Y T;
-        std::optional<T> rhs;
+        optional<T> rhs;
         test(rhs);
     }
     {
         typedef Y T;
-        std::optional<T> rhs(Y(3));
+        optional<T> rhs(Y(3));
         test(rhs);
     }
     {
         typedef Z T;
-        std::optional<T> rhs;
+        optional<T> rhs;
         test(rhs);
     }
     {
         typedef Z T;
-        std::optional<T> rhs(Z(3));
+        optional<T> rhs(Z(3));
         test(rhs, true);
     }
 #endif  // _LIBCPP_STD_VER > 11

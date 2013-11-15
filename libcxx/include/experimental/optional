@@ -18,8 +18,7 @@
 
 #include <initializer_list>
 
-namespace std
-{
+namespace std { namespace experimental {
 
 // optional for object types
 template <class T>
@@ -110,7 +109,7 @@ template <class T> constexpr optional<typename decay<T>::type> make_optional(T&&
 template <class T> struct hash;
 template <class T> struct hash<optional<T>>;
 
-}  // std
+}}  // std::experimental
 
 */
 
@@ -118,8 +117,7 @@ template <class T> struct hash<optional<T>>;
 #include <functional>
 #include <stdexcept>
 
-namespace std  // purposefully not using versioning namespace
-{
+namespace std { namespace experimental {
 
 class _LIBCPP_EXCEPTION_ABI bad_optional_access
     : public logic_error
@@ -142,7 +140,7 @@ public:
     virtual ~bad_optional_access() _NOEXCEPT;
 };
 
-}  // std
+}}  // std::experimental
 
 #if _LIBCPP_STD_VER > 11
 
@@ -163,7 +161,7 @@ public:
 #pragma GCC system_header
 #endif
 
-_LIBCPP_BEGIN_NAMESPACE_STD
+namespace std { namespace experimental { inline namespace __library_fundamentals_v1 {
 
 struct in_place_t {};
 constexpr in_place_t in_place{};
@@ -677,10 +675,14 @@ make_optional(_Tp&& __v)
     return optional<typename decay<_Tp>::type>(_VSTD::forward<_Tp>(__v));
 }
 
+}}}  // namespace std::experimental::__library_fundamentals_v1
+
+_LIBCPP_BEGIN_NAMESPACE_STD
+
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS_ONLY hash<optional<_Tp> >
+struct _LIBCPP_TYPE_VIS_ONLY hash<std::experimental::optional<_Tp> >
 {
-    typedef optional<_Tp> argument_type;
+    typedef std::experimental::optional<_Tp> argument_type;
     typedef size_t        result_type;
 
     _LIBCPP_INLINE_VISIBILITY

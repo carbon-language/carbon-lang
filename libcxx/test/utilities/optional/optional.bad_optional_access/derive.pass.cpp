@@ -11,17 +11,15 @@
 
 // class bad_optional_access : public logic_error 
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
-
-#if _LIBCPP_STD_VER > 11
-
-#endif  // _LIBCPP_STD_VER > 11
 
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-    static_assert(std::is_base_of<std::logic_error, std::bad_optional_access>::value, "");
-    static_assert(std::is_convertible<std::bad_optional_access*, std::logic_error*>::value, "");
+    using std::experimental::bad_optional_access;
+
+    static_assert(std::is_base_of<std::logic_error, bad_optional_access>::value, "");
+    static_assert(std::is_convertible<bad_optional_access*, std::logic_error*>::value, "");
 #endif  // _LIBCPP_STD_VER > 11
 }

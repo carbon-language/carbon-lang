@@ -11,12 +11,14 @@
 
 // template <class... Args> void optional<T>::emplace(Args&&... args);
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 #include <memory>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
 
 class X
 {
@@ -58,61 +60,61 @@ int main()
 {
 #if _LIBCPP_STD_VER > 11
     {
-        std::optional<int> opt;
+        optional<int> opt;
         opt.emplace();
         assert(static_cast<bool>(opt) == true);
         assert(*opt == 0);
     }
     {
-        std::optional<int> opt;
+        optional<int> opt;
         opt.emplace(1);
         assert(static_cast<bool>(opt) == true);
         assert(*opt == 1);
     }
     {
-        std::optional<int> opt(2);
+        optional<int> opt(2);
         opt.emplace();
         assert(static_cast<bool>(opt) == true);
         assert(*opt == 0);
     }
     {
-        std::optional<int> opt(2);
+        optional<int> opt(2);
         opt.emplace(1);
         assert(static_cast<bool>(opt) == true);
         assert(*opt == 1);
     }
     {
-        std::optional<X> opt;
+        optional<X> opt;
         opt.emplace();
         assert(static_cast<bool>(opt) == true);
         assert(*opt == X());
     }
     {
-        std::optional<X> opt;
+        optional<X> opt;
         opt.emplace(1);
         assert(static_cast<bool>(opt) == true);
         assert(*opt == X(1));
     }
     {
-        std::optional<X> opt;
+        optional<X> opt;
         opt.emplace(1, 2);
         assert(static_cast<bool>(opt) == true);
         assert(*opt == X(1, 2));
     }
     {
-        std::optional<X> opt(X{3});
+        optional<X> opt(X{3});
         opt.emplace();
         assert(static_cast<bool>(opt) == true);
         assert(*opt == X());
     }
     {
-        std::optional<X> opt(X{3});
+        optional<X> opt(X{3});
         opt.emplace(1);
         assert(static_cast<bool>(opt) == true);
         assert(*opt == X(1));
     }
     {
-        std::optional<X> opt(X{3});
+        optional<X> opt(X{3});
         opt.emplace(1, 2);
         assert(static_cast<bool>(opt) == true);
         assert(*opt == X(1, 2));
@@ -120,7 +122,7 @@ int main()
     {
         Y y;
         {
-            std::optional<Y> opt(y);
+            optional<Y> opt(y);
             assert(Y::dtor_called == false);
             opt.emplace();
             assert(Y::dtor_called == true);
@@ -128,7 +130,7 @@ int main()
     }
     {
         Z z;
-        std::optional<Z> opt(z);
+        optional<Z> opt(z);
         try
         {
             assert(static_cast<bool>(opt) == true);

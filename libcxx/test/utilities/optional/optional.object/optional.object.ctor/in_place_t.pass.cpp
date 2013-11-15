@@ -12,11 +12,15 @@
 // template <class... Args>
 //   constexpr explicit optional(in_place_t, Args&&... args);
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
+using std::experimental::in_place_t;
+using std::experimental::in_place;
 
 class X
 {
@@ -60,76 +64,76 @@ int main()
 {
 #if _LIBCPP_STD_VER > 11
     {
-        constexpr std::optional<int> opt(std::in_place, 5);
+        constexpr optional<int> opt(in_place, 5);
         static_assert(static_cast<bool>(opt) == true, "");
         static_assert(*opt == 5, "");
 
         struct test_constexpr_ctor
-            : public std::optional<int>
+            : public optional<int>
         {
-            constexpr test_constexpr_ctor(std::in_place_t, int i) 
-                : std::optional<int>(std::in_place, i) {}
+            constexpr test_constexpr_ctor(in_place_t, int i) 
+                : optional<int>(in_place, i) {}
         };
 
     }
     {
-        const std::optional<X> opt(std::in_place);
+        const optional<X> opt(in_place);
         assert(static_cast<bool>(opt) == true);
         assert(*opt == X());
     }
     {
-        const std::optional<X> opt(std::in_place, 5);
+        const optional<X> opt(in_place, 5);
         assert(static_cast<bool>(opt) == true);
         assert(*opt == X(5));
     }
     {
-        const std::optional<X> opt(std::in_place, 5, 4);
+        const optional<X> opt(in_place, 5, 4);
         assert(static_cast<bool>(opt) == true);
         assert(*opt == X(5, 4));
     }
     {
-        constexpr std::optional<Y> opt(std::in_place);
+        constexpr optional<Y> opt(in_place);
         static_assert(static_cast<bool>(opt) == true, "");
         static_assert(*opt == Y(), "");
 
         struct test_constexpr_ctor
-            : public std::optional<Y>
+            : public optional<Y>
         {
-            constexpr test_constexpr_ctor(std::in_place_t) 
-                : std::optional<Y>(std::in_place) {}
+            constexpr test_constexpr_ctor(in_place_t) 
+                : optional<Y>(in_place) {}
         };
 
     }
     {
-        constexpr std::optional<Y> opt(std::in_place, 5);
+        constexpr optional<Y> opt(in_place, 5);
         static_assert(static_cast<bool>(opt) == true, "");
         static_assert(*opt == Y(5), "");
 
         struct test_constexpr_ctor
-            : public std::optional<Y>
+            : public optional<Y>
         {
-            constexpr test_constexpr_ctor(std::in_place_t, int i) 
-                : std::optional<Y>(std::in_place, i) {}
+            constexpr test_constexpr_ctor(in_place_t, int i) 
+                : optional<Y>(in_place, i) {}
         };
 
     }
     {
-        constexpr std::optional<Y> opt(std::in_place, 5, 4);
+        constexpr optional<Y> opt(in_place, 5, 4);
         static_assert(static_cast<bool>(opt) == true, "");
         static_assert(*opt == Y(5, 4), "");
 
         struct test_constexpr_ctor
-            : public std::optional<Y>
+            : public optional<Y>
         {
-            constexpr test_constexpr_ctor(std::in_place_t, int i, int j) 
-                : std::optional<Y>(std::in_place, i, j) {}
+            constexpr test_constexpr_ctor(in_place_t, int i, int j) 
+                : optional<Y>(in_place, i, j) {}
         };
 
     }
     {
         try
         {
-            const std::optional<Z> opt(std::in_place, 1);
+            const optional<Z> opt(in_place, 1);
             assert(false);
         }
         catch (int i)

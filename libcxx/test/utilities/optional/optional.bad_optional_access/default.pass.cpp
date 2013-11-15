@@ -11,16 +11,14 @@
 
 // class bad_optional_access is not default constructible
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
-
-#if _LIBCPP_STD_VER > 11
-
-#endif  // _LIBCPP_STD_VER > 11
 
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-    static_assert(!std::is_default_constructible<std::bad_optional_access>::value, "");
+    using std::experimental::bad_optional_access;
+
+    static_assert(!std::is_default_constructible<bad_optional_access>::value, "");
 #endif  // _LIBCPP_STD_VER > 11
 }

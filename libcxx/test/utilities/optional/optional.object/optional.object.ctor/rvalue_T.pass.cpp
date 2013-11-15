@@ -11,11 +11,13 @@
 
 // constexpr optional(T&& v);
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
 
 class X
 {
@@ -52,42 +54,42 @@ int main()
 #if _LIBCPP_STD_VER > 11
     {
         typedef int T;
-        constexpr std::optional<T> opt(T(5));
+        constexpr optional<T> opt(T(5));
         static_assert(static_cast<bool>(opt) == true, "");
         static_assert(*opt == 5, "");
 
         struct test_constexpr_ctor
-            : public std::optional<T>
+            : public optional<T>
         {
             constexpr test_constexpr_ctor(T&&) {}
         };
     }
     {
         typedef double T;
-        constexpr std::optional<T> opt(T(3));
+        constexpr optional<T> opt(T(3));
         static_assert(static_cast<bool>(opt) == true, "");
         static_assert(*opt == 3, "");
 
         struct test_constexpr_ctor
-            : public std::optional<T>
+            : public optional<T>
         {
             constexpr test_constexpr_ctor(T&&) {}
         };
     }
     {
         typedef X T;
-        std::optional<T> opt(T(3));
+        optional<T> opt(T(3));
         assert(static_cast<bool>(opt) == true);
         assert(*opt == 3);
     }
     {
         typedef Y T;
-        constexpr std::optional<T> opt(T(3));
+        constexpr optional<T> opt(T(3));
         static_assert(static_cast<bool>(opt) == true, "");
         static_assert(*opt == 3, "");
 
         struct test_constexpr_ctor
-            : public std::optional<T>
+            : public optional<T>
         {
             constexpr test_constexpr_ctor(T&&) {}
         };
@@ -96,7 +98,7 @@ int main()
         typedef Z T;
         try
         {
-            std::optional<T> opt(T(3));
+            optional<T> opt(T(3));
             assert(false);
         }
         catch (int i)

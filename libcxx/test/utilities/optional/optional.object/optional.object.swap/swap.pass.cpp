@@ -13,11 +13,13 @@
 //     noexcept(is_nothrow_move_constructible<T>::value &&
 //              noexcept(swap(declval<T&>(), declval<T&>())));
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
 
 class X
 {
@@ -67,8 +69,8 @@ int main()
 {
 #if _LIBCPP_STD_VER > 11
     {
-        std::optional<int> opt1;
-        std::optional<int> opt2;
+        optional<int> opt1;
+        optional<int> opt2;
         static_assert(noexcept(opt1.swap(opt2)) == true, "");
         assert(static_cast<bool>(opt1) == false);
         assert(static_cast<bool>(opt2) == false);
@@ -77,8 +79,8 @@ int main()
         assert(static_cast<bool>(opt2) == false);
     }
     {
-        std::optional<int> opt1(1);
-        std::optional<int> opt2;
+        optional<int> opt1(1);
+        optional<int> opt2;
         static_assert(noexcept(opt1.swap(opt2)) == true, "");
         assert(static_cast<bool>(opt1) == true);
         assert(*opt1 == 1);
@@ -89,8 +91,8 @@ int main()
         assert(*opt2 == 1);
     }
     {
-        std::optional<int> opt1;
-        std::optional<int> opt2(2);
+        optional<int> opt1;
+        optional<int> opt2(2);
         static_assert(noexcept(opt1.swap(opt2)) == true, "");
         assert(static_cast<bool>(opt1) == false);
         assert(static_cast<bool>(opt2) == true);
@@ -101,8 +103,8 @@ int main()
         assert(static_cast<bool>(opt2) == false);
     }
     {
-        std::optional<int> opt1(1);
-        std::optional<int> opt2(2);
+        optional<int> opt1(1);
+        optional<int> opt2(2);
         static_assert(noexcept(opt1.swap(opt2)) == true, "");
         assert(static_cast<bool>(opt1) == true);
         assert(*opt1 == 1);
@@ -115,8 +117,8 @@ int main()
         assert(*opt2 == 1);
     }
     {
-        std::optional<X> opt1;
-        std::optional<X> opt2;
+        optional<X> opt1;
+        optional<X> opt2;
         static_assert(noexcept(opt1.swap(opt2)) == true, "");
         assert(static_cast<bool>(opt1) == false);
         assert(static_cast<bool>(opt2) == false);
@@ -126,8 +128,8 @@ int main()
         assert(X::dtor_called == 0);
     }
     {
-        std::optional<X> opt1(1);
-        std::optional<X> opt2;
+        optional<X> opt1(1);
+        optional<X> opt2;
         static_assert(noexcept(opt1.swap(opt2)) == true, "");
         assert(static_cast<bool>(opt1) == true);
         assert(*opt1 == 1);
@@ -140,8 +142,8 @@ int main()
         assert(*opt2 == 1);
     }
     {
-        std::optional<X> opt1;
-        std::optional<X> opt2(2);
+        optional<X> opt1;
+        optional<X> opt2(2);
         static_assert(noexcept(opt1.swap(opt2)) == true, "");
         assert(static_cast<bool>(opt1) == false);
         assert(static_cast<bool>(opt2) == true);
@@ -154,8 +156,8 @@ int main()
         assert(static_cast<bool>(opt2) == false);
     }
     {
-        std::optional<X> opt1(1);
-        std::optional<X> opt2(2);
+        optional<X> opt1(1);
+        optional<X> opt2(2);
         static_assert(noexcept(opt1.swap(opt2)) == true, "");
         assert(static_cast<bool>(opt1) == true);
         assert(*opt1 == 1);
@@ -170,8 +172,8 @@ int main()
         assert(*opt2 == 1);
     }
     {
-        std::optional<Y> opt1;
-        std::optional<Y> opt2;
+        optional<Y> opt1;
+        optional<Y> opt2;
         static_assert(noexcept(opt1.swap(opt2)) == false, "");
         assert(static_cast<bool>(opt1) == false);
         assert(static_cast<bool>(opt2) == false);
@@ -181,8 +183,8 @@ int main()
         assert(Y::dtor_called == 0);
     }
     {
-        std::optional<Y> opt1(1);
-        std::optional<Y> opt2;
+        optional<Y> opt1(1);
+        optional<Y> opt2;
         static_assert(noexcept(opt1.swap(opt2)) == false, "");
         assert(static_cast<bool>(opt1) == true);
         assert(*opt1 == 1);
@@ -195,8 +197,8 @@ int main()
         assert(*opt2 == 1);
     }
     {
-        std::optional<Y> opt1;
-        std::optional<Y> opt2(2);
+        optional<Y> opt1;
+        optional<Y> opt2(2);
         static_assert(noexcept(opt1.swap(opt2)) == false, "");
         assert(static_cast<bool>(opt1) == false);
         assert(static_cast<bool>(opt2) == true);
@@ -209,8 +211,8 @@ int main()
         assert(static_cast<bool>(opt2) == false);
     }
     {
-        std::optional<Y> opt1(1);
-        std::optional<Y> opt2(2);
+        optional<Y> opt1(1);
+        optional<Y> opt2(2);
         static_assert(noexcept(opt1.swap(opt2)) == false, "");
         assert(static_cast<bool>(opt1) == true);
         assert(*opt1 == 1);
@@ -225,8 +227,8 @@ int main()
         assert(*opt2 == 1);
     }
     {
-        std::optional<Z> opt1;
-        std::optional<Z> opt2;
+        optional<Z> opt1;
+        optional<Z> opt2;
         static_assert(noexcept(opt1.swap(opt2)) == false, "");
         assert(static_cast<bool>(opt1) == false);
         assert(static_cast<bool>(opt2) == false);
@@ -235,9 +237,9 @@ int main()
         assert(static_cast<bool>(opt2) == false);
     }
     {
-        std::optional<Z> opt1;
+        optional<Z> opt1;
         opt1.emplace(1);
-        std::optional<Z> opt2;
+        optional<Z> opt2;
         static_assert(noexcept(opt1.swap(opt2)) == false, "");
         assert(static_cast<bool>(opt1) == true);
         assert(*opt1 == 1);
@@ -256,8 +258,8 @@ int main()
         assert(static_cast<bool>(opt2) == false);
     }
     {
-        std::optional<Z> opt1;
-        std::optional<Z> opt2;
+        optional<Z> opt1;
+        optional<Z> opt2;
         opt2.emplace(2);
         static_assert(noexcept(opt1.swap(opt2)) == false, "");
         assert(static_cast<bool>(opt1) == false);
@@ -277,9 +279,9 @@ int main()
         assert(*opt2 == 2);
     }
     {
-        std::optional<Z> opt1;
+        optional<Z> opt1;
         opt1.emplace(1);
-        std::optional<Z> opt2;
+        optional<Z> opt2;
         opt2.emplace(2);
         static_assert(noexcept(opt1.swap(opt2)) == false, "");
         assert(static_cast<bool>(opt1) == true);

@@ -15,11 +15,13 @@
 #define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
 #endif
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
 
 struct X
 {
@@ -33,12 +35,12 @@ int main()
 {
 #if _LIBCPP_STD_VER > 11
     {
-        std::optional<X> opt(X{});
+        optional<X> opt(X{});
         assert((*opt).test() == 4);
     }
 #ifdef _LIBCPP_DEBUG
     {
-        std::optional<X> opt;
+        optional<X> opt;
         assert((*opt).test() == 3);
         assert(false);
     }

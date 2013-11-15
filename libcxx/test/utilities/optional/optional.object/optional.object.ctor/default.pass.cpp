@@ -11,11 +11,13 @@
 
 // constexpr optional() noexcept;
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
 
 template <class Opt>
 void
@@ -58,8 +60,8 @@ struct X
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-    test_constexpr<std::optional<int>>();
-    test_constexpr<std::optional<int*>>();
-    test<std::optional<X>>();
+    test_constexpr<optional<int>>();
+    test_constexpr<optional<int*>>();
+    test<optional<X>>();
 #endif  // _LIBCPP_STD_VER > 11
 }

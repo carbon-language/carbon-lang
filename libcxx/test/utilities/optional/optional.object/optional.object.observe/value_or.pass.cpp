@@ -11,11 +11,15 @@
 
 // template <class U> T optional<T>::value_or(U&& v) &&;
 
-#include <optional>
+#include <experimental/optional>
 #include <type_traits>
 #include <cassert>
 
 #if _LIBCPP_STD_VER > 11
+
+using std::experimental::optional;
+using std::experimental::in_place_t;
+using std::experimental::in_place;
 
 struct Y
 {
@@ -42,24 +46,24 @@ int main()
 {
 #if _LIBCPP_STD_VER > 11
     {
-        std::optional<X> opt(std::in_place, 2);
+        optional<X> opt(in_place, 2);
         Y y(3);
         assert(std::move(opt).value_or(y) == 2);
         assert(*opt == 0);
     }
     {
-        std::optional<X> opt(std::in_place, 2);
+        optional<X> opt(in_place, 2);
         assert(std::move(opt).value_or(Y(3)) == 2);
         assert(*opt == 0);
     }
     {
-        std::optional<X> opt;
+        optional<X> opt;
         Y y(3);
         assert(std::move(opt).value_or(y) == 3);
         assert(!opt);
     }
     {
-        std::optional<X> opt;
+        optional<X> opt;
         assert(std::move(opt).value_or(Y(3)) == 4);
         assert(!opt);
     }
