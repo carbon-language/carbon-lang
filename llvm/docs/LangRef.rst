@@ -5774,9 +5774,9 @@ Semantics:
 
 The '``addrspacecast``' instruction converts the pointer value
 ``ptrval`` to type ``pty2``. It can be a *no-op cast* or a complex
-value modification, depending on the target and the address spaces
-pair. Pointers conversion within the same address space must be
-performed with ``bitcast`` instruction. Note that if the address space
+value modification, depending on the target and the address space
+pair. Pointer conversions within the same address space must be
+performed with the ``bitcast`` instruction. Note that if the address space
 conversion is legal then both result and operand refer to the same memory
 location.
 
