@@ -989,7 +989,6 @@ MicrosoftCXXABI::EmitVirtualMemPtrThunk(const CXXMethodDecl *MD,
                              ThunkName.str(), &CGM.getModule());
   assert(ThunkFn->getName() == ThunkName && "name was uniqued!");
 
-  LinkageInfo LV = MD->getLinkageAndVisibility();
   ThunkFn->setLinkage(MD->isExternallyVisible()
                           ? llvm::GlobalValue::LinkOnceODRLinkage
                           : llvm::GlobalValue::InternalLinkage);
