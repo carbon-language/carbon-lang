@@ -2,7 +2,7 @@
 
 void f1(void) {
   int x = 0;
-/* expected-error@+1 {{'#pragma fp_contract' should only appear at file scope or at the start of a compound expression}} */
+/* expected-error@+1 {{'#pragma fp_contract' can only appear at file scope or at the start of a compound statement}} */
 #pragma STDC FP_CONTRACT ON
 }
 

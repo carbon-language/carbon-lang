@@ -797,8 +797,8 @@ def warn_pragma_unused_expected_punc : Warning<
   "expected ')' or ',' in '#pragma unused'">;
 // - #pragma fp_contract
 def err_pragma_fp_contract_scope : Error<
-  "'#pragma fp_contract' should only appear at file scope or at the start of a "
-  "compound expression">; 
+  "'#pragma fp_contract' can only appear at file scope or at the start of a "
+  "compound statement">; 
 // - #pragma comment
 def err_pragma_comment_malformed : Error<
   "pragma comment requires parenthesized identifier and optional string">;
