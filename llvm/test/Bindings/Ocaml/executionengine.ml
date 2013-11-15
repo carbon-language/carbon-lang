@@ -103,11 +103,11 @@ let test_executionengine () =
   (* run_static_dtors *)
   ExecutionEngine.run_static_dtors ee;
 
-  (* Show that the target data binding links and runs.*)
-  let td = ExecutionEngine.target_data ee in
+  (* Show that the data layout binding links and runs.*)
+  let dl = ExecutionEngine.data_layout ee in
 
   (* Demonstrate that a garbage pointer wasn't returned. *)
-  let ty = intptr_type td context in
+  let ty = DataLayout.intptr_type context dl in
   if ty != i32_type && ty != i64_type then bomb "target_data did not work";
   
   (* dispose *)

@@ -46,10 +46,7 @@ let test_transforms () =
       ignore (build_ret (build_call fn [| |] "" b) b);
   end;
 
-  let td = DataLayout.create (target_triple m) in
-  
   ignore (PassManager.create ()
-           ++ DataLayout.add td
            ++ add_argument_promotion
            ++ add_constant_merge
            ++ add_dead_arg_elimination

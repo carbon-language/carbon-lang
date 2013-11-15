@@ -37,26 +37,30 @@ let m = create_module context filename
 (*===-- Target Data -------------------------------------------------------===*)
 
 let test_target_data () =
+  let module DL = DataLayout in
   let layout = "e-p:32:32:32-S32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-" ^
                "f16:16:16-f32:32:32-f64:32:64-f128:128:128-v64:32:64-v128:32:128-" ^
                "a0:0:64-n32" in
-  let td     = DataLayout.create layout in
+  let dl     = DL.of_string layout in
   let sty    = struct_type context [| i32_type; i64_type |] in
   
-  assert_equal (DataLayout.as_string td) layout;
-  assert_equal (byte_order td) Endian.Little;
-  assert_equal (pointer_size td) 4;
-  assert_equal (intptr_type td context) i32_type;
-  assert_equal (qualified_pointer_size td 0) 4;
-  assert_equal (qualified_intptr_type td context 0) i32_type;
-  assert_equal (size_in_bits td sty) (Int64.of_int 96);
-  assert_equal (store_size td sty) (Int64.of_int 12);
-  assert_equal (abi_size td sty) (Int64.of_int 12);
-  assert_equal (stack_align td sty) 4;
-  assert_equal (preferred_align td sty) 8;
-  assert_equal (preferred_align_of_global td (declare_global sty "g" m)) 8;
-  assert_equal (element_at_offset td sty (Int64.of_int 1)) 0;
-  assert_equal (offset_of_element td sty 1) (Int64.of_int 4)
+  assert_equal (DL.as_string dl) layout;
+  assert_equal (DL.byte_order dl) Endian.Little;
+  assert_equal (DL.pointer_size dl) 4;
+  assert_equal (DL.intptr_type context dl) i32_type;
+  assert_equal (DL.qualified_pointer_size 0 dl) 4;
+  assert_equal (DL.qualified_intptr_type context 0 dl) i32_type;
+  assert_equal (DL.size_in_bits sty dl) (Int64.of_int 96);
+  assert_equal (DL.store_size sty dl) (Int64.of_int 12);
+  assert_equal (DL.abi_size sty dl) (Int64.of_int 12);
+  assert_equal (DL.stack_align sty dl) 4;
+  assert_equal (DL.preferred_align sty dl) 8;
+  assert_equal (DL.preferred_align_of_global (declare_global sty "g" m) dl) 8;
+  assert_equal (DL.element_at_offset sty (Int64.of_int 1) dl) 0;
+  assert_equal (DL.offset_of_element sty 1 dl) (Int64.of_int 4);
+
+  let pm = PassManager.create () in
+  ignore (DL.add_to_pass_manager pm dl)
 
 
 (*===-- Driver ------------------------------------------------------------===*)

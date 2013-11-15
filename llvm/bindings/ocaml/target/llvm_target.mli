@@ -21,84 +21,75 @@ end
 module DataLayout : sig
   type t
 
-  (** [DataLayout.create rep] parses the target data string representation [rep].
-      See the constructor llvm::DataLayout::DataLayout. *)
-  external create : string -> t = "llvm_targetdata_create"
+  (** [of_string rep] parses the data layout string representation [rep].
+      See the constructor [llvm::DataLayout::DataLayout]. *)
+  val of_string : string -> t
 
-  (** [add_target_data td pm] adds the target data [td] to the pass manager [pm].
-      Does not take ownership of the target data.
-      See the method llvm::PassManagerBase::add. *)
-  external add : t -> [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
-               = "llvm_targetdata_add"
+  (** [as_string dl] is the string representation of the data layout [dl].
+      See the method [llvm::DataLayout::getStringRepresentation]. *)
+  val as_string : t -> string
 
-  (** [as_string td] is the string representation of the target data [td].
-      See the constructor llvm::DataLayout::DataLayout. *)
-  external as_string : t -> string = "llvm_targetdata_as_string"
+  (** [add_to_pass_manager dl pm] adds the target data [dl] to
+      the pass manager [pm].
+      See the method [llvm::PassManagerBase::add]. *)
+  val add_to_pass_manager : [<Llvm.PassManager.any] Llvm.PassManager.t ->
+                            t -> unit
+
+  (** Returns the byte order of a target, either [Endian.Big] or
+      [Endian.Little].
+      See the method [llvm::DataLayout::isLittleEndian]. *)
+  val byte_order : t -> Endian.t
+
+  (** Returns the pointer size in bytes for a target.
+      See the method [llvm::DataLayout::getPointerSize]. *)
+  val pointer_size : t -> int
+
+  (** Returns the integer type that is the same size as a pointer on a target.
+      See the method [llvm::DataLayout::getIntPtrType]. *)
+  val intptr_type : Llvm.llcontext -> t -> Llvm.lltype
+
+  (** Returns the pointer size in bytes for a target in a given address space.
+      See the method [llvm::DataLayout::getPointerSize]. *)
+  val qualified_pointer_size : int -> t -> int
+
+  (** Returns the integer type that is the same size as a pointer on a target
+      in a given address space.
+      See the method [llvm::DataLayout::getIntPtrType]. *)
+  val qualified_intptr_type : Llvm.llcontext -> int -> t -> Llvm.lltype
+
+  (** Computes the size of a type in bits for a target.
+      See the method [llvm::DataLayout::getTypeSizeInBits]. *)
+  val size_in_bits : Llvm.lltype -> t -> Int64.t
+
+  (** Computes the storage size of a type in bytes for a target.
+      See the method [llvm::DataLayout::getTypeStoreSize]. *)
+  val store_size : Llvm.lltype -> t -> Int64.t
+
+  (** Computes the ABI size of a type in bytes for a target.
+      See the method [llvm::DataLayout::getTypeAllocSize]. *)
+  val abi_size : Llvm.lltype -> t -> Int64.t
+
+  (** Computes the ABI alignment of a type in bytes for a target.
+      See the method [llvm::DataLayout::getTypeABISize]. *)
+  val abi_align : Llvm.lltype -> t -> int
+
+  (** Computes the call frame alignment of a type in bytes for a target.
+      See the method [llvm::DataLayout::getTypeABISize]. *)
+  val stack_align : Llvm.lltype -> t -> int
+
+  (** Computes the preferred alignment of a type in bytes for a target.
+      See the method [llvm::DataLayout::getTypeABISize]. *)
+  val preferred_align : Llvm.lltype -> t -> int
+
+  (** Computes the preferred alignment of a global variable in bytes for
+      a target. See the method [llvm::DataLayout::getPreferredAlignment]. *)
+  val preferred_align_of_global : Llvm.llvalue -> t -> int
+
+  (** Computes the structure element that contains the byte offset for a target.
+      See the method [llvm::StructLayout::getElementContainingOffset]. *)
+  val element_at_offset : Llvm.lltype -> Int64.t -> t -> int
+
+  (** Computes the byte offset of the indexed struct element for a target.
+      See the method [llvm::StructLayout::getElementContainingOffset]. *)
+  val offset_of_element : Llvm.lltype -> int -> t -> Int64.t
 end
-
-(** Returns the byte order of a target, either LLVMBigEndian or
-    LLVMLittleEndian.
-    See the method llvm::DataLayout::isLittleEndian. *)
-external byte_order : DataLayout.t -> Endian.t = "llvm_byte_order"
-
-(** Returns the pointer size in bytes for a target.
-    See the method llvm::DataLayout::getPointerSize. *)
-external pointer_size : DataLayout.t -> int = "llvm_pointer_size"
-
-(** Returns the integer type that is the same size as a pointer on a target.
-    See the method llvm::DataLayout::getIntPtrType. *)
-external intptr_type : DataLayout.t -> Llvm.llcontext -> Llvm.lltype
-                     = "llvm_intptr_type"
-
-(** Returns the pointer size in bytes for a target in a given address space.
-    See the method llvm::DataLayout::getPointerSize. *)
-external qualified_pointer_size : DataLayout.t -> int -> int
-                                = "llvm_qualified_pointer_size"
-
-(** Returns the integer type that is the same size as a pointer on a target
-    in a given address space.
-    See the method llvm::DataLayout::getIntPtrType. *)
-external qualified_intptr_type : DataLayout.t -> Llvm.llcontext ->
-                                 int -> Llvm.lltype
-                               = "llvm_qualified_intptr_type"
-
-(** Computes the size of a type in bits for a target.
-    See the method llvm::DataLayout::getTypeSizeInBits. *)
-external size_in_bits : DataLayout.t -> Llvm.lltype -> Int64.t
-                      = "llvm_size_in_bits"
-
-(** Computes the storage size of a type in bytes for a target.
-    See the method llvm::DataLayout::getTypeStoreSize. *)
-external store_size : DataLayout.t -> Llvm.lltype -> Int64.t = "llvm_store_size"
-
-(** Computes the ABI size of a type in bytes for a target.
-    See the method llvm::DataLayout::getTypeAllocSize. *)
-external abi_size : DataLayout.t -> Llvm.lltype -> Int64.t = "llvm_abi_size"
-
-(** Computes the ABI alignment of a type in bytes for a target.
-    See the method llvm::DataLayout::getTypeABISize. *)
-external abi_align : DataLayout.t -> Llvm.lltype -> int = "llvm_abi_align"
-
-(** Computes the call frame alignment of a type in bytes for a target.
-    See the method llvm::DataLayout::getTypeABISize. *)
-external stack_align : DataLayout.t -> Llvm.lltype -> int = "llvm_stack_align"
-
-(** Computes the preferred alignment of a type in bytes for a target.
-    See the method llvm::DataLayout::getTypeABISize. *)
-external preferred_align : DataLayout.t -> Llvm.lltype -> int
-                         = "llvm_preferred_align"
-
-(** Computes the preferred alignment of a global variable in bytes for a target.
-    See the method llvm::DataLayout::getPreferredAlignment. *)
-external preferred_align_of_global : DataLayout.t -> Llvm.llvalue -> int
-                                   = "llvm_preferred_align_of_global"
-
-(** Computes the structure element that contains the byte offset for a target.
-    See the method llvm::StructLayout::getElementContainingOffset. *)
-external element_at_offset : DataLayout.t -> Llvm.lltype -> Int64.t -> int
-                           = "llvm_element_at_offset"
-
-(** Computes the byte offset of the indexed struct element for a target.
-    See the method llvm::StructLayout::getElementContainingOffset. *)
-external offset_of_element : DataLayout.t -> Llvm.lltype -> int -> Int64.t
-                           = "llvm_offset_of_element"

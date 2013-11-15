@@ -147,9 +147,8 @@ module ExecutionEngine: sig
       used to store the machine code for the function [f]. *)
   val free_machine_code : Llvm.llvalue -> t -> unit
 
-  (** [target_data ee] is the target data owned by the execution engine
-      [ee]. *)
-  val target_data : t -> Llvm_target.DataLayout.t
+  (** [data_layout ee] is the data layout of the execution engine [ee]. *)
+  val data_layout : t -> Llvm_target.DataLayout.t
 end
 
 val initialize_native_target : unit -> bool

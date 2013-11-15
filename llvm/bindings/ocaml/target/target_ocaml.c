@@ -19,15 +19,15 @@
 #include "caml/alloc.h"
 #include "caml/custom.h"
 
-#define TargetData_val(v)  (*(LLVMTargetDataRef *)(Data_custom_val(v)))
+#define DataLayout_val(v)  (*(LLVMTargetDataRef *)(Data_custom_val(v)))
 
-static void llvm_finalize_target_data(value TargetData) {
-  LLVMDisposeTargetData(TargetData_val(TargetData));
+static void llvm_finalize_data_layout(value DataLayout) {
+  LLVMDisposeTargetData(DataLayout_val(DataLayout));
 }
 
-static struct custom_operations llvm_target_data_ops = {
-  (char *) "LLVMTargetData",
-  llvm_finalize_target_data,
+static struct custom_operations llvm_data_layout_ops = {
+  (char *) "LLVMDataLayout",
+  llvm_finalize_data_layout,
   custom_compare_default,
   custom_hash_default,
   custom_serialize_default,
@@ -37,101 +37,105 @@ static struct custom_operations llvm_target_data_ops = {
 #endif
 };
 
-value llvm_alloc_target_data(LLVMTargetDataRef TargetData) {
-  value V = alloc_custom(&llvm_target_data_ops, sizeof(LLVMTargetDataRef), 0, 1);
-  TargetData_val(V) = TargetData;
+value llvm_alloc_data_layout(LLVMTargetDataRef DataLayout) {
+  value V = alloc_custom(&llvm_data_layout_ops, sizeof(LLVMTargetDataRef), 0, 1);
+  DataLayout_val(V) = DataLayout;
   return V;
 }
 
 /* string -> DataLayout.t */
-CAMLprim value llvm_targetdata_create(value StringRep) {
-  return llvm_alloc_target_data(LLVMCreateTargetData(String_val(StringRep)));
-}
-
-/* DataLayout.t -> [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
-CAMLprim value llvm_targetdata_add(value TD, LLVMPassManagerRef PM){
-  LLVMAddTargetData(TargetData_val(TD), PM);
-  return Val_unit;
+CAMLprim value llvm_datalayout_of_string(value StringRep) {
+  return llvm_alloc_data_layout(LLVMCreateTargetData(String_val(StringRep)));
 }
 
 /* DataLayout.t -> string */
-CAMLprim value llvm_targetdata_as_string(value TD) {
-  char *StringRep = LLVMCopyStringRepOfTargetData(TargetData_val(TD));
+CAMLprim value llvm_datalayout_as_string(value TD) {
+  char *StringRep = LLVMCopyStringRepOfTargetData(DataLayout_val(TD));
   value Copy = copy_string(StringRep);
   LLVMDisposeMessage(StringRep);
   return Copy;
 }
 
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> DataLayout.t -> unit */
+CAMLprim value llvm_datalayout_add_to_pass_manager(LLVMPassManagerRef PM,
+                                                   value DL) {
+  LLVMAddTargetData(DataLayout_val(DL), PM);
+  return Val_unit;
+}
+
 /* DataLayout.t -> Endian.t */
-CAMLprim value llvm_byte_order(value TD) {
-  return Val_int(LLVMByteOrder(TargetData_val(TD)));
+CAMLprim value llvm_datalayout_byte_order(value DL) {
+  return Val_int(LLVMByteOrder(DataLayout_val(DL)));
 }
 
 /* DataLayout.t -> int */
-CAMLprim value llvm_pointer_size(value TD) {
-  return Val_int(LLVMPointerSize(TargetData_val(TD)));
+CAMLprim value llvm_datalayout_pointer_size(value DL) {
+  return Val_int(LLVMPointerSize(DataLayout_val(DL)));
 }
 
-/* DataLayout.t -> Llvm.llcontext -> Llvm.lltype */
-CAMLprim LLVMTypeRef llvm_intptr_type(value TD, LLVMContextRef C) {
-  return LLVMIntPtrTypeInContext(C, TargetData_val(TD));;
+/* Llvm.llcontext -> DataLayout.t -> Llvm.lltype */
+CAMLprim LLVMTypeRef llvm_datalayout_intptr_type(LLVMContextRef C, value DL) {
+  return LLVMIntPtrTypeInContext(C, DataLayout_val(DL));;
 }
 
-/* DataLayout.t -> int -> int */
-CAMLprim value llvm_qualified_pointer_size(LLVMTargetDataRef TD, value AS) {
-  return Val_int(LLVMPointerSizeForAS(TargetData_val(TD), Int_val(AS)));
+/* int -> DataLayout.t -> int */
+CAMLprim value llvm_datalayout_qualified_pointer_size(value AS, value DL) {
+  return Val_int(LLVMPointerSizeForAS(DataLayout_val(DL), Int_val(AS)));
 }
 
-/* DataLayout.t -> int -> Llvm.lltype */
-CAMLprim LLVMTypeRef llvm_qualified_intptr_type(LLVMTargetDataRef TD,
-                                                LLVMContextRef C, value AS) {
-  return LLVMIntPtrTypeForASInContext(C, TargetData_val(TD), Int_val(AS));
+/* Llvm.llcontext -> int -> DataLayout.t -> Llvm.lltype */
+CAMLprim LLVMTypeRef llvm_datalayout_qualified_intptr_type(LLVMContextRef C,
+                                                           value AS,
+                                                           value DL) {
+  return LLVMIntPtrTypeForASInContext(C, DataLayout_val(DL), Int_val(AS));
 }
 
-/* DataLayout.t -> Llvm.lltype -> Int64.t */
-CAMLprim value llvm_size_in_bits(value TD, LLVMTypeRef Ty) {
-  return caml_copy_int64(LLVMSizeOfTypeInBits(TargetData_val(TD), Ty));
+/* Llvm.lltype -> DataLayout.t -> Int64.t */
+CAMLprim value llvm_datalayout_size_in_bits(LLVMTypeRef Ty, value DL) {
+  return caml_copy_int64(LLVMSizeOfTypeInBits(DataLayout_val(DL), Ty));
 }
 
-/* DataLayout.t -> Llvm.lltype -> Int64.t */
-CAMLprim value llvm_store_size(value TD, LLVMTypeRef Ty) {
-  return caml_copy_int64(LLVMStoreSizeOfType(TargetData_val(TD), Ty));
+/* Llvm.lltype -> DataLayout.t -> Int64.t */
+CAMLprim value llvm_datalayout_store_size(LLVMTypeRef Ty, value DL) {
+  return caml_copy_int64(LLVMStoreSizeOfType(DataLayout_val(DL), Ty));
 }
 
-/* DataLayout.t -> Llvm.lltype -> Int64.t */
-CAMLprim value llvm_abi_size(value TD, LLVMTypeRef Ty) {
-  return caml_copy_int64(LLVMABISizeOfType(TargetData_val(TD), Ty));
+/* Llvm.lltype -> DataLayout.t -> Int64.t */
+CAMLprim value llvm_datalayout_abi_size(LLVMTypeRef Ty, value DL) {
+  return caml_copy_int64(LLVMABISizeOfType(DataLayout_val(DL), Ty));
 }
 
-/* DataLayout.t -> Llvm.lltype -> int */
-CAMLprim value llvm_abi_align(value TD, LLVMTypeRef Ty) {
-  return Val_int(LLVMABIAlignmentOfType(TargetData_val(TD), Ty));
+/* Llvm.lltype -> DataLayout.t -> int */
+CAMLprim value llvm_datalayout_abi_align(LLVMTypeRef Ty, value DL) {
+  return Val_int(LLVMABIAlignmentOfType(DataLayout_val(DL), Ty));
 }
 
-/* DataLayout.t -> Llvm.lltype -> int */
-CAMLprim value llvm_stack_align(value TD, LLVMTypeRef Ty) {
-  return Val_int(LLVMCallFrameAlignmentOfType(TargetData_val(TD), Ty));
+/* Llvm.lltype -> DataLayout.t -> int */
+CAMLprim value llvm_datalayout_stack_align(LLVMTypeRef Ty, value DL) {
+  return Val_int(LLVMCallFrameAlignmentOfType(DataLayout_val(DL), Ty));
 }
 
-/* DataLayout.t -> Llvm.lltype -> int */
-CAMLprim value llvm_preferred_align(value TD, LLVMTypeRef Ty) {
-  return Val_int(LLVMPreferredAlignmentOfType(TargetData_val(TD), Ty));
+/* Llvm.lltype -> DataLayout.t -> int */
+CAMLprim value llvm_datalayout_preferred_align(LLVMTypeRef Ty, value DL) {
+  return Val_int(LLVMPreferredAlignmentOfType(DataLayout_val(DL), Ty));
 }
 
-/* DataLayout.t -> Llvm.llvalue -> int */
-CAMLprim value llvm_preferred_align_of_global(value TD,
-                                              LLVMValueRef GlobalVar) {
-  return Val_int(LLVMPreferredAlignmentOfGlobal(TargetData_val(TD), GlobalVar));
+/* Llvm.llvalue -> DataLayout.t -> int */
+CAMLprim value llvm_datalayout_preferred_align_of_global(LLVMValueRef GlobalVar,
+                                                         value DL) {
+  return Val_int(LLVMPreferredAlignmentOfGlobal(DataLayout_val(DL), GlobalVar));
 }
 
-/* DataLayout.t -> Llvm.lltype -> Int64.t -> int */
-CAMLprim value llvm_element_at_offset(value TD, LLVMTypeRef Ty,
-                                      value Offset) {
-  return Val_int(LLVMElementAtOffset(TargetData_val(TD), Ty, Int64_val(Offset)));
+/* Llvm.lltype -> Int64.t -> DataLayout.t -> int */
+CAMLprim value llvm_datalayout_element_at_offset(LLVMTypeRef Ty, value Offset,
+                                                 value DL) {
+  return Val_int(LLVMElementAtOffset(DataLayout_val(DL), Ty,
+                                     Int64_val(Offset)));
 }
 
-/* DataLayout.t -> Llvm.lltype -> int -> Int64.t */
-CAMLprim value llvm_offset_of_element(value TD, LLVMTypeRef Ty,
-                                      value Index) {
-  return caml_copy_int64(LLVMOffsetOfElement(TargetData_val(TD), Ty, Int_val(Index)));
+/* Llvm.lltype -> int -> DataLayout.t -> Int64.t */
+CAMLprim value llvm_datalayout_offset_of_element(LLVMTypeRef Ty, value Index,
+                                                 value DL) {
+  return caml_copy_int64(LLVMOffsetOfElement(DataLayout_val(DL), Ty,
+                                             Int_val(Index)));
 }

@@ -41,10 +41,7 @@ let test_transforms () =
   let fn = define_function "fn" fty m in
   ignore (build_ret_void (builder_at_end context (entry_block fn)));
   
-  let td = DataLayout.create (target_triple m) in
-  
   ignore (PassManager.create_function m
-           ++ DataLayout.add td
            ++ add_verifier
            ++ add_constant_propagation
            ++ add_sccp

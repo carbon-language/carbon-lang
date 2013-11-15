@@ -324,10 +324,18 @@ CAMLprim value llvm_ee_free_machine_code(LLVMValueRef F,
   return Val_unit;
 }
 
-extern value llvm_alloc_target_data(LLVMTargetDataRef TargetData);
+extern value llvm_alloc_data_layout(LLVMTargetDataRef TargetData);
 
-/* ExecutionEngine.t -> Llvm_target.TargetData.t */
-CAMLprim value llvm_ee_get_target_data(LLVMExecutionEngineRef EE) {
-  LLVMTargetDataRef TD = LLVMGetExecutionEngineTargetData(EE);
-  return llvm_alloc_target_data(TD);
+/* ExecutionEngine.t -> Llvm_target.DataLayout.t */
+CAMLprim value llvm_ee_get_data_layout(LLVMExecutionEngineRef EE) {
+  value DataLayout;
+  LLVMTargetDataRef OrigDataLayout;
+  OrigDataLayout = LLVMGetExecutionEngineTargetData(EE);
+
+  char* TargetDataCStr;
+  TargetDataCStr = LLVMCopyStringRepOfTargetData(OrigDataLayout);
+  DataLayout = llvm_alloc_data_layout(LLVMCreateTargetData(TargetDataCStr));
+  LLVMDisposeMessage(TargetDataCStr);
+
+  return DataLayout;
 }
