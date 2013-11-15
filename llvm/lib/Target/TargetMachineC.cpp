@@ -73,9 +73,10 @@ LLVMTargetRef LLVMGetNextTarget(LLVMTargetRef T) {
 }
 
 LLVMTargetRef LLVMGetTargetFromName(const char *Name) {
+  StringRef NameRef = Name;
   for (TargetRegistry::iterator IT = TargetRegistry::begin(),
                                 IE = TargetRegistry::end(); IT != IE; ++IT) {
-    if (IT->getName() == Name)
+    if (IT->getName() == NameRef)
       return wrap(&*IT);
   }
   
