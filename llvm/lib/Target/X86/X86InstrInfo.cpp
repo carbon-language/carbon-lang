@@ -4207,10 +4207,6 @@ static MachineInstr* foldPatchpoint(MachineFunction &MF,
                 !MI->getOperand(0).isImplicit();
   unsigned StartIdx = hasDef ? 1 : 0;
 
-  MachineInstr *NewMI =
-    MF.CreateMachineInstr(TII.get(MI->getOpcode()), MI->getDebugLoc(), true);
-  MachineInstrBuilder MIB(MF, NewMI);
-
   switch (MI->getOpcode()) {
   case TargetOpcode::STACKMAP:
     StartIdx += 2; // Skip ID, nShadowBytes.
@@ -4231,6 +4227,11 @@ static MachineInstr* foldPatchpoint(MachineFunction &MF,
     if (*I < StartIdx)
       return 0;
   }
+
+  MachineInstr *NewMI =
+    MF.CreateMachineInstr(TII.get(MI->getOpcode()), MI->getDebugLoc(), true);
+  MachineInstrBuilder MIB(MF, NewMI);
+
   // No need to fold return, the meta data, and function arguments
   for (unsigned i = 0; i < StartIdx; ++i)
     MIB.addOperand(MI->getOperand(i));
