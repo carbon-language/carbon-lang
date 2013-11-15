@@ -184,87 +184,49 @@ private:
     // create chunk for defined atom ivar array
     int nextIndex = 0;
     uint32_t nextFileOffset = _headerBufferSize;
-    if ( hasDefines ) {
-      NativeChunk& chd = chunks[nextIndex++];
-      chd.signature = NCS_DefinedAtomsV1;
-      chd.fileOffset = nextFileOffset;
-      chd.fileSize = _definedAtomIvars.size()*sizeof(NativeDefinedAtomIvarsV1);
-      chd.elementCount = _definedAtomIvars.size();
-      nextFileOffset = chd.fileOffset + chd.fileSize;
+    if (hasDefines) {
+      fillChunkHeader(chunks[nextIndex++], nextFileOffset, _definedAtomIvars,
+                      NCS_DefinedAtomsV1);
 
       // create chunk for attributes
-      NativeChunk& cha = chunks[nextIndex++];
-      cha.signature = NCS_AttributesArrayV1;
-      cha.fileOffset = nextFileOffset;
-      cha.fileSize = _attributes.size()*sizeof(NativeAtomAttributesV1);
-      cha.elementCount = _attributes.size();
-      nextFileOffset = cha.fileOffset + cha.fileSize;
+      fillChunkHeader(chunks[nextIndex++], nextFileOffset, _attributes,
+                      NCS_AttributesArrayV1);
     }
 
     // create chunk for undefined atom array
-    if ( hasUndefines ) {
-      NativeChunk& chu = chunks[nextIndex++];
-      chu.signature = NCS_UndefinedAtomsV1;
-      chu.fileOffset = nextFileOffset;
-      chu.fileSize = _undefinedAtomIvars.size() *
-                                            sizeof(NativeUndefinedAtomIvarsV1);
-      chu.elementCount = _undefinedAtomIvars.size();
-      nextFileOffset = chu.fileOffset + chu.fileSize;
-    }
+    if (hasUndefines)
+      fillChunkHeader(chunks[nextIndex++], nextFileOffset, _undefinedAtomIvars,
+                      NCS_UndefinedAtomsV1);
 
     // create chunk for shared library atom array
-    if ( hasSharedLibraries ) {
-      NativeChunk& chsl = chunks[nextIndex++];
-      chsl.signature = NCS_SharedLibraryAtomsV1;
-      chsl.fileOffset = nextFileOffset;
-      chsl.fileSize = _sharedLibraryAtomIvars.size() *
-                                        sizeof(NativeSharedLibraryAtomIvarsV1);
-      chsl.elementCount = _sharedLibraryAtomIvars.size();
-      nextFileOffset = chsl.fileOffset + chsl.fileSize;
-    }
+    if (hasSharedLibraries)
+      fillChunkHeader(chunks[nextIndex++], nextFileOffset,
+                      _sharedLibraryAtomIvars, NCS_SharedLibraryAtomsV1);
 
      // create chunk for shared library atom array
-    if ( hasAbsolutes ) {
-      NativeChunk& chabs = chunks[nextIndex++];
-      chabs.signature = NCS_AbsoluteAtomsV1;
-      chabs.fileOffset = nextFileOffset;
-      chabs.fileSize = _absoluteAtomIvars.size() *
-                                        sizeof(NativeAbsoluteAtomIvarsV1);
-      chabs.elementCount = _absoluteAtomIvars.size();
-      nextFileOffset = chabs.fileOffset + chabs.fileSize;
+    if (hasAbsolutes) {
+      fillChunkHeader(chunks[nextIndex++], nextFileOffset, _absoluteAtomIvars,
+                      NCS_AbsoluteAtomsV1);
 
       // create chunk for attributes
-      NativeChunk& cha = chunks[nextIndex++];
-      cha.signature = NCS_AbsoluteAttributesV1;
-      cha.fileOffset = nextFileOffset;
-      cha.fileSize = _absAttributes.size()*sizeof(NativeAtomAttributesV1);
-      cha.elementCount = _absAttributes.size();
-      nextFileOffset = cha.fileOffset + cha.fileSize;
+      fillChunkHeader(chunks[nextIndex++], nextFileOffset, _absAttributes,
+                      NCS_AbsoluteAttributesV1);
     }
 
     // create chunk for symbol strings
     // pad end of string pool to 4-bytes
-    while ( (_stringPool.size() % 4) != 0 )
+    while ((_stringPool.size() % 4) != 0)
       _stringPool.push_back('\0');
-    NativeChunk& chs = chunks[nextIndex++];
-    chs.signature = NCS_Strings;
-    chs.fileOffset = nextFileOffset;
-    chs.fileSize = _stringPool.size();
-    chs.elementCount = _stringPool.size();
-    nextFileOffset = chs.fileOffset + chs.fileSize;
+    fillChunkHeader(chunks[nextIndex++], nextFileOffset, _stringPool,
+                    NCS_Strings);
 
     // create chunk for references
-    if ( hasReferences ) {
-      NativeChunk& chr = chunks[nextIndex++];
-      chr.signature = NCS_ReferencesArrayV1;
-      chr.fileOffset = nextFileOffset;
-      chr.fileSize = _references.size() * sizeof(NativeReferenceIvarsV1);
-      chr.elementCount = _references.size();
-      nextFileOffset = chr.fileOffset + chr.fileSize;
-    }
+    if (hasReferences)
+      fillChunkHeader(chunks[nextIndex++], nextFileOffset, _references,
+                      NCS_ReferencesArrayV1);
 
     // create chunk for target table
-    if ( hasTargetsTable ) {
+    if (hasTargetsTable) {
       NativeChunk& cht = chunks[nextIndex++];
       cht.signature = NCS_TargetsTable;
       cht.fileOffset = nextFileOffset;
@@ -274,7 +236,7 @@ private:
     }
 
     // create chunk for addend table
-    if ( hasAddendTable ) {
+    if (hasAddendTable) {
       NativeChunk& chad = chunks[nextIndex++];
       chad.signature = NCS_AddendsTable;
       chad.fileOffset = nextFileOffset;
@@ -284,16 +246,21 @@ private:
     }
 
     // create chunk for content
-    if ( hasContent ) {
-      NativeChunk& chc = chunks[nextIndex++];
-      chc.signature = NCS_Content;
-      chc.fileOffset = nextFileOffset;
-      chc.fileSize = _contentPool.size();
-      chc.elementCount = _contentPool.size();
-      nextFileOffset = chc.fileOffset + chc.fileSize;
-    }
+    if (hasContent)
+      fillChunkHeader(chunks[nextIndex++], nextFileOffset, _contentPool,
+                      NCS_Content);
 
     _headerBuffer->fileSize = nextFileOffset;
+  }
+
+  template<class T>
+  void fillChunkHeader(NativeChunk &chunk, uint32_t &nextFileOffset,
+                       std::vector<T> data, uint32_t signature) {
+    chunk.signature = signature;
+    chunk.fileOffset = nextFileOffset;
+    chunk.fileSize = data.size() * sizeof(T);
+    chunk.elementCount = data.size();
+    nextFileOffset = chunk.fileOffset + chunk.fileSize;
   }
 
   // scan header to find particular chunk
