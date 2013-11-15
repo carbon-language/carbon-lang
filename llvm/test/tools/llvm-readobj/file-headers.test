@@ -10,6 +10,8 @@ RUN: llvm-readobj -h %p/Inputs/trivial.obj.elf-x86-64 \
 RUN:   | FileCheck %s -check-prefix ELF64
 RUN: llvm-readobj -h %p/Inputs/magic.coff-unknown \
 RUN:   | FileCheck %s -check-prefix COFF-UNKNOWN
+RUN: llvm-readobj -h %p/Inputs/magic.coff-importlib \
+RUN:   | FileCheck %s -check-prefix COFF-IMPORTLIB
 
 COFF32:      File: {{(.*[/\\])?}}trivial.obj.coff-i386
 COFF32-NEXT: Format: COFF-i386
@@ -199,3 +201,18 @@ COFF-UNKNOWN-NEXT:   OptionalHeaderSize: 0
 COFF-UNKNOWN-NEXT:   Characteristics [ (0x0)
 COFF-UNKNOWN-NEXT:   ]
 COFF-UNKNOWN-NEXT: }
+
+COFF-IMPORTLIB:      Format: COFF-<unknown arch>
+COFF-IMPORTLIB-NEXT: Arch: unknown
+COFF-IMPORTLIB-NEXT: AddressSize: 32bit
+COFF-IMPORTLIB-NEXT: ImageFileHeader {
+COFF-IMPORTLIB-NEXT:   Machine: IMAGE_FILE_MACHINE_UNKNOWN (0x0)
+COFF-IMPORTLIB-NEXT:   SectionCount: 65535
+COFF-IMPORTLIB-NEXT:   TimeDateStamp: 1970-09-09 19:52:32 (0x14C0000)
+COFF-IMPORTLIB-NEXT:   PointerToSymbolTable: 0x528542EB
+COFF-IMPORTLIB-NEXT:   SymbolCount: 20
+COFF-IMPORTLIB-NEXT:   OptionalHeaderSize: 0
+COFF-IMPORTLIB-NEXT:   Characteristics [ (0x8)
+COFF-IMPORTLIB-NEXT:     IMAGE_FILE_LOCAL_SYMS_STRIPPED (0x8)
+COFF-IMPORTLIB-NEXT:   ]
+COFF-IMPORTLIB-NEXT: }

@@ -69,6 +69,7 @@ ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
   case sys::fs::file_magic::macho_dsym_companion:
     return createMachOObjectFile(Object);
   case sys::fs::file_magic::coff_object:
+  case sys::fs::file_magic::coff_import_library:
   case sys::fs::file_magic::pecoff_executable:
     return createCOFFObjectFile(Object);
   }

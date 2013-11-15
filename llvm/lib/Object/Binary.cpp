@@ -91,6 +91,7 @@ error_code object::createBinary(MemoryBuffer *Source,
       return object_error::success;
     }
     case sys::fs::file_magic::coff_object:
+    case sys::fs::file_magic::coff_import_library:
     case sys::fs::file_magic::pecoff_executable: {
       OwningPtr<Binary> ret(
           ObjectFile::createCOFFObjectFile(scopedSource.take()));
