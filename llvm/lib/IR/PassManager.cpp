@@ -146,10 +146,10 @@ void AnalysisManager::invalidateImpl(void *PassID, Function *F) {
   assert(F->getParent() == M &&
          "Invalidating a pass over a function from another module!");
 
-  FunctionAnalysisResultMapT::iterator RI = FunctionAnalysisResults.find(std::make_pair(PassID, F));
+  FunctionAnalysisResultMapT::iterator RI =
+      FunctionAnalysisResults.find(std::make_pair(PassID, F));
   if (RI == FunctionAnalysisResults.end())
     return;
 
   FunctionAnalysisResultLists[F].erase(RI->second);
 }
-
