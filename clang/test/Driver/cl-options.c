@@ -102,9 +102,25 @@
 
 // Ignored options. Check that we don't get "unused during compilation" errors.
 // (/Zs is for syntax-only, /WX is for -Werror)
-// RUN: %clang_cl /Zs /WX /analyze- /errorReport:foo /nologo /Ob1 /Ob2 -- %s
-// RUN: %clang_cl /Zs /WX /Zc:forScope /Zc:wchar_t /w12345 /wd1234 /RTC1 /GS- -- %s
-// RUN: %clang_cl /Zs /WX /sdl /sdl- -- %s
+// RUN: %clang_cl /Zs /WX \
+// RUN:    /analyze- \
+// RUN:    /errorReport:foo \
+// RUN:    /FS \
+// RUN:    /GF \
+// RUN:    /GS- \
+// RUN:    /kernel- \
+// RUN:    /nologo \
+// RUN:    /Ob1 \
+// RUN:    /Ob2 \
+// RUN:    /RTC1 \
+// RUN:    /sdl \
+// RUN:    /sdl- \
+// RUN:    /vmg \
+// RUN:    /w12345 \
+// RUN:    /wd1234 \
+// RUN:    /Zc:forScope \
+// RUN:    /Zc:wchar_t \
+// RUN:    -- %s
 
 // Ignored options and compile-only options are ignored for link jobs.
 // RUN: touch %t.obj
@@ -117,17 +133,98 @@
 // RUN: %clang_cl /Abracadabra -Qunused-arguments -### -- %s 2>&1 | FileCheck -check-prefix=UNUSED %s
 // UNUSED-NOT: warning
 
-
 // Unsupported but parsed options. Check that we don't error on them.
 // (/Zs is for syntax-only)
-// RUN: %clang_cl /Zs /arch:sse2 /Ycstdafx.h /Yustdafx.h /FpDebug\main.pch -- %s 2>&1
-// RUN: %clang_cl /Zs /EHsc /Fdfoo /fp:precise /Gd /GL /GL- -- %s 2>&1
-// RUN: %clang_cl /Zs /Gm /Gm- /GS /Gy /Gy- /GT /GZ -- %s 2>&1
-// RUN: %clang_cl /Zs /ofoo.obj /o foo.obj -- %s 2>&1
-// RUN: %clang_cl /Zs /wfoo /Zc:wchar_t- -- %s 2>&1
-// RUN: %clang_cl /Zs /ZI /Zi /MP -- %s 2>&1
-// RUN: %clang_cl /Zs /FA /FAc /FAs /FAu /Fafilename -- %s 2>&1
-
+// RUN: %clang_cl /Zs \
+// RUN:     /AIfoo \
+// RUN:     /arch:sse2 \
+// RUN:     /clr:pure \
+// RUN:     /docname \
+// RUN:     /E \
+// RUN:     /EHsc \
+// RUN:     /EP \
+// RUN:     /F \
+// RUN:     /FA \
+// RUN:     /FAc \
+// RUN:     /Fafilename \
+// RUN:     /FAs \
+// RUN:     /FAu \
+// RUN:     /favor:blend \
+// RUN:     /FC \
+// RUN:     /Fdfoo \
+// RUN:     /Fifoo \
+// RUN:     /Fmfoo \
+// RUN:     /FpDebug\main.pch \
+// RUN:     /fp:precise \
+// RUN:     /Frfoo \
+// RUN:     /FRfoo \
+// RUN:     /FU foo \
+// RUN:     /Fx \
+// RUN:     /G1 \
+// RUN:     /G2 \
+// RUN:     /GA \
+// RUN:     /Gd \
+// RUN:     /Ge \
+// RUN:     /Gh \
+// RUN:     /GH \
+// RUN:     /GL \
+// RUN:     /GL- \
+// RUN:     /Gm \
+// RUN:     /Gm- \
+// RUN:     /Gr \
+// RUN:     /GS \
+// RUN:     /Gs1000 \
+// RUN:     /GT \
+// RUN:     /GX \
+// RUN:     /Gy \
+// RUN:     /Gy- \
+// RUN:     /Gz \
+// RUN:     /GZ \
+// RUN:     /H \
+// RUN:     /homeparams \
+// RUN:     /hotpatch \
+// RUN:     /kernel \
+// RUN:     /LN \
+// RUN:     /MP \
+// RUN:     /o foo.obj \
+// RUN:     /ofoo.obj \
+// RUN:     /openmp \
+// RUN:     /Qfast_transcendentals \
+// RUN:     /QIfist \
+// RUN:     /Qimprecise_fwaits \
+// RUN:     /Qpar \
+// RUN:     /Qvec-report:2 \
+// RUN:     /u \
+// RUN:     /V \
+// RUN:     /vd2 \
+// RUN:     /vmb \
+// RUN:     /vmm \
+// RUN:     /vms \
+// RUN:     /vmv \
+// RUN:     /volatile \
+// RUN:     /wfoo \
+// RUN:     /WL \
+// RUN:     /Wp64 \
+// RUN:     /X \
+// RUN:     /Y- \
+// RUN:     /Yc \
+// RUN:     /Ycstdafx.h \
+// RUN:     /Yd \
+// RUN:     /Yl- \
+// RUN:     /Ylfoo \
+// RUN:     /Yustdafx.h \
+// RUN:     /Z7 \
+// RUN:     /Za \
+// RUN:     /Zc:auto \
+// RUN:     /Zc:wchar_t- \
+// RUN:     /Ze \
+// RUN:     /Zg \
+// RUN:     /Zi \
+// RUN:     /ZI \
+// RUN:     /Zl \
+// RUN:     /Zp \
+// RUN:     /ZW:nostdlib \
+// RUN:     -- %s 2>&1
 
 // We support -Xclang for forwarding options to cc1.
 // RUN: %clang_cl -Xclang hellocc1 -### -- %s 2>&1 | FileCheck -check-prefix=Xclang %s

@@ -52,6 +52,8 @@ class CLRemainingArgs<string name> : Option<["/", "-"], name,
 // (We don't put any of these in cl_compile_Group as the options they alias are
 // already in the right group.)
 
+def _SLASH_C : CLFlag<"C">, HelpText<"Don't discard comments when preprocessing">,
+  Alias<C>;
 def _SLASH_c : CLFlag<"c">, HelpText<"Compile only">, Alias<c>;
 def _SLASH_D : CLJoinedOrSeparate<"D">, HelpText<"Define macro">,
   MetaVarName<"<macro[=value]>">, Alias<D>;
@@ -61,6 +63,7 @@ def _SLASH_GF_ : CLFlag<"GF-">, HelpText<"Disable string pooling">,
   Alias<fwritable_strings>;
 def _SLASH_help : CLFlag<"help">, Alias<help>,
   HelpText<"Display available options">;
+def _SLASH_HELP : CLFlag<"HELP">, Alias<help>;
 def _SLASH_I : CLJoinedOrSeparate<"I">,
   HelpText<"Add directory to include search path">, MetaVarName<"<dir>">,
   Alias<I>;
@@ -154,6 +157,7 @@ def _SLASH_errorReport : CLIgnoredJoined<"errorReport">;
 def _SLASH_FS : CLIgnoredFlag<"FS">, HelpText<"Force synchronous PDB writes">;
 def _SLASH_GF : CLIgnoredFlag<"GF">;
 def _SLASH_GS_ : CLIgnoredFlag<"GS-">;
+def _SLASH_kernel_ : CLIgnoredFlag<"kernel-">;
 def _SLASH_nologo : CLIgnoredFlag<"nologo">;
 def _SLASH_Ob1 : CLIgnoredFlag<"Ob1">;
 def _SLASH_Ob2 : CLIgnoredFlag<"Ob2">;
@@ -169,32 +173,83 @@ def _SLASH_Zm : CLIgnoredJoined<"Zm">;
 
 // Unsupported:
 
+def _SLASH_AI : CLJoined<"AI">;
 def _SLASH_arch : CLJoined<"arch:">;
 def _SLASH_bigobj : CLFlag<"bigobj">;
+def _SLASH_clr : CLJoined<"clr">;
+def _SLASH_doc : CLJoined<"doc">;
+def _SLASH_E : CLFlag<"E">;
 def _SLASH_EH : CLJoined<"EH">;
+def _SLASH_EP : CLFlag<"EP">;
 def _SLASH_FA_joined : CLJoined<"FA">;
+def _SLASH_favor : CLJoined<"favor">;
+def _SLASH_FC : CLFlag<"FC">;
+def _SLASH_F : CLFlag<"F">;
 def _SLASH_Fd : CLJoined<"Fd">;
-def _SLASH_Fp : CLJoined<"Fp">;
+def _SLASH_Fi : CLJoined<"Fi">;
+def _SLASH_Fm : CLJoined<"Fm">;
 def _SLASH_fp : CLJoined<"fp">;
+def _SLASH_Fp : CLJoined<"Fp">;
+def _SLASH_Fr : CLJoined<"Fr">;
+def _SLASH_FR : CLJoined<"FR">;
+def _SLASH_FU : CLJoinedOrSeparate<"FU">;
+def _SLASH_Fx : CLFlag<"Fx">;
+def _SLASH_G1 : CLFlag<"G1">;
+def _SLASH_G2 : CLFlag<"G2">;
+def _SLASH_GA : CLFlag<"GA">;
 def _SLASH_Gd : CLFlag<"Gd">;
+def _SLASH_Ge : CLFlag<"Ge">;
+def _SLASH_Gh : CLFlag<"Gh">;
+def _SLASH_GH : CLFlag<"GH">;
 def _SLASH_GL : CLFlag<"GL">;
 def _SLASH_GL_ : CLFlag<"GL-">;
 def _SLASH_Gm : CLFlag<"Gm">;
 def _SLASH_Gm_ : CLFlag<"Gm-">;
+def _SLASH_Gr : CLFlag<"Gr">;
 def _SLASH_GS : CLFlag<"GS">;
+def _SLASH_Gs : CLJoined<"Gs">;
 def _SLASH_GT : CLFlag<"GT">;
+def _SLASH_GX : CLFlag<"GX">;
 def _SLASH_Gy : CLFlag<"Gy">;
 def _SLASH_Gy_ : CLFlag<"Gy-">;
+def _SLASH_Gz : CLFlag<"Gz">;
 def _SLASH_GZ : CLFlag<"GZ">;
+def _SLASH_H : CLFlag<"H">;
+def _SLASH_homeparams : CLFlag<"homeparams">;
+def _SLASH_hotpatch : CLFlag<"hotpatch">;
+def _SLASH_kernel : CLFlag<"kernel">;
+def _SLASH_LN : CLFlag<"LN">;
 def _SLASH_MP : CLJoined<"MP">;
 def _SLASH_o : CLJoinedOrSeparate<"o">;
+def _SLASH_openmp : CLFlag<"openmp">;
+def _SLASH_Qfast_transcendentals : CLFlag<"Qfast_transcendentals">;
+def _SLASH_QIfist : CLFlag<"QIfist">;
+def _SLASH_Qimprecise_fwaits : CLFlag<"Qimprecise_fwaits">;
+def _SLASH_Qpar : CLFlag<"Qpar">;
+def _SLASH_Qvec_report : CLJoined<"Qvec-report">;
+def _SLASH_u : CLFlag<"u">;
+def _SLASH_V : CLFlag<"V">;
+def _SLASH_vd : CLJoined<"vd">;
 def _SLASH_vmb : CLFlag<"vmb">;
 def _SLASH_vmm : CLFlag<"vmm">;
 def _SLASH_vms : CLFlag<"vms">;
 def _SLASH_vmv : CLFlag<"vmv">;
+def _SLASH_volatile : CLFlag<"volatile">;
+def _SLASH_WL : CLFlag<"WL">;
+def _SLASH_Wp64 : CLFlag<"Wp64">;
+def _SLASH_X : CLFlag<"X">;
 def _SLASH_Yc : CLJoined<"Yc">;
+def _SLASH_Y_ : CLFlag<"Y-">;
+def _SLASH_Yd : CLFlag<"Yd">;
+def _SLASH_Yl : CLJoined<"Yl">;
 def _SLASH_Yu : CLJoined<"Yu">;
+def _SLASH_Z7 : CLFlag<"Z7">;
 def _SLASH_Za : CLFlag<"Za">;
 def _SLASH_Zc : CLJoined<"Zc:">;
-def _SLASH_ZI : CLFlag<"ZI">;
+def _SLASH_Ze : CLFlag<"Ze">;
+def _SLASH_Zg : CLFlag<"Zg">;
 def _SLASH_Zi : CLFlag<"Zi">;
+def _SLASH_ZI : CLFlag<"ZI">;
+def _SLASH_Zl : CLFlag<"Zl">;
+def _SLASH_Zp : CLFlag<"Zp">;
+def _SLASH_ZW : CLJoined<"ZW">;
