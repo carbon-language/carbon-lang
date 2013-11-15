@@ -5601,25 +5601,25 @@ float64_t test_vrsqrtsd_f64(float64_t a, float64_t b) {
 float32_t test_vcvts_f32_s32(int32_t a) {
 // CHECK: test_vcvts_f32_s32
 // CHECK: scvtf {{s[0-9]+}}, {{s[0-9]+}}
-  return (float32_t)vcvts_f32_s32(a);
+  return vcvts_f32_s32(a);
 }
 
 float64_t test_vcvtd_f64_s64(int64_t a) {
 // CHECK: test_vcvtd_f64_s64
 // CHECK: scvtf {{d[0-9]+}}, {{d[0-9]+}}
-  return (float64_t)vcvtd_f64_s64(a);
+  return vcvtd_f64_s64(a);
 }
 
 float32_t test_vcvts_f32_u32(uint32_t a) {
 // CHECK: test_vcvts_f32_u32
 // CHECK: ucvtf {{s[0-9]+}}, {{s[0-9]+}}
-  return (float32_t)vcvts_f32_u32(a);
+  return vcvts_f32_u32(a);
 }
 
 float64_t test_vcvtd_f64_u64(uint64_t a) {
 // CHECK: test_vcvtd_f64_u64
 // CHECK: ucvtf {{d[0-9]+}}, {{d[0-9]+}}
-  return (float64_t)vcvtd_f64_u64(a);
+  return vcvtd_f64_u64(a);
 }
 
 float32_t test_vrecpes_f32(float32_t a) {
@@ -7852,25 +7852,25 @@ int32_t test_vqrshrund_n_s64(int64_t a) {
 float32_t test_vcvts_n_f32_s32(int32_t a) {
 // CHECK: test_vcvts_n_f32_s32
 // CHECK: scvtf {{s[0-9]+}}, {{s[0-9]+}}, #1
-  return (float32_t)vcvts_n_f32_s32(a, 1);
+  return vcvts_n_f32_s32(a, 1);
 }
 
 float64_t test_vcvtd_n_f64_s64(int64_t a) {
 // CHECK: test_vcvtd_n_f64_s64
 // CHECK: scvtf {{d[0-9]+}}, {{d[0-9]+}}, #1
-  return (float64_t)vcvtd_n_f64_s64(a, 1);
+  return vcvtd_n_f64_s64(a, 1);
 }
 
 float32_t test_vcvts_n_f32_u32(uint32_t a) {
 // CHECK: test_vcvts_n_f32_u32
 // CHECK: ucvtf {{s[0-9]+}}, {{s[0-9]+}}, #32
-  return (float32_t)vcvts_n_f32_u32(a, 32);
+  return vcvts_n_f32_u32(a, 32);
 }
 
 float64_t test_vcvtd_n_f64_u64(uint64_t a) {
 // CHECK: test_vcvtd_n_f64_u64
 // CHECK: ucvtf {{d[0-9]+}}, {{d[0-9]+}}, #64
-  return (float64_t)vcvtd_n_f64_u64(a, 64);
+  return vcvtd_n_f64_u64(a, 64);
 }
 
 int32_t test_vcvts_n_s32_f32(float32_t a) {
