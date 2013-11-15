@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
     errs() << InputGCNO << ": " << ec.message() << "\n";
     return 1;
   }
-  GCOVBuffer GCNO_GB(GCNO_Buff.take());
+  GCOVBuffer GCNO_GB(GCNO_Buff.get());
   if (!GF.read(GCNO_GB)) {
     errs() << "Invalid .gcno File!\n";
     return 1;
@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
       errs() << InputGCDA << ": " << ec.message() << "\n";
       return 1;
     }
-    GCOVBuffer GCDA_GB(GCDA_Buff.take());
+    GCOVBuffer GCDA_GB(GCDA_Buff.get());
     if (!GF.read(GCDA_GB)) {
       errs() << "Invalid .gcda File!\n";
       return 1;

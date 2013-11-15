@@ -292,7 +292,7 @@ void FileInfo::print(raw_fd_ostream &OS, StringRef gcnoFile,
       errs() << Filename << ": " << ec.message() << "\n";
       return;
     }
-    StringRef AllLines = Buff.take()->getBuffer();
+    StringRef AllLines = Buff->getBuffer();
     uint32_t i = 0;
     while (!AllLines.empty()) {
       if (L.find(i) != L.end()) {
