@@ -139,11 +139,12 @@ set( CLANG_USED_LIBS
   clangSerialization
   )  
   
+set(LLDB_SYSTEM_LIBS)
 if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
-  set( LLDB_SYSTEM_LIBS
-    edit
-    python2.7
-    )
+  list(APPEND LLDB_SYSTEM_LIBS edit)
+endif()
+if (NOT LLDB_DISABLE_PYTHON)
+  list(APPEND LLDB_SYSTEM_LIBS ${PYTHON_LIBRARIES})
 endif()
 
 set( LLVM_LINK_COMPONENTS
