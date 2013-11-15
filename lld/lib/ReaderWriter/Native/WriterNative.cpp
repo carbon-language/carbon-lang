@@ -68,71 +68,37 @@ private:
 
   // write the lld::File in native format to the specified stream
   void write(raw_ostream &out) {
-    assert( out.tell() == 0 );
+    assert(out.tell() == 0);
     out.write((char*)_headerBuffer, _headerBufferSize);
 
-    if (!_definedAtomIvars.empty()) {
-      assert( out.tell() == findChunk(NCS_DefinedAtomsV1).fileOffset );
-      out.write((char*)&_definedAtomIvars[0],
-                _definedAtomIvars.size()*sizeof(NativeDefinedAtomIvarsV1));
-    }
+    writeChunk(out, _definedAtomIvars, NCS_DefinedAtomsV1);
+    writeChunk(out, _attributes, NCS_AttributesArrayV1);
+    writeChunk(out, _undefinedAtomIvars, NCS_UndefinedAtomsV1);
+    writeChunk(out, _sharedLibraryAtomIvars, NCS_SharedLibraryAtomsV1);
+    writeChunk(out, _absoluteAtomIvars, NCS_AbsoluteAtomsV1);
+    writeChunk(out, _absAttributes, NCS_AbsoluteAttributesV1);
+    writeChunk(out, _stringPool, NCS_Strings);
+    writeChunk(out, _references, NCS_ReferencesArrayV1);
 
-    if (!_attributes.empty()) {
-      assert( out.tell() == findChunk(NCS_AttributesArrayV1).fileOffset );
-      out.write((char*)&_attributes[0],
-                _attributes.size()*sizeof(NativeAtomAttributesV1));
-    }
-
-    if ( !_undefinedAtomIvars.empty() ) {
-      assert( out.tell() == findChunk(NCS_UndefinedAtomsV1).fileOffset );
-      out.write((char*)&_undefinedAtomIvars[0],
-              _undefinedAtomIvars.size()*sizeof(NativeUndefinedAtomIvarsV1));
-    }
-
-     if ( !_sharedLibraryAtomIvars.empty() ) {
-      assert( out.tell() == findChunk(NCS_SharedLibraryAtomsV1).fileOffset );
-      out.write((char*)&_sharedLibraryAtomIvars[0],
-              _sharedLibraryAtomIvars.size()
-              * sizeof(NativeSharedLibraryAtomIvarsV1));
-    }
-
-    if ( !_absoluteAtomIvars.empty() ) {
-      assert( out.tell() == findChunk(NCS_AbsoluteAtomsV1).fileOffset );
-      out.write((char*)&_absoluteAtomIvars[0],
-              _absoluteAtomIvars.size()
-              * sizeof(NativeAbsoluteAtomIvarsV1));
-    }
-    if (!_absAttributes.empty()) {
-      assert( out.tell() == findChunk(NCS_AbsoluteAttributesV1).fileOffset );
-      out.write((char*)&_absAttributes[0],
-                _absAttributes.size()*sizeof(NativeAtomAttributesV1));
-    }
-
-    if (!_stringPool.empty()) {
-      assert( out.tell() == findChunk(NCS_Strings).fileOffset );
-      out.write(&_stringPool[0], _stringPool.size());
-    }
-
-    if ( !_references.empty() ) {
-      assert( out.tell() == findChunk(NCS_ReferencesArrayV1).fileOffset );
-      out.write((char*)&_references[0],
-              _references.size()*sizeof(NativeReferenceIvarsV1));
-    }
-
-    if ( !_targetsTableIndex.empty() ) {
-      assert( out.tell() == findChunk(NCS_TargetsTable).fileOffset );
+    if (!_targetsTableIndex.empty()) {
+      assert(out.tell() == findChunk(NCS_TargetsTable).fileOffset);
       writeTargetTable(out);
     }
 
-    if ( !_addendsTableIndex.empty() ) {
-      assert( out.tell() == findChunk(NCS_AddendsTable).fileOffset );
+    if (!_addendsTableIndex.empty()) {
+      assert(out.tell() == findChunk(NCS_AddendsTable).fileOffset);
       writeAddendTable(out);
     }
 
-    if (!_contentPool.empty()) {
-      assert( out.tell() == findChunk(NCS_Content).fileOffset );
-      out.write((char*)&_contentPool[0], _contentPool.size());
-    }
+    writeChunk(out, _contentPool, NCS_Content);
+  }
+
+  template<class T>
+  void writeChunk(raw_ostream &out, std::vector<T> &vector, uint32_t signature) {
+    if (vector.empty())
+      return;
+    assert(out.tell() == findChunk(signature).fileOffset);
+    out.write((char*)&vector[0], vector.size() * sizeof(T));
   }
 
   void addIVarsForDefinedAtom(const DefinedAtom& atom) {
