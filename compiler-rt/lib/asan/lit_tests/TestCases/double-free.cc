@@ -14,10 +14,12 @@ int main(int argc, char **argv) {
   free(x);
   free(x + argc - 1);  // BOOM
   // CHECK: AddressSanitizer: attempting double-free{{.*}}in thread T0
-  // CHECK: double-free.cc:[[@LINE-2]]
+  // CHECK: #0 0x{{.*}} in {{.*}}free
+  // CHECK: #1 0x{{.*}} in main {{.*}}double-free.cc:[[@LINE-3]]
   // CHECK: freed by thread T0 here:
-  // MALLOC-CTX: double-free.cc:[[@LINE-5]]
+  // MALLOC-CTX: #0 0x{{.*}} in {{.*}}free
+  // MALLOC-CTX: #1 0x{{.*}} in main {{.*}}double-free.cc:[[@LINE-7]]
   // CHECK: allocated by thread T0 here:
-  // MALLOC-CTX: double-free.cc:[[@LINE-10]]
+  // MALLOC-CTX: double-free.cc:[[@LINE-12]]
   return res;
 }

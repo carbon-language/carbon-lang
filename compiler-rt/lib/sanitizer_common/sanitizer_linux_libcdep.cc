@@ -161,7 +161,7 @@ void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
   UnwindTraceArg arg = {this, Min(max_depth + 1, kStackTraceMax)};
   _Unwind_Backtrace(Unwind_Trace, &arg);
   // We need to pop a few frames so that pc is on top.
-  uptr to_pop = LocatePcInTrace(pc, 6);
+  uptr to_pop = LocatePcInTrace(pc);
   // trace[0] belongs to the current function so we always pop it.
   if (to_pop == 0)
     to_pop = 1;
