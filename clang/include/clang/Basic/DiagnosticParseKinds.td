@@ -465,9 +465,9 @@ def err_expected_member_or_base_name : Error<
 def err_expected_lbrace_after_base_specifiers : Error<
   "expected '{' after base class list">;
 def err_missing_end_of_definition : Error<
-  "missing '}' at end of definition of %0">;
+  "missing '}' at end of definition of %q0">;
 def note_missing_end_of_definition_before : Note<
-  "still within definition of %0 here">;
+  "still within definition of %q0 here">;
 def ext_ellipsis_exception_spec : Extension<
   "exception specification of '...' is a Microsoft extension">,
   InGroup<Microsoft>;

@@ -2627,7 +2627,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 
       // If we see a namespace here, a close brace was missing somewhere.
       if (Tok.is(tok::kw_namespace)) {
-        DiagnoseUnexpectedNamespace(cast<DeclContext>(TagDecl));
+        DiagnoseUnexpectedNamespace(cast<NamedDecl>(TagDecl));
         break;
       }
 
@@ -2722,15 +2722,15 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   ClassScope.Exit();
 }
 
-void Parser::DiagnoseUnexpectedNamespace(DeclContext *Ctx) {
+void Parser::DiagnoseUnexpectedNamespace(NamedDecl *D) {
   assert(Tok.is(tok::kw_namespace));
 
   // FIXME: Suggest where the close brace should have gone by looking
   // at indentation changes within the definition body.
-  Diag(cast<Decl>(Ctx)->getLocation(),
-       diag::err_missing_end_of_definition) << Ctx;
+  Diag(D->getLocation(),
+       diag::err_missing_end_of_definition) << D;
   Diag(Tok.getLocation(),
-       diag::note_missing_end_of_definition_before) << Ctx;
+       diag::note_missing_end_of_definition_before) << D;
 
   // Push '};' onto the token stream to recover.
   PP.EnterToken(Tok);

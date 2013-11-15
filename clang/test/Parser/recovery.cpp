@@ -44,6 +44,11 @@ namespace MissingBrace {
 
   int k1 = S().h(); // expected-error {{no member named 'h' in 'MissingBrace::S'}}
   int k2 = S().f() + N::g();
+
+  template<typename T> struct PR17949 { // expected-error {{missing '}' at end of definition of 'MissingBrace::PR17949'}}
+
+  namespace X { // expected-note {{still within definition of 'MissingBrace::PR17949' here}}
+  }
 }
 
 namespace N {
