@@ -142,7 +142,7 @@ OutputCMXA := $(LibraryCMXA:$(ObjDir)/%.cmxa=$(OcamlDir)/%.cmxa)
 endif
 
 ifdef OCAMLSTUBS
-SharedLib := $(OcamlDir)/dll$(LIBRARYNAME).$(SHLIBEXT)
+SharedLib := $(OcamlDir)/dll$(LIBRARYNAME)$(SHLIBEXT)
 endif
 
 ifdef TOOLNAME
@@ -163,7 +163,7 @@ DestCMXA := $(PROJ_libocamldir)/$(LIBRARYNAME).cmxa
 endif
 
 ifdef OCAMLSTUBS
-DestSharedLib := $(PROJ_libocamldir)/dll$(LIBRARYNAME).$(SHLIBEXT)
+DestSharedLib := $(PROJ_libocamldir)/dll$(LIBRARYNAME)$(SHLIBEXT)
 endif
 
 ##===- Dependencies -------------------------------------------------------===##
