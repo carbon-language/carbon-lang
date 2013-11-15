@@ -6737,12 +6737,16 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         Diag(D.getDeclSpec().getVirtualSpecLoc(), diag::err_auto_fn_virtual);
     }
 
-    if (getLangOpts().CPlusPlus1y && NewFD->isDependentContext() &&
+    if (getLangOpts().CPlusPlus1y &&
+        (NewFD->isDependentContext() ||
+         (isFriend && CurContext->isDependentContext())) &&
         NewFD->getResultType()->isUndeducedType()) {
       // If the function template is referenced directly (for instance, as a
       // member of the current instantiation), pretend it has a dependent type.
       // This is not really justified by the standard, but is the only sane
       // thing to do.
+      // FIXME: For a friend function, we have not marked the function as being
+      // a friend yet, so 'isDependentContext' on the FD doesn't work.
       const FunctionProtoType *FPT =
           NewFD->getType()->castAs<FunctionProtoType>();
       QualType Result = SubstAutoType(FPT->getResultType(),

@@ -457,3 +457,22 @@ void bar() { puts("bar"); }
 int main() { return foo(0); }
 
 }
+
+namespace OverloadedOperators {
+  template<typename T> struct A {
+    auto operator()() { return T{}; }
+    auto operator[](int) { return T{}; }
+    auto operator+(int) { return T{}; }
+    auto operator+() { return T{}; }
+    friend auto operator-(A) { return T{}; }
+    friend auto operator-(A, A) { return T{}; }
+  };
+  void f(A<int> a) {
+    int b = a();
+    int c = a[0];
+    int d = a + 0;
+    int e = +a;
+    int f = -a;
+    int g = a - a;
+  }
+}
