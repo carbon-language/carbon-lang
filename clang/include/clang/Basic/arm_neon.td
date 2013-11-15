@@ -931,6 +931,7 @@ def VQTBX4_A64 : WInst<"vqtbx4", "ddDt", "UccPcQUcQcQPc">;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Scalar Intrinsics
 // Scalar Arithmetic
 
 // Scalar Addition
