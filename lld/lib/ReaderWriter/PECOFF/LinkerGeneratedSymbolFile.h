@@ -21,7 +21,7 @@ namespace coff {
 class LinkerGeneratedSymbolFile : public SimpleFile {
 public:
   LinkerGeneratedSymbolFile(const PECOFFLinkingContext &ctx)
-      : SimpleFile(ctx, "Member of the Linker Internal File"),
+      : SimpleFile(ctx, "<linker-internal-file>"),
         _imageBaseAtom(*this, ctx.decorateSymbol("__ImageBase"),
                        Atom::scopeGlobal, ctx.getBaseAddress()) {
     addAtom(_imageBaseAtom);
