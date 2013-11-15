@@ -33,6 +33,7 @@ def version : P<"version", "Specify a version number in the PE header">;
 def merge   : P<"merge", "Combine sections">;
 def section : P<"section", "Specify section attributes">;
 def subsystem : P<"subsystem", "Specify subsystem">;
+def stub    : P<"stub", "Specify DOS stub file">;
 
 def manifest : F<"manifest">;
 def manifest_colon : P<"manifest", "Create manifest file">;

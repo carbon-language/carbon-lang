@@ -230,9 +230,8 @@ public:
     return it == _sectionAttributeMask.end() ? 0 : it->second;
   }
 
-  const std::vector<uint8_t> &getDosStub() const {
-    return _dosStub;
-  }
+  void setDosStub(std::vector<uint8_t> &data) { _dosStub = std::move(data); }
+  const std::vector<uint8_t> &getDosStub() const { return _dosStub; }
 
   StringRef allocateString(StringRef ref) const {
     char *x = _allocator.Allocate<char>(ref.size() + 1);

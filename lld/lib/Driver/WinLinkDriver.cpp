@@ -203,6 +203,14 @@ bool parseSection(StringRef option, std::string &section,
   return true;
 }
 
+bool readFile(StringRef path, std::vector<uint8_t> &result) {
+  OwningPtr<MemoryBuffer> buf;
+  if (MemoryBuffer::getFile(path, buf))
+    return false;
+  result = std::vector<uint8_t>(buf->getBufferStart(), buf->getBufferEnd());
+  return true;
+}
+
 // Parse /manifest:EMBED[,ID=#]|NO.
 bool parseManifest(StringRef option, bool &enable, bool &embed, int &id) {
   if (option.equals_lower("no")) {
@@ -827,6 +835,17 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
     case OPT_swaprun_net:
       ctx.setSwapRunFromNet(true);
       break;
+
+    case OPT_stub: {
+      std::vector<uint8_t> contents;
+      if (!readFile(inputArg->getValue(), contents)) {
+        diagnostics << "Failed to read DOS stub file "
+                    << inputArg->getValue() << "\n";
+        return false;
+      }
+      ctx.setDosStub(contents);
+      break;
+    }
 
     case OPT_incl:
       ctx.addInitialUndefinedSymbol(ctx.allocateString(inputArg->getValue()));
