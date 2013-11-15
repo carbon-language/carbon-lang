@@ -25,12 +25,12 @@ namespace {
 class IRBuilderTest : public testing::Test {
 protected:
   virtual void SetUp() {
-    M.reset(new Module("MyModule", getGlobalContext()));
-    FunctionType *FTy = FunctionType::get(Type::getVoidTy(getGlobalContext()),
+    M.reset(new Module("MyModule", Ctx));
+    FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx),
                                           /*isVarArg=*/false);
     F = Function::Create(FTy, Function::ExternalLinkage, "", M.get());
-    BB = BasicBlock::Create(getGlobalContext(), "", F);
-    GV = new GlobalVariable(*M, Type::getFloatTy(getGlobalContext()), true,
+    BB = BasicBlock::Create(Ctx, "", F);
+    GV = new GlobalVariable(*M, Type::getFloatTy(Ctx), true,
                             GlobalValue::ExternalLinkage, 0);
   }
 
@@ -39,6 +39,7 @@ protected:
     M.reset();
   }
 
+  LLVMContext Ctx;
   OwningPtr<Module> M;
   Function *F;
   BasicBlock *BB;
@@ -78,8 +79,8 @@ TEST_F(IRBuilderTest, Lifetime) {
 
 TEST_F(IRBuilderTest, CreateCondBr) {
   IRBuilder<> Builder(BB);
-  BasicBlock *TBB = BasicBlock::Create(getGlobalContext(), "", F);
-  BasicBlock *FBB = BasicBlock::Create(getGlobalContext(), "", F);
+  BasicBlock *TBB = BasicBlock::Create(Ctx, "", F);
+  BasicBlock *FBB = BasicBlock::Create(Ctx, "", F);
 
   BranchInst *BI = Builder.CreateCondBr(Builder.getTrue(), TBB, FBB);
   TerminatorInst *TI = BB->getTerminator();
@@ -89,7 +90,7 @@ TEST_F(IRBuilderTest, CreateCondBr) {
   EXPECT_EQ(FBB, TI->getSuccessor(1));
 
   BI->eraseFromParent();
-  MDNode *Weights = MDBuilder(getGlobalContext()).createBranchWeights(42, 13);
+  MDNode *Weights = MDBuilder(Ctx).createBranchWeights(42, 13);
   BI = Builder.CreateCondBr(Builder.getTrue(), TBB, FBB, Weights);
   TI = BB->getTerminator();
   EXPECT_EQ(BI, TI);
@@ -109,12 +110,12 @@ TEST_F(IRBuilderTest, LandingPadName) {
 TEST_F(IRBuilderTest, GetIntTy) {
   IRBuilder<> Builder(BB);
   IntegerType *Ty1 = Builder.getInt1Ty();
-  EXPECT_EQ(Ty1, IntegerType::get(getGlobalContext(), 1));
+  EXPECT_EQ(Ty1, IntegerType::get(Ctx, 1));
 
   DataLayout* DL = new DataLayout(M.get());
   IntegerType *IntPtrTy = Builder.getIntPtrTy(DL);
   unsigned IntPtrBitSize =  DL->getPointerSizeInBits(0);
-  EXPECT_EQ(IntPtrTy, IntegerType::get(getGlobalContext(), IntPtrBitSize));
+  EXPECT_EQ(IntPtrTy, IntegerType::get(Ctx, IntPtrBitSize));
   delete DL;
 }
 
