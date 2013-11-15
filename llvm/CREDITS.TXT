@@ -366,7 +366,7 @@ I: arosenberg
 D: ARM calling conventions rewrite, hard float support
 
 N: Chad Rosier
-E: mcrosier@apple.com
+E: mcrosier@codeaurora.org
 D: ARM fast-isel improvements
 D: Performance monitoring
 

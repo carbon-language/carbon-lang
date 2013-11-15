@@ -102,7 +102,7 @@ E: richard@xmos.com
 D: XCore Backend
 
 N: Chad Rosier
-E: mcrosier@apple.com
+E: mcrosier@codeaurora.org
 D: Fast-Isel
 
 N: Nadav Rotem
