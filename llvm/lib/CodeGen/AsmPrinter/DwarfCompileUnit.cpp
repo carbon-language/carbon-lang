@@ -33,12 +33,12 @@
 using namespace llvm;
 
 /// CompileUnit - Compile unit constructor.
-CompileUnit::CompileUnit(unsigned UID, DIE *D, const MDNode *N, AsmPrinter *A,
-                         DwarfDebug *DW, DwarfUnits *DWU)
-    : UniqueID(UID), Node(N), CUDie(D), Asm(A), DD(DW), DU(DWU), IndexTyDie(0),
-      DebugInfoOffset(0) {
+CompileUnit::CompileUnit(unsigned UID, DIE *D, DICompileUnit Node,
+                         AsmPrinter *A, DwarfDebug *DW, DwarfUnits *DWU)
+    : UniqueID(UID), Node(Node), CUDie(D), Asm(A), DD(DW), DU(DWU),
+      IndexTyDie(0), DebugInfoOffset(0) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
-  insertDIE(DIDescriptor(N), D);
+  insertDIE(Node, D);
 }
 
 /// ~CompileUnit - Destructor for compile unit.

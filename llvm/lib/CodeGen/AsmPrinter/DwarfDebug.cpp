@@ -718,14 +718,13 @@ unsigned DwarfDebug::getOrCreateSourceID(StringRef FileName,
 
 // Create new CompileUnit for the given metadata node with tag
 // DW_TAG_compile_unit.
-CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
-  DICompileUnit DIUnit(N);
+CompileUnit *DwarfDebug::constructCompileUnit(DICompileUnit DIUnit) {
   StringRef FN = DIUnit.getFilename();
   CompilationDir = DIUnit.getDirectory();
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
-  CompileUnit *NewCU =
-      new CompileUnit(GlobalCUIndexCount++, Die, N, Asm, this, &InfoHolder);
+  CompileUnit *NewCU = new CompileUnit(GlobalCUIndexCount++, Die, DIUnit, Asm,
+                                       this, &InfoHolder);
 
   FileIDCUMap[NewCU->getUniqueID()] = 0;
   // Call this to emit a .file directive if it wasn't emitted for the source
@@ -818,7 +817,7 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
 
   InfoHolder.addUnit(NewCU);
 
-  CUMap.insert(std::make_pair(N, NewCU));
+  CUMap.insert(std::make_pair(DIUnit, NewCU));
   CUDieMap.insert(std::make_pair(Die, NewCU));
   return NewCU;
 }
@@ -2951,8 +2950,9 @@ void DwarfDebug::emitDebugMacInfo() {
 CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
-  CompileUnit *NewCU = new CompileUnit(CU->getUniqueID(), Die, CU->getNode(),
-                                       Asm, this, &SkeletonHolder);
+  CompileUnit *NewCU =
+      new CompileUnit(CU->getUniqueID(), Die, DICompileUnit(CU->getNode()), Asm,
+                      this, &SkeletonHolder);
 
   NewCU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name,
                         DICompileUnit(CU->getNode()).getSplitDebugFilename());

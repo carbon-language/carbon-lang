@@ -40,7 +40,7 @@ class CompileUnit {
   unsigned UniqueID;
 
   /// Node - MDNode for the compile unit.
-  const MDNode *Node;
+  DICompileUnit Node;
 
   /// CUDie - Compile unit debug information entry.
   ///
@@ -94,13 +94,13 @@ class CompileUnit {
   DIEInteger *DIEIntegerOne;
 
 public:
-  CompileUnit(unsigned UID, DIE *D, const MDNode *N, AsmPrinter *A,
+  CompileUnit(unsigned UID, DIE *D, DICompileUnit CU, AsmPrinter *A,
               DwarfDebug *DW, DwarfUnits *DWU);
   ~CompileUnit();
 
   // Accessors.
   unsigned getUniqueID() const { return UniqueID; }
-  uint16_t getLanguage() const { return DICompileUnit(Node).getLanguage(); }
+  uint16_t getLanguage() const { return Node.getLanguage(); }
   const MDNode *getNode() const { return Node; }
   DIE *getCUDie() const { return CUDie.get(); }
   const StringMap<DIE *> &getGlobalNames() const { return GlobalNames; }

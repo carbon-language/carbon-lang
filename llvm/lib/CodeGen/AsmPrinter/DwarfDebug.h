@@ -604,7 +604,7 @@ private:
 
   /// \brief Create new CompileUnit for the given metadata node with tag
   /// DW_TAG_compile_unit.
-  CompileUnit *constructCompileUnit(const MDNode *N);
+  CompileUnit *constructCompileUnit(DICompileUnit DIUnit);
 
   /// \brief Construct subprogram DIE.
   void constructSubprogramDIE(CompileUnit *TheCU, const MDNode *N);
