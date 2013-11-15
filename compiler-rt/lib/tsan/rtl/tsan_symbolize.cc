@@ -42,18 +42,6 @@ ReportStack *NewReportStackEntry(uptr addr) {
   return ent;
 }
 
-// Strip module path to make output shorter.
-static char *StripModuleName(const char *module) {
-  if (module == 0)
-    return 0;
-  const char *short_module_name = internal_strrchr(module, '/');
-  if (short_module_name)
-    short_module_name += 1;
-  else
-    short_module_name = module;
-  return internal_strdup(short_module_name);
-}
-
 static ReportStack *NewReportStackEntry(const AddressInfo &info) {
   ReportStack *ent = NewReportStackEntry(info.address);
   ent->module = StripModuleName(info.module);
