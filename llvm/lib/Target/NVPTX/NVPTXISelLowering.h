@@ -49,6 +49,7 @@ enum NodeType {
   RETURN,
   CallSeqBegin,
   CallSeqEnd,
+  CallPrototype,
   Dummy,
 
   LoadV2 = ISD::FIRST_TARGET_MEMORY_OPCODE,

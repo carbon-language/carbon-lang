@@ -44,7 +44,8 @@ public:
                      raw_ostream &O, const char *Modifier = 0);
   void printMemOperand(const MCInst *MI, int OpNum,
                        raw_ostream &O, const char *Modifier = 0);
-
+  void printProtoIdent(const MCInst *MI, int OpNum,
+                       raw_ostream &O, const char *Modifier = 0);
 };
 
 }

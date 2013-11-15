@@ -310,6 +310,8 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "NVPTXISD::CallSeqBegin";
   case NVPTXISD::CallSeqEnd:
     return "NVPTXISD::CallSeqEnd";
+  case NVPTXISD::CallPrototype:
+    return "NVPTXISD::CallPrototype";
   case NVPTXISD::LoadV2:
     return "NVPTXISD::LoadV2";
   case NVPTXISD::LoadV4:
@@ -885,18 +887,16 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     // proto_0 : .callprototype(.param .b32 _) _ (.param .b32 _);
     // to be emitted, and the label has to used as the last arg of call
     // instruction.
-    // The prototype is embedded in a string and put as the operand for an
-    // INLINEASM SDNode.
-    SDVTList InlineAsmVTs = DAG.getVTList(MVT::Other, MVT::Glue);
-    std::string proto_string =
-        getPrototype(retTy, Args, Outs, retAlignment, CS);
-    const char *asmstr = nvTM->getManagedStrPool()
-        ->getManagedString(proto_string.c_str())->c_str();
-    SDValue InlineAsmOps[] = {
-      Chain, DAG.getTargetExternalSymbol(asmstr, getPointerTy()),
-      DAG.getMDNode(0), DAG.getTargetConstant(0, MVT::i32), InFlag
+    // The prototype is embedded in a string and put as the operand for a
+    // CallPrototype SDNode which will print out to the value of the string.
+    SDVTList ProtoVTs = DAG.getVTList(MVT::Other, MVT::Glue);
+    std::string Proto = getPrototype(retTy, Args, Outs, retAlignment, CS);
+    const char *ProtoStr =
+      nvTM->getManagedStrPool()->getManagedString(Proto.c_str())->c_str();
+    SDValue ProtoOps[] = {
+      Chain, DAG.getTargetExternalSymbol(ProtoStr, MVT::i32), InFlag,
     };
-    Chain = DAG.getNode(ISD::INLINEASM, dl, InlineAsmVTs, InlineAsmOps, 5);
+    Chain = DAG.getNode(NVPTXISD::CallPrototype, dl, ProtoVTs, &ProtoOps[0], 3);
     InFlag = Chain.getValue(1);
   }
   // Op to just print "call"

@@ -18,6 +18,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
@@ -276,4 +277,13 @@ void NVPTXInstPrinter::printMemOperand(const MCInst *MI, int OpNum,
     O << "+";
     printOperand(MI, OpNum + 1, O);
   }
+}
+
+void NVPTXInstPrinter::printProtoIdent(const MCInst *MI, int OpNum,
+                                       raw_ostream &O, const char *Modifier) {
+  const MCOperand &Op = MI->getOperand(OpNum);
+  assert(Op.isExpr() && "Call prototype is not an MCExpr?");
+  const MCExpr *Expr = Op.getExpr();
+  const MCSymbol &Sym = cast<MCSymbolRefExpr>(Expr)->getSymbol();
+  O << Sym.getName();
 }

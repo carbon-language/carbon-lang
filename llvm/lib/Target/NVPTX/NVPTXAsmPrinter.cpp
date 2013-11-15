@@ -314,6 +314,14 @@ void NVPTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 void NVPTXAsmPrinter::lowerToMCInst(const MachineInstr *MI, MCInst &OutMI) {
   OutMI.setOpcode(MI->getOpcode());
 
+  // Special: Do not mangle symbol operand of CALL_PROTOTYPE
+  if (MI->getOpcode() == NVPTX::CALL_PROTOTYPE) {
+    const MachineOperand &MO = MI->getOperand(0);
+    OutMI.addOperand(GetSymbolRef(MO,
+      OutContext.GetOrCreateSymbol(Twine(MO.getSymbolName()))));
+    return;
+  }
+
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
 

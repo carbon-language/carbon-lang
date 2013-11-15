@@ -2607,6 +2607,20 @@ def trapinst : NVPTXInst<(outs), (ins),
                          "trap;",
                          [(trap)]>;
 
+// Call prototype wrapper
+def SDTCallPrototype : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
+def CallPrototype
+  : SDNode<"NVPTXISD::CallPrototype", SDTCallPrototype,
+           [SDNPHasChain, SDNPOutGlue, SDNPInGlue, SDNPSideEffect]>;
+def ProtoIdent : Operand<i32> {
+  let PrintMethod = "printProtoIdent";
+}
+def CALL_PROTOTYPE
+  : NVPTXInst<(outs), (ins ProtoIdent:$ident),
+              "$ident", [(CallPrototype (i32 texternalsym:$ident))]>;
+
+
+
 include "NVPTXIntrinsics.td"
 
 
