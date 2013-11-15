@@ -504,7 +504,9 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   // OriginalLoads - Keep track of a representative load instruction from the
   // original function so that we can tell the alias analysis implementation
   // what the new GEP/Load instructions we are inserting look like.
-  std::map<IndicesVector, LoadInst*> OriginalLoads;
+  // We need to keep the original loads for each argument and the elements
+  // of the argument that are accessed.
+  std::map<std::pair<Argument*, IndicesVector>, LoadInst*> OriginalLoads;
 
   // Attribute - Keep track of the parameter attributes for the arguments
   // that we are *not* promoting. For the ones that we do promote, the parameter
@@ -569,7 +571,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
         else
           // Take any load, we will use it only to update Alias Analysis
           OrigLoad = cast<LoadInst>(User->use_back());
-        OriginalLoads[Indices] = OrigLoad;
+        OriginalLoads[std::make_pair(I, Indices)] = OrigLoad;
       }
 
       // Add a parameter to the function for each element passed in.
@@ -676,7 +678,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
         for (ScalarizeTable::iterator SI = ArgIndices.begin(),
                E = ArgIndices.end(); SI != E; ++SI) {
           Value *V = *AI;
-          LoadInst *OrigLoad = OriginalLoads[*SI];
+          LoadInst *OrigLoad = OriginalLoads[std::make_pair(I, *SI)];
           if (!SI->empty()) {
             Ops.reserve(SI->size());
             Type *ElTy = V->getType();
