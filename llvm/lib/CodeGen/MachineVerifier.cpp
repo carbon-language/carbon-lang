@@ -775,7 +775,7 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
   if (MI->getNumOperands() < MCID.getNumOperands()) {
     report("Too few operands", MI);
     *OS << MCID.getNumOperands() << " operands expected, but "
-        << MI->getNumExplicitOperands() << " given.\n";
+        << MI->getNumOperands() << " given.\n";
   }
 
   // Check the tied operands.
