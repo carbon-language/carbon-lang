@@ -1187,7 +1187,7 @@ bool AddressSanitizer::InjectCoverage(Function &F) {
   IRBuilder<> IRB(F.getEntryBlock().getFirstInsertionPt());
   Type *Int8Ty = IRB.getInt8Ty();
   GlobalVariable *Guard = new GlobalVariable(
-      *F.getParent(), Int8Ty, false, F.getLinkage(),
+      *F.getParent(), Int8Ty, false, GlobalValue::PrivateLinkage,
       Constant::getNullValue(Int8Ty), "__asan_gen_cov_" + F.getName());
   LoadInst *Load = IRB.CreateLoad(Guard);
   Load->setAtomic(Monotonic);
