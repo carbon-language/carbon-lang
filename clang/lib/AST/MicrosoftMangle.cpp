@@ -181,6 +181,8 @@ public:
       : MicrosoftMangleContext(Context, Diags) {}
   virtual bool shouldMangleCXXName(const NamedDecl *D);
   virtual void mangleCXXName(const NamedDecl *D, raw_ostream &Out);
+  virtual void mangleVirtualMemPtrThunk(const CXXMethodDecl *MD,
+                                        int OffsetInVFTable, raw_ostream &);
   virtual void mangleThunk(const CXXMethodDecl *MD,
                            const ThunkInfo &Thunk,
                            raw_ostream &);
@@ -1919,6 +1921,19 @@ static void mangleThunkThisAdjustment(const CXXMethodDecl *MD,
       Out << 'Q';
     }
   }
+}
+
+void MicrosoftMangleContextImpl::mangleVirtualMemPtrThunk(
+    const CXXMethodDecl *MD, int OffsetInVFTable, raw_ostream &Out) {
+  bool Is64Bit = getASTContext().getTargetInfo().getPointerWidth(0) == 64;
+
+  MicrosoftCXXNameMangler Mangler(*this, Out);
+  Mangler.getStream() << "\01??_9";
+  Mangler.mangleName(MD->getParent());
+  Mangler.getStream() << "$B";
+  Mangler.mangleNumber(OffsetInVFTable);
+  Mangler.getStream() << "A";
+  Mangler.getStream() << (Is64Bit ? "A" : "E");
 }
 
 void MicrosoftMangleContextImpl::mangleThunk(const CXXMethodDecl *MD,

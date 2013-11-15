@@ -311,6 +311,10 @@ private:
   /// \brief Caching wrapper around VBTableBuilder::enumerateVBTables().
   const VBTableVector &EnumerateVBTables(const CXXRecordDecl *RD);
 
+  /// \brief Generate a thunk for calling a virtual member function MD.
+  llvm::Function *EmitVirtualMemPtrThunk(const CXXMethodDecl *MD,
+                                         StringRef ThunkName);
+
 public:
   virtual llvm::Type *ConvertMemberPointerType(const MemberPointerType *MPT);
 
@@ -970,6 +974,43 @@ MicrosoftCXXABI::EnumerateVBTables(const CXXRecordDecl *RD) {
   return VBTables;
 }
 
+llvm::Function *
+MicrosoftCXXABI::EmitVirtualMemPtrThunk(const CXXMethodDecl *MD,
+                                        StringRef ThunkName) {
+  // If the thunk has been generated previously, just return it.
+  if (llvm::GlobalValue *GV = CGM.getModule().getNamedValue(ThunkName))
+    return cast<llvm::Function>(GV);
+
+  // Create the llvm::Function.
+  const CGFunctionInfo &FnInfo = CGM.getTypes().arrangeGlobalDeclaration(MD);
+  llvm::FunctionType *ThunkTy = CGM.getTypes().GetFunctionType(FnInfo);
+  llvm::Function *ThunkFn =
+      llvm::Function::Create(ThunkTy, llvm::Function::ExternalLinkage,
+                             ThunkName.str(), &CGM.getModule());
+  assert(ThunkFn->getName() == ThunkName && "name was uniqued!");
+
+  LinkageInfo LV = MD->getLinkageAndVisibility();
+  ThunkFn->setLinkage(MD->isExternallyVisible()
+                          ? llvm::GlobalValue::LinkOnceODRLinkage
+                          : llvm::GlobalValue::InternalLinkage);
+
+  CGM.SetLLVMFunctionAttributes(MD, FnInfo, ThunkFn);
+  CGM.SetLLVMFunctionAttributesForDefinition(MD, ThunkFn);
+
+  // Start codegen.
+  CodeGenFunction CGF(CGM);
+  CGF.StartThunk(ThunkFn, MD, FnInfo);
+
+  // Get to the Callee.
+  llvm::Value *This = CGF.LoadCXXThis();
+  llvm::Value *Callee = getVirtualFunctionPointer(CGF, MD, This, ThunkTy);
+
+  // Make the call and return the result.
+  CGF.EmitCallAndReturnForThunk(MD, Callee, 0);
+
+  return ThunkFn;
+}
+
 void MicrosoftCXXABI::emitVirtualInheritanceTables(const CXXRecordDecl *RD) {
   const VBTableVector &VBTables = EnumerateVBTables(RD);
   llvm::GlobalVariable::LinkageTypes Linkage = CGM.getVTableLinkage(RD);
@@ -1370,12 +1411,7 @@ MicrosoftCXXABI::BuildMemberPointer(const CXXRecordDecl *RD,
   CodeGenTypes &Types = CGM.getTypes();
 
   llvm::Constant *FirstField;
-  if (MD->isVirtual()) {
-    // FIXME: We have to instantiate a thunk that loads the vftable and jumps to
-    // the right offset.
-    CGM.ErrorUnsupported(MD, "pointer to virtual member function");
-    FirstField = llvm::Constant::getNullValue(CGM.VoidPtrTy);
-  } else {
+  if (!MD->isVirtual()) {
     const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
     llvm::Type *Ty;
     // Check whether the function has a computable LLVM signature.
@@ -1389,6 +1425,33 @@ MicrosoftCXXABI::BuildMemberPointer(const CXXRecordDecl *RD,
     }
     FirstField = CGM.GetAddrOfFunction(MD, Ty);
     FirstField = llvm::ConstantExpr::getBitCast(FirstField, CGM.VoidPtrTy);
+  } else {
+    MicrosoftVTableContext::MethodVFTableLocation ML =
+        CGM.getMicrosoftVTableContext().getMethodVFTableLocation(MD);
+    if (MD->isVariadic()) {
+      CGM.ErrorUnsupported(MD, "pointer to variadic virtual member function");
+      FirstField = llvm::Constant::getNullValue(CGM.VoidPtrTy);
+    } else if (!CGM.getTypes().isFuncTypeConvertible(
+                    MD->getType()->castAs<FunctionType>())) {
+      CGM.ErrorUnsupported(MD, "pointer to virtual member function with "
+                               "incomplete return or parameter type");
+      FirstField = llvm::Constant::getNullValue(CGM.VoidPtrTy);
+    } else if (ML.VBase) {
+      CGM.ErrorUnsupported(MD, "pointer to virtual member function overriding "
+                               "member function in virtual base class");
+      FirstField = llvm::Constant::getNullValue(CGM.VoidPtrTy);
+    } else {
+      SmallString<256> ThunkName;
+      int OffsetInVFTable =
+          ML.Index *
+          getContext().getTypeSizeInChars(getContext().VoidPtrTy).getQuantity();
+      llvm::raw_svector_ostream Out(ThunkName);
+      getMangleContext().mangleVirtualMemPtrThunk(MD, OffsetInVFTable, Out);
+      Out.flush();
+
+      llvm::Function *Thunk = EmitVirtualMemPtrThunk(MD, ThunkName.str());
+      FirstField = llvm::ConstantExpr::getBitCast(Thunk, CGM.VoidPtrTy);
+    }
   }
 
   // The rest of the fields are common with data member pointers.
@@ -1875,4 +1938,3 @@ MicrosoftCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
 CGCXXABI *clang::CodeGen::CreateMicrosoftCXXABI(CodeGenModule &CGM) {
   return new MicrosoftCXXABI(CGM);
 }
-

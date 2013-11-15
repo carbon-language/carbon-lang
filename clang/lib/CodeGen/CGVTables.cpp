@@ -238,92 +238,99 @@ void CodeGenFunction::GenerateVarArgsThunk(
   }
 }
 
-void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
-                                    const CGFunctionInfo &FnInfo,
-                                    GlobalDecl GD, const ThunkInfo &Thunk) {
+void CodeGenFunction::StartThunk(llvm::Function *Fn, GlobalDecl GD,
+                                 const CGFunctionInfo &FnInfo) {
+  assert(!CurGD.getDecl() && "CurGD was already set!");
+  CurGD = GD;
+
+  // Build FunctionArgs.
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
   QualType ThisType = MD->getThisType(getContext());
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
   QualType ResultType =
     CGM.getCXXABI().HasThisReturn(GD) ? ThisType : FPT->getResultType();
-
   FunctionArgList FunctionArgs;
 
-  // FIXME: It would be nice if more of this code could be shared with 
-  // CodeGenFunction::GenerateCode.
-
   // Create the implicit 'this' parameter declaration.
-  CurGD = GD;
   CGM.getCXXABI().BuildInstanceFunctionParams(*this, ResultType, FunctionArgs);
 
   // Add the rest of the parameters.
   for (FunctionDecl::param_const_iterator I = MD->param_begin(),
-       E = MD->param_end(); I != E; ++I) {
-    ParmVarDecl *Param = *I;
-    
-    FunctionArgs.push_back(Param);
-  }
+                                          E = MD->param_end();
+       I != E; ++I)
+    FunctionArgs.push_back(*I);
 
+  // Start defining the function.
   StartFunction(GlobalDecl(), ResultType, Fn, FnInfo, FunctionArgs,
                 SourceLocation());
 
+  // Since we didn't pass a GlobalDecl to StartFunction, do this ourselves.
   CGM.getCXXABI().EmitInstanceFunctionProlog(*this);
   CXXThisValue = CXXABIThisValue;
+}
 
-  // Adjust the 'this' pointer if necessary.
-  llvm::Value *AdjustedThisPtr =
-      CGM.getCXXABI().performThisAdjustment(*this, LoadCXXThis(), Thunk.This);
+void CodeGenFunction::EmitCallAndReturnForThunk(GlobalDecl GD,
+                                                llvm::Value *Callee,
+                                                const ThunkInfo *Thunk) {
+  assert(isa<CXXMethodDecl>(CurGD.getDecl()) &&
+         "Please use a new CGF for this thunk");
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
 
+  // Adjust the 'this' pointer if necessary
+  llvm::Value *AdjustedThisPtr = Thunk ? CGM.getCXXABI().performThisAdjustment(
+                                             *this, LoadCXXThis(), Thunk->This)
+                                       : LoadCXXThis();
+
+  // Start building CallArgs.
   CallArgList CallArgs;
-  
-  // Add our adjusted 'this' pointer.
+  QualType ThisType = MD->getThisType(getContext());
   CallArgs.add(RValue::get(AdjustedThisPtr), ThisType);
 
   if (isa<CXXDestructorDecl>(MD))
     CGM.getCXXABI().adjustCallArgsForDestructorThunk(*this, GD, CallArgs);
 
-  // Add the rest of the parameters.
+  // Add the rest of the arguments.
   for (FunctionDecl::param_const_iterator I = MD->param_begin(),
-       E = MD->param_end(); I != E; ++I) {
-    ParmVarDecl *param = *I;
-    EmitDelegateCallArg(CallArgs, param, param->getLocStart());
-  }
+       E = MD->param_end(); I != E; ++I)
+    EmitDelegateCallArg(CallArgs, *I, (*I)->getLocStart());
 
-  // Get our callee.
-  llvm::Type *Ty =
-    CGM.getTypes().GetFunctionType(CGM.getTypes().arrangeGlobalDeclaration(GD));
-  llvm::Value *Callee = CGM.GetAddrOfFunction(GD, Ty, /*ForVTable=*/true);
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
 
 #ifndef NDEBUG
   const CGFunctionInfo &CallFnInfo =
     CGM.getTypes().arrangeCXXMethodCall(CallArgs, FPT,
                                        RequiredArgs::forPrototypePlus(FPT, 1));
-  assert(CallFnInfo.getRegParm() == FnInfo.getRegParm() &&
-         CallFnInfo.isNoReturn() == FnInfo.isNoReturn() &&
-         CallFnInfo.getCallingConvention() == FnInfo.getCallingConvention());
+  assert(CallFnInfo.getRegParm() == CurFnInfo->getRegParm() &&
+         CallFnInfo.isNoReturn() == CurFnInfo->isNoReturn() &&
+         CallFnInfo.getCallingConvention() == CurFnInfo->getCallingConvention());
   assert(isa<CXXDestructorDecl>(MD) || // ignore dtor return types
          similar(CallFnInfo.getReturnInfo(), CallFnInfo.getReturnType(),
-                 FnInfo.getReturnInfo(), FnInfo.getReturnType()));
-  assert(CallFnInfo.arg_size() == FnInfo.arg_size());
-  for (unsigned i = 0, e = FnInfo.arg_size(); i != e; ++i)
+                 CurFnInfo->getReturnInfo(), CurFnInfo->getReturnType()));
+  assert(CallFnInfo.arg_size() == CurFnInfo->arg_size());
+  for (unsigned i = 0, e = CurFnInfo->arg_size(); i != e; ++i)
     assert(similar(CallFnInfo.arg_begin()[i].info,
                    CallFnInfo.arg_begin()[i].type,
-                   FnInfo.arg_begin()[i].info, FnInfo.arg_begin()[i].type));
+                   CurFnInfo->arg_begin()[i].info,
+                   CurFnInfo->arg_begin()[i].type));
 #endif
-  
+
   // Determine whether we have a return value slot to use.
+  QualType ResultType =
+    CGM.getCXXABI().HasThisReturn(GD) ? ThisType : FPT->getResultType();
   ReturnValueSlot Slot;
   if (!ResultType->isVoidType() &&
-      FnInfo.getReturnInfo().getKind() == ABIArgInfo::Indirect &&
+      CurFnInfo->getReturnInfo().getKind() == ABIArgInfo::Indirect &&
       !hasScalarEvaluationKind(CurFnInfo->getReturnType()))
     Slot = ReturnValueSlot(ReturnValue, ResultType.isVolatileQualified());
   
   // Now emit our call.
-  RValue RV = EmitCall(FnInfo, Callee, Slot, CallArgs, MD);
+  RValue RV = EmitCall(*CurFnInfo, Callee, Slot, CallArgs, MD);
   
-  if (!Thunk.Return.isEmpty())
-    RV = PerformReturnAdjustment(*this, ResultType, RV, Thunk);
+  // Consider return adjustment if we have ThunkInfo.
+  if (Thunk && !Thunk->Return.isEmpty())
+    RV = PerformReturnAdjustment(*this, ResultType, RV, *Thunk);
 
+  // Emit return.
   if (!ResultType->isVoidType() && Slot.isNull())
     CGM.getCXXABI().EmitReturnFromThunk(*this, RV, ResultType);
 
@@ -331,11 +338,26 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   AutoreleaseResult = false;
 
   FinishFunction();
+}
+
+void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
+                                    const CGFunctionInfo &FnInfo,
+                                    GlobalDecl GD, const ThunkInfo &Thunk) {
+  StartThunk(Fn, GD, FnInfo);
+
+  // Get our callee.
+  llvm::Type *Ty =
+    CGM.getTypes().GetFunctionType(CGM.getTypes().arrangeGlobalDeclaration(GD));
+  llvm::Value *Callee = CGM.GetAddrOfFunction(GD, Ty, /*ForVTable=*/true);
+
+  // Make the call and return the result.
+  EmitCallAndReturnForThunk(GD, Callee, &Thunk);
 
   // Set the right linkage.
   CGM.setFunctionLinkage(GD, Fn);
   
   // Set the right visibility.
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   setThunkVisibility(CGM, MD, Thunk, Fn);
 }
 
