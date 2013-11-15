@@ -871,7 +871,8 @@ unsigned SelectionDAG::getEVTAlignment(EVT VT) const {
 SelectionDAG::SelectionDAG(const TargetMachine &tm, CodeGenOpt::Level OL)
   : TM(tm), TSI(*tm.getSelectionDAGInfo()), TTI(0), OptLevel(OL),
     EntryNode(ISD::EntryToken, 0, DebugLoc(), getVTList(MVT::Other)),
-    Root(getEntryNode()), UpdateListeners(0) {
+    Root(getEntryNode()), NewNodesMustHaveLegalTypes(false),
+    UpdateListeners(0) {
   AllNodes.push_back(&EntryNode);
   DbgInfo = new SDDbgInfo();
 }
@@ -982,6 +983,54 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, EVT VT, bool isT) {
    EltVT = TLI->getTypeToTransformTo(*getContext(), EltVT);
    APInt NewVal = Elt->getValue().zext(EltVT.getSizeInBits());
    Elt = ConstantInt::get(*getContext(), NewVal);
+  }
+  // In other cases the element type is illegal and needs to be expanded, for
+  // example v2i64 on MIPS32. In this case, find the nearest legal type, split
+  // the value into n parts and use a vector type with n-times the elements.
+  // Then bitcast to the type requested.
+  // Legalizing constants too early makes the DAGCombiner's job harder so we
+  // only legalize if the DAG tells us we must produce legal types.
+  else if (NewNodesMustHaveLegalTypes && VT.isVector() &&
+           TLI->getTypeAction(*getContext(), EltVT) ==
+           TargetLowering::TypeExpandInteger) {
+    APInt NewVal = Elt->getValue();
+    EVT ViaEltVT = TLI->getTypeToTransformTo(*getContext(), EltVT);
+    unsigned ViaEltSizeInBits = ViaEltVT.getSizeInBits();
+    unsigned ViaVecNumElts = VT.getSizeInBits() / ViaEltSizeInBits;
+    EVT ViaVecVT = EVT::getVectorVT(*getContext(), ViaEltVT, ViaVecNumElts);
+
+    // Check the temporary vector is the correct size. If this fails then
+    // getTypeToTransformTo() probably returned a type whose size (in bits)
+    // isn't a power-of-2 factor of the requested type size.
+    assert(ViaVecVT.getSizeInBits() == VT.getSizeInBits());
+
+    SmallVector<SDValue, 2> EltParts;
+    for (unsigned i = 0; i < ViaVecNumElts / VT.getVectorNumElements(); ++i) {
+      EltParts.push_back(getConstant(NewVal.lshr(i * ViaEltSizeInBits)
+                                           .trunc(ViaEltSizeInBits),
+                                     ViaEltVT, isT));
+    }
+
+    // EltParts is currently in little endian order. If we actually want
+    // big-endian order then reverse it now.
+    if (TLI->isBigEndian())
+      std::reverse(EltParts.begin(), EltParts.end());
+
+    // The elements must be reversed when the element order is different
+    // to the endianness of the elements (because the BITCAST is itself a
+    // vector shuffle in this situation). However, we do not need any code to
+    // perform this reversal because getConstant() is producing a vector
+    // splat.
+    // This situation occurs in MIPS MSA.
+
+    SmallVector<SDValue, 8> Ops;
+    for (unsigned i = 0; i < VT.getVectorNumElements(); ++i)
+      Ops.insert(Ops.end(), EltParts.begin(), EltParts.end());
+
+    SDValue Result = getNode(ISD::BITCAST, SDLoc(), VT,
+                             getNode(ISD::BUILD_VECTOR, SDLoc(), ViaVecVT,
+                                     &Ops[0], Ops.size()));
+    return Result;
   }
 
   assert(Elt->getBitWidth() == EltVT.getSizeInBits() &&

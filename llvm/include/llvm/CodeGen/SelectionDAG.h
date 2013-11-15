@@ -236,6 +236,13 @@ public:
     virtual void NodeUpdated(SDNode *N);
   };
 
+  /// NewNodesMustHaveLegalTypes - When true, additional steps are taken to
+  /// ensure that getConstant() and similar functions return DAG nodes that
+  /// have legal types. This is important after type legalization since
+  /// any illegally typed nodes generated after this point will not experience
+  /// type legalization.
+  bool NewNodesMustHaveLegalTypes;
+
 private:
   /// DAGUpdateListener is a friend so it can manipulate the listener stack.
   friend struct DAGUpdateListener;

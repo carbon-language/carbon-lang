@@ -1,7 +1,3 @@
-; Both endians should emit the same output for immediate instructions.
-; This is not currently true.
-; XFAIL: *
-
 ; Test the MSA intrinsics that are encoded with the BIT instruction format.
 
 ; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | FileCheck %s

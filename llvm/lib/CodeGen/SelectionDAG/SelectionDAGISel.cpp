@@ -666,6 +666,8 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
           << BlockNumber << " '" << BlockName << "'\n"; CurDAG->dump());
   }
 
+  CurDAG->NewNodesMustHaveLegalTypes = true;
+
   if (ViewLegalizeDAGs) CurDAG->viewGraph("legalize input for " + BlockName);
 
   {

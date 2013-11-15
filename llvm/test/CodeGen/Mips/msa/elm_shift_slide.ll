@@ -1,7 +1,3 @@
-; Both endians should emit the same output for immediate instructions.
-; This is not currently true.
-; XFAIL: *
-
 ; Test the MSA intrinsics that are encoded with the ELM instruction format and
 ; are either shifts or slides.
 
