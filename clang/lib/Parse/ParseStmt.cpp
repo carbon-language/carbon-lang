@@ -327,6 +327,7 @@ Retry:
     return StmtEmpty();
 
   case tok::annot_pragma_fp_contract:
+    ProhibitAttributes(Attrs);
     Diag(Tok, diag::err_pragma_fp_contract_scope);
     ConsumeToken();
     return StmtError();

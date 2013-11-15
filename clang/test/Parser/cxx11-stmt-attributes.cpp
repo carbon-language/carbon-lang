@@ -76,4 +76,9 @@ void foo(int i) {
   }
 
   [[carries_dependency]] return; // expected-error {{'carries_dependency' attribute cannot be applied to a statement}}
+
+  {
+    [[ ]] // expected-error {{an attribute list cannot appear here}}
+#pragma STDC FP_CONTRACT ON // expected-error {{can only appear at file scope or at the start of a compound statement}}
+  }
 }
