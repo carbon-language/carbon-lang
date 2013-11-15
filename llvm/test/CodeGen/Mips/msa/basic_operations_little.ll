@@ -1,4 +1,6 @@
-; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=MIPS32 %s
+; This test will be merged back into basic_operations.ll once FileCheck accepts multiple prefixes.
+
+; RUN: llc -march=mipsel -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=MIPS32 %s
 
 @v4i8 = global <4 x i8> <i8 0, i8 0, i8 0, i8 0>
 @v16i8 = global <16 x i8> <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>
@@ -23,11 +25,11 @@ define void @const_v16i8() nounwind {
   ; MIPS32: ld.b  [[R1:\$w[0-9]+]], %lo(
 
   store volatile <16 x i8> <i8 1, i8 0, i8 1, i8 0, i8 1, i8 0, i8 1, i8 0, i8 1, i8 0, i8 1, i8 0, i8 1, i8 0, i8 1, i8 0>, <16 x i8>*@v16i8
-  ; MIPS32: ldi.h [[R1:\$w[0-9]+]], 256
+  ; MIPS32: ldi.h [[R1:\$w[0-9]+]], 1
 
   store volatile <16 x i8> <i8 1, i8 2, i8 3, i8 4, i8 1, i8 2, i8 3, i8 4, i8 1, i8 2, i8 3, i8 4, i8 1, i8 2, i8 3, i8 4>, <16 x i8>*@v16i8
-  ; MIPS32-DAG: lui [[R2:\$[0-9]+]], 258
-  ; MIPS32-DAG: ori [[R2]], [[R2]], 772
+  ; MIPS32-DAG: lui [[R2:\$[0-9]+]], 1027
+  ; MIPS32-DAG: ori [[R2]], [[R2]], 513
   ; MIPS32-DAG: fill.w [[R1:\$w[0-9]+]], [[R2]]
 
   store volatile <16 x i8> <i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8>, <16 x i8>*@v16i8
@@ -53,8 +55,8 @@ define void @const_v8i16() nounwind {
   ; MIPS32: ldi.b [[R1:\$w[0-9]+]], 4
 
   store volatile <8 x i16> <i16 1, i16 2, i16 1, i16 2, i16 1, i16 2, i16 1, i16 2>, <8 x i16>*@v8i16
-  ; MIPS32-DAG: lui [[R2:\$[0-9]+]], 1
-  ; MIPS32-DAG: ori [[R2]], [[R2]], 2
+  ; MIPS32-DAG: lui [[R2:\$[0-9]+]], 2
+  ; MIPS32-DAG: ori [[R2]], [[R2]], 1
   ; MIPS32-DAG: fill.w [[R1:\$w[0-9]+]], [[R2]]
 
   store volatile <8 x i16> <i16 1, i16 2, i16 3, i16 4, i16 1, i16 2, i16 3, i16 4>, <8 x i16>*@v8i16
@@ -143,13 +145,13 @@ define void @nonconst_v16i8(i8 %a, i8 %b, i8 %c, i8 %d, i8 %e, i8 %f, i8 %g, i8 
   ; MIPS32-DAG: insert.b [[R1]][1], $5
   ; MIPS32-DAG: insert.b [[R1]][2], $6
   ; MIPS32-DAG: insert.b [[R1]][3], $7
-  ; MIPS32-DAG: lbu [[R2:\$[0-9]+]], 19($sp)
+  ; MIPS32-DAG: lbu [[R2:\$[0-9]+]], 16($sp)
   ; MIPS32-DAG: insert.b [[R1]][4], [[R2]]
-  ; MIPS32-DAG: lbu [[R3:\$[0-9]+]], 23($sp)
+  ; MIPS32-DAG: lbu [[R3:\$[0-9]+]], 20($sp)
   ; MIPS32-DAG: insert.b [[R1]][5], [[R3]]
-  ; MIPS32-DAG: lbu [[R4:\$[0-9]+]], 27($sp)
+  ; MIPS32-DAG: lbu [[R4:\$[0-9]+]], 24($sp)
   ; MIPS32-DAG: insert.b [[R1]][6], [[R4]]
-  ; MIPS32-DAG: lbu [[R5:\$[0-9]+]], 31($sp)
+  ; MIPS32-DAG: lbu [[R5:\$[0-9]+]], 28($sp)
   ; MIPS32-DAG: insert.b [[R1]][7], [[R5]]
   ; MIPS32-DAG: insert.b [[R1]][8], [[R5]]
   ; MIPS32-DAG: insert.b [[R1]][9], [[R5]]
@@ -181,13 +183,13 @@ define void @nonconst_v8i16(i16 %a, i16 %b, i16 %c, i16 %d, i16 %e, i16 %f, i16 
   ; MIPS32-DAG: insert.h [[R1]][1], $5
   ; MIPS32-DAG: insert.h [[R1]][2], $6
   ; MIPS32-DAG: insert.h [[R1]][3], $7
-  ; MIPS32-DAG: lhu [[R2:\$[0-9]+]], 18($sp)
+  ; MIPS32-DAG: lhu [[R2:\$[0-9]+]], 16($sp)
   ; MIPS32-DAG: insert.h [[R1]][4], [[R2]]
-  ; MIPS32-DAG: lhu [[R2:\$[0-9]+]], 22($sp)
+  ; MIPS32-DAG: lhu [[R2:\$[0-9]+]], 20($sp)
   ; MIPS32-DAG: insert.h [[R1]][5], [[R2]]
-  ; MIPS32-DAG: lhu [[R2:\$[0-9]+]], 26($sp)
+  ; MIPS32-DAG: lhu [[R2:\$[0-9]+]], 24($sp)
   ; MIPS32-DAG: insert.h [[R1]][6], [[R2]]
-  ; MIPS32-DAG: lhu [[R2:\$[0-9]+]], 30($sp)
+  ; MIPS32-DAG: lhu [[R2:\$[0-9]+]], 28($sp)
   ; MIPS32-DAG: insert.h [[R1]][7], [[R2]]
 
   store volatile <8 x i16> %8, <8 x i16>*@v8i16

@@ -1,4 +1,5 @@
 ; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | FileCheck %s
+; RUN: llc -march=mipsel -mattr=+msa,+fp64 < %s | FileCheck %s
 
 define void @add_v16i8(<16 x i8>* %c, <16 x i8>* %a, <16 x i8>* %b) nounwind {
   ; CHECK: add_v16i8:

@@ -3,6 +3,8 @@
 
 ; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | \
 ; RUN:     FileCheck -check-prefix=MIPS32 %s
+; RUN: llc -march=mipsel -mattr=+msa,+fp64 < %s | \
+; RUN:     FileCheck -check-prefix=MIPS32 %s
 
 @llvm_mips_splat_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
 @llvm_mips_splat_b_RES  = global <16 x i8> <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>, align 16

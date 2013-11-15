@@ -2,6 +2,7 @@
 ; There are lots of these so this covers those beginning with 'a'
 
 ; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | FileCheck %s
+; RUN: llc -march=mipsel -mattr=+msa,+fp64 < %s | FileCheck %s
 
 ; It should fail to compile without fp64.
 ; RUN: not llc -march=mips -mattr=+msa < %s 2>&1 | \

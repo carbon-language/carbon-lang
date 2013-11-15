@@ -3,6 +3,7 @@
 ; operands had.
 
 ; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | FileCheck %s
+; RUN: llc -march=mipsel -mattr=+msa,+fp64 < %s | FileCheck %s
 
 @llvm_mips_dpadd_s_h_ARG1 = global <8 x i16> <i16 0, i16 1, i16 2, i16 3, i16 4, i16 5, i16 6, i16 7>, align 16
 @llvm_mips_dpadd_s_h_ARG2 = global <16 x i8> <i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15, i8 16, i8 17, i8 18, i8 19, i8 20, i8 21, i8 22, i8 23>, align 16

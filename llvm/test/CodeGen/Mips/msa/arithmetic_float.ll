@@ -1,4 +1,5 @@
 ; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | FileCheck %s
+; RUN: llc -march=mipsel -mattr=+msa,+fp64 < %s | FileCheck %s
 
 define void @add_v4f32(<4 x float>* %c, <4 x float>* %a, <4 x float>* %b) nounwind {
   ; CHECK: add_v4f32:
