@@ -248,11 +248,11 @@ Module *MCJIT::findModuleForSymbol(const std::string &Name,
        I != E; ++I) {
     Module *M = *I;
     Function *F = M->getFunction(Name);
-    if (F && !F->empty())
+    if (F && !F->isDeclaration())
       return M;
     if (!CheckFunctionsOnly) {
       GlobalVariable *G = M->getGlobalVariable(Name);
-      if (G)
+      if (G && !G->isDeclaration())
         return M;
       // FIXME: Do we need to worry about global aliases?
     }
