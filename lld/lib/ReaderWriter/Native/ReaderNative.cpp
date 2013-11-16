@@ -334,25 +334,20 @@ public:
     }
     // TO DO: validate enough chunks were used
 
-    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
-                  << " ReaderNative DefinedAtoms:\n");
-    for (const DefinedAtom *a : file->defined() ) {
-      DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
-                    << llvm::format("    0x%09lX", a)
-                    << ", name=" << a->name()
-                    << ", size=" << a->size()
-                    << "\n");
-      for (const Reference *r : *a ) {
-        (void)r;
-        DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
-                    << "        offset="
-                    << llvm::format("0x%03X", r->offsetInAtom())
-                    << ", kind=" << r->kind()
-                    << ", target=" << r->target()
-                    << "\n");
+    DEBUG_WITH_TYPE("ReaderNative", {
+      llvm::dbgs() << " ReaderNative DefinedAtoms:\n";
+      for (const DefinedAtom *a : file->defined()) {
+        llvm::dbgs() << llvm::format("    0x%09lX", a)
+                     << ", name=" << a->name()
+                     << ", size=" << a->size() << "\n";
+        for (const Reference *r : *a) {
+          llvm::dbgs() << "        offset="
+                       << llvm::format("0x%03X", r->offsetInAtom())
+                       << ", kind=" << r->kind()
+                       << ", target=" << r->target() << "\n";
+        }
       }
-    }
-
+    });
     result.push_back(std::move(file));
     return make_error_code(NativeReaderError::success);
   }
