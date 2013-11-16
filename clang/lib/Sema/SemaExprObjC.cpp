@@ -3190,7 +3190,11 @@ static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr) {
               S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge)
                 << TDNDecl->getName() << Target->getName() << CastClass->getName();
               return true;
-            }
+            } else {
+              S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge)
+                << TDNDecl->getName() << Target->getName() << castType;
+              return true;
+           }
           }
         }
         S.Diag(castExpr->getLocStart(), diag::err_objc_cf_bridged_not_interface)
@@ -3231,6 +3235,11 @@ static bool CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr) {
                 return true;
               S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge_to_cf)
                 << ExprClass->getName() << TDNDecl->getName();
+              S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+              return true;
+            } else {
+              S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge_to_cf)
+                << castExpr->getType() << castType;
               S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
               return true;
             }

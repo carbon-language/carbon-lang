@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -fobjc-arc -verify -Wno-objc-root-class %s
 // rdar://15454846
 
-typedef struct __CFErrorRef * __attribute__ ((objc_bridge(NSError))) CFErrorRef; // expected-note {{declared here}}
+typedef struct __CFErrorRef * __attribute__ ((objc_bridge(NSError))) CFErrorRef; // expected-note 2 {{declared here}}
 
 typedef struct __CFMyColor  * __attribute__((objc_bridge(12))) CFMyColorRef; // expected-error {{parameter of 'objc_bridge' attribute must be a single name of an Objective-C class}}
 
@@ -48,10 +48,12 @@ typedef CFErrorRef1 CFErrorRef2;
 
 @class NSString;
 
-void Test2(CFErrorRef2 cf, NSError *ns, NSString *str) {
+void Test2(CFErrorRef2 cf, NSError *ns, NSString *str, Class c) {
   (void)(NSString *)cf; // expected-warning {{CFErrorRef bridges to NSError, not NSString}}
   (void)(NSError *)cf; // okay
   (void)(MyError*)cf; // okay,
   (void)(CFErrorRef)ns; // okay
   (void)(CFErrorRef)str;  // expected-warning {{NSString cannot bridge to CFErrorRef}}
+  (void)(Class)cf; // expected-warning {{CFErrorRef bridges to NSError, not 'Class'}}
+  (void)(CFErrorRef)c; // expected-warning {{'Class' cannot bridge to 'CFErrorRef'}}
 }
