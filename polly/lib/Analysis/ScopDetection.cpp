@@ -468,9 +468,12 @@ Region *ScopDetection::expandRegion(Region &R) {
     }
   }
 
-  DEBUG(if (LastValidRegion) dbgs() << "\tto " << LastValidRegion->getNameStr()
-                                    << "\n";
-        else dbgs() << "\tExpanding " << R.getNameStr() << " failed\n";);
+  DEBUG({
+    if (LastValidRegion)
+      dbgs() << "\tto " << LastValidRegion->getNameStr() << "\n";
+    else
+      dbgs() << "\tExpanding " << R.getNameStr() << " failed\n";
+  });
 
   return LastValidRegion;
 }
