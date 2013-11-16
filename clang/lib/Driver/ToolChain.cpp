@@ -252,12 +252,26 @@ static const char *getLLVMArchSuffixForARM(StringRef CPU) {
     .Default("");
 }
 
-std::string ToolChain::ComputeLLVMTriple(const ArgList &Args, 
+std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
                                          types::ID InputType) const {
   switch (getTriple().getArch()) {
   default:
     return getTripleString();
 
+  case llvm::Triple::x86_64: {
+    llvm::Triple Triple = getTriple();
+    if (!Triple.isOSDarwin())
+      return getTripleString();
+
+    if (Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
+      // x86_64h goes in the triple. Other -march options just use the
+      // vanilla triple we already have.
+      StringRef MArch = A->getValue();
+      if (MArch == "x86_64h")
+        Triple.setArchName(MArch);
+    }
+    return Triple.getTriple();
+  }
   case llvm::Triple::arm:
   case llvm::Triple::thumb: {
     // FIXME: Factor into subclasses.

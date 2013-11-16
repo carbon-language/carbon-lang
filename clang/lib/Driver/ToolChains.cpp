@@ -793,6 +793,10 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
 
     else if (Name == "x86_64")
       DAL->AddFlagArg(0, Opts.getOption(options::OPT_m64));
+    else if (Name == "x86_64h") {
+      DAL->AddFlagArg(0, Opts.getOption(options::OPT_m64));
+      DAL->AddJoinedArg(0, MArch, "x86_64h");
+    }
 
     else if (Name == "arm")
       DAL->AddJoinedArg(0, MArch, "armv4t");
