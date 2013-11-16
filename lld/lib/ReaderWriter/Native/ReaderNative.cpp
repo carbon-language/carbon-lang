@@ -264,7 +264,8 @@ public:
     const NativeChunk *const chunks =
         reinterpret_cast<const NativeChunk *>(base + sizeof(NativeFileHeader));
     // make sure magic matches
-    if ( memcmp(header->magic, NATIVE_FILE_HEADER_MAGIC, 16) != 0 )
+    if (memcmp(header->magic, NATIVE_FILE_HEADER_MAGIC,
+               sizeof(header->magic)) != 0)
       return make_error_code(NativeReaderError::unknown_file_format);
 
     // make sure mapped file contains all needed data
