@@ -162,6 +162,7 @@ void initializeLoopRotatePass(PassRegistry&);
 void initializeLoopSimplifyPass(PassRegistry&);
 void initializeLoopStrengthReducePass(PassRegistry&);
 void initializeGlobalMergePass(PassRegistry&);
+void initializeLoopRerollPass(PassRegistry&);
 void initializeLoopUnrollPass(PassRegistry&);
 void initializeLoopUnswitchPass(PassRegistry&);
 void initializeLoopIdiomRecognizePass(PassRegistry&);

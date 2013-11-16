@@ -16,6 +16,7 @@ add_llvm_library(LLVMScalarOpts
   LoopInstSimplify.cpp
   LoopRotation.cpp
   LoopStrengthReduce.cpp
+  LoopRerollPass.cpp
   LoopUnrollPass.cpp
   LoopUnswitch.cpp
   LowerAtomic.cpp

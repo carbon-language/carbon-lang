@@ -145,6 +145,12 @@ Pass *createLoopUnrollPass(int Threshold = -1, int Count = -1,
 
 //===----------------------------------------------------------------------===//
 //
+// LoopReroll - This pass is a simple loop rerolling pass.
+//
+Pass *createLoopRerollPass();
+
+//===----------------------------------------------------------------------===//
+//
 // LoopRotate - This pass is a simple loop rotating pass.
 //
 Pass *createLoopRotatePass();
