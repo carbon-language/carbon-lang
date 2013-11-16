@@ -219,7 +219,7 @@ namespace {
       visitModuleIdents(M);
 
       // Verify Debug Info.
-      verifyDebugInfo(M);
+      verifyDebugInfo();
 
       // If the module is broken, abort at this time.
       return abortIfBroken();
@@ -335,7 +335,7 @@ namespace {
     void VerifyBitcastType(const Value *V, Type *DestTy, Type *SrcTy);
     void VerifyConstantExprBitcastType(const ConstantExpr *CE);
 
-    void verifyDebugInfo(Module &M);
+    void verifyDebugInfo();
 
     void WriteValue(const Value *V) {
       if (!V) return;
@@ -2374,7 +2374,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   }
 }
 
-void Verifier::verifyDebugInfo(Module &M) {
+void Verifier::verifyDebugInfo() {
   // Verify Debug Info.
   if (!DisableDebugInfoVerifier) {
     for (DebugInfoFinder::iterator I = Finder.compile_unit_begin(),
