@@ -40,3 +40,14 @@ entry:
   store i32 %1, i32 addrspace(1)* %out
   ret void
 }
+
+; CHECK-LABEL: @null_32bit_lds_ptr:
+; CHECK: V_CMP_NE_I32
+; CHECK-NOT: V_CMP_NE_I32
+; CHECK: V_CNDMASK_B32
+define void @null_32bit_lds_ptr(i32 addrspace(1)* %out, i32 addrspace(3)* %lds) nounwind {
+  %cmp = icmp ne i32 addrspace(3)* %lds, null
+  %x = select i1 %cmp, i32 123, i32 456
+  store i32 %x, i32 addrspace(1)* %out
+  ret void
+}
