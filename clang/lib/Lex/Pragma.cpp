@@ -1036,7 +1036,7 @@ struct PragmaWarningHandler : public PragmaHandler {
     // Parse things like:
     // warning(push, 1)
     // warning(pop)
-    // warning(disable : 1 2 3 ; error 4 5 6 ; suppress 7 8 9)
+    // warning(disable : 1 2 3 ; error : 4 5 6 ; suppress : 7 8 9)
     SourceLocation DiagLoc = Tok.getLocation();
     PPCallbacks *Callbacks = PP.getPPCallbacks();
 
