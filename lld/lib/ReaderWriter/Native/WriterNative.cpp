@@ -380,8 +380,7 @@ private:
   }
 
   // add references for this atom in a contiguous block in NCS_ReferencesArrayV1
-  uint32_t getReferencesIndex(const DefinedAtom& atom, unsigned& count) {
-    count = 0;
+  uint32_t getReferencesIndex(const DefinedAtom& atom, unsigned& refsCount) {
     size_t startRefSize = _references.size();
     uint32_t result = startRefSize;
     for (const Reference *ref : atom) {
@@ -392,11 +391,8 @@ private:
       nref.addendIndex = this->getAddendIndex(ref->addend());
       _references.push_back(nref);
     }
-    count = _references.size() - startRefSize;
-    if ( count == 0 )
-      return 0;
-    else
-      return result;
+    refsCount = _references.size() - startRefSize;
+    return (refsCount == 0) ? 0 : result;
   }
 
   uint32_t getTargetIndex(const Atom* target) {
