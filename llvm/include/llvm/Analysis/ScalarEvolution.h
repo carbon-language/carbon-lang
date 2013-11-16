@@ -189,15 +189,16 @@ namespace llvm {
 
     /// Convenient NoWrapFlags manipulation that hides enum casts and is
     /// visible in the ScalarEvolution name space.
-    static SCEV::NoWrapFlags maskFlags(SCEV::NoWrapFlags Flags, int Mask) {
+    static SCEV::NoWrapFlags LLVM_ATTRIBUTE_UNUSED_RESULT
+    maskFlags(SCEV::NoWrapFlags Flags, int Mask) {
       return (SCEV::NoWrapFlags)(Flags & Mask);
     }
-    static SCEV::NoWrapFlags setFlags(SCEV::NoWrapFlags Flags,
-                                      SCEV::NoWrapFlags OnFlags) {
+    static SCEV::NoWrapFlags LLVM_ATTRIBUTE_UNUSED_RESULT
+    setFlags(SCEV::NoWrapFlags Flags, SCEV::NoWrapFlags OnFlags) {
       return (SCEV::NoWrapFlags)(Flags | OnFlags);
     }
-    static SCEV::NoWrapFlags clearFlags(SCEV::NoWrapFlags Flags,
-                                        SCEV::NoWrapFlags OffFlags) {
+    static SCEV::NoWrapFlags LLVM_ATTRIBUTE_UNUSED_RESULT
+    clearFlags(SCEV::NoWrapFlags Flags, SCEV::NoWrapFlags OffFlags) {
       return (SCEV::NoWrapFlags)(Flags & ~OffFlags);
     }
 
