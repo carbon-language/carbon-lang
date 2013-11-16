@@ -2447,10 +2447,14 @@ def err_objc_bridge_not_cftype : Error<
   "'objc_bridge' attribute must be applied to definition of CF types">;
 def err_objc_bridge_not_pointert_to_struct : Error<
   "'objc_bridge' attribute must be applied to a pointer to struct type">;
-def err_objc_bridged_not_interface : Error<
+def err_objc_cf_bridged_not_interface : Error<
   "CF object of type %0 is bridged to '%1', which is not an Objective-C class">;
+def err_objc_ns_bridged_invalid_cfobject : Error<
+  "ObjectiveC object of type %0 is bridged to %1, which is not valid CF object">;
 def warn_objc_invalid_bridge : Warning<
   "%0 bridges to %1, not %2">, InGroup<ObjCBridge>;
+def warn_objc_invalid_bridge_to_cf : Warning<
+  "%0 cannot bridge to %1">, InGroup<ObjCBridge>;
 
 // Function Parameter Semantic Analysis.
 def err_param_with_void_type : Error<"argument may not have 'void' type">;
