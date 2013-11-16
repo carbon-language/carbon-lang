@@ -1776,10 +1776,6 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vfmas_laneq_f32:
   case AArch64::BI__builtin_neon_vfmad_lane_f64:
   case AArch64::BI__builtin_neon_vfmad_laneq_f64: {
-    bool Quad = false;
-    if (BuiltinID == AArch64::BI__builtin_neon_vfmas_laneq_f32 ||
-      BuiltinID == AArch64::BI__builtin_neon_vfmad_laneq_f64)
-      Quad = true;
     llvm::Type *Ty = CGF.ConvertType(E->getCallReturnType());
     Value *F = CGF.CGM.getIntrinsic(Intrinsic::fma, Ty);
     // extract lane acc += x * v[i]
