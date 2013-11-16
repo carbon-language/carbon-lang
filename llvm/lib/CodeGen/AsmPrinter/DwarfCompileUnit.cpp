@@ -296,11 +296,11 @@ void CompileUnit::addDIEEntry(DIE *Die, dwarf::Attribute Attribute,
 
 /// Create a DIE with the given Tag, add the DIE to its parent, and
 /// call insertDIE if MD is not null.
-DIE *CompileUnit::createAndAddDIE(unsigned Tag, DIE &Parent, const MDNode *MD) {
+DIE *CompileUnit::createAndAddDIE(unsigned Tag, DIE &Parent, DIDescriptor N) {
   DIE *Die = new DIE(Tag);
   Parent.addChild(Die);
-  if (MD)
-    insertDIE(DIDescriptor(MD), Die);
+  if (N)
+    insertDIE(N, Die);
   return Die;
 }
 
@@ -1541,7 +1541,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     DIE *ContextDIE = getOrCreateContextDIE(GVContext);
 
     // Add to map.
-    VariableDIE = createAndAddDIE(GV.getTag(), *ContextDIE, N);
+    VariableDIE = createAndAddDIE(GV.getTag(), *ContextDIE, GV);
 
     // Add name and type.
     addString(VariableDIE, dwarf::DW_AT_name, GV.getDisplayName());

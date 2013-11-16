@@ -321,7 +321,7 @@ public:
 
   /// Create a DIE with the given Tag, add the DIE to its parent, and
   /// call insertDIE if MD is not null.
-  DIE *createAndAddDIE(unsigned Tag, DIE &Parent, const MDNode *MD = NULL);
+  DIE *createAndAddDIE(unsigned Tag, DIE &Parent, DIDescriptor N = DIDescriptor());
 
   /// Compute the size of a header for this unit, not including the initial
   /// length field.
