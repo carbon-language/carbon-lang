@@ -24,7 +24,7 @@ void* operator new(size_t, int*); // expected-note 3 {{candidate}}
 void* operator new(size_t, float*); // expected-note 3 {{candidate}}
 void* operator new(size_t, S); // expected-note 2 {{candidate}}
 
-inline void operator delete(void *); // expected-error {{replacement function 'operator delete' cannot be declared 'inline'}}
+inline void operator delete(void *); // expected-warning {{replacement function 'operator delete' cannot be declared 'inline'}}
 
 struct foo { };
 

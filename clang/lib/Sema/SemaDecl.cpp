@@ -6879,7 +6879,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     // N.B. We diagnose declarations instead of definitions per LWG issue 2340.
     if (isInline && NewFD->isReplaceableGlobalAllocationFunction())
       Diag(D.getDeclSpec().getInlineSpecLoc(),
-           diag::err_operator_new_delete_declared_inline)
+           diag::ext_operator_new_delete_declared_inline)
         << NewFD->getDeclName();
   }
 
