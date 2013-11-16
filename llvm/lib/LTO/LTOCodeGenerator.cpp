@@ -372,7 +372,7 @@ static void accumulateAndSortLibcalls(std::vector<StringRef> &Libcalls,
           = Lowering->getLibcallName(static_cast<RTLIB::Libcall>(I)))
         Libcalls.push_back(Name);
 
-  std::sort(Libcalls.begin(), Libcalls.end());
+  array_pod_sort(Libcalls.begin(), Libcalls.end());
   Libcalls.erase(std::unique(Libcalls.begin(), Libcalls.end()),
                  Libcalls.end());
 }
