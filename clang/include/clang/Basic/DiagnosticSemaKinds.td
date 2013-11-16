@@ -2449,6 +2449,8 @@ def err_objc_bridge_not_pointert_to_struct : Error<
   "'objc_bridge' attribute must be applied to a pointer to struct type">;
 def err_objc_bridged_not_interface : Error<
   "CF object of type %0 is bridged to '%1', which is not an Objective-C class">;
+def warn_objc_invalid_bridge : Warning<
+  "%0 bridges to %1, not %2">, InGroup<ObjCBridge>;
 
 // Function Parameter Semantic Analysis.
 def err_param_with_void_type : Error<"argument may not have 'void' type">;

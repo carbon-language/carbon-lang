@@ -3172,23 +3172,32 @@ static bool CheckObjCBridgeCast(Sema &S, QualType castType, Expr *castExpr) {
     if (TDNDecl->hasAttr<ObjCBridgeAttr>()) {
       ObjCBridgeAttr *ObjCBAttr = TDNDecl->getAttr<ObjCBridgeAttr>();
       IdentifierInfo *Parm = ObjCBAttr->getBridgedType();
+      NamedDecl *Target = 0;
       if (Parm && S.getLangOpts().ObjC1) {
         // Check for an existing type with this name.
         LookupResult R(S, DeclarationName(Parm), SourceLocation(),
                        Sema::LookupOrdinaryName);
         if (S.LookupName(R, S.TUScope)) {
-          NamedDecl *Target = R.getFoundDecl();
-          if (Target && !isa<ObjCInterfaceDecl>(Target)) {
-            S.Diag(castExpr->getLocStart(), diag::err_objc_bridged_not_interface)
-                    << castExpr->getType() << Parm->getName();
-            S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
-            S.Diag(Target->getLocStart(), diag::note_declared_at);
+          Target = R.getFoundDecl();
+          if (Target && isa<ObjCInterfaceDecl>(Target)) {
+            ObjCInterfaceDecl *ExprClass = cast<ObjCInterfaceDecl>(Target);
+            if (const ObjCObjectPointerType *InterfacePointerType =
+                  castType->getAsObjCInterfacePointerType()) {
+              ObjCInterfaceDecl *CastClass
+                = InterfacePointerType->getObjectType()->getInterface();
+              if ((CastClass == ExprClass) || (CastClass && ExprClass->isSuperClassOf(CastClass)))
+                return true;
+              S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge)
+                << TDNDecl->getName() << Target->getName() << CastClass->getName();
+              return true;
+            }
           }
-        } else {
-          S.Diag(castExpr->getLocStart(), diag::err_objc_bridged_not_interface)
-                  << castExpr->getType() << Parm->getName();
-          S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
         }
+        S.Diag(castExpr->getLocStart(), diag::err_objc_bridged_not_interface)
+        << castExpr->getType() << Parm->getName();
+        S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+        if (Target)
+          S.Diag(Target->getLocStart(), diag::note_declared_at);
       }
       return true;
     }

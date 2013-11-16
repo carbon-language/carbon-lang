@@ -48,6 +48,8 @@ typedef CFErrorRef1 CFErrorRef2;
 
 @class NSString;
 
-id Test2(CFErrorRef2 cf) {
-  return (NSString *)cf;
+void Test2(CFErrorRef2 cf) {
+  (void)(NSString *)cf; // expected-warning {{CFErrorRef bridges to NSError, not NSString}}
+  (void)(NSError *)cf; // okay
+  (void)(MyError*)cf; // okay,
 }
