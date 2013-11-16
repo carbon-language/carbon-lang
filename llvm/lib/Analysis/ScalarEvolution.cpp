@@ -6684,9 +6684,9 @@ static const APInt gcd(const SCEVConstant *C1, const SCEVConstant *C2) {
   uint32_t BBW = B.getBitWidth();
 
   if (ABW > BBW)
-    B.zext(ABW);
+    B = B.zext(ABW);
   else if (ABW < BBW)
-    A.zext(BBW);
+    A = A.zext(BBW);
 
   return APIntOps::GreatestCommonDivisor(A, B);
 }
@@ -6698,9 +6698,9 @@ static const APInt srem(const SCEVConstant *C1, const SCEVConstant *C2) {
   uint32_t BBW = B.getBitWidth();
 
   if (ABW > BBW)
-    B.sext(ABW);
+    B = B.sext(ABW);
   else if (ABW < BBW)
-    A.sext(BBW);
+    A = A.sext(BBW);
 
   return APIntOps::srem(A, B);
 }
@@ -6712,9 +6712,9 @@ static const APInt sdiv(const SCEVConstant *C1, const SCEVConstant *C2) {
   uint32_t BBW = B.getBitWidth();
 
   if (ABW > BBW)
-    B.sext(ABW);
+    B = B.sext(ABW);
   else if (ABW < BBW)
-    A.sext(BBW);
+    A = A.sext(BBW);
 
   return APIntOps::sdiv(A, B);
 }
