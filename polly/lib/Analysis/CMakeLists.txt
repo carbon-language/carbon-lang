@@ -1,4 +1,4 @@
-add_polly_library(PollyAnalysis
+add_polly_library(LLVMPollyAnalysis
   Dependences.cpp
   MayAliasSet.cpp
   ScopDetection.cpp

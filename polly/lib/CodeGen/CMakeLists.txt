@@ -13,7 +13,7 @@ if (GPU_CODEGEN)
        PTXGenerator.cpp)
 endif (GPU_CODEGEN)
 
-add_polly_library(PollyCodeGen
+add_polly_library(LLVMPollyCodeGen
   BlockGenerators.cpp
   ${CLOOG_FILES}
   ${ISL_CODEGEN_FILES}

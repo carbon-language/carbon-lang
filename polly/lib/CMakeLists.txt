@@ -16,11 +16,11 @@ if (PLUTO_FOUND)
 endif (PLUTO_FOUND)
 
 set(LLVM_USED_LIBS
-  PollyAnalysis
-  PollyCodeGen
-  PollyExchange
-  PollySupport
-  PollyJSON
+  LLVMPollyAnalysis
+  LLVMPollyCodeGen
+  LLVMPollyExchange
+  LLVMPollySupport
+  LLVMPollyJSON
   )
 
 add_polly_loadable_module(LLVMPolly
@@ -41,11 +41,11 @@ if (TARGET intrinsics_gen)
 endif()
 
 add_dependencies(LLVMPolly
-  PollyAnalysis
-  PollyCodeGen
-  PollyExchange
-  PollySupport
-  PollyJSON
+  LLVMPollyAnalysis
+  LLVMPollyCodeGen
+  LLVMPollyExchange
+  LLVMPollySupport
+  LLVMPollyJSON
   )
 
 set_target_properties(LLVMPolly

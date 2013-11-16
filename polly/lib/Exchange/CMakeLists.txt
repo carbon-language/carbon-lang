@@ -11,10 +11,10 @@ if (SCOPLIB_FOUND)
       ScopLibImporter.cpp)
 endif (SCOPLIB_FOUND)
 
-add_polly_library(PollyExchange
+add_polly_library(LLVMPollyExchange
   JSONExporter.cpp
   ${POLLY_OPENSCOP_FILES}
   ${POLLY_SCOPLIB_FILES}
 )
 
-target_link_libraries(PollyExchange PollyJSON)
+target_link_libraries(LLVMPollyExchange LLVMPollyJSON)
