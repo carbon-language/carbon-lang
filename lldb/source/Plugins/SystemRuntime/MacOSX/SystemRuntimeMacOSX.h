@@ -125,6 +125,12 @@ private:
     lldb::addr_t
     GetThreadCreatorItem (lldb::ThreadSP thread);
 
+    lldb::tid_t
+    GetNewThreadUniquethreadID (lldb::ThreadSP original_thread_sp);
+
+    void
+    SetNewThreadThreadName (lldb::ThreadSP original_thread_sp, lldb::ThreadSP new_extended_thread_sp);
+
     void
     SetNewThreadQueueName (lldb::ThreadSP original_thread_sp, lldb::ThreadSP new_extended_thread_sp);
 

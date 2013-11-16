@@ -204,6 +204,9 @@ public:
     SBThread
     GetExtendedBacktraceThread (const char *type);
 
+    uint32_t
+    GetExtendedBacktraceOriginatingIndexID ();
+
 protected:
     friend class SBBreakpoint;
     friend class SBBreakpointLocation;

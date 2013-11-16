@@ -273,6 +273,11 @@ public:
         return NULL;
     }
 
+    virtual void
+    SetName (const char *name)
+    {
+    }
+
     virtual lldb::queue_id_t
     GetQueueID ()
     {
@@ -795,7 +800,7 @@ public:
     
     void
     SetTracer (lldb::ThreadPlanTracerSP &tracer_sp);
-    
+
     //------------------------------------------------------------------
     // Get the thread index ID. The index ID that is guaranteed to not
     // be re-used by a process. They start at 1 and increase with each
@@ -804,8 +809,25 @@ public:
     //------------------------------------------------------------------
     uint32_t
     GetIndexID () const;
-    
-    
+
+    //------------------------------------------------------------------
+    // Get the originating thread's index ID. 
+    // In the case of an "extended" thread -- a thread which represents
+    // the stack that enqueued/spawned work that is currently executing --
+    // we need to provide the IndexID of the thread that actually did
+    // this work.  We don't want to just masquerade as that thread's IndexID
+    // by using it in our own IndexID because that way leads to madness -
+    // but the driver program which is iterating over extended threads 
+    // may ask for the OriginatingThreadID to display that information
+    // to the user. 
+    // Normal threads will return the same thing as GetIndexID();
+    //------------------------------------------------------------------
+    virtual uint32_t
+    GetExtendedBacktraceOriginatingIndexID ()
+    {
+        return GetIndexID ();
+    }
+
     //------------------------------------------------------------------
     // The API ID is often the same as the Thread::GetID(), but not in
     // all cases. Thread::GetID() is the user visible thread ID that

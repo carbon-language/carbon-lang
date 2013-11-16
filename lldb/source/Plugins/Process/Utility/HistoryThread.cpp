@@ -21,6 +21,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 HistoryThread::HistoryThread (lldb_private::Process &process, 
+                              lldb::tid_t tid,
                               std::vector<lldb::addr_t> pcs, 
                               uint32_t stop_id, 
                               bool stop_id_is_valid) : 
@@ -30,7 +31,10 @@ HistoryThread::HistoryThread (lldb_private::Process &process,
         m_pcs (pcs),
         m_stop_id (stop_id),
         m_stop_id_is_valid (stop_id_is_valid),
-        m_extended_unwind_token (LLDB_INVALID_ADDRESS)
+        m_extended_unwind_token (LLDB_INVALID_ADDRESS),
+        m_queue_name (),
+        m_thread_name (),
+        m_originating_unique_thread_id (tid)
 {
     m_unwinder_ap.reset (new HistoryUnwind (*this, pcs, stop_id, stop_id_is_valid));
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
@@ -74,4 +78,17 @@ HistoryThread::GetStackFrameList ()
     }
 
     return m_framelist;
+}
+
+uint32_t
+HistoryThread::GetExtendedBacktraceOriginatingIndexID ()
+{
+    if (m_originating_unique_thread_id != LLDB_INVALID_THREAD_ID)
+    {
+        if (GetProcess()->HasAssignedIndexIDToThread (m_originating_unique_thread_id))
+        {
+            return GetProcess()->AssignIndexIDToThread (m_originating_unique_thread_id);
+        }
+    }
+    return LLDB_INVALID_THREAD_ID;
 }

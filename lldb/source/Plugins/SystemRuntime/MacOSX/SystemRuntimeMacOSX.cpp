@@ -331,7 +331,7 @@ SystemRuntimeMacOSX::SetNewThreadQueueName (ThreadSP original_thread_sp, ThreadS
         addr_t queue_name_ptr = m_process->ReadPointerFromMemory (enqueued_item_ptr + m_ldi_header.item_offsets.queue_name_ptr, error);
         if (queue_name_ptr != LLDB_INVALID_ADDRESS && error.Success())
         {
-            char namebuf[256];
+            char namebuf[512];
             if (m_process->ReadCStringFromMemory (queue_name_ptr, namebuf, sizeof (namebuf), error) > 0 && error.Success())
             {
                 new_extended_thread_sp->SetQueueName (namebuf);
@@ -339,6 +339,27 @@ SystemRuntimeMacOSX::SetNewThreadQueueName (ThreadSP original_thread_sp, ThreadS
         }
     }
 }
+
+void
+SystemRuntimeMacOSX::SetNewThreadThreadName (ThreadSP original_thread_sp, ThreadSP new_extended_thread_sp)
+{
+    addr_t enqueued_item_ptr = GetThreadCreatorItem (original_thread_sp);
+
+    if (enqueued_item_ptr != LLDB_INVALID_ADDRESS)
+    {
+        Error error;
+        addr_t thread_name_ptr = m_process->ReadPointerFromMemory (enqueued_item_ptr + m_ldi_header.item_offsets.thread_name_ptr, error);
+        if (thread_name_ptr != LLDB_INVALID_ADDRESS && error.Success())
+        {
+            char namebuf[512];
+            if (m_process->ReadCStringFromMemory (thread_name_ptr, namebuf, sizeof (namebuf), error) > 0 && error.Success())
+            {
+                new_extended_thread_sp->SetName (namebuf);
+            }
+        }
+    }
+}
+
 
 void
 SystemRuntimeMacOSX::SetNewThreadExtendedBacktraceToken (ThreadSP original_thread_sp, ThreadSP new_extended_thread_sp)
@@ -355,6 +376,21 @@ SystemRuntimeMacOSX::SetNewThreadExtendedBacktraceToken (ThreadSP original_threa
     }
 }
 
+lldb::tid_t
+SystemRuntimeMacOSX::GetNewThreadUniquethreadID (ThreadSP original_thread_sp)
+{
+    tid_t ret = LLDB_INVALID_THREAD_ID;
+    addr_t enqueued_item_ptr = GetThreadCreatorItem (original_thread_sp);
+    if (enqueued_item_ptr != LLDB_INVALID_ADDRESS)
+    {
+        Error error;
+        ret = m_process->ReadUnsignedIntegerFromMemory (enqueued_item_ptr + m_ldi_header.item_offsets.unique_thread_id, 8, LLDB_INVALID_THREAD_ID, error);
+        if (!error.Success())
+            ret = LLDB_INVALID_THREAD_ID;
+    }
+    return ret;
+}
+
 ThreadSP
 SystemRuntimeMacOSX::GetExtendedBacktraceThread (ThreadSP original_thread_sp, ConstString type)
 {
@@ -368,8 +404,11 @@ SystemRuntimeMacOSX::GetExtendedBacktraceThread (ThreadSP original_thread_sp, Co
     if (bt.pcs.size() == 0)
         return new_extended_thread_sp;
 
-    new_extended_thread_sp.reset (new HistoryThread (*m_process, bt.pcs, bt.stop_id, bt.stop_id_is_valid));
+    tid_t unique_thread_id = GetNewThreadUniquethreadID (original_thread_sp);
 
+    new_extended_thread_sp.reset (new HistoryThread (*m_process, unique_thread_id, bt.pcs, bt.stop_id, bt.stop_id_is_valid));
+
+    SetNewThreadThreadName(original_thread_sp, new_extended_thread_sp);
     SetNewThreadQueueName(original_thread_sp, new_extended_thread_sp);
     SetNewThreadExtendedBacktraceToken(original_thread_sp, new_extended_thread_sp);
 

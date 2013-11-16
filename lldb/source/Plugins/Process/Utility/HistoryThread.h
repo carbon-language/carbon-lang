@@ -25,7 +25,7 @@ namespace lldb_private {
 class HistoryThread : public lldb_private::Thread
 {
 public:
-    HistoryThread (lldb_private::Process &process, std::vector<lldb::addr_t> pcs, uint32_t stop_id, bool stop_id_is_valid);
+    HistoryThread (lldb_private::Process &process, lldb::tid_t tid, std::vector<lldb::addr_t> pcs, uint32_t stop_id, bool stop_id_is_valid);
 
     virtual ~HistoryThread ();
 
@@ -65,6 +65,21 @@ public:
         m_queue_name = name;
     }
 
+    const char *
+    GetThreadName ()
+    {
+        return m_thread_name.c_str();
+    }
+
+    uint32_t
+    GetExtendedBacktraceOriginatingIndexID ();
+
+    void
+    SetThreadName (const char *name)
+    {
+        m_thread_name = name;
+    }
+
 protected:
     virtual lldb::StackFrameListSP
     GetStackFrameList ();
@@ -77,6 +92,8 @@ protected:
 
     uint64_t                    m_extended_unwind_token;
     std::string                 m_queue_name;
+    std::string                 m_thread_name;
+    lldb::tid_t                 m_originating_unique_thread_id;
 };
 
 } // namespace lldb_private

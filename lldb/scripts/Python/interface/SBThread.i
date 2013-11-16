@@ -239,7 +239,7 @@ public:
 
     bool
     operator != (const lldb::SBThread &rhs) const;
-             
+
     %feature("autodoc","
     Given an argument of str to specify the type of thread-origin extended
     backtrace to retrieve, query whether the origin of this thread is 
@@ -252,6 +252,18 @@ public:
     ") GetExtendedBacktraceThread;
     lldb::SBThread
     GetExtendedBacktraceThread (const char *type);
+
+    %feature("autodoc","
+    Takes no arguments, returns a uint32_t.
+    If this SBThread is an ExtendedBacktrace thread, get the IndexID of the
+    original thread that this ExtendedBacktrace thread represents, if 
+    available.  The thread that was running this backtrace in the past may
+    not have been registered with lldb's thread index (if it was created,
+    did its work, and was destroyed without lldb ever stopping execution).
+    In that case, this ExtendedBacktrace thread's IndexID will be returned.
+    ") GetExtendedBacktraceOriginatingIndexID;
+    uint32_t
+    GetExtendedBacktraceOriginatingIndexID();
 
     %pythoncode %{
         class frames_access(object):
