@@ -948,7 +948,8 @@ namespace llvm {
 
       CPU_SUBTYPE_X86_ALL     = 3,
       CPU_SUBTYPE_X86_64_ALL  = 3,
-      CPU_SUBTYPE_X86_ARCH1   = 4
+      CPU_SUBTYPE_X86_ARCH1   = 4,
+      CPU_SUBTYPE_X86_64_H    = 8
     };
     static inline int CPU_SUBTYPE_INTEL(int Family, int Model) {
       return Family | (Model << 4);

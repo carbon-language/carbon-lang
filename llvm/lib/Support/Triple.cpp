@@ -221,7 +221,7 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     .Cases("i386", "i486", "i586", "i686", Triple::x86)
     // FIXME: Do we need to support these?
     .Cases("i786", "i886", "i986", Triple::x86)
-    .Cases("amd64", "x86_64", Triple::x86_64)
+    .Cases("amd64", "x86_64", "x86_64h", Triple::x86_64)
     .Case("powerpc", Triple::ppc)
     .Cases("powerpc64", "ppu", Triple::ppc64)
     .Case("powerpc64le", Triple::ppc64le)

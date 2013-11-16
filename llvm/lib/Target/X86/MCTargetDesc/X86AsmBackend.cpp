@@ -9,6 +9,7 @@
 
 #include "MCTargetDesc/X86BaseInfo.h"
 #include "MCTargetDesc/X86FixupKinds.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCELFObjectWriter.h"
@@ -732,17 +733,19 @@ public:
 
 class DarwinX86_64AsmBackend : public DarwinX86AsmBackend {
   bool SupportsCU;
+  const MachO::CPUSubTypeX86 Subtype;
 public:
   DarwinX86_64AsmBackend(const Target &T, const MCRegisterInfo &MRI,
-                         StringRef CPU, bool SupportsCU)
-    : DarwinX86AsmBackend(T, MRI, CPU, true), SupportsCU(SupportsCU) {
+                         StringRef CPU, bool SupportsCU,
+                         MachO::CPUSubTypeX86 st)
+    : DarwinX86AsmBackend(T, MRI, CPU, true), SupportsCU(SupportsCU),
+      Subtype(st) {
     HasReliableSymbolDifference = true;
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return createX86MachObjectWriter(OS, /*Is64Bit=*/true,
-                                     MachO::CPU_TYPE_X86_64,
-                                     MachO::CPU_SUBTYPE_X86_64_ALL);
+                                     MachO::CPU_TYPE_X86_64, Subtype);
   }
 
   virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
@@ -811,10 +814,15 @@ MCAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
                                            StringRef CPU) {
   Triple TheTriple(TT);
 
-  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO)
+  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO) {
+    MachO::CPUSubTypeX86 CS =
+        StringSwitch<MachO::CPUSubTypeX86>(TheTriple.getArchName())
+            .Case("x86_64h", MachO::CPU_SUBTYPE_X86_64_H)
+            .Default(MachO::CPU_SUBTYPE_X86_64_ALL);
     return new DarwinX86_64AsmBackend(T, MRI, CPU,
                                       TheTriple.isMacOSX() &&
-                                      !TheTriple.isMacOSXVersionLT(10, 7));
+                                      !TheTriple.isMacOSXVersionLT(10, 7), CS);
+  }
 
   if (TheTriple.isOSWindows() && TheTriple.getEnvironment() != Triple::ELF)
     return new WindowsX86AsmBackend(T, true, CPU);
