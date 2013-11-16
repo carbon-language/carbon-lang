@@ -1,6 +1,6 @@
 ; RUN: opt < %s -basicaa -gvn -instcombine -S 2>&1 | FileCheck %s
 
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
+target datalayout = "e-p:32:32:32-p1:16:16:16-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 
 ; Make sure that basicaa thinks R and r are must aliases.
 define i32 @test1(i8 * %P) {
@@ -83,6 +83,33 @@ define i32 @test5(i32* %p, i64 %i) {
   %z = sub i32 %x, %y
   ret i32 %z
 ; CHECK-LABEL: @test5(
+; CHECK: ret i32 0
+}
+
+define i32 @test5_as1_smaller_size(i32 addrspace(1)* %p, i8 %i) {
+  %pi = getelementptr i32 addrspace(1)* %p, i8 %i
+  %i.next = add i8 %i, 1
+  %pi.next = getelementptr i32 addrspace(1)* %p, i8 %i.next
+  %x = load i32 addrspace(1)* %pi
+  store i32 42, i32 addrspace(1)* %pi.next
+  %y = load i32 addrspace(1)* %pi
+  %z = sub i32 %x, %y
+  ret i32 %z
+; CHECK-LABEL: @test5_as1_smaller_size(
+; CHECK: sext
+; CHECK: ret i32 0
+}
+
+define i32 @test5_as1_same_size(i32 addrspace(1)* %p, i16 %i) {
+  %pi = getelementptr i32 addrspace(1)* %p, i16 %i
+  %i.next = add i16 %i, 1
+  %pi.next = getelementptr i32 addrspace(1)* %p, i16 %i.next
+  %x = load i32 addrspace(1)* %pi
+  store i32 42, i32 addrspace(1)* %pi.next
+  %y = load i32 addrspace(1)* %pi
+  %z = sub i32 %x, %y
+  ret i32 %z
+; CHECK-LABEL: @test5_as1_same_size(
 ; CHECK: ret i32 0
 }
 
