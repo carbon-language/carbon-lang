@@ -316,32 +316,26 @@ private:
 
   // reuse existing attributes entry or create a new one and return offet
   uint32_t getAttributeOffset(const DefinedAtom& atom) {
-    NativeAtomAttributesV1 attrs;
-    computeAttributesV1(atom, attrs);
-    for(unsigned int i=0; i < _attributes.size(); ++i) {
-      if ( !memcmp(&_attributes[i], &attrs, sizeof(NativeAtomAttributesV1)) ) {
-        // found that this set of attributes already used, so re-use
-        return i * sizeof(NativeAtomAttributesV1);
-      }
-    }
-    // append new attribute set to end
-    uint32_t result = _attributes.size() * sizeof(NativeAtomAttributesV1);
-    _attributes.push_back(attrs);
-    return result;
+    NativeAtomAttributesV1 attrs = computeAttributesV1(atom);
+    return getOrPushAttribute(_attributes, attrs);
   }
 
   uint32_t getAttributeOffset(const AbsoluteAtom& atom) {
-    NativeAtomAttributesV1 attrs;
-    computeAbsoluteAttributes(atom, attrs);
-    for(unsigned int i=0; i < _absAttributes.size(); ++i) {
-      if ( !memcmp(&_absAttributes[i], &attrs, sizeof(NativeAtomAttributesV1)) ) {
+    NativeAtomAttributesV1 attrs = computeAbsoluteAttributes(atom);
+    return getOrPushAttribute(_absAttributes, attrs);
+  }
+
+  uint32_t getOrPushAttribute(std::vector<NativeAtomAttributesV1> &dest,
+                              const NativeAtomAttributesV1 &attrs) {
+    for (size_t i = 0, e = dest.size(); i < e; ++i) {
+      if (!memcmp(&dest[i], &attrs, sizeof(attrs))) {
         // found that this set of attributes already used, so re-use
-        return i * sizeof(NativeAtomAttributesV1);
+        return i * sizeof(attrs);
       }
     }
     // append new attribute set to end
-    uint32_t result = _absAttributes.size() * sizeof(NativeAtomAttributesV1);
-    _absAttributes.push_back(attrs);
+    uint32_t result = dest.size() * sizeof(attrs);
+    dest.push_back(attrs);
     return result;
   }
 
@@ -361,8 +355,8 @@ private:
     return result;
   }
 
-  void computeAttributesV1(const DefinedAtom& atom,
-                           NativeAtomAttributesV1& attrs) {
+  NativeAtomAttributesV1 computeAttributesV1(const DefinedAtom& atom) {
+    NativeAtomAttributesV1 attrs;
     attrs.sectionNameOffset = sectionNameOffset(atom);
     attrs.align2            = atom.alignment().powerOf2;
     attrs.alignModulus      = atom.alignment().modulus;
@@ -376,11 +370,13 @@ private:
     attrs.dynamicExport     = atom.dynamicExport();
     attrs.permissions       = atom.permissions();
     attrs.alias             = atom.isAlias();
+    return attrs;
   }
 
-  void computeAbsoluteAttributes(const AbsoluteAtom& atom,
-                                 NativeAtomAttributesV1& attrs) {
-    attrs.scope       = atom.scope();
+  NativeAtomAttributesV1 computeAbsoluteAttributes(const AbsoluteAtom& atom) {
+    NativeAtomAttributesV1 attrs;
+    attrs.scope = atom.scope();
+    return attrs;
   }
 
   // add references for this atom in a contiguous block in NCS_ReferencesArrayV1
