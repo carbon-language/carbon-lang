@@ -2118,7 +2118,7 @@ void DwarfDebug::emitDIE(DIE *Die, ArrayRef<DIEAbbrev *> Abbrevs) {
     case dwarf::DW_AT_location: {
       if (DIELabel *L = dyn_cast<DIELabel>(Values[i])) {
         if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-          Asm->EmitLabelReference(L->getValue(), 4);
+          Asm->EmitSectionOffset(L->getValue(), DwarfDebugLocSectionSym);
         else
           Asm->EmitLabelDifference(L->getValue(), DwarfDebugLocSectionSym, 4);
       } else {

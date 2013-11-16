@@ -5,7 +5,7 @@
 ; CHECK: DW_TAG_subprogram [3]
 ; CHECK: DW_TAG_variable [5]
 ; CHECK: DW_AT_name [DW_FORM_strp]     ( .debug_str[{{.*}}] = "block")
-; CHECK: DW_AT_location [DW_FORM_data4]        ({{.*}})
+; CHECK: DW_AT_location [DW_FORM_sec_offset]        ({{.*}})
 
 %struct.__block_descriptor = type { i64, i64 }
 %struct.__block_literal_generic = type { i8*, i32, i32, i8*, %struct.__block_descriptor* }

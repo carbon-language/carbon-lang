@@ -1772,7 +1772,9 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable &DV, bool isScopeAbstract) {
 
   unsigned Offset = DV.getDotDebugLocOffset();
   if (Offset != ~0U) {
-    addLabel(VariableDie, dwarf::DW_AT_location, dwarf::DW_FORM_data4,
+    addLabel(VariableDie, dwarf::DW_AT_location,
+             DD->getDwarfVersion() >= 4 ? dwarf::DW_FORM_sec_offset
+                                        : dwarf::DW_FORM_data4,
              Asm->GetTempSymbol("debug_loc", Offset));
     DV.setDIE(VariableDie);
     return VariableDie;
