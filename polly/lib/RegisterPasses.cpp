@@ -310,12 +310,9 @@ static void registerPollyPasses(llvm::PassManagerBase &PM) {
     PM.add(llvm::createCFGPrinterPass());
 }
 
-static void
-registerPollyEarlyAsPossiblePasses(const llvm::PassManagerBuilder &Builder,
-                                   llvm::PassManagerBase &PM) {
-
-  if (Builder.OptLevel == 0)
-    return;
+static bool shouldEnablePolly(unsigned OptLevel) {
+  if (OptLevel == 0)
+    return false;
 
   if (PollyOnlyPrinter || PollyPrinter || PollyOnlyViewer || PollyViewer)
     PollyTrackFailures = true;
@@ -324,7 +321,14 @@ registerPollyEarlyAsPossiblePasses(const llvm::PassManagerBuilder &Builder,
       ExportJScop || ImportJScop)
     PollyEnabled = true;
 
-  if (!PollyEnabled)
+  return PollyEnabled;
+}
+
+static void
+registerPollyEarlyAsPossiblePasses(const llvm::PassManagerBuilder &Builder,
+                                   llvm::PassManagerBase &PM) {
+
+  if (!shouldEnablePolly(Builder.OptLevel))
     return;
 
   // We only run Polly at optimization level '-O3'.
@@ -340,9 +344,10 @@ registerPollyEarlyAsPossiblePasses(const llvm::PassManagerBuilder &Builder,
   registerPollyPasses(PM);
 }
 
-static void registerPollyOptLevel0Passes(const llvm::PassManagerBuilder &,
+static void registerPollyOptLevel0Passes(const llvm::PassManagerBuilder &Builder,
                                          llvm::PassManagerBase &PM) {
-  registerCanonicalicationPasses(PM);
+  if (shouldEnablePolly(Builder.OptLevel))
+    registerCanonicalicationPasses(PM);
 }
 
 /// @brief Register Polly canonicalization passes at opt level '0'
