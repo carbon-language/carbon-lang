@@ -1591,7 +1591,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     if (GVContext && GV.isDefinition() && !GVContext.isCompileUnit() &&
         !GVContext.isFile() && !DD->isSubprogramContext(GVContext)) {
       // Create specification DIE.
-      VariableSpecDIE = createAndAddDIE(dwarf::DW_TAG_variable, *CUDie.get());
+      VariableSpecDIE = createAndAddDIE(dwarf::DW_TAG_variable, *CUDie);
       addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification, VariableDIE);
       addBlock(VariableSpecDIE, dwarf::DW_AT_location, Block);
       // A static member's declaration is already flagged as such.
