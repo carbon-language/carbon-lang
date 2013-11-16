@@ -655,10 +655,10 @@ public:
   Status(int c) RETURN_TYPESTATE(unconsumed);
 
   Status(const Status &other);
-  //Status(Status &&other);
+  Status(Status &&other);
 
   Status& operator=(const Status &other) CALLABLE_WHEN("unknown", "consumed");
-  //Status& operator=(Status &&other) CALLABLE_WHEN("unknown", "consumed");
+  Status& operator=(Status &&other) CALLABLE_WHEN("unknown", "consumed");
 
   bool check()  const SET_TYPESTATE(consumed);
   void ignore() const SET_TYPESTATE(consumed);
@@ -672,17 +672,123 @@ public:
 
 bool   cond();
 Status doSomething();
-void   handleStatus(const Status& s);
+void   handleStatus(const Status& s RETURN_TYPESTATE(consumed));
 void   handleStatusPtr(const Status* s);
 
-int a;
+void testSimpleTemporaries0() {
+  doSomething(); // expected-warning {{invalid invocation of method '~Status' on a temporary object while it is in the 'unconsumed' state}}
+}
 
+void testSimpleTemporaries1() {
+  doSomething().ignore();
+}
 
-void test() {
+void testSimpleTemporaries2() {
+  handleStatus(doSomething());
+}
+
+void testSimpleTemporaries3() {
+  Status s = doSomething();
+}  // expected-warning {{invalid invocation of method '~Status' on object 's' while it is in the 'unconsumed' state}}
+
+void testSimpleTemporaries4() {
+  Status s = doSomething();
+  s.check();
+}
+
+void testSimpleTemporaries5() {
+  Status s = doSomething();
+  s.clear(); // expected-warning {{invalid invocation of method 'clear' on object 's' while it is in the 'unconsumed' state}}
+}
+
+void testSimpleTemporaries6() {
+  Status s = doSomething();
+  handleStatus(s);
+}
+
+void testSimpleTemporaries7() {
+  Status s;
+  s = doSomething();
+}  // expected-warning {{invalid invocation of method '~Status' on object 's' while it is in the 'unconsumed' state}}
+
+void testTemporariesWithConditionals0() {
+  int a;
+
+  Status s = doSomething();
+  if (cond()) a = 0;
+  else        a = 1;
+} // expected-warning {{invalid invocation of method '~Status' on object 's' while it is in the 'unconsumed' state}}
+
+void testTemporariesWithConditionals1() {
+  int a;
+  
+  Status s = doSomething();
+  if (cond()) a = 0;
+  else        a = 1;
+  s.ignore();
+}
+
+void testTemporariesWithConditionals2() {
+  int a;
+  
+  Status s = doSomething();
+  s.ignore();
+  if (cond()) a = 0;
+  else        a = 1;
+}
+
+void testTemporariesWithConditionals3() {
+  Status s = doSomething();
   if (cond()) {
-    Status s = doSomething();
-    return;                     // Warning: Store it, but don't check.
+    s.check();
   }
+}
+
+void testTemporariesAndConstructors0() {
+  Status s(doSomething());
+  s.check();
+}
+
+void testTemporariesAndConstructors1() {
+  // Test the copy constructor.
+  
+  Status s1 = doSomething();
+  Status s2(s1);
+  s2.check();
+}  // expected-warning {{invalid invocation of method '~Status' on object 's1' while it is in the 'unconsumed' state}}
+
+void testTemporariesAndConstructors2() {
+  // Test the move constructor.
+  
+  Status s1 = doSomething();
+  Status s2(static_cast<Status&&>(s1));
+  s2.check();
+}
+
+void testTemporariesAndOperators0() {
+  // Test the assignment operator.
+  
+  Status s1 = doSomething();
+  Status s2;
+  s2 = s1;
+  s2.check();
+} // expected-warning {{invalid invocation of method '~Status' on object 's1' while it is in the 'unconsumed' state}}
+
+void testTemporariesAndOperators1() {
+  // Test the move assignment operator.
+  
+  Status s1 = doSomething();
+  Status s2;
+  s2 = static_cast<Status&&>(s1);
+  s2.check();
+}
+
+void testTemporariesAndOperators2() {
+  Status s1 = doSomething();
+  Status s2 = doSomething();
+  s1 = s2; // expected-warning {{invalid invocation of method 'operator=' on object 's1' while it is in the 'unconsumed' state}}
+  s1.check();
+  s2.check();
 }
 
 } // end namespace InitializerAssertionFailTest

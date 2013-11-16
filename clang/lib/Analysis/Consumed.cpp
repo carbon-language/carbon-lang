@@ -32,7 +32,9 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 
-// TODO: Use information from tests in while-loop conditional.
+// TODO: Adjust states of args to constructors in the same way that arguments to
+//       function calls are handled.
+// TODO: Use information from tests in for- and while-loop conditional.
 // TODO: Add notes about the actual and expected state for 
 // TODO: Correctly identify unreachable blocks when chaining boolean operators.
 // TODO: Adjust the parser and AttributesList class to support lists of
@@ -280,9 +282,10 @@ class PropagationInfo {
   enum {
     IT_None,
     IT_State,
-    IT_Test,
+    IT_VarTest,
     IT_BinTest,
-    IT_Var
+    IT_Var,
+    IT_Tmp
   } InfoType;
 
   struct BinTestTy {
@@ -294,22 +297,23 @@ class PropagationInfo {
   
   union {
     ConsumedState State;
-    VarTestResult Test;
+    VarTestResult VarTest;
     const VarDecl *Var;
+    const CXXBindTemporaryExpr *Tmp;
     BinTestTy BinTest;
   };
-  
-  QualType TempType;
   
 public:
   PropagationInfo() : InfoType(IT_None) {}
   
-  PropagationInfo(const VarTestResult &Test) : InfoType(IT_Test), Test(Test) {}
+  PropagationInfo(const VarTestResult &VarTest)
+    : InfoType(IT_VarTest), VarTest(VarTest) {}
+  
   PropagationInfo(const VarDecl *Var, ConsumedState TestsFor)
-    : InfoType(IT_Test) {
+    : InfoType(IT_VarTest) {
     
-    Test.Var      = Var;
-    Test.TestsFor = TestsFor;
+    VarTest.Var      = Var;
+    VarTest.TestsFor = TestsFor;
   }
   
   PropagationInfo(const BinaryOperator *Source, EffectiveOp EOp,
@@ -335,24 +339,21 @@ public:
     BinTest.RTest.TestsFor = RTestsFor;
   }
   
-  PropagationInfo(ConsumedState State, QualType TempType)
-    : InfoType(IT_State), State(State), TempType(TempType) {}
+  PropagationInfo(ConsumedState State)
+    : InfoType(IT_State), State(State) {}
   
   PropagationInfo(const VarDecl *Var) : InfoType(IT_Var), Var(Var) {}
+  PropagationInfo(const CXXBindTemporaryExpr *Tmp)
+    : InfoType(IT_Tmp), Tmp(Tmp) {}
   
   const ConsumedState & getState() const {
     assert(InfoType == IT_State);
     return State;
   }
   
-  const QualType & getTempType() const {
-    assert(InfoType == IT_State);
-    return TempType;
-  }
-  
-  const VarTestResult & getTest() const {
-    assert(InfoType == IT_Test);
-    return Test;
+  const VarTestResult & getVarTest() const {
+    assert(InfoType == IT_VarTest);
+    return VarTest;
   }
   
   const VarTestResult & getLTest() const {
@@ -370,6 +371,24 @@ public:
     return Var;
   }
   
+  const CXXBindTemporaryExpr * getTmp() const {
+    assert(InfoType == IT_Tmp);
+    return Tmp;
+  }
+  
+  ConsumedState getAsState(const ConsumedStateMap *StateMap) const {
+    assert(isVar() || isTmp() || isState());
+    
+    if (isVar())
+      return StateMap->getState(Var);
+    else if (isTmp())
+      return StateMap->getState(Tmp);
+    else if (isState())
+      return State;
+    else
+      return CS_None;
+  }
+  
   EffectiveOp testEffectiveOp() const {
     assert(InfoType == IT_BinTest);
     return BinTest.EOp;
@@ -380,17 +399,27 @@ public:
     return BinTest.Source;
   }
   
-  bool isValid()   const { return InfoType != IT_None;     }
-  bool isState()   const { return InfoType == IT_State;    }
-  bool isTest()    const { return InfoType == IT_Test;     }
-  bool isBinTest() const { return InfoType == IT_BinTest;  }
-  bool isVar()     const { return InfoType == IT_Var;      }
+  inline bool isValid()   const { return InfoType != IT_None;    }
+  inline bool isState()   const { return InfoType == IT_State;   }
+  inline bool isVarTest() const { return InfoType == IT_VarTest; }
+  inline bool isBinTest() const { return InfoType == IT_BinTest; }
+  inline bool isVar()     const { return InfoType == IT_Var;     }
+  inline bool isTmp()     const { return InfoType == IT_Tmp;     }
+  
+  bool isTest() const {
+    return InfoType == IT_VarTest || InfoType == IT_BinTest;
+  }
+  
+  bool isPointerToValue() const {
+    return InfoType == IT_Var || InfoType == IT_Tmp;
+  }
   
   PropagationInfo invertTest() const {
-    assert(InfoType == IT_Test || InfoType == IT_BinTest);
+    assert(InfoType == IT_VarTest || InfoType == IT_BinTest);
     
-    if (InfoType == IT_Test) {
-      return PropagationInfo(Test.Var, invertConsumedUnconsumed(Test.TestsFor));
+    if (InfoType == IT_VarTest) {
+      return PropagationInfo(VarTest.Var,
+                             invertConsumedUnconsumed(VarTest.TestsFor));
     
     } else if (InfoType == IT_BinTest) {
       return PropagationInfo(BinTest.Source,
@@ -402,6 +431,18 @@ public:
     }
   }
 };
+
+static inline void
+setStateForVarOrTmp(ConsumedStateMap *StateMap, const PropagationInfo &PInfo,
+                    ConsumedState State) {
+
+  assert(PInfo.isVar() || PInfo.isTmp());
+  
+  if (PInfo.isVar())
+    StateMap->setState(PInfo.getVar(), State);
+  else
+    StateMap->setState(PInfo.getTmp(), State);
+}
 
 class ConsumedStmtVisitor : public ConstStmtVisitor<ConsumedStmtVisitor> {
   
@@ -418,22 +459,11 @@ class ConsumedStmtVisitor : public ConstStmtVisitor<ConsumedStmtVisitor> {
   bool isLikeMoveAssignment(const CXXMethodDecl *MethodDecl);
   void propagateReturnType(const Stmt *Call, const FunctionDecl *Fun,
                            QualType ReturnType);
-  
-  inline ConsumedState getPInfoState(const PropagationInfo& PInfo) {
-    if (PInfo.isVar())
-      return StateMap->getState(PInfo.getVar());
-    else if (PInfo.isState())
-      return PInfo.getState();
-    else
-      return CS_None;
-  }
 
 public:
   void checkCallability(const PropagationInfo &PInfo,
                         const FunctionDecl *FunDecl,
                         SourceLocation BlameLoc);
-
-  void Visit(const Stmt *StmtNode);
   
   void VisitBinaryOperator(const BinaryOperator *BinOp);
   void VisitCallExpr(const CallExpr *Call);
@@ -472,6 +502,7 @@ public:
 void ConsumedStmtVisitor::checkCallability(const PropagationInfo &PInfo,
                                            const FunctionDecl *FunDecl,
                                            SourceLocation BlameLoc) {
+  assert(!PInfo.isTest());
   
   if (!FunDecl->hasAttr<CallableWhenAttr>())
     return;
@@ -479,27 +510,23 @@ void ConsumedStmtVisitor::checkCallability(const PropagationInfo &PInfo,
   const CallableWhenAttr *CWAttr = FunDecl->getAttr<CallableWhenAttr>();
   
   if (PInfo.isVar()) {
-    const VarDecl *Var = PInfo.getVar();
-    ConsumedState VarState = StateMap->getState(Var);
+    ConsumedState VarState = StateMap->getState(PInfo.getVar());
     
-    assert(VarState != CS_None && "Invalid state");
-    
-    if (isCallableInState(CWAttr, VarState))
+    if (VarState == CS_None || isCallableInState(CWAttr, VarState))
       return;
     
     Analyzer.WarningsHandler.warnUseInInvalidState(
-      FunDecl->getNameAsString(), Var->getNameAsString(),
+      FunDecl->getNameAsString(), PInfo.getVar()->getNameAsString(),
       stateToString(VarState), BlameLoc);
     
-  } else if (PInfo.isState()) {
+  } else {
+    ConsumedState TmpState = PInfo.getAsState(StateMap);
     
-    assert(PInfo.getState() != CS_None && "Invalid state");
-    
-    if (isCallableInState(CWAttr, PInfo.getState()))
+    if (TmpState == CS_None || isCallableInState(CWAttr, TmpState))
       return;
     
     Analyzer.WarningsHandler.warnUseOfTempInInvalidState(
-      FunDecl->getNameAsString(), stateToString(PInfo.getState()), BlameLoc);
+      FunDecl->getNameAsString(), stateToString(TmpState), BlameLoc);
   }
 }
 
@@ -532,19 +559,7 @@ void ConsumedStmtVisitor::propagateReturnType(const Stmt *Call,
     else
       ReturnState = mapConsumableAttrState(ReturnType);
     
-    PropagationMap.insert(PairType(Call,
-      PropagationInfo(ReturnState, ReturnType)));
-  }
-}
-
-void ConsumedStmtVisitor::Visit(const Stmt *StmtNode) {
-  
-  ConstStmtVisitor<ConsumedStmtVisitor>::Visit(StmtNode);
-  
-  for (Stmt::const_child_iterator CI = StmtNode->child_begin(),
-       CE = StmtNode->child_end(); CI != CE; ++CI) {
-    
-    PropagationMap.erase(*CI);
+    PropagationMap.insert(PairType(Call, PropagationInfo(ReturnState)));
   }
 }
 
@@ -557,16 +572,16 @@ void ConsumedStmtVisitor::VisitBinaryOperator(const BinaryOperator *BinOp) {
     
     VarTestResult LTest, RTest;
     
-    if (LEntry != PropagationMap.end() && LEntry->second.isTest()) {
-      LTest = LEntry->second.getTest();
+    if (LEntry != PropagationMap.end() && LEntry->second.isVarTest()) {
+      LTest = LEntry->second.getVarTest();
       
     } else {
       LTest.Var      = NULL;
       LTest.TestsFor = CS_None;
     }
     
-    if (REntry != PropagationMap.end() && REntry->second.isTest()) {
-      RTest = REntry->second.getTest();
+    if (REntry != PropagationMap.end() && REntry->second.isVarTest()) {
+      RTest = REntry->second.getVarTest();
       
     } else {
       RTest.Var      = NULL;
@@ -609,8 +624,7 @@ void ConsumedStmtVisitor::VisitCallExpr(const CallExpr *Call) {
       
       InfoEntry Entry = PropagationMap.find(Call->getArg(Index));
       
-      if (Entry == PropagationMap.end() ||
-          !(Entry->second.isState() || Entry->second.isVar()))
+      if (Entry == PropagationMap.end() || Entry->second.isTest())
         continue;
       
       PropagationInfo PInfo = Entry->second;
@@ -618,9 +632,7 @@ void ConsumedStmtVisitor::VisitCallExpr(const CallExpr *Call) {
       // Check that the parameter is in the correct state.
       
       if (Param->hasAttr<ParamTypestateAttr>()) {
-        ConsumedState ParamState =
-          PInfo.isState() ? PInfo.getState() :
-                            StateMap->getState(PInfo.getVar());
+        ConsumedState ParamState = PInfo.getAsState(StateMap);
         
         ConsumedState ExpectedState =
           mapParamTypestateAttrState(Param->getAttr<ParamTypestateAttr>());
@@ -631,22 +643,22 @@ void ConsumedStmtVisitor::VisitCallExpr(const CallExpr *Call) {
             stateToString(ExpectedState), stateToString(ParamState));
       }
       
-      if (!Entry->second.isVar())
+      if (!(Entry->second.isVar() || Entry->second.isTmp()))
         continue;
       
       // Adjust state on the caller side.
       
       if (isRValueRefish(ParamType)) {
-        StateMap->setState(PInfo.getVar(), consumed::CS_Consumed);
+        setStateForVarOrTmp(StateMap, PInfo, consumed::CS_Consumed);
         
       } else if (Param->hasAttr<ReturnTypestateAttr>()) {
-        StateMap->setState(PInfo.getVar(),
+        setStateForVarOrTmp(StateMap, PInfo,
           mapReturnTypestateAttrState(Param->getAttr<ReturnTypestateAttr>()));
         
       } else if (!isValueType(ParamType) &&
                  !ParamType->getPointeeType().isConstQualified()) {
         
-        StateMap->setState(PInfo.getVar(), consumed::CS_Unknown);
+        setStateForVarOrTmp(StateMap, PInfo, consumed::CS_Unknown);
       }
     }
     
@@ -665,7 +677,12 @@ void ConsumedStmtVisitor::VisitCastExpr(const CastExpr *Cast) {
 void ConsumedStmtVisitor::VisitCXXBindTemporaryExpr(
   const CXXBindTemporaryExpr *Temp) {
   
-  forwardInfo(Temp->getSubExpr(), Temp);
+  InfoEntry Entry = PropagationMap.find(Temp->getSubExpr());
+  
+  if (Entry != PropagationMap.end() && !Entry->second.isTest()) {
+    StateMap->setState(Temp, Entry->second.getAsState(StateMap));
+    PropagationMap.insert(PairType(Temp, PropagationInfo(Temp)));
+  }
 }
 
 void ConsumedStmtVisitor::VisitCXXConstructExpr(const CXXConstructExpr *Call) {
@@ -679,14 +696,16 @@ void ConsumedStmtVisitor::VisitCXXConstructExpr(const CXXConstructExpr *Call) {
   
   // FIXME: What should happen if someone annotates the move constructor?
   if (Constructor->hasAttr<ReturnTypestateAttr>()) {
+    // TODO: Adjust state of args appropriately.
+    
     ReturnTypestateAttr *RTAttr = Constructor->getAttr<ReturnTypestateAttr>();
     ConsumedState RetState = mapReturnTypestateAttrState(RTAttr);
-    PropagationMap.insert(PairType(Call, PropagationInfo(RetState, ThisType)));
+    PropagationMap.insert(PairType(Call, PropagationInfo(RetState)));
     
   } else if (Constructor->isDefaultConstructor()) {
     
     PropagationMap.insert(PairType(Call,
-      PropagationInfo(consumed::CS_Consumed, ThisType)));
+      PropagationInfo(consumed::CS_Consumed)));
     
   } else if (Constructor->isMoveConstructor()) {
     
@@ -699,9 +718,17 @@ void ConsumedStmtVisitor::VisitCXXConstructExpr(const CXXConstructExpr *Call) {
         const VarDecl* Var = PInfo.getVar();
         
         PropagationMap.insert(PairType(Call,
-          PropagationInfo(StateMap->getState(Var), ThisType)));
+          PropagationInfo(StateMap->getState(Var))));
         
         StateMap->setState(Var, consumed::CS_Consumed);
+        
+      } else if (PInfo.isTmp()) {
+        const CXXBindTemporaryExpr *Tmp = PInfo.getTmp();
+        
+        PropagationMap.insert(PairType(Call,
+          PropagationInfo(StateMap->getState(Tmp))));
+        
+        StateMap->setState(Tmp, consumed::CS_Consumed);
         
       } else {
         PropagationMap.insert(PairType(Call, PInfo));
@@ -711,8 +738,10 @@ void ConsumedStmtVisitor::VisitCXXConstructExpr(const CXXConstructExpr *Call) {
     forwardInfo(Call->getArg(0), Call);
     
   } else {
+    // TODO: Adjust state of args appropriately.
+    
     ConsumedState RetState = mapConsumableAttrState(ThisType);
-    PropagationMap.insert(PairType(Call, PropagationInfo(RetState, ThisType)));
+    PropagationMap.insert(PairType(Call, PropagationInfo(RetState)));
   }
 }
 
@@ -736,6 +765,9 @@ void ConsumedStmtVisitor::VisitCXXMemberCallExpr(
       else if (MethodDecl->hasAttr<SetTypestateAttr>())
         StateMap->setState(PInfo.getVar(),
           mapSetTypestateAttrState(MethodDecl->getAttr<SetTypestateAttr>()));
+    } else if (PInfo.isTmp() && MethodDecl->hasAttr<SetTypestateAttr>()) {
+      StateMap->setState(PInfo.getTmp(),
+        mapSetTypestateAttrState(MethodDecl->getAttr<SetTypestateAttr>()));
     }
   }
 }
@@ -762,28 +794,17 @@ void ConsumedStmtVisitor::VisitCXXOperatorCallExpr(
       LPInfo = LEntry->second;
       RPInfo = REntry->second;
       
-      if (LPInfo.isVar() && RPInfo.isVar()) {
-        StateMap->setState(LPInfo.getVar(),
-          StateMap->getState(RPInfo.getVar()));
-        
-        StateMap->setState(RPInfo.getVar(), consumed::CS_Consumed);
-        
+      if (LPInfo.isPointerToValue() && RPInfo.isPointerToValue()) {
+        setStateForVarOrTmp(StateMap, LPInfo, RPInfo.getAsState(StateMap));
         PropagationMap.insert(PairType(Call, LPInfo));
+        setStateForVarOrTmp(StateMap, RPInfo, consumed::CS_Consumed);
         
-      } else if (LPInfo.isVar() && !RPInfo.isVar()) {
-        StateMap->setState(LPInfo.getVar(), RPInfo.getState());
-        
+      } else if (RPInfo.isState()) {
+        setStateForVarOrTmp(StateMap, LPInfo, RPInfo.getState());
         PropagationMap.insert(PairType(Call, LPInfo));
-        
-      } else if (!LPInfo.isVar() && RPInfo.isVar()) {
-        PropagationMap.insert(PairType(Call,
-          PropagationInfo(StateMap->getState(RPInfo.getVar()),
-                          LPInfo.getTempType())));
-        
-        StateMap->setState(RPInfo.getVar(), consumed::CS_Consumed);
         
       } else {
-        PropagationMap.insert(PairType(Call, RPInfo));
+        setStateForVarOrTmp(StateMap, RPInfo, consumed::CS_Consumed);
       }
       
     } else if (LEntry != PropagationMap.end() &&
@@ -791,21 +812,24 @@ void ConsumedStmtVisitor::VisitCXXOperatorCallExpr(
       
       LPInfo = LEntry->second;
       
-      if (LPInfo.isVar()) {
-        StateMap->setState(LPInfo.getVar(), consumed::CS_Unknown);
-        
+      assert(!LPInfo.isTest());
+      
+      if (LPInfo.isPointerToValue()) {
+        setStateForVarOrTmp(StateMap, LPInfo, consumed::CS_Unknown);
         PropagationMap.insert(PairType(Call, LPInfo));
         
-      } else if (LPInfo.isState()) {
+      } else {
         PropagationMap.insert(PairType(Call,
-          PropagationInfo(consumed::CS_Unknown, LPInfo.getTempType())));
+          PropagationInfo(consumed::CS_Unknown)));
       }
       
     } else if (LEntry == PropagationMap.end() &&
                REntry != PropagationMap.end()) {
       
-      if (REntry->second.isVar())
-        StateMap->setState(REntry->second.getVar(), consumed::CS_Consumed);
+      RPInfo = REntry->second;
+      
+      if (RPInfo.isPointerToValue())
+        setStateForVarOrTmp(StateMap, RPInfo, consumed::CS_Consumed);
     }
     
   } else {
@@ -826,7 +850,11 @@ void ConsumedStmtVisitor::VisitCXXOperatorCallExpr(
         else if (FunDecl->hasAttr<SetTypestateAttr>())
           StateMap->setState(PInfo.getVar(),
             mapSetTypestateAttrState(FunDecl->getAttr<SetTypestateAttr>()));
-      }
+        
+      } else if (PInfo.isTmp() && FunDecl->hasAttr<SetTypestateAttr>()) {
+        StateMap->setState(PInfo.getTmp(),
+          mapSetTypestateAttrState(FunDecl->getAttr<SetTypestateAttr>()));
+    }
     }
   }
 }
@@ -892,10 +920,7 @@ void ConsumedStmtVisitor::VisitReturnStmt(const ReturnStmt *Ret) {
     InfoEntry Entry = PropagationMap.find(Ret->getRetValue());
     
     if (Entry != PropagationMap.end()) {
-      assert(Entry->second.isState() || Entry->second.isVar());
-       
-      ConsumedState RetState = Entry->second.isState() ?
-        Entry->second.getState() : StateMap->getState(Entry->second.getVar());
+      ConsumedState RetState = Entry->second.getAsState(StateMap);
         
       if (RetState != ExpectedState)
         Analyzer.WarningsHandler.warnReturnTypestateMismatch(
@@ -918,7 +943,7 @@ void ConsumedStmtVisitor::VisitUnaryOperator(const UnaryOperator *UOp) {
     break;
   
   case UO_LNot:
-    if (Entry->second.isTest() || Entry->second.isBinTest())
+    if (Entry->second.isTest())
       PropagationMap.insert(PairType(UOp, Entry->second.invertTest()));
     break;
   
@@ -931,10 +956,12 @@ void ConsumedStmtVisitor::VisitUnaryOperator(const UnaryOperator *UOp) {
 void ConsumedStmtVisitor::VisitVarDecl(const VarDecl *Var) {
   if (isConsumableType(Var->getType())) {
     if (Var->hasInit()) {
-      MapType::iterator VIT = PropagationMap.find(Var->getInit());
+      MapType::iterator VIT = PropagationMap.find(
+        Var->getInit()->IgnoreImplicit());
       if (VIT != PropagationMap.end()) {
         PropagationInfo PInfo = VIT->second;
-        ConsumedState St = getPInfoState(PInfo);
+        ConsumedState St = PInfo.getAsState(StateMap);
+        
         if (St != consumed::CS_None) {
           StateMap->setState(Var, St);
           return;
@@ -1133,8 +1160,8 @@ void ConsumedStateMap::checkParamsForReturnTypestate(SourceLocation BlameLoc,
   
   ConsumedState ExpectedState;
   
-  for (MapType::const_iterator DMI = Map.begin(), DME = Map.end(); DMI != DME;
-       ++DMI) {
+  for (VarMapType::const_iterator DMI = VarMap.begin(), DME = VarMap.end();
+       DMI != DME; ++DMI) {
     
     if (isa<ParmVarDecl>(DMI->first)) {
       const ParmVarDecl *Param = cast<ParmVarDecl>(DMI->first);
@@ -1153,15 +1180,27 @@ void ConsumedStateMap::checkParamsForReturnTypestate(SourceLocation BlameLoc,
   }
 }
 
+void ConsumedStateMap::clearTemporaries() {
+  TmpMap.clear();
+}
+
 ConsumedState ConsumedStateMap::getState(const VarDecl *Var) const {
-  MapType::const_iterator Entry = Map.find(Var);
+  VarMapType::const_iterator Entry = VarMap.find(Var);
   
-  if (Entry != Map.end()) {
+  if (Entry != VarMap.end())
     return Entry->second;
     
-  } else {
-    return CS_None;
-  }
+  return CS_None;
+}
+
+ConsumedState
+ConsumedStateMap::getState(const CXXBindTemporaryExpr *Tmp) const {
+  TmpMapType::const_iterator Entry = TmpMap.find(Tmp);
+  
+  if (Entry != TmpMap.end())
+    return Entry->second;
+  
+  return CS_None;
 }
 
 void ConsumedStateMap::intersect(const ConsumedStateMap *Other) {
@@ -1172,8 +1211,8 @@ void ConsumedStateMap::intersect(const ConsumedStateMap *Other) {
     return;
   }
   
-  for (MapType::const_iterator DMI = Other->Map.begin(), DME = Other->Map.end();
-       DMI != DME; ++DMI) {
+  for (VarMapType::const_iterator DMI = Other->VarMap.begin(),
+       DME = Other->VarMap.end(); DMI != DME; ++DMI) {
     
     LocalState = this->getState(DMI->first);
     
@@ -1181,7 +1220,7 @@ void ConsumedStateMap::intersect(const ConsumedStateMap *Other) {
       continue;
     
     if (LocalState != DMI->second)
-       Map[DMI->first] = CS_Unknown;
+       VarMap[DMI->first] = CS_Unknown;
   }
 }
 
@@ -1192,8 +1231,8 @@ void ConsumedStateMap::intersectAtLoopHead(const CFGBlock *LoopHead,
   ConsumedState LocalState;
   SourceLocation BlameLoc = getLastStmtLoc(LoopBack);
   
-  for (MapType::const_iterator DMI = LoopBackStates->Map.begin(),
-       DME = LoopBackStates->Map.end(); DMI != DME; ++DMI) {
+  for (VarMapType::const_iterator DMI = LoopBackStates->VarMap.begin(),
+       DME = LoopBackStates->VarMap.end(); DMI != DME; ++DMI) {
     
     LocalState = this->getState(DMI->first);
     
@@ -1201,7 +1240,7 @@ void ConsumedStateMap::intersectAtLoopHead(const CFGBlock *LoopHead,
       continue;
     
     if (LocalState != DMI->second) {
-      Map[DMI->first] = CS_Unknown;
+      VarMap[DMI->first] = CS_Unknown;
       WarningsHandler.warnLoopStateMismatch(
         BlameLoc, DMI->first->getNameAsString());
     }
@@ -1210,20 +1249,26 @@ void ConsumedStateMap::intersectAtLoopHead(const CFGBlock *LoopHead,
 
 void ConsumedStateMap::markUnreachable() {
   this->Reachable = false;
-  Map.clear();
+  VarMap.clear();
+  TmpMap.clear();
 }
 
 void ConsumedStateMap::setState(const VarDecl *Var, ConsumedState State) {
-  Map[Var] = State;
+  VarMap[Var] = State;
+}
+
+void ConsumedStateMap::setState(const CXXBindTemporaryExpr *Tmp,
+                                ConsumedState State) {
+  TmpMap[Tmp] = State;
 }
 
 void ConsumedStateMap::remove(const VarDecl *Var) {
-  Map.erase(Var);
+  VarMap.erase(Var);
 }
 
 bool ConsumedStateMap::operator!=(const ConsumedStateMap *Other) const {
-  for (MapType::const_iterator DMI = Other->Map.begin(), DME = Other->Map.end();
-       DMI != DME; ++DMI) {
+  for (VarMapType::const_iterator DMI = Other->VarMap.begin(),
+       DME = Other->VarMap.end(); DMI != DME; ++DMI) {
     
     if (this->getState(DMI->first) != DMI->second)
       return true;
@@ -1276,10 +1321,10 @@ bool ConsumedAnalyzer::splitState(const CFGBlock *CurrBlock,
     if (!PInfo.isValid() && isa<BinaryOperator>(Cond))
       PInfo = Visitor.getInfo(cast<BinaryOperator>(Cond)->getRHS());
     
-    if (PInfo.isTest()) {
+    if (PInfo.isVarTest()) {
       CurrStates->setSource(Cond);
       FalseStates->setSource(Cond);
-      splitVarStateForIf(IfNode, PInfo.getTest(), CurrStates,
+      splitVarStateForIf(IfNode, PInfo.getVarTest(), CurrStates,
                          FalseStates.get());
       
     } else if (PInfo.isBinTest()) {
@@ -1295,11 +1340,11 @@ bool ConsumedAnalyzer::splitState(const CFGBlock *CurrBlock,
     dyn_cast_or_null<BinaryOperator>(CurrBlock->getTerminator().getStmt())) {
     
     PInfo = Visitor.getInfo(BinOp->getLHS());
-    if (!PInfo.isTest()) {
+    if (!PInfo.isVarTest()) {
       if ((BinOp = dyn_cast_or_null<BinaryOperator>(BinOp->getLHS()))) {
         PInfo = Visitor.getInfo(BinOp->getRHS());
         
-        if (!PInfo.isTest())
+        if (!PInfo.isVarTest())
           return false;
         
       } else {
@@ -1310,7 +1355,7 @@ bool ConsumedAnalyzer::splitState(const CFGBlock *CurrBlock,
     CurrStates->setSource(BinOp);
     FalseStates->setSource(BinOp);
     
-    const VarTestResult &Test = PInfo.getTest();
+    const VarTestResult &Test = PInfo.getVarTest();
     ConsumedState VarState = CurrStates->getState(Test.Var);
     
     if (BinOp->getOpcode() == BO_LAnd) {
@@ -1402,30 +1447,21 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
       case CFGElement::TemporaryDtor: {
         const CFGTemporaryDtor DTor = BI->castAs<CFGTemporaryDtor>();
         const CXXBindTemporaryExpr *BTE = DTor.getBindTemporaryExpr();
-        PropagationInfo PInfo = Visitor.getInfo(BTE);
         
-        if (PInfo.isValid())
-          Visitor.checkCallability(PInfo,
-                                   DTor.getDestructorDecl(AC.getASTContext()),
-                                   BTE->getExprLoc());
+        Visitor.checkCallability(PropagationInfo(BTE),
+                                 DTor.getDestructorDecl(AC.getASTContext()),
+                                 BTE->getExprLoc());
         break;
       }
       
       case CFGElement::AutomaticObjectDtor: {
         const CFGAutomaticObjDtor DTor = BI->castAs<CFGAutomaticObjDtor>();
-        
+        SourceLocation Loc = DTor.getTriggerStmt()->getLocEnd();
         const VarDecl *Var = DTor.getVarDecl();
-        ConsumedState VarState = CurrStates->getState(Var);
         
-        if (VarState != CS_None) {
-          PropagationInfo PInfo(Var);
-          
-          Visitor.checkCallability(PInfo,
-                                   DTor.getDestructorDecl(AC.getASTContext()),
-                                   getLastStmtLoc(CurrBlock));
-          
-          CurrStates->remove(Var);
-        }
+        Visitor.checkCallability(PropagationInfo(Var),
+                                 DTor.getDestructorDecl(AC.getASTContext()),
+                                 Loc);
         break;
       }
       
@@ -1433,6 +1469,8 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
         break;
       }
     }
+    
+    CurrStates->clearTemporaries();
     
     // TODO: Handle other forms of branching with precision, including while-
     //       and for-loops. (Deferred)

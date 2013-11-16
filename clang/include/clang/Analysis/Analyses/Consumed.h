@@ -130,27 +130,36 @@ namespace consumed {
 
   class ConsumedStateMap {
     
-    typedef llvm::DenseMap<const VarDecl *, ConsumedState> MapType;
-    typedef std::pair<const VarDecl *, ConsumedState> PairType;
+    typedef llvm::DenseMap<const VarDecl *, ConsumedState> VarMapType;
+    typedef llvm::DenseMap<const CXXBindTemporaryExpr *, ConsumedState>
+            TmpMapType;
     
   protected:
     
     bool Reachable;
     const Stmt *From;
-    MapType Map;
+    VarMapType VarMap;
+    TmpMapType TmpMap;
     
   public:
     ConsumedStateMap() : Reachable(true), From(NULL) {}
     ConsumedStateMap(const ConsumedStateMap &Other)
-      : Reachable(Other.Reachable), From(Other.From), Map(Other.Map) {}
+      : Reachable(Other.Reachable), From(Other.From), VarMap(Other.VarMap),
+        TmpMap() {}
     
     /// \brief Warn if any of the parameters being tracked are not in the state
     /// they were declared to be in upon return from a function.
     void checkParamsForReturnTypestate(SourceLocation BlameLoc,
       ConsumedWarningsHandlerBase &WarningsHandler) const;
     
+    /// \brief Clear the TmpMap.
+    void clearTemporaries();
+    
     /// \brief Get the consumed state of a given variable.
     ConsumedState getState(const VarDecl *Var) const;
+    
+    /// \brief Get the consumed state of a given temporary value.
+    ConsumedState getState(const CXXBindTemporaryExpr *Tmp) const;
     
     /// \brief Merge this state map with another map.
     void intersect(const ConsumedStateMap *Other);
@@ -172,6 +181,9 @@ namespace consumed {
     
     /// \brief Set the consumed state of a given variable.
     void setState(const VarDecl *Var, ConsumedState State);
+    
+    /// \brief Set the consumed state of a given temporary value.
+    void setState(const CXXBindTemporaryExpr *Tmp, ConsumedState State);
     
     /// \brief Remove the variable from our state map.
     void remove(const VarDecl *Var);
