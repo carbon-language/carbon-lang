@@ -572,7 +572,6 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
   OS << "  AttributeSet AS[" << maxArgAttrs+1 << "];\n";
   OS << "  unsigned NumAttrs = 0;\n";
   OS << "  if (id != 0) {\n";
-  OS << "    SmallVector<Attribute::AttrKind, 8> AttrVec;\n";
   OS << "    switch(IntrinsicsToAttributesMap[id - ";
   if (TargetOnly)
     OS << "Intrinsic::num_intrinsics";
@@ -582,7 +581,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
   OS << "    default: llvm_unreachable(\"Invalid attribute number\");\n";
   for (UniqAttrMapTy::const_iterator I = UniqAttributes.begin(),
        E = UniqAttributes.end(); I != E; ++I) {
-    OS << "    case " << I->second << ":\n";
+    OS << "    case " << I->second << ": {\n";
 
     const CodeGenIntrinsic &intrinsic = *(I->first);
 
@@ -595,55 +594,77 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
       while (ai != ae) {
         unsigned argNo = intrinsic.ArgumentAttributes[ai].first;
 
-        OS << "      AttrVec.clear();\n";
+        OS <<  "      const Attribute::AttrKind AttrParam" << argNo + 1 <<"[]= {";
+        bool addComma = false;
 
         do {
           switch (intrinsic.ArgumentAttributes[ai].second) {
           case CodeGenIntrinsic::NoCapture:
-            OS << "      AttrVec.push_back(Attribute::NoCapture);\n";
+            if (addComma)
+              OS << ",";
+            OS << "Attribute::NoCapture";
+            addComma = true;
             break;
           case CodeGenIntrinsic::ReadOnly:
-            OS << "      AttrVec.push_back(Attribute::ReadOnly);\n";
+            if (addComma)
+              OS << ",";
+            OS << "Attribute::ReadOnly";
+            addComma = true;
             break;
           case CodeGenIntrinsic::ReadNone:
-            OS << "      AttrVec.push_back(Attribute::ReadNone);\n";
+            if (addComma)
+              OS << ",";
+            OS << "Attributes::ReadNone";
+            addComma = true;
             break;
           }
 
           ++ai;
         } while (ai != ae && intrinsic.ArgumentAttributes[ai].first == argNo);
-
+        OS << "};\n";
         OS << "      AS[" << numAttrs++ << "] = AttributeSet::get(C, "
-           << argNo+1 << ", AttrVec);\n";
+           << argNo+1 << ", AttrParam" << argNo +1 << ");\n";
       }
     }
 
     ModRefKind modRef = getModRefKind(intrinsic);
 
     if (!intrinsic.canThrow || modRef || intrinsic.isNoReturn) {
-      OS << "      AttrVec.clear();\n";
-
-      if (!intrinsic.canThrow)
-        OS << "      AttrVec.push_back(Attribute::NoUnwind);\n";
-      if (intrinsic.isNoReturn)
-        OS << "      AttrVec.push_back(Attribute::NoReturn);\n";
+      OS << "      const Attribute::AttrKind Atts[] = {";
+      bool addComma = false;
+      if (!intrinsic.canThrow) {
+        OS << "Attribute::NoUnwind";
+        addComma = true;
+      }
+      if (intrinsic.isNoReturn) {
+        if (addComma)
+          OS << ",";
+        OS << "Attribute::NoReturn";
+        addComma = true;
+      }
 
       switch (modRef) {
       case MRK_none: break;
       case MRK_readonly:
-        OS << "      AttrVec.push_back(Attribute::ReadOnly);\n";
+        if (addComma)
+          OS << ",";
+        OS << "Attribute::ReadOnly";
         break;
       case MRK_readnone:
-        OS << "      AttrVec.push_back(Attribute::ReadNone);\n";
+        if (addComma)
+          OS << ",";
+        OS << "Attribute::ReadNone";
         break;
       }
+      OS << "};\n";
       OS << "      AS[" << numAttrs++ << "] = AttributeSet::get(C, "
-         << "AttributeSet::FunctionIndex, AttrVec);\n";
+         << "AttributeSet::FunctionIndex, Atts);\n";
     }
 
     if (numAttrs) {
       OS << "      NumAttrs = " << numAttrs << ";\n";
       OS << "      break;\n";
+      OS << "      }\n";
     } else {
       OS << "      return AttributeSet();\n";
     }
