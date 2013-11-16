@@ -53,8 +53,8 @@ namespace {
 ///
 class CodePreparation : public FunctionPass {
   CodePreparation(const CodePreparation &) LLVM_DELETED_FUNCTION;
-  const CodePreparation &operator=(
-      const CodePreparation &) LLVM_DELETED_FUNCTION;
+  const CodePreparation &
+  operator=(const CodePreparation &) LLVM_DELETED_FUNCTION;
 
   LoopInfo *LI;
   ScalarEvolution *SE;
