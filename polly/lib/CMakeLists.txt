@@ -28,7 +28,6 @@ add_polly_loadable_module(LLVMPolly
   DeadCodeElimination.cpp
   IndependentBlocks.cpp
   IndVarSimplify.cpp
-  MayAliasSet.cpp
   Pocc.cpp
   RegisterPasses.cpp
   ScheduleOptimizer.cpp

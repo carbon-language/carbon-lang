@@ -1,5 +1,6 @@
 add_polly_library(PollyAnalysis
   Dependences.cpp
+  MayAliasSet.cpp
   ScopDetection.cpp
   ScopInfo.cpp
   ScopGraphPrinter.cpp
