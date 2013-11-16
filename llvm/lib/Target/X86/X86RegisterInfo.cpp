@@ -240,6 +240,7 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     return CSR_NoRegs_SaveList;
 
   case CallingConv::WebKit_JS:
+    return CSR_64_SaveList;
   case CallingConv::AnyReg:
     return CSR_MostRegs_64_SaveList;
 
