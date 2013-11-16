@@ -6872,15 +6872,6 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       NewFD->setType(Context.getFunctionType(FPT->getResultType(),
                                              FPT->getArgTypes(), EPI));
     }
-
-    // C++11 [replacement.functions]p3:
-    //  The program's definitions shall not be specified as inline.
-    //
-    // N.B. We diagnose declarations instead of definitions per LWG issue 2340.
-    if (isInline && NewFD->isReplaceableGlobalAllocationFunction())
-      Diag(D.getDeclSpec().getInlineSpecLoc(),
-           diag::ext_operator_new_delete_declared_inline)
-        << NewFD->getDeclName();
   }
 
   // Filter out previous declarations that don't match the scope.
@@ -7015,6 +7006,20 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
             Previous.getResultKind() != LookupResult::FoundOverloaded) &&
            "previous declaration set still overloaded");
   } else {
+    // C++11 [replacement.functions]p3:
+    //  The program's definitions shall not be specified as inline.
+    //
+    // N.B. We diagnose declarations instead of definitions per LWG issue 2340.
+    //
+    // Suppress the diagnostic if the function is __attribute__((used)), since
+    // that forces an external definition to be emitted.
+    if (D.getDeclSpec().isInlineSpecified() &&
+        NewFD->isReplaceableGlobalAllocationFunction() &&
+        !NewFD->hasAttr<UsedAttr>())
+      Diag(D.getDeclSpec().getInlineSpecLoc(),
+           diag::ext_operator_new_delete_declared_inline)
+        << NewFD->getDeclName();
+
     // If the declarator is a template-id, translate the parser's template 
     // argument list into our AST format.
     if (D.getName().getKind() == UnqualifiedId::IK_TemplateId) {

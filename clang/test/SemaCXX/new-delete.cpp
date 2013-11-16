@@ -18,13 +18,18 @@ struct V : U
 {
 };
 
+inline void operator delete(void *); // expected-warning {{replacement function 'operator delete' cannot be declared 'inline'}}
+
+__attribute__((used))
+inline void *operator new(size_t) { // no warning, due to __attribute__((used))
+  return 0;
+}
+
 // PR5823
 void* operator new(const size_t); // expected-note 2 {{candidate}}
 void* operator new(size_t, int*); // expected-note 3 {{candidate}}
 void* operator new(size_t, float*); // expected-note 3 {{candidate}}
 void* operator new(size_t, S); // expected-note 2 {{candidate}}
-
-inline void operator delete(void *); // expected-warning {{replacement function 'operator delete' cannot be declared 'inline'}}
 
 struct foo { };
 
