@@ -83,6 +83,13 @@ Non-comprehensive list of changes in this release
 * FileCheck now allows specifing -check-prefix multiple times. This
   helps reduce duplicate check lines when using multiple RUN lines.
 
+* The bitcast instruction no longer allows casting between pointers
+   with different address spaces. To achieve this, use the new
+   addrspacecast instruction.
+
+* Different sized pointers for different address spaces should now
+  generally work. This is primarily useful for GPU targets.
+
 * ... next change ...
 
 .. NOTE
