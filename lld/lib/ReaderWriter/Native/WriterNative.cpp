@@ -416,38 +416,34 @@ private:
       const Atom* atom = it.first;
       uint32_t targetIndex = it.second;
       assert(targetIndex < maxTargetIndex);
-      uint32_t atomIndex = 0;
+
       TargetToIndex::iterator pos = _definedAtomIndex.find(atom);
-      if ( pos != _definedAtomIndex.end() ) {
-        atomIndex = pos->second;
+      if (pos != _definedAtomIndex.end()) {
+        targetIndexes[targetIndex] = pos->second;
+        continue;
       }
-      else {
-        pos = _undefinedAtomIndex.find(atom);
-        if ( pos != _undefinedAtomIndex.end() ) {
-          atomIndex = pos->second + _definedAtomIvars.size();
-        }
-        else {
-          pos = _sharedLibraryAtomIndex.find(atom);
-          if ( pos != _sharedLibraryAtomIndex.end() ) {
-            assert(pos != _sharedLibraryAtomIndex.end());
-            atomIndex = pos->second
-                      + _definedAtomIvars.size()
-                      + _undefinedAtomIndex.size();
-          }
-          else {
-            pos = _absoluteAtomIndex.find(atom);
-            assert(pos != _absoluteAtomIndex.end());
-            atomIndex = pos->second
-                      + _definedAtomIvars.size()
-                      + _undefinedAtomIndex.size()
-                      + _sharedLibraryAtomIndex.size();
-         }
-        }
+      uint32_t base = _definedAtomIvars.size();
+
+      pos = _undefinedAtomIndex.find(atom);
+      if (pos != _undefinedAtomIndex.end()) {
+        targetIndexes[targetIndex] = pos->second + base;
+        continue;
       }
-      targetIndexes[targetIndex] = atomIndex;
+      base += _undefinedAtomIndex.size();
+
+      pos = _sharedLibraryAtomIndex.find(atom);
+      if (pos != _sharedLibraryAtomIndex.end()) {
+        targetIndexes[targetIndex] = pos->second + base;
+        continue;
+      }
+      base += _sharedLibraryAtomIndex.size();
+
+      pos = _absoluteAtomIndex.find(atom);
+      assert(pos != _absoluteAtomIndex.end());
+      targetIndexes[targetIndex] = pos->second + base;
     }
     // write table
-    out.write((char*)&targetIndexes[0], maxTargetIndex*sizeof(uint32_t));
+    out.write((char*)&targetIndexes[0], maxTargetIndex * sizeof(uint32_t));
   }
 
   uint32_t getAddendIndex(Reference::Addend addend) {
