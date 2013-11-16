@@ -523,12 +523,12 @@ define i1 @test52(i32 %x1) nounwind {
 
 ; PR9838
 ; CHECK-LABEL: @test53(
-; CHECK-NEXT: ashr exact
-; CHECK-NEXT: ashr
+; CHECK-NEXT: sdiv exact
+; CHECK-NEXT: sdiv
 ; CHECK-NEXT: icmp
 define i1 @test53(i32 %a, i32 %b) nounwind {
- %x = ashr exact i32 %a, 30
- %y = ashr i32 %b, 30
+ %x = sdiv exact i32 %a, 30
+ %y = sdiv i32 %b, 30
  %z = icmp eq i32 %x, %y
  ret i1 %z
 }
@@ -1335,4 +1335,24 @@ false:
 end:
   %res = phi i1 [%restrue, %true], [%resfalse, %false]
   ret i1 %res
+}
+
+; CHECK-LABEL: @icmp_lshr_lshr_eq
+; CHECK: %z.unshifted = xor i32 %a, %b
+; CHECK: %z = icmp ult i32 %z.unshifted, 1073741824
+define i1 @icmp_lshr_lshr_eq(i32 %a, i32 %b) nounwind {
+ %x = lshr i32 %a, 30
+ %y = lshr i32 %b, 30
+ %z = icmp eq i32 %x, %y
+ ret i1 %z
+}
+
+; CHECK-LABEL: @icmp_ashr_ashr_ne
+; CHECK: %z.unshifted = xor i32 %a, %b
+; CHECK: %z = icmp ugt i32 %z.unshifted, 255
+define i1 @icmp_ashr_ashr_ne(i32 %a, i32 %b) nounwind {
+ %x = ashr i32 %a, 8
+ %y = ashr i32 %b, 8
+ %z = icmp ne i32 %x, %y
+ ret i1 %z
 }
