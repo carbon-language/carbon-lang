@@ -735,8 +735,6 @@ DeathTest::TestRole WindowsDeathTest::AssumeRole() {
 }
 # else  // We are not on Windows.
 
-DeathTestFactory::~DeathTestFactory() {}
-
 // ForkingDeathTest provides implementations for most of the abstract
 // methods of the DeathTest interface.  Only the AssumeRole method is
 // left undefined.
@@ -1038,6 +1036,8 @@ DeathTest::TestRole ExecDeathTest::AssumeRole() {
 }
 
 # endif  // !GTEST_OS_WINDOWS
+
+DeathTestFactory::~DeathTestFactory() {}
 
 // Creates a concrete DeathTest-derived class that depends on the
 // --gtest_death_test_style flag, and sets the pointer pointed to
