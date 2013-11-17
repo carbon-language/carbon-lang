@@ -727,7 +727,7 @@ CINDEX_LINKAGE void clang_disposeDiagnosticSet(CXDiagnosticSet Diags);
  * \brief Retrieve the child diagnostics of a CXDiagnostic. 
  *
  * This CXDiagnosticSet does not need to be released by
- * clang_diposeDiagnosticSet.
+ * clang_disposeDiagnosticSet.
  */
 CINDEX_LINKAGE CXDiagnosticSet clang_getChildDiagnostics(CXDiagnostic D);
 
@@ -767,7 +767,7 @@ CINDEX_LINKAGE void clang_disposeDiagnostic(CXDiagnostic Diagnostic);
  * \brief Options to control the display of diagnostics.
  *
  * The values in this enum are meant to be combined to customize the
- * behavior of \c clang_displayDiagnostic().
+ * behavior of \c clang_formatDiagnostic().
  */
 enum CXDiagnosticDisplayOptions {
   /**
@@ -854,7 +854,7 @@ CINDEX_LINKAGE CXString clang_formatDiagnostic(CXDiagnostic Diagnostic,
  * default behavior of the clang compiler.
  *
  * \returns A set of display options suitable for use with \c
- * clang_displayDiagnostic().
+ * clang_formatDiagnostic().
  */
 CINDEX_LINKAGE unsigned clang_defaultDiagnosticDisplayOptions(void);
 
