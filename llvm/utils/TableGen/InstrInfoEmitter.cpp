@@ -57,6 +57,7 @@ private:
                   std::map<std::vector<Record*>, unsigned> &EL,
                   const OperandInfoMapTy &OpInfo,
                   raw_ostream &OS);
+  void emitOperandTypesEnum(raw_ostream &OS, const CodeGenTarget &Target);
   void initOperandMapData(
              const std::vector<const CodeGenInstruction *> NumberedInstructions,
              const std::string &Namespace,
@@ -311,6 +312,34 @@ void InstrInfoEmitter::emitOperandNameMappings(raw_ostream &OS,
 
 }
 
+/// Generate an enum for all the operand types for this target, under the
+/// llvm::TargetNamespace::OpTypes namespace.
+/// Operand types are all definitions derived of the Operand Target.td class.
+void InstrInfoEmitter::emitOperandTypesEnum(raw_ostream &OS,
+                                            const CodeGenTarget &Target) {
+
+  const std::string &Namespace = Target.getInstNamespace();
+  std::vector<Record *> Operands = Records.getAllDerivedDefinitions("Operand");
+
+  OS << "\n#ifdef GET_INSTRINFO_OPERAND_TYPES_ENUM\n";
+  OS << "#undef GET_INSTRINFO_OPERAND_TYPES_ENUM\n";
+  OS << "namespace llvm {";
+  OS << "namespace " << Namespace << " {\n";
+  OS << "namespace OpTypes { \n";
+  OS << "enum OperandType {\n";
+
+  for (unsigned oi = 0, oe = Operands.size(); oi != oe; ++oi) {
+    if (!Operands[oi]->isAnonymous())
+      OS << "  " << Operands[oi]->getName() << " = " << oi << ",\n";
+  }
+
+  OS << "  OPERAND_TYPE_LIST_END" << "\n};\n";
+  OS << "} // End namespace OpTypes\n";
+  OS << "} // End namespace " << Namespace << "\n";
+  OS << "} // End namespace llvm\n";
+  OS << "#endif // GET_INSTRINFO_OPERAND_TYPES_ENUM\n";
+}
+
 //===----------------------------------------------------------------------===//
 // Main Output.
 //===----------------------------------------------------------------------===//
@@ -432,6 +461,8 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   OS << "#endif // GET_INSTRINFO_CTOR_DTOR\n\n";
 
   emitOperandNameMappings(OS, Target, NumberedInstructions);
+
+  emitOperandTypesEnum(OS, Target);
 }
 
 void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,

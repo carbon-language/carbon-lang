@@ -955,6 +955,50 @@ XXXInstrInfo.h:
     int16_t getNamedOperandIdx(uint16_t Opcode, uint16_t NamedIndex);
   } // End namespace XXX
 
+Instruction Operand Types
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+TableGen will also generate an enumeration consisting of all named Operand
+types defined in the backend, in the llvm::XXX::OpTypes namespace.
+Some common immediate Operand types (for instance i8, i32, i64, f32, f64)
+are defined for all targets in ``include/llvm/Target/Target.td``, and are
+available in each Target's OpTypes enum.  Also, only named Operand types appear
+in the enumeration: anonymous types are ignored.
+For example, the X86 backend defines ``brtarget`` and ``brtarget8``, both
+instances of the TableGen ``Operand`` class, which represent branch target
+operands:
+
+.. code-block:: llvm
+
+  def brtarget : Operand<OtherVT>;
+  def brtarget8 : Operand<OtherVT>;
+
+This results in:
+
+.. code-block:: c++
+  namespace X86 {
+  namespace OpTypes {
+  enum OperandType {
+    ...
+    brtarget,
+    brtarget8,
+    ...
+    i32imm,
+    i64imm,
+    ...
+    OPERAND_TYPE_LIST_END
+  } // End namespace OpTypes
+  } // End namespace X86
+
+In typical TableGen fashion, to use the enum, you will need to define a
+preprocessor macro:
+
+.. code-block:: c++
+
+  #define GET_INSTRINFO_OPERAND_TYPES_ENUM // For OpTypes enum
+  #include "XXXGenInstrInfo.inc"
+
+
 Instruction Scheduling
 ----------------------
 
