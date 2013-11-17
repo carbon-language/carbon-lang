@@ -178,4 +178,6 @@ define i32 @PR17487(i1 %tobool) {
 
 ; X64-LABEL: PR17487:
 ; X64: andn
+; X32-LABEL: PR17487:
+; X32: andn
 }
