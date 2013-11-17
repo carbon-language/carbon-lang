@@ -276,7 +276,7 @@ protected:
           int Idx = PossibleRedIdx[J1];
           assert(Idx == PossibleRedIdx[J2] &&
                  "Recording pair from different reductions?");
-          Reds.insert(PossibleRedIdx[J1]);
+          Reds.insert(Idx);
         }
       }
 
