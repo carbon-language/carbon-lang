@@ -167,11 +167,8 @@ namespace {
     bool doInitialization(Module &M) {
       Mod = &M;
       Context = &M.getContext();
-      Finder.reset();
 
       DL = getAnalysisIfAvailable<DataLayout>();
-      if (!DisableDebugInfoVerifier)
-        Finder.processModule(M);
 
       // We must abort before returning back to the pass manager, or else the
       // pass manager may try to run other passes on the broken module.
@@ -185,9 +182,14 @@ namespace {
       Mod = F.getParent();
       if (!Context) Context = &F.getContext();
 
+      Finder.reset();
       visit(F);
       InstsInThisBlock.clear();
       PersonalityFn = 0;
+
+      if (!DisableDebugInfoVerifier)
+        // Verify Debug Info.
+        verifyDebugInfo();
 
       // We must abort before returning back to the pass manager, or else the
       // pass manager may try to run other passes on the broken module.
@@ -218,8 +220,12 @@ namespace {
       visitModuleFlags(M);
       visitModuleIdents(M);
 
-      // Verify Debug Info.
-      verifyDebugInfo();
+      if (!DisableDebugInfoVerifier) {
+        Finder.reset();
+        Finder.processModule(M);
+        // Verify Debug Info.
+        verifyDebugInfo();
+      }
 
       // If the module is broken, abort at this time.
       return abortIfBroken();
