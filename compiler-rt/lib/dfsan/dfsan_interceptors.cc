@@ -12,7 +12,7 @@
 // Interceptors for standard library functions.
 //===----------------------------------------------------------------------===//
 
-#include "sanitizer/dfsan_interface.h"
+#include "dfsan/dfsan.h"
 #include "interception/interception.h"
 #include "sanitizer_common/sanitizer_common.h"
 

@@ -11,7 +11,6 @@
 //
 // This file defines the custom functions listed in done_abilist.txt.
 //===----------------------------------------------------------------------===//
-#include "sanitizer/dfsan_interface.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_linux.h"
 
