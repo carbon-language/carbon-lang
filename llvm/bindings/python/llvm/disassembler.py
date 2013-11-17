@@ -33,6 +33,29 @@ callbacks = {}
 # Constants for set_options
 Option_UseMarkup = 1
 
+
+
+_initialized = False
+_targets = ['AArch64', 'ARM', 'Hexagon', 'MSP430', 'Mips', 'NVPTX', 'PowerPC', 'R600', 'Sparc', 'SystemZ', 'X86', 'XCore']
+def _ensure_initialized():
+    global _initialized
+    if not _initialized:
+        # Here one would want to call the functions
+        # LLVMInitializeAll{TargetInfo,TargetMC,Disassembler}s, but
+        # unfortunately they are only defined as static inline
+        # functions in the header files of llvm-c, so they don't exist
+        # as symbols in the shared library.
+        # So until that is fixed use this hack to initialize them all
+        for tgt in _targets:
+            for initializer in ("TargetInfo", "TargetMC", "Disassembler"):
+                try:
+                    f = getattr(lib, "LLVMInitialize" + tgt + initializer)
+                except AttributeError:
+                    continue
+                f()
+        _initialized = True
+
+
 class Disassembler(LLVMObject):
     """Represents a disassembler instance.
 
@@ -47,6 +70,9 @@ class Disassembler(LLVMObject):
         The triple argument is the triple to create the disassembler for. This
         is something like 'i386-apple-darwin9'.
         """
+
+        _ensure_initialized()
+
         ptr = lib.LLVMCreateDisasm(c_char_p(triple), c_void_p(None), c_int(0),
                 callbacks['op_info'](0), callbacks['symbol_lookup'](0))
         if not ptr.contents:
