@@ -200,9 +200,8 @@ private:
 /// clear.
 ///
 /// \param[in] Args Args as provided by the user.
-/// \param[out] Resulting stripped command line.
-///
-/// \returns \li true if successful.
+/// \return Resulting stripped command line.
+///          \li true if successful.
 ///          \li false if \c Args cannot be used for compilation jobs (e.g.
 ///          contains an option like -E or -version).
 bool stripPositionalArgs(std::vector<const char *> Args,
