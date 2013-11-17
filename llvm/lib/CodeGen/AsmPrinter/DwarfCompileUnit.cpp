@@ -602,8 +602,8 @@ void CompileUnit::addBlockByrefAddress(const DbgVariable &DV, DIE *Die,
   // Find the __forwarding field and the variable field in the __Block_byref
   // struct.
   DIArray Fields = blockStruct.getTypeArray();
-  DIDescriptor varField = DIDescriptor();
-  DIDescriptor forwardingField = DIDescriptor();
+  DIDescriptor varField;
+  DIDescriptor forwardingField;
 
   for (unsigned i = 0, N = Fields.getNumElements(); i < N; ++i) {
     DIDescriptor Element = Fields.getElement(i);
