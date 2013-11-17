@@ -94,6 +94,10 @@ print >> out_file, '''\
 
 def availability(issue):
   status = status_map.get(issue, 'unknown')
+  avail_suffix = ''
+  if status.endswith(' c++11'):
+    status = status[:-6]
+    avail_suffix = ' (C++11 onwards)'
   if status == 'unknown':
     avail = 'Unknown'
     avail_style = ' class="none"'
@@ -129,7 +133,7 @@ def availability(issue):
     _, avail_style = availability(dup)
   else:
     assert False, 'unknown status %s for issue %s' % (status, dr.issue)
-  return (avail, avail_style)
+  return (avail + avail_suffix, avail_style)
 
 count = {}
 for dr in drs:

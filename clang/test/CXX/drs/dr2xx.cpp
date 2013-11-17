@@ -405,3 +405,126 @@ namespace dr239 { // dr239: yes
 }
 
 // dr240: dup 616
+
+namespace dr241 { // dr241: yes
+  namespace A {
+    struct B {};
+    template <int X> void f(); // expected-note 2{{candidate}}
+    template <int X> void g(B);
+  }
+  namespace C {
+    template <class T> void f(T t); // expected-note 2{{candidate}}
+    template <class T> void g(T t); // expected-note {{candidate}}
+  }
+  void h(A::B b) {
+    f<3>(b); // expected-error {{undeclared identifier}}
+    g<3>(b); // expected-error {{undeclared identifier}}
+    A::f<3>(b); // expected-error {{no matching}}
+    A::g<3>(b);
+    C::f<3>(b); // expected-error {{no matching}}
+    C::g<3>(b); // expected-error {{no matching}}
+    using C::f;
+    using C::g;
+    f<3>(b); // expected-error {{no matching}}
+    g<3>(b);
+  }
+}
+
+namespace dr243 { // dr243: yes
+  struct B;
+  struct A {
+    A(B); // expected-note {{candidate}}
+  };
+  struct B {
+    operator A() = delete; // expected-error 0-1{{extension}} expected-note {{candidate}}
+  } b;
+  A a1(b);
+  A a2 = b; // expected-error {{ambiguous}}
+}
+
+namespace dr244 { // dr244: no
+  struct B {}; struct D : B {}; // expected-note {{here}}
+
+  D D_object;
+  typedef B B_alias;
+  B* B_ptr = &D_object;
+
+  void f() {
+    D_object.~B(); // expected-error {{expression does not match the type}}
+    D_object.B::~B();
+    B_ptr->~B();
+    B_ptr->~B_alias();
+    B_ptr->B_alias::~B();
+    // This is valid under DR244.
+    B_ptr->B_alias::~B_alias(); // FIXME: expected-error {{expected the class name after '~' to name a destructor}}
+    B_ptr->dr244::~B(); // expected-error {{refers to a member in namespace}}
+    B_ptr->dr244::~B_alias(); // expected-error {{refers to a member in namespace}}
+  }
+}
+
+namespace dr245 { // dr245: yes
+  struct S {
+    enum E {}; // expected-note {{here}}
+    class E *p; // expected-error {{does not match previous declaration}}
+  };
+}
+
+namespace dr246 { // dr246: yes
+  struct S {
+    S() try { // expected-note {{try block}}
+      throw 0;
+X: ;
+    } catch (int) {
+      goto X; // expected-error {{protected scope}}
+    }
+  };
+}
+
+namespace dr247 { // dr247: yes
+  struct A {};
+  struct B : A {
+    void f();
+    void f(int);
+  };
+  void (A::*f)() = (void (A::*)())&B::f;
+
+  struct C {
+    void f();
+    void f(int);
+  };
+  struct D : C {};
+  void (C::*g)() = &D::f;
+  void (D::*h)() = &D::f;
+
+  struct E {
+    void f();
+  };
+  struct F : E {
+    using E::f;
+    void f(int);
+  };
+  void (F::*i)() = &F::f;
+}
+
+namespace dr248 { // dr248: yes c++11
+  // FIXME: Should this also apply to c++98 mode? This was a DR against C++98.
+  int \u040d\u040e = 0;
+#if __cplusplus < 201103L
+  // FIXME: expected-error@-2 {{expected ';'}}
+#endif
+}
+
+namespace dr249 { // dr249: yes
+  template<typename T> struct X { void f(); };
+  template<typename T> void X<T>::f() {}
+}
+
+namespace dr250 { // dr250: yes
+  typedef void (*FPtr)(double x[]);
+
+  template<int I> void f(double x[]);
+  FPtr fp = &f<3>;
+
+  template<int I = 3> void g(double x[]); // expected-error 0-1{{extension}}
+  FPtr gp = &g<>;
+}

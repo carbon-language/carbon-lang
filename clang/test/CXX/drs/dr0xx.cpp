@@ -325,7 +325,7 @@ namespace dr29 { // dr29: 3.4
   }
 }
 
-namespace dr30 { // dr30: sup 468
+namespace dr30 { // dr30: sup 468 c++11
   struct A {
     template<int> static int f();
   } a, *p = &a;
