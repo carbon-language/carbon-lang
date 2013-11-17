@@ -7896,3 +7896,2187 @@ uint64_t test_vcvtd_n_u64_f64(float64_t a) {
 // CHECK: fcvtzu {{d[0-9]+}}, {{d[0-9]+}}, #64
   return (uint64_t)vcvtd_n_u64_f64(a, 64);
 }
+
+// CHECK-LABEL: test_vreinterpret_s8_s16
+// CHECK-NEXT: ret
+int8x8_t test_vreinterpret_s8_s16(int16x4_t a) {
+  return vreinterpret_s8_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s8_s32
+// CHECK-NEXT: ret
+int8x8_t test_vreinterpret_s8_s32(int32x2_t a) {
+  return vreinterpret_s8_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s8_s64
+// CHECK-NEXT: ret
+int8x8_t test_vreinterpret_s8_s64(int64x1_t a) {
+  return vreinterpret_s8_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s8_u8
+// CHECK-NEXT: ret
+int8x8_t test_vreinterpret_s8_u8(uint8x8_t a) {
+  return vreinterpret_s8_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s8_u16
+// CHECK-NEXT: ret
+int8x8_t test_vreinterpret_s8_u16(uint16x4_t a) {
+  return vreinterpret_s8_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s8_u32
+// CHECK-NEXT: ret
+int8x8_t test_vreinterpret_s8_u32(uint32x2_t a) {
+  return vreinterpret_s8_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s8_u64
+// CHECK-NEXT: ret
+int8x8_t test_vreinterpret_s8_u64(uint64x1_t a) {
+  return vreinterpret_s8_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s8_f16
+// CHECK-NEXT: ret
+int8x8_t test_vreinterpret_s8_f16(float16x4_t a) {
+  return vreinterpret_s8_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s8_f32
+// CHECK-NEXT: ret
+int8x8_t test_vreinterpret_s8_f32(float32x2_t a) {
+  return vreinterpret_s8_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s8_f64
+// CHECK-NEXT: ret
+int8x8_t test_vreinterpret_s8_f64(float64x1_t a) {
+  return vreinterpret_s8_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s8_p8
+// CHECK-NEXT: ret
+int8x8_t test_vreinterpret_s8_p8(poly8x8_t a) {
+  return vreinterpret_s8_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s8_p16
+// CHECK-NEXT: ret
+int8x8_t test_vreinterpret_s8_p16(poly16x4_t a) {
+  return vreinterpret_s8_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s8_p64
+// CHECK-NEXT: ret
+int8x8_t test_vreinterpret_s8_p64(poly64x1_t a) {
+  return vreinterpret_s8_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s16_s8
+// CHECK-NEXT: ret
+int16x4_t test_vreinterpret_s16_s8(int8x8_t a) {
+  return vreinterpret_s16_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s16_s32
+// CHECK-NEXT: ret
+int16x4_t test_vreinterpret_s16_s32(int32x2_t a) {
+  return vreinterpret_s16_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s16_s64
+// CHECK-NEXT: ret
+int16x4_t test_vreinterpret_s16_s64(int64x1_t a) {
+  return vreinterpret_s16_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s16_u8
+// CHECK-NEXT: ret
+int16x4_t test_vreinterpret_s16_u8(uint8x8_t a) {
+  return vreinterpret_s16_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s16_u16
+// CHECK-NEXT: ret
+int16x4_t test_vreinterpret_s16_u16(uint16x4_t a) {
+  return vreinterpret_s16_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s16_u32
+// CHECK-NEXT: ret
+int16x4_t test_vreinterpret_s16_u32(uint32x2_t a) {
+  return vreinterpret_s16_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s16_u64
+// CHECK-NEXT: ret
+int16x4_t test_vreinterpret_s16_u64(uint64x1_t a) {
+  return vreinterpret_s16_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s16_f16
+// CHECK-NEXT: ret
+int16x4_t test_vreinterpret_s16_f16(float16x4_t a) {
+  return vreinterpret_s16_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s16_f32
+// CHECK-NEXT: ret
+int16x4_t test_vreinterpret_s16_f32(float32x2_t a) {
+  return vreinterpret_s16_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s16_f64
+// CHECK-NEXT: ret
+int16x4_t test_vreinterpret_s16_f64(float64x1_t a) {
+  return vreinterpret_s16_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s16_p8
+// CHECK-NEXT: ret
+int16x4_t test_vreinterpret_s16_p8(poly8x8_t a) {
+  return vreinterpret_s16_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s16_p16
+// CHECK-NEXT: ret
+int16x4_t test_vreinterpret_s16_p16(poly16x4_t a) {
+  return vreinterpret_s16_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s16_p64
+// CHECK-NEXT: ret
+int16x4_t test_vreinterpret_s16_p64(poly64x1_t a) {
+  return vreinterpret_s16_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s32_s8
+// CHECK-NEXT: ret
+int32x2_t test_vreinterpret_s32_s8(int8x8_t a) {
+  return vreinterpret_s32_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s32_s16
+// CHECK-NEXT: ret
+int32x2_t test_vreinterpret_s32_s16(int16x4_t a) {
+  return vreinterpret_s32_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s32_s64
+// CHECK-NEXT: ret
+int32x2_t test_vreinterpret_s32_s64(int64x1_t a) {
+  return vreinterpret_s32_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s32_u8
+// CHECK-NEXT: ret
+int32x2_t test_vreinterpret_s32_u8(uint8x8_t a) {
+  return vreinterpret_s32_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s32_u16
+// CHECK-NEXT: ret
+int32x2_t test_vreinterpret_s32_u16(uint16x4_t a) {
+  return vreinterpret_s32_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s32_u32
+// CHECK-NEXT: ret
+int32x2_t test_vreinterpret_s32_u32(uint32x2_t a) {
+  return vreinterpret_s32_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s32_u64
+// CHECK-NEXT: ret
+int32x2_t test_vreinterpret_s32_u64(uint64x1_t a) {
+  return vreinterpret_s32_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s32_f16
+// CHECK-NEXT: ret
+int32x2_t test_vreinterpret_s32_f16(float16x4_t a) {
+  return vreinterpret_s32_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s32_f32
+// CHECK-NEXT: ret
+int32x2_t test_vreinterpret_s32_f32(float32x2_t a) {
+  return vreinterpret_s32_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s32_f64
+// CHECK-NEXT: ret
+int32x2_t test_vreinterpret_s32_f64(float64x1_t a) {
+  return vreinterpret_s32_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s32_p8
+// CHECK-NEXT: ret
+int32x2_t test_vreinterpret_s32_p8(poly8x8_t a) {
+  return vreinterpret_s32_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s32_p16
+// CHECK-NEXT: ret
+int32x2_t test_vreinterpret_s32_p16(poly16x4_t a) {
+  return vreinterpret_s32_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s32_p64
+// CHECK-NEXT: ret
+int32x2_t test_vreinterpret_s32_p64(poly64x1_t a) {
+  return vreinterpret_s32_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s64_s8
+// CHECK-NEXT: ret
+int64x1_t test_vreinterpret_s64_s8(int8x8_t a) {
+  return vreinterpret_s64_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s64_s16
+// CHECK-NEXT: ret
+int64x1_t test_vreinterpret_s64_s16(int16x4_t a) {
+  return vreinterpret_s64_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s64_s32
+// CHECK-NEXT: ret
+int64x1_t test_vreinterpret_s64_s32(int32x2_t a) {
+  return vreinterpret_s64_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s64_u8
+// CHECK-NEXT: ret
+int64x1_t test_vreinterpret_s64_u8(uint8x8_t a) {
+  return vreinterpret_s64_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s64_u16
+// CHECK-NEXT: ret
+int64x1_t test_vreinterpret_s64_u16(uint16x4_t a) {
+  return vreinterpret_s64_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s64_u32
+// CHECK-NEXT: ret
+int64x1_t test_vreinterpret_s64_u32(uint32x2_t a) {
+  return vreinterpret_s64_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s64_u64
+// CHECK-NEXT: ret
+int64x1_t test_vreinterpret_s64_u64(uint64x1_t a) {
+  return vreinterpret_s64_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s64_f16
+// CHECK-NEXT: ret
+int64x1_t test_vreinterpret_s64_f16(float16x4_t a) {
+  return vreinterpret_s64_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s64_f32
+// CHECK-NEXT: ret
+int64x1_t test_vreinterpret_s64_f32(float32x2_t a) {
+  return vreinterpret_s64_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s64_f64
+// CHECK-NEXT: ret
+int64x1_t test_vreinterpret_s64_f64(float64x1_t a) {
+  return vreinterpret_s64_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s64_p8
+// CHECK-NEXT: ret
+int64x1_t test_vreinterpret_s64_p8(poly8x8_t a) {
+  return vreinterpret_s64_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s64_p16
+// CHECK-NEXT: ret
+int64x1_t test_vreinterpret_s64_p16(poly16x4_t a) {
+  return vreinterpret_s64_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_s64_p64
+// CHECK-NEXT: ret
+int64x1_t test_vreinterpret_s64_p64(poly64x1_t a) {
+  return vreinterpret_s64_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u8_s8
+// CHECK-NEXT: ret
+uint8x8_t test_vreinterpret_u8_s8(int8x8_t a) {
+  return vreinterpret_u8_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u8_s16
+// CHECK-NEXT: ret
+uint8x8_t test_vreinterpret_u8_s16(int16x4_t a) {
+  return vreinterpret_u8_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u8_s32
+// CHECK-NEXT: ret
+uint8x8_t test_vreinterpret_u8_s32(int32x2_t a) {
+  return vreinterpret_u8_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u8_s64
+// CHECK-NEXT: ret
+uint8x8_t test_vreinterpret_u8_s64(int64x1_t a) {
+  return vreinterpret_u8_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u8_u16
+// CHECK-NEXT: ret
+uint8x8_t test_vreinterpret_u8_u16(uint16x4_t a) {
+  return vreinterpret_u8_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u8_u32
+// CHECK-NEXT: ret
+uint8x8_t test_vreinterpret_u8_u32(uint32x2_t a) {
+  return vreinterpret_u8_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u8_u64
+// CHECK-NEXT: ret
+uint8x8_t test_vreinterpret_u8_u64(uint64x1_t a) {
+  return vreinterpret_u8_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u8_f16
+// CHECK-NEXT: ret
+uint8x8_t test_vreinterpret_u8_f16(float16x4_t a) {
+  return vreinterpret_u8_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u8_f32
+// CHECK-NEXT: ret
+uint8x8_t test_vreinterpret_u8_f32(float32x2_t a) {
+  return vreinterpret_u8_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u8_f64
+// CHECK-NEXT: ret
+uint8x8_t test_vreinterpret_u8_f64(float64x1_t a) {
+  return vreinterpret_u8_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u8_p8
+// CHECK-NEXT: ret
+uint8x8_t test_vreinterpret_u8_p8(poly8x8_t a) {
+  return vreinterpret_u8_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u8_p16
+// CHECK-NEXT: ret
+uint8x8_t test_vreinterpret_u8_p16(poly16x4_t a) {
+  return vreinterpret_u8_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u8_p64
+// CHECK-NEXT: ret
+uint8x8_t test_vreinterpret_u8_p64(poly64x1_t a) {
+  return vreinterpret_u8_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u16_s8
+// CHECK-NEXT: ret
+uint16x4_t test_vreinterpret_u16_s8(int8x8_t a) {
+  return vreinterpret_u16_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u16_s16
+// CHECK-NEXT: ret
+uint16x4_t test_vreinterpret_u16_s16(int16x4_t a) {
+  return vreinterpret_u16_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u16_s32
+// CHECK-NEXT: ret
+uint16x4_t test_vreinterpret_u16_s32(int32x2_t a) {
+  return vreinterpret_u16_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u16_s64
+// CHECK-NEXT: ret
+uint16x4_t test_vreinterpret_u16_s64(int64x1_t a) {
+  return vreinterpret_u16_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u16_u8
+// CHECK-NEXT: ret
+uint16x4_t test_vreinterpret_u16_u8(uint8x8_t a) {
+  return vreinterpret_u16_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u16_u32
+// CHECK-NEXT: ret
+uint16x4_t test_vreinterpret_u16_u32(uint32x2_t a) {
+  return vreinterpret_u16_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u16_u64
+// CHECK-NEXT: ret
+uint16x4_t test_vreinterpret_u16_u64(uint64x1_t a) {
+  return vreinterpret_u16_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u16_f16
+// CHECK-NEXT: ret
+uint16x4_t test_vreinterpret_u16_f16(float16x4_t a) {
+  return vreinterpret_u16_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u16_f32
+// CHECK-NEXT: ret
+uint16x4_t test_vreinterpret_u16_f32(float32x2_t a) {
+  return vreinterpret_u16_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u16_f64
+// CHECK-NEXT: ret
+uint16x4_t test_vreinterpret_u16_f64(float64x1_t a) {
+  return vreinterpret_u16_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u16_p8
+// CHECK-NEXT: ret
+uint16x4_t test_vreinterpret_u16_p8(poly8x8_t a) {
+  return vreinterpret_u16_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u16_p16
+// CHECK-NEXT: ret
+uint16x4_t test_vreinterpret_u16_p16(poly16x4_t a) {
+  return vreinterpret_u16_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u16_p64
+// CHECK-NEXT: ret
+uint16x4_t test_vreinterpret_u16_p64(poly64x1_t a) {
+  return vreinterpret_u16_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u32_s8
+// CHECK-NEXT: ret
+uint32x2_t test_vreinterpret_u32_s8(int8x8_t a) {
+  return vreinterpret_u32_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u32_s16
+// CHECK-NEXT: ret
+uint32x2_t test_vreinterpret_u32_s16(int16x4_t a) {
+  return vreinterpret_u32_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u32_s32
+// CHECK-NEXT: ret
+uint32x2_t test_vreinterpret_u32_s32(int32x2_t a) {
+  return vreinterpret_u32_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u32_s64
+// CHECK-NEXT: ret
+uint32x2_t test_vreinterpret_u32_s64(int64x1_t a) {
+  return vreinterpret_u32_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u32_u8
+// CHECK-NEXT: ret
+uint32x2_t test_vreinterpret_u32_u8(uint8x8_t a) {
+  return vreinterpret_u32_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u32_u16
+// CHECK-NEXT: ret
+uint32x2_t test_vreinterpret_u32_u16(uint16x4_t a) {
+  return vreinterpret_u32_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u32_u64
+// CHECK-NEXT: ret
+uint32x2_t test_vreinterpret_u32_u64(uint64x1_t a) {
+  return vreinterpret_u32_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u32_f16
+// CHECK-NEXT: ret
+uint32x2_t test_vreinterpret_u32_f16(float16x4_t a) {
+  return vreinterpret_u32_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u32_f32
+// CHECK-NEXT: ret
+uint32x2_t test_vreinterpret_u32_f32(float32x2_t a) {
+  return vreinterpret_u32_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u32_f64
+// CHECK-NEXT: ret
+uint32x2_t test_vreinterpret_u32_f64(float64x1_t a) {
+  return vreinterpret_u32_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u32_p8
+// CHECK-NEXT: ret
+uint32x2_t test_vreinterpret_u32_p8(poly8x8_t a) {
+  return vreinterpret_u32_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u32_p16
+// CHECK-NEXT: ret
+uint32x2_t test_vreinterpret_u32_p16(poly16x4_t a) {
+  return vreinterpret_u32_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u32_p64
+// CHECK-NEXT: ret
+uint32x2_t test_vreinterpret_u32_p64(poly64x1_t a) {
+  return vreinterpret_u32_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u64_s8
+// CHECK-NEXT: ret
+uint64x1_t test_vreinterpret_u64_s8(int8x8_t a) {
+  return vreinterpret_u64_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u64_s16
+// CHECK-NEXT: ret
+uint64x1_t test_vreinterpret_u64_s16(int16x4_t a) {
+  return vreinterpret_u64_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u64_s32
+// CHECK-NEXT: ret
+uint64x1_t test_vreinterpret_u64_s32(int32x2_t a) {
+  return vreinterpret_u64_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u64_s64
+// CHECK-NEXT: ret
+uint64x1_t test_vreinterpret_u64_s64(int64x1_t a) {
+  return vreinterpret_u64_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u64_u8
+// CHECK-NEXT: ret
+uint64x1_t test_vreinterpret_u64_u8(uint8x8_t a) {
+  return vreinterpret_u64_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u64_u16
+// CHECK-NEXT: ret
+uint64x1_t test_vreinterpret_u64_u16(uint16x4_t a) {
+  return vreinterpret_u64_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u64_u32
+// CHECK-NEXT: ret
+uint64x1_t test_vreinterpret_u64_u32(uint32x2_t a) {
+  return vreinterpret_u64_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u64_f16
+// CHECK-NEXT: ret
+uint64x1_t test_vreinterpret_u64_f16(float16x4_t a) {
+  return vreinterpret_u64_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u64_f32
+// CHECK-NEXT: ret
+uint64x1_t test_vreinterpret_u64_f32(float32x2_t a) {
+  return vreinterpret_u64_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u64_f64
+// CHECK-NEXT: ret
+uint64x1_t test_vreinterpret_u64_f64(float64x1_t a) {
+  return vreinterpret_u64_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u64_p8
+// CHECK-NEXT: ret
+uint64x1_t test_vreinterpret_u64_p8(poly8x8_t a) {
+  return vreinterpret_u64_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u64_p16
+// CHECK-NEXT: ret
+uint64x1_t test_vreinterpret_u64_p16(poly16x4_t a) {
+  return vreinterpret_u64_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_u64_p64
+// CHECK-NEXT: ret
+uint64x1_t test_vreinterpret_u64_p64(poly64x1_t a) {
+  return vreinterpret_u64_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f16_s8
+// CHECK-NEXT: ret
+float16x4_t test_vreinterpret_f16_s8(int8x8_t a) {
+  return vreinterpret_f16_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f16_s16
+// CHECK-NEXT: ret
+float16x4_t test_vreinterpret_f16_s16(int16x4_t a) {
+  return vreinterpret_f16_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f16_s32
+// CHECK-NEXT: ret
+float16x4_t test_vreinterpret_f16_s32(int32x2_t a) {
+  return vreinterpret_f16_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f16_s64
+// CHECK-NEXT: ret
+float16x4_t test_vreinterpret_f16_s64(int64x1_t a) {
+  return vreinterpret_f16_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f16_u8
+// CHECK-NEXT: ret
+float16x4_t test_vreinterpret_f16_u8(uint8x8_t a) {
+  return vreinterpret_f16_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f16_u16
+// CHECK-NEXT: ret
+float16x4_t test_vreinterpret_f16_u16(uint16x4_t a) {
+  return vreinterpret_f16_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f16_u32
+// CHECK-NEXT: ret
+float16x4_t test_vreinterpret_f16_u32(uint32x2_t a) {
+  return vreinterpret_f16_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f16_u64
+// CHECK-NEXT: ret
+float16x4_t test_vreinterpret_f16_u64(uint64x1_t a) {
+  return vreinterpret_f16_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f16_f32
+// CHECK-NEXT: ret
+float16x4_t test_vreinterpret_f16_f32(float32x2_t a) {
+  return vreinterpret_f16_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f16_f64
+// CHECK-NEXT: ret
+float16x4_t test_vreinterpret_f16_f64(float64x1_t a) {
+  return vreinterpret_f16_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f16_p8
+// CHECK-NEXT: ret
+float16x4_t test_vreinterpret_f16_p8(poly8x8_t a) {
+  return vreinterpret_f16_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f16_p16
+// CHECK-NEXT: ret
+float16x4_t test_vreinterpret_f16_p16(poly16x4_t a) {
+  return vreinterpret_f16_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f16_p64
+// CHECK-NEXT: ret
+float16x4_t test_vreinterpret_f16_p64(poly64x1_t a) {
+  return vreinterpret_f16_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f32_s8
+// CHECK-NEXT: ret
+float32x2_t test_vreinterpret_f32_s8(int8x8_t a) {
+  return vreinterpret_f32_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f32_s16
+// CHECK-NEXT: ret
+float32x2_t test_vreinterpret_f32_s16(int16x4_t a) {
+  return vreinterpret_f32_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f32_s32
+// CHECK-NEXT: ret
+float32x2_t test_vreinterpret_f32_s32(int32x2_t a) {
+  return vreinterpret_f32_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f32_s64
+// CHECK-NEXT: ret
+float32x2_t test_vreinterpret_f32_s64(int64x1_t a) {
+  return vreinterpret_f32_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f32_u8
+// CHECK-NEXT: ret
+float32x2_t test_vreinterpret_f32_u8(uint8x8_t a) {
+  return vreinterpret_f32_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f32_u16
+// CHECK-NEXT: ret
+float32x2_t test_vreinterpret_f32_u16(uint16x4_t a) {
+  return vreinterpret_f32_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f32_u32
+// CHECK-NEXT: ret
+float32x2_t test_vreinterpret_f32_u32(uint32x2_t a) {
+  return vreinterpret_f32_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f32_u64
+// CHECK-NEXT: ret
+float32x2_t test_vreinterpret_f32_u64(uint64x1_t a) {
+  return vreinterpret_f32_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f32_f16
+// CHECK-NEXT: ret
+float32x2_t test_vreinterpret_f32_f16(float16x4_t a) {
+  return vreinterpret_f32_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f32_f64
+// CHECK-NEXT: ret
+float32x2_t test_vreinterpret_f32_f64(float64x1_t a) {
+  return vreinterpret_f32_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f32_p8
+// CHECK-NEXT: ret
+float32x2_t test_vreinterpret_f32_p8(poly8x8_t a) {
+  return vreinterpret_f32_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f32_p16
+// CHECK-NEXT: ret
+float32x2_t test_vreinterpret_f32_p16(poly16x4_t a) {
+  return vreinterpret_f32_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f32_p64
+// CHECK-NEXT: ret
+float32x2_t test_vreinterpret_f32_p64(poly64x1_t a) {
+  return vreinterpret_f32_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f64_s8
+// CHECK-NEXT: ret
+float64x1_t test_vreinterpret_f64_s8(int8x8_t a) {
+  return vreinterpret_f64_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f64_s16
+// CHECK-NEXT: ret
+float64x1_t test_vreinterpret_f64_s16(int16x4_t a) {
+  return vreinterpret_f64_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f64_s32
+// CHECK-NEXT: ret
+float64x1_t test_vreinterpret_f64_s32(int32x2_t a) {
+  return vreinterpret_f64_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f64_s64
+// CHECK-NEXT: ret
+float64x1_t test_vreinterpret_f64_s64(int64x1_t a) {
+  return vreinterpret_f64_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f64_u8
+// CHECK-NEXT: ret
+float64x1_t test_vreinterpret_f64_u8(uint8x8_t a) {
+  return vreinterpret_f64_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f64_u16
+// CHECK-NEXT: ret
+float64x1_t test_vreinterpret_f64_u16(uint16x4_t a) {
+  return vreinterpret_f64_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f64_u32
+// CHECK-NEXT: ret
+float64x1_t test_vreinterpret_f64_u32(uint32x2_t a) {
+  return vreinterpret_f64_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f64_u64
+// CHECK-NEXT: ret
+float64x1_t test_vreinterpret_f64_u64(uint64x1_t a) {
+  return vreinterpret_f64_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f64_f16
+// CHECK-NEXT: ret
+float64x1_t test_vreinterpret_f64_f16(float16x4_t a) {
+  return vreinterpret_f64_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f64_f32
+// CHECK-NEXT: ret
+float64x1_t test_vreinterpret_f64_f32(float32x2_t a) {
+  return vreinterpret_f64_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f64_p8
+// CHECK-NEXT: ret
+float64x1_t test_vreinterpret_f64_p8(poly8x8_t a) {
+  return vreinterpret_f64_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f64_p16
+// CHECK-NEXT: ret
+float64x1_t test_vreinterpret_f64_p16(poly16x4_t a) {
+  return vreinterpret_f64_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_f64_p64
+// CHECK-NEXT: ret
+float64x1_t test_vreinterpret_f64_p64(poly64x1_t a) {
+  return vreinterpret_f64_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p8_s8
+// CHECK-NEXT: ret
+poly8x8_t test_vreinterpret_p8_s8(int8x8_t a) {
+  return vreinterpret_p8_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p8_s16
+// CHECK-NEXT: ret
+poly8x8_t test_vreinterpret_p8_s16(int16x4_t a) {
+  return vreinterpret_p8_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p8_s32
+// CHECK-NEXT: ret
+poly8x8_t test_vreinterpret_p8_s32(int32x2_t a) {
+  return vreinterpret_p8_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p8_s64
+// CHECK-NEXT: ret
+poly8x8_t test_vreinterpret_p8_s64(int64x1_t a) {
+  return vreinterpret_p8_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p8_u8
+// CHECK-NEXT: ret
+poly8x8_t test_vreinterpret_p8_u8(uint8x8_t a) {
+  return vreinterpret_p8_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p8_u16
+// CHECK-NEXT: ret
+poly8x8_t test_vreinterpret_p8_u16(uint16x4_t a) {
+  return vreinterpret_p8_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p8_u32
+// CHECK-NEXT: ret
+poly8x8_t test_vreinterpret_p8_u32(uint32x2_t a) {
+  return vreinterpret_p8_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p8_u64
+// CHECK-NEXT: ret
+poly8x8_t test_vreinterpret_p8_u64(uint64x1_t a) {
+  return vreinterpret_p8_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p8_f16
+// CHECK-NEXT: ret
+poly8x8_t test_vreinterpret_p8_f16(float16x4_t a) {
+  return vreinterpret_p8_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p8_f32
+// CHECK-NEXT: ret
+poly8x8_t test_vreinterpret_p8_f32(float32x2_t a) {
+  return vreinterpret_p8_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p8_f64
+// CHECK-NEXT: ret
+poly8x8_t test_vreinterpret_p8_f64(float64x1_t a) {
+  return vreinterpret_p8_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p8_p16
+// CHECK-NEXT: ret
+poly8x8_t test_vreinterpret_p8_p16(poly16x4_t a) {
+  return vreinterpret_p8_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p8_p64
+// CHECK-NEXT: ret
+poly8x8_t test_vreinterpret_p8_p64(poly64x1_t a) {
+  return vreinterpret_p8_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p16_s8
+// CHECK-NEXT: ret
+poly16x4_t test_vreinterpret_p16_s8(int8x8_t a) {
+  return vreinterpret_p16_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p16_s16
+// CHECK-NEXT: ret
+poly16x4_t test_vreinterpret_p16_s16(int16x4_t a) {
+  return vreinterpret_p16_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p16_s32
+// CHECK-NEXT: ret
+poly16x4_t test_vreinterpret_p16_s32(int32x2_t a) {
+  return vreinterpret_p16_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p16_s64
+// CHECK-NEXT: ret
+poly16x4_t test_vreinterpret_p16_s64(int64x1_t a) {
+  return vreinterpret_p16_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p16_u8
+// CHECK-NEXT: ret
+poly16x4_t test_vreinterpret_p16_u8(uint8x8_t a) {
+  return vreinterpret_p16_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p16_u16
+// CHECK-NEXT: ret
+poly16x4_t test_vreinterpret_p16_u16(uint16x4_t a) {
+  return vreinterpret_p16_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p16_u32
+// CHECK-NEXT: ret
+poly16x4_t test_vreinterpret_p16_u32(uint32x2_t a) {
+  return vreinterpret_p16_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p16_u64
+// CHECK-NEXT: ret
+poly16x4_t test_vreinterpret_p16_u64(uint64x1_t a) {
+  return vreinterpret_p16_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p16_f16
+// CHECK-NEXT: ret
+poly16x4_t test_vreinterpret_p16_f16(float16x4_t a) {
+  return vreinterpret_p16_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p16_f32
+// CHECK-NEXT: ret
+poly16x4_t test_vreinterpret_p16_f32(float32x2_t a) {
+  return vreinterpret_p16_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p16_f64
+// CHECK-NEXT: ret
+poly16x4_t test_vreinterpret_p16_f64(float64x1_t a) {
+  return vreinterpret_p16_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p16_p8
+// CHECK-NEXT: ret
+poly16x4_t test_vreinterpret_p16_p8(poly8x8_t a) {
+  return vreinterpret_p16_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p16_p64
+// CHECK-NEXT: ret
+poly16x4_t test_vreinterpret_p16_p64(poly64x1_t a) {
+  return vreinterpret_p16_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p64_s8
+// CHECK-NEXT: ret
+poly64x1_t test_vreinterpret_p64_s8(int8x8_t a) {
+  return vreinterpret_p64_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p64_s16
+// CHECK-NEXT: ret
+poly64x1_t test_vreinterpret_p64_s16(int16x4_t a) {
+  return vreinterpret_p64_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p64_s32
+// CHECK-NEXT: ret
+poly64x1_t test_vreinterpret_p64_s32(int32x2_t a) {
+  return vreinterpret_p64_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p64_s64
+// CHECK-NEXT: ret
+poly64x1_t test_vreinterpret_p64_s64(int64x1_t a) {
+  return vreinterpret_p64_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p64_u8
+// CHECK-NEXT: ret
+poly64x1_t test_vreinterpret_p64_u8(uint8x8_t a) {
+  return vreinterpret_p64_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p64_u16
+// CHECK-NEXT: ret
+poly64x1_t test_vreinterpret_p64_u16(uint16x4_t a) {
+  return vreinterpret_p64_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p64_u32
+// CHECK-NEXT: ret
+poly64x1_t test_vreinterpret_p64_u32(uint32x2_t a) {
+  return vreinterpret_p64_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p64_u64
+// CHECK-NEXT: ret
+poly64x1_t test_vreinterpret_p64_u64(uint64x1_t a) {
+  return vreinterpret_p64_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p64_f16
+// CHECK-NEXT: ret
+poly64x1_t test_vreinterpret_p64_f16(float16x4_t a) {
+  return vreinterpret_p64_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p64_f32
+// CHECK-NEXT: ret
+poly64x1_t test_vreinterpret_p64_f32(float32x2_t a) {
+  return vreinterpret_p64_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p64_f64
+// CHECK-NEXT: ret
+poly64x1_t test_vreinterpret_p64_f64(float64x1_t a) {
+  return vreinterpret_p64_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p64_p8
+// CHECK-NEXT: ret
+poly64x1_t test_vreinterpret_p64_p8(poly8x8_t a) {
+  return vreinterpret_p64_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpret_p64_p16
+// CHECK-NEXT: ret
+poly64x1_t test_vreinterpret_p64_p16(poly16x4_t a) {
+  return vreinterpret_p64_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s8_s16
+// CHECK-NEXT: ret
+int8x16_t test_vreinterpretq_s8_s16(int16x8_t a) {
+  return vreinterpretq_s8_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s8_s32
+// CHECK-NEXT: ret
+int8x16_t test_vreinterpretq_s8_s32(int32x4_t a) {
+  return vreinterpretq_s8_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s8_s64
+// CHECK-NEXT: ret
+int8x16_t test_vreinterpretq_s8_s64(int64x2_t a) {
+  return vreinterpretq_s8_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s8_u8
+// CHECK-NEXT: ret
+int8x16_t test_vreinterpretq_s8_u8(uint8x16_t a) {
+  return vreinterpretq_s8_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s8_u16
+// CHECK-NEXT: ret
+int8x16_t test_vreinterpretq_s8_u16(uint16x8_t a) {
+  return vreinterpretq_s8_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s8_u32
+// CHECK-NEXT: ret
+int8x16_t test_vreinterpretq_s8_u32(uint32x4_t a) {
+  return vreinterpretq_s8_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s8_u64
+// CHECK-NEXT: ret
+int8x16_t test_vreinterpretq_s8_u64(uint64x2_t a) {
+  return vreinterpretq_s8_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s8_f16
+// CHECK-NEXT: ret
+int8x16_t test_vreinterpretq_s8_f16(float16x8_t a) {
+  return vreinterpretq_s8_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s8_f32
+// CHECK-NEXT: ret
+int8x16_t test_vreinterpretq_s8_f32(float32x4_t a) {
+  return vreinterpretq_s8_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s8_f64
+// CHECK-NEXT: ret
+int8x16_t test_vreinterpretq_s8_f64(float64x2_t a) {
+  return vreinterpretq_s8_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s8_p8
+// CHECK-NEXT: ret
+int8x16_t test_vreinterpretq_s8_p8(poly8x16_t a) {
+  return vreinterpretq_s8_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s8_p16
+// CHECK-NEXT: ret
+int8x16_t test_vreinterpretq_s8_p16(poly16x8_t a) {
+  return vreinterpretq_s8_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s8_p64
+// CHECK-NEXT: ret
+int8x16_t test_vreinterpretq_s8_p64(poly64x2_t a) {
+  return vreinterpretq_s8_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s16_s8
+// CHECK-NEXT: ret
+int16x8_t test_vreinterpretq_s16_s8(int8x16_t a) {
+  return vreinterpretq_s16_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s16_s32
+// CHECK-NEXT: ret
+int16x8_t test_vreinterpretq_s16_s32(int32x4_t a) {
+  return vreinterpretq_s16_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s16_s64
+// CHECK-NEXT: ret
+int16x8_t test_vreinterpretq_s16_s64(int64x2_t a) {
+  return vreinterpretq_s16_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s16_u8
+// CHECK-NEXT: ret
+int16x8_t test_vreinterpretq_s16_u8(uint8x16_t a) {
+  return vreinterpretq_s16_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s16_u16
+// CHECK-NEXT: ret
+int16x8_t test_vreinterpretq_s16_u16(uint16x8_t a) {
+  return vreinterpretq_s16_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s16_u32
+// CHECK-NEXT: ret
+int16x8_t test_vreinterpretq_s16_u32(uint32x4_t a) {
+  return vreinterpretq_s16_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s16_u64
+// CHECK-NEXT: ret
+int16x8_t test_vreinterpretq_s16_u64(uint64x2_t a) {
+  return vreinterpretq_s16_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s16_f16
+// CHECK-NEXT: ret
+int16x8_t test_vreinterpretq_s16_f16(float16x8_t a) {
+  return vreinterpretq_s16_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s16_f32
+// CHECK-NEXT: ret
+int16x8_t test_vreinterpretq_s16_f32(float32x4_t a) {
+  return vreinterpretq_s16_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s16_f64
+// CHECK-NEXT: ret
+int16x8_t test_vreinterpretq_s16_f64(float64x2_t a) {
+  return vreinterpretq_s16_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s16_p8
+// CHECK-NEXT: ret
+int16x8_t test_vreinterpretq_s16_p8(poly8x16_t a) {
+  return vreinterpretq_s16_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s16_p16
+// CHECK-NEXT: ret
+int16x8_t test_vreinterpretq_s16_p16(poly16x8_t a) {
+  return vreinterpretq_s16_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s16_p64
+// CHECK-NEXT: ret
+int16x8_t test_vreinterpretq_s16_p64(poly64x2_t a) {
+  return vreinterpretq_s16_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s32_s8
+// CHECK-NEXT: ret
+int32x4_t test_vreinterpretq_s32_s8(int8x16_t a) {
+  return vreinterpretq_s32_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s32_s16
+// CHECK-NEXT: ret
+int32x4_t test_vreinterpretq_s32_s16(int16x8_t a) {
+  return vreinterpretq_s32_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s32_s64
+// CHECK-NEXT: ret
+int32x4_t test_vreinterpretq_s32_s64(int64x2_t a) {
+  return vreinterpretq_s32_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s32_u8
+// CHECK-NEXT: ret
+int32x4_t test_vreinterpretq_s32_u8(uint8x16_t a) {
+  return vreinterpretq_s32_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s32_u16
+// CHECK-NEXT: ret
+int32x4_t test_vreinterpretq_s32_u16(uint16x8_t a) {
+  return vreinterpretq_s32_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s32_u32
+// CHECK-NEXT: ret
+int32x4_t test_vreinterpretq_s32_u32(uint32x4_t a) {
+  return vreinterpretq_s32_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s32_u64
+// CHECK-NEXT: ret
+int32x4_t test_vreinterpretq_s32_u64(uint64x2_t a) {
+  return vreinterpretq_s32_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s32_f16
+// CHECK-NEXT: ret
+int32x4_t test_vreinterpretq_s32_f16(float16x8_t a) {
+  return vreinterpretq_s32_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s32_f32
+// CHECK-NEXT: ret
+int32x4_t test_vreinterpretq_s32_f32(float32x4_t a) {
+  return vreinterpretq_s32_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s32_f64
+// CHECK-NEXT: ret
+int32x4_t test_vreinterpretq_s32_f64(float64x2_t a) {
+  return vreinterpretq_s32_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s32_p8
+// CHECK-NEXT: ret
+int32x4_t test_vreinterpretq_s32_p8(poly8x16_t a) {
+  return vreinterpretq_s32_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s32_p16
+// CHECK-NEXT: ret
+int32x4_t test_vreinterpretq_s32_p16(poly16x8_t a) {
+  return vreinterpretq_s32_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s32_p64
+// CHECK-NEXT: ret
+int32x4_t test_vreinterpretq_s32_p64(poly64x2_t a) {
+  return vreinterpretq_s32_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s64_s8
+// CHECK-NEXT: ret
+int64x2_t test_vreinterpretq_s64_s8(int8x16_t a) {
+  return vreinterpretq_s64_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s64_s16
+// CHECK-NEXT: ret
+int64x2_t test_vreinterpretq_s64_s16(int16x8_t a) {
+  return vreinterpretq_s64_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s64_s32
+// CHECK-NEXT: ret
+int64x2_t test_vreinterpretq_s64_s32(int32x4_t a) {
+  return vreinterpretq_s64_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s64_u8
+// CHECK-NEXT: ret
+int64x2_t test_vreinterpretq_s64_u8(uint8x16_t a) {
+  return vreinterpretq_s64_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s64_u16
+// CHECK-NEXT: ret
+int64x2_t test_vreinterpretq_s64_u16(uint16x8_t a) {
+  return vreinterpretq_s64_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s64_u32
+// CHECK-NEXT: ret
+int64x2_t test_vreinterpretq_s64_u32(uint32x4_t a) {
+  return vreinterpretq_s64_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s64_u64
+// CHECK-NEXT: ret
+int64x2_t test_vreinterpretq_s64_u64(uint64x2_t a) {
+  return vreinterpretq_s64_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s64_f16
+// CHECK-NEXT: ret
+int64x2_t test_vreinterpretq_s64_f16(float16x8_t a) {
+  return vreinterpretq_s64_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s64_f32
+// CHECK-NEXT: ret
+int64x2_t test_vreinterpretq_s64_f32(float32x4_t a) {
+  return vreinterpretq_s64_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s64_f64
+// CHECK-NEXT: ret
+int64x2_t test_vreinterpretq_s64_f64(float64x2_t a) {
+  return vreinterpretq_s64_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s64_p8
+// CHECK-NEXT: ret
+int64x2_t test_vreinterpretq_s64_p8(poly8x16_t a) {
+  return vreinterpretq_s64_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s64_p16
+// CHECK-NEXT: ret
+int64x2_t test_vreinterpretq_s64_p16(poly16x8_t a) {
+  return vreinterpretq_s64_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_s64_p64
+// CHECK-NEXT: ret
+int64x2_t test_vreinterpretq_s64_p64(poly64x2_t a) {
+  return vreinterpretq_s64_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u8_s8
+// CHECK-NEXT: ret
+uint8x16_t test_vreinterpretq_u8_s8(int8x16_t a) {
+  return vreinterpretq_u8_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u8_s16
+// CHECK-NEXT: ret
+uint8x16_t test_vreinterpretq_u8_s16(int16x8_t a) {
+  return vreinterpretq_u8_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u8_s32
+// CHECK-NEXT: ret
+uint8x16_t test_vreinterpretq_u8_s32(int32x4_t a) {
+  return vreinterpretq_u8_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u8_s64
+// CHECK-NEXT: ret
+uint8x16_t test_vreinterpretq_u8_s64(int64x2_t a) {
+  return vreinterpretq_u8_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u8_u16
+// CHECK-NEXT: ret
+uint8x16_t test_vreinterpretq_u8_u16(uint16x8_t a) {
+  return vreinterpretq_u8_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u8_u32
+// CHECK-NEXT: ret
+uint8x16_t test_vreinterpretq_u8_u32(uint32x4_t a) {
+  return vreinterpretq_u8_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u8_u64
+// CHECK-NEXT: ret
+uint8x16_t test_vreinterpretq_u8_u64(uint64x2_t a) {
+  return vreinterpretq_u8_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u8_f16
+// CHECK-NEXT: ret
+uint8x16_t test_vreinterpretq_u8_f16(float16x8_t a) {
+  return vreinterpretq_u8_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u8_f32
+// CHECK-NEXT: ret
+uint8x16_t test_vreinterpretq_u8_f32(float32x4_t a) {
+  return vreinterpretq_u8_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u8_f64
+// CHECK-NEXT: ret
+uint8x16_t test_vreinterpretq_u8_f64(float64x2_t a) {
+  return vreinterpretq_u8_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u8_p8
+// CHECK-NEXT: ret
+uint8x16_t test_vreinterpretq_u8_p8(poly8x16_t a) {
+  return vreinterpretq_u8_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u8_p16
+// CHECK-NEXT: ret
+uint8x16_t test_vreinterpretq_u8_p16(poly16x8_t a) {
+  return vreinterpretq_u8_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u8_p64
+// CHECK-NEXT: ret
+uint8x16_t test_vreinterpretq_u8_p64(poly64x2_t a) {
+  return vreinterpretq_u8_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u16_s8
+// CHECK-NEXT: ret
+uint16x8_t test_vreinterpretq_u16_s8(int8x16_t a) {
+  return vreinterpretq_u16_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u16_s16
+// CHECK-NEXT: ret
+uint16x8_t test_vreinterpretq_u16_s16(int16x8_t a) {
+  return vreinterpretq_u16_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u16_s32
+// CHECK-NEXT: ret
+uint16x8_t test_vreinterpretq_u16_s32(int32x4_t a) {
+  return vreinterpretq_u16_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u16_s64
+// CHECK-NEXT: ret
+uint16x8_t test_vreinterpretq_u16_s64(int64x2_t a) {
+  return vreinterpretq_u16_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u16_u8
+// CHECK-NEXT: ret
+uint16x8_t test_vreinterpretq_u16_u8(uint8x16_t a) {
+  return vreinterpretq_u16_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u16_u32
+// CHECK-NEXT: ret
+uint16x8_t test_vreinterpretq_u16_u32(uint32x4_t a) {
+  return vreinterpretq_u16_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u16_u64
+// CHECK-NEXT: ret
+uint16x8_t test_vreinterpretq_u16_u64(uint64x2_t a) {
+  return vreinterpretq_u16_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u16_f16
+// CHECK-NEXT: ret
+uint16x8_t test_vreinterpretq_u16_f16(float16x8_t a) {
+  return vreinterpretq_u16_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u16_f32
+// CHECK-NEXT: ret
+uint16x8_t test_vreinterpretq_u16_f32(float32x4_t a) {
+  return vreinterpretq_u16_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u16_f64
+// CHECK-NEXT: ret
+uint16x8_t test_vreinterpretq_u16_f64(float64x2_t a) {
+  return vreinterpretq_u16_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u16_p8
+// CHECK-NEXT: ret
+uint16x8_t test_vreinterpretq_u16_p8(poly8x16_t a) {
+  return vreinterpretq_u16_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u16_p16
+// CHECK-NEXT: ret
+uint16x8_t test_vreinterpretq_u16_p16(poly16x8_t a) {
+  return vreinterpretq_u16_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u16_p64
+// CHECK-NEXT: ret
+uint16x8_t test_vreinterpretq_u16_p64(poly64x2_t a) {
+  return vreinterpretq_u16_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u32_s8
+// CHECK-NEXT: ret
+uint32x4_t test_vreinterpretq_u32_s8(int8x16_t a) {
+  return vreinterpretq_u32_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u32_s16
+// CHECK-NEXT: ret
+uint32x4_t test_vreinterpretq_u32_s16(int16x8_t a) {
+  return vreinterpretq_u32_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u32_s32
+// CHECK-NEXT: ret
+uint32x4_t test_vreinterpretq_u32_s32(int32x4_t a) {
+  return vreinterpretq_u32_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u32_s64
+// CHECK-NEXT: ret
+uint32x4_t test_vreinterpretq_u32_s64(int64x2_t a) {
+  return vreinterpretq_u32_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u32_u8
+// CHECK-NEXT: ret
+uint32x4_t test_vreinterpretq_u32_u8(uint8x16_t a) {
+  return vreinterpretq_u32_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u32_u16
+// CHECK-NEXT: ret
+uint32x4_t test_vreinterpretq_u32_u16(uint16x8_t a) {
+  return vreinterpretq_u32_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u32_u64
+// CHECK-NEXT: ret
+uint32x4_t test_vreinterpretq_u32_u64(uint64x2_t a) {
+  return vreinterpretq_u32_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u32_f16
+// CHECK-NEXT: ret
+uint32x4_t test_vreinterpretq_u32_f16(float16x8_t a) {
+  return vreinterpretq_u32_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u32_f32
+// CHECK-NEXT: ret
+uint32x4_t test_vreinterpretq_u32_f32(float32x4_t a) {
+  return vreinterpretq_u32_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u32_f64
+// CHECK-NEXT: ret
+uint32x4_t test_vreinterpretq_u32_f64(float64x2_t a) {
+  return vreinterpretq_u32_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u32_p8
+// CHECK-NEXT: ret
+uint32x4_t test_vreinterpretq_u32_p8(poly8x16_t a) {
+  return vreinterpretq_u32_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u32_p16
+// CHECK-NEXT: ret
+uint32x4_t test_vreinterpretq_u32_p16(poly16x8_t a) {
+  return vreinterpretq_u32_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u32_p64
+// CHECK-NEXT: ret
+uint32x4_t test_vreinterpretq_u32_p64(poly64x2_t a) {
+  return vreinterpretq_u32_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u64_s8
+// CHECK-NEXT: ret
+uint64x2_t test_vreinterpretq_u64_s8(int8x16_t a) {
+  return vreinterpretq_u64_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u64_s16
+// CHECK-NEXT: ret
+uint64x2_t test_vreinterpretq_u64_s16(int16x8_t a) {
+  return vreinterpretq_u64_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u64_s32
+// CHECK-NEXT: ret
+uint64x2_t test_vreinterpretq_u64_s32(int32x4_t a) {
+  return vreinterpretq_u64_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u64_s64
+// CHECK-NEXT: ret
+uint64x2_t test_vreinterpretq_u64_s64(int64x2_t a) {
+  return vreinterpretq_u64_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u64_u8
+// CHECK-NEXT: ret
+uint64x2_t test_vreinterpretq_u64_u8(uint8x16_t a) {
+  return vreinterpretq_u64_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u64_u16
+// CHECK-NEXT: ret
+uint64x2_t test_vreinterpretq_u64_u16(uint16x8_t a) {
+  return vreinterpretq_u64_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u64_u32
+// CHECK-NEXT: ret
+uint64x2_t test_vreinterpretq_u64_u32(uint32x4_t a) {
+  return vreinterpretq_u64_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u64_f16
+// CHECK-NEXT: ret
+uint64x2_t test_vreinterpretq_u64_f16(float16x8_t a) {
+  return vreinterpretq_u64_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u64_f32
+// CHECK-NEXT: ret
+uint64x2_t test_vreinterpretq_u64_f32(float32x4_t a) {
+  return vreinterpretq_u64_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u64_f64
+// CHECK-NEXT: ret
+uint64x2_t test_vreinterpretq_u64_f64(float64x2_t a) {
+  return vreinterpretq_u64_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u64_p8
+// CHECK-NEXT: ret
+uint64x2_t test_vreinterpretq_u64_p8(poly8x16_t a) {
+  return vreinterpretq_u64_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u64_p16
+// CHECK-NEXT: ret
+uint64x2_t test_vreinterpretq_u64_p16(poly16x8_t a) {
+  return vreinterpretq_u64_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_u64_p64
+// CHECK-NEXT: ret
+uint64x2_t test_vreinterpretq_u64_p64(poly64x2_t a) {
+  return vreinterpretq_u64_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f16_s8
+// CHECK-NEXT: ret
+float16x8_t test_vreinterpretq_f16_s8(int8x16_t a) {
+  return vreinterpretq_f16_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f16_s16
+// CHECK-NEXT: ret
+float16x8_t test_vreinterpretq_f16_s16(int16x8_t a) {
+  return vreinterpretq_f16_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f16_s32
+// CHECK-NEXT: ret
+float16x8_t test_vreinterpretq_f16_s32(int32x4_t a) {
+  return vreinterpretq_f16_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f16_s64
+// CHECK-NEXT: ret
+float16x8_t test_vreinterpretq_f16_s64(int64x2_t a) {
+  return vreinterpretq_f16_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f16_u8
+// CHECK-NEXT: ret
+float16x8_t test_vreinterpretq_f16_u8(uint8x16_t a) {
+  return vreinterpretq_f16_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f16_u16
+// CHECK-NEXT: ret
+float16x8_t test_vreinterpretq_f16_u16(uint16x8_t a) {
+  return vreinterpretq_f16_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f16_u32
+// CHECK-NEXT: ret
+float16x8_t test_vreinterpretq_f16_u32(uint32x4_t a) {
+  return vreinterpretq_f16_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f16_u64
+// CHECK-NEXT: ret
+float16x8_t test_vreinterpretq_f16_u64(uint64x2_t a) {
+  return vreinterpretq_f16_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f16_f32
+// CHECK-NEXT: ret
+float16x8_t test_vreinterpretq_f16_f32(float32x4_t a) {
+  return vreinterpretq_f16_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f16_f64
+// CHECK-NEXT: ret
+float16x8_t test_vreinterpretq_f16_f64(float64x2_t a) {
+  return vreinterpretq_f16_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f16_p8
+// CHECK-NEXT: ret
+float16x8_t test_vreinterpretq_f16_p8(poly8x16_t a) {
+  return vreinterpretq_f16_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f16_p16
+// CHECK-NEXT: ret
+float16x8_t test_vreinterpretq_f16_p16(poly16x8_t a) {
+  return vreinterpretq_f16_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f16_p64
+// CHECK-NEXT: ret
+float16x8_t test_vreinterpretq_f16_p64(poly64x2_t a) {
+  return vreinterpretq_f16_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f32_s8
+// CHECK-NEXT: ret
+float32x4_t test_vreinterpretq_f32_s8(int8x16_t a) {
+  return vreinterpretq_f32_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f32_s16
+// CHECK-NEXT: ret
+float32x4_t test_vreinterpretq_f32_s16(int16x8_t a) {
+  return vreinterpretq_f32_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f32_s32
+// CHECK-NEXT: ret
+float32x4_t test_vreinterpretq_f32_s32(int32x4_t a) {
+  return vreinterpretq_f32_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f32_s64
+// CHECK-NEXT: ret
+float32x4_t test_vreinterpretq_f32_s64(int64x2_t a) {
+  return vreinterpretq_f32_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f32_u8
+// CHECK-NEXT: ret
+float32x4_t test_vreinterpretq_f32_u8(uint8x16_t a) {
+  return vreinterpretq_f32_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f32_u16
+// CHECK-NEXT: ret
+float32x4_t test_vreinterpretq_f32_u16(uint16x8_t a) {
+  return vreinterpretq_f32_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f32_u32
+// CHECK-NEXT: ret
+float32x4_t test_vreinterpretq_f32_u32(uint32x4_t a) {
+  return vreinterpretq_f32_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f32_u64
+// CHECK-NEXT: ret
+float32x4_t test_vreinterpretq_f32_u64(uint64x2_t a) {
+  return vreinterpretq_f32_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f32_f16
+// CHECK-NEXT: ret
+float32x4_t test_vreinterpretq_f32_f16(float16x8_t a) {
+  return vreinterpretq_f32_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f32_f64
+// CHECK-NEXT: ret
+float32x4_t test_vreinterpretq_f32_f64(float64x2_t a) {
+  return vreinterpretq_f32_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f32_p8
+// CHECK-NEXT: ret
+float32x4_t test_vreinterpretq_f32_p8(poly8x16_t a) {
+  return vreinterpretq_f32_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f32_p16
+// CHECK-NEXT: ret
+float32x4_t test_vreinterpretq_f32_p16(poly16x8_t a) {
+  return vreinterpretq_f32_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f32_p64
+// CHECK-NEXT: ret
+float32x4_t test_vreinterpretq_f32_p64(poly64x2_t a) {
+  return vreinterpretq_f32_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f64_s8
+// CHECK-NEXT: ret
+float64x2_t test_vreinterpretq_f64_s8(int8x16_t a) {
+  return vreinterpretq_f64_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f64_s16
+// CHECK-NEXT: ret
+float64x2_t test_vreinterpretq_f64_s16(int16x8_t a) {
+  return vreinterpretq_f64_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f64_s32
+// CHECK-NEXT: ret
+float64x2_t test_vreinterpretq_f64_s32(int32x4_t a) {
+  return vreinterpretq_f64_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f64_s64
+// CHECK-NEXT: ret
+float64x2_t test_vreinterpretq_f64_s64(int64x2_t a) {
+  return vreinterpretq_f64_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f64_u8
+// CHECK-NEXT: ret
+float64x2_t test_vreinterpretq_f64_u8(uint8x16_t a) {
+  return vreinterpretq_f64_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f64_u16
+// CHECK-NEXT: ret
+float64x2_t test_vreinterpretq_f64_u16(uint16x8_t a) {
+  return vreinterpretq_f64_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f64_u32
+// CHECK-NEXT: ret
+float64x2_t test_vreinterpretq_f64_u32(uint32x4_t a) {
+  return vreinterpretq_f64_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f64_u64
+// CHECK-NEXT: ret
+float64x2_t test_vreinterpretq_f64_u64(uint64x2_t a) {
+  return vreinterpretq_f64_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f64_f16
+// CHECK-NEXT: ret
+float64x2_t test_vreinterpretq_f64_f16(float16x8_t a) {
+  return vreinterpretq_f64_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f64_f32
+// CHECK-NEXT: ret
+float64x2_t test_vreinterpretq_f64_f32(float32x4_t a) {
+  return vreinterpretq_f64_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f64_p8
+// CHECK-NEXT: ret
+float64x2_t test_vreinterpretq_f64_p8(poly8x16_t a) {
+  return vreinterpretq_f64_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f64_p16
+// CHECK-NEXT: ret
+float64x2_t test_vreinterpretq_f64_p16(poly16x8_t a) {
+  return vreinterpretq_f64_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_f64_p64
+// CHECK-NEXT: ret
+float64x2_t test_vreinterpretq_f64_p64(poly64x2_t a) {
+  return vreinterpretq_f64_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p8_s8
+// CHECK-NEXT: ret
+poly8x16_t test_vreinterpretq_p8_s8(int8x16_t a) {
+  return vreinterpretq_p8_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p8_s16
+// CHECK-NEXT: ret
+poly8x16_t test_vreinterpretq_p8_s16(int16x8_t a) {
+  return vreinterpretq_p8_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p8_s32
+// CHECK-NEXT: ret
+poly8x16_t test_vreinterpretq_p8_s32(int32x4_t a) {
+  return vreinterpretq_p8_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p8_s64
+// CHECK-NEXT: ret
+poly8x16_t test_vreinterpretq_p8_s64(int64x2_t a) {
+  return vreinterpretq_p8_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p8_u8
+// CHECK-NEXT: ret
+poly8x16_t test_vreinterpretq_p8_u8(uint8x16_t a) {
+  return vreinterpretq_p8_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p8_u16
+// CHECK-NEXT: ret
+poly8x16_t test_vreinterpretq_p8_u16(uint16x8_t a) {
+  return vreinterpretq_p8_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p8_u32
+// CHECK-NEXT: ret
+poly8x16_t test_vreinterpretq_p8_u32(uint32x4_t a) {
+  return vreinterpretq_p8_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p8_u64
+// CHECK-NEXT: ret
+poly8x16_t test_vreinterpretq_p8_u64(uint64x2_t a) {
+  return vreinterpretq_p8_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p8_f16
+// CHECK-NEXT: ret
+poly8x16_t test_vreinterpretq_p8_f16(float16x8_t a) {
+  return vreinterpretq_p8_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p8_f32
+// CHECK-NEXT: ret
+poly8x16_t test_vreinterpretq_p8_f32(float32x4_t a) {
+  return vreinterpretq_p8_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p8_f64
+// CHECK-NEXT: ret
+poly8x16_t test_vreinterpretq_p8_f64(float64x2_t a) {
+  return vreinterpretq_p8_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p8_p16
+// CHECK-NEXT: ret
+poly8x16_t test_vreinterpretq_p8_p16(poly16x8_t a) {
+  return vreinterpretq_p8_p16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p8_p64
+// CHECK-NEXT: ret
+poly8x16_t test_vreinterpretq_p8_p64(poly64x2_t a) {
+  return vreinterpretq_p8_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p16_s8
+// CHECK-NEXT: ret
+poly16x8_t test_vreinterpretq_p16_s8(int8x16_t a) {
+  return vreinterpretq_p16_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p16_s16
+// CHECK-NEXT: ret
+poly16x8_t test_vreinterpretq_p16_s16(int16x8_t a) {
+  return vreinterpretq_p16_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p16_s32
+// CHECK-NEXT: ret
+poly16x8_t test_vreinterpretq_p16_s32(int32x4_t a) {
+  return vreinterpretq_p16_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p16_s64
+// CHECK-NEXT: ret
+poly16x8_t test_vreinterpretq_p16_s64(int64x2_t a) {
+  return vreinterpretq_p16_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p16_u8
+// CHECK-NEXT: ret
+poly16x8_t test_vreinterpretq_p16_u8(uint8x16_t a) {
+  return vreinterpretq_p16_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p16_u16
+// CHECK-NEXT: ret
+poly16x8_t test_vreinterpretq_p16_u16(uint16x8_t a) {
+  return vreinterpretq_p16_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p16_u32
+// CHECK-NEXT: ret
+poly16x8_t test_vreinterpretq_p16_u32(uint32x4_t a) {
+  return vreinterpretq_p16_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p16_u64
+// CHECK-NEXT: ret
+poly16x8_t test_vreinterpretq_p16_u64(uint64x2_t a) {
+  return vreinterpretq_p16_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p16_f16
+// CHECK-NEXT: ret
+poly16x8_t test_vreinterpretq_p16_f16(float16x8_t a) {
+  return vreinterpretq_p16_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p16_f32
+// CHECK-NEXT: ret
+poly16x8_t test_vreinterpretq_p16_f32(float32x4_t a) {
+  return vreinterpretq_p16_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p16_f64
+// CHECK-NEXT: ret
+poly16x8_t test_vreinterpretq_p16_f64(float64x2_t a) {
+  return vreinterpretq_p16_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p16_p8
+// CHECK-NEXT: ret
+poly16x8_t test_vreinterpretq_p16_p8(poly8x16_t a) {
+  return vreinterpretq_p16_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p16_p64
+// CHECK-NEXT: ret
+poly16x8_t test_vreinterpretq_p16_p64(poly64x2_t a) {
+  return vreinterpretq_p16_p64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p64_s8
+// CHECK-NEXT: ret
+poly64x2_t test_vreinterpretq_p64_s8(int8x16_t a) {
+  return vreinterpretq_p64_s8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p64_s16
+// CHECK-NEXT: ret
+poly64x2_t test_vreinterpretq_p64_s16(int16x8_t a) {
+  return vreinterpretq_p64_s16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p64_s32
+// CHECK-NEXT: ret
+poly64x2_t test_vreinterpretq_p64_s32(int32x4_t a) {
+  return vreinterpretq_p64_s32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p64_s64
+// CHECK-NEXT: ret
+poly64x2_t test_vreinterpretq_p64_s64(int64x2_t a) {
+  return vreinterpretq_p64_s64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p64_u8
+// CHECK-NEXT: ret
+poly64x2_t test_vreinterpretq_p64_u8(uint8x16_t a) {
+  return vreinterpretq_p64_u8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p64_u16
+// CHECK-NEXT: ret
+poly64x2_t test_vreinterpretq_p64_u16(uint16x8_t a) {
+  return vreinterpretq_p64_u16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p64_u32
+// CHECK-NEXT: ret
+poly64x2_t test_vreinterpretq_p64_u32(uint32x4_t a) {
+  return vreinterpretq_p64_u32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p64_u64
+// CHECK-NEXT: ret
+poly64x2_t test_vreinterpretq_p64_u64(uint64x2_t a) {
+  return vreinterpretq_p64_u64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p64_f16
+// CHECK-NEXT: ret
+poly64x2_t test_vreinterpretq_p64_f16(float16x8_t a) {
+  return vreinterpretq_p64_f16(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p64_f32
+// CHECK-NEXT: ret
+poly64x2_t test_vreinterpretq_p64_f32(float32x4_t a) {
+  return vreinterpretq_p64_f32(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p64_f64
+// CHECK-NEXT: ret
+poly64x2_t test_vreinterpretq_p64_f64(float64x2_t a) {
+  return vreinterpretq_p64_f64(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p64_p8
+// CHECK-NEXT: ret
+poly64x2_t test_vreinterpretq_p64_p8(poly8x16_t a) {
+  return vreinterpretq_p64_p8(a);
+}
+
+// CHECK-LABEL: test_vreinterpretq_p64_p16
+// CHECK-NEXT: ret
+poly64x2_t test_vreinterpretq_p64_p16(poly16x8_t a) {
+  return vreinterpretq_p64_p16(a);
+}

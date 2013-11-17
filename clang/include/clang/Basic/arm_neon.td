@@ -941,6 +941,14 @@ def VQTBX4_A64 : WInst<"vqtbx4", "ddDt", "UccPcQUcQcQPc">;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Vector reinterpret cast operations
+// With additional d, Qd, pl, Qpl types
+def REINTERPRET
+  : NoTestOpInst<"vreinterpret", "dd",
+         "csilUcUsUiUlhfdPcPsPlQcQsQiQlQUcQUsQUiQUlQhQfQdQPcQPsQPl", OP_REINT>;
+
+
+////////////////////////////////////////////////////////////////////////////////
 // Scalar Intrinsics
 // Scalar Arithmetic
 
