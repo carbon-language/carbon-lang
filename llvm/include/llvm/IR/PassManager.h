@@ -151,6 +151,9 @@ public:
   /// constructed around.
   template <typename PassT>
   const typename PassT::Result &getResult(Module *M) {
+    assert(ModuleAnalysisPasses.count(PassT::ID()) &&
+           "This analysis pass was not registered prior to being queried");
+
     const AnalysisResultConcept<Module> &ResultConcept =
         getResultImpl(PassT::ID(), M);
     typedef AnalysisResultModel<Module, typename PassT::Result> ResultModelT;
@@ -163,6 +166,9 @@ public:
   /// re-run the analysis to produce a valid result.
   template <typename PassT>
   const typename PassT::Result &getResult(Function *F) {
+    assert(FunctionAnalysisPasses.count(PassT::ID()) &&
+           "This analysis pass was not registered prior to being queried");
+
     const AnalysisResultConcept<Function> &ResultConcept =
         getResultImpl(PassT::ID(), F);
     typedef AnalysisResultModel<Function, typename PassT::Result> ResultModelT;
@@ -178,21 +184,6 @@ public:
   /// the manager with all of the analysis passes available.
   template <typename PassT> void registerAnalysisPass(PassT Pass) {
     registerAnalysisPassImpl<PassT>(llvm_move(Pass));
-  }
-
-  /// \brief Require that a particular analysis pass is provided by the manager.
-  ///
-  /// This allows transform passes to assert ther requirements during
-  /// construction and fail fast if the analysis manager doesn't provide the
-  /// needed facilities.
-  ///
-  /// We force the analysis manager to have these passes explicitly registered
-  /// first to ensure that there is exactly one place in the code responsible
-  /// for adding an analysis pass to the manager as all transforms will share
-  /// a single pass within the manager and each may not be the canonical place
-  /// to initialize such a pass.
-  template <typename PassT> void requireAnalysisPass() {
-    requireAnalysisPassImpl<PassT>();
   }
 
   /// \brief Invalidate a specific analysis pass for an IR module.
@@ -332,22 +323,6 @@ private:
            "Registered the same analysis pass twice!");
     FunctionAnalysisPasses[PassT::ID()] =
         new AnalysisPassModel<PassT>(llvm_move(Pass));
-  }
-
-  /// \brief Module pass specific implementation of requirement declaration.
-  template <typename PassT>
-  typename enable_if<is_same<typename PassT::IRUnitT, Module> >::type
-  requireAnalysisPassImpl() {
-    assert(ModuleAnalysisPasses.count(PassT::ID()) &&
-           "This analysis pass was not registered prior to being required");
-  }
-
-  /// \brief Function pass specific implementation of requirement declaration.
-  template <typename PassT>
-  typename enable_if<is_same<typename PassT::IRUnitT, Function> >::type
-  requireAnalysisPassImpl() {
-    assert(FunctionAnalysisPasses.count(PassT::ID()) &&
-           "This analysis pass was not registered prior to being required");
   }
 
 

@@ -63,7 +63,6 @@ struct TestModulePass {
 struct TestFunctionPass {
   TestFunctionPass(AnalysisManager &AM, int &RunCount, int &AnalyzedInstrCount)
       : AM(AM), RunCount(RunCount), AnalyzedInstrCount(AnalyzedInstrCount) {
-    AM.requireAnalysisPass<TestAnalysisPass>();
   }
 
   bool run(Function *F) {
