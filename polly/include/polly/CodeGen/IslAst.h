@@ -33,6 +33,7 @@ class raw_ostream;
 }
 
 struct isl_ast_node;
+struct isl_ast_expr;
 struct isl_ast_build;
 struct isl_pw_multi_aff;
 
@@ -63,6 +64,14 @@ public:
   void pprint(llvm::raw_ostream &OS);
 
   isl_ast_node *getAst();
+
+  /// @brief Get the run conditon.
+  ///
+  /// Only if the run condition evaluates at run-time to a non-zero value, the
+  /// assumptions that have been taken hold. If the run condition evaluates to
+  /// zero/false some assumptions do not hold and the original code needs to
+  /// be executed.
+  __isl_give isl_ast_expr *getRunCondition();
 
   bool runOnScop(Scop &S);
   void printScop(llvm::raw_ostream &OS) const;

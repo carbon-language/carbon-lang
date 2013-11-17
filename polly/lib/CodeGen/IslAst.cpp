@@ -464,6 +464,9 @@ bool IslAstInfo::runOnScop(Scop &Scop) {
 }
 
 __isl_give isl_ast_node *IslAstInfo::getAst() { return Ast->getAst(); }
+__isl_give isl_ast_expr *IslAstInfo::getRunCondition() {
+  return Ast->getRunCondition();
+}
 
 void IslAstInfo::printScop(raw_ostream &OS) const {
   Function *F = S->getRegion().getEntry()->getParent();

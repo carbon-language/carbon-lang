@@ -542,6 +542,7 @@ public:
 
   void addParameters(__isl_take isl_set *Context);
   void create(__isl_take isl_ast_node *Node);
+  IslExprBuilder &getExprBuilder() { return ExprBuilder; }
 
 private:
   IRBuilder<> &Builder;
@@ -1032,6 +1033,17 @@ public:
     IRBuilder<> Builder(StartBlock->begin());
 
     IslNodeBuilder NodeBuilder(Builder, this);
+
+    // Build condition that evaluates at run-time if all assumptions taken
+    // for the scop hold. If we detect some assumptions do not hold, the
+    // original code is executed.
+    Value *V = NodeBuilder.getExprBuilder().create(AstInfo.getRunCondition());
+    Value *Zero = ConstantInt::get(V->getType(), 0);
+    V = Builder.CreateICmp(CmpInst::ICMP_NE, Zero, V);
+    BasicBlock *PrevBB = StartBlock->getUniquePredecessor();
+    BranchInst *Branch = dyn_cast<BranchInst>(PrevBB->getTerminator());
+    Branch->setCondition(V);
+
     NodeBuilder.addParameters(S.getContext());
     NodeBuilder.create(Ast);
     return true;
