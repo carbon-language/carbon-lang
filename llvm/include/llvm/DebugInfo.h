@@ -766,16 +766,19 @@ public:
   void processModule(const Module &M);
 
   /// processDeclare - Process DbgDeclareInst.
-  void processDeclare(const DbgDeclareInst *DDI);
+  void processDeclare(const Module &M, const DbgDeclareInst *DDI);
   /// Process DbgValueInst.
-  void processValue(const DbgValueInst *DVI);
+  void processValue(const Module &M, const DbgValueInst *DVI);
   /// processLocation - Process DILocation.
-  void processLocation(DILocation Loc);
+  void processLocation(const Module &M, DILocation Loc);
 
   /// Clear all lists.
   void reset();
 
 private:
+  /// Initialize TypeIdentifierMap.
+  void IntializeTypeMap(const Module &M);
+
   /// processType - Process DIType.
   void processType(DIType DT);
 
@@ -828,6 +831,8 @@ private:
   SmallVector<MDNode *, 8> Scopes; // Scopes
   SmallPtrSet<MDNode *, 64> NodesSeen;
   DITypeIdentifierMap TypeIdentifierMap;
+  /// Specify if TypeIdentifierMap is initialized.
+  bool TypeMapInitialized;
 };
 } // end namespace llvm
 

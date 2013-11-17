@@ -951,12 +951,21 @@ void DebugInfoFinder::reset() {
   Scopes.clear();
   NodesSeen.clear();
   TypeIdentifierMap.clear();
+  TypeMapInitialized = false;
+}
+
+void DebugInfoFinder::IntializeTypeMap(const Module &M) {
+  if (!TypeMapInitialized)
+    if (NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu")) {
+      TypeIdentifierMap = generateDITypeIdentifierMap(CU_Nodes);
+      TypeMapInitialized = true;
+    }
 }
 
 /// processModule - Process entire module and collect debug info.
 void DebugInfoFinder::processModule(const Module &M) {
+  IntializeTypeMap(M);
   if (NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu")) {
-    TypeIdentifierMap = generateDITypeIdentifierMap(CU_Nodes);
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
       DICompileUnit CU(CU_Nodes->getOperand(i));
       addCompileUnit(CU);
@@ -993,11 +1002,12 @@ void DebugInfoFinder::processModule(const Module &M) {
 }
 
 /// processLocation - Process DILocation.
-void DebugInfoFinder::processLocation(DILocation Loc) {
+void DebugInfoFinder::processLocation(const Module &M, DILocation Loc) {
   if (!Loc)
     return;
+  IntializeTypeMap(M);
   processScope(Loc.getScope());
-  processLocation(Loc.getOrigLocation());
+  processLocation(M, Loc.getOrigLocation());
 }
 
 /// processType - Process DIType.
@@ -1084,10 +1094,12 @@ void DebugInfoFinder::processSubprogram(DISubprogram SP) {
 }
 
 /// processDeclare - Process DbgDeclareInst.
-void DebugInfoFinder::processDeclare(const DbgDeclareInst *DDI) {
+void DebugInfoFinder::processDeclare(const Module &M,
+                                     const DbgDeclareInst *DDI) {
   MDNode *N = dyn_cast<MDNode>(DDI->getVariable());
   if (!N)
     return;
+  IntializeTypeMap(M);
 
   DIDescriptor DV(N);
   if (!DV.isVariable())
@@ -1099,10 +1111,11 @@ void DebugInfoFinder::processDeclare(const DbgDeclareInst *DDI) {
   processType(DIVariable(N).getType());
 }
 
-void DebugInfoFinder::processValue(const DbgValueInst *DVI) {
+void DebugInfoFinder::processValue(const Module &M, const DbgValueInst *DVI) {
   MDNode *N = dyn_cast<MDNode>(DVI->getVariable());
   if (!N)
     return;
+  IntializeTypeMap(M);
 
   DIDescriptor DV(N);
   if (!DV.isVariable())

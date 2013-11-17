@@ -2125,7 +2125,7 @@ void Verifier::visitInstruction(Instruction &I) {
 
   if (!DisableDebugInfoVerifier) {
     MD = I.getMetadata(LLVMContext::MD_dbg);
-    Finder.processLocation(DILocation(MD));
+    Finder.processLocation(*Mod, DILocation(MD));
   }
 
   InstsInThisBlock.insert(&I);
@@ -2303,13 +2303,13 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     Assert1(MD->getNumOperands() == 1,
                 "invalid llvm.dbg.declare intrinsic call 2", &CI);
     if (!DisableDebugInfoVerifier)
-      Finder.processDeclare(cast<DbgDeclareInst>(&CI));
+      Finder.processDeclare(*Mod, cast<DbgDeclareInst>(&CI));
   } break;
   case Intrinsic::dbg_value: { //llvm.dbg.value
     if (!DisableDebugInfoVerifier) {
       Assert1(CI.getArgOperand(0) && isa<MDNode>(CI.getArgOperand(0)),
               "invalid llvm.dbg.value intrinsic call 1", &CI);
-      Finder.processValue(cast<DbgValueInst>(&CI));
+      Finder.processValue(*Mod, cast<DbgValueInst>(&CI));
     }
     break;
   }
