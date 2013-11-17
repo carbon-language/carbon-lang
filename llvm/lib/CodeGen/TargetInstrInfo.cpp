@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/CommandLine.h"
@@ -274,6 +275,36 @@ bool TargetInstrInfo::hasStoreToStackSlot(const MachineInstr *MI,
       }
   }
   return false;
+}
+
+bool TargetInstrInfo::getStackSlotRange(const TargetRegisterClass *RC,
+                                        unsigned SubIdx, unsigned &Size,
+                                        unsigned &Offset,
+                                        const TargetMachine *TM) const {
+  if (!SubIdx) {
+    Size = RC->getSize();
+    Offset = 0;
+    return true;
+  }
+  unsigned BitSize = TM->getRegisterInfo()->getSubRegIdxSize(SubIdx);
+  // Convert bit size to byte size to be consistent with
+  // MCRegisterClass::getSize().
+  if (BitSize % 8)
+    return false;
+
+  int BitOffset = TM->getRegisterInfo()->getSubRegIdxOffset(SubIdx);
+  if (BitOffset < 0 || BitOffset % 8)
+    return false;
+
+  Size = BitSize /= 8;
+  Offset = (unsigned)BitOffset / 8;
+
+  assert(RC->getSize() >= (Offset + Size) && "bad subregister range");
+
+  if (!TM->getDataLayout()->isLittleEndian()) {
+    Offset = RC->getSize() - (Offset + Size);
+  }
+  return true;
 }
 
 void TargetInstrInfo::reMaterialize(MachineBasicBlock &MBB,

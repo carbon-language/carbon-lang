@@ -34,7 +34,8 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
   // This method is implemented in X86MCInstLower.cpp.
   static std::pair<StackMaps::Location, MachineInstr::const_mop_iterator>
     stackmapOperandParser(MachineInstr::const_mop_iterator MOI,
-                          MachineInstr::const_mop_iterator MOE);
+                          MachineInstr::const_mop_iterator MOE,
+                          const TargetMachine &TM);
 
  public:
   explicit X86AsmPrinter(TargetMachine &TM, MCStreamer &Streamer)

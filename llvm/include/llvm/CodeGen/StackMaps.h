@@ -26,18 +26,19 @@ public:
     enum LocationType { Unprocessed, Register, Direct, Indirect, Constant,
                         ConstantIndex };
     LocationType LocType;
+    unsigned Size;
     unsigned Reg;
     int64_t Offset;
-    Location() : LocType(Unprocessed), Reg(0), Offset(0) {}
-    Location(LocationType LocType, unsigned Reg, int64_t Offset)
-      : LocType(LocType), Reg(Reg), Offset(Offset) {}
+    Location() : LocType(Unprocessed), Size(0), Reg(0), Offset(0) {}
+    Location(LocationType LocType, unsigned Size, unsigned Reg, int64_t Offset)
+      : LocType(LocType), Size(Size), Reg(Reg), Offset(Offset) {}
   };
 
   // Typedef a function pointer for functions that parse sequences of operands
   // and return a Location, plus a new "next" operand iterator.
   typedef std::pair<Location, MachineInstr::const_mop_iterator>
     (*OperandParser)(MachineInstr::const_mop_iterator,
-                     MachineInstr::const_mop_iterator);
+                     MachineInstr::const_mop_iterator, const TargetMachine&);
 
   // OpTypes are used to encode information about the following logical
   // operand (which may consist of several MachineOperands) for the

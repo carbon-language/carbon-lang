@@ -4239,9 +4239,20 @@ static MachineInstr* foldPatchpoint(MachineFunction &MF,
   for (unsigned i = StartIdx; i < MI->getNumOperands(); ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (std::find(Ops.begin(), Ops.end(), i) != Ops.end()) {
+      assert(MO.getReg() && "patchpoint can only fold a vreg operand");
+      // Compute the spill slot size and offset.
+      const TargetRegisterClass *RC = MF.getRegInfo().getRegClass(MO.getReg());
+      unsigned SpillSize;
+      unsigned SpillOffset;
+      bool Valid = TII.getStackSlotRange(RC, MO.getSubReg(), SpillSize,
+                                         SpillOffset, &MF.getTarget());
+      if (!Valid)
+        report_fatal_error("cannot spill patchpoint subregister operand");
+
       MIB.addOperand(MachineOperand::CreateImm(StackMaps::IndirectMemRefOp));
+      MIB.addOperand(MachineOperand::CreateImm(SpillSize));
       MIB.addOperand(MachineOperand::CreateFI(FrameIndex));
-      addOffset(MIB, 0);
+      addOffset(MIB, SpillOffset);
     }
     else
       MIB.addOperand(MO);

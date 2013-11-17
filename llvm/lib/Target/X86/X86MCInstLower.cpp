@@ -676,7 +676,7 @@ static void LowerTlsAddr(MCStreamer &OutStreamer,
 }
 
 static std::pair<StackMaps::Location, MachineInstr::const_mop_iterator>
-parseMemoryOperand(StackMaps::Location::LocationType LocTy,
+parseMemoryOperand(StackMaps::Location::LocationType LocTy, unsigned Size,
                    MachineInstr::const_mop_iterator MOI,
                    MachineInstr::const_mop_iterator MOE) {
 
@@ -701,12 +701,13 @@ parseMemoryOperand(StackMaps::Location::LocationType LocTy,
   (void)ZeroReg;
 
   return std::make_pair(
-           Location(LocTy, Base.getReg(), Disp.getImm()), ++MOI);
+    Location(LocTy, Size, Base.getReg(), Disp.getImm()), ++MOI);
 }
 
 std::pair<StackMaps::Location, MachineInstr::const_mop_iterator>
 X86AsmPrinter::stackmapOperandParser(MachineInstr::const_mop_iterator MOI,
-                                     MachineInstr::const_mop_iterator MOE) {
+                                     MachineInstr::const_mop_iterator MOE,
+                                     const TargetMachine &TM) {
 
   typedef StackMaps::Location Location;
 
@@ -717,26 +718,42 @@ X86AsmPrinter::stackmapOperandParser(MachineInstr::const_mop_iterator MOI,
   if (MOP.isImm()) {
     switch (MOP.getImm()) {
     default: llvm_unreachable("Unrecognized operand type.");
-    case StackMaps::DirectMemRefOp:
-      return parseMemoryOperand(StackMaps::Location::Direct,
+    case StackMaps::DirectMemRefOp: {
+      unsigned Size = TM.getDataLayout()->getPointerSizeInBits();
+      assert((Size % 8) == 0 && "Need pointer size in bytes.");
+      Size /= 8;
+      return parseMemoryOperand(StackMaps::Location::Direct, Size,
                                 llvm::next(MOI), MOE);
-    case StackMaps::IndirectMemRefOp:
-      return parseMemoryOperand(StackMaps::Location::Indirect,
+    }
+    case StackMaps::IndirectMemRefOp: {
+      ++MOI;
+      int64_t Size = MOI->getImm();
+      assert(Size > 0 && "Need a valid size for indirect memory locations.");
+      return parseMemoryOperand(StackMaps::Location::Indirect, Size,
                                 llvm::next(MOI), MOE);
+    }
     case StackMaps::ConstantOp: {
       ++MOI;
       assert(MOI->isImm() && "Expected constant operand.");
       int64_t Imm = MOI->getImm();
-      return std::make_pair(Location(Location::Constant, 0, Imm), ++MOI);
+      return std::make_pair(
+        Location(Location::Constant, sizeof(int64_t), 0, Imm), ++MOI);
     }
     }
   }
 
-  // Otherwise this is a reg operand.
+  // Otherwise this is a reg operand. The physical register number will
+  // ultimately be encoded as a DWARF regno. The stack map also records the size
+  // of a spill slot that can hold the register content. (The runtime can
+  // track the actual size of the data type if it needs to.)
   assert(MOP.isReg() && "Expected register operand here.");
   assert(TargetRegisterInfo::isPhysicalRegister(MOP.getReg()) &&
          "Virtreg operands should have been rewritten before now.");
-  return std::make_pair(Location(Location::Register, MOP.getReg(), 0), ++MOI);
+  const TargetRegisterClass *RC =
+    TM.getRegisterInfo()->getMinimalPhysRegClass(MOP.getReg());
+  assert(!MOP.getSubReg() && "Physical subreg still around.");
+  return std::make_pair(
+    Location(Location::Register, RC->getSize(), MOP.getReg(), 0), ++MOI);
 }
 
 static MachineInstr::const_mop_iterator

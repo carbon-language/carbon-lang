@@ -41,7 +41,7 @@ void StackMaps::recordStackMap(const MachineInstr &MI, uint32_t ID,
 
   if (recordResult) {
     std::pair<Location, MachineInstr::const_mop_iterator> ParseResult =
-      OpParser(MI.operands_begin(), llvm::next(MI.operands_begin(), 1));
+      OpParser(MI.operands_begin(), llvm::next(MI.operands_begin()), AP.TM);
 
     Location &Loc = ParseResult.first;
     assert(Loc.LocType == Location::Register &&
@@ -51,7 +51,7 @@ void StackMaps::recordStackMap(const MachineInstr &MI, uint32_t ID,
 
   while (MOI != MOE) {
     std::pair<Location, MachineInstr::const_mop_iterator> ParseResult =
-      OpParser(MOI, MOE);
+      OpParser(MOI, MOE, AP.TM);
 
     Location &Loc = ParseResult.first;
 
@@ -86,7 +86,7 @@ void StackMaps::recordStackMap(const MachineInstr &MI, uint32_t ID,
 ///   uint16 : NumLocations
 ///   Location[NumLocations] {
 ///     uint8  : Register | Direct | Indirect | Constant | ConstantIndex
-///     uint8  : Reserved (location flags)
+///     uint8  : Size in Bytes
 ///     uint16 : Dwarf RegNum
 ///     int32  : Offset
 ///   }
@@ -200,11 +200,21 @@ void StackMaps::serializeToStackMapSection() {
       );
 
       unsigned RegNo = 0;
+      int Offset = Loc.Offset;
       if(Loc.Reg) {
         RegNo = MCRI.getDwarfRegNum(Loc.Reg, false);
         for (MCSuperRegIterator SR(Loc.Reg, TRI);
              SR.isValid() && (int)RegNo < 0; ++SR) {
           RegNo = TRI->getDwarfRegNum(*SR, false);
+        }
+        // If this is a register location, put the subregister byte offset in
+        // the location offset.
+        if (Loc.LocType == Location::Register) {
+          assert(!Loc.Offset && "Register location should have zero offset");
+          unsigned LLVMRegNo = MCRI.getLLVMRegNum(RegNo, false);
+          unsigned SubRegIdx = MCRI.getSubRegIndex(LLVMRegNo, Loc.Reg);
+          if (SubRegIdx)
+            Offset = MCRI.getSubRegIdxOffset(SubRegIdx);
         }
       }
       else {
@@ -213,9 +223,9 @@ void StackMaps::serializeToStackMapSection() {
                "Missing location register");
       }
       AP.OutStreamer.EmitIntValue(Loc.LocType, 1);
-      AP.OutStreamer.EmitIntValue(0, 1); // Reserved location flags.
+      AP.OutStreamer.EmitIntValue(Loc.Size, 1);
       AP.OutStreamer.EmitIntValue(RegNo, 2);
-      AP.OutStreamer.EmitIntValue(Loc.Offset, 4);
+      AP.OutStreamer.EmitIntValue(Offset, 4);
     }
   }
 

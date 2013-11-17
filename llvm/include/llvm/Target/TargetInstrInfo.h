@@ -181,6 +181,23 @@ public:
     return false;
   }
 
+  /// Compute the size in bytes and offset within a stack slot of a spilled
+  /// register or subregister.
+  ///
+  /// \param [out] Size in bytes of the spilled value.
+  /// \param [out] Offset in bytes within the stack slot.
+  /// \returns true if both Size and Offset are successfully computed.
+  ///
+  /// Not all subregisters have computable spill slots. For example,
+  /// subregisters registers may not be byte-sized, and a pair of discontiguous
+  /// subregisters has no single offset.
+  ///
+  /// Targets with nontrivial bigendian implementations may need to override
+  /// this, particularly to support spilled vector registers.
+  virtual bool getStackSlotRange(const TargetRegisterClass *RC, unsigned SubIdx,
+                                 unsigned &Size, unsigned &Offset,
+                                 const TargetMachine *TM) const;
+
   /// reMaterialize - Re-issue the specified 'original' instruction at the
   /// specific location targeting a new destination register.
   /// The register in Orig->getOperand(0).getReg() will be substituted by

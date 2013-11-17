@@ -1057,6 +1057,9 @@ foldMemoryOperand(ArrayRef<std::pair<MachineInstr*, unsigned> > Ops,
   bool WasCopy = MI->isCopy();
   unsigned ImpReg = 0;
 
+  bool SpillSubRegs = (MI->getOpcode() == TargetOpcode::PATCHPOINT ||
+                       MI->getOpcode() == TargetOpcode::STACKMAP);
+
   // TargetInstrInfo::foldMemoryOperand only expects explicit, non-tied
   // operands.
   SmallVector<unsigned, 8> FoldOps;
@@ -1068,7 +1071,7 @@ foldMemoryOperand(ArrayRef<std::pair<MachineInstr*, unsigned> > Ops,
       continue;
     }
     // FIXME: Teach targets to deal with subregs.
-    if (MO.getSubReg())
+    if (!SpillSubRegs && MO.getSubReg())
       return false;
     // We cannot fold a load instruction into a def.
     if (LoadMI && MO.isDef())
