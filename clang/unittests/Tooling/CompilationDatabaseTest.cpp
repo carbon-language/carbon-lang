@@ -450,7 +450,9 @@ TEST(ParseFixedCompilationDatabase, ReturnsNullWithoutDoubleDash) {
 
 TEST(ParseFixedCompilationDatabase, ReturnsArgumentsAfterDoubleDash) {
   int Argc = 5;
-  const char *Argv[] = { "1", "2", "--\0no-constant-folding", "3", "4" };
+  const char *Argv[] = {
+    "1", "2", "--\0no-constant-folding", "-DDEF3", "-DDEF4"
+  };
   OwningPtr<FixedCompilationDatabase> Database(
       FixedCompilationDatabase::loadFromCommandLine(Argc, Argv));
   ASSERT_TRUE(Database.isValid());
@@ -460,8 +462,8 @@ TEST(ParseFixedCompilationDatabase, ReturnsArgumentsAfterDoubleDash) {
   ASSERT_EQ(".", Result[0].Directory);
   std::vector<std::string> CommandLine;
   CommandLine.push_back("clang-tool");
-  CommandLine.push_back("3");
-  CommandLine.push_back("4");
+  CommandLine.push_back("-DDEF3");
+  CommandLine.push_back("-DDEF4");
   CommandLine.push_back("source");
   ASSERT_EQ(CommandLine, Result[0].CommandLine);
   EXPECT_EQ(2, Argc);
@@ -481,6 +483,42 @@ TEST(ParseFixedCompilationDatabase, ReturnsEmptyCommandLine) {
   CommandLine.push_back("clang-tool");
   CommandLine.push_back("source");
   ASSERT_EQ(CommandLine, Result[0].CommandLine);
+  EXPECT_EQ(2, Argc);
+}
+
+TEST(ParseFixedCompilationDatabase, HandlesPositionalArgs) {
+  const char *Argv[] = {"1", "2", "--", "-c", "somefile.cpp", "-DDEF3"};
+  int Argc = sizeof(Argv) / sizeof(char*);
+  OwningPtr<FixedCompilationDatabase> Database(
+      FixedCompilationDatabase::loadFromCommandLine(Argc, Argv));
+  ASSERT_TRUE(Database.isValid());
+  std::vector<CompileCommand> Result =
+    Database->getCompileCommands("source");
+  ASSERT_EQ(1ul, Result.size());
+  ASSERT_EQ(".", Result[0].Directory);
+  std::vector<std::string> Expected;
+  Expected.push_back("clang-tool");
+  Expected.push_back("-c");
+  Expected.push_back("-DDEF3");
+  Expected.push_back("source");
+  ASSERT_EQ(Expected, Result[0].CommandLine);
+  EXPECT_EQ(2, Argc);
+}
+
+TEST(ParseFixedCompilationDatabase, HandlesArgv0) {
+  const char *Argv[] = {"1", "2", "--", "mytool", "somefile.cpp"};
+  int Argc = sizeof(Argv) / sizeof(char*);
+  OwningPtr<FixedCompilationDatabase> Database(
+      FixedCompilationDatabase::loadFromCommandLine(Argc, Argv));
+  ASSERT_TRUE(Database.isValid());
+  std::vector<CompileCommand> Result =
+    Database->getCompileCommands("source");
+  ASSERT_EQ(1ul, Result.size());
+  ASSERT_EQ(".", Result[0].Directory);
+  std::vector<std::string> Expected;
+  Expected.push_back("clang-tool");
+  Expected.push_back("source");
+  ASSERT_EQ(Expected, Result[0].CommandLine);
   EXPECT_EQ(2, Argc);
 }
 
