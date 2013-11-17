@@ -911,6 +911,9 @@ format instructions will bind the operands to the ``rd``, ``rs1``, and ``rs2``
 fields.  This results in the ``XNORrr`` instruction binding ``$dst``, ``$b``,
 and ``$c`` operands to the ``rd``, ``rs1``, and ``rs2`` fields respectively.
 
+Instruction Operand Name Mapping
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 TableGen will also generate a function called getNamedOperandIdx() which
 can be used to look up an operand's index in a MachineInstr based on its
 TableGen name.  Setting the UseNamedOperandTable bit in an instruction's
@@ -951,6 +954,9 @@ XXXInstrInfo.h:
   namespace XXX {
     int16_t getNamedOperandIdx(uint16_t Opcode, uint16_t NamedIndex);
   } // End namespace XXX
+
+Instruction Scheduling
+----------------------
 
 Instruction itineraries can be queried using MCDesc::getSchedClass(). The
 value can be named by an enumemation in llvm::XXX::Sched namespace generated
