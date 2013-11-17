@@ -19,52 +19,69 @@
 using namespace llvm;
 
 /// Multiply FREQ by N and store result in W array.
-static void mult96bit(uint64_t freq, uint32_t N, uint64_t W[2]) {
+static void mult96bit(uint64_t freq, uint32_t N, uint32_t W[3]) {
   uint64_t u0 = freq & UINT32_MAX;
   uint64_t u1 = freq >> 32;
 
-  // Represent 96-bit value as w[2]:w[1]:w[0];
-  uint32_t w[3] = { 0, 0, 0 };
-
+  // Represent 96-bit value as W[2]:W[1]:W[0];
   uint64_t t = u0 * N;
   uint64_t k = t >> 32;
-  w[0] = t;
+  W[0] = t;
   t = u1 * N + k;
-  w[1] = t;
-  w[2] = t >> 32;
-
-  // W[1] - higher bits.
-  // W[0] - lower bits.
-  W[0] = w[0] + ((uint64_t) w[1] << 32);
-  W[1] = w[2];
+  W[1] = t;
+  W[2] = t >> 32;
 }
 
+/// Divide 96-bit value stored in W[2]:W[1]:W[0] by D. Since our word size is a
+/// 32 bit unsigned integer, we can use a short division algorithm.
+static uint64_t divrem96bit(uint32_t W[3], uint32_t D, uint32_t *Rout) {
+  // We assume that W[2] is non-zero since if W[2] is not then the user should
+  // just use hardware division.
+  assert(W[2] && "This routine assumes that W[2] is non-zero since if W[2] is "
+         "zero, the caller should just use 64/32 hardware.");
+  uint32_t Q[3] = { 0, 0, 0 };
 
-/// Divide 96-bit value stored in W array by D.
-/// Return 64-bit quotient, saturated to UINT64_MAX on overflow.
-static uint64_t div96bit(uint64_t W[2], uint32_t D) {
-  uint64_t y = W[0];
-  uint64_t x = W[1];
-  unsigned i;
-
-  assert(x != 0 && "This is really a 64-bit division");
-
-  // This long division algorithm automatically saturates on overflow.
-  for (i = 0; i < 64 && x; ++i) {
-    uint32_t t = -((x >> 31) & 1); // Splat bit 31 to bits 0-31.
-    x = (x << 1) | (y >> 63);
-    y = y << 1;
-    if ((x | t) >= D) {
-      x -= D;
-      ++y;
+  // The generalized short division algorithm sets i to m + n - 1, where n is
+  // the number of words in the divisior and m is the number of words by which
+  // the divident exceeds the divisor (i.e. m + n == the length of the dividend
+  // in words). Due to our assumption that W[2] is non-zero, we know that the
+  // dividend is of length 3 implying since n is 1 that m = 2. Thus we set i to
+  // m + n - 1 = 2 + 1 - 1 = 2.
+  uint32_t R = 0;
+  for (int i = 2; i >= 0; --i) {
+    uint64_t PartialD = uint64_t(R) << 32 | W[i];
+    if (PartialD == 0) {
+      Q[i] = 0;
+      R = 0;
+    } else if (PartialD < D) {
+      Q[i] = 0;
+      R = uint32_t(PartialD);
+    } else if (PartialD == D) {
+      Q[i] = 1;
+      R = 0;
+    } else {
+      Q[i] = uint32_t(PartialD / D);
+      R = uint32_t(PartialD - (Q[i] * D));
     }
   }
 
-  return y << (64 - i);
+  // If Q[2] is non-zero, then we overflowed.
+  uint64_t Result;
+  if (Q[2]) {
+    Result = UINT64_MAX;
+    R = D;
+  } else {
+    // Form the final uint64_t result, avoiding endianness issues.
+    Result = uint64_t(Q[0]) | (uint64_t(Q[1]) << 32);
+  }
+
+  if (Rout)
+    *Rout = R;
+
+  return Result;
 }
 
-
-void BlockFrequency::scale(uint32_t N, uint32_t D) {
+uint32_t BlockFrequency::scale(uint32_t N, uint32_t D) {
   assert(D != 0 && "Division by zero");
 
   // Calculate Frequency * N.
@@ -75,15 +92,16 @@ void BlockFrequency::scale(uint32_t N, uint32_t D) {
   // If the product fits in 64 bits, just use built-in division.
   if (MulHi <= UINT32_MAX && MulRes >= MulLo) {
     Frequency = MulRes / D;
-    return;
+    return MulRes % D;
   }
 
   // Product overflowed, use 96-bit operations.
-  // 96-bit value represented as W[1]:W[0].
-  uint64_t W[2];
+  // 96-bit value represented as W[2]:W[1]:W[0].
+  uint32_t W[3];
+  uint32_t R;
   mult96bit(Frequency, N, W);
-  Frequency = div96bit(W, D);
-  return;
+  Frequency = divrem96bit(W, D, &R);
+  return R;
 }
 
 BlockFrequency &BlockFrequency::operator*=(const BranchProbability &Prob) {
@@ -125,6 +143,10 @@ BlockFrequency::operator+(const BlockFrequency &Prob) const {
   BlockFrequency Freq(Frequency);
   Freq += Prob;
   return Freq;
+}
+
+uint32_t BlockFrequency::scale(const BranchProbability &Prob) {
+  return scale(Prob.getNumerator(), Prob.getDenominator());
 }
 
 void BlockFrequency::print(raw_ostream &OS) const {
