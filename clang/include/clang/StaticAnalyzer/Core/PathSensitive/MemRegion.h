@@ -1329,7 +1329,9 @@ public:
   /// \brief Describes different invalidation traits.
   enum InvalidationKinds {
     /// Tells that a region's contents is not changed.
-    TK_PreserveContents = 0x1
+    TK_PreserveContents = 0x1,
+    /// Suppress pointer-escaping of a region.
+    TK_SuppressEscape = 0x2
 
     // Do not forget to extend StorageTypeForKinds if number of traits exceed 
     // the number of bits StorageTypeForKinds can store.

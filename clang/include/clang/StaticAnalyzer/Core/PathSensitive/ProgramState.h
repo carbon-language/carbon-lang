@@ -232,21 +232,21 @@ public:
   /// \param IS the set of invalidated symbols.
   /// \param Call if non-null, the invalidated regions represent parameters to
   ///        the call and should be considered directly invalidated.
-  /// \param HTraits information about special handling for a particular 
+  /// \param ITraits information about special handling for a particular 
   ///        region/symbol.
   ProgramStateRef
   invalidateRegions(ArrayRef<const MemRegion *> Regions, const Expr *E,
                     unsigned BlockCount, const LocationContext *LCtx,
                     bool CausesPointerEscape, InvalidatedSymbols *IS = 0,
                     const CallEvent *Call = 0,
-                    RegionAndSymbolInvalidationTraits *HTraits = 0) const;
+                    RegionAndSymbolInvalidationTraits *ITraits = 0) const;
 
   ProgramStateRef
   invalidateRegions(ArrayRef<SVal> Regions, const Expr *E,
                     unsigned BlockCount, const LocationContext *LCtx,
                     bool CausesPointerEscape, InvalidatedSymbols *IS = 0,
                     const CallEvent *Call = 0,
-                    RegionAndSymbolInvalidationTraits *HTraits = 0) const;
+                    RegionAndSymbolInvalidationTraits *ITraits = 0) const;
 
   /// enterStackFrame - Returns the state for entry to the given stack frame,
   ///  preserving the current state.

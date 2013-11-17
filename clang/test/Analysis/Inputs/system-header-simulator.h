@@ -32,6 +32,7 @@ typedef __typeof(sizeof(int)) size_t;
 size_t strlen(const char *);
 
 char *strcpy(char *restrict, const char *restrict);
+void *memcpy(void *dst, const void *src, size_t n);
 
 typedef unsigned long __darwin_pthread_key_t;
 typedef __darwin_pthread_key_t pthread_key_t;

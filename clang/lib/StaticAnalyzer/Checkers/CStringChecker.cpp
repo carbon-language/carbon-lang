@@ -141,8 +141,9 @@ public:
                                          SVal val) const;
 
   static ProgramStateRef InvalidateBuffer(CheckerContext &C,
-                                              ProgramStateRef state,
-                                              const Expr *Ex, SVal V);
+                                          ProgramStateRef state,
+                                          const Expr *Ex, SVal V,
+                                          bool IsSourceBuffer);
 
   static bool SummarizeRegion(raw_ostream &os, ASTContext &Ctx,
                               const MemRegion *MR);
@@ -809,8 +810,9 @@ const StringLiteral *CStringChecker::getCStringLiteral(CheckerContext &C,
 }
 
 ProgramStateRef CStringChecker::InvalidateBuffer(CheckerContext &C,
-                                                ProgramStateRef state,
-                                                const Expr *E, SVal V) {
+                                                 ProgramStateRef state,
+                                                 const Expr *E, SVal V,
+                                                 bool IsSourceBuffer) {
   Optional<Loc> L = V.getAs<Loc>();
   if (!L)
     return state;
@@ -830,8 +832,20 @@ ProgramStateRef CStringChecker::InvalidateBuffer(CheckerContext &C,
 
     // Invalidate this region.
     const LocationContext *LCtx = C.getPredecessor()->getLocationContext();
-    return state->invalidateRegions(R, E, C.blockCount(), LCtx,
-                                    /*CausesPointerEscape*/ false);
+
+    bool CausesPointerEscape = false;
+    RegionAndSymbolInvalidationTraits ITraits;
+    // Invalidate and escape only indirect regions accessible through the source
+    // buffer.
+    if (IsSourceBuffer) {
+      ITraits.setTrait(R, 
+                       RegionAndSymbolInvalidationTraits::TK_PreserveContents);
+      ITraits.setTrait(R, RegionAndSymbolInvalidationTraits::TK_SuppressEscape);
+      CausesPointerEscape = true;
+    }
+
+    return state->invalidateRegions(R, E, C.blockCount(), LCtx, 
+                                    CausesPointerEscape, 0, 0, &ITraits);
   }
 
   // If we have a non-region value by chance, just remove the binding.
@@ -968,13 +982,20 @@ void CStringChecker::evalCopyCommon(CheckerContext &C,
       state = state->BindExpr(CE, LCtx, destVal);
     }
 
-    // Invalidate the destination.
+    // Invalidate the destination (regular invalidation without pointer-escaping
+    // the address of the top-level region).
     // FIXME: Even if we can't perfectly model the copy, we should see if we
     // can use LazyCompoundVals to copy the source values into the destination.
     // This would probably remove any existing bindings past the end of the
     // copied region, but that's still an improvement over blank invalidation.
-    state = InvalidateBuffer(C, state, Dest,
-                             state->getSVal(Dest, C.getLocationContext()));
+    state = InvalidateBuffer(C, state, Dest, C.getSVal(Dest), 
+                             /*IsSourceBuffer*/false);
+
+    // Invalidate the source (const-invalidation without const-pointer-escaping
+    // the address of the top-level region).
+    state = InvalidateBuffer(C, state, Source, C.getSVal(Source), 
+                             /*IsSourceBuffer*/true);
+
     C.addTransition(state);
   }
 }
@@ -1577,13 +1598,19 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
         Result = lastElement;
     }
 
-    // Invalidate the destination. This must happen before we set the C string
-    // length because invalidation will clear the length.
+    // Invalidate the destination (regular invalidation without pointer-escaping
+    // the address of the top-level region). This must happen before we set the
+    // C string length because invalidation will clear the length.
     // FIXME: Even if we can't perfectly model the copy, we should see if we
     // can use LazyCompoundVals to copy the source values into the destination.
     // This would probably remove any existing bindings past the end of the
     // string, but that's still an improvement over blank invalidation.
-    state = InvalidateBuffer(C, state, Dst, *dstRegVal);
+    state = InvalidateBuffer(C, state, Dst, *dstRegVal,
+                             /*IsSourceBuffer*/false);
+
+    // Invalidate the source (const-invalidation without const-pointer-escaping
+    // the address of the top-level region).
+    state = InvalidateBuffer(C, state, srcExpr, srcVal, /*IsSourceBuffer*/true);
 
     // Set the C string length of the destination, if we know it.
     if (isBounded && !isAppending) {
@@ -1805,7 +1832,8 @@ void CStringChecker::evalStrsep(CheckerContext &C, const CallExpr *CE) const {
 
     // Invalidate the search string, representing the change of one delimiter
     // character to NUL.
-    State = InvalidateBuffer(C, State, SearchStrPtr, Result);
+    State = InvalidateBuffer(C, State, SearchStrPtr, Result,
+                             /*IsSourceBuffer*/false);
 
     // Overwrite the search string pointer. The new value is either an address
     // further along in the same string, or NULL if there are no more tokens.
