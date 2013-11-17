@@ -75,7 +75,7 @@ class Disassembler(LLVMObject):
 
         ptr = lib.LLVMCreateDisasm(c_char_p(triple), c_void_p(None), c_int(0),
                 callbacks['op_info'](0), callbacks['symbol_lookup'](0))
-        if not ptr.contents:
+        if not ptr:
             raise Exception('Could not obtain disassembler for triple: %s' %
                             triple)
 
