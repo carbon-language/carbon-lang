@@ -777,7 +777,7 @@ public:
 
 private:
   /// Initialize TypeIdentifierMap.
-  void IntializeTypeMap(const Module &M);
+  void InitializeTypeMap(const Module &M);
 
   /// processType - Process DIType.
   void processType(DIType DT);

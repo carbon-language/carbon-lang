@@ -954,7 +954,7 @@ void DebugInfoFinder::reset() {
   TypeMapInitialized = false;
 }
 
-void DebugInfoFinder::IntializeTypeMap(const Module &M) {
+void DebugInfoFinder::InitializeTypeMap(const Module &M) {
   if (!TypeMapInitialized)
     if (NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu")) {
       TypeIdentifierMap = generateDITypeIdentifierMap(CU_Nodes);
@@ -964,7 +964,7 @@ void DebugInfoFinder::IntializeTypeMap(const Module &M) {
 
 /// processModule - Process entire module and collect debug info.
 void DebugInfoFinder::processModule(const Module &M) {
-  IntializeTypeMap(M);
+  InitializeTypeMap(M);
   if (NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu")) {
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
       DICompileUnit CU(CU_Nodes->getOperand(i));
@@ -1005,7 +1005,7 @@ void DebugInfoFinder::processModule(const Module &M) {
 void DebugInfoFinder::processLocation(const Module &M, DILocation Loc) {
   if (!Loc)
     return;
-  IntializeTypeMap(M);
+  InitializeTypeMap(M);
   processScope(Loc.getScope());
   processLocation(M, Loc.getOrigLocation());
 }
@@ -1099,7 +1099,7 @@ void DebugInfoFinder::processDeclare(const Module &M,
   MDNode *N = dyn_cast<MDNode>(DDI->getVariable());
   if (!N)
     return;
-  IntializeTypeMap(M);
+  InitializeTypeMap(M);
 
   DIDescriptor DV(N);
   if (!DV.isVariable())
@@ -1115,7 +1115,7 @@ void DebugInfoFinder::processValue(const Module &M, const DbgValueInst *DVI) {
   MDNode *N = dyn_cast<MDNode>(DVI->getVariable());
   if (!N)
     return;
-  IntializeTypeMap(M);
+  InitializeTypeMap(M);
 
   DIDescriptor DV(N);
   if (!DV.isVariable())
