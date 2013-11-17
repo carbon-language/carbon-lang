@@ -272,7 +272,6 @@ bool stripPositionalArgs(std::vector<const char *> Args,
   End = std::remove_if(Args.begin(), End, MatchesAny(DiagClient.UnusedInputs));
 
   // Remove the -c add above as well. It will be at the end right now.
-  assert(*(End - 1) == "-c");
   --End;
 
   Result = std::vector<std::string>(Args.begin() + 1, End);
