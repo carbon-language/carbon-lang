@@ -112,6 +112,7 @@ public:
   bool SLPVectorize;
   bool LoopVectorize;
   bool LateVectorize;
+  bool RerollLoops;
 
 private:
   /// ExtensionList - This is list of all of the extensions that are registered.

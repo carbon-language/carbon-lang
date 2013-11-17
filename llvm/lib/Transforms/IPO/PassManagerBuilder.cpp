@@ -69,6 +69,7 @@ PassManagerBuilder::PassManagerBuilder() {
     SLPVectorize = RunSLPVectorization;
     LoopVectorize = RunLoopVectorization;
     LateVectorize = LateVectorization;
+    RerollLoops = RunLoopRerolling;
 }
 
 PassManagerBuilder::~PassManagerBuilder() {
@@ -220,7 +221,7 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
 
   addExtensionsToPM(EP_ScalarOptimizerLate, MPM);
 
-  if (RunLoopRerolling)
+  if (RerollLoops)
     MPM.add(createLoopRerollPass());
   if (SLPVectorize)
     MPM.add(createSLPVectorizerPass());   // Vectorize parallel scalar chains.
