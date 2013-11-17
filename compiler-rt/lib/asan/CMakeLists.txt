@@ -116,7 +116,7 @@ else()
       $<TARGET_OBJECTS:RTInterception.${arch}>
       $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
       $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>)
-    if (NOT MSVC)
+    if (NOT WIN32)
       # We can't build Leak Sanitizer on Windows yet.
       list(APPEND ASAN_RUNTIME_OBJECTS $<TARGET_OBJECTS:RTLSanCommon.${arch}>)
     endif()
