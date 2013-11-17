@@ -71,7 +71,7 @@ protected:
 
 class FileToMutable : public SimpleFile {
 public:
-  explicit FileToMutable(const LinkingContext &context, File &file)
+  FileToMutable(const LinkingContext &context, File &file)
       : SimpleFile(context, file.path()) {
     for (auto definedAtom : file.defined())
       _definedAtoms._atoms.push_back(std::move(definedAtom));
