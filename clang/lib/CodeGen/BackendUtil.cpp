@@ -242,6 +242,7 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
 
   PMBuilder.DisableUnitAtATime = !CodeGenOpts.UnitAtATime;
   PMBuilder.DisableUnrollLoops = !CodeGenOpts.UnrollLoops;
+  PMBuilder.RerollLoops = CodeGenOpts.RerollLoops;
 
   if (!CodeGenOpts.SampleProfileFile.empty())
     PMBuilder.addExtension(PassManagerBuilder::EP_EarlyAsPossible,

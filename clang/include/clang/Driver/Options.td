@@ -828,6 +828,10 @@ def funroll_loops : Flag<["-"], "funroll-loops">, Group<f_Group>,
   HelpText<"Turn on loop unroller">, Flags<[CC1Option]>;
 def fno_unroll_loops : Flag<["-"], "fno-unroll-loops">, Group<f_Group>,
   HelpText<"Turn off loop unroller">, Flags<[CC1Option]>;
+def freroll_loops : Flag<["-"], "freroll-loops">, Group<f_Group>,
+  HelpText<"Turn on loop reroller">, Flags<[CC1Option]>;
+def fno_reroll_loops : Flag<["-"], "fno-reroll-loops">, Group<f_Group>,
+  HelpText<"Turn off loop reroller">;
 def funsigned_bitfields : Flag<["-"], "funsigned-bitfields">, Group<f_Group>;
 def funsigned_char : Flag<["-"], "funsigned-char">, Group<f_Group>;
 def fno_unsigned_char : Flag<["-"], "fno-unsigned-char">, Group<clang_ignored_f_Group>;

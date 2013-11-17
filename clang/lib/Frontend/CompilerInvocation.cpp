@@ -355,6 +355,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.UnrollLoops =
       Args.hasFlag(OPT_funroll_loops, OPT_fno_unroll_loops,
                    (Opts.OptimizationLevel > 1 && !Opts.OptimizeSize));
+  Opts.RerollLoops = Args.hasArg(OPT_freroll_loops);
 
   Opts.Autolink = !Args.hasArg(OPT_fno_autolink);
   Opts.SampleProfileFile = Args.getLastArgValue(OPT_fprofile_sample_use_EQ);
