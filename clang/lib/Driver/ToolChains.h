@@ -329,19 +329,8 @@ public:
     return true;
   }
   virtual bool IsIntegratedAssemblerDefault() const {
-#ifdef DISABLE_DEFAULT_INTEGRATED_ASSEMBLER
-    return false;
-#else
     // Default integrated assembler to on for Darwin.
     return true;
-#endif
-  }
-  virtual bool IsStrictAliasingDefault() const {
-#ifdef DISABLE_DEFAULT_STRICT_ALIASING
-    return false;
-#else
-    return ToolChain::IsStrictAliasingDefault();
-#endif
   }
 
   virtual bool IsMathErrnoDefault() const {
