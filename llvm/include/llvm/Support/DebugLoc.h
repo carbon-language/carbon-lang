@@ -15,6 +15,8 @@
 #ifndef LLVM_SUPPORT_DEBUGLOC_H
 #define LLVM_SUPPORT_DEBUGLOC_H
 
+#include "llvm/Support/DataTypes.h"
+
 namespace llvm {
   template <typename T> struct DenseMapInfo;
   class MDNode;
@@ -45,7 +47,7 @@ namespace llvm {
     /// LineCol - This 32-bit value encodes the line and column number for the
     /// location, encoded as 24-bits for line and 8 bits for col.  A value of 0
     /// for either means unknown.
-    unsigned LineCol;
+    uint32_t LineCol;
 
     /// ScopeIdx - This is an opaque ID# for Scope/InlinedAt information,
     /// decoded by LLVMContext.  0 is unknown.
