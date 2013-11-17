@@ -344,8 +344,9 @@ registerPollyEarlyAsPossiblePasses(const llvm::PassManagerBuilder &Builder,
   registerPollyPasses(PM);
 }
 
-static void registerPollyOptLevel0Passes(const llvm::PassManagerBuilder &Builder,
-                                         llvm::PassManagerBase &PM) {
+static void
+registerPollyOptLevel0Passes(const llvm::PassManagerBuilder &Builder,
+                             llvm::PassManagerBase &PM) {
   if (shouldEnablePolly(Builder.OptLevel))
     registerCanonicalicationPasses(PM);
 }
