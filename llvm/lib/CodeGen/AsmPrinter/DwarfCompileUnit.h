@@ -310,7 +310,7 @@ public:
   DIE *getOrCreateContextDIE(DIScope Context);
 
   /// createGlobalVariableDIE - create global variable DIE.
-  void createGlobalVariableDIE(const MDNode *N);
+  void createGlobalVariableDIE(DIGlobalVariable GV);
 
   /// constructContainingTypeDIEs - Construct DIEs for types that contain
   /// vtables.

@@ -923,7 +923,7 @@ void DwarfDebug::beginModule() {
               ScopesWithImportedEntities.end(), less_first());
     DIArray GVs = CUNode.getGlobalVariables();
     for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i)
-      CU->createGlobalVariableDIE(GVs.getElement(i));
+      CU->createGlobalVariableDIE(DIGlobalVariable(GVs.getElement(i)));
     DIArray SPs = CUNode.getSubprograms();
     for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
       constructSubprogramDIE(CU, SPs.getElement(i));
