@@ -2235,9 +2235,6 @@ void CXXNameMangler::mangleAArch64NeonVectorType(const VectorType *T) {
   assert((BitSize == 64 || BitSize == 128) &&
          "Neon vector type not 64 or 128 bits");
 
-  assert(getASTContext().getTypeSize(EltType) != BitSize &&
-         "Vector of 1 element not permitted");
-
   StringRef EltName;
   if (T->getVectorKind() == VectorType::NeonPolyVector) {
     switch (cast<BuiltinType>(EltType)->getKind()) {
@@ -2246,6 +2243,9 @@ void CXXNameMangler::mangleAArch64NeonVectorType(const VectorType *T) {
       break;
     case BuiltinType::UShort:
       EltName = "Poly16";
+      break;
+    case BuiltinType::ULongLong:
+      EltName = "Poly64";
       break;
     default:
       llvm_unreachable("unexpected Neon polynomial vector element type");
