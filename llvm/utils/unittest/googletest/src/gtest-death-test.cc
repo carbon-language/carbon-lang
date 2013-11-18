@@ -1035,8 +1035,6 @@ DeathTest::TestRole ExecDeathTest::AssumeRole() {
 
 # endif  // !GTEST_OS_WINDOWS
 
-DeathTestFactory::~DeathTestFactory() {}
-
 // Creates a concrete DeathTest-derived class that depends on the
 // --gtest_death_test_style flag, and sets the pointer pointed to
 // by the "test" argument to its address.  If the test should be
