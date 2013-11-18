@@ -253,7 +253,7 @@ void Parser::ConsumeExtraSemi(ExtraSemiKind Kind, unsigned TST) {
 // Error recovery.
 //===----------------------------------------------------------------------===//
 
-bool HasFlagsSet(Parser::SkipUntilFlags L, Parser::SkipUntilFlags R) {
+static bool HasFlagsSet(Parser::SkipUntilFlags L, Parser::SkipUntilFlags R) {
   return (static_cast<unsigned>(L) & static_cast<unsigned>(R)) != 0;
 }
 
