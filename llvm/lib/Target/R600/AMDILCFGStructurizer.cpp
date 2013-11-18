@@ -1005,13 +1005,14 @@ int AMDGPUCFGStructurizer::ifPatternMatch(MachineBasicBlock *MBB) {
     return 0;
 
   assert(isCondBranch(BranchMI));
+  int NumMatch = 0;
 
   MachineBasicBlock *TrueMBB = getTrueBranch(BranchMI);
-  serialPatternMatch(TrueMBB);
-  ifPatternMatch(TrueMBB);
+  NumMatch += serialPatternMatch(TrueMBB);
+  NumMatch += ifPatternMatch(TrueMBB);
   MachineBasicBlock *FalseMBB = getFalseBranch(MBB, BranchMI);
-  serialPatternMatch(FalseMBB);
-  ifPatternMatch(FalseMBB);
+  NumMatch += serialPatternMatch(FalseMBB);
+  NumMatch += ifPatternMatch(FalseMBB);
   MachineBasicBlock *LandBlk;
   int Cloned = 0;
 
@@ -1040,7 +1041,7 @@ int AMDGPUCFGStructurizer::ifPatternMatch(MachineBasicBlock *MBB) {
     && isSameloopDetachedContbreak(FalseMBB, TrueMBB)) {
     LandBlk = *TrueMBB->succ_begin();
   } else {
-    return handleJumpintoIf(MBB, TrueMBB, FalseMBB);
+    return NumMatch + handleJumpintoIf(MBB, TrueMBB, FalseMBB);
   }
 
   // improveSimpleJumpinfoIf can handle the case where landBlk == NULL but the
@@ -1068,7 +1069,7 @@ int AMDGPUCFGStructurizer::ifPatternMatch(MachineBasicBlock *MBB) {
 
   numClonedBlock += Cloned;
 
-  return 1 + Cloned;
+  return 1 + Cloned + NumMatch;
 }
 
 int AMDGPUCFGStructurizer::loopendPatternMatch() {
