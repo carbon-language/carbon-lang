@@ -424,6 +424,7 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
   switch (Op.getOpcode()) {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
+  case ISD::ADD: return LowerADD(Op, DAG);
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::LOAD: {
     LoadSDNode *Load = dyn_cast<LoadSDNode>(Op);
@@ -558,6 +559,33 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     }
   }
   return SDValue();
+}
+
+SDValue SITargetLowering::LowerADD(SDValue Op,
+                                   SelectionDAG &DAG) const {
+  if (Op.getValueType() != MVT::i64)
+    return SDValue();
+
+  SDLoc DL(Op);
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+
+  SDValue Zero = DAG.getConstant(0, MVT::i32);
+  SDValue One = DAG.getConstant(1, MVT::i32);
+
+  SDValue Lo0 = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32, LHS, Zero);
+  SDValue Hi0 = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32, LHS, One);
+
+  SDValue Lo1 = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32, RHS, Zero);
+  SDValue Hi1 = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32, RHS, One);
+
+  SDVTList VTList = DAG.getVTList(MVT::i32, MVT::Glue);
+
+  SDValue AddLo = DAG.getNode(ISD::ADDC, DL, VTList, Lo0, Lo1);
+  SDValue Carry = AddLo.getValue(1);
+  SDValue AddHi = DAG.getNode(ISD::ADDE, DL, VTList, Hi0, Hi1, Carry);
+
+  return DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64, AddLo, AddHi.getValue(0));
 }
 
 /// \brief Helper function for LowerBRCOND
