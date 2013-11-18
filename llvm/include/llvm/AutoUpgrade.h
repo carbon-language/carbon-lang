@@ -15,14 +15,14 @@
 #define LLVM_AUTOUPGRADE_H
 
 namespace llvm {
+  class CallInst;
   class Constant;
+  class Function;
+  class Instruction;
   class Module;
   class GlobalVariable;
-  class Function;
-  class CallInst;
-  class Instruction;
-  class Value;
   class Type;
+  class Value;
 
   /// This is a more granular function that simply checks an intrinsic function
   /// for upgrading, and returns true if it requires upgrading. It may return

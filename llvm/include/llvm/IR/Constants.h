@@ -862,7 +862,7 @@ public:
   static Constant *getPtrToInt(Constant *C, Type *Ty);
   static Constant *getIntToPtr(Constant *C, Type *Ty);
   static Constant *getBitCast (Constant *C, Type *Ty);
-  static Constant *getAddrSpaceCast (Constant *C, Type *Ty);
+  static Constant *getAddrSpaceCast(Constant *C, Type *Ty);
 
   static Constant *getNSWNeg(Constant *C) { return getNeg(C, false, true); }
   static Constant *getNUWNeg(Constant *C) { return getNeg(C, true, false); }
@@ -1080,8 +1080,8 @@ public:
   /// as this ConstantExpr. The instruction is not linked to any basic block.
   ///
   /// A better approach to this could be to have a constructor for Instruction
-  /// which would take a ConstantExpr parameter, but that would have spread 
-  /// implementation details of ConstantExpr outside of Constants.cpp, which 
+  /// which would take a ConstantExpr parameter, but that would have spread
+  /// implementation details of ConstantExpr outside of Constants.cpp, which
   /// would make it harder to remove ConstantExprs altogether.
   Instruction *getAsInstruction();
 

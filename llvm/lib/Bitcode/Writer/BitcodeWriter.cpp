@@ -78,7 +78,7 @@ static unsigned GetEncodedCastOpcode(unsigned Opcode) {
   case Instruction::PtrToInt: return bitc::CAST_PTRTOINT;
   case Instruction::IntToPtr: return bitc::CAST_INTTOPTR;
   case Instruction::BitCast : return bitc::CAST_BITCAST;
-  case Instruction::AddrSpaceCast : return bitc::CAST_ADDRSPACECAST;
+  case Instruction::AddrSpaceCast: return bitc::CAST_ADDRSPACECAST;
   }
 }
 
