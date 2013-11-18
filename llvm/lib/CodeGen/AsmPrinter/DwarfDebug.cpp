@@ -620,11 +620,9 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
       // Note down abstract DIE.
       if (ScopeDIE)
         AbstractSPDies.insert(std::make_pair(DS, ScopeDIE));
-    }
-    else
+    } else
       ScopeDIE = updateSubprogramScopeDIE(TheCU, DISubprogram(DS));
-  }
-  else {
+  } else {
     // Early exit when we know the scope DIE is going to be null.
     if (isLexicalScopeDIENull(Scope))
       return NULL;
