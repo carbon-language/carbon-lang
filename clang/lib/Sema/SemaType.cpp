@@ -3240,9 +3240,11 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     // top-level template type arguments.
     bool FreeFunction;
     if (!D.getCXXScopeSpec().isSet()) {
-      FreeFunction = ((D.getContext() != Declarator::MemberContext &&
-                       D.getContext() != Declarator::LambdaExprContext) ||
-                      D.getDeclSpec().isFriendSpecified());
+      const DeclSpec &Spec = D.getDeclSpec();
+      FreeFunction = (D.getContext() != Declarator::MemberContext &&
+                      D.getContext() != Declarator::LambdaExprContext) ||
+                     Spec.isFriendSpecified() ||
+                     Spec.getStorageClassSpec() == DeclSpec::SCS_typedef;
     } else {
       DeclContext *DC = S.computeDeclContext(D.getCXXScopeSpec());
       FreeFunction = (DC && !DC->isRecord());

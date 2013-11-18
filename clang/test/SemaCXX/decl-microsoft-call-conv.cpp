@@ -167,3 +167,12 @@ namespace test2 {
   };
   extern template void foo::bar(const void *);
 }
+
+namespace test3 {
+  struct foo {
+    typedef void bar();
+  };
+  bool zed(foo::bar *);
+  void bah() {}
+  void baz() { zed(bah); }
+}
