@@ -160,7 +160,7 @@ DIType DbgVariable::getType() const {
 
     DIArray Elements = DICompositeType(subType).getTypeArray();
     for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
-      DIDerivedType DT = DIDerivedType(Elements.getElement(i));
+      DIDerivedType DT(Elements.getElement(i));
       if (getName() == DT.getName())
         return (resolve(DT.getTypeDerivedFrom()));
     }
@@ -400,7 +400,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU, DISubprogram SP) {
           for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
             DIE *Arg =
                 SPCU->createAndAddDIE(dwarf::DW_TAG_formal_parameter, *SPDie);
-            DIType ATy = DIType(Args.getElement(i));
+            DIType ATy(Args.getElement(i));
             SPCU->addType(Arg, ATy);
             if (ATy.isArtificial())
               SPCU->addFlag(Arg, dwarf::DW_AT_artificial);
@@ -1655,8 +1655,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
           // label, so arguments are visible when breaking at function entry.
           DIVariable DV(Var);
           if (DV.isVariable() && DV.getTag() == dwarf::DW_TAG_arg_variable &&
-              DISubprogram(getDISubprogram(DV.getContext()))
-                  .describes(MF->getFunction()))
+              getDISubprogram(DV.getContext()).describes(MF->getFunction()))
             LabelsBeforeInsn[MI] = FunctionBeginSym;
         } else {
           // We have seen this variable before. Try to coalesce DBG_VALUEs.
