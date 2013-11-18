@@ -105,11 +105,17 @@
 #include <clc/synchronization/cl_mem_fence_flags.h>
 #include <clc/synchronization/barrier.h>
 
-/* 6.11.11 Atomic Functins */
+/* 6.11.11 Atomic Functions */
 #include <clc/atomic/atomic_add.h>
 #include <clc/atomic/atomic_dec.h>
 #include <clc/atomic/atomic_inc.h>
 #include <clc/atomic/atomic_sub.h>
+
+/* cl_khr_global_int32_base_atomics Extension Functions */
+#include <clc/cl_khr_global_int32_base_atomics/atom_add.h>
+#include <clc/cl_khr_global_int32_base_atomics/atom_dec.h>
+#include <clc/cl_khr_global_int32_base_atomics/atom_inc.h>
+#include <clc/cl_khr_global_int32_base_atomics/atom_sub.h>
 
 /* libclc internal defintions */
 #ifdef __CLC_INTERNAL

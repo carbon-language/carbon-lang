@@ -1,4 +1,8 @@
 atomic/atomic_impl.ll
+cl_khr_global_int32_base_atomics/atom_add.cl
+cl_khr_global_int32_base_atomics/atom_dec.cl
+cl_khr_global_int32_base_atomics/atom_inc.cl
+cl_khr_global_int32_base_atomics/atom_sub.cl
 convert.cl
 common/sign.cl
 geometric/cross.cl
