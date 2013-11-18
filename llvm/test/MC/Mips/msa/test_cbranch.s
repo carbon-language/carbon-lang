@@ -20,9 +20,9 @@
                                         #   fixup A - offset: 0, value: SYMBOL3, kind: fixup_Mips_PC16
 #CHECK:      nop                        # encoding: [0x00,0x00,0x00,0x00]
 
-#CHECK:      bnz.v        $w0, 4        # encoding: [0x45,0x00,0x00,0x01]
+#CHECK:      bnz.v        $w0, 4        # encoding: [0x45,0xe0,0x00,0x01]
 #CHECK:      nop                        # encoding: [0x00,0x00,0x00,0x00]
-#CHECK:      bnz.v        $w0, SYMBOL0  # encoding: [0x45'A',A,0x00,0x00]
+#CHECK:      bnz.v        $w0, SYMBOL0  # encoding: [0x45'A',0xe0'A',0x00,0x00]
                                         #   fixup A - offset: 0, value: SYMBOL0, kind: fixup_Mips_PC16
 #CHECK:      nop                        # encoding: [0x00,0x00,0x00,0x00]
 
