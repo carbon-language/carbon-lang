@@ -976,6 +976,7 @@ operands:
 This results in:
 
 .. code-block:: c++
+
   namespace X86 {
   namespace OpTypes {
   enum OperandType {
