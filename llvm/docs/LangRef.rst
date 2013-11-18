@@ -941,9 +941,10 @@ example:
     attribute; this attribute is also incompatible
     with the ``minsize`` attribute and the ``optsize`` attribute.
 
-    The inliner should never inline this function in any situation.
+    This attribute requires the ``noinline`` attribute to be specified on
+    the function as well, so the function is never inlined into any caller.
     Only functions with the ``alwaysinline`` attribute are valid
-    candidates for inlining inside the body of this function.
+    candidates for inlining into the body of this function.
 ``optsize``
     This attribute suggests that optimization passes and code generator
     passes make choices that keep the code size of this function low,

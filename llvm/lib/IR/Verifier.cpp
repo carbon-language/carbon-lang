@@ -927,9 +927,9 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
 
   if (Attrs.hasAttribute(AttributeSet::FunctionIndex, 
                          Attribute::OptimizeNone)) {
-    Assert1(!Attrs.hasAttribute(AttributeSet::FunctionIndex,
-                                Attribute::AlwaysInline),
-            "Attributes 'alwaysinline and optnone' are incompatible!", V);
+    Assert1(Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                               Attribute::NoInline),
+            "Attribute 'optnone' requires 'noinline'!", V);
 
     Assert1(!Attrs.hasAttribute(AttributeSet::FunctionIndex,
                                 Attribute::OptimizeForSize),

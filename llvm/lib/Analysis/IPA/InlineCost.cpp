@@ -1206,6 +1206,10 @@ InlineCost InlineCostAnalysis::getInlineCost(CallSite CS, Function *Callee,
   if (!functionsHaveCompatibleAttributes(CS.getCaller(), Callee))
     return llvm::InlineCost::getNever();
 
+  // Don't inline this call if the caller has the optnone attribute.
+  if (CS.getCaller()->hasFnAttribute(Attribute::OptimizeNone))
+    return llvm::InlineCost::getNever();
+
   // Don't inline functions which can be redefined at link-time to mean
   // something else.  Don't inline functions marked noinline or call sites
   // marked noinline.
