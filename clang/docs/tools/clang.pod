@@ -81,7 +81,8 @@ B<Clang Static Analyzer>
 
 The Clang Static Analyzer is a tool that scans source code to try to find bugs
 through code analysis.  This tool uses many parts of Clang and is built into the
-same driver.
+same driver.  Please see L<http://clang-analyzer.llvm.org> for more details
+on how to use the static analyzer.
 
 
 =head1 OPTIONS
@@ -111,10 +112,6 @@ Run all of the above, plus the assembler, generating a target ".o" object file.
 
 If no stage selection option is specified, all stages above are run, and the
 linker is run to combine the results into an executable or shared library.
-
-=item B<--analyze>
-
-Run the Clang Static Analyzer.
 
 =back
 
