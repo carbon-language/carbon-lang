@@ -188,8 +188,7 @@ bool SIFixSGPRCopies::isVGPRToSGPRCopy(const MachineInstr &Copy,
     return false;
 
   SrcRC = inferRegClassFromDef(TRI, MRI, SrcReg, SrcSubReg);
-  return TRI->isSGPRClass(DstRC) &&
-         !TRI->getCommonSubClass(DstRC, SrcRC);
+  return TRI->isSGPRClass(DstRC) && TRI->hasVGPRs(SrcRC);
 }
 
 bool SIFixSGPRCopies::runOnMachineFunction(MachineFunction &MF) {
