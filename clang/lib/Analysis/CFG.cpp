@@ -3708,35 +3708,32 @@ public:
 };
 } // end anonymous namespace
 
-static void print_elem(raw_ostream &OS, StmtPrinterHelper* Helper,
+static void print_elem(raw_ostream &OS, StmtPrinterHelper &Helper,
                        const CFGElement &E) {
   if (Optional<CFGStmt> CS = E.getAs<CFGStmt>()) {
     const Stmt *S = CS->getStmt();
     
-    if (Helper) {
+    // special printing for statement-expressions.
+    if (const StmtExpr *SE = dyn_cast<StmtExpr>(S)) {
+      const CompoundStmt *Sub = SE->getSubStmt();
 
-      // special printing for statement-expressions.
-      if (const StmtExpr *SE = dyn_cast<StmtExpr>(S)) {
-        const CompoundStmt *Sub = SE->getSubStmt();
-
-        if (Sub->children()) {
-          OS << "({ ... ; ";
-          Helper->handledStmt(*SE->getSubStmt()->body_rbegin(),OS);
-          OS << " })\n";
-          return;
-        }
-      }
-      // special printing for comma expressions.
-      if (const BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
-        if (B->getOpcode() == BO_Comma) {
-          OS << "... , ";
-          Helper->handledStmt(B->getRHS(),OS);
-          OS << '\n';
-          return;
-        }
+      if (Sub->children()) {
+        OS << "({ ... ; ";
+        Helper.handledStmt(*SE->getSubStmt()->body_rbegin(),OS);
+        OS << " })\n";
+        return;
       }
     }
-    S->printPretty(OS, Helper, PrintingPolicy(Helper->getLangOpts()));
+    // special printing for comma expressions.
+    if (const BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
+      if (B->getOpcode() == BO_Comma) {
+        OS << "... , ";
+        Helper.handledStmt(B->getRHS(),OS);
+        OS << '\n';
+        return;
+      }
+    }
+    S->printPretty(OS, &Helper, PrintingPolicy(Helper.getLangOpts()));
 
     if (isa<CXXOperatorCallExpr>(S)) {
       OS << " (OperatorCall)";
@@ -3768,7 +3765,7 @@ static void print_elem(raw_ostream &OS, StmtPrinterHelper* Helper,
 
     OS << "(";
     if (Expr *IE = I->getInit())
-      IE->printPretty(OS, Helper, PrintingPolicy(Helper->getLangOpts()));
+      IE->printPretty(OS, &Helper, PrintingPolicy(Helper.getLangOpts()));
     OS << ")";
 
     if (I->isBaseInitializer())
@@ -3780,7 +3777,7 @@ static void print_elem(raw_ostream &OS, StmtPrinterHelper* Helper,
   } else if (Optional<CFGAutomaticObjDtor> DE =
                  E.getAs<CFGAutomaticObjDtor>()) {
     const VarDecl *VD = DE->getVarDecl();
-    Helper->handleDecl(VD, OS);
+    Helper.handleDecl(VD, OS);
 
     const Type* T = VD->getType().getTypePtr();
     if (const ReferenceType* RT = T->getAs<ReferenceType>())
@@ -3796,7 +3793,7 @@ static void print_elem(raw_ostream &OS, StmtPrinterHelper* Helper,
       return;
     CXXDeleteExpr *DelExpr =
         const_cast<CXXDeleteExpr*>(DE->getDeleteExpr());
-    Helper->handledStmt(cast<Stmt>(DelExpr->getArgument()), OS);
+    Helper.handledStmt(cast<Stmt>(DelExpr->getArgument()), OS);
     OS << "->~" << RD->getName().str() << "()";
     OS << " (Implicit destructor)\n";
   } else if (Optional<CFGBaseDtor> BE = E.getAs<CFGBaseDtor>()) {
@@ -3814,18 +3811,17 @@ static void print_elem(raw_ostream &OS, StmtPrinterHelper* Helper,
   } else if (Optional<CFGTemporaryDtor> TE = E.getAs<CFGTemporaryDtor>()) {
     const CXXBindTemporaryExpr *BT = TE->getBindTemporaryExpr();
     OS << "~";
-    BT->getType().print(OS, PrintingPolicy(Helper->getLangOpts()));
+    BT->getType().print(OS, PrintingPolicy(Helper.getLangOpts()));
     OS << "() (Temporary object destructor)\n";
   }
 }
 
 static void print_block(raw_ostream &OS, const CFG* cfg,
                         const CFGBlock &B,
-                        StmtPrinterHelper* Helper, bool print_edges,
+                        StmtPrinterHelper &Helper, bool print_edges,
                         bool ShowColors) {
 
-  if (Helper)
-    Helper->setBlockID(B.getBlockID());
+  Helper.setBlockID(B.getBlockID());
 
   // Print the header.
   if (ShowColors)
@@ -3855,19 +3851,19 @@ static void print_block(raw_ostream &OS, const CFG* cfg,
       OS << L->getName();
     else if (CaseStmt *C = dyn_cast<CaseStmt>(Label)) {
       OS << "case ";
-      C->getLHS()->printPretty(OS, Helper,
-                               PrintingPolicy(Helper->getLangOpts()));
+      C->getLHS()->printPretty(OS, &Helper,
+                               PrintingPolicy(Helper.getLangOpts()));
       if (C->getRHS()) {
         OS << " ... ";
-        C->getRHS()->printPretty(OS, Helper,
-                                 PrintingPolicy(Helper->getLangOpts()));
+        C->getRHS()->printPretty(OS, &Helper,
+                                 PrintingPolicy(Helper.getLangOpts()));
       }
     } else if (isa<DefaultStmt>(Label))
       OS << "default";
     else if (CXXCatchStmt *CS = dyn_cast<CXXCatchStmt>(Label)) {
       OS << "catch (";
       if (CS->getExceptionDecl())
-        CS->getExceptionDecl()->print(OS, PrintingPolicy(Helper->getLangOpts()),
+        CS->getExceptionDecl()->print(OS, PrintingPolicy(Helper.getLangOpts()),
                                       0);
       else
         OS << "...";
@@ -3891,8 +3887,7 @@ static void print_block(raw_ostream &OS, const CFG* cfg,
 
     OS << llvm::format("%3d", j) << ": ";
 
-    if (Helper)
-      Helper->setStmtID(j);
+    Helper.setStmtID(j);
 
     print_elem(OS, Helper, *I);
   }
@@ -3904,10 +3899,10 @@ static void print_block(raw_ostream &OS, const CFG* cfg,
 
     OS << "   T: ";
 
-    if (Helper) Helper->setBlockID(-1);
+    Helper.setBlockID(-1);
 
-    PrintingPolicy PP(Helper ? Helper->getLangOpts() : LangOptions());
-    CFGBlockTerminatorPrint TPrinter(OS, Helper, PP);
+    PrintingPolicy PP(Helper.getLangOpts());
+    CFGBlockTerminatorPrint TPrinter(OS, &Helper, PP);
     TPrinter.Visit(const_cast<Stmt*>(B.getTerminator().getStmt()));
     OS << '\n';
     
@@ -3989,7 +3984,7 @@ void CFG::print(raw_ostream &OS, const LangOptions &LO, bool ShowColors) const {
   StmtPrinterHelper Helper(this, LO);
 
   // Print the entry block.
-  print_block(OS, this, getEntry(), &Helper, true, ShowColors);
+  print_block(OS, this, getEntry(), Helper, true, ShowColors);
 
   // Iterate through the CFGBlocks and print them one by one.
   for (const_iterator I = Blocks.begin(), E = Blocks.end() ; I != E ; ++I) {
@@ -3997,11 +3992,11 @@ void CFG::print(raw_ostream &OS, const LangOptions &LO, bool ShowColors) const {
     if (&(**I) == &getEntry() || &(**I) == &getExit())
       continue;
 
-    print_block(OS, this, **I, &Helper, true, ShowColors);
+    print_block(OS, this, **I, Helper, true, ShowColors);
   }
 
   // Print the exit block.
-  print_block(OS, this, getExit(), &Helper, true, ShowColors);
+  print_block(OS, this, getExit(), Helper, true, ShowColors);
   OS << '\n';
   OS.flush();
 }
@@ -4017,7 +4012,7 @@ void CFGBlock::dump(const CFG* cfg, const LangOptions &LO,
 void CFGBlock::print(raw_ostream &OS, const CFG* cfg,
                      const LangOptions &LO, bool ShowColors) const {
   StmtPrinterHelper Helper(cfg, LO);
-  print_block(OS, cfg, *this, &Helper, true, ShowColors);
+  print_block(OS, cfg, *this, Helper, true, ShowColors);
   OS << '\n';
 }
 
@@ -4119,7 +4114,7 @@ struct DOTGraphTraits<const CFG*> : public DefaultDOTGraphTraits {
 #ifndef NDEBUG
     std::string OutSStr;
     llvm::raw_string_ostream Out(OutSStr);
-    print_block(Out,Graph, *Node, GraphHelper, false, false);
+    print_block(Out,Graph, *Node, *GraphHelper, false, false);
     std::string& OutStr = Out.str();
 
     if (OutStr[0] == '\n') OutStr.erase(OutStr.begin());
