@@ -752,11 +752,11 @@ DICompositeType DIBuilder::createEnumerationType(
     NULL,
     UniqueIdentifier.empty() ? NULL : MDString::get(VMContext, UniqueIdentifier)
   };
-  MDNode *Node = MDNode::get(VMContext, Elts);
-  AllEnumTypes.push_back(Node);
+  DICompositeType CTy(MDNode::get(VMContext, Elts));
+  AllEnumTypes.push_back(CTy);
   if (!UniqueIdentifier.empty())
-    retainType(Node);
-  return DICompositeType(Node);
+    retainType(CTy);
+  return CTy;
 }
 
 /// createArrayType - Create debugging information entry for an array.

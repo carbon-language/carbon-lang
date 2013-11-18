@@ -281,7 +281,7 @@ protected:
   void printInternal(raw_ostream &OS) const;
 
 public:
-  DIType(const MDNode *N = 0) : DIScope(N) {}
+  explicit DIType(const MDNode *N = 0) : DIScope(N) {}
 
   /// Verify - Verify that a type descriptor is well formed.
   bool Verify() const;

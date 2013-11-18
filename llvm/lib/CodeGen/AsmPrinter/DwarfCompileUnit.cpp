@@ -592,33 +592,31 @@ void CompileUnit::addBlockByrefAddress(const DbgVariable &DV, DIE *Die,
   StringRef varName = DV.getName();
 
   if (Tag == dwarf::DW_TAG_pointer_type) {
-    DIDerivedType DTy = DIDerivedType(Ty);
+    DIDerivedType DTy(Ty);
     TmpTy = resolve(DTy.getTypeDerivedFrom());
     isPointer = true;
   }
 
-  DICompositeType blockStruct = DICompositeType(TmpTy);
+  DICompositeType blockStruct(TmpTy);
 
   // Find the __forwarding field and the variable field in the __Block_byref
   // struct.
   DIArray Fields = blockStruct.getTypeArray();
-  DIDescriptor varField;
-  DIDescriptor forwardingField;
+  DIDerivedType varField;
+  DIDerivedType forwardingField;
 
   for (unsigned i = 0, N = Fields.getNumElements(); i < N; ++i) {
-    DIDescriptor Element = Fields.getElement(i);
-    DIDerivedType DT = DIDerivedType(Element);
+    DIDerivedType DT(Fields.getElement(i));
     StringRef fieldName = DT.getName();
     if (fieldName == "__forwarding")
-      forwardingField = Element;
+      forwardingField = DT;
     else if (fieldName == varName)
-      varField = Element;
+      varField = DT;
   }
 
   // Get the offsets for the forwarding field and the variable field.
-  unsigned forwardingFieldOffset =
-      DIDerivedType(forwardingField).getOffsetInBits() >> 3;
-  unsigned varFieldOffset = DIDerivedType(varField).getOffsetInBits() >> 3;
+  unsigned forwardingFieldOffset = forwardingField.getOffsetInBits() >> 3;
+  unsigned varFieldOffset = varField.getOffsetInBits() >> 2;
 
   // Decode the original location, and use that as the start of the byref
   // variable's location.
@@ -1145,9 +1143,9 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   case dwarf::DW_TAG_subroutine_type: {
     // Add return type. A void return won't have a type.
     DIArray Elements = CTy.getTypeArray();
-    DIDescriptor RTy = Elements.getElement(0);
+    DIType RTy(Elements.getElement(0));
     if (RTy)
-      addType(&Buffer, DIType(RTy));
+      addType(&Buffer, RTy);
 
     bool isPrototyped = true;
     // Add arguments.
@@ -1181,7 +1179,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       DIE *ElemDie = NULL;
       if (Element.isSubprogram()) {
         DISubprogram SP(Element);
-        ElemDie = getOrCreateSubprogramDIE(DISubprogram(Element));
+        ElemDie = getOrCreateSubprogramDIE(SP);
         if (SP.isProtected())
           addUInt(ElemDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
                   dwarf::DW_ACCESS_protected);
@@ -1247,9 +1245,9 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       addFlag(&Buffer, dwarf::DW_AT_APPLE_block);
 
     DICompositeType ContainingType(resolve(CTy.getContainingType()));
-    if (ContainingType.isCompositeType())
+    if (ContainingType)
       addDIEEntry(&Buffer, dwarf::DW_AT_containing_type,
-                  getOrCreateTypeDIE(DIType(ContainingType)));
+                  getOrCreateTypeDIE(ContainingType));
 
     if (CTy.isObjcClassComplete())
       addFlag(&Buffer, dwarf::DW_AT_APPLE_objc_complete_type);
@@ -1457,7 +1455,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
     // be handled while processing variables.
     for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
       DIE *Arg = createAndAddDIE(dwarf::DW_TAG_formal_parameter, *SPDie);
-      DIType ATy = DIType(Args.getElement(i));
+      DIType ATy(Args.getElement(i));
       addType(Arg, ATy);
       if (ATy.isArtificial())
         addFlag(Arg, dwarf::DW_AT_artificial);
@@ -1708,13 +1706,12 @@ void CompileUnit::constructEnumTypeDIE(DIE &Buffer, DICompositeType CTy) {
 
   // Add enumerators to enumeration type.
   for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
-    DIDescriptor Enum(Elements.getElement(i));
-    DIEnumerator ETy = DIEnumerator(Enum);
+    DIEnumerator Enum(Elements.getElement(i));
     if (Enum.isEnumerator()) {
       DIE *Enumerator = createAndAddDIE(dwarf::DW_TAG_enumerator, Buffer);
-      StringRef Name = ETy.getName();
+      StringRef Name = Enum.getName();
       addString(Enumerator, dwarf::DW_AT_name, Name);
-      int64_t Value = ETy.getEnumValue();
+      int64_t Value = Enum.getEnumValue();
       addSInt(Enumerator, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata, Value);
     }
   }
