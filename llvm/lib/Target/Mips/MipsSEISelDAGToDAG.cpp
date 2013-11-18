@@ -634,6 +634,11 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
         SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), DL,
                                               Mips::ZERO_64, MVT::i64);
         Result = CurDAG->getMachineNode(Mips::DMTC1, DL, MVT::f64, Zero);
+      } else if (Subtarget.isFP64bit()) {
+        SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), DL,
+                                              Mips::ZERO, MVT::i32);
+        Result = CurDAG->getMachineNode(Mips::BuildPairF64_64, DL, MVT::f64,
+                                        Zero, Zero);
       } else {
         SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), DL,
                                               Mips::ZERO, MVT::i32);
