@@ -1757,6 +1757,10 @@ FileID SourceManager::translateFile(const FileEntry *SourceFile) const {
 SourceLocation SourceManager::translateLineCol(FileID FID,
                                                unsigned Line,
                                                unsigned Col) const {
+  // Lines are used as a one-based index into a zero-based array. This assert
+  // checks for possible buffer underruns.
+  assert(Line != 0 && "Passed a zero-based line");
+
   if (FID.isInvalid())
     return SourceLocation();
 
