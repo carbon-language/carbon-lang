@@ -17,7 +17,7 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
-#define GET_INSTRINFO_CTOR_DTOR
+#define GET_INSTRINFO_CTOR
 #define GET_INSTRMAP_INFO
 #include "SystemZGenInstrInfo.inc"
 
@@ -36,9 +36,6 @@ static bool isHighReg(unsigned int Reg) {
   assert(SystemZ::GR32BitRegClass.contains(Reg) && "Invalid GRX32");
   return false;
 }
-
-// pin vtable to this file
-void SystemZInstrInfo::anchor() {}
 
 SystemZInstrInfo::SystemZInstrInfo(SystemZTargetMachine &tm)
   : SystemZGenInstrInfo(SystemZ::ADJCALLSTACKDOWN, SystemZ::ADJCALLSTACKUP),

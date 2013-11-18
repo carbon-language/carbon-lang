@@ -20,9 +20,6 @@
 using namespace llvm;
 
 
-// pin vtable to this file
-void NVPTXSubtarget::anchor() {}
-
 NVPTXSubtarget::NVPTXSubtarget(const std::string &TT, const std::string &CPU,
                                const std::string &FS, bool is64Bit)
     : NVPTXGenSubtargetInfo(TT, CPU, FS), Is64Bit(is64Bit), PTXVersion(0),

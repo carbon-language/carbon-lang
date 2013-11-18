@@ -2288,29 +2288,3 @@ void NVPTXTargetLowering::ReplaceNodeResults(
     return;
   }
 }
-
-// pin NVPTXSection.h and NVPTXTargetObjectFile.h vtables to this file
-void NVPTXSection::anchor() {}
-
-NVPTXTargetObjectFile::~NVPTXTargetObjectFile() {
-  delete TextSection;
-  delete DataSection;
-  delete BSSSection;
-  delete ReadOnlySection;
-
-  delete StaticCtorSection;
-  delete StaticDtorSection;
-  delete LSDASection;
-  delete EHFrameSection;
-  delete DwarfAbbrevSection;
-  delete DwarfInfoSection;
-  delete DwarfLineSection;
-  delete DwarfFrameSection;
-  delete DwarfPubTypesSection;
-  delete DwarfDebugInlineSection;
-  delete DwarfStrSection;
-  delete DwarfLocSection;
-  delete DwarfARangesSection;
-  delete DwarfRangesSection;
-  delete DwarfMacroInfoSection;
-}

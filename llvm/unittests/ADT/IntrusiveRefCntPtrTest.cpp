@@ -13,10 +13,8 @@
 namespace llvm {
 
 struct VirtualRefCounted : public RefCountedBaseVPTR {
-  virtual void f();
+  virtual void f() {}
 };
-
-void VirtualRefCounted::f() {}
 
 // Run this test with valgrind to detect memory leaks.
 TEST(IntrusiveRefCntPtr, RefCountedBaseVPTRCopyDoesNotLeak) {

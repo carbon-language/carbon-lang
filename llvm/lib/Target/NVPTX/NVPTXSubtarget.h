@@ -36,8 +36,6 @@ class NVPTXSubtarget : public NVPTXGenSubtargetInfo {
   // SM version x.y is represented as 10*x+y, e.g. 3.1 == 31
   unsigned int SmVersion;
 
-  virtual void anchor();
-
 public:
   /// This constructor initializes the data members to match that
   /// of the specified module.

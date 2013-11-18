@@ -300,8 +300,6 @@ DeathTest::DeathTest() {
   }
 }
 
-DeathTest::~DeathTest() {}
-
 // Creates and returns a death test by dispatching to the current
 // death test factory.
 bool DeathTest::Create(const char* statement, const RE* regex,

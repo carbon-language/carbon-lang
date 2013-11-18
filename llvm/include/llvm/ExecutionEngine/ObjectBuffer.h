@@ -33,6 +33,7 @@ class ObjectBuffer {
 public:
   ObjectBuffer() {}
   ObjectBuffer(MemoryBuffer* Buf) : Buffer(Buf) {}
+  virtual ~ObjectBuffer() {}
 
   /// getMemBuffer - Like MemoryBuffer::getMemBuffer() this function
   /// returns a pointer to an object that is owned by the caller. However,
@@ -57,6 +58,7 @@ protected:
 class ObjectBufferStream : public ObjectBuffer {
 public:
   ObjectBufferStream() : OS(SV) {}
+  virtual ~ObjectBufferStream() {}
 
   raw_ostream &getOStream() { return OS; }
   void flush()

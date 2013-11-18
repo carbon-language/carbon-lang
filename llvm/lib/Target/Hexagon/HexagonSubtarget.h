@@ -42,7 +42,6 @@ public:
 
 public:
   HexagonSubtarget(StringRef TT, StringRef CPU, StringRef FS);
-  virtual ~HexagonSubtarget();
 
   /// getInstrItins - Return the instruction itineraies based on subtarget
   /// selection.

@@ -23,8 +23,6 @@ class SystemZMachineFunctionInfo : public MachineFunctionInfo {
   unsigned RegSaveFrameIndex;
   bool ManipulatesSP;
 
-  virtual void anchor();
-
 public:
   explicit SystemZMachineFunctionInfo(MachineFunction &MF)
     : LowSavedGPR(0), HighSavedGPR(0), VarArgsFirstGPR(0), VarArgsFirstFPR(0),

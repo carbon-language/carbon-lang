@@ -26,7 +26,6 @@ class GlobalValue;
 class StringRef;
 
 class SystemZSubtarget : public SystemZGenSubtargetInfo {
-  virtual void anchor();
 protected:
   bool HasDistinctOps;
   bool HasLoadStoreOnCond;

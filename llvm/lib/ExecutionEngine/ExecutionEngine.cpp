@@ -15,7 +15,6 @@
 #define DEBUG_TYPE "jit"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
-#include "llvm/ExecutionEngine/ObjectCache.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
@@ -39,9 +38,6 @@ using namespace llvm;
 
 STATISTIC(NumInitBytes, "Number of bytes of global vars initialized");
 STATISTIC(NumGlobals  , "Number of global vars initialized");
-
-// pin vtable to this file
-void ObjectCache::anchor() {}
 
 ExecutionEngine *(*ExecutionEngine::JITCtor)(
   Module *M,

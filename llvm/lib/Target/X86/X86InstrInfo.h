@@ -152,8 +152,6 @@ class X86InstrInfo : public X86GenInstrInfo {
                             MemOp2RegOpTableType &M2RTable,
                             unsigned RegOp, unsigned MemOp, unsigned Flags);
 
-  virtual void anchor();
-
 public:
   explicit X86InstrInfo(X86TargetMachine &tm);
 

@@ -22,7 +22,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
-#define GET_INSTRINFO_CTOR_DTOR
+#define GET_INSTRINFO_CTOR
 #include "XCoreGenInstrInfo.inc"
 
 namespace llvm {
@@ -38,10 +38,6 @@ namespace XCore {
 }
 
 using namespace llvm;
-
-
-// pin vtable to this file
-void XCoreInstrInfo::anchor() {}
 
 XCoreInstrInfo::XCoreInstrInfo()
   : XCoreGenInstrInfo(XCore::ADJCALLSTACKDOWN, XCore::ADJCALLSTACKUP),

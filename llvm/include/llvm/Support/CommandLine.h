@@ -350,9 +350,6 @@ struct cat {
 struct GenericOptionValue {
   virtual ~GenericOptionValue() {}
   virtual bool compare(const GenericOptionValue &V) const = 0;
-
-private:
-  virtual void anchor();
 };
 
 template<class DataType> struct OptionValue;
@@ -1755,7 +1752,6 @@ void getRegisteredOptions(StringMap<Option*> &Map);
 /// \brief Saves strings in the inheritor's stable storage and returns a stable
 /// raw character pointer.
 class StringSaver {
-  virtual void anchor();
 public:
   virtual const char *SaveString(const char *Str) = 0;
   virtual ~StringSaver() {};  // Pacify -Wnon-virtual-dtor.

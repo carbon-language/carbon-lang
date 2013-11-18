@@ -30,9 +30,8 @@ class PSetIterator;
 class MachineRegisterInfo {
 public:
   class Delegate {
-    virtual void anchor();
   public:
-    virtual void MRI_NoteNewVirtualRegister(unsigned Reg) = 0;
+    virtual void MRI_NoteNewVirtualRegister(unsigned Reg) {}
 
     virtual ~Delegate() {}
   };

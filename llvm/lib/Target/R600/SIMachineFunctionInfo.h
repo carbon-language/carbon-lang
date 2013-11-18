@@ -22,7 +22,6 @@ namespace llvm {
 /// This class keeps track of the SPI_SP_INPUT_ADDR config register, which
 /// tells the hardware which interpolation parameters to load.
 class SIMachineFunctionInfo : public AMDGPUMachineFunction {
-  virtual void anchor();
 public:
   SIMachineFunctionInfo(const MachineFunction &MF);
   unsigned PSInputAddr;

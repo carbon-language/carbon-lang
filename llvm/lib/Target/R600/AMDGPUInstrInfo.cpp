@@ -20,16 +20,12 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
-#define GET_INSTRINFO_CTOR_DTOR
+#define GET_INSTRINFO_CTOR
 #define GET_INSTRINFO_NAMED_OPS
 #define GET_INSTRMAP_INFO
 #include "AMDGPUGenInstrInfo.inc"
 
 using namespace llvm;
-
-
-// pin vtable to this file
-void AMDGPUInstrInfo::anchor() {}
 
 AMDGPUInstrInfo::AMDGPUInstrInfo(TargetMachine &tm)
   : AMDGPUGenInstrInfo(-1,-1), RI(tm), TM(tm) { }

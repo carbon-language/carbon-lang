@@ -414,7 +414,7 @@ class TestMetaFactory
 // and calls RegisterTests() on each of them when asked.
 class ParameterizedTestCaseInfoBase {
  public:
-  virtual ~ParameterizedTestCaseInfoBase();
+  virtual ~ParameterizedTestCaseInfoBase() {}
 
   // Base part of test case name for display purposes.
   virtual const string& GetTestCaseName() const = 0;

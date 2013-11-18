@@ -29,7 +29,7 @@
 
 #include <algorithm>
 
-#define GET_INSTRINFO_CTOR_DTOR
+#define GET_INSTRINFO_CTOR
 #include "AArch64GenInstrInfo.inc"
 
 using namespace llvm;

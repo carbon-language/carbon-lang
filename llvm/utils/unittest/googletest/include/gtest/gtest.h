@@ -910,7 +910,7 @@ class GTEST_API_ TestCase {
 class Environment {
  public:
   // The d'tor is virtual as we need to subclass Environment.
-  virtual ~Environment();
+  virtual ~Environment() {}
 
   // Override this to define how to set up the environment.
   virtual void SetUp() {}
@@ -928,7 +928,7 @@ class Environment {
 // the order the corresponding events are fired.
 class TestEventListener {
  public:
-  virtual ~TestEventListener();
+  virtual ~TestEventListener() {}
 
   // Fired before any test activity starts.
   virtual void OnTestProgramStart(const UnitTest& unit_test) = 0;
@@ -980,7 +980,6 @@ class TestEventListener {
 // comments about each method please see the definition of TestEventListener
 // above.
 class EmptyTestEventListener : public TestEventListener {
-  virtual void anchor();
  public:
   virtual void OnTestProgramStart(const UnitTest& /*unit_test*/) {}
   virtual void OnTestIterationStart(const UnitTest& /*unit_test*/,

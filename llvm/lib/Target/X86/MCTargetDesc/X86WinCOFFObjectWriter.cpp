@@ -27,7 +27,7 @@ namespace {
 
   public:
     X86WinCOFFObjectWriter(bool Is64Bit_);
-    virtual ~X86WinCOFFObjectWriter();
+    ~X86WinCOFFObjectWriter();
 
     virtual unsigned getRelocType(const MCValue &Target,
                                   const MCFixup &Fixup,

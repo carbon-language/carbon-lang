@@ -735,5 +735,9 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
 #endif
 }
 
-// pin vtable to this file
-void CallbackVH::anchor() {}
+// Default implementation for CallbackVH.
+void CallbackVH::allUsesReplacedWith(Value *) {}
+
+void CallbackVH::deleted() {
+  setValPtr(NULL);
+}

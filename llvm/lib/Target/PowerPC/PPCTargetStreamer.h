@@ -15,7 +15,6 @@
 namespace llvm {
 class PPCTargetStreamer : public MCTargetStreamer {
 public:
-  virtual ~PPCTargetStreamer();
   virtual void emitTCEntry(const MCSymbol &S) = 0;
 };
 }

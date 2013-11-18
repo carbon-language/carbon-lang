@@ -1,4 +1,4 @@
-//=- HexagonMachineFunctionInfo.h - Hexagon machine function info -*- C++ -*-=//
+//=- HexagonMachineFuctionInfo.h - Hexagon machine function info --*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,7 +10,6 @@
 #ifndef HexagonMACHINEFUNCTIONINFO_H
 #define HexagonMACHINEFUNCTIONINFO_H
 
-#include <map>
 #include "llvm/CodeGen/MachineFunction.h"
 
 namespace llvm {
@@ -34,7 +33,6 @@ class HexagonMachineFunctionInfo : public MachineFunctionInfo {
 
   std::map<const MachineInstr*, unsigned> PacketInfo;
 
-  virtual void anchor();
 
 public:
   HexagonMachineFunctionInfo() : SRetReturnReg(0), HasClobberLR(0),

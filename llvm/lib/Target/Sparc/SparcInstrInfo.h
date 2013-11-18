@@ -37,7 +37,6 @@ namespace SPII {
 class SparcInstrInfo : public SparcGenInstrInfo {
   const SparcRegisterInfo RI;
   const SparcSubtarget& Subtarget;
-  virtual void anchor();
 public:
   explicit SparcInstrInfo(SparcSubtarget &ST);
 

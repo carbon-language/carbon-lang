@@ -37,9 +37,6 @@
 
 using namespace llvm;
 
-// pin vtable to this file
-PPCTargetStreamer::~PPCTargetStreamer() {}
-
 static MCInstrInfo *createPPCMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitPPCMCInstrInfo(X);

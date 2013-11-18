@@ -43,7 +43,6 @@ private:
   const AMDGPURegisterInfo RI;
   bool getNextBranchInstr(MachineBasicBlock::iterator &iter,
                           MachineBasicBlock &MBB) const;
-  virtual void anchor();
 protected:
   TargetMachine &TM;
 public:

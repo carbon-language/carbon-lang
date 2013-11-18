@@ -22,13 +22,10 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
-#define GET_INSTRINFO_CTOR_DTOR
+#define GET_INSTRINFO_CTOR
 #include "MipsGenInstrInfo.inc"
 
 using namespace llvm;
-
-// pin vtable to this file
-void MipsInstrInfo::anchor() {}
 
 MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm, unsigned UncondBr)
   : MipsGenInstrInfo(Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),

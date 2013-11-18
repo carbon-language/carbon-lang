@@ -21,12 +21,10 @@ using namespace llvm;
 class MCJITTest : public testing::Test, public MCJITTestBase {
 protected:
 
-  virtual void SetUp();
+  virtual void SetUp() {
+    M.reset(createEmptyModule("<main>"));
+  }
 };
-
-void MCJITTest::SetUp() {
-  M.reset(createEmptyModule("<main>"));
-}
 
 namespace {
 

@@ -76,7 +76,6 @@ public:
 // FIXME: declared here because it is used from
 // lib/CodeGen/AsmPrinter/ARMException.cpp.
 class ARMTargetStreamer : public MCTargetStreamer {
-  virtual void anchor();
 public:
   virtual void emitFnStart() = 0;
   virtual void emitFnEnd() = 0;

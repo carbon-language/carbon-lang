@@ -22,9 +22,7 @@
 #include <cstdlib>
 using namespace llvm;
 
-// pin vtables to this file
 MCTargetStreamer::~MCTargetStreamer() {}
-void ARMTargetStreamer::anchor() {}
 
 MCStreamer::MCStreamer(MCContext &Ctx, MCTargetStreamer *TargetStreamer)
     : Context(Ctx), TargetStreamer(TargetStreamer), EmitEHFrame(true),

@@ -27,16 +27,14 @@ typedef SetTheory::RecVec RecVec;
 
 // (add a, b, ...) Evaluate and union all arguments.
 struct AddOp : public SetTheory::Operator {
-  virtual void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts,
-                     ArrayRef<SMLoc> Loc) {
+  void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts, ArrayRef<SMLoc> Loc) {
     ST.evaluate(Expr->arg_begin(), Expr->arg_end(), Elts, Loc);
   }
 };
 
 // (sub Add, Sub, ...) Set difference.
 struct SubOp : public SetTheory::Operator {
-  virtual void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts,
-                     ArrayRef<SMLoc> Loc) {
+  void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts, ArrayRef<SMLoc> Loc) {
     if (Expr->arg_size() < 2)
       PrintFatalError(Loc, "Set difference needs at least two arguments: " +
         Expr->getAsString());
@@ -51,8 +49,7 @@ struct SubOp : public SetTheory::Operator {
 
 // (and S1, S2) Set intersection.
 struct AndOp : public SetTheory::Operator {
-  virtual void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts,
-                     ArrayRef<SMLoc> Loc) {
+  void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts, ArrayRef<SMLoc> Loc) {
     if (Expr->arg_size() != 2)
       PrintFatalError(Loc, "Set intersection requires two arguments: " +
         Expr->getAsString());
@@ -71,8 +68,7 @@ struct SetIntBinOp : public SetTheory::Operator {
                      RecSet &Set, int64_t N,
                      RecSet &Elts, ArrayRef<SMLoc> Loc) =0;
 
-  virtual void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts,
-                     ArrayRef<SMLoc> Loc) {
+  void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts, ArrayRef<SMLoc> Loc) {
     if (Expr->arg_size() != 2)
       PrintFatalError(Loc, "Operator requires (Op Set, Int) arguments: " +
         Expr->getAsString());
@@ -88,9 +84,9 @@ struct SetIntBinOp : public SetTheory::Operator {
 
 // (shl S, N) Shift left, remove the first N elements.
 struct ShlOp : public SetIntBinOp {
-  virtual void apply2(SetTheory &ST, DagInit *Expr,
-                      RecSet &Set, int64_t N,
-                      RecSet &Elts, ArrayRef<SMLoc> Loc) {
+  void apply2(SetTheory &ST, DagInit *Expr,
+             RecSet &Set, int64_t N,
+             RecSet &Elts, ArrayRef<SMLoc> Loc) {
     if (N < 0)
       PrintFatalError(Loc, "Positive shift required: " +
         Expr->getAsString());
@@ -101,9 +97,9 @@ struct ShlOp : public SetIntBinOp {
 
 // (trunc S, N) Truncate after the first N elements.
 struct TruncOp : public SetIntBinOp {
-  virtual void apply2(SetTheory &ST, DagInit *Expr,
-                      RecSet &Set, int64_t N,
-                      RecSet &Elts, ArrayRef<SMLoc> Loc) {
+  void apply2(SetTheory &ST, DagInit *Expr,
+             RecSet &Set, int64_t N,
+             RecSet &Elts, ArrayRef<SMLoc> Loc) {
     if (N < 0)
       PrintFatalError(Loc, "Positive length required: " +
         Expr->getAsString());
@@ -119,9 +115,9 @@ struct RotOp : public SetIntBinOp {
 
   RotOp(bool Rev) : Reverse(Rev) {}
 
-  virtual void apply2(SetTheory &ST, DagInit *Expr,
-                      RecSet &Set, int64_t N,
-                      RecSet &Elts, ArrayRef<SMLoc> Loc) {
+  void apply2(SetTheory &ST, DagInit *Expr,
+             RecSet &Set, int64_t N,
+             RecSet &Elts, ArrayRef<SMLoc> Loc) {
     if (Reverse)
       N = -N;
     // N > 0 -> rotate left, N < 0 -> rotate right.
@@ -138,9 +134,9 @@ struct RotOp : public SetIntBinOp {
 
 // (decimate S, N) Pick every N'th element of S.
 struct DecimateOp : public SetIntBinOp {
-  virtual void apply2(SetTheory &ST, DagInit *Expr,
-                      RecSet &Set, int64_t N,
-                      RecSet &Elts, ArrayRef<SMLoc> Loc) {
+  void apply2(SetTheory &ST, DagInit *Expr,
+             RecSet &Set, int64_t N,
+             RecSet &Elts, ArrayRef<SMLoc> Loc) {
     if (N <= 0)
       PrintFatalError(Loc, "Positive stride required: " +
         Expr->getAsString());
@@ -151,8 +147,7 @@ struct DecimateOp : public SetIntBinOp {
 
 // (interleave S1, S2, ...) Interleave elements of the arguments.
 struct InterleaveOp : public SetTheory::Operator {
-  virtual void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts,
-                     ArrayRef<SMLoc> Loc) {
+  void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts, ArrayRef<SMLoc> Loc) {
     // Evaluate the arguments individually.
     SmallVector<RecSet, 4> Args(Expr->getNumArgs());
     unsigned MaxSize = 0;
@@ -170,8 +165,7 @@ struct InterleaveOp : public SetTheory::Operator {
 
 // (sequence "Format", From, To) Generate a sequence of records by name.
 struct SequenceOp : public SetTheory::Operator {
-  virtual void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts,
-                     ArrayRef<SMLoc> Loc) {
+  void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts, ArrayRef<SMLoc> Loc) {
     int Step = 1;
     if (Expr->arg_size() > 4)
       PrintFatalError(Loc, "Bad args to (sequence \"Format\", From, To): " +
@@ -238,16 +232,15 @@ struct FieldExpander : public SetTheory::Expander {
 
   FieldExpander(StringRef fn) : FieldName(fn) {}
 
-  virtual void expand(SetTheory &ST, Record *Def, RecSet &Elts) {
+  void expand(SetTheory &ST, Record *Def, RecSet &Elts) {
     ST.evaluate(Def->getValueInit(FieldName), Elts, Def->getLoc());
   }
 };
 } // end anonymous namespace
 
-// pin vtables to this file
-void SetTheory::Operator::anchor() {}
-void SetTheory::Expander::anchor() {}
+void SetTheory::Operator::anchor() { }
 
+void SetTheory::Expander::anchor() { }
 
 SetTheory::SetTheory() {
   addOperator("add", new AddOp);

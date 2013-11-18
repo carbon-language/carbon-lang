@@ -23,7 +23,6 @@ namespace llvm {
 class ObjectImageCommon : public ObjectImage {
   ObjectImageCommon(); // = delete
   ObjectImageCommon(const ObjectImageCommon &other); // = delete
-  virtual void anchor();
 
 protected:
   object::ObjectFile *ObjFile;

@@ -17,7 +17,6 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/Threading.h"
 #include "llvm/Support/raw_ostream.h"
@@ -120,4 +119,3 @@ void LLVMInstallFatalErrorHandler(LLVMFatalErrorHandler Handler) {
 void LLVMResetFatalErrorHandler() {
   remove_fatal_error_handler();
 }
-

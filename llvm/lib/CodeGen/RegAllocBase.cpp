@@ -50,9 +50,6 @@ bool RegAllocBase::VerifyEnabled = false;
 //                         RegAllocBase Implementation
 //===----------------------------------------------------------------------===//
 
-// pin vtable to this file
-void RegAllocBase::anchor() {}
-
 void RegAllocBase::init(VirtRegMap &vrm,
                         LiveIntervals &lis,
                         LiveRegMatrix &mat) {
