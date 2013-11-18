@@ -28,6 +28,11 @@ def FeatureIRStructurizer : SubtargetFeature <"enable-irstructurizer",
 
 // Target features
 
+def FeatureIfCvt : SubtargetFeature <"disable-ifcvt",
+        "EnableIfCvt",
+        "false",
+        "Disable the if conversion pass">;
+
 def FeatureFP64     : SubtargetFeature<"fp64",
         "FP64",
         "true",

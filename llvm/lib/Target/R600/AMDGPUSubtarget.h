@@ -50,6 +50,7 @@ private:
   bool FP64;
   bool CaymanISA;
   bool EnableIRStructurizer;
+  bool EnableIfCvt;
 
   InstrItineraryData InstrItins;
 
@@ -66,6 +67,7 @@ public:
   bool hasHWFP64() const;
   bool hasCaymanISA() const;
   bool IsIRStructurizerEnabled() const;
+  bool isIfCvtEnabled() const;
 
   virtual bool enableMachineScheduler() const {
     return getGeneration() <= NORTHERN_ISLANDS;

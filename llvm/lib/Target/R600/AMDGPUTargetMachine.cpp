@@ -169,7 +169,8 @@ bool AMDGPUPassConfig::addPreSched2() {
 
   if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
     addPass(createR600EmitClauseMarkers(*TM));
-  addPass(&IfConverterID);
+  if (ST.isIfCvtEnabled())
+    addPass(&IfConverterID);
   if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
     addPass(createR600ClauseMergePass(*TM));
   return false;
