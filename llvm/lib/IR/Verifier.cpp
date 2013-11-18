@@ -78,7 +78,7 @@
 using namespace llvm;
 
 static cl::opt<bool> DisableDebugInfoVerifier("disable-debug-info-verifier",
-                                              cl::init(false));
+                                              cl::init(true));
 
 namespace {  // Anonymous namespace for class
   struct PreVerifier : public FunctionPass {
