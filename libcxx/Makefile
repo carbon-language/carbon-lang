@@ -39,6 +39,8 @@ installheaders::
 	chmod 644 $(HEADER_DIR)/c++/v1/*
 	chmod 755 $(HEADER_DIR)/c++/v1/ext
 	chmod 644 $(HEADER_DIR)/c++/v1/ext/*
+	chmod 755 $(HEADER_DIR)/c++/v1/experimental
+	chmod 644 $(HEADER_DIR)/c++/v1/experimental/*
 
 install::
 
