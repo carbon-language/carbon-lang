@@ -5289,21 +5289,6 @@ def neon_uimm4 : Operand<i64>,
   let PrintMethod = "printUImmHexOperand";
 }
 
-class NeonI_INS_main<string asmop, string Res, ValueType ResTy,
-                     RegisterClass OpGPR, ValueType OpTy, Operand OpImm>
-  : NeonI_copy<0b1, 0b0, 0b0011,
-               (outs VPR128:$Rd), (ins VPR128:$src, OpGPR:$Rn, OpImm:$Imm),
-               asmop # "\t$Rd." # Res # "[$Imm], $Rn",
-               [(set (ResTy VPR128:$Rd),
-                 (ResTy (vector_insert
-                   (ResTy VPR128:$src),
-                   (OpTy OpGPR:$Rn),
-                   (OpImm:$Imm))))],
-               NoItinerary> {
-  bits<4> Imm;
-  let Constraints = "$src = $Rd";
-}
-
 // Bitwise Extract
 class NeonI_Extract<bit q, bits<2> op2, string asmop,
                     string OpS, RegisterOperand OpVPR, Operand OpImm>
@@ -6157,6 +6142,21 @@ defm SQDMLSL_lane_v3 : NI_2VEL_v3_qdma_pat<"SQDMLSLvve", "Neon_qdmlsl">;
 
 // End of implementation for instruction class (3V Elem)
 
+class NeonI_INS_main<string asmop, string Res, ValueType ResTy,
+                     RegisterClass OpGPR, ValueType OpTy, Operand OpImm>
+  : NeonI_copy<0b1, 0b0, 0b0011,
+               (outs VPR128:$Rd), (ins VPR128:$src, OpGPR:$Rn, OpImm:$Imm),
+               asmop # "\t$Rd." # Res # "[$Imm], $Rn",
+               [(set (ResTy VPR128:$Rd),
+                 (ResTy (vector_insert
+                   (ResTy VPR128:$src),
+                   (OpTy OpGPR:$Rn),
+                   (OpImm:$Imm))))],
+               NoItinerary> {
+  bits<4> Imm;
+  let Constraints = "$src = $Rd";
+}
+
 //Insert element (vector, from main)
 def INSbw : NeonI_INS_main<"ins", "b", v16i8, GPR32, i32,
                            neon_uimm4_bare> {
@@ -6174,6 +6174,15 @@ def INSdx : NeonI_INS_main<"ins", "d", v2i64, GPR64, i64,
                            neon_uimm1_bare> {
   let Inst{20-16} = {Imm, 0b1, 0b0, 0b0, 0b0};
 }
+
+def : NeonInstAlias<"mov $Rd.b[$Imm], $Rn",
+                    (INSbw VPR128:$Rd, GPR32:$Rn, neon_uimm4_bare:$Imm), 0>;
+def : NeonInstAlias<"mov $Rd.h[$Imm], $Rn",
+                    (INShw VPR128:$Rd, GPR32:$Rn, neon_uimm3_bare:$Imm), 0>;
+def : NeonInstAlias<"mov $Rd.s[$Imm], $Rn",
+                    (INSsw VPR128:$Rd, GPR32:$Rn, neon_uimm2_bare:$Imm), 0>;
+def : NeonInstAlias<"mov $Rd.d[$Imm], $Rn",
+                    (INSdx VPR128:$Rd, GPR64:$Rn, neon_uimm1_bare:$Imm), 0>;
 
 class Neon_INS_main_pattern <ValueType ResTy,ValueType ExtResTy,
                              RegisterClass OpGPR, ValueType OpTy, 
@@ -6214,19 +6223,32 @@ def INSELb : NeonI_INS_element<"ins", "b", neon_uimm4_bare> {
 }
 def INSELh : NeonI_INS_element<"ins", "h", neon_uimm3_bare> {
   let Inst{20-16} = {Immd{2}, Immd{1}, Immd{0}, 0b1, 0b0};
-  let Inst{14-12} = {Immn{2}, Immn{1}, Immn{0}};
-  // bit 11 is unspecified.
+  let Inst{14-11} = {Immn{2}, Immn{1}, Immn{0}, 0b0};
+  // bit 11 is unspecified, but should be set to zero.
 }
 def INSELs : NeonI_INS_element<"ins", "s", neon_uimm2_bare> {
   let Inst{20-16} = {Immd{1}, Immd{0}, 0b1, 0b0, 0b0};
-  let Inst{14-13} = {Immn{1}, Immn{0}};
-  // bits 11-12 are unspecified.
+  let Inst{14-11} = {Immn{1}, Immn{0}, 0b0, 0b0};
+  // bits 11-12 are unspecified, but should be set to zero.
 }
 def INSELd : NeonI_INS_element<"ins", "d", neon_uimm1_bare> {
   let Inst{20-16} = {Immd, 0b1, 0b0, 0b0, 0b0};
-  let Inst{14} = Immn{0};
-  // bits 11-13 are unspecified.
+  let Inst{14-11} = {Immn{0}, 0b0, 0b0, 0b0};
+  // bits 11-13 are unspecified, but should be set to zero.
 }
+
+def : NeonInstAlias<"mov $Rd.b[$Immd], $Rn.b[$Immn]",
+                    (INSELb VPR128:$Rd, VPR128:$Rn,
+                      neon_uimm4_bare:$Immd, neon_uimm4_bare:$Immn), 0>;
+def : NeonInstAlias<"mov $Rd.h[$Immd], $Rn.h[$Immn]",
+                    (INSELh VPR128:$Rd, VPR128:$Rn,
+                      neon_uimm3_bare:$Immd, neon_uimm3_bare:$Immn), 0>;
+def : NeonInstAlias<"mov $Rd.s[$Immd], $Rn.s[$Immn]",
+                    (INSELs VPR128:$Rd, VPR128:$Rn,
+                      neon_uimm2_bare:$Immd, neon_uimm2_bare:$Immn), 0>;
+def : NeonInstAlias<"mov $Rd.d[$Immd], $Rn.d[$Immn]",
+                    (INSELd VPR128:$Rd, VPR128:$Rn,
+                      neon_uimm1_bare:$Immd, neon_uimm1_bare:$Immn), 0>;
 
 multiclass Neon_INS_elt_pattern<ValueType ResTy, ValueType NaTy,
                                 ValueType MidTy, Operand StImm, Operand NaImm,
@@ -6448,6 +6470,11 @@ def UMOVxd : NeonI_UMOV<"umov", "d", 0b1, v2i64, neon_uimm1_bare,
   let Inst{20-16} = {Imm, 0b1, 0b0, 0b0, 0b0};
 }
 
+def : NeonInstAlias<"mov $Rd, $Rn.s[$Imm]",
+                    (UMOVws GPR32:$Rd, VPR128:$Rn, neon_uimm2_bare:$Imm), 0>;
+def : NeonInstAlias<"mov $Rd, $Rn.d[$Imm]",
+                    (UMOVxd GPR64:$Rd, VPR128:$Rn, neon_uimm1_bare:$Imm), 0>;
+
 class Neon_UMOV_pattern <ValueType StTy, ValueType NaTy, ValueType ResTy,
                          Operand StImm,  Operand NaImm,
                          Instruction SMOVI>
@@ -6650,37 +6677,38 @@ class NeonI_DUP<bit Q, string asmop, string rdlane,
                NoItinerary>;
 
 def DUP16b : NeonI_DUP<0b1, "dup", ".16b", VPR128, v16i8, GPR32, i32> {
-  let Inst{16} = 0b1;
-  // bits 17-19 are unspecified.
+  let Inst{20-16} = 0b00001;
+  // bits 17-20 are unspecified, but should be set to zero.
 }
 
 def DUP8h : NeonI_DUP<0b1, "dup", ".8h", VPR128, v8i16, GPR32, i32> {
-  let Inst{17-16} = 0b10;
-  // bits 18-19 are unspecified.
+  let Inst{20-16} = 0b00010;
+  // bits 18-20 are unspecified, but should be set to zero.
 }
 
 def DUP4s : NeonI_DUP<0b1, "dup", ".4s", VPR128, v4i32, GPR32, i32> {
-  let Inst{18-16} = 0b100;
-  // bit 19 is unspecified.
+  let Inst{20-16} = 0b00100;
+  // bits 19-20 are unspecified, but should be set to zero.
 }
 
 def DUP2d : NeonI_DUP<0b1, "dup", ".2d", VPR128, v2i64, GPR64, i64> {
-  let Inst{19-16} = 0b1000;
+  let Inst{20-16} = 0b01000;
+  // bit 20 is unspecified, but should be set to zero.
 }
 
 def DUP8b : NeonI_DUP<0b0, "dup", ".8b", VPR64, v8i8, GPR32, i32> {
-  let Inst{16} = 0b1;
-  // bits 17-19 are unspecified.
+  let Inst{20-16} = 0b00001;
+  // bits 17-20 are unspecified, but should be set to zero.
 }
 
 def DUP4h : NeonI_DUP<0b0, "dup", ".4h", VPR64, v4i16, GPR32, i32> {
-  let Inst{17-16} = 0b10;
-  // bits 18-19 are unspecified.
+  let Inst{20-16} = 0b00010;
+  // bits 18-20 are unspecified, but should be set to zero.
 }
 
 def DUP2s : NeonI_DUP<0b0, "dup", ".2s", VPR64, v2i32, GPR32, i32> {
-  let Inst{18-16} = 0b100;
-  // bit 19 is unspecified.
+  let Inst{20-16} = 0b00100;
+  // bits 19-20 are unspecified, but should be set to zero.
 }
 
 // patterns for CONCAT_VECTORS
