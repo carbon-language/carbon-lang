@@ -34,6 +34,7 @@ foreach( f ${SANITIZER_HEADERS} )
 endforeach( f )
 
 add_custom_target(compiler-rt-headers ALL DEPENDS ${out_files})
+add_dependencies(compiler-rt compiler-rt-headers)
 
 # Install sanitizer headers.
 install(FILES ${SANITIZER_HEADERS}
