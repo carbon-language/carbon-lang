@@ -58,6 +58,12 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   *pc = ucontext->uc_mcontext.arm_pc;
   *bp = ucontext->uc_mcontext.arm_fp;
   *sp = ucontext->uc_mcontext.arm_sp;
+# elif defined(__hppa__)
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.sc_iaoq[0];
+  /* GCC uses %r3 whenever a frame pointer is needed.  */
+  *bp = ucontext->uc_mcontext.sc_gr[3];
+  *sp = ucontext->uc_mcontext.sc_gr[30];
 # elif defined(__x86_64__)
   ucontext_t *ucontext = (ucontext_t*)context;
   *pc = ucontext->uc_mcontext.gregs[REG_RIP];
