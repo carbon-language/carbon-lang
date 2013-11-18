@@ -202,8 +202,13 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
   } else if (CurArraySize != RHS.CurArraySize) {
     if (isSmall())
       CurArray = (const void**)malloc(sizeof(void*) * RHS.CurArraySize);
-    else
-      CurArray = (const void**)realloc(CurArray, sizeof(void*)*RHS.CurArraySize);
+    else {
+      const void **T = (const void**)realloc(CurArray,
+                                             sizeof(void*) * RHS.CurArraySize);
+      if (!T)
+        free(CurArray);
+      CurArray = T;
+    }
     assert(CurArray && "Failed to allocate memory?");
   }
   
