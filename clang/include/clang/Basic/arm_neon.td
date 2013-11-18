@@ -543,6 +543,20 @@ def ST3 : WInst<"vst3", "vp3",
 def ST4 : WInst<"vst4", "vp4",
                 "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsUcUsUiUlcsilhfdPcPsPlQPl">;
 
+def LD1_X2 : WInst<"vld1_x2", "2c",
+                   "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsQPlUcUsUiUlcsilhfdPcPsPl">;
+def LD3_x3 : WInst<"vld1_x3", "3c",
+                   "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsQPlUcUsUiUlcsilhfdPcPsPl">;
+def LD4_x4 : WInst<"vld1_x4", "4c",
+                   "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsQPlUcUsUiUlcsilhfdPcPsPl">;
+
+def ST1_X2 : WInst<"vst1_x2", "vp2",
+                   "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsQPlUcUsUiUlcsilhfdPcPsPl">;
+def ST1_X3 : WInst<"vst1_x3", "vp3",
+                   "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsQPlUcUsUiUlcsilhfdPcPsPl">;
+def ST1_X4 : WInst<"vst1_x4", "vp4",
+                   "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsQPlUcUsUiUlcsilhfdPcPsPl">;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Addition
 // With additional Qd type.

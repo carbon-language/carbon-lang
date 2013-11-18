@@ -881,6 +881,16 @@ static char Insert_BHSD_Suffix(StringRef typestr){
   return 0;
 }
 
+static bool endsWith_xN(std::string const &name) {
+  if (name.length() > 3) {
+    if (name.compare(name.length() - 3, 3, "_x2") == 0 ||
+        name.compare(name.length() - 3, 3, "_x3") == 0 ||
+        name.compare(name.length() - 3, 3, "_x4") == 0)
+      return true;
+  }
+  return false;
+}
+
 /// MangleName - Append a type or width suffix to a base neon function name,
 /// and insert a 'q' in the appropriate location if type string starts with 'Q'.
 /// E.g. turn "vst2_lane" into "vst2q_lane_f32", etc.
@@ -898,7 +908,11 @@ static std::string MangleName(const std::string &name, StringRef typestr,
   std::string s = name;
 
   if (typeCode.size() > 0) {
-    s += "_" + typeCode;
+    // If the name is end with _xN (N = 2,3,4), insert the typeCode before _xN.
+    if (endsWith_xN(s))
+      s.insert(s.length() - 3, "_" + typeCode);
+    else
+      s += "_" + typeCode;
   }
 
   if (ck == ClassB)
