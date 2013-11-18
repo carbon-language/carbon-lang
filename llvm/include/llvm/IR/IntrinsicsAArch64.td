@@ -163,6 +163,33 @@ def int_aarch64_neon_vtbx4 :
             LLVMMatchType<1>,  LLVMMatchType<1>, LLVMMatchType<0>],
             [IntrNoMem]>;
 
+// Vector Load/store
+def int_aarch64_neon_vld1x2 : Intrinsic<[llvm_anyvector_ty, LLVMMatchType<0>],
+                                        [llvm_ptr_ty, llvm_i32_ty],
+                                        [IntrReadArgMem]>;
+def int_aarch64_neon_vld1x3 : Intrinsic<[llvm_anyvector_ty, LLVMMatchType<0>,
+                                         LLVMMatchType<0>],
+                                        [llvm_ptr_ty, llvm_i32_ty],
+                                        [IntrReadArgMem]>;
+def int_aarch64_neon_vld1x4 : Intrinsic<[llvm_anyvector_ty, LLVMMatchType<0>,
+                                         LLVMMatchType<0>, LLVMMatchType<0>],
+                                        [llvm_ptr_ty, llvm_i32_ty],
+                                        [IntrReadArgMem]>;
+
+def int_aarch64_neon_vst1x2 : Intrinsic<[],
+                                        [llvm_ptr_ty, llvm_anyvector_ty,
+                                         LLVMMatchType<0>, llvm_i32_ty],
+                                        [IntrReadWriteArgMem]>;
+def int_aarch64_neon_vst1x3 : Intrinsic<[],
+                                        [llvm_ptr_ty, llvm_anyvector_ty,
+                                         LLVMMatchType<0>, LLVMMatchType<0>,
+                                         llvm_i32_ty], [IntrReadWriteArgMem]>;
+def int_aarch64_neon_vst1x4 : Intrinsic<[],
+                                        [llvm_ptr_ty, llvm_anyvector_ty,
+                                         LLVMMatchType<0>, LLVMMatchType<0>,
+                                         LLVMMatchType<0>, llvm_i32_ty],
+                                        [IntrReadWriteArgMem]>;
+
 // Scalar Add
 def int_aarch64_neon_vaddds :
   Intrinsic<[llvm_v1i64_ty], [llvm_v1i64_ty, llvm_v1i64_ty], [IntrNoMem]>;

@@ -157,12 +157,18 @@ namespace AArch64ISD {
     NEON_LD2_UPD,
     NEON_LD3_UPD,
     NEON_LD4_UPD,
+    NEON_LD1x2_UPD,
+    NEON_LD1x3_UPD,
+    NEON_LD1x4_UPD,
 
     // NEON stores with post-increment base updates:
     NEON_ST1_UPD,
     NEON_ST2_UPD,
     NEON_ST3_UPD,
-    NEON_ST4_UPD
+    NEON_ST4_UPD,
+    NEON_ST1x2_UPD,
+    NEON_ST1x3_UPD,
+    NEON_ST1x4_UPD
   };
 }
 

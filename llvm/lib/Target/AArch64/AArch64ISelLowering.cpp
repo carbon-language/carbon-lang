@@ -937,6 +937,18 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "AArch64ISD::NEON_ST3_UPD";
   case AArch64ISD::NEON_ST4_UPD:
     return "AArch64ISD::NEON_ST4_UPD";
+  case AArch64ISD::NEON_LD1x2_UPD:
+    return "AArch64ISD::NEON_LD1x2_UPD";
+  case AArch64ISD::NEON_LD1x3_UPD:
+    return "AArch64ISD::NEON_LD1x3_UPD";
+  case AArch64ISD::NEON_LD1x4_UPD:
+    return "AArch64ISD::NEON_LD1x4_UPD";
+  case AArch64ISD::NEON_ST1x2_UPD:
+    return "AArch64ISD::NEON_ST1x2_UPD";
+  case AArch64ISD::NEON_ST1x3_UPD:
+    return "AArch64ISD::NEON_ST1x3_UPD";
+  case AArch64ISD::NEON_ST1x4_UPD:
+    return "AArch64ISD::NEON_ST1x4_UPD";
   case AArch64ISD::NEON_VEXTRACT:
     return "AArch64ISD::NEON_VEXTRACT";
   default:
@@ -3545,6 +3557,18 @@ static SDValue CombineBaseUpdate(SDNode *N,
       NumVecs = 3; isLoad = false; break;
     case Intrinsic::arm_neon_vst4:     NewOpc = AArch64ISD::NEON_ST4_UPD;
       NumVecs = 4; isLoad = false; break;
+    case Intrinsic::aarch64_neon_vld1x2: NewOpc = AArch64ISD::NEON_LD1x2_UPD;
+      NumVecs = 2; break;
+    case Intrinsic::aarch64_neon_vld1x3: NewOpc = AArch64ISD::NEON_LD1x3_UPD;
+      NumVecs = 3; break;
+    case Intrinsic::aarch64_neon_vld1x4: NewOpc = AArch64ISD::NEON_LD1x4_UPD;
+      NumVecs = 4; break;
+    case Intrinsic::aarch64_neon_vst1x2: NewOpc = AArch64ISD::NEON_ST1x2_UPD;
+      NumVecs = 2; isLoad = false; break;
+    case Intrinsic::aarch64_neon_vst1x3: NewOpc = AArch64ISD::NEON_ST1x3_UPD;
+      NumVecs = 3; isLoad = false; break;
+    case Intrinsic::aarch64_neon_vst1x4: NewOpc = AArch64ISD::NEON_ST1x4_UPD;
+      NumVecs = 4; isLoad = false; break;
     }
 
     // Find the size of memory referenced by the load/store.
@@ -3624,6 +3648,12 @@ AArch64TargetLowering::PerformDAGCombine(SDNode *N,
     case Intrinsic::arm_neon_vst2:
     case Intrinsic::arm_neon_vst3:
     case Intrinsic::arm_neon_vst4:
+    case Intrinsic::aarch64_neon_vld1x2:
+    case Intrinsic::aarch64_neon_vld1x3:
+    case Intrinsic::aarch64_neon_vld1x4:
+    case Intrinsic::aarch64_neon_vst1x2:
+    case Intrinsic::aarch64_neon_vst1x3:
+    case Intrinsic::aarch64_neon_vst1x4:
       return CombineBaseUpdate(N, DCI);
     default:
       break;
@@ -4170,7 +4200,10 @@ bool AArch64TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
   case Intrinsic::arm_neon_vld1:
   case Intrinsic::arm_neon_vld2:
   case Intrinsic::arm_neon_vld3:
-  case Intrinsic::arm_neon_vld4: {
+  case Intrinsic::arm_neon_vld4:
+  case Intrinsic::aarch64_neon_vld1x2:
+  case Intrinsic::aarch64_neon_vld1x3:
+  case Intrinsic::aarch64_neon_vld1x4: {
     Info.opc = ISD::INTRINSIC_W_CHAIN;
     // Conservatively set memVT to the entire set of vectors loaded.
     uint64_t NumElts = getDataLayout()->getTypeAllocSize(I.getType()) / 8;
@@ -4187,7 +4220,10 @@ bool AArch64TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
   case Intrinsic::arm_neon_vst1:
   case Intrinsic::arm_neon_vst2:
   case Intrinsic::arm_neon_vst3:
-  case Intrinsic::arm_neon_vst4: {
+  case Intrinsic::arm_neon_vst4:
+  case Intrinsic::aarch64_neon_vst1x2:
+  case Intrinsic::aarch64_neon_vst1x3:
+  case Intrinsic::aarch64_neon_vst1x4: {
     Info.opc = ISD::INTRINSIC_VOID;
     // Conservatively set memVT to the entire set of vectors stored.
     unsigned NumElts = 0;

@@ -483,7 +483,6 @@ static unsigned getVLDSTRegisterUpdateOpcode(unsigned Opc) {
   case AArch64::LD2WB_8B_fixed: return AArch64::LD2WB_8B_register;
   case AArch64::LD2WB_4H_fixed: return AArch64::LD2WB_4H_register;
   case AArch64::LD2WB_2S_fixed: return AArch64::LD2WB_2S_register;
-  case AArch64::LD1WB2V_1D_fixed: return AArch64::LD1WB2V_1D_register;
   case AArch64::LD2WB_16B_fixed: return AArch64::LD2WB_16B_register;
   case AArch64::LD2WB_8H_fixed: return AArch64::LD2WB_8H_register;
   case AArch64::LD2WB_4S_fixed: return AArch64::LD2WB_4S_register;
@@ -492,7 +491,6 @@ static unsigned getVLDSTRegisterUpdateOpcode(unsigned Opc) {
   case AArch64::LD3WB_8B_fixed: return AArch64::LD3WB_8B_register;
   case AArch64::LD3WB_4H_fixed: return AArch64::LD3WB_4H_register;
   case AArch64::LD3WB_2S_fixed: return AArch64::LD3WB_2S_register;
-  case AArch64::LD1WB3V_1D_fixed: return AArch64::LD1WB3V_1D_register;
   case AArch64::LD3WB_16B_fixed: return AArch64::LD3WB_16B_register;
   case AArch64::LD3WB_8H_fixed: return AArch64::LD3WB_8H_register;
   case AArch64::LD3WB_4S_fixed: return AArch64::LD3WB_4S_register;
@@ -501,11 +499,37 @@ static unsigned getVLDSTRegisterUpdateOpcode(unsigned Opc) {
   case AArch64::LD4WB_8B_fixed: return AArch64::LD4WB_8B_register;
   case AArch64::LD4WB_4H_fixed: return AArch64::LD4WB_4H_register;
   case AArch64::LD4WB_2S_fixed: return AArch64::LD4WB_2S_register;
-  case AArch64::LD1WB4V_1D_fixed: return AArch64::LD1WB4V_1D_register;
   case AArch64::LD4WB_16B_fixed: return AArch64::LD4WB_16B_register;
   case AArch64::LD4WB_8H_fixed: return AArch64::LD4WB_8H_register;
   case AArch64::LD4WB_4S_fixed: return AArch64::LD4WB_4S_register;
   case AArch64::LD4WB_2D_fixed: return AArch64::LD4WB_2D_register;
+
+  case AArch64::LD1x2WB_8B_fixed: return AArch64::LD1x2WB_8B_register;
+  case AArch64::LD1x2WB_4H_fixed: return AArch64::LD1x2WB_4H_register;
+  case AArch64::LD1x2WB_2S_fixed: return AArch64::LD1x2WB_2S_register;
+  case AArch64::LD1x2WB_1D_fixed: return AArch64::LD1x2WB_1D_register;
+  case AArch64::LD1x2WB_16B_fixed: return AArch64::LD1x2WB_16B_register;
+  case AArch64::LD1x2WB_8H_fixed: return AArch64::LD1x2WB_8H_register;
+  case AArch64::LD1x2WB_4S_fixed: return AArch64::LD1x2WB_4S_register;
+  case AArch64::LD1x2WB_2D_fixed: return AArch64::LD1x2WB_2D_register;
+
+  case AArch64::LD1x3WB_8B_fixed: return AArch64::LD1x3WB_8B_register;
+  case AArch64::LD1x3WB_4H_fixed: return AArch64::LD1x3WB_4H_register;
+  case AArch64::LD1x3WB_2S_fixed: return AArch64::LD1x3WB_2S_register;
+  case AArch64::LD1x3WB_1D_fixed: return AArch64::LD1x3WB_1D_register;
+  case AArch64::LD1x3WB_16B_fixed: return AArch64::LD1x3WB_16B_register;
+  case AArch64::LD1x3WB_8H_fixed: return AArch64::LD1x3WB_8H_register;
+  case AArch64::LD1x3WB_4S_fixed: return AArch64::LD1x3WB_4S_register;
+  case AArch64::LD1x3WB_2D_fixed: return AArch64::LD1x3WB_2D_register;
+
+  case AArch64::LD1x4WB_8B_fixed: return AArch64::LD1x4WB_8B_register;
+  case AArch64::LD1x4WB_4H_fixed: return AArch64::LD1x4WB_4H_register;
+  case AArch64::LD1x4WB_2S_fixed: return AArch64::LD1x4WB_2S_register;
+  case AArch64::LD1x4WB_1D_fixed: return AArch64::LD1x4WB_1D_register;
+  case AArch64::LD1x4WB_16B_fixed: return AArch64::LD1x4WB_16B_register;
+  case AArch64::LD1x4WB_8H_fixed: return AArch64::LD1x4WB_8H_register;
+  case AArch64::LD1x4WB_4S_fixed: return AArch64::LD1x4WB_4S_register;
+  case AArch64::LD1x4WB_2D_fixed: return AArch64::LD1x4WB_2D_register;
 
   case AArch64::ST1WB_8B_fixed: return AArch64::ST1WB_8B_register;
   case AArch64::ST1WB_4H_fixed: return AArch64::ST1WB_4H_register;
@@ -519,7 +543,6 @@ static unsigned getVLDSTRegisterUpdateOpcode(unsigned Opc) {
   case AArch64::ST2WB_8B_fixed: return AArch64::ST2WB_8B_register;
   case AArch64::ST2WB_4H_fixed: return AArch64::ST2WB_4H_register;
   case AArch64::ST2WB_2S_fixed: return AArch64::ST2WB_2S_register;
-  case AArch64::ST1WB2V_1D_fixed: return AArch64::ST1WB2V_1D_register;
   case AArch64::ST2WB_16B_fixed: return AArch64::ST2WB_16B_register;
   case AArch64::ST2WB_8H_fixed: return AArch64::ST2WB_8H_register;
   case AArch64::ST2WB_4S_fixed: return AArch64::ST2WB_4S_register;
@@ -528,7 +551,6 @@ static unsigned getVLDSTRegisterUpdateOpcode(unsigned Opc) {
   case AArch64::ST3WB_8B_fixed: return AArch64::ST3WB_8B_register;
   case AArch64::ST3WB_4H_fixed: return AArch64::ST3WB_4H_register;
   case AArch64::ST3WB_2S_fixed: return AArch64::ST3WB_2S_register;
-  case AArch64::ST1WB3V_1D_fixed: return AArch64::ST1WB3V_1D_register;
   case AArch64::ST3WB_16B_fixed: return AArch64::ST3WB_16B_register;
   case AArch64::ST3WB_8H_fixed: return AArch64::ST3WB_8H_register;
   case AArch64::ST3WB_4S_fixed: return AArch64::ST3WB_4S_register;
@@ -537,11 +559,37 @@ static unsigned getVLDSTRegisterUpdateOpcode(unsigned Opc) {
   case AArch64::ST4WB_8B_fixed: return AArch64::ST4WB_8B_register;
   case AArch64::ST4WB_4H_fixed: return AArch64::ST4WB_4H_register;
   case AArch64::ST4WB_2S_fixed: return AArch64::ST4WB_2S_register;
-  case AArch64::ST1WB4V_1D_fixed: return AArch64::ST1WB4V_1D_register;
   case AArch64::ST4WB_16B_fixed: return AArch64::ST4WB_16B_register;
   case AArch64::ST4WB_8H_fixed: return AArch64::ST4WB_8H_register;
   case AArch64::ST4WB_4S_fixed: return AArch64::ST4WB_4S_register;
   case AArch64::ST4WB_2D_fixed: return AArch64::ST4WB_2D_register;
+
+  case AArch64::ST1x2WB_8B_fixed: return AArch64::ST1x2WB_8B_register;
+  case AArch64::ST1x2WB_4H_fixed: return AArch64::ST1x2WB_4H_register;
+  case AArch64::ST1x2WB_2S_fixed: return AArch64::ST1x2WB_2S_register;
+  case AArch64::ST1x2WB_1D_fixed: return AArch64::ST1x2WB_1D_register;
+  case AArch64::ST1x2WB_16B_fixed: return AArch64::ST1x2WB_16B_register;
+  case AArch64::ST1x2WB_8H_fixed: return AArch64::ST1x2WB_8H_register;
+  case AArch64::ST1x2WB_4S_fixed: return AArch64::ST1x2WB_4S_register;
+  case AArch64::ST1x2WB_2D_fixed: return AArch64::ST1x2WB_2D_register;
+
+  case AArch64::ST1x3WB_8B_fixed: return AArch64::ST1x3WB_8B_register;
+  case AArch64::ST1x3WB_4H_fixed: return AArch64::ST1x3WB_4H_register;
+  case AArch64::ST1x3WB_2S_fixed: return AArch64::ST1x3WB_2S_register;
+  case AArch64::ST1x3WB_1D_fixed: return AArch64::ST1x3WB_1D_register;
+  case AArch64::ST1x3WB_16B_fixed: return AArch64::ST1x3WB_16B_register;
+  case AArch64::ST1x3WB_8H_fixed: return AArch64::ST1x3WB_8H_register;
+  case AArch64::ST1x3WB_4S_fixed: return AArch64::ST1x3WB_4S_register;
+  case AArch64::ST1x3WB_2D_fixed: return AArch64::ST1x3WB_2D_register;
+
+  case AArch64::ST1x4WB_8B_fixed: return AArch64::ST1x4WB_8B_register;
+  case AArch64::ST1x4WB_4H_fixed: return AArch64::ST1x4WB_4H_register;
+  case AArch64::ST1x4WB_2S_fixed: return AArch64::ST1x4WB_2S_register;
+  case AArch64::ST1x4WB_1D_fixed: return AArch64::ST1x4WB_1D_register;
+  case AArch64::ST1x4WB_16B_fixed: return AArch64::ST1x4WB_16B_register;
+  case AArch64::ST1x4WB_8H_fixed: return AArch64::ST1x4WB_8H_register;
+  case AArch64::ST1x4WB_4S_fixed: return AArch64::ST1x4WB_4S_register;
+  case AArch64::ST1x4WB_2D_fixed: return AArch64::ST1x4WB_2D_register;
   }
   return Opc; // If not one we handle, return it unchanged.
 }
@@ -912,7 +960,7 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   case AArch64ISD::NEON_LD2_UPD: {
     static const uint16_t Opcodes[] = {
       AArch64::LD2WB_8B_fixed,  AArch64::LD2WB_4H_fixed,
-      AArch64::LD2WB_2S_fixed,  AArch64::LD1WB2V_1D_fixed,
+      AArch64::LD2WB_2S_fixed,  AArch64::LD1x2WB_1D_fixed,
       AArch64::LD2WB_16B_fixed, AArch64::LD2WB_8H_fixed,
       AArch64::LD2WB_4S_fixed,  AArch64::LD2WB_2D_fixed
     };
@@ -921,7 +969,7 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   case AArch64ISD::NEON_LD3_UPD: {
     static const uint16_t Opcodes[] = {
       AArch64::LD3WB_8B_fixed,  AArch64::LD3WB_4H_fixed,
-      AArch64::LD3WB_2S_fixed,  AArch64::LD1WB3V_1D_fixed,
+      AArch64::LD3WB_2S_fixed,  AArch64::LD1x3WB_1D_fixed,
       AArch64::LD3WB_16B_fixed, AArch64::LD3WB_8H_fixed,
       AArch64::LD3WB_4S_fixed,  AArch64::LD3WB_2D_fixed
     };
@@ -930,9 +978,36 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   case AArch64ISD::NEON_LD4_UPD: {
     static const uint16_t Opcodes[] = {
       AArch64::LD4WB_8B_fixed,  AArch64::LD4WB_4H_fixed,
-      AArch64::LD4WB_2S_fixed,  AArch64::LD1WB4V_1D_fixed,
+      AArch64::LD4WB_2S_fixed,  AArch64::LD1x4WB_1D_fixed,
       AArch64::LD4WB_16B_fixed, AArch64::LD4WB_8H_fixed,
       AArch64::LD4WB_4S_fixed,  AArch64::LD4WB_2D_fixed
+    };
+    return SelectVLD(Node, 4, true, Opcodes);
+  }
+  case AArch64ISD::NEON_LD1x2_UPD: {
+    static const uint16_t Opcodes[] = {
+      AArch64::LD1x2WB_8B_fixed,  AArch64::LD1x2WB_4H_fixed,
+      AArch64::LD1x2WB_2S_fixed,  AArch64::LD1x2WB_1D_fixed,
+      AArch64::LD1x2WB_16B_fixed, AArch64::LD1x2WB_8H_fixed,
+      AArch64::LD1x2WB_4S_fixed,  AArch64::LD1x2WB_2D_fixed
+    };
+    return SelectVLD(Node, 2, true, Opcodes);
+  }
+  case AArch64ISD::NEON_LD1x3_UPD: {
+    static const uint16_t Opcodes[] = {
+      AArch64::LD1x3WB_8B_fixed,  AArch64::LD1x3WB_4H_fixed,
+      AArch64::LD1x3WB_2S_fixed,  AArch64::LD1x3WB_1D_fixed,
+      AArch64::LD1x3WB_16B_fixed, AArch64::LD1x3WB_8H_fixed,
+      AArch64::LD1x3WB_4S_fixed,  AArch64::LD1x3WB_2D_fixed
+    };
+    return SelectVLD(Node, 3, true, Opcodes);
+  }
+  case AArch64ISD::NEON_LD1x4_UPD: {
+    static const uint16_t Opcodes[] = {
+      AArch64::LD1x4WB_8B_fixed,  AArch64::LD1x4WB_4H_fixed,
+      AArch64::LD1x4WB_2S_fixed,  AArch64::LD1x4WB_1D_fixed,
+      AArch64::LD1x4WB_16B_fixed, AArch64::LD1x4WB_8H_fixed,
+      AArch64::LD1x4WB_4S_fixed,  AArch64::LD1x4WB_2D_fixed
     };
     return SelectVLD(Node, 4, true, Opcodes);
   }
@@ -948,7 +1023,7 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   case AArch64ISD::NEON_ST2_UPD: {
     static const uint16_t Opcodes[] = {
       AArch64::ST2WB_8B_fixed,  AArch64::ST2WB_4H_fixed,
-      AArch64::ST2WB_2S_fixed,  AArch64::ST1WB2V_1D_fixed,
+      AArch64::ST2WB_2S_fixed,  AArch64::ST1x2WB_1D_fixed,
       AArch64::ST2WB_16B_fixed, AArch64::ST2WB_8H_fixed,
       AArch64::ST2WB_4S_fixed,  AArch64::ST2WB_2D_fixed
     };
@@ -957,7 +1032,7 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   case AArch64ISD::NEON_ST3_UPD: {
     static const uint16_t Opcodes[] = {
       AArch64::ST3WB_8B_fixed,  AArch64::ST3WB_4H_fixed,
-      AArch64::ST3WB_2S_fixed,  AArch64::ST1WB3V_1D_fixed,
+      AArch64::ST3WB_2S_fixed,  AArch64::ST1x3WB_1D_fixed,
       AArch64::ST3WB_16B_fixed, AArch64::ST3WB_8H_fixed,
       AArch64::ST3WB_4S_fixed,  AArch64::ST3WB_2D_fixed
     };
@@ -966,9 +1041,36 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   case AArch64ISD::NEON_ST4_UPD: {
     static const uint16_t Opcodes[] = {
       AArch64::ST4WB_8B_fixed,  AArch64::ST4WB_4H_fixed,
-      AArch64::ST4WB_2S_fixed,  AArch64::ST1WB4V_1D_fixed,
+      AArch64::ST4WB_2S_fixed,  AArch64::ST1x4WB_1D_fixed,
       AArch64::ST4WB_16B_fixed, AArch64::ST4WB_8H_fixed,
       AArch64::ST4WB_4S_fixed,  AArch64::ST4WB_2D_fixed
+    };
+    return SelectVST(Node, 4, true, Opcodes);
+  }
+  case AArch64ISD::NEON_ST1x2_UPD: {
+    static const uint16_t Opcodes[] = {
+      AArch64::ST1x2WB_8B_fixed,  AArch64::ST1x2WB_4H_fixed,
+      AArch64::ST1x2WB_2S_fixed,  AArch64::ST1x2WB_1D_fixed,
+      AArch64::ST1x2WB_16B_fixed, AArch64::ST1x2WB_8H_fixed,
+      AArch64::ST1x2WB_4S_fixed,  AArch64::ST1x2WB_2D_fixed
+    };
+    return SelectVST(Node, 2, true, Opcodes);
+  }
+  case AArch64ISD::NEON_ST1x3_UPD: {
+    static const uint16_t Opcodes[] = {
+      AArch64::ST1x3WB_8B_fixed,  AArch64::ST1x3WB_4H_fixed,
+      AArch64::ST1x3WB_2S_fixed,  AArch64::ST1x3WB_1D_fixed,
+      AArch64::ST1x3WB_16B_fixed, AArch64::ST1x3WB_8H_fixed,
+      AArch64::ST1x3WB_4S_fixed,  AArch64::ST1x3WB_2D_fixed
+    };
+    return SelectVST(Node, 3, true, Opcodes);
+  }
+  case AArch64ISD::NEON_ST1x4_UPD: {
+    static const uint16_t Opcodes[] = {
+      AArch64::ST1x4WB_8B_fixed,  AArch64::ST1x4WB_4H_fixed,
+      AArch64::ST1x4WB_2S_fixed,  AArch64::ST1x4WB_1D_fixed,
+      AArch64::ST1x4WB_16B_fixed, AArch64::ST1x4WB_8H_fixed,
+      AArch64::ST1x4WB_4S_fixed,  AArch64::ST1x4WB_2D_fixed
     };
     return SelectVST(Node, 4, true, Opcodes);
   }
@@ -1013,23 +1115,47 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
     }
     case Intrinsic::arm_neon_vld2: {
       static const uint16_t Opcodes[] = { AArch64::LD2_8B,  AArch64::LD2_4H,
-                                          AArch64::LD2_2S,  AArch64::LD1_2V_1D,
+                                          AArch64::LD2_2S,  AArch64::LD1x2_1D,
                                           AArch64::LD2_16B, AArch64::LD2_8H,
                                           AArch64::LD2_4S,  AArch64::LD2_2D };
       return SelectVLD(Node, 2, false, Opcodes);
     }
     case Intrinsic::arm_neon_vld3: {
       static const uint16_t Opcodes[] = { AArch64::LD3_8B,  AArch64::LD3_4H,
-                                          AArch64::LD3_2S,  AArch64::LD1_3V_1D,
+                                          AArch64::LD3_2S,  AArch64::LD1x3_1D,
                                           AArch64::LD3_16B, AArch64::LD3_8H,
                                           AArch64::LD3_4S,  AArch64::LD3_2D };
       return SelectVLD(Node, 3, false, Opcodes);
     }
     case Intrinsic::arm_neon_vld4: {
       static const uint16_t Opcodes[] = { AArch64::LD4_8B,  AArch64::LD4_4H,
-                                          AArch64::LD4_2S,  AArch64::LD1_4V_1D,
+                                          AArch64::LD4_2S,  AArch64::LD1x4_1D,
                                           AArch64::LD4_16B, AArch64::LD4_8H,
                                           AArch64::LD4_4S,  AArch64::LD4_2D };
+      return SelectVLD(Node, 4, false, Opcodes);
+    }
+    case Intrinsic::aarch64_neon_vld1x2: {
+      static const uint16_t Opcodes[] = {
+        AArch64::LD1x2_8B, AArch64::LD1x2_4H,  AArch64::LD1x2_2S,
+        AArch64::LD1x2_1D, AArch64::LD1x2_16B, AArch64::LD1x2_8H,
+        AArch64::LD1x2_4S, AArch64::LD1x2_2D
+      };
+      return SelectVLD(Node, 2, false, Opcodes);
+    }
+    case Intrinsic::aarch64_neon_vld1x3: {
+      static const uint16_t Opcodes[] = {
+        AArch64::LD1x3_8B, AArch64::LD1x3_4H,  AArch64::LD1x3_2S,
+        AArch64::LD1x3_1D, AArch64::LD1x3_16B, AArch64::LD1x3_8H,
+        AArch64::LD1x3_4S, AArch64::LD1x3_2D
+      };
+      return SelectVLD(Node, 3, false, Opcodes);
+    }
+    case Intrinsic::aarch64_neon_vld1x4: {
+      static const uint16_t Opcodes[] = {
+        AArch64::LD1x4_8B, AArch64::LD1x4_4H,  AArch64::LD1x4_2S,
+        AArch64::LD1x4_1D, AArch64::LD1x4_16B, AArch64::LD1x4_8H,
+        AArch64::LD1x4_4S, AArch64::LD1x4_2D
+      };
       return SelectVLD(Node, 4, false, Opcodes);
     }
     case Intrinsic::arm_neon_vst1: {
@@ -1041,23 +1167,47 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
     }
     case Intrinsic::arm_neon_vst2: {
       static const uint16_t Opcodes[] = { AArch64::ST2_8B,  AArch64::ST2_4H,
-                                          AArch64::ST2_2S,  AArch64::ST1_2V_1D,
+                                          AArch64::ST2_2S,  AArch64::ST1x2_1D,
                                           AArch64::ST2_16B, AArch64::ST2_8H,
                                           AArch64::ST2_4S,  AArch64::ST2_2D };
       return SelectVST(Node, 2, false, Opcodes);
     }
     case Intrinsic::arm_neon_vst3: {
       static const uint16_t Opcodes[] = { AArch64::ST3_8B,  AArch64::ST3_4H,
-                                          AArch64::ST3_2S,  AArch64::ST1_3V_1D,
+                                          AArch64::ST3_2S,  AArch64::ST1x3_1D,
                                           AArch64::ST3_16B, AArch64::ST3_8H,
                                           AArch64::ST3_4S,  AArch64::ST3_2D };
       return SelectVST(Node, 3, false, Opcodes);
     }
     case Intrinsic::arm_neon_vst4: {
       static const uint16_t Opcodes[] = { AArch64::ST4_8B,  AArch64::ST4_4H,
-                                          AArch64::ST4_2S,  AArch64::ST1_4V_1D,
+                                          AArch64::ST4_2S,  AArch64::ST1x4_1D,
                                           AArch64::ST4_16B, AArch64::ST4_8H,
                                           AArch64::ST4_4S,  AArch64::ST4_2D };
+      return SelectVST(Node, 4, false, Opcodes);
+    }
+    case Intrinsic::aarch64_neon_vst1x2: {
+      static const uint16_t Opcodes[] = {
+        AArch64::ST1x2_8B, AArch64::ST1x2_4H,  AArch64::ST1x2_2S,
+        AArch64::ST1x2_1D, AArch64::ST1x2_16B, AArch64::ST1x2_8H,
+        AArch64::ST1x2_4S, AArch64::ST1x2_2D
+      };
+      return SelectVST(Node, 2, false, Opcodes);
+    }
+    case Intrinsic::aarch64_neon_vst1x3: {
+      static const uint16_t Opcodes[] = {
+        AArch64::ST1x3_8B, AArch64::ST1x3_4H,  AArch64::ST1x3_2S,
+        AArch64::ST1x3_1D, AArch64::ST1x3_16B, AArch64::ST1x3_8H,
+        AArch64::ST1x3_4S, AArch64::ST1x3_2D
+      };
+      return SelectVST(Node, 3, false, Opcodes);
+    }
+    case Intrinsic::aarch64_neon_vst1x4: {
+      static const uint16_t Opcodes[] = {
+        AArch64::ST1x4_8B, AArch64::ST1x4_4H,  AArch64::ST1x4_2S,
+        AArch64::ST1x4_1D, AArch64::ST1x4_16B, AArch64::ST1x4_8H,
+        AArch64::ST1x4_4S, AArch64::ST1x4_2D
+      };
       return SelectVST(Node, 4, false, Opcodes);
     }
     }

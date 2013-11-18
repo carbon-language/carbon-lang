@@ -3364,14 +3364,14 @@ defm LD3 : LDVList_BHSD<0b0100, "VTriple", "ld3">;
 defm LD4 : LDVList_BHSD<0b0000, "VQuad", "ld4">;
 
 // Load multiple 1-element structure to N consecutive registers (N = 2,3,4)
-defm LD1_2V : LDVList_BHSD<0b1010, "VPair", "ld1">;
-def LD1_2V_1D : NeonI_LDVList<0, 0b1010, 0b11, VPair1D_operand, "ld1">;
+defm LD1x2 : LDVList_BHSD<0b1010, "VPair", "ld1">;
+def LD1x2_1D : NeonI_LDVList<0, 0b1010, 0b11, VPair1D_operand, "ld1">;
 
-defm LD1_3V : LDVList_BHSD<0b0110, "VTriple", "ld1">;
-def LD1_3V_1D : NeonI_LDVList<0, 0b0110, 0b11, VTriple1D_operand, "ld1">;
+defm LD1x3 : LDVList_BHSD<0b0110, "VTriple", "ld1">;
+def LD1x3_1D : NeonI_LDVList<0, 0b0110, 0b11, VTriple1D_operand, "ld1">;
 
-defm LD1_4V : LDVList_BHSD<0b0010, "VQuad", "ld1">;
-def LD1_4V_1D : NeonI_LDVList<0, 0b0010, 0b11, VQuad1D_operand, "ld1">;
+defm LD1x4 : LDVList_BHSD<0b0010, "VQuad", "ld1">;
+def LD1x4_1D : NeonI_LDVList<0, 0b0010, 0b11, VQuad1D_operand, "ld1">;
 
 class NeonI_STVList<bit q, bits<4> opcode, bits<2> size,
                     RegisterOperand VecList, string asmop>
@@ -3418,14 +3418,14 @@ defm ST3 : STVList_BHSD<0b0100, "VTriple", "st3">;
 defm ST4 : STVList_BHSD<0b0000, "VQuad", "st4">;
 
 // Store multiple 1-element structures from N consecutive registers (N = 2,3,4)
-defm ST1_2V : STVList_BHSD<0b1010, "VPair", "st1">;
-def ST1_2V_1D : NeonI_STVList<0, 0b1010, 0b11, VPair1D_operand, "st1">;
+defm ST1x2 : STVList_BHSD<0b1010, "VPair", "st1">;
+def ST1x2_1D : NeonI_STVList<0, 0b1010, 0b11, VPair1D_operand, "st1">;
 
-defm ST1_3V : STVList_BHSD<0b0110, "VTriple", "st1">;
-def ST1_3V_1D : NeonI_STVList<0, 0b0110, 0b11, VTriple1D_operand, "st1">;
+defm ST1x3 : STVList_BHSD<0b0110, "VTriple", "st1">;
+def ST1x3_1D : NeonI_STVList<0, 0b0110, 0b11, VTriple1D_operand, "st1">;
 
-defm ST1_4V : STVList_BHSD<0b0010, "VQuad", "st1">;
-def ST1_4V_1D : NeonI_STVList<0, 0b0010, 0b11, VQuad1D_operand, "st1">;
+defm ST1x4 : STVList_BHSD<0b0010, "VQuad", "st1">;
+def ST1x4_1D : NeonI_STVList<0, 0b0010, 0b11, VQuad1D_operand, "st1">;
 
 // End of vector load/store multiple N-element structure(class SIMD lselem)
 
@@ -3553,19 +3553,19 @@ defm LD4WB : LDWB_VList_BHSD<0b0000, "VQuad", uimm_exact32, uimm_exact64, "ld4">
 
 // Post-index load multiple 1-element structures from N consecutive registers
 // (N = 2,3,4)
-defm LD1WB2V : LDWB_VList_BHSD<0b1010, "VPair", uimm_exact16, uimm_exact32,
+defm LD1x2WB : LDWB_VList_BHSD<0b1010, "VPair", uimm_exact16, uimm_exact32,
                                "ld1">;
-defm LD1WB2V_1D : NeonI_LDWB_VList<0, 0b1010, 0b11, VPair1D_operand,
+defm LD1x2WB_1D : NeonI_LDWB_VList<0, 0b1010, 0b11, VPair1D_operand,
                                    uimm_exact16, "ld1">;
 
-defm LD1WB3V : LDWB_VList_BHSD<0b0110, "VTriple", uimm_exact24, uimm_exact48,
+defm LD1x3WB : LDWB_VList_BHSD<0b0110, "VTriple", uimm_exact24, uimm_exact48,
                                "ld1">;
-defm LD1WB3V_1D : NeonI_LDWB_VList<0, 0b0110, 0b11, VTriple1D_operand,
+defm LD1x3WB_1D : NeonI_LDWB_VList<0, 0b0110, 0b11, VTriple1D_operand,
                                    uimm_exact24, "ld1">;
 
-defm LD1WB_4V : LDWB_VList_BHSD<0b0010, "VQuad", uimm_exact32, uimm_exact64,
+defm LD1x4WB : LDWB_VList_BHSD<0b0010, "VQuad", uimm_exact32, uimm_exact64,
                                 "ld1">;
-defm LD1WB4V_1D : NeonI_LDWB_VList<0, 0b0010, 0b11, VQuad1D_operand,
+defm LD1x4WB_1D : NeonI_LDWB_VList<0, 0b0010, 0b11, VQuad1D_operand,
                                    uimm_exact32, "ld1">;
 
 multiclass NeonI_STWB_VList<bit q, bits<4> opcode, bits<2> size,
@@ -3635,19 +3635,19 @@ defm ST4WB : STWB_VList_BHSD<0b0000, "VQuad", uimm_exact32, uimm_exact64, "st4">
 
 // Post-index load multiple 1-element structures from N consecutive registers
 // (N = 2,3,4)
-defm ST1WB2V : STWB_VList_BHSD<0b1010, "VPair", uimm_exact16, uimm_exact32,
+defm ST1x2WB : STWB_VList_BHSD<0b1010, "VPair", uimm_exact16, uimm_exact32,
                                "st1">;
-defm ST1WB2V_1D : NeonI_STWB_VList<0, 0b1010, 0b11, VPair1D_operand,
+defm ST1x2WB_1D : NeonI_STWB_VList<0, 0b1010, 0b11, VPair1D_operand,
                                    uimm_exact16, "st1">;
 
-defm ST1WB3V : STWB_VList_BHSD<0b0110, "VTriple", uimm_exact24, uimm_exact48,
+defm ST1x3WB : STWB_VList_BHSD<0b0110, "VTriple", uimm_exact24, uimm_exact48,
                                "st1">;
-defm ST1WB3V_1D : NeonI_STWB_VList<0, 0b0110, 0b11, VTriple1D_operand,
+defm ST1x3WB_1D : NeonI_STWB_VList<0, 0b0110, 0b11, VTriple1D_operand,
                                    uimm_exact24, "st1">;
 
-defm ST1WB4V : STWB_VList_BHSD<0b0010, "VQuad", uimm_exact32, uimm_exact64,
+defm ST1x4WB : STWB_VList_BHSD<0b0010, "VQuad", uimm_exact32, uimm_exact64,
                                "st1">;
-defm ST1WB4V_1D : NeonI_STWB_VList<0, 0b0010, 0b11, VQuad1D_operand,
+defm ST1x4WB_1D : NeonI_STWB_VList<0, 0b0010, 0b11, VQuad1D_operand,
                                    uimm_exact32, "st1">;
 
 // End of post-index vector load/store multiple N-element structure
