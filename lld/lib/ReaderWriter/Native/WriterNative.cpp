@@ -256,7 +256,7 @@ private:
 
   template<class T>
   void fillChunkHeader(NativeChunk &chunk, uint32_t &nextFileOffset,
-                       std::vector<T> data, uint32_t signature) {
+                       const std::vector<T> &data, uint32_t signature) {
     chunk.signature = signature;
     chunk.fileOffset = nextFileOffset;
     chunk.fileSize = data.size() * sizeof(T);
