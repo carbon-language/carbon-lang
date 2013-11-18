@@ -1131,13 +1131,13 @@ let Defs = [SCC] in { // Carry out goes to SCC
 let isCommutable = 1 in {
 def S_ADD_U32 : SOP2_32 <0x00000000, "S_ADD_U32", []>;
 def S_ADD_I32 : SOP2_32 <0x00000002, "S_ADD_I32",
-  [(set i32:$dst, (add i32:$src0, i32:$src1))]
+  [(set i32:$dst, (add SSrc_32:$src0, SSrc_32:$src1))]
 >;
 } // End isCommutable = 1
 
 def S_SUB_U32 : SOP2_32 <0x00000001, "S_SUB_U32", []>;
 def S_SUB_I32 : SOP2_32 <0x00000003, "S_SUB_I32",
-  [(set i32:$dst, (sub i32:$src0, i32:$src1))]
+  [(set i32:$dst, (sub SSrc_32:$src0, SSrc_32:$src1))]
 >;
 
 let Uses = [SCC] in { // Carry in comes from SCC
