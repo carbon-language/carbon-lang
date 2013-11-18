@@ -294,6 +294,6 @@ void __sanitizer_annotate_contiguous_container(void *beg_p, void *end_p,
   PoisonShadow(b2, c - b2, kAsanUserPoisonedMemoryMagic);
   if (b1 != b2) {
     CHECK_EQ(b2 - b1, granularity);
-    *(u8*)MemToShadow(b1) = b - b1;
+    *(u8*)MemToShadow(b1) = static_cast<u8>(b - b1);
   }
 }
