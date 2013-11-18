@@ -180,6 +180,18 @@ if [ "$do_dragonegg" = "yes" ]; then
     fi
 fi
 
+# Make sure that a required program is available
+function check_program_exists() {
+  local program="$1"
+  if ! type -P $program > /dev/null 2>&1 ; then
+    echo "program '$1' not found !"
+    exit 1
+  fi
+}
+
+check_program_exists 'chrpath'
+check_program_exists 'file'
+check_program_exists 'objdump'
 
 # Make sure that the URLs are valid.
 function check_valid_urls() {
@@ -328,6 +340,21 @@ function test_llvmCore() {
     cd $BuildDir
 }
 
+# Clean RPATH. Libtool adds the build directory to the search path, which is
+# not necessary --- and even harmful --- for the binary packages we release.
+function clean_RPATH() {
+  local InstallPath="$1"
+  for Candidate in `find $InstallPath/{bin,lib} -type f`; do
+    if file $Candidate | grep ELF | egrep 'executable|shared object' > /dev/null 2>&1 ; then
+      rpath=`objdump -x $Candidate | grep 'RPATH' | sed -e's/^ *RPATH *//'`
+      if [ -n "$rpath" ]; then
+        newrpath=`echo $rpath | sed -e's/.*\(\$ORIGIN[^:]*\).*/\1/'`
+        chrpath -r $newrpath $Candidate 2>&1 > /dev/null 2>&1
+      fi
+    fi
+  done
+}
+
 set -e                          # Exit if any command fails
 
 if [ "$do_checkout" = "yes" ]; then
@@ -415,6 +442,7 @@ for Flavor in $Flavors ; do
         $llvmCore_phase1_objdir $llvmCore_phase1_installdir
     build_llvmCore 1 $Flavor \
         $llvmCore_phase1_objdir
+    clean_RPATH $llvmCore_phase1_installdir
 
     # Test clang
     if [ "$do_clang" = "yes" ]; then
@@ -427,6 +455,7 @@ for Flavor in $Flavors ; do
             $llvmCore_phase2_objdir $llvmCore_phase2_installdir
         build_llvmCore 2 $Flavor \
             $llvmCore_phase2_objdir
+        clean_RPATH $llvmCore_phase2_installdir
 
         ########################################################################
         # Phase 3: Build llvmCore with newly built clang from phase 2.
@@ -437,6 +466,7 @@ for Flavor in $Flavors ; do
             $llvmCore_phase3_objdir $llvmCore_phase3_installdir
         build_llvmCore 3 $Flavor \
             $llvmCore_phase3_objdir
+        clean_RPATH $llvmCore_phase3_installdir
 
         ########################################################################
         # Testing: Test phase 3
@@ -478,6 +508,7 @@ for Flavor in $Flavors ; do
         build_llvmCore 2 $Flavor \
             $llvmCore_de_phase2_objdir
         build_dragonegg 2 $Flavor $llvmCore_de_phase2_installdir $dragonegg_phase2_objdir
+        clean_RPATH $llvmCore_de_phase2_installdir
 
         ########################################################################
         # Phase 3: Build llvmCore with newly built dragonegg from phase 2.
@@ -489,6 +520,7 @@ for Flavor in $Flavors ; do
         build_llvmCore 3 $Flavor \
             $llvmCore_de_phase3_objdir
         build_dragonegg 3 $Flavor $llvmCore_de_phase3_installdir $dragonegg_phase3_objdir
+        clean_RPATH $llvmCore_de_phase3_installdir
 
         ########################################################################
         # Testing: Test phase 3
