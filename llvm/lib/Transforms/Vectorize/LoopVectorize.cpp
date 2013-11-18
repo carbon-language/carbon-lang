@@ -1537,6 +1537,7 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   const SCEV *ExitCount = SE->getBackedgeTakenCount(OrigLoop);
   assert(ExitCount != SE->getCouldNotCompute() && "Invalid loop count");
 
+  ExitCount = SE->getNoopOrZeroExtend(ExitCount, IdxTy);
   // Get the total trip count from the count by adding 1.
   ExitCount = SE->getAddExpr(ExitCount,
                              SE->getConstant(ExitCount->getType(), 1));
@@ -2887,6 +2888,11 @@ bool LoopVectorizationLegality::canVectorize() {
 static Type *convertPointerToIntegerType(DataLayout &DL, Type *Ty) {
   if (Ty->isPointerTy())
     return DL.getIntPtrType(Ty);
+
+  // It is possible that char's or short's overflow when we ask for the loop's
+  // trip count, work around this by changing the type size.
+  if (Ty->getScalarSizeInBits() < 32)
+    return Type::getInt32Ty(Ty->getContext());
 
   return Ty;
 }
