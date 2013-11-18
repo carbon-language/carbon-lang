@@ -802,18 +802,21 @@ protected:
                                  AncestorMatchMode MatchMode) = 0;
 };
 
-/// \brief A simple type-list implementation.
+/// \brief A type-list implementation.
 ///
-/// It is implemented as a flat struct with a maximum number of arguments to
-/// simplify compiler error messages.
-/// However, it is used as a "linked list" of types.
-///
-/// Note: If you need to extend for more types, add them as template arguments
-///       and to the "typedef TypeList<...> tail" below. Nothing else is needed.
+/// A list is declared as a tree of type list nodes, where the leafs are the
+/// types.
+/// However, it is used as a "linked list" of types, by using the ::head and
+/// ::tail typedefs.
+/// Each node supports up to 4 children (instead of just 2) to reduce the
+/// nesting required by large lists.
 template <typename T1 = void, typename T2 = void, typename T3 = void,
-          typename T4 = void, typename T5 = void, typename T6 = void,
-          typename T7 = void, typename T8 = void>
+          typename T4 = void>
 struct TypeList {
+  /// \brief Implementation detail. Combined with the specializations below,
+  ///   this typedef allows for flattening of nested structures.
+  typedef TypeList<T1, T2, T3, T4> self;
+
   /// \brief The first type on the list.
   typedef T1 head;
 
@@ -821,29 +824,48 @@ struct TypeList {
   ///
   /// This type is used to do recursion. TypeList<>/EmptyTypeList indicates the
   /// end of the list.
-  typedef TypeList<T2, T3, T4, T5, T6, T7, T8> tail;
-
-  /// \brief Helper meta-function to determine if some type \c T is present or
-  ///   a parent type in the list.
-  template <typename T> struct ContainsSuperOf {
-    static const bool value = llvm::is_base_of<head, T>::value ||
-                              tail::template ContainsSuperOf<T>::value;
-  };
+  typedef typename TypeList<T2, T3, T4>::self tail;
 };
 
-/// \brief Specialization of ContainsSuperOf for the empty list.
-template <> template <typename T> struct TypeList<>::ContainsSuperOf {
-  static const bool value = false;
+/// \brief Template specialization to allow nested lists.
+///
+/// First element is a typelist. Pop its first element.
+template <typename Sub1, typename Sub2, typename Sub3, typename Sub4,
+          typename T2, typename T3, typename T4>
+struct TypeList<TypeList<Sub1, Sub2, Sub3, Sub4>, T2, T3,
+                T4> : public TypeList<Sub1,
+                                      typename TypeList<Sub2, Sub3, Sub4>::self,
+                                      typename TypeList<T2, T3, T4>::self> {};
+
+/// \brief Template specialization to allow nested lists.
+///
+/// First element is an empty typelist. Skip it.
+template <typename T2, typename T3, typename T4>
+struct TypeList<TypeList<>, T2, T3, T4> : public TypeList<T2, T3, T4> {
 };
 
 /// \brief The empty type list.
 typedef TypeList<> EmptyTypeList;
 
+/// \brief Helper meta-function to determine if some type \c T is present or
+///   a parent type in the list.
+template <typename AnyTypeList, typename T>
+struct TypeListContainsSuperOf {
+  static const bool value =
+      llvm::is_base_of<typename AnyTypeList::head, T>::value ||
+      TypeListContainsSuperOf<typename AnyTypeList::tail, T>::value;
+};
+template <typename T>
+struct TypeListContainsSuperOf<EmptyTypeList, T> {
+  static const bool value = false;
+};
+
 /// \brief A "type list" that contains all types.
 ///
 /// Useful for matchers like \c anything and \c unless.
-typedef TypeList<Decl, Stmt, NestedNameSpecifier, NestedNameSpecifierLoc,
-        QualType, Type, TypeLoc, CXXCtorInitializer> AllNodeBaseTypes;
+typedef TypeList<
+    TypeList<Decl, Stmt, NestedNameSpecifier, NestedNameSpecifierLoc>,
+    TypeList<QualType, Type, TypeLoc, CXXCtorInitializer> > AllNodeBaseTypes;
 
 /// \brief Helper meta-function to extract the argument out of a function of
 ///   type void(Arg).
@@ -856,8 +878,17 @@ template <class T> struct ExtractFunctionArgMeta<void(T)> {
 
 /// \brief Default type lists for ArgumentAdaptingMatcher matchers.
 typedef AllNodeBaseTypes AdaptativeDefaultFromTypes;
-typedef TypeList<Decl, Stmt, NestedNameSpecifier, NestedNameSpecifierLoc,
-                 TypeLoc, QualType> AdaptativeDefaultToTypes;
+typedef TypeList<TypeList<Decl, Stmt, NestedNameSpecifier>,
+                 TypeList<NestedNameSpecifierLoc, TypeLoc, QualType> >
+AdaptativeDefaultToTypes;
+
+/// \brief All types that are supported by HasDeclarationMatcher above.
+typedef TypeList<TypeList<CallExpr, CXXConstructExpr, DeclRefExpr, EnumType>,
+                 TypeList<InjectedClassNameType, LabelStmt, MemberExpr>,
+                 TypeList<QualType, RecordType, TagType>,
+                 TypeList<TemplateSpecializationType, TemplateTypeParmType,
+                          TypedefType, UnresolvedUsingType> >
+HasDeclarationSupportedTypes;
 
 /// \brief Converts a \c Matcher<T> to a matcher of desired type \c To by
 /// "adapting" a \c To into a \c T.
@@ -921,7 +952,7 @@ public:
   typedef typename ExtractFunctionArgMeta<ReturnTypesF>::type ReturnTypes;
   template <typename T>
   operator Matcher<T>() const {
-    TOOLING_COMPILE_ASSERT(ReturnTypes::template ContainsSuperOf<T>::value,
+    TOOLING_COMPILE_ASSERT((TypeListContainsSuperOf<ReturnTypes, T>::value),
                            right_polymorphic_conversion);
     return Matcher<T>(new MatcherT<T>());
   }
@@ -939,7 +970,7 @@ public:
 
   template <typename T>
   operator Matcher<T>() const {
-    TOOLING_COMPILE_ASSERT(ReturnTypes::template ContainsSuperOf<T>::value,
+    TOOLING_COMPILE_ASSERT((TypeListContainsSuperOf<ReturnTypes, T>::value),
                            right_polymorphic_conversion);
     return Matcher<T>(new MatcherT<T, P1>(Param1));
   }
@@ -960,7 +991,7 @@ public:
 
   template <typename T>
   operator Matcher<T>() const {
-    TOOLING_COMPILE_ASSERT(ReturnTypes::template ContainsSuperOf<T>::value,
+    TOOLING_COMPILE_ASSERT((TypeListContainsSuperOf<ReturnTypes, T>::value),
                            right_polymorphic_conversion);
     return Matcher<T>(new MatcherT<T, P1, P2>(Param1, Param2));
   }

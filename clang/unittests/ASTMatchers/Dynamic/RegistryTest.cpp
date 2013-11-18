@@ -179,6 +179,19 @@ TEST_F(RegistryTest, PolymorphicMatchers) {
   EXPECT_FALSE(matches("int Foo;", RecordDecl));
   EXPECT_TRUE(matches("class Foo {};", RecordDecl));
   EXPECT_FALSE(matches("void Foo(){};", RecordDecl));
+
+  Matcher<Stmt> ConstructExpr = constructMatcher(
+      "constructExpr",
+      constructMatcher(
+          "hasDeclaration",
+          constructMatcher(
+              "methodDecl",
+              constructMatcher(
+                  "ofClass", constructMatcher("hasName", std::string("Foo"))))))
+                                    .getTypedMatcher<Stmt>();
+  EXPECT_FALSE(matches("class Foo { public: Foo(); };", ConstructExpr));
+  EXPECT_TRUE(
+      matches("class Foo { public: Foo(); }; Foo foo = Foo();", ConstructExpr));
 }
 
 TEST_F(RegistryTest, TemplateArgument) {

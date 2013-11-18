@@ -83,7 +83,6 @@ RegistryMaps::RegistryMaps() {
   // loc
   // equals
   // equalsNode
-  // hasDeclaration
 
   REGISTER_OVERLOADED_2(callee);
   REGISTER_OVERLOADED_2(hasPrefix);
@@ -174,6 +173,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(hasCondition);
   REGISTER_MATCHER(hasConditionVariableStatement);
   REGISTER_MATCHER(hasDeclContext);
+  REGISTER_MATCHER(hasDeclaration);
   REGISTER_MATCHER(hasDeducedType);
   REGISTER_MATCHER(hasDescendant);
   REGISTER_MATCHER(hasDestinationType);
