@@ -417,6 +417,7 @@ void SIInstrInfo::legalizeOpWithMove(MachineInstr *MI, unsigned OpIdx) const {
   MachineOperand &MO = MI->getOperand(OpIdx);
   MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
   unsigned RCID = get(MI->getOpcode()).OpInfo[OpIdx].RegClass;
+  // XXX - This shouldn't be VSrc
   const TargetRegisterClass *RC = RI.getRegClass(RCID);
   unsigned Opcode = AMDGPU::V_MOV_B32_e32;
   if (MO.isReg()) {
@@ -442,7 +443,23 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
 
   // Legalize VOP2
   if (isVOP2(MI->getOpcode()) && Src1Idx != -1) {
+    MachineOperand &Src0 = MI->getOperand(Src0Idx);
     MachineOperand &Src1 = MI->getOperand(Src1Idx);
+
+    // If the instruction implicitly reads VCC, we can't have any SGPR operands,
+    // so move any.
+    bool ReadsVCC = MI->readsRegister(AMDGPU::VCC, &RI);
+    if (ReadsVCC && Src0.isReg() &&
+        RI.isSGPRClass(MRI.getRegClass(Src0.getReg()))) {
+      legalizeOpWithMove(MI, Src0Idx);
+      return;
+    }
+
+    if (ReadsVCC && Src1.isReg() &&
+        RI.isSGPRClass(MRI.getRegClass(Src1.getReg()))) {
+      legalizeOpWithMove(MI, Src1Idx);
+      return;
+    }
 
     // Legalize VOP2 instructions where src1 is not a VGPR. An SGPR input must
     // be the first operand, and there can only be one.
@@ -456,6 +473,7 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
     }
   }
 
+  // XXX - Do any VOP3 instructions read VCC?
   // Legalize VOP3
   if (isVOP3(MI->getOpcode())) {
     int VOP3Idx[3] = {Src0Idx, Src1Idx, Src2Idx};
