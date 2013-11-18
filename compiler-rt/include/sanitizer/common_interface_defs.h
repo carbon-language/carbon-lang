@@ -50,6 +50,30 @@ extern "C" {
   // Record and dump coverage info.
   void __sanitizer_cov_dump();
 
+  // Annotate the current state of a contiguous container, such as
+  // std::vector, std::string or similar.
+  // A contiguous container is a container that keeps all of its elements
+  // in a contiguous region of memory. The container owns the region of memory
+  // [beg, end); the memory [beg, mid) is used to store the current elements
+  // and the memory [mid, end) is reserved for future elements;
+  // end <= mid <= end. For example, in "std::vector<> v"
+  //   beg = &v[0];
+  //   end = beg + v.capacity() * sizeof(v[0]);
+  //   mid = beg + v.size()     * sizeof(v[0]);
+  //
+  // This annotation tells the Sanitizer tool about the current state of the
+  // container so that the tool can report errors when memory from [mid, end)
+  // is accessed. Insert this annotation into methods like push_back/pop_back.
+  // Supply the old and the new values of mid (old_mid/new_mid).
+  // In the initial state mid == end and so should be the final
+  // state when the container is destroyed or when it reallocates the storage.
+  //
+  // Use with caution and don't use for anything other than vector-like classes.
+  //
+  // For AddressSanitizer, 'beg' should be 8-aligned.
+  void __sanitizer_annotate_contiguous_container(void *beg, void *end,
+                                                 void *old_mid, void *new_mid);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

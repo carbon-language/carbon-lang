@@ -113,6 +113,9 @@ extern "C" {
 
   SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump();
   SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov(void *pc);
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __sanitizer_annotate_contiguous_container(void *beg, void *end,
+                                                 void *old_mid, void *new_mid);
 }  // extern "C"
 
 
