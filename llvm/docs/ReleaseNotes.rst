@@ -102,6 +102,16 @@ Non-comprehensive list of changes in this release
 
    Makes programs 10x faster by doing Special New Thing.
 
+Mips Target
+-----------
+
+Support for the MIPS SIMD Architecture (MSA) has been added. MSA is supported
+through inline assembly, intrinsics with the prefix '__builtin_msa', and normal
+code generation.
+
+For more information on MSA (including documentation for the instruction set),
+see the `MIPS SIMD page at Imagination Technologies
+<http://imgtec.com/mips/mips-simd.asp>`_
 
 External Open Source Projects Using LLVM 3.4
 ============================================
