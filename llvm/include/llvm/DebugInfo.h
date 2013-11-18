@@ -761,6 +761,8 @@ DITypeIdentifierMap generateDITypeIdentifierMap(const NamedMDNode *CU_Nodes);
 /// used by the CUs.
 class DebugInfoFinder {
 public:
+  DebugInfoFinder() : TypeMapInitialized(false) {}
+
   /// processModule - Process entire module and collect debug info
   /// anchors.
   void processModule(const Module &M);
