@@ -80,6 +80,16 @@ int wctob_l( wint_t c, locale_t loc )
     return wctob( c );
 }
 
+int snprintf_l(char *ret, size_t n, locale_t loc, const char *format, ...)
+{
+    __locale_raii __current( uselocale(loc), uselocale );
+    va_list ap;
+    va_start( ap, format );
+    int result = vsnprintf( ret, n, format, ap );
+    va_end(ap);
+    return result;
+}
+
 int asprintf_l( char **ret, locale_t loc, const char *format, ... )
 {
     va_list ap;

@@ -103,9 +103,9 @@ isupper_l(int c, _locale_t loc)
 #define sscanf_l( __s, __l, __f, ...) _sscanf_l( __s, __f, __l, __VA_ARGS__ )
 #define vsscanf_l( __s, __l, __f, ...) _sscanf_l( __s, __f, __l, __VA_ARGS__ )
 #define sprintf_l( __s, __l, __f, ... ) _sprintf_l( __s, __f, __l, __VA_ARGS__ )
-#define snprintf_l( __s, __n, __l, __f, ... ) _snprintf_l( __s, __n, __f, __l, __VA_ARGS__ )
 #define vsprintf_l( __s, __l, __f, ... ) _vsprintf_l( __s, __f, __l, __VA_ARGS__ )
 #define vsnprintf_l( __s, __n, __l, __f, ... ) _vsnprintf_l( __s, __n, __f, __l, __VA_ARGS__ )
+int snprintf_l(char *ret, size_t n, locale_t loc, const char *format, ...);
 int asprintf_l( char **ret, locale_t loc, const char *format, ... );
 int vasprintf_l( char **ret, locale_t loc, const char *format, va_list ap );
 
