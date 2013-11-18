@@ -1045,7 +1045,11 @@ bool llvm::LowerDbgDeclare(Function &F) {
   for (SmallVectorImpl<DbgDeclareInst *>::iterator I = Dbgs.begin(),
          E = Dbgs.end(); I != E; ++I) {
     DbgDeclareInst *DDI = *I;
-    if (AllocaInst *AI = dyn_cast_or_null<AllocaInst>(DDI->getAddress())) {
+    AllocaInst *AI = dyn_cast_or_null<AllocaInst>(DDI->getAddress());
+    // If this is an alloca for a scalar variable, insert a dbg.value
+    // at each load and store to the alloca and erase the dbg.declare.
+    if (AI && !AI->isArrayAllocation()) {
+
       // We only remove the dbg.declare intrinsic if all uses are
       // converted to dbg.value intrinsics.
       bool RemoveDDI = true;
