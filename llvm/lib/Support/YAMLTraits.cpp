@@ -41,10 +41,15 @@ void IO::setContext(void *Context) {
 //  Input
 //===----------------------------------------------------------------------===//
 
-Input::Input(StringRef InputContent, void *Ctxt)
+Input::Input(StringRef InputContent,
+             void *Ctxt,
+             SourceMgr::DiagHandlerTy DiagHandler,
+             void *DiagHandlerCtxt)
   : IO(Ctxt),
     Strm(new Stream(InputContent, SrcMgr)),
     CurrentNode(NULL) {
+  if (DiagHandler)
+    SrcMgr.setDiagHandler(DiagHandler, DiagHandlerCtxt);
   DocIterator = Strm->begin();
 }
 
@@ -55,10 +60,6 @@ error_code Input::error() {
   return EC;
 }
 
-void Input::setDiagHandler(SourceMgr::DiagHandlerTy Handler, void *Ctxt) {
-  SrcMgr.setDiagHandler(Handler, Ctxt);
-}
-
 bool Input::outputting() const {
   return false;
 }
@@ -66,6 +67,12 @@ bool Input::outputting() const {
 bool Input::setCurrentDocument() {
   if (DocIterator != Strm->end()) {
     Node *N = DocIterator->getRoot();
+    if (!N) {
+      assert(Strm->failed() && "Root is NULL iff parsing failed");
+      EC = make_error_code(errc::invalid_argument);
+      return false;
+    }
+
     if (isa<NullNode>(N)) {
       // Empty files are allowed and ignored
       ++DocIterator;
@@ -95,7 +102,8 @@ bool Input::mapTag(StringRef Tag, bool Default) {
 void Input::beginMapping() {
   if (EC)
     return;
-  MapHNode *MN = dyn_cast<MapHNode>(CurrentNode);
+  // CurrentNode can be null if the document is empty.
+  MapHNode *MN = dyn_cast_or_null<MapHNode>(CurrentNode);
   if (MN) {
     MN->ValidKeys.clear();
   }
@@ -106,6 +114,15 @@ bool Input::preflightKey(const char *Key, bool Required, bool, bool &UseDefault,
   UseDefault = false;
   if (EC)
     return false;
+
+  // CurrentNode is null for empty documents, which is an error in case required
+  // nodes are present.
+  if (!CurrentNode) {
+    if (Required)
+      EC = make_error_code(errc::invalid_argument);
+    return false;
+  }
+
   MapHNode *MN = dyn_cast<MapHNode>(CurrentNode);
   if (!MN) {
     setError(CurrentNode, "not a mapping");
@@ -132,7 +149,8 @@ void Input::postflightKey(void *saveInfo) {
 void Input::endMapping() {
   if (EC)
     return;
-  MapHNode *MN = dyn_cast<MapHNode>(CurrentNode);
+  // CurrentNode can be null if the document is empty.
+  MapHNode *MN = dyn_cast_or_null<MapHNode>(CurrentNode);
   if (!MN)
     return;
   for (MapHNode::NameToNode::iterator i = MN->Mapping.begin(),
@@ -273,6 +291,7 @@ void Input::scalarString(StringRef &S) {
 }
 
 void Input::setError(HNode *hnode, const Twine &message) {
+  assert(hnode && "HNode must not be NULL");
   this->setError(hnode->_node, message);
 }
 

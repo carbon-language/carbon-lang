@@ -58,14 +58,24 @@ namespace yaml {
 //
 TEST(YAMLIO, TestMapRead) {
   FooBar doc;
-  Input yin("---\nfoo:  3\nbar:  5\n...\n");
-  yin >> doc;
+  {
+    Input yin("---\nfoo:  3\nbar:  5\n...\n");
+    yin >> doc;
 
-  EXPECT_FALSE(yin.error());
-  EXPECT_EQ(doc.foo, 3);
-  EXPECT_EQ(doc.bar,5);
+    EXPECT_FALSE(yin.error());
+    EXPECT_EQ(doc.foo, 3);
+    EXPECT_EQ(doc.bar, 5);
+  }
+
+  {
+    Input yin("{foo: 3, bar: 5}");
+    yin >> doc;
+
+    EXPECT_FALSE(yin.error());
+    EXPECT_EQ(doc.foo, 3);
+    EXPECT_EQ(doc.bar, 5);
+  }
 }
-
 
 //
 // Test the reading of a yaml sequence of mappings
@@ -1164,8 +1174,9 @@ TEST(YAMLIO, TestColorsReadError) {
             "c1:  blue\n"
             "c2:  purple\n"
             "c3:  green\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> map;
   EXPECT_TRUE(yin.error());
 }
@@ -1180,8 +1191,9 @@ TEST(YAMLIO, TestFlagsReadError) {
             "f1:  [ big ]\n"
             "f2:  [ round, hollow ]\n"
             "f3:  []\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> map;
 
   EXPECT_TRUE(yin.error());
@@ -1198,8 +1210,9 @@ TEST(YAMLIO, TestReadBuiltInTypesUint8Error) {
             "- 255\n"
             "- 0\n"
             "- 257\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1216,8 +1229,9 @@ TEST(YAMLIO, TestReadBuiltInTypesUint16Error) {
             "- 65535\n"
             "- 0\n"
             "- 66000\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1234,8 +1248,9 @@ TEST(YAMLIO, TestReadBuiltInTypesUint32Error) {
             "- 4000000000\n"
             "- 0\n"
             "- 5000000000\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1252,8 +1267,9 @@ TEST(YAMLIO, TestReadBuiltInTypesUint64Error) {
             "- 18446744073709551615\n"
             "- 0\n"
             "- 19446744073709551615\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1271,8 +1287,9 @@ TEST(YAMLIO, TestReadBuiltInTypesint8OverError) {
             "- 0\n"
             "- 127\n"
             "- 128\n"
-           "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+           "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1288,8 +1305,9 @@ TEST(YAMLIO, TestReadBuiltInTypesint8UnderError) {
             "- 0\n"
             "- 127\n"
             "- -129\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1307,8 +1325,9 @@ TEST(YAMLIO, TestReadBuiltInTypesint16UnderError) {
             "- 0\n"
             "- -32768\n"
             "- -32769\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1325,8 +1344,9 @@ TEST(YAMLIO, TestReadBuiltInTypesint16OverError) {
             "- 0\n"
             "- -32768\n"
             "- 32768\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1344,8 +1364,9 @@ TEST(YAMLIO, TestReadBuiltInTypesint32UnderError) {
             "- 0\n"
             "- -2147483648\n"
             "- -2147483649\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1361,8 +1382,9 @@ TEST(YAMLIO, TestReadBuiltInTypesint32OverError) {
             "- 0\n"
             "- -2147483648\n"
             "- 2147483649\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1380,8 +1402,9 @@ TEST(YAMLIO, TestReadBuiltInTypesint64UnderError) {
             "- 0\n"
             "- 9223372036854775807\n"
             "- -9223372036854775809\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1397,8 +1420,9 @@ TEST(YAMLIO, TestReadBuiltInTypesint64OverError) {
             "- 0\n"
             "- 9223372036854775807\n"
             "- 9223372036854775809\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1415,8 +1439,9 @@ TEST(YAMLIO, TestReadBuiltInTypesFloatError) {
             "- 1000.1\n"
             "- -123.456\n"
             "- 1.2.3\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1433,8 +1458,9 @@ TEST(YAMLIO, TestReadBuiltInTypesDoubleError) {
             "- 1000.1\n"
             "- -123.456\n"
             "- 1.2.3\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1450,8 +1476,9 @@ TEST(YAMLIO, TestReadBuiltInTypesHex8Error) {
             "- 0x12\n"
             "- 0xFE\n"
             "- 0x123\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1468,8 +1495,9 @@ TEST(YAMLIO, TestReadBuiltInTypesHex16Error) {
             "- 0x0012\n"
             "- 0xFEFF\n"
             "- 0x12345\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1485,8 +1513,9 @@ TEST(YAMLIO, TestReadBuiltInTypesHex32Error) {
             "- 0x0012\n"
             "- 0xFEFF0000\n"
             "- 0x1234556789\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
@@ -1502,11 +1531,29 @@ TEST(YAMLIO, TestReadBuiltInTypesHex64Error) {
             "- 0x0012\n"
             "- 0xFFEEDDCCBBAA9988\n"
             "- 0x12345567890ABCDEF0\n"
-            "...\n");
-  yin.setDiagHandler(suppressErrorMessages);
+            "...\n",
+            /*Ctxt=*/NULL,
+            suppressErrorMessages);
   yin >> seq;
 
   EXPECT_TRUE(yin.error());
+}
+
+TEST(YAMLIO, TestMalformedMapFailsGracefully) {
+  FooBar doc;
+  {
+    // We pass the suppressErrorMessages handler to handle the error
+    // message generated in the constructor of Input.
+    Input yin("{foo:3, bar: 5}", /*Ctxt=*/NULL, suppressErrorMessages);
+    yin >> doc;
+    EXPECT_TRUE(yin.error());
+  }
+
+  {
+    Input yin("---\nfoo:3\nbar: 5\n...\n", /*Ctxt=*/NULL, suppressErrorMessages);
+    yin >> doc;
+    EXPECT_TRUE(yin.error());
+  }
 }
 
 struct OptionalTest {
@@ -1571,4 +1618,27 @@ TEST(YAMLIO, SequenceElideTest) {
   EXPECT_EQ(3, Seq2.Tests[2].Numbers[2]);
 
   EXPECT_TRUE(Seq2.Tests[3].Numbers.empty());
+}
+
+TEST(YAMLIO, TestEmptyStringFailsForMapWithRequiredFields) {
+  FooBar doc;
+  Input yin("");
+  yin >> doc;
+  EXPECT_TRUE(yin.error());
+}
+
+TEST(YAMLIO, TestEmptyStringSucceedsForMapWithOptionalFields) {
+  OptionalTest doc;
+  Input yin("");
+  yin >> doc;
+  EXPECT_FALSE(yin.error());
+}
+
+TEST(YAMLIO, TestEmptyStringSucceedsForSequence) {
+  std::vector<uint8_t> seq;
+  Input yin("", /*Ctxt=*/NULL, suppressErrorMessages);
+  yin >> seq;
+
+  EXPECT_FALSE(yin.error());
+  EXPECT_TRUE(seq.empty());
 }

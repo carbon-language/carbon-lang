@@ -685,15 +685,17 @@ private:
 ///
 class Input : public IO {
 public:
-  // Construct a yaml Input object from a StringRef and optional user-data.
-  Input(StringRef InputContent, void *Ctxt=NULL);
+  // Construct a yaml Input object from a StringRef and optional
+  // user-data. The DiagHandler can be specified to provide
+  // alternative error reporting.
+  Input(StringRef InputContent,
+        void *Ctxt = NULL,
+        SourceMgr::DiagHandlerTy DiagHandler = NULL,
+        void *DiagHandlerCtxt = NULL);
   ~Input();
-  
+
   // Check if there was an syntax or semantic error during parsing.
   llvm::error_code error();
-
-  // To set alternate error reporting.
-  void setDiagHandler(llvm::SourceMgr::DiagHandlerTy Handler, void *Ctxt = 0);
 
   static bool classof(const IO *io) { return !io->outputting(); }
 
@@ -968,8 +970,8 @@ template <typename T>
 inline
 typename llvm::enable_if_c<has_SequenceTraits<T>::value,Input &>::type
 operator>>(Input &yin, T &docSeq) {
-  yin.setCurrentDocument();
-  yamlize(yin, docSeq, true);
+  if (yin.setCurrentDocument())
+    yamlize(yin, docSeq, true);
   return yin;
 }
 
