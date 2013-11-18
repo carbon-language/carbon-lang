@@ -116,6 +116,10 @@ public:
   unsigned getSizeInsEncoding(const MCInst &MI, unsigned OpNo,
                               SmallVectorImpl<MCFixup> &Fixups) const;
 
+  // getLSAImmEncoding - Return binary encoding of LSA immediate.
+  unsigned getLSAImmEncoding(const MCInst &MI, unsigned OpNo,
+                             SmallVectorImpl<MCFixup> &Fixups) const;
+
   unsigned
   getExprOpValue(const MCExpr *Expr,SmallVectorImpl<MCFixup> &Fixups) const;
 
@@ -519,6 +523,14 @@ MipsMCCodeEmitter::getSizeInsEncoding(const MCInst &MI, unsigned OpNo,
   unsigned Size = getMachineOpValue(MI, MI.getOperand(OpNo), Fixups);
 
   return Position + Size - 1;
+}
+
+unsigned
+MipsMCCodeEmitter::getLSAImmEncoding(const MCInst &MI, unsigned OpNo,
+                                     SmallVectorImpl<MCFixup> &Fixups) const {
+  assert(MI.getOperand(OpNo).isImm());
+  // The immediate is encoded as 'immediate - 1'.
+  return getMachineOpValue(MI, MI.getOperand(OpNo), Fixups) - 1;
 }
 
 #include "MipsGenMCCodeEmitter.inc"
