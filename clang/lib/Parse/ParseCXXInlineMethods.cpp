@@ -868,7 +868,7 @@ public:
     Revert();
 
     // Put back the original tokens.
-    Self.SkipUntil(EndKind, true, /*DontConsume*/true);
+    Self.SkipUntil(EndKind, StopAtSemi | StopBeforeMatch);
     if (Toks.size()) {
       Token *Buffer = new Token[Toks.size()];
       std::copy(Toks.begin() + 1, Toks.end(), Buffer);

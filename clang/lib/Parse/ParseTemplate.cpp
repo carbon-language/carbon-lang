@@ -120,7 +120,7 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
     if (ParseTemplateParameters(CurTemplateDepthTracker.getDepth(),
                                 TemplateParams, LAngleLoc, RAngleLoc)) {
       // Skip until the semi-colon or a }.
-      SkipUntil(tok::r_brace, true, true);
+      SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
       if (Tok.is(tok::semi))
         ConsumeToken();
       return 0;
@@ -216,7 +216,7 @@ Parser::ParseSingleDeclarationAfterTemplate(
   // Error parsing the declarator?
   if (!DeclaratorInfo.hasName()) {
     // If so, skip until the semi-colon or a }.
-    SkipUntil(tok::r_brace, true, true);
+    SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
     if (Tok.is(tok::semi))
       ConsumeToken();
     return 0;
@@ -276,7 +276,7 @@ Parser::ParseSingleDeclarationAfterTemplate(
   if (Tok.is(tok::comma)) {
     Diag(Tok, diag::err_multiple_template_declarators)
       << (int)TemplateInfo.Kind;
-    SkipUntil(tok::semi, true, false);
+    SkipUntil(tok::semi);
     return ThisDecl;
   }
 
@@ -349,7 +349,8 @@ Parser::ParseTemplateParameterList(unsigned Depth,
     } else {
       // If we failed to parse a template parameter, skip until we find
       // a comma or closing brace.
-      SkipUntil(tok::comma, tok::greater, tok::greatergreater, true, true);
+      SkipUntil(tok::comma, tok::greater, tok::greatergreater,
+                StopAtSemi | StopBeforeMatch);
     }
 
     // Did we find a comma or the end of the template parameter list?
@@ -363,7 +364,8 @@ Parser::ParseTemplateParameterList(unsigned Depth,
       // try to get out of the expression. This error is currently
       // subsumed by whatever goes on in ParseTemplateParameter.
       Diag(Tok.getLocation(), diag::err_expected_comma_greater);
-      SkipUntil(tok::comma, tok::greater, tok::greatergreater, true, true);
+      SkipUntil(tok::comma, tok::greater, tok::greatergreater,
+                StopAtSemi | StopBeforeMatch);
       return false;
     }
   }
@@ -611,7 +613,8 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     if (DefaultArg.isInvalid()) {
       Diag(Tok.getLocation(), 
            diag::err_default_template_template_parameter_not_template);
-      SkipUntil(tok::comma, tok::greater, tok::greatergreater, true, true);
+      SkipUntil(tok::comma, tok::greater, tok::greatergreater,
+                StopAtSemi | StopBeforeMatch);
     }
   }
   
@@ -661,7 +664,7 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
 
     DefaultArg = ParseAssignmentExpression();
     if (DefaultArg.isInvalid())
-      SkipUntil(tok::comma, tok::greater, true, true);
+      SkipUntil(tok::comma, tok::greater, StopAtSemi | StopBeforeMatch);
   }
 
   // Create the parameter.
@@ -825,8 +828,10 @@ Parser::ParseTemplateIdAfterTemplateName(TemplateTy Template,
 
     if (Invalid) {
       // Try to find the closing '>'.
-      SkipUntil(tok::greater, true, !ConsumeLastToken);
-
+      if (ConsumeLastToken)
+        SkipUntil(tok::greater, StopAtSemi);
+      else
+        SkipUntil(tok::greater, StopAtSemi | StopBeforeMatch);
       return true;
     }
   }
@@ -1191,7 +1196,7 @@ Parser::ParseTemplateArgumentList(TemplateArgList &TemplateArgs) {
     }
 
     if (Arg.isInvalid()) {
-      SkipUntil(tok::comma, tok::greater, true, true);
+      SkipUntil(tok::comma, tok::greater, StopAtSemi | StopBeforeMatch);
       return true;
     }
 

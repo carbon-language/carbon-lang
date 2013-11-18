@@ -201,7 +201,7 @@ Retry:
             == ANK_Error) {
         // Handle errors here by skipping up to the next semicolon or '}', and
         // eat the semicolon if that's what stopped us.
-        SkipUntil(tok::r_brace, /*StopAtSemi=*/true, /*DontConsume=*/true);
+        SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
         if (Tok.is(tok::semi))
           ConsumeToken();
         return StmtError();
@@ -356,7 +356,7 @@ Retry:
     // succeed.
     ExpectAndConsume(tok::semi, diag::err_expected_semi_after_stmt, SemiError);
     // Skip until we see a } or ;, but don't eat it.
-    SkipUntil(tok::r_brace, true, true);
+    SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
   }
 
   return Res;
@@ -373,7 +373,7 @@ StmtResult Parser::ParseExprStatement() {
     // If the expression is invalid, skip ahead to the next semicolon or '}'.
     // Not doing this opens us up to the possibility of infinite loops if
     // ParseExpression does not consume any tokens.
-    SkipUntil(tok::r_brace, /*StopAtSemi=*/true, /*DontConsume=*/true);
+    SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
     if (Tok.is(tok::semi))
       ConsumeToken();
     return Actions.ActOnExprStmtError();
@@ -617,7 +617,7 @@ StmtResult Parser::ParseCaseStatement(bool MissingCase, ExprResult Expr) {
     ExprResult LHS(MissingCase ? Expr : ParseConstantExpression());
     MissingCase = false;
     if (LHS.isInvalid()) {
-      SkipUntil(tok::colon);
+      SkipUntil(tok::colon, StopAtSemi);
       return StmtError();
     }
 
@@ -630,7 +630,7 @@ StmtResult Parser::ParseCaseStatement(bool MissingCase, ExprResult Expr) {
 
       RHS = ParseConstantExpression();
       if (RHS.isInvalid()) {
-        SkipUntil(tok::colon);
+        SkipUntil(tok::colon, StopAtSemi);
         return StmtError();
       }
     }
@@ -1196,7 +1196,7 @@ StmtResult Parser::ParseSwitchStatement(SourceLocation *TrailingElseLoc) {
     // will have no place to connect back with the switch.
     if (Tok.is(tok::l_brace)) {
       ConsumeBrace();
-      SkipUntil(tok::r_brace, false, false);
+      SkipUntil(tok::r_brace);
     } else
       SkipUntil(tok::semi);
     return Switch;
@@ -1347,7 +1347,7 @@ StmtResult Parser::ParseDoStatement() {
     if (!Body.isInvalid()) {
       Diag(Tok, diag::err_expected_while);
       Diag(DoLoc, diag::note_matching) << "do";
-      SkipUntil(tok::semi, false, true);
+      SkipUntil(tok::semi, StopBeforeMatch);
     }
     return StmtError();
   }
@@ -1355,7 +1355,7 @@ StmtResult Parser::ParseDoStatement() {
 
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after) << "do/while";
-    SkipUntil(tok::semi, false, true);
+    SkipUntil(tok::semi, StopBeforeMatch);
     return StmtError();
   }
 
@@ -1531,14 +1531,14 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
       //   for (expr : expr) { ... }
       Diag(Tok, diag::err_for_range_expected_decl)
         << FirstPart.get()->getSourceRange();
-      SkipUntil(tok::r_paren, false, true);
+      SkipUntil(tok::r_paren, StopBeforeMatch);
       SecondPartIsInvalid = true;
     } else {
       if (!Value.isInvalid()) {
         Diag(Tok, diag::err_expected_semi_for);
       } else {
         // Skip until semicolon or rparen, don't consume it.
-        SkipUntil(tok::r_paren, true, true);
+        SkipUntil(tok::r_paren, StopAtSemi | StopBeforeMatch);
         if (Tok.is(tok::semi))
           ConsumeToken();
       }
@@ -1570,7 +1570,7 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
         Diag(Tok, diag::err_expected_semi_for);
       else
         // Skip until semicolon or rparen, don't consume it.
-        SkipUntil(tok::r_paren, true, true);
+        SkipUntil(tok::r_paren, StopAtSemi | StopBeforeMatch);
     }
 
     if (Tok.is(tok::semi)) {
@@ -1672,7 +1672,7 @@ StmtResult Parser::ParseGotoStatement() {
     SourceLocation StarLoc = ConsumeToken();
     ExprResult R(ParseExpression());
     if (R.isInvalid()) {  // Skip to the semicolon, but don't consume it.
-      SkipUntil(tok::semi, false, true);
+      SkipUntil(tok::semi, StopBeforeMatch);
       return StmtError();
     }
     Res = Actions.ActOnIndirectGotoStmt(GotoLoc, StarLoc, R.take());
@@ -1731,7 +1731,7 @@ StmtResult Parser::ParseReturnStatement() {
     } else
         R = ParseExpression();
     if (R.isInvalid()) {  // Skip to the semicolon, but don't consume it.
-      SkipUntil(tok::semi, false, true);
+      SkipUntil(tok::semi, StopBeforeMatch);
       return StmtError();
     }
   }
@@ -2279,7 +2279,7 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   bool isVolatile = DS.getTypeQualifiers() & DeclSpec::TQ_volatile;
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after) << "asm";
-    SkipUntil(tok::r_paren);
+    SkipUntil(tok::r_paren, StopAtSemi);
     return StmtError();
   }
   BalancedDelimiterTracker T(*this, tok::l_paren);
@@ -2398,7 +2398,7 @@ bool Parser::ParseAsmOperandsOpt(SmallVectorImpl<IdentifierInfo *> &Names,
 
       if (Tok.isNot(tok::identifier)) {
         Diag(Tok, diag::err_expected_ident);
-        SkipUntil(tok::r_paren);
+        SkipUntil(tok::r_paren, StopAtSemi);
         return true;
       }
 
@@ -2412,14 +2412,14 @@ bool Parser::ParseAsmOperandsOpt(SmallVectorImpl<IdentifierInfo *> &Names,
 
     ExprResult Constraint(ParseAsmStringLiteral());
     if (Constraint.isInvalid()) {
-        SkipUntil(tok::r_paren);
+        SkipUntil(tok::r_paren, StopAtSemi);
         return true;
     }
     Constraints.push_back(Constraint.release());
 
     if (Tok.isNot(tok::l_paren)) {
       Diag(Tok, diag::err_expected_lparen_after) << "asm operand";
-      SkipUntil(tok::r_paren);
+      SkipUntil(tok::r_paren, StopAtSemi);
       return true;
     }
 
@@ -2429,7 +2429,7 @@ bool Parser::ParseAsmOperandsOpt(SmallVectorImpl<IdentifierInfo *> &Names,
     ExprResult Res(ParseExpression());
     T.consumeClose();
     if (Res.isInvalid()) {
-      SkipUntil(tok::r_paren);
+      SkipUntil(tok::r_paren, StopAtSemi);
       return true;
     }
     Exprs.push_back(Res.release());
@@ -2511,7 +2511,7 @@ bool Parser::trySkippingFunctionBody() {
 
   if (!PP.isCodeCompletionEnabled()) {
     ConsumeBrace();
-    SkipUntil(tok::r_brace, /*StopAtSemi=*/false, /*DontConsume=*/false);
+    SkipUntil(tok::r_brace);
     return true;
   }
 
@@ -2519,8 +2519,7 @@ bool Parser::trySkippingFunctionBody() {
   // the body contains the code-completion point.
   TentativeParsingAction PA(*this);
   ConsumeBrace();
-  if (SkipUntil(tok::r_brace, /*StopAtSemi=*/false, /*DontConsume=*/false,
-                /*StopAtCodeCompletion=*/true)) {
+  if (SkipUntil(tok::r_brace, StopAtCodeCompletion)) {
     PA.Commit();
     return true;
   }

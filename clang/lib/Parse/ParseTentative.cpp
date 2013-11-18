@@ -159,7 +159,7 @@ Parser::TPResult Parser::TryConsumeDeclarationSpecifier() {
     if (Tok.isNot(tok::l_paren))
       return TPResult::Error();
     ConsumeParen();
-    if (!SkipUntil(tok::r_paren, false))
+    if (!SkipUntil(tok::r_paren))
       return TPResult::Error();
     break;
   }
@@ -183,14 +183,14 @@ Parser::TPResult Parser::TryConsumeDeclarationSpecifier() {
            Tok.is(tok::kw___declspec) || Tok.is(tok::kw_alignas)) {
       if (Tok.is(tok::l_square)) {
         ConsumeBracket();
-        if (!SkipUntil(tok::r_square, false))
+        if (!SkipUntil(tok::r_square))
           return TPResult::Error();
       } else {
         ConsumeToken();
         if (Tok.isNot(tok::l_paren))
           return TPResult::Error();
         ConsumeParen();
-        if (!SkipUntil(tok::r_paren, false))
+        if (!SkipUntil(tok::r_paren))
           return TPResult::Error();
       }
     }
@@ -294,7 +294,7 @@ Parser::TPResult Parser::TryParseInitDeclaratorList() {
     if (Tok.is(tok::l_paren)) {
       // Parse through the parens.
       ConsumeParen();
-      if (!SkipUntil(tok::r_paren))
+      if (!SkipUntil(tok::r_paren, StopAtSemi))
         return TPResult::Error();
     } else if (Tok.is(tok::l_brace)) {
       // A left-brace here is sufficient to disambiguate the parse; an
@@ -517,7 +517,7 @@ Parser::isCXX11AttributeSpecifier(bool Disambiguate,
   if (!getLangOpts().ObjC1) {
     ConsumeBracket();
 
-    bool IsAttribute = SkipUntil(tok::r_square, false);
+    bool IsAttribute = SkipUntil(tok::r_square);
     IsAttribute &= Tok.is(tok::r_square);
 
     PA.Revert();
@@ -589,7 +589,7 @@ Parser::isCXX11AttributeSpecifier(bool Disambiguate,
     // Parse the attribute-argument-clause, if present.
     if (Tok.is(tok::l_paren)) {
       ConsumeParen();
-      if (!SkipUntil(tok::r_paren, false)) {
+      if (!SkipUntil(tok::r_paren)) {
         IsAttribute = false;
         break;
       }
@@ -1550,7 +1550,7 @@ Parser::TPResult Parser::TryParseTypeofSpecifier() {
   assert(Tok.is(tok::l_paren) && "Expected '('");
   // Parse through the parens after 'typeof'.
   ConsumeParen();
-  if (!SkipUntil(tok::r_paren))
+  if (!SkipUntil(tok::r_paren, StopAtSemi))
     return TPResult::Error();
 
   return TPResult::Ambiguous();
@@ -1744,8 +1744,7 @@ Parser::TryParseParameterDeclarationClause(bool *InvalidAsDeclaration,
       // '=' assignment-expression
       // Parse through assignment-expression.
       // FIXME: assignment-expression may contain an unparenthesized comma.
-      if (!SkipUntil(tok::comma, tok::r_paren, true/*StopAtSemi*/,
-                     true/*DontConsume*/))
+      if (!SkipUntil(tok::comma, tok::r_paren, StopAtSemi | StopBeforeMatch))
         return TPResult::Error();
     }
 
@@ -1789,7 +1788,7 @@ Parser::TPResult Parser::TryParseFunctionDeclarator() {
     return TPR;
 
   // Parse through the parens.
-  if (!SkipUntil(tok::r_paren))
+  if (!SkipUntil(tok::r_paren, StopAtSemi))
     return TPResult::Error();
 
   // cv-qualifier-seq
@@ -1810,7 +1809,7 @@ Parser::TPResult Parser::TryParseFunctionDeclarator() {
 
     // Parse through the parens after 'throw'.
     ConsumeParen();
-    if (!SkipUntil(tok::r_paren))
+    if (!SkipUntil(tok::r_paren, StopAtSemi))
       return TPResult::Error();
   }
   if (Tok.is(tok::kw_noexcept)) {
@@ -1819,7 +1818,7 @@ Parser::TPResult Parser::TryParseFunctionDeclarator() {
     if (Tok.is(tok::l_paren)) {
       // Find the matching rparen.
       ConsumeParen();
-      if (!SkipUntil(tok::r_paren))
+      if (!SkipUntil(tok::r_paren, StopAtSemi))
         return TPResult::Error();
     }
   }
@@ -1831,7 +1830,7 @@ Parser::TPResult Parser::TryParseFunctionDeclarator() {
 ///
 Parser::TPResult Parser::TryParseBracketDeclarator() {
   ConsumeBracket();
-  if (!SkipUntil(tok::r_square))
+  if (!SkipUntil(tok::r_square, StopAtSemi))
     return TPResult::Error();
 
   return TPResult::Ambiguous();
