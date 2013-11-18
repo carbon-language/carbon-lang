@@ -737,12 +737,12 @@ private:
 
 public:
 
-  // Control flags for SkipUntil functions.
+  /// \brief Control flags for SkipUntil functions.
   enum SkipUntilFlags {
-    StopAtSemi = 1 << 0,  /// \brief Stop skipping at semicolon
+    StopAtSemi = 1 << 0,  ///< Stop skipping at semicolon
     /// \brief Stop skipping at specified token, but don't skip the token itself
     StopBeforeMatch = 1 << 1,
-    StopAtCodeCompletion = 1 << 2 /// \brief Stop at code completion
+    StopAtCodeCompletion = 1 << 2 ///< Stop at code completion
   };
 
   friend LLVM_CONSTEXPR SkipUntilFlags operator|(SkipUntilFlags L,
