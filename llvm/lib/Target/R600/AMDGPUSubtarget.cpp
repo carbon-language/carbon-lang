@@ -36,7 +36,7 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS) :
   Gen = AMDGPUSubtarget::R600;
   FP64 = false;
   CaymanISA = false;
-  EnableIRStructurizer = false;
+  EnableIRStructurizer = true;
   EnableIfCvt = true;
   ParseSubtargetFeatures(GPU, FS);
   DevName = GPU;

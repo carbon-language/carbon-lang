@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=redwood -mattr=disable-irstructurizer | FileCheck %s
 ; Test case for a crash in the AMDILCFGStructurizer from a CFG like this:
 ;
 ;                            entry

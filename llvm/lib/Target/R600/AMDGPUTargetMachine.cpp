@@ -125,8 +125,7 @@ bool
 AMDGPUPassConfig::addPreISel() {
   const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
   addPass(createFlattenCFGPass());
-  if (ST.IsIRStructurizerEnabled() ||
-      ST.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS)
+  if (ST.IsIRStructurizerEnabled())
     addPass(createStructurizeCFGPass());
   if (ST.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
     addPass(createSinkingPass());

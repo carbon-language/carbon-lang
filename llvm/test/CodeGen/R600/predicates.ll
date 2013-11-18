@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
+; RUN: llc < %s -march=r600 -mattr=disable-irstructurizer -mcpu=redwood | FileCheck %s
 
 ; These tests make sure the compiler is optimizing branches using predicates
 ; when it is legal to do so.
