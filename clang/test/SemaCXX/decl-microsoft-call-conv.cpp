@@ -160,3 +160,10 @@ struct ExactlyInt {
   }
 };
 template <> inline int ExactlyInt::cast_to_int<int>(int x) { return x; }
+
+namespace test2 {
+  class foo {
+    template <typename T> void bar(T v);
+  };
+  extern template void foo::bar(const void *);
+}
