@@ -2054,6 +2054,13 @@ def : Pat <
   (EXTRACT_SUBREG $a, sub0)
 >;
 
+// V_ADD_I32_e32/S_ADD_I32 produces carry in VCC/SCC. For the vector
+// case, the sgpr-copies pass will fix this to use the vector version.
+def : Pat <
+  (i32 (addc i32:$src0, i32:$src1)),
+  (S_ADD_I32 $src0, $src1)
+>;
+
 def : Pat <
   (or i64:$a, i64:$b),
   (INSERT_SUBREG
