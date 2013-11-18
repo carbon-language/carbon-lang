@@ -373,6 +373,10 @@ unsigned SIInstrInfo::getVALUOp(const MachineInstr &MI) {
   case AMDGPU::REG_SEQUENCE: return AMDGPU::REG_SEQUENCE;
   case AMDGPU::COPY: return AMDGPU::COPY;
   case AMDGPU::PHI: return AMDGPU::PHI;
+  case AMDGPU::S_ADD_I32: return AMDGPU::V_ADD_I32_e32;
+  case AMDGPU::S_ADDC_U32: return AMDGPU::V_ADDC_U32_e32;
+  case AMDGPU::S_SUB_I32: return AMDGPU::V_SUB_I32_e32;
+  case AMDGPU::S_SUBB_U32: return AMDGPU::V_SUBB_U32_e32;
   case AMDGPU::S_ASHR_I32: return AMDGPU::V_ASHR_I32_e32;
   case AMDGPU::S_ASHR_I64: return AMDGPU::V_ASHR_I64;
   case AMDGPU::S_LSHL_B32: return AMDGPU::V_LSHL_B32_e32;

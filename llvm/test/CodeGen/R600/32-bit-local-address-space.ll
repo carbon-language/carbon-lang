@@ -20,8 +20,9 @@ entry:
 }
 
 ; CHECK-LABEL: @local_address_gep
-; CHECK: V_ADD_I32_e{{32|64}} [[PTR:v[0-9]]]
-; CHECK: DS_READ_B32 [[PTR]]
+; CHECK: S_ADD_I32 [[SPTR:s[0-9]]]
+; CHECK: V_MOV_B32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
+; CHECK: DS_READ_B32 [[VPTR]]
 define void @local_address_gep(i32 addrspace(1)* %out, i32 addrspace(3)* %in, i32 %offset) {
 entry:
   %0 = getelementptr i32 addrspace(3)* %in, i32 %offset
@@ -31,8 +32,9 @@ entry:
 }
 
 ; CHECK-LABEL: @local_address_gep_const_offset
-; CHECK: V_ADD_I32_e{{32|64}} [[PTR:v[0-9]]]
-; CHECK: DS_READ_B32 [[PTR]]
+; CHECK: S_ADD_I32 [[SPTR:s[0-9]]]
+; CHECK: V_MOV_B32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
+; CHECK: DS_READ_B32 [[VPTR]]
 define void @local_address_gep_const_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
 entry:
   %0 = getelementptr i32 addrspace(3)* %in, i32 1
