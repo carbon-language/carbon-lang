@@ -535,6 +535,7 @@ void X86AsmPrinter::EmitStartOfAsmFile(Module &M) {
       // cause the process to terminate immediately.  LLVM does not know how to
       // register any SEH handlers, so its object files should be safe.
       S->setAbsolute();
+      OutStreamer.EmitSymbolAttribute(S, MCSA_Global);
       OutStreamer.EmitAssignment(
           S, MCConstantExpr::Create(int64_t(1), MMI->getContext()));
     }

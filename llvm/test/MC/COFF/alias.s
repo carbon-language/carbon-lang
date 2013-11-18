@@ -45,15 +45,6 @@ weak_aliased_to_external = external2
 // CHECK-NEXT:     AuxSymbolCount: 0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: external_aliased_to_local
-// CHECK-NEXT:     Value: 0
-// CHECK-NEXT:     Section: .text (1)
-// CHECK-NEXT:     BaseType: Null (0x0)
-// CHECK-NEXT:     ComplexType: Null (0x0)
-// CHECK-NEXT:     StorageClass: Static (0x3)
-// CHECK-NEXT:     AuxSymbolCount: 0
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: global_aliased_to_external
 // CHECK-NEXT:     Value: 0
 // CHECK-NEXT:     Section:  (0)
@@ -98,7 +89,7 @@ weak_aliased_to_external = external2
 // CHECK-NEXT:     StorageClass: WeakExternal (0x69)
 // CHECK-NEXT:     AuxSymbolCount: 1
 // CHECK-NEXT:     AuxWeakExternal {
-// CHECK-NEXT:       Linked: external2 (10)
+// CHECK-NEXT:       Linked: external2 (9)
 // CHECK-NEXT:       Search: Library (0x2)
 // CHECK-NEXT:       Unused: (00 00 00 00 00 00 00 00 00 00)
 // CHECK-NEXT:     }
