@@ -268,3 +268,29 @@ endif:
 }
 
 !2 = metadata !{metadata !"const", null, i32 1}
+
+; CHECK-LABEL: @copy1
+; CHECK: BUFFER_LOAD_DWORD
+; CHECK: V_ADD
+; CHECK: S_ENDPGM
+define void @copy1(float addrspace(1)* %out, float addrspace(1)* %in0) {
+entry:
+  %0 = load float addrspace(1)* %in0
+  %1 = fcmp oeq float %0, 0.0
+  br i1 %1, label %if0, label %endif
+
+if0:
+  %2 = bitcast float %0 to i32
+  %3 = fcmp olt float %0, 0.0
+  br i1 %3, label %if1, label %endif
+
+if1:
+  %4 = add i32 %2, 1
+  br label %endif
+
+endif:
+  %5 = phi i32 [ 0, %entry ], [ %2, %if0 ], [ %4, %if1 ]
+  %6 = bitcast i32 %5 to float
+  store float %6, float addrspace(1)* %out
+  ret void
+}
