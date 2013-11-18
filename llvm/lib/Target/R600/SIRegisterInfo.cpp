@@ -100,6 +100,8 @@ const TargetRegisterClass *SIRegisterInfo::getEquivalentVGPRClass(
                                          const TargetRegisterClass *SRC) const {
     if (hasVGPRs(SRC)) {
       return SRC;
+    } else if (SRC == &AMDGPU::SCCRegRegClass) {
+      return &AMDGPU::VCCRegRegClass;
     } else if (getCommonSubClass(SRC, &AMDGPU::SGPR_32RegClass)) {
       return &AMDGPU::VReg_32RegClass;
     } else if (getCommonSubClass(SRC, &AMDGPU::SGPR_64RegClass)) {

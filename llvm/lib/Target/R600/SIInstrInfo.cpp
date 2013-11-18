@@ -417,7 +417,6 @@ void SIInstrInfo::legalizeOpWithMove(MachineInstr *MI, unsigned OpIdx) const {
   MachineOperand &MO = MI->getOperand(OpIdx);
   MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
   unsigned RCID = get(MI->getOpcode()).OpInfo[OpIdx].RegClass;
-  // XXX - This shouldn't be VSrc
   const TargetRegisterClass *RC = RI.getRegClass(RCID);
   unsigned Opcode = AMDGPU::V_MOV_B32_e32;
   if (MO.isReg()) {
@@ -426,7 +425,8 @@ void SIInstrInfo::legalizeOpWithMove(MachineInstr *MI, unsigned OpIdx) const {
     Opcode = AMDGPU::S_MOV_B32;
   }
 
-  unsigned Reg = MRI.createVirtualRegister(RI.getRegClass(RCID));
+  const TargetRegisterClass *VRC = RI.getEquivalentVGPRClass(RC);
+  unsigned Reg = MRI.createVirtualRegister(VRC);
   BuildMI(*MI->getParent(), I, MI->getParent()->findDebugLoc(I), get(Opcode),
           Reg).addOperand(MO);
   MO.ChangeToRegister(Reg, false);
