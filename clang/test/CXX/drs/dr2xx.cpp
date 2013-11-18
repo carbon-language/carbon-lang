@@ -528,3 +528,196 @@ namespace dr250 { // dr250: yes
   template<int I = 3> void g(double x[]); // expected-error 0-1{{extension}}
   FPtr gp = &g<>;
 }
+
+namespace dr252 { // dr252: yes
+  struct A {
+    void operator delete(void*); // expected-note {{found}}
+  };
+  struct B {
+    void operator delete(void*); // expected-note {{found}}
+  };
+  struct C : A, B {
+    virtual ~C();
+  };
+  C::~C() {} // expected-error {{'operator delete' found in multiple base classes}}
+
+  struct D {
+    void operator delete(void*, int); // expected-note {{here}}
+    virtual ~D();
+  };
+  D::~D() {} // expected-error {{no suitable member 'operator delete'}}
+
+  struct E {
+    void operator delete(void*, int);
+    void operator delete(void*) = delete; // expected-error 0-1{{extension}} expected-note {{here}}
+    virtual ~E();
+  };
+  E::~E() {} // expected-error {{deleted}}
+
+  struct F {
+    // If both functions are available, the first one is a placement delete.
+    void operator delete(void*, __SIZE_TYPE__);
+    void operator delete(void*) = delete; // expected-error 0-1{{extension}} expected-note {{here}}
+    virtual ~F();
+  };
+  F::~F() {} // expected-error {{deleted}}
+
+  struct G {
+    void operator delete(void*, __SIZE_TYPE__);
+    virtual ~G();
+  };
+  G::~G() {}
+}
+
+namespace dr254 { // dr254: yes
+  template<typename T> struct A {
+    typedef typename T::type type; // ok even if this is a typedef-name, because
+                                   // it's not an elaborated-type-specifier
+    typedef struct T::type foo; // expected-error {{elaborated type refers to a typedef}}
+  };
+  struct B { struct type {}; };
+  struct C { typedef struct {} type; }; // expected-note {{here}}
+  A<B>::type n;
+  A<C>::type n; // expected-note {{instantiation of}}
+}
+
+// dr256: dup 624
+
+namespace dr257 { // dr257: yes
+  struct A { A(int); }; // expected-note {{here}}
+  struct B : virtual A {
+    B() {}
+    virtual void f() = 0;
+  };
+  struct C : B {
+    C() {}
+  };
+  struct D : B {
+    D() {} // expected-error {{must explicitly initialize the base class 'dr257::A'}}
+    void f();
+  };
+}
+
+namespace dr258 { // dr258: yes
+  struct A {
+    void f(const int);
+    template<typename> void g(int);
+    float &h() const;
+  };
+  struct B : A {
+    using A::f;
+    using A::g;
+    using A::h;
+    int &f(int);
+    template<int> int &g(int); // expected-note {{candidate}}
+    int &h();
+  } b;
+  int &w = b.f(0);
+  int &x = b.g<int>(0); // expected-error {{no match}}
+  int &y = b.h();
+  float &z = const_cast<const B&>(b).h();
+
+  struct C {
+    virtual void f(const int) = 0;
+  };
+  struct D : C {
+    void f(int);
+  } d;
+
+  struct E {
+    virtual void f() = 0; // expected-note {{unimplemented}}
+  };
+  struct F : E {
+    void f() const {}
+  } f; // expected-error {{abstract}}
+}
+
+namespace dr259 { // dr259: yes c++11
+  template<typename T> struct A {};
+  template struct A<int>; // expected-note {{previous}}
+  template struct A<int>; // expected-error {{duplicate explicit instantiation}}
+
+  // FIXME: We only apply this DR in C++11 mode.
+  template<> struct A<float>;
+  template struct A<float>;
+#if __cplusplus < 201103L
+  // expected-error@-2 {{extension}} expected-note@-3 {{here}}
+#endif
+
+  template struct A<char>; // expected-note {{here}}
+  template<> struct A<char>; // expected-error {{explicit specialization of 'dr259::A<char>' after instantiation}}
+
+  template<> struct A<double>;
+  template<> struct A<double>;
+  template<> struct A<double> {}; // expected-note {{here}}
+  template<> struct A<double> {}; // expected-error {{redefinition}}
+
+  template<typename T> struct B; // expected-note {{here}}
+  template struct B<int>; // expected-error {{undefined}}
+
+  template<> struct B<float>;
+  template struct B<float>;
+#if __cplusplus < 201103L
+  // expected-error@-2 {{extension}} expected-note@-3 {{here}}
+#endif
+}
+
+namespace dr261 { // dr261: no
+#pragma clang diagnostic push
+#pragma clang diagnostic warning "-Wused-but-marked-unused"
+
+  // FIXME: This is ill-formed, with a diagnostic required, because operator new
+  // and operator delete are inline and odr-used, but not defined in this
+  // translation unit.
+  // We're also missing the -Wused-but-marked-unused diagnostic here.
+  struct A {
+    inline void *operator new(__SIZE_TYPE__) __attribute__((unused));
+    inline void operator delete(void*) __attribute__((unused));
+    A() {}
+  };
+
+  // FIXME: These are ill-formed, with a required diagnostic, for the same
+  // reason.
+  struct B {
+    inline void operator delete(void*) __attribute__((unused));
+    ~B() {}
+  };
+  struct C {
+    inline void operator delete(void*) __attribute__((unused));
+    virtual ~C() {}
+  };
+
+  struct D {
+    inline void operator delete(void*) __attribute__((unused));
+  };
+  void h() { C::operator delete(0); } // expected-warning {{marked unused but was used}}
+
+#pragma clang diagnostic pop
+}
+
+namespace dr262 { // dr262: yes
+  int f(int = 0, ...);
+  int k = f();
+  int l = f(0);
+  int m = f(0, 0);
+}
+
+namespace dr263 { // dr263: yes
+  struct X {};
+  struct Y {
+#if __cplusplus < 201103L
+    friend X::X() throw();
+    friend X::~X() throw();
+#else
+    friend constexpr X::X() noexcept;
+    friend X::~X();
+#endif
+    Y::Y(); // expected-error {{extra qualification}}
+    Y::~Y(); // expected-error {{extra qualification}}
+  };
+}
+
+// dr265: dup 353
+// dr266: na
+// dr269: na
+// dr270: na
