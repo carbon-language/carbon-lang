@@ -1142,10 +1142,12 @@ def S_SUB_I32 : SOP2_32 <0x00000003, "S_SUB_I32",
 
 let Uses = [SCC] in { // Carry in comes from SCC
 let isCommutable = 1 in {
-def S_ADDC_U32 : SOP2_32 <0x00000004, "S_ADDC_U32", []>;
+def S_ADDC_U32 : SOP2_32 <0x00000004, "S_ADDC_U32",
+  [(set i32:$dst, (adde (i32 SSrc_32:$src0), (i32 SSrc_32:$src1)))]>;
 } // End isCommutable = 1
 
-def S_SUBB_U32 : SOP2_32 <0x00000005, "S_SUBB_U32", []>;
+def S_SUBB_U32 : SOP2_32 <0x00000005, "S_SUBB_U32",
+  [(set i32:$dst, (sube (i32 SSrc_32:$src0), (i32 SSrc_32:$src1)))]>;
 } // End Uses = [SCC]
 } // End Defs = [SCC]
 
