@@ -77,7 +77,8 @@ New Compiler Flags
 
 - Clang no longer special cases -O4 to enable lto. Explicitly pass -flto to
   enable it.
-- Command line "clang -O3 -flto a.c -c" and "clang -emit-llvm a.c -c" 
+- Clang no longer fails on >= -O5. Uses -O3 instead.
+- Command line "clang -O3 -flto a.c -c" and "clang -emit-llvm a.c -c"
   are no longer equivalent.
 - Clang now errors on unknown -m flags (``-munknown-to-clang``),
   unknown -f flags (``-funknown-to-clang``) and unknown
