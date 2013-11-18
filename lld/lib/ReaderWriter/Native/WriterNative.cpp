@@ -18,6 +18,7 @@
 
 #include "NativeFileFormat.h"
 
+#include <limits>
 #include <vector>
 
 namespace lld {
@@ -404,6 +405,7 @@ private:
     }
     uint32_t result = _targetsTableIndex.size();
     _targetsTableIndex[target] = result;
+    assert(result < NativeReferenceIvarsV1::noTarget);
     return result;
   }
 
