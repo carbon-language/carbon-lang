@@ -77,9 +77,9 @@ def help_q : Flag<["/?", "-?"], "">, Alias<help>;
 
 def DASH_DASH : Option<["--"], "", KIND_REMAINING_ARGS>;
 
-//
+//==============================================================================
 // The flags below do nothing. They are defined only for link.exe compatibility.
-//
+//==============================================================================
 
 class QF<string name> : Joined<["/", "-", "-?"], name#":">;
 
@@ -88,6 +88,7 @@ multiclass QB<string name> {
   def _no : F<name#":no">;
 }
 
+def ignoreidl : F<"ignoreidl">;
 def incremental : F<"incremental">;
 def no_incremental : F<"incremental:no">;
 def nologo : F<"nologo">;
@@ -96,8 +97,11 @@ def verbose : F<"verbose">;
 def delay : QF<"delay">;
 def delayload : QF<"delayload">;
 def errorreport : QF<"errorreport">;
+def idlout : QF<"idlout">;
 def pdb : QF<"pdb">;
 def pdbaltpath : QF<"pdbaltpath">;
+def tlbid : QF<"tlbid">;
+def tlbout : QF<"tlbout">;
 def verbose_all : QF<"verbose">;
 
 defm wx : QB<"wx">;
