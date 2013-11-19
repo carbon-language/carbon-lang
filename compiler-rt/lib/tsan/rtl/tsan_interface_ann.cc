@@ -441,7 +441,7 @@ void INTERFACE_ATTRIBUTE WTFAnnotateHappensAfter(char *f, int l, uptr addr) {
 void INTERFACE_ATTRIBUTE WTFAnnotateBenignRaceSized(
     char *f, int l, uptr mem, uptr sz, char *desc) {
   SCOPED_ANNOTATION(AnnotateBenignRaceSized);
-  BenignRaceImpl(f, l, mem, 1, desc);
+  BenignRaceImpl(f, l, mem, sz, desc);
 }
 
 int INTERFACE_ATTRIBUTE RunningOnValgrind() {
