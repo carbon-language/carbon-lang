@@ -689,6 +689,17 @@ StringRef ScalarTraits<StringRef>::input(StringRef Scalar, void *,
   Val = Scalar;
   return StringRef();
 }
+ 
+void ScalarTraits<std::string>::output(const std::string &Val, void *,
+                                     raw_ostream &Out) {
+  Out << Val;
+}
+
+StringRef ScalarTraits<std::string>::input(StringRef Scalar, void *,
+                                         std::string &Val) {
+  Val = Scalar.str();
+  return StringRef();
+}
 
 void ScalarTraits<uint8_t>::output(const uint8_t &Val, void *,
                                    raw_ostream &Out) {

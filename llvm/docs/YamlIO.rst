@@ -234,6 +234,7 @@ The following types have built-in support in YAML I/O:
 * float
 * double
 * StringRef
+* std::string
 * int64_t
 * int32_t
 * int16_t
