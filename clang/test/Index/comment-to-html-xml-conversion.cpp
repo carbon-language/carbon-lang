@@ -115,7 +115,8 @@ void test_cmd_brief_like_6();
 ///
 /// Bbb.
 void test_cmd_brief_like_7();
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:6: FunctionDecl=test_cmd_brief_like_7:{{.*}} BriefComment=[Aaa.] FullCommentAsHTML=[<p class="para-brief"> Aaa.</p><p> Bbb.</p>] FullCommentAsXML=[<Function file="/home/storage_3/grib/clang-commit/llvm/tools/clang/test/Index/comment-to-html-xml-conversion.cpp" line="117" column="6"><Name>test_cmd_brief_like_7</Name><USR>c:@F@test_cmd_brief_like_7#</USR><Declaration>void test_cmd_brief_like_7()</Declaration><Abstract><Para> Aaa.</Para></Abstract><Discussion><Para> Bbb.</Para></Discussion></Function>]
+
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=test_cmd_brief_like_7:{{.*}} BriefComment=[Aaa.] FullCommentAsHTML=[<p class="para-brief"> Aaa.</p><p> Bbb.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>test_cmd_brief_like_7</Name><USR>c:@F@test_cmd_brief_like_7#</USR><Declaration>void test_cmd_brief_like_7()</Declaration><Abstract><Para> Aaa.</Para></Abstract><Discussion><Para> Bbb.</Para></Discussion></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
