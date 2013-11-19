@@ -3170,8 +3170,8 @@ static inline ObjCBridgeAttr *getObjCBridgeAttr(const TypedefType *TD) {
   QualType QT = TDNDecl->getUnderlyingType();
   if (QT->isPointerType()) {
     QT = QT->getPointeeType();
-    if (QT->isStructureType() || QT->isUnionType() || QT->isClassType())
-      if (RecordDecl *RD = QT->getAs<RecordType>()->getDecl())
+    if (const RecordType *RT = QT->getAs<RecordType>())
+      if (RecordDecl *RD = RT->getDecl())
         if (RD->hasAttr<ObjCBridgeAttr>())
           return RD->getAttr<ObjCBridgeAttr>();
   }
