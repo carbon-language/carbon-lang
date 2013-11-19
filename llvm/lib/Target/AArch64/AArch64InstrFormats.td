@@ -1297,6 +1297,85 @@ class NeonI_LdStMult_Post<bit q, bit l, bits<4> opcode, bits<2> size,
   // Inherit Rt in 4-0
 }
 
+// Format AdvSIMD vector load Single N-element structure to all lanes
+class NeonI_LdOne_Dup<bit q, bit r, bits<3> opcode, bits<2> size, dag outs,
+                      dag ins, string asmstr, list<dag> patterns,
+                      InstrItinClass itin>
+  : A64InstRtn<outs, ins, asmstr, patterns, itin>
+{
+  let Inst{31} = 0b0;
+  let Inst{30} = q;
+  let Inst{29-23} = 0b0011010;
+  let Inst{22} = 0b1;
+  let Inst{21} = r;
+  let Inst{20-16} = 0b00000;
+  let Inst{15-13} = opcode;
+  let Inst{12} = 0b0;
+  let Inst{11-10} = size;
+
+  // Inherit Rn in 9-5
+  // Inherit Rt in 4-0
+}
+
+// Format AdvSIMD vector load/store Single N-element structure to/from one lane
+class NeonI_LdStOne_Lane<bit l, bit r, bits<2> op2_1, bit op0, dag outs,
+                         dag ins, string asmstr,
+                         list<dag> patterns, InstrItinClass itin>
+  : A64InstRtn<outs, ins, asmstr, patterns, itin>
+{
+  bits<4> lane;
+  let Inst{31} = 0b0;
+  let Inst{29-23} = 0b0011010;
+  let Inst{22} = l;
+  let Inst{21} = r;
+  let Inst{20-16} = 0b00000;
+  let Inst{15-14} = op2_1;
+  let Inst{13} = op0;
+  
+  // Inherit Rn in 9-5
+  // Inherit Rt in 4-0
+}
+
+// Format AdvSIMD post-index vector load Single N-element structure to all lanes
+class NeonI_LdOne_Dup_Post<bit q, bit r, bits<3> opcode, bits<2> size, dag outs,
+                           dag ins, string asmstr, list<dag> patterns,
+                           InstrItinClass itin>
+  : A64InstRtnm<outs, ins, asmstr, patterns, itin>
+{
+  let Inst{31} = 0b0;
+  let Inst{30} = q;
+  let Inst{29-23} = 0b0011011;
+  let Inst{22} = 0b1;
+  let Inst{21} = r;
+  // Inherit Rm in 20-16
+  let Inst{15-13} = opcode;
+  let Inst{12} = 0b0;
+  let Inst{11-10} = size;
+
+  // Inherit Rn in 9-5
+  // Inherit Rt in 4-0
+}
+
+// Format AdvSIMD post-index vector load/store Single N-element structure
+// to/from one lane
+class NeonI_LdStOne_Lane_Post<bit l, bit r, bits<2> op2_1, bit op0, dag outs,
+                         dag ins, string asmstr,
+                         list<dag> patterns, InstrItinClass itin>
+  : A64InstRtnm<outs, ins, asmstr, patterns, itin>
+{
+  bits<4> lane;
+  let Inst{31} = 0b0;
+  let Inst{29-23} = 0b0011011;
+  let Inst{22} = l;
+  let Inst{21} = r;
+  // Inherit Rm in 20-16
+  let Inst{15-14} = op2_1;
+  let Inst{13} = op0;
+  
+  // Inherit Rn in 9-5
+  // Inherit Rt in 4-0
+}
+
 // Format AdvSIMD 3 scalar registers with different type
 
 class NeonI_Scalar3Diff<bit u, bits<2> size, bits<4> opcode,

@@ -317,7 +317,14 @@ namespace A64Layout {
         _16B,
         _8H,
         _4S,
-        _2D
+        _2D,
+
+        // Bare layout for the 128-bit vector
+        // (only show ".b", ".h", ".s", ".d" without vector number)
+        _B,
+        _H,
+        _S,
+        _D
     };
 }
 
@@ -332,6 +339,10 @@ A64VectorLayoutToString(A64Layout::VectorLayout Layout) {
   case A64Layout::_8H:  return ".8h";
   case A64Layout::_4S:  return ".4s";
   case A64Layout::_2D:  return ".2d";
+  case A64Layout::_B:  return ".b";
+  case A64Layout::_H:  return ".h";
+  case A64Layout::_S:  return ".s";
+  case A64Layout::_D:  return ".d";
   default: llvm_unreachable("Unknown Vector Layout");
   }
 }
@@ -347,6 +358,10 @@ A64StringToVectorLayout(StringRef LayoutStr) {
              .Case(".8h", A64Layout::_8H)
              .Case(".4s", A64Layout::_4S)
              .Case(".2d", A64Layout::_2D)
+             .Case(".b", A64Layout::_B)
+             .Case(".h", A64Layout::_H)
+             .Case(".s", A64Layout::_S)
+             .Case(".d", A64Layout::_D)
              .Default(A64Layout::Invalid);
 }
 

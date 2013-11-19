@@ -1985,6 +1985,7 @@ bool AArch64AsmParser::TryParseVector(uint32_t &RegNum, SMLoc &RegEndLoc,
 // Now there are two kinds of vector list when number of vector > 1:
 //   (1) {Vn.layout, Vn+1.layout, ... , Vm.layout}
 //   (2) {Vn.layout - Vm.layout}
+// If the layout is like .b/.h/.s/.d, also parse the lane.
 AArch64AsmParser::OperandMatchResultTy AArch64AsmParser::ParseVectorList(
     SmallVectorImpl<MCParsedAsmOperand *> &Operands) {
   if (Parser.getTok().isNot(AsmToken::LCurly)) {
@@ -2065,7 +2066,7 @@ AArch64AsmParser::OperandMatchResultTy AArch64AsmParser::ParseVectorList(
 
   A64Layout::VectorLayout Layout = A64StringToVectorLayout(LayoutStr);
   if (Count > 1) { // If count > 1, create vector list using super register.
-    bool IsVec64 = (Layout < A64Layout::_16B) ? true : false;
+    bool IsVec64 = (Layout < A64Layout::_16B);
     static unsigned SupRegIDs[3][2] = {
       { AArch64::QPairRegClassID, AArch64::DPairRegClassID },
       { AArch64::QTripleRegClassID, AArch64::DTripleRegClassID },
@@ -2080,7 +2081,22 @@ AArch64AsmParser::OperandMatchResultTy AArch64AsmParser::ParseVectorList(
   Operands.push_back(
       AArch64Operand::CreateVectorList(Reg, Count, Layout, SLoc, ELoc));
 
-  return MatchOperand_Success;
+  if (Parser.getTok().is(AsmToken::LBrac)) {
+    uint32_t NumLanes = 0;
+    switch(Layout) {
+    case A64Layout::_B : NumLanes = 16; break;
+    case A64Layout::_H : NumLanes = 8; break;
+    case A64Layout::_S : NumLanes = 4; break;
+    case A64Layout::_D : NumLanes = 2; break;
+    default:
+      SMLoc Loc = getLexer().getLoc();
+      Error(Loc, "expected comma before next operand");
+      return MatchOperand_ParseFail;
+    }
+    return ParseNEONLane(Operands, NumLanes);
+  } else {
+    return MatchOperand_Success;
+  }
 }
 
 // FIXME: We would really like to be able to tablegen'erate this.

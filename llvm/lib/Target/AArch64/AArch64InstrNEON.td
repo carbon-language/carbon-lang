@@ -3456,6 +3456,51 @@ def ST1x4_1D : NeonI_STVList<0, 0b0010, 0b11, VQuad1D_operand, "st1">;
 
 // The followings are post-index vector load/store multiple N-element
 // structure(class SIMD lselem-post)
+def exact1_asmoperand : AsmOperandClass {
+  let Name = "Exact1";
+  let PredicateMethod = "isExactImm<1>";
+  let RenderMethod = "addImmOperands";
+}
+def uimm_exact1 : Operand<i32>, ImmLeaf<i32, [{return Imm == 1;}]> {
+  let ParserMatchClass = exact1_asmoperand;
+}
+
+def exact2_asmoperand : AsmOperandClass {
+  let Name = "Exact2";
+  let PredicateMethod = "isExactImm<2>";
+  let RenderMethod = "addImmOperands";
+}
+def uimm_exact2 : Operand<i32>, ImmLeaf<i32, [{return Imm == 2;}]> {
+  let ParserMatchClass = exact2_asmoperand;
+}
+
+def exact3_asmoperand : AsmOperandClass {
+  let Name = "Exact3";
+  let PredicateMethod = "isExactImm<3>";
+  let RenderMethod = "addImmOperands";
+}
+def uimm_exact3 : Operand<i32>, ImmLeaf<i32, [{return Imm == 3;}]> {
+  let ParserMatchClass = exact3_asmoperand;
+}
+
+def exact4_asmoperand : AsmOperandClass {
+  let Name = "Exact4";
+  let PredicateMethod = "isExactImm<4>";
+  let RenderMethod = "addImmOperands";
+}
+def uimm_exact4 : Operand<i32>, ImmLeaf<i32, [{return Imm == 4;}]> {
+  let ParserMatchClass = exact4_asmoperand;
+}
+
+def exact6_asmoperand : AsmOperandClass {
+  let Name = "Exact6";
+  let PredicateMethod = "isExactImm<6>";
+  let RenderMethod = "addImmOperands";
+}
+def uimm_exact6 : Operand<i32>, ImmLeaf<i32, [{return Imm == 6;}]> {
+  let ParserMatchClass = exact6_asmoperand;
+}
+
 def exact8_asmoperand : AsmOperandClass {
   let Name = "Exact8";
   let PredicateMethod = "isExactImm<8>";
@@ -3463,6 +3508,15 @@ def exact8_asmoperand : AsmOperandClass {
 }
 def uimm_exact8 : Operand<i32>, ImmLeaf<i32, [{return Imm == 8;}]> {
   let ParserMatchClass = exact8_asmoperand;
+}
+
+def exact12_asmoperand : AsmOperandClass {
+  let Name = "Exact12";
+  let PredicateMethod = "isExactImm<12>";
+  let RenderMethod = "addImmOperands";
+}
+def uimm_exact12 : Operand<i32>, ImmLeaf<i32, [{return Imm == 12;}]> {
+  let ParserMatchClass = exact12_asmoperand;
 }
 
 def exact16_asmoperand : AsmOperandClass {
@@ -3678,6 +3732,574 @@ defm ST1x4WB_1D : NeonI_STWB_VList<0, 0b0010, 0b11, VQuad1D_operand,
 // End of post-index vector load/store multiple N-element structure
 // (class SIMD lselem-post)
 
+// The followings are vector load/store single N-element structure
+// (class SIMD lsone).
+def neon_uimm0_bare : Operand<i64>,
+                        ImmLeaf<i64, [{return Imm == 0;}]> {
+  let ParserMatchClass = neon_uimm0_asmoperand;
+  let PrintMethod = "printUImmBareOperand";
+}
+
+def neon_uimm1_bare : Operand<i64>,
+                        ImmLeaf<i64, [{return Imm < 2;}]> {
+  let ParserMatchClass = neon_uimm1_asmoperand;
+  let PrintMethod = "printUImmBareOperand";
+}
+
+def neon_uimm2_bare : Operand<i64>,
+                        ImmLeaf<i64, [{return Imm < 4;}]> {
+  let ParserMatchClass = neon_uimm2_asmoperand;
+  let PrintMethod = "printUImmBareOperand";
+}
+
+def neon_uimm3_bare : Operand<i64>,
+                        ImmLeaf<i64, [{return Imm < 8;}]> {
+  let ParserMatchClass = uimm3_asmoperand;
+  let PrintMethod = "printUImmBareOperand";
+}
+
+def neon_uimm4_bare : Operand<i64>,
+                        ImmLeaf<i64, [{return Imm < 16;}]> {
+  let ParserMatchClass = uimm4_asmoperand;
+  let PrintMethod = "printUImmBareOperand";
+}
+
+class NeonI_LDN_Dup<bit q, bit r, bits<3> opcode, bits<2> size,
+                    RegisterOperand VecList, string asmop>
+    : NeonI_LdOne_Dup<q, r, opcode, size,
+                      (outs VecList:$Rt), (ins GPR64xsp:$Rn),
+                      asmop # "\t$Rt, [$Rn]",
+                      [],
+                      NoItinerary> {
+  let mayLoad = 1;
+  let neverHasSideEffects = 1;
+}
+
+multiclass LDN_Dup_BHSD<bit r, bits<3> opcode, string List, string asmop> {
+  def _8B : NeonI_LDN_Dup<0, r, opcode, 0b00,
+                          !cast<RegisterOperand>(List # "8B_operand"), asmop>;
+
+  def _4H : NeonI_LDN_Dup<0, r, opcode, 0b01,
+                          !cast<RegisterOperand>(List # "4H_operand"), asmop>;
+
+  def _2S : NeonI_LDN_Dup<0, r, opcode, 0b10,
+                          !cast<RegisterOperand>(List # "2S_operand"), asmop>;
+
+  def _1D : NeonI_LDN_Dup<0, r, opcode, 0b11,
+                          !cast<RegisterOperand>(List # "1D_operand"), asmop>;
+
+  def _16B : NeonI_LDN_Dup<1, r, opcode, 0b00,
+                           !cast<RegisterOperand>(List # "16B_operand"), asmop>;
+
+  def _8H : NeonI_LDN_Dup<1, r, opcode, 0b01,
+                          !cast<RegisterOperand>(List # "8H_operand"), asmop>;
+
+  def _4S : NeonI_LDN_Dup<1, r, opcode, 0b10,
+                          !cast<RegisterOperand>(List # "4S_operand"), asmop>;
+
+  def _2D : NeonI_LDN_Dup<1, r, opcode, 0b11,
+                          !cast<RegisterOperand>(List # "2D_operand"), asmop>;
+}
+
+// Load single 1-element structure to all lanes of 1 register
+defm LD1R : LDN_Dup_BHSD<0b0, 0b110, "VOne", "ld1r">;
+
+// Load single N-element structure to all lanes of N consecutive 
+// registers (N = 2,3,4)
+defm LD2R : LDN_Dup_BHSD<0b1, 0b110, "VPair", "ld2r">;
+defm LD3R : LDN_Dup_BHSD<0b0, 0b111, "VTriple", "ld3r">;
+defm LD4R : LDN_Dup_BHSD<0b1, 0b111, "VQuad", "ld4r">;
+
+
+class LD1R_pattern <ValueType VTy, ValueType DTy, PatFrag LoadOp,
+                    Instruction INST>
+    : Pat<(VTy (Neon_vdup (DTy (LoadOp GPR64xsp:$Rn)))),
+          (VTy (INST GPR64xsp:$Rn))>;
+
+// Match all LD1R instructions
+def : LD1R_pattern<v8i8, i32, extloadi8, LD1R_8B>;
+
+def : LD1R_pattern<v16i8, i32, extloadi8, LD1R_16B>;
+
+def : LD1R_pattern<v4i16, i32, extloadi16, LD1R_4H>;
+
+def : LD1R_pattern<v8i16, i32, extloadi16, LD1R_8H>;
+
+def : LD1R_pattern<v2i32, i32, load, LD1R_2S>;
+def : LD1R_pattern<v2f32, f32, load, LD1R_2S>;
+
+def : LD1R_pattern<v4i32, i32, load, LD1R_4S>;
+def : LD1R_pattern<v4f32, f32, load, LD1R_4S>;
+
+def : LD1R_pattern<v1i64, i64, load, LD1R_1D>;
+def : LD1R_pattern<v1f64, f64, load, LD1R_1D>;
+
+def : LD1R_pattern<v2i64, i64, load, LD1R_2D>;
+def : LD1R_pattern<v2f64, f64, load, LD1R_2D>;
+
+
+multiclass VectorList_Bare_BHSD<string PREFIX, int Count,
+                                RegisterClass RegList> {
+  defm B : VectorList_operands<PREFIX, "B", Count, RegList>;
+  defm H : VectorList_operands<PREFIX, "H", Count, RegList>;
+  defm S : VectorList_operands<PREFIX, "S", Count, RegList>;
+  defm D : VectorList_operands<PREFIX, "D", Count, RegList>;
+}
+
+// Special vector list operand of 128-bit vectors with bare layout.
+// i.e. only show ".b", ".h", ".s", ".d"
+defm VOne : VectorList_Bare_BHSD<"VOne", 1, FPR128>;
+defm VPair : VectorList_Bare_BHSD<"VPair", 2, QPair>;
+defm VTriple : VectorList_Bare_BHSD<"VTriple", 3, QTriple>;
+defm VQuad : VectorList_Bare_BHSD<"VQuad", 4, QQuad>;
+
+class NeonI_LDN_Lane<bit r, bits<2> op2_1, bit op0, RegisterOperand VList,
+                     Operand ImmOp, string asmop>
+    : NeonI_LdStOne_Lane<1, r, op2_1, op0,
+                         (outs VList:$Rt),
+                         (ins GPR64xsp:$Rn, VList:$src, ImmOp:$lane),
+                         asmop # "\t$Rt[$lane], [$Rn]",
+                         [],
+                         NoItinerary> {
+  let mayLoad = 1;
+  let neverHasSideEffects = 1;
+  let hasExtraDefRegAllocReq = 1;
+  let Constraints = "$src = $Rt";
+}
+
+multiclass LDN_Lane_BHSD<bit r, bit op0, string List, string asmop> {
+  def _B : NeonI_LDN_Lane<r, 0b00, op0,
+                          !cast<RegisterOperand>(List # "B_operand"),
+                          neon_uimm4_bare, asmop> {
+    let Inst{12-10} = lane{2-0};
+    let Inst{30} = lane{3};
+  }
+
+  def _H : NeonI_LDN_Lane<r, 0b01, op0,
+                          !cast<RegisterOperand>(List # "H_operand"),
+                          neon_uimm3_bare, asmop> {
+    let Inst{12-10} = {lane{1}, lane{0}, 0b0};
+    let Inst{30} = lane{2};
+  }
+
+  def _S : NeonI_LDN_Lane<r, 0b10, op0,
+                          !cast<RegisterOperand>(List # "S_operand"),
+                          neon_uimm2_bare, asmop> {
+    let Inst{12-10} = {lane{0}, 0b0, 0b0};
+    let Inst{30} = lane{1};
+  }
+  
+  def _D : NeonI_LDN_Lane<r, 0b10, op0,
+                          !cast<RegisterOperand>(List # "D_operand"),
+                          neon_uimm1_bare, asmop> {
+    let Inst{12-10} = 0b001;
+    let Inst{30} = lane{0};
+  }
+}
+
+// Load single 1-element structure to one lane of 1 register.
+defm LD1LN : LDN_Lane_BHSD<0b0, 0b0, "VOne", "ld1">;
+
+// Load single N-element structure to one lane of N consecutive registers
+// (N = 2,3,4)
+defm LD2LN : LDN_Lane_BHSD<0b1, 0b0, "VPair", "ld2">;
+defm LD3LN : LDN_Lane_BHSD<0b0, 0b1, "VTriple", "ld3">;
+defm LD4LN : LDN_Lane_BHSD<0b1, 0b1, "VQuad", "ld4">;
+
+multiclass LD1LN_patterns<ValueType VTy, ValueType VTy2, ValueType DTy,
+                          Operand ImmOp, Operand ImmOp2, PatFrag LoadOp,
+                          Instruction INST> {
+  def : Pat<(VTy (vector_insert (VTy VPR64:$src),
+                     (DTy (LoadOp GPR64xsp:$Rn)), (ImmOp:$lane))),
+            (VTy (EXTRACT_SUBREG 
+                     (INST GPR64xsp:$Rn, 
+                           (SUBREG_TO_REG (i64 0), VPR64:$src, sub_64),
+                           ImmOp:$lane),
+                     sub_64))>;
+
+  def : Pat<(VTy2 (vector_insert (VTy2 VPR128:$src),
+                      (DTy (LoadOp GPR64xsp:$Rn)), (ImmOp2:$lane))),
+            (VTy2 (INST GPR64xsp:$Rn, VPR128:$src, ImmOp2:$lane))>;
+}
+
+// Match all LD1LN instructions
+defm : LD1LN_patterns<v8i8, v16i8, i32, neon_uimm3_bare, neon_uimm4_bare,
+                      extloadi8, LD1LN_B>;
+
+defm : LD1LN_patterns<v4i16, v8i16, i32, neon_uimm2_bare, neon_uimm3_bare,
+                      extloadi16, LD1LN_H>;
+
+defm : LD1LN_patterns<v2i32, v4i32, i32, neon_uimm1_bare, neon_uimm2_bare,
+                      load, LD1LN_S>;
+defm : LD1LN_patterns<v2f32, v4f32, f32, neon_uimm1_bare, neon_uimm2_bare,
+                      load, LD1LN_S>;
+
+defm : LD1LN_patterns<v1i64, v2i64, i64, neon_uimm0_bare, neon_uimm1_bare,
+                      load, LD1LN_D>;
+defm : LD1LN_patterns<v1f64, v2f64, f64, neon_uimm0_bare, neon_uimm1_bare,
+                      load, LD1LN_D>;
+
+class NeonI_STN_Lane<bit r, bits<2> op2_1, bit op0, RegisterOperand VList,
+                     Operand ImmOp, string asmop>
+    : NeonI_LdStOne_Lane<0, r, op2_1, op0,
+                         (outs), (ins GPR64xsp:$Rn, VList:$Rt, ImmOp:$lane),
+                         asmop # "\t$Rt[$lane], [$Rn]",
+                         [],
+                         NoItinerary> {
+  let mayStore = 1;
+  let neverHasSideEffects = 1;
+  let hasExtraDefRegAllocReq = 1;
+}
+
+multiclass STN_Lane_BHSD<bit r, bit op0, string List, string asmop> {
+  def _B : NeonI_STN_Lane<r, 0b00, op0,
+                          !cast<RegisterOperand>(List # "B_operand"),
+                          neon_uimm4_bare, asmop> {
+    let Inst{12-10} = lane{2-0};
+    let Inst{30} = lane{3};
+  }
+
+  def _H : NeonI_STN_Lane<r, 0b01, op0,
+                          !cast<RegisterOperand>(List # "H_operand"),
+                          neon_uimm3_bare, asmop> {
+    let Inst{12-10} = {lane{1}, lane{0}, 0b0};
+    let Inst{30} = lane{2};
+  }
+
+  def _S : NeonI_STN_Lane<r, 0b10, op0,
+                          !cast<RegisterOperand>(List # "S_operand"),
+                           neon_uimm2_bare, asmop> {
+    let Inst{12-10} = {lane{0}, 0b0, 0b0};
+    let Inst{30} = lane{1};
+  }
+  
+  def _D : NeonI_STN_Lane<r, 0b10, op0,
+                          !cast<RegisterOperand>(List # "D_operand"),
+                          neon_uimm1_bare, asmop>{
+    let Inst{12-10} = 0b001;
+    let Inst{30} = lane{0};
+  }
+}
+
+// Store single 1-element structure from one lane of 1 register.
+defm ST1LN : STN_Lane_BHSD<0b0, 0b0, "VOne", "st1">;
+
+// Store single N-element structure from one lane of N consecutive registers
+// (N = 2,3,4)
+defm ST2LN : STN_Lane_BHSD<0b1, 0b0, "VPair", "st2">;
+defm ST3LN : STN_Lane_BHSD<0b0, 0b1, "VTriple", "st3">;
+defm ST4LN : STN_Lane_BHSD<0b1, 0b1, "VQuad", "st4">;
+
+multiclass ST1LN_patterns<ValueType VTy, ValueType VTy2, ValueType DTy,
+                          Operand ImmOp, Operand ImmOp2, PatFrag StoreOp,
+                          Instruction INST> {
+  def : Pat<(StoreOp (DTy (vector_extract (VTy VPR64:$Rt), ImmOp:$lane)),
+                     GPR64xsp:$Rn),
+            (INST GPR64xsp:$Rn,
+                  (SUBREG_TO_REG (i64 0), VPR64:$Rt, sub_64),
+                  ImmOp:$lane)>;
+
+  def : Pat<(StoreOp (DTy (vector_extract (VTy2 VPR128:$Rt), ImmOp2:$lane)),
+                     GPR64xsp:$Rn),
+            (INST GPR64xsp:$Rn, VPR128:$Rt, ImmOp2:$lane)>;
+}
+
+// Match all ST1LN instructions
+defm : ST1LN_patterns<v8i8, v16i8, i32, neon_uimm3_bare, neon_uimm4_bare,
+                      truncstorei8, ST1LN_B>;
+
+defm : ST1LN_patterns<v4i16, v8i16, i32, neon_uimm2_bare, neon_uimm3_bare,
+                      truncstorei16, ST1LN_H>;
+
+defm : ST1LN_patterns<v2i32, v4i32, i32, neon_uimm1_bare, neon_uimm2_bare,
+                      store, ST1LN_S>;
+defm : ST1LN_patterns<v2f32, v4f32, f32, neon_uimm1_bare, neon_uimm2_bare,
+                      store, ST1LN_S>;
+
+defm : ST1LN_patterns<v1i64, v2i64, i64, neon_uimm0_bare, neon_uimm1_bare,
+                      store, ST1LN_D>;
+defm : ST1LN_patterns<v1f64, v2f64, f64, neon_uimm0_bare, neon_uimm1_bare,
+                      store, ST1LN_D>;
+
+// End of vector load/store single N-element structure (class SIMD lsone).
+
+
+// The following are post-index load/store single N-element instructions
+// (class SIMD lsone-post)
+
+multiclass NeonI_LDN_WB_Dup<bit q, bit r, bits<3> opcode, bits<2> size,
+                            RegisterOperand VecList, Operand ImmTy,
+                            string asmop> {
+  let mayLoad = 1, neverHasSideEffects = 1, Constraints = "$wb = $Rn",
+  DecoderMethod = "DecodeVLDSTLanePostInstruction" in {
+    def _fixed : NeonI_LdOne_Dup_Post<q, r, opcode, size,
+                      (outs VecList:$Rt, GPR64xsp:$wb),
+                      (ins GPR64xsp:$Rn, ImmTy:$amt),
+                      asmop # "\t$Rt, [$Rn], $amt",
+                      [],
+                      NoItinerary> {
+                        let Rm = 0b11111;
+                      }
+
+    def _register : NeonI_LdOne_Dup_Post<q, r, opcode, size,
+                      (outs VecList:$Rt, GPR64xsp:$wb),
+                      (ins GPR64xsp:$Rn, GPR64noxzr:$Rm),
+                      asmop # "\t$Rt, [$Rn], $Rm",
+                      [],
+                      NoItinerary>;
+  }
+}
+
+multiclass LDWB_Dup_BHSD<bit r, bits<3> opcode, string List, string asmop,
+                         Operand uimm_b, Operand uimm_h,
+                         Operand uimm_s, Operand uimm_d> {
+  defm _8B : NeonI_LDN_WB_Dup<0, r, opcode, 0b00,
+                              !cast<RegisterOperand>(List # "8B_operand"),
+                              uimm_b, asmop>;
+
+  defm _4H : NeonI_LDN_WB_Dup<0, r, opcode, 0b01,
+                              !cast<RegisterOperand>(List # "4H_operand"),
+                              uimm_h, asmop>;
+
+  defm _2S : NeonI_LDN_WB_Dup<0, r, opcode, 0b10,
+                              !cast<RegisterOperand>(List # "2S_operand"),
+                              uimm_s, asmop>;
+
+  defm _1D : NeonI_LDN_WB_Dup<0, r, opcode, 0b11,
+                              !cast<RegisterOperand>(List # "1D_operand"),
+                              uimm_d, asmop>;
+
+  defm _16B : NeonI_LDN_WB_Dup<1, r, opcode, 0b00,
+                               !cast<RegisterOperand>(List # "16B_operand"),
+                               uimm_b, asmop>;
+
+  defm _8H : NeonI_LDN_WB_Dup<1, r, opcode, 0b01,
+                              !cast<RegisterOperand>(List # "8H_operand"),
+                              uimm_h, asmop>;
+
+  defm _4S : NeonI_LDN_WB_Dup<1, r, opcode, 0b10,
+                              !cast<RegisterOperand>(List # "4S_operand"),
+                              uimm_s, asmop>;
+
+  defm _2D : NeonI_LDN_WB_Dup<1, r, opcode, 0b11,
+                              !cast<RegisterOperand>(List # "2D_operand"),
+                              uimm_d, asmop>;
+}
+
+// Post-index load single 1-element structure to all lanes of 1 register
+defm LD1R_WB : LDWB_Dup_BHSD<0b0, 0b110, "VOne", "ld1r", uimm_exact1,
+                             uimm_exact2, uimm_exact4, uimm_exact8>;
+
+// Post-index load single N-element structure to all lanes of N consecutive 
+// registers (N = 2,3,4)
+defm LD2R_WB : LDWB_Dup_BHSD<0b1, 0b110, "VPair", "ld2r", uimm_exact2,
+                             uimm_exact4, uimm_exact8, uimm_exact16>;
+defm LD3R_WB : LDWB_Dup_BHSD<0b0, 0b111, "VTriple", "ld3r", uimm_exact3,
+                             uimm_exact6, uimm_exact12, uimm_exact24>;
+defm LD4R_WB : LDWB_Dup_BHSD<0b1, 0b111, "VQuad", "ld4r", uimm_exact4,
+                             uimm_exact8, uimm_exact16, uimm_exact32>;
+
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1, 
+    Constraints = "$Rn = $wb, $Rt = $src",
+    DecoderMethod = "DecodeVLDSTLanePostInstruction" in {
+  class LDN_WBFx_Lane<bit r, bits<2> op2_1, bit op0, RegisterOperand VList,
+                                Operand ImmTy, Operand ImmOp, string asmop>
+      : NeonI_LdStOne_Lane_Post<1, r, op2_1, op0,
+                                (outs VList:$Rt, GPR64xsp:$wb),
+                                (ins GPR64xsp:$Rn, ImmTy:$amt,
+                                    VList:$src, ImmOp:$lane),
+                                asmop # "\t$Rt[$lane], [$Rn], $amt",
+                                [],
+                                NoItinerary> {
+    let Rm = 0b11111;
+  }
+
+  class LDN_WBReg_Lane<bit r, bits<2> op2_1, bit op0, RegisterOperand VList,
+                                 Operand ImmTy, Operand ImmOp, string asmop>
+      : NeonI_LdStOne_Lane_Post<1, r, op2_1, op0,
+                                (outs VList:$Rt, GPR64xsp:$wb),
+                                (ins GPR64xsp:$Rn, GPR64noxzr:$Rm,
+                                    VList:$src, ImmOp:$lane),
+                                asmop # "\t$Rt[$lane], [$Rn], $Rm",
+                                [],
+                                NoItinerary>;
+}
+
+multiclass LD_Lane_WB_BHSD<bit r, bit op0, string List, string asmop,
+                           Operand uimm_b, Operand uimm_h,
+                           Operand uimm_s, Operand uimm_d> {
+  def _B_fixed : LDN_WBFx_Lane<r, 0b00, op0,
+                               !cast<RegisterOperand>(List # "B_operand"),
+                               uimm_b, neon_uimm4_bare, asmop> {
+    let Inst{12-10} = lane{2-0};
+    let Inst{30} = lane{3};
+  }
+
+  def _B_register : LDN_WBReg_Lane<r, 0b00, op0,
+                                   !cast<RegisterOperand>(List # "B_operand"),
+                                   uimm_b, neon_uimm4_bare, asmop> {
+    let Inst{12-10} = lane{2-0};
+    let Inst{30} = lane{3};
+  }
+  
+  def _H_fixed : LDN_WBFx_Lane<r, 0b01, op0,
+                               !cast<RegisterOperand>(List # "H_operand"),
+                               uimm_h, neon_uimm3_bare, asmop> {
+    let Inst{12-10} = {lane{1}, lane{0}, 0b0};
+    let Inst{30} = lane{2};
+  }
+  
+  def _H_register : LDN_WBReg_Lane<r, 0b01, op0,
+                                   !cast<RegisterOperand>(List # "H_operand"),
+                                   uimm_h, neon_uimm3_bare, asmop> {
+    let Inst{12-10} = {lane{1}, lane{0}, 0b0};
+    let Inst{30} = lane{2};
+  }
+
+  def _S_fixed : LDN_WBFx_Lane<r, 0b10, op0,
+                               !cast<RegisterOperand>(List # "S_operand"),
+                               uimm_s, neon_uimm2_bare, asmop> {
+    let Inst{12-10} = {lane{0}, 0b0, 0b0};
+    let Inst{30} = lane{1};
+  }
+
+  def _S_register : LDN_WBReg_Lane<r, 0b10, op0,
+                                   !cast<RegisterOperand>(List # "S_operand"),
+                                   uimm_s, neon_uimm2_bare, asmop> {
+    let Inst{12-10} = {lane{0}, 0b0, 0b0};
+    let Inst{30} = lane{1};
+  }
+  
+  def _D_fixed : LDN_WBFx_Lane<r, 0b10, op0,
+                               !cast<RegisterOperand>(List # "D_operand"),
+                               uimm_d, neon_uimm1_bare, asmop> {
+    let Inst{12-10} = 0b001;
+    let Inst{30} = lane{0};
+  }
+
+  def _D_register : LDN_WBReg_Lane<r, 0b10, op0,
+                                   !cast<RegisterOperand>(List # "D_operand"),
+                                   uimm_d, neon_uimm1_bare, asmop> {
+    let Inst{12-10} = 0b001;
+    let Inst{30} = lane{0};
+  }
+}
+
+// Post-index load single 1-element structure to one lane of 1 register.
+defm LD1LN_WB : LD_Lane_WB_BHSD<0b0, 0b0, "VOne", "ld1", uimm_exact1,
+                                uimm_exact2, uimm_exact4, uimm_exact8>;
+
+// Post-index load single N-element structure to one lane of N consecutive
+// registers
+// (N = 2,3,4)
+defm LD2LN_WB : LD_Lane_WB_BHSD<0b1, 0b0, "VPair", "ld2", uimm_exact2,
+                                uimm_exact4, uimm_exact8, uimm_exact16>;
+defm LD3LN_WB : LD_Lane_WB_BHSD<0b0, 0b1, "VTriple", "ld3", uimm_exact3,
+                                uimm_exact6, uimm_exact12, uimm_exact24>;
+defm LD4LN_WB : LD_Lane_WB_BHSD<0b1, 0b1, "VQuad", "ld4", uimm_exact4,
+                                uimm_exact8, uimm_exact16, uimm_exact32>;
+
+let mayStore = 1, neverHasSideEffects = 1,
+    hasExtraDefRegAllocReq = 1, Constraints = "$Rn = $wb",
+    DecoderMethod = "DecodeVLDSTLanePostInstruction" in {
+  class STN_WBFx_Lane<bit r, bits<2> op2_1, bit op0, RegisterOperand VList,
+                      Operand ImmTy, Operand ImmOp, string asmop>
+      : NeonI_LdStOne_Lane_Post<0, r, op2_1, op0,
+                                (outs GPR64xsp:$wb),
+                                (ins GPR64xsp:$Rn, ImmTy:$amt,
+                                    VList:$Rt, ImmOp:$lane),
+                                asmop # "\t$Rt[$lane], [$Rn], $amt",
+                                [],
+                                NoItinerary> {
+    let Rm = 0b11111;
+  }
+
+  class STN_WBReg_Lane<bit r, bits<2> op2_1, bit op0, RegisterOperand VList,
+                       Operand ImmTy, Operand ImmOp, string asmop>
+      : NeonI_LdStOne_Lane_Post<0, r, op2_1, op0,
+                                (outs GPR64xsp:$wb),
+                                (ins GPR64xsp:$Rn, GPR64noxzr:$Rm, VList:$Rt,
+                                    ImmOp:$lane),
+                                asmop # "\t$Rt[$lane], [$Rn], $Rm",
+                                [],
+                                NoItinerary>;
+}
+
+multiclass ST_Lane_WB_BHSD<bit r, bit op0, string List, string asmop,
+                           Operand uimm_b, Operand uimm_h,
+                           Operand uimm_s, Operand uimm_d> {
+  def _B_fixed : STN_WBFx_Lane<r, 0b00, op0,
+                               !cast<RegisterOperand>(List # "B_operand"),
+                               uimm_b, neon_uimm4_bare, asmop> {
+    let Inst{12-10} = lane{2-0};
+    let Inst{30} = lane{3};
+  }
+
+  def _B_register : STN_WBReg_Lane<r, 0b00, op0,
+                                   !cast<RegisterOperand>(List # "B_operand"),
+                                   uimm_b, neon_uimm4_bare, asmop> {
+    let Inst{12-10} = lane{2-0};
+    let Inst{30} = lane{3};
+  }
+  
+  def _H_fixed : STN_WBFx_Lane<r, 0b01, op0,
+                               !cast<RegisterOperand>(List # "H_operand"),
+                               uimm_h, neon_uimm3_bare, asmop> {
+    let Inst{12-10} = {lane{1}, lane{0}, 0b0};
+    let Inst{30} = lane{2};
+  }
+  
+  def _H_register : STN_WBReg_Lane<r, 0b01, op0,
+                                   !cast<RegisterOperand>(List # "H_operand"),
+                                   uimm_h, neon_uimm3_bare, asmop> {
+    let Inst{12-10} = {lane{1}, lane{0}, 0b0};
+    let Inst{30} = lane{2};
+  }
+
+  def _S_fixed : STN_WBFx_Lane<r, 0b10, op0,
+                               !cast<RegisterOperand>(List # "S_operand"),
+                               uimm_s, neon_uimm2_bare, asmop> {
+    let Inst{12-10} = {lane{0}, 0b0, 0b0};
+    let Inst{30} = lane{1};
+  }
+
+  def _S_register : STN_WBReg_Lane<r, 0b10, op0,
+                                   !cast<RegisterOperand>(List # "S_operand"),
+                                   uimm_s, neon_uimm2_bare, asmop> {
+    let Inst{12-10} = {lane{0}, 0b0, 0b0};
+    let Inst{30} = lane{1};
+  }
+  
+  def _D_fixed : STN_WBFx_Lane<r, 0b10, op0,
+                               !cast<RegisterOperand>(List # "D_operand"),
+                               uimm_d, neon_uimm1_bare, asmop> {
+    let Inst{12-10} = 0b001;
+    let Inst{30} = lane{0};
+  }
+
+  def _D_register : STN_WBReg_Lane<r, 0b10, op0,
+                                   !cast<RegisterOperand>(List # "D_operand"),
+                                   uimm_d, neon_uimm1_bare, asmop> {
+    let Inst{12-10} = 0b001;
+    let Inst{30} = lane{0};
+  }
+}
+
+// Post-index store single 1-element structure from one lane of 1 register.
+defm ST1LN_WB : ST_Lane_WB_BHSD<0b0, 0b0, "VOne", "st1", uimm_exact1,
+                                uimm_exact2, uimm_exact4, uimm_exact8>;
+
+// Post-index store single N-element structure from one lane of N consecutive
+// registers (N = 2,3,4)
+defm ST2LN_WB : ST_Lane_WB_BHSD<0b1, 0b0, "VPair", "st2", uimm_exact2,
+                                uimm_exact4, uimm_exact8, uimm_exact16>;
+defm ST3LN_WB : ST_Lane_WB_BHSD<0b0, 0b1, "VTriple", "st3", uimm_exact3,
+                                uimm_exact6, uimm_exact12, uimm_exact24>;
+defm ST4LN_WB : ST_Lane_WB_BHSD<0b1, 0b1, "VQuad", "st4", uimm_exact4,
+                                uimm_exact8, uimm_exact16, uimm_exact32>;
+
+// End of post-index load/store single N-element instructions
+// (class SIMD lsone-post)
 
 // Neon Scalar instructions implementation
 // Scalar Three Same
@@ -4737,36 +5359,6 @@ defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vpfmaxnm,
 defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vpfminnm, 
   int_aarch64_neon_vpfminnmq, FMINNMPvv_S_2S, FMINNMPvv_D_2D>;
 
-def neon_uimm0_bare : Operand<i64>,
-                        ImmLeaf<i64, [{return Imm == 0;}]> {
-  let ParserMatchClass = neon_uimm0_asmoperand;
-  let PrintMethod = "printUImmBareOperand";
-}
-
-def neon_uimm1_bare : Operand<i64>,
-                        ImmLeaf<i64, [{return Imm < 2;}]> {
-  let ParserMatchClass = neon_uimm1_asmoperand;
-  let PrintMethod = "printUImmBareOperand";
-}
-
-def neon_uimm2_bare : Operand<i64>,
-                        ImmLeaf<i64, [{return Imm < 4;}]> {
-  let ParserMatchClass = neon_uimm2_asmoperand;
-  let PrintMethod = "printUImmBareOperand";
-}
-
-def neon_uimm3_bare : Operand<i64>,
-                        ImmLeaf<i64, [{return Imm < 8;}]> {
-  let ParserMatchClass = uimm3_asmoperand;
-  let PrintMethod = "printUImmBareOperand";
-}
-
-def neon_uimm4_bare : Operand<i64>,
-                        ImmLeaf<i64, [{return Imm < 16;}]> {
-  let ParserMatchClass = uimm4_asmoperand;
-  let PrintMethod = "printUImmBareOperand";
-}
-
 
 // Scalar by element Arithmetic
 
@@ -5315,6 +5907,8 @@ def : Pat<(v4i32  (bitconvert (f128   FPR128:$src))), (v4i32 FPR128:$src)>;
 def : Pat<(v2i64  (bitconvert (f128   FPR128:$src))), (v2i64 FPR128:$src)>;
 def : Pat<(v4f32  (bitconvert (f128   FPR128:$src))), (v4f32 FPR128:$src)>;
 def : Pat<(v2f64  (bitconvert (f128   FPR128:$src))), (v2f64 FPR128:$src)>;
+
+// Scalar Three Same
 
 def neon_uimm3 : Operand<i64>,
                    ImmLeaf<i64, [{return Imm < 8;}]> {

@@ -949,6 +949,30 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "AArch64ISD::NEON_ST1x3_UPD";
   case AArch64ISD::NEON_ST1x4_UPD:
     return "AArch64ISD::NEON_ST1x4_UPD";
+  case AArch64ISD::NEON_LD2DUP:
+    return "AArch64ISD::NEON_LD2DUP";
+  case AArch64ISD::NEON_LD3DUP:
+    return "AArch64ISD::NEON_LD3DUP";
+  case AArch64ISD::NEON_LD4DUP:
+    return "AArch64ISD::NEON_LD4DUP";
+  case AArch64ISD::NEON_LD2DUP_UPD:
+    return "AArch64ISD::NEON_LD2DUP_UPD";
+  case AArch64ISD::NEON_LD3DUP_UPD:
+    return "AArch64ISD::NEON_LD3DUP_UPD";
+  case AArch64ISD::NEON_LD4DUP_UPD:
+    return "AArch64ISD::NEON_LD4DUP_UPD";
+  case AArch64ISD::NEON_LD2LN_UPD:
+    return "AArch64ISD::NEON_LD2LN_UPD";
+  case AArch64ISD::NEON_LD3LN_UPD:
+    return "AArch64ISD::NEON_LD3LN_UPD";
+  case AArch64ISD::NEON_LD4LN_UPD:
+    return "AArch64ISD::NEON_LD4LN_UPD";
+  case AArch64ISD::NEON_ST2LN_UPD:
+    return "AArch64ISD::NEON_ST2LN_UPD";
+  case AArch64ISD::NEON_ST3LN_UPD:
+    return "AArch64ISD::NEON_ST3LN_UPD";
+  case AArch64ISD::NEON_ST4LN_UPD:
+    return "AArch64ISD::NEON_ST4LN_UPD";
   case AArch64ISD::NEON_VEXTRACT:
     return "AArch64ISD::NEON_VEXTRACT";
   default:
@@ -3518,7 +3542,9 @@ static SDValue CombineBaseUpdate(SDNode *N,
     return SDValue();
 
   SelectionDAG &DAG = DCI.DAG;
-  unsigned AddrOpIdx = 2;
+  bool isIntrinsic = (N->getOpcode() == ISD::INTRINSIC_VOID ||
+                      N->getOpcode() == ISD::INTRINSIC_W_CHAIN);
+  unsigned AddrOpIdx = (isIntrinsic ? 2 : 1);
   SDValue Addr = N->getOperand(AddrOpIdx);
 
   // Search for a use of the address operand that is an increment.
@@ -3536,39 +3562,65 @@ static SDValue CombineBaseUpdate(SDNode *N,
 
     // Find the new opcode for the updating load/store.
     bool isLoad = true;
+    bool isLaneOp = false;
     unsigned NewOpc = 0;
     unsigned NumVecs = 0;
-    unsigned IntNo = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
-    switch (IntNo) {
-    default: llvm_unreachable("unexpected intrinsic for Neon base update");
-    case Intrinsic::arm_neon_vld1:     NewOpc = AArch64ISD::NEON_LD1_UPD;
-      NumVecs = 1; break;
-    case Intrinsic::arm_neon_vld2:     NewOpc = AArch64ISD::NEON_LD2_UPD;
-      NumVecs = 2; break;
-    case Intrinsic::arm_neon_vld3:     NewOpc = AArch64ISD::NEON_LD3_UPD;
-      NumVecs = 3; break;
-    case Intrinsic::arm_neon_vld4:     NewOpc = AArch64ISD::NEON_LD4_UPD;
-      NumVecs = 4; break;
-    case Intrinsic::arm_neon_vst1:     NewOpc = AArch64ISD::NEON_ST1_UPD;
-      NumVecs = 1; isLoad = false; break;
-    case Intrinsic::arm_neon_vst2:     NewOpc = AArch64ISD::NEON_ST2_UPD;
-      NumVecs = 2; isLoad = false; break;
-    case Intrinsic::arm_neon_vst3:     NewOpc = AArch64ISD::NEON_ST3_UPD;
-      NumVecs = 3; isLoad = false; break;
-    case Intrinsic::arm_neon_vst4:     NewOpc = AArch64ISD::NEON_ST4_UPD;
-      NumVecs = 4; isLoad = false; break;
-    case Intrinsic::aarch64_neon_vld1x2: NewOpc = AArch64ISD::NEON_LD1x2_UPD;
-      NumVecs = 2; break;
-    case Intrinsic::aarch64_neon_vld1x3: NewOpc = AArch64ISD::NEON_LD1x3_UPD;
-      NumVecs = 3; break;
-    case Intrinsic::aarch64_neon_vld1x4: NewOpc = AArch64ISD::NEON_LD1x4_UPD;
-      NumVecs = 4; break;
-    case Intrinsic::aarch64_neon_vst1x2: NewOpc = AArch64ISD::NEON_ST1x2_UPD;
-      NumVecs = 2; isLoad = false; break;
-    case Intrinsic::aarch64_neon_vst1x3: NewOpc = AArch64ISD::NEON_ST1x3_UPD;
-      NumVecs = 3; isLoad = false; break;
-    case Intrinsic::aarch64_neon_vst1x4: NewOpc = AArch64ISD::NEON_ST1x4_UPD;
-      NumVecs = 4; isLoad = false; break;
+    if (isIntrinsic) {
+      unsigned IntNo = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
+      switch (IntNo) {
+      default: llvm_unreachable("unexpected intrinsic for Neon base update");
+      case Intrinsic::arm_neon_vld1:       NewOpc = AArch64ISD::NEON_LD1_UPD;
+        NumVecs = 1; break;
+      case Intrinsic::arm_neon_vld2:       NewOpc = AArch64ISD::NEON_LD2_UPD;
+        NumVecs = 2; break;
+      case Intrinsic::arm_neon_vld3:       NewOpc = AArch64ISD::NEON_LD3_UPD;
+        NumVecs = 3; break;
+      case Intrinsic::arm_neon_vld4:       NewOpc = AArch64ISD::NEON_LD4_UPD;
+        NumVecs = 4; break;
+      case Intrinsic::arm_neon_vst1:       NewOpc = AArch64ISD::NEON_ST1_UPD;
+        NumVecs = 1; isLoad = false; break;
+      case Intrinsic::arm_neon_vst2:       NewOpc = AArch64ISD::NEON_ST2_UPD;
+        NumVecs = 2; isLoad = false; break;
+      case Intrinsic::arm_neon_vst3:       NewOpc = AArch64ISD::NEON_ST3_UPD;
+        NumVecs = 3; isLoad = false; break;
+      case Intrinsic::arm_neon_vst4:       NewOpc = AArch64ISD::NEON_ST4_UPD;
+        NumVecs = 4; isLoad = false; break;
+      case Intrinsic::aarch64_neon_vld1x2: NewOpc = AArch64ISD::NEON_LD1x2_UPD;
+        NumVecs = 2; break;
+      case Intrinsic::aarch64_neon_vld1x3: NewOpc = AArch64ISD::NEON_LD1x3_UPD;
+        NumVecs = 3; break;
+      case Intrinsic::aarch64_neon_vld1x4: NewOpc = AArch64ISD::NEON_LD1x4_UPD;
+        NumVecs = 4; break;
+      case Intrinsic::aarch64_neon_vst1x2: NewOpc = AArch64ISD::NEON_ST1x2_UPD;
+        NumVecs = 2; isLoad = false; break;
+      case Intrinsic::aarch64_neon_vst1x3: NewOpc = AArch64ISD::NEON_ST1x3_UPD;
+        NumVecs = 3; isLoad = false; break;
+      case Intrinsic::aarch64_neon_vst1x4: NewOpc = AArch64ISD::NEON_ST1x4_UPD;
+        NumVecs = 4; isLoad = false; break;
+      case Intrinsic::arm_neon_vld2lane:   NewOpc = AArch64ISD::NEON_LD2LN_UPD;
+        NumVecs = 2; isLaneOp = true; break;
+      case Intrinsic::arm_neon_vld3lane:   NewOpc = AArch64ISD::NEON_LD3LN_UPD;
+        NumVecs = 3; isLaneOp = true; break;
+      case Intrinsic::arm_neon_vld4lane:   NewOpc = AArch64ISD::NEON_LD4LN_UPD;
+        NumVecs = 4; isLaneOp = true; break;
+      case Intrinsic::arm_neon_vst2lane:   NewOpc = AArch64ISD::NEON_ST2LN_UPD;
+        NumVecs = 2; isLoad = false; isLaneOp = true; break;
+      case Intrinsic::arm_neon_vst3lane:   NewOpc = AArch64ISD::NEON_ST3LN_UPD;
+        NumVecs = 3; isLoad = false; isLaneOp = true; break;
+      case Intrinsic::arm_neon_vst4lane:   NewOpc = AArch64ISD::NEON_ST4LN_UPD;
+        NumVecs = 4; isLoad = false; isLaneOp = true; break;
+      }
+    } else {
+      isLaneOp = true;
+      switch (N->getOpcode()) {
+      default: llvm_unreachable("unexpected opcode for Neon base update");
+      case AArch64ISD::NEON_LD2DUP: NewOpc = AArch64ISD::NEON_LD2DUP_UPD;
+        NumVecs = 2; break;
+      case AArch64ISD::NEON_LD3DUP: NewOpc = AArch64ISD::NEON_LD3DUP_UPD;
+        NumVecs = 3; break;
+      case AArch64ISD::NEON_LD4DUP: NewOpc = AArch64ISD::NEON_LD4DUP_UPD;
+        NumVecs = 4; break;
+      }
     }
 
     // Find the size of memory referenced by the load/store.
@@ -3578,6 +3630,8 @@ static SDValue CombineBaseUpdate(SDNode *N,
     else
       VecTy = N->getOperand(AddrOpIdx + 1).getValueType();
     unsigned NumBytes = NumVecs * VecTy.getSizeInBits() / 8;
+    if (isLaneOp)
+      NumBytes /= VecTy.getVectorNumElements();
 
     // If the increment is a constant, it must match the memory ref size.
     SDValue Inc = User->getOperand(User->getOperand(0) == Addr ? 1 : 0);
@@ -3624,6 +3678,83 @@ static SDValue CombineBaseUpdate(SDNode *N,
   return SDValue();
 }
 
+/// For a VDUPLANE node N, check if its source operand is a vldN-lane (N > 1)
+/// intrinsic, and if all the other uses of that intrinsic are also VDUPLANEs.
+/// If so, combine them to a vldN-dup operation and return true.
+static SDValue CombineVLDDUP(SDNode *N, TargetLowering::DAGCombinerInfo &DCI) {
+  SelectionDAG &DAG = DCI.DAG;
+  EVT VT = N->getValueType(0);
+
+  // Check if the VDUPLANE operand is a vldN-dup intrinsic.
+  SDNode *VLD = N->getOperand(0).getNode();
+  if (VLD->getOpcode() != ISD::INTRINSIC_W_CHAIN)
+    return SDValue();
+  unsigned NumVecs = 0;
+  unsigned NewOpc = 0;
+  unsigned IntNo = cast<ConstantSDNode>(VLD->getOperand(1))->getZExtValue();
+  if (IntNo == Intrinsic::arm_neon_vld2lane) {
+    NumVecs = 2;
+    NewOpc = AArch64ISD::NEON_LD2DUP;
+  } else if (IntNo == Intrinsic::arm_neon_vld3lane) {
+    NumVecs = 3;
+    NewOpc = AArch64ISD::NEON_LD3DUP;
+  } else if (IntNo == Intrinsic::arm_neon_vld4lane) {
+    NumVecs = 4;
+    NewOpc = AArch64ISD::NEON_LD4DUP;
+  } else {
+    return SDValue();
+  }
+
+  // First check that all the vldN-lane uses are VDUPLANEs and that the lane
+  // numbers match the load.
+  unsigned VLDLaneNo =
+      cast<ConstantSDNode>(VLD->getOperand(NumVecs + 3))->getZExtValue();
+  for (SDNode::use_iterator UI = VLD->use_begin(), UE = VLD->use_end();
+       UI != UE; ++UI) {
+    // Ignore uses of the chain result.
+    if (UI.getUse().getResNo() == NumVecs)
+      continue;
+    SDNode *User = *UI;
+    if (User->getOpcode() != AArch64ISD::NEON_VDUPLANE ||
+        VLDLaneNo != cast<ConstantSDNode>(User->getOperand(1))->getZExtValue())
+      return SDValue();
+  }
+
+  // Create the vldN-dup node.
+  EVT Tys[5];
+  unsigned n;
+  for (n = 0; n < NumVecs; ++n)
+    Tys[n] = VT;
+  Tys[n] = MVT::Other;
+  SDVTList SDTys = DAG.getVTList(Tys, NumVecs + 1);
+  SDValue Ops[] = { VLD->getOperand(0), VLD->getOperand(2) };
+  MemIntrinsicSDNode *VLDMemInt = cast<MemIntrinsicSDNode>(VLD);
+  SDValue VLDDup = DAG.getMemIntrinsicNode(NewOpc, SDLoc(VLD), SDTys, Ops, 2,
+                                           VLDMemInt->getMemoryVT(),
+                                           VLDMemInt->getMemOperand());
+
+  // Update the uses.
+  for (SDNode::use_iterator UI = VLD->use_begin(), UE = VLD->use_end();
+       UI != UE; ++UI) {
+    unsigned ResNo = UI.getUse().getResNo();
+    // Ignore uses of the chain result.
+    if (ResNo == NumVecs)
+      continue;
+    SDNode *User = *UI;
+    DCI.CombineTo(User, SDValue(VLDDup.getNode(), ResNo));
+  }
+
+  // Now the vldN-lane intrinsic is dead except for its chain result.
+  // Update uses of the chain.
+  std::vector<SDValue> VLDDupResults;
+  for (unsigned n = 0; n < NumVecs; ++n)
+    VLDDupResults.push_back(SDValue(VLDDup.getNode(), n));
+  VLDDupResults.push_back(SDValue(VLDDup.getNode(), NumVecs));
+  DCI.CombineTo(VLD, VLDDupResults);
+
+  return SDValue(N, 0);
+}
+
 SDValue
 AArch64TargetLowering::PerformDAGCombine(SDNode *N,
                                          DAGCombinerInfo &DCI) const {
@@ -3637,6 +3768,12 @@ AArch64TargetLowering::PerformDAGCombine(SDNode *N,
     return PerformShiftCombine(N, DCI, getSubtarget());
   case ISD::INTRINSIC_WO_CHAIN:
     return PerformIntrinsicCombine(N, DCI.DAG);
+  case AArch64ISD::NEON_VDUPLANE:
+    return CombineVLDDUP(N, DCI);
+  case AArch64ISD::NEON_LD2DUP:
+  case AArch64ISD::NEON_LD3DUP:
+  case AArch64ISD::NEON_LD4DUP:
+    return CombineBaseUpdate(N, DCI);
   case ISD::INTRINSIC_VOID:
   case ISD::INTRINSIC_W_CHAIN:
     switch (cast<ConstantSDNode>(N->getOperand(1))->getZExtValue()) {
@@ -3648,12 +3785,18 @@ AArch64TargetLowering::PerformDAGCombine(SDNode *N,
     case Intrinsic::arm_neon_vst2:
     case Intrinsic::arm_neon_vst3:
     case Intrinsic::arm_neon_vst4:
+    case Intrinsic::arm_neon_vld2lane:
+    case Intrinsic::arm_neon_vld3lane:
+    case Intrinsic::arm_neon_vld4lane:
     case Intrinsic::aarch64_neon_vld1x2:
     case Intrinsic::aarch64_neon_vld1x3:
     case Intrinsic::aarch64_neon_vld1x4:
     case Intrinsic::aarch64_neon_vst1x2:
     case Intrinsic::aarch64_neon_vst1x3:
     case Intrinsic::aarch64_neon_vst1x4:
+    case Intrinsic::arm_neon_vst2lane:
+    case Intrinsic::arm_neon_vst3lane:
+    case Intrinsic::arm_neon_vst4lane:
       return CombineBaseUpdate(N, DCI);
     default:
       break;
@@ -4203,7 +4346,10 @@ bool AArch64TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
   case Intrinsic::arm_neon_vld4:
   case Intrinsic::aarch64_neon_vld1x2:
   case Intrinsic::aarch64_neon_vld1x3:
-  case Intrinsic::aarch64_neon_vld1x4: {
+  case Intrinsic::aarch64_neon_vld1x4:
+  case Intrinsic::arm_neon_vld2lane:
+  case Intrinsic::arm_neon_vld3lane:
+  case Intrinsic::arm_neon_vld4lane: {
     Info.opc = ISD::INTRINSIC_W_CHAIN;
     // Conservatively set memVT to the entire set of vectors loaded.
     uint64_t NumElts = getDataLayout()->getTypeAllocSize(I.getType()) / 8;
@@ -4223,7 +4369,10 @@ bool AArch64TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
   case Intrinsic::arm_neon_vst4:
   case Intrinsic::aarch64_neon_vst1x2:
   case Intrinsic::aarch64_neon_vst1x3:
-  case Intrinsic::aarch64_neon_vst1x4: {
+  case Intrinsic::aarch64_neon_vst1x4:
+  case Intrinsic::arm_neon_vst2lane:
+  case Intrinsic::arm_neon_vst3lane:
+  case Intrinsic::arm_neon_vst4lane: {
     Info.opc = ISD::INTRINSIC_VOID;
     // Conservatively set memVT to the entire set of vectors stored.
     unsigned NumElts = 0;

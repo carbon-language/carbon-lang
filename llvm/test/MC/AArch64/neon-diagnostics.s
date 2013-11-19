@@ -4170,6 +4170,125 @@
 // CHECK-ERROR:          st4 {v31.2d, v0.2d, v1.2d, v2.1d}, [x3], x1
 // CHECK-ERROR:                                     ^
 
+//------------------------------------------------------------------------------
+// Load single N-element structure to all lanes of N consecutive
+// registers (N = 1,2,3,4)
+//------------------------------------------------------------------------------
+         ld1r {x1}, [x0]
+         ld2r {v31.4s, v0.2s}, [sp]
+         ld3r {v0.8b, v1.8b, v2.8b, v3.8b}, [x0]
+         ld4r {v31.2s, v0.2s, v1.2d, v2.2s}, [sp]
+// CHECK-ERROR: error: expected vector type register
+// CHECK-ERROR: ld1r {x1}, [x0]
+// CHECK-ERROR:       ^
+// CHECK-ERROR: error: invalid space between two vectors
+// CHECK-ERROR: ld2r {v31.4s, v0.2s}, [sp]
+// CHECK-ERROR:               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: ld3r {v0.8b, v1.8b, v2.8b, v3.8b}, [x0]
+// CHECK-ERROR:      ^
+// CHECK-ERROR: error: invalid space between two vectors
+// CHECK-ERROR: ld4r {v31.2s, v0.2s, v1.2d, v2.2s}, [sp]
+// CHECK-ERROR:                      ^
+
+//------------------------------------------------------------------------------
+// Load/Store single N-element structure to/from one lane of N consecutive
+// registers (N = 1, 2,3,4)
+//------------------------------------------------------------------------------
+         ld1 {v0.b}[16], [x0]
+         ld2 {v15.h, v16.h}[8], [x15]
+         ld3 {v31.s, v0.s, v1.s}[-1], [sp]
+         ld4 {v0.d, v1.d, v2.d, v3.d}[2], [x0]
+// CHECK-ERROR:: error: lane number incompatible with layout
+// CHECK-ERROR: ld1 {v0.b}[16], [x0]
+// CHECK-ERROR:            ^
+// CHECK-ERROR: error: lane number incompatible with layout
+// CHECK-ERROR: ld2 {v15.h, v16.h}[8], [x15]
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: expected lane number
+// CHECK-ERROR: ld3 {v31.s, v0.s, v1.s}[-1], [sp]
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: lane number incompatible with layout
+// CHECK-ERROR: ld4 {v0.d, v1.d, v2.d, v3.d}[2], [x0]
+// CHECK-ERROR:                              ^
+
+         st1 {v0.d}[16], [x0]
+         st2 {v31.s, v0.s}[3], [8]
+         st3 {v15.h, v16.h, v17.h}[-1], [x15]
+         st4 {v0.d, v1.d, v2.d, v3.d}[2], [x0]
+// CHECK-ERROR:: error: lane number incompatible with layout
+// CHECK-ERROR: st1 {v0.d}[16], [x0]
+// CHECK-ERROR:            ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: st2 {v31.s, v0.s}[3], [8]
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected lane number
+// CHECK-ERROR: st3 {v15.h, v16.h, v17.h}[-1], [x15]
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: lane number incompatible with layout
+// CHECK-ERROR: st4 {v0.d, v1.d, v2.d, v3.d}[2], [x0]
+// CHECK-ERROR:                              ^
+
+//------------------------------------------------------------------------------
+// Post-index of load single N-element structure to all lanes of N consecutive
+// registers (N = 1,2,3,4)
+//------------------------------------------------------------------------------
+         ld1r {v15.8h}, [x15], #5
+         ld2r {v0.2d, v1.2d}, [x0], #7
+         ld3r {v15.4h, v16.4h, v17.4h}, [x15], #1
+         ld4r {v31.1d, v0.1d, v1.1d, v2.1d}, [sp], sp
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: ld1r {v15.8h}, [x15], #5
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: ld2r {v0.2d, v1.2d}, [x0], #7
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: ld3r {v15.4h, v16.4h, v17.4h}, [x15], #1
+// CHECK-ERROR:                                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: ld4r {v31.1d, v0.1d, v1.1d, v2.1d}, [sp], sp
+// CHECK-ERROR:                                           ^
+
+//------------------------------------------------------------------------------
+// Post-index of Load/Store single N-element structure to/from one lane of N
+// consecutive registers (N = 1, 2,3,4)
+//------------------------------------------------------------------------------
+         ld1 {v0.b}[0], [x0], #2
+         ld2 {v15.h, v16.h}[0], [x15], #3
+         ld3 {v31.s, v0.s, v1.d}[0], [sp], x9
+         ld4 {v0.d, v1.d, v2.d, v3.d}[1], [x0], #24
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: ld1 {v0.b}[0], [x0], #2
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: ld2 {v15.h, v16.h}[0], [x15], #3
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: expected the same vector layout
+// CHECK-ERROR: ld3 {v31.s, v0.s, v1.d}[0], [sp], x9
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: ld4 {v0.d, v1.d, v2.d, v3.d}[1], [x0], #24
+// CHECK-ERROR:                                        ^
+
+         st1 {v0.d}[0], [x0], #7
+         st2 {v31.s, v0.s}[0], [sp], #6
+         st3 {v15.h, v16.h, v17.h}[0], [x15], #8
+         st4 {v0.b, v1.b, v2.b, v3.b}[1], [x0], #1
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: st1 {v0.d}[0], [x0], #7
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: st2 {v31.s, v0.s}[0], [sp], #6
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: st3 {v15.h, v16.h, v17.h}[0], [x15], #8
+// CHECK-ERROR:                                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: st4 {v0.b, v1.b, v2.b, v3.b}[1], [x0], #1
+// CHECK-ERROR:                                        ^
+
+
          ins v2.b[16], w1
          ins v7.h[8], w14
          ins v20.s[5], w30
