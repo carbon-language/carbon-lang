@@ -23,7 +23,6 @@ public:
 
 // This part is for ascii assembly output
 class MipsTargetAsmStreamer : public MipsTargetStreamer {
-  formatted_raw_ostream &OS;
 
 public:
   MipsTargetAsmStreamer(formatted_raw_ostream &OS);
