@@ -207,11 +207,6 @@ static inline bool isCFStringType(QualType T, ASTContext &Ctx) {
   return RD->getIdentifier() == &Ctx.Idents.get("__CFString");
 }
 
-static inline bool isTollFreeBridgeCFRefType(TypedefNameDecl *TD, ASTContext &Ctx) {
-  StringRef TDName = TD->getIdentifier()->getName();
-  return (TDName.startswith("CF") && TDName.endswith("Ref"));
-}
-
 static unsigned getNumAttributeArgs(const AttributeList &Attr) {
   // FIXME: Include the type in the argument list.
   return Attr.getNumArgs() + Attr.hasParsedType();
@@ -4396,34 +4391,7 @@ static void handleNSBridgedAttr(Sema &S, Scope *Sc, Decl *D,
 
 static void handleObjCBridgeAttr(Sema &S, Scope *Sc, Decl *D,
                                 const AttributeList &Attr) {
-  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
-    QualType T = TD->getUnderlyingType();
-    if (T->isPointerType()) {
-      T = T->getPointeeType();
-      if (T->isRecordType()) {
-        RecordDecl *RD = T->getAs<RecordType>()->getDecl();
-        if (!RD || RD->isUnion()) {
-          S.Diag(D->getLocStart(), diag::err_objc_bridge_not_pointert_to_struct)
-          << Attr.getRange();
-          return;
-        }
-      } else {
-        S.Diag(TD->getLocStart(), diag::err_objc_bridge_not_pointert_to_struct)
-        << Attr.getRange();
-        return;
-      }
-    } else {
-      S.Diag(TD->getLocStart(), diag::err_objc_bridge_not_pointert_to_struct)
-            << Attr.getRange();
-      return;
-    }
-    // Check for T being a CFType goes here.
-    if (!isTollFreeBridgeCFRefType(TD, S.Context)) {
-      S.Diag(TD->getLocStart(), diag::err_objc_bridge_not_cftype);
-      return;
-    }
-  }
-  else {
+  if (!isa<RecordDecl>(D)) {
     S.Diag(D->getLocStart(), diag::err_objc_bridge_attribute);
     return;
   }

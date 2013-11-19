@@ -3165,15 +3165,26 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
     << castRange << castExpr->getSourceRange();
 }
 
+static inline ObjCBridgeAttr *getObjCBridgeAttr(const TypedefType *TD) {
+  TypedefNameDecl *TDNDecl = TD->getDecl();
+  QualType QT = TDNDecl->getUnderlyingType();
+  if (QT->isPointerType()) {
+    QT = QT->getPointeeType();
+    if (QT->isStructureType() || QT->isUnionType() || QT->isClassType())
+      if (RecordDecl *RD = QT->getAs<RecordType>()->getDecl())
+        if (RD->hasAttr<ObjCBridgeAttr>())
+          return RD->getAttr<ObjCBridgeAttr>();
+  }
+  return 0;
+}
+
 static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr) {
   QualType T = castExpr->getType();
   while (const TypedefType *TD = dyn_cast<TypedefType>(T.getTypePtr())) {
     TypedefNameDecl *TDNDecl = TD->getDecl();
-    if (TDNDecl->hasAttr<ObjCBridgeAttr>()) {
-      ObjCBridgeAttr *ObjCBAttr = TDNDecl->getAttr<ObjCBridgeAttr>();
-      IdentifierInfo *Parm = ObjCBAttr->getBridgedType();
-      NamedDecl *Target = 0;
-      if (Parm && S.getLangOpts().ObjC1) {
+    if (ObjCBridgeAttr *ObjCBAttr = getObjCBridgeAttr(TD)) {
+      if (IdentifierInfo *Parm = ObjCBAttr->getBridgedType()) {
+        NamedDecl *Target = 0;
         // Check for an existing type with this name.
         LookupResult R(S, DeclarationName(Parm), SourceLocation(),
                        Sema::LookupOrdinaryName);
@@ -3215,11 +3226,9 @@ static bool CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr) {
   QualType T = castType;
   while (const TypedefType *TD = dyn_cast<TypedefType>(T.getTypePtr())) {
     TypedefNameDecl *TDNDecl = TD->getDecl();
-    if (TDNDecl->hasAttr<ObjCBridgeAttr>()) {
-      ObjCBridgeAttr *ObjCBAttr = TDNDecl->getAttr<ObjCBridgeAttr>();
-      IdentifierInfo *Parm = ObjCBAttr->getBridgedType();
-      NamedDecl *Target = 0;
-      if (Parm && S.getLangOpts().ObjC1) {
+    if (ObjCBridgeAttr *ObjCBAttr = getObjCBridgeAttr(TD)) {
+      if (IdentifierInfo *Parm = ObjCBAttr->getBridgedType()) {
+        NamedDecl *Target = 0;
         // Check for an existing type with this name.
         LookupResult R(S, DeclarationName(Parm), SourceLocation(),
                        Sema::LookupOrdinaryName);
