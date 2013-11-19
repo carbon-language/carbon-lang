@@ -4392,7 +4392,8 @@ static void handleNSBridgedAttr(Sema &S, Scope *Sc, Decl *D,
 static void handleObjCBridgeAttr(Sema &S, Scope *Sc, Decl *D,
                                 const AttributeList &Attr) {
   if (!isa<RecordDecl>(D)) {
-    S.Diag(D->getLocStart(), diag::err_objc_bridge_attribute);
+    S.Diag(D->getLocStart(), diag::err_objc_bridge_attribute)
+      << S.getLangOpts().CPlusPlus;
     return;
   }
   

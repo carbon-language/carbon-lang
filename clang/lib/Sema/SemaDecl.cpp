@@ -10072,31 +10072,6 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
   }
 }
 
-static inline bool isTollFreeBridgeCFRefType(TypedefDecl *TD) {
-  TypedefNameDecl * TDefNameDecl = TD;
-  const Type *TP = TDefNameDecl->getUnderlyingType().getTypePtr();
-  while (const TypedefType *TDef = dyn_cast<TypedefType>(TP)) {
-    TDefNameDecl = TDef->getDecl();
-    TP = TDefNameDecl->getUnderlyingType().getTypePtr();
-  }
-  
-  StringRef TDName = TDefNameDecl->getIdentifier()->getName();
-  return (TDName.startswith("CF") && TDName.endswith("Ref"));
-}
-
-/// CheckObjCBridgeAttribute - Checks that objc_bridge attribute is
-/// properly applied to a typedef of a pointer to struct/union/class
-static void CheckObjCBridgeAttribute(Sema &S, TypedefDecl *TD) {
-  QualType T = TD->getUnderlyingType();
-  if (!T->isPointerType())
-    return;
-  T = T->getPointeeType();
-  if (T->isStructureType() || T->isUnionType() || T->isClassType())
-    if (RecordDecl *RD = T->getAs<RecordType>()->getDecl())
-      if (RD->hasAttr<ObjCBridgeAttr>() && !isTollFreeBridgeCFRefType(TD))
-        S.Diag(TD->getLocStart(), diag::err_objc_bridge_not_cftype);
-}
-
 TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                     TypeSourceInfo *TInfo) {
   assert(D.getIdentifier() && "Wrong callback for declspec without declarator");
@@ -10119,8 +10094,6 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
     NewTD->setInvalidDecl();
     return NewTD;
   }
-
-  CheckObjCBridgeAttribute(*this, NewTD);
   
   if (D.getDeclSpec().isModulePrivateSpecified()) {
     if (CurContext->isFunctionOrMethod())

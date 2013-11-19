@@ -3199,11 +3199,11 @@ static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr) {
               if ((CastClass == ExprClass) || (CastClass && ExprClass->isSuperClassOf(CastClass)))
                 return true;
               S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge)
-                << TDNDecl->getName() << Target->getName() << CastClass->getName();
+                << T << Target->getName() << castType->getPointeeType();
               return true;
             } else {
               S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge)
-                << TDNDecl->getName() << Target->getName() << castType;
+                << T << Target->getName() << castType;
               return true;
            }
           }
@@ -3243,7 +3243,7 @@ static bool CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr) {
               if ((CastClass == ExprClass) || (ExprClass && CastClass->isSuperClassOf(ExprClass)))
                 return true;
               S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge_to_cf)
-                << ExprClass->getName() << TDNDecl->getName();
+                << castExpr->getType()->getPointeeType() << T;
               S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
               return true;
             } else {
