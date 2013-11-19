@@ -758,7 +758,7 @@ public:
 
     if (fileType == llvm::sys::fs::file_magic::windows_resource)
       return convertAndParseResourceFile(mb, result);
-    if (isImportLibrary(magic))
+    if (fileType == llvm::sys::fs::file_magic::coff_import_library)
       return lld::coff::parseCOFFImportLibrary(_context, mb, result);
     return parseCOFFFile(mb, result);
   }
@@ -927,11 +927,6 @@ private:
 
     result.push_back(std::move(file));
     return error_code::success();
-  }
-
-  static bool isImportLibrary(StringRef magic) {
-    return (magic[0] == 0          && magic[1] == 0 &&
-            magic[2] == (char)0xff && magic[3] == (char)0xff);
   }
 
   PECOFFLinkingContext &_PECOFFLinkingContext;
