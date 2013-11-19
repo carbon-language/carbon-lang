@@ -3401,6 +3401,7 @@ class AArch64TargetInfo : public TargetInfo {
   };
 
   unsigned FPU;
+  unsigned Crypto;
   static const Builtin::Info BuiltinInfo[];
 
 public:
@@ -3430,22 +3431,20 @@ public:
     Builder.defineMacro("__AARCH64EL__");
 
     // ACLE predefines. Many can only have one possible value on v8 AArch64.
-
-    // FIXME: these were written based on an unreleased version of a 32-bit ACLE
-    // which was intended to be compatible with a 64-bit implementation. They
-    // will need updating when a real 64-bit ACLE exists. Particularly pressing
-    // instances are: __ARM_ARCH_ISA_ARM, __ARM_ARCH_ISA_THUMB, __ARM_PCS.
-    Builder.defineMacro("__ARM_ACLE",         "101");
+    Builder.defineMacro("__ARM_ACLE",         "200");
     Builder.defineMacro("__ARM_ARCH",         "8");
     Builder.defineMacro("__ARM_ARCH_PROFILE", "'A'");
+
+    Builder.defineMacro("__ARM_64BIT_STATE");
+    Builder.defineMacro("__ARM_PCS_AAPCS64");
+    Builder.defineMacro("__ARM_ARCH_ISA_A64");
 
     Builder.defineMacro("__ARM_FEATURE_UNALIGNED");
     Builder.defineMacro("__ARM_FEATURE_CLZ");
     Builder.defineMacro("__ARM_FEATURE_FMA");
+    Builder.defineMacro("__ARM_FEATURE_DIV");
 
-    // FIXME: ACLE 1.1 reserves bit 4. Will almost certainly come to mean
-    // 128-bit LDXP present, at which point this becomes 0x1f.
-    Builder.defineMacro("__ARM_FEATURE_LDREX", "0xf");
+    Builder.defineMacro("__ARM_ALIGN_MAX_STACK_PWR", "4");
 
     // 0xe implies support for half, single and double precision operations.
     Builder.defineMacro("__ARM_FP", "0xe");
@@ -3470,10 +3469,13 @@ public:
       Builder.defineMacro("__AARCH_BIG_ENDIAN");
 
     if (FPU == NeonMode) {
-      Builder.defineMacro("__AARCH_FEATURE_ADVSIMD");
-
+      Builder.defineMacro("__ARM_NEON");
       // 64-bit NEON supports half, single and double precision operations.
-      Builder.defineMacro("__AARCH_ADVSIMD_FP", "0xe");
+      Builder.defineMacro("__ARM_NEON_FP", "7");
+    }
+
+    if (Crypto) {
+      Builder.defineMacro("__ARM_FEATURE_CRYPTO");
     }
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
@@ -3495,9 +3497,12 @@ public:
   virtual bool handleTargetFeatures(std::vector<std::string> &Features,
                                     DiagnosticsEngine &Diags) {
     FPU = FPUMode;
+    Crypto = 0;
     for (unsigned i = 0, e = Features.size(); i != e; ++i) {
       if (Features[i] == "+neon")
         FPU = NeonMode;
+      if (Features[i] == "+crypto")
+        Crypto = 1;
     }
     return true;
   }
