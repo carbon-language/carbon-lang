@@ -1051,22 +1051,6 @@ void DwarfDebug::finalizeModuleInfo() {
   // Attach DW_AT_inline attribute with inlined subprogram DIEs.
   computeInlinedDIEs();
 
-  // Split out type units and conditionally add an ODR tag to the split
-  // out type.
-  // FIXME: Do type splitting.
-  for (unsigned i = 0, e = TypeUnits.size(); i != e; ++i) {
-    DIE *Die = TypeUnits[i];
-    DIEHash Hash;
-    // If we've requested ODR hashes and it's applicable for an ODR hash then
-    // add the ODR signature now.
-    // FIXME: This should be added onto the type unit, not the type, but this
-    // works as an intermediate stage.
-    if (GenerateODRHash && shouldAddODRHash(CUMap.begin()->second, Die))
-      CUMap.begin()->second->addUInt(Die, dwarf::DW_AT_GNU_odr_signature,
-                                     dwarf::DW_FORM_data8,
-                                     Hash.computeDIEODRSignature(*Die));
-  }
-
   // Handle anything that needs to be done on a per-cu basis.
   for (DenseMap<const MDNode *, CompileUnit *>::iterator CUI = CUMap.begin(),
                                                          CUE = CUMap.end();
@@ -2071,7 +2055,7 @@ void DwarfDebug::emitDIE(DIE *Die, ArrayRef<DIEAbbrev *> Abbrevs) {
         // For DW_FORM_ref_addr, output the offset from beginning of debug info
         // section. Origin->getOffset() returns the offset from start of the
         // compile unit.
-        CompileUnit *CU = CUDieMap.lookup(Origin->getCompileUnit());
+        CompileUnit *CU = CUDieMap.lookup(Origin->getUnit());
         assert(CU && "CUDie should belong to a CU.");
         Addr += CU->getDebugInfoOffset();
         if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
@@ -2083,7 +2067,7 @@ void DwarfDebug::emitDIE(DIE *Die, ArrayRef<DIEAbbrev *> Abbrevs) {
                                          DIEEntry::getRefAddrSize(Asm));
       } else {
         // Make sure Origin belong to the same CU.
-        assert(Die->getCompileUnit() == Origin->getCompileUnit() &&
+        assert(Die->getUnit() == Origin->getUnit() &&
                "The referenced DIE should belong to the same CU in ref4");
         Asm->EmitInt32(Addr);
       }
@@ -3062,4 +3046,58 @@ void DwarfDebug::emitDebugStrDWO() {
   const MCSymbol *StrSym = DwarfStrSectionSym;
   InfoHolder.emitStrings(Asm->getObjFileLowering().getDwarfStrDWOSection(),
                          OffSec, StrSym);
+}
+
+void DwarfDebug::addTypeUnitType(DIE *RefDie, DICompositeType CTy) {
+  DenseMap<const MDNode*, std::pair<uint64_t, SmallVectorImpl<DIE*>* > >::iterator I = TypeUnits.find(CTy);
+  SmallVector<DIE *, 8> References;
+  References.push_back(RefDie);
+  if (I != TypeUnits.end()) {
+    if (I->second.second) {
+      I->second.second->push_back(RefDie);
+      return;
+    }
+  } else {
+    DIE *UnitDie = new DIE(dwarf::DW_TAG_type_unit);
+    CompileUnit *NewCU =
+        new CompileUnit(GlobalCUIndexCount++, UnitDie,
+                        dwarf::DW_LANG_C_plus_plus, Asm, this, &InfoHolder);
+    CUDieMap.insert(std::make_pair(UnitDie, NewCU));
+    NewCU->addUInt(UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
+                   dwarf::DW_LANG_C_plus_plus);
+
+    // Register the type in the TypeUnits map with a vector of references to be
+    // populated whenever a reference is required.
+    I = TypeUnits.insert(std::make_pair(CTy, std::make_pair(0, &References)))
+            .first;
+
+    // Construct the type, this may, recursively, require more type units that
+    // may in turn require this type again - in which case they will add DIEs to
+    // the References vector.
+    DIE *Die = NewCU->createTypeDIE(CTy);
+
+    if (GenerateODRHash && shouldAddODRHash(NewCU, Die))
+      NewCU->addUInt(UnitDie, dwarf::DW_AT_GNU_odr_signature,
+                     dwarf::DW_FORM_data8,
+                     DIEHash().computeDIEODRSignature(*Die));
+    // FIXME: This won't handle circularly referential structures, as the DIE
+    // may have references to other DIEs still under construction and missing
+    // their signature. Hashing should walk through the signatures to their
+    // referenced type, or possibly walk the precomputed hashes of related types
+    // at the end.
+    uint64_t Signature = DIEHash().computeTypeSignature(*Die);
+
+    // Remove the References vector and add the type hash.
+    I->second.first = Signature;
+    I->second.second = NULL;
+
+
+    InfoHolder.addUnit(NewCU);
+  }
+
+  // Populate all the signatures.
+  for (unsigned i = 0, e = References.size(); i != e; ++i) {
+    CUMap.begin()->second->addUInt(References[i], dwarf::DW_AT_signature,
+                                   dwarf::DW_FORM_ref_sig8, I->second.first);
+  }
 }

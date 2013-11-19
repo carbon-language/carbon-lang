@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
 
-; RUN: llc %s -o %t -filetype=obj -O0 -generate-odr-hash -mtriple=x86_64-unknown-linux-gnu
+; RUN: llc %s -o %t -filetype=obj -O0 -generate-type-units -generate-odr-hash -mtriple=x86_64-unknown-linux-gnu
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 ;
 ; Generated from:
@@ -44,9 +44,12 @@
 ; wombat wom;
 
 ; Check that we generate a hash for bar and the value.
+; CHECK-LABEL: DW_AT_GNU_odr_signature [DW_FORM_data8] (0x200520c0d5b90eff)
 ; CHECK: DW_TAG_structure_type
 ; CHECK-NEXT: debug_str{{.*}}"bar"
-; CHECK: DW_AT_GNU_odr_signature [DW_FORM_data8] (0x200520c0d5b90eff)
+
+; Check that we generate a hash for fluffy and the value.
+; CHECK-LABEL: DW_AT_GNU_odr_signature [DW_FORM_data8]   (0x9a0124d5a0c21c52)
 ; CHECK: DW_TAG_namespace
 ; CHECK-NEXT: debug_str{{.*}}"echidna"
 ; CHECK: DW_TAG_namespace
@@ -55,34 +58,36 @@
 ; CHECK-NEXT: debug_str{{.*}}"mongoose"
 ; CHECK: DW_TAG_class_type
 ; CHECK-NEXT: debug_str{{.*}}"fluffy"
-; CHECK: DW_AT_GNU_odr_signature [DW_FORM_data8]   (0x9a0124d5a0c21c52)
 
 ; We emit no hash for walrus since the type is contained in an anonymous
 ; namespace and won't violate any ODR-ness.
+; CHECK: DW_TAG_type_unit
+; CHECK-NOT: NULL
+; CHECK-NOT: DW_AT_GNU_odr_signature
 ; CHECK: DW_TAG_structure_type
 ; CHECK-NEXT: debug_str{{.*}}"walrus"
 ; CHECK-NEXT: DW_AT_byte_size
 ; CHECK-NEXT: DW_AT_decl_file
 ; CHECK-NEXT: DW_AT_decl_line
-; CHECK-NOT: DW_AT_GNU_odr_signature
 ; CHECK: DW_TAG_subprogram
+
 
 ; Check that we generate a hash for wombat and the value, but not for the
 ; anonymous type contained within.
+; CHECK: DW_TAG_type_unit
 ; CHECK: DW_TAG_structure_type
-; CHECK-NEXT: debug_str{{.*}}wombat
-; CHECK: DW_AT_GNU_odr_signature [DW_FORM_data8] (0x685bcc220141e9d7)
+; The signature for the outer 'wombat' type - this can be FileChecked once the
+; type units are moved to their own section with the full type unit header
+; including the signature
+; CHECK: DW_AT_signature [DW_FORM_ref_sig8] (0x73776f130648b986)
 ; CHECK: DW_TAG_structure_type
-; CHECK-NEXT: DW_AT_byte_size
-; CHECK-NEXT: DW_AT_decl_file
-; CHECK-NEXT: DW_AT_decl_line
+; CHECK-NOT: DW_AT_name
+; CHECK-NOT: DW_AT_GNU_odr_signature
 ; CHECK: DW_TAG_member
 ; CHECK-NEXT: debug_str{{.*}}"a"
-
-; Check that we don't generate a hash for baz.
+; CHECK-LABEL: DW_AT_GNU_odr_signature [DW_FORM_data8] (0x685bcc220141e9d7)
 ; CHECK: DW_TAG_structure_type
-; CHECK-NEXT: debug_str{{.*}}"baz"
-; CHECK-NOT: DW_AT_GNU_odr_signature
+; CHECK-NEXT: debug_str{{.*}}"wombat"
 
 %struct.bar = type { i8 }
 %"class.echidna::capybara::mongoose::fluffy" = type { i32, i32 }

@@ -93,14 +93,18 @@ class CompileUnit {
   // DIEIntegerOne - A preallocated DIEValue because 1 is used frequently.
   DIEInteger *DIEIntegerOne;
 
+  uint16_t Language;
+
 public:
   CompileUnit(unsigned UID, DIE *D, DICompileUnit CU, AsmPrinter *A,
+              DwarfDebug *DW, DwarfUnits *DWU);
+  CompileUnit(unsigned UID, DIE *D, uint16_t Language, AsmPrinter *A,
               DwarfDebug *DW, DwarfUnits *DWU);
   ~CompileUnit();
 
   // Accessors.
   unsigned getUniqueID() const { return UniqueID; }
-  uint16_t getLanguage() const { return Node.getLanguage(); }
+  uint16_t getLanguage() const { return Language; }
   DICompileUnit getNode() const { return Node; }
   DIE *getCUDie() const { return CUDie.get(); }
   const StringMap<DIE *> &getGlobalNames() const { return GlobalNames; }
@@ -311,6 +315,9 @@ public:
   DIE *getOrCreateTypeDIE(const MDNode *N);
 
   /// getOrCreateContextDIE - Get context owner's DIE.
+  DIE *createTypeDIE(DICompositeType Ty);
+
+  /// getOrCreateContextDIE - Get context owner's DIE.
   DIE *getOrCreateContextDIE(DIScope Context);
 
   /// createGlobalVariableDIE - create global variable DIE.
@@ -327,6 +334,10 @@ public:
   /// call insertDIE if MD is not null.
   DIE *createAndAddDIE(unsigned Tag, DIE &Parent,
                        DIDescriptor N = DIDescriptor());
+
+  /// constructTypeDIEImpl - Construct type DIE that is not a type unit
+  /// reference from a DICompositeType.
+  void constructTypeDIEImpl(DIE &Buffer, DICompositeType CTy);
 
   /// Compute the size of a header for this unit, not including the initial
   /// length field.

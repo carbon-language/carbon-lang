@@ -114,18 +114,19 @@ DIE::~DIE() {
 
 /// Climb up the parent chain to get the compile unit DIE to which this DIE
 /// belongs.
-const DIE *DIE::getCompileUnit() const {
-  const DIE *Cu = getCompileUnitOrNull();
+const DIE *DIE::getUnit() const {
+  const DIE *Cu = getUnitOrNull();
   assert(Cu && "We should not have orphaned DIEs.");
   return Cu;
 }
 
 /// Climb up the parent chain to get the compile unit DIE this DIE belongs
 /// to. Return NULL if DIE is not added to an owner yet.
-const DIE *DIE::getCompileUnitOrNull() const {
+const DIE *DIE::getUnitOrNull() const {
   const DIE *p = this;
   while (p) {
-    if (p->getTag() == dwarf::DW_TAG_compile_unit)
+    if (p->getTag() == dwarf::DW_TAG_compile_unit ||
+        p->getTag() == dwarf::DW_TAG_type_unit)
       return p;
     p = p->getParent();
   }
@@ -227,6 +228,7 @@ void DIEInteger::EmitValue(AsmPrinter *Asm, dwarf::Form Form) const {
   case dwarf::DW_FORM_ref4:  // Fall thru
   case dwarf::DW_FORM_data4: Size = 4; break;
   case dwarf::DW_FORM_ref8:  // Fall thru
+  case dwarf::DW_FORM_ref_sig8:  // Fall thru
   case dwarf::DW_FORM_data8: Size = 8; break;
   case dwarf::DW_FORM_GNU_str_index: Asm->EmitULEB128(Integer); return;
   case dwarf::DW_FORM_GNU_addr_index: Asm->EmitULEB128(Integer); return;
@@ -253,6 +255,7 @@ unsigned DIEInteger::SizeOf(AsmPrinter *AP, dwarf::Form Form) const {
   case dwarf::DW_FORM_ref4:  // Fall thru
   case dwarf::DW_FORM_data4: return sizeof(int32_t);
   case dwarf::DW_FORM_ref8:  // Fall thru
+  case dwarf::DW_FORM_ref_sig8:  // Fall thru
   case dwarf::DW_FORM_data8: return sizeof(int64_t);
   case dwarf::DW_FORM_GNU_str_index: return MCAsmInfo::getULEB128Size(Integer);
   case dwarf::DW_FORM_GNU_addr_index: return MCAsmInfo::getULEB128Size(Integer);

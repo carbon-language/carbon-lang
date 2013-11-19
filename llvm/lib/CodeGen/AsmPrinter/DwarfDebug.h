@@ -37,6 +37,7 @@ class MachineFrameInfo;
 class MachineModuleInfo;
 class MachineOperand;
 class MCAsmInfo;
+class MCObjectFileInfo;
 class DIEAbbrev;
 class DIE;
 class DIEBlock;
@@ -443,7 +444,7 @@ class DwarfDebug {
   ImportedEntityMap ScopesWithImportedEntities;
 
   // Holder for types that are going to be extracted out into a type unit.
-  std::vector<DIE *> TypeUnits;
+  DenseMap<const MDNode *, std::pair<uint64_t, SmallVectorImpl<DIE*>* > > TypeUnits;
 
   // Whether to emit the pubnames/pubtypes sections.
   bool HasDwarfPubSections;
@@ -695,7 +696,7 @@ public:
 
   /// \brief Add a DIE to the set of types that we're going to pull into
   /// type units.
-  void addTypeUnitType(DIE *Die) { TypeUnits.push_back(Die); }
+  void addTypeUnitType(DIE *Die, DICompositeType CTy);
 
   /// \brief Add a label so that arange data can be generated for it.
   void addArangeLabel(SymbolCU SCU) { ArangeLabels.push_back(SCU); }
