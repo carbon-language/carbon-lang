@@ -2622,7 +2622,8 @@ void DwarfUnits::emitStrings(const MCSection *StrSection,
   }
 }
 
-// Emit strings into a string section.
+
+// Emit addresses into the section given.
 void DwarfUnits::emitAddresses(const MCSection *AddrSection) {
 
   if (AddressPool.empty())
