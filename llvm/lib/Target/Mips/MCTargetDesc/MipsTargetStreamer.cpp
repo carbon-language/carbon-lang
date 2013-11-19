@@ -20,9 +20,6 @@
 
 using namespace llvm;
 
-static cl::opt<bool> PrintHackDirectives("print-hack-directives",
-                                         cl::init(false), cl::Hidden);
-
 // pin vtable to this file
 void MipsTargetStreamer::anchor() {}
 
@@ -30,22 +27,12 @@ MipsTargetAsmStreamer::MipsTargetAsmStreamer(formatted_raw_ostream &OS)
     : OS(OS) {}
 
 void MipsTargetAsmStreamer::emitMipsHackELFFlags(unsigned Flags) {
-  if (!PrintHackDirectives)
-    return;
+  return;
 
-  OS << "\t.mips_hack_elf_flags 0x";
-  OS.write_hex(Flags);
-  OS << '\n';
 }
-void MipsTargetAsmStreamer::emitMipsHackSTOCG(MCSymbol *Sym, unsigned Val) {
-  if (!PrintHackDirectives)
-    return;
+void MipsTargetAsmStreamer::emitSymSTO(MCSymbol *Sym, unsigned Val) {
+  return;
 
-  OS << "\t.mips_hack_stocg ";
-  OS << Sym->getName();
-  OS << ", ";
-  OS << Val;
-  OS << '\n';
 }
 
 MipsTargetELFStreamer::MipsTargetELFStreamer() {}
@@ -60,7 +47,7 @@ void MipsTargetELFStreamer::emitMipsHackELFFlags(unsigned Flags) {
 }
 
 // Set a symbol's STO flags
-void MipsTargetELFStreamer::emitMipsHackSTOCG(MCSymbol *Sym, unsigned Val) {
+void MipsTargetELFStreamer::emitSymSTO(MCSymbol *Sym, unsigned Val) {
   MCSymbolData &Data = getStreamer().getOrCreateSymbolData(Sym);
   // The "other" values are stored in the last 6 bits of the second byte
   // The traditional defines for STO values assume the full byte and thus

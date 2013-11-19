@@ -18,7 +18,7 @@ class MipsTargetStreamer : public MCTargetStreamer {
   virtual void anchor();
 public:
   virtual void emitMipsHackELFFlags(unsigned Flags) = 0;
-  virtual void emitMipsHackSTOCG(MCSymbol *Sym, unsigned Val) = 0;
+  virtual void emitSymSTO(MCSymbol *Sym, unsigned Val) = 0;
 };
 
 // This part is for ascii assembly output
@@ -28,7 +28,7 @@ class MipsTargetAsmStreamer : public MipsTargetStreamer {
 public:
   MipsTargetAsmStreamer(formatted_raw_ostream &OS);
   virtual void emitMipsHackELFFlags(unsigned Flags);
-  virtual void emitMipsHackSTOCG(MCSymbol *Sym, unsigned Val);
+  virtual void emitSymSTO(MCSymbol *Sym, unsigned Val);
 };
 
 // This part is for ELF object output
@@ -37,7 +37,7 @@ public:
   MCELFStreamer &getStreamer();
   MipsTargetELFStreamer();
   virtual void emitMipsHackELFFlags(unsigned Flags);
-  virtual void emitMipsHackSTOCG(MCSymbol *Sym, unsigned Val);
+  virtual void emitSymSTO(MCSymbol *Sym, unsigned Val);
 };
 }
 
