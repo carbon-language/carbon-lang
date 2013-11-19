@@ -22,7 +22,7 @@ void f() {
 // CHECK4: {{^  int \*i;$}}
 // CHECK5: {{^     int\* i;$}}
 // CHECK6: {{^Error reading .*\.clang-format: Invalid argument}}
-// CHECK6: {{^  int \*i;$}}
+// XCHECK6X: {{^  int \*i;$}}
 // CHECK7: {{^      int\* i;$}}
 int*i;
 int j;
