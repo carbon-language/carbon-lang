@@ -88,8 +88,10 @@ UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 armv7,profile_ios)
 Configs += asan_osx_dynamic
 UniversalArchs.asan_osx_dynamic := $(call CheckArches,i386 x86_64,asan_osx_dynamic)
 
+ifneq ($(IOSSIM_SDK_PATH),)
 Configs += asan_iossim_dynamic
 UniversalArchs.asan_iossim_dynamic := $(call CheckArches,i386 x86_64,asan_iossim_dynamic)
+endif
 
 Configs += ubsan_osx
 UniversalArchs.ubsan_osx := $(call CheckArches,i386 x86_64,ubsan_osx)
