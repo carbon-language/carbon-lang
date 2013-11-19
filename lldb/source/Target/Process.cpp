@@ -1593,9 +1593,10 @@ Process::UpdateThreadListIfNeeded ()
                 m_thread_list_real.Update(real_thread_list);
                 m_thread_list.Update (new_thread_list);
                 m_thread_list.SetStopID (stop_id);
+
+                // Clear any extended threads that we may have accumulated previously
+                m_extended_thread_list.Clear();
             }
-            // Clear any extended threads that we may have accumulated previously
-            m_extended_thread_list.Clear();
         }
     }
 }

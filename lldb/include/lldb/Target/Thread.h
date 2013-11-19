@@ -284,6 +284,11 @@ public:
         return LLDB_INVALID_QUEUE_ID;
     }
 
+    virtual void
+    SetQueueID (lldb::queue_id_t new_val)
+    {
+    }
+
     virtual const char *
     GetQueueName ()
     {

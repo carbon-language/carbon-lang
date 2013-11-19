@@ -126,7 +126,7 @@ private:
     GetThreadCreatorItem (lldb::ThreadSP thread);
 
     lldb::tid_t
-    GetNewThreadUniquethreadID (lldb::ThreadSP original_thread_sp);
+    GetNewThreadUniqueThreadID (lldb::ThreadSP original_thread_sp);
 
     void
     SetNewThreadThreadName (lldb::ThreadSP original_thread_sp, lldb::ThreadSP new_extended_thread_sp);
@@ -136,6 +136,9 @@ private:
 
     void
     SetNewThreadExtendedBacktraceToken (lldb::ThreadSP original_thread_sp, lldb::ThreadSP new_extended_thread_sp);
+
+    void
+    SetNewThreadQueueID (lldb::ThreadSP original_thread_sp, lldb::ThreadSP new_extended_thread_sp);
 
     struct ldi_queue_offsets {
         uint16_t next;
@@ -158,6 +161,7 @@ private:
         uint16_t pthread_id;
         uint16_t enqueueing_thread_dispatch_queue_t;
         uint16_t enqueueing_thread_dispatch_block_ptr;
+        uint16_t queue_id_from_thread_info;
     };
 
     struct ldi_header {

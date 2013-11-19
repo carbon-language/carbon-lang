@@ -198,7 +198,15 @@ SystemRuntimeMacOSX::ParseLdiHeaders ()
                     m_ldi_header.item_offsets.pthread_id = ldi_extractor.GetU16(&offset);
                     m_ldi_header.item_offsets.enqueueing_thread_dispatch_queue_t = ldi_extractor.GetU16(&offset);
                     m_ldi_header.item_offsets.enqueueing_thread_dispatch_block_ptr = ldi_extractor.GetU16(&offset);
-                    
+
+                    if (ldi_header.GetByteSize () > offset)
+                    {
+                        m_ldi_header.item_offsets.queue_id_from_thread_info = ldi_extractor.GetU16(&offset);
+                    }
+                    else
+                    {
+                        m_ldi_header.item_offsets.queue_id_from_thread_info = 0xffff;
+                    }
                 }
             }
         }
@@ -376,8 +384,28 @@ SystemRuntimeMacOSX::SetNewThreadExtendedBacktraceToken (ThreadSP original_threa
     }
 }
 
+void
+SystemRuntimeMacOSX::SetNewThreadQueueID (ThreadSP original_thread_sp, ThreadSP new_extended_thread_sp)
+{
+    queue_id_t queue_id = LLDB_INVALID_QUEUE_ID;
+    addr_t enqueued_item_ptr = GetThreadCreatorItem (original_thread_sp);
+    if (enqueued_item_ptr != LLDB_INVALID_ADDRESS && m_ldi_header.item_offsets.queue_id_from_thread_info != 0xffff)
+    {
+        Error error;
+        queue_id = m_process->ReadUnsignedIntegerFromMemory (enqueued_item_ptr + m_ldi_header.item_offsets.queue_id_from_thread_info, 8, LLDB_INVALID_QUEUE_ID, error);
+        if (!error.Success())
+            queue_id = LLDB_INVALID_QUEUE_ID;
+    }
+
+    if (queue_id != LLDB_INVALID_QUEUE_ID)
+    {
+        new_extended_thread_sp->SetQueueID (queue_id);
+    }
+}
+
+
 lldb::tid_t
-SystemRuntimeMacOSX::GetNewThreadUniquethreadID (ThreadSP original_thread_sp)
+SystemRuntimeMacOSX::GetNewThreadUniqueThreadID (ThreadSP original_thread_sp)
 {
     tid_t ret = LLDB_INVALID_THREAD_ID;
     addr_t enqueued_item_ptr = GetThreadCreatorItem (original_thread_sp);
@@ -404,14 +432,14 @@ SystemRuntimeMacOSX::GetExtendedBacktraceThread (ThreadSP original_thread_sp, Co
     if (bt.pcs.size() == 0)
         return new_extended_thread_sp;
 
-    tid_t unique_thread_id = GetNewThreadUniquethreadID (original_thread_sp);
+    tid_t unique_thread_id = GetNewThreadUniqueThreadID (original_thread_sp);
 
     new_extended_thread_sp.reset (new HistoryThread (*m_process, unique_thread_id, bt.pcs, bt.stop_id, bt.stop_id_is_valid));
 
-    SetNewThreadThreadName(original_thread_sp, new_extended_thread_sp);
-    SetNewThreadQueueName(original_thread_sp, new_extended_thread_sp);
-    SetNewThreadExtendedBacktraceToken(original_thread_sp, new_extended_thread_sp);
-
+    SetNewThreadThreadName (original_thread_sp, new_extended_thread_sp);
+    SetNewThreadQueueName (original_thread_sp, new_extended_thread_sp);
+    SetNewThreadQueueID (original_thread_sp, new_extended_thread_sp);
+    SetNewThreadExtendedBacktraceToken (original_thread_sp, new_extended_thread_sp);
     return new_extended_thread_sp;
 }
 

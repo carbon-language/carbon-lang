@@ -65,6 +65,18 @@ public:
         m_queue_name = name;
     }
 
+    lldb::queue_id_t
+    GetQueueID ()
+    {
+        return m_queue_id;
+    }
+
+    void
+    SetQueueID (lldb::queue_id_t queue)
+    {
+        m_queue_id = queue;
+    }
+
     const char *
     GetThreadName ()
     {
@@ -94,6 +106,7 @@ protected:
     std::string                 m_queue_name;
     std::string                 m_thread_name;
     lldb::tid_t                 m_originating_unique_thread_id;
+    lldb::queue_id_t            m_queue_id;
 };
 
 } // namespace lldb_private

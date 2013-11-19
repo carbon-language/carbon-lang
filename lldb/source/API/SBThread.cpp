@@ -1305,10 +1305,20 @@ SBThread::GetExtendedBacktraceThread (const char *type)
                     if (runtime)
                     {
                         ThreadSP new_thread_sp (runtime->GetExtendedBacktraceThread (real_thread, type_const));
-                        // Save this in the Process' ExtendedThreadList so a strong pointer retains the
-                        // object.
-                        process->GetExtendedThreadList().AddThread (new_thread_sp);
-                        sb_origin_thread.SetThread (new_thread_sp);
+                        if (new_thread_sp)
+                        {
+                            // Save this in the Process' ExtendedThreadList so a strong pointer retains the
+                            // object.
+                            process->GetExtendedThreadList().AddThread (new_thread_sp);
+                            sb_origin_thread.SetThread (new_thread_sp);
+                            if (log)
+                            {
+                                const char *queue_name = new_thread_sp->GetQueueName();
+                                if (queue_name == NULL)
+                                    queue_name = "";
+                                log->Printf ("SBThread(%p)::GetExtendedBacktraceThread() => new extended Thread created (%p) with queue_id 0x%" PRIx64 " queue name '%s'", exe_ctx.GetThreadPtr(), new_thread_sp.get(), new_thread_sp->GetQueueID(), queue_name);
+                            }
+                        }
                     }
                 }
             }
@@ -1316,7 +1326,7 @@ SBThread::GetExtendedBacktraceThread (const char *type)
         else
         {
             if (log)
-                log->Printf ("SBThread(%p)::GetExtendedBacktrace() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::GetExtendedBacktraceThread() => error: process is running", exe_ctx.GetThreadPtr());
         }
     }
 
