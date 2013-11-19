@@ -281,18 +281,20 @@ void FileInfo::print(raw_fd_ostream &OS, StringRef gcnoFile,
   for (StringMap<LineCounts>::const_iterator I = LineInfo.begin(),
          E = LineInfo.end(); I != E; ++I) {
     StringRef Filename = I->first();
-    OS << "        -:    0:Source:" << Filename << "\n";
-    OS << "        -:    0:Graph:" << gcnoFile << "\n";
-    OS << "        -:    0:Data:" << gcdaFile << "\n";
-    OS << "        -:    0:Runs:" << RunCount << "\n";
-    OS << "        -:    0:Programs:" << ProgramCount << "\n";
-    const LineCounts &L = I->second;
     OwningPtr<MemoryBuffer> Buff;
     if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {
       errs() << Filename << ": " << ec.message() << "\n";
       return;
     }
     StringRef AllLines = Buff->getBuffer();
+
+    OS << "        -:    0:Source:" << Filename << "\n";
+    OS << "        -:    0:Graph:" << gcnoFile << "\n";
+    OS << "        -:    0:Data:" << gcdaFile << "\n";
+    OS << "        -:    0:Runs:" << RunCount << "\n";
+    OS << "        -:    0:Programs:" << ProgramCount << "\n";
+
+    const LineCounts &L = I->second;
     uint32_t i = 0;
     while (!AllLines.empty()) {
       LineCounts::const_iterator CountIt = L.find(i);
