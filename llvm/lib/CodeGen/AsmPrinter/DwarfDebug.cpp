@@ -1165,54 +1165,30 @@ void DwarfDebug::endModule() {
   // Finalize the debug info for the module.
   finalizeModuleInfo();
 
-  if (!useSplitDwarf()) {
-    emitDebugStr();
+  emitDebugStr();
 
-    // Emit all the DIEs into a debug info section.
-    emitDebugInfo();
+  // Emit all the DIEs into a debug info section.
+  emitDebugInfo();
 
-    // Corresponding abbreviations into a abbrev section.
-    emitAbbreviations();
+  // Corresponding abbreviations into a abbrev section.
+  emitAbbreviations();
 
-    // Emit info into a debug loc section.
-    emitDebugLoc();
+  // Emit info into a debug loc section.
+  emitDebugLoc();
 
-    // Emit info into a debug aranges section.
-    emitDebugARanges();
+  // Emit info into a debug aranges section.
+  emitDebugARanges();
 
-    // Emit info into a debug ranges section.
-    emitDebugRanges();
+  // Emit info into a debug ranges section.
+  emitDebugRanges();
 
-    // Emit info into a debug macinfo section.
-    emitDebugMacInfo();
+  // Emit info into a debug macinfo section.
+  emitDebugMacInfo();
 
-  } else {
-    // TODO: Fill this in for separated debug sections and separate
-    // out information into new sections.
-    emitDebugStr();
-    if (useSplitDwarf())
-      emitDebugStrDWO();
-
-    // Emit the debug info section and compile units.
-    emitDebugInfo();
+  if (useSplitDwarf()) {
+    emitDebugStrDWO();
     emitDebugInfoDWO();
-
-    // Corresponding abbreviations into a abbrev section.
-    emitAbbreviations();
     emitDebugAbbrevDWO();
-
-    // Emit info into a debug loc section.
-    emitDebugLoc();
-
-    // Emit info into a debug aranges section.
-    emitDebugARanges();
-
-    // Emit info into a debug ranges section.
-    emitDebugRanges();
-
-    // Emit info into a debug macinfo section.
-    emitDebugMacInfo();
-
     // Emit DWO addresses.
     InfoHolder.emitAddresses(Asm->getObjFileLowering().getDwarfAddrSection());
   }
