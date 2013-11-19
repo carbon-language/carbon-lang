@@ -25,42 +25,42 @@ namespace lld {
 
 void StubsPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   // Skip this pass if output format uses text relocations instead of stubs.
-  if ( ! this->noTextRelocs() )
+  if (!this->noTextRelocs())
     return;
 
   // Scan all references in all atoms.
   for (const DefinedAtom *atom : mergedFile->defined()) {
     for (const Reference *ref : *atom) {
       // Look at call-sites.
-      if (this->isCallSite(ref->kind()) ) {
-        const Atom* target = ref->target();
-        assert(target != nullptr);
-        bool replaceCalleeWithStub = false;
-        if ( target->definition() == Atom::definitionSharedLibrary ) {
-          // Calls to shared libraries go through stubs.
-          replaceCalleeWithStub = true;
-        }
-        else if (const DefinedAtom* defTarget =
-                     dyn_cast<DefinedAtom>(target)) {
-          if ( defTarget->interposable() != DefinedAtom::interposeNo ) {
-            // Calls to interposable functions in same linkage unit
-            // must also go through a stub.
-            assert(defTarget->scope() != DefinedAtom::scopeTranslationUnit);
-            replaceCalleeWithStub = true;
-          }
-        }
-        if ( replaceCalleeWithStub ) {
-          // Make file-format specific stub and other support atoms.
-          const DefinedAtom* stub = this->getStub(*target);
-          assert(stub != nullptr);
-          // Switch call site to reference stub atom instead.
-          (const_cast<Reference*>(ref))->setTarget(stub);
-         }
+      if (!this->isCallSite(ref->kind()))
+        continue;
+      const Atom *target = ref->target();
+      assert(target != nullptr);
+      if (target->definition() == Atom::definitionSharedLibrary) {
+        // Calls to shared libraries go through stubs.
+        replaceCalleeWithStub(target, ref);
+        continue;
+      }
+      const DefinedAtom *defTarget = dyn_cast<DefinedAtom>(target);
+      if (defTarget && defTarget->interposable() != DefinedAtom::interposeNo) {
+        // Calls to interposable functions in same linkage unit must also go
+        // through a stub.
+        assert(defTarget->scope() != DefinedAtom::scopeTranslationUnit);
+        replaceCalleeWithStub(target, ref);
       }
     }
   }
-
   // Add all created stubs and support Atoms.
   this->addStubAtoms(*mergedFile);
 }
+
+void StubsPass::replaceCalleeWithStub(const Atom *target,
+                                      const Reference *ref) {
+  // Make file-format specific stub and other support atoms.
+  const DefinedAtom *stub = this->getStub(*target);
+  assert(stub != nullptr);
+  // Switch call site to reference stub atom instead.
+  const_cast<Reference *>(ref)->setTarget(stub);
 }
+
+} // end namespace lld

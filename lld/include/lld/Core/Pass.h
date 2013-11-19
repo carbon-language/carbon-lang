@@ -75,6 +75,9 @@ public:
   /// it will call this method to add all the stub (and support) atoms to the
   /// master file object.
   virtual void addStubAtoms(MutableFile &masterFile) = 0;
+
+private:
+  void replaceCalleeWithStub(const Atom *target, const Reference *ref);
 };
 
 /// Pass for adding GOT entries for pointers to functions/data
