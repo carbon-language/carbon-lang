@@ -16,7 +16,6 @@
 namespace llvm {
 class MipsTargetStreamer : public MCTargetStreamer {
   virtual void anchor();
-
 public:
   virtual void emitMipsHackELFFlags(unsigned Flags) = 0;
   virtual void emitMipsHackSTOCG(MCSymbol *Sym, unsigned Val) = 0;

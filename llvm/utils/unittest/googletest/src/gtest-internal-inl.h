@@ -408,7 +408,7 @@ GTEST_API_ FilePath GetCurrentExecutableName();
 class OsStackTraceGetterInterface {
  public:
   OsStackTraceGetterInterface() {}
-  virtual ~OsStackTraceGetterInterface() {}
+  virtual ~OsStackTraceGetterInterface();
 
   // Returns the current OS stack trace as a String.  Parameters:
   //

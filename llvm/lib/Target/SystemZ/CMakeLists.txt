@@ -21,6 +21,7 @@ add_llvm_target(SystemZCodeGen
   SystemZISelLowering.cpp
   SystemZInstrInfo.cpp
   SystemZLongBranch.cpp
+  SystemZMachineFunctionInfo.cpp
   SystemZMCInstLower.cpp
   SystemZRegisterInfo.cpp
   SystemZSelectionDAGInfo.cpp

@@ -27,6 +27,7 @@ class StringRef;
 class GlobalValue;
 
 class AArch64Subtarget : public AArch64GenSubtargetInfo {
+  virtual void anchor();
 protected:
   bool HasFPARMv8;
   bool HasNEON;

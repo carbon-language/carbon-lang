@@ -17,6 +17,7 @@ namespace llvm {
   class raw_ostream;
 
   class MCWinCOFFObjectTargetWriter {
+    virtual void anchor();
     const unsigned Machine;
 
   protected:

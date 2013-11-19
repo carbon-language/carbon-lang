@@ -24,10 +24,10 @@ namespace llvm {
 /// the ASMPrint interface.
 ///
 class NVPTXSection : public MCSection {
-
+  virtual void anchor();
 public:
   NVPTXSection(SectionVariant V, SectionKind K) : MCSection(V, K) {}
-  ~NVPTXSection() {}
+  virtual ~NVPTXSection() {}
 
   /// Override this as NVPTX has its own way of printing switching
   /// to a section.

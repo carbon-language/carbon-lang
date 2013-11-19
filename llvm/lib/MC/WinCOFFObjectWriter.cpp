@@ -138,7 +138,7 @@ public:
   symbol_map  SymbolMap;
 
   WinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW, raw_ostream &OS);
-  ~WinCOFFObjectWriter();
+  virtual ~WinCOFFObjectWriter();
 
   COFFSymbol *createSymbol(StringRef Name);
   COFFSymbol *GetOrCreateCOFFSymbol(const MCSymbol * Symbol);
@@ -914,6 +914,9 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
 MCWinCOFFObjectTargetWriter::MCWinCOFFObjectTargetWriter(unsigned Machine_) :
   Machine(Machine_) {
 }
+
+// Pin the vtable to this file.
+void MCWinCOFFObjectTargetWriter::anchor() {}
 
 //------------------------------------------------------------------------------
 // WinCOFFObjectWriter factory function

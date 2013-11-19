@@ -18,7 +18,13 @@
 
 using namespace llvm;
 
-class MCJITMultipleModuleTest : public testing::Test, public MCJITTestBase {};
+class MCJITMultipleModuleTest : public testing::Test, public MCJITTestBase {
+public:
+  virtual ~MCJITMultipleModuleTest();
+};
+
+// Provide out-of-line definition to prevent weak vtable.
+MCJITMultipleModuleTest::~MCJITMultipleModuleTest() {}
 
 namespace {
 

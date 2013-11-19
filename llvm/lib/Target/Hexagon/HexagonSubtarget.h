@@ -27,7 +27,7 @@
 namespace llvm {
 
 class HexagonSubtarget : public HexagonGenSubtargetInfo {
-
+  virtual void anchor();
   bool UseMemOps;
   bool ModeIEEERndNear;
 

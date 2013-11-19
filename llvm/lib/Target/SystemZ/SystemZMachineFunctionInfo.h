@@ -15,6 +15,7 @@
 namespace llvm {
 
 class SystemZMachineFunctionInfo : public MachineFunctionInfo {
+  virtual void anchor();
   unsigned LowSavedGPR;
   unsigned HighSavedGPR;
   unsigned VarArgsFirstGPR;

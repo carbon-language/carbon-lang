@@ -72,6 +72,10 @@ static cl::opt<bool> VerifyScheduling("verify-misched", cl::Hidden,
 // DAG subtrees must have at least this many nodes.
 static const unsigned MinSubtreeSize = 8;
 
+// Pin the vtables to this file.
+void MachineSchedStrategy::anchor() {}
+void ScheduleDAGMutation::anchor() {}
+
 //===----------------------------------------------------------------------===//
 // Machine Instruction Scheduling Pass and Registry
 //===----------------------------------------------------------------------===//

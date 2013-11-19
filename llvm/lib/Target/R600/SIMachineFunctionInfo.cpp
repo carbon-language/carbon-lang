@@ -13,6 +13,10 @@
 
 using namespace llvm;
 
+
+// Pin the vtable to this file.
+void SIMachineFunctionInfo::anchor() {}
+
 SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
   : AMDGPUMachineFunction(MF),
     PSInputAddr(0) { }

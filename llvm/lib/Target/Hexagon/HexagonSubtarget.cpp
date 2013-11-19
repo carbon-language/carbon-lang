@@ -86,3 +86,5 @@ HexagonSubtarget::HexagonSubtarget(StringRef TT, StringRef CPU, StringRef FS):
     ModeIEEERndNear = false;
 }
 
+// Pin the vtable to this file.
+void HexagonSubtarget::anchor() {}

@@ -19,6 +19,9 @@
 
 using namespace llvm;
 
+// Pin the vtable to this file.
+void MachineRegisterInfo::Delegate::anchor() {}
+
 MachineRegisterInfo::MachineRegisterInfo(const TargetMachine &TM)
   : TM(TM), TheDelegate(0), IsSSA(true), TracksLiveness(true) {
   VRegInfo.reserve(256);

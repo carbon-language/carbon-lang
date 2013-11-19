@@ -37,3 +37,6 @@ AArch64ELFMCAsmInfo::AArch64ELFMCAsmInfo() {
   // Exceptions handling
   ExceptionsType = ExceptionHandling::DwarfCFI;
 }
+
+// Pin the vtable to this file.
+void AArch64ELFMCAsmInfo::anchor() {}

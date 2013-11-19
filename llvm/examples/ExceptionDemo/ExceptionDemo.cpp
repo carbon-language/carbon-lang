@@ -1577,9 +1577,11 @@ public:
                                  std::runtime_error::operator=(toCopy)));
   }
 
-  ~OurCppRunException (void) throw () {}
+  ~OurCppRunException (void) throw ();
 };
 
+// Provide out-of-line definition to prevent weak vtable.
+OurCppRunException::~OurCppRunException() throw () {}
 
 /// Throws foreign C++ exception.
 /// @param ignoreIt unused parameter that allows function to match implied

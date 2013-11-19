@@ -746,5 +746,19 @@ const char* StringFromGTestEnv(const char* flag, const char* default_value) {
   return value == NULL ? default_value : value;
 }
 
+// Pin the vtables to this file.
+#if GTEST_HAS_PTHREAD
+ThreadWithParamBase::~ThreadWithParamBase() {}
+ThreadLocalValueHolderBase::~ThreadLocalValueHolderBase() {}
+#endif
+TestFactoryBase::~TestFactoryBase() {}
+
 }  // namespace internal
 }  // namespace testing
+
+// Pin the vtable to this file.
+#if !GTEST_NO_LLVM_RAW_OSTREAM
+namespace llvm {
+void convertible_fwd_ostream::anchor() {}
+}
+#endif

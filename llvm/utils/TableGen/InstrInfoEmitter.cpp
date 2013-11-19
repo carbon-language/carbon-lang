@@ -437,13 +437,14 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   OS << "namespace llvm {\n";
   OS << "struct " << ClassName << " : public TargetInstrInfo {\n"
      << "  explicit " << ClassName << "(int SO = -1, int DO = -1);\n"
+     << "  virtual ~" << ClassName << "();\n"
      << "};\n";
   OS << "} // End llvm namespace \n";
 
   OS << "#endif // GET_INSTRINFO_HEADER\n\n";
 
-  OS << "\n#ifdef GET_INSTRINFO_CTOR\n";
-  OS << "#undef GET_INSTRINFO_CTOR\n";
+  OS << "\n#ifdef GET_INSTRINFO_CTOR_DTOR\n";
+  OS << "#undef GET_INSTRINFO_CTOR_DTOR\n";
 
   OS << "namespace llvm {\n";
   OS << "extern const MCInstrDesc " << TargetName << "Insts[];\n";
@@ -453,10 +454,11 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
      << "  : TargetInstrInfo(SO, DO) {\n"
      << "  InitMCInstrInfo(" << TargetName << "Insts, "
      << TargetName << "InstrNameIndices, " << TargetName << "InstrNameData, "
-     << NumberedInstructions.size() << ");\n}\n";
+     << NumberedInstructions.size() << ");\n}\n"
+     << ClassName << "::~" << ClassName << "() {}\n";
   OS << "} // End llvm namespace \n";
 
-  OS << "#endif // GET_INSTRINFO_CTOR\n\n";
+  OS << "#endif // GET_INSTRINFO_CTOR_DTOR\n\n";
 
   emitOperandNameMappings(OS, Target, NumberedInstructions);
 

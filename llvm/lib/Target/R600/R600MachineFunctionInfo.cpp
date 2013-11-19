@@ -12,7 +12,9 @@
 
 using namespace llvm;
 
+
+// Pin the vtable to this file.
+void R600MachineFunctionInfo::anchor() {}
+
 R600MachineFunctionInfo::R600MachineFunctionInfo(const MachineFunction &MF)
   : AMDGPUMachineFunction(MF) { }
-
-

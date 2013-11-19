@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "dyld"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
+#include "JITRegistrar.h"
 #include "ObjectImageCommon.h"
 #include "RuntimeDyldELF.h"
 #include "RuntimeDyldImpl.h"
@@ -27,6 +28,11 @@ using namespace llvm::object;
 
 // Empty out-of-line virtual destructor as the key function.
 RuntimeDyldImpl::~RuntimeDyldImpl() {}
+
+// Pin the JITRegistrar's and ObjectImage*'s vtables to this file.
+void JITRegistrar::anchor() {}
+void ObjectImage::anchor() {}
+void ObjectImageCommon::anchor() {}
 
 namespace llvm {
 

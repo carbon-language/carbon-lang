@@ -24,6 +24,7 @@ namespace llvm {
 
 class XCoreInstrInfo : public XCoreGenInstrInfo {
   const XCoreRegisterInfo RI;
+  virtual void anchor();
 public:
   XCoreInstrInfo();
 

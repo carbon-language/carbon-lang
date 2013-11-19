@@ -19,6 +19,7 @@
 namespace llvm {
 
 class AMDGPUMachineFunction : public MachineFunctionInfo {
+  virtual void anchor();
 public:
   AMDGPUMachineFunction(const MachineFunction &MF);
   unsigned ShaderType;

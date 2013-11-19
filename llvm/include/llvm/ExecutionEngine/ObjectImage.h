@@ -25,6 +25,7 @@ namespace llvm {
 class ObjectImage {
   ObjectImage() LLVM_DELETED_FUNCTION;
   ObjectImage(const ObjectImage &other) LLVM_DELETED_FUNCTION;
+  virtual void anchor();
 
 protected:
   OwningPtr<ObjectBuffer> Buffer;

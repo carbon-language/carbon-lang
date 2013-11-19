@@ -128,7 +128,7 @@ public:
     BB(Block),PT(PT),Ran(R),Context(BB->getContext()) {}
 
   /// virtual D'tor to silence warnings.
-  virtual ~Modifier() {}
+  virtual ~Modifier();
 
   /// Add a new instruction.
   virtual void Act() = 0;
@@ -287,6 +287,7 @@ protected:
 
 struct LoadModifier: public Modifier {
   LoadModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
+  virtual ~LoadModifier();
   virtual void Act() {
     // Try to use predefined pointers. If non exist, use undef pointer value;
     Value *Ptr = getRandomPointerValue();
@@ -297,6 +298,7 @@ struct LoadModifier: public Modifier {
 
 struct StoreModifier: public Modifier {
   StoreModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
+  virtual ~StoreModifier();
   virtual void Act() {
     // Try to use predefined pointers. If non exist, use undef pointer value;
     Value *Ptr = getRandomPointerValue();
@@ -315,6 +317,7 @@ struct StoreModifier: public Modifier {
 
 struct BinModifier: public Modifier {
   BinModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
+  virtual ~BinModifier();
 
   virtual void Act() {
     Value *Val0 = getRandomVal();
@@ -359,6 +362,8 @@ struct BinModifier: public Modifier {
 /// Generate constant values.
 struct ConstModifier: public Modifier {
   ConstModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
+  virtual ~ConstModifier();
+
   virtual void Act() {
     Type *Ty = pickType();
 
@@ -405,6 +410,7 @@ struct ConstModifier: public Modifier {
 
 struct AllocaModifier: public Modifier {
   AllocaModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R){}
+  virtual ~AllocaModifier();
 
   virtual void Act() {
     Type *Tp = pickType();
@@ -415,6 +421,7 @@ struct AllocaModifier: public Modifier {
 struct ExtractElementModifier: public Modifier {
   ExtractElementModifier(BasicBlock *BB, PieceTable *PT, Random *R):
     Modifier(BB, PT, R) {}
+  virtual ~ExtractElementModifier();
 
   virtual void Act() {
     Value *Val0 = getRandomVectorValue();
@@ -428,6 +435,8 @@ struct ExtractElementModifier: public Modifier {
 
 struct ShuffModifier: public Modifier {
   ShuffModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
+  virtual ~ShuffModifier();
+
   virtual void Act() {
 
     Value *Val0 = getRandomVectorValue();
@@ -456,6 +465,7 @@ struct ShuffModifier: public Modifier {
 struct InsertElementModifier: public Modifier {
   InsertElementModifier(BasicBlock *BB, PieceTable *PT, Random *R):
     Modifier(BB, PT, R) {}
+  virtual ~InsertElementModifier();
 
   virtual void Act() {
     Value *Val0 = getRandomVectorValue();
@@ -472,6 +482,8 @@ struct InsertElementModifier: public Modifier {
 
 struct CastModifier: public Modifier {
   CastModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
+  virtual ~CastModifier();
+
   virtual void Act() {
 
     Value *V = getRandomVal();
@@ -558,6 +570,7 @@ struct CastModifier: public Modifier {
 struct SelectModifier: public Modifier {
   SelectModifier(BasicBlock *BB, PieceTable *PT, Random *R):
     Modifier(BB, PT, R) {}
+  virtual ~SelectModifier();
 
   virtual void Act() {
     // Try a bunch of different select configuration until a valid one is found.
@@ -582,6 +595,8 @@ struct SelectModifier: public Modifier {
 
 struct CmpModifier: public Modifier {
   CmpModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
+  virtual ~CmpModifier();
+
   virtual void Act() {
 
     Value *Val0 = getRandomVal();
@@ -606,6 +621,20 @@ struct CmpModifier: public Modifier {
     return PT->push_back(V);
   }
 };
+
+// Use out-of-line definitions to prevent weak vtables.
+Modifier::~Modifier() {}
+LoadModifier::~LoadModifier() {}
+StoreModifier::~StoreModifier() {}
+BinModifier::~BinModifier() {}
+ConstModifier::~ConstModifier() {}
+AllocaModifier::~AllocaModifier() {}
+ExtractElementModifier::~ExtractElementModifier() {}
+ShuffModifier::~ShuffModifier() {}
+InsertElementModifier::~InsertElementModifier() {}
+CastModifier::~CastModifier() {}
+SelectModifier::~SelectModifier() {}
+CmpModifier::~CmpModifier() {}
 
 void FillFunction(Function *F, Random &R) {
   // Create a legal entry block.

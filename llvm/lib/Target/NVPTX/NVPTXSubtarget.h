@@ -25,7 +25,7 @@
 namespace llvm {
 
 class NVPTXSubtarget : public NVPTXGenSubtargetInfo {
-
+  virtual void anchor();
   std::string TargetName;
   NVPTX::DrvInterface drvInterface;
   bool Is64Bit;

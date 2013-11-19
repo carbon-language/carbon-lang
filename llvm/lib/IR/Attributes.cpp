@@ -286,7 +286,11 @@ bool Attribute::operator<(Attribute A) const {
 // AttributeImpl Definition
 //===----------------------------------------------------------------------===//
 
+// Pin the vtabels to this file.
 AttributeImpl::~AttributeImpl() {}
+void EnumAttributeImpl::anchor() {}
+void AlignAttributeImpl::anchor() {}
+void StringAttributeImpl::anchor() {}
 
 bool AttributeImpl::hasAttribute(Attribute::AttrKind A) const {
   if (isStringAttribute()) return false;

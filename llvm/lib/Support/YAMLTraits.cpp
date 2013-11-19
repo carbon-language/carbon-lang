@@ -60,6 +60,11 @@ error_code Input::error() {
   return EC;
 }
 
+// Pin the vtables to this file.
+void Input::HNode::anchor() {}
+void Input::EmptyHNode::anchor() {}
+void Input::ScalarHNode::anchor() {}
+
 bool Input::outputting() const {
   return false;
 }

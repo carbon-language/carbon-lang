@@ -42,6 +42,7 @@ namespace MSP430II {
 
 class MSP430InstrInfo : public MSP430GenInstrInfo {
   const MSP430RegisterInfo RI;
+  virtual void anchor();
 public:
   explicit MSP430InstrInfo(MSP430TargetMachine &TM);
 

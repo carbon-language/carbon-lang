@@ -94,6 +94,7 @@ public:
 /// attribute enties, which are for target-dependent attributes.
 
 class EnumAttributeImpl : public AttributeImpl {
+  virtual void anchor();
   Attribute::AttrKind Kind;
 
 protected:
@@ -108,6 +109,7 @@ public:
 };
 
 class AlignAttributeImpl : public EnumAttributeImpl {
+  virtual void anchor();
   unsigned Align;
 
 public:
@@ -122,6 +124,7 @@ public:
 };
 
 class StringAttributeImpl : public AttributeImpl {
+  virtual void anchor();
   std::string Kind;
   std::string Val;
 
