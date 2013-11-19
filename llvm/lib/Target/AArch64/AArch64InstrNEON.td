@@ -1590,15 +1590,30 @@ def Neon_High8H  : PatFrag<(ops node:$in),
                            (extract_subvector (v8i16 node:$in), (iPTR 4))>;
 def Neon_High4S  : PatFrag<(ops node:$in),
                            (extract_subvector (v4i32 node:$in), (iPTR 2))>;
+def Neon_High2D  : PatFrag<(ops node:$in),
+                           (extract_subvector (v2i64 node:$in), (iPTR 1))>;
+def Neon_High4f  : PatFrag<(ops node:$in),
+                           (extract_subvector (v4f32 node:$in), (iPTR 2))>;
+def Neon_High2d  : PatFrag<(ops node:$in),
+                           (extract_subvector (v2f64 node:$in), (iPTR 1))>;
 
+def Neon_low16B : PatFrag<(ops node:$in),
+                          (v8i8 (extract_subvector (v16i8 node:$in),
+                                                   (iPTR 0)))>;
 def Neon_low8H : PatFrag<(ops node:$in),
                          (v4i16 (extract_subvector (v8i16 node:$in),
                                                    (iPTR 0)))>;
 def Neon_low4S : PatFrag<(ops node:$in),
                          (v2i32 (extract_subvector (v4i32 node:$in),
                                                    (iPTR 0)))>;
+def Neon_low2D : PatFrag<(ops node:$in),
+                         (v1i64 (extract_subvector (v2i64 node:$in),
+                                                   (iPTR 0)))>;
 def Neon_low4f : PatFrag<(ops node:$in),
                          (v2f32 (extract_subvector (v4f32 node:$in),
+                                                   (iPTR 0)))>;
+def Neon_low2d : PatFrag<(ops node:$in),
+                         (v1f64 (extract_subvector (v2f64 node:$in),
                                                    (iPTR 0)))>;
 
 def neon_uimm3_shift : Operand<i32>,
@@ -5136,15 +5151,29 @@ def DUPdv_D : NeonI_Scalar_DUP<"dup", "d", FPR64, VPR128, neon_uimm1_bare> {
 multiclass NeonI_Scalar_DUP_Elt_pattern<Instruction DUPI, ValueType ResTy,
   ValueType OpTy, Operand OpImm,
   ValueType OpNTy, ValueType ExTy, Operand OpNImm> {
-
-  def  : Pat<(ResTy (vector_extract (OpTy VPR128:$Rn), OpImm:$Imm)),
-             (ResTy (DUPI (OpTy VPR128:$Rn), OpImm:$Imm))>;
+  def : Pat<(ResTy (vector_extract (OpTy VPR128:$Rn), OpImm:$Imm)),
+            (ResTy (DUPI (OpTy VPR128:$Rn), OpImm:$Imm))>;
 
   def : Pat<(ResTy (vector_extract (OpNTy VPR64:$Rn), OpNImm:$Imm)),
             (ResTy (DUPI
               (ExTy (SUBREG_TO_REG (i64 0), VPR64:$Rn, sub_64)),
                 OpNImm:$Imm))>;
 }
+
+multiclass NeonI_SDUP<PatFrag GetLow, PatFrag GetHigh,
+                 ValueType ResTy, ValueType OpTy> {
+  def : Pat<(ResTy (GetLow VPR128:$Rn)),
+            (ResTy (DUPdv_D (OpTy VPR128:$Rn), 0))>;
+  def : Pat<(ResTy (GetHigh VPR128:$Rn)),
+            (ResTy (DUPdv_D (OpTy VPR128:$Rn), 1))>;
+}
+
+defm : NeonI_SDUP<Neon_low16B, Neon_High16B, v8i8, v16i8>;
+defm : NeonI_SDUP<Neon_low8H, Neon_High8H, v4i16, v8i16>;
+defm : NeonI_SDUP<Neon_low4S, Neon_High4S, v2i32, v4i32>;
+defm : NeonI_SDUP<Neon_low2D, Neon_High2D, v1i64, v2i64>;
+defm : NeonI_SDUP<Neon_low4f, Neon_High4f, v2f32, v4f32>;
+defm : NeonI_SDUP<Neon_low2d, Neon_High2d, v1f64, v2f64>;
 
 // Patterns  for vector extract of FP data using scalar DUP instructions
 defm : NeonI_Scalar_DUP_Elt_pattern<DUPsv_S, f32,
