@@ -45,7 +45,6 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   
   void migrateDecl(Decl *D);
   void migrateObjCInterfaceDecl(ASTContext &Ctx, ObjCContainerDecl *D);
-  void migrateDeprecatedAnnotation(ASTContext &Ctx, ObjCCategoryDecl *CatDecl);
   void migrateProtocolConformance(ASTContext &Ctx,
                                   const ObjCImplementationDecl *ImpDecl);
   void CacheObjCNSIntegerTypedefed(const TypedefDecl *TypedefDcl);
@@ -426,11 +425,19 @@ static void rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   }
 }
 
+static bool IsCategoryNameWithDeprecatedSuffix(ObjCContainerDecl *D) {
+  if (ObjCCategoryDecl *CatDecl = dyn_cast<ObjCCategoryDecl>(D)) {
+    StringRef Name = CatDecl->getName();
+    return Name.endswith("Deprecated");
+  }
+  return false;
+}
+
 void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
                                                       ObjCContainerDecl *D) {
-  if (D->isDeprecated())
+  if (D->isDeprecated() || IsCategoryNameWithDeprecatedSuffix(D))
     return;
-  
+    
   for (ObjCContainerDecl::method_iterator M = D->meth_begin(), MEnd = D->meth_end();
        M != MEnd; ++M) {
     ObjCMethodDecl *Method = (*M);
@@ -454,39 +461,6 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
     if ((ASTMigrateActions & FrontendOptions::ObjCMT_Annotation) &&
         !Prop->isDeprecated())
       migratePropertyNsReturnsInnerPointer(Ctx, Prop);
-  }
-}
-
-void ObjCMigrateASTConsumer::migrateDeprecatedAnnotation(ASTContext &Ctx,
-                                                           ObjCCategoryDecl *CatDecl) {
-  StringRef Name = CatDecl->getName();
-  if (!Name.endswith("Deprecated"))
-    return;
-  
-  if (!Ctx.Idents.get("DEPRECATED").hasMacroDefinition())
-    return;
-  
-  ObjCContainerDecl *D = cast<ObjCContainerDecl>(CatDecl);
-  
-  for (ObjCContainerDecl::method_iterator M = D->meth_begin(), MEnd = D->meth_end();
-       M != MEnd; ++M) {
-    ObjCMethodDecl *Method = (*M);
-    if (Method->isDeprecated() || Method->isImplicit())
-      continue;
-    // Annotate with DEPRECATED
-    edit::Commit commit(*Editor);
-    commit.insertBefore(Method->getLocEnd(), " DEPRECATED");
-    Editor->commit(commit);
-  }
-  for (ObjCContainerDecl::prop_iterator P = D->prop_begin(),
-       E = D->prop_end(); P != E; ++P) {
-    ObjCPropertyDecl *Prop = *P;
-    if (Prop->isDeprecated())
-      continue;
-    // Annotate with DEPRECATED
-    edit::Commit commit(*Editor);
-    commit.insertAfterToken(Prop->getLocEnd(), " DEPRECATED");
-    Editor->commit(commit);
   }
 }
 
@@ -1153,7 +1127,7 @@ void ObjCMigrateASTConsumer::migratePropertyNsReturnsInnerPointer(ASTContext &Ct
 
 void ObjCMigrateASTConsumer::migrateAllMethodInstaceType(ASTContext &Ctx,
                                                  ObjCContainerDecl *CDecl) {
-  if (CDecl->isDeprecated())
+  if (CDecl->isDeprecated() || IsCategoryNameWithDeprecatedSuffix(CDecl))
     return;
   
   // migrate methods which can have instancetype as their result type.
@@ -1627,8 +1601,6 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
         migrateObjCInterfaceDecl(Ctx, CDecl);
       if (ObjCCategoryDecl *CatDecl = dyn_cast<ObjCCategoryDecl>(*D)) {
         migrateObjCInterfaceDecl(Ctx, CatDecl);
-        if (ASTMigrateActions & FrontendOptions::ObjCMT_Annotation)
-          migrateDeprecatedAnnotation(Ctx, CatDecl);
       }
       else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(*D))
         ObjCProtocolDecls.insert(PDecl);
