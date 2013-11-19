@@ -13,6 +13,7 @@
 #include "lld/ReaderWriter/Simple.h"
 #include "lld/ReaderWriter/Writer.h"
 
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
 
 // Skip YAML files larger than this to avoid OOM error. The YAML reader consumes
@@ -31,6 +32,9 @@ void RoundTripYAMLPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   StringRef outFile = llvm::sys::path::filename(_context.outputPath());
   if (llvm::sys::fs::createTemporaryFile(outFile, "yaml", tmpYAMLFile))
     return;
+  DEBUG_WITH_TYPE("RoundTripYAMLPass", {
+    llvm::dbgs() << "RoundTripYAMLPass: " << tmpYAMLFile << "\n";
+  });
 
   // The file that is written would be kept around if there is a problem
   // writing to the file or when reading atoms back from the file.

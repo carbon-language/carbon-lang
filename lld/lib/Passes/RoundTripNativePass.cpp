@@ -14,6 +14,7 @@
 #include "lld/ReaderWriter/Simple.h"
 #include "lld/ReaderWriter/Writer.h"
 
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
 
 using namespace lld;
@@ -27,6 +28,9 @@ void RoundTripNativePass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   StringRef outFile = llvm::sys::path::filename(_context.outputPath());
   if (llvm::sys::fs::createTemporaryFile(outFile, "native", tmpNativeFile))
     return;
+  DEBUG_WITH_TYPE("RoundTripNativePass", {
+    llvm::dbgs() << "RoundTripNativePass: " << tmpNativeFile << "\n";
+  });
 
   // The file that is written would be kept around if there is a problem
   // writing to the file or when reading atoms back from the file.
