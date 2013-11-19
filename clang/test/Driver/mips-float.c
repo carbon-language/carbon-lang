@@ -60,23 +60,22 @@
 // RUN: %clang -c %s -### -o %t.o 2>&1 \
 // RUN:     -target mips-linux-gnu -mips16 \
 // RUN:   | FileCheck --check-prefix=CHECK-DEF-MIPS16 %s
-// CHECK-DEF-MIPS16: "-mfloat-abi" "soft"
-// CHECK-DEF-MIPS16: "-mllvm" "-mips16-hard-float"
+// CHECK-DEF-MIPS16: "-target-feature" "+mips16"
+// CHECK-DEF-MIPS16: "-mfloat-abi" "hard"
 //
 // -mhard-float -mips16
 // RUN: %clang -c %s -### -o %t.o 2>&1 \
 // RUN:     -target mips-linux-gnu -mhard-float -mips16 \
 // RUN:   | FileCheck --check-prefix=CHECK-HARD-MIPS16 %s
-// CHECK-HARD-MIPS16: "-target-feature" "+soft-float"
-// CHECK-HARD-MIPS16: "-msoft-float"
-// CHECK-HARD-MIPS16: "-mfloat-abi" "soft"
-// CHECK-HARD-MIPS16: "-mllvm" "-mips16-hard-float"
+// CHECK-HARD-MIPS16: "-target-feature" "+mips16"
+// CHECK-HARD-MIPS16: "-mfloat-abi" "hard"
 //
 // -msoft-float -mips16
 // RUN: %clang -c %s -### -o %t.o 2>&1 \
 // RUN:     -target mips-linux-gnu -msoft-float -mips16 \
 // RUN:   | FileCheck --check-prefix=CHECK-SOFT-MIPS16 %s
 // CHECK-SOFT-MIPS16: "-target-feature" "+soft-float"
+// CHECK-SOFT-MIPS16: "-target-feature" "+mips16"
 // CHECK-SOFT-MIPS16: "-msoft-float"
 // CHECK-SOFT-MIPS16: "-mfloat-abi" "soft"
 //
@@ -84,15 +83,14 @@
 // RUN: %clang -c %s -### -o %t.o 2>&1 \
 // RUN:     -target mips-linux-gnu -mfloat-abi=hard -mips16 \
 // RUN:   | FileCheck --check-prefix=CHECK-ABI-HARD-MIPS16 %s
-// CHECK-ABI-HARD-MIPS16: "-target-feature" "+soft-float"
-// CHECK-ABI-HARD-MIPS16: "-msoft-float"
-// CHECK-ABI-HARD-MIPS16: "-mfloat-abi" "soft"
-// CHECK-ABI-HARD-MIPS16: "-mllvm" "-mips16-hard-float"
+// CHECK-ABI-HARD-MIPS16: "-target-feature" "+mips16"
+// CHECK-ABI-HARD-MIPS16: "-mfloat-abi" "hard"
 //
 // -mfloat-abi=soft -mips16
 // RUN: %clang -c %s -### -o %t.o 2>&1 \
 // RUN:     -target mips-linux-gnu -mfloat-abi=soft -mips16 \
 // RUN:   | FileCheck --check-prefix=CHECK-ABI-SOFT-MIPS16 %s
 // CHECK-ABI-SOFT-MIPS16: "-target-feature" "+soft-float"
+// CHECK-ABI-SOFT-MIPS16: "-target-feature" "+mips16"
 // CHECK-ABI-SOFT-MIPS16: "-msoft-float"
 // CHECK-ABI-SOFT-MIPS16: "-mfloat-abi" "soft"
