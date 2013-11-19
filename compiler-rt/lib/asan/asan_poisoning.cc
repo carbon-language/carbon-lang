@@ -256,44 +256,47 @@ void __asan_unpoison_stack_memory(uptr addr, uptr size) {
   PoisonAlignedStackMemory(addr, size, false);
 }
 
-void __sanitizer_annotate_contiguous_container(void *beg_p, void *end_p,
-                                               void *old_mid_p,
-                                               void *new_mid_p) {
+void __sanitizer_annotate_contiguous_container(const void *beg_p,
+                                               const void *end_p,
+                                               const void *old_mid_p,
+                                               const void *new_mid_p) {
+  if (common_flags()->verbosity >= 2)
+    Printf("contiguous_container: %p %p %p %p\n", beg_p, end_p, old_mid_p,
+           new_mid_p);
   uptr beg = reinterpret_cast<uptr>(beg_p);
   uptr end= reinterpret_cast<uptr>(end_p);
   uptr old_mid = reinterpret_cast<uptr>(old_mid_p);
   uptr new_mid = reinterpret_cast<uptr>(new_mid_p);
   uptr granularity = SHADOW_GRANULARITY;
-  CHECK(beg <= end && beg <= old_mid && beg <= new_mid && old_mid <= end &&
-        new_mid <= end && IsAligned(beg, granularity));
+  CHECK(beg <= old_mid && beg <= new_mid && old_mid <= end && new_mid <= end &&
+        IsAligned(beg, granularity));
   CHECK_LE(end - beg,
            FIRST_32_SECOND_64(1UL << 30, 1UL << 34)); // Sanity check.
 
   uptr a = RoundDownTo(Min(old_mid, new_mid), granularity);
   uptr c = RoundUpTo(Max(old_mid, new_mid), granularity);
-  uptr b = new_mid;
-  uptr b1 = RoundDownTo(b, granularity);
-  uptr b2 = RoundUpTo(b, granularity);
-  uptr d = old_mid;
-  uptr d1 = RoundDownTo(d, granularity);
-  uptr d2 = RoundUpTo(d, granularity);
+  uptr d1 = RoundDownTo(old_mid, granularity);
+  uptr d2 = RoundUpTo(old_mid, granularity);
   // Currently we should be in this state:
   // [a, d1) is good, [d2, c) is bad, [d1, d2) is partially good.
   // Make a quick sanity check that we are indeed in this state.
   if (d1 != d2)
-    CHECK_EQ(*(u8*)MemToShadow(d1), d - d1);
+    CHECK_EQ(*(u8*)MemToShadow(d1), old_mid - d1);
   if (a + granularity <= d1)
     CHECK_EQ(*(u8*)MemToShadow(a), 0);
   if (d2 + granularity <= c && c <= end)
-    CHECK_EQ(*(u8 *)MemToShadow(c - granularity), kAsanUserPoisonedMemoryMagic);
+    CHECK_EQ(*(u8 *)MemToShadow(c - granularity),
+             kAsanContiguousContainerOOBMagic);
 
+  uptr b1 = RoundDownTo(new_mid, granularity);
+  uptr b2 = RoundUpTo(new_mid, granularity);
   // New state:
   // [a, b1) is good, [b2, c) is bad, [b1, b2) is partially good.
   // FIXME: we may want to have a separate poison magic value.
   PoisonShadow(a, b1 - a, 0);
-  PoisonShadow(b2, c - b2, kAsanUserPoisonedMemoryMagic);
+  PoisonShadow(b2, c - b2, kAsanContiguousContainerOOBMagic);
   if (b1 != b2) {
     CHECK_EQ(b2 - b1, granularity);
-    *(u8*)MemToShadow(b1) = static_cast<u8>(b - b1);
+    *(u8*)MemToShadow(b1) = static_cast<u8>(new_mid - b1);
   }
 }

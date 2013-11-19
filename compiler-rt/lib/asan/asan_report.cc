@@ -74,6 +74,7 @@ class Decorator: private __sanitizer::AnsiColorDecorator {
       case kAsanInitializationOrderMagic:
         return Cyan();
       case kAsanUserPoisonedMemoryMagic:
+      case kAsanContiguousContainerOOBMagic:
         return Blue();
       case kAsanStackUseAfterScopeMagic:
         return Magenta();
@@ -120,19 +121,21 @@ static void PrintLegend() {
   for (u8 i = 1; i < SHADOW_GRANULARITY; i++)
     PrintShadowByte("", i, " ");
   Printf("\n");
-  PrintShadowByte("  Heap left redzone:     ", kAsanHeapLeftRedzoneMagic);
-  PrintShadowByte("  Heap right redzone:    ", kAsanHeapRightRedzoneMagic);
-  PrintShadowByte("  Freed heap region:     ", kAsanHeapFreeMagic);
-  PrintShadowByte("  Stack left redzone:    ", kAsanStackLeftRedzoneMagic);
-  PrintShadowByte("  Stack mid redzone:     ", kAsanStackMidRedzoneMagic);
-  PrintShadowByte("  Stack right redzone:   ", kAsanStackRightRedzoneMagic);
-  PrintShadowByte("  Stack partial redzone: ", kAsanStackPartialRedzoneMagic);
-  PrintShadowByte("  Stack after return:    ", kAsanStackAfterReturnMagic);
-  PrintShadowByte("  Stack use after scope: ", kAsanStackUseAfterScopeMagic);
-  PrintShadowByte("  Global redzone:        ", kAsanGlobalRedzoneMagic);
-  PrintShadowByte("  Global init order:     ", kAsanInitializationOrderMagic);
-  PrintShadowByte("  Poisoned by user:      ", kAsanUserPoisonedMemoryMagic);
-  PrintShadowByte("  ASan internal:         ", kAsanInternalHeapMagic);
+  PrintShadowByte("  Heap left redzone:       ", kAsanHeapLeftRedzoneMagic);
+  PrintShadowByte("  Heap right redzone:      ", kAsanHeapRightRedzoneMagic);
+  PrintShadowByte("  Freed heap region:       ", kAsanHeapFreeMagic);
+  PrintShadowByte("  Stack left redzone:      ", kAsanStackLeftRedzoneMagic);
+  PrintShadowByte("  Stack mid redzone:       ", kAsanStackMidRedzoneMagic);
+  PrintShadowByte("  Stack right redzone:     ", kAsanStackRightRedzoneMagic);
+  PrintShadowByte("  Stack partial redzone:   ", kAsanStackPartialRedzoneMagic);
+  PrintShadowByte("  Stack after return:      ", kAsanStackAfterReturnMagic);
+  PrintShadowByte("  Stack use after scope:   ", kAsanStackUseAfterScopeMagic);
+  PrintShadowByte("  Global redzone:          ", kAsanGlobalRedzoneMagic);
+  PrintShadowByte("  Global init order:       ", kAsanInitializationOrderMagic);
+  PrintShadowByte("  Poisoned by user:        ", kAsanUserPoisonedMemoryMagic);
+  PrintShadowByte("  Contiguous container OOB:",
+                  kAsanContiguousContainerOOBMagic);
+  PrintShadowByte("  ASan internal:           ", kAsanInternalHeapMagic);
 }
 
 static void PrintShadowMemoryForAddress(uptr addr) {
@@ -744,6 +747,9 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
         break;
       case kAsanUserPoisonedMemoryMagic:
         bug_descr = "use-after-poison";
+        break;
+      case kAsanContiguousContainerOOBMagic:
+        bug_descr = "contiguous-container-buffer-overflow";
         break;
       case kAsanStackUseAfterScopeMagic:
         bug_descr = "stack-use-after-scope";

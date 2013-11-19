@@ -71,8 +71,10 @@ extern "C" {
   // Use with caution and don't use for anything other than vector-like classes.
   //
   // For AddressSanitizer, 'beg' should be 8-aligned.
-  void __sanitizer_annotate_contiguous_container(void *beg, void *end,
-                                                 void *old_mid, void *new_mid);
+  void __sanitizer_annotate_contiguous_container(const void *beg,
+                                                 const void *end,
+                                                 const void *old_mid,
+                                                 const void *new_mid);
 
 #ifdef __cplusplus
 }  // extern "C"
