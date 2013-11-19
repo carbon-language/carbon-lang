@@ -10,6 +10,8 @@
 #ifndef LLD_READER_WRITER_NATIVE_NATIVE_FILE_FORMAT_H
 #define LLD_READER_WRITER_NATIVE_NATIVE_FILE_FORMAT_H
 
+#include <cstdint>
+
 #include "llvm/Support/DataTypes.h"
 
 namespace lld {
@@ -199,7 +201,7 @@ struct NativeAbsoluteAtomIvarsV1 {
 //
 struct NativeReferenceIvarsV1 {
   enum {
-    noTarget = 0xFFFF
+    noTarget = UINT16_MAX
   };
   uint16_t  offsetInAtom;
    int16_t  kind;
