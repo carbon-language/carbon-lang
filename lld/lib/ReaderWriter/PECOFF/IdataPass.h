@@ -59,7 +59,7 @@ void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target,
 
 // A state object of this pass.
 struct Context {
-  explicit Context(MutableFile &f, File &g) : file(f), dummyFile(g) {}
+  Context(MutableFile &f, File &g) : file(f), dummyFile(g) {}
 
   MutableFile &file;
   File &dummyFile;
@@ -145,7 +145,7 @@ private:
 
 class ImportTableEntryAtom : public IdataAtom {
 public:
-  explicit ImportTableEntryAtom(Context &context, uint32_t contents)
+  ImportTableEntryAtom(Context &context, uint32_t contents)
       : IdataAtom(context, assembleRawContent(contents)) {}
 
 private:
