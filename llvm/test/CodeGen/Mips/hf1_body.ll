@@ -1,4 +1,4 @@
-; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16  -relocation-model=pic -soft-float -mips16-hard-float < %s | FileCheck %s -check-prefix=picfp16
+; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16  -relocation-model=pic < %s | FileCheck %s -check-prefix=picfp16
 
 @x = external global float
 

@@ -1,6 +1,6 @@
 ; RUN: llc  < %s -march=mipsel -mcpu=mips32r2 | FileCheck %s -check-prefix=MIPS32
 ; RUN: llc  < %s -march=mips64el -mcpu=mips64r2 | FileCheck %s -check-prefix=MIPS64
-; RUN: llc  < %s -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips32r2 -mattr=+mips16 -soft-float -mips16-hard-float   | FileCheck %s -check-prefix=mips16 
+; RUN: llc  < %s -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips32r2 -mattr=+mips16 | FileCheck %s -check-prefix=mips16
 
 define i32 @bswap32(i32 %x) nounwind readnone {
 entry:

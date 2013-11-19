@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -soft-float -mips16-hard-float -relocation-model=static  < %s | FileCheck %s -check-prefix=static16
+; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -relocation-model=static  < %s | FileCheck %s -check-prefix=static16
 
 ; Function Attrs: nounwind
 define double @my_mul(double %a, double %b) #0 {

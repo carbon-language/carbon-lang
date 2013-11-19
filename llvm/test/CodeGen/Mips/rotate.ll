@@ -1,5 +1,5 @@
 ; RUN: llc -march=mips -mcpu=mips32r2 < %s | FileCheck %s
-; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips32r2 -mattr=+mips16 -soft-float -mips16-hard-float   < %s | FileCheck %s -check-prefix=mips16 
+; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips32r2 -mattr=+mips16 < %s | FileCheck %s -check-prefix=mips16
 
 ; CHECK:  rotrv $2, $4
 ; mips16: .ent rot0
