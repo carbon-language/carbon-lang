@@ -1,38 +1,37 @@
 fun:main=uninstrumented
 fun:main=discard
 
-# DFSan interface functions.
+###############################################################################
+# DFSan interface functions
+###############################################################################
 fun:dfsan_union=uninstrumented
 fun:dfsan_union=discard
-
 fun:dfsan_create_label=uninstrumented
 fun:dfsan_create_label=discard
-
 fun:dfsan_set_label=uninstrumented
 fun:dfsan_set_label=discard
-
 fun:dfsan_add_label=uninstrumented
 fun:dfsan_add_label=discard
-
 fun:dfsan_get_label=uninstrumented
 fun:dfsan_get_label=custom
-
 fun:dfsan_read_label=uninstrumented
 fun:dfsan_read_label=discard
-
 fun:dfsan_get_label_info=uninstrumented
 fun:dfsan_get_label_info=discard
-
 fun:dfsan_has_label=uninstrumented
 fun:dfsan_has_label=discard
-
 fun:dfsan_has_label_with_desc=uninstrumented
 fun:dfsan_has_label_with_desc=discard
 
-# glibc functions.
+###############################################################################
+# glibc
+###############################################################################
 fun:malloc=discard
 fun:realloc=discard
 fun:free=discard
+
+# Functions that return a value that depends on the input, but the output might
+# not be necessarily data-dependent on the input.
 fun:isalpha=functional
 fun:isdigit=functional
 fun:isprint=functional
@@ -42,77 +41,97 @@ fun:ispunct=functional
 fun:isspace=functional
 fun:tolower=functional
 fun:toupper=functional
+
+# Functions that return a value that is data-dependent on the input.
 fun:exp=functional
 fun:exp2=functional
 fun:log=functional
 fun:sqrt=functional
-fun:__cxa_atexit=discard
-fun:open=discard
-fun:pthread_key_create=discard
-fun:getenv=discard
+
+# Functions that produce an output that does not depend on the input (shadow is
+# zeroed automatically).
 fun:__ctype_b_loc=discard
+fun:__cxa_atexit=discard
 fun:__errno_location=discard
+fun:__newlocale=discard
+fun:__sbrk=discard
+fun:__uselocale=discard
+fun:access=discard
+fun:atexit=discard
+fun:chdir=discard
+fun:close=discard
+fun:connect=discard
+fun:dladdr=discard
+fun:fclose=discard
+fun:feof=discard
+fun:fflush=discard
+fun:fileno=discard
+fun:fopen=discard
+fun:fprintf=discard
+fun:fputc=discard
+fun:fputc=discard
+fun:fputs=discard
+fun:fputs=discard
+fun:fseek=discard
+fun:ftell=discard
+fun:fwrite=discard
+fun:getenv=discard
+fun:geteuid=discard
+fun:getpagesize=discard
+fun:getpid=discard
+fun:lseek=discard
+fun:mkdir=discard
 fun:mmap=discard
 fun:munmap=discard
-fun:write=discard
-fun:close=discard
-fun:pthread_equal=discard
-fun:pthread_getspecific=discard
-fun:pthread_setspecific=discard
-fun:pthread_mutex_destroy=discard
-fun:pthread_mutexattr_init=discard
-fun:pthread_mutexattr_settype=discard
-fun:pthread_mutex_init=discard
-fun:pthread_mutex_lock=discard
-fun:pthread_mutex_trylock=discard
-fun:pthread_mutex_unlock=discard
-fun:pthread_mutexattr_destroy=discard
-fun:pthread_once=discard
-fun:pthread_key_delete=discard
-fun:pthread_self=discard
+fun:open=discard
 fun:printf=discard
-fun:fprintf=discard
-fun:fputs=discard
-fun:fputc=discard
-fun:fopen=discard
-fun:fseek=discard
-fun:lseek=discard
-fun:ftell=discard
-fun:fclose=discard
-fun:dladdr=discard
-fun:getpagesize=discard
+fun:pthread_sigmask=discard
+fun:putc=discard
+fun:putchar=discard
+fun:puts=discard
+fun:rand=discard
+fun:random=discard
+fun:remove=discard
 fun:sched_getcpu=discard
-fun:sched_getaffinity=discard
 fun:sched_setaffinity=discard
-fun:syscall=discard
+fun:sched_yield=discard
 fun:sem_init=discard
 fun:sem_post=discard
 fun:sem_wait=discard
-fun:sched_yield=discard
-fun:uselocale=discard
-fun:rand=discard
-fun:random=discard
 fun:sleep=discard
+fun:strerror=discard
+fun:syscall=discard
+fun:uselocale=discard
+fun:write=discard
 
-fun:stat=custom
+# Functions that produce output does not depend on the input (need to zero the
+# shadow manually).
+fun:calloc=custom
+fun:clock_gettime=custom
+fun:dlopen=custom
 fun:fstat=custom
-fun:memcmp=custom
+fun:pread=custom
+fun:read=custom
+fun:stat=custom
+
+# Functions that produce an output that depend on the input (propagate the
+# shadow manually).
 fun:memcpy=custom
 fun:memset=custom
-fun:strcmp=custom
 fun:strdup=custom
-fun:strncmp=custom
 fun:strncpy=custom
+
+# Functions that produce an output that is computed from the input, but is not
+# necessarily data dependent.
+fun:memcmp=custom
 fun:strcasecmp=custom
-fun:strncasecmp=custom
 fun:strchr=custom
+fun:strcmp=custom
 fun:strlen=custom
-fun:calloc=custom
-fun:dlopen=custom
-fun:read=custom
-fun:pread=custom
-fun:clock_gettime=custom
-fun:pthread_create=custom
+fun:strncasecmp=custom
+fun:strncmp=custom
+
+# Functions that take a callback (wrap the callback manually).
 fun:dl_iterate_phdr=custom
 
 # TODO: custom
@@ -125,3 +144,30 @@ fun:strtoull=discard
 fun:sigemptyset=discard
 fun:sigaction=discard
 fun:gettimeofday=discard
+fun:get_current_dir_name=discard
+fun:getpwuid_r=discard
+fun:poll=discard
+fun:sched_getaffinity=discard
+fun:select=discard
+
+###############################################################################
+# pthread
+###############################################################################
+fun:pthread_equal=discard
+fun:pthread_getspecific=discard
+fun:pthread_key_create=discard
+fun:pthread_key_delete=discard
+fun:pthread_mutex_destroy=discard
+fun:pthread_mutex_init=discard
+fun:pthread_mutex_lock=discard
+fun:pthread_mutex_trylock=discard
+fun:pthread_mutex_unlock=discard
+fun:pthread_mutexattr_destroy=discard
+fun:pthread_mutexattr_init=discard
+fun:pthread_mutexattr_settype=discard
+fun:pthread_once=discard
+fun:pthread_self=discard
+fun:pthread_setspecific=discard
+
+# Functions that take a callback (wrap the callback manually).
+fun:pthread_create=custom
