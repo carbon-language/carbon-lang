@@ -145,7 +145,7 @@ our $debug = 1;
 
 sub parallel_guess
 {
-    my $cpus = `sysctl -n hw.availcpu`;
+    my $cpus = `sysctl -n hw.ncpu`;
     chomp ($cpus);
     my $memsize = `sysctl -n hw.memsize`;
     chomp ($memsize);
