@@ -23,9 +23,8 @@ public:
 
 // This part is for ascii assembly output
 class MipsTargetAsmStreamer : public MipsTargetStreamer {
-
 public:
-  MipsTargetAsmStreamer(formatted_raw_ostream &OS);
+  MipsTargetAsmStreamer();
   virtual void emitMipsHackELFFlags(unsigned Flags);
   virtual void emitSymSTO(MCSymbol *Sym, unsigned Val);
 };

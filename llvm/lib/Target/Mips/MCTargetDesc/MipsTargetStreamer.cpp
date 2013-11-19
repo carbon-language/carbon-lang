@@ -23,8 +23,7 @@ using namespace llvm;
 // pin vtable to this file
 void MipsTargetStreamer::anchor() {}
 
-MipsTargetAsmStreamer::MipsTargetAsmStreamer(formatted_raw_ostream &OS)
-    : OS(OS) {}
+MipsTargetAsmStreamer::MipsTargetAsmStreamer() {}
 
 void MipsTargetAsmStreamer::emitMipsHackELFFlags(unsigned Flags) {
   return;
