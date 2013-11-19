@@ -7,6 +7,7 @@
 - (NSString *)stringByAppendingFormat:(NSString *)format, ... __attribute__((format(__NSString__, 1, 2)));
 -(void) m0 __attribute__((noreturn));
 -(void) m1 __attribute__((unused));
+-(void) m2 __attribute__((stdcall));
 @end
 
 
@@ -83,4 +84,8 @@
 - (id) method4: (int)arg1 __attribute__((aligned(16))) __attribute__((deprecated)) __attribute__((unavailable)) {
   return self;
 }
+@end
+
+__attribute__((cdecl))  // expected-warning {{'cdecl' attribute only applies to functions and methods}}
+@interface Complain 
 @end

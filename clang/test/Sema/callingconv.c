@@ -66,3 +66,5 @@ void __attribute__((intel_ocl_bicc)) inteloclbifunc(float *a) {}
 typedef void typedef_fun_t(int);
 typedef_fun_t typedef_fun; // expected-note {{previous declaration is here}}
 void __attribute__((stdcall)) typedef_fun(int x) { } // expected-error {{function declared 'stdcall' here was previously declared without calling convention}}
+
+struct type_test {} __attribute__((stdcall));  // expected-warning {{'stdcall' attribute only applies to functions and methods}}
