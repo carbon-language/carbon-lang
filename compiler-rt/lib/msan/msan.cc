@@ -33,9 +33,14 @@ static THREADLOCAL int msan_expected_umr_found = 0;
 
 static int msan_running_under_dr = 0;
 
+// Function argument shadow. Each argument starts at the next available 8-byte
+// aligned address.
 SANITIZER_INTERFACE_ATTRIBUTE
 THREADLOCAL u64 __msan_param_tls[kMsanParamTlsSizeInWords];
 
+// Function argument origin. Each argument starts at the same offset as the
+// corresponding shadow in (__msan_param_tls). Slightly weird, but changing this
+// would break compatibility with older prebuilt binaries.
 SANITIZER_INTERFACE_ATTRIBUTE
 THREADLOCAL u32 __msan_param_origin_tls[kMsanParamTlsSizeInWords];
 
@@ -460,8 +465,8 @@ void __msan_set_origin(const void *a, uptr size, u32 origin) {
   uptr beg = x & ~3UL;  // align down.
   uptr end = (x + size + 3) & ~3UL;  // align up.
   u64 origin64 = ((u64)origin << 32) | origin;
-  // This is like memset, but the value is 32-bit. We unroll by 2 two write
-  // 64-bits at once. May want to unroll further to get 128-bit stores.
+  // This is like memset, but the value is 32-bit. We unroll by 2 to write
+  // 64 bits at once. May want to unroll further to get 128-bit stores.
   if (beg & 7ULL) {
     *(u32*)beg = origin;
     beg += 4;
@@ -521,37 +526,40 @@ u32 __msan_get_umr_origin() {
 u16 __sanitizer_unaligned_load16(const uu16 *p) {
   __msan_retval_tls[0] = *(uu16 *)MEM_TO_SHADOW((uptr)p);
   if (__msan_get_track_origins())
-    __msan_retval_origin_tls = *(uu32 *)MEM_TO_ORIGIN((uptr)p);
+    __msan_retval_origin_tls = *(uu32 *)(MEM_TO_ORIGIN((uptr)p) & ~3UL);
   return *p;
 }
 u32 __sanitizer_unaligned_load32(const uu32 *p) {
   __msan_retval_tls[0] = *(uu32 *)MEM_TO_SHADOW((uptr)p);
   if (__msan_get_track_origins())
-    __msan_retval_origin_tls = *(uu32 *)MEM_TO_ORIGIN((uptr)p);
+    __msan_retval_origin_tls = *(uu32 *)(MEM_TO_ORIGIN((uptr)p) & ~3UL);
   return *p;
 }
 u64 __sanitizer_unaligned_load64(const uu64 *p) {
   __msan_retval_tls[0] = *(uu64 *)MEM_TO_SHADOW((uptr)p);
   if (__msan_get_track_origins())
-    __msan_retval_origin_tls = *(uu32 *)MEM_TO_ORIGIN((uptr)p);
+    __msan_retval_origin_tls = *(uu32 *)(MEM_TO_ORIGIN((uptr)p) & ~3UL);
   return *p;
 }
 void __sanitizer_unaligned_store16(uu16 *p, u16 x) {
   *(uu16 *)MEM_TO_SHADOW((uptr)p) = __msan_param_tls[1];
   if (__msan_get_track_origins())
-    *(uu32 *)MEM_TO_ORIGIN((uptr)p) = __msan_param_origin_tls[1];
+    if (uu32 o = __msan_param_origin_tls[2])
+      __msan_set_origin(p, 2, o);
   *p = x;
 }
 void __sanitizer_unaligned_store32(uu32 *p, u32 x) {
   *(uu32 *)MEM_TO_SHADOW((uptr)p) = __msan_param_tls[1];
   if (__msan_get_track_origins())
-    *(uu32 *)MEM_TO_ORIGIN((uptr)p) = __msan_param_origin_tls[1];
+    if (uu32 o = __msan_param_origin_tls[2])
+      __msan_set_origin(p, 4, o);
   *p = x;
 }
 void __sanitizer_unaligned_store64(uu64 *p, u64 x) {
   *(uu64 *)MEM_TO_SHADOW((uptr)p) = __msan_param_tls[1];
   if (__msan_get_track_origins())
-    *(uu32 *)MEM_TO_ORIGIN((uptr)p) = __msan_param_origin_tls[1];
+    if (uu32 o = __msan_param_origin_tls[2])
+      __msan_set_origin(p, 8, o);
   *p = x;
 }
 
