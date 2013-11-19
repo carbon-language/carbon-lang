@@ -70,7 +70,16 @@ extern "C" {
   //
   // Use with caution and don't use for anything other than vector-like classes.
   //
-  // For AddressSanitizer, 'beg' should be 8-aligned.
+  // For AddressSanitizer, 'beg' should be 8-aligned and 'end' should
+  // be either 8-aligned or it should point to the end of a separate heap-,
+  // stack-, or global- allocated buffer. I.e. the following will not work:
+  //   int64_t x[2];  // 16 bytes, 8-aligned.
+  //   char *beg = (char *)&x[0];
+  //   char *end = beg + 12;  // Not 8 aligned, not the end of the buffer.
+  // This however will work fine:
+  //   int32_t x[3];  // 12 bytes, but 8-aligned under AddressSanitizer.
+  //   char *beg = (char*)&x[0];
+  //   char *end = beg + 12;  // Not 8-aligned, but is the end of the buffer.
   void __sanitizer_annotate_contiguous_container(const void *beg,
                                                  const void *end,
                                                  const void *old_mid,

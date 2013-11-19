@@ -292,7 +292,6 @@ void __sanitizer_annotate_contiguous_container(const void *beg_p,
   uptr b2 = RoundUpTo(new_mid, granularity);
   // New state:
   // [a, b1) is good, [b2, c) is bad, [b1, b2) is partially good.
-  // FIXME: we may want to have a separate poison magic value.
   PoisonShadow(a, b1 - a, 0);
   PoisonShadow(b2, c - b2, kAsanContiguousContainerOOBMagic);
   if (b1 != b2) {
