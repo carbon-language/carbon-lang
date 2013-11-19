@@ -979,6 +979,13 @@ def SCALAR_SUB : SInst<"vsub", "sss",  "SlSUl">;
 // Scalar  Saturating Sub
 def SCALAR_QSUB   : SInst<"vqsub", "sss", "ScSsSiSlSUcSUsSUiSUl">;
 
+let InstName = "vmov" in {
+def VGET_HIGH_A64 : NoTestOpInst<"vget_high", "dk", "csilhfdUcUsUiUlPcPsPl",
+                                 OP_HI>;
+def VGET_LOW_A64  : NoTestOpInst<"vget_low", "dk", "csilhfdUcUsUiUlPcPsPl",
+                                 OP_LO>;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Shift
 // Scalar Shift Left
