@@ -182,6 +182,8 @@ void Value::setName(const Twine &NewName) {
 
   SmallString<256> NameData;
   StringRef NameRef = NewName.toStringRef(NameData);
+  assert(NameRef.find_first_of(0) == StringRef::npos &&
+         "Null bytes are not allowed in names");
 
   // Name isn't changing?
   if (getName() == NameRef)
