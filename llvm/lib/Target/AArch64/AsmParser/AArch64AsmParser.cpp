@@ -1639,6 +1639,7 @@ AArch64AsmParser::IdentifyRegister(unsigned &RegNum, SMLoc &RegEndLoc,
 
     // See if it's a 128-bit layout first.
     Layout = StringSwitch<const char *>(LayoutText)
+      .Case(".q", ".q").Case(".1q", ".1q")
       .Case(".d", ".d").Case(".2d", ".2d")
       .Case(".s", ".s").Case(".4s", ".4s")
       .Case(".h", ".h").Case(".8h", ".8h")
@@ -1737,6 +1738,7 @@ AArch64AsmParser::ParseRegister(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
       case 'h': NumLanes = 8; break;
       case 's': NumLanes = 4; break;
       case 'd': NumLanes = 2; break;
+      case 'q': NumLanes = 1; break;
       }
     }
 

@@ -2582,6 +2582,12 @@
 // CHECK-ERROR:        pmull v0.8h, v1.8h, v2.8b
 // CHECK-ERROR:                        ^
 
+        pmull v0.1q, v1.2d, v2.2d
+        
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        pmull v0.1q, v1.2d, v2.2d
+// CHECK-ERROR:                     ^
+
         // Mismatched vector types
         pmull v0.4s, v1.4h, v2.4h
         pmull v0.2d, v1.2s, v2.2s
@@ -2599,6 +2605,12 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        pmull2 v0.8h, v1.16h, v2.16b
 // CHECK-ERROR:                      ^
+
+        pmull2 v0.q, v1.2d, v2.2d
+        
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        pmull2 v0.q, v1.2d, v2.2d
+// CHECK-ERROR:                  ^
 
         // Mismatched vector types
         pmull2 v0.4s, v1.8h v2.8h
