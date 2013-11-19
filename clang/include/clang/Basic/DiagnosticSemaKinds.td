@@ -3775,7 +3775,7 @@ def warn_missing_field_initializers : Warning<
   InGroup<MissingFieldInitializers>, DefaultIgnore;
 def warn_braces_around_scalar_init : Warning<
   "braces around scalar initializer">;
-def warn_many_braces_around_scalar_init : ExtWarn<
+def ext_many_braces_around_scalar_init : ExtWarn<
   "too many braces around scalar initializer">;
 def ext_complex_component_init : Extension<
   "complex initialization specifying real and imaginary components "

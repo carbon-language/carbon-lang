@@ -1005,9 +1005,11 @@ void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
 
   Expr *expr = IList->getInit(Index);
   if (InitListExpr *SubIList = dyn_cast<InitListExpr>(expr)) {
+    // FIXME: This is invalid, and accepting it causes overload resolution
+    // to pick the wrong overload in some corner cases.
     if (!VerifyOnly)
       SemaRef.Diag(SubIList->getLocStart(),
-                   diag::warn_many_braces_around_scalar_init)
+                   diag::ext_many_braces_around_scalar_init)
         << SubIList->getSourceRange();
 
     CheckScalarType(Entity, SubIList, DeclType, Index, StructuredList,
