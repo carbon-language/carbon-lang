@@ -165,10 +165,10 @@ private:
   // HashData[hash_data_count]
 public:
   struct HashDataContents {
-    DIE *Die;   // Offsets
+    const DIE *Die;   // Offsets
     char Flags; // Specific flags to output
 
-    HashDataContents(DIE *D, char Flags) : Die(D), Flags(Flags) {}
+    HashDataContents(const DIE *D, char Flags) : Die(D), Flags(Flags) {}
 #ifndef NDEBUG
     void print(raw_ostream &O) const {
       O << "  Offset: " << Die->getOffset() << "\n";
@@ -241,7 +241,7 @@ private:
 public:
   DwarfAccelTable(ArrayRef<DwarfAccelTable::Atom>);
   ~DwarfAccelTable();
-  void AddName(StringRef, DIE *, char = 0);
+  void AddName(StringRef, const DIE *, char = 0);
   void FinalizeTable(AsmPrinter *, StringRef);
   void Emit(AsmPrinter *, MCSymbol *, DwarfUnits *);
 #ifndef NDEBUG

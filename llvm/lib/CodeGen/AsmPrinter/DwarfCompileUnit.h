@@ -74,10 +74,10 @@ class CompileUnit {
 
   /// AccelNames - A map of names for the name accelerator table.
   ///
-  StringMap<std::vector<DIE *> > AccelNames;
-  StringMap<std::vector<DIE *> > AccelObjC;
-  StringMap<std::vector<DIE *> > AccelNamespace;
-  StringMap<std::vector<std::pair<DIE *, unsigned> > > AccelTypes;
+  StringMap<std::vector<const DIE *> > AccelNames;
+  StringMap<std::vector<const DIE *> > AccelObjC;
+  StringMap<std::vector<const DIE *> > AccelNamespace;
+  StringMap<std::vector<std::pair<const DIE *, unsigned> > > AccelTypes;
 
   /// DIEBlocks - A list of all the DIEBlocks in use.
   std::vector<DIEBlock *> DIEBlocks;
@@ -106,16 +106,16 @@ public:
   const StringMap<DIE *> &getGlobalNames() const { return GlobalNames; }
   const StringMap<DIE *> &getGlobalTypes() const { return GlobalTypes; }
 
-  const StringMap<std::vector<DIE *> > &getAccelNames() const {
+  const StringMap<std::vector<const DIE *> > &getAccelNames() const {
     return AccelNames;
   }
-  const StringMap<std::vector<DIE *> > &getAccelObjC() const {
+  const StringMap<std::vector<const DIE *> > &getAccelObjC() const {
     return AccelObjC;
   }
-  const StringMap<std::vector<DIE *> > &getAccelNamespace() const {
+  const StringMap<std::vector<const DIE *> > &getAccelNamespace() const {
     return AccelNamespace;
   }
-  const StringMap<std::vector<std::pair<DIE *, unsigned> > > &
+  const StringMap<std::vector<std::pair<const DIE *, unsigned> > > &
   getAccelTypes() const {
     return AccelTypes;
   }
@@ -143,16 +143,16 @@ public:
   void addPubTypes(DISubprogram SP);
 
   /// addAccelName - Add a new name to the name accelerator table.
-  void addAccelName(StringRef Name, DIE *Die);
+  void addAccelName(StringRef Name, const DIE *Die);
 
   /// addAccelObjC - Add a new name to the ObjC accelerator table.
-  void addAccelObjC(StringRef Name, DIE *Die);
+  void addAccelObjC(StringRef Name, const DIE *Die);
 
   /// addAccelNamespace - Add a new name to the namespace accelerator table.
-  void addAccelNamespace(StringRef Name, DIE *Die);
+  void addAccelNamespace(StringRef Name, const DIE *Die);
 
   /// addAccelType - Add a new type to the type accelerator table.
-  void addAccelType(StringRef Name, std::pair<DIE *, unsigned> Die);
+  void addAccelType(StringRef Name, std::pair<const DIE *, unsigned> Die);
 
   /// getDIE - Returns the debug information entry map slot for the
   /// specified debug variable. We delegate the request to DwarfDebug
@@ -408,6 +408,10 @@ private:
   template <typename T> T resolve(DIRef<T> Ref) const {
     return DD->resolve(Ref);
   }
+
+  /// If this is a named finished type then include it in the list of types for
+  /// the accelerator tables.
+  void updateAcceleratorTables(DIType Ty, const DIE *TyDIE);
 };
 
 } // end llvm namespace

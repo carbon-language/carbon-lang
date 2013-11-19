@@ -2247,16 +2247,17 @@ void DwarfDebug::emitAccelNames() {
                                                          E = CUMap.end();
        I != E; ++I) {
     CompileUnit *TheCU = I->second;
-    const StringMap<std::vector<DIE *> > &Names = TheCU->getAccelNames();
-    for (StringMap<std::vector<DIE *> >::const_iterator GI = Names.begin(),
-                                                        GE = Names.end();
+    const StringMap<std::vector<const DIE *> > &Names = TheCU->getAccelNames();
+    for (StringMap<std::vector<const DIE *> >::const_iterator
+             GI = Names.begin(),
+             GE = Names.end();
          GI != GE; ++GI) {
       StringRef Name = GI->getKey();
-      const std::vector<DIE *> &Entities = GI->second;
-      for (std::vector<DIE *>::const_iterator DI = Entities.begin(),
-                                              DE = Entities.end();
+      const std::vector<const DIE *> &Entities = GI->second;
+      for (std::vector<const DIE *>::const_iterator DI = Entities.begin(),
+                                                    DE = Entities.end();
            DI != DE; ++DI)
-        AT.AddName(Name, (*DI));
+        AT.AddName(Name, *DI);
     }
   }
 
@@ -2279,16 +2280,17 @@ void DwarfDebug::emitAccelObjC() {
                                                          E = CUMap.end();
        I != E; ++I) {
     CompileUnit *TheCU = I->second;
-    const StringMap<std::vector<DIE *> > &Names = TheCU->getAccelObjC();
-    for (StringMap<std::vector<DIE *> >::const_iterator GI = Names.begin(),
-                                                        GE = Names.end();
+    const StringMap<std::vector<const DIE *> > &Names = TheCU->getAccelObjC();
+    for (StringMap<std::vector<const DIE *> >::const_iterator
+             GI = Names.begin(),
+             GE = Names.end();
          GI != GE; ++GI) {
       StringRef Name = GI->getKey();
-      const std::vector<DIE *> &Entities = GI->second;
-      for (std::vector<DIE *>::const_iterator DI = Entities.begin(),
-                                              DE = Entities.end();
+      const std::vector<const DIE *> &Entities = GI->second;
+      for (std::vector<const DIE *>::const_iterator DI = Entities.begin(),
+                                                    DE = Entities.end();
            DI != DE; ++DI)
-        AT.AddName(Name, (*DI));
+        AT.AddName(Name, *DI);
     }
   }
 
@@ -2310,16 +2312,18 @@ void DwarfDebug::emitAccelNamespaces() {
                                                          E = CUMap.end();
        I != E; ++I) {
     CompileUnit *TheCU = I->second;
-    const StringMap<std::vector<DIE *> > &Names = TheCU->getAccelNamespace();
-    for (StringMap<std::vector<DIE *> >::const_iterator GI = Names.begin(),
-                                                        GE = Names.end();
+    const StringMap<std::vector<const DIE *> > &Names =
+        TheCU->getAccelNamespace();
+    for (StringMap<std::vector<const DIE *> >::const_iterator
+             GI = Names.begin(),
+             GE = Names.end();
          GI != GE; ++GI) {
       StringRef Name = GI->getKey();
-      const std::vector<DIE *> &Entities = GI->second;
-      for (std::vector<DIE *>::const_iterator DI = Entities.begin(),
-                                              DE = Entities.end();
+      const std::vector<const DIE *> &Entities = GI->second;
+      for (std::vector<const DIE *>::const_iterator DI = Entities.begin(),
+                                                    DE = Entities.end();
            DI != DE; ++DI)
-        AT.AddName(Name, (*DI));
+        AT.AddName(Name, *DI);
     }
   }
 
@@ -2347,19 +2351,21 @@ void DwarfDebug::emitAccelTypes() {
                                                          E = CUMap.end();
        I != E; ++I) {
     CompileUnit *TheCU = I->second;
-    const StringMap<std::vector<std::pair<DIE *, unsigned> > > &Names =
+    const StringMap<std::vector<std::pair<const DIE *, unsigned> > > &Names =
         TheCU->getAccelTypes();
-    for (StringMap<std::vector<std::pair<DIE *, unsigned> > >::const_iterator
+    for (StringMap<
+             std::vector<std::pair<const DIE *, unsigned> > >::const_iterator
              GI = Names.begin(),
              GE = Names.end();
          GI != GE; ++GI) {
       StringRef Name = GI->getKey();
-      const std::vector<std::pair<DIE *, unsigned> > &Entities = GI->second;
-      for (std::vector<std::pair<DIE *, unsigned> >::const_iterator
+      const std::vector<std::pair<const DIE *, unsigned> > &Entities =
+          GI->second;
+      for (std::vector<std::pair<const DIE *, unsigned> >::const_iterator
                DI = Entities.begin(),
                DE = Entities.end();
            DI != DE; ++DI)
-        AT.AddName(Name, (*DI).first, (*DI).second);
+        AT.AddName(Name, DI->first, DI->second);
     }
   }
 

@@ -31,7 +31,7 @@ DwarfAccelTable::DwarfAccelTable(ArrayRef<DwarfAccelTable::Atom> atomList)
 
 DwarfAccelTable::~DwarfAccelTable() {}
 
-void DwarfAccelTable::AddName(StringRef Name, DIE *die, char Flags) {
+void DwarfAccelTable::AddName(StringRef Name, const DIE *die, char Flags) {
   assert(Data.empty() && "Already finalized!");
   // If the string is in the list already then add this die to the list
   // otherwise add a new one.

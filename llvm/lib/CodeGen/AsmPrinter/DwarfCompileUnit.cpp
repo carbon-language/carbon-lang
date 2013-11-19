@@ -900,8 +900,13 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     assert(Ty.isDerivedType() && "Unknown kind of DIType");
     constructTypeDIE(*TyDIE, DIDerivedType(Ty));
   }
-  // If this is a named finished type then include it in the list of types
-  // for the accelerator tables.
+
+  updateAcceleratorTables(Ty, TyDIE);
+
+  return TyDIE;
+}
+
+void CompileUnit::updateAcceleratorTables(DIType Ty, const DIE *TyDIE) {
   if (!Ty.getName().empty() && !Ty.isForwardDecl()) {
     bool IsImplementation = 0;
     if (Ty.isCompositeType()) {
@@ -913,8 +918,6 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     unsigned Flags = IsImplementation ? dwarf::DW_FLAG_type_implementation : 0;
     addAccelType(Ty.getName(), std::make_pair(TyDIE, Flags));
   }
-
-  return TyDIE;
 }
 
 /// addType - Add a new type attribute to the specified entity.
@@ -946,27 +949,28 @@ void CompileUnit::addType(DIE *Entity, DIType Ty, dwarf::Attribute Attribute) {
 // DIE to the proper table while ensuring that the name that we're going
 // to reference is in the string table. We do this since the names we
 // add may not only be identical to the names in the DIE.
-void CompileUnit::addAccelName(StringRef Name, DIE *Die) {
+void CompileUnit::addAccelName(StringRef Name, const DIE *Die) {
   DU->getStringPoolEntry(Name);
-  std::vector<DIE *> &DIEs = AccelNames[Name];
+  std::vector<const DIE *> &DIEs = AccelNames[Name];
   DIEs.push_back(Die);
 }
 
-void CompileUnit::addAccelObjC(StringRef Name, DIE *Die) {
+void CompileUnit::addAccelObjC(StringRef Name, const DIE *Die) {
   DU->getStringPoolEntry(Name);
-  std::vector<DIE *> &DIEs = AccelObjC[Name];
+  std::vector<const DIE *> &DIEs = AccelObjC[Name];
   DIEs.push_back(Die);
 }
 
-void CompileUnit::addAccelNamespace(StringRef Name, DIE *Die) {
+void CompileUnit::addAccelNamespace(StringRef Name, const DIE *Die) {
   DU->getStringPoolEntry(Name);
-  std::vector<DIE *> &DIEs = AccelNamespace[Name];
+  std::vector<const DIE *> &DIEs = AccelNamespace[Name];
   DIEs.push_back(Die);
 }
 
-void CompileUnit::addAccelType(StringRef Name, std::pair<DIE *, unsigned> Die) {
+void CompileUnit::addAccelType(StringRef Name,
+                               std::pair<const DIE *, unsigned> Die) {
   DU->getStringPoolEntry(Name);
-  std::vector<std::pair<DIE *, unsigned> > &DIEs = AccelTypes[Name];
+  std::vector<std::pair<const DIE *, unsigned> > &DIEs = AccelTypes[Name];
   DIEs.push_back(Die);
 }
 
