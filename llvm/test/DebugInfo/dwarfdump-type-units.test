@@ -1,6 +1,7 @@
 RUN: llvm-dwarfdump %p/Inputs/dwarfdump-type-units.elf-x86-64 > %t
 RUN: cat %t | FileCheck -check-prefix=FOO %s
 RUN: cat %t | FileCheck -check-prefix=BAR %s
+RUN: llvm-dwarfdump -debug-dump=types %p/Inputs/dwarfdump-type-units.elf-x86-64 | FileCheck -check-prefix=TYPES %s
 
 FOO: debug_info contents:
 FOO: DW_TAG_variable
@@ -26,3 +27,6 @@ BAR: DW_TAG_type_unit
 BAR-NOT: NULL
 BAR: 0x0000[[BAR_OFF]]: DW_TAG_structure_type
 BAR-NEXT: DW_AT_name {{.*}}"bar"
+
+TYPES-NOT: debug_info contents:
+TYPES: debug_types contents:
