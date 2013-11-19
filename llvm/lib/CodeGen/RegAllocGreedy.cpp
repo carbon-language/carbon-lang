@@ -217,7 +217,7 @@ class RAGreedy : public MachineFunctionPass,
     }
   };
 
-  /// Candidate info for for each PhysReg in AllocationOrder.
+  /// Candidate info for each PhysReg in AllocationOrder.
   /// This vector never shrinks, but grows to the size of the largest register
   /// class.
   SmallVector<GlobalSplitCandidate, 32> GlobalCand;
