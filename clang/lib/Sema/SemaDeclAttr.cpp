@@ -3662,7 +3662,7 @@ static void handleConstantAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                CUDAConstantAttr(Attr.getRange(), S.Context,
                                 Attr.getAttributeSpellingListIndex()));
   } else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "constant";
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
   }
 }
 
@@ -3685,7 +3685,7 @@ static void handleDeviceAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                CUDADeviceAttr(Attr.getRange(), S.Context,
                               Attr.getAttributeSpellingListIndex()));
   } else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "device";
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
   }
 }
 
@@ -3716,7 +3716,7 @@ static void handleGlobalAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                CUDAGlobalAttr(Attr.getRange(), S.Context,
                               Attr.getAttributeSpellingListIndex()));
   } else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "global";
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
   }
 }
 
@@ -3732,7 +3732,7 @@ static void handleHostAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                CUDAHostAttr(Attr.getRange(), S.Context,
                             Attr.getAttributeSpellingListIndex()));
   } else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "host";
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
   }
 }
 
@@ -3748,7 +3748,7 @@ static void handleSharedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                CUDASharedAttr(Attr.getRange(), S.Context,
                               Attr.getAttributeSpellingListIndex()));
   } else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "shared";
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
   }
 }
 
