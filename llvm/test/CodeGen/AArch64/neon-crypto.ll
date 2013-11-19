@@ -1,4 +1,5 @@
-; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon -mattr=+crypto | FileCheck %s
+; RUN: not llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon 2>&1 | FileCheck --check-prefix=CHECK-NO-CRYPTO %s
 
 declare <4 x i32> @llvm.arm.neon.sha256su1.v4i32(<4 x i32>, <4 x i32>, <4 x i32>) #1
 
@@ -31,6 +32,7 @@ declare <16 x i8> @llvm.arm.neon.aese.v16i8(<16 x i8>, <16 x i8>) #1
 define <16 x i8> @test_vaeseq_u8(<16 x i8> %data, <16 x i8> %key) {
 ; CHECK: test_vaeseq_u8:
 ; CHECK: aese {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NO-CRYPTO: Cannot select: intrinsic %llvm.arm.neon.aese
 entry:
   %aese.i = tail call <16 x i8> @llvm.arm.neon.aese.v16i8(<16 x i8> %data, <16 x i8> %key)
   ret <16 x i8> %aese.i

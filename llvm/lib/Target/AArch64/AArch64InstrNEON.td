@@ -7605,6 +7605,7 @@ class NeonI_Cryptoaes_2v<bits<2> size, bits<5> opcode,
                                        (v16i8 VPR128:$Rn))))],
                      NoItinerary>{
   let Constraints = "$src = $Rd";
+  let Predicates = [HasNEON, HasCrypto];
 }
 
 def AESE : NeonI_Cryptoaes_2v<0b00, 0b00100, "aese", int_arm_neon_aese>;
@@ -7632,6 +7633,7 @@ class NeonI_Cryptosha_vv<bits<2> size, bits<5> opcode,
                                        (v4i32 VPR128:$Rn))))],
                      NoItinerary> {
   let Constraints = "$src = $Rd";
+  let Predicates = [HasNEON, HasCrypto];
 }
 
 def SHA1SU1 : NeonI_Cryptosha_vv<0b00, 0b00001, "sha1su1",
@@ -7646,7 +7648,9 @@ class NeonI_Cryptosha_ss<bits<2> size, bits<5> opcode,
                      asmop # "\t$Rd, $Rn",
                      [(set (v1i32 FPR32:$Rd),
                         (v1i32 (opnode (v1i32 FPR32:$Rn))))],
-                     NoItinerary>;
+                     NoItinerary> {
+  let Predicates = [HasNEON, HasCrypto];
+}
 
 def SHA1H : NeonI_Cryptosha_ss<0b00, 0b00000, "sha1h", int_arm_neon_sha1h>;
 
@@ -7662,6 +7666,7 @@ class NeonI_Cryptosha3_vvv<bits<2> size, bits<3> opcode, string asmop,
                                          (v4i32 VPR128:$Rm))))],
                        NoItinerary> {
   let Constraints = "$src = $Rd";
+  let Predicates = [HasNEON, HasCrypto];
 }
 
 def SHA1SU0 : NeonI_Cryptosha3_vvv<0b00, 0b011, "sha1su0",
@@ -7681,6 +7686,7 @@ class NeonI_Cryptosha3_qqv<bits<2> size, bits<3> opcode, string asmop,
                                          (v4i32 VPR128:$Rm))))],
                        NoItinerary> {
   let Constraints = "$src = $Rd";
+  let Predicates = [HasNEON, HasCrypto];
 }
 
 def SHA256H : NeonI_Cryptosha3_qqv<0b00, 0b100, "sha256h",
@@ -7700,6 +7706,7 @@ class NeonI_Cryptosha3_qsv<bits<2> size, bits<3> opcode, string asmop,
                                          (v4i32 VPR128:$Rm))))],
                        NoItinerary> {
   let Constraints = "$src = $Rd";
+  let Predicates = [HasNEON, HasCrypto];
 }
 
 def SHA1C : NeonI_Cryptosha3_qsv<0b00, 0b000, "sha1c", int_aarch64_neon_sha1c>;
