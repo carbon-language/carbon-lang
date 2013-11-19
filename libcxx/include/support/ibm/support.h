@@ -15,7 +15,7 @@ extern "builtin" int __popcnt4(unsigned int);
 extern "builtin" int __popcnt8(unsigned long long);
 extern "builtin" unsigned int __cnttz4(unsigned int);
 extern "builtin" unsigned int __cnttz8(unsigned long long);
-extern "builtin" unsigned int __cntlz4(unsigned long long);
+extern "builtin" unsigned int __cntlz4(unsigned int);
 extern "builtin" unsigned int __cntlz8(unsigned long long);
 
 // Builtin functions for counting population

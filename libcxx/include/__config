@@ -454,7 +454,6 @@ namespace std {
 #define _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 #define _LIBCPP_HAS_NO_NULLPTR
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
-#define _LIBCPP_HAS_NO_STRONG_ENUMS
 #define _LIBCPP_HAS_IS_BASE_OF
 
 #if defined(_AIX)
@@ -514,7 +513,7 @@ template <unsigned> struct __static_assert_check {};
 #define __has_feature(__x) 0
 #endif
 
-#if __has_feature(cxx_explicit_conversions)
+#if __has_feature(cxx_explicit_conversions) || defined(__IBMCPP__)
 #   define _LIBCPP_EXPLICIT explicit
 #else
 #   define _LIBCPP_EXPLICIT
