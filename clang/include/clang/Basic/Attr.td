@@ -266,6 +266,7 @@ def CarriesDependency : InheritableParamAttr {
 def CDecl : InheritableAttr {
   let Spellings = [GNU<"cdecl">, CXX11<"gnu", "cdecl">, Keyword<"__cdecl">,
                    Keyword<"_cdecl">];
+  let Subjects = [Function, ObjCMethod];
 }
 
 // cf_audited_transfer indicates that the given function has been
@@ -393,6 +394,7 @@ def FallThrough : Attr {
 def FastCall : InheritableAttr {
   let Spellings = [GNU<"fastcall">, CXX11<"gnu", "fastcall">,
                    Keyword<"__fastcall">, Keyword<"_fastcall">];
+  let Subjects = [Function, ObjCMethod];
 }
 
 def Final : InheritableAttr {
@@ -454,6 +456,7 @@ def MayAlias : InheritableAttr {
 
 def MSABI : InheritableAttr {
   let Spellings = [GNU<"ms_abi">, CXX11<"gnu", "ms_abi">];
+  let Subjects = [Function, ObjCMethod];
 }
 
 def MSP430Interrupt : InheritableAttr, TargetSpecificAttr {
@@ -636,10 +639,12 @@ def Packed : InheritableAttr {
 
 def PnaclCall : InheritableAttr {
   let Spellings = [GNU<"pnaclcall">];
+  let Subjects = [Function, ObjCMethod];
 }
 
 def IntelOclBicc : InheritableAttr {
   let Spellings = [GNU<"intel_ocl_bicc">];
+  let Subjects = [Function, ObjCMethod];
 }
 
 def Pcs : InheritableAttr {
@@ -647,6 +652,7 @@ def Pcs : InheritableAttr {
   let Args = [EnumArgument<"PCS", "PCSType",
                            ["aapcs", "aapcs-vfp"],
                            ["AAPCS", "AAPCS_VFP"]>];
+  let Subjects = [Function, ObjCMethod];
 }
 
 def Pure : InheritableAttr {
@@ -690,19 +696,23 @@ def Sentinel : InheritableAttr {
 def StdCall : InheritableAttr {
   let Spellings = [GNU<"stdcall">, CXX11<"gnu", "stdcall">,
                    Keyword<"__stdcall">, Keyword<"_stdcall">];
+  let Subjects = [Function, ObjCMethod];
 }
 
 def SysVABI : InheritableAttr {
   let Spellings = [GNU<"sysv_abi">, CXX11<"gnu", "sysv_abi">];
+  let Subjects = [Function, ObjCMethod];
 }
 
 def ThisCall : InheritableAttr {
   let Spellings = [GNU<"thiscall">, CXX11<"gnu", "thiscall">,
                    Keyword<"__thiscall">, Keyword<"_thiscall">];
+  let Subjects = [Function, ObjCMethod];
 }
 
 def Pascal : InheritableAttr {
   let Spellings = [GNU<"pascal">, Keyword<"__pascal">, Keyword<"_pascal">];
+  let Subjects = [Function, ObjCMethod];
 }
 
 def TransparentUnion : InheritableAttr {
