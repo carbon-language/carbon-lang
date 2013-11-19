@@ -379,9 +379,7 @@ public:
   ///   matcher can handle a value of T.
   ///
   /// If it is not compatible, then this matcher will never match anything.
-  template <typename T> Matcher<T> unconditionalConvertTo() const {
-    return Matcher<T>(new WrappedMatcher<T>(*this));
-  }
+  template <typename T> Matcher<T> unconditionalConvertTo() const;
 
 private:
   class MatcherStorage : public RefCountedBaseVPTR {
@@ -409,9 +407,6 @@ private:
 
   /// \brief Typed implementation of \c MatcherStorage.
   template <typename T> class TypedMatcherStorage;
-
-  /// \brief Simple MatcherInterface<T> wrapper around a DynTypedMatcher.
-  template <typename T> class WrappedMatcher;
 
   IntrusiveRefCntPtr<const MatcherStorage> Storage;
 };
@@ -451,22 +446,6 @@ inline DynTypedMatcher::DynTypedMatcher(const Matcher<T> &M)
 template <typename T>
 inline DynTypedMatcher::DynTypedMatcher(const BindableMatcher<T> &M)
     : Storage(new TypedMatcherStorage<T>(M, true)) {}
-
-template <typename T>
-class DynTypedMatcher::WrappedMatcher : public MatcherInterface<T> {
-public:
-  explicit WrappedMatcher(const DynTypedMatcher &Matcher) : Inner(Matcher) {}
-  virtual ~WrappedMatcher() {}
-
-  bool matches(const T &Node, ASTMatchFinder *Finder,
-               BoundNodesTreeBuilder *Builder) const {
-    return Inner.matches(ast_type_traits::DynTypedNode::create(Node), Finder,
-                         Builder);
-  }
-
-private:
-  const DynTypedMatcher Inner;
-};
 
 /// \brief Specialization of the conversion functions for QualType.
 ///
@@ -1165,12 +1144,8 @@ template <typename T>
 class VariadicOperatorMatcherInterface : public MatcherInterface<T> {
 public:
   VariadicOperatorMatcherInterface(VariadicOperatorFunction Func,
-                                   ArrayRef<const Matcher<T> *> InputMatchers)
-      : Func(Func) {
-    for (size_t i = 0, e = InputMatchers.size(); i != e; ++i) {
-      InnerMatchers.push_back(*InputMatchers[i]);
-    }
-  }
+                                   ArrayRef<DynTypedMatcher> InnerMatchers)
+      : Func(Func), InnerMatchers(InnerMatchers) {}
 
   virtual bool matches(const T &Node, ASTMatchFinder *Finder,
                        BoundNodesTreeBuilder *Builder) const {
@@ -1180,7 +1155,7 @@ public:
 
 private:
   const VariadicOperatorFunction Func;
-  std::vector<DynTypedMatcher> InnerMatchers;
+  const std::vector<DynTypedMatcher> InnerMatchers;
 };
 
 /// \brief "No argument" placeholder to use as template paratemers.
@@ -1207,31 +1182,27 @@ public:
         Param4(Param4), Param5(Param5) {}
 
   template <typename T> operator Matcher<T>() const {
-    Matcher<T> *Array[5];
-    size_t Size = 0;
+    std::vector<DynTypedMatcher> Matchers;
 
-    addMatcher<T>(Param1, Array, Size);
-    addMatcher<T>(Param2, Array, Size);
-    addMatcher<T>(Param3, Array, Size);
-    addMatcher<T>(Param4, Array, Size);
-    addMatcher<T>(Param5, Array, Size);
-    Matcher<T> Result(new VariadicOperatorMatcherInterface<T>(
-        Func, ArrayRef<const Matcher<T> *>(Array, Size)));
-    for (size_t i = 0, e = Size; i != e; ++i) delete Array[i];
-    return Result;
+    addMatcher<T>(Param1, Matchers);
+    addMatcher<T>(Param2, Matchers);
+    addMatcher<T>(Param3, Matchers);
+    addMatcher<T>(Param4, Matchers);
+    addMatcher<T>(Param5, Matchers);
+    return Matcher<T>(new VariadicOperatorMatcherInterface<T>(Func, Matchers));
   }
 
 private:
   template <typename T>
-  static void addMatcher(const Matcher<T> &M, Matcher<T> **Array,
-                         size_t &Size) {
-    Array[Size++] = new Matcher<T>(M);
+  static void addMatcher(const Matcher<T> &M,
+                         std::vector<DynTypedMatcher> &Matchers) {
+    Matchers.push_back(M);
   }
 
   /// \brief Overload to ignore \c VariadicOperatorNoArg arguments.
   template <typename T>
-  static void addMatcher(VariadicOperatorNoArg, Matcher<T> **Array,
-                         size_t &Size) {}
+  static void addMatcher(VariadicOperatorNoArg,
+                         std::vector<DynTypedMatcher> &Matchers) {}
 
   const VariadicOperatorFunction Func;
   const P1 Param1;
@@ -1293,12 +1264,22 @@ bool AnyOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
                            BoundNodesTreeBuilder *Builder,
                            ArrayRef<DynTypedMatcher> InnerMatchers);
 
+template <typename T>
+inline Matcher<T> DynTypedMatcher::unconditionalConvertTo() const {
+  return Matcher<T>(
+      new VariadicOperatorMatcherInterface<T>(AllOfVariadicOperator, *this));
+}
+
 /// \brief Creates a Matcher<T> that matches if all inner matchers match.
 template<typename T>
 BindableMatcher<T> makeAllOfComposite(
     ArrayRef<const Matcher<T> *> InnerMatchers) {
+  std::vector<DynTypedMatcher> DynMatchers;
+  for (size_t i = 0, e = InnerMatchers.size(); i != e; ++i) {
+    DynMatchers.push_back(*InnerMatchers[i]);
+  }
   return BindableMatcher<T>(new VariadicOperatorMatcherInterface<T>(
-      AllOfVariadicOperator, InnerMatchers));
+      AllOfVariadicOperator, DynMatchers));
 }
 
 /// \brief Creates a Matcher<T> that matches if

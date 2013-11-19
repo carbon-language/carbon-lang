@@ -156,27 +156,18 @@ private:
     virtual void constructVariadicOperator(
         ast_matchers::internal::VariadicOperatorFunction Func,
         ArrayRef<VariantMatcher> InnerMatchers) {
-      const size_t NumArgs = InnerMatchers.size();
-      MatcherT **InnerArgs = new MatcherT *[NumArgs]();
-      bool HasError = false;
-      for (size_t i = 0; i != NumArgs; ++i) {
+      std::vector<DynTypedMatcher> DynMatchers;
+      for (size_t i = 0, e = InnerMatchers.size(); i != e; ++i) {
         // Abort if any of the inner matchers can't be converted to
         // Matcher<T>.
         if (!InnerMatchers[i].hasTypedMatcher<T>()) {
-          HasError = true;
-          break;
+          return;
         }
-        InnerArgs[i] = new MatcherT(InnerMatchers[i].getTypedMatcher<T>());
+        DynMatchers.push_back(InnerMatchers[i].getTypedMatcher<T>());
       }
-      if (!HasError) {
-        Out.reset(new MatcherT(
-            new ast_matchers::internal::VariadicOperatorMatcherInterface<T>(
-                Func, ArrayRef<const MatcherT *>(InnerArgs, NumArgs))));
-      }
-      for (size_t i = 0; i != NumArgs; ++i) {
-        delete InnerArgs[i];
-      }
-      delete[] InnerArgs;
+      Out.reset(new MatcherT(
+          new ast_matchers::internal::VariadicOperatorMatcherInterface<T>(
+              Func, DynMatchers)));
     }
 
     bool hasMatcher() const { return Out.get() != NULL; }
