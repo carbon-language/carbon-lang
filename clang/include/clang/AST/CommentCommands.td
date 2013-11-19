@@ -146,7 +146,7 @@ def Todo       : BlockCommand<"todo">;
 def Version    : BlockCommand<"version">;
 def Warning    : BlockCommand<"warning">;
 // HeaderDoc commands
-def Abstract      : BlockCommand<"abstract">;
+def Abstract      : BlockCommand<"abstract"> { let IsBriefCommand = 1; }
 def ClassDesign   : RecordLikeDetailCommand<"classdesign">;
 def CoClass       : RecordLikeDetailCommand<"coclass">;
 def Dependency    : RecordLikeDetailCommand<"dependency">;
