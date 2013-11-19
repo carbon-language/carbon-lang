@@ -1,6 +1,8 @@
 // REQUIRES: aarch64-registered-target
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +neon \
-// RUN:   -ffp-contract=fast -S -O3 -o - %s | FileCheck %s
+// RUN:   -target-feature +crypto -S -O3 -o - %s | FileCheck %s
+// RUN: not %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +neon \
+// RUN:   -S -O3 -o - %s 2>&1 | FileCheck --check-prefix=CHECK-NO-CRYPTO %s
 
 // Test new aarch64 intrinsics and types
 
@@ -8,6 +10,7 @@
 
 uint8x16_t test_vaeseq_u8(uint8x16_t data, uint8x16_t key) {
   // CHECK: test_vaeseq_u8
+  // CHECK-NO-CRYPTO: warning: implicit declaration of function 'vaeseq_u8' is invalid in C99
   return vaeseq_u8(data, key);
   // CHECK: aese {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }

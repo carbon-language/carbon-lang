@@ -129,6 +129,7 @@ class Inst <string n, string p, string t, Op o> {
   bit isScalarShift = 0;
   bit isVCVT_N = 0;
   bit isA64 = 0;
+  bit isCrypto = 0;
 
   // Certain intrinsics have different names than their representative
   // instructions. This field allows us to handle this correctly when we
@@ -907,6 +908,7 @@ def VEXT_A64 : WInst<"vext", "dddi",
 
 ////////////////////////////////////////////////////////////////////////////////
 // Crypto
+let isCrypto = 1 in {
 def AESE : SInst<"vaese", "ddd", "QUc">;
 def AESD : SInst<"vaesd", "ddd", "QUc">;
 def AESMC : SInst<"vaesmc", "dd", "QUc">;
@@ -923,6 +925,7 @@ def SHA1SU0 : SInst<"vsha1su0", "dddd", "QUi">;
 def SHA256H : SInst<"vsha256h", "dddd", "QUi">;
 def SHA256H2 : SInst<"vsha256h2", "dddd", "QUi">;
 def SHA256SU1 : SInst<"vsha256su1", "dddd", "QUi">;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Permutation
