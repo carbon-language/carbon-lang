@@ -136,7 +136,8 @@ private:
                                 StringRef Name);
 
   /// \brief Hashes a reference to a previously referenced type DIE.
-  void hashRepeatedTypeReference(dwarf::Attribute Attribute, unsigned DieNumber);
+  void hashRepeatedTypeReference(dwarf::Attribute Attribute,
+                                 unsigned DieNumber);
 
   void hashNestedType(const DIE &Die, StringRef Name);
 

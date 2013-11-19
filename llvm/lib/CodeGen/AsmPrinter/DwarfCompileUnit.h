@@ -196,7 +196,8 @@ public:
 
   /// addLocalString - Add a string attribute data and value.
   ///
-  void addLocalString(DIE *Die, dwarf::Attribute Attribute, const StringRef Str);
+  void addLocalString(DIE *Die, dwarf::Attribute Attribute,
+                      const StringRef Str);
 
   /// addExpr - Add a Dwarf expression attribute data and value.
   ///
@@ -221,8 +222,8 @@ public:
 
   /// addDelta - Add a label delta attribute data and value.
   ///
-  void addDelta(DIE *Die, dwarf::Attribute Attribute, dwarf::Form Form, const MCSymbol *Hi,
-                const MCSymbol *Lo);
+  void addDelta(DIE *Die, dwarf::Attribute Attribute, dwarf::Form Form,
+                const MCSymbol *Hi, const MCSymbol *Lo);
 
   /// addDIEEntry - Add a DIE attribute data and value.
   ///
@@ -247,8 +248,8 @@ public:
 
   /// addAddress - Add an address attribute to a die based on the location
   /// provided.
-  void addAddress(DIE *Die, dwarf::Attribute Attribute, const MachineLocation &Location,
-                  bool Indirect = false);
+  void addAddress(DIE *Die, dwarf::Attribute Attribute,
+                  const MachineLocation &Location, bool Indirect = false);
 
   /// addConstantValue - Add constant value entry in variable DIE.
   void addConstantValue(DIE *Die, const MachineOperand &MO, DIType Ty);
@@ -273,7 +274,8 @@ public:
   /// (navigating the extra location information encoded in the type) based on
   /// the starting location.  Add the DWARF information to the die.
   ///
-  void addComplexAddress(const DbgVariable &DV, DIE *Die, dwarf::Attribute Attribute,
+  void addComplexAddress(const DbgVariable &DV, DIE *Die,
+                         dwarf::Attribute Attribute,
                          const MachineLocation &Location);
 
   // FIXME: Should be reformulated in terms of addComplexAddress.
@@ -283,7 +285,8 @@ public:
   /// starting location.  Add the DWARF information to the die.  Obsolete,
   /// please use addComplexAddress instead.
   ///
-  void addBlockByrefAddress(const DbgVariable &DV, DIE *Die, dwarf::Attribute Attribute,
+  void addBlockByrefAddress(const DbgVariable &DV, DIE *Die,
+                            dwarf::Attribute Attribute,
                             const MachineLocation &Location);
 
   /// addVariableAddress - Add DW_AT_location attribute for a
@@ -294,7 +297,8 @@ public:
   /// addType - Add a new type attribute to the specified entity. This takes
   /// and attribute parameter because DW_AT_friend attributes are also
   /// type references.
-  void addType(DIE *Entity, DIType Ty, dwarf::Attribute Attribute = dwarf::DW_AT_type);
+  void addType(DIE *Entity, DIType Ty,
+               dwarf::Attribute Attribute = dwarf::DW_AT_type);
 
   /// getOrCreateNameSpace - Create a DIE for DINameSpace.
   DIE *getOrCreateNameSpace(DINameSpace NS);
@@ -321,7 +325,8 @@ public:
 
   /// Create a DIE with the given Tag, add the DIE to its parent, and
   /// call insertDIE if MD is not null.
-  DIE *createAndAddDIE(unsigned Tag, DIE &Parent, DIDescriptor N = DIDescriptor());
+  DIE *createAndAddDIE(unsigned Tag, DIE &Parent,
+                       DIDescriptor N = DIDescriptor());
 
   /// Compute the size of a header for this unit, not including the initial
   /// length field.

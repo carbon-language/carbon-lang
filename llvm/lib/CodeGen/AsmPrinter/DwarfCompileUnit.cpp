@@ -102,8 +102,7 @@ int64_t CompileUnit::getDefaultLowerBound() const {
 static bool isShareableAcrossCUs(DIDescriptor D) {
   // When the MDNode can be part of the type system, the DIE can be
   // shared across CUs.
-  return D.isType() ||
-         (D.isSubprogram() && !DISubprogram(D).isDefinition());
+  return D.isType() || (D.isSubprogram() && !DISubprogram(D).isDefinition());
 }
 
 /// getDIE - Returns the debug information entry map slot for the
@@ -1712,7 +1711,8 @@ void CompileUnit::constructEnumTypeDIE(DIE &Buffer, DICompositeType CTy) {
       StringRef Name = Enum.getName();
       addString(Enumerator, dwarf::DW_AT_name, Name);
       int64_t Value = Enum.getEnumValue();
-      addSInt(Enumerator, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata, Value);
+      addSInt(Enumerator, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata,
+              Value);
     }
   }
   DIType DTy = resolve(CTy.getTypeDerivedFrom());

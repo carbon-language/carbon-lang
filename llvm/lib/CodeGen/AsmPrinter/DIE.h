@@ -172,8 +172,8 @@ namespace llvm {
       Child->Parent = this;
     }
 
-    /// findAttribute - Find a value in the DIE with the attribute given, returns NULL
-    /// if no such attribute exists.
+    /// findAttribute - Find a value in the DIE with the attribute given,
+    /// returns NULL if no such attribute exists.
     DIEValue *findAttribute(uint16_t Attribute);
 
 #ifndef NDEBUG
