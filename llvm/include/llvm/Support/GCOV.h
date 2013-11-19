@@ -196,7 +196,7 @@ public:
   GCOVFile() : Functions(), RunCount(0), ProgramCount(0) {}
   ~GCOVFile();
   bool read(GCOVBuffer &Buffer);
-  void dump();
+  void dump() const;
   void collectLineCounts(FileInfo &FI);
 private:
   SmallVector<GCOVFunction *, 16> Functions;
@@ -211,7 +211,7 @@ public:
   ~GCOVFunction();
   bool read(GCOVBuffer &Buffer, GCOV::GCOVFormat Format);
   StringRef getFilename() const { return Filename; }
-  void dump();
+  void dump() const;
   void collectLineCounts(FileInfo &FI);
 private:
   uint32_t Ident;
@@ -230,8 +230,8 @@ public:
   void addEdge(uint32_t N) { Edges.push_back(N); }
   void addLine(uint32_t N) { Lines.push_back(N); }
   void addCount(uint64_t N) { Counter += N; }
-  size_t getNumEdges() { return Edges.size(); }
-  void dump();
+  size_t getNumEdges() const { return Edges.size(); }
+  void dump() const;
   void collectLineCounts(FileInfo &FI);
 private:
   GCOVFunction &Parent;
@@ -249,7 +249,7 @@ public:
   }
   void setRunCount(uint32_t Runs) { RunCount = Runs; }
   void setProgramCount(uint32_t Programs) { ProgramCount = Programs; }
-  void print(raw_fd_ostream &OS, StringRef gcnoFile, StringRef gcdaFile);
+  void print(raw_fd_ostream &OS, StringRef gcnoFile, StringRef gcdaFile) const;
 private:
   StringMap<LineCounts> LineInfo;
   uint32_t RunCount;
