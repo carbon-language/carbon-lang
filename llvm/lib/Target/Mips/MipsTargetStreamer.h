@@ -16,6 +16,7 @@
 namespace llvm {
 class MipsTargetStreamer : public MCTargetStreamer {
   virtual void anchor();
+
 public:
   virtual void emitMipsHackELFFlags(unsigned Flags) = 0;
   virtual void emitSymSTO(MCSymbol *Sym, unsigned Val) = 0;
@@ -24,7 +25,6 @@ public:
 // This part is for ascii assembly output
 class MipsTargetAsmStreamer : public MipsTargetStreamer {
 public:
-  MipsTargetAsmStreamer();
   virtual void emitMipsHackELFFlags(unsigned Flags);
   virtual void emitSymSTO(MCSymbol *Sym, unsigned Val);
 };
@@ -33,7 +33,6 @@ public:
 class MipsTargetELFStreamer : public MipsTargetStreamer {
 public:
   MCELFStreamer &getStreamer();
-  MipsTargetELFStreamer();
   virtual void emitMipsHackELFFlags(unsigned Flags);
   virtual void emitSymSTO(MCSymbol *Sym, unsigned Val);
 };
