@@ -38,38 +38,7 @@ public:
   virtual ErrorOr<StringRef> getPath(const LinkingContext &ctx) const;
 
   /// \brief Parse the input file to lld::File.
-  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
-    ErrorOr<StringRef> filePath = getPath(ctx);
-    if (!filePath)
-      return error_code(filePath);
-
-    if (error_code ec = getBuffer(*filePath))
-      return ec;
-
-    if (ctx.logInputFiles())
-      diagnostics << *filePath << "\n";
-
-    if (filePath->endswith(".objtxt"))
-      return ctx.getYAMLReader().parseFile(_buffer, _files);
-
-    llvm::sys::fs::file_magic FileType =
-        llvm::sys::fs::identify_magic(_buffer->getBuffer());
-    std::unique_ptr<File> f;
-
-    switch (FileType) {
-    case llvm::sys::fs::file_magic::archive: {
-      // Archive File
-      error_code ec;
-      f.reset(new FileArchive(ctx, std::move(_buffer), ec, false));
-      _files.push_back(std::move(f));
-      return ec;
-    }
-
-    case llvm::sys::fs::file_magic::coff_object:
-    default:
-      return _ctx.getDefaultReader().parseFile(_buffer, _files);
-    }
-  }
+  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics);
 
   /// \brief validates the Input Element
   virtual bool validate() { return true; }
@@ -77,11 +46,7 @@ public:
   /// \brief Dump the Input Element
   virtual bool dump(raw_ostream &) { return true; }
 
-  virtual ErrorOr<File &> getNextFile() {
-    if (_nextFileIndex == _files.size())
-      return make_error_code(InputGraphError::no_more_files);
-    return *_files[_nextFileIndex++];
-  }
+  virtual ErrorOr<File &> getNextFile();
 
 protected:
   const PECOFFLinkingContext &_ctx;

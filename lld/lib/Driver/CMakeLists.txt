@@ -16,6 +16,7 @@ add_lld_library(lldDriver
   Driver.cpp
   GnuLdDriver.cpp
   WinLinkDriver.cpp
+  WinLinkInputGraph.cpp
   UniversalDriver.cpp
   )
 

@@ -547,20 +547,6 @@ parseArgs(int argc, const char *argv[], raw_ostream &diagnostics,
 // Main driver
 //
 
-ErrorOr<StringRef> PECOFFFileNode::getPath(const LinkingContext &) const {
-  if (_path.endswith_lower(".lib"))
-    return _ctx.searchLibraryFile(_path);
-  if (llvm::sys::path::extension(_path).empty())
-    return _ctx.allocateString(_path.str() + ".obj");
-  return _path;
-}
-
-ErrorOr<StringRef> PECOFFLibraryNode::getPath(const LinkingContext &) const {
-  if (!_path.endswith_lower(".lib"))
-    return _ctx.searchLibraryFile(_ctx.allocateString(_path.str() + ".lib"));
-  return _ctx.searchLibraryFile(_path);
-}
-
 bool WinLinkDriver::linkPECOFF(int argc, const char *argv[],
                                raw_ostream &diagnostics) {
   PECOFFLinkingContext context;
