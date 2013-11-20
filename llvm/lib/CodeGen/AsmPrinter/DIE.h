@@ -134,7 +134,7 @@ namespace llvm {
     explicit DIE(unsigned Tag)
         : Offset(0), Size(0), Abbrev((dwarf::Tag)Tag, dwarf::DW_CHILDREN_no),
           Parent(0) {}
-    virtual ~DIE();
+    ~DIE();
 
     // Accessors.
     DIEAbbrev &getAbbrev() { return Abbrev; }
