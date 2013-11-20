@@ -91,8 +91,8 @@ private:
   ///
   /// If \p DryRun is \c false, also creates and stores the required
   /// \c Replacement.
-  void addTokenOnCurrentLine(LineState &State, bool DryRun,
-                             unsigned ExtraSpaces);
+  unsigned addTokenOnCurrentLine(LineState &State, bool DryRun,
+                                 unsigned ExtraSpaces);
 
   /// \brief Appends the next token to \p State and updates information
   /// necessary for indentation.

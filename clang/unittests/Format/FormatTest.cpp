@@ -3744,6 +3744,11 @@ TEST_F(FormatTest, AlignsPipes) {
   EXPECT_EQ("llvm::errs() << \"\n"
             "             << a;",
             format("llvm::errs() << \"\n<<a;"));
+
+  verifyFormat("void f() {\n"
+               "  CHECK_EQ(aaaa, (*bbbbbbbbb)->cccccc)\n"
+               "      << \"qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq\";\n"
+               "}");
 }
 
 TEST_F(FormatTest, UnderstandsEquals) {

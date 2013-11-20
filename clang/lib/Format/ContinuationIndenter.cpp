@@ -224,13 +224,14 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
   if (Newline)
     Penalty = addTokenOnNewLine(State, DryRun);
   else
-    addTokenOnCurrentLine(State, DryRun, ExtraSpaces);
+    Penalty = addTokenOnCurrentLine(State, DryRun, ExtraSpaces);
 
   return moveStateToNextToken(State, DryRun, Newline) + Penalty;
 }
 
-void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
-                                                 unsigned ExtraSpaces) {
+unsigned ContinuationIndenter::addTokenOnCurrentLine(LineState &State,
+                                                     bool DryRun,
+                                                     unsigned ExtraSpaces) {
   FormatToken &Current = *State.NextToken;
   const FormatToken &Previous = *State.NextToken->Previous;
   if (Current.is(tok::equal) &&
@@ -248,6 +249,15 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
     if (Previous.PartOfMultiVariableDeclStmt)
       State.Stack.back().LastSpace = State.Stack.back().VariablePos;
   }
+
+  unsigned Penalty = 0;
+  // A break before a "<<" will get Style.PenaltyBreakFirstLessLess, so a
+  // continuation with "<<" has a smaller penalty in general.
+  // If the LHS is long, we don't want to penalize the break though, so we
+  // also add Style.PenaltyBreakFirstLessLess.
+  if (Current.is(tok::lessless) && State.Stack.back().FirstLessLess == 0 &&
+      State.Column > Style.ColumnLimit / 2)
+    Penalty += Style.PenaltyBreakFirstLessLess;
 
   unsigned Spaces = Current.SpacesRequiredBefore + ExtraSpaces;
 
@@ -307,6 +317,7 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
         State.Stack[State.Stack.size() - 2].CallContinuation == 0)
       State.Stack.back().LastSpace = State.Column;
   }
+  return Penalty;
 }
 
 unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
@@ -332,9 +343,8 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
   Penalty += State.NextToken->SplitPenalty;
 
   // Breaking before the first "<<" is generally not desirable if the LHS is
-  // short.
-  if (Current.is(tok::lessless) && State.Stack.back().FirstLessLess == 0 &&
-      State.Column <= Style.ColumnLimit / 2)
+  // short (not breaking with a long LHS is penalized in addTokenOnCurrentLine).
+  if (Current.is(tok::lessless) && State.Stack.back().FirstLessLess == 0)
     Penalty += Style.PenaltyBreakFirstLessLess;
 
   if (Current.is(tok::l_brace) && Current.BlockKind == BK_Block) {
