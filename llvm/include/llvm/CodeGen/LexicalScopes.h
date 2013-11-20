@@ -44,7 +44,7 @@ typedef std::pair<const MachineInstr *, const MachineInstr *> InsnRange;
 ///
 class LexicalScopes {
 public:
-  LexicalScopes() : MF(NULL),  CurrentFnLexicalScope(NULL) { }
+  LexicalScopes() : MF(NULL), CurrentFnLexicalScope(NULL) {}
   virtual ~LexicalScopes();
 
   /// initialize - Scan machine function and constuct lexical scope nest.
@@ -52,24 +52,26 @@ public:
 
   /// releaseMemory - release memory.
   virtual void releaseMemory();
-  
+
   /// empty - Return true if there is any lexical scope information available.
   bool empty() { return CurrentFnLexicalScope == NULL; }
 
-  /// isCurrentFunctionScope - Return true if given lexical scope represents 
+  /// isCurrentFunctionScope - Return true if given lexical scope represents
   /// current function.
-  bool isCurrentFunctionScope(const LexicalScope *LS) { 
+  bool isCurrentFunctionScope(const LexicalScope *LS) {
     return LS == CurrentFnLexicalScope;
   }
 
   /// getCurrentFunctionScope - Return lexical scope for the current function.
-  LexicalScope *getCurrentFunctionScope() const { return CurrentFnLexicalScope;}
+  LexicalScope *getCurrentFunctionScope() const {
+    return CurrentFnLexicalScope;
+  }
 
   /// getMachineBasicBlocks - Populate given set using machine basic blocks
   /// which have machine instructions that belong to lexical scope identified by
   /// DebugLoc.
   void getMachineBasicBlocks(DebugLoc DL,
-                             SmallPtrSet<const MachineBasicBlock*, 4> &MBBs);
+                             SmallPtrSet<const MachineBasicBlock *, 4> &MBBs);
 
   /// dominates - Return true if DebugLoc's lexical scope dominates at least one
   /// machine instruction's lexical scope in a given machine basic block.
@@ -104,7 +106,6 @@ public:
   void dump();
 
 private:
-
   /// getOrCreateLexicalScope - Find lexical scope for the given DebugLoc. If
   /// not available then create new lexical scope.
   LexicalScope *getOrCreateLexicalScope(DebugLoc DL);
@@ -123,8 +124,9 @@ private:
   void extractLexicalScopes(SmallVectorImpl<InsnRange> &MIRanges,
                             DenseMap<const MachineInstr *, LexicalScope *> &M);
   void constructScopeNest(LexicalScope *Scope);
-  void assignInstructionRanges(SmallVectorImpl<InsnRange> &MIRanges,
-                             DenseMap<const MachineInstr *, LexicalScope *> &M);
+  void
+  assignInstructionRanges(SmallVectorImpl<InsnRange> &MIRanges,
+                          DenseMap<const MachineInstr *, LexicalScope *> &M);
 
 private:
   const MachineFunction *MF;
@@ -133,10 +135,11 @@ private:
   /// contained LexicalScope*s.
   DenseMap<const MDNode *, LexicalScope *> LexicalScopeMap;
 
-  /// InlinedLexicalScopeMap - Tracks inlined function scopes in current function.
+  /// InlinedLexicalScopeMap - Tracks inlined function scopes in current
+  /// function.
   DenseMap<DebugLoc, LexicalScope *> InlinedLexicalScopeMap;
 
-  /// AbstractScopeMap - These scopes are  not included LexicalScopeMap.  
+  /// AbstractScopeMap - These scopes are  not included LexicalScopeMap.
   /// AbstractScopes owns its LexicalScope*s.
   DenseMap<const MDNode *, LexicalScope *> AbstractScopeMap;
 
@@ -157,8 +160,8 @@ class LexicalScope {
 
 public:
   LexicalScope(LexicalScope *P, const MDNode *D, const MDNode *I, bool A)
-    : Parent(P), Desc(D), InlinedAtLocation(I), AbstractScope(A),
-      LastInsn(0), FirstInsn(0), DFSIn(0), DFSOut(0) {
+      : Parent(P), Desc(D), InlinedAtLocation(I), AbstractScope(A), LastInsn(0),
+        FirstInsn(0), DFSIn(0), DFSOut(0) {
     if (Parent)
       Parent->addChild(this);
   }
@@ -166,13 +169,13 @@ public:
   virtual ~LexicalScope() {}
 
   // Accessors.
-  LexicalScope *getParent() const                { return Parent; }
-  const MDNode *getDesc() const                  { return Desc; }
-  const MDNode *getInlinedAt() const             { return InlinedAtLocation; }
-  const MDNode *getScopeNode() const             { return Desc; }
-  bool isAbstractScope() const                   { return AbstractScope; }
+  LexicalScope *getParent() const { return Parent; }
+  const MDNode *getDesc() const { return Desc; }
+  const MDNode *getInlinedAt() const { return InlinedAtLocation; }
+  const MDNode *getScopeNode() const { return Desc; }
+  bool isAbstractScope() const { return AbstractScope; }
   SmallVectorImpl<LexicalScope *> &getChildren() { return Children; }
-  SmallVectorImpl<InsnRange> &getRanges()        { return Ranges; }
+  SmallVectorImpl<InsnRange> &getRanges() { return Ranges; }
 
   /// addChild - Add a child scope.
   void addChild(LexicalScope *S) { Children.push_back(S); }
@@ -189,7 +192,7 @@ public:
   /// extendInsnRange - Extend the current instruction range covered by
   /// this scope.
   void extendInsnRange(const MachineInstr *MI) {
-    assert (FirstInsn && "MI Range is not open!");
+    assert(FirstInsn && "MI Range is not open!");
     LastInsn = MI;
     if (Parent)
       Parent->extendInsnRange(MI);
@@ -199,7 +202,7 @@ public:
   /// until now. This is used when a new scope is encountered while walking
   /// machine instructions.
   void closeInsnRange(LexicalScope *NewScope = NULL) {
-    assert (LastInsn && "Last insn missing!");
+    assert(LastInsn && "Last insn missing!");
     Ranges.push_back(InsnRange(FirstInsn, LastInsn));
     FirstInsn = NULL;
     LastInsn = NULL;
@@ -219,28 +222,28 @@ public:
   }
 
   // Depth First Search support to walk and manipulate LexicalScope hierarchy.
-  unsigned getDFSOut() const            { return DFSOut; }
-  void setDFSOut(unsigned O)            { DFSOut = O; }
-  unsigned getDFSIn() const             { return DFSIn; }
-  void setDFSIn(unsigned I)             { DFSIn = I; }
+  unsigned getDFSOut() const { return DFSOut; }
+  void setDFSOut(unsigned O) { DFSOut = O; }
+  unsigned getDFSIn() const { return DFSIn; }
+  void setDFSIn(unsigned I) { DFSIn = I; }
 
   /// dump - print lexical scope.
   void dump(unsigned Indent = 0) const;
 
 private:
-  LexicalScope *Parent;                          // Parent to this scope.
-  AssertingVH<const MDNode> Desc;                // Debug info descriptor.
-  AssertingVH<const MDNode> InlinedAtLocation;   // Location at which this 
-                                                 // scope is inlined.
-  bool AbstractScope;                            // Abstract Scope
-  SmallVector<LexicalScope *, 4> Children;       // Scopes defined in scope.  
-                                                 // Contents not owned.
+  LexicalScope *Parent;                        // Parent to this scope.
+  AssertingVH<const MDNode> Desc;              // Debug info descriptor.
+  AssertingVH<const MDNode> InlinedAtLocation; // Location at which this
+                                               // scope is inlined.
+  bool AbstractScope;                          // Abstract Scope
+  SmallVector<LexicalScope *, 4> Children;     // Scopes defined in scope.
+                                               // Contents not owned.
   SmallVector<InsnRange, 4> Ranges;
 
-  const MachineInstr *LastInsn;       // Last instruction of this scope.
-  const MachineInstr *FirstInsn;      // First instruction of this scope.
-  unsigned DFSIn, DFSOut;             // In & Out Depth use to determine
-                                      // scope nesting.
+  const MachineInstr *LastInsn;  // Last instruction of this scope.
+  const MachineInstr *FirstInsn; // First instruction of this scope.
+  unsigned DFSIn, DFSOut;        // In & Out Depth use to determine
+                                 // scope nesting.
 };
 
 } // end llvm namespace
