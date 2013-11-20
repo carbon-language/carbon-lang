@@ -1,7 +1,9 @@
 // RUN: %clang_cc1 -fsyntax-only -fobjc-arc -verify -Wno-objc-root-class %s
 // rdar://15454846
 
-typedef struct __attribute__ ((objc_bridge(NSError))) __CFErrorRef * CFErrorRef; // expected-note 2 {{declared here}}
+typedef struct __attribute__ ((objc_bridge(NSError))) __CFErrorRef * CFErrorRef; // expected-note 5 {{declared here}}
+
+typedef struct __attribute__ ((objc_bridge(MyError))) __CFMyErrorRef * CFMyErrorRef; // expected-note 3 {{declared here}}
 
 typedef struct __attribute__((objc_bridge(12))) __CFMyColor  *CFMyColorRef; // expected-error {{parameter of 'objc_bridge' attribute must be a single name of an Objective-C class}}
 
@@ -43,11 +45,16 @@ id Test1(CFTestingRef cf) {
 
 typedef CFErrorRef CFErrorRef1;
 
-typedef CFErrorRef1 CFErrorRef2;
+typedef CFErrorRef1 CFErrorRef2; // expected-note {{declared here}}
 
-@interface NSError @end
+@protocol P1 @end
+@protocol P2 @end
+@protocol P3 @end
+@protocol P4 @end
 
-@interface MyError : NSError
+@interface NSError<P1, P2, P3> @end // expected-note 5 {{declared here}}
+
+@interface MyError : NSError // expected-note 3 {{declared here}}
 @end
 
 @interface NSUColor @end
@@ -63,4 +70,36 @@ void Test2(CFErrorRef2 cf, NSError *ns, NSString *str, Class c, CFUColor2Ref cf2
   (void)(CFErrorRef)str;  // expected-warning {{'NSString' cannot bridge to 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
   (void)(Class)cf; // expected-warning {{'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, not 'Class'}}
   (void)(CFErrorRef)c; // expected-warning {{'Class' cannot bridge to 'CFErrorRef'}}
+}
+
+
+void Test3(CFErrorRef cf, NSError *ns) {
+  (void)(id)cf; // okay
+ (void)(id<P1, P2>)cf; // okay
+ (void)(id<P1, P2, P4>)cf; // expected-warning {{'CFErrorRef' (aka 'struct __CFErrorRef *') bridges to NSError, not 'id<P1,P2,P4>'}}
+}
+
+void Test4(CFMyErrorRef cf) {
+   (void)(id)cf; // okay
+ (void)(id<P1, P2>)cf; // ok
+ (void)(id<P1, P2, P3>)cf; // ok
+ (void)(id<P2, P3>)cf; // ok
+ (void)(id<P1, P2, P4>)cf; // expected-warning {{'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') bridges to MyError, not 'id<P1,P2,P4>'}}
+}
+
+void Test5(id<P1, P2, P3> P123, id ID, id<P1, P2, P3, P4> P1234, id<P1, P2> P12, id<P2, P3> P23) {
+ (void)(CFErrorRef)ID; // ok
+ (void)(CFErrorRef)P123; // ok
+ (void)(CFErrorRef)P1234; // ok
+ (void)(CFErrorRef)P12; // expected-warning {{'id<P1,P2>' cannot bridge to 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
+ (void)(CFErrorRef)P23; // expected-warning {{'id<P2,P3>' cannot bridge to 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
+}
+
+void Test6(id<P1, P2, P3> P123, id ID, id<P1, P2, P3, P4> P1234, id<P1, P2> P12, id<P2, P3> P23) {
+
+ (void)(CFMyErrorRef)ID; // ok
+ (void)(CFMyErrorRef)P123; // ok
+ (void)(CFMyErrorRef)P1234; // ok
+ (void)(CFMyErrorRef)P12; // expected-warning {{'id<P1,P2>' cannot bridge to 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *')}}
+ (void)(CFMyErrorRef)P23; // expected-warning {{'id<P2,P3>' cannot bridge to 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *')}}
 }

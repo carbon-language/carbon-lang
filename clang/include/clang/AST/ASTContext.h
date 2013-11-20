@@ -1126,6 +1126,13 @@ public:
   QualType getObjCObjectType(QualType Base,
                              ObjCProtocolDecl * const *Protocols,
                              unsigned NumProtocols) const;
+  
+  bool ObjCObjectAdoptsQTypeProtocols(QualType QT, ObjCInterfaceDecl *Decl);
+  /// QIdProtocolsAdoptObjCObjectProtocols - Checks that protocols in
+  /// QT's qualified-id protocol list adopt all protocols in IDecl's list
+  /// of protocols.
+  bool QIdProtocolsAdoptObjCObjectProtocols(QualType QT,
+                                            ObjCInterfaceDecl *IDecl);
 
   /// \brief Return a ObjCObjectPointerType type for the given ObjCObjectType.
   QualType getObjCObjectPointerType(QualType OIT) const;

@@ -3196,14 +3196,24 @@ static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr) {
                   castType->getAsObjCInterfacePointerType()) {
               ObjCInterfaceDecl *CastClass
                 = InterfacePointerType->getObjectType()->getInterface();
-              if ((CastClass == ExprClass) || (CastClass && ExprClass->isSuperClassOf(CastClass)))
+              if ((CastClass == ExprClass) ||
+                  (CastClass && ExprClass->isSuperClassOf(CastClass)))
                 return true;
               S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge)
                 << T << Target->getName() << castType->getPointeeType();
               return true;
-            } else {
+            } else if (castType->isObjCIdType() ||
+                       (S.Context.ObjCObjectAdoptsQTypeProtocols(
+                          castType, ExprClass)))
+              // ok to cast to 'id'.
+              // casting to id<p-list> is ok if bridge type adopts all of
+              // p-list protocols.
+              return true;
+            else {
               S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge)
                 << T << Target->getName() << castType;
+              S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+              S.Diag(Target->getLocStart(), diag::note_declared_at);
               return true;
            }
           }
@@ -3221,7 +3231,6 @@ static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr) {
   return false;
 }
 
-// (CFErrorRef)ns
 static bool CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr) {
   QualType T = castType;
   while (const TypedefType *TD = dyn_cast<TypedefType>(T.getTypePtr())) {
@@ -3240,16 +3249,25 @@ static bool CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr) {
                   castExpr->getType()->getAsObjCInterfacePointerType()) {
               ObjCInterfaceDecl *ExprClass
                 = InterfacePointerType->getObjectType()->getInterface();
-              if ((CastClass == ExprClass) || (ExprClass && CastClass->isSuperClassOf(ExprClass)))
+              if ((CastClass == ExprClass) ||
+                  (ExprClass && CastClass->isSuperClassOf(ExprClass)))
                 return true;
               S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge_to_cf)
                 << castExpr->getType()->getPointeeType() << T;
               S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
               return true;
-            } else {
+            } else if (castExpr->getType()->isObjCIdType() ||
+                       (S.Context.QIdProtocolsAdoptObjCObjectProtocols(
+                          castExpr->getType(), CastClass)))
+              // ok to cast an 'id' expression to a CFtype.
+              // ok to cast an 'id<plist>' expression to CFtype provided plist
+              // adopts all of CFtype's ObjetiveC's class plist.
+              return true;
+            else {
               S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge_to_cf)
                 << castExpr->getType() << castType;
               S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+              S.Diag(Target->getLocStart(), diag::note_declared_at);
               return true;
             }
           }
