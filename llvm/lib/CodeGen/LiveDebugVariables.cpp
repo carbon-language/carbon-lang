@@ -72,7 +72,7 @@ LiveDebugVariables::LiveDebugVariables() : MachineFunctionPass(ID), pImpl(0) {
 typedef IntervalMap<SlotIndex, unsigned, 4> LocMap;
 
 namespace {
-/// UserValueScopes - Keeps track of lexical scopes associated with an
+/// UserValueScopes - Keeps track of lexical scopes associated with a
 /// user value's source location.
 class UserValueScopes {
   DebugLoc DL;
