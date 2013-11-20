@@ -1024,6 +1024,7 @@ Process::Process(Target &target, Listener &listener) :
     m_thread_list_real (this),
     m_thread_list (this),
     m_extended_thread_list (this),
+    m_extended_thread_stop_id (0),
     m_notifications (),
     m_image_tokens (),
     m_listener (listener),
@@ -1594,8 +1595,12 @@ Process::UpdateThreadListIfNeeded ()
                 m_thread_list.Update (new_thread_list);
                 m_thread_list.SetStopID (stop_id);
 
-                // Clear any extended threads that we may have accumulated previously
-                m_extended_thread_list.Clear();
+                if (GetLastNaturalStopID () != m_extended_thread_stop_id)
+                {
+                    // Clear any extended threads that we may have accumulated previously
+                    m_extended_thread_list.Clear();
+                    m_extended_thread_stop_id = GetLastNaturalStopID ();
+                }
             }
         }
     }

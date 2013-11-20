@@ -3683,7 +3683,8 @@ protected:
     ThreadList                  m_thread_list_real;     ///< The threads for this process as are known to the protocol we are debugging with
     ThreadList                  m_thread_list;          ///< The threads for this process as the user will see them. This is usually the same as
                                                         ///< m_thread_list_real, but might be different if there is an OS plug-in creating memory threads
-    ThreadList                  m_extended_thread_list; ///< Owner for extended threads that may be generated, cleared on public stops
+    ThreadList                  m_extended_thread_list; ///< Owner for extended threads that may be generated, cleared on natural stops
+    uint32_t                    m_extended_thread_stop_id; ///< The natural stop id when extended_thread_list was last updated
     std::vector<Notifications>  m_notifications;        ///< The list of notifications that this process can deliver.
     std::vector<lldb::addr_t>   m_image_tokens;
     Listener                    &m_listener;
