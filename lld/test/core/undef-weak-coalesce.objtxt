@@ -1,5 +1,4 @@
-# RUN: lld -core %s 2> %t.err | FileCheck %s
-# RUN: FileCheck -check-prefix=ERROR %s < %t.err
+# RUN: lld -core %s | FileCheck %s
 
 #
 # Test that undefined symbols preserve their attributes and merge properly
@@ -29,12 +28,8 @@ undefined-atoms:
       can-be-null:       never
     - name:              bar8
       can-be-null:       at-runtime
-      fallback:
-        name: baz1
     - name:              bar9
       can-be-null:       at-buildtime
-      fallback:
-        name: baz2
 ---
 undefined-atoms:
     - name:              bar1
@@ -55,8 +50,6 @@ undefined-atoms:
       can-be-null:       never
     - name:              bar9
       can-be-null:       at-runtime
-      fallback:
-        name: baz3
 ...
 
 # CHECK:       - name:            regular_func
@@ -77,7 +70,3 @@ undefined-atoms:
 # CHECK-NEXT:  - name:            bar8
 # CHECK-NEXT:  - name:            bar9
 # CHECK-NEXT:    can-be-null:     at-runtime
-# CHECK-NEXT:    fallback:
-# CHECK-NEXT:      name:            baz3
-
-# ERROR: undefined symbol bar9 has different fallback: baz2 in and baz3 in

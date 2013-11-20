@@ -83,6 +83,16 @@ void Resolver::handleFile(const File &file) {
   for (const UndefinedAtom *undefAtom : file.undefined()) {
     doUndefinedAtom(*undefAtom);
     resolverState |= StateNewUndefinedAtoms;
+
+    // If the undefined symbol has an alternative name, try to resolve the
+    // symbol with the name to give it a second chance. This feature is used for
+    // COFF "weak external" symbol.
+    if (!_symbolTable.isDefined(undefAtom->name())) {
+      if (const UndefinedAtom *fallbackAtom = undefAtom->fallback()) {
+        doUndefinedAtom(*fallbackAtom);
+        _symbolTable.addReplacement(undefAtom, fallbackAtom);
+      }
+    }
   }
   for (const SharedLibraryAtom *shlibAtom : file.sharedLibrary()) {
     doSharedLibraryAtom(*shlibAtom);
@@ -108,15 +118,6 @@ Resolver::forEachUndefines(UndefCallback callback, bool searchForOverrides) {
       // load for previous undefine may also have loaded this undefine
       if (!_symbolTable.isDefined(undefName))
         callback(undefName, false);
-      // If the undefined symbol has an alternative name, try to resolve the
-      // symbol with the name to give it a second chance. This feature is used
-      // for COFF "weak external" symbol.
-      if (!_symbolTable.isDefined(undefName)) {
-        if (const UndefinedAtom *fallbackUndefAtom = undefAtom->fallback()) {
-          _symbolTable.addReplacement(undefAtom, fallbackUndefAtom);
-          _symbolTable.add(*fallbackUndefAtom);
-        }
-      }
     }
     // search libraries for overrides of common symbols
     if (searchForOverrides) {

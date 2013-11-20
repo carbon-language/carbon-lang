@@ -5,14 +5,33 @@
 
 ---
 defined-atoms:
-  - name: bar
-    type: code
+  - name: def1
+    scope: global
 
 undefined-atoms:
-  - name: foo
+  - name: undef1
     fallback:
-      name: bar
+      name: fallback1
+  - name: undef2
+    fallback:
+      name: fallback2
+---
+defined-atoms:
+  - name: fallback1
+
+undefined-atoms:
+  - name: def1
+    fallback:
+      name: fallback3
 ...
 
 # CHECK:      defined-atoms:
-# CHECK-NEXT:   - name: bar
+# CHECK-NEXT:   - name:            def1
+# CHECK-NEXT:     scope:           global
+# CHECK-NEXT:   - name:            fallback1
+# CHECK-NEXT:     ref-name:        fallback1
+# CHECK-NEXT: undefined-atoms:
+# CHECK-NEXT:   - name:            fallback1
+# CHECK-NEXT:   - name:            fallback2
+
+# CHECK-NOT:    - name:            fallback3

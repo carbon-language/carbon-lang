@@ -4,6 +4,6 @@
 # RUN:    /entry:fn -- %t.obj %p/Inputs/static.lib 2> %t2.out
 # RUN: FileCheck %s < %t2.out
 
-CHECK-NOT: _no_such_symbol1
+CHECK: _no_such_symbol1
 CHECK-NOT: _no_such_symbol2
 CHECK: _no_such_symbol3
