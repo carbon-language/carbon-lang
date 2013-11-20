@@ -3540,14 +3540,14 @@ bool ASTContext::QIdProtocolsAdoptObjCObjectProtocols(QualType QT,
     return false;
   if (!IDecl->hasDefinition())
     return false;
-  ObjCInterfaceDecl::protocol_iterator PI = IDecl->protocol_begin(),
-                                       E = IDecl->protocol_end();
-  if (PI == E)
-    return (IDecl->getSuperClass()
-             ? QIdProtocolsAdoptObjCObjectProtocols(QT, IDecl->getSuperClass())
-             : false);
-  
-  for (; PI != E; ++PI) {
+  llvm::SmallPtrSet<ObjCProtocolDecl *, 8> InheritedProtocols;
+  CollectInheritedProtocols(IDecl, InheritedProtocols);
+  if (InheritedProtocols.empty())
+    return false;
+      
+  for (llvm::SmallPtrSet<ObjCProtocolDecl*,8>::iterator PI =
+       InheritedProtocols.begin(),
+       E = InheritedProtocols.end(); PI != E; ++PI) {
     // If both the right and left sides have qualifiers.
     bool Adopts = false;
     for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
@@ -3558,9 +3558,7 @@ bool ASTContext::QIdProtocolsAdoptObjCObjectProtocols(QualType QT,
         break;
     }
     if (!Adopts)
-      return (IDecl->getSuperClass()
-              ? QIdProtocolsAdoptObjCObjectProtocols(QT, IDecl->getSuperClass())
-              : false);
+      return false;
   }
   return true;
 }

@@ -51,6 +51,7 @@ typedef CFErrorRef1 CFErrorRef2; // expected-note {{declared here}}
 @protocol P2 @end
 @protocol P3 @end
 @protocol P4 @end
+@protocol P5 @end
 
 @interface NSError<P1, P2, P3> @end // expected-note 5 {{declared here}}
 
@@ -103,3 +104,26 @@ void Test6(id<P1, P2, P3> P123, id ID, id<P1, P2, P3, P4> P1234, id<P1, P2> P12,
  (void)(CFMyErrorRef)P12; // expected-warning {{'id<P1,P2>' cannot bridge to 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *')}}
  (void)(CFMyErrorRef)P23; // expected-warning {{'id<P2,P3>' cannot bridge to 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *')}}
 }
+
+typedef struct __attribute__ ((objc_bridge(MyPersonalError))) __CFMyPersonalErrorRef * CFMyPersonalErrorRef;  // expected-note 4 {{declared here}}
+
+@interface MyPersonalError : NSError <P4> // expected-note 4 {{declared here}}
+@end
+
+void Test7(id<P1, P2, P3> P123, id ID, id<P1, P2, P3, P4> P1234, id<P1, P2> P12, id<P2, P3> P23) {
+ (void)(CFMyPersonalErrorRef)ID; // ok
+ (void)(CFMyPersonalErrorRef)P123; // expected-warning {{'id<P1,P2,P3>' cannot bridge to 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *')}}
+ (void)(CFMyPersonalErrorRef)P1234; // ok
+ (void)(CFMyPersonalErrorRef)P12; //  expected-warning {{'id<P1,P2>' cannot bridge to 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *')}}
+ (void)(CFMyPersonalErrorRef)P23; //  expected-warning {{'id<P2,P3>' cannot bridge to 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *')}}
+}
+
+void Test8(CFMyPersonalErrorRef cf) {
+  (void)(id)cf; // ok
+  (void)(id<P1>)cf; // ok
+  (void)(id<P1, P2>)cf; // ok
+  (void)(id<P1, P2, P3>)cf; // ok
+  (void)(id<P1, P2, P3, P4>)cf; // ok
+  (void)(id<P1, P2, P3, P4, P5>)cf; // expected-warning {{'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') bridges to MyPersonalError, not 'id<P1,P2,P3,P4,P5>'}}
+}
+
