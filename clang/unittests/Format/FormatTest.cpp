@@ -7309,5 +7309,13 @@ TEST_F(FormatTest, SpacesInAngles) {
   verifyFormat("A<A<int>>();", Spaces);
 }
 
+
+TEST_F(FormatTest, UnderstandsJavaScript) {
+  verifyFormat("a === b;");
+  verifyFormat("aaaaaaa === b;", getLLVMStyleWithColumns(10));
+  verifyFormat("a !== b;");
+  verifyFormat("aaaaaaa !== b;", getLLVMStyleWithColumns(10));
+}
+
 } // end namespace tooling
 } // end namespace clang
