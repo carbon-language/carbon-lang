@@ -23,7 +23,7 @@ class MSASpecial : MSAInst {
   let Inst{31-26} = 0b000000;
 }
 
-class PseudoMSA<dag outs, dag ins, list<dag> pattern,
+class MSAPseudo<dag outs, dag ins, list<dag> pattern,
                 InstrItinClass itin = IIPseudo>:
   MipsPseudo<outs, ins, pattern, itin> {
   let Predicates = [HasMSA];
