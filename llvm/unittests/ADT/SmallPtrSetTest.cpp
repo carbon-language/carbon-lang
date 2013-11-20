@@ -121,28 +121,42 @@ TEST(SmallPtrSetTest, CopyAndMoveTest) {
 
   s1 = s2;
   EXPECT_EQ(4U, s1.size());
+  EXPECT_EQ(4U, s2.size());
   for (int i = 0; i < 8; ++i)
     if (i < 4)
       EXPECT_TRUE(s1.count(&buf[i]));
     else
       EXPECT_FALSE(s1.count(&buf[i]));
 
-  SmallPtrSet<int *, 4> s3(llvm_move(s1));
+#if LLVM_HAS_RVALUE_REFERENCES
+  SmallPtrSet<int *, 4> s3(std::move(s1));
   EXPECT_EQ(4U, s3.size());
+  EXPECT_TRUE(s1.empty());
   for (int i = 0; i < 8; ++i)
     if (i < 4)
       EXPECT_TRUE(s3.count(&buf[i]));
     else
       EXPECT_FALSE(s3.count(&buf[i]));
 
-  // Move assign to the moved-from object.
+  // Move assign into the moved-from object. Also test move of a non-small
+  // container.
+  s3.insert(&buf[4]);
+  s3.insert(&buf[5]);
+  s3.insert(&buf[6]);
+  s3.insert(&buf[7]);
   s1 = llvm_move(s3);
-  EXPECT_EQ(4U, s1.size());
+  EXPECT_EQ(8U, s1.size());
+  EXPECT_TRUE(s3.empty());
   for (int i = 0; i < 8; ++i)
-    if (i < 4)
-      EXPECT_TRUE(s1.count(&buf[i]));
-    else
-      EXPECT_FALSE(s1.count(&buf[i]));
+    EXPECT_TRUE(s1.count(&buf[i]));
+
+  // Copy assign into a moved-from object.
+  s3 = s1;
+  EXPECT_EQ(8U, s3.size());
+  EXPECT_EQ(8U, s1.size());
+  for (int i = 0; i < 8; ++i)
+    EXPECT_TRUE(s3.count(&buf[i]));
+#endif
 }
 
 TEST(SmallPtrSetTest, SwapTest) {

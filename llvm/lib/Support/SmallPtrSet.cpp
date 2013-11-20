@@ -206,6 +206,12 @@ SmallPtrSetImpl::SmallPtrSetImpl(const void **SmallStorage, unsigned SmallSize,
   // Otherwise, we steal the large memory allocation and no copy is needed.
   CurArray = that.CurArray;
   that.CurArray = that.SmallArray;
+
+  // Make the "that" object small and empty.
+  that.CurArraySize = SmallSize;
+  assert(that.CurArray == that.SmallArray);
+  that.NumElements = 0;
+  that.NumTombstones = 0;
 }
 #endif
 
@@ -246,7 +252,7 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
 }
 
 #if LLVM_HAS_RVALUE_REFERENCES
-void SmallPtrSetImpl::MoveFrom(SmallPtrSetImpl &&RHS) {
+void SmallPtrSetImpl::MoveFrom(unsigned SmallSize, SmallPtrSetImpl &&RHS) {
   if (!isSmall())
     free(CurArray);
 
@@ -263,6 +269,12 @@ void SmallPtrSetImpl::MoveFrom(SmallPtrSetImpl &&RHS) {
   CurArraySize = RHS.CurArraySize;
   NumElements = RHS.NumElements;
   NumTombstones = RHS.NumTombstones;
+
+  // Make the RHS small and empty.
+  RHS.CurArraySize = SmallSize;
+  assert(RHS.CurArray == RHS.SmallArray);
+  RHS.NumElements = 0;
+  RHS.NumTombstones = 0;
 }
 #endif
 

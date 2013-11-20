@@ -140,7 +140,7 @@ protected:
 
   void CopyFrom(const SmallPtrSetImpl &RHS);
 #if LLVM_HAS_RVALUE_REFERENCES
-  void MoveFrom(SmallPtrSetImpl &&RHS);
+  void MoveFrom(unsigned SmallSize, SmallPtrSetImpl &&RHS);
 #endif
 };
 
@@ -300,7 +300,7 @@ public:
 #if LLVM_HAS_RVALUE_REFERENCES
   SmallPtrSet<PtrType, SmallSize>&
   operator=(SmallPtrSet<PtrType, SmallSize> &&RHS) {
-    MoveFrom(std::move(RHS));
+    MoveFrom(SmallSizePowTwo, std::move(RHS));
     return *this;
   }
 #endif
