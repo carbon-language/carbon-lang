@@ -60,9 +60,9 @@ ErrorOr<StringRef> PECOFFFileNode::getPath(const LinkingContext &) const {
 }
 
 ErrorOr<StringRef> PECOFFLibraryNode::getPath(const LinkingContext &) const {
-  if (!_path.endswith_lower(".lib"))
-    return _ctx.searchLibraryFile(_ctx.allocateString(_path.str() + ".lib"));
-  return _ctx.searchLibraryFile(_path);
+  if (_path.endswith_lower(".lib"))
+    return _ctx.searchLibraryFile(_path);
+  return _ctx.searchLibraryFile(_ctx.allocateString(_path.str() + ".lib"));
 }
 
 } // end anonymous namespace
