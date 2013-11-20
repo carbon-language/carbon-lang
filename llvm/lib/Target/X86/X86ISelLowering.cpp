@@ -6150,14 +6150,27 @@ static SDValue LowerAVXCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
   if(ResVT.is256BitVector())
     return Concat128BitVectors(V1, V2, ResVT, NumElems, DAG, dl);
 
+  if (Op.getNumOperands() == 4) {
+    MVT HalfVT = MVT::getVectorVT(ResVT.getScalarType(),
+                                ResVT.getVectorNumElements()/2);
+    SDValue V3 = Op.getOperand(2);
+    SDValue V4 = Op.getOperand(3);
+    return Concat256BitVectors(Concat128BitVectors(V1, V2, HalfVT, NumElems/2, DAG, dl),
+      Concat128BitVectors(V3, V4, HalfVT, NumElems/2, DAG, dl), ResVT, NumElems, DAG, dl);
+  }
   return Concat256BitVectors(V1, V2, ResVT, NumElems, DAG, dl);
 }
 
 static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
-  assert(Op.getNumOperands() == 2);
+  MVT VT = Op.getSimpleValueType();
+  unsigned NumOps = Op.getNumOperands();
+  assert((VT.is256BitVector() && NumOps == 2) ||
+         (VT.is512BitVector() && (NumOps == 2 || NumOps == 4)));
 
-  // AVX/AVX-512 can use the vinsertf128 instruction to create 256-bit vectors
+  // AVX can use the vinsertf128 instruction to create 256-bit vectors
   // from two other 128-bit ones.
+
+  // 512-bit vector may contain 2 256-bit vectors or 4 128-bit vectors
   return LowerAVXCONCAT_VECTORS(Op, DAG);
 }
 
