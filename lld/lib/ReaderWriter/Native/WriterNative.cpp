@@ -18,7 +18,8 @@
 
 #include "NativeFileFormat.h"
 
-#include <limits>
+#include <cstdint>
+#include <set>
 #include <vector>
 
 namespace lld {
@@ -47,6 +48,8 @@ public:
     for ( const AbsoluteAtom *absAtom : file.absolute() ) {
       this->addIVarsForAbsoluteAtom(*absAtom);
     }
+
+    maybeConvertReferencesToV1();
 
     // construct file header based on atom information accumulated
     this->makeHeader();
@@ -79,7 +82,8 @@ private:
     writeChunk(out, _absoluteAtomIvars, NCS_AbsoluteAtomsV1);
     writeChunk(out, _absAttributes, NCS_AbsoluteAttributesV1);
     writeChunk(out, _stringPool, NCS_Strings);
-    writeChunk(out, _references, NCS_ReferencesArrayV1);
+    writeChunk(out, _referencesV1, NCS_ReferencesArrayV1);
+    writeChunk(out, _referencesV2, NCS_ReferencesArrayV2);
 
     if (!_targetsTableIndex.empty()) {
       assert(out.tell() == findChunk(NCS_TargetsTable).fileOffset);
@@ -147,13 +151,47 @@ private:
     _absoluteAtomIvars.push_back(ivar);
   }
 
+  void convertReferencesToV1() {
+    for (const NativeReferenceIvarsV2 &v2 : _referencesV2) {
+      NativeReferenceIvarsV1 v1;
+      v1.offsetInAtom = v2.offsetInAtom;
+      v1.kind = v2.kind;
+      v1.targetIndex = (v2.targetIndex == NativeReferenceIvarsV2::noTarget) ?
+          NativeReferenceIvarsV1::noTarget : v2.targetIndex;
+      v1.addendIndex = this->getAddendIndex(v2.addend);
+      _referencesV1.push_back(v1);
+    }
+    _referencesV2.clear();
+  }
+
+  bool canConvertReferenceToV1(const NativeReferenceIvarsV2 &ref) {
+    bool validOffset = (ref.offsetInAtom == NativeReferenceIvarsV2::noTarget) ||
+        ref.offsetInAtom < NativeReferenceIvarsV1::noTarget;
+    return validOffset && ref.targetIndex < UINT16_MAX;
+  }
+
+  // Convert vector of NativeReferenceIvarsV2 to NativeReferenceIvarsV1 if
+  // possible.
+  void maybeConvertReferencesToV1() {
+    std::set<int64_t> addends;
+    for (const NativeReferenceIvarsV2 &ref : _referencesV2) {
+      if (!canConvertReferenceToV1(ref))
+        return;
+      addends.insert(ref.addend);
+      if (addends.size() >= UINT16_MAX)
+        return;
+    }
+    convertReferencesToV1();
+  }
+
   // fill out native file header and chunk directory
   void makeHeader() {
     const bool hasDefines = !_definedAtomIvars.empty();
     const bool hasUndefines = !_undefinedAtomIvars.empty();
     const bool hasSharedLibraries = !_sharedLibraryAtomIvars.empty();
     const bool hasAbsolutes = !_absoluteAtomIvars.empty();
-    const bool hasReferences = !_references.empty();
+    const bool hasReferencesV1 = !_referencesV1.empty();
+    const bool hasReferencesV2 = !_referencesV2.empty();
     const bool hasTargetsTable = !_targetsTableIndex.empty();
     const bool hasAddendTable = !_addendsTableIndex.empty();
     const bool hasContent = !_contentPool.empty();
@@ -163,7 +201,8 @@ private:
     if ( hasUndefines ) ++chunkCount;
     if ( hasSharedLibraries ) ++chunkCount;
     if ( hasAbsolutes ) chunkCount += 2;
-    if ( hasReferences ) ++chunkCount;
+    if ( hasReferencesV1 ) ++chunkCount;
+    if ( hasReferencesV2 ) ++chunkCount;
     if ( hasTargetsTable ) ++chunkCount;
     if ( hasAddendTable ) ++chunkCount;
     if ( hasContent ) ++chunkCount;
@@ -221,10 +260,15 @@ private:
     fillChunkHeader(chunks[nextIndex++], nextFileOffset, _stringPool,
                     NCS_Strings);
 
-    // create chunk for references
-    if (hasReferences)
-      fillChunkHeader(chunks[nextIndex++], nextFileOffset, _references,
+    // create chunk for referencesV2
+    if (hasReferencesV1)
+      fillChunkHeader(chunks[nextIndex++], nextFileOffset, _referencesV1,
                       NCS_ReferencesArrayV1);
+
+    // create chunk for referencesV2
+    if (hasReferencesV2)
+      fillChunkHeader(chunks[nextIndex++], nextFileOffset, _referencesV2,
+                      NCS_ReferencesArrayV2);
 
     // create chunk for target table
     if (hasTargetsTable) {
@@ -380,32 +424,31 @@ private:
     return attrs;
   }
 
-  // add references for this atom in a contiguous block in NCS_ReferencesArrayV1
+  // add references for this atom in a contiguous block in NCS_ReferencesArrayV2
   uint32_t getReferencesIndex(const DefinedAtom& atom, unsigned& refsCount) {
-    size_t startRefSize = _references.size();
+    size_t startRefSize = _referencesV2.size();
     uint32_t result = startRefSize;
     for (const Reference *ref : atom) {
-      NativeReferenceIvarsV1 nref;
+      NativeReferenceIvarsV2 nref;
       nref.offsetInAtom = ref->offsetInAtom();
       nref.kind = ref->kind();
       nref.targetIndex = this->getTargetIndex(ref->target());
-      nref.addendIndex = this->getAddendIndex(ref->addend());
-      _references.push_back(nref);
+      nref.addend = ref->addend();
+      _referencesV2.push_back(nref);
     }
-    refsCount = _references.size() - startRefSize;
+    refsCount = _referencesV2.size() - startRefSize;
     return (refsCount == 0) ? 0 : result;
   }
 
   uint32_t getTargetIndex(const Atom* target) {
     if ( target == nullptr )
-      return NativeReferenceIvarsV1::noTarget;
+      return NativeReferenceIvarsV2::noTarget;
     TargetToIndex::const_iterator pos = _targetsTableIndex.find(target);
     if ( pos != _targetsTableIndex.end() ) {
       return pos->second;
     }
     uint32_t result = _targetsTableIndex.size();
     _targetsTableIndex[target] = result;
-    assert(result < NativeReferenceIvarsV1::noTarget);
     return result;
   }
 
@@ -489,7 +532,8 @@ private:
   std::vector<NativeUndefinedAtomIvarsV1> _undefinedAtomIvars;
   std::vector<NativeSharedLibraryAtomIvarsV1> _sharedLibraryAtomIvars;
   std::vector<NativeAbsoluteAtomIvarsV1>  _absoluteAtomIvars;
-  std::vector<NativeReferenceIvarsV1>     _references;
+  std::vector<NativeReferenceIvarsV1>     _referencesV1;
+  std::vector<NativeReferenceIvarsV2>     _referencesV2;
   TargetToIndex                           _targetsTableIndex;
   TargetToIndex                           _definedAtomIndex;
   TargetToIndex                           _undefinedAtomIndex;

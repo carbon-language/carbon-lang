@@ -207,7 +207,6 @@ private:
 };
 
 
-
 //
 // An object of this class is instantied for each NativeReferenceIvarsV1
 // struct in the NCS_ReferencesArrayV1 chunk.
@@ -229,20 +228,35 @@ public:
   virtual void setAddend(Addend a);
 
 private:
-  // Used in rare cases when Reference is modified,
-  // since ivar data is mapped read-only.
-  void cloneIvarData() {
-    // TODO: do nothing on second call
-   NativeReferenceIvarsV1* niv = reinterpret_cast<NativeReferenceIvarsV1*>
-                                (operator new(sizeof(NativeReferenceIvarsV1),
-                                                                std::nothrow));
-    memcpy(niv, _ivarData, sizeof(NativeReferenceIvarsV1));
-  }
-
   const File                    *_file;
   const NativeReferenceIvarsV1  *_ivarData;
 };
 
+
+//
+// An object of this class is instantied for each NativeReferenceIvarsV1
+// struct in the NCS_ReferencesArrayV1 chunk.
+//
+class NativeReferenceV2 : public Reference {
+public:
+  NativeReferenceV2(const File& f, const NativeReferenceIvarsV2* ivarData)
+      : _file(&f), _ivarData(ivarData) {
+    setKind(ivarData->kind);
+  }
+
+  virtual uint64_t offsetInAtom() const {
+    return _ivarData->offsetInAtom;
+  }
+
+  virtual const Atom* target() const;
+  virtual Addend addend() const;
+  virtual void setTarget(const Atom* newAtom);
+  virtual void setAddend(Addend a);
+
+private:
+  const File                    *_file;
+  const NativeReferenceIvarsV2  *_ivarData;
+};
 
 
 //
@@ -313,6 +327,9 @@ public:
         case NCS_ReferencesArrayV1:
           ec = file->processReferencesV1(base, chunk);
           break;
+        case NCS_ReferencesArrayV2:
+          ec = file->processReferencesV2(base, chunk);
+          break;
         case NCS_TargetsTable:
           ec = file->processTargetsTable(base, chunk);
           break;
@@ -363,7 +380,8 @@ public:
     delete _undefinedAtoms._arrayStart;
     delete _sharedLibraryAtoms._arrayStart;
     delete _absoluteAtoms._arrayStart;
-    delete _references.arrayStart;
+    delete _referencesV1.arrayStart;
+    delete _referencesV2.arrayStart;
     delete [] _targetsTable;
   }
 
@@ -387,6 +405,7 @@ private:
   friend NativeSharedLibraryAtomV1;
   friend NativeAbsoluteAtomV1;
   friend NativeReferenceV1;
+  friend NativeReferenceV2;
 
   // instantiate array of DefinedAtoms from v1 ivar data in file
   error_code processDefinedAtomsV1(const uint8_t *base,
@@ -558,43 +577,65 @@ private:
     return make_error_code(NativeReaderError::success);
   }
 
-
-
+  template<class T, class U>
+  error_code processReferences(const uint8_t *base, const NativeChunk *chunk,
+                               uint8_t *&refsStart, uint8_t *&refsEnd) const {
+    if (chunk->elementCount == 0)
+      return make_error_code(NativeReaderError::success);
+    size_t refsArraySize = chunk->elementCount * sizeof(T);
+    refsStart = reinterpret_cast<uint8_t *>(
+        operator new(refsArraySize, std::nothrow));
+    if (refsStart == nullptr)
+      return make_error_code(NativeReaderError::memory_error);
+    const size_t ivarElementSize = chunk->fileSize / chunk->elementCount;
+    if (ivarElementSize != sizeof(U))
+      return make_error_code(NativeReaderError::file_malformed);
+    refsEnd = refsStart + refsArraySize;
+    const U* ivarData = reinterpret_cast<const U *>(base + chunk->fileOffset);
+    for (uint8_t *s = refsStart; s != refsEnd; s += sizeof(T), ++ivarData) {
+      T *atomAllocSpace = reinterpret_cast<T *>(s);
+      new (atomAllocSpace) T(*this, ivarData);
+    }
+    return make_error_code(NativeReaderError::success);
+  }
 
   // instantiate array of Referemces from v1 ivar data in file
   error_code processReferencesV1(const uint8_t *base,
                                  const NativeChunk *chunk) {
-    if ( chunk->elementCount == 0 )
-      return make_error_code(NativeReaderError::success);
-    const size_t refSize = sizeof(NativeReferenceV1);
-    size_t refsArraySize = chunk->elementCount * refSize;
-    uint8_t* refsStart = reinterpret_cast<uint8_t*>
-                                (operator new(refsArraySize, std::nothrow));
-    if (refsStart == nullptr)
-      return make_error_code(NativeReaderError::memory_error);
-    const size_t ivarElementSize = chunk->fileSize
-                                          / chunk->elementCount;
-    if ( ivarElementSize != sizeof(NativeReferenceIvarsV1) )
-      return make_error_code(NativeReaderError::file_malformed);
-    uint8_t* refsEnd = refsStart + refsArraySize;
-    const NativeReferenceIvarsV1* ivarData =
-                             reinterpret_cast<const NativeReferenceIvarsV1*>
-                                                  (base + chunk->fileOffset);
-    for(uint8_t* s = refsStart; s != refsEnd; s += refSize) {
-      NativeReferenceV1* atomAllocSpace =
-                  reinterpret_cast<NativeReferenceV1*>(s);
-      new (atomAllocSpace) NativeReferenceV1(*this, ivarData);
-      ++ivarData;
-    }
-    this->_references.arrayStart = refsStart;
-    this->_references.arrayEnd = refsEnd;
-    this->_references.elementSize = refSize;
-    this->_references.elementCount = chunk->elementCount;
-    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
-                    << " chunk ReferencesV1:        "
-                    << " count=" << chunk->elementCount
-                    << " chunkSize=" << chunk->fileSize
-                    << "\n");
+    uint8_t *refsStart, *refsEnd;
+    if (error_code ec
+            = processReferences<NativeReferenceV1, NativeReferenceIvarsV1>(
+                base, chunk, refsStart, refsEnd))
+      return ec;
+    this->_referencesV1.arrayStart = refsStart;
+    this->_referencesV1.arrayEnd = refsEnd;
+    this->_referencesV1.elementSize = sizeof(NativeReferenceV1);
+    this->_referencesV1.elementCount = chunk->elementCount;
+    DEBUG_WITH_TYPE("ReaderNative", {
+      llvm::dbgs() << " chunk ReferencesV1:        "
+                   << " count=" << chunk->elementCount
+                   << " chunkSize=" << chunk->fileSize << "\n";
+    });
+    return make_error_code(NativeReaderError::success);
+  }
+
+  // instantiate array of Referemces from v2 ivar data in file
+  error_code processReferencesV2(const uint8_t *base,
+                                 const NativeChunk *chunk) {
+    uint8_t *refsStart, *refsEnd;
+    if (error_code ec
+            = processReferences<NativeReferenceV2, NativeReferenceIvarsV2>(
+                base, chunk, refsStart, refsEnd))
+      return ec;
+    this->_referencesV2.arrayStart = refsStart;
+    this->_referencesV2.arrayEnd = refsEnd;
+    this->_referencesV2.elementSize = sizeof(NativeReferenceV2);
+    this->_referencesV2.elementCount = chunk->elementCount;
+    DEBUG_WITH_TYPE("ReaderNative", {
+      llvm::dbgs() << " chunk ReferencesV2:        "
+                   << " count=" << chunk->elementCount
+                   << " chunkSize=" << chunk->fileSize << "\n";
+    });
     return make_error_code(NativeReaderError::success);
   }
 
@@ -715,20 +756,37 @@ private:
   }
 
   const Reference* referenceByIndex(uintptr_t index) const {
-    assert(index < _references.elementCount);
-    const uint8_t* p = _references.arrayStart + index * _references.elementSize;
-    return reinterpret_cast<const NativeReferenceV1*>(p);
+    if (index < _referencesV1.elementCount) {
+      return reinterpret_cast<const NativeReferenceV1*>(
+          _referencesV1.arrayStart + index * _referencesV1.elementSize);
+    }
+    assert(index < _referencesV2.elementCount);
+    return reinterpret_cast<const NativeReferenceV2*>(
+        _referencesV2.arrayStart + index * _referencesV2.elementSize);
   }
 
-  const Atom* target(uint16_t index) const {
+  const Atom* targetV1(uint16_t index) const {
     if ( index == NativeReferenceIvarsV1::noTarget )
       return nullptr;
     assert(index < _targetsTableCount);
     return _targetsTable[index];
   }
 
-  void setTarget(uint16_t index, const Atom* newAtom) const {
+  void setTargetV1(uint16_t index, const Atom* newAtom) const {
     assert(index != NativeReferenceIvarsV1::noTarget);
+    assert(index > _targetsTableCount);
+    _targetsTable[index] = newAtom;
+  }
+
+  const Atom* targetV2(uint32_t index) const {
+    if (index == NativeReferenceIvarsV2::noTarget)
+      return nullptr;
+    assert(index < _targetsTableCount);
+    return _targetsTable[index];
+  }
+
+  void setTargetV2(uint32_t index, const Atom* newAtom) const {
+    assert(index != NativeReferenceIvarsV2::noTarget);
     assert(index > _targetsTableCount);
     _targetsTable[index] = newAtom;
   }
@@ -797,7 +855,8 @@ private:
   uint32_t                        _absAbsoluteMaxOffset;
   const uint8_t*                  _attributes;
   uint32_t                        _attributesMaxOffset;
-  IvarArray                       _references;
+  IvarArray                       _referencesV1;
+  IvarArray                       _referencesV2;
   const Atom**                    _targetsTable;
   uint32_t                        _targetsTableCount;
   const char*                     _strings;
@@ -906,7 +965,7 @@ inline const NativeAtomAttributesV1& NativeAbsoluteAtomV1::absAttributes() const
 }
 
 inline const Atom* NativeReferenceV1::target() const {
-  return _file->target(_ivarData->targetIndex);
+  return _file->targetV1(_ivarData->targetIndex);
 }
 
 inline Reference::Addend NativeReferenceV1::addend() const {
@@ -914,10 +973,29 @@ inline Reference::Addend NativeReferenceV1::addend() const {
 }
 
 inline void NativeReferenceV1::setTarget(const Atom* newAtom) {
-  return _file->setTarget(_ivarData->targetIndex, newAtom);
+  return _file->setTargetV1(_ivarData->targetIndex, newAtom);
 }
 
 inline void NativeReferenceV1::setAddend(Addend a) {
+  // Do nothing if addend value is not being changed.
+  if (addend() == a)
+    return;
+  llvm_unreachable("setAddend() not supported");
+}
+
+inline const Atom* NativeReferenceV2::target() const {
+  return _file->targetV2(_ivarData->targetIndex);
+}
+
+inline Reference::Addend NativeReferenceV2::addend() const {
+  return _ivarData->addend;
+}
+
+inline void NativeReferenceV2::setTarget(const Atom* newAtom) {
+  return _file->setTargetV2(_ivarData->targetIndex, newAtom);
+}
+
+inline void NativeReferenceV2::setAddend(Addend a) {
   // Do nothing if addend value is not being changed.
   if (addend() == a)
     return;

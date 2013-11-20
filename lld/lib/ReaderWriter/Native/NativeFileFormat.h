@@ -16,7 +16,6 @@
 
 namespace lld {
 
-
 //
 // Overview:
 //
@@ -214,6 +213,9 @@ struct NativeReferenceIvarsV1 {
 // The NCS_ReferencesArrayV2 chunk contains an array of these structs
 //
 struct NativeReferenceIvarsV2 {
+  enum {
+    noTarget = UINT32_MAX
+  };
   uint64_t  offsetInAtom;
   int64_t   addend;
   int32_t   kind;
