@@ -112,8 +112,13 @@ int64_t CompileUnit::getDefaultLowerBound() const {
 
 /// Check whether the DIE for this MDNode can be shared across CUs.
 static bool isShareableAcrossCUs(DIDescriptor D) {
-  // When the MDNode can be part of the type system, the DIE can be
-  // shared across CUs.
+  // When the MDNode can be part of the type system, the DIE can be shared
+  // across CUs.
+  // Combining type units and cross-CU DIE sharing is lower value (since
+  // cross-CU DIE sharing is used in LTO and removes type redundancy at that
+  // level already) but may be implementable for some value in projects
+  // building multiple independent libraries with LTO and then linking those
+  // together.
   return (D.isType() ||
           (D.isSubprogram() && !DISubprogram(D).isDefinition())) &&
          !GenerateTypeUnits;

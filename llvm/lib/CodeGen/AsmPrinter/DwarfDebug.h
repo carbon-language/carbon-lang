@@ -443,7 +443,11 @@ class DwarfDebug {
     ImportedEntityMap;
   ImportedEntityMap ScopesWithImportedEntities;
 
-  // Holder for types that are going to be extracted out into a type unit.
+  // Map from type MDNodes to a pair used as a union. If the pointer is
+  // non-null, proxy DIEs in CUs meant to reference this type should be stored
+  // in the vector. The hash will be added to these DIEs once it is computed. If
+  // the pointer is null, the hash is immediately available in the uint64_t and
+  // should be directly used for proxy DIEs.
   DenseMap<const MDNode *, std::pair<uint64_t, SmallVectorImpl<DIE*>* > > TypeUnits;
 
   // Whether to emit the pubnames/pubtypes sections.
