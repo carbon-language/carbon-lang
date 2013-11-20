@@ -18,6 +18,7 @@
 
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
@@ -62,32 +63,35 @@ GCOVOptions GCOVOptions::getDefault() {
 }
 
 namespace {
+  class GCOVFunction;
+
   class GCOVProfiler : public ModulePass {
   public:
     static char ID;
     GCOVProfiler() : ModulePass(ID), Options(GCOVOptions::getDefault()) {
-      ReversedVersion[0] = Options.Version[3];
-      ReversedVersion[1] = Options.Version[2];
-      ReversedVersion[2] = Options.Version[1];
-      ReversedVersion[3] = Options.Version[0];
-      ReversedVersion[4] = '\0';
-      initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
+      init();
     }
     GCOVProfiler(const GCOVOptions &Options) : ModulePass(ID), Options(Options){
       assert((Options.EmitNotes || Options.EmitData) &&
              "GCOVProfiler asked to do nothing?");
-      ReversedVersion[0] = Options.Version[3];
-      ReversedVersion[1] = Options.Version[2];
-      ReversedVersion[2] = Options.Version[1];
-      ReversedVersion[3] = Options.Version[0];
-      ReversedVersion[4] = '\0';
-      initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
+      init();
+    }
+    ~GCOVProfiler() {
+      DeleteContainerPointers(Funcs);
     }
     virtual const char *getPassName() const {
       return "GCOV Profiler";
     }
 
   private:
+    void init() {
+      ReversedVersion[0] = Options.Version[3];
+      ReversedVersion[1] = Options.Version[2];
+      ReversedVersion[2] = Options.Version[1];
+      ReversedVersion[3] = Options.Version[0];
+      ReversedVersion[4] = '\0';
+      initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
+    }
     bool runOnModule(Module &M);
 
     // Create the .gcno files for the Module based on DebugInfo.
@@ -131,9 +135,12 @@ namespace {
 
     // Reversed, NUL-terminated copy of Options.Version.
     char ReversedVersion[5];  
+    // Checksum, produced by hash of EdgeDestinations
+    uint32_t FileChecksum;
 
     Module *M;
     LLVMContext *Ctx;
+    SmallVector<GCOVFunction *, 16> Funcs;
   };
 }
 
@@ -145,7 +152,7 @@ ModulePass *llvm::createGCOVProfilerPass(const GCOVOptions &Options) {
   return new GCOVProfiler(Options);
 }
 
-static std::string getFunctionName(DISubprogram SP) {
+static StringRef getFunctionName(DISubprogram SP) {
   if (!SP.getLinkageName().empty())
     return SP.getLinkageName();
   return SP.getName();
@@ -302,7 +309,8 @@ namespace {
   class GCOVFunction : public GCOVRecord {
    public:
     GCOVFunction(DISubprogram SP, raw_ostream *os, uint32_t Ident,
-                 bool UseCfgChecksum) {
+                 bool UseCfgChecksum) :
+        SP(SP), Ident(Ident), UseCfgChecksum(UseCfgChecksum), CfgChecksum(0) {
       this->os = os;
 
       Function *F = SP.getFunction();
@@ -312,20 +320,6 @@ namespace {
         Blocks[BB] = new GCOVBlock(i++, os);
       }
       ReturnBlock = new GCOVBlock(i++, os);
-
-      writeBytes(FunctionTag, 4);
-      uint32_t BlockLen = 1 + 1 + 1 + lengthOfGCOVString(getFunctionName(SP)) +
-          1 + lengthOfGCOVString(SP.getFilename()) + 1;
-      if (UseCfgChecksum)
-        ++BlockLen;
-      write(BlockLen);
-      write(Ident);
-      write(0);  // lineno checksum
-      if (UseCfgChecksum)
-        write(0);  // cfg checksum
-      writeGCOVString(getFunctionName(SP));
-      writeGCOVString(SP.getFilename());
-      write(SP.getLineNumber());
     }
 
     ~GCOVFunction() {
@@ -341,7 +335,37 @@ namespace {
       return *ReturnBlock;
     }
 
+    std::string getEdgeDestinations() {
+      std::string EdgeDestinations;
+      raw_string_ostream EDOS(EdgeDestinations);
+      Function *F = Blocks.begin()->first->getParent();
+      for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
+        GCOVBlock &Block = *Blocks[I];
+        for (int i = 0, e = Block.OutEdges.size(); i != e; ++i)
+          EDOS << Block.OutEdges[i]->Number;
+      }
+      return EdgeDestinations;
+    }
+
+    void setCfgChecksum(uint32_t Checksum) {
+      CfgChecksum = Checksum;
+    }
+
     void writeOut() {
+      writeBytes(FunctionTag, 4);
+      uint32_t BlockLen = 1 + 1 + 1 + lengthOfGCOVString(getFunctionName(SP)) +
+          1 + lengthOfGCOVString(SP.getFilename()) + 1;
+      if (UseCfgChecksum)
+        ++BlockLen;
+      write(BlockLen);
+      write(Ident);
+      write(0);  // lineno checksum
+      if (UseCfgChecksum)
+        write(CfgChecksum);
+      writeGCOVString(getFunctionName(SP));
+      writeGCOVString(SP.getFilename());
+      write(SP.getLineNumber());
+
       // Emit count of blocks.
       writeBytes(BlockTag, 4);
       write(Blocks.size() + 1);
@@ -375,6 +399,10 @@ namespace {
     }
 
    private:
+    DISubprogram SP;
+    uint32_t Ident;
+    bool UseCfgChecksum;
+    uint32_t CfgChecksum;
     DenseMap<BasicBlock *, GCOVBlock *> Blocks;
     GCOVBlock *ReturnBlock;
   };
@@ -427,9 +455,7 @@ void GCOVProfiler::emitProfileNotes() {
     std::string ErrorInfo;
     raw_fd_ostream out(mangleName(CU, "gcno").c_str(), ErrorInfo,
                        sys::fs::F_Binary);
-    out.write("oncg", 4);
-    out.write(ReversedVersion, 4);
-    out.write("MVLL", 4);
+    std::string EdgeDestinations;
 
     DIArray SPs = CU.getSubprograms();
     for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
@@ -441,17 +467,19 @@ void GCOVProfiler::emitProfileNotes() {
 
       Function *F = SP.getFunction();
       if (!F) continue;
-      GCOVFunction Func(SP, &out, i, Options.UseCfgChecksum);
+      GCOVFunction *Func =
+        new GCOVFunction(SP, &out, i, Options.UseCfgChecksum);
+      Funcs.push_back(Func);
 
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-        GCOVBlock &Block = Func.getBlock(BB);
+        GCOVBlock &Block = Func->getBlock(BB);
         TerminatorInst *TI = BB->getTerminator();
         if (int successors = TI->getNumSuccessors()) {
           for (int i = 0; i != successors; ++i) {
-            Block.addEdge(Func.getBlock(TI->getSuccessor(i)));
+            Block.addEdge(Func->getBlock(TI->getSuccessor(i)));
           }
         } else if (isa<ReturnInst>(TI)) {
-          Block.addEdge(Func.getReturnBlock());
+          Block.addEdge(Func->getReturnBlock());
         }
 
         uint32_t Line = 0;
@@ -467,8 +495,18 @@ void GCOVProfiler::emitProfileNotes() {
           Lines.addLine(Loc.getLine());
         }
       }
-      Func.writeOut();
+      EdgeDestinations += Func->getEdgeDestinations();
     }
+
+    FileChecksum = hash_value(EdgeDestinations);
+    out.write("oncg", 4);
+    out.write(ReversedVersion, 4);
+    out.write(reinterpret_cast<char*>(&FileChecksum), 4);
+
+    for (SmallVectorImpl<GCOVFunction *>::iterator I = Funcs.begin(),
+           E = Funcs.end(); I != E; ++I)
+      (*I)->writeOut();
+
     out.write("\0\0\0\0\0\0\0\0", 8);  // EOF
     out.close();
   }
@@ -666,6 +704,7 @@ Constant *GCOVProfiler::getStartFileFunc() {
   Type *Args[] = {
     Type::getInt8PtrTy(*Ctx),  // const char *orig_filename
     Type::getInt8PtrTy(*Ctx),  // const char version[4]
+    Type::getInt32Ty(*Ctx),    // uint32_t checksum
   };
   FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), Args, false);
   return M->getOrInsertFunction("llvm_gcda_start_file", FTy);
@@ -683,10 +722,11 @@ Constant *GCOVProfiler::getIncrementIndirectCounterFunc() {
 }
 
 Constant *GCOVProfiler::getEmitFunctionFunc() {
-  Type *Args[3] = {
+  Type *Args[] = {
     Type::getInt32Ty(*Ctx),    // uint32_t ident
     Type::getInt8PtrTy(*Ctx),  // const char *function_name
     Type::getInt8Ty(*Ctx),     // uint8_t use_extra_checksum
+    Type::getInt32Ty(*Ctx),    // uint32_t cfg_checksum
   };
   FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), Args, false);
   return M->getOrInsertFunction("llvm_gcda_emit_function", FTy);
@@ -760,17 +800,19 @@ Function *GCOVProfiler::insertCounterWriteout(
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
       DICompileUnit CU(CU_Nodes->getOperand(i));
       std::string FilenameGcda = mangleName(CU, "gcda");
-      Builder.CreateCall2(StartFile,
+      Builder.CreateCall3(StartFile,
                           Builder.CreateGlobalStringPtr(FilenameGcda),
-                          Builder.CreateGlobalStringPtr(ReversedVersion));
+                          Builder.CreateGlobalStringPtr(ReversedVersion),
+                          Builder.getInt32(FileChecksum));
       for (unsigned j = 0, e = CountersBySP.size(); j != e; ++j) {
         DISubprogram SP(CountersBySP[j].second);
-        Builder.CreateCall3(
+        Builder.CreateCall4(
             EmitFunction, Builder.getInt32(j),
             Options.FunctionNamesInData ?
               Builder.CreateGlobalStringPtr(getFunctionName(SP)) :
               Constant::getNullValue(Builder.getInt8PtrTy()),
-            Builder.getInt8(Options.UseCfgChecksum));
+            Builder.getInt8(Options.UseCfgChecksum),
+            Builder.getInt32(FileChecksum));
 
         GlobalVariable *GV = CountersBySP[j].first;
         unsigned Arcs =

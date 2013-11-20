@@ -46,6 +46,7 @@ bool GCOVFile::read(GCOVBuffer &Buffer) {
     return false;
 
   if (isGCNOFile(Format)) {
+    if (!Buffer.readInt(Checksum)) return false;
     while (true) {
       if (!Buffer.readFunctionTag()) break;
       GCOVFunction *GFun = new GCOVFunction();
@@ -55,6 +56,12 @@ bool GCOVFile::read(GCOVBuffer &Buffer) {
     }
   }
   else if (isGCDAFile(Format)) {
+    uint32_t Checksum2;
+    if (!Buffer.readInt(Checksum2)) return false;
+    if (Checksum != Checksum2) {
+      errs() << "File checksum does not match.\n";
+      return false;
+    }
     for (size_t i = 0, e = Functions.size(); i < e; ++i) {
       if (!Buffer.readFunctionTag()) {
         errs() << "Unexpected number of functions.\n";

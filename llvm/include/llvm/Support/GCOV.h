@@ -45,15 +45,15 @@ public:
   
   /// readGCOVFormat - Read GCOV signature at the beginning of buffer.
   GCOV::GCOVFormat readGCOVFormat() {
-    StringRef Magic = Buffer->getBuffer().slice(0, 12);
-    Cursor = 12;
-    if (Magic == "oncg*404MVLL")
+    StringRef Magic = Buffer->getBuffer().slice(0, 8);
+    Cursor = 8;
+    if (Magic == "oncg*404")
       return GCOV::GCNO_404;
-    else if (Magic == "oncg*204MVLL")
+    else if (Magic == "oncg*204")
       return GCOV::GCNO_402;
-    else if (Magic == "adcg*404MVLL")
+    else if (Magic == "adcg*404")
       return GCOV::GCDA_404;
-    else if (Magic == "adcg*204MVLL")
+    else if (Magic == "adcg*204")
       return GCOV::GCDA_402;
     
     Cursor = 0;
@@ -193,12 +193,13 @@ private:
 /// (.gcno and .gcda).
 class GCOVFile {
 public:
-  GCOVFile() : Functions(), RunCount(0), ProgramCount(0) {}
+  GCOVFile() : Checksum(0), Functions(), RunCount(0), ProgramCount(0) {}
   ~GCOVFile();
   bool read(GCOVBuffer &Buffer);
   void dump() const;
   void collectLineCounts(FileInfo &FI);
 private:
+  uint32_t Checksum;
   SmallVector<GCOVFunction *, 16> Functions;
   uint32_t RunCount;
   uint32_t ProgramCount;

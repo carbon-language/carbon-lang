@@ -1,11 +1,11 @@
 ; RUN: echo '!9 = metadata !{metadata !"%T/version.ll", metadata !0}' > %t1
 ; RUN: cat %s %t1 > %t2
 ; RUN: opt -insert-gcov-profiling -disable-output < %t2
-; RUN: head -c12 %T/version.gcno | grep '^oncg\*204MVLL$'
+; RUN: head -c8 %T/version.gcno | grep '^oncg\*204'
 ; RUN: rm %T/version.gcno
 ; RUN: not opt -insert-gcov-profiling -default-gcov-version=asdfasdf -disable-output < %t2
 ; RUN: opt -insert-gcov-profiling -default-gcov-version=407* -disable-output < %t2
-; RUN: head -c12 %T/version.gcno | grep '^oncg\*704MVLL$'
+; RUN: head -c8 %T/version.gcno | grep '^oncg\*704'
 ; RUN: rm %T/version.gcno
 
 define void @test() {
