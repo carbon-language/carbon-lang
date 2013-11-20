@@ -25,10 +25,11 @@
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
-LexicalScopes::~LexicalScopes() { releaseMemory(); }
+/// ~LexicalScopes - final cleanup after ourselves.
+LexicalScopes::~LexicalScopes() { reset(); }
 
-/// releaseMemory - release memory.
-void LexicalScopes::releaseMemory() {
+/// reset - Reset the instance so that it's prepared for another function.
+void LexicalScopes::reset() {
   MF = NULL;
   CurrentFnLexicalScope = NULL;
   DeleteContainerSeconds(LexicalScopeMap);
@@ -39,7 +40,7 @@ void LexicalScopes::releaseMemory() {
 
 /// initialize - Scan machine function and constuct lexical scope nest.
 void LexicalScopes::initialize(const MachineFunction &Fn) {
-  releaseMemory();
+  reset();
   MF = &Fn;
   SmallVector<InsnRange, 4> MIRanges;
   DenseMap<const MachineInstr *, LexicalScope *> MI2ScopeMap;
@@ -310,8 +311,6 @@ bool LexicalScopes::dominates(DebugLoc DL, MachineBasicBlock *MBB) {
   }
   return Result;
 }
-
-void LexicalScope::anchor() {}
 
 /// dump - Print data structures.
 void LexicalScope::dump(unsigned Indent) const {

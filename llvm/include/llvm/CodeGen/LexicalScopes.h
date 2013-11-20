@@ -45,13 +45,14 @@ typedef std::pair<const MachineInstr *, const MachineInstr *> InsnRange;
 class LexicalScopes {
 public:
   LexicalScopes() : MF(NULL), CurrentFnLexicalScope(NULL) {}
-  virtual ~LexicalScopes();
+  ~LexicalScopes();
 
-  /// initialize - Scan machine function and constuct lexical scope nest.
-  virtual void initialize(const MachineFunction &);
+  /// initialize - Scan machine function and constuct lexical scope nest, resets
+  /// the instance if necessary.
+  void initialize(const MachineFunction &);
 
   /// releaseMemory - release memory.
-  virtual void releaseMemory();
+  void reset();
 
   /// empty - Return true if there is any lexical scope information available.
   bool empty() { return CurrentFnLexicalScope == NULL; }
@@ -156,7 +157,6 @@ private:
 /// LexicalScope - This class is used to track scope information.
 ///
 class LexicalScope {
-  virtual void anchor();
 
 public:
   LexicalScope(LexicalScope *P, const MDNode *D, const MDNode *I, bool A)
@@ -165,8 +165,6 @@ public:
     if (Parent)
       Parent->addChild(this);
   }
-
-  virtual ~LexicalScope() {}
 
   // Accessors.
   LexicalScope *getParent() const { return Parent; }

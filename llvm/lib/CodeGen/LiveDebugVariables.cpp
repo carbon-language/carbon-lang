@@ -704,7 +704,6 @@ bool LDVImpl::runOnMachineFunction(MachineFunction &mf) {
   bool Changed = collectDebugValues(mf);
   computeIntervals();
   DEBUG(print(dbgs()));
-  LS.releaseMemory();
   ModifiedMF = Changed;
   return Changed;
 }
