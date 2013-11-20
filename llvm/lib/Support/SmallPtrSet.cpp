@@ -186,6 +186,29 @@ SmallPtrSetImpl::SmallPtrSetImpl(const void **SmallStorage,
   NumTombstones = that.NumTombstones;
 }
 
+#if LLVM_HAS_RVALUE_REFERENCES
+SmallPtrSetImpl::SmallPtrSetImpl(const void **SmallStorage, unsigned SmallSize,
+                                 SmallPtrSetImpl &&that) {
+  SmallArray = SmallStorage;
+
+  // Copy over the basic members.
+  CurArraySize = that.CurArraySize;
+  NumElements = that.NumElements;
+  NumTombstones = that.NumTombstones;
+
+  // When small, just copy into our small buffer.
+  if (that.isSmall()) {
+    CurArray = SmallArray;
+    memcpy(CurArray, that.CurArray, sizeof(void *) * CurArraySize);
+    return;
+  }
+
+  // Otherwise, we steal the large memory allocation and no copy is needed.
+  CurArray = that.CurArray;
+  that.CurArray = that.SmallArray;
+}
+#endif
+
 /// CopyFrom - implement operator= from a smallptrset that has the same pointer
 /// type, but may have a different small size.
 void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
@@ -221,6 +244,27 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
   NumElements = RHS.NumElements;
   NumTombstones = RHS.NumTombstones;
 }
+
+#if LLVM_HAS_RVALUE_REFERENCES
+void SmallPtrSetImpl::MoveFrom(SmallPtrSetImpl &&RHS) {
+  if (!isSmall())
+    free(CurArray);
+
+  if (RHS.isSmall()) {
+    // Copy a small RHS rather than moving.
+    CurArray = SmallArray;
+    memcpy(CurArray, RHS.CurArray, sizeof(void*)*RHS.CurArraySize);
+  } else {
+    CurArray = RHS.CurArray;
+    RHS.CurArray = RHS.SmallArray;
+  }
+
+  // Copy the rest of the trivial members.
+  CurArraySize = RHS.CurArraySize;
+  NumElements = RHS.NumElements;
+  NumTombstones = RHS.NumTombstones;
+}
+#endif
 
 void SmallPtrSetImpl::swap(SmallPtrSetImpl &RHS) {
   if (this == &RHS) return;

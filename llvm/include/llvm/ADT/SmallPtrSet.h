@@ -60,8 +60,12 @@ protected:
   unsigned NumElements;
   unsigned NumTombstones;
 
-  // Helper to copy construct a SmallPtrSet.
-  SmallPtrSetImpl(const void **SmallStorage, const SmallPtrSetImpl& that);
+  // Helpers to copy and move construct a SmallPtrSet.
+  SmallPtrSetImpl(const void **SmallStorage, const SmallPtrSetImpl &that);
+#if LLVM_HAS_RVALUE_REFERENCES
+  SmallPtrSetImpl(const void **SmallStorage, unsigned SmallSize,
+                  SmallPtrSetImpl &&that);
+#endif
   explicit SmallPtrSetImpl(const void **SmallStorage, unsigned SmallSize) :
     SmallArray(SmallStorage), CurArray(SmallStorage), CurArraySize(SmallSize) {
     assert(SmallSize && (SmallSize & (SmallSize-1)) == 0 &&
@@ -135,6 +139,9 @@ protected:
   void swap(SmallPtrSetImpl &RHS);
 
   void CopyFrom(const SmallPtrSetImpl &RHS);
+#if LLVM_HAS_RVALUE_REFERENCES
+  void MoveFrom(SmallPtrSetImpl &&RHS);
+#endif
 };
 
 /// SmallPtrSetIteratorImpl - This is the common base class shared between all
@@ -242,6 +249,10 @@ class SmallPtrSet : public SmallPtrSetImpl {
 public:
   SmallPtrSet() : SmallPtrSetImpl(SmallStorage, SmallSizePowTwo) {}
   SmallPtrSet(const SmallPtrSet &that) : SmallPtrSetImpl(SmallStorage, that) {}
+#if LLVM_HAS_RVALUE_REFERENCES
+  SmallPtrSet(SmallPtrSet &&that)
+      : SmallPtrSetImpl(SmallStorage, SmallSizePowTwo, std::move(that)) {}
+#endif
 
   template<typename It>
   SmallPtrSet(It I, It E) : SmallPtrSetImpl(SmallStorage, SmallSizePowTwo) {
@@ -280,13 +291,19 @@ public:
     return iterator(CurArray+CurArraySize, CurArray+CurArraySize);
   }
 
-  // Allow assignment from any smallptrset with the same element type even if it
-  // doesn't have the same smallsize.
-  const SmallPtrSet<PtrType, SmallSize>&
+  SmallPtrSet<PtrType, SmallSize> &
   operator=(const SmallPtrSet<PtrType, SmallSize> &RHS) {
     CopyFrom(RHS);
     return *this;
   }
+
+#if LLVM_HAS_RVALUE_REFERENCES
+  SmallPtrSet<PtrType, SmallSize>&
+  operator=(SmallPtrSet<PtrType, SmallSize> &&RHS) {
+    MoveFrom(std::move(RHS));
+    return *this;
+  }
+#endif
 
   /// swap - Swaps the elements of two sets.
   void swap(SmallPtrSet<PtrType, SmallSize> &RHS) {
