@@ -11,7 +11,7 @@ int main() {
   void *p = malloc(1024 * 1024);
   free(p);
 
-  char *q = (char *)mmap(p, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+  char *q = (char *)mmap(p, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, 0, 0);
   assert(q);
   assert(q <= p);
   assert(q + 4096 > p);
