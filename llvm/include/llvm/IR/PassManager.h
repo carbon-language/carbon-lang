@@ -189,7 +189,7 @@ public:
     Passes.push_back(new FunctionPassModel<FunctionPassT>(llvm_move(Pass)));
   }
 
-  bool run(Module *M);
+  bool run(Function *F);
 
 private:
   // Pull in the concept type and model template specialized for functions.
@@ -203,6 +203,36 @@ private:
   FunctionAnalysisManager *AM;
   std::vector<polymorphic_ptr<FunctionPassConcept> > Passes;
 };
+
+/// \brief Trivial adaptor that maps from a module to its functions.
+///
+/// Designed to allow composition of a FunctionPass(Manager) and a
+/// ModulePassManager.
+template <typename FunctionPassT>
+class ModuleToFunctionPassAdaptor {
+public:
+  explicit ModuleToFunctionPassAdaptor(FunctionPassT Pass)
+      : Pass(llvm_move(Pass)) {}
+
+  /// \brief Runs the function pass across every function in the module.
+  bool run(Module *M) {
+    bool Changed = false;
+    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+      Changed |= Pass.run(I);
+    return Changed;
+  }
+
+private:
+  FunctionPassT Pass;
+};
+
+/// \brief A function to deduce a function pass type and wrap it in the
+/// templated adaptor.
+template <typename FunctionPassT>
+ModuleToFunctionPassAdaptor<FunctionPassT>
+createModuleToFunctionPassAdaptor(FunctionPassT Pass) {
+  return ModuleToFunctionPassAdaptor<FunctionPassT>(llvm_move(Pass));
+}
 
 /// \brief A module analysis pass manager with lazy running and caching of
 /// results.

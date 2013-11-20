@@ -53,15 +53,14 @@ void ModuleAnalysisManager::invalidateImpl(void *PassID, Module *M) {
   ModuleAnalysisResults.erase(PassID);
 }
 
-bool FunctionPassManager::run(Module *M) {
+bool FunctionPassManager::run(Function *F) {
   bool Changed = false;
-  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    for (unsigned Idx = 0, Size = Passes.size(); Idx != Size; ++Idx)
-      if (Passes[Idx]->run(I)) {
-        Changed = true;
-        if (AM)
-          AM->invalidateAll(I);
-      }
+  for (unsigned Idx = 0, Size = Passes.size(); Idx != Size; ++Idx)
+    if (Passes[Idx]->run(F)) {
+      Changed = true;
+      if (AM)
+        AM->invalidateAll(F);
+    }
   return Changed;
 }
 

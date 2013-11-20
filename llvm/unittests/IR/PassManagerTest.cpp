@@ -120,7 +120,7 @@ TEST_F(PassManagerTest, Basic) {
   int FunctionPassRunCount = 0;
   int AnalyzedInstrCount = 0;
   FPM.addPass(TestFunctionPass(AM, FunctionPassRunCount, AnalyzedInstrCount));
-  MPM.addPass(FPM);
+  MPM.addPass(createModuleToFunctionPassAdaptor(FPM));
 
   MPM.run(M.get());
   EXPECT_EQ(1, ModulePassRunCount);
