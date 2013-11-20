@@ -22,15 +22,29 @@ struct Metadata {
   uptr requested_size;
 };
 
+struct MsanMapUnmapCallback {
+  void OnMap(uptr p, uptr size) const {}
+  void OnUnmap(uptr p, uptr size) const {
+    __msan_unpoison((void *)p, size);
+
+    // We are about to unmap a chunk of user memory.
+    // Mark the corresponding shadow memory as not needed.
+    FlushUnneededShadowMemory(MEM_TO_SHADOW(p), size);
+    if (__msan_get_track_origins())
+      FlushUnneededShadowMemory(MEM_TO_ORIGIN(p), size);
+  }
+};
+
 static const uptr kAllocatorSpace = 0x600000000000ULL;
 static const uptr kAllocatorSize   = 0x80000000000;  // 8T.
 static const uptr kMetadataSize  = sizeof(Metadata);
 static const uptr kMaxAllowedMallocSize = 8UL << 30;
 
 typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, kMetadataSize,
-                             DefaultSizeClassMap> PrimaryAllocator;
+                             DefaultSizeClassMap,
+                             MsanMapUnmapCallback> PrimaryAllocator;
 typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
-typedef LargeMmapAllocator<> SecondaryAllocator;
+typedef LargeMmapAllocator<MsanMapUnmapCallback> SecondaryAllocator;
 typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
                           SecondaryAllocator> Allocator;
 

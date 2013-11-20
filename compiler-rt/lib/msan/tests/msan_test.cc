@@ -3571,3 +3571,26 @@ TEST(MemorySanitizer, MlockTest) {
   EXPECT_EQ(0, munlockall());
   EXPECT_EQ(0, munlock((void*)0x987, 0x654));
 }
+
+// Test that LargeAllocator unpoisons memory before releasing it to the OS.
+TEST(MemorySanitizer, LargeAllocatorUnpoisonsOnFree) {
+  void *p = malloc(1024 * 1024);
+  free(p);
+
+  typedef void *(*mmap_fn)(void *, size_t, int, int, int, off_t);
+  mmap_fn real_mmap = (mmap_fn)dlsym(RTLD_NEXT, "mmap");
+
+  // Allocate the page that was released to the OS in free() with the real mmap,
+  // bypassing the interceptor.
+  char *q = (char *)real_mmap(p, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+  ASSERT_NE((char *)0, q);
+
+  ASSERT_TRUE(q <= p);
+  ASSERT_TRUE(q + 4096 > p);
+
+  EXPECT_NOT_POISONED(q[0]);
+  EXPECT_NOT_POISONED(q[10]);
+  EXPECT_NOT_POISONED(q[100]);
+
+  munmap(q, 4096);
+}
