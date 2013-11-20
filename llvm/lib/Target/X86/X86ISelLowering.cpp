@@ -6163,9 +6163,9 @@ static SDValue LowerAVXCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
 
 static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
-  unsigned NumOps = Op.getNumOperands();
-  assert((VT.is256BitVector() && NumOps == 2) ||
-         (VT.is512BitVector() && (NumOps == 2 || NumOps == 4)));
+  assert((VT.is256BitVector() && Op.getNumOperands() == 2) ||
+         (VT.is512BitVector() && (Op.getNumOperands() == 2 ||
+          Op.getNumOperands() == 4)));
 
   // AVX can use the vinsertf128 instruction to create 256-bit vectors
   // from two other 128-bit ones.
