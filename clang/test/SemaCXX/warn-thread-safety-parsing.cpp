@@ -229,28 +229,28 @@ class __attribute__((lockable (1))) LTestClass_args { // \
 };
 
 void l_test_function() LOCKABLE;  // \
-  // expected-warning {{'lockable' attribute only applies to classes}}
+  // expected-warning {{'lockable' attribute only applies to struct, union or class}}
 
 int l_testfn(int y) {
   int x LOCKABLE = y; // \
-    // expected-warning {{'lockable' attribute only applies to classes}}
+    // expected-warning {{'lockable' attribute only applies to struct, union or class}}
   return x;
 }
 
 int l_test_var LOCKABLE; // \
-  // expected-warning {{'lockable' attribute only applies to classes}}
+  // expected-warning {{'lockable' attribute only applies to struct, union or class}}
 
 class LFoo {
  private:
   int test_field LOCKABLE; // \
-    // expected-warning {{'lockable' attribute only applies to classes}}
+    // expected-warning {{'lockable' attribute only applies to struct, union or class}}
   void test_method() LOCKABLE; // \
-    // expected-warning {{'lockable' attribute only applies to classes}}
+    // expected-warning {{'lockable' attribute only applies to struct, union or class}}
 };
 
 
 void l_function_params(int lvar LOCKABLE); // \
-  // expected-warning {{'lockable' attribute only applies to classes}}
+  // expected-warning {{'lockable' attribute only applies to struct, union or class}}
 
 
 //-----------------------------------------//
@@ -269,28 +269,28 @@ class __attribute__((scoped_lockable (1))) SLTestClass_args { // \
 };
 
 void sl_test_function() SCOPED_LOCKABLE;  // \
-  // expected-warning {{'scoped_lockable' attribute only applies to classes}}
+  // expected-warning {{'scoped_lockable' attribute only applies to struct, union or class}}
 
 int sl_testfn(int y) {
   int x SCOPED_LOCKABLE = y; // \
-    // expected-warning {{'scoped_lockable' attribute only applies to classes}}
+    // expected-warning {{'scoped_lockable' attribute only applies to struct, union or class}}
   return x;
 }
 
 int sl_test_var SCOPED_LOCKABLE; // \
-  // expected-warning {{'scoped_lockable' attribute only applies to classes}}
+  // expected-warning {{'scoped_lockable' attribute only applies to struct, union or class}}
 
 class SLFoo {
  private:
   int test_field SCOPED_LOCKABLE; // \
-    // expected-warning {{'scoped_lockable' attribute only applies to classes}}
+    // expected-warning {{'scoped_lockable' attribute only applies to struct, union or class}}
   void test_method() SCOPED_LOCKABLE; // \
-    // expected-warning {{'scoped_lockable' attribute only applies to classes}}
+    // expected-warning {{'scoped_lockable' attribute only applies to struct, union or class}}
 };
 
 
 void sl_function_params(int lvar SCOPED_LOCKABLE); // \
-  // expected-warning {{'scoped_lockable' attribute only applies to classes}}
+  // expected-warning {{'scoped_lockable' attribute only applies to struct, union or class}}
 
 
 //-----------------------------------------//

@@ -535,18 +535,12 @@ static void checkAttrArgsAreLockableObjs(Sema &S, Decl *D,
 // least add some helper functions to check most argument patterns (#
 // and types of args).
 
-enum ThreadAttributeDeclKind {
-  ThreadExpectedFieldOrGlobalVar,
-  ThreadExpectedFunctionOrMethod,
-  ThreadExpectedClassOrStruct
-};
-
 static bool checkGuardedVarAttrCommon(Sema &S, Decl *D,
                                       const AttributeList &Attr) {
   // D must be either a member field or global (potentially shared) variable.
   if (!mayBeSharedVariable(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
-      << Attr.getName() << ThreadExpectedFieldOrGlobalVar;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFieldOrGlobalVar;
     return false;
   }
 
@@ -580,8 +574,8 @@ static bool checkGuardedByAttrCommon(Sema &S, Decl *D,
                                      Expr* &Arg) {
   // D must be either a member field or global (potentially shared) variable.
   if (!mayBeSharedVariable(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
-      << Attr.getName() << ThreadExpectedFieldOrGlobalVar;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFieldOrGlobalVar;
     return false;
   }
 
@@ -622,8 +616,8 @@ static bool checkLockableAttrCommon(Sema &S, Decl *D,
                                     const AttributeList &Attr) {
   // FIXME: Lockable structs for C code.
   if (!isa<RecordDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
-      << Attr.getName() << ThreadExpectedClassOrStruct;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedStructOrUnionOrClass;
     return false;
   }
 
@@ -650,8 +644,8 @@ static void handleScopedLockableAttr(Sema &S, Decl *D,
 static void handleNoThreadSafetyAnalysis(Sema &S, Decl *D,
                                          const AttributeList &Attr) {
   if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
-      << Attr.getName() << ThreadExpectedFunctionOrMethod;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFunctionOrMethod;
     return;
   }
 
@@ -705,8 +699,8 @@ static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D,
   // D must be either a member field or global (potentially shared) variable.
   ValueDecl *VD = dyn_cast<ValueDecl>(D);
   if (!VD || !mayBeSharedVariable(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
-      << Attr.getName() << ThreadExpectedFieldOrGlobalVar;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFieldOrGlobalVar;
     return false;
   }
 
@@ -762,8 +756,8 @@ static bool checkLockFunAttrCommon(Sema &S, Decl *D,
 
   // check that the attribute is applied to a function
   if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
-      << Attr.getName() << ThreadExpectedFunctionOrMethod;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFunctionOrMethod;
     return false;
   }
 
@@ -835,8 +829,8 @@ static bool checkTryLockFunAttrCommon(Sema &S, Decl *D,
     return false;
 
   if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
-      << Attr.getName() << ThreadExpectedFunctionOrMethod;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFunctionOrMethod;
     return false;
   }
 
@@ -885,8 +879,8 @@ static bool checkLocksRequiredCommon(Sema &S, Decl *D,
     return false;
 
   if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
-      << Attr.getName() << ThreadExpectedFunctionOrMethod;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFunctionOrMethod;
     return false;
   }
 
@@ -929,8 +923,8 @@ static void handleUnlockFunAttr(Sema &S, Decl *D,
   // zero or more arguments ok
 
   if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
-      << Attr.getName() << ThreadExpectedFunctionOrMethod;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFunctionOrMethod;
     return;
   }
 
@@ -948,8 +942,8 @@ static void handleUnlockFunAttr(Sema &S, Decl *D,
 static void handleLockReturnedAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
   if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
-      << Attr.getName() << ThreadExpectedFunctionOrMethod;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFunctionOrMethod;
     return;
   }
 
@@ -971,8 +965,8 @@ static void handleLocksExcludedAttr(Sema &S, Decl *D,
     return;
 
   if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
-      << Attr.getName() << ThreadExpectedFunctionOrMethod;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFunctionOrMethod;
     return;
   }
 
