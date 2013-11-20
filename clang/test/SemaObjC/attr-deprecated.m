@@ -154,3 +154,41 @@ typedef NewI DeprI __attribute__((deprecated("blah"))); // expected-note 4 {{'De
   return 0;
 }
 @end
+
+// <rdar://problem/15407366> and <rdar://problem/15466783>:
+// - Using deprecated class name inside class should not warn about deprecation.
+// - Implementations of deprecated classes should not result in deprecation warnings.
+__attribute__((deprecated))
+@interface DeprecatedClassA
+@end
+
+__attribute__((deprecated))
+@interface DeprecatedClassB
+// The self-reference return value should not be
+// flagged as the use of a deprecated declaration.
++ (DeprecatedClassB *)sharedInstance; // no-warning
+
+// Since this class is deprecated, returning a reference
+// to another deprecated class is fine as they may
+// have been deprecated together.  From a user's
+// perspective they are all deprecated.
++ (DeprecatedClassA *)somethingElse; // no-warning
+@end
+
+@implementation DeprecatedClassB
++ (DeprecatedClassB *)sharedInstance
+{
+  // This self-reference should not
+  // be flagged as a use of a deprecated
+  // declaration.
+  static DeprecatedClassB *x; // no-warning
+  return x;
+}
++ (DeprecatedClassA *)somethingElse {
+  // Since this class is deprecated, referencing
+  // another deprecated class is also OK.
+  static DeprecatedClassA *x; // no-warning
+  return x;
+}
+
+@end

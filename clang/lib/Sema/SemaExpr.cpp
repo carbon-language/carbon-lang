@@ -111,7 +111,8 @@ static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
       break;
             
     case AR_Deprecated:
-      S.EmitDeprecationWarning(D, Message, Loc, UnknownObjCClass, ObjCPDecl);
+      if (S.getCurContextAvailability() != AR_Deprecated)
+        S.EmitDeprecationWarning(D, Message, Loc, UnknownObjCClass, ObjCPDecl);
       break;
             
     case AR_Unavailable:
