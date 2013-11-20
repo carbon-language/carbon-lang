@@ -10,7 +10,9 @@
 
 // FreeBSD9-STABLE requires this to know about size_t in cxxabi.h
 #include <cstddef>
-#if defined(_MSC_VER) || defined (__FreeBSD__)
+#if defined(_MSC_VER) 
+// Cannot enable the builtin demangler on msvc as it does not support the cpp11 within the implementation.
+#elif defined (__FreeBSD__)
 #define LLDB_USE_BUILTIN_DEMANGLER
 #else
 #include <cxxabi.h>
@@ -4890,6 +4892,9 @@ Mangled::GetDemangledName () const
                 // add it to our map.
 #ifdef LLDB_USE_BUILTIN_DEMANGLER
                 char *demangled_name = __cxa_demangle (mangled_cstr, NULL, NULL, NULL);
+#elif defined(_MSC_VER)
+                // Cannot demangle on msvc.
+                char *demangled_name = nullptr;
 #else
                 char *demangled_name = abi::__cxa_demangle (mangled_cstr, NULL, NULL, NULL);
 #endif
