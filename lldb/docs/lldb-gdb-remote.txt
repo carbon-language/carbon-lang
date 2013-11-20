@@ -10,7 +10,7 @@ Some packets improve performance, others allow for remote process launching
 (if you have an OS), and others allow us to dynamically figure out what
 registers a thread might have. Again with GDB, both sides pre-agree on how the
 registers will look (how many, their register number,name and offsets). We 
-prefer to be able to dynamically determine what kind of architecture, os and
+prefer to be able to dynamically determine what kind of architecture, OS and
 vendor we are debugging, as well as how things are laid out when it comes to
 the thread register contexts. Below are the details on the new packets we have
 added above and beyond the standard GDB remote protocol packets.
