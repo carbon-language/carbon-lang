@@ -1300,17 +1300,6 @@ class MSA_I8_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   InstrItinClass Itinerary = itin;
 }
 
-// This class is deprecated and will be removed in the next few patches
-class MSA_I8_X_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                         RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
-                         InstrItinClass itin = NoItinerary> {
-  dag OutOperandList = (outs ROWD:$wd);
-  dag InOperandList = (ins ROWS:$ws, uimm8:$u8);
-  string AsmString = !strconcat(instr_asm, "\t$wd, $ws, $u8");
-  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, immZExt8:$u8))];
-  InstrItinClass Itinerary = itin;
-}
-
 class MSA_I8_SHF_DESC_BASE<string instr_asm, RegisterOperand ROWD,
                            RegisterOperand ROWS = ROWD,
                            InstrItinClass itin = NoItinerary> {
