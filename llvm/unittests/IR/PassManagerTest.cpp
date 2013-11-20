@@ -61,9 +61,9 @@ struct TestModulePass {
 };
 
 struct TestFunctionPass {
-  TestFunctionPass(AnalysisManager &AM, int &RunCount, int &AnalyzedInstrCount)
-      : AM(AM), RunCount(RunCount), AnalyzedInstrCount(AnalyzedInstrCount) {
-  }
+  TestFunctionPass(FunctionAnalysisManager &AM, int &RunCount,
+                   int &AnalyzedInstrCount)
+      : AM(AM), RunCount(RunCount), AnalyzedInstrCount(AnalyzedInstrCount) {}
 
   bool run(Function *F) {
     ++RunCount;
@@ -74,7 +74,7 @@ struct TestFunctionPass {
     return true;
   }
 
-  AnalysisManager &AM;
+  FunctionAnalysisManager &AM;
   int &RunCount;
   int &AnalyzedInstrCount;
 };
@@ -106,10 +106,10 @@ public:
 };
 
 TEST_F(PassManagerTest, Basic) {
-  AnalysisManager AM(M.get());
-  AM.registerAnalysisPass(TestAnalysisPass());
+  FunctionAnalysisManager AM;
+  AM.registerPass(TestAnalysisPass());
 
-  ModulePassManager MPM(M.get(), &AM);
+  ModulePassManager MPM;
   FunctionPassManager FPM(&AM);
 
   // Count the runs over a module.
@@ -122,10 +122,9 @@ TEST_F(PassManagerTest, Basic) {
   FPM.addPass(TestFunctionPass(AM, FunctionPassRunCount, AnalyzedInstrCount));
   MPM.addPass(FPM);
 
-  MPM.run();
+  MPM.run(M.get());
   EXPECT_EQ(1, ModulePassRunCount);
   EXPECT_EQ(3, FunctionPassRunCount);
   EXPECT_EQ(5, AnalyzedInstrCount);
 }
-
 }
