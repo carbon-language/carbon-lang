@@ -538,6 +538,7 @@ private:
       // Reset token type in case we have already looked at it and then
       // recovered from an error (e.g. failure to find the matching >).
       if (CurrentToken->Type != TT_LambdaLSquare &&
+          CurrentToken->Type != TT_FunctionLBrace &&
           CurrentToken->Type != TT_ImplicitStringLiteral)
         CurrentToken->Type = TT_Unknown;
       if (CurrentToken->Role)

@@ -681,6 +681,7 @@ void UnwrappedLineParser::parseStructuralElement() {
             Style.BreakBeforeBraces == FormatStyle::BS_Stroustrup ||
             Style.BreakBeforeBraces == FormatStyle::BS_Allman)
           addUnwrappedLine();
+        FormatTok->Type = TT_FunctionLBrace;
         parseBlock(/*MustBeDeclaration=*/false);
         addUnwrappedLine();
         return;

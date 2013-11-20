@@ -141,6 +141,10 @@ struct FormatStyle {
   /// single line.
   bool AllowShortLoopsOnASingleLine;
 
+  /// \brief If \c true, <tt>int f() { return 0; }</tt> can be put on a single
+  /// line.
+  bool AllowShortFunctionsOnASingleLine;
+
   /// \brief Add a space in front of an Objective-C protocol list, i.e. use
   /// <tt>Foo <Protocol></tt> instead of \c Foo<Protocol>.
   bool ObjCSpaceBeforeProtocolList;
@@ -255,6 +259,8 @@ struct FormatStyle {
            AlignTrailingComments == R.AlignTrailingComments &&
            AllowAllParametersOfDeclarationOnNextLine ==
                R.AllowAllParametersOfDeclarationOnNextLine &&
+           AllowShortFunctionsOnASingleLine ==
+               R.AllowShortFunctionsOnASingleLine &&
            AllowShortIfStatementsOnASingleLine ==
                R.AllowShortIfStatementsOnASingleLine &&
            AllowShortLoopsOnASingleLine == R.AllowShortLoopsOnASingleLine &&

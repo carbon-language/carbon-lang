@@ -39,6 +39,7 @@ enum TokenType {
   TT_ImplicitStringLiteral,
   TT_InlineASMColon,
   TT_InheritanceColon,
+  TT_FunctionLBrace,
   TT_FunctionTypeLParen,
   TT_LambdaLSquare,
   TT_LineComment,

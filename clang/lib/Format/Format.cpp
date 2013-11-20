@@ -117,6 +117,8 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
                    Style.AllowShortIfStatementsOnASingleLine);
     IO.mapOptional("AllowShortLoopsOnASingleLine",
                    Style.AllowShortLoopsOnASingleLine);
+    IO.mapOptional("AllowShortFunctionsOnASingleLine",
+                   Style.AllowShortFunctionsOnASingleLine);
     IO.mapOptional("AlwaysBreakTemplateDeclarations",
                    Style.AlwaysBreakTemplateDeclarations);
     IO.mapOptional("AlwaysBreakBeforeMultilineStrings",
@@ -190,6 +192,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.AlignEscapedNewlinesLeft = false;
   LLVMStyle.AlignTrailingComments = true;
   LLVMStyle.AllowAllParametersOfDeclarationOnNextLine = true;
+  LLVMStyle.AllowShortFunctionsOnASingleLine = true;
   LLVMStyle.AllowShortIfStatementsOnASingleLine = false;
   LLVMStyle.AllowShortLoopsOnASingleLine = false;
   LLVMStyle.AlwaysBreakBeforeMultilineStrings = false;
@@ -237,6 +240,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.AlignEscapedNewlinesLeft = true;
   GoogleStyle.AlignTrailingComments = true;
   GoogleStyle.AllowAllParametersOfDeclarationOnNextLine = true;
+  GoogleStyle.AllowShortFunctionsOnASingleLine = true;
   GoogleStyle.AllowShortIfStatementsOnASingleLine = true;
   GoogleStyle.AllowShortLoopsOnASingleLine = true;
   GoogleStyle.AlwaysBreakBeforeMultilineStrings = true;
@@ -381,7 +385,7 @@ public:
   /// \brief Calculates how many lines can be merged into 1 starting at \p I.
   unsigned
   tryFitMultipleLinesInOne(unsigned Indent,
-                           SmallVectorImpl<AnnotatedLine *>::const_iterator &I,
+                           SmallVectorImpl<AnnotatedLine *>::const_iterator I,
                            SmallVectorImpl<AnnotatedLine *>::const_iterator E) {
     // We can never merge stuff if there are trailing line comments.
     AnnotatedLine *TheLine = *I;
@@ -402,16 +406,43 @@ public:
     if (I + 1 == E || I[1]->Type == LT_Invalid)
       return 0;
 
+    if (TheLine->Last->Type == TT_FunctionLBrace) {
+      return Style.AllowShortFunctionsOnASingleLine
+                 ? tryMergeSimpleBlock(I, E, Limit)
+                 : 0;
+    }
     if (TheLine->Last->is(tok::l_brace)) {
-      return tryMergeSimpleBlock(I, E, Limit);
-    } else if (Style.AllowShortIfStatementsOnASingleLine &&
-               TheLine->First->is(tok::kw_if)) {
-      return tryMergeSimpleControlStatement(I, E, Limit);
-    } else if (Style.AllowShortLoopsOnASingleLine &&
-               TheLine->First->isOneOf(tok::kw_for, tok::kw_while)) {
-      return tryMergeSimpleControlStatement(I, E, Limit);
-    } else if (TheLine->InPPDirective && (TheLine->First->HasUnescapedNewline ||
-                                          TheLine->First->IsFirst)) {
+      return Style.BreakBeforeBraces == clang::format::FormatStyle::BS_Attach
+                 ? tryMergeSimpleBlock(I, E, Limit)
+                 : 0;
+    }
+    if (I[1]->First->Type == TT_FunctionLBrace &&
+        Style.BreakBeforeBraces != FormatStyle::BS_Attach) {
+      // Reduce the column limit by the number of spaces we need to insert
+      // around braces.
+      Limit = Limit > 3 ? Limit - 3 : 0;
+      unsigned MergedLines = 0;
+      if (Style.AllowShortFunctionsOnASingleLine) {
+        MergedLines = tryMergeSimpleBlock(I + 1, E, Limit);
+        // If we managed to merge the block, count the function header, which is
+        // on a separate line.
+        if (MergedLines > 0)
+          ++MergedLines;
+      }
+      return MergedLines;
+    }
+    if (TheLine->First->is(tok::kw_if)) {
+      return Style.AllowShortIfStatementsOnASingleLine
+                 ? tryMergeSimpleControlStatement(I, E, Limit)
+                 : 0;
+    }
+    if (TheLine->First->isOneOf(tok::kw_for, tok::kw_while)) {
+      return Style.AllowShortLoopsOnASingleLine
+                 ? tryMergeSimpleControlStatement(I, E, Limit)
+                 : 0;
+    }
+    if (TheLine->InPPDirective &&
+        (TheLine->First->HasUnescapedNewline || TheLine->First->IsFirst)) {
       return tryMergeSimplePPDirective(I, E, Limit);
     }
     return 0;
@@ -419,7 +450,7 @@ public:
 
 private:
   unsigned
-  tryMergeSimplePPDirective(SmallVectorImpl<AnnotatedLine *>::const_iterator &I,
+  tryMergeSimplePPDirective(SmallVectorImpl<AnnotatedLine *>::const_iterator I,
                             SmallVectorImpl<AnnotatedLine *>::const_iterator E,
                             unsigned Limit) {
     if (Limit == 0)
@@ -434,7 +465,7 @@ private:
   }
 
   unsigned tryMergeSimpleControlStatement(
-      SmallVectorImpl<AnnotatedLine *>::const_iterator &I,
+      SmallVectorImpl<AnnotatedLine *>::const_iterator I,
       SmallVectorImpl<AnnotatedLine *>::const_iterator E, unsigned Limit) {
     if (Limit == 0)
       return 0;
@@ -450,7 +481,7 @@ private:
     if (1 + I[1]->Last->TotalLength > Limit)
       return 0;
     if (I[1]->First->isOneOf(tok::semi, tok::kw_if, tok::kw_for,
-                                   tok::kw_while) ||
+                             tok::kw_while) ||
         I[1]->First->Type == TT_LineComment)
       return 0;
     // Only inline simple if's (no nested if or else).
@@ -461,13 +492,9 @@ private:
   }
 
   unsigned
-  tryMergeSimpleBlock(SmallVectorImpl<AnnotatedLine *>::const_iterator &I,
+  tryMergeSimpleBlock(SmallVectorImpl<AnnotatedLine *>::const_iterator I,
                       SmallVectorImpl<AnnotatedLine *>::const_iterator E,
                       unsigned Limit) {
-    // No merging if the brace already is on the next line.
-    if (Style.BreakBeforeBraces != FormatStyle::BS_Attach)
-      return 0;
-
     // First, check that the current line allows merging. This is the case if
     // we're not in a control flow statement and the last token is an opening
     // brace.
@@ -583,8 +610,7 @@ public:
         }
       } else if (TheLine.Type != LT_Invalid &&
                  (WasMoved || FormatPPDirective || touchesLine(TheLine))) {
-        unsigned LevelIndent =
-            getIndent(IndentForLevel, TheLine.Level);
+        unsigned LevelIndent = getIndent(IndentForLevel, TheLine.Level);
         if (FirstTok->WhitespaceRange.isValid()) {
           if (!DryRun)
             formatFirstToken(*TheLine.First, PreviousLine, TheLine.Level,
@@ -732,9 +758,9 @@ private:
     if (PreviousLine && PreviousLine->First->isAccessSpecifier())
       Newlines = std::min(1u, Newlines);
 
-    Whitespaces->replaceWhitespace(
-        RootToken, Newlines, IndentLevel, Indent, Indent,
-        InPPDirective && !RootToken.HasUnescapedNewline);
+    Whitespaces->replaceWhitespace(RootToken, Newlines, IndentLevel, Indent,
+                                   Indent, InPPDirective &&
+                                               !RootToken.HasUnescapedNewline);
   }
 
   /// \brief Get the indent of \p Level from \p IndentForLevel.
@@ -961,7 +987,7 @@ private:
 
     // Cannot merge multiple statements into a single line.
     if (Previous.Children.size() > 1)
-      return false; 
+      return false;
 
     // We can't put the closing "}" on a line with a trailing comment.
     if (Previous.Children[0]->Last->isTrailingComment())
