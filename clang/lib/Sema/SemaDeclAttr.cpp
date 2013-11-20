@@ -57,7 +57,8 @@ enum AttributeDeclKind {
   ExpectedObjectiveCInterface,
   ExpectedMethodOrProperty,
   ExpectedStructOrUnion,
-  ExpectedStructOrUnionOrClass
+  ExpectedStructOrUnionOrClass,
+  ExpectedType
 };
 
 //===----------------------------------------------------------------------===//
@@ -1249,7 +1250,8 @@ static void handleExtVectorTypeAttr(Sema &S, Scope *scope, Decl *D,
   if (TD == 0) {
     // __attribute__((ext_vector_type(N))) can only be applied to typedefs
     // and type-ids.
-    S.Diag(Attr.getLoc(), diag::err_typecheck_ext_vector_not_typedef);
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type) <<
+      Attr.getName() << ExpectedType;
     return;
   }
 
