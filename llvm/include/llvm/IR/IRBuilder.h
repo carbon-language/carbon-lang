@@ -915,8 +915,9 @@ public:
     return SI;
   }
   FenceInst *CreateFence(AtomicOrdering Ordering,
-                         SynchronizationScope SynchScope = CrossThread) {
-    return Insert(new FenceInst(Context, Ordering, SynchScope));
+                         SynchronizationScope SynchScope = CrossThread,
+                         const Twine &Name = "") {
+    return Insert(new FenceInst(Context, Ordering, SynchScope), Name);
   }
   AtomicCmpXchgInst *CreateAtomicCmpXchg(Value *Ptr, Value *Cmp, Value *New,
                                          AtomicOrdering Ordering,
