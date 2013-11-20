@@ -3617,6 +3617,15 @@ ExprResult Sema::ActOnObjCBridgedCast(Scope *S,
                                       Expr *SubExpr) {
   TypeSourceInfo *TSInfo = 0;
   QualType T = GetTypeFromParser(Type, &TSInfo);
+  if (Kind == OBC_Bridge) {
+    // warn in presense of __bridge casting to or from a toll free bridge cast.
+    ARCConversionTypeClass exprACTC = classifyTypeForARCConversion(SubExpr->getType());
+    ARCConversionTypeClass castACTC = classifyTypeForARCConversion(T);
+    if (castACTC == ACTC_retainable && exprACTC == ACTC_coreFoundation)
+      (void)CheckObjCBridgeNSCast(*this, T, SubExpr);
+    else if (castACTC == ACTC_coreFoundation && exprACTC == ACTC_retainable)
+      (void)CheckObjCBridgeCFCast(*this, T, SubExpr);
+  }
   if (!TSInfo)
     TSInfo = Context.getTrivialTypeSourceInfo(T, LParenLoc);
   return BuildObjCBridgedCast(LParenLoc, Kind, BridgeKeywordLoc, TSInfo, 
