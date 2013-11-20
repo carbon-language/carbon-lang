@@ -2338,7 +2338,6 @@ Parser::DiagnoseMissingSemiAfterTagDefinition(DeclSpec &DS, AccessSpecifier AS,
   assert(DS.hasTagDefinition() && "shouldn't call this");
 
   bool EnteringContext = (DSContext == DSC_class || DSContext == DSC_top_level);
-  bool HasMissingSemi = false;
 
   if (getLangOpts().CPlusPlus &&
       (Tok.is(tok::identifier) || Tok.is(tok::coloncolon) ||
@@ -2348,58 +2347,71 @@ Parser::DiagnoseMissingSemiAfterTagDefinition(DeclSpec &DS, AccessSpecifier AS,
     return true;
   }
 
+  bool HasScope = Tok.is(tok::annot_cxxscope);
+  // Make a copy in case GetLookAheadToken invalidates the result of NextToken.
+  Token AfterScope = HasScope ? NextToken() : Tok;
+
   // Determine whether the following tokens could possibly be a
   // declarator.
-  if (Tok.is(tok::identifier) || Tok.is(tok::annot_template_id)) {
-    const Token &Next = NextToken();
+  bool MightBeDeclarator = true;
+  if (Tok.is(tok::kw_typename) || Tok.is(tok::annot_typename)) {
+    // A declarator-id can't start with 'typename'.
+    MightBeDeclarator = false;
+  } else if (AfterScope.is(tok::annot_template_id)) {
+    // If we have a type expressed as a template-id, this cannot be a
+    // declarator-id (such a type cannot be redeclared in a simple-declaration).
+    TemplateIdAnnotation *Annot =
+        static_cast<TemplateIdAnnotation *>(AfterScope.getAnnotationValue());
+    if (Annot->Kind == TNK_Type_template)
+      MightBeDeclarator = false;
+  } else if (AfterScope.is(tok::identifier)) {
+    const Token &Next = HasScope ? GetLookAheadToken(2) : NextToken();
+
     // These tokens cannot come after the declarator-id in a
     // simple-declaration, and are likely to come after a type-specifier.
-    HasMissingSemi = Next.is(tok::star) || Next.is(tok::amp) ||
-                     Next.is(tok::ampamp) || Next.is(tok::identifier) ||
-                     Next.is(tok::annot_cxxscope) ||
-                     Next.is(tok::coloncolon);
-  } else if (Tok.is(tok::annot_cxxscope) &&
-             NextToken().is(tok::identifier) &&
-             DS.getStorageClassSpec() != DeclSpec::SCS_typedef) {
-    // We almost certainly have a missing semicolon. Look up the name and
-    // check; if it names a type, we're missing a semicolon.
-    CXXScopeSpec SS;
-    Actions.RestoreNestedNameSpecifierAnnotation(Tok.getAnnotationValue(),
-                                                 Tok.getAnnotationRange(), SS);
-    const Token &Next = NextToken();
-    IdentifierInfo *Name = Next.getIdentifierInfo();
-    Sema::NameClassification Classification =
-        Actions.ClassifyName(getCurScope(), SS, Name, Next.getLocation(),
-                             NextToken(), /*IsAddressOfOperand*/false);
-    switch (Classification.getKind()) {
-    case Sema::NC_Error:
-      SkipMalformedDecl();
-      return true;
+    if (Next.is(tok::star) || Next.is(tok::amp) || Next.is(tok::ampamp) ||
+        Next.is(tok::identifier) || Next.is(tok::annot_cxxscope) ||
+        Next.is(tok::coloncolon)) {
+      // Missing a semicolon.
+      MightBeDeclarator = false;
+    } else if (HasScope) {
+      // If the declarator-id has a scope specifier, it must redeclare a
+      // previously-declared entity. If that's a type (and this is not a
+      // typedef), that's an error.
+      CXXScopeSpec SS;
+      Actions.RestoreNestedNameSpecifierAnnotation(
+          Tok.getAnnotationValue(), Tok.getAnnotationRange(), SS);
+      IdentifierInfo *Name = AfterScope.getIdentifierInfo();
+      Sema::NameClassification Classification = Actions.ClassifyName(
+          getCurScope(), SS, Name, AfterScope.getLocation(), Next,
+          /*IsAddressOfOperand*/false);
+      switch (Classification.getKind()) {
+      case Sema::NC_Error:
+        SkipMalformedDecl();
+        return true;
 
-    case Sema::NC_Keyword:
-    case Sema::NC_NestedNameSpecifier:
-      llvm_unreachable("typo correction and nested name specifiers not "
-                       "possible here");
+      case Sema::NC_Keyword:
+      case Sema::NC_NestedNameSpecifier:
+        llvm_unreachable("typo correction and nested name specifiers not "
+                         "possible here");
 
-    case Sema::NC_Type:
-    case Sema::NC_TypeTemplate:
-      // Not a previously-declared non-type entity.
-      HasMissingSemi = true;
-      break;
+      case Sema::NC_Type:
+      case Sema::NC_TypeTemplate:
+        // Not a previously-declared non-type entity.
+        MightBeDeclarator = false;
+        break;
 
-    case Sema::NC_Unknown:
-    case Sema::NC_Expression:
-    case Sema::NC_VarTemplate:
-    case Sema::NC_FunctionTemplate:
-      // Might be a redeclaration of a prior entity.
-      HasMissingSemi = false;
-      break;
+      case Sema::NC_Unknown:
+      case Sema::NC_Expression:
+      case Sema::NC_VarTemplate:
+      case Sema::NC_FunctionTemplate:
+        // Might be a redeclaration of a prior entity.
+        break;
+      }
     }
-  } else if (Tok.is(tok::kw_typename) || Tok.is(tok::annot_typename)) {
-    HasMissingSemi = true;
   }
 
-  if (!HasMissingSemi)
+  if (MightBeDeclarator)
     return false;
 
   Diag(PP.getLocForEndOfToken(DS.getRepAsDecl()->getLocEnd()),
