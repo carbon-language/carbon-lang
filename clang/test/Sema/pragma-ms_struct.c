@@ -25,7 +25,7 @@ struct {
 } __attribute__((__ms_struct__)) t1;
 
 struct S {
-		   double __attribute__((ms_struct)) d;	// expected-warning {{'ms_struct' attribute ignored}}
+		   double __attribute__((ms_struct)) d;	// expected-warning {{'ms_struct' attribute only applies to struct, union or class}}
                    unsigned long bf_1 : 12;
                    unsigned long : 0;
                    unsigned long bf_2 : 12;
@@ -36,7 +36,7 @@ enum
   A = 0,
   B,
   C
-} __attribute__((ms_struct)) e1; // expected-warning {{'ms_struct' attribute ignored}}
+} __attribute__((ms_struct)) e1; // expected-warning {{'ms_struct' attribute only applies to struct, union or class}}
 
 // rdar://10513599
 #pragma ms_struct on
@@ -52,10 +52,12 @@ typedef struct
 void *pv1;
 Foo foo;
 unsigned short fInited : 1;
-void *pv2;		
-} PackOddity;		
+void *pv2;
+} PackOddity;
 
 #pragma ms_struct off
 
 static int arr[sizeof(PackOddity) == 40 ? 1 : -1];
 
+__declspec(ms_struct) struct bad { // expected-warning {{unknown __declspec attribute 'ms_struct' ignored}}
+};

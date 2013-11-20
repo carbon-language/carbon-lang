@@ -1278,7 +1278,8 @@ static void handleMsStructAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                 MsStructAttr(Attr.getRange(), S.Context,
                              Attr.getAttributeSpellingListIndex()));
   else
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedStructOrUnionOrClass;
 }
 
 static void handleIBAction(Sema &S, Decl *D, const AttributeList &Attr) {

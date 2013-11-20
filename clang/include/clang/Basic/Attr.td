@@ -1068,7 +1068,8 @@ def MsProperty : IgnoredAttr {
 }
 
 def MsStruct : InheritableAttr {
-  let Spellings = [Declspec<"ms_struct">];
+  let Spellings = [GNU<"ms_struct">, CXX11<"gnu", "ms_struct">];
+  let Subjects = [Record];
 }
 
 def DLLExport : InheritableAttr, TargetSpecificAttr {
