@@ -1540,6 +1540,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
     LinkageSpecDecl *CLinkageDecl =
         LinkageSpecDecl::Create(Context, Parent, Loc, Loc,
                                 LinkageSpecDecl::lang_c, false);
+    CLinkageDecl->setImplicit();
     Parent->addDecl(CLinkageDecl);
     Parent = CLinkageDecl;
   }
