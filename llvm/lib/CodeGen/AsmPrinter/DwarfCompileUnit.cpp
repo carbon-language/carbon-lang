@@ -41,7 +41,7 @@ static cl::opt<bool> GenerateTypeUnits("generate-type-units", cl::Hidden,
 CompileUnit::CompileUnit(unsigned UID, DIE *D, DICompileUnit Node,
                          AsmPrinter *A, DwarfDebug *DW, DwarfUnits *DWU)
     : UniqueID(UID), Node(Node), CUDie(D), Asm(A), DD(DW), DU(DWU),
-      IndexTyDie(0), Language(Node.getLanguage()) {
+      IndexTyDie(0), Language(Node.getLanguage()), DebugInfoOffset(0) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
   insertDIE(Node, D);
 }
@@ -49,7 +49,7 @@ CompileUnit::CompileUnit(unsigned UID, DIE *D, DICompileUnit Node,
 CompileUnit::CompileUnit(unsigned UID, DIE *D, uint16_t Language, AsmPrinter *A,
                          DwarfDebug *DD, DwarfUnits *DU)
     : UniqueID(UID), Node(NULL), CUDie(D), Asm(A), DD(DD), DU(DU),
-      IndexTyDie(0), Language(Language) {
+      IndexTyDie(0), Language(Language), DebugInfoOffset(0) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
 }
 
