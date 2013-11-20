@@ -128,7 +128,6 @@ public:
         (_files[0]->kind() == File::kindSharedLibrary))
       _nextFileIndex = 0;
     setResolveState(Resolver::StateNoChange);
-    return;
   }
 
   /// \brief Return the file that has to be processed by the resolver
