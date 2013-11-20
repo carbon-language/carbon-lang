@@ -98,6 +98,7 @@ def delay : QF<"delay">;
 def delayload : QF<"delayload">;
 def errorreport : QF<"errorreport">;
 def idlout : QF<"idlout">;
+def implib : QF<"implib">;
 def pdb : QF<"pdb">;
 def pdbaltpath : QF<"pdbaltpath">;
 def tlbid : QF<"tlbid">;
@@ -105,3 +106,4 @@ def tlbout : QF<"tlbout">;
 def verbose_all : QF<"verbose">;
 
 defm wx : QB<"wx">;
+defm safeseh : QB<"safeseh">;
