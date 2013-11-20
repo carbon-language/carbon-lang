@@ -36,6 +36,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/polymorphic_ptr.h"
 #include "llvm/Support/type_traits.h"
 #include "llvm/IR/Function.h"
@@ -48,6 +49,106 @@ namespace llvm {
 class Module;
 class Function;
 
+/// \brief An abstract set of preserved analyses following a transformation pass
+/// run.
+///
+/// When a transformation pass is run, it can return a set of analyses whose
+/// results were preserved by that transformation. The default set is "none",
+/// and preserving analyses must be done explicitly.
+///
+/// There is also an explicit all state which can be used (for example) when
+/// the IR is not mutated at all.
+class PreservedAnalyses {
+public:
+  /// \brief Convenience factory function for the empty preserved set.
+  static PreservedAnalyses none() { return PreservedAnalyses(); }
+
+  /// \brief Construct a special preserved set that preserves all passes.
+  static PreservedAnalyses all() {
+    PreservedAnalyses PA;
+    PA.PreservedPassIDs.insert((void *)AllPassesID);
+    return PA;
+  }
+
+  PreservedAnalyses &operator=(PreservedAnalyses Arg) {
+    swap(Arg);
+    return *this;
+  }
+
+  void swap(PreservedAnalyses &Arg) {
+    PreservedPassIDs.swap(Arg.PreservedPassIDs);
+  }
+
+  /// \brief Mark a particular pass as preserved, adding it to the set.
+  template <typename PassT> void preserve() {
+    if (!areAllPreserved())
+      PreservedPassIDs.insert(PassT::ID());
+  }
+
+  /// \brief Intersect this set with another in place.
+  ///
+  /// This is a mutating operation on this preserved set, removing all
+  /// preserved passes which are not also preserved in the argument.
+  void intersect(const PreservedAnalyses &Arg) {
+    if (Arg.areAllPreserved())
+      return;
+    if (areAllPreserved()) {
+      PreservedPassIDs = Arg.PreservedPassIDs;
+      return;
+    }
+    for (SmallPtrSet<void *, 2>::const_iterator I = PreservedPassIDs.begin(),
+                                                E = PreservedPassIDs.end();
+         I != E; ++I)
+      if (!Arg.PreservedPassIDs.count(*I))
+        PreservedPassIDs.erase(*I);
+  }
+
+#if LLVM_HAS_RVALUE_REFERENCES
+  /// \brief Intersect this set with a temporary other set in place.
+  ///
+  /// This is a mutating operation on this preserved set, removing all
+  /// preserved passes which are not also preserved in the argument.
+  void intersect(PreservedAnalyses &&Arg) {
+    if (Arg.areAllPreserved())
+      return;
+    if (areAllPreserved()) {
+      PreservedPassIDs = std::move(Arg.PreservedPassIDs);
+      return;
+    }
+    for (SmallPtrSet<void *, 2>::const_iterator I = PreservedPassIDs.begin(),
+                                                E = PreservedPassIDs.end();
+         I != E; ++I)
+      if (!Arg.PreservedPassIDs.count(*I))
+        PreservedPassIDs.erase(*I);
+  }
+#endif
+
+  /// \brief Query whether a pass is marked as preserved by this set.
+  template <typename PassT> bool preserved() const {
+    return preserved(PassT::ID());
+  }
+
+  /// \brief Query whether an abstract pass ID is marked as preserved by this
+  /// set.
+  bool preserved(void *PassID) const {
+    return PreservedPassIDs.count((void *)AllPassesID) ||
+           PreservedPassIDs.count(PassID);
+  }
+
+private:
+  // Note that this must not be -1 or -2 as those are already used by the
+  // SmallPtrSet.
+  static const uintptr_t AllPassesID = (intptr_t)-3;
+
+  bool areAllPreserved() const { return PreservedPassIDs.count((void *)AllPassesID); }
+
+  SmallPtrSet<void *, 2> PreservedPassIDs;
+};
+
+inline void swap(PreservedAnalyses &LHS, PreservedAnalyses &RHS) {
+  LHS.swap(RHS);
+}
+
 /// \brief Implementation details of the pass manager interfaces.
 namespace detail {
 
@@ -59,7 +160,7 @@ template <typename T> struct PassConcept {
   virtual PassConcept *clone() = 0;
 
   /// \brief The polymorphic API which runs the pass over a given IR entity.
-  virtual bool run(T Arg) = 0;
+  virtual PreservedAnalyses run(T Arg) = 0;
 };
 
 /// \brief A template wrapper used to implement the polymorphic API.
@@ -70,7 +171,7 @@ template <typename T> struct PassConcept {
 template <typename T, typename PassT> struct PassModel : PassConcept<T> {
   PassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
   virtual PassModel *clone() { return new PassModel(Pass); }
-  virtual bool run(T Arg) { return Pass.run(Arg); }
+  virtual PreservedAnalyses run(T Arg) { return Pass.run(Arg); }
   PassT Pass;
 };
 
@@ -161,7 +262,7 @@ public:
   ///
   /// This method should only be called for a single module as there is the
   /// expectation that the lifetime of a pass is bounded to that of a module.
-  void run(Module *M);
+  PreservedAnalyses run(Module *M);
 
   template <typename ModulePassT> void addPass(ModulePassT Pass) {
     Passes.push_back(new ModulePassModel<ModulePassT>(llvm_move(Pass)));
@@ -189,7 +290,7 @@ public:
     Passes.push_back(new FunctionPassModel<FunctionPassT>(llvm_move(Pass)));
   }
 
-  bool run(Function *F);
+  PreservedAnalyses run(Function *F);
 
 private:
   // Pull in the concept type and model template specialized for functions.
@@ -215,11 +316,13 @@ public:
       : Pass(llvm_move(Pass)) {}
 
   /// \brief Runs the function pass across every function in the module.
-  bool run(Module *M) {
-    bool Changed = false;
-    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-      Changed |= Pass.run(I);
-    return Changed;
+  PreservedAnalyses run(Module *M) {
+    PreservedAnalyses PA = PreservedAnalyses::all();
+    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
+      PreservedAnalyses PassPA = Pass.run(I);
+      PA.intersect(llvm_move(PassPA));
+    }
+    return PA;
   }
 
 private:
@@ -286,12 +389,9 @@ public:
 
   /// \brief Invalidate analyses cached for an IR Module.
   ///
-  /// Note that specific analysis results can disregard invalidation by
-  /// overriding their invalidate method.
-  ///
-  /// The module must be the module this analysis manager was constructed
-  /// around.
-  void invalidateAll(Module *M);
+  /// Walk through all of the analyses pertaining to this module and invalidate
+  /// them unless they are preserved by the PreservedAnalyses set.
+  void invalidate(Module *M, const PreservedAnalyses &PA);
 
 private:
   /// \brief Get a module pass result, running the pass if necessary.
@@ -371,9 +471,10 @@ public:
 
   /// \brief Invalidate analyses cached for an IR Function.
   ///
-  /// Note that specific analysis results can disregard invalidation by
-  /// overriding the invalidate method.
-  void invalidateAll(Function *F);
+  /// Walk through all of the analyses cache for this IR function and
+  /// invalidate them unless they are preserved by the provided
+  /// PreservedAnalyses set.
+  void invalidate(Function *F, const PreservedAnalyses &PA);
 
 private:
   /// \brief Get a function pass result, running the pass if necessary.

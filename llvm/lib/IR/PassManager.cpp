@@ -12,20 +12,24 @@
 
 using namespace llvm;
 
-void ModulePassManager::run(Module *M) {
-  for (unsigned Idx = 0, Size = Passes.size(); Idx != Size; ++Idx)
-    if (Passes[Idx]->run(M))
-      if (AM)
-        AM->invalidateAll(M);
+PreservedAnalyses ModulePassManager::run(Module *M) {
+  PreservedAnalyses PA = PreservedAnalyses::all();
+  for (unsigned Idx = 0, Size = Passes.size(); Idx != Size; ++Idx) {
+    PreservedAnalyses PassPA = Passes[Idx]->run(M);
+    if (AM)
+      AM->invalidate(M, PassPA);
+    PA.intersect(llvm_move(PassPA));
+  }
+  return PA;
 }
 
-void ModuleAnalysisManager::invalidateAll(Module *M) {
+void ModuleAnalysisManager::invalidate(Module *M, const PreservedAnalyses &PA) {
   // FIXME: This is a total hack based on the fact that erasure doesn't
   // invalidate iteration for DenseMap.
   for (ModuleAnalysisResultMapT::iterator I = ModuleAnalysisResults.begin(),
                                           E = ModuleAnalysisResults.end();
        I != E; ++I)
-    if (I->second->invalidate(M))
+    if (!PA.preserved(I->first) && I->second->invalidate(M))
       ModuleAnalysisResults.erase(I);
 }
 
@@ -53,18 +57,18 @@ void ModuleAnalysisManager::invalidateImpl(void *PassID, Module *M) {
   ModuleAnalysisResults.erase(PassID);
 }
 
-bool FunctionPassManager::run(Function *F) {
-  bool Changed = false;
-  for (unsigned Idx = 0, Size = Passes.size(); Idx != Size; ++Idx)
-    if (Passes[Idx]->run(F)) {
-      Changed = true;
-      if (AM)
-        AM->invalidateAll(F);
-    }
-  return Changed;
+PreservedAnalyses FunctionPassManager::run(Function *F) {
+  PreservedAnalyses PA = PreservedAnalyses::all();
+  for (unsigned Idx = 0, Size = Passes.size(); Idx != Size; ++Idx) {
+    PreservedAnalyses PassPA = Passes[Idx]->run(F);
+    if (AM)
+      AM->invalidate(F, PassPA);
+    PA.intersect(llvm_move(PassPA));
+  }
+  return PA;
 }
 
-void FunctionAnalysisManager::invalidateAll(Function *F) {
+void FunctionAnalysisManager::invalidate(Function *F, const PreservedAnalyses &PA) {
   // Clear all the invalidated results associated specifically with this
   // function.
   SmallVector<void *, 8> InvalidatedPassIDs;
@@ -72,7 +76,7 @@ void FunctionAnalysisManager::invalidateAll(Function *F) {
   for (FunctionAnalysisResultListT::iterator I = ResultsList.begin(),
                                              E = ResultsList.end();
        I != E;)
-    if (I->second->invalidate(F)) {
+    if (!PA.preserved(I->first) && I->second->invalidate(F)) {
       InvalidatedPassIDs.push_back(I->first);
       I = ResultsList.erase(I);
     } else {

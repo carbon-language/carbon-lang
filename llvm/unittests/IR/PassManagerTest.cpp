@@ -52,9 +52,9 @@ char TestAnalysisPass::PassID;
 struct TestModulePass {
   TestModulePass(int &RunCount) : RunCount(RunCount) {}
 
-  bool run(Module *M) {
+  PreservedAnalyses run(Module *M) {
     ++RunCount;
-    return true;
+    return PreservedAnalyses::none();
   }
 
   int &RunCount;
@@ -65,13 +65,13 @@ struct TestFunctionPass {
                    int &AnalyzedInstrCount)
       : AM(AM), RunCount(RunCount), AnalyzedInstrCount(AnalyzedInstrCount) {}
 
-  bool run(Function *F) {
+  PreservedAnalyses run(Function *F) {
     ++RunCount;
 
     const TestAnalysisPass::Result &AR = AM.getResult<TestAnalysisPass>(F);
     AnalyzedInstrCount += AR.InstructionCount;
 
-    return true;
+    return PreservedAnalyses::none();
   }
 
   FunctionAnalysisManager &AM;
