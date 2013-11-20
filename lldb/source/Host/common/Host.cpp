@@ -1826,11 +1826,130 @@ Host::LaunchApplication (const FileSpec &app_file_spec)
     return LLDB_INVALID_PROCESS_ID;
 }
 
-uint32_t
-Host::MakeDirectory (const char* path, mode_t mode)
+#endif
+
+
+#ifdef LLDB_DISABLE_POSIX
+
+Error
+Host::MakeDirectory (const char* path, uint32_t mode)
 {
-    return UINT32_MAX;
+    Error error;
+    error.SetErrorString("%s in not implemented on this host", __PRETTY_FUNCTION__);
+    return error;
 }
+
+Error
+Host::GetFilePermissions (const char* path, uint32_t &file_permissions)
+{
+    Error error;
+    error.SetErrorString("%s is not supported on this host", __PRETTY_FUNCTION__);
+    return error;
+}
+
+Error
+Host::SetFilePermissions (const char* path, uint32_t file_permissions)
+{
+    Error error;
+    error.SetErrorString("%s is not supported on this host", __PRETTY_FUNCTION__);
+    return error;
+}
+
+Error
+Host::Symlink (const char *src, const char *dst)
+{
+    Error error;
+    error.SetErrorString("%s is not supported on this host", __PRETTY_FUNCTION__);
+    return error;
+}
+
+Error
+Host::Readlink (const char *path, char *buf, size_t buf_len)
+{
+    Error error;
+    error.SetErrorString("%s is not supported on this host", __PRETTY_FUNCTION__);
+    return error;
+}
+
+Error
+Host::Unlink (const char *path)
+{
+    Error error;
+    error.SetErrorString("%s is not supported on this host", __PRETTY_FUNCTION__);
+    return error;
+}
+
+#else
+
+Error
+Host::MakeDirectory (const char* path, uint32_t file_permissions)
+{
+    Error error;
+    if (::mkdir(path, file_permissions) != 0)
+        error.SetErrorToErrno();
+    return error;
+}
+
+Error
+Host::GetFilePermissions (const char* path, uint32_t &file_permissions)
+{
+    Error error;
+    struct stat file_stats;
+    if (::stat (path, &file_stats) == 0)
+    {
+        // The bits in "st_mode" currently match the definitions
+        // for the file mode bits in unix.
+        file_permissions = file_stats.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+    }
+    else
+    {
+        error.SetErrorToErrno();
+    }
+    return error;
+}
+
+Error
+Host::SetFilePermissions (const char* path, uint32_t file_permissions)
+{
+    Error error;
+    if (::chmod(path, file_permissions) != 0)
+        error.SetErrorToErrno();
+    return error;
+}
+
+Error
+Host::Symlink (const char *src, const char *dst)
+{
+    Error error;
+    if (::symlink(dst, src) == -1)
+        error.SetErrorToErrno();
+    return error;
+}
+
+Error
+Host::Unlink (const char *path)
+{
+    Error error;
+    if (::unlink(path) == -1)
+        error.SetErrorToErrno();
+    return error;
+}
+
+Error
+Host::Readlink (const char *path, char *buf, size_t buf_len)
+{
+    Error error;
+    ssize_t count = ::readlink(path, buf, buf_len);
+    if (count < 0)
+        error.SetErrorToErrno();
+    else if (count < (buf_len-1))
+        buf[count] = '\0'; // Success
+    else
+        error.SetErrorString("'buf' buffer is too small to contain link contents");
+    return error;
+}
+
+
 #endif
 
 typedef std::map<lldb::user_id_t, lldb::FileSP> FDToFileMap;
@@ -1843,7 +1962,7 @@ FDToFileMap& GetFDToFileMap()
 lldb::user_id_t
 Host::OpenFile (const FileSpec& file_spec,
                 uint32_t flags,
-                mode_t mode,
+                uint32_t mode,
                 Error &error)
 {
     std::string path (file_spec.GetPath());

@@ -363,7 +363,7 @@ WaitForProcessToSIGSTOP (const lldb::pid_t pid, const int timeout_in_seconds)
 //    StreamFile command_file;
 //    command_file.GetFile().Open (temp_file_path, 
 //                                 File::eOpenOptionWrite | File::eOpenOptionCanCreate,
-//                                 File::ePermissionsDefault);
+//                                 lldb::eFilePermissionsDefault);
 //    
 //    if (!command_file.GetFile().IsValid())
 //        return LLDB_INVALID_PROCESS_ID;
@@ -1984,10 +1984,3 @@ Host::GetAuxvData(lldb_private::Process *process)
 {
     return lldb::DataBufferSP();
 }
-
-uint32_t
-Host::MakeDirectory (const char* path, mode_t mode)
-{
-    return ::mkdir(path,mode);
-}
-

@@ -76,44 +76,56 @@ PlatformPOSIX::RunShellCommand (const char *command,           // Shouldn't be N
     }
 }
 
-uint32_t
-PlatformPOSIX::MakeDirectory (const std::string &path,
-                               mode_t mode)
+Error
+PlatformPOSIX::MakeDirectory (const char *path, uint32_t file_permissions)
 {
-    if (IsHost())
-    {
-        return Host::MakeDirectory (path.c_str(), mode);
-    }
-    if (IsRemote() && m_remote_platform_sp)
-        return m_remote_platform_sp->MakeDirectory(path, mode);
-    return Platform::MakeDirectory(path,mode);
+    if (m_remote_platform_sp)
+        return m_remote_platform_sp->MakeDirectory(path, file_permissions);
+    else
+        return Platform::MakeDirectory(path ,file_permissions);
+}
+
+Error
+PlatformPOSIX::GetFilePermissions (const char *path, uint32_t &file_permissions)
+{
+    if (m_remote_platform_sp)
+        return m_remote_platform_sp->GetFilePermissions(path, file_permissions);
+    else
+        return Platform::GetFilePermissions(path ,file_permissions);
+}
+
+Error
+PlatformPOSIX::SetFilePermissions (const char *path, uint32_t file_permissions)
+{
+    if (m_remote_platform_sp)
+        return m_remote_platform_sp->MakeDirectory(path, file_permissions);
+    else
+        return Platform::SetFilePermissions(path ,file_permissions);
 }
 
 lldb::user_id_t
 PlatformPOSIX::OpenFile (const FileSpec& file_spec,
                          uint32_t flags,
-                         mode_t mode,
+                         uint32_t mode,
                          Error &error)
 {
     if (IsHost())
-    {
         return Host::OpenFile(file_spec, flags, mode, error);
-    }
-    if (IsRemote() && m_remote_platform_sp)
+    else if (m_remote_platform_sp)
         return m_remote_platform_sp->OpenFile(file_spec, flags, mode, error);
-    return Platform::OpenFile(file_spec, flags, mode, error);
+    else
+        return Platform::OpenFile(file_spec, flags, mode, error);
 }
 
 bool
 PlatformPOSIX::CloseFile (lldb::user_id_t fd, Error &error)
 {
     if (IsHost())
-    {
         return Host::CloseFile(fd, error);
-    }
-    if (IsRemote() && m_remote_platform_sp)
+    else if (m_remote_platform_sp)
         return m_remote_platform_sp->CloseFile(fd, error);
-    return Platform::CloseFile(fd, error);
+    else
+        return Platform::CloseFile(fd, error);
 }
 
 uint64_t
@@ -124,12 +136,11 @@ PlatformPOSIX::ReadFile (lldb::user_id_t fd,
                          Error &error)
 {
     if (IsHost())
-    {
         return Host::ReadFile(fd, offset, dst, dst_len, error);
-    }
-    if (IsRemote() && m_remote_platform_sp)
+    else if (m_remote_platform_sp)
         return m_remote_platform_sp->ReadFile(fd, offset, dst, dst_len, error);
-    return Platform::ReadFile(fd, offset, dst, dst_len, error);
+    else
+        return Platform::ReadFile(fd, offset, dst, dst_len, error);
 }
 
 uint64_t
@@ -140,13 +151,11 @@ PlatformPOSIX::WriteFile (lldb::user_id_t fd,
                           Error &error)
 {
     if (IsHost())
-    {
         return Host::WriteFile(fd, offset, src, src_len, error);
-    }
-    if (IsRemote() && m_remote_platform_sp)
+    else if (m_remote_platform_sp)
         return m_remote_platform_sp->WriteFile(fd, offset, src, src_len, error);
-
-    return Platform::WriteFile(fd, offset, src, src_len, error);
+    else
+        return Platform::WriteFile(fd, offset, src, src_len, error);
 }
 
 static uint32_t
@@ -184,6 +193,8 @@ PlatformPOSIX::PutFile (const lldb_private::FileSpec& source,
                          uint32_t uid,
                          uint32_t gid)
 {
+    Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
+
     if (IsHost())
     {
         if (FileSpec::Equal(source, destination, true))
@@ -213,7 +224,7 @@ PlatformPOSIX::PutFile (const lldb_private::FileSpec& source,
             return Error("unable to perform chown");
         return Error();
     }
-    else if (IsRemote() && m_remote_platform_sp)
+    else if (m_remote_platform_sp)
     {
         if (GetSupportsRSync())
         {
@@ -244,7 +255,6 @@ PlatformPOSIX::PutFile (const lldb_private::FileSpec& source,
                                src_path.c_str(),
                                GetHostname(),
                                dst_path.c_str());
-            Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
             if (log)
                 log->Printf("[PutFile] Running command: %s\n", command.GetData());
             int retcode;
@@ -263,20 +273,35 @@ PlatformPOSIX::PutFile (const lldb_private::FileSpec& source,
             }
             // if we are still here rsync has failed - let's try the slow way before giving up
         }
+        
+        if (log)
+            log->Printf ("PlatformPOSIX::PutFile(src='%s', dst='%s', uid=%u, gid=%u)",
+                         source.GetPath().c_str(),
+                         destination.GetPath().c_str(),
+                         uid,
+                         gid); // REMOVE THIS PRINTF PRIOR TO CHECKIN
         // open
         // read, write, read, write, ...
         // close
         // chown uid:gid dst
-        Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
-            if (log)
-                log->Printf("[PutFile] Using block by block transfer....\n");
-        File source_file(source, File::eOpenOptionRead, File::ePermissionsUserRW);
+        if (log)
+            log->Printf("[PutFile] Using block by block transfer....\n");
+        
+        uint32_t source_open_options = File::eOpenOptionRead;
+        if (source.GetFileType() == FileSpec::eFileTypeSymbolicLink)
+            source_open_options |= File::eOpenoptionDontFollowSymlinks;
+
+        File source_file(source, source_open_options, lldb::eFilePermissionsUserRW);
+        Error error;
+        uint32_t permissions = source_file.GetPermissions(error);
+        if (permissions == 0)
+            permissions = lldb::eFilePermissionsFileDefault;
+
         if (!source_file.IsValid())
             return Error("unable to open source file");
-        Error error;
         lldb::user_id_t dest_file = OpenFile (destination,
                                               File::eOpenOptionCanCreate | File::eOpenOptionWrite | File::eOpenOptionTruncate,
-                                              File::ePermissionsUserRWX | File::ePermissionsGroupRX | File::ePermissionsWorldRX,
+                                              permissions,
                                               error);
         if (log)
             log->Printf ("dest_file = %" PRIu64 "\n", dest_file);
@@ -314,45 +339,52 @@ lldb::user_id_t
 PlatformPOSIX::GetFileSize (const FileSpec& file_spec)
 {
     if (IsHost())
-    {
         return Host::GetFileSize(file_spec);
-    }
-    if (IsRemote() && m_remote_platform_sp)
+    else if (m_remote_platform_sp)
         return m_remote_platform_sp->GetFileSize(file_spec);
-    return Platform::GetFileSize(file_spec);
+    else
+        return Platform::GetFileSize(file_spec);
+}
+
+Error
+PlatformPOSIX::CreateSymlink(const char *src, const char *dst)
+{
+    if (IsHost())
+        return Host::Symlink(src, dst);
+    else if (m_remote_platform_sp)
+        return m_remote_platform_sp->CreateSymlink(src, dst);
+    else
+        return Platform::CreateSymlink(src, dst);
 }
 
 bool
 PlatformPOSIX::GetFileExists (const FileSpec& file_spec)
 {
     if (IsHost())
-    {
         return file_spec.Exists();
-    }
-    if (IsRemote() && m_remote_platform_sp)
+    else if (m_remote_platform_sp)
         return m_remote_platform_sp->GetFileExists(file_spec);
-    return Platform::GetFileExists(file_spec);
+    else
+        return Platform::GetFileExists(file_spec);
 }
 
-uint32_t
-PlatformPOSIX::GetFilePermissions (const lldb_private::FileSpec &file_spec,
-                                   lldb_private::Error &error)
+Error
+PlatformPOSIX::Unlink (const char *path)
 {
     if (IsHost())
-    {
-        return File::GetPermissions(file_spec.GetPath().c_str(), error);
-    }
-    if (IsRemote() && m_remote_platform_sp)
-        return m_remote_platform_sp->GetFilePermissions(file_spec, error);
-    return Platform::GetFilePermissions(file_spec, error);
-    
+        return Host::Unlink (path);
+    else if (m_remote_platform_sp)
+        return m_remote_platform_sp->Unlink(path);
+    else
+        return Platform::Unlink(path);
 }
-
 
 lldb_private::Error
 PlatformPOSIX::GetFile (const lldb_private::FileSpec& source /* remote file path */,
-                         const lldb_private::FileSpec& destination /* local file path */)
+                        const lldb_private::FileSpec& destination /* local file path */)
 {
+    Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
+
     // Check the args, first.
     std::string src_path (source.GetPath());
     if (src_path.empty())
@@ -378,7 +410,7 @@ PlatformPOSIX::GetFile (const lldb_private::FileSpec& source /* remote file path
             return Error("unable to perform copy");
         return Error();
     }
-    else if (IsRemote() && m_remote_platform_sp)
+    else if (m_remote_platform_sp)
     {
         if (GetSupportsRSync())
         {
@@ -403,7 +435,6 @@ PlatformPOSIX::GetFile (const lldb_private::FileSpec& source /* remote file path
                                m_remote_platform_sp->GetHostname(),
                                src_path.c_str(),
                                dst_path.c_str());
-            Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
             if (log)
                 log->Printf("[GetFile] Running command: %s\n", command.GetData());
             int retcode;
@@ -421,22 +452,22 @@ PlatformPOSIX::GetFile (const lldb_private::FileSpec& source /* remote file path
         // read/write, read/write, read/write, ...
         // close src
         // close dst
-        Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
-            if (log)
-                log->Printf("[GetFile] Using block by block transfer....\n");
+        if (log)
+            log->Printf("[GetFile] Using block by block transfer....\n");
         Error error;
         user_id_t fd_src = OpenFile (source,
                                      File::eOpenOptionRead,
-                                     File::ePermissionsDefault,
+                                     lldb::eFilePermissionsFileDefault,
                                      error);
 
         if (fd_src == UINT64_MAX)
             return Error("unable to open source file");
 
-        uint32_t permissions = GetFilePermissions(source, error);
+        uint32_t permissions = 0;
+        error = GetFilePermissions(source.GetPath().c_str(), permissions);
         
         if (permissions == 0)
-            permissions = File::ePermissionsDefault;
+            permissions = lldb::eFilePermissionsFileDefault;
 
         user_id_t fd_dst = Host::OpenFile(destination,
                                           File::eOpenOptionCanCreate | File::eOpenOptionWrite | File::eOpenOptionTruncate,
@@ -539,3 +570,22 @@ PlatformPOSIX::CalculateMD5 (const FileSpec& file_spec,
         return m_remote_platform_sp->CalculateMD5(file_spec, low, high);
     return false;
 }
+
+lldb_private::ConstString
+PlatformPOSIX::GetRemoteWorkingDirectory()
+{
+    if (IsRemote() && m_remote_platform_sp)
+        return m_remote_platform_sp->GetRemoteWorkingDirectory();
+    else
+        return Platform::GetRemoteWorkingDirectory();
+}
+
+bool
+PlatformPOSIX::SetRemoteWorkingDirectory(const lldb_private::ConstString &path)
+{
+    if (IsRemote() && m_remote_platform_sp)
+        return m_remote_platform_sp->SetRemoteWorkingDirectory(path);
+    else
+        return Platform::SetRemoteWorkingDirectory(path);
+}
+

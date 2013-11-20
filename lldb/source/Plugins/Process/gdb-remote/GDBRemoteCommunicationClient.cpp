@@ -989,19 +989,43 @@ GDBRemoteCommunicationClient::GetLaunchSuccess (std::string &error_str)
 }
 
 int
-GDBRemoteCommunicationClient::SendArgumentsPacket (char const *argv[])
+GDBRemoteCommunicationClient::SendArgumentsPacket (const ProcessLaunchInfo &launch_info)
 {
-    if (argv && argv[0])
+    // Since we don't get the send argv0 separate from the executable path, we need to
+    // make sure to use the actual exectuable path found in the launch_info...
+    std::vector<const char *> argv;
+    FileSpec exe_file = launch_info.GetExecutableFile();
+    std::string exe_path;
+    const char *arg = NULL;
+    const Args &launch_args = launch_info.GetArguments();
+    if (exe_file)
+        exe_path = exe_file.GetPath();
+    else
+    {
+        arg = launch_args.GetArgumentAtIndex(0);
+        if (arg)
+            exe_path = arg;
+    }
+    if (!exe_path.empty())
+    {
+        argv.push_back(exe_path.c_str());
+        for (uint32_t i=1; (arg = launch_args.GetArgumentAtIndex(i)) != NULL; ++i)
+        {
+            if (arg)
+                argv.push_back(arg);
+        }
+    }
+    if (!argv.empty())
     {
         StreamString packet;
         packet.PutChar('A');
-        const char *arg;
-        for (uint32_t i = 0; (arg = argv[i]) != NULL; ++i)
+        for (size_t i = 0, n = argv.size(); i < n; ++i)
         {
+            arg = argv[i];
             const int arg_len = strlen(arg);
             if (i > 0)
                 packet.PutChar(',');
-            packet.Printf("%i,%i,", arg_len * 2, i);
+            packet.Printf("%i,%i,", arg_len * 2, (int)i);
             packet.PutBytesAsRawHex8 (arg, arg_len);
         }
 
@@ -1785,6 +1809,22 @@ GDBRemoteCommunicationClient::SetSTDERR (char const *path)
     return -1;
 }
 
+bool
+GDBRemoteCommunicationClient::GetWorkingDir (std::string &cwd)
+{
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse ("qGetWorkingDir", response, false))
+    {
+        if (response.IsUnsupportedResponse())
+            return false;
+        if (response.IsErrorResponse())
+            return false;
+        response.GetHexByteString (cwd);
+        return !cwd.empty();
+    }
+    return false;
+}
+
 int
 GDBRemoteCommunicationClient::SetWorkingDir (char const *path)
 {
@@ -2497,7 +2537,7 @@ GDBRemoteCommunicationClient::RunShellCommand (const char *command,           //
                                                uint32_t timeout_sec)          // Timeout in seconds to wait for shell program to finish
 {
     lldb_private::StreamString stream;
-    stream.PutCString("qPlatform_RunCommand:");
+    stream.PutCString("qPlatform_shell:");
     stream.PutBytesAsRawHex8(command, strlen(command));
     stream.PutChar(',');
     stream.PutHex32(timeout_sec);
@@ -2536,24 +2576,44 @@ GDBRemoteCommunicationClient::RunShellCommand (const char *command,           //
     return Error("unable to send packet");
 }
 
-uint32_t
-GDBRemoteCommunicationClient::MakeDirectory (const std::string &path,
-                                             mode_t mode)
+Error
+GDBRemoteCommunicationClient::MakeDirectory (const char *path,
+                                             uint32_t file_permissions)
 {
     lldb_private::StreamString stream;
-    stream.PutCString("qPlatform_IO_MkDir:");
-    stream.PutHex32(mode);
+    stream.PutCString("qPlatform_mkdir:");
+    stream.PutHex32(file_permissions);
     stream.PutChar(',');
-    stream.PutBytesAsRawHex8(path.c_str(), path.size());
+    stream.PutBytesAsRawHex8(path, strlen(path));
     const char *packet = stream.GetData();
     int packet_len = stream.GetSize();
     StringExtractorGDBRemote response;
     if (SendPacketAndWaitForResponse(packet, packet_len, response, false))
     {
-        return response.GetHexMaxU32(false, UINT32_MAX);
+        return Error(response.GetHexMaxU32(false, UINT32_MAX), eErrorTypePOSIX);
     }
-    return UINT32_MAX;
+    return Error();
 
+}
+
+Error
+GDBRemoteCommunicationClient::SetFilePermissions (const char *path,
+                                                  uint32_t file_permissions)
+{
+    lldb_private::StreamString stream;
+    stream.PutCString("qPlatform_chmod:");
+    stream.PutHex32(file_permissions);
+    stream.PutChar(',');
+    stream.PutBytesAsRawHex8(path, strlen(path));
+    const char *packet = stream.GetData();
+    int packet_len = stream.GetSize();
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse(packet, packet_len, response, false))
+    {
+        return Error(response.GetHexMaxU32(false, UINT32_MAX), eErrorTypePOSIX);
+    }
+    return Error();
+    
 }
 
 static uint64_t
@@ -2643,13 +2703,13 @@ GDBRemoteCommunicationClient::GetFileSize (const lldb_private::FileSpec& file_sp
     return UINT64_MAX;
 }
 
-uint32_t
-GDBRemoteCommunicationClient::GetFilePermissions(const lldb_private::FileSpec& file_spec, Error &error)
+Error
+GDBRemoteCommunicationClient::GetFilePermissions(const char *path, uint32_t &file_permissions)
 {
+    Error error;
     lldb_private::StreamString stream;
     stream.PutCString("vFile:mode:");
-    std::string path (file_spec.GetPath());
-    stream.PutCStringAsRawHex8(path.c_str());
+    stream.PutCStringAsRawHex8(path);
     const char* packet = stream.GetData();
     int packet_len = stream.GetSize();
     StringExtractorGDBRemote response;
@@ -2658,29 +2718,34 @@ GDBRemoteCommunicationClient::GetFilePermissions(const lldb_private::FileSpec& f
         if (response.GetChar() != 'F')
         {
             error.SetErrorStringWithFormat ("invalid response to '%s' packet", packet);
-            return 0;
         }
-        const uint32_t mode = response.GetS32(-1);
-        if (mode == -1)
+        else
         {
-            if (response.GetChar() == ',')
+            const uint32_t mode = response.GetS32(-1);
+            if (mode == -1)
             {
-                int response_errno = response.GetS32(-1);
-                if (response_errno > 0)
-                    error.SetError(response_errno, lldb::eErrorTypePOSIX);
+                if (response.GetChar() == ',')
+                {
+                    int response_errno = response.GetS32(-1);
+                    if (response_errno > 0)
+                        error.SetError(response_errno, lldb::eErrorTypePOSIX);
+                    else
+                        error.SetErrorToGenericError();
+                }
                 else
                     error.SetErrorToGenericError();
             }
+            else
+            {
+                file_permissions = mode & (S_IRWXU|S_IRWXG|S_IRWXO);
+            }
         }
-        else
-            error.Clear();
-        return mode & (S_IRWXU|S_IRWXG|S_IRWXO);
     }
     else
     {
         error.SetErrorStringWithFormat ("failed to send '%s' packet", packet);
     }
-    return 0;
+    return error;
 }
 
 uint64_t
@@ -2760,6 +2825,90 @@ GDBRemoteCommunicationClient::WriteFile (lldb::user_id_t fd,
         error.SetErrorString ("failed to send vFile:pwrite packet");
     }
     return 0;
+}
+
+Error
+GDBRemoteCommunicationClient::CreateSymlink (const char *src, const char *dst)
+{
+    Error error;
+    lldb_private::StreamGDBRemote stream;
+    stream.PutCString("vFile:symlink:");
+    // the unix symlink() command reverses its parameters where the dst if first,
+    // so we follow suit here
+    stream.PutCStringAsRawHex8(dst);
+    stream.PutChar(',');
+    stream.PutCStringAsRawHex8(src);
+    const char* packet = stream.GetData();
+    int packet_len = stream.GetSize();
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse(packet, packet_len, response, false))
+    {
+        if (response.GetChar() == 'F')
+        {
+            uint32_t result = response.GetU32(UINT32_MAX);
+            if (result != 0)
+            {
+                error.SetErrorToGenericError();
+                if (response.GetChar() == ',')
+                {
+                    int response_errno = response.GetS32(-1);
+                    if (response_errno > 0)
+                        error.SetError(response_errno, lldb::eErrorTypePOSIX);
+                }
+            }
+        }
+        else
+        {
+            // Should have returned with 'F<result>[,<errno>]'
+            error.SetErrorStringWithFormat("symlink failed");
+        }
+    }
+    else
+    {
+        error.SetErrorString ("failed to send vFile:symlink packet");
+    }
+    return error;
+}
+
+Error
+GDBRemoteCommunicationClient::Unlink (const char *path)
+{
+    Error error;
+    lldb_private::StreamGDBRemote stream;
+    stream.PutCString("vFile:unlink:");
+    // the unix symlink() command reverses its parameters where the dst if first,
+    // so we follow suit here
+    stream.PutCStringAsRawHex8(path);
+    const char* packet = stream.GetData();
+    int packet_len = stream.GetSize();
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse(packet, packet_len, response, false))
+    {
+        if (response.GetChar() == 'F')
+        {
+            uint32_t result = response.GetU32(UINT32_MAX);
+            if (result != 0)
+            {
+                error.SetErrorToGenericError();
+                if (response.GetChar() == ',')
+                {
+                    int response_errno = response.GetS32(-1);
+                    if (response_errno > 0)
+                        error.SetError(response_errno, lldb::eErrorTypePOSIX);
+                }
+            }
+        }
+        else
+        {
+            // Should have returned with 'F<result>[,<errno>]'
+            error.SetErrorStringWithFormat("unlink failed");
+        }
+    }
+    else
+    {
+        error.SetErrorString ("failed to send vFile:unlink packet");
+    }
+    return error;
 }
 
 // Extension of host I/O packets to get whether a file exists.

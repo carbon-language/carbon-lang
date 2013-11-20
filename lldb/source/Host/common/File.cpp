@@ -1,4 +1,4 @@
-//===-- FileSpec.cpp --------------------------------------------*- C++ -*-===//
+//===-- File.cpp ------------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,7 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-
 
 #include "lldb/Host/File.h"
 
@@ -237,6 +236,9 @@ File::Open (const char *path, uint32_t options, uint32_t permissions)
     else if (read)
     {
         oflag |= O_RDONLY;
+
+        if (options & eOpenoptionDontFollowSymlinks)
+            oflag |= O_NOFOLLOW;
     }
     
 #ifndef _WIN32
@@ -249,15 +251,15 @@ File::Open (const char *path, uint32_t options, uint32_t permissions)
     mode_t mode = 0;
     if (oflag & O_CREAT)
     {
-        if (permissions & ePermissionsUserRead)     mode |= S_IRUSR;
-        if (permissions & ePermissionsUserWrite)    mode |= S_IWUSR;
-        if (permissions & ePermissionsUserExecute)  mode |= S_IXUSR;
-        if (permissions & ePermissionsGroupRead)    mode |= S_IRGRP;
-        if (permissions & ePermissionsGroupWrite)   mode |= S_IWGRP;
-        if (permissions & ePermissionsGroupExecute) mode |= S_IXGRP;
-        if (permissions & ePermissionsWorldRead)    mode |= S_IROTH;
-        if (permissions & ePermissionsWorldWrite)   mode |= S_IWOTH;
-        if (permissions & ePermissionsWorldExecute) mode |= S_IXOTH;
+        if (permissions & lldb::eFilePermissionsUserRead)     mode |= S_IRUSR;
+        if (permissions & lldb::eFilePermissionsUserWrite)    mode |= S_IWUSR;
+        if (permissions & lldb::eFilePermissionsUserExecute)  mode |= S_IXUSR;
+        if (permissions & lldb::eFilePermissionsGroupRead)    mode |= S_IRGRP;
+        if (permissions & lldb::eFilePermissionsGroupWrite)   mode |= S_IWGRP;
+        if (permissions & lldb::eFilePermissionsGroupExecute) mode |= S_IXGRP;
+        if (permissions & lldb::eFilePermissionsWorldRead)    mode |= S_IROTH;
+        if (permissions & lldb::eFilePermissionsWorldWrite)   mode |= S_IWOTH;
+        if (permissions & lldb::eFilePermissionsWorldExecute) mode |= S_IXOTH;
     }
 
     do

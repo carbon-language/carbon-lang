@@ -89,6 +89,8 @@
 		262D24E613FB8710002D1960 /* RegisterContextMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262D24E413FB8710002D1960 /* RegisterContextMemory.cpp */; };
 		262ED0051631FA2800879631 /* OptionGroupString.h in Headers */ = {isa = PBXBuildFile; fileRef = 262ED0041631FA2800879631 /* OptionGroupString.h */; };
 		262ED0081631FA3A00879631 /* OptionGroupString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262ED0071631FA3A00879631 /* OptionGroupString.cpp */; };
+		262F12B51835468600AEB384 /* SBPlatform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262F12B41835468600AEB384 /* SBPlatform.cpp */; };
+		262F12B71835469C00AEB384 /* SBPlatform.h in Headers */ = {isa = PBXBuildFile; fileRef = 262F12B61835469C00AEB384 /* SBPlatform.h */; };
 		2635879417822FC2004C30BA /* SymbolVendorELF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2635879017822E56004C30BA /* SymbolVendorELF.cpp */; };
 		26368A3C126B697600E8659F /* darwin-debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26368A3B126B697600E8659F /* darwin-debug.cpp */; };
 		26368AF7126B960500E8659F /* darwin-debug in Resources */ = {isa = PBXBuildFile; fileRef = 26579F68126A25920007C5CB /* darwin-debug */; };
@@ -947,6 +949,9 @@
 		262D24E513FB8710002D1960 /* RegisterContextMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextMemory.h; path = Utility/RegisterContextMemory.h; sourceTree = "<group>"; };
 		262ED0041631FA2800879631 /* OptionGroupString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionGroupString.h; path = include/lldb/Interpreter/OptionGroupString.h; sourceTree = "<group>"; };
 		262ED0071631FA3A00879631 /* OptionGroupString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupString.cpp; path = source/Interpreter/OptionGroupString.cpp; sourceTree = "<group>"; };
+		262F12B41835468600AEB384 /* SBPlatform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBPlatform.cpp; path = source/API/SBPlatform.cpp; sourceTree = "<group>"; };
+		262F12B61835469C00AEB384 /* SBPlatform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBPlatform.h; path = include/lldb/API/SBPlatform.h; sourceTree = "<group>"; };
+		262F12B8183546C900AEB384 /* SBPlatform.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBPlatform.i; sourceTree = "<group>"; };
 		2635879017822E56004C30BA /* SymbolVendorELF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SymbolVendorELF.cpp; sourceTree = "<group>"; };
 		2635879117822E56004C30BA /* SymbolVendorELF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SymbolVendorELF.h; sourceTree = "<group>"; };
 		263664921140A4930075843B /* Debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = Debugger.cpp; path = source/Core/Debugger.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
@@ -2169,6 +2174,7 @@
 				2611FF05142D83060017FEA3 /* SBListener.i */,
 				2611FF06142D83060017FEA3 /* SBModule.i */,
 				263C493B178B61CC0070F12D /* SBModuleSpec.i */,
+				262F12B8183546C900AEB384 /* SBPlatform.i */,
 				2611FF07142D83060017FEA3 /* SBProcess.i */,
 				2611FF08142D83060017FEA3 /* SBSection.i */,
 				2611FF09142D83060017FEA3 /* SBSourceManager.i */,
@@ -2269,6 +2275,8 @@
 				26DE204C11618E7A00A093E2 /* SBModule.cpp */,
 				263C4939178B50CF0070F12D /* SBModuleSpec.h */,
 				263C4937178B50C40070F12D /* SBModuleSpec.cpp */,
+				262F12B61835469C00AEB384 /* SBPlatform.h */,
+				262F12B41835468600AEB384 /* SBPlatform.cpp */,
 				9A9831041125FC5800A56CB0 /* SBProcess.h */,
 				9A9831031125FC5800A56CB0 /* SBProcess.cpp */,
 				26B8283C142D01E9002DBC64 /* SBSection.h */,
@@ -3600,6 +3608,7 @@
 				26C72C94124322890068DC16 /* SBStream.h in Headers */,
 				9A357671116E7B5200E8ED2F /* SBStringList.h in Headers */,
 				26DE205B11618FF600A093E2 /* SBSymbol.h in Headers */,
+				262F12B71835469C00AEB384 /* SBPlatform.h in Headers */,
 				26DE204111618AB900A093E2 /* SBSymbolContext.h in Headers */,
 				268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */,
 				2668022C115FD13D008E1FE4 /* SBTarget.h in Headers */,
@@ -3981,6 +3990,7 @@
 			files = (
 				9461569A14E358A6003A195C /* SBTypeFilter.cpp in Sources */,
 				9461569B14E358A6003A195C /* SBTypeFormat.cpp in Sources */,
+				262F12B51835468600AEB384 /* SBPlatform.cpp in Sources */,
 				9461569C14E358A6003A195C /* SBTypeSummary.cpp in Sources */,
 				9461569D14E358A6003A195C /* SBTypeSynthetic.cpp in Sources */,
 				26680324116005D9008E1FE4 /* SBThread.cpp in Sources */,

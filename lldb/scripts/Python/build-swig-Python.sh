@@ -152,6 +152,7 @@ INTERFACE_FILES="${SRC_ROOT}/scripts/Python/interface/SBAddress.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBListener.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBModule.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBModuleSpec.i"\
+" ${SRC_ROOT}/scripts/Python/interface/SBPlatform.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBProcess.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBSourceManager.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBStream.i"\

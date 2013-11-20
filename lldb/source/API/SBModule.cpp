@@ -162,6 +162,27 @@ SBModule::SetPlatformFileSpec (const lldb::SBFileSpec &platform_file)
     return result;
 }
 
+lldb::SBFileSpec
+SBModule::GetRemoteInstallFileSpec ()
+{
+    SBFileSpec sb_file_spec;
+    ModuleSP module_sp (GetSP ());
+    if (module_sp)
+        sb_file_spec.SetFileSpec (module_sp->GetRemoteInstallFileSpec());
+    return sb_file_spec;
+}
+
+bool
+SBModule::SetRemoteInstallFileSpec (lldb::SBFileSpec &file)
+{
+    ModuleSP module_sp (GetSP ());
+    if (module_sp)
+    {
+        module_sp->SetRemoteInstallFileSpec(file.ref());
+        return true;
+    }
+    return false;
+}
 
 
 const uint8_t *

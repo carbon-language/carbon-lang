@@ -121,7 +121,10 @@ protected:
     Handle_qKillSpawnedProcess (StringExtractorGDBRemote &packet);
 
     bool
-    Handle_qPlatform_IO_MkDir (StringExtractorGDBRemote &packet);
+    Handle_qPlatform_mkdir (StringExtractorGDBRemote &packet);
+    
+    bool
+    Handle_qPlatform_chmod (StringExtractorGDBRemote &packet);
     
     bool
     Handle_qProcessInfoPID (StringExtractorGDBRemote &packet);
@@ -155,6 +158,9 @@ protected:
 
     bool
     Handle_QSetWorkingDir (StringExtractorGDBRemote &packet);
+    
+    bool
+    Handle_qGetWorkingDir (StringExtractorGDBRemote &packet);
 
     bool
     Handle_QStartNoAckMode (StringExtractorGDBRemote &packet);
@@ -188,6 +194,12 @@ protected:
 
     bool
     Handle_vFile_Exists (StringExtractorGDBRemote &packet);
+    
+    bool
+    Handle_vFile_symlink (StringExtractorGDBRemote &packet);
+    
+    bool
+    Handle_vFile_unlink (StringExtractorGDBRemote &packet);
 
     bool
     Handle_vFile_Stat (StringExtractorGDBRemote &packet);
@@ -196,7 +208,7 @@ protected:
     Handle_vFile_MD5 (StringExtractorGDBRemote &packet);
     
     bool
-    Handle_qPlatform_RunCommand (StringExtractorGDBRemote &packet);
+    Handle_qPlatform_shell (StringExtractorGDBRemote &packet);
 
 private:
     bool

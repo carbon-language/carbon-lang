@@ -10,8 +10,10 @@
 #ifndef LLDB_SBDebugger_h_
 #define LLDB_SBDebugger_h_
 
-#include "lldb/API/SBDefines.h"
 #include <stdio.h>
+
+#include "lldb/API/SBDefines.h"
+#include "lldb/API/SBPlatform.h"
 
 namespace lldb {
 
@@ -152,6 +154,12 @@ public:
 
     void
     SetSelectedTarget (SBTarget& target);
+
+    lldb::SBPlatform
+    GetSelectedPlatform();
+
+    void
+    SetSelectedPlatform(lldb::SBPlatform &platform);
 
     lldb::SBSourceManager
     GetSourceManager ();

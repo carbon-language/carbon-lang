@@ -1041,6 +1041,12 @@ public:
     ClangASTImporter *
     GetClangASTImporter();
     
+    //----------------------------------------------------------------------
+    // Install any files through the platform that need be to installed
+    // prior to launching or attaching.
+    //----------------------------------------------------------------------
+    Error
+    Install(ProcessLaunchInfo *launch_info);
     
     // Since expressions results can persist beyond the lifetime of a process,
     // and the const expression results are available after a process is gone,

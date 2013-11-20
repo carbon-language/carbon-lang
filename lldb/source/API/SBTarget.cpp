@@ -605,6 +605,19 @@ SBTarget::LaunchSimple
                    error);
 }
 
+SBError
+SBTarget::Install()
+{
+    SBError sb_error;
+    TargetSP target_sp(GetSP());
+    if (target_sp)
+    {
+        Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        sb_error.ref() = target_sp->Install(NULL);
+    }
+    return sb_error;
+}
+
 SBProcess
 SBTarget::Launch 
 (

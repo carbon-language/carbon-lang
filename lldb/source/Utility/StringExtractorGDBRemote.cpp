@@ -117,6 +117,7 @@ StringExtractorGDBRemote::GetServerPacketType () const
 
         case 'G':
             if (PACKET_STARTS_WITH ("qGroupName:"))             return eServerPacketType_qGroupName;
+            if (PACKET_MATCHES ("qGetWorkingDir"))              return eServerPacketType_qGetWorkingDir;
             break;
 
         case 'H':
@@ -133,9 +134,10 @@ StringExtractorGDBRemote::GetServerPacketType () const
             break;
             
         case 'P':
-            if (PACKET_STARTS_WITH ("qProcessInfoPID:"))                 return eServerPacketType_qProcessInfoPID;
-            if (PACKET_STARTS_WITH ("qPlatform_RunCommand:"))            return eServerPacketType_qPlatform_RunCommand;
-            if (PACKET_STARTS_WITH ("qPlatform_IO_MkDir:"))              return eServerPacketType_qPlatform_IO_MkDir;
+            if (PACKET_STARTS_WITH ("qProcessInfoPID:"))        return eServerPacketType_qProcessInfoPID;
+            if (PACKET_STARTS_WITH ("qPlatform_shell:"))   return eServerPacketType_qPlatform_shell;
+            if (PACKET_STARTS_WITH ("qPlatform_mkdir:"))        return eServerPacketType_qPlatform_mkdir;
+            if (PACKET_STARTS_WITH ("qPlatform_chmod:"))        return eServerPacketType_qPlatform_chmod;
             break;
                 
 
@@ -151,15 +153,17 @@ StringExtractorGDBRemote::GetServerPacketType () const
     case 'v':
             if (PACKET_STARTS_WITH("vFile:"))
             {
-                if (PACKET_STARTS_WITH("vFile:open:"))               return eServerPacketType_vFile_Open;
-                else if (PACKET_STARTS_WITH("vFile:close:"))         return eServerPacketType_vFile_Close;
-                else if (PACKET_STARTS_WITH("vFile:pread"))          return eServerPacketType_vFile_pRead;
-                else if (PACKET_STARTS_WITH("vFile:pwrite"))         return eServerPacketType_vFile_pWrite;
-                else if (PACKET_STARTS_WITH("vFile:size"))           return eServerPacketType_vFile_Size;
-                else if (PACKET_STARTS_WITH("vFile:exists"))         return eServerPacketType_vFile_Exists;
-                else if (PACKET_STARTS_WITH("vFile:stat"))           return eServerPacketType_vFile_Stat;
-                else if (PACKET_STARTS_WITH("vFile:mode"))           return eServerPacketType_vFile_Mode;
-                else if (PACKET_STARTS_WITH("vFile:MD5"))            return eServerPacketType_vFile_MD5;
+                if (PACKET_STARTS_WITH("vFile:open:"))          return eServerPacketType_vFile_open;
+                else if (PACKET_STARTS_WITH("vFile:close:"))    return eServerPacketType_vFile_close;
+                else if (PACKET_STARTS_WITH("vFile:pread"))     return eServerPacketType_vFile_pread;
+                else if (PACKET_STARTS_WITH("vFile:pwrite"))    return eServerPacketType_vFile_pwrite;
+                else if (PACKET_STARTS_WITH("vFile:size"))      return eServerPacketType_vFile_size;
+                else if (PACKET_STARTS_WITH("vFile:exists"))    return eServerPacketType_vFile_exists;
+                else if (PACKET_STARTS_WITH("vFile:stat"))      return eServerPacketType_vFile_stat;
+                else if (PACKET_STARTS_WITH("vFile:mode"))      return eServerPacketType_vFile_mode;
+                else if (PACKET_STARTS_WITH("vFile:MD5"))       return eServerPacketType_vFile_md5;
+                else if (PACKET_STARTS_WITH("vFile:symlink"))   return eServerPacketType_vFile_symlink;
+                else if (PACKET_STARTS_WITH("vFile:unlink"))    return eServerPacketType_vFile_unlink;
 
             }
             break;

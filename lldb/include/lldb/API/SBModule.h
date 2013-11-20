@@ -76,6 +76,42 @@ public:
     bool
     SetPlatformFileSpec (const lldb::SBFileSpec &platform_file);
 
+    //------------------------------------------------------------------
+    /// Get accessor for the remote install path for a module.
+    ///
+    /// When debugging to a remote platform by connecting to a remote
+    /// platform, the install path of the module can be set. If the
+    /// install path is set, every time the process is about to launch
+    /// the target will install this module on the remote platform prior
+    /// to launching.
+    ///
+    /// @return
+    ///     A file specification object.
+    //------------------------------------------------------------------
+    lldb::SBFileSpec
+    GetRemoteInstallFileSpec ();
+    
+    //------------------------------------------------------------------
+    /// Set accessor for the remote install path for a module.
+    ///
+    /// When debugging to a remote platform by connecting to a remote
+    /// platform, the install path of the module can be set. If the
+    /// install path is set, every time the process is about to launch
+    /// the target will install this module on the remote platform prior
+    /// to launching.
+    ///
+    /// If \a file specifies a full path to an install location, the
+    /// module will be installed to this path. If the path is relative
+    /// (no directory specified, or the path is partial like "usr/lib"
+    /// or "./usr/lib", then the install path will be resolved using
+    /// the platform's current working directory as the base path.
+    ///
+    /// @param[in]
+    ///     A file specification object.
+    //------------------------------------------------------------------
+    bool
+    SetRemoteInstallFileSpec (lldb::SBFileSpec &file);
+    
     lldb::ByteOrder
     GetByteOrder ();
     

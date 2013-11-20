@@ -237,6 +237,7 @@ Platform::Platform (bool is_host) :
     m_system_arch_set_while_connected (false),
     m_sdk_sysroot (),
     m_sdk_build (),
+    m_working_dir (),
     m_remote_url (),
     m_name (),
     m_major_os_version (UINT32_MAX),
@@ -319,6 +320,10 @@ Platform::GetStatus (Stream &strm)
         strm.Printf(" Connected: %s\n", is_connected ? "yes" : "no");
     }
 
+    if (GetWorkingDirectory())
+    {
+        strm.Printf("WorkingDir: %s\n", GetWorkingDirectory().GetCString());
+    }
     if (!IsConnected())
         return;
 
@@ -405,12 +410,323 @@ Platform::GetOSKernelDescription (std::string &s)
 }
 
 ConstString
+Platform::GetWorkingDirectory ()
+{
+    if (IsHost())
+    {
+        char cwd[PATH_MAX];
+        if (getcwd(cwd, sizeof(cwd)))
+            return ConstString(cwd);
+        else
+            return ConstString();
+    }
+    else
+    {
+        if (!m_working_dir)
+            m_working_dir = GetRemoteWorkingDirectory();
+        return m_working_dir;
+    }
+}
+
+
+struct RecurseCopyBaton
+{
+    const FileSpec& dst;
+    Platform *platform_ptr;
+    Error error;
+};
+
+
+static FileSpec::EnumerateDirectoryResult
+RecurseCopy_Callback (void *baton,
+                      FileSpec::FileType file_type,
+                      const FileSpec &src)
+{
+    RecurseCopyBaton* rc_baton = (RecurseCopyBaton*)baton;
+    switch (file_type)
+    {
+        case FileSpec::eFileTypePipe:
+        case FileSpec::eFileTypeSocket:
+            // we have no way to copy pipes and sockets - ignore them and continue
+            return FileSpec::eEnumerateDirectoryResultNext;
+            break;
+            
+        case FileSpec::eFileTypeDirectory:
+            {
+                // make the new directory and get in there
+                FileSpec dst_dir = rc_baton->dst;
+                if (!dst_dir.GetFilename())
+                    dst_dir.GetFilename() = src.GetLastPathComponent();
+                std::string dst_dir_path (dst_dir.GetPath());
+                Error error = rc_baton->platform_ptr->MakeDirectory(dst_dir_path.c_str(), lldb::eFilePermissionsDirectoryDefault);
+                if (error.Fail())
+                {
+                    rc_baton->error.SetErrorStringWithFormat("unable to setup directory %s on remote end", dst_dir_path.c_str());
+                    return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
+                }
+                
+                // now recurse
+                std::string src_dir_path (src.GetPath());
+                
+                // Make a filespec that only fills in the directory of a FileSpec so
+                // when we enumerate we can quickly fill in the filename for dst copies
+                FileSpec recurse_dst;
+                recurse_dst.GetDirectory().SetCString(dst_dir.GetPath().c_str());
+                RecurseCopyBaton rc_baton2 = { recurse_dst, rc_baton->platform_ptr, Error() };
+                FileSpec::EnumerateDirectory(src_dir_path.c_str(), true, true, true, RecurseCopy_Callback, &rc_baton2);
+                if (rc_baton2.error.Fail())
+                {
+                    rc_baton->error.SetErrorString(rc_baton2.error.AsCString());
+                    return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
+                }
+                return FileSpec::eEnumerateDirectoryResultNext;
+            }
+            break;
+            
+        case FileSpec::eFileTypeSymbolicLink:
+            {
+                // copy the file and keep going
+                FileSpec dst_file = rc_baton->dst;
+                if (!dst_file.GetFilename())
+                    dst_file.GetFilename() = src.GetFilename();
+                
+                char buf[PATH_MAX];
+                
+                rc_baton->error = Host::Readlink (src.GetPath().c_str(), buf, sizeof(buf));
+
+                if (rc_baton->error.Fail())
+                    return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
+                
+                rc_baton->error = rc_baton->platform_ptr->CreateSymlink(dst_file.GetPath().c_str(), buf);
+
+                if (rc_baton->error.Fail())
+                    return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
+
+                return FileSpec::eEnumerateDirectoryResultNext;
+            }
+            break;
+        case FileSpec::eFileTypeRegular:
+            {
+                // copy the file and keep going
+                FileSpec dst_file = rc_baton->dst;
+                if (!dst_file.GetFilename())
+                    dst_file.GetFilename() = src.GetFilename();
+                Error err = rc_baton->platform_ptr->PutFile(src, dst_file);
+                if (err.Fail())
+                {
+                    rc_baton->error.SetErrorString(err.AsCString());
+                    return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
+                }
+                return FileSpec::eEnumerateDirectoryResultNext;
+            }
+            break;
+            
+        case FileSpec::eFileTypeInvalid:
+        case FileSpec::eFileTypeOther:
+        case FileSpec::eFileTypeUnknown:
+            rc_baton->error.SetErrorStringWithFormat("invalid file detected during copy: %s", src.GetPath().c_str());
+            return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
+            break;
+    }
+}
+
+Error
+Platform::Install (const FileSpec& src, const FileSpec& dst)
+{
+    Error error;
+    
+    Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
+    if (log)
+        log->Printf ("Platform::Install (src='%s', dst='%s')", src.GetPath().c_str(), dst.GetPath().c_str());
+    FileSpec fixed_dst(dst);
+    
+    if (!fixed_dst.GetFilename())
+        fixed_dst.GetFilename() = src.GetFilename();
+
+    ConstString working_dir = GetWorkingDirectory();
+
+    if (dst)
+    {
+        if (dst.GetDirectory())
+        {
+            const char first_dst_dir_char = dst.GetDirectory().GetCString()[0];
+            if (first_dst_dir_char == '/' || first_dst_dir_char  == '\\')
+            {
+                fixed_dst.GetDirectory() = dst.GetDirectory();
+            }
+            // If the fixed destination file doesn't have a directory yet,
+            // then we must have a relative path. We will resolve this relative
+            // path against the platform's working directory
+            if (!fixed_dst.GetDirectory())
+            {
+                FileSpec relative_spec;
+                std::string path;
+                if (working_dir)
+                {
+                    relative_spec.SetFile(working_dir.GetCString(), false);
+                    relative_spec.AppendPathComponent(dst.GetPath().c_str());
+                    fixed_dst.GetDirectory() = relative_spec.GetDirectory();
+                }
+                else
+                {
+                    error.SetErrorStringWithFormat("platform working directory must be valid for relative path '%s'", dst.GetPath().c_str());
+                    return error;
+                }
+            }
+        }
+        else
+        {
+            if (working_dir)
+            {
+                fixed_dst.GetDirectory() = working_dir;
+            }
+            else
+            {
+                error.SetErrorStringWithFormat("platform working directory must be valid for relative path '%s'", dst.GetPath().c_str());
+                return error;
+            }
+        }
+    }
+    else
+    {
+        if (working_dir)
+        {
+            fixed_dst.GetDirectory() = working_dir;
+        }
+        else
+        {
+            error.SetErrorStringWithFormat("platform working directory must be valid when destination directory is empty");
+            return error;
+        }
+    }
+    
+    if (log)
+        log->Printf ("Platform::Install (src='%s', dst='%s') fixed_dst='%s'", src.GetPath().c_str(), dst.GetPath().c_str(), fixed_dst.GetPath().c_str());
+
+    if (GetSupportsRSync())
+    {
+        error = PutFile(src, dst);
+    }
+    else
+    {
+        switch (src.GetFileType())
+        {
+            case FileSpec::eFileTypeDirectory:
+                {
+                    if (GetFileExists (fixed_dst))
+                        Unlink (fixed_dst.GetPath().c_str());
+                    uint32_t permissions = src.GetPermissions();
+                    if (permissions == 0)
+                        permissions = eFilePermissionsDirectoryDefault;
+                    std::string dst_dir_path(fixed_dst.GetPath());
+                    error = MakeDirectory(dst_dir_path.c_str(), permissions);
+                    if (error.Success())
+                    {
+                        // Make a filespec that only fills in the directory of a FileSpec so
+                        // when we enumerate we can quickly fill in the filename for dst copies
+                        FileSpec recurse_dst;
+                        recurse_dst.GetDirectory().SetCString(dst_dir_path.c_str());
+                        std::string src_dir_path (src.GetPath());
+                        RecurseCopyBaton baton = { recurse_dst, this, Error() };
+                        FileSpec::EnumerateDirectory(src_dir_path.c_str(), true, true, true, RecurseCopy_Callback, &baton);
+                        return baton.error;
+                    }
+                }
+                break;
+
+            case FileSpec::eFileTypeRegular:
+                if (GetFileExists (fixed_dst))
+                    Unlink (fixed_dst.GetPath().c_str());
+                error = PutFile(src, fixed_dst);
+                break;
+
+            case FileSpec::eFileTypeSymbolicLink:
+                {
+                    if (GetFileExists (fixed_dst))
+                        Unlink (fixed_dst.GetPath().c_str());
+                    char buf[PATH_MAX];
+                    error = Host::Readlink(src.GetPath().c_str(), buf, sizeof(buf));
+                    if (error.Success())
+                        error = CreateSymlink(dst.GetPath().c_str(), buf);
+                }
+                break;
+            case FileSpec::eFileTypePipe:
+                error.SetErrorString("platform install doesn't handle pipes");
+                break;
+            case FileSpec::eFileTypeSocket:
+                error.SetErrorString("platform install doesn't handle sockets");
+                break;
+            case FileSpec::eFileTypeInvalid:
+            case FileSpec::eFileTypeUnknown:
+            case FileSpec::eFileTypeOther:
+                error.SetErrorString("platform install doesn't handle non file or directory items");
+                break;
+        }
+    }
+    return error;
+}
+
+bool
+Platform::SetWorkingDirectory (const ConstString &path)
+{
+    if (IsHost())
+    {
+        if (path)
+        {
+            if (chdir(path.GetCString()) == 0)
+                return true;
+        }
+        return false;
+    }
+    else
+    {
+        return SetRemoteWorkingDirectory(path);
+    }
+}
+
+Error
+Platform::MakeDirectory (const char *path, uint32_t permissions)
+{
+    if (IsHost())
+        return Host::MakeDirectory (path, permissions);
+    else
+    {
+        Error error;
+        error.SetErrorStringWithFormat("remote platform %s doesn't support %s", GetPluginName().GetCString(), __PRETTY_FUNCTION__);
+        return error;
+    }
+}
+
+Error
+Platform::GetFilePermissions (const char *path, uint32_t &file_permissions)
+{
+    if (IsHost())
+        return Host::GetFilePermissions(path, file_permissions);
+    else
+    {
+        Error error;
+        error.SetErrorStringWithFormat("remote platform %s doesn't support %s", GetPluginName().GetCString(), __PRETTY_FUNCTION__);
+        return error;
+    }
+}
+
+Error
+Platform::SetFilePermissions (const char *path, uint32_t file_permissions)
+{
+    if (IsHost())
+        return Host::SetFilePermissions(path, file_permissions);
+    else
+    {
+        Error error;
+        error.SetErrorStringWithFormat("remote platform %s doesn't support %s", GetPluginName().GetCString(), __PRETTY_FUNCTION__);
+        return error;
+    }
+}
+
+ConstString
 Platform::GetName ()
 {
-    const char *name = GetHostname();
-    if (name == NULL || name[0] == '\0')
-        return GetPluginName();
-    return ConstString (name);
+    return GetPluginName();
 }
 
 const char *
@@ -779,14 +1095,6 @@ Platform::IsCompatibleArchitecture (const ArchSpec &arch, bool exact_arch_match,
     return false;
 }
 
-uint32_t
-Platform::MakeDirectory (const FileSpec &spec,
-                         mode_t mode)
-{
-    std::string path(spec.GetPath());
-    return this->MakeDirectory(path,mode);
-}
-
 Error
 Platform::PutFile (const FileSpec& source,
                    const FileSpec& destination,
@@ -805,11 +1113,28 @@ Platform::GetFile (const FileSpec& source,
     return error;
 }
 
+Error
+Platform::CreateSymlink (const char *src, // The name of the link is in src
+                         const char *dst)// The symlink points to dst
+{
+    Error error("unimplemented");
+    return error;
+}
+
 bool
 Platform::GetFileExists (const lldb_private::FileSpec& file_spec)
 {
     return false;
 }
+
+Error
+Platform::Unlink (const char *path)
+{
+    Error error("unimplemented");
+    return error;
+}
+
+
 
 lldb_private::Error
 Platform::RunShellCommand (const char *command,           // Shouldn't be NULL

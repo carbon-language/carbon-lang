@@ -58,6 +58,12 @@ public:
     const char *
     GetDirectory() const;
 
+    void
+    SetFilename(const char *filename);
+    
+    void
+    SetDirectory(const char *directory);
+
     uint32_t
     GetPath (char *dst_path, size_t dst_len) const;
 

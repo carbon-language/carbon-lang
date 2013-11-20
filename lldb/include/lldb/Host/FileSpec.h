@@ -420,6 +420,21 @@ public:
     FileType
     GetFileType () const;
 
+    //------------------------------------------------------------------
+    /// Return the current permissions of the path.
+    ///
+    /// Returns a bitmask for the current permissions of the file
+    /// ( zero or more of the permission bits defined in
+    /// File::Permissions).
+    ///
+    /// @return
+    ///     Zero if the file doesn't exist or we are unable to get
+    ///     information for the file, otherwise one or more permission
+    ///     bits from the File::Permissions enumeration.
+    //------------------------------------------------------------------
+    uint32_t
+    GetPermissions () const;
+    
     bool
     IsDirectory () const
     {
@@ -636,7 +651,7 @@ public:
     void
     RemoveLastPathComponent ();
     
-    const char*
+    ConstString
     GetLastPathComponent () const;
     
     //------------------------------------------------------------------

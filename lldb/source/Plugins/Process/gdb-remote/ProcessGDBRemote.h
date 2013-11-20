@@ -222,6 +222,13 @@ public:
     {
         return m_gdb_comm;
     }
+    
+    //----------------------------------------------------------------------
+    // Override SetExitStatus so we can disconnect from the remote GDB server
+    //----------------------------------------------------------------------
+    virtual bool
+    SetExitStatus (int exit_status, const char *cstr);
+
 
 protected:
     friend class ThreadGDBRemote;

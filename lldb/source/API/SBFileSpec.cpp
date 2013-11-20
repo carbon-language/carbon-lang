@@ -121,6 +121,24 @@ SBFileSpec::GetDirectory() const
     return s;
 }
 
+void
+SBFileSpec::SetFilename(const char *filename)
+{
+    if (filename && filename[0])
+        m_opaque_ap->GetFilename().SetCString(filename);
+    else
+        m_opaque_ap->GetFilename().Clear();
+}
+
+void
+SBFileSpec::SetDirectory(const char *directory)
+{
+    if (directory && directory[0])
+        m_opaque_ap->GetDirectory().SetCString(directory);
+    else
+        m_opaque_ap->GetDirectory().Clear();
+}
+
 uint32_t
 SBFileSpec::GetPath (char *dst_path, size_t dst_len) const
 {

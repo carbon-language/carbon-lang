@@ -22,6 +22,7 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Interpreter/OptionGroupFile.h"
 #include "lldb/Interpreter/OptionGroupPlatform.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Platform.h"
@@ -119,31 +120,31 @@ public:
                     m_permissions = perms;
             }
             case 'r':
-                m_permissions |= File::ePermissionsUserRead;
+                m_permissions |= lldb::eFilePermissionsUserRead;
                 break;
             case 'w':
-                m_permissions |= File::ePermissionsUserWrite;
+                m_permissions |= lldb::eFilePermissionsUserWrite;
                 break;
             case 'x':
-                m_permissions |= File::ePermissionsUserExecute;
+                m_permissions |= lldb::eFilePermissionsUserExecute;
                 break;
             case 'R':
-                m_permissions |= File::ePermissionsGroupRead;
+                m_permissions |= lldb::eFilePermissionsGroupRead;
                 break;
             case 'W':
-                m_permissions |= File::ePermissionsGroupWrite;
+                m_permissions |= lldb::eFilePermissionsGroupWrite;
                 break;
             case 'X':
-                m_permissions |= File::ePermissionsGroupExecute;
+                m_permissions |= lldb::eFilePermissionsGroupExecute;
                 break;
             case 'd':
-                m_permissions |= File::ePermissionsWorldRead;
+                m_permissions |= lldb::eFilePermissionsWorldRead;
                 break;
             case 't':
-                m_permissions |= File::ePermissionsWorldWrite;
+                m_permissions |= lldb::eFilePermissionsWorldWrite;
                 break;
             case 'e':
-                m_permissions |= File::ePermissionsWorldExecute;
+                m_permissions |= lldb::eFilePermissionsWorldExecute;
                 break;
 
             default:
@@ -524,6 +525,65 @@ protected:
 };
 
 //----------------------------------------------------------------------
+// "platform settings"
+//----------------------------------------------------------------------
+class CommandObjectPlatformSettings : public CommandObjectParsed
+{
+public:
+    CommandObjectPlatformSettings (CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter,
+                             "platform settings",
+                             "Set settings for the current target's platform, or for a platform by name.",
+                             "platform settings",
+                             0),
+        m_options (interpreter),
+        m_option_working_dir (LLDB_OPT_SET_1, false, "working-dir", 'w', 0, eArgTypePath, "The working directory for the platform.")
+    {
+        m_options.Append (&m_option_working_dir, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+    }
+    
+    virtual
+    ~CommandObjectPlatformSettings ()
+    {
+    }
+    
+protected:
+    virtual bool
+    DoExecute (Args& args, CommandReturnObject &result)
+    {
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (platform_sp)
+        {
+            if (m_option_working_dir.GetOptionValue().OptionWasSet())
+                platform_sp->SetWorkingDirectory (ConstString(m_option_working_dir.GetOptionValue().GetCurrentValue().GetPath().c_str()));
+        }
+        else
+        {
+            result.AppendError ("no platform is currently selected");
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return result.Succeeded();
+    }
+    
+    virtual Options *
+    GetOptions ()
+    {
+        if (m_options.DidFinalize() == false)
+        {
+            m_options.Append(new OptionPermissions());
+            m_options.Finalize();
+        }
+        return &m_options;
+    }
+protected:
+    
+    OptionGroupOptions m_options;
+    OptionGroupFile m_option_working_dir;
+
+};
+
+
+//----------------------------------------------------------------------
 // "platform mkdir"
 //----------------------------------------------------------------------
 class CommandObjectPlatformMkDir : public CommandObjectParsed
@@ -552,15 +612,22 @@ public:
         {
             std::string cmd_line;
             args.GetCommandString(cmd_line);
-            mode_t perms;
+            uint32_t mode;
             const OptionPermissions* options_permissions = (OptionPermissions*)m_options.GetGroupWithOption('r');
             if (options_permissions)
-                perms = options_permissions->m_permissions;
+                mode = options_permissions->m_permissions;
             else
-                perms = 0000700 | 0000070 | 0000007;
-            uint32_t retcode = platform_sp->MakeDirectory(cmd_line,perms);
-            result.AppendMessageWithFormat("Status = %d\n",retcode);
-            result.SetStatus (eReturnStatusSuccessFinishResult);
+                mode = lldb::eFilePermissionsUserRWX | lldb::eFilePermissionsGroupRWX | lldb::eFilePermissionsWorldRX;
+            Error error = platform_sp->MakeDirectory(cmd_line.c_str(), mode);
+            if (error.Success())
+            {
+                result.SetStatus (eReturnStatusSuccessFinishResult);
+            }
+            else
+            {
+                result.AppendError(error.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+            }
         }
         else
         {
@@ -619,7 +686,7 @@ public:
             if (options_permissions)
                 perms = options_permissions->m_permissions;
             else
-                perms = 0000700 | 0000070 | 0000007;
+                perms = lldb::eFilePermissionsUserRW | lldb::eFilePermissionsGroupRW | lldb::eFilePermissionsWorldRead;
             lldb::user_id_t fd = platform_sp->OpenFile(FileSpec(cmd_line.c_str(),false),
                                                        File::eOpenOptionRead | File::eOpenOptionWrite |
                                                        File::eOpenOptionAppend | File::eOpenOptionCanCreate,
@@ -2129,82 +2196,6 @@ CommandObjectPlatformShell::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
-struct RecurseCopyBaton
-{
-    const std::string& destination;
-    const PlatformSP& platform_sp;
-    Error error;
-};
-
-
-static FileSpec::EnumerateDirectoryResult
-RecurseCopy_Callback (void *baton,
-                      FileSpec::FileType file_type,
-                      const FileSpec &spec)
-{
-    RecurseCopyBaton* rc_baton = (RecurseCopyBaton*)baton;
-    switch (file_type)
-    {
-        case FileSpec::eFileTypePipe:
-        case FileSpec::eFileTypeSocket:
-            // we have no way to copy pipes and sockets - ignore them and continue
-            return FileSpec::eEnumerateDirectoryResultNext;
-            break;
-            
-        case FileSpec::eFileTypeSymbolicLink:
-            // what to do for symlinks?
-            return FileSpec::eEnumerateDirectoryResultNext;
-            break;
-            
-        case FileSpec::eFileTypeDirectory:
-        {
-            // make the new directory and get in there
-            FileSpec new_directory(rc_baton->destination.c_str(),false);
-            new_directory.AppendPathComponent(spec.GetLastPathComponent());
-            uint32_t errcode = rc_baton->platform_sp->MakeDirectory(new_directory, 0777);
-            std::string new_directory_path (new_directory.GetPath());
-            if (errcode != 0)
-            {
-                rc_baton->error.SetErrorStringWithFormat("unable to setup directory %s on remote end",new_directory_path.c_str());
-                return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
-            }
-            
-            // now recurse
-            std::string local_path (spec.GetPath());
-            RecurseCopyBaton rc_baton2 = { new_directory_path, rc_baton->platform_sp, Error() };
-            FileSpec::EnumerateDirectory(local_path.c_str(), true, true, true, RecurseCopy_Callback, &rc_baton2);
-            if (rc_baton2.error.Fail())
-            {
-                rc_baton->error.SetErrorString(rc_baton2.error.AsCString());
-                return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
-            }
-            return FileSpec::eEnumerateDirectoryResultNext;
-        }
-            break;
-            
-        case FileSpec::eFileTypeRegular:
-        {
-            // copy the file and keep going
-            std::string dest(rc_baton->destination);
-            dest.append(spec.GetFilename().GetCString());
-            Error err = rc_baton->platform_sp->PutFile(spec, FileSpec(dest.c_str(), false));
-            if (err.Fail())
-            {
-                rc_baton->error.SetErrorString(err.AsCString());
-                return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
-            }
-            return FileSpec::eEnumerateDirectoryResultNext;
-        }
-            break;
-            
-        case FileSpec::eFileTypeInvalid:
-        case FileSpec::eFileTypeOther:
-        case FileSpec::eFileTypeUnknown:
-            rc_baton->error.SetErrorStringWithFormat("invalid file detected during copy: %s/%s", spec.GetDirectory().GetCString(), spec.GetFilename().GetCString());
-            return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
-            break;
-    }
-}
 
 //----------------------------------------------------------------------
 // "platform install" - install a target to a remote end
@@ -2236,10 +2227,9 @@ public:
             return false;
         }
         // TODO: move the bulk of this code over to the platform itself
-        std::string local_thing(args.GetArgumentAtIndex(0));
-        std::string remote_sandbox(args.GetArgumentAtIndex(1));
-        FileSpec source(local_thing.c_str(), true);
-        if (source.Exists() == false)
+        FileSpec src(args.GetArgumentAtIndex(0), true);
+        FileSpec dst(args.GetArgumentAtIndex(1), false);
+        if (src.Exists() == false)
         {
             result.AppendError("source location does not exist or is not accessible");
             result.SetStatus(eReturnStatusFailed);
@@ -2252,75 +2242,21 @@ public:
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
-        FileSpec::FileType source_type(source.GetFileType());
-        if (source_type == FileSpec::eFileTypeDirectory)
+        
+        Error error = platform_sp->Install(src, dst);
+        if (error.Success())
         {
-            if (platform_sp->GetSupportsRSync())
-            {
-                FileSpec remote_folder(remote_sandbox.c_str(), false);
-                Error rsync_err = platform_sp->PutFile(source, remote_folder);
-                if (rsync_err.Success())
-                {
-                    result.SetStatus(eReturnStatusSuccessFinishResult);
-                    return result.Succeeded();
-                }
-            }
-            FileSpec remote_folder(remote_sandbox.c_str(), false);
-            remote_folder.AppendPathComponent(source.GetLastPathComponent());
-            // TODO: default permissions are bad
-            uint32_t errcode = platform_sp->MakeDirectory(remote_folder, 0777);
-            if (errcode != 0)
-            {
-                result.AppendError("unable to setup target directory on remote end");
-                result.SetStatus(eReturnStatusSuccessFinishNoResult);
-                return result.Succeeded();
-            }
-            // now recurse
-            std::string remote_folder_path (remote_folder.GetPath());
-            Error err = RecurseCopy(source,remote_folder_path,platform_sp);
-            if (err.Fail())
-            {
-                result.AppendError(err.AsCString());
-                result.SetStatus(eReturnStatusFailed);
-            }
-            else
-                result.SetStatus(eReturnStatusSuccessFinishResult);
-            return result.Succeeded();
-        }
-        else if (source_type == FileSpec::eFileTypeRegular)
-        {
-            // just a plain file - push it to remote and be done
-            remote_sandbox.append(source.GetFilename().GetCString());
-            FileSpec destination(remote_sandbox.c_str(),false);
-            Error err = platform_sp->PutFile(source, destination);
-            if (err.Success())
-                result.SetStatus(eReturnStatusSuccessFinishResult);
-            else
-            {
-                result.AppendError(err.AsCString());
-                result.SetStatus(eReturnStatusFailed);
-            }
-            return result.Succeeded();
+            result.SetStatus(eReturnStatusSuccessFinishNoResult);
         }
         else
         {
-            result.AppendError("source is not a known type of file");
+            result.AppendErrorWithFormat("install failed: %s", error.AsCString());
             result.SetStatus(eReturnStatusFailed);
-            return result.Succeeded();
         }
+        return result.Succeeded();
     }
 private:
-    
-    Error
-    RecurseCopy (const FileSpec& source,
-                 const std::string& destination,
-                 const PlatformSP& platform_sp)
-    {
-        std::string source_path (source.GetPath());
-        RecurseCopyBaton baton = { destination, platform_sp, Error() };
-        FileSpec::EnumerateDirectory(source_path.c_str(), true, true, true, RecurseCopy_Callback, &baton);
-        return baton.error;
-    }
+
 };
 
 //----------------------------------------------------------------------
@@ -2332,21 +2268,22 @@ CommandObjectPlatform::CommandObjectPlatform(CommandInterpreter &interpreter) :
                             "A set of commands to manage and create platforms.",
                             "platform [connect|disconnect|info|list|status|select] ...")
 {
-    LoadSubCommand ("select", CommandObjectSP (new CommandObjectPlatformSelect  (interpreter)));
-    LoadSubCommand ("list"  , CommandObjectSP (new CommandObjectPlatformList    (interpreter)));
-    LoadSubCommand ("status", CommandObjectSP (new CommandObjectPlatformStatus  (interpreter)));
-    LoadSubCommand ("connect", CommandObjectSP (new CommandObjectPlatformConnect  (interpreter)));
-    LoadSubCommand ("disconnect", CommandObjectSP (new CommandObjectPlatformDisconnect  (interpreter)));
+    LoadSubCommand ("select", CommandObjectSP (new CommandObjectPlatformSelect (interpreter)));
+    LoadSubCommand ("list"  , CommandObjectSP (new CommandObjectPlatformList (interpreter)));
+    LoadSubCommand ("status", CommandObjectSP (new CommandObjectPlatformStatus (interpreter)));
+    LoadSubCommand ("connect", CommandObjectSP (new CommandObjectPlatformConnect (interpreter)));
+    LoadSubCommand ("disconnect", CommandObjectSP (new CommandObjectPlatformDisconnect (interpreter)));
+    LoadSubCommand ("settings", CommandObjectSP (new CommandObjectPlatformSettings (interpreter)));
 #ifdef LLDB_CONFIGURATION_DEBUG
-    LoadSubCommand ("mkdir", CommandObjectSP (new CommandObjectPlatformMkDir  (interpreter)));
-    LoadSubCommand ("file", CommandObjectSP (new CommandObjectPlatformFile  (interpreter)));
-    LoadSubCommand ("get-file", CommandObjectSP (new CommandObjectPlatformGetFile  (interpreter)));
-    LoadSubCommand ("get-size", CommandObjectSP (new CommandObjectPlatformGetSize  (interpreter)));
-    LoadSubCommand ("put-file", CommandObjectSP (new CommandObjectPlatformPutFile  (interpreter)));
+    LoadSubCommand ("mkdir", CommandObjectSP (new CommandObjectPlatformMkDir (interpreter)));
+    LoadSubCommand ("file", CommandObjectSP (new CommandObjectPlatformFile (interpreter)));
+    LoadSubCommand ("get-file", CommandObjectSP (new CommandObjectPlatformGetFile (interpreter)));
+    LoadSubCommand ("get-size", CommandObjectSP (new CommandObjectPlatformGetSize (interpreter)));
+    LoadSubCommand ("put-file", CommandObjectSP (new CommandObjectPlatformPutFile (interpreter)));
 #endif
-    LoadSubCommand ("process", CommandObjectSP (new CommandObjectPlatformProcess  (interpreter)));
-    LoadSubCommand ("shell", CommandObjectSP (new CommandObjectPlatformShell  (interpreter)));
-    LoadSubCommand ("target-install", CommandObjectSP (new CommandObjectPlatformInstall  (interpreter)));
+    LoadSubCommand ("process", CommandObjectSP (new CommandObjectPlatformProcess (interpreter)));
+    LoadSubCommand ("shell", CommandObjectSP (new CommandObjectPlatformShell (interpreter)));
+    LoadSubCommand ("target-install", CommandObjectSP (new CommandObjectPlatformInstall (interpreter)));
 }
 
 

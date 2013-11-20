@@ -34,6 +34,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/File.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataBufferMemoryMap.h"
 #include "lldb/Core/RegularExpression.h"
@@ -646,6 +647,15 @@ FileSpec::GetFileType () const
     return eFileTypeInvalid;
 }
 
+uint32_t
+FileSpec::GetPermissions () const
+{
+    uint32_t file_permissions = 0;
+    if (*this)
+        Host::GetFilePermissions(GetPath().c_str(), file_permissions);
+    return file_permissions;
+}
+
 TimeValue
 FileSpec::GetModificationTime () const
 {
@@ -1161,26 +1171,26 @@ FileSpec::CopyByRemovingLastPathComponent ()  const
         return FileSpec(m_directory.GetCString(),resolve);
 }
 
-const char*
+ConstString
 FileSpec::GetLastPathComponent () const
 {
-    if (m_filename.IsEmpty() && m_directory.IsEmpty())
-        return NULL;
-    if (m_filename.IsEmpty())
+    if (m_filename)
+        return m_filename;
+    if (m_directory)
     {
         const char* dir_cstr = m_directory.GetCString();
         const char* last_slash_ptr = ::strrchr(dir_cstr, '/');
         if (last_slash_ptr == NULL)
-            return m_directory.GetCString();
+            return m_directory;
         if (last_slash_ptr == dir_cstr)
         {
             if (last_slash_ptr[1] == 0)
-                return last_slash_ptr;
+                return ConstString(last_slash_ptr);
             else
-                return last_slash_ptr+1;
+                return ConstString(last_slash_ptr+1);
         }
         if (last_slash_ptr[1] != 0)
-            return last_slash_ptr+1;
+            return ConstString(last_slash_ptr+1);
         const char* penultimate_slash_ptr = last_slash_ptr;
         while (*penultimate_slash_ptr)
         {
@@ -1190,10 +1200,10 @@ FileSpec::GetLastPathComponent () const
             if (*penultimate_slash_ptr == '/')
                 break;
         }
-        ConstString new_path(penultimate_slash_ptr+1,last_slash_ptr-penultimate_slash_ptr);
-        return new_path.AsCString();
+        ConstString result(penultimate_slash_ptr+1,last_slash_ptr-penultimate_slash_ptr);
+        return result;
     }
-    return m_filename.GetCString();
+    return ConstString();
 }
 
 void

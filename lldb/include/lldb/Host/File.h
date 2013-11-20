@@ -40,46 +40,13 @@ public:
         eOpenOptionTruncate             = (1u << 3),    // Truncate file when opening
         eOpenOptionNonBlocking          = (1u << 4),    // File reads
         eOpenOptionCanCreate            = (1u << 5),    // Create file if doesn't already exist
-        eOpenOptionCanCreateNewOnly     = (1u << 6)     // Can create file only if it doesn't already exist
+        eOpenOptionCanCreateNewOnly     = (1u << 6),    // Can create file only if it doesn't already exist
+        eOpenoptionDontFollowSymlinks   = (1u << 7)
     };
     
     static mode_t
     ConvertOpenOptionsForPOSIXOpen (uint32_t open_options);
     
-    enum Permissions
-    {
-        ePermissionsUserRead        = (1u << 8),
-        ePermissionsUserWrite       = (1u << 7),
-        ePermissionsUserExecute     = (1u << 6),
-        ePermissionsGroupRead       = (1u << 5),
-        ePermissionsGroupWrite      = (1u << 4),
-        ePermissionsGroupExecute    = (1u << 3),
-        ePermissionsWorldRead       = (1u << 2),
-        ePermissionsWorldWrite      = (1u << 1),
-        ePermissionsWorldExecute    = (1u << 0),
-
-        ePermissionsUserRW      = (ePermissionsUserRead    | ePermissionsUserWrite    | 0                        ),
-        ePermissionsUserRX      = (ePermissionsUserRead    | 0                        | ePermissionsUserExecute  ),
-        ePermissionsUserRWX     = (ePermissionsUserRead    | ePermissionsUserWrite    | ePermissionsUserExecute  ),
-
-        ePermissionsGroupRW     = (ePermissionsGroupRead   | ePermissionsGroupWrite   | 0                        ),
-        ePermissionsGroupRX     = (ePermissionsGroupRead   | 0                        | ePermissionsGroupExecute ),
-        ePermissionsGroupRWX    = (ePermissionsGroupRead   | ePermissionsGroupWrite   | ePermissionsGroupExecute ),
-
-        ePermissionsWorldRW     = (ePermissionsWorldRead   | ePermissionsWorldWrite   | 0                        ),
-        ePermissionsWorldRX     = (ePermissionsWorldRead   | 0                        | ePermissionsWorldExecute ),
-        ePermissionsWorldRWX    = (ePermissionsWorldRead   | ePermissionsWorldWrite   | ePermissionsWorldExecute ),
-
-        ePermissionsEveryoneR   = (ePermissionsUserRead    | ePermissionsGroupRead    | ePermissionsWorldRead    ),
-        ePermissionsEveryoneW   = (ePermissionsUserWrite   | ePermissionsGroupWrite   | ePermissionsWorldWrite   ),
-        ePermissionsEveryoneX   = (ePermissionsUserExecute | ePermissionsGroupExecute | ePermissionsWorldExecute ),
-
-        ePermissionsEveryoneRW  = (ePermissionsEveryoneR   | ePermissionsEveryoneW    | 0                        ),
-        ePermissionsEveryoneRX  = (ePermissionsEveryoneR   | 0                        | ePermissionsEveryoneX    ),
-        ePermissionsEveryoneRWX = (ePermissionsEveryoneR   | ePermissionsEveryoneW    | ePermissionsEveryoneX    ),
-        ePermissionsDefault     = (ePermissionsUserRW      | ePermissionsGroupRead)
-    };
-
     File() : 
         m_descriptor (kInvalidDescriptor),
         m_stream (kInvalidStream),
@@ -120,7 +87,7 @@ public:
     //------------------------------------------------------------------
     File (const char *path,
           uint32_t options,
-          uint32_t permissions = ePermissionsDefault);
+          uint32_t permissions = lldb::eFilePermissionsFileDefault);
 
     //------------------------------------------------------------------
     /// Constructor with FileSpec.
@@ -142,7 +109,7 @@ public:
     //------------------------------------------------------------------
     File (const FileSpec& filespec,
           uint32_t options,
-          uint32_t permissions = ePermissionsDefault);
+          uint32_t permissions = lldb::eFilePermissionsFileDefault);
     
     File (int fd, bool tranfer_ownership) : 
         m_descriptor (fd),
@@ -236,7 +203,7 @@ public:
     Error
     Open (const char *path,
           uint32_t options,
-          uint32_t permissions = ePermissionsDefault);
+          uint32_t permissions = lldb::eFilePermissionsFileDefault);
 
     Error
     Close ();

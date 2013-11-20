@@ -40,7 +40,8 @@ namespace lldb_private {
     ///     @li listing and getting info for existing processes
     ///     @li attaching and possibly debugging the platform's kernel
     //----------------------------------------------------------------------
-    class Platform : public PluginInterface
+    class Platform :
+        public PluginInterface
     {
     public:
 
@@ -214,8 +215,7 @@ namespace lldb_private {
         bool
         GetOSKernelDescription (std::string &s);
 
-        // Returns the the hostname if we are connected, else the short plugin
-        // name.
+        // Returns the the name of the platform
         ConstString
         GetName ();
 
@@ -268,6 +268,19 @@ namespace lldb_private {
         GetRemoteSystemArchitecture ()
         {
             return ArchSpec(); // Return an invalid architecture
+        }
+        
+        virtual ConstString
+        GetRemoteWorkingDirectory()
+        {
+            return m_working_dir;
+        }
+        
+        virtual bool
+        SetRemoteWorkingDirectory(const ConstString &path)
+        {
+            m_working_dir = path;
+            return true;
         }
 
         virtual const char *
@@ -384,10 +397,13 @@ namespace lldb_private {
         }
 
         //------------------------------------------------------------------
-        /// Subclasses should NOT need to implement this function as it uses
-        /// the Platform::LaunchProcess() followed by Platform::Attach ()
+        /// Subclasses do not need to implement this function as it uses
+        /// the Platform::LaunchProcess() followed by Platform::Attach ().
+        /// Remote platforms will want to subclass this function in order
+        /// to be able to intercept STDIO and possibly launch a separate
+        /// process that will debug the debuggee.
         //------------------------------------------------------------------
-        lldb::ProcessSP
+        virtual lldb::ProcessSP
         DebugProcess (ProcessLaunchInfo &launch_info,
                       Debugger &debugger,
                       Target *target,       // Can be NULL, if NULL create a new target, else use existing one
@@ -542,6 +558,12 @@ namespace lldb_private {
         {
             m_sdk_build = sdk_build;
         }    
+
+        ConstString
+        GetWorkingDirectory ();
+        
+        bool
+        SetWorkingDirectory (const ConstString &path);
         
         // There may be modules that we don't want to find by default for operations like "setting breakpoint by name".
         // The platform will return "true" from this call if the passed in module happens to be one of these.
@@ -552,23 +574,19 @@ namespace lldb_private {
             return false;
         }
         
-        virtual uint32_t
-        MakeDirectory (const std::string &path,
-                       mode_t mode)
-        {
-            return UINT32_MAX;
-        }
+        virtual Error
+        MakeDirectory (const char *path, uint32_t permissions);
         
-        // this need not be virtual: the core behavior is in
-        // MakeDirectory(std::string,mode_t)
-        uint32_t
-        MakeDirectory (const FileSpec &spec,
-                       mode_t mode);
-        
+        virtual Error
+        GetFilePermissions (const char *path, uint32_t &file_permissions);
+
+        virtual Error
+        SetFilePermissions (const char *path, uint32_t file_permissions);
+
         virtual lldb::user_id_t
         OpenFile (const FileSpec& file_spec,
                   uint32_t flags,
-                  mode_t mode,
+                  uint32_t mode,
                   Error &error)
         {
             return UINT64_MAX;
@@ -610,28 +628,54 @@ namespace lldb_private {
         }
         
         virtual Error
+        GetFile (const FileSpec& source,
+                 const FileSpec& destination);
+        
+        virtual Error
         PutFile (const FileSpec& source,
                  const FileSpec& destination,
                  uint32_t uid = UINT32_MAX,
                  uint32_t gid = UINT32_MAX);
-                
+
+        virtual Error
+        CreateSymlink (const char *src, // The name of the link is in src
+                       const char *dst);// The symlink points to dst
+
+        //----------------------------------------------------------------------
+        /// Install a file or directory to the remote system.
+        ///
+        /// Install is similar to Platform::PutFile(), but it differs in that if
+        /// an application/framework/shared library is installed on a remote
+        /// platform and the remote platform requires something to be done to
+        /// register the application/framework/shared library, then this extra
+        /// registration can be done.
+        ///
+        /// @param[in] src
+        ///     The source file/directory to install on the remote system.
+        ///
+        /// @param[in] dst
+        ///     The destination file/directory where \a src will be installed.
+        ///     If \a dst has no filename specified, then its filename will
+        ///     be set from \a src. It \a dst has no directory specified, it
+        ///     will use the platform working directory. If \a dst has a
+        ///     directory specified, but the directory path is relative, the
+        ///     platform working directory will be prepended to the relative
+        ///     directory.
+        ///
+        /// @return
+        ///     An error object that describes anything that went wrong.
+        //----------------------------------------------------------------------
+        virtual Error
+        Install (const FileSpec& src, const FileSpec& dst);
+
         virtual size_t
         GetEnvironment (StringList &environment);
-        
-        virtual Error
-        GetFile (const FileSpec& source,
-                 const FileSpec& destination);
         
         virtual bool
         GetFileExists (const lldb_private::FileSpec& file_spec);
         
-        virtual uint32_t
-        GetFilePermissions (const lldb_private::FileSpec &file_spec,
-                            Error &error)
-        {
-            error.SetErrorStringWithFormat ("Platform::GetFilePermissions() is not supported in the %s platform", GetName().GetCString());
-            return 0;
-        }
+        virtual Error
+        Unlink (const char *path);
 
         virtual bool
         GetSupportsRSync ()
@@ -806,6 +850,7 @@ namespace lldb_private {
         bool m_system_arch_set_while_connected;
         ConstString m_sdk_sysroot; // the root location of where the SDK files are all located
         ConstString m_sdk_build;
+        ConstString m_working_dir; // The working directory which is used when installing modules that have no install path set
         std::string m_remote_url;
         std::string m_name;
         uint32_t m_major_os_version;

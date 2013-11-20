@@ -38,7 +38,6 @@ public:
     //------------------------------------------------------------------
     GDBRemoteCommunicationClient(bool is_platform);
 
-    virtual
     ~GDBRemoteCommunicationClient();
 
     //------------------------------------------------------------------
@@ -65,7 +64,7 @@ public:
                                           size_t packet_length,
                                           StringExtractorGDBRemote &response);
 
-    virtual bool
+    bool
     GetThreadSuffixSupported ();
 
     void
@@ -109,7 +108,7 @@ public:
     ///     response was received.
     //------------------------------------------------------------------
     int
-    SendArgumentsPacket (char const *argv[]);
+    SendArgumentsPacket (const lldb_private::ProcessLaunchInfo &launch_info);
 
     //------------------------------------------------------------------
     /// Sends a "QEnvironment:NAME=VALUE" packet that will build up the
@@ -185,7 +184,10 @@ public:
 
     //------------------------------------------------------------------
     /// Sets the working directory to \a path for a process that will 
-    /// be launched with the 'A' packet.
+    /// be launched with the 'A' packet for non platform based
+    /// connections. If this packet is sent to a GDB server that
+    /// implements the platform, it will change the current working
+    /// directory for the platform process.
     ///
     /// @param[in] path
     ///     The path to a directory to use when launching our processs
@@ -195,6 +197,19 @@ public:
     //------------------------------------------------------------------
     int
     SetWorkingDir (char const *path);
+
+    //------------------------------------------------------------------
+    /// Gets the current working directory of a remote platform GDB
+    /// server.
+    ///
+    /// @param[out] cwd
+    ///     The current working directory on the remote platform.
+    ///
+    /// @return
+    ///     Boolean for success
+    //------------------------------------------------------------------
+    bool
+    GetWorkingDir (std::string &cwd);
 
     lldb::addr_t
     AllocateMemory (size_t size, uint32_t permissions);
@@ -356,45 +371,54 @@ public:
         return m_interrupt_sent;
     }
     
-    virtual lldb::user_id_t
+    lldb::user_id_t
     OpenFile (const lldb_private::FileSpec& file_spec,
               uint32_t flags,
               mode_t mode,
               lldb_private::Error &error);
     
-    virtual bool
+    bool
     CloseFile (lldb::user_id_t fd,
                lldb_private::Error &error);
     
-    virtual lldb::user_id_t
+    lldb::user_id_t
     GetFileSize (const lldb_private::FileSpec& file_spec);
     
-    virtual uint32_t
-    GetFilePermissions(const lldb_private::FileSpec& file_spec,
-                       lldb_private::Error &error);
+    lldb_private::Error
+    GetFilePermissions(const char *path, uint32_t &file_permissions);
 
-    virtual uint64_t
+    lldb_private::Error
+    SetFilePermissions(const char *path, uint32_t file_permissions);
+
+    uint64_t
     ReadFile (lldb::user_id_t fd,
               uint64_t offset,
               void *dst,
               uint64_t dst_len,
               lldb_private::Error &error);
     
-    virtual uint64_t
+    uint64_t
     WriteFile (lldb::user_id_t fd,
                uint64_t offset,
                const void* src,
                uint64_t src_len,
                lldb_private::Error &error);
     
-    virtual uint32_t
-    MakeDirectory (const std::string &path,
-                   mode_t mode);
+    lldb_private::Error
+    CreateSymlink (const char *src,
+                   const char *dst);
     
-    virtual bool
+    lldb_private::Error
+    Unlink (const char *path);
+
+    lldb_private::Error
+    MakeDirectory (const char *path,
+                   uint32_t mode);
+    
+    bool
     GetFileExists (const lldb_private::FileSpec& file_spec);
     
-    virtual lldb_private::Error
+    lldb_private::Error
     RunShellCommand (const char *command,           // Shouldn't be NULL
                      const char *working_dir,       // Pass NULL to use the current working directory
                      int *status_ptr,               // Pass NULL if you don't want the process exit status
@@ -402,7 +426,7 @@ public:
                      std::string *command_output,   // Pass NULL if you don't want the command output
                      uint32_t timeout_sec);         // Timeout in seconds to wait for shell program to finish
     
-    virtual bool
+    bool
     CalculateMD5 (const lldb_private::FileSpec& file_spec,
                   uint64_t &high,
                   uint64_t &low);

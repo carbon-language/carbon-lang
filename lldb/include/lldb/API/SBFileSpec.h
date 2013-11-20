@@ -45,6 +45,12 @@ public:
     const char *
     GetDirectory() const;
 
+    void
+    SetFilename(const char *filename);
+    
+    void
+    SetDirectory(const char *directory);
+
     uint32_t
     GetPath (char *dst_path, size_t dst_len) const;
 
@@ -65,6 +71,7 @@ private:
     friend class SBLineEntry;
     friend class SBModule;
     friend class SBModuleSpec;
+    friend class SBPlatform;
     friend class SBProcess;
     friend class SBSourceManager;
     friend class SBThread;

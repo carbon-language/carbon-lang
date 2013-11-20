@@ -231,6 +231,12 @@ public:
     void
     SetSelectedTarget (lldb::SBTarget &target);
 
+    lldb::SBPlatform
+    GetSelectedPlatform();
+    
+    void
+    SetSelectedPlatform(lldb::SBPlatform &platform);
+
     lldb::SBSourceManager
     GetSourceManager ();
 

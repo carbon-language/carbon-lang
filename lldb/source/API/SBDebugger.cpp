@@ -804,6 +804,42 @@ SBDebugger::SetSelectedTarget (SBTarget &sb_target)
     }
 }
 
+SBPlatform
+SBDebugger::GetSelectedPlatform()
+{
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    SBPlatform sb_platform;
+    DebuggerSP debugger_sp(m_opaque_sp);
+    if (debugger_sp)
+    {
+        sb_platform.SetSP(debugger_sp->GetPlatformList().GetSelectedPlatform());
+    }
+    if (log)
+    {
+        log->Printf ("SBDebugger(%p)::GetSelectedPlatform () => SBPlatform(%p): %s", m_opaque_sp.get(),
+                     sb_platform.GetSP().get(), sb_platform.GetName());
+    }
+    return sb_platform;
+}
+
+void
+SBDebugger::SetSelectedPlatform(SBPlatform &sb_platform)
+{
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    
+    DebuggerSP debugger_sp(m_opaque_sp);
+    if (debugger_sp)
+    {
+        debugger_sp->GetPlatformList().SetSelectedPlatform(sb_platform.GetSP());
+    }
+    if (log)
+    {
+        log->Printf ("SBDebugger(%p)::SetSelectedPlatform (SBPlatform(%p) %s)", m_opaque_sp.get(),
+                     sb_platform.GetSP().get(), sb_platform.GetName());
+    }
+}
+
 void
 SBDebugger::DispatchInput (void* baton, const void *data, size_t data_len)
 {

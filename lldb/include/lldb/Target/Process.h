@@ -1745,7 +1745,7 @@ public:
     ///     the error object is success.
     //------------------------------------------------------------------
     virtual Error
-    Launch (const ProcessLaunchInfo &launch_info);
+    Launch (ProcessLaunchInfo &launch_info);
 
     virtual Error
     LoadCore ();

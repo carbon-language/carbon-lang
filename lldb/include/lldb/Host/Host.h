@@ -510,13 +510,28 @@ public:
                              const char *symbol_name, 
                              Error &error);
     
-    static uint32_t
-    MakeDirectory (const char* path, mode_t mode);
+    static Error
+    MakeDirectory (const char* path, uint32_t mode);
     
+    static Error
+    GetFilePermissions (const char* path, uint32_t &file_permissions);
+
+    static Error
+    SetFilePermissions (const char* path, uint32_t file_permissions);
+    
+    static Error
+    Symlink (const char *src, const char *dst);
+    
+    static Error
+    Readlink (const char *path, char *buf, size_t buf_len);
+
+    static Error
+    Unlink (const char *path);
+
     static lldb::user_id_t
     OpenFile (const FileSpec& file_spec,
               uint32_t flags,
-              mode_t mode,
+              uint32_t mode,
               Error &error);
     
     static bool

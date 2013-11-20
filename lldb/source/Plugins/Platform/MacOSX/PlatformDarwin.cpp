@@ -761,6 +761,31 @@ PlatformDarwin::LaunchProcess (ProcessLaunchInfo &launch_info)
 }
 
 lldb::ProcessSP
+PlatformDarwin::DebugProcess (ProcessLaunchInfo &launch_info,
+                              Debugger &debugger,
+                              Target *target,       // Can be NULL, if NULL create a new target, else use existing one
+                              Listener &listener,
+                              Error &error)
+{
+    ProcessSP process_sp;
+    
+    if (IsHost())
+    {
+        process_sp = Platform::DebugProcess (launch_info, debugger, target, listener, error);
+    }
+    else
+    {
+        if (m_remote_platform_sp)
+            process_sp = m_remote_platform_sp->DebugProcess (launch_info, debugger, target, listener, error);
+        else
+            error.SetErrorString ("the platform is not currently connected");
+    }
+    return process_sp;
+    
+}
+
+
+lldb::ProcessSP
 PlatformDarwin::Attach (ProcessAttachInfo &attach_info,
                         Debugger &debugger,
                         Target *target,

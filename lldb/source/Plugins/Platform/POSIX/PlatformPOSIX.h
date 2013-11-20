@@ -43,7 +43,7 @@ public:
     virtual lldb::user_id_t
     OpenFile (const lldb_private::FileSpec& file_spec,
               uint32_t flags,
-              mode_t mode,
+              uint32_t mode,
               lldb_private::Error &error);
     
     virtual bool
@@ -68,8 +68,17 @@ public:
     GetFileSize (const lldb_private::FileSpec& file_spec);
 
     virtual lldb_private::Error
+    CreateSymlink(const char *src, const char *dst);
+
+    virtual lldb_private::Error
     GetFile (const lldb_private::FileSpec& source,
              const lldb_private::FileSpec& destination);
+    
+    virtual lldb_private::ConstString
+    GetRemoteWorkingDirectory();
+    
+    virtual bool
+    SetRemoteWorkingDirectory(const lldb_private::ConstString &path);
     
     virtual lldb_private::Error
     RunShellCommand (const char *command,           // Shouldn't be NULL
@@ -79,16 +88,20 @@ public:
                      std::string *command_output,   // Pass NULL if you don't want the command output
                      uint32_t timeout_sec);         // Timeout in seconds to wait for shell program to finish
     
-    virtual uint32_t
-    MakeDirectory (const std::string &path,
-                   mode_t mode);
+    virtual lldb_private::Error
+    MakeDirectory (const char *path, uint32_t mode);
     
+    virtual lldb_private::Error
+    GetFilePermissions (const char *path, uint32_t &file_permissions);
+
+    virtual lldb_private::Error
+    SetFilePermissions (const char *path, uint32_t file_permissions);
+
     virtual bool
     GetFileExists (const lldb_private::FileSpec& file_spec);
     
-    virtual uint32_t
-    GetFilePermissions (const lldb_private::FileSpec &file_spec,
-                        lldb_private::Error &error);
+    virtual lldb_private::Error
+    Unlink (const char *path);
 
     virtual std::string
     GetPlatformSpecificConnectionInformation();

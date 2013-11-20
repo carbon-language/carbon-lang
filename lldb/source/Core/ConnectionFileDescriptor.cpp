@@ -53,6 +53,8 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Host/Host.h"
+
 
 using namespace lldb;
 using namespace lldb_private;
@@ -1209,6 +1211,7 @@ ConnectionFileDescriptor::NamedSocketAccept (const char *socket_name, Error *err
     saddr_un.sun_len = SUN_LEN (&saddr_un);
 #endif
 
+    Host::Unlink (socket_name);
     if (::bind (listen_socket, (struct sockaddr *)&saddr_un, SUN_LEN (&saddr_un)) == 0) 
     {
         if (::listen (listen_socket, 5) == 0) 
