@@ -245,7 +245,8 @@ static void unmap_file() {
  * profiling enabled will emit to a different file. Only one file may be
  * started at a time.
  */
-void llvm_gcda_start_file(const char *orig_filename, const char version[4]) {
+void llvm_gcda_start_file(const char *orig_filename, const char version[4],
+                          uint32_t checksum) {
   const char *mode = "r+b";
   filename = mangle_filename(orig_filename);
 
@@ -293,10 +294,10 @@ void llvm_gcda_start_file(const char *orig_filename, const char version[4]) {
     }
   }
 
-  /* gcda file, version, stamp LLVM. */
+  /* gcda file, version, stamp checksum. */
   write_bytes("adcg", 4);
   write_bytes(version, 4);
-  write_bytes("MVLL", 4);
+  write_32bit_value(checksum);
 
 #ifdef DEBUG_GCDAPROFILING
   fprintf(stderr, "llvmgcda: [%s]\n", orig_filename);
@@ -329,7 +330,8 @@ void llvm_gcda_increment_indirect_counter(uint32_t *predecessor,
 }
 
 void llvm_gcda_emit_function(uint32_t ident, const char *function_name,
-                             uint8_t use_extra_checksum) {
+                             uint8_t use_extra_checksum,
+                             uint32_t cfg_checksum) {
   uint32_t len = 2;
 
   if (use_extra_checksum)
@@ -348,7 +350,7 @@ void llvm_gcda_emit_function(uint32_t ident, const char *function_name,
   write_32bit_value(ident);
   write_32bit_value(0);
   if (use_extra_checksum)
-    write_32bit_value(0);
+    write_32bit_value(cfg_checksum);
   if (function_name)
     write_string(function_name);
 }
