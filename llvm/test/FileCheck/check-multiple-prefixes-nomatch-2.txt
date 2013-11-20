@@ -1,0 +1,10 @@
+; RUN: not FileCheck -input-file %s %s -check-prefix=FOO -check-prefix=BAR 2>&1 | FileCheck %s
+
+fog
+bar
+; _FOO not a valid check-line
+; FOO: fo{{o}}
+; BAR: ba{{r}}
+
+; CHECK: {{error: expected string not found in input}}
+; CHECK-NEXT: {{F}}OO: fo{{[{][{]o[}][}]}}

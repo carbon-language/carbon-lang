@@ -795,10 +795,11 @@ static StringRef FindFirstCandidateMatch(StringRef &Buffer,
     // it. This should also prevent matching the wrong prefix when one is a
     // substring of another.
     if (PrefixLoc != 0 && IsPartOfWord(Buffer[PrefixLoc - 1]))
-      continue;
+      FirstTy = Check::CheckNone;
+    else
+      FirstTy = FindCheckType(Rest, Prefix);
 
     FirstLoc = PrefixLoc;
-    FirstTy = FindCheckType(Rest, Prefix);
     FirstPrefix = Prefix;
   }
 
