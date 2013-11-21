@@ -5520,6 +5520,17 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
       "                    der:NO]);\n"
       "}",
       getLLVMStyleWithColumns(70));
+  verifyFormat("{\n"
+               "  popup_window_.reset([[RenderWidgetPopupWindow alloc]\n"
+               "      initWithContentRect:NSMakeRect(origin_global.x,\n"
+               "                                     origin_global.y,\n"
+               "                                     pos.width(),\n"
+               "                                     pos.height())\n"
+               "                styleMask:NSBorderlessWindowMask\n"
+               "                  backing:NSBackingStoreBuffered\n"
+               "                    defer:NO]);\n"
+               "}",
+               getChromiumStyle());
   verifyFormat("[contentsContainer replaceSubview:[subviews objectAtIndex:0]\n"
                "                             with:contentsNativeView];");
 
