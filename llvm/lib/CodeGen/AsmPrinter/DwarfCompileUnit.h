@@ -76,6 +76,9 @@ class CompileUnit {
   StringMap<const DIE *> GlobalTypes;
 
   /// AccelNames - A map of names for the name accelerator table.
+  /// AccelObjC - A map of objc spec for the objc accelerator table.
+  /// AccelNamespace - A map of names for the namespace accelerator table.
+  /// AccelTypes - A map of names for the type accelerator table.
   ///
   StringMap<std::vector<const DIE *> > AccelNames;
   StringMap<std::vector<const DIE *> > AccelObjC;
