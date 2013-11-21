@@ -7326,12 +7326,19 @@ TEST_F(FormatTest, SpacesInAngles) {
   verifyFormat("A<A<int>>();", Spaces);
 }
 
-
 TEST_F(FormatTest, UnderstandsJavaScript) {
+  verifyFormat("a == = b;");
+  verifyFormat("a != = b;");
+
   verifyFormat("a === b;");
-  verifyFormat("aaaaaaa === b;", getLLVMStyleWithColumns(10));
+  verifyFormat("aaaaaaa ===\n    b;", getLLVMStyleWithColumns(10));
   verifyFormat("a !== b;");
-  verifyFormat("aaaaaaa !== b;", getLLVMStyleWithColumns(10));
+  verifyFormat("aaaaaaa !==\n    b;", getLLVMStyleWithColumns(10));
+  verifyFormat("if (a + b + c +\n"
+               "        d !==\n"
+               "    e + f + g)\n"
+               "  q();",
+               getLLVMStyleWithColumns(20));
 }
 
 } // end namespace tooling

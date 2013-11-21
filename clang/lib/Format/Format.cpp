@@ -1029,7 +1029,7 @@ public:
     assert(Tokens.empty());
     do {
       Tokens.push_back(getNextToken());
-      maybeJoinPreviousTokens();
+      tryMergePreviousTokens();
     } while (Tokens.back()->Tok.isNot(tok::eof));
     return Tokens;
   }
@@ -1037,23 +1037,45 @@ public:
   IdentifierTable &getIdentTable() { return IdentTable; }
 
 private:
-  void maybeJoinPreviousTokens() {
+  void tryMergePreviousTokens() {
+    tryMerge_TMacro() || tryMergeJavaScriptIdentityOperators();
+  }
+
+  bool tryMergeJavaScriptIdentityOperators() {
+    if (Tokens.size() < 2)
+      return false;
+    FormatToken &First = *Tokens[Tokens.size() - 2];
+    if (!First.isOneOf(tok::exclaimequal, tok::equalequal))
+      return false;
+    FormatToken &Second = *Tokens.back();
+    if (!Second.is(tok::equal))
+      return false;
+    if (Second.WhitespaceRange.getBegin() != Second.WhitespaceRange.getEnd())
+      return false;
+    First.TokenText =
+        StringRef(First.TokenText.data(), First.TokenText.size() + 1);
+    First.ColumnWidth += 1;
+    Tokens.pop_back();
+    return true;
+  }
+
+  bool tryMerge_TMacro() {
     if (Tokens.size() < 4)
-      return;
+      return false;
     FormatToken *Last = Tokens.back();
     if (!Last->is(tok::r_paren))
-      return;
+      return false;
 
     FormatToken *String = Tokens[Tokens.size() - 2];
     if (!String->is(tok::string_literal) || String->IsMultiline)
-      return;
+      return false;
 
     if (!Tokens[Tokens.size() - 3]->is(tok::l_paren))
-      return;
+      return false;
 
     FormatToken *Macro = Tokens[Tokens.size() - 4];
     if (Macro->TokenText != "_T")
-      return;
+      return false;
 
     const char *Start = Macro->TokenText.data();
     const char *End = Last->TokenText.data() + Last->TokenText.size();
@@ -1069,6 +1091,7 @@ private:
     Tokens.pop_back();
     Tokens.pop_back();
     Tokens.back() = String;
+    return true;
   }
 
   FormatToken *getNextToken() {
