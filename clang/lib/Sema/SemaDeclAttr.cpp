@@ -4347,19 +4347,18 @@ static void handleObjCBridgeAttr(Sema &S, Scope *Sc, Decl *D,
                                   : ExpectedStructOrUnion);
     return;
   }
-  
-  if (Attr.getNumArgs() != 1) {
-    S.Diag(D->getLocStart(), diag::err_objc_bridge_not_id);
-    return;
-  }
-  IdentifierLoc *Parm = Attr.isArgIdent(0) ? Attr.getArgAsIdent(0) : 0;
+
+  IdentifierLoc *Parm = 0;
+  if (Attr.getNumArgs() == 1)
+    Parm = Attr.isArgIdent(0) ? Attr.getArgAsIdent(0) : 0;
+
   if (!Parm) {
-    S.Diag(D->getLocStart(), diag::err_objc_bridge_not_id);
+    S.Diag(D->getLocStart(), diag::err_objc_attr_not_id) << Attr.getName() << 0;
     return;
   }
   
   D->addAttr(::new (S.Context)
-             ObjCBridgeAttr(Attr.getRange(), S.Context, Parm ? Parm->Ident : 0,
+             ObjCBridgeAttr(Attr.getRange(), S.Context, Parm->Ident,
                            Attr.getAttributeSpellingListIndex()));
 }
 
