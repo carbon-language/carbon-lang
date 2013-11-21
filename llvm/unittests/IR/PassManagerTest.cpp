@@ -25,7 +25,6 @@ public:
 
   struct Result {
     Result(int Count) : InstructionCount(Count) {}
-    bool invalidate(Function *) { return true; }
     int InstructionCount;
   };
 

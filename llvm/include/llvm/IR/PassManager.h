@@ -194,10 +194,33 @@ template <typename IRUnitT> struct AnalysisResultConcept {
 
 /// \brief Wrapper to model the analysis result concept.
 ///
+/// By default, this will implement the invalidate method with a trivial
+/// implementation so that the actual analysis result doesn't need to provide
+/// an invalidation handler. It is only selected when the invalidation handler
+/// is not part of the ResultT's interface.
+template <typename IRUnitT, typename ResultT, bool HasInvalidateHandler = false>
+struct AnalysisResultModel : AnalysisResultConcept<IRUnitT> {
+  AnalysisResultModel(ResultT Result) : Result(llvm_move(Result)) {}
+  virtual AnalysisResultModel *clone() {
+    return new AnalysisResultModel(Result);
+  }
+
+  /// \brief The model returns true to allow the invalidation.
+  //
+  // FIXME: We should actually use two different concepts for analysis results
+  // rather than two different models, and avoid the indirect function call for
+  // ones that use the trivial behavior.
+  virtual bool invalidate(IRUnitT *) { return true; }
+
+  ResultT Result;
+};
+
+/// \brief Wrapper to model the analysis result concept.
+///
 /// Can wrap any type which implements a suitable invalidate member and model
 /// the AnalysisResultConcept for the AnalysisManager.
 template <typename IRUnitT, typename ResultT>
-struct AnalysisResultModel : AnalysisResultConcept<IRUnitT> {
+struct AnalysisResultModel<IRUnitT, ResultT, true> : AnalysisResultConcept<IRUnitT> {
   AnalysisResultModel(ResultT Result) : Result(llvm_move(Result)) {}
   virtual AnalysisResultModel *clone() {
     return new AnalysisResultModel(Result);
@@ -207,6 +230,19 @@ struct AnalysisResultModel : AnalysisResultConcept<IRUnitT> {
   virtual bool invalidate(IRUnitT *IR) { return Result.invalidate(IR); }
 
   ResultT Result;
+};
+
+/// \brief SFINAE metafunction for computing whether \c ResultT provides an
+/// \c invalidate member function.
+template <typename IRUnitT, typename ResultT> class ResultHasInvalidateMethod {
+  typedef char SmallType;
+  struct BigType { char a, b; };
+  template <typename T, bool (T::*)(IRUnitT *)> struct Checker;
+  template <typename T> static SmallType f(Checker<T, &T::invalidate> *);
+  template <typename T> static BigType f(...);
+
+public:
+  enum { Value = sizeof(f<ResultT>(0)) == sizeof(SmallType) };
 };
 
 /// \brief Abstract concept of an analysis pass.
@@ -237,7 +273,10 @@ struct AnalysisPassModel : AnalysisPassConcept<typename PassT::IRUnitT> {
   typedef typename PassT::IRUnitT IRUnitT;
 
   // FIXME: Replace PassT::Result with type traits when we use C++11.
-  typedef AnalysisResultModel<IRUnitT, typename PassT::Result> ResultModelT;
+  typedef AnalysisResultModel<
+      IRUnitT, typename PassT::Result,
+      ResultHasInvalidateMethod<IRUnitT, typename PassT::Result>::Value>
+          ResultModelT;
 
   /// \brief The model delegates to the \c PassT::run method.
   ///
@@ -323,8 +362,10 @@ public:
 
     const detail::AnalysisResultConcept<Module> &ResultConcept =
         getResultImpl(PassT::ID(), M);
-    typedef detail::AnalysisResultModel<Module, typename PassT::Result>
-        ResultModelT;
+    typedef detail::AnalysisResultModel<
+        Module, typename PassT::Result,
+        detail::ResultHasInvalidateMethod<
+            Module, typename PassT::Result>::Value> ResultModelT;
     return static_cast<const ResultModelT &>(ResultConcept).Result;
   }
 
@@ -405,8 +446,10 @@ public:
 
     const detail::AnalysisResultConcept<Function> &ResultConcept =
         getResultImpl(PassT::ID(), F);
-    typedef detail::AnalysisResultModel<Function, typename PassT::Result>
-        ResultModelT;
+    typedef detail::AnalysisResultModel<
+        Function, typename PassT::Result,
+        detail::ResultHasInvalidateMethod<
+            Function, typename PassT::Result>::Value> ResultModelT;
     return static_cast<const ResultModelT &>(ResultConcept).Result;
   }
 
