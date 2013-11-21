@@ -803,10 +803,11 @@ Function *GCOVProfiler::insertCounterWriteout(
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
       DICompileUnit CU(CU_Nodes->getOperand(i));
       std::string FilenameGcda = mangleName(CU, "gcda");
+      uint32_t CfgChecksum = FileChecksums.size() ? FileChecksums[i] : 0;
       Builder.CreateCall3(StartFile,
                           Builder.CreateGlobalStringPtr(FilenameGcda),
                           Builder.CreateGlobalStringPtr(ReversedVersion),
-                          Builder.getInt32(FileChecksums[i]));
+                          Builder.getInt32(CfgChecksum));
       for (unsigned j = 0, e = CountersBySP.size(); j != e; ++j) {
         DISubprogram SP(CountersBySP[j].second);
         Builder.CreateCall4(
@@ -815,7 +816,7 @@ Function *GCOVProfiler::insertCounterWriteout(
               Builder.CreateGlobalStringPtr(getFunctionName(SP)) :
               Constant::getNullValue(Builder.getInt8PtrTy()),
             Builder.getInt8(Options.UseCfgChecksum),
-            Builder.getInt32(FileChecksums[i]));
+            Builder.getInt32(CfgChecksum));
 
         GlobalVariable *GV = CountersBySP[j].first;
         unsigned Arcs =
