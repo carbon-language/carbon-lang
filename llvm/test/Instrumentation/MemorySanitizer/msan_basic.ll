@@ -1,6 +1,5 @@
 ; RUN: opt < %s -msan -msan-check-access-address=0 -S | FileCheck %s
-; RUN: opt < %s -msan -msan-check-access-address=0 -msan-track-origins=1 -S | FileCheck -check-prefix=CHECK-ORIGINS %s
-; RUN: opt < %s -msan -msan-check-access-address=1 -S | FileCheck %s -check-prefix=CHECK-AA
+; RUN: opt < %s -msan -msan-check-access-address=0 -msan-track-origins=1 -S | FileCheck -check-prefix=CHECK -check-prefix=CHECK-ORIGINS %s
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
@@ -32,20 +31,16 @@ entry:
 
 ; CHECK: @Store
 ; CHECK: load {{.*}} @__msan_param_tls
+; CHECK-ORIGINS: load {{.*}} @__msan_param_origin_tls
 ; CHECK: store
-; CHECK: store
-; CHECK: ret void
-; CHECK-ORIGINS: @Store
-; CHECK-ORIGINS: load {{.*}} @__msan_param_tls
-; CHECK-ORIGINS: store
 ; CHECK-ORIGINS: icmp
 ; CHECK-ORIGINS: br i1
 ; CHECK-ORIGINS: <label>
 ; CHECK-ORIGINS: store
 ; CHECK-ORIGINS: br label
 ; CHECK-ORIGINS: <label>
-; CHECK-ORIGINS: store
-; CHECK-ORIGINS: ret void
+; CHECK: store
+; CHECK: ret void
 
 
 ; Check instrumentation of aligned stores
@@ -60,20 +55,16 @@ entry:
 
 ; CHECK: @AlignedStore
 ; CHECK: load {{.*}} @__msan_param_tls
+; CHECK-ORIGINS: load {{.*}} @__msan_param_origin_tls
 ; CHECK: store {{.*}} align 32
-; CHECK: store {{.*}} align 32
-; CHECK: ret void
-; CHECK-ORIGINS: @AlignedStore
-; CHECK-ORIGINS: load {{.*}} @__msan_param_tls
-; CHECK-ORIGINS: store {{.*}} align 32
 ; CHECK-ORIGINS: icmp
 ; CHECK-ORIGINS: br i1
 ; CHECK-ORIGINS: <label>
 ; CHECK-ORIGINS: store {{.*}} align 32
 ; CHECK-ORIGINS: br label
 ; CHECK-ORIGINS: <label>
-; CHECK-ORIGINS: store {{.*}} align 32
-; CHECK-ORIGINS: ret void
+; CHECK: store {{.*}} align 32
+; CHECK: ret void
 
 
 ; load followed by cmp: check that we load the shadow and call __msan_warning.
@@ -251,10 +242,9 @@ declare void @llvm.memmove.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32,
 
 ; Check that we propagate shadow for "select"
 
-define i32 @Select(i32 %a, i32 %b, i32 %c) nounwind uwtable readnone sanitize_memory {
+define i32 @Select(i32 %a, i32 %b, i1 %c) nounwind uwtable readnone sanitize_memory {
 entry:
-  %tobool = icmp ne i32 %c, 0
-  %cond = select i1 %tobool, i32 %a, i32 %b
+  %cond = select i1 %c, i32 %a, i32 %b
   ret i32 %cond
 }
 
@@ -263,6 +253,8 @@ entry:
 ; CHECK-NEXT: sext i1 {{.*}} to i32
 ; CHECK-NEXT: or i32
 ; CHECK-NEXT: select
+; CHECK-ORIGINS: select
+; CHECK-ORIGINS: select
 ; CHECK: ret i32
 
 
@@ -280,14 +272,12 @@ entry:
 ; CHECK: select <8 x i1>
 ; CHECK-NEXT: sext <8 x i1> {{.*}} to <8 x i16>
 ; CHECK-NEXT: or <8 x i16>
-; CHECK-NEXT: select <8 x i1>
+; CHECK-ORIGINS: bitcast <8 x i1> {{.*}} to i8
+; CHECK-ORIGINS: icmp ne i8 {{.*}}, 0
+; CHECK-ORIGINS: select i1
+; CHECK: select <8 x i1>
 ; CHECK: ret <8 x i16>
 
-; CHECK-ORIGINS: @SelectVector
-; CHECK-ORIGINS: bitcast <8 x i1> {{.*}} to i8
-; CHECK-ORIGINS: icmp ne i8
-; CHECK-ORIGINS: select i1
-; CHECK-ORIGINS: ret <8 x i16>
 
 
 ; Check that we propagate origin for "select" with scalar condition and vector
@@ -318,6 +308,7 @@ entry:
 ; CHECK: @SelectStruct
 ; CHECK: select i1 {{.*}}, { i64, i64 }
 ; CHECK-NEXT: select i1 {{.*}}, { i64, i64 } { i64 -1, i64 -1 }, { i64, i64 }
+; CHECK-ORIGINS: select i1
 ; CHECK-NEXT: select i1 {{.*}}, { i64, i64 }
 ; CHECK: ret { i64, i64 }
 
@@ -330,9 +321,10 @@ entry:
 
 ; CHECK: @IntToPtr
 ; CHECK: load i64*{{.*}}__msan_param_tls
+; CHECK-ORIGINS-NEXT: load i32*{{.*}}__msan_param_origin_tls
 ; CHECK-NEXT: inttoptr
 ; CHECK-NEXT: store i64{{.*}}__msan_retval_tls
-; CHECK: ret i8
+; CHECK: ret i8*
 
 
 define i8* @IntToPtr_ZExt(i16 %x) nounwind uwtable readnone sanitize_memory {
@@ -342,9 +334,11 @@ entry:
 }
 
 ; CHECK: @IntToPtr_ZExt
+; CHECK: load i16*{{.*}}__msan_param_tls
 ; CHECK: zext
 ; CHECK-NEXT: inttoptr
-; CHECK: ret i8
+; CHECK-NEXT: store i64{{.*}}__msan_retval_tls
+; CHECK: ret i8*
 
 
 ; Check that we insert exactly one check on udiv
@@ -474,13 +468,8 @@ define i32 @ShadowLoadAlignmentSmall() nounwind uwtable sanitize_memory {
 ; CHECK: @ShadowLoadAlignmentSmall
 ; CHECK: load volatile i32* {{.*}} align 2
 ; CHECK: load i32* {{.*}} align 2
-; CHECK: ret i32
-
-; CHECK-ORIGINS: @ShadowLoadAlignmentSmall
-; CHECK-ORIGINS: load volatile i32* {{.*}} align 2
-; CHECK-ORIGINS: load i32* {{.*}} align 2
 ; CHECK-ORIGINS: load i32* {{.*}} align 4
-; CHECK-ORIGINS: ret i32
+; CHECK: ret i32
 
 
 ; Test vector manipulation instructions.
@@ -567,17 +556,13 @@ declare <16 x i8> @llvm.x86.sse3.ldu.dq(i8* %p) nounwind
 
 ; CHECK: @LoadIntrinsic
 ; CHECK: load <16 x i8>* {{.*}} align 1
+; CHECK-ORIGINS: [[ORIGIN:%[01-9a-z]+]] = load i32* {{.*}}
 ; CHECK-NOT: br
 ; CHECK-NOT: = or
 ; CHECK: call <16 x i8> @llvm.x86.sse3.ldu.dq
 ; CHECK: store <16 x i8> {{.*}} @__msan_retval_tls
-; CHECK: ret <16 x i8>
-
-; CHECK-ORIGINS: @LoadIntrinsic
-; CHECK-ORIGINS: [[ORIGIN:%[01-9a-z]+]] = load i32* {{.*}}
-; CHECK-ORIGINS: call <16 x i8> @llvm.x86.sse3.ldu.dq
 ; CHECK-ORIGINS: store i32 {{.*}}[[ORIGIN]], i32* @__msan_retval_origin_tls
-; CHECK-ORIGINS: ret <16 x i8>
+; CHECK: ret <16 x i8>
 
 
 ; Simple NoMem intrinsic
@@ -593,21 +578,17 @@ declare <8 x i16> @llvm.x86.sse2.padds.w(<8 x i16> %a, <8 x i16> %b) nounwind
 
 ; CHECK: @Paddsw128
 ; CHECK-NEXT: load <8 x i16>* {{.*}} @__msan_param_tls
+; CHECK-ORIGINS: load i32* {{.*}} @__msan_param_origin_tls
 ; CHECK-NEXT: load <8 x i16>* {{.*}} @__msan_param_tls
+; CHECK-ORIGINS: load i32* {{.*}} @__msan_param_origin_tls
 ; CHECK-NEXT: = or <8 x i16>
-; CHECK-NEXT: call <8 x i16> @llvm.x86.sse2.padds.w
-; CHECK-NEXT: store <8 x i16> {{.*}} @__msan_retval_tls
-; CHECK-NEXT: ret <8 x i16>
-
-; CHECK-ORIGINS: @Paddsw128
-; CHECK-ORIGINS: load i32* {{.*}} @__msan_param_origin_tls
-; CHECK-ORIGINS: load i32* {{.*}} @__msan_param_origin_tls
 ; CHECK-ORIGINS: = bitcast <8 x i16> {{.*}} to i128
 ; CHECK-ORIGINS-NEXT: = icmp ne i128 {{.*}}, 0
 ; CHECK-ORIGINS-NEXT: = select i1 {{.*}}, i32 {{.*}}, i32
-; CHECK-ORIGINS: call <8 x i16> @llvm.x86.sse2.padds.w
+; CHECK-NEXT: call <8 x i16> @llvm.x86.sse2.padds.w
+; CHECK-NEXT: store <8 x i16> {{.*}} @__msan_retval_tls
 ; CHECK-ORIGINS: store i32 {{.*}} @__msan_retval_origin_tls
-; CHECK-ORIGINS: ret <8 x i16>
+; CHECK-NEXT: ret <8 x i16>
 
 
 ; Test handling of vectors of pointers.
@@ -750,30 +731,6 @@ entry:
 ; CHECK: load <2 x i64>* {{.*}} @__msan_param_tls {{.*}}, align 8
 ; CHECK: store <2 x i64> {{.*}} @__msan_retval_tls {{.*}}, align 8
 ; CHECK: ret <2 x i64>
-
-
-; Test byval argument shadow alignment
-
-define <2 x i64> @ByValArgumentShadowLargeAlignment(<2 x i64>* byval %p) sanitize_memory {
-entry:
-  %x = load <2 x i64>* %p
-  ret <2 x i64> %x
-}
-
-; CHECK-AA: @ByValArgumentShadowLargeAlignment
-; CHECK-AA: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* {{.*}}, i64 16, i32 8, i1 false)
-; CHECK-AA: ret <2 x i64>
-
-
-define i16 @ByValArgumentShadowSmallAlignment(i16* byval %p) sanitize_memory {
-entry:
-  %x = load i16* %p
-  ret i16 %x
-}
-
-; CHECK-AA: @ByValArgumentShadowSmallAlignment
-; CHECK-AA: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* {{.*}}, i64 2, i32 2, i1 false)
-; CHECK-AA: ret i16
 
 
 ; Test origin propagation for insertvalue
