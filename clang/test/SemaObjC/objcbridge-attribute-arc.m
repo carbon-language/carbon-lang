@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -fsyntax-only -x objective-c -fobjc-arc -verify -Wno-objc-root-class %s
 // rdar://15454846
 
-typedef struct __attribute__ ((objc_bridge(NSError))) __CFErrorRef * CFErrorRef; // expected-note 5 {{declared here}}
+typedef struct __attribute__ ((objc_bridge(NSError))) __CFErrorRef * CFErrorRef; // expected-note 7 {{declared here}}
 
 typedef struct __attribute__ ((objc_bridge(MyError))) __CFMyErrorRef * CFMyErrorRef; // expected-note 3 {{declared here}}
 
@@ -45,7 +45,7 @@ id Test1(CFTestingRef cf) {
 
 typedef CFErrorRef CFErrorRef1;
 
-typedef CFErrorRef1 CFErrorRef2; // expected-note {{declared here}}
+typedef CFErrorRef1 CFErrorRef2; // expected-note 2 {{declared here}}
 
 @protocol P1 @end
 @protocol P2 @end
@@ -53,7 +53,7 @@ typedef CFErrorRef1 CFErrorRef2; // expected-note {{declared here}}
 @protocol P4 @end
 @protocol P5 @end
 
-@interface NSError<P1, P2, P3> @end // expected-note 5 {{declared here}}
+@interface NSError<P1, P2, P3> @end // expected-note 7 {{declared here}}
 
 @interface MyError : NSError // expected-note 3 {{declared here}}
 @end
@@ -125,4 +125,15 @@ void Test8(CFMyPersonalErrorRef cf) {
   (void)(id<P1, P2, P3>)cf; // ok
   (void)(id<P1, P2, P3, P4>)cf; // ok
   (void)(id<P1, P2, P3, P4, P5>)cf; // expected-warning {{'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') bridges to MyPersonalError, not 'id<P1,P2,P3,P4,P5>'}}
+}
+
+void Test9(CFErrorRef2 cf, NSError *ns, NSString *str, Class c, CFUColor2Ref cf2) {
+  (void)(__bridge NSString *)cf; // expected-warning {{'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, not 'NSString'}}
+  (void)(__bridge NSError *)cf; // okay
+  (void)(__bridge MyError*)cf; // okay,
+  (void)(__bridge NSUColor *)cf2; // okay
+  (void)(__bridge CFErrorRef)ns; // okay
+  (void)(__bridge CFErrorRef)str;  // expected-warning {{'NSString' cannot bridge to 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
+  (void)(__bridge Class)cf; // expected-warning {{'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, not 'Class'}}
+  (void)(__bridge CFErrorRef)c; // expected-warning {{'__unsafe_unretained Class' cannot bridge to 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
 }

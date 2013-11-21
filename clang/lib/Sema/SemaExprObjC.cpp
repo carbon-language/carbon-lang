@@ -3285,6 +3285,16 @@ static bool CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr) {
   return false;
 }
 
+void Sema::CheckTollFreeBridgeCast(QualType castType, Expr *castExpr) {
+  // warn in presense of __bridge casting to or from a toll free bridge cast.
+  ARCConversionTypeClass exprACTC = classifyTypeForARCConversion(castExpr->getType());
+  ARCConversionTypeClass castACTC = classifyTypeForARCConversion(castType);
+  if (castACTC == ACTC_retainable && exprACTC == ACTC_coreFoundation)
+    (void)CheckObjCBridgeNSCast(*this, castType, castExpr);
+  else if (castACTC == ACTC_coreFoundation && exprACTC == ACTC_retainable)
+    (void)CheckObjCBridgeCFCast(*this, castType, castExpr);
+}
+
 Sema::ARCConversionResult
 Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
                              Expr *&castExpr, CheckedConversionKind CCK,
@@ -3617,15 +3627,8 @@ ExprResult Sema::ActOnObjCBridgedCast(Scope *S,
                                       Expr *SubExpr) {
   TypeSourceInfo *TSInfo = 0;
   QualType T = GetTypeFromParser(Type, &TSInfo);
-  if (Kind == OBC_Bridge) {
-    // warn in presense of __bridge casting to or from a toll free bridge cast.
-    ARCConversionTypeClass exprACTC = classifyTypeForARCConversion(SubExpr->getType());
-    ARCConversionTypeClass castACTC = classifyTypeForARCConversion(T);
-    if (castACTC == ACTC_retainable && exprACTC == ACTC_coreFoundation)
-      (void)CheckObjCBridgeNSCast(*this, T, SubExpr);
-    else if (castACTC == ACTC_coreFoundation && exprACTC == ACTC_retainable)
-      (void)CheckObjCBridgeCFCast(*this, T, SubExpr);
-  }
+  if (Kind == OBC_Bridge)
+    CheckTollFreeBridgeCast(T, SubExpr);
   if (!TSInfo)
     TSInfo = Context.getTrivialTypeSourceInfo(T, LParenLoc);
   return BuildObjCBridgedCast(LParenLoc, Kind, BridgeKeywordLoc, TSInfo, 
