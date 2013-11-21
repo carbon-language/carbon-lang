@@ -2006,7 +2006,9 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V,
   }
   case Instruction::Load: {
     const LoadInst *LI = cast<LoadInst>(Inst);
-    if (!LI->isUnordered())
+    if (!LI->isUnordered() ||
+        // Speculative load may create a race that did not exist in the source.
+        LI->getParent()->getParent()->hasFnAttribute(Attribute::SanitizeThread))
       return false;
     return LI->getPointerOperand()->isDereferenceablePointer();
   }
