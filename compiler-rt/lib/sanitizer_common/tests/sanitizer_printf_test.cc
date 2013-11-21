@@ -120,7 +120,6 @@ TEST(Printf, MinMax) {
   TestAgainstLibc<unsigned long>("%zu-%zu", 0, ULONG_MAX);  // NOLINT
   TestAgainstLibc<unsigned>("%x-%x", 0, UINT_MAX);  // NOLINT
   TestAgainstLibc<unsigned long>("%zx-%zx", 0, ULONG_MAX);  // NOLINT
-  Report("%zd\n", LONG_MIN);
 }
 
 TEST(Printf, Padding) {
