@@ -22,6 +22,7 @@
 #include <grp.h>
 #include <netdb.h>
 #include <pwd.h>
+#include <sys/stat.h>
 #endif
 
 #if !defined (__GNU__) && !defined (_WIN32)
