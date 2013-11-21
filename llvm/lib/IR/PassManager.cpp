@@ -87,6 +87,19 @@ void FunctionAnalysisManager::invalidate(Function *F, const PreservedAnalyses &P
         std::make_pair(InvalidatedPassIDs.pop_back_val(), F));
 }
 
+bool FunctionAnalysisManager::empty() const {
+  assert(FunctionAnalysisResults.empty() ==
+             FunctionAnalysisResultLists.empty() &&
+         "The storage and index of analysis results disagree on how many there "
+         "are!");
+  return FunctionAnalysisResults.empty();
+}
+
+void FunctionAnalysisManager::clear() {
+  FunctionAnalysisResults.clear();
+  FunctionAnalysisResultLists.clear();
+}
+
 const detail::AnalysisResultConcept<Function> &
 FunctionAnalysisManager::getResultImpl(void *PassID, Function *F) {
   FunctionAnalysisResultMapT::iterator RI;
@@ -116,4 +129,28 @@ void FunctionAnalysisManager::invalidateImpl(void *PassID, Function *F) {
     return;
 
   FunctionAnalysisResultLists[F].erase(RI->second);
+}
+
+char FunctionAnalysisModuleProxy::PassID;
+
+FunctionAnalysisModuleProxy::Result
+FunctionAnalysisModuleProxy::run(Module *M) {
+  assert(FAM.empty() && "Function analyses ran prior to the module proxy!");
+  return Result(FAM);
+}
+
+FunctionAnalysisModuleProxy::Result::~Result() {
+  // Clear out the analysis manager if we're being destroyed -- it means we
+  // didn't even see an invalidate call when we got invalidated.
+  FAM.clear();
+}
+
+bool FunctionAnalysisModuleProxy::Result::invalidate(Module *M) {
+  // FIXME: We should pull the preserved analysis set into the invalidation
+  // handler so that we can detect when there is no need to clear the entire
+  // function analysis manager.
+  FAM.clear();
+
+  // Return false to indicate that this result is still a valid proxy.
+  return false;
 }

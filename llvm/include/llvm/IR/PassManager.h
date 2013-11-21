@@ -305,38 +305,6 @@ private:
   std::vector<polymorphic_ptr<FunctionPassConcept> > Passes;
 };
 
-/// \brief Trivial adaptor that maps from a module to its functions.
-///
-/// Designed to allow composition of a FunctionPass(Manager) and a
-/// ModulePassManager.
-template <typename FunctionPassT>
-class ModuleToFunctionPassAdaptor {
-public:
-  explicit ModuleToFunctionPassAdaptor(FunctionPassT Pass)
-      : Pass(llvm_move(Pass)) {}
-
-  /// \brief Runs the function pass across every function in the module.
-  PreservedAnalyses run(Module *M) {
-    PreservedAnalyses PA = PreservedAnalyses::all();
-    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
-      PreservedAnalyses PassPA = Pass.run(I);
-      PA.intersect(llvm_move(PassPA));
-    }
-    return PA;
-  }
-
-private:
-  FunctionPassT Pass;
-};
-
-/// \brief A function to deduce a function pass type and wrap it in the
-/// templated adaptor.
-template <typename FunctionPassT>
-ModuleToFunctionPassAdaptor<FunctionPassT>
-createModuleToFunctionPassAdaptor(FunctionPassT Pass) {
-  return ModuleToFunctionPassAdaptor<FunctionPassT>(llvm_move(Pass));
-}
-
 /// \brief A module analysis pass manager with lazy running and caching of
 /// results.
 class ModuleAnalysisManager {
@@ -476,6 +444,17 @@ public:
   /// PreservedAnalyses set.
   void invalidate(Function *F, const PreservedAnalyses &PA);
 
+  /// \brief Returns true if the analysis manager has an empty results cache.
+  bool empty() const;
+
+  /// \brief Clear the function analysis result cache.
+  ///
+  /// This routine allows cleaning up when the set of functions itself has
+  /// potentially changed, and thus we can't even look up a a result and
+  /// invalidate it directly. Notably, this does *not* call invalidate
+  /// functions as there is nothing to be done for them.
+  void clear();
+
 private:
   /// \brief Get a function pass result, running the pass if necessary.
   const detail::AnalysisResultConcept<Function> &getResultImpl(void *PassID,
@@ -521,5 +500,105 @@ private:
   /// analysis result.
   FunctionAnalysisResultMapT FunctionAnalysisResults;
 };
+
+/// \brief A module analysis which acts as a proxy for a function analysis
+/// manager.
+///
+/// This primarily proxies invalidation information from the module analysis
+/// manager and module pass manager to a function analysis manager. You should
+/// never use a function analysis manager from within (transitively) a module
+/// pass manager unless your parent module pass has received a proxy result
+/// object for it.
+///
+/// FIXME: It might be really nice to "enforce" this (softly) by making this
+/// proxy the API path to access a function analysis manager within a module
+/// pass.
+class FunctionAnalysisModuleProxy {
+public:
+  typedef Module IRUnitT;
+  class Result;
+
+  static void *ID() { return (void *)&PassID; }
+
+  FunctionAnalysisModuleProxy(FunctionAnalysisManager &FAM) : FAM(FAM) {}
+
+  /// \brief Run the analysis pass and create our proxy result object.
+  ///
+  /// This doesn't do any interesting work, it is primarily used to insert our
+  /// proxy result object into the module analysis cache so that we can proxy
+  /// invalidation to the function analysis manager.
+  ///
+  /// In debug builds, it will also assert that the analysis manager is empty
+  /// as no queries should arrive at the function analysis manager prior to
+  /// this analysis being requested.
+  Result run(Module *M);
+
+private:
+  static char PassID;
+
+  FunctionAnalysisManager &FAM;
+};
+
+/// \brief The result proxy object for the \c FunctionAnalysisModuleProxy.
+///
+/// See its documentation for more information.
+class FunctionAnalysisModuleProxy::Result {
+public:
+  Result(FunctionAnalysisManager &FAM) : FAM(FAM) {}
+  ~Result();
+
+  /// \brief Handler for invalidation of the module.
+  bool invalidate(Module *M);
+
+private:
+  FunctionAnalysisManager &FAM;
+};
+
+/// \brief Trivial adaptor that maps from a module to its functions.
+///
+/// Designed to allow composition of a FunctionPass(Manager) and a
+/// ModulePassManager. Note that if this pass is constructed with a pointer to
+/// a \c ModuleAnalysisManager it will run the \c FunctionAnalysisModuleProxy
+/// analysis prior to running the function pass over the module to enable a \c
+/// FunctionAnalysisManager to be used within this run safely.
+template <typename FunctionPassT>
+class ModuleToFunctionPassAdaptor {
+public:
+  explicit ModuleToFunctionPassAdaptor(FunctionPassT Pass,
+                                       ModuleAnalysisManager *MAM = 0)
+      : Pass(llvm_move(Pass)), MAM(MAM) {}
+
+  /// \brief Runs the function pass across every function in the module.
+  PreservedAnalyses run(Module *M) {
+    if (MAM)
+      // Pull in the analysis proxy so that the function analysis manager is
+      // appropriately set up.
+      (void)MAM->getResult<FunctionAnalysisModuleProxy>(M);
+
+    PreservedAnalyses PA = PreservedAnalyses::all();
+    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
+      PreservedAnalyses PassPA = Pass.run(I);
+      PA.intersect(llvm_move(PassPA));
+    }
+    return PA;
+  }
+
+private:
+  FunctionPassT Pass;
+  ModuleAnalysisManager *MAM;
+};
+
+/// \brief A function to deduce a function pass type and wrap it in the
+/// templated adaptor.
+///
+/// \param MAM is an optional \c ModuleAnalysisManager which (if provided) will
+/// be queried for a \c FunctionAnalysisModuleProxy to enable the function
+/// pass(es) to safely interact with a \c FunctionAnalysisManager.
+template <typename FunctionPassT>
+ModuleToFunctionPassAdaptor<FunctionPassT>
+createModuleToFunctionPassAdaptor(FunctionPassT Pass,
+                                  ModuleAnalysisManager *MAM = 0) {
+  return ModuleToFunctionPassAdaptor<FunctionPassT>(llvm_move(Pass), MAM);
+}
 
 }

@@ -32,8 +32,11 @@ public:
   /// \brief Returns an opaque, unique ID for this pass type.
   static void *ID() { return (void *)&PassID; }
 
+  TestAnalysisPass(int &Runs) : Runs(Runs) {}
+
   /// \brief Run the analysis pass over the function and return a result.
   Result run(Function *F) {
+    ++Runs;
     int Count = 0;
     for (Function::iterator BBI = F->begin(), BBE = F->end(); BBI != BBE; ++BBI)
       for (BasicBlock::iterator II = BBI->begin(), IE = BBI->end(); II != IE;
@@ -45,6 +48,8 @@ public:
 private:
   /// \brief Private static data to provide unique ID.
   static char PassID;
+
+  int &Runs;
 };
 
 char TestAnalysisPass::PassID;
@@ -71,7 +76,7 @@ struct TestFunctionPass {
     const TestAnalysisPass::Result &AR = AM.getResult<TestAnalysisPass>(F);
     AnalyzedInstrCount += AR.InstructionCount;
 
-    return PreservedAnalyses::none();
+    return PreservedAnalyses::all();
   }
 
   FunctionAnalysisManager &AM;
@@ -106,25 +111,45 @@ public:
 };
 
 TEST_F(PassManagerTest, Basic) {
-  FunctionAnalysisManager AM;
-  AM.registerPass(TestAnalysisPass());
+  FunctionAnalysisManager FAM;
+  int AnalysisRuns = 0;
+  FAM.registerPass(TestAnalysisPass(AnalysisRuns));
 
-  ModulePassManager MPM;
-  FunctionPassManager FPM(&AM);
+  ModuleAnalysisManager MAM;
+  MAM.registerPass(FunctionAnalysisModuleProxy(FAM));
+
+  ModulePassManager MPM(&MAM);
+
+  // Count the runs over a Function.
+  FunctionPassManager FPM1(&FAM);
+  int FunctionPassRunCount1 = 0;
+  int AnalyzedInstrCount1 = 0;
+  FPM1.addPass(TestFunctionPass(FAM, FunctionPassRunCount1, AnalyzedInstrCount1));
+  MPM.addPass(createModuleToFunctionPassAdaptor(FPM1, &MAM));
 
   // Count the runs over a module.
   int ModulePassRunCount = 0;
   MPM.addPass(TestModulePass(ModulePassRunCount));
 
-  // Count the runs over a Function.
-  int FunctionPassRunCount = 0;
-  int AnalyzedInstrCount = 0;
-  FPM.addPass(TestFunctionPass(AM, FunctionPassRunCount, AnalyzedInstrCount));
-  MPM.addPass(createModuleToFunctionPassAdaptor(FPM));
+  // Count the runs over a Function in a separate manager.
+  FunctionPassManager FPM2(&FAM);
+  int FunctionPassRunCount2 = 0;
+  int AnalyzedInstrCount2 = 0;
+  FPM2.addPass(TestFunctionPass(FAM, FunctionPassRunCount2, AnalyzedInstrCount2));
+  MPM.addPass(createModuleToFunctionPassAdaptor(FPM2, &MAM));
 
   MPM.run(M.get());
+
+  // Validate module pass counters.
   EXPECT_EQ(1, ModulePassRunCount);
-  EXPECT_EQ(3, FunctionPassRunCount);
-  EXPECT_EQ(5, AnalyzedInstrCount);
+
+  // Validate both function pass counter sets.
+  EXPECT_EQ(3, FunctionPassRunCount1);
+  EXPECT_EQ(5, AnalyzedInstrCount1);
+  EXPECT_EQ(3, FunctionPassRunCount2);
+  EXPECT_EQ(5, AnalyzedInstrCount2);
+
+  // Validate the analysis counters.
+  EXPECT_EQ(6, AnalysisRuns);
 }
 }
