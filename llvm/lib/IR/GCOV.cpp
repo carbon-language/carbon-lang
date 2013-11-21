@@ -54,8 +54,7 @@ bool GCOVFile::read(GCOVBuffer &Buffer) {
         return false;
       Functions.push_back(GFun);
     }
-  }
-  else if (isGCDAFile(Format)) {
+  } else if (isGCDAFile(Format)) {
     uint32_t Checksum2;
     if (!Buffer.readInt(Checksum2)) return false;
     if (Checksum != Checksum2) {
