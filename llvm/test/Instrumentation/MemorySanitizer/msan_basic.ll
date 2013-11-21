@@ -255,6 +255,7 @@ entry:
 ; CHECK-NEXT: select
 ; CHECK-ORIGINS: select
 ; CHECK-ORIGINS: select
+; CHECK: select
 ; CHECK: ret i32
 
 
@@ -274,6 +275,9 @@ entry:
 ; CHECK-NEXT: or <8 x i16>
 ; CHECK-ORIGINS: bitcast <8 x i1> {{.*}} to i8
 ; CHECK-ORIGINS: icmp ne i8 {{.*}}, 0
+; CHECK-ORIGINS: bitcast <8 x i1> {{.*}} to i8
+; CHECK-ORIGINS: icmp ne i8 {{.*}}, 0
+; CHECK-ORIGINS: select i1
 ; CHECK-ORIGINS: select i1
 ; CHECK: select <8 x i1>
 ; CHECK: ret <8 x i16>
@@ -295,6 +299,8 @@ entry:
 ; CHECK: sext i1 {{.*}} to i128
 ; CHECK: bitcast i128 {{.*}} to <8 x i16>
 ; CHECK: or <8 x i16>
+; CHECK-ORIGINS: select i1
+; CHECK-ORIGINS: select i1
 ; CHECK: select i1
 ; CHECK: ret <8 x i16>
 
@@ -308,6 +314,7 @@ entry:
 ; CHECK: @SelectStruct
 ; CHECK: select i1 {{.*}}, { i64, i64 }
 ; CHECK-NEXT: select i1 {{.*}}, { i64, i64 } { i64 -1, i64 -1 }, { i64, i64 }
+; CHECK-ORIGINS: select i1
 ; CHECK-ORIGINS: select i1
 ; CHECK-NEXT: select i1 {{.*}}, { i64, i64 }
 ; CHECK: ret { i64, i64 }

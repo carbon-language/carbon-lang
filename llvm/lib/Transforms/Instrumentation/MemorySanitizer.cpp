@@ -2082,13 +2082,20 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       // Origins are always i32, so any vector conditions must be flattened.
       // FIXME: consider tracking vector origins for app vectors?
       Value *Cond = I.getCondition();
+      Value *CondShadow = getShadow(Cond);
       if (Cond->getType()->isVectorTy()) {
-        Value *ConvertedShadow = convertToShadowTyNoVec(Cond, IRB);
-        Cond = IRB.CreateICmpNE(ConvertedShadow,
-                                getCleanShadow(ConvertedShadow), "_mso_select");
+        Type *FlatTy = getShadowTyNoVec(Cond->getType());
+        Cond = IRB.CreateICmpNE(IRB.CreateBitCast(Cond, FlatTy),
+                                ConstantInt::getNullValue(FlatTy));
+        CondShadow = IRB.CreateICmpNE(IRB.CreateBitCast(CondShadow, FlatTy),
+                                      ConstantInt::getNullValue(FlatTy));
       }
-      setOrigin(&I, IRB.CreateSelect(Cond,
-                getOrigin(I.getTrueValue()), getOrigin(I.getFalseValue())));
+      // a = select b, c, d
+      // Oa = Sb ? Ob : (b ? Oc : Od)
+      setOrigin(&I, IRB.CreateSelect(
+                        CondShadow, getOrigin(I.getCondition()),
+                        IRB.CreateSelect(Cond, getOrigin(I.getTrueValue()),
+                                         getOrigin(I.getFalseValue()))));
     }
   }
 
