@@ -26,6 +26,8 @@ class StringExtractorGDBRemote;
 class GDBRemoteCommunicationServer : public GDBRemoteCommunication
 {
 public:
+    typedef std::map<uint16_t, lldb::pid_t> PortMap;
+
     enum
     {
         eBroadcastBitRunPacketSent = kLoUserBroadcastBit
@@ -58,30 +60,79 @@ public:
     // Set both ports to zero to let the platform automatically bind to 
     // a port chosen by the OS.
     void
-    SetPortRange (uint16_t lo_port_num, uint16_t hi_port_num)
+    SetPortMap (PortMap &&port_map)
     {
-        m_lo_port_num = lo_port_num;
-        m_hi_port_num = hi_port_num;
-        m_next_port = m_lo_port_num;
-        m_use_port_range = true;
+        m_port_map = port_map;
     }
 
-    // If we are using a port range, get and update the next port to be used variable.
-    // Otherwise, just return 0.
+    //----------------------------------------------------------------------
+    // If we are using a port map where we can only use certain ports,
+    // get the next available port.
+    //
+    // If we are using a port map and we are out of ports, return UINT16_MAX
+    //
+    // If we aren't using a port map, return 0 to indicate we should bind to
+    // port 0 and then figure out which port we used.
+    //----------------------------------------------------------------------
     uint16_t
-    GetAndUpdateNextPort ()
+    GetNextAvailablePort ()
     {
-        if (!m_use_port_range)
-            return 0;
-        uint16_t val = m_next_port;
-        if (++m_next_port > m_hi_port_num)
-            m_next_port = m_lo_port_num;
-        return val;
+        if (m_port_map.empty())
+            return 0; // Bind to port zero and get a port, we didn't have any limitations
+        
+        for (auto &pair : m_port_map)
+        {
+            if (pair.second == LLDB_INVALID_PROCESS_ID)
+            {
+                pair.second = ~(lldb::pid_t)LLDB_INVALID_PROCESS_ID;
+                return pair.first;
+            }
+        }
+        return UINT16_MAX;
+    }
+
+    bool
+    AssociatePortWithProcess (uint16_t port, lldb::pid_t pid)
+    {
+        PortMap::iterator pos = m_port_map.find(port);
+        if (pos != m_port_map.end())
+        {
+            pos->second = pid;
+            return true;
+        }
+        return false;
+    }
+
+    bool
+    FreePort (uint16_t port)
+    {
+        PortMap::iterator pos = m_port_map.find(port);
+        if (pos != m_port_map.end())
+        {
+            pos->second = LLDB_INVALID_PROCESS_ID;
+            return true;
+        }
+        return false;
+    }
+
+    bool
+    FreePortForProcess (lldb::pid_t pid)
+    {
+        if (!m_port_map.empty())
+        {
+            for (auto &pair : m_port_map)
+            {
+                if (pair.second == pid)
+                {
+                    pair.second = LLDB_INVALID_PROCESS_ID;
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 protected:
-    //typedef std::map<uint16_t, lldb::pid_t> PortToPIDMap;
-
     lldb::thread_t m_async_thread;
     lldb_private::ProcessLaunchInfo m_process_launch_info;
     lldb_private::Error m_process_launch_error;
@@ -89,11 +140,7 @@ protected:
     lldb_private::Mutex m_spawned_pids_mutex;
     lldb_private::ProcessInstanceInfoList m_proc_infos;
     uint32_t m_proc_infos_index;
-    uint16_t m_lo_port_num;
-    uint16_t m_hi_port_num;
-    //PortToPIDMap m_port_to_pid_map;
-    uint16_t m_next_port;
-    bool m_use_port_range;
+    PortMap m_port_map;
     
 
     size_t

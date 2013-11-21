@@ -2286,7 +2286,7 @@ GDBRemoteCommunicationClient::LaunchGDBserverAndGetPort (lldb::pid_t &pid)
     pid = LLDB_INVALID_PROCESS_ID;
     StringExtractorGDBRemote response;
     StreamString stream;
-    stream.PutCString("qLaunchGDBServer:port:0;");
+    stream.PutCString("qLaunchGDBServer;");
     std::string hostname;
     if (Host::GetHostname (hostname))
     {

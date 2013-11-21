@@ -47,27 +47,8 @@ GDBRemoteCommunicationServer::GDBRemoteCommunicationServer(bool is_platform) :
     m_spawned_pids_mutex (Mutex::eMutexTypeRecursive),
     m_proc_infos (),
     m_proc_infos_index (0),
-    m_lo_port_num (0),
-    m_hi_port_num (0),
-    m_next_port (0),
-    m_use_port_range (false)
+    m_port_map ()
 {
-    // We seldom need to override the port number that the debugserver process
-    // starts with.  We just pass in 0 to let the system choose a random port.
-    // In rare situation where the need arises, use two environment variables
-    // to override.
-    uint16_t lo_port_num = 0;
-    uint16_t hi_port_num = 0;
-    const char *lo_port_c_str = getenv("LLDB_PLATFORM_START_DEBUG_SERVER_LO_PORT");
-    if (lo_port_c_str)
-        lo_port_num = ::atoi(lo_port_c_str);
-    const char *hi_port_c_str = getenv("LLDB_PLATFORM_START_DEBUG_SERVER_HI_PORT");
-    if (hi_port_c_str)
-        hi_port_num = ::atoi(hi_port_c_str);
-    if (lo_port_num && hi_port_num && lo_port_num < hi_port_num)
-    {
-        SetPortRange(lo_port_num, hi_port_num);
-    }
 }
 
 //----------------------------------------------------------------------
@@ -743,6 +724,7 @@ bool
 GDBRemoteCommunicationServer::DebugserverProcessReaped (lldb::pid_t pid)
 {
     Mutex::Locker locker (m_spawned_pids_mutex);
+    FreePortForProcess(pid);
     return m_spawned_pids.erase(pid) > 0;
 }
 bool
@@ -776,106 +758,119 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
         std::string hostname;
         // TODO: /tmp/ should not be hardcoded. User might want to override /tmp
         // with the TMPDIR environnement variable
-        char unix_socket_name[PATH_MAX] = "/tmp/XXXXXX";
-        if (::mkstemp (unix_socket_name) == -1)
+        packet.SetFilePos(::strlen ("qLaunchGDBServer;"));
+        std::string name;
+        std::string value;
+        uint16_t port = UINT16_MAX;
+        while (packet.GetNameColonValue(name, value))
         {
-            error.SetErrorStringWithFormat("failed to make temporary path for a unix socket: %s", strerror(errno));
+            if (name.compare ("host") == 0)
+                hostname.swap(value);
+            else if (name.compare ("port") == 0)
+                port = Args::StringToUInt32(value.c_str(), 0, 0);
         }
-        else
+        if (port == UINT16_MAX)
+            port = GetNextAvailablePort();
+
+        // Spawn a new thread to accept the port that gets bound after
+        // binding to port 0 (zero).
+        lldb::thread_t accept_thread = LLDB_INVALID_HOST_THREAD;
+        const char *unix_socket_name = NULL;
+        char unix_socket_name_buf[PATH_MAX] = "/tmp/XXXXXXXXX";
+
+        if (port == 0)
         {
-            packet.SetFilePos(::strlen ("qLaunchGDBServer:"));
-            std::string name;
-            std::string value;
-            uint16_t port = UINT16_MAX;
-            while (packet.GetNameColonValue(name, value))
+            if (::mkstemp (unix_socket_name_buf) == 0)
             {
-                if (name.compare ("host") == 0)
-                    hostname.swap(value);
-                else if (name.compare ("port") == 0)
-                    port = Args::StringToUInt32(value.c_str(), 0, 0);
-            }
-            if (port == UINT16_MAX)
-                port = GetAndUpdateNextPort();
-
-            ::snprintf (connect_url, sizeof(connect_url), "unix-accept://%s", unix_socket_name);
-            // Spawn a new thread to accept the port that gets bound after
-            // binding to port 0 (zero).
-            lldb::thread_t accept_thread = LLDB_INVALID_HOST_THREAD;
-
-            if (port == 0)
-            {
+                unix_socket_name = unix_socket_name_buf;
+                ::snprintf (connect_url, sizeof(connect_url), "unix-accept://%s", unix_socket_name);
                 accept_thread = Host::ThreadCreate (unix_socket_name,
                                                     AcceptPortFromInferior,
                                                     connect_url,
                                                     &error);
             }
-
-            if (IS_VALID_LLDB_HOST_THREAD(accept_thread))
+            else
             {
-                // Spawn a debugserver and try to get the port it listens to.
-                ProcessLaunchInfo debugserver_launch_info;
-                StreamString host_and_port;
-                if (hostname.empty())
-                    hostname = "localhost";
-                host_and_port.Printf("%s:%u", hostname.c_str(), port);
-                const char *host_and_port_cstr = host_and_port.GetString().c_str();
-                Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
-                if (log)
-                    log->Printf("Launching debugserver with: %s...\n", host_and_port_cstr);
+                error.SetErrorStringWithFormat("failed to make temporary path for a unix socket: %s", strerror(errno));
+            }
+        }
 
-                debugserver_launch_info.SetMonitorProcessCallback(ReapDebugserverProcess, this, false);
-                
-                error = StartDebugserverProcess (host_and_port_cstr,
-                                                 unix_socket_name,
-                                                 debugserver_launch_info);
+        if (error.Success())
+        {
+            // Spawn a debugserver and try to get the port it listens to.
+            ProcessLaunchInfo debugserver_launch_info;
+            StreamString host_and_port;
+            if (hostname.empty())
+                hostname = "localhost";
+            host_and_port.Printf("%s:%u", hostname.c_str(), port);
+            const char *host_and_port_cstr = host_and_port.GetString().c_str();
+            Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
+            if (log)
+                log->Printf("Launching debugserver with: %s...\n", host_and_port_cstr);
 
-                lldb::pid_t debugserver_pid = debugserver_launch_info.GetProcessID();
+            debugserver_launch_info.SetMonitorProcessCallback(ReapDebugserverProcess, this, false);
+            
+            error = StartDebugserverProcess (host_and_port_cstr,
+                                             unix_socket_name,
+                                             debugserver_launch_info);
+
+            lldb::pid_t debugserver_pid = debugserver_launch_info.GetProcessID();
 
 
-                if (debugserver_pid != LLDB_INVALID_PROCESS_ID)
+            if (debugserver_pid != LLDB_INVALID_PROCESS_ID)
+            {
+                Mutex::Locker locker (m_spawned_pids_mutex);
+                m_spawned_pids.insert(debugserver_pid);
+                if (port > 0)
+                    AssociatePortWithProcess(port, debugserver_pid);
+            }
+            else
+            {
+                if (port > 0)
+                    FreePort (port);
+            }
+
+            if (error.Success())
+            {
+                bool success = false;
+
+                if (IS_VALID_LLDB_HOST_THREAD(accept_thread))
                 {
-                    Mutex::Locker locker (m_spawned_pids_mutex);
-                    m_spawned_pids.insert(debugserver_pid);
-                }
-
-                if (error.Success())
-                {
-                    bool success = false;
-
-                    if (accept_thread)
+                    thread_result_t accept_thread_result = NULL;
+                    if (Host::ThreadJoin (accept_thread, &accept_thread_result, &error))
                     {
-                        thread_result_t accept_thread_result = NULL;
-                        if (Host::ThreadJoin (accept_thread, &accept_thread_result, &error))
+                        if (accept_thread_result)
                         {
-                            if (accept_thread_result)
-                            {
-                                port = (intptr_t)accept_thread_result;
-                                char response[256];
-                                const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port);
-                                assert (response_len < sizeof(response));
-                                //m_port_to_pid_map[port] = debugserver_launch_info.GetProcessID();
-                                success = SendPacketNoLock (response, response_len) > 0;
-                            }
+                            port = (intptr_t)accept_thread_result;
+                            char response[256];
+                            const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port);
+                            assert (response_len < sizeof(response));
+                            //m_port_to_pid_map[port] = debugserver_launch_info.GetProcessID();
+                            success = SendPacketNoLock (response, response_len) > 0;
                         }
                     }
-                    else
-                    {
-                        char response[256];
-                        const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port);
-                        assert (response_len < sizeof(response));
-                        //m_port_to_pid_map[port] = debugserver_launch_info.GetProcessID();
-                        success = SendPacketNoLock (response, response_len) > 0;
-
-                    }
-                    ::unlink (unix_socket_name);
-
-                    if (!success)
-                    {
-                        if (debugserver_pid != LLDB_INVALID_PROCESS_ID)
-                            ::kill (debugserver_pid, SIGINT);
-                    }
-                    return success;
                 }
+                else
+                {
+                    char response[256];
+                    const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port);
+                    assert (response_len < sizeof(response));
+                    //m_port_to_pid_map[port] = debugserver_launch_info.GetProcessID();
+                    success = SendPacketNoLock (response, response_len) > 0;
+
+                }
+                Host::Unlink (unix_socket_name);
+
+                if (!success)
+                {
+                    if (debugserver_pid != LLDB_INVALID_PROCESS_ID)
+                        ::kill (debugserver_pid, SIGINT);
+                }
+                return success;
+            }
+            else if (accept_thread)
+            {
+                Host::Unlink (unix_socket_name);
             }
         }
     }

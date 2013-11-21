@@ -48,8 +48,20 @@ static struct option g_long_options[] =
     { "log-file",           required_argument,  NULL,               'l' },
     { "log-flags",          required_argument,  NULL,               'f' },
     { "listen",             required_argument,  NULL,               'L' },
+    { "gdbserver-port",     required_argument,  NULL,               'p' },
+    { "min-gdbserver-port", required_argument,  NULL,               'm' },
+    { "max-gdbserver-port", required_argument,  NULL,               'M' },
     { NULL,                 0,                  NULL,               0   }
 };
+
+#if defined (__APPLE__)
+#define LOW_PORT    (IPPORT_RESERVED)
+#define HIGH_PORT   (IPPORT_HIFIRSTAUTO)
+#else
+#define LOW_PORT    (1024u)
+#define HIGH_PORT   (49151u)
+#endif
+
 
 //----------------------------------------------------------------------
 // Watch for signals
@@ -97,11 +109,17 @@ main (int argc, char *argv[])
     int ch;
     Debugger::Initialize();
     
+    GDBRemoteCommunicationServer::PortMap gdbserver_portmap;
+    int min_gdbserver_port = 0;
+    int max_gdbserver_port = 0;
+    
+    bool show_usage = false;
+    int option_error = 0;
 //    StreamSP stream_sp (new StreamFile(stdout, false));
 //    const char *log_channels[] = { "host", "process", NULL };
 //    EnableLog (stream_sp, 0, log_channels, NULL);
     
-    while ((ch = getopt_long_only(argc, argv, "l:f:L:", g_long_options, &long_option_index)) != -1)
+    while ((ch = getopt_long_only(argc, argv, "l:f:L:p:m:M:", g_long_options, &long_option_index)) != -1)
     {
 //        DNBLogDebug("option: ch == %c (0x%2.2x) --%s%c%s\n",
 //                    ch, (uint8_t)ch,
@@ -152,15 +170,66 @@ main (int argc, char *argv[])
             listen_host_port.append (optarg);
             break;
 
+        case 'p':
+        case 'm':
+        case 'M':
+            {
+                char *end = NULL;
+                long portnum = strtoul(optarg, &end, 0);
+                if (end && *end == '\0')
+                {
+                    if (LOW_PORT <= portnum && portnum <= HIGH_PORT)
+                    {
+                        if (ch  == 'p')
+                            gdbserver_portmap[(uint16_t)portnum] = LLDB_INVALID_PROCESS_ID;
+                        else if (ch == 'm')
+                            min_gdbserver_port = portnum;
+                        else
+                            max_gdbserver_port = portnum;
+                    }
+                    else
+                    {
+                        fprintf (stderr, "error: port number %li is not in the valid user port range of %u - %u\n", portnum, LOW_PORT, HIGH_PORT);
+                        option_error = 1;
+                    }
+                }
+                else
+                {
+                    fprintf (stderr, "error: invalid port number string %s\n", optarg);
+                    option_error = 2;
+                }
+            }
+            break;
+            
         case 'h':   /* fall-through is intentional */
         case '?':
-            display_usage(progname);
+            show_usage = true;
             break;
         }
     }
+    
+    // Make a port map for a port range that was specified.
+    if (min_gdbserver_port < max_gdbserver_port)
+    {
+        for (uint16_t port = min_gdbserver_port; port < max_gdbserver_port; ++port)
+            gdbserver_portmap[port] = LLDB_INVALID_PROCESS_ID;
+    }
+    else if (min_gdbserver_port != max_gdbserver_port)
+    {
+        fprintf (stderr, "error: --min-gdbserver-port (%u) is greater than --max-gdbserver-port (%u)\n", min_gdbserver_port, max_gdbserver_port);
+        option_error = 3;
+        
+    }
+
     // Print usage and exit if no listening port is specified.
     if (listen_host_port.empty())
+        show_usage = true;
+    
+    if (show_usage || option_error)
+    {
         display_usage(progname);
+        exit(option_error);
+    }
     
     if (log_stream_sp)
     {
@@ -176,6 +245,12 @@ main (int argc, char *argv[])
 
     do {
         GDBRemoteCommunicationServer gdb_server (true);
+        
+        if (!gdbserver_portmap.empty())
+        {
+            gdb_server.SetPortMap(std::move(gdbserver_portmap));
+        }
+
         if (!listen_host_port.empty())
         {
             std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
