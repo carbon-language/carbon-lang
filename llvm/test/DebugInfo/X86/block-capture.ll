@@ -1,11 +1,18 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj -dwarf-version=3
+; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s -check-prefix=DWARF3
 
 ; Checks that we emit debug info for the block variable declare.
 ; CHECK: DW_TAG_subprogram [3]
 ; CHECK: DW_TAG_variable [5]
 ; CHECK: DW_AT_name [DW_FORM_strp]     ( .debug_str[{{.*}}] = "block")
 ; CHECK: DW_AT_location [DW_FORM_sec_offset]        ({{.*}})
+
+; DWARF3: DW_TAG_subprogram [3]
+; DWARF3: DW_TAG_variable [5]
+; DWARF3: DW_AT_name [DW_FORM_strp]     ( .debug_str[{{.*}}] = "block")
+; DWARF3: DW_AT_location [DW_FORM_data4]        ({{.*}})
 
 %struct.__block_descriptor = type { i64, i64 }
 %struct.__block_literal_generic = type { i8*, i32, i32, i8*, %struct.__block_descriptor* }

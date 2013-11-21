@@ -104,6 +104,11 @@ DwarfPubSections("generate-dwarf-pub-sections", cl::Hidden,
                             clEnumVal(Disable, "Disabled"), clEnumValEnd),
                  cl::init(Default));
 
+static cl::opt<unsigned>
+DwarfVersionNumber("dwarf-version", cl::Hidden,
+                   cl::desc("Generate DWARF for dwarf version."),
+                   cl::init(0));
+
 static const char *const DWARFGroupName = "DWARF Emission";
 static const char *const DbgTimerName = "DWARF Debug Writer";
 
@@ -212,7 +217,9 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   else
     HasDwarfPubSections = DwarfPubSections == Enable;
 
-  DwarfVersion = getDwarfVersionFromModule(MMI->getModule());
+  DwarfVersion = DwarfVersionNumber
+                     ? DwarfVersionNumber
+                     : getDwarfVersionFromModule(MMI->getModule());
 
   {
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
@@ -470,9 +477,9 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
     // .debug_range section has not been laid out yet. Emit offset in
     // .debug_range as a uint, size 4, for now. emitDIE will handle
     // DW_AT_ranges appropriately.
-    TheCU->addUInt(ScopeDIE, dwarf::DW_AT_ranges, dwarf::DW_FORM_data4,
-                   DebugRangeSymbols.size() *
-                       Asm->getDataLayout().getPointerSize());
+    TheCU->addSectionOffset(ScopeDIE, dwarf::DW_AT_ranges,
+                            DebugRangeSymbols.size() *
+                                Asm->getDataLayout().getPointerSize());
     for (SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin(),
                                                     RE = Ranges.end();
          RI != RE; ++RI) {
@@ -526,9 +533,9 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
     // .debug_range section has not been laid out yet. Emit offset in
     // .debug_range as a uint, size 4, for now. emitDIE will handle
     // DW_AT_ranges appropriately.
-    TheCU->addUInt(ScopeDIE, dwarf::DW_AT_ranges, dwarf::DW_FORM_data4,
-                   DebugRangeSymbols.size() *
-                       Asm->getDataLayout().getPointerSize());
+    TheCU->addSectionOffset(ScopeDIE, dwarf::DW_AT_ranges,
+                            DebugRangeSymbols.size() *
+                                Asm->getDataLayout().getPointerSize());
     for (SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin(),
                                                     RE = Ranges.end();
          RI != RE; ++RI) {
@@ -766,14 +773,15 @@ CompileUnit *DwarfDebug::constructCompileUnit(DICompileUnit DIUnit) {
     // The line table entries are not always emitted in assembly, so it
     // is not okay to use line_table_start here.
     if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-      NewCU->addLabel(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_sec_offset,
-                      UseTheFirstCU ? Asm->GetTempSymbol("section_line")
-                                    : LineTableStartSym);
+      NewCU->addSectionLabel(
+          Die, dwarf::DW_AT_stmt_list,
+          UseTheFirstCU ? Asm->GetTempSymbol("section_line")
+                        : LineTableStartSym);
     else if (UseTheFirstCU)
-      NewCU->addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
+      NewCU->addSectionOffset(Die, dwarf::DW_AT_stmt_list, 0);
     else
-      NewCU->addDelta(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
-                      LineTableStartSym, DwarfLineSectionSym);
+      NewCU->addSectionDelta(Die, dwarf::DW_AT_stmt_list,
+                             LineTableStartSym, DwarfLineSectionSym);
 
     // If we're using split dwarf the compilation dir is going to be in the
     // skeleton CU and so we don't need to duplicate it here.
@@ -784,22 +792,22 @@ CompileUnit *DwarfDebug::constructCompileUnit(DICompileUnit DIUnit) {
     // emit it here if we don't have a skeleton CU for split dwarf.
     if (GenerateGnuPubSections) {
       if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-        NewCU->addLabel(
-            Die, dwarf::DW_AT_GNU_pubnames, dwarf::DW_FORM_sec_offset,
+        NewCU->addSectionLabel(
+            Die, dwarf::DW_AT_GNU_pubnames,
             Asm->GetTempSymbol("gnu_pubnames", NewCU->getUniqueID()));
       else
-        NewCU->addDelta(
-            Die, dwarf::DW_AT_GNU_pubnames, dwarf::DW_FORM_data4,
+        NewCU->addSectionDelta(
+            Die, dwarf::DW_AT_GNU_pubnames,
             Asm->GetTempSymbol("gnu_pubnames", NewCU->getUniqueID()),
             DwarfGnuPubNamesSectionSym);
 
       if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-        NewCU->addLabel(
-            Die, dwarf::DW_AT_GNU_pubtypes, dwarf::DW_FORM_sec_offset,
+        NewCU->addSectionLabel(
+            Die, dwarf::DW_AT_GNU_pubtypes,
             Asm->GetTempSymbol("gnu_pubtypes", NewCU->getUniqueID()));
       else
-        NewCU->addDelta(
-            Die, dwarf::DW_AT_GNU_pubtypes, dwarf::DW_FORM_data4,
+        NewCU->addSectionDelta(
+            Die, dwarf::DW_AT_GNU_pubtypes,
             Asm->GetTempSymbol("gnu_pubtypes", NewCU->getUniqueID()),
             DwarfGnuPubTypesSectionSym);
     }
@@ -2957,11 +2965,10 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
   // Relocate to the beginning of the addr_base section, else 0 for the
   // beginning of the one for this compile unit.
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-    NewCU->addLabel(Die, dwarf::DW_AT_GNU_addr_base, dwarf::DW_FORM_sec_offset,
-                    DwarfAddrSectionSym);
+    NewCU->addSectionLabel(Die, dwarf::DW_AT_GNU_addr_base,
+                           DwarfAddrSectionSym);
   else
-    NewCU->addUInt(Die, dwarf::DW_AT_GNU_addr_base, dwarf::DW_FORM_sec_offset,
-                   0);
+    NewCU->addSectionOffset(Die, dwarf::DW_AT_GNU_addr_base, 0);
 
   // 2.17.1 requires that we use DW_AT_low_pc for a single entry point
   // into an entity. We're using 0, or a NULL label for this.
@@ -2971,10 +2978,10 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
   // compile unit in debug_line section.
   // FIXME: Should handle multiple compile units.
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-    NewCU->addLabel(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_sec_offset,
-                    DwarfLineSectionSym);
+    NewCU->addSectionLabel(Die, dwarf::DW_AT_stmt_list,
+                           DwarfLineSectionSym);
   else
-    NewCU->addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_sec_offset, 0);
+    NewCU->addSectionOffset(Die, dwarf::DW_AT_stmt_list, 0);
 
   if (!CompilationDir.empty())
     NewCU->addLocalString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
@@ -2982,27 +2989,31 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
   // Flags to let the linker know we have emitted new style pubnames.
   if (GenerateGnuPubSections) {
     if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-      NewCU->addLabel(Die, dwarf::DW_AT_GNU_pubnames, dwarf::DW_FORM_sec_offset,
-                      Asm->GetTempSymbol("gnu_pubnames", NewCU->getUniqueID()));
+      NewCU->addSectionLabel(
+          Die, dwarf::DW_AT_GNU_pubnames,
+          Asm->GetTempSymbol("gnu_pubnames", NewCU->getUniqueID()));
     else
-      NewCU->addDelta(Die, dwarf::DW_AT_GNU_pubnames, dwarf::DW_FORM_data4,
-                      Asm->GetTempSymbol("gnu_pubnames", NewCU->getUniqueID()),
-                      DwarfGnuPubNamesSectionSym);
+      NewCU->addSectionDelta(
+          Die, dwarf::DW_AT_GNU_pubnames,
+          Asm->GetTempSymbol("gnu_pubnames", NewCU->getUniqueID()),
+          DwarfGnuPubNamesSectionSym);
 
     if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-      NewCU->addLabel(Die, dwarf::DW_AT_GNU_pubtypes, dwarf::DW_FORM_sec_offset,
-                      Asm->GetTempSymbol("gnu_pubtypes", NewCU->getUniqueID()));
+      NewCU->addSectionLabel(
+          Die, dwarf::DW_AT_GNU_pubtypes,
+          Asm->GetTempSymbol("gnu_pubtypes", NewCU->getUniqueID()));
     else
-      NewCU->addDelta(Die, dwarf::DW_AT_GNU_pubtypes, dwarf::DW_FORM_data4,
-                      Asm->GetTempSymbol("gnu_pubtypes", NewCU->getUniqueID()),
-                      DwarfGnuPubTypesSectionSym);
+      NewCU->addSectionDelta(
+          Die, dwarf::DW_AT_GNU_pubtypes,
+          Asm->GetTempSymbol("gnu_pubtypes", NewCU->getUniqueID()),
+          DwarfGnuPubTypesSectionSym);
   }
 
   // Flag if we've emitted any ranges and their location for the compile unit.
   if (DebugRangeSymbols.size()) {
     if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-      NewCU->addLabel(Die, dwarf::DW_AT_GNU_ranges_base,
-                      dwarf::DW_FORM_sec_offset, DwarfDebugRangeSectionSym);
+      NewCU->addSectionLabel(Die, dwarf::DW_AT_GNU_ranges_base,
+                             DwarfDebugRangeSectionSym);
     else
       NewCU->addUInt(Die, dwarf::DW_AT_GNU_ranges_base, dwarf::DW_FORM_data4,
                      0);

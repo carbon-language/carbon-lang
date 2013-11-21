@@ -341,6 +341,7 @@ void DIEDelta::EmitValue(AsmPrinter *AP, dwarf::Form Form) const {
 ///
 unsigned DIEDelta::SizeOf(AsmPrinter *AP, dwarf::Form Form) const {
   if (Form == dwarf::DW_FORM_data4) return 4;
+  if (Form == dwarf::DW_FORM_sec_offset) return 4;
   if (Form == dwarf::DW_FORM_strp) return 4;
   return AP->getDataLayout().getPointerSize();
 }

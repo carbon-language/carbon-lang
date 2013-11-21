@@ -245,6 +245,26 @@ void CompileUnit::addLabel(DIEBlock *Die, dwarf::Form Form,
   addLabel(Die, (dwarf::Attribute)0, Form, Label);
 }
 
+/// addSectionLabel - Add a Dwarf section label attribute data and value.
+///
+void CompileUnit::addSectionLabel(DIE *Die, dwarf::Attribute Attribute,
+                                  const MCSymbol *Label) {
+  if (DD->getDwarfVersion() >= 4)
+    addLabel(Die, Attribute, dwarf::DW_FORM_sec_offset, Label);
+  else
+    addLabel(Die, Attribute, dwarf::DW_FORM_data4, Label);
+}
+
+/// addSectionOffset - Add an offset into a section attribute data and value.
+///
+void CompileUnit::addSectionOffset(DIE *Die, dwarf::Attribute Attribute,
+                                   uint64_t Integer) {
+  if (DD->getDwarfVersion() >= 4)
+    addUInt(Die, Attribute, dwarf::DW_FORM_sec_offset, Integer);
+  else
+    addUInt(Die, Attribute, dwarf::DW_FORM_data4, Integer);
+}
+
 /// addLabelAddress - Add a dwarf label attribute data and value using
 /// DW_FORM_addr or DW_FORM_GNU_addr_index.
 ///
@@ -282,13 +302,15 @@ void CompileUnit::addOpAddress(DIEBlock *Die, const MCSymbol *Sym) {
   }
 }
 
-/// addDelta - Add a label delta attribute data and value.
+/// addSectionDelta - Add a section label delta attribute data and value.
 ///
-void CompileUnit::addDelta(DIE *Die, dwarf::Attribute Attribute,
-                           dwarf::Form Form, const MCSymbol *Hi,
-                           const MCSymbol *Lo) {
+void CompileUnit::addSectionDelta(DIE *Die, dwarf::Attribute Attribute,
+                                  const MCSymbol *Hi, const MCSymbol *Lo) {
   DIEValue *Value = new (DIEValueAllocator) DIEDelta(Hi, Lo);
-  Die->addValue(Attribute, Form, Value);
+  if (DD->getDwarfVersion() >= 4)
+    Die->addValue(Attribute, dwarf::DW_FORM_sec_offset, Value);
+  else
+    Die->addValue(Attribute, dwarf::DW_FORM_data4, Value);
 }
 
 /// addDIEEntry - Add a DIE attribute data and value.
@@ -1814,10 +1836,8 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable &DV, bool isScopeAbstract) {
 
   unsigned Offset = DV.getDotDebugLocOffset();
   if (Offset != ~0U) {
-    addLabel(VariableDie, dwarf::DW_AT_location,
-             DD->getDwarfVersion() >= 4 ? dwarf::DW_FORM_sec_offset
-                                        : dwarf::DW_FORM_data4,
-             Asm->GetTempSymbol("debug_loc", Offset));
+    addSectionLabel(VariableDie, dwarf::DW_AT_location,
+                    Asm->GetTempSymbol("debug_loc", Offset));
     DV.setDIE(VariableDie);
     return VariableDie;
   }

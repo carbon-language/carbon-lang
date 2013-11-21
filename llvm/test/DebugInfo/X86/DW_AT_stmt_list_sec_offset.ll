@@ -1,13 +1,16 @@
 ; RUN: llc -mtriple=i686-w64-mingw32 -o %t -filetype=obj %s
 ; RUN: llvm-dwarfdump -debug-dump=all %t | FileCheck %s
+; RUN: llc -mtriple=i686-w64-mingw32 -o %t -filetype=obj -dwarf-version=3 %s
+; RUN: llvm-dwarfdump -debug-dump=all %t | FileCheck %s -check-prefix=DWARF3
 
-; CHECK:  	 DW_AT_stmt_list [DW_FORM_sec_offset]
+; CHECK:         DW_AT_stmt_list [DW_FORM_sec_offset]
+; DWARF3:        DW_AT_stmt_list [DW_FORM_data4]
 ;
 ; generated from:
 ; clang -g -S -emit-llvm test.c -o test.ll
 ; int main()
 ; {
-; 	return 0;
+;       return 0;
 ; }
 
 ; ModuleID = 'test.c'
@@ -36,5 +39,5 @@ attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 !6 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !7, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !7 = metadata !{metadata !8}
 !8 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!9 = metadata !{i32 2, metadata !"Dwarf Version", i32 3}
+!9 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
 !10 = metadata !{i32 3, i32 0, metadata !4, null}

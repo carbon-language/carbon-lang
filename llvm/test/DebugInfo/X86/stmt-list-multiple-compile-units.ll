@@ -1,16 +1,18 @@
 ; RUN: llc -O0 %s -mtriple=x86_64-apple-darwin -filetype=obj -o %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s
+; RUN: llc -O0 %s -mtriple=x86_64-apple-darwin -filetype=obj -o %t -dwarf-version=3
+; RUN: llvm-dwarfdump %t | FileCheck %s -check-prefix=DWARF3
 ; RUN: llc < %s -O0 -mtriple=x86_64-apple-macosx10.7 | FileCheck %s -check-prefix=ASM
 
 ; rdar://13067005
 ; CHECK: .debug_info contents:
 ; CHECK: DW_TAG_compile_unit
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
-; CHECK: DW_AT_stmt_list [DW_FORM_data4]   (0x00000000)
+; CHECK: DW_AT_stmt_list [DW_FORM_sec_offset]   (0x00000000)
 
 ; CHECK: DW_TAG_compile_unit
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
-; CHECK: DW_AT_stmt_list [DW_FORM_data4]   (0x0000003c)
+; CHECK: DW_AT_stmt_list [DW_FORM_sec_offset]   (0x0000003c)
 
 ; CHECK: .debug_line contents:
 ; CHECK-NEXT: Line table prologue:
@@ -20,6 +22,24 @@
 ; CHECK-NEXT: total_length: 0x00000039
 ; CHECK: file_names[  1]    0 0x00000000 0x00000000 simple2.c
 ; CHECK-NOT: file_names
+
+; DWARF3: .debug_info contents:
+; DWARF3: DW_TAG_compile_unit
+; DWARF3: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
+; DWARF3: DW_AT_stmt_list [DW_FORM_data4]   (0x00000000)
+
+; DWARF3: DW_TAG_compile_unit
+; DWARF3: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
+; DWARF3: DW_AT_stmt_list [DW_FORM_data4]   (0x0000003c)
+
+; DWARF3: .debug_line contents:
+; DWARF3-NEXT: Line table prologue:
+; DWARF3-NEXT: total_length: 0x00000038
+; DWARF3: file_names[  1]    0 0x00000000 0x00000000 simple.c
+; DWARF3: Line table prologue:
+; DWARF3-NEXT: total_length: 0x00000039
+; DWARF3: file_names[  1]    0 0x00000000 0x00000000 simple2.c
+; DWARF3-NOT: file_names
 
 ; PR15408
 ; ASM: L__DWARF__debug_info_begin0:
