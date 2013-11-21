@@ -29,7 +29,7 @@ void ModuleAnalysisManager::invalidate(Module *M, const PreservedAnalyses &PA) {
   for (ModuleAnalysisResultMapT::iterator I = ModuleAnalysisResults.begin(),
                                           E = ModuleAnalysisResults.end();
        I != E; ++I)
-    if (!PA.preserved(I->first) && I->second->invalidate(M))
+    if (I->second->invalidate(M, PA))
       ModuleAnalysisResults.erase(I);
 }
 
@@ -76,7 +76,7 @@ void FunctionAnalysisManager::invalidate(Function *F, const PreservedAnalyses &P
   for (FunctionAnalysisResultListT::iterator I = ResultsList.begin(),
                                              E = ResultsList.end();
        I != E;)
-    if (!PA.preserved(I->first) && I->second->invalidate(F)) {
+    if (I->second->invalidate(F, PA)) {
       InvalidatedPassIDs.push_back(I->first);
       I = ResultsList.erase(I);
     } else {
@@ -145,11 +145,19 @@ FunctionAnalysisModuleProxy::Result::~Result() {
   FAM.clear();
 }
 
-bool FunctionAnalysisModuleProxy::Result::invalidate(Module *M) {
-  // FIXME: We should pull the preserved analysis set into the invalidation
-  // handler so that we can detect when there is no need to clear the entire
-  // function analysis manager.
-  FAM.clear();
+bool FunctionAnalysisModuleProxy::Result::invalidate(Module *M, const PreservedAnalyses &PA) {
+  // If this proxy isn't marked as preserved, then it is has an invalid set of
+  // Function objects in the cache making it impossible to incrementally
+  // preserve them. Just clear the entire manager.
+  if (!PA.preserved(ID())) {
+    FAM.clear();
+    return false;
+  }
+
+  // The set of functions was preserved some how, so just directly invalidate
+  // any analysis results not preserved.
+  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+    FAM.invalidate(I, PA);
 
   // Return false to indicate that this result is still a valid proxy.
   return false;

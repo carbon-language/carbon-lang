@@ -64,6 +64,20 @@ struct TestModulePass {
   int &RunCount;
 };
 
+struct TestPreservingModulePass {
+  PreservedAnalyses run(Module *M) {
+    return PreservedAnalyses::all();
+  }
+};
+
+struct TestMinPreservingModulePass {
+  PreservedAnalyses run(Module *M) {
+    PreservedAnalyses PA;
+    PA.preserve<FunctionAnalysisModuleProxy>();
+    return PA;
+  }
+};
+
 struct TestFunctionPass {
   TestFunctionPass(FunctionAnalysisManager &AM, int &RunCount,
                    int &AnalyzedInstrCount)
@@ -137,6 +151,22 @@ TEST_F(PassManagerTest, Basic) {
   FPM2.addPass(TestFunctionPass(FAM, FunctionPassRunCount2, AnalyzedInstrCount2));
   MPM.addPass(createModuleToFunctionPassAdaptor(FPM2, &MAM));
 
+  // A third function pass manager but with only preserving intervening passes.
+  MPM.addPass(TestPreservingModulePass());
+  FunctionPassManager FPM3(&FAM);
+  int FunctionPassRunCount3 = 0;
+  int AnalyzedInstrCount3 = 0;
+  FPM3.addPass(TestFunctionPass(FAM, FunctionPassRunCount3, AnalyzedInstrCount3));
+  MPM.addPass(createModuleToFunctionPassAdaptor(FPM3, &MAM));
+
+  // A fourth function pass manager but with a minimal intervening passes.
+  MPM.addPass(TestMinPreservingModulePass());
+  FunctionPassManager FPM4(&FAM);
+  int FunctionPassRunCount4 = 0;
+  int AnalyzedInstrCount4 = 0;
+  FPM4.addPass(TestFunctionPass(FAM, FunctionPassRunCount4, AnalyzedInstrCount4));
+  MPM.addPass(createModuleToFunctionPassAdaptor(FPM4, &MAM));
+
   MPM.run(M.get());
 
   // Validate module pass counters.
@@ -147,8 +177,12 @@ TEST_F(PassManagerTest, Basic) {
   EXPECT_EQ(5, AnalyzedInstrCount1);
   EXPECT_EQ(3, FunctionPassRunCount2);
   EXPECT_EQ(5, AnalyzedInstrCount2);
+  EXPECT_EQ(3, FunctionPassRunCount3);
+  EXPECT_EQ(5, AnalyzedInstrCount3);
+  EXPECT_EQ(3, FunctionPassRunCount4);
+  EXPECT_EQ(5, AnalyzedInstrCount4);
 
   // Validate the analysis counters.
-  EXPECT_EQ(6, AnalysisRuns);
+  EXPECT_EQ(9, AnalysisRuns);
 }
 }
