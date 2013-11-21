@@ -749,7 +749,7 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
         bug_descr = "use-after-poison";
         break;
       case kAsanContiguousContainerOOBMagic:
-        bug_descr = "contiguous-container-buffer-overflow";
+        bug_descr = "container-overflow";
         break;
       case kAsanStackUseAfterScopeMagic:
         bug_descr = "stack-use-after-scope";

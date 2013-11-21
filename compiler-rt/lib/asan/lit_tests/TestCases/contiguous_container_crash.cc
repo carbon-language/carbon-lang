@@ -13,4 +13,4 @@ int main(int argc, char **argv) {
                                             &t[0] + 50);
   return t[60 * argc];  // Touches the poisoned memory.
 }
-// CHECK: AddressSanitizer: contiguous-container-buffer-overflow
+// CHECK: AddressSanitizer: container-overflow
