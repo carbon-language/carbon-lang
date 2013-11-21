@@ -910,15 +910,11 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
 
   // Add the libraries specified by /defaultlib unless they are already added
   // nor blacklisted by /nodefaultlib.
-  if (!ctx.getNoDefaultLibAll()) {
-    for (const StringRef path : defaultLibs) {
-      if (!ctx.hasNoDefaultLib(path) && !ctx.hasDefaultLib(path)) {
+  if (!ctx.getNoDefaultLibAll())
+    for (const StringRef path : defaultLibs)
+      if (!ctx.hasNoDefaultLib(path))
         inputElements.push_back(std::unique_ptr<InputElement>(
             new PECOFFLibraryNode(ctx, path)));
-	ctx.addDefaultLib(path);
-      }
-    }
-  }
 
   if (inputElements.empty() && !isReadingDirectiveSection) {
     diagnostics << "No input files\n";
