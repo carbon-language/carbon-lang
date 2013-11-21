@@ -22,6 +22,10 @@
 ; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r5 | FileCheck %s --check-prefix=CORTEX-R5
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a53 | FileCheck %s --check-prefix=CORTEX-A53
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a57 | FileCheck %s --check-prefix=CORTEX-A57
+; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 | FileCheck %s  --check-prefix=CORTEX-A7-CHECK
+; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=-vfp2,-vfp3,-vfp4,-neon | FileCheck %s --check-prefix=CORTEX-A7-NOFPU
+; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=+vfp4,-neon | FileCheck %s --check-prefix=CORTEX-A7-FPUV4
+; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=+vfp4,,+d16,-neon | FileCheck %s --check-prefix=CORTEX-A7-FPUV4
 
 ; V6:   .eabi_attribute 6, 6
 ; V6:   .eabi_attribute 8, 1
@@ -111,6 +115,77 @@
 ; V8-FPARMv8-NEON-CRYPTO: .eabi_attribute 6, 14
 ; V8-FPARMv8-NEON-CRYPTO: .fpu crypto-neon-fp-armv8
 ; V8-FPARMv8-NEON-CRYPTO: .eabi_attribute 12, 3
+
+
+; Tag_CPU_arch	'ARMv7'
+; CORTEX-A7-CHECK: .eabi_attribute	6, 10
+; CORTEX-A7-NOFPU: .eabi_attribute	6, 10
+; CORTEX-A7-FPUV4: .eabi_attribute	6, 10
+
+; Tag_CPU_arch_profile 'A'
+; CORTEX-A7-CHECK: .eabi_attribute	7, 65
+; CORTEX-A7-NOFPU: .eabi_attribute	7, 65
+; CORTEX-A7-FPUV4: .eabi_attribute	7, 65
+
+; Tag_ARM_ISA_use
+; CORTEX-A7-CHECK: .eabi_attribute	8, 1
+; CORTEX-A7-NOFPU: .eabi_attribute	8, 1
+; CORTEX-A7-FPUV4: .eabi_attribute	8, 1
+
+; Tag_THUMB_ISA_use
+; CORTEX-A7-CHECK: .eabi_attribute	9, 2
+; CORTEX-A7-NOFPU: .eabi_attribute	9, 2
+; CORTEX-A7-FPUV4: .eabi_attribute	9, 2
+
+; CORTEX-A7-CHECK: .fpu	neon-vfpv4
+; CORTEX-A7-NOFPU-NOT: .fpu
+; CORTEX-A7-FPUV4: .fpu	vfpv4
+
+; Tag_ABI_FP_denormal
+; CORTEX-A7-CHECK: .eabi_attribute	20, 1
+; CORTEX-A7-NOFPU: .eabi_attribute	20, 1
+; CORTEX-A7-FPUV4: .eabi_attribute	20, 1
+
+; Tag_ABI_FP_exceptions
+; CORTEX-A7-CHECK: .eabi_attribute	21, 1
+; CORTEX-A7-NOFPU: .eabi_attribute	21, 1
+; CORTEX-A7-FPUV4: .eabi_attribute	21, 1
+
+; Tag_ABI_FP_number_model
+; CORTEX-A7-CHECK: .eabi_attribute	23, 3
+; CORTEX-A7-NOFPU: .eabi_attribute	23, 3
+; CORTEX-A7-FPUV4: .eabi_attribute	23, 3
+
+; Tag_ABI_align_needed
+; CORTEX-A7-CHECK: .eabi_attribute	24, 1
+; CORTEX-A7-NOFPU: .eabi_attribute	24, 1
+; CORTEX-A7-FPUV4: .eabi_attribute	24, 1
+
+; Tag_ABI_align8_preserved
+; CORTEX-A7-CHECK: .eabi_attribute	25, 1
+; CORTEX-A7-NOFPU: .eabi_attribute	25, 1
+; CORTEX-A7-FPUV4: .eabi_attribute	25, 1
+
+; Tag_FP_HP_extension
+; CORTEX-A7-CHECK: .eabi_attribute	36, 1
+; CORTEX-A7-NOFPU: .eabi_attribute	36, 1
+; CORTEX-A7-FPUV4: .eabi_attribute	36, 1
+
+; Tag_MPextension_use
+; CORTEX-A7-CHECK: .eabi_attribute	42, 1
+; CORTEX-A7-NOFPU: .eabi_attribute	42, 1
+; CORTEX-A7-FPUV4: .eabi_attribute	42, 1
+
+; Tag_DIV_use
+; CORTEX-A7-CHECK: .eabi_attribute	44, 2
+; CORTEX-A7-NOFPU: .eabi_attribute	44, 2
+; CORTEX-A7-FPUV4: .eabi_attribute	44, 2
+
+; Tag_Virtualization_use
+; CORTEX-A7-CHECK: .eabi_attribute	68, 3
+; CORTEX-A7-NOFPU: .eabi_attribute	68, 3
+; CORTEX-A7-FPUV4: .eabi_attribute	68, 3
+
 
 ; CORTEX-A9-SOFT:  .cpu cortex-a9
 ; CORTEX-A9-SOFT:  .eabi_attribute 6, 10
