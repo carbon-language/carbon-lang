@@ -112,7 +112,7 @@ DIE::~DIE() {
     delete Children[i];
 }
 
-/// Climb up the parent chain to get the compile unit DIE to which this DIE
+/// Climb up the parent chain to get the unit DIE to which this DIE
 /// belongs.
 const DIE *DIE::getUnit() const {
   const DIE *Cu = getUnitOrNull();
@@ -120,7 +120,7 @@ const DIE *DIE::getUnit() const {
   return Cu;
 }
 
-/// Climb up the parent chain to get the compile unit DIE this DIE belongs
+/// Climb up the parent chain to get the unit DIE this DIE belongs
 /// to. Return NULL if DIE is not added to an owner yet.
 const DIE *DIE::getUnitOrNull() const {
   const DIE *p = this;
