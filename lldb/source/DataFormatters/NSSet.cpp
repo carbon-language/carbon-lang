@@ -249,6 +249,10 @@ lldb_private::formatters::NSSetISyntheticFrontEnd::GetChildAtIndex (size_t idx)
     if (idx >= num_children)
         return lldb::ValueObjectSP();
     
+    ProcessSP process_sp = m_exe_ctx_ref.GetProcessSP();
+    if (!process_sp)
+        return lldb::ValueObjectSP();
+    
     if (m_children.empty())
     {
         // do the scan phase
@@ -260,7 +264,6 @@ lldb_private::formatters::NSSetISyntheticFrontEnd::GetChildAtIndex (size_t idx)
         while(tries < num_children)
         {
             obj_at_idx = m_data_ptr + (test_idx * m_ptr_size);
-            ProcessSP process_sp = m_exe_ctx_ref.GetProcessSP();
             if (!process_sp)
                 return lldb::ValueObjectSP();
             Error error;
@@ -286,12 +289,34 @@ lldb_private::formatters::NSSetISyntheticFrontEnd::GetChildAtIndex (size_t idx)
     SetItemDescriptor &set_item = m_children[idx];
     if (!set_item.valobj_sp)
     {
-        // make the new ValueObject
-        StreamString expr;
-        expr.Printf("(id)%" PRIu64,set_item.item_ptr);
+        auto ptr_size = process_sp->GetAddressByteSize();
+        DataBufferHeap buffer(ptr_size,0);
+        switch (ptr_size)
+        {
+            case 0: // architecture has no clue?? - fail
+                return lldb::ValueObjectSP();
+            case 4:
+                *((uint32_t*)buffer.GetBytes()) = (uint32_t)set_item.item_ptr;
+                break;
+            case 8:
+                *((uint64_t*)buffer.GetBytes()) = (uint64_t)set_item.item_ptr;
+                break;
+            default:
+                assert(false && "pointer size is not 4 nor 8 - get out of here ASAP");
+        }
         StreamString idx_name;
         idx_name.Printf("[%zu]",idx);
-        set_item.valobj_sp = ValueObject::CreateValueObjectFromExpression(idx_name.GetData(), expr.GetData(), m_exe_ctx_ref);
+        
+        DataExtractor data(buffer.GetBytes(),
+                           buffer.GetByteSize(),
+                           process_sp->GetByteOrder(),
+                           process_sp->GetAddressByteSize());
+        
+        set_item.valobj_sp =
+            ValueObject::CreateValueObjectFromData(idx_name.GetData(),
+                                                   data,
+                                                   m_exe_ctx_ref,
+                                                   m_backend.GetClangType().GetBasicTypeFromAST(lldb::eBasicTypeObjCID));
     }
     return set_item.valobj_sp;
 }
@@ -392,6 +417,10 @@ lldb_private::formatters::NSSetMSyntheticFrontEnd::GetChildAtIndex (size_t idx)
     if (idx >= num_children)
         return lldb::ValueObjectSP();
     
+    ProcessSP process_sp = m_exe_ctx_ref.GetProcessSP();
+    if (!process_sp)
+        return lldb::ValueObjectSP();
+    
     if (m_children.empty())
     {
         // do the scan phase
@@ -403,7 +432,6 @@ lldb_private::formatters::NSSetMSyntheticFrontEnd::GetChildAtIndex (size_t idx)
         while(tries < num_children)
         {
             obj_at_idx = m_objs_addr + (test_idx * m_ptr_size);
-            ProcessSP process_sp = m_exe_ctx_ref.GetProcessSP();
             if (!process_sp)
                 return lldb::ValueObjectSP();
             Error error;
@@ -429,12 +457,34 @@ lldb_private::formatters::NSSetMSyntheticFrontEnd::GetChildAtIndex (size_t idx)
     SetItemDescriptor &set_item = m_children[idx];
     if (!set_item.valobj_sp)
     {
-        // make the new ValueObject
-        StreamString expr;
-        expr.Printf("(id)%" PRIu64,set_item.item_ptr);
+        auto ptr_size = process_sp->GetAddressByteSize();
+        DataBufferHeap buffer(ptr_size,0);
+        switch (ptr_size)
+        {
+            case 0: // architecture has no clue?? - fail
+                return lldb::ValueObjectSP();
+            case 4:
+                *((uint32_t*)buffer.GetBytes()) = (uint32_t)set_item.item_ptr;
+                break;
+            case 8:
+                *((uint64_t*)buffer.GetBytes()) = (uint64_t)set_item.item_ptr;
+                break;
+            default:
+                assert(false && "pointer size is not 4 nor 8 - get out of here ASAP");
+        }
         StreamString idx_name;
         idx_name.Printf("[%zu]",idx);
-        set_item.valobj_sp = ValueObject::CreateValueObjectFromExpression(idx_name.GetData(), expr.GetData(), m_exe_ctx_ref);
+        
+        DataExtractor data(buffer.GetBytes(),
+                           buffer.GetByteSize(),
+                           process_sp->GetByteOrder(),
+                           process_sp->GetAddressByteSize());
+        
+        set_item.valobj_sp =
+            ValueObject::CreateValueObjectFromData(idx_name.GetData(),
+                                                   data,
+                                                   m_exe_ctx_ref,
+                                                   m_backend.GetClangType().GetBasicTypeFromAST(lldb::eBasicTypeObjCID));
     }
     return set_item.valobj_sp;
 }
