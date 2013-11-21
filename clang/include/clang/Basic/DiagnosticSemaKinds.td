@@ -3520,6 +3520,8 @@ def note_declaration_not_a_prototype : Note<
 def warn_missing_variable_declarations : Warning<
   "no previous extern declaration for non-static variable %0">,
   InGroup<DiagGroup<"missing-variable-declarations">>, DefaultIgnore;
+def err_static_data_member_reinitialization :
+  Error<"static data member %0 already has an initializer">;
 def err_redefinition : Error<"redefinition of %0">;
 def err_alias_after_tentative :
   Error<"alias definition of %0 after tentative definition">;

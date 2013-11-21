@@ -39,11 +39,11 @@ namespace out_of_line {
   template<typename T> CONST T B1::right<T,int> = T(5);
 
   class B2 {
-    template<typename T, typename T0> static CONST T right = T(100);  // expected-note {{previous definition is here}}
-    template<typename T> static CONST T right<T,int> = T(5);          // expected-note {{previous definition is here}}
+    template<typename T, typename T0> static CONST T right = T(100);  // expected-note {{previous initialization is here}}
+    template<typename T> static CONST T right<T,int> = T(5);          // expected-note {{previous initialization is here}}
   };
-  template<typename T, typename T0> CONST T B2::right = T(100);   // expected-error {{redefinition of 'right'}}
-  template<typename T> CONST T B2::right<T,int> = T(5);           // expected-error {{redefinition of 'right'}}
+  template<typename T, typename T0> CONST T B2::right = T(100);   // expected-error {{static data member 'right' already has an initializer}}
+  template<typename T> CONST T B2::right<T,int> = T(5);           // expected-error {{static data member 'right' already has an initializer}}
 
   class B3 {
     template<typename T, typename T0> static CONST T right = T(100);

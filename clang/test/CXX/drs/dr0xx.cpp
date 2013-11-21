@@ -919,11 +919,10 @@ namespace dr87 { // dr87: no
 
 namespace dr88 { // dr88: yes
   template<typename T> struct S {
-    static const int a = 1;
+    static const int a = 1; // expected-note {{previous}}
     static const int b;
   };
-  // FIXME: This diagnostic is pretty bad.
-  template<> const int S<int>::a = 4; // expected-error {{redefinition}} expected-note {{previous}}
+  template<> const int S<int>::a = 4; // expected-error {{already has an initializer}}
   template<> const int S<int>::b = 4;
 }
 

@@ -8184,9 +8184,9 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     // data members we also need to check whether there was an in-class
     // declaration with an initializer.
     if (VDecl->isStaticDataMember() && VDecl->getAnyInitializer(PrevInit)) {
-      Diag(VDecl->getLocation(), diag::err_redefinition) 
-        << VDecl->getDeclName();
-      Diag(PrevInit->getLocation(), diag::note_previous_definition);
+      Diag(Init->getExprLoc(), diag::err_static_data_member_reinitialization)
+          << VDecl->getDeclName();
+      Diag(PrevInit->getInit()->getExprLoc(), diag::note_previous_initializer) << 0;
       return;
     }  
 
