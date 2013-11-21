@@ -4007,8 +4007,10 @@ public:
     // the VFP define, hence the soft float and arch check. This is subtly
     // different from gcc, we follow the intent which was that it should be set
     // when Neon instructions are actually available.
-    if ((FPU & NeonFPU) && !SoftFloat && CPUArchVer >= 7)
+    if ((FPU & NeonFPU) && !SoftFloat && CPUArchVer >= 7) {
+      Builder.defineMacro("__ARM_NEON");
       Builder.defineMacro("__ARM_NEON__");
+    }
 
     if (CRC)
       Builder.defineMacro("__ARM_FEATURE_CRC32");
