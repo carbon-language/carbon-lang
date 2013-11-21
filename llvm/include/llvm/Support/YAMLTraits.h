@@ -18,7 +18,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/YAMLParser.h"
@@ -318,7 +317,7 @@ public:
   IO(void *Ctxt=NULL);
   virtual ~IO();
 
-  virtual bool outputting() const = 0;
+  virtual bool outputting() = 0;
 
   virtual unsigned beginSequence() = 0;
   virtual bool preflightElement(unsigned, void *&) = 0;
@@ -703,10 +702,8 @@ public:
   // Check if there was an syntax or semantic error during parsing.
   llvm::error_code error();
 
-  static bool classof(const IO *io) { return !io->outputting(); }
-
 private:
-  virtual bool outputting() const;
+  virtual bool outputting();
   virtual bool mapTag(StringRef, bool);
   virtual void beginMapping();
   virtual void endMapping();
@@ -831,9 +828,7 @@ public:
   Output(llvm::raw_ostream &, void *Ctxt=NULL);
   virtual ~Output();
 
-  static bool classof(const IO *io) { return io->outputting(); }
-  
-  virtual bool outputting() const;
+  virtual bool outputting();
   virtual bool mapTag(StringRef, bool);
   virtual void beginMapping();
   virtual void endMapping();

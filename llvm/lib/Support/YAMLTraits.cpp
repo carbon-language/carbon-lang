@@ -65,7 +65,7 @@ void Input::HNode::anchor() {}
 void Input::EmptyHNode::anchor() {}
 void Input::ScalarHNode::anchor() {}
 
-bool Input::outputting() const {
+bool Input::outputting() {
   return false;
 }
 
@@ -406,7 +406,7 @@ Output::Output(raw_ostream &yout, void *context)
 Output::~Output() {
 }
 
-bool Output::outputting() const {
+bool Output::outputting() {
   return true;
 }
 
