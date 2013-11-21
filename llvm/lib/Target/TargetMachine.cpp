@@ -67,7 +67,7 @@ TargetMachine::~TargetMachine() {
 void TargetMachine::resetTargetOptions(const MachineFunction *MF) const {
   const Function *F = MF->getFunction();
   TargetOptions &TO = MF->getTarget().Options;
-  
+
 #define RESET_OPTION(X, Y)                                              \
   do {                                                                  \
     if (F->hasFnAttribute(Y))                                           \

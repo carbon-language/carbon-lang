@@ -107,7 +107,7 @@ public:
   void resetTargetOptions(const MachineFunction *MF) const;
 
   // Interfaces to the major aspects of target machine information:
-  // 
+  //
   // -- Instruction opcode and operand information
   // -- Pipelines and scheduling information
   // -- Stack frame information
