@@ -94,6 +94,23 @@
 // RUN: %clang -target arm -mthumb -mcpu=cortex-a15 -mhwdiv=none -x c -E -dM %s -o - | FileCheck --check-prefix=DEFAULTHWDIV-NONEHWDIV-THUMB %s
 // DEFAULTHWDIV-NONEHWDIV-THUMB-NOT:#define __ARM_ARCH_EXT_IDIV__
 
+
+// Check that -mfpu works properly for Cortex-A7 (enabled by default).
+// RUN: %clang -target armv7-none-linux-gnueabi -mcpu=cortex-a7 -x c -E -dM %s -o - | FileCheck --check-prefix=DEFAULTFPU-A7 %s
+// RUN: %clang -target armv7-none-linux-gnueabi -mthumb -mcpu=cortex-a7 -x c -E -dM %s -o - | FileCheck --check-prefix=DEFAULTFPU-A7 %s
+// DEFAULTFPU-A7:#define __ARM_NEON__ 1
+// DEFAULTFPU-A7:#define __ARM_VFPV4__ 1
+
+// RUN: %clang -target armv7-none-linux-gnueabi -mcpu=cortex-a7 -mfpu=none -x c -E -dM %s -o - | FileCheck --check-prefix=FPUNONE-A7 %s
+// RUN: %clang -target armv7-none-linux-gnueabi -mthumb -mcpu=cortex-a7 -mfpu=none -x c -E -dM %s -o - | FileCheck --check-prefix=FPUNONE-A7 %s
+// FPUNONE-A7-NOT:#define __ARM_NEON__ 1
+// FPUNONE-A7-NOT:#define __ARM_VFPV4__ 1
+
+// RUN: %clang -target armv7-none-linux-gnueabi -mcpu=cortex-a7 -mfpu=vfp4 -x c -E -dM %s -o - | FileCheck --check-prefix=NONEON-A7 %s
+// RUN: %clang -target armv7-none-linux-gnueabi -mthumb -mcpu=cortex-a7 -mfpu=vfp4 -x c -E -dM %s -o - | FileCheck --check-prefix=NONEON-A7 %s
+// NONEON-A7-NOT:#define __ARM_NEON__ 1
+// NONEON-A7:#define __ARM_VFPV4__ 1
+
 // FIXME: add check for further predefines
 // Test whether predefines are as expected when targeting cortex-a5.
 // RUN: %clang -target armv7 -mcpu=cortex-a5 -x c -E -dM %s -o - | FileCheck --check-prefix=A5-ARM %s
@@ -101,6 +118,14 @@
 
 // RUN: %clang -target armv7 -mthumb -mcpu=cortex-a5 -x c -E -dM %s -o - | FileCheck --check-prefix=A5-THUMB %s
 // A5-THUMB-NOT:#define __ARM_ARCH_EXT_IDIV__
+
+// Test whether predefines are as expected when targeting cortex-a7.
+// RUN: %clang -target armv7 -mcpu=cortex-a7 -x c -E -dM %s -o - | FileCheck --check-prefix=A7 %s
+// RUN: %clang -target armv7 -mthumb -mcpu=cortex-a7 -x c -E -dM %s -o - | FileCheck --check-prefix=A7 %s
+// A7:#define __ARM_ARCH 7
+// A7:#define __ARM_ARCH_7A__ 1
+// A7:#define __ARM_ARCH_EXT_IDIV__ 1
+// A7:#define __ARM_ARCH_PROFILE A
 
 // Test whether predefines are as expected when targeting cortex-a8.
 // RUN: %clang -target armv7 -mcpu=cortex-a8 -x c -E -dM %s -o - | FileCheck --check-prefix=A8-ARM %s

@@ -39,6 +39,22 @@
 // CHECK-VFP3: "-target-feature" "+vfp3"
 // CHECK-VFP3: "-target-feature" "-neon"
 
+// RUN: %clang -target arm-linux-eabi -mfpu=vfp4 %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-VFP4 %s
+// RUN: %clang -target arm-linux-eabi -mfpu=vfpv4 %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-VFP4 %s
+// CHECK-VFP4: "-target-feature" "+vfp4"
+// CHECK-VFP4: "-target-feature" "-neon"
+
+// RUN: %clang -target arm-linux-eabi -mfpu=vfp4-d16 %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-VFP4-D16 %s
+// RUN: %clang -target arm-linux-eabi -mfpu=vfpv4-d16 %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-VFP4-D16 %s
+// CHECK-VFP4-D16: "-target-feature" "+vfp4"
+// CHECK-VFP4-D16: "-target-feature" "+d16"
+// CHECK-VFP4-D16: "-target-feature" "-neon"
+
+
 // RUN: %clang -target arm-linux-eabi -mfpu=neon %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NEON %s
 // CHECK-NEON: "-target-feature" "+neon"
