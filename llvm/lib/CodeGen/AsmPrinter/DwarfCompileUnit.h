@@ -42,6 +42,9 @@ class CompileUnit {
   /// Node - MDNode for the compile unit.
   DICompileUnit Node;
 
+  /// Language - Language for the translation unit associated with this CU.
+  uint16_t Language;
+
   /// CUDie - Compile unit debug information entry.
   ///
   const OwningPtr<DIE> CUDie;
@@ -92,8 +95,6 @@ class CompileUnit {
 
   // DIEIntegerOne - A preallocated DIEValue because 1 is used frequently.
   DIEInteger *DIEIntegerOne;
-
-  uint16_t Language;
 
 public:
   CompileUnit(unsigned UID, DIE *D, DICompileUnit CU, AsmPrinter *A,
