@@ -263,6 +263,15 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
       ToggleFeature(X86::FeatureSlowBTMem);
     }
 
+    // Determine if SHLD/SHRD instructions have higher latency then the
+    // equivalent series of shifts/or instructions. 
+    // FIXME: Add Intel's processors that have SHLD instructions with very
+    // poor latency. 
+    if (IsAMD) {
+      IsSHLDSlow = true;
+      ToggleFeature(X86::FeatureSlowSHLD);
+    }
+
     // If it's an Intel chip since Nehalem and not an Atom chip, unaligned
     // memory access is fast. We hard code model numbers here because they
     // aren't strictly increasing for Intel chips it seems.
@@ -514,6 +523,7 @@ void X86Subtarget::initializeEnvironment() {
   HasPRFCHW = false;
   HasRDSEED = false;
   IsBTMemSlow = false;
+  IsSHLDSlow = false;
   IsUAMemFast = false;
   HasVectorUAMem = false;
   HasCmpxchg16b = false;

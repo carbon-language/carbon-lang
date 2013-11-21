@@ -73,6 +73,8 @@ def FeatureCMPXCHG16B : SubtargetFeature<"cx16", "HasCmpxchg16b", "true",
                                       [Feature64Bit]>;
 def FeatureSlowBTMem : SubtargetFeature<"slow-bt-mem", "IsBTMemSlow", "true",
                                        "Bit testing of memory is slow">;
+def FeatureSlowSHLD : SubtargetFeature<"slow-shld", "IsSHLDSlow", "true",
+                                       "SHLD instruction is slow">;
 def FeatureFastUAMem : SubtargetFeature<"fast-unaligned-mem",
                                         "IsUAMemFast", "true",
                                         "Fast unaligned memory access">;
@@ -268,46 +270,53 @@ def : ProcessorModel<"knl", HaswellModel,
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [Feature3DNow]>;
 def : Proc<"k6-3",            [Feature3DNow]>;
-def : Proc<"athlon",          [Feature3DNowA, FeatureSlowBTMem]>;
-def : Proc<"athlon-tbird",    [Feature3DNowA, FeatureSlowBTMem]>;
-def : Proc<"athlon-4",        [FeatureSSE1,   Feature3DNowA, FeatureSlowBTMem]>;
-def : Proc<"athlon-xp",       [FeatureSSE1,   Feature3DNowA, FeatureSlowBTMem]>;
-def : Proc<"athlon-mp",       [FeatureSSE1,   Feature3DNowA, FeatureSlowBTMem]>;
+def : Proc<"athlon",          [Feature3DNowA, FeatureSlowBTMem, 
+                               FeatureSlowSHLD]>;
+def : Proc<"athlon-tbird",    [Feature3DNowA, FeatureSlowBTMem,
+                               FeatureSlowSHLD]>;
+def : Proc<"athlon-4",        [FeatureSSE1,   Feature3DNowA, FeatureSlowBTMem, 
+                               FeatureSlowSHLD]>;
+def : Proc<"athlon-xp",       [FeatureSSE1,   Feature3DNowA, FeatureSlowBTMem,
+                               FeatureSlowSHLD]>;
+def : Proc<"athlon-mp",       [FeatureSSE1,   Feature3DNowA, FeatureSlowBTMem,
+                               FeatureSlowSHLD]>;
 def : Proc<"k8",              [FeatureSSE2,   Feature3DNowA, Feature64Bit,
-                               FeatureSlowBTMem]>;
+                               FeatureSlowBTMem, FeatureSlowSHLD]>;
 def : Proc<"opteron",         [FeatureSSE2,   Feature3DNowA, Feature64Bit,
-                               FeatureSlowBTMem]>;
+                               FeatureSlowBTMem, FeatureSlowSHLD]>;
 def : Proc<"athlon64",        [FeatureSSE2,   Feature3DNowA, Feature64Bit,
-                               FeatureSlowBTMem]>;
+                               FeatureSlowBTMem, FeatureSlowSHLD]>;
 def : Proc<"athlon-fx",       [FeatureSSE2,   Feature3DNowA, Feature64Bit,
-                               FeatureSlowBTMem]>;
+                               FeatureSlowBTMem, FeatureSlowSHLD]>;
 def : Proc<"k8-sse3",         [FeatureSSE3,   Feature3DNowA, FeatureCMPXCHG16B,
-                               FeatureSlowBTMem]>;
+                               FeatureSlowBTMem, FeatureSlowSHLD]>;
 def : Proc<"opteron-sse3",    [FeatureSSE3,   Feature3DNowA, FeatureCMPXCHG16B,
-                               FeatureSlowBTMem]>;
+                               FeatureSlowBTMem, FeatureSlowSHLD]>;
 def : Proc<"athlon64-sse3",   [FeatureSSE3,   Feature3DNowA, FeatureCMPXCHG16B,
-                               FeatureSlowBTMem]>;
+                               FeatureSlowBTMem, FeatureSlowSHLD]>;
 def : Proc<"amdfam10",        [FeatureSSE4A,
                                Feature3DNowA, FeatureCMPXCHG16B, FeatureLZCNT,
-                               FeaturePOPCNT, FeatureSlowBTMem]>;
+                               FeaturePOPCNT, FeatureSlowBTMem,
+                               FeatureSlowSHLD]>;
 // Bobcat
 def : Proc<"btver1",          [FeatureSSSE3, FeatureSSE4A, FeatureCMPXCHG16B,
-                               FeaturePRFCHW, FeatureLZCNT, FeaturePOPCNT]>;
+                               FeaturePRFCHW, FeatureLZCNT, FeaturePOPCNT,
+                               FeatureSlowSHLD]>;
 // Jaguar
 def : Proc<"btver2",          [FeatureAVX, FeatureSSE4A, FeatureCMPXCHG16B,
                                FeaturePRFCHW, FeatureAES, FeaturePCLMUL,
                                FeatureBMI, FeatureF16C, FeatureMOVBE,
-                               FeatureLZCNT, FeaturePOPCNT]>;
+                               FeatureLZCNT, FeaturePOPCNT, FeatureSlowSHLD]>;
 // Bulldozer
 def : Proc<"bdver1",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureAES, FeaturePRFCHW, FeaturePCLMUL,
-                               FeatureLZCNT, FeaturePOPCNT]>;
+                               FeatureLZCNT, FeaturePOPCNT, FeatureSlowSHLD]>;
 // Piledriver
 def : Proc<"bdver2",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureAES, FeaturePRFCHW, FeaturePCLMUL,
                                FeatureF16C, FeatureLZCNT,
-                               FeaturePOPCNT, FeatureBMI,  FeatureTBM,
-                               FeatureFMA]>;
+                               FeaturePOPCNT, FeatureBMI, FeatureTBM,
+                               FeatureFMA, FeatureSlowSHLD]>;
 
 // Steamroller
 def : Proc<"bdver3",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
