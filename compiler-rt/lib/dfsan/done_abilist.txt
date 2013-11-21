@@ -103,41 +103,23 @@ fun:strerror=discard
 fun:syscall=discard
 fun:uselocale=discard
 fun:write=discard
-fun:dlclose=discard
-fun:__assert_fail=discard
 
 # Functions that produce output does not depend on the input (need to zero the
 # shadow manually).
 fun:calloc=custom
 fun:clock_gettime=custom
 fun:dlopen=custom
-fun:fgets=custom
 fun:fstat=custom
-fun:getcwd=custom
-fun:get_current_dir_name=custom
-fun:gethostname=custom
-fun:getrlimit=custom
-fun:getrusage=custom
 fun:pread=custom
 fun:read=custom
 fun:stat=custom
-fun:time=custom
 
 # Functions that produce an output that depend on the input (propagate the
 # shadow manually).
-fun:ctime_r=custom
-fun:inet_pton=custom
-fun:localtime_r=custom
 fun:memcpy=custom
 fun:memset=custom
-fun:strcpy=custom
 fun:strdup=custom
 fun:strncpy=custom
-fun:strtod=custom
-fun:strtol=custom
-fun:strtoll=custom
-fun:strtoul=custom
-fun:strtoull=custom
 
 # Functions that produce an output that is computed from the input, but is not
 # necessarily data dependent.
@@ -152,19 +134,21 @@ fun:strncmp=custom
 # Functions that take a callback (wrap the callback manually).
 fun:dl_iterate_phdr=custom
 
-fun:getpwuid_r=custom
-fun:poll=custom
-fun:sched_getaffinity=custom
-fun:select=custom
-fun:sigemptyset=custom
-fun:sigaction=custom
-fun:gettimeofday=custom
-
 # TODO: custom
 fun:snprintf=discard
 fun:vsnprintf=discard
 fun:asprintf=discard
 fun:qsort=discard
+fun:strtoll=discard
+fun:strtoull=discard
+fun:sigemptyset=discard
+fun:sigaction=discard
+fun:gettimeofday=discard
+fun:get_current_dir_name=discard
+fun:getpwuid_r=discard
+fun:poll=discard
+fun:sched_getaffinity=discard
+fun:select=discard
 
 ###############################################################################
 # pthread
