@@ -131,6 +131,21 @@ TEST_F(WinLinkParserTest, Libpath) {
 }
 
 //
+// Tests for input file order
+//
+
+TEST_F(WinLinkParserTest, InputOrder) {
+  EXPECT_TRUE(parse("link.exe", "b.lib", "b.obj", "c.obj", "a.lib", "a.obj",
+                    nullptr));
+  EXPECT_EQ(5, inputFileCount());
+  EXPECT_EQ("b.obj", inputFile(0));
+  EXPECT_EQ("c.obj", inputFile(1));
+  EXPECT_EQ("a.obj", inputFile(2));
+  EXPECT_EQ("b.lib", inputFile(3));
+  EXPECT_EQ("a.lib", inputFile(4));
+}
+
+//
 // Tests for command line options that take values.
 //
 

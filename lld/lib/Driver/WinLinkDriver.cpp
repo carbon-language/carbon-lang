@@ -13,6 +13,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include <algorithm>
 #include <cctype>
 #include <sstream>
 #include <map>
@@ -600,6 +601,8 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
     defaultLibs.push_back((*it)->getValue());
   }
 
+  std::vector<StringRef> inputFiles;
+
   // Process all the arguments and create Input Elements
   for (auto inputArg : *parsedArgs) {
     switch (inputArg->getOption().getID()) {
@@ -850,8 +853,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       break;
 
     case OPT_INPUT:
-      inputElements.push_back(std::unique_ptr<InputElement>(
-          new PECOFFFileNode(ctx, ctx.allocate(inputArg->getValue()))));
+      inputFiles.push_back(ctx.allocate(inputArg->getValue()));
       break;
 
 #define DEFINE_BOOLEAN_FLAG(name, setter)       \
@@ -876,6 +878,17 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       break;
     }
   }
+
+  // Move files with ".lib" extension at the end of the input file list. Say
+  // foo.obj depends on bar.lib. The linker needs to accept both "bar.lib
+  // foo.obj" and "foo.obj bar.lib".
+  auto compfn = [](StringRef a, StringRef b) {
+    return !a.endswith_lower(".lib") && b.endswith_lower(".lib");
+  };
+  std::stable_sort(inputFiles.begin(), inputFiles.end(), compfn);
+  for (StringRef path : inputFiles)
+    inputElements.push_back(std::unique_ptr<InputElement>(
+        new PECOFFFileNode(ctx, path)));
 
   // Use the default entry name if /entry option is not given.
   if (ctx.entrySymbolName().empty())
