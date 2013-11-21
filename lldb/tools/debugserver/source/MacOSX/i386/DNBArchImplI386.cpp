@@ -1824,7 +1824,7 @@ DNBArchImplI386::SaveRegisterState ()
 bool
 DNBArchImplI386::RestoreRegisterState (uint32_t save_id)
 {
-    SaveRegiterStates::iterator pos = m_saved_register_states.find(save_id);
+    SaveRegisterStates::iterator pos = m_saved_register_states.find(save_id);
     if (pos != m_saved_register_states.end())
     {
         m_state.context.gpr = pos->second.gpr;

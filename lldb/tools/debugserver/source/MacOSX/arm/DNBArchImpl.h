@@ -34,7 +34,8 @@ public:
         m_last_decode_pc(INVALID_NUB_ADDRESS),
         m_watchpoint_hw_index(-1),
         m_watchpoint_did_occur(false),
-        m_watchpoint_resume_single_step_enabled(false)
+        m_watchpoint_resume_single_step_enabled(false),
+        m_saved_register_states()
     {
         memset(&m_dbg_save, 0, sizeof(m_dbg_save));
 #if defined (USE_ARM_DISASSEMBLER_FRAMEWORK)
@@ -54,6 +55,8 @@ public:
     virtual bool            SetRegisterValue(int set, int reg, const DNBRegisterValue *value);
     virtual nub_size_t      GetRegisterContext (void *buf, nub_size_t buf_len);
     virtual nub_size_t      SetRegisterContext (const void *buf, nub_size_t buf_len);
+    virtual uint32_t        SaveRegisterState ();
+    virtual bool            RestoreRegisterState (uint32_t save_id);
 
     virtual kern_return_t   GetRegisterState  (int set, bool force);
     virtual kern_return_t   SetRegisterState  (int set);
@@ -246,6 +249,9 @@ protected:
     int32_t         m_watchpoint_hw_index;
     bool            m_watchpoint_did_occur;
     bool            m_watchpoint_resume_single_step_enabled;
+
+    typedef std::map<uint32_t, Context> SaveRegisterStates;
+    SaveRegisterStates m_saved_register_states;
 };
 
 #endif    // #if defined (__arm__)

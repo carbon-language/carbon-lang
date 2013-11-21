@@ -154,7 +154,7 @@ DNBArchMachARM::SetPC(uint64_t value)
     kern_return_t err = GetGPRState(false);
     if (err == KERN_SUCCESS)
     {
-        m_state.context.gpr.__pc = value;
+        m_state.context.gpr.__pc = (uint32_t) value;
         err = SetGPRState();
     }
     return err == KERN_SUCCESS;
@@ -1818,9 +1818,9 @@ DNBArchMachARM::SaveRegisterState ()
     {
         DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::SaveRegisterState () error: GPR regs failed to read: %u ", kret);
     }
-    else if ((kret = GetFPUState(force)) != KERN_SUCCESS)
+    else if ((kret = GetVFPState(force)) != KERN_SUCCESS)
     {
-        DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::SaveRegisterState () error: %s regs failed to read: %u", CPUHasAVX() ? "AVX" : "FPU", kret);
+        DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::SaveRegisterState () error: %s regs failed to read: %u", "VFP", kret);
     }
     else
     {
@@ -1830,10 +1830,11 @@ DNBArchMachARM::SaveRegisterState ()
     }
     return UINT32_MAX;
 }
+
 bool
 DNBArchMachARM::RestoreRegisterState (uint32_t save_id)
 {
-    SaveRegiterStates::iterator pos = m_saved_register_states.find(save_id);
+    SaveRegisterStates::iterator pos = m_saved_register_states.find(save_id);
     if (pos != m_saved_register_states.end())
     {
         m_state.context.gpr = pos->second.gpr;
@@ -1845,9 +1846,9 @@ DNBArchMachARM::RestoreRegisterState (uint32_t save_id)
             DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::RestoreRegisterState (save_id = %u) error: GPR regs failed to write: %u", save_id, kret);
             success = false;
         }
-        else if ((kret = SetFPUState()) != KERN_SUCCESS)
+        else if ((kret = SetVFPState()) != KERN_SUCCESS)
         {
-            DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::RestoreRegisterState (save_id = %u) error: %s regs failed to write: %u", save_id, CPUHasAVX() ? "AVX" : "FPU", kret);
+            DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::RestoreRegisterState (save_id = %u) error: %s regs failed to write: %u", save_id, "VFP", kret);
             success = false;
         }
         m_saved_register_states.erase(pos);

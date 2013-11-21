@@ -247,8 +247,8 @@ protected:
     State       m_state;
     DBG         m_2pc_dbg_checkpoint;
     uint32_t    m_2pc_trans_state; // Is transaction of DBG state change: Pedning (0), Done (1), or Rolled Back (2)?
-    typedef std::map<uint32_t, Context> SaveRegiterStates;
-    SaveRegiterStates m_saved_register_states;
+    typedef std::map<uint32_t, Context> SaveRegisterStates;
+    SaveRegisterStates m_saved_register_states;
 };
 
 #endif    // #if defined (__i386__) || defined (__x86_64__)
