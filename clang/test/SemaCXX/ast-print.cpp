@@ -164,3 +164,12 @@ void test13() {
 void test14() {
   struct X { union { int x; } x; };
 }
+
+
+// CHECK: float test15() {
+// CHECK:     return __builtin_asinf(1.F);
+// CHECK: }
+// CHECK-NOT: extern "C"
+float test15() {
+  return __builtin_asinf(1.0F);
+}
