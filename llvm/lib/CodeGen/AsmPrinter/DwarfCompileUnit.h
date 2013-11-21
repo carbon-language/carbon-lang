@@ -66,11 +66,11 @@ class CompileUnit {
 
   /// GlobalNames - A map of globally visible named entities for this unit.
   ///
-  StringMap<DIE *> GlobalNames;
+  StringMap<const DIE *> GlobalNames;
 
   /// GlobalTypes - A map of globally visible types for this unit.
   ///
-  StringMap<DIE *> GlobalTypes;
+  StringMap<const DIE *> GlobalTypes;
 
   /// AccelNames - A map of names for the name accelerator table.
   ///
@@ -107,8 +107,8 @@ public:
   uint16_t getLanguage() const { return Language; }
   DICompileUnit getNode() const { return Node; }
   DIE *getCUDie() const { return CUDie.get(); }
-  const StringMap<DIE *> &getGlobalNames() const { return GlobalNames; }
-  const StringMap<DIE *> &getGlobalTypes() const { return GlobalTypes; }
+  const StringMap<const DIE *> &getGlobalNames() const { return GlobalNames; }
+  const StringMap<const DIE *> &getGlobalTypes() const { return GlobalTypes; }
 
   const StringMap<std::vector<const DIE *> > &getAccelNames() const {
     return AccelNames;

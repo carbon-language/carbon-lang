@@ -2379,7 +2379,7 @@ void DwarfDebug::emitAccelTypes() {
 
 /// computeIndexValue - Compute the gdb index value for the DIE and CU.
 static dwarf::PubIndexEntryDescriptor computeIndexValue(CompileUnit *CU,
-                                                        DIE *Die) {
+                                                        const DIE *Die) {
   dwarf::GDBIndexEntryLinkage Linkage = dwarf::GIEL_STATIC;
 
   // We could have a specification DIE that has our most of our knowledge,
@@ -2461,12 +2461,12 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
                              4);
 
     // Emit the pubnames for this compilation unit.
-    const StringMap<DIE *> &Globals = TheCU->getGlobalNames();
-    for (StringMap<DIE *>::const_iterator GI = Globals.begin(),
-                                          GE = Globals.end();
+    const StringMap<const DIE *> &Globals = TheCU->getGlobalNames();
+    for (StringMap<const DIE *>::const_iterator GI = Globals.begin(),
+                                                GE = Globals.end();
          GI != GE; ++GI) {
       const char *Name = GI->getKeyData();
-      DIE *Entity = GI->second;
+      const DIE *Entity = GI->second;
 
       Asm->OutStreamer.AddComment("DIE offset");
       Asm->EmitInt32(Entity->getOffset());
@@ -2532,12 +2532,12 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
         Asm->GetTempSymbol(ISec->getLabelBeginName(), TheCU->getUniqueID()), 4);
 
     // Emit the pubtypes.
-    const StringMap<DIE *> &Globals = TheCU->getGlobalTypes();
-    for (StringMap<DIE *>::const_iterator GI = Globals.begin(),
-                                          GE = Globals.end();
+    const StringMap<const DIE *> &Globals = TheCU->getGlobalTypes();
+    for (StringMap<const DIE *>::const_iterator GI = Globals.begin(),
+                                                GE = Globals.end();
          GI != GE; ++GI) {
       const char *Name = GI->getKeyData();
-      DIE *Entity = GI->second;
+      const DIE *Entity = GI->second;
 
       if (Asm->isVerbose())
         Asm->OutStreamer.AddComment("DIE offset");

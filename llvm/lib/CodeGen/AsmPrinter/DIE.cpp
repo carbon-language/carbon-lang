@@ -133,7 +133,7 @@ const DIE *DIE::getUnitOrNull() const {
   return NULL;
 }
 
-DIEValue *DIE::findAttribute(uint16_t Attribute) {
+DIEValue *DIE::findAttribute(uint16_t Attribute) const {
   const SmallVectorImpl<DIEValue *> &Values = getValues();
   const DIEAbbrev &Abbrevs = getAbbrev();
 
