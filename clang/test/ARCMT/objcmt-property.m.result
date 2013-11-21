@@ -61,6 +61,9 @@ typedef char BOOL;
 
 @property (nonatomic, assign) id dataSource;
 
+// rdar://15509831
+@property (nonatomic, readonly, assign) id delegate;
+
 @property (nonatomic, assign) id xxxdelegateYYY;
 
 
