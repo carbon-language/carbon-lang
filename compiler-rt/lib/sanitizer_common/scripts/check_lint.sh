@@ -27,6 +27,7 @@ TSAN_LIT_TEST_LINT_FILTER=${TSAN_TEST_LINT_FILTER},-whitespace/line_length
 MSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER}
 LSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER}
 LSAN_LIT_TEST_LINT_FILTER=${LSAN_RTL_LINT_FILTER},-whitespace/line_length
+DFSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int,-runtime/printf,-runtime/references
 COMMON_RTL_INC_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int,-runtime/sizeof,-runtime/printf
 SANITIZER_INCLUDES_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
 MKTEMP="mktemp -q /tmp/tmp.XXXXXXXXXX"
@@ -89,6 +90,13 @@ LSAN_RTL=${COMPILER_RT}/lib/lsan
 run_lint ${LSAN_RTL_LINT_FILTER} ${LSAN_RTL}/*.{cc,h} \
                                  ${LSAN_RTL}/tests/*.{cc,h} &
 run_lint ${LSAN_LIT_TEST_LINT_FILTER} ${LSAN_RTL}/lit_tests/*/*.cc &
+
+# DFSan
+DFSAN_RTL=${COMPILER_RT}/lib/dfsan
+run_lint ${DFSAN_RTL_LINT_FILTER} ${DFSAN_RTL}/*.{cc,h} &
+# Check that all the custom functions in the ABI list are wrapped and that all
+# wrappers are tested.
+${DFSAN_RTL}/scripts/check_custom_wrappers.sh >> ${ERROR_LOG}
 
 # Misc files
 FILES=${COMMON_RTL}/*.inc
