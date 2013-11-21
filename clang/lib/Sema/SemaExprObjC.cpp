@@ -3165,24 +3165,26 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
     << castRange << castExpr->getSourceRange();
 }
 
-static inline ObjCBridgeAttr *getObjCBridgeAttr(const TypedefType *TD) {
+template <typename T>
+static inline T *getObjCBridgeAttr(const TypedefType *TD) {
   TypedefNameDecl *TDNDecl = TD->getDecl();
   QualType QT = TDNDecl->getUnderlyingType();
   if (QT->isPointerType()) {
     QT = QT->getPointeeType();
     if (const RecordType *RT = QT->getAs<RecordType>())
       if (RecordDecl *RD = RT->getDecl())
-        if (RD->hasAttr<ObjCBridgeAttr>())
-          return RD->getAttr<ObjCBridgeAttr>();
+        if (RD->hasAttr<T>())
+          return RD->getAttr<T>();
   }
   return 0;
 }
 
+template <typename TB>
 static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr) {
   QualType T = castExpr->getType();
   while (const TypedefType *TD = dyn_cast<TypedefType>(T.getTypePtr())) {
     TypedefNameDecl *TDNDecl = TD->getDecl();
-    if (ObjCBridgeAttr *ObjCBAttr = getObjCBridgeAttr(TD)) {
+    if (TB *ObjCBAttr = getObjCBridgeAttr<TB>(TD)) {
       if (IdentifierInfo *Parm = ObjCBAttr->getBridgedType()) {
         NamedDecl *Target = 0;
         // Check for an existing type with this name.
@@ -3231,11 +3233,12 @@ static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr) {
   return false;
 }
 
+template <typename TB>
 static bool CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr) {
   QualType T = castType;
   while (const TypedefType *TD = dyn_cast<TypedefType>(T.getTypePtr())) {
     TypedefNameDecl *TDNDecl = TD->getDecl();
-    if (ObjCBridgeAttr *ObjCBAttr = getObjCBridgeAttr(TD)) {
+    if (TB *ObjCBAttr = getObjCBridgeAttr<TB>(TD)) {
       if (IdentifierInfo *Parm = ObjCBAttr->getBridgedType()) {
         NamedDecl *Target = 0;
         // Check for an existing type with this name.
@@ -3289,10 +3292,14 @@ void Sema::CheckTollFreeBridgeCast(QualType castType, Expr *castExpr) {
   // warn in presense of __bridge casting to or from a toll free bridge cast.
   ARCConversionTypeClass exprACTC = classifyTypeForARCConversion(castExpr->getType());
   ARCConversionTypeClass castACTC = classifyTypeForARCConversion(castType);
-  if (castACTC == ACTC_retainable && exprACTC == ACTC_coreFoundation)
-    (void)CheckObjCBridgeNSCast(*this, castType, castExpr);
-  else if (castACTC == ACTC_coreFoundation && exprACTC == ACTC_retainable)
-    (void)CheckObjCBridgeCFCast(*this, castType, castExpr);
+  if (castACTC == ACTC_retainable && exprACTC == ACTC_coreFoundation) {
+    (void)CheckObjCBridgeNSCast<ObjCBridgeAttr>(*this, castType, castExpr);
+    (void)CheckObjCBridgeNSCast<ObjCBridgeMutableAttr>(*this, castType, castExpr);
+  }
+  else if (castACTC == ACTC_coreFoundation && exprACTC == ACTC_retainable) {
+    (void)CheckObjCBridgeCFCast<ObjCBridgeAttr>(*this, castType, castExpr);
+    (void)CheckObjCBridgeCFCast<ObjCBridgeMutableAttr>(*this, castType, castExpr);
+  }
 }
 
 Sema::ARCConversionResult
@@ -3355,12 +3362,14 @@ Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
   
   if (castACTC == ACTC_retainable && exprACTC == ACTC_coreFoundation &&
       (CCK == CCK_CStyleCast || CCK == CCK_FunctionalCast))
-    if (CheckObjCBridgeNSCast(*this, castType, castExpr))
+    if (CheckObjCBridgeNSCast<ObjCBridgeAttr>(*this, castType, castExpr) ||
+        CheckObjCBridgeNSCast<ObjCBridgeMutableAttr>(*this, castType, castExpr))
       return ACR_okay;
     
   if (castACTC == ACTC_coreFoundation && exprACTC == ACTC_retainable &&
       (CCK == CCK_CStyleCast || CCK == CCK_FunctionalCast))
-    if (CheckObjCBridgeCFCast(*this, castType, castExpr))
+    if (CheckObjCBridgeCFCast<ObjCBridgeAttr>(*this, castType, castExpr) ||
+        CheckObjCBridgeCFCast<ObjCBridgeMutableAttr>(*this, castType, castExpr))
       return ACR_okay;
     
 
