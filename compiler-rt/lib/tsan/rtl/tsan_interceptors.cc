@@ -2048,10 +2048,14 @@ void InitializeInterceptors() {
 
   SANITIZER_COMMON_INTERCEPTORS_INIT;
 
-  TSAN_INTERCEPT(setjmp);
-  TSAN_INTERCEPT(_setjmp);
-  TSAN_INTERCEPT(sigsetjmp);
-  TSAN_INTERCEPT(__sigsetjmp);
+  // We can not use TSAN_INTERCEPT to get setjmp addr,
+  // because it does &setjmp and setjmp is not present in some versions of libc.
+  using __interception::GetRealFunctionAddress;
+  GetRealFunctionAddress("setjmp", (uptr*)&REAL(setjmp), 0, 0);
+  GetRealFunctionAddress("_setjmp", (uptr*)&REAL(_setjmp), 0, 0);
+  GetRealFunctionAddress("sigsetjmp", (uptr*)&REAL(sigsetjmp), 0, 0);
+  GetRealFunctionAddress("__sigsetjmp", (uptr*)&REAL(__sigsetjmp), 0, 0);
+
   TSAN_INTERCEPT(longjmp);
   TSAN_INTERCEPT(siglongjmp);
 
