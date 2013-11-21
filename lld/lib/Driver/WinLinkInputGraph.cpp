@@ -1,4 +1,4 @@
-//===- lib/Driver/WinLinkDriver.cpp ---------------------------------------===//
+//===- lib/Driver/WinLinkInputGraph.cpp -----------------------------------===//
 //
 //                             The LLVM Linker
 //
