@@ -2035,7 +2035,7 @@ static void handleConstructorAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  int priority = 65535; // FIXME: Do not hardcode such constants.
+  int priority = ConstructorAttr::DefaultPriority;
   if (Attr.getNumArgs() > 0) {
     Expr *E = Attr.getArgAsExpr(0);
     llvm::APSInt Idx(32);
@@ -2067,7 +2067,7 @@ static void handleDestructorAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  int priority = 65535; // FIXME: Do not hardcode such constants.
+  int priority = DestructorAttr::DefaultPriority;
   if (Attr.getNumArgs() > 0) {
     Expr *E = Attr.getArgAsExpr(0);
     llvm::APSInt Idx(32);
@@ -2562,7 +2562,7 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  unsigned sentinel = 0;
+  unsigned sentinel = (unsigned)SentinelAttr::DefaultSentinel;
   if (Attr.getNumArgs() > 0) {
     Expr *E = Attr.getArgAsExpr(0);
     llvm::APSInt Idx(32);
@@ -2583,7 +2583,7 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     sentinel = Idx.getZExtValue();
   }
 
-  unsigned nullPos = 0;
+  unsigned nullPos = (unsigned)SentinelAttr::DefaultNullPos;
   if (Attr.getNumArgs() > 1) {
     Expr *E = Attr.getArgAsExpr(1);
     llvm::APSInt Idx(32);

@@ -222,6 +222,22 @@ namespace {
     }
   };
 
+  class DefaultSimpleArgument : public SimpleArgument {
+    int64_t Default;
+
+  public:
+    DefaultSimpleArgument(Record &Arg, StringRef Attr,
+                          std::string T, int64_t Default)
+      : SimpleArgument(Arg, Attr, T), Default(Default) {}
+
+    void writeAccessors(raw_ostream &OS) const {
+      SimpleArgument::writeAccessors(OS);
+
+      OS << "\n\n  static const " << getType() << " Default" << getUpperName()
+         << " = " << Default << ";";
+    }
+  };
+
   class StringArgument : public Argument {
   public:
     StringArgument(Record &Arg, StringRef Attr)
@@ -871,6 +887,9 @@ static Argument *createArgument(Record &Arg, StringRef Attr,
     Ptr = new SimpleArgument(Arg, Attr, "IdentifierInfo *");
   else if (ArgName == "BoolArgument") Ptr = new SimpleArgument(Arg, Attr, 
                                                                "bool");
+  else if (ArgName == "DefaultIntArgument")
+    Ptr = new DefaultSimpleArgument(Arg, Attr, "int",
+                                    Arg.getValueAsInt("Default"));
   else if (ArgName == "IntArgument") Ptr = new SimpleArgument(Arg, Attr, "int");
   else if (ArgName == "StringArgument") Ptr = new StringArgument(Arg, Attr);
   else if (ArgName == "TypeArgument") Ptr = new TypeArgument(Arg, Attr);
@@ -888,9 +907,10 @@ static Argument *createArgument(Record &Arg, StringRef Attr,
     Ptr = new VersionArgument(Arg, Attr);
 
   if (!Ptr) {
+    // Search in reverse order so that the most-derived type is handled first.
     std::vector<Record*> Bases = Search->getSuperClasses();
-    for (std::vector<Record*>::iterator i = Bases.begin(), e = Bases.end();
-         i != e; ++i) {
+    for (std::vector<Record*>::reverse_iterator i = Bases.rbegin(),
+         e = Bases.rend(); i != e; ++i) {
       Ptr = createArgument(Arg, Attr, *i);
       if (Ptr)
         break;
