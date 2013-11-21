@@ -13,7 +13,7 @@ BLACKLIST=$ROOTDIR/lit_tests/Helpers/blacklist.txt
 
 # TODO: add testing for all of -O0...-O3
 CFLAGS="-fsanitize=thread -fsanitize-blacklist=$BLACKLIST -fPIE -O1 -g -Wall"
-LDFLAGS="-pie -lpthread -ldl -lrt -Wl,--whole-archive $ROOTDIR/rtl/libtsan.a -Wl,--no-whole-archive"
+LDFLAGS="-pie -lpthread -ldl -lrt -lm -Wl,--whole-archive $ROOTDIR/rtl/libtsan.a -Wl,--no-whole-archive"
 
 test_file() {
   SRC=$1
