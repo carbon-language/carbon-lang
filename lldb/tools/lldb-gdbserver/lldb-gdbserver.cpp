@@ -199,6 +199,7 @@ main (int argc, char *argv[])
         else
         {
             fprintf (stderr, "error: failed to launch '%s': %s\n", argv[0], error.AsCString());
+            exit(1);
         }
     }
     
