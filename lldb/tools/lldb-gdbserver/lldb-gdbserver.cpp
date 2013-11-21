@@ -93,7 +93,9 @@ main (int argc, char *argv[])
     Error error;
     int ch;
     Debugger::Initialize();
-    
+    ProcessLaunchInfo launch_info;
+    ProcessAttachInfo attach_info;
+
     bool show_usage = false;
     int option_error = 0;
 //    StreamSP stream_sp (new StreamFile(stdout, false));
@@ -183,7 +185,23 @@ main (int argc, char *argv[])
     // Any arguments left over are for the the program that we need to launch. If there
     // are no arguments, then the GDB server will start up and wait for an 'A' packet
     // to launch a program, or a vAttach packet to attach to an existing process.
-
+    if (argc > 0)
+    {
+        // Launch the program specified on the command line
+        launch_info.SetArguments((const char **)argv, true);
+        launch_info.GetFlags().Set(eLaunchFlagDebug | eLaunchFlagStopAtEntry);
+        error = Host::LaunchProcess (launch_info);
+        
+        if (error.Success())
+        {
+            printf ("Launched '%s' as process %" PRIu64 "...\n", argv[0], launch_info.GetProcessID());
+        }
+        else
+        {
+            fprintf (stderr, "error: failed to launch '%s': %s\n", argv[0], error.AsCString());
+        }
+    }
+    
     const bool is_platform = false;
     GDBRemoteCommunicationServer gdb_server (is_platform);
     
