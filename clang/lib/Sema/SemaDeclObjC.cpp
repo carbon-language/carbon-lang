@@ -1664,7 +1664,8 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
       if (method->getImplementationControl() != ObjCMethodDecl::Optional &&
           !method->isPropertyAccessor() &&
           !InsMap.count(method->getSelector()) &&
-          (!Super || !Super->lookupInstanceMethod(method->getSelector()))) {
+          (!Super || !Super->lookupInstanceMethod(method->getSelector(),
+                                                  false, PDecl))) {
             // If a method is not implemented in the category implementation but
             // has been declared in its primary class, superclass,
             // or in one of their protocols, no need to issue the warning. 
@@ -1676,7 +1677,8 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
             // uses the protocol.
             if (ObjCMethodDecl *MethodInClass =
                   IDecl->lookupInstanceMethod(method->getSelector(), 
-                                              true /*shallowCategoryLookup*/))
+                                              true /*shallowCategoryLookup*/,
+                                              PDecl))
               if (C || MethodInClass->isPropertyAccessor())
                 continue;
             unsigned DIAG = diag::warn_unimplemented_protocol_method;
@@ -1695,10 +1697,13 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
     ObjCMethodDecl *method = *I;
     if (method->getImplementationControl() != ObjCMethodDecl::Optional &&
         !ClsMap.count(method->getSelector()) &&
-        (!Super || !Super->lookupClassMethod(method->getSelector()))) {
+        (!Super || !Super->lookupClassMethod(method->getSelector(),
+                                             /* shallowCategoryLookup */ false,
+                                             PDecl))) {
       // See above comment for instance method lookups.
       if (C && IDecl->lookupClassMethod(method->getSelector(), 
-                                        true /*shallowCategoryLookup*/))
+                                        true /*shallowCategoryLookup*/,
+                                        PDecl))
         continue;
       unsigned DIAG = diag::warn_unimplemented_protocol_method;
       if (Diags.getDiagnosticLevel(DIAG, ImpLoc) !=

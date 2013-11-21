@@ -457,9 +457,11 @@ ObjCInterfaceDecl::lookupNestedProtocol(IdentifierInfo *Name) {
 /// When argument category "C" is specified, any implicit method found
 /// in this category is ignored.
 ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel, 
-                                     bool isInstance,
-                                     bool shallowCategoryLookup,
-                                     const ObjCCategoryDecl *C) const {
+                                                bool isInstance,
+                                                bool shallowCategoryLookup,
+                                                const ObjCCategoryDecl *C,
+                                                const ObjCProtocolDecl *P) const
+{
   // FIXME: Should make sure no callers ever do this.
   if (!hasDefinition())
     return 0;
@@ -470,7 +472,23 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
   if (data().ExternallyCompleted)
     LoadExternalDefinition();
 
-  while (ClassDecl != NULL) {
+  while (ClassDecl) {
+    // If we are looking for a method that is part of protocol conformance,
+    // check if the class has been marked to suppress conformance
+    // of that protocol.
+    if (P && ClassDecl->hasAttrs()) {
+      const AttrVec &V = ClassDecl->getAttrs();
+      const IdentifierInfo *PI = P->getIdentifier();
+      for (AttrVec::const_iterator I = V.begin(), E = V.end(); I != E; ++I) {
+        if (const ObjCSuppressProtocolAttr *A =
+            dyn_cast<ObjCSuppressProtocolAttr>(*I)){
+          if (A->getProtocol() == PI) {
+            return 0;
+          }
+        }
+      }
+    }
+
     if ((MethodDecl = ClassDecl->getMethod(Sel, isInstance)))
       return MethodDecl;
 

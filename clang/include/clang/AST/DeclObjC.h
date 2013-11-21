@@ -1142,14 +1142,17 @@ public:
   // found, we search referenced protocols and class categories.
   ObjCMethodDecl *lookupMethod(Selector Sel, bool isInstance,
                                bool shallowCategoryLookup= false,
-                               const ObjCCategoryDecl *C= 0) const;
+                               const ObjCCategoryDecl *C = 0,
+                               const ObjCProtocolDecl *P = 0) const;
   ObjCMethodDecl *lookupInstanceMethod(Selector Sel,
-                            bool shallowCategoryLookup = false) const {
-    return lookupMethod(Sel, true/*isInstance*/, shallowCategoryLookup);
+                                       bool shallowCategoryLookup = false,
+                                       ObjCProtocolDecl *P = 0) const {
+    return lookupMethod(Sel, true/*isInstance*/, shallowCategoryLookup, 0, P);
   }
   ObjCMethodDecl *lookupClassMethod(Selector Sel,
-                     bool shallowCategoryLookup = false) const {
-    return lookupMethod(Sel, false/*isInstance*/, shallowCategoryLookup);
+                                    bool shallowCategoryLookup = false,
+                                    ObjCProtocolDecl *P = 0) const {
+    return lookupMethod(Sel, false/*isInstance*/, shallowCategoryLookup, 0, P);
   }
   ObjCInterfaceDecl *lookupInheritedClass(const IdentifierInfo *ICName);
 
