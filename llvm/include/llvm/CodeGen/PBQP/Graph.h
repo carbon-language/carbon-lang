@@ -437,8 +437,8 @@ namespace PBQP {
       for (NodeItr nodeItr = nodesBegin(), nodeEnd = nodesEnd();
            nodeItr != nodeEnd; ++nodeItr) {
 
-        os << "  node" << nodeItr << " [ label=\""
-           << nodeItr << ": " << getNodeCosts(*nodeItr) << "\" ]\n";
+        os << "  node" << *nodeItr << " [ label=\""
+           << *nodeItr << ": " << getNodeCosts(*nodeItr) << "\" ]\n";
       }
 
       os << "  edge [ len=" << getNumNodes() << " ]\n";
