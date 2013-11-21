@@ -301,7 +301,7 @@ static const char *PropertyMemoryAttribute(ASTContext &Context, QualType ArgType
           IDecl->lookupNestedProtocol(&Context.Idents.get("NSCopying")))
         return "copy";
       else
-        return "retain";
+        return "strong";
     }
     else if (ArgType->isBlockPointerType())
       return "copy";
@@ -310,7 +310,7 @@ static const char *PropertyMemoryAttribute(ASTContext &Context, QualType ArgType
     // looking into setter's implementation for backing weak ivar.
     return "weak";
   else if (RetainableObject)
-    return ArgType->isBlockPointerType() ? "copy" : "retain";
+    return ArgType->isBlockPointerType() ? "copy" : "strong";
   return 0;
 }
 

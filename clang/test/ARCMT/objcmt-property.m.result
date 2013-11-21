@@ -23,14 +23,14 @@ typedef char BOOL;
 }
 @property (nonatomic, weak) NSString *WeakProp;
 
-@property (nonatomic, retain) NSString *StrongProp;
+@property (nonatomic, strong) NSString *StrongProp;
 
-@property (nonatomic, retain) NSString *UnavailProp  __attribute__((unavailable));
+@property (nonatomic, strong) NSString *UnavailProp  __attribute__((unavailable));
 - (void) setUnavailProp  : (NSString *)Val;
 
-@property (nonatomic, retain) NSString *UnavailProp1  __attribute__((unavailable));
+@property (nonatomic, strong) NSString *UnavailProp1  __attribute__((unavailable));
 
-@property (nonatomic, retain) NSString *UnavailProp2;
+@property (nonatomic, strong) NSString *UnavailProp2;
 - (void) setUnavailProp2  : (NSString *)Val  __attribute__((unavailable));
 
 @property (nonatomic, copy) NSDictionary *undoAction;
@@ -48,10 +48,10 @@ typedef char BOOL;
     NSArray *_names3;
     NSArray *_names4;
 }
-@property (nonatomic, retain) NSArray *names2;
-@property (nonatomic, retain) NSArray *names3;
-@property (nonatomic, retain) NSArray *names4;
-@property (nonatomic, retain) NSArray *names1;
+@property (nonatomic, strong) NSArray *names2;
+@property (nonatomic, strong) NSArray *names3;
+@property (nonatomic, strong) NSArray *names4;
+@property (nonatomic, strong) NSArray *names1;
 @end
 
 // Properties that contain the name "delegate" or "dataSource",
@@ -64,9 +64,9 @@ typedef char BOOL;
 @property (nonatomic, assign) id xxxdelegateYYY;
 
 
-@property (nonatomic, retain) id MYtarget;
+@property (nonatomic, strong) id MYtarget;
 
-@property (nonatomic, retain) id targetX;
+@property (nonatomic, strong) id targetX;
  
 @property (nonatomic) int value;
 
@@ -80,14 +80,14 @@ typedef char BOOL;
 
 - (void) Nothing;
 @property (nonatomic, readonly) int Length;
-@property (nonatomic, readonly, retain) id object;
+@property (nonatomic, readonly, strong) id object;
 + (double) D;
 @property (nonatomic, readonly) void *JSObject WEBKIT_OBJC_METHOD_ANNOTATION(AVAILABLE_WEBKIT_VERSION_3_0_AND_LATER);
 @property (nonatomic, getter=isIgnoringInteractionEvents, readonly) BOOL ignoringInteractionEvents;
 
-@property (nonatomic, getter=getStringValue, retain) NSString *stringValue;
+@property (nonatomic, getter=getStringValue, strong) NSString *stringValue;
 @property (nonatomic, getter=getCounterValue, readonly) BOOL counterValue;
-@property (nonatomic, getter=getns_dixtionary, readonly, retain) NSDictionary *ns_dixtionary;
+@property (nonatomic, getter=getns_dixtionary, readonly, strong) NSDictionary *ns_dixtionary;
 
 - (BOOL)is3bar; // watch out
 - (NSString *)get3foo; // watch out
@@ -108,9 +108,9 @@ typedef char BOOL;
 @property (nonatomic, assign) id xxxdelegateYYY;
 
 
-@property (nonatomic, retain) id MYtarget;
+@property (nonatomic, strong) id MYtarget;
 
-@property (nonatomic, retain) id targetX;
+@property (nonatomic, strong) id targetX;
 
 @property (nonatomic) int value;
 
@@ -124,7 +124,7 @@ typedef char BOOL;
 
 - (void) Nothing;
 @property (nonatomic, readonly) int Length;
-@property (nonatomic, readonly, retain) id object;
+@property (nonatomic, readonly, strong) id object;
 + (double) D;
 
 - (BOOL)is3bar; // watch out
@@ -161,26 +161,26 @@ DEPRECATED
 
 @interface NSURL
 // Do not infer a property.
-@property (nonatomic, retain) NSURL *appStoreReceiptURL NS_AVAILABLE;
+@property (nonatomic, strong) NSURL *appStoreReceiptURL NS_AVAILABLE;
 - (void) setAppStoreReceiptURL : (NSURL *)object;
 
-@property (nonatomic, retain) NSURL *appStoreReceiptURLX NS_AVAILABLE;
+@property (nonatomic, strong) NSURL *appStoreReceiptURLX NS_AVAILABLE;
 
 // Do not infer a property.
-@property (nonatomic, retain) NSURL *appStoreReceiptURLY ;
+@property (nonatomic, strong) NSURL *appStoreReceiptURLY ;
 - (void) setAppStoreReceiptURLY : (NSURL *)object NS_AVAILABLE;
 
-@property (nonatomic, readonly, retain) id OkToInfer NS_AVAILABLE;
+@property (nonatomic, readonly, strong) id OkToInfer NS_AVAILABLE;
 
 // Do not infer a property.
-@property (nonatomic, retain) NSURL *appStoreReceiptURLZ ;
+@property (nonatomic, strong) NSURL *appStoreReceiptURLZ ;
 - (void) setAppStoreReceiptURLZ : (NSURL *)object NS_AVAILABLE;
 
 // Do not infer a property.
 - (id) t1 NORETURN NS_AVAILABLE;
 - (void) setT1 : (id) arg NS_AVAILABLE;
 
-@property (nonatomic, retain) id method1 ALIGNED NS_AVAILABLE;
+@property (nonatomic, strong) id method1 ALIGNED NS_AVAILABLE;
 
 - (NSURL *)init;  // No Change
 + (id)alloc;      // No Change

@@ -19,20 +19,20 @@
 #define UNAVAILABLE __attribute__((unavailable("not available in automatic reference counting mode")))
 
 @interface MKMapItem
-@property (nonatomic, retain) MKMapItem *source NS_AVAILABLE(10_9, 6_0);
+@property (nonatomic, strong) MKMapItem *source NS_AVAILABLE(10_9, 6_0);
 - (void)setSource:(MKMapItem *)source NS_AVAILABLE(10_9, 7_0);
 
-@property (nonatomic, retain) MKMapItem *dest NS_AVAILABLE(10_9, 6_0);
+@property (nonatomic, strong) MKMapItem *dest NS_AVAILABLE(10_9, 6_0);
 
-@property (nonatomic, retain) MKMapItem *final;
+@property (nonatomic, strong) MKMapItem *final;
 
-@property (nonatomic, retain) MKMapItem *total NS_AVAILABLE(10_9, 6_0);
+@property (nonatomic, strong) MKMapItem *total NS_AVAILABLE(10_9, 6_0);
 - (void)setTotal:(MKMapItem *)source;
 
 - (MKMapItem *)comp NS_AVAILABLE(10_9, 6_0);
 - (void)setComp:(MKMapItem *)source UNAVAILABLE;
 
-@property (nonatomic, retain) MKMapItem *tally  UNAVAILABLE NS_AVAILABLE(10_9, 6_0);
+@property (nonatomic, strong) MKMapItem *tally  UNAVAILABLE NS_AVAILABLE(10_9, 6_0);
 
 - (MKMapItem *)itally  NS_AVAILABLE(10_9, 6_0);
 - (void)setItally:(MKMapItem *)source UNAVAILABLE NS_AVAILABLE(10_9, 6_0);

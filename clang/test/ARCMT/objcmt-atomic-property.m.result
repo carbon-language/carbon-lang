@@ -23,14 +23,14 @@ typedef char BOOL;
 }
 @property (weak) NSString *WeakProp;
 
-@property (retain) NSString *StrongProp;
+@property (strong) NSString *StrongProp;
 
-@property (retain) NSString *UnavailProp  __attribute__((unavailable));
+@property (strong) NSString *UnavailProp  __attribute__((unavailable));
 - (void) setUnavailProp  : (NSString *)Val;
 
-@property (retain) NSString *UnavailProp1  __attribute__((unavailable));
+@property (strong) NSString *UnavailProp1  __attribute__((unavailable));
 
-@property (retain) NSString *UnavailProp2;
+@property (strong) NSString *UnavailProp2;
 - (void) setUnavailProp2  : (NSString *)Val  __attribute__((unavailable));
 
 @property (copy) NSDictionary *undoAction;
@@ -48,10 +48,10 @@ typedef char BOOL;
     NSArray *_names3;
     NSArray *_names4;
 }
-@property (retain) NSArray *names2;
-@property (retain) NSArray *names3;
-@property (retain) NSArray *names4;
-@property (retain) NSArray *names1;
+@property (strong) NSArray *names2;
+@property (strong) NSArray *names3;
+@property (strong) NSArray *names4;
+@property (strong) NSArray *names1;
 @end
 
 // Properties that contain the name "delegate" or "dataSource",
@@ -64,9 +64,9 @@ typedef char BOOL;
 @property (assign) id xxxdelegateYYY;
 
 
-@property (retain) id MYtarget;
+@property (strong) id MYtarget;
 
-@property (retain) id targetX;
+@property (strong) id targetX;
  
 @property  int value;
 
@@ -80,14 +80,14 @@ typedef char BOOL;
 
 - (void) Nothing;
 @property (readonly) int Length;
-@property (readonly, retain) id object;
+@property (readonly, strong) id object;
 + (double) D;
 @property (readonly) void *JSObject WEBKIT_OBJC_METHOD_ANNOTATION(AVAILABLE_WEBKIT_VERSION_3_0_AND_LATER);
 @property (getter=isIgnoringInteractionEvents, readonly) BOOL ignoringInteractionEvents;
 
-@property (getter=getStringValue, retain) NSString *stringValue;
+@property (getter=getStringValue, strong) NSString *stringValue;
 @property (getter=getCounterValue, readonly) BOOL counterValue;
-@property (getter=getns_dixtionary, readonly, retain) NSDictionary *ns_dixtionary;
+@property (getter=getns_dixtionary, readonly, strong) NSDictionary *ns_dixtionary;
 
 - (BOOL)is3bar; // watch out
 - (NSString *)get3foo; // watch out
@@ -108,9 +108,9 @@ typedef char BOOL;
 @property (assign) id xxxdelegateYYY;
 
 
-@property (retain) id MYtarget;
+@property (strong) id MYtarget;
 
-@property (retain) id targetX;
+@property (strong) id targetX;
 
 @property  int value;
 
@@ -124,7 +124,7 @@ typedef char BOOL;
 
 - (void) Nothing;
 @property (readonly) int Length;
-@property (readonly, retain) id object;
+@property (readonly, strong) id object;
 + (double) D;
 
 - (BOOL)is3bar; // watch out
@@ -161,26 +161,26 @@ DEPRECATED
 
 @interface NSURL
 // Do not infer a property.
-@property (retain) NSURL *appStoreReceiptURL NS_AVAILABLE;
+@property (strong) NSURL *appStoreReceiptURL NS_AVAILABLE;
 - (void) setAppStoreReceiptURL : (NSURL *)object;
 
-@property (retain) NSURL *appStoreReceiptURLX NS_AVAILABLE;
+@property (strong) NSURL *appStoreReceiptURLX NS_AVAILABLE;
 
 // Do not infer a property.
-@property (retain) NSURL *appStoreReceiptURLY ;
+@property (strong) NSURL *appStoreReceiptURLY ;
 - (void) setAppStoreReceiptURLY : (NSURL *)object NS_AVAILABLE;
 
-@property (readonly, retain) id OkToInfer NS_AVAILABLE;
+@property (readonly, strong) id OkToInfer NS_AVAILABLE;
 
 // Do not infer a property.
-@property (retain) NSURL *appStoreReceiptURLZ ;
+@property (strong) NSURL *appStoreReceiptURLZ ;
 - (void) setAppStoreReceiptURLZ : (NSURL *)object NS_AVAILABLE;
 
 // Do not infer a property.
 - (id) t1 NORETURN NS_AVAILABLE;
 - (void) setT1 : (id) arg NS_AVAILABLE;
 
-@property (retain) id method1 ALIGNED NS_AVAILABLE;
+@property (strong) id method1 ALIGNED NS_AVAILABLE;
 
 - (NSURL *)init;  // No Change
 + (id)alloc;      // No Change

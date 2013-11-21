@@ -30,14 +30,14 @@ typedef char BOOL;
 }
 @property (NS_NONATOMIC_IOSONLY, weak) NSString *WeakProp;
 
-@property (NS_NONATOMIC_IOSONLY, retain) NSString *StrongProp;
+@property (NS_NONATOMIC_IOSONLY, strong) NSString *StrongProp;
 
-@property (NS_NONATOMIC_IOSONLY, retain) NSString *UnavailProp  __attribute__((unavailable));
+@property (NS_NONATOMIC_IOSONLY, strong) NSString *UnavailProp  __attribute__((unavailable));
 - (void) setUnavailProp  : (NSString *)Val;
 
-@property (NS_NONATOMIC_IOSONLY, retain) NSString *UnavailProp1  __attribute__((unavailable));
+@property (NS_NONATOMIC_IOSONLY, strong) NSString *UnavailProp1  __attribute__((unavailable));
 
-@property (NS_NONATOMIC_IOSONLY, retain) NSString *UnavailProp2;
+@property (NS_NONATOMIC_IOSONLY, strong) NSString *UnavailProp2;
 - (void) setUnavailProp2  : (NSString *)Val  __attribute__((unavailable));
 
 @property (NS_NONATOMIC_IOSONLY, copy) NSDictionary *undoAction;
@@ -55,10 +55,10 @@ typedef char BOOL;
     NSArray *_names3;
     NSArray *_names4;
 }
-@property (NS_NONATOMIC_IOSONLY, retain) NSArray *names2;
-@property (NS_NONATOMIC_IOSONLY, retain) NSArray *names3;
-@property (NS_NONATOMIC_IOSONLY, retain) NSArray *names4;
-@property (NS_NONATOMIC_IOSONLY, retain) NSArray *names1;
+@property (NS_NONATOMIC_IOSONLY, strong) NSArray *names2;
+@property (NS_NONATOMIC_IOSONLY, strong) NSArray *names3;
+@property (NS_NONATOMIC_IOSONLY, strong) NSArray *names4;
+@property (NS_NONATOMIC_IOSONLY, strong) NSArray *names1;
 @end
 
 // Properties that contain the name "delegate" or "dataSource",
@@ -71,9 +71,9 @@ typedef char BOOL;
 @property (NS_NONATOMIC_IOSONLY, assign) id xxxdelegateYYY;
 
 
-@property (NS_NONATOMIC_IOSONLY, retain) id MYtarget;
+@property (NS_NONATOMIC_IOSONLY, strong) id MYtarget;
 
-@property (NS_NONATOMIC_IOSONLY, retain) id targetX;
+@property (NS_NONATOMIC_IOSONLY, strong) id targetX;
  
 @property (NS_NONATOMIC_IOSONLY) int value;
 
@@ -87,14 +87,14 @@ typedef char BOOL;
 
 - (void) Nothing;
 @property (NS_NONATOMIC_IOSONLY, readonly) int Length;
-@property (NS_NONATOMIC_IOSONLY, readonly, retain) id object;
+@property (NS_NONATOMIC_IOSONLY, readonly, strong) id object;
 + (double) D;
 @property (NS_NONATOMIC_IOSONLY, readonly) void *JSObject WEBKIT_OBJC_METHOD_ANNOTATION(AVAILABLE_WEBKIT_VERSION_3_0_AND_LATER);
 @property (NS_NONATOMIC_IOSONLY, getter=isIgnoringInteractionEvents, readonly) BOOL ignoringInteractionEvents;
 
-@property (NS_NONATOMIC_IOSONLY, getter=getStringValue, retain) NSString *stringValue;
+@property (NS_NONATOMIC_IOSONLY, getter=getStringValue, strong) NSString *stringValue;
 @property (NS_NONATOMIC_IOSONLY, getter=getCounterValue, readonly) BOOL counterValue;
-@property (NS_NONATOMIC_IOSONLY, getter=getns_dixtionary, readonly, retain) NSDictionary *ns_dixtionary;
+@property (NS_NONATOMIC_IOSONLY, getter=getns_dixtionary, readonly, strong) NSDictionary *ns_dixtionary;
 
 - (BOOL)is3bar; // watch out
 - (NSString *)get3foo; // watch out
@@ -115,9 +115,9 @@ typedef char BOOL;
 @property (NS_NONATOMIC_IOSONLY, assign) id xxxdelegateYYY;
 
 
-@property (NS_NONATOMIC_IOSONLY, retain) id MYtarget;
+@property (NS_NONATOMIC_IOSONLY, strong) id MYtarget;
 
-@property (NS_NONATOMIC_IOSONLY, retain) id targetX;
+@property (NS_NONATOMIC_IOSONLY, strong) id targetX;
 
 @property (NS_NONATOMIC_IOSONLY) int value;
 
@@ -131,7 +131,7 @@ typedef char BOOL;
 
 - (void) Nothing;
 @property (NS_NONATOMIC_IOSONLY, readonly) int Length;
-@property (NS_NONATOMIC_IOSONLY, readonly, retain) id object;
+@property (NS_NONATOMIC_IOSONLY, readonly, strong) id object;
 + (double) D;
 
 - (BOOL)is3bar; // watch out
@@ -168,26 +168,26 @@ DEPRECATED
 
 @interface NSURL
 // Do not infer a property.
-@property (NS_NONATOMIC_IOSONLY, retain) NSURL *appStoreReceiptURL NS_AVAILABLE;
+@property (NS_NONATOMIC_IOSONLY, strong) NSURL *appStoreReceiptURL NS_AVAILABLE;
 - (void) setAppStoreReceiptURL : (NSURL *)object;
 
-@property (NS_NONATOMIC_IOSONLY, retain) NSURL *appStoreReceiptURLX NS_AVAILABLE;
+@property (NS_NONATOMIC_IOSONLY, strong) NSURL *appStoreReceiptURLX NS_AVAILABLE;
 
 // Do not infer a property.
-@property (NS_NONATOMIC_IOSONLY, retain) NSURL *appStoreReceiptURLY ;
+@property (NS_NONATOMIC_IOSONLY, strong) NSURL *appStoreReceiptURLY ;
 - (void) setAppStoreReceiptURLY : (NSURL *)object NS_AVAILABLE;
 
-@property (NS_NONATOMIC_IOSONLY, readonly, retain) id OkToInfer NS_AVAILABLE;
+@property (NS_NONATOMIC_IOSONLY, readonly, strong) id OkToInfer NS_AVAILABLE;
 
 // Do not infer a property.
-@property (NS_NONATOMIC_IOSONLY, retain) NSURL *appStoreReceiptURLZ ;
+@property (NS_NONATOMIC_IOSONLY, strong) NSURL *appStoreReceiptURLZ ;
 - (void) setAppStoreReceiptURLZ : (NSURL *)object NS_AVAILABLE;
 
 // Do not infer a property.
 - (id) t1 NORETURN NS_AVAILABLE;
 - (void) setT1 : (id) arg NS_AVAILABLE;
 
-@property (NS_NONATOMIC_IOSONLY, retain) id method1 ALIGNED NS_AVAILABLE;
+@property (NS_NONATOMIC_IOSONLY, strong) id method1 ALIGNED NS_AVAILABLE;
 
 - (NSURL *)init;  // No Change
 + (id)alloc;      // No Change
