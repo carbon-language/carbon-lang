@@ -75,22 +75,27 @@ void Resolver::doFile(const File &file) {}
 
 void Resolver::handleFile(const File &file) {
   uint32_t resolverState = Resolver::StateNoChange;
+  const SharedLibraryFile *sharedLibraryFile =
+      llvm::dyn_cast<SharedLibraryFile>(&file);
+
   doFile(file);
   for (const DefinedAtom *atom : file.defined()) {
     doDefinedAtom(*atom);
     resolverState |= StateNewDefinedAtoms;
   }
-  for (const UndefinedAtom *undefAtom : file.undefined()) {
-    doUndefinedAtom(*undefAtom);
-    resolverState |= StateNewUndefinedAtoms;
-
-    // If the undefined symbol has an alternative name, try to resolve the
-    // symbol with the name to give it a second chance. This feature is used for
-    // COFF "weak external" symbol.
-    if (!_symbolTable.isDefined(undefAtom->name())) {
-      if (const UndefinedAtom *fallbackAtom = undefAtom->fallback()) {
-        doUndefinedAtom(*fallbackAtom);
-        _symbolTable.addReplacement(undefAtom, fallbackAtom);
+  if (!sharedLibraryFile ||
+      _context.addUndefinedAtomsFromSharedLibrary(sharedLibraryFile)) {
+    for (const UndefinedAtom *undefAtom : file.undefined()) {
+      doUndefinedAtom(*undefAtom);
+      resolverState |= StateNewUndefinedAtoms;
+      // If the undefined symbol has an alternative name, try to resolve the
+      // symbol with the name to give it a second chance. This feature is used
+      // for COFF "weak external" symbol.
+      if (!_symbolTable.isDefined(undefAtom->name())) {
+        if (const UndefinedAtom *fallbackAtom = undefAtom->fallback()) {
+          doUndefinedAtom(*fallbackAtom);
+          _symbolTable.addReplacement(undefAtom, fallbackAtom);
+        }
       }
     }
   }

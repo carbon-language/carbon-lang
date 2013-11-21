@@ -22,6 +22,7 @@
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
 
+#include <map>
 #include <memory>
 
 namespace lld {
@@ -206,6 +207,13 @@ public:
     return _rpathLinkList;
   }
 
+  virtual bool addUndefinedAtomsFromSharedLibrary(const SharedLibraryFile *s) {
+    if (_undefinedAtomsFromFile.find(s) != _undefinedAtomsFromFile.end())
+      return false;
+    _undefinedAtomsFromFile[s] = true;
+    return true;
+  }
+
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
 
@@ -240,6 +248,7 @@ protected:
   StringRef _soname;
   StringRefVector _rpathList;
   StringRefVector _rpathLinkList;
+  std::map<const SharedLibraryFile *, bool> _undefinedAtomsFromFile;
 };
 } // end namespace lld
 
