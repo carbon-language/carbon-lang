@@ -647,6 +647,44 @@ mappings, as long as they are convertable.
 To check a tag, inside your mapping() method you can use io.mapTag() to specify
 what the tag should be.  This will also add that tag when writing yaml.
 
+Validation
+----------
+
+Sometimes in a yaml map, each key/value pair is valid, but the combination is
+not.  This is similar to something having no syntax errors, but still having
+semantic errors.  To support semantic level checking, YAML I/O allows
+an optional ``validate()`` method in a MappingTraits template specialization.  
+
+When parsing yaml, the ``validate()`` method is call *after* all key/values in 
+the map have been processed. Any error message returned by the ``validate()`` 
+method during input will be printed just a like a syntax error would be printed.
+When writing yaml, the ``validate()`` method is called *before* the yaml 
+key/values  are written.  Any error during output will trigger an ``assert()`` 
+because it is a programming error to have invalid struct values.
+
+
+.. code-block:: c++
+
+    using llvm::yaml::MappingTraits;
+    using llvm::yaml::IO;
+    
+    struct Stuff {
+      ...
+    };
+
+    template <>
+    struct MappingTraits<Stuff> {
+      static void mapping(IO &io, Stuff &stuff) {
+      ...
+      }
+      static StringRef validate(IO &io, Stuff &stuff) {
+        // Look at all fields in 'stuff' and if there
+        // are any bad values return a string describing
+        // the error.  Otherwise return an empty string.
+        return StringRef();
+      }
+    };
+
 
 Sequence
 ========

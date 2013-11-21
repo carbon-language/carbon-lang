@@ -27,6 +27,13 @@ using llvm::yaml::Hex32;
 using llvm::yaml::Hex64;
 
 
+
+
+static void suppressErrorMessages(const llvm::SMDiagnostic &, void *) {
+}
+
+
+
 //===----------------------------------------------------------------------===//
 //  Test MappingTraits
 //===----------------------------------------------------------------------===//
@@ -1115,16 +1122,49 @@ TEST(YAMLIO, TestTaggedDocumentsWriteAndRead) {
 }
 
 
+//===----------------------------------------------------------------------===//
+//  Test mapping validation
+//===----------------------------------------------------------------------===//
+
+struct MyValidation {
+  double value;
+};
+
+LLVM_YAML_IS_DOCUMENT_LIST_VECTOR(MyValidation)
+
+namespace llvm {
+namespace yaml {
+  template <>
+  struct MappingTraits<MyValidation> {
+    static void mapping(IO &io, MyValidation &d) {
+        io.mapRequired("value", d.value);
+    }
+    static StringRef validate(IO &io, MyValidation &d) {
+        if (d.value < 0)
+          return "negative value";
+        return StringRef();
+    }
+  };
+ }
+}
+
+
+//
+// Test that validate() is called and complains about the negative value.
+//
+TEST(YAMLIO, TestValidatingInput) {
+  std::vector<MyValidation> docList;
+  Input yin("--- \nvalue:  3.0\n"
+            "--- \nvalue:  -1.0\n...\n",
+            NULL, suppressErrorMessages);
+  yin >> docList;
+  EXPECT_TRUE(yin.error());
+}
+
 
 //===----------------------------------------------------------------------===//
 //  Test error handling
 //===----------------------------------------------------------------------===//
-
-
-
-static void suppressErrorMessages(const llvm::SMDiagnostic &, void *) {
-}
-
 
 //
 // Test error handling of unknown enumerated scalar
