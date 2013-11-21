@@ -165,7 +165,7 @@ StringRef PECOFFLinkingContext::searchLibraryFile(StringRef filename) const {
     SmallString<128> path = dir;
     llvm::sys::path::append(path, filename);
     if (llvm::sys::fs::exists(path.str()))
-      return allocateString(path.str());
+      return allocate(path.str());
   }
   return filename;
 }

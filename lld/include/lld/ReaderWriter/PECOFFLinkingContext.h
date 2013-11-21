@@ -85,7 +85,7 @@ public:
 
   void registerTemporaryFile(StringRef path) {
     std::unique_ptr<llvm::FileRemover> fileRemover(
-        new llvm::FileRemover(Twine(allocateString(path))));
+        new llvm::FileRemover(Twine(allocate(path))));
     _tempFiles.push_back(std::move(fileRemover));
   }
 
@@ -99,7 +99,7 @@ public:
       return name;
     std::string str = "_";
     str.append(name);
-    return allocateString(str);
+    return allocate(str);
   }
 
   void setEntrySymbolName(StringRef name) {
@@ -237,7 +237,7 @@ public:
   void setDosStub(ArrayRef<uint8_t> data) { _dosStub = data; }
   ArrayRef<uint8_t> getDosStub() const { return _dosStub; }
 
-  StringRef allocateString(StringRef ref) const {
+  StringRef allocate(StringRef ref) const {
     char *x = _allocator.Allocate<char>(ref.size() + 1);
     memcpy(x, ref.data(), ref.size());
     x[ref.size()] = '\0';

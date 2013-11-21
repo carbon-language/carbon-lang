@@ -269,7 +269,7 @@ StringRef replaceExtension(PECOFFLinkingContext &ctx,
                            StringRef path, StringRef extension) {
   SmallString<128> val = path;
   llvm::sys::path::replace_extension(val, extension);
-  return ctx.allocateString(val.str());
+  return ctx.allocate(val.str());
 }
 
 // Create a manifest file contents.
@@ -433,7 +433,7 @@ bool createManifest(PECOFFLinkingContext &ctx, raw_ostream &diagnostics) {
     if (!createManifestResourceFile(ctx, diagnostics, resourceFilePath))
       return false;
     std::unique_ptr<InputElement> inputElement(
-        new PECOFFFileNode(ctx, ctx.allocateString(resourceFilePath)));
+        new PECOFFFileNode(ctx, ctx.allocate(resourceFilePath)));
     ctx.inputGraph().addInputElement(std::move(inputElement));
     return true;
   }
@@ -478,7 +478,7 @@ std::vector<const char *> processLinkEnv(PECOFFLinkingContext &context,
   llvm::Optional<std::string> env = llvm::sys::Process::GetEnv("LINK");
   if (env.hasValue())
     for (std::string &arg : splitArgList(*env))
-      ret.push_back(context.allocateString(arg).data());
+      ret.push_back(context.allocate(arg).data());
 
   // Add the rest of arguments passed via the command line.
   for (int i = 1; i < argc; ++i)
@@ -493,7 +493,7 @@ void processLibEnv(PECOFFLinkingContext &context) {
   llvm::Optional<std::string> env = llvm::sys::Process::GetEnv("LIB");
   if (env.hasValue())
     for (StringRef path : splitPathList(*env))
-      context.appendInputSearchPath(context.allocateString(path));
+      context.appendInputSearchPath(context.allocate(path));
 }
 
 // Returns a default entry point symbol name depending on context image type and
@@ -763,7 +763,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
     }
 
     case OPT_manifestfile:
-      ctx.setManifestOutputPath(ctx.allocateString(inputArg->getValue()));
+      ctx.setManifestOutputPath(ctx.allocate(inputArg->getValue()));
       break;
 
     case OPT_manifestdependency:
@@ -771,7 +771,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       // embedded to the manifest XML file with no error check, for link.exe
       // compatibility. We do not gurantete that the resulting XML file is
       // valid.
-      ctx.setManifestDependency(ctx.allocateString(inputArg->getValue()));
+      ctx.setManifestDependency(ctx.allocate(inputArg->getValue()));
       break;
 
     case OPT_failifmismatch:
@@ -781,11 +781,11 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       break;
 
     case OPT_entry:
-      ctx.setEntrySymbolName(ctx.allocateString(inputArg->getValue()));
+      ctx.setEntrySymbolName(ctx.allocate(inputArg->getValue()));
       break;
 
     case OPT_libpath:
-      ctx.appendInputSearchPath(ctx.allocateString(inputArg->getValue()));
+      ctx.appendInputSearchPath(ctx.allocate(inputArg->getValue()));
       break;
 
     case OPT_debug:
@@ -838,7 +838,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
     }
 
     case OPT_incl:
-      ctx.addInitialUndefinedSymbol(ctx.allocateString(inputArg->getValue()));
+      ctx.addInitialUndefinedSymbol(ctx.allocate(inputArg->getValue()));
       break;
 
     case OPT_nodefaultlib_all:
@@ -846,12 +846,12 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       break;
 
     case OPT_out:
-      ctx.setOutputPath(ctx.allocateString(inputArg->getValue()));
+      ctx.setOutputPath(ctx.allocate(inputArg->getValue()));
       break;
 
     case OPT_INPUT:
       inputElements.push_back(std::unique_ptr<InputElement>(
-          new PECOFFFileNode(ctx, ctx.allocateString(inputArg->getValue()))));
+          new PECOFFFileNode(ctx, ctx.allocate(inputArg->getValue()))));
       break;
 
 #define DEFINE_BOOLEAN_FLAG(name, setter)       \
@@ -903,7 +903,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   if (llvm::opt::Arg *dashdash = parsedArgs->getLastArg(OPT_DASH_DASH)) {
     for (const StringRef value : dashdash->getValues()) {
       std::unique_ptr<InputElement> elem(
-          new PECOFFFileNode(ctx, ctx.allocateString(value)));
+          new PECOFFFileNode(ctx, ctx.allocate(value)));
       inputElements.push_back(std::move(elem));
     }
   }
@@ -938,7 +938,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   if (ctx.getManifestOutputPath().empty()) {
     std::string path = ctx.outputPath();
     path.append(".manifest");
-    ctx.setManifestOutputPath(ctx.allocateString(path));
+    ctx.setManifestOutputPath(ctx.allocate(path));
   }
 
   // If the core linker already started, we need to explicitly call parse() for
