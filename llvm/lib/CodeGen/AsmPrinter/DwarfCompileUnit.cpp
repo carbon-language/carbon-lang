@@ -40,16 +40,16 @@ static cl::opt<bool> GenerateTypeUnits("generate-type-units", cl::Hidden,
 /// CompileUnit - Compile unit constructor.
 CompileUnit::CompileUnit(unsigned UID, DIE *D, DICompileUnit Node,
                          AsmPrinter *A, DwarfDebug *DW, DwarfUnits *DWU)
-    : UniqueID(UID), Node(Node), Language(Node.getLanguage()), CUDie(D), Asm(A),
-      DD(DW), DU(DWU), IndexTyDie(0), DebugInfoOffset(0) {
+    : UniqueID(UID), Node(Node), Language(Node.getLanguage()), CUDie(D),
+      DebugInfoOffset(0), Asm(A), DD(DW), DU(DWU), IndexTyDie(0) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
   insertDIE(Node, D);
 }
 
 CompileUnit::CompileUnit(unsigned UID, DIE *D, uint16_t Language, AsmPrinter *A,
                          DwarfDebug *DD, DwarfUnits *DU)
-    : UniqueID(UID), Node(NULL), Language(Language), CUDie(D), Asm(A), DD(DD),
-      DU(DU), IndexTyDie(0), DebugInfoOffset(0) {
+    : UniqueID(UID), Node(NULL), Language(Language), CUDie(D),
+      DebugInfoOffset(0), Asm(A), DD(DD), DU(DU), IndexTyDie(0) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
 }
 

@@ -47,6 +47,9 @@ class CompileUnit {
   /// CUDie - Compile unit debug information entry.
   const OwningPtr<DIE> CUDie;
 
+  /// Offset of the CUDie from beginning of debug info section.
+  unsigned DebugInfoOffset;
+
   /// Asm - Target of Dwarf emission.
   AsmPrinter *Asm;
 
@@ -96,9 +99,6 @@ class CompileUnit {
 
   // DIEIntegerOne - A preallocated DIEValue because 1 is used frequently.
   DIEInteger *DIEIntegerOne;
-
-  /// Offset of the CUDie from beginning of debug info section.
-  unsigned DebugInfoOffset;
 
 public:
   CompileUnit(unsigned UID, DIE *D, DICompileUnit CU, AsmPrinter *A,
