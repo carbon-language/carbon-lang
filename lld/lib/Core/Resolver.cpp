@@ -34,15 +34,15 @@ namespace {
 /// This is used as a filter function to std::remove_if to dead strip atoms.
 class NotLive {
 public:
-  explicit NotLive(const llvm::DenseSet<const Atom*>& la) : _liveAtoms(la) { }
+  explicit NotLive(const llvm::DenseSet<const Atom *> &la) : _liveAtoms(la) {}
 
   bool operator()(const Atom *atom) const {
     // don't remove if live
-    if ( _liveAtoms.count(atom) )
+    if (_liveAtoms.count(atom))
       return false;
-   // don't remove if marked never-dead-strip
-    if (const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(atom)) {
-      if ( defAtom->deadStrip() == DefinedAtom::deadStripNever )
+    // don't remove if marked never-dead-strip
+    if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom)) {
+      if (defAtom->deadStrip() == DefinedAtom::deadStripNever)
         return false;
     }
     // do remove this atom
@@ -50,9 +50,8 @@ public:
   }
 
 private:
-  const llvm::DenseSet<const Atom*> _liveAtoms;
+  const llvm::DenseSet<const Atom *> _liveAtoms;
 };
-
 
 /// This is used as a filter function to std::remove_if to coalesced atoms.
 class AtomCoalescedAway {
@@ -110,8 +109,8 @@ void Resolver::handleFile(const File &file) {
   _context.setResolverState(resolverState);
 }
 
-void
-Resolver::forEachUndefines(UndefCallback callback, bool searchForOverrides) {
+void Resolver::forEachUndefines(UndefCallback callback,
+                                bool searchForOverrides) {
   // Handle normal archives
   int64_t undefineGenCount = 0;
   do {
@@ -150,7 +149,8 @@ void Resolver::handleArchiveFile(const File &file) {
       handleFile(*member);
     }
   };
-  bool searchForOverrides = _context.searchArchivesToOverrideTentativeDefinitions();
+  bool searchForOverrides =
+      _context.searchArchivesToOverrideTentativeDefinitions();
   forEachUndefines(callback, searchForOverrides);
 }
 
@@ -160,8 +160,8 @@ void Resolver::handleSharedLibrary(const File &file) {
   handleFile(*sharedLibrary);
 
   auto callback = [&](StringRef undefName, bool dataSymbolOnly) {
-    if (const SharedLibraryAtom *shAtom = sharedLibrary->exports(
-            undefName, dataSymbolOnly))
+    if (const SharedLibraryAtom *shAtom =
+            sharedLibrary->exports(undefName, dataSymbolOnly))
       doSharedLibraryAtom(*shAtom);
   };
   bool searchForOverrides =
@@ -169,7 +169,7 @@ void Resolver::handleSharedLibrary(const File &file) {
   forEachUndefines(callback, searchForOverrides);
 }
 
-void Resolver::doUndefinedAtom(const UndefinedAtom& atom) {
+void Resolver::doUndefinedAtom(const UndefinedAtom &atom) {
   DEBUG_WITH_TYPE("resolver", llvm::dbgs()
                     << "       UndefinedAtom: "
                     << llvm::format("0x%09lX", &atom)
@@ -177,13 +177,12 @@ void Resolver::doUndefinedAtom(const UndefinedAtom& atom) {
                     << atom.name()
                     << "\n");
 
- // add to list of known atoms
+  // add to list of known atoms
   _atoms.push_back(&atom);
 
   // tell symbol table
   _symbolTable.add(atom);
 }
-
 
 // called on each atom when a file is added
 void Resolver::doDefinedAtom(const DefinedAtom &atom) {
@@ -199,7 +198,7 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
                     << "\n");
 
   // Verify on zero-size atoms are pinned to start or end of section.
-  switch ( atom.sectionPosition() ) {
+  switch (atom.sectionPosition()) {
   case DefinedAtom::sectionPositionStart:
   case DefinedAtom::sectionPositionEnd:
     assert(atom.size() == 0);
@@ -223,8 +222,8 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
   }
 }
 
-void Resolver::doSharedLibraryAtom(const SharedLibraryAtom& atom) {
-   DEBUG_WITH_TYPE("resolver", llvm::dbgs()
+void Resolver::doSharedLibraryAtom(const SharedLibraryAtom &atom) {
+  DEBUG_WITH_TYPE("resolver", llvm::dbgs()
                     << "   SharedLibraryAtom: "
                     << llvm::format("0x%09lX", &atom)
                     << ", name="
@@ -238,12 +237,12 @@ void Resolver::doSharedLibraryAtom(const SharedLibraryAtom& atom) {
   _symbolTable.add(atom);
 }
 
-void Resolver::doAbsoluteAtom(const AbsoluteAtom& atom) {
-   DEBUG_WITH_TYPE("resolver", llvm::dbgs()
+void Resolver::doAbsoluteAtom(const AbsoluteAtom &atom) {
+  DEBUG_WITH_TYPE("resolver", llvm::dbgs()
                     << "       AbsoluteAtom: "
                     << llvm::format("0x%09lX", &atom)
                     << ", name="
-                     << atom.name()
+                    << atom.name()
                     << "\n");
 
   // add to list of known atoms
@@ -255,10 +254,8 @@ void Resolver::doAbsoluteAtom(const AbsoluteAtom& atom) {
   }
 }
 
-
-
 // utility to add a vector of atoms
-void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
+void Resolver::addAtoms(const std::vector<const DefinedAtom *> &newAtoms) {
   for (const DefinedAtom *newAtom : newAtoms) {
     this->doDefinedAtom(*newAtom);
   }
@@ -306,36 +303,34 @@ bool Resolver::resolveUndefines() {
 // to the new defined atom
 void Resolver::updateReferences() {
   ScopedTask task(getDefaultDomain(), "updateReferences");
-  for(const Atom *atom : _atoms) {
-    if (const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(atom)) {
+  for (const Atom *atom : _atoms) {
+    if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom)) {
       for (const Reference *ref : *defAtom) {
-        const Atom* newTarget = _symbolTable.replacement(ref->target());
-        (const_cast<Reference*>(ref))->setTarget(newTarget);
+        const Atom *newTarget = _symbolTable.replacement(ref->target());
+        const_cast<Reference *>(ref)->setTarget(newTarget);
       }
     }
   }
 }
 
-
 // for dead code stripping, recursively mark atoms "live"
 void Resolver::markLive(const Atom &atom) {
   // if already marked live, then done (stop recursion)
-  if ( _liveAtoms.count(&atom) )
+  if (_liveAtoms.count(&atom))
     return;
 
   // mark this atom is live
   _liveAtoms.insert(&atom);
 
   // mark all atoms it references as live
-  if ( const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(&atom)) {
+  if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom)) {
     for (const Reference *ref : *defAtom) {
       const Atom *target = ref->target();
-      if ( target != nullptr )
+      if (target != nullptr)
         this->markLive(*target);
     }
   }
 }
-
 
 // remove all atoms not actually used
 void Resolver::deadStripOptimize() {
@@ -353,7 +348,7 @@ void Resolver::deadStripOptimize() {
       const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom);
       if (defAtom == nullptr)
         continue;
-      if ( defAtom->scope() == DefinedAtom::scopeGlobal )
+      if (defAtom->scope() == DefinedAtom::scopeGlobal)
         _deadStripRoots.insert(defAtom);
     }
   }
@@ -370,15 +365,15 @@ void Resolver::deadStripOptimize() {
   }
 
   // mark all roots as live, and recursively all atoms they reference
-  for ( const Atom *dsrAtom : _deadStripRoots) {
+  for (const Atom *dsrAtom : _deadStripRoots) {
     this->markLive(*dsrAtom);
   }
 
   // now remove all non-live atoms from _atoms
-  _atoms.erase(std::remove_if(_atoms.begin(), _atoms.end(),
-                              NotLive(_liveAtoms)), _atoms.end());
+  _atoms.erase(
+      std::remove_if(_atoms.begin(), _atoms.end(), NotLive(_liveAtoms)),
+      _atoms.end());
 }
-
 
 // error out if some undefines remain
 bool Resolver::checkUndefines(bool final) {
@@ -391,9 +386,10 @@ bool Resolver::checkUndefines(bool final) {
   _symbolTable.undefines(undefinedAtoms);
   if (_context.deadStrip()) {
     // When dead code stripping, we don't care if dead atoms are undefined.
-    undefinedAtoms.erase(std::remove_if(
-                           undefinedAtoms.begin(), undefinedAtoms.end(),
-                           NotLive(_liveAtoms)), undefinedAtoms.end());
+    undefinedAtoms.erase(std::remove_if(undefinedAtoms.begin(),
+                                        undefinedAtoms.end(),
+                                        NotLive(_liveAtoms)),
+                         undefinedAtoms.end());
   }
 
   // error message about missing symbols
@@ -432,12 +428,12 @@ bool Resolver::checkUndefines(bool final) {
   return false;
 }
 
-
 // remove from _atoms all coaleseced away atoms
 void Resolver::removeCoalescedAwayAtoms() {
   ScopedTask task(getDefaultDomain(), "removeCoalescedAwayAtoms");
   _atoms.erase(std::remove_if(_atoms.begin(), _atoms.end(),
-                              AtomCoalescedAway(_symbolTable)), _atoms.end());
+                              AtomCoalescedAway(_symbolTable)),
+               _atoms.end());
 }
 
 void Resolver::linkTimeOptimize() {
@@ -459,33 +455,30 @@ bool Resolver::resolve() {
   return true;
 }
 
-void Resolver::MergedFile::addAtom(const Atom& atom) {
-  if (const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(&atom)) {
+void Resolver::MergedFile::addAtom(const Atom &atom) {
+  if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom)) {
     _definedAtoms._atoms.push_back(defAtom);
-  } else if (const UndefinedAtom* undefAtom = dyn_cast<UndefinedAtom>(&atom)) {
+  } else if (const UndefinedAtom *undefAtom = dyn_cast<UndefinedAtom>(&atom)) {
     _undefinedAtoms._atoms.push_back(undefAtom);
-  } else if (const SharedLibraryAtom* slAtom =
-               dyn_cast<SharedLibraryAtom>(&atom)) {
+  } else if (const SharedLibraryAtom *slAtom =
+                 dyn_cast<SharedLibraryAtom>(&atom)) {
     _sharedLibraryAtoms._atoms.push_back(slAtom);
-  } else if (const AbsoluteAtom* abAtom = dyn_cast<AbsoluteAtom>(&atom)) {
+  } else if (const AbsoluteAtom *abAtom = dyn_cast<AbsoluteAtom>(&atom)) {
     _absoluteAtoms._atoms.push_back(abAtom);
   } else {
     llvm_unreachable("atom has unknown definition kind");
   }
 }
 
-
 MutableFile::DefinedAtomRange Resolver::MergedFile::definedAtoms() {
-  return range<std::vector<const DefinedAtom*>::iterator>(
-                    _definedAtoms._atoms.begin(), _definedAtoms._atoms.end());
+  return range<std::vector<const DefinedAtom *>::iterator>(
+      _definedAtoms._atoms.begin(), _definedAtoms._atoms.end());
 }
 
-
-
-void Resolver::MergedFile::addAtoms(std::vector<const Atom*>& all) {
+void Resolver::MergedFile::addAtoms(std::vector<const Atom *> &all) {
   ScopedTask task(getDefaultDomain(), "addAtoms");
   DEBUG_WITH_TYPE("resolver", llvm::dbgs() << "Resolver final atom list:\n");
-  for ( const Atom *atom : all ) {
+  for (const Atom *atom : all) {
     DEBUG_WITH_TYPE("resolver", llvm::dbgs()
                     << llvm::format("    0x%09lX", atom)
                     << ", name="
@@ -494,6 +487,5 @@ void Resolver::MergedFile::addAtoms(std::vector<const Atom*>& all) {
     this->addAtom(*atom);
   }
 }
-
 
 } // namespace lld
