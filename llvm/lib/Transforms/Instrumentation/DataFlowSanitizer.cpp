@@ -96,6 +96,22 @@ static cl::opt<bool> ClArgsABI(
     cl::desc("Use the argument ABI rather than the TLS ABI"),
     cl::Hidden);
 
+// Controls whether the pass includes or ignores the labels of pointers in load
+// instructions.
+static cl::opt<bool> ClCombinePointerLabelsOnLoad(
+    "dfsan-combine-pointer-labels-on-load",
+    cl::desc("Combine the label of the pointer with the label of the data when "
+             "loading from memory."),
+    cl::Hidden, cl::init(true));
+
+// Controls whether the pass includes or ignores the labels of pointers in
+// stores instructions.
+static cl::opt<bool> ClCombinePointerLabelsOnStore(
+    "dfsan-combine-pointer-labels-on-store",
+    cl::desc("Combine the label of the pointer with the label of the data when "
+             "storing in memory."),
+    cl::Hidden, cl::init(false));
+
 static cl::opt<bool> ClDebugNonzeroLabels(
     "dfsan-debug-nonzero-labels",
     cl::desc("Insert calls to __dfsan_nonzero_label on observing a parameter, "
@@ -505,6 +521,7 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
   DFSanUnionLoadFn =
       Mod->getOrInsertFunction("__dfsan_union_load", DFSanUnionLoadFnTy);
   if (Function *F = dyn_cast<Function>(DFSanUnionLoadFn)) {
+    F->addAttribute(AttributeSet::FunctionIndex, Attribute::ReadOnly);
     F->addAttribute(AttributeSet::ReturnIndex, Attribute::ZExt);
   }
   DFSanUnimplementedFn =
@@ -978,14 +995,15 @@ void DFSanVisitor::visitLoadInst(LoadInst &LI) {
     Align = 1;
   }
   IRBuilder<> IRB(&LI);
-  Value *LoadedShadow =
-      DFSF.loadShadow(LI.getPointerOperand(), Size, Align, &LI);
-  Value *PtrShadow = DFSF.getShadow(LI.getPointerOperand());
-  Value *CombinedShadow = DFSF.DFS.combineShadows(LoadedShadow, PtrShadow, &LI);
-  if (CombinedShadow != DFSF.DFS.ZeroShadow)
-    DFSF.NonZeroChecks.insert(CombinedShadow);
+  Value *Shadow = DFSF.loadShadow(LI.getPointerOperand(), Size, Align, &LI);
+  if (ClCombinePointerLabelsOnLoad) {
+    Value *PtrShadow = DFSF.getShadow(LI.getPointerOperand());
+    Shadow = DFSF.DFS.combineShadows(Shadow, PtrShadow, &LI);
+  }
+  if (Shadow != DFSF.DFS.ZeroShadow)
+    DFSF.NonZeroChecks.insert(Shadow);
 
-  DFSF.setShadow(&LI, CombinedShadow);
+  DFSF.setShadow(&LI, Shadow);
 }
 
 void DFSanFunction::storeShadow(Value *Addr, uint64_t Size, uint64_t Align,
@@ -1050,8 +1068,13 @@ void DFSanVisitor::visitStoreInst(StoreInst &SI) {
   } else {
     Align = 1;
   }
-  DFSF.storeShadow(SI.getPointerOperand(), Size, Align,
-                   DFSF.getShadow(SI.getValueOperand()), &SI);
+
+  Value* Shadow = DFSF.getShadow(SI.getValueOperand());
+  if (ClCombinePointerLabelsOnStore) {
+    Value *PtrShadow = DFSF.getShadow(SI.getPointerOperand());
+    Shadow = DFSF.DFS.combineShadows(Shadow, PtrShadow, &SI);
+  }
+  DFSF.storeShadow(SI.getPointerOperand(), Size, Align, Shadow, &SI);
 }
 
 void DFSanVisitor::visitBinaryOperator(BinaryOperator &BO) {
