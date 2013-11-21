@@ -456,6 +456,9 @@ class DwarfDebug {
   // Version of dwarf we're emitting.
   unsigned DwarfVersion;
 
+  // Maps from a type identifier to the actual MDNode.
+  DITypeIdentifierMap TypeIdentifierMap;
+
   // DWARF5 Experimental Options
   bool HasDwarfAccelTables;
   bool HasSplitDwarf;
@@ -476,9 +479,6 @@ class DwarfDebug {
 
   // Holder for the skeleton information.
   DwarfUnits SkeletonHolder;
-
-  // Maps from a type identifier to the actual MDNode.
-  DITypeIdentifierMap TypeIdentifierMap;
 
 private:
 
