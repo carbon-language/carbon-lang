@@ -1399,9 +1399,29 @@ bool
 MipsConstantIslands::fixupUnconditionalBr(ImmBranch &Br) {
   MachineInstr *MI = Br.MI;
   MachineBasicBlock *MBB = MI->getParent();
+  MachineBasicBlock *DestBB = MI->getOperand(0).getMBB();
   // Use BL to implement far jump.
-  Br.MaxDisp = ((1 << 16)-1) * 2;
-  MI->setDesc(TII->get(Mips::BimmX16));
+  unsigned BimmX16MaxDisp = ((1 << 16)-1) * 2;
+  if (isBBInRange(MI, DestBB, BimmX16MaxDisp)) {
+    Br.MaxDisp = BimmX16MaxDisp;
+    MI->setDesc(TII->get(Mips::BimmX16));
+  }
+  else {
+    // need to give the math a more careful look here
+    // this is really a segment address and not
+    // a PC relative address. FIXME. But I think that
+    // just reducing the bits by 1 as I've done is correct.
+    // The basic block we are branching too much be longword aligned.
+    // we know that RA is saved because we always save it right now.
+    // this requirement will be relaxed later but we also have an alternate
+    // way to implement this that I will implement that does not need jal.
+    // We should have a way to back out this alignment restriction if we "can" later.
+    // but it is not harmful.
+    //
+    DestBB->setAlignment(2);
+    Br.MaxDisp = ((1<<24)-1) * 2;
+    MI->setDesc(TII->get(Mips::Jal16));
+  }
   BBInfo[MBB->getNumber()].Size += 2;
   adjustBBOffsetsAfter(MBB);
   HasFarJump = true;

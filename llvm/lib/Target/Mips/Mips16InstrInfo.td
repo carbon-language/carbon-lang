@@ -734,6 +734,7 @@ def DivuRxRy16: FRR16_div_ins<0b11011, "divu", IIAlu> {
 def Jal16 : FJAL16_ins<0b0, "jal", IIAlu> {
   let hasDelaySlot = 0;  // not true, but we add the nop for now
   let isCall=1;
+  let Defs = [RA];
 }
 
 //
