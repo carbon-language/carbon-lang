@@ -210,7 +210,7 @@ struct AnalysisResultModel : AnalysisResultConcept<IRUnitT> {
     return new AnalysisResultModel(Result);
   }
 
-  /// \brief The model bases invalidation soley on being in the preserved set.
+  /// \brief The model bases invalidation solely on being in the preserved set.
   //
   // FIXME: We should actually use two different concepts for analysis results
   // rather than two different models, and avoid the indirect function call for
@@ -645,7 +645,7 @@ public:
       PreservedAnalyses PassPA = Pass.run(I);
       PA.intersect(llvm_move(PassPA));
     }
-    
+
     // By definition we preserve the proxy.
     PA.preserve<FunctionAnalysisModuleProxy>();
     return PA;
