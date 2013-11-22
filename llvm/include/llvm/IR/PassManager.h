@@ -327,13 +327,10 @@ template <typename IRUnitT> struct AnalysisPassConcept {
 /// Can wrap any type which implements a suitable \c run method. The method
 /// must accept the IRUnitT as an argument and produce an object which can be
 /// wrapped in a \c AnalysisResultModel.
-template <typename PassT>
-struct AnalysisPassModel : AnalysisPassConcept<typename PassT::IRUnitT> {
+template <typename IRUnitT, typename PassT>
+struct AnalysisPassModel : AnalysisPassConcept<IRUnitT> {
   AnalysisPassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
   virtual AnalysisPassModel *clone() { return new AnalysisPassModel(Pass); }
-
-  // FIXME: Replace PassT::IRUnitT with type traits when we use C++11.
-  typedef typename PassT::IRUnitT IRUnitT;
 
   // FIXME: Replace PassT::Result with type traits when we use C++11.
   typedef AnalysisResultModel<IRUnitT, PassT, typename PassT::Result>
@@ -418,8 +415,6 @@ public:
   /// If there is not a valid cached result in the manager already, this will
   /// re-run the analysis to produce a valid result.
   template <typename PassT> const typename PassT::Result &getResult(Module *M) {
-    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Module *>::value),
-                       "The analysis pass must be over a Module.");
     assert(ModuleAnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being queried");
 
@@ -438,20 +433,16 @@ public:
   /// populate
   /// the manager with all of the analysis passes available.
   template <typename PassT> void registerPass(PassT Pass) {
-    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Module *>::value),
-                       "The analysis pass must be over a Module.");
     assert(!ModuleAnalysisPasses.count(PassT::ID()) &&
            "Registered the same analysis pass twice!");
     ModuleAnalysisPasses[PassT::ID()] =
-        new detail::AnalysisPassModel<PassT>(llvm_move(Pass));
+        new detail::AnalysisPassModel<Module *, PassT>(llvm_move(Pass));
   }
 
   /// \brief Invalidate a specific analysis pass for an IR module.
   ///
   /// Note that the analysis result can disregard invalidation.
   template <typename PassT> void invalidate(Module *M) {
-    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Module *>::value),
-                       "The analysis pass must be over a Module.");
     assert(ModuleAnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being invalidated");
     invalidateImpl(PassT::ID(), M);
@@ -500,8 +491,6 @@ public:
   /// re-run the analysis to produce a valid result.
   template <typename PassT>
   const typename PassT::Result &getResult(Function *F) {
-    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Function *>::value),
-                       "The analysis pass must be over a Function.");
     assert(FunctionAnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being queried");
 
@@ -520,20 +509,16 @@ public:
   /// populate
   /// the manager with all of the analysis passes available.
   template <typename PassT> void registerPass(PassT Pass) {
-    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Function *>::value),
-                       "The analysis pass must be over a Function.");
     assert(!FunctionAnalysisPasses.count(PassT::ID()) &&
            "Registered the same analysis pass twice!");
     FunctionAnalysisPasses[PassT::ID()] =
-        new detail::AnalysisPassModel<PassT>(llvm_move(Pass));
+        new detail::AnalysisPassModel<Function *, PassT>(llvm_move(Pass));
   }
 
   /// \brief Invalidate a specific analysis pass for an IR module.
   ///
   /// Note that the analysis result can disregard invalidation.
   template <typename PassT> void invalidate(Function *F) {
-    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Function *>::value),
-                       "The analysis pass must be over a Function.");
     assert(FunctionAnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being invalidated");
     invalidateImpl(PassT::ID(), F);
@@ -617,7 +602,6 @@ private:
 /// pass.
 class FunctionAnalysisManagerModuleProxy {
 public:
-  typedef Module *IRUnitT;
   class Result;
 
   static void *ID() { return (void *)&PassID; }
