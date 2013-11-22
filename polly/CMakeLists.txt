@@ -168,8 +168,10 @@ file( GLOB_RECURSE files *.h *.cpp)
 file( GLOB_RECURSE jsonfiles lib/JSON/*.h lib/JSON/*.cpp)
 list( REMOVE_ITEM files ${jsonfiles} )
 add_custom_command( OUTPUT formatting COMMAND
+  CLANG_FORMAT=${LLVM_BINARY_DIR}/bin/clang-format
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/check_format.sh ${files})
 add_custom_target(polly-check-format DEPENDS formatting)
 add_custom_command( OUTPUT formatting-update COMMAND
+  CLANG_FORMAT=${LLVM_BINARY_DIR}/bin/clang-format
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/update_format.sh ${files})
 add_custom_target(polly-update-format DEPENDS formatting-update)

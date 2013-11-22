@@ -1,16 +1,20 @@
 #!/bin/bash
 
-if ! which clang-format; then
-    echo "Error: cannot find clang-format in your path"
-    # Do not fail. This is a temporary fix to silence buildbots.
-    exit 0
+CLANG_FORMAT=${CLANG_FORMAT}
+
+if [ "${CLANG_FORMAT}x" = "x" ]; then
+  CLANG_FORMAT=`which clang-format`
+  if [ "${CLANG_FORMAT}x" = "x" ]; then
+     echo "Error: cannot find clang-format in your path"
+     exit 1
+  fi
 fi
 
 OK=0
 
 for ARG in "$@"
   do
-    clang-format $ARG | diff -u $ARG -
+    ${CLANG_FORMAT} $ARG | diff -u $ARG -
 
     if [[ $? -eq 1 ]]; then
       OK=1
