@@ -308,7 +308,7 @@ protected:
   /// deserialized from a module file.
   ///
   /// \param Size The size of the allocated object.
-  /// \param Context The context in which we will allocate memory.
+  /// \param Ctx The context in which we will allocate memory.
   /// \param ID The global ID of the deserialized declaration.
   /// \param Extra The amount of extra space to allocate after the object.
   void *operator new(std::size_t Size, const ASTContext &Ctx, unsigned ID,
