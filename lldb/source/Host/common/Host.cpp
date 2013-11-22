@@ -980,6 +980,7 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
     // on linux this is assumed to be the "lldb" main executable. If LLDB on
     // linux is actually in a shared library (liblldb.so) then this function will
     // need to be modified to "do the right thing".
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST);
 
     switch (path_type)
     {
@@ -990,6 +991,8 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
             {
                 FileSpec lldb_file_spec (Host::GetModuleFileSpecForHostAddress ((void *)Host::GetLLDBPath));
                 g_lldb_so_dir = lldb_file_spec.GetDirectory();
+                if (log)
+                    log->Printf("Host::GetLLDBPath(ePathTypeLLDBShlibDir) => '%s'", g_lldb_so_dir.GetCString());
             }
             file_spec.GetDirectory() = g_lldb_so_dir;
             return (bool)file_spec.GetDirectory();
@@ -1013,7 +1016,11 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                     if (framework_pos)
                     {
                         framework_pos += strlen("LLDB.framework");
-#if !defined (__arm__)
+#if defined (__arm__)
+                        // Shallow bundle
+                        *framework_pos = '\0';
+#else
+                        // Normal bundle
                         ::strncpy (framework_pos, "/Resources", PATH_MAX - (framework_pos - raw_path));
 #endif
                     }
@@ -1021,6 +1028,8 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                     FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));
                     g_lldb_support_exe_dir.SetCString(resolved_path);
                 }
+                if (log)
+                    log->Printf("Host::GetLLDBPath(ePathTypeSupportExecutableDir) => '%s'", g_lldb_support_exe_dir.GetCString());
             }
             file_spec.GetDirectory() = g_lldb_support_exe_dir;
             return (bool)file_spec.GetDirectory();
@@ -1053,6 +1062,8 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                 // TODO: Anyone know how we can determine this for linux? Other systems??
                 g_lldb_headers_dir.SetCString ("/opt/local/include/lldb");
 #endif
+                if (log)
+                    log->Printf("Host::GetLLDBPath(ePathTypeHeaderDir) => '%s'", g_lldb_headers_dir.GetCString());
             }
             file_spec.GetDirectory() = g_lldb_headers_dir;
             return (bool)file_spec.GetDirectory();
@@ -1098,6 +1109,10 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                     FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));
                     g_lldb_python_dir.SetCString(resolved_path);
                 }
+                
+                if (log)
+                    log->Printf("Host::GetLLDBPath(ePathTypePythonDir) => '%s'", g_lldb_python_dir.GetCString());
+
             }
             file_spec.GetDirectory() = g_lldb_python_dir;
             return (bool)file_spec.GetDirectory();
@@ -1138,6 +1153,10 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                     g_lldb_system_plugin_dir.SetCString(lldb_file_spec.GetPath().c_str());
                 }
 #endif // __APPLE__ || __linux__
+                
+                if (log)
+                    log->Printf("Host::GetLLDBPath(ePathTypeLLDBSystemPlugins) => '%s'", g_lldb_system_plugin_dir.GetCString());
+
             }
             
             if (g_lldb_system_plugin_dir)
@@ -1196,6 +1215,8 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
 
                 if (lldb_file_spec.Exists())
                     g_lldb_user_plugin_dir.SetCString(lldb_file_spec.GetPath().c_str());
+                if (log)
+                    log->Printf("Host::GetLLDBPath(ePathTypeLLDBUserPlugins) => '%s'", g_lldb_user_plugin_dir.GetCString());
             }
             file_spec.GetDirectory() = g_lldb_user_plugin_dir;
             return (bool)file_spec.GetDirectory();
