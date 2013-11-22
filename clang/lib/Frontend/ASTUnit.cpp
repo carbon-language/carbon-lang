@@ -2953,7 +2953,7 @@ void ASTUnit::ConcurrencyState::finish() {
 
 #else // NDEBUG
 
-ASTUnit::ConcurrencyState::ConcurrencyState() {}
+ASTUnit::ConcurrencyState::ConcurrencyState() { Mutex = 0; }
 ASTUnit::ConcurrencyState::~ConcurrencyState() {}
 void ASTUnit::ConcurrencyState::start() {}
 void ASTUnit::ConcurrencyState::finish() {}
