@@ -67,6 +67,9 @@ public:
   /// \brief Set Ordinals for all the InputElements that form the InputGraph
   virtual bool assignOrdinals();
 
+  /// Normalize the InputGraph.
+  virtual void normalize();
+
   /// Destructor
   virtual ~InputGraph() {}
 
@@ -131,6 +134,13 @@ public:
     File        // Represents a type associated with File Nodes
   };
 
+  /// How does the inputGraph expand the InputElement
+  enum class ExpandType : uint8_t {
+    None,             // Do nothing(Default)
+    ReplaceAndExpand, // Replace current node and expand
+    ExpandOnly        // Expand the current node
+  };
+
   /// \brief Initialize the Input Element, The ordinal value of an input Element
   /// is initially set to -1, if the user wants to override its ordinal,
   /// let the user do it
@@ -174,6 +184,16 @@ public:
 
   /// \brief Reset the next index
   virtual void resetNextIndex() = 0;
+
+  /// Normalize functions
+
+  /// \brief How do we want to expand the current node ?
+  virtual ExpandType expandType() const { return ExpandType::None; }
+
+  /// \brief Get the elements that we want to expand with.
+  virtual range<InputGraph::InputElementIterT> expandElements() {
+    llvm_unreachable("no element to expand");
+  }
 
 protected:
   Kind _kind;              // The type of the Element

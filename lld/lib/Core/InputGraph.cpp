@@ -86,6 +86,38 @@ error_code InputGraph::setNextElementIndex(uint32_t index) {
   return error_code::success();
 }
 
+// Normalize the InputGraph.
+void InputGraph::normalize() {
+  auto iterb = _inputArgs.begin();
+  auto itere = _inputArgs.end();
+  auto currentIter = _inputArgs.begin();
+  bool replaceCurrentNode = false;
+  bool expand = false;
+
+  std::vector<std::unique_ptr<InputElement> > _workInputArgs;
+  while (iterb != itere) {
+    replaceCurrentNode = false;
+    expand = false;
+    InputElement::ExpandType expandType = (*iterb)->expandType();
+    if (expandType == InputElement::ExpandType::ReplaceAndExpand) {
+      replaceCurrentNode = true;
+      expand = true;
+    } else if (expandType == InputElement::ExpandType::ExpandOnly) {
+      replaceCurrentNode = false;
+      expand = true;
+    }
+    currentIter = iterb++;
+    if (expand)
+      _workInputArgs.insert(
+          _workInputArgs.end(),
+          std::make_move_iterator((*currentIter)->expandElements().begin()),
+          std::make_move_iterator((*currentIter)->expandElements().end()));
+    if (!replaceCurrentNode)
+      _workInputArgs.push_back(std::move(*currentIter));
+  }
+  _inputArgs = std::move(_workInputArgs);
+}
+
 /// InputElement
 
 /// \brief Initialize the Input Element, The ordinal value of an input Element
