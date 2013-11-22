@@ -467,6 +467,9 @@ void GCOVProfiler::emitProfileNotes() {
 
       Function *F = SP.getFunction();
       if (!F) continue;
+      BasicBlock &EntryBlock = F->getEntryBlock();
+      EntryBlock.splitBasicBlock(EntryBlock.begin());
+
       GCOVFunction *Func =
         new GCOVFunction(SP, &out, i, Options.UseCfgChecksum);
       Funcs.push_back(Func);
