@@ -80,8 +80,11 @@ public:
 
 class MyExpandFileNode : public FileNode {
 public:
-  MyExpandFileNode(StringRef path, int64_t ordinal, ExpandType expandType)
-      : FileNode(path, ordinal), _expandType(expandType) {}
+  MyExpandFileNode(StringRef path, int64_t ordinal,
+                   ExpandType expandType, bool isHidden=false)
+      : FileNode(path, ordinal), _expandType(expandType),
+        _isHidden(isHidden)
+  {}
 
   bool validate() { return true; }
 
@@ -111,9 +114,13 @@ public:
     return true;
   }
 
+  // Is hidden node
+  virtual bool isHidden() const { return _isHidden; }
+
 private:
   InputGraph::InputElementVectorT _expandElements;
   ExpandType _expandType;
+  bool _isHidden;
 };
 
 class MyObjFile : public SimpleFile {
@@ -550,4 +557,77 @@ TEST_F(InputGraphTest, ExpandAndReplaceInputGraphNode) {
   nextElement = inputGraph().getNextInputElement();
   EXPECT_EQ(InputGraphError::no_more_elements, error_code(nextElement));
 }
+
+// Hidden Node tests
+TEST_F(InputGraphTest, HiddenNodeTests) {
+  std::unique_ptr<MyFileNode> myfile(new MyFileNode("multi_files1", 0));
+  std::vector<std::unique_ptr<File> > objfiles;
+  std::unique_ptr<MyObjFile> obj1(new MyObjFile(_context, "objfile1"));
+  std::unique_ptr<MyObjFile> obj2(new MyObjFile(_context, "objfile2"));
+  objfiles.push_back(std::move(obj1));
+  objfiles.push_back(std::move(obj2));
+  myfile->addFiles(std::move(objfiles));
+  EXPECT_EQ(true, inputGraph().addInputElement(std::move(myfile)));
+  objfiles.clear();
+
+  std::unique_ptr<MyExpandFileNode> expandFile(new MyExpandFileNode(
+      "expand_node", 1, InputElement::ExpandType::ExpandOnly, true));
+
+  std::unique_ptr<MyFileNode> filenode1(new MyFileNode("expand_file1", 2));
+  std::unique_ptr<MyObjFile> obj3(new MyObjFile(_context, "objfile3"));
+  objfiles.push_back(std::move(obj3));
+  filenode1->addFiles(std::move(objfiles));
+  expandFile->addElement(std::move(filenode1));
+  objfiles.clear();
+
+  std::unique_ptr<MyFileNode> filenode2(new MyFileNode("expand_file2", 3));
+  std::unique_ptr<MyObjFile> obj4(new MyObjFile(_context, "objfile4"));
+  objfiles.push_back(std::move(obj4));
+  filenode2->addFiles(std::move(objfiles));
+  expandFile->addElement(std::move(filenode2));
+  objfiles.clear();
+
+  // Add expand file to InputGraph
+  EXPECT_EQ(true, inputGraph().addInputElement(std::move(expandFile)));
+
+  std::unique_ptr<MyFileNode> filenode3(new MyFileNode("obj_after_expand", 4));
+  std::unique_ptr<MyObjFile> obj5(new MyObjFile(_context, "objfile5"));
+  std::unique_ptr<MyObjFile> obj6(new MyObjFile(_context, "objfile6"));
+  objfiles.push_back(std::move(obj5));
+  objfiles.push_back(std::move(obj6));
+  filenode3->addFiles(std::move(objfiles));
+
+  // Add an extra obj after the expand node
+  EXPECT_EQ(true, inputGraph().addInputElement(std::move(filenode3)));
+
+  inputGraph().normalize();
+
+  ErrorOr<InputElement *> nextElement = inputGraph().getNextInputElement();
+  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
+  FileNode *fileNode = llvm::dyn_cast<FileNode>(*nextElement);
+  EXPECT_EQ("multi_files1", (*fileNode).getUserPath());
+
+  nextElement = inputGraph().getNextInputElement();
+  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
+  fileNode = llvm::dyn_cast<FileNode>(*nextElement);
+  EXPECT_EQ("expand_file1", (*fileNode).getUserPath());
+
+  nextElement = inputGraph().getNextInputElement();
+  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
+  fileNode = llvm::dyn_cast<FileNode>(*nextElement);
+  EXPECT_EQ("expand_file2", (*fileNode).getUserPath());
+
+  nextElement = inputGraph().getNextInputElement();
+  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
+  fileNode = llvm::dyn_cast<FileNode>(*nextElement);
+  EXPECT_EQ("obj_after_expand", (*fileNode).getUserPath());
+
+  nextElement = inputGraph().getNextInputElement();
+  EXPECT_EQ(InputGraphError::no_more_elements, error_code(nextElement));
+}
+
 }

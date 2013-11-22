@@ -185,6 +185,10 @@ public:
   /// \brief Reset the next index
   virtual void resetNextIndex() = 0;
 
+  /// \brief Is this a hidden node, hidden nodes are not part of
+  /// of the resolver.
+  virtual bool isHidden() const { return false; }
+
   /// Normalize functions
 
   /// \brief How do we want to expand the current node ?

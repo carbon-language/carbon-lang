@@ -75,7 +75,11 @@ void InputGraph::insertOneElementAt(std::unique_ptr<InputElement> element,
 ErrorOr<InputElement *> InputGraph::getNextInputElement() {
   if (_nextElementIndex >= _inputArgs.size())
     return make_error_code(InputGraphError::no_more_elements);
-  return _inputArgs[_nextElementIndex++].get();
+  auto elem = _inputArgs[_nextElementIndex++].get();
+  // Do not return Hidden elements.
+  if (!elem->isHidden())
+    return elem;
+  return getNextInputElement();
 }
 
 /// \brief Set the index on what inputElement has to be returned

@@ -54,6 +54,9 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   TaskGroup tg;
   std::mutex diagnosticsMutex;
   for (auto &ie : inputGraph.inputElements()) {
+    // Skip Hidden elements.
+    if (ie->isHidden())
+      continue;
     tg.spawn([&] {
       // Writes to the same output stream is not guaranteed to be thread-safe.
       // We buffer the diagnostics output to a separate string-backed output
