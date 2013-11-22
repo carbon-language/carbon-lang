@@ -205,6 +205,15 @@ def ProcSwift   : SubtargetFeature<"swift", "ARMProcFamily", "Swift",
                                     FeatureHWDivARM, FeatureAvoidPartialCPSR,
                                     FeatureAvoidMOVsShOp,
                                     FeatureHasSlowFPVMLx, FeatureTrustZone]>;
+def ProcA12     : SubtargetFeature<"a12", "ARMProcFamily", "CortexA12",
+                                   "Cortex-A12 ARM processors",
+                                   [FeatureVMLxForwarding,
+                                    FeatureT2XtPk, FeatureVFP4,
+                                    FeatureHWDiv, FeatureHWDivARM,
+                                    FeatureAvoidPartialCPSR,
+                                    FeatureVirtualization,
+                                    FeatureTrustZone]>;
+
 
 // FIXME: It has not been determined if A15 has these features.
 def ProcA15      : SubtargetFeature<"a15", "ARMProcFamily", "CortexA15",
@@ -319,11 +328,19 @@ def : ProcessorModel<"cortex-a9-mp", CortexA9Model,
                                     [ProcA9, HasV7Ops, FeatureNEON, FeatureDB,
                                      FeatureDSPThumb2, FeatureMP,
                                      FeatureHasRAS, FeatureAClass]>;
+
+// FIXME: A12 has currently the same Schedule model as A9
+def : ProcessorModel<"cortex-a12", CortexA9Model,
+                                    [ProcA12, HasV7Ops, FeatureNEON, FeatureDB,
+                                     FeatureDSPThumb2, FeatureMP,
+                                     FeatureHasRAS, FeatureAClass]>;
+
 // FIXME: A15 has currently the same ProcessorModel as A9.
 def : ProcessorModel<"cortex-a15",   CortexA9Model,
                                     [ProcA15, HasV7Ops, FeatureNEON, FeatureDB,
                                      FeatureDSPThumb2, FeatureHasRAS,
                                      FeatureAClass]>;
+
 // FIXME: R5 has currently the same ProcessorModel as A8.
 def : ProcessorModel<"cortex-r5",   CortexA8Model,
                                     [ProcR5, HasV7Ops, FeatureDB,

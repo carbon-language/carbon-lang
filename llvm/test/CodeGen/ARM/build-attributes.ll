@@ -14,6 +14,8 @@
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi | FileCheck %s --check-prefix=V8-FPARMv8-NEON-CRYPTO
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a9 -float-abi=soft | FileCheck %s --check-prefix=CORTEX-A9-SOFT
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a9 -float-abi=hard | FileCheck %s --check-prefix=CORTEX-A9-HARD
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a12 | FileCheck %s --check-prefix=CORTEX-A12-DEFAULT
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a12 -mattr=-vfp2 | FileCheck %s --check-prefix=CORTEX-A12-NOFPU
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a9-mp | FileCheck %s --check-prefix=CORTEX-A9-MP
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a15 | FileCheck %s --check-prefix=CORTEX-A15
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m0 | FileCheck %s --check-prefix=CORTEX-M0
@@ -237,6 +239,36 @@
 ; CORTEX-A9-MP:  .eabi_attribute 36, 1
 ; CORTEX-A9-MP:  .eabi_attribute 42, 1
 ; CORTEX-A9-MP:  .eabi_attribute 68, 1
+
+; CORTEX-A12-DEFAULT:  .cpu cortex-a12
+; CORTEX-A12-DEFAULT:  .eabi_attribute 6, 10
+; CORTEX-A12-DEFAULT:  .eabi_attribute 7, 65
+; CORTEX-A12-DEFAULT:  .eabi_attribute 8, 1
+; CORTEX-A12-DEFAULT:  .eabi_attribute 9, 2
+; CORTEX-A12-DEFAULT:  .fpu neon-vfpv4
+; CORTEX-A12-DEFAULT:  .eabi_attribute 20, 1
+; CORTEX-A12-DEFAULT:  .eabi_attribute 21, 1
+; CORTEX-A12-DEFAULT:  .eabi_attribute 23, 3
+; CORTEX-A12-DEFAULT:  .eabi_attribute 24, 1
+; CORTEX-A12-DEFAULT:  .eabi_attribute 25, 1
+; CORTEX-A12-DEFAULT:  .eabi_attribute 42, 1
+; CORTEX-A12-DEFAULT:  .eabi_attribute 44, 2
+; CORTEX-A12-DEFAULT:  .eabi_attribute 68, 3
+
+; CORTEX-A12-NOFPU:  .cpu cortex-a12
+; CORTEX-A12-NOFPU:  .eabi_attribute 6, 10
+; CORTEX-A12-NOFPU:  .eabi_attribute 7, 65
+; CORTEX-A12-NOFPU:  .eabi_attribute 8, 1
+; CORTEX-A12-NOFPU:  .eabi_attribute 9, 2
+; CORTEX-A12-NOFPU-NOT:  .fpu
+; CORTEX-A12-NOFPU:  .eabi_attribute 20, 1
+; CORTEX-A12-NOFPU:  .eabi_attribute 21, 1
+; CORTEX-A12-NOFPU:  .eabi_attribute 23, 3
+; CORTEX-A12-NOFPU:  .eabi_attribute 24, 1
+; CORTEX-A12-NOFPU:  .eabi_attribute 25, 1
+; CORTEX-A12-NOFPU:  .eabi_attribute 42, 1
+; CORTEX-A12-NOFPU:  .eabi_attribute 44, 2
+; CORTEX-A12-NOFPU:  .eabi_attribute 68, 3
 
 ; CORTEX-A15: .cpu cortex-a15
 ; CORTEX-A15: .eabi_attribute 6, 10
