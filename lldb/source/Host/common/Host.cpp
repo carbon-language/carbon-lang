@@ -34,6 +34,7 @@
 #include <mach/mach_port.h>
 #include <mach/mach_init.h>
 #include <mach-o/dyld.h>
+#include <AvailabilityMacros.h>
 #endif
 
 #if defined (__linux__) || defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
