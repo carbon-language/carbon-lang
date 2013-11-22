@@ -296,16 +296,16 @@ TEST_F(RegistryTest, VariadicOp) {
   EXPECT_TRUE(matches("class Bar{};", D));
   EXPECT_FALSE(matches("class OtherBar{};", D));
 
-  D = constructMatcher(
-      "recordDecl",
+  D = recordDecl(
+      has(fieldDecl(hasName("Foo"))),
       constructMatcher(
           "unless",
           constructMatcher("namedDecl",
-                           constructMatcher("hasName", std::string("Bar")))))
-          .getTypedMatcher<Decl>();
+                           constructMatcher("hasName", std::string("Bar"))))
+          .getTypedMatcher<Decl>());
 
-  EXPECT_FALSE(matches("class Bar{};", D));
-  EXPECT_TRUE(matches("class OtherBar{};", D));
+  EXPECT_FALSE(matches("class Bar{ int Foo; };", D));
+  EXPECT_TRUE(matches("class OtherBar{ int Foo; };", D));
 }
 
 TEST_F(RegistryTest, Errors) {
