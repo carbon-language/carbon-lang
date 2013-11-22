@@ -73,26 +73,24 @@ struct TestPreservingModulePass {
 struct TestMinPreservingModulePass {
   PreservedAnalyses run(Module *M) {
     PreservedAnalyses PA;
-    PA.preserve<FunctionAnalysisModuleProxy>();
+    PA.preserve<FunctionAnalysisManagerModuleProxy>();
     return PA;
   }
 };
 
 struct TestFunctionPass {
-  TestFunctionPass(FunctionAnalysisManager &AM, int &RunCount,
-                   int &AnalyzedInstrCount)
-      : AM(AM), RunCount(RunCount), AnalyzedInstrCount(AnalyzedInstrCount) {}
+  TestFunctionPass(int &RunCount, int &AnalyzedInstrCount)
+      : RunCount(RunCount), AnalyzedInstrCount(AnalyzedInstrCount) {}
 
-  PreservedAnalyses run(Function *F) {
+  PreservedAnalyses run(Function *F, FunctionAnalysisManager *AM) {
     ++RunCount;
 
-    const TestAnalysisPass::Result &AR = AM.getResult<TestAnalysisPass>(F);
+    const TestAnalysisPass::Result &AR = AM->getResult<TestAnalysisPass>(F);
     AnalyzedInstrCount += AR.InstructionCount;
 
     return PreservedAnalyses::all();
   }
 
-  FunctionAnalysisManager &AM;
   int &RunCount;
   int &AnalyzedInstrCount;
 };
@@ -129,45 +127,45 @@ TEST_F(PassManagerTest, Basic) {
   FAM.registerPass(TestAnalysisPass(AnalysisRuns));
 
   ModuleAnalysisManager MAM;
-  MAM.registerPass(FunctionAnalysisModuleProxy(FAM));
+  MAM.registerPass(FunctionAnalysisManagerModuleProxy(FAM));
 
-  ModulePassManager MPM(&MAM);
+  ModulePassManager MPM;
 
   // Count the runs over a Function.
-  FunctionPassManager FPM1(&FAM);
+  FunctionPassManager FPM1;
   int FunctionPassRunCount1 = 0;
   int AnalyzedInstrCount1 = 0;
-  FPM1.addPass(TestFunctionPass(FAM, FunctionPassRunCount1, AnalyzedInstrCount1));
-  MPM.addPass(createModuleToFunctionPassAdaptor(FPM1, &MAM));
+  FPM1.addPass(TestFunctionPass(FunctionPassRunCount1, AnalyzedInstrCount1));
+  MPM.addPass(createModuleToFunctionPassAdaptor(FPM1));
 
   // Count the runs over a module.
   int ModulePassRunCount = 0;
   MPM.addPass(TestModulePass(ModulePassRunCount));
 
   // Count the runs over a Function in a separate manager.
-  FunctionPassManager FPM2(&FAM);
+  FunctionPassManager FPM2;
   int FunctionPassRunCount2 = 0;
   int AnalyzedInstrCount2 = 0;
-  FPM2.addPass(TestFunctionPass(FAM, FunctionPassRunCount2, AnalyzedInstrCount2));
-  MPM.addPass(createModuleToFunctionPassAdaptor(FPM2, &MAM));
+  FPM2.addPass(TestFunctionPass(FunctionPassRunCount2, AnalyzedInstrCount2));
+  MPM.addPass(createModuleToFunctionPassAdaptor(FPM2));
 
   // A third function pass manager but with only preserving intervening passes.
   MPM.addPass(TestPreservingModulePass());
-  FunctionPassManager FPM3(&FAM);
+  FunctionPassManager FPM3;
   int FunctionPassRunCount3 = 0;
   int AnalyzedInstrCount3 = 0;
-  FPM3.addPass(TestFunctionPass(FAM, FunctionPassRunCount3, AnalyzedInstrCount3));
-  MPM.addPass(createModuleToFunctionPassAdaptor(FPM3, &MAM));
+  FPM3.addPass(TestFunctionPass(FunctionPassRunCount3, AnalyzedInstrCount3));
+  MPM.addPass(createModuleToFunctionPassAdaptor(FPM3));
 
   // A fourth function pass manager but with a minimal intervening passes.
   MPM.addPass(TestMinPreservingModulePass());
-  FunctionPassManager FPM4(&FAM);
+  FunctionPassManager FPM4;
   int FunctionPassRunCount4 = 0;
   int AnalyzedInstrCount4 = 0;
-  FPM4.addPass(TestFunctionPass(FAM, FunctionPassRunCount4, AnalyzedInstrCount4));
-  MPM.addPass(createModuleToFunctionPassAdaptor(FPM4, &MAM));
+  FPM4.addPass(TestFunctionPass(FunctionPassRunCount4, AnalyzedInstrCount4));
+  MPM.addPass(createModuleToFunctionPassAdaptor(FPM4));
 
-  MPM.run(M.get());
+  MPM.run(M.get(), &MAM);
 
   // Validate module pass counters.
   EXPECT_EQ(1, ModulePassRunCount);

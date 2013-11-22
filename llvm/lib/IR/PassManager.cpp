@@ -12,10 +12,10 @@
 
 using namespace llvm;
 
-PreservedAnalyses ModulePassManager::run(Module *M) {
+PreservedAnalyses ModulePassManager::run(Module *M, ModuleAnalysisManager *AM) {
   PreservedAnalyses PA = PreservedAnalyses::all();
   for (unsigned Idx = 0, Size = Passes.size(); Idx != Size; ++Idx) {
-    PreservedAnalyses PassPA = Passes[Idx]->run(M);
+    PreservedAnalyses PassPA = Passes[Idx]->run(M, AM);
     if (AM)
       AM->invalidate(M, PassPA);
     PA.intersect(llvm_move(PassPA));
@@ -57,10 +57,10 @@ void ModuleAnalysisManager::invalidateImpl(void *PassID, Module *M) {
   ModuleAnalysisResults.erase(PassID);
 }
 
-PreservedAnalyses FunctionPassManager::run(Function *F) {
+PreservedAnalyses FunctionPassManager::run(Function *F, FunctionAnalysisManager *AM) {
   PreservedAnalyses PA = PreservedAnalyses::all();
   for (unsigned Idx = 0, Size = Passes.size(); Idx != Size; ++Idx) {
-    PreservedAnalyses PassPA = Passes[Idx]->run(F);
+    PreservedAnalyses PassPA = Passes[Idx]->run(F, AM);
     if (AM)
       AM->invalidate(F, PassPA);
     PA.intersect(llvm_move(PassPA));
@@ -131,21 +131,22 @@ void FunctionAnalysisManager::invalidateImpl(void *PassID, Function *F) {
   FunctionAnalysisResultLists[F].erase(RI->second);
 }
 
-char FunctionAnalysisModuleProxy::PassID;
+char FunctionAnalysisManagerModuleProxy::PassID;
 
-FunctionAnalysisModuleProxy::Result
-FunctionAnalysisModuleProxy::run(Module *M) {
+FunctionAnalysisManagerModuleProxy::Result
+FunctionAnalysisManagerModuleProxy::run(Module *M) {
   assert(FAM.empty() && "Function analyses ran prior to the module proxy!");
   return Result(FAM);
 }
 
-FunctionAnalysisModuleProxy::Result::~Result() {
+FunctionAnalysisManagerModuleProxy::Result::~Result() {
   // Clear out the analysis manager if we're being destroyed -- it means we
   // didn't even see an invalidate call when we got invalidated.
   FAM.clear();
 }
 
-bool FunctionAnalysisModuleProxy::Result::invalidate(Module *M, const PreservedAnalyses &PA) {
+bool FunctionAnalysisManagerModuleProxy::Result::invalidate(
+    Module *M, const PreservedAnalyses &PA) {
   // If this proxy isn't marked as preserved, then it is has an invalid set of
   // Function objects in the cache making it impossible to incrementally
   // preserve them. Just clear the entire manager.

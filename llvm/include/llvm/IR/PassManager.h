@@ -154,24 +154,69 @@ namespace detail {
 
 /// \brief Template for the abstract base class used to dispatch
 /// polymorphically over pass objects.
-template <typename T> struct PassConcept {
+template <typename IRUnitT, typename AnalysisManagerT> struct PassConcept {
   // Boiler plate necessary for the container of derived classes.
   virtual ~PassConcept() {}
   virtual PassConcept *clone() = 0;
 
   /// \brief The polymorphic API which runs the pass over a given IR entity.
-  virtual PreservedAnalyses run(T Arg) = 0;
+  ///
+  /// Note that actual pass object can omit the analysis manager argument if
+  /// desired. Also that the analysis manager may be null if there is no
+  /// analysis manager in the pass pipeline.
+  virtual PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) = 0;
+};
+
+/// \brief SFINAE metafunction for computing whether \c PassT has a run method
+/// accepting an \c AnalysisManagerT.
+template <typename IRUnitT, typename PassT, typename AnalysisManagerT>
+class PassRunAcceptsAnalysisManager {
+  typedef char SmallType;
+  struct BigType { char a, b; };
+
+  template <typename T, PreservedAnalyses (T::*)(IRUnitT, AnalysisManagerT *)>
+  struct Checker;
+
+  template <typename T> static SmallType f(Checker<T, &T::run> *);
+  template <typename T> static BigType f(...);
+
+public:
+  enum { Value = sizeof(f<PassT>(0)) == sizeof(SmallType) };
 };
 
 /// \brief A template wrapper used to implement the polymorphic API.
 ///
-/// Can be instantiated for any object which provides a \c run method
-/// accepting a \c T. It requires the pass to be a copyable
-/// object.
-template <typename T, typename PassT> struct PassModel : PassConcept<T> {
+/// Can be instantiated for any object which provides a \c run method accepting
+/// an \c IRUnitT. It requires the pass to be a copyable object. When the
+/// \c run method also accepts an \c AnalysisManagerT*, we pass it along.
+template <typename IRUnitT, typename PassT, typename AnalysisManagerT,
+          bool AcceptsAnalysisManager = PassRunAcceptsAnalysisManager<
+              IRUnitT, PassT, AnalysisManagerT>::Value>
+struct PassModel;
+
+/// \brief Specialization of \c PassModel for passes that accept an analyis
+/// manager.
+template <typename IRUnitT, typename PassT, typename AnalysisManagerT>
+struct PassModel<IRUnitT, PassT, AnalysisManagerT,
+                 true> : PassConcept<IRUnitT, AnalysisManagerT> {
   PassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
   virtual PassModel *clone() { return new PassModel(Pass); }
-  virtual PreservedAnalyses run(T Arg) { return Pass.run(Arg); }
+  virtual PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) {
+    return Pass.run(IR, AM);
+  }
+  PassT Pass;
+};
+
+/// \brief Specialization of \c PassModel for passes that accept an analyis
+/// manager.
+template <typename IRUnitT, typename PassT, typename AnalysisManagerT>
+struct PassModel<IRUnitT, PassT, AnalysisManagerT,
+                 false> : PassConcept<IRUnitT, AnalysisManagerT> {
+  PassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
+  virtual PassModel *clone() { return new PassModel(Pass); }
+  virtual PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) {
+    return Pass.run(IR);
+  }
   PassT Pass;
 };
 
@@ -307,14 +352,14 @@ class ModuleAnalysisManager;
 
 class ModulePassManager {
 public:
-  explicit ModulePassManager(ModuleAnalysisManager *AM = 0) : AM(AM) {}
+  explicit ModulePassManager() {}
 
   /// \brief Run all of the module passes in this module pass manager over
   /// a module.
   ///
   /// This method should only be called for a single module as there is the
   /// expectation that the lifetime of a pass is bounded to that of a module.
-  PreservedAnalyses run(Module *M);
+  PreservedAnalyses run(Module *M, ModuleAnalysisManager *AM = 0);
 
   template <typename ModulePassT> void addPass(ModulePassT Pass) {
     Passes.push_back(new ModulePassModel<ModulePassT>(llvm_move(Pass)));
@@ -322,13 +367,14 @@ public:
 
 private:
   // Pull in the concept type and model template specialized for modules.
-  typedef detail::PassConcept<Module *> ModulePassConcept;
+  typedef detail::PassConcept<Module *, ModuleAnalysisManager> ModulePassConcept;
   template <typename PassT>
-  struct ModulePassModel : detail::PassModel<Module *, PassT> {
-    ModulePassModel(PassT Pass) : detail::PassModel<Module *, PassT>(Pass) {}
+  struct ModulePassModel
+      : detail::PassModel<Module *, PassT, ModuleAnalysisManager> {
+    ModulePassModel(PassT Pass)
+        : detail::PassModel<Module *, PassT, ModuleAnalysisManager>(Pass) {}
   };
 
-  ModuleAnalysisManager *AM;
   std::vector<polymorphic_ptr<ModulePassConcept> > Passes;
 };
 
@@ -336,24 +382,25 @@ class FunctionAnalysisManager;
 
 class FunctionPassManager {
 public:
-  explicit FunctionPassManager(FunctionAnalysisManager *AM = 0) : AM(AM) {}
+  explicit FunctionPassManager() {}
 
   template <typename FunctionPassT> void addPass(FunctionPassT Pass) {
     Passes.push_back(new FunctionPassModel<FunctionPassT>(llvm_move(Pass)));
   }
 
-  PreservedAnalyses run(Function *F);
+  PreservedAnalyses run(Function *F, FunctionAnalysisManager *AM = 0);
 
 private:
   // Pull in the concept type and model template specialized for functions.
-  typedef detail::PassConcept<Function *> FunctionPassConcept;
+  typedef detail::PassConcept<Function *, FunctionAnalysisManager>
+      FunctionPassConcept;
   template <typename PassT>
-  struct FunctionPassModel : detail::PassModel<Function *, PassT> {
+  struct FunctionPassModel
+      : detail::PassModel<Function *, PassT, FunctionAnalysisManager> {
     FunctionPassModel(PassT Pass)
-        : detail::PassModel<Function *, PassT>(Pass) {}
+        : detail::PassModel<Function *, PassT, FunctionAnalysisManager>(Pass) {}
   };
 
-  FunctionAnalysisManager *AM;
   std::vector<polymorphic_ptr<FunctionPassConcept> > Passes;
 };
 
@@ -569,14 +616,14 @@ private:
 /// FIXME: It might be really nice to "enforce" this (softly) by making this
 /// proxy the API path to access a function analysis manager within a module
 /// pass.
-class FunctionAnalysisModuleProxy {
+class FunctionAnalysisManagerModuleProxy {
 public:
   typedef Module IRUnitT;
   class Result;
 
   static void *ID() { return (void *)&PassID; }
 
-  FunctionAnalysisModuleProxy(FunctionAnalysisManager &FAM) : FAM(FAM) {}
+  FunctionAnalysisManagerModuleProxy(FunctionAnalysisManager &FAM) : FAM(FAM) {}
 
   /// \brief Run the analysis pass and create our proxy result object.
   ///
@@ -595,13 +642,17 @@ private:
   FunctionAnalysisManager &FAM;
 };
 
-/// \brief The result proxy object for the \c FunctionAnalysisModuleProxy.
+/// \brief The result proxy object for the
+/// \c FunctionAnalysisManagerModuleProxy.
 ///
 /// See its documentation for more information.
-class FunctionAnalysisModuleProxy::Result {
+class FunctionAnalysisManagerModuleProxy::Result {
 public:
   Result(FunctionAnalysisManager &FAM) : FAM(FAM) {}
   ~Result();
+
+  /// \brief Accessor for the \c FunctionAnalysisManager.
+  FunctionAnalysisManager &getManager() const { return FAM; }
 
   /// \brief Handler for invalidation of the module.
   ///
@@ -621,52 +672,46 @@ private:
 
 /// \brief Trivial adaptor that maps from a module to its functions.
 ///
-/// Designed to allow composition of a FunctionPass(Manager) and a
-/// ModulePassManager. Note that if this pass is constructed with a pointer to
-/// a \c ModuleAnalysisManager it will run the \c FunctionAnalysisModuleProxy
-/// analysis prior to running the function pass over the module to enable a \c
-/// FunctionAnalysisManager to be used within this run safely.
+/// Designed to allow composition of a FunctionPass(Manager) and
+/// a ModulePassManager. Note that if this pass is constructed with a pointer
+/// to a \c ModuleAnalysisManager it will run the
+/// \c FunctionAnalysisManagerModuleProxy analysis prior to running the function
+/// pass over the module to enable a \c FunctionAnalysisManager to be used
+/// within this run safely.
 template <typename FunctionPassT>
 class ModuleToFunctionPassAdaptor {
 public:
-  explicit ModuleToFunctionPassAdaptor(FunctionPassT Pass,
-                                       ModuleAnalysisManager *MAM = 0)
-      : Pass(llvm_move(Pass)), MAM(MAM) {}
+  explicit ModuleToFunctionPassAdaptor(FunctionPassT Pass)
+      : Pass(llvm_move(Pass)) {}
 
   /// \brief Runs the function pass across every function in the module.
-  PreservedAnalyses run(Module *M) {
-    if (MAM)
-      // Pull in the analysis proxy so that the function analysis manager is
-      // appropriately set up.
-      (void)MAM->getResult<FunctionAnalysisModuleProxy>(M);
+  PreservedAnalyses run(Module *M, ModuleAnalysisManager *AM) {
+    FunctionAnalysisManager *FAM = 0;
+    if (AM)
+      // Setup the function analysis manager from its proxy.
+      FAM = &AM->getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
 
     PreservedAnalyses PA = PreservedAnalyses::all();
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
-      PreservedAnalyses PassPA = Pass.run(I);
+      PreservedAnalyses PassPA = Pass.run(I, FAM);
       PA.intersect(llvm_move(PassPA));
     }
 
     // By definition we preserve the proxy.
-    PA.preserve<FunctionAnalysisModuleProxy>();
+    PA.preserve<FunctionAnalysisManagerModuleProxy>();
     return PA;
   }
 
 private:
   FunctionPassT Pass;
-  ModuleAnalysisManager *MAM;
 };
 
 /// \brief A function to deduce a function pass type and wrap it in the
 /// templated adaptor.
-///
-/// \param MAM is an optional \c ModuleAnalysisManager which (if provided) will
-/// be queried for a \c FunctionAnalysisModuleProxy to enable the function
-/// pass(es) to safely interact with a \c FunctionAnalysisManager.
 template <typename FunctionPassT>
 ModuleToFunctionPassAdaptor<FunctionPassT>
-createModuleToFunctionPassAdaptor(FunctionPassT Pass,
-                                  ModuleAnalysisManager *MAM = 0) {
-  return ModuleToFunctionPassAdaptor<FunctionPassT>(llvm_move(Pass), MAM);
+createModuleToFunctionPassAdaptor(FunctionPassT Pass) {
+  return ModuleToFunctionPassAdaptor<FunctionPassT>(llvm_move(Pass));
 }
 
 }
