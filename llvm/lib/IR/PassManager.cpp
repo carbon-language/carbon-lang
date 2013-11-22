@@ -147,18 +147,12 @@ FunctionAnalysisManagerModuleProxy::Result::~Result() {
 
 bool FunctionAnalysisManagerModuleProxy::Result::invalidate(
     Module *M, const PreservedAnalyses &PA) {
-  // If this proxy isn't marked as preserved, then it is has an invalid set of
-  // Function objects in the cache making it impossible to incrementally
-  // preserve them. Just clear the entire manager.
-  if (!PA.preserved(ID())) {
+  // If this proxy isn't marked as preserved, then we can't even invalidate
+  // individual function analyses, there may be an invalid set of Function
+  // objects in the cache making it impossible to incrementally preserve them.
+  // Just clear the entire manager.
+  if (!PA.preserved(ID()))
     FAM.clear();
-    return false;
-  }
-
-  // The set of functions was preserved some how, so just directly invalidate
-  // any analysis results not preserved.
-  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    FAM.invalidate(I, PA);
 
   // Return false to indicate that this result is still a valid proxy.
   return false;

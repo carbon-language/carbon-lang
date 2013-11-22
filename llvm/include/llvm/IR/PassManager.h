@@ -709,10 +709,22 @@ public:
     PreservedAnalyses PA = PreservedAnalyses::all();
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
       PreservedAnalyses PassPA = Pass.run(I, FAM);
+
+      // We know that the function pass couldn't have invalidated any other
+      // function's analyses (that's the contract of a function pass), so
+      // directly handle the function analysis manager's invalidation here.
+      if (FAM)
+        FAM->invalidate(I, PassPA);
+
+      // Then intersect the preserved set so that invalidation of module
+      // analyses will eventually occur when the module pass completes.
       PA.intersect(llvm_move(PassPA));
     }
 
-    // By definition we preserve the proxy.
+    // By definition we preserve the proxy. This precludes *any* invalidation
+    // of function analyses by the proxy, but that's OK because we've taken
+    // care to invalidate analyses in the function analysis manager
+    // incrementally above.
     PA.preserve<FunctionAnalysisManagerModuleProxy>();
     return PA;
   }

@@ -93,6 +93,19 @@ struct TestFunctionPass {
   int &AnalyzedInstrCount;
 };
 
+// A test function pass that invalidates all function analyses for a function
+// with a specific name.
+struct TestInvalidationFunctionPass {
+  TestInvalidationFunctionPass(StringRef FunctionName) : Name(FunctionName) {}
+
+  PreservedAnalyses run(Function *F) {
+    return F->getName() == Name ? PreservedAnalyses::none()
+                                : PreservedAnalyses::all();
+  }
+
+  StringRef Name;
+};
+
 Module *parseIR(const char *IR) {
   LLVMContext &C = getGlobalContext();
   SMDiagnostic Err;
@@ -147,12 +160,14 @@ TEST_F(PassManagerTest, Basic) {
   FPM2.addPass(TestFunctionPass(FunctionPassRunCount2, AnalyzedInstrCount2));
   MPM.addPass(createModuleToFunctionPassAdaptor(FPM2));
 
-  // A third function pass manager but with only preserving intervening passes.
+  // A third function pass manager but with only preserving intervening passes
+  // and with a function pass that invalidates exactly one analysis.
   MPM.addPass(TestPreservingModulePass());
   FunctionPassManager FPM3;
   int FunctionPassRunCount3 = 0;
   int AnalyzedInstrCount3 = 0;
   FPM3.addPass(TestFunctionPass(FunctionPassRunCount3, AnalyzedInstrCount3));
+  FPM3.addPass(TestInvalidationFunctionPass("f"));
   MPM.addPass(createModuleToFunctionPassAdaptor(FPM3));
 
   // A fourth function pass manager but with a minimal intervening passes.
@@ -168,7 +183,7 @@ TEST_F(PassManagerTest, Basic) {
   // Validate module pass counters.
   EXPECT_EQ(1, ModulePassRunCount);
 
-  // Validate both function pass counter sets.
+  // Validate all function pass counter sets are the same.
   EXPECT_EQ(3, FunctionPassRunCount1);
   EXPECT_EQ(5, AnalyzedInstrCount1);
   EXPECT_EQ(3, FunctionPassRunCount2);
@@ -178,7 +193,11 @@ TEST_F(PassManagerTest, Basic) {
   EXPECT_EQ(3, FunctionPassRunCount4);
   EXPECT_EQ(5, AnalyzedInstrCount4);
 
-  // Validate the analysis counters.
-  EXPECT_EQ(9, AnalysisRuns);
+  // Validate the analysis counters:
+  //   first run over 3 functions, then module pass invalidates
+  //   second run over 3 functions, nothing invalidates
+  //   third run over 0 functions, but 1 function invalidated
+  //   fourth run over 1 function
+  EXPECT_EQ(7, AnalysisRuns);
 }
 }
