@@ -47,7 +47,7 @@ ModuleAnalysisManager::getResultImpl(void *PassID, Module *M) {
         ModuleAnalysisPasses.find(PassID);
     assert(PI != ModuleAnalysisPasses.end() &&
            "Analysis passes must be registered prior to being queried!");
-    RI->second = PI->second->run(M);
+    RI->second = PI->second->run(M, this);
   }
 
   return *RI->second;
@@ -115,7 +115,7 @@ FunctionAnalysisManager::getResultImpl(void *PassID, Function *F) {
     assert(PI != FunctionAnalysisPasses.end() &&
            "Analysis passes must be registered prior to being queried!");
     FunctionAnalysisResultListT &ResultList = FunctionAnalysisResultLists[F];
-    ResultList.push_back(std::make_pair(PassID, PI->second->run(F)));
+    ResultList.push_back(std::make_pair(PassID, PI->second->run(F, this)));
     RI->second = llvm::prior(ResultList.end());
   }
 

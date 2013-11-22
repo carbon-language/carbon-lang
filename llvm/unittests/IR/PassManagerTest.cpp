@@ -32,7 +32,7 @@ public:
   TestAnalysisPass(int &Runs) : Runs(Runs) {}
 
   /// \brief Run the analysis pass over the function and return a result.
-  Result run(Function *F) {
+  Result run(Function *F, FunctionAnalysisManager *AM) {
     ++Runs;
     int Count = 0;
     for (Function::iterator BBI = F->begin(), BBE = F->end(); BBI != BBE; ++BBI)

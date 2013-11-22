@@ -169,12 +169,13 @@ template <typename IRUnitT, typename AnalysisManagerT> struct PassConcept {
 
 /// \brief SFINAE metafunction for computing whether \c PassT has a run method
 /// accepting an \c AnalysisManagerT.
-template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
+template <typename IRUnitT, typename AnalysisManagerT, typename PassT,
+          typename ResultT>
 class PassRunAcceptsAnalysisManager {
   typedef char SmallType;
   struct BigType { char a, b; };
 
-  template <typename T, PreservedAnalyses (T::*)(IRUnitT, AnalysisManagerT *)>
+  template <typename T, ResultT (T::*)(IRUnitT, AnalysisManagerT *)>
   struct Checker;
 
   template <typename T> static SmallType f(Checker<T, &T::run> *);
@@ -191,7 +192,7 @@ public:
 /// \c run method also accepts an \c AnalysisManagerT*, we pass it along.
 template <typename IRUnitT, typename AnalysisManagerT, typename PassT,
           bool AcceptsAnalysisManager = PassRunAcceptsAnalysisManager<
-              IRUnitT, AnalysisManagerT, PassT>::Value>
+              IRUnitT, AnalysisManagerT, PassT, PreservedAnalyses>::Value>
 struct PassModel;
 
 /// \brief Specialization of \c PassModel for passes that accept an analyis
@@ -312,14 +313,16 @@ struct AnalysisResultModel<IRUnitT, PassT, ResultT,
 ///
 /// This concept is parameterized over the IR unit that it can run over and
 /// produce an analysis result.
-template <typename IRUnitT> struct AnalysisPassConcept {
+template <typename IRUnitT, typename AnalysisManagerT>
+struct AnalysisPassConcept {
   virtual ~AnalysisPassConcept() {}
   virtual AnalysisPassConcept *clone() = 0;
 
   /// \brief Method to run this analysis over a unit of IR.
   /// \returns The analysis result object to be queried by users, the caller
   /// takes ownership.
-  virtual AnalysisResultConcept<IRUnitT> *run(IRUnitT IR) = 0;
+  virtual AnalysisResultConcept<IRUnitT> *run(IRUnitT IR,
+                                              AnalysisManagerT *AM) = 0;
 };
 
 /// \brief Wrapper to model the analysis pass concept.
@@ -327,8 +330,17 @@ template <typename IRUnitT> struct AnalysisPassConcept {
 /// Can wrap any type which implements a suitable \c run method. The method
 /// must accept the IRUnitT as an argument and produce an object which can be
 /// wrapped in a \c AnalysisResultModel.
-template <typename IRUnitT, typename PassT>
-struct AnalysisPassModel : AnalysisPassConcept<IRUnitT> {
+template <typename IRUnitT, typename AnalysisManagerT, typename PassT,
+          bool AcceptsAnalysisManager = PassRunAcceptsAnalysisManager<
+              IRUnitT, AnalysisManagerT, PassT,
+              typename PassT::Result>::Value > struct AnalysisPassModel;
+
+/// \brief Specialization of \c AnalysisPassModel which passes an
+/// \c AnalysisManager to PassT's run method.
+template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
+struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
+                         true> : AnalysisPassConcept<IRUnitT,
+                                                     AnalysisManagerT> {
   AnalysisPassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
   virtual AnalysisPassModel *clone() { return new AnalysisPassModel(Pass); }
 
@@ -339,7 +351,30 @@ struct AnalysisPassModel : AnalysisPassConcept<IRUnitT> {
   /// \brief The model delegates to the \c PassT::run method.
   ///
   /// The return is wrapped in an \c AnalysisResultModel.
-  virtual ResultModelT *run(IRUnitT IR) {
+  virtual ResultModelT *run(IRUnitT IR, AnalysisManagerT *AM) {
+    return new ResultModelT(Pass.run(IR, AM));
+  }
+
+  PassT Pass;
+};
+
+/// \brief Specialization of \c AnalysisPassModel which does not pass an
+/// \c AnalysisManager to PassT's run method.
+template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
+struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
+                         false> : AnalysisPassConcept<IRUnitT,
+                                                     AnalysisManagerT> {
+  AnalysisPassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
+  virtual AnalysisPassModel *clone() { return new AnalysisPassModel(Pass); }
+
+  // FIXME: Replace PassT::Result with type traits when we use C++11.
+  typedef AnalysisResultModel<IRUnitT, PassT, typename PassT::Result>
+      ResultModelT;
+
+  /// \brief The model delegates to the \c PassT::run method.
+  ///
+  /// The return is wrapped in an \c AnalysisResultModel.
+  virtual ResultModelT *run(IRUnitT IR, AnalysisManagerT *) {
     return new ResultModelT(Pass.run(IR));
   }
 
@@ -436,7 +471,8 @@ public:
     assert(!ModuleAnalysisPasses.count(PassT::ID()) &&
            "Registered the same analysis pass twice!");
     ModuleAnalysisPasses[PassT::ID()] =
-        new detail::AnalysisPassModel<Module *, PassT>(llvm_move(Pass));
+        new detail::AnalysisPassModel<Module *, ModuleAnalysisManager, PassT>(
+            llvm_move(Pass));
   }
 
   /// \brief Invalidate a specific analysis pass for an IR module.
@@ -463,8 +499,8 @@ private:
   void invalidateImpl(void *PassID, Module *M);
 
   /// \brief Map type from module analysis pass ID to pass concept pointer.
-  typedef DenseMap<void *,
-                   polymorphic_ptr<detail::AnalysisPassConcept<Module *> > >
+  typedef DenseMap<void *, polymorphic_ptr<detail::AnalysisPassConcept<
+                               Module *, ModuleAnalysisManager> > >
       ModuleAnalysisPassMapT;
 
   /// \brief Collection of module analysis passes, indexed by ID.
@@ -511,8 +547,8 @@ public:
   template <typename PassT> void registerPass(PassT Pass) {
     assert(!FunctionAnalysisPasses.count(PassT::ID()) &&
            "Registered the same analysis pass twice!");
-    FunctionAnalysisPasses[PassT::ID()] =
-        new detail::AnalysisPassModel<Function *, PassT>(llvm_move(Pass));
+    FunctionAnalysisPasses[PassT::ID()] = new detail::AnalysisPassModel<
+        Function *, FunctionAnalysisManager, PassT>(llvm_move(Pass));
   }
 
   /// \brief Invalidate a specific analysis pass for an IR module.
@@ -551,8 +587,8 @@ private:
   void invalidateImpl(void *PassID, Function *F);
 
   /// \brief Map type from function analysis pass ID to pass concept pointer.
-  typedef DenseMap<void *,
-                   polymorphic_ptr<detail::AnalysisPassConcept<Function *> > >
+  typedef DenseMap<void *, polymorphic_ptr<detail::AnalysisPassConcept<
+                               Function *, FunctionAnalysisManager> > >
       FunctionAnalysisPassMapT;
 
   /// \brief Collection of function analysis passes, indexed by ID.
