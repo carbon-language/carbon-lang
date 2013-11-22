@@ -101,8 +101,8 @@ void RegAllocBase::allocatePhysRegs() {
     // register if possible and populate a list of new live intervals that
     // result from splitting.
     DEBUG(dbgs() << "\nselectOrSplit "
-                 << MRI->getRegClass(VirtReg->reg)->getName()
-                 << ':' << *VirtReg << '\n');
+          << MRI->getRegClass(VirtReg->reg)->getName()
+          << ':' << *VirtReg << " w=" << VirtReg->weight << '\n');
     typedef SmallVector<unsigned, 4> VirtRegVec;
     VirtRegVec SplitVRegs;
     unsigned AvailablePhysReg = selectOrSplit(*VirtReg, SplitVRegs);

@@ -548,7 +548,11 @@ bool RAGreedy::shouldEvict(LiveInterval &A, bool IsHint,
   if (CanSplit && IsHint && !BreaksHint)
     return true;
 
-  return A.weight > B.weight;
+  if (A.weight > B.weight) {
+    DEBUG(dbgs() << "should evict: " << B << " w= " << B.weight << '\n');
+    return true;
+  }
+  return false;
 }
 
 /// canEvictInterference - Return true if all interferences between VirtReg and
