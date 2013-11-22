@@ -4514,10 +4514,10 @@ static void handlePortabilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
 
   AttributeList::Kind Kind = Attr.getKind();
-    if (Kind == AttributeList::AT_Win64)
-    D->addAttr(
-        ::new (S.Context) Win64Attr(Attr.getRange(), S.Context,
-                                    Attr.getAttributeSpellingListIndex()));
+  if (Kind == AttributeList::AT_Win64)
+  D->addAttr(
+      ::new (S.Context) Win64Attr(Attr.getRange(), S.Context,
+                                  Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleForceInlineAttr(Sema &S, Decl *D, const AttributeList &Attr) {
