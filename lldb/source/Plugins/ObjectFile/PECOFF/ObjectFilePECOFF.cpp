@@ -922,7 +922,7 @@ ObjectFilePECOFF::GetArchitecture (ArchSpec &arch)
         case llvm::COFF::IMAGE_FILE_MACHINE_ARM:
         case llvm::COFF::IMAGE_FILE_MACHINE_ARMV7:
         case llvm::COFF::IMAGE_FILE_MACHINE_THUMB:
-            arch.SetArchitecture (eArchTypeCOFF, machine, 0);
+            arch.SetArchitecture (eArchTypeCOFF, machine, LLDB_INVALID_CPUTYPE);
             return true;
         default:
             break;
