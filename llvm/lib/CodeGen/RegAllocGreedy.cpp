@@ -160,9 +160,13 @@ class RAGreedy : public MachineFunctionPass,
     unsigned BrokenHints; ///< Total number of broken hints.
     float MaxWeight;      ///< Maximum spill weight evicted.
 
-    EvictionCost(unsigned B = 0) : BrokenHints(B), MaxWeight(0) {}
+    EvictionCost(): BrokenHints(0), MaxWeight(0) {}
 
     bool isMax() const { return BrokenHints == ~0u; }
+
+    void setMax() { BrokenHints = ~0u; }
+
+    void setBrokenHints(unsigned NHints) { BrokenHints = NHints; }
 
     bool operator<(const EvictionCost &O) const {
       if (BrokenHints != O.BrokenHints)
@@ -471,7 +475,8 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
   if (unsigned Hint = MRI->getSimpleHint(VirtReg.reg))
     if (Order.isHint(Hint)) {
       DEBUG(dbgs() << "missed hint " << PrintReg(Hint, TRI) << '\n');
-      EvictionCost MaxCost(1);
+      EvictionCost MaxCost;
+      MaxCost.setBrokenHints(1);
       if (canEvictInterference(VirtReg, Hint, true, MaxCost)) {
         evictInterference(VirtReg, Hint, NewVRegs);
         return Hint;
@@ -685,7 +690,8 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
   NamedRegionTimer T("Evict", TimerGroupName, TimePassesIsEnabled);
 
   // Keep track of the cheapest interference seen so far.
-  EvictionCost BestCost(~0u);
+  EvictionCost BestCost;
+  BestCost.setMax();
   unsigned BestPhys = 0;
   unsigned OrderLimit = Order.getOrder().size();
 
