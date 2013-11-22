@@ -657,7 +657,8 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 
     // C99 6.8.5p2/p4: The first substatement is executed if the expression
     // compares unequal to 0.  The condition must be a scalar type.
-    EmitBranchOnBoolExpr(S.getCond(), ForBody, ExitBlock);
+    llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
+    Builder.CreateCondBr(BoolCondVal, ForBody, ExitBlock);
 
     if (ExitBlock != LoopExit.getBlock()) {
       EmitBlock(ExitBlock);
@@ -737,7 +738,8 @@ void CodeGenFunction::EmitCXXForRangeStmt(const CXXForRangeStmt &S) {
 
   // The body is executed if the expression, contextually converted
   // to bool, is true.
-  EmitBranchOnBoolExpr(S.getCond(), ForBody, ExitBlock);
+  llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
+  Builder.CreateCondBr(BoolCondVal, ForBody, ExitBlock);
 
   if (ExitBlock != LoopExit.getBlock()) {
     EmitBlock(ExitBlock);
