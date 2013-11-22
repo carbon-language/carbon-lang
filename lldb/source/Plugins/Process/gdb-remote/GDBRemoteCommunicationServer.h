@@ -132,6 +132,12 @@ public:
         return false;
     }
 
+    void
+    SetPortOffset (uint16_t port_offset)
+    {
+        m_port_offset = port_offset;
+    }
+
 protected:
     lldb::thread_t m_async_thread;
     lldb_private::ProcessLaunchInfo m_process_launch_info;
@@ -141,6 +147,7 @@ protected:
     lldb_private::ProcessInstanceInfoList m_proc_infos;
     uint32_t m_proc_infos_index;
     PortMap m_port_map;
+    uint16_t m_port_offset;
     
 
     size_t

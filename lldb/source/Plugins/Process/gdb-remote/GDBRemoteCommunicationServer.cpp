@@ -47,7 +47,8 @@ GDBRemoteCommunicationServer::GDBRemoteCommunicationServer(bool is_platform) :
     m_spawned_pids_mutex (Mutex::eMutexTypeRecursive),
     m_proc_infos (),
     m_proc_infos_index (0),
-    m_port_map ()
+    m_port_map (),
+    m_port_offset(0)
 {
 }
 
@@ -322,12 +323,33 @@ GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet
         response.PutCStringAsRawHex8(s.c_str());
         response.PutChar(';');
     }
+#if defined(__APPLE__)
+
+#if defined(__arm__)
+    // For iOS devices, we are connected through a USB Mux so we never pretend
+    // to actually have a hostname as far as the remote lldb that is connecting
+    // to this lldb-platform is concerned
+    response.PutCString ("hostname:");
+    response.PutCStringAsRawHex8("localhost");
+    response.PutChar(';');
+#else   // #if defined(__arm__)
     if (Host::GetHostname (s))
     {
         response.PutCString ("hostname:");
         response.PutCStringAsRawHex8(s.c_str());
         response.PutChar(';');
     }
+
+#endif  // #if defined(__arm__)
+
+#else   // #if defined(__APPLE__)
+    if (Host::GetHostname (s))
+    {
+        response.PutCString ("hostname:");
+        response.PutCStringAsRawHex8(s.c_str());
+        response.PutChar(';');
+    }
+#endif  // #if defined(__APPLE__)
 
     return SendPacketNoLock (response.GetData(), response.GetSize()) > 0;
 }
@@ -843,7 +865,7 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
                         {
                             port = (intptr_t)accept_thread_result;
                             char response[256];
-                            const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port);
+                            const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port + m_port_offset);
                             assert (response_len < sizeof(response));
                             //m_port_to_pid_map[port] = debugserver_launch_info.GetProcessID();
                             success = SendPacketNoLock (response, response_len) > 0;
@@ -853,7 +875,7 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
                 else
                 {
                     char response[256];
-                    const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port);
+                    const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port + m_port_offset);
                     assert (response_len < sizeof(response));
                     //m_port_to_pid_map[port] = debugserver_launch_info.GetProcessID();
                     success = SendPacketNoLock (response, response_len) > 0;
@@ -904,7 +926,7 @@ GDBRemoteCommunicationServer::Handle_qKillSpawnedProcess (StringExtractorGDBRemo
             {
                 Mutex::Locker locker (m_spawned_pids_mutex);
                 if (m_spawned_pids.find(pid) == m_spawned_pids.end())
-                    return true;
+                    return SendOKResponse();
             }
             usleep (10000);
         }
@@ -913,7 +935,7 @@ GDBRemoteCommunicationServer::Handle_qKillSpawnedProcess (StringExtractorGDBRemo
         {
             Mutex::Locker locker (m_spawned_pids_mutex);
             if (m_spawned_pids.find(pid) == m_spawned_pids.end())
-                return true;
+                return SendOKResponse();
         }
         Host::Kill (pid, SIGKILL);
 
@@ -923,12 +945,12 @@ GDBRemoteCommunicationServer::Handle_qKillSpawnedProcess (StringExtractorGDBRemo
             {
                 Mutex::Locker locker (m_spawned_pids_mutex);
                 if (m_spawned_pids.find(pid) == m_spawned_pids.end())
-                    return true;
+                    return SendOKResponse();
             }
             usleep (10000);
         }
     }
-    return SendErrorResponse (10);
+    return SendErrorResponse (11);
 }
 
 bool
@@ -952,7 +974,7 @@ GDBRemoteCommunicationServer::Handle_QEnvironment  (StringExtractorGDBRemote &pa
         m_process_launch_info.GetEnvironmentEntries ().AppendArgument (packet.Peek());
         return SendOKResponse ();
     }
-    return SendErrorResponse (11);
+    return SendErrorResponse (12);
 }
 
 bool
@@ -967,7 +989,7 @@ GDBRemoteCommunicationServer::Handle_QLaunchArch (StringExtractorGDBRemote &pack
         m_process_launch_info.SetArchitecture(arch_spec);
         return SendOKResponse();
     }
-    return SendErrorResponse(12);
+    return SendErrorResponse(13);
 }
 
 bool
@@ -1031,7 +1053,7 @@ GDBRemoteCommunicationServer::Handle_qGetWorkingDir (StringExtractorGDBRemote &p
         }
         else
         {
-            return SendErrorResponse(1);
+            return SendErrorResponse(14);
         }
     }
 }
@@ -1050,7 +1072,7 @@ GDBRemoteCommunicationServer::Handle_QSetSTDIN (StringExtractorGDBRemote &packet
         m_process_launch_info.AppendFileAction(file_action);
         return SendOKResponse ();
     }
-    return SendErrorResponse (13);
+    return SendErrorResponse (15);
 }
 
 bool
@@ -1067,7 +1089,7 @@ GDBRemoteCommunicationServer::Handle_QSetSTDOUT (StringExtractorGDBRemote &packe
         m_process_launch_info.AppendFileAction(file_action);
         return SendOKResponse ();
     }
-    return SendErrorResponse (14);
+    return SendErrorResponse (16);
 }
 
 bool
@@ -1084,7 +1106,7 @@ GDBRemoteCommunicationServer::Handle_QSetSTDERR (StringExtractorGDBRemote &packe
         m_process_launch_info.AppendFileAction(file_action);
         return SendOKResponse ();
     }
-    return SendErrorResponse (15);
+    return SendErrorResponse (17);
 }
 
 bool
@@ -1101,16 +1123,17 @@ GDBRemoteCommunicationServer::Handle_qPlatform_mkdir (StringExtractorGDBRemote &
 {
     packet.SetFilePos(::strlen("qPlatform_mkdir:"));
     mode_t mode = packet.GetHexMaxU32(false, UINT32_MAX);
-    if (packet.GetChar() != ',')
-        return false;
-    std::string path;
-    packet.GetHexByteString(path);
-    Error error = Host::MakeDirectory(path.c_str(),mode);
-    if (error.Success())
-        return SendPacketNoLock ("OK", 2);
-    else
-        return SendErrorResponse(error.GetError());
-    return true;
+    if (packet.GetChar() == ',')
+    {
+        std::string path;
+        packet.GetHexByteString(path);
+        Error error = Host::MakeDirectory(path.c_str(),mode);
+        if (error.Success())
+            return SendPacketNoLock ("OK", 2);
+        else
+            return SendErrorResponse(error.GetError());
+    }
+    return SendErrorResponse(20);
 }
 
 bool
@@ -1119,16 +1142,17 @@ GDBRemoteCommunicationServer::Handle_qPlatform_chmod (StringExtractorGDBRemote &
     packet.SetFilePos(::strlen("qPlatform_chmod:"));
     
     mode_t mode = packet.GetHexMaxU32(false, UINT32_MAX);
-    if (packet.GetChar() != ',')
-        return false;
-    std::string path;
-    packet.GetHexByteString(path);
-    Error error = Host::SetFilePermissions (path.c_str(), mode);
-    if (error.Success())
-        return SendPacketNoLock ("OK", 2);
-    else
-        return SendErrorResponse(error.GetError());
-    return true;
+    if (packet.GetChar() == ',')
+    {
+        std::string path;
+        packet.GetHexByteString(path);
+        Error error = Host::SetFilePermissions (path.c_str(), mode);
+        if (error.Success())
+            return SendPacketNoLock ("OK", 2);
+        else
+            return SendErrorResponse(error.GetError());
+    }
+    return SendErrorResponse(19);
 }
 
 bool
@@ -1137,24 +1161,28 @@ GDBRemoteCommunicationServer::Handle_vFile_Open (StringExtractorGDBRemote &packe
     packet.SetFilePos(::strlen("vFile:open:"));
     std::string path;
     packet.GetHexByteStringTerminatedBy(path,',');
-    if (path.size() == 0)
-        return false;
-    if (packet.GetChar() != ',')
-        return false;
-    uint32_t flags = packet.GetHexMaxU32(false, UINT32_MAX);
-    if (packet.GetChar() != ',')
-        return false;
-    mode_t mode = packet.GetHexMaxU32(false, UINT32_MAX);
-    Error error;
-    int fd = ::open (path.c_str(), flags, mode);
-    const int save_errno = fd == -1 ? errno : 0;
-    StreamString response;
-    response.PutChar('F');
-    response.Printf("%i", fd);
-    if (save_errno)
-        response.Printf(",%i", save_errno);
-    SendPacketNoLock(response.GetData(), response.GetSize());
-    return true;
+    if (!path.empty())
+    {
+        if (packet.GetChar() == ',')
+        {
+            uint32_t flags = packet.GetHexMaxU32(false, 0);
+            if (packet.GetChar() == ',')
+            {
+                mode_t mode = packet.GetHexMaxU32(false, 0600);
+                Error error;
+                int fd = ::open (path.c_str(), flags, mode);
+                printf ("open('%s', flags=0x%x, mode=%o) fd = %i (%s)\n", path.c_str(), flags, mode, fd, fd == -1 ? strerror(errno) : "<success>");
+                const int save_errno = fd == -1 ? errno : 0;
+                StreamString response;
+                response.PutChar('F');
+                response.Printf("%i", fd);
+                if (save_errno)
+                    response.Printf(",%i", save_errno);
+                return SendPacketNoLock(response.GetData(), response.GetSize());
+            }
+        }
+    }
+    return SendErrorResponse(18);
 }
 
 bool
@@ -1179,8 +1207,7 @@ GDBRemoteCommunicationServer::Handle_vFile_Close (StringExtractorGDBRemote &pack
     response.Printf("%i", err);
     if (save_errno)
         response.Printf(",%i", save_errno);
-    SendPacketNoLock(response.GetData(), response.GetSize());
-    return true;
+    return SendPacketNoLock(response.GetData(), response.GetSize());
 }
 
 bool
@@ -1188,37 +1215,40 @@ GDBRemoteCommunicationServer::Handle_vFile_pRead (StringExtractorGDBRemote &pack
 {
 #ifdef _WIN32
     // Not implemented on Windows
-    return false;
+    return SendUnimplementedResponse("GDBRemoteCommunicationServer::Handle_vFile_pRead() unimplemented");
 #else
     StreamGDBRemote response;
     packet.SetFilePos(::strlen("vFile:pread:"));
     int fd = packet.GetS32(-1);
-    if (packet.GetChar() != ',')
-        return false;
-    uint64_t count = packet.GetU64(UINT64_MAX);
-    if (packet.GetChar() != ',')
-        return false;
-    uint64_t offset = packet.GetU64(UINT32_MAX);
-    if (count == UINT64_MAX)
+    if (packet.GetChar() == ',')
     {
-        response.Printf("F-1:%i", EINVAL);
-        SendPacketNoLock(response.GetData(), response.GetSize());
-        return true;
+        uint64_t count = packet.GetU64(UINT64_MAX);
+        if (packet.GetChar() == ',')
+        {
+            uint64_t offset = packet.GetU64(UINT32_MAX);
+            if (count == UINT64_MAX)
+            {
+                response.Printf("F-1:%i", EINVAL);
+                return SendPacketNoLock(response.GetData(), response.GetSize());
+            }
+            
+            std::string buffer(count, 0);
+            const ssize_t bytes_read = ::pread (fd, &buffer[0], buffer.size(), offset);
+            const int save_errno = bytes_read == -1 ? errno : 0;
+            response.PutChar('F');
+            response.Printf("%zi", bytes_read);
+            if (save_errno)
+                response.Printf(",%i", save_errno);
+            else
+            {
+                response.PutChar(';');
+                response.PutEscapedBytes(&buffer[0], bytes_read);
+            }
+            return SendPacketNoLock(response.GetData(), response.GetSize());
+        }
     }
-    std::string buffer(count, 0);
-    const ssize_t bytes_read = ::pread (fd, &buffer[0], buffer.size(), offset);
-    const int save_errno = bytes_read == -1 ? errno : 0;
-    response.PutChar('F');
-    response.Printf("%zi", bytes_read);
-    if (save_errno)
-        response.Printf(",%i", save_errno);
-    else
-    {
-        response.PutChar(';');
-        response.PutEscapedBytes(&buffer[0], bytes_read);
-    }
-    SendPacketNoLock(response.GetData(), response.GetSize());
-    return true;
+    return SendErrorResponse(21);
+
 #endif
 }
 
@@ -1226,8 +1256,7 @@ bool
 GDBRemoteCommunicationServer::Handle_vFile_pWrite (StringExtractorGDBRemote &packet)
 {
 #ifdef _WIN32
-    // Not implemented on Windows
-    return false;
+    return SendUnimplementedResponse("GDBRemoteCommunicationServer::Handle_vFile_pWrite() unimplemented");
 #else
     packet.SetFilePos(::strlen("vFile:pwrite:"));
 
@@ -1235,27 +1264,28 @@ GDBRemoteCommunicationServer::Handle_vFile_pWrite (StringExtractorGDBRemote &pac
     response.PutChar('F');
 
     int fd = packet.GetU32(UINT32_MAX);
-    if (packet.GetChar() != ',')
-        return false;
-    off_t offset = packet.GetU64(UINT32_MAX);
-    if (packet.GetChar() != ',')
-        return false;
-    std::string buffer;
-    if (packet.GetEscapedBinaryData(buffer))
+    if (packet.GetChar() == ',')
     {
-        const ssize_t bytes_written = ::pwrite (fd, buffer.data(), buffer.size(), offset);
-        const int save_errno = bytes_written == -1 ? errno : 0;
-        response.Printf("%zi", bytes_written);
-        if (save_errno)
-            response.Printf(",%i", save_errno);
+        off_t offset = packet.GetU64(UINT32_MAX);
+        if (packet.GetChar() == ',')
+        {
+            std::string buffer;
+            if (packet.GetEscapedBinaryData(buffer))
+            {
+                const ssize_t bytes_written = ::pwrite (fd, buffer.data(), buffer.size(), offset);
+                const int save_errno = bytes_written == -1 ? errno : 0;
+                response.Printf("%zi", bytes_written);
+                if (save_errno)
+                    response.Printf(",%i", save_errno);
+            }
+            else
+            {
+                response.Printf ("-1,%i", EINVAL);
+            }
+            return SendPacketNoLock(response.GetData(), response.GetSize());
+        }
     }
-    else
-    {
-        response.Printf ("-1,%i", EINVAL);
-    }
-
-    SendPacketNoLock(response.GetData(), response.GetSize());
-    return true;
+    return SendErrorResponse(27);
 #endif
 }
 
@@ -1265,19 +1295,20 @@ GDBRemoteCommunicationServer::Handle_vFile_Size (StringExtractorGDBRemote &packe
     packet.SetFilePos(::strlen("vFile:size:"));
     std::string path;
     packet.GetHexByteString(path);
-    if (path.empty())
-        return false;
-    lldb::user_id_t retcode = Host::GetFileSize(FileSpec(path.c_str(), false));
-    StreamString response;
-    response.PutChar('F');
-    response.PutHex64(retcode);
-    if (retcode == UINT64_MAX)
+    if (!path.empty())
     {
-        response.PutChar(',');
-        response.PutHex64(retcode); // TODO: replace with Host::GetSyswideErrorCode()
+        lldb::user_id_t retcode = Host::GetFileSize(FileSpec(path.c_str(), false));
+        StreamString response;
+        response.PutChar('F');
+        response.PutHex64(retcode);
+        if (retcode == UINT64_MAX)
+        {
+            response.PutChar(',');
+            response.PutHex64(retcode); // TODO: replace with Host::GetSyswideErrorCode()
+        }
+        return SendPacketNoLock(response.GetData(), response.GetSize());
     }
-    SendPacketNoLock(response.GetData(), response.GetSize());
-    return true;
+    return SendErrorResponse(22);
 }
 
 bool
@@ -1286,16 +1317,17 @@ GDBRemoteCommunicationServer::Handle_vFile_Mode (StringExtractorGDBRemote &packe
     packet.SetFilePos(::strlen("vFile:mode:"));
     std::string path;
     packet.GetHexByteString(path);
-    if (path.empty())
-        return false;
-    Error error;
-    const uint32_t mode = File::GetPermissions(path.c_str(), error);
-    StreamString response;
-    response.Printf("F%u", mode);
-    if (mode == 0 || error.Fail())
-        response.Printf(",%i", (int)error.GetError());
-    SendPacketNoLock(response.GetData(), response.GetSize());
-    return true;
+    if (!path.empty())
+    {
+        Error error;
+        const uint32_t mode = File::GetPermissions(path.c_str(), error);
+        StreamString response;
+        response.Printf("F%u", mode);
+        if (mode == 0 || error.Fail())
+            response.Printf(",%i", (int)error.GetError());
+        return SendPacketNoLock(response.GetData(), response.GetSize());
+    }
+    return SendErrorResponse(23);
 }
 
 bool
@@ -1304,18 +1336,19 @@ GDBRemoteCommunicationServer::Handle_vFile_Exists (StringExtractorGDBRemote &pac
     packet.SetFilePos(::strlen("vFile:exists:"));
     std::string path;
     packet.GetHexByteString(path);
-    if (path.empty())
-        return false;
-    bool retcode = Host::GetFileExists(FileSpec(path.c_str(), false));
-    StreamString response;
-    response.PutChar('F');
-    response.PutChar(',');
-    if (retcode)
-        response.PutChar('1');
-    else
-        response.PutChar('0');
-    SendPacketNoLock(response.GetData(), response.GetSize());
-    return true;
+    if (!path.empty())
+    {
+        bool retcode = Host::GetFileExists(FileSpec(path.c_str(), false));
+        StreamString response;
+        response.PutChar('F');
+        response.PutChar(',');
+        if (retcode)
+            response.PutChar('1');
+        else
+            response.PutChar('0');
+        return SendPacketNoLock(response.GetData(), response.GetSize());
+    }
+    return SendErrorResponse(24);
 }
 
 bool
@@ -1329,8 +1362,7 @@ GDBRemoteCommunicationServer::Handle_vFile_symlink (StringExtractorGDBRemote &pa
     Error error = Host::Symlink(src.c_str(), dst.c_str());
     StreamString response;
     response.Printf("F%u,%u", error.GetError(), error.GetError());
-    SendPacketNoLock(response.GetData(), response.GetSize());
-    return true;
+    return SendPacketNoLock(response.GetData(), response.GetSize());
 }
 
 bool
@@ -1342,8 +1374,7 @@ GDBRemoteCommunicationServer::Handle_vFile_unlink (StringExtractorGDBRemote &pac
     Error error = Host::Unlink(path.c_str());
     StreamString response;
     response.Printf("F%u,%u", error.GetError(), error.GetError());
-    SendPacketNoLock(response.GetData(), response.GetSize());
-    return true;
+    return SendPacketNoLock(response.GetData(), response.GetSize());
 }
 
 bool
@@ -1353,66 +1384,70 @@ GDBRemoteCommunicationServer::Handle_qPlatform_shell (StringExtractorGDBRemote &
     std::string path;
     std::string working_dir;
     packet.GetHexByteStringTerminatedBy(path,',');
-    if (path.size() == 0)
-        return false;
-    if (packet.GetChar() != ',')
-        return false;
-    // FIXME: add timeout to qPlatform_shell packet
-    // uint32_t timeout = packet.GetHexMaxU32(false, 32);
-    uint32_t timeout = 10;
-    if (packet.GetChar() == ',')
-        packet.GetHexByteString(working_dir);
-    int status, signo;
-    std::string output;
-    Error err = Host::RunShellCommand(path.c_str(),
-                                      working_dir.empty() ? NULL : working_dir.c_str(),
-                                      &status, &signo, &output, timeout);
-    StreamGDBRemote response;
-    if (err.Fail())
+    if (!path.empty())
     {
-        response.PutCString("F,");
-        response.PutHex32(UINT32_MAX);
+        if (packet.GetChar() == ',')
+        {
+            // FIXME: add timeout to qPlatform_shell packet
+            // uint32_t timeout = packet.GetHexMaxU32(false, 32);
+            uint32_t timeout = 10;
+            if (packet.GetChar() == ',')
+                packet.GetHexByteString(working_dir);
+            int status, signo;
+            std::string output;
+            Error err = Host::RunShellCommand(path.c_str(),
+                                              working_dir.empty() ? NULL : working_dir.c_str(),
+                                              &status, &signo, &output, timeout);
+            StreamGDBRemote response;
+            if (err.Fail())
+            {
+                response.PutCString("F,");
+                response.PutHex32(UINT32_MAX);
+            }
+            else
+            {
+                response.PutCString("F,");
+                response.PutHex32(status);
+                response.PutChar(',');
+                response.PutHex32(signo);
+                response.PutChar(',');
+                response.PutEscapedBytes(output.c_str(), output.size());
+            }
+            return SendPacketNoLock(response.GetData(), response.GetSize());
+        }
     }
-    else
-    {
-        response.PutCString("F,");
-        response.PutHex32(status);
-        response.PutChar(',');
-        response.PutHex32(signo);
-        response.PutChar(',');
-        response.PutEscapedBytes(output.c_str(), output.size());
-    }
-    SendPacketNoLock(response.GetData(), response.GetSize());
-    return true;
+    return SendErrorResponse(24);
 }
 
 bool
 GDBRemoteCommunicationServer::Handle_vFile_Stat (StringExtractorGDBRemote &packet)
 {
-    return false;
+    return SendUnimplementedResponse("GDBRemoteCommunicationServer::Handle_vFile_Stat() unimplemented");
 }
 
 bool
 GDBRemoteCommunicationServer::Handle_vFile_MD5 (StringExtractorGDBRemote &packet)
 {
-    packet.SetFilePos(::strlen("vFile:exists:"));
+    packet.SetFilePos(::strlen("vFile:MD5:"));
     std::string path;
     packet.GetHexByteString(path);
-    if (path.size() == 0)
-        return false;
-    uint64_t a,b;
-    StreamGDBRemote response;
-    if (Host::CalculateMD5(FileSpec(path.c_str(),false),a,b) == false)
+    if (!path.empty())
     {
-        response.PutCString("F,");
-        response.PutCString("x");
+        uint64_t a,b;
+        StreamGDBRemote response;
+        if (Host::CalculateMD5(FileSpec(path.c_str(),false),a,b) == false)
+        {
+            response.PutCString("F,");
+            response.PutCString("x");
+        }
+        else
+        {
+            response.PutCString("F,");
+            response.PutHex64(a);
+            response.PutHex64(b);
+        }
+        return SendPacketNoLock(response.GetData(), response.GetSize());
     }
-    else
-    {
-        response.PutCString("F,");
-        response.PutHex64(a);
-        response.PutHex64(b);
-    }
-    SendPacketNoLock(response.GetData(), response.GetSize());
-    return true;
+    return SendErrorResponse(25);
 }
+
