@@ -97,6 +97,7 @@ class   FileSpecList;
 class   Flags;
 class   TypeCategoryImpl;
 class   FormatManager;
+class   FormattersMatchCandidate;
 class   FuncUnwinders;
 class   Function;
 class   FunctionInfo;

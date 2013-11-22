@@ -18,6 +18,7 @@
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
 
+#include "lldb/DataFormatters/FormatClasses.h"
 #include "lldb/DataFormatters/FormatNavigator.h"
 
 namespace lldb_private {    
@@ -177,23 +178,22 @@ namespace lldb_private {
                 return m_enabled_position;
         }
         
-        
         bool
         Get (ValueObject& valobj,
+             const FormattersMatchVector& candidates,
              lldb::TypeFormatImplSP& entry,
-             lldb::DynamicValueType use_dynamic,
              uint32_t* reason = NULL);
         
         bool
         Get (ValueObject& valobj,
+             const FormattersMatchVector& candidates,
              lldb::TypeSummaryImplSP& entry,
-             lldb::DynamicValueType use_dynamic,
              uint32_t* reason = NULL);
         
         bool
         Get (ValueObject& valobj,
+             const FormattersMatchVector& candidates,
              lldb::SyntheticChildrenSP& entry,
-             lldb::DynamicValueType use_dynamic,
              uint32_t* reason = NULL);
         
         void

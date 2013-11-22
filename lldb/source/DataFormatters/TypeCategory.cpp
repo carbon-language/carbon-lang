@@ -39,15 +39,15 @@ m_name(name)
 
 bool
 TypeCategoryImpl::Get (ValueObject& valobj,
+                       const FormattersMatchVector& candidates,
                        lldb::TypeFormatImplSP& entry,
-                       lldb::DynamicValueType use_dynamic,
                        uint32_t* reason)
 {
     if (!IsEnabled())
         return false;
-    if (GetValueNavigator()->Get(valobj, entry, use_dynamic, reason))
+    if (GetValueNavigator()->Get(candidates, entry, reason))
         return true;
-    bool regex = GetRegexValueNavigator()->Get(valobj, entry, use_dynamic, reason);
+    bool regex = GetRegexValueNavigator()->Get(candidates, entry, reason);
     if (regex && reason)
         *reason |= lldb_private::eFormatterChoiceCriterionRegularExpressionSummary;
     return regex;
@@ -55,25 +55,25 @@ TypeCategoryImpl::Get (ValueObject& valobj,
 
 bool
 TypeCategoryImpl::Get (ValueObject& valobj,
+                       const FormattersMatchVector& candidates,
                        lldb::TypeSummaryImplSP& entry,
-                       lldb::DynamicValueType use_dynamic,
                        uint32_t* reason)
 {
     if (!IsEnabled())
         return false;
-    if (GetSummaryNavigator()->Get(valobj, entry, use_dynamic, reason))
+    if (GetSummaryNavigator()->Get(candidates, entry, reason))
         return true;
-    bool regex = GetRegexSummaryNavigator()->Get(valobj, entry, use_dynamic, reason);
+    bool regex = GetRegexSummaryNavigator()->Get(candidates, entry, reason);
     if (regex && reason)
         *reason |= lldb_private::eFormatterChoiceCriterionRegularExpressionSummary;
     return regex;
 }
 
 bool
-TypeCategoryImpl::Get(ValueObject& valobj,
-                      lldb::SyntheticChildrenSP& entry_sp,
-                      lldb::DynamicValueType use_dynamic,
-                      uint32_t* reason)
+TypeCategoryImpl::Get (ValueObject& valobj,
+                       const FormattersMatchVector& candidates,
+                       lldb::SyntheticChildrenSP& entry,
+                       uint32_t* reason)
 {
     if (!IsEnabled())
         return false;
@@ -82,16 +82,16 @@ TypeCategoryImpl::Get(ValueObject& valobj,
     bool regex_filter = false;
     // first find both Filter and Synth, and then check which is most recent
     
-    if (!GetFilterNavigator()->Get(valobj, filter_sp, use_dynamic, &reason_filter))
-        regex_filter = GetRegexFilterNavigator()->Get (valobj, filter_sp, use_dynamic, &reason_filter);
+    if (!GetFilterNavigator()->Get(candidates, filter_sp, &reason_filter))
+        regex_filter = GetRegexFilterNavigator()->Get (candidates, filter_sp, &reason_filter);
     
 #ifndef LLDB_DISABLE_PYTHON
     bool regex_synth = false;
     uint32_t reason_synth = 0;
     bool pick_synth = false;
     ScriptedSyntheticChildren::SharedPointer synth;
-    if (!GetSyntheticNavigator()->Get(valobj, synth, use_dynamic, &reason_synth))
-        regex_synth = GetRegexSyntheticNavigator()->Get (valobj, synth, use_dynamic, &reason_synth);
+    if (!GetSyntheticNavigator()->Get(candidates, synth, &reason_synth))
+        regex_synth = GetRegexSyntheticNavigator()->Get (candidates, synth, &reason_synth);
     if (!filter_sp.get() && !synth.get())
         return false;
     else if (!filter_sp.get() && synth.get())
@@ -111,27 +111,26 @@ TypeCategoryImpl::Get(ValueObject& valobj,
     {
         if (regex_synth && reason)
             *reason |= lldb_private::eFormatterChoiceCriterionRegularExpressionFilter;
-        entry_sp = synth;
+        entry = synth;
         return true;
     }
     else
     {
         if (regex_filter && reason)
             *reason |= lldb_private::eFormatterChoiceCriterionRegularExpressionFilter;
-        entry_sp = filter_sp;
+        entry = filter_sp;
         return true;
     }
     
 #else
     if (filter_sp)
     {
-        entry_sp = filter_sp;
+        entry = filter_sp;
         return true;
     }
 #endif
     
     return false;
-    
 }
 
 void

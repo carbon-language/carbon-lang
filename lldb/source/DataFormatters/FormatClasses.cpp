@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
+#include "lldb/DataFormatters/FormatClasses.h"
 
 // C Includes
 
@@ -16,17 +16,6 @@
 // Other libraries and framework includes
 
 // Project includes
-#include "lldb/lldb-public.h"
-#include "lldb/lldb-enumerations.h"
-
-#include "lldb/Core/Debugger.h"
-#include "lldb/Core/StreamString.h"
-#include "lldb/Core/Timer.h"
-#include "lldb/DataFormatters/FormatClasses.h"
-#include "lldb/Interpreter/CommandInterpreter.h"
-#include "lldb/Symbol/ClangASTType.h"
-#include "lldb/Target/StackFrame.h"
-#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;

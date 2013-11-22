@@ -26,6 +26,9 @@
 #include "lldb/Core/ValueObject.h"
 
 #include "lldb/DataFormatters/FormatClasses.h"
+#include "lldb/DataFormatters/TypeFormat.h"
+#include "lldb/DataFormatters/TypeSummary.h"
+#include "lldb/DataFormatters/TypeSynthetic.h"
 
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ClangASTType.h"
@@ -459,228 +462,29 @@ protected:
         }
         return false;
     }
-    
-    bool
-    Get_BitfieldMatch (ValueObject& valobj,
-                       ConstString typeName,
-                       MapValueType& entry,
-                       uint32_t& reason)
-    {
-        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-        // for bitfields, append size to the typename so one can custom format them
-        StreamString sstring;
-        sstring.Printf("%s:%d",typeName.AsCString(),valobj.GetBitfieldBitSize());
-        ConstString bitfieldname = ConstString(sstring.GetData());
-        if (log)
-            log->Printf("[Get_BitfieldMatch] appended bitfield info, final result is %s", bitfieldname.GetCString());
-        if (Get(bitfieldname, entry))
-        {
-            if (log)
-                log->Printf("[Get_BitfieldMatch] bitfield direct match found, returning");
-            return true;
-        }
-        else
-        {
-            reason |= lldb_private::eFormatterChoiceCriterionStrippedBitField;
-            if (log)
-                log->Printf("[Get_BitfieldMatch] no bitfield direct match");
-            return false;
-        }
-    }
-    
-    bool Get_ObjC (ValueObject& valobj,
-                   MapValueType& entry)
-    {
-        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-        lldb::ProcessSP process_sp = valobj.GetProcessSP();
-        ObjCLanguageRuntime* runtime = process_sp->GetObjCLanguageRuntime();
-        if (runtime == NULL)
-        {
-            if (log)
-                log->Printf("[Get_ObjC] no valid ObjC runtime, skipping dynamic");
-            return false;
-        }
-        ObjCLanguageRuntime::ClassDescriptorSP objc_class_sp (runtime->GetClassDescriptor(valobj));
-        if (!objc_class_sp)
-        {
-            if (log)
-                log->Printf("[Get_ObjC] invalid ISA, skipping dynamic");
-            return false;
-        }
-        ConstString name (objc_class_sp->GetClassName());
-        if (log)
-            log->Printf("[Get_ObjC] dynamic type inferred is %s - looking for direct dynamic match", name.GetCString());
-        if (Get(name, entry))
-        {
-            if (log)
-                log->Printf("[Get_ObjC] direct dynamic match found, returning");
-            return true;
-        }
-        if (log)
-            log->Printf("[Get_ObjC] no dynamic match");
-        return false;
-    }
-    
-    bool
-    Get_Impl (ValueObject& valobj,
-              ClangASTType clang_type,
-              MapValueType& entry,
-              lldb::DynamicValueType use_dynamic,
-              uint32_t& reason)
-    {
-        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
 
-        if (!clang_type.IsValid())
+    bool
+    Get (const FormattersMatchVector& candidates,
+         MapValueType& entry,
+         uint32_t *reason)
+    {
+        for (const FormattersMatchCandidate& candidate : candidates)
         {
-            if (log)
-                log->Printf("[Get_Impl] type is invalid, returning");
-            return false;
-        }
-        
-        clang_type = clang_type.RemoveFastQualifiers();
-
-        ConstString typeName(clang_type.GetConstTypeName());
-        
-        if (valobj.GetBitfieldBitSize() > 0)
-        {
-            if (Get_BitfieldMatch(valobj, typeName, entry, reason))
-                return true;
-        }
-        
-        if (log)
-            log->Printf("[Get_Impl] trying to get %s for VO name %s of type %s",
-                        m_name.c_str(),
-                        valobj.GetName().AsCString(),
-                        typeName.AsCString());
-        
-        if (Get(typeName, entry))
-        {
-            if (log)
-                log->Printf("[Get] direct match found, returning");
-            return true;
-        }
-        if (log)
-            log->Printf("[Get_Impl] no direct match");
-        
-        // strip pointers and references and see if that helps
-        if (clang_type.IsReferenceType())
-        {
-            if (log)
-                log->Printf("[Get_Impl] stripping reference");
-            if (Get_Impl(valobj, clang_type.GetNonReferenceType(), entry, use_dynamic, reason) && !entry->SkipsReferences())
+            if (Get(candidate.GetTypeName(),entry))
             {
-                reason |= lldb_private::eFormatterChoiceCriterionStrippedPointerReference;
-                return true;
-            }
-        }
-        else if (clang_type.IsPointerType())
-        {
-            if (log)
-                log->Printf("[Get_Impl] stripping pointer");
-            if (Get_Impl(valobj, clang_type.GetPointeeType(), entry, use_dynamic, reason) && !entry->SkipsPointers())
-            {
-                reason |= lldb_private::eFormatterChoiceCriterionStrippedPointerReference;
-                return true;
-            }
-        }
-        
-        bool canBeObjCDynamic = valobj.GetClangType().IsPossibleDynamicType (NULL,
-                                                                             false, // no C++
-                                                                             true); // yes ObjC
-        
-        if (canBeObjCDynamic)
-        {
-            if (use_dynamic != lldb::eNoDynamicValues)
-            {
-                if (log)
-                    log->Printf("[Get_Impl] allowed to figure out dynamic ObjC type");
-                if (Get_ObjC(valobj,entry))
+                if (candidate.IsMatch(entry) == false)
                 {
-                    reason |= lldb_private::eFormatterChoiceCriterionDynamicObjCDiscovery;
-                    return true;
+                    entry.reset();
+                    continue;
                 }
-            }
-            if (log)
-                log->Printf("[Get_Impl] dynamic disabled or failed - stripping ObjC pointer");
-            if (Get_Impl(valobj, clang_type.GetPointeeType(), entry, use_dynamic, reason) && !entry->SkipsPointers())
-            {
-                reason |= lldb_private::eFormatterChoiceCriterionStrippedPointerReference;
-                return true;
-            }
-        }
-        
-        // try to strip typedef chains
-        if (clang_type.IsTypedefType())
-        {
-            if (log)
-                log->Printf("[Get_Impl] stripping typedef");
-            if ((Get_Impl(valobj, clang_type.GetTypedefedType(), entry, use_dynamic, reason)) && entry->Cascades())
-            {
-                reason |= lldb_private::eFormatterChoiceCriterionNavigatedTypedefs;
-                return true;
-            }
-        }
-        
-        // out of luck here
-        return false;
-    }
-    
-    // we are separately passing in valobj and type because the valobj is fixed (and is used for ObjC discovery and bitfield size)
-    // but the type can change (e.g. stripping pointers, ...)
-    bool Get (ValueObject& valobj,
-              ClangASTType clang_type,
-              MapValueType& entry,
-              lldb::DynamicValueType use_dynamic,
-              uint32_t& reason)
-    {
-        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-        
-        if (Get_Impl (valobj, clang_type, entry, use_dynamic, reason))
-            return true;
-        
-        // try going to the unqualified type
-        do {
-            if (log)
-                log->Printf("[Get] trying the unqualified type");
-            if (!clang_type.IsValid())
-                break;
-
-            ClangASTType unqual_clang_ast_type = clang_type.GetFullyUnqualifiedType();
-            if (!unqual_clang_ast_type.IsValid())
-            {
-                if (log)
-                    log->Printf("[Get] could not get the unqual_clang_ast_type");
-                break;
-            }
-            if (unqual_clang_ast_type.GetOpaqueQualType() != clang_type.GetOpaqueQualType())
-            {
-                if (log)
-                    log->Printf("[Get] unqualified type is there and is not the same, let's try");
-                if (Get_Impl (valobj, unqual_clang_ast_type,entry, use_dynamic, reason))
-                    return true;
-            }
-            else if (log)
-                log->Printf("[Get] unqualified type same as original type");
-        } while(false);
-        
-        // if all else fails, go to static type
-        if (valobj.IsDynamic())
-        {
-            if (log)
-                log->Printf("[Get] going to static value");
-            lldb::ValueObjectSP static_value_sp(valobj.GetStaticValue());
-            if (static_value_sp)
-            {
-                if (log)
-                    log->Printf("[Get] has a static value - actually use it");
-                if (Get(*static_value_sp.get(), static_value_sp->GetClangType(), entry, use_dynamic, reason))
+                else
                 {
-                    reason |= lldb_private::eFormatterChoiceCriterionWentToStaticValue;
+                    if(reason)
+                        *reason = candidate.GetReason();
                     return true;
                 }
             }
         }
-        
         return false;
     }
 };

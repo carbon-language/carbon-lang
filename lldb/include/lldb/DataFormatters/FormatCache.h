@@ -18,6 +18,7 @@
 // Project includes
 #include "lldb/lldb-public.h"
 #include "lldb/Core/ConstString.h"
+#include "lldb/Host/Mutex.h"
 #include "lldb/DataFormatters/FormatClasses.h"
 
 namespace lldb_private {

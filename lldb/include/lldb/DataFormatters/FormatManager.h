@@ -19,6 +19,7 @@
 #include "lldb/lldb-enumerations.h"
 
 #include "lldb/DataFormatters/FormatCache.h"
+#include "lldb/DataFormatters/FormatClasses.h"
 #include "lldb/DataFormatters/FormatNavigator.h"
 #include "lldb/DataFormatters/TypeCategory.h"
 #include "lldb/DataFormatters/TypeCategoryMap.h"
@@ -213,7 +214,36 @@ public:
     {
     }
     
+    static FormattersMatchVector
+    GetPossibleMatches (ValueObject& valobj,
+                        lldb::DynamicValueType use_dynamic)
+    {
+        FormattersMatchVector matches;
+        GetPossibleMatches (valobj,
+                            valobj.GetClangType(),
+                            lldb_private::eFormatterChoiceCriterionDirectChoice,
+                            use_dynamic,
+                            matches,
+                            false,
+                            false,
+                            false,
+                            true);
+        return matches;
+    }
+
 private:
+    
+    static void
+    GetPossibleMatches (ValueObject& valobj,
+                        ClangASTType clang_type,
+                        uint32_t reason,
+                        lldb::DynamicValueType use_dynamic,
+                        FormattersMatchVector& entries,
+                        bool did_strip_ptr,
+                        bool did_strip_ref,
+                        bool did_strip_typedef,
+                        bool root_level = false);
+    
     FormatCache m_format_cache;
     NamedSummariesMap m_named_summaries_map;
     std::atomic<uint32_t> m_last_revision;

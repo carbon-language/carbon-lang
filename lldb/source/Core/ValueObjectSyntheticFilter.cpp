@@ -16,7 +16,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/ValueObject.h"
-#include "lldb/DataFormatters/FormatClasses.h"
+#include "lldb/DataFormatters/TypeSynthetic.h"
 
 using namespace lldb_private;
 

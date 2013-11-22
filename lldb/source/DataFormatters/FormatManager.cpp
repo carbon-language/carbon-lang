@@ -163,6 +163,139 @@ FormatManager::GetFormatAsCString (Format format)
     return NULL;
 }
 
+void
+FormatManager::GetPossibleMatches (ValueObject& valobj,
+                                   ClangASTType clang_type,
+                                   uint32_t reason,
+                                   lldb::DynamicValueType use_dynamic,
+                                   FormattersMatchVector& entries,
+                                   bool did_strip_ptr,
+                                   bool did_strip_ref,
+                                   bool did_strip_typedef,
+                                   bool root_level)
+{
+    clang_type = clang_type.RemoveFastQualifiers();
+    ConstString type_name(clang_type.GetConstTypeName());
+    if (valobj.GetBitfieldBitSize() > 0)
+    {
+        StreamString sstring;
+        sstring.Printf("%s:%d",type_name.AsCString(),valobj.GetBitfieldBitSize());
+        ConstString bitfieldname = ConstString(sstring.GetData());
+        entries.push_back({bitfieldname,0,did_strip_ptr,did_strip_ref,did_strip_typedef});
+        reason |= lldb_private::eFormatterChoiceCriterionStrippedBitField;
+    }
+    entries.push_back({type_name,reason,did_strip_ptr,did_strip_ref,did_strip_typedef});
+
+    if (clang_type.IsReferenceType())
+    {
+        ClangASTType non_ref_type = clang_type.GetNonReferenceType();
+        GetPossibleMatches(valobj,
+                           non_ref_type,
+                           reason | lldb_private::eFormatterChoiceCriterionStrippedPointerReference,
+                           use_dynamic,
+                           entries,
+                           did_strip_ptr,
+                           true,
+                           did_strip_typedef);
+    }
+    else if (clang_type.IsPointerType())
+    {
+        ClangASTType non_ptr_type = clang_type.GetPointeeType();
+        GetPossibleMatches(valobj,
+                           non_ptr_type,
+                           reason | lldb_private::eFormatterChoiceCriterionStrippedPointerReference,
+                           use_dynamic,
+                           entries,
+                           true,
+                           did_strip_ref,
+                           did_strip_typedef);
+    }
+    bool canBeObjCDynamic = clang_type.IsPossibleDynamicType (NULL,
+                                                              false, // no C
+                                                              true);  // yes ObjC
+    
+    if (canBeObjCDynamic)
+    {
+        if (use_dynamic != lldb::eNoDynamicValues)
+        {
+            do
+            {
+                lldb::ProcessSP process_sp = valobj.GetProcessSP();
+                ObjCLanguageRuntime* runtime = process_sp->GetObjCLanguageRuntime();
+                if (runtime == nullptr)
+                    break;
+                ObjCLanguageRuntime::ClassDescriptorSP objc_class_sp (runtime->GetClassDescriptor(valobj));
+                if (!objc_class_sp)
+                    break;
+                ConstString name (objc_class_sp->GetClassName());
+                entries.push_back({name,reason | lldb_private::eFormatterChoiceCriterionDynamicObjCDiscovery,did_strip_ptr,did_strip_ref,did_strip_typedef});
+            } while (false);
+        }
+        
+        ClangASTType non_ptr_type = clang_type.GetPointeeType();
+        GetPossibleMatches(valobj,
+                           non_ptr_type,
+                           reason | lldb_private::eFormatterChoiceCriterionStrippedPointerReference,
+                           use_dynamic,
+                           entries,
+                           true,
+                           did_strip_ref,
+                           did_strip_typedef);
+    }
+    
+    // try to strip typedef chains
+    if (clang_type.IsTypedefType())
+    {
+        ClangASTType deffed_type = clang_type.GetTypedefedType();
+        GetPossibleMatches(valobj,
+                           deffed_type,
+                           reason | lldb_private::eFormatterChoiceCriterionNavigatedTypedefs,
+                           use_dynamic,
+                           entries,
+                           did_strip_ptr,
+                           did_strip_ref,
+                           true);
+    }
+    
+    if (root_level)
+    {
+        do {
+            if (!clang_type.IsValid())
+                break;
+            
+            ClangASTType unqual_clang_ast_type = clang_type.GetFullyUnqualifiedType();
+            if (!unqual_clang_ast_type.IsValid())
+                break;
+            if (unqual_clang_ast_type.GetOpaqueQualType() != clang_type.GetOpaqueQualType())
+                GetPossibleMatches (valobj,
+                                    unqual_clang_ast_type,
+                                    reason,
+                                    use_dynamic,
+                                    entries,
+                                    did_strip_ptr,
+                                    did_strip_ref,
+                                    did_strip_typedef);
+        } while(false);
+        
+        
+        // if all else fails, go to static type
+        if (valobj.IsDynamic())
+        {
+            lldb::ValueObjectSP static_value_sp(valobj.GetStaticValue());
+            if (static_value_sp)
+                GetPossibleMatches(*static_value_sp.get(),
+                                   static_value_sp->GetClangType(),
+                                   reason | lldb_private::eFormatterChoiceCriterionWentToStaticValue,
+                                   use_dynamic,
+                                   entries,
+                                   did_strip_ptr,
+                                   did_strip_ref,
+                                   did_strip_typedef,
+                                   true);
+        }
+    }
+}
+
 lldb::TypeFormatImplSP
 FormatManager::GetFormatForType (lldb::TypeNameSpecifierImplSP type_sp)
 {
