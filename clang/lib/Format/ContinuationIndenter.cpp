@@ -375,7 +375,8 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
               State.ParenLevel == 0 &&
               (!Style.IndentFunctionDeclarationAfterType ||
                State.Line->StartsDefinition))) {
-    State.Column = State.Stack.back().Indent;
+    State.Column =
+        std::max(State.Stack.back().LastSpace, State.Stack.back().Indent);
   } else if (Current.Type == TT_ObjCSelectorName) {
     if (State.Stack.back().ColonPos == 0) {
       State.Stack.back().ColonPos =

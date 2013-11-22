@@ -3882,6 +3882,10 @@ TEST_F(FormatTest, WrapsTemplateDeclarations) {
       "template <typename T1, typename T2 = char, typename T3 = char,\n"
       "          typename T4 = char>\n"
       "void f();");
+  verifyFormat("template <typename aaaaaaaaaaa, typename bbbbbbbbbbbbb,\n"
+               "          template <typename> class cccccccccccccccccccccc,\n"
+               "          typename ddddddddddddd>\n"
+               "class C {};");
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaa<aaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaa>(\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
