@@ -37,9 +37,9 @@ set(SANITIZER_LIBCDEP_SOURCES
 set(SANITIZER_HEADERS
   sanitizer_allocator.h
   sanitizer_allocator_internal.h
+  sanitizer_atomic.h
   sanitizer_atomic_clang.h
   sanitizer_atomic_msvc.h
-  sanitizer_atomic.h
   sanitizer_common.h
   sanitizer_common_interceptors.inc
   sanitizer_common_interceptors_ioctl.inc
@@ -54,13 +54,19 @@ set(SANITIZER_HEADERS
   sanitizer_list.h
   sanitizer_mutex.h
   sanitizer_placement_new.h
+  sanitizer_platform.h
   sanitizer_platform_interceptors.h
+  sanitizer_platform_limits_posix.h
   sanitizer_procmaps.h
   sanitizer_quarantine.h
   sanitizer_report_decorator.h
   sanitizer_stackdepot.h
   sanitizer_stacktrace.h
+  sanitizer_stoptheworld.h
+  sanitizer_suppressions.h
   sanitizer_symbolizer.h
+  sanitizer_syscall_generic.inc
+  sanitizer_syscall_linux_x86_64.inc
   sanitizer_thread_registry.h)
 
 if (NOT MSVC)
