@@ -333,7 +333,7 @@ struct AnalysisPassConcept {
 template <typename IRUnitT, typename AnalysisManagerT, typename PassT,
           bool AcceptsAnalysisManager = PassRunAcceptsAnalysisManager<
               IRUnitT, AnalysisManagerT, PassT,
-              typename PassT::Result>::Value > struct AnalysisPassModel;
+              typename PassT::Result>::Value> struct AnalysisPassModel;
 
 /// \brief Specialization of \c AnalysisPassModel which passes an
 /// \c AnalysisManager to PassT's run method.
