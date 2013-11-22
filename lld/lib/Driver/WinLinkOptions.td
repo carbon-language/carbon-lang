@@ -50,6 +50,8 @@ def incl : Joined<["/", "-"], "include:">,
 def incl_c : Separate<["/", "-"], "include">, Alias<incl>;
 
 def nodefaultlib_all : F<"nodefaultlib">;
+def noentry : F<"noentry">;
+def dll : F<"dll">;
 
 def debug : F<"debug">;
 def swaprun_cd : F<"swaprun:cd">;

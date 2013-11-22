@@ -341,6 +341,21 @@ TEST_F(WinLinkParserTest, DisallowLib) {
 }
 
 //
+// Tests for DLL.
+//
+
+TEST_F(WinLinkParserTest, NoEntry) {
+  EXPECT_TRUE(parse("link.exe", "/noentry", "/dll", "a.obj", nullptr));
+  EXPECT_EQ("", _context.entrySymbolName());
+}
+
+TEST_F(WinLinkParserTest, NoEntryError) {
+  // /noentry without /dll is an error.
+  EXPECT_FALSE(parse("link.exe", "/noentry", "a.obj", nullptr));
+  EXPECT_EQ("/noentry must be specified with /dll\n", errorMessage());
+}
+
+//
 // Tests for boolean flags.
 //
 

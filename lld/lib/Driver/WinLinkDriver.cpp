@@ -891,11 +891,17 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
         new PECOFFFileNode(ctx, path)));
 
   // Use the default entry name if /entry option is not given.
-  if (ctx.entrySymbolName().empty())
+  if (ctx.entrySymbolName().empty() && !parsedArgs->getLastArg(OPT_noentry))
     ctx.setEntrySymbolName(getDefaultEntrySymbolName(ctx));
   StringRef entry = ctx.entrySymbolName();
   if (!entry.empty())
     ctx.addInitialUndefinedSymbol(entry);
+
+  // Specify /noentry without /dll is an error.
+  if (parsedArgs->getLastArg(OPT_noentry) && !parsedArgs->getLastArg(OPT_dll)) {
+    diagnostics << "/noentry must be specified with /dll\n";
+    return false;
+  }
 
   // Specifying both /opt:ref and /opt:noref is an error.
   if (parsedArgs->getLastArg(OPT_ref) && parsedArgs->getLastArg(OPT_ref_no)) {
