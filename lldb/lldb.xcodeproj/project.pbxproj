@@ -90,7 +90,7 @@
 		262ED0051631FA2800879631 /* OptionGroupString.h in Headers */ = {isa = PBXBuildFile; fileRef = 262ED0041631FA2800879631 /* OptionGroupString.h */; };
 		262ED0081631FA3A00879631 /* OptionGroupString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262ED0071631FA3A00879631 /* OptionGroupString.cpp */; };
 		262F12B51835468600AEB384 /* SBPlatform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262F12B41835468600AEB384 /* SBPlatform.cpp */; };
-		262F12B71835469C00AEB384 /* SBPlatform.h in Headers */ = {isa = PBXBuildFile; fileRef = 262F12B61835469C00AEB384 /* SBPlatform.h */; };
+		262F12B71835469C00AEB384 /* SBPlatform.h in Headers */ = {isa = PBXBuildFile; fileRef = 262F12B61835469C00AEB384 /* SBPlatform.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2635879417822FC2004C30BA /* SymbolVendorELF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2635879017822E56004C30BA /* SymbolVendorELF.cpp */; };
 		26368A3C126B697600E8659F /* darwin-debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26368A3B126B697600E8659F /* darwin-debug.cpp */; };
 		26368AF7126B960500E8659F /* darwin-debug in Resources */ = {isa = PBXBuildFile; fileRef = 26579F68126A25920007C5CB /* darwin-debug */; };
@@ -6470,6 +6470,7 @@
 				26D6F3F0183E7F4F00194858 /* BuildAndIntegration */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = BuildAndIntegration;
 		};
 		26DC6A1A1337FE8B00FF7998 /* Build configuration list for PBXNativeTarget "lldb-platform" */ = {
 			isa = XCConfigurationList;
