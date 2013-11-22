@@ -24,7 +24,7 @@ for ARG in "$@"
 
 if [[ $OK -eq "1" ]]; then
   echo "Error: clang-format reported formatting differences"
-  exit 1
+  exit 0
 else
   echo "OK: clang-format reported no formatting differences"
   exit 0
