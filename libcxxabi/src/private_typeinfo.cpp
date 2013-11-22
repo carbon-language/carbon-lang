@@ -27,7 +27,7 @@
 // The current implementation of _LIBCXX_DYNAMIC_FALLBACK requires a
 // printf-like function called syslog:
 // 
-//     void syslog(const char* format, ...);
+//     void syslog(int facility_priority, const char* format, ...);
 // 
 // If you want this functionality but your platform doesn't have syslog,
 // just implement it in terms of fprintf(stderr, ...).
