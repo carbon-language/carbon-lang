@@ -548,13 +548,13 @@ def NSBridged : InheritableAttr {
 def ObjCBridge : InheritableAttr {
   let Spellings = [GNU<"objc_bridge">];
   let Subjects = [Record];
-  let Args = [IdentifierArgument<"BridgedType", 1>];
+  let Args = [IdentifierArgument<"BridgedType">];
 }
 
 def ObjCBridgeMutable : InheritableAttr {
   let Spellings = [GNU<"objc_bridge_mutable">];
   let Subjects = [Record];
-  let Args = [IdentifierArgument<"BridgedType", 1>];
+  let Args = [IdentifierArgument<"BridgedType">];
 }
 
 def NSReturnsRetained : InheritableAttr {
