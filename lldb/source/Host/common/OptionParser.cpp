@@ -38,9 +38,11 @@ OptionParser::EnableError(bool error)
 }
 
 int
-OptionParser::Parse(int argc, char * const argv [],
-        const char *optstring,
-        const Option *longopts, int *longindex)
+OptionParser::Parse (int argc,
+                     char * const argv [],
+                     const char *optstring,
+                     const Option *longopts,
+                     int *longindex)
 {
     return getopt_long_only(argc, argv, optstring, (const option*)longopts, longindex);
 }
