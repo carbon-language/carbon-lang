@@ -5,7 +5,7 @@
 ; CodeGenPrepare should move the zext into the block with the load
 ; so that SelectionDAG can select it with the load.
 
-; CHECK: movzbl ({{%rdi|%rcx}}), %eax
+; CHECK: movsbl ({{%rdi|%rcx}}), %eax
 
 define void @foo(i8* %p, i32* %q) {
 entry:

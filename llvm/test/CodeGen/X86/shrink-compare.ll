@@ -2,7 +2,7 @@
 
 declare void @bar()
 
-define void @test1(i32* nocapture %X) nounwind {
+define void @test1(i32* nocapture %X) nounwind minsize {
 entry:
   %tmp1 = load i32* %X, align 4
   %and = and i32 %tmp1, 255
@@ -19,7 +19,7 @@ if.end:
 ; CHECK: cmpb $47, (%{{rdi|rcx}})
 }
 
-define void @test2(i32 %X) nounwind {
+define void @test2(i32 %X) nounwind minsize {
 entry:
   %and = and i32 %X, 255
   %cmp = icmp eq i32 %and, 47
@@ -35,7 +35,7 @@ if.end:
 ; CHECK: cmpb $47, %{{dil|cl}}
 }
 
-define void @test3(i32 %X) nounwind {
+define void @test3(i32 %X) nounwind minsize {
 entry:
   %and = and i32 %X, 255
   %cmp = icmp eq i32 %and, 255
@@ -70,7 +70,7 @@ lor.end:                                          ; preds = %lor.rhs, %entry
 @x = global { i8, i8, i8, i8, i8, i8, i8, i8 } { i8 1, i8 0, i8 0, i8 0, i8 1, i8 0, i8 0, i8 1 }, align 4
 
 ; PR16551
-define void @test5(i32 %X) nounwind {
+define void @test5(i32 %X) nounwind minsize {
 entry:
   %bf.load = load i56* bitcast ({ i8, i8, i8, i8, i8, i8, i8, i8 }* @x to i56*), align 4
   %bf.lshr = lshr i56 %bf.load, 32
