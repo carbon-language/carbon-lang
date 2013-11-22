@@ -2552,6 +2552,13 @@ INTERCEPTOR(int, pthread_attr_getstack, void *attr, void **addr, SIZE_T *size) {
   return res;
 }
 
+// We may need to call the real pthread_attr_getstack from the run-time
+// in sanitizer_common, but we don't want to include the interception headers
+// there. So, just define this function here.
+int __sanitizer_pthread_attr_getstack(void *attr, void **addr, SIZE_T *size) {
+  return REAL(pthread_attr_getstack)(attr, addr, size);
+}
+
 #define INIT_PTHREAD_ATTR_GET                             \
   COMMON_INTERCEPT_FUNCTION(pthread_attr_getdetachstate); \
   COMMON_INTERCEPT_FUNCTION(pthread_attr_getguardsize);   \
