@@ -399,7 +399,7 @@ static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
       if (ty.isVolatileQualified())
         typeQuals += typeQuals.empty() ? "volatile" : " volatile";
     }
-    
+
     argTypeQuals.push_back(llvm::MDString::get(Context, typeQuals));
 
     // Get image access qualifier:
