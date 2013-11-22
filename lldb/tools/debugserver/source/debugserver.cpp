@@ -878,6 +878,14 @@ main (int argc, char *argv[])
     }
     // NULL terminate the short option string.
     short_options[short_options_idx++] = '\0';
+    
+#if __GLIBC__
+    optind = 0;
+#else
+    optreset = 1;
+    optind = 1;
+#endif
+
     while ((ch = getopt_long_only(argc, argv, short_options, g_long_options, &long_option_index)) != -1)
     {
         DNBLogDebug("option: ch == %c (0x%2.2x) --%s%c%s\n",

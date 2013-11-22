@@ -186,6 +186,14 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
     bool pass_env = true;
     std::string unix_socket_name;
     std::string working_dir;
+    
+#if __GLIBC__
+    optind = 0;
+#else
+    optreset = 1;
+    optind = 1;
+#endif
+
 	while ((ch = getopt_long_only(argc, argv, "a:deE:hsu:?", g_long_options, NULL)) != -1)
 	{
 		switch (ch) 

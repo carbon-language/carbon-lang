@@ -48,7 +48,8 @@ static struct option g_long_options[] =
     { "log-file",           required_argument,  NULL,               'l' },
     { "log-flags",          required_argument,  NULL,               'f' },
     { "listen",             required_argument,  NULL,               'L' },
-    { "gdbserver-port",     required_argument,  NULL,               'p' },
+    { "port-offset",        required_argument,  NULL,               'p' },
+    { "gdbserver-port",     required_argument,  NULL,               'P' },
     { "min-gdbserver-port", required_argument,  NULL,               'm' },
     { "max-gdbserver-port", required_argument,  NULL,               'M' },
     { NULL,                 0,                  NULL,               0   }
@@ -112,13 +113,22 @@ main (int argc, char *argv[])
     GDBRemoteCommunicationServer::PortMap gdbserver_portmap;
     int min_gdbserver_port = 0;
     int max_gdbserver_port = 0;
+    uint16_t port_offset = 0;
     
     bool show_usage = false;
     int option_error = 0;
-//    StreamSP stream_sp (new StreamFile(stdout, false));
-//    const char *log_channels[] = { "host", "process", NULL };
-//    EnableLog (stream_sp, 0, log_channels, NULL);
+    // Enable LLDB log channels...
+    StreamSP stream_sp (new StreamFile(stdout, false));
+    const char *log_channels[] = { "platform", "host", "process", NULL };
+    EnableLog (stream_sp, 0, log_channels, NULL);
     
+#if __GLIBC__
+    optind = 0;
+#else
+    optreset = 1;
+    optind = 1;
+#endif
+
     while ((ch = getopt_long_only(argc, argv, "l:f:L:p:m:M:", g_long_options, &long_option_index)) != -1)
     {
 //        DNBLogDebug("option: ch == %c (0x%2.2x) --%s%c%s\n",
@@ -171,6 +181,30 @@ main (int argc, char *argv[])
             break;
 
         case 'p':
+            {
+                char *end = NULL;
+                long tmp_port_offset = strtoul(optarg, &end, 0);
+                if (end && *end == '\0')
+                {
+                    if (LOW_PORT <= tmp_port_offset && tmp_port_offset <= HIGH_PORT)
+                    {
+                        port_offset = (uint16_t)tmp_port_offset;
+                    }
+                    else
+                    {
+                        fprintf (stderr, "error: port offset %li is not in the valid user port range of %u - %u\n", tmp_port_offset, LOW_PORT, HIGH_PORT);
+                        option_error = 5;
+                    }
+                }
+                else
+                {
+                    fprintf (stderr, "error: invalid port offset string %s\n", optarg);
+                    option_error = 4;
+                }
+            }
+            break;
+                
+        case 'P':
         case 'm':
         case 'M':
             {
@@ -180,7 +214,7 @@ main (int argc, char *argv[])
                 {
                     if (LOW_PORT <= portnum && portnum <= HIGH_PORT)
                     {
-                        if (ch  == 'p')
+                        if (ch  == 'P')
                             gdbserver_portmap[(uint16_t)portnum] = LLDB_INVALID_PROCESS_ID;
                         else if (ch == 'm')
                             min_gdbserver_port = portnum;
@@ -246,6 +280,9 @@ main (int argc, char *argv[])
     do {
         GDBRemoteCommunicationServer gdb_server (true);
         
+        if (port_offset > 0)
+            gdb_server.SetPortOffset(port_offset);
+
         if (!gdbserver_portmap.empty())
         {
             gdb_server.SetPortMap(std::move(gdbserver_portmap));

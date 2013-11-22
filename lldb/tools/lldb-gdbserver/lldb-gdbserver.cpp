@@ -101,6 +101,12 @@ main (int argc, char *argv[])
 //    StreamSP stream_sp (new StreamFile(stdout, false));
 //    const char *log_channels[] = { "host", "process", NULL };
 //    EnableLog (stream_sp, 0, log_channels, NULL);
+#if __GLIBC__
+    optind = 0;
+#else
+    optreset = 1;
+    optind = 1;
+#endif
     
     while ((ch = getopt_long_only(argc, argv, "l:f:h", g_long_options, &long_option_index)) != -1)
     {
