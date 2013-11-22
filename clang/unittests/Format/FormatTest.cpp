@@ -4671,6 +4671,7 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
     verifyFormat("new int[3]{ 1, 2, 3 };");
     verifyFormat("return { arg1, arg2 };");
     verifyFormat("return { arg1, SomeType{ parameter } };");
+    verifyFormat("int count = set<int>{ f(), g(), h() }.size();");
     verifyFormat("new T{ arg1, arg2 };");
     verifyFormat("f(MyMap[{ composite, key }]);");
     verifyFormat("class Class {\n"
@@ -4706,6 +4707,7 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
     verifyFormat("new int[3]{1, 2, 3};", NoSpaces);
     verifyFormat("return {arg1, arg2};", NoSpaces);
     verifyFormat("return {arg1, SomeType{parameter}};", NoSpaces);
+    verifyFormat("int count = set<int>{f(), g(), h()}.size();", NoSpaces);
     verifyFormat("new T{arg1, arg2};", NoSpaces);
     verifyFormat("f(MyMap[{composite, key}]);", NoSpaces);
     verifyFormat("class Class {\n"
