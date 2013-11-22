@@ -34,6 +34,26 @@ void BoundNodesTreeBuilder::addMatch(const BoundNodesTreeBuilder &Other) {
   }
 }
 
+bool NotUnaryOperator(const ast_type_traits::DynTypedNode DynNode,
+                      ASTMatchFinder *Finder, BoundNodesTreeBuilder *Builder,
+                      ArrayRef<DynTypedMatcher> InnerMatchers) {
+  if (InnerMatchers.size() != 1)
+    return false;
+
+  // The 'unless' matcher will always discard the result:
+  // If the inner matcher doesn't match, unless returns true,
+  // but the inner matcher cannot have bound anything.
+  // If the inner matcher matches, the result is false, and
+  // any possible binding will be discarded.
+  // We still need to hand in all the bound nodes up to this
+  // point so the inner matcher can depend on bound nodes,
+  // and we need to actively discard the bound nodes, otherwise
+  // the inner matcher will reset the bound nodes if it doesn't
+  // match, but this would be inversed by 'unless'.
+  BoundNodesTreeBuilder Discard(*Builder);
+  return !InnerMatchers[0].matches(DynNode, Finder, &Discard);
+}
+
 bool AllOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
                            ASTMatchFinder *Finder,
                            BoundNodesTreeBuilder *Builder,

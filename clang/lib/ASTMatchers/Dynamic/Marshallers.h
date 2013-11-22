@@ -347,12 +347,22 @@ private:
 class VariadicOperatorMatcherCreateCallback : public MatcherCreateCallback {
 public:
   typedef ast_matchers::internal::VariadicOperatorFunction VarFunc;
-  VariadicOperatorMatcherCreateCallback(VarFunc Func, StringRef MatcherName)
-      : Func(Func), MatcherName(MatcherName) {}
+  VariadicOperatorMatcherCreateCallback(unsigned MinCount, unsigned MaxCount,
+                                        VarFunc Func, StringRef MatcherName)
+      : MinCount(MinCount), MaxCount(MaxCount), Func(Func),
+        MatcherName(MatcherName) {}
 
   virtual VariantMatcher run(const SourceRange &NameRange,
                              ArrayRef<ParserValue> Args,
                              Diagnostics *Error) const {
+    if (Args.size() < MinCount || MaxCount < Args.size()) {
+      const std::string MaxStr =
+          (MaxCount == UINT_MAX ? "" : Twine(MaxCount)).str();
+      Error->addError(NameRange, Error->ET_RegistryWrongArgCount)
+          << ("(" + Twine(MinCount) + ", " + MaxStr + ")") << Args.size();
+      return VariantMatcher();
+    }
+
     std::vector<VariantMatcher> InnerArgs;
     for (size_t i = 0, e = Args.size(); i != e; ++i) {
       const ParserValue &Arg = Args[i];
@@ -368,6 +378,8 @@ public:
   }
 
 private:
+  const unsigned MinCount;
+  const unsigned MaxCount;
   const VarFunc Func;
   const StringRef MatcherName;
 };
@@ -439,10 +451,13 @@ AdaptativeOverloadCollector<ArgumentAdapterT, FromTypes, ToTypes>::collect(
 }
 
 /// \brief Variadic operator overload.
-MatcherCreateCallback *makeMatcherAutoMarshall(
-    ast_matchers::internal::VariadicOperatorMatcherFunc Func,
-    StringRef MatcherName) {
-  return new VariadicOperatorMatcherCreateCallback(Func.Func, MatcherName);
+template <unsigned MinCount, unsigned MaxCount>
+MatcherCreateCallback *
+makeMatcherAutoMarshall(ast_matchers::internal::VariadicOperatorMatcherFunc<
+                            MinCount, MaxCount> Func,
+                        StringRef MatcherName) {
+  return new VariadicOperatorMatcherCreateCallback(MinCount, MaxCount,
+                                                   Func.Func, MatcherName);
 }
 
 }  // namespace internal

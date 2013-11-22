@@ -76,7 +76,6 @@ RegistryMaps::RegistryMaps() {
   // ofKind
   //
   // Polymorphic + argument overload:
-  // unless
   // findAll
   //
   // Other:
@@ -285,6 +284,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(typedefType);
   REGISTER_MATCHER(unaryExprOrTypeTraitExpr);
   REGISTER_MATCHER(unaryOperator);
+  REGISTER_MATCHER(unless);
   REGISTER_MATCHER(userDefinedLiteral);
   REGISTER_MATCHER(usingDecl);
   REGISTER_MATCHER(varDecl);

@@ -1317,21 +1317,21 @@ const internal::VariadicAllOfMatcher<TypeLoc> typeLoc;
 /// \c b.
 ///
 /// Usable as: Any Matcher
-const internal::VariadicOperatorMatcherFunc eachOf = {
+const internal::VariadicOperatorMatcherFunc<2, UINT_MAX> eachOf = {
   internal::EachOfVariadicOperator
 };
 
 /// \brief Matches if any of the given matchers matches.
 ///
 /// Usable as: Any Matcher
-const internal::VariadicOperatorMatcherFunc anyOf = {
+const internal::VariadicOperatorMatcherFunc<2, UINT_MAX> anyOf = {
   internal::AnyOfVariadicOperator
 };
 
 /// \brief Matches if all given matchers match.
 ///
 /// Usable as: Any Matcher
-const internal::VariadicOperatorMatcherFunc allOf = {
+const internal::VariadicOperatorMatcherFunc<2, UINT_MAX> allOf = {
   internal::AllOfVariadicOperator
 };
 
@@ -1671,12 +1671,9 @@ const internal::ArgumentAdaptingMatcherFunc<
 /// \endcode
 ///
 /// Usable as: Any Matcher
-template <typename M>
-internal::PolymorphicMatcherWithParam1<internal::NotMatcher, M>
-unless(const M &InnerMatcher) {
-  return internal::PolymorphicMatcherWithParam1<
-    internal::NotMatcher, M>(InnerMatcher);
-}
+const internal::VariadicOperatorMatcherFunc<1, 1> unless = {
+  internal::NotUnaryOperator
+};
 
 /// \brief Matches a node if the declaration associated with that node
 /// matches the given matcher.

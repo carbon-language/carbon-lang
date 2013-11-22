@@ -1098,38 +1098,6 @@ private:
   const Matcher<ChildT> ChildMatcher;
 };
 
-/// \brief Matches nodes of type T if the given Matcher<T> does not match.
-///
-/// Type argument MatcherT is required by PolymorphicMatcherWithParam1
-/// but not actually used. It will always be instantiated with a type
-/// convertible to Matcher<T>.
-template <typename T, typename MatcherT>
-class NotMatcher : public MatcherInterface<T> {
-public:
-  explicit NotMatcher(const Matcher<T> &InnerMatcher)
-      : InnerMatcher(InnerMatcher) {}
-
-  virtual bool matches(const T &Node,
-                       ASTMatchFinder *Finder,
-                       BoundNodesTreeBuilder *Builder) const {
-    // The 'unless' matcher will always discard the result:
-    // If the inner matcher doesn't match, unless returns true,
-    // but the inner matcher cannot have bound anything.
-    // If the inner matcher matches, the result is false, and
-    // any possible binding will be discarded.
-    // We still need to hand in all the bound nodes up to this
-    // point so the inner matcher can depend on bound nodes,
-    // and we need to actively discard the bound nodes, otherwise
-    // the inner matcher will reset the bound nodes if it doesn't
-    // match, but this would be inversed by 'unless'.
-    BoundNodesTreeBuilder Discard(*Builder);
-    return !InnerMatcher.matches(Node, Finder, &Discard);
-  }
-
-private:
-  const Matcher<T> InnerMatcher;
-};
-
 /// \brief VariadicOperatorMatcher related types.
 /// @{
 
@@ -1167,14 +1135,14 @@ struct VariadicOperatorNoArg {};
 /// Input matchers can have any type (including other polymorphic matcher
 /// types), and the actual Matcher<T> is generated on demand with an implicit
 /// coversion operator.
-template <typename P1, typename P2,
+template <typename P1, typename P2 = VariadicOperatorNoArg,
           typename P3 = VariadicOperatorNoArg,
           typename P4 = VariadicOperatorNoArg,
           typename P5 = VariadicOperatorNoArg>
 class VariadicOperatorMatcher {
 public:
   VariadicOperatorMatcher(VariadicOperatorFunction Func, const P1 &Param1,
-                          const P2 &Param2,
+                          const P2 &Param2 = VariadicOperatorNoArg(),
                           const P3 &Param3 = VariadicOperatorNoArg(),
                           const P4 &Param4 = VariadicOperatorNoArg(),
                           const P5 &Param5 = VariadicOperatorNoArg())
@@ -1183,7 +1151,6 @@ public:
 
   template <typename T> operator Matcher<T>() const {
     std::vector<DynTypedMatcher> Matchers;
-
     addMatcher<T>(Param1, Matchers);
     addMatcher<T>(Param2, Matchers);
     addMatcher<T>(Param3, Matchers);
@@ -1215,26 +1182,38 @@ private:
 /// \brief Overloaded function object to generate VariadicOperatorMatcher
 ///   objects from arbitrary matchers.
 ///
-/// It supports 2-5 argument overloaded operator(). More can be added if needed.
+/// It supports 1-5 argument overloaded operator(). More can be added if needed.
+template <unsigned MinCount, unsigned MaxCount>
 struct VariadicOperatorMatcherFunc {
   VariadicOperatorFunction Func;
 
+  template <unsigned Count, typename T>
+  struct EnableIfValidArity
+      : public llvm::enable_if_c<MinCount <= Count &&Count <= MaxCount, T> {};
+
+  template <typename M1>
+  typename EnableIfValidArity<1, VariadicOperatorMatcher<M1> >::type
+  operator()(const M1 &P1) const {
+    return VariadicOperatorMatcher<M1>(Func, P1);
+  }
   template <typename M1, typename M2>
-  VariadicOperatorMatcher<M1, M2> operator()(const M1 &P1, const M2 &P2) const {
+  typename EnableIfValidArity<2, VariadicOperatorMatcher<M1, M2> >::type
+  operator()(const M1 &P1, const M2 &P2) const {
     return VariadicOperatorMatcher<M1, M2>(Func, P1, P2);
   }
   template <typename M1, typename M2, typename M3>
-  VariadicOperatorMatcher<M1, M2, M3> operator()(const M1 &P1, const M2 &P2,
-                                                 const M3 &P3) const {
+  typename EnableIfValidArity<3, VariadicOperatorMatcher<M1, M2, M3> >::type
+  operator()(const M1 &P1, const M2 &P2, const M3 &P3) const {
     return VariadicOperatorMatcher<M1, M2, M3>(Func, P1, P2, P3);
   }
   template <typename M1, typename M2, typename M3, typename M4>
-  VariadicOperatorMatcher<M1, M2, M3, M4>
+  typename EnableIfValidArity<4, VariadicOperatorMatcher<M1, M2, M3, M4> >::type
   operator()(const M1 &P1, const M2 &P2, const M3 &P3, const M4 &P4) const {
     return VariadicOperatorMatcher<M1, M2, M3, M4>(Func, P1, P2, P3, P4);
   }
   template <typename M1, typename M2, typename M3, typename M4, typename M5>
-  VariadicOperatorMatcher<M1, M2, M3, M4, M5>
+  typename EnableIfValidArity<
+      5, VariadicOperatorMatcher<M1, M2, M3, M4, M5> >::type
   operator()(const M1 &P1, const M2 &P2, const M3 &P3, const M4 &P4,
              const M5 &P5) const {
     return VariadicOperatorMatcher<M1, M2, M3, M4, M5>(Func, P1, P2, P3, P4,
@@ -1243,6 +1222,13 @@ struct VariadicOperatorMatcherFunc {
 };
 
 /// @}
+
+/// \brief Matches nodes that do not match the provided matcher.
+///
+/// Uses the variadic matcher interface, but fails if InnerMatchers.size()!=1.
+bool NotUnaryOperator(const ast_type_traits::DynTypedNode DynNode,
+                      ASTMatchFinder *Finder, BoundNodesTreeBuilder *Builder,
+                      ArrayRef<DynTypedMatcher> InnerMatchers);
 
 /// \brief Matches nodes for which all provided matchers match.
 bool AllOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
