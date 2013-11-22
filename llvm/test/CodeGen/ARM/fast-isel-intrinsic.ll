@@ -15,7 +15,7 @@
 @temp = common global [60 x i8] zeroinitializer, align 1
 
 define void @t1() nounwind ssp {
-; ARM: t1
+; ARM-LABEL: t1:
 ; ARM: {{(movw r0, :lower16:_?message1)|(ldr r0, .LCPI)}}
 ; ARM: {{(movt r0, :upper16:_?message1)|(ldr r0, \[r0\])}}
 ; ARM: add r0, r0, #5
@@ -23,12 +23,12 @@ define void @t1() nounwind ssp {
 ; ARM: movw r2, #10
 ; ARM: and r1, r1, #255
 ; ARM: bl {{_?}}memset
-; ARM-LONG: t1
+; ARM-LONG-LABEL: t1:
 ; ARM-LONG: {{(movw r3, :lower16:L_memset\$non_lazy_ptr)|(ldr r3, .LCPI)}}
 ; ARM-LONG: {{(movt r3, :upper16:L_memset\$non_lazy_ptr)?}}
 ; ARM-LONG: ldr r3, [r3]
 ; ARM-LONG: blx r3
-; THUMB: t1
+; THUMB-LABEL: t1:
 ; THUMB: {{(movw r0, :lower16:_?message1)|(ldr.n r0, .LCPI)}}
 ; THUMB: {{(movt r0, :upper16:_?message1)|(ldr r0, \[r0\])}}
 ; THUMB: adds r0, #5
@@ -38,7 +38,7 @@ define void @t1() nounwind ssp {
 ; THUMB: movt r2, #0
 ; THUMB: and r1, r1, #255
 ; THUMB: bl {{_?}}memset
-; THUMB-LONG: t1
+; THUMB-LONG-LABEL: t1:
 ; THUMB-LONG: movw r3, :lower16:L_memset$non_lazy_ptr
 ; THUMB-LONG: movt r3, :upper16:L_memset$non_lazy_ptr
 ; THUMB-LONG: ldr r3, [r3]
@@ -50,7 +50,7 @@ define void @t1() nounwind ssp {
 declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 
 define void @t2() nounwind ssp {
-; ARM: t2
+; ARM-LABEL: t2:
 ; ARM: {{(movw r0, :lower16:L_temp\$non_lazy_ptr)|(ldr r0, .LCPI)}}
 ; ARM: {{(movt r0, :upper16:L_temp\$non_lazy_ptr)?}}
 ; ARM: ldr r0, [r0]
@@ -61,12 +61,12 @@ define void @t2() nounwind ssp {
 ; ARM: mov r0, r1
 ; ARM: ldr r1, [sp[[SLOT]]] @ 4-byte Reload
 ; ARM: bl {{_?}}memcpy
-; ARM-LONG: t2
+; ARM-LONG-LABEL: t2:
 ; ARM-LONG: {{(movw r3, :lower16:L_memcpy\$non_lazy_ptr)|(ldr r3, .LCPI)}}
 ; ARM-LONG: {{(movt r3, :upper16:L_memcpy\$non_lazy_ptr)?}}
 ; ARM-LONG: ldr r3, [r3]
 ; ARM-LONG: blx r3
-; THUMB: t2
+; THUMB-LABEL: t2:
 ; THUMB: {{(movw r0, :lower16:L_temp\$non_lazy_ptr)|(ldr.n r0, .LCPI)}}
 ; THUMB: {{(movt r0, :upper16:L_temp\$non_lazy_ptr)?}}
 ; THUMB: ldr r0, [r0]
@@ -78,7 +78,7 @@ define void @t2() nounwind ssp {
 ; THUMB: mov r0, r1
 ; THUMB: ldr r1,  [sp[[SLOT]]] @ 4-byte Reload
 ; THUMB: bl {{_?}}memcpy
-; THUMB-LONG: t2
+; THUMB-LONG-LABEL: t2:
 ; THUMB-LONG: movw r3, :lower16:L_memcpy$non_lazy_ptr
 ; THUMB-LONG: movt r3, :upper16:L_memcpy$non_lazy_ptr
 ; THUMB-LONG: ldr r3, [r3]
@@ -90,7 +90,7 @@ define void @t2() nounwind ssp {
 declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
 
 define void @t3() nounwind ssp {
-; ARM: t3
+; ARM-LABEL: t3:
 ; ARM: {{(movw r0, :lower16:L_temp\$non_lazy_ptr)|(ldr r0, .LCPI)}}
 ; ARM: {{(movt r0, :upper16:L_temp\$non_lazy_ptr)?}}
 ; ARM: ldr r0, [r0]
@@ -99,12 +99,12 @@ define void @t3() nounwind ssp {
 ; ARM: movw r2, #10
 ; ARM: mov r0, r1
 ; ARM: bl {{_?}}memmove
-; ARM-LONG: t3
+; ARM-LONG-LABEL: t3:
 ; ARM-LONG: {{(movw r3, :lower16:L_memmove\$non_lazy_ptr)|(ldr r3, .LCPI)}}
 ; ARM-LONG: {{(movt r3, :upper16:L_memmove\$non_lazy_ptr)?}}
 ; ARM-LONG: ldr r3, [r3]
 ; ARM-LONG: blx r3
-; THUMB: t3
+; THUMB-LABEL: t3:
 ; THUMB: {{(movw r0, :lower16:L_temp\$non_lazy_ptr)|(ldr.n r0, .LCPI)}}
 ; THUMB: {{(movt r0, :upper16:L_temp\$non_lazy_ptr)?}}
 ; THUMB: ldr r0, [r0]
@@ -116,7 +116,7 @@ define void @t3() nounwind ssp {
 ; THUMB: mov r0, r1
 ; THUMB: ldr r1,  [sp[[SLOT]]] @ 4-byte Reload
 ; THUMB: bl {{_?}}memmove
-; THUMB-LONG: t3
+; THUMB-LONG-LABEL: t3:
 ; THUMB-LONG: movw r3, :lower16:L_memmove$non_lazy_ptr
 ; THUMB-LONG: movt r3, :upper16:L_memmove$non_lazy_ptr
 ; THUMB-LONG: ldr r3, [r3]
@@ -126,7 +126,7 @@ define void @t3() nounwind ssp {
 }
 
 define void @t4() nounwind ssp {
-; ARM: t4
+; ARM-LABEL: t4:
 ; ARM: {{(movw r0, :lower16:L_temp\$non_lazy_ptr)|(ldr r0, .LCPI)}}
 ; ARM: {{(movt r0, :upper16:L_temp\$non_lazy_ptr)?}}
 ; ARM: ldr r0, [r0]
@@ -137,7 +137,7 @@ define void @t4() nounwind ssp {
 ; ARM: ldrh r1, [r0, #24]
 ; ARM: strh r1, [r0, #12]
 ; ARM: bx lr
-; THUMB: t4
+; THUMB-LABEL: t4:
 ; THUMB: {{(movw r0, :lower16:L_temp\$non_lazy_ptr)|(ldr.n r0, .LCPI)}}
 ; THUMB: {{(movt r0, :upper16:L_temp\$non_lazy_ptr)?}}
 ; THUMB: ldr r0, [r0]
@@ -155,7 +155,7 @@ define void @t4() nounwind ssp {
 declare void @llvm.memmove.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
 
 define void @t5() nounwind ssp {
-; ARM: t5
+; ARM-LABEL: t5:
 ; ARM: {{(movw r0, :lower16:L_temp\$non_lazy_ptr)|(ldr r0, .LCPI)}}
 ; ARM: {{(movt r0, :upper16:L_temp\$non_lazy_ptr)?}}
 ; ARM: ldr r0, [r0]
@@ -170,7 +170,7 @@ define void @t5() nounwind ssp {
 ; ARM: ldrh r1, [r0, #24]
 ; ARM: strh r1, [r0, #12]
 ; ARM: bx lr
-; THUMB: t5
+; THUMB-LABEL: t5:
 ; THUMB: {{(movw r0, :lower16:L_temp\$non_lazy_ptr)|(ldr.n r0, .LCPI)}}
 ; THUMB: {{(movt r0, :upper16:L_temp\$non_lazy_ptr)?}}
 ; THUMB: ldr r0, [r0]
@@ -190,7 +190,7 @@ define void @t5() nounwind ssp {
 }
 
 define void @t6() nounwind ssp {
-; ARM: t6
+; ARM-LABEL: t6:
 ; ARM: {{(movw r0, :lower16:L_temp\$non_lazy_ptr)|(ldr r0, .LCPI)}}
 ; ARM: {{(movt r0, :upper16:L_temp\$non_lazy_ptr)?}}
 ; ARM: ldr r0, [r0]
@@ -215,7 +215,7 @@ define void @t6() nounwind ssp {
 ; ARM: ldrb r1, [r0, #25]
 ; ARM: strb r1, [r0, #13]
 ; ARM: bx lr
-; THUMB: t6
+; THUMB-LABEL: t6:
 ; THUMB: {{(movw r0, :lower16:L_temp\$non_lazy_ptr)|(ldr.n r0, .LCPI)}}
 ; THUMB: {{(movt r0, :upper16:L_temp\$non_lazy_ptr)?}}
 ; THUMB: ldr r0, [r0]
@@ -253,9 +253,9 @@ define void @t7() nounwind ssp {
 
 define i32 @t8(i32 %x) nounwind {
 entry:
-; ARM: t8
+; ARM-LABEL: t8:
 ; ARM-NOT: FastISel missed call:   %expval = call i32 @llvm.expect.i32(i32 %x, i32 1)
-; THUMB: t8
+; THUMB-LABEL: t8:
 ; THUMB-NOT: FastISel missed call:   %expval = call i32 @llvm.expect.i32(i32 %x, i32 1)
   %expval = call i32 @llvm.expect.i32(i32 %x, i32 1)
   ret i32 %expval
