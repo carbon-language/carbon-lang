@@ -3733,12 +3733,9 @@ Stmt *RewriteModernObjC::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
                                 SC_Extern);
   DeclRefExpr *DRE = new (Context) DeclRefExpr(VD, false, getProtocolType(),
                                                VK_LValue, SourceLocation());
-  Expr *DerefExpr = new (Context) UnaryOperator(DRE, UO_AddrOf,
-                             Context->getPointerType(DRE->getType()),
-                             VK_RValue, OK_Ordinary, SourceLocation());
-  CastExpr *castExpr = NoTypeInfoCStyleCastExpr(Context, DerefExpr->getType(),
-                                                CK_BitCast,
-                                                DerefExpr);
+  CastExpr *castExpr =
+    NoTypeInfoCStyleCastExpr(
+      Context, Context->getPointerType(DRE->getType()), CK_BitCast, DRE);
   ReplaceStmt(Exp, castExpr);
   ProtocolExprDecls.insert(Exp->getProtocol()->getCanonicalDecl());
   // delete Exp; leak for now, see RewritePropertyOrImplicitSetter() usage for more info.
