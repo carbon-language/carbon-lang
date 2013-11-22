@@ -241,6 +241,22 @@ template <typename IRUnitT> struct AnalysisResultConcept {
   virtual bool invalidate(IRUnitT *IR, const PreservedAnalyses &PA) = 0;
 };
 
+/// \brief SFINAE metafunction for computing whether \c ResultT provides an
+/// \c invalidate member function.
+template <typename IRUnitT, typename ResultT> class ResultHasInvalidateMethod {
+  typedef char SmallType;
+  struct BigType { char a, b; };
+
+  template <typename T, bool (T::*)(IRUnitT *, const PreservedAnalyses &)>
+  struct Checker;
+
+  template <typename T> static SmallType f(Checker<T, &T::invalidate> *);
+  template <typename T> static BigType f(...);
+
+public:
+  enum { Value = sizeof(f<ResultT>(0)) == sizeof(SmallType) };
+};
+
 /// \brief Wrapper to model the analysis result concept.
 ///
 /// By default, this will implement the invalidate method with a trivial
@@ -248,8 +264,15 @@ template <typename IRUnitT> struct AnalysisResultConcept {
 /// an invalidation handler. It is only selected when the invalidation handler
 /// is not part of the ResultT's interface.
 template <typename IRUnitT, typename PassT, typename ResultT,
-          bool HasInvalidateHandler = false>
-struct AnalysisResultModel : AnalysisResultConcept<IRUnitT> {
+          bool HasInvalidateHandler =
+              ResultHasInvalidateMethod<IRUnitT, ResultT>::Value>
+struct AnalysisResultModel;
+
+/// \brief Specialization of \c AnalysisResultModel which provides the default
+/// invalidate functionality.
+template <typename IRUnitT, typename PassT, typename ResultT>
+struct AnalysisResultModel<IRUnitT, PassT, ResultT,
+                           false> : AnalysisResultConcept<IRUnitT> {
   AnalysisResultModel(ResultT Result) : Result(llvm_move(Result)) {}
   virtual AnalysisResultModel *clone() {
     return new AnalysisResultModel(Result);
@@ -267,10 +290,8 @@ struct AnalysisResultModel : AnalysisResultConcept<IRUnitT> {
   ResultT Result;
 };
 
-/// \brief Wrapper to model the analysis result concept.
-///
-/// Can wrap any type which implements a suitable invalidate member and model
-/// the AnalysisResultConcept for the AnalysisManager.
+/// \brief Specialization of \c AnalysisResultModel which delegates invalidate
+/// handling to \c ResultT.
 template <typename IRUnitT, typename PassT, typename ResultT>
 struct AnalysisResultModel<IRUnitT, PassT, ResultT,
                            true> : AnalysisResultConcept<IRUnitT> {
@@ -285,22 +306,6 @@ struct AnalysisResultModel<IRUnitT, PassT, ResultT,
   }
 
   ResultT Result;
-};
-
-/// \brief SFINAE metafunction for computing whether \c ResultT provides an
-/// \c invalidate member function.
-template <typename IRUnitT, typename ResultT> class ResultHasInvalidateMethod {
-  typedef char SmallType;
-  struct BigType { char a, b; };
-
-  template <typename T, bool (T::*)(IRUnitT *, const PreservedAnalyses &)>
-  struct Checker;
-
-  template <typename T> static SmallType f(Checker<T, &T::invalidate> *);
-  template <typename T> static BigType f(...);
-
-public:
-  enum { Value = sizeof(f<ResultT>(0)) == sizeof(SmallType) };
 };
 
 /// \brief Abstract concept of an analysis pass.
@@ -331,10 +336,8 @@ struct AnalysisPassModel : AnalysisPassConcept<typename PassT::IRUnitT> {
   typedef typename PassT::IRUnitT IRUnitT;
 
   // FIXME: Replace PassT::Result with type traits when we use C++11.
-  typedef AnalysisResultModel<
-      IRUnitT, PassT, typename PassT::Result,
-      ResultHasInvalidateMethod<IRUnitT, typename PassT::Result>::Value>
-          ResultModelT;
+  typedef AnalysisResultModel<IRUnitT, PassT, typename PassT::Result>
+      ResultModelT;
 
   /// \brief The model delegates to the \c PassT::run method.
   ///
@@ -422,10 +425,8 @@ public:
 
     const detail::AnalysisResultConcept<Module> &ResultConcept =
         getResultImpl(PassT::ID(), M);
-    typedef detail::AnalysisResultModel<
-        Module, PassT, typename PassT::Result,
-        detail::ResultHasInvalidateMethod<
-            Module, typename PassT::Result>::Value> ResultModelT;
+    typedef detail::AnalysisResultModel<Module, PassT, typename PassT::Result>
+        ResultModelT;
     return static_cast<const ResultModelT &>(ResultConcept).Result;
   }
 
@@ -506,10 +507,8 @@ public:
 
     const detail::AnalysisResultConcept<Function> &ResultConcept =
         getResultImpl(PassT::ID(), F);
-    typedef detail::AnalysisResultModel<
-        Function, PassT, typename PassT::Result,
-        detail::ResultHasInvalidateMethod<
-            Function, typename PassT::Result>::Value> ResultModelT;
+    typedef detail::AnalysisResultModel<Function, PassT, typename PassT::Result>
+        ResultModelT;
     return static_cast<const ResultModelT &>(ResultConcept).Result;
   }
 
