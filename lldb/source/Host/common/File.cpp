@@ -286,7 +286,7 @@ File::GetPermissions (const char *path, Error &error)
         else
         {
             error.Clear();
-            return file_stats.st_mode; // All bits from lldb_private::File::Permissions match those in POSIX mode bits
+            return file_stats.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
         }
     }
     else
@@ -311,7 +311,7 @@ File::GetPermissions(Error &error) const
         else
         {
             error.Clear();
-            return file_stats.st_mode; // All bits from lldb_private::File::Permissions match those in POSIX mode bits
+            return file_stats.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
         }
     }
     else
