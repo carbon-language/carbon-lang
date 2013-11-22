@@ -3810,7 +3810,7 @@ public:
     else if (CPU == "cortex-a5") {
       Features["vfp4"] = true;
       Features["neon"] = true;
-    } else if (CPU == "swift" || CPU == "cortex-a7" || CPU == "cortex-a15") {
+    } else if (CPU == "swift" || CPU == "cortex-a7" || CPU == "cortex-a12" || CPU == "cortex-a15") {
       Features["vfp4"] = true;
       Features["neon"] = true;
       Features["hwdiv"] = true;
