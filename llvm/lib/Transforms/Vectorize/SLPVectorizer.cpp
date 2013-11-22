@@ -411,7 +411,7 @@ private:
 
   /// \returns whether the VectorizableTree is fully vectoriable and will
   /// be beneficial even the tree height is tiny.
-  bool isFullyVectorizableTinyTree(); 
+  bool isFullyVectorizableTinyTree();
 
   struct TreeEntry {
     TreeEntry() : Scalars(), VectorizedValue(0), LastScalarIndex(0),
@@ -1082,19 +1082,18 @@ int BoUpSLP::getTreeCost() {
     Cost += C;
   }
 
-  SmallSet<Value *, 16> ExtractCostCalculated; 
+  SmallSet<Value *, 16> ExtractCostCalculated;
   int ExtractCost = 0;
   for (UserList::iterator I = ExternalUses.begin(), E = ExternalUses.end();
        I != E; ++I) {
-    // We only add extract cost once for the same scalar. 
+    // We only add extract cost once for the same scalar.
     if (!ExtractCostCalculated.insert(I->Scalar))
-      continue; 
+      continue;
 
     VectorType *VecTy = VectorType::get(I->Scalar->getType(), BundleWidth);
     ExtractCost += TTI->getVectorInstrCost(Instruction::ExtractElement, VecTy,
                                            I->Lane);
   }
-
 
   DEBUG(dbgs() << "SLP: Total Cost " << Cost + ExtractCost<< ".\n");
   return  Cost + ExtractCost;
