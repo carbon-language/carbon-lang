@@ -632,10 +632,6 @@ private:
 /// never use a function analysis manager from within (transitively) a module
 /// pass manager unless your parent module pass has received a proxy result
 /// object for it.
-///
-/// FIXME: It might be really nice to "enforce" this (softly) by making this
-/// proxy the API path to access a function analysis manager within a module
-/// pass.
 class FunctionAnalysisManagerModuleProxy {
 public:
   class Result;
