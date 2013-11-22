@@ -19,6 +19,7 @@ class StopHookMechanismTestCase(TestBase):
         self.buildDsym()
         self.stop_hook_firing()
 
+    @skipIfFreeBSD # llvm.org/pr15037
     @skipIfLinux # llvm.org/pr15037: stop-hooks sometimes fail to fire on Linux (disabled to avoid needless noise)
     @dwarf_test
     def test_with_dwarf(self):
