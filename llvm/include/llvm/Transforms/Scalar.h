@@ -370,6 +370,12 @@ FunctionPass *createPartiallyInlineLibCallsPass();
 FunctionPass *createSampleProfileLoaderPass();
 FunctionPass *createSampleProfileLoaderPass(StringRef Name);
 
+//===----------------------------------------------------------------------===//
+//
+// ScalarizerPass - Converts vector operations into scalar operations
+//
+FunctionPass *createScalarizerPass();
+
 } // End llvm namespace
 
 #endif

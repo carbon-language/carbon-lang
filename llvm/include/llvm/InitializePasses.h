@@ -120,6 +120,7 @@ void initializeAddressSanitizerModulePass(PassRegistry&);
 void initializeMemorySanitizerPass(PassRegistry&);
 void initializeThreadSanitizerPass(PassRegistry&);
 void initializeDataFlowSanitizerPass(PassRegistry&);
+void initializeScalarizerPass(PassRegistry&);
 void initializeEarlyCSEPass(PassRegistry&);
 void initializeExpandISelPseudosPass(PassRegistry&);
 void initializeFindUsedTypesPass(PassRegistry&);

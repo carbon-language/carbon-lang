@@ -41,6 +41,9 @@ void LLVMAddCFGSimplificationPass(LLVMPassManagerRef PM);
 /** See llvm::createDeadStoreEliminationPass function. */
 void LLVMAddDeadStoreEliminationPass(LLVMPassManagerRef PM);
 
+/** See llvm::createScalarizerPass function. */
+void LLVMAddScalarizerPass(LLVMPassManagerRef PM);
+
 /** See llvm::createGVNPass function. */
 void LLVMAddGVNPass(LLVMPassManagerRef PM);
 

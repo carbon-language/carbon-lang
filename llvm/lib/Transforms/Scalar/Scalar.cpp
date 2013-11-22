@@ -34,6 +34,7 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeCorrelatedValuePropagationPass(Registry);
   initializeDCEPass(Registry);
   initializeDeadInstEliminationPass(Registry);
+  initializeScalarizerPass(Registry);
   initializeDSEPass(Registry);
   initializeGVNPass(Registry);
   initializeEarlyCSEPass(Registry);
@@ -79,6 +80,10 @@ void LLVMAddCFGSimplificationPass(LLVMPassManagerRef PM) {
 
 void LLVMAddDeadStoreEliminationPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createDeadStoreEliminationPass());
+}
+
+void LLVMAddScalarizerPass(LLVMPassManagerRef PM) {
+  unwrap(PM)->add(createScalarizerPass());
 }
 
 void LLVMAddGVNPass(LLVMPassManagerRef PM) {
