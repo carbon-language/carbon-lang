@@ -302,6 +302,22 @@ protected:
 
   template<typename decl_type> friend class Redeclarable;
 
+  /// \brief Allocate memory for a deserialized declaration.
+  ///
+  /// This routine must be used to allocate memory for any declaration that is
+  /// deserialized from a module file.
+  ///
+  /// \param Size The size of the allocated object.
+  /// \param Context The context in which we will allocate memory.
+  /// \param ID The global ID of the deserialized declaration.
+  /// \param Extra The amount of extra space to allocate after the object.
+  void *operator new(std::size_t Size, const ASTContext &Ctx, unsigned ID,
+                     std::size_t Extra = 0);
+
+  /// \brief Allocate memory for a non-deserialized declaration.
+  void *operator new(std::size_t Size, const ASTContext &Ctx,
+                     DeclContext *Parent, std::size_t Extra = 0);
+
 private:
   void CheckAccessDeclContext() const;
 
@@ -329,18 +345,6 @@ protected:
   }
 
   virtual ~Decl();
-
-  /// \brief Allocate memory for a deserialized declaration.
-  ///
-  /// This routine must be used to allocate memory for any declaration that is
-  /// deserialized from a module file.
-  ///
-  /// \param Context The context in which we will allocate memory.
-  /// \param ID The global ID of the deserialized declaration.
-  /// \param Size The size of the allocated object.
-  static void *AllocateDeserializedDecl(const ASTContext &Context,
-                                        unsigned ID,
-                                        unsigned Size);
 
   /// \brief Update a potentially out-of-date declaration.
   void updateOutOfDate(IdentifierInfo &II) const;

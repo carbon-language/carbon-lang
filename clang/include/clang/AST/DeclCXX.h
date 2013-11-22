@@ -129,7 +129,7 @@ public:
   static AccessSpecDecl *Create(ASTContext &C, AccessSpecifier AS,
                                 DeclContext *DC, SourceLocation ASLoc,
                                 SourceLocation ColonLoc) {
-    return new (C) AccessSpecDecl(AS, DC, ASLoc, ColonLoc);
+    return new (C, DC) AccessSpecDecl(AS, DC, ASLoc, ColonLoc);
   }
   static AccessSpecDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
@@ -2701,7 +2701,7 @@ public:
   static UsingShadowDecl *Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation Loc, UsingDecl *Using,
                                  NamedDecl *Target) {
-    return new (C) UsingShadowDecl(DC, Loc, Using, Target);
+    return new (C, DC) UsingShadowDecl(DC, Loc, Using, Target);
   }
 
   static UsingShadowDecl *CreateDeserialized(ASTContext &C, unsigned ID);
@@ -3083,14 +3083,17 @@ public:
 class MSPropertyDecl : public DeclaratorDecl {
   IdentifierInfo *GetterId, *SetterId;
 
-public:
-  MSPropertyDecl(DeclContext *DC, SourceLocation L,
-                 DeclarationName N, QualType T, TypeSourceInfo *TInfo,
-                 SourceLocation StartL, IdentifierInfo *Getter,
-                 IdentifierInfo *Setter):
-  DeclaratorDecl(MSProperty, DC, L, N, T, TInfo, StartL), GetterId(Getter),
-  SetterId(Setter) {}
+  MSPropertyDecl(DeclContext *DC, SourceLocation L, DeclarationName N,
+                 QualType T, TypeSourceInfo *TInfo, SourceLocation StartL,
+                 IdentifierInfo *Getter, IdentifierInfo *Setter)
+      : DeclaratorDecl(MSProperty, DC, L, N, T, TInfo, StartL),
+        GetterId(Getter), SetterId(Setter) {}
 
+public:
+  static MSPropertyDecl *Create(ASTContext &C, DeclContext *DC,
+                                SourceLocation L, DeclarationName N, QualType T,
+                                TypeSourceInfo *TInfo, SourceLocation StartL,
+                                IdentifierInfo *Getter, IdentifierInfo *Setter);
   static MSPropertyDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
   static bool classof(const Decl *D) { return D->getKind() == MSProperty; }

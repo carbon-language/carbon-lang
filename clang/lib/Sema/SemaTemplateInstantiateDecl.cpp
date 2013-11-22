@@ -488,11 +488,9 @@ Decl *TemplateDeclInstantiator::VisitMSPropertyDecl(MSPropertyDecl *D) {
     SemaRef.MarkDeclarationsReferencedInType(D->getLocation(), DI->getType());
   }
 
-  MSPropertyDecl *Property = new (SemaRef.Context)
-      MSPropertyDecl(Owner, D->getLocation(),
-                     D->getDeclName(), DI->getType(), DI,
-                     D->getLocStart(),
-                     D->getGetterId(), D->getSetterId());
+  MSPropertyDecl *Property = MSPropertyDecl::Create(
+      SemaRef.Context, Owner, D->getLocation(), D->getDeclName(), DI->getType(),
+      DI, D->getLocStart(), D->getGetterId(), D->getSetterId());
 
   SemaRef.InstantiateAttrs(TemplateArgs, D, Property, LateAttrs,
                            StartingScope);

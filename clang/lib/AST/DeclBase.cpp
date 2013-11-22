@@ -45,23 +45,28 @@ void Decl::updateOutOfDate(IdentifierInfo &II) const {
   getASTContext().getExternalSource()->updateOutOfDateIdentifier(II);
 }
 
-void *Decl::AllocateDeserializedDecl(const ASTContext &Context, 
-                                     unsigned ID,
-                                     unsigned Size) {
+void *Decl::operator new(std::size_t Size, const ASTContext &Context,
+                         unsigned ID, std::size_t Extra) {
   // Allocate an extra 8 bytes worth of storage, which ensures that the
   // resulting pointer will still be 8-byte aligned. 
-  void *Start = Context.Allocate(Size + 8);
+  void *Start = Context.Allocate(Size + Extra + 8);
   void *Result = (char*)Start + 8;
-  
+
   unsigned *PrefixPtr = (unsigned *)Result - 2;
-  
+
   // Zero out the first 4 bytes; this is used to store the owning module ID.
   PrefixPtr[0] = 0;
-  
+
   // Store the global declaration ID in the second 4 bytes.
   PrefixPtr[1] = ID;
-  
+
   return Result;
+}
+
+void *Decl::operator new(std::size_t Size, const ASTContext &Ctx,
+                         DeclContext *Parent, std::size_t Extra) {
+  assert(!Parent || &Parent->getParentASTContext() == &Ctx);
+  return ::operator new(Size + Extra, Ctx);
 }
 
 Module *Decl::getOwningModuleSlow() const {

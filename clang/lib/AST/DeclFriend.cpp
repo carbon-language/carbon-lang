@@ -46,21 +46,17 @@ FriendDecl *FriendDecl::Create(ASTContext &C, DeclContext *DC,
   }
 #endif
 
-  std::size_t Size = sizeof(FriendDecl)
-    + FriendTypeTPLists.size() * sizeof(TemplateParameterList*);
-  void *Mem = C.Allocate(Size);
-  FriendDecl *FD = new (Mem) FriendDecl(DC, L, Friend, FriendL,
-                                        FriendTypeTPLists);
+  std::size_t Extra = FriendTypeTPLists.size() * sizeof(TemplateParameterList*);
+  FriendDecl *FD = new (C, DC, Extra) FriendDecl(DC, L, Friend, FriendL,
+                                                 FriendTypeTPLists);
   cast<CXXRecordDecl>(DC)->pushFriendDecl(FD);
   return FD;
 }
 
 FriendDecl *FriendDecl::CreateDeserialized(ASTContext &C, unsigned ID,
                                            unsigned FriendTypeNumTPLists) {
-  std::size_t Size = sizeof(FriendDecl)
-    + FriendTypeNumTPLists * sizeof(TemplateParameterList*);
-  void *Mem = AllocateDeserializedDecl(C, ID, Size);
-  return new (Mem) FriendDecl(EmptyShell(), FriendTypeNumTPLists);
+  std::size_t Extra = FriendTypeNumTPLists * sizeof(TemplateParameterList*);
+  return new (C, ID, Extra) FriendDecl(EmptyShell(), FriendTypeNumTPLists);
 }
 
 FriendDecl *CXXRecordDecl::getFirstFriend() const {

@@ -29,12 +29,8 @@ OMPThreadPrivateDecl *OMPThreadPrivateDecl::Create(ASTContext &C,
                                                    DeclContext *DC,
                                                    SourceLocation L,
                                                    ArrayRef<Expr *> VL) {
-  unsigned Size = sizeof(OMPThreadPrivateDecl) +
-                  (VL.size() * sizeof(Expr *));
-
-  void *Mem = C.Allocate(Size, llvm::alignOf<OMPThreadPrivateDecl>());
-  OMPThreadPrivateDecl *D = new (Mem) OMPThreadPrivateDecl(OMPThreadPrivate,
-                                                           DC, L);
+  OMPThreadPrivateDecl *D = new (C, DC, VL.size() * sizeof(Expr *))
+      OMPThreadPrivateDecl(OMPThreadPrivate, DC, L);
   D->NumVars = VL.size();
   D->setVars(VL);
   return D;
@@ -43,11 +39,8 @@ OMPThreadPrivateDecl *OMPThreadPrivateDecl::Create(ASTContext &C,
 OMPThreadPrivateDecl *OMPThreadPrivateDecl::CreateDeserialized(ASTContext &C,
                                                                unsigned ID,
                                                                unsigned N) {
-  unsigned Size = sizeof(OMPThreadPrivateDecl) + (N * sizeof(Expr *));
-
-  void *Mem = AllocateDeserializedDecl(C, ID, Size);
-  OMPThreadPrivateDecl *D = new (Mem) OMPThreadPrivateDecl(OMPThreadPrivate,
-                                                           0, SourceLocation());
+  OMPThreadPrivateDecl *D = new (C, ID, N * sizeof(Expr *))
+      OMPThreadPrivateDecl(OMPThreadPrivate, 0, SourceLocation());
   D->NumVars = N;
   return D;
 }

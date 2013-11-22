@@ -2214,9 +2214,8 @@ public:
                                                       CXXMethodDecl *FD,
                                                    bool HasExplicitTemplateArgs,
                                         TemplateArgumentListInfo TemplateArgs) {
-    return new (C) ClassScopeFunctionSpecializationDecl(DC , Loc, FD,
-                                                        HasExplicitTemplateArgs,
-                                                        TemplateArgs);
+    return new (C, DC) ClassScopeFunctionSpecializationDecl(
+        DC, Loc, FD, HasExplicitTemplateArgs, TemplateArgs);
   }
 
   static ClassScopeFunctionSpecializationDecl *
