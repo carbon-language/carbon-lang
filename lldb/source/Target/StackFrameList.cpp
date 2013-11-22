@@ -301,7 +301,7 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
                     if (reg_ctx_sp)
                     {
 
-                        const bool success = unwinder->GetFrameInfoAtIndex(idx, cfa, pc);
+                        const bool success = unwinder && unwinder->GetFrameInfoAtIndex(idx, cfa, pc);
                         // There shouldn't be any way not to get the frame info for frame 0.
                         // But if the unwinder can't make one, lets make one by hand with the
                         // SP as the CFA and see if that gets any further.
@@ -329,7 +329,7 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
             }
             else
             {
-                const bool success = unwinder->GetFrameInfoAtIndex(idx, cfa, pc);
+                const bool success = unwinder && unwinder->GetFrameInfoAtIndex(idx, cfa, pc);
                 if (!success)
                 {
                     // We've gotten to the end of the stack.
@@ -451,14 +451,17 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
     {
         if (end_idx < m_concrete_frames_fetched)
             return;
-            
-        uint32_t num_frames = unwinder->GetFramesUpTo(end_idx);
-        if (num_frames <= end_idx + 1)
+
+        if (unwinder)
         {
-            //Done unwinding.
-            m_concrete_frames_fetched = UINT32_MAX;
+            uint32_t num_frames = unwinder->GetFramesUpTo(end_idx);
+            if (num_frames <= end_idx + 1)
+            {
+                //Done unwinding.
+                m_concrete_frames_fetched = UINT32_MAX;
+            }
+            m_frames.resize(num_frames);
         }
-        m_frames.resize(num_frames);
     }
 }
 
