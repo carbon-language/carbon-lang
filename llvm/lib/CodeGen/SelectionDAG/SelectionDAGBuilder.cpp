@@ -6855,17 +6855,19 @@ void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
   SDValue Callee = getValue(CI.getOperand(2)); // <target>
 
   // Get the real number of arguments participating in the call <numArgs>
-  unsigned NumArgs =
-    cast<ConstantSDNode>(getValue(CI.getArgOperand(3)))->getZExtValue();
+  SDValue NArgVal = getValue(CI.getArgOperand(PatchPointOpers::NArgPos));
+  unsigned NumArgs = cast<ConstantSDNode>(NArgVal)->getZExtValue();
 
   // Skip the four meta args: <id>, <numNopBytes>, <target>, <numArgs>
-  assert(CI.getNumArgOperands() >= NumArgs + 4 &&
+  // Intrinsics include all meta-operands up to but not including CC.
+  unsigned NumMetaOpers = PatchPointOpers::CCPos;
+  assert(CI.getNumArgOperands() >= NumMetaOpers + NumArgs &&
          "Not enough arguments provided to the patchpoint intrinsic");
 
   // For AnyRegCC the arguments are lowered later on manually.
   unsigned NumCallArgs = isAnyRegCC ? 0 : NumArgs;
   std::pair<SDValue, SDValue> Result =
-    LowerCallOperands(CI, 4, NumCallArgs, Callee, isAnyRegCC);
+    LowerCallOperands(CI, NumMetaOpers, NumCallArgs, Callee, isAnyRegCC);
 
   // Set the root to the target-lowered call chain.
   SDValue Chain = Result.second;
@@ -6885,13 +6887,16 @@ void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
   // Replace the target specific call node with the patchable intrinsic.
   SmallVector<SDValue, 8> Ops;
 
-  // Add the <id> and <numNopBytes> constants.
-  for (unsigned i = 0; i < 2; ++i) {
-    SDValue tmp = getValue(CI.getOperand(i));
-    Ops.push_back(DAG.getTargetConstant(
-        cast<ConstantSDNode>(tmp)->getZExtValue(), MVT::i32));
-  }
+  // Add the <id> and <numBytes> constants.
+  SDValue IDVal = getValue(CI.getOperand(PatchPointOpers::IDPos));
+  Ops.push_back(DAG.getTargetConstant(
+                  cast<ConstantSDNode>(IDVal)->getZExtValue(), MVT::i32));
+  SDValue NBytesVal = getValue(CI.getOperand(PatchPointOpers::NBytesPos));
+  Ops.push_back(DAG.getTargetConstant(
+                  cast<ConstantSDNode>(NBytesVal)->getZExtValue(), MVT::i32));
+
   // Assume that the Callee is a constant address.
+  // FIXME: handle function symbols in the future.
   Ops.push_back(
     DAG.getIntPtrConstant(cast<ConstantSDNode>(Callee)->getZExtValue(),
                           /*isTarget=*/true));
@@ -6909,16 +6914,17 @@ void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
   // Add the arguments we omitted previously. The register allocator should
   // place these in any free register.
   if (isAnyRegCC)
-    for (unsigned i = 4, e = NumArgs + 4; i != e; ++i)
+    for (unsigned i = NumMetaOpers, e = NumMetaOpers + NumArgs; i != e; ++i)
       Ops.push_back(getValue(CI.getArgOperand(i)));
 
-  // Push the arguments from the call instruction.
+  // Push the arguments from the call instruction up to the register mask.
   SDNode::op_iterator e = hasGlue ? Call->op_end()-2 : Call->op_end()-1;
   for (SDNode::op_iterator i = Call->op_begin()+2; i != e; ++i)
     Ops.push_back(*i);
 
   // Push live variables for the stack map.
-  for (unsigned i = NumArgs + 4, e = CI.getNumArgOperands(); i != e; ++i) {
+  for (unsigned i = NumMetaOpers + NumArgs, e = CI.getNumArgOperands();
+       i != e; ++i) {
     SDValue OpVal = getValue(CI.getArgOperand(i));
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(OpVal)) {
       Ops.push_back(
