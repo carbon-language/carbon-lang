@@ -228,6 +228,18 @@ public:
   /// A latch block is a block that contains a branch back to the header.
   BlockT *getLoopLatch() const;
 
+  /// getLoopLatches - Return all loop latch blocks of this loop. A latch block
+  /// is a block that contains a branch back to the header.
+  void getLoopLatches(SmallVectorImpl<BlockT *> &LoopLatches) const {
+    BlockT *H = getHeader();
+    typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
+    for (typename InvBlockTraits::ChildIteratorType I =
+         InvBlockTraits::child_begin(H),
+         E = InvBlockTraits::child_end(H); I != E; ++I)
+      if (contains(*I))
+        LoopLatches.push_back(*I);
+  }
+
   //===--------------------------------------------------------------------===//
   // APIs for updating loop information after changing the CFG
   //
