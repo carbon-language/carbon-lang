@@ -3092,9 +3092,13 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   if (isCalleeStructRet || isCallerStructRet)
     return false;
 
-  // An stdcall caller is expected to clean up its arguments; the callee
-  // isn't going to do that.
-  if (!CCMatch && CallerCC == CallingConv::X86_StdCall)
+  // An stdcall/thiscall caller is expected to clean up its arguments; the
+  // callee isn't going to do that.
+  // FIXME: this is more restrictive than needed. We could produce a tailcall
+  // when the stack adjustment matches. For example, with a thiscall that takes
+  // only one argument.
+  if (!CCMatch && (CallerCC == CallingConv::X86_StdCall ||
+                   CallerCC == CallingConv::X86_ThisCall))
     return false;
 
   // Do not sibcall optimize vararg calls unless all arguments are passed via

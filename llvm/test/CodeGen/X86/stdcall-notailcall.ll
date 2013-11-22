@@ -10,4 +10,12 @@ entry:
   ret void
 }
 
+define x86_thiscallcc void @test2(%struct.I*  %this, i32 %a) {
+; CHECK-LABEL: test2:
+; CHECK: calll _foo
+; CHECK: ret $4
+  tail call void @foo()
+  ret void
+}
+
 declare void @foo()
