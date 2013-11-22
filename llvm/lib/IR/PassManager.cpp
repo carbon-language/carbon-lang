@@ -33,12 +33,12 @@ void ModuleAnalysisManager::invalidate(Module *M, const PreservedAnalyses &PA) {
       ModuleAnalysisResults.erase(I);
 }
 
-const detail::AnalysisResultConcept<Module> &
+const detail::AnalysisResultConcept<Module *> &
 ModuleAnalysisManager::getResultImpl(void *PassID, Module *M) {
   ModuleAnalysisResultMapT::iterator RI;
   bool Inserted;
   llvm::tie(RI, Inserted) = ModuleAnalysisResults.insert(std::make_pair(
-      PassID, polymorphic_ptr<detail::AnalysisResultConcept<Module> >()));
+      PassID, polymorphic_ptr<detail::AnalysisResultConcept<Module *> >()));
 
   if (Inserted) {
     // We don't have a cached result for this result. Look up the pass and run
@@ -100,7 +100,7 @@ void FunctionAnalysisManager::clear() {
   FunctionAnalysisResultLists.clear();
 }
 
-const detail::AnalysisResultConcept<Function> &
+const detail::AnalysisResultConcept<Function *> &
 FunctionAnalysisManager::getResultImpl(void *PassID, Function *F) {
   FunctionAnalysisResultMapT::iterator RI;
   bool Inserted;

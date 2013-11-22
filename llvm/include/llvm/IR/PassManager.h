@@ -238,7 +238,7 @@ template <typename IRUnitT> struct AnalysisResultConcept {
   /// took care to update or preserve the analysis result in some way.
   ///
   /// \returns true if the result is indeed invalid (the default).
-  virtual bool invalidate(IRUnitT *IR, const PreservedAnalyses &PA) = 0;
+  virtual bool invalidate(IRUnitT IR, const PreservedAnalyses &PA) = 0;
 };
 
 /// \brief SFINAE metafunction for computing whether \c ResultT provides an
@@ -247,7 +247,7 @@ template <typename IRUnitT, typename ResultT> class ResultHasInvalidateMethod {
   typedef char SmallType;
   struct BigType { char a, b; };
 
-  template <typename T, bool (T::*)(IRUnitT *, const PreservedAnalyses &)>
+  template <typename T, bool (T::*)(IRUnitT, const PreservedAnalyses &)>
   struct Checker;
 
   template <typename T> static SmallType f(Checker<T, &T::invalidate> *);
@@ -283,7 +283,7 @@ struct AnalysisResultModel<IRUnitT, PassT, ResultT,
   // FIXME: We should actually use two different concepts for analysis results
   // rather than two different models, and avoid the indirect function call for
   // ones that use the trivial behavior.
-  virtual bool invalidate(IRUnitT *, const PreservedAnalyses &PA) {
+  virtual bool invalidate(IRUnitT, const PreservedAnalyses &PA) {
     return !PA.preserved(PassT::ID());
   }
 
@@ -301,7 +301,7 @@ struct AnalysisResultModel<IRUnitT, PassT, ResultT,
   }
 
   /// \brief The model delegates to the \c ResultT method.
-  virtual bool invalidate(IRUnitT *IR, const PreservedAnalyses &PA) {
+  virtual bool invalidate(IRUnitT IR, const PreservedAnalyses &PA) {
     return Result.invalidate(IR, PA);
   }
 
@@ -319,7 +319,7 @@ template <typename IRUnitT> struct AnalysisPassConcept {
   /// \brief Method to run this analysis over a unit of IR.
   /// \returns The analysis result object to be queried by users, the caller
   /// takes ownership.
-  virtual AnalysisResultConcept<IRUnitT> *run(IRUnitT *IR) = 0;
+  virtual AnalysisResultConcept<IRUnitT> *run(IRUnitT IR) = 0;
 };
 
 /// \brief Wrapper to model the analysis pass concept.
@@ -342,7 +342,7 @@ struct AnalysisPassModel : AnalysisPassConcept<typename PassT::IRUnitT> {
   /// \brief The model delegates to the \c PassT::run method.
   ///
   /// The return is wrapped in an \c AnalysisResultModel.
-  virtual ResultModelT *run(IRUnitT *IR) {
+  virtual ResultModelT *run(IRUnitT IR) {
     return new ResultModelT(Pass.run(IR));
   }
 
@@ -418,14 +418,14 @@ public:
   /// If there is not a valid cached result in the manager already, this will
   /// re-run the analysis to produce a valid result.
   template <typename PassT> const typename PassT::Result &getResult(Module *M) {
-    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Module>::value),
+    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Module *>::value),
                        "The analysis pass must be over a Module.");
     assert(ModuleAnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being queried");
 
-    const detail::AnalysisResultConcept<Module> &ResultConcept =
+    const detail::AnalysisResultConcept<Module *> &ResultConcept =
         getResultImpl(PassT::ID(), M);
-    typedef detail::AnalysisResultModel<Module, PassT, typename PassT::Result>
+    typedef detail::AnalysisResultModel<Module *, PassT, typename PassT::Result>
         ResultModelT;
     return static_cast<const ResultModelT &>(ResultConcept).Result;
   }
@@ -438,7 +438,7 @@ public:
   /// populate
   /// the manager with all of the analysis passes available.
   template <typename PassT> void registerPass(PassT Pass) {
-    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Module>::value),
+    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Module *>::value),
                        "The analysis pass must be over a Module.");
     assert(!ModuleAnalysisPasses.count(PassT::ID()) &&
            "Registered the same analysis pass twice!");
@@ -450,7 +450,7 @@ public:
   ///
   /// Note that the analysis result can disregard invalidation.
   template <typename PassT> void invalidate(Module *M) {
-    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Module>::value),
+    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Module *>::value),
                        "The analysis pass must be over a Module.");
     assert(ModuleAnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being invalidated");
@@ -465,15 +465,15 @@ public:
 
 private:
   /// \brief Get a module pass result, running the pass if necessary.
-  const detail::AnalysisResultConcept<Module> &getResultImpl(void *PassID,
-                                                             Module *M);
+  const detail::AnalysisResultConcept<Module *> &getResultImpl(void *PassID,
+                                                               Module *M);
 
   /// \brief Invalidate a module pass result.
   void invalidateImpl(void *PassID, Module *M);
 
   /// \brief Map type from module analysis pass ID to pass concept pointer.
   typedef DenseMap<void *,
-                   polymorphic_ptr<detail::AnalysisPassConcept<Module> > >
+                   polymorphic_ptr<detail::AnalysisPassConcept<Module *> > >
       ModuleAnalysisPassMapT;
 
   /// \brief Collection of module analysis passes, indexed by ID.
@@ -481,7 +481,7 @@ private:
 
   /// \brief Map type from module analysis pass ID to pass result concept pointer.
   typedef DenseMap<void *,
-                   polymorphic_ptr<detail::AnalysisResultConcept<Module> > >
+                   polymorphic_ptr<detail::AnalysisResultConcept<Module *> > >
       ModuleAnalysisResultMapT;
 
   /// \brief Cache of computed module analysis results for this module.
@@ -500,15 +500,15 @@ public:
   /// re-run the analysis to produce a valid result.
   template <typename PassT>
   const typename PassT::Result &getResult(Function *F) {
-    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Function>::value),
+    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Function *>::value),
                        "The analysis pass must be over a Function.");
     assert(FunctionAnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being queried");
 
-    const detail::AnalysisResultConcept<Function> &ResultConcept =
+    const detail::AnalysisResultConcept<Function *> &ResultConcept =
         getResultImpl(PassT::ID(), F);
-    typedef detail::AnalysisResultModel<Function, PassT, typename PassT::Result>
-        ResultModelT;
+    typedef detail::AnalysisResultModel<Function *, PassT,
+                                        typename PassT::Result> ResultModelT;
     return static_cast<const ResultModelT &>(ResultConcept).Result;
   }
 
@@ -520,7 +520,7 @@ public:
   /// populate
   /// the manager with all of the analysis passes available.
   template <typename PassT> void registerPass(PassT Pass) {
-    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Function>::value),
+    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Function *>::value),
                        "The analysis pass must be over a Function.");
     assert(!FunctionAnalysisPasses.count(PassT::ID()) &&
            "Registered the same analysis pass twice!");
@@ -532,7 +532,7 @@ public:
   ///
   /// Note that the analysis result can disregard invalidation.
   template <typename PassT> void invalidate(Function *F) {
-    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Function>::value),
+    LLVM_STATIC_ASSERT((is_same<typename PassT::IRUnitT, Function *>::value),
                        "The analysis pass must be over a Function.");
     assert(FunctionAnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being invalidated");
@@ -559,15 +559,15 @@ public:
 
 private:
   /// \brief Get a function pass result, running the pass if necessary.
-  const detail::AnalysisResultConcept<Function> &getResultImpl(void *PassID,
-                                                               Function *F);
+  const detail::AnalysisResultConcept<Function *> &getResultImpl(void *PassID,
+                                                                 Function *F);
 
   /// \brief Invalidate a function pass result.
   void invalidateImpl(void *PassID, Function *F);
 
   /// \brief Map type from function analysis pass ID to pass concept pointer.
   typedef DenseMap<void *,
-                   polymorphic_ptr<detail::AnalysisPassConcept<Function> > >
+                   polymorphic_ptr<detail::AnalysisPassConcept<Function *> > >
       FunctionAnalysisPassMapT;
 
   /// \brief Collection of function analysis passes, indexed by ID.
@@ -579,7 +579,7 @@ private:
   /// erases. Provides both the pass ID and concept pointer such that it is
   /// half of a bijection and provides storage for the actual result concept.
   typedef std::list<std::pair<
-      void *, polymorphic_ptr<detail::AnalysisResultConcept<Function> > > >
+      void *, polymorphic_ptr<detail::AnalysisResultConcept<Function *> > > >
       FunctionAnalysisResultListT;
 
   /// \brief Map type from function pointer to our custom list type.
@@ -617,7 +617,7 @@ private:
 /// pass.
 class FunctionAnalysisManagerModuleProxy {
 public:
-  typedef Module IRUnitT;
+  typedef Module *IRUnitT;
   class Result;
 
   static void *ID() { return (void *)&PassID; }

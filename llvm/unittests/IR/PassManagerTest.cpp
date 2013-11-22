@@ -21,7 +21,7 @@ namespace {
 
 class TestAnalysisPass {
 public:
-  typedef Function IRUnitT;
+  typedef Function *IRUnitT;
 
   struct Result {
     Result(int Count) : InstructionCount(Count) {}
