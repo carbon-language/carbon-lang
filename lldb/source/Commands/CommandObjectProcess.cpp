@@ -251,9 +251,11 @@ protected:
         // then you'll pick up that incorrect value.
         bool synchronous_execution = m_interpreter.GetSynchronous ();
 
+        PlatformSP platform_sp (target->GetPlatform());
+
         // Finalize the file actions, and if none were given, default to opening
         // up a pseudo terminal
-        const bool default_to_use_pty = true;
+        const bool default_to_use_pty = platform_sp ? platform_sp->IsHost() : false;
         m_options.launch_info.FinalizeFileActions (target, default_to_use_pty);
 
         if (state == eStateConnected)
@@ -267,8 +269,6 @@ protected:
         
         if (!m_options.launch_info.GetArchitecture().IsValid())
             m_options.launch_info.GetArchitecture() = target->GetArchitecture();
-
-        PlatformSP platform_sp (target->GetPlatform());
         
         if (platform_sp && platform_sp->CanDebugProcess ())
         {
