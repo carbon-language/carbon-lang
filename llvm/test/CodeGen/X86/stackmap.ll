@@ -9,7 +9,7 @@
 ; CHECK-NEXT:   .long   1
 ; CHECK-NEXT:   .quad   4294967296
 ; Num Callsites
-; CHECK-NEXT:   .long   11
+; CHECK-NEXT:   .long   12
 
 ; Constant arguments
 ;
@@ -284,6 +284,24 @@ define void @subRegOffset(i16 %arg) {
   %a1 = trunc i16 %arghi to i8
   tail call void asm sideeffect "nop", "~{cx},~{dx},~{bp},~{si},~{di},~{r8},~{r9},~{r10},~{r11},~{r12},~{r13},~{r14},~{r15}"() nounwind
   tail call void (i32, i32, ...)* @llvm.experimental.stackmap(i32 14, i32 5, i8 %a0, i8 %a1)
+  ret void
+}
+
+; Map a constant value.
+;
+; CHECK:       .long 15
+; CHECK-LABEL: .long L{{.*}}-_liveConstant
+; CHECK-NEXT:  .short 0
+; 1 location
+; CHECK-NEXT:  .short 1
+; Loc 0: SmallConstant
+; CHECK-NEXT:   .byte   4
+; CHECK-NEXT:   .byte   8
+; CHECK-NEXT:   .short  0
+; CHECK-NEXT:   .long   33
+
+define void @liveConstant() {
+  tail call void (i32, i32, ...)* @llvm.experimental.stackmap(i32 15, i32 5, i32 33)
   ret void
 }
 

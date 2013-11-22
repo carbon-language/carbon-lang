@@ -6781,6 +6781,23 @@ SelectionDAGBuilder::LowerCallOperands(const CallInst &CI, unsigned ArgIdx,
   return TLI->LowerCallTo(CLI);
 }
 
+/// \brief Add a stack map intrinsic call's live variable operands to a stackmap
+/// or patchpoint target node's operand list.
+static void addStackMapLiveVars(const CallInst &CI, unsigned StartIdx,
+                                SmallVectorImpl<SDValue> &Ops,
+                                SelectionDAGBuilder &Builder) {
+  for (unsigned i = StartIdx, e = CI.getNumArgOperands(); i != e; ++i) {
+    SDValue OpVal = Builder.getValue(CI.getArgOperand(i));
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(OpVal)) {
+      Ops.push_back(
+        Builder.DAG.getTargetConstant(StackMaps::ConstantOp, MVT::i64));
+      Ops.push_back(
+        Builder.DAG.getTargetConstant(C->getSExtValue(), MVT::i64));
+    } else
+      Ops.push_back(OpVal);
+  }
+}
+
 /// \brief Lower llvm.experimental.stackmap directly to its target opcode.
 void SelectionDAGBuilder::visitStackmap(const CallInst &CI) {
   // void @llvm.experimental.stackmap(i32 <id>, i32 <numShadowBytes>,
@@ -6814,8 +6831,7 @@ void SelectionDAGBuilder::visitStackmap(const CallInst &CI) {
         cast<ConstantSDNode>(tmp)->getZExtValue(), MVT::i32));
   }
   // Push live variables for the stack map.
-  for (unsigned i = 2, e = CI.getNumArgOperands(); i != e; ++i)
-    Ops.push_back(getValue(CI.getArgOperand(i)));
+  addStackMapLiveVars(CI, 2, Ops, *this);
 
   // Push the chain (this is originally the first operand of the call, but
   // becomes now the last or second to last operand).
@@ -6923,17 +6939,7 @@ void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
     Ops.push_back(*i);
 
   // Push live variables for the stack map.
-  for (unsigned i = NumMetaOpers + NumArgs, e = CI.getNumArgOperands();
-       i != e; ++i) {
-    SDValue OpVal = getValue(CI.getArgOperand(i));
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(OpVal)) {
-      Ops.push_back(
-        DAG.getTargetConstant(StackMaps::ConstantOp, MVT::i64));
-      Ops.push_back(
-        DAG.getTargetConstant(C->getSExtValue(), MVT::i64));
-    } else
-      Ops.push_back(OpVal);
-  }
+  addStackMapLiveVars(CI, NumMetaOpers + NumArgs, Ops, *this);
 
   // Push the register mask info.
   if (hasGlue)
