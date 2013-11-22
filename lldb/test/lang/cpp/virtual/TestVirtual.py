@@ -28,7 +28,6 @@ class CppVirtualMadness(TestBase):
         self.buildDsym()
         self.virtual_madness_test()
 
-    @skipIfFreeBSD # llvm.org/pr17225
     @expectedFailureIcc('llvm.org/pr16808') # lldb does not call the correct virtual function with icc
     def test_virtual_madness_dwarf(self):
         """Test that expression works correctly with virtual inheritance as well as virtual function."""
