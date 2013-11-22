@@ -169,7 +169,7 @@ template <typename IRUnitT, typename AnalysisManagerT> struct PassConcept {
 
 /// \brief SFINAE metafunction for computing whether \c PassT has a run method
 /// accepting an \c AnalysisManagerT.
-template <typename IRUnitT, typename PassT, typename AnalysisManagerT>
+template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
 class PassRunAcceptsAnalysisManager {
   typedef char SmallType;
   struct BigType { char a, b; };
@@ -189,15 +189,15 @@ public:
 /// Can be instantiated for any object which provides a \c run method accepting
 /// an \c IRUnitT. It requires the pass to be a copyable object. When the
 /// \c run method also accepts an \c AnalysisManagerT*, we pass it along.
-template <typename IRUnitT, typename PassT, typename AnalysisManagerT,
+template <typename IRUnitT, typename AnalysisManagerT, typename PassT,
           bool AcceptsAnalysisManager = PassRunAcceptsAnalysisManager<
-              IRUnitT, PassT, AnalysisManagerT>::Value>
+              IRUnitT, AnalysisManagerT, PassT>::Value>
 struct PassModel;
 
 /// \brief Specialization of \c PassModel for passes that accept an analyis
 /// manager.
-template <typename IRUnitT, typename PassT, typename AnalysisManagerT>
-struct PassModel<IRUnitT, PassT, AnalysisManagerT,
+template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
+struct PassModel<IRUnitT, AnalysisManagerT, PassT,
                  true> : PassConcept<IRUnitT, AnalysisManagerT> {
   PassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
   virtual PassModel *clone() { return new PassModel(Pass); }
@@ -209,8 +209,8 @@ struct PassModel<IRUnitT, PassT, AnalysisManagerT,
 
 /// \brief Specialization of \c PassModel for passes that accept an analyis
 /// manager.
-template <typename IRUnitT, typename PassT, typename AnalysisManagerT>
-struct PassModel<IRUnitT, PassT, AnalysisManagerT,
+template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
+struct PassModel<IRUnitT, AnalysisManagerT, PassT,
                  false> : PassConcept<IRUnitT, AnalysisManagerT> {
   PassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
   virtual PassModel *clone() { return new PassModel(Pass); }
@@ -370,9 +370,9 @@ private:
   typedef detail::PassConcept<Module *, ModuleAnalysisManager> ModulePassConcept;
   template <typename PassT>
   struct ModulePassModel
-      : detail::PassModel<Module *, PassT, ModuleAnalysisManager> {
+      : detail::PassModel<Module *, ModuleAnalysisManager, PassT> {
     ModulePassModel(PassT Pass)
-        : detail::PassModel<Module *, PassT, ModuleAnalysisManager>(Pass) {}
+        : detail::PassModel<Module *, ModuleAnalysisManager, PassT>(Pass) {}
   };
 
   std::vector<polymorphic_ptr<ModulePassConcept> > Passes;
@@ -396,9 +396,9 @@ private:
       FunctionPassConcept;
   template <typename PassT>
   struct FunctionPassModel
-      : detail::PassModel<Function *, PassT, FunctionAnalysisManager> {
+      : detail::PassModel<Function *, FunctionAnalysisManager, PassT> {
     FunctionPassModel(PassT Pass)
-        : detail::PassModel<Function *, PassT, FunctionAnalysisManager>(Pass) {}
+        : detail::PassModel<Function *, FunctionAnalysisManager, PassT>(Pass) {}
   };
 
   std::vector<polymorphic_ptr<FunctionPassConcept> > Passes;
