@@ -54,7 +54,7 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 attributes #1 = { nounwind readnone }
 
 !llvm.dbg.cu = !{!0}
-!llvm.module.flags = !{!18}
+!llvm.module.flags = !{!18, !26}
 !llvm.ident = !{!19}
 
 !0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.4 (trunk 194134) (llvm/trunk 194126)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/home/richards/llvm/build//tmp/add.c] [DW_LANG_C99]
@@ -83,3 +83,4 @@ attributes #1 = { nounwind readnone }
 !23 = metadata !{metadata !"omnipotent char", metadata !24, i64 0}
 !24 = metadata !{metadata !"Simple C/C++ TBAA"}
 !25 = metadata !{i32 6, i32 0, metadata !4, null}
+!26 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
