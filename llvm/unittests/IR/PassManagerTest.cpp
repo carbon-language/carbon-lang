@@ -69,28 +69,46 @@ struct TestPreservingModulePass {
 };
 
 struct TestMinPreservingModulePass {
-  PreservedAnalyses run(Module *M) {
+  PreservedAnalyses run(Module *M, ModuleAnalysisManager *AM) {
     PreservedAnalyses PA;
+
+    // Check that we can get cached result objects for modules.
+    const FunctionAnalysisManagerModuleProxy::Result *R =
+        AM->getCachedResult<FunctionAnalysisManagerModuleProxy>(M);
+    (void)R; // FIXME: We should test this better by querying an actual analysis
+             // pass in interesting ways.
+
     PA.preserve<FunctionAnalysisManagerModuleProxy>();
     return PA;
   }
 };
 
 struct TestFunctionPass {
-  TestFunctionPass(int &RunCount, int &AnalyzedInstrCount)
-      : RunCount(RunCount), AnalyzedInstrCount(AnalyzedInstrCount) {}
+  TestFunctionPass(int &RunCount, int &AnalyzedInstrCount,
+                   bool OnlyUseCachedResults = false)
+      : RunCount(RunCount), AnalyzedInstrCount(AnalyzedInstrCount),
+        OnlyUseCachedResults(OnlyUseCachedResults) {}
 
   PreservedAnalyses run(Function *F, FunctionAnalysisManager *AM) {
     ++RunCount;
 
-    const TestAnalysisPass::Result &AR = AM->getResult<TestAnalysisPass>(F);
-    AnalyzedInstrCount += AR.InstructionCount;
+    if (OnlyUseCachedResults) {
+      // Hack to force the use of the cached interface.
+      if (const TestAnalysisPass::Result *AR =
+              AM->getCachedResult<TestAnalysisPass>(F))
+        AnalyzedInstrCount += AR->InstructionCount;
+    } else {
+      // Typical path just runs the analysis as needed.
+      const TestAnalysisPass::Result &AR = AM->getResult<TestAnalysisPass>(F);
+      AnalyzedInstrCount += AR.InstructionCount;
+    }
 
     return PreservedAnalyses::all();
   }
 
   int &RunCount;
   int &AnalyzedInstrCount;
+  bool OnlyUseCachedResults;
 };
 
 // A test function pass that invalidates all function analyses for a function
@@ -178,6 +196,15 @@ TEST_F(PassManagerTest, Basic) {
   FPM4.addPass(TestFunctionPass(FunctionPassRunCount4, AnalyzedInstrCount4));
   MPM.addPass(createModuleToFunctionPassAdaptor(FPM4));
 
+  // A fifth function pass manager but which uses only cached results.
+  FunctionPassManager FPM5;
+  int FunctionPassRunCount5 = 0;
+  int AnalyzedInstrCount5 = 0;
+  FPM5.addPass(TestInvalidationFunctionPass("f"));
+  FPM5.addPass(TestFunctionPass(FunctionPassRunCount5, AnalyzedInstrCount5,
+                                /*OnlyUseCachedResults=*/true));
+  MPM.addPass(createModuleToFunctionPassAdaptor(FPM5));
+
   MPM.run(M.get(), &MAM);
 
   // Validate module pass counters.
@@ -192,6 +219,8 @@ TEST_F(PassManagerTest, Basic) {
   EXPECT_EQ(5, AnalyzedInstrCount3);
   EXPECT_EQ(3, FunctionPassRunCount4);
   EXPECT_EQ(5, AnalyzedInstrCount4);
+  EXPECT_EQ(3, FunctionPassRunCount5);
+  EXPECT_EQ(2, AnalyzedInstrCount5); // Only 'g' and 'h' were cached.
 
   // Validate the analysis counters:
   //   first run over 3 functions, then module pass invalidates
