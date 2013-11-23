@@ -68,8 +68,8 @@ __attribute__((objc_supress_protocol(Protocol)))
 @interface ClassE (MyCat) @end // expected-error {{attributes may not be specified on a category}}
 
 // The attribute requires one or more identifiers.
-__attribute__((objc_suppress_protocol_methods()))
-@interface ClassF @end // expected-error {{parameter of 'objc_suppress_protocol_methods' attribute must be a single name of an Objective-C protocol}}
+__attribute__((objc_suppress_protocol_methods())) // expected-error {{'objc_suppress_protocol_methods' attribute takes one argument}}
+@interface ClassF @end
 
 // The attribute requires one or more identifiers.
 __attribute__((objc_suppress_protocol_methods(ProtoA, ProtoB))) // expected-error {{use of undeclared identifier 'ProtoB'}}

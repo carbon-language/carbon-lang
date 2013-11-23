@@ -645,7 +645,7 @@ def ObjCRootClass : InheritableAttr {
 def ObjCSuppressProtocol : InheritableAttr {
   let Spellings = [GNU<"objc_suppress_protocol_methods">];
   let Subjects = [ObjCInterface];
-  let Args = [IdentifierArgument<"Protocol", 1>];
+  let Args = [IdentifierArgument<"Protocol">];
 }
 
 def Overloadable : Attr {

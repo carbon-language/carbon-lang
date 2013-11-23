@@ -2142,8 +2142,7 @@ static void handleObjCSuppresProtocolAttr(Sema &S, Decl *D,
     return;
   }
 
-  IdentifierLoc *Parm = (Attr.getNumArgs() == 1 && Attr.isArgIdent(0))
-                        ? Attr.getArgAsIdent(0) : 0;
+  IdentifierLoc *Parm = Attr.isArgIdent(0) ? Attr.getArgAsIdent(0) : 0;
 
   if (!Parm) {
     S.Diag(D->getLocStart(), diag::err_objc_attr_not_id) << Attr.getName() << 1;
