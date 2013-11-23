@@ -259,16 +259,12 @@ void ObjCInterfaceDecl::anchor() { }
 bool ObjCInterfaceDecl::shouldSuppressProtocol(const ObjCProtocolDecl *P) const{
   if (!hasAttrs())
     return false;
-  const AttrVec &V = getAttrs();
   const IdentifierInfo *PI = P->getIdentifier();
-  for (AttrVec::const_iterator I = V.begin(), E = V.end(); I != E; ++I) {
-    if (const ObjCSuppressProtocolAttr *A =
-        dyn_cast<ObjCSuppressProtocolAttr>(*I)){
-      if (A->getProtocol() == PI) {
+  for (specific_attr_iterator<ObjCSuppressProtocolAttr>
+        I = specific_attr_begin<ObjCSuppressProtocolAttr>(),
+        E = specific_attr_end<ObjCSuppressProtocolAttr>(); I != E; ++I)
+      if ((*I)->getProtocol() == PI)
         return true;
-      }
-    }
-  }
   return false;
 }
 
