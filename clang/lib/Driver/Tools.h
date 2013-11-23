@@ -163,17 +163,6 @@ namespace gcc {
                                      llvm::opt::ArgStringList &CmdArgs) const;
   };
 
-  class LLVM_LIBRARY_VISIBILITY Assemble : public Common  {
-  public:
-    Assemble(const ToolChain &TC) : Common("gcc::Assemble",
-                                           "assembler (via gcc)", TC) {}
-
-    virtual bool hasIntegratedCPP() const { return false; }
-
-    virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     llvm::opt::ArgStringList &CmdArgs) const;
-  };
-
   class LLVM_LIBRARY_VISIBILITY Link : public Common  {
   public:
     Link(const ToolChain &TC) : Common("gcc::Link",

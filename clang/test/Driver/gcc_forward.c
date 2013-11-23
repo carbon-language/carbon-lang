@@ -13,19 +13,8 @@
 // CHECK: "-Wall" "-Wdocumentation"
 // CHECK: "-o" "{{[^"]+}}.s"
 //
-// gcc-as
-// CHECK: gcc{{[^"]*}}"
-// CHECK-NOT: "-mlinker-version=10"
-// CHECK-NOT: "-Xclang"
-// CHECK-NOT: "foo-bar"
-// CHECK-NOT: "-Wall"
-// CHECK-NOT: "-Wdocumentation"
-// CHECK: -march
-// CHECK-NOT: "-mlinker-version=10"
-// CHECK-NOT: "-Xclang"
-// CHECK-NOT: "foo-bar"
-// CHECK-NOT: "-Wall"
-// CHECK-NOT: "-Wdocumentation"
+// gnu-as
+// CHECK: as{{[^"]*}}"
 // CHECK: "-o" "{{[^"]+}}.o"
 //
 // gcc-ld

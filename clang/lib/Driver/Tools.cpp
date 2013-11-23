@@ -4285,11 +4285,6 @@ void gcc::Compile::RenderExtraToolArgs(const JobAction &JA,
   }
 }
 
-void gcc::Assemble::RenderExtraToolArgs(const JobAction &JA,
-                                        ArgStringList &CmdArgs) const {
-  CmdArgs.push_back("-c");
-}
-
 void gcc::Link::RenderExtraToolArgs(const JobAction &JA,
                                     ArgStringList &CmdArgs) const {
   // The types are (hopefully) good enough.
