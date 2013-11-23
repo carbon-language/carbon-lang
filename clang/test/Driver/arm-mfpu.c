@@ -100,3 +100,7 @@
 // RUN: %clang -target arm-linux-gnueabihf %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-HF %s
 // CHECK-HF: "-target-cpu" "arm1136jf-s"
+
+// RUN: %clang -target armv7-apple-darwin -x assembler %s -### -c 2>&1 \
+// RUN:   | FileCheck --check-prefix=ASM %s
+// ASM-NOT: -target-feature
