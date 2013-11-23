@@ -39,18 +39,24 @@ const ASTNodeKind::KindInfo ASTNodeKind::AllKindInfo[] = {
 #include "clang/AST/TypeNodes.def"
 };
 
-bool ASTNodeKind::isBaseOf(ASTNodeKind Other) const {
-  return isBaseOf(KindId, Other.KindId);
+bool ASTNodeKind::isBaseOf(ASTNodeKind Other, unsigned *Distance) const {
+  return isBaseOf(KindId, Other.KindId, Distance);
 }
 
 bool ASTNodeKind::isSame(ASTNodeKind Other) const {
   return KindId != NKI_None && KindId == Other.KindId;
 }
 
-bool ASTNodeKind::isBaseOf(NodeKindId Base, NodeKindId Derived) {
+bool ASTNodeKind::isBaseOf(NodeKindId Base, NodeKindId Derived,
+                           unsigned *Distance) {
   if (Base == NKI_None || Derived == NKI_None) return false;
-  while (Derived != Base && Derived != NKI_None)
+  unsigned Dist = 0;
+  while (Derived != Base && Derived != NKI_None) {
     Derived = AllKindInfo[Derived].ParentId;
+    ++Dist;
+  }
+  if (Distance)
+    *Distance = Dist;
   return Derived == Base;
 }
 

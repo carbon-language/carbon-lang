@@ -34,6 +34,19 @@ TEST(ASTNodeKind, Bases) {
   EXPECT_TRUE(DNT<Decl>().isSame(DNT<Decl>()));
 }
 
+TEST(ASTNodeKind, BaseDistances) {
+  unsigned Distance = 1;
+  EXPECT_TRUE(DNT<Expr>().isBaseOf(DNT<Expr>(), &Distance));
+  EXPECT_EQ(0u, Distance);
+
+  EXPECT_TRUE(DNT<Stmt>().isBaseOf(DNT<IfStmt>(), &Distance));
+  EXPECT_EQ(1u, Distance);
+
+  Distance = 3;
+  EXPECT_TRUE(DNT<DeclaratorDecl>().isBaseOf(DNT<ParmVarDecl>(), &Distance));
+  EXPECT_EQ(2u, Distance);
+}
+
 TEST(ASTNodeKind, SameBase) {
   EXPECT_TRUE(DNT<Expr>().isBaseOf(DNT<CallExpr>()));
   EXPECT_TRUE(DNT<Expr>().isBaseOf(DNT<BinaryOperator>()));

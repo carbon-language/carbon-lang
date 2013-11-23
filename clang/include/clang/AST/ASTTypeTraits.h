@@ -57,7 +57,9 @@ public:
   bool isSame(ASTNodeKind Other) const;
 
   /// \brief Returns \c true if \c this is a base kind of (or same as) \c Other.
-  bool isBaseOf(ASTNodeKind Other) const;
+  /// \param Distance If non-null, used to return the distance between \c this
+  /// and \c Other in the class hierarchy.
+  bool isBaseOf(ASTNodeKind Other, unsigned *Distance = 0) const;
 
   /// \brief String representation of the kind.
   StringRef asStringRef() const;
@@ -91,7 +93,9 @@ private:
 
   /// \brief Returns \c true if \c Base is a base kind of (or same as) \c
   ///   Derived.
-  static bool isBaseOf(NodeKindId Base, NodeKindId Derived);
+  /// \param Distance If non-null, used to return the distance between \c Base
+  /// and \c Derived in the class hierarchy.
+  static bool isBaseOf(NodeKindId Base, NodeKindId Derived, unsigned *Distance);
 
   /// \brief Helper meta-function to convert a kind T to its enum value.
   ///
