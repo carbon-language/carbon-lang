@@ -6566,9 +6566,6 @@ def error_private_ivar_access : Error<"instance variable %0 is private">,
 def error_protected_ivar_access : Error<"instance variable %0 is protected">,
   AccessControl;
 def warn_maynot_respond : Warning<"%0 may not respond to %1">;
-def warn_attribute_method_def : Warning<
-  "attributes on method implementation and its declaration must match">,
-  InGroup<DiagGroup<"mismatched-method-attributes">>;
 def ext_typecheck_base_super : Warning<
   "method parameter type "
   "%diff{$ does not match super class method parameter type $|"

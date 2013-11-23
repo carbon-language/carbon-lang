@@ -14,20 +14,20 @@
 @interface INTF
 - (int) foo1: (int)arg1 __attribute__((deprecated));
 
-- (int) foo: (int)arg1;  // expected-note {{method 'foo:' declared here}}
+- (int) foo: (int)arg1;
 
-- (int) foo2: (int)arg1 __attribute__((deprecated)) __attribute__((unavailable)); // expected-note {{method 'foo2:' declared here}}
+- (int) foo2: (int)arg1 __attribute__((deprecated)) __attribute__((unavailable));
 - (int) foo3: (int)arg1 __attribute__((deprecated)) __attribute__((unavailable)) __attribute__((ns_consumes_self));
 @end
 
 @implementation INTF
-- (int) foo: (int)arg1  __attribute__((deprecated)){ // expected-warning {{attributes on method implementation and its declaration must match}}
+- (int) foo: (int)arg1  __attribute__((deprecated)){
         return 10;
 }
 - (int) foo1: (int)arg1 {
         return 10;
 }
-- (int) foo2: (int)arg1 __attribute__((deprecated)) {  // expected-warning {{attributes on method implementation and its declaration must match}}
+- (int) foo2: (int)arg1 __attribute__((deprecated)) {
         return 10;
 }
 - (int) foo3: (int)arg1 __attribute__((deprecated)) __attribute__((unavailable)) __attribute__((ns_consumes_self)) {return 0; }
@@ -40,7 +40,7 @@
 
 @interface Foo 
 - (void)doSomething1:(id)sender;
-- (void)doSomething2:(id)sender; // expected-note {{method 'doSomething2:' declared here}}
+- (void)doSomething2:(id)sender;
 @end
 
 @implementation Foo
@@ -53,7 +53,7 @@
 @end
 @implementation Bar
 - (IBAction)doSomething1:(id)sender {}
-- (IBAction)doSomething2:(id)sender {} // expected-warning {{attributes on method implementation and its declaration must match}}
+- (IBAction)doSomething2:(id)sender {}
 - (IBAction)doSomething3:(id)sender {}
 @end
 
@@ -64,7 +64,7 @@
 -(id)method __attribute__((deprecated));
 -(id)method1;
 -(id)method2 __attribute__((aligned(16)));
-- (id) method3: (int)arg1 __attribute__((aligned(16)))  __attribute__((deprecated)) __attribute__((unavailable)); // expected-note {{method 'method3:' declared here}}
+- (id) method3: (int)arg1 __attribute__((aligned(16)))  __attribute__((deprecated)) __attribute__((unavailable));
 - (id) method4: (int)arg1 __attribute__((aligned(16)))  __attribute__((deprecated)) __attribute__((unavailable)); 
 @end
 
@@ -78,7 +78,7 @@
 -(id)method2 {
     return self;
 }
-- (id) method3: (int)arg1 __attribute__((deprecated)) __attribute__((unavailable)) {  // expected-warning {{attributes on method implementation and its declaration must match}}
+- (id) method3: (int)arg1 __attribute__((deprecated)) __attribute__((unavailable)) {
         return self;
 }
 - (id) method4: (int)arg1 __attribute__((aligned(16))) __attribute__((deprecated)) __attribute__((unavailable)) {
