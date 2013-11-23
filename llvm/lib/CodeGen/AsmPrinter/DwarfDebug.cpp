@@ -240,6 +240,12 @@ static MCSymbol *emitSectionSym(AsmPrinter *Asm, const MCSection *Section,
   return TmpSym;
 }
 
+DwarfUnits::~DwarfUnits() {
+  for (SmallVectorImpl<CompileUnit *>::iterator I = CUs.begin(), E = CUs.end();
+       I != E; ++I)
+    delete *I;
+}
+
 MCSymbol *DwarfUnits::getStringPoolSym() {
   return Asm->GetTempSymbol(StringPref);
 }
@@ -1201,15 +1207,6 @@ void DwarfDebug::endModule() {
 
   // clean up.
   SPMap.clear();
-  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
-                                                         E = CUMap.end();
-       I != E; ++I)
-    delete I->second;
-
-  for (SmallVectorImpl<CompileUnit *>::iterator I = SkeletonCUs.begin(),
-                                                E = SkeletonCUs.end();
-       I != E; ++I)
-    delete *I;
 
   // Reset these for the next Module if we have one.
   FirstCU = NULL;
@@ -3021,7 +3018,6 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
   }
 
   SkeletonHolder.addUnit(NewCU);
-  SkeletonCUs.push_back(NewCU);
 
   return NewCU;
 }

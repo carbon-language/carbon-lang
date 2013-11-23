@@ -256,6 +256,8 @@ public:
         NextStringPoolNumber(0), StringPref(Pref), AddressPool(),
         NextAddrPoolNumber(0) {}
 
+  ~DwarfUnits();
+
   /// \brief Compute the size and offset of a DIE given an incoming Offset.
   unsigned computeSizeAndOffset(DIE *Die, unsigned Offset);
 
@@ -467,9 +469,6 @@ class DwarfDebug {
   // In general these will all be for bits that are left in the
   // original object file, rather than things that are meant
   // to be in the .dwo sections.
-
-  // The CUs left in the original object file for separated debug info.
-  SmallVector<CompileUnit *, 1> SkeletonCUs;
 
   // Used to uniquely define abbreviations for the skeleton emission.
   FoldingSet<DIEAbbrev> SkeletonAbbrevSet;
