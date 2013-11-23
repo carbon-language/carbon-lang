@@ -1667,7 +1667,9 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
           (!Super || !Super->lookupMethod(method->getSelector(),
                                           true /* instance */,
                                           false /* shallowCategory */,
-                                          true /* followsSuper */))) {
+                                          true /* followsSuper */,
+                                          NULL /* category */,
+                                          PDecl /* protocol */))) {
             // If a method is not implemented in the category implementation but
             // has been declared in its primary class, superclass,
             // or in one of their protocols, no need to issue the warning. 
@@ -1703,7 +1705,9 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
         (!Super || !Super->lookupMethod(method->getSelector(),
                                         false /* class method */,
                                         false /* shallowCategoryLookup */,
-                                        true  /* followSuper */))) {
+                                        true  /* followSuper */,
+                                        NULL /* category */,
+                                        PDecl /* protocol */))) {
       // See above comment for instance method lookups.
       if (C && IDecl->lookupMethod(method->getSelector(),
                                    false /* class */,

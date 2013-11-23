@@ -1143,7 +1143,8 @@ public:
   ObjCMethodDecl *lookupMethod(Selector Sel, bool isInstance,
                                bool shallowCategoryLookup = false,
                                bool followSuper = true,
-                               const ObjCCategoryDecl *C = 0) const;
+                               const ObjCCategoryDecl *C = 0,
+                               const ObjCProtocolDecl *P = 0) const;
 
   /// Lookup an instance method for a given selector.
   ObjCMethodDecl *lookupInstanceMethod(Selector Sel) const {
