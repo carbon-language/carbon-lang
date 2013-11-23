@@ -564,6 +564,7 @@ protected:
     SetIteratorType SetIter;
 
   public:
+    SpecIterator() : SetIter() {}
     SpecIterator(SetIteratorType SetIter) : SetIter(SetIter) {}
 
     DeclType *operator*() const {
