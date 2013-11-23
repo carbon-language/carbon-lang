@@ -25,13 +25,9 @@ EXTRA_OPTIONS += -Wno-four-char-constants
 # which we are not currently clean with (due to SWIG generated cpp source).
 EXTRA_OPTIONS += -Wno-missing-field-initializers -Wno-self-assign -Wno-sometimes-uninitialized
 
-# edit-swig-python-wrapper-file.py needs $(SRCROOT)
-export SRCROOT := $(PROJ_SRC_DIR)/$(LLDB_LEVEL)
-
 PYTHON_DIR := $(PROJ_OBJ_ROOT)/$(BuildMode)
 
 LLDBWrapPython.cpp lldb.py: $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/modify-python-lldb.py \
-                            $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/edit-swig-python-wrapper-file.py \
                             $(wildcard $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/interface/*.i)
 	$(Echo) Generating LLDBWrapPython.cpp
 	$(Verb) "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/build-swig-wrapper-classes.sh" "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)" "$(PROJ_OBJ_DIR)" "$(PROJ_OBJ_DIR)" "$(PYTHON_DIR)" -m $(if $(DISABLE_AUTO_DEPENDENCIES),,-M)

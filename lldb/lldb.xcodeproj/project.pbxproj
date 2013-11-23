@@ -4827,6 +4827,12 @@
 					"$(inherited)",
 				);
 				OTHER_CPLUSPLUSFLAGS = (
+					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
+					"-fno-rtti",
+					"-Wglobal-constructors",
+					"$(OTHER_CFLAGS)",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
@@ -4836,11 +4842,15 @@
 					Carbon,
 					"-framework",
 					DebugSymbols,
-					"-lpython",
+					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
+					"-lpython2.7",
 					"-lllvmclang",
 					"-framework",
 					Foundation,
+					"-framework",
+					AppKit,
 					"-v",
+					"-Wl,-v",
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
@@ -4882,6 +4892,12 @@
 					"$(inherited)",
 				);
 				OTHER_CPLUSPLUSFLAGS = (
+					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
+					"-fno-rtti",
+					"-Wglobal-constructors",
+					"$(OTHER_CFLAGS)",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
@@ -4891,13 +4907,15 @@
 					Carbon,
 					"-framework",
 					DebugSymbols,
-					"-lpython",
+					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
+					"-lpython2.7",
 					"-lllvmclang",
 					"-framework",
 					Foundation,
 					"-framework",
 					AppKit,
 					"-v",
+					"-Wl,-v",
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
@@ -4986,6 +5004,13 @@
 				HEADER_SEARCH_PATHS = /usr/include/libxml2;
 				MACH_O_TYPE = staticlib;
 				OTHER_CPLUSPLUSFLAGS = (
+					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
+					"-fno-rtti",
+					"-Wglobal-constructors",
+					"$(OTHER_CFLAGS)",
+					"-DLLDB_USE_BUILTIN_DEMANGLER",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
@@ -5015,6 +5040,13 @@
 				HEADER_SEARCH_PATHS = /usr/include/libxml2;
 				MACH_O_TYPE = staticlib;
 				OTHER_CPLUSPLUSFLAGS = (
+					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
+					"-fno-rtti",
+					"-Wglobal-constructors",
+					"$(OTHER_CFLAGS)",
+					"-DLLDB_USE_BUILTIN_DEMANGLER",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
@@ -5044,6 +5076,13 @@
 				HEADER_SEARCH_PATHS = /usr/include/libxml2;
 				MACH_O_TYPE = staticlib;
 				OTHER_CPLUSPLUSFLAGS = (
+					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
+					"-fno-rtti",
+					"-Wglobal-constructors",
+					"$(OTHER_CFLAGS)",
+					"-DLLDB_USE_BUILTIN_DEMANGLER",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
@@ -5190,6 +5229,12 @@
 					"$(inherited)",
 				);
 				OTHER_CPLUSPLUSFLAGS = (
+					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
+					"-fno-rtti",
+					"-Wglobal-constructors",
+					"$(OTHER_CFLAGS)",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
@@ -5199,7 +5244,8 @@
 					Carbon,
 					"-framework",
 					DebugSymbols,
-					"-lpython",
+					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
+					"-lpython2.7",
 					"-lllvmclang",
 					"-framework",
 					Foundation,
@@ -5606,14 +5652,23 @@
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
 				);
+				OTHER_CFLAGS = (
+					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
+					"-flimit-debug-info",
+					"-Wparentheses",
+				);
+				"OTHER_CFLAGS[sdk=iphoneos*]" = (
+					"-flimit-debug-info",
+					"-Wparentheses",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"-lllvmclang",
-					"-lpython",
+					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
+					"-lpython2.7",
 					"-lxml2",
 					"-framework",
 					DebugSymbols,
-					"-framework",
-					Carbon,
 					"-framework",
 					Foundation,
 					"-framework",
@@ -5664,14 +5719,23 @@
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
 				);
+				OTHER_CFLAGS = (
+					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
+					"-flimit-debug-info",
+					"-Wparentheses",
+				);
+				"OTHER_CFLAGS[sdk=iphoneos*]" = (
+					"-flimit-debug-info",
+					"-Wparentheses",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"-lllvmclang",
-					"-lpython",
+					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
+					"-lpython2.7",
 					"-lxml2",
 					"-framework",
 					DebugSymbols,
-					"-framework",
-					Carbon,
 					"-framework",
 					Foundation,
 					"-framework",
@@ -5722,14 +5786,23 @@
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
 				);
+				OTHER_CFLAGS = (
+					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
+					"-flimit-debug-info",
+					"-Wparentheses",
+				);
+				"OTHER_CFLAGS[sdk=iphoneos*]" = (
+					"-flimit-debug-info",
+					"-Wparentheses",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"-lllvmclang",
-					"-lpython",
+					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
+					"-lpython2.7",
 					"-lxml2",
 					"-framework",
 					DebugSymbols,
-					"-framework",
-					Carbon,
 					"-framework",
 					Foundation,
 					"-framework",
@@ -5956,6 +6029,12 @@
 					"$(inherited)",
 				);
 				OTHER_CPLUSPLUSFLAGS = (
+					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
+					"-fno-rtti",
+					"-Wglobal-constructors",
+					"$(OTHER_CFLAGS)",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
@@ -5965,11 +6044,15 @@
 					Carbon,
 					"-framework",
 					DebugSymbols,
-					"-lpython",
+					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
+					"-lpython2.7",
 					"-lllvmclang",
 					"-framework",
 					Foundation,
+					"-framework",
+					AppKit,
 					"-v",
+					"-Wl,-v",
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
@@ -6012,6 +6095,13 @@
 				HEADER_SEARCH_PATHS = /usr/include/libxml2;
 				MACH_O_TYPE = staticlib;
 				OTHER_CPLUSPLUSFLAGS = (
+					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
+					"-fno-rtti",
+					"-Wglobal-constructors",
+					"$(OTHER_CFLAGS)",
+					"-DLLDB_USE_BUILTIN_DEMANGLER",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
@@ -6058,13 +6148,23 @@
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
 				);
+				OTHER_CFLAGS = (
+					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
+					"-flimit-debug-info",
+					"-Wparentheses",
+				);
+				"OTHER_CFLAGS[sdk=iphoneos*]" = (
+					"-flimit-debug-info",
+					"-Wparentheses",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"-lllvmclang",
-					"-lpython",
+					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
+					"-lpython2.7",
+					"-lxml2",
 					"-framework",
 					DebugSymbols,
-					"-framework",
-					Carbon,
 					"-framework",
 					Foundation,
 					"-framework",

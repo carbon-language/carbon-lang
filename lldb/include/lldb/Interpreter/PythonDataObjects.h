@@ -19,11 +19,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Flags.h"
 #include "lldb/Interpreter/OptionValue.h"
-#if defined (__APPLE__)
-#include <Python/Python.h>
-#else
 #include <Python.h>
-#endif
 
 namespace lldb_private {
     

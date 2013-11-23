@@ -359,20 +359,5 @@ then
     python ${current_dir}/modify-python-lldb.py ${CONFIG_BUILD_DIR}
 fi
 
-# Fix the "#include" statement in the swig output file
-
-if [ -f "${current_dir}/edit-swig-python-wrapper-file.py" ]
-then
-    if [ $MakefileCalled -eq 1 ]
-    then
-        python ${current_dir}/edit-swig-python-wrapper-file.py "${TARGET_DIR}"
-    else
-        python ${current_dir}/edit-swig-python-wrapper-file.py
-    fi
-    if [ -f "${swig_output_file}.edited" ]
-    then
-        mv "${swig_output_file}.edited" ${swig_output_file}
-    fi
-fi
 
 fi
