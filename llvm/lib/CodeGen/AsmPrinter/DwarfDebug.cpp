@@ -475,11 +475,11 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
   // If we have multiple ranges, emit them into the range section.
   if (Ranges.size() > 1) {
     // .debug_range section has not been laid out yet. Emit offset in
-    // .debug_range as a uint, size 4, for now. emitDIE will handle
-    // DW_AT_ranges appropriately.
-    TheCU->addSectionOffset(ScopeDIE, dwarf::DW_AT_ranges,
-                            DebugRangeSymbols.size() *
-                                Asm->getDataLayout().getPointerSize());
+    // .debug_range as a relocatable label. emitDIE will handle
+    // emitting it appropriately.
+    unsigned Offset = DebugRangeSymbols.size();
+    TheCU->addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges,
+                           Asm->GetTempSymbol("debug_ranges", Offset));
     for (SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin(),
                                                     RE = Ranges.end();
          RI != RE; ++RI) {
@@ -531,11 +531,11 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
 
   if (Ranges.size() > 1) {
     // .debug_range section has not been laid out yet. Emit offset in
-    // .debug_range as a uint, size 4, for now. emitDIE will handle
-    // DW_AT_ranges appropriately.
-    TheCU->addSectionOffset(ScopeDIE, dwarf::DW_AT_ranges,
-                            DebugRangeSymbols.size() *
-                                Asm->getDataLayout().getPointerSize());
+    // .debug_range as a relocatable label. emitDIE will handle
+    // emitting it appropriately.
+    unsigned Offset = DebugRangeSymbols.size();
+    TheCU->addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges,
+                           Asm->GetTempSymbol("debug_ranges", Offset));
     for (SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin(),
                                                     RE = Ranges.end();
          RI != RE; ++RI) {
@@ -2083,14 +2083,12 @@ void DwarfDebug::emitDIE(DIE *Die, ArrayRef<DIEAbbrev *> Abbrevs) {
     }
     case dwarf::DW_AT_ranges: {
       // DW_AT_range Value encodes offset in debug_range section.
-      DIEInteger *V = cast<DIEInteger>(Values[i]);
+      DIELabel *V = cast<DIELabel>(Values[i]);
 
-      if (Asm->MAI->doesDwarfUseRelocationsAcrossSections()) {
-        Asm->EmitLabelPlusOffset(DwarfDebugRangeSectionSym, V->getValue(), 4);
-      } else {
-        Asm->EmitLabelOffsetDifference(DwarfDebugRangeSectionSym, V->getValue(),
-                                       DwarfDebugRangeSectionSym, 4);
-      }
+      if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
+        Asm->EmitSectionOffset(V->getValue(), DwarfDebugRangeSectionSym);
+      else
+        Asm->EmitLabelDifference(V->getValue(), DwarfDebugRangeSectionSym, 4);
       break;
     }
     case dwarf::DW_AT_location: {
@@ -2928,12 +2926,15 @@ void DwarfDebug::emitDebugRanges() {
   Asm->OutStreamer.SwitchSection(
       Asm->getObjFileLowering().getDwarfRangesSection());
   unsigned char Size = Asm->getDataLayout().getPointerSize();
-  for (SmallVectorImpl<const MCSymbol *>::iterator
-           I = DebugRangeSymbols.begin(),
-           E = DebugRangeSymbols.end();
-       I != E; ++I) {
-    if (*I)
-      Asm->OutStreamer.EmitSymbolValue(const_cast<MCSymbol *>(*I), Size);
+  for (uint32_t i = 0, e = DebugRangeSymbols.size(); i < e; ++i) {
+    // Only emit a symbol for every range pair for now.
+    // FIXME: Make this per range list.
+    if ((i % 2) == 0)
+      Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_ranges", i));
+
+    const MCSymbol *I = DebugRangeSymbols[i];
+    if (I)
+      Asm->OutStreamer.EmitSymbolValue(I, Size);
     else
       Asm->OutStreamer.EmitIntValue(0, Size);
   }
