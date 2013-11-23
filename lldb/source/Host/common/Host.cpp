@@ -1910,11 +1910,9 @@ Host::MakeDirectory (const char* path, uint32_t file_permissions)
     Error error;
     if (path && path[0])
     {
-        printf("mkdir('%s', %o) ", path, file_permissions);
         if (::mkdir(path, file_permissions) != 0)
         {
             error.SetErrorToErrno();
-            printf(" %i (%s)\n", error.GetError(), error.AsCString());
             switch (error.GetError())
             {
             case ENOENT:
@@ -1928,17 +1926,10 @@ Host::MakeDirectory (const char* path, uint32_t file_permissions)
                         if (error2.Success())
                         {
                             // Try and make the directory again now that the parent directory was made successfully
-                            printf("mkdir('%s', %o) ", path, file_permissions);
                             if (::mkdir(path, file_permissions) == 0)
-                            {
-                                puts("success");
                                 error.Clear();
-                            }
                             else
-                            {
                                 error.SetErrorToErrno();
-                                printf(" %i (%s)\n", error.GetError(), error.AsCString());
-                            }
                         }
                     }
                 }
@@ -1951,10 +1942,6 @@ Host::MakeDirectory (const char* path, uint32_t file_permissions)
                 }
                 break;
             }
-        }
-        else
-        {
-            puts("success");
         }
     }
     else
