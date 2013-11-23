@@ -2720,6 +2720,10 @@ TEST_F(FormatTest, ExpressionIndentationBreakingBeforeOperators) {
       "    + sizeof(int32_t) // Offset of CU in the .debug_info section\n"
       "    + sizeof(int8_t)  // Pointer Size (in bytes)\n"
       "    + sizeof(int8_t); // Segment Size (in bytes)");
+
+  verifyFormat("return boost::fusion::at_c<0>(iiii).second\n"
+               "       == boost::fusion::at_c<1>(iiii).second;",
+               Style);
 }
 
 TEST_F(FormatTest, ConstructorInitializers) {
