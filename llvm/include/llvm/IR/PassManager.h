@@ -733,6 +733,50 @@ private:
   FunctionAnalysisManager &FAM;
 };
 
+/// \brief A function analysis which acts as a proxy for a module analysis
+/// manager.
+///
+/// This primarily provides an accessor to a parent module analysis manager to
+/// function passes. Only the const interface of the module analysis manager is
+/// provided to indicate that once inside of a function analysis pass you
+/// cannot request a module analysis to actually run. Instead, the user must
+/// rely on the \c getCachedResult API.
+///
+/// This proxy *doesn't* manage the invalidation in any way. That is handled by
+/// the recursive return path of each layer of the pass manager and the
+/// returned PreservedAnalysis set.
+class ModuleAnalysisManagerFunctionProxy {
+public:
+  /// \brief Result proxy object for \c ModuleAnalysisManagerFunctionProxy.
+  class Result {
+  public:
+    Result(const ModuleAnalysisManager &MAM) : MAM(MAM) {}
+
+    const ModuleAnalysisManager &getManager() const { return MAM; }
+
+    /// \brief Handle invalidation by ignoring it, this pass is immutable.
+    bool invalidate(Function *) { return false; }
+
+  private:
+    const ModuleAnalysisManager &MAM;
+  };
+
+  static void *ID() { return (void *)&PassID; }
+
+  ModuleAnalysisManagerFunctionProxy(const ModuleAnalysisManager &MAM)
+      : MAM(MAM) {}
+
+  /// \brief Run the analysis pass and create our proxy result object.
+  /// Nothing to see here, it just forwards the \c MAM reference into the
+  /// result.
+  Result run(Function *) { return Result(MAM); }
+
+private:
+  static char PassID;
+
+  const ModuleAnalysisManager &MAM;
+};
+
 /// \brief Trivial adaptor that maps from a module to its functions.
 ///
 /// Designed to allow composition of a FunctionPass(Manager) and
