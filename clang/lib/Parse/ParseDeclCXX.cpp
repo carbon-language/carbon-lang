@@ -195,7 +195,7 @@ void Parser::ParseInnerNamespace(std::vector<SourceLocation>& IdentLoc,
                                  ParsedAttributes& attrs,
                                  BalancedDelimiterTracker &Tracker) {
   if (index == Ident.size()) {
-    while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
+    while (Tok.isNot(tok::r_brace) && !isEofOrEom()) {
       ParsedAttributesWithRange attrs(AttrFactory);
       MaybeParseCXX11Attributes(attrs);
       MaybeParseMicrosoftAttributes(attrs);
@@ -318,7 +318,7 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, unsigned Context) {
 
   BalancedDelimiterTracker T(*this, tok::l_brace);
   T.consumeOpen();
-  while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
+  while (Tok.isNot(tok::r_brace) && !isEofOrEom()) {
     ParsedAttributesWithRange attrs(AttrFactory);
     MaybeParseCXX11Attributes(attrs);
     MaybeParseMicrosoftAttributes(attrs);
@@ -2452,7 +2452,7 @@ ExprResult Parser::ParseCXXMemberInitializer(Decl *D, bool IsFunction,
       // a top-level comma always ends the initializer expression.
       const Token &Next = NextToken();
       if (IsFunction || Next.is(tok::semi) || Next.is(tok::comma) ||
-           Next.is(tok::eof)) {
+          Next.is(tok::eof)) {
         if (IsFunction)
           Diag(ConsumeToken(), diag::err_default_delete_in_multiple_declaration)
             << 1 /* delete */;
@@ -2597,7 +2597,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 
   if (TagDecl) {
     // While we still have something to read, read the member-declarations.
-    while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
+    while (Tok.isNot(tok::r_brace) && !isEofOrEom()) {
       // Each iteration of this loop reads one member-declaration.
 
       if (getLangOpts().MicrosoftExt && (Tok.is(tok::kw___if_exists) ||
@@ -3420,7 +3420,7 @@ void Parser::ParseMicrosoftIfExistsClassDeclaration(DeclSpec::TST TagType,
     return;
   }
 
-  while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
+  while (Tok.isNot(tok::r_brace) && !isEofOrEom()) {
     // __if_exists, __if_not_exists can nest.
     if ((Tok.is(tok::kw___if_exists) || Tok.is(tok::kw___if_not_exists))) {
       ParseMicrosoftIfExistsClassDeclaration((DeclSpec::TST)TagType, CurAS);

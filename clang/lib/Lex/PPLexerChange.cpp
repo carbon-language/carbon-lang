@@ -69,7 +69,7 @@ PreprocessorLexer *Preprocessor::getCurrentFileLexer() const {
 /// EnterSourceFile - Add a source file to the top of the include stack and
 /// start lexing tokens from it instead of the current buffer.
 void Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir,
-                                   SourceLocation Loc) {
+                                   SourceLocation Loc, bool IsSubmodule) {
   assert(!CurTokenLexer && "Cannot #include a file inside a macro!");
   ++NumEnteredSourceFiles;
 
@@ -78,7 +78,7 @@ void Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir,
 
   if (PTH) {
     if (PTHLexer *PL = PTH->CreateLexer(FID)) {
-      EnterSourceFileWithPTH(PL, CurDir);
+      EnterSourceFileWithPTH(PL, CurDir, IsSubmodule);
       return;
     }
   }
@@ -101,14 +101,16 @@ void Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir,
         CodeCompletionFileLoc.getLocWithOffset(CodeCompletionOffset);
   }
 
-  EnterSourceFileWithLexer(new Lexer(FID, InputFile, *this), CurDir);
+  EnterSourceFileWithLexer(new Lexer(FID, InputFile, *this), CurDir,
+                           IsSubmodule);
   return;
 }
 
 /// EnterSourceFileWithLexer - Add a source file to the top of the include stack
 ///  and start lexing tokens from it instead of the current buffer.
 void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
-                                            const DirectoryLookup *CurDir) {
+                                            const DirectoryLookup *CurDir,
+                                            bool IsSubmodule) {
 
   // Add the current lexer to the include stack.
   if (CurPPLexer || CurTokenLexer)
@@ -117,6 +119,7 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
   CurLexer.reset(TheLexer);
   CurPPLexer = TheLexer;
   CurDirLookup = CurDir;
+  CurIsSubmodule = IsSubmodule;
   if (CurLexerKind != CLK_LexAfterModuleImport)
     CurLexerKind = CLK_Lexer;
   
@@ -133,7 +136,8 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
 /// EnterSourceFileWithPTH - Add a source file to the top of the include stack
 /// and start getting tokens from it using the PTH cache.
 void Preprocessor::EnterSourceFileWithPTH(PTHLexer *PL,
-                                          const DirectoryLookup *CurDir) {
+                                          const DirectoryLookup *CurDir,
+                                          bool IsSubmodule) {
 
   if (CurPPLexer || CurTokenLexer)
     PushIncludeMacroStack();
@@ -141,6 +145,7 @@ void Preprocessor::EnterSourceFileWithPTH(PTHLexer *PL,
   CurDirLookup = CurDir;
   CurPTHLexer.reset(PL);
   CurPPLexer = CurPTHLexer.get();
+  CurIsSubmodule = IsSubmodule;
   if (CurLexerKind != CLK_LexAfterModuleImport)
     CurLexerKind = CLK_PTHLexer;
   
@@ -244,6 +249,29 @@ void Preprocessor::PropagateLineStartLeadingSpaceInfo(Token &Result) {
   // but it might if they're empty?
 }
 
+/// \brief Determine the location to use as the end of the buffer for a lexer.
+///
+/// If the file ends with a newline, form the EOF token on the newline itself,
+/// rather than "on the line following it", which doesn't exist.  This makes
+/// diagnostics relating to the end of file include the last file that the user
+/// actually typed, which is goodness.
+const char *Preprocessor::getCurLexerEndPos() {
+  const char *EndPos = CurLexer->BufferEnd;
+  if (EndPos != CurLexer->BufferStart &&
+      (EndPos[-1] == '\n' || EndPos[-1] == '\r')) {
+    --EndPos;
+
+    // Handle \n\r and \r\n:
+    if (EndPos != CurLexer->BufferStart &&
+        (EndPos[-1] == '\n' || EndPos[-1] == '\r') &&
+        EndPos[-1] != EndPos[0])
+      --EndPos;
+  }
+
+  return EndPos;
+}
+
+
 /// HandleEndOfFile - This callback is invoked when the lexer hits the end of
 /// the current file.  This either returns the EOF token or pops a level off
 /// the include stack and keeps going.
@@ -342,7 +370,19 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     FileID ExitedFID;
     if (Callbacks && !isEndOfMacro && CurPPLexer)
       ExitedFID = CurPPLexer->getFileID();
-    
+
+    // If this file corresponded to a submodule, notify the parser that we've
+    // left that submodule.
+    bool LeavingSubmodule = CurIsSubmodule && CurLexer;
+    if (LeavingSubmodule) {
+      const char *EndPos = getCurLexerEndPos();
+      Result.startToken();
+      CurLexer->BufferPtr = EndPos;
+      CurLexer->FormTokenWithChars(Result, EndPos, tok::annot_module_end);
+      Result.setAnnotationEndLoc(Result.getLocation());
+      Result.setAnnotationValue(0);
+    }
+
     // We're done with the #included file.
     RemoveTopOfLexerStack();
 
@@ -357,27 +397,13 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
                              PPCallbacks::ExitFile, FileType, ExitedFID);
     }
 
-    // Client should lex another token.
-    return false;
+    // Client should lex another token unless we generated an EOM.
+    return LeavingSubmodule;
   }
 
-  // If the file ends with a newline, form the EOF token on the newline itself,
-  // rather than "on the line following it", which doesn't exist.  This makes
-  // diagnostics relating to the end of file include the last file that the user
-  // actually typed, which is goodness.
+  // If this is the end of the main file, form an EOF token.
   if (CurLexer) {
-    const char *EndPos = CurLexer->BufferEnd;
-    if (EndPos != CurLexer->BufferStart &&
-        (EndPos[-1] == '\n' || EndPos[-1] == '\r')) {
-      --EndPos;
-
-      // Handle \n\r and \r\n:
-      if (EndPos != CurLexer->BufferStart &&
-          (EndPos[-1] == '\n' || EndPos[-1] == '\r') &&
-          EndPos[-1] != EndPos[0])
-        --EndPos;
-    }
-
+    const char *EndPos = getCurLexerEndPos();
     Result.startToken();
     CurLexer->BufferPtr = EndPos;
     CurLexer->FormTokenWithChars(Result, EndPos, tok::eof);

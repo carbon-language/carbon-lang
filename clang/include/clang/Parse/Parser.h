@@ -73,7 +73,7 @@ class Parser : public CodeCompletionHandler {
   SourceLocation PrevTokLocation;
 
   unsigned short ParenCount, BracketCount, BraceCount;
-  
+
   /// Actions - These are the callbacks we invoke as we parse various constructs
   /// in the file.
   Sema &Actions;
@@ -406,6 +406,14 @@ private:
       PP.setCodeCompletionReached();
     // Cut off parsing by acting as if we reached the end-of-file.
     Tok.setKind(tok::eof);
+  }
+
+  /// \brief Determine if we're at the end of the file or at a transition
+  /// between modules.
+  bool isEofOrEom() {
+    tok::TokenKind Kind = Tok.getKind();
+    return Kind == tok::eof || Kind == tok::annot_module_begin ||
+           Kind == tok::annot_module_end || Kind == tok::annot_module_include;
   }
 
   /// \brief Handle the annotation token produced for #pragma unused(...)

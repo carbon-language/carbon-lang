@@ -512,7 +512,7 @@ bool Parser::ParseMicrosoftIfExistsBraceInitializer(ExprVector &InitExprs,
     return false;
   }
 
-  while (Tok.isNot(tok::eof)) {
+  while (!isEofOrEom()) {
     trailingComma = false;
     // If we know that this cannot be a designation, just parse the nested
     // initializer directly.

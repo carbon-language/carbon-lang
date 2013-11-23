@@ -580,6 +580,9 @@ bool Parser::ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
 
     switch (Tok.getKind()) {
     case tok::eof:
+    case tok::annot_module_begin:
+    case tok::annot_module_end:
+    case tok::annot_module_include:
       // Ran out of tokens.
       return false;
 
@@ -965,6 +968,9 @@ bool Parser::ConsumeAndStoreInitializer(CachedTokens &Toks,
       goto consume_token;
 
     case tok::eof:
+    case tok::annot_module_begin:
+    case tok::annot_module_end:
+    case tok::annot_module_include:
       // Ran out of tokens.
       return false;
 

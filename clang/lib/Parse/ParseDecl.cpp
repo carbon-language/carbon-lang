@@ -1561,6 +1561,9 @@ void Parser::SkipMalformedDecl() {
       break;
 
     case tok::eof:
+    case tok::annot_module_begin:
+    case tok::annot_module_end:
+    case tok::annot_module_include:
       return;
 
     default:
@@ -3371,7 +3374,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
   SmallVector<Decl *, 32> FieldDecls;
 
   // While we still have something to read, read the declarations in the struct.
-  while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
+  while (Tok.isNot(tok::r_brace) && !isEofOrEom()) {
     // Each iteration of this loop reads one struct-declaration.
 
     // Check for extraneous top-level semicolon.

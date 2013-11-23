@@ -1389,6 +1389,19 @@ bool Preprocessor::ConcatenateIncludeName(
   return true;
 }
 
+/// \brief Push a token onto the token stream containing an annotation.
+static void EnterAnnotationToken(Preprocessor &PP,
+                                 SourceLocation Begin, SourceLocation End,
+                                 tok::TokenKind Kind, void *AnnotationVal) {
+  Token *Tok = new Token[1];
+  Tok[0].startToken();
+  Tok[0].setKind(Kind);
+  Tok[0].setLocation(Begin);
+  Tok[0].setAnnotationEndLoc(End);
+  Tok[0].setAnnotationValue(AnnotationVal);
+  PP.EnterTokenStream(Tok, 1, true, true);
+}
+
 /// HandleIncludeDirective - The "\#include" tokens have just been read, read
 /// the file to be included from the lexer, then include it!  This is a common
 /// routine with functionality shared between \#include, \#include_next and
@@ -1590,7 +1603,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     // include directive maps to.
     bool BuildingImportedModule
       = Path[0].first->getName() == getLangOpts().CurrentModule;
-    
+
     if (!BuildingImportedModule && getLangOpts().ObjC2) {
       // If we're not building the imported module, warn that we're going
       // to automatically turn this inclusion directive into a module import.
@@ -1639,13 +1652,8 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
         // make the module visible.
         // FIXME: Produce this as the current token directly, rather than
         // allocating a new token for it.
-        Token *Tok = new Token[1];
-        Tok[0].startToken();
-        Tok[0].setKind(tok::annot_module_include);
-        Tok[0].setLocation(HashLoc);
-        Tok[0].setAnnotationEndLoc(End);
-        Tok[0].setAnnotationValue(Imported);
-        EnterTokenStream(Tok, 1, true, true);
+        EnterAnnotationToken(*this, HashLoc, End, tok::annot_module_include,
+                             Imported);
       }
       return;
     }
@@ -1692,8 +1700,23 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   FileID FID = SourceMgr.createFileID(File, IncludePos, FileCharacter);
   assert(!FID.isInvalid() && "Expected valid file ID");
 
-  // Finally, if all is good, enter the new file!
-  EnterSourceFile(FID, CurDir, FilenameTok.getLocation());
+  // Determine if we're switching to building a new submodule, and which one.
+  ModuleMap::KnownHeader BuildingModule;
+  if (getLangOpts().Modules && !getLangOpts().CurrentModule.empty()) {
+    Module *RequestingModule = getModuleForLocation(FilenameLoc);
+    BuildingModule =
+        HeaderInfo.getModuleMap().findModuleForHeader(File, RequestingModule);
+  }
+
+  // If all is good, enter the new file!
+  EnterSourceFile(FID, CurDir, FilenameTok.getLocation(),
+                  static_cast<bool>(BuildingModule));
+
+  // If we're walking into another part of the same module, let the parser
+  // know that any future declarations are within that other submodule.
+  if (BuildingModule)
+    EnterAnnotationToken(*this, HashLoc, End, tok::annot_module_begin,
+                         BuildingModule.getModule());
 }
 
 /// HandleIncludeNextDirective - Implements \#include_next.
