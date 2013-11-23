@@ -48,8 +48,11 @@ unsigned CommaSeparatedList::format(LineState &State,
 
   // Find the best ColumnFormat, i.e. the best number of columns to use.
   const ColumnFormat *Format = getColumnFormat(RemainingCodePoints);
+  // If no ColumnFormat can be used, the braced list would generally be
+  // bin-packed. Add a severe penalty to this so that column layouts are
+  // prefered if possible.
   if (!Format)
-    return 0;
+    return 10000;
 
   // Format the entire list.
   unsigned Penalty = 0;

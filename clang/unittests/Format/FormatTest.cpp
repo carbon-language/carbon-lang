@@ -4698,6 +4698,14 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
     verifyFormat(
         "std::this_thread::sleep_for(\n"
         "    std::chrono::nanoseconds{ std::chrono::seconds{ 1 } } / 5);");
+    verifyFormat("std::vector<MyValues> aaaaaaaaaaaaaaaaaaa{\n"
+                 "  aaaaaaa,      aaaaaaaaaa,\n"
+                 "  aaaaa,        aaaaaaaaaaaaaaa,\n"
+                 "  aaa,          aaaaaaaaaa,\n"
+                 "  a,            aaaaaaaaaaaaaaaaaaaaa,\n"
+                 "  aaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaa,\n"
+                 "  aaaaaaa,      a\n"
+                 "};");
 
     FormatStyle NoSpaces = getLLVMStyle();
     NoSpaces.Cpp11BracedListStyle = true;
