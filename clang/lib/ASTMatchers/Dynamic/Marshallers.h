@@ -76,25 +76,25 @@ template <> struct ArgTypeTraits<unsigned> {
   }
 };
 
-/// \brief Generic MatcherCreate interface.
+/// \brief Matcher descriptor interface.
 ///
-/// Provides a \c run() method that constructs the matcher from the provided
+/// Provides a \c create() method that constructs the matcher from the provided
 /// arguments.
-class MatcherCreateCallback {
+class MatcherDescriptor {
 public:
-  virtual ~MatcherCreateCallback() {}
-  virtual VariantMatcher run(const SourceRange &NameRange,
-                             ArrayRef<ParserValue> Args,
-                             Diagnostics *Error) const = 0;
+  virtual ~MatcherDescriptor() {}
+  virtual VariantMatcher create(const SourceRange &NameRange,
+                                ArrayRef<ParserValue> Args,
+                                Diagnostics *Error) const = 0;
 };
 
 /// \brief Simple callback implementation. Marshaller and function are provided.
 ///
 /// This class wraps a function of arbitrary signature and a marshaller
-/// function into a MatcherCreateCallback.
+/// function into a MatcherDescriptor.
 /// The marshaller is in charge of taking the VariantValue arguments, checking
 /// their types, unpacking them and calling the underlying function.
-class FixedArgCountMatcherCreateCallback : public MatcherCreateCallback {
+class FixedArgCountMatcherDescriptor : public MatcherDescriptor {
 public:
   typedef VariantMatcher (*MarshallerType)(void (*Func)(),
                                            StringRef MatcherName,
@@ -105,12 +105,12 @@ public:
   /// \param Marshaller Function to unpack the arguments and call \c Func
   /// \param Func Matcher construct function. This is the function that
   ///   compile-time matcher expressions would use to create the matcher.
-  FixedArgCountMatcherCreateCallback(MarshallerType Marshaller, void (*Func)(),
-                                     StringRef MatcherName)
+  FixedArgCountMatcherDescriptor(MarshallerType Marshaller, void (*Func)(),
+                                 StringRef MatcherName)
       : Marshaller(Marshaller), Func(Func), MatcherName(MatcherName) {}
 
-  VariantMatcher run(const SourceRange &NameRange, ArrayRef<ParserValue> Args,
-                     Diagnostics *Error) const {
+  VariantMatcher create(const SourceRange &NameRange,
+                        ArrayRef<ParserValue> Args, Diagnostics *Error) const {
     return Marshaller(Func, MatcherName, NameRange, Args, Error);
   }
 
@@ -123,22 +123,22 @@ private:
 /// \brief Simple callback implementation. Free function is wrapped.
 ///
 /// This class simply wraps a free function with the right signature to export
-/// it as a MatcherCreateCallback.
+/// it as a MatcherDescriptor.
 /// This allows us to have one implementation of the interface for as many free
 /// functions as we want, reducing the number of symbols and size of the
 /// object file.
-class FreeFuncMatcherCreateCallback : public MatcherCreateCallback {
+class FreeFuncMatcherDescriptor : public MatcherDescriptor {
 public:
   typedef VariantMatcher (*RunFunc)(StringRef MatcherName,
                                     const SourceRange &NameRange,
                                     ArrayRef<ParserValue> Args,
                                     Diagnostics *Error);
 
-  FreeFuncMatcherCreateCallback(RunFunc Func, StringRef MatcherName)
+  FreeFuncMatcherDescriptor(RunFunc Func, StringRef MatcherName)
       : Func(Func), MatcherName(MatcherName.str()) {}
 
-  VariantMatcher run(const SourceRange &NameRange, ArrayRef<ParserValue> Args,
-                     Diagnostics *Error) const {
+  VariantMatcher create(const SourceRange &NameRange,
+                        ArrayRef<ParserValue> Args, Diagnostics *Error) const {
     return Func(MatcherName, NameRange, Args, Error);
   }
 
@@ -243,9 +243,8 @@ static VariantMatcher matcherMarshall2(void (*Func)(), StringRef MatcherName,
 template <typename ResultT, typename ArgT,
           ResultT (*Func)(ArrayRef<const ArgT *>)>
 VariantMatcher
-variadicMatcherCreateCallback(StringRef MatcherName,
-                              const SourceRange &NameRange,
-                              ArrayRef<ParserValue> Args, Diagnostics *Error) {
+variadicMatcherDescriptor(StringRef MatcherName, const SourceRange &NameRange,
+                          ArrayRef<ParserValue> Args, Diagnostics *Error) {
   ArgT **InnerArgs = new ArgT *[Args.size()]();
 
   bool HasError = false;
@@ -282,7 +281,7 @@ template <template <typename ToArg, typename FromArg> class ArgumentAdapterT,
 class AdaptativeOverloadCollector {
 public:
   AdaptativeOverloadCollector(StringRef Name,
-                              std::vector<MatcherCreateCallback *> &Out)
+                              std::vector<MatcherDescriptor *> &Out)
       : Name(Name), Out(Out) {
     collect(FromTypes());
   }
@@ -296,33 +295,34 @@ private:
 
   /// \brief Recursive case. Get the overload for the head of the list, and
   ///   recurse to the tail.
-  template <typename FromTypeList> inline void collect(FromTypeList);
+  template <typename FromTypeList>
+  inline void collect(FromTypeList);
 
   const StringRef Name;
-  std::vector<MatcherCreateCallback *> &Out;
+  std::vector<MatcherDescriptor *> &Out;
 };
 
-/// \brief MatcherCreateCallback that wraps multiple "overloads" of the same
+/// \brief MatcherDescriptor that wraps multiple "overloads" of the same
 ///   matcher.
 ///
 /// It will try every overload and generate appropriate errors for when none or
 /// more than one overloads match the arguments.
-class OverloadedMatcherCreateCallback : public MatcherCreateCallback {
+class OverloadedMatcherDescriptor : public MatcherDescriptor {
 public:
-  OverloadedMatcherCreateCallback(ArrayRef<MatcherCreateCallback *> Callbacks)
+  OverloadedMatcherDescriptor(ArrayRef<MatcherDescriptor *> Callbacks)
       : Overloads(Callbacks) {}
 
-  virtual ~OverloadedMatcherCreateCallback() {
+  virtual ~OverloadedMatcherDescriptor() {
     llvm::DeleteContainerPointers(Overloads);
   }
 
-  virtual VariantMatcher run(const SourceRange &NameRange,
-                             ArrayRef<ParserValue> Args,
-                             Diagnostics *Error) const {
+  virtual VariantMatcher create(const SourceRange &NameRange,
+                                ArrayRef<ParserValue> Args,
+                                Diagnostics *Error) const {
     std::vector<VariantMatcher> Constructed;
     Diagnostics::OverloadContext Ctx(Error);
     for (size_t i = 0, e = Overloads.size(); i != e; ++i) {
-      VariantMatcher SubMatcher = Overloads[i]->run(NameRange, Args, Error);
+      VariantMatcher SubMatcher = Overloads[i]->create(NameRange, Args, Error);
       if (!SubMatcher.isNull()) {
         Constructed.push_back(SubMatcher);
       }
@@ -340,21 +340,21 @@ public:
   }
 
 private:
-  std::vector<MatcherCreateCallback *> Overloads;
+  std::vector<MatcherDescriptor *> Overloads;
 };
 
 /// \brief Variadic operator marshaller function.
-class VariadicOperatorMatcherCreateCallback : public MatcherCreateCallback {
+class VariadicOperatorMatcherDescriptor : public MatcherDescriptor {
 public:
   typedef ast_matchers::internal::VariadicOperatorFunction VarFunc;
-  VariadicOperatorMatcherCreateCallback(unsigned MinCount, unsigned MaxCount,
-                                        VarFunc Func, StringRef MatcherName)
+  VariadicOperatorMatcherDescriptor(unsigned MinCount, unsigned MaxCount,
+                                    VarFunc Func, StringRef MatcherName)
       : MinCount(MinCount), MaxCount(MaxCount), Func(Func),
         MatcherName(MatcherName) {}
 
-  virtual VariantMatcher run(const SourceRange &NameRange,
-                             ArrayRef<ParserValue> Args,
-                             Diagnostics *Error) const {
+  virtual VariantMatcher create(const SourceRange &NameRange,
+                                ArrayRef<ParserValue> Args,
+                                Diagnostics *Error) const {
     if (Args.size() < MinCount || MaxCount < Args.size()) {
       const std::string MaxStr =
           (MaxCount == UINT_MAX ? "" : Twine(MaxCount)).str();
@@ -390,28 +390,28 @@ private:
 
 /// \brief 0-arg overload
 template <typename ReturnType>
-MatcherCreateCallback *makeMatcherAutoMarshall(ReturnType (*Func)(),
-                                               StringRef MatcherName) {
-  return new FixedArgCountMatcherCreateCallback(
-      matcherMarshall0<ReturnType>, reinterpret_cast<void (*)()>(Func),
-      MatcherName);
+MatcherDescriptor *makeMatcherAutoMarshall(ReturnType (*Func)(),
+                                           StringRef MatcherName) {
+  return new FixedArgCountMatcherDescriptor(matcherMarshall0<ReturnType>,
+                                            reinterpret_cast<void (*)()>(Func),
+                                            MatcherName);
 }
 
 /// \brief 1-arg overload
 template <typename ReturnType, typename ArgType1>
-MatcherCreateCallback *makeMatcherAutoMarshall(ReturnType (*Func)(ArgType1),
-                                               StringRef MatcherName) {
-  return new FixedArgCountMatcherCreateCallback(
+MatcherDescriptor *makeMatcherAutoMarshall(ReturnType (*Func)(ArgType1),
+                                           StringRef MatcherName) {
+  return new FixedArgCountMatcherDescriptor(
       matcherMarshall1<ReturnType, ArgType1>,
       reinterpret_cast<void (*)()>(Func), MatcherName);
 }
 
 /// \brief 2-arg overload
 template <typename ReturnType, typename ArgType1, typename ArgType2>
-MatcherCreateCallback *makeMatcherAutoMarshall(ReturnType (*Func)(ArgType1,
-                                                                  ArgType2),
-                                               StringRef MatcherName) {
-  return new FixedArgCountMatcherCreateCallback(
+MatcherDescriptor *makeMatcherAutoMarshall(ReturnType (*Func)(ArgType1,
+                                                              ArgType2),
+                                           StringRef MatcherName) {
+  return new FixedArgCountMatcherDescriptor(
       matcherMarshall2<ReturnType, ArgType1, ArgType2>,
       reinterpret_cast<void (*)()>(Func), MatcherName);
 }
@@ -419,32 +419,31 @@ MatcherCreateCallback *makeMatcherAutoMarshall(ReturnType (*Func)(ArgType1,
 /// \brief Variadic overload.
 template <typename ResultT, typename ArgT,
           ResultT (*Func)(ArrayRef<const ArgT *>)>
-MatcherCreateCallback *
+MatcherDescriptor *
 makeMatcherAutoMarshall(llvm::VariadicFunction<ResultT, ArgT, Func> VarFunc,
                         StringRef MatcherName) {
-  return new FreeFuncMatcherCreateCallback(
-      &variadicMatcherCreateCallback<ResultT, ArgT, Func>, MatcherName);
+  return new FreeFuncMatcherDescriptor(
+      &variadicMatcherDescriptor<ResultT, ArgT, Func>, MatcherName);
 }
 
 /// \brief Argument adaptative overload.
 template <template <typename ToArg, typename FromArg> class ArgumentAdapterT,
           typename FromTypes, typename ToTypes>
-MatcherCreateCallback *
+MatcherDescriptor *
 makeMatcherAutoMarshall(ast_matchers::internal::ArgumentAdaptingMatcherFunc<
                             ArgumentAdapterT, FromTypes, ToTypes>,
                         StringRef MatcherName) {
-  std::vector<MatcherCreateCallback *> Overloads;
+  std::vector<MatcherDescriptor *> Overloads;
   AdaptativeOverloadCollector<ArgumentAdapterT, FromTypes, ToTypes>(MatcherName,
                                                                     Overloads);
-  return new OverloadedMatcherCreateCallback(Overloads);
+  return new OverloadedMatcherDescriptor(Overloads);
 }
 
 template <template <typename ToArg, typename FromArg> class ArgumentAdapterT,
           typename FromTypes, typename ToTypes>
 template <typename FromTypeList>
-inline void
-AdaptativeOverloadCollector<ArgumentAdapterT, FromTypes, ToTypes>::collect(
-    FromTypeList) {
+inline void AdaptativeOverloadCollector<ArgumentAdapterT, FromTypes,
+                                        ToTypes>::collect(FromTypeList) {
   Out.push_back(makeMatcherAutoMarshall(
       &AdaptativeFunc::template create<typename FromTypeList::head>, Name));
   collect(typename FromTypeList::tail());
@@ -452,12 +451,12 @@ AdaptativeOverloadCollector<ArgumentAdapterT, FromTypes, ToTypes>::collect(
 
 /// \brief Variadic operator overload.
 template <unsigned MinCount, unsigned MaxCount>
-MatcherCreateCallback *
+MatcherDescriptor *
 makeMatcherAutoMarshall(ast_matchers::internal::VariadicOperatorMatcherFunc<
                             MinCount, MaxCount> Func,
                         StringRef MatcherName) {
-  return new VariadicOperatorMatcherCreateCallback(MinCount, MaxCount,
-                                                   Func.Func, MatcherName);
+  return new VariadicOperatorMatcherDescriptor(MinCount, MaxCount, Func.Func,
+                                               MatcherName);
 }
 
 }  // namespace internal

@@ -27,9 +27,9 @@ namespace ast_matchers {
 namespace dynamic {
 namespace {
 
-using internal::MatcherCreateCallback;
+using internal::MatcherDescriptor;
 
-typedef llvm::StringMap<const MatcherCreateCallback *> ConstructorMap;
+typedef llvm::StringMap<const MatcherDescriptor *> ConstructorMap;
 class RegistryMaps {
 public:
   RegistryMaps();
@@ -38,12 +38,12 @@ public:
   const ConstructorMap &constructors() const { return Constructors; }
 
 private:
-  void registerMatcher(StringRef MatcherName, MatcherCreateCallback *Callback);
+  void registerMatcher(StringRef MatcherName, MatcherDescriptor *Callback);
   ConstructorMap Constructors;
 };
 
 void RegistryMaps::registerMatcher(StringRef MatcherName,
-                                   MatcherCreateCallback *Callback) {
+                                   MatcherDescriptor *Callback) {
   assert(Constructors.find(MatcherName) == Constructors.end());
   Constructors[MatcherName] = Callback;
 }
@@ -58,14 +58,14 @@ void RegistryMaps::registerMatcher(StringRef MatcherName,
 
 #define REGISTER_OVERLOADED_2(name)                                            \
   do {                                                                         \
-    MatcherCreateCallback *Callbacks[] = {                                     \
+    MatcherDescriptor *Callbacks[] = {                                         \
       internal::makeMatcherAutoMarshall(SPECIFIC_MATCHER_OVERLOAD(name, 0),    \
                                         #name),                                \
       internal::makeMatcherAutoMarshall(SPECIFIC_MATCHER_OVERLOAD(name, 1),    \
                                         #name)                                 \
     };                                                                         \
     registerMatcher(#name,                                                     \
-                    new internal::OverloadedMatcherCreateCallback(Callbacks)); \
+                    new internal::OverloadedMatcherDescriptor(Callbacks));     \
   } while (0)
 
 /// \brief Generate a registry map with all the known matchers.
@@ -324,7 +324,7 @@ VariantMatcher Registry::constructMatcher(MatcherCtor Ctor,
                                           const SourceRange &NameRange,
                                           ArrayRef<ParserValue> Args,
                                           Diagnostics *Error) {
-  return Ctor->run(NameRange, Args, Error);
+  return Ctor->create(NameRange, Args, Error);
 }
 
 // static

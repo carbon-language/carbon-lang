@@ -29,10 +29,10 @@ namespace ast_matchers {
 namespace dynamic {
 
 namespace internal {
-class MatcherCreateCallback;
+class MatcherDescriptor;
 }
 
-typedef const internal::MatcherCreateCallback *MatcherCtor;
+typedef const internal::MatcherDescriptor *MatcherCtor;
 
 class Registry {
 public:
