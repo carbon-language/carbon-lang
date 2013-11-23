@@ -306,27 +306,34 @@ static llvm::ManagedStatic<RegistryMaps> RegistryData;
 } // anonymous namespace
 
 // static
-VariantMatcher Registry::constructMatcher(StringRef MatcherName,
-                                          const SourceRange &NameRange,
-                                          ArrayRef<ParserValue> Args,
-                                          Diagnostics *Error) {
+llvm::Optional<MatcherCtor>
+Registry::lookupMatcherCtor(StringRef MatcherName, const SourceRange &NameRange,
+                            Diagnostics *Error) {
   ConstructorMap::const_iterator it =
       RegistryData->constructors().find(MatcherName);
   if (it == RegistryData->constructors().end()) {
     Error->addError(NameRange, Error->ET_RegistryNotFound) << MatcherName;
-    return VariantMatcher();
+    return llvm::Optional<MatcherCtor>();
   }
 
-  return it->second->run(NameRange, Args, Error);
+  return it->second;
 }
 
 // static
-VariantMatcher Registry::constructBoundMatcher(StringRef MatcherName,
+VariantMatcher Registry::constructMatcher(MatcherCtor Ctor,
+                                          const SourceRange &NameRange,
+                                          ArrayRef<ParserValue> Args,
+                                          Diagnostics *Error) {
+  return Ctor->run(NameRange, Args, Error);
+}
+
+// static
+VariantMatcher Registry::constructBoundMatcher(MatcherCtor Ctor,
                                                const SourceRange &NameRange,
                                                StringRef BindID,
                                                ArrayRef<ParserValue> Args,
                                                Diagnostics *Error) {
-  VariantMatcher Out = constructMatcher(MatcherName, NameRange, Args, Error);
+  VariantMatcher Out = constructMatcher(Ctor, NameRange, Args, Error);
   if (Out.isNull()) return Out;
 
   llvm::Optional<DynTypedMatcher> Result = Out.getSingleMatcher();
