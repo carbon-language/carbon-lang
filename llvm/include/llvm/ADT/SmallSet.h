@@ -39,7 +39,10 @@ class SmallSet {
 public:
   SmallSet() {}
 
-  bool empty() const { return Vector.empty() && Set.empty(); }
+  bool LLVM_ATTRIBUTE_UNUSED_RESULT empty() const {
+    return Vector.empty() && Set.empty();
+  }
+
   unsigned size() const {
     return isSmall() ? Vector.size() : Set.size();
   }
