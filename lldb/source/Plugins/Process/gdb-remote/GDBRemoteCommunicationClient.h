@@ -67,7 +67,13 @@ public:
     bool
     GetThreadSuffixSupported ();
 
-    void
+    // This packet is usually sent first and the boolean return value
+    // indicates if the packet was send and any response was received
+    // even in the response is UNIMPLEMENTED. If the packet failed to
+    // get a response, then false is returned. This quickly tells us
+    // if we were able to connect and communicte with the remote GDB
+    // server
+    bool
     QueryNoAckModeSupported ();
 
     void

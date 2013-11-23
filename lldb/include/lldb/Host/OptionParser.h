@@ -10,6 +10,10 @@
 #ifndef liblldb_OptionParser_h_
 #define liblldb_OptionParser_h_
 
+#include <string>
+
+struct option;
+
 namespace lldb_private {
 
 typedef struct Option
@@ -46,6 +50,7 @@ public:
     static char* GetOptionArgument();
     static int GetOptionIndex();
     static int GetOptionErrorCause();
+    static std::string GetShortOptionString(struct option *long_options);
 };
 
 }

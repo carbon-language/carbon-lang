@@ -27,6 +27,7 @@
 #include "lldb/Core/ConnectionMachPort.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Host/OptionParser.h"
 #include "Plugins/Process/gdb-remote/GDBRemoteCommunicationServer.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h"
 using namespace lldb;
@@ -67,15 +68,11 @@ static struct option g_long_options[] =
 //----------------------------------------------------------------------
 // Watch for signals
 //----------------------------------------------------------------------
-int g_sigpipe_received = 0;
 void
 signal_handler(int signo)
 {
     switch (signo)
     {
-    case SIGPIPE:
-        g_sigpipe_received = 1;
-        break;
     case SIGHUP:
         // Use SIGINT first, if that does not work, use SIGHUP as a last resort.
         // And we should not call exit() here because it results in the global destructors
@@ -100,7 +97,7 @@ int
 main (int argc, char *argv[])
 {
     const char *progname = argv[0];
-    signal (SIGPIPE, signal_handler);
+    signal (SIGPIPE, SIG_IGN);
     signal (SIGHUP, signal_handler);
     int long_option_index = 0;
     StreamSP log_stream_sp;
@@ -122,6 +119,8 @@ main (int argc, char *argv[])
     const char *log_channels[] = { "platform", "host", "process", NULL };
     EnableLog (stream_sp, 0, log_channels, NULL);
     
+    std::string short_options(OptionParser::GetShortOptionString(g_long_options));
+                            
 #if __GLIBC__
     optind = 0;
 #else
@@ -129,7 +128,7 @@ main (int argc, char *argv[])
     optind = 1;
 #endif
 
-    while ((ch = getopt_long_only(argc, argv, "l:f:L:p:m:M:", g_long_options, &long_option_index)) != -1)
+    while ((ch = getopt_long_only(argc, argv, short_options.c_str(), g_long_options, &long_option_index)) != -1)
     {
 //        DNBLogDebug("option: ch == %c (0x%2.2x) --%s%c%s\n",
 //                    ch, (uint8_t)ch,

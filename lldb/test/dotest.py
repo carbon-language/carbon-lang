@@ -20,15 +20,16 @@ Type:
 for available options.
 """
 
+import commands
 import os
 import platform
+import progress
 import signal
 import subprocess
 import sys
 import textwrap
 import time
 import unittest2
-import progress
 
 if sys.version_info >= (2, 7):
     argparse = __import__('argparse')
@@ -171,9 +172,6 @@ compilers = None    # Must be initialized after option parsing
 # just that.
 cflags_extras = ''
 
-# Delay startup in order for the debugger to attach.
-delay = False
-
 # Dump the Python sys.path variable.  Use '-D' to dump sys.path.
 dumpSysPath = False
 
@@ -255,6 +253,11 @@ testdirs = [ sys.path[0] ]
 separator = '-' * 70
 
 failed = False
+
+# LLDB Remote platform setting
+lldb_platform_name = None
+lldb_platform_url = None
+lldb_platform_working_dir = None
 
 def usage(parser):
     parser.print_help()
@@ -396,7 +399,6 @@ def parseOptionsAndInitTestdirs():
     global archs
     global compilers
     global count
-    global delay
     global dumpSysPath
     global bmExecutable
     global bmBreakpointSpec
@@ -417,6 +419,9 @@ def parseOptionsAndInitTestdirs():
     global svn_silent
     global verbose
     global testdirs
+    global lldb_platform_name
+    global lldb_platform_url
+    global lldb_platform_working_dir
 
     do_help = False
 
@@ -468,9 +473,15 @@ def parseOptionsAndInitTestdirs():
     group.add_argument('-y', type=int, metavar='count', help="Specify the iteration count used to collect our benchmarks. An example is the number of times to do 'thread step-over' to measure stepping speed.")
     group.add_argument('-#', type=int, metavar='sharp', dest='sharp', help='Repeat the test suite for a specified number of times')
 
+    # Configuration options
+    group = parser.add_argument_group('Remote platform options')
+    group.add_argument('--platform-name', dest='lldb_platform_name', metavar='platform-name', help='The name of a remote platform to use')
+    group.add_argument('--platform-url', dest='lldb_platform_url', metavar='platform-url', help='A LLDB platform URL to use when connecting to a remote platform to run the test suite')
+    group.add_argument('--platform-working-dir', dest='lldb_platform_working_dir', metavar='platform-working-dir', help='The directory to use on the remote platform.')
+
     # Test-suite behaviour
     group = parser.add_argument_group('Runtime behaviour options')
-    X('-d', 'Delay startup for 10 seconds (in order for the debugger to attach)')
+    X('-d', 'Suspend the process after launch to wait indefinitely for a debugger to attach')
     X('-F', 'Fail fast. Stop the test suite on the first error/failure')
     X('-i', "Ignore (don't bailout) if 'lldb.py' module cannot be located in the build tree relative to this script; use PYTHONPATH to locate the module")
     X('-n', "Don't print the headers like build dir, lldb version, and svn info at all")
@@ -515,6 +526,9 @@ def parseOptionsAndInitTestdirs():
 
     if args.archs:
         archs = args.archs
+        for arch in archs:
+            if arch.startswith('arm') and platform_system == 'Darwin':
+                os.environ['SDKROOT'] = commands.getoutput('xcodebuild -version -sdk iphoneos.internal Path')
     else:
         if (platform_system == 'Darwin' or (platform_system == 'Linux' and compilers == ['clang'])) and platform_machine == 'x86_64':
             archs = ['x86_64', 'i386']
@@ -575,7 +589,9 @@ def parseOptionsAndInitTestdirs():
             usage(parser)
 
     if args.d:
-        delay = True
+        sys.stdout.write("Suspending the process %d to wait for debugger to attach...\n" % os.getpid())
+        sys.stdout.flush()    
+        os.kill(os.getpid(), signal.SIGSTOP)
 
     if args.e:
         if args.e.startswith('-'):
@@ -691,6 +707,12 @@ def parseOptionsAndInitTestdirs():
     if dont_do_python_api_test and just_do_python_api_test:
         usage(parser)
 
+    if args.lldb_platform_name:
+        lldb_platform_name = args.lldb_platform_name
+    if args.lldb_platform_url:
+        lldb_platform_url = args.lldb_platform_url
+    if args.lldb_platform_working_dir:
+        lldb_platform_working_dir = args.lldb_platform_working_dir
     # Gather all the dirs passed on the command line.
     if len(args.args) > 0:
         testdirs = map(os.path.abspath, args.args)
@@ -994,27 +1016,6 @@ def setupSysPath():
     if dumpSysPath:
         print "sys.path:", sys.path
 
-
-def doDelay(delta):
-    """Delaying startup for delta-seconds to facilitate debugger attachment."""
-    def alarm_handler(*args):
-        raise Exception("timeout")
-
-    signal.signal(signal.SIGALRM, alarm_handler)
-    signal.alarm(delta)
-    sys.stdout.write("pid=%d\n" % os.getpid())
-    sys.stdout.write("Enter RET to proceed (or timeout after %d seconds):" %
-                     delta)
-    sys.stdout.flush()
-    try:
-        text = sys.stdin.readline()
-    except:
-        text = ""
-    signal.alarm(0)
-    sys.stdout.write("proceeding...\n")
-    pass
-
-
 def visit(prefix, dir, names):
     """Visitor function for os.path.walk(path, visit, arg)."""
 
@@ -1169,12 +1170,6 @@ parseOptionsAndInitTestdirs()
 setupSysPath()
 
 #
-# If '-d' is specified, do a delay of 10 seconds for the debugger to attach.
-#
-if delay:
-    doDelay(10)
-
-#
 # If '-l' is specified, do not skip the long running tests.
 if not skip_long_running_test:
     os.environ["LLDB_SKIP_LONG_RUNNING_TEST"] = "NO"
@@ -1200,6 +1195,32 @@ atexit.register(lambda: lldb.SBDebugger.Terminate())
 # Create a singleton SBDebugger in the lldb namespace.
 lldb.DBG = lldb.SBDebugger.Create()
 
+if lldb_platform_name:
+    print "Setting up remote platform '%s'" % (lldb_platform_name)
+    lldb.remote_platform = lldb.SBPlatform(lldb_platform_name)
+    if not lldb.remote_platform.IsValid():
+        print "error: unable to create the LLDB platform named '%s'." % (lldb_platform_name)
+        sys.exit(1)
+    if lldb_platform_url:
+        # We must connect to a remote platform if a LLDB platform URL was specified
+        print "Connecting to remote platform '%s' at '%s'..." % (lldb_platform_name, lldb_platform_url)
+        platform_connect_options = lldb.SBPlatformConnectOptions(lldb_platform_url); 
+        err = lldb.remote_platform.ConnectRemote(platform_connect_options)
+        if err.Success():
+            print "Connected."
+        else:
+            print "error: failed to connect to remote platform using URL '%s': %s" % (lldb_platform_url, err)
+            sys.exit(1)
+    
+    if lldb_platform_working_dir:
+        print "Setting remote platform working directory to '%s'..." % (lldb_platform_working_dir)
+        lldb.remote_platform.SetWorkingDirectory(lldb_platform_working_dir)
+    
+    lldb.remote_platform_working_dir = lldb_platform_working_dir
+    lldb.DBG.SetSelectedPlatform(lldb.remote_platform)
+else:
+    lldb.remote_platform = None
+    lldb.remote_platform_working_dir = None
 # Put the blacklist in the lldb namespace, to be used by lldb.TestBase.
 lldb.blacklist = blacklist
 
@@ -1538,6 +1559,7 @@ for ia in range(len(archs) if iterArchs else 1):
                 if self.shouldSkipBecauseOfCategories(test):
                     self.hardMarkAsSkipped(test)
                 self.counter += 1
+                test.test_number = self.counter
                 if self.showAll:
                     self.stream.write(self.fmt % self.counter)
                 super(LLDBTestResult, self).startTest(test)

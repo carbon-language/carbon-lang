@@ -1908,8 +1908,59 @@ Error
 Host::MakeDirectory (const char* path, uint32_t file_permissions)
 {
     Error error;
-    if (::mkdir(path, file_permissions) != 0)
-        error.SetErrorToErrno();
+    if (path && path[0])
+    {
+        printf("mkdir('%s', %o) ", path, file_permissions);
+        if (::mkdir(path, file_permissions) != 0)
+        {
+            error.SetErrorToErrno();
+            printf(" %i (%s)\n", error.GetError(), error.AsCString());
+            switch (error.GetError())
+            {
+            case ENOENT:
+                {
+                    // Parent directory doesn't exist, so lets make it if we can
+                    FileSpec spec(path, false);
+                    if (spec.GetDirectory() && spec.GetFilename())
+                    {
+                        // Make the parent directory and try again
+                        Error error2 = Host::MakeDirectory(spec.GetDirectory().GetCString(), file_permissions);
+                        if (error2.Success())
+                        {
+                            // Try and make the directory again now that the parent directory was made successfully
+                            printf("mkdir('%s', %o) ", path, file_permissions);
+                            if (::mkdir(path, file_permissions) == 0)
+                            {
+                                puts("success");
+                                error.Clear();
+                            }
+                            else
+                            {
+                                error.SetErrorToErrno();
+                                printf(" %i (%s)\n", error.GetError(), error.AsCString());
+                            }
+                        }
+                    }
+                }
+                break;
+            case EEXIST:
+                {
+                    FileSpec path_spec(path, false);
+                    if (path_spec.IsDirectory())
+                        error.Clear(); // It is a directory and it already exists
+                }
+                break;
+            }
+        }
+        else
+        {
+            puts("success");
+        }
+    }
+    else
+    {
+        error.SetErrorString("empty path");
+    }
     return error;
 }
 

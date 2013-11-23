@@ -111,17 +111,35 @@ GDBRemoteCommunicationClient::~GDBRemoteCommunicationClient()
 bool
 GDBRemoteCommunicationClient::HandshakeWithServer (Error *error_ptr)
 {
+    ResetDiscoverableSettings();
+
     // Start the read thread after we send the handshake ack since if we
     // fail to send the handshake ack, there is no reason to continue...
     if (SendAck())
-        return true;
-    
-    if (error_ptr)
-        error_ptr->SetErrorString("failed to send the handshake ack");
+    {
+        // The return value from QueryNoAckModeSupported() is true if the packet
+        // was sent and _any_ response (including UNIMPLEMENTED) was received),
+        // or false if no response was received. This quickly tells us if we have
+        // a live connection to a remote GDB server...
+        if (QueryNoAckModeSupported())
+        {
+            return true;
+        }
+        else
+        {
+            if (error_ptr)
+                error_ptr->SetErrorString("failed to get reply to handshake packet");
+        }
+    }
+    else
+    {
+        if (error_ptr)
+            error_ptr->SetErrorString("failed to send the handshake ack");
+    }
     return false;
 }
 
-void
+bool
 GDBRemoteCommunicationClient::QueryNoAckModeSupported ()
 {
     if (m_supports_not_sending_acks == eLazyBoolCalculate)
@@ -137,8 +155,10 @@ GDBRemoteCommunicationClient::QueryNoAckModeSupported ()
                 m_send_acks = false;
                 m_supports_not_sending_acks = eLazyBoolYes;
             }
+            return true;
         }
     }
+    return false;
 }
 
 void

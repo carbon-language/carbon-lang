@@ -926,15 +926,13 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
     // then we aren't actually connected to anything, so try and do the
     // handshake with the remote GDB server and make sure that goes 
     // alright.
-    if (!m_gdb_comm.HandshakeWithServer (NULL))
+    if (!m_gdb_comm.HandshakeWithServer (&error))
     {
         m_gdb_comm.Disconnect();
         if (error.Success())
             error.SetErrorString("not connected to remote gdb server");
         return error;
     }
-    m_gdb_comm.ResetDiscoverableSettings();
-    m_gdb_comm.QueryNoAckModeSupported ();
     m_gdb_comm.GetThreadSuffixSupported ();
     m_gdb_comm.GetListThreadsInStopReplySupported ();
     m_gdb_comm.GetHostInfo ();

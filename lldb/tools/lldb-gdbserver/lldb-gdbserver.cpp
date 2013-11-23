@@ -27,6 +27,7 @@
 #include "lldb/Core/ConnectionMachPort.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Host/OptionParser.h"
 #include "Plugins/Process/gdb-remote/GDBRemoteCommunicationServer.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h"
 using namespace lldb;
@@ -108,7 +109,10 @@ main (int argc, char *argv[])
     optind = 1;
 #endif
     
-    while ((ch = getopt_long_only(argc, argv, "l:f:h", g_long_options, &long_option_index)) != -1)
+    std::string short_options(OptionParser::GetShortOptionString(g_long_options));
+
+    
+    while ((ch = getopt_long_only(argc, argv, short_options.c_str(), g_long_options, &long_option_index)) != -1)
     {
 //        DNBLogDebug("option: ch == %c (0x%2.2x) --%s%c%s\n",
 //                    ch, (uint8_t)ch,

@@ -253,7 +253,6 @@ PlatformRemoteGDBServer::ConnectRemote (Args& args)
             {
                 if (m_gdb_client.HandshakeWithServer(&error))
                 {
-                    m_gdb_client.QueryNoAckModeSupported();
                     m_gdb_client.GetHostInfo();
                     // If a working directory was set prior to connecting, send it down now
                     if (m_working_dir)
@@ -265,6 +264,8 @@ PlatformRemoteGDBServer::ConnectRemote (Args& args)
                 else
                 {
                     m_gdb_client.Disconnect();
+                    if (error.Success())
+                        error.SetErrorString("handshake failed");
                 }
             }
         }
@@ -272,11 +273,6 @@ PlatformRemoteGDBServer::ConnectRemote (Args& args)
         {
             error.SetErrorString ("\"platform connect\" takes a single argument: <connect-url>");
         }
-    }
-    
-    if (error.Success())
-    {
-        
     }
 
     return error;
