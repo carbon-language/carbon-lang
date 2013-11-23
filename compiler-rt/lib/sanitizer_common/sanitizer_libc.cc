@@ -16,6 +16,11 @@
 
 namespace __sanitizer {
 
+// Make the compiler think that something is going on there.
+static inline void break_optimization(void *arg) {
+  __asm__ __volatile__("" : : "r" (arg) : "memory");
+}
+
 s64 internal_atoll(const char *nptr) {
   return internal_simple_strtoll(nptr, (char**)0, 10);
 }
@@ -60,6 +65,16 @@ void *internal_memmove(void *dest, const void *src, uptr n) {
       }
   }
   return dest;
+}
+
+// Semi-fast bzero for 16-aligned data. Still far from peak performance.
+void internal_bzero_aligned16(void *s, uptr n) {
+  struct S16 { u64 a, b; } ALIGNED(16);
+  CHECK_EQ((reinterpret_cast<uptr>(s) | n) & 15, 0);
+  for (S16 *p = reinterpret_cast<S16*>(s), *end = p + n / 16; p < end; p++) {
+    p->a = p->b = 0;
+    break_optimization(0);  // Make sure this does not become memset.
+  }
 }
 
 void *internal_memset(void* s, int c, uptr n) {

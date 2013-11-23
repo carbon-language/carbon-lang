@@ -1191,7 +1191,7 @@ class CombinedAllocator {
     if (alignment > 8)
       CHECK_EQ(reinterpret_cast<uptr>(res) & (alignment - 1), 0);
     if (cleared && res)
-      internal_memset(res, 0, size);
+      internal_bzero_aligned16(res, RoundUpTo(size, 16));
     return res;
   }
 
