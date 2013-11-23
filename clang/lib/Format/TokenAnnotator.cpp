@@ -1181,7 +1181,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   if (Right.Type == TT_ObjCSelectorName)
     return 0;
   if (Left.is(tok::colon) && Left.Type == TT_ObjCMethodExpr)
-    return 500;
+    return Line.MightBeFunctionDecl ? 50 : 500;
 
   if (Left.is(tok::l_paren) && InFunctionDecl)
     return 100;
@@ -1416,6 +1416,8 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
 bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
                                     const FormatToken &Right) {
   const FormatToken &Left = *Right.Previous;
+  if (Left.is(tok::at))
+    return false;
   if (Right.Type == TT_StartOfName || Right.is(tok::kw_operator))
     return true;
   if (Right.isTrailingComment())

@@ -5751,6 +5751,14 @@ TEST_F(FormatTest, ObjCArrayLiterals) {
                "  @\"aaaaaaaaaaaaaaaaa\",\n"
                "  @\"aaaaaaaaaaaaaaaaa\",\n"
                "];");
+  verifyFormat(
+      "- (NSAttributedString *)attributedStringForSegment:(NSUInteger)segment\n"
+      "                                             index:(NSUInteger)index\n"
+      "                                nonDigitAttributes:\n"
+      "                                    (NSDictionary *)noDigitAttributes;");
+  verifyFormat(
+      "[someFunction someLooooooooooooongParameter:\n"
+      "                  @[ NSBundle.mainBundle.infoDictionary[@\"a\"] ]];");
 }
 
 TEST_F(FormatTest, ReformatRegionAdjustsIndent) {
