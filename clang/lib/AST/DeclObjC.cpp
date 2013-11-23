@@ -457,9 +457,11 @@ ObjCInterfaceDecl::lookupNestedProtocol(IdentifierInfo *Name) {
 /// When argument category "C" is specified, any implicit method found
 /// in this category is ignored.
 ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel, 
-                                     bool isInstance,
-                                     bool shallowCategoryLookup,
-                                     const ObjCCategoryDecl *C) const {
+                                                bool isInstance,
+                                                bool shallowCategoryLookup,
+                                                bool followSuper,
+                                                const ObjCCategoryDecl *C) const
+{
   // FIXME: Should make sure no callers ever do this.
   if (!hasDefinition())
     return 0;
@@ -470,7 +472,7 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
   if (data().ExternallyCompleted)
     LoadExternalDefinition();
 
-  while (ClassDecl != NULL) {
+  while (ClassDecl) {
     if ((MethodDecl = ClassDecl->getMethod(Sel, isInstance)))
       return MethodDecl;
 
@@ -501,7 +503,11 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
               return MethodDecl;
       }
     }
-  
+
+    if (!followSuper)
+      return NULL;
+
+    // Get the super class (if any).
     ClassDecl = ClassDecl->getSuperClass();
   }
   return NULL;

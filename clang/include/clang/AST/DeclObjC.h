@@ -1141,15 +1141,18 @@ public:
   // Lookup a method. First, we search locally. If a method isn't
   // found, we search referenced protocols and class categories.
   ObjCMethodDecl *lookupMethod(Selector Sel, bool isInstance,
-                               bool shallowCategoryLookup= false,
-                               const ObjCCategoryDecl *C= 0) const;
-  ObjCMethodDecl *lookupInstanceMethod(Selector Sel,
-                            bool shallowCategoryLookup = false) const {
-    return lookupMethod(Sel, true/*isInstance*/, shallowCategoryLookup);
+                               bool shallowCategoryLookup = false,
+                               bool followSuper = true,
+                               const ObjCCategoryDecl *C = 0) const;
+
+  /// Lookup an instance method for a given selector.
+  ObjCMethodDecl *lookupInstanceMethod(Selector Sel) const {
+    return lookupMethod(Sel, true/*isInstance*/);
   }
-  ObjCMethodDecl *lookupClassMethod(Selector Sel,
-                     bool shallowCategoryLookup = false) const {
-    return lookupMethod(Sel, false/*isInstance*/, shallowCategoryLookup);
+
+  /// Lookup a class method for a given selector.
+  ObjCMethodDecl *lookupClassMethod(Selector Sel) const {
+    return lookupMethod(Sel, false/*isInstance*/);
   }
   ObjCInterfaceDecl *lookupInheritedClass(const IdentifierInfo *ICName);
 
@@ -1167,7 +1170,9 @@ public:
   ObjCMethodDecl *lookupPropertyAccessor(const Selector Sel,
                                          const ObjCCategoryDecl *Cat) const {
     return lookupMethod(Sel, true/*isInstance*/,
-                        false/*shallowCategoryLookup*/, Cat);
+                        false/*shallowCategoryLookup*/,
+                        true /* followsSuper */,
+                        Cat);
   }
                           
   SourceLocation getEndOfDefinitionLoc() const { 
