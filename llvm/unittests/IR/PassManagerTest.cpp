@@ -19,7 +19,7 @@ using namespace llvm;
 
 namespace {
 
-class TestAnalysisPass {
+class TestFunctionAnalysis {
 public:
   struct Result {
     Result(int Count) : InstructionCount(Count) {}
@@ -29,7 +29,7 @@ public:
   /// \brief Returns an opaque, unique ID for this pass type.
   static void *ID() { return (void *)&PassID; }
 
-  TestAnalysisPass(int &Runs) : Runs(Runs) {}
+  TestFunctionAnalysis(int &Runs) : Runs(Runs) {}
 
   /// \brief Run the analysis pass over the function and return a result.
   Result run(Function *F, FunctionAnalysisManager *AM) {
@@ -49,7 +49,7 @@ private:
   int &Runs;
 };
 
-char TestAnalysisPass::PassID;
+char TestFunctionAnalysis::PassID;
 
 struct TestModulePass {
   TestModulePass(int &RunCount) : RunCount(RunCount) {}
@@ -94,12 +94,12 @@ struct TestFunctionPass {
 
     if (OnlyUseCachedResults) {
       // Hack to force the use of the cached interface.
-      if (const TestAnalysisPass::Result *AR =
-              AM->getCachedResult<TestAnalysisPass>(F))
+      if (const TestFunctionAnalysis::Result *AR =
+              AM->getCachedResult<TestFunctionAnalysis>(F))
         AnalyzedInstrCount += AR->InstructionCount;
     } else {
       // Typical path just runs the analysis as needed.
-      const TestAnalysisPass::Result &AR = AM->getResult<TestAnalysisPass>(F);
+      const TestFunctionAnalysis::Result &AR = AM->getResult<TestFunctionAnalysis>(F);
       AnalyzedInstrCount += AR.InstructionCount;
     }
 
@@ -153,7 +153,7 @@ public:
 TEST_F(PassManagerTest, Basic) {
   FunctionAnalysisManager FAM;
   int AnalysisRuns = 0;
-  FAM.registerPass(TestAnalysisPass(AnalysisRuns));
+  FAM.registerPass(TestFunctionAnalysis(AnalysisRuns));
 
   ModuleAnalysisManager MAM;
   MAM.registerPass(FunctionAnalysisManagerModuleProxy(FAM));
