@@ -925,6 +925,10 @@ public:
                                               : superCls; 
   }
 
+  /// \brief Returns true if this class is marked to suppress being
+  /// used to determine if a subclass conforms to a protocol.
+  bool shouldSuppressProtocol(const ObjCProtocolDecl *P) const;
+
   /// \brief Iterator that walks over the list of categories, filtering out
   /// those that do not meet specific criteria.
   ///
