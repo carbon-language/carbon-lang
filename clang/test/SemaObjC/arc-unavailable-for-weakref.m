@@ -90,3 +90,5 @@ __attribute__((objc_arc_weak_reference_unavailable))
 __attribute__((objc_arc_weak_reference_unavailable(1)))	// expected-error {{'objc_arc_weak_reference_unavailable' attribute takes no arguments}}
 @interface I3
 @end
+
+int I4 __attribute__((objc_arc_weak_reference_unavailable)); // expected-error {{'objc_arc_weak_reference_unavailable' attribute only applies to Objective-C interfaces}}

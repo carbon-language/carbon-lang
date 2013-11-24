@@ -37,7 +37,7 @@ __attribute ((objc_requires_property_definitions))
 @interface Deep(CAT)  // expected-error {{attributes may not be specified on a category}}
 @end
 
-__attribute ((objc_requires_property_definitions)) // expected-error {{objc_requires_property_definitions attribute may only be specified on a class}} 
+__attribute ((objc_requires_property_definitions)) // expected-error {{'objc_requires_property_definitions' attribute only applies to Objective-C interfaces}}
 @protocol P @end
 
 // rdar://13388503
