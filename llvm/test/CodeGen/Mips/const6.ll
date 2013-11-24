@@ -27,7 +27,7 @@ entry:
 ; no-load-relax:	jalrc 	${{[0-9]+}}
 ; no-load-relax:	b	$BB0_2
 ; no-load-relax:	.align	2
-; no-load-relax: $CPI0_0:
+; no-load-relax: $CPI0_1:
 ; no-load-relax:	.4byte	3735943886
 ; no-load-relax: $BB0_2:
 

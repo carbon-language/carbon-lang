@@ -22,7 +22,7 @@ entry:
 ; no-load-relax:	lw	${{[0-9]+}}, %call16(foo)(${{[0-9]+}})
 ; no-load-relax:	b	$BB0_4
 ; no-load-relax:	.align	2
-; no-load-relax: $CPI0_0:
+; no-load-relax: $CPI0_1:
 ; no-load-relax:	.4byte	3735943886
 ; no-load-relax: $BB0_3:
 ; no-load-relax:	lw	${{[0-9]+}}, %call16(goo)(${{[0-9]+}})
