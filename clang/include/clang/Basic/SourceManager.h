@@ -1332,7 +1332,7 @@ public:
     return loc.isMacroID() && isInSystemHeader(getSpellingLoc(loc));
   }
 
-  /// \brief The size of the SLocEnty that \p FID represents.
+  /// \brief The size of the SLocEntry that \p FID represents.
   unsigned getFileIDSize(FileID FID) const;
 
   /// \brief Given a specific FileID, returns true if \p Loc is inside that

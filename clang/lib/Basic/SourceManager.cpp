@@ -1583,7 +1583,7 @@ bool SourceManager::isInMainFile(SourceLocation Loc) const {
   return FI.getIncludeLoc().isInvalid();
 }
 
-/// \brief The size of the SLocEnty that \arg FID represents.
+/// \brief The size of the SLocEntry that \p FID represents.
 unsigned SourceManager::getFileIDSize(FileID FID) const {
   bool Invalid = false;
   const SrcMgr::SLocEntry &Entry = getSLocEntry(FID, &Invalid);
