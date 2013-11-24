@@ -1184,13 +1184,14 @@ class CombinedAllocator {
     if (alignment > 8)
       size = RoundUpTo(size, alignment);
     void *res;
-    if (primary_.CanAllocate(size, alignment))
+    bool from_primary = primary_.CanAllocate(size, alignment);
+    if (from_primary)
       res = cache->Allocate(&primary_, primary_.ClassID(size));
     else
       res = secondary_.Allocate(&stats_, size, alignment);
     if (alignment > 8)
       CHECK_EQ(reinterpret_cast<uptr>(res) & (alignment - 1), 0);
-    if (cleared && res)
+    if (cleared && res && from_primary)
       internal_bzero_aligned16(res, RoundUpTo(size, 16));
     return res;
   }
