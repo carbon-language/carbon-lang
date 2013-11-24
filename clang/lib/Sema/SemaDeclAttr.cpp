@@ -1854,7 +1854,8 @@ static void handleNoCommonAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
 static void handleCommonAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (S.LangOpts.CPlusPlus) {
-    S.Diag(Attr.getLoc(), diag::err_common_not_supported_cplusplus);
+    S.Diag(Attr.getLoc(), diag::err_attribute_not_supported_in_lang)
+      << Attr.getName() << AttributeLangSupport::Cpp;
     return;
   }
 
