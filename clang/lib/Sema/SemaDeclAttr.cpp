@@ -61,6 +61,14 @@ enum AttributeDeclKind {
   ExpectedType
 };
 
+namespace AttributeLangSupport {
+  enum {
+    C,
+    Cpp,
+    ObjC
+  };
+}
+
 //===----------------------------------------------------------------------===//
 //  Helper functions
 //===----------------------------------------------------------------------===//
@@ -4479,6 +4487,12 @@ static bool checkMicrosoftExt(Sema &S, const AttributeList &Attr,
 }
 
 static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  if (!S.LangOpts.CPlusPlus) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_not_supported_in_lang)
+      << Attr.getName() << AttributeLangSupport::C;
+    return;
+  }
+
   if (!checkMicrosoftExt(S, Attr, S.LangOpts.Borland))
     return;
 
