@@ -50,7 +50,7 @@ struct __declspec(uuid("0000000-0000-0000-1234-0000500000047")) uuid_attr_bad3 {
 struct __declspec(uuid("0000000-0000-0000-Z234-000000000047")) uuid_attr_bad4 { };// expected-error {{uuid attribute contains a malformed GUID}}
 struct __declspec(uuid("000000000000-0000-1234-000000000047")) uuid_attr_bad5 { };// expected-error {{uuid attribute contains a malformed GUID}}
 
-
+__declspec(uuid("000000A0-0000-0000-C000-000000000046")) int i; // expected-warning {{'uuid' attribute only applies to classes}}
 
 struct __declspec(uuid("000000A0-0000-0000-C000-000000000046"))
 struct_with_uuid { };

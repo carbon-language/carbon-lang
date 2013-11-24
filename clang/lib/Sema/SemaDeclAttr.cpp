@@ -4482,6 +4482,12 @@ static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (!checkMicrosoftExt(S, Attr, S.LangOpts.Borland))
     return;
 
+  if (!isa<CXXRecordDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedClass;
+    return;
+  }
+
   StringRef StrRef;
   SourceLocation LiteralLoc;
   if (!S.checkStringLiteralArgumentAttr(Attr, 0, StrRef, &LiteralLoc))
