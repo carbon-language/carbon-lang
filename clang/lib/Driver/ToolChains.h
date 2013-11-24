@@ -407,19 +407,6 @@ public:
   /// }
 };
 
-/// Darwin_Generic_GCC - Generic Darwin tool chain using gcc.
-class LLVM_LIBRARY_VISIBILITY Darwin_Generic_GCC : public Generic_GCC {
-public:
-  Darwin_Generic_GCC(const Driver &D, const llvm::Triple &Triple,
-                     const llvm::opt::ArgList &Args)
-      : Generic_GCC(D, Triple, Args) {}
-
-  std::string ComputeEffectiveClangTriple(const llvm::opt::ArgList &Args,
-                                          types::ID InputType) const;
-
-  virtual bool isPICDefault() const { return false; }
-};
-
 class LLVM_LIBRARY_VISIBILITY Generic_ELF : public Generic_GCC {
   virtual void anchor();
 public:
