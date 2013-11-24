@@ -432,4 +432,4 @@ protected:
 };
 } // namespace lld
 
-#endif // LLD_DRIVER_INPUT_GRAPH_H
+#endif // LLD_CORE_INPUT_GRAPH_H
