@@ -1275,6 +1275,10 @@ bool MipsConstantIslands::handleConstantPoolUser(unsigned CPUserIndex) {
   // Decrement the old entry, and remove it if refcount becomes 0.
   decrementCPEReferenceCount(CPI, CPEMI);
 
+  // No existing clone of this CPE is within range.
+  // We will be generating a new clone.  Get a UID for it.
+  unsigned ID = createPICLabelUId();
+
   // Now that we have an island to add the CPE to, clone the original CPE and
   // add it to the island.
   U.HighWaterMark = NewIsland;
@@ -1290,9 +1294,7 @@ bool MipsConstantIslands::handleConstantPoolUser(unsigned CPUserIndex) {
   BBInfo[NewIsland->getNumber()].Size += Size;
   adjustBBOffsetsAfter(llvm::prior(MachineFunction::iterator(NewIsland)));
 
-  // No existing clone of this CPE is within range.
-  // We will be generating a new clone.  Get a UID for it.
-  unsigned ID = createPICLabelUId();
+
 
   // Finally, change the CPI in the instruction operand to be ID.
   for (unsigned i = 0, e = UserMI->getNumOperands(); i != e; ++i)
