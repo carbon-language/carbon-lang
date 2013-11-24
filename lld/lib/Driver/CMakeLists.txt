@@ -15,6 +15,7 @@ add_lld_library(lldDriver
   DarwinLdDriver.cpp
   Driver.cpp
   GnuLdDriver.cpp
+  GnuLdInputGraph.cpp
   WinLinkDriver.cpp
   WinLinkInputGraph.cpp
   UniversalDriver.cpp
