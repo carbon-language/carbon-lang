@@ -584,10 +584,8 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
 
   // Skip over the EOF token, flagging end of previous input for incremental
   // processing
-  if (PP.isIncrementalProcessingEnabled() && Tok.is(tok::eof)) {
+  if (PP.isIncrementalProcessingEnabled() && Tok.is(tok::eof))
     ConsumeToken();
-    return false;
-  }
 
   Result = DeclGroupPtrTy();
   switch (Tok.getKind()) {

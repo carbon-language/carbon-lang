@@ -13,6 +13,7 @@
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "gtest/gtest.h"
@@ -24,7 +25,18 @@ namespace {
 
 class TestASTFrontendAction : public ASTFrontendAction {
 public:
+  TestASTFrontendAction(bool enableIncrementalProcessing = false)
+    : EnableIncrementalProcessing(enableIncrementalProcessing) { }
+
+  bool EnableIncrementalProcessing;
   std::vector<std::string> decl_names;
+
+  virtual bool BeginSourceFileAction(CompilerInstance &ci, StringRef filename) {
+    if (EnableIncrementalProcessing)
+      ci.getPreprocessor().enableIncrementalProcessing();
+
+    return ASTFrontendAction::BeginSourceFileAction(ci, filename);
+  }
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          StringRef InFile) {
@@ -63,6 +75,26 @@ TEST(ASTFrontendAction, Sanity) {
   compiler.createDiagnostics();
 
   TestASTFrontendAction test_action;
+  ASSERT_TRUE(compiler.ExecuteAction(test_action));
+  ASSERT_EQ(3U, test_action.decl_names.size());
+  EXPECT_EQ("__builtin_va_list", test_action.decl_names[0]);
+  EXPECT_EQ("main", test_action.decl_names[1]);
+  EXPECT_EQ("x", test_action.decl_names[2]);
+}
+
+TEST(ASTFrontendAction, IncrementalParsing) {
+  CompilerInvocation *invocation = new CompilerInvocation;
+  invocation->getPreprocessorOpts().addRemappedFile(
+    "test.cc", MemoryBuffer::getMemBuffer("int main() { float x; }"));
+  invocation->getFrontendOpts().Inputs.push_back(FrontendInputFile("test.cc",
+                                                                   IK_CXX));
+  invocation->getFrontendOpts().ProgramAction = frontend::ParseSyntaxOnly;
+  invocation->getTargetOpts().Triple = "i386-unknown-linux-gnu";
+  CompilerInstance compiler;
+  compiler.setInvocation(invocation);
+  compiler.createDiagnostics();
+
+  TestASTFrontendAction test_action(/*enableIncrementalProcessing=*/true);
   ASSERT_TRUE(compiler.ExecuteAction(test_action));
   ASSERT_EQ(3U, test_action.decl_names.size());
   EXPECT_EQ("__builtin_va_list", test_action.decl_names[0]);
