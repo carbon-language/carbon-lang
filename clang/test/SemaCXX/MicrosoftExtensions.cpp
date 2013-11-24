@@ -410,3 +410,14 @@ struct SealedType sealed : SomeBase {
 
 // expected-error@+1 {{base 'SealedType' is marked 'sealed'}}
 struct InheritFromSealed : SealedType {};
+
+void AfterClassBody() {
+  // expected-warning@+1 {{attribute 'deprecated' is ignored, place it after "struct" to apply attribute to type declaration}}
+  struct D {} __declspec(deprecated);
+
+  struct __declspec(align(4)) S {} __declspec(align(8)) s1;
+  S s2;
+  _Static_assert(__alignof(S) == 4, "");
+  _Static_assert(__alignof(s1) == 8, "");
+  _Static_assert(__alignof(s2) == 4, "");
+}
