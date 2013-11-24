@@ -1,5 +1,6 @@
-; RUN: llc -march=mipsel -mcpu=mips16 -relocation-model=static < %s | FileCheck %s -check-prefix=1
+; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -relocation-model=static < %s | FileCheck %s -check-prefix=1
 
+; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -soft-float -mips16-hard-float -relocation-model=pic -mips16-constant-islands   < %s | FileCheck %s -check-prefix=ci
 
 @i = common global i32 0, align 4
 @j = common global i32 0, align 4
@@ -71,4 +72,5 @@ entry:
   ret i32 0
 }
 
+; ci: lw	${{[0-9]+}}, $CPI{{[0-9]+}}_{{[0-9]+}}
 declare i32 @printf(i8*, ...)

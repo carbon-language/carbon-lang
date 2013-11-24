@@ -1518,13 +1518,13 @@ MipsConstantIslands::fixupConditionalBr(ImmBranch &Br) {
 void MipsConstantIslands::prescanForConstants() {
   unsigned J = 0;
   (void)J;
-  PrescannedForConstants = true;
   for (MachineFunction::iterator B =
          MF->begin(), E = MF->end(); B != E; ++B) {
     for (MachineBasicBlock::instr_iterator I =
         B->instr_begin(), EB = B->instr_end(); I != EB; ++I) {
       switch(I->getDesc().getOpcode()) {
         case Mips::LwConstant32: {
+          PrescannedForConstants = true;
           DEBUG(dbgs() << "constant island constant " << *I << "\n");
           J = I->getNumOperands();
           DEBUG(dbgs() << "num operands " << J  << "\n");

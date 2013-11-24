@@ -281,7 +281,7 @@ void Mips16InstrInfo::adjustStackPtrBig(unsigned SP, int64_t Amount,
   //
   //
   MachineInstrBuilder MIB1 = BuildMI(MBB, I, DL, get(Mips::LwConstant32), Reg1);
-  MIB1.addImm(Amount);
+  MIB1.addImm(Amount).addImm(-1);
   MachineInstrBuilder MIB2 = BuildMI(MBB, I, DL, get(Mips::MoveR3216), Reg2);
   MIB2.addReg(Mips::SP, RegState::Kill);
   MachineInstrBuilder MIB3 = BuildMI(MBB, I, DL, get(Mips::AdduRxRyRz16), Reg1);
@@ -393,7 +393,7 @@ Mips16InstrInfo::loadImmediate(unsigned FrameReg,
   }
   else
     Available.reset(Reg);
-  BuildMI(MBB, II, DL, get(Mips::LwConstant32), Reg).addImm(Imm);
+  BuildMI(MBB, II, DL, get(Mips::LwConstant32), Reg).addImm(Imm).addImm(-1);
   NewImm = 0;
   if (FrameReg == Mips::SP) {
     SpReg = Available.find_first();
