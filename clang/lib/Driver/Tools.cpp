@@ -4263,11 +4263,6 @@ void gcc::Preprocess::RenderExtraToolArgs(const JobAction &JA,
   CmdArgs.push_back("-E");
 }
 
-void gcc::Precompile::RenderExtraToolArgs(const JobAction &JA,
-                                          ArgStringList &CmdArgs) const {
-  // The type is good enough.
-}
-
 void gcc::Compile::RenderExtraToolArgs(const JobAction &JA,
                                        ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getDriver();

@@ -183,7 +183,6 @@ protected:
 
 private:
   mutable OwningPtr<tools::gcc::Preprocess> Preprocess;
-  mutable OwningPtr<tools::gcc::Precompile> Precompile;
   mutable OwningPtr<tools::gcc::Compile> Compile;
 };
 

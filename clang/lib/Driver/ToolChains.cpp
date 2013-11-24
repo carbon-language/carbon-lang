@@ -1574,10 +1574,6 @@ Tool *Generic_GCC::getTool(Action::ActionClass AC) const {
     if (!Preprocess)
       Preprocess.reset(new tools::gcc::Preprocess(*this));
     return Preprocess.get();
-  case Action::PrecompileJobClass:
-    if (!Precompile)
-      Precompile.reset(new tools::gcc::Precompile(*this));
-    return Precompile.get();
   case Action::CompileJobClass:
     if (!Compile)
       Compile.reset(new tools::gcc::Compile(*this));
