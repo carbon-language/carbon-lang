@@ -117,8 +117,6 @@ public:
 
   virtual Reader &getDefaultReader() const { return *_elfReader; }
 
-  virtual Reader &getLinkerScriptReader() const { return *_linkerScriptReader; }
-
   /// \brief Does the output have dynamic sections.
   virtual bool isDynamic() const;
 
@@ -214,6 +212,14 @@ public:
     return true;
   }
 
+  /// \brief Helper function to allocate strings.
+  StringRef allocateString(StringRef ref) const {
+    char *x = _allocator.Allocate<char>(ref.size() + 1);
+    memcpy(x, ref.data(), ref.size());
+    x[ref.size()] = '\0';
+    return x;
+  }
+
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
 
@@ -240,7 +246,6 @@ protected:
   StringRefVector _inputSearchPaths;
   std::unique_ptr<Reader> _elfReader;
   std::unique_ptr<Writer> _writer;
-  std::unique_ptr<Reader> _linkerScriptReader;
   StringRef _dynamicLinkerPath;
   StringRefVector _initFunctions;
   StringRefVector _finiFunctions;

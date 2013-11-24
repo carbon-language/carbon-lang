@@ -70,6 +70,18 @@ inline llvm::error_code make_error_code(InputGraphError e) {
   return llvm::error_code(static_cast<int>(e), InputGraphErrorCategory());
 }
 
+/// \brief Errors returned by Reader.
+const llvm::error_category &ReaderErrorCategory();
+
+enum class ReaderError {
+  success = 0,
+  unknown_file_format = 1
+};
+
+inline llvm::error_code make_error_code(ReaderError e) {
+  return llvm::error_code(static_cast<int>(e), ReaderErrorCategory());
+}
+
 } // end namespace lld
 
 namespace llvm {
@@ -79,6 +91,7 @@ template <> struct is_error_code_enum<lld::YamlReaderError> : true_type {};
 template <>
 struct is_error_code_enum<lld::LinkerScriptReaderError> : true_type {};
 template <> struct is_error_code_enum<lld::InputGraphError> : true_type {};
+template <> struct is_error_code_enum<lld::ReaderError> : true_type {};
 } // end namespace llvm
 
 #endif

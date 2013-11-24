@@ -21,6 +21,7 @@
 #include "lld/Core/Resolver.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "lld/ReaderWriter/FileArchive.h"
+#include "lld/ReaderWriter/LinkerScript.h"
 
 namespace lld {
 
@@ -135,6 +136,77 @@ public:
 
 private:
   const ELFLinkingContext &_elfLinkingContext;
+};
+
+/// \brief Parse GNU Linker scripts.
+class GNULdScript : public FileNode {
+public:
+  GNULdScript(ELFLinkingContext &ctx, StringRef userPath, int64_t ordinal)
+      : FileNode(userPath, ordinal), _elfLinkingContext(ctx),
+        _linkerScript(nullptr)
+  {}
+
+  static inline bool classof(const InputElement *a) {
+    return a->kind() == InputElement::Kind::File;
+  }
+
+  /// \brief Is this node part of resolution ?
+  virtual bool isHidden() const { return true; }
+
+  /// \brief Validate the options
+  virtual bool validate() {
+    (void)_elfLinkingContext;
+    return true;
+  }
+
+  /// \brief Dump the Linker script.
+  virtual bool dump(raw_ostream &) { return true; }
+
+  /// \brief Parse the linker script.
+  virtual error_code parse(const LinkingContext &, raw_ostream &);
+
+protected:
+  ELFLinkingContext &_elfLinkingContext;
+  std::unique_ptr<script::Parser> _parser;
+  std::unique_ptr<script::Lexer> _lexer;
+  script::LinkerScript *_linkerScript;
+};
+
+/// \brief Handle ELF style with GNU Linker scripts.
+class ELFGNULdScript : public GNULdScript {
+public:
+  ELFGNULdScript(ELFLinkingContext &ctx, StringRef userPath, int64_t ordinal)
+      : GNULdScript(ctx, userPath, ordinal) {}
+
+  virtual error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics);
+
+  virtual ExpandType expandType() const {
+    return InputElement::ExpandType::ExpandOnly;
+  }
+
+  /// Unused functions for ELFGNULdScript Nodes.
+  virtual ErrorOr<File &> getNextFile() {
+    return make_error_code(InputGraphError::no_more_files);
+  }
+
+  /// Return the elements that we would want to expand with.
+  range<InputGraph::InputElementIterT> expandElements() {
+    return make_range(_expandElements.begin(), _expandElements.end());
+  }
+
+  virtual void setResolveState(uint32_t) {
+    llvm_unreachable("cannot use this function: setResolveState");
+  }
+
+  virtual uint32_t getResolveState() const {
+    llvm_unreachable("cannot use this function: getResolveState");
+  }
+
+  // Do nothing here.
+  virtual void resetNextIndex() {}
+
+private:
+  InputGraph::InputElementVectorT _expandElements;
 };
 
 } // namespace lld

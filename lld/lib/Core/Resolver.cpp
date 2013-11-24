@@ -293,8 +293,6 @@ bool Resolver::resolveUndefines() {
         file->setOrdinal(_context.getNextOrdinalAndIncrement());
       handleSharedLibrary(*file);
       break;
-    case File::kindLinkerScript:
-      llvm_unreachable("linker script should not be returned by nextFile()");
     }
   }
 }

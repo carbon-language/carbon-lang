@@ -18,7 +18,6 @@
 #include "lld/Passes/LayoutPass.h"
 #include "lld/Passes/RoundTripNativePass.h"
 #include "lld/Passes/RoundTripYAMLPass.h"
-#include "lld/ReaderWriter/ReaderLinkerScript.h"
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/ELF.h"
@@ -83,7 +82,6 @@ StringRef ELFLinkingContext::entrySymbolName() const {
 
 bool ELFLinkingContext::validateImpl(raw_ostream &diagnostics) {
   _elfReader = createReaderELF(*this);
-  _linkerScriptReader.reset(new ReaderLinkerScript(*this));
   switch (outputFileType()) {
   case LinkingContext::OutputFileType::YAML:
     _writer = createWriterYAML(*this);

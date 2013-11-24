@@ -44,10 +44,9 @@ public:
 
   /// \brief Kinds of files that are supported.
   enum Kind {
-    kindObject,            ///< object file (.o)
-    kindSharedLibrary,     ///< shared library (.so)
-    kindArchiveLibrary,    ///< archive (.a)
-    kindLinkerScript,      ///< linker script
+    kindObject,        ///< object file (.o)
+    kindSharedLibrary, ///< shared library (.so)
+    kindArchiveLibrary ///< archive (.a)
   };
 
   /// \brief Returns file kind.  Need for dyn_cast<> on File objects.

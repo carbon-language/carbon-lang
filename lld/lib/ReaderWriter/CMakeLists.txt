@@ -9,7 +9,6 @@ add_lld_library(lldReaderWriter
   CoreLinkingContext.cpp
   LinkerScript.cpp
   Reader.cpp
-  ReaderLinkerScript.cpp
   Writer.cpp
   )
 

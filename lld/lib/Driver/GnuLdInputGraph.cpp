@@ -52,10 +52,59 @@ error_code ELFFileNode::parse(const LinkingContext &ctx,
     }
     return ec;
   }
+
   default:
-    // Process Linker script
-    return _elfLinkingContext.getLinkerScriptReader().parseFile(_buffer,
-                                                                _files);
     break;
   }
+  return error_code::success();
+}
+
+/// \brief Parse the GnuLD Script
+error_code GNULdScript::parse(const LinkingContext &ctx,
+                              raw_ostream &diagnostics) {
+  ErrorOr<StringRef> filePath = getPath(ctx);
+  if (!filePath)
+    return error_code(filePath);
+
+  if (error_code ec = getBuffer(*filePath))
+    return ec;
+
+  if (ctx.logInputFiles())
+    diagnostics << *filePath << "\n";
+
+  _lexer.reset(new script::Lexer(std::move(_buffer)));
+  _parser.reset(new script::Parser(*_lexer.get()));
+
+  _linkerScript = _parser->parse();
+
+  if (!_linkerScript)
+    return LinkerScriptReaderError::parse_error;
+
+  return error_code::success();
+}
+
+/// \brief Handle GnuLD script for ELF.
+error_code ELFGNULdScript::parse(const LinkingContext &ctx,
+                                 raw_ostream &diagnostics) {
+  int64_t index = 0;
+  std::vector<StringRef> searchPath;
+  if (error_code ec = GNULdScript::parse(ctx, diagnostics))
+    return ec;
+  for (const auto &c : _linkerScript->_commands) {
+    if (auto group = dyn_cast<script::Group>(c)) {
+      std::unique_ptr<InputElement> controlStart(
+          new ELFGroup(_elfLinkingContext, index++));
+      for (auto &path : group->getPaths()) {
+        // TODO : Propagate SearchPath, Set WholeArchive/dashlPrefix
+        auto inputNode = new ELFFileNode(
+            _elfLinkingContext, _elfLinkingContext.allocateString(path._path),
+            searchPath, index++, false, path._asNeeded, false);
+        std::unique_ptr<InputElement> inputFile(inputNode);
+        dyn_cast<ControlNode>(controlStart.get())
+            ->processInputElement(std::move(inputFile));
+      }
+      _expandElements.push_back(std::move(controlStart));
+    }
+  }
+  return error_code::success();
 }

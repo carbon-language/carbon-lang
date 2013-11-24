@@ -127,3 +127,29 @@ const llvm::error_category &lld::InputGraphErrorCategory() {
   static _InputGraphErrorCategory i;
   return i;
 }
+
+class _ReaderErrorCategory : public llvm::_do_message {
+public:
+  virtual const char *name() const { return "lld.inputGraph.parse"; }
+
+  virtual std::string message(int ev) const {
+    if (ReaderError(ev) == ReaderError::success)
+      return "Success";
+    else if (ReaderError(ev) == ReaderError::unknown_file_format)
+      return "File format for the input file is not recognized by this flavor";
+
+    llvm_unreachable("An enumerator of ReaderError does not have a "
+                     "message defined.");
+  }
+
+  virtual llvm::error_condition default_error_condition(int ev) const {
+    if (ReaderError(ev) == ReaderError::success)
+      return llvm::errc::success;
+    return llvm::errc::invalid_argument;
+  }
+};
+
+const llvm::error_category &lld::ReaderErrorCategory() {
+  static _ReaderErrorCategory i;
+  return i;
+}
