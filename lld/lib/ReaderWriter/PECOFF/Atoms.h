@@ -101,8 +101,8 @@ public:
   virtual Interposable interposable() const { return interposeNo; }
   virtual Merge merge() const { return mergeNo; }
   virtual Alignment alignment() const { return Alignment(0); }
-  virtual SectionChoice sectionChoice() const { return sectionBasedOnContent; }
-  virtual StringRef customSectionName() const { return ""; }
+  virtual SectionChoice sectionChoice() const = 0;
+  virtual StringRef customSectionName() const { return ""; };
   virtual SectionPosition sectionPosition() const { return sectionPositionAny; }
   virtual DeadStripKind deadStrip() const { return deadStripNormal; }
   virtual bool isAlias() const { return false; }
@@ -160,7 +160,8 @@ public:
 
   void setAlignment(Alignment val) { _alignment = val; };
 
-  virtual StringRef getSectionName() const { return _sectionName; }
+  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+  virtual StringRef customSectionName() const { return _sectionName; };
   virtual Scope scope() const { return _scope; }
   virtual ContentType contentType() const { return _contentType; }
   virtual ContentPermissions permissions() const { return _permissions; }
@@ -227,6 +228,7 @@ private:
 /// not read from file.
 class COFFLinkerInternalAtom : public COFFBaseDefinedAtom {
 public:
+  virtual SectionChoice sectionChoice() const { return sectionBasedOnContent; }
   virtual uint64_t ordinal() const { return 0; }
   virtual Scope scope() const { return scopeGlobal; }
   virtual Alignment alignment() const { return Alignment(0); }

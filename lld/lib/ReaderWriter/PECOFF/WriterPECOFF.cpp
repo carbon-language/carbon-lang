@@ -699,7 +699,6 @@ void SectionChunk::buildContents(const File &linkedFile,
                                  bool (*isEligible)(const DefinedAtom *)) {
   // Extract atoms from the linked file and append them to this section.
   for (const DefinedAtom *atom : linkedFile.defined()) {
-    assert(atom->sectionChoice() == DefinedAtom::sectionBasedOnContent);
     if (isEligible(atom))
       appendAtom(atom);
   }
