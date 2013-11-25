@@ -132,9 +132,9 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
         
         bool stop_others;
         if (m_stop_others == lldb::eOnlyThisThread)
-            stop_others = false;
-        else
             stop_others = true;
+        else
+            stop_others = false;
             
         FrameComparison frame_order = CompareCurrentFrameToStartFrame();
         
