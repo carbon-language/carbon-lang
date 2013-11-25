@@ -98,8 +98,9 @@ static bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
 /// GetX86CpuIDAndInfoEx - Execute the specified cpuid with subleaf and return the
 /// 4 values in the specified arguments.  If we can't run cpuid on the host,
 /// return true.
-bool GetX86CpuIDAndInfoEx(unsigned value, unsigned subleaf, unsigned *rEAX,
-                          unsigned *rEBX, unsigned *rECX, unsigned *rEDX) {
+static bool GetX86CpuIDAndInfoEx(unsigned value, unsigned subleaf,
+                                 unsigned *rEAX, unsigned *rEBX, unsigned *rECX,
+                                 unsigned *rEDX) {
 #if defined(__x86_64__) || defined(_M_AMD64) || defined (_M_X64)
   #if defined(__GNUC__)
     // gcc doesn't know cpuid would clobber ebx/rbx. Preseve it manually.
