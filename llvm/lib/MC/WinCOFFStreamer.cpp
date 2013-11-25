@@ -94,36 +94,39 @@ private:
     DF->getContents().append(Code.begin(), Code.end());
   }
 
-  void SetSection(StringRef Section,
-                  unsigned Characteristics,
-                  SectionKind Kind) {
-    SwitchSection(getContext().getCOFFSection(Section, Characteristics, Kind));
+  const MCSectionCOFF *getSectionText() {
+    return getContext().getCOFFSection(
+        ".text", COFF::IMAGE_SCN_CNT_CODE | COFF::IMAGE_SCN_MEM_EXECUTE |
+                     COFF::IMAGE_SCN_MEM_READ,
+        SectionKind::getText());
+  }
+
+  const MCSectionCOFF *getSectionData() {
+    return getContext().getCOFFSection(
+        ".data", COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                     COFF::IMAGE_SCN_MEM_READ | COFF::IMAGE_SCN_MEM_WRITE,
+        SectionKind::getDataRel());
+  }
+
+  const MCSectionCOFF *getSectionBSS() {
+    return getContext().getCOFFSection(
+        ".bss", COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA |
+                    COFF::IMAGE_SCN_MEM_READ | COFF::IMAGE_SCN_MEM_WRITE,
+        SectionKind::getBSS());
   }
 
   void SetSectionText() {
-    SetSection(".text",
-               COFF::IMAGE_SCN_CNT_CODE
-             | COFF::IMAGE_SCN_MEM_EXECUTE
-             | COFF::IMAGE_SCN_MEM_READ,
-               SectionKind::getText());
+    SwitchSection(getSectionText());
     EmitCodeAlignment(4, 0);
   }
 
   void SetSectionData() {
-    SetSection(".data",
-               COFF::IMAGE_SCN_CNT_INITIALIZED_DATA
-             | COFF::IMAGE_SCN_MEM_READ
-             | COFF::IMAGE_SCN_MEM_WRITE,
-               SectionKind::getDataRel());
+    SwitchSection(getSectionData());
     EmitCodeAlignment(4, 0);
   }
 
   void SetSectionBSS() {
-    SetSection(".bss",
-               COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA
-             | COFF::IMAGE_SCN_MEM_READ
-             | COFF::IMAGE_SCN_MEM_WRITE,
-               SectionKind::getBSS());
+    SwitchSection(getSectionBSS());
     EmitCodeAlignment(4, 0);
   }
 };
