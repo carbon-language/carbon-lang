@@ -1332,8 +1332,9 @@ private:
     SourceLocation Start = First.WhitespaceRange.getBegin();
     if (!IncludeLeadingNewlines)
       Start = Start.getLocWithOffset(First.LastNewlineOffset);
-    SourceLocation End = Last.getStartOfNonWhitespace().getLocWithOffset(
-        Last.TokenText.size() - 1);
+    SourceLocation End = Last.getStartOfNonWhitespace();
+    if (Last.TokenText.size() > 0)
+      End = End.getLocWithOffset(Last.TokenText.size() - 1);
     CharSourceRange Range = CharSourceRange::getCharRange(Start, End);
     return affectsCharSourceRange(Range);
   }
