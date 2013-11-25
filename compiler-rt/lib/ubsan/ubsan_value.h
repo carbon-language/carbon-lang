@@ -25,8 +25,8 @@
 
 // FIXME: Move this out to a config header.
 #if __SIZEOF_INT128__
-typedef __int128 s128;
-typedef unsigned __int128 u128;
+__extension__ typedef __int128 s128;
+__extension__ typedef unsigned __int128 u128;
 #define HAVE_INT128_T 1
 #else
 #define HAVE_INT128_T 0
