@@ -12,6 +12,7 @@ class WatchpointSetErrorTestCase(TestBase):
 
     mydir = os.path.join("functionalities", "watchpoint", "watchpoint_set_command")
 
+    @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints not yet on FreeBSD
     def test_error_cases_with_watchpoint_set(self):
         """Test error cases with the 'watchpoint set' command."""
         self.buildDwarf(dictionary=self.d)
