@@ -32,21 +32,31 @@ def defined_function_list(object):
   return functions
 
 p = OptionParser()
-p.add_option('--lib', metavar='PATH',
-             help='path to lib directory to use',
+
+p.add_option('--libc-dso-path', metavar='PATH',
+             help='path to libc DSO directory',
              default='/lib/x86_64-linux-gnu')
-p.add_option('--usrlib', metavar='PATH',
-             help='path to usr/lib directory to use',
+p.add_option('--libc-archive-path', metavar='PATH',
+             help='path to libc archive directory',
              default='/usr/lib/x86_64-linux-gnu')
-p.add_option('--gcclib', metavar='PATH',
-             help='path to gcc lib directory to use',
+
+p.add_option('--libgcc-dso-path', metavar='PATH',
+             help='path to libgcc DSO directory',
+             default='/lib/x86_64-linux-gnu')
+p.add_option('--libgcc-archive-path', metavar='PATH',
+             help='path to libgcc archive directory',
              default='/usr/lib/gcc/x86_64-linux-gnu/4.6')
+
 p.add_option('--with-libstdcxx', action='store_true',
              dest='with_libstdcxx',
              help='include libstdc++ in the list (inadvisable)')
+p.add_option('--libstdcxx-dso-path', metavar='PATH',
+             help='path to libstdc++ DSO directory',
+             default='/usr/lib/x86_64-linux-gnu')
+
 (options, args) = p.parse_args()
 
-libs = [os.path.join(options.lib, name) for name in
+libs = [os.path.join(options.libc_dso_path, name) for name in
         ['ld-linux-x86-64.so.2',
          'libanl.so.1',
          'libBrokenLocale.so.1',
@@ -61,14 +71,15 @@ libs = [os.path.join(options.lib, name) for name in
          'librt.so.1',
          'libthread_db.so.1',
          'libutil.so.1']]
-libs += [os.path.join(options.usrlib, name) for name in
+libs += [os.path.join(options.libc_archive_path, name) for name in
          ['libc_nonshared.a',
           'libpthread_nonshared.a']]
-gcclibs = ['libgcc.a',
-           'libgcc_s.so']
+
+libs.append(os.path.join(options.libgcc_dso_path, 'libgcc_s.so.1'))
+libs.append(os.path.join(options.libgcc_archive_path, 'libgcc.a'))
+
 if options.with_libstdcxx:
-  gcclibs += ['libstdc++.so']
-libs += [os.path.join(options.gcclib, name) for name in gcclibs]
+  libs.append(os.path.join(options.libstdcxx_dso_path, 'libstdc++.so.6'))
 
 functions = []
 for l in libs:
