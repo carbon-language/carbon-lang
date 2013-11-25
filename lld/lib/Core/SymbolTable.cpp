@@ -338,9 +338,8 @@ unsigned int SymbolTable::size() {
 }
 
 void SymbolTable::undefines(std::vector<const UndefinedAtom *> &undefs) {
-  for (NameToAtom::iterator it = _nameTable.begin(),
-       end = _nameTable.end(); it != end; ++it) {
-    const Atom *atom = it->second;
+  for (auto it : _nameTable) {
+    const Atom *atom = it.second;
     assert(atom != nullptr);
     if (const auto undef = dyn_cast<const UndefinedAtom>(atom)) {
       AtomToAtom::iterator pos = _replacedAtoms.find(undef);
