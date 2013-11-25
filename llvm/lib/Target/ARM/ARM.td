@@ -179,7 +179,7 @@ def ProcA5      : SubtargetFeature<"a5", "ARMProcFamily", "CortexA5",
                                    "Cortex-A5 ARM processors",
                                    [FeatureSlowFPBrcc, FeatureHasSlowFPVMLx,
                                     FeatureVMLxForwarding, FeatureT2XtPk,
-                                    FeatureTrustZone]>;
+                                    FeatureTrustZone, FeatureMP]>;
 def ProcA7      : SubtargetFeature<"a7", "ARMProcFamily", "CortexA7",
                                    "Cortex-A7 ARM processors",
                                    [FeatureSlowFPBrcc, FeatureHasSlowFPVMLx,
