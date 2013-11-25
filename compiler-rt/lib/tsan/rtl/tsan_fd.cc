@@ -44,7 +44,7 @@ static FdContext fdctx;
 
 static bool bogusfd(int fd) {
   // Apparently a bogus fd value.
-  return fd < 0 || fd >= (1 << 30);
+  return fd < 0 || fd >= kTableSize;
 }
 
 static FdSync *allocsync() {
