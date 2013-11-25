@@ -18,7 +18,7 @@ namespace __sanitizer {
 
 // Make the compiler think that something is going on there.
 static inline void break_optimization(void *arg) {
-#ifdef SANITIZER_WINDOWS
+#if SANITIZER_WINDOWS
   // FIXME: make sure this is actually enough.
   __asm;
 #else
