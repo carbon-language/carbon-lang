@@ -585,7 +585,7 @@ EventMessageOperation::Execute(ProcessMonitor *monitor)
         m_result = false;
     else {
         if (plwp.pl_flags & PL_FLAG_FORKED) {
-            m_message = (unsigned long *)plwp.pl_child_pid;
+            *m_message = plwp.pl_child_pid;
             m_result = true;
         } else
             m_result = false;
@@ -953,7 +953,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
         }
         goto FINISH;
     }
-    assert(WIFSTOPPED(status) && wpid == pid &&
+    assert(WIFSTOPPED(status) && wpid == (::pid_t)pid &&
            "Could not sync with inferior process.");
 
 #ifdef notyet
