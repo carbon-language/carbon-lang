@@ -46,12 +46,14 @@ void SymbolTable::add(const AbsoluteAtom &atom) {
 
 void SymbolTable::add(const DefinedAtom &atom) {
   if (!atom.name().empty() &&
-      (atom.scope() != DefinedAtom::scopeTranslationUnit)) {
+      atom.scope() != DefinedAtom::scopeTranslationUnit) {
     // Named atoms cannot be merged by content.
     assert(atom.merge() != DefinedAtom::mergeByContent);
     // Track named atoms that are not scoped to file (static).
     this->addByName(atom);
-  } else if (atom.merge() == DefinedAtom::mergeByContent) {
+    return;
+  }
+  if (atom.merge() == DefinedAtom::mergeByContent) {
     // Named atoms cannot be merged by content.
     assert(atom.name().empty());
     this->addByContent(atom);
