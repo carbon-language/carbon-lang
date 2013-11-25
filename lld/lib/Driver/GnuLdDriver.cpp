@@ -158,12 +158,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   bool asNeeded = false;
   bool _outputOptionSet = false;
 
-  // Create a dynamic executable by default
-  ctx->setOutputELFType(llvm::ELF::ET_EXEC);
-  ctx->setIsStaticExecutable(false);
-  ctx->setAllowShlibUndefines(false);
-  ctx->setUseShlibUndefines(true);
-
   int index = 0;
 
   // Set sys root path.
@@ -176,17 +170,23 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
        it != ie; ++it)
     ctx->addSearchPath((*it)->getValue());
 
-  // Process all the arguments and create Input Elements
-  for (auto inputArg : *parsedArgs) {
-    switch (inputArg->getOption().getID()) {
-    case OPT_mllvm:
-      ctx->appendLLVMOption(inputArg->getValue());
-      break;
+  // Create a dynamic executable by default
+  ctx->setOutputELFType(llvm::ELF::ET_EXEC);
+  ctx->setIsStaticExecutable(false);
+  ctx->setAllowShlibUndefines(false);
+  ctx->setUseShlibUndefines(true);
+
+  // Figure out output kind ( -r, -static, -shared)
+  if ( llvm::opt::Arg *kind = parsedArgs->getLastArg(OPT_relocatable, OPT_static,
+                                      OPT_shared, OPT_nmagic,
+                                      OPT_omagic, OPT_no_omagic)) {
+    switch (kind->getOption().getID()) {
     case OPT_relocatable:
       ctx->setOutputELFType(llvm::ELF::ET_REL);
       ctx->setPrintRemainingUndefines(false);
       ctx->setAllowRemainingUndefines(true);
       break;
+
     case OPT_static:
       ctx->setOutputELFType(llvm::ELF::ET_EXEC);
       ctx->setIsStaticExecutable(true);
@@ -195,6 +195,36 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ctx->setOutputELFType(llvm::ELF::ET_DYN);
       ctx->setAllowShlibUndefines(true);
       ctx->setUseShlibUndefines(false);
+      break;
+    }
+  }
+
+  // Figure out if the output type is nmagic/omagic
+  if ( llvm::opt::Arg *kind = parsedArgs->getLastArg(OPT_nmagic, OPT_omagic,
+                                                     OPT_no_omagic)) {
+    switch (kind->getOption().getID()) {
+    case OPT_nmagic:
+      ctx->setOutputMagic(ELFLinkingContext::OutputMagic::NMAGIC);
+      ctx->setIsStaticExecutable(true);
+      break;
+
+    case OPT_omagic:
+      ctx->setOutputMagic(ELFLinkingContext::OutputMagic::OMAGIC);
+      ctx->setIsStaticExecutable(true);
+      break;
+
+    case OPT_no_omagic:
+      ctx->setOutputMagic(ELFLinkingContext::OutputMagic::DEFAULT);
+      ctx->setNoAllowDynamicLibraries();
+      break;
+    }
+  }
+
+  // Process all the arguments and create Input Elements
+  for (auto inputArg : *parsedArgs) {
+    switch (inputArg->getOption().getID()) {
+    case OPT_mllvm:
+      ctx->appendLLVMOption(inputArg->getValue());
       break;
     case OPT_e:
       ctx->setEntrySymbolName(inputArg->getValue());
@@ -231,21 +261,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
     case OPT_dynamic_linker:
       ctx->setInterpreter(inputArg->getValue());
-      break;
-
-    case OPT_nmagic:
-      ctx->setOutputMagic(ELFLinkingContext::OutputMagic::NMAGIC);
-      ctx->setIsStaticExecutable(true);
-      break;
-
-    case OPT_omagic:
-      ctx->setOutputMagic(ELFLinkingContext::OutputMagic::OMAGIC);
-      ctx->setIsStaticExecutable(true);
-      break;
-
-    case OPT_no_omagic:
-      ctx->setOutputMagic(ELFLinkingContext::OutputMagic::DEFAULT);
-      ctx->setNoAllowDynamicLibraries();
       break;
 
     case OPT_u:
