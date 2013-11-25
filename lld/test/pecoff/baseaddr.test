@@ -1,9 +1,11 @@
 # RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1 /opt:noref -- %t.obj \
+# RUN: lld -flavor link /out:%t1 /opt:noref /subsystem:console /force \
+# RUN:   -- %t.obj \
 # RUN:   && llvm-readobj -file-headers %t1 | FileCheck -check-prefix=DEFAULT %s
 #
-# RUN: lld -flavor link /out:%t1 /opt:noref /base:8388608 -- %t.obj \
+# RUN: lld -flavor link /out:%t1 /opt:noref /base:8388608 /subsystem:console \
+# RUN:   /force -- %t.obj \
 # RUN:   && llvm-readobj -file-headers %t1 | FileCheck -check-prefix=BASE %s
 
 DEFAULT: ImageBase: 0x400000
@@ -11,7 +13,7 @@ DEFAULT: ImageBase: 0x400000
 BASE: ImageBase: 0x800000
 
 
-# RUN: not lld -flavor link /base:3 -- %t.obj >& %t.log
+# RUN: not lld -flavor link /base:3 /subsystem:console -- %t.obj >& %t.log
 # RUN: FileCheck -check-prefix=ERROR %s < %t.log
 
 ERROR: Base address have to be multiple of 64K, but got 3
