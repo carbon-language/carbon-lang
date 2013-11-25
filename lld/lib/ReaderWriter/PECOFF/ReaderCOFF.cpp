@@ -594,9 +594,10 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
   if (sectionName == ".debug$S")
     return error_code::success();
 
-  // A section with IMAGE_SCN_LNK_REMOVE attribute will never become
+  // A section with IMAGE_SCN_LNK_{INFO,REMOVE} attribute will never become
   // a part of the output image. That's what the COFF spec says.
-  if (section->Characteristics & llvm::COFF::IMAGE_SCN_LNK_REMOVE)
+  if (section->Characteristics & llvm::COFF::IMAGE_SCN_LNK_INFO ||
+      section->Characteristics & llvm::COFF::IMAGE_SCN_LNK_REMOVE)
     return error_code::success();
 
   DefinedAtom::ContentType type = getContentType(section);
