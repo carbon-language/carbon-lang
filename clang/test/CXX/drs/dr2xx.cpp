@@ -1003,7 +1003,7 @@ namespace dr299 { // dr299: yes c++11
   };
   struct T {
     operator int(); // expected-note {{}}
-    operator unsigned(); // expected-note {{}}
+    operator unsigned short(); // expected-note {{}}
   };
   // FIXME: should this apply to c++98 mode?
   int *p = new int[S()]; // expected-error 0-1{{extension}}
