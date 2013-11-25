@@ -580,8 +580,8 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
         //
         // instead of:
         //   SomeFunction(a, [] {
-        //                        f();  // break
-        //                      });
+        //                     f();  // break
+        //                   });
         for (unsigned i = 0; i != Current.MatchingParen->FakeRParens; ++i)
           State.Stack.pop_back();
         NewIndent = State.Stack.back().LastSpace + Style.IndentWidth;

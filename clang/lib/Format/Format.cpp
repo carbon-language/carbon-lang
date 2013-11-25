@@ -553,13 +553,11 @@ private:
 
 class UnwrappedLineFormatter {
 public:
-  UnwrappedLineFormatter(SourceManager &SourceMgr,
-                         SmallVectorImpl<CharSourceRange> &Ranges,
-                         ContinuationIndenter *Indenter,
+  UnwrappedLineFormatter(ContinuationIndenter *Indenter,
                          WhitespaceManager *Whitespaces,
                          const FormatStyle &Style)
-      : SourceMgr(SourceMgr), Ranges(Ranges), Indenter(Indenter),
-        Whitespaces(Whitespaces), Style(Style), Joiner(Style) {}
+      : Indenter(Indenter), Whitespaces(Whitespaces), Style(Style),
+        Joiner(Style) {}
 
   unsigned format(const SmallVectorImpl<AnnotatedLine *> &Lines, bool DryRun,
                   int AdditionalIndent = 0) {
@@ -568,22 +566,13 @@ public:
     std::vector<int> IndentForLevel;
     for (unsigned i = 0, e = Lines[0]->Level; i != e; ++i)
       IndentForLevel.push_back(Style.IndentWidth * i + AdditionalIndent);
-    bool PreviousLineWasTouched = false;
     const AnnotatedLine *PreviousLine = NULL;
-    bool FormatPPDirective = false;
     for (SmallVectorImpl<AnnotatedLine *>::const_iterator I = Lines.begin(),
                                                           E = Lines.end();
          I != E; ++I) {
       const AnnotatedLine &TheLine = **I;
       const FormatToken *FirstTok = TheLine.First;
       int Offset = getIndentOffset(*FirstTok);
-
-      // Check whether this line is part of a formatted preprocessor directive.
-      if (FirstTok->HasUnescapedNewline)
-        FormatPPDirective = false;
-      if (!FormatPPDirective && TheLine.InPPDirective &&
-          (touchesLine(TheLine) || touchesPPDirective(I + 1, E)))
-        FormatPPDirective = true;
 
       // Determine indent and try to merge multiple unwrapped lines.
       while (IndentForLevel.size() <= TheLine.Level)
@@ -600,16 +589,15 @@ public:
       }
       I += MergedLines;
 
-      bool WasMoved = PreviousLineWasTouched && FirstTok->NewlinesBefore == 0;
       if (TheLine.First->is(tok::eof)) {
-        if (PreviousLineWasTouched && !DryRun) {
+        if (PreviousLine && PreviousLine->Affected && !DryRun) {
+          // Remove the file's trailing whitespace.
           unsigned Newlines = std::min(FirstTok->NewlinesBefore, 1u);
           Whitespaces->replaceWhitespace(*TheLine.First, Newlines,
                                          /*IndentLevel=*/0, /*Spaces=*/0,
                                          /*TargetColumn=*/0);
         }
-      } else if (TheLine.Type != LT_Invalid &&
-                 (WasMoved || FormatPPDirective || touchesLine(TheLine))) {
+      } else if (TheLine.Type != LT_Invalid && TheLine.Affected) {
         unsigned LevelIndent = getIndent(IndentForLevel, TheLine.Level);
         if (FirstTok->WhitespaceRange.isValid()) {
           if (!DryRun)
@@ -640,7 +628,6 @@ public:
         }
 
         IndentForLevel[TheLine.Level] = LevelIndent;
-        PreviousLineWasTouched = true;
       } else {
         // Format the first token if necessary, and notify the WhitespaceManager
         // about the unchanged whitespace.
@@ -649,9 +636,9 @@ public:
               (Tok->NewlinesBefore > 0 || Tok->IsFirst)) {
             unsigned LevelIndent = Tok->OriginalColumn;
             if (!DryRun) {
-              // Remove trailing whitespace of the previous line if it was
-              // touched.
-              if (PreviousLineWasTouched || touchesEmptyLineBefore(TheLine)) {
+              // Remove trailing whitespace of the previous line if.
+              if ((PreviousLine && PreviousLine->Affected) ||
+                  TheLine.LeadingEmptyLinesAffected) {
                 formatFirstToken(*Tok, PreviousLine, TheLine.Level, LevelIndent,
                                  TheLine.InPPDirective);
               } else {
@@ -667,10 +654,6 @@ public:
             Whitespaces->addUntouchableToken(*Tok, TheLine.InPPDirective);
           }
         }
-        // If we did not reformat this unwrapped line, the column at the end of
-        // the last token is unchanged - thus, we can calculate the end of the
-        // last token.
-        PreviousLineWasTouched = false;
       }
       if (!DryRun) {
         for (FormatToken *Tok = TheLine.First; Tok != NULL; Tok = Tok->Next) {
@@ -779,6 +762,8 @@ private:
   void join(AnnotatedLine &A, const AnnotatedLine &B) {
     assert(!A.Last->Next);
     assert(!B.First->Previous);
+    if (B.Affected)
+      A.Affected = true;
     A.Last->Next = B.First;
     B.First->Previous = A.Last;
     B.First->CanBreakBefore = true;
@@ -792,48 +777,6 @@ private:
   unsigned getColumnLimit(bool InPPDirective) const {
     // In preprocessor directives reserve two chars for trailing " \"
     return Style.ColumnLimit - (InPPDirective ? 2 : 0);
-  }
-
-  bool touchesRanges(const CharSourceRange &Range) {
-    for (SmallVectorImpl<CharSourceRange>::const_iterator I = Ranges.begin(),
-                                                          E = Ranges.end();
-         I != E; ++I) {
-      if (!SourceMgr.isBeforeInTranslationUnit(Range.getEnd(), I->getBegin()) &&
-          !SourceMgr.isBeforeInTranslationUnit(I->getEnd(), Range.getBegin()))
-        return true;
-    }
-    return false;
-  }
-
-  bool touchesLine(const AnnotatedLine &TheLine) {
-    const FormatToken *First = TheLine.First;
-    const FormatToken *Last = TheLine.Last;
-    CharSourceRange LineRange = CharSourceRange::getCharRange(
-        First->WhitespaceRange.getBegin().getLocWithOffset(
-            First->LastNewlineOffset),
-        Last->getStartOfNonWhitespace().getLocWithOffset(
-            Last->TokenText.size() - 1));
-    return touchesRanges(LineRange);
-  }
-
-  bool touchesPPDirective(SmallVectorImpl<AnnotatedLine *>::const_iterator I,
-                          SmallVectorImpl<AnnotatedLine *>::const_iterator E) {
-    for (; I != E; ++I) {
-      if ((*I)->First->HasUnescapedNewline)
-        return false;
-      if (touchesLine(**I))
-        return true;
-    }
-    return false;
-  }
-
-  bool touchesEmptyLineBefore(const AnnotatedLine &TheLine) {
-    const FormatToken *First = TheLine.First;
-    CharSourceRange LineRange = CharSourceRange::getCharRange(
-        First->WhitespaceRange.getBegin(),
-        First->WhitespaceRange.getBegin().getLocWithOffset(
-            First->LastNewlineOffset));
-    return touchesRanges(LineRange);
   }
 
   /// \brief Analyze the entire solution space starting from \p InitialState.
@@ -1005,8 +948,6 @@ private:
     return true;
   }
 
-  SourceManager &SourceMgr;
-  SmallVectorImpl<CharSourceRange> &Ranges;
   ContinuationIndenter *Indenter;
   WhitespaceManager *Whitespaces;
   FormatStyle Style;
@@ -1310,17 +1251,114 @@ public:
     for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
       Annotator.calculateFormattingInformation(*AnnotatedLines[i]);
     }
+    computeAffectedLines(AnnotatedLines.begin(), AnnotatedLines.end());
 
     Annotator.setCommentLineLevels(AnnotatedLines);
     ContinuationIndenter Indenter(Style, SourceMgr, Whitespaces, Encoding,
                                   BinPackInconclusiveFunctions);
-    UnwrappedLineFormatter Formatter(SourceMgr, Ranges, &Indenter, &Whitespaces,
-                                     Style);
+    UnwrappedLineFormatter Formatter(&Indenter, &Whitespaces, Style);
     Formatter.format(AnnotatedLines, /*DryRun=*/false);
     return Whitespaces.generateReplacements();
   }
 
 private:
+  // Determines which lines are affected by the SourceRanges given as input.
+  // Returns \c true if at least one line between I and E was affected.
+  bool computeAffectedLines(SmallVectorImpl<AnnotatedLine *>::iterator I,
+                            SmallVectorImpl<AnnotatedLine *>::iterator E) {
+    bool SomeLineAffected = false;
+    bool PreviousLineAffected = false;
+    while (I != E) {
+      AnnotatedLine *Line = *I;
+      Line->LeadingEmptyLinesAffected = affectsLeadingEmptyLines(*Line->First);
+
+      // If a line is part of a preprocessor directive, it needs to be formatted
+      // if any token within the directive is affected.
+      if (Line->InPPDirective) {
+        FormatToken *Last = Line->Last;
+        SmallVectorImpl<AnnotatedLine *>::iterator PPEnd = I + 1;
+        while (PPEnd != E && !(*PPEnd)->First->HasUnescapedNewline) {
+          Last = (*PPEnd)->Last;
+          ++PPEnd;
+        }
+
+        if (affectsTokenRange(*Line->First, *Last,
+                              /*IncludeLeadingNewlines=*/false)) {
+          SomeLineAffected = true;
+          markAllAsAffected(I, PPEnd);
+        }
+        I = PPEnd;
+        continue;
+      }
+
+      bool SomeTokenAffected = false;
+      for (FormatToken *Tok = Line->First; Tok; Tok = Tok->Next) {
+        bool IncludeLeadingNewlines = Tok != Line->First;
+        if (affectsTokenRange(*Tok, *Tok, IncludeLeadingNewlines)) {
+          SomeTokenAffected = true;
+          break;
+        }
+      }
+      bool SomeChildAffected =
+          computeAffectedLines(Line->Children.begin(), Line->Children.end());
+      bool LineMoved = PreviousLineAffected && Line->First->NewlinesBefore == 0;
+      if (SomeTokenAffected || SomeChildAffected || LineMoved) {
+        Line->Affected = true;
+        SomeLineAffected = true;
+        PreviousLineAffected = true;
+      } else {
+        PreviousLineAffected = false;
+      }
+
+      ++I;
+    }
+    return SomeLineAffected;
+  }
+
+  // Marks all lines between I and E as well as all their children as affected.
+  void markAllAsAffected(SmallVectorImpl<AnnotatedLine *>::iterator I,
+                         SmallVectorImpl<AnnotatedLine *>::iterator E) {
+    while (I != E) {
+      (*I)->Affected = true;
+      markAllAsAffected((*I)->Children.begin(), (*I)->Children.end());
+      ++I;
+    }
+  }
+
+  // Returns true if the range from 'First' to 'Last' intersects with one of the
+  // input ranges.
+  bool affectsTokenRange(const FormatToken &First, const FormatToken &Last,
+                         bool IncludeLeadingNewlines) {
+    SourceLocation Start = First.WhitespaceRange.getBegin();
+    if (!IncludeLeadingNewlines)
+      Start = Start.getLocWithOffset(First.LastNewlineOffset);
+    SourceLocation End = Last.getStartOfNonWhitespace().getLocWithOffset(
+        Last.TokenText.size() - 1);
+    CharSourceRange Range = CharSourceRange::getCharRange(Start, End);
+    return affectsCharSourceRange(Range);
+  }
+
+  // Returns true if one of the input ranges intersect the leading empty lines
+  // before 'Tok'.
+  bool affectsLeadingEmptyLines(const FormatToken &Tok) {
+    CharSourceRange EmptyLineRange = CharSourceRange::getCharRange(
+        Tok.WhitespaceRange.getBegin(),
+        Tok.WhitespaceRange.getBegin().getLocWithOffset(Tok.LastNewlineOffset));
+    return affectsCharSourceRange(EmptyLineRange);
+  }
+
+  // Returns true if 'Range' intersects with one of the input ranges.
+  bool affectsCharSourceRange(const CharSourceRange &Range) {
+    for (SmallVectorImpl<CharSourceRange>::const_iterator I = Ranges.begin(),
+                                                          E = Ranges.end();
+         I != E; ++I) {
+      if (!SourceMgr.isBeforeInTranslationUnit(Range.getEnd(), I->getBegin()) &&
+          !SourceMgr.isBeforeInTranslationUnit(I->getEnd(), Range.getBegin()))
+        return true;
+    }
+    return false;
+  }
+
   static bool inputUsesCRLF(StringRef Text) {
     return Text.count('\r') * 2 > Text.count('\n');
   }

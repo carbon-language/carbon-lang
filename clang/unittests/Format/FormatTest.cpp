@@ -187,10 +187,10 @@ TEST_F(FormatTest, FormatsCorrectRegionForLeadingWhitespace) {
                    26, 0, getLLVMStyleWithColumns(12)));
   EXPECT_EQ("#define A  \\\n"
             "  int a;   \\\n"
-            "    int b;",
+            "  int b;",
             format("#define A  \\\n"
                    "  int a;   \\\n"
-                   "    int b;",
+                   "  int b;",
                    25, 0, getLLVMStyleWithColumns(12)));
 }
 
