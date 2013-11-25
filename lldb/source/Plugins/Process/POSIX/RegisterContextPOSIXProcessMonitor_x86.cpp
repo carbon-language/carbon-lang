@@ -377,8 +377,6 @@ RegisterContextPOSIXProcessMonitor_x86_64::WriteAllRegisterValues(const DataBuff
                 success = WriteFPR();
                 if (success)
                 {
-                    success = true;
-
                     if (GetFPRType() == eXSAVE)
                     {
                         ByteOrder byte_order = GetByteOrder();
