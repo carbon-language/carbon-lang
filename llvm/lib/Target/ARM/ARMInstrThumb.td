@@ -1306,8 +1306,7 @@ def : T1Pat<(addc   tGPR:$lhs, imm8_255_neg:$rhs),
 def : T1Pat<(subc   tGPR:$lhs, tGPR:$rhs),
             (tSUBrr tGPR:$lhs, tGPR:$rhs)>;
 
-// ConstantPool, GlobalAddress
-def : T1Pat<(ARMWrapper  tglobaladdr :$dst), (tLEApcrel tglobaladdr :$dst)>;
+// ConstantPool
 def : T1Pat<(ARMWrapper  tconstpool  :$dst), (tLEApcrel tconstpool  :$dst)>;
 
 // JumpTable
