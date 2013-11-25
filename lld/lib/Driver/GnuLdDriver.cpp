@@ -160,6 +160,13 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
   int index = 0;
 
+  // Ignore unknown arguments.
+  for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
+            ie = parsedArgs->filtered_end();
+       it != ie; ++it)
+    diagnostics << "warning: ignoring unknown argument: " << (*it)->getValue()
+                << "\n";
+
   // Set sys root path.
   if (llvm::opt::Arg *sysRootPath = parsedArgs->getLastArg(OPT_sysroot))
     ctx->setSysroot(sysRootPath->getValue());
