@@ -817,7 +817,7 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
     // On Darwin, const-pool entries may get the "FOO$non_lazy_ptr" mangling, so
     // flag the global as MO_NONLAZY.
     unsigned char TF = Subtarget->isTargetDarwin() ? ARMII::MO_NONLAZY : 0;
-  MCSym = GetARMGVSymbol(GV, TF);
+    MCSym = GetARMGVSymbol(GV, TF);
   } else if (ACPV->isMachineBasicBlock()) {
     const MachineBasicBlock *MBB = cast<ARMConstantPoolMBB>(ACPV)->getMBB();
     MCSym = MBB->getSymbol();
