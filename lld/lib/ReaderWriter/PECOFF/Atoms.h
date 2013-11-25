@@ -229,19 +229,20 @@ private:
 class COFFLinkerInternalAtom : public COFFBaseDefinedAtom {
 public:
   virtual SectionChoice sectionChoice() const { return sectionBasedOnContent; }
-  virtual uint64_t ordinal() const { return 0; }
+  virtual uint64_t ordinal() const { return _ordinal; }
   virtual Scope scope() const { return scopeGlobal; }
   virtual Alignment alignment() const { return Alignment(0); }
   virtual uint64_t size() const { return _data.size(); }
   virtual ArrayRef<uint8_t> rawContent() const { return _data; }
 
 protected:
-  COFFLinkerInternalAtom(const File &file, std::vector<uint8_t> data,
-                         StringRef symbolName = "")
+  COFFLinkerInternalAtom(const File &file, uint64_t ordinal,
+                         std::vector<uint8_t> data, StringRef symbolName = "")
       : COFFBaseDefinedAtom(file, symbolName, Kind::Internal),
-        _data(std::move(data)) {}
+        _ordinal(ordinal), _data(std::move(data)) {}
 
 private:
+  uint64_t _ordinal;
   std::vector<uint8_t> _data;
 };
 
@@ -249,8 +250,9 @@ private:
 // COFF header.
 class COFFDataDirectoryAtom : public COFFLinkerInternalAtom {
 public:
-  COFFDataDirectoryAtom(const File &file, std::vector<uint8_t> contents)
-      : COFFLinkerInternalAtom(file, contents) {}
+  COFFDataDirectoryAtom(const File &file, uint64_t ordinal,
+                        std::vector<uint8_t> contents)
+      : COFFLinkerInternalAtom(file, ordinal, contents) {}
 
   virtual ContentType contentType() const { return typeDataDirectoryEntry; }
   virtual ContentPermissions permissions() const { return permR__; }

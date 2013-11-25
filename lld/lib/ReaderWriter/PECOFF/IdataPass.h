@@ -45,6 +45,7 @@ using std::vector;
 
 namespace lld {
 namespace pecoff {
+class IdataPassFile;
 
 namespace {
 class DLLNameAtom;
@@ -59,10 +60,10 @@ void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target,
 
 // A state object of this pass.
 struct Context {
-  Context(MutableFile &f, File &g) : file(f), dummyFile(g) {}
+  Context(MutableFile &f, IdataPassFile &g) : file(f), dummyFile(g) {}
 
   MutableFile &file;
-  File &dummyFile;
+  IdataPassFile &dummyFile;
 
   // The object to accumulate idata atoms. Idata atoms need to be grouped by
   // type and be continuous in the output file. To force such layout, we
@@ -84,10 +85,7 @@ public:
   virtual ContentPermissions permissions() const { return permR__; }
 
 protected:
-  IdataAtom(Context &context, vector<uint8_t> data)
-      : COFFLinkerInternalAtom(context.dummyFile, data) {
-    context.file.addAtom(*this);
-  }
+  IdataAtom(Context &context, vector<uint8_t> data);
 };
 
 /// A DLLNameAtom contains a name of a DLL and is referenced by the Name RVA
@@ -243,9 +241,14 @@ public:
 class IdataPassFile : public SimpleFile {
 public:
   IdataPassFile(const LinkingContext &ctx)
-      : SimpleFile(ctx, "<idata-pass-file>") {
+      : SimpleFile(ctx, "<idata-pass-file>"), _nextOrdinal(0) {
     setOrdinal(ctx.getNextOrdinalAndIncrement());
   }
+
+  uint64_t getNextOrdinal() { return _nextOrdinal++; }
+
+private:
+  uint64_t _nextOrdinal;
 };
 
 class IdataPass : public lld::Pass {
@@ -336,7 +339,8 @@ private:
         * context.importAddressTables[0]->size();
 
     auto *dir = new (_alloc) coff::COFFDataDirectoryAtom(
-        context.dummyFile, std::move(contents));
+        context.dummyFile, context.dummyFile.getNextOrdinal(),
+        std::move(contents));
     addDir32NBReloc(dir, context.importDirectories[0], importTableOffset);
     addDir32NBReloc(dir, context.importAddressTables[0], iatOffset);
 
@@ -365,6 +369,12 @@ private:
 
   llvm::BumpPtrAllocator _alloc;
 };
+
+IdataAtom::IdataAtom(Context &context, vector<uint8_t> data)
+    : COFFLinkerInternalAtom(context.dummyFile,
+                             context.dummyFile.getNextOrdinal(), data) {
+  context.file.addAtom(*this);
+}
 
 } // namespace pecoff
 } // namespace lld

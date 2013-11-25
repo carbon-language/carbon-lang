@@ -160,7 +160,7 @@ class FuncAtom : public COFFLinkerInternalAtom {
 public:
   FuncAtom(const File &file, StringRef symbolName)
       : COFFLinkerInternalAtom(
-            file,
+            file, /*oridnal*/ 0,
             std::vector<uint8_t>(FuncAtomContent,
                                  FuncAtomContent + sizeof(FuncAtomContent)),
             symbolName) {}

@@ -414,8 +414,8 @@ private:
 /// A BaseRelocAtom represents a base relocation block in ".reloc" section.
 class BaseRelocAtom : public coff::COFFLinkerInternalAtom {
 public:
-  BaseRelocAtom(const File &file, std::vector<uint8_t> data)
-      : COFFLinkerInternalAtom(file, std::move(data)) {}
+  BaseRelocAtom(const File &file, uint64_t ordinal, std::vector<uint8_t> data)
+      : COFFLinkerInternalAtom(file, ordinal, std::move(data)) {}
 
   virtual ContentType contentType() const { return typeData; }
   virtual Alignment alignment() const { return Alignment(2); }
@@ -459,7 +459,8 @@ private:
   PageOffsetT groupByPage(std::vector<uint64_t> relocSites);
 
   // Create the content of a relocation block.
-  DefinedAtom *createBaseRelocBlock(const File &file, uint64_t pageAddr,
+  DefinedAtom *createBaseRelocBlock(const File &file, uint64_t ordinal,
+                                    uint64_t pageAddr,
                                     const std::vector<uint16_t> &offsets);
 
   mutable llvm::BumpPtrAllocator _alloc;
@@ -782,10 +783,11 @@ void SectionHeaderTableChunk::write(uint8_t *fileBuffer) {
 void BaseRelocChunk::setContents(ChunkVectorT &chunks) {
   std::vector<uint64_t> relocSites = listRelocSites(chunks);
   PageOffsetT blocks = groupByPage(relocSites);
+  uint64_t ordinal = 0;
   for (auto &i : blocks) {
     uint64_t pageAddr = i.first;
     const std::vector<uint16_t> &offsetsInPage = i.second;
-    appendAtom(createBaseRelocBlock(_file, pageAddr, offsetsInPage));
+    appendAtom(createBaseRelocBlock(_file, ordinal++, pageAddr, offsetsInPage));
   }
 }
 
@@ -811,7 +813,8 @@ BaseRelocChunk::groupByPage(std::vector<uint64_t> relocSites) {
 
 // Create the content of a relocation block.
 DefinedAtom *
-BaseRelocChunk::createBaseRelocBlock(const File &file, uint64_t pageAddr,
+BaseRelocChunk::createBaseRelocBlock(const File &file, uint64_t ordinal,
+                                     uint64_t pageAddr,
                                      const std::vector<uint16_t> &offsets) {
   // Relocation blocks should be padded with IMAGE_REL_I386_ABSOLUTE to be
   // aligned to a DWORD size boundary.
@@ -837,7 +840,7 @@ BaseRelocChunk::createBaseRelocBlock(const File &file, uint64_t pageAddr,
     *reinterpret_cast<ulittle16_t *>(ptr) = val;
     ptr += sizeof(ulittle16_t);
   }
-  return new (_alloc) BaseRelocAtom(file, std::move(contents));
+  return new (_alloc) BaseRelocAtom(file, ordinal, std::move(contents));
 }
 
 } // end anonymous namespace
