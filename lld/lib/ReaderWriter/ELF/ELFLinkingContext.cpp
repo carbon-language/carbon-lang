@@ -42,7 +42,7 @@ ELFLinkingContext::ELFLinkingContext(
       _targetHandler(std::move(targetHandler)), _baseAddress(0),
       _isStaticExecutable(false), _noInhibitExec(false),
       _mergeCommonStrings(false), _runLayoutPass(true),
-      _useShlibUndefines(false), _dynamicLinkerArg(false),
+      _useShlibUndefines(true), _dynamicLinkerArg(false),
       _noAllowDynamicLibraries(false), _outputMagic(OutputMagic::DEFAULT),
       _sysrootPath("") {}
 

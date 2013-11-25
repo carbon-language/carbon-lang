@@ -177,12 +177,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
        it != ie; ++it)
     ctx->addSearchPath((*it)->getValue());
 
-  // Create a dynamic executable by default
-  ctx->setOutputELFType(llvm::ELF::ET_EXEC);
-  ctx->setIsStaticExecutable(false);
-  ctx->setAllowShlibUndefines(false);
-  ctx->setUseShlibUndefines(true);
-
   // Figure out output kind ( -r, -static, -shared)
   if ( llvm::opt::Arg *kind = parsedArgs->getLastArg(OPT_relocatable, OPT_static,
                                       OPT_shared, OPT_nmagic,
