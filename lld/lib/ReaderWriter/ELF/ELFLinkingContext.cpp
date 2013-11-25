@@ -132,12 +132,11 @@ ELFLinkingContext::create(llvm::Triple triple) {
   }
 }
 
-ErrorOr<StringRef> ELFLinkingContext::searchLibrary(
-    StringRef libName, const std::vector<StringRef> &searchPath) const {
+ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
   bool foundFile = false;
   StringRef pathref;
   SmallString<128> path;
-  for (StringRef dir : searchPath) {
+  for (StringRef dir : _inputSearchPaths) {
     // Search for dynamic library
     if (!_isStaticExecutable) {
       path.clear();

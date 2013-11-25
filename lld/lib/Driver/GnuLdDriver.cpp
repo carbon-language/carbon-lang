@@ -69,7 +69,6 @@ public:
 
 // Get the Input file magic for creating appropriate InputGraph nodes.
 error_code getFileMagic(ELFLinkingContext &ctx, StringRef path,
-                        std::vector<StringRef> &searchPaths,
                         llvm::sys::fs::file_magic &magic) {
   error_code ec = llvm::sys::fs::identify_magic(path, magic);
   if (ec)
@@ -91,7 +90,7 @@ error_code getFileMagic(ELFLinkingContext &ctx, StringRef path,
 llvm::ErrorOr<StringRef> ELFFileNode::getPath(const LinkingContext &) const {
   if (!_isDashlPrefix)
     return _path;
-  return _elfLinkingContext.searchLibrary(_path, _libraryPaths);
+  return _elfLinkingContext.searchLibrary(_path);
 }
 
 std::string ELFFileNode::errStr(error_code errc) {
@@ -155,7 +154,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   std::stack<InputElement *> controlNodeStack;
 
   // Positional options for an Input File
-  std::vector<StringRef> searchPath;
   bool isWholeArchive = false;
   bool asNeeded = false;
   bool _outputOptionSet = false;
@@ -167,6 +165,16 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   ctx->setUseShlibUndefines(true);
 
   int index = 0;
+
+  // Set sys root path.
+  if (llvm::opt::Arg *sysRootPath = parsedArgs->getLastArg(OPT_sysroot))
+    ctx->setSysroot(sysRootPath->getValue());
+
+  // Add all search paths.
+  for (auto it = parsedArgs->filtered_begin(OPT_L),
+            ie = parsedArgs->filtered_end();
+       it != ie; ++it)
+    ctx->addSearchPath((*it)->getValue());
 
   // Process all the arguments and create Input Elements
   for (auto inputArg : *parsedArgs) {
@@ -259,17 +267,17 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     case OPT_no_whole_archive:
       isWholeArchive = false;
       break;
+
     case OPT_whole_archive:
       isWholeArchive = true;
       break;
+
     case OPT_as_needed:
       asNeeded = true;
       break;
+
     case OPT_no_as_needed:
       asNeeded = false;
-      break;
-    case OPT_L:
-      searchPath.push_back(inputArg->getValue());
       break;
 
     case OPT_start_group: {
@@ -295,8 +303,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       // If the path was referred to by using a -l argument, lets search
       // for the file in the search path.
       if (isDashlPrefix) {
-        ErrorOr<StringRef> resolvedPath =
-            ctx->searchLibrary(userPath, searchPath);
+        ErrorOr<StringRef> resolvedPath = ctx->searchLibrary(userPath);
         if (!resolvedPath) {
           diagnostics << " Unable to find library -l" << userPath << "\n";
           return false;
@@ -304,7 +311,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         resolvedInputPath = resolvedPath->str();
       }
       llvm::sys::fs::file_magic magic = llvm::sys::fs::file_magic::unknown;
-      error_code ec = getFileMagic(*ctx, resolvedInputPath, searchPath, magic);
+      error_code ec = getFileMagic(*ctx, resolvedInputPath, magic);
       if (ec) {
         diagnostics << "lld: unknown input file format for file " << userPath
                     << "\n";
@@ -316,8 +323,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
       FileNode *inputNode = nullptr;
       if (isELFFileNode)
-        inputNode = new ELFFileNode(*ctx, userPath, searchPath, index++,
-                                    isWholeArchive, asNeeded, isDashlPrefix);
+        inputNode = new ELFFileNode(*ctx, userPath, index++, isWholeArchive,
+                                    asNeeded, isDashlPrefix);
       else {
         inputNode = new ELFGNULdScript(*ctx, resolvedInputPath, index++);
         ec = inputNode->parse(*ctx, diagnostics);
@@ -351,10 +358,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         ctx->addRpathLink(path);
       break;
     }
-
-    case OPT_sysroot:
-      ctx->setSysroot(inputArg->getValue());
-      break;
 
     case OPT_soname:
       ctx->setSharedObjectName(inputArg->getValue());

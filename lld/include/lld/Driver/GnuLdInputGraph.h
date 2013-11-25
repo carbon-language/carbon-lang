@@ -28,16 +28,12 @@ namespace lld {
 /// \brief Represents a ELF File
 class ELFFileNode : public FileNode {
 public:
-  ELFFileNode(ELFLinkingContext &ctx, StringRef path,
-              std::vector<StringRef> searchPath, int64_t ordinal = -1,
+  ELFFileNode(ELFLinkingContext &ctx, StringRef path, int64_t ordinal = -1,
               bool isWholeArchive = false, bool asNeeded = false,
               bool dashlPrefix = false)
       : FileNode(path, ordinal), _elfLinkingContext(ctx),
         _isWholeArchive(isWholeArchive), _asNeeded(asNeeded),
-        _isDashlPrefix(dashlPrefix) {
-    std::copy(searchPath.begin(), searchPath.end(),
-              std::back_inserter(_libraryPaths));
-  }
+        _isDashlPrefix(dashlPrefix) {}
 
   static inline bool classof(const InputElement *a) {
     return a->kind() == InputElement::Kind::File;
@@ -64,10 +60,6 @@ public:
                 << ((_isWholeArchive) ? "true" : "false") << "\n";
     diagnostics << "  - asNeeded : " << ((_asNeeded) ? "true" : "false")
                 << "\n";
-    diagnostics << "  contextPath : " << ((_libraryPaths.size()) ? "" : "None")
-                << "\n";
-    for (auto path : _libraryPaths)
-      diagnostics << "    - " << path << "\n";
     return true;
   }
 
@@ -103,7 +95,6 @@ private:
   bool _isWholeArchive;
   bool _asNeeded;
   bool _isDashlPrefix;
-  std::vector<StringRef> _libraryPaths;
   std::unique_ptr<FileArchive> _archiveFile;
 };
 

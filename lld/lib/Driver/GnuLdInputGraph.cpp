@@ -87,7 +87,6 @@ error_code GNULdScript::parse(const LinkingContext &ctx,
 error_code ELFGNULdScript::parse(const LinkingContext &ctx,
                                  raw_ostream &diagnostics) {
   int64_t index = 0;
-  std::vector<StringRef> searchPath;
   if (error_code ec = GNULdScript::parse(ctx, diagnostics))
     return ec;
   for (const auto &c : _linkerScript->_commands) {
@@ -95,10 +94,10 @@ error_code ELFGNULdScript::parse(const LinkingContext &ctx,
       std::unique_ptr<InputElement> controlStart(
           new ELFGroup(_elfLinkingContext, index++));
       for (auto &path : group->getPaths()) {
-        // TODO : Propagate SearchPath, Set WholeArchive/dashlPrefix
+        // TODO : Propagate Set WholeArchive/dashlPrefix
         auto inputNode = new ELFFileNode(
             _elfLinkingContext, _elfLinkingContext.allocateString(path._path),
-            searchPath, index++, false, path._asNeeded, false);
+            index++, false, path._asNeeded, false);
         std::unique_ptr<InputElement> inputFile(inputNode);
         dyn_cast<ControlNode>(controlStart.get())
             ->processInputElement(std::move(inputFile));

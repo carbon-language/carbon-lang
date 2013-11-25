@@ -13,8 +13,6 @@ CHECK: Ordinal : 0
 CHECK: Attributes :
 CHECK:   - wholeArchive : false
 CHECK:   - asNeeded : false
-CHECK:   contextPath :
-CHECK:     - {{[^ ]+}}elf/Inputs
 
 WHOLEARCHIVE: Name    : {{[^ ]+}}elf/Inputs{{[\\/]}}libfnarchive.a
 WHOLEARCHIVE: Type    : ELF File
@@ -22,8 +20,6 @@ WHOLEARCHIVE: Ordinal : 0
 WHOLEARCHIVE: Attributes :
 WHOLEARCHIVE:   - wholeArchive : true
 WHOLEARCHIVE:   - asNeeded : false
-WHOLEARCHIVE:   contextPath :
-WHOLEARCHIVE:     - {{[^ ]+}}elf/Inputs
 
 ASNEEDED: Name    : {{[^ ]+}}elf/Inputs{{[\\/]}}libfnarchive.a
 ASNEEDED: Type    : ELF File
@@ -31,8 +27,6 @@ ASNEEDED: Ordinal : 0
 ASNEEDED: Attributes :
 ASNEEDED:   - wholeArchive : true
 ASNEEDED:   - asNeeded : true
-ASNEEDED:   contextPath :
-ASNEEDED:     - {{[^ ]+}}elf/Inputs
 
 SYSROOT: Name    : {{[^ ]+}}elf/Inputs{{[\\/]}}libfnarchive.a
 SYSROOT: Type    : ELF File
@@ -40,5 +34,3 @@ SYSROOT: Ordinal : 0
 SYSROOT: Attributes :
 SYSROOT:   - wholeArchive : false
 SYSROOT:   - asNeeded : false
-SYSROOT:   contextPath :
-SYSROOT:     - =/Inputs

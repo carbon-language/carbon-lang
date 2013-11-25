@@ -155,9 +155,7 @@ public:
   virtual void setNoAllowDynamicLibraries() { _noAllowDynamicLibraries = true; }
 
   /// Searches directories for a match on the input File
-  ErrorOr<StringRef>
-  searchLibrary(StringRef libName,
-                const std::vector<StringRef> &searchPath) const;
+  ErrorOr<StringRef> searchLibrary(StringRef libName) const;
 
   /// Get the entry symbol name
   virtual StringRef entrySymbolName() const;
@@ -218,6 +216,12 @@ public:
     memcpy(x, ref.data(), ref.size());
     x[ref.size()] = '\0';
     return x;
+  }
+
+  // add search path to list.
+  virtual bool addSearchPath(StringRef ref) {
+    _inputSearchPaths.push_back(ref);
+    return true;
   }
 
 private:
