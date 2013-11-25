@@ -1105,7 +1105,7 @@ def lldbLoggings():
             "log enable -n -f " + os.environ["LLDB_LOG"] + " lldb " + lldb_log_option,
             res)
         if not res.Succeeded():
-            raise Exception('log enable failed (check LLDB_LOG env variable.')
+            raise Exception('log enable failed (check LLDB_LOG env variable)')
 
     if ("LLDB_LINUX_LOG" in os.environ):
         open(os.environ["LLDB_LINUX_LOG"], 'w').close()
@@ -1117,7 +1117,7 @@ def lldbLoggings():
             "log enable -n -f " + os.environ["LLDB_LINUX_LOG"] + " linux " + lldb_log_option,
             res)
         if not res.Succeeded():
-            raise Exception('log enable failed (check LLDB_LINUX_LOG env variable.')
+            raise Exception('log enable failed (check LLDB_LINUX_LOG env variable)')
  
     # Ditto for gdb-remote logging if ${GDB_REMOTE_LOG} environment variable is defined.
     # Use ${GDB_REMOTE_LOG} to specify the log file.
@@ -1131,7 +1131,7 @@ def lldbLoggings():
             + gdb_remote_log_option,
             res)
         if not res.Succeeded():
-            raise Exception('log enable failed (check GDB_REMOTE_LOG env variable.')
+            raise Exception('log enable failed (check GDB_REMOTE_LOG env variable)')
 
 def getMyCommandLine():
     ps = subprocess.Popen([which('ps'), '-o', "command=CMD", str(os.getpid())], stdout=subprocess.PIPE).communicate()[0]
