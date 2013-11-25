@@ -18,7 +18,12 @@ namespace __sanitizer {
 
 // Make the compiler think that something is going on there.
 static inline void break_optimization(void *arg) {
+#ifdef SANITIZER_WINDOWS
+  // FIXME: make sure this is actually enough.
+  __asm;
+#else
   __asm__ __volatile__("" : : "r" (arg) : "memory");
+#endif
 }
 
 s64 internal_atoll(const char *nptr) {
