@@ -1338,8 +1338,6 @@ ProcessMonitor::GetCrashReasonForSIGBUS(const siginfo_t *info)
 void
 ProcessMonitor::ServeOperation(OperationArgs *args)
 {
-    int status;
-
     ProcessMonitor *monitor = args->m_monitor;
 
     // We are finised with the arguments and are ready to go.  Sync with the
