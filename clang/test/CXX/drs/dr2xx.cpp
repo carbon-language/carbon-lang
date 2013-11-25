@@ -3,7 +3,7 @@
 // RUN: %clang_cc1 -std=c++1y %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
 
 // PR13819 -- __SIZE_TYPE__ is incompatible.
-// REQUIRES: LP64
+typedef __SIZE_TYPE__ size_t; // expected-warning 0-1 {{extension}}
 
 #if __cplusplus < 201103L
 #define fold(x) (__builtin_constant_p(x) ? (x) : (x))
@@ -559,14 +559,14 @@ namespace dr252 { // dr252: yes
 
   struct F {
     // If both functions are available, the first one is a placement delete.
-    void operator delete(void*, __SIZE_TYPE__);
+    void operator delete(void*, size_t);
     void operator delete(void*) = delete; // expected-error 0-1{{extension}} expected-note {{here}}
     virtual ~F();
   };
   F::~F() {} // expected-error {{deleted}}
 
   struct G {
-    void operator delete(void*, __SIZE_TYPE__);
+    void operator delete(void*, size_t);
     virtual ~G();
   };
   G::~G() {}
@@ -674,7 +674,7 @@ namespace dr261 { // dr261: no
   // translation unit.
   // We're also missing the -Wused-but-marked-unused diagnostic here.
   struct A {
-    inline void *operator new(__SIZE_TYPE__) __attribute__((unused));
+    inline void *operator new(size_t) __attribute__((unused));
     inline void operator delete(void*) __attribute__((unused));
     A() {}
   };
@@ -724,3 +724,288 @@ namespace dr263 { // dr263: yes
 // dr266: na
 // dr269: na
 // dr270: na
+
+namespace dr272 { // dr272: yes
+  struct X {
+    void f() {
+      this->~X();
+      X::~X();
+      ~X(); // expected-error {{unary expression}}
+    }
+  };
+}
+
+#include <stdarg.h>
+#include <stddef.h>
+namespace dr273 { // dr273: yes
+  struct A {
+    int n;
+  };
+  void operator&(A);
+  void f(A a, ...) {
+    offsetof(A, n);
+    va_list val;
+    va_start(val, a);
+    va_end(val);
+  }
+}
+
+// dr274: na
+
+namespace dr275 { // dr275: no
+  namespace N {
+    template <class T> void f(T) {} // expected-note 1-4{{here}}
+    template <class T> void g(T) {} // expected-note {{candidate}}
+    template <> void f(int);
+    template <> void f(char);
+    template <> void f(double);
+    template <> void g(char);
+  }
+
+  using namespace N;
+
+  namespace M {
+    template <> void N::f(char) {} // expected-error {{'M' does not enclose namespace 'N'}}
+    template <class T> void g(T) {}
+    template <> void g(char) {}
+    template void f(long);
+#if __cplusplus >= 201103L
+    // FIXME: this should be rejected in c++98 too
+    // expected-error@-3 {{must occur in namespace 'N'}}
+#endif
+    template void N::f(unsigned long);
+#if __cplusplus >= 201103L
+    // FIXME: this should be rejected in c++98 too
+    // expected-error@-3 {{not in a namespace enclosing 'N'}}
+#endif
+    template void h(long); // expected-error {{does not refer to a function template}}
+    template <> void f(double) {} // expected-error {{no function template matches}}
+  }
+
+  template <class T> void g(T) {} // expected-note {{candidate}}
+
+  template <> void N::f(char) {}
+  template <> void f(int) {} // expected-error {{no function template matches}}
+
+  template void f(short);
+#if __cplusplus >= 201103L
+  // FIXME: this should be rejected in c++98 too
+  // expected-error@-3 {{must occur in namespace 'N'}}
+#endif
+  template void N::f(unsigned short);
+
+  // FIXME: this should probably be valid. the wording from the issue
+  // doesn't clarify this, but it follows from the usual rules.
+  template void g(int); // expected-error {{ambiguous}}
+
+  // FIXME: likewise, this should also be valid.
+  template<typename T> void f(T) {} // expected-note {{candidate}}
+  template void f(short); // expected-error {{ambiguous}}
+}
+
+// dr276: na
+
+namespace dr277 { // dr277: yes
+  typedef int *intp;
+  int *p = intp();
+  int a[fold(intp() ? -1 : 1)];
+}
+
+namespace dr280 { // dr280: yes
+  typedef void f0();
+  typedef void f1(int);
+  typedef void f2(int, int);
+  typedef void f3(int, int, int);
+  struct A {
+    operator f1*(); // expected-note {{here}} expected-note {{candidate}}
+    operator f2*();
+  };
+  struct B {
+    operator f0*(); // expected-note {{candidate}}
+  private:
+    operator f3*(); // expected-note {{here}} expected-note {{candidate}}
+  };
+  struct C {
+    operator f0*(); // expected-note {{candidate}}
+    operator f1*(); // expected-note {{candidate}}
+    operator f2*(); // expected-note {{candidate}}
+    operator f3*(); // expected-note {{candidate}}
+  };
+  struct D : private A, B { // expected-note 2{{here}}
+    operator f2*(); // expected-note {{candidate}}
+  } d;
+  struct E : C, D {} e;
+  void g() {
+    d(); // ok, public
+    d(0); // expected-error {{private member of 'dr280::A'}} expected-error {{private base class 'dr280::A'}}
+    d(0, 0); // ok, suppressed by member in D
+    d(0, 0, 0); // expected-error {{private member of 'dr280::B'}}
+    e(); // expected-error {{ambiguous}}
+    e(0); // expected-error {{ambiguous}}
+    e(0, 0); // expected-error {{ambiguous}}
+    e(0, 0, 0); // expected-error {{ambiguous}}
+  }
+}
+
+namespace dr281 { // dr281: no
+  void a();
+  inline void b();
+
+  void d();
+  inline void e();
+
+  struct S {
+    friend inline void a(); // FIXME: ill-formed
+    friend inline void b();
+    friend inline void c(); // FIXME: ill-formed
+    friend inline void d() {}
+    friend inline void e() {}
+    friend inline void f() {}
+  };
+}
+
+namespace dr283 { // dr283: yes
+  template<typename T> // expected-note 2{{here}}
+  struct S {
+    friend class T; // expected-error {{shadows}}
+    class T; // expected-error {{shadows}}
+  };
+}
+
+namespace dr284 { // dr284: no
+  namespace A {
+    struct X;
+    enum Y {};
+    class Z {};
+  }
+  namespace B {
+    struct W;
+    using A::X;
+    using A::Y;
+    using A::Z;
+  }
+  struct B::V {}; // expected-error {{no struct named 'V'}}
+  struct B::W {};
+  struct B::X {}; // FIXME: ill-formed
+  enum B::Y e; // ok per dr417
+  class B::Z z; // ok per dr417
+
+  struct C {
+    struct X;
+    enum Y {};
+    class Z {};
+  };
+  struct D : C {
+    struct W;
+    using C::X;
+    using C::Y;
+    using C::Z;
+  };
+  struct D::V {}; // expected-error {{no struct named 'V'}}
+  struct D::W {};
+  struct D::X {}; // FIXME: ill-formed
+  enum D::Y e2; // ok per dr417
+  class D::Z z2; // ok per dr417
+}
+
+namespace dr285 { // dr285: yes
+  template<typename T> void f(T, int); // expected-note {{match}}
+  template<typename T> void f(int, T); // expected-note {{match}}
+  template<> void f<int>(int, int) {} // expected-error {{ambiguous}}
+}
+
+namespace dr286 { // dr286: yes
+  template<class T> struct A {
+    class C {
+      template<class T2> struct B {}; // expected-note {{here}}
+    };
+  };
+
+  template<class T>
+  template<class T2>
+  struct A<T>::C::B<T2*> { };
+
+  A<short>::C::B<int*> absip; // expected-error {{private}}
+}
+
+// dr288: na
+
+namespace dr289 { // dr289: yes
+  struct A; // expected-note {{forward}}
+  struct B : A {}; // expected-error {{incomplete}}
+
+  template<typename T> struct C { typename T::error error; }; // expected-error {{cannot be used prior to '::'}}
+  struct D : C<int> {}; // expected-note {{instantiation}}
+}
+
+// dr290: na
+// dr291: dup 391
+// dr292 FIXME: write a codegen test
+
+namespace dr294 { // dr294: no
+  void f() throw(int);
+  int main() {
+    // FIXME: we reject this for the wrong reason, because we don't implement
+    // dr87 yet.
+    (void)static_cast<void (*)() throw()>(f); // expected-error {{not superset}}
+    void (*p)() throw() = f; // expected-error {{not superset}}
+
+    (void)static_cast<void (*)() throw(int)>(f); // FIXME: ill-formed
+  }
+}
+
+namespace dr295 { // dr295: no
+  typedef int f();
+  // FIXME: This warning is incorrect.
+  const f g; // expected-warning {{unspecified behavior}}
+  const f &r = g; // expected-warning {{unspecified behavior}}
+  template<typename T> struct X {
+    const T &f;
+  };
+  X<f> x = {g}; // FIXME: expected-error {{drops qualifiers}}
+}
+
+namespace dr296 { // dr296: yes
+  struct A {
+    static operator int() { return 0; } // expected-error {{static}}
+  };
+}
+
+namespace dr298 { // dr298: yes
+  struct A {
+    typedef int type;
+    A();
+    ~A();
+  };
+  typedef A B; // expected-note {{here}}
+  typedef const A C; // expected-note {{here}}
+
+  A::type i1;
+  B::type i2;
+  C::type i3;
+
+  struct A a;
+  struct B b; // expected-error {{refers to a typedef}}
+  struct C c; // expected-error {{refers to a typedef}}
+
+  B::B() {} // expected-error {{requires a type specifier}}
+  B::A() {} // ok
+  C::~C() {} // expected-error {{expected the class name}}
+  C::~A() {} // ok
+
+  typedef struct D E; // expected-note {{here}}
+  struct E {}; // expected-error {{conflicts with typedef}}
+}
+
+namespace dr299 { // dr299: yes c++11
+  struct S {
+    operator int();
+  };
+  struct T {
+    operator int(); // expected-note {{}}
+    operator unsigned(); // expected-note {{}}
+  };
+  // FIXME: should this apply to c++98 mode?
+  int *p = new int[S()]; // expected-error 0-1{{extension}}
+  int *q = new int[T()]; // expected-error {{ambiguous}}
+}
