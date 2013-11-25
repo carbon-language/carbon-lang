@@ -57,6 +57,8 @@ extern struct A datatype_wrong6
     __attribute__(( type_tag_for_datatype(mpi,int,layout_compatible,not_a_flag) )); // expected-error {{invalid comparison flag 'not_a_flag'}}
 
 
+void datatype_wrong7(void) __attribute__((type_tag_for_datatype(datatype_wrong7, int))); // expected-error {{'type_tag_for_datatype' attribute only applies to variables}}
+
 // Using a tag with kind A in a place where the function requires kind B should
 // warn.
 
@@ -156,5 +158,3 @@ void test_64bit_magic(int *int_ptr, float *float_ptr)
   F_func(float_ptr, 0xFFFFFFFFFFFFFFFFULL); // expected-warning {{argument type 'float *' doesn't match specified 'f' type tag that requires 'int *'}}
   F_func(float_ptr, 0xFFFFFFFFULL);
 }
-
-

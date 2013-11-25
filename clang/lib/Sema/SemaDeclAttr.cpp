@@ -4089,6 +4089,12 @@ static void handleTypeTagForDatatypeAttr(Sema &S, Decl *D,
   if (!checkAttributeNumArgs(S, Attr, 1))
     return;
 
+  if (!isa<VarDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedVariable;
+    return;
+  }
+
   IdentifierInfo *PointerKind = Attr.getArgAsIdent(0)->Ident;
   TypeSourceInfo *MatchingCTypeLoc = 0;
   S.GetTypeFromParser(Attr.getMatchingCType(), &MatchingCTypeLoc);
