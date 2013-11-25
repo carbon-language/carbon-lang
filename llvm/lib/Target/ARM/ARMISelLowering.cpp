@@ -1009,7 +1009,6 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return 0;
   case ARMISD::Wrapper:       return "ARMISD::Wrapper";
-  case ARMISD::WrapperDYN:    return "ARMISD::WrapperDYN";
   case ARMISD::WrapperPIC:    return "ARMISD::WrapperPIC";
   case ARMISD::WrapperJT:     return "ARMISD::WrapperJT";
   case ARMISD::CALL:          return "ARMISD::CALL";
@@ -2548,10 +2547,12 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
       return DAG.getNode(ARMISD::Wrapper, dl, PtrVT,
                                  DAG.getTargetGlobalAddress(GV, dl, PtrVT));
 
-    unsigned Wrapper = (RelocM == Reloc::PIC_)
-      ? ARMISD::WrapperPIC : ARMISD::WrapperDYN;
-    SDValue Result = DAG.getNode(Wrapper, dl, PtrVT,
-                                 DAG.getTargetGlobalAddress(GV, dl, PtrVT));
+    unsigned Wrapper =
+        RelocM == Reloc::PIC_ ? ARMISD::WrapperPIC : ARMISD::Wrapper;
+
+    SDValue G = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0, ARMII::MO_NONLAZY);
+    SDValue Result = DAG.getNode(Wrapper, dl, PtrVT, G);
+
     if (Subtarget->GVIsIndirectSymbol(GV, RelocM))
       Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Result,
                            MachinePointerInfo::getGOT(),

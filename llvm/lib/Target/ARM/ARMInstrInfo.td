@@ -95,7 +95,6 @@ def ARMSmlal         : SDNode<"ARMISD::SMLAL", SDT_ARM64bitmlal>;
 
 // Node definitions.
 def ARMWrapper       : SDNode<"ARMISD::Wrapper",     SDTIntUnaryOp>;
-def ARMWrapperDYN    : SDNode<"ARMISD::WrapperDYN",  SDTIntUnaryOp>;
 def ARMWrapperPIC    : SDNode<"ARMISD::WrapperPIC",  SDTIntUnaryOp>;
 def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntBinOp>;
 
@@ -5191,11 +5190,6 @@ let isReMaterializable = 1 in {
 def MOV_ga_pcrel : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
                               IIC_iMOVix2addpc,
                         [(set GPR:$dst, (ARMWrapperPIC tglobaladdr:$addr))]>,
-                        Requires<[IsARM, UseMovt]>;
-
-def MOV_ga_dyn : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
-                             IIC_iMOVix2,
-                        [(set GPR:$dst, (ARMWrapperDYN tglobaladdr:$addr))]>,
                         Requires<[IsARM, UseMovt]>;
 
 let AddedComplexity = 10 in

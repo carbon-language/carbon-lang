@@ -115,7 +115,7 @@ private:
 
   MCSymbol *GetARMSJLJEHLabel() const;
 
-  MCSymbol *GetARMGVSymbol(const GlobalValue *GV);
+  MCSymbol *GetARMGVSymbol(const GlobalValue *GV, unsigned char TargetFlags);
 
 public:
   /// EmitMachineConstantPoolValue - Print a machine constantpool value to

@@ -685,19 +685,20 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, MVT VT) {
   if (Subtarget->useMovt() &&
       Subtarget->isTargetDarwin() == (RelocM != Reloc::Static)) {
     unsigned Opc;
+    unsigned char TF = 0;
+    if (Subtarget->isTargetDarwin() && RelocM != Reloc::Static)
+      TF = ARMII::MO_NONLAZY;
+
     switch (RelocM) {
     case Reloc::PIC_:
       Opc = isThumb2 ? ARM::t2MOV_ga_pcrel : ARM::MOV_ga_pcrel;
-      break;
-    case Reloc::DynamicNoPIC:
-      Opc = isThumb2 ? ARM::t2MOV_ga_dyn : ARM::MOV_ga_dyn;
       break;
     default:
       Opc = isThumb2 ? ARM::t2MOVi32imm : ARM::MOVi32imm;
       break;
     }
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
-                            DestReg).addGlobalAddress(GV));
+                            DestReg).addGlobalAddress(GV, 0, TF));
   } else {
     // MachineConstantPool wants an explicit alignment.
     unsigned Align = TD.getPrefTypeAlignment(GV->getType());

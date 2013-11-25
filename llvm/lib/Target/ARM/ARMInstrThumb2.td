@@ -3793,10 +3793,6 @@ def t2MOV_ga_pcrel : PseudoInst<(outs rGPR:$dst), (ins i32imm:$addr),
                           [(set rGPR:$dst, (ARMWrapperPIC tglobaladdr:$addr))]>,
                           Requires<[IsThumb2, UseMovt]>;
 
-def t2MOV_ga_dyn : PseudoInst<(outs rGPR:$dst), (ins i32imm:$addr),
-                              IIC_iMOVix2,
-                          [(set rGPR:$dst, (ARMWrapperDYN tglobaladdr:$addr))]>,
-                          Requires<[IsThumb2, UseMovt]>;
 }
 
 // ConstantPool, GlobalAddress, and JumpTable

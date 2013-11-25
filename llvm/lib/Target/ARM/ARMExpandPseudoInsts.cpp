@@ -898,10 +898,8 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       return true;
     }
 
-    case ARM::MOV_ga_dyn:
     case ARM::MOV_ga_pcrel:
     case ARM::MOV_ga_pcrel_ldr:
-    case ARM::t2MOV_ga_dyn:
     case ARM::t2MOV_ga_pcrel: {
       // Expand into movw + movw. Also "add pc" / ldr [pc] in PIC mode.
       unsigned LabelId = AFI->createPICLabelUId();
@@ -910,14 +908,11 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       const MachineOperand &MO1 = MI.getOperand(1);
       const GlobalValue *GV = MO1.getGlobal();
       unsigned TF = MO1.getTargetFlags();
-      bool isARM = (Opcode != ARM::t2MOV_ga_pcrel && Opcode!=ARM::t2MOV_ga_dyn);
-      bool isPIC = (Opcode != ARM::MOV_ga_dyn && Opcode != ARM::t2MOV_ga_dyn);
+      bool isARM = Opcode != ARM::t2MOV_ga_pcrel;
       unsigned LO16Opc = isARM ? ARM::MOVi16_ga_pcrel : ARM::t2MOVi16_ga_pcrel;
       unsigned HI16Opc = isARM ? ARM::MOVTi16_ga_pcrel :ARM::t2MOVTi16_ga_pcrel;
-      unsigned LO16TF = isPIC
-        ? ARMII::MO_LO16_NONLAZY_PIC : ARMII::MO_LO16_NONLAZY;
-      unsigned HI16TF = isPIC
-        ? ARMII::MO_HI16_NONLAZY_PIC : ARMII::MO_HI16_NONLAZY;
+      unsigned LO16TF = TF | ARMII::MO_LO16;
+      unsigned HI16TF = TF | ARMII::MO_HI16;
       unsigned PICAddOpc = isARM
         ? (Opcode == ARM::MOV_ga_pcrel_ldr ? ARM::PICLDR : ARM::PICADD)
         : ARM::tPICADD;
@@ -925,16 +920,11 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
                                          TII->get(LO16Opc), DstReg)
         .addGlobalAddress(GV, MO1.getOffset(), TF | LO16TF)
         .addImm(LabelId);
-      MachineInstrBuilder MIB2 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                                         TII->get(HI16Opc), DstReg)
+
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(HI16Opc), DstReg)
         .addReg(DstReg)
         .addGlobalAddress(GV, MO1.getOffset(), TF | HI16TF)
         .addImm(LabelId);
-      if (!isPIC) {
-        TransferImpOps(MI, MIB1, MIB2);
-        MI.eraseFromParent();
-        return true;
-      }
 
       MachineInstrBuilder MIB3 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
                                          TII->get(PICAddOpc))
