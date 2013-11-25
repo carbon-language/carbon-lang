@@ -367,7 +367,8 @@ MachineBasicBlock *MachineBlockPlacement::selectBestSuccessor(
     // any CFG constraints.
     if (SuccChain.LoopPredecessors != 0) {
       if (SuccProb < HotProb) {
-        DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> CFG conflict\n");
+        DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> " << SuccProb
+                     << " (prob) (CFG conflict)\n");
         continue;
       }
 
@@ -390,8 +391,8 @@ MachineBasicBlock *MachineBlockPlacement::selectBestSuccessor(
         }
       }
       if (BadCFGConflict) {
-        DEBUG(dbgs() << "    " << getBlockName(*SI)
-                               << " -> non-cold CFG conflict\n");
+        DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> " << SuccProb
+                     << " (prob) (non-cold CFG conflict)\n");
         continue;
       }
     }
