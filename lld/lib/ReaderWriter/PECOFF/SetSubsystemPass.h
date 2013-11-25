@@ -12,9 +12,7 @@
 
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 
-using llvm::COFF::WindowsSubsystem::IMAGE_SUBSYSTEM_UNKNOWN;
-using llvm::COFF::WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_CUI;
-using llvm::COFF::WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_GUI;
+using llvm::COFF::WindowsSubsystem;
 
 namespace lld {
 namespace pecoff {
@@ -26,7 +24,7 @@ public:
   SetSubsystemPass(PECOFFLinkingContext &ctx) : _ctx(ctx) {}
 
   virtual void perform(std::unique_ptr<MutableFile> &file) {
-    if (_ctx.getSubsystem() != IMAGE_SUBSYSTEM_UNKNOWN)
+    if (_ctx.getSubsystem() != WindowsSubsystem::IMAGE_SUBSYSTEM_UNKNOWN)
       return;
     StringRef main = _ctx.decorateSymbol("main");
     StringRef wmain = _ctx.decorateSymbol("wmain");
@@ -35,11 +33,11 @@ public:
     for (auto *atom : file->defined()) {
       StringRef s = atom->name();
       if (s == main || s == wmain) {
-        _ctx.setSubsystem(IMAGE_SUBSYSTEM_WINDOWS_CUI);
+        _ctx.setSubsystem(WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_CUI);
         return;
       }
       if (s == winmain || s == wwinmain) {
-        _ctx.setSubsystem(IMAGE_SUBSYSTEM_WINDOWS_GUI);
+        _ctx.setSubsystem(WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_GUI);
         return;
       }
     }
