@@ -62,7 +62,7 @@ enum AttributeDeclKind {
 };
 
 namespace AttributeLangSupport {
-  enum {
+  enum LANG {
     C,
     Cpp,
     ObjC
