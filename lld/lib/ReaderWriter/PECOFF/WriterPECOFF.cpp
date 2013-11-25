@@ -726,7 +726,8 @@ SectionChunk::createSectionHeader(StringRef sectionName,
   // Name field must be NUL-padded. If the name is exactly 8 byte long,
   // there's no terminating NUL.
   std::memset(header.Name, 0, sizeof(header.Name));
-  std::strncpy(header.Name, sectionName.data(), sizeof(header.Name));
+  std::strncpy(header.Name, sectionName.data(),
+               std::min(sizeof(header.Name), sectionName.size()));
 
   header.VirtualSize = 0;
   header.VirtualAddress = 0;
