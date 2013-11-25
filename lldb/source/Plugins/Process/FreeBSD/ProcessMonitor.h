@@ -175,15 +175,15 @@ public:
     bool
     GetEventMessage(lldb::tid_t tid, unsigned long *message);
 
-    /// Resumes the given thread.  If @p signo is anything but
-    /// LLDB_INVALID_SIGNAL_NUMBER, deliver that signal to the thread.
+    /// Resumes the process.  If @p signo is anything but
+    /// LLDB_INVALID_SIGNAL_NUMBER, deliver that signal to the process.
     bool
-    Resume(lldb::tid_t tid, uint32_t signo);
+    Resume(lldb::tid_t unused, uint32_t signo);
 
-    /// Single steps the given thread.  If @p signo is anything but
-    /// LLDB_INVALID_SIGNAL_NUMBER, deliver that signal to the thread.
+    /// Single steps the process.  If @p signo is anything but
+    /// LLDB_INVALID_SIGNAL_NUMBER, deliver that signal to the process.
     bool
-    SingleStep(lldb::tid_t tid, uint32_t signo);
+    SingleStep(lldb::tid_t unused, uint32_t signo);
 
     /// Sends the inferior process a PTRACE_KILL signal.  The inferior will
     /// still exists and can be interrogated.  Once resumed it will exit as
