@@ -1612,6 +1612,11 @@ bool Generic_GCC::isPICDefaultForced() const {
   return false;
 }
 
+bool Generic_GCC::IsIntegratedAssemblerDefault() const {
+  return getTriple().getArch() == llvm::Triple::x86 ||
+    getTriple().getArch() == llvm::Triple::x86_64;
+}
+
 /// Hexagon Toolchain
 
 std::string Hexagon_TC::GetGnuDir(const std::string &InstalledDir) {

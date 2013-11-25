@@ -1,5 +1,5 @@
 // Basic binding.
-// RUN: %clang -target i386-unknown-unknown -ccc-print-bindings %s 2>&1 | FileCheck %s --check-prefix=CHECK01
+// RUN: %clang -target i386-unknown-unknown -ccc-print-bindings -no-integrated-as %s 2>&1 | FileCheck %s --check-prefix=CHECK01
 // CHECK01: "clang", inputs: ["{{.*}}bindings.c"], output: "{{.*}}.s"
 // CHECK01: "GNU::Assemble", inputs: ["{{.*}}.s"], output: "{{.*}}.o"
 // CHECK01: "gcc::Link", inputs: ["{{.*}}.o"], output: "a.out"

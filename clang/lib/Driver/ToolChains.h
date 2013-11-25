@@ -164,6 +164,7 @@ public:
   virtual bool isPICDefault() const;
   virtual bool isPIEDefault() const;
   virtual bool isPICDefaultForced() const;
+  virtual bool IsIntegratedAssemblerDefault() const;
 
 protected:
   virtual Tool *getTool(Action::ActionClass AC) const;
@@ -414,10 +415,9 @@ public:
       : Generic_GCC(D, Triple, Args) {}
 
   virtual bool IsIntegratedAssemblerDefault() const {
-    // Default integrated assembler to on for x86.
-    return (getTriple().getArch() == llvm::Triple::aarch64 ||
-            getTriple().getArch() == llvm::Triple::x86 ||
-            getTriple().getArch() == llvm::Triple::x86_64);
+    if (getTriple().getArch() == llvm::Triple::aarch64)
+      return true;
+    return Generic_GCC::IsIntegratedAssemblerDefault();
   }
 };
 
