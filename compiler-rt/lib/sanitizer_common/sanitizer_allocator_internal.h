@@ -27,21 +27,25 @@ static const uptr kInternalAllocatorSpace = 0;
 #if SANITIZER_WORDSIZE == 32
 static const u64 kInternalAllocatorSize = (1ULL << 32);
 static const uptr kInternalAllocatorRegionSizeLog = 20;
+static const uptr kInternalAllocatorNumRegions =
+    kInternalAllocatorSize >> kInternalAllocatorRegionSizeLog;
+typedef FlatByteMap<kInternalAllocatorNumRegions> ByteMap;
 #else
 static const u64 kInternalAllocatorSize = (1ULL << 47);
 static const uptr kInternalAllocatorRegionSizeLog = 24;
-#endif
-static const uptr kInternalAllocatorFlatByteMapSize =
+static const uptr kInternalAllocatorNumRegions =
     kInternalAllocatorSize >> kInternalAllocatorRegionSizeLog;
+typedef TwoLevelByteMap<(kInternalAllocatorNumRegions >> 12), 1 << 12> ByteMap;
+#endif
 typedef SizeClassAllocator32<
     kInternalAllocatorSpace, kInternalAllocatorSize, 16, InternalSizeClassMap,
-    kInternalAllocatorRegionSizeLog,
-    FlatByteMap<kInternalAllocatorFlatByteMapSize> > PrimaryInternalAllocator;
+    kInternalAllocatorRegionSizeLog, ByteMap> PrimaryInternalAllocator;
 
 typedef SizeClassAllocatorLocalCache<PrimaryInternalAllocator>
     InternalAllocatorCache;
 
-// We don't want our internal allocator to do any map/unmap operations.
+// We don't want our internal allocator to do any map/unmap operations from
+// LargeMmapAllocator.
 struct CrashOnMapUnmap {
   void OnMap(uptr p, uptr size) const {
     RAW_CHECK_MSG(0, "Unexpected mmap in InternalAllocator!");

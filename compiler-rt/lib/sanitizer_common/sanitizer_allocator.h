@@ -587,7 +587,69 @@ class FlatByteMap {
   u8 map_[kSize];
 };
 
-// FIXME: Also implement TwoLevelByteMap.
+// TwoLevelByteMap maps integers in range [0, kSize1*kSize2) to u8 values.
+// It is implemented as a two-dimensional array: array of kSize1 pointers
+// to kSize2-byte arrays. The secondary arrays are mmaped on demand.
+// Each value is initially zero and can be set to something else only once.
+// Setting and getting values from multiple threads is safe w/o extra locking.
+template <u64 kSize1, u64 kSize2, class MapUnmapCallback = NoOpMapUnmapCallback>
+class TwoLevelByteMap {
+ public:
+  void TestOnlyInit() {
+    internal_memset(map1_, 0, sizeof(map1_));
+    mu_.Init();
+  }
+  void TestOnlyUnmap() {
+    for (uptr i = 0; i < kSize1; i++) {
+      u8 *p = Get(i);
+      if (!p) continue;
+      MapUnmapCallback().OnUnmap(reinterpret_cast<uptr>(p), kSize2);
+      UnmapOrDie(p, kSize2);
+    }
+  }
+
+  uptr size() const { return kSize1 * kSize2; }
+  uptr size1() const { return kSize1; }
+  uptr size2() const { return kSize2; }
+
+  void set(uptr idx, u8 val) {
+    CHECK_LT(idx, kSize1 * kSize2);
+    u8 *map2 = GetOrCreate(idx / kSize2);
+    CHECK_EQ(0U, map2[idx % kSize2]);
+    map2[idx % kSize2] = val;
+  }
+
+  u8 operator[] (uptr idx) const {
+    CHECK_LT(idx, kSize1 * kSize2);
+    u8 *map2 = Get(idx / kSize2);
+    if (!map2) return 0;
+    return map2[idx % kSize2];
+  }
+
+ private:
+  u8 *Get(uptr idx) const {
+    CHECK_LT(idx, kSize1);
+    return reinterpret_cast<u8 *>(
+        atomic_load(&map1_[idx], memory_order_acquire));
+  }
+
+  u8 *GetOrCreate(uptr idx) {
+    u8 *res = Get(idx);
+    if (!res) {
+      SpinMutexLock l(&mu_);
+      if (!(res = Get(idx))) {
+        res = (u8*)MmapOrDie(kSize2, "TwoLevelByteMap");
+        MapUnmapCallback().OnMap(reinterpret_cast<uptr>(res), kSize2);
+        atomic_store(&map1_[idx], reinterpret_cast<uptr>(res),
+                     memory_order_release);
+      }
+    }
+    return res;
+  }
+
+  atomic_uintptr_t map1_[kSize1];
+  StaticSpinMutex mu_;
+};
 
 // SizeClassAllocator32 -- allocator for 32-bit address space.
 // This allocator can theoretically be used on 64-bit arch, but there it is less
