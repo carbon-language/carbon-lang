@@ -23,11 +23,11 @@ template <class Analysis, bool Simple>
 class DOTGraphTraitsViewer : public FunctionPass {
 public:
   DOTGraphTraitsViewer(StringRef GraphName, char &ID)
-    : FunctionPass(ID), Name(GraphName) {}
+      : FunctionPass(ID), Name(GraphName) {}
 
   virtual bool runOnFunction(Function &F) {
     Analysis *Graph = &getAnalysis<Analysis>();
-    std::string GraphName = DOTGraphTraits<Analysis*>::getGraphName(Graph);
+    std::string GraphName = DOTGraphTraits<Analysis *>::getGraphName(Graph);
     std::string Title = GraphName + " for '" + F.getName().str() + "' function";
 
     ViewGraph(Graph, Name, Simple, Title);
@@ -48,7 +48,7 @@ template <class Analysis, bool Simple>
 class DOTGraphTraitsPrinter : public FunctionPass {
 public:
   DOTGraphTraitsPrinter(StringRef GraphName, char &ID)
-    : FunctionPass(ID), Name(GraphName) {}
+      : FunctionPass(ID), Name(GraphName) {}
 
   virtual bool runOnFunction(Function &F) {
     Analysis *Graph = &getAnalysis<Analysis>();
@@ -58,7 +58,7 @@ public:
     errs() << "Writing '" << Filename << "'...";
 
     raw_fd_ostream File(Filename.c_str(), ErrorInfo);
-    std::string GraphName = DOTGraphTraits<Analysis*>::getGraphName(Graph);
+    std::string GraphName = DOTGraphTraits<Analysis *>::getGraphName(Graph);
     std::string Title = GraphName + " for '" + F.getName().str() + "' function";
 
     if (ErrorInfo.empty())
@@ -83,11 +83,11 @@ template <class Analysis, bool Simple>
 class DOTGraphTraitsModuleViewer : public ModulePass {
 public:
   DOTGraphTraitsModuleViewer(StringRef GraphName, char &ID)
-    : ModulePass(ID), Name(GraphName) {}
+      : ModulePass(ID), Name(GraphName) {}
 
   virtual bool runOnModule(Module &M) {
     Analysis *Graph = &getAnalysis<Analysis>();
-    std::string Title = DOTGraphTraits<Analysis*>::getGraphName(Graph);
+    std::string Title = DOTGraphTraits<Analysis *>::getGraphName(Graph);
 
     ViewGraph(Graph, Name, Simple, Title);
 
@@ -107,7 +107,7 @@ template <class Analysis, bool Simple>
 class DOTGraphTraitsModulePrinter : public ModulePass {
 public:
   DOTGraphTraitsModulePrinter(StringRef GraphName, char &ID)
-    : ModulePass(ID), Name(GraphName) {}
+      : ModulePass(ID), Name(GraphName) {}
 
   virtual bool runOnModule(Module &M) {
     Analysis *Graph = &getAnalysis<Analysis>();
@@ -117,7 +117,7 @@ public:
     errs() << "Writing '" << Filename << "'...";
 
     raw_fd_ostream File(Filename.c_str(), ErrorInfo);
-    std::string Title = DOTGraphTraits<Analysis*>::getGraphName(Graph);
+    std::string Title = DOTGraphTraits<Analysis *>::getGraphName(Graph);
 
     if (ErrorInfo.empty())
       WriteGraph(File, Graph, Simple, Title);
