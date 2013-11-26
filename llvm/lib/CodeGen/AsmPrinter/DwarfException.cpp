@@ -717,20 +717,20 @@ void DwarfException::EmitTypeInfos(unsigned TTypeEncoding) {
   }
 }
 
-/// EndModule - Emit all exception information that should come after the
+/// endModule - Emit all exception information that should come after the
 /// content.
-void DwarfException::EndModule() {
+void DwarfException::endModule() {
   llvm_unreachable("Should be implemented");
 }
 
-/// BeginFunction - Gather pre-function exception information. Assumes it's
+/// beginFunction - Gather pre-function exception information. Assumes it's
 /// being emitted immediately after the function entry point.
-void DwarfException::BeginFunction(const MachineFunction *MF) {
+void DwarfException::beginFunction(const MachineFunction *MF) {
   llvm_unreachable("Should be implemented");
 }
 
-/// EndFunction - Gather and emit post-function exception information.
+/// endFunction - Gather and emit post-function exception information.
 ///
-void DwarfException::EndFunction() {
+void DwarfException::endFunction() {
   llvm_unreachable("Should be implemented");
 }

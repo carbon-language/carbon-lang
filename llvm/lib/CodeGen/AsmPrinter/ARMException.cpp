@@ -52,21 +52,21 @@ ARMTargetStreamer &ARMException::getTargetStreamer() {
   return static_cast<ARMTargetStreamer &>(TS);
 }
 
-void ARMException::EndModule() {
+void ARMException::endModule() {
 }
 
-/// BeginFunction - Gather pre-function exception information. Assumes it's
+/// beginFunction - Gather pre-function exception information. Assumes it's
 /// being emitted immediately after the function entry point.
-void ARMException::BeginFunction(const MachineFunction *MF) {
+void ARMException::beginFunction(const MachineFunction *MF) {
   getTargetStreamer().emitFnStart();
   if (Asm->MF->getFunction()->needsUnwindTableEntry())
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
                                                   Asm->getFunctionNumber()));
 }
 
-/// EndFunction - Gather and emit post-function exception information.
+/// endFunction - Gather and emit post-function exception information.
 ///
-void ARMException::EndFunction() {
+void ARMException::endFunction() {
   ARMTargetStreamer &ATS = getTargetStreamer();
   if (!Asm->MF->getFunction()->needsUnwindTableEntry())
     ATS.emitCantUnwind();

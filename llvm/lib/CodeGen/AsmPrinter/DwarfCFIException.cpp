@@ -46,9 +46,9 @@ DwarfCFIException::DwarfCFIException(AsmPrinter *A)
 
 DwarfCFIException::~DwarfCFIException() {}
 
-/// EndModule - Emit all exception information that should come after the
+/// endModule - Emit all exception information that should come after the
 /// content.
-void DwarfCFIException::EndModule() {
+void DwarfCFIException::endModule() {
   if (moveTypeModule == AsmPrinter::CFI_M_Debug)
     Asm->OutStreamer.EmitCFISections(false, true);
 
@@ -82,9 +82,9 @@ void DwarfCFIException::EndModule() {
   }
 }
 
-/// BeginFunction - Gather pre-function exception information. Assumes it's
+/// beginFunction - Gather pre-function exception information. Assumes it's
 /// being emitted immediately after the function entry point.
-void DwarfCFIException::BeginFunction(const MachineFunction *MF) {
+void DwarfCFIException::beginFunction(const MachineFunction *MF) {
   shouldEmitMoves = shouldEmitPersonality = shouldEmitLSDA = false;
 
   // If any landing pads survive, we need an EH table.
@@ -135,9 +135,9 @@ void DwarfCFIException::BeginFunction(const MachineFunction *MF) {
                                LSDAEncoding);
 }
 
-/// EndFunction - Gather and emit post-function exception information.
+/// endFunction - Gather and emit post-function exception information.
 ///
-void DwarfCFIException::EndFunction() {
+void DwarfCFIException::endFunction() {
   if (!shouldEmitPersonality && !shouldEmitMoves)
     return;
 

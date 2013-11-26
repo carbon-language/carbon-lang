@@ -44,14 +44,14 @@ Win64Exception::Win64Exception(AsmPrinter *A)
 
 Win64Exception::~Win64Exception() {}
 
-/// EndModule - Emit all exception information that should come after the
+/// endModule - Emit all exception information that should come after the
 /// content.
-void Win64Exception::EndModule() {
+void Win64Exception::endModule() {
 }
 
-/// BeginFunction - Gather pre-function exception information. Assumes it's
+/// beginFunction - Gather pre-function exception information. Assumes it's
 /// being emitted immediately after the function entry point.
-void Win64Exception::BeginFunction(const MachineFunction *MF) {
+void Win64Exception::beginFunction(const MachineFunction *MF) {
   shouldEmitMoves = shouldEmitPersonality = shouldEmitLSDA = false;
 
   // If any landing pads survive, we need an EH table.
@@ -86,9 +86,9 @@ void Win64Exception::BeginFunction(const MachineFunction *MF) {
                                                 Asm->getFunctionNumber()));
 }
 
-/// EndFunction - Gather and emit post-function exception information.
+/// endFunction - Gather and emit post-function exception information.
 ///
-void Win64Exception::EndFunction() {
+void Win64Exception::endFunction() {
   if (!shouldEmitPersonality && !shouldEmitMoves)
     return;
 

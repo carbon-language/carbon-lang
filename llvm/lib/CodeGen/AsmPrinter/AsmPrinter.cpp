@@ -484,7 +484,7 @@ void AsmPrinter::EmitFunctionHeader() {
   // Emit pre-function debug and/or EH information.
   if (DE) {
     NamedRegionTimer T(EHTimerName, DWARFGroupName, TimePassesIsEnabled);
-    DE->BeginFunction(MF);
+    DE->beginFunction(MF);
   }
   if (DD) {
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
@@ -818,7 +818,7 @@ void AsmPrinter::EmitFunctionBody() {
   }
   if (DE) {
     NamedRegionTimer T(EHTimerName, DWARFGroupName, TimePassesIsEnabled);
-    DE->EndFunction();
+    DE->endFunction();
   }
   MMI->EndFunction();
 
@@ -910,7 +910,7 @@ bool AsmPrinter::doFinalization(Module &M) {
   if (DE) {
     {
       NamedRegionTimer T(EHTimerName, DWARFGroupName, TimePassesIsEnabled);
-      DE->EndModule();
+      DE->endModule();
     }
     delete DE; DE = 0;
   }
