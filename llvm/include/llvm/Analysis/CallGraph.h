@@ -77,7 +77,9 @@ class CallGraph : public ModulePass {
   Module *M;
 
   typedef std::map<const Function *, CallGraphNode *> FunctionMapTy;
-  FunctionMapTy FunctionMap;    // Map from a function to its node
+
+  /// \brief A map from \c Function* to \c CallGraphNode*.
+  FunctionMapTy FunctionMap;
 
   /// \brief Root is root of the call graph, or the external node if a 'main'
   /// function couldn't be found.
