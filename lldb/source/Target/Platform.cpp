@@ -671,12 +671,17 @@ Platform::SetWorkingDirectory (const ConstString &path)
 {
     if (IsHost())
     {
+#ifdef _WIN32
+        // Not implemented on Windows
+        return false;
+#else
         if (path)
         {
             if (chdir(path.GetCString()) == 0)
                 return true;
         }
         return false;
+#endif
     }
     else
     {

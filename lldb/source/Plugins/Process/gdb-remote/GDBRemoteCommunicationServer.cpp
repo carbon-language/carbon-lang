@@ -1011,9 +1011,14 @@ GDBRemoteCommunicationServer::Handle_QSetWorkingDir (StringExtractorGDBRemote &p
     packet.GetHexByteString(path);
     if (m_is_platform)
     {
+#ifdef _WIN32
+        // Not implemented on Windows
+        return SendUnimplementedResponse("GDBRemoteCommunicationServer::Handle_QSetWorkingDir unimplemented");
+#else
         // If this packet is sent to a platform, then change the current working directory
         if (::chdir(path.c_str()) != 0)
             return SendErrorResponse(errno);
+#endif
     }
     else
     {

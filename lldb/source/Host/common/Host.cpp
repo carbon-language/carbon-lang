@@ -1569,7 +1569,7 @@ Host::RunShellCommand (const char *command,
     return error;
 }
 
-#if defined(__linux__) or defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__)
 // The functions below implement process launching via posix_spawn() for Linux
 // and FreeBSD.
 
@@ -1858,7 +1858,7 @@ Error
 Host::MakeDirectory (const char* path, uint32_t mode)
 {
     Error error;
-    error.SetErrorString("%s in not implemented on this host", __PRETTY_FUNCTION__);
+    error.SetErrorStringWithFormat("%s in not implemented on this host", __PRETTY_FUNCTION__);
     return error;
 }
 
@@ -1866,7 +1866,7 @@ Error
 Host::GetFilePermissions (const char* path, uint32_t &file_permissions)
 {
     Error error;
-    error.SetErrorString("%s is not supported on this host", __PRETTY_FUNCTION__);
+    error.SetErrorStringWithFormat("%s is not supported on this host", __PRETTY_FUNCTION__);
     return error;
 }
 
@@ -1874,7 +1874,7 @@ Error
 Host::SetFilePermissions (const char* path, uint32_t file_permissions)
 {
     Error error;
-    error.SetErrorString("%s is not supported on this host", __PRETTY_FUNCTION__);
+    error.SetErrorStringWithFormat("%s is not supported on this host", __PRETTY_FUNCTION__);
     return error;
 }
 
@@ -1882,7 +1882,7 @@ Error
 Host::Symlink (const char *src, const char *dst)
 {
     Error error;
-    error.SetErrorString("%s is not supported on this host", __PRETTY_FUNCTION__);
+    error.SetErrorStringWithFormat("%s is not supported on this host", __PRETTY_FUNCTION__);
     return error;
 }
 
@@ -1890,7 +1890,7 @@ Error
 Host::Readlink (const char *path, char *buf, size_t buf_len)
 {
     Error error;
-    error.SetErrorString("%s is not supported on this host", __PRETTY_FUNCTION__);
+    error.SetErrorStringWithFormat("%s is not supported on this host", __PRETTY_FUNCTION__);
     return error;
 }
 
@@ -1898,7 +1898,7 @@ Error
 Host::Unlink (const char *path)
 {
     Error error;
-    error.SetErrorString("%s is not supported on this host", __PRETTY_FUNCTION__);
+    error.SetErrorStringWithFormat("%s is not supported on this host", __PRETTY_FUNCTION__);
     return error;
 }
 

@@ -237,8 +237,10 @@ File::Open (const char *path, uint32_t options, uint32_t permissions)
     {
         oflag |= O_RDONLY;
 
+#ifndef _WIN32
         if (options & eOpenoptionDontFollowSymlinks)
             oflag |= O_NOFOLLOW;
+#endif
     }
     
 #ifndef _WIN32
