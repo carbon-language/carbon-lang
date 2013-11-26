@@ -1386,9 +1386,6 @@ static bool findTargetBiarchSuffix(std::string &Suffix, StringRef Path,
 void Generic_GCC::GCCInstallationDetector::findMIPSABIDirSuffix(
     std::string &Suffix, llvm::Triple::ArchType TargetArch, StringRef Path,
     const llvm::opt::ArgList &Args) {
-  if (!isMipsArch(TargetArch))
-    return;
-
   // Some MIPS toolchains put libraries and object files compiled
   // using different options in to the sub-directoris which names
   // reflects the flags used for compilation. For example sysroot
@@ -1523,7 +1520,8 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
         continue;
 
       std::string MIPSABIDirSuffix;
-      findMIPSABIDirSuffix(MIPSABIDirSuffix, TargetArch, LI->path(), Args);
+      if (isMipsArch(TargetArch))
+        findMIPSABIDirSuffix(MIPSABIDirSuffix, TargetArch, LI->path(), Args);
 
       // Some versions of SUSE and Fedora on ppc64 put 32-bit libs
       // in what would normally be GCCInstallPath and put the 64-bit
