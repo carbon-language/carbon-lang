@@ -37,7 +37,7 @@
 
 ; Darwin shouldn't be generating the section by default
 ; DARWIN: debug_pubnames
-; DARWIN: unit_size = 0x00000000
+; DARWIN: {{^$}}
 
 ; Skip the output to the header of the pubnames section.
 ; LINUX: debug_pubnames
