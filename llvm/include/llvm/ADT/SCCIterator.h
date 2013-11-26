@@ -6,16 +6,18 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This builds on the llvm/ADT/GraphTraits.h file to find the strongly connected
-// components (SCCs) of a graph in O(N+E) time using Tarjan's DFS algorithm.
-//
-// The SCC iterator has the important property that if a node in SCC S1 has an
-// edge to a node in SCC S2, then it visits S1 *after* S2.
-//
-// To visit S1 *before* S2, use the scc_iterator on the Inverse graph.
-// (NOTE: This requires some simple wrappers and is not supported yet.)
-//
+/// \file
+///
+/// This builds on the llvm/ADT/GraphTraits.h file to find the strongly
+/// connected components (SCCs) of a graph in O(N+E) time using Tarjan's DFS
+/// algorithm.
+///
+/// The SCC iterator has the important property that if a node in SCC S1 has an
+/// edge to a node in SCC S2, then it visits S1 *after* S2.
+///
+/// To visit S1 *before* S2, use the scc_iterator on the Inverse graph. (NOTE:
+/// This requires some simple wrappers and is not supported yet.)
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ADT_SCCITERATOR_H
@@ -27,11 +29,12 @@
 
 namespace llvm {
 
-//===----------------------------------------------------------------------===//
+/// \brief Enumerate the SCCs of a directed graph in reverse topological order
+/// of the SCC DAG.
 ///
-/// scc_iterator - Enumerate the SCCs of a directed graph, in
-/// reverse topological order of the SCC DAG.
-///
+/// This is implemented using Tarjan's DFS algorithm using an internal stack to
+/// build up a vector of nodes in a particular SCC. Note that it is a forward
+/// iterator and thus you cannot backtrack or re-visit nodes.
 template<class GraphT, class GT = GraphTraits<GraphT> >
 class scc_iterator
   : public std::iterator<std::forward_iterator_tag,
@@ -50,30 +53,32 @@ class scc_iterator
   unsigned visitNum;
   DenseMap<NodeType *, unsigned> nodeVisitNumbers;
 
-  // SCCNodeStack - Stack holding nodes of the SCC.
+  // Stack holding nodes of the SCC.
   std::vector<NodeType *> SCCNodeStack;
 
-  // CurrentSCC - The current SCC, retrieved using operator*().
+  // The current SCC, retrieved using operator*().
   SccTy CurrentSCC;
 
-  // VisitStack - Used to maintain the ordering.  Top = current block
-  // First element is basic block pointer, second is the 'next child' to visit
+  // Used to maintain the ordering.  The top is the current block, the first
+  // element is basic block pointer, second is the 'next child' to visit.
   std::vector<std::pair<NodeType *, ChildItTy> > VisitStack;
 
-  // MinVisitNumStack - Stack holding the "min" values for each node in the DFS.
-  // This is used to track the minimum uplink values for all children of
-  // the corresponding node on the VisitStack.
+  // Stack holding the "min" values for each node in the DFS. This is used to
+  // track the minimum uplink values for all children of the corresponding node
+  // on the VisitStack.
   std::vector<unsigned> MinVisitNumStack;
 
   // A single "visit" within the non-recursive DFS traversal.
   void DFSVisitOne(NodeType *N) {
-    ++visitNum;                         // Global counter for the visit order
+    ++visitNum;
     nodeVisitNumbers[N] = visitNum;
     SCCNodeStack.push_back(N);
     MinVisitNumStack.push_back(visitNum);
     VisitStack.push_back(std::make_pair(N, GT::child_begin(N)));
-    //dbgs() << "TarjanSCC: Node " << N <<
-    //      " : visitNum = " << visitNum << "\n";
+#if 0 // Enable if needed when debugging.
+    dbgs() << "TarjanSCC: Node " << N <<
+          " : visitNum = " << visitNum << "\n";
+#endif
   }
 
   // The stack-based DFS traversal; defined below.
@@ -108,9 +113,11 @@ class scc_iterator
       if (!MinVisitNumStack.empty() && MinVisitNumStack.back() > minVisitNum)
         MinVisitNumStack.back() = minVisitNum;
 
-      //dbgs() << "TarjanSCC: Popped node " << visitingN <<
-      //      " : minVisitNum = " << minVisitNum << "; Node visit num = " <<
-      //      nodeVisitNumbers[visitingN] << "\n";
+#if 0 // Enable if needed when debugging.
+      dbgs() << "TarjanSCC: Popped node " << visitingN <<
+            " : minVisitNum = " << minVisitNum << "; Node visit num = " <<
+            nodeVisitNumbers[visitingN] << "\n";
+#endif
 
       if (minVisitNum != nodeVisitNumbers[visitingN])
         continue;
@@ -137,11 +144,11 @@ class scc_iterator
 public:
   typedef scc_iterator<GraphT, GT> _Self;
 
-  // Provide static "constructors"...
   static inline _Self begin(const GraphT &G){return _Self(GT::getEntryNode(G));}
   static inline _Self end  (const GraphT &) { return _Self(); }
 
-  // Direct loop termination test: I.isAtEnd() is more efficient than I == end()
+  /// \brief Direct loop termination test which is more efficient than
+  /// comparison with \c end().
   inline bool isAtEnd() const {
     assert(!CurrentSCC.empty() || VisitStack.empty());
     return CurrentSCC.empty();
@@ -152,16 +159,14 @@ public:
   }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
 
-  // Iterator traversal: forward iteration only
-  inline _Self& operator++() {          // Preincrement
+  inline _Self& operator++() {
     GetNextSCC();
     return *this;
   }
-  inline _Self operator++(int) {        // Postincrement
+  inline _Self operator++(int) {
     _Self tmp = *this; ++*this; return tmp;
   }
 
-  // Retrieve a reference to the current SCC
   inline const SccTy &operator*() const {
     assert(!CurrentSCC.empty() && "Dereferencing END SCC iterator!");
     return CurrentSCC;
@@ -171,9 +176,10 @@ public:
     return CurrentSCC;
   }
 
-  // hasLoop() -- Test if the current SCC has a loop.  If it has more than one
-  // node, this is trivially true.  If not, it may still contain a loop if the
-  // node has an edge back to itself.
+  /// \brief Test if the current SCC has a loop.
+  ///
+  /// If the SCC has more than one node, this is trivially true.  If not, it may
+  /// still contain a loop if the node has an edge back to itself.
   bool hasLoop() const {
     assert(!CurrentSCC.empty() && "Dereferencing END SCC iterator!");
     if (CurrentSCC.size() > 1) return true;
@@ -184,8 +190,8 @@ public:
     return false;
   }
 
-  /// ReplaceNode - This informs the scc_iterator that the specified Old node
-  /// has been deleted, and New is to be used in its place.
+  /// This informs the \c scc_iterator that the specified \c Old node
+  /// has been deleted, and \c New is to be used in its place.
   void ReplaceNode(NodeType *Old, NodeType *New) {
     assert(nodeVisitNumbers.count(Old) && "Old not in scc_iterator?");
     nodeVisitNumbers[New] = nodeVisitNumbers[Old];
@@ -194,22 +200,25 @@ public:
 };
 
 
-// Global constructor for the SCC iterator.
+/// \brief Construct the begin iterator for a deduced graph type T.
 template <class T>
 scc_iterator<T> scc_begin(const T &G) {
   return scc_iterator<T>::begin(G);
 }
 
+/// \brief Construct the end iterator for a deduced graph type T.
 template <class T>
 scc_iterator<T> scc_end(const T &G) {
   return scc_iterator<T>::end(G);
 }
 
+/// \brief Construct the begin iterator for a deduced graph type T's Inverse<T>.
 template <class T>
 scc_iterator<Inverse<T> > scc_begin(const Inverse<T> &G) {
   return scc_iterator<Inverse<T> >::begin(G);
 }
 
+/// \brief Construct the end iterator for a deduced graph type T's Inverse<T>.
 template <class T>
 scc_iterator<Inverse<T> > scc_end(const Inverse<T> &G) {
   return scc_iterator<Inverse<T> >::end(G);
