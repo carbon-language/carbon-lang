@@ -468,7 +468,6 @@ bool DIType::Verify() const {
     return DIDerivedType(DbgNode).Verify();
   else
     return false;
-  return true;
 }
 
 /// Verify - Verify that a basic type descriptor is well formed.
