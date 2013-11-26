@@ -218,6 +218,9 @@ SmallPtrSetImpl::SmallPtrSetImpl(const void **SmallStorage, unsigned SmallSize,
 /// CopyFrom - implement operator= from a smallptrset that has the same pointer
 /// type, but may have a different small size.
 void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
+  if (&RHS == this)
+    return;
+
   if (isSmall() && RHS.isSmall())
     assert(CurArraySize == RHS.CurArraySize &&
            "Cannot assign sets with different small sizes");
