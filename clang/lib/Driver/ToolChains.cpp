@@ -1457,6 +1457,8 @@ void Generic_GCC::GCCInstallationDetector::findMIPSABIDirSuffix(
 
   if (isSoftFloatABI(Args))
     Suffix += "/soft-float";
+  else if (isMipsNan2008(Args))
+    Suffix += "/nan2008";
 
   if (TargetArch == llvm::Triple::mipsel ||
       TargetArch == llvm::Triple::mips64el)

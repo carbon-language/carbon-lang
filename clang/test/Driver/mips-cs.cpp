@@ -83,6 +83,34 @@
 // CHECK-BE-HF-MICRO: "[[TC]]/micromips{{/|\\\\}}crtend.o"
 // CHECK-BE-HF-MICRO: "[[TC]]/../../../../mips-linux-gnu/libc/micromips/usr/lib/../lib{{/|\\\\}}crtn.o"
 //
+// = Big-endian, hard float, nan2008
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=mips-linux-gnu -mnan=2008 \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-BE-HF-NAN %s
+// CHECK-BE-HF-NAN: "-internal-isystem"
+// CHECK-BE-HF-NAN: "[[TC:[^"]+/lib/gcc/mips-linux-gnu/4.6.3]]/../../../../mips-linux-gnu/include/c++/4.6.3"
+// CHECK-BE-HF-NAN: "-internal-isystem"
+// CHECK-BE-HF-NAN: "[[TC]]/../../../../mips-linux-gnu/include/c++/4.6.3/mips-linux-gnu/nan2008"
+// CHECK-BE-HF-NAN: "-internal-isystem"
+// CHECK-BE-HF-NAN: "[[TC]]/../../../../mips-linux-gnu/include/c++/4.6.3/backward"
+// CHECK-BE-HF-NAN: "-internal-externc-isystem"
+// CHECK-BE-HF-NAN: "[[TC]]/include"
+// CHECK-BE-HF-NAN: "-internal-externc-isystem"
+// CHECK-BE-HF-NAN: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
+// CHECK-BE-HF-NAN: "{{.*}}ld{{(.exe)?}}"
+// CHECK-BE-HF-NAN: "--sysroot=[[SR:[^"]+]]/../../../../mips-linux-gnu/libc/nan2008"
+// CHECK-BE-HF-NAN: "[[TC]]/../../../../mips-linux-gnu/libc/nan2008/usr/lib/../lib{{/|\\\\}}crt1.o"
+// CHECK-BE-HF-NAN: "[[TC]]/../../../../mips-linux-gnu/libc/nan2008/usr/lib/../lib{{/|\\\\}}crti.o"
+// CHECK-BE-HF-NAN: "[[TC]]/nan2008{{/|\\\\}}crtbegin.o"
+// CHECK-BE-HF-NAN: "-L[[SR]]/nan2008"
+// CHECK-BE-HF-NAN: "-L[[SR]]/../../../../mips-linux-gnu/lib/../lib/nan2008"
+// CHECK-BE-HF-NAN-NOT: "-L[[SR]]"
+// CHECK-BE-HF-NAN: "-L[[SR]]/../../../../mips-linux-gnu/libc/nan2008/lib/../lib"
+// CHECK-BE-HF-NAN: "-L[[SR]]/../../../../mips-linux-gnu/libc/nan2008/usr/lib/../lib"
+// CHECK-BE-HF-NAN: "[[TC]]/nan2008{{/|\\\\}}crtend.o"
+// CHECK-BE-HF-NAN: "[[TC]]/../../../../mips-linux-gnu/libc/nan2008/usr/lib/../lib{{/|\\\\}}crtn.o"
+//
 // = Big-endian, soft float
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=mips-linux-gnu -msoft-float \
@@ -306,6 +334,34 @@
 // CHECK-EL-HF-MICRO: "-L[[SR]]/../../../../mips-linux-gnu/libc/micromips/el/usr/lib/../lib"
 // CHECK-EL-HF-MICRO: "[[TC]]/micromips/el{{/|\\\\}}crtend.o"
 // CHECK-EL-HF-MICRO: "[[TC]]/../../../../mips-linux-gnu/libc/micromips/el/usr/lib/../lib{{/|\\\\}}crtn.o"
+//
+// = Little-endian, hard float, nan2008
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=mipsel-linux-gnu -mnan=2008 \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-EL-HF-NAN %s
+// CHECK-EL-HF-NAN: "-internal-isystem"
+// CHECK-EL-HF-NAN: "[[TC:[^"]+/lib/gcc/mips-linux-gnu/4.6.3]]/../../../../mips-linux-gnu/include/c++/4.6.3"
+// CHECK-EL-HF-NAN: "-internal-isystem"
+// CHECK-EL-HF-NAN: "[[TC]]/../../../../mips-linux-gnu/include/c++/4.6.3/mips-linux-gnu/nan2008/el"
+// CHECK-EL-HF-NAN: "-internal-isystem"
+// CHECK-EL-HF-NAN: "[[TC]]/../../../../mips-linux-gnu/include/c++/4.6.3/backward"
+// CHECK-EL-HF-NAN: "-internal-externc-isystem"
+// CHECK-EL-HF-NAN: "[[TC]]/include"
+// CHECK-EL-HF-NAN: "-internal-externc-isystem"
+// CHECK-EL-HF-NAN: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
+// CHECK-EL-HF-NAN: "{{.*}}ld{{(.exe)?}}"
+// CHECK-EL-HF-NAN: "--sysroot=[[SR:[^"]+]]/../../../../mips-linux-gnu/libc/nan2008/el"
+// CHECK-EL-HF-NAN: "[[TC]]/../../../../mips-linux-gnu/libc/nan2008/el/usr/lib/../lib{{/|\\\\}}crt1.o"
+// CHECK-EL-HF-NAN: "[[TC]]/../../../../mips-linux-gnu/libc/nan2008/el/usr/lib/../lib{{/|\\\\}}crti.o"
+// CHECK-EL-HF-NAN: "[[TC]]/nan2008/el{{/|\\\\}}crtbegin.o"
+// CHECK-EL-HF-NAN: "-L[[SR]]/nan2008/el"
+// CHECK-EL-HF-NAN: "-L[[SR]]/../../../../mips-linux-gnu/lib/../lib/nan2008/el"
+// CHECK-EL-HF-NAN-NOT: "-L[[SR]]"
+// CHECK-EL-HF-NAN: "-L[[SR]]/../../../../mips-linux-gnu/libc/nan2008/el/lib/../lib"
+// CHECK-EL-HF-NAN: "-L[[SR]]/../../../../mips-linux-gnu/libc/nan2008/el/usr/lib/../lib"
+// CHECK-EL-HF-NAN: "[[TC]]/nan2008/el{{/|\\\\}}crtend.o"
+// CHECK-EL-HF-NAN: "[[TC]]/../../../../mips-linux-gnu/libc/nan2008/el/usr/lib/../lib{{/|\\\\}}crtn.o"
 //
 // = Little-endian, soft float
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
