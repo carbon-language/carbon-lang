@@ -79,6 +79,12 @@ struct PostDominatorTree : public FunctionPass {
     return DT->findNearestCommonDominator(A, B);
   }
 
+  /// Get all nodes post-dominated by R, including R itself.
+  void getDescendants(BasicBlock *R,
+                      SmallVectorImpl<BasicBlock *> &Result) const {
+    DT->getDescendants(R, Result);
+  }
+
   virtual void releaseMemory() {
     DT->releaseMemory();
   }
