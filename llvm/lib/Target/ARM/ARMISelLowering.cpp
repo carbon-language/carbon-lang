@@ -2537,9 +2537,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   Reloc::Model RelocM = getTargetMachine().getRelocationModel();
 
-  // FIXME: Enable this for static codegen when tool issues are fixed.  Also
-  // update ARMFastISel::ARMMaterializeGV.
-  if (Subtarget->useMovt() && RelocM != Reloc::Static) {
+  if (Subtarget->useMovt()) {
     ++NumMovwMovt;
     // FIXME: Once remat is capable of dealing with instructions with register
     // operands, expand this into two nodes.
