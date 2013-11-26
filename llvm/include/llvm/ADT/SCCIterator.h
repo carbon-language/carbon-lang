@@ -35,13 +35,13 @@ namespace llvm {
 /// This is implemented using Tarjan's DFS algorithm using an internal stack to
 /// build up a vector of nodes in a particular SCC. Note that it is a forward
 /// iterator and thus you cannot backtrack or re-visit nodes.
-template<class GraphT, class GT = GraphTraits<GraphT> >
+template <class GraphT, class GT = GraphTraits<GraphT> >
 class scc_iterator
-  : public std::iterator<std::forward_iterator_tag,
-                         std::vector<typename GT::NodeType>, ptrdiff_t> {
-  typedef typename GT::NodeType          NodeType;
+    : public std::iterator<std::forward_iterator_tag,
+                           std::vector<typename GT::NodeType>, ptrdiff_t> {
+  typedef typename GT::NodeType NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
-  typedef std::vector<NodeType*> SccTy;
+  typedef std::vector<NodeType *> SccTy;
   typedef std::iterator<std::forward_iterator_tag,
                         std::vector<typename GT::NodeType>, ptrdiff_t> super;
   typedef typename super::reference reference;
@@ -102,10 +102,11 @@ class scc_iterator
   // Compute the next SCC using the DFS traversal.
   void GetNextSCC() {
     assert(VisitStack.size() == MinVisitNumStack.size());
-    CurrentSCC.clear();                 // Prepare to compute the next SCC
+    CurrentSCC.clear(); // Prepare to compute the next SCC
     while (!VisitStack.empty()) {
       DFSVisitChildren();
-      assert(VisitStack.back().second ==GT::child_end(VisitStack.back().first));
+      assert(VisitStack.back().second ==
+             GT::child_end(VisitStack.back().first));
       NodeType *visitingN = VisitStack.back().first;
       unsigned minVisitNum = MinVisitNumStack.back();
       VisitStack.pop_back();
@@ -139,13 +140,17 @@ class scc_iterator
     DFSVisitOne(entryN);
     GetNextSCC();
   }
-  inline scc_iterator() { /* End is when DFS stack is empty */ }
+
+  // End is when the DFS stack is empty.
+  inline scc_iterator() {}
 
 public:
   typedef scc_iterator<GraphT, GT> _Self;
 
-  static inline _Self begin(const GraphT &G){return _Self(GT::getEntryNode(G));}
-  static inline _Self end  (const GraphT &) { return _Self(); }
+  static inline _Self begin(const GraphT &G) {
+    return _Self(GT::getEntryNode(G));
+  }
+  static inline _Self end(const GraphT &) { return _Self(); }
 
   /// \brief Direct loop termination test which is more efficient than
   /// comparison with \c end().
@@ -154,17 +159,19 @@ public:
     return CurrentSCC.empty();
   }
 
-  inline bool operator==(const _Self& x) const {
+  inline bool operator==(const _Self &x) const {
     return VisitStack == x.VisitStack && CurrentSCC == x.CurrentSCC;
   }
-  inline bool operator!=(const _Self& x) const { return !operator==(x); }
+  inline bool operator!=(const _Self &x) const { return !operator==(x); }
 
-  inline _Self& operator++() {
+  inline _Self &operator++() {
     GetNextSCC();
     return *this;
   }
   inline _Self operator++(int) {
-    _Self tmp = *this; ++*this; return tmp;
+    _Self tmp = *this;
+    ++*this;
+    return tmp;
   }
 
   inline const SccTy &operator*() const {
@@ -182,9 +189,11 @@ public:
   /// still contain a loop if the node has an edge back to itself.
   bool hasLoop() const {
     assert(!CurrentSCC.empty() && "Dereferencing END SCC iterator!");
-    if (CurrentSCC.size() > 1) return true;
+    if (CurrentSCC.size() > 1)
+      return true;
     NodeType *N = CurrentSCC.front();
-    for (ChildItTy CI = GT::child_begin(N), CE=GT::child_end(N); CI != CE; ++CI)
+    for (ChildItTy CI = GT::child_begin(N), CE = GT::child_end(N); CI != CE;
+         ++CI)
       if (*CI == N)
         return true;
     return false;
@@ -199,28 +208,23 @@ public:
   }
 };
 
-
 /// \brief Construct the begin iterator for a deduced graph type T.
-template <class T>
-scc_iterator<T> scc_begin(const T &G) {
+template <class T> scc_iterator<T> scc_begin(const T &G) {
   return scc_iterator<T>::begin(G);
 }
 
 /// \brief Construct the end iterator for a deduced graph type T.
-template <class T>
-scc_iterator<T> scc_end(const T &G) {
+template <class T> scc_iterator<T> scc_end(const T &G) {
   return scc_iterator<T>::end(G);
 }
 
 /// \brief Construct the begin iterator for a deduced graph type T's Inverse<T>.
-template <class T>
-scc_iterator<Inverse<T> > scc_begin(const Inverse<T> &G) {
+template <class T> scc_iterator<Inverse<T> > scc_begin(const Inverse<T> &G) {
   return scc_iterator<Inverse<T> >::begin(G);
 }
 
 /// \brief Construct the end iterator for a deduced graph type T's Inverse<T>.
-template <class T>
-scc_iterator<Inverse<T> > scc_end(const Inverse<T> &G) {
+template <class T> scc_iterator<Inverse<T> > scc_end(const Inverse<T> &G) {
   return scc_iterator<Inverse<T> >::end(G);
 }
 
