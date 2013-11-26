@@ -6,46 +6,47 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This interface is used to build and manipulate a call graph, which is a very
-// useful tool for interprocedural optimization.
-//
-// Every function in a module is represented as a node in the call graph.  The
-// callgraph node keeps track of which functions the are called by the function
-// corresponding to the node.
-//
-// A call graph may contain nodes where the function that they correspond to is
-// null.  These 'external' nodes are used to represent control flow that is not
-// represented (or analyzable) in the module.  In particular, this analysis
-// builds one external node such that:
-//   1. All functions in the module without internal linkage will have edges
-//      from this external node, indicating that they could be called by
-//      functions outside of the module.
-//   2. All functions whose address is used for something more than a direct
-//      call, for example being stored into a memory location will also have an
-//      edge from this external node.  Since they may be called by an unknown
-//      caller later, they must be tracked as such.
-//
-// There is a second external node added for calls that leave this module.
-// Functions have a call edge to the external node iff:
-//   1. The function is external, reflecting the fact that they could call
-//      anything without internal linkage or that has its address taken.
-//   2. The function contains an indirect function call.
-//
-// As an extension in the future, there may be multiple nodes with a null
-// function.  These will be used when we can prove (through pointer analysis)
-// that an indirect call site can call only a specific set of functions.
-//
-// Because of these properties, the CallGraph captures a conservative superset
-// of all of the caller-callee relationships, which is useful for
-// transformations.
-//
-// The CallGraph class also attempts to figure out what the root of the
-// CallGraph is, which it currently does by looking for a function named 'main'.
-// If no function named 'main' is found, the external node is used as the entry
-// node, reflecting the fact that any function without internal linkage could
-// be called into (which is common for libraries).
-//
+/// \file
+///
+/// This file provides interfaces used to build and manipulate a call graph,
+/// which is a very useful tool for interprocedural optimization.
+///
+/// Every function in a module is represented as a node in the call graph.  The
+/// callgraph node keeps track of which functions the are called by the
+/// function corresponding to the node.
+///
+/// A call graph may contain nodes where the function that they correspond to
+/// is null.  These 'external' nodes are used to represent control flow that is
+/// not represented (or analyzable) in the module.  In particular, this
+/// analysis builds one external node such that:
+///   1. All functions in the module without internal linkage will have edges
+///      from this external node, indicating that they could be called by
+///      functions outside of the module.
+///   2. All functions whose address is used for something more than a direct
+///      call, for example being stored into a memory location will also have
+///      an edge from this external node.  Since they may be called by an
+///      unknown caller later, they must be tracked as such.
+///
+/// There is a second external node added for calls that leave this module.
+/// Functions have a call edge to the external node iff:
+///   1. The function is external, reflecting the fact that they could call
+///      anything without internal linkage or that has its address taken.
+///   2. The function contains an indirect function call.
+///
+/// As an extension in the future, there may be multiple nodes with a null
+/// function.  These will be used when we can prove (through pointer analysis)
+/// that an indirect call site can call only a specific set of functions.
+///
+/// Because of these properties, the CallGraph captures a conservative superset
+/// of all of the caller-callee relationships, which is useful for
+/// transformations.
+///
+/// The CallGraph class also attempts to figure out what the root of the
+/// CallGraph is, which it currently does by looking for a function named
+/// 'main'. If no function named 'main' is found, the external node is used as
+/// the entry node, reflecting the fact that any function without internal
+/// linkage could be called into (which is common for libraries).
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ANALYSIS_CALLGRAPH_H
