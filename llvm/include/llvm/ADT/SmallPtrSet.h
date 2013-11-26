@@ -293,14 +293,16 @@ public:
 
   SmallPtrSet<PtrType, SmallSize> &
   operator=(const SmallPtrSet<PtrType, SmallSize> &RHS) {
-    CopyFrom(RHS);
+    if (&RHS != this)
+      CopyFrom(RHS);
     return *this;
   }
 
 #if LLVM_HAS_RVALUE_REFERENCES
   SmallPtrSet<PtrType, SmallSize>&
   operator=(SmallPtrSet<PtrType, SmallSize> &&RHS) {
-    MoveFrom(SmallSizePowTwo, std::move(RHS));
+    if (&RHS != this)
+      MoveFrom(SmallSizePowTwo, std::move(RHS));
     return *this;
   }
 #endif

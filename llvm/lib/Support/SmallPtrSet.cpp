@@ -218,8 +218,7 @@ SmallPtrSetImpl::SmallPtrSetImpl(const void **SmallStorage, unsigned SmallSize,
 /// CopyFrom - implement operator= from a smallptrset that has the same pointer
 /// type, but may have a different small size.
 void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
-  if (&RHS == this)
-    return;
+  assert(&RHS != this && "Self-copy should be handled by the caller.");
 
   if (isSmall() && RHS.isSmall())
     assert(CurArraySize == RHS.CurArraySize &&
@@ -256,6 +255,8 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
 
 #if LLVM_HAS_RVALUE_REFERENCES
 void SmallPtrSetImpl::MoveFrom(unsigned SmallSize, SmallPtrSetImpl &&RHS) {
+  assert(&RHS != this && "Self-move should be handled by the caller.");
+
   if (!isSmall())
     free(CurArray);
 
