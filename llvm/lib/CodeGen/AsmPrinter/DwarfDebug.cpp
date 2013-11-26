@@ -3056,7 +3056,9 @@ void DwarfDebug::emitDebugStrDWO() {
 }
 
 void DwarfDebug::addTypeUnitType(DIE *RefDie, DICompositeType CTy) {
-  DenseMap<const MDNode*, std::pair<uint64_t, SmallVectorImpl<DIE*>* > >::iterator I = TypeUnits.find(CTy);
+  DenseMap<const MDNode *,
+           std::pair<uint64_t, SmallVectorImpl<DIE *> *> >::iterator I =
+      TypeUnits.find(CTy);
   SmallVector<DIE *, 8> References;
   References.push_back(RefDie);
   if (I != TypeUnits.end()) {

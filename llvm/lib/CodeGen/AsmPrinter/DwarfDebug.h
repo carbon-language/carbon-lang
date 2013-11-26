@@ -452,7 +452,8 @@ class DwarfDebug {
   // in the vector. The hash will be added to these DIEs once it is computed. If
   // the pointer is null, the hash is immediately available in the uint64_t and
   // should be directly used for proxy DIEs.
-  DenseMap<const MDNode *, std::pair<uint64_t, SmallVectorImpl<DIE*>* > > TypeUnits;
+  DenseMap<const MDNode *, std::pair<uint64_t, SmallVectorImpl<DIE *> *> >
+  TypeUnits;
 
   // Whether to emit the pubnames/pubtypes sections.
   bool HasDwarfPubSections;

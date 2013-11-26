@@ -208,7 +208,8 @@ public:
 
   /// addSectionLabel - Add a Dwarf section label attribute data and value.
   ///
-  void addSectionLabel(DIE *Die, dwarf::Attribute Attribute, const MCSymbol *Label);
+  void addSectionLabel(DIE *Die, dwarf::Attribute Attribute,
+                       const MCSymbol *Label);
 
   /// addSectionOffset - Add an offset into a section attribute data and value.
   ///
