@@ -1914,8 +1914,6 @@ NamespaceDecl *UsingDirectiveDecl::getNominatedNamespace() {
   return cast_or_null<NamespaceDecl>(NominatedNamespace);
 }
 
-void NamespaceDecl::anchor() { }
-
 NamespaceDecl::NamespaceDecl(DeclContext *DC, bool Inline, 
                              SourceLocation StartLoc,
                              SourceLocation IdLoc, IdentifierInfo *Id,
@@ -1939,6 +1937,16 @@ NamespaceDecl *NamespaceDecl::Create(ASTContext &C, DeclContext *DC,
 NamespaceDecl *NamespaceDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   return new (C, ID) NamespaceDecl(0, false, SourceLocation(), SourceLocation(),
                                    0, 0);
+}
+
+NamespaceDecl *NamespaceDecl::getNextRedeclaration() {
+  return RedeclLink.getNext();
+}
+NamespaceDecl *NamespaceDecl::getPreviousDeclImpl() {
+  return getPreviousDecl();
+}
+NamespaceDecl *NamespaceDecl::getMostRecentDeclImpl() {
+  return getMostRecentDecl();
 }
 
 void NamespaceAliasDecl::anchor() { }
