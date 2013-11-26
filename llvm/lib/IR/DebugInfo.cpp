@@ -461,11 +461,11 @@ bool DIType::Verify() const {
   // DIType is abstract, it should be a BasicType, a DerivedType or
   // a CompositeType.
   if (isBasicType())
-    DIBasicType(DbgNode).Verify();
+    return DIBasicType(DbgNode).Verify();
   else if (isCompositeType())
-    DICompositeType(DbgNode).Verify();
+    return DICompositeType(DbgNode).Verify();
   else if (isDerivedType())
-    DIDerivedType(DbgNode).Verify();
+    return DIDerivedType(DbgNode).Verify();
   else
     return false;
   return true;
