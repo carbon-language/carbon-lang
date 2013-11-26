@@ -156,7 +156,7 @@ llvm::COFF::MachineTypes stringToMachineType(StringRef str) {
 //
 // /section option is to set non-default bits in the Characteristics fields of
 // the section header. D, E, K, P, R, S, and W represent discardable,
-// not_cachable, not_pageable, shared, execute, read, and write bits,
+// execute, not_cachable, not_pageable, read, shared, and write bits,
 // respectively. You can specify multiple flags in one /section option.
 //
 // If the flag starts with "!", the flags represent a mask that should be turned
@@ -185,11 +185,11 @@ bool parseSection(StringRef option, std::string &section,
       attribs |= flag;                          \
       break
     CASE('d', llvm::COFF::IMAGE_SCN_MEM_DISCARDABLE);
-    CASE('e', llvm::COFF::IMAGE_SCN_MEM_NOT_CACHED);
-    CASE('k', llvm::COFF::IMAGE_SCN_MEM_NOT_PAGED);
-    CASE('p', llvm::COFF::IMAGE_SCN_MEM_SHARED);
-    CASE('r', llvm::COFF::IMAGE_SCN_MEM_EXECUTE);
-    CASE('s', llvm::COFF::IMAGE_SCN_MEM_READ);
+    CASE('e', llvm::COFF::IMAGE_SCN_MEM_EXECUTE);
+    CASE('k', llvm::COFF::IMAGE_SCN_MEM_NOT_CACHED);
+    CASE('p', llvm::COFF::IMAGE_SCN_MEM_NOT_PAGED);
+    CASE('r', llvm::COFF::IMAGE_SCN_MEM_READ);
+    CASE('s', llvm::COFF::IMAGE_SCN_MEM_SHARED);
     CASE('w', llvm::COFF::IMAGE_SCN_MEM_WRITE);
 #undef CASE
     default:

@@ -236,6 +236,36 @@ TEST_F(WinLinkParserTest, SectionAlignment) {
   EXPECT_EQ(8192U, _context.getSectionDefaultAlignment());
 }
 
+TEST_F(WinLinkParserTest, InvalidAlignment) {
+  EXPECT_FALSE(parse("link.exe", "/align:1000", "a.obj", nullptr));
+  EXPECT_EQ("Section alignment must be a power of 2, but got 1000\n",
+            errorMessage());
+}
+
+TEST_F(WinLinkParserTest, Include) {
+  EXPECT_TRUE(parse("link.exe", "/include:foo", "a.out", nullptr));
+  auto symbols = _context.initialUndefinedSymbols();
+  EXPECT_FALSE(symbols.empty());
+  EXPECT_EQ("foo", symbols[0]);
+}
+
+TEST_F(WinLinkParserTest, Merge) {
+  EXPECT_TRUE(parse("link.exe", "/merge:.foo=.bar", "/merge:.bar=.baz",
+                    "a.out", nullptr));
+  EXPECT_EQ(".baz", _context.getFinalSectionName(".foo"));
+  EXPECT_EQ(".baz", _context.getFinalSectionName(".bar"));
+  EXPECT_EQ(".abc", _context.getFinalSectionName(".abc"));
+}
+
+TEST_F(WinLinkParserTest, Merge_Circular) {
+  EXPECT_FALSE(parse("link.exe", "/merge:.foo=.bar", "/merge:.bar=.foo",
+                     "a.out", nullptr));
+}
+
+//
+// Tests for /section
+//
+
 TEST_F(WinLinkParserTest, Section) {
   EXPECT_TRUE(parse("link.exe", "/section:.teXT,dekpRSW", "a.obj", nullptr));
   uint32_t expect = llvm::COFF::IMAGE_SCN_MEM_DISCARDABLE |
@@ -267,31 +297,23 @@ TEST_F(WinLinkParserTest, SectionNegative) {
   EXPECT_EQ(expect, _context.getSectionAttributeMask(".teXT"));
 }
 
-TEST_F(WinLinkParserTest, InvalidAlignment) {
-  EXPECT_FALSE(parse("link.exe", "/align:1000", "a.obj", nullptr));
-  EXPECT_EQ("Section alignment must be a power of 2, but got 1000\n",
-            errorMessage());
-}
+#define TEST_SECTION(testname, arg, expect)                                  \
+  TEST_F(WinLinkParserTest, testname) {                                      \
+    EXPECT_TRUE(parse("link.exe", "/section:.text," arg, "a.obj", nullptr)); \
+    llvm::Optional<uint32_t> val = _context.getSectionAttributes(".text");   \
+    EXPECT_TRUE(val.hasValue());                                             \
+    EXPECT_EQ(expect, *val);                                                 \
+  }
 
-TEST_F(WinLinkParserTest, Include) {
-  EXPECT_TRUE(parse("link.exe", "/include:foo", "a.out", nullptr));
-  auto symbols = _context.initialUndefinedSymbols();
-  EXPECT_FALSE(symbols.empty());
-  EXPECT_EQ("foo", symbols[0]);
-}
+TEST_SECTION(SectionD, "d", llvm::COFF::IMAGE_SCN_MEM_DISCARDABLE);
+TEST_SECTION(SectionE, "e", llvm::COFF::IMAGE_SCN_MEM_EXECUTE);
+TEST_SECTION(SectionK, "k", llvm::COFF::IMAGE_SCN_MEM_NOT_CACHED);
+TEST_SECTION(SectionP, "p", llvm::COFF::IMAGE_SCN_MEM_NOT_PAGED);
+TEST_SECTION(SectionR, "r", llvm::COFF::IMAGE_SCN_MEM_READ);
+TEST_SECTION(SectionS, "s", llvm::COFF::IMAGE_SCN_MEM_SHARED);
+TEST_SECTION(SectionW, "w", llvm::COFF::IMAGE_SCN_MEM_WRITE);
 
-TEST_F(WinLinkParserTest, Merge) {
-  EXPECT_TRUE(parse("link.exe", "/merge:.foo=.bar", "/merge:.bar=.baz",
-                    "a.out", nullptr));
-  EXPECT_EQ(".baz", _context.getFinalSectionName(".foo"));
-  EXPECT_EQ(".baz", _context.getFinalSectionName(".bar"));
-  EXPECT_EQ(".abc", _context.getFinalSectionName(".abc"));
-}
-
-TEST_F(WinLinkParserTest, Merge_Circular) {
-  EXPECT_FALSE(parse("link.exe", "/merge:.foo=.bar", "/merge:.bar=.foo",
-                     "a.out", nullptr));
-}
+#undef TEST_SECTION
 
 //
 // Tests for /defaultlib and /nodefaultlib.
