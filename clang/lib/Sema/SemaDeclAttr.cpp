@@ -2563,10 +2563,11 @@ static void handleObjCNSObject(Sema &S, Decl *D, const AttributeList &Attr) {
                               Attr.getAttributeSpellingListIndex()));
 }
 
-static void
-handleOverloadableAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+static void handleOverloadableAttr(Sema &S, Decl *D,
+                                   const AttributeList &Attr) {
   if (!isa<FunctionDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_overloadable_not_function);
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFunction;
     return;
   }
 

@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-int var __attribute__((overloadable)); // expected-error{{'overloadable' attribute can only be applied to a function}}
+int var __attribute__((overloadable)); // expected-error{{'overloadable' attribute only applies to functions}}
 void params(void) __attribute__((overloadable(12))); // expected-error {{'overloadable' attribute takes no arguments}}
 
 int *f(int) __attribute__((overloadable)); // expected-note 2{{previous overload of function is here}}
