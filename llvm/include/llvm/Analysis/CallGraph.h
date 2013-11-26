@@ -74,7 +74,7 @@ class CallGraphNode;
 ///
 /// The core call graph itself can also be updated to reflect changes to the IR.
 class CallGraph : public ModulePass {
-  Module *Mod;              // The module this call graph represents
+  Module *M;
 
   typedef std::map<const Function *, CallGraphNode *> FunctionMapTy;
   FunctionMapTy FunctionMap;    // Map from a function to its node
@@ -109,7 +109,7 @@ public:
   typedef FunctionMapTy::const_iterator const_iterator;
 
   /// \brief Returns the module the call graph corresponds to.
-  Module &getModule() const { return *Mod; }
+  Module &getModule() const { return *M; }
 
   inline       iterator begin()       { return FunctionMap.begin(); }
   inline       iterator end()         { return FunctionMap.end();   }

@@ -67,7 +67,7 @@ void CallGraph::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool CallGraph::runOnModule(Module &M) {
-  Mod = &M;
+  this->M = &M;
 
   ExternalCallingNode = getOrInsertFunction(0);
   assert(!CallsExternalNode);
@@ -148,7 +148,7 @@ Function *CallGraph::removeFunctionFromModule(CallGraphNode *CGN) {
   delete CGN;                       // Delete the call graph node for this func
   FunctionMap.erase(F);             // Remove the call graph node from the map
 
-  Mod->getFunctionList().remove(F);
+  M->getFunctionList().remove(F);
   return F;
 }
 
@@ -174,7 +174,7 @@ CallGraphNode *CallGraph::getOrInsertFunction(const Function *F) {
   CallGraphNode *&CGN = FunctionMap[F];
   if (CGN) return CGN;
   
-  assert((!F || F->getParent() == Mod) && "Function not in current module!");
+  assert((!F || F->getParent() == M) && "Function not in current module!");
   return CGN = new CallGraphNode(const_cast<Function*>(F));
 }
 
