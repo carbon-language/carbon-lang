@@ -929,6 +929,40 @@ DIE *CompileUnit::createTypeDIE(DICompositeType Ty) {
   return TyDIE;
 }
 
+/// Return true if the type is appropriately scoped to be contained inside
+/// its own type unit.
+static bool isTypeUnitScoped(DIType Ty, const DwarfDebug *DD) {
+  DIScope Parent = DD->resolve(Ty.getContext());
+  while (Parent) {
+    // Don't generate a hash for anything scoped inside a function.
+    if (Parent.isSubprogram())
+      return false;
+    Parent = DD->resolve(Parent.getContext());
+  }
+  return true;
+}
+
+/// Return true if the type should be split out into a type unit.
+static bool shouldCreateTypeUnit(DICompositeType CTy, const DwarfDebug *DD) {
+  if (!GenerateTypeUnits)
+    return false;
+
+  uint16_t Tag = CTy.getTag();
+
+  switch (Tag) {
+  case dwarf::DW_TAG_structure_type:
+  case dwarf::DW_TAG_union_type:
+  case dwarf::DW_TAG_enumeration_type:
+  case dwarf::DW_TAG_class_type:
+    // If this is a class, structure, union, or enumeration type
+    // that is a definition (not a declaration), and not scoped
+    // inside a function then separate this out as a type unit.
+    return !CTy.isForwardDecl() && isTypeUnitScoped(CTy, DD);
+  default:
+    return false;
+  }
+}
+
 /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
 /// given DIType.
 DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
@@ -953,9 +987,15 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
 
   if (Ty.isBasicType())
     constructTypeDIE(*TyDIE, DIBasicType(Ty));
-  else if (Ty.isCompositeType())
-    constructTypeDIE(*TyDIE, DICompositeType(Ty));
-  else {
+  else if (Ty.isCompositeType()) {
+    DICompositeType CTy(Ty);
+    if (shouldCreateTypeUnit(CTy, DD)) {
+      DD->addTypeUnitType(TyDIE, CTy);
+      // Skip updating the accellerator tables since this is not the full type
+      return TyDIE;
+    }
+    constructTypeDIEImpl(*TyDIE, CTy);
+  } else {
     assert(Ty.isDerivedType() && "Unknown kind of DIType");
     constructTypeDIE(*TyDIE, DIDerivedType(Ty));
   }
@@ -1125,40 +1165,6 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
   // Add source line info if available and TyDesc is not a forward declaration.
   if (!DTy.isForwardDecl())
     addSourceLine(&Buffer, DTy);
-}
-
-/// Return true if the type is appropriately scoped to be contained inside
-/// its own type unit.
-static bool isTypeUnitScoped(DIType Ty, const DwarfDebug *DD) {
-  DIScope Parent = DD->resolve(Ty.getContext());
-  while (Parent) {
-    // Don't generate a hash for anything scoped inside a function.
-    if (Parent.isSubprogram())
-      return false;
-    Parent = DD->resolve(Parent.getContext());
-  }
-  return true;
-}
-
-/// Return true if the type should be split out into a type unit.
-static bool shouldCreateTypeUnit(DICompositeType CTy, const DwarfDebug *DD) {
-  if (!GenerateTypeUnits)
-    return false;
-
-  uint16_t Tag = CTy.getTag();
-
-  switch (Tag) {
-  case dwarf::DW_TAG_structure_type:
-  case dwarf::DW_TAG_union_type:
-  case dwarf::DW_TAG_enumeration_type:
-  case dwarf::DW_TAG_class_type:
-    // If this is a class, structure, union, or enumeration type
-    // that is a definition (not a declaration), and not scoped
-    // inside a function then separate this out as a type unit.
-    return !CTy.isForwardDecl() && isTypeUnitScoped(CTy, DD);
-  default:
-    return false;
-  }
 }
 
 /// constructTypeDIE - Construct type DIE from DICompositeType.

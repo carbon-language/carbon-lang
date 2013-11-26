@@ -34,27 +34,29 @@ static void dumpPubSection(raw_ostream &OS, StringRef Name, StringRef Data,
   OS << "\n." << Name << " contents:\n";
   DataExtractor pubNames(Data, LittleEndian, 0);
   uint32_t offset = 0;
-  OS << "length = " << format("0x%08x", pubNames.getU32(&offset));
-  OS << " version = " << format("0x%04x", pubNames.getU16(&offset));
-  OS << " unit_offset = " << format("0x%08x", pubNames.getU32(&offset));
-  OS << " unit_size = " << format("0x%08x", pubNames.getU32(&offset)) << '\n';
-  if (GnuStyle)
-    OS << "Offset     Linkage  Kind     Name\n";
-  else
-    OS << "Offset     Name\n";
+  while (pubNames.isValidOffset(offset)) {
+    OS << "length = " << format("0x%08x", pubNames.getU32(&offset));
+    OS << " version = " << format("0x%04x", pubNames.getU16(&offset));
+    OS << " unit_offset = " << format("0x%08x", pubNames.getU32(&offset));
+    OS << " unit_size = " << format("0x%08x", pubNames.getU32(&offset)) << '\n';
+    if (GnuStyle)
+      OS << "Offset     Linkage  Kind     Name\n";
+    else
+      OS << "Offset     Name\n";
 
-  while (offset < Data.size()) {
-    uint32_t dieRef = pubNames.getU32(&offset);
-    if (dieRef == 0)
-      break;
-    OS << format("0x%8.8x ", dieRef);
-    if (GnuStyle) {
-      PubIndexEntryDescriptor desc(pubNames.getU8(&offset));
-      OS << format("%-8s", dwarf::GDBIndexEntryLinkageString(desc.Linkage))
-         << ' ' << format("%-8s", dwarf::GDBIndexEntryKindString(desc.Kind))
-         << ' ';
+    while (offset < Data.size()) {
+      uint32_t dieRef = pubNames.getU32(&offset);
+      if (dieRef == 0)
+        break;
+      OS << format("0x%8.8x ", dieRef);
+      if (GnuStyle) {
+        PubIndexEntryDescriptor desc(pubNames.getU8(&offset));
+        OS << format("%-8s", dwarf::GDBIndexEntryLinkageString(desc.Linkage))
+           << ' ' << format("%-8s", dwarf::GDBIndexEntryKindString(desc.Kind))
+           << ' ';
+      }
+      OS << '\"' << pubNames.getCStr(&offset) << "\"\n";
     }
-    OS << '\"' << pubNames.getCStr(&offset) << "\"\n";
   }
 }
 
