@@ -215,7 +215,7 @@ u64 NanoTime() {
 
 void Abort() {
   abort();
-  _exit(-1);  // abort is not NORETURN on Windows.
+  internal__exit(-1);  // abort is not NORETURN on Windows.
 }
 
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
@@ -305,7 +305,7 @@ uptr internal_sched_yield() {
 }
 
 void internal__exit(int exitcode) {
-  _exit(exitcode);
+  ExitProcess(exitcode);
 }
 
 // ---------------------- BlockingMutex ---------------- {{{1
