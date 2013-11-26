@@ -973,6 +973,9 @@ namespace llvm {
     MachineBasicBlock *emitEHSjLjLongJmp(MachineInstr *MI,
                                          MachineBasicBlock *MBB) const;
 
+    MachineBasicBlock *emitPatchPoint(MachineInstr *MI,
+                                      MachineBasicBlock *MBB) const;
+
     /// Emit nodes that will be selected as "test Op0,Op0", or something
     /// equivalent, for use with the given x86 condition code.
     SDValue EmitTest(SDValue Op0, unsigned X86CC, SelectionDAG &DAG) const;

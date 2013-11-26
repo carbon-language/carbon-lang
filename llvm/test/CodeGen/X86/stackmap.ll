@@ -9,7 +9,7 @@
 ; CHECK-NEXT:   .long   1
 ; CHECK-NEXT:   .quad   4294967296
 ; Num Callsites
-; CHECK-NEXT:   .long   12
+; CHECK-NEXT:   .long   14
 
 ; Constant arguments
 ;
@@ -302,6 +302,48 @@ define void @subRegOffset(i16 %arg) {
 
 define void @liveConstant() {
   tail call void (i32, i32, ...)* @llvm.experimental.stackmap(i32 15, i32 5, i32 33)
+  ret void
+}
+
+; Directly map an alloca's address.
+;
+; Callsite 16
+; CHECK:        .long 16
+; CHECK-LABEL:  .long L{{.*}}-_directFrameIdx
+; CHECK-NEXT:   .short 0
+; 1 location
+; CHECK-NEXT:   .short	1
+; Loc 0: Direct RBP - ofs
+; CHECK-NEXT:   .byte	2
+; CHECK-NEXT:   .byte	8
+; CHECK-NEXT:   .short	6
+; CHECK-NEXT:   .long
+; Callsite 17
+; CHECK-NEXT:   .long	17
+; CHECK-NEXT:   .long	L{{.*}}-_directFrameIdx
+; CHECK-NEXT:   .short	0
+; 2 locations
+; CHECK-NEXT:   .short	2
+; Loc 0: Direct RBP - ofs
+; CHECK-NEXT:   .byte	2
+; CHECK-NEXT:   .byte	8
+; CHECK-NEXT:   .short	6
+; CHECK-NEXT:   .long
+; Loc 1: Direct RBP - ofs
+; CHECK-NEXT:   .byte	2
+; CHECK-NEXT:   .byte	8
+; CHECK-NEXT:   .short	6
+; CHECK-NEXT:   .long
+define void @directFrameIdx() {
+entry:
+  %metadata1 = alloca i64, i32 3, align 8
+  store i64 11, i64* %metadata1
+  store i64 12, i64* %metadata1
+  store i64 13, i64* %metadata1
+  call void (i32, i32, ...)* @llvm.experimental.stackmap(i32 16, i32 0, i64* %metadata1)
+  %metadata2 = alloca i8, i32 4, align 8
+  %metadata3 = alloca i16, i32 4, align 8
+  call void (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i32 17, i32 5, i8* null, i32 0, i8* %metadata2, i16* %metadata3)
   ret void
 }
 

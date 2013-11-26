@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -disable-fp-elim | FileCheck %s
 
 ; Stackmap Header: no constants - 6 callsites
 ; CHECK-LABEL: .section	__LLVM_STACKMAPS,__llvm_stackmaps
@@ -95,11 +95,11 @@ entry:
 ; CHECK-NEXT:   .byte 8
 ; CHECK-NEXT:   .short {{[0-9]+}}
 ; CHECK-NEXT:   .long 0
-; Loc 1: Register <-- this will be folded once folding for FI is implemented
-; CHECK-NEXT:   .byte 1
+; Loc 1: Direct RBP - ofs
+; CHECK-NEXT:   .byte 2
 ; CHECK-NEXT:   .byte 8
-; CHECK-NEXT:   .short {{[0-9]+}}
-; CHECK-NEXT:   .long 0
+; CHECK-NEXT:   .short 6
+; CHECK-NEXT:   .long
 define i64 @property_access3() nounwind ssp uwtable {
 entry:
   %obj = alloca i64, align 8
@@ -330,13 +330,13 @@ entry:
 ; Loc 3: Arg2 spilled to RBP +
 ; CHECK-NEXT: .byte  3
 ; CHECK-NEXT: .byte  8
-; CHECK-NEXT: .short 7
-; CHECK-NEXT: .long  {{[0-9]+}}
+; CHECK-NEXT: .short 6
+; CHECK-NEXT: .long
 ; Loc 4: Arg3 spilled to RBP +
 ; CHECK-NEXT: .byte  3
 ; CHECK-NEXT: .byte  8
-; CHECK-NEXT: .short 7
-; CHECK-NEXT: .long  {{[0-9]+}}
+; CHECK-NEXT: .short 6
+; CHECK-NEXT: .long
 define i64 @patchpoint_spillargs(i64 %p1, i64 %p2, i64 %p3, i64 %p4) {
 entry:
   tail call void asm sideeffect "nop", "~{ax},~{bx},~{cx},~{dx},~{bp},~{si},~{di},~{r8},~{r9},~{r10},~{r11},~{r12},~{r13},~{r14},~{r15}"() nounwind

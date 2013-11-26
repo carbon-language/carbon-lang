@@ -6783,6 +6783,21 @@ SelectionDAGBuilder::LowerCallOperands(const CallInst &CI, unsigned ArgIdx,
 
 /// \brief Add a stack map intrinsic call's live variable operands to a stackmap
 /// or patchpoint target node's operand list.
+///
+/// Constants are converted to TargetConstants purely as an optimization to
+/// avoid constant materialization and register allocation.
+///
+/// FrameIndex operands are converted to TargetFrameIndex so that ISEL does not
+/// generate addess computation nodes, and so ExpandISelPseudo can convert the
+/// TargetFrameIndex into a DirectMemRefOp StackMap location. This avoids
+/// address materialization and register allocation, but may also be required
+/// for correctness. If a StackMap (or PatchPoint) intrinsic directly uses an
+/// alloca in the entry block, then the runtime may assume that the alloca's
+/// StackMap location can be read immediately after compilation and that the
+/// location is valid at any point during execution (this is similar to the
+/// assumption made by the llvm.gcroot intrinsic). If the alloca's location were
+/// only available in a register, then the runtime would need to trap when
+/// execution reaches the StackMap in order to read the alloca's location.
 static void addStackMapLiveVars(const CallInst &CI, unsigned StartIdx,
                                 SmallVectorImpl<SDValue> &Ops,
                                 SelectionDAGBuilder &Builder) {
@@ -6793,6 +6808,10 @@ static void addStackMapLiveVars(const CallInst &CI, unsigned StartIdx,
         Builder.DAG.getTargetConstant(StackMaps::ConstantOp, MVT::i64));
       Ops.push_back(
         Builder.DAG.getTargetConstant(C->getSExtValue(), MVT::i64));
+    } else if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(OpVal)) {
+      const TargetLowering &TLI = Builder.DAG.getTargetLoweringInfo();
+      Ops.push_back(
+        Builder.DAG.getTargetFrameIndex(FI->getIndex(), TLI.getPointerTy()));
     } else
       Ops.push_back(OpVal);
   }

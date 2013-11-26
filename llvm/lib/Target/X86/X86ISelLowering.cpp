@@ -15811,6 +15811,51 @@ X86TargetLowering::emitEHSjLjLongJmp(MachineInstr *MI,
   return MBB;
 }
 
+/// Convert any TargetFrameIndex operands into the x86-specific pattern of five
+/// memory operands that is recognized by PrologEpilogInserter.
+MachineBasicBlock *
+X86TargetLowering::emitPatchPoint(MachineInstr *MI,
+                                  MachineBasicBlock *MBB) const {
+  const TargetMachine &TM = getTargetMachine();
+  const X86InstrInfo *TII = static_cast<const X86InstrInfo*>(TM.getInstrInfo());
+
+  // MI changes inside this loop as we grow operands.
+  for(unsigned OperIdx = 0; OperIdx != MI->getNumOperands(); ++OperIdx) {
+    MachineOperand &MO = MI->getOperand(OperIdx);
+    if (!MO.isFI())
+      continue;
+
+    // foldMemoryOperand builds a new MI after replacing a single FI operand
+    // with the canonical set of five x86 addressing-mode operands.
+    int FI = MO.getIndex();
+    MachineFunction &MF = *MBB->getParent();
+    SmallVector<unsigned, 1> FIOps(1, OperIdx);
+    MachineInstr *NewMI = TII->foldMemoryOperandImpl(MF, MI, FIOps, FI);
+    assert(NewMI && "Cannot fold frame index operand into stackmap.");
+
+    // Inherit previous memory operands.
+    NewMI->setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
+    assert(NewMI->mayLoad() && "Folded a stackmap use to a non-load!");
+
+    // Add a new memory operand for this FI.
+    const MachineFrameInfo &MFI = *MF.getFrameInfo();
+    assert(MFI.getObjectOffset(FI) != -1);
+    MachineMemOperand *MMO =
+      MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(FI),
+                              MachineMemOperand::MOLoad,
+                              TM.getDataLayout()->getPointerSize(),
+                              MFI.getObjectAlignment(FI));
+    NewMI->addMemOperand(MF, MMO);
+
+    // Replace the instruction and update the operand index.
+    MBB->insert(MachineBasicBlock::iterator(MI), NewMI);
+    OperIdx += (NewMI->getNumOperands() - MI->getNumOperands()) - 1;
+    MI->eraseFromParent();
+    MI = NewMI;
+  }
+  return MBB;
+}
+
 MachineBasicBlock *
 X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) const {
@@ -16038,6 +16083,10 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::EH_SjLj_LongJmp32:
   case X86::EH_SjLj_LongJmp64:
     return emitEHSjLjLongJmp(MI, BB);
+
+  case TargetOpcode::STACKMAP:
+  case TargetOpcode::PATCHPOINT:
+    return emitPatchPoint(MI, BB);
   }
 }
 

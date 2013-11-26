@@ -4237,18 +4237,27 @@ static MachineInstr* foldPatchpoint(MachineFunction &MF,
   for (unsigned i = StartIdx; i < MI->getNumOperands(); ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (std::find(Ops.begin(), Ops.end(), i) != Ops.end()) {
-      assert(MO.getReg() && "patchpoint can only fold a vreg operand");
-      // Compute the spill slot size and offset.
-      const TargetRegisterClass *RC = MF.getRegInfo().getRegClass(MO.getReg());
       unsigned SpillSize;
       unsigned SpillOffset;
-      bool Valid = TII.getStackSlotRange(RC, MO.getSubReg(), SpillSize,
-                                         SpillOffset, &MF.getTarget());
-      if (!Valid)
-        report_fatal_error("cannot spill patchpoint subregister operand");
-
-      MIB.addOperand(MachineOperand::CreateImm(StackMaps::IndirectMemRefOp));
-      MIB.addOperand(MachineOperand::CreateImm(SpillSize));
+      if (MO.isReg()) {
+        // Compute the spill slot size and offset.
+        const TargetRegisterClass *RC =
+          MF.getRegInfo().getRegClass(MO.getReg());
+        bool Valid = TII.getStackSlotRange(RC, MO.getSubReg(), SpillSize,
+                                           SpillOffset, &MF.getTarget());
+        if (!Valid)
+          report_fatal_error("cannot spill patchpoint subregister operand");
+        MIB.addOperand(MachineOperand::CreateImm(StackMaps::IndirectMemRefOp));
+        MIB.addOperand(MachineOperand::CreateImm(SpillSize));
+      }
+      else {
+        // ExpandISelPseudos is converting a simple frame index into a 5-operand
+        // frame index.
+        assert(MO.isFI() && MO.getIndex() == FrameIndex &&
+               "patchpoint can only fold a vreg operand or frame index");
+        SpillOffset = 0;
+        MIB.addOperand(MachineOperand::CreateImm(StackMaps::DirectMemRefOp));
+      }
       MIB.addOperand(MachineOperand::CreateFI(FrameIndex));
       addOffset(MIB, SpillOffset);
     }
