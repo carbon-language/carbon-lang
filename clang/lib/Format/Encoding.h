@@ -64,6 +64,10 @@ inline unsigned getCodePointCount(StringRef Text, Encoding Encoding) {
 inline unsigned columnWidth(StringRef Text, Encoding Encoding) {
   if (Encoding == Encoding_UTF8) {
     int ContentWidth = llvm::sys::unicode::columnWidthUTF8(Text);
+    // FIXME: Figure out the correct way to handle this in the presence of both
+    // printable and unprintable multi-byte UTF-8 characters. Falling back to
+    // returning the number of bytes may cause problems, as columnWidth suddenly
+    // becomes non-additive.
     if (ContentWidth >= 0)
       return ContentWidth;
   }
@@ -81,9 +85,7 @@ inline unsigned columnWidthWithTabs(StringRef Text, unsigned StartColumn,
     StringRef::size_type TabPos = Tail.find('\t');
     if (TabPos == StringRef::npos)
       return TotalWidth + columnWidth(Tail, Encoding);
-    int Width = columnWidth(Tail.substr(0, TabPos), Encoding);
-    assert(Width >= 0);
-    TotalWidth += Width;
+    TotalWidth += columnWidth(Tail.substr(0, TabPos), Encoding);
     TotalWidth += TabWidth - (TotalWidth + StartColumn) % TabWidth;
     Tail = Tail.substr(TabPos + 1);
   }

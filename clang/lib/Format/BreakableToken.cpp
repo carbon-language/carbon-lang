@@ -92,9 +92,7 @@ static BreakableToken::Split getStringSplit(StringRef Text,
     return BreakableToken::Split(StringRef::npos, 0);
   if (ColumnLimit <= UsedColumns)
     return BreakableToken::Split(StringRef::npos, 0);
-  unsigned MaxSplit = std::min<unsigned>(
-      ColumnLimit - UsedColumns,
-      encoding::columnWidthWithTabs(Text, UsedColumns, TabWidth, Encoding) - 1);
+  unsigned MaxSplit = ColumnLimit - UsedColumns;
   StringRef::size_type SpaceOffset = 0;
   StringRef::size_type SlashOffset = 0;
   StringRef::size_type WordStartOffset = 0;
@@ -110,7 +108,7 @@ static BreakableToken::Split getStringSplit(StringRef Text,
           Text.substr(0, Advance), UsedColumns + Chars, TabWidth, Encoding);
     }
 
-    if (Chars > MaxSplit)
+    if (Chars > MaxSplit || Text.size() == Advance)
       break;
 
     if (IsBlank(Text[0]))
