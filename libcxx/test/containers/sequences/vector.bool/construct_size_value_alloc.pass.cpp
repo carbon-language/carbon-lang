@@ -15,7 +15,7 @@
 #include <vector>
 #include <cassert>
 
-#include "../../min_allocator.h"
+#include "min_allocator.h"
 
 template <class C>
 void

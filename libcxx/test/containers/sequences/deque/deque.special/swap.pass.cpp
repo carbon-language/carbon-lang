@@ -15,7 +15,7 @@
 #include <deque>
 #include <cassert>
 #include "../../../test_allocator.h"
-#include "../../../min_allocator.h"
+#include "min_allocator.h"
 
 template <class C>
 C

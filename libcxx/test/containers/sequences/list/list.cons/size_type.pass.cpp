@@ -15,7 +15,7 @@
 #include <cassert>
 #include "../../../DefaultOnly.h"
 #include "../../../stack_allocator.h"
-#include "../../../min_allocator.h"
+#include "min_allocator.h"
 
 template <class T, class Allocator>
 void

@@ -25,7 +25,7 @@
 #include <list>
 #include <type_traits>
 
-#include "../../min_allocator.h"
+#include "min_allocator.h"
 
 int main()
 {

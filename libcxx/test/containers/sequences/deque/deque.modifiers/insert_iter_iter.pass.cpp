@@ -18,7 +18,7 @@
 #include "test_iterators.h"
 #include "../../../MoveOnly.h"
 #include "../../../stack_allocator.h"
-#include "../../../min_allocator.h"
+#include "min_allocator.h"
 
 template <class C>
 C

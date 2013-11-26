@@ -33,7 +33,7 @@
 
 #include "../../test_allocator.h"
 #include "../../Copyable.h"
-#include "../../min_allocator.h"
+#include "min_allocator.h"
 
 template <class Allocator>
 void

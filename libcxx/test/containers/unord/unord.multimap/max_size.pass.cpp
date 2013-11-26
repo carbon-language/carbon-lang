@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <cassert>
 
-#include "../../min_allocator.h"
+#include "min_allocator.h"
 
 int main()
 {

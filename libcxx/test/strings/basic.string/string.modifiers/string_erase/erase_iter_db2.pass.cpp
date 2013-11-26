@@ -20,7 +20,7 @@
 #include <cstdlib>
 #include <exception>
 
-#include "../../min_allocator.h"
+#include "min_allocator.h"
 
 int main()
 {

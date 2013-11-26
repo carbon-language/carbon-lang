@@ -14,7 +14,7 @@
 #include <list>
 #include <cassert>
 #include "../../../DefaultOnly.h"
-#include "../../../min_allocator.h"
+#include "min_allocator.h"
 
 int main()
 {

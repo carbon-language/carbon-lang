@@ -15,7 +15,7 @@
 #include <stdexcept>
 #include <cassert>
 
-#include "../min_allocator.h"
+#include "min_allocator.h"
 
 template <class S>
 void

@@ -18,7 +18,7 @@
 #include <list>
 #include <cassert>
 
-#include "../../../min_allocator.h"
+#include "min_allocator.h"
 
 class A
 {

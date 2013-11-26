@@ -17,7 +17,7 @@
 
 #include "test_iterators.h"
 #include "../../../stack_allocator.h"
-#include "../../../min_allocator.h"
+#include "min_allocator.h"
 
 template <class C, class Iterator, class A>
 void

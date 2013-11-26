@@ -19,7 +19,7 @@
 
 #include "../../../test_allocator.h"
 #include "test_iterators.h"
-#include "../../../min_allocator.h"
+#include "min_allocator.h"
 
 int main()
 {

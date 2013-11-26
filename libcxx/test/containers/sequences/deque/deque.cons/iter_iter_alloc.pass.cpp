@@ -17,7 +17,7 @@
 
 #include "test_iterators.h"
 #include "../../../test_allocator.h"
-#include "../../../min_allocator.h"
+#include "min_allocator.h"
 
 template <class InputIterator, class Allocator>
 void

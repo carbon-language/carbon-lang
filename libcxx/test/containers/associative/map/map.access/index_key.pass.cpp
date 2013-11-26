@@ -16,7 +16,7 @@
 #include <map>
 #include <cassert>
 
-#include "../../../min_allocator.h"
+#include "min_allocator.h"
 #include "private_constructor.hpp"
 
 int main()

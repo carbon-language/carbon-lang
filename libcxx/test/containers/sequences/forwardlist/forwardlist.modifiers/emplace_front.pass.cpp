@@ -15,7 +15,7 @@
 #include <cassert>
 
 #include "../../../Emplaceable.h"
-#include "../../../min_allocator.h"
+#include "min_allocator.h"
 
 int main()
 {

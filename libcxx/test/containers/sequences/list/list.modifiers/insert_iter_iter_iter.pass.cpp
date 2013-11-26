@@ -20,7 +20,7 @@
 #include <cstdlib>
 #include <cassert>
 #include "test_iterators.h"
-#include "../../../min_allocator.h"
+#include "min_allocator.h"
 
 int throw_next = 0xFFFF;
 int count = 0;

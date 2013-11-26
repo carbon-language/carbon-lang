@@ -19,7 +19,7 @@
 #include <cstdlib>
 #include <cassert>
 
-#include "../../../min_allocator.h"
+#include "min_allocator.h"
 
 int throw_next = 0xFFFF;
 int count = 0;

@@ -18,7 +18,7 @@
 #include <vector>
 #include <cassert>
 #include "../../../stack_allocator.h"
-#include "../../../min_allocator.h"
+#include "min_allocator.h"
 
 #if _LIBCPP_DEBUG >= 1
 #include <cstdlib>

@@ -17,7 +17,7 @@
 #include <cassert>
 
 #include "test_iterators.h"
-#include "../../min_allocator.h"
+#include "min_allocator.h"
 
 template <class C, class Iterator>
 void

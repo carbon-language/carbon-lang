@@ -15,7 +15,7 @@
 #include <cassert>
 #include <iterator>
 
-#include "../../../min_allocator.h"
+#include "min_allocator.h"
 
 typedef int T;
 const T t1[] = {0, 1, 2, 3, 4, 5, 6, 7};
