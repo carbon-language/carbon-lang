@@ -6996,11 +6996,11 @@ TEST_F(FormatTest, SplitsUTF8Strings) {
   // (zero-width, single width with a substitution glyph, expanded to their code
   // (e.g. "<8d>"), so there's no single correct way to handle them.
   EXPECT_EQ("\"aaaaÄ\"\n"
-            "\"\";",
-            format("\"aaaaÄ\";", getLLVMStyleWithColumns(10)));
+            "\"\xc2\x8d\";",
+            format("\"aaaaÄ\xc2\x8d\";", getLLVMStyleWithColumns(10)));
   EXPECT_EQ("\"aaaaaaaÄ\"\n"
-            "\"\";",
-            format("\"aaaaaaaÄ\";", getLLVMStyleWithColumns(10)));
+            "\"\xc2\x8d\";",
+            format("\"aaaaaaaÄ\xc2\x8d\";", getLLVMStyleWithColumns(10)));
   EXPECT_EQ(
       "\"Однажды, в \"\n"
       "\"студёную \"\n"
@@ -7034,8 +7034,8 @@ TEST_F(FormatTest, HandlesDoubleWidthCharsInMultiLineStrings) {
 }
 
 TEST_F(FormatTest, SplitsUTF8LineComments) {
-  EXPECT_EQ("// aaaaÄ",
-            format("// aaaaÄ", getLLVMStyleWithColumns(10)));
+  EXPECT_EQ("// aaaaÄ\xc2\x8d",
+            format("// aaaaÄ\xc2\x8d", getLLVMStyleWithColumns(10)));
   EXPECT_EQ("// Я из лесу\n"
             "// вышел; был\n"
             "// сильный\n"
