@@ -523,8 +523,8 @@ public:
 
   /// \brief Invalidate analyses cached for an IR unit.
   ///
-  /// Walk through all of the analyses pertaining to this module and invalidate
-  /// them unless they are preserved by the PreservedAnalyses set.
+  /// Walk through all of the analyses pertaining to this unit of IR and
+  /// invalidate them unless they are preserved by the PreservedAnalyses set.
   void invalidate(IRUnitT IR, const PreservedAnalyses &PA) {
     derived_this()->invalidateImpl(IR, PA);
   }
