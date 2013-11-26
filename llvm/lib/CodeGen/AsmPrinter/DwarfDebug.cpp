@@ -1063,10 +1063,10 @@ void DwarfDebug::finalizeModuleInfo() {
   computeInlinedDIEs();
 
   // Handle anything that needs to be done on a per-cu basis.
-  for (DenseMap<const MDNode *, CompileUnit *>::iterator CUI = CUMap.begin(),
-                                                         CUE = CUMap.end();
-       CUI != CUE; ++CUI) {
-    CompileUnit *TheCU = CUI->second;
+  for (SmallVectorImpl<CompileUnit *>::const_iterator I = getUnits().begin(),
+                                                      E = getUnits().end();
+       I != E; ++I) {
+    CompileUnit *TheCU = *I;
     // Emit DW_AT_containing_type attribute to connect types with their
     // vtable holding type.
     TheCU->constructContainingTypeDIEs();
@@ -1953,7 +1953,8 @@ void DwarfUnits::computeSizeAndOffsets() {
 
   // Iterate over each compile unit and set the size and offsets for each
   // DIE within each compile unit. All offsets are CU relative.
-  for (SmallVectorImpl<CompileUnit *>::iterator I = CUs.begin(), E = CUs.end();
+  for (SmallVectorImpl<CompileUnit *>::const_iterator I = CUs.begin(),
+                                                      E = CUs.end();
        I != E; ++I) {
     (*I)->setDebugInfoOffset(SecOffset);
 
@@ -2227,10 +2228,10 @@ void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
 void DwarfDebug::emitAccelNames() {
   DwarfAccelTable AT(
       DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset, dwarf::DW_FORM_data4));
-  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
-                                                         E = CUMap.end();
+  for (SmallVectorImpl<CompileUnit *>::const_iterator I = getUnits().begin(),
+                                                      E = getUnits().end();
        I != E; ++I) {
-    CompileUnit *TheCU = I->second;
+    CompileUnit *TheCU = *I;
     const StringMap<std::vector<const DIE *> > &Names = TheCU->getAccelNames();
     for (StringMap<std::vector<const DIE *> >::const_iterator
              GI = Names.begin(),
@@ -2260,10 +2261,10 @@ void DwarfDebug::emitAccelNames() {
 void DwarfDebug::emitAccelObjC() {
   DwarfAccelTable AT(
       DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset, dwarf::DW_FORM_data4));
-  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
-                                                         E = CUMap.end();
+  for (SmallVectorImpl<CompileUnit *>::const_iterator I = getUnits().begin(),
+                                                      E = getUnits().end();
        I != E; ++I) {
-    CompileUnit *TheCU = I->second;
+    CompileUnit *TheCU = *I;
     const StringMap<std::vector<const DIE *> > &Names = TheCU->getAccelObjC();
     for (StringMap<std::vector<const DIE *> >::const_iterator
              GI = Names.begin(),
@@ -2292,10 +2293,10 @@ void DwarfDebug::emitAccelObjC() {
 void DwarfDebug::emitAccelNamespaces() {
   DwarfAccelTable AT(
       DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset, dwarf::DW_FORM_data4));
-  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
-                                                         E = CUMap.end();
+  for (SmallVectorImpl<CompileUnit *>::const_iterator I = getUnits().begin(),
+                                                      E = getUnits().end();
        I != E; ++I) {
-    CompileUnit *TheCU = I->second;
+    CompileUnit *TheCU = *I;
     const StringMap<std::vector<const DIE *> > &Names =
         TheCU->getAccelNamespace();
     for (StringMap<std::vector<const DIE *> >::const_iterator
@@ -2331,10 +2332,10 @@ void DwarfDebug::emitAccelTypes() {
   Atoms.push_back(
       DwarfAccelTable::Atom(dwarf::DW_ATOM_type_flags, dwarf::DW_FORM_data1));
   DwarfAccelTable AT(Atoms);
-  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
-                                                         E = CUMap.end();
+  for (SmallVectorImpl<CompileUnit *>::const_iterator I = getUnits().begin(),
+                                                      E = getUnits().end();
        I != E; ++I) {
-    CompileUnit *TheCU = I->second;
+    CompileUnit *TheCU = *I;
     const StringMap<std::vector<std::pair<const DIE *, unsigned> > > &Names =
         TheCU->getAccelTypes();
     for (StringMap<
@@ -2428,9 +2429,10 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
       GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubNamesSection()
                : Asm->getObjFileLowering().getDwarfPubNamesSection();
 
-  typedef DenseMap<const MDNode *, CompileUnit *> CUMapType;
-  for (CUMapType::iterator I = CUMap.begin(), E = CUMap.end(); I != E; ++I) {
-    CompileUnit *TheCU = I->second;
+  for (SmallVectorImpl<CompileUnit *>::const_iterator I = getUnits().begin(),
+                                                      E = getUnits().end();
+       I != E; ++I) {
+    CompileUnit *TheCU = *I;
     unsigned ID = TheCU->getUniqueID();
 
     // Start the dwarf pubnames section.
@@ -2496,10 +2498,10 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
       GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubTypesSection()
                : Asm->getObjFileLowering().getDwarfPubTypesSection();
 
-  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
-                                                         E = CUMap.end();
+  for (SmallVectorImpl<CompileUnit *>::const_iterator I = getUnits().begin(),
+                                                      E = getUnits().end();
        I != E; ++I) {
-    CompileUnit *TheCU = I->second;
+    CompileUnit *TheCU = *I;
     // Start the dwarf pubtypes section.
     Asm->OutStreamer.SwitchSection(PSec);
 

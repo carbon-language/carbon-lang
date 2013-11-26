@@ -91,11 +91,29 @@
 ; CHECK: DW_TAG_structure_type
 ; CHECK-NEXT: debug_str{{.*}}"wombat"
 
-; Don't emit pubtype entries for type DIEs in the compile unit that just indirect to a type unit.
+; Use the unit size as a rough hash/identifier for the unit we're dealing with
+; it happens to be unambiguous at the moment, but it's hardly ideal.
 ; CHECK-LABEL: .debug_pubtypes contents:
-; CHECK-NEXT: unit_offset = 0x00000000
-; CHECK-NEXT: Offset
-; CHECK-NEXT: {{^$}}
+; Don't emit pubtype entries for type DIEs in the compile unit that just indirect to a type unit.
+; CHECK-NEXT: unit_size = 0x00000174
+; CHECK-NEXT: Offset Name
+; Type unit for 'bar'
+; CHECK-NEXT: unit_size = 0x0000001f
+; CHECK-NEXT: Offset Name
+; CHECK-NEXT: "bar"
+; CHECK-NEXT: unit_size = 0x00000059
+; CHECK-NEXT: Offset Name
+; CHECK-NEXT: "int"
+; CHECK-NEXT: "echidna::capybara::mongoose::fluffy"
+; CHECK-NEXT: unit_size = 0x0000002f
+; CHECK-NEXT: Offset Name
+; CHECK-NEXT: "walrus"
+; CHECK-NEXT: unit_size = 0x0000003f
+; CHECK-NEXT: Offset Name
+; CHECK-NEXT: "int"
+; CHECK-NEXT: unit_size = 0x00000036
+; CHECK-NEXT: Offset Name
+; CHECK-NEXT: "wombat"
 
 %struct.bar = type { i8 }
 %"class.echidna::capybara::mongoose::fluffy" = type { i32, i32 }

@@ -258,6 +258,8 @@ public:
 
   ~DwarfUnits();
 
+  const SmallVectorImpl<CompileUnit *> &getUnits() { return CUs; }
+
   /// \brief Compute the size and offset of a DIE given an incoming Offset.
   unsigned computeSizeAndOffset(DIE *Die, unsigned Offset);
 
@@ -479,9 +481,11 @@ class DwarfDebug {
   // Holder for the skeleton information.
   DwarfUnits SkeletonHolder;
 
-private:
-
   void addScopeVariable(LexicalScope *LS, DbgVariable *Var);
+
+  const SmallVectorImpl<CompileUnit *> &getUnits() {
+    return InfoHolder.getUnits();
+  }
 
   /// \brief Find abstract variable associated with Var.
   DbgVariable *findAbstractVariable(DIVariable &Var, DebugLoc Loc);
