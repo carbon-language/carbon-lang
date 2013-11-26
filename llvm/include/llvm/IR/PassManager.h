@@ -562,8 +562,8 @@ class ModuleAnalysisManager
     : public detail::AnalysisManagerBase<ModuleAnalysisManager, Module *> {
   friend class detail::AnalysisManagerBase<ModuleAnalysisManager, Module *>;
   typedef detail::AnalysisManagerBase<ModuleAnalysisManager, Module *> BaseT;
-  typedef typename BaseT::ResultConceptT ResultConceptT;
-  typedef typename BaseT::PassConceptT PassConceptT;
+  typedef BaseT::ResultConceptT ResultConceptT;
+  typedef BaseT::PassConceptT PassConceptT;
 
 public:
   // Public methods provided by the base class.
@@ -596,8 +596,8 @@ class FunctionAnalysisManager
     : public detail::AnalysisManagerBase<FunctionAnalysisManager, Function *> {
   friend class detail::AnalysisManagerBase<FunctionAnalysisManager, Function *>;
   typedef detail::AnalysisManagerBase<FunctionAnalysisManager, Function *> BaseT;
-  typedef typename BaseT::ResultConceptT ResultConceptT;
-  typedef typename BaseT::PassConceptT PassConceptT;
+  typedef BaseT::ResultConceptT ResultConceptT;
+  typedef BaseT::PassConceptT PassConceptT;
 
 public:
   // Most public APIs are inherited from the CRTP base class.
