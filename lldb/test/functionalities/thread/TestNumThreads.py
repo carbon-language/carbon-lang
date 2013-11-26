@@ -19,7 +19,7 @@ class NumberOfThreadsTestCase(TestBase):
         self.buildDsym()
         self.number_of_threads_test()
 
-    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
+    @expectedFailureFreeBSD("llvm.org/pr18061") # test relies on undefined behaviour
     @dwarf_test
     def test_with_dwarf(self):
         """Test number of threads."""
