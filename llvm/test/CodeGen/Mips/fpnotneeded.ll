@@ -1,4 +1,6 @@
-; RUN: llc  -march=mipsel -mcpu=mips32 -relocation-model=static -O3 < %s -mips-os16  | FileCheck %s -check-prefix=32
+; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips32 -relocation-model=static -O3 < %s -mips-os16  | FileCheck %s -check-prefix=32
+
+; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips32 -relocation-model=static -O3 -mips16-constant-islands < %s -mips-os16  | FileCheck %s -check-prefix=cisle
 
 @i = global i32 1, align 4
 @f = global float 1.000000e+00, align 4
@@ -56,6 +58,8 @@ entry:
 ; 32:	save	{{.+}}
 ; 32:	restore	{{.+}} 
 ; 32:	.end	foo
+
+; cisle:	.end	foo
 
 attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
 
