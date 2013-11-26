@@ -76,7 +76,6 @@ protected:
   /// Driver, and has logic for fuzzing that where appropriate.
   class GCCInstallationDetector {
     bool IsValid;
-    const Driver &D;
     llvm::Triple GCCTriple;
 
     // FIXME: These might be better as path objects.
