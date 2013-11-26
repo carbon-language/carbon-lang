@@ -53,6 +53,7 @@
 #define LLVM_ANALYSIS_CALLGRAPH_H
 
 #include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Pass.h"
@@ -67,15 +68,13 @@ class Function;
 class Module;
 class CallGraphNode;
 
-/// \brief The basic data container for the call graph and the \c ModulePass
-/// which produces it.
+/// \brief The basic data container for the call graph of a \c Module of IR.
 ///
-/// This class exposes both the interface to the call graph container and the
-/// module pass which runs over a module of IR and produces the call graph.
+/// This class exposes both the interface to the call graph for a module of IR.
 ///
 /// The core call graph itself can also be updated to reflect changes to the IR.
-class CallGraph : public ModulePass {
-  Module *M;
+class CallGraph {
+  Module &M;
 
   typedef std::map<const Function *, CallGraphNode *> FunctionMapTy;
 
@@ -106,13 +105,17 @@ class CallGraph : public ModulePass {
   void addToCallGraph(Function *F);
 
 public:
-  static char ID; // Class identification, replacement for typeinfo
+  CallGraph(Module &M);
+  ~CallGraph();
+
+  void print(raw_ostream &OS) const;
+  void dump() const;
 
   typedef FunctionMapTy::iterator iterator;
   typedef FunctionMapTy::const_iterator const_iterator;
 
   /// \brief Returns the module the call graph corresponds to.
-  Module &getModule() const { return *M; }
+  Module &getModule() const { return M; }
 
   inline iterator begin() { return FunctionMap.begin(); }
   inline iterator end() { return FunctionMap.end(); }
@@ -160,20 +163,6 @@ public:
   /// \brief Similar to operator[], but this will insert a new CallGraphNode for
   /// \c F if one does not already exist.
   CallGraphNode *getOrInsertFunction(const Function *F);
-
-  CallGraph();
-  virtual ~CallGraph() { releaseMemory(); }
-
-  //===---------------------------------------------------------------------
-  // Implementation of the ModulePass interface needed here.
-  //
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-  virtual bool runOnModule(Module &M);
-  virtual void releaseMemory();
-
-  void print(raw_ostream &o, const Module *) const;
-  void dump() const;
 };
 
 /// \brief A node in the call graph for a module.
@@ -301,6 +290,94 @@ public:
   //
   // FIXME: Make this private?
   void allReferencesDropped() { NumReferences = 0; }
+};
+
+/// \brief The \c ModulePass which wraps up a \c CallGraph and the logic to
+/// build it.
+///
+/// This class exposes both the interface to the call graph container and the
+/// module pass which runs over a module of IR and produces the call graph. The
+/// call graph interface is entirelly a wrapper around a \c CallGraph object
+/// which is stored internally for each module.
+class CallGraphWrapperPass : public ModulePass {
+  OwningPtr<CallGraph> G;
+
+public:
+  static char ID; // Class identification, replacement for typeinfo
+
+  CallGraphWrapperPass();
+  virtual ~CallGraphWrapperPass();
+
+  /// \brief The internal \c CallGraph around which the rest of this interface
+  /// is wrapped.
+  const CallGraph &getCallGraph() const { return *G; }
+  CallGraph &getCallGraph() { return *G; }
+
+  typedef CallGraph::iterator iterator;
+  typedef CallGraph::const_iterator const_iterator;
+
+  /// \brief Returns the module the call graph corresponds to.
+  Module &getModule() const { return G->getModule(); }
+
+  inline iterator begin() { return G->begin(); }
+  inline iterator end() { return G->end(); }
+  inline const_iterator begin() const { return G->begin(); }
+  inline const_iterator end() const { return G->end(); }
+
+  /// \brief Returns the call graph node for the provided function.
+  inline const CallGraphNode *operator[](const Function *F) const {
+    return (*G)[F];
+  }
+
+  /// \brief Returns the call graph node for the provided function.
+  inline CallGraphNode *operator[](const Function *F) { return (*G)[F]; }
+
+  /// \brief Returns the \c CallGraphNode which is used to represent
+  /// undetermined calls into the callgraph.
+  CallGraphNode *getExternalCallingNode() const {
+    return G->getExternalCallingNode();
+  }
+
+  CallGraphNode *getCallsExternalNode() const {
+    return G->getCallsExternalNode();
+  }
+
+  /// \brief Returns the root/main method in the module, or some other root
+  /// node, such as the externalcallingnode.
+  CallGraphNode *getRoot() { return G->getRoot(); }
+  const CallGraphNode *getRoot() const { return G->getRoot(); }
+
+  //===---------------------------------------------------------------------
+  // Functions to keep a call graph up to date with a function that has been
+  // modified.
+  //
+
+  /// \brief Unlink the function from this module, returning it.
+  ///
+  /// Because this removes the function from the module, the call graph node is
+  /// destroyed.  This is only valid if the function does not call any other
+  /// functions (ie, there are no edges in it's CGN).  The easiest way to do
+  /// this is to dropAllReferences before calling this.
+  Function *removeFunctionFromModule(CallGraphNode *CGN) {
+    return G->removeFunctionFromModule(CGN);
+  }
+
+  /// \brief Similar to operator[], but this will insert a new CallGraphNode for
+  /// \c F if one does not already exist.
+  CallGraphNode *getOrInsertFunction(const Function *F) {
+    return G->getOrInsertFunction(F);
+  }
+
+  //===---------------------------------------------------------------------
+  // Implementation of the ModulePass interface needed here.
+  //
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  virtual bool runOnModule(Module &M);
+  virtual void releaseMemory();
+
+  void print(raw_ostream &o, const Module *) const;
+  void dump() const;
 };
 
 //===----------------------------------------------------------------------===//

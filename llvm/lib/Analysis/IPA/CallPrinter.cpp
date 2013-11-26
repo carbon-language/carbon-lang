@@ -35,24 +35,38 @@ template <> struct DOTGraphTraits<CallGraph *> : public DefaultDOTGraphTraits {
   }
 };
 
+struct AnalysisCallGraphWrapperPassTraits {
+  static CallGraph *getGraph(CallGraphWrapperPass *P) {
+    return &P->getCallGraph();
+  }
+};
+
 } // end llvm namespace
 
 namespace {
 
-struct CallGraphViewer : public DOTGraphTraitsModuleViewer<CallGraph, true> {
+struct CallGraphViewer
+    : public DOTGraphTraitsModuleViewer<CallGraphWrapperPass, true, CallGraph *,
+                                        AnalysisCallGraphWrapperPassTraits> {
   static char ID;
 
   CallGraphViewer()
-      : DOTGraphTraitsModuleViewer<CallGraph, true>("callgraph", ID) {
+      : DOTGraphTraitsModuleViewer<CallGraphWrapperPass, true, CallGraph *,
+                                   AnalysisCallGraphWrapperPassTraits>(
+            "callgraph", ID) {
     initializeCallGraphViewerPass(*PassRegistry::getPassRegistry());
   }
 };
 
-struct CallGraphPrinter : public DOTGraphTraitsModulePrinter<CallGraph, true> {
+struct CallGraphPrinter : public DOTGraphTraitsModulePrinter<
+                              CallGraphWrapperPass, true, CallGraph *,
+                              AnalysisCallGraphWrapperPassTraits> {
   static char ID;
 
   CallGraphPrinter()
-      : DOTGraphTraitsModulePrinter<CallGraph, true>("callgraph", ID) {
+      : DOTGraphTraitsModulePrinter<CallGraphWrapperPass, true, CallGraph *,
+                                    AnalysisCallGraphWrapperPassTraits>(
+            "callgraph", ID) {
     initializeCallGraphPrinterPass(*PassRegistry::getPassRegistry());
   }
 };

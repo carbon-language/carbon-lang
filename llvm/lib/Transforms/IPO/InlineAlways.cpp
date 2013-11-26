@@ -63,7 +63,7 @@ public:
 char AlwaysInliner::ID = 0;
 INITIALIZE_PASS_BEGIN(AlwaysInliner, "always-inline",
                 "Inliner for always_inline functions", false, false)
-INITIALIZE_PASS_DEPENDENCY(CallGraph)
+INITIALIZE_PASS_DEPENDENCY(CallGraphWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(InlineCostAnalysis)
 INITIALIZE_PASS_END(AlwaysInliner, "always-inline",
                 "Inliner for always_inline functions", false, false)

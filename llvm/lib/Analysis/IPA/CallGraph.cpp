@@ -16,9 +16,37 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-CallGraph::CallGraph()
-    : ModulePass(ID), Root(0), ExternalCallingNode(0), CallsExternalNode(0) {
-  initializeCallGraphPass(*PassRegistry::getPassRegistry());
+//===----------------------------------------------------------------------===//
+// Implementations of the CallGraph class methods.
+//
+
+CallGraph::CallGraph(Module &M)
+    : M(M), Root(0), ExternalCallingNode(getOrInsertFunction(0)),
+      CallsExternalNode(new CallGraphNode(0)) {
+  // Add every function to the call graph.
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    addToCallGraph(I);
+
+  // If we didn't find a main function, use the external call graph node
+  if (Root == 0)
+    Root = ExternalCallingNode;
+}
+
+CallGraph::~CallGraph() {
+  // CallsExternalNode is not in the function map, delete it explicitly.
+  CallsExternalNode->allReferencesDropped();
+  delete CallsExternalNode;
+
+// Reset all node's use counts to zero before deleting them to prevent an
+// assertion from firing.
+#ifndef NDEBUG
+  for (FunctionMapTy::iterator I = FunctionMap.begin(), E = FunctionMap.end();
+       I != E; ++I)
+    I->second->allReferencesDropped();
+#endif
+  for (FunctionMapTy::iterator I = FunctionMap.begin(), E = FunctionMap.end();
+       I != E; ++I)
+    delete I->second;
 }
 
 void CallGraph::addToCallGraph(Function *F) {
@@ -62,59 +90,7 @@ void CallGraph::addToCallGraph(Function *F) {
     }
 }
 
-void CallGraph::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesAll();
-}
-
-bool CallGraph::runOnModule(Module &M) {
-  this->M = &M;
-
-  ExternalCallingNode = getOrInsertFunction(0);
-  assert(!CallsExternalNode);
-  CallsExternalNode = new CallGraphNode(0);
-  Root = 0;
-
-  // Add every function to the call graph.
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    addToCallGraph(I);
-
-  // If we didn't find a main function, use the external call graph node
-  if (Root == 0)
-    Root = ExternalCallingNode;
-
-  return false;
-}
-
-INITIALIZE_PASS(CallGraph, "basiccg", "CallGraph Construction", false, true)
-
-char CallGraph::ID = 0;
-
-void CallGraph::releaseMemory() {
-  /// CallsExternalNode is not in the function map, delete it explicitly.
-  if (CallsExternalNode) {
-    CallsExternalNode->allReferencesDropped();
-    delete CallsExternalNode;
-    CallsExternalNode = 0;
-  }
-
-  if (FunctionMap.empty())
-    return;
-
-// Reset all node's use counts to zero before deleting them to prevent an
-// assertion from firing.
-#ifndef NDEBUG
-  for (FunctionMapTy::iterator I = FunctionMap.begin(), E = FunctionMap.end();
-       I != E; ++I)
-    I->second->allReferencesDropped();
-#endif
-  
-  for (FunctionMapTy::iterator I = FunctionMap.begin(), E = FunctionMap.end();
-      I != E; ++I)
-    delete I->second;
-  FunctionMap.clear();
-}
-
-void CallGraph::print(raw_ostream &OS, const Module*) const {
+void CallGraph::print(raw_ostream &OS) const {
   OS << "CallGraph Root is: ";
   if (Function *F = Root->getFunction())
     OS << F->getName() << "\n";
@@ -125,15 +101,10 @@ void CallGraph::print(raw_ostream &OS, const Module*) const {
   for (CallGraph::const_iterator I = begin(), E = end(); I != E; ++I)
     I->second->print(OS);
 }
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-void CallGraph::dump() const {
-  print(dbgs(), 0);
-}
-#endif
 
-//===----------------------------------------------------------------------===//
-// Implementations of public modification methods
-//
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+void CallGraph::dump() const { print(dbgs()); }
+#endif
 
 // removeFunctionFromModule - Unlink the function from this module, returning
 // it.  Because this removes the function from the module, the call graph node
@@ -148,7 +119,7 @@ Function *CallGraph::removeFunctionFromModule(CallGraphNode *CGN) {
   delete CGN;                       // Delete the call graph node for this func
   FunctionMap.erase(F);             // Remove the call graph node from the map
 
-  M->getFunctionList().remove(F);
+  M.getFunctionList().remove(F);
   return F;
 }
 
@@ -172,11 +143,16 @@ void CallGraph::spliceFunction(const Function *From, const Function *To) {
 // not already exist.
 CallGraphNode *CallGraph::getOrInsertFunction(const Function *F) {
   CallGraphNode *&CGN = FunctionMap[F];
-  if (CGN) return CGN;
-  
-  assert((!F || F->getParent() == M) && "Function not in current module!");
+  if (CGN)
+    return CGN;
+
+  assert((!F || F->getParent() == &M) && "Function not in current module!");
   return CGN = new CallGraphNode(const_cast<Function*>(F));
 }
+
+//===----------------------------------------------------------------------===//
+// Implementations of the CallGraphNode class methods.
+//
 
 void CallGraphNode::print(raw_ostream &OS) const {
   if (Function *F = getFunction())
@@ -259,6 +235,47 @@ void CallGraphNode::replaceCallEdge(CallSite CS,
     }
   }
 }
+
+//===----------------------------------------------------------------------===//
+// Implementations of the CallGraphWrapperPass class methods.
+//
+
+CallGraphWrapperPass::CallGraphWrapperPass() : ModulePass(ID) {
+  initializeCallGraphWrapperPassPass(*PassRegistry::getPassRegistry());
+}
+
+CallGraphWrapperPass::~CallGraphWrapperPass() {}
+
+void CallGraphWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
+}
+
+bool CallGraphWrapperPass::runOnModule(Module &M) {
+  // All the real work is done in the constructor for the CallGraph.
+  G.reset(new CallGraph(M));
+  return false;
+}
+
+INITIALIZE_PASS(CallGraphWrapperPass, "basiccg", "CallGraph Construction",
+                false, true)
+
+char CallGraphWrapperPass::ID = 0;
+
+void CallGraphWrapperPass::releaseMemory() { G.reset(0); }
+
+void CallGraphWrapperPass::print(raw_ostream &OS, const Module *) const {
+  if (!G) {
+    OS << "No call graph has been built!\n";
+    return;
+  }
+
+  // Just delegate.
+  G->print(OS);
+}
+
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+void CallGraphWrapperPass::dump() const { print(dbgs(), 0); }
+#endif
 
 // Enuse that users of CallGraph.h also link with this file
 DEFINING_FILE_FOR(CallGraph)

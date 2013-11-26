@@ -73,7 +73,7 @@ void initializeArgPromotionPass(PassRegistry&);
 void initializeSampleProfileLoaderPass(PassRegistry&);
 void initializeBarrierNoopPass(PassRegistry&);
 void initializeBasicAliasAnalysisPass(PassRegistry&);
-void initializeCallGraphPass(PassRegistry&);
+void initializeCallGraphWrapperPassPass(PassRegistry &);
 void initializeBasicTTIPass(PassRegistry&);
 void initializeBlockExtractorPassPass(PassRegistry&);
 void initializeBlockFrequencyInfoPass(PassRegistry&);

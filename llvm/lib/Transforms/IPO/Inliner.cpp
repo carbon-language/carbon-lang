@@ -395,7 +395,7 @@ static bool InlineHistoryIncludes(Function *F, int InlineHistoryID,
 }
 
 bool Inliner::runOnSCC(CallGraphSCC &SCC) {
-  CallGraph &CG = getAnalysis<CallGraph>();
+  CallGraph &CG = getAnalysis<CallGraphWrapperPass>().getCallGraph();
   const DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
   const TargetLibraryInfo *TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
 

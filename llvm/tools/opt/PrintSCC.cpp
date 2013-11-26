@@ -58,7 +58,7 @@ namespace {
     // getAnalysisUsage - This pass requires the CallGraph.
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
-      AU.addRequired<CallGraph>();
+      AU.addRequired<CallGraphWrapperPass>();
     }
   };
 }
@@ -92,7 +92,7 @@ bool CFGSCC::runOnFunction(Function &F) {
 
 // run - Print out SCCs in the call graph for the specified module.
 bool CallGraphSCC::runOnModule(Module &M) {
-  CallGraphNode* rootNode = getAnalysis<CallGraph>().getRoot();
+  CallGraphNode *rootNode = getAnalysis<CallGraphWrapperPass>().getRoot();
   unsigned sccNum = 0;
   errs() << "SCCs for the program in PostOrder:";
   for (scc_iterator<CallGraphNode*> SCCI = scc_begin(rootNode),

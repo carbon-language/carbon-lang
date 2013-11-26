@@ -80,10 +80,10 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
-      AU.addRequiredTransitive<CallGraph>();
+      AU.addRequiredTransitive<CallGraphWrapperPass>();
     }
     virtual bool runOnModule(Module &M) {
-      getAnalysis<CallGraph>().print(errs(), &M);
+      getAnalysis<CallGraphWrapperPass>().print(errs(), &M);
       return false;
     }
   };

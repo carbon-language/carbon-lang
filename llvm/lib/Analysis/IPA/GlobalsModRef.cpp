@@ -95,15 +95,19 @@ namespace {
     }
 
     bool runOnModule(Module &M) {
-      InitializeAliasAnalysis(this);                 // set up super class
-      AnalyzeGlobals(M);                          // find non-addr taken globals
-      AnalyzeCallGraph(getAnalysis<CallGraph>(), M); // Propagate on CG
+      InitializeAliasAnalysis(this);
+
+      // Find non-addr taken globals.
+      AnalyzeGlobals(M);
+
+      // Propagate on CG.
+      AnalyzeCallGraph(getAnalysis<CallGraphWrapperPass>().getCallGraph(), M);
       return false;
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AliasAnalysis::getAnalysisUsage(AU);
-      AU.addRequired<CallGraph>();
+      AU.addRequired<CallGraphWrapperPass>();
       AU.setPreservesAll();                         // Does not transform code
     }
 
@@ -189,7 +193,7 @@ char GlobalsModRef::ID = 0;
 INITIALIZE_AG_PASS_BEGIN(GlobalsModRef, AliasAnalysis,
                 "globalsmodref-aa", "Simple mod/ref analysis for globals",    
                 false, true, false)
-INITIALIZE_PASS_DEPENDENCY(CallGraph)
+INITIALIZE_PASS_DEPENDENCY(CallGraphWrapperPass)
 INITIALIZE_AG_PASS_END(GlobalsModRef, AliasAnalysis,
                 "globalsmodref-aa", "Simple mod/ref analysis for globals",    
                 false, true, false)

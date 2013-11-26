@@ -550,7 +550,7 @@ namespace llvm {
 
 INITIALIZE_PASS(ModuleNDM, "mndm", "mndm", false, false)
 INITIALIZE_PASS_BEGIN(CGPass, "cgp","cgp", false, false)
-INITIALIZE_PASS_DEPENDENCY(CallGraph)
+INITIALIZE_PASS_DEPENDENCY(CallGraphWrapperPass)
 INITIALIZE_PASS_END(CGPass, "cgp","cgp", false, false)
 INITIALIZE_PASS(FPass, "fp","fp", false, false)
 INITIALIZE_PASS_BEGIN(LPass, "lp","lp", false, false)

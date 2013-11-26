@@ -88,7 +88,7 @@ char ArgPromotion::ID = 0;
 INITIALIZE_PASS_BEGIN(ArgPromotion, "argpromotion",
                 "Promote 'by reference' arguments to scalars", false, false)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
-INITIALIZE_PASS_DEPENDENCY(CallGraph)
+INITIALIZE_PASS_DEPENDENCY(CallGraphWrapperPass)
 INITIALIZE_PASS_END(ArgPromotion, "argpromotion",
                 "Promote 'by reference' arguments to scalars", false, false)
 
@@ -621,8 +621,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
 
   // Get the callgraph information that we need to update to reflect our
   // changes.
-  CallGraph &CG = getAnalysis<CallGraph>();
-  
+  CallGraph &CG = getAnalysis<CallGraphWrapperPass>().getCallGraph();
+
   // Get a new callgraph node for NF.
   CallGraphNode *NF_CGN = CG.getOrInsertFunction(NF);
 
