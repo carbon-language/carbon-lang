@@ -439,23 +439,43 @@ private:
   std::vector<polymorphic_ptr<FunctionPassConcept> > Passes;
 };
 
-/// \brief A module analysis pass manager with lazy running and caching of
-/// results.
-class ModuleAnalysisManager {
-public:
-  ModuleAnalysisManager() {}
+namespace detail {
 
+/// \brief A CRTP base used to implement analysis managers.
+///
+/// This class template serves as the boiler plate of an analysis manager. Any
+/// analysis manager can be implemented on top of this base class. Any
+/// implementation will be required to provide specific hooks:
+///
+/// - getResultImpl
+/// - getCachedResultImpl
+/// - invalidateImpl
+///
+/// The details of the call pattern are within.
+template <typename DerivedT, typename IRUnitT>
+class AnalysisManagerBase {
+  DerivedT *derived_this() { return static_cast<DerivedT *>(this); }
+  const DerivedT *derived_this() const { return static_cast<const DerivedT *>(this); }
+
+protected:
+  typedef detail::AnalysisResultConcept<IRUnitT> ResultConceptT;
+  typedef detail::AnalysisPassConcept<IRUnitT, DerivedT> PassConceptT;
+
+  // FIXME: Provide template aliases for the models when we're using C++11 in
+  // a mode supporting them.
+
+public:
   /// \brief Get the result of an analysis pass for this module.
   ///
   /// If there is not a valid cached result in the manager already, this will
   /// re-run the analysis to produce a valid result.
-  template <typename PassT> const typename PassT::Result &getResult(Module *M) {
-    assert(ModuleAnalysisPasses.count(PassT::ID()) &&
+  template <typename PassT> const typename PassT::Result &getResult(IRUnitT IR) {
+    assert(AnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being queried");
 
-    const detail::AnalysisResultConcept<Module *> &ResultConcept =
-        getResultImpl(PassT::ID(), M);
-    typedef detail::AnalysisResultModel<Module *, PassT, typename PassT::Result>
+    const ResultConceptT &ResultConcept =
+        derived_this()->getResultImpl(PassT::ID(), IR);
+    typedef detail::AnalysisResultModel<IRUnitT, PassT, typename PassT::Result>
         ResultModelT;
     return static_cast<const ResultModelT &>(ResultConcept).Result;
   }
@@ -466,69 +486,100 @@ public:
   ///
   /// \returns null if there is no cached result.
   template <typename PassT>
-  const typename PassT::Result *getCachedResult(Module *M) const {
-    assert(ModuleAnalysisPasses.count(PassT::ID()) &&
+  const typename PassT::Result *getCachedResult(IRUnitT IR) const {
+    assert(AnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being queried");
 
-    const detail::AnalysisResultConcept<Module *> *ResultConcept =
-        getCachedResultImpl(PassT::ID(), M);
+    const ResultConceptT *ResultConcept =
+        derived_this()->getCachedResultImpl(PassT::ID(), IR);
     if (!ResultConcept)
       return 0;
 
-    typedef detail::AnalysisResultModel<Module *, PassT, typename PassT::Result>
+    typedef detail::AnalysisResultModel<IRUnitT, PassT, typename PassT::Result>
         ResultModelT;
     return &static_cast<const ResultModelT *>(ResultConcept)->Result;
   }
 
   /// \brief Register an analysis pass with the manager.
   ///
-  /// This provides an initialized and set-up analysis pass to the
-  /// analysis
-  /// manager. Whomever is setting up analysis passes must use this to
-  /// populate
+  /// This provides an initialized and set-up analysis pass to the analysis
+  /// manager. Whomever is setting up analysis passes must use this to populate
   /// the manager with all of the analysis passes available.
   template <typename PassT> void registerPass(PassT Pass) {
-    assert(!ModuleAnalysisPasses.count(PassT::ID()) &&
+    assert(!AnalysisPasses.count(PassT::ID()) &&
            "Registered the same analysis pass twice!");
-    ModuleAnalysisPasses[PassT::ID()] =
-        new detail::AnalysisPassModel<Module *, ModuleAnalysisManager, PassT>(
-            llvm_move(Pass));
+    typedef detail::AnalysisPassModel<IRUnitT, DerivedT, PassT> PassModelT;
+    AnalysisPasses[PassT::ID()] = new PassModelT(llvm_move(Pass));
   }
 
   /// \brief Invalidate a specific analysis pass for an IR module.
   ///
   /// Note that the analysis result can disregard invalidation.
   template <typename PassT> void invalidate(Module *M) {
-    assert(ModuleAnalysisPasses.count(PassT::ID()) &&
+    assert(AnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being invalidated");
-    invalidateImpl(PassT::ID(), M);
+    derived_this()->invalidateImpl(PassT::ID(), M);
   }
 
-  /// \brief Invalidate analyses cached for an IR Module.
+  /// \brief Invalidate analyses cached for an IR unit.
   ///
   /// Walk through all of the analyses pertaining to this module and invalidate
   /// them unless they are preserved by the PreservedAnalyses set.
-  void invalidate(Module *M, const PreservedAnalyses &PA);
+  void invalidate(IRUnitT IR, const PreservedAnalyses &PA) {
+    derived_this()->invalidateImpl(IR, PA);
+  }
+
+protected:
+  /// \brief Lookup a registered analysis pass.
+  PassConceptT &lookupPass(void *PassID) {
+    typename AnalysisPassMapT::iterator PI = AnalysisPasses.find(PassID);
+    assert(PI != AnalysisPasses.end() &&
+           "Analysis passes must be registered prior to being queried!");
+    return *PI->second;
+  }
+
+  /// \brief Lookup a registered analysis pass.
+  const PassConceptT &lookupPass(void *PassID) const {
+    typename AnalysisPassMapT::const_iterator PI = AnalysisPasses.find(PassID);
+    assert(PI != AnalysisPasses.end() &&
+           "Analysis passes must be registered prior to being queried!");
+    return *PI->second;
+  }
+
+private:
+  /// \brief Map type from module analysis pass ID to pass concept pointer.
+  typedef DenseMap<void *, polymorphic_ptr<PassConceptT> > AnalysisPassMapT;
+
+  /// \brief Collection of module analysis passes, indexed by ID.
+  AnalysisPassMapT AnalysisPasses;
+};
+
+}
+
+/// \brief A module analysis pass manager with lazy running and caching of
+/// results.
+class ModuleAnalysisManager
+    : public detail::AnalysisManagerBase<ModuleAnalysisManager, Module *> {
+  friend class detail::AnalysisManagerBase<ModuleAnalysisManager, Module *>;
+  typedef detail::AnalysisManagerBase<ModuleAnalysisManager, Module *> BaseT;
+  typedef typename BaseT::ResultConceptT ResultConceptT;
+  typedef typename BaseT::PassConceptT PassConceptT;
+
+public:
+  // Public methods provided by the base class.
 
 private:
   /// \brief Get a module pass result, running the pass if necessary.
-  const detail::AnalysisResultConcept<Module *> &getResultImpl(void *PassID,
-                                                               Module *M);
+  const ResultConceptT &getResultImpl(void *PassID, Module *M);
 
   /// \brief Get a cached module pass result or return null.
-  const detail::AnalysisResultConcept<Module *> *
-  getCachedResultImpl(void *PassID, Module *M) const;
+  const ResultConceptT *getCachedResultImpl(void *PassID, Module *M) const;
 
   /// \brief Invalidate a module pass result.
   void invalidateImpl(void *PassID, Module *M);
 
-  /// \brief Map type from module analysis pass ID to pass concept pointer.
-  typedef DenseMap<void *, polymorphic_ptr<detail::AnalysisPassConcept<
-                               Module *, ModuleAnalysisManager> > >
-      ModuleAnalysisPassMapT;
-
-  /// \brief Collection of module analysis passes, indexed by ID.
-  ModuleAnalysisPassMapT ModuleAnalysisPasses;
+  /// \brief Invalidate results across a module.
+  void invalidateImpl(Module *M, const PreservedAnalyses &PA);
 
   /// \brief Map type from module analysis pass ID to pass result concept pointer.
   typedef DenseMap<void *,
@@ -541,75 +592,15 @@ private:
 
 /// \brief A function analysis manager to coordinate and cache analyses run over
 /// a module.
-class FunctionAnalysisManager {
+class FunctionAnalysisManager
+    : public detail::AnalysisManagerBase<FunctionAnalysisManager, Function *> {
+  friend class detail::AnalysisManagerBase<FunctionAnalysisManager, Function *>;
+  typedef detail::AnalysisManagerBase<FunctionAnalysisManager, Function *> BaseT;
+  typedef typename BaseT::ResultConceptT ResultConceptT;
+  typedef typename BaseT::PassConceptT PassConceptT;
+
 public:
-  FunctionAnalysisManager() {}
-
-  /// \brief Get the result of an analysis pass for a function.
-  ///
-  /// If there is not a valid cached result in the manager already, this will
-  /// re-run the analysis to produce a valid result.
-  template <typename PassT>
-  const typename PassT::Result &getResult(Function *F) {
-    assert(FunctionAnalysisPasses.count(PassT::ID()) &&
-           "This analysis pass was not registered prior to being queried");
-
-    const detail::AnalysisResultConcept<Function *> &ResultConcept =
-        getResultImpl(PassT::ID(), F);
-    typedef detail::AnalysisResultModel<Function *, PassT,
-                                        typename PassT::Result> ResultModelT;
-    return static_cast<const ResultModelT &>(ResultConcept).Result;
-  }
-
-  /// \brief Get the cached result of an analysis pass for a function if
-  /// available.
-  ///
-  /// Does not run the analysis ever.
-  /// \returns null if a cached result is not available.
-  template <typename PassT>
-  const typename PassT::Result *getCachedResult(Function *F) {
-    assert(FunctionAnalysisPasses.count(PassT::ID()) &&
-           "This analysis pass was not registered prior to being queried");
-
-    const detail::AnalysisResultConcept<Function *> *ResultConcept =
-        getCachedResultImpl(PassT::ID(), F);
-    if (!ResultConcept)
-      return 0;
-
-    typedef detail::AnalysisResultModel<Function *, PassT,
-                                        typename PassT::Result> ResultModelT;
-    return &static_cast<const ResultModelT *>(ResultConcept)->Result;
-  }
-
-  /// \brief Register an analysis pass with the manager.
-  ///
-  /// This provides an initialized and set-up analysis pass to the
-  /// analysis
-  /// manager. Whomever is setting up analysis passes must use this to
-  /// populate
-  /// the manager with all of the analysis passes available.
-  template <typename PassT> void registerPass(PassT Pass) {
-    assert(!FunctionAnalysisPasses.count(PassT::ID()) &&
-           "Registered the same analysis pass twice!");
-    FunctionAnalysisPasses[PassT::ID()] = new detail::AnalysisPassModel<
-        Function *, FunctionAnalysisManager, PassT>(llvm_move(Pass));
-  }
-
-  /// \brief Invalidate a specific analysis pass for an IR module.
-  ///
-  /// Note that the analysis result can disregard invalidation.
-  template <typename PassT> void invalidate(Function *F) {
-    assert(FunctionAnalysisPasses.count(PassT::ID()) &&
-           "This analysis pass was not registered prior to being invalidated");
-    invalidateImpl(PassT::ID(), F);
-  }
-
-  /// \brief Invalidate analyses cached for an IR Function.
-  ///
-  /// Walk through all of the analyses cache for this IR function and
-  /// invalidate them unless they are preserved by the provided
-  /// PreservedAnalyses set.
-  void invalidate(Function *F, const PreservedAnalyses &PA);
+  // Most public APIs are inherited from the CRTP base class.
 
   /// \brief Returns true if the analysis manager has an empty results cache.
   bool empty() const;
@@ -624,23 +615,16 @@ public:
 
 private:
   /// \brief Get a function pass result, running the pass if necessary.
-  const detail::AnalysisResultConcept<Function *> &getResultImpl(void *PassID,
-                                                                 Function *F);
+  const ResultConceptT &getResultImpl(void *PassID, Function *F);
 
   /// \brief Get a cached function pass result or return null.
-  const detail::AnalysisResultConcept<Function *> *
-  getCachedResultImpl(void *PassID, Function *F) const;
+  const ResultConceptT *getCachedResultImpl(void *PassID, Function *F) const;
 
   /// \brief Invalidate a function pass result.
   void invalidateImpl(void *PassID, Function *F);
 
-  /// \brief Map type from function analysis pass ID to pass concept pointer.
-  typedef DenseMap<void *, polymorphic_ptr<detail::AnalysisPassConcept<
-                               Function *, FunctionAnalysisManager> > >
-      FunctionAnalysisPassMapT;
-
-  /// \brief Collection of function analysis passes, indexed by ID.
-  FunctionAnalysisPassMapT FunctionAnalysisPasses;
+  /// \brief Invalidate the results for a function..
+  void invalidateImpl(Function *F, const PreservedAnalyses &PA);
 
   /// \brief List of function analysis pass IDs and associated concept pointers.
   ///
