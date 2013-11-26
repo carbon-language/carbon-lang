@@ -113,10 +113,10 @@ public:
   /// \brief Returns the module the call graph corresponds to.
   Module &getModule() const { return *M; }
 
-  inline       iterator begin()       { return FunctionMap.begin(); }
-  inline       iterator end()         { return FunctionMap.end();   }
+  inline iterator begin() { return FunctionMap.begin(); }
+  inline iterator end() { return FunctionMap.end(); }
   inline const_iterator begin() const { return FunctionMap.begin(); }
-  inline const_iterator end()   const { return FunctionMap.end();   }
+  inline const_iterator end() const { return FunctionMap.end(); }
 
   /// \brief Returns the call graph node for the provided function.
   inline const CallGraphNode *operator[](const Function *F) const {
@@ -187,7 +187,7 @@ class CallGraphNode {
 public:
   /// \brief A pair of the calling instruction (a call or invoke)
   /// and the call graph node being called.
-  typedef std::pair<WeakVH, CallGraphNode*> CallRecord;
+  typedef std::pair<WeakVH, CallGraphNode *> CallRecord;
 
 private:
   std::vector<CallRecord> CalledFunctions;
@@ -219,9 +219,9 @@ public:
   Function *getFunction() const { return F; }
 
   inline iterator begin() { return CalledFunctions.begin(); }
-  inline iterator end()   { return CalledFunctions.end();   }
+  inline iterator end() { return CalledFunctions.end(); }
   inline const_iterator begin() const { return CalledFunctions.begin(); }
-  inline const_iterator end()   const { return CalledFunctions.end();   }
+  inline const_iterator end() const { return CalledFunctions.end(); }
   inline bool empty() const { return CalledFunctions.empty(); }
   inline unsigned size() const { return (unsigned)CalledFunctions.size(); }
 
@@ -262,8 +262,7 @@ public:
 
   /// \brief Adds a function to the list of functions called by this one.
   void addCalledFunction(CallSite CS, CallGraphNode *M) {
-    assert(!CS.getInstruction() ||
-           !CS.getCalledFunction() ||
+    assert(!CS.getInstruction() || !CS.getCalledFunction() ||
            !CS.getCalledFunction()->isIntrinsic());
     CalledFunctions.push_back(std::make_pair(CS.getInstruction(), M));
     M->AddRef();
@@ -300,9 +299,7 @@ public:
   /// \brief A special function that should only be used by the CallGraph class.
   //
   // FIXME: Make this private?
-  void allReferencesDropped() {
-    NumReferences = 0;
-  }
+  void allReferencesDropped() { NumReferences = 0; }
 };
 
 //===----------------------------------------------------------------------===//
@@ -312,11 +309,12 @@ public:
 
 // Provide graph traits for tranversing call graphs using standard graph
 // traversals.
-template <> struct GraphTraits<CallGraphNode*> {
+template <> struct GraphTraits<CallGraphNode *> {
   typedef CallGraphNode NodeType;
 
   typedef CallGraphNode::CallRecord CGNPairTy;
-  typedef std::pointer_to_unary_function<CGNPairTy, CallGraphNode*> CGNDerefFun;
+  typedef std::pointer_to_unary_function<CGNPairTy, CallGraphNode *>
+  CGNDerefFun;
 
   static NodeType *getEntryNode(CallGraphNode *CGN) { return CGN; }
 
@@ -325,55 +323,54 @@ template <> struct GraphTraits<CallGraphNode*> {
   static inline ChildIteratorType child_begin(NodeType *N) {
     return map_iterator(N->begin(), CGNDerefFun(CGNDeref));
   }
-  static inline ChildIteratorType child_end  (NodeType *N) {
+  static inline ChildIteratorType child_end(NodeType *N) {
     return map_iterator(N->end(), CGNDerefFun(CGNDeref));
   }
 
-  static CallGraphNode *CGNDeref(CGNPairTy P) {
-    return P.second;
-  }
-
+  static CallGraphNode *CGNDeref(CGNPairTy P) { return P.second; }
 };
 
-template <> struct GraphTraits<const CallGraphNode*> {
+template <> struct GraphTraits<const CallGraphNode *> {
   typedef const CallGraphNode NodeType;
   typedef NodeType::const_iterator ChildIteratorType;
 
   static NodeType *getEntryNode(const CallGraphNode *CGN) { return CGN; }
-  static inline ChildIteratorType child_begin(NodeType *N) { return N->begin();}
-  static inline ChildIteratorType child_end  (NodeType *N) { return N->end(); }
+  static inline ChildIteratorType child_begin(NodeType *N) {
+    return N->begin();
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { return N->end(); }
 };
 
-template<> struct GraphTraits<CallGraph*> : public GraphTraits<CallGraphNode*> {
+template <>
+struct GraphTraits<CallGraph *> : public GraphTraits<CallGraphNode *> {
   static NodeType *getEntryNode(CallGraph *CGN) {
-    return CGN->getExternalCallingNode();  // Start at the external node!
+    return CGN->getExternalCallingNode(); // Start at the external node!
   }
-  typedef std::pair<const Function*, CallGraphNode*> PairTy;
-  typedef std::pointer_to_unary_function<PairTy, CallGraphNode&> DerefFun;
+  typedef std::pair<const Function *, CallGraphNode *> PairTy;
+  typedef std::pointer_to_unary_function<PairTy, CallGraphNode &> DerefFun;
 
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
   typedef mapped_iterator<CallGraph::iterator, DerefFun> nodes_iterator;
   static nodes_iterator nodes_begin(CallGraph *CG) {
     return map_iterator(CG->begin(), DerefFun(CGdereference));
   }
-  static nodes_iterator nodes_end  (CallGraph *CG) {
+  static nodes_iterator nodes_end(CallGraph *CG) {
     return map_iterator(CG->end(), DerefFun(CGdereference));
   }
 
-  static CallGraphNode &CGdereference(PairTy P) {
-    return *P.second;
-  }
+  static CallGraphNode &CGdereference(PairTy P) { return *P.second; }
 };
 
-template<> struct GraphTraits<const CallGraph*> :
-  public GraphTraits<const CallGraphNode*> {
+template <>
+struct GraphTraits<const CallGraph *> : public GraphTraits<
+                                            const CallGraphNode *> {
   static NodeType *getEntryNode(const CallGraph *CGN) {
     return CGN->getExternalCallingNode();
   }
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
   typedef CallGraph::const_iterator nodes_iterator;
   static nodes_iterator nodes_begin(const CallGraph *CG) { return CG->begin(); }
-  static nodes_iterator nodes_end  (const CallGraph *CG) { return CG->end(); }
+  static nodes_iterator nodes_end(const CallGraph *CG) { return CG->end(); }
 };
 
 } // End llvm namespace
