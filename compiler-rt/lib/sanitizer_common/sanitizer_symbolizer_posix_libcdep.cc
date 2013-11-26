@@ -205,19 +205,49 @@ static const char *ExtractUptr(const char *str, const char *delims,
 //   <file_name>:<line_number>:<column_number>
 //   ...
 //   <empty line>
+// ExternalSymbolizer may not be used from two threads simultaneously.
 class ExternalSymbolizer {
  public:
-  ExternalSymbolizer(const char *path, int input_fd, int output_fd)
+  explicit ExternalSymbolizer(const char *path)
       : path_(path),
-        input_fd_(input_fd),
-        output_fd_(output_fd),
-        times_restarted_(0) {
+        input_fd_(kInvalidFd),
+        output_fd_(kInvalidFd),
+        times_restarted_(0),
+        failed_to_start_(false) {
     CHECK(path_);
-    CHECK_NE(input_fd_, kInvalidFd);
-    CHECK_NE(output_fd_, kInvalidFd);
+    CHECK_NE(path[0], '\0');
   }
 
   char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
+    for (; times_restarted_ < kMaxTimesRestarted; times_restarted_++) {
+      // Start or restart symbolizer if we failed to send command to it.
+      if (char *res = SendCommandImpl(is_data, module_name, module_offset))
+        return res;
+      Restart();
+    }
+    if (!failed_to_start_) {
+      Report("WARNING: Failed to use and restart external symbolizer!\n");
+      failed_to_start_ = true;
+    }
+    return 0;
+  }
+
+  void Flush() {
+  }
+
+ private:
+  bool Restart() {
+    if (input_fd_ != kInvalidFd)
+      internal_close(input_fd_);
+    if (output_fd_ != kInvalidFd)
+      internal_close(output_fd_);
+    return StartSymbolizerSubprocess(path_, &input_fd_, &output_fd_);
+  }
+
+  char *SendCommandImpl(bool is_data, const char *module_name,
+                        uptr module_offset) {
+    if (input_fd_ == kInvalidFd || output_fd_ == kInvalidFd)
+      return 0;
     CHECK(module_name);
     internal_snprintf(buffer_, kBufferSize, "%s\"%s\" 0x%zx\n",
                       is_data ? "DATA " : "", module_name, module_offset);
@@ -228,18 +258,6 @@ class ExternalSymbolizer {
     return buffer_;
   }
 
-  bool Restart() {
-    if (times_restarted_ >= kMaxTimesRestarted) return false;
-    times_restarted_++;
-    internal_close(input_fd_);
-    internal_close(output_fd_);
-    return StartSymbolizerSubprocess(path_, &input_fd_, &output_fd_);
-  }
-
-  void Flush() {
-  }
-
- private:
   bool readFromSymbolizer(char *buffer, uptr max_length) {
     if (max_length == 0)
       return true;
@@ -283,6 +301,7 @@ class ExternalSymbolizer {
 
   static const uptr kMaxTimesRestarted = 5;
   uptr times_restarted_;
+  bool failed_to_start_;
 };
 
 #if SANITIZER_SUPPORTS_WEAK_HOOKS
@@ -500,26 +519,11 @@ class POSIXSymbolizer : public Symbolizer {
                                                module_offset);
     }
     // Otherwise, fall back to external symbolizer.
-    if (external_symbolizer_ == 0) {
-      ReportExternalSymbolizerError(
-          "WARNING: Trying to symbolize code, but external "
-          "symbolizer is not initialized!\n");
-      return 0;
+    if (external_symbolizer_) {
+      return external_symbolizer_->SendCommand(is_data, module_name,
+                                               module_offset);
     }
-    for (;;) {
-      char *reply = external_symbolizer_->SendCommand(is_data, module_name,
-          module_offset);
-      if (reply)
-        return reply;
-      // Try to restart symbolizer subprocess. If we don't succeed, forget
-      // about it and don't try to use it later.
-      if (!external_symbolizer_->Restart()) {
-        ReportExternalSymbolizerError(
-            "WARNING: Failed to use and restart external symbolizer!\n");
-        external_symbolizer_ = 0;
-        return 0;
-      }
-    }
+    return 0;
   }
 
   LoadedModule *FindModuleForAddress(uptr address) {
@@ -553,16 +557,6 @@ class POSIXSymbolizer : public Symbolizer {
     return 0;
   }
 
-  void ReportExternalSymbolizerError(const char *msg) {
-    // Don't use atomics here for now, as SymbolizeCode can't be called
-    // from multiple threads anyway.
-    static bool reported;
-    if (!reported) {
-      Report(msg);
-      reported = true;
-    }
-  }
-
   // 16K loaded modules should be enough for everyone.
   static const uptr kMaxNumberOfModuleContexts = 1 << 14;
   LoadedModule *modules_;  // Array of module descriptions is leaked.
@@ -581,15 +575,12 @@ Symbolizer *Symbolizer::PlatformInit(const char *path_to_external) {
   ExternalSymbolizer *external_symbolizer = 0;
 
   if (!internal_symbolizer) {
-    if (!path_to_external || path_to_external[0] == '\0')
+    // Find path to llvm-symbolizer if it's not provided.
+    if (!path_to_external)
       path_to_external = FindPathToBinary("llvm-symbolizer");
-
-    int input_fd, output_fd;
-    if (path_to_external &&
-        StartSymbolizerSubprocess(path_to_external, &input_fd, &output_fd)) {
+    if (path_to_external && path_to_external[0] != '\0')
       external_symbolizer = new(symbolizer_allocator_)
-          ExternalSymbolizer(path_to_external, input_fd, output_fd);
-    }
+          ExternalSymbolizer(path_to_external);
   }
 
   return new(symbolizer_allocator_)

@@ -25,7 +25,8 @@ void ParseFlag(const char *env, const char **flag, const char *name);
 struct CommonFlags {
   // If set, use the online symbolizer from common sanitizer runtime.
   bool symbolize;
-  // Path to external symbolizer.
+  // Path to external symbolizer. If it is NULL, symbolizer will be looked for
+  // in PATH. If it is empty, external symbolizer will not be started.
   const char *external_symbolizer_path;
   // Strips this prefix from file paths in error reports.
   const char *strip_path_prefix;

@@ -21,7 +21,7 @@ namespace __sanitizer {
 void SetCommonFlagDefaults() {
   CommonFlags *f = common_flags();
   f->symbolize = true;
-  f->external_symbolizer_path = "";
+  f->external_symbolizer_path = 0;
   f->strip_path_prefix = "";
   f->fast_unwind_on_fatal = false;
   f->fast_unwind_on_malloc = true;
