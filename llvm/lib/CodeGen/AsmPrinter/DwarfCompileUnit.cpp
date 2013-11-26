@@ -913,7 +913,8 @@ DIE *CompileUnit::getOrCreateContextDIE(DIScope Context) {
 }
 
 DIE *CompileUnit::createTypeDIE(DICompositeType Ty) {
-  DIE *ContextDIE = getOrCreateContextDIE(resolve(Ty.getContext()));
+  DIScope Context = resolve(Ty.getContext());
+  DIE *ContextDIE = getOrCreateContextDIE(Context);
 
   DIE *TyDIE = getDIE(Ty);
   if (TyDIE)
@@ -924,7 +925,7 @@ DIE *CompileUnit::createTypeDIE(DICompositeType Ty) {
 
   constructTypeDIEImpl(*TyDIE, Ty);
 
-  updateAcceleratorTables(Ty, TyDIE);
+  updateAcceleratorTables(Context, Ty, TyDIE);
   return TyDIE;
 }
 
@@ -939,7 +940,8 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
 
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE.
-  DIE *ContextDIE = getOrCreateContextDIE(resolve(Ty.getContext()));
+  DIScope Context = resolve(Ty.getContext());
+  DIE *ContextDIE = getOrCreateContextDIE(Context);
   assert(ContextDIE);
 
   DIE *TyDIE = getDIE(Ty);
@@ -958,12 +960,13 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     constructTypeDIE(*TyDIE, DIDerivedType(Ty));
   }
 
-  updateAcceleratorTables(Ty, TyDIE);
+  updateAcceleratorTables(Context, Ty, TyDIE);
 
   return TyDIE;
 }
 
-void CompileUnit::updateAcceleratorTables(DIType Ty, const DIE *TyDIE) {
+void CompileUnit::updateAcceleratorTables(DIScope Context, DIType Ty,
+                                          const DIE *TyDIE) {
   if (!Ty.getName().empty() && !Ty.isForwardDecl()) {
     bool IsImplementation = 0;
     if (Ty.isCompositeType()) {
@@ -974,6 +977,10 @@ void CompileUnit::updateAcceleratorTables(DIType Ty, const DIE *TyDIE) {
     }
     unsigned Flags = IsImplementation ? dwarf::DW_FLAG_type_implementation : 0;
     addAccelType(Ty.getName(), std::make_pair(TyDIE, Flags));
+
+    if (!Context || Context.isCompileUnit() || Context.isFile() ||
+        Context.isNameSpace())
+      GlobalTypes[getParentContextString(Context) + Ty.getName().str()] = TyDIE;
   }
 }
 
@@ -996,10 +1003,6 @@ void CompileUnit::addType(DIE *Entity, DIType Ty, dwarf::Attribute Attribute) {
   Entry = createDIEEntry(Buffer);
   insertDIEEntry(Ty, Entry);
   addDIEEntry(Entity, Attribute, Entry);
-
-  // If this is a complete composite type then include it in the
-  // list of global types.
-  addGlobalType(Ty);
 }
 
 // Accelerator table mutators - add each name along with its companion
@@ -1035,20 +1038,6 @@ void CompileUnit::addAccelType(StringRef Name,
 void CompileUnit::addGlobalName(StringRef Name, DIE *Die, DIScope Context) {
   std::string FullName = getParentContextString(Context) + Name.str();
   GlobalNames[FullName] = Die;
-}
-
-/// addGlobalType - Add a new global type to the compile unit.
-///
-void CompileUnit::addGlobalType(DIType Ty) {
-  DIScope Context = resolve(Ty.getContext());
-  if (!Ty.getName().empty() && !Ty.isForwardDecl() &&
-      (!Context || Context.isCompileUnit() || Context.isFile() ||
-       Context.isNameSpace()))
-    if (DIEEntry *Entry = getDIEEntry(Ty)) {
-      std::string FullName =
-          getParentContextString(Context) + Ty.getName().str();
-      GlobalTypes[FullName] = Entry->getEntry();
-    }
 }
 
 /// getParentContextString - Walks the metadata parent chain in a language
@@ -1089,22 +1078,6 @@ std::string CompileUnit::getParentContextString(DIScope Context) const {
     }
   }
   return CS;
-}
-
-/// addPubTypes - Add subprogram argument types for pubtypes section.
-void CompileUnit::addPubTypes(DISubprogram SP) {
-  DICompositeType SPTy = SP.getType();
-  uint16_t SPTag = SPTy.getTag();
-  if (SPTag != dwarf::DW_TAG_subroutine_type)
-    return;
-
-  DIArray Args = SPTy.getTypeArray();
-  for (unsigned i = 0, e = Args.getNumElements(); i != e; ++i) {
-    DIType ATy(Args.getElement(i));
-    if (!ATy.isType())
-      continue;
-    addGlobalType(ATy);
-  }
 }
 
 /// constructTypeDIE - Construct basic type die from DIBasicType.

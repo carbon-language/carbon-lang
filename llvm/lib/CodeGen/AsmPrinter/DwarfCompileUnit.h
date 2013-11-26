@@ -143,12 +143,6 @@ public:
   ///
   void addGlobalName(StringRef Name, DIE *Die, DIScope Context);
 
-  /// addGlobalType - Add a new global type to the compile unit.
-  void addGlobalType(DIType Ty);
-
-  /// addPubTypes - Add a set of types from the subprogram to the global types.
-  void addPubTypes(DISubprogram SP);
-
   /// addAccelName - Add a new name to the name accelerator table.
   void addAccelName(StringRef Name, const DIE *Die);
 
@@ -417,7 +411,7 @@ private:
 
   /// If this is a named finished type then include it in the list of types for
   /// the accelerator tables.
-  void updateAcceleratorTables(DIType Ty, const DIE *TyDIE);
+  void updateAcceleratorTables(DIScope Context, DIType Ty, const DIE *TyDIE);
 };
 
 } // end llvm namespace

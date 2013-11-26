@@ -685,9 +685,6 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   if (DS.isSubprogram() && ObjectPointer != NULL)
     TheCU->addDIEEntry(ScopeDIE, dwarf::DW_AT_object_pointer, ObjectPointer);
 
-  if (DS.isSubprogram())
-    TheCU->addPubTypes(DISubprogram(DS));
-
   return ScopeDIE;
 }
 
