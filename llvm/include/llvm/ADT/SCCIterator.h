@@ -145,12 +145,10 @@ class scc_iterator
   inline scc_iterator() {}
 
 public:
-  typedef scc_iterator<GraphT, GT> _Self;
-
-  static inline _Self begin(const GraphT &G) {
-    return _Self(GT::getEntryNode(G));
+  static inline scc_iterator begin(const GraphT &G) {
+    return scc_iterator(GT::getEntryNode(G));
   }
-  static inline _Self end(const GraphT &) { return _Self(); }
+  static inline scc_iterator end(const GraphT &) { return scc_iterator(); }
 
   /// \brief Direct loop termination test which is more efficient than
   /// comparison with \c end().
@@ -159,17 +157,17 @@ public:
     return CurrentSCC.empty();
   }
 
-  inline bool operator==(const _Self &x) const {
+  inline bool operator==(const scc_iterator &x) const {
     return VisitStack == x.VisitStack && CurrentSCC == x.CurrentSCC;
   }
-  inline bool operator!=(const _Self &x) const { return !operator==(x); }
+  inline bool operator!=(const scc_iterator &x) const { return !operator==(x); }
 
-  inline _Self &operator++() {
+  inline scc_iterator &operator++() {
     GetNextSCC();
     return *this;
   }
-  inline _Self operator++(int) {
-    _Self tmp = *this;
+  inline scc_iterator operator++(int) {
+    scc_iterator tmp = *this;
     ++*this;
     return tmp;
   }
