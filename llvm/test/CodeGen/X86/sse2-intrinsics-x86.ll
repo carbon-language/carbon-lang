@@ -710,3 +710,10 @@ define i32 @test_x86_sse2_ucomineq_sd(<2 x double> %a0, <2 x double> %a1) {
   ret i32 %res
 }
 declare i32 @llvm.x86.sse2.ucomineq.sd(<2 x double>, <2 x double>) nounwind readnone
+
+define void @test_x86_sse2_pause() {
+  ; CHECK: pause
+  tail call void @llvm.x86.sse2.pause()
+  ret void 
+}
+declare void @llvm.x86.sse2.pause() nounwind
