@@ -17943,12 +17943,12 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
   MachineFunction &MF = DAG.getMachineFunction();
   bool OptForSize = MF.getFunction()->getAttributes().
     hasAttribute(AttributeSet::FunctionIndex, Attribute::OptimizeForSize);
- 
-  // SHLD/SHRD instructions have lower register pressure, but on some 
-  // platforms they have higher latency than the equivalent 
-  // series of shifts/or that would otherwise be generated. 
+
+  // SHLD/SHRD instructions have lower register pressure, but on some
+  // platforms they have higher latency than the equivalent
+  // series of shifts/or that would otherwise be generated.
   // Don't fold (or (x << c) | (y >> (64 - c))) if SHLD/SHRD instructions
-  // have higer latencies and we are not optimizing for size.  
+  // have higher latencies and we are not optimizing for size.
   if (!OptForSize && Subtarget->isSHLDSlow())
     return SDValue();
 
