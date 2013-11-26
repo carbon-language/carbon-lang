@@ -923,7 +923,7 @@ DIE *CompileUnit::createTypeDIE(DICompositeType Ty) {
   // Create new type.
   TyDIE = createAndAddDIE(Ty.getTag(), *ContextDIE, Ty);
 
-  constructTypeDIEImpl(*TyDIE, Ty);
+  constructTypeDIE(*TyDIE, Ty);
 
   updateAcceleratorTables(Context, Ty, TyDIE);
   return TyDIE;
@@ -994,7 +994,7 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
       // Skip updating the accellerator tables since this is not the full type
       return TyDIE;
     }
-    constructTypeDIEImpl(*TyDIE, CTy);
+    constructTypeDIE(*TyDIE, CTy);
   } else {
     assert(Ty.isDerivedType() && "Unknown kind of DIType");
     constructTypeDIE(*TyDIE, DIDerivedType(Ty));
@@ -1169,15 +1169,6 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 
 /// constructTypeDIE - Construct type DIE from DICompositeType.
 void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
-  // If this is a type applicable to a type unit it then add it to the
-  // list of types we'll compute a hash for later.
-  if (shouldCreateTypeUnit(CTy, DD))
-    DD->addTypeUnitType(&Buffer, CTy);
-  else
-    constructTypeDIEImpl(Buffer, CTy);
-}
-
-void CompileUnit::constructTypeDIEImpl(DIE &Buffer, DICompositeType CTy) {
   // Add name if not anonymous or intermediate type.
   StringRef Name = CTy.getName();
 

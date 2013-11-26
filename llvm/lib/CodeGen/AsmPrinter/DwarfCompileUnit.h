@@ -327,10 +327,6 @@ public:
   DIE *createAndAddDIE(unsigned Tag, DIE &Parent,
                        DIDescriptor N = DIDescriptor());
 
-  /// constructTypeDIEImpl - Construct type DIE that is not a type unit
-  /// reference from a DICompositeType.
-  void constructTypeDIEImpl(DIE &Buffer, DICompositeType CTy);
-
   /// Compute the size of a header for this unit, not including the initial
   /// length field.
   unsigned getHeaderSize() const {
