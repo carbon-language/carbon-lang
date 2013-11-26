@@ -1349,8 +1349,7 @@ class TemplateDiff {
         FromType.getLocalUnqualifiedType() ==
         ToType.getLocalUnqualifiedType()) {
       Qualifiers FromQual = FromType.getLocalQualifiers(),
-                 ToQual = ToType.getLocalQualifiers(),
-                 CommonQual;
+                 ToQual = ToType.getLocalQualifiers();
       PrintQualifiers(FromQual, ToQual);
       FromType.getLocalUnqualifiedType().print(OS, Policy);
       return;
