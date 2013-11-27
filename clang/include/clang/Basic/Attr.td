@@ -730,7 +730,7 @@ def WorkGroupSizeHint :  InheritableAttr {
 def InitPriority : InheritableAttr {
   let Spellings = [GNU<"init_priority">];
   let Args = [UnsignedArgument<"Priority">];
-//  let Subjects = [Var];
+  let Subjects = SubjectList<[Var], ErrorDiag>;
 }
 
 def Section : InheritableAttr {
