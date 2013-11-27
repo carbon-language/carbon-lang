@@ -27,12 +27,12 @@ namespace __lsan {
 
 static void InitializeCommonFlags() {
   CommonFlags *cf = common_flags();
-  SetCommonFlagDefaults();
+  SetCommonFlagsDefaults(cf);
   cf->external_symbolizer_path = GetEnv("LSAN_SYMBOLIZER_PATH");
   cf->malloc_context_size = 30;
   cf->detect_leaks = true;
 
-  ParseCommonFlagsFromString(GetEnv("LSAN_OPTIONS"));
+  ParseCommonFlagsFromString(cf, GetEnv("LSAN_OPTIONS"));
 }
 
 }  // namespace __lsan

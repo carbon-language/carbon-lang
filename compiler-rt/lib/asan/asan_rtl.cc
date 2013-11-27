@@ -88,8 +88,9 @@ static const char *MaybeUseAsanDefaultOptionsCompileDefiniton() {
 }
 
 static void ParseFlagsFromString(Flags *f, const char *str) {
-  ParseCommonFlagsFromString(str);
-  CHECK((uptr)common_flags()->malloc_context_size <= kStackTraceMax);
+  CommonFlags *cf = common_flags();
+  ParseCommonFlagsFromString(cf, str);
+  CHECK((uptr)cf->malloc_context_size <= kStackTraceMax);
 
   ParseFlag(str, &f->quarantine_size, "quarantine_size");
   ParseFlag(str, &f->redzone, "redzone");
@@ -133,7 +134,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
 
 void InitializeFlags(Flags *f, const char *env) {
   CommonFlags *cf = common_flags();
-  SetCommonFlagDefaults();
+  SetCommonFlagsDefaults(cf);
   cf->external_symbolizer_path = GetEnv("ASAN_SYMBOLIZER_PATH");
   cf->malloc_context_size = kDefaultMallocContextSize;
 
@@ -179,7 +180,7 @@ void InitializeFlags(Flags *f, const char *env) {
 
   // Override from user-specified string.
   ParseFlagsFromString(f, MaybeCallAsanDefaultOptions());
-  if (common_flags()->verbosity) {
+  if (cf->verbosity) {
     Report("Using the defaults from __asan_default_options: %s\n",
            MaybeCallAsanDefaultOptions());
   }
