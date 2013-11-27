@@ -1771,8 +1771,12 @@ static std::string CalculateDiagnostic(const Record &S) {
     case Type:  return "ExpectedType";
     case ObjCInterface: return "ExpectedObjectiveCInterface";
     
-    // FIXME: This could be checking lang opts to remove class.
-    case Struct:  return "ExpectedStructOrUnionOrClass";
+    // "Struct" means struct, union or class; check the language options and if
+    // not compiling for C++, strip off the class part. Note that this relies
+    // on the fact that the context for this declares "Sema &S".
+    case Struct:
+      return "(S.getLangOpts().CPlusPlus ? ExpectedStructOrUnionOrClass : "
+                                           "ExpectedStructOrUnion)";
     case Func | ObjCMethod | Block: return "ExpectedFunctionMethodOrBlock";
     case Func | ObjCMethod | Class: return "ExpectedFunctionMethodOrClass";
     case Func | Param:

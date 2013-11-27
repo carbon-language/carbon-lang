@@ -576,13 +576,13 @@ def NSBridged : InheritableAttr {
 
 def ObjCBridge : InheritableAttr {
   let Spellings = [GNU<"objc_bridge">];
-//  let Subjects = SubjectList<[Record], ErrorDiag>;
+  let Subjects = SubjectList<[Record], ErrorDiag>;
   let Args = [IdentifierArgument<"BridgedType">];
 }
 
 def ObjCBridgeMutable : InheritableAttr {
   let Spellings = [GNU<"objc_bridge_mutable">];
-//  let Subjects = SubjectList<[Record], ErrorDiag>;
+  let Subjects = SubjectList<[Record], ErrorDiag>;
   let Args = [IdentifierArgument<"BridgedType">];
 }
 

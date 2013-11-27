@@ -3891,14 +3891,6 @@ static void handleNSBridgedAttr(Sema &S, Scope *Sc, Decl *D,
 
 static void handleObjCBridgeAttr(Sema &S, Scope *Sc, Decl *D,
                                 const AttributeList &Attr) {
-  if (!isa<RecordDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
-    << Attr.getName()
-    << (S.getLangOpts().CPlusPlus ? ExpectedStructOrUnionOrClass
-                                  : ExpectedStructOrUnion);
-    return;
-  }
-
   IdentifierLoc * Parm = Attr.isArgIdent(0) ? Attr.getArgAsIdent(0) : 0;
 
   if (!Parm) {
@@ -3913,14 +3905,6 @@ static void handleObjCBridgeAttr(Sema &S, Scope *Sc, Decl *D,
 
 static void handleObjCBridgeMutableAttr(Sema &S, Scope *Sc, Decl *D,
                                         const AttributeList &Attr) {
-  if (!isa<RecordDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
-    << Attr.getName()
-    << (S.getLangOpts().CPlusPlus ? ExpectedStructOrUnionOrClass
-        : ExpectedStructOrUnion);
-    return;
-  }
-  
   IdentifierLoc * Parm = Attr.isArgIdent(0) ? Attr.getArgAsIdent(0) : 0;
   
   if (!Parm) {
