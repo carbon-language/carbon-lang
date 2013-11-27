@@ -3222,10 +3222,8 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   // while we're still within our own instantiation context.
   SmallVector<VTableUse, 16> SavedVTableUses;
   std::deque<PendingImplicitInstantiation> SavedPendingInstantiations;
-  std::deque<PendingImplicitInstantiation> 
-                              SavedPendingLocalImplicitInstantiations;
-  SavedPendingLocalImplicitInstantiations.swap(
-                                  PendingLocalImplicitInstantiations);
+  SavePendingLocalImplicitInstantiationsRAII
+      SavedPendingLocalImplicitInstantiations(*this);
   if (Recursive) {
     VTableUses.swap(SavedVTableUses);
     PendingInstantiations.swap(SavedPendingInstantiations);
@@ -3306,8 +3304,6 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
            "PendingInstantiations should be empty before it is discarded.");
     PendingInstantiations.swap(SavedPendingInstantiations);
   }
-  SavedPendingLocalImplicitInstantiations.swap(
-                            PendingLocalImplicitInstantiations);
 }
 
 VarTemplateSpecializationDecl *Sema::BuildVarTemplateInstantiation(
@@ -3727,6 +3723,8 @@ void Sema::InstantiateVariableDefinition(SourceLocation PointOfInstantiation,
   // while we're still within our own instantiation context.
   SmallVector<VTableUse, 16> SavedVTableUses;
   std::deque<PendingImplicitInstantiation> SavedPendingInstantiations;
+  SavePendingLocalImplicitInstantiationsRAII
+      SavedPendingLocalImplicitInstantiations(*this);
   if (Recursive) {
     VTableUses.swap(SavedVTableUses);
     PendingInstantiations.swap(SavedPendingInstantiations);
