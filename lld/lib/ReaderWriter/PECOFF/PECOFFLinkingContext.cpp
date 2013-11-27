@@ -111,11 +111,11 @@ bool PECOFFLinkingContext::createImplicitFiles(
 /// executable. We have a mapping for the renaming. This method looks up the
 /// table and returns a new section name if renamed.
 StringRef
-PECOFFLinkingContext::getFinalSectionName(StringRef sectionName) const {
+PECOFFLinkingContext::getOutputSectionName(StringRef sectionName) const {
   auto it = _renamedSections.find(sectionName);
   if (it == _renamedSections.end())
     return sectionName;
-  return getFinalSectionName(it->second);
+  return getOutputSectionName(it->second);
 }
 
 /// Adds a mapping to the section renaming table. This method will be used for

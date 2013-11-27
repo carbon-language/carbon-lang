@@ -252,9 +252,9 @@ TEST_F(WinLinkParserTest, Include) {
 TEST_F(WinLinkParserTest, Merge) {
   EXPECT_TRUE(parse("link.exe", "/merge:.foo=.bar", "/merge:.bar=.baz",
                     "a.out", nullptr));
-  EXPECT_EQ(".baz", _context.getFinalSectionName(".foo"));
-  EXPECT_EQ(".baz", _context.getFinalSectionName(".bar"));
-  EXPECT_EQ(".abc", _context.getFinalSectionName(".abc"));
+  EXPECT_EQ(".baz", _context.getOutputSectionName(".foo"));
+  EXPECT_EQ(".baz", _context.getOutputSectionName(".bar"));
+  EXPECT_EQ(".abc", _context.getOutputSectionName(".abc"));
 }
 
 TEST_F(WinLinkParserTest, Merge_Circular) {

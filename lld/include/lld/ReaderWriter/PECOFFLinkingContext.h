@@ -194,7 +194,7 @@ public:
   void setImageType(ImageType type) { _imageType = type; }
   ImageType getImageType() const { return _imageType; }
 
-  StringRef getFinalSectionName(StringRef sectionName) const;
+  StringRef getOutputSectionName(StringRef sectionName) const;
   bool addSectionRenaming(raw_ostream &diagnostics,
                           StringRef from, StringRef to);
 
