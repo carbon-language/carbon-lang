@@ -292,7 +292,6 @@ void CompileUnit::addLabelAddress(DIE *Die, dwarf::Attribute Attribute,
 /// form given and an op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
 ///
 void CompileUnit::addOpAddress(DIEBlock *Die, const MCSymbol *Sym) {
-  DD->addArangeLabel(SymbolCU(this, Sym));
   if (!DD->useSplitDwarf()) {
     addUInt(Die, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
     addLabel(Die, dwarf::DW_FORM_udata, Sym);
@@ -1618,8 +1617,10 @@ void CompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
       }
       // 3) followed by a custom OP to make the debugger do a TLS lookup.
       addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_push_tls_address);
-    } else
+    } else {
+      DD->addArangeLabel(SymbolCU(this, Sym));
       addOpAddress(Block, Sym);
+    }
     // Do not create specification DIE if context is either compile unit
     // or a subprogram.
     if (GVContext && GV.isDefinition() && !GVContext.isCompileUnit() &&
@@ -1656,7 +1657,9 @@ void CompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
     // GV is a merged global.
     DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
     Value *Ptr = CE->getOperand(0);
-    addOpAddress(Block, Asm->getSymbol(cast<GlobalValue>(Ptr)));
+    MCSymbol *Sym = Asm->getSymbol(cast<GlobalValue>(Ptr));
+    DD->addArangeLabel(SymbolCU(this, Sym));
+    addOpAddress(Block, Sym);
     addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
     SmallVector<Value *, 3> Idx(CE->op_begin() + 1, CE->op_end());
     addUInt(Block, dwarf::DW_FORM_udata,
