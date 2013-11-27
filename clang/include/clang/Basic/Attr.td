@@ -846,7 +846,7 @@ def VecReturn : InheritableAttr {
 
 def WarnUnused : InheritableAttr {
   let Spellings = [GNU<"warn_unused">];
-//  let Subjects = [Record];
+  let Subjects = SubjectList<[Record]>;
 }
 
 def WarnUnusedResult : InheritableAttr {
