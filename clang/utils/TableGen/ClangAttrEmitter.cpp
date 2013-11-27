@@ -1513,39 +1513,29 @@ void EmitClangAttrSpellingListIndex(RecordKeeper &Records, raw_ostream &OS) {
       continue;
 
     std::vector<Record*> Spellings = R.getValueAsListOfDefs("Spellings");
-    // Each distinct spelling yields an attribute kind.
-    if (R.getValueAsBit("DistinctSpellings")) {
-      for (unsigned I = 0; I < Spellings.size(); ++ I) {
-        OS <<
-          "  case AT_" << Spellings[I]->getValueAsString("Name") << ": \n"
-          "    Index = " << I << ";\n"
-          "  break;\n";
-      }
-    } else {
-      OS << "  case AT_" << R.getName() << " : {\n";
-      for (unsigned I = 0; I < Spellings.size(); ++ I) {
-        SmallString<16> Namespace;
-        if (Spellings[I]->getValueAsString("Variety") == "CXX11")
-          Namespace = Spellings[I]->getValueAsString("Namespace");
-        else
-          Namespace = "";
+    OS << "  case AT_" << R.getName() << " : {\n";
+    for (unsigned I = 0; I < Spellings.size(); ++ I) {
+      SmallString<16> Namespace;
+      if (Spellings[I]->getValueAsString("Variety") == "CXX11")
+        Namespace = Spellings[I]->getValueAsString("Namespace");
+      else
+        Namespace = "";
 
-        OS << "    if (Name == \""
-          << Spellings[I]->getValueAsString("Name") << "\" && "
-          << "SyntaxUsed == "
-          << StringSwitch<unsigned>(Spellings[I]->getValueAsString("Variety"))
-            .Case("GNU", 0)
-            .Case("CXX11", 1)
-            .Case("Declspec", 2)
-            .Case("Keyword", 3)
-            .Default(0)
-          << " && Scope == \"" << Namespace << "\")\n"
-          << "        return " << I << ";\n";
-      }
-
-      OS << "    break;\n";
-      OS << "  }\n";
+      OS << "    if (Name == \""
+        << Spellings[I]->getValueAsString("Name") << "\" && "
+        << "SyntaxUsed == "
+        << StringSwitch<unsigned>(Spellings[I]->getValueAsString("Variety"))
+          .Case("GNU", 0)
+          .Case("CXX11", 1)
+          .Case("Declspec", 2)
+          .Case("Keyword", 3)
+          .Default(0)
+        << " && Scope == \"" << Namespace << "\")\n"
+        << "        return " << I << ";\n";
     }
+
+    OS << "    break;\n";
+    OS << "  }\n";
   }
 
   OS << "  }\n";
@@ -1662,26 +1652,10 @@ static ParsedAttrMap getParsedAttrList(const RecordKeeper &Records) {
   for (std::vector<Record*>::iterator I = Attrs.begin(), E = Attrs.end();
        I != E; ++I) {
     Record &Attr = **I;
-    
-    bool SemaHandler = Attr.getValueAsBit("SemaHandler");
-    bool DistinctSpellings = Attr.getValueAsBit("DistinctSpellings");
-
-    if (SemaHandler) {
-      if (DistinctSpellings) {
-        std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
-        
-        for (std::vector<Record*>::const_iterator I = Spellings.begin(),
-             E = Spellings.end(); I != E; ++I) {
-          std::string AttrName = (*I)->getValueAsString("Name");
-
-          StringRef Spelling = NormalizeAttrName(AttrName);
-          R.push_back(std::make_pair(Spelling.str(), &Attr));
-        }
-      } else {
-        StringRef AttrName = Attr.getName();
-        AttrName = NormalizeAttrName(AttrName);
-        R.push_back(std::make_pair(AttrName.str(), *I));
-      }
+    if (Attr.getValueAsBit("SemaHandler")) {
+      StringRef AttrName = Attr.getName();
+      AttrName = NormalizeAttrName(AttrName);
+      R.push_back(std::make_pair(AttrName.str(), *I));
     }
   }
   return R;
@@ -1750,19 +1724,16 @@ void EmitClangAttrParsedAttrKinds(RecordKeeper &Records, raw_ostream &OS) {
   for (std::vector<Record*>::iterator I = Attrs.begin(), E = Attrs.end();
        I != E; ++I) {
     Record &Attr = **I;
-    
+
     bool SemaHandler = Attr.getValueAsBit("SemaHandler");
     bool Ignored = Attr.getValueAsBit("Ignored");
-    bool DistinctSpellings = Attr.getValueAsBit("DistinctSpellings");
     if (SemaHandler || Ignored) {
       std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
 
+      StringRef AttrName = NormalizeAttrName(StringRef(Attr.getName()));
       for (std::vector<Record*>::const_iterator I = Spellings.begin(),
            E = Spellings.end(); I != E; ++I) {
         std::string RawSpelling = (*I)->getValueAsString("Name");
-        StringRef AttrName = NormalizeAttrName(DistinctSpellings
-                                                 ? StringRef(RawSpelling)
-                                                 : StringRef(Attr.getName()));
 
         SmallString<64> Spelling;
         if ((*I)->getValueAsString("Variety") == "CXX11") {

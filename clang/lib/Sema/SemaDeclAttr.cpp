@@ -1546,34 +1546,26 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
     return;
   }
 
-  // Figure out our Kind, and check arguments while we're at it.
-  OwnershipAttr::OwnershipKind K;
-  switch (AL.getKind()) {
-  case AttributeList::AT_ownership_takes:
-    K = OwnershipAttr::Takes;
-    if (AL.getNumArgs() < 2) {
-      S.Diag(AL.getLoc(), diag::err_attribute_too_few_arguments) << 2;
-      return;
-    }
-    break;
-  case AttributeList::AT_ownership_holds:
-    K = OwnershipAttr::Holds;
-    if (AL.getNumArgs() < 2) {
-      S.Diag(AL.getLoc(), diag::err_attribute_too_few_arguments) << 2;
-      return;
-    }
-    break;
-  case AttributeList::AT_ownership_returns:
-    K = OwnershipAttr::Returns;
+  // Figure out our Kind.
+  OwnershipAttr::OwnershipKind K =
+      OwnershipAttr(AL.getLoc(), S.Context, 0, 0, 0,
+                    AL.getAttributeSpellingListIndex()).getOwnKind();
 
+  // Check arguments.
+  switch (K) {
+  case OwnershipAttr::Takes:
+  case OwnershipAttr::Holds:
+    if (AL.getNumArgs() < 2) {
+      S.Diag(AL.getLoc(), diag::err_attribute_too_few_arguments) << 2;
+      return;
+    }
+    break;
+  case OwnershipAttr::Returns:
     if (AL.getNumArgs() > 2) {
       S.Diag(AL.getLoc(), diag::err_attribute_too_many_arguments) << 1;
       return;
     }
     break;
-  default:
-    // This should never happen given how we are called.
-    llvm_unreachable("Unknown ownership attribute");
   }
 
   if (!isFunction(D) || !hasFunctionProto(D)) {
@@ -1582,11 +1574,15 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
     return;
   }
 
-  StringRef Module = AL.getArgAsIdent(0)->Ident->getName();
+  IdentifierInfo *Module = AL.getArgAsIdent(0)->Ident;
 
   // Normalize the argument, __foo__ becomes foo.
-  if (Module.startswith("__") && Module.endswith("__"))
-    Module = Module.substr(2, Module.size() - 4);
+  StringRef ModuleName = Module->getName();
+  if (ModuleName.startswith("__") && ModuleName.endswith("__") &&
+      ModuleName.size() > 4) {
+    ModuleName = ModuleName.drop_front(2).drop_back(2);
+    Module = &S.PP.getIdentifierTable().get(ModuleName);
+  }
 
   SmallVector<unsigned, 8> OwnershipArgs;
   for (unsigned i = 1; i < AL.getNumArgs(); ++i) {
@@ -1620,6 +1616,8 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
     for (specific_attr_iterator<OwnershipAttr>
          i = D->specific_attr_begin<OwnershipAttr>(),
          e = D->specific_attr_end<OwnershipAttr>(); i != e; ++i) {
+      // FIXME: A returns attribute should conflict with any returns attribute
+      // with a different index too.
       if ((*i)->getOwnKind() != K && (*i)->args_end() !=
           std::find((*i)->args_begin(), (*i)->args_end(), Idx)) {
         S.Diag(AL.getLoc(), diag::err_attributes_are_not_compatible)
@@ -1635,7 +1633,7 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
   llvm::array_pod_sort(start, start + size);
 
   D->addAttr(::new (S.Context)
-             OwnershipAttr(AL.getLoc(), S.Context, K, Module, start, size,
+             OwnershipAttr(AL.getLoc(), S.Context, Module, start, size,
                            AL.getAttributeSpellingListIndex()));
 }
 
@@ -4698,10 +4696,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_NoCommon:    handleNoCommonAttr    (S, D, Attr); break;
   case AttributeList::AT_NonNull:     handleNonNullAttr     (S, D, Attr); break;
   case AttributeList::AT_Overloadable:handleOverloadableAttr(S, D, Attr); break;
-  case AttributeList::AT_ownership_returns:
-  case AttributeList::AT_ownership_takes:
-  case AttributeList::AT_ownership_holds:
-      handleOwnershipAttr     (S, D, Attr); break;
+  case AttributeList::AT_Ownership:   handleOwnershipAttr   (S, D, Attr); break;
   case AttributeList::AT_Cold:        handleColdAttr        (S, D, Attr); break;
   case AttributeList::AT_Hot:         handleHotAttr         (S, D, Attr); break;
   case AttributeList::AT_Naked:       handleNakedAttr       (S, D, Attr); break;

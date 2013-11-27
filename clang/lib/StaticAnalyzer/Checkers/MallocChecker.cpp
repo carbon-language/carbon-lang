@@ -234,9 +234,9 @@ private:
   bool isAllocationFunction(const FunctionDecl *FD, ASTContext &C) const;
   bool isStandardNewDelete(const FunctionDecl *FD, ASTContext &C) const;
   ///@}
-  static ProgramStateRef MallocMemReturnsAttr(CheckerContext &C,
-                                              const CallExpr *CE,
-                                              const OwnershipAttr* Att);
+  ProgramStateRef MallocMemReturnsAttr(CheckerContext &C,
+                                       const CallExpr *CE,
+                                       const OwnershipAttr* Att) const;
   static ProgramStateRef MallocMemAux(CheckerContext &C, const CallExpr *CE,
                                      const Expr *SizeEx, SVal Init,
                                      ProgramStateRef State,
@@ -729,10 +729,10 @@ void MallocChecker::checkPostObjCMessage(const ObjCMethodCall &Call,
   C.addTransition(State);
 }
 
-ProgramStateRef MallocChecker::MallocMemReturnsAttr(CheckerContext &C,
-                                                    const CallExpr *CE,
-                                                    const OwnershipAttr* Att) {
-  if (Att->getModule() != "malloc")
+ProgramStateRef
+MallocChecker::MallocMemReturnsAttr(CheckerContext &C, const CallExpr *CE,
+                                    const OwnershipAttr *Att) const {
+  if (Att->getModule() != II_malloc)
     return 0;
 
   OwnershipAttr::args_iterator I = Att->args_begin(), E = Att->args_end();
@@ -804,8 +804,8 @@ ProgramStateRef MallocChecker::MallocUpdateRefState(CheckerContext &C,
 
 ProgramStateRef MallocChecker::FreeMemAttr(CheckerContext &C,
                                            const CallExpr *CE,
-                                           const OwnershipAttr* Att) const {
-  if (Att->getModule() != "malloc")
+                                           const OwnershipAttr *Att) const {
+  if (Att->getModule() != II_malloc)
     return 0;
 
   ProgramStateRef State = C.getState();

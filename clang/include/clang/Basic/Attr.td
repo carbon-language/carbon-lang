@@ -131,8 +131,6 @@ class Attr {
   bit SemaHandler = 1;
   // Set to true for attributes that are completely ignored.
   bit Ignored = 0;
-  // Set to true if each of the spellings is a distinct attribute.
-  bit DistinctSpellings = 0;
   // Set to true if the attribute's parsing does not match its semantic
   // content. Eg) It parses 3 args, but semantically takes 4 args.  Opts out of
   // common attribute error checking.
@@ -662,12 +660,18 @@ def Override : InheritableAttr {
 def Ownership : InheritableAttr {
   let Spellings = [GNU<"ownership_holds">, GNU<"ownership_returns">,
                    GNU<"ownership_takes">];
-  let DistinctSpellings = 1;
-  let Args = [EnumArgument<"OwnKind", "OwnershipKind",
-                    ["ownership_holds", "ownership_returns", "ownership_takes"],
-                    ["Holds", "Returns", "Takes"]>,
-              StringArgument<"Module">, VariadicUnsignedArgument<"Args">];
-  let HasCustomParsing = 1;
+  let Accessors = [Accessor<"isHolds", [GNU<"ownership_holds">]>,
+                   Accessor<"isReturns", [GNU<"ownership_returns">]>,
+                   Accessor<"isTakes", [GNU<"ownership_takes">]>];
+  let AdditionalMembers = [{
+    enum OwnershipKind { Holds, Returns, Takes };
+    OwnershipKind getOwnKind() const {
+      return isHolds() ? Holds :
+             isTakes() ? Takes :
+             Returns;
+    }
+  }];
+  let Args = [IdentifierArgument<"Module">, VariadicUnsignedArgument<"Args">];
 }
 
 def Packed : InheritableAttr {
