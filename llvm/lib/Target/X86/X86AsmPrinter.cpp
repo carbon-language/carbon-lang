@@ -426,31 +426,42 @@ bool X86AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       // See if this is a generic print operand
       return AsmPrinter::PrintAsmOperand(MI, OpNo, AsmVariant, ExtraCode, O);
     case 'a': // This is an address.  Currently only 'i' and 'r' are expected.
-      if (MO.isImm()) {
+      switch (MO.getType()) {
+      default:
+        return true;
+      case MachineOperand::MO_Immediate:
         O << MO.getImm();
         return false;
-      }
-      if (MO.isGlobal() || MO.isCPI() || MO.isJTI() || MO.isSymbol()) {
+      case MachineOperand::MO_GlobalAddress:
+      case MachineOperand::MO_ConstantPoolIndex:
+      case MachineOperand::MO_JumpTableIndex:
+      case MachineOperand::MO_ExternalSymbol:
         printSymbolOperand(*this, MO, O);
         if (Subtarget->isPICStyleRIPRel())
           O << "(%rip)";
         return false;
-      }
-      if (MO.isReg()) {
+      case MachineOperand::MO_Register:
         O << '(';
         printOperand(*this, MI, OpNo, O);
         O << ')';
         return false;
       }
-      return true;
 
     case 'c': // Don't print "$" before a global var name or constant.
-      if (MO.isImm())
-        O << MO.getImm();
-      else if (MO.isGlobal() || MO.isCPI() || MO.isJTI() || MO.isSymbol())
-        printSymbolOperand(*this, MO, O);
-      else
+      switch (MO.getType()) {
+      default:
         printOperand(*this, MI, OpNo, O);
+        break;
+      case MachineOperand::MO_Immediate:
+        O << MO.getImm();
+        break;
+      case MachineOperand::MO_GlobalAddress:
+      case MachineOperand::MO_ConstantPoolIndex:
+      case MachineOperand::MO_JumpTableIndex:
+      case MachineOperand::MO_ExternalSymbol:
+        printSymbolOperand(*this, MO, O);
+        break;
+      }
       return false;
 
     case 'A': // Print '*' before a register (it must be a register)
