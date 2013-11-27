@@ -611,6 +611,18 @@ let isCall=1, hasDelaySlot=1, Defs = [RA] in {
 
 }
 
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, hasDelaySlot = 1,
+    hasExtraSrcRegAllocReq = 1, Defs = [AT] in {
+  class TailCall<Instruction JumpInst> :
+    PseudoSE<(outs), (ins calltarget:$target), [], IIBranch>,
+    PseudoInstExpansion<(JumpInst jmptarget:$target)>;
+
+  class TailCallReg<RegisterOperand RO, Instruction JRInst,
+                    RegisterOperand ResRO = RO> :
+    PseudoSE<(outs), (ins RO:$rs), [(MipsTailCall RO:$rs)], IIBranch>,
+    PseudoInstExpansion<(JRInst ResRO:$rs)>;
+}
+
 class BAL_BR_Pseudo<Instruction RealInst> :
   PseudoSE<(outs), (ins brtarget:$offset), [], IIBranch>,
   PseudoInstExpansion<(RealInst ZERO, brtarget:$offset)> {
@@ -1018,10 +1030,8 @@ def JALRPseudo : JumpLinkRegPseudo<GPR32Opnd, JALR, RA>;
 def BGEZAL : MMRel, BGEZAL_FT<"bgezal", brtarget, GPR32Opnd>, BGEZAL_FM<0x11>;
 def BLTZAL : MMRel, BGEZAL_FT<"bltzal", brtarget, GPR32Opnd>, BGEZAL_FM<0x10>;
 def BAL_BR : BAL_BR_Pseudo<BGEZAL>;
-def TAILCALL : MMRel, JumpFJ<calltarget, "j", MipsTailCall, imm, "tcall">,
-               FJ<2>, IsTailCall;
-def TAILCALL_R : MMRel, JumpFR<"tcallr", GPR32Opnd, MipsTailCall>, MTLO_FM<8>,
-                 IsTailCall;
+def TAILCALL : TailCall<J>;
+def TAILCALL_R : TailCallReg<GPR32Opnd, JR>;
 
 def RET : MMRel, RetBase<"ret", GPR32Opnd>, MTLO_FM<8>;
 
