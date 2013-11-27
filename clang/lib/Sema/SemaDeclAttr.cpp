@@ -3955,7 +3955,6 @@ static void handleObjCReturnsInnerPointerAttr(Sema &S, Decl *D,
 
 static void handleObjCRequiresSuperAttr(Sema &S, Decl *D,
                                         const AttributeList &attr) {
-  SourceLocation loc = attr.getLoc();
   ObjCMethodDecl *method = cast<ObjCMethodDecl>(D);
   
   DeclContext *DC = method->getDeclContext();
