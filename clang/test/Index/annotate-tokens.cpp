@@ -28,6 +28,11 @@ struct TS {
 template <bool (*tfn)(X*)>
 void TS<tfn>::foo() {}
 
+void test4() {
+  if (int p = 0)
+    return;
+}
+
 // RUN: c-index-test -test-annotate-tokens=%s:1:1:30:1 %s -fno-delayed-template-parsing | FileCheck %s
 // CHECK: Keyword: "struct" [1:1 - 1:7] StructDecl=bonk:1:8 (Definition)
 // CHECK: Identifier: "bonk" [1:8 - 1:12] StructDecl=bonk:1:8 (Definition)
@@ -173,3 +178,10 @@ void TS<tfn>::foo() {}
 // CHECK: Punctuation: ")" [29:19 - 29:20] CXXMethod=foo:29:15 (Definition)
 // CHECK: Punctuation: "{" [29:21 - 29:22] CompoundStmt=
 // CHECK: Punctuation: "}" [29:22 - 29:23] CompoundStmt=
+
+// RUN: env LIBCLANG_DISABLE_CRASH_RECOVERY=1 c-index-test -test-annotate-tokens=%s:32:1:32:13 %s | FileCheck %s -check-prefix=CHECK2
+// CHECK2: Keyword: "if" [32:3 - 32:5] IfStmt=
+// CHECK2: Punctuation: "(" [32:6 - 32:7] IfStmt=
+// CHECK2: Keyword: "int" [32:7 - 32:10] VarDecl=p:32:11 (Definition)
+// CHECK2: Identifier: "p" [32:11 - 32:12] VarDecl=p:32:11 (Definition)
+// CHECK2: Punctuation: "=" [32:13 - 32:14] VarDecl=p:32:11 (Definition)

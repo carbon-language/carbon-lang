@@ -5075,18 +5075,26 @@ class AnnotateTokensWorker {
     unsigned BeforeChildrenTokenIdx;
   };
   SmallVector<PostChildrenInfo, 8> PostChildrenInfos;
-  
+
+  CXToken &getTok(unsigned Idx) {
+    assert(Idx < NumTokens);
+    return Tokens[Idx];
+  }
+  const CXToken &getTok(unsigned Idx) const {
+    assert(Idx < NumTokens);
+    return Tokens[Idx];
+  }
   bool MoreTokens() const { return TokIdx < NumTokens; }
   unsigned NextToken() const { return TokIdx; }
   void AdvanceToken() { ++TokIdx; }
   SourceLocation GetTokenLoc(unsigned tokI) {
-    return SourceLocation::getFromRawEncoding(Tokens[tokI].int_data[1]);
+    return SourceLocation::getFromRawEncoding(getTok(tokI).int_data[1]);
   }
   bool isFunctionMacroToken(unsigned tokI) const {
-    return Tokens[tokI].int_data[3] != 0;
+    return getTok(tokI).int_data[3] != 0;
   }
   SourceLocation getFunctionMacroTokenLoc(unsigned tokI) const {
-    return SourceLocation::getFromRawEncoding(Tokens[tokI].int_data[3]);
+    return SourceLocation::getFromRawEncoding(getTok(tokI).int_data[3]);
   }
 
   void annotateAndAdvanceTokens(CXCursor, RangeComparisonResult, SourceRange);
@@ -5333,7 +5341,7 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   // This can happen for C++ constructor expressions whose range generally
   // include the variable declaration, e.g.:
   //  MyCXXClass foo; // Make sure we don't annotate 'foo' as a CallExpr cursor.
-  if (clang_isExpression(cursorK)) {
+  if (clang_isExpression(cursorK) && MoreTokens()) {
     const Expr *E = getCursorExpr(cursor);
     if (const Decl *D = getCursorParentDecl(cursor)) {
       const unsigned I = NextToken();
@@ -5455,14 +5463,23 @@ public:
   }
 
 private:
+  CXToken &getTok(unsigned Idx) {
+    assert(Idx < NumTokens);
+    return Tokens[Idx];
+  }
+  const CXToken &getTok(unsigned Idx) const {
+    assert(Idx < NumTokens);
+    return Tokens[Idx];
+  }
+
   SourceLocation getTokenLoc(unsigned tokI) {
-    return SourceLocation::getFromRawEncoding(Tokens[tokI].int_data[1]);
+    return SourceLocation::getFromRawEncoding(getTok(tokI).int_data[1]);
   }
 
   void setFunctionMacroTokenLoc(unsigned tokI, SourceLocation loc) {
     // The third field is reserved and currently not used. Use it here
     // to mark macro arg expanded tokens with their expanded locations.
-    Tokens[tokI].int_data[3] = loc.getRawEncoding();
+    getTok(tokI).int_data[3] = loc.getRawEncoding();
   }
 };
 
@@ -6498,6 +6515,11 @@ bool RunSafely(llvm::CrashRecoveryContext &CRC,
                unsigned Size) {
   if (!Size)
     Size = GetSafetyThreadStackSize();
+  if (getenv("LIBCLANG_DISABLE_CRASH_RECOVERY")) {
+    // Don't use crash recovery.
+    llvm::llvm_execute_on_thread(Fn, UserData, Size);
+    return true;
+  }
   if (Size)
     return CRC.RunSafelyOnThread(Fn, UserData, Size);
   return CRC.RunSafely(Fn, UserData);
