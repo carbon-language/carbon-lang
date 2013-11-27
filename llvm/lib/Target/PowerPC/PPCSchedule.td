@@ -25,97 +25,97 @@ def VFPU   : FuncUnit; // vector floating point unit
 //===----------------------------------------------------------------------===//
 // Instruction Itinerary classes used for PowerPC
 //
-def IntSimple    : InstrItinClass;
-def IntGeneral   : InstrItinClass;
-def IntCompare   : InstrItinClass;
-def IntDivD      : InstrItinClass;
-def IntDivW      : InstrItinClass;
-def IntMFFS      : InstrItinClass;
-def IntMFVSCR    : InstrItinClass;
-def IntMTFSB0    : InstrItinClass;
-def IntMTSRD     : InstrItinClass;
-def IntMulHD     : InstrItinClass;
-def IntMulHW     : InstrItinClass;
-def IntMulHWU    : InstrItinClass;
-def IntMulLI     : InstrItinClass;
-def IntRFID      : InstrItinClass;
-def IntRotateD   : InstrItinClass;
-def IntRotateDI  : InstrItinClass;
-def IntRotate    : InstrItinClass;
-def IntShift     : InstrItinClass;
-def IntTrapD     : InstrItinClass;
-def IntTrapW     : InstrItinClass;
-def BrB          : InstrItinClass;
-def BrCR         : InstrItinClass;
-def BrMCR        : InstrItinClass;
-def BrMCRX       : InstrItinClass;
-def LdStDCBA     : InstrItinClass;
-def LdStDCBF     : InstrItinClass;
-def LdStDCBI     : InstrItinClass;
-def LdStLoad     : InstrItinClass;
-def LdStLoadUpd  : InstrItinClass;
-def LdStStore    : InstrItinClass;
-def LdStStoreUpd : InstrItinClass;
-def LdStDSS      : InstrItinClass;
-def LdStICBI     : InstrItinClass;
-def LdStLD       : InstrItinClass;
-def LdStLDU      : InstrItinClass;
-def LdStLDARX    : InstrItinClass;
-def LdStLFD      : InstrItinClass;
-def LdStLFDU     : InstrItinClass;
-def LdStLHA      : InstrItinClass;
-def LdStLHAU     : InstrItinClass;
-def LdStLMW      : InstrItinClass;
-def LdStLVecX    : InstrItinClass;
-def LdStLWA      : InstrItinClass;
-def LdStLWARX    : InstrItinClass;
-def LdStSLBIA    : InstrItinClass;
-def LdStSLBIE    : InstrItinClass;
-def LdStSTD      : InstrItinClass;
-def LdStSTDCX    : InstrItinClass;
-def LdStSTDU     : InstrItinClass;
-def LdStSTFD     : InstrItinClass;
-def LdStSTFDU    : InstrItinClass;
-def LdStSTVEBX   : InstrItinClass;
-def LdStSTWCX    : InstrItinClass;
-def LdStSync     : InstrItinClass;
-def SprISYNC     : InstrItinClass;
-def SprMFSR      : InstrItinClass;
-def SprMTMSR     : InstrItinClass;
-def SprMTSR      : InstrItinClass;
-def SprTLBSYNC   : InstrItinClass;
-def SprMFCR      : InstrItinClass;
-def SprMFMSR     : InstrItinClass;
-def SprMFSPR     : InstrItinClass;
-def SprMFTB      : InstrItinClass;
-def SprMTSPR     : InstrItinClass;
-def SprMTSRIN    : InstrItinClass;
-def SprRFI       : InstrItinClass;
-def SprSC        : InstrItinClass;
-def FPGeneral    : InstrItinClass;
-def FPAddSub     : InstrItinClass;
-def FPCompare    : InstrItinClass;
-def FPDivD       : InstrItinClass;
-def FPDivS       : InstrItinClass;
-def FPFused      : InstrItinClass;
-def FPRes        : InstrItinClass;
-def FPSqrt       : InstrItinClass;
-def VecGeneral   : InstrItinClass;
-def VecFP        : InstrItinClass;
-def VecFPCompare : InstrItinClass;
-def VecComplex   : InstrItinClass;
-def VecPerm      : InstrItinClass;
-def VecFPRound   : InstrItinClass;
-def VecVSL       : InstrItinClass;
-def VecVSR       : InstrItinClass;
-def SprMTMSRD    : InstrItinClass;
-def SprSLIE      : InstrItinClass;
-def SprSLBIE     : InstrItinClass;
-def SprSLBMTE    : InstrItinClass;
-def SprSLBMFEE   : InstrItinClass;
-def SprSLBIA     : InstrItinClass;
-def SprTLBIEL    : InstrItinClass;
-def SprTLBIE     : InstrItinClass;
+def IIC_IntSimple    : InstrItinClass;
+def IIC_IntGeneral   : InstrItinClass;
+def IIC_IntCompare   : InstrItinClass;
+def IIC_IntDivD      : InstrItinClass;
+def IIC_IntDivW      : InstrItinClass;
+def IIC_IntMFFS      : InstrItinClass;
+def IIC_IntMFVSCR    : InstrItinClass;
+def IIC_IntMTFSB0    : InstrItinClass;
+def IIC_IntMTSRD     : InstrItinClass;
+def IIC_IntMulHD     : InstrItinClass;
+def IIC_IntMulHW     : InstrItinClass;
+def IIC_IntMulHWU    : InstrItinClass;
+def IIC_IntMulLI     : InstrItinClass;
+def IIC_IntRFID      : InstrItinClass;
+def IIC_IntRotateD   : InstrItinClass;
+def IIC_IntRotateDI  : InstrItinClass;
+def IIC_IntRotate    : InstrItinClass;
+def IIC_IntShift     : InstrItinClass;
+def IIC_IntTrapD     : InstrItinClass;
+def IIC_IntTrapW     : InstrItinClass;
+def IIC_BrB          : InstrItinClass;
+def IIC_BrCR         : InstrItinClass;
+def IIC_BrMCR        : InstrItinClass;
+def IIC_BrMCRX       : InstrItinClass;
+def IIC_LdStDCBA     : InstrItinClass;
+def IIC_LdStDCBF     : InstrItinClass;
+def IIC_LdStDCBI     : InstrItinClass;
+def IIC_LdStLoad     : InstrItinClass;
+def IIC_LdStLoadUpd  : InstrItinClass;
+def IIC_LdStStore    : InstrItinClass;
+def IIC_LdStStoreUpd : InstrItinClass;
+def IIC_LdStDSS      : InstrItinClass;
+def IIC_LdStICBI     : InstrItinClass;
+def IIC_LdStLD       : InstrItinClass;
+def IIC_LdStLDU      : InstrItinClass;
+def IIC_LdStLDARX    : InstrItinClass;
+def IIC_LdStLFD      : InstrItinClass;
+def IIC_LdStLFDU     : InstrItinClass;
+def IIC_LdStLHA      : InstrItinClass;
+def IIC_LdStLHAU     : InstrItinClass;
+def IIC_LdStLMW      : InstrItinClass;
+def IIC_LdStLVecX    : InstrItinClass;
+def IIC_LdStLWA      : InstrItinClass;
+def IIC_LdStLWARX    : InstrItinClass;
+def IIC_LdStSLBIA    : InstrItinClass;
+def IIC_LdStSLBIE    : InstrItinClass;
+def IIC_LdStSTD      : InstrItinClass;
+def IIC_LdStSTDCX    : InstrItinClass;
+def IIC_LdStSTDU     : InstrItinClass;
+def IIC_LdStSTFD     : InstrItinClass;
+def IIC_LdStSTFDU    : InstrItinClass;
+def IIC_LdStSTVEBX   : InstrItinClass;
+def IIC_LdStSTWCX    : InstrItinClass;
+def IIC_LdStSync     : InstrItinClass;
+def IIC_SprISYNC     : InstrItinClass;
+def IIC_SprMFSR      : InstrItinClass;
+def IIC_SprMTMSR     : InstrItinClass;
+def IIC_SprMTSR      : InstrItinClass;
+def IIC_SprTLBSYNC   : InstrItinClass;
+def IIC_SprMFCR      : InstrItinClass;
+def IIC_SprMFMSR     : InstrItinClass;
+def IIC_SprMFSPR     : InstrItinClass;
+def IIC_SprMFTB      : InstrItinClass;
+def IIC_SprMTSPR     : InstrItinClass;
+def IIC_SprMTSRIN    : InstrItinClass;
+def IIC_SprRFI       : InstrItinClass;
+def IIC_SprSC        : InstrItinClass;
+def IIC_FPGeneral    : InstrItinClass;
+def IIC_FPAddSub     : InstrItinClass;
+def IIC_FPCompare    : InstrItinClass;
+def IIC_FPDivD       : InstrItinClass;
+def IIC_FPDivS       : InstrItinClass;
+def IIC_FPFused      : InstrItinClass;
+def IIC_FPRes        : InstrItinClass;
+def IIC_FPSqrt       : InstrItinClass;
+def IIC_VecGeneral   : InstrItinClass;
+def IIC_VecFP        : InstrItinClass;
+def IIC_VecFPCompare : InstrItinClass;
+def IIC_VecComplex   : InstrItinClass;
+def IIC_VecPerm      : InstrItinClass;
+def IIC_VecFPRound   : InstrItinClass;
+def IIC_VecVSL       : InstrItinClass;
+def IIC_VecVSR       : InstrItinClass;
+def IIC_SprMTMSRD    : InstrItinClass;
+def IIC_SprSLIE      : InstrItinClass;
+def IIC_SprSLBIE     : InstrItinClass;
+def IIC_SprSLBMTE    : InstrItinClass;
+def IIC_SprSLBMFEE   : InstrItinClass;
+def IIC_SprSLBIA     : InstrItinClass;
+def IIC_SprTLBIEL    : InstrItinClass;
+def IIC_SprTLBIE     : InstrItinClass;
 
 //===----------------------------------------------------------------------===//
 // Processor instruction itineraries.
@@ -136,392 +136,392 @@ include "PPCScheduleE5500.td"
 //
 //    opcode     itinerary class
 //    ======     ===============
-//    add        IntSimple
-//    addc       IntGeneral
-//    adde       IntGeneral
-//    addi       IntSimple
-//    addic      IntGeneral
-//    addic.     IntGeneral
-//    addis      IntSimple
-//    addme      IntGeneral
-//    addze      IntGeneral
-//    and        IntSimple
-//    andc       IntSimple
-//    andi.      IntGeneral
-//    andis.     IntGeneral
-//    b          BrB
-//    bc         BrB
-//    bcctr      BrB
-//    bclr       BrB
-//    cmp        IntCompare
-//    cmpi       IntCompare
-//    cmpl       IntCompare
-//    cmpli      IntCompare
-//    cntlzd     IntRotateD
-//    cntlzw     IntGeneral
-//    crand      BrCR
-//    crandc     BrCR
-//    creqv      BrCR
-//    crnand     BrCR
-//    crnor      BrCR
-//    cror       BrCR
-//    crorc      BrCR
-//    crxor      BrCR
-//    dcba       LdStDCBA
-//    dcbf       LdStDCBF
-//    dcbi       LdStDCBI
-//    dcbst      LdStDCBF
-//    dcbt       LdStLoad
-//    dcbtst     LdStLoad
-//    dcbz       LdStDCBF
-//    divd       IntDivD
-//    divdu      IntDivD
-//    divw       IntDivW
-//    divwu      IntDivW
-//    dss        LdStDSS
-//    dst        LdStDSS
-//    dstst      LdStDSS
-//    eciwx      LdStLoad
-//    ecowx      LdStLoad
-//    eieio      LdStLoad
-//    eqv        IntSimple
-//    extsb      IntSimple
-//    extsh      IntSimple
-//    extsw      IntSimple
-//    fabs       FPGeneral
-//    fadd       FPAddSub
-//    fadds      FPGeneral
-//    fcfid      FPGeneral
-//    fcmpo      FPCompare
-//    fcmpu      FPCompare
-//    fctid      FPGeneral
-//    fctidz     FPGeneral
-//    fctiw      FPGeneral
-//    fctiwz     FPGeneral
-//    fdiv       FPDivD
-//    fdivs      FPDivS
-//    fmadd      FPFused
-//    fmadds     FPGeneral
-//    fmr        FPGeneral
-//    fmsub      FPFused
-//    fmsubs     FPGeneral
-//    fmul       FPFused
-//    fmuls      FPGeneral
-//    fnabs      FPGeneral
-//    fneg       FPGeneral
-//    fnmadd     FPFused
-//    fnmadds    FPGeneral
-//    fnmsub     FPFused
-//    fnmsubs    FPGeneral
-//    fres       FPRes
-//    frsp       FPGeneral
-//    frsqrte    FPGeneral
-//    fsel       FPGeneral
-//    fsqrt      FPSqrt
-//    fsqrts     FPSqrt
-//    fsub       FPAddSub
-//    fsubs      FPGeneral
-//    icbi       LdStICBI
-//    isync      SprISYNC
-//    lbz        LdStLoad
-//    lbzu       LdStLoadUpd
-//    lbzux      LdStLoadUpd
-//    lbzx       LdStLoad
-//    ld         LdStLD
-//    ldarx      LdStLDARX
-//    ldu        LdStLDU
-//    ldux       LdStLDU
-//    ldx        LdStLD
-//    lfd        LdStLFD
-//    lfdu       LdStLFDU
-//    lfdux      LdStLFDU
-//    lfdx       LdStLFD
-//    lfs        LdStLFD
-//    lfsu       LdStLFDU
-//    lfsux      LdStLFDU
-//    lfsx       LdStLFD
-//    lha        LdStLHA
-//    lhau       LdStLHAU
-//    lhaux      LdStLHAU
-//    lhax       LdStLHA
-//    lhbrx      LdStLoad
-//    lhz        LdStLoad
-//    lhzu       LdStLoadUpd
-//    lhzux      LdStLoadUpd
-//    lhzx       LdStLoad
-//    lmw        LdStLMW
-//    lswi       LdStLMW
-//    lswx       LdStLMW
-//    lvebx      LdStLVecX
-//    lvehx      LdStLVecX
-//    lvewx      LdStLVecX
-//    lvsl       LdStLVecX
-//    lvsr       LdStLVecX
-//    lvx        LdStLVecX
-//    lvxl       LdStLVecX
-//    lwa        LdStLWA
-//    lwarx      LdStLWARX
-//    lwaux      LdStLHAU
-//    lwax       LdStLHA
-//    lwbrx      LdStLoad
-//    lwz        LdStLoad
-//    lwzu       LdStLoadUpd
-//    lwzux      LdStLoadUpd
-//    lwzx       LdStLoad
-//    mcrf       BrMCR
-//    mcrfs      FPGeneral
-//    mcrxr      BrMCRX
-//    mfcr       SprMFCR
-//    mffs       IntMFFS
-//    mfmsr      SprMFMSR
-//    mfspr      SprMFSPR
-//    mfsr       SprMFSR
-//    mfsrin     SprMFSR
-//    mftb       SprMFTB
-//    mfvscr     IntMFVSCR
-//    mtcrf      BrMCRX
-//    mtfsb0     IntMTFSB0
-//    mtfsb1     IntMTFSB0
-//    mtfsf      IntMTFSB0
-//    mtfsfi     IntMTFSB0
-//    mtmsr      SprMTMSR
-//    mtmsrd     LdStLD
-//    mtspr      SprMTSPR
-//    mtsr       SprMTSR
-//    mtsrd      IntMTSRD
-//    mtsrdin    IntMTSRD
-//    mtsrin     SprMTSRIN
-//    mtvscr     IntMFVSCR
-//    mulhd      IntMulHD
-//    mulhdu     IntMulHD
-//    mulhw      IntMulHW
-//    mulhwu     IntMulHWU
-//    mulld      IntMulHD
-//    mulli      IntMulLI
-//    mullw      IntMulHW
-//    nand       IntSimple
-//    neg        IntSimple
-//    nor        IntSimple
-//    or         IntSimple
-//    orc        IntSimple
-//    ori        IntSimple
-//    oris       IntSimple
-//    rfi        SprRFI
-//    rfid       IntRFID
-//    rldcl      IntRotateD
-//    rldcr      IntRotateD
-//    rldic      IntRotateDI
-//    rldicl     IntRotateDI
-//    rldicr     IntRotateDI
-//    rldimi     IntRotateDI
-//    rlwimi     IntRotate
-//    rlwinm     IntGeneral
-//    rlwnm      IntGeneral
-//    sc         SprSC
-//    slbia      LdStSLBIA
-//    slbie      LdStSLBIE
-//    sld        IntRotateD
-//    slw        IntGeneral
-//    srad       IntRotateD
-//    sradi      IntRotateDI
-//    sraw       IntShift
-//    srawi      IntShift
-//    srd        IntRotateD
-//    srw        IntGeneral
-//    stb        LdStStore
-//    stbu       LdStStoreUpd
-//    stbux      LdStStoreUpd
-//    stbx       LdStStore
-//    std        LdStSTD
-//    stdcx.     LdStSTDCX
-//    stdu       LdStSTDU
-//    stdux      LdStSTDU
-//    stdx       LdStSTD
-//    stfd       LdStSTFD
-//    stfdu      LdStSTFDU
-//    stfdux     LdStSTFDU
-//    stfdx      LdStSTFD
-//    stfiwx     LdStSTFD
-//    stfs       LdStSTFD
-//    stfsu      LdStSTFDU
-//    stfsux     LdStSTFDU
-//    stfsx      LdStSTFD
-//    sth        LdStStore
-//    sthbrx     LdStStore
-//    sthu       LdStStoreUpd
-//    sthux      LdStStoreUpd
-//    sthx       LdStStore
-//    stmw       LdStLMW
-//    stswi      LdStLMW
-//    stswx      LdStLMW
-//    stvebx     LdStSTVEBX
-//    stvehx     LdStSTVEBX
-//    stvewx     LdStSTVEBX
-//    stvx       LdStSTVEBX
-//    stvxl      LdStSTVEBX
-//    stw        LdStStore
-//    stwbrx     LdStStore
-//    stwcx.     LdStSTWCX
-//    stwu       LdStStoreUpd
-//    stwux      LdStStoreUpd
-//    stwx       LdStStore
-//    subf       IntGeneral
-//    subfc      IntGeneral
-//    subfe      IntGeneral
-//    subfic     IntGeneral
-//    subfme     IntGeneral
-//    subfze     IntGeneral
-//    sync       LdStSync
-//    td         IntTrapD
-//    tdi        IntTrapD
-//    tlbia      LdStSLBIA
-//    tlbie      LdStDCBF
-//    tlbsync    SprTLBSYNC
-//    tw         IntTrapW
-//    twi        IntTrapW
-//    vaddcuw    VecGeneral
-//    vaddfp     VecFP
-//    vaddsbs    VecGeneral
-//    vaddshs    VecGeneral
-//    vaddsws    VecGeneral
-//    vaddubm    VecGeneral
-//    vaddubs    VecGeneral
-//    vadduhm    VecGeneral
-//    vadduhs    VecGeneral
-//    vadduwm    VecGeneral
-//    vadduws    VecGeneral
-//    vand       VecGeneral
-//    vandc      VecGeneral
-//    vavgsb     VecGeneral
-//    vavgsh     VecGeneral
-//    vavgsw     VecGeneral
-//    vavgub     VecGeneral
-//    vavguh     VecGeneral
-//    vavguw     VecGeneral
-//    vcfsx      VecFP
-//    vcfux      VecFP
-//    vcmpbfp    VecFPCompare
-//    vcmpeqfp   VecFPCompare
-//    vcmpequb   VecGeneral
-//    vcmpequh   VecGeneral
-//    vcmpequw   VecGeneral
-//    vcmpgefp   VecFPCompare
-//    vcmpgtfp   VecFPCompare
-//    vcmpgtsb   VecGeneral
-//    vcmpgtsh   VecGeneral
-//    vcmpgtsw   VecGeneral
-//    vcmpgtub   VecGeneral
-//    vcmpgtuh   VecGeneral
-//    vcmpgtuw   VecGeneral
-//    vctsxs     VecFP
-//    vctuxs     VecFP
-//    vexptefp   VecFP
-//    vlogefp    VecFP
-//    vmaddfp    VecFP
-//    vmaxfp     VecFPCompare
-//    vmaxsb     VecGeneral
-//    vmaxsh     VecGeneral
-//    vmaxsw     VecGeneral
-//    vmaxub     VecGeneral
-//    vmaxuh     VecGeneral
-//    vmaxuw     VecGeneral
-//    vmhaddshs  VecComplex
-//    vmhraddshs VecComplex
-//    vminfp     VecFPCompare
-//    vminsb     VecGeneral
-//    vminsh     VecGeneral
-//    vminsw     VecGeneral
-//    vminub     VecGeneral
-//    vminuh     VecGeneral
-//    vminuw     VecGeneral
-//    vmladduhm  VecComplex
-//    vmrghb     VecPerm
-//    vmrghh     VecPerm
-//    vmrghw     VecPerm
-//    vmrglb     VecPerm
-//    vmrglh     VecPerm
-//    vmrglw     VecPerm
-//    vmsubfp    VecFP
-//    vmsummbm   VecComplex
-//    vmsumshm   VecComplex
-//    vmsumshs   VecComplex
-//    vmsumubm   VecComplex
-//    vmsumuhm   VecComplex
-//    vmsumuhs   VecComplex
-//    vmulesb    VecComplex
-//    vmulesh    VecComplex
-//    vmuleub    VecComplex
-//    vmuleuh    VecComplex
-//    vmulosb    VecComplex
-//    vmulosh    VecComplex
-//    vmuloub    VecComplex
-//    vmulouh    VecComplex
-//    vnor       VecGeneral
-//    vor        VecGeneral
-//    vperm      VecPerm
-//    vpkpx      VecPerm
-//    vpkshss    VecPerm
-//    vpkshus    VecPerm
-//    vpkswss    VecPerm
-//    vpkswus    VecPerm
-//    vpkuhum    VecPerm
-//    vpkuhus    VecPerm
-//    vpkuwum    VecPerm
-//    vpkuwus    VecPerm
-//    vrefp      VecFPRound
-//    vrfim      VecFPRound
-//    vrfin      VecFPRound
-//    vrfip      VecFPRound
-//    vrfiz      VecFPRound
-//    vrlb       VecGeneral
-//    vrlh       VecGeneral
-//    vrlw       VecGeneral
-//    vrsqrtefp  VecFP
-//    vsel       VecGeneral
-//    vsl        VecVSL
-//    vslb       VecGeneral
-//    vsldoi     VecPerm
-//    vslh       VecGeneral
-//    vslo       VecPerm
-//    vslw       VecGeneral
-//    vspltb     VecPerm
-//    vsplth     VecPerm
-//    vspltisb   VecPerm
-//    vspltish   VecPerm
-//    vspltisw   VecPerm
-//    vspltw     VecPerm
-//    vsr        VecVSR
-//    vsrab      VecGeneral
-//    vsrah      VecGeneral
-//    vsraw      VecGeneral
-//    vsrb       VecGeneral
-//    vsrh       VecGeneral
-//    vsro       VecPerm
-//    vsrw       VecGeneral
-//    vsubcuw    VecGeneral
-//    vsubfp     VecFP
-//    vsubsbs    VecGeneral
-//    vsubshs    VecGeneral
-//    vsubsws    VecGeneral
-//    vsububm    VecGeneral
-//    vsububs    VecGeneral
-//    vsubuhm    VecGeneral
-//    vsubuhs    VecGeneral
-//    vsubuwm    VecGeneral
-//    vsubuws    VecGeneral
-//    vsum2sws   VecComplex
-//    vsum4sbs   VecComplex
-//    vsum4shs   VecComplex
-//    vsum4ubs   VecComplex
-//    vsumsws    VecComplex
-//    vupkhpx    VecPerm
-//    vupkhsb    VecPerm
-//    vupkhsh    VecPerm
-//    vupklpx    VecPerm
-//    vupklsb    VecPerm
-//    vupklsh    VecPerm
-//    vxor       VecGeneral
-//    xor        IntSimple
-//    xori       IntSimple
-//    xoris      IntSimple
+//    add        IIC_IntSimple
+//    addc       IIC_IntGeneral
+//    adde       IIC_IntGeneral
+//    addi       IIC_IntSimple
+//    addic      IIC_IntGeneral
+//    addic.     IIC_IntGeneral
+//    addis      IIC_IntSimple
+//    addme      IIC_IntGeneral
+//    addze      IIC_IntGeneral
+//    and        IIC_IntSimple
+//    andc       IIC_IntSimple
+//    andi.      IIC_IntGeneral
+//    andis.     IIC_IntGeneral
+//    b          IIC_BrB
+//    bc         IIC_BrB
+//    bcctr      IIC_BrB
+//    bclr       IIC_BrB
+//    cmp        IIC_IntCompare
+//    cmpi       IIC_IntCompare
+//    cmpl       IIC_IntCompare
+//    cmpli      IIC_IntCompare
+//    cntlzd     IIC_IntRotateD
+//    cntlzw     IIC_IntGeneral
+//    crand      IIC_BrCR
+//    crandc     IIC_BrCR
+//    creqv      IIC_BrCR
+//    crnand     IIC_BrCR
+//    crnor      IIC_BrCR
+//    cror       IIC_BrCR
+//    crorc      IIC_BrCR
+//    crxor      IIC_BrCR
+//    dcba       IIC_LdStDCBA
+//    dcbf       IIC_LdStDCBF
+//    dcbi       IIC_LdStDCBI
+//    dcbst      IIC_LdStDCBF
+//    dcbt       IIC_LdStLoad
+//    dcbtst     IIC_LdStLoad
+//    dcbz       IIC_LdStDCBF
+//    divd       IIC_IntDivD
+//    divdu      IIC_IntDivD
+//    divw       IIC_IntDivW
+//    divwu      IIC_IntDivW
+//    dss        IIC_LdStDSS
+//    dst        IIC_LdStDSS
+//    dstst      IIC_LdStDSS
+//    eciwx      IIC_LdStLoad
+//    ecowx      IIC_LdStLoad
+//    eieio      IIC_LdStLoad
+//    eqv        IIC_IntSimple
+//    extsb      IIC_IntSimple
+//    extsh      IIC_IntSimple
+//    extsw      IIC_IntSimple
+//    fabs       IIC_FPGeneral
+//    fadd       IIC_FPAddSub
+//    fadds      IIC_FPGeneral
+//    fcfid      IIC_FPGeneral
+//    fcmpo      IIC_FPCompare
+//    fcmpu      IIC_FPCompare
+//    fctid      IIC_FPGeneral
+//    fctidz     IIC_FPGeneral
+//    fctiw      IIC_FPGeneral
+//    fctiwz     IIC_FPGeneral
+//    fdiv       IIC_FPDivD
+//    fdivs      IIC_FPDivS
+//    fmadd      IIC_FPFused
+//    fmadds     IIC_FPGeneral
+//    fmr        IIC_FPGeneral
+//    fmsub      IIC_FPFused
+//    fmsubs     IIC_FPGeneral
+//    fmul       IIC_FPFused
+//    fmuls      IIC_FPGeneral
+//    fnabs      IIC_FPGeneral
+//    fneg       IIC_FPGeneral
+//    fnmadd     IIC_FPFused
+//    fnmadds    IIC_FPGeneral
+//    fnmsub     IIC_FPFused
+//    fnmsubs    IIC_FPGeneral
+//    fres       IIC_FPRes
+//    frsp       IIC_FPGeneral
+//    frsqrte    IIC_FPGeneral
+//    fsel       IIC_FPGeneral
+//    fsqrt      IIC_FPSqrt
+//    fsqrts     IIC_FPSqrt
+//    fsub       IIC_FPAddSub
+//    fsubs      IIC_FPGeneral
+//    icbi       IIC_LdStICBI
+//    isync      IIC_SprISYNC
+//    lbz        IIC_LdStLoad
+//    lbzu       IIC_LdStLoadUpd
+//    lbzux      IIC_LdStLoadUpd
+//    lbzx       IIC_LdStLoad
+//    ld         IIC_LdStLD
+//    ldarx      IIC_LdStLDARX
+//    ldu        IIC_LdStLDU
+//    ldux       IIC_LdStLDU
+//    ldx        IIC_LdStLD
+//    lfd        IIC_LdStLFD
+//    lfdu       IIC_LdStLFDU
+//    lfdux      IIC_LdStLFDU
+//    lfdx       IIC_LdStLFD
+//    lfs        IIC_LdStLFD
+//    lfsu       IIC_LdStLFDU
+//    lfsux      IIC_LdStLFDU
+//    lfsx       IIC_LdStLFD
+//    lha        IIC_LdStLHA
+//    lhau       IIC_LdStLHAU
+//    lhaux      IIC_LdStLHAU
+//    lhax       IIC_LdStLHA
+//    lhbrx      IIC_LdStLoad
+//    lhz        IIC_LdStLoad
+//    lhzu       IIC_LdStLoadUpd
+//    lhzux      IIC_LdStLoadUpd
+//    lhzx       IIC_LdStLoad
+//    lmw        IIC_LdStLMW
+//    lswi       IIC_LdStLMW
+//    lswx       IIC_LdStLMW
+//    lvebx      IIC_LdStLVecX
+//    lvehx      IIC_LdStLVecX
+//    lvewx      IIC_LdStLVecX
+//    lvsl       IIC_LdStLVecX
+//    lvsr       IIC_LdStLVecX
+//    lvx        IIC_LdStLVecX
+//    lvxl       IIC_LdStLVecX
+//    lwa        IIC_LdStLWA
+//    lwarx      IIC_LdStLWARX
+//    lwaux      IIC_LdStLHAU
+//    lwax       IIC_LdStLHA
+//    lwbrx      IIC_LdStLoad
+//    lwz        IIC_LdStLoad
+//    lwzu       IIC_LdStLoadUpd
+//    lwzux      IIC_LdStLoadUpd
+//    lwzx       IIC_LdStLoad
+//    mcrf       IIC_BrMCR
+//    mcrfs      IIC_FPGeneral
+//    mcrxr      IIC_BrMCRX
+//    mfcr       IIC_SprMFCR
+//    mffs       IIC_IntMFFS
+//    mfmsr      IIC_SprMFMSR
+//    mfspr      IIC_SprMFSPR
+//    mfsr       IIC_SprMFSR
+//    mfsrin     IIC_SprMFSR
+//    mftb       IIC_SprMFTB
+//    mfvscr     IIC_IntMFVSCR
+//    mtcrf      IIC_BrMCRX
+//    mtfsb0     IIC_IntMTFSB0
+//    mtfsb1     IIC_IntMTFSB0
+//    mtfsf      IIC_IntMTFSB0
+//    mtfsfi     IIC_IntMTFSB0
+//    mtmsr      IIC_SprMTMSR
+//    mtmsrd     IIC_LdStLD
+//    mtspr      IIC_SprMTSPR
+//    mtsr       IIC_SprMTSR
+//    mtsrd      IIC_IntMTSRD
+//    mtsrdin    IIC_IntMTSRD
+//    mtsrin     IIC_SprMTSRIN
+//    mtvscr     IIC_IntMFVSCR
+//    mulhd      IIC_IntMulHD
+//    mulhdu     IIC_IntMulHD
+//    mulhw      IIC_IntMulHW
+//    mulhwu     IIC_IntMulHWU
+//    mulld      IIC_IntMulHD
+//    mulli      IIC_IntMulLI
+//    mullw      IIC_IntMulHW
+//    nand       IIC_IntSimple
+//    neg        IIC_IntSimple
+//    nor        IIC_IntSimple
+//    or         IIC_IntSimple
+//    orc        IIC_IntSimple
+//    ori        IIC_IntSimple
+//    oris       IIC_IntSimple
+//    rfi        IIC_SprRFI
+//    rfid       IIC_IntRFID
+//    rldcl      IIC_IntRotateD
+//    rldcr      IIC_IntRotateD
+//    rldic      IIC_IntRotateDI
+//    rldicl     IIC_IntRotateDI
+//    rldicr     IIC_IntRotateDI
+//    rldimi     IIC_IntRotateDI
+//    rlwimi     IIC_IntRotate
+//    rlwinm     IIC_IntGeneral
+//    rlwnm      IIC_IntGeneral
+//    sc         IIC_SprSC
+//    slbia      IIC_LdStSLBIA
+//    slbie      IIC_LdStSLBIE
+//    sld        IIC_IntRotateD
+//    slw        IIC_IntGeneral
+//    srad       IIC_IntRotateD
+//    sradi      IIC_IntRotateDI
+//    sraw       IIC_IntShift
+//    srawi      IIC_IntShift
+//    srd        IIC_IntRotateD
+//    srw        IIC_IntGeneral
+//    stb        IIC_LdStStore
+//    stbu       IIC_LdStStoreUpd
+//    stbux      IIC_LdStStoreUpd
+//    stbx       IIC_LdStStore
+//    std        IIC_LdStSTD
+//    stdcx.     IIC_LdStSTDCX
+//    stdu       IIC_LdStSTDU
+//    stdux      IIC_LdStSTDU
+//    stdx       IIC_LdStSTD
+//    stfd       IIC_LdStSTFD
+//    stfdu      IIC_LdStSTFDU
+//    stfdux     IIC_LdStSTFDU
+//    stfdx      IIC_LdStSTFD
+//    stfiwx     IIC_LdStSTFD
+//    stfs       IIC_LdStSTFD
+//    stfsu      IIC_LdStSTFDU
+//    stfsux     IIC_LdStSTFDU
+//    stfsx      IIC_LdStSTFD
+//    sth        IIC_LdStStore
+//    sthbrx     IIC_LdStStore
+//    sthu       IIC_LdStStoreUpd
+//    sthux      IIC_LdStStoreUpd
+//    sthx       IIC_LdStStore
+//    stmw       IIC_LdStLMW
+//    stswi      IIC_LdStLMW
+//    stswx      IIC_LdStLMW
+//    stvebx     IIC_LdStSTVEBX
+//    stvehx     IIC_LdStSTVEBX
+//    stvewx     IIC_LdStSTVEBX
+//    stvx       IIC_LdStSTVEBX
+//    stvxl      IIC_LdStSTVEBX
+//    stw        IIC_LdStStore
+//    stwbrx     IIC_LdStStore
+//    stwcx.     IIC_LdStSTWCX
+//    stwu       IIC_LdStStoreUpd
+//    stwux      IIC_LdStStoreUpd
+//    stwx       IIC_LdStStore
+//    subf       IIC_IntGeneral
+//    subfc      IIC_IntGeneral
+//    subfe      IIC_IntGeneral
+//    subfic     IIC_IntGeneral
+//    subfme     IIC_IntGeneral
+//    subfze     IIC_IntGeneral
+//    sync       IIC_LdStSync
+//    td         IIC_IntTrapD
+//    tdi        IIC_IntTrapD
+//    tlbia      IIC_LdStSLBIA
+//    tlbie      IIC_LdStDCBF
+//    tlbsync    IIC_SprTLBSYNC
+//    tw         IIC_IntTrapW
+//    twi        IIC_IntTrapW
+//    vaddcuw    IIC_VecGeneral
+//    vaddfp     IIC_VecFP
+//    vaddsbs    IIC_VecGeneral
+//    vaddshs    IIC_VecGeneral
+//    vaddsws    IIC_VecGeneral
+//    vaddubm    IIC_VecGeneral
+//    vaddubs    IIC_VecGeneral
+//    vadduhm    IIC_VecGeneral
+//    vadduhs    IIC_VecGeneral
+//    vadduwm    IIC_VecGeneral
+//    vadduws    IIC_VecGeneral
+//    vand       IIC_VecGeneral
+//    vandc      IIC_VecGeneral
+//    vavgsb     IIC_VecGeneral
+//    vavgsh     IIC_VecGeneral
+//    vavgsw     IIC_VecGeneral
+//    vavgub     IIC_VecGeneral
+//    vavguh     IIC_VecGeneral
+//    vavguw     IIC_VecGeneral
+//    vcfsx      IIC_VecFP
+//    vcfux      IIC_VecFP
+//    vcmpbfp    IIC_VecFPCompare
+//    vcmpeqfp   IIC_VecFPCompare
+//    vcmpequb   IIC_VecGeneral
+//    vcmpequh   IIC_VecGeneral
+//    vcmpequw   IIC_VecGeneral
+//    vcmpgefp   IIC_VecFPCompare
+//    vcmpgtfp   IIC_VecFPCompare
+//    vcmpgtsb   IIC_VecGeneral
+//    vcmpgtsh   IIC_VecGeneral
+//    vcmpgtsw   IIC_VecGeneral
+//    vcmpgtub   IIC_VecGeneral
+//    vcmpgtuh   IIC_VecGeneral
+//    vcmpgtuw   IIC_VecGeneral
+//    vctsxs     IIC_VecFP
+//    vctuxs     IIC_VecFP
+//    vexptefp   IIC_VecFP
+//    vlogefp    IIC_VecFP
+//    vmaddfp    IIC_VecFP
+//    vmaxfp     IIC_VecFPCompare
+//    vmaxsb     IIC_VecGeneral
+//    vmaxsh     IIC_VecGeneral
+//    vmaxsw     IIC_VecGeneral
+//    vmaxub     IIC_VecGeneral
+//    vmaxuh     IIC_VecGeneral
+//    vmaxuw     IIC_VecGeneral
+//    vmhaddshs  IIC_VecComplex
+//    vmhraddshs IIC_VecComplex
+//    vminfp     IIC_VecFPCompare
+//    vminsb     IIC_VecGeneral
+//    vminsh     IIC_VecGeneral
+//    vminsw     IIC_VecGeneral
+//    vminub     IIC_VecGeneral
+//    vminuh     IIC_VecGeneral
+//    vminuw     IIC_VecGeneral
+//    vmladduhm  IIC_VecComplex
+//    vmrghb     IIC_VecPerm
+//    vmrghh     IIC_VecPerm
+//    vmrghw     IIC_VecPerm
+//    vmrglb     IIC_VecPerm
+//    vmrglh     IIC_VecPerm
+//    vmrglw     IIC_VecPerm
+//    vmsubfp    IIC_VecFP
+//    vmsummbm   IIC_VecComplex
+//    vmsumshm   IIC_VecComplex
+//    vmsumshs   IIC_VecComplex
+//    vmsumubm   IIC_VecComplex
+//    vmsumuhm   IIC_VecComplex
+//    vmsumuhs   IIC_VecComplex
+//    vmulesb    IIC_VecComplex
+//    vmulesh    IIC_VecComplex
+//    vmuleub    IIC_VecComplex
+//    vmuleuh    IIC_VecComplex
+//    vmulosb    IIC_VecComplex
+//    vmulosh    IIC_VecComplex
+//    vmuloub    IIC_VecComplex
+//    vmulouh    IIC_VecComplex
+//    vnor       IIC_VecGeneral
+//    vor        IIC_VecGeneral
+//    vperm      IIC_VecPerm
+//    vpkpx      IIC_VecPerm
+//    vpkshss    IIC_VecPerm
+//    vpkshus    IIC_VecPerm
+//    vpkswss    IIC_VecPerm
+//    vpkswus    IIC_VecPerm
+//    vpkuhum    IIC_VecPerm
+//    vpkuhus    IIC_VecPerm
+//    vpkuwum    IIC_VecPerm
+//    vpkuwus    IIC_VecPerm
+//    vrefp      IIC_VecFPRound
+//    vrfim      IIC_VecFPRound
+//    vrfin      IIC_VecFPRound
+//    vrfip      IIC_VecFPRound
+//    vrfiz      IIC_VecFPRound
+//    vrlb       IIC_VecGeneral
+//    vrlh       IIC_VecGeneral
+//    vrlw       IIC_VecGeneral
+//    vrsqrtefp  IIC_VecFP
+//    vsel       IIC_VecGeneral
+//    vsl        IIC_VecVSL
+//    vslb       IIC_VecGeneral
+//    vsldoi     IIC_VecPerm
+//    vslh       IIC_VecGeneral
+//    vslo       IIC_VecPerm
+//    vslw       IIC_VecGeneral
+//    vspltb     IIC_VecPerm
+//    vsplth     IIC_VecPerm
+//    vspltisb   IIC_VecPerm
+//    vspltish   IIC_VecPerm
+//    vspltisw   IIC_VecPerm
+//    vspltw     IIC_VecPerm
+//    vsr        IIC_VecVSR
+//    vsrab      IIC_VecGeneral
+//    vsrah      IIC_VecGeneral
+//    vsraw      IIC_VecGeneral
+//    vsrb       IIC_VecGeneral
+//    vsrh       IIC_VecGeneral
+//    vsro       IIC_VecPerm
+//    vsrw       IIC_VecGeneral
+//    vsubcuw    IIC_VecGeneral
+//    vsubfp     IIC_VecFP
+//    vsubsbs    IIC_VecGeneral
+//    vsubshs    IIC_VecGeneral
+//    vsubsws    IIC_VecGeneral
+//    vsububm    IIC_VecGeneral
+//    vsububs    IIC_VecGeneral
+//    vsubuhm    IIC_VecGeneral
+//    vsubuhs    IIC_VecGeneral
+//    vsubuwm    IIC_VecGeneral
+//    vsubuws    IIC_VecGeneral
+//    vsum2sws   IIC_VecComplex
+//    vsum4sbs   IIC_VecComplex
+//    vsum4shs   IIC_VecComplex
+//    vsum4ubs   IIC_VecComplex
+//    vsumsws    IIC_VecComplex
+//    vupkhpx    IIC_VecPerm
+//    vupkhsb    IIC_VecPerm
+//    vupkhsh    IIC_VecPerm
+//    vupklpx    IIC_VecPerm
+//    vupklsb    IIC_VecPerm
+//    vupklsh    IIC_VecPerm
+//    vxor       IIC_VecGeneral
+//    xor        IIC_IntSimple
+//    xori       IIC_IntSimple
+//    xoris      IIC_IntSimple
 //

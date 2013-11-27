@@ -45,255 +45,255 @@ def PPCE5500Itineraries : ProcessorItineraries<
   [DIS0, DIS1, SFX0, SFX1, BU, CFX_DivBypass, CFX_0, CFX_1,
    LSU_0, FPU_0],
   [CR_Bypass, GPR_Bypass, FPR_Bypass], [
-  InstrItinData<IntSimple   , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [SFX0, SFX1]>],
-                              [5, 2, 2], // Latency = 1
-                              [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<IntGeneral  , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [SFX0, SFX1]>],
-                              [5, 2, 2], // Latency = 1
-                              [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<IntCompare  , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [SFX0, SFX1]>],
-                              [6, 2, 2], // Latency = 1 or 2
-                              [CR_Bypass, GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<IntDivD     , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [CFX_0], 0>,
-                               InstrStage<26, [CFX_DivBypass]>],
-                              [30, 2, 2], // Latency= 4..26, Repeat rate= 4..26
-                              [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,                              
-  InstrItinData<IntDivW     , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [CFX_0], 0>,
-                               InstrStage<16, [CFX_DivBypass]>],
-                              [20, 2, 2], // Latency= 4..16, Repeat rate= 4..16
-                              [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<IntMFFS     , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [FPU_0]>],
-                              [11], // Latency = 7, Repeat rate = 1
-                              [FPR_Bypass]>,
-  InstrItinData<IntMTFSB0   , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<7, [FPU_0]>],
-                              [11, 2, 2], // Latency = 7, Repeat rate = 7
-                              [NoBypass, NoBypass, NoBypass]>,
-  InstrItinData<IntMulHD    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [CFX_0], 0>,
-                               InstrStage<2, [CFX_1]>],
-                              [9, 2, 2], // Latency = 4..7, Repeat rate = 2..4
-                              [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,                              
-  InstrItinData<IntMulHW    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [CFX_0], 0>,
-                               InstrStage<1, [CFX_1]>],
-                              [8, 2, 2], // Latency = 4, Repeat rate = 1
-                              [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<IntMulHWU   , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [CFX_0], 0>,
-                               InstrStage<1, [CFX_1]>],
-                              [8, 2, 2], // Latency = 4, Repeat rate = 1
-                              [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<IntMulLI    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [CFX_0], 0>,
-                               InstrStage<2, [CFX_1]>],
-                              [8, 2, 2], // Latency = 4 or 5, Repeat = 2
-                              [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<IntRotate   , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [SFX0, SFX1]>],
-                              [5, 2, 2], // Latency = 1
-                              [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<IntRotateD  , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<2, [SFX0, SFX1]>],
-                              [6, 2, 2], // Latency = 2, Repeat rate = 2
-                              [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<IntRotateDI , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [SFX0, SFX1]>],
-                              [5, 2, 2], // Latency = 1, Repeat rate = 1
-                              [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,                                                            
-  InstrItinData<IntShift    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<2, [SFX0, SFX1]>],
-                              [6, 2, 2], // Latency = 2, Repeat rate = 2
-                              [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<IntTrapW    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<2, [SFX0]>],
-                              [6, 2], // Latency = 2, Repeat rate = 2
-                              [GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<BrB         , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [BU]>],
-                              [5, 2], // Latency = 1
-                              [NoBypass, GPR_Bypass]>,
-  InstrItinData<BrCR        , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [BU]>],
-                              [5, 2, 2], // Latency = 1
-                              [CR_Bypass, CR_Bypass, CR_Bypass]>,
-  InstrItinData<BrMCR       , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [BU]>],
-                              [5, 2], // Latency = 1
-                              [CR_Bypass, CR_Bypass]>,
-  InstrItinData<BrMCRX      , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [CFX_0]>],
-                              [5, 2, 2], // Latency = 1
-                              [CR_Bypass, GPR_Bypass]>,
-  InstrItinData<LdStDCBA    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3, Repeat rate = 1
-                              [GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<LdStDCBF    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3, Repeat rate = 1
-                              [GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<LdStDCBI    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3, Repeat rate = 1
-                              [GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<LdStLoad    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3
-                              [GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<LdStLoadUpd , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [SFX0, SFX1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3, Repeat rate = 1
-                              [GPR_Bypass, GPR_Bypass],
-                              2>, // 2 micro-ops
-  InstrItinData<LdStLD      , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3, Repeat rate = 1
-                              [GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<LdStLDARX   , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<3, [LSU_0]>],
-                              [7, 2], // Latency = 3, Repeat rate = 3
-                              [GPR_Bypass, GPR_Bypass]>,                              
-  InstrItinData<LdStLDU     , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [SFX0, SFX1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3, Repeat rate = 1
-                              [GPR_Bypass, GPR_Bypass],
-                              2>, // 2 micro-ops
-  InstrItinData<LdStStore   , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3, Repeat rate = 1
-                              [NoBypass, GPR_Bypass]>,
-  InstrItinData<LdStStoreUpd, [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [SFX0, SFX1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3, Repeat rate = 1
-                              [NoBypass, GPR_Bypass],
-                              2>, // 2 micro-ops                              
-  InstrItinData<LdStICBI    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3, Repeat rate = 1
-                              [NoBypass, GPR_Bypass]>,
-  InstrItinData<LdStSTFD    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2, 2], // Latency = 3, Repeat rate = 1
-                              [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<LdStSTFDU   , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [SFX0, SFX1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2, 2], // Latency = 3, Repeat rate = 1
-                              [GPR_Bypass, GPR_Bypass, GPR_Bypass],
-                              2>, // 2 micro-ops                              
-  InstrItinData<LdStLFD     , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [8, 2, 2], // Latency = 4, Repeat rate = 1
-                              [FPR_Bypass, GPR_Bypass, GPR_Bypass],
-                              2>, // 2 micro-ops
-  InstrItinData<LdStLFDU    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [SFX0, SFX1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [8, 2, 2], // Latency = 4, Repeat rate = 1
-                              [FPR_Bypass, GPR_Bypass, GPR_Bypass],
-                              2>, // 2 micro-ops
-  InstrItinData<LdStLHA     , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3
-                              [GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<LdStLHAU    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [SFX0, SFX1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3, Repeat rate = 1
-                              [GPR_Bypass, GPR_Bypass],
-                              2>, // 2 micro-ops                              
-  InstrItinData<LdStLMW     , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<4, [LSU_0]>],
-                              [8, 2], // Latency = r+3, Repeat rate = r+3
-                              [NoBypass, GPR_Bypass]>,
-  InstrItinData<LdStLWARX   , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<3, [LSU_0]>],
-                              [7, 2, 2], // Latency = 3, Repeat rate = 3
-                              [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<LdStSTD     , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3, Repeat rate = 1                              
-                              [NoBypass, GPR_Bypass]>,
-  InstrItinData<LdStSTDCX   , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3, Repeat rate = 1                              
-                              [NoBypass, GPR_Bypass]>,                              
-  InstrItinData<LdStSTDU    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [SFX0, SFX1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3, Repeat rate = 1
-                              [NoBypass, GPR_Bypass],
-                              2>, // 2 micro-ops                              
-  InstrItinData<LdStSTWCX   , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [LSU_0]>],
-                              [7, 2], // Latency = 3, Repeat rate = 1
-                              [NoBypass, GPR_Bypass]>,
-  InstrItinData<LdStSync    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [LSU_0]>]>,
-  InstrItinData<SprMTMSR    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<2, [CFX_0]>],
-                              [6, 2], // Latency = 2, Repeat rate = 4
-                              [GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<SprTLBSYNC  , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [LSU_0], 0>]>,
-  InstrItinData<SprMFCR     , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<5, [CFX_0]>],
-                              [9, 2], // Latency = 5, Repeat rate = 5
-                              [GPR_Bypass, CR_Bypass]>,
-  InstrItinData<SprMFMSR    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<4, [SFX0]>],
-                              [8, 2], // Latency = 4, Repeat rate = 4
-                              [GPR_Bypass, GPR_Bypass]>,
-  InstrItinData<SprMFSPR    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [CFX_0]>],
-                              [5], // Latency = 1, Repeat rate = 1
-                              [GPR_Bypass]>,
-  InstrItinData<SprMFTB     , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<4, [CFX_0]>],
-                              [8, 2], // Latency = 4, Repeat rate = 4
-                              [NoBypass, GPR_Bypass]>,
-  InstrItinData<SprMTSPR    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [SFX0, SFX1]>],
-                              [5], // Latency = 1, Repeat rate = 1
-                              [GPR_Bypass]>,
-  InstrItinData<FPGeneral   , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [FPU_0]>],
-                              [11, 2, 2], // Latency = 7, Repeat rate = 1 
-                              [FPR_Bypass, FPR_Bypass, FPR_Bypass]>,
-  InstrItinData<FPAddSub    , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [FPU_0]>],
-                              [11, 2, 2], // Latency = 7, Repeat rate = 1 
-                              [FPR_Bypass, FPR_Bypass, FPR_Bypass]>,                              
-  InstrItinData<FPCompare   , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [FPU_0]>],
-                              [11, 2, 2], // Latency = 7, Repeat rate = 1
-                              [CR_Bypass, FPR_Bypass, FPR_Bypass]>,
-  InstrItinData<FPDivD      , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<31, [FPU_0]>],
-                              [39, 2, 2], // Latency = 35, Repeat rate = 31
-                              [FPR_Bypass, FPR_Bypass, FPR_Bypass]>,
-  InstrItinData<FPDivS      , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<16, [FPU_0]>],
-                              [24, 2, 2], // Latency = 20, Repeat rate = 16 
-                              [FPR_Bypass, FPR_Bypass, FPR_Bypass]>,
-  InstrItinData<FPFused     , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<1, [FPU_0]>],
-                              [11, 2, 2, 2], // Latency = 7, Repeat rate = 1
-                              [FPR_Bypass, FPR_Bypass, FPR_Bypass, FPR_Bypass]>,
-  InstrItinData<FPRes       , [InstrStage<1, [DIS0, DIS1], 0>,
-                               InstrStage<2, [FPU_0]>],
-                              [12, 2], // Latency = 8, Repeat rate = 2
-                              [FPR_Bypass, FPR_Bypass]>
+  InstrItinData<IIC_IntSimple,   [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [SFX0, SFX1]>],
+                                 [5, 2, 2], // Latency = 1
+                                 [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_IntGeneral,  [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [SFX0, SFX1]>],
+                                 [5, 2, 2], // Latency = 1
+                                 [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_IntCompare,  [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [SFX0, SFX1]>],
+                                 [6, 2, 2], // Latency = 1 or 2
+                                 [CR_Bypass, GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_IntDivD,     [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [CFX_0], 0>,
+                                  InstrStage<26, [CFX_DivBypass]>],
+                                 [30, 2, 2], // Latency= 4..26, Repeat rate= 4..26
+                                 [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,                              
+  InstrItinData<IIC_IntDivW,     [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [CFX_0], 0>,
+                                  InstrStage<16, [CFX_DivBypass]>],
+                                 [20, 2, 2], // Latency= 4..16, Repeat rate= 4..16
+                                 [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_IntMFFS,     [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [FPU_0]>],
+                                 [11], // Latency = 7, Repeat rate = 1
+                                 [FPR_Bypass]>,
+  InstrItinData<IIC_IntMTFSB0,   [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<7, [FPU_0]>],
+                                 [11, 2, 2], // Latency = 7, Repeat rate = 7
+                                 [NoBypass, NoBypass, NoBypass]>,
+  InstrItinData<IIC_IntMulHD,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [CFX_0], 0>,
+                                  InstrStage<2, [CFX_1]>],
+                                 [9, 2, 2], // Latency = 4..7, Repeat rate = 2..4
+                                 [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,                              
+  InstrItinData<IIC_IntMulHW,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [CFX_0], 0>,
+                                  InstrStage<1, [CFX_1]>],
+                                 [8, 2, 2], // Latency = 4, Repeat rate = 1
+                                 [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_IntMulHWU,   [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [CFX_0], 0>,
+                                  InstrStage<1, [CFX_1]>],
+                                 [8, 2, 2], // Latency = 4, Repeat rate = 1
+                                 [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_IntMulLI,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [CFX_0], 0>,
+                                  InstrStage<2, [CFX_1]>],
+                                 [8, 2, 2], // Latency = 4 or 5, Repeat = 2
+                                 [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_IntRotate,   [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [SFX0, SFX1]>],
+                                 [5, 2, 2], // Latency = 1
+                                 [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_IntRotateD,  [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<2, [SFX0, SFX1]>],
+                                 [6, 2, 2], // Latency = 2, Repeat rate = 2
+                                 [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_IntRotateDI, [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [SFX0, SFX1]>],
+                                 [5, 2, 2], // Latency = 1, Repeat rate = 1
+                                 [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,                                                            
+  InstrItinData<IIC_IntShift,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<2, [SFX0, SFX1]>],
+                                 [6, 2, 2], // Latency = 2, Repeat rate = 2
+                                 [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_IntTrapW,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<2, [SFX0]>],
+                                 [6, 2], // Latency = 2, Repeat rate = 2
+                                 [GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_BrB,         [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [BU]>],
+                                 [5, 2], // Latency = 1
+                                 [NoBypass, GPR_Bypass]>,
+  InstrItinData<IIC_BrCR,        [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [BU]>],
+                                 [5, 2, 2], // Latency = 1
+                                 [CR_Bypass, CR_Bypass, CR_Bypass]>,
+  InstrItinData<IIC_BrMCR,       [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [BU]>],
+                                 [5, 2], // Latency = 1
+                                 [CR_Bypass, CR_Bypass]>,
+  InstrItinData<IIC_BrMCRX,      [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [CFX_0]>],
+                                 [5, 2, 2], // Latency = 1
+                                 [CR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_LdStDCBA,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_LdStDCBF,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_LdStDCBI,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_LdStLoad,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3
+                                 [GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_LdStLoadUpd, [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [SFX0, SFX1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [GPR_Bypass, GPR_Bypass],
+                                 2>, // 2 micro-ops
+  InstrItinData<IIC_LdStLD,      [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_LdStLDARX,   [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<3, [LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 3
+                                 [GPR_Bypass, GPR_Bypass]>,                              
+  InstrItinData<IIC_LdStLDU,     [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [SFX0, SFX1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [GPR_Bypass, GPR_Bypass],
+                                 2>, // 2 micro-ops
+  InstrItinData<IIC_LdStStore,   [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [NoBypass, GPR_Bypass]>,
+  InstrItinData<IIC_LdStStoreUpd,[InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [SFX0, SFX1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [NoBypass, GPR_Bypass],
+                                 2>, // 2 micro-ops                              
+  InstrItinData<IIC_LdStICBI,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [NoBypass, GPR_Bypass]>,
+  InstrItinData<IIC_LdStSTFD,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2, 2], // Latency = 3, Repeat rate = 1
+                                 [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_LdStSTFDU,   [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [SFX0, SFX1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2, 2], // Latency = 3, Repeat rate = 1
+                                 [GPR_Bypass, GPR_Bypass, GPR_Bypass],
+                                 2>, // 2 micro-ops                              
+  InstrItinData<IIC_LdStLFD,     [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [8, 2, 2], // Latency = 4, Repeat rate = 1
+                                 [FPR_Bypass, GPR_Bypass, GPR_Bypass],
+                                 2>, // 2 micro-ops
+  InstrItinData<IIC_LdStLFDU,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [SFX0, SFX1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [8, 2, 2], // Latency = 4, Repeat rate = 1
+                                 [FPR_Bypass, GPR_Bypass, GPR_Bypass],
+                                 2>, // 2 micro-ops
+  InstrItinData<IIC_LdStLHA,     [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3
+                                 [GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_LdStLHAU,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [SFX0, SFX1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [GPR_Bypass, GPR_Bypass],
+                                 2>, // 2 micro-ops                              
+  InstrItinData<IIC_LdStLMW,     [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<4, [LSU_0]>],
+                                 [8, 2], // Latency = r+3, Repeat rate = r+3
+                                 [NoBypass, GPR_Bypass]>,
+  InstrItinData<IIC_LdStLWARX,   [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<3, [LSU_0]>],
+                                 [7, 2, 2], // Latency = 3, Repeat rate = 3
+                                 [GPR_Bypass, GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_LdStSTD,     [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1                              
+                                 [NoBypass, GPR_Bypass]>,
+  InstrItinData<IIC_LdStSTDCX,   [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1                              
+                                 [NoBypass, GPR_Bypass]>,                              
+  InstrItinData<IIC_LdStSTDU,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [SFX0, SFX1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [NoBypass, GPR_Bypass],
+                                 2>, // 2 micro-ops                              
+  InstrItinData<IIC_LdStSTWCX,   [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [NoBypass, GPR_Bypass]>,
+  InstrItinData<IIC_LdStSync,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [LSU_0]>]>,
+  InstrItinData<IIC_SprMTMSR,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<2, [CFX_0]>],
+                                 [6, 2], // Latency = 2, Repeat rate = 4
+                                 [GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_SprTLBSYNC,  [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [LSU_0], 0>]>,
+  InstrItinData<IIC_SprMFCR,     [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<5, [CFX_0]>],
+                                 [9, 2], // Latency = 5, Repeat rate = 5
+                                 [GPR_Bypass, CR_Bypass]>,
+  InstrItinData<IIC_SprMFMSR,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<4, [SFX0]>],
+                                 [8, 2], // Latency = 4, Repeat rate = 4
+                                 [GPR_Bypass, GPR_Bypass]>,
+  InstrItinData<IIC_SprMFSPR,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [CFX_0]>],
+                                 [5], // Latency = 1, Repeat rate = 1
+                                 [GPR_Bypass]>,
+  InstrItinData<IIC_SprMFTB,     [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<4, [CFX_0]>],
+                                 [8, 2], // Latency = 4, Repeat rate = 4
+                                 [NoBypass, GPR_Bypass]>,
+  InstrItinData<IIC_SprMTSPR,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [SFX0, SFX1]>],
+                                 [5], // Latency = 1, Repeat rate = 1
+                                 [GPR_Bypass]>,
+  InstrItinData<IIC_FPGeneral,   [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [FPU_0]>],
+                                 [11, 2, 2], // Latency = 7, Repeat rate = 1 
+                                 [FPR_Bypass, FPR_Bypass, FPR_Bypass]>,
+  InstrItinData<IIC_FPAddSub,    [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [FPU_0]>],
+                                 [11, 2, 2], // Latency = 7, Repeat rate = 1 
+                                 [FPR_Bypass, FPR_Bypass, FPR_Bypass]>,                              
+  InstrItinData<IIC_FPCompare,   [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [FPU_0]>],
+                                 [11, 2, 2], // Latency = 7, Repeat rate = 1
+                                 [CR_Bypass, FPR_Bypass, FPR_Bypass]>,
+  InstrItinData<IIC_FPDivD,      [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<31, [FPU_0]>],
+                                 [39, 2, 2], // Latency = 35, Repeat rate = 31
+                                 [FPR_Bypass, FPR_Bypass, FPR_Bypass]>,
+  InstrItinData<IIC_FPDivS,      [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<16, [FPU_0]>],
+                                 [24, 2, 2], // Latency = 20, Repeat rate = 16 
+                                 [FPR_Bypass, FPR_Bypass, FPR_Bypass]>,
+  InstrItinData<IIC_FPFused,     [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<1, [FPU_0]>],
+                                 [11, 2, 2, 2], // Latency = 7, Repeat rate = 1
+                                 [FPR_Bypass, FPR_Bypass, FPR_Bypass, FPR_Bypass]>,
+  InstrItinData<IIC_FPRes,       [InstrStage<1, [DIS0, DIS1], 0>,
+                                  InstrStage<2, [FPU_0]>],
+                                 [12, 2], // Latency = 8, Repeat rate = 2
+                                 [FPR_Bypass, FPR_Bypass]>
 ]>;
 
 // ===---------------------------------------------------------------------===//

@@ -164,7 +164,7 @@ def vecspltisw : PatLeaf<(build_vector), [{
 // VA1a_Int_Ty - A VAForm_1a intrinsic definition of specific type.
 class VA1a_Int_Ty<bits<6> xo, string opc, Intrinsic IntID, ValueType Ty>
   : VAForm_1a<xo, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB, vrrc:$vC),
-              !strconcat(opc, " $vD, $vA, $vB, $vC"), VecFP,
+              !strconcat(opc, " $vD, $vA, $vB, $vC"), IIC_VecFP,
                        [(set Ty:$vD, (IntID Ty:$vA, Ty:$vB, Ty:$vC))]>;
 
 // VA1a_Int_Ty2 - A VAForm_1a intrinsic definition where the type of the
@@ -172,7 +172,7 @@ class VA1a_Int_Ty<bits<6> xo, string opc, Intrinsic IntID, ValueType Ty>
 class VA1a_Int_Ty2<bits<6> xo, string opc, Intrinsic IntID, ValueType OutTy,
                    ValueType InTy>
   : VAForm_1a<xo, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB, vrrc:$vC),
-              !strconcat(opc, " $vD, $vA, $vB, $vC"), VecFP,
+              !strconcat(opc, " $vD, $vA, $vB, $vC"), IIC_VecFP,
                        [(set OutTy:$vD, (IntID InTy:$vA, InTy:$vB, InTy:$vC))]>;
 
 // VA1a_Int_Ty3 - A VAForm_1a intrinsic definition where there are two
@@ -180,14 +180,14 @@ class VA1a_Int_Ty2<bits<6> xo, string opc, Intrinsic IntID, ValueType OutTy,
 class VA1a_Int_Ty3<bits<6> xo, string opc, Intrinsic IntID, ValueType OutTy,
                    ValueType In1Ty, ValueType In2Ty>
   : VAForm_1a<xo, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB, vrrc:$vC),
-              !strconcat(opc, " $vD, $vA, $vB, $vC"), VecFP,
+              !strconcat(opc, " $vD, $vA, $vB, $vC"), IIC_VecFP,
                        [(set OutTy:$vD,
                          (IntID In1Ty:$vA, In1Ty:$vB, In2Ty:$vC))]>;
 
 // VX1_Int_Ty - A VXForm_1 intrinsic definition of specific type.
 class VX1_Int_Ty<bits<11> xo, string opc, Intrinsic IntID, ValueType Ty>
   : VXForm_1<xo, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-             !strconcat(opc, " $vD, $vA, $vB"), VecFP,
+             !strconcat(opc, " $vD, $vA, $vB"), IIC_VecFP,
              [(set Ty:$vD, (IntID Ty:$vA, Ty:$vB))]>;
 
 // VX1_Int_Ty2 - A VXForm_1 intrinsic definition where the type of the
@@ -195,7 +195,7 @@ class VX1_Int_Ty<bits<11> xo, string opc, Intrinsic IntID, ValueType Ty>
 class VX1_Int_Ty2<bits<11> xo, string opc, Intrinsic IntID, ValueType OutTy,
                   ValueType InTy>
   : VXForm_1<xo, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-             !strconcat(opc, " $vD, $vA, $vB"), VecFP,
+             !strconcat(opc, " $vD, $vA, $vB"), IIC_VecFP,
              [(set OutTy:$vD, (IntID InTy:$vA, InTy:$vB))]>;
 
 // VX1_Int_Ty3 - A VXForm_1 intrinsic definition where there are two
@@ -203,13 +203,13 @@ class VX1_Int_Ty2<bits<11> xo, string opc, Intrinsic IntID, ValueType OutTy,
 class VX1_Int_Ty3<bits<11> xo, string opc, Intrinsic IntID, ValueType OutTy,
                   ValueType In1Ty, ValueType In2Ty>
   : VXForm_1<xo, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-             !strconcat(opc, " $vD, $vA, $vB"), VecFP,
+             !strconcat(opc, " $vD, $vA, $vB"), IIC_VecFP,
              [(set OutTy:$vD, (IntID In1Ty:$vA, In2Ty:$vB))]>;
 
 // VX2_Int_SP - A VXForm_2 intrinsic definition of vector single-precision type.
 class VX2_Int_SP<bits<11> xo, string opc, Intrinsic IntID>
   : VXForm_2<xo, (outs vrrc:$vD), (ins vrrc:$vB),
-             !strconcat(opc, " $vD, $vB"), VecFP,
+             !strconcat(opc, " $vD, $vB"), IIC_VecFP,
              [(set v4f32:$vD, (IntID v4f32:$vB))]>;
 
 // VX2_Int_Ty2 - A VXForm_2 intrinsic definition where the type of the
@@ -217,7 +217,7 @@ class VX2_Int_SP<bits<11> xo, string opc, Intrinsic IntID>
 class VX2_Int_Ty2<bits<11> xo, string opc, Intrinsic IntID, ValueType OutTy,
                   ValueType InTy>
   : VXForm_2<xo, (outs vrrc:$vD), (ins vrrc:$vB),
-             !strconcat(opc, " $vD, $vB"), VecFP,
+             !strconcat(opc, " $vD, $vB"), IIC_VecFP,
              [(set OutTy:$vD, (IntID InTy:$vB))]>;
 
 //===----------------------------------------------------------------------===//
@@ -229,109 +229,109 @@ let Predicates = [HasAltivec] in {
 let isCodeGenOnly = 1 in {
 def DSS      : DSS_Form<822, (outs),
                         (ins u5imm:$ZERO0, u5imm:$STRM,u5imm:$ZERO1,u5imm:$ZERO2),
-                        "dss $STRM", LdStLoad /*FIXME*/, []>,
+                        "dss $STRM", IIC_LdStLoad /*FIXME*/, []>,
                         Deprecated<DeprecatedDST>;
 def DSSALL   : DSS_Form<822, (outs),
                         (ins u5imm:$ONE, u5imm:$ZERO0,u5imm:$ZERO1,u5imm:$ZERO2),
-                        "dssall", LdStLoad /*FIXME*/, []>,
+                        "dssall", IIC_LdStLoad /*FIXME*/, []>,
                         Deprecated<DeprecatedDST>;
 def DST      : DSS_Form<342, (outs),
                         (ins u5imm:$ZERO, u5imm:$STRM, gprc:$rA, gprc:$rB),
-                        "dst $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        "dst $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
                         Deprecated<DeprecatedDST>;
 def DSTT     : DSS_Form<342, (outs),
                         (ins u5imm:$ONE, u5imm:$STRM, gprc:$rA, gprc:$rB),
-                        "dstt $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        "dstt $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
                         Deprecated<DeprecatedDST>;
 def DSTST    : DSS_Form<374, (outs),
                         (ins u5imm:$ZERO, u5imm:$STRM, gprc:$rA, gprc:$rB),
-                        "dstst $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        "dstst $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
                         Deprecated<DeprecatedDST>;
 def DSTSTT   : DSS_Form<374, (outs),
                         (ins u5imm:$ONE, u5imm:$STRM, gprc:$rA, gprc:$rB),
-                        "dststt $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        "dststt $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
                         Deprecated<DeprecatedDST>;
 
 def DST64    : DSS_Form<342, (outs),
                         (ins u5imm:$ZERO, u5imm:$STRM, g8rc:$rA, gprc:$rB),
-                        "dst $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        "dst $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
                         Deprecated<DeprecatedDST>;
 def DSTT64   : DSS_Form<342, (outs),
                         (ins u5imm:$ONE, u5imm:$STRM, g8rc:$rA, gprc:$rB),
-                        "dstt $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        "dstt $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
                         Deprecated<DeprecatedDST>;
 def DSTST64  : DSS_Form<374, (outs),
                         (ins u5imm:$ZERO, u5imm:$STRM, g8rc:$rA, gprc:$rB),
-                        "dstst $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        "dstst $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
                         Deprecated<DeprecatedDST>;
 def DSTSTT64 : DSS_Form<374, (outs),
                         (ins u5imm:$ONE, u5imm:$STRM, g8rc:$rA, gprc:$rB),
-                        "dststt $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        "dststt $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
                         Deprecated<DeprecatedDST>;
 }
 
 def MFVSCR : VXForm_4<1540, (outs vrrc:$vD), (ins),
-                      "mfvscr $vD", LdStStore,
+                      "mfvscr $vD", IIC_LdStStore,
                       [(set v8i16:$vD, (int_ppc_altivec_mfvscr))]>; 
 def MTVSCR : VXForm_5<1604, (outs), (ins vrrc:$vB),
-                      "mtvscr $vB", LdStLoad,
+                      "mtvscr $vB", IIC_LdStLoad,
                       [(int_ppc_altivec_mtvscr v4i32:$vB)]>; 
 
 let canFoldAsLoad = 1, PPC970_Unit = 2 in {  // Loads.
 def LVEBX: XForm_1<31,   7, (outs vrrc:$vD), (ins memrr:$src),
-                   "lvebx $vD, $src", LdStLoad,
+                   "lvebx $vD, $src", IIC_LdStLoad,
                    [(set v16i8:$vD, (int_ppc_altivec_lvebx xoaddr:$src))]>;
 def LVEHX: XForm_1<31,  39, (outs vrrc:$vD), (ins memrr:$src),
-                   "lvehx $vD, $src", LdStLoad,
+                   "lvehx $vD, $src", IIC_LdStLoad,
                    [(set v8i16:$vD, (int_ppc_altivec_lvehx xoaddr:$src))]>;
 def LVEWX: XForm_1<31,  71, (outs vrrc:$vD), (ins memrr:$src),
-                   "lvewx $vD, $src", LdStLoad,
+                   "lvewx $vD, $src", IIC_LdStLoad,
                    [(set v4i32:$vD, (int_ppc_altivec_lvewx xoaddr:$src))]>;
 def LVX  : XForm_1<31, 103, (outs vrrc:$vD), (ins memrr:$src),
-                   "lvx $vD, $src", LdStLoad,
+                   "lvx $vD, $src", IIC_LdStLoad,
                    [(set v4i32:$vD, (int_ppc_altivec_lvx xoaddr:$src))]>;
 def LVXL : XForm_1<31, 359, (outs vrrc:$vD), (ins memrr:$src),
-                   "lvxl $vD, $src", LdStLoad,
+                   "lvxl $vD, $src", IIC_LdStLoad,
                    [(set v4i32:$vD, (int_ppc_altivec_lvxl xoaddr:$src))]>;
 }
 
 def LVSL : XForm_1<31,   6, (outs vrrc:$vD), (ins memrr:$src),
-                   "lvsl $vD, $src", LdStLoad,
+                   "lvsl $vD, $src", IIC_LdStLoad,
                    [(set v16i8:$vD, (int_ppc_altivec_lvsl xoaddr:$src))]>,
                    PPC970_Unit_LSU;
 def LVSR : XForm_1<31,  38, (outs vrrc:$vD), (ins memrr:$src),
-                   "lvsr $vD, $src", LdStLoad,
+                   "lvsr $vD, $src", IIC_LdStLoad,
                    [(set v16i8:$vD, (int_ppc_altivec_lvsr xoaddr:$src))]>,
                    PPC970_Unit_LSU;
 
 let PPC970_Unit = 2 in {   // Stores.
 def STVEBX: XForm_8<31, 135, (outs), (ins vrrc:$rS, memrr:$dst),
-                   "stvebx $rS, $dst", LdStStore,
+                   "stvebx $rS, $dst", IIC_LdStStore,
                    [(int_ppc_altivec_stvebx v16i8:$rS, xoaddr:$dst)]>;
 def STVEHX: XForm_8<31, 167, (outs), (ins vrrc:$rS, memrr:$dst),
-                   "stvehx $rS, $dst", LdStStore,
+                   "stvehx $rS, $dst", IIC_LdStStore,
                    [(int_ppc_altivec_stvehx v8i16:$rS, xoaddr:$dst)]>;
 def STVEWX: XForm_8<31, 199, (outs), (ins vrrc:$rS, memrr:$dst),
-                   "stvewx $rS, $dst", LdStStore,
+                   "stvewx $rS, $dst", IIC_LdStStore,
                    [(int_ppc_altivec_stvewx v4i32:$rS, xoaddr:$dst)]>;
 def STVX  : XForm_8<31, 231, (outs), (ins vrrc:$rS, memrr:$dst),
-                   "stvx $rS, $dst", LdStStore,
+                   "stvx $rS, $dst", IIC_LdStStore,
                    [(int_ppc_altivec_stvx v4i32:$rS, xoaddr:$dst)]>;
 def STVXL : XForm_8<31, 487, (outs), (ins vrrc:$rS, memrr:$dst),
-                   "stvxl $rS, $dst", LdStStore,
+                   "stvxl $rS, $dst", IIC_LdStStore,
                    [(int_ppc_altivec_stvxl v4i32:$rS, xoaddr:$dst)]>;
 }
 
 let PPC970_Unit = 5 in {  // VALU Operations.
 // VA-Form instructions.  3-input AltiVec ops.
 def VMADDFP : VAForm_1<46, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vC, vrrc:$vB),
-                       "vmaddfp $vD, $vA, $vC, $vB", VecFP,
+                       "vmaddfp $vD, $vA, $vC, $vB", IIC_VecFP,
                        [(set v4f32:$vD,
                         (fma v4f32:$vA, v4f32:$vC, v4f32:$vB))]>;
 
 // FIXME: The fma+fneg pattern won't match because fneg is not legal.
 def VNMSUBFP: VAForm_1<47, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vC, vrrc:$vB),
-                       "vnmsubfp $vD, $vA, $vC, $vB", VecFP,
+                       "vnmsubfp $vD, $vA, $vC, $vB", IIC_VecFP,
                        [(set v4f32:$vD, (fneg (fma v4f32:$vA, v4f32:$vC,
                                                   (fneg v4f32:$vB))))]>; 
 
@@ -346,23 +346,23 @@ def VSEL       : VA1a_Int_Ty<42, "vsel",  int_ppc_altivec_vsel, v4i32>;
 
 // Shuffles.
 def VSLDOI  : VAForm_2<44, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB, u5imm:$SH),
-                       "vsldoi $vD, $vA, $vB, $SH", VecFP,
+                       "vsldoi $vD, $vA, $vB, $SH", IIC_VecFP,
                        [(set v16i8:$vD, 
                          (vsldoi_shuffle:$SH v16i8:$vA, v16i8:$vB))]>;
 
 // VX-Form instructions.  AltiVec arithmetic ops.
 def VADDFP : VXForm_1<10, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vaddfp $vD, $vA, $vB", VecFP,
+                      "vaddfp $vD, $vA, $vB", IIC_VecFP,
                       [(set v4f32:$vD, (fadd v4f32:$vA, v4f32:$vB))]>;
                       
 def VADDUBM : VXForm_1<0, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vaddubm $vD, $vA, $vB", VecGeneral,
+                      "vaddubm $vD, $vA, $vB", IIC_VecGeneral,
                       [(set v16i8:$vD, (add v16i8:$vA, v16i8:$vB))]>;
 def VADDUHM : VXForm_1<64, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vadduhm $vD, $vA, $vB", VecGeneral,
+                      "vadduhm $vD, $vA, $vB", IIC_VecGeneral,
                       [(set v8i16:$vD, (add v8i16:$vA, v8i16:$vB))]>;
 def VADDUWM : VXForm_1<128, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vadduwm $vD, $vA, $vB", VecGeneral,
+                      "vadduwm $vD, $vA, $vB", IIC_VecGeneral,
                       [(set v4i32:$vD, (add v4i32:$vA, v4i32:$vB))]>;
                       
 def VADDCUW : VX1_Int_Ty<384, "vaddcuw", int_ppc_altivec_vaddcuw, v4i32>;
@@ -375,27 +375,27 @@ def VADDUWS : VX1_Int_Ty<640, "vadduws", int_ppc_altivec_vadduws, v4i32>;
                              
                              
 def VAND : VXForm_1<1028, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                    "vand $vD, $vA, $vB", VecFP,
+                    "vand $vD, $vA, $vB", IIC_VecFP,
                     [(set v4i32:$vD, (and v4i32:$vA, v4i32:$vB))]>;
 def VANDC : VXForm_1<1092, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                     "vandc $vD, $vA, $vB", VecFP,
+                     "vandc $vD, $vA, $vB", IIC_VecFP,
                      [(set v4i32:$vD, (and v4i32:$vA,
                                            (vnot_ppc v4i32:$vB)))]>;
 
 def VCFSX  : VXForm_1<842, (outs vrrc:$vD), (ins u5imm:$UIMM, vrrc:$vB),
-                      "vcfsx $vD, $vB, $UIMM", VecFP,
+                      "vcfsx $vD, $vB, $UIMM", IIC_VecFP,
                       [(set v4f32:$vD,
                              (int_ppc_altivec_vcfsx v4i32:$vB, imm:$UIMM))]>;
 def VCFUX  : VXForm_1<778, (outs vrrc:$vD), (ins u5imm:$UIMM, vrrc:$vB),
-                      "vcfux $vD, $vB, $UIMM", VecFP,
+                      "vcfux $vD, $vB, $UIMM", IIC_VecFP,
                       [(set v4f32:$vD,
                              (int_ppc_altivec_vcfux v4i32:$vB, imm:$UIMM))]>;
 def VCTSXS : VXForm_1<970, (outs vrrc:$vD), (ins u5imm:$UIMM, vrrc:$vB),
-                      "vctsxs $vD, $vB, $UIMM", VecFP,
+                      "vctsxs $vD, $vB, $UIMM", IIC_VecFP,
                       [(set v4i32:$vD,
                              (int_ppc_altivec_vctsxs v4f32:$vB, imm:$UIMM))]>;
 def VCTUXS : VXForm_1<906, (outs vrrc:$vD), (ins u5imm:$UIMM, vrrc:$vB),
-                      "vctuxs $vD, $vB, $UIMM", VecFP,
+                      "vctuxs $vD, $vB, $UIMM", IIC_VecFP,
                       [(set v4i32:$vD,
                              (int_ppc_altivec_vctuxs v4f32:$vB, imm:$UIMM))]>;
 
@@ -404,19 +404,19 @@ def VCTUXS : VXForm_1<906, (outs vrrc:$vD), (ins u5imm:$UIMM, vrrc:$vB),
 // to floating-point (sint_to_fp/uint_to_fp) conversions.
 let isCodeGenOnly = 1, VA = 0 in {
 def VCFSX_0 : VXForm_1<842, (outs vrrc:$vD), (ins vrrc:$vB),
-                       "vcfsx $vD, $vB, 0", VecFP,
+                       "vcfsx $vD, $vB, 0", IIC_VecFP,
                        [(set v4f32:$vD,
                              (int_ppc_altivec_vcfsx v4i32:$vB, 0))]>;
 def VCTUXS_0 : VXForm_1<906, (outs vrrc:$vD), (ins vrrc:$vB),
-                        "vctuxs $vD, $vB, 0", VecFP,
+                        "vctuxs $vD, $vB, 0", IIC_VecFP,
                         [(set v4i32:$vD,
                                (int_ppc_altivec_vctuxs v4f32:$vB, 0))]>;
 def VCFUX_0 : VXForm_1<778, (outs vrrc:$vD), (ins vrrc:$vB),
-                       "vcfux $vD, $vB, 0", VecFP,
+                       "vcfux $vD, $vB, 0", IIC_VecFP,
                        [(set v4f32:$vD,
                                (int_ppc_altivec_vcfux v4i32:$vB, 0))]>;
 def VCTSXS_0 : VXForm_1<970, (outs vrrc:$vD), (ins vrrc:$vB),
-                      "vctsxs $vD, $vB, 0", VecFP,
+                      "vctsxs $vD, $vB, 0", IIC_VecFP,
                       [(set v4i32:$vD,
                              (int_ppc_altivec_vctsxs v4f32:$vB, 0))]>;
 }
@@ -446,22 +446,22 @@ def VMINUH : VX1_Int_Ty< 578, "vminuh", int_ppc_altivec_vminuh, v8i16>;
 def VMINUW : VX1_Int_Ty< 642, "vminuw", int_ppc_altivec_vminuw, v4i32>;
 
 def VMRGHB : VXForm_1< 12, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vmrghb $vD, $vA, $vB", VecFP,
+                      "vmrghb $vD, $vA, $vB", IIC_VecFP,
                       [(set v16i8:$vD, (vmrghb_shuffle v16i8:$vA, v16i8:$vB))]>;
 def VMRGHH : VXForm_1< 76, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vmrghh $vD, $vA, $vB", VecFP,
+                      "vmrghh $vD, $vA, $vB", IIC_VecFP,
                       [(set v16i8:$vD, (vmrghh_shuffle v16i8:$vA, v16i8:$vB))]>;
 def VMRGHW : VXForm_1<140, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vmrghw $vD, $vA, $vB", VecFP,
+                      "vmrghw $vD, $vA, $vB", IIC_VecFP,
                       [(set v16i8:$vD, (vmrghw_shuffle v16i8:$vA, v16i8:$vB))]>;
 def VMRGLB : VXForm_1<268, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vmrglb $vD, $vA, $vB", VecFP,
+                      "vmrglb $vD, $vA, $vB", IIC_VecFP,
                       [(set v16i8:$vD, (vmrglb_shuffle v16i8:$vA, v16i8:$vB))]>;
 def VMRGLH : VXForm_1<332, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vmrglh $vD, $vA, $vB", VecFP,
+                      "vmrglh $vD, $vA, $vB", IIC_VecFP,
                       [(set v16i8:$vD, (vmrglh_shuffle v16i8:$vA, v16i8:$vB))]>;
 def VMRGLW : VXForm_1<396, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vmrglw $vD, $vA, $vB", VecFP,
+                      "vmrglw $vD, $vA, $vB", IIC_VecFP,
                       [(set v16i8:$vD, (vmrglw_shuffle v16i8:$vA, v16i8:$vB))]>;
 
 def VMSUMMBM : VA1a_Int_Ty3<37, "vmsummbm", int_ppc_altivec_vmsummbm,
@@ -504,16 +504,16 @@ def VRSQRTEFP : VX2_Int_SP<330, "vrsqrtefp", int_ppc_altivec_vrsqrtefp>;
 def VSUBCUW : VX1_Int_Ty<1408, "vsubcuw", int_ppc_altivec_vsubcuw, v4i32>;
 
 def VSUBFP  : VXForm_1<74, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vsubfp $vD, $vA, $vB", VecGeneral,
+                      "vsubfp $vD, $vA, $vB", IIC_VecGeneral,
                       [(set v4f32:$vD, (fsub v4f32:$vA, v4f32:$vB))]>;
 def VSUBUBM : VXForm_1<1024, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vsububm $vD, $vA, $vB", VecGeneral,
+                      "vsububm $vD, $vA, $vB", IIC_VecGeneral,
                       [(set v16i8:$vD, (sub v16i8:$vA, v16i8:$vB))]>;
 def VSUBUHM : VXForm_1<1088, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vsubuhm $vD, $vA, $vB", VecGeneral,
+                      "vsubuhm $vD, $vA, $vB", IIC_VecGeneral,
                       [(set v8i16:$vD, (sub v8i16:$vA, v8i16:$vB))]>;
 def VSUBUWM : VXForm_1<1152, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vsubuwm $vD, $vA, $vB", VecGeneral,
+                      "vsubuwm $vD, $vA, $vB", IIC_VecGeneral,
                       [(set v4i32:$vD, (sub v4i32:$vA, v4i32:$vB))]>;
                       
 def VSUBSBS : VX1_Int_Ty<1792, "vsubsbs" , int_ppc_altivec_vsubsbs, v16i8>;
@@ -534,14 +534,14 @@ def VSUM4UBS: VX1_Int_Ty3<1544, "vsum4ubs", int_ppc_altivec_vsum4ubs,
                           v4i32, v16i8, v4i32>;
 
 def VNOR : VXForm_1<1284, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                    "vnor $vD, $vA, $vB", VecFP,
+                    "vnor $vD, $vA, $vB", IIC_VecFP,
                     [(set v4i32:$vD, (vnot_ppc (or v4i32:$vA,
                                                    v4i32:$vB)))]>;
 def VOR : VXForm_1<1156, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vor $vD, $vA, $vB", VecFP,
+                      "vor $vD, $vA, $vB", IIC_VecFP,
                       [(set v4i32:$vD, (or v4i32:$vA, v4i32:$vB))]>;
 def VXOR : VXForm_1<1220, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                      "vxor $vD, $vA, $vB", VecFP,
+                      "vxor $vD, $vA, $vB", IIC_VecFP,
                       [(set v4i32:$vD, (xor v4i32:$vA, v4i32:$vB))]>;
 
 def VRLB   : VX1_Int_Ty<   4, "vrlb", int_ppc_altivec_vrlb, v16i8>;
@@ -556,15 +556,15 @@ def VSLH   : VX1_Int_Ty< 324, "vslh", int_ppc_altivec_vslh, v8i16>;
 def VSLW   : VX1_Int_Ty< 388, "vslw", int_ppc_altivec_vslw, v4i32>;
 
 def VSPLTB : VXForm_1<524, (outs vrrc:$vD), (ins u5imm:$UIMM, vrrc:$vB),
-                      "vspltb $vD, $vB, $UIMM", VecPerm,
+                      "vspltb $vD, $vB, $UIMM", IIC_VecPerm,
                       [(set v16i8:$vD,
                         (vspltb_shuffle:$UIMM v16i8:$vB, (undef)))]>;
 def VSPLTH : VXForm_1<588, (outs vrrc:$vD), (ins u5imm:$UIMM, vrrc:$vB),
-                      "vsplth $vD, $vB, $UIMM", VecPerm,
+                      "vsplth $vD, $vB, $UIMM", IIC_VecPerm,
                       [(set v16i8:$vD,
                         (vsplth_shuffle:$UIMM v16i8:$vB, (undef)))]>;
 def VSPLTW : VXForm_1<652, (outs vrrc:$vD), (ins u5imm:$UIMM, vrrc:$vB),
-                      "vspltw $vD, $vB, $UIMM", VecPerm,
+                      "vspltw $vD, $vB, $UIMM", IIC_VecPerm,
                       [(set v16i8:$vD, 
                         (vspltw_shuffle:$UIMM v16i8:$vB, (undef)))]>;
 
@@ -580,13 +580,13 @@ def VSRW   : VX1_Int_Ty< 644, "vsrw" , int_ppc_altivec_vsrw , v4i32>;
 
 
 def VSPLTISB : VXForm_3<780, (outs vrrc:$vD), (ins s5imm:$SIMM),
-                       "vspltisb $vD, $SIMM", VecPerm,
+                       "vspltisb $vD, $SIMM", IIC_VecPerm,
                        [(set v16i8:$vD, (v16i8 vecspltisb:$SIMM))]>;
 def VSPLTISH : VXForm_3<844, (outs vrrc:$vD), (ins s5imm:$SIMM),
-                       "vspltish $vD, $SIMM", VecPerm,
+                       "vspltish $vD, $SIMM", IIC_VecPerm,
                        [(set v8i16:$vD, (v8i16 vecspltish:$SIMM))]>;
 def VSPLTISW : VXForm_3<908, (outs vrrc:$vD), (ins s5imm:$SIMM),
-                       "vspltisw $vD, $SIMM", VecPerm,
+                       "vspltisw $vD, $SIMM", IIC_VecPerm,
                        [(set v4i32:$vD, (v4i32 vecspltisw:$SIMM))]>;
 
 // Vector Pack.
@@ -601,13 +601,13 @@ def VPKSWSS : VX1_Int_Ty2<462, "vpkswss", int_ppc_altivec_vpkswss,
 def VPKSWUS : VX1_Int_Ty2<334, "vpkswus", int_ppc_altivec_vpkswus,
                           v8i16, v4i32>;
 def VPKUHUM : VXForm_1<14, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                       "vpkuhum $vD, $vA, $vB", VecFP,
+                       "vpkuhum $vD, $vA, $vB", IIC_VecFP,
                        [(set v16i8:$vD,
                          (vpkuhum_shuffle v16i8:$vA, v16i8:$vB))]>;
 def VPKUHUS : VX1_Int_Ty2<142, "vpkuhus", int_ppc_altivec_vpkuhus,
                           v16i8, v8i16>;
 def VPKUWUM : VXForm_1<78, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                       "vpkuwum $vD, $vA, $vB", VecFP,
+                       "vpkuwum $vD, $vA, $vB", IIC_VecFP,
                        [(set v16i8:$vD,
                          (vpkuwum_shuffle v16i8:$vA, v16i8:$vB))]>;
 def VPKUWUS : VX1_Int_Ty2<206, "vpkuwus", int_ppc_altivec_vpkuwus,
@@ -631,10 +631,12 @@ def VUPKLSH : VX2_Int_Ty2<718, "vupklsh", int_ppc_altivec_vupklsh,
 // Altivec Comparisons.
 
 class VCMP<bits<10> xo, string asmstr, ValueType Ty>
-  : VXRForm_1<xo, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),asmstr,VecFPCompare,
+  : VXRForm_1<xo, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB), asmstr,
+              IIC_VecFPCompare,
               [(set Ty:$vD, (Ty (PPCvcmp Ty:$vA, Ty:$vB, xo)))]>;
 class VCMPo<bits<10> xo, string asmstr, ValueType Ty>
-  : VXRForm_1<xo, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),asmstr,VecFPCompare,
+  : VXRForm_1<xo, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB), asmstr,
+              IIC_VecFPCompare,
               [(set Ty:$vD, (Ty (PPCvcmp_o Ty:$vA, Ty:$vB, xo)))]> {
   let Defs = [CR6];
   let RC = 1;
@@ -676,24 +678,24 @@ def VCMPGTUWo : VCMPo<646, "vcmpgtuw. $vD, $vA, $vB", v4i32>;
                       
 let isCodeGenOnly = 1 in {
 def V_SET0B : VXForm_setzero<1220, (outs vrrc:$vD), (ins),
-                      "vxor $vD, $vD, $vD", VecFP,
+                      "vxor $vD, $vD, $vD", IIC_VecFP,
                       [(set v16i8:$vD, (v16i8 immAllZerosV))]>;
 def V_SET0H : VXForm_setzero<1220, (outs vrrc:$vD), (ins),
-                      "vxor $vD, $vD, $vD", VecFP,
+                      "vxor $vD, $vD, $vD", IIC_VecFP,
                       [(set v8i16:$vD, (v8i16 immAllZerosV))]>;
 def V_SET0  : VXForm_setzero<1220, (outs vrrc:$vD), (ins),
-                      "vxor $vD, $vD, $vD", VecFP,
+                      "vxor $vD, $vD, $vD", IIC_VecFP,
                       [(set v4i32:$vD, (v4i32 immAllZerosV))]>;
 
 let IMM=-1 in {
 def V_SETALLONESB : VXForm_3<908, (outs vrrc:$vD), (ins),
-                      "vspltisw $vD, -1", VecFP,
+                      "vspltisw $vD, -1", IIC_VecFP,
                       [(set v16i8:$vD, (v16i8 immAllOnesV))]>;
 def V_SETALLONESH : VXForm_3<908, (outs vrrc:$vD), (ins),
-                      "vspltisw $vD, -1", VecFP,
+                      "vspltisw $vD, -1", IIC_VecFP,
                       [(set v8i16:$vD, (v8i16 immAllOnesV))]>;
 def V_SETALLONES  : VXForm_3<908, (outs vrrc:$vD), (ins),
-                      "vspltisw $vD, -1", VecFP,
+                      "vspltisw $vD, -1", IIC_VecFP,
                       [(set v4i32:$vD, (v4i32 immAllOnesV))]>;
 }
 }
