@@ -1848,6 +1848,21 @@ INTERCEPTOR(char *, strerror_r, int errnum, char *buf, SIZE_T buflen) {
 #define INIT_STRERROR_R
 #endif
 
+#if SANITIZER_INTERCEPT_XPG_STRERROR_R
+INTERCEPTOR(int, __xpg_strerror_r, int errnum, char *buf, SIZE_T buflen) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, __xpg_strerror_r, errnum, buf, buflen);
+  int res = REAL(__xpg_strerror_r)(errnum, buf, buflen);
+  // This version always returns a null-terminated string.
+  if (buf && buflen)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, REAL(strlen)(buf) + 1);
+  return res;
+}
+#define INIT_XPG_STRERROR_R COMMON_INTERCEPT_FUNCTION(__xpg_strerror_r);
+#else
+#define INIT_XPG_STRERROR_R
+#endif
+
 #if SANITIZER_INTERCEPT_SCANDIR
 typedef int (*scandir_filter_f)(const struct __sanitizer_dirent *);
 typedef int (*scandir_compar_f)(const struct __sanitizer_dirent **,
@@ -2895,6 +2910,7 @@ INTERCEPTOR(SSIZE_T, getdelim, char **lineptr, SIZE_T *n, int delim,
   INIT_SCHED_GETAFFINITY;                  \
   INIT_STRERROR;                           \
   INIT_STRERROR_R;                         \
+  INIT_XPG_STRERROR_R;                     \
   INIT_SCANDIR;                            \
   INIT_SCANDIR64;                          \
   INIT_GETGROUPS;                          \

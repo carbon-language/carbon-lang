@@ -356,6 +356,7 @@ enum StatType {
   StatInt_sched_getaffinity,
   StatInt_strerror,
   StatInt_strerror_r,
+  StatInt___xpg_strerror_r,
   StatInt_scandir,
   StatInt_scandir64,
   StatInt_getgroups,
