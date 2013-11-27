@@ -268,8 +268,9 @@ static void printOperand(X86AsmPrinter &P, const MachineInstr *MI,
   }
 }
 
-void X86AsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
-                                         raw_ostream &O, const char *Modifier) {
+static void printLeaMemReference(X86AsmPrinter &P, const MachineInstr *MI,
+                                 unsigned Op, raw_ostream &O,
+                                 const char *Modifier = NULL) {
   const MachineOperand &BaseReg  = MI->getOperand(Op);
   const MachineOperand &IndexReg = MI->getOperand(Op+2);
   const MachineOperand &DispSpec = MI->getOperand(Op+3);
@@ -290,7 +291,7 @@ void X86AsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
   } else {
     assert(DispSpec.isGlobal() || DispSpec.isCPI() ||
            DispSpec.isJTI() || DispSpec.isSymbol());
-    printSymbolOperand(*this, MI->getOperand(Op+3), O);
+    printSymbolOperand(P, MI->getOperand(Op+3), O);
   }
 
   if (Modifier && strcmp(Modifier, "H") == 0)
@@ -302,11 +303,11 @@ void X86AsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
 
     O << '(';
     if (HasBaseReg)
-      printOperand(*this, MI, Op, O, Modifier);
+      printOperand(P, MI, Op, O, Modifier);
 
     if (IndexReg.getReg()) {
       O << ',';
-      printOperand(*this, MI, Op+2, O, Modifier);
+      printOperand(P, MI, Op+2, O, Modifier);
       unsigned ScaleVal = MI->getOperand(Op+1).getImm();
       if (ScaleVal != 1)
         O << ',' << ScaleVal;
@@ -315,20 +316,22 @@ void X86AsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
   }
 }
 
-void X86AsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
-                                      raw_ostream &O, const char *Modifier) {
+static void printMemReference(X86AsmPrinter &P, const MachineInstr *MI,
+                              unsigned Op, raw_ostream &O,
+                              const char *Modifier = NULL) {
   assert(isMem(MI, Op) && "Invalid memory reference!");
   const MachineOperand &Segment = MI->getOperand(Op+4);
   if (Segment.getReg()) {
-    printOperand(*this, MI, Op+4, O, Modifier);
+    printOperand(P, MI, Op+4, O, Modifier);
     O << ':';
   }
-  printLeaMemReference(MI, Op, O, Modifier);
+  printLeaMemReference(P, MI, Op, O, Modifier);
 }
 
-void X86AsmPrinter::printIntelMemReference(const MachineInstr *MI, unsigned Op,
-                                           raw_ostream &O, const char *Modifier,
-                                           unsigned AsmVariant){
+static void printIntelMemReference(X86AsmPrinter &P, const MachineInstr *MI,
+                                   unsigned Op, raw_ostream &O,
+                                   const char *Modifier = NULL,
+                                   unsigned AsmVariant = 1) {
   const MachineOperand &BaseReg  = MI->getOperand(Op);
   unsigned ScaleVal = MI->getOperand(Op+1).getImm();
   const MachineOperand &IndexReg = MI->getOperand(Op+2);
@@ -337,7 +340,7 @@ void X86AsmPrinter::printIntelMemReference(const MachineInstr *MI, unsigned Op,
 
   // If this has a segment register, print it.
   if (SegReg.getReg()) {
-    printOperand(*this, MI, Op+4, O, Modifier, AsmVariant);
+    printOperand(P, MI, Op+4, O, Modifier, AsmVariant);
     O << ':';
   }
 
@@ -345,7 +348,7 @@ void X86AsmPrinter::printIntelMemReference(const MachineInstr *MI, unsigned Op,
 
   bool NeedPlus = false;
   if (BaseReg.getReg()) {
-    printOperand(*this, MI, Op, O, Modifier, AsmVariant);
+    printOperand(P, MI, Op, O, Modifier, AsmVariant);
     NeedPlus = true;
   }
 
@@ -353,13 +356,13 @@ void X86AsmPrinter::printIntelMemReference(const MachineInstr *MI, unsigned Op,
     if (NeedPlus) O << " + ";
     if (ScaleVal != 1)
       O << ScaleVal << '*';
-    printOperand(*this, MI, Op+2, O, Modifier, AsmVariant);
+    printOperand(P, MI, Op+2, O, Modifier, AsmVariant);
     NeedPlus = true;
   }
 
   if (!DispSpec.isImm()) {
     if (NeedPlus) O << " + ";
-    printOperand(*this, MI, Op+3, O, Modifier, AsmVariant);
+    printOperand(P, MI, Op+3, O, Modifier, AsmVariant);
   } else {
     int64_t DispVal = DispSpec.getImm();
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg())) {
@@ -377,8 +380,8 @@ void X86AsmPrinter::printIntelMemReference(const MachineInstr *MI, unsigned Op,
   O << ']';
 }
 
-bool X86AsmPrinter::printAsmMRegister(const MachineOperand &MO, char Mode,
-                                      raw_ostream &O) {
+static bool printAsmMRegister(X86AsmPrinter &P, const MachineOperand &MO,
+                              char Mode, raw_ostream &O) {
   unsigned Reg = MO.getReg();
   switch (Mode) {
   default: return true;  // Unknown mode.
@@ -461,7 +464,7 @@ bool X86AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     case 'k': // Print SImode register
     case 'q': // Print DImode register
       if (MO.isReg())
-        return printAsmMRegister(MO, ExtraCode[0], O);
+        return printAsmMRegister(*this, MO, ExtraCode[0], O);
       printOperand(*this, MI, OpNo, O);
       return false;
 
@@ -489,7 +492,7 @@ bool X86AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                           const char *ExtraCode,
                                           raw_ostream &O) {
   if (AsmVariant) {
-    printIntelMemReference(MI, OpNo, O);
+    printIntelMemReference(*this, MI, OpNo, O);
     return false;
   }
 
@@ -506,14 +509,14 @@ bool X86AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
       // These only apply to registers, ignore on mem.
       break;
     case 'H':
-      printMemReference(MI, OpNo, O, "H");
+      printMemReference(*this, MI, OpNo, O, "H");
       return false;
     case 'P': // Don't print @PLT, but do print as memory.
-      printMemReference(MI, OpNo, O, "no-rip");
+      printMemReference(*this, MI, OpNo, O, "no-rip");
       return false;
     }
   }
-  printMemReference(MI, OpNo, O);
+  printMemReference(*this, MI, OpNo, O);
   return false;
 }
 

@@ -55,22 +55,12 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
 
   virtual void EmitInstruction(const MachineInstr *MI) LLVM_OVERRIDE;
 
-  bool printAsmMRegister(const MachineOperand &MO, char Mode, raw_ostream &O);
   virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                                unsigned AsmVariant, const char *ExtraCode,
                                raw_ostream &OS) LLVM_OVERRIDE;
   virtual bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                      unsigned AsmVariant, const char *ExtraCode,
                                      raw_ostream &OS) LLVM_OVERRIDE;
-
-  void printMemReference(const MachineInstr *MI, unsigned Op, raw_ostream &O,
-                         const char *Modifier=NULL);
-  void printLeaMemReference(const MachineInstr *MI, unsigned Op, raw_ostream &O,
-                            const char *Modifier=NULL);
-
-  void printIntelMemReference(const MachineInstr *MI, unsigned Op,
-                              raw_ostream &O, const char *Modifier=NULL,
-                              unsigned AsmVariant = 1);
 
   virtual bool runOnMachineFunction(MachineFunction &F) LLVM_OVERRIDE;
 };
