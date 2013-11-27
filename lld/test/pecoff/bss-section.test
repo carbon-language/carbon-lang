@@ -1,4 +1,4 @@
-# RUN: lld -flavor link /out:%t /subsystem:console /force /opt:noref \
+# RUN: lld -flavor link /out:%t /subsystem:console /force \
 # RUN:    -- %p/Inputs/bss.obj && llvm-readobj -sections %t | FileCheck %s
 
 CHECK:       Section {

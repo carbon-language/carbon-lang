@@ -1,6 +1,6 @@
 # RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
 
-# RUN: lld -flavor link /out:%t1.exe /subsystem:console /force /opt:noref \
+# RUN: lld -flavor link /out:%t1.exe /subsystem:console /force \
 # RUN:   -- %t.obj
 # RUN: FileCheck -check-prefix=MANIFEST %s < %t1.exe.manifest
 
@@ -16,7 +16,7 @@ MANIFEST:     </security>
 MANIFEST:   </trustInfo>
 MANIFEST: </assembly>
 
-# RUN: lld -flavor link /out:%t2.exe /subsystem:console /force /opt:noref \
+# RUN: lld -flavor link /out:%t2.exe /subsystem:console /force \
 # RUN:   /manifestuac:"level='requireAdministrator' uiAccess='true'" -- %t.obj
 # RUN: FileCheck -check-prefix=UAC %s < %t2.exe.manifest
 
@@ -32,7 +32,7 @@ UAC:     </security>
 UAC:   </trustInfo>
 UAC: </assembly>
 
-# RUN: lld -flavor link /out:%t3.exe /subsystem:console /force /opt:noref \
+# RUN: lld -flavor link /out:%t3.exe /subsystem:console /force \
 # RUN:   /manifestdependency:"foo='bar'" -- %t.obj
 # RUN: FileCheck -check-prefix=DEPENDENCY %s < %t3.exe.manifest
 
