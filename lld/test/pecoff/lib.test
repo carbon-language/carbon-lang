@@ -5,8 +5,8 @@
 # RUN: lld -flavor link /out:%t1 /subsystem:console /entry:main /opt:noref \
 # RUN:   -- %t.obj %p/Inputs/static.lib && llvm-objdump -d %t1 | FileCheck %s
 
-CHECK: Disassembly of section .text:
-CHECK: .text:
-CHECK:     2000: a1 04 10 40 00      movl    4198404, %eax
-CHECK:     2005: 03 05 00 10 40 00   addl    4198400, %eax
-CHECK:     200b: c3                  ret
+CHECK:      Disassembly of section .text:
+CHECK-NEXT: .text:
+CHECK-NEXT:     movl 4198400, %eax
+CHECK-NEXT:     addl 4198404, %eax
+CHECK-NEXT:     ret

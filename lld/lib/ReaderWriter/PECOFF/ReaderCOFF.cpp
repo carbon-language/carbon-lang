@@ -157,6 +157,7 @@ private:
 
   mutable llvm::BumpPtrAllocator _alloc;
   const LinkingContext &_context;
+  uint64_t _ordinal;
 };
 
 class BumpPtrStringSaver : public llvm::cl::StringSaver {
@@ -279,7 +280,8 @@ DefinedAtom::Merge getMerge(const coff_aux_section_definition *auxsym) {
 
 FileCOFF::FileCOFF(const LinkingContext &context,
                    std::unique_ptr<MemoryBuffer> mb, error_code &ec)
-    : File(mb->getBufferIdentifier(), kindObject), _context(context) {
+    : File(mb->getBufferIdentifier(), kindObject), _context(context),
+      _ordinal(0) {
   OwningPtr<llvm::object::Binary> bin;
   ec = llvm::object::createBinary(mb.release(), bin);
   if (ec)
@@ -457,7 +459,7 @@ error_code FileCOFF::createDefinedSymbols(const SymbolVectorT &symbols,
       uint32_t size = sym->Value;
       auto *atom = new (_alloc)
           COFFBSSAtom(*this, name, getScope(sym), DefinedAtom::permRW_,
-                      DefinedAtom::mergeAsWeakAndAddressUsed, size, 0);
+                      DefinedAtom::mergeAsWeakAndAddressUsed, size, _ordinal++);
       result.push_back(atom);
       continue;
     }
@@ -565,7 +567,6 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
   StringRef sectionName;
   if (error_code ec = _obj->getSectionName(section, sectionName))
     return ec;
-  uint64_t ordinal = -1;
 
   // BSS section does not have contents. If this is the BSS section, create
   // COFFBSSAtom instead of COFFDefinedAtom.
@@ -576,7 +577,7 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
                                      : si[1]->Value - sym->Value;
       auto *atom = new (_alloc) COFFBSSAtom(
           *this, _symbolName[sym], getScope(sym), getPermissions(section),
-          DefinedAtom::mergeAsWeakAndAddressUsed, size, ++ordinal);
+          DefinedAtom::mergeAsWeakAndAddressUsed, size, _ordinal++);
       atoms.push_back(atom);
       _symbolAtom[sym] = atom;
     }
@@ -609,7 +610,7 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
     ArrayRef<uint8_t> data(secData.data(), secData.size());
     auto *atom = new (_alloc)
         COFFDefinedAtom(*this, "", sectionName, Atom::scopeTranslationUnit,
-                        type, isComdat, perms, _merge[section], data, 0);
+                        type, isComdat, perms, _merge[section], data, _ordinal++);
     atoms.push_back(atom);
     _definedAtomLocations[section][0].push_back(atom);
     return error_code::success();
@@ -622,7 +623,7 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
     ArrayRef<uint8_t> data(secData.data(), size);
     auto *atom = new (_alloc) COFFDefinedAtom(
         *this, "", sectionName, Atom::scopeTranslationUnit, type, isComdat,
-        perms, _merge[section], data, ++ordinal);
+        perms, _merge[section], data, _ordinal++);
     atoms.push_back(atom);
     _definedAtomLocations[section][0].push_back(atom);
   }
@@ -635,7 +636,7 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
     ArrayRef<uint8_t> data(start, end);
     auto *atom = new (_alloc) COFFDefinedAtom(
         *this, _symbolName[*si], sectionName, getScope(*si), type, isComdat,
-        perms, _merge[section], data, ++ordinal);
+        perms, _merge[section], data, _ordinal++);
     atoms.push_back(atom);
     _symbolAtom[*si] = atom;
     _definedAtomLocations[section][(*si)->Value].push_back(atom);
