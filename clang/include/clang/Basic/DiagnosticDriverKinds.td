@@ -109,8 +109,6 @@ def err_drv_unknown_objc_runtime : Error<
   "unknown or ill-formed Objective-C runtime '%0'">;
 def err_drv_emit_llvm_link : Error<
    "-emit-llvm cannot be used when linking">;
-def err_drv_unknown_toolchain : Error<
-  "cannot recognize the type of the toolchain">;
 
 def warn_O4_is_O3 : Warning<"-O4 is equivalent to -O3">, InGroup<Deprecated>;
 def warn_drv_optimization_value : Warning<"optimization level '%0' is unsupported; using '%1%2' instead">,
