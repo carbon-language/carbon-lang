@@ -883,18 +883,20 @@ StringRef chooseSectionByContent(const DefinedAtom *atom) {
 
 typedef std::map<StringRef, std::vector<const DefinedAtom *> > AtomVectorMap;
 
-void groupAtoms(const File &file, AtomVectorMap &result,
-                const DefinedAtom *&datadir) {
+void groupAtoms(const PECOFFLinkingContext &ctx, const File &file,
+                AtomVectorMap &result, const DefinedAtom *&datadir) {
   for (const DefinedAtom *atom : file.defined()) {
     if (atom->sectionChoice() == DefinedAtom::sectionCustomRequired) {
-      result[customSectionName(atom)].push_back(atom);
+      StringRef section = customSectionName(atom);
+      result[ctx.getOutputSectionName(section)].push_back(atom);
       continue;
     }
     if (atom->sectionChoice() == DefinedAtom::sectionBasedOnContent) {
       if (atom->contentType() == DefinedAtom::typeDataDirectoryEntry) {
         datadir = atom;
       } else {
-        result[chooseSectionByContent(atom)].push_back(atom);
+        StringRef section = chooseSectionByContent(atom);
+        result[ctx.getOutputSectionName(section)].push_back(atom);
       }
       continue;
     }
@@ -906,7 +908,7 @@ void groupAtoms(const File &file, AtomVectorMap &result,
 void ExecutableWriter::build(const File &linkedFile) {
   AtomVectorMap atoms;
   const DefinedAtom *dataDirAtom = nullptr;
-  groupAtoms(linkedFile, atoms, dataDirAtom);
+  groupAtoms(_PECOFFLinkingContext, linkedFile, atoms, dataDirAtom);
 
   // Create file chunks and add them to the list.
   auto *dosStub = new DOSStubChunk(_PECOFFLinkingContext);
