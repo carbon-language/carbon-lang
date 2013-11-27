@@ -55,13 +55,6 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
 
   virtual void EmitInstruction(const MachineInstr *MI) LLVM_OVERRIDE;
 
-  void printSymbolOperand(const MachineOperand &MO, raw_ostream &O);
-
-  // These methods are used by the tablegen'erated instruction printer.
-  void printOperand(const MachineInstr *MI, unsigned OpNo, raw_ostream &O,
-                    const char *Modifier = 0, unsigned AsmVariant = 0);
-  void printPCRelImm(const MachineInstr *MI, unsigned OpNo, raw_ostream &O);
-
   bool printAsmMRegister(const MachineOperand &MO, char Mode, raw_ostream &O);
   virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                                unsigned AsmVariant, const char *ExtraCode,
