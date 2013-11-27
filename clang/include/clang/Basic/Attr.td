@@ -19,27 +19,22 @@ include "clang/Basic/StmtNodes.td"
 // A subset-subject is an AttrSubject constrained to operate only on some subset
 // of that subject.
 //
-// The description is used in output messages to specify what the subject
-// represents. FIXME: Deal with translation issues.
-//
 // The code fragment is a boolean expression that will confirm that the subject
 // meets the requirements; the subject will have the name S, and will have the
 // type specified by the base. It should be a simple boolean expression.
-class SubsetSubject<AttrSubject base, string description, code check>
-    : AttrSubject {
+class SubsetSubject<AttrSubject base, code check> : AttrSubject {
   AttrSubject Base = base;
-  string Description = description;
   code CheckCode = check;
 }
 
 // This is the type of a variable which C++11 allows alignas(...) to appertain
 // to.
-def NormalVar : SubsetSubject<Var, "non-register, non-parameter variable",
+def NormalVar : SubsetSubject<Var,
                               [{S->getStorageClass() != VarDecl::Register &&
                                 S->getKind() != Decl::ImplicitParam &&
                                 S->getKind() != Decl::ParmVar &&
                                 S->getKind() != Decl::NonTypeTemplateParm}]>;
-def NonBitField : SubsetSubject<Field, "non-bit field",
+def NonBitField : SubsetSubject<Field,
                                 [{!S->isBitField()}]>;
 
 // A single argument to an attribute
