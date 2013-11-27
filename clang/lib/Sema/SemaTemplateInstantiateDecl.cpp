@@ -3427,7 +3427,9 @@ void Sema::BuildVariableInstantiation(
                                   : Sema::LookupOrdinaryName,
       Sema::ForRedeclaration);
 
-  if (NewVar->isLocalExternDecl() && OldVar->getPreviousDecl()) {
+  if (NewVar->isLocalExternDecl() && OldVar->getPreviousDecl() &&
+      (!OldVar->getPreviousDecl()->getDeclContext()->isDependentContext() ||
+       OldVar->getPreviousDecl()->getDeclContext()==OldVar->getDeclContext())) {
     // We have a previous declaration. Use that one, so we merge with the
     // right type.
     if (NamedDecl *NewPrev = FindInstantiatedDecl(

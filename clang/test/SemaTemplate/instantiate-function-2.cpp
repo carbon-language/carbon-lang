@@ -64,3 +64,28 @@ namespace PR10273 {
     (f)(17);
   }
 }
+
+namespace rdar15464547 {
+  class A {
+    A();
+  };
+
+  template <typename R> class B {
+  public:
+    static void meth1();
+    static void meth2();
+  };
+
+  A::A() {
+    extern int compile_time_assert_failed;
+    B<int>::meth2();
+  }
+
+  template <typename R> void B<R>::meth1() {
+    extern int compile_time_assert_failed;
+  }
+
+  template <typename R> void B<R>::meth2() {
+    extern int compile_time_assert_failed;
+  }
+}
