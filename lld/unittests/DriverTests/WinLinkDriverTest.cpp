@@ -266,19 +266,22 @@ TEST_F(WinLinkParserTest, Merge_Circular) {
 // Tests for /section
 //
 
+namespace {
+const uint32_t discardable = llvm::COFF::IMAGE_SCN_MEM_DISCARDABLE;
+const uint32_t not_cached = llvm::COFF::IMAGE_SCN_MEM_NOT_CACHED;
+const uint32_t not_paged = llvm::COFF::IMAGE_SCN_MEM_NOT_PAGED;
+const uint32_t shared = llvm::COFF::IMAGE_SCN_MEM_SHARED;
+const uint32_t execute = llvm::COFF::IMAGE_SCN_MEM_EXECUTE;
+const uint32_t read = llvm::COFF::IMAGE_SCN_MEM_READ;
+const uint32_t write = llvm::COFF::IMAGE_SCN_MEM_WRITE;
+
 TEST_F(WinLinkParserTest, Section) {
   EXPECT_TRUE(parse("link.exe", "/section:.teXT,dekpRSW", "a.obj", nullptr));
-  uint32_t expect = llvm::COFF::IMAGE_SCN_MEM_DISCARDABLE |
-      llvm::COFF::IMAGE_SCN_MEM_NOT_CACHED |
-      llvm::COFF::IMAGE_SCN_MEM_NOT_PAGED |
-      llvm::COFF::IMAGE_SCN_MEM_SHARED |
-      llvm::COFF::IMAGE_SCN_MEM_EXECUTE |
-      llvm::COFF::IMAGE_SCN_MEM_READ |
-      llvm::COFF::IMAGE_SCN_MEM_WRITE;
+  uint32_t expect =
+      discardable | not_cached | not_paged | shared | execute | read | write;
   llvm::Optional<uint32_t> val = _context.getSectionAttributes(".teXT");
   EXPECT_TRUE(val.hasValue());
   EXPECT_EQ(expect, *val);
-
   EXPECT_EQ(0U, _context.getSectionAttributeMask(".teXT"));
 }
 
@@ -287,13 +290,8 @@ TEST_F(WinLinkParserTest, SectionNegative) {
   llvm::Optional<uint32_t> val = _context.getSectionAttributes(".teXT");
   EXPECT_FALSE(val.hasValue());
 
-  uint32_t expect = llvm::COFF::IMAGE_SCN_MEM_DISCARDABLE |
-      llvm::COFF::IMAGE_SCN_MEM_NOT_CACHED |
-      llvm::COFF::IMAGE_SCN_MEM_NOT_PAGED |
-      llvm::COFF::IMAGE_SCN_MEM_SHARED |
-      llvm::COFF::IMAGE_SCN_MEM_EXECUTE |
-      llvm::COFF::IMAGE_SCN_MEM_READ |
-      llvm::COFF::IMAGE_SCN_MEM_WRITE;
+  uint32_t expect =
+      discardable | not_cached | not_paged | shared | execute | read | write;
   EXPECT_EQ(expect, _context.getSectionAttributeMask(".teXT"));
 }
 
@@ -305,15 +303,16 @@ TEST_F(WinLinkParserTest, SectionNegative) {
     EXPECT_EQ(expect, *val);                                                 \
   }
 
-TEST_SECTION(SectionD, "d", llvm::COFF::IMAGE_SCN_MEM_DISCARDABLE);
-TEST_SECTION(SectionE, "e", llvm::COFF::IMAGE_SCN_MEM_EXECUTE);
-TEST_SECTION(SectionK, "k", llvm::COFF::IMAGE_SCN_MEM_NOT_CACHED);
-TEST_SECTION(SectionP, "p", llvm::COFF::IMAGE_SCN_MEM_NOT_PAGED);
-TEST_SECTION(SectionR, "r", llvm::COFF::IMAGE_SCN_MEM_READ);
-TEST_SECTION(SectionS, "s", llvm::COFF::IMAGE_SCN_MEM_SHARED);
-TEST_SECTION(SectionW, "w", llvm::COFF::IMAGE_SCN_MEM_WRITE);
+TEST_SECTION(SectionD, "d", discardable);
+TEST_SECTION(SectionE, "e", execute);
+TEST_SECTION(SectionK, "k", not_cached);
+TEST_SECTION(SectionP, "p", not_paged);
+TEST_SECTION(SectionR, "r", read);
+TEST_SECTION(SectionS, "s", shared);
+TEST_SECTION(SectionW, "w", write);
 
 #undef TEST_SECTION
+} // end anonymous namespace
 
 //
 // Tests for /defaultlib and /nodefaultlib.
