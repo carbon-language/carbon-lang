@@ -44,7 +44,6 @@ PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit) {
   AlignmentIsInBytes = false;
 
   CommentString = "#";
-  GlobalPrefix = "";
   PrivateGlobalPrefix = ".L";
 
   // Uses '.section' before '.bss' directive
