@@ -47,9 +47,9 @@ struct AsanStats {
   uptr malloc_large;
   uptr malloc_small_slow;
 
-  // Ctor for global AsanStats (accumulated stats and main thread stats).
+  // Ctor for global AsanStats (accumulated stats for dead threads).
   explicit AsanStats(LinkerInitialized) { }
-  // Default ctor for thread-local stats.
+  // Creates empty stats.
   AsanStats();
 
   void Print();  // Prints formatted stats to stderr.

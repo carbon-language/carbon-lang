@@ -81,7 +81,6 @@ AsanThread *AsanThread::Create(thread_callback_t start_routine,
   AsanThread *thread = (AsanThread*)MmapOrDie(size, __FUNCTION__);
   thread->start_routine_ = start_routine;
   thread->arg_ = arg;
-  thread->context_ = 0;
 
   return thread;
 }

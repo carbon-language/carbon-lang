@@ -91,16 +91,12 @@ class AsanChunkFifoList: public IntrusiveList<AsanChunk> {
 };
 
 struct AsanThreadLocalMallocStorage {
-  explicit AsanThreadLocalMallocStorage(LinkerInitialized x)
-      { }
-  AsanThreadLocalMallocStorage() {
-    CHECK(REAL(memset));
-    REAL(memset)(this, 0, sizeof(AsanThreadLocalMallocStorage));
-  }
-
   uptr quarantine_cache[16];
   uptr allocator2_cache[96 * (512 * 8 + 16)];  // Opaque.
   void CommitBack();
+ private:
+  // These objects are allocated via mmap() and are zero-initialized.
+  AsanThreadLocalMallocStorage() {}
 };
 
 void *asan_memalign(uptr alignment, uptr size, StackTrace *stack,
