@@ -34,6 +34,7 @@ add_llvm_target(MipsCodeGen
   MipsMCInstLower.cpp
   MipsMachineFunction.cpp
   MipsModuleISelDAGToDAG.cpp
+  MipsOptimizePICCall.cpp
   MipsOs16.cpp
   MipsRegisterInfo.cpp
   MipsSEFrameLowering.cpp
