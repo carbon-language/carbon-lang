@@ -281,14 +281,20 @@ static void printLeaMemReference(X86AsmPrinter &P, const MachineInstr *MI,
   // HasParenPart - True if we will print out the () part of the mem ref.
   bool HasParenPart = IndexReg.getReg() || HasBaseReg;
 
-  if (DispSpec.isImm()) {
+  switch (DispSpec.getType()) {
+  default:
+    llvm_unreachable("unknown operand type!");
+  case MachineOperand::MO_Immediate: {
     int DispVal = DispSpec.getImm();
     if (DispVal || !HasParenPart)
       O << DispVal;
-  } else {
-    assert(DispSpec.isGlobal() || DispSpec.isCPI() ||
-           DispSpec.isJTI() || DispSpec.isSymbol());
-    printSymbolOperand(P, MI->getOperand(Op+3), O);
+    break;
+  }
+  case MachineOperand::MO_GlobalAddress:
+  case MachineOperand::MO_ConstantPoolIndex:
+  case MachineOperand::MO_JumpTableIndex:
+  case MachineOperand::MO_ExternalSymbol:
+    printSymbolOperand(P, MI->getOperand(Op + 3), O);
   }
 
   if (Modifier && strcmp(Modifier, "H") == 0)
