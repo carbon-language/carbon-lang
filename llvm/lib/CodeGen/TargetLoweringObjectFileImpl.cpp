@@ -744,7 +744,7 @@ static const char *getCOFFSectionNameForUniqueGlobal(SectionKind Kind) {
   if (Kind.isBSS ())
     return ".bss";
   if (Kind.isThreadLocal())
-    return ".tls";
+    return ".tls$";
   if (Kind.isWriteable())
     return ".data";
   return ".rdata";

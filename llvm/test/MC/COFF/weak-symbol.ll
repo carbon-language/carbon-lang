@@ -36,3 +36,13 @@ define weak void @f() section ".sect" {
 ; X64: .globl a
 ; X64: .zero 12
 @a = weak unnamed_addr constant { i32, i32, i32 } { i32 0, i32 0, i32 0}, section ".data"
+
+; X86:  .section        .tls$,"w",discard,_b
+; X86:  .globl  _b
+; X86:  .long   0
+;
+; X64:  .section        .tls$,"w",discard,b
+; X64:  .globl  b
+; X64:  .long   0
+
+@b = weak_odr thread_local global i32 0, align 4
