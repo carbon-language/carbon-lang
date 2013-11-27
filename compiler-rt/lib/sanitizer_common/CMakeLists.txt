@@ -28,6 +28,7 @@ set(SANITIZER_LIBCDEP_SOURCES
   sanitizer_posix_libcdep.cc
   sanitizer_stacktrace_libcdep.cc
   sanitizer_stoptheworld_linux_libcdep.cc
+  sanitizer_symbolizer_libbacktrace.cc
   sanitizer_symbolizer_libcdep.cc
   sanitizer_symbolizer_posix_libcdep.cc)
 
@@ -65,6 +66,7 @@ set(SANITIZER_HEADERS
   sanitizer_stoptheworld.h
   sanitizer_suppressions.h
   sanitizer_symbolizer.h
+  sanitizer_symbolizer_libbacktrace.h
   sanitizer_syscall_generic.inc
   sanitizer_syscall_linux_x86_64.inc
   sanitizer_thread_registry.h)
