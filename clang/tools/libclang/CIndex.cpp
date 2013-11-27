@@ -2544,7 +2544,8 @@ CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
                           int displayDiagnostics) {
   // We use crash recovery to make some of our APIs more reliable, implicitly
   // enable it.
-  llvm::CrashRecoveryContext::Enable();
+  if (!getenv("LIBCLANG_DISABLE_CRASH_RECOVERY"))
+    llvm::CrashRecoveryContext::Enable();
 
   // Enable support for multithreading in LLVM.
   {
@@ -6515,11 +6516,6 @@ bool RunSafely(llvm::CrashRecoveryContext &CRC,
                unsigned Size) {
   if (!Size)
     Size = GetSafetyThreadStackSize();
-  if (getenv("LIBCLANG_DISABLE_CRASH_RECOVERY")) {
-    // Don't use crash recovery.
-    llvm::llvm_execute_on_thread(Fn, UserData, Size);
-    return true;
-  }
   if (Size)
     return CRC.RunSafelyOnThread(Fn, UserData, Size);
   return CRC.RunSafely(Fn, UserData);
