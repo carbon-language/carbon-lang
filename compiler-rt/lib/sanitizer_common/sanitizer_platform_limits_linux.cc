@@ -85,8 +85,10 @@ CHECK_SIZE_AND_OFFSET(perf_event_attr, size);
 
 COMPILER_CHECK(iocb_cmd_pread == IOCB_CMD_PREAD);
 COMPILER_CHECK(iocb_cmd_pwrite == IOCB_CMD_PWRITE);
+#if !SANITIZER_ANDROID
 COMPILER_CHECK(iocb_cmd_preadv == IOCB_CMD_PREADV);
 COMPILER_CHECK(iocb_cmd_pwritev == IOCB_CMD_PWRITEV);
+#endif
 
 CHECK_TYPE_SIZE(iocb);
 CHECK_SIZE_AND_OFFSET(iocb, aio_data);
