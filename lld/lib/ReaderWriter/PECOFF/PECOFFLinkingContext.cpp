@@ -204,6 +204,34 @@ PECOFFLinkingContext::stringFromRelocKind(Reference::Kind kind) const {
   return make_error_code(YamlReaderError::illegal_value);
 }
 
+void PECOFFLinkingContext::setSectionSetMask(StringRef sectionName,
+                                             uint32_t newFlags) {
+  _sectionSetMask[sectionName] |= newFlags;
+  _sectionClearMask[sectionName] &= ~newFlags;
+  const uint32_t rwx = (llvm::COFF::IMAGE_SCN_MEM_READ |
+                        llvm::COFF::IMAGE_SCN_MEM_WRITE |
+                        llvm::COFF::IMAGE_SCN_MEM_EXECUTE);
+  if (newFlags & rwx)
+    _sectionClearMask[sectionName] |= ~_sectionSetMask[sectionName] & rwx;
+  assert((_sectionSetMask[sectionName] & _sectionClearMask[sectionName]) == 0);
+}
+
+void PECOFFLinkingContext::setSectionClearMask(StringRef sectionName,
+                                               uint32_t newFlags) {
+  _sectionClearMask[sectionName] |= newFlags;
+  _sectionSetMask[sectionName] &= ~newFlags;
+  assert((_sectionSetMask[sectionName] & _sectionClearMask[sectionName]) == 0);
+}
+
+uint32_t PECOFFLinkingContext::getSectionAttributes(StringRef sectionName,
+                                                    uint32_t flags) const {
+  auto si = _sectionSetMask.find(sectionName);
+  uint32_t setMask = (si == _sectionSetMask.end()) ? 0 : si->second;
+  auto ci = _sectionClearMask.find(sectionName);
+  uint32_t clearMask = (ci == _sectionClearMask.end()) ? 0 : ci->second;
+  return (flags | setMask) & ~clearMask;
+}
+
 void PECOFFLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new pecoff::SetSubsystemPass(*this)));
   pm.add(std::unique_ptr<Pass>(new pecoff::GroupedSectionsPass()));

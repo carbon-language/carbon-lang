@@ -723,9 +723,9 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
         return false;
       }
       if (flags.hasValue())
-        ctx.setSectionAttributes(section, *flags);
+        ctx.setSectionSetMask(section, *flags);
       if (mask.hasValue())
-        ctx.setSectionAttributeMask(section, *mask);
+        ctx.setSectionClearMask(section, *mask);
       break;
     }
 

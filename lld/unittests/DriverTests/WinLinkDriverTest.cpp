@@ -275,43 +275,41 @@ const uint32_t execute = llvm::COFF::IMAGE_SCN_MEM_EXECUTE;
 const uint32_t read = llvm::COFF::IMAGE_SCN_MEM_READ;
 const uint32_t write = llvm::COFF::IMAGE_SCN_MEM_WRITE;
 
-TEST_F(WinLinkParserTest, Section) {
-  EXPECT_TRUE(parse("link.exe", "/section:.teXT,dekpRSW", "a.obj", nullptr));
-  uint32_t expect =
-      discardable | not_cached | not_paged | shared | execute | read | write;
-  llvm::Optional<uint32_t> val = _context.getSectionAttributes(".teXT");
-  EXPECT_TRUE(val.hasValue());
-  EXPECT_EQ(expect, *val);
-  EXPECT_EQ(0U, _context.getSectionAttributeMask(".teXT"));
-}
-
-TEST_F(WinLinkParserTest, SectionNegative) {
-  EXPECT_TRUE(parse("link.exe", "/section:.teXT,!dekpRSW", "a.obj", nullptr));
-  llvm::Optional<uint32_t> val = _context.getSectionAttributes(".teXT");
-  EXPECT_FALSE(val.hasValue());
-
-  uint32_t expect =
-      discardable | not_cached | not_paged | shared | execute | read | write;
-  EXPECT_EQ(expect, _context.getSectionAttributeMask(".teXT"));
-}
-
-#define TEST_SECTION(testname, arg, expect)                                  \
-  TEST_F(WinLinkParserTest, testname) {                                      \
-    EXPECT_TRUE(parse("link.exe", "/section:.text," arg, "a.obj", nullptr)); \
-    llvm::Optional<uint32_t> val = _context.getSectionAttributes(".text");   \
-    EXPECT_TRUE(val.hasValue());                                             \
-    EXPECT_EQ(expect, *val);                                                 \
+#define TEST_SECTION(testname, arg, expect)                                    \
+  TEST_F(WinLinkParserTest, testname) {                                        \
+    EXPECT_TRUE(parse("link.exe", "/section:.text," arg, "a.obj", nullptr));   \
+    EXPECT_EQ(expect, _context.getSectionAttributes(".text", execute | read)); \
   }
 
-TEST_SECTION(SectionD, "d", discardable);
+TEST_SECTION(SectionD, "d", execute | read | discardable);
 TEST_SECTION(SectionE, "e", execute);
-TEST_SECTION(SectionK, "k", not_cached);
-TEST_SECTION(SectionP, "p", not_paged);
+TEST_SECTION(SectionK, "k", execute | read | not_cached);
+TEST_SECTION(SectionP, "p", execute | read | not_paged);
 TEST_SECTION(SectionR, "r", read);
-TEST_SECTION(SectionS, "s", shared);
+TEST_SECTION(SectionS, "s", execute | read | shared);
 TEST_SECTION(SectionW, "w", write);
 
 #undef TEST_SECTION
+
+TEST_F(WinLinkParserTest, Section) {
+  EXPECT_TRUE(parse("link.exe", "/section:.text,dekprsw",
+                    "/section:.text,!dekprsw", "a.obj", nullptr));
+  EXPECT_EQ(0U, _context.getSectionAttributes(".text", execute | read));
+}
+
+TEST_F(WinLinkParserTest, SectionNegate) {
+  EXPECT_TRUE(parse("link.exe", "/section:.text,!e", "a.obj", nullptr));
+  EXPECT_EQ(read, _context.getSectionAttributes(".text", execute | read));
+}
+
+TEST_F(WinLinkParserTest, SectionMultiple) {
+  EXPECT_TRUE(parse("link.exe", "/section:.foo,e", "/section:.foo,rw",
+                    "/section:.foo,!d", "a.obj", nullptr));
+  uint32_t flags = execute | read | not_paged | discardable;
+  uint32_t expected = execute | read | write | not_paged;
+  EXPECT_EQ(expected, _context.getSectionAttributes(".foo", flags));
+}
+
 } // end anonymous namespace
 
 //
