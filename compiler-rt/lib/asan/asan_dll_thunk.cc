@@ -132,6 +132,8 @@ extern "C" {
   }
 }
 
+WRAP_V_V(__asan_handle_no_return)
+
 WRAP_V_W(__asan_report_store1)
 WRAP_V_W(__asan_report_store2)
 WRAP_V_W(__asan_report_store4)
