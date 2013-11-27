@@ -12,8 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/AttributeList.h"
+#include "clang/Sema/SemaInternal.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -149,6 +152,9 @@ struct ParsedAttrInfo {
   unsigned NumArgs : 4;
   unsigned OptArgs : 4;
   unsigned HasCustomParsing : 1;
+
+  bool (*DiagAppertainsToDecl)(Sema &S, const AttributeList &Attr,
+                               const Decl *);
 };
 
 namespace {
@@ -169,4 +175,8 @@ unsigned AttributeList::getMaxArgs() const {
 
 bool AttributeList::hasCustomParsing() const {
   return getInfo(*this).HasCustomParsing;
+}
+
+bool AttributeList::diagnoseAppertainsTo(Sema &S, const Decl *D) const {
+  return getInfo(*this).DiagAppertainsToDecl(S, *this, D);
 }

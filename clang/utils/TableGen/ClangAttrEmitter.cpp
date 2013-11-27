@@ -17,8 +17,10 @@
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/StringMatcher.h"
 #include "llvm/TableGen/TableGenBackend.h"
+#include "llvm/TableGen/Error.h"
 #include <algorithm>
 #include <cctype>
+#include <sstream>
 
 using namespace llvm;
 
@@ -1676,7 +1678,7 @@ void EmitClangAttrParsedAttrList(RecordKeeper &Records, raw_ostream &OS) {
   }
 }
 
-static void emitArgInfo(const Record &R, raw_ostream &OS) {
+static void emitArgInfo(const Record &R, std::stringstream &OS) {
   // This function will count the number of arguments specified for the
   // attribute and emit the number of required arguments followed by the
   // number of optional arguments.
@@ -1690,27 +1692,191 @@ static void emitArgInfo(const Record &R, raw_ostream &OS) {
   OS << ArgCount << ", " << OptCount;
 }
 
+static void GenerateDefaultAppertainsTo(raw_ostream &OS) {
+  OS << "static bool DefaultAppertainsTo(Sema &, const AttributeList &,";
+  OS << "const Decl *) {\n";
+  OS << "  return true;\n";
+  OS << "}\n\n";
+}
+
+static std::string CalculateDiagnostic(const Record &S) {
+  // If the SubjectList object has a custom diagnostic associated with it,
+  // return that directly.
+  std::string CustomDiag = S.getValueAsString("CustomDiag");
+  if (!CustomDiag.empty())
+    return CustomDiag;
+
+  // Given the list of subjects, determine what diagnostic best fits.
+  enum {
+    Func = 1U << 0,
+    Var = 1U << 1,
+    ObjCMethod = 1U << 2,
+    Param = 1U << 3,
+    Class = 1U << 4,
+    Struct = 1U << 5,
+    Type = 1U << 6,
+    ObjCIVar = 1U << 7,
+    ObjCProp = 1U << 8,
+    ObjCInterface = 1U << 9,
+    Block = 1U << 10,
+    Namespace = 1U << 11,
+    FuncTemplate = 1U << 12,
+    Field = 1U << 13,
+    CXXMethod = 1U << 14
+  };
+  uint32_t SubMask = 0;
+
+  std::vector<Record *> Subjects = S.getValueAsListOfDefs("Subjects");
+  for (std::vector<Record *>::const_iterator I = Subjects.begin(),
+       E = Subjects.end(); I != E; ++I) {
+    uint32_t V = StringSwitch<uint32_t>((*I)->getName())
+                   .Case("Function", Func)
+                   .Case("Var", Var)
+                   .Case("ObjCMethod", ObjCMethod)
+                   .Case("ParmVar", Param)
+                   .Case("TypedefName", Type)
+                   .Case("ObjCIvar", ObjCIVar)
+                   .Case("ObjCProperty", ObjCProp)
+                   .Case("Record", Struct)
+                   .Case("ObjCInterface", ObjCInterface)
+                   .Case("Block", Block)
+                   .Case("CXXRecord", Class)
+                   .Case("Namespace", Namespace)
+                   .Case("FunctionTemplate", FuncTemplate)
+                   .Case("Field", Field)
+                   .Case("CXXMethod", CXXMethod)
+                   .Default(0);
+    if (!V) {
+      // Something wasn't in our mapping, so be helpful and let the developer
+      // know about it.
+      PrintFatalError((*I)->getLoc(), "Unknown subject type: " +
+                      (*I)->getName());
+      return "";
+    }
+
+    SubMask |= V;
+  }
+
+  switch (SubMask) {
+    // For the simple cases where there's only a single entry in the mask, we
+    // don't have to resort to bit fiddling.
+    case Func:  return "ExpectedFunction";
+    case Var:   return "ExpectedVariable";
+    case Param: return "ExpectedParameter";
+    case Class: return "ExpectedClass";
+    case CXXMethod:
+      // FIXME: Currently, this maps to ExpectedMethod based on existing code,
+      // but should map to something a bit more accurate at some point.
+    case ObjCMethod:  return "ExpectedMethod";
+    case Type:  return "ExpectedType";
+    case ObjCInterface: return "ExpectedObjectiveCInterface";
+    
+    // FIXME: This could be checking lang opts to remove class.
+    case Struct:  return "ExpectedStructOrUnionOrClass";
+    case Func | ObjCMethod | Block: return "ExpectedFunctionMethodOrBlock";
+    case Func | ObjCMethod | Class: return "ExpectedFunctionMethodOrClass";
+    case Func | Param:
+    case Func | ObjCMethod | Param: return "ExpectedFunctionMethodOrParameter";
+    case Func | FuncTemplate:
+    case Func | ObjCMethod: return "ExpectedFunctionOrMethod";
+    case Func | Var: return "ExpectedVariableOrFunction";
+    case ObjCMethod | ObjCProp: return "ExpectedMethodOrProperty";
+    case Field | Var: return "ExpectedFieldOrGlobalVar";
+  }
+
+  PrintFatalError(S.getLoc(),
+                  "Could not deduce diagnostic argument for Attr subjects");
+
+  return "";
+}
+
+static std::string GenerateAppertainsTo(const Record &Attr, raw_ostream &OS) {
+  // If the attribute does not contain a Subjects definition, then use the
+  // default appertainsTo logic.
+  if (Attr.isValueUnset("Subjects"))
+    return "DefaultAppertainsTo";
+
+  const Record *SubjectObj = Attr.getValueAsDef("Subjects");
+  std::vector<Record*> Subjects = SubjectObj->getValueAsListOfDefs("Subjects");
+
+  // If the list of subjects is empty, it is assumed that the attribute
+  // appertains to everything.
+  if (Subjects.empty())
+    return "DefaultAppertainsTo";
+
+  // If any of the subjects are a SubsetSubject derivative, bail out for now
+  // as though it was using custom parsing.
+  bool HasSubsetSubject = false;
+  bool Warn = SubjectObj->getValueAsDef("Diag")->getValueAsBit("Warn");
+
+  // Otherwise, generate an appertainsTo check specific to this attribute which
+  // checks all of the given subjects against the Decl passed in. Return the
+  // name of that check to the caller.
+  std::string FnName = Attr.getName() + "AppertainsTo";
+  std::stringstream SS;
+  SS << "static bool " << FnName << "(Sema &S, const AttributeList &Attr, ";
+  SS << "const Decl *D) {\n";
+  SS << "  if (";
+  for (std::vector<Record *>::const_iterator I = Subjects.begin(),
+       E = Subjects.end(); I != E; ++I) {
+    if ((*I)->isSubClassOf("SubsetSubject"))
+      HasSubsetSubject = true;
+
+    SS << "!isa<" << (*I)->getName() << "Decl>(D)";
+    if (I + 1 != E)
+      SS << " && ";
+  }
+  SS << ") {\n";
+  SS << "    S.Diag(Attr.getLoc(), diag::";
+  SS << (Warn ? "warn_attribute_wrong_decl_type" :
+               "err_attribute_wrong_decl_type");
+  SS << ")\n";
+  SS << "      << Attr.getName() << ";
+  SS << CalculateDiagnostic(*SubjectObj) << ";\n";
+  SS << "    return false;\n";
+  SS << "  }\n";
+  SS << "  return true;\n";
+  SS << "}\n\n";
+
+  if (HasSubsetSubject)
+    return "DefaultAppertainsTo";
+
+  OS << SS.str();
+  return FnName;
+}
+
 /// Emits the parsed attribute helpers
 void EmitClangAttrParsedAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
   emitSourceFileHeader("Parsed attribute helpers", OS);
 
   ParsedAttrMap Attrs = getParsedAttrList(Records);
 
-  OS << "static const ParsedAttrInfo AttrInfoMap[AttributeList::UnknownAttribute + 1] = {\n";
+  // Generate the default appertainsTo diagnostic method.
+  GenerateDefaultAppertainsTo(OS);
+
+  // Generate the appertainsTo diagnostic methods and write their names into
+  // another mapping. At the same time, generate the AttrInfoMap object
+  // contents. Due to the reliance on generated code, use separate streams so
+  // that code will not be interleaved.
+  std::stringstream SS;
   for (ParsedAttrMap::iterator I = Attrs.begin(), E = Attrs.end(); I != E;
        ++I) {
     // We need to generate struct instances based off ParsedAttrInfo from
     // AttributeList.cpp.
-    OS << "  { ";
-    emitArgInfo(*I->second, OS);
-    OS << ", " << I->second->getValueAsBit("HasCustomParsing");
-    OS << " }";
+    SS << "  { ";
+    emitArgInfo(*I->second, SS);
+    SS << ", " << I->second->getValueAsBit("HasCustomParsing");
+    SS << ", " << GenerateAppertainsTo(*I->second, OS);
+    SS << " }";
 
     if (I + 1 != E)
-      OS << ",";
-    
-    OS << "  // AT_" << I->first << "\n";
+      SS << ",";
+
+    SS << "  // AT_" << I->first << "\n";
   }
+
+  OS << "static const ParsedAttrInfo AttrInfoMap[AttributeList::UnknownAttribute + 1] = {\n";
+  OS << SS.str();
   OS << "};\n\n";
 }
 
