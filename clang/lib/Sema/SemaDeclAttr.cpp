@@ -328,6 +328,15 @@ bool Sema::checkStringLiteralArgumentAttr(const AttributeList &Attr,
   return true;
 }
 
+/// \brief Applies the given attribute to the Decl without performing any
+/// additional semantic checking.
+template <typename AttrType>
+static void handleSimpleAttribute(Sema &S, Decl *D,
+                                  const AttributeList &Attr) {
+  D->addAttr(::new (S.Context) AttrType(Attr.getRange(), S.Context,
+                                        Attr.getAttributeSpellingListIndex()));
+}
+
 ///
 /// \brief Check if passed in Decl is a field or potentially shared global var
 /// \return true if the Decl is a field or potentially shared global variable
@@ -638,31 +647,6 @@ static void handleScopedLockableAttr(Sema &S, Decl *D,
   D->addAttr(::new (S.Context)
              ScopedLockableAttr(Attr.getRange(), S.Context,
                                 Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleNoThreadSafetyAnalysis(Sema &S, Decl *D,
-                                         const AttributeList &Attr) {
-  D->addAttr(::new (S.Context) NoThreadSafetyAnalysisAttr(Attr.getRange(),
-                                                          S.Context));
-}
-
-static void handleNoSanitizeAddressAttr(Sema &S, Decl *D,
-                                      const AttributeList &Attr) {
-  D->addAttr(::new (S.Context)
-             NoSanitizeAddressAttr(Attr.getRange(), S.Context,
-                                   Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleNoSanitizeMemory(Sema &S, Decl *D,
-                                   const AttributeList &Attr) {
-  D->addAttr(::new (S.Context) NoSanitizeMemoryAttr(Attr.getRange(),
-                                                         S.Context));
-}
-
-static void handleNoSanitizeThread(Sema &S, Decl *D,
-                                   const AttributeList &Attr) {
-  D->addAttr(::new (S.Context) NoSanitizeThreadAttr(Attr.getRange(),
-                                                    S.Context));
 }
 
 static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D,
@@ -1163,11 +1147,6 @@ static void handlePackedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
 }
 
-static void handleMsStructAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  D->addAttr(::new (S.Context) MsStructAttr(Attr.getRange(), S.Context,
-                                        Attr.getAttributeSpellingListIndex()));
-}
-
 static void handleIBAction(Sema &S, Decl *D, const AttributeList &Attr) {
   // The IBAction attributes only apply to instance methods.
   if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
@@ -1573,12 +1552,6 @@ static void handleAliasAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                                          Attr.getAttributeSpellingListIndex()));
 }
 
-static void handleMinSizeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  D->addAttr(::new (S.Context)
-             MinSizeAttr(Attr.getRange(), S.Context,
-                         Attr.getAttributeSpellingListIndex()));
-}
-
 static void handleColdAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (D->hasAttr<HotAttr>()) {
     S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
@@ -1599,19 +1572,6 @@ static void handleHotAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
   D->addAttr(::new (S.Context) HotAttr(Attr.getRange(), S.Context,
                                        Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleNakedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  D->addAttr(::new (S.Context)
-             NakedAttr(Attr.getRange(), S.Context,
-                       Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleAlwaysInlineAttr(Sema &S, Decl *D,
-                                   const AttributeList &Attr) {
-  D->addAttr(::new (S.Context)
-             AlwaysInlineAttr(Attr.getRange(), S.Context,
-                              Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleTLSModelAttr(Sema &S, Decl *D,
@@ -1652,17 +1612,6 @@ static void handleMallocAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 
   S.Diag(Attr.getLoc(), diag::warn_attribute_malloc_pointer_only);
-}
-
-static void handleMayAliasAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  D->addAttr(::new (S.Context)
-             MayAliasAttr(Attr.getRange(), S.Context,
-                          Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleNoCommonAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  D->addAttr(::new (S.Context) NoCommonAttr(Attr.getRange(), S.Context,
-                                        Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleCommonAttr(Sema &S, Decl *D, const AttributeList &Attr) {
@@ -1827,13 +1776,6 @@ static void handleUnusedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                         Attr.getAttributeSpellingListIndex()));
 }
 
-static void handleReturnsTwiceAttr(Sema &S, Decl *D,
-                                   const AttributeList &Attr) {
-  D->addAttr(::new (S.Context)
-             ReturnsTwiceAttr(Attr.getRange(), S.Context,
-                              Attr.getAttributeSpellingListIndex()));
-}
-
 static void handleUsedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     if (VD->hasLocalStorage()) {
@@ -1903,20 +1845,6 @@ static void handleAttrWithMessage(Sema &S, Decl *D,
                                       Attr.getAttributeSpellingListIndex()));
 }
 
-static void handleArcWeakrefUnavailableAttr(Sema &S, Decl *D, 
-                                            const AttributeList &Attr) {
-  D->addAttr(::new (S.Context)
-             ArcWeakrefUnavailableAttr(Attr.getRange(), S.Context,
-                                       Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleObjCRootClassAttr(Sema &S, Decl *D, 
-                                    const AttributeList &Attr) {
-  D->addAttr(::new (S.Context)
-             ObjCRootClassAttr(Attr.getRange(), S.Context,
-                               Attr.getAttributeSpellingListIndex()));
-}
-
 static void handleObjCSuppresProtocolAttr(Sema &S, Decl *D,
                                           const AttributeList &Attr) {
   IdentifierLoc *Parm = Attr.isArgIdent(0) ? Attr.getArgAsIdent(0) : 0;
@@ -1929,14 +1857,6 @@ static void handleObjCSuppresProtocolAttr(Sema &S, Decl *D,
   D->addAttr(::new (S.Context)
              ObjCSuppressProtocolAttr(Attr.getRange(), S.Context, Parm->Ident,
                                       Attr.getAttributeSpellingListIndex()));
-}
-
-
-static void handleObjCRequiresPropertyDefsAttr(Sema &S, Decl *D,
-                                               const AttributeList &Attr) {
-  D->addAttr(::new (S.Context)
-             ObjCRequiresPropertyDefsAttr(Attr.getRange(), S.Context,
-                                          Attr.getAttributeSpellingListIndex()));
 }
 
 static bool checkAvailabilityAttr(Sema &S, SourceRange Range,
@@ -2271,13 +2191,6 @@ static void handleObjCMethodFamilyAttr(Sema &S, Decl *decl,
                                                        S.Context, F));
 }
 
-static void handleObjCExceptionAttr(Sema &S, Decl *D,
-                                    const AttributeList &Attr) {
-  D->addAttr(::new (S.Context)
-             ObjCExceptionAttr(Attr.getRange(), S.Context,
-                               Attr.getAttributeSpellingListIndex()));
-}
-
 static void handleObjCNSObject(Sema &S, Decl *D, const AttributeList &Attr) {
   if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
     QualType T = TD->getUnderlyingType();
@@ -2304,13 +2217,6 @@ static void handleObjCNSObject(Sema &S, Decl *D, const AttributeList &Attr) {
   }
   D->addAttr(::new (S.Context)
              ObjCNSObjectAttr(Attr.getRange(), S.Context,
-                              Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleOverloadableAttr(Sema &S, Decl *D,
-                                   const AttributeList &Attr) {
-  D->addAttr(::new (S.Context)
-             OverloadableAttr(Attr.getRange(), S.Context,
                               Attr.getAttributeSpellingListIndex()));
 }
 
@@ -2641,12 +2547,6 @@ static void handleConstAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                ConstAttr(Attr.getRange(), S.Context,
                          Attr.getAttributeSpellingListIndex() ));
   }
-}
-
-static void handlePureAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  D->addAttr(::new (S.Context)
-             PureAttr(Attr.getRange(), S.Context,
-                      Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleCleanupAttr(Sema &S, Decl *D, const AttributeList &Attr) {
@@ -3375,18 +3275,6 @@ static void handleNoDebugAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                          Attr.getAttributeSpellingListIndex()));
 }
 
-static void handleNoInlineAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  D->addAttr(::new (S.Context) NoInlineAttr(Attr.getRange(), S.Context,
-                                        Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleNoInstrumentFunctionAttr(Sema &S, Decl *D,
-                                           const AttributeList &Attr) {
-  D->addAttr(::new (S.Context)
-             NoInstrumentFunctionAttr(Attr.getRange(), S.Context,
-                                      Attr.getAttributeSpellingListIndex()));
-}
-
 static void handleConstantAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (S.LangOpts.CUDA) {
     D->addAttr(::new (S.Context)
@@ -3555,11 +3443,6 @@ static void handleCallConvAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   default:
     llvm_unreachable("unexpected attribute kind");
   }
-}
-
-static void handleOpenCLKernelAttr(Sema &S, Decl *D,
-                                   const AttributeList &Attr) {
-  D->addAttr(::new (S.Context) OpenCLKernelAttr(Attr.getRange(), S.Context));
 }
 
 static void handleOpenCLImageAccessAttr(Sema &S, Decl *D,
@@ -3839,13 +3722,6 @@ static void handleNSConsumedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     param->addAttr(::new (S.Context)
                    NSConsumedAttr(Attr.getRange(), S.Context,
                                   Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleNSConsumesSelfAttr(Sema &S, Decl *D,
-                                     const AttributeList &Attr) {
-  D->addAttr(::new (S.Context)
-             NSConsumesSelfAttr(Attr.getRange(), S.Context,
-                                Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
@@ -4313,7 +4189,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_Aligned:     handleAlignedAttr     (S, D, Attr); break;
   case AttributeList::AT_AllocSize:   handleAllocSizeAttr   (S, D, Attr); break;
   case AttributeList::AT_AlwaysInline:
-    handleAlwaysInlineAttr  (S, D, Attr); break;
+    handleSimpleAttribute<AlwaysInlineAttr>(S, D, Attr); break;
   case AttributeList::AT_AnalyzerNoReturn:
     handleAnalyzerNoReturnAttr  (S, D, Attr); break;
   case AttributeList::AT_TLSModel:    handleTLSModelAttr    (S, D, Attr); break;
@@ -4336,7 +4212,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleExtVectorTypeAttr(S, scope, D, Attr);
     break;
   case AttributeList::AT_MinSize:
-    handleMinSizeAttr(S, D, Attr);
+    handleSimpleAttribute<MinSizeAttr>(S, D, Attr);
     break;
   case AttributeList::AT_Format:      handleFormatAttr      (S, D, Attr); break;
   case AttributeList::AT_FormatArg:   handleFormatArgAttr   (S, D, Attr); break;
@@ -4348,15 +4224,19 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleLaunchBoundsAttr(S, D, Attr);
     break;
   case AttributeList::AT_Malloc:      handleMallocAttr      (S, D, Attr); break;
-  case AttributeList::AT_MayAlias:    handleMayAliasAttr    (S, D, Attr); break;
+  case AttributeList::AT_MayAlias:
+    handleSimpleAttribute<MayAliasAttr>(S, D, Attr); break;
   case AttributeList::AT_Mode:        handleModeAttr        (S, D, Attr); break;
-  case AttributeList::AT_NoCommon:    handleNoCommonAttr    (S, D, Attr); break;
+  case AttributeList::AT_NoCommon:
+    handleSimpleAttribute<NoCommonAttr>(S, D, Attr); break;
   case AttributeList::AT_NonNull:     handleNonNullAttr     (S, D, Attr); break;
-  case AttributeList::AT_Overloadable:handleOverloadableAttr(S, D, Attr); break;
+  case AttributeList::AT_Overloadable:
+    handleSimpleAttribute<OverloadableAttr>(S, D, Attr); break;
   case AttributeList::AT_Ownership:   handleOwnershipAttr   (S, D, Attr); break;
   case AttributeList::AT_Cold:        handleColdAttr        (S, D, Attr); break;
   case AttributeList::AT_Hot:         handleHotAttr         (S, D, Attr); break;
-  case AttributeList::AT_Naked:       handleNakedAttr       (S, D, Attr); break;
+  case AttributeList::AT_Naked:
+    handleSimpleAttribute<NakedAttr>(S, D, Attr); break;
   case AttributeList::AT_NoReturn:    handleNoReturnAttr    (S, D, Attr); break;
   case AttributeList::AT_NoThrow:     handleNothrowAttr     (S, D, Attr); break;
   case AttributeList::AT_CUDAShared:  handleSharedAttr      (S, D, Attr); break;
@@ -4390,7 +4270,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_CFConsumed:
   case AttributeList::AT_NSConsumed:  handleNSConsumedAttr  (S, D, Attr); break;
   case AttributeList::AT_NSConsumesSelf:
-    handleNSConsumesSelfAttr(S, D, Attr); break;
+    handleSimpleAttribute<NSConsumesSelfAttr>(S, D, Attr); break;
 
   case AttributeList::AT_NSReturnsAutoreleased:
   case AttributeList::AT_NSReturnsNotRetained:
@@ -4415,21 +4295,17 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleAttrWithMessage<UnavailableAttr>(S, D, Attr);
     break;
   case AttributeList::AT_ArcWeakrefUnavailable: 
-    handleArcWeakrefUnavailableAttr (S, D, Attr); 
-    break;
+    handleSimpleAttribute<ArcWeakrefUnavailableAttr>(S, D, Attr); break;
   case AttributeList::AT_ObjCRootClass:
-    handleObjCRootClassAttr(S, D, Attr);
-    break;
+    handleSimpleAttribute<ObjCRootClassAttr>(S, D, Attr); break;
   case AttributeList::AT_ObjCSuppressProtocol:
     handleObjCSuppresProtocolAttr(S, D, Attr);
     break;
   case AttributeList::AT_ObjCRequiresPropertyDefs:
-    handleObjCRequiresPropertyDefsAttr (S, D, Attr); 
-    break;
+    handleSimpleAttribute<ObjCRequiresPropertyDefsAttr>(S, D, Attr); break;
   case AttributeList::AT_Unused:      handleUnusedAttr      (S, D, Attr); break;
   case AttributeList::AT_ReturnsTwice:
-    handleReturnsTwiceAttr(S, D, Attr);
-    break;
+    handleSimpleAttribute<ReturnsTwiceAttr>(S, D, Attr); break;
   case AttributeList::AT_Used:        handleUsedAttr        (S, D, Attr); break;
   case AttributeList::AT_Visibility:
     handleVisibilityAttr(S, D, Attr, false);
@@ -4449,8 +4325,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleTransparentUnionAttr(S, D, Attr);
     break;
   case AttributeList::AT_ObjCException:
-    handleObjCExceptionAttr(S, D, Attr);
-    break;
+    handleSimpleAttribute<ObjCExceptionAttr>(S, D, Attr); break;
   case AttributeList::AT_ObjCMethodFamily:
     handleObjCMethodFamilyAttr(S, D, Attr);
     break;
@@ -4458,17 +4333,18 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_Blocks:      handleBlocksAttr      (S, D, Attr); break;
   case AttributeList::AT_Sentinel:    handleSentinelAttr    (S, D, Attr); break;
   case AttributeList::AT_Const:       handleConstAttr       (S, D, Attr); break;
-  case AttributeList::AT_Pure:        handlePureAttr        (S, D, Attr); break;
+  case AttributeList::AT_Pure:
+    handleSimpleAttribute<PureAttr>(S, D, Attr); break;
   case AttributeList::AT_Cleanup:     handleCleanupAttr     (S, D, Attr); break;
   case AttributeList::AT_NoDebug:     handleNoDebugAttr     (S, D, Attr); break;
-  case AttributeList::AT_NoInline:    handleNoInlineAttr    (S, D, Attr); break;
+  case AttributeList::AT_NoInline:
+    handleSimpleAttribute<NoInlineAttr>(S, D, Attr); break;
   case AttributeList::AT_Regparm:     handleRegparmAttr     (S, D, Attr); break;
   case AttributeList::IgnoredAttribute:
     // Just ignore
     break;
   case AttributeList::AT_NoInstrumentFunction:  // Interacts with -pg.
-    handleNoInstrumentFunctionAttr(S, D, Attr);
-    break;
+    handleSimpleAttribute<NoInstrumentFunctionAttr>(S, D, Attr); break;
   case AttributeList::AT_StdCall:
   case AttributeList::AT_CDecl:
   case AttributeList::AT_FastCall:
@@ -4482,15 +4358,14 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleCallConvAttr(S, D, Attr);
     break;
   case AttributeList::AT_OpenCLKernel:
-    handleOpenCLKernelAttr(S, D, Attr);
-    break;
+    handleSimpleAttribute<OpenCLKernelAttr>(S, D, Attr); break;
   case AttributeList::AT_OpenCLImageAccess:
     handleOpenCLImageAccessAttr(S, D, Attr);
     break;
 
   // Microsoft attributes:
   case AttributeList::AT_MsStruct:
-    handleMsStructAttr(S, D, Attr);
+    handleSimpleAttribute<MsStructAttr>(S, D, Attr);
     break;
   case AttributeList::AT_Uuid:
     handleUuidAttr(S, D, Attr);
@@ -4527,16 +4402,16 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleScopedLockableAttr(S, D, Attr);
     break;
   case AttributeList::AT_NoSanitizeAddress:
-    handleNoSanitizeAddressAttr(S, D, Attr);
+    handleSimpleAttribute<NoSanitizeAddressAttr>(S, D, Attr);
     break;
   case AttributeList::AT_NoThreadSafetyAnalysis:
-    handleNoThreadSafetyAnalysis(S, D, Attr);
+    handleSimpleAttribute<NoThreadSafetyAnalysisAttr>(S, D, Attr);
     break;
   case AttributeList::AT_NoSanitizeThread:
-    handleNoSanitizeThread(S, D, Attr);
+    handleSimpleAttribute<NoSanitizeThreadAttr>(S, D, Attr);
     break;
   case AttributeList::AT_NoSanitizeMemory:
-    handleNoSanitizeMemory(S, D, Attr);
+    handleSimpleAttribute<NoSanitizeMemoryAttr>(S, D, Attr);
     break;
   case AttributeList::AT_Lockable:
     handleLockableAttr(S, D, Attr);
