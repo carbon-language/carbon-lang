@@ -620,35 +620,6 @@ static void handlePtGuardedByAttr(Sema &S, Decl *D,
                                                S.Context, Arg));
 }
 
-static bool checkLockableAttrCommon(Sema &S, Decl *D,
-                                    const AttributeList &Attr) {
-  // FIXME: Lockable structs for C code.
-  if (!isa<RecordDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedStructOrUnionOrClass;
-    return false;
-  }
-
-  return true;
-}
-
-static void handleLockableAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!checkLockableAttrCommon(S, D, Attr))
-    return;
-
-  D->addAttr(::new (S.Context) LockableAttr(Attr.getRange(), S.Context));
-}
-
-static void handleScopedLockableAttr(Sema &S, Decl *D,
-                             const AttributeList &Attr) {
-  if (!checkLockableAttrCommon(S, D, Attr))
-    return;
-
-  D->addAttr(::new (S.Context)
-             ScopedLockableAttr(Attr.getRange(), S.Context,
-                                Attr.getAttributeSpellingListIndex()));
-}
-
 static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D,
                                         const AttributeList &Attr,
                                         SmallVectorImpl<Expr *> &Args) {
@@ -4357,8 +4328,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handlePtGuardedVarAttr(S, D, Attr);
     break;
   case AttributeList::AT_ScopedLockable:
-    handleScopedLockableAttr(S, D, Attr);
-    break;
+    handleSimpleAttribute<ScopedLockableAttr>(S, D, Attr); break;
   case AttributeList::AT_NoSanitizeAddress:
     handleSimpleAttribute<NoSanitizeAddressAttr>(S, D, Attr);
     break;
@@ -4372,8 +4342,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleSimpleAttribute<NoSanitizeMemoryAttr>(S, D, Attr);
     break;
   case AttributeList::AT_Lockable:
-    handleLockableAttr(S, D, Attr);
-    break;
+    handleSimpleAttribute<LockableAttr>(S, D, Attr); break;
   case AttributeList::AT_GuardedBy:
     handleGuardedByAttr(S, D, Attr);
     break;
