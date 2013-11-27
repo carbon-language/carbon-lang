@@ -251,6 +251,29 @@ void StackMaps::serializeToStackMapSection() {
     for (LocationVec::const_iterator LocI = CSLocs.begin(), LocE = CSLocs.end();
          LocI != LocE; ++LocI, ++operIdx) {
       const Location &Loc = *LocI;
+      unsigned RegNo = 0;
+      int Offset = Loc.Offset;
+      if(Loc.Reg) {
+        RegNo = MCRI.getDwarfRegNum(Loc.Reg, false);
+        for (MCSuperRegIterator SR(Loc.Reg, TRI);
+             SR.isValid() && (int)RegNo < 0; ++SR) {
+          RegNo = TRI->getDwarfRegNum(*SR, false);
+        }
+        // If this is a register location, put the subregister byte offset in
+        // the location offset.
+        if (Loc.LocType == Location::Register) {
+          assert(!Loc.Offset && "Register location should have zero offset");
+          unsigned LLVMRegNo = MCRI.getLLVMRegNum(RegNo, false);
+          unsigned SubRegIdx = MCRI.getSubRegIndex(LLVMRegNo, Loc.Reg);
+          if (SubRegIdx)
+            Offset = MCRI.getSubRegIdxOffset(SubRegIdx);
+        }
+      }
+      else {
+        assert(Loc.LocType != Location::Register &&
+               "Missing location register");
+      }
+
       DEBUG(
         dbgs() << WSMP << "  Loc " << operIdx << ": ";
         switch (Loc.LocType) {
@@ -276,31 +299,12 @@ void StackMaps::serializeToStackMapSection() {
           dbgs() << "Constant Index " << Loc.Offset;
           break;
         }
-        dbgs() << "\n";
+        dbgs() << "     [encoding: .byte " << Loc.LocType
+               << ", .byte " << Loc.Size
+               << ", .short " << RegNo
+               << ", .int " << Offset << "]\n";
       );
 
-      unsigned RegNo = 0;
-      int Offset = Loc.Offset;
-      if(Loc.Reg) {
-        RegNo = MCRI.getDwarfRegNum(Loc.Reg, false);
-        for (MCSuperRegIterator SR(Loc.Reg, TRI);
-             SR.isValid() && (int)RegNo < 0; ++SR) {
-          RegNo = TRI->getDwarfRegNum(*SR, false);
-        }
-        // If this is a register location, put the subregister byte offset in
-        // the location offset.
-        if (Loc.LocType == Location::Register) {
-          assert(!Loc.Offset && "Register location should have zero offset");
-          unsigned LLVMRegNo = MCRI.getLLVMRegNum(RegNo, false);
-          unsigned SubRegIdx = MCRI.getSubRegIndex(LLVMRegNo, Loc.Reg);
-          if (SubRegIdx)
-            Offset = MCRI.getSubRegIdxOffset(SubRegIdx);
-        }
-      }
-      else {
-        assert(Loc.LocType != Location::Register &&
-               "Missing location register");
-      }
       AP.OutStreamer.EmitIntValue(Loc.LocType, 1);
       AP.OutStreamer.EmitIntValue(Loc.Size, 1);
       AP.OutStreamer.EmitIntValue(RegNo, 2);
