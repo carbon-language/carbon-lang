@@ -114,3 +114,18 @@ namespace PR13052 {
     friend constexpr S<W>::S(const S<W>&) noexcept;
   };
 }
+
+namespace Mutable {
+  struct A {
+    constexpr A(A &);
+    A(const A &);
+  };
+  struct B {
+    constexpr B(const B &) = default; // ok
+    mutable A a;
+  };
+  struct C {
+    constexpr C(const C &) = default; // expected-error {{not constexpr}}
+    A a;
+  };
+}

@@ -139,3 +139,22 @@ namespace PR13381 {
   T &f();
   T t = f(); // expected-error{{call to implicitly-deleted copy constructor}}
 }
+
+namespace Mutable {
+  struct A {
+    A(const A &);
+    A(A &) = delete;
+  };
+
+  struct B {
+    A a;
+    B(const B &);
+  };
+  B::B(const B &) = default;
+
+  struct C {
+    mutable A a;
+    C(const C &);
+  };
+  C::C(const C &) = default; // expected-error{{would delete}}
+}

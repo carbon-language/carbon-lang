@@ -4463,14 +4463,43 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   DeclareInheritingConstructors(Record);
 }
 
+/// Look up the special member function that would be called by a special
+/// member function for a subobject of class type.
+///
+/// \param Class The class type of the subobject.
+/// \param CSM The kind of special member function.
+/// \param FieldQuals If the subobject is a field, its cv-qualifiers.
+/// \param ConstRHS True if this is a copy operation with a const object
+///        on its RHS, that is, if the argument to the outer special member
+///        function is 'const' and this is not a field marked 'mutable'.
+static Sema::SpecialMemberOverloadResult *lookupCallFromSpecialMember(
+    Sema &S, CXXRecordDecl *Class, Sema::CXXSpecialMember CSM,
+    unsigned FieldQuals, bool ConstRHS) {
+  unsigned LHSQuals = 0;
+  if (CSM == Sema::CXXCopyAssignment || CSM == Sema::CXXMoveAssignment)
+    LHSQuals = FieldQuals;
+
+  unsigned RHSQuals = FieldQuals;
+  if (CSM == Sema::CXXDefaultConstructor || CSM == Sema::CXXDestructor)
+    RHSQuals = 0;
+  else if (ConstRHS)
+    RHSQuals |= Qualifiers::Const;
+
+  return S.LookupSpecialMember(Class, CSM,
+                               RHSQuals & Qualifiers::Const,
+                               RHSQuals & Qualifiers::Volatile,
+                               false,
+                               LHSQuals & Qualifiers::Const,
+                               LHSQuals & Qualifiers::Volatile);
+}
+
 /// Is the special member function which would be selected to perform the
 /// specified operation on the specified class type a constexpr constructor?
 static bool specialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
                                      Sema::CXXSpecialMember CSM,
-                                     bool ConstArg) {
+                                     unsigned Quals, bool ConstRHS) {
   Sema::SpecialMemberOverloadResult *SMOR =
-      S.LookupSpecialMember(ClassDecl, CSM, ConstArg,
-                            false, false, false, false);
+      lookupCallFromSpecialMember(S, ClassDecl, CSM, Quals, ConstRHS);
   if (!SMOR || !SMOR->getMethod())
     // A constructor we wouldn't select can't be "involved in initializing"
     // anything.
@@ -4547,7 +4576,7 @@ static bool defaultedSpecialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
     if (!BaseType) continue;
 
     CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
-    if (!specialMemberIsConstexpr(S, BaseClassDecl, CSM, ConstArg))
+    if (!specialMemberIsConstexpr(S, BaseClassDecl, CSM, 0, ConstArg))
       return false;
   }
 
@@ -4555,7 +4584,7 @@ static bool defaultedSpecialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
   //      [...] shall be a constexpr constructor;
   //   -- every non-static data member and base class sub-object shall be
   //      initialized
-  //   -- for each non-stastic data member of X that is of class type (or array
+  //   -- for each non-static data member of X that is of class type (or array
   //      thereof), the assignment operator selected to copy/move that member is
   //      a constexpr function
   for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
@@ -4563,10 +4592,12 @@ static bool defaultedSpecialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
        F != FEnd; ++F) {
     if (F->isInvalidDecl())
       continue;
-    if (const RecordType *RecordTy =
-            S.Context.getBaseElementType(F->getType())->getAs<RecordType>()) {
+    QualType BaseType = S.Context.getBaseElementType(F->getType());
+    if (const RecordType *RecordTy = BaseType->getAs<RecordType>()) {
       CXXRecordDecl *FieldRecDecl = cast<CXXRecordDecl>(RecordTy->getDecl());
-      if (!specialMemberIsConstexpr(S, FieldRecDecl, CSM, ConstArg))
+      if (!specialMemberIsConstexpr(S, FieldRecDecl, CSM,
+                                    BaseType.getCVRQualifiers(),
+                                    ConstArg && !F->isMutable()))
         return false;
     }
   }
@@ -4865,7 +4896,7 @@ struct SpecialMemberDeletionInfo {
   bool Diagnose;
 
   // Properties of the special member, computed for convenience.
-  bool IsConstructor, IsAssignment, IsMove, ConstArg, VolatileArg;
+  bool IsConstructor, IsAssignment, IsMove, ConstArg;
   SourceLocation Loc;
 
   bool AllFieldsAreConst;
@@ -4874,7 +4905,7 @@ struct SpecialMemberDeletionInfo {
                             Sema::CXXSpecialMember CSM, bool Diagnose)
     : S(S), MD(MD), CSM(CSM), Diagnose(Diagnose),
       IsConstructor(false), IsAssignment(false), IsMove(false),
-      ConstArg(false), VolatileArg(false), Loc(MD->getLocation()),
+      ConstArg(false), Loc(MD->getLocation()),
       AllFieldsAreConst(true) {
     switch (CSM) {
       case Sema::CXXDefaultConstructor:
@@ -4899,8 +4930,9 @@ struct SpecialMemberDeletionInfo {
     }
 
     if (MD->getNumParams()) {
-      ConstArg = MD->getParamDecl(0)->getType().isConstQualified();
-      VolatileArg = MD->getParamDecl(0)->getType().isVolatileQualified();
+      if (const ReferenceType *RT =
+              MD->getParamDecl(0)->getType()->getAs<ReferenceType>())
+        ConstArg = RT->getPointeeType().isConstQualified();
     }
   }
 
@@ -4908,21 +4940,9 @@ struct SpecialMemberDeletionInfo {
 
   /// Look up the corresponding special member in the given class.
   Sema::SpecialMemberOverloadResult *lookupIn(CXXRecordDecl *Class,
-                                              unsigned Quals) {
-    unsigned TQ = MD->getTypeQualifiers();
-    // cv-qualifiers on class members don't affect default ctor / dtor calls.
-    if (CSM == Sema::CXXDefaultConstructor || CSM == Sema::CXXDestructor)
-      Quals = 0;
-    // cv-qualifiers on class members affect the type of both '*this' and the
-    // argument for an assignment.
-    if (IsAssignment)
-      TQ |= Quals;
-    return S.LookupSpecialMember(Class, CSM,
-                                 ConstArg || (Quals & Qualifiers::Const),
-                                 VolatileArg || (Quals & Qualifiers::Volatile),
-                                 MD->getRefQualifier() == RQ_RValue,
-                                 TQ & Qualifiers::Const,
-                                 TQ & Qualifiers::Volatile);
+                                              unsigned Quals, bool IsMutable) {
+    return lookupCallFromSpecialMember(S, Class, CSM, Quals,
+                                       ConstArg && !IsMutable);
   }
 
   typedef llvm::PointerUnion<CXXBaseSpecifier*, FieldDecl*> Subobject;
@@ -5017,6 +5037,7 @@ bool SpecialMemberDeletionInfo::shouldDeleteForSubobjectCall(
 bool SpecialMemberDeletionInfo::shouldDeleteForClassSubobject(
     CXXRecordDecl *Class, Subobject Subobj, unsigned Quals) {
   FieldDecl *Field = Subobj.dyn_cast<FieldDecl*>();
+  bool IsMutable = Field && Field->isMutable();
 
   // C++11 [class.ctor]p5:
   // -- any direct or virtual base class, or non-static data member with no
@@ -5034,7 +5055,8 @@ bool SpecialMemberDeletionInfo::shouldDeleteForClassSubobject(
   //    that is deleted or inaccessible
   if (!(CSM == Sema::CXXDefaultConstructor &&
         Field && Field->hasInClassInitializer()) &&
-      shouldDeleteForSubobjectCall(Subobj, lookupIn(Class, Quals), false))
+      shouldDeleteForSubobjectCall(Subobj, lookupIn(Class, Quals, IsMutable),
+                                   false))
     return true;
 
   // C++11 [class.ctor]p5, C++11 [class.copy]p11:
@@ -5312,7 +5334,7 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
 /// member that was most likely to be intended to be trivial, if any.
 static bool findTrivialSpecialMember(Sema &S, CXXRecordDecl *RD,
                                      Sema::CXXSpecialMember CSM, unsigned Quals,
-                                     CXXMethodDecl **Selected) {
+                                     bool ConstRHS, CXXMethodDecl **Selected) {
   if (Selected)
     *Selected = 0;
 
@@ -5403,11 +5425,7 @@ static bool findTrivialSpecialMember(Sema &S, CXXRecordDecl *RD,
   case Sema::CXXMoveAssignment:
   NeedOverloadResolution:
     Sema::SpecialMemberOverloadResult *SMOR =
-      S.LookupSpecialMember(RD, CSM,
-                            Quals & Qualifiers::Const,
-                            Quals & Qualifiers::Volatile,
-                            /*RValueThis*/false, /*ConstThis*/false,
-                            /*VolatileThis*/false);
+        lookupCallFromSpecialMember(S, RD, CSM, Quals, ConstRHS);
 
     // The standard doesn't describe how to behave if the lookup is ambiguous.
     // We treat it as not making the member non-trivial, just like the standard
@@ -5462,7 +5480,7 @@ enum TrivialSubobjectKind {
 
 /// Check whether the special member selected for a given type would be trivial.
 static bool checkTrivialSubobjectCall(Sema &S, SourceLocation SubobjLoc,
-                                      QualType SubType,
+                                      QualType SubType, bool ConstRHS,
                                       Sema::CXXSpecialMember CSM,
                                       TrivialSubobjectKind Kind,
                                       bool Diagnose) {
@@ -5472,10 +5490,13 @@ static bool checkTrivialSubobjectCall(Sema &S, SourceLocation SubobjLoc,
 
   CXXMethodDecl *Selected;
   if (findTrivialSpecialMember(S, SubRD, CSM, SubType.getCVRQualifiers(),
-                               Diagnose ? &Selected : 0))
+                               ConstRHS, Diagnose ? &Selected : 0))
     return true;
 
   if (Diagnose) {
+    if (ConstRHS)
+      SubType.addConst();
+
     if (!Selected && CSM == Sema::CXXDefaultConstructor) {
       S.Diag(SubobjLoc, diag::note_nontrivial_no_def_ctor)
         << Kind << SubType.getUnqualifiedType();
@@ -5548,10 +5569,9 @@ static bool checkTrivialClassMembers(Sema &S, CXXRecordDecl *RD,
       return false;
     }
 
-    if (ConstArg && !FI->isMutable())
-      FieldType.addConst();
-    if (!checkTrivialSubobjectCall(S, FI->getLocation(), FieldType, CSM,
-                                   TSK_Field, Diagnose))
+    bool ConstRHS = ConstArg && !FI->isMutable();
+    if (!checkTrivialSubobjectCall(S, FI->getLocation(), FieldType, ConstRHS,
+                                   CSM, TSK_Field, Diagnose))
       return false;
   }
 
@@ -5562,10 +5582,9 @@ static bool checkTrivialClassMembers(Sema &S, CXXRecordDecl *RD,
 /// the given kind.
 void Sema::DiagnoseNontrivial(const CXXRecordDecl *RD, CXXSpecialMember CSM) {
   QualType Ty = Context.getRecordType(RD);
-  if (CSM == CXXCopyConstructor || CSM == CXXCopyAssignment)
-    Ty.addConst();
 
-  checkTrivialSubobjectCall(*this, RD->getLocation(), Ty, CSM,
+  bool ConstArg = (CSM == CXXCopyConstructor || CSM == CXXCopyAssignment);
+  checkTrivialSubobjectCall(*this, RD->getLocation(), Ty, ConstArg, CSM,
                             TSK_CompleteObject, /*Diagnose*/true);
 }
 
@@ -5650,10 +5669,8 @@ bool Sema::SpecialMemberIsTrivial(CXXMethodDecl *MD, CXXSpecialMember CSM,
   //       destructors]
   for (CXXRecordDecl::base_class_iterator BI = RD->bases_begin(),
                                           BE = RD->bases_end(); BI != BE; ++BI)
-    if (!checkTrivialSubobjectCall(*this, BI->getLocStart(),
-                                   ConstArg ? BI->getType().withConst()
-                                            : BI->getType(),
-                                   CSM, TSK_BaseClass, Diagnose))
+    if (!checkTrivialSubobjectCall(*this, BI->getLocStart(), BI->getType(),
+                                   ConstArg, CSM, TSK_BaseClass, Diagnose))
       return false;
 
   // C++11 [class.ctor]p5, C++11 [class.dtor]p5:
