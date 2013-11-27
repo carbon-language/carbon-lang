@@ -16,6 +16,7 @@
 #include "SIInstrInfo.h"
 #include "AMDGPUTargetMachine.h"
 #include "SIDefines.h"
+#include "SIMachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/MC/MCInstrDesc.h"
@@ -183,6 +184,67 @@ unsigned SIInstrInfo::commuteOpcode(unsigned Opcode) const {
     return NewOpc;
 
   return Opcode;
+}
+
+void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
+                                      MachineBasicBlock::iterator MI,
+                                      unsigned SrcReg, bool isKill,
+                                      int FrameIndex,
+                                      const TargetRegisterClass *RC,
+                                      const TargetRegisterInfo *TRI) const {
+  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+  SIMachineFunctionInfo *MFI = MBB.getParent()->getInfo<SIMachineFunctionInfo>();
+  DebugLoc DL = MBB.findDebugLoc(MI);
+  unsigned KillFlag = isKill ? RegState::Kill : 0;
+
+  if (TRI->getCommonSubClass(RC, &AMDGPU::SGPR_32RegClass)) {
+    unsigned Lane = MFI->SpillTracker.getNextLane(MRI);
+    BuildMI(MBB, MI, DL, get(AMDGPU::V_WRITELANE_B32),
+            MFI->SpillTracker.LaneVGPR)
+            .addReg(SrcReg, KillFlag)
+            .addImm(Lane);
+    MFI->SpillTracker.addSpilledReg(FrameIndex, MFI->SpillTracker.LaneVGPR,
+                                    Lane);
+  } else {
+    for (unsigned i = 0, e = RC->getSize() / 4; i != e; ++i) {
+      unsigned SubReg = MRI.createVirtualRegister(&AMDGPU::SReg_32RegClass);
+      BuildMI(MBB, MI, MBB.findDebugLoc(MI), get(AMDGPU::COPY), SubReg)
+              .addReg(SrcReg, 0, RI.getSubRegFromChannel(i));
+      storeRegToStackSlot(MBB, MI, SubReg, isKill, FrameIndex + i,
+                          &AMDGPU::SReg_32RegClass, TRI);
+    }
+  }
+}
+
+void SIInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                       MachineBasicBlock::iterator MI,
+                                       unsigned DestReg, int FrameIndex,
+                                       const TargetRegisterClass *RC,
+                                       const TargetRegisterInfo *TRI) const {
+  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+  SIMachineFunctionInfo *MFI = MBB.getParent()->getInfo<SIMachineFunctionInfo>();
+  DebugLoc DL = MBB.findDebugLoc(MI);
+  if (TRI->getCommonSubClass(RC, &AMDGPU::SReg_32RegClass)) {
+     SIMachineFunctionInfo::SpilledReg Spill =
+        MFI->SpillTracker.getSpilledReg(FrameIndex);
+    assert(Spill.VGPR);
+    BuildMI(MBB, MI, DL, get(AMDGPU::V_READLANE_B32), DestReg)
+            .addReg(Spill.VGPR)
+            .addImm(Spill.Lane);
+  } else {
+    for (unsigned i = 0, e = RC->getSize() / 4; i != e; ++i) {
+      unsigned Flags = RegState::Define;
+      if (i == 0) {
+        Flags |= RegState::Undef;
+      }
+      unsigned SubReg = MRI.createVirtualRegister(&AMDGPU::SReg_32RegClass);
+      loadRegFromStackSlot(MBB, MI, SubReg, FrameIndex + i,
+                           &AMDGPU::SReg_32RegClass, TRI);
+      BuildMI(MBB, MI, DL, get(AMDGPU::COPY))
+              .addReg(DestReg, Flags, RI.getSubRegFromChannel(i))
+              .addReg(SubReg);
+    }
+  }
 }
 
 MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,

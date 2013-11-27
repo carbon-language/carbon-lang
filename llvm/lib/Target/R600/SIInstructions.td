@@ -876,8 +876,21 @@ def : Pat <
                      $src2), sub1)
 >;
 
-defm V_READLANE_B32 : VOP2_32 <0x00000001, "V_READLANE_B32", []>;
-defm V_WRITELANE_B32 : VOP2_32 <0x00000002, "V_WRITELANE_B32", []>;
+def V_READLANE_B32 : VOP2 <
+  0x00000001,
+  (outs SReg_32:$vdst),
+  (ins VReg_32:$src0, SSrc_32:$vsrc1),
+  "V_READLANE_B32 $vdst, $src0, $vsrc1",
+  []
+>;
+
+def V_WRITELANE_B32 : VOP2 <
+  0x00000002,
+  (outs VReg_32:$vdst),
+  (ins SReg_32:$src0, SSrc_32:$vsrc1),
+  "V_WRITELANE_B32 $vdst, $src0, $vsrc1",
+  []
+>;
 
 let isCommutable = 1 in {
 defm V_ADD_F32 : VOP2_32 <0x00000003, "V_ADD_F32",
