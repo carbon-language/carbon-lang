@@ -78,9 +78,6 @@ static void printSymbolOperand(X86AsmPrinter &P, const MachineOperand &MO,
                                raw_ostream &O) {
   switch (MO.getType()) {
   default: llvm_unreachable("unknown symbol type!");
-  case MachineOperand::MO_JumpTableIndex:
-    O << *P.GetJTISymbol(MO.getIndex());
-    break;
   case MachineOperand::MO_ConstantPoolIndex:
     O << *P.GetCPISymbol(MO.getIndex());
     P.printOffset(MO.getOffset(), O);
@@ -135,35 +132,6 @@ static void printSymbolOperand(X86AsmPrinter &P, const MachineOperand &MO,
     else
       O << '(' << *GVSym << ')';
     P.printOffset(MO.getOffset(), O);
-    break;
-  }
-  case MachineOperand::MO_ExternalSymbol: {
-    const MCSymbol *SymToPrint;
-    if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      SmallString<128> TempNameStr;
-      TempNameStr += StringRef(MO.getSymbolName());
-      TempNameStr += StringRef("$stub");
-
-      MCSymbol *Sym = P.GetExternalSymbolSymbol(TempNameStr.str());
-      MachineModuleInfoImpl::StubValueTy &StubSym =
-          P.MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
-      if (StubSym.getPointer() == 0) {
-        TempNameStr.erase(TempNameStr.end()-5, TempNameStr.end());
-        StubSym = MachineModuleInfoImpl::
-          StubValueTy(P.OutContext.GetOrCreateSymbol(TempNameStr.str()),
-                      true);
-      }
-      SymToPrint = StubSym.getPointer();
-    } else {
-      SymToPrint = P.GetExternalSymbolSymbol(MO.getSymbolName());
-    }
-
-    // If the name begins with a dollar-sign, enclose it in parens.  We do this
-    // to avoid having it look like an integer immediate to the assembler.
-    if (SymToPrint->getName()[0] != '$')
-      O << *SymToPrint;
-    else
-      O << '(' << *SymToPrint << '(';
     break;
   }
   }
@@ -292,8 +260,6 @@ static void printLeaMemReference(X86AsmPrinter &P, const MachineInstr *MI,
   }
   case MachineOperand::MO_GlobalAddress:
   case MachineOperand::MO_ConstantPoolIndex:
-  case MachineOperand::MO_JumpTableIndex:
-  case MachineOperand::MO_ExternalSymbol:
     printSymbolOperand(P, MI->getOperand(Op + 3), O);
   }
 
@@ -432,10 +398,11 @@ bool X86AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       case MachineOperand::MO_Immediate:
         O << MO.getImm();
         return false;
-      case MachineOperand::MO_GlobalAddress:
       case MachineOperand::MO_ConstantPoolIndex:
       case MachineOperand::MO_JumpTableIndex:
       case MachineOperand::MO_ExternalSymbol:
+        llvm_unreachable("unexpected operand type!");
+      case MachineOperand::MO_GlobalAddress:
         printSymbolOperand(*this, MO, O);
         if (Subtarget->isPICStyleRIPRel())
           O << "(%rip)";
@@ -455,10 +422,11 @@ bool X86AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       case MachineOperand::MO_Immediate:
         O << MO.getImm();
         break;
-      case MachineOperand::MO_GlobalAddress:
       case MachineOperand::MO_ConstantPoolIndex:
       case MachineOperand::MO_JumpTableIndex:
       case MachineOperand::MO_ExternalSymbol:
+        llvm_unreachable("unexpected operand type!");
+      case MachineOperand::MO_GlobalAddress:
         printSymbolOperand(*this, MO, O);
         break;
       }
