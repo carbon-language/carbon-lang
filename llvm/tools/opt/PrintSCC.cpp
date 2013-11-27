@@ -92,11 +92,11 @@ bool CFGSCC::runOnFunction(Function &F) {
 
 // run - Print out SCCs in the call graph for the specified module.
 bool CallGraphSCC::runOnModule(Module &M) {
-  CallGraphNode *rootNode = getAnalysis<CallGraphWrapperPass>().getRoot();
+  CallGraph &CG = getAnalysis<CallGraphWrapperPass>().getCallGraph();
   unsigned sccNum = 0;
   errs() << "SCCs for the program in PostOrder:";
-  for (scc_iterator<CallGraphNode*> SCCI = scc_begin(rootNode),
-         E = scc_end(rootNode); SCCI != E; ++SCCI) {
+  for (scc_iterator<CallGraph*> SCCI = scc_begin(&CG),
+         E = scc_end(&CG); SCCI != E; ++SCCI) {
     const std::vector<CallGraphNode*> &nextSCC = *SCCI;
     errs() << "\nSCC #" << ++sccNum << " : ";
     for (std::vector<CallGraphNode*>::const_iterator I = nextSCC.begin(),

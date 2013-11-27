@@ -142,11 +142,6 @@ public:
 
   CallGraphNode *getCallsExternalNode() const { return CallsExternalNode; }
 
-  /// \brief Returns the root/main method in the module, or some other root
-  /// node, such as the externalcallingnode.
-  CallGraphNode *getRoot() { return Root; }
-  const CallGraphNode *getRoot() const { return Root; }
-
   //===---------------------------------------------------------------------
   // Functions to keep a call graph up to date with a function that has been
   // modified.
@@ -341,11 +336,6 @@ public:
   CallGraphNode *getCallsExternalNode() const {
     return G->getCallsExternalNode();
   }
-
-  /// \brief Returns the root/main method in the module, or some other root
-  /// node, such as the externalcallingnode.
-  CallGraphNode *getRoot() { return G->getRoot(); }
-  const CallGraphNode *getRoot() const { return G->getRoot(); }
 
   //===---------------------------------------------------------------------
   // Functions to keep a call graph up to date with a function that has been
