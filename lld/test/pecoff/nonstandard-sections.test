@@ -1,0 +1,75 @@
+# RUN: yaml2obj %p/Inputs/nonstandard-sections.obj.yaml > %t.obj
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /force -- %t.obj
+# RUN: llvm-readobj -sections %t.exe | FileCheck %s
+
+CHECK:      Arch: i386
+CHECK-NEXT: AddressSize: 32bit
+CHECK-NEXT: Sections [
+CHECK-NEXT:   Section {
+CHECK-NEXT:     Number: 1
+CHECK-NEXT:     Name: .bar (2E 62 61 72 00 00 00 00)
+CHECK-NEXT:     VirtualSize: 0x4
+CHECK-NEXT:     VirtualAddress: 0x1000
+CHECK-NEXT:     RawDataSize: 512
+CHECK-NEXT:     PointerToRawData: 0x400
+CHECK-NEXT:     PointerToRelocations: 0x0
+CHECK-NEXT:     PointerToLineNumbers: 0x0
+CHECK-NEXT:     RelocationCount: 0
+CHECK-NEXT:     LineNumberCount: 0
+CHECK-NEXT:     Characteristics [ (0x40000040)
+CHECK-NEXT:       IMAGE_SCN_CNT_INITIALIZED_DATA (0x40)
+CHECK-NEXT:       IMAGE_SCN_MEM_READ (0x40000000)
+CHECK-NEXT:     ]
+CHECK-NEXT:   }
+CHECK-NEXT:   Section {
+CHECK-NEXT:     Number: 2
+CHECK-NEXT:     Name: .data (2E 64 61 74 61 00 00 00)
+CHECK-NEXT:     VirtualSize: 0x4
+CHECK-NEXT:     VirtualAddress: 0x2000
+CHECK-NEXT:     RawDataSize: 512
+CHECK-NEXT:     PointerToRawData: 0x600
+CHECK-NEXT:     PointerToRelocations: 0x0
+CHECK-NEXT:     PointerToLineNumbers: 0x0
+CHECK-NEXT:     RelocationCount: 0
+CHECK-NEXT:     LineNumberCount: 0
+CHECK-NEXT:     Characteristics [ (0xC0000040)
+CHECK-NEXT:       IMAGE_SCN_CNT_INITIALIZED_DATA (0x40)
+CHECK-NEXT:       IMAGE_SCN_MEM_READ (0x40000000)
+CHECK-NEXT:       IMAGE_SCN_MEM_WRITE (0x80000000)
+CHECK-NEXT:     ]
+CHECK-NEXT:   }
+CHECK-NEXT:   Section {
+CHECK-NEXT:     Number: 3
+CHECK-NEXT:     Name: .foo (2E 66 6F 6F 00 00 00 00)
+CHECK-NEXT:     VirtualSize: 0x4
+CHECK-NEXT:     VirtualAddress: 0x3000
+CHECK-NEXT:     RawDataSize: 512
+CHECK-NEXT:     PointerToRawData: 0x800
+CHECK-NEXT:     PointerToRelocations: 0x0
+CHECK-NEXT:     PointerToLineNumbers: 0x0
+CHECK-NEXT:     RelocationCount: 0
+CHECK-NEXT:     LineNumberCount: 0
+CHECK-NEXT:     Characteristics [ (0xC0000040)
+CHECK-NEXT:       IMAGE_SCN_CNT_INITIALIZED_DATA (0x40)
+CHECK-NEXT:       IMAGE_SCN_MEM_READ (0x40000000)
+CHECK-NEXT:       IMAGE_SCN_MEM_WRITE (0x80000000)
+CHECK-NEXT:     ]
+CHECK-NEXT:   }
+CHECK-NEXT:   Section {
+CHECK-NEXT:     Number: 4
+CHECK-NEXT:     Name: .text (2E 74 65 78 74 00 00 00)
+CHECK-NEXT:     VirtualSize: 0x4
+CHECK-NEXT:     VirtualAddress: 0x4000
+CHECK-NEXT:     RawDataSize: 512
+CHECK-NEXT:     PointerToRawData: 0xA00
+CHECK-NEXT:     PointerToRelocations: 0x0
+CHECK-NEXT:     PointerToLineNumbers: 0x0
+CHECK-NEXT:     RelocationCount: 0
+CHECK-NEXT:     LineNumberCount: 0
+CHECK-NEXT:     Characteristics [ (0x60000020)
+CHECK-NEXT:       IMAGE_SCN_CNT_CODE (0x20)
+CHECK-NEXT:       IMAGE_SCN_MEM_EXECUTE (0x20000000)
+CHECK-NEXT:       IMAGE_SCN_MEM_READ (0x40000000)
+CHECK-NEXT:     ]
+CHECK-NEXT:   }
+CHECK-NEXT: ]
