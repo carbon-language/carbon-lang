@@ -70,7 +70,7 @@ COMPILER_CHECK(struct_kernel_stat_sz == sizeof(struct stat));
 COMPILER_CHECK(struct_kernel_stat64_sz == sizeof(struct stat64));
 #endif
 
-COMPILER_CHECK(sizeof(__sanitizer_io_event) == sizeof(struct io_event));
+CHECK_TYPE_SIZE(io_event);
 CHECK_SIZE_AND_OFFSET(io_event, data);
 CHECK_SIZE_AND_OFFSET(io_event, obj);
 CHECK_SIZE_AND_OFFSET(io_event, res);
@@ -85,6 +85,8 @@ CHECK_SIZE_AND_OFFSET(perf_event_attr, size);
 
 COMPILER_CHECK(iocb_cmd_pread == IOCB_CMD_PREAD);
 COMPILER_CHECK(iocb_cmd_pwrite == IOCB_CMD_PWRITE);
+COMPILER_CHECK(iocb_cmd_preadv == IOCB_CMD_PREADV);
+COMPILER_CHECK(iocb_cmd_pwritev == IOCB_CMD_PWRITEV);
 
 CHECK_TYPE_SIZE(iocb);
 CHECK_SIZE_AND_OFFSET(iocb, aio_data);
