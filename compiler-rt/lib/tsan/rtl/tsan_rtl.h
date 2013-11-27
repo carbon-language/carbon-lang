@@ -41,6 +41,7 @@
 #include "tsan_report.h"
 #include "tsan_platform.h"
 #include "tsan_mutexset.h"
+#include "tsan_ignoreset.h"
 
 #if SANITIZER_WORDSIZE != 64
 # error "ThreadSanitizer is supported only on 64-bit platforms"
@@ -413,6 +414,11 @@ struct ThreadState {
   // for better performance.
   int ignore_reads_and_writes;
   int ignore_sync;
+  // Go does not support ignores.
+#ifndef TSAN_GO
+  IgnoreSet mop_ignore_set;
+  IgnoreSet sync_ignore_set;
+#endif
   // C/C++ uses fixed size shadow stack embed into Trace.
   // Go uses malloc-allocated shadow stack with dynamic size.
   uptr *shadow_stack;
@@ -440,6 +446,7 @@ struct ThreadState {
   const uptr stk_size;
   const uptr tls_addr;
   const uptr tls_size;
+  ThreadContext *tctx;
 
   DeadlockDetector deadlock_detector;
 
@@ -627,6 +634,7 @@ ReportStack *SkipTsanInternalFrames(ReportStack *ent);
 #endif
 
 u32 CurrentStackId(ThreadState *thr, uptr pc);
+ReportStack *SymbolizeStackId(u32 stack_id);
 void PrintCurrentStack(ThreadState *thr, uptr pc);
 void PrintCurrentStackSlow();  // uses libunwind
 
@@ -678,10 +686,10 @@ void MemoryResetRange(ThreadState *thr, uptr pc, uptr addr, uptr size);
 void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size);
 void MemoryRangeImitateWrite(ThreadState *thr, uptr pc, uptr addr, uptr size);
 
-void ThreadIgnoreBegin(ThreadState *thr);
-void ThreadIgnoreEnd(ThreadState *thr);
-void ThreadIgnoreSyncBegin(ThreadState *thr);
-void ThreadIgnoreSyncEnd(ThreadState *thr);
+void ThreadIgnoreBegin(ThreadState *thr, uptr pc);
+void ThreadIgnoreEnd(ThreadState *thr, uptr pc);
+void ThreadIgnoreSyncBegin(ThreadState *thr, uptr pc);
+void ThreadIgnoreSyncEnd(ThreadState *thr, uptr pc);
 
 void FuncEntry(ThreadState *thr, uptr pc);
 void FuncExit(ThreadState *thr);

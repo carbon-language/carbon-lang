@@ -697,31 +697,45 @@ void FuncExit(ThreadState *thr) {
   thr->shadow_stack_pos--;
 }
 
-void ThreadIgnoreBegin(ThreadState *thr) {
+void ThreadIgnoreBegin(ThreadState *thr, uptr pc) {
   DPrintf("#%d: ThreadIgnoreBegin\n", thr->tid);
   thr->ignore_reads_and_writes++;
   CHECK_GT(thr->ignore_reads_and_writes, 0);
   thr->fast_state.SetIgnoreBit();
+#ifndef TSAN_GO
+  thr->mop_ignore_set.Add(CurrentStackId(thr, pc));
+#endif
 }
 
-void ThreadIgnoreEnd(ThreadState *thr) {
+void ThreadIgnoreEnd(ThreadState *thr, uptr pc) {
   DPrintf("#%d: ThreadIgnoreEnd\n", thr->tid);
   thr->ignore_reads_and_writes--;
   CHECK_GE(thr->ignore_reads_and_writes, 0);
-  if (thr->ignore_reads_and_writes == 0)
+  if (thr->ignore_reads_and_writes == 0) {
     thr->fast_state.ClearIgnoreBit();
+#ifndef TSAN_GO
+    thr->mop_ignore_set.Reset();
+#endif
+  }
 }
 
-void ThreadIgnoreSyncBegin(ThreadState *thr) {
+void ThreadIgnoreSyncBegin(ThreadState *thr, uptr pc) {
   DPrintf("#%d: ThreadIgnoreSyncBegin\n", thr->tid);
   thr->ignore_sync++;
   CHECK_GT(thr->ignore_sync, 0);
+#ifndef TSAN_GO
+  thr->sync_ignore_set.Add(CurrentStackId(thr, pc));
+#endif
 }
 
-void ThreadIgnoreSyncEnd(ThreadState *thr) {
+void ThreadIgnoreSyncEnd(ThreadState *thr, uptr pc) {
   DPrintf("#%d: ThreadIgnoreSyncEnd\n", thr->tid);
   thr->ignore_sync--;
   CHECK_GE(thr->ignore_sync, 0);
+#ifndef TSAN_GO
+  if (thr->ignore_sync == 0)
+    thr->mop_ignore_set.Reset();
+#endif
 }
 
 bool MD5Hash::operator==(const MD5Hash &other) const {

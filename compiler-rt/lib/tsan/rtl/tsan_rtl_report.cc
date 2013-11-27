@@ -101,6 +101,18 @@ static void StackStripMain(ReportStack *stack) {
 #endif
 }
 
+#ifndef TSAN_GO
+ReportStack *SymbolizeStackId(u32 stack_id) {
+  uptr ssz = 0;
+  const uptr *stack = StackDepotGet(stack_id, &ssz);
+  if (stack == 0)
+    return 0;
+  StackTrace trace;
+  trace.Init(stack, ssz);
+  return SymbolizeStack(trace);
+}
+#endif
+
 static ReportStack *SymbolizeStack(const StackTrace& trace) {
   if (trace.IsEmpty())
     return 0;
@@ -203,13 +215,7 @@ void ScopedReport::AddThread(const ThreadContext *tctx) {
 #ifdef TSAN_GO
   rt->stack = SymbolizeStack(tctx->creation_stack);
 #else
-  uptr ssz = 0;
-  const uptr *stack = StackDepotGet(tctx->creation_stack_id, &ssz);
-  if (stack) {
-    StackTrace trace;
-    trace.Init(stack, ssz);
-    rt->stack = SymbolizeStack(trace);
-  }
+  rt->stack = SymbolizeStackId(tctx->creation_stack_id);
 #endif
 }
 
@@ -272,13 +278,7 @@ void ScopedReport::AddMutex(const SyncVar *s) {
   rm->destroyed = false;
   rm->stack = 0;
 #ifndef TSAN_GO
-  uptr ssz = 0;
-  const uptr *stack = StackDepotGet(s->creation_stack_id, &ssz);
-  if (stack) {
-    StackTrace trace;
-    trace.Init(stack, ssz);
-    rm->stack = SymbolizeStack(trace);
-  }
+  rm->stack = SymbolizeStackId(s->creation_stack_id);
 #endif
 }
 
@@ -310,13 +310,7 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
     loc->type = ReportLocationFD;
     loc->fd = fd;
     loc->tid = creat_tid;
-    uptr ssz = 0;
-    const uptr *stack = StackDepotGet(creat_stack, &ssz);
-    if (stack) {
-      StackTrace trace;
-      trace.Init(stack, ssz);
-      loc->stack = SymbolizeStack(trace);
-    }
+    loc->stack = SymbolizeStackId(creat_stack);
     ThreadContext *tctx = FindThreadByUidLocked(creat_tid);
     if (tctx)
       AddThread(tctx);
@@ -337,13 +331,7 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
     loc->file = 0;
     loc->line = 0;
     loc->stack = 0;
-    uptr ssz = 0;
-    const uptr *stack = StackDepotGet(b->StackId(), &ssz);
-    if (stack) {
-      StackTrace trace;
-      trace.Init(stack, ssz);
-      loc->stack = SymbolizeStack(trace);
-    }
+    loc->stack = SymbolizeStackId(b->StackId());
     if (tctx)
       AddThread(tctx);
     return;
@@ -367,13 +355,7 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
 
 #ifndef TSAN_GO
 void ScopedReport::AddSleep(u32 stack_id) {
-  uptr ssz = 0;
-  const uptr *stack = StackDepotGet(stack_id, &ssz);
-  if (stack) {
-    StackTrace trace;
-    trace.Init(stack, ssz);
-    rep_->sleep = SymbolizeStack(trace);
-  }
+  rep_->sleep = SymbolizeStackId(stack_id);
 }
 #endif
 

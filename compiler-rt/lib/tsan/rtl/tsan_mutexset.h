@@ -62,4 +62,4 @@ MutexSet::Desc MutexSet::Get(uptr i) const { return Desc(); }
 
 }  // namespace __tsan
 
-#endif  // TSAN_REPORT_H
+#endif  // TSAN_MUTEXSET_H

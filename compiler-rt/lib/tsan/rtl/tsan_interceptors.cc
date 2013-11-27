@@ -160,6 +160,7 @@ class ScopedInterceptor {
   ~ScopedInterceptor();
  private:
   ThreadState *const thr_;
+  const uptr pc_;
   const int in_rtl_;
   bool in_ignored_lib_;
 };
@@ -167,6 +168,7 @@ class ScopedInterceptor {
 ScopedInterceptor::ScopedInterceptor(ThreadState *thr, const char *fname,
                                      uptr pc)
     : thr_(thr)
+    , pc_(pc)
     , in_rtl_(thr->in_rtl)
     , in_ignored_lib_(false) {
   if (thr_->in_rtl == 0) {
@@ -180,14 +182,14 @@ ScopedInterceptor::ScopedInterceptor(ThreadState *thr, const char *fname,
   if (!thr_->in_ignored_lib && libignore()->IsIgnored(pc)) {
     in_ignored_lib_ = true;
     thr_->in_ignored_lib = true;
-    ThreadIgnoreBegin(thr_);
+    ThreadIgnoreBegin(thr_, pc_);
   }
 }
 
 ScopedInterceptor::~ScopedInterceptor() {
   if (in_ignored_lib_) {
     thr_->in_ignored_lib = false;
-    ThreadIgnoreEnd(thr_);
+    ThreadIgnoreEnd(thr_, pc_);
   }
   thr_->in_rtl--;
   if (thr_->in_rtl == 0) {
@@ -360,9 +362,9 @@ TSAN_INTERCEPTOR(int, __cxa_atexit, void (*f)(void *a), void *arg, void *dso) {
   if (dso) {
     // Memory allocation in __cxa_atexit will race with free during exit,
     // because we do not see synchronization around atexit callback list.
-    ThreadIgnoreBegin(thr);
+    ThreadIgnoreBegin(thr, pc);
     int res = REAL(__cxa_atexit)(f, arg, dso);
-    ThreadIgnoreEnd(thr);
+    ThreadIgnoreEnd(thr, pc);
     return res;
   }
   return atexit_ctx->atexit(thr, pc, false, (void(*)())f, arg);
@@ -1768,13 +1770,13 @@ TSAN_INTERCEPTOR(int, getaddrinfo, void *node, void *service,
   // We miss atomic synchronization in getaddrinfo,
   // and can report false race between malloc and free
   // inside of getaddrinfo. So ignore memory accesses.
-  ThreadIgnoreBegin(thr);
+  ThreadIgnoreBegin(thr, pc);
   // getaddrinfo calls fopen, which can be intercepted by user.
   thr->in_rtl--;
   CHECK_EQ(thr->in_rtl, 0);
   int res = REAL(getaddrinfo)(node, service, hints, rv);
   thr->in_rtl++;
-  ThreadIgnoreEnd(thr);
+  ThreadIgnoreEnd(thr, pc);
   return res;
 }
 

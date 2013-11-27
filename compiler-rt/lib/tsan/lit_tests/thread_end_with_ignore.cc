@@ -1,4 +1,4 @@
-// RUN: %clangxx_tsan -O1 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_tsan -O1 %s -o %t && not %t 2>&1 | FileCheck %s
 #include <pthread.h>
 #include <stdio.h>
 
@@ -15,5 +15,10 @@ int main() {
   pthread_join(t, 0);
 }
 
-// CHECK: ThreadSanitizer: thread T1 finished with ignores enabled
+// CHECK: ThreadSanitizer: thread T1  finished with ignores enabled, created at:
+// CHECK:     #0 pthread_create
+// CHECK:     #1 main
+// CHECK:   Ignore was enabled at:
+// CHECK:     #0 AnnotateIgnoreReadsBegin
+// CHECK:     #1 Thread
 

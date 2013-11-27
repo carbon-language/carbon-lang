@@ -160,16 +160,31 @@ static void MaybeReportThreadLeak(ThreadContextBase *tctx_base, void *arg) {
 }
 #endif
 
-static void ThreadCheckIgnore(ThreadState *thr) {
-  if (thr->ignore_reads_and_writes) {
-    Printf("ThreadSanitizer: thread T%d finished with ignores enabled.\n",
-           thr->tid);
+#ifndef TSAN_GO
+static void ReportIgnoresEnabled(ThreadContext *tctx, IgnoreSet *set) {
+  if (tctx->tid == 0) {
+    Printf("ThreadSanitizer: main thread finished with ignores enabled\n");
+  } else {
+    Printf("ThreadSanitizer: thread T%d %s finished with ignores enabled,"
+      " created at:\n", tctx->tid, tctx->name);
+    PrintStack(SymbolizeStackId(tctx->creation_stack_id));
   }
-  if (thr->ignore_sync) {
-    Printf("ThreadSanitizer: thread T%d finished with sync ignores enabled.\n",
-           thr->tid);
+  for (uptr i = 0; i < set->Size(); i++) {
+    Printf("  Ignore was enabled at:\n");
+    PrintStack(SymbolizeStackId(set->At(i)));
   }
+  Die();
 }
+
+static void ThreadCheckIgnore(ThreadState *thr) {
+  if (thr->ignore_reads_and_writes)
+    ReportIgnoresEnabled(thr->tctx, &thr->mop_ignore_set);
+  if (thr->ignore_sync)
+    ReportIgnoresEnabled(thr->tctx, &thr->sync_ignore_set);
+}
+#else
+static void ThreadCheckIgnore(ThreadState *thr) {}
+#endif
 
 void ThreadFinalize(ThreadState *thr) {
   CHECK_GT(thr->in_rtl, 0);
@@ -210,6 +225,7 @@ int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
 }
 
 void ThreadStart(ThreadState *thr, int tid, uptr os_id) {
+  Context *ctx = CTX();
   CHECK_GT(thr->in_rtl, 0);
   uptr stk_addr = 0;
   uptr stk_size = 0;
@@ -236,8 +252,13 @@ void ThreadStart(ThreadState *thr, int tid, uptr os_id) {
     }
   }
 
+  ThreadRegistry *tr = ctx->thread_registry;
   OnStartedArgs args = { thr, stk_addr, stk_size, tls_addr, tls_size };
-  CTX()->thread_registry->StartThread(tid, os_id, &args);
+  tr->StartThread(tid, os_id, &args);
+
+  tr->Lock();
+  thr->tctx = (ThreadContext*)tr->GetThreadLocked(tid);
+  tr->Unlock();
 }
 
 void ThreadFinish(ThreadState *thr) {

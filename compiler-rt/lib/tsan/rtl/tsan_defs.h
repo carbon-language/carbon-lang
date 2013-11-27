@@ -154,6 +154,7 @@ struct MD5Hash {
 MD5Hash md5_hash(const void *data, uptr size);
 
 struct ThreadState;
+class ThreadContext;
 struct Context;
 struct ReportStack;
 class ReportDesc;

@@ -27,6 +27,7 @@ set(TSAN_SOURCES
   rtl/tsan_clock.cc
   rtl/tsan_flags.cc
   rtl/tsan_fd.cc
+  rtl/tsan_ignoreset.cc
   rtl/tsan_interceptors.cc
   rtl/tsan_interface_ann.cc
   rtl/tsan_interface_atomic.cc
