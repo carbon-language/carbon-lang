@@ -220,11 +220,7 @@ void X86AsmPrinter::printPCRelImm(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_Immediate:
     O << MO.getImm();
     return;
-  case MachineOperand::MO_MachineBasicBlock:
-    O << *MO.getMBB()->getSymbol();
-    return;
   case MachineOperand::MO_GlobalAddress:
-  case MachineOperand::MO_ExternalSymbol:
     printSymbolOperand(MO, O);
     return;
   }
