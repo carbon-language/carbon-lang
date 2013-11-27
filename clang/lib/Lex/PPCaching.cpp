@@ -114,4 +114,5 @@ void Preprocessor::AnnotatePreviousCachedTokens(const Token &Tok) {
       CachedLexPos = i;
       return;
     }
-  
+  }
+}
