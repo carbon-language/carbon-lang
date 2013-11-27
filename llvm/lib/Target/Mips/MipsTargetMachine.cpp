@@ -153,6 +153,7 @@ public:
 
   virtual void addIRPasses();
   virtual bool addInstSelector();
+  virtual void addMachineSSAOptimization();
   virtual bool addPreEmitPass();
 };
 } // namespace
@@ -180,6 +181,11 @@ bool MipsPassConfig::addInstSelector() {
     addPass(createMipsISelDag(getMipsTargetMachine()));
   }
   return false;
+}
+
+void MipsPassConfig::addMachineSSAOptimization() {
+  addPass(createMipsOptimizePICCallPass(getMipsTargetMachine()));
+  TargetPassConfig::addMachineSSAOptimization();
 }
 
 void MipsTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
