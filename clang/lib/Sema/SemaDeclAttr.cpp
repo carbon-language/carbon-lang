@@ -1672,23 +1672,6 @@ static void handleAnalyzerNoReturnAttr(Sema &S, Decl *D,
                                   Attr.getAttributeSpellingListIndex()));
 }
 
-static void handleCXX11NoReturnAttr(Sema &S, Decl *D,
-                                    const AttributeList &Attr) {
-  // C++11 [dcl.attr.noreturn]p1:
-  //   The attribute may be applied to the declarator-id in a function
-  //   declaration.
-  FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
-  if (!FD) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedFunctionOrMethod;
-    return;
-  }
-
-  D->addAttr(::new (S.Context)
-             CXX11NoReturnAttr(Attr.getRange(), S.Context,
-                               Attr.getAttributeSpellingListIndex()));
-}
-
 // PS3 PPU-specific.
 static void handleVecReturnAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 /*
@@ -4195,8 +4178,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_CUDAConstant:handleConstantAttr    (S, D, Attr); break;
   case AttributeList::AT_Constructor: handleConstructorAttr (S, D, Attr); break;
   case AttributeList::AT_CXX11NoReturn:
-    handleCXX11NoReturnAttr(S, D, Attr);
-    break;
+  handleSimpleAttribute<CXX11NoReturnAttr>(S, D, Attr); break;
   case AttributeList::AT_Deprecated:
     handleAttrWithMessage<DeprecatedAttr>(S, D, Attr);
     break;

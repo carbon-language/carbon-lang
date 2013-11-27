@@ -78,11 +78,11 @@ class c [[]] [[]] y [[]] [[]];
 class c final [(int){0}];
 
 class base {};
-class [[]] [[]] final_class 
+class [[]] [[]] final_class
   alignas(float) [[]] final // expected-error {{an attribute list cannot appear here}}
   alignas(float) [[]] [[]] alignas(float): base{}; // expected-error {{an attribute list cannot appear here}}
 
-class [[]] [[]] final_class_another 
+class [[]] [[]] final_class_another
   [[]] [[]] alignas(16) final // expected-error {{an attribute list cannot appear here}}
   [[]] [[]] alignas(16) [[]]{}; // expected-error {{an attribute list cannot appear here}}
 
@@ -120,7 +120,7 @@ extern "C++" [[]] { } // expected-error {{an attribute list cannot appear here}}
 
 [[]] using ns::i; // expected-error {{an attribute list cannot appear here}}
 [[unknown]] using namespace ns; // expected-warning {{unknown attribute 'unknown' ignored}}
-[[noreturn]] using namespace ns; // expected-error {{'noreturn' attribute only applies to functions and methods}}
+[[noreturn]] using namespace ns; // expected-error {{'noreturn' attribute only applies to functions}}
 
 using [[]] alignas(4) [[]] ns::i; // expected-error {{an attribute list cannot appear here}}
 using [[]] alignas(4) [[]] foobar = int; // expected-error {{an attribute list cannot appear here}} expected-error {{'alignas' attribute only applies to}}
@@ -146,7 +146,7 @@ template<typename T> using U [[]] = T;
 using ns::i [[]]; // expected-error {{an attribute list cannot appear here}}
 using [[]] ns::i; // expected-error {{an attribute list cannot appear here}}
 using T [[unknown]] = int; // expected-warning {{unknown attribute 'unknown' ignored}}
-using T [[noreturn]] = int; // expected-error {{'noreturn' attribute only applies to functions and methods}}
+using T [[noreturn]] = int; // expected-error {{'noreturn' attribute only applies to functions}}
 using V = int; // expected-note {{previous}}
 using V [[gnu::vector_size(16)]] = int; // expected-error {{redefinition with different types}}
 
@@ -210,16 +210,16 @@ void foo () {
     [[]] continue;
   } while (0);
   [[]] while (0);
-  
+
   [[]] switch (i) {
     [[]] case 0:
     [[]] default:
       [[]] break;
   }
-  
+
   [[]] goto there;
   [[]] there:
-  
+
   [[]] try {
   } [[]] catch (...) { // expected-error {{an attribute list cannot appear here}}
   }
@@ -297,7 +297,7 @@ int v4[2][[gnu::unused]]; // expected-warning {{attribute 'unused' ignored}}
 int v5()[[gnu::unused]]; // expected-warning {{attribute 'unused' ignored}}
 
 [[attribute_declaration]]; // expected-warning {{unknown attribute 'attribute_declaration' ignored}}
-[[noreturn]]; // expected-error {{'noreturn' attribute only applies to functions and methods}}
+[[noreturn]]; // expected-error {{'noreturn' attribute only applies to functions}}
 [[carries_dependency]]; // expected-error {{'carries_dependency' attribute only applies to functions, methods, and parameters}}
 
 class A {

@@ -13,7 +13,7 @@ void a2 [[noreturn]] () {
 [[noreturn()]] void c(); // expected-error {{attribute 'noreturn' cannot have an argument list}}
 
 void d() [[noreturn]]; // expected-error {{'noreturn' attribute cannot be applied to types}}
-int d2 [[noreturn]]; // expected-error {{'noreturn' attribute only applies to functions and methods}}
+int d2 [[noreturn]]; // expected-error {{'noreturn' attribute only applies to functions}}
 
 [[noreturn]] int e() { b2(); } // ok
 

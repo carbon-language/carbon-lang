@@ -369,13 +369,13 @@ def CUDAShared : InheritableAttr {
 
 def C11NoReturn : InheritableAttr {
   let Spellings = [Keyword<"_Noreturn">];
-//  let Subjects = SubjectList<[Function], ErrorDiag>;
+  let Subjects = SubjectList<[Function], ErrorDiag>;
   let SemaHandler = 0;
 }
 
 def CXX11NoReturn : InheritableAttr {
   let Spellings = [CXX11<"","noreturn">, CXX11<"std","noreturn">];
-//  let Subjects = SubjectList<[Function], ErrorDiag>;
+  let Subjects = SubjectList<[Function], ErrorDiag>;
 }
 
 def OpenCLKernel : InheritableAttr {
