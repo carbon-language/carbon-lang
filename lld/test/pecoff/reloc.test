@@ -7,34 +7,34 @@
 
 BEFORE: Disassembly of section .text:
 BEFORE: _main:
-BEFORE:       0:        55
-BEFORE:       1:        89 e5
-BEFORE:       3:        83 ec 14
-BEFORE:       6:        c7 45 fc 00 00 00 00
-BEFORE:       d:        c7 44 24 0c 00 00 00 00
-BEFORE:      15:        c7 44 24 08 07 00 00 00
-BEFORE:      1d:        c7 44 24 04 00 00 00 00
-BEFORE:      25:        c7 04 24 00 00 00 00
-BEFORE:      2c:        ff 15 00 00 00 00
-BEFORE:      32:        83 ec 10
-BEFORE:      35:        31 c0
-BEFORE:      37:        83 c4 14
-BEFORE:      3a:        5d
-BEFORE:      3b:        c3
+BEFORE:       0:	55
+BEFORE:       1:	89 e5
+BEFORE:       3:	83 ec 14
+BEFORE:       6:	c7 45 fc 00 00 00 00
+BEFORE:       d:	c7 44 24 0c 00 00 00 00
+BEFORE:      15:	c7 44 24 08 07 00 00 00
+BEFORE:      1d:	c7 44 24 04 00 00 00 00
+BEFORE:      25:	c7 04 24 00 00 00 00
+BEFORE:      2c:	ff 15 00 00 00 00
+BEFORE:      32:	83 ec 10
+BEFORE:      35:	31 c0
+BEFORE:      37:	83 c4 14
+BEFORE:      3a:	5d
+BEFORE:      3b:	c3
 
 AFTER: Disassembly of section .text:
 AFTER: .text:
-AFTER:    pushl  %ebp
-AFTER:    movl   %esp, %ebp
-AFTER:    subl   $20, %esp
-AFTER:    movl   $0, -4(%ebp)
-AFTER:    movl   $0, 12(%esp)
-AFTER:    movl   $4198407, 8(%esp)
-AFTER:    movl   $4198400, 4(%esp)
-AFTER:    movl   $0, (%esp)
-AFTER:    calll  *4194304
-AFTER:    subl   $16, %esp
-AFTER:    xorl   %eax, %eax
-AFTER:    addl   $20, %esp
-AFTER:    popl   %ebp
-AFTER:    ret
+AFTER:    1000:	55
+AFTER:    1001:	89 e5
+AFTER:    1003:	83 ec 14
+AFTER:    1006:	c7 45 fc 00 00 00 00
+AFTER:    100d:	c7 44 24 0c 00 00 00 00
+AFTER:    1015:	c7 44 24 08 07 20 40 00
+AFTER:    101d:	c7 44 24 04 00 20 40 00
+AFTER:    1025:	c7 04 24 00 00 00 00
+AFTER:    102c:	ff 15 00 00 40 00
+AFTER:    1032:	83 ec 10
+AFTER:    1035:	31 c0
+AFTER:    1037:	83 c4 14
+AFTER:    103a:	5d
+AFTER:    103b:	c3

@@ -3,8 +3,8 @@
 # RUN: lld -flavor link /out:%t1 /subsystem:console /force /entry:start \
 # RUN:   -- %t.obj && llvm-readobj -sections %t1 | FileCheck %s
 
-CHECK:      Name: .data (2E 64 61 74 61 00 00 00)
-CHECK-NEXT: VirtualSize: 0x6
-
-CHECK:      Name: .text (2E 74 65 78 74 00 00 00)
+CHECK:      Name: .text
 CHECK-NEXT: VirtualSize: 0x1001
+
+CHECK:      Name: .data
+CHECK-NEXT: VirtualSize: 0x6
