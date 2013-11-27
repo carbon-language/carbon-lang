@@ -6265,7 +6265,10 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
   switch (NewTSK) {
   case TSK_Undeclared:
   case TSK_ImplicitInstantiation:
-    llvm_unreachable("Don't check implicit instantiations here");
+    assert(
+        (PrevTSK == TSK_Undeclared || PrevTSK == TSK_ImplicitInstantiation) &&
+        "previous declaration must be implicit!");
+    return false;
 
   case TSK_ExplicitSpecialization:
     switch (PrevTSK) {
