@@ -15,28 +15,28 @@
 #include "clang/Lex/Preprocessor.h"
 using namespace clang;
 
-/// EnableBacktrackAtThisPos - From the point that this method is called, and
-/// until CommitBacktrackedTokens() or Backtrack() is called, the Preprocessor
-/// keeps track of the lexed tokens so that a subsequent Backtrack() call will
-/// make the Preprocessor re-lex the same tokens.
-///
-/// Nested backtracks are allowed, meaning that EnableBacktrackAtThisPos can
-/// be called multiple times and CommitBacktrackedTokens/Backtrack calls will
-/// be combined with the EnableBacktrackAtThisPos calls in reverse order.
+// EnableBacktrackAtThisPos - From the point that this method is called, and
+// until CommitBacktrackedTokens() or Backtrack() is called, the Preprocessor
+// keeps track of the lexed tokens so that a subsequent Backtrack() call will
+// make the Preprocessor re-lex the same tokens.
+//
+// Nested backtracks are allowed, meaning that EnableBacktrackAtThisPos can
+// be called multiple times and CommitBacktrackedTokens/Backtrack calls will
+// be combined with the EnableBacktrackAtThisPos calls in reverse order.
 void Preprocessor::EnableBacktrackAtThisPos() {
   BacktrackPositions.push_back(CachedLexPos);
   EnterCachingLexMode();
 }
 
-/// CommitBacktrackedTokens - Disable the last EnableBacktrackAtThisPos call.
+// Disable the last EnableBacktrackAtThisPos call.
 void Preprocessor::CommitBacktrackedTokens() {
   assert(!BacktrackPositions.empty()
          && "EnableBacktrackAtThisPos was not called!");
   BacktrackPositions.pop_back();
 }
 
-/// Backtrack - Make Preprocessor re-lex the tokens that were lexed since
-/// EnableBacktrackAtThisPos() was previously called.
+// Make Preprocessor re-lex the tokens that were lexed since
+// EnableBacktrackAtThisPos() was previously called.
 void Preprocessor::Backtrack() {
   assert(!BacktrackPositions.empty()
          && "EnableBacktrackAtThisPos was not called!");
@@ -114,5 +114,4 @@ void Preprocessor::AnnotatePreviousCachedTokens(const Token &Tok) {
       CachedLexPos = i;
       return;
     }
-  }
-}
+  

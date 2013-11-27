@@ -1327,21 +1327,20 @@ bool Preprocessor::GetIncludeFilenameSpelling(SourceLocation Loc,
   return isAngled;
 }
 
-/// \brief Handle cases where the \#include name is expanded from a macro
-/// as multiple tokens, which need to be glued together.
-///
-/// This occurs for code like:
-/// \code
-///    \#define FOO <a/b.h>
-///    \#include FOO
-/// \endcode
-/// because in this case, "<a/b.h>" is returned as 7 tokens, not one.
-///
-/// This code concatenates and consumes tokens up to the '>' token.  It returns
-/// false if the > was found, otherwise it returns true if it finds and consumes
-/// the EOD marker.
-bool Preprocessor::ConcatenateIncludeName(
-                                        SmallString<128> &FilenameBuffer,
+// \brief Handle cases where the \#include name is expanded from a macro
+// as multiple tokens, which need to be glued together.
+//
+// This occurs for code like:
+// \code
+//    \#define FOO <a/b.h>
+//    \#include FOO
+// \endcode
+// because in this case, "<a/b.h>" is returned as 7 tokens, not one.
+//
+// This code concatenates and consumes tokens up to the '>' token.  It returns
+// false if the > was found, otherwise it returns true if it finds and consumes
+// the EOD marker.
+bool Preprocessor::ConcatenateIncludeName(SmallString<128> &FilenameBuffer,
                                           SourceLocation &End) {
   Token CurTok;
 
