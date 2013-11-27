@@ -32,6 +32,8 @@ using namespace llvm::opt;
 
 static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   using namespace clang::frontend;
+  StringRef Action("unknown");
+  (void)Action;
 
   switch (CI.getFrontendOpts().ProgramAction) {
   case ASTDeclList:            return new ASTDeclListAction();
