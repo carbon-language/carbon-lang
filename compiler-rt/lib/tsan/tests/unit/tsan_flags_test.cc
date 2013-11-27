@@ -111,7 +111,7 @@ static const char *options2 =
   " handle_ioctl=true"
   " malloc_context_size=567"
   " log_path=eeeeeee"
-  " verbosity=3"
+  " verbosity=0"
   " detect_leaks=true"
   " leak_check_at_exit=true"
   " allocator_may_return_null=true"
@@ -193,7 +193,7 @@ void VerifyOptions2(Flags *f) {
   EXPECT_EQ(f->handle_ioctl, true);
   EXPECT_EQ(f->malloc_context_size, 567);
   EXPECT_EQ(f->log_path, std::string("eeeeeee"));
-  EXPECT_EQ(f->verbosity, 3);
+  EXPECT_EQ(f->verbosity, 0);
   EXPECT_EQ(f->detect_leaks, true);
   EXPECT_EQ(f->leak_check_at_exit, true);
   EXPECT_EQ(f->allocator_may_return_null, true);
