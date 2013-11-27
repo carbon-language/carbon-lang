@@ -1927,10 +1927,33 @@ static void syscall_access_range(uptr pc, uptr p, uptr s, bool write) {
   MemoryAccessRange(thr, pc, p, s, write);
 }
 
+static void syscall_acquire(uptr pc, uptr addr) {
+  TSAN_SYSCALL();
+  Acquire(thr, pc, addr);
+  Printf("syscall_acquire(%p)\n", addr);
+}
+
+static void syscall_release(uptr pc, uptr addr) {
+  TSAN_SYSCALL();
+  Printf("syscall_release(%p)\n", addr);
+  Release(thr, pc, addr);
+}
+
 static void syscall_fd_close(uptr pc, int fd) {
   TSAN_SYSCALL();
-  if (fd >= 0)
-    FdClose(thr, pc, fd);
+  FdClose(thr, pc, fd);
+}
+
+static USED void syscall_fd_acquire(uptr pc, int fd) {
+  TSAN_SYSCALL();
+  FdAcquire(thr, pc, fd);
+  Printf("syscall_fd_acquire(%p)\n", fd);
+}
+
+static USED void syscall_fd_release(uptr pc, int fd) {
+  TSAN_SYSCALL();
+  Printf("syscall_fd_release(%p)\n", fd);
+  FdRelease(thr, pc, fd);
 }
 
 static void syscall_pre_fork(uptr pc) {
@@ -1949,23 +1972,40 @@ static void syscall_post_fork(uptr pc, int res) {
 
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) \
   syscall_access_range(GET_CALLER_PC(), (uptr)(p), (uptr)(s), false)
+
 #define COMMON_SYSCALL_PRE_WRITE_RANGE(p, s) \
   syscall_access_range(GET_CALLER_PC(), (uptr)(p), (uptr)(s), true)
+
 #define COMMON_SYSCALL_POST_READ_RANGE(p, s) \
   do {                                       \
     (void)(p);                               \
     (void)(s);                               \
   } while (false)
+
 #define COMMON_SYSCALL_POST_WRITE_RANGE(p, s) \
   do {                                        \
     (void)(p);                                \
     (void)(s);                                \
   } while (false)
+
+#define COMMON_SYSCALL_ACQUIRE(addr) \
+    syscall_acquire(GET_CALLER_PC(), (uptr)(addr))
+
+#define COMMON_SYSCALL_RELEASE(addr) \
+    syscall_release(GET_CALLER_PC(), (uptr)(addr))
+
 #define COMMON_SYSCALL_FD_CLOSE(fd) syscall_fd_close(GET_CALLER_PC(), fd)
+
+#define COMMON_SYSCALL_FD_ACQUIRE(fd) syscall_fd_acquire(GET_CALLER_PC(), fd)
+
+#define COMMON_SYSCALL_FD_RELEASE(fd) syscall_fd_release(GET_CALLER_PC(), fd)
+
 #define COMMON_SYSCALL_PRE_FORK() \
   syscall_pre_fork(GET_CALLER_PC())
+
 #define COMMON_SYSCALL_POST_FORK(res) \
   syscall_post_fork(GET_CALLER_PC(), res)
+
 #include "sanitizer_common/sanitizer_common_syscalls.inc"
 
 namespace __tsan {

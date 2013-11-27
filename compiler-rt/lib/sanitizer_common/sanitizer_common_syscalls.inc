@@ -25,8 +25,16 @@
 //   COMMON_SYSCALL_POST_WRITE_RANGE
 //          Called in posthook for regions that were written to by the kernel
 //          and are now initialized.
+//   COMMON_SYSCALL_ACQUIRE(addr)
+//          Acquire memory visibility from addr.
+//   COMMON_SYSCALL_RELEASE(addr)
+//          Release memory visibility to addr.
 //   COMMON_SYSCALL_FD_CLOSE(fd)
 //          Called before closing file descriptor fd.
+//   COMMON_SYSCALL_FD_ACQUIRE(fd)
+//          Acquire memory visibility from fd.
+//   COMMON_SYSCALL_FD_RELEASE(fd)
+//          Release memory visibility to fd.
 //   COMMON_SYSCALL_PRE_FORK()
 //          Called before fork syscall.
 //   COMMON_SYSCALL_POST_FORK(long res)
@@ -48,16 +56,32 @@
 #define POST_READ(p, s) COMMON_SYSCALL_POST_READ_RANGE(p, s)
 #define POST_WRITE(p, s) COMMON_SYSCALL_POST_WRITE_RANGE(p, s)
 
+#ifndef COMMON_SYSCALL_ACQUIRE
+# define COMMON_SYSCALL_ACQUIRE(addr) ((void)(addr))
+#endif
+
+#ifndef COMMON_SYSCALL_RELEASE
+# define COMMON_SYSCALL_RELEASE(addr) ((void)(addr))
+#endif
+
 #ifndef COMMON_SYSCALL_FD_CLOSE
-# define COMMON_SYSCALL_FD_CLOSE(fd)
+# define COMMON_SYSCALL_FD_CLOSE(fd) ((void)(fd))
+#endif
+
+#ifndef COMMON_SYSCALL_FD_ACQUIRE
+# define COMMON_SYSCALL_FD_ACQUIRE(fd) ((void)(fd))
+#endif
+
+#ifndef COMMON_SYSCALL_FD_RELEASE
+# define COMMON_SYSCALL_FD_RELEASE(fd) ((void)(fd))
 #endif
 
 #ifndef COMMON_SYSCALL_PRE_FORK
-# define COMMON_SYSCALL_PRE_FORK()
+# define COMMON_SYSCALL_PRE_FORK() {}
 #endif
 
 #ifndef COMMON_SYSCALL_POST_FORK
-# define COMMON_SYSCALL_POST_FORK(res)
+# define COMMON_SYSCALL_POST_FORK(res) {}
 #endif
 
 // FIXME: do some kind of PRE_READ for all syscall arguments (int(s) and such).
@@ -1263,44 +1287,70 @@ PRE_SYSCALL(io_destroy)(long ctx) {}
 
 POST_SYSCALL(io_destroy)(long res, long ctx) {}
 
-PRE_SYSCALL(io_getevents)(long ctx_id, long min_nr, long nr, void *events,
-                          void *timeout) {
+PRE_SYSCALL(io_getevents)(long ctx_id, long min_nr, long nr,
+                          __sanitizer_io_event *ioevpp, void *timeout) {
   if (timeout) PRE_READ(timeout, struct_timespec_sz);
 }
 
 POST_SYSCALL(io_getevents)(long res, long ctx_id, long min_nr, long nr,
-                           void *events, void *timeout) {
+                           __sanitizer_io_event *ioevpp, void *timeout) {
   if (res >= 0) {
-    if (events) POST_WRITE(events, res * struct_io_event_sz);
+    if (ioevpp) POST_WRITE(ioevpp, res * sizeof(*ioevpp));
     if (timeout) POST_WRITE(timeout, struct_timespec_sz);
+  }
+  for (long i = 0; i < res; i++) {
+    // We synchronize io_submit -> io_getevents/io_cancel using the
+    // user-provided data context. Data is not necessary a pointer, it can be
+    // an int, 0 or whatever; acquire/release will correctly handle this.
+    // This scheme can lead to false negatives, e.g. when all operations
+    // synchronize on 0. But there does not seem to be a better solution
+    // (except wrapping all operations in own context, which is unreliable).
+    // We can not reliably extract fildes in io_getevents.
+    COMMON_SYSCALL_ACQUIRE((void*)ioevpp[i].data);
   }
 }
 
 PRE_SYSCALL(io_submit)(long ctx_id, long nr, __sanitizer_iocb **iocbpp) {
   for (long i = 0; i < nr; ++i) {
-    if (iocbpp[i]->aio_lio_opcode == iocb_cmd_pwrite && iocbpp[i]->aio_buf &&
-        iocbpp[i]->aio_nbytes)
-      PRE_READ((void *)iocbpp[i]->aio_buf, iocbpp[i]->aio_nbytes);
+    uptr op = iocbpp[i]->aio_lio_opcode;
+    void *data = (void*)iocbpp[i]->aio_data;
+    void *buf = (void*)iocbpp[i]->aio_buf;
+    uptr len = (uptr)iocbpp[i]->aio_nbytes;
+    if (op == iocb_cmd_pwrite && buf && len) {
+      PRE_READ(buf, len);
+    } else if (op == iocb_cmd_pread && buf && len) {
+      POST_WRITE(buf, len);
+    } else if (op == iocb_cmd_pwritev) {
+      __sanitizer_iovec *iovec = (__sanitizer_iovec*)iocbpp[i]->aio_buf;
+      for (uptr v = 0; v < len; v++)
+        PRE_READ(iovec[i].iov_base, iovec[i].iov_len);
+    } else if (op == iocb_cmd_preadv) {
+      __sanitizer_iovec *iovec = (__sanitizer_iovec*)iocbpp[i]->aio_buf;
+      for (uptr v = 0; v < len; v++)
+        POST_WRITE(iovec[i].iov_base, iovec[i].iov_len);
+    }
+    // See comment in io_getevents.
+    COMMON_SYSCALL_RELEASE(data);
   }
 }
 
 POST_SYSCALL(io_submit)(long res, long ctx_id, long nr,
-                        __sanitizer_iocb **iocbpp) {
-  if (res > 0 && iocbpp) {
-    for (long i = 0; i < res; ++i) {
-      if (iocbpp[i]->aio_lio_opcode == iocb_cmd_pread && iocbpp[i]->aio_buf &&
-          iocbpp[i]->aio_nbytes)
-        POST_WRITE((void *)iocbpp[i]->aio_buf, iocbpp[i]->aio_nbytes);
-    }
-  }
+    __sanitizer_iocb **iocbpp) {}
+
+PRE_SYSCALL(io_cancel)(long ctx_id, __sanitizer_iocb *iocb,
+    __sanitizer_io_event *result) {
 }
 
-PRE_SYSCALL(io_cancel)(long ctx_id, void *iocb, void *result) {}
-
-POST_SYSCALL(io_cancel)(long res, long ctx_id, void *iocb, void *result) {
-  if (res >= 0) {
-    if (iocb) POST_WRITE(iocb, sizeof(__sanitizer_iocb));
-    if (result) POST_WRITE(result, struct_io_event_sz);
+POST_SYSCALL(io_cancel)(long res, long ctx_id, __sanitizer_iocb *iocb,
+    __sanitizer_io_event *result) {
+  if (res == 0) {
+    if (result) {
+      // See comment in io_getevents.
+      COMMON_SYSCALL_ACQUIRE((void*)result->data);
+      POST_WRITE(result, sizeof(*result));
+    }
+    if (iocb)
+      POST_WRITE(iocb, sizeof(*iocb));
   }
 }
 
