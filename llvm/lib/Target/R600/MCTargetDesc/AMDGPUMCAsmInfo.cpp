@@ -25,7 +25,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   CommentColumn = 40;
   CommentString = ";";
   LabelSuffix = ":";
-  GlobalPrefix = "@";
   PrivateGlobalPrefix = ";.";
   LinkerPrivateGlobalPrefix = "!";
   InlineAsmStart = ";#ASMSTART";
