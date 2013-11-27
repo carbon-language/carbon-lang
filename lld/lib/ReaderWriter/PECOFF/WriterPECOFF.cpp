@@ -320,9 +320,9 @@ class GenericSectionChunk : public SectionChunk {
 public:
   virtual void write(uint8_t *fileBuffer);
 
-  GenericSectionChunk(StringRef name,
+  GenericSectionChunk(const PECOFFLinkingContext &ctx, StringRef name,
                       const std::vector<const DefinedAtom *> &atoms)
-      : SectionChunk(name, getCharacteristics(name, atoms)) {
+      : SectionChunk(name, getCharacteristics(ctx, name, atoms)) {
     for (auto *a : atoms)
       appendAtom(a);
     _sectionHeader.VirtualSize = _size;
@@ -330,36 +330,13 @@ public:
   }
 
 private:
-  uint32_t getCharacteristics(StringRef name,
+  uint32_t getCharacteristics(const PECOFFLinkingContext &ctx, StringRef name,
                               const std::vector<const DefinedAtom *> &atoms) {
-    const uint32_t code = llvm::COFF::IMAGE_SCN_CNT_CODE;
-    const uint32_t execute = llvm::COFF::IMAGE_SCN_MEM_EXECUTE;
-    const uint32_t read = llvm::COFF::IMAGE_SCN_MEM_READ;
-    const uint32_t write = llvm::COFF::IMAGE_SCN_MEM_WRITE;
-    const uint32_t data = llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA;
-    const uint32_t bss = llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
-    if (name == ".text")
-      return code | execute | read;
-    if (name == ".data")
-      return data | read | write;
-    if (name == ".rdata")
-      return data | read;
-    if (name == ".bss")
-      return bss | read | write;
-    assert(atoms.size() > 0);
-    switch (atoms[0]->permissions()) {
-    case DefinedAtom::permR__:
-      return data | read;
-    case DefinedAtom::permRW_:
-      return data | read | write;
-    case DefinedAtom::permR_X:
-      return code | execute | read;
-    case DefinedAtom::permRWX:
-      return code | execute | read | write;
-    default:
-      llvm_unreachable("Unsupported permission");
-    }
+    return ctx.getSectionAttributes(name, getDefaultCharacteristics(name, atoms));
   }
+
+  uint32_t getDefaultCharacteristics(
+      StringRef name, const std::vector<const DefinedAtom *> &atoms);
 };
 
 /// A BaseRelocAtom represents a base relocation block in ".reloc" section.
@@ -714,6 +691,37 @@ void GenericSectionChunk::write(uint8_t *fileBuffer) {
   SectionChunk::write(fileBuffer);
 }
 
+uint32_t GenericSectionChunk::getDefaultCharacteristics(
+    StringRef name, const std::vector<const DefinedAtom *> &atoms) {
+  const uint32_t code = llvm::COFF::IMAGE_SCN_CNT_CODE;
+  const uint32_t execute = llvm::COFF::IMAGE_SCN_MEM_EXECUTE;
+  const uint32_t read = llvm::COFF::IMAGE_SCN_MEM_READ;
+  const uint32_t write = llvm::COFF::IMAGE_SCN_MEM_WRITE;
+  const uint32_t data = llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA;
+  const uint32_t bss = llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
+  if (name == ".text")
+    return code | execute | read;
+  if (name == ".data")
+    return data | read | write;
+  if (name == ".rdata")
+    return data | read;
+  if (name == ".bss")
+    return bss | read | write;
+  assert(atoms.size() > 0);
+  switch (atoms[0]->permissions()) {
+    case DefinedAtom::permR__:
+      return data | read;
+    case DefinedAtom::permRW_:
+      return data | read | write;
+    case DefinedAtom::permR_X:
+      return code | execute | read;
+    case DefinedAtom::permRWX:
+      return code | execute | read | write;
+    default:
+      llvm_unreachable("Unsupported permission");
+  }
+}
+
 void SectionHeaderTableChunk::addSection(SectionChunk *chunk) {
   _sections.push_back(chunk);
 }
@@ -925,7 +933,8 @@ void ExecutableWriter::build(const File &linkedFile) {
   for (auto i : atoms) {
     StringRef sectionName = i.first;
     std::vector<const DefinedAtom *> &contents = i.second;
-    auto *section = new GenericSectionChunk(sectionName, contents);
+    auto *section = new GenericSectionChunk(_PECOFFLinkingContext, sectionName,
+                                            contents);
     addSectionChunk(section, sectionTable);
 
     if (!text && sectionName == ".text")

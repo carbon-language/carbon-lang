@@ -1,0 +1,45 @@
+# RUN: yaml2obj %p/Inputs/nonstandard-sections.obj.yaml > %t.obj
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /force \
+# RUN:   /section:.foo,d /section:.bar,rw /section:.text,rwe -- %t.obj
+# RUN: llvm-readobj -sections %t.exe | FileCheck %s
+
+CHECK: Sections [
+CHECK:   Section {
+CHECK:     Number: 1
+CHECK:     Name: .bar (2E 62 61 72 00 00 00 00)
+CHECK:     Characteristics [ (0xC0000040)
+CHECK:       IMAGE_SCN_CNT_INITIALIZED_DATA (0x40)
+CHECK:       IMAGE_SCN_MEM_READ (0x40000000)
+CHECK:       IMAGE_SCN_MEM_WRITE (0x80000000)
+CHECK:     ]
+CHECK:   }
+CHECK:   Section {
+CHECK:     Number: 2
+CHECK:     Name: .data (2E 64 61 74 61 00 00 00)
+CHECK:     Characteristics [ (0xC0000040)
+CHECK:       IMAGE_SCN_CNT_INITIALIZED_DATA (0x40)
+CHECK:       IMAGE_SCN_MEM_READ (0x40000000)
+CHECK:       IMAGE_SCN_MEM_WRITE (0x80000000)
+CHECK:     ]
+CHECK:   }
+CHECK:   Section {
+CHECK:     Number: 3
+CHECK:     Name: .foo (2E 66 6F 6F 00 00 00 00)
+CHECK:     Characteristics [ (0xC2000040)
+CHECK:       IMAGE_SCN_CNT_INITIALIZED_DATA (0x40)
+CHECK:       IMAGE_SCN_MEM_DISCARDABLE (0x2000000)
+CHECK:       IMAGE_SCN_MEM_READ (0x40000000)
+CHECK:       IMAGE_SCN_MEM_WRITE (0x80000000)
+CHECK:     ]
+CHECK:   }
+CHECK:   Section {
+CHECK:     Number: 4
+CHECK:     Name: .text (2E 74 65 78 74 00 00 00)
+CHECK:     Characteristics [ (0xE0000020)
+CHECK:       IMAGE_SCN_CNT_CODE (0x20)
+CHECK:       IMAGE_SCN_MEM_EXECUTE (0x20000000)
+CHECK:       IMAGE_SCN_MEM_READ (0x40000000)
+CHECK:       IMAGE_SCN_MEM_WRITE (0x80000000)
+CHECK:     ]
+CHECK:   }
+CHECK: ]
