@@ -169,6 +169,8 @@ static void ReportIgnoresEnabled(ThreadContext *tctx, IgnoreSet *set) {
       " created at:\n", tctx->tid, tctx->name);
     PrintStack(SymbolizeStackId(tctx->creation_stack_id));
   }
+  Printf("  One of the following ignores was not ended"
+      " (in order of probability)\n");
   for (uptr i = 0; i < set->Size(); i++) {
     Printf("  Ignore was enabled at:\n");
     PrintStack(SymbolizeStackId(set->At(i)));
