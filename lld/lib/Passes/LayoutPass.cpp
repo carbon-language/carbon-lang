@@ -129,7 +129,8 @@ bool LayoutPass::CompareAtoms::compare(const DefinedAtom *left,
     return leftOrdinal < rightOrdinal;
   }
 
-  DEBUG(llvm::dbgs() << "Unordered\n");
+  llvm::errs() << "Unordered: <" << left->name() << "> <"
+               << right->name() << ">\n";
   llvm_unreachable("Atoms with Same Ordinal!");
 }
 
