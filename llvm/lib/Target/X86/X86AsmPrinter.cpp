@@ -257,10 +257,7 @@ static void printOperand(X86AsmPrinter &P, const MachineInstr *MI,
     O << MO.getImm();
     return;
 
-  case MachineOperand::MO_JumpTableIndex:
-  case MachineOperand::MO_ConstantPoolIndex:
-  case MachineOperand::MO_GlobalAddress:
-  case MachineOperand::MO_ExternalSymbol: {
+  case MachineOperand::MO_GlobalAddress: {
     if (AsmVariant == 0) O << '$';
     printSymbolOperand(P, MO, O);
     break;
