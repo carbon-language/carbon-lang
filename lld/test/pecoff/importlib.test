@@ -24,15 +24,15 @@
 
 CHECK: Disassembly of section .text:
 CHECK-NEXT: .text:
-CHECK-NEXT:     1000:       55                   pushl   %ebp
-CHECK-NEXT:     1001:       8b ec                movl    %esp, %ebp
-CHECK-NEXT:     1003:       56                   pushl   %esi
-CHECK-NEXT:     1004:       {{[0-9 a-f]+}}       calll *{{[0-9a-f]+}}
-CHECK-NEXT:     100a:       {{[0-9 a-f]+}}       movl {{[0-9a-f]+}}, %ecx
-CHECK-NEXT:     1010:       8b 31                movl    (%ecx), %esi
-CHECK-NEXT:     1012:       03 f0                addl    %eax, %esi
-CHECK-NEXT:     1014:       {{[0-9 a-f]+}}       calll *{{[0-9a-f]+}}
-CHECK-NEXT:     101a:       03 c6                addl    %esi, %eax
-CHECK-NEXT:     101c:       5e                   popl    %esi
-CHECK-NEXT:     101d:       5d                   popl    %ebp
-CHECK-NEXT:     101e:       c3                   ret
+CHECK-NEXT:     pushl   %ebp
+CHECK-NEXT:     movl    %esp, %ebp
+CHECK-NEXT:     pushl   %esi
+CHECK-NEXT:     calll   *{{[0-9]+}}
+CHECK-NEXT:     movl    {{[0-9]+}}, %ecx
+CHECK-NEXT:     movl    (%ecx), %esi
+CHECK-NEXT:     addl    %eax, %esi
+CHECK-NEXT:     calll   *{{[0-9]+}}
+CHECK-NEXT:     addl    %esi, %eax
+CHECK-NEXT:     popl    %esi
+CHECK-NEXT:     popl    %ebp
+CHECK-NEXT:     ret

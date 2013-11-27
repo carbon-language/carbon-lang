@@ -12,74 +12,90 @@
 # RUN:   -- %t.obj \
 # RUN:   && llvm-readobj -sections %t1 | FileCheck -check-prefix=SECTIONS %s
 
-FILE: Format: COFF-i386
-FILE: Arch: i386
-FILE: AddressSize: 32bit
-FILE: ImageFileHeader {
-FILE:   Machine: IMAGE_FILE_MACHINE_I386 (0x14C)
-FILE:   SectionCount: 1
-FILE:   TimeDateStamp:
-FILE:   PointerToSymbolTable: 0x0
-FILE:   SymbolCount: 0
-FILE:   OptionalHeaderSize: 224
-FILE:   Characteristics [ (0x102)
-FILE:     IMAGE_FILE_32BIT_MACHINE (0x100)
-FILE:     IMAGE_FILE_EXECUTABLE_IMAGE (0x2)
-FILE:   ]
-FILE: }
-FILE: ImageOptionalHeader {
-FILE:   MajorLinkerVersion: 0
-FILE:   MinorLinkerVersion: 0
-FILE:   SizeOfCode: 512
-FILE:   SizeOfInitializedData: 0
-FILE:   SizeOfUninitializedData: 0
-FILE:   AddressOfEntryPoint: 0x1000
-FILE:   BaseOfCode: 0x1000
-FILE:   BaseOfData: 0
-FILE:   ImageBase: 0x400000
-FILE:   SectionAlignment: 4096
-FILE:   FileAlignment: 512
-FILE:   MajorOperatingSystemVersion: 3
-FILE:   MinorOperatingSystemVersion: 11
-FILE:   MajorImageVersion: 1
-FILE:   MinorImageVersion: 25
-FILE:   MajorSubsystemVersion: 3
-FILE:   MinorSubsystemVersion: 11
-FILE:   SizeOfImage: 8192
-FILE:   SizeOfHeaders: 512
-FILE:   Subsystem: IMAGE_SUBSYSTEM_WINDOWS_CUI (0x3)
-FILE:   Subsystem [ (0x8540)
-FILE:     IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE (0x40)
-FILE:     IMAGE_DLL_CHARACTERISTICS_NO_SEH (0x400)
-FILE:     IMAGE_DLL_CHARACTERISTICS_NX_COMPAT (0x100)
-FILE:     IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE (0x8000)
-FILE:   ]
-FILE:   SizeOfStackReserve: 1048576
-FILE:   SizeOfStackCommit: 4096
-FILE:   SizeOfHeapReserve: 1048576
-FILE:   SizeOfHeapCommit: 4096
-FILE:   NumberOfRvaAndSize: 16
-FILE: }
+FILE:      Format: COFF-i386
+FILE-NEXT: Arch: i386
+FILE-NEXT: AddressSize: 32bit
+FILE-NEXT: ImageFileHeader {
+FILE-NEXT:   Machine: IMAGE_FILE_MACHINE_I386 (0x14C)
+FILE-NEXT:   SectionCount: 2
+FILE-NEXT:   TimeDateStamp:
+FILE-NEXT:   PointerToSymbolTable: 0x0
+FILE-NEXT:   SymbolCount: 0
+FILE-NEXT:   OptionalHeaderSize: 224
+FILE-NEXT:   Characteristics [ (0x102)
+FILE-NEXT:     IMAGE_FILE_32BIT_MACHINE (0x100)
+FILE-NEXT:     IMAGE_FILE_EXECUTABLE_IMAGE (0x2)
+FILE-NEXT:   ]
+FILE-NEXT: }
+FILE-NEXT: ImageOptionalHeader {
+FILE-NEXT:   MajorLinkerVersion: 0
+FILE-NEXT:   MinorLinkerVersion: 0
+FILE-NEXT:   SizeOfCode: 512
+FILE-NEXT:   SizeOfInitializedData: 0
+FILE-NEXT:   SizeOfUninitializedData: 0
+FILE-NEXT:   AddressOfEntryPoint: 0x1000
+FILE-NEXT:   BaseOfCode: 0x1000
+FILE-NEXT:   BaseOfData: 0
+FILE-NEXT:   ImageBase: 0x400000
+FILE-NEXT:   SectionAlignment: 4096
+FILE-NEXT:   FileAlignment: 512
+FILE-NEXT:   MajorOperatingSystemVersion: 3
+FILE-NEXT:   MinorOperatingSystemVersion: 11
+FILE-NEXT:   MajorImageVersion: 1
+FILE-NEXT:   MinorImageVersion: 25
+FILE-NEXT:   MajorSubsystemVersion: 3
+FILE-NEXT:   MinorSubsystemVersion: 11
+FILE-NEXT:   SizeOfImage: 8192
+FILE-NEXT:   SizeOfHeaders: 512
+FILE-NEXT:   Subsystem: IMAGE_SUBSYSTEM_WINDOWS_CUI (0x3)
+FILE-NEXT:   Subsystem [ (0x8540)
+FILE-NEXT:     IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE (0x40)
+FILE-NEXT:     IMAGE_DLL_CHARACTERISTICS_NO_SEH (0x400)
+FILE-NEXT:     IMAGE_DLL_CHARACTERISTICS_NX_COMPAT (0x100)
+FILE-NEXT:     IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE (0x8000)
+FILE-NEXT:   ]
+FILE-NEXT:   SizeOfStackReserve: 1048576
+FILE-NEXT:   SizeOfStackCommit: 4096
+FILE-NEXT:   SizeOfHeapReserve: 1048576
+FILE-NEXT:   SizeOfHeapCommit: 4096
+FILE-NEXT:   NumberOfRvaAndSize: 16
 
-SECTIONS: Format: COFF-i386
-SECTIONS: Arch: i386
-SECTIONS: AddressSize: 32bit
-SECTIONS: Sections [
-SECTIONS:   Section {
-SECTIONS:     Number: 1
-SECTIONS:     Name: .text (2E 74 65 78 74 00 00 00)
-SECTIONS:     VirtualSize: 0x6
-SECTIONS:     VirtualAddress: 0x1000
-SECTIONS:     RawDataSize: 512
-SECTIONS:     PointerToRawData: 0x200
-SECTIONS:     PointerToRelocations: 0x0
-SECTIONS:     PointerToLineNumbers: 0x0
-SECTIONS:     RelocationCount: 0
-SECTIONS:     LineNumberCount: 0
-SECTIONS:     Characteristics [ (0x60000020)
-SECTIONS:       IMAGE_SCN_CNT_CODE (0x20)
-SECTIONS:       IMAGE_SCN_MEM_EXECUTE (0x20000000)
-SECTIONS:       IMAGE_SCN_MEM_READ (0x40000000)
-SECTIONS:     ]
-SECTIONS:   }
-SECTIONS: ]
+SECTIONS:      Format: COFF-i386
+SECTIONS-NEXT: Arch: i386
+SECTIONS-NEXT: AddressSize: 32bit
+SECTIONS-NEXT: Sections [
+SECTIONS-NEXT:   Section {
+SECTIONS-NEXT:     Number: 1
+SECTIONS-NEXT:     Name: .data (2E 64 61 74 61 00 00 00)
+SECTIONS-NEXT:     VirtualSize: 0x0
+SECTIONS-NEXT:     VirtualAddress: 0x1000
+SECTIONS-NEXT:     RawDataSize: 0
+SECTIONS-NEXT:     PointerToRawData: 0x200
+SECTIONS-NEXT:     PointerToRelocations: 0x0
+SECTIONS-NEXT:     PointerToLineNumbers: 0x0
+SECTIONS-NEXT:     RelocationCount: 0
+SECTIONS-NEXT:     LineNumberCount: 0
+SECTIONS-NEXT:     Characteristics [
+SECTIONS-NEXT:       IMAGE_SCN_CNT_INITIALIZED_DATA
+SECTIONS-NEXT:       IMAGE_SCN_MEM_READ
+SECTIONS-NEXT:       IMAGE_SCN_MEM_WRITE
+SECTIONS-NEXT:     ]
+SECTIONS-NEXT:   }
+SECTIONS-NEXT:   Section {
+SECTIONS-NEXT:     Number: 2
+SECTIONS-NEXT:     Name: .text (2E 74 65 78 74 00 00 00)
+SECTIONS-NEXT:     VirtualSize: 0x6
+SECTIONS-NEXT:     VirtualAddress: 0x1000
+SECTIONS-NEXT:     RawDataSize: 512
+SECTIONS-NEXT:     PointerToRawData: 0x200
+SECTIONS-NEXT:     PointerToRelocations: 0x0
+SECTIONS-NEXT:     PointerToLineNumbers: 0x0
+SECTIONS-NEXT:     RelocationCount: 0
+SECTIONS-NEXT:     LineNumberCount: 0
+SECTIONS-NEXT:     Characteristics [
+SECTIONS-NEXT:       IMAGE_SCN_CNT_CODE
+SECTIONS-NEXT:       IMAGE_SCN_MEM_EXECUTE
+SECTIONS-NEXT:       IMAGE_SCN_MEM_READ
+SECTIONS-NEXT:     ]
+SECTIONS-NEXT:   }
+SECTIONS-NEXT: ]
