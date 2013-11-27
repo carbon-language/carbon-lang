@@ -268,7 +268,6 @@ void IndexingContext::importedModule(const ImportDecl *ImportD) {
   Module *Mod = ImportD->getImportedModule();
   if (!Mod)
     return;
-  std::string ModuleName = Mod->getFullModuleName();
 
   CXIdxImportedASTFileInfo Info = {
                                     static_cast<CXFile>(

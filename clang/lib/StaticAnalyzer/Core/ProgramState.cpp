@@ -175,7 +175,6 @@ ProgramState::invalidateRegionsImpl(ValueList Values,
                                     const CallEvent *Call) const {
   ProgramStateManager &Mgr = getStateManager();
   SubEngine* Eng = Mgr.getOwningEngine();
-  InvalidatedSymbols ConstIS;
 
   InvalidatedSymbols Invalidated;
   if (!IS)

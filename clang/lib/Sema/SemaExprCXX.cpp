@@ -1225,9 +1225,8 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
   if (ArraySize && !ArraySize->isTypeDependent()) {
     ExprResult ConvertedSize;
     if (getLangOpts().CPlusPlus1y) {
-      unsigned IntWidth = Context.getTargetInfo().getIntWidth();
-      assert(IntWidth && "Builtin type of size 0?");
-      llvm::APSInt Value(IntWidth);
+      assert(Context.getTargetInfo().getIntWidth() && "Builtin type of size 0?");
+
       ConvertedSize = PerformImplicitConversion(ArraySize, Context.getSizeType(),
 						AA_Converting);
 
@@ -4457,7 +4456,6 @@ QualType Sema::CXXCheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
   //   those operands to the type of the other.
   if (!Context.hasSameType(LTy, RTy) &&
       (LTy->isRecordType() || RTy->isRecordType())) {
-    ImplicitConversionSequence ICSLeftToRight, ICSRightToLeft;
     // These return true if a single direction is already ambiguous.
     QualType L2RType, R2LType;
     bool HaveL2R, HaveR2L;

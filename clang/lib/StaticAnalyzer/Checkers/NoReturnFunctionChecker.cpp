@@ -37,7 +37,6 @@ public:
 
 void NoReturnFunctionChecker::checkPostCall(const CallEvent &CE,
                                             CheckerContext &C) const {
-  ProgramStateRef state = C.getState();
   bool BuildSinks = false;
 
   if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(CE.getDecl()))

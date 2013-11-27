@@ -174,7 +174,7 @@ std::vector<CompileCommand>
 JSONCompilationDatabase::getCompileCommands(StringRef FilePath) const {
   SmallString<128> NativeFilePath;
   llvm::sys::path::native(FilePath, NativeFilePath);
-  std::vector<StringRef> PossibleMatches;
+
   std::string Error;
   llvm::raw_string_ostream ES(Error);
   StringRef Match = MatchTrie.findEquivalent(NativeFilePath.str(), ES);

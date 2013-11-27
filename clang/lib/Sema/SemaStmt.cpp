@@ -499,7 +499,6 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
     // We don't diagnose this overflow, because it is implementation-defined
     // behavior.
     // FIXME: Introduce a second, default-ignored warning for this case?
-    llvm::APSInt OldVal(Val);
     Val.setIsSigned(NewSign);
   }
 }
@@ -1044,7 +1043,6 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 
       for (EI = EnumVals.begin(); EI != EIend; EI++){
         // Drop unneeded case values
-        llvm::APSInt CIVal;
         while (CI != CaseVals.end() && CI->first < EI->first)
           CI++;
 

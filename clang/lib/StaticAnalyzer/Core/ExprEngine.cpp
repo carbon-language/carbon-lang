@@ -598,7 +598,6 @@ void ExprEngine::ProcessDeleteDtor(const CFGDeleteDtor Dtor,
 void ExprEngine::ProcessBaseDtor(const CFGBaseDtor D,
                                  ExplodedNode *Pred, ExplodedNodeSet &Dst) {
   const LocationContext *LCtx = Pred->getLocationContext();
-  ProgramStateRef State = Pred->getState();
 
   const CXXDestructorDecl *CurDtor = cast<CXXDestructorDecl>(LCtx->getDecl());
   Loc ThisPtr = getSValBuilder().getCXXThis(CurDtor,

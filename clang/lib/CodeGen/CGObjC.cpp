@@ -1356,7 +1356,6 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
     // Suppress the final autorelease in ARC.
     AutoreleaseResult = false;
 
-    SmallVector<CXXCtorInitializer *, 8> IvarInitializers;
     for (ObjCImplementationDecl::init_const_iterator B = IMP->init_begin(),
            E = IMP->init_end(); B != E; ++B) {
       CXXCtorInitializer *IvarInit = (*B);
