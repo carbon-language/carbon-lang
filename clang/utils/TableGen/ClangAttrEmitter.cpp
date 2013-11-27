@@ -1713,7 +1713,7 @@ static std::string CalculateDiagnostic(const Record &S) {
     ObjCMethod = 1U << 2,
     Param = 1U << 3,
     Class = 1U << 4,
-    Struct = 1U << 5,
+    GenericRecord = 1U << 5,
     Type = 1U << 6,
     ObjCIVar = 1U << 7,
     ObjCProp = 1U << 8,
@@ -1737,7 +1737,7 @@ static std::string CalculateDiagnostic(const Record &S) {
                    .Case("TypedefName", Type)
                    .Case("ObjCIvar", ObjCIVar)
                    .Case("ObjCProperty", ObjCProp)
-                   .Case("Record", Struct)
+                   .Case("Record", GenericRecord)
                    .Case("ObjCInterface", ObjCInterface)
                    .Case("Block", Block)
                    .Case("CXXRecord", Class)
@@ -1771,10 +1771,10 @@ static std::string CalculateDiagnostic(const Record &S) {
     case Type:  return "ExpectedType";
     case ObjCInterface: return "ExpectedObjectiveCInterface";
     
-    // "Struct" means struct, union or class; check the language options and if
-    // not compiling for C++, strip off the class part. Note that this relies
-    // on the fact that the context for this declares "Sema &S".
-    case Struct:
+    // "GenericRecord" means struct, union or class; check the language options
+    // and if not compiling for C++, strip off the class part. Note that this
+    // relies on the fact that the context for this declares "Sema &S".
+    case GenericRecord:
       return "(S.getLangOpts().CPlusPlus ? ExpectedStructOrUnionOrClass : "
                                            "ExpectedStructOrUnion)";
     case Func | ObjCMethod | Block: return "ExpectedFunctionMethodOrBlock";
