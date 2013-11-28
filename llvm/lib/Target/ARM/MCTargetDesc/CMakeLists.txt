@@ -11,4 +11,3 @@ add_llvm_library(LLVMARMDesc
   ARMUnwindOpAsm.cpp
   ARMMachORelocationInfo.cpp
   )
-add_dependencies(LLVMARMDesc ARMCommonTableGen)

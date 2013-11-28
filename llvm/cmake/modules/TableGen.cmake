@@ -45,7 +45,7 @@ macro(tablegen project ofn)
     PROPERTIES GENERATED 1)
 endmacro(tablegen)
 
-function(add_public_tablegen_target target)
+macro(add_public_tablegen_target target)
   # Creates a target for publicly exporting tablegen dependencies.
   if( TABLEGEN_OUTPUT )
     add_custom_target(${target}
@@ -54,8 +54,9 @@ function(add_public_tablegen_target target)
       add_dependencies(${target} ${LLVM_COMMON_DEPENDS})
     endif ()
     set_target_properties(${target} PROPERTIES FOLDER "Tablegenning")
+    list(APPEND LLVM_COMMON_DEPENDS ${target})
   endif( TABLEGEN_OUTPUT )
-endfunction()
+endmacro()
 
 if(CMAKE_CROSSCOMPILING)
   set(CX_NATIVE_TG_DIR "${CMAKE_BINARY_DIR}/native")

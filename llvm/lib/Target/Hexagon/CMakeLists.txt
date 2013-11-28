@@ -37,7 +37,7 @@ add_llvm_target(HexagonCodeGen
   HexagonCopyToCombine.cpp
 )
 
-add_dependencies(LLVMHexagonCodeGen HexagonCommonTableGen intrinsics_gen)
+add_dependencies(LLVMHexagonCodeGen intrinsics_gen)
 
 add_subdirectory(TargetInfo)
 add_subdirectory(InstPrinter)

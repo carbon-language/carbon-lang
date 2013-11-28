@@ -8,5 +8,3 @@ add_llvm_library(LLVMPowerPCDesc
   PPCMachObjectWriter.cpp
   PPCELFObjectWriter.cpp
   )
-
-add_dependencies(LLVMPowerPCDesc PowerPCCommonTableGen)

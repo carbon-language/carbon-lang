@@ -7,4 +7,3 @@ add_llvm_library(LLVMAArch64Desc
   AArch64MCExpr.cpp
   AArch64MCTargetDesc.cpp
   )
-add_dependencies(LLVMAArch64Desc AArch64CommonTableGen)

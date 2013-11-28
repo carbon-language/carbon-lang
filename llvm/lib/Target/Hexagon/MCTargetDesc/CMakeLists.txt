@@ -3,5 +3,3 @@ add_llvm_library(LLVMHexagonDesc
   HexagonMCInst.cpp
   HexagonMCTargetDesc.cpp
   )
-
-add_dependencies(LLVMHexagonDesc HexagonCommonTableGen)

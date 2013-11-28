@@ -5,5 +5,3 @@ add_llvm_library(LLVMSystemZDesc
   SystemZMCObjectWriter.cpp
   SystemZMCTargetDesc.cpp
   )
-
-add_dependencies(LLVMSystemZDesc SystemZCommonTableGen)

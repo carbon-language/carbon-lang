@@ -7,5 +7,3 @@ add_llvm_library(LLVMMipsDesc
   MipsReginfo.cpp
   MipsTargetStreamer.cpp
   )
-
-add_dependencies(LLVMMipsDesc MipsCommonTableGen)
