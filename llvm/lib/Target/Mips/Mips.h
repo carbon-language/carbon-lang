@@ -31,5 +31,4 @@ namespace llvm {
   FunctionPass *createMipsConstantIslandPass(MipsTargetMachine &tm);
 } // end namespace llvm;
 
-
 #endif
