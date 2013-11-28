@@ -25,6 +25,7 @@
 //   COMMON_INTERCEPTOR_MUTEX_UNLOCK
 //   COMMON_INTERCEPTOR_MUTEX_REPAIR
 //   COMMON_INTERCEPTOR_SET_PTHREAD_NAME
+//   COMMON_INTERCEPTOR_HANDLE_RECVMSG
 //===----------------------------------------------------------------------===//
 #include "interception/interception.h"
 #include "sanitizer_platform_interceptors.h"
@@ -53,6 +54,10 @@
 
 #ifndef COMMON_INTERCEPTOR_MUTEX_REPAIR
 #define COMMON_INTERCEPTOR_MUTEX_REPAIR(ctx, m) {}
+#endif
+
+#ifndef COMMON_INTERCEPTOR_HANDLE_RECVMSG
+#define COMMON_INTERCEPTOR_HANDLE_RECVMSG(ctx, msg) ((void)(msg))
 #endif
 
 #if SANITIZER_INTERCEPT_STRCMP
@@ -1402,7 +1407,10 @@ INTERCEPTOR(SSIZE_T, recvmsg, int fd, struct __sanitizer_msghdr *msg,
   SSIZE_T res = REAL(recvmsg)(fd, msg, flags);
   if (res >= 0) {
     if (fd >= 0) COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd);
-    if (msg) write_msghdr(ctx, msg, res);
+    if (msg) {
+      write_msghdr(ctx, msg, res);
+      COMMON_INTERCEPTOR_HANDLE_RECVMSG(ctx, msg);
+    }
   }
   return res;
 }

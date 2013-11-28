@@ -1834,6 +1834,14 @@ struct TsanInterceptorContext {
   const uptr pc;
 };
 
+static void HandleRecvmsg(ThreadState *thr, uptr pc,
+    __sanitizer_msghdr *msg) {
+  int fds[64];
+  int cnt = ExtractRecvmsgFDs(msg, fds, ARRAY_SIZE(fds));
+  for (int i = 0; i < cnt; i++)
+    FdEventCreate(thr, pc, fds[i]);
+}
+
 #include "sanitizer_common/sanitizer_platform_interceptors.h"
 // Causes interceptor recursion (getpwuid_r() calls fopen())
 #undef SANITIZER_INTERCEPT_GETPWNAM_AND_FRIENDS
@@ -1899,6 +1907,10 @@ struct TsanInterceptorContext {
 #define COMMON_INTERCEPTOR_MUTEX_REPAIR(ctx, m) \
   MutexRepair(((TsanInterceptorContext *)ctx)->thr, \
             ((TsanInterceptorContext *)ctx)->pc, (uptr)m)
+
+#define COMMON_INTERCEPTOR_HANDLE_RECVMSG(ctx, msg) \
+  HandleRecvmsg(((TsanInterceptorContext *)ctx)->thr, \
+      ((TsanInterceptorContext *)ctx)->pc, msg)
 
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 

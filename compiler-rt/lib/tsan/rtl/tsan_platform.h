@@ -162,6 +162,7 @@ void internal_start_thread(void(*func)(void*), void *arg);
 // Guesses with high probability, may yield both false positives and negatives.
 bool IsGlobalVar(uptr addr);
 int ExtractResolvFDs(void *state, int *fds, int nfd);
+int ExtractRecvmsgFDs(void *msg, int *fds, int nfd);
 
 }  // namespace __tsan
 
