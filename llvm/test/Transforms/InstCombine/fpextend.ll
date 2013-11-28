@@ -1,3 +1,4 @@
+
 ; RUN: opt < %s -instcombine -S | not grep fpext
 @X = external global float 
 @Y = external global float
@@ -9,6 +10,18 @@ entry:
 	%tmp3 = fadd double %tmp1, 0.000000e+00		; <double> [#uses=1]
 	%tmp34 = fptrunc double %tmp3 to float		; <float> [#uses=1]
 	store float %tmp34, float* @X, align 4
+	ret void
+}
+
+define void @test2() nounwind  {
+entry:
+	%tmp = load float* @X, align 4		; <float> [#uses=1]
+	%tmp1 = fpext float %tmp to double		; <double> [#uses=1]
+	%tmp2 = load float* @Y, align 4		; <float> [#uses=1]
+	%tmp23 = fpext float %tmp2 to double		; <double> [#uses=1]
+	%tmp5 = fmul double %tmp1, %tmp23		; <double> [#uses=1]
+	%tmp56 = fptrunc double %tmp5 to float		; <float> [#uses=1]
+	store float %tmp56, float* @X, align 4
 	ret void
 }
 
@@ -33,4 +46,3 @@ entry:
 	store float %tmp34, float* @X, align 4
 	ret void
 }
-

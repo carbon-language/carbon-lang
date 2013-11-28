@@ -1189,36 +1189,92 @@ static Value *LookThroughFPExtensions(Value *V) {
 Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
   if (Instruction *I = commonCastTransforms(CI))
     return I;
-
-  // If we have fptrunc(fadd (fpextend x), (fpextend y)), where x and y are
-  // smaller than the destination type, we can eliminate the truncate by doing
-  // the add as the smaller type.  This applies to fadd/fsub/fmul/fdiv as well
-  // as many builtins (sqrt, etc).
+  // If we have fptrunc(OpI (fpextend x), (fpextend y)), we would like to
+  // simpilify this expression to avoid one or more of the trunc/extend
+  // operations if we can do so without changing the numerical results.
+  //
+  // The exact manner in which the widths of the operands interact to limit
+  // what we can and cannot do safely varies from operation to operation, and
+  // is explained below in the various case statements.
   BinaryOperator *OpI = dyn_cast<BinaryOperator>(CI.getOperand(0));
   if (OpI && OpI->hasOneUse()) {
+    Value *LHSOrig = LookThroughFPExtensions(OpI->getOperand(0));
+    Value *RHSOrig = LookThroughFPExtensions(OpI->getOperand(1));
+    unsigned OpWidth = OpI->getType()->getFPMantissaWidth();
+    unsigned LHSWidth = LHSOrig->getType()->getFPMantissaWidth();
+    unsigned RHSWidth = RHSOrig->getType()->getFPMantissaWidth();
+    unsigned SrcWidth = std::max(LHSWidth, RHSWidth);
+    unsigned DstWidth = CI.getType()->getFPMantissaWidth();
     switch (OpI->getOpcode()) {
-    default: break;
-    case Instruction::FAdd:
-    case Instruction::FSub:
-    case Instruction::FMul:
-    case Instruction::FDiv:
-    case Instruction::FRem:
-      Type *SrcTy = OpI->getType();
-      Value *LHSTrunc = LookThroughFPExtensions(OpI->getOperand(0));
-      Value *RHSTrunc = LookThroughFPExtensions(OpI->getOperand(1));
-      if (LHSTrunc->getType() != SrcTy &&
-          RHSTrunc->getType() != SrcTy) {
-        unsigned DstSize = CI.getType()->getScalarSizeInBits();
-        // If the source types were both smaller than the destination type of
-        // the cast, do this xform.
-        if (LHSTrunc->getType()->getScalarSizeInBits() <= DstSize &&
-            RHSTrunc->getType()->getScalarSizeInBits() <= DstSize) {
-          LHSTrunc = Builder->CreateFPExt(LHSTrunc, CI.getType());
-          RHSTrunc = Builder->CreateFPExt(RHSTrunc, CI.getType());
-          return BinaryOperator::Create(OpI->getOpcode(), LHSTrunc, RHSTrunc);
+      default: break;
+      case Instruction::FAdd:
+      case Instruction::FSub:
+        // For addition and subtraction, the infinitely precise result can
+        // essentially be arbitrarily wide; proving that double rounding
+        // will not occur because the result of OpI is exact (as we will for
+        // FMul, for example) is hopeless.  However, we *can* nonetheless
+        // frequently know that double rounding cannot occur (or that it is
+        // innoculous) by taking advantage of the specific structure of
+        // infinitely-precise results that admit double rounding.
+        //
+        // Specifically, if OpWidth >= 2*DstWdith+1 and DstWidth is sufficent
+        // to represent both sources, we can guarantee that the double
+        // rounding is innocuous (See p50 of Figueroa's 2000 PhD thesis,
+        // "A Rigorous Framework for Fully Supporting the IEEE Standard ..."
+        // for proof of this fact).
+        //
+        // Note: Figueroa does not consider the case where DstFormat !=
+        // SrcFormat.  It's possible (likely even!) that this analysis
+        // could be tightened for those cases, but they are rare (the main
+        // case of interest here is (float)((double)float + float)).
+        if (OpWidth >= 2*DstWidth+1 && DstWidth >= SrcWidth) {
+          if (LHSOrig->getType() != CI.getType())
+            LHSOrig = Builder->CreateFPExt(LHSOrig, CI.getType());
+          if (RHSOrig->getType() != CI.getType())
+            RHSOrig = Builder->CreateFPExt(RHSOrig, CI.getType());
+          return BinaryOperator::Create(OpI->getOpcode(), LHSOrig, RHSOrig);
         }
-      }
-      break;
+        break;
+      case Instruction::FMul:
+        // For multiplication, the infinitely precise result has at most
+        // LHSWidth + RHSWidth significant bits; if OpWidth is sufficient
+        // that such a value can be exactly represented, then no double
+        // rounding can possibly occur; we can safely perform the operation
+        // in the destination format if it can represent both sources.
+        if (OpWidth >= LHSWidth + RHSWidth && DstWidth >= SrcWidth) {
+          if (LHSOrig->getType() != CI.getType())
+            LHSOrig = Builder->CreateFPExt(LHSOrig, CI.getType());
+          if (RHSOrig->getType() != CI.getType())
+            RHSOrig = Builder->CreateFPExt(RHSOrig, CI.getType());
+          return BinaryOperator::CreateFMul(LHSOrig, RHSOrig);
+        }
+        break;
+      case Instruction::FDiv:
+        // For division, we use again use the bound from Figueroa's
+        // dissertation.  I am entirely certain that this bound can be
+        // tightened in the unbalanced operand case by an analysis based on
+        // the diophantine rational approximation bound, but the well-known
+        // condition used here is a good conservative first pass.
+        // TODO: Tighten bound via rigorous analysis of the unbalanced case.
+        if (OpWidth >= 2*DstWidth && DstWidth >= SrcWidth) {
+          if (LHSOrig->getType() != CI.getType())
+            LHSOrig = Builder->CreateFPExt(LHSOrig, CI.getType());
+          if (RHSOrig->getType() != CI.getType())
+            RHSOrig = Builder->CreateFPExt(RHSOrig, CI.getType());
+          return BinaryOperator::CreateFDiv(LHSOrig, RHSOrig);
+        }
+        break;
+      case Instruction::FRem:
+        // Remainder is straightforward.  Remainder is always exact, so the
+        // type of OpI doesn't enter into things at all.  We simply evaluate
+        // in whichever source type is larger, then convert to the
+        // destination type.
+        if (LHSWidth < SrcWidth)
+          LHSOrig = Builder->CreateFPExt(LHSOrig, RHSOrig->getType());
+        else if (RHSWidth <= SrcWidth)
+          RHSOrig = Builder->CreateFPExt(RHSOrig, LHSOrig->getType());
+        Value *ExactResult = Builder->CreateFRem(LHSOrig, RHSOrig);
+        return CastInst::CreateFPCast(ExactResult, CI.getType());
     }
 
     // (fptrunc (fneg x)) -> (fneg (fptrunc x))
