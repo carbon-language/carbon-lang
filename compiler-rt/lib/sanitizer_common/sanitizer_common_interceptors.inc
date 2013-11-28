@@ -2853,6 +2853,31 @@ INTERCEPTOR(SSIZE_T, getdelim, char **lineptr, SIZE_T *n, int delim,
 #define INIT_GETLINE
 #endif
 
+#if SANITIZER_INTERCEPT_ICONV
+INTERCEPTOR(SIZE_T, iconv, void *cd, char **inbuf, SIZE_T *inbytesleft,
+            char **outbuf, SIZE_T *outbytesleft) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, iconv, cd, inbuf, inbytesleft, outbuf,
+                           outbytesleft);
+  if (inbytesleft)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, inbytesleft, sizeof(*inbytesleft));
+  if (inbuf && inbytesleft)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, *inbuf, *inbytesleft);
+  if (outbytesleft)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, outbytesleft, sizeof(*outbytesleft));
+  void *outbuf_orig = outbuf ? *outbuf : 0;
+  SIZE_T res = REAL(iconv)(cd, inbuf, inbytesleft, outbuf, outbytesleft);
+  if (res != (SIZE_T) - 1 && outbuf && *outbuf > outbuf_orig) {
+    SIZE_T sz = (char *)*outbuf - (char *)outbuf_orig;
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, outbuf_orig, sz);
+  }
+  return res;
+}
+#define INIT_ICONV COMMON_INTERCEPT_FUNCTION(iconv);
+#else
+#define INIT_ICONV
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -2963,4 +2988,5 @@ INTERCEPTOR(SSIZE_T, getdelim, char **lineptr, SIZE_T *n, int delim,
   INIT_LGAMMA_R;                           \
   INIT_DRAND48_R;                          \
   INIT_GETLINE;                            \
+  INIT_ICONV;                              \
 /**/

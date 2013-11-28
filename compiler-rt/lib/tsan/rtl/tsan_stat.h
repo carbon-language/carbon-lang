@@ -411,6 +411,7 @@ enum StatType {
   StatInt_lrand48_r,
   StatInt_getline,
   StatInt_getdelim,
+  StatInt_iconv,
 
   StatInt_pthread_attr_getdetachstate,
   StatInt_pthread_attr_getguardsize,
