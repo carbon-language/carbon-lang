@@ -55,9 +55,9 @@ Mips16HardFloat("mips16-hard-float", cl::NotHidden,
 
 static cl::opt<bool>
 Mips16ConstantIslands(
-  "mips16-constant-islands", cl::Hidden,
-  cl::desc("MIPS: mips16 constant islands enable. experimental feature"),
-  cl::init(false));
+  "mips16-constant-islands", cl::NotHidden,
+  cl::desc("MIPS: mips16 constant islands enable."),
+  cl::init(true));
 
 void MipsSubtarget::anchor() { }
 

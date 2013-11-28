@@ -77,6 +77,103 @@ static cl::opt<bool> NoLoadRelaxation(
   cl::desc("Don't relax loads to long loads - for testing purposes"),
   cl::Hidden);
 
+static unsigned int branchTargetOperand(MachineInstr *MI) {
+  switch (MI->getOpcode()) {
+  case Mips::Bimm16:
+  case Mips::BimmX16:
+  case Mips::Bteqz16:
+  case Mips::BteqzX16:
+  case Mips::Btnez16:
+  case Mips::BtnezX16:
+  case Mips::Jal16:
+    return 0;
+  case Mips::BeqzRxImm16:
+  case Mips::BeqzRxImmX16:
+  case Mips::BnezRxImm16:
+  case Mips::BnezRxImmX16:
+    return 1;
+  }
+  llvm_unreachable("Unknown branch type");
+}
+
+static unsigned int longformBranchOpcode(unsigned int Opcode) {
+  switch (Opcode) {
+  case Mips::Bimm16:
+  case Mips::BimmX16:
+    return Mips::BimmX16;
+  case Mips::Bteqz16:
+  case Mips::BteqzX16:
+    return Mips::BteqzX16;
+  case Mips::Btnez16:
+  case Mips::BtnezX16:
+    return Mips::BtnezX16;
+  case Mips::Jal16:
+    return Mips::Jal16;
+  case Mips::BeqzRxImm16:
+  case Mips::BeqzRxImmX16:
+    return Mips::BeqzRxImmX16;
+  case Mips::BnezRxImm16:
+  case Mips::BnezRxImmX16:
+    return Mips::BnezRxImmX16;
+  }
+  llvm_unreachable("Unknown branch type");
+}
+
+//
+// FIXME: need to go through this whole constant islands port and check the math
+// for branch ranges and clean this up and make some functions to calculate things
+// that are done many times identically.
+// Need to refactor some of the code to call this routine.
+//
+static unsigned int branchMaxOffsets(unsigned int Opcode) {
+  unsigned Bits, Scale;
+  switch (Opcode) {
+    case Mips::Bimm16:
+      Bits = 11;
+      Scale = 2;
+      break;
+    case Mips::BimmX16:
+      Bits = 16;
+      Scale = 2;
+      break;
+    case Mips::BeqzRxImm16:
+      Bits = 8;
+      Scale = 2;
+      break;
+    case Mips::BeqzRxImmX16:
+      Bits = 16;
+      Scale = 2;
+      break;
+    case Mips::BnezRxImm16:
+      Bits = 8;
+      Scale = 2;
+      break;
+    case Mips::BnezRxImmX16:
+      Bits = 16;
+      Scale = 2;
+      break;
+    case Mips::Bteqz16:
+      Bits = 8;
+      Scale = 2;
+      break;
+    case Mips::BteqzX16:
+      Bits = 16;
+      Scale = 2;
+      break;
+    case Mips::Btnez16:
+      Bits = 8;
+      Scale = 2;
+      break;
+    case Mips::BtnezX16:
+      Bits = 16;
+      Scale = 2;
+      break;
+    default:
+      llvm_unreachable("Unknown branch type");
+  }
+  unsigned MaxOffs = ((1 << (Bits-1))-1) * Scale;
+  return MaxOffs;
+}
 
 namespace {
 
@@ -603,6 +700,47 @@ initializeFunctionInfo(const std::vector<MachineInstr*> &CPEMIs) {
           Bits = 16;
           Scale = 2;
           isCond = false;
+          break;
+        case Mips::BeqzRxImm16:
+          Bits = 8;
+          Scale = 2;
+          isCond = true;
+          break;
+        case Mips::BeqzRxImmX16:
+          Bits = 16;
+          Scale = 2;
+          isCond = true;
+          break;
+        case Mips::BnezRxImm16:
+          Bits = 8;
+          Scale = 2;
+          isCond = true;
+          break;
+        case Mips::BnezRxImmX16:
+          Bits = 16;
+          Scale = 2;
+          isCond = true;
+          break;
+        case Mips::Bteqz16:
+          Bits = 8;
+          Scale = 2;
+          isCond = true;
+          break;
+        case Mips::BteqzX16:
+          Bits = 16;
+          Scale = 2;
+          isCond = true;
+          break;
+        case Mips::Btnez16:
+          Bits = 8;
+          Scale = 2;
+          isCond = true;
+          break;
+        case Mips::BtnezX16:
+          Bits = 16;
+          Scale = 2;
+          isCond = true;
+          break;
         }
         // Record this immediate branch.
         unsigned MaxOffs = ((1 << (Bits-1))-1) * Scale;
@@ -1382,7 +1520,8 @@ unsigned PCAdj = 4;
 /// away to fit in its displacement field.
 bool MipsConstantIslands::fixupImmediateBr(ImmBranch &Br) {
   MachineInstr *MI = Br.MI;
-  MachineBasicBlock *DestBB = MI->getOperand(0).getMBB();
+  unsigned TargetOperand = branchTargetOperand(MI);
+  MachineBasicBlock *DestBB = MI->getOperand(TargetOperand).getMBB();
 
   // Check to see if the DestBB is already in-range.
   if (isBBInRange(MI, DestBB, Br.MaxDisp))
@@ -1434,13 +1573,26 @@ MipsConstantIslands::fixupUnconditionalBr(ImmBranch &Br) {
   return true;
 }
 
+
 /// fixupConditionalBr - Fix up a conditional branch whose destination is too
 /// far away to fit in its displacement field. It is converted to an inverse
 /// conditional branch + an unconditional branch to the destination.
 bool
 MipsConstantIslands::fixupConditionalBr(ImmBranch &Br) {
   MachineInstr *MI = Br.MI;
-  MachineBasicBlock *DestBB = MI->getOperand(0).getMBB();
+  unsigned TargetOperand = branchTargetOperand(MI);
+  MachineBasicBlock *DestBB = MI->getOperand(TargetOperand).getMBB();
+  unsigned Opcode = MI->getOpcode();
+  unsigned LongFormOpcode = longformBranchOpcode(Opcode);
+  unsigned LongFormMaxOff = branchMaxOffsets(LongFormOpcode);
+
+  // Check to see if the DestBB is already in-range.
+  if (isBBInRange(MI, DestBB, LongFormMaxOff)) {
+    Br.MaxDisp = LongFormMaxOff;
+    MI->setDesc(TII->get(LongFormOpcode));
+    return true;
+  }
+  llvm_unreachable("Fixup of very long conditional branch not working yet.");
 
   // Add an unconditional branch to the destination and invert the branch
   // condition to jump over it:
