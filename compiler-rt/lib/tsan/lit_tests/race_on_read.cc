@@ -5,11 +5,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 int fd;
 char buf;
 
 void *Thread(void *x) {
+  sleep(1);
   read(fd, &buf, 1);
   return NULL;
 }

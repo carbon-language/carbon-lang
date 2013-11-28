@@ -1,10 +1,12 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && not %t 2>&1 | FileCheck %s
 #include <pthread.h>
 #include <stdio.h>
+#include <unistd.h>
 
 const long kOffset = 64*1024;
 
 void *Thread(void *p) {
+  sleep(1);
   ((char*)p)[-kOffset] = 43;
   return 0;
 }
