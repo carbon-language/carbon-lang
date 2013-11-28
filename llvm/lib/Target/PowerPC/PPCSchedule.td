@@ -8,21 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// Functional units across PowerPC chips sets
-//
-def BPU    : FuncUnit; // Branch unit
-def SLU    : FuncUnit; // Store/load unit
-def SRU    : FuncUnit; // special register unit
-def IU1    : FuncUnit; // integer unit 1 (simple)
-def IU2    : FuncUnit; // integer unit 2 (complex)
-def FPU1   : FuncUnit; // floating point unit 1
-def FPU2   : FuncUnit; // floating point unit 2
-def VPU    : FuncUnit; // vector permutation unit
-def VIU1   : FuncUnit; // vector integer unit 1 (simple)
-def VIU2   : FuncUnit; // vector integer unit 2 (complex)
-def VFPU   : FuncUnit; // vector floating point unit
-
-//===----------------------------------------------------------------------===//
 // Instruction Itinerary classes used for PowerPC
 //
 def IIC_IntSimple    : InstrItinClass;
