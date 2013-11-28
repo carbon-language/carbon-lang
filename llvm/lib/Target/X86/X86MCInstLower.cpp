@@ -73,16 +73,26 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
   assert((MO.isGlobal() || MO.isSymbol() || MO.isMBB()) && "Isn't a symbol reference");
 
   SmallString<128> Name;
+  StringRef Suffix;
+
+  switch (MO.getTargetFlags()) {
+  case X86II::MO_DLLIMPORT:
+    // Handle dllimport linkage.
+    Name += "__imp_";
+    break;
+  case X86II::MO_DARWIN_STUB:
+    Suffix = "$stub";
+    break;
+  case X86II::MO_DARWIN_NONLAZY:
+  case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
+  case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
+    Suffix = "$non_lazy_ptr";
+    break;
+  }
 
   if (MO.isGlobal()) {
     const GlobalValue *GV = MO.getGlobal();
-    bool isImplicitlyPrivate = false;
-    if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB ||
-        MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
-        MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE ||
-        MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
-      isImplicitlyPrivate = true;
-
+    bool isImplicitlyPrivate = !Suffix.empty();
     getMang()->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
   } else if (MO.isSymbol()) {
     getMang()->getNameWithPrefix(Name, MO.getSymbolName());
@@ -90,21 +100,15 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
     Name += MO.getMBB()->getSymbol()->getName();
   }
 
+  Name += Suffix;
+  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
+
   // If the target flags on the operand changes the name of the symbol, do that
   // before we return the symbol.
   switch (MO.getTargetFlags()) {
   default: break;
-  case X86II::MO_DLLIMPORT: {
-    // Handle dllimport linkage.
-    const char *Prefix = "__imp_";
-    Name.insert(Name.begin(), Prefix, Prefix+strlen(Prefix));
-    break;
-  }
   case X86II::MO_DARWIN_NONLAZY:
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE: {
-    Name += "$non_lazy_ptr";
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
-
     MachineModuleInfoImpl::StubValueTy &StubSym =
       getMachOMMI().getGVStubEntry(Sym);
     if (StubSym.getPointer() == 0) {
@@ -114,11 +118,9 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
         StubValueTy(AsmPrinter.getSymbol(MO.getGlobal()),
                     !MO.getGlobal()->hasInternalLinkage());
     }
-    return Sym;
+    break;
   }
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: {
-    Name += "$non_lazy_ptr";
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
     MachineModuleInfoImpl::StubValueTy &StubSym =
       getMachOMMI().getHiddenGVStubEntry(Sym);
     if (StubSym.getPointer() == 0) {
@@ -128,11 +130,9 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
         StubValueTy(AsmPrinter.getSymbol(MO.getGlobal()),
                     !MO.getGlobal()->hasInternalLinkage());
     }
-    return Sym;
+    break;
   }
   case X86II::MO_DARWIN_STUB: {
-    Name += "$stub";
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
     MachineModuleInfoImpl::StubValueTy &StubSym =
       getMachOMMI().getFnStubEntry(Sym);
     if (StubSym.getPointer())
@@ -149,11 +149,11 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
         MachineModuleInfoImpl::
         StubValueTy(Ctx.GetOrCreateSymbol(Name.str()), false);
     }
-    return Sym;
+    break;
   }
   }
 
-  return Ctx.GetOrCreateSymbol(Name.str());
+  return Sym;
 }
 
 MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
