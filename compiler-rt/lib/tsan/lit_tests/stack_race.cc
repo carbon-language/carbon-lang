@@ -1,8 +1,10 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && not %t 2>&1 | FileCheck %s
 #include <pthread.h>
 #include <stddef.h>
+#include <unistd.h>
 
 void *Thread(void *a) {
+  sleep(1);
   *(int*)a = 43;
   return 0;
 }

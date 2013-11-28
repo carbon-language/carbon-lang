@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 void *Thread2(void *a) {
+  sleep(1);
   *(int*)a = 43;
   return 0;
 }
