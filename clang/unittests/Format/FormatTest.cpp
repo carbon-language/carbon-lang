@@ -2511,6 +2511,36 @@ TEST_F(FormatTest, LayoutNestedBlocks) {
                "                 return;\n"
                "             },\n"
                "      a);", Style);
+}
+
+TEST_F(FormatTest, IndividualStatementsOfNestedBlocks) {
+  EXPECT_EQ("DEBUG({\n"
+            "  int i;\n"
+            "  int        j;\n"
+            "});",
+            format("DEBUG(   {\n"
+                   "  int        i;\n"
+                   "  int        j;\n"
+                   "}   )  ;",
+                   20, 1, getLLVMStyle()));
+  EXPECT_EQ("DEBUG(   {\n"
+            "  int        i;\n"
+            "  int j;\n"
+            "}   )  ;",
+            format("DEBUG(   {\n"
+                   "  int        i;\n"
+                   "  int        j;\n"
+                   "}   )  ;",
+                   41, 1, getLLVMStyle()));
+  EXPECT_EQ("DEBUG({\n"
+            "  int i;\n"
+            "  int j;\n"
+            "});",
+            format("DEBUG(   {\n"
+                   "    int        i;\n"
+                   "    int        j;\n"
+                   "}   )  ;",
+                   20, 1, getLLVMStyle()));
 
   EXPECT_EQ("Debug({\n"
             "        if (aaaaaaaaaaaaaaaaaaaaaaaa)\n"
@@ -2523,18 +2553,26 @@ TEST_F(FormatTest, LayoutNestedBlocks) {
                    "      },\n"
                    "      a);",
                    50, 1, getLLVMStyle()));
-}
-
-TEST_F(FormatTest, IndividualStatementsOfNestedBlocks) {
   EXPECT_EQ("DEBUG({\n"
-            "  int        i;\n"
-            "  int j;\n"
+            "  DEBUG({\n"
+            "    int a;\n"
+            "    int b;\n"
+            "  }) ;\n"
             "});",
-            format("DEBUG(   {\n"
-                   "  int        i;\n"
-                   "  int        j;\n"
-                   "}   )  ;",
-                   40, 1, getLLVMStyle()));
+            format("DEBUG({\n"
+                   "  DEBUG({\n"
+                   "    int a;\n"
+                   "    int    b;\n" // Format this line only.
+                   "  }) ;\n"        // Don't touch this line.
+                   "});",
+                   35, 0, getLLVMStyle()));
+  EXPECT_EQ("DEBUG({\n"
+            "  int a; //\n"
+            "});",
+            format("DEBUG({\n"
+                   "    int a; //\n"
+                   "});",
+                   0, 0, getLLVMStyle()));
 }
 
 TEST_F(FormatTest, PutEmptyBlocksIntoOneLine) {

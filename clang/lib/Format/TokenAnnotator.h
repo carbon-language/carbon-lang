@@ -42,7 +42,7 @@ public:
         InPPDirective(Line.InPPDirective),
         MustBeDeclaration(Line.MustBeDeclaration), MightBeFunctionDecl(false),
         StartsDefinition(false), Affected(false),
-        LeadingEmptyLinesAffected(false) {
+        LeadingEmptyLinesAffected(false), ChildrenAffected(false) {
     assert(!Line.Tokens.empty());
 
     // Calculate Next and Previous for all tokens. Note that we must overwrite
@@ -95,6 +95,9 @@ public:
   /// \c True if the leading empty lines of this line intersect with one of the
   /// input ranges.
   bool LeadingEmptyLinesAffected;
+
+  /// \c True if a one of this line's children intersects with an input range.
+  bool ChildrenAffected;
 
 private:
   // Disallow copying.

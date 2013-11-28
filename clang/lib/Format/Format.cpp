@@ -560,7 +560,7 @@ public:
         Joiner(Style) {}
 
   unsigned format(const SmallVectorImpl<AnnotatedLine *> &Lines, bool DryRun,
-                  int AdditionalIndent = 0) {
+                  int AdditionalIndent = 0, bool FixBadIndentation = false) {
     assert(!Lines.empty());
     unsigned Penalty = 0;
     std::vector<int> IndentForLevel;
@@ -589,6 +589,9 @@ public:
       }
       I += MergedLines;
 
+      unsigned LevelIndent = getIndent(IndentForLevel, TheLine.Level);
+      bool FixIndentation =
+          FixBadIndentation && (LevelIndent != FirstTok->OriginalColumn);
       if (TheLine.First->is(tok::eof)) {
         if (PreviousLine && PreviousLine->Affected && !DryRun) {
           // Remove the file's trailing whitespace.
@@ -597,8 +600,8 @@ public:
                                          /*IndentLevel=*/0, /*Spaces=*/0,
                                          /*TargetColumn=*/0);
         }
-      } else if (TheLine.Type != LT_Invalid && TheLine.Affected) {
-        unsigned LevelIndent = getIndent(IndentForLevel, TheLine.Level);
+      } else if (TheLine.Type != LT_Invalid &&
+                 (TheLine.Affected || FixIndentation)) {
         if (FirstTok->WhitespaceRange.isValid()) {
           if (!DryRun)
             formatFirstToken(*TheLine.First, PreviousLine, TheLine.Level,
@@ -620,6 +623,7 @@ public:
           while (State.NextToken != NULL)
             Indenter->addTokenToState(State, /*Newline=*/false, DryRun);
         } else if (Style.ColumnLimit == 0) {
+          // FIXME: Implement nested blocks for ColumnLimit = 0.
           NoColumnLimitFormatter Formatter(Indenter);
           if (!DryRun)
             Formatter.format(Indent, &TheLine);
@@ -628,6 +632,8 @@ public:
         }
 
         IndentForLevel[TheLine.Level] = LevelIndent;
+      } else if (TheLine.ChildrenAffected) {
+        format(TheLine.Children, DryRun);
       } else {
         // Format the first token if necessary, and notify the WhitespaceManager
         // about the unchanged whitespace.
@@ -636,7 +642,7 @@ public:
               (Tok->NewlinesBefore > 0 || Tok->IsFirst)) {
             unsigned LevelIndent = Tok->OriginalColumn;
             if (!DryRun) {
-              // Remove trailing whitespace of the previous line if.
+              // Remove trailing whitespace of the previous line.
               if ((PreviousLine && PreviousLine->Affected) ||
                   TheLine.LeadingEmptyLinesAffected) {
                 formatFirstToken(*Tok, PreviousLine, TheLine.Level, LevelIndent,
@@ -924,7 +930,8 @@ private:
     if (NewLine) {
       int AdditionalIndent = State.Stack.back().Indent -
                              Previous.Children[0]->Level * Style.IndentWidth;
-      Penalty += format(Previous.Children, DryRun, AdditionalIndent);
+      Penalty += format(Previous.Children, DryRun, AdditionalIndent,
+                        /*FixBadIndentation=*/true);
       return true;
     }
 
@@ -1263,7 +1270,8 @@ public:
 
 private:
   // Determines which lines are affected by the SourceRanges given as input.
-  // Returns \c true if at least one line between I and E was affected.
+  // Returns \c true if at least one line between I and E or one of their
+  // children is affected.
   bool computeAffectedLines(SmallVectorImpl<AnnotatedLine *>::iterator I,
                             SmallVectorImpl<AnnotatedLine *>::iterator E) {
     bool SomeLineAffected = false;
@@ -1291,26 +1299,55 @@ private:
         continue;
       }
 
-      bool SomeTokenAffected = false;
-      for (FormatToken *Tok = Line->First; Tok; Tok = Tok->Next) {
-        bool IncludeLeadingNewlines = Tok != Line->First;
-        if (affectsTokenRange(*Tok, *Tok, IncludeLeadingNewlines)) {
-          SomeTokenAffected = true;
-          break;
-        }
-      }
-      bool SomeChildAffected =
-          computeAffectedLines(Line->Children.begin(), Line->Children.end());
-      bool LineMoved = PreviousLineAffected && Line->First->NewlinesBefore == 0;
-      if (SomeTokenAffected || SomeChildAffected || LineMoved) {
-        Line->Affected = true;
+      if (nonPPLineAffected(Line, &PreviousLineAffected))
         SomeLineAffected = true;
-        PreviousLineAffected = true;
-      } else {
-        PreviousLineAffected = false;
-      }
 
       ++I;
+    }
+    return SomeLineAffected;
+  }
+
+  // Determines whether 'Line' is affected by the SourceRanges given as input.
+  // Returns \c true if line or one if its children is affected.
+  bool nonPPLineAffected(AnnotatedLine *Line, bool *PreviousLineAffected) {
+    bool SomeLineAffected = false;
+    Line->ChildrenAffected =
+        computeAffectedLines(Line->Children.begin(), Line->Children.end());
+    if (Line->ChildrenAffected)
+      SomeLineAffected = true;
+
+    // Stores whether one of the line's tokens is directly affected.
+    bool SomeTokenAffected = false;
+    // Stores whether we need to look at the leading newlines of the next token
+    // in order to determine whether it was affected.
+    bool IncludeLeadingNewlines = false;
+
+    // Stores whether the first child line of any of this line's tokens is
+    // affected.
+    bool SomeFirstChildAffected = false;
+
+    for (FormatToken *Tok = Line->First; Tok; Tok = Tok->Next) {
+      // Determine whether 'Tok' was affected.
+      if (affectsTokenRange(*Tok, *Tok, IncludeLeadingNewlines))
+        SomeTokenAffected = true;
+
+      // Determine whether the first child of 'Tok' was affected.
+      if (!Tok->Children.empty() && Tok->Children.front()->Affected)
+        SomeFirstChildAffected = true;
+
+      IncludeLeadingNewlines = Tok->Children.empty();
+    }
+
+    // Was this line moved, i.e. has it previously been on the same line as an
+    // affected line?
+    bool LineMoved = *PreviousLineAffected && Line->First->NewlinesBefore == 0;
+
+    if (SomeTokenAffected || SomeFirstChildAffected || LineMoved) {
+      Line->Affected = true;
+      *PreviousLineAffected = true;
+      SomeLineAffected = true;
+    } else {
+      *PreviousLineAffected = false;
     }
     return SomeLineAffected;
   }
