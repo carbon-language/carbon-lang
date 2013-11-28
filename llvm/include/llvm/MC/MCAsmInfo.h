@@ -115,9 +115,9 @@ namespace llvm {
     /// LabelSuffix - This is appended to emitted labels.
     const char *DebugLabelSuffix;                 // Defaults to ":"
 
-    /// GlobalPrefix - If this is set to a non-empty string, it is prepended
-    /// onto all global symbols.  This is often used for "_" or ".".
-    const char *GlobalPrefix;                // Defaults to ""
+    /// If this is set to anything other than '\0', it is prepended
+    /// onto all global symbols.  This is often used for '_'.
+    char GlobalPrefix;                // Defaults to '\0'
 
     /// PrivateGlobalPrefix - This prefix is used for globals like constant
     /// pool entries that are completely private to the .s file and should not
@@ -428,7 +428,7 @@ namespace llvm {
       return DebugLabelSuffix;
     }
 
-    const char *getGlobalPrefix() const {
+    char getGlobalPrefix() const {
       return GlobalPrefix;
     }
     const char *getPrivateGlobalPrefix() const {

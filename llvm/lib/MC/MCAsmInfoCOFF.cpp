@@ -18,7 +18,7 @@ using namespace llvm;
 void MCAsmInfoCOFF::anchor() { }
 
 MCAsmInfoCOFF::MCAsmInfoCOFF() {
-  GlobalPrefix = "_";
+  GlobalPrefix = '_';
   // MingW 4.5 and later support .comm with log2 alignment, but .lcomm uses byte
   // alignment.
   COMMDirectiveAlignmentIsInBytes = false;

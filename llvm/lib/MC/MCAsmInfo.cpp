@@ -41,7 +41,7 @@ MCAsmInfo::MCAsmInfo() {
   CommentString = "#";
   LabelSuffix = ":";
   DebugLabelSuffix = ":";
-  GlobalPrefix = "";
+  GlobalPrefix = '\0';
   PrivateGlobalPrefix = ".";
   LinkerPrivateGlobalPrefix = "";
   InlineAsmStart = "APP";

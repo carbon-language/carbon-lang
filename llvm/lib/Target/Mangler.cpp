@@ -47,14 +47,9 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
     }
 
 
-    const char *Prefix = MAI->getGlobalPrefix();
-    if (Prefix[0] == 0)
-      ; // Common noop, no prefix.
-    else if (Prefix[1] == 0)
-      OutName.push_back(Prefix[0]);  // Common, one character prefix.
-    else
-      // Arbitrary length prefix.
-      OutName.append(Prefix, Prefix+strlen(Prefix));
+    char Prefix = MAI->getGlobalPrefix();
+    if (Prefix != '\0')
+      OutName.push_back(Prefix);
   }
 
   // If this is a simple string that doesn't need escaping, just append it.

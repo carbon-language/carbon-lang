@@ -128,7 +128,7 @@ void X86MCAsmInfoMicrosoft::anchor() { }
 
 X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const Triple &Triple) {
   if (Triple.getArch() == Triple::x86_64) {
-    GlobalPrefix = "";
+    GlobalPrefix = '\0';
     PrivateGlobalPrefix = ".L";
   }
 
@@ -143,7 +143,7 @@ void X86MCAsmInfoGNUCOFF::anchor() { }
 
 X86MCAsmInfoGNUCOFF::X86MCAsmInfoGNUCOFF(const Triple &Triple) {
   if (Triple.getArch() == Triple::x86_64) {
-    GlobalPrefix = "";
+    GlobalPrefix = '\0';
     PrivateGlobalPrefix = ".L";
   }
 
