@@ -287,6 +287,8 @@ namespace __sanitizer {
   };
 #endif
 
+  typedef long __sanitizer_clock_t;
+
 #if SANITIZER_LINUX
 #if defined(_LP64) || defined(__x86_64__)
   typedef unsigned __sanitizer___kernel_uid_t;

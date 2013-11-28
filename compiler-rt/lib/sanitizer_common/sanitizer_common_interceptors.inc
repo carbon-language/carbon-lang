@@ -2878,6 +2878,20 @@ INTERCEPTOR(SIZE_T, iconv, void *cd, char **inbuf, SIZE_T *inbytesleft,
 #define INIT_ICONV
 #endif
 
+#if SANITIZER_INTERCEPT_TIMES
+INTERCEPTOR(__sanitizer_clock_t, times, void *tms) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, times, tms);
+  __sanitizer_clock_t res = REAL(times)(tms);
+  if (res != (__sanitizer_clock_t)-1 && tms)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, tms, struct_tms_sz);
+  return res;
+}
+#define INIT_TIMES COMMON_INTERCEPT_FUNCTION(times);
+#else
+#define INIT_TIMES
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -2989,4 +3003,5 @@ INTERCEPTOR(SIZE_T, iconv, void *cd, char **inbuf, SIZE_T *inbytesleft,
   INIT_DRAND48_R;                          \
   INIT_GETLINE;                            \
   INIT_ICONV;                              \
+  INIT_TIMES;                              \
 /**/
