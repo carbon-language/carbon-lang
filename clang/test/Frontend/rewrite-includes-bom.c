@@ -1,5 +1,7 @@
 // RUN: grep $'^\xEF\xBB\xBF' %S/Inputs/rewrite-includes-bom.h
-// RUN: %clang_cc1 -E -frewrite-includes -I %S/Inputs %s -o - | %clang_cc1 -fsyntax-only -verify -x c - | not grep $'\xEF\xBB\xBF'
+// RUN: %clang_cc1 -E -frewrite-includes -I %S/Inputs %s -o %t.c
+// RUN: not grep $'\xEF\xBB\xBF' %t.c
+// RUN: %clang_cc1 -fsyntax-only -verify %t.c
 // expected-no-diagnostics
 // REQUIRES: shell
 
