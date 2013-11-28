@@ -363,14 +363,10 @@ bool InclusionRewriter::Process(FileID FileId,
   if (SM.getFileIDSize(FileId) == 0)
     return false;
 
-  // The next byte to be copied from the source file
-  unsigned NextToWrite = 0;
+  // The next byte to be copied from the source file, which may be non-zero if
+  // the lexer handled a BOM.
+  unsigned NextToWrite = SM.getFileOffset(RawLex.getSourceLocation());
   int Line = 1; // The current input file line number.
-
-  // Ignore UTF-8 BOM, otherwise it'd end up somewhere else than the start
-  // of the resulting file.
-  if (FromFile.getBuffer().startswith("\xEF\xBB\xBF"))
-    NextToWrite = 3;
 
   Token RawToken;
   RawLex.LexFromRawLexer(RawToken);
