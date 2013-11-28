@@ -2033,14 +2033,10 @@ MCSymbol *AsmPrinter::GetJTSetSymbol(unsigned UID, unsigned MBBID) const {
    Twine(UID) + "_set_" + Twine(MBBID));
 }
 
-/// GetSymbolWithGlobalValueBase - Return the MCSymbol for a symbol with
-/// global value name as its base, with the specified suffix, and where the
-/// symbol is forced to have private linkage if ForcePrivate is true.
 MCSymbol *AsmPrinter::GetSymbolWithGlobalValueBase(const GlobalValue *GV,
-                                                   StringRef Suffix,
-                                                   bool ForcePrivate) const {
+                                                   StringRef Suffix) const {
   SmallString<60> NameStr;
-  Mang->getNameWithPrefix(NameStr, GV, ForcePrivate);
+  Mang->getNameWithPrefix(NameStr, GV, true);
   NameStr.append(Suffix.begin(), Suffix.end());
   return OutContext.GetOrCreateSymbol(NameStr.str());
 }
