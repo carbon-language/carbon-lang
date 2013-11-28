@@ -85,8 +85,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
 
     getMang()->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
   } else if (MO.isSymbol()) {
-    Name += MAI.getGlobalPrefix();
-    Name += MO.getSymbolName();
+    getMang()->getNameWithPrefix(Name, MO.getSymbolName());
   } else if (MO.isMBB()) {
     Name += MO.getMBB()->getSymbol()->getName();
   }

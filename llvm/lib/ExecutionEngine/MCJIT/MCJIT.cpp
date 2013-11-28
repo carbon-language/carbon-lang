@@ -25,6 +25,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MutexGuard.h"
+#include "llvm/Target/Mangler.h"
 
 using namespace llvm;
 
@@ -231,11 +232,10 @@ void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {
 }
 
 uint64_t MCJIT::getExistingSymbolAddress(const std::string &Name) {
-  // Check with the RuntimeDyld to see if we already have this symbol.
-  if (Name[0] == '\1')
-    return Dyld.getSymbolLoadAddress(Name.substr(1));
-  return Dyld.getSymbolLoadAddress((TM->getMCAsmInfo()->getGlobalPrefix()
-                                       + Name));
+  Mangler Mang(TM);
+  SmallString<128> FullName;
+  Mang.getNameWithPrefix(FullName, Name);
+  return Dyld.getSymbolLoadAddress(FullName);
 }
 
 Module *MCJIT::findModuleForSymbol(const std::string &Name,
@@ -320,15 +320,13 @@ void *MCJIT::getPointerToFunction(Function *F) {
     return NULL;
 
   // FIXME: Should the Dyld be retaining module information? Probably not.
-  // FIXME: Should we be using the mangler for this? Probably.
   //
   // This is the accessor for the target address, so make sure to check the
   // load address of the symbol, not the local address.
-  StringRef BaseName = F->getName();
-  if (BaseName[0] == '\1')
-    return (void*)Dyld.getSymbolLoadAddress(BaseName.substr(1));
-  return (void*)Dyld.getSymbolLoadAddress((TM->getMCAsmInfo()->getGlobalPrefix()
-                                       + BaseName).str());
+  Mangler Mang(TM);
+  SmallString<128> Name;
+  Mang.getNameWithPrefix(Name, F, false);
+  return (void*)Dyld.getSymbolLoadAddress(Name);
 }
 
 void *MCJIT::recompileAndRelinkFunction(Function *F) {

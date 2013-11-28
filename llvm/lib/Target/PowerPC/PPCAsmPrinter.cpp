@@ -176,9 +176,9 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       return;
     }
 
-    MCSymbol *NLPSym = 
-      OutContext.GetOrCreateSymbol(StringRef(MAI->getGlobalPrefix())+
-                                   MO.getSymbolName()+"$non_lazy_ptr");
+    SmallString<128> Name;
+    Mang->getNameWithPrefix(Name, Twine(MO.getSymbolName()) + "$non_lazy_ptr");
+    MCSymbol *NLPSym = OutContext.GetOrCreateSymbol(Name);
     MachineModuleInfoImpl::StubValueTy &StubSym = 
       MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(NLPSym);
     if (StubSym.getPointer() == 0)
