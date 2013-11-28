@@ -50,8 +50,6 @@ add_llvm_target(R600CodeGen
   SITypeRewriter.cpp
   )
 
-add_dependencies(LLVMR600CodeGen intrinsics_gen)
-
 add_subdirectory(InstPrinter)
 add_subdirectory(TargetInfo)
 add_subdirectory(MCTargetDesc)

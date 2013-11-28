@@ -26,8 +26,6 @@ add_llvm_target(XCoreCodeGen
   XCoreSelectionDAGInfo.cpp
   )
 
-add_dependencies(LLVMXCoreCodeGen intrinsics_gen)
-
 add_subdirectory(Disassembler)
 add_subdirectory(InstPrinter)
 add_subdirectory(TargetInfo)
