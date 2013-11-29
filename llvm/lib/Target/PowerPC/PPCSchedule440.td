@@ -555,3 +555,17 @@ def PPC440Itineraries : ProcessorItineraries<
                                 [6, 0],
                                 [P440_FPR_Bypass, P440_FPR_Bypass]>
 ]>;
+
+// ===---------------------------------------------------------------------===//
+// PPC440 machine model for scheduling and other instruction cost heuristics.
+
+def PPC440Model : SchedMachineModel {
+  let IssueWidth = 2;  // 2 instructions are dispatched per cycle.
+  let MinLatency = -1; // OperandCycles are interpreted as MinLatency.
+  let LoadLatency = 5; // Optimistic load latency assuming bypass.
+                       // This is overriden by OperandCycles if the
+                       // Itineraries are queried instead.
+
+  let Itineraries = PPC440Itineraries;
+}
+

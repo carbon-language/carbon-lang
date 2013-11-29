@@ -153,12 +153,12 @@ include "PPCInstrInfo.td"
 //
 
 def : Processor<"generic", G3Itineraries, [Directive32]>;
-def : Processor<"440", PPC440Itineraries, [Directive440, FeatureISEL,
-                                           FeatureFRES, FeatureFRSQRTE,
-                                           FeatureBookE, DeprecatedMFTB]>;
-def : Processor<"450", PPC440Itineraries, [Directive440, FeatureISEL,
-                                           FeatureFRES, FeatureFRSQRTE,
-                                           FeatureBookE, DeprecatedMFTB]>;
+def : ProcessorModel<"440", PPC440Model, [Directive440, FeatureISEL,
+                                          FeatureFRES, FeatureFRSQRTE,
+                                          FeatureBookE, DeprecatedMFTB]>;
+def : ProcessorModel<"450", PPC440Model, [Directive440, FeatureISEL,
+                                          FeatureFRES, FeatureFRSQRTE,
+                                          FeatureBookE, DeprecatedMFTB]>;
 def : Processor<"601", G3Itineraries, [Directive601]>;
 def : Processor<"602", G3Itineraries, [Directive602]>;
 def : Processor<"603", G3Itineraries, [Directive603,
