@@ -1087,7 +1087,8 @@ void UnwrappedLineParser::parseSwitch() {
 void UnwrappedLineParser::parseAccessSpecifier() {
   nextToken();
   // Understand Qt's slots.
-  if (FormatTok->is(tok::identifier) && FormatTok->TokenText == "slots")
+  if (FormatTok->is(tok::identifier) &&
+      (FormatTok->TokenText == "slots" || FormatTok->TokenText == "Q_SLOTS"))
     nextToken();
   // Otherwise, we don't know what it is, and we'd better keep the next token.
   if (FormatTok->Tok.is(tok::colon))

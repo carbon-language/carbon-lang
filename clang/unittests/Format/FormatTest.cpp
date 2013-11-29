@@ -1540,6 +1540,8 @@ TEST_F(FormatTest, UnderstandsAccessSpecifiers) {
   verifyFormat("class A {\n"
                "public slots:\n"
                "  void f() {}\n"
+               "public Q_SLOTS:\n"
+               "  void f() {}\n"
                "};");
 }
 
