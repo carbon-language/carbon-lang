@@ -6939,8 +6939,6 @@ TEST_F(FormatTest, GetsPredefinedStyleByName) {
   EXPECT_FALSE(getPredefinedStyle("qwerty", &Styles[0]));
 }
 
-TEST_F(FormatTest, ParsesConfiguration) {
-  FormatStyle Style = {};
 #define CHECK_PARSE(TEXT, FIELD, VALUE)                                        \
   EXPECT_NE(VALUE, Style.FIELD);                                               \
   EXPECT_EQ(0, parseConfiguration(TEXT, &Style).value());                      \
@@ -6953,6 +6951,9 @@ TEST_F(FormatTest, ParsesConfiguration) {
   EXPECT_EQ(0, parseConfiguration(#FIELD ": false", &Style).value());          \
   EXPECT_FALSE(Style.FIELD);
 
+TEST_F(FormatTest, ParsesConfiguration) {
+  FormatStyle Style = {};
+  Style.Language = FormatStyle::LK_Cpp;
   CHECK_PARSE_BOOL(AlignEscapedNewlinesLeft);
   CHECK_PARSE_BOOL(AlignTrailingComments);
   CHECK_PARSE_BOOL(AllowAllParametersOfDeclarationOnNextLine);
@@ -7027,15 +7028,117 @@ TEST_F(FormatTest, ParsesConfiguration) {
               FormatStyle::NI_Inner);
   CHECK_PARSE("NamespaceIndentation: All", NamespaceIndentation,
               FormatStyle::NI_All);
+}
+
+TEST_F(FormatTest, ParsesConfigurationWithLanguages) {
+  FormatStyle Style = {};
+  Style.Language = FormatStyle::LK_Cpp;
+  CHECK_PARSE("Language: Cpp\n"
+              "IndentWidth: 12",
+              IndentWidth, 12u);
+  EXPECT_EQ(llvm::errc::not_supported,
+            parseConfiguration("Language: JavaScript\n"
+                               "IndentWidth: 34",
+                               &Style));
+  EXPECT_EQ(12u, Style.IndentWidth);
+  CHECK_PARSE("IndentWidth: 56", IndentWidth, 56u);
+  EXPECT_EQ(FormatStyle::LK_Cpp, Style.Language);
+
+  Style.Language = FormatStyle::LK_JavaScript;
+  CHECK_PARSE("Language: JavaScript\n"
+              "IndentWidth: 12",
+              IndentWidth, 12u);
+  CHECK_PARSE("IndentWidth: 23", IndentWidth, 23u);
+  EXPECT_EQ(llvm::errc::not_supported, parseConfiguration("Language: Cpp\n"
+                                                          "IndentWidth: 34",
+                                                          &Style));
+  EXPECT_EQ(23u, Style.IndentWidth);
+  CHECK_PARSE("IndentWidth: 56", IndentWidth, 56u);
+  EXPECT_EQ(FormatStyle::LK_JavaScript, Style.Language);
+
+  CHECK_PARSE("BasedOnStyle: LLVM\n"
+              "IndentWidth: 67",
+              IndentWidth, 67u);
+
+  CHECK_PARSE("---\n"
+              "Language: JavaScript\n"
+              "IndentWidth: 12\n"
+              "---\n"
+              "Language: Cpp\n"
+              "IndentWidth: 34\n"
+              "...\n",
+              IndentWidth, 12u);
+
+  Style.Language = FormatStyle::LK_Cpp;
+  CHECK_PARSE("---\n"
+              "Language: JavaScript\n"
+              "IndentWidth: 12\n"
+              "---\n"
+              "Language: Cpp\n"
+              "IndentWidth: 34\n"
+              "...\n",
+              IndentWidth, 34u);
+  CHECK_PARSE("---\n"
+              "IndentWidth: 78\n"
+              "---\n"
+              "Language: JavaScript\n"
+              "IndentWidth: 56\n"
+              "...\n",
+              IndentWidth, 78u);
+
+  Style.ColumnLimit = 123;
+  Style.IndentWidth = 234;
+  Style.BreakBeforeBraces = FormatStyle::BS_Linux;
+  Style.TabWidth = 345;
+  EXPECT_EQ(llvm::errc::success,
+            parseConfiguration("---\n"
+                               "IndentWidth: 456\n"
+                               "BreakBeforeBraces: Allman\n"
+                               "---\n"
+                               "Language: JavaScript\n"
+                               "IndentWidth: 111\n"
+                               "TabWidth: 111\n"
+                               "---\n"
+                               "Language: Cpp\n"
+                               "BreakBeforeBraces: Stroustrup\n"
+                               "TabWidth: 789\n"
+                               "...\n",
+                               &Style));
+  EXPECT_EQ(123u, Style.ColumnLimit);
+  EXPECT_EQ(456u, Style.IndentWidth);
+  EXPECT_EQ(FormatStyle::BS_Stroustrup, Style.BreakBeforeBraces);
+  EXPECT_EQ(789u, Style.TabWidth);
+
+
+  EXPECT_EQ(llvm::errc::invalid_argument,
+            parseConfiguration("---\n"
+                               "Language: JavaScript\n"
+                               "IndentWidth: 56\n"
+                               "---\n"
+                               "IndentWidth: 78\n"
+                               "...\n",
+                               &Style));
+  EXPECT_EQ(llvm::errc::invalid_argument,
+            parseConfiguration("---\n"
+                               "Language: JavaScript\n"
+                               "IndentWidth: 56\n"
+                               "---\n"
+                               "Language: JavaScript\n"
+                               "IndentWidth: 78\n"
+                               "...\n",
+                               &Style));
+
+  EXPECT_EQ(FormatStyle::LK_Cpp, Style.Language);
+}
 
 #undef CHECK_PARSE
 #undef CHECK_PARSE_BOOL
-}
 
 TEST_F(FormatTest, ConfigurationRoundTripTest) {
   FormatStyle Style = getLLVMStyle();
   std::string YAML = configurationAsText(Style);
   FormatStyle ParsedStyle = {};
+  ParsedStyle.Language = FormatStyle::LK_Cpp;
   EXPECT_EQ(0, parseConfiguration(YAML, &ParsedStyle).value());
   EXPECT_EQ(Style, ParsedStyle);
 }
@@ -7457,18 +7560,36 @@ TEST_F(FormatTest, SpacesInAngles) {
 }
 
 TEST_F(FormatTest, UnderstandsJavaScript) {
-  verifyFormat("a == = b;");
-  verifyFormat("a != = b;");
+  FormatStyle JS = getLLVMStyle();
+  FormatStyle JS10Columns = getLLVMStyleWithColumns(10);
+  FormatStyle JS20Columns = getLLVMStyleWithColumns(20);
+  JS.Language = JS10Columns.Language = JS20Columns.Language =
+      FormatStyle::LK_JavaScript;
 
-  verifyFormat("a === b;");
-  verifyFormat("aaaaaaa ===\n    b;", getLLVMStyleWithColumns(10));
-  verifyFormat("a !== b;");
-  verifyFormat("aaaaaaa !==\n    b;", getLLVMStyleWithColumns(10));
+  verifyFormat("a == = b;", JS);
+  verifyFormat("a != = b;", JS);
+
+  verifyFormat("a === b;", JS);
+  verifyFormat("aaaaaaa ===\n    b;", JS10Columns);
+  verifyFormat("a !== b;", JS);
+  verifyFormat("aaaaaaa !==\n    b;", JS10Columns);
   verifyFormat("if (a + b + c +\n"
                "        d !==\n"
                "    e + f + g)\n"
                "  q();",
-               getLLVMStyleWithColumns(20));
+               JS20Columns);
+
+  verifyFormat("a >> >= b;", JS);
+
+  verifyFormat("a >>> b;", JS);
+  verifyFormat("aaaaaaa >>>\n    b;", JS10Columns);
+  verifyFormat("a >>>= b;", JS);
+  verifyFormat("aaaaaaa >>>=\n    b;", JS10Columns);
+  verifyFormat("if (a + b + c +\n"
+               "        d >>>\n"
+               "    e + f + g)\n"
+               "  q();",
+               JS20Columns);
 }
 
 } // end namespace tooling
