@@ -1545,12 +1545,6 @@ static void handleTLSModelAttr(Sema &S, Decl *D,
   if (!S.checkStringLiteralArgumentAttr(Attr, 0, Model, &LiteralLoc))
     return;
 
-  if (!cast<VarDecl>(D)->getTLSKind()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedTLSVar;
-    return;
-  }
-
   // Check that the value.
   if (Model != "global-dynamic" && Model != "local-dynamic"
       && Model != "initial-exec" && Model != "local-exec") {

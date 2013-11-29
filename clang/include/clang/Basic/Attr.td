@@ -43,6 +43,9 @@ def ObjCInstanceMethod : SubsetSubject<ObjCMethod,
 def Struct : SubsetSubject<Record,
                            [{!S->isUnion()}]>;
 
+def TLSVar : SubsetSubject<Var,
+                           [{S->getTLSKind() != 0}]>;
+
 // A single argument to an attribute
 class Argument<string name, bit optional> {
   string Name = name;
@@ -220,7 +223,7 @@ def AlwaysInline : InheritableAttr {
 
 def TLSModel : InheritableAttr {
   let Spellings = [GNU<"tls_model">, CXX11<"gnu", "tls_model">];
-  let Subjects = SubjectList<[Var], ErrorDiag, "ExpectedTLSVar">;
+  let Subjects = SubjectList<[TLSVar], ErrorDiag, "ExpectedTLSVar">;
   let Args = [StringArgument<"Model">];
 }
 
