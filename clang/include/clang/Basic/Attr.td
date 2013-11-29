@@ -40,6 +40,9 @@ def NonBitField : SubsetSubject<Field,
 def ObjCInstanceMethod : SubsetSubject<ObjCMethod,
                                        [{S->isInstanceMethod()}]>;
 
+def Struct : SubsetSubject<Record,
+                           [{!S->isUnion()}]>;
+
 // A single argument to an attribute
 class Argument<string name, bit optional> {
   string Name = name;
@@ -574,7 +577,7 @@ def NoThrow : InheritableAttr {
 
 def NSBridged : InheritableAttr {
   let Spellings = [GNU<"ns_bridged">];
-//  let Subjects = SubjectList<[Record], ErrorDiag>;
+  let Subjects = SubjectList<[Struct], ErrorDiag, "ExpectedStruct">;
   let Args = [IdentifierArgument<"BridgedType", 1>];
 }
 

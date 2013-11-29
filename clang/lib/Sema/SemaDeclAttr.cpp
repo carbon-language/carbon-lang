@@ -3823,12 +3823,6 @@ static void handleCFTransferAttr(Sema &S, Decl *D, const AttributeList &A) {
 
 static void handleNSBridgedAttr(Sema &S, Scope *Sc, Decl *D,
                                 const AttributeList &Attr) {
-  RecordDecl *RD = dyn_cast<RecordDecl>(D);
-  if (!RD || RD->isUnion()) {
-    S.Diag(D->getLocStart(), diag::err_attribute_wrong_decl_type)
-      << Attr.getRange() << Attr.getName() << ExpectedStruct;
-  }
-
   IdentifierLoc *Parm = Attr.isArgIdent(0) ? Attr.getArgAsIdent(0) : 0;
 
   // In Objective-C, verify that the type names an Objective-C type.
