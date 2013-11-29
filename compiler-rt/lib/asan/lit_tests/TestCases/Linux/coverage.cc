@@ -5,6 +5,7 @@
 // RUN: %t foo 2>&1     | FileCheck %s --check-prefix=CHECK-foo
 // RUN: %t bar 2>&1     | FileCheck %s --check-prefix=CHECK-bar
 // RUN: %t foo bar 2>&1 | FileCheck %s --check-prefix=CHECK-foo-bar
+// RUN: not %t foo bar 1 2  2>&1 | FileCheck %s --check-prefix=CHECK-report
 
 #include <stdio.h>
 #include <string.h>
@@ -17,6 +18,8 @@ __attribute__((noinline))
 void foo() { printf("foo\n"); }
 extern void bar();
 
+int G[4];
+
 int main(int argc, char **argv) {
   fprintf(stderr, "PID: %d\n", getpid());
   for (int i = 1; i < argc; i++) {
@@ -25,6 +28,7 @@ int main(int argc, char **argv) {
     if (!strcmp(argv[i], "bar"))
       bar();
   }
+  return G[argc];  // Buffer overflow if argc >= 4.
 }
 #endif
 
@@ -43,3 +47,6 @@ int main(int argc, char **argv) {
 // CHECK-foo-bar: PID: [[PID:[0-9]+]]
 // CHECK-foo-bar: [[PID]].sancov: 2 PCs written
 // CHECK-foo-bar: so.[[PID]].sancov: 1 PCs written
+//
+// CHECK-report: AddressSanitizer: global-buffer-overflow
+// CHECK-report: PCs written
