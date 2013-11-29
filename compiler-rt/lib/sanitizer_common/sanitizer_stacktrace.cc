@@ -41,8 +41,8 @@ static void PrintStackFramePrefix(InternalScopedString *buffer, uptr frame_num,
 
 void StackTrace::PrintStack(const uptr *addr, uptr size,
                             SymbolizeCallback symbolize_callback) {
-  if (addr == 0) {
-    Printf("<empty stack>\n\n");
+  if (addr == 0 || size == 0) {
+    Printf("    <empty stack>\n\n");
     return;
   }
   MemoryMappingLayout proc_maps(/*cache_enabled*/true);
