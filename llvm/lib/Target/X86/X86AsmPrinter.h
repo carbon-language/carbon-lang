@@ -27,19 +27,9 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
   const X86Subtarget *Subtarget;
   StackMaps SM;
 
-  // Parses operands of PATCHPOINT and STACKMAP to produce stack map Location
-  // structures. Returns a result location and an iterator to the operand
-  // immediately following the operands consumed.
-  //
-  // This method is implemented in X86MCInstLower.cpp.
-  static std::pair<StackMaps::Location, MachineInstr::const_mop_iterator>
-    stackmapOperandParser(MachineInstr::const_mop_iterator MOI,
-                          MachineInstr::const_mop_iterator MOE,
-                          const TargetMachine &TM);
-
  public:
   explicit X86AsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
-    : AsmPrinter(TM, Streamer), SM(*this, stackmapOperandParser) {
+    : AsmPrinter(TM, Streamer), SM(*this) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
   }
 

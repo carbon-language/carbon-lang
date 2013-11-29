@@ -92,19 +92,12 @@ public:
       : LocType(LocType), Size(Size), Reg(Reg), Offset(Offset) {}
   };
 
-  // Typedef a function pointer for functions that parse sequences of operands
-  // and return a Location, plus a new "next" operand iterator.
-  typedef std::pair<Location, MachineInstr::const_mop_iterator>
-    (*OperandParser)(MachineInstr::const_mop_iterator,
-                     MachineInstr::const_mop_iterator, const TargetMachine&);
-
   // OpTypes are used to encode information about the following logical
   // operand (which may consist of several MachineOperands) for the
   // OpParser.
   typedef enum { DirectMemRefOp, IndirectMemRefOp, ConstantOp } OpType;
 
-  StackMaps(AsmPrinter &AP, OperandParser OpParser)
-    : AP(AP), OpParser(OpParser) {}
+  StackMaps(AsmPrinter &AP) : AP(AP) {}
 
   /// \brief Generate a stackmap record for a stackmap instruction.
   ///
@@ -155,9 +148,14 @@ private:
   };
 
   AsmPrinter &AP;
-  OperandParser OpParser;
   CallsiteInfoList CSInfos;
   ConstantPool ConstPool;
+
+  /// Parse 
+  std::pair<Location, MachineInstr::const_mop_iterator>
+  parseOperand(MachineInstr::const_mop_iterator MOI,
+               MachineInstr::const_mop_iterator MOE);
+               
 
   /// This should be called by the MC lowering code _immediately_ before
   /// lowering the MI to an MCInst. It records where the operands for the

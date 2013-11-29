@@ -18,7 +18,9 @@
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/StackMaps.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -892,6 +894,60 @@ bool TargetLoweringBase::isLegalRC(const TargetRegisterClass *RC) const {
       return true;
   }
   return false;
+}
+
+/// Replace/modify any TargetFrameIndex operands with a targte-dependent
+/// sequence of memory operands that is recognized by PrologEpilogInserter.
+MachineBasicBlock*
+TargetLoweringBase::emitPatchPoint(MachineInstr *MI,
+                                   MachineBasicBlock *MBB) const {
+  const TargetMachine &TM = getTargetMachine();
+  const TargetInstrInfo *TII = TM.getInstrInfo();
+  MachineFunction &MF = *MI->getParent()->getParent();
+
+  // MI changes inside this loop as we grow operands.
+  for(unsigned OperIdx = 0; OperIdx != MI->getNumOperands(); ++OperIdx) {
+    MachineOperand &MO = MI->getOperand(OperIdx);
+    if (!MO.isFI())
+      continue;
+
+    // foldMemoryOperand builds a new MI after replacing a single FI operand
+    // with the canonical set of five x86 addressing-mode operands.
+    int FI = MO.getIndex();
+    MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(), MI->getDesc());
+
+    // Copy operands before the frame-index.
+    for (unsigned i = 0; i < OperIdx; ++i)
+      MIB.addOperand(MI->getOperand(i));
+    // Add frame index operands: direct-mem-ref tag, #FI, offset.
+    MIB.addImm(StackMaps::DirectMemRefOp);
+    MIB.addOperand(MI->getOperand(OperIdx));
+    MIB.addImm(0);
+    // Copy the operands after the frame index.
+    for (unsigned i = OperIdx + 1; i != MI->getNumOperands(); ++i)
+      MIB.addOperand(MI->getOperand(i));
+
+    // Inherit previous memory operands.
+    MIB->setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
+    assert(MIB->mayLoad() && "Folded a stackmap use to a non-load!");
+
+    // Add a new memory operand for this FI.
+    const MachineFrameInfo &MFI = *MF.getFrameInfo();
+    assert(MFI.getObjectOffset(FI) != -1);
+    MachineMemOperand *MMO =
+      MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(FI),
+                              MachineMemOperand::MOLoad,
+                              TM.getDataLayout()->getPointerSize(),
+                              MFI.getObjectAlignment(FI));
+    MIB->addMemOperand(MF, MMO);
+
+    // Replace the instruction and update the operand index.
+    MBB->insert(MachineBasicBlock::iterator(MI), MIB);
+    OperIdx += (MIB->getNumOperands() - MI->getNumOperands()) - 1;
+    MI->eraseFromParent();
+    MI = MIB;
+  }
+  return MBB;
 }
 
 /// findRepresentativeClass - Return the largest legal super-reg register class

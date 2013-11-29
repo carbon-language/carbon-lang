@@ -4198,84 +4198,10 @@ breakPartialRegDependency(MachineBasicBlock::iterator MI, unsigned OpNum,
   MI->addRegisterKilled(Reg, TRI, true);
 }
 
-static MachineInstr* foldPatchpoint(MachineFunction &MF,
-                                    MachineInstr *MI,
-                                    const SmallVectorImpl<unsigned> &Ops,
-                                    int FrameIndex,
-                                    const TargetInstrInfo &TII) {
-  unsigned StartIdx = 0;
-  switch (MI->getOpcode()) {
-  case TargetOpcode::STACKMAP:
-    StartIdx = 2; // Skip ID, nShadowBytes.
-    break;
-  case TargetOpcode::PATCHPOINT: {
-    // For PatchPoint, the call args are not foldable.
-    PatchPointOpers opers(MI);
-    StartIdx = opers.getVarIdx();
-    break;
-  }
-  default:
-    llvm_unreachable("unexpected stackmap opcode");
-  }
-
-  // Return false if any operands requested for folding are not foldable (not
-  // part of the stackmap's live values).
-  for (SmallVectorImpl<unsigned>::const_iterator I = Ops.begin(), E = Ops.end();
-       I != E; ++I) {
-    if (*I < StartIdx)
-      return 0;
-  }
-
-  MachineInstr *NewMI =
-    MF.CreateMachineInstr(TII.get(MI->getOpcode()), MI->getDebugLoc(), true);
-  MachineInstrBuilder MIB(MF, NewMI);
-
-  // No need to fold return, the meta data, and function arguments
-  for (unsigned i = 0; i < StartIdx; ++i)
-    MIB.addOperand(MI->getOperand(i));
-
-  for (unsigned i = StartIdx; i < MI->getNumOperands(); ++i) {
-    MachineOperand &MO = MI->getOperand(i);
-    if (std::find(Ops.begin(), Ops.end(), i) != Ops.end()) {
-      unsigned SpillSize;
-      unsigned SpillOffset;
-      if (MO.isReg()) {
-        // Compute the spill slot size and offset.
-        const TargetRegisterClass *RC =
-          MF.getRegInfo().getRegClass(MO.getReg());
-        bool Valid = TII.getStackSlotRange(RC, MO.getSubReg(), SpillSize,
-                                           SpillOffset, &MF.getTarget());
-        if (!Valid)
-          report_fatal_error("cannot spill patchpoint subregister operand");
-        MIB.addOperand(MachineOperand::CreateImm(StackMaps::IndirectMemRefOp));
-        MIB.addOperand(MachineOperand::CreateImm(SpillSize));
-      }
-      else {
-        // ExpandISelPseudos is converting a simple frame index into a 5-operand
-        // frame index.
-        assert(MO.isFI() && MO.getIndex() == FrameIndex &&
-               "patchpoint can only fold a vreg operand or frame index");
-        SpillOffset = 0;
-        MIB.addOperand(MachineOperand::CreateImm(StackMaps::DirectMemRefOp));
-      }
-      MIB.addOperand(MachineOperand::CreateFI(FrameIndex));
-      addOffset(MIB, SpillOffset);
-    }
-    else
-      MIB.addOperand(MO);
-  }
-  return NewMI;
-}
-
 MachineInstr*
 X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
                                     const SmallVectorImpl<unsigned> &Ops,
                                     int FrameIndex) const {
-  // Special case stack map and patch point intrinsics.
-  if (MI->getOpcode() == TargetOpcode::STACKMAP
-      || MI->getOpcode() == TargetOpcode::PATCHPOINT) {
-    return foldPatchpoint(MF, MI, Ops, FrameIndex, *this);
-  }
   // Check switch flag
   if (NoFusing) return NULL;
 

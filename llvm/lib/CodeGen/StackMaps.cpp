@@ -13,6 +13,7 @@
 
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectFileInfo.h"
@@ -65,6 +66,60 @@ unsigned PatchPointOpers::getNextScratchIdx(unsigned StartIdx) const {
   return ScratchIdx;
 }
 
+std::pair<StackMaps::Location, MachineInstr::const_mop_iterator>
+StackMaps::parseOperand(MachineInstr::const_mop_iterator MOI,
+                        MachineInstr::const_mop_iterator MOE) {
+  const MachineOperand &MOP = *MOI;
+  assert(!MOP.isRegMask() && (!MOP.isReg() || !MOP.isImplicit()) &&
+         "Register mask and implicit operands should not be processed.");
+
+  if (MOP.isImm()) {
+    // Verify anyregcc
+    // [<def>], <id>, <numBytes>, <target>, <numArgs>, <cc>, ...
+
+    switch (MOP.getImm()) {
+      default: llvm_unreachable("Unrecognized operand type.");
+      case StackMaps::DirectMemRefOp: {
+        unsigned Size = AP.TM.getDataLayout()->getPointerSizeInBits();
+        assert((Size % 8) == 0 && "Need pointer size in bytes.");
+        Size /= 8;
+        unsigned Reg = (++MOI)->getReg();
+        int64_t Imm = (++MOI)->getImm();
+        return std::make_pair(
+          Location(StackMaps::Location::Direct, Size, Reg, Imm), ++MOI);
+      }
+      case StackMaps::IndirectMemRefOp: {
+        int64_t Size = (++MOI)->getImm();
+        assert(Size > 0 && "Need a valid size for indirect memory locations.");
+        unsigned Reg = (++MOI)->getReg();
+        int64_t Imm = (++MOI)->getImm();
+        return std::make_pair(
+          Location(StackMaps::Location::Indirect, Size, Reg, Imm), ++MOI);
+      }
+      case StackMaps::ConstantOp: {
+        ++MOI;
+        assert(MOI->isImm() && "Expected constant operand.");
+        int64_t Imm = MOI->getImm();
+        return std::make_pair(
+          Location(Location::Constant, sizeof(int64_t), 0, Imm), ++MOI);
+      }
+    }
+  }
+
+  // Otherwise this is a reg operand. The physical register number will
+  // ultimately be encoded as a DWARF regno. The stack map also records the size
+  // of a spill slot that can hold the register content. (The runtime can
+  // track the actual size of the data type if it needs to.)
+  assert(MOP.isReg() && "Expected register operand here.");
+  assert(TargetRegisterInfo::isPhysicalRegister(MOP.getReg()) &&
+         "Virtreg operands should have been rewritten before now.");
+  const TargetRegisterClass *RC =
+    AP.TM.getRegisterInfo()->getMinimalPhysRegClass(MOP.getReg());
+  assert(!MOP.getSubReg() && "Physical subreg still around.");
+  return std::make_pair(
+    Location(Location::Register, RC->getSize(), MOP.getReg(), 0), ++MOI);
+}
+
 void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint32_t ID,
                                     MachineInstr::const_mop_iterator MOI,
                                     MachineInstr::const_mop_iterator MOE,
@@ -78,7 +133,7 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint32_t ID,
 
   if (recordResult) {
     std::pair<Location, MachineInstr::const_mop_iterator> ParseResult =
-      OpParser(MI.operands_begin(), llvm::next(MI.operands_begin()), AP.TM);
+      parseOperand(MI.operands_begin(), llvm::next(MI.operands_begin()));
 
     Location &Loc = ParseResult.first;
     assert(Loc.LocType == Location::Register &&
@@ -87,10 +142,8 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint32_t ID,
   }
 
   while (MOI != MOE) {
-    std::pair<Location, MachineInstr::const_mop_iterator> ParseResult =
-      OpParser(MOI, MOE, AP.TM);
-
-    Location &Loc = ParseResult.first;
+    Location Loc;
+    tie(Loc, MOI) = parseOperand(MOI, MOE);
 
     // Move large constants into the constant pool.
     if (Loc.LocType == Location::Constant && (Loc.Offset & ~0xFFFFFFFFULL)) {
@@ -99,7 +152,6 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint32_t ID,
     }
 
     CallsiteLocs.push_back(Loc);
-    MOI = ParseResult.second;
   }
 
   const MCExpr *CSOffsetExpr = MCBinaryExpr::CreateSub(

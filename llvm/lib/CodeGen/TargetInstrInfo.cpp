@@ -13,10 +13,12 @@
 
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
+#include "llvm/CodeGen/StackMaps.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInstrItineraries.h"
@@ -372,6 +374,65 @@ canFoldMemoryOperand(const MachineInstr *MI,
   return MI->isCopy() && Ops.size() == 1 && canFoldCopy(MI, Ops[0]);
 }
 
+static MachineInstr* foldPatchpoint(MachineFunction &MF,
+                                    MachineInstr *MI,
+                                    const SmallVectorImpl<unsigned> &Ops,
+                                    int FrameIndex,
+                                    const TargetInstrInfo &TII) {
+  unsigned StartIdx = 0;
+  switch (MI->getOpcode()) {
+  case TargetOpcode::STACKMAP:
+    StartIdx = 2; // Skip ID, nShadowBytes.
+    break;
+  case TargetOpcode::PATCHPOINT: {
+    // For PatchPoint, the call args are not foldable.
+    PatchPointOpers opers(MI);
+    StartIdx = opers.getVarIdx();
+    break;
+  }
+  default:
+    llvm_unreachable("unexpected stackmap opcode");
+  }
+
+  // Return false if any operands requested for folding are not foldable (not
+  // part of the stackmap's live values).
+  for (SmallVectorImpl<unsigned>::const_iterator I = Ops.begin(), E = Ops.end();
+       I != E; ++I) {
+    if (*I < StartIdx)
+      return 0;
+  }
+
+  MachineInstr *NewMI =
+    MF.CreateMachineInstr(TII.get(MI->getOpcode()), MI->getDebugLoc(), true);
+  MachineInstrBuilder MIB(MF, NewMI);
+
+  // No need to fold return, the meta data, and function arguments
+  for (unsigned i = 0; i < StartIdx; ++i)
+    MIB.addOperand(MI->getOperand(i));
+
+  for (unsigned i = StartIdx; i < MI->getNumOperands(); ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (std::find(Ops.begin(), Ops.end(), i) != Ops.end()) {
+      unsigned SpillSize;
+      unsigned SpillOffset;
+      // Compute the spill slot size and offset.
+      const TargetRegisterClass *RC =
+        MF.getRegInfo().getRegClass(MO.getReg());
+      bool Valid = TII.getStackSlotRange(RC, MO.getSubReg(), SpillSize,
+                                         SpillOffset, &MF.getTarget());
+      if (!Valid)
+        report_fatal_error("cannot spill patchpoint subregister operand");
+      MIB.addImm(StackMaps::IndirectMemRefOp);
+      MIB.addImm(SpillSize);
+      MIB.addFrameIndex(FrameIndex);
+      MIB.addImm(0);
+    }
+    else
+      MIB.addOperand(MO);
+  }
+  return NewMI;
+}
+
 /// foldMemoryOperand - Attempt to fold a load or store of the specified stack
 /// slot into the specified machine instruction for the specified operand(s).
 /// If this is possible, a new instruction is returned with the specified
@@ -393,8 +454,18 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
   assert(MBB && "foldMemoryOperand needs an inserted instruction");
   MachineFunction &MF = *MBB->getParent();
 
-  // Ask the target to do the actual folding.
-  if (MachineInstr *NewMI = foldMemoryOperandImpl(MF, MI, Ops, FI)) {
+  MachineInstr *NewMI = 0;
+
+  if (MI->getOpcode() == TargetOpcode::STACKMAP ||
+      MI->getOpcode() == TargetOpcode::PATCHPOINT) {
+    // Fold stackmap/patchpoint.
+    NewMI = foldPatchpoint(MF, MI, Ops, FI, *this);
+  } else {
+    // Ask the target to do the actual folding.
+    NewMI =foldMemoryOperandImpl(MF, MI, Ops, FI);
+  }
+ 
+  if (NewMI) {
     NewMI->setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
     // Add a memory operand, foldMemoryOperandImpl doesn't do that.
     assert((!(Flags & MachineMemOperand::MOStore) ||
@@ -450,7 +521,20 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
   MachineFunction &MF = *MBB.getParent();
 
   // Ask the target to do the actual folding.
-  MachineInstr *NewMI = foldMemoryOperandImpl(MF, MI, Ops, LoadMI);
+  MachineInstr *NewMI = 0;
+  int FrameIndex = 0;
+
+  if ((MI->getOpcode() == TargetOpcode::STACKMAP ||
+       MI->getOpcode() == TargetOpcode::PATCHPOINT) &&
+      isLoadFromStackSlot(LoadMI, FrameIndex)) {
+    // Fold stackmap/patchpoint.
+    NewMI = foldPatchpoint(MF, MI, Ops, FrameIndex, *this);
+  } else {
+    // Ask the target to do the actual folding.
+    NewMI =foldMemoryOperandImpl(MF, MI, Ops, LoadMI);
+  }
+  foldMemoryOperandImpl(MF, MI, Ops, LoadMI);
+
   if (!NewMI) return 0;
 
   NewMI = MBB.insert(MI, NewMI);
