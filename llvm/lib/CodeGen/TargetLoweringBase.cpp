@@ -902,7 +902,6 @@ MachineBasicBlock*
 TargetLoweringBase::emitPatchPoint(MachineInstr *MI,
                                    MachineBasicBlock *MBB) const {
   const TargetMachine &TM = getTargetMachine();
-  const TargetInstrInfo *TII = TM.getInstrInfo();
   MachineFunction &MF = *MI->getParent()->getParent();
 
   // MI changes inside this loop as we grow operands.
