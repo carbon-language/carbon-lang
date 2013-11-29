@@ -85,7 +85,7 @@ static unsigned int branchTargetOperand(MachineInstr *MI) {
   case Mips::BteqzX16:
   case Mips::Btnez16:
   case Mips::BtnezX16:
-  case Mips::Jal16:
+  case Mips::JalB16:
     return 0;
   case Mips::BeqzRxImm16:
   case Mips::BeqzRxImmX16:
@@ -94,6 +94,16 @@ static unsigned int branchTargetOperand(MachineInstr *MI) {
     return 1;
   }
   llvm_unreachable("Unknown branch type");
+}
+
+static bool isUnconditionalBranch(unsigned int Opcode) {
+  switch (Opcode) {
+  default: return false;
+  case Mips::Bimm16:
+  case Mips::BimmX16:
+  case Mips::JalB16:
+    return true;
+  }
 }
 
 static unsigned int longformBranchOpcode(unsigned int Opcode) {
@@ -107,8 +117,8 @@ static unsigned int longformBranchOpcode(unsigned int Opcode) {
   case Mips::Btnez16:
   case Mips::BtnezX16:
     return Mips::BtnezX16;
-  case Mips::Jal16:
-    return Mips::Jal16;
+  case Mips::JalB16:
+    return Mips::JalB16;
   case Mips::BeqzRxImm16:
   case Mips::BeqzRxImmX16:
     return Mips::BeqzRxImmX16;
@@ -1561,7 +1571,7 @@ MipsConstantIslands::fixupUnconditionalBr(ImmBranch &Br) {
     //
     DestBB->setAlignment(2);
     Br.MaxDisp = ((1<<24)-1) * 2;
-    MI->setDesc(TII->get(Mips::Jal16));
+    MI->setDesc(TII->get(Mips::JalB16));
   }
   BBInfo[MBB->getNumber()].Size += 2;
   adjustBBOffsetsAfter(MBB);
@@ -1592,17 +1602,14 @@ MipsConstantIslands::fixupConditionalBr(ImmBranch &Br) {
     MI->setDesc(TII->get(LongFormOpcode));
     return true;
   }
-  llvm_unreachable("Fixup of very long conditional branch not working yet.");
 
   // Add an unconditional branch to the destination and invert the branch
   // condition to jump over it:
-  // blt L1
+  // bteqz L1
   // =>
-  // bge L2
+  // bnez L2
   // b   L1
   // L2:
-  unsigned CCReg = 0;  // FIXME
-  unsigned CC=0; //FIXME
 
   // If the branch is at the end of its MBB and that has a fall-through block,
   // direct the updated conditional branch to the fall-through block. Otherwise,
@@ -1611,27 +1618,33 @@ MipsConstantIslands::fixupConditionalBr(ImmBranch &Br) {
   MachineInstr *BMI = &MBB->back();
   bool NeedSplit = (BMI != MI) || !BBHasFallthrough(MBB);
 
+ 
   ++NumCBrFixed;
   if (BMI != MI) {
     if (llvm::next(MachineBasicBlock::iterator(MI)) == prior(MBB->end()) &&
-        BMI->getOpcode() == Br.UncondBr) {
+        isUnconditionalBranch(BMI->getOpcode())) {
       // Last MI in the BB is an unconditional branch. Can we simply invert the
       // condition and swap destinations:
-      // beq L1
+      // beqz L1
       // b   L2
       // =>
-      // bne L2
+      // bnez L2
       // b   L1
-      MachineBasicBlock *NewDest = BMI->getOperand(0).getMBB();
+      unsigned BMITargetOperand = branchTargetOperand(BMI);
+      MachineBasicBlock *NewDest = 
+        BMI->getOperand(BMITargetOperand).getMBB();
       if (isBBInRange(MI, NewDest, Br.MaxDisp)) {
         DEBUG(dbgs() << "  Invert Bcc condition and swap its destination with "
                      << *BMI);
-        BMI->getOperand(0).setMBB(DestBB);
-        MI->getOperand(0).setMBB(NewDest);
+        MI->setDesc(TII->get(TII->getOppositeBranchOpc(Opcode)));
+        BMI->getOperand(BMITargetOperand).setMBB(DestBB);
+        MI->getOperand(TargetOperand).setMBB(NewDest);
         return true;
       }
     }
   }
+
+  llvm_unreachable("unsupported range of unconditional branch");
 
   if (NeedSplit) {
     splitBlockBeforeInstr(MI);
@@ -1651,7 +1664,7 @@ MipsConstantIslands::fixupConditionalBr(ImmBranch &Br) {
   // Insert a new conditional branch and a new unconditional branch.
   // Also update the ImmBranch as well as adding a new entry for the new branch.
   BuildMI(MBB, DebugLoc(), TII->get(MI->getOpcode()))
-    .addMBB(NextBB).addImm(CC).addReg(CCReg);
+    .addMBB(NextBB);
   Br.MI = &MBB->back();
   BBInfo[MBB->getNumber()].Size += TII->GetInstSizeInBytes(&MBB->back());
   BuildMI(MBB, DebugLoc(), TII->get(Br.UncondBr)).addMBB(DestBB);
