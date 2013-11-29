@@ -233,9 +233,11 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       MachineInstr *MI = I;
 
-      // Debug value instructions can't be out of range, so they don't need
-      // any updates.
-      if (MI->isDebugValue())
+      // Debug value, stackmap and patchpoint instructions can't be out of
+      // range, so they don't need any updates.
+      if (MI->isDebugValue() ||
+          MI->getOpcode() == TargetOpcode::STACKMAP ||
+          MI->getOpcode() == TargetOpcode::PATCHPOINT)
         continue;
 
       // For now, allocate the base register(s) within the basic block
