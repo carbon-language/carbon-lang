@@ -1119,16 +1119,8 @@ static void handlePackedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleIBAction(Sema &S, Decl *D, const AttributeList &Attr) {
-  // The IBAction attributes only apply to instance methods.
-  if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
-    if (MD->isInstanceMethod()) {
-      D->addAttr(::new (S.Context)
-                 IBActionAttr(Attr.getRange(), S.Context,
-                              Attr.getAttributeSpellingListIndex()));
-      return;
-    }
-
-  S.Diag(Attr.getLoc(), diag::warn_attribute_ibaction) << Attr.getName();
+  D->addAttr(::new (S.Context) IBActionAttr(Attr.getRange(), S.Context,
+                                        Attr.getAttributeSpellingListIndex()));
 }
 
 static bool checkIBOutletCommon(Sema &S, Decl *D, const AttributeList &Attr) {

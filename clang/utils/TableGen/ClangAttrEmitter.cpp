@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <cctype>
 #include <sstream>
+#include <set>
 
 using namespace llvm;
 
@@ -1729,7 +1730,19 @@ static std::string CalculateDiagnostic(const Record &S) {
   std::vector<Record *> Subjects = S.getValueAsListOfDefs("Subjects");
   for (std::vector<Record *>::const_iterator I = Subjects.begin(),
        E = Subjects.end(); I != E; ++I) {
-    uint32_t V = StringSwitch<uint32_t>((*I)->getName())
+    const Record &R = (**I);
+    std::string Name;
+
+    if (R.isSubClassOf("SubsetSubject")) {
+      PrintError(R.getLoc(), "SubsetSubjects should use a custom diagnostic");
+      // As a fallback, look through the SubsetSubject to see what its base
+      // type is, and use that. This needs to be updated if SubsetSubjects
+      // are allowed within other SubsetSubjects.
+      Name = R.getValueAsDef("Base")->getName();
+    } else
+      Name = R.getName();
+
+    uint32_t V = StringSwitch<uint32_t>(Name)
                    .Case("Function", Func)
                    .Case("Var", Var)
                    .Case("ObjCMethod", ObjCMethod)
@@ -1794,6 +1807,35 @@ static std::string CalculateDiagnostic(const Record &S) {
   return "";
 }
 
+static std::string GenerateCustomAppertainsTo(const Record &Subject,
+                                              raw_ostream &OS) {
+  // If this code has already been generated, simply return the previous
+  // instance of it.
+  static std::set<std::string> CustomSubjectSet;
+  std::set<std::string>::iterator I = CustomSubjectSet.find(Subject.getName());
+  if (I != CustomSubjectSet.end())
+    return *I;
+
+  Record *Base = Subject.getValueAsDef("Base");
+
+  // Not currently support custom subjects within custom subjects.
+  if (Base->isSubClassOf("SubsetSubject")) {
+    PrintFatalError(Subject.getLoc(),
+                    "SubsetSubjects within SubsetSubjects is not supported");
+    return "";
+  }
+
+  std::string FnName = "is" + Subject.getName();
+  OS << "static bool " << FnName << "(const Decl *D) {\n";
+  OS << "  const " << Base->getName() << "Decl *S = cast<" << Base->getName();
+  OS << "Decl>(D);\n";
+  OS << "  return " << Subject.getValueAsString("CheckCode") << ";\n";
+  OS << "}\n\n";
+
+  CustomSubjectSet.insert(FnName);
+  return FnName;
+}
+
 static std::string GenerateAppertainsTo(const Record &Attr, raw_ostream &OS) {
   // If the attribute does not contain a Subjects definition, then use the
   // default appertainsTo logic.
@@ -1808,9 +1850,6 @@ static std::string GenerateAppertainsTo(const Record &Attr, raw_ostream &OS) {
   if (Subjects.empty())
     return "DefaultAppertainsTo";
 
-  // If any of the subjects are a SubsetSubject derivative, bail out for now
-  // as though it was using custom parsing.
-  bool HasSubsetSubject = false;
   bool Warn = SubjectObj->getValueAsDef("Diag")->getValueAsBit("Warn");
 
   // Otherwise, generate an appertainsTo check specific to this attribute which
@@ -1823,10 +1862,17 @@ static std::string GenerateAppertainsTo(const Record &Attr, raw_ostream &OS) {
   SS << "  if (";
   for (std::vector<Record *>::const_iterator I = Subjects.begin(),
        E = Subjects.end(); I != E; ++I) {
-    if ((*I)->isSubClassOf("SubsetSubject"))
-      HasSubsetSubject = true;
+    // If the subject has custom code associated with it, generate a function
+    // for it. The function cannot be inlined into this check (yet) because it
+    // requires the subject to be of a specific type, and were that information
+    // inlined here, it would not support an attribute with multiple custom
+    // subjects.
+    if ((*I)->isSubClassOf("SubsetSubject")) {
+      SS << "!" << GenerateCustomAppertainsTo(**I, OS) << "(D)";
+    } else {
+      SS << "!isa<" << (*I)->getName() << "Decl>(D)";
+    }
 
-    SS << "!isa<" << (*I)->getName() << "Decl>(D)";
     if (I + 1 != E)
       SS << " && ";
   }
@@ -1841,9 +1887,6 @@ static std::string GenerateAppertainsTo(const Record &Attr, raw_ostream &OS) {
   SS << "  }\n";
   SS << "  return true;\n";
   SS << "}\n\n";
-
-  if (HasSubsetSubject)
-    return "DefaultAppertainsTo";
 
   OS << SS.str();
   return FnName;

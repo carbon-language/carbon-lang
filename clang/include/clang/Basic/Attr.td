@@ -37,6 +37,9 @@ def NormalVar : SubsetSubject<Var,
 def NonBitField : SubsetSubject<Field,
                                 [{!S->isBitField()}]>;
 
+def ObjCInstanceMethod : SubsetSubject<ObjCMethod,
+                                       [{S->isInstanceMethod()}]>;
+
 // A single argument to an attribute
 class Argument<string name, bit optional> {
   string Name = name;
@@ -451,7 +454,8 @@ def Hot : InheritableAttr {
 
 def IBAction : InheritableAttr {
   let Spellings = [GNU<"ibaction">];
-//  let Subjects = [ObjCMethod];
+  let Subjects = SubjectList<[ObjCInstanceMethod], WarnDiag,
+                             "ExpectedObjCInstanceMethod">;
 }
 
 def IBOutlet : InheritableAttr {
