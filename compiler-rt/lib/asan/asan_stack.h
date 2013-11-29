@@ -34,17 +34,22 @@ void PrintStack(const uptr *trace, uptr size);
   StackTrace stack;                                         \
   stack.Unwind(max_s, pc, bp, 0, 0, fast)
 #else
-#define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp, fast)                \
-  StackTrace stack;                                                        \
-  {                                                                        \
-    AsanThread *t;                                                         \
-    stack.size = 0;                                                        \
-    if (asan_inited && (t = GetCurrentThread()) && !t->isUnwinding()) {    \
-      uptr stack_top = t->stack_top();                                     \
-      uptr stack_bottom = t->stack_bottom();                               \
-      ScopedUnwinding unwind_scope(t);                                     \
-      stack.Unwind(max_s, pc, bp, stack_top, stack_bottom, fast);          \
-    }                                                                      \
+#define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp, fast)                    \
+  StackTrace stack;                                                            \
+  {                                                                            \
+    AsanThread *t;                                                             \
+    stack.size = 0;                                                            \
+    if (asan_inited) {                                                         \
+      if ((t = GetCurrentThread()) && !t->isUnwinding()) {                     \
+        uptr stack_top = t->stack_top();                                       \
+        uptr stack_bottom = t->stack_bottom();                                 \
+        ScopedUnwinding unwind_scope(t);                                       \
+        stack.Unwind(max_s, pc, bp, stack_top, stack_bottom, fast);            \
+      } else if (t == 0 && !fast) {                                            \
+        /* If GetCurrentThread() has failed, try to do slow unwind anyways. */ \
+        stack.Unwind(max_s, pc, bp, 0, 0, false);                              \
+      }                                                                        \
+    }                                                                          \
   }
 #endif  // SANITIZER_WINDOWS
 
