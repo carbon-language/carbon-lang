@@ -437,10 +437,8 @@ bool MipsLongBranch::runOnMachineFunction(MachineFunction &F) {
       if (!I->Br || I->HasLongBranch)
         continue;
 
-      int ShVal = TM.getSubtarget<MipsSubtarget>().inMicroMipsMode() ? 2 : 4;
-
       // Check if offset fits into 16-bit immediate field of branches.
-      if (!ForceLongBranch && isInt<16>(computeOffset(I->Br) / ShVal))
+      if (!ForceLongBranch && isInt<16>(computeOffset(I->Br) / 4))
         continue;
 
       I->HasLongBranch = true;
