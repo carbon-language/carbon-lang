@@ -1827,9 +1827,10 @@ static std::string GenerateCustomAppertainsTo(const Record &Subject,
 
   std::string FnName = "is" + Subject.getName();
   OS << "static bool " << FnName << "(const Decl *D) {\n";
-  OS << "  const " << Base->getName() << "Decl *S = cast<" << Base->getName();
+  OS << "  const " << Base->getName() << "Decl *S = dyn_cast<";
+  OS << Base->getName();
   OS << "Decl>(D);\n";
-  OS << "  return " << Subject.getValueAsString("CheckCode") << ";\n";
+  OS << "  return S && " << Subject.getValueAsString("CheckCode") << ";\n";
   OS << "}\n\n";
 
   CustomSubjectSet.insert(FnName);
