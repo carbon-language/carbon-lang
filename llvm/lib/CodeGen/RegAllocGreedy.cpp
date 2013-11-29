@@ -627,6 +627,9 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
         return false;
       if (Urgent)
         continue;
+      // Apply the eviction policy for non-urgent evictions.
+      if (!shouldEvict(VirtReg, IsHint, *Intf, BreaksHint))
+        return false;
       // If !MaxCost.isMax(), then we're just looking for a cheap register.
       // Evicting another local live range in this case could lead to suboptimal
       // coloring.
@@ -634,9 +637,6 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
           !canReassign(*Intf, PhysReg)) {
         return false;
       }
-      // Finally, apply the eviction policy for non-urgent evictions.
-      if (!shouldEvict(VirtReg, IsHint, *Intf, BreaksHint))
-        return false;
     }
   }
   MaxCost = Cost;
