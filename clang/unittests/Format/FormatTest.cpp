@@ -829,6 +829,36 @@ TEST_F(FormatTest, CanFormatCommentsLocally) {
                    "int b;\n"
                    "int   c; // unrelated comment",
                    31, 0, getLLVMStyle()));
+
+  EXPECT_EQ("int a; // This\n"
+            "       // is\n"
+            "       // a",
+            format("int a;      // This\n"
+                   "            // is\n"
+                   "            // a",
+                   0, 0, getLLVMStyle()));
+  EXPECT_EQ("int a; // This\n"
+            "       // is\n"
+            "       // a\n"
+            "// This is b\n"
+            "int b;",
+            format("int a; // This\n"
+                   "     // is\n"
+                   "     // a\n"
+                   "// This is b\n"
+                   "int b;",
+                   0, 0, getLLVMStyle()));
+  EXPECT_EQ("int a; // This\n"
+            "       // is\n"
+            "       // a\n"
+            "\n"
+            "  // This is unrelated",
+            format("int a; // This\n"
+                   "     // is\n"
+                   "     // a\n"
+                   "\n"
+                   "  // This is unrelated",
+                   0, 0, getLLVMStyle()));
 }
 
 TEST_F(FormatTest, RemovesTrailingWhitespaceOfComments) {
@@ -843,11 +873,11 @@ TEST_F(FormatTest, RemovesTrailingWhitespaceOfComments) {
 TEST_F(FormatTest, UnderstandsBlockComments) {
   verifyFormat("f(/*noSpaceAfterParameterNamingComment=*/true);");
   verifyFormat("void f() { g(/*aaa=*/x, /*bbb=*/!y); }");
-  EXPECT_EQ(
-      "f(aaaaaaaaaaaaaaaaaaaaaaaaa, /* Trailing comment for aa... */\n"
-      "  bbbbbbbbbbbbbbbbbbbbbbbbb);",
-      format("f(aaaaaaaaaaaaaaaaaaaaaaaaa ,   \\\n/* Trailing comment for aa... */\n"
-             "  bbbbbbbbbbbbbbbbbbbbbbbbb);"));
+  EXPECT_EQ("f(aaaaaaaaaaaaaaaaaaaaaaaaa, /* Trailing comment for aa... */\n"
+            "  bbbbbbbbbbbbbbbbbbbbbbbbb);",
+            format("f(aaaaaaaaaaaaaaaaaaaaaaaaa ,   \\\n"
+                   "/* Trailing comment for aa... */\n"
+                   "  bbbbbbbbbbbbbbbbbbbbbbbbb);"));
   EXPECT_EQ(
       "f(aaaaaaaaaaaaaaaaaaaaaaaaa,\n"
       "  /* Leading comment for bb... */ bbbbbbbbbbbbbbbbbbbbbbbbb);",

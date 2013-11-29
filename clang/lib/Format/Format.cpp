@@ -1275,7 +1275,7 @@ private:
   bool computeAffectedLines(SmallVectorImpl<AnnotatedLine *>::iterator I,
                             SmallVectorImpl<AnnotatedLine *>::iterator E) {
     bool SomeLineAffected = false;
-    bool PreviousLineAffected = false;
+    const AnnotatedLine *PreviousLine = NULL;
     while (I != E) {
       AnnotatedLine *Line = *I;
       Line->LeadingEmptyLinesAffected = affectsLeadingEmptyLines(*Line->First);
@@ -1299,9 +1299,10 @@ private:
         continue;
       }
 
-      if (nonPPLineAffected(Line, &PreviousLineAffected))
+      if (nonPPLineAffected(Line, PreviousLine))
         SomeLineAffected = true;
 
+      PreviousLine = Line;
       ++I;
     }
     return SomeLineAffected;
@@ -1309,7 +1310,8 @@ private:
 
   // Determines whether 'Line' is affected by the SourceRanges given as input.
   // Returns \c true if line or one if its children is affected.
-  bool nonPPLineAffected(AnnotatedLine *Line, bool *PreviousLineAffected) {
+  bool nonPPLineAffected(AnnotatedLine *Line,
+                         const AnnotatedLine *PreviousLine) {
     bool SomeLineAffected = false;
     Line->ChildrenAffected =
         computeAffectedLines(Line->Children.begin(), Line->Children.end());
@@ -1340,14 +1342,18 @@ private:
 
     // Was this line moved, i.e. has it previously been on the same line as an
     // affected line?
-    bool LineMoved = *PreviousLineAffected && Line->First->NewlinesBefore == 0;
+    bool LineMoved = PreviousLine && PreviousLine->Affected &&
+                     Line->First->NewlinesBefore == 0;
 
-    if (SomeTokenAffected || SomeFirstChildAffected || LineMoved) {
+    bool IsContinuedComment = Line->First->is(tok::comment) &&
+                              Line->First->Next == NULL &&
+                              Line->First->NewlinesBefore < 2 && PreviousLine &&
+                              PreviousLine->Last->is(tok::comment);
+
+    if (SomeTokenAffected || SomeFirstChildAffected || LineMoved ||
+        IsContinuedComment) {
       Line->Affected = true;
-      *PreviousLineAffected = true;
       SomeLineAffected = true;
-    } else {
-      *PreviousLineAffected = false;
     }
     return SomeLineAffected;
   }
