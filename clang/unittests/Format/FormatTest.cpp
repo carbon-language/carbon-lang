@@ -2465,6 +2465,14 @@ TEST_F(FormatTest, LayoutNestedBlocks) {
                "  somethingelse();\n"
                "});",
                getLLVMStyleWithColumns(40));
+  verifyFormat("DEBUG( //\n"
+               "    { f(); }, a);");
+  verifyFormat("DEBUG( //\n"
+               "    {\n"
+               "      f(); //\n"
+               "    },\n"
+               "    a);");
+
   EXPECT_EQ("call(parameter, {\n"
             "  something();\n"
             "  // Comment too\n"
@@ -2530,6 +2538,15 @@ TEST_F(FormatTest, IndividualStatementsOfNestedBlocks) {
             format("DEBUG(   {\n"
                    "  int        i;\n"
                    "  int        j;\n"
+                   "}   )  ;",
+                   41, 1, getLLVMStyle()));
+  EXPECT_EQ("DEBUG(   {\n"
+            "    int        i;\n"
+            "    int j;\n"
+            "}   )  ;",
+            format("DEBUG(   {\n"
+                   "    int        i;\n"
+                   "    int        j;\n"
                    "}   )  ;",
                    41, 1, getLLVMStyle()));
   EXPECT_EQ("DEBUG({\n"
