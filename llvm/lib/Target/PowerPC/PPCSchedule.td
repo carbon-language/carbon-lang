@@ -39,17 +39,21 @@ def IIC_LdStDCBF     : InstrItinClass;
 def IIC_LdStDCBI     : InstrItinClass;
 def IIC_LdStLoad     : InstrItinClass;
 def IIC_LdStLoadUpd  : InstrItinClass;
+def IIC_LdStLoadUpdX : InstrItinClass;
 def IIC_LdStStore    : InstrItinClass;
 def IIC_LdStStoreUpd : InstrItinClass;
 def IIC_LdStDSS      : InstrItinClass;
 def IIC_LdStICBI     : InstrItinClass;
 def IIC_LdStLD       : InstrItinClass;
 def IIC_LdStLDU      : InstrItinClass;
+def IIC_LdStLDUX     : InstrItinClass;
 def IIC_LdStLDARX    : InstrItinClass;
 def IIC_LdStLFD      : InstrItinClass;
 def IIC_LdStLFDU     : InstrItinClass;
+def IIC_LdStLFDUX    : InstrItinClass;
 def IIC_LdStLHA      : InstrItinClass;
 def IIC_LdStLHAU     : InstrItinClass;
+def IIC_LdStLHAUX    : InstrItinClass;
 def IIC_LdStLMW      : InstrItinClass;
 def IIC_LdStLVecX    : InstrItinClass;
 def IIC_LdStLWA      : InstrItinClass;
@@ -59,6 +63,7 @@ def IIC_LdStSLBIE    : InstrItinClass;
 def IIC_LdStSTD      : InstrItinClass;
 def IIC_LdStSTDCX    : InstrItinClass;
 def IIC_LdStSTDU     : InstrItinClass;
+def IIC_LdStSTDUX    : InstrItinClass;
 def IIC_LdStSTFD     : InstrItinClass;
 def IIC_LdStSTFDU    : InstrItinClass;
 def IIC_LdStSTVEBX   : InstrItinClass;
@@ -70,6 +75,7 @@ def IIC_SprMTMSR     : InstrItinClass;
 def IIC_SprMTSR      : InstrItinClass;
 def IIC_SprTLBSYNC   : InstrItinClass;
 def IIC_SprMFCR      : InstrItinClass;
+def IIC_SprMFCRF     : InstrItinClass;
 def IIC_SprMFMSR     : InstrItinClass;
 def IIC_SprMFSPR     : InstrItinClass;
 def IIC_SprMFTB      : InstrItinClass;
@@ -84,7 +90,8 @@ def IIC_FPDivD       : InstrItinClass;
 def IIC_FPDivS       : InstrItinClass;
 def IIC_FPFused      : InstrItinClass;
 def IIC_FPRes        : InstrItinClass;
-def IIC_FPSqrt       : InstrItinClass;
+def IIC_FPSqrtD      : InstrItinClass;
+def IIC_FPSqrtS      : InstrItinClass;
 def IIC_VecGeneral   : InstrItinClass;
 def IIC_VecFP        : InstrItinClass;
 def IIC_VecFPCompare : InstrItinClass;
@@ -202,37 +209,37 @@ include "PPCScheduleE5500.td"
 //    frsp       IIC_FPGeneral
 //    frsqrte    IIC_FPGeneral
 //    fsel       IIC_FPGeneral
-//    fsqrt      IIC_FPSqrt
-//    fsqrts     IIC_FPSqrt
+//    fsqrt      IIC_FPSqrtD
+//    fsqrts     IIC_FPSqrtS
 //    fsub       IIC_FPAddSub
 //    fsubs      IIC_FPGeneral
 //    icbi       IIC_LdStICBI
 //    isync      IIC_SprISYNC
 //    lbz        IIC_LdStLoad
 //    lbzu       IIC_LdStLoadUpd
-//    lbzux      IIC_LdStLoadUpd
+//    lbzux      IIC_LdStLoadUpdX
 //    lbzx       IIC_LdStLoad
 //    ld         IIC_LdStLD
 //    ldarx      IIC_LdStLDARX
 //    ldu        IIC_LdStLDU
-//    ldux       IIC_LdStLDU
+//    ldux       IIC_LdStLDUX
 //    ldx        IIC_LdStLD
 //    lfd        IIC_LdStLFD
 //    lfdu       IIC_LdStLFDU
-//    lfdux      IIC_LdStLFDU
+//    lfdux      IIC_LdStLFDUX
 //    lfdx       IIC_LdStLFD
 //    lfs        IIC_LdStLFD
 //    lfsu       IIC_LdStLFDU
-//    lfsux      IIC_LdStLFDU
+//    lfsux      IIC_LdStLFDUX
 //    lfsx       IIC_LdStLFD
 //    lha        IIC_LdStLHA
 //    lhau       IIC_LdStLHAU
-//    lhaux      IIC_LdStLHAU
+//    lhaux      IIC_LdStLHAUX
 //    lhax       IIC_LdStLHA
 //    lhbrx      IIC_LdStLoad
 //    lhz        IIC_LdStLoad
 //    lhzu       IIC_LdStLoadUpd
-//    lhzux      IIC_LdStLoadUpd
+//    lhzux      IIC_LdStLoadUpdX
 //    lhzx       IIC_LdStLoad
 //    lmw        IIC_LdStLMW
 //    lswi       IIC_LdStLMW
@@ -246,12 +253,12 @@ include "PPCScheduleE5500.td"
 //    lvxl       IIC_LdStLVecX
 //    lwa        IIC_LdStLWA
 //    lwarx      IIC_LdStLWARX
-//    lwaux      IIC_LdStLHAU
+//    lwaux      IIC_LdStLHAUX
 //    lwax       IIC_LdStLHA
 //    lwbrx      IIC_LdStLoad
 //    lwz        IIC_LdStLoad
 //    lwzu       IIC_LdStLoadUpd
-//    lwzux      IIC_LdStLoadUpd
+//    lwzux      IIC_LdStLoadUpdX
 //    lwzx       IIC_LdStLoad
 //    mcrf       IIC_BrMCR
 //    mcrfs      IIC_FPGeneral
@@ -320,7 +327,7 @@ include "PPCScheduleE5500.td"
 //    std        IIC_LdStSTD
 //    stdcx.     IIC_LdStSTDCX
 //    stdu       IIC_LdStSTDU
-//    stdux      IIC_LdStSTDU
+//    stdux      IIC_LdStSTDUX
 //    stdx       IIC_LdStSTD
 //    stfd       IIC_LdStSTFD
 //    stfdu      IIC_LdStSTFDU

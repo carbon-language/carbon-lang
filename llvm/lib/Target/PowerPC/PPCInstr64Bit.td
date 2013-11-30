@@ -276,7 +276,7 @@ def MTCRF8 : XFXForm_5<31, 144, (outs), (ins i32imm:$FXM, g8rc:$rS),
 
 let hasExtraSrcRegAllocReq = 1 in // to enable post-ra anti-dep breaking.
 def MFOCRF8: XFXForm_5a<31, 19, (outs g8rc:$rT), (ins crbitm:$FXM),
-                        "mfocrf $rT, $FXM", IIC_SprMFCR>,
+                        "mfocrf $rT, $FXM", IIC_SprMFCRF>,
              PPC970_DGroup_First, PPC970_Unit_CRU;
 
 def MFCR8 : XFXForm_3<31, 19, (outs g8rc:$rT), (ins),
@@ -665,12 +665,12 @@ def LHAU8 : DForm_1<43, (outs g8rc:$rD, ptr_rc_nor0:$ea_result),
 let Interpretation64Bit = 1 in
 def LHAUX8 : XForm_1<31, 375, (outs g8rc:$rD, ptr_rc_nor0:$ea_result),
                     (ins memrr:$addr),
-                    "lhaux $rD, $addr", IIC_LdStLHAU,
+                    "lhaux $rD, $addr", IIC_LdStLHAUX,
                     []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                     NoEncode<"$ea_result">;
 def LWAUX : XForm_1<31, 373, (outs g8rc:$rD, ptr_rc_nor0:$ea_result),
                     (ins memrr:$addr),
-                    "lwaux $rD, $addr", IIC_LdStLHAU,
+                    "lwaux $rD, $addr", IIC_LdStLHAUX,
                     []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                     NoEncode<"$ea_result">, isPPC64;
 }
@@ -717,17 +717,17 @@ def LWZU8 : DForm_1<33, (outs g8rc:$rD, ptr_rc_nor0:$ea_result), (ins memri:$add
 
 def LBZUX8 : XForm_1<31, 119, (outs g8rc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
-                   "lbzux $rD, $addr", IIC_LdStLoadUpd,
+                   "lbzux $rD, $addr", IIC_LdStLoadUpdX,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 def LHZUX8 : XForm_1<31, 311, (outs g8rc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
-                   "lhzux $rD, $addr", IIC_LdStLoadUpd,
+                   "lhzux $rD, $addr", IIC_LdStLoadUpdX,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 def LWZUX8 : XForm_1<31, 55, (outs g8rc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
-                   "lwzux $rD, $addr", IIC_LdStLoadUpd,
+                   "lwzux $rD, $addr", IIC_LdStLoadUpdX,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 }
@@ -782,7 +782,7 @@ def LDU  : DSForm_1<58, 1, (outs g8rc:$rD, ptr_rc_nor0:$ea_result), (ins memrix:
 
 def LDUX : XForm_1<31, 53, (outs g8rc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
-                   "ldux $rD, $addr", IIC_LdStLDU,
+                   "ldux $rD, $addr", IIC_LdStLDUX,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">, isPPC64;
 }
@@ -936,7 +936,7 @@ def STWUX8: XForm_8<31, 183, (outs ptr_rc_nor0:$ea_res), (ins g8rc:$rS, memrr:$d
 } // Interpretation64Bit
 
 def STDUX : XForm_8<31, 181, (outs ptr_rc_nor0:$ea_res), (ins g8rc:$rS, memrr:$dst),
-                    "stdux $rS, $dst", IIC_LdStSTDU, []>,
+                    "stdux $rS, $dst", IIC_LdStSTDUX, []>,
                     RegConstraint<"$dst.ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     PPC970_DGroup_Cracked, isPPC64;
 }

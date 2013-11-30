@@ -1330,37 +1330,37 @@ def LFDU : DForm_1<51, (outs f8rc:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr
 // Indexed (r+r) Loads with Update (preinc).
 def LBZUX : XForm_1<31, 119, (outs gprc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
-                   "lbzux $rD, $addr", IIC_LdStLoadUpd,
+                   "lbzux $rD, $addr", IIC_LdStLoadUpdX,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
 def LHAUX : XForm_1<31, 375, (outs gprc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
-                   "lhaux $rD, $addr", IIC_LdStLHAU,
+                   "lhaux $rD, $addr", IIC_LdStLHAUX,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
 def LHZUX : XForm_1<31, 311, (outs gprc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
-                   "lhzux $rD, $addr", IIC_LdStLoadUpd,
+                   "lhzux $rD, $addr", IIC_LdStLoadUpdX,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
 def LWZUX : XForm_1<31, 55, (outs gprc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
-                   "lwzux $rD, $addr", IIC_LdStLoadUpd,
+                   "lwzux $rD, $addr", IIC_LdStLoadUpdX,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
 def LFSUX : XForm_1<31, 567, (outs f4rc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
-                   "lfsux $rD, $addr", IIC_LdStLFDU,
+                   "lfsux $rD, $addr", IIC_LdStLFDUX,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
 def LFDUX : XForm_1<31, 631, (outs f8rc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
-                   "lfdux $rD, $addr", IIC_LdStLFDU,
+                   "lfdux $rD, $addr", IIC_LdStLFDUX,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 }
@@ -1740,10 +1740,10 @@ let Uses = [RM] in {
                           [(set f32:$frD, (ffloor f32:$frB))]>;
 
   defm FSQRT  : XForm_26r<63, 22, (outs f8rc:$frD), (ins f8rc:$frB),
-                          "fsqrt", "$frD, $frB", IIC_FPSqrt,
+                          "fsqrt", "$frD, $frB", IIC_FPSqrtD,
                           [(set f64:$frD, (fsqrt f64:$frB))]>;
   defm FSQRTS : XForm_26r<59, 22, (outs f4rc:$frD), (ins f4rc:$frB),
-                          "fsqrts", "$frD, $frB", IIC_FPSqrt,
+                          "fsqrts", "$frD, $frB", IIC_FPSqrtS,
                           [(set f32:$frD, (fsqrt f32:$frB))]>;
   }
   }
@@ -1948,7 +1948,7 @@ def MTCRF : XFXForm_5<31, 144, (outs), (ins i32imm:$FXM, gprc:$rS),
 
 let hasExtraSrcRegAllocReq = 1 in // to enable post-ra anti-dep breaking.
 def MFOCRF: XFXForm_5a<31, 19, (outs gprc:$rT), (ins crbitm:$FXM),
-                       "mfocrf $rT, $FXM", IIC_SprMFCR>,
+                       "mfocrf $rT, $FXM", IIC_SprMFCRF>,
             PPC970_DGroup_First, PPC970_Unit_CRU;
 
 def MFCR : XFXForm_3<31, 19, (outs gprc:$rT), (ins),

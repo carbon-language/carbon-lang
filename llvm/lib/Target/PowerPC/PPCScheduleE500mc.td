@@ -141,6 +141,12 @@ def PPCE500mcItineraries : ProcessorItineraries<
                                  [6, 1], // Latency = 3
                                  [E500_GPR_Bypass, E500_GPR_Bypass],
                                  2>, // 2 micro-ops
+  InstrItinData<IIC_LdStLoadUpdX,[InstrStage<1, [E500_DIS0, E500_DIS1], 0>,
+                                  InstrStage<1, [E500_SFX0, E500_SFX1], 0>,
+                                  InstrStage<1, [E500_LSU_0]>],
+                                 [6, 1], // Latency = 3
+                                 [E500_GPR_Bypass, E500_GPR_Bypass],
+                                 2>, // 2 micro-ops
   InstrItinData<IIC_LdStStore,   [InstrStage<1, [E500_DIS0, E500_DIS1], 0>,
                                   InstrStage<1, [E500_LSU_0]>],
                                  [6, 1], // Latency = 3
@@ -179,11 +185,23 @@ def PPCE500mcItineraries : ProcessorItineraries<
                                  [E500_FPR_Bypass,
                                   E500_GPR_Bypass, E500_GPR_Bypass],
                                  2>, // 2 micro-ops
+  InstrItinData<IIC_LdStLFDUX,   [InstrStage<1, [E500_DIS0, E500_DIS1], 0>,
+                                  InstrStage<1, [E500_SFX0, E500_SFX1], 0>,
+                                  InstrStage<1, [E500_LSU_0]>],
+                                 [7, 1, 1], // Latency = 4
+                                 [E500_FPR_Bypass,
+                                  E500_GPR_Bypass, E500_GPR_Bypass],
+                                 2>, // 2 micro-ops
   InstrItinData<IIC_LdStLHA,     [InstrStage<1, [E500_DIS0, E500_DIS1], 0>,
                                   InstrStage<1, [E500_LSU_0]>],
                                  [6, 1], // Latency = 3
                                  [E500_GPR_Bypass, E500_GPR_Bypass]>,
   InstrItinData<IIC_LdStLHAU,    [InstrStage<1, [E500_DIS0, E500_DIS1], 0>,
+                                  InstrStage<1, [E500_SFX0, E500_SFX1], 0>,
+                                  InstrStage<1, [E500_LSU_0]>],
+                                 [6, 1], // Latency = 3
+                                 [E500_GPR_Bypass, E500_GPR_Bypass]>,
+  InstrItinData<IIC_LdStLHAUX,   [InstrStage<1, [E500_DIS0, E500_DIS1], 0>,
                                   InstrStage<1, [E500_SFX0, E500_SFX1], 0>,
                                   InstrStage<1, [E500_LSU_0]>],
                                  [6, 1], // Latency = 3
@@ -218,6 +236,10 @@ def PPCE500mcItineraries : ProcessorItineraries<
   InstrItinData<IIC_SprTLBSYNC,  [InstrStage<1, [E500_DIS0, E500_DIS1], 0>,
                                   InstrStage<1, [E500_LSU_0], 0>]>,
   InstrItinData<IIC_SprMFCR,     [InstrStage<1, [E500_DIS0, E500_DIS1], 0>,
+                                  InstrStage<5, [E500_SFX0]>],
+                                 [8, 1],
+                                 [E500_GPR_Bypass, E500_CR_Bypass]>,
+  InstrItinData<IIC_SprMFCRF,    [InstrStage<1, [E500_DIS0, E500_DIS1], 0>,
                                   InstrStage<5, [E500_SFX0]>],
                                  [8, 1],
                                  [E500_GPR_Bypass, E500_CR_Bypass]>,

@@ -170,6 +170,12 @@ def PPCE5500Itineraries : ProcessorItineraries<
                                  [7, 2], // Latency = 3, Repeat rate = 1
                                  [E5500_GPR_Bypass, E5500_GPR_Bypass],
                                  2>, // 2 micro-ops
+  InstrItinData<IIC_LdStLoadUpdX,[InstrStage<1, [E5500_DIS0, E5500_DIS1], 0>,
+                                  InstrStage<1, [E5500_SFX0, E5500_SFX1], 0>,
+                                  InstrStage<1, [E5500_LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [E5500_GPR_Bypass, E5500_GPR_Bypass],
+                                 2>, // 2 micro-ops
   InstrItinData<IIC_LdStLD,      [InstrStage<1, [E5500_DIS0, E5500_DIS1], 0>,
                                   InstrStage<1, [E5500_LSU_0]>],
                                  [7, 2], // Latency = 3, Repeat rate = 1
@@ -179,6 +185,12 @@ def PPCE5500Itineraries : ProcessorItineraries<
                                  [7, 2], // Latency = 3, Repeat rate = 3
                                  [E5500_GPR_Bypass, E5500_GPR_Bypass]>,
   InstrItinData<IIC_LdStLDU,     [InstrStage<1, [E5500_DIS0, E5500_DIS1], 0>,
+                                  InstrStage<1, [E5500_SFX0, E5500_SFX1], 0>,
+                                  InstrStage<1, [E5500_LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [E5500_GPR_Bypass, E5500_GPR_Bypass],
+                                 2>, // 2 micro-ops
+  InstrItinData<IIC_LdStLDUX,    [InstrStage<1, [E5500_DIS0, E5500_DIS1], 0>,
                                   InstrStage<1, [E5500_SFX0, E5500_SFX1], 0>,
                                   InstrStage<1, [E5500_LSU_0]>],
                                  [7, 2], // Latency = 3, Repeat rate = 1
@@ -223,11 +235,24 @@ def PPCE5500Itineraries : ProcessorItineraries<
                                  [E5500_FPR_Bypass,
                                   E5500_GPR_Bypass, E5500_GPR_Bypass],
                                  2>, // 2 micro-ops
+  InstrItinData<IIC_LdStLFDUX,   [InstrStage<1, [E5500_DIS0, E5500_DIS1], 0>,
+                                  InstrStage<1, [E5500_SFX0, E5500_SFX1], 0>,
+                                  InstrStage<1, [E5500_LSU_0]>],
+                                 [8, 2, 2], // Latency = 4, Repeat rate = 1
+                                 [E5500_FPR_Bypass,
+                                  E5500_GPR_Bypass, E5500_GPR_Bypass],
+                                 2>, // 2 micro-ops
   InstrItinData<IIC_LdStLHA,     [InstrStage<1, [E5500_DIS0, E5500_DIS1], 0>,
                                   InstrStage<1, [E5500_LSU_0]>],
                                  [7, 2], // Latency = 3
                                  [E5500_GPR_Bypass, E5500_GPR_Bypass]>,
   InstrItinData<IIC_LdStLHAU,    [InstrStage<1, [E5500_DIS0, E5500_DIS1], 0>,
+                                  InstrStage<1, [E5500_SFX0, E5500_SFX1], 0>,
+                                  InstrStage<1, [E5500_LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [E5500_GPR_Bypass, E5500_GPR_Bypass],
+                                 2>, // 2 micro-ops
+  InstrItinData<IIC_LdStLHAUX,   [InstrStage<1, [E5500_DIS0, E5500_DIS1], 0>,
                                   InstrStage<1, [E5500_SFX0, E5500_SFX1], 0>,
                                   InstrStage<1, [E5500_LSU_0]>],
                                  [7, 2], // Latency = 3, Repeat rate = 1
@@ -256,6 +281,12 @@ def PPCE5500Itineraries : ProcessorItineraries<
                                  [7, 2], // Latency = 3, Repeat rate = 1
                                  [NoBypass, E5500_GPR_Bypass],
                                  2>, // 2 micro-ops
+  InstrItinData<IIC_LdStSTDUX,   [InstrStage<1, [E5500_DIS0, E5500_DIS1], 0>,
+                                  InstrStage<1, [E5500_SFX0, E5500_SFX1], 0>,
+                                  InstrStage<1, [E5500_LSU_0]>],
+                                 [7, 2], // Latency = 3, Repeat rate = 1
+                                 [NoBypass, E5500_GPR_Bypass],
+                                 2>, // 2 micro-ops
   InstrItinData<IIC_LdStSTWCX,   [InstrStage<1, [E5500_DIS0, E5500_DIS1], 0>,
                                   InstrStage<1, [E5500_LSU_0]>],
                                  [7, 2], // Latency = 3, Repeat rate = 1
@@ -269,6 +300,10 @@ def PPCE5500Itineraries : ProcessorItineraries<
   InstrItinData<IIC_SprTLBSYNC,  [InstrStage<1, [E5500_DIS0, E5500_DIS1], 0>,
                                   InstrStage<1, [E5500_LSU_0], 0>]>,
   InstrItinData<IIC_SprMFCR,     [InstrStage<1, [E5500_DIS0, E5500_DIS1], 0>,
+                                  InstrStage<5, [E5500_CFX_0]>],
+                                 [9, 2], // Latency = 5, Repeat rate = 5
+                                 [E5500_GPR_Bypass, E5500_CR_Bypass]>,
+  InstrItinData<IIC_SprMFCRF,    [InstrStage<1, [E5500_DIS0, E5500_DIS1], 0>,
                                   InstrStage<5, [E5500_CFX_0]>],
                                  [9, 2], // Latency = 5, Repeat rate = 5
                                  [E5500_GPR_Bypass, E5500_CR_Bypass]>,
