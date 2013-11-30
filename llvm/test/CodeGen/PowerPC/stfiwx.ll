@@ -1,18 +1,27 @@
-; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 -mattr=stfiwx -o %t1
-; RUN: grep stfiwx %t1
-; RUN: not grep r1 %t1
-; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 -mattr=-stfiwx \
-; RUN:   -o %t2
-; RUN: not grep stfiwx %t2
-; RUN: grep r1 %t2
+; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 -mattr=stfiwx | FileCheck %s
+; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 -mattr=-stfiwx | FileCheck -check-prefix=CHECK-LS %s
 
-define void @test(float %a, i32* %b) nounwind {
+define void @test1(float %a, i32* %b) nounwind {
+; CHECK-LABEL: @test1
+; CHECK-LS-LABEL: @test1
         %tmp.2 = fptosi float %a to i32         ; <i32> [#uses=1]
         store i32 %tmp.2, i32* %b
         ret void
+
+; CHECK-NOT: lwz
+; CHECK-NOT: stw
+; CHECK: stfiwx
+; CHECK: blr
+
+; CHECK-LS: lwz
+; CHECK-LS: stw
+; CHECK-LS-NOT: stfiwx
+; CHECK-LS: blr
 }
 
 define void @test2(float %a, i32* %b, i32 %i) nounwind {
+; CHECK-LABEL: @test2
+; CHECK-LS-LABEL: @test2
         %tmp.2 = getelementptr i32* %b, i32 1           ; <i32*> [#uses=1]
         %tmp.5 = getelementptr i32* %b, i32 %i          ; <i32*> [#uses=1]
         %tmp.7 = fptosi float %a to i32         ; <i32> [#uses=3]
@@ -20,5 +29,15 @@ define void @test2(float %a, i32* %b, i32 %i) nounwind {
         store i32 %tmp.7, i32* %tmp.2
         store i32 %tmp.7, i32* %b
         ret void
+
+; CHECK-NOT: lwz
+; CHECK-NOT: stw
+; CHECK: stfiwx
+; CHECK: blr
+
+; CHECK-LS: lwz
+; CHECK-LS: stw
+; CHECK-LS-NOT: stfiwx
+; CHECK-LS: blr
 }
 
