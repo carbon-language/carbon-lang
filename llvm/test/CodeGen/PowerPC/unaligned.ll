@@ -65,9 +65,9 @@ entry:
 ; These loads and stores are legalized into aligned loads and stores
 ; using aligned stack slots.
 ; CHECK: @foo6
-; CHECK: ld
-; CHECK: ld
-; CHECK: std
-; CHECK: std
+; CHECK-DAG: ld
+; CHECK-DAG: ld
+; CHECK-DAG: stdx
+; CHECK: stdx
 }
 

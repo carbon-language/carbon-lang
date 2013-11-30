@@ -134,8 +134,8 @@ return:                                           ; preds = %if.end, %if.then
 ; CHECK: @main2
 
 ; CHECK: addis [[REG:[0-9]+]], 2, env_sigill@toc@ha
-; CHECK: std 31, env_sigill@toc@l([[REG]])
-; CHECK: addi [[REGB:[0-9]+]], [[REG]], env_sigill@toc@l
+; CHECK-DAG: std 31, env_sigill@toc@l([[REG]])
+; CHECK-DAG: addi [[REGB:[0-9]+]], [[REG]], env_sigill@toc@l
 ; CHECK-DAG: std [[REGB]], [[OFF:[0-9]+]](31)                  # 8-byte Folded Spill
 ; CHECK-DAG: std 1, 16([[REGB]])
 ; CHECK-DAG: std 2, 24([[REGB]])
