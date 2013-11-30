@@ -286,8 +286,8 @@ class IndexingContext {
   ContainerMapTy ContainerMap;
   EntityMapTy EntityMap;
 
-  typedef std::pair<const FileEntry *, const Decl *> RefFileOccurence;
-  llvm::DenseSet<RefFileOccurence> RefFileOccurences;
+  typedef std::pair<const FileEntry *, const Decl *> RefFileOccurrence;
+  llvm::DenseSet<RefFileOccurrence> RefFileOccurrences;
 
   std::deque<DeclGroupRef> TUDeclsInObjCContainer;
   
