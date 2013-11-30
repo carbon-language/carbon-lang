@@ -179,7 +179,7 @@ bool PPCSubtarget::enablePostRAScheduler(
   return OptLevel >= CodeGenOpt::Default;
 }
 
-// Embedded cores need aggressive scheduling.
+// Embedded cores need aggressive scheduling (and some others also benefit).
 static bool needsAggressiveScheduling(unsigned Directive) {
   switch (Directive) {
   default: return false;
@@ -187,6 +187,7 @@ static bool needsAggressiveScheduling(unsigned Directive) {
   case PPC::DIR_A2:
   case PPC::DIR_E500mc:
   case PPC::DIR_E5500:
+  case PPC::DIR_PWR7:
     return true;
   }
 }
