@@ -309,8 +309,10 @@ namespace GccConst {
   // GCC's tokenizer treats const and __const as the same token.
   [[gnu::const]] int *f1();
   [[gnu::__const]] int *f2();
+  [[gnu::__const__]] int *f3();
   void f(const int *);
   void g() { f(f1()); f(f2()); }
+  void h() { f(f3()); }
 }
 
 namespace GccASan {
