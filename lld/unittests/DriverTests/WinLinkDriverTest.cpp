@@ -436,7 +436,6 @@ TEST_F(WinLinkParserTest, SwapRunFromNet) {
 TEST_F(WinLinkParserTest, Debug) {
   EXPECT_TRUE(parse("link.exe", "/debug", "a.out", nullptr));
   EXPECT_FALSE(_context.deadStrip());
-  EXPECT_TRUE(_context.logInputFiles());
 }
 
 TEST_F(WinLinkParserTest, Fixed) {

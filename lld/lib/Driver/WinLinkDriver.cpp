@@ -795,9 +795,6 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       // LLD is not yet capable of creating a PDB file, so /debug does not have
       // any effect, other than disabling dead stripping.
       ctx.setDeadStripping(false);
-
-      // Prints out input files during core linking to help debugging.
-      ctx.setLogInputFiles(true);
       break;
 
     case OPT_force:
