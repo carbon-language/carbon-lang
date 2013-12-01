@@ -27,6 +27,11 @@ entry:
   ret float %0
 }
 
+; X32-LABEL: _sin$stub:
+; X32-NEXT:   .indirect_symbol        _sin
+; X32-LABEL: _sinf$stub:
+; X32-NEXT:   .indirect_symbol        _sinf
+
 declare float @sinf(float) nounwind readonly
 
 declare double @sin(double) nounwind readonly
