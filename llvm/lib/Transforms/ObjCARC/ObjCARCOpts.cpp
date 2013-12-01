@@ -538,8 +538,7 @@ namespace {
 
 void
 PtrState::Merge(const PtrState &Other, bool TopDown) {
-  Seq = MergeSeqs(static_cast<Sequence>(Seq), static_cast<Sequence>(Other.Seq),
-                  TopDown);
+  Seq = MergeSeqs(GetSeq(), Other.GetSeq(), TopDown);
   KnownPositiveRefCount &= Other.KnownPositiveRefCount;
 
   // If we're not in a sequence (anymore), drop all associated state.
