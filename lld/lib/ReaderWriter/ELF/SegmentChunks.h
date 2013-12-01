@@ -103,8 +103,8 @@ private:
   uint64_t _memSize;
 };
 
-/// \brief A segment contains a set of sections, that have similiar properties
-//  the sections are already seperated based on different flags and properties
+/// \brief A segment contains a set of sections, that have similar properties
+//  the sections are already separated based on different flags and properties
 //  the segment is just a way to concatenate sections to segments
 template<class ELFT>
 class Segment : public Chunk<ELFT> {
@@ -457,7 +457,7 @@ template <class ELFT> void Segment<ELFT>::assignOffsets(uint64_t startOffset) {
       uint64_t newOffset = llvm::RoundUpToAlignment(curOffset, (*si)->align2());
       SegmentSlice<ELFT> *slice = nullptr;
       // If the newOffset computed is more than a page away, lets create
-      // a seperate segment, so that memory is not used up while running
+      // a separate segment, so that memory is not used up while running
       if (((newOffset - curOffset) > this->_context.getPageSize()) &&
           (_outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
            _outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)) {

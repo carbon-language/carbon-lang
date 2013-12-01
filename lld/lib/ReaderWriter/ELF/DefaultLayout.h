@@ -205,7 +205,7 @@ public:
   }
 
   // Merge sections with the same name into a MergedSections
-  void mergeSimiliarSections();
+  void mergeSimilarSections();
 
   void assignSectionsToSegments();
 
@@ -571,7 +571,7 @@ ErrorOr<const lld::AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) 
 /// Merge sections with the same name into a MergedSections
 template<class ELFT>
 void
-DefaultLayout<ELFT>::mergeSimiliarSections() {
+DefaultLayout<ELFT>::mergeSimilarSections() {
   MergedSections<ELFT> *mergedSection;
 
   for (auto &si : _sections) {
@@ -603,7 +603,7 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
     return A->order() < B->order();
   });
   // Merge all sections
-  mergeSimiliarSections();
+  mergeSimilarSections();
   // Set the ordinal after sorting the sections
   int ordinal = 1;
   for (auto msi : _mergedSections) {
@@ -639,7 +639,7 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
         lookupSectionFlag &= ~(llvm::ELF::SHF_TLS);
 
         Segment<ELFT> *segment;
-        // We need a seperate segment for sections that dont have
+        // We need a separate segment for sections that dont have
         // the segment type to be PT_LOAD
         if (segmentType != llvm::ELF::PT_LOAD) {
           const AdditionalSegmentKey key(segmentType, lookupSectionFlag);

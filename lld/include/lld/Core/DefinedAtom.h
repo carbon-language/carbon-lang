@@ -97,7 +97,7 @@ public:
 
   enum Merge {
     mergeNo,                // Another atom with same name is error
-    mergeAsTentative,       // Is ANSI C tentative defintion, can be coalesced
+    mergeAsTentative,       // Is ANSI C tentative definition, can be coalesced
     mergeAsWeak,            // is C++ inline definition that was not inlined,
                             // but address was not taken, so atom can be hidden
                             // by linker

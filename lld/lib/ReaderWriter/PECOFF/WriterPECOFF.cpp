@@ -12,7 +12,7 @@
 /// PE/COFF file consists of DOS Header, PE Header, COFF Header and Section
 /// Tables followed by raw section data.
 ///
-/// This writer is reponsible for writing Core Linker results to an Windows
+/// This writer is responsible for writing Core Linker results to an Windows
 /// executable file. Currently it can only output ".text" section; other
 /// sections including the symbol table are silently ignored.
 ///

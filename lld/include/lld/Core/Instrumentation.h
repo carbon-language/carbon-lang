@@ -61,7 +61,7 @@ public:
 /// A task cannot transfer threads.
 ///
 /// SBRM is used to ensure task starts and ends are ballanced. The lifetime of
-/// a task is either the liftime of this object, or until end is called.
+/// a task is either the lifetime of this object, or until end is called.
 class ScopedTask {
   __itt_domain *_domain;
 

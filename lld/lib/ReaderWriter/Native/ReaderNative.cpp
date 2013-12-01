@@ -266,7 +266,7 @@ class File : public lld::File {
 public:
 
   /// Instantiates a File object from a native object file.  Ownership
-  /// of the MemoryBuffer is transfered to the resulting File object.
+  /// of the MemoryBuffer is transferred to the resulting File object.
   static error_code make(const LinkingContext &context,
                          std::unique_ptr<MemoryBuffer> mb,
                          std::vector<std::unique_ptr<lld::File> > &result) {
@@ -599,7 +599,7 @@ private:
     return make_error_code(NativeReaderError::success);
   }
 
-  // instantiate array of Referemces from v1 ivar data in file
+  // instantiate array of References from v1 ivar data in file
   error_code processReferencesV1(const uint8_t *base,
                                  const NativeChunk *chunk) {
     uint8_t *refsStart, *refsEnd;
@@ -619,7 +619,7 @@ private:
     return make_error_code(NativeReaderError::success);
   }
 
-  // instantiate array of Referemces from v2 ivar data in file
+  // instantiate array of References from v2 ivar data in file
   error_code processReferencesV2(const uint8_t *base,
                                  const NativeChunk *chunk) {
     uint8_t *refsStart, *refsEnd;

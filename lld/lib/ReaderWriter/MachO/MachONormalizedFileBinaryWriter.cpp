@@ -426,7 +426,7 @@ void MachOFileLayout::buildFileOffsets() {
   DEBUG_WITH_TYPE("MachOFileLayout", 
                   llvm::dbgs() << "buildFileOffsets()\n");
   for (const Segment &sg : _file.segments) {
-    // FIXME: 4096  should be infered from segments in normalized file.
+    // FIXME: 4096 should be inferred from segments in normalized file.
     _segInfo[&sg].fileOffset = llvm::RoundUpToAlignment(fileOffset, 4096);
     if ((_seg1addr == INT64_MAX) && sg.access)
       _seg1addr = sg.address;

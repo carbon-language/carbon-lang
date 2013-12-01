@@ -224,7 +224,7 @@ public:
     // Divide the section that contains mergeable strings into tokens
     // TODO
     // a) add resolver support to recognize multibyte chars
-    // b) Create a seperate section chunk to write mergeable atoms
+    // b) Create a separate section chunk to write mergeable atoms
     std::vector<MergeString *> tokens;
     for (const Elf_Shdr *msi : _mergeStringSections) {
       auto sectionName = _objFile->getSectionName(msi);
@@ -400,7 +400,7 @@ public:
             (uint8_t *)sectionContents->data() + symbol->st_value, contentSize);
 
         // If the linker finds that a section has global atoms that are in a
-        // mergeable section, treat them as defined atoms as they shouldnt be
+        // mergeable section, treat them as defined atoms as they shouldn't be
         // merged away as well as these symbols have to be part of symbol
         // resolution
         if (isMergeableStringSection(section)) {

@@ -28,7 +28,7 @@ class MutableFile;
 
 /// This linker pass does the layout of the atoms. The pass is done after the
 /// order their .o files were found on the command line, then by order of the
-/// atoms (address) in the .o file.  But some atoms have a prefered location
+/// atoms (address) in the .o file.  But some atoms have a preferred location
 /// in their section (such as pinned to the start or end of the section), so
 /// the sort must take that into account too.
 class LayoutPass : public Pass {

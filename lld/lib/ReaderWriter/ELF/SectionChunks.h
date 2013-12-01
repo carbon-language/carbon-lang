@@ -284,7 +284,7 @@ const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
   DefinedAtom::Alignment atomAlign = definedAtom->alignment();
   uint64_t align2 = 1u << atomAlign.powerOf2;
   // Align the atom to the required modulus/ align the file offset and the
-  // memory offset seperately this is required so that BSS symbols are handled
+  // memory offset separately this is required so that BSS symbols are handled
   // properly as the BSS symbols only occupy memory size and not file size
   uint64_t fOffset = alignOffset(this->fileSize(), atomAlign);
   uint64_t mOffset = alignOffset(this->memSize(), atomAlign);
@@ -393,7 +393,7 @@ void AtomSection<ELFT>::write(ELFWriter *writer,
 
 /// \brief A MergedSections represents a set of sections grouped by the same
 /// name. The output file that gets written by the linker has sections grouped
-/// by similiar names
+/// by similar names
 template<class ELFT>
 class MergedSections {
 public:

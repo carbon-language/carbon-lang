@@ -66,7 +66,7 @@
 ///   fn_in_dll();     // is equivalent to (*_imp__fn_in_dll)();
 ///
 /// It's just the compiler rewrites code for you so that you don't need to
-/// handle the indirection youself.
+/// handle the indirection yourself.
 ///
 /// Note 2: __declspec(dllimport) is mandatory for data but optional for
 /// function. For a function, the linker creates a jump table with the original

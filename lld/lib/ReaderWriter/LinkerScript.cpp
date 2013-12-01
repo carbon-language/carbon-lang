@@ -140,7 +140,7 @@ void Lexer::skipWhitespace() {
         if (!_buffer.empty() && _buffer[0] == '/')
           _buffer = _buffer.drop_front();
 
-        // Scan for /'s. We're done if it is preceeded by a *.
+        // Scan for /'s. We're done if it is preceded by a *.
         while (true) {
           if (_buffer.empty())
             break;
