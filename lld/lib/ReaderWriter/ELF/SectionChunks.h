@@ -790,7 +790,7 @@ void SymbolTable<ELFT>::addUndefinedAtom(Elf_Sym &sym,
 }
 
 /// Add a symbol to the symbol Table, definedAtoms which get added to the symbol
-/// section dont have their virtual addresses set at the time of adding the
+/// section don't have their virtual addresses set at the time of adding the
 /// symbol to the symbol table(Example: dynamic symbols), the addresses needs
 /// to be updated in the table before writing the dynamic symbol table
 /// information
@@ -885,7 +885,7 @@ public:
 
   virtual void finalize() {
     // Defined symbols which have been added into the dynamic symbol table
-    // dont have their addresses known until addresses have been assigned
+    // don't have their addresses known until addresses have been assigned
     // so lets update the symbol values after they have got assigned
     for (auto &ste: this->_symbolTable) {
       const lld::AtomLayout *atomLayout = ste._atomLayout;
@@ -894,7 +894,7 @@ public:
       ste._symbol.st_value = atomLayout->_virtualAddr;
     }
 
-    // Dont sort the symbols
+    // Don't sort the symbols
     SymbolTable<ELFT>::finalize(false);
   }
 

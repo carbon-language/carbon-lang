@@ -1,5 +1,5 @@
 # This tests the functionality of handling BSS symbols
-# BSS symbols dont occupy file content and are associated with typeZeroFill
+# BSS symbols don't occupy file content and are associated with typeZeroFill
 # Any typeZeroFill content wouldnot have space reserved in the file to store
 # its content
 

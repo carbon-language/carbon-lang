@@ -122,7 +122,7 @@ template <class ELFT> void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
 
   auto bssSection = this->_layout->findOutputSection(".bss");
 
-  // If we dont find a bss section, then dont set these values
+  // If we don't find a bss section, then don't set these values
   if (bssSection) {
     (*bssStartAtomIter)->_virtualAddr = bssSection->virtualAddr();
     (*bssEndAtomIter)->_virtualAddr =

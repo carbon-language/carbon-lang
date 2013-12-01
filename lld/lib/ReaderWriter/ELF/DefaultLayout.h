@@ -639,7 +639,7 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
         lookupSectionFlag &= ~(llvm::ELF::SHF_TLS);
 
         Segment<ELFT> *segment;
-        // We need a separate segment for sections that dont have
+        // We need a separate segment for sections that don't have
         // the segment type to be PT_LOAD
         if (segmentType != llvm::ELF::PT_LOAD) {
           const AdditionalSegmentKey key(segmentType, lookupSectionFlag);
@@ -706,7 +706,7 @@ template <class ELFT> void DefaultLayout<ELFT>::assignFileOffsets() {
   uint64_t offset = 0;
   for (auto si : _segments) {
     si->setOrdinal(++ordinal);
-    // Dont assign offsets for segments that are not loadable
+    // Don't assign offsets for segments that are not loadable
     if (si->segmentType() != llvm::ELF::PT_LOAD)
       continue;
     si->assignOffsets(offset);
@@ -742,7 +742,7 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
   while (true) {
     for (auto si : _segments) {
       si->finalize();
-      // Dont add PT_NULL segments into the program header
+      // Don't add PT_NULL segments into the program header
       if (si->segmentType() != llvm::ELF::PT_NULL)
         newSegmentHeaderAdded = _programHeader->addSegment(si);
     }
@@ -778,7 +778,7 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
       } else {
         si->setVAddr(virtualAddress);
         // The first segment has the virtualAddress set to the base address as
-        // we have added the file header and the program header dont align the
+        // we have added the file header and the program header don't align the
         // first segment to the pagesize
         si->assignVirtualAddress(address);
         si->setMemSize(address - virtualAddress);
@@ -841,7 +841,7 @@ DefaultLayout<ELFT>::assignOffsetsForMiscSections() {
   uint64_t fileoffset = 0;
   uint64_t size = 0;
   for (auto si : _segments) {
-    // Dont calculate offsets from non loadable segments
+    // Don't calculate offsets from non loadable segments
     if ((si->segmentType() != llvm::ELF::PT_LOAD) &&
         (si->segmentType() != llvm::ELF::PT_NULL))
       continue;

@@ -570,7 +570,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t &addr) {
         tlsStartAddr += section->memSize();
       section->setMemSize(addr + section->memSize() - section->virtualAddr());
       // TBSS section is special that it doesnot contribute to memory of any
-      // segment, If we see a tbss section, dont add memory size to addr
+      // segment, If we see a tbss section, don't add memory size to addr
       // The fileOffset is automatically taken care of since TBSS section does
       // not endup using file size
       if (section->order() != DefaultLayout<ELFT>::ORDER_TBSS)

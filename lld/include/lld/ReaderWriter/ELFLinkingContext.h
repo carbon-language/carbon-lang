@@ -45,9 +45,9 @@ public:
   /// creates.
   enum class OutputMagic : uint8_t {
     DEFAULT, // The default mode, no specific magic set
-    NMAGIC,  // Disallow shared libraries and dont align sections
+    NMAGIC,  // Disallow shared libraries and don't align sections
              // PageAlign Data, Mark Text Segment/Data segment RW
-    OMAGIC   // Disallow shared libraries and dont align sections,
+    OMAGIC   // Disallow shared libraries and don't align sections,
              // Mark Text Segment/Data segment RW
   };
 

@@ -188,7 +188,7 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   // The dynamic symbol table need to be sorted earlier because the hash
   // table needs to be built using the dynamic symbol table. It would be
   // late to sort the symbols due to that in finalize. In the dynamic symbol
-  // table finalize, we call the symbol table finalize and we dont want to
+  // table finalize, we call the symbol table finalize and we don't want to
   // sort again
   _dynamicSymbolTable->sortSymbols();
 
