@@ -1,5 +1,12 @@
 
-; RUN: llc < %s -march=xcore | FileCheck %s
+; RUN: not llc < %s -march=xcore -code-model=medium 2>&1 | FileCheck %s -check-prefix=BAD_CM
+; RUN: not llc < %s -march=xcore -code-model=kernel 2>&1 | FileCheck %s -check-prefix=BAD_CM
+; BAD_CM: Target only supports CodeModel Small or Large
+
+
+; RUN: llc < %s -march=xcore -code-model=default | FileCheck %s
+; RUN: llc < %s -march=xcore -code-model=small | FileCheck %s
+; RUN: llc < %s -march=xcore -code-model=large | FileCheck %s -check-prefix=LARGE
 
 ; CHECK: .section  .cp.rodata.cst4,"aMc",@progbits,4
 ; CHECK: .long 65536
@@ -25,6 +32,40 @@
 ; CHECK: ldw r1, dp[s+36]
 ; CHECK: add r0, r0, r1
 ; CHECK: retsp 0
+;
+; LARGE: .section .cp.rodata.cst4,"aMc",@progbits,4
+; LARGE: .long 65536
+; LARGE: .section .cp.rodata,"ac",@progbits
+; LARGE: .long l
+; LARGE: .long l+4
+; LARGE: .long l+392
+; LARGE: .long l+396
+; LARGE: .text
+; LARGE-LABEL: f:
+; LARGE: ldc r1, 65532
+; LARGE: add r1, r0, r1
+; LARGE: ldw r1, r1[0]
+; LARGE: ldw r2, cp[.LCPI0_0]
+; LARGE: add r0, r0, r2
+; LARGE: ldw r0, r0[0]
+; LARGE: add r0, r1, r0
+; LARGE: ldw r1, cp[.LCPI0_1]
+; LARGE: ldw r1, r1[0]
+; LARGE: add r0, r0, r1
+; LARGE: ldw r1, cp[.LCPI0_2]
+; LARGE: ldw r1, r1[0]
+; LARGE: add r0, r0, r1
+; LARGE: ldw r1, cp[.LCPI0_3]
+; LARGE: ldw r1, r1[0]
+; LARGE: add r0, r0, r1
+; LARGE: ldw r1, cp[.LCPI0_4]
+; LARGE: ldw r1, r1[0]
+; LARGE: add r0, r0, r1
+; LARGE: ldw r1, dp[s]
+; LARGE: add r0, r0, r1
+; LARGE: ldw r1, dp[s+36]
+; LARGE: add r0, r0, r1
+; LARGE: retsp 0
 define i32 @f(i32* %i) {
 entry:
   %0 = getelementptr inbounds i32* %i, i32 16383
@@ -50,17 +91,39 @@ entry:
 ; CHECK: .section .dp.bss,"awd",@nobits
 ; CHECK-LABEL: l:
 ; CHECK: .space 400
+; LARGE: .section  .dp.bss.large,"awd",@nobits
+; LARGE-LABEL: l:
+; LARGE: .space  400
 @l = global [100 x i32] zeroinitializer
 
 ; CHECK-LABEL: s:
 ; CHECK: .space 40
+; LARGE: .section  .dp.bss,"awd",@nobits
+; LARGE-LABEL: s:
+; LARGE: .space  40
 @s = global [10 x i32] zeroinitializer
 
 ; CHECK: .section .cp.rodata,"ac",@progbits
 ; CHECK-LABEL: cl:
 ; CHECK: .space 400
+; LARGE: .section .cp.rodata.large,"ac",@progbits
+; LARGE-LABEL: cl:
+; LARGE: .space 400
 @cl = constant  [100 x i32] zeroinitializer
 
 ; CHECK-LABEL: cs:
 ; CHECK: .space 40
+; LARGE: .section .cp.rodata,"ac",@progbits
+; LARGE-LABEL: cs:
+; LARGE: .space 40
 @cs = constant  [10 x i32] zeroinitializer
+
+; CHECK: .section  .cp.namedsection,"ac",@progbits
+; CHECK-LABEL: cpsec:
+; CHECK: .long 0
+@cpsec = global i32 0, section ".cp.namedsection"
+
+; CHECK: .section  .dp.namedsection,"awd",@progbits
+; CHECK-LABEL: dpsec:
+; CHECK: .long 0
+@dpsec = global i32 0, section ".dp.namedsection"

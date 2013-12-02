@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/CallingConv.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalAlias.h"
@@ -270,20 +271,35 @@ getGlobalAddressWrapper(SDValue GA, const GlobalValue *GV,
 SDValue XCoreTargetLowering::
 LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const
 {
-  SDLoc DL(Op);
   const GlobalAddressSDNode *GN = cast<GlobalAddressSDNode>(Op);
   const GlobalValue *GV = GN->getGlobal();
+  SDLoc DL(GN);
   int64_t Offset = GN->getOffset();
-  // We can only fold positive offsets that are a multiple of the word size.
-  int64_t FoldedOffset = std::max(Offset & ~3, (int64_t)0);
-  SDValue GA = DAG.getTargetGlobalAddress(GV, DL, MVT::i32, FoldedOffset);
-  GA = getGlobalAddressWrapper(GA, GV, DAG);
-  // Handle the rest of the offset.
-  if (Offset != FoldedOffset) {
-    SDValue Remaining = DAG.getConstant(Offset - FoldedOffset, MVT::i32);
-    GA = DAG.getNode(ISD::ADD, DL, MVT::i32, GA, Remaining);
+  Type *ObjType = GV->getType()->getPointerElementType();
+  if (getTargetMachine().getCodeModel() == CodeModel::Small ||
+      !ObjType->isSized() ||
+      getDataLayout()->getTypeAllocSize(ObjType) < CodeModelLargeSize) {
+    // We can only fold positive offsets that are a multiple of the word size.
+    int64_t FoldedOffset = std::max(Offset & ~3, (int64_t)0);
+    SDValue GA = DAG.getTargetGlobalAddress(GV, DL, MVT::i32, FoldedOffset);
+    GA = getGlobalAddressWrapper(GA, GV, DAG);
+    // Handle the rest of the offset.
+    if (Offset != FoldedOffset) {
+      SDValue Remaining = DAG.getConstant(Offset - FoldedOffset, MVT::i32);
+      GA = DAG.getNode(ISD::ADD, DL, MVT::i32, GA, Remaining);
+    }
+    return GA;
+  } else {
+    // Ideally we would not fold in offset with an index <= 11.
+    Type *Ty = Type::getInt8PtrTy(*DAG.getContext());
+    Constant *GA = ConstantExpr::getBitCast(const_cast<GlobalValue*>(GV), Ty);
+    Ty = Type::getInt32Ty(*DAG.getContext());
+    Constant *Idx = ConstantInt::get(Ty, Offset);
+    Constant *GAI = ConstantExpr::getGetElementPtr(GA, Idx);
+    SDValue CP = DAG.getConstantPool(GAI, MVT::i32);
+    return DAG.getLoad(getPointerTy(), DL, DAG.getEntryNode(), CP,
+                       MachinePointerInfo(), false, false, false, 0);
   }
-  return GA;
 }
 
 SDValue XCoreTargetLowering::
@@ -307,10 +323,10 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) const
   SDValue Res;
   if (CP->isMachineConstantPoolEntry()) {
     Res = DAG.getTargetConstantPool(CP->getMachineCPVal(), PtrVT,
-                                    CP->getAlignment());
+                                    CP->getAlignment(), CP->getOffset());
   } else {
     Res = DAG.getTargetConstantPool(CP->getConstVal(), PtrVT,
-                                    CP->getAlignment());
+                                    CP->getAlignment(), CP->getOffset());
   }
   return DAG.getNode(XCoreISD::CPRelativeWrapper, dl, MVT::i32, Res);
 }
