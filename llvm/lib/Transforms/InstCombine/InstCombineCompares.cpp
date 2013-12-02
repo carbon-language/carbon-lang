@@ -1078,17 +1078,17 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
     }
     break;
 
-  case Instruction::Xor:         // (icmp pred (xor X, XorCST), CI)
-    if (ConstantInt *XorCST = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
+  case Instruction::Xor:         // (icmp pred (xor X, XorCst), CI)
+    if (ConstantInt *XorCst = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
       // If this is a comparison that tests the signbit (X < 0) or (x > -1),
       // fold the xor.
       if ((ICI.getPredicate() == ICmpInst::ICMP_SLT && RHSV == 0) ||
           (ICI.getPredicate() == ICmpInst::ICMP_SGT && RHSV.isAllOnesValue())) {
         Value *CompareVal = LHSI->getOperand(0);
 
-        // If the sign bit of the XorCST is not set, there is no change to
+        // If the sign bit of the XorCst is not set, there is no change to
         // the operation, just stop using the Xor.
-        if (!XorCST->isNegative()) {
+        if (!XorCst->isNegative()) {
           ICI.setOperand(0, CompareVal);
           Worklist.Add(LHSI);
           return &ICI;
@@ -1110,8 +1110,8 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
 
       if (LHSI->hasOneUse()) {
         // (icmp u/s (xor A SignBit), C) -> (icmp s/u A, (xor C SignBit))
-        if (!ICI.isEquality() && XorCST->getValue().isSignBit()) {
-          const APInt &SignBit = XorCST->getValue();
+        if (!ICI.isEquality() && XorCst->getValue().isSignBit()) {
+          const APInt &SignBit = XorCst->getValue();
           ICmpInst::Predicate Pred = ICI.isSigned()
                                          ? ICI.getUnsignedPredicate()
                                          : ICI.getSignedPredicate();
@@ -1120,8 +1120,8 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         }
 
         // (icmp u/s (xor A ~SignBit), C) -> (icmp s/u (xor C ~SignBit), A)
-        if (!ICI.isEquality() && XorCST->isMaxValue(true)) {
-          const APInt &NotSignBit = XorCST->getValue();
+        if (!ICI.isEquality() && XorCst->isMaxValue(true)) {
+          const APInt &NotSignBit = XorCst->getValue();
           ICmpInst::Predicate Pred = ICI.isSigned()
                                          ? ICI.getUnsignedPredicate()
                                          : ICI.getSignedPredicate();
@@ -1134,20 +1134,20 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       // (icmp ugt (xor X, C), ~C) -> (icmp ult X, C)
       //   iff -C is a power of 2
       if (ICI.getPredicate() == ICmpInst::ICMP_UGT &&
-          XorCST->getValue() == ~RHSV && (RHSV + 1).isPowerOf2())
-        return new ICmpInst(ICmpInst::ICMP_ULT, LHSI->getOperand(0), XorCST);
+          XorCst->getValue() == ~RHSV && (RHSV + 1).isPowerOf2())
+        return new ICmpInst(ICmpInst::ICMP_ULT, LHSI->getOperand(0), XorCst);
 
       // (icmp ult (xor X, C), -C) -> (icmp uge X, C)
       //   iff -C is a power of 2
       if (ICI.getPredicate() == ICmpInst::ICMP_ULT &&
-          XorCST->getValue() == -RHSV && RHSV.isPowerOf2())
-        return new ICmpInst(ICmpInst::ICMP_UGE, LHSI->getOperand(0), XorCST);
+          XorCst->getValue() == -RHSV && RHSV.isPowerOf2())
+        return new ICmpInst(ICmpInst::ICMP_UGE, LHSI->getOperand(0), XorCst);
     }
     break;
-  case Instruction::And:         // (icmp pred (and X, AndCST), RHS)
+  case Instruction::And:         // (icmp pred (and X, AndCst), RHS)
     if (LHSI->hasOneUse() && isa<ConstantInt>(LHSI->getOperand(1)) &&
         LHSI->getOperand(0)->hasOneUse()) {
-      ConstantInt *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
+      ConstantInt *AndCst = cast<ConstantInt>(LHSI->getOperand(1));
 
       // If the LHS is an AND of a truncating cast, we can widen the
       // and/compare to be the input width without changing the value
@@ -1158,10 +1158,10 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // Extending a relational comparison when we're checking the sign
         // bit would not work.
         if (ICI.isEquality() ||
-            (!AndCST->isNegative() && RHSV.isNonNegative())) {
+            (!AndCst->isNegative() && RHSV.isNonNegative())) {
           Value *NewAnd =
             Builder->CreateAnd(Cast->getOperand(0),
-                               ConstantExpr::getZExt(AndCST, Cast->getSrcTy()));
+                               ConstantExpr::getZExt(AndCst, Cast->getSrcTy()));
           NewAnd->takeName(LHSI);
           return new ICmpInst(ICI.getPredicate(), NewAnd,
                               ConstantExpr::getZExt(RHS, Cast->getSrcTy()));
@@ -1177,7 +1177,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         if (ICI.isEquality() && RHSV.getActiveBits() <= Ty->getBitWidth()) {
           Value *NewAnd =
             Builder->CreateAnd(Cast->getOperand(0),
-                               ConstantExpr::getTrunc(AndCST, Ty));
+                               ConstantExpr::getTrunc(AndCst, Ty));
           NewAnd->takeName(LHSI);
           return new ICmpInst(ICI.getPredicate(), NewAnd,
                               ConstantExpr::getTrunc(RHS, Ty));
@@ -1195,7 +1195,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       ConstantInt *ShAmt;
       ShAmt = Shift ? dyn_cast<ConstantInt>(Shift->getOperand(1)) : 0;
       Type *Ty = Shift ? Shift->getType() : 0;  // Type of the shift.
-      Type *AndTy = AndCST->getType();          // Type of the and.
+      Type *AndTy = AndCst->getType();          // Type of the and.
 
       // We can fold this as long as we can't shift unknown bits
       // into the mask. This can happen with signed shift
@@ -1215,7 +1215,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
 
           uint32_t BitWidth = AndTy->getPrimitiveSizeInBits();
           if ((APInt::getHighBitsSet(BitWidth, BitWidth-ShAmtVal) &
-               AndCST->getValue()) == 0)
+               AndCst->getValue()) == 0)
             CanFold = true;
         } else if (ShiftOpcode == Instruction::Shl ||
                    ShiftOpcode == Instruction::LShr) {
@@ -1242,12 +1242,12 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
               return ReplaceInstUsesWith(ICI, Builder->getTrue());
           } else {
             ICI.setOperand(1, NewCst);
-            Constant *NewAndCST;
+            Constant *NewAndCst;
             if (Shift->getOpcode() == Instruction::Shl)
-              NewAndCST = ConstantExpr::getLShr(AndCST, ShAmt);
+              NewAndCst = ConstantExpr::getLShr(AndCst, ShAmt);
             else
-              NewAndCST = ConstantExpr::getShl(AndCST, ShAmt);
-            LHSI->setOperand(1, NewAndCST);
+              NewAndCst = ConstantExpr::getShl(AndCst, ShAmt);
+            LHSI->setOperand(1, NewAndCst);
             LHSI->setOperand(0, Shift->getOperand(0));
             Worklist.Add(Shift); // Shift is dead.
             return &ICI;
@@ -1264,10 +1264,10 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // Compute C << Y.
         Value *NS;
         if (Shift->getOpcode() == Instruction::LShr) {
-          NS = Builder->CreateShl(AndCST, Shift->getOperand(1));
+          NS = Builder->CreateShl(AndCst, Shift->getOperand(1));
         } else {
           // Insert a logical shift.
-          NS = Builder->CreateLShr(AndCST, Shift->getOperand(1));
+          NS = Builder->CreateLShr(AndCst, Shift->getOperand(1));
         }
 
         // Compute X & (C << Y).
@@ -1278,12 +1278,12 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         return &ICI;
       }
 
-      // Replace ((X & AndCST) > RHSV) with ((X & AndCST) != 0), if any
-      // bit set in (X & AndCST) will produce a result greater than RHSV.
+      // Replace ((X & AndCst) > RHSV) with ((X & AndCst) != 0), if any
+      // bit set in (X & AndCst) will produce a result greater than RHSV.
       if (ICI.getPredicate() == ICmpInst::ICMP_UGT) {
-        unsigned NTZ = AndCST->getValue().countTrailingZeros();
-        if ((NTZ < AndCST->getBitWidth()) &&
-            APInt::getOneBitSet(AndCST->getBitWidth(), NTZ).ugt(RHSV))
+        unsigned NTZ = AndCst->getValue().countTrailingZeros();
+        if ((NTZ < AndCst->getBitWidth()) &&
+            APInt::getOneBitSet(AndCst->getBitWidth(), NTZ).ugt(RHSV))
           return new ICmpInst(ICmpInst::ICMP_NE, LHSI,
                               Constant::getNullValue(RHS->getType()));
       }
