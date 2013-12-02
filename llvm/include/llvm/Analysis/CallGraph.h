@@ -165,27 +165,10 @@ public:
 /// Typically represents a function in the call graph. There are also special
 /// "null" nodes used to represent theoretical entries in the call graph.
 class CallGraphNode {
-  friend class CallGraph;
-
-  AssertingVH<Function> F;
-
 public:
   /// \brief A pair of the calling instruction (a call or invoke)
   /// and the call graph node being called.
   typedef std::pair<WeakVH, CallGraphNode *> CallRecord;
-
-private:
-  std::vector<CallRecord> CalledFunctions;
-
-  /// \brief The number of times that this CallGraphNode occurs in the
-  /// CalledFunctions array of this or other CallGraphNodes.
-  unsigned NumReferences;
-
-  CallGraphNode(const CallGraphNode &) LLVM_DELETED_FUNCTION;
-  void operator=(const CallGraphNode &) LLVM_DELETED_FUNCTION;
-
-  void DropRef() { --NumReferences; }
-  void AddRef() { ++NumReferences; }
 
 public:
   typedef std::vector<CallRecord> CalledFunctionsVector;
@@ -281,10 +264,46 @@ public:
   /// Note that this method takes linear time, so it should be used sparingly.
   void replaceCallEdge(CallSite CS, CallSite NewCS, CallGraphNode *NewNode);
 
+private:
+  friend class CallGraph;
+
+  AssertingVH<Function> F;
+
+  std::vector<CallRecord> CalledFunctions;
+
+  /// \brief The number of times that this CallGraphNode occurs in the
+  /// CalledFunctions array of this or other CallGraphNodes.
+  unsigned NumReferences;
+
+  CallGraphNode(const CallGraphNode &) LLVM_DELETED_FUNCTION;
+  void operator=(const CallGraphNode &) LLVM_DELETED_FUNCTION;
+
+  void DropRef() { --NumReferences; }
+  void AddRef() { ++NumReferences; }
+
   /// \brief A special function that should only be used by the CallGraph class.
-  //
-  // FIXME: Make this private?
   void allReferencesDropped() { NumReferences = 0; }
+};
+
+/// \brief An analysis pass to compute the \c CallGraph for a \c Module.
+///
+/// This class implements the concept of an analysis pass used by the \c
+/// ModuleAnalysisManager to run an analysis over a module and cache the
+/// resulting data.
+class CallGraphAnalysis {
+public:
+  /// \brief A formulaic typedef to inform clients of the result type.
+  typedef CallGraph Result;
+
+  static void *ID() { return (void *)&PassID; }
+
+  /// \brief Compute the \c CallGraph for the module \c M.
+  ///
+  /// The real work here is done in the \c CallGraph constructor.
+  CallGraph run(Module *M) { return CallGraph(*M); }
+
+private:
+  static char PassID;
 };
 
 /// \brief The \c ModulePass which wraps up a \c CallGraph and the logic to
