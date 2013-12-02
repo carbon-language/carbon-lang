@@ -320,8 +320,7 @@ template<typename T>
 class InternalMmapVector {
  public:
   explicit InternalMmapVector(uptr initial_capacity) {
-    CHECK_GT(initial_capacity, 0);
-    capacity_ = initial_capacity;
+    capacity_ = Min(initial_capacity, (uptr)1);
     size_ = 0;
     data_ = (T *)MmapOrDie(capacity_ * sizeof(T), "InternalMmapVector");
   }
