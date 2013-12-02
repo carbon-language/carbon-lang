@@ -299,7 +299,7 @@ TEST(AddressSanitizer, LargeMallocTest) {
 }
 
 TEST(AddressSanitizer, HugeMallocTest) {
-  if (SANITIZER_WORDSIZE != 64) return;
+  if (SANITIZER_WORDSIZE != 64 || ASAN_AVOID_EXPENSIVE_TESTS) return;
   size_t n_megs = 4100;
   TestLargeMalloc(n_megs << 20);
 }
