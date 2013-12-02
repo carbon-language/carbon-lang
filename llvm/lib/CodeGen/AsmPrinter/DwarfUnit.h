@@ -42,10 +42,10 @@ protected:
   /// Node - MDNode for the compile unit.
   DICompileUnit Node;
 
-  /// CUDie - Compile unit debug information entry.
-  const OwningPtr<DIE> CUDie;
+  /// Unit debug information entry.
+  const OwningPtr<DIE> UnitDie;
 
-  /// Offset of the CUDie from beginning of debug info section.
+  /// Offset of the UnitDie from beginning of debug info section.
   unsigned DebugInfoOffset;
 
   /// Asm - Target of Dwarf emission.
@@ -55,7 +55,7 @@ protected:
   DwarfDebug *DD;
   DwarfUnits *DU;
 
-  /// IndexTyDie - An anonymous type for index type.  Owned by CUDie.
+  /// IndexTyDie - An anonymous type for index type.  Owned by UnitDie.
   DIE *IndexTyDie;
 
   /// MDNodeToDieMap - Tracks the mapping of unit level debug information
@@ -108,7 +108,7 @@ public:
   unsigned getUniqueID() const { return UniqueID; }
   virtual uint16_t getLanguage() const = 0;
   DICompileUnit getNode() const { return Node; }
-  DIE *getCUDie() const { return CUDie.get(); }
+  DIE *getUnitDie() const { return UnitDie.get(); }
   const StringMap<const DIE *> &getGlobalNames() const { return GlobalNames; }
   const StringMap<const DIE *> &getGlobalTypes() const { return GlobalTypes; }
 
@@ -130,7 +130,7 @@ public:
   void setDebugInfoOffset(unsigned DbgInfoOff) { DebugInfoOffset = DbgInfoOff; }
 
   /// hasContent - Return true if this compile unit has something to write out.
-  bool hasContent() const { return !CUDie->getChildren().empty(); }
+  bool hasContent() const { return !UnitDie->getChildren().empty(); }
 
   /// getParentContextString - Get a string containing the language specific
   /// context for a global name.
@@ -170,7 +170,7 @@ public:
 
   /// addDie - Adds or interns the DIE to the compile unit.
   ///
-  void addDie(DIE *Buffer) { CUDie->addChild(Buffer); }
+  void addDie(DIE *Buffer) { UnitDie->addChild(Buffer); }
 
   /// addFlag - Add a flag that is true to the DIE.
   void addFlag(DIE *Die, dwarf::Attribute Attribute);

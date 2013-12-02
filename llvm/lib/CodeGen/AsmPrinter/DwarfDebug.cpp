@@ -341,26 +341,26 @@ static bool SectionSort(const MCSection *A, const MCSection *B) {
 // TODO: Determine whether or not we should add names for programs
 // that do not have a DW_AT_name or DW_AT_linkage_name field - this
 // is only slightly different than the lookup of non-standard ObjC names.
-static void addSubprogramNames(Unit *TheCU, DISubprogram SP, DIE *Die) {
+static void addSubprogramNames(Unit *TheU, DISubprogram SP, DIE *Die) {
   if (!SP.isDefinition())
     return;
-  TheCU->addAccelName(SP.getName(), Die);
+  TheU->addAccelName(SP.getName(), Die);
 
   // If the linkage name is different than the name, go ahead and output
   // that as well into the name table.
   if (SP.getLinkageName() != "" && SP.getName() != SP.getLinkageName())
-    TheCU->addAccelName(SP.getLinkageName(), Die);
+    TheU->addAccelName(SP.getLinkageName(), Die);
 
   // If this is an Objective-C selector name add it to the ObjC accelerator
   // too.
   if (isObjCClass(SP.getName())) {
     StringRef Class, Category;
     getObjCClassCategory(SP.getName(), Class, Category);
-    TheCU->addAccelObjC(Class, Die);
+    TheU->addAccelObjC(Class, Die);
     if (Category != "")
-      TheCU->addAccelObjC(Category, Die);
+      TheU->addAccelObjC(Category, Die);
     // Also add the base method name to the name table.
-    TheCU->addAccelName(getObjCMethodName(SP.getName()), Die);
+    TheU->addAccelName(getObjCMethodName(SP.getName()), Die);
   }
 }
 
@@ -390,7 +390,8 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU, DISubprogram SP) {
   // concrete DIE twice.
   if (DIE *AbsSPDIE = AbstractSPDies.lookup(SP)) {
     // Pick up abstract subprogram DIE.
-    SPDie = SPCU->createAndAddDIE(dwarf::DW_TAG_subprogram, *SPCU->getCUDie());
+    SPDie =
+        SPCU->createAndAddDIE(dwarf::DW_TAG_subprogram, *SPCU->getUnitDie());
     SPCU->addDIEEntry(SPDie, dwarf::DW_AT_abstract_origin, AbsSPDIE);
   } else {
     DISubprogram SPDecl = SP.getFunctionDeclaration();
@@ -421,8 +422,8 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU, DISubprogram SP) {
               SPCU->addDIEEntry(SPDie, dwarf::DW_AT_object_pointer, Arg);
           }
         DIE *SPDeclDie = SPDie;
-        SPDie =
-            SPCU->createAndAddDIE(dwarf::DW_TAG_subprogram, *SPCU->getCUDie());
+        SPDie = SPCU->createAndAddDIE(dwarf::DW_TAG_subprogram,
+                                      *SPCU->getUnitDie());
         SPCU->addDIEEntry(SPDie, dwarf::DW_AT_specification, SPDeclDie);
       }
     }
@@ -1066,28 +1067,27 @@ void DwarfDebug::finalizeModuleInfo() {
   for (SmallVectorImpl<Unit *>::const_iterator I = getUnits().begin(),
                                                E = getUnits().end();
        I != E; ++I) {
-    Unit *TheCU = *I;
+    Unit *TheU = *I;
     // Emit DW_AT_containing_type attribute to connect types with their
     // vtable holding type.
-    TheCU->constructContainingTypeDIEs();
+    TheU->constructContainingTypeDIEs();
 
     // If we're splitting the dwarf out now that we've got the entire
     // CU then construct a skeleton CU based upon it.
     if (useSplitDwarf() &&
-        TheCU->getCUDie()->getTag() == dwarf::DW_TAG_compile_unit) {
+        TheU->getUnitDie()->getTag() == dwarf::DW_TAG_compile_unit) {
       uint64_t ID = 0;
       if (GenerateCUHash) {
         DIEHash CUHash;
-        ID = CUHash.computeCUSignature(*TheCU->getCUDie());
+        ID = CUHash.computeCUSignature(*TheU->getUnitDie());
       }
       // This should be a unique identifier when we want to build .dwp files.
-      TheCU->addUInt(TheCU->getCUDie(), dwarf::DW_AT_GNU_dwo_id,
-                     dwarf::DW_FORM_data8, ID);
+      TheU->addUInt(TheU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
+                    dwarf::DW_FORM_data8, ID);
       // Now construct the skeleton CU associated.
-      CompileUnit *SkCU =
-          constructSkeletonCU(static_cast<CompileUnit *>(TheCU));
+      CompileUnit *SkCU = constructSkeletonCU(static_cast<CompileUnit *>(TheU));
       // This should be a unique identifier when we want to build .dwp files.
-      SkCU->addUInt(SkCU->getCUDie(), dwarf::DW_AT_GNU_dwo_id,
+      SkCU->addUInt(SkCU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
                     dwarf::DW_FORM_data8, ID);
     }
   }
@@ -1965,7 +1965,7 @@ void DwarfUnits::computeSizeAndOffsets() {
 
     // EndOffset here is CU-relative, after laying out
     // all of the CU DIE.
-    unsigned EndOffset = computeSizeAndOffset((*I)->getCUDie(), Offset);
+    unsigned EndOffset = computeSizeAndOffset((*I)->getUnitDie(), Offset);
     SecOffset += EndOffset;
   }
 }
@@ -2134,22 +2134,22 @@ void DwarfUnits::emitUnits(DwarfDebug *DD, const MCSection *USection,
   Asm->OutStreamer.SwitchSection(USection);
   for (SmallVectorImpl<Unit *>::iterator I = CUs.begin(), E = CUs.end(); I != E;
        ++I) {
-    Unit *TheCU = *I;
-    DIE *Die = TheCU->getCUDie();
+    Unit *TheU = *I;
+    DIE *Die = TheU->getUnitDie();
 
     // Emit the compile units header.
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol(USection->getLabelBeginName(),
-                                                  TheCU->getUniqueID()));
+    Asm->OutStreamer.EmitLabel(
+        Asm->GetTempSymbol(USection->getLabelBeginName(), TheU->getUniqueID()));
 
     // Emit size of content not including length itself
     Asm->OutStreamer.AddComment("Length of Unit");
-    Asm->EmitInt32(TheCU->getHeaderSize() + Die->getSize());
+    Asm->EmitInt32(TheU->getHeaderSize() + Die->getSize());
 
-    TheCU->emitHeader(ASection, ASectionSym);
+    TheU->emitHeader(ASection, ASectionSym);
 
     DD->emitDIE(Die, Abbreviations);
     Asm->OutStreamer.EmitLabel(
-        Asm->GetTempSymbol(USection->getLabelEndName(), TheCU->getUniqueID()));
+        Asm->GetTempSymbol(USection->getLabelEndName(), TheU->getUniqueID()));
   }
 }
 
@@ -2232,8 +2232,8 @@ void DwarfDebug::emitAccelNames() {
   for (SmallVectorImpl<Unit *>::const_iterator I = getUnits().begin(),
                                                E = getUnits().end();
        I != E; ++I) {
-    Unit *TheCU = *I;
-    const StringMap<std::vector<const DIE *> > &Names = TheCU->getAccelNames();
+    Unit *TheU = *I;
+    const StringMap<std::vector<const DIE *> > &Names = TheU->getAccelNames();
     for (StringMap<std::vector<const DIE *> >::const_iterator
              GI = Names.begin(),
              GE = Names.end();
@@ -2265,8 +2265,8 @@ void DwarfDebug::emitAccelObjC() {
   for (SmallVectorImpl<Unit *>::const_iterator I = getUnits().begin(),
                                                E = getUnits().end();
        I != E; ++I) {
-    Unit *TheCU = *I;
-    const StringMap<std::vector<const DIE *> > &Names = TheCU->getAccelObjC();
+    Unit *TheU = *I;
+    const StringMap<std::vector<const DIE *> > &Names = TheU->getAccelObjC();
     for (StringMap<std::vector<const DIE *> >::const_iterator
              GI = Names.begin(),
              GE = Names.end();
@@ -2297,9 +2297,9 @@ void DwarfDebug::emitAccelNamespaces() {
   for (SmallVectorImpl<Unit *>::const_iterator I = getUnits().begin(),
                                                E = getUnits().end();
        I != E; ++I) {
-    Unit *TheCU = *I;
+    Unit *TheU = *I;
     const StringMap<std::vector<const DIE *> > &Names =
-        TheCU->getAccelNamespace();
+        TheU->getAccelNamespace();
     for (StringMap<std::vector<const DIE *> >::const_iterator
              GI = Names.begin(),
              GE = Names.end();
@@ -2336,9 +2336,9 @@ void DwarfDebug::emitAccelTypes() {
   for (SmallVectorImpl<Unit *>::const_iterator I = getUnits().begin(),
                                                E = getUnits().end();
        I != E; ++I) {
-    Unit *TheCU = *I;
+    Unit *TheU = *I;
     const StringMap<std::vector<std::pair<const DIE *, unsigned> > > &Names =
-        TheCU->getAccelTypes();
+        TheU->getAccelTypes();
     for (StringMap<
              std::vector<std::pair<const DIE *, unsigned> > >::const_iterator
              GI = Names.begin(),
@@ -2433,8 +2433,8 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
   for (SmallVectorImpl<Unit *>::const_iterator I = getUnits().begin(),
                                                E = getUnits().end();
        I != E; ++I) {
-    Unit *TheCU = *I;
-    unsigned ID = TheCU->getUniqueID();
+    Unit *TheU = *I;
+    unsigned ID = TheU->getUniqueID();
 
     // Start the dwarf pubnames section.
     Asm->OutStreamer.SwitchSection(PSec);
@@ -2442,7 +2442,7 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
     // Emit a label so we can reference the beginning of this pubname section.
     if (GnuStyle)
       Asm->OutStreamer.EmitLabel(
-          Asm->GetTempSymbol("gnu_pubnames", TheCU->getUniqueID()));
+          Asm->GetTempSymbol("gnu_pubnames", TheU->getUniqueID()));
 
     // Emit the header.
     Asm->OutStreamer.AddComment("Length of Public Names Info");
@@ -2464,7 +2464,7 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
                              4);
 
     // Emit the pubnames for this compilation unit.
-    const StringMap<const DIE *> &Globals = TheCU->getGlobalNames();
+    const StringMap<const DIE *> &Globals = TheU->getGlobalNames();
     for (StringMap<const DIE *>::const_iterator GI = Globals.begin(),
                                                 GE = Globals.end();
          GI != GE; ++GI) {
@@ -2475,7 +2475,7 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
       Asm->EmitInt32(Entity->getOffset());
 
       if (GnuStyle) {
-        dwarf::PubIndexEntryDescriptor Desc = computeIndexValue(TheCU, Entity);
+        dwarf::PubIndexEntryDescriptor Desc = computeIndexValue(TheU, Entity);
         Asm->OutStreamer.AddComment(
             Twine("Kind: ") + dwarf::GDBIndexEntryKindString(Desc.Kind) + ", " +
             dwarf::GDBIndexEntryLinkageString(Desc.Linkage));
@@ -2502,23 +2502,23 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
   for (SmallVectorImpl<Unit *>::const_iterator I = getUnits().begin(),
                                                E = getUnits().end();
        I != E; ++I) {
-    Unit *TheCU = *I;
+    Unit *TheU = *I;
     // Start the dwarf pubtypes section.
     Asm->OutStreamer.SwitchSection(PSec);
 
     // Emit a label so we can reference the beginning of this pubtype section.
     if (GnuStyle)
       Asm->OutStreamer.EmitLabel(
-          Asm->GetTempSymbol("gnu_pubtypes", TheCU->getUniqueID()));
+          Asm->GetTempSymbol("gnu_pubtypes", TheU->getUniqueID()));
 
     // Emit the header.
     Asm->OutStreamer.AddComment("Length of Public Types Info");
     Asm->EmitLabelDifference(
-        Asm->GetTempSymbol("pubtypes_end", TheCU->getUniqueID()),
-        Asm->GetTempSymbol("pubtypes_begin", TheCU->getUniqueID()), 4);
+        Asm->GetTempSymbol("pubtypes_end", TheU->getUniqueID()),
+        Asm->GetTempSymbol("pubtypes_begin", TheU->getUniqueID()), 4);
 
     Asm->OutStreamer.EmitLabel(
-        Asm->GetTempSymbol("pubtypes_begin", TheCU->getUniqueID()));
+        Asm->GetTempSymbol("pubtypes_begin", TheU->getUniqueID()));
 
     if (Asm->isVerbose())
       Asm->OutStreamer.AddComment("DWARF Version");
@@ -2526,16 +2526,16 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
 
     Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
     Asm->EmitSectionOffset(
-        Asm->GetTempSymbol(ISec->getLabelBeginName(), TheCU->getUniqueID()),
+        Asm->GetTempSymbol(ISec->getLabelBeginName(), TheU->getUniqueID()),
         DwarfInfoSectionSym);
 
     Asm->OutStreamer.AddComment("Compilation Unit Length");
     Asm->EmitLabelDifference(
-        Asm->GetTempSymbol(ISec->getLabelEndName(), TheCU->getUniqueID()),
-        Asm->GetTempSymbol(ISec->getLabelBeginName(), TheCU->getUniqueID()), 4);
+        Asm->GetTempSymbol(ISec->getLabelEndName(), TheU->getUniqueID()),
+        Asm->GetTempSymbol(ISec->getLabelBeginName(), TheU->getUniqueID()), 4);
 
     // Emit the pubtypes.
-    const StringMap<const DIE *> &Globals = TheCU->getGlobalTypes();
+    const StringMap<const DIE *> &Globals = TheU->getGlobalTypes();
     for (StringMap<const DIE *>::const_iterator GI = Globals.begin(),
                                                 GE = Globals.end();
          GI != GE; ++GI) {
@@ -2547,7 +2547,7 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
       Asm->EmitInt32(Entity->getOffset());
 
       if (GnuStyle) {
-        dwarf::PubIndexEntryDescriptor Desc = computeIndexValue(TheCU, Entity);
+        dwarf::PubIndexEntryDescriptor Desc = computeIndexValue(TheU, Entity);
         Asm->OutStreamer.AddComment(
             Twine("Kind: ") + dwarf::GDBIndexEntryKindString(Desc.Kind) + ", " +
             dwarf::GDBIndexEntryLinkageString(Desc.Linkage));
@@ -2564,7 +2564,7 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
     Asm->OutStreamer.AddComment("End Mark");
     Asm->EmitInt32(0);
     Asm->OutStreamer.EmitLabel(
-        Asm->GetTempSymbol("pubtypes_end", TheCU->getUniqueID()));
+        Asm->GetTempSymbol("pubtypes_end", TheU->getUniqueID()));
   }
 }
 

@@ -37,10 +37,10 @@ static cl::opt<bool> GenerateTypeUnits("generate-type-units", cl::Hidden,
                                        cl::desc("Generate DWARF4 type units."),
                                        cl::init(false));
 
-/// Unit - Compile unit constructor.
+/// Unit - Unit constructor.
 Unit::Unit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
            DwarfDebug *DW, DwarfUnits *DWU)
-    : UniqueID(UID), Node(Node), CUDie(D), DebugInfoOffset(0), Asm(A), DD(DW),
+    : UniqueID(UID), Node(Node), UnitDie(D), DebugInfoOffset(0), Asm(A), DD(DW),
       DU(DWU), IndexTyDie(0) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
 }
@@ -322,9 +322,9 @@ void Unit::addDIEEntry(DIE *Die, dwarf::Attribute Attribute, DIEEntry *Entry) {
   const DIE *EntryCU = Entry->getEntry()->getUnitOrNull();
   if (!DieCU)
     // We assume that Die belongs to this CU, if it is not linked to any CU yet.
-    DieCU = getCUDie();
+    DieCU = getUnitDie();
   if (!EntryCU)
-    EntryCU = getCUDie();
+    EntryCU = getUnitDie();
   Die->addValue(Attribute, EntryCU == DieCU ? dwarf::DW_FORM_ref4
                                             : dwarf::DW_FORM_ref_addr,
                 Entry);
@@ -894,7 +894,7 @@ void Unit::addTemplateParams(DIE &Buffer, DIArray TParams) {
 /// getOrCreateContextDIE - Get context owner's DIE.
 DIE *Unit::getOrCreateContextDIE(DIScope Context) {
   if (!Context || Context.isFile())
-    return getCUDie();
+    return getUnitDie();
   if (Context.isType())
     return getOrCreateTypeDIE(DIType(Context));
   if (Context.isNameSpace())
@@ -1413,7 +1413,7 @@ DIE *Unit::getOrCreateSubprogramDIE(DISubprogram SP) {
   DISubprogram SPDecl = SP.getFunctionDeclaration();
   if (SPDecl.isSubprogram())
     // Add subprogram definitions to the CU die directly.
-    ContextDIE = CUDie.get();
+    ContextDIE = UnitDie.get();
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
   SPDie = createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE, SP);
@@ -1616,7 +1616,7 @@ void CompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
     if (GVContext && GV.isDefinition() && !GVContext.isCompileUnit() &&
         !GVContext.isFile() && !DD->isSubprogramContext(GVContext)) {
       // Create specification DIE.
-      VariableSpecDIE = createAndAddDIE(dwarf::DW_TAG_variable, *CUDie);
+      VariableSpecDIE = createAndAddDIE(dwarf::DW_TAG_variable, *UnitDie);
       addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification, VariableDIE);
       addBlock(VariableSpecDIE, dwarf::DW_AT_location, Block);
       // A static member's declaration is already flagged as such.
@@ -1712,7 +1712,7 @@ void Unit::constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy) {
   DIE *IdxTy = getIndexTyDie();
   if (!IdxTy) {
     // Construct an anonymous type for index type.
-    IdxTy = createAndAddDIE(dwarf::DW_TAG_base_type, *CUDie.get());
+    IdxTy = createAndAddDIE(dwarf::DW_TAG_base_type, *UnitDie);
     addString(IdxTy, dwarf::DW_AT_name, "int");
     addUInt(IdxTy, dwarf::DW_AT_byte_size, None, sizeof(int32_t));
     addUInt(IdxTy, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
