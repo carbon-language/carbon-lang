@@ -48,7 +48,7 @@ class RefState {
               Allocated,
               // Reference to released/freed memory.
               Released,
-              // The responsibility for freeing resources has transfered from
+              // The responsibility for freeing resources has transferred from
               // this reference. A relinquished symbol should not be freed.
               Relinquished,
               // We are no longer guaranteed to have observed all manipulations
@@ -2130,7 +2130,7 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
       StackHint = new StackHintGeneratorForSymbol(Sym,
                                              "Returning; memory was released");
     } else if (isRelinquished(RS, RSPrev, S)) {
-      Msg = "Memory ownership is transfered";
+      Msg = "Memory ownership is transferred";
       StackHint = new StackHintGeneratorForSymbol(Sym, "");
     } else if (isReallocFailedCheck(RS, RSPrev, S)) {
       Mode = ReallocationFailed;
