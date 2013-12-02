@@ -3143,76 +3143,38 @@ static void handleNoDebugAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                          Attr.getAttributeSpellingListIndex()));
 }
 
-static void handleConstantAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (S.LangOpts.CUDA) {
-    D->addAttr(::new (S.Context)
-               CUDAConstantAttr(Attr.getRange(), S.Context,
-                                Attr.getAttributeSpellingListIndex()));
-  } else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
-  }
-}
-
 static void handleDeviceAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (S.LangOpts.CUDA) {
-    // check the attribute arguments.
-    if (Attr.getNumArgs() != 0) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-        << Attr.getName() << 0;
-      return;
-    }
-
-    D->addAttr(::new (S.Context)
-               CUDADeviceAttr(Attr.getRange(), S.Context,
-                              Attr.getAttributeSpellingListIndex()));
-  } else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 0;
+    return;
   }
+
+  D->addAttr(::new (S.Context)
+              CUDADeviceAttr(Attr.getRange(), S.Context,
+                            Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleGlobalAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (S.LangOpts.CUDA) {
-    FunctionDecl *FD = cast<FunctionDecl>(D);
-    if (!FD->getResultType()->isVoidType()) {
-      TypeLoc TL = FD->getTypeSourceInfo()->getTypeLoc().IgnoreParens();
-      if (FunctionTypeLoc FTL = TL.getAs<FunctionTypeLoc>()) {
-        S.Diag(FD->getTypeSpecStartLoc(), diag::err_kern_type_not_void_return)
-          << FD->getType()
-          << FixItHint::CreateReplacement(FTL.getResultLoc().getSourceRange(),
-                                          "void");
-      } else {
-        S.Diag(FD->getTypeSpecStartLoc(), diag::err_kern_type_not_void_return)
-          << FD->getType();
-      }
-      return;
+  FunctionDecl *FD = cast<FunctionDecl>(D);
+  if (!FD->getResultType()->isVoidType()) {
+    TypeLoc TL = FD->getTypeSourceInfo()->getTypeLoc().IgnoreParens();
+    if (FunctionTypeLoc FTL = TL.getAs<FunctionTypeLoc>()) {
+      S.Diag(FD->getTypeSpecStartLoc(), diag::err_kern_type_not_void_return)
+        << FD->getType()
+        << FixItHint::CreateReplacement(FTL.getResultLoc().getSourceRange(),
+                                        "void");
+    } else {
+      S.Diag(FD->getTypeSpecStartLoc(), diag::err_kern_type_not_void_return)
+        << FD->getType();
     }
-
-    D->addAttr(::new (S.Context)
-               CUDAGlobalAttr(Attr.getRange(), S.Context,
-                              Attr.getAttributeSpellingListIndex()));
-  } else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+    return;
   }
-}
 
-static void handleHostAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (S.LangOpts.CUDA) {
-    D->addAttr(::new (S.Context)
-               CUDAHostAttr(Attr.getRange(), S.Context,
+  D->addAttr(::new (S.Context)
+              CUDAGlobalAttr(Attr.getRange(), S.Context,
                             Attr.getAttributeSpellingListIndex()));
-  } else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
-  }
-}
-
-static void handleSharedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (S.LangOpts.CUDA) {
-    D->addAttr(::new (S.Context)
-               CUDASharedAttr(Attr.getRange(), S.Context,
-                              Attr.getAttributeSpellingListIndex()));
-  } else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
-  }
 }
 
 static void handleGNUInlineAttr(Sema &S, Decl *D, const AttributeList &Attr) {
@@ -3443,32 +3405,28 @@ bool Sema::CheckRegparmAttr(const AttributeList &Attr, unsigned &numParams) {
 }
 
 static void handleLaunchBoundsAttr(Sema &S, Decl *D, const AttributeList &Attr){
-  if (S.LangOpts.CUDA) {
-    // check the attribute arguments.
-    if (Attr.getNumArgs() != 1 && Attr.getNumArgs() != 2) {
-      // FIXME: 0 is not okay.
-      S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 2;
-      return;
-    }
-
-    if (!isFunctionOrMethod(D)) {
-      S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-        << Attr.getName() << ExpectedFunctionOrMethod;
-      return;
-    }
-
-    uint32_t MaxThreads, MinBlocks;
-    if (!checkUInt32Argument(S, Attr, Attr.getArgAsExpr(0), MaxThreads, 1) ||
-        !checkUInt32Argument(S, Attr, Attr.getArgAsExpr(1), MinBlocks, 2))
-      return;
-
-    D->addAttr(::new (S.Context)
-               CUDALaunchBoundsAttr(Attr.getRange(), S.Context,
-                                    MaxThreads, MinBlocks,
-                                    Attr.getAttributeSpellingListIndex()));
-  } else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "launch_bounds";
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 1 && Attr.getNumArgs() != 2) {
+    // FIXME: 0 is not okay.
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 2;
+    return;
   }
+
+  if (!isFunctionOrMethod(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFunctionOrMethod;
+    return;
+  }
+
+  uint32_t MaxThreads, MinBlocks;
+  if (!checkUInt32Argument(S, Attr, Attr.getArgAsExpr(0), MaxThreads, 1) ||
+      !checkUInt32Argument(S, Attr, Attr.getArgAsExpr(1), MinBlocks, 2))
+    return;
+
+  D->addAttr(::new (S.Context)
+              CUDALaunchBoundsAttr(Attr.getRange(), S.Context,
+                                  MaxThreads, MinBlocks,
+                                  Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleArgumentWithTypeTagAttr(Sema &S, Decl *D,
@@ -3847,25 +3805,12 @@ static void handleObjCPreciseLifetimeAttr(Sema &S, Decl *D,
 // Microsoft specific attribute handlers.
 //===----------------------------------------------------------------------===//
 
-// Check if MS extensions or some other language extensions are enabled.  If
-// not, issue a diagnostic that the given attribute is unused.
-static bool checkMicrosoftExt(Sema &S, const AttributeList &Attr,
-                              bool OtherExtension = false) {
-  if (S.LangOpts.MicrosoftExt || OtherExtension)
-    return true;
-  S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
-  return false;
-}
-
 static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (!S.LangOpts.CPlusPlus) {
     S.Diag(Attr.getLoc(), diag::err_attribute_not_supported_in_lang)
       << Attr.getName() << AttributeLangSupport::C;
     return;
   }
-
-  if (!checkMicrosoftExt(S, Attr, S.LangOpts.Borland))
-    return;
 
   if (!isa<CXXRecordDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
@@ -3905,54 +3850,6 @@ static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                                         Attr.getAttributeSpellingListIndex()));
 }
 
-static void handleInheritanceAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!checkMicrosoftExt(S, Attr))
-    return;
-
-  AttributeList::Kind Kind = Attr.getKind();
-  if (Kind == AttributeList::AT_SingleInheritance)
-    D->addAttr(
-        ::new (S.Context)
-               SingleInheritanceAttr(Attr.getRange(), S.Context,
-                                     Attr.getAttributeSpellingListIndex()));
-  else if (Kind == AttributeList::AT_MultipleInheritance)
-    D->addAttr(
-        ::new (S.Context)
-               MultipleInheritanceAttr(Attr.getRange(), S.Context,
-                                       Attr.getAttributeSpellingListIndex()));
-  else if (Kind == AttributeList::AT_VirtualInheritance)
-    D->addAttr(
-        ::new (S.Context)
-               VirtualInheritanceAttr(Attr.getRange(), S.Context,
-                                      Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleWin64Attr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!checkMicrosoftExt(S, Attr))
-    return;
-
-  D->addAttr(::new (S.Context) Win64Attr(Attr.getRange(), S.Context,
-                                       Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleForceInlineAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!checkMicrosoftExt(S, Attr))
-    return;
-  D->addAttr(::new (S.Context)
-             ForceInlineAttr(Attr.getRange(), S.Context,
-                             Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleSelectAnyAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!checkMicrosoftExt(S, Attr))
-    return;
-  // Check linkage after possibly merging declaratinos.  See
-  // checkAttributesAfterMerging().
-  D->addAttr(::new (S.Context)
-             SelectAnyAttr(Attr.getRange(), S.Context,
-                           Attr.getAttributeSpellingListIndex()));
-}
-
 /// Handles semantic checking for features that are common to all attributes,
 /// such as checking whether a parameter was properly specified, or the correct
 /// number of arguments were passed, etc.
@@ -3967,6 +3864,11 @@ static bool handleCommonAttributeFeatures(Sema &S, Scope *scope, Decl *D,
       Attr.getKind() == AttributeList::UnknownAttribute ||
       Attr.getKind() == AttributeList::IgnoredAttribute)
     return false;
+
+  // Check whether the attribute requires specific language extensions to be
+  // enabled.
+  if (!Attr.diagnoseLangOpts(S))
+    return true;
 
   // If there are no optional arguments, then checking for the argument count
   // is trivial.
@@ -4034,7 +3936,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleDependencyAttr(S, scope, D, Attr);
     break;
   case AttributeList::AT_Common:      handleCommonAttr      (S, D, Attr); break;
-  case AttributeList::AT_CUDAConstant:handleConstantAttr    (S, D, Attr); break;
+  case AttributeList::AT_CUDAConstant:
+  handleSimpleAttribute<CUDAConstantAttr>(S, D, Attr); break;
   case AttributeList::AT_Constructor: handleConstructorAttr (S, D, Attr); break;
   case AttributeList::AT_CXX11NoReturn:
   handleSimpleAttribute<CXX11NoReturnAttr>(S, D, Attr); break;
@@ -4052,7 +3955,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_FormatArg:   handleFormatArgAttr   (S, D, Attr); break;
   case AttributeList::AT_CUDAGlobal:  handleGlobalAttr      (S, D, Attr); break;
   case AttributeList::AT_CUDADevice:  handleDeviceAttr      (S, D, Attr); break;
-  case AttributeList::AT_CUDAHost:    handleHostAttr        (S, D, Attr); break;
+  case AttributeList::AT_CUDAHost:
+    handleSimpleAttribute<CUDAHostAttr>(S, D, Attr); break;
   case AttributeList::AT_GNUInline:   handleGNUInlineAttr   (S, D, Attr); break;
   case AttributeList::AT_CUDALaunchBounds:
     handleLaunchBoundsAttr(S, D, Attr);
@@ -4073,7 +3977,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleSimpleAttribute<NakedAttr>(S, D, Attr); break;
   case AttributeList::AT_NoReturn:    handleNoReturnAttr    (S, D, Attr); break;
   case AttributeList::AT_NoThrow:     handleNothrowAttr     (S, D, Attr); break;
-  case AttributeList::AT_CUDAShared:  handleSharedAttr      (S, D, Attr); break;
+  case AttributeList::AT_CUDAShared:
+    handleSimpleAttribute<CUDASharedAttr>(S, D, Attr); break;
   case AttributeList::AT_VecReturn:   handleVecReturnAttr   (S, D, Attr); break;
 
   case AttributeList::AT_ObjCOwnership:
@@ -4206,18 +4111,17 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleUuidAttr(S, D, Attr);
     break;
   case AttributeList::AT_SingleInheritance:
+    handleSimpleAttribute<SingleInheritanceAttr>(S, D, Attr); break;
   case AttributeList::AT_MultipleInheritance:
+    handleSimpleAttribute<MultipleInheritanceAttr>(S, D, Attr); break;
   case AttributeList::AT_VirtualInheritance:
-    handleInheritanceAttr(S, D, Attr);
-    break;
+    handleSimpleAttribute<VirtualInheritanceAttr>(S, D, Attr); break;
   case AttributeList::AT_Win64:
-    handleWin64Attr(S, D, Attr); break;
+    handleSimpleAttribute<Win64Attr>(S, D, Attr); break;
   case AttributeList::AT_ForceInline:
-    handleForceInlineAttr(S, D, Attr);
-    break;
+    handleSimpleAttribute<ForceInlineAttr>(S, D, Attr); break;
   case AttributeList::AT_SelectAny:
-    handleSelectAnyAttr(S, D, Attr);
-    break;
+    handleSimpleAttribute<SelectAnyAttr>(S, D, Attr); break;
 
   // Thread safety attributes:
   case AttributeList::AT_AssertExclusiveLock:

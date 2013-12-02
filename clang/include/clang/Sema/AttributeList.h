@@ -468,6 +468,7 @@ public:
   unsigned getMinArgs() const;
   unsigned getMaxArgs() const;
   bool diagnoseAppertainsTo(class Sema &S, const Decl *D) const;
+  bool diagnoseLangOpts(class Sema &S) const;
 };
 
 /// A factory, from which one makes pools, from which one creates

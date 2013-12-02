@@ -155,6 +155,7 @@ struct ParsedAttrInfo {
 
   bool (*DiagAppertainsToDecl)(Sema &S, const AttributeList &Attr,
                                const Decl *);
+  bool (*DiagLangOpts)(Sema &S, const AttributeList &Attr);
 };
 
 namespace {
@@ -179,4 +180,8 @@ bool AttributeList::hasCustomParsing() const {
 
 bool AttributeList::diagnoseAppertainsTo(Sema &S, const Decl *D) const {
   return getInfo(*this).DiagAppertainsToDecl(S, *this, D);
+}
+
+bool AttributeList::diagnoseLangOpts(Sema &S) const {
+  return getInfo(*this).DiagLangOpts(S, *this);
 }
