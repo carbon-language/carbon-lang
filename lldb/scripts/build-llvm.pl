@@ -64,7 +64,6 @@ our @archive_files = (
     "$llvm_configuration/lib/libclangSema.a",
     "$llvm_configuration/lib/libclangSerialization.a",
     "$llvm_configuration/lib/libLLVMAnalysis.a",
-    "$llvm_configuration/lib/libLLVMArchive.a",
     "$llvm_configuration/lib/libLLVMARMAsmParser.a",
     "$llvm_configuration/lib/libLLVMARMAsmPrinter.a",
     "$llvm_configuration/lib/libLLVMARMCodeGen.a",
@@ -205,7 +204,7 @@ sub build_llvm
                 if (!-d $llvm_dstroot_arch_bin)
                 {
                     do_command ("mkdir -p '$llvm_dstroot_arch_bin'", "making llvm build arch bin directory '$llvm_dstroot_arch_bin'", 1);
-                    my @tools = ("ar", "nm", "ranlib", "strip", "lipo", "ld", "as");
+                    my @tools = ("ar", "nm", "strip", "lipo", "ld", "as");
                     my $script_mode = 0755;
                     my $prog;
                     for $prog (@tools)
@@ -390,7 +389,6 @@ sub create_single_llvm_archive_for_arch
     }
     close (FILES);
     do_command ("libtool -static -o '$arch_output_file' -filelist '$files'");
-    do_command ("ranlib '$arch_output_file'");
 
     foreach $object_dir (@object_dirs)
     {
