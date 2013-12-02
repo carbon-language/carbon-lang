@@ -61,7 +61,7 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetHazardRecognizer(
   if (Directive == PPC::DIR_440 || Directive == PPC::DIR_A2 ||
       Directive == PPC::DIR_E500mc || Directive == PPC::DIR_E5500) {
     const InstrItineraryData *II = TM->getInstrItineraryData();
-    return new PPCScoreboardHazardRecognizer(II, DAG);
+    return new ScoreboardHazardRecognizer(II, DAG);
   }
 
   return TargetInstrInfo::CreateTargetHazardRecognizer(TM, DAG);
@@ -82,7 +82,7 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetPostRAHazardRecognizer(
     return new PPCHazardRecognizer970(TM);
   }
 
-  return new PPCScoreboardHazardRecognizer(II, DAG);
+  return new ScoreboardHazardRecognizer(II, DAG);
 }
 
 // Detect 32 -> 64-bit extensions where we may reuse the low sub-register.
