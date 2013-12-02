@@ -17,7 +17,7 @@
 #include <string>
 #include <cassert>
 
-#include "../DefaultOnly.h"
+#include "DefaultOnly.h"
 
 int main()
 {

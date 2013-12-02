@@ -18,7 +18,7 @@
 #include <cassert>
 
 #include "../../Emplaceable.h"
-#include "../../DefaultOnly.h"
+#include "DefaultOnly.h"
 #include "min_allocator.h"
 
 int main()

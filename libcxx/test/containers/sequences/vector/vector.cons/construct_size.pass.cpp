@@ -14,7 +14,7 @@
 #include <vector>
 #include <cassert>
 
-#include "../../../DefaultOnly.h"
+#include "DefaultOnly.h"
 #include "min_allocator.h"
 #include "../../../test_allocator.h"
 

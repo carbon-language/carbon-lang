@@ -14,7 +14,7 @@
 #include <forward_list>
 #include <cassert>
 
-#include "../../../DefaultOnly.h"
+#include "DefaultOnly.h"
 
 int main()
 {
