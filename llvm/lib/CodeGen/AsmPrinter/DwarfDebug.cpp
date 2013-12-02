@@ -3055,7 +3055,8 @@ void DwarfDebug::emitDebugStrDWO() {
                          OffSec, StrSym);
 }
 
-void DwarfDebug::addTypeUnitType(DIE *RefDie, DICompositeType CTy) {
+void DwarfDebug::addTypeUnitType(uint16_t Language, DIE *RefDie,
+                                 DICompositeType CTy) {
   DenseMap<const MDNode *,
            std::pair<uint64_t, SmallVectorImpl<DIE *> *> >::iterator I =
       TypeUnits.find(CTy);
@@ -3068,12 +3069,11 @@ void DwarfDebug::addTypeUnitType(DIE *RefDie, DICompositeType CTy) {
     }
   } else {
     DIE *UnitDie = new DIE(dwarf::DW_TAG_type_unit);
-    CompileUnit *NewCU =
-        new CompileUnit(GlobalCUIndexCount++, UnitDie,
-                        dwarf::DW_LANG_C_plus_plus, Asm, this, &InfoHolder);
+    CompileUnit *NewCU = new CompileUnit(GlobalCUIndexCount++, UnitDie,
+                                         Language, Asm, this, &InfoHolder);
     CUDieMap.insert(std::make_pair(UnitDie, NewCU));
     NewCU->addUInt(UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
-                   dwarf::DW_LANG_C_plus_plus);
+                   Language);
 
     // Register the type in the TypeUnits map with a vector of references to be
     // populated whenever a reference is required.

@@ -704,7 +704,7 @@ public:
 
   /// \brief Add a DIE to the set of types that we're going to pull into
   /// type units.
-  void addTypeUnitType(DIE *Die, DICompositeType CTy);
+  void addTypeUnitType(uint16_t Language, DIE *Die, DICompositeType CTy);
 
   /// \brief Add a label so that arange data can be generated for it.
   void addArangeLabel(SymbolCU SCU) { ArangeLabels.push_back(SCU); }

@@ -989,7 +989,7 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
   else if (Ty.isCompositeType()) {
     DICompositeType CTy(Ty);
     if (shouldCreateTypeUnit(CTy, DD)) {
-      DD->addTypeUnitType(TyDIE, CTy);
+      DD->addTypeUnitType(getLanguage(), TyDIE, CTy);
       // Skip updating the accellerator tables since this is not the full type
       return TyDIE;
     }
