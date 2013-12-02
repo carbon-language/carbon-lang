@@ -4,7 +4,7 @@ C++11
 lld is developed in a limited subset of C++11. Supported compilers are:
 
 * Clang 3.1+
-* g++ 4.6+
+* g++ 4.7+
 * MSVC 2012+
 
 Allowed Features
