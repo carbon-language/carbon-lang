@@ -341,6 +341,9 @@ function(add_lit_target target comment)
       COMMAND cmake -E echo "${target} does nothing, no tools built.")
     message(STATUS "${target} does nothing.")
   endif()
+
+  # Tests should be excluded from "Build Solution".
+  set_target_properties(${target} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD ON)
 endfunction()
 
 # A function to add a set of lit test suites to be driven through 'check-*' targets.
