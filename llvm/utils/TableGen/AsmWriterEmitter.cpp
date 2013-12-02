@@ -987,7 +987,6 @@ AsmWriterEmitter::AsmWriterEmitter(RecordKeeper &R) : Records(R), Target(R) {
     if (!(*I)->AsmString.empty() && (*I)->TheDef->getName() != "PHI")
       Instructions.push_back(
           AsmWriterInst(**I, AsmWriter->getValueAsInt("Variant"),
-                        AsmWriter->getValueAsInt("FirstOperandColumn"),
                         AsmWriter->getValueAsInt("OperandSpacing")));
 
   // Get the instruction numbering.
