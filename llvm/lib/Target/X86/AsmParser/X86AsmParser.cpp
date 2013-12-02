@@ -50,6 +50,12 @@ class X86AsmParser : public MCTargetAsmParser {
   MCAsmParser &Parser;
   ParseInstructionInfo *InstInfo;
 private:
+  SMLoc consumeToken() {
+    SMLoc Result = Parser.getTok().getLoc();
+    Parser.Lex();
+    return Result;
+  }
+
   enum InfixCalculatorTok {
     IC_PLUS = 0,
     IC_MINUS,
@@ -1341,10 +1347,8 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
     if (SM.hadError())
       return Error(Tok.getLoc(), "unknown token in expression");
 
-    if (!Done && UpdateLocLex) {
-      End = Tok.getLoc();
-      Parser.Lex(); // Consume the token.
-    }
+    if (!Done && UpdateLocLex)
+      End = consumeToken();
   }
   return false;
 }
@@ -1991,11 +1995,8 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
   if (getLexer().isNot(AsmToken::EndOfStatement) && !isPrefix) {
 
     // Parse '*' modifier.
-    if (getLexer().is(AsmToken::Star)) {
-      SMLoc Loc = Parser.getTok().getLoc();
-      Operands.push_back(X86Operand::CreateToken("*", Loc));
-      Parser.Lex(); // Eat the star.
-    }
+    if (getLexer().is(AsmToken::Star))
+      Operands.push_back(X86Operand::CreateToken("*", consumeToken()));
 
     // Read the first operand.
     if (X86Operand *Op = ParseOperand())
@@ -2020,9 +2021,7 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
     if (STI.getFeatureBits() & X86::FeatureAVX512) {
       // Parse mask register {%k1}
       if (getLexer().is(AsmToken::LCurly)) {
-        SMLoc Loc = Parser.getTok().getLoc();
-        Operands.push_back(X86Operand::CreateToken("{", Loc));
-        Parser.Lex();  // Eat the {
+        Operands.push_back(X86Operand::CreateToken("{", consumeToken()));
         if (X86Operand *Op = ParseOperand()) {
           Operands.push_back(Op);
           if (!getLexer().is(AsmToken::RCurly)) {
@@ -2030,9 +2029,7 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
             Parser.eatToEndOfStatement();
             return Error(Loc, "Expected } at this point");
           }
-          Loc = Parser.getTok().getLoc();
-          Operands.push_back(X86Operand::CreateToken("}", Loc));
-          Parser.Lex();  // Eat the }
+          Operands.push_back(X86Operand::CreateToken("}", consumeToken()));
         } else {
           Parser.eatToEndOfStatement();
           return true;
@@ -2040,9 +2037,7 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
       }
       // Parse "zeroing non-masked" semantic {z}
       if (getLexer().is(AsmToken::LCurly)) {
-        SMLoc Loc = Parser.getTok().getLoc();
-        Operands.push_back(X86Operand::CreateToken("{z}", Loc));
-        Parser.Lex();  // Eat the {
+        Operands.push_back(X86Operand::CreateToken("{z}", consumeToken()));
         if (!getLexer().is(AsmToken::Identifier) || getLexer().getTok().getIdentifier() != "z") {
           SMLoc Loc = getLexer().getLoc();
           Parser.eatToEndOfStatement();
