@@ -1226,15 +1226,14 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
 
         if (CanFold) {
           Constant *NewCst;
-          if (Shift->getOpcode() == Instruction::Shl)
+          if (ShiftOpcode == Instruction::Shl)
             NewCst = ConstantExpr::getLShr(RHS, ShAmt);
           else
             NewCst = ConstantExpr::getShl(RHS, ShAmt);
 
           // Check to see if we are shifting out any of the bits being
           // compared.
-          if (ConstantExpr::get(Shift->getOpcode(),
-                                       NewCst, ShAmt) != RHS) {
+          if (ConstantExpr::get(ShiftOpcode, NewCst, ShAmt) != RHS) {
             // If we shifted bits out, the fold is not going to work out.
             // As a special case, check to see if this means that the
             // result is always true or false now.
@@ -1245,7 +1244,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           } else {
             ICI.setOperand(1, NewCst);
             Constant *NewAndCst;
-            if (Shift->getOpcode() == Instruction::Shl)
+            if (ShiftOpcode == Instruction::Shl)
               NewAndCst = ConstantExpr::getLShr(AndCst, ShAmt);
             else
               NewAndCst = ConstantExpr::getShl(AndCst, ShAmt);
