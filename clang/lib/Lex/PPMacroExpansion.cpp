@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the top level handling of macro expasion for the
+// This file implements the top level handling of macro expansion for the
 // preprocessor.
 //
 //===----------------------------------------------------------------------===//
