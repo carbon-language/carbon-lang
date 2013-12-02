@@ -7,9 +7,9 @@ add_llvm_library(LLVMAsmPrinter
   DIEHash.cpp
   DwarfAccelTable.cpp
   DwarfCFIException.cpp
-  DwarfCompileUnit.cpp
   DwarfDebug.cpp
   DwarfException.cpp
+  DwarfUnit.cpp
   ErlangGCPrinter.cpp
   OcamlGCPrinter.cpp
   Win64Exception.cpp

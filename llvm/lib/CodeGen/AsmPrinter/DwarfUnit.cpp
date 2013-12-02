@@ -13,7 +13,7 @@
 
 #define DEBUG_TYPE "dwarfdebug"
 
-#include "DwarfCompileUnit.h"
+#include "DwarfUnit.h"
 #include "DwarfAccelTable.h"
 #include "DwarfDebug.h"
 #include "llvm/ADT/APFloat.h"

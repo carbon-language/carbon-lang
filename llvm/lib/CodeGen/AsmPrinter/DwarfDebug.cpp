@@ -16,7 +16,7 @@
 #include "DIE.h"
 #include "DIEHash.h"
 #include "DwarfAccelTable.h"
-#include "DwarfCompileUnit.h"
+#include "DwarfUnit.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
