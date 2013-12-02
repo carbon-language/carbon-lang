@@ -348,10 +348,12 @@ public:
 
   /// Get all nodes dominated by R, including R itself.
   void getDescendants(NodeT *R, SmallVectorImpl<NodeT *> &Result) const {
+    Result.clear();
     const DomTreeNodeBase<NodeT> *RN = getNode(R);
+    if (RN == NULL)
+      return; // If R is unreachable, it will not be present in the DOM tree.
     SmallVector<const DomTreeNodeBase<NodeT> *, 8> WL;
     WL.push_back(RN);
-    Result.clear();
 
     while (!WL.empty()) {
       const DomTreeNodeBase<NodeT> *N = WL.pop_back_val();
