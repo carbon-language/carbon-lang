@@ -1209,9 +1209,9 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
   }
 
   if (numIvars > 0)
-    Diag(ivars[j]->getLocation(), diag::err_inconsistant_ivar_count);
+    Diag(ivars[j]->getLocation(), diag::err_inconsistent_ivar_count);
   else if (IVI != IVE)
-    Diag(IVI->getLocation(), diag::err_inconsistant_ivar_count);
+    Diag(IVI->getLocation(), diag::err_inconsistent_ivar_count);
 }
 
 void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,

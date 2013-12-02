@@ -547,7 +547,7 @@ def err_conflicting_ivar_bitwidth : Error<
   "instance variable %0 has conflicting bit-field width">;
 def err_conflicting_ivar_name : Error<
   "conflicting instance variable names: %0 vs %1">;
-def err_inconsistant_ivar_count : Error<
+def err_inconsistent_ivar_count : Error<
   "inconsistent number of instance variables specified">;
 def warn_undef_method_impl : Warning<"method definition for %0 not found">,
   InGroup<DiagGroup<"incomplete-implementation">>;
