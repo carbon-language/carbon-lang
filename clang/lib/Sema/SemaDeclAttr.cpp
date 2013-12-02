@@ -3944,15 +3944,12 @@ static void handleInheritanceAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                                       Attr.getAttributeSpellingListIndex()));
 }
 
-static void handlePortabilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+static void handleWin64Attr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (!checkMicrosoftExt(S, Attr))
     return;
 
-  AttributeList::Kind Kind = Attr.getKind();
-  if (Kind == AttributeList::AT_Win64)
-  D->addAttr(
-      ::new (S.Context) Win64Attr(Attr.getRange(), S.Context,
-                                  Attr.getAttributeSpellingListIndex()));
+  D->addAttr(::new (S.Context) Win64Attr(Attr.getRange(), S.Context,
+                                       Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleForceInlineAttr(Sema &S, Decl *D, const AttributeList &Attr) {
@@ -4229,8 +4226,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleInheritanceAttr(S, D, Attr);
     break;
   case AttributeList::AT_Win64:
-    handlePortabilityAttr(S, D, Attr);
-    break;
+    handleWin64Attr(S, D, Attr); break;
   case AttributeList::AT_ForceInline:
     handleForceInlineAttr(S, D, Attr);
     break;
