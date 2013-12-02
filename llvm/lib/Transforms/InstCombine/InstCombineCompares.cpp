@@ -1194,8 +1194,6 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
 
       ConstantInt *ShAmt;
       ShAmt = Shift ? dyn_cast<ConstantInt>(Shift->getOperand(1)) : 0;
-      Type *Ty = Shift ? Shift->getType() : 0;  // Type of the shift.
-      Type *AndTy = AndCst->getType();          // Type of the and.
 
       // We can fold this as long as we can't shift unknown bits
       // into the mask. This can happen with signed shift
@@ -1210,11 +1208,15 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         if (ShiftOpcode == Instruction::AShr) {
           // To test for the bad case of the signed shr, see if any
           // of the bits shifted in could be tested after the mask.
-          uint32_t TyBits = Ty->getPrimitiveSizeInBits();
-          int ShAmtVal = TyBits - ShAmt->getLimitedValue(TyBits);
+          Type *ShiftType = Shift->getType();
+          Type *AndType = AndCst->getType();
+ 
+          unsigned ShiftBitWidth = ShiftType->getPrimitiveSizeInBits();
+          unsigned AndBitWidth = AndType->getPrimitiveSizeInBits();
 
-          uint32_t BitWidth = AndTy->getPrimitiveSizeInBits();
-          if ((APInt::getHighBitsSet(BitWidth, BitWidth-ShAmtVal) &
+          int ShAmtVal = ShiftBitWidth - ShAmt->getLimitedValue(ShiftBitWidth);
+
+          if ((APInt::getHighBitsSet(AndBitWidth, AndBitWidth - ShAmtVal) &
                AndCst->getValue()) == 0)
             CanFold = true;
         } else if (ShiftOpcode == Instruction::Shl ||
