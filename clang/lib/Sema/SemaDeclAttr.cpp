@@ -337,17 +337,6 @@ static void handleSimpleAttribute(Sema &S, Decl *D,
                                         Attr.getAttributeSpellingListIndex()));
 }
 
-///
-/// \brief Check if passed in Decl is a field or potentially shared global var
-/// \return true if the Decl is a field or potentially shared global variable
-///
-static bool mayBeSharedVariable(const Decl *D) {
-  if (const VarDecl *vd = dyn_cast<VarDecl>(D))
-    return vd->hasGlobalStorage() && !vd->getTLSKind();
-
-  return true;
-}
-
 /// \brief Check if the passed-in expression is of type int or bool.
 static bool isIntOrBool(Expr *Exp) {
   QualType QT = Exp->getType();
@@ -543,32 +532,8 @@ static void checkAttrArgsAreLockableObjs(Sema &S, Decl *D,
 // least add some helper functions to check most argument patterns (#
 // and types of args).
 
-static bool checkGuardedVarAttrCommon(Sema &S, Decl *D,
-                                      const AttributeList &Attr) {
-  // D must be either a member field or global (potentially shared) variable.
-  if (!mayBeSharedVariable(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedFieldOrGlobalVar;
-    return false;
-  }
-
-  return true;
-}
-
-static void handleGuardedVarAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!checkGuardedVarAttrCommon(S, D, Attr))
-    return;
-
-  D->addAttr(::new (S.Context)
-             GuardedVarAttr(Attr.getRange(), S.Context,
-                            Attr.getAttributeSpellingListIndex()));
-}
-
 static void handlePtGuardedVarAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
-  if (!checkGuardedVarAttrCommon(S, D, Attr))
-    return;
-
   if (!threadSafetyCheckIsPointer(S, D, Attr))
     return;
 
@@ -580,13 +545,6 @@ static void handlePtGuardedVarAttr(Sema &S, Decl *D,
 static bool checkGuardedByAttrCommon(Sema &S, Decl *D,
                                      const AttributeList &Attr,
                                      Expr* &Arg) {
-  // D must be either a member field or global (potentially shared) variable.
-  if (!mayBeSharedVariable(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedFieldOrGlobalVar;
-    return false;
-  }
-
   SmallVector<Expr*, 1> Args;
   // check that all arguments are lockable objects
   checkAttrArgsAreLockableObjs(S, D, Attr, Args);
@@ -626,16 +584,8 @@ static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D,
   if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
     return false;
 
-  // D must be either a member field or global (potentially shared) variable.
-  ValueDecl *VD = dyn_cast<ValueDecl>(D);
-  if (!VD || !mayBeSharedVariable(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedFieldOrGlobalVar;
-    return false;
-  }
-
   // Check that this attribute only applies to lockable types.
-  QualType QT = VD->getType();
+  QualType QT = cast<ValueDecl>(D)->getType();
   if (!QT->isDependentType()) {
     const RecordType *RT = getRecordType(QT);
     if (!RT || !RT->getDecl()->getAttr<LockableAttr>()) {
@@ -4302,8 +4252,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleAssertSharedLockAttr(S, D, Attr);
     break;
   case AttributeList::AT_GuardedVar:
-    handleGuardedVarAttr(S, D, Attr);
-    break;
+    handleSimpleAttribute<GuardedVarAttr>(S, D, Attr); break;
   case AttributeList::AT_PtGuardedVar:
     handlePtGuardedVarAttr(S, D, Attr);
     break;

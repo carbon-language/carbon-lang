@@ -46,6 +46,9 @@ def Struct : SubsetSubject<Record,
 def TLSVar : SubsetSubject<Var,
                            [{S->getTLSKind() != 0}]>;
 
+def SharedVar : SubsetSubject<Var,
+                              [{S->hasGlobalStorage() && !S->getTLSKind()}]>;
+
 // A single argument to an attribute
 class Argument<string name, bit optional> {
   string Name = name;
@@ -910,12 +913,14 @@ def NoSanitizeMemory : InheritableAttr {
 
 def GuardedVar : InheritableAttr {
   let Spellings = [GNU<"guarded_var">];
-  let Subjects = SubjectList<[Field, Var]>;
+  let Subjects = SubjectList<[Field, SharedVar], WarnDiag,
+                             "ExpectedFieldOrGlobalVar">;
 }
 
 def PtGuardedVar : InheritableAttr {
   let Spellings = [GNU<"pt_guarded_var">];
-  let Subjects = SubjectList<[Field, Var]>;
+  let Subjects = SubjectList<[Field, SharedVar], WarnDiag,
+                             "ExpectedFieldOrGlobalVar">;
 }
 
 def Lockable : InheritableAttr {
@@ -938,7 +943,8 @@ def GuardedBy : InheritableAttr {
   let Args = [ExprArgument<"Arg">];
   let LateParsed = 1;
   let TemplateDependent = 1;
-  let Subjects = SubjectList<[Field, Var]>;
+  let Subjects = SubjectList<[Field, SharedVar], WarnDiag,
+                             "ExpectedFieldOrGlobalVar">;
 }
 
 def PtGuardedBy : InheritableAttr {
@@ -946,7 +952,8 @@ def PtGuardedBy : InheritableAttr {
   let Args = [ExprArgument<"Arg">];
   let LateParsed = 1;
   let TemplateDependent = 1;
-  let Subjects = SubjectList<[Field, Var]>;
+  let Subjects = SubjectList<[Field, SharedVar], WarnDiag,
+                             "ExpectedFieldOrGlobalVar">;
 }
 
 def AcquiredAfter : InheritableAttr {
@@ -954,7 +961,8 @@ def AcquiredAfter : InheritableAttr {
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
-  let Subjects = SubjectList<[Field, Var]>;
+  let Subjects = SubjectList<[Field, SharedVar], WarnDiag,
+                             "ExpectedFieldOrGlobalVar">;
 }
 
 def AcquiredBefore : InheritableAttr {
@@ -962,7 +970,8 @@ def AcquiredBefore : InheritableAttr {
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
-  let Subjects = SubjectList<[Field, Var]>;
+  let Subjects = SubjectList<[Field, SharedVar], WarnDiag,
+                             "ExpectedFieldOrGlobalVar">;
 }
 
 def ExclusiveLockFunction : InheritableAttr {
