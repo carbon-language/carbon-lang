@@ -332,6 +332,7 @@ public:
 
     unsigned MaxStack = 0;
     unsigned CurrentStack = 0;
+    unsigned CurrentLoopDepth = 0;
     bool HasPush = false;
     for (MachineFunction::iterator MB = MF.begin(), ME = MF.end(); MB != ME;
         ++MB) {
@@ -370,6 +371,13 @@ public:
           CurrentStack++;
           MaxStack = std::max(MaxStack, CurrentStack);
           HasPush = true;
+          if (ST.hasCaymanISA() && CurrentLoopDepth > 1) {
+            BuildMI(MBB, MI, MBB.findDebugLoc(MI), TII->get(AMDGPU::CF_PUSH_CM))
+                .addImm(CfCount + 1)
+                .addImm(1);
+            MI->setDesc(TII->get(AMDGPU::CF_ALU));
+            CfCount++;
+          }
         case AMDGPU::CF_ALU:
           I = MI;
           AluClauses.push_back(MakeALUClause(MBB, I));
@@ -378,6 +386,7 @@ public:
           break;
         case AMDGPU::WHILELOOP: {
           CurrentStack+=4;
+          CurrentLoopDepth++;
           MaxStack = std::max(MaxStack, CurrentStack);
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
               getHWInstrDesc(CF_WHILE_LOOP))
@@ -392,6 +401,7 @@ public:
         }
         case AMDGPU::ENDLOOP: {
           CurrentStack-=4;
+          CurrentLoopDepth--;
           std::pair<unsigned, std::set<MachineInstr *> > Pair =
               LoopStack.back();
           LoopStack.pop_back();

@@ -1867,6 +1867,10 @@ def : Pat <
     let COUNT = 0;
   }
 
+  def CF_PUSH_CM : CF_CLAUSE_EG<11, (ins i32imm:$ADDR, i32imm:$POP_COUNT), "PUSH @$ADDR POP:$POP_COUNT"> {
+    let COUNT = 0;
+  }
+
 def : Pat<(fsqrt f32:$src), (MUL R600_Reg32:$src, (RECIPSQRT_CLAMPED_cm $src))>;
 
 class RAT_STORE_DWORD <RegisterClass rc, ValueType vt, bits<4> mask> :
