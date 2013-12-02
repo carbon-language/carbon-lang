@@ -75,7 +75,7 @@ static void EmitCfiOffset(MachineBasicBlock &MBB,
 /// IfNeededExtSP emits the necessary EXTSP instructions to move the SP only
 /// as far as to make 'OffsetFromBottom' reachable using an STWSP_lru6.
 /// \param OffsetFromTop the spill offset from the top of the frame.
-/// \param [in] [out] Adjusted the current SP offset from the top of the frame.
+/// \param [in,out] Adjusted the current SP offset from the top of the frame.
 static void IfNeededExtSP(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator MBBI, DebugLoc dl,
                           const TargetInstrInfo &TII, MachineModuleInfo *MMI,
@@ -98,7 +98,7 @@ static void IfNeededExtSP(MachineBasicBlock &MBB,
 /// IfNeededLDAWSP emits the necessary LDAWSP instructions to move the SP only
 /// as far as to make 'OffsetFromTop' reachable using an LDAWSP_lru6.
 /// \param OffsetFromTop the spill offset from the top of the frame.
-/// \param [in] [out] RemainingAdj the current SP offset from the top of the frame.
+/// \param [in,out] RemainingAdj the current SP offset from the top of the frame.
 static void IfNeededLDAWSP(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI, DebugLoc dl,
                            const TargetInstrInfo &TII, int OffsetFromTop,
