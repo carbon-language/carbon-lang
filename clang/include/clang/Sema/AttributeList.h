@@ -859,7 +859,8 @@ enum AttributeDeclKind {
   ExpectedStructOrUnion,
   ExpectedStructOrUnionOrClass,
   ExpectedType,
-  ExpectedObjCInstanceMethod
+  ExpectedObjCInstanceMethod,
+  ExpectedFunctionVariableOrClass
 };
 
 }  // end namespace clang

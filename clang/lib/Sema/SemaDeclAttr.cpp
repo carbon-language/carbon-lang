@@ -2243,24 +2243,6 @@ static void handleWarnUnusedResult(Sema &S, Decl *D, const AttributeList &Attr) 
                                   Attr.getAttributeSpellingListIndex()));
 }
 
-static void handleWeakAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!isa<VarDecl>(D) && !isa<FunctionDecl>(D)) {
-    if (isa<CXXRecordDecl>(D)) {
-      D->addAttr(::new (S.Context) WeakAttr(Attr.getRange(), S.Context));
-      return;
-    }
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedVariableOrFunction;
-    return;
-  }
-
-  NamedDecl *nd = cast<NamedDecl>(D);
-
-  nd->addAttr(::new (S.Context)
-              WeakAttr(Attr.getRange(), S.Context,
-                       Attr.getAttributeSpellingListIndex()));
-}
-
 static void handleWeakImportAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // weak_import only applies to variable & function declarations.
   bool isDef = false;
@@ -4168,7 +4150,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleSimpleAttribute<WarnUnusedAttr>(S, D, Attr); break;
   case AttributeList::AT_WarnUnusedResult: handleWarnUnusedResult(S, D, Attr);
     break;
-  case AttributeList::AT_Weak:        handleWeakAttr        (S, D, Attr); break;
+  case AttributeList::AT_Weak:
+    handleSimpleAttribute<WeakAttr>(S, D, Attr); break;
   case AttributeList::AT_WeakRef:     handleWeakRefAttr     (S, D, Attr); break;
   case AttributeList::AT_WeakImport:  handleWeakImportAttr  (S, D, Attr); break;
   case AttributeList::AT_TransparentUnion:

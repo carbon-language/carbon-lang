@@ -1797,6 +1797,12 @@ static std::string CalculateDiagnostic(const Record &S) {
     case Func | FuncTemplate:
     case Func | ObjCMethod: return "ExpectedFunctionOrMethod";
     case Func | Var: return "ExpectedVariableOrFunction";
+
+    // If not compiling for C++, the class portion does not apply.
+    case Func | Var | Class:
+      return "(S.getLangOpts().CPlusPlus ? ExpectedFunctionVariableOrClass : "
+                                           "ExpectedVariableOrFunction)";
+
     case ObjCMethod | ObjCProp: return "ExpectedMethodOrProperty";
     case Field | Var: return "ExpectedFieldOrGlobalVar";
   }

@@ -3,7 +3,7 @@
 static int test0 __attribute__((weak)); // expected-error {{weak declaration cannot have internal linkage}}
 static void test1() __attribute__((weak)); // expected-error {{weak declaration cannot have internal linkage}}
 
-namespace test2 __attribute__((weak)) { // expected-warning {{'weak' attribute only applies to variables and functions}}
+namespace test2 __attribute__((weak)) { // expected-warning {{'weak' attribute only applies to variables, functions and classes}}
 }
 
 namespace {
@@ -34,3 +34,5 @@ int Test7<T>::var;
 namespace { class Internal; }
 template struct Test7<Internal>;
 template struct Test7<int>;
+
+class __attribute__((weak)) Test8 {}; // OK
