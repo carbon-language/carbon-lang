@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
   // Determine a formatting style from options.
   format::FormatStyle FormatStyle;
   if (DoFormat)
-    FormatStyle = format::getStyle(FormatStyleOpt, FormatStyleConfig);
+    FormatStyle = format::getStyle(FormatStyleOpt, FormatStyleConfig, "LLVM");
 
   TUReplacements TUs;
   TUReplacementFiles TURFiles;
