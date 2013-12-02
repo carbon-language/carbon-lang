@@ -20,6 +20,34 @@
 
 #include "ELFHeader.h"
 
+struct ELFNote
+{
+    elf::elf_word n_namesz;
+    elf::elf_word n_descsz;
+    elf::elf_word n_type;
+
+    std::string n_name;
+
+    ELFNote() : n_namesz(0), n_descsz(0), n_type(0)
+    {
+    }
+
+    /// Parse an ELFNote entry from the given DataExtractor starting at position
+    /// \p offset.
+    ///
+    /// @param[in] data
+    ///    The DataExtractor to read from.
+    ///
+    /// @param[in,out] offset
+    ///    Pointer to an offset in the data.  On return the offset will be
+    ///    advanced by the number of bytes read.
+    ///
+    /// @return
+    ///    True if the ELFRel entry was successfully read and false otherwise.
+    bool
+    Parse(const lldb_private::DataExtractor &data, lldb::offset_t *offset);
+};
+
 //------------------------------------------------------------------------------
 /// @class ObjectFileELF
 /// @brief Generic ELF object file reader.

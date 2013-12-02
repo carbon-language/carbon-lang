@@ -16,6 +16,7 @@
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/FileSpecList.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
@@ -142,6 +143,44 @@ ELFRelocation::RelocSymbol64(const ELFRelocation &rel)
 }
 
 } // end anonymous namespace
+
+bool
+ELFNote::Parse(const DataExtractor &data, lldb::offset_t *offset)
+{
+    // Read all fields.
+    if (data.GetU32(offset, &n_namesz, 3) == NULL)
+        return false;
+
+    // The name field is required to be nul-terminated, and n_namesz
+    // includes the terminating nul in observed implementations (contrary
+    // to the ELF-64 spec).  A special case is needed for cores generated
+    // by some older Linux versions, which write a note named "CORE"
+    // without a nul terminator and n_namesz = 4.
+    if (n_namesz == 4)
+    {
+        char buf[4];
+        if (data.ExtractBytes (*offset, 4, data.GetByteOrder(), buf) != 4)
+            return false;
+        if (strncmp (buf, "CORE", 4) == 0)
+        {
+            n_name = "CORE";
+            *offset += 4;
+            return true;
+        }
+    }
+
+    const char *cstr = data.GetCStr(offset, llvm::RoundUpToAlignment (n_namesz, 4));
+    if (cstr == NULL)
+    {
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYMBOLS));
+        if (log)
+            log->Printf("Failed to parse note name lacking nul terminator");
+
+        return false;
+    }
+    n_name = cstr;
+    return true;
+}
 
 //------------------------------------------------------------------
 // Static methods.
@@ -685,42 +724,26 @@ ParseNoteGNUBuildID(DataExtractor &data, lldb_private::UUID &uuid)
 {
     // Try to parse the note section (ie .note.gnu.build-id|.notes|.note|...) and get the build id.
     // BuildID documentation: https://fedoraproject.org/wiki/Releases/FeatureBuildId
-    struct
-    {
-        uint32_t name_len;  // Length of note name
-        uint32_t desc_len;  // Length of note descriptor
-        uint32_t type;      // Type of note (1 is ABI_TAG, 3 is BUILD_ID)
-    } notehdr;
     lldb::offset_t offset = 0;
     static const uint32_t g_gnu_build_id = 3; // NT_GNU_BUILD_ID from elf.h
 
     while (true)
     {
-        if (data.GetU32 (&offset, &notehdr, 3) == NULL)
+        ELFNote note = ELFNote();
+        if (!note.Parse(data, &offset))
             return false;
 
-        notehdr.name_len = llvm::RoundUpToAlignment (notehdr.name_len, 4);
-        notehdr.desc_len = llvm::RoundUpToAlignment (notehdr.desc_len, 4);
-
-        lldb::offset_t offset_next_note = offset + notehdr.name_len + notehdr.desc_len;
-
         // 16 bytes is UUID|MD5, 20 bytes is SHA1
-        if ((notehdr.type == g_gnu_build_id) && (notehdr.name_len == 4) &&
-            (notehdr.desc_len == 16 || notehdr.desc_len == 20))
+        if (note.n_name == "GNU" && (note.n_type == g_gnu_build_id) &&
+            (note.n_descsz == 16 || note.n_descsz == 20))
         {
-            char name[4];
-            if (data.GetU8 (&offset, name, 4) == NULL)
+            uint8_t uuidbuf[20]; 
+            if (data.GetU8 (&offset, &uuidbuf, note.n_descsz) == NULL)
                 return false;
-            if (!strcmp(name, "GNU"))
-            {
-                uint8_t uuidbuf[20]; 
-                if (data.GetU8 (&offset, &uuidbuf, notehdr.desc_len) == NULL)
-                    return false;
-                uuid.SetBytes (uuidbuf, notehdr.desc_len);
-                return true;
-            }
+            uuid.SetBytes (uuidbuf, note.n_descsz);
+            return true;
         }
-        offset = offset_next_note;
+        offset += llvm::RoundUpToAlignment(note.n_descsz, 4);
     }
     return false;
 }
