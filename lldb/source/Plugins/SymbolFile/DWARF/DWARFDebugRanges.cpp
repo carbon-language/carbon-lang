@@ -32,6 +32,7 @@ DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data)
     dw_offset_t debug_ranges_offset = offset;
     while (Extract(dwarf2Data, &offset, range_list))
     {
+        range_list.Sort();
         m_range_map[debug_ranges_offset] = range_list;
         debug_ranges_offset = offset;
     }
