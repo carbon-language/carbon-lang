@@ -25,7 +25,7 @@
 #include <scoped_allocator>
 #include <cassert>
 
-#include "../allocators.h"
+#include "allocators.h"
 
 int main()
 {

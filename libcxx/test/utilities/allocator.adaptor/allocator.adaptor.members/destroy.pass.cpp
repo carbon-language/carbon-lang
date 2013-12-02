@@ -18,7 +18,7 @@
 #include <cassert>
 #include <string>
 
-#include "../allocators.h"
+#include "allocators.h"
 
 struct B
 {
