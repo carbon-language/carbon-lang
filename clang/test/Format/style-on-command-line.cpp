@@ -7,7 +7,7 @@
 // RUN: printf "BasedOnStyle: google\nIndentWidth: 5\n" > %T/.clang-format
 // RUN: clang-format -style=file %t.cpp 2>&1 | FileCheck -strict-whitespace -check-prefix=CHECK5 %s
 // RUN: printf "\n" > %T/.clang-format
-// RUN: clang-format -style=file %t.cpp 2>&1 | FileCheck -strict-whitespace -check-prefix=CHECK6 %s
+// RUN: clang-format -style=file -fallback-style=webkit %t.cpp 2>&1 | FileCheck -strict-whitespace -check-prefix=CHECK6 %s
 // RUN: [ ! -e %T/.clang-format ] || rm %T/.clang-format
 // RUN: [ ! -e %T/_clang-format ] || rm %T/_clang-format
 // RUN: printf "BasedOnStyle: google\nIndentWidth: 6\n" > %T/_clang-format
@@ -22,7 +22,8 @@ void f() {
 // CHECK4: {{^  int \*i;$}}
 // CHECK5: {{^     int\* i;$}}
 // CHECK6: {{^Error reading .*\.clang-format: Invalid argument}}
-// XCHECK6X: {{^  int \*i;$}}
+// CHECK6: {{^Can't find usable .clang-format, using webkit style$}}
+// CHECK6: {{^    int\* i;$}}
 // CHECK7: {{^      int\* i;$}}
 int*i;
 int j;

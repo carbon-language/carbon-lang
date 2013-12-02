@@ -1661,12 +1661,14 @@ static void fillLanguageByFileName(StringRef FileName, FormatStyle *Style) {
   }
 }
 
-FormatStyle getStyle(StringRef StyleName, StringRef FileName) {
-  // FIXME: Configure fallback style from outside (add a command line option).
-  // Fallback style in case the rest of this function can't determine a style.
-  StringRef FallbackStyle = "LLVM";
+FormatStyle getStyle(StringRef StyleName, StringRef FileName,
+                     StringRef FallbackStyle) {
   FormatStyle Style;
-  getPredefinedStyle(FallbackStyle, &Style);
+  if (!getPredefinedStyle(FallbackStyle, &Style)) {
+    llvm::errs() << "Invalid fallback style \"" << FallbackStyle
+                 << "\" using LLVM style\n";
+    return getLLVMStyle();
+  }
   fillLanguageByFileName(FileName, &Style);
 
   if (StyleName.startswith("{")) {
@@ -1715,18 +1717,18 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName) {
       if (llvm::error_code ec =
               llvm::MemoryBuffer::getFile(ConfigFile.c_str(), Text)) {
         llvm::errs() << ec.message() << "\n";
-        continue;
+        break;
       }
       if (llvm::error_code ec = parseConfiguration(Text->getBuffer(), &Style)) {
         if (ec == llvm::errc::not_supported) {
           if (!UnsuitableConfigFiles.empty())
             UnsuitableConfigFiles.append(", ");
           UnsuitableConfigFiles.append(ConfigFile);
-        } else {
-          llvm::errs() << "Error reading " << ConfigFile << ": " << ec.message()
-                       << "\n";
+          continue;
         }
-        continue;
+        llvm::errs() << "Error reading " << ConfigFile << ": " << ec.message()
+                     << "\n";
+        break;
       }
       DEBUG(llvm::dbgs() << "Using configuration file " << ConfigFile << "\n");
       return Style;
