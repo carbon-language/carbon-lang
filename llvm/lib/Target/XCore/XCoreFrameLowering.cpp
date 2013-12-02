@@ -121,13 +121,13 @@ static void GetSpillList(SmallVectorImpl<std::pair<unsigned,int> > &SpillList,
   int LRSpillOffset = fetchLR? MFI->getObjectOffset(XFI->getLRSpillSlot()) : 0;
   int FPSpillOffset = fetchFP? MFI->getObjectOffset(XFI->getFPSpillSlot()) : 0;
   if (fetchLR && fetchFP && LRSpillOffset > FPSpillOffset) {
-    SpillList.push_back(std::make_pair<unsigned,int>(XCore::LR,LRSpillOffset));
+    SpillList.push_back(std::pair<unsigned, int>(XCore::LR, LRSpillOffset));
     fetchLR = false;
   }
   if (fetchFP)
-    SpillList.push_back(std::make_pair<unsigned,int>(FramePtr, FPSpillOffset));
+    SpillList.push_back(std::pair<unsigned, int>(FramePtr, FPSpillOffset));
   if (fetchLR)
-    SpillList.push_back(std::make_pair<unsigned,int>(XCore::LR,LRSpillOffset));
+    SpillList.push_back(std::pair<unsigned, int>(XCore::LR, LRSpillOffset));
 }
 
 
