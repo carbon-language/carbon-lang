@@ -33,8 +33,6 @@ NVPTXMCAsmInfo::NVPTXMCAsmInfo(const StringRef &TT) {
 
   CommentString = "//";
 
-  PrivateGlobalPrefix = "$L__";
-
   HasSetDirective = false;
 
   HasSingleParameterDotFile = false;
