@@ -309,6 +309,7 @@ void WinCOFFStreamer::EmitWin64EHHandlerData() {
 }
 
 void WinCOFFStreamer::FinishImpl() {
+  EmitFrames(NULL, true);
   EmitW64Tables();
   MCObjectStreamer::FinishImpl();
 }
