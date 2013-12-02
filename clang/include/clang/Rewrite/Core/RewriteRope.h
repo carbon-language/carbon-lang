@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_REWRITEROPE_H
 #define LLVM_CLANG_REWRITEROPE_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <cstddef>
@@ -144,7 +145,11 @@ namespace clang {
     inline RopePieceBTreeIterator operator++(int) { // Postincrement
       RopePieceBTreeIterator tmp = *this; ++*this; return tmp;
     }
-  private:
+
+    llvm::StringRef piece() const {
+      return llvm::StringRef(&(*CurPiece)[0], CurPiece->size());
+    }
+
     void MoveToNextPiece();
   };
 

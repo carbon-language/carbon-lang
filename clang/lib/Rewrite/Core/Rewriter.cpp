@@ -26,8 +26,11 @@
 using namespace clang;
 
 raw_ostream &RewriteBuffer::write(raw_ostream &os) const {
-  // FIXME: eliminate the copy by writing out each chunk at a time
-  os << std::string(begin(), end());
+  // Walk RewriteRope chunks efficiently using MoveToNextPiece() instead of the
+  // character iterator.
+  for (RopePieceBTreeIterator I = begin(), E = end(); I != E;
+       I.MoveToNextPiece())
+    os << I.piece();
   return os;
 }
 
