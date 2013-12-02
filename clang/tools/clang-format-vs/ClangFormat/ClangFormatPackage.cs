@@ -22,6 +22,7 @@ using System;
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Xml.Linq;
 
@@ -128,9 +129,12 @@ namespace LLVM.ClangFormat
         /// </summary>
         private string RunClangFormat(string text, int offset, int length, string path)
         {
+            string vsixPath = Path.GetDirectoryName(Uri.UnescapeDataString(
+                new UriBuilder(Assembly.GetExecutingAssembly().CodeBase).Path));
+
             System.Diagnostics.Process process = new System.Diagnostics.Process();
             process.StartInfo.UseShellExecute = false;
-            process.StartInfo.FileName = "clang-format.exe";
+            process.StartInfo.FileName = vsixPath + "\\clang-format.exe";
             // Poor man's escaping - this will not work when quotes are already escaped
             // in the input (but we don't need more).
             string style = GetStyle().Replace("\"", "\\\"");
