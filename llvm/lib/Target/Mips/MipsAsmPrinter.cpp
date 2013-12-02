@@ -542,15 +542,6 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
       break;
     }
 
-    case MachineOperand::MO_ExternalSymbol:
-      O << *GetExternalSymbolSymbol(MO.getSymbolName());
-      break;
-
-    case MachineOperand::MO_JumpTableIndex:
-      O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-        << '_' << MO.getIndex();
-      break;
-
     case MachineOperand::MO_ConstantPoolIndex:
       O << MAI->getPrivateGlobalPrefix() << "CPI"
         << getFunctionNumber() << "_" << MO.getIndex();

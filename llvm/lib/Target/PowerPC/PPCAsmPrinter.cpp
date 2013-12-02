@@ -157,11 +157,6 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_MachineBasicBlock:
     O << *MO.getMBB()->getSymbol();
     return;
-  case MachineOperand::MO_JumpTableIndex:
-    O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-      << '_' << MO.getIndex();
-    // FIXME: PIC relocation model
-    return;
   case MachineOperand::MO_ConstantPoolIndex:
     O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
       << '_' << MO.getIndex();
@@ -169,25 +164,6 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_BlockAddress:
     O << *GetBlockAddressSymbol(MO.getBlockAddress());
     return;
-  case MachineOperand::MO_ExternalSymbol: {
-    // Computing the address of an external symbol, not calling it.
-    if (TM.getRelocationModel() == Reloc::Static) {
-      O << *GetExternalSymbolSymbol(MO.getSymbolName());
-      return;
-    }
-
-    SmallString<128> Name;
-    Mang->getNameWithPrefix(Name, Twine(MO.getSymbolName()) + "$non_lazy_ptr");
-    MCSymbol *NLPSym = OutContext.GetOrCreateSymbol(Name);
-    MachineModuleInfoImpl::StubValueTy &StubSym = 
-      MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(NLPSym);
-    if (StubSym.getPointer() == 0)
-      StubSym = MachineModuleInfoImpl::
-        StubValueTy(GetExternalSymbolSymbol(MO.getSymbolName()), true);
-    
-    O << *NLPSym;
-    return;
-  }
   case MachineOperand::MO_GlobalAddress: {
     // Computing the address of a global symbol, not calling it.
     const GlobalValue *GV = MO.getGlobal();

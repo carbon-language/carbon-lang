@@ -213,17 +213,8 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
       O << "(PLT)";
     break;
   }
-  case MachineOperand::MO_ExternalSymbol: {
-    O << *GetExternalSymbolSymbol(MO.getSymbolName());
-    if (TF == ARMII::MO_PLT)
-      O << "(PLT)";
-    break;
-  }
   case MachineOperand::MO_ConstantPoolIndex:
     O << *GetCPISymbol(MO.getIndex());
-    break;
-  case MachineOperand::MO_JumpTableIndex:
-    O << *GetJTISymbol(MO.getIndex());
     break;
   }
 }

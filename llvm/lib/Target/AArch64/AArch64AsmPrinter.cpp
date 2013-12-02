@@ -114,9 +114,6 @@ bool AArch64AsmPrinter::printSymbolicAddress(const MachineOperand &MO,
   case MachineOperand::MO_BlockAddress:
     Name = GetBlockAddressSymbol(MO.getBlockAddress())->getName();
     break;
-  case MachineOperand::MO_ExternalSymbol:
-    Name = MO.getSymbolName();
-    break;
   case MachineOperand::MO_ConstantPoolIndex:
     Name = GetCPISymbol(MO.getIndex())->getName();
     break;
@@ -238,7 +235,6 @@ bool AArch64AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
   case MachineOperand::MO_BlockAddress:
   case MachineOperand::MO_ConstantPoolIndex:
   case MachineOperand::MO_GlobalAddress:
-  case MachineOperand::MO_ExternalSymbol:
     return printSymbolicAddress(MO, false, "", O);
   }
 

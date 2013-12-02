@@ -76,15 +76,8 @@ void HexagonAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_MachineBasicBlock:
     O << *MO.getMBB()->getSymbol();
     return;
-  case MachineOperand::MO_JumpTableIndex:
-    O << *GetJTISymbol(MO.getIndex());
-    // FIXME: PIC relocation model.
-    return;
   case MachineOperand::MO_ConstantPoolIndex:
     O << *GetCPISymbol(MO.getIndex());
-    return;
-  case MachineOperand::MO_ExternalSymbol:
-    O << *GetExternalSymbolSymbol(MO.getSymbolName());
     return;
   case MachineOperand::MO_GlobalAddress:
     // Computing the address of a global symbol, not calling it.
