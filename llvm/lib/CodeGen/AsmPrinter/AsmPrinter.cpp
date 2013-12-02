@@ -2033,12 +2033,9 @@ MCSymbol *AsmPrinter::GetJTSetSymbol(unsigned UID, unsigned MBBID) const {
    Twine(UID) + "_set_" + Twine(MBBID));
 }
 
-MCSymbol *AsmPrinter::GetSymbolWithGlobalValueBase(const GlobalValue *GV,
+MCSymbol *AsmPrinter::getSymbolWithGlobalValueBase(const GlobalValue *GV,
                                                    StringRef Suffix) const {
-  SmallString<60> NameStr;
-  Mang->getNameWithPrefix(NameStr, GV, true);
-  NameStr.append(Suffix.begin(), Suffix.end());
-  return OutContext.GetOrCreateSymbol(NameStr.str());
+  return getObjFileLowering().getSymbolWithGlobalValueBase(*Mang, GV, Suffix);
 }
 
 /// GetExternalSymbolSymbol - Return the MCSymbol for the specified

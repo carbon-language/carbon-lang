@@ -106,6 +106,13 @@ MCSymbol *TargetLoweringObjectFile::getSymbol(Mangler &M,
   return Ctx->GetOrCreateSymbol(NameStr.str());
 }
 
+MCSymbol *TargetLoweringObjectFile::getSymbolWithGlobalValueBase(
+    Mangler &M, const GlobalValue *GV, StringRef Suffix) const {
+  SmallString<60> NameStr;
+  M.getNameWithPrefix(NameStr, GV, true);
+  NameStr.append(Suffix.begin(), Suffix.end());
+  return Ctx->GetOrCreateSymbol(NameStr.str());
+}
 
 MCSymbol *TargetLoweringObjectFile::
 getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,

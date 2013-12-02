@@ -87,11 +87,11 @@ static void printSymbolOperand(X86AsmPrinter &P, const MachineOperand &MO,
 
     MCSymbol *GVSym;
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
-      GVSym = P.GetSymbolWithGlobalValueBase(GV, "$stub");
+      GVSym = P.getSymbolWithGlobalValueBase(GV, "$stub");
     else if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
              MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE ||
              MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
-      GVSym = P.GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
+      GVSym = P.getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
     else
       GVSym = P.getSymbol(GV);
 
@@ -102,14 +102,14 @@ static void printSymbolOperand(X86AsmPrinter &P, const MachineOperand &MO,
 
     if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
         MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE) {
-      MCSymbol *Sym = P.GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
+      MCSymbol *Sym = P.getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
       MachineModuleInfoImpl::StubValueTy &StubSym =
           P.MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(Sym);
       if (StubSym.getPointer() == 0)
         StubSym = MachineModuleInfoImpl::
           StubValueTy(P.getSymbol(GV), !GV->hasInternalLinkage());
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE){
-      MCSymbol *Sym = P.GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
+      MCSymbol *Sym = P.getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
       MachineModuleInfoImpl::StubValueTy &StubSym =
           P.MMI->getObjFileInfo<MachineModuleInfoMachO>().getHiddenGVStubEntry(
               Sym);
@@ -117,7 +117,7 @@ static void printSymbolOperand(X86AsmPrinter &P, const MachineOperand &MO,
         StubSym = MachineModuleInfoImpl::
           StubValueTy(P.getSymbol(GV), !GV->hasInternalLinkage());
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      MCSymbol *Sym = P.GetSymbolWithGlobalValueBase(GV, "$stub");
+      MCSymbol *Sym = P.getSymbolWithGlobalValueBase(GV, "$stub");
       MachineModuleInfoImpl::StubValueTy &StubSym =
           P.MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
       if (StubSym.getPointer() == 0)

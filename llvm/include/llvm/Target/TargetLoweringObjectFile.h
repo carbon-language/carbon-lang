@@ -121,6 +121,11 @@ public:
   /// main label that is the address of the global
   MCSymbol *getSymbol(Mangler &M, const GlobalValue *GV) const;
 
+  /// Return the MCSymbol for a private symbol with global value name as its
+  /// base, with the specified suffix.
+  MCSymbol *getSymbolWithGlobalValueBase(Mangler &M, const GlobalValue *GV,
+                                         StringRef Suffix) const;
+
   // getCFIPersonalitySymbol - The symbol that gets passed to .cfi_personality.
   virtual MCSymbol *
   getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,

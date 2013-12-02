@@ -173,7 +173,7 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (TM.getRelocationModel() != Reloc::Static &&
         (GV->isDeclaration() || GV->isWeakForLinker())) {
       if (!GV->hasHiddenVisibility()) {
-        SymToPrint = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
+        SymToPrint = getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
         MachineModuleInfoImpl::StubValueTy &StubSym = 
           MMI->getObjFileInfo<MachineModuleInfoMachO>()
             .getGVStubEntry(SymToPrint);
@@ -182,7 +182,7 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
             StubValueTy(getSymbol(GV), !GV->hasInternalLinkage());
       } else if (GV->isDeclaration() || GV->hasCommonLinkage() ||
                  GV->hasAvailableExternallyLinkage()) {
-        SymToPrint = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
+        SymToPrint = getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
         
         MachineModuleInfoImpl::StubValueTy &StubSym = 
           MMI->getObjFileInfo<MachineModuleInfoMachO>().
@@ -1034,7 +1034,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     for (std::vector<const Function*>::const_iterator I = Personalities.begin(),
          E = Personalities.end(); I != E; ++I) {
       if (*I) {
-        MCSymbol *NLPSym = GetSymbolWithGlobalValueBase(*I, "$non_lazy_ptr");
+        MCSymbol *NLPSym = getSymbolWithGlobalValueBase(*I, "$non_lazy_ptr");
         MachineModuleInfoImpl::StubValueTy &StubSym =
           MMIMacho.getGVStubEntry(NLPSym);
         StubSym = MachineModuleInfoImpl::StubValueTy(getSymbol(*I), true);

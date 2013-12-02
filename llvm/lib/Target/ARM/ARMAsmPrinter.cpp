@@ -774,7 +774,7 @@ MCSymbol *ARMAsmPrinter::GetARMGVSymbol(const GlobalValue *GV,
     return getSymbol(GV);
 
   // FIXME: Remove this when Darwin transition to @GOT like syntax.
-  MCSymbol *MCSym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
+  MCSymbol *MCSym = getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
   MachineModuleInfoMachO &MMIMachO =
     MMI->getObjFileInfo<MachineModuleInfoMachO>();
   MachineModuleInfoImpl::StubValueTy &StubSym =

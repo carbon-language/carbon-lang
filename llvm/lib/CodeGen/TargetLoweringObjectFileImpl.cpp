@@ -95,13 +95,10 @@ getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
   if (Encoding & dwarf::DW_EH_PE_indirect) {
     MachineModuleInfoELF &ELFMMI = MMI->getObjFileInfo<MachineModuleInfoELF>();
 
-    SmallString<128> Name;
-    Mang->getNameWithPrefix(Name, GV, true);
-    Name += ".DW.stub";
+    MCSymbol *SSym = getSymbolWithGlobalValueBase(*Mang, GV, ".DW.stub");
 
     // Add information about the stub reference to ELFMMI so that the stub
     // gets emitted by the asmprinter.
-    MCSymbol *SSym = getContext().GetOrCreateSymbol(Name.str());
     MachineModuleInfoImpl::StubValueTy &StubSym = ELFMMI.getGVStubEntry(SSym);
     if (StubSym.getPointer() == 0) {
       MCSymbol *Sym = getSymbol(*Mang, GV);
@@ -632,13 +629,10 @@ getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
     MachineModuleInfoMachO &MachOMMI =
       MMI->getObjFileInfo<MachineModuleInfoMachO>();
 
-    SmallString<128> Name;
-    Mang->getNameWithPrefix(Name, GV, true);
-    Name += "$non_lazy_ptr";
+    MCSymbol *SSym = getSymbolWithGlobalValueBase(*Mang, GV, "$non_lazy_ptr");
 
     // Add information about the stub reference to MachOMMI so that the stub
     // gets emitted by the asmprinter.
-    MCSymbol *SSym = getContext().GetOrCreateSymbol(Name.str());
     MachineModuleInfoImpl::StubValueTy &StubSym =
       GV->hasHiddenVisibility() ? MachOMMI.getHiddenGVStubEntry(SSym) :
                                   MachOMMI.getGVStubEntry(SSym);
@@ -663,13 +657,10 @@ getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
   MachineModuleInfoMachO &MachOMMI =
     MMI->getObjFileInfo<MachineModuleInfoMachO>();
 
-  SmallString<128> Name;
-  Mang->getNameWithPrefix(Name, GV, true);
-  Name += "$non_lazy_ptr";
+  MCSymbol *SSym = getSymbolWithGlobalValueBase(*Mang, GV, "$non_lazy_ptr");
 
   // Add information about the stub reference to MachOMMI so that the stub
   // gets emitted by the asmprinter.
-  MCSymbol *SSym = getContext().GetOrCreateSymbol(Name.str());
   MachineModuleInfoImpl::StubValueTy &StubSym = MachOMMI.getGVStubEntry(SSym);
   if (StubSym.getPointer() == 0) {
     MCSymbol *Sym = getSymbol(*Mang, GV);
