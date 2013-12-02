@@ -1809,10 +1809,12 @@ static std::string CalculateDiagnostic(const Record &S) {
 
 static std::string GenerateCustomAppertainsTo(const Record &Subject,
                                               raw_ostream &OS) {
+  std::string FnName = "is" + Subject.getName();
+
   // If this code has already been generated, simply return the previous
   // instance of it.
   static std::set<std::string> CustomSubjectSet;
-  std::set<std::string>::iterator I = CustomSubjectSet.find(Subject.getName());
+  std::set<std::string>::iterator I = CustomSubjectSet.find(FnName);
   if (I != CustomSubjectSet.end())
     return *I;
 
@@ -1825,7 +1827,6 @@ static std::string GenerateCustomAppertainsTo(const Record &Subject,
     return "";
   }
 
-  std::string FnName = "is" + Subject.getName();
   OS << "static bool " << FnName << "(const Decl *D) {\n";
   OS << "  const " << Base->getName() << "Decl *S = dyn_cast<";
   OS << Base->getName();
