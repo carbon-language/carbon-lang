@@ -2319,8 +2319,6 @@ static void handleWorkGroupSize(Sema &S, Decl *D,
 }
 
 static void handleVecTypeHint(Sema &S, Decl *D, const AttributeList &Attr) {
-  assert(Attr.getKind() == AttributeList::AT_VecTypeHint);
-
   if (!Attr.hasParsedType()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
       << Attr.getName() << 1;
@@ -2339,9 +2337,7 @@ static void handleVecTypeHint(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  if (Attr.getKind() == AttributeList::AT_VecTypeHint &&
-      D->hasAttr<VecTypeHintAttr>()) {
-    VecTypeHintAttr *A = D->getAttr<VecTypeHintAttr>();
+  if (VecTypeHintAttr *A = D->getAttr<VecTypeHintAttr>()) {
     if (!S.Context.hasSameType(A->getTypeHint(), ParmType)) {
       S.Diag(Attr.getLoc(), diag::warn_duplicate_attribute) << Attr.getName();
       return;
