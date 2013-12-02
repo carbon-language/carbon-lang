@@ -5182,6 +5182,10 @@ def MOVi32imm : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
                            [(set GPR:$dst, (arm_i32imm:$src))]>,
                            Requires<[IsARM]>;
 
+def LDRLIT_ga_abs : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iLoad_i,
+                               [(set GPR:$dst, (ARMWrapper tglobaladdr:$src))]>,
+                    Requires<[IsARM, DontUseMovt]>;
+
 // Pseudo instruction that combines movw + movt + add pc (if PIC).
 // It also makes it possible to rematerialize the instructions.
 // FIXME: Remove this when we can do generalized remat and when machine licm
@@ -5191,6 +5195,18 @@ def MOV_ga_pcrel : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
                               IIC_iMOVix2addpc,
                         [(set GPR:$dst, (ARMWrapperPIC tglobaladdr:$addr))]>,
                         Requires<[IsARM, UseMovt]>;
+
+def LDRLIT_ga_pcrel : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
+                                 IIC_iLoadiALU,
+                                 [(set GPR:$dst,
+                                       (ARMWrapperPIC tglobaladdr:$addr))]>,
+                      Requires<[IsARM, DontUseMovt]>;
+
+def LDRLIT_ga_pcrel_ldr : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
+                              NoItinerary,
+                              [(set GPR:$dst,
+                                    (load (ARMWrapperPIC tglobaladdr:$addr)))]>,
+                          Requires<[IsARM, DontUseMovt]>;
 
 let AddedComplexity = 10 in
 def MOV_ga_pcrel_ldr : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),

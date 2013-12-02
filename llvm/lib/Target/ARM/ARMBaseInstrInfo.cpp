@@ -1325,6 +1325,9 @@ bool ARMBaseInstrInfo::produceSameValue(const MachineInstr *MI0,
       Opcode == ARM::t2LDRpci_pic ||
       Opcode == ARM::tLDRpci ||
       Opcode == ARM::tLDRpci_pic ||
+      Opcode == ARM::LDRLIT_ga_pcrel ||
+      Opcode == ARM::LDRLIT_ga_pcrel_ldr ||
+      Opcode == ARM::tLDRLIT_ga_pcrel ||
       Opcode == ARM::MOV_ga_pcrel ||
       Opcode == ARM::MOV_ga_pcrel_ldr ||
       Opcode == ARM::t2MOV_ga_pcrel) {
@@ -1338,7 +1341,10 @@ bool ARMBaseInstrInfo::produceSameValue(const MachineInstr *MI0,
     if (MO0.getOffset() != MO1.getOffset())
       return false;
 
-    if (Opcode == ARM::MOV_ga_pcrel ||
+    if (Opcode == ARM::LDRLIT_ga_pcrel ||
+        Opcode == ARM::LDRLIT_ga_pcrel_ldr ||
+        Opcode == ARM::tLDRLIT_ga_pcrel ||
+        Opcode == ARM::MOV_ga_pcrel ||
         Opcode == ARM::MOV_ga_pcrel_ldr ||
         Opcode == ARM::t2MOV_ga_pcrel)
       // Ignore the PC labels.

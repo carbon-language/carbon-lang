@@ -1700,19 +1700,10 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     // ARM call to a local ARM function is predicable.
     isLocalARMFunc = !Subtarget->isThumb() && (!isExt || !ARMInterworking);
     // tBX takes a register source operand.
-    if (isARMFunc && Subtarget->isThumb1Only() && !Subtarget->hasV5TOps()) {
-      unsigned ARMPCLabelIndex = AFI->createPICLabelUId();
-      ARMConstantPoolValue *CPV =
-        ARMConstantPoolConstant::Create(GV, ARMPCLabelIndex, ARMCP::CPValue, 4);
-      SDValue CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 4);
-      CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
-      Callee = DAG.getLoad(getPointerTy(), dl,
-                           DAG.getEntryNode(), CPAddr,
-                           MachinePointerInfo::getConstantPool(),
-                           false, false, false, 0);
-      SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex, MVT::i32);
-      Callee = DAG.getNode(ARMISD::PIC_ADD, dl,
-                           getPointerTy(), Callee, PICLabel);
+    if (isStub && Subtarget->isThumb1Only() && !Subtarget->hasV5TOps()) {
+      assert(Subtarget->isTargetDarwin() && "WrapperPIC use on non-Darwin?");
+      Callee = DAG.getNode(ARMISD::WrapperPIC, dl, getPointerTy(),
+                           DAG.getTargetGlobalAddress(GV, dl, getPointerTy()));
     } else {
       // On ELF targets for PIC code, direct calls should go through the PLT
       unsigned OpFlags = 0;
@@ -2537,56 +2528,20 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   Reloc::Model RelocM = getTargetMachine().getRelocationModel();
 
-  if (Subtarget->useMovt()) {
+  if (Subtarget->useMovt())
     ++NumMovwMovt;
-    // FIXME: Once remat is capable of dealing with instructions with register
-    // operands, expand this into two nodes.
-    if (RelocM == Reloc::Static)
-      return DAG.getNode(ARMISD::Wrapper, dl, PtrVT,
-                                 DAG.getTargetGlobalAddress(GV, dl, PtrVT));
 
-    unsigned Wrapper =
-        RelocM == Reloc::PIC_ ? ARMISD::WrapperPIC : ARMISD::Wrapper;
+  // FIXME: Once remat is capable of dealing with instructions with register
+  // operands, expand this into multiple nodes
+  unsigned Wrapper =
+      RelocM == Reloc::PIC_ ? ARMISD::WrapperPIC : ARMISD::Wrapper;
 
-    SDValue G = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0, ARMII::MO_NONLAZY);
-    SDValue Result = DAG.getNode(Wrapper, dl, PtrVT, G);
-
-    if (Subtarget->GVIsIndirectSymbol(GV, RelocM))
-      Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Result,
-                           MachinePointerInfo::getGOT(),
-                           false, false, false, 0);
-    return Result;
-  }
-
-  unsigned ARMPCLabelIndex = 0;
-  SDValue CPAddr;
-  if (RelocM == Reloc::Static) {
-    CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 4);
-  } else {
-    ARMFunctionInfo *AFI = DAG.getMachineFunction().getInfo<ARMFunctionInfo>();
-    ARMPCLabelIndex = AFI->createPICLabelUId();
-    unsigned PCAdj = (RelocM != Reloc::PIC_) ? 0 : (Subtarget->isThumb()?4:8);
-    ARMConstantPoolValue *CPV =
-      ARMConstantPoolConstant::Create(GV, ARMPCLabelIndex, ARMCP::CPValue,
-                                      PCAdj);
-    CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 4);
-  }
-  CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
-
-  SDValue Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr,
-                               MachinePointerInfo::getConstantPool(),
-                               false, false, false, 0);
-  SDValue Chain = Result.getValue(1);
-
-  if (RelocM == Reloc::PIC_) {
-    SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex, MVT::i32);
-    Result = DAG.getNode(ARMISD::PIC_ADD, dl, PtrVT, Result, PICLabel);
-  }
+  SDValue G = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0, ARMII::MO_NONLAZY);
+  SDValue Result = DAG.getNode(Wrapper, dl, PtrVT, G);
 
   if (Subtarget->GVIsIndirectSymbol(GV, RelocM))
-    Result = DAG.getLoad(PtrVT, dl, Chain, Result, MachinePointerInfo::getGOT(),
-                         false, false, false, 0);
-
+    Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Result,
+                         MachinePointerInfo::getGOT(), false, false, false, 0);
   return Result;
 }
 

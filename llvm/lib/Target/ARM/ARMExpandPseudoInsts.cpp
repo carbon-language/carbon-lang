@@ -18,11 +18,13 @@
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMBaseRegisterInfo.h"
+#include "ARMConstantPoolValue.h"
 #include "ARMMachineFunctionInfo.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h" // FIXME: for debug only. remove!
 #include "llvm/Target/TargetFrameLowering.h"
@@ -898,6 +900,59 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       return true;
     }
 
+    case ARM::LDRLIT_ga_abs:
+    case ARM::LDRLIT_ga_pcrel:
+    case ARM::LDRLIT_ga_pcrel_ldr:
+    case ARM::tLDRLIT_ga_abs:
+    case ARM::tLDRLIT_ga_pcrel: {
+      unsigned DstReg = MI.getOperand(0).getReg();
+      bool DstIsDead = MI.getOperand(0).isDead();
+      const MachineOperand &MO1 = MI.getOperand(1);
+      const GlobalValue *GV = MO1.getGlobal();
+      bool IsARM =
+          Opcode != ARM::tLDRLIT_ga_pcrel && Opcode != ARM::tLDRLIT_ga_abs;
+      bool IsPIC =
+          Opcode != ARM::LDRLIT_ga_abs && Opcode != ARM::tLDRLIT_ga_abs;
+      unsigned LDRLITOpc = IsARM ? ARM::LDRi12 : ARM::tLDRpci;
+      unsigned PICAddOpc =
+          IsARM
+              ? (Opcode == ARM::LDRLIT_ga_pcrel_ldr ? ARM::PICADD : ARM::PICLDR)
+              : ARM::tPICADD;
+
+      // We need a new const-pool entry to load from.
+      MachineConstantPool *MCP = MBB.getParent()->getConstantPool();
+      unsigned ARMPCLabelIndex = 0;
+      MachineConstantPoolValue *CPV;
+
+      if (IsPIC) {
+        unsigned PCAdj = IsARM ? 8 : 4;
+        ARMPCLabelIndex = AFI->createPICLabelUId();
+        CPV = ARMConstantPoolConstant::Create(GV, ARMPCLabelIndex,
+                                              ARMCP::CPValue, PCAdj);
+      } else
+        CPV = ARMConstantPoolConstant::Create(GV, ARMCP::no_modifier);
+
+      MachineInstrBuilder MIB =
+          BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(LDRLITOpc), DstReg)
+            .addConstantPoolIndex(MCP->getConstantPoolIndex(CPV, 4));
+      if (IsARM)
+        MIB.addImm(0);
+      AddDefaultPred(MIB);
+
+      if (IsPIC) {
+        MachineInstrBuilder MIB =
+          BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(PICAddOpc))
+            .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
+            .addReg(DstReg)
+            .addImm(ARMPCLabelIndex);
+
+        if (IsARM)
+          AddDefaultPred(MIB);
+      }
+
+      MI.eraseFromParent();
+      return true;
+    }
     case ARM::MOV_ga_pcrel:
     case ARM::MOV_ga_pcrel_ldr:
     case ARM::t2MOV_ga_pcrel: {
