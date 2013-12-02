@@ -277,11 +277,7 @@ namespace lldb_private {
         }
         
         virtual bool
-        SetRemoteWorkingDirectory(const ConstString &path)
-        {
-            m_working_dir = path;
-            return true;
-        }
+        SetRemoteWorkingDirectory(const ConstString &path);
 
         virtual const char *
         GetUserName (uint32_t uid);

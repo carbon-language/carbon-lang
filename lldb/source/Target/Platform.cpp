@@ -671,6 +671,9 @@ Platform::SetWorkingDirectory (const ConstString &path)
 {
     if (IsHost())
     {
+        Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
+        if (log)
+            log->Printf("Platform::SetWorkingDirectory('%s')", path.GetCString());
 #ifdef _WIN32
         // Not implemented on Windows
         return false;
@@ -685,6 +688,7 @@ Platform::SetWorkingDirectory (const ConstString &path)
     }
     else
     {
+        m_working_dir.Clear();
         return SetRemoteWorkingDirectory(path);
     }
 }
@@ -743,6 +747,16 @@ Platform::GetHostname ()
     if (m_name.empty())        
         return NULL;
     return m_name.c_str();
+}
+
+bool
+Platform::SetRemoteWorkingDirectory(const ConstString &path)
+{
+    Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
+    if (log)
+        log->Printf("Platform::SetRemoteWorkingDirectory('%s')", path.GetCString());
+    m_working_dir = path;
+    return true;
 }
 
 const char *

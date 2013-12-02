@@ -17,9 +17,6 @@
 #include <stack>
 
 #include "lldb/lldb-public.h"
-
-#include "lldb/API/SBDefines.h"
-
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/InputReaderStack.h"
@@ -55,6 +52,10 @@ friend class SourceManager;  // For GetSourceFileCache.
 
 public:
 
+    typedef lldb::DynamicLibrarySP (*LoadPluginCallbackType) (const lldb::DebuggerSP &debugger_sp,
+                                                              const FileSpec& spec,
+                                                              Error& error);
+
     static lldb::DebuggerSP
     CreateInstance (lldb::LogOutputCallback log_callback = NULL, void *baton = NULL);
 
@@ -65,7 +66,7 @@ public:
     FindTargetWithProcess (Process *process);
 
     static void
-    Initialize ();
+    Initialize (LoadPluginCallbackType load_plugin_callback);
     
     static void 
     Terminate ();
@@ -333,9 +334,7 @@ public:
     {
         return m_instance_name;
     }
-    
-    typedef bool (*LLDBCommandPluginInit) (lldb::SBDebugger& debugger);
-    
+        
     bool
     LoadPlugin (const FileSpec& spec, Error& error);
 
@@ -377,6 +376,7 @@ protected:
     LogStreamMap m_log_streams;
     lldb::StreamSP m_log_callback_stream_sp;
     ConstString m_instance_name;
+    static LoadPluginCallbackType g_load_plugin_callback;
     typedef std::vector<lldb::DynamicLibrarySP> LoadedPluginsList;
     LoadedPluginsList m_loaded_plugins;
     

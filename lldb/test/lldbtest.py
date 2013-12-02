@@ -1686,7 +1686,10 @@ class TestBase(Base):
 
         if lldb.remote_platform:
             #remote_test_dir = os.path.join(lldb.remote_platform_working_dir, self.mydir)
-            remote_test_dir = os.path.join(lldb.remote_platform_working_dir, str(self.test_number), self.mydir)
+            remote_test_dir = os.path.join(lldb.remote_platform_working_dir, 
+                                           self.getArchitecture(), 
+                                           str(self.test_number), 
+                                           self.mydir)
             error = lldb.remote_platform.MakeDirectory(remote_test_dir, 0700)
             if error.Success():
                 print "successfully made remote directory '%s'" % (remote_test_dir)

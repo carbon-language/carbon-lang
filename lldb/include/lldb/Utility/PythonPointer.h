@@ -12,7 +12,7 @@
 
 #include <algorithm>
 
-#include <Python.h>
+#include "lldb/lldb-python.h"
 
 namespace lldb_private {
 

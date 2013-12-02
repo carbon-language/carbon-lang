@@ -17,8 +17,7 @@
 
 #else
 
-#include <Python.h>
-
+#include "lldb/lldb-python.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Core/InputReader.h"

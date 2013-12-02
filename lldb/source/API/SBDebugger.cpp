@@ -38,6 +38,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/State.h"
 #include "lldb/DataFormatters/DataVisualization.h"
+#include "lldb/Host/DynamicLibrary.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/OptionGroupPlatform.h"
@@ -46,6 +47,41 @@
 
 using namespace lldb;
 using namespace lldb_private;
+
+
+static lldb::DynamicLibrarySP
+LoadPlugin (const lldb::DebuggerSP &debugger_sp, const FileSpec& spec, Error& error)
+{
+    lldb::DynamicLibrarySP dynlib_sp(new lldb_private::DynamicLibrary(spec));
+    if (dynlib_sp && dynlib_sp->IsValid())
+    {
+        typedef bool (*LLDBCommandPluginInit) (lldb::SBDebugger& debugger);
+        
+        lldb::SBDebugger debugger_sb(debugger_sp);
+        // This calls the bool lldb::PluginInitialize(lldb::SBDebugger debugger) function.
+        // TODO: mangle this differently for your system - on OSX, the first underscore needs to be removed and the second one stays
+        LLDBCommandPluginInit init_func = dynlib_sp->GetSymbol<LLDBCommandPluginInit>("_ZN4lldb16PluginInitializeENS_10SBDebuggerE");
+        if (init_func)
+        {
+            if (init_func(debugger_sb))
+                return dynlib_sp;
+            else
+                error.SetErrorString("plug-in refused to load (lldb::PluginInitialize(lldb::SBDebugger) returned false)");
+        }
+        else
+        {
+            error.SetErrorString("plug-in is missing the required initialization: lldb::PluginInitialize(lldb::SBDebugger)");
+        }
+    }
+    else
+    {
+        if (spec.Exists())
+            error.SetErrorString("this file does not represent a loadable dylib");
+        else
+            error.SetErrorString("no such file");
+    }
+    return lldb::DynamicLibrarySP();
+}
 
 void
 SBDebugger::Initialize ()
@@ -57,7 +93,7 @@ SBDebugger::Initialize ()
 
     SBCommandInterpreter::InitializeSWIG ();
 
-    Debugger::Initialize();
+    Debugger::Initialize(LoadPlugin);
 }
 
 void

@@ -303,7 +303,7 @@ PlatformDarwin::GetSharedModuleWithLocalCache (const lldb_private::ModuleSpec &m
 
     Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
     if (log)
-        log->Printf("[%s] Trying to find module %s/%s - platform path %s/%s symbol path %s/%s\n",
+        log->Printf("[%s] Trying to find module %s/%s - platform path %s/%s symbol path %s/%s",
                      (IsHost() ? "host" : "remote"),
                      module_spec.GetFileSpec().GetDirectory().AsCString(),
                      module_spec.GetFileSpec().GetFilename().AsCString(),
@@ -328,7 +328,7 @@ PlatformDarwin::GetSharedModuleWithLocalCache (const lldb_private::ModuleSpec &m
         {
             Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
             if (log)
-                log->Printf("[%s] module %s/%s was rsynced and is now there\n",
+                log->Printf("[%s] module %s/%s was rsynced and is now there",
                              (IsHost() ? "host" : "remote"),
                              module_spec.GetFileSpec().GetDirectory().AsCString(),
                              module_spec.GetFileSpec().GetFilename().AsCString());
@@ -361,7 +361,7 @@ PlatformDarwin::GetSharedModuleWithLocalCache (const lldb_private::ModuleSpec &m
                 // bring in the remote file
                 Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
                 if (log)
-                    log->Printf("[%s] module %s/%s needs to be replaced from remote copy\n",
+                    log->Printf("[%s] module %s/%s needs to be replaced from remote copy",
                                  (IsHost() ? "host" : "remote"),
                                  module_spec.GetFileSpec().GetDirectory().AsCString(),
                                  module_spec.GetFileSpec().GetFilename().AsCString());
@@ -376,7 +376,7 @@ PlatformDarwin::GetSharedModuleWithLocalCache (const lldb_private::ModuleSpec &m
         module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
         Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
             if (log)
-                log->Printf("[%s] module %s/%s was found in the cache\n",
+                log->Printf("[%s] module %s/%s was found in the cache",
                              (IsHost() ? "host" : "remote"),
                              module_spec.GetFileSpec().GetDirectory().AsCString(),
                              module_spec.GetFileSpec().GetFilename().AsCString());
@@ -385,7 +385,7 @@ PlatformDarwin::GetSharedModuleWithLocalCache (const lldb_private::ModuleSpec &m
     
     // bring in the remote module file
     if (log)
-        log->Printf("[%s] module %s/%s needs to come in remotely\n",
+        log->Printf("[%s] module %s/%s needs to come in remotely",
                      (IsHost() ? "host" : "remote"),
                      module_spec.GetFileSpec().GetDirectory().AsCString(),
                      module_spec.GetFileSpec().GetFilename().AsCString());
@@ -396,7 +396,7 @@ PlatformDarwin::GetSharedModuleWithLocalCache (const lldb_private::ModuleSpec &m
     {
         Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
         if (log)
-            log->Printf("[%s] module %s/%s is now cached and fine\n",
+            log->Printf("[%s] module %s/%s is now cached and fine",
                          (IsHost() ? "host" : "remote"),
                          module_spec.GetFileSpec().GetDirectory().AsCString(),
                          module_spec.GetFileSpec().GetFilename().AsCString());

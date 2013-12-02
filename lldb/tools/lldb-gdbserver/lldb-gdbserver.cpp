@@ -93,7 +93,7 @@ main (int argc, char *argv[])
     Args log_args;
     Error error;
     int ch;
-    Debugger::Initialize();
+    Debugger::Initialize(NULL);
     ProcessLaunchInfo launch_info;
     ProcessAttachInfo attach_info;
 

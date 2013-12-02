@@ -28,6 +28,8 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Host/OptionParser.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/CommandReturnObject.h"
 #include "Plugins/Process/gdb-remote/GDBRemoteCommunicationServer.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h"
 using namespace lldb;
@@ -46,13 +48,12 @@ static struct option g_long_options[] =
     { "debug",              no_argument,        &g_debug,           1   },
     { "verbose",            no_argument,        &g_verbose,         1   },
     { "stay-alive",         no_argument,        &g_stay_alive,      1   },
-    { "log-file",           required_argument,  NULL,               'l' },
-    { "log-flags",          required_argument,  NULL,               'f' },
     { "listen",             required_argument,  NULL,               'L' },
     { "port-offset",        required_argument,  NULL,               'p' },
     { "gdbserver-port",     required_argument,  NULL,               'P' },
     { "min-gdbserver-port", required_argument,  NULL,               'm' },
     { "max-gdbserver-port", required_argument,  NULL,               'M' },
+    { "lldb-command",       required_argument,  NULL,               'c' },
     { NULL,                 0,                  NULL,               0   }
 };
 
@@ -100,24 +101,25 @@ main (int argc, char *argv[])
     signal (SIGPIPE, SIG_IGN);
     signal (SIGHUP, signal_handler);
     int long_option_index = 0;
-    StreamSP log_stream_sp;
-    Args log_args;
     Error error;
     std::string listen_host_port;
     int ch;
-    Debugger::Initialize();
+    Debugger::Initialize(NULL);
+
+    lldb::DebuggerSP debugger_sp = Debugger::CreateInstance ();
+
+    debugger_sp->SetInputFileHandle(stdin, false);
+    debugger_sp->SetOutputFileHandle(stdout, false);
+    debugger_sp->SetErrorFileHandle(stderr, false);
     
     GDBRemoteCommunicationServer::PortMap gdbserver_portmap;
     int min_gdbserver_port = 0;
     int max_gdbserver_port = 0;
     uint16_t port_offset = 0;
     
+    std::vector<std::string> lldb_commands;
     bool show_usage = false;
     int option_error = 0;
-    // Enable LLDB log channels...
-    StreamSP stream_sp (new StreamFile(stdout, false));
-    const char *log_channels[] = { "platform", "host", "process", NULL };
-    EnableLog (stream_sp, 0, log_channels, NULL);
     
     std::string short_options(OptionParser::GetShortOptionString(g_long_options));
                             
@@ -130,51 +132,11 @@ main (int argc, char *argv[])
 
     while ((ch = getopt_long_only(argc, argv, short_options.c_str(), g_long_options, &long_option_index)) != -1)
     {
-//        DNBLogDebug("option: ch == %c (0x%2.2x) --%s%c%s\n",
-//                    ch, (uint8_t)ch,
-//                    g_long_options[long_option_index].name,
-//                    g_long_options[long_option_index].has_arg ? '=' : ' ',
-//                    optarg ? optarg : "");
         switch (ch)
         {
         case 0:   // Any optional that auto set themselves will return 0
             break;
 
-        case 'l': // Set Log File
-            if (optarg && optarg[0])
-            {
-                if ((strcasecmp(optarg, "stdout") == 0) || (strcmp(optarg, "/dev/stdout") == 0))
-                {
-                    log_stream_sp.reset (new StreamFile (stdout, false));
-                }
-                else if ((strcasecmp(optarg, "stderr") == 0) || (strcmp(optarg, "/dev/stderr") == 0))
-                {
-                    log_stream_sp.reset (new StreamFile (stderr, false));
-                }
-                else
-                {
-                    FILE *log_file = fopen(optarg, "w");
-                    if (log_file)
-                    {
-                        setlinebuf(log_file);
-                        log_stream_sp.reset (new StreamFile (log_file, true));
-                    }
-                    else
-                    {
-                        const char *errno_str = strerror(errno);
-                        fprintf (stderr, "Failed to open log file '%s' for writing: errno = %i (%s)", optarg, errno, errno_str ? errno_str : "unknown error");
-                    }
-
-                }
-                
-            }
-            break;
-
-        case 'f': // Log Flags
-            if (optarg && optarg[0])
-                log_args.AppendArgument(optarg);
-            break;
-        
         case 'L':
             listen_host_port.append (optarg);
             break;
@@ -234,13 +196,17 @@ main (int argc, char *argv[])
             }
             break;
             
+        case 'c':
+            lldb_commands.push_back(optarg);
+            break;
+
         case 'h':   /* fall-through is intentional */
         case '?':
             show_usage = true;
             break;
         }
     }
-    
+
     // Make a port map for a port range that was specified.
     if (min_gdbserver_port < max_gdbserver_port)
     {
@@ -264,16 +230,20 @@ main (int argc, char *argv[])
         exit(option_error);
     }
     
-    if (log_stream_sp)
-    {
-        if (log_args.GetArgumentCount() == 0)
-            log_args.AppendArgument("default");
-        ProcessGDBRemoteLog::EnableLog (log_stream_sp, 0,log_args.GetConstArgumentVector(), log_stream_sp.get());
-    }
-
     // Skip any options we consumed with getopt_long_only
     argc -= optind;
     argv += optind;
+
+    // Execute any LLDB commands that we were asked to evaluate.
+    for (const auto &lldb_command : lldb_commands)
+    {
+        lldb_private::CommandReturnObject result;
+        printf("(lldb) %s\n", lldb_command.c_str());
+        debugger_sp->GetCommandInterpreter().HandleCommand(lldb_command.c_str(), eLazyBoolNo, result);
+        const char *output = result.GetOutputData();
+        if (output && output[0])
+            puts(output);
+    }
 
 
     do {

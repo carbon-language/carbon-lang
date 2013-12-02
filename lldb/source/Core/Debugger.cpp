@@ -9,8 +9,6 @@
 
 #include "lldb/lldb-python.h"
 
-#include "lldb/API/SBDebugger.h"
-
 #include "lldb/Core/Debugger.h"
 
 #include <map>
@@ -46,6 +44,7 @@
 #include "lldb/Target/TargetList.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
@@ -155,19 +154,7 @@ enum
     ePropertyAutoOneLineSummaries
 };
 
-//
-//const char *
-//Debugger::GetFrameFormat() const
-//{
-//    return m_properties_sp->GetFrameFormat();
-//}
-//const char *
-//Debugger::GetThreadFormat() const
-//{
-//    return m_properties_sp->GetThreadFormat();
-//}
-//
-
+Debugger::LoadPluginCallbackType Debugger::g_load_plugin_callback = NULL;
 
 Error
 Debugger::SetPropertyValue (const ExecutionContext *exe_ctx,
@@ -373,8 +360,9 @@ Debugger::TestDebuggerRefCount ()
 }
 
 void
-Debugger::Initialize ()
+Debugger::Initialize (LoadPluginCallbackType load_plugin_callback)
 {
+    g_load_plugin_callback = load_plugin_callback;
     if (g_shared_debugger_refcount++ == 0)
         lldb_private::Initialize();
 }
@@ -412,31 +400,22 @@ Debugger::SettingsTerminate ()
 bool
 Debugger::LoadPlugin (const FileSpec& spec, Error& error)
 {
-    lldb::DynamicLibrarySP dynlib_sp(new lldb_private::DynamicLibrary(spec));
-    if (!dynlib_sp || dynlib_sp->IsValid() == false)
+    if (g_load_plugin_callback)
     {
-        if (spec.Exists())
-            error.SetErrorString("this file does not represent a loadable dylib");
-        else
-            error.SetErrorString("no such file");
-        return false;
+        lldb::DynamicLibrarySP dynlib_sp = g_load_plugin_callback (shared_from_this(), spec, error);
+        if (dynlib_sp)
+        {
+            m_loaded_plugins.push_back(dynlib_sp);
+            return true;
+        }
     }
-    lldb::DebuggerSP debugger_sp(shared_from_this());
-    lldb::SBDebugger debugger_sb(debugger_sp);
-    // This calls the bool lldb::PluginInitialize(lldb::SBDebugger debugger) function.
-    // TODO: mangle this differently for your system - on OSX, the first underscore needs to be removed and the second one stays
-    LLDBCommandPluginInit init_func = dynlib_sp->GetSymbol<LLDBCommandPluginInit>("_ZN4lldb16PluginInitializeENS_10SBDebuggerE");
-    if (!init_func)
+    else
     {
-        error.SetErrorString("cannot find the initialization function lldb::PluginInitialize(lldb::SBDebugger)");
-        return false;
+        // The g_load_plugin_callback is registered in SBDebugger::Initialize()
+        // and if the public API layer isn't available (code is linking against
+        // all of the internal LLDB static libraries), then we can't load plugins
+        error.SetErrorString("Public API layer is not available");
     }
-    if (init_func(debugger_sb))
-    {
-        m_loaded_plugins.push_back(dynlib_sp);
-        return true;
-    }
-    error.SetErrorString("dylib refused to be loaded");
     return false;
 }
 

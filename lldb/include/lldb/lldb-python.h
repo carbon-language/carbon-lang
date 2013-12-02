@@ -18,7 +18,7 @@
 
 #else
 
-#include <Python.h>
+#include <Python/Python.h>
 
 #endif // LLDB_DISABLE_PYTHON
 

@@ -19,7 +19,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Flags.h"
 #include "lldb/Interpreter/OptionValue.h"
-#include <Python.h>
+#include "lldb/lldb-python.h"
 
 namespace lldb_private {
     

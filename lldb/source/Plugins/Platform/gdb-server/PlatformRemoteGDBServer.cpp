@@ -199,13 +199,19 @@ PlatformRemoteGDBServer::GetRemoteWorkingDirectory()
 {
     if (IsConnected())
     {
-        if (!m_working_dir)
+        Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
+        std::string cwd;
+        if (m_gdb_client.GetWorkingDir(cwd))
         {
-            std::string cwd;
-            if (m_gdb_client.GetWorkingDir(cwd))
-                m_working_dir = ConstString(cwd.c_str());
+            ConstString working_dir(cwd.c_str());
+            if (log)
+                log->Printf("PlatformRemoteGDBServer::GetRemoteWorkingDirectory() -> '%s'", working_dir.GetCString());
+            return working_dir;
         }
-        return m_working_dir;
+        else
+        {
+            return ConstString();
+        }
     }
     else
     {
@@ -220,7 +226,9 @@ PlatformRemoteGDBServer::SetRemoteWorkingDirectory(const lldb_private::ConstStri
     {
         // Clear the working directory it case it doesn't get set correctly. This will
         // for use to re-read it
-        m_working_dir.Clear();
+        Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
+        if (log)
+            log->Printf("PlatformRemoteGDBServer::SetRemoteWorkingDirectory('%s')", path.GetCString());
         return m_gdb_client.SetWorkingDir(path.GetCString()) == 0;
     }
     else

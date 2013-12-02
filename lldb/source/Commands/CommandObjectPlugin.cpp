@@ -11,10 +11,6 @@
 
 #include "CommandObjectPlugin.h"
 
-#include "lldb/API/SBDebugger.h"
-#include "lldb/API/SBCommandInterpreter.h"
-#include "lldb/API/SBCommandReturnObject.h"
-
 #include "lldb/Host/Host.h"
 
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -79,8 +75,6 @@ protected:
     bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        typedef void (*LLDBCommandPluginInit) (lldb::SBDebugger debugger);
-        
         size_t argc = command.GetArgumentCount();
         
         if (argc != 1)
