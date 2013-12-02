@@ -31,6 +31,7 @@ class XCoreFunctionInfo : public MachineFunctionInfo {
   int LRSpillSlot;
   int FPSpillSlot;
   int VarArgsFrameIndex;
+  mutable int CachedEStackSize;
   std::vector<std::pair<MCSymbol*, CalleeSavedInfo> > SpillLabels;
 
 public:
@@ -38,13 +39,15 @@ public:
     UsesLR(false),
     LRSpillSlot(0),
     FPSpillSlot(0),
-    VarArgsFrameIndex(0) {}
+    VarArgsFrameIndex(0),
+    CachedEStackSize(-1) {}
   
   explicit XCoreFunctionInfo(MachineFunction &MF) :
     UsesLR(false),
     LRSpillSlot(0),
     FPSpillSlot(0),
-    VarArgsFrameIndex(0) {}
+    VarArgsFrameIndex(0),
+    CachedEStackSize(-1) {}
   
   ~XCoreFunctionInfo() {}
   
@@ -60,6 +63,8 @@ public:
   void setFPSpillSlot(int off) { FPSpillSlot = off; }
   int getFPSpillSlot() const { return FPSpillSlot; }
   
+  bool isLargeFrame(const MachineFunction &MF) const;
+
   std::vector<std::pair<MCSymbol*, CalleeSavedInfo> > &getSpillLabels() {
     return SpillLabels;
   }

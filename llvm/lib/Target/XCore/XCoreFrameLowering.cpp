@@ -302,10 +302,11 @@ void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
   } // else Don't erase the return instruction.
 }
 
-bool XCoreFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                               MachineBasicBlock::iterator MI,
-                                        const std::vector<CalleeSavedInfo> &CSI,
-                                          const TargetRegisterInfo *TRI) const {
+bool XCoreFrameLowering::
+spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                          MachineBasicBlock::iterator MI,
+                          const std::vector<CalleeSavedInfo> &CSI,
+                          const TargetRegisterInfo *TRI) const {
   if (CSI.empty())
     return true;
 
@@ -337,10 +338,11 @@ bool XCoreFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
-bool XCoreFrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                                 MachineBasicBlock::iterator MI,
-                                        const std::vector<CalleeSavedInfo> &CSI,
-                                            const TargetRegisterInfo *TRI) const{
+bool XCoreFrameLowering::
+restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MI,
+                            const std::vector<CalleeSavedInfo> &CSI,
+                            const TargetRegisterInfo *TRI) const{
   MachineFunction *MF = MBB.getParent();
   const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
 
@@ -420,11 +422,10 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   MBB.erase(I);
 }
 
-void
-XCoreFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                                     RegScavenger *RS) const {
+void XCoreFrameLowering::
+processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                     RegScavenger *RS) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
   bool LRUsed = MF.getRegInfo().isPhysRegUsed(XCore::LR);
   const TargetRegisterClass *RC = &XCore::GRRegsRegClass;
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
@@ -434,7 +435,7 @@ XCoreFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     bool isVarArg = MF.getFunction()->isVarArg();
     int FrameIdx;
     if (! isVarArg) {
-      // A fixed offset of 0 allows us to save / restore LR using entsp / retsp.
+      // A fixed offset of 0 allows us to save/restore LR using entsp/retsp.
       FrameIdx = MFI->CreateFixedObject(RC->getSize(), 0, true);
     } else {
       FrameIdx = MFI->CreateStackObject(RC->getSize(), RC->getAlignment(),
@@ -443,17 +444,32 @@ XCoreFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     XFI->setUsesLR(FrameIdx);
     XFI->setLRSpillSlot(FrameIdx);
   }
-  if (RegInfo->requiresRegisterScavenging(MF)) {
-    // Reserve a slot close to SP or frame pointer.
-    RS->addScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
-                                                       RC->getAlignment(),
-                                                       false));
-  }
-  if (hasFP(MF)) {
-    // A callee save register is used to hold the FP.
-    // This needs saving / restoring in the epilogue / prologue.
+
+  // A callee save register is used to hold the FP.
+  // This needs saving / restoring in the epilogue / prologue.
+  if (hasFP(MF))
     XFI->setFPSpillSlot(MFI->CreateStackObject(RC->getSize(),
                                                RC->getAlignment(),
                                                false));
-  }
+}
+
+void XCoreFrameLowering::
+processFunctionBeforeFrameFinalized(MachineFunction &MF,
+                                    RegScavenger *RS) const {
+  assert(RS && "requiresRegisterScavenging failed");
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  const TargetRegisterClass *RC = &XCore::GRRegsRegClass;
+  XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
+  // Reserve slots close to SP or frame pointer for Scavenging spills.
+  // When using SP for small frames, we don't need any scratch registers.
+  // When using SP for large frames, we may need 2 scratch registers.
+  // When using FP, for large or small frames, we may need 1 scratch register.
+  if (XFI->isLargeFrame(MF) || hasFP(MF))
+    RS->addScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
+                                                       RC->getAlignment(),
+                                                       false));
+  if (XFI->isLargeFrame(MF) && !hasFP(MF))
+    RS->addScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
+                                                       RC->getAlignment(),
+                                                       false));
 }
