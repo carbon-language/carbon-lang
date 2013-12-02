@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/DwarfCompileUnit.h - Dwarf Compile Unit ---*- C++ -*--===//
+//===-- llvm/CodeGen/DwarfUnit.h - Dwarf Compile Unit ---*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -32,17 +32,15 @@ class ConstantFP;
 class DbgVariable;
 
 //===----------------------------------------------------------------------===//
-/// CompileUnit - This dwarf writer support class manages information associated
+/// Unit - This dwarf writer support class manages information associated
 /// with a source file.
-class CompileUnit {
+class Unit {
+protected:
   /// UniqueID - a numeric ID unique among all CUs in the module
   unsigned UniqueID;
 
   /// Node - MDNode for the compile unit.
   DICompileUnit Node;
-
-  /// Language - Language for the translation unit associated with this CU.
-  uint16_t Language;
 
   /// CUDie - Compile unit debug information entry.
   const OwningPtr<DIE> CUDie;
@@ -100,16 +98,15 @@ class CompileUnit {
   // DIEIntegerOne - A preallocated DIEValue because 1 is used frequently.
   DIEInteger *DIEIntegerOne;
 
+  Unit(unsigned UID, DIE *D, DICompileUnit CU, AsmPrinter *A, DwarfDebug *DW,
+       DwarfUnits *DWU);
+
 public:
-  CompileUnit(unsigned UID, DIE *D, DICompileUnit CU, AsmPrinter *A,
-              DwarfDebug *DW, DwarfUnits *DWU);
-  CompileUnit(unsigned UID, DIE *D, uint16_t Language, AsmPrinter *A,
-              DwarfDebug *DW, DwarfUnits *DWU);
-  ~CompileUnit();
+  virtual ~Unit();
 
   // Accessors.
   unsigned getUniqueID() const { return UniqueID; }
-  uint16_t getLanguage() const { return Language; }
+  virtual uint16_t getLanguage() const = 0;
   DICompileUnit getNode() const { return Node; }
   DIE *getCUDie() const { return CUDie.get(); }
   const StringMap<const DIE *> &getGlobalNames() const { return GlobalNames; }
@@ -215,10 +212,6 @@ public:
   ///
   void addSectionOffset(DIE *Die, dwarf::Attribute Attribute, uint64_t Integer);
 
-  /// addLabelAddress - Add a dwarf label attribute data and value using
-  /// either DW_FORM_addr or DW_FORM_GNU_addr_index.
-  void addLabelAddress(DIE *Die, dwarf::Attribute Attribute, MCSymbol *Label);
-
   /// addOpAddress - Add a dwarf op address data and value using the
   /// form given and an op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
   void addOpAddress(DIEBlock *Die, const MCSymbol *Label);
@@ -313,9 +306,6 @@ public:
   /// getOrCreateContextDIE - Get context owner's DIE.
   DIE *getOrCreateContextDIE(DIScope Context);
 
-  /// createGlobalVariableDIE - create global variable DIE.
-  void createGlobalVariableDIE(DIGlobalVariable GV);
-
   /// constructContainingTypeDIEs - Construct DIEs for types that contain
   /// vtables.
   void constructContainingTypeDIEs();
@@ -338,6 +328,10 @@ public:
 
   /// Emit the header for this unit, not including the initial length field.
   void emitHeader(const MCSection *ASection, const MCSymbol *ASectionSym);
+
+protected:
+  /// getOrCreateStaticMemberDIE - Create new static data member DIE.
+  DIE *getOrCreateStaticMemberDIE(DIDerivedType DT);
 
 private:
   /// constructTypeDIE - Construct basic type die from DIBasicType.
@@ -370,9 +364,6 @@ private:
   /// DITemplateValueParameter.
   void constructTemplateValueParameterDIE(DIE &Buffer,
                                           DITemplateValueParameter TVP);
-
-  /// getOrCreateStaticMemberDIE - Create new static data member DIE.
-  DIE *getOrCreateStaticMemberDIE(DIDerivedType DT);
 
   /// getLowerBoundDefault - Return the default lower bound for an array. If the
   /// DWARF version doesn't handle the language, return -1.
@@ -411,5 +402,30 @@ private:
   void updateAcceleratorTables(DIScope Context, DIType Ty, const DIE *TyDIE);
 };
 
+class CompileUnit : public Unit {
+public:
+  CompileUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
+              DwarfDebug *DW, DwarfUnits *DWU);
+
+  /// createGlobalVariableDIE - create global variable DIE.
+  void createGlobalVariableDIE(DIGlobalVariable GV);
+
+  /// addLabelAddress - Add a dwarf label attribute data and value using
+  /// either DW_FORM_addr or DW_FORM_GNU_addr_index.
+  void addLabelAddress(DIE *Die, dwarf::Attribute Attribute, MCSymbol *Label);
+
+  uint16_t getLanguage() const { return getNode().getLanguage(); }
+};
+
+class TypeUnit : public Unit {
+private:
+  uint16_t Language;
+
+public:
+  TypeUnit(unsigned UID, DIE *D, uint16_t Language, AsmPrinter *A,
+           DwarfDebug *DW, DwarfUnits *DWU);
+
+  uint16_t getLanguage() const { return Language; }
+};
 } // end llvm namespace
 #endif

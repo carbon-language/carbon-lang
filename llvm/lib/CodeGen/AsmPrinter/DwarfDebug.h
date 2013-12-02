@@ -29,6 +29,7 @@
 
 namespace llvm {
 
+class Unit;
 class CompileUnit;
 class ConstantInt;
 class ConstantFP;
@@ -230,7 +231,7 @@ class DwarfUnits {
   std::vector<DIEAbbrev *> &Abbreviations;
 
   // A pointer to all units in the section.
-  SmallVector<CompileUnit *, 1> CUs;
+  SmallVector<Unit *, 1> CUs;
 
   // Collection of strings for this unit and assorted symbols.
   // A String->Symbol mapping of strings used by indirect
@@ -258,7 +259,7 @@ public:
 
   ~DwarfUnits();
 
-  const SmallVectorImpl<CompileUnit *> &getUnits() { return CUs; }
+  const SmallVectorImpl<Unit *> &getUnits() { return CUs; }
 
   /// \brief Compute the size and offset of a DIE given an incoming Offset.
   unsigned computeSizeAndOffset(DIE *Die, unsigned Offset);
@@ -270,7 +271,7 @@ public:
   void assignAbbrevNumber(DIEAbbrev &Abbrev);
 
   /// \brief Add a unit to the list of CUs.
-  void addUnit(CompileUnit *CU) { CUs.push_back(CU); }
+  void addUnit(Unit *CU) { CUs.push_back(CU); }
 
   /// \brief Emit all of the units to the section listed with the given
   /// abbreviation section.
@@ -484,9 +485,7 @@ class DwarfDebug {
 
   void addScopeVariable(LexicalScope *LS, DbgVariable *Var);
 
-  const SmallVectorImpl<CompileUnit *> &getUnits() {
-    return InfoHolder.getUnits();
-  }
+  const SmallVectorImpl<Unit *> &getUnits() { return InfoHolder.getUnits(); }
 
   /// \brief Find abstract variable associated with Var.
   DbgVariable *findAbstractVariable(DIVariable &Var, DebugLoc Loc);
