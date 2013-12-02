@@ -123,6 +123,7 @@ enum StatType {
   StatInt_strlen,
   StatInt_memset,
   StatInt_memcpy,
+  StatInt_textdomain,
   StatInt_strcmp,
   StatInt_memchr,
   StatInt_memrchr,

@@ -126,6 +126,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_strlen]                   = "  strlen                          ";
   name[StatInt_memset]                   = "  memset                          ";
   name[StatInt_memcpy]                   = "  memcpy                          ";
+  name[StatInt_textdomain]               = "  textdomain                      ";
   name[StatInt_strcmp]                   = "  strcmp                          ";
   name[StatInt_memchr]                   = "  memchr                          ";
   name[StatInt_memrchr]                  = "  memrchr                         ";

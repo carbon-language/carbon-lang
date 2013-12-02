@@ -60,6 +60,22 @@
 #define COMMON_INTERCEPTOR_HANDLE_RECVMSG(ctx, msg) ((void)(msg))
 #endif
 
+#if SANITIZER_INTERCEPT_TEXTDOMAIN
+INTERCEPTOR(char*, textdomain, const char *domainname) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, textdomain, domainname);
+  char* domain = REAL(textdomain)(domainname);
+  if (domain) {
+    COMMON_INTERCEPTOR_INITIALIZE_RANGE(ctx, domain,
+        REAL(strlen)(domain) + 1);
+  }
+  return domain;
+}
+#define INIT_TEXTDOMAIN COMMON_INTERCEPT_FUNCTION(textdomain)
+#else
+#define INIT_TEXTDOMAIN
+#endif
+
 #if SANITIZER_INTERCEPT_STRCMP
 static inline int CharCmpX(unsigned char c1, unsigned char c2) {
   return (c1 == c2) ? 0 : (c1 < c2) ? -1 : 1;
@@ -2893,6 +2909,7 @@ INTERCEPTOR(__sanitizer_clock_t, times, void *tms) {
 #endif
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
+  INIT_TEXTDOMAIN;                         \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
   INIT_STRCASECMP;                         \
