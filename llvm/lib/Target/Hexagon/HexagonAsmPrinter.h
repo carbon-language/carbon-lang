@@ -136,10 +136,6 @@ namespace llvm {
     void printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
                                raw_ostream &O);
 
-#if 0
-    void printModuleLevelGV(const GlobalVariable* GVar, raw_ostream &O);
-#endif
-
     void printAddrModeBasePlusOffset(const MachineInstr *MI, int OpNo,
                                      raw_ostream &O);
 
@@ -148,10 +144,6 @@ namespace llvm {
     void printConstantPool(const MachineInstr *MI, int OpNo, raw_ostream &O);
 
     static const char *getRegisterName(unsigned RegNo);
-
-#if 0
-    void EmitStartOfAsmFile(Module &M);
-#endif
   };
 
 } // end of llvm namespace
