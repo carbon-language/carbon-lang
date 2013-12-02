@@ -55,19 +55,9 @@ include "AArch64InstrInfo.td"
 def AArch64InstrInfo : InstrInfo;
 
 //===----------------------------------------------------------------------===//
-// Assembly printer
-//===----------------------------------------------------------------------===//
-
-def A64InstPrinter : AsmWriter {
-  string AsmWriterClassName = "InstPrinter";
-  bit isMCAsmWriter = 1;
-}
-
-//===----------------------------------------------------------------------===//
 // Declare the target which we are implementing
 //===----------------------------------------------------------------------===//
 
 def AArch64 : Target {
   let InstructionSet = AArch64InstrInfo;
-  let AssemblyWriters = [A64InstPrinter];
 }

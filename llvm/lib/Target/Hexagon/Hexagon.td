@@ -205,14 +205,6 @@ def : Proc<"hexagonv3", HexagonModel,   [ArchV2, ArchV3]>;
 def : Proc<"hexagonv4", HexagonModelV4, [ArchV2, ArchV3, ArchV4]>;
 def : Proc<"hexagonv5", HexagonModelV4, [ArchV2, ArchV3, ArchV4, ArchV5]>;
 
-
-// Hexagon Uses the MC printer for assembler output, so make sure the TableGen
-// AsmWriter bits get associated with the correct class.
-def HexagonAsmWriter : AsmWriter {
-  string AsmWriterClassName  = "InstPrinter";
-  bit isMCAsmWriter = 1;
-}
-
 //===----------------------------------------------------------------------===//
 // Declare the target which we are implementing
 //===----------------------------------------------------------------------===//
@@ -220,6 +212,4 @@ def HexagonAsmWriter : AsmWriter {
 def Hexagon : Target {
   // Pull in Instruction Info:
   let InstructionSet = HexagonInstrInfo;
-
-  let AssemblyWriters = [HexagonAsmWriter];
 }

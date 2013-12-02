@@ -57,12 +57,6 @@ def : Proc<"sm_35", [SM35]>;
 def NVPTXInstrInfo : InstrInfo {
 }
 
-def NVPTXAsmWriter : AsmWriter {
-  bit isMCAsmWriter = 1;
-  string AsmWriterClassName  = "InstPrinter";
-}
-
 def NVPTX : Target {
   let InstructionSet = NVPTXInstrInfo;
-  let AssemblyWriters = [NVPTXAsmWriter];
 }

@@ -285,11 +285,6 @@ def PPCInstrInfo : InstrInfo {
   let isLittleEndianEncoding = 1;
 }
 
-def PPCAsmWriter : AsmWriter {
-  string AsmWriterClassName  = "InstPrinter";
-  bit isMCAsmWriter = 1;
-}
-
 def PPCAsmParser : AsmParser {
   let ShouldEmitMatchRegisterName = 0;
 }
@@ -306,8 +301,7 @@ def PPCAsmParserVariant : AsmParserVariant {
 def PPC : Target {
   // Information about the instructions.
   let InstructionSet = PPCInstrInfo;
-  
-  let AssemblyWriters = [PPCAsmWriter];
+
   let AssemblyParsers = [PPCAsmParser];
   let AssemblyParserVariants = [PPCAsmParserVariant];
 }

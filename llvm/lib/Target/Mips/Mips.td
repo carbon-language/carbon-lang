@@ -96,11 +96,6 @@ def : Proc<"mips64", [FeatureMips64]>;
 def : Proc<"mips64r2", [FeatureMips64r2]>;
 def : Proc<"mips16", [FeatureMips16]>;
 
-def MipsAsmWriter : AsmWriter {
-  string AsmWriterClassName  = "InstPrinter";
-  bit isMCAsmWriter = 1;
-}
-
 def MipsAsmParser : AsmParser {
   let ShouldEmitMatchRegisterName = 0;
   let MnemonicContainsDot = 1;
@@ -116,6 +111,5 @@ def MipsAsmParserVariant : AsmParserVariant {
 def Mips : Target {
   let InstructionSet = MipsInstrInfo;
   let AssemblyParsers = [MipsAsmParser];
-  let AssemblyWriters = [MipsAsmWriter];
   let AssemblyParserVariants = [MipsAsmParserVariant];
 }

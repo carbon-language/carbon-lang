@@ -949,7 +949,7 @@ class AsmWriter {
   // AsmWriterClassName - This specifies the suffix to use for the asmwriter
   // class.  Generated AsmWriter classes are always prefixed with the target
   // name.
-  string AsmWriterClassName  = "AsmPrinter";
+  string AsmWriterClassName  = "InstPrinter";
 
   // Variant - AsmWriters can be of multiple different variants.  Variants are
   // used to support targets that need to emit assembly code in ways that are
@@ -973,7 +973,7 @@ class AsmWriter {
   // isMCAsmWriter - Is this assembly writer for an MC emitter? This controls
   // generation of the printInstruction() method. For MC printers, it takes
   // an MCInstr* operand, otherwise it takes a MachineInstr*.
-  bit isMCAsmWriter = 0;
+  bit isMCAsmWriter = 1;
 }
 def DefaultAsmWriter : AsmWriter;
 
