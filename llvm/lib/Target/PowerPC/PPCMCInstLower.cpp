@@ -35,31 +35,34 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
   MCContext &Ctx = AP.OutContext;
 
   SmallString<128> Name;
+  StringRef Suffix;
+  if (MO.getTargetFlags() == PPCII::MO_DARWIN_STUB)
+    Suffix = "$stub";
+  else if (MO.getTargetFlags() & PPCII::MO_NLP_FLAG)
+    Suffix = "$non_lazy_ptr";
+
+  if (!Suffix.empty())
+    Name += AP.MAI->getPrivateGlobalPrefix();
+
+  unsigned PrefixLen = Name.size();
+
   if (!MO.isGlobal()) {
     assert(MO.isSymbol() && "Isn't a symbol reference");
     AP.Mang->getNameWithPrefix(Name, MO.getSymbolName());
-  } else {    
+  } else {
     const GlobalValue *GV = MO.getGlobal();
-    bool isImplicitlyPrivate = false;
-    if (MO.getTargetFlags() == PPCII::MO_DARWIN_STUB ||
-        (MO.getTargetFlags() & PPCII::MO_NLP_FLAG))
-      isImplicitlyPrivate = true;
-    
-    AP.Mang->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
+    AP.Mang->getNameWithPrefix(Name, GV, false);
   }
-  
+
+  unsigned OrigLen = Name.size() - PrefixLen;
+
+  Name += Suffix;
+  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
+  StringRef OrigName = StringRef(Name).substr(PrefixLen, OrigLen);
+
   // If the target flags on the operand changes the name of the symbol, do that
   // before we return the symbol.
   if (MO.getTargetFlags() == PPCII::MO_DARWIN_STUB) {
-    Name += "$stub";
-    const char *PGP = AP.MAI->getPrivateGlobalPrefix();
-    const char *Prefix = "";
-    if (!Name.startswith(PGP)) {
-      // http://llvm.org/bugs/show_bug.cgi?id=15763
-      // all stubs and lazy_ptrs should be local symbols, which need leading 'L'
-      Prefix = PGP;
-    }
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Twine(Prefix) + Twine(Name));
     MachineModuleInfoImpl::StubValueTy &StubSym =
       getMachOMMI(AP).getFnStubEntry(Sym);
     if (StubSym.getPointer())
@@ -71,10 +74,9 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
       StubValueTy(AP.getSymbol(MO.getGlobal()),
                   !MO.getGlobal()->hasInternalLinkage());
     } else {
-      Name.erase(Name.end()-5, Name.end());
       StubSym =
       MachineModuleInfoImpl::
-      StubValueTy(Ctx.GetOrCreateSymbol(Name.str()), false);
+      StubValueTy(Ctx.GetOrCreateSymbol(OrigName), false);
     }
     return Sym;
   }
@@ -82,9 +84,6 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
   // If the symbol reference is actually to a non_lazy_ptr, not to the symbol,
   // then add the suffix.
   if (MO.getTargetFlags() & PPCII::MO_NLP_FLAG) {
-    Name += "$non_lazy_ptr";
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
-  
     MachineModuleInfoMachO &MachO = getMachOMMI(AP);
     
     MachineModuleInfoImpl::StubValueTy &StubSym =
@@ -100,7 +99,7 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
     return Sym;
   }
   
-  return Ctx.GetOrCreateSymbol(Name.str());
+  return Sym;
 }
 
 static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
