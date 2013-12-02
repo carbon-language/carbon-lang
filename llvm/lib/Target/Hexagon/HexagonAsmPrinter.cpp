@@ -61,17 +61,6 @@ static cl::opt<bool> AlignCalls(
          "hexagon-align-calls", cl::Hidden, cl::init(true),
           cl::desc("Insert falign after call instruction for Hexagon target"));
 
-void HexagonAsmPrinter::EmitAlignment(unsigned NumBits,
-                                      const GlobalValue *GV) const {
-  // For basic block level alignment, use ".falign".
-  if (!GV) {
-    OutStreamer.EmitRawText(StringRef("\t.falign"));
-    return;
-  }
-
-  AsmPrinter::EmitAlignment(NumBits, GV);
-}
-
 void HexagonAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                                     raw_ostream &O) {
   const MachineOperand &MO = MI->getOperand(OpNo);
@@ -186,12 +175,6 @@ bool HexagonAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   return false;
 }
 
-void HexagonAsmPrinter::printPredicateOperand(const MachineInstr *MI,
-                                              unsigned OpNo,
-                                              raw_ostream &O) {
-  llvm_unreachable("Unimplemented");
-}
-
 
 /// printMachineInstruction -- Print out a single Hexagon MI in Darwin syntax to
 /// the current output stream.
@@ -238,60 +221,6 @@ void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
 
   return;
-}
-
-/// PrintUnmangledNameSafely - Print out the printable characters in the name.
-/// Don't print things like \n or \0.
-// static void PrintUnmangledNameSafely(const Value *V, raw_ostream &OS) {
-//   for (const char *Name = V->getNameStart(), *E = Name+V->getNameLen();
-//        Name != E; ++Name)
-//     if (isprint(*Name))
-//       OS << *Name;
-// }
-
-
-void HexagonAsmPrinter::printAddrModeBasePlusOffset(const MachineInstr *MI,
-                                                    int OpNo, raw_ostream &O) {
-  const MachineOperand &MO1 = MI->getOperand(OpNo);
-  const MachineOperand &MO2 = MI->getOperand(OpNo+1);
-
-  O << HexagonInstPrinter::getRegisterName(MO1.getReg())
-    << " + #"
-    << MO2.getImm();
-}
-
-
-void HexagonAsmPrinter::printGlobalOperand(const MachineInstr *MI, int OpNo,
-                                           raw_ostream &O) {
-  const MachineOperand &MO = MI->getOperand(OpNo);
-  assert( (MO.getType() == MachineOperand::MO_GlobalAddress) &&
-         "Expecting global address");
-
-  O << *getSymbol(MO.getGlobal());
-  if (MO.getOffset() != 0) {
-    O << " + ";
-    O << MO.getOffset();
-  }
-}
-
-void HexagonAsmPrinter::printJumpTable(const MachineInstr *MI, int OpNo,
-                                       raw_ostream &O) {
-  const MachineOperand &MO = MI->getOperand(OpNo);
-  assert( (MO.getType() == MachineOperand::MO_JumpTableIndex) && 
-           "Expecting jump table index");
-
-  // Hexagon_TODO: Do we need name mangling?
-  O << *GetJTISymbol(MO.getIndex());
-}
-
-void HexagonAsmPrinter::printConstantPool(const MachineInstr *MI, int OpNo,
-                                       raw_ostream &O) {
-  const MachineOperand &MO = MI->getOperand(OpNo);
-  assert( (MO.getType() == MachineOperand::MO_ConstantPoolIndex) &&
-          "Expecting constant pool index");
-
-  // Hexagon_TODO: Do we need name mangling?
-  O << *GetCPISymbol(MO.getIndex());
 }
 
 static MCInstPrinter *createHexagonMCInstPrinter(const Target &T,

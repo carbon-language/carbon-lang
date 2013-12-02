@@ -37,8 +37,6 @@ namespace llvm {
     bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const;
 
     virtual void EmitInstruction(const MachineInstr *MI);
-    virtual void EmitAlignment(unsigned NumBits,
-                               const GlobalValue *GV = 0) const;
 
     void printOperand(const MachineInstr *MI, unsigned OpNo, raw_ostream &O);
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
@@ -47,101 +45,6 @@ namespace llvm {
     bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                unsigned AsmVariant, const char *ExtraCode,
                                raw_ostream &OS);
-
-    //    void printMachineInstruction(const MachineInstr *MI);
-    void printOp(const MachineOperand &MO, raw_ostream &O);
-
-    /// printRegister - Print register according to target requirements.
-    ///
-    void printRegister(const MachineOperand &MO, bool R0AsZero,
-                       raw_ostream &O) {
-      unsigned RegNo = MO.getReg();
-      assert(TargetRegisterInfo::isPhysicalRegister(RegNo) && "Not physreg??");
-      O << getRegisterName(RegNo);
-    }
-
-    void printImmOperand(const MachineInstr *MI, unsigned OpNo,
-                                raw_ostream &O) {
-      int value = MI->getOperand(OpNo).getImm();
-      O << value;
-    }
-
-    void printNegImmOperand(const MachineInstr *MI, unsigned OpNo,
-                                   raw_ostream &O) {
-      int value = MI->getOperand(OpNo).getImm();
-      O << -value;
-    }
-
-    void printMEMriOperand(const MachineInstr *MI, unsigned OpNo,
-                                  raw_ostream &O) {
-      const MachineOperand &MO1 = MI->getOperand(OpNo);
-      const MachineOperand &MO2 = MI->getOperand(OpNo+1);
-
-      O << getRegisterName(MO1.getReg())
-        << " + #"
-        << (int) MO2.getImm();
-    }
-
-    void printFrameIndexOperand(const MachineInstr *MI, unsigned OpNo,
-                                       raw_ostream &O) {
-      const MachineOperand &MO1 = MI->getOperand(OpNo);
-      const MachineOperand &MO2 = MI->getOperand(OpNo+1);
-
-      O << getRegisterName(MO1.getReg())
-        << ", #"
-        << MO2.getImm();
-    }
-
-    void printBranchOperand(const MachineInstr *MI, unsigned OpNo,
-                            raw_ostream &O) {
-      // Branches can take an immediate operand.  This is used by the branch
-      // selection pass to print $+8, an eight byte displacement from the PC.
-      if (MI->getOperand(OpNo).isImm()) {
-        O << "$+" << MI->getOperand(OpNo).getImm()*4;
-      } else {
-        printOp(MI->getOperand(OpNo), O);
-      }
-    }
-
-    void printCallOperand(const MachineInstr *MI, unsigned OpNo,
-                          raw_ostream &O) {
-    }
-
-    void printAbsAddrOperand(const MachineInstr *MI, unsigned OpNo,
-                             raw_ostream &O) {
-    }
-
-    void printSymbolHi(const MachineInstr *MI, unsigned OpNo, raw_ostream &O) {
-      O << "#HI(";
-      if (MI->getOperand(OpNo).isImm()) {
-        printImmOperand(MI, OpNo, O);
-      }
-      else {
-        printOp(MI->getOperand(OpNo), O);
-      }
-      O << ")";
-    }
-
-    void printSymbolLo(const MachineInstr *MI, unsigned OpNo, raw_ostream &O) {
-      O << "#HI(";
-      if (MI->getOperand(OpNo).isImm()) {
-        printImmOperand(MI, OpNo, O);
-      }
-      else {
-        printOp(MI->getOperand(OpNo), O);
-      }
-      O << ")";
-    }
-
-    void printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
-                               raw_ostream &O);
-
-    void printAddrModeBasePlusOffset(const MachineInstr *MI, int OpNo,
-                                     raw_ostream &O);
-
-    void printGlobalOperand(const MachineInstr *MI, int OpNo, raw_ostream &O);
-    void printJumpTable(const MachineInstr *MI, int OpNo, raw_ostream &O);
-    void printConstantPool(const MachineInstr *MI, int OpNo, raw_ostream &O);
 
     static const char *getRegisterName(unsigned RegNo);
   };
