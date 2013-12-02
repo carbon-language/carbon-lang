@@ -49,8 +49,6 @@ static const FunctionType *getFunctionType(const Decl *D,
   QualType Ty;
   if (const ValueDecl *decl = dyn_cast<ValueDecl>(D))
     Ty = decl->getType();
-  else if (const FieldDecl *decl = dyn_cast<FieldDecl>(D))
-    Ty = decl->getType();
   else if (const TypedefNameDecl* decl = dyn_cast<TypedefNameDecl>(D))
     Ty = decl->getUnderlyingType();
   else
