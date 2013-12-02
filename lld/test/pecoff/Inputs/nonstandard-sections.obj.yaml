@@ -12,7 +12,7 @@ sections:
     Alignment:       4
     SectionData:     01234678
   - Name:            .foo
-    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE, IMAGE_SCN_MEM_EXECUTE ]
+    Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE, IMAGE_SCN_MEM_EXECUTE ]
     Alignment:       4
     SectionData:     01234678
   - Name:            .bar

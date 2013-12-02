@@ -75,10 +75,11 @@ private:
   /// Returns the list of atoms that appeared at the beginning of sections.
   SectionToAtomsT filterHeadAtoms(MutableFile &mutableFile) const {
     SectionToAtomsT result;
-    for (const DefinedAtom *atom : mutableFile.defined())
-      if (auto *coffAtom = dyn_cast<COFFDefinedAtom>((COFFBaseDefinedAtom *)atom))
-        if (result.find(coffAtom->customSectionName()) == result.end())
-          result[coffAtom->customSectionName()].push_back(coffAtom);
+    for (const DefinedAtom *atom : mutableFile.defined()) {
+      auto *coffAtom = dyn_cast<COFFDefinedAtom>((COFFBaseDefinedAtom *)atom);
+      if (coffAtom && coffAtom->ordinal() == 0)
+        result[coffAtom->customSectionName()].push_back(coffAtom);
+    }
     return result;
   }
 
