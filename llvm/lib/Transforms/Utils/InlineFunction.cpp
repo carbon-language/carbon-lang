@@ -172,9 +172,7 @@ void InvokeInliningInfo::forwardResume(ResumeInst *RI,
 /// invokes.  This function analyze BB to see if there are any calls, and if so,
 /// it rewrites them to be invokes that jump to InvokeDest and fills in the PHI
 /// nodes in that block with the values specified in InvokeDestPHIValues.
-///
-/// Returns true to indicate that the next block should be skipped.
-static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
+static void HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
                                                    InvokeInliningInfo &Invoke) {
   LandingPadInst *LPI = Invoke.getLandingPadInst();
 
@@ -223,10 +221,8 @@ static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
     // Update any PHI nodes in the exceptional block to indicate that there is
     // now a new entry in them.
     Invoke.addIncomingPHIValuesFor(BB);
-    return false;
+    return;
   }
-
-  return false;
 }
 
 /// HandleInlinedInvoke - If we inlined an invoke site, we need to convert calls
@@ -254,11 +250,7 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
 
   for (Function::iterator BB = FirstNewBlock, E = Caller->end(); BB != E; ++BB){
     if (InlinedCodeInfo.ContainsCalls)
-      if (HandleCallsInBlockInlinedThroughInvoke(BB, Invoke)) {
-        // Honor a request to skip the next block.
-        ++BB;
-        continue;
-      }
+      HandleCallsInBlockInlinedThroughInvoke(BB, Invoke);
 
     // Forward any resumes that are remaining here.
     if (ResumeInst *RI = dyn_cast<ResumeInst>(BB->getTerminator()))
