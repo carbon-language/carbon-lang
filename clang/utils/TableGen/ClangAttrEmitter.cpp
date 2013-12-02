@@ -1694,7 +1694,7 @@ static void emitArgInfo(const Record &R, std::stringstream &OS) {
 }
 
 static void GenerateDefaultAppertainsTo(raw_ostream &OS) {
-  OS << "static bool DefaultAppertainsTo(Sema &, const AttributeList &,";
+  OS << "static bool defaultAppertainsTo(Sema &, const AttributeList &,";
   OS << "const Decl *) {\n";
   OS << "  return true;\n";
   OS << "}\n\n";
@@ -1848,7 +1848,7 @@ static std::string GenerateAppertainsTo(const Record &Attr, raw_ostream &OS) {
   // If the attribute does not contain a Subjects definition, then use the
   // default appertainsTo logic.
   if (Attr.isValueUnset("Subjects"))
-    return "DefaultAppertainsTo";
+    return "defaultAppertainsTo";
 
   const Record *SubjectObj = Attr.getValueAsDef("Subjects");
   std::vector<Record*> Subjects = SubjectObj->getValueAsListOfDefs("Subjects");
@@ -1856,14 +1856,14 @@ static std::string GenerateAppertainsTo(const Record &Attr, raw_ostream &OS) {
   // If the list of subjects is empty, it is assumed that the attribute
   // appertains to everything.
   if (Subjects.empty())
-    return "DefaultAppertainsTo";
+    return "defaultAppertainsTo";
 
   bool Warn = SubjectObj->getValueAsDef("Diag")->getValueAsBit("Warn");
 
   // Otherwise, generate an appertainsTo check specific to this attribute which
   // checks all of the given subjects against the Decl passed in. Return the
   // name of that check to the caller.
-  std::string FnName = Attr.getName() + "AppertainsTo";
+  std::string FnName = "check" + Attr.getName() + "AppertainTo";
   std::stringstream SS;
   SS << "static bool " << FnName << "(Sema &S, const AttributeList &Attr, ";
   SS << "const Decl *D) {\n";
