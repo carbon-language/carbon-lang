@@ -129,8 +129,8 @@ namespace LLVM.ClangFormat
         /// </summary>
         private string RunClangFormat(string text, int offset, int length, string path)
         {
-            string vsixPath = Path.GetDirectoryName(Uri.UnescapeDataString(
-                new UriBuilder(Assembly.GetExecutingAssembly().CodeBase).Path));
+            string vsixPath = Path.GetDirectoryName(
+                typeof(ClangFormatPackage).Assembly.Location);
 
             System.Diagnostics.Process process = new System.Diagnostics.Process();
             process.StartInfo.UseShellExecute = false;
