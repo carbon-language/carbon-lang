@@ -240,6 +240,22 @@ static bool checkUInt32Argument(Sema &S, const AttributeList &Attr,
   return true;
 }
 
+/// \brief Diagnose mutually exclusive attributes when present on a given
+/// declaration. Returns true if diagnosed.
+template <typename AttrTy>
+static bool checkAttrMutualExclusion(Sema &S, Decl *D,
+                                     const AttributeList &Attr,
+                                     const char *OtherName) {
+  // FIXME: it would be nice if OtherName did not have to be passed in, but was
+  // instead determined based on the AttrTy template parameter.
+  if (D->hasAttr<AttrTy>()) {
+    S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
+      << Attr.getName() << OtherName;
+    return true;
+  }
+  return false;
+}
+
 /// \brief Check if IdxExpr is a valid argument index for a function or
 /// instance method D.  May output an error.
 ///
@@ -1459,22 +1475,16 @@ static void handleAliasAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleColdAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (D->hasAttr<HotAttr>()) {
-    S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
-      << Attr.getName() << "hot";
+  if (checkAttrMutualExclusion<HotAttr>(S, D, Attr, "hot"))
     return;
-  }
 
   D->addAttr(::new (S.Context) ColdAttr(Attr.getRange(), S.Context,
                                         Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleHotAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (D->hasAttr<ColdAttr>()) {
-    S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
-      << Attr.getName() << "cold";
+  if (checkAttrMutualExclusion<ColdAttr>(S, D, Attr, "cold"))
     return;
-  }
 
   D->addAttr(::new (S.Context) HotAttr(Attr.getRange(), S.Context,
                                        Attr.getAttributeSpellingListIndex()));
@@ -3709,35 +3719,26 @@ static void handleObjCRequiresSuperAttr(Sema &S, Decl *D,
                                         attr.getAttributeSpellingListIndex()));
 }
 
-/// Handle cf_audited_transfer and cf_unknown_transfer.
-static void handleCFTransferAttr(Sema &S, Decl *D, const AttributeList &A) {
-  bool IsAudited = (A.getKind() == AttributeList::AT_CFAuditedTransfer);
-
-  // Check whether there's a conflicting attribute already present.
-  Attr *Existing;
-  if (IsAudited) {
-    Existing = D->getAttr<CFUnknownTransferAttr>();
-  } else {
-    Existing = D->getAttr<CFAuditedTransferAttr>();
-  }
-  if (Existing) {
-    S.Diag(D->getLocStart(), diag::err_attributes_are_not_compatible)
-      << A.getName()
-      << (IsAudited ? "cf_unknown_transfer" : "cf_audited_transfer")
-      << A.getRange() << Existing->getRange();
+static void handleCFAuditedTransferAttr(Sema &S, Decl *D,
+                                        const AttributeList &Attr) {
+  if (checkAttrMutualExclusion<CFUnknownTransferAttr>(S, D, Attr,
+                                                      "cf_unknown_transfer"))
     return;
-  }
 
-  // All clear;  add the attribute.
-  if (IsAudited) {
-    D->addAttr(::new (S.Context)
-               CFAuditedTransferAttr(A.getRange(), S.Context,
-                                     A.getAttributeSpellingListIndex()));
-  } else {
-    D->addAttr(::new (S.Context)
-               CFUnknownTransferAttr(A.getRange(), S.Context,
-                                     A.getAttributeSpellingListIndex()));
-  }
+  D->addAttr(::new (S.Context)
+             CFAuditedTransferAttr(Attr.getRange(), S.Context,
+                                   Attr.getAttributeSpellingListIndex()));
+}
+
+static void handleCFUnknownTransferAttr(Sema &S, Decl *D,
+                                        const AttributeList &Attr) {
+  if (checkAttrMutualExclusion<CFAuditedTransferAttr>(S, D, Attr,
+                                                      "cf_audited_transfer"))
+    return;
+
+  D->addAttr(::new (S.Context)
+             CFUnknownTransferAttr(Attr.getRange(), S.Context,
+             Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleNSBridgedAttr(Sema &S, Scope *Sc, Decl *D,
@@ -4096,8 +4097,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleObjCBridgeMutableAttr(S, scope, D, Attr); break;
 
   case AttributeList::AT_CFAuditedTransfer:
+    handleCFAuditedTransferAttr(S, D, Attr); break;
   case AttributeList::AT_CFUnknownTransfer:
-    handleCFTransferAttr(S, D, Attr); break;
+    handleCFUnknownTransferAttr(S, D, Attr); break;
 
   // Checker-specific.
   case AttributeList::AT_CFConsumed:
