@@ -42,7 +42,7 @@ public:
     uint64_t align2 = 1u << atomAlign.powerOf2;
     this->_atoms.push_back(new (this->_alloc) lld::AtomLayout(atom, 0, 0));
     // Set the section alignment to the largest alignment
-    // std::max doesnot support uint64_t
+    // std::max doesn't support uint64_t
     if (this->_align2 < align2)
       this->_align2 = align2;
     return *(this->_atoms.back());

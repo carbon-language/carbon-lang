@@ -333,7 +333,7 @@ const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
     break;
   }
   // Set the section alignment to the largest alignment
-  // std::max doesnot support uint64_t
+  // std::max doesn't support uint64_t
   if (this->_align2 < align2)
     this->_align2 = align2;
 
@@ -886,7 +886,7 @@ public:
   virtual void finalize() {
     // Defined symbols which have been added into the dynamic symbol table
     // don't have their addresses known until addresses have been assigned
-    // so lets update the symbol values after they have got assigned
+    // so let's update the symbol values after they have got assigned
     for (auto &ste: this->_symbolTable) {
       const lld::AtomLayout *atomLayout = ste._atomLayout;
       if (!atomLayout)
@@ -1207,7 +1207,7 @@ public:
   }
 
   // The size of the section has to be determined so that fileoffsets
-  // may be properly assigned. Lets calculate the buckets and the chains
+  // may be properly assigned. Let's calculate the buckets and the chains
   // and fill the chains and the buckets hash table used by the dynamic
   // linker and update the filesize and memory size accordingly
   virtual void doPreFlight() {

@@ -297,7 +297,7 @@ protected:
 };
 
 /// \brief A Program Header segment contains a set of chunks instead of sections
-/// The segment doesnot contain any slice
+/// The segment doesn't contain any slice
 template <class ELFT> class ProgramHeaderSegment : public Segment<ELFT> {
 public:
   ProgramHeaderSegment(const ELFLinkingContext &context)
@@ -456,7 +456,7 @@ template <class ELFT> void Segment<ELFT>::assignOffsets(uint64_t startOffset) {
       }
       uint64_t newOffset = llvm::RoundUpToAlignment(curOffset, (*si)->align2());
       SegmentSlice<ELFT> *slice = nullptr;
-      // If the newOffset computed is more than a page away, lets create
+      // If the newOffset computed is more than a page away, let's create
       // a separate segment, so that memory is not used up while running
       if (((newOffset - curOffset) > this->_context.getPageSize()) &&
           (_outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
@@ -569,10 +569,10 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t &addr) {
       if (isTLSSegment)
         tlsStartAddr += section->memSize();
       section->setMemSize(addr + section->memSize() - section->virtualAddr());
-      // TBSS section is special that it doesnot contribute to memory of any
-      // segment, If we see a tbss section, don't add memory size to addr
+      // TBSS section is special in that it doesn't contribute to memory of any
+      // segment. If we see a tbss section, don't add memory size to addr
       // The fileOffset is automatically taken care of since TBSS section does
-      // not endup using file size
+      // not end up using file size
       if (section->order() != DefaultLayout<ELFT>::ORDER_TBSS)
         addr += section->memSize();
     }

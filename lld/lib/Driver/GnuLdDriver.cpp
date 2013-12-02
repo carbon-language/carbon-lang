@@ -316,7 +316,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       StringRef userPath = inputArg->getValue();
       std::string resolvedInputPath = userPath;
 
-      // If the path was referred to by using a -l argument, lets search
+      // If the path was referred to by using a -l argument, let's search
       // for the file in the search path.
       if (isDashlPrefix) {
         ErrorOr<StringRef> resolvedPath = ctx->searchLibrary(userPath);

@@ -102,8 +102,8 @@ public:
       break;
     }
     case llvm::sys::fs::file_magic::elf_shared_object: {
-      // If the link doesnot allow dynamic libraries to be present during the
-      // link, lets not parse the file and just return
+      // If the link doesn't allow dynamic libraries to be present during the
+      // link, let's not parse the file and just return
       if (!_elfLinkingContext.allowLinkWithDynamicLibraries())
         return llvm::make_error_code(llvm::errc::executable_format_error);
       auto f = createELF<DynamicFileCreateELFTraits>(

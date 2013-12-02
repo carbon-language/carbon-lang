@@ -227,14 +227,14 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
       const DefinedAtom *targetAtom = dyn_cast<DefinedAtom>(r->target());
       _followOnNexts[ai] = targetAtom;
 
-      // If we find a followon for the first time, lets make that atom as the
+      // If we find a followon for the first time, let's make that atom as the
       // root atom.
       if (_followOnRoots.count(ai) == 0)
         _followOnRoots[ai] = ai;
 
       auto iter = _followOnRoots.find(targetAtom);
       if (iter == _followOnRoots.end()) {
-        // If the targetAtom is not a root of any chain, lets make the root of
+        // If the targetAtom is not a root of any chain, let's make the root of
         // the targetAtom to the root of the current chain.
         _followOnRoots[targetAtom] = _followOnRoots[ai];
       } else if (iter->second == targetAtom) {
