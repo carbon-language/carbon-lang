@@ -1457,6 +1457,7 @@ private:
     bool IsContinuedComment = Line->First->is(tok::comment) &&
                               Line->First->Next == NULL &&
                               Line->First->NewlinesBefore < 2 && PreviousLine &&
+                              PreviousLine->Affected &&
                               PreviousLine->Last->is(tok::comment);
 
     if (SomeTokenAffected || SomeFirstChildAffected || LineMoved ||

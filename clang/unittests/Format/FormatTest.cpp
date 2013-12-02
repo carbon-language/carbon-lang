@@ -859,6 +859,13 @@ TEST_F(FormatTest, CanFormatCommentsLocally) {
                    "\n"
                    "  // This is unrelated",
                    0, 0, getLLVMStyle()));
+  EXPECT_EQ("int a;\n"
+            "// This is\n"
+            "// not formatted.   ",
+            format("int a;\n"
+                   "// This is\n"
+                   "// not formatted.   ",
+                   0, 0, getLLVMStyle()));
 }
 
 TEST_F(FormatTest, RemovesTrailingWhitespaceOfComments) {
