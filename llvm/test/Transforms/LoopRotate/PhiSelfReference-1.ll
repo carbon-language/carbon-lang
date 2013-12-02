@@ -1,5 +1,5 @@
 ; RUN: opt < %s -loop-rotate -verify-dom-info -verify-loop-info -disable-output
-; ModuleID = 'PhiSelfRefernce-1.bc'
+; ModuleID = 'PhiSelfReference-1.bc'
 
 define void @snrm2(i32 %incx) {
 entry:
