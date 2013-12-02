@@ -16,16 +16,19 @@
 #include "XCoreMachineFunctionInfo.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -244,14 +247,22 @@ XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 void XCoreRegisterInfo::
 loadConstant(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
             unsigned DstReg, int64_t Value, DebugLoc dl) const {
-  // TODO use mkmsk if possible.
-  if (!isImmU16(Value)) {
-    // TODO use constant pool.
-    report_fatal_error("loadConstant value too big " + Twine(Value));
-  }
-  int Opcode = isImmU6(Value) ? XCore::LDC_ru6 : XCore::LDC_lru6;
   const TargetInstrInfo &TII = *MBB.getParent()->getTarget().getInstrInfo();
-  BuildMI(MBB, I, dl, TII.get(Opcode), DstReg).addImm(Value);
+  if (isMask_32(Value)) {
+    int N = Log2_32(Value) + 1;
+    BuildMI(MBB, I, dl, TII.get(XCore::MKMSK_rus), DstReg).addImm(N);
+  } else if (isImmU16(Value)) {
+    int Opcode = isImmU6(Value) ? XCore::LDC_ru6 : XCore::LDC_lru6;
+    BuildMI(MBB, I, dl, TII.get(Opcode), DstReg).addImm(Value);
+    return;
+  } else {
+    MachineConstantPool *ConstantPool = MBB.getParent()->getConstantPool();
+    const Constant *C = ConstantInt::get(
+        Type::getInt32Ty(MBB.getParent()->getFunction()->getContext()), Value);
+    unsigned Idx = ConstantPool->getConstantPoolIndex(C, 4);
+    BuildMI(MBB, I, dl, TII.get(XCore::LDWCP_lru6), DstReg)
+        .addConstantPoolIndex(Idx);
+  }
 }
 
 unsigned XCoreRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
