@@ -8,6 +8,33 @@
 ; RUN: llc < %s -march=xcore -code-model=small | FileCheck %s
 ; RUN: llc < %s -march=xcore -code-model=large | FileCheck %s -check-prefix=LARGE
 
+
+; CHECK-LABEL: test:
+; CHECK: zext r0, 1
+; CHECK: bt r0, [[JUMP:.LBB[0-9_]*]]
+; CHECK: ldaw r0, dp[A2]
+; CHECK: retsp 0
+; CHECK: [[JUMP]]
+; CHECK: ldaw r0, dp[A1]
+; CHECK: retsp 0
+; LARGE-LABEL: test:
+; LARGE: zext r0, 1
+; LARGE: ldaw r11, cp[.LCPI{{[0-9_]*}}]
+; LARGE: mov r1, r11
+; LARGE: ldaw r11, cp[.LCPI{{[0-9_]*}}]
+; LARGE: bt r0, [[JUMP:.LBB[0-9_]*]]
+; LARGE: mov r11, r1
+; LARGE: [[JUMP]]
+; LARGE: ldw r0, r11[0]
+; LARGE: retsp 0
+@A1 = external global [50000 x i32]
+@A2 = external global [50000 x i32]
+define [50000 x i32]* @test(i1 %bool) nounwind {
+entry:
+  %Addr = select i1 %bool, [50000 x i32]* @A1, [50000 x i32]* @A2
+  ret [50000 x i32]* %Addr
+}
+
 ; CHECK: .section  .cp.rodata.cst4,"aMc",@progbits,4
 ; CHECK: .long 65536
 ; CHECK: .text
@@ -15,7 +42,7 @@
 ; CHECK: ldc r1, 65532
 ; CHECK: add r1, r0, r1
 ; CHECK: ldw r1, r1[0]
-; CHECK: ldw r2, cp[.LCPI0_0]
+; CHECK: ldw r2, cp[.LCPI{{[0-9_]*}}]
 ; CHECK: add r0, r0, r2
 ; CHECK: ldw r0, r0[0]
 ; CHECK: add r0, r1, r0
@@ -45,20 +72,20 @@
 ; LARGE: ldc r1, 65532
 ; LARGE: add r1, r0, r1
 ; LARGE: ldw r1, r1[0]
-; LARGE: ldw r2, cp[.LCPI0_0]
+; LARGE: ldw r2, cp[.LCPI{{[0-9_]*}}]
 ; LARGE: add r0, r0, r2
 ; LARGE: ldw r0, r0[0]
 ; LARGE: add r0, r1, r0
-; LARGE: ldw r1, cp[.LCPI0_1]
+; LARGE: ldw r1, cp[.LCPI{{[0-9_]*}}]
 ; LARGE: ldw r1, r1[0]
 ; LARGE: add r0, r0, r1
-; LARGE: ldw r1, cp[.LCPI0_2]
+; LARGE: ldw r1, cp[.LCPI{{[0-9_]*}}]
 ; LARGE: ldw r1, r1[0]
 ; LARGE: add r0, r0, r1
-; LARGE: ldw r1, cp[.LCPI0_3]
+; LARGE: ldw r1, cp[.LCPI{{[0-9_]*}}]
 ; LARGE: ldw r1, r1[0]
 ; LARGE: add r0, r0, r1
-; LARGE: ldw r1, cp[.LCPI0_4]
+; LARGE: ldw r1, cp[.LCPI{{[0-9_]*}}]
 ; LARGE: ldw r1, r1[0]
 ; LARGE: add r0, r0, r1
 ; LARGE: ldw r1, dp[s]
