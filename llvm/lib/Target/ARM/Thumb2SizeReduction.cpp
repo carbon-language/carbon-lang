@@ -1012,8 +1012,7 @@ bool Thumb2SizeReduce::runOnMachineFunction(MachineFunction &MF) {
   AttributeSet FnAttrs = MF.getFunction()->getAttributes();
   OptimizeSize = FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
                                       Attribute::OptimizeForSize);
-  MinimizeSize = FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
-                                      Attribute::MinSize);
+  MinimizeSize = STI->isMinSize();
 
   BlockInfo.clear();
   BlockInfo.resize(MF.getNumBlockIDs());

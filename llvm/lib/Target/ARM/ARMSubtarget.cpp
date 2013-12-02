@@ -102,6 +102,7 @@ void ARMSubtarget::initializeEnvironment() {
   HasVFPv4 = false;
   HasFPARMv8 = false;
   HasNEON = false;
+  MinSize = false;
   UseNEONForSinglePrecisionFP = false;
   UseMulOps = UseFusedMulOps;
   SlowFPVMLx = false;
@@ -151,6 +152,9 @@ void ARMSubtarget::resetSubtargetFeatures(const MachineFunction *MF) {
     initializeEnvironment();
     resetSubtargetFeatures(CPU, FS);
   }
+
+  MinSize =
+      FnAttrs.hasAttribute(AttributeSet::FunctionIndex, Attribute::MinSize);
 }
 
 void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {

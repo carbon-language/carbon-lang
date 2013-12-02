@@ -256,7 +256,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   if (NumBytes) {
     // Adjust SP after all the callee-save spills.
-    if (tryFoldSPUpdateIntoPushPop(MF, LastPush, NumBytes))
+    if (tryFoldSPUpdateIntoPushPop(STI, MF, LastPush, NumBytes))
       FramePtrOffsetInPush += NumBytes;
     else
       emitSPUpdate(isARM, MBB, MBBI, dl, TII, -NumBytes,
@@ -434,7 +434,8 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
                                  ARM::SP)
             .addReg(FramePtr));
       }
-    } else if (NumBytes && !tryFoldSPUpdateIntoPushPop(MF, FirstPop, NumBytes))
+    } else if (NumBytes &&
+               !tryFoldSPUpdateIntoPushPop(STI, MF, FirstPop, NumBytes))
         emitSPUpdate(isARM, MBB, MBBI, dl, TII, NumBytes);
 
     // Increment past our save areas.

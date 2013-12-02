@@ -1745,8 +1745,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // FIXME: handle tail calls differently.
   unsigned CallOpc;
-  bool HasMinSizeAttr = MF.getFunction()->getAttributes().
-    hasAttribute(AttributeSet::FunctionIndex, Attribute::MinSize);
+  bool HasMinSizeAttr = Subtarget->isMinSize();
   if (Subtarget->isThumb()) {
     if ((!isDirect || isARMFunc) && !Subtarget->hasV5TOps())
       CallOpc = ARMISD::CALL_NOLINK;

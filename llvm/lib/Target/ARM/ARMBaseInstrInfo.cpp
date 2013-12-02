@@ -1859,12 +1859,12 @@ void llvm::emitARMRegPlusImmediate(MachineBasicBlock &MBB,
   }
 }
 
-bool llvm::tryFoldSPUpdateIntoPushPop(MachineFunction &MF,
-                                      MachineInstr *MI,
+bool llvm::tryFoldSPUpdateIntoPushPop(const ARMSubtarget &Subtarget,
+                                      MachineFunction &MF, MachineInstr *MI,
                                       unsigned NumBytes) {
   // This optimisation potentially adds lots of load and store
   // micro-operations, it's only really a great benefit to code-size.
-  if (!MF.getFunction()->hasFnAttribute(Attribute::MinSize))
+  if (!Subtarget.isMinSize())
     return false;
 
   // If only one register is pushed/popped, LLVM can use an LDR/STR

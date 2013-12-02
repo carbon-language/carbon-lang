@@ -417,7 +417,8 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
 /// NumBytes. This can save a few bytes per function in code-size, but
 /// obviously generates more memory traffic. As such, it only takes
 /// effect in functions being optimised for size.
-bool tryFoldSPUpdateIntoPushPop(MachineFunction &MF, MachineInstr *MI,
+bool tryFoldSPUpdateIntoPushPop(const ARMSubtarget &Subtarget,
+                                MachineFunction &MF, MachineInstr *MI,
                                 unsigned NumBytes);
 
 /// rewriteARMFrameIndex / rewriteT2FrameIndex -
