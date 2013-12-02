@@ -42,7 +42,7 @@ MCAsmInfo::MCAsmInfo() {
   LabelSuffix = ":";
   DebugLabelSuffix = ":";
   GlobalPrefix = '\0';
-  PrivateGlobalPrefix = ".";
+  PrivateGlobalPrefix = "L";
   LinkerPrivateGlobalPrefix = "";
   InlineAsmStart = "APP";
   InlineAsmEnd = "NO_APP";

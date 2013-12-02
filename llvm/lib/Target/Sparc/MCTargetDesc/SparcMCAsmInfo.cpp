@@ -40,8 +40,6 @@ SparcELFMCAsmInfo::SparcELFMCAsmInfo(StringRef TT) {
 
   SunStyleELFSectionSwitchSyntax = true;
   UsesELFSectionDirectiveForBSS = true;
-
-  PrivateGlobalPrefix = ".L";
 }
 
 

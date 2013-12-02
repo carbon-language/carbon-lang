@@ -22,7 +22,6 @@ AArch64ELFMCAsmInfo::AArch64ELFMCAsmInfo() {
   AlignmentIsInBytes = false;
 
   CommentString = "//";
-  PrivateGlobalPrefix = ".L";
   Code32Directive = ".code\t32";
 
   Data16bitsDirective = "\t.hword\t";

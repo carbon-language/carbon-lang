@@ -119,10 +119,10 @@ namespace llvm {
     /// onto all global symbols.  This is often used for '_'.
     char GlobalPrefix;                // Defaults to '\0'
 
-    /// PrivateGlobalPrefix - This prefix is used for globals like constant
-    /// pool entries that are completely private to the .s file and should not
-    /// have names in the .o file.  This is often "." or "L".
-    const char *PrivateGlobalPrefix;         // Defaults to "."
+    /// This prefix is used for globals like constant pool entries that are
+    /// completely private to the .s file and should not have names in the .o
+    /// file.
+    const char *PrivateGlobalPrefix;         // Defaults to "L"
 
     /// LinkerPrivateGlobalPrefix - This prefix is used for symbols that should
     /// be passed through the assembler but be removed by the linker.  This

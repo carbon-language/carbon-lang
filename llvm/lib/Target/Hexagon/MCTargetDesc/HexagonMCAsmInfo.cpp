@@ -26,7 +26,6 @@ HexagonMCAsmInfo::HexagonMCAsmInfo(StringRef TT) {
   CommentString = "//";
   HasLEB128 = true;
 
-  PrivateGlobalPrefix = ".L";
   LCOMMDirectiveAlignmentType = LCOMM::ByteAlignment;
   InlineAsmStart = "# InlineAsm Start";
   InlineAsmEnd = "# InlineAsm End";

@@ -20,7 +20,6 @@ void MSP430MCAsmInfo::anchor() { }
 MSP430MCAsmInfo::MSP430MCAsmInfo(StringRef TT) {
   PointerSize = CalleeSaveStackSlotSize = 2;
 
-  PrivateGlobalPrefix = ".L";
   CommentString = ";";
 
   AlignmentIsInBytes = false;

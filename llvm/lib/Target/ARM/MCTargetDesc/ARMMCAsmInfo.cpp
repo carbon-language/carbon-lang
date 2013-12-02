@@ -45,7 +45,6 @@ ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
 
   Data64bitsDirective = 0;
   CommentString = "@";
-  PrivateGlobalPrefix = ".L";
   Code16Directive = ".code\t16";
   Code32Directive = ".code\t32";
 

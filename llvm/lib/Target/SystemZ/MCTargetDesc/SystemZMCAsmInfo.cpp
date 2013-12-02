@@ -19,7 +19,6 @@ SystemZMCAsmInfo::SystemZMCAsmInfo(StringRef TT) {
   IsLittleEndian = false;
 
   CommentString = "#";
-  PrivateGlobalPrefix = ".L";
   ZeroDirective = "\t.space\t";
   Data64bitsDirective = "\t.quad\t";
   UsesELFSectionDirectiveForBSS = true;
