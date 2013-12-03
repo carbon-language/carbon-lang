@@ -3,7 +3,7 @@ REQUIRES: shell
 RUN: rm -rf %t
 RUN: mkdir %t
 RUN: cd %t
-RUN: cp %p/Inputs/test.* .
+RUN: cp %p/Inputs/test* .
 
 RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda
 RUN: diff -aub test.cpp.gcov test.cpp.llcov
