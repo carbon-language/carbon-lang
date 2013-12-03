@@ -684,6 +684,11 @@ def ObjCSuppressProtocol : InheritableAttr {
   let Args = [IdentifierArgument<"Protocol">];
 }
 
+def ObjCDesignatedInitializer : Attr {
+  let Spellings = [GNU<"objc_designated_initializer">];
+  let Subjects = SubjectList<[ObjCMethod], ErrorDiag>;
+}
+
 def Overloadable : Attr {
   let Spellings = [GNU<"overloadable">];
   let Subjects = SubjectList<[Function], ErrorDiag>;

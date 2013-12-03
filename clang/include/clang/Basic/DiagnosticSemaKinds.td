@@ -2427,6 +2427,12 @@ def warn_objc_requires_super_protocol : Warning<
 def note_protocol_decl : Note<
   "protocol is declared here">;
 
+// objc_designated_initializer attribute diagnostics.
+def err_attr_objc_designated_not_init_family : Error<
+  "'objc_designated_initializer' only applies to methods of the init family">;
+def err_attr_objc_designated_not_interface : Error<
+  "'objc_designated_initializer' only applies to methods of interface declarations">;
+
 def err_ns_bridged_not_interface : Error<
   "parameter of 'ns_bridged' attribute does not name an Objective-C class">;
   
