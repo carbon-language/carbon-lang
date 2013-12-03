@@ -379,7 +379,19 @@ UnwindPlan::PlanValidAtAddress (Address addr)
     {
         Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
         if (log)
-            log->Printf ("Testing if UnwindPlan is valid at pc 0x%" PRIx64 ": No unwind rows - is invalid.");
+        {
+            StreamString s;
+            if (addr.Dump (&s, NULL, Address::DumpStyleSectionNameOffset))
+            {
+                log->Printf ("UnwindPlan is invalid -- no unwind rows for UnwindPlan '%s' at address %s",
+                             m_source_name.GetCString(), s.GetData());
+            }
+            else
+            {
+                log->Printf ("UnwindPlan is invalid -- no unwind rows for UnwindPlan '%s'",
+                             m_source_name.GetCString());
+            }
+        }
         return false;
     }
 
@@ -389,7 +401,19 @@ UnwindPlan::PlanValidAtAddress (Address addr)
     {
         Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
         if (log)
-            log->Printf ("Testing if UnwindPlan is valid at pc 0x%" PRIx64 ": No CFA register - is invalid.");
+        {
+            StreamString s;
+            if (addr.Dump (&s, NULL, Address::DumpStyleSectionNameOffset))
+            {
+                log->Printf ("UnwindPlan is invalid -- no CFA register defined in row 0 for UnwindPlan '%s' at address %s",
+                             m_source_name.GetCString(), s.GetData());
+            }
+            else
+            {
+                log->Printf ("UnwindPlan is invalid -- no CFA register defined in row 0 for UnwindPlan '%s'",
+                             m_source_name.GetCString());
+            }
+        }
         return false;
     }
 
