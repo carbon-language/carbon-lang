@@ -113,6 +113,9 @@ TEST(SanitizerCommon, InternalMmapVector) {
     vector.pop_back();
     EXPECT_EQ((uptr)i, vector.size());
   }
+  InternalMmapVector<uptr> empty_vector(0);
+  CHECK_GT(empty_vector.capacity(), 0U);
+  CHECK_EQ(0U, empty_vector.size());
 }
 
 void TestThreadInfo(bool main) {
