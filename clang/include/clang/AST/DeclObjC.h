@@ -457,7 +457,12 @@ public:
 
   /// Returns true if the method selector resolves to a designated initializer
   /// in the class's interface.
-  bool isDesignatedInitializerForTheInterface() const;
+  ///
+  /// \param InitMethod if non-null and the function returns true, it receives
+  /// the method declaration that was marked with the designated initializer
+  /// attribute.
+  bool isDesignatedInitializerForTheInterface(
+      const ObjCMethodDecl **InitMethod = 0) const;
 
   /// \brief Determine whether this method has a body.
   virtual bool hasBody() const { return Body.isValid(); }

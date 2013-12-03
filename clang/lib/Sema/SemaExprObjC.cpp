@@ -2447,13 +2447,32 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     }
   }
 
-  if (SuperLoc.isValid() && getCurFunction()->ObjCIsDesignatedInit) {
-    if (const ObjCObjectPointerType *
-          OCIType = ReceiverType->getAsObjCInterfacePointerType()) {
-      if (const ObjCInterfaceDecl *ID = OCIType->getInterfaceDecl()) {
-        if (ID->isDesignatedInitializer(Sel))
-          getCurFunction()->ObjCWarnForNoDesignatedInitChain = false;
+  if (Method && Method->getMethodFamily() == OMF_init &&
+      getCurFunction()->ObjCIsDesignatedInit &&
+      (SuperLoc.isValid() || isSelfExpr(Receiver))) {
+    bool isDesignatedInitChain = false;
+    if (SuperLoc.isValid()) {
+      if (const ObjCObjectPointerType *
+            OCIType = ReceiverType->getAsObjCInterfacePointerType()) {
+        if (const ObjCInterfaceDecl *ID = OCIType->getInterfaceDecl()) {
+          if (ID->isDesignatedInitializer(Sel)) {
+            isDesignatedInitChain = true;
+            getCurFunction()->ObjCWarnForNoDesignatedInitChain = false;
+          }
+        }
       }
+    }
+    if (!isDesignatedInitChain) {
+      const ObjCMethodDecl *InitMethod = 0;
+      bool isDesignated =
+        getCurMethodDecl()->isDesignatedInitializerForTheInterface(&InitMethod);
+      assert(isDesignated && InitMethod);
+      (void)isDesignated;
+      Diag(SelLoc, SuperLoc.isValid() ?
+             diag::warn_objc_designated_init_non_designated_init_call :
+             diag::warn_objc_designated_init_non_super_designated_init_call);
+      Diag(InitMethod->getLocation(),
+           diag::note_objc_designated_init_marked_here);
     }
   }
 

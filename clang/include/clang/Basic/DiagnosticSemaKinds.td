@@ -2437,6 +2437,12 @@ def warn_objc_designated_init_missing_super_call : Warning<
   InGroup<ObjCDesignatedInit>;
 def note_objc_designated_init_marked_here : Note<
   "method marked as designated initializer of the class here">;
+def warn_objc_designated_init_non_super_designated_init_call : Warning<
+  "designated initializer should only invoke a designated initializer on 'super'">,
+  InGroup<ObjCDesignatedInit>;
+def warn_objc_designated_init_non_designated_init_call : Warning<
+  "designated initializer invoked a non-designated initializer">,
+  InGroup<ObjCDesignatedInit>;
 
 def err_ns_bridged_not_interface : Error<
   "parameter of 'ns_bridged' attribute does not name an Objective-C class">;

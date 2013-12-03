@@ -9816,8 +9816,8 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
     }
     if (getCurFunction()->ObjCWarnForNoDesignatedInitChain) {
       const ObjCMethodDecl *InitMethod = 0;
-      bool isDesignated = MD->getClassInterface()
-                      ->isDesignatedInitializer(MD->getSelector(), &InitMethod);
+      bool isDesignated =
+          MD->isDesignatedInitializerForTheInterface(&InitMethod);
       assert(isDesignated && InitMethod);
       (void)isDesignated;
       Diag(MD->getLocation(),

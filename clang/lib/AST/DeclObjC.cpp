@@ -655,12 +655,15 @@ bool ObjCMethodDecl::isThisDeclarationADesignatedInitializer() const {
       hasAttr<ObjCDesignatedInitializerAttr>();
 }
 
-bool ObjCMethodDecl::isDesignatedInitializerForTheInterface() const {
+bool ObjCMethodDecl::isDesignatedInitializerForTheInterface(
+    const ObjCMethodDecl **InitMethod) const {
+  if (getMethodFamily() != OMF_init)
+    return false;
   const DeclContext *DC = getDeclContext();
   if (isa<ObjCProtocolDecl>(DC))
     return false;
   if (const ObjCInterfaceDecl *ID = getClassInterface())
-    return ID->isDesignatedInitializer(getSelector());
+    return ID->isDesignatedInitializer(getSelector(), InitMethod);
   return false;
 }
 

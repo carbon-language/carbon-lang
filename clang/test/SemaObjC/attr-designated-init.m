@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fblocks %s
 
 #define NS_DESIGNATED_INITIALIZER __attribute__((objc_designated_initializer))
 
@@ -35,7 +35,7 @@ __attribute__((objc_root_class))
 @interface B1
 -(id)initB1 NS_DESIGNATED_INITIALIZER; // expected-note 2 {{method marked as designated initializer of the class here}}
 -(id)initB2;
--(id)initB3 NS_DESIGNATED_INITIALIZER;
+-(id)initB3 NS_DESIGNATED_INITIALIZER; // expected-note {{method marked as designated initializer of the class here}}
 @end
 
 @implementation B1
@@ -47,8 +47,8 @@ __attribute__((objc_root_class))
 @interface S1 : B1
 -(id)initS1 NS_DESIGNATED_INITIALIZER; // expected-note {{method marked as designated initializer of the class here}}
 -(id)initS2 NS_DESIGNATED_INITIALIZER;
--(id)initS3 NS_DESIGNATED_INITIALIZER; // expected-note {{method marked as designated initializer of the class here}}
--(id)initS4 NS_DESIGNATED_INITIALIZER; // expected-note {{method marked as designated initializer of the class here}}
+-(id)initS3 NS_DESIGNATED_INITIALIZER; // expected-note 2 {{method marked as designated initializer of the class here}}
+-(id)initS4 NS_DESIGNATED_INITIALIZER; // expected-note 2 {{method marked as designated initializer of the class here}}
 -(id)initB1;
 @end
 
@@ -60,10 +60,10 @@ __attribute__((objc_root_class))
   return [super initB1];
 }
 -(id)initS3 { // expected-warning {{designated initializer missing a 'super' call to a designated initializer of the super class}}
-  return [super initB2];
+  return [super initB2]; // expected-warning {{designated initializer invoked a non-designated initializer}}
 }
 -(id)initS4 { // expected-warning {{designated initializer missing a 'super' call to a designated initializer of the super class}}
-  return [self initB1];
+  return [self initB1]; // expected-warning {{designated initializer should only invoke a designated initializer on 'super'}}
 }
 -(id)initB1 {
   return [self initS1];
@@ -92,12 +92,12 @@ __attribute__((objc_root_class))
 @end
 
 @interface SS3 : S3
--(id)initSS1 NS_DESIGNATED_INITIALIZER; // expected-note {{method marked as designated initializer of the class here}}
+-(id)initSS1 NS_DESIGNATED_INITIALIZER; // expected-note 2 {{method marked as designated initializer of the class here}}
 @end
 
 @implementation SS3
 -(id)initSS1 { // expected-warning {{designated initializer missing a 'super' call to a designated initializer of the super class}}
-  return [super initB1];
+  return [super initB1]; // expected-warning {{designated initializer invoked a non-designated initializer}}
 }
 @end
 
@@ -116,6 +116,7 @@ __attribute__((objc_root_class))
 @end
 
 @interface S5 : B1
+-(void)meth;
 @end
 
 @implementation S5
@@ -123,6 +124,14 @@ __attribute__((objc_root_class))
   return 0;
 }
 -(id)initB3 {
+  [self initB1]; // expected-warning {{designated initializer should only invoke a designated initializer on 'super'}}
+  S5 *s;
+  [s initB1];
+  [self meth];
+  void (^blk)(void) = ^{
+    [self initB1];
+  };
   return [super initB3];
 }
+-(void)meth {}
 @end
