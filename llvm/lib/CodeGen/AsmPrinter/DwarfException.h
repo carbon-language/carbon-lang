@@ -14,7 +14,6 @@
 #ifndef LLVM_CODEGEN_ASMPRINTER_DWARFEXCEPTION_H
 #define LLVM_CODEGEN_ASMPRINTER_DWARFEXCEPTION_H
 
-#include "AsmPrinterHandler.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include <vector>
@@ -36,7 +35,7 @@ class AsmPrinter;
 //===----------------------------------------------------------------------===//
 /// DwarfException - Emits Dwarf exception handling directives.
 ///
-class DwarfException : public AsmPrinterHandler {
+class DwarfException {
 protected:
   /// Asm - Target of Dwarf emission.
   AsmPrinter *Asm;
@@ -141,11 +140,6 @@ public:
 
   /// endFunction - Gather and emit post-function exception information.
   virtual void endFunction();
-
-  // We don't need these.
-  virtual void setSymbolSize(const MCSymbol *Sym, uint64_t Size) {}
-  virtual void beginInstruction(const MachineInstr *MI) {}
-  virtual void endInstruction() {}
 };
 
 class DwarfCFIException : public DwarfException {

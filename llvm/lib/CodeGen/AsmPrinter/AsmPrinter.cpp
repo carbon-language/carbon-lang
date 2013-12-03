@@ -99,14 +99,14 @@ AsmPrinter::AsmPrinter(TargetMachine &tm, MCStreamer &Streamer)
     OutContext(Streamer.getContext()),
     OutStreamer(Streamer),
     LastMI(0), LastFn(0), Counter(~0U), SetCounter(0) {
-  DD = 0; MMI = 0; LI = 0; MF = 0;
+  DD = 0; DE = 0; MMI = 0; LI = 0; MF = 0;
   CurrentFnSym = CurrentFnSymForSize = 0;
   GCMetadataPrinters = 0;
   VerboseAsm = Streamer.isVerboseAsm();
 }
 
 AsmPrinter::~AsmPrinter() {
-  assert(DD == 0 && Handlers.empty() && "Debug/EH info didn't get finalized");
+  assert(DD == 0 && DE == 0 && "Debug/EH info didn't get finalized");
 
   if (GCMetadataPrinters != 0) {
     gcp_map_type &GCMap = getGCMap(GCMetadataPrinters);
@@ -192,29 +192,25 @@ bool AsmPrinter::doInitialization(Module &M) {
     OutStreamer.AddBlankLine();
   }
 
-  if (MAI->doesSupportDebugInformation()) {
+  if (MAI->doesSupportDebugInformation())
     DD = new DwarfDebug(this, &M);
-    Handlers.push_back(HandlerInfo(DD, DbgTimerName, DWARFGroupName));
-  }
 
-  DwarfException *DE = 0;
   switch (MAI->getExceptionHandlingType()) {
   case ExceptionHandling::None:
-    break;
+    return false;
   case ExceptionHandling::SjLj:
   case ExceptionHandling::DwarfCFI:
     DE = new DwarfCFIException(this);
-    break;
+    return false;
   case ExceptionHandling::ARM:
     DE = new ARMException(this);
-    break;
+    return false;
   case ExceptionHandling::Win64:
     DE = new Win64Exception(this);
-    break;
+    return false;
   }
-  if (DE)
-    Handlers.push_back(HandlerInfo(DE, EHTimerName, DWARFGroupName));
-  return false;
+
+  llvm_unreachable("Unknown exception type.");
 }
 
 void AsmPrinter::EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
@@ -315,11 +311,8 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   // sections and expected to be contiguous (e.g. ObjC metadata).
   unsigned AlignLog = getGVAlignmentLog2(GV, *DL);
 
-  for (unsigned I = 0, E = Handlers.size(); I != E; ++I) {
-    const HandlerInfo &OI = Handlers[I];
-    NamedRegionTimer T(OI.TimerName, OI.TimerGroupName, TimePassesIsEnabled);
-    OI.Handler->setSymbolSize(GVSym, Size);
-  }
+  if (DD)
+    DD->setSymbolSize(GVSym, Size);
 
   // Handle common and BSS local symbols (.lcomm).
   if (GVKind.isCommon() || GVKind.isBSSLocal()) {
@@ -489,10 +482,13 @@ void AsmPrinter::EmitFunctionHeader() {
   }
 
   // Emit pre-function debug and/or EH information.
-  for (unsigned I = 0, E = Handlers.size(); I != E; ++I) {
-    const HandlerInfo &OI = Handlers[I];
-    NamedRegionTimer T(OI.TimerName, OI.TimerGroupName, TimePassesIsEnabled);
-    OI.Handler->beginFunction(MF);
+  if (DE) {
+    NamedRegionTimer T(EHTimerName, DWARFGroupName, TimePassesIsEnabled);
+    DE->beginFunction(MF);
+  }
+  if (DD) {
+    NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
+    DD->beginFunction(MF);
   }
 
   // Emit the prefix data.
@@ -697,7 +693,7 @@ void AsmPrinter::EmitFunctionBody() {
   // Emit target-specific gunk before the function body.
   EmitFunctionBodyStart();
 
-  bool ShouldPrintDebugScopes = MMI->hasDebugInfo();
+  bool ShouldPrintDebugScopes = DD && MMI->hasDebugInfo();
 
   // Print out code for the function.
   bool HasAnyRealCode = false;
@@ -718,12 +714,8 @@ void AsmPrinter::EmitFunctionBody() {
       }
 
       if (ShouldPrintDebugScopes) {
-        for (unsigned III = 0, EEE = Handlers.size(); III != EEE; ++III) {
-          const HandlerInfo &OI = Handlers[III];
-          NamedRegionTimer T(OI.TimerName, OI.TimerGroupName,
-                             TimePassesIsEnabled);
-          OI.Handler->beginInstruction(II);
-        }
+        NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
+        DD->beginInstruction(II);
       }
 
       if (isVerbose())
@@ -762,12 +754,8 @@ void AsmPrinter::EmitFunctionBody() {
       }
 
       if (ShouldPrintDebugScopes) {
-        for (unsigned III = 0, EEE = Handlers.size(); III != EEE; ++III) {
-          const HandlerInfo &OI = Handlers[III];
-          NamedRegionTimer T(OI.TimerName, OI.TimerGroupName,
-                             TimePassesIsEnabled);
-          OI.Handler->endInstruction();
-        }
+        NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
+        DD->endInstruction(II);
       }
     }
   }
@@ -823,11 +811,14 @@ void AsmPrinter::EmitFunctionBody() {
     OutStreamer.EmitELFSize(CurrentFnSym, SizeExp);
   }
 
-  // Emit post-function debug and/or EH information.
-  for (unsigned I = 0, E = Handlers.size(); I != E; ++I) {
-    const HandlerInfo &OI = Handlers[I];
-    NamedRegionTimer T(OI.TimerName, OI.TimerGroupName, TimePassesIsEnabled);
-    OI.Handler->endFunction();
+  // Emit post-function debug information.
+  if (DD) {
+    NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
+    DD->endFunction(MF);
+  }
+  if (DE) {
+    NamedRegionTimer T(EHTimerName, DWARFGroupName, TimePassesIsEnabled);
+    DE->endFunction();
   }
   MMI->EndFunction();
 
@@ -916,15 +907,20 @@ bool AsmPrinter::doFinalization(Module &M) {
   OutStreamer.Flush();
 
   // Finalize debug and EH information.
-  for (unsigned I = 0, E = Handlers.size(); I != E; ++I) {
-    const HandlerInfo &OI = Handlers[I];
-    NamedRegionTimer T(OI.TimerName, OI.TimerGroupName,
-                       TimePassesIsEnabled);
-    OI.Handler->endModule();
-    delete OI.Handler;
+  if (DE) {
+    {
+      NamedRegionTimer T(EHTimerName, DWARFGroupName, TimePassesIsEnabled);
+      DE->endModule();
+    }
+    delete DE; DE = 0;
   }
-  Handlers.clear();
-  DD = 0;
+  if (DD) {
+    {
+      NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
+      DD->endModule();
+    }
+    delete DD; DD = 0;
+  }
 
   // If the target wants to know about weak references, print them all.
   if (MAI->getWeakRefDirective()) {

@@ -390,9 +390,7 @@ unsigned DIEEntry::getRefAddrSize(AsmPrinter *AP) {
   // specified to be four bytes in the DWARF 32-bit format and eight bytes
   // in the DWARF 64-bit format, while DWARF Version 2 specifies that such
   // references have the same size as an address on the target system.
-  const DwarfDebug *DD = AP->getDwarfDebug();
-  assert(DD && "Expected Dwarf Debug info to be available");
-  if (DD->getDwarfVersion() == 2)
+  if (AP->getDwarfDebug()->getDwarfVersion() == 2)
     return AP->getDataLayout().getPointerSize();
   return sizeof(int32_t);
 }

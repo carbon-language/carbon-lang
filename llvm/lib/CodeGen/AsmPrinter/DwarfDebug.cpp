@@ -197,7 +197,6 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   DwarfAddrSectionSym = 0;
   DwarfAbbrevDWOSectionSym = DwarfStrDWOSectionSym = 0;
   FunctionBeginSym = FunctionEndSym = 0;
-  CurFn = 0; CurMI = 0;
 
   // Turn on accelerator tables for Darwin by default, pubnames by
   // default for non-Darwin, and handle split dwarf.
@@ -1145,7 +1144,6 @@ void DwarfDebug::endSections() {
 
 // Emit all Dwarf sections that should come after the content.
 void DwarfDebug::endModule() {
-  assert(CurFn == 0);
 
   if (!FirstCU)
     return;
@@ -1227,7 +1225,8 @@ DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &DV,
 }
 
 // If Var is a current function argument then add it to CurrentFnArguments list.
-bool DwarfDebug::addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope) {
+bool DwarfDebug::addCurrentFnArgument(const MachineFunction *MF,
+                                      DbgVariable *Var, LexicalScope *Scope) {
   if (!LScopes.isCurrentFunctionScope(Scope))
     return false;
   DIVariable DV = Var->getVariable();
@@ -1239,7 +1238,7 @@ bool DwarfDebug::addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope) {
 
   size_t Size = CurrentFnArguments.size();
   if (Size == 0)
-    CurrentFnArguments.resize(CurFn->getFunction()->arg_size());
+    CurrentFnArguments.resize(MF->getFunction()->arg_size());
   // llvm::Function argument size is not good indicator of how many
   // arguments does the function have at source level.
   if (ArgNo > Size)
@@ -1250,7 +1249,7 @@ bool DwarfDebug::addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope) {
 
 // Collect variable information from side table maintained by MMI.
 void DwarfDebug::collectVariableInfoFromMMITable(
-    SmallPtrSet<const MDNode *, 16> &Processed) {
+    const MachineFunction *MF, SmallPtrSet<const MDNode *, 16> &Processed) {
   MachineModuleInfo::VariableDbgInfoMapTy &VMap = MMI->getVariableDbgInfo();
   for (MachineModuleInfo::VariableDbgInfoMapTy::iterator VI = VMap.begin(),
                                                          VE = VMap.end();
@@ -1271,7 +1270,7 @@ void DwarfDebug::collectVariableInfoFromMMITable(
     DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VP.second);
     DbgVariable *RegVar = new DbgVariable(DV, AbsDbgVariable, this);
     RegVar->setFrameIndex(VP.first);
-    if (!addCurrentFnArgument(RegVar, Scope))
+    if (!addCurrentFnArgument(MF, RegVar, Scope))
       addScopeVariable(Scope, RegVar);
     if (AbsDbgVariable)
       AbsDbgVariable->setFrameIndex(VP.first);
@@ -1318,10 +1317,11 @@ static DotDebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
 
 // Find variables for each lexical scope.
 void
-DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
+DwarfDebug::collectVariableInfo(const MachineFunction *MF,
+                                SmallPtrSet<const MDNode *, 16> &Processed) {
 
   // Grab the variable info that was squirreled away in the MMI side-table.
-  collectVariableInfoFromMMITable(Processed);
+  collectVariableInfoFromMMITable(MF, Processed);
 
   for (SmallVectorImpl<const MDNode *>::const_iterator
            UVI = UserVariables.begin(),
@@ -1341,7 +1341,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     DIVariable DV(Var);
     LexicalScope *Scope = NULL;
     if (DV.getTag() == dwarf::DW_TAG_arg_variable &&
-        DISubprogram(DV.getContext()).describes(CurFn->getFunction()))
+        DISubprogram(DV.getContext()).describes(MF->getFunction()))
       Scope = LScopes.getCurrentFunctionScope();
     else if (MDNode *IA = DV.getInlinedAt())
       Scope = LScopes.findInlinedScope(DebugLoc::getFromDILocation(IA));
@@ -1355,7 +1355,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     assert(MInsn->isDebugValue() && "History must begin with debug value");
     DbgVariable *AbsVar = findAbstractVariable(DV, MInsn->getDebugLoc());
     DbgVariable *RegVar = new DbgVariable(DV, AbsVar, this);
-    if (!addCurrentFnArgument(RegVar, Scope))
+    if (!addCurrentFnArgument(MF, RegVar, Scope))
       addScopeVariable(Scope, RegVar);
     if (AbsVar)
       AbsVar->setMInsn(MInsn);
@@ -1437,8 +1437,6 @@ MCSymbol *DwarfDebug::getLabelAfterInsn(const MachineInstr *MI) {
 
 // Process beginning of an instruction.
 void DwarfDebug::beginInstruction(const MachineInstr *MI) {
-  assert(CurMI == 0);
-  CurMI = MI;
   // Check if source location changes, but ignore DBG_VALUE locations.
   if (!MI->isDebugValue()) {
     DebugLoc DL = MI->getDebugLoc();
@@ -1480,16 +1478,14 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
 }
 
 // Process end of an instruction.
-void DwarfDebug::endInstruction() {
-  assert(CurMI != 0);
+void DwarfDebug::endInstruction(const MachineInstr *MI) {
   // Don't create a new label after DBG_VALUE instructions.
   // They don't generate code.
-  if (!CurMI->isDebugValue())
+  if (!MI->isDebugValue())
     PrevLabel = 0;
 
   DenseMap<const MachineInstr *, MCSymbol *>::iterator I =
-      LabelsAfterInsn.find(CurMI);
-  CurMI = 0;
+      LabelsAfterInsn.find(MI);
 
   // No label needed.
   if (I == LabelsAfterInsn.end())
@@ -1569,7 +1565,6 @@ static DebugLoc getFnDebugLoc(DebugLoc DL, const LLVMContext &Ctx) {
 // Gather pre-function debug information.  Assumes being called immediately
 // after the function entry point has been emitted.
 void DwarfDebug::beginFunction(const MachineFunction *MF) {
-  CurFn = MF;
 
   // If there's no debug info for the function we're not going to do anything.
   if (!MMI->hasDebugInfo())
@@ -1796,13 +1791,9 @@ void DwarfDebug::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
 }
 
 // Gather and emit post-function debug information.
-void DwarfDebug::endFunction() {
-  assert(CurFn != 0);
-
-  if (!MMI->hasDebugInfo() || LScopes.empty()) {
-    CurFn = 0;
+void DwarfDebug::endFunction(const MachineFunction *MF) {
+  if (!MMI->hasDebugInfo() || LScopes.empty())
     return;
-  }
 
   // Define end label for subprogram.
   FunctionEndSym = Asm->GetTempSymbol("func_end", Asm->getFunctionNumber());
@@ -1812,7 +1803,7 @@ void DwarfDebug::endFunction() {
   Asm->OutStreamer.getContext().setDwarfCompileUnitID(0);
 
   SmallPtrSet<const MDNode *, 16> ProcessedVars;
-  collectVariableInfo(ProcessedVars);
+  collectVariableInfo(MF, ProcessedVars);
 
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
   CompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
@@ -1846,7 +1837,7 @@ void DwarfDebug::endFunction() {
 
   DIE *CurFnDIE = constructScopeDIE(TheCU, FnScope);
 
-  if (!CurFn->getTarget().Options.DisableFramePointerElim(*CurFn))
+  if (!MF->getTarget().Options.DisableFramePointerElim(*MF))
     TheCU->addFlag(CurFnDIE, dwarf::DW_AT_APPLE_omit_frame_ptr);
 
   // Clear debug info
@@ -1862,7 +1853,6 @@ void DwarfDebug::endFunction() {
   LabelsBeforeInsn.clear();
   LabelsAfterInsn.clear();
   PrevLabel = NULL;
-  CurFn = 0;
 }
 
 // Register a source line with debug info. Returns the  unique label that was
