@@ -453,18 +453,34 @@ def CC_X86_32_FastCall : CallingConv<[
   CCDelegateTo<CC_X86_32_Common>
 ]>;
 
-def CC_X86_32_ThisCall : CallingConv<[
+def CC_X86_32_ThisCall_Common : CallingConv<[
+  // The first integer argument is passed in ECX
+  CCIfType<[i32], CCAssignToReg<[ECX]>>,
+
+  // Otherwise, same as everything else.
+  CCDelegateTo<CC_X86_32_Common>
+]>;
+
+def CC_X86_32_ThisCall_Mingw : CallingConv<[
+  // Promote i8/i16 arguments to i32.
+  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+
+  CCDelegateTo<CC_X86_32_ThisCall_Common>
+]>;
+
+def CC_X86_32_ThisCall_Win : CallingConv<[
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 
   // Pass sret arguments indirectly through stack.
   CCIfSRet<CCAssignToStack<4, 4>>,
 
-  // The first integer argument is passed in ECX
-  CCIfType<[i32], CCAssignToReg<[ECX]>>,
+  CCDelegateTo<CC_X86_32_ThisCall_Common>
+]>;
 
-  // Otherwise, same as everything else.
-  CCDelegateTo<CC_X86_32_Common>
+def CC_X86_32_ThisCall : CallingConv<[
+  CCIfSubtarget<"isTargetCygMing()", CCDelegateTo<CC_X86_32_ThisCall_Mingw>>,
+  CCDelegateTo<CC_X86_32_ThisCall_Win>
 ]>;
 
 def CC_X86_32_FastCC : CallingConv<[

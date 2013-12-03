@@ -124,3 +124,31 @@ entry:
 ; WIN32:      ret
   ret void
 }
+
+
+%struct.test6 = type { i32, i32, i32 }
+define void @test6_f(%struct.test6* %x) nounwind {
+; WIN32-LABEL: _test6_f:
+; MINGW_X86-LABEL: _test6_f:
+
+; The %x argument is moved to %ecx. It will be the this pointer.
+; WIN32: movl    8(%ebp), %ecx
+
+; The %x argument is moved to (%esp). It will be the this pointer. With -O0
+; we copy esp to ecx and use (ecx) instead of (esp).
+; MINGW_X86: movl    8(%ebp), %eax
+; MINGW_X86: movl    %eax, (%e{{([a-d]x)|(sp)}})
+
+; The sret pointer is (%esp)
+; WIN32:          leal    8(%esp), %[[REG:e[a-d]x]]
+; WIN32-NEXT:     movl    %[[REG]], (%e{{([a-d]x)|(sp)}})
+
+; The sret pointer is %ecx
+; MINGW_X86-NEXT: leal    8(%esp), %ecx
+; MINGW_X86-NEXT: calll   _test6_g
+
+  %tmp = alloca %struct.test6, align 4
+  call x86_thiscallcc void @test6_g(%struct.test6* sret %tmp, %struct.test6* %x)
+  ret void
+}
+declare x86_thiscallcc void @test6_g(%struct.test6* sret, %struct.test6*)
