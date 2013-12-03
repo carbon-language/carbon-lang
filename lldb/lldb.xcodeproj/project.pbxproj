@@ -5378,6 +5378,7 @@
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
+					"-lxml2",
 					"-framework",
 					Foundation,
 					"-framework",
@@ -5449,6 +5450,7 @@
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
+					"-lxml2",
 					"-framework",
 					Foundation,
 					"-framework",
@@ -5517,6 +5519,7 @@
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
+					"-lxml2",
 					"-framework",
 					Foundation,
 					"-framework",
@@ -5584,6 +5587,7 @@
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
+					"-lxml2",
 					"-framework",
 					Foundation,
 					"-framework",
@@ -5656,6 +5660,7 @@
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
+					"-lxml2",
 					"-framework",
 					Foundation,
 					"-framework",
@@ -5725,6 +5730,7 @@
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
+					"-lxml2",
 					"-framework",
 					Foundation,
 					"-framework",
@@ -5794,6 +5800,7 @@
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
+					"-lxml2",
 					"-framework",
 					Foundation,
 					"-framework",
@@ -6154,6 +6161,7 @@
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
+					"-lxml2",
 					"-framework",
 					Foundation,
 					"-framework",
