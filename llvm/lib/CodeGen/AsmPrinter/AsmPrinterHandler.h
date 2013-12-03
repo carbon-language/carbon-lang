@@ -41,7 +41,7 @@ public:
   virtual void beginFunction(const MachineFunction *MF) = 0;
 
   /// \brief Gather post-function debug information.
-  /// Please note that some AsmPrinter implementationss may not call
+  /// Please note that some AsmPrinter implementations may not call
   /// beginFunction at all.
   virtual void endFunction(const MachineFunction *MF) = 0;
 
