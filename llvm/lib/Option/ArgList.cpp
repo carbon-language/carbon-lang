@@ -291,8 +291,7 @@ void ArgList::ClaimAllArgs() const {
 
 const char *ArgList::MakeArgString(const Twine &T) const {
   SmallString<256> Str;
-  T.toVector(Str);
-  return MakeArgString(Str.str());
+  return MakeArgString(T.toStringRef(Str));
 }
 
 const char *ArgList::GetOrMakeJoinedArgString(unsigned Index,
