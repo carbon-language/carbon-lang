@@ -49,7 +49,7 @@ struct FormatStyle {
   ///
   /// A column limit of \c 0 means that there is no column limit. In this case,
   /// clang-format will respect the input's line breaking decisions within
-  /// statements.
+  /// statements unless they contradict other rules.
   unsigned ColumnLimit;
 
   /// \brief The maximum number of consecutive empty lines to keep.
