@@ -2,8 +2,9 @@ RUN: cd %p/Inputs
 # "cd" is unsupported in lit internal runner.
 REQUIRES: shell
 
-RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda \
-RUN:   | diff -aub test.cpp.gcov -
+RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda
+RUN: diff test.cpp.gcov test.cpp.llcov
+RUN: rm test.cpp.llcov
 
 RUN: not llvm-cov -gcno=test_read_fail.gcno -gcda=test.gcda
 

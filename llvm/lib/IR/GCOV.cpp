@@ -317,8 +317,7 @@ void GCOVBlock::dump() const {
 // FileInfo implementation.
 
 /// print -  Print source files with collected line count information.
-void FileInfo::print(raw_fd_ostream &OS, StringRef gcnoFile,
-                     StringRef gcdaFile) const {
+void FileInfo::print(StringRef gcnoFile, StringRef gcdaFile) const {
   for (StringMap<LineData>::const_iterator I = LineInfo.begin(),
          E = LineInfo.end(); I != E; ++I) {
     StringRef Filename = I->first();
@@ -328,6 +327,12 @@ void FileInfo::print(raw_fd_ostream &OS, StringRef gcnoFile,
       return;
     }
     StringRef AllLines = Buff->getBuffer();
+
+    std::string CovFilename = Filename.str() + ".llcov";
+    std::string ErrorInfo;
+    raw_fd_ostream OS(CovFilename.c_str(), ErrorInfo);
+    if (!ErrorInfo.empty())
+      errs() << ErrorInfo << "\n";
 
     OS << "        -:    0:Source:" << Filename << "\n";
     OS << "        -:    0:Graph:" << gcnoFile << "\n";

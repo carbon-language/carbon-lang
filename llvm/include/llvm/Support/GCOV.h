@@ -279,7 +279,7 @@ public:
   }
   void setRunCount(uint32_t Runs) { RunCount = Runs; }
   void setProgramCount(uint32_t Programs) { ProgramCount = Programs; }
-  void print(raw_fd_ostream &OS, StringRef gcnoFile, StringRef gcdaFile) const;
+  void print(StringRef gcnoFile, StringRef gcdaFile) const;
 private:
   StringMap<LineData> LineInfo;
   uint32_t RunCount;

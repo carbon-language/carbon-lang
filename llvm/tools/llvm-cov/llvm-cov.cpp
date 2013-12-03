@@ -17,7 +17,6 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
 using namespace llvm;
@@ -31,10 +30,6 @@ InputGCNO("gcno", cl::desc("<input gcno file>"), cl::init(""));
 static cl::opt<std::string>
 InputGCDA("gcda", cl::desc("<input gcda file>"), cl::init(""));
 
-static cl::opt<std::string>
-OutputFile("o", cl::desc("<output llvm-cov file>"), cl::init("-"));
-
-
 //===----------------------------------------------------------------------===//
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
@@ -43,11 +38,6 @@ int main(int argc, char **argv) {
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
   cl::ParseCommandLineOptions(argc, argv, "llvm coverage tool\n");
-
-  std::string ErrorInfo;
-  raw_fd_ostream OS(OutputFile.c_str(), ErrorInfo);
-  if (!ErrorInfo.empty())
-    errs() << ErrorInfo << "\n";
 
   GCOVFile GF;
   if (InputGCNO.empty())
@@ -83,6 +73,6 @@ int main(int argc, char **argv) {
 
   FileInfo FI;
   GF.collectLineCounts(FI);
-  FI.print(OS, InputGCNO, InputGCDA);
+  FI.print(InputGCNO, InputGCDA);
   return 0;
 }
