@@ -1,3 +1,5 @@
+REQUIRES: shell
+RUN: rm -f test.*
 RUN: cp %p/Inputs/test.* .
 RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda
 RUN: diff -aub test.cpp.gcov test.cpp.llcov
