@@ -26,6 +26,10 @@ void FunctionScopeInfo::Clear() {
   HasBranchProtectedScope = false;
   HasBranchIntoScope = false;
   HasIndirectGoto = false;
+  HasDroppedStmt = false;
+  ObjCShouldCallSuper = false;
+  ObjCIsDesignatedInit = false;
+  ObjCWarnForNoDesignatedInitChain = false;
 
   SwitchStack.clear();
   Returns.clear();

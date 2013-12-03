@@ -9814,6 +9814,18 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
         << MD->getSelector().getAsString();
       getCurFunction()->ObjCShouldCallSuper = false;
     }
+    if (getCurFunction()->ObjCWarnForNoDesignatedInitChain) {
+      const ObjCMethodDecl *InitMethod = 0;
+      bool isDesignated = MD->getClassInterface()
+                      ->isDesignatedInitializer(MD->getSelector(), &InitMethod);
+      assert(isDesignated && InitMethod);
+      (void)isDesignated;
+      Diag(MD->getLocation(),
+           diag::warn_objc_designated_init_missing_super_call);
+      Diag(InitMethod->getLocation(),
+           diag::note_objc_designated_init_marked_here);
+      getCurFunction()->ObjCWarnForNoDesignatedInitChain = false;
+    }
   } else {
     return 0;
   }

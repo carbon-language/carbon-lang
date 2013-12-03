@@ -451,6 +451,14 @@ public:
     return ImplementationControl(DeclImplementation);
   }
 
+  /// Returns true if this specific method declaration is marked with the
+  /// designated initializer attribute.
+  bool isThisDeclarationADesignatedInitializer() const;
+
+  /// Returns true if the method selector resolves to a designated initializer
+  /// in the class's interface.
+  bool isDesignatedInitializerForTheInterface() const;
+
   /// \brief Determine whether this method has a body.
   virtual bool hasBody() const { return Body.isValid(); }
 
@@ -883,6 +891,18 @@ public:
   /// its super class.
   void getDesignatedInitializers(
                   llvm::SmallVectorImpl<const ObjCMethodDecl *> &Methods) const;
+
+  /// Returns true if the given selector is a designated initializer for the
+  /// interface.
+  ///
+  /// If this declaration does not have methods marked as designated
+  /// initializers then the interface inherits the designated initializers of
+  /// its super class.
+  ///
+  /// \param InitMethod if non-null and the function returns true, it receives
+  /// the method that was marked as a designated initializer.
+  bool isDesignatedInitializer(Selector Sel,
+                               const ObjCMethodDecl **InitMethod = 0) const;
 
   /// \brief Determine whether this particular declaration of this class is
   /// actually also a definition.

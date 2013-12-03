@@ -398,10 +398,37 @@ void ObjCInterfaceDecl::getDesignatedInitializers(
   for (instmeth_iterator I = IFace->instmeth_begin(),
                          E = IFace->instmeth_end(); I != E; ++I) {
     const ObjCMethodDecl *MD = *I;
-    if (MD->getMethodFamily() == OMF_init &&
-        MD->hasAttr<ObjCDesignatedInitializerAttr>())
+    if (MD->isThisDeclarationADesignatedInitializer())
       Methods.push_back(MD);
   }
+}
+
+bool ObjCInterfaceDecl::isDesignatedInitializer(Selector Sel,
+                                      const ObjCMethodDecl **InitMethod) const {
+  assert(hasDefinition());
+  if (data().ExternallyCompleted)
+    LoadExternalDefinition();
+
+  const ObjCInterfaceDecl *IFace = this;
+  while (IFace) {
+    if (IFace->data().HasDesignatedInitializers)
+      break;
+    IFace = IFace->getSuperClass();
+  }
+
+  if (!IFace)
+    return false;
+
+  if (const ObjCMethodDecl *MD = IFace->lookupMethod(Sel, /*isInstance=*/true,
+                                                 /*shallowCategoryLookup=*/true,
+                                                 /*followSuper=*/false)) {
+    if (MD->isThisDeclarationADesignatedInitializer()) {
+      if (InitMethod)
+        *InitMethod = MD;
+      return true;
+    }
+  }
+  return false;
 }
 
 void ObjCInterfaceDecl::allocateDefinitionData() {
@@ -621,6 +648,20 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
 ObjCMethodDecl *ObjCMethodDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   return new (C, ID) ObjCMethodDecl(SourceLocation(), SourceLocation(),
                                     Selector(), QualType(), 0, 0);
+}
+
+bool ObjCMethodDecl::isThisDeclarationADesignatedInitializer() const {
+  return getMethodFamily() == OMF_init &&
+      hasAttr<ObjCDesignatedInitializerAttr>();
+}
+
+bool ObjCMethodDecl::isDesignatedInitializerForTheInterface() const {
+  const DeclContext *DC = getDeclContext();
+  if (isa<ObjCProtocolDecl>(DC))
+    return false;
+  if (const ObjCInterfaceDecl *ID = getClassInterface())
+    return ID->isDesignatedInitializer(getSelector());
+  return false;
 }
 
 Stmt *ObjCMethodDecl::getBody() const {

@@ -110,6 +110,13 @@ public:
   /// with \c __attribute__((objc_requires_super)).
   bool ObjCShouldCallSuper;
 
+  /// True when this is a method marked as a designated initializer.
+  bool ObjCIsDesignatedInit;
+  /// This starts true for a method marked as designated initializer and will
+  /// be set to false if there is an invocation to a designated initializer of
+  /// the super class.
+  bool ObjCWarnForNoDesignatedInitChain;
+
   /// \brief Used to determine if errors occurred in this function or block.
   DiagnosticErrorTrap ErrorTrap;
 
@@ -318,6 +325,8 @@ public:
       HasIndirectGoto(false),
       HasDroppedStmt(false),
       ObjCShouldCallSuper(false),
+      ObjCIsDesignatedInit(false),
+      ObjCWarnForNoDesignatedInitChain(false),
       ErrorTrap(Diag) { }
 
   virtual ~FunctionScopeInfo();

@@ -30,3 +30,99 @@ __attribute__((objc_root_class))
 -(id)init3 { return 0; }
 -(id)init4 NS_DESIGNATED_INITIALIZER { return 0; } // expected-error {{only applies to methods of interface declarations}}
 @end
+
+__attribute__((objc_root_class))
+@interface B1
+-(id)initB1 NS_DESIGNATED_INITIALIZER; // expected-note 2 {{method marked as designated initializer of the class here}}
+-(id)initB2;
+-(id)initB3 NS_DESIGNATED_INITIALIZER;
+@end
+
+@implementation B1
+-(id)initB1 { return 0; }
+-(id)initB2 { return 0; }
+-(id)initB3 { return 0; }
+@end
+
+@interface S1 : B1
+-(id)initS1 NS_DESIGNATED_INITIALIZER; // expected-note {{method marked as designated initializer of the class here}}
+-(id)initS2 NS_DESIGNATED_INITIALIZER;
+-(id)initS3 NS_DESIGNATED_INITIALIZER; // expected-note {{method marked as designated initializer of the class here}}
+-(id)initS4 NS_DESIGNATED_INITIALIZER; // expected-note {{method marked as designated initializer of the class here}}
+-(id)initB1;
+@end
+
+@implementation S1
+-(id)initS1 { // expected-warning {{designated initializer missing a 'super' call to a designated initializer of the super class}}
+  return 0;
+}
+-(id)initS2 {
+  return [super initB1];
+}
+-(id)initS3 { // expected-warning {{designated initializer missing a 'super' call to a designated initializer of the super class}}
+  return [super initB2];
+}
+-(id)initS4 { // expected-warning {{designated initializer missing a 'super' call to a designated initializer of the super class}}
+  return [self initB1];
+}
+-(id)initB1 {
+  return [self initS1];
+}
+-(id)initB3 {
+  return [self initS1];
+}
+@end
+
+@interface S2 : B1
+-(id)initB1;
+@end
+
+@interface SS2 : S2
+-(id)initSS1 NS_DESIGNATED_INITIALIZER;
+@end
+
+@implementation SS2
+-(id)initSS1 {
+  return [super initB1];
+}
+@end
+
+@interface S3 : B1
+-(id)initS1 NS_DESIGNATED_INITIALIZER;
+@end
+
+@interface SS3 : S3
+-(id)initSS1 NS_DESIGNATED_INITIALIZER; // expected-note {{method marked as designated initializer of the class here}}
+@end
+
+@implementation SS3
+-(id)initSS1 { // expected-warning {{designated initializer missing a 'super' call to a designated initializer of the super class}}
+  return [super initB1];
+}
+@end
+
+@interface S4 : B1
+-(id)initB1;
+-(id)initB3;
+@end
+
+@implementation S4
+-(id)initB1 { // expected-warning {{designated initializer missing a 'super' call to a designated initializer of the super class}}
+  return 0;
+}
+-(id)initB3 {
+  return [super initB3];
+}
+@end
+
+@interface S5 : B1
+@end
+
+@implementation S5
+-(id)initB1 { // expected-warning {{designated initializer missing a 'super' call to a designated initializer of the super class}}
+  return 0;
+}
+-(id)initB3 {
+  return [super initB3];
+}
+@end

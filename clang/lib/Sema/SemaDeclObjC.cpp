@@ -391,6 +391,9 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
                                           MDecl->getLocation(), 0);
     }
 
+    if (MDecl->isDesignatedInitializerForTheInterface())
+      getCurFunction()->ObjCIsDesignatedInit = true;
+
     // If this is "dealloc" or "finalize", set some bit here.
     // Then in ActOnSuperMessage() (SemaExprObjC), set it back to false.
     // Finally, in ActOnFinishFunctionBody() (SemaDecl), warn if flag is set.
@@ -413,6 +416,9 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
         getCurFunction()->ObjCShouldCallSuper = 
           (SuperMethod && SuperMethod->hasAttr<ObjCRequiresSuperAttr>());
       }
+
+      if (getCurFunction()->ObjCIsDesignatedInit)
+        getCurFunction()->ObjCWarnForNoDesignatedInitChain = true;
     }
   }
 }

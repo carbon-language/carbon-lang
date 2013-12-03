@@ -2432,6 +2432,11 @@ def err_attr_objc_designated_not_init_family : Error<
   "'objc_designated_initializer' only applies to methods of the init family">;
 def err_attr_objc_designated_not_interface : Error<
   "'objc_designated_initializer' only applies to methods of interface declarations">;
+def warn_objc_designated_init_missing_super_call : Warning<
+  "designated initializer missing a 'super' call to a designated initializer of the super class">,
+  InGroup<ObjCDesignatedInit>;
+def note_objc_designated_init_marked_here : Note<
+  "method marked as designated initializer of the class here">;
 
 def err_ns_bridged_not_interface : Error<
   "parameter of 'ns_bridged' attribute does not name an Objective-C class">;

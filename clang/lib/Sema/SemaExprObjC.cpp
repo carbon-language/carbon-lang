@@ -2447,6 +2447,16 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     }
   }
 
+  if (SuperLoc.isValid() && getCurFunction()->ObjCIsDesignatedInit) {
+    if (const ObjCObjectPointerType *
+          OCIType = ReceiverType->getAsObjCInterfacePointerType()) {
+      if (const ObjCInterfaceDecl *ID = OCIType->getInterfaceDecl()) {
+        if (ID->isDesignatedInitializer(Sel))
+          getCurFunction()->ObjCWarnForNoDesignatedInitChain = false;
+      }
+    }
+  }
+
   // Check the message arguments.
   unsigned NumArgs = ArgsIn.size();
   Expr **Args = ArgsIn.data();
