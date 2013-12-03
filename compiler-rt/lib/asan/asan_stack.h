@@ -77,11 +77,10 @@ void PrintStack(const uptr *trace, uptr size);
 
 #define GET_STACK_TRACE_FREE GET_STACK_TRACE_MALLOC
 
-#define PRINT_CURRENT_STACK()                    \
-  {                                              \
-    GET_STACK_TRACE(kStackTraceMax,              \
-      common_flags()->fast_unwind_on_fatal);     \
-    PrintStack(&stack);                          \
+#define PRINT_CURRENT_STACK()   \
+  {                             \
+    GET_STACK_TRACE_FATAL_HERE; \
+    PrintStack(&stack);         \
   }
 
 #endif  // ASAN_STACK_H

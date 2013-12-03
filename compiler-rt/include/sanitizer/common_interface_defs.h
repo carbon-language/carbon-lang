@@ -85,6 +85,9 @@ extern "C" {
                                                  const void *old_mid,
                                                  const void *new_mid);
 
+  // Print the stack trace leading to this call. Useful for debugging user code.
+  void __sanitizer_print_stack_trace();
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif
