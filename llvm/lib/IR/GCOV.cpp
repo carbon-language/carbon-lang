@@ -112,6 +112,7 @@ void GCOVFile::collectLineCounts(FileInfo &FI) {
 /// ~GCOVFunction - Delete GCOVFunction and its content.
 GCOVFunction::~GCOVFunction() {
   DeleteContainerPointers(Blocks);
+  DeleteContainerPointers(Edges);
 }
 
 /// readGCNO - Read a function from the GCNO buffer. Return false if an error
@@ -154,7 +155,10 @@ bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
     for (uint32_t i = 0, e = EdgeCount; i != e; ++i) {
       uint32_t Dst;
       if (!Buff.readInt(Dst)) return false;
-      Blocks[BlockNo]->addEdge(Dst);
+      GCOVEdge *Edge = new GCOVEdge(Blocks[BlockNo], Blocks[Dst]);
+      Edges.push_back(Edge);
+      Blocks[BlockNo]->addDstEdge(Edge);
+      Blocks[Dst]->addSrcEdge(Edge);
       if (!Buff.readInt(Dummy)) return false; // Edge flag
     }
   }
@@ -208,26 +212,29 @@ bool GCOVFunction::readGCDA(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
     errs() << "Arc tag not found.\n";
     return false;
   }
+
   uint32_t Count;
   if (!Buff.readInt(Count)) return false;
   Count /= 2;
 
   // This for loop adds the counts for each block. A second nested loop is
   // required to combine the edge counts that are contained in the GCDA file.
-  for (uint32_t Line = 0; Count > 0; ++Line) {
-    if (Line >= Blocks.size()) {
+  for (uint32_t BlockNo = 0; Count > 0; ++BlockNo) {
+    // The last block is always reserved for exit block
+    if (BlockNo >= Blocks.size()-1) {
       errs() << "Unexpected number of edges.\n";
       return false;
     }
-    GCOVBlock &Block = *Blocks[Line];
-    for (size_t Edge = 0, End = Block.getNumEdges(); Edge < End; ++Edge) {
+    GCOVBlock &Block = *Blocks[BlockNo];
+    for (size_t EdgeNo = 0, End = Block.getNumDstEdges(); EdgeNo < End;
+           ++EdgeNo) {
       if (Count == 0) {
         errs() << "Unexpected number of edges.\n";
         return false;
       }
       uint64_t ArcCount;
       if (!Buff.readInt64(ArcCount)) return false;
-      Block.addCount(ArcCount);
+      Block.addCount(EdgeNo, ArcCount);
       --Count;
     }
   }
@@ -255,8 +262,19 @@ void GCOVFunction::collectLineCounts(FileInfo &FI) {
 
 /// ~GCOVBlock - Delete GCOVBlock and its content.
 GCOVBlock::~GCOVBlock() {
-  Edges.clear();
+  SrcEdges.clear();
+  DstEdges.clear();
   Lines.clear();
+}
+
+/// addCount - Add to block counter while storing the edge count. If the
+/// destination has no outgoing edges, also update that block's count too.
+void GCOVBlock::addCount(size_t DstEdgeNo, uint64_t N) {
+  assert(DstEdgeNo < DstEdges.size()); // up to caller to ensure EdgeNo is valid
+  DstEdges[DstEdgeNo]->Count = N;
+  Counter += N;
+  if (!DstEdges[DstEdgeNo]->Dst->getNumDstEdges())
+    DstEdges[DstEdgeNo]->Dst->Counter += N;
 }
 
 /// collectLineCounts - Collect line counts. This must be used after
@@ -270,11 +288,20 @@ void GCOVBlock::collectLineCounts(FileInfo &FI) {
 /// dump - Dump GCOVBlock content to dbgs() for debugging purposes.
 void GCOVBlock::dump() const {
   dbgs() << "Block : " << Number << " Counter : " << Counter << "\n";
-  if (!Edges.empty()) {
-    dbgs() << "\tEdges : ";
-    for (SmallVectorImpl<uint32_t>::const_iterator I = Edges.begin(), E = Edges.end();
-         I != E; ++I)
-      dbgs() << (*I) << ",";
+  if (!SrcEdges.empty()) {
+    dbgs() << "\tSource Edges : ";
+    for (EdgeIterator I = SrcEdges.begin(), E = SrcEdges.end(); I != E; ++I) {
+      const GCOVEdge *Edge = *I;
+      dbgs() << Edge->Src->Number << " (" << Edge->Count << "), ";
+    }
+    dbgs() << "\n";
+  }
+  if (!DstEdges.empty()) {
+    dbgs() << "\tDestination Edges : ";
+    for (EdgeIterator I = DstEdges.begin(), E = DstEdges.end(); I != E; ++I) {
+      const GCOVEdge *Edge = *I;
+      dbgs() << Edge->Dst->Number << " (" << Edge->Count << "), ";
+    }
     dbgs() << "\n";
   }
   if (!Lines.empty()) {

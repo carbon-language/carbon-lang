@@ -205,6 +205,14 @@ private:
   uint32_t ProgramCount;
 };
 
+struct GCOVEdge {
+  GCOVEdge(GCOVBlock *S, GCOVBlock *D): Src(S), Dst(D), Count(0) {}
+
+  GCOVBlock *Src;
+  GCOVBlock *Dst;
+  uint64_t Count;
+};
+
 /// GCOVFunction - Collects function information.
 class GCOVFunction {
 public:
@@ -221,25 +229,43 @@ private:
   StringRef Name;
   StringRef Filename;
   SmallVector<GCOVBlock *, 16> Blocks;
+  SmallVector<GCOVEdge *, 16> Edges;
 };
 
 /// GCOVBlock - Collects block information.
 class GCOVBlock {
 public:
+  typedef SmallVectorImpl<GCOVEdge *>::const_iterator EdgeIterator;
+
   GCOVBlock(GCOVFunction &P, uint32_t N) :
-    Parent(P), Number(N), Counter(0), Edges(), Lines() {}
+    Parent(P), Number(N), Counter(0), SrcEdges(), DstEdges(), Lines() {}
   ~GCOVBlock();
-  void addEdge(uint32_t N) { Edges.push_back(N); }
+  void addSrcEdge(GCOVEdge *Edge) {
+    assert(Edge->Dst == this); // up to caller to ensure edge is valid
+    SrcEdges.push_back(Edge);
+  }
+  void addDstEdge(GCOVEdge *Edge) {
+    assert(Edge->Src == this); // up to caller to ensure edge is valid
+    DstEdges.push_back(Edge);
+  }
   void addLine(uint32_t N) { Lines.push_back(N); }
-  void addCount(uint64_t N) { Counter += N; }
-  size_t getNumEdges() const { return Edges.size(); }
+  void addCount(size_t DstEdgeNo, uint64_t N);
+  size_t getNumSrcEdges() const { return SrcEdges.size(); }
+  size_t getNumDstEdges() const { return DstEdges.size(); }
+
+  EdgeIterator src_begin() const { return SrcEdges.begin(); }
+  EdgeIterator src_end() const { return SrcEdges.end(); }
+  EdgeIterator dst_begin() const { return DstEdges.begin(); }
+  EdgeIterator dst_end() const { return DstEdges.end(); }
+
   void dump() const;
   void collectLineCounts(FileInfo &FI);
 private:
   GCOVFunction &Parent;
   uint32_t Number;
   uint64_t Counter;
-  SmallVector<uint32_t, 16> Edges;
+  SmallVector<GCOVEdge *, 16> SrcEdges;
+  SmallVector<GCOVEdge *, 16> DstEdges;
   SmallVector<uint32_t, 16> Lines;
 };
 
