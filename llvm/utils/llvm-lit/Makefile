@@ -11,9 +11,14 @@ LEVEL = ../..
 
 include $(LEVEL)/Makefile.common
 
-all:: $(ToolDir)/llvm-lit
+# llvm-lit needs suffix.py for multiprocess to find a main module.
+ifeq ($(HOST_OS),MingW)
+  Suffix := .py
+endif
 
-$(ToolDir)/llvm-lit: llvm-lit.in Makefile $(ToolDir)/.dir
+all:: $(ToolDir)/llvm-lit$(Suffix)
+
+$(ToolDir)/llvm-lit$(Suffix): llvm-lit.in Makefile $(ToolDir)/.dir
 	$(Echo) "Creating 'llvm-lit' script..."
 	$(Verb)$(ECHOPATH) s=@LLVM_SOURCE_DIR@=$(LLVM_SRC_ROOT)=g > lit.tmp
 	$(Verb)$(ECHOPATH) s=@LLVM_BINARY_DIR@=$(LLVM_OBJ_ROOT)=g >> lit.tmp
