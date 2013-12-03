@@ -4745,6 +4745,29 @@ defm : Neon_ScalarShiftImm_fcvts_SD_size_patterns<int_aarch64_neon_vcvts_n_u32_f
                                                   int_aarch64_neon_vcvtd_n_u64_f64,
                                                   FCVTZU_Nssi, FCVTZU_Nddi>;
 
+// Patterns For Convert Instructions Between v1f64 and v1i64
+class Neon_ScalarShiftImm_cvtf_v1f64_pattern<SDPatternOperator opnode,
+                                             Instruction INST>
+    : Pat<(v1f64 (opnode (v1i64 FPR64:$Rn), (i32 shr_imm64:$Imm))),
+          (INST FPR64:$Rn, imm:$Imm)>;
+
+class Neon_ScalarShiftImm_fcvt_v1f64_pattern<SDPatternOperator opnode,
+                                             Instruction INST>
+    : Pat<(v1i64 (opnode (v1f64 FPR64:$Rn), (i32 shr_imm64:$Imm))),
+          (INST FPR64:$Rn, imm:$Imm)>;
+
+def : Neon_ScalarShiftImm_cvtf_v1f64_pattern<int_arm_neon_vcvtfxs2fp,
+                                             SCVTF_Nddi>;
+
+def : Neon_ScalarShiftImm_cvtf_v1f64_pattern<int_arm_neon_vcvtfxu2fp,
+                                             UCVTF_Nddi>;
+
+def : Neon_ScalarShiftImm_fcvt_v1f64_pattern<int_arm_neon_vcvtfp2fxs,
+                                             FCVTZS_Nddi>;
+
+def : Neon_ScalarShiftImm_fcvt_v1f64_pattern<int_arm_neon_vcvtfp2fxu,
+                                             FCVTZU_Nddi>;
+
 // Scalar Integer Add
 let isCommutable = 1 in {
 def ADDddd : NeonI_Scalar3Same_D_size<0b0, 0b10000, "add">;
@@ -4813,6 +4836,8 @@ defm : Neon_Scalar3Same_SD_size_patterns<int_arm_neon_vrecps, FRECPSsss,
                                                               FRECPSddd>;
 defm : Neon_Scalar3Same_SD_size_patterns<int_arm_neon_vrsqrts, FRSQRTSsss,
                                                                FRSQRTSddd>;
+
+def : Pat<(v1f64 (fsqrt (v1f64 FPR64:$Rn))), (FSQRTdd FPR64:$Rn)>;
 
 // Patterns to match llvm.aarch64.* intrinsic for
 // Scalar Floating-point Multiply Extended,
@@ -4960,6 +4985,21 @@ defm FCVTZU : NeonI_Scalar2SameMisc_SD_size<0b1, 0b1, 0b11011, "fcvtzu">;
 defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtzu,
                                                   FCVTZUss, FCVTZUdd>;
 
+// Patterns For Convert Instructions Between v1f64 and v1i64
+class Neon_Scalar2SameMisc_cvtf_v1f64_pattern<SDPatternOperator opnode,
+                                              Instruction INST>
+    : Pat<(v1f64 (opnode (v1i64 FPR64:$Rn))), (INST FPR64:$Rn)>;
+
+class Neon_Scalar2SameMisc_fcvt_v1f64_pattern<SDPatternOperator opnode,
+                                              Instruction INST>
+    : Pat<(v1i64 (opnode (v1f64 FPR64:$Rn))), (INST FPR64:$Rn)>;
+
+def : Neon_Scalar2SameMisc_cvtf_v1f64_pattern<sint_to_fp, SCVTFdd>;
+def : Neon_Scalar2SameMisc_cvtf_v1f64_pattern<uint_to_fp, UCVTFdd>;
+
+def : Neon_Scalar2SameMisc_fcvt_v1f64_pattern<fp_to_sint, FCVTZSdd>;
+def : Neon_Scalar2SameMisc_fcvt_v1f64_pattern<fp_to_uint, FCVTZUdd>;
+
 // Scalar Floating-point Reciprocal Estimate
 defm FRECPE : NeonI_Scalar2SameMisc_SD_size<0b0, 0b1, 0b11101, "frecpe">;
 defm : Neon_Scalar2SameMisc_SD_size_patterns<int_arm_neon_vrecpe,
@@ -4974,6 +5014,18 @@ defm : Neon_Scalar2SameMisc_SD_size_patterns<int_aarch64_neon_vrecpx,
 defm FRSQRTE: NeonI_Scalar2SameMisc_SD_size<0b1, 0b1, 0b11101, "frsqrte">;
 defm : Neon_Scalar2SameMisc_SD_size_patterns<int_arm_neon_vrsqrte,
                                              FRSQRTEss, FRSQRTEdd>;
+
+// Scalar Floating-point Round
+class Neon_ScalarFloatRound_pattern<SDPatternOperator opnode, Instruction INST>
+    : Pat<(v1f64 (opnode (v1f64 FPR64:$Rn))), (INST FPR64:$Rn)>;
+
+def : Neon_ScalarFloatRound_pattern<fceil, FRINTPdd>;
+def : Neon_ScalarFloatRound_pattern<ffloor, FRINTMdd>;
+def : Neon_ScalarFloatRound_pattern<ftrunc, FRINTZdd>;
+def : Neon_ScalarFloatRound_pattern<frint, FRINTXdd>;
+def : Neon_ScalarFloatRound_pattern<fnearbyint, FRINTIdd>;
+def : Neon_ScalarFloatRound_pattern<frnd, FRINTAdd>;
+def : Neon_ScalarFloatRound_pattern<int_aarch64_neon_frintn, FRINTNdd>;
 
 // Scalar Integer Compare
 
@@ -8347,8 +8399,7 @@ defm FRECPE : NeonI_2VMisc_fp_to_fp<"frecpe", 0b1, 0b0, 0b11101,
                                     int_arm_neon_vrecpe>;
 defm FRSQRTE : NeonI_2VMisc_fp_to_fp<"frsqrte", 0b1, 0b1, 0b11101,
                                      int_arm_neon_vrsqrte>;
-defm FSQRT : NeonI_2VMisc_fp_to_fp<"fsqrt", 0b1, 0b1, 0b11111,
-                                   int_aarch64_neon_fsqrt>;
+defm FSQRT : NeonI_2VMisc_fp_to_fp<"fsqrt", 0b1, 0b1, 0b11111, fsqrt>;
 
 multiclass NeonI_2VMisc_S_Conv<string asmop, bit Size, bit U,
                                bits<5> opcode, SDPatternOperator Neon_Op> {
