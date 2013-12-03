@@ -10,6 +10,7 @@
 #include "lldb/Symbol/UnwindPlan.h"
 
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Thread.h"
@@ -373,6 +374,25 @@ UnwindPlan::SetPlanValidAddressRange (const AddressRange& range)
 bool
 UnwindPlan::PlanValidAtAddress (Address addr)
 {
+    // If this UnwindPlan has no rows, it is an invalid UnwindPlan.
+    if (GetRowCount() == 0)
+    {
+        Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+        if (log)
+            log->Printf ("Testing if UnwindPlan is valid at pc 0x%" PRIx64 ": No unwind rows - is invalid.");
+        return false;
+    }
+
+    // If the 0th Row of unwind instructions is missing, or if it doesn't provide
+    // a register to use to find the Canonical Frame Address, this is not a valid UnwindPlan.
+    if (GetRowAtIndex(0).get() == NULL || GetRowAtIndex(0)->GetCFARegister() == LLDB_INVALID_REGNUM)
+    {
+        Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+        if (log)
+            log->Printf ("Testing if UnwindPlan is valid at pc 0x%" PRIx64 ": No CFA register - is invalid.");
+        return false;
+    }
+
     if (!m_plan_valid_address_range.GetBaseAddress().IsValid() || m_plan_valid_address_range.GetByteSize() == 0)
         return true;
 
