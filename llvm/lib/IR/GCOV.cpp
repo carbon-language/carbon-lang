@@ -50,7 +50,7 @@ bool GCOVFile::read(GCOVBuffer &Buffer) {
     while (true) {
       if (!Buffer.readFunctionTag()) break;
       GCOVFunction *GFun = new GCOVFunction();
-      if (!GFun->read(Buffer, Format))
+      if (!GFun->readGCNO(Buffer, Format))
         return false;
       Functions.push_back(GFun);
     }
@@ -66,7 +66,7 @@ bool GCOVFile::read(GCOVBuffer &Buffer) {
         errs() << "Unexpected number of functions.\n";
         return false;
       }
-      if (!Functions[i]->read(Buffer, Format))
+      if (!Functions[i]->readGCDA(Buffer, Format))
         return false;
     }
     if (Buffer.readObjectTag()) {
@@ -114,52 +114,18 @@ GCOVFunction::~GCOVFunction() {
   DeleteContainerPointers(Blocks);
 }
 
-/// read - Read a function from the buffer. Return false if buffer cursor
-/// does not point to a function tag.
-bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
+/// readGCNO - Read a function from the GCNO buffer. Return false if an error
+/// occurs.
+bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
   uint32_t Dummy;
   if (!Buff.readInt(Dummy)) return false; // Function header length
   if (!Buff.readInt(Ident)) return false;
   if (!Buff.readInt(Dummy)) return false; // Checksum #1
-  if (Format != GCOV::GCNO_402 && Format != GCOV::GCDA_402)
+  if (Format != GCOV::GCNO_402)
     if (!Buff.readInt(Dummy)) return false; // Checksum #2
 
   if (!Buff.readString(Name)) return false;
-
-  if (Format == GCOV::GCNO_402 || Format == GCOV::GCNO_404)
-    if (!Buff.readString(Filename)) return false;
-
-  if (Format == GCOV::GCDA_402 || Format == GCOV::GCDA_404) {
-    if (!Buff.readArcTag()) {
-      errs() << "Arc tag not found.\n";
-      return false;
-    }
-    uint32_t Count;
-    if (!Buff.readInt(Count)) return false;
-    Count /= 2;
-
-    // This for loop adds the counts for each block. A second nested loop is
-    // required to combine the edge counts that are contained in the GCDA file.
-    for (uint32_t Line = 0; Count > 0; ++Line) {
-      if (Line >= Blocks.size()) {
-        errs() << "Unexpected number of edges.\n";
-        return false;
-      }
-      GCOVBlock &Block = *Blocks[Line];
-      for (size_t Edge = 0, End = Block.getNumEdges(); Edge < End; ++Edge) {
-        if (Count == 0) {
-          errs() << "Unexpected number of edges.\n";
-          return false;
-        }
-        uint64_t ArcCount;
-        if (!Buff.readInt64(ArcCount)) return false;
-        Block.addCount(ArcCount);
-        --Count;
-      }
-    }
-    return true;
-  }
-
+  if (!Buff.readString(Filename)) return false;
   if (!Buff.readInt(LineNumber)) return false;
 
   // read blocks.
@@ -222,6 +188,48 @@ bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
       }
     }
     if (!Buff.readInt(Dummy)) return false; // flag
+  }
+  return true;
+}
+
+/// readGCDA - Read a function from the GCDA buffer. Return false if an error
+/// occurs.
+bool GCOVFunction::readGCDA(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
+  uint32_t Dummy;
+  if (!Buff.readInt(Dummy)) return false; // Function header length
+  if (!Buff.readInt(Ident)) return false;
+  if (!Buff.readInt(Dummy)) return false; // Checksum #1
+  if (Format != GCOV::GCDA_402)
+    if (!Buff.readInt(Dummy)) return false; // Checksum #2
+
+  if (!Buff.readString(Name)) return false;
+
+  if (!Buff.readArcTag()) {
+    errs() << "Arc tag not found.\n";
+    return false;
+  }
+  uint32_t Count;
+  if (!Buff.readInt(Count)) return false;
+  Count /= 2;
+
+  // This for loop adds the counts for each block. A second nested loop is
+  // required to combine the edge counts that are contained in the GCDA file.
+  for (uint32_t Line = 0; Count > 0; ++Line) {
+    if (Line >= Blocks.size()) {
+      errs() << "Unexpected number of edges.\n";
+      return false;
+    }
+    GCOVBlock &Block = *Blocks[Line];
+    for (size_t Edge = 0, End = Block.getNumEdges(); Edge < End; ++Edge) {
+      if (Count == 0) {
+        errs() << "Unexpected number of edges.\n";
+        return false;
+      }
+      uint64_t ArcCount;
+      if (!Buff.readInt64(ArcCount)) return false;
+      Block.addCount(ArcCount);
+      --Count;
+    }
   }
   return true;
 }

@@ -210,7 +210,8 @@ class GCOVFunction {
 public:
   GCOVFunction() : Ident(0), LineNumber(0) {}
   ~GCOVFunction();
-  bool read(GCOVBuffer &Buffer, GCOV::GCOVFormat Format);
+  bool readGCNO(GCOVBuffer &Buffer, GCOV::GCOVFormat Format);
+  bool readGCDA(GCOVBuffer &Buffer, GCOV::GCOVFormat Format);
   StringRef getFilename() const { return Filename; }
   void dump() const;
   void collectLineCounts(FileInfo &FI);
