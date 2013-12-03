@@ -230,12 +230,11 @@ void RawWrite(const char *buffer) {
 
 bool GetCodeRangeForFile(const char *module, uptr *start, uptr *end) {
   uptr s, e, off, prot;
-  InternalMmapVector<char> fn(4096);
-  fn.push_back(0);
+  InternalScopedString buff(4096);
   MemoryMappingLayout proc_maps(/*cache_enabled*/false);
-  while (proc_maps.Next(&s, &e, &off, &fn[0], fn.capacity(), &prot)) {
+  while (proc_maps.Next(&s, &e, &off, buff.data(), buff.size(), &prot)) {
     if ((prot & MemoryMappingLayout::kProtectionExecute) != 0
-        && internal_strcmp(module, &fn[0]) == 0) {
+        && internal_strcmp(module, buff.data()) == 0) {
       *start = s;
       *end = e;
       return true;
