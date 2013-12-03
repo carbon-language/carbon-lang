@@ -380,6 +380,30 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
   data().AllReferencedProtocols.set(ProtocolRefs.data(), ProtocolRefs.size(),C);
 }
 
+void ObjCInterfaceDecl::getDesignatedInitializers(
+    llvm::SmallVectorImpl<const ObjCMethodDecl *> &Methods) const {
+  assert(hasDefinition());
+  if (data().ExternallyCompleted)
+    LoadExternalDefinition();
+
+  const ObjCInterfaceDecl *IFace = this;
+  while (IFace) {
+    if (IFace->data().HasDesignatedInitializers)
+      break;
+    IFace = IFace->getSuperClass();
+  }
+
+  if (!IFace)
+    return;
+  for (instmeth_iterator I = IFace->instmeth_begin(),
+                         E = IFace->instmeth_end(); I != E; ++I) {
+    const ObjCMethodDecl *MD = *I;
+    if (MD->getMethodFamily() == OMF_init &&
+        MD->hasAttr<ObjCDesignatedInitializerAttr>())
+      Methods.push_back(MD);
+  }
+}
+
 void ObjCInterfaceDecl::allocateDefinitionData() {
   assert(!hasDefinition() && "ObjC class already has a definition");
   Data.setPointer(new (getASTContext()) DefinitionData());
@@ -1122,6 +1146,11 @@ void ObjCInterfaceDecl::setExternallyCompleted() {
   assert(hasDefinition() && 
          "Forward declarations can't be externally completed");
   data().ExternallyCompleted = true;
+}
+
+void ObjCInterfaceDecl::setHasDesignatedInitializers() {
+  assert(hasDefinition() && "Forward declarations can't contain methods");
+  data().HasDesignatedInitializers = true;
 }
 
 ObjCImplementationDecl *ObjCInterfaceDecl::getImplementation() const {

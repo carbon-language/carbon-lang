@@ -3723,13 +3723,15 @@ static void handleObjCDesignatedInitializer(Sema &S, Decl *D,
     << SourceRange(Loc, Loc);
     return;
   }
-  DeclContext *DC = Method->getDeclContext();
-  if (!isa<ObjCInterfaceDecl>(DC)) {
+  ObjCInterfaceDecl *IFace =
+      dyn_cast<ObjCInterfaceDecl>(Method->getDeclContext());
+  if (!IFace) {
     S.Diag(D->getLocStart(), diag::err_attr_objc_designated_not_interface)
     << SourceRange(Loc, Loc);
     return;
   }
 
+  IFace->setHasDesignatedInitializers();
   Method->addAttr(::new (S.Context)
                   ObjCDesignatedInitializerAttr(Attr.getRange(), S.Context,
                                          Attr.getAttributeSpellingListIndex()));
