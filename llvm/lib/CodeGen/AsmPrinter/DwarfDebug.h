@@ -14,6 +14,7 @@
 #ifndef CODEGEN_ASMPRINTER_DWARFDEBUG_H__
 #define CODEGEN_ASMPRINTER_DWARFDEBUG_H__
 
+#include "AsmPrinterHandler.h"
 #include "DIE.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -316,7 +317,7 @@ struct SymbolCU {
 };
 
 /// \brief Collects and handles dwarf debug information.
-class DwarfDebug {
+class DwarfDebug : public AsmPrinterHandler {
   // Target of Dwarf emission.
   AsmPrinter *Asm;
 
@@ -417,6 +418,12 @@ class DwarfDebug {
   // This location indicates end of function prologue and beginning of function
   // body.
   DebugLoc PrologEndLoc;
+
+  // If nonnull, stores the current machine function we're processing.
+  const MachineFunction *CurFn;
+
+  // If nonnull, stores the current machine instruction we're processing.
+  const MachineInstr *CurMI;
 
   // Section Symbols: these are assembler temporary labels that are emitted at
   // the beginning of each supported dwarf section.  These are used to form
@@ -648,17 +655,14 @@ class DwarfDebug {
 
   /// \brief If Var is an current function argument that add it in
   /// CurrentFnArguments list.
-  bool addCurrentFnArgument(const MachineFunction *MF,
-                            DbgVariable *Var, LexicalScope *Scope);
+  bool addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope);
 
   /// \brief Populate LexicalScope entries with variables' info.
-  void collectVariableInfo(const MachineFunction *,
-                           SmallPtrSet<const MDNode *, 16> &ProcessedVars);
+  void collectVariableInfo(SmallPtrSet<const MDNode *, 16> &ProcessedVars);
 
   /// \brief Collect variable information from the side table maintained
   /// by MMI.
-  void collectVariableInfoFromMMITable(const MachineFunction * MF,
-                                       SmallPtrSet<const MDNode *, 16> &P);
+  void collectVariableInfoFromMMITable(SmallPtrSet<const MDNode *, 16> &P);
 
   /// \brief Ensure that a label will be emitted before MI.
   void requestLabelBeforeInsn(const MachineInstr *MI) {
@@ -700,13 +704,13 @@ public:
   void beginFunction(const MachineFunction *MF);
 
   /// \brief Gather and emit post-function debug information.
-  void endFunction(const MachineFunction *MF);
+  void endFunction();
 
   /// \brief Process beginning of an instruction.
   void beginInstruction(const MachineInstr *MI);
 
   /// \brief Process end of an instruction.
-  void endInstruction(const MachineInstr *MI);
+  void endInstruction();
 
   /// \brief Add a DIE to the set of types that we're going to pull into
   /// type units.

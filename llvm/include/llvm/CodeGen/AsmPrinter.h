@@ -22,6 +22,7 @@
 #include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
+  class AsmPrinterHandler;
   class BlockAddress;
   class GCStrategy;
   class Constant;
@@ -110,12 +111,20 @@ namespace llvm {
     /// function.
     MachineLoopInfo *LI;
 
+    struct HandlerInfo {
+      AsmPrinterHandler *Handler;
+      const char *TimerName, *TimerGroupName;
+      HandlerInfo(AsmPrinterHandler *Handler, const char *TimerName,
+                  const char *TimerGroupName)
+          : Handler(Handler), TimerName(TimerName),
+            TimerGroupName(TimerGroupName) {}
+    };
+    /// Handlers - a vector of all debug/EH info emitters we should use.
+    /// This vector maintains ownership of the emitters.
+    SmallVector<HandlerInfo, 1> Handlers;
+
     /// DD - If the target supports dwarf debug info, this pointer is non-null.
     DwarfDebug *DD;
-
-    /// DE - If the target supports dwarf exception info, this pointer is
-    /// non-null.
-    DwarfException *DE;
 
   protected:
     explicit AsmPrinter(TargetMachine &TM, MCStreamer &Streamer);
