@@ -31,11 +31,21 @@
 # define COMPILER_RT_ABI
 #endif
 
+#if defined(__NetBSD__) && (defined(_KERNEL) || defined(_STANDALONE))
+/*
+ * Kernel and boot environment can't use normal headers,
+ * so use the equivalent system headers.
+ */
+#  include <machine/limits.h>
+#  include <sys/stdint.h>
+#  include <sys/types.h>
+#else
 /* Include the standard compiler builtin headers we use functionality from. */
-#include <limits.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <float.h>
+#  include <limits.h>
+#  include <stdint.h>
+#  include <stdbool.h>
+#  include <float.h>
+#endif
 
 /* Include the commonly used internal type definitions. */
 #include "int_types.h"
