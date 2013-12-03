@@ -501,6 +501,11 @@ class DwarfDebug {
   /// going to be null.
   bool isLexicalScopeDIENull(LexicalScope *Scope);
 
+  /// \brief A helper function to construct a RangeSpanList for a given
+  /// lexical scope.
+  void addScopeRangeList(CompileUnit *TheCU, DIE *ScopeDIE,
+                         const SmallVectorImpl<InsnRange> &Range);
+
   /// \brief Construct new DW_TAG_lexical_block for this scope and
   /// attach DW_AT_low_pc/DW_AT_high_pc labels.
   DIE *constructLexicalScopeDIE(CompileUnit *TheCU, LexicalScope *Scope);

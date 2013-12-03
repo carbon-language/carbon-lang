@@ -467,6 +467,25 @@ bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
   return !End;
 }
 
+void DwarfDebug::addScopeRangeList(CompileUnit *TheCU, DIE *ScopeDIE,
+                                   const SmallVectorImpl<InsnRange> &Range) {
+  // Emit offset in .debug_range as a relocatable label. emitDIE will handle
+  // emitting it appropriately.
+  TheCU->addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges,
+                         Asm->GetTempSymbol("debug_ranges", GlobalRangeCount));
+  RangeSpanList *List = new RangeSpanList(GlobalRangeCount++);
+  for (SmallVectorImpl<InsnRange>::const_iterator RI = Range.begin(),
+                                                  RE = Range.end();
+       RI != RE; ++RI) {
+    RangeSpan Span(getLabelBeforeInsn(RI->first),
+                   getLabelAfterInsn(RI->second));
+    List->addRange(Span);
+  }
+
+  // Add the range list to the set of ranges to be emitted.
+  TheCU->addRangeList(List);
+}
+
 // Construct new DW_TAG_lexical_block for this scope and attach
 // DW_AT_low_pc/DW_AT_high_pc labels.
 DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
@@ -479,25 +498,10 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
     return ScopeDIE;
 
   const SmallVectorImpl<InsnRange> &ScopeRanges = Scope->getRanges();
+
   // If we have multiple ranges, emit them into the range section.
   if (ScopeRanges.size() > 1) {
-    // .debug_range section has not been laid out yet. Emit offset in
-    // .debug_range as a relocatable label. emitDIE will handle
-    // emitting it appropriately.
-    TheCU->addSectionLabel(
-        ScopeDIE, dwarf::DW_AT_ranges,
-        Asm->GetTempSymbol("debug_ranges", GlobalRangeCount));
-    RangeSpanList *List = new RangeSpanList(GlobalRangeCount++);
-    for (SmallVectorImpl<InsnRange>::const_iterator RI = ScopeRanges.begin(),
-                                                    RE = ScopeRanges.end();
-         RI != RE; ++RI) {
-      RangeSpan Range(getLabelBeforeInsn(RI->first),
-                      getLabelAfterInsn(RI->second));
-      List->addRange(Range);
-    }
-
-    // Add the range list to the set of ranges to be emitted.
-    TheCU->addRangeList(List);
+    addScopeRangeList(TheCU, ScopeDIE, ScopeRanges);
     return ScopeDIE;
   }
 
@@ -537,25 +541,10 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_inlined_subroutine);
   TheCU->addDIEEntry(ScopeDIE, dwarf::DW_AT_abstract_origin, OriginDIE);
 
-  if (ScopeRanges.size() > 1) {
-    // .debug_range section has not been laid out yet. Emit offset in
-    // .debug_range as a relocatable label. emitDIE will handle
-    // emitting it appropriately.
-    TheCU->addSectionLabel(
-        ScopeDIE, dwarf::DW_AT_ranges,
-        Asm->GetTempSymbol("debug_ranges", GlobalRangeCount));
-    RangeSpanList *List = new RangeSpanList(GlobalRangeCount++);
-    for (SmallVectorImpl<InsnRange>::const_iterator RI = ScopeRanges.begin(),
-                                                    RE = ScopeRanges.end();
-         RI != RE; ++RI) {
-      RangeSpan Range(getLabelBeforeInsn(RI->first),
-                      getLabelAfterInsn(RI->second));
-      List->addRange(Range);
-    }
-
-    // Add the range list to the set of ranges to be emitted.
-    TheCU->addRangeList(List);
-  } else {
+  // If we have multiple ranges, emit them into the range section.
+  if (ScopeRanges.size() > 1)
+    addScopeRangeList(TheCU, ScopeDIE, ScopeRanges);
+  else {
     SmallVectorImpl<InsnRange>::const_iterator RI = ScopeRanges.begin();
     MCSymbol *StartLabel = getLabelBeforeInsn(RI->first);
     MCSymbol *EndLabel = getLabelAfterInsn(RI->second);
