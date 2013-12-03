@@ -497,8 +497,8 @@ class DwarfDebug {
   /// variables.
   DIE *updateSubprogramScopeDIE(CompileUnit *SPCU, DISubprogram SP);
 
-  /// A helper function to check whether the DIE for a given Scope is going
-  /// to be null.
+  /// \brief A helper function to check whether the DIE for a given Scope is
+  /// going to be null.
   bool isLexicalScopeDIENull(LexicalScope *Scope);
 
   /// \brief Construct new DW_TAG_lexical_block for this scope and
