@@ -327,7 +327,10 @@ class DwarfDebug : public AsmPrinterHandler {
   // All DIEValues are allocated through this allocator.
   BumpPtrAllocator DIEValueAllocator;
 
-  // Handle to the a compile unit used for the inline extension handling.
+  // Handle to the compile unit used for the inline extension handling,
+  // this is just so that the DIEValue allocator has a place to store
+  // the particular elements.
+  // FIXME: Store these off of DwarfDebug instead?
   CompileUnit *FirstCU;
 
   // Maps MDNode with its corresponding CompileUnit.
