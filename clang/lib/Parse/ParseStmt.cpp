@@ -1280,7 +1280,7 @@ StmtResult Parser::ParseWhileStatement(SourceLocation *TrailingElseLoc) {
 
   FullExprArg FullCond(Actions.MakeFullExpr(Cond.get(), WhileLoc));
 
-  // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
+  // C99 6.8.5p5 - In C99, the body of the while statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
   //
@@ -1325,7 +1325,7 @@ StmtResult Parser::ParseDoStatement() {
 
   ParseScope DoScope(this, ScopeFlags);
 
-  // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
+  // C99 6.8.5p5 - In C99, the body of the do statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause. We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
   //
@@ -1611,7 +1611,7 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
                                                      T.getCloseLocation());
   }
 
-  // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
+  // C99 6.8.5p5 - In C99, the body of the for statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
   //
