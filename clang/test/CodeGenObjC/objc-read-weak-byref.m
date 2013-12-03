@@ -1,8 +1,7 @@
-// REQUIRES: x86-registered-target,x86-64-registered-target
-// RUN: %clang_cc1 -fblocks -fobjc-gc -triple x86_64-apple-darwin -fobjc-runtime=macosx-fragile-10.5 -S %s -o %t-64.s
-// RUN: FileCheck -check-prefix CHECK-LP64 --input-file=%t-64.s %s
-// RUN: %clang_cc1 -fblocks -fobjc-gc -triple i386-apple-darwin -fobjc-runtime=macosx-fragile-10.5 -S %s -o %t-32.s
-// RUN: FileCheck -check-prefix CHECK-LP32 --input-file=%t-32.s %s
+// RUN: %clang_cc1 -fblocks -fobjc-gc -triple x86_64-apple-darwin -fobjc-runtime=macosx-fragile-10.5 -emit-llvm %s -o - | \
+// RUN: FileCheck %s
+// RUN: %clang_cc1 -fblocks -fobjc-gc -triple i386-apple-darwin -fobjc-runtime=macosx-fragile-10.5 -emit-llvm %s -o - | \
+// RUN: FileCheck %s
 
 @interface NSObject 
 - copy;
@@ -19,8 +18,5 @@ int main() {
     return 0;
 }
 
-// CHECK-LP64: callq    _objc_read_weak
-// CHECK-LP64: callq    _objc_read_weak
-
-// CHECK-LP32: calll     L_objc_read_weak
-// CHECK-LP32: calll     L_objc_read_weak
+// CHECK: call i8* @objc_read_weak
+// CHECK: call i8* @objc_read_weak
