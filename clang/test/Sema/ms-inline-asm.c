@@ -32,3 +32,21 @@ void f() {
     mov eax, TYPE bar // expected-error {{unable to lookup expression}}
   }
 }
+
+void rdar15318432(void) {
+  // We used to crash on this.  When LLVM called back to Clang to parse a name
+  // and do name lookup, if parsing failed, we did not restore the lexer state
+  // properly.
+
+  // expected-error@+2 {{expected identifier}}
+  __asm {
+    and ecx, ~15
+  }
+
+  int x = 0;
+  // expected-error@+3 {{expected identifier}}
+  __asm {
+    and ecx, x
+    and ecx, ~15
+  }
+}

@@ -1920,30 +1920,33 @@ ExprResult Parser::ParseMSAsmIdentifier(llvm::SmallVectorImpl<Token> &LineToks,
                                     TemplateKWLoc,
                                     Id);
 
-  // If we've run into the poison token we inserted before, or there
-  // was a parsing error, then claim the entire line.
-  if (Invalid || Tok.is(EndOfStream)) {
-    NumLineToksConsumed = LineToks.size() - 2;
-
-    // Otherwise, claim up to the start of the next token.
+  // Figure out how many tokens we are into LineToks.
+  unsigned LineIndex = 0;
+  if (Tok.is(EndOfStream)) {
+    LineIndex = LineToks.size() - 2;
   } else {
-    // Figure out how many tokens we are into LineToks.
-    unsigned LineIndex = 0;
     while (LineToks[LineIndex].getLocation() != Tok.getLocation()) {
       LineIndex++;
       assert(LineIndex < LineToks.size() - 2); // we added two extra tokens
     }
+  }
 
+  // If we've run into the poison token we inserted before, or there
+  // was a parsing error, then claim the entire line.
+  if (Invalid || Tok.is(EndOfStream)) {
+    NumLineToksConsumed = LineToks.size() - 2;
+  } else {
+    // Otherwise, claim up to the start of the next token.
     NumLineToksConsumed = LineIndex;
   }
-      
-  // Finally, restore the old parsing state by consuming all the
-  // tokens we staged before, implicitly killing off the
-  // token-lexer we pushed.
-  for (unsigned n = LineToks.size() - 2 - NumLineToksConsumed; n != 0; --n) {
+
+  // Finally, restore the old parsing state by consuming all the tokens we
+  // staged before, implicitly killing off the token-lexer we pushed.
+  for (unsigned i = 0, e = LineToks.size() - LineIndex - 2; i != e; ++i) {
     ConsumeAnyToken();
   }
-  ConsumeToken(EndOfStream);
+  assert(Tok.is(EndOfStream));
+  ConsumeToken();
 
   // Leave LineToks in its original state.
   LineToks.pop_back();
