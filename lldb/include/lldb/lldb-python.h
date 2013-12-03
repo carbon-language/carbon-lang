@@ -18,11 +18,7 @@
 
 #else
 
-#ifdef __FreeBSD__
 #include <Python.h>
-#else
-#include <Python/Python.h>
-#endif
 
 #endif // LLDB_DISABLE_PYTHON
 
