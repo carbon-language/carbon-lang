@@ -712,41 +712,49 @@ initializeFunctionInfo(const std::vector<MachineInstr*> &CPEMIs) {
           isCond = false;
           break;
         case Mips::BeqzRxImm16:
+          UOpc=Mips::Bimm16;
           Bits = 8;
           Scale = 2;
           isCond = true;
           break;
         case Mips::BeqzRxImmX16:
+          UOpc=Mips::Bimm16;
           Bits = 16;
           Scale = 2;
           isCond = true;
           break;
         case Mips::BnezRxImm16:
+          UOpc=Mips::Bimm16;
           Bits = 8;
           Scale = 2;
           isCond = true;
           break;
         case Mips::BnezRxImmX16:
+          UOpc=Mips::Bimm16;
           Bits = 16;
           Scale = 2;
           isCond = true;
           break;
         case Mips::Bteqz16:
+          UOpc=Mips::Bimm16;
           Bits = 8;
           Scale = 2;
           isCond = true;
           break;
         case Mips::BteqzX16:
+          UOpc=Mips::Bimm16;
           Bits = 16;
           Scale = 2;
           isCond = true;
           break;
         case Mips::Btnez16:
+          UOpc=Mips::Bimm16;
           Bits = 8;
           Scale = 2;
           isCond = true;
           break;
         case Mips::BtnezX16:
+          UOpc=Mips::Bimm16;
           Bits = 16;
           Scale = 2;
           isCond = true;
@@ -1617,7 +1625,7 @@ MipsConstantIslands::fixupConditionalBr(ImmBranch &Br) {
   MachineBasicBlock *MBB = MI->getParent();
   MachineInstr *BMI = &MBB->back();
   bool NeedSplit = (BMI != MI) || !BBHasFallthrough(MBB);
-
+  unsigned OppositeBranchOpcode=TII->getOppositeBranchOpc(Opcode);
  
   ++NumCBrFixed;
   if (BMI != MI) {
@@ -1636,7 +1644,7 @@ MipsConstantIslands::fixupConditionalBr(ImmBranch &Br) {
       if (isBBInRange(MI, NewDest, Br.MaxDisp)) {
         DEBUG(dbgs() << "  Invert Bcc condition and swap its destination with "
                      << *BMI);
-        MI->setDesc(TII->get(TII->getOppositeBranchOpc(Opcode)));
+        MI->setDesc(TII->get(OppositeBranchOpcode));
         BMI->getOperand(BMITargetOperand).setMBB(DestBB);
         MI->getOperand(TargetOperand).setMBB(NewDest);
         return true;
@@ -1644,7 +1652,6 @@ MipsConstantIslands::fixupConditionalBr(ImmBranch &Br) {
     }
   }
 
-  llvm_unreachable("unsupported range of unconditional branch");
 
   if (NeedSplit) {
     splitBlockBeforeInstr(MI);
@@ -1663,8 +1670,14 @@ MipsConstantIslands::fixupConditionalBr(ImmBranch &Br) {
 
   // Insert a new conditional branch and a new unconditional branch.
   // Also update the ImmBranch as well as adding a new entry for the new branch.
-  BuildMI(MBB, DebugLoc(), TII->get(MI->getOpcode()))
-    .addMBB(NextBB);
+  if (MI->getNumExplicitOperands() == 2) {
+    BuildMI(MBB, DebugLoc(), TII->get(OppositeBranchOpcode))
+           .addReg(MI->getOperand(0).getReg())
+           .addMBB(NextBB);
+  }
+  else { BuildMI(MBB, DebugLoc(), TII->get(OppositeBranchOpcode))
+        .addMBB(NextBB);
+  }
   Br.MI = &MBB->back();
   BBInfo[MBB->getNumber()].Size += TII->GetInstSizeInBytes(&MBB->back());
   BuildMI(MBB, DebugLoc(), TII->get(Br.UncondBr)).addMBB(DestBB);
