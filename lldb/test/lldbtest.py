@@ -1692,7 +1692,6 @@ class TestBase(Base):
                                            self.mydir)
             error = lldb.remote_platform.MakeDirectory(remote_test_dir, 0700)
             if error.Success():
-                print "successfully made remote directory '%s'" % (remote_test_dir)
                 lldb.remote_platform.SetWorkingDirectory(remote_test_dir)
             else:
                 print "error: making remote directory '%s': %s" % (remote_test_dir, error)
