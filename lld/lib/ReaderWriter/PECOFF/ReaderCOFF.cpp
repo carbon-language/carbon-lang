@@ -587,13 +587,6 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
   if (error_code ec = _obj->getSectionContents(section, secData))
     return ec;
 
-  // We do not support debug information yet. We could keep data in ".debug$S"
-  // section in the resultant binary by copying as opaque bytes, but it would
-  // make the binary hard to debug because of extraneous data. So we'll skip
-  // the debug info.
-  if (sectionName == ".debug$S")
-    return error_code::success();
-
   // A section with IMAGE_SCN_LNK_{INFO,REMOVE} attribute will never become
   // a part of the output image. That's what the COFF spec says.
   if (section->Characteristics & llvm::COFF::IMAGE_SCN_LNK_INFO ||

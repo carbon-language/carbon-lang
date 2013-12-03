@@ -7,6 +7,6 @@
 
 CHECK: Disassembly of section .text:
 CHECK: .text:
-CHECK:     2000: a1 04 10 40 00      movl    4198404, %eax
-CHECK:     2005: 03 05 00 10 40 00   addl    4198400, %eax
-CHECK:     200b: c3                  ret
+CHECK:     3000: a1 04 10 40 00      movl    4198404, %eax
+CHECK:     3005: 03 05 00 10 40 00   addl    4198400, %eax
+CHECK:     300b: c3                  ret
