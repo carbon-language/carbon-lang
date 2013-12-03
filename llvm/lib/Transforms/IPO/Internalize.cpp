@@ -115,6 +115,10 @@ static bool shouldInternalize(const GlobalValue &GV,
   if (GV.hasAvailableExternallyLinkage())
     return false;
 
+  // Assume that dllexported symbols are referenced elsewhere
+  if (GV.hasDLLExportLinkage())
+    return false;
+
   // Already has internal linkage
   if (GV.hasLocalLinkage())
     return false;

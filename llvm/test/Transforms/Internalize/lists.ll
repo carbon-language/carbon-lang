@@ -48,3 +48,12 @@ define void @foo() {
 define available_externally void @bar() {
   ret void
 }
+
+; ALL: define dllexport void @export_foo() {
+; FOO_AND_J: define dllexport void @export_foo() {
+; FOO_AND_BAR: define dllexport void @export_foo() {
+; FOO_J_AND_BAR: define dllexport void @export_foo() {
+define dllexport void @export_foo() {
+  ret void
+}
+
