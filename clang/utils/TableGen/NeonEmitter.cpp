@@ -391,8 +391,8 @@ static void ParseTypes(Record *r, std::string &s,
   int len = 0;
 
   for (unsigned i = 0, e = s.size(); i != e; ++i, ++len) {
-    if (data[len] == 'P' || data[len] == 'Q' || data[len] == 'U' ||
-        data[len] == 'H' || data[len] == 'S' || data[len] == 'T')
+    if (data[len] == 'P' || data[len] == 'Q' || data[len] == 'U'
+                         || data[len] == 'H' || data[len] == 'S')
       continue;
 
     switch (data[len]) {
@@ -480,9 +480,9 @@ static std::string GetNarrowTypestr(StringRef ty)
 static char ClassifyType(StringRef ty, bool &quad, bool &poly, bool &usgn) {
   unsigned off = 0;
   // ignore scalar.
-  if (ty[off] == 'S' || ty[off] == 'T')
+  if (ty[off] == 'S') {
     ++off;
-
+  }
   // remember quad.
   if (ty[off] == 'Q' || ty[off] == 'H') {
     quad = true;
@@ -897,14 +897,9 @@ static void InstructionTypeCode(const StringRef &typeStr,
 
 static char Insert_BHSD_Suffix(StringRef typestr){
   unsigned off = 0;
-
-  // Don't include the BHSD suffix.
-  if (typestr[0] == 'T') 
-    return 0;
-
-  if (typestr[off++] == 'S') {
-    while (typestr[off] == 'Q' || typestr[off] == 'H'||
-           typestr[off] == 'P' || typestr[off] == 'U')
+  if(typestr[off++] == 'S'){
+    while(typestr[off] == 'Q' || typestr[off] == 'H'||
+          typestr[off] == 'P' || typestr[off] == 'U')
       ++off;
     switch (typestr[off]){
     default  : break;
@@ -932,8 +927,7 @@ static bool endsWith_xN(std::string const &name) {
 /// MangleName - Append a type or width suffix to a base neon function name,
 /// and insert a 'q' in the appropriate location if type string starts with 'Q'.
 /// E.g. turn "vst2_lane" into "vst2q_lane_f32", etc.
-/// Insert proper 'b' 'h' 's' 'd' if prefix 'S' is used.  Do not insert size
-/// suffix if the prefix 'T' is used.
+/// Insert proper 'b' 'h' 's' 'd' if prefix 'S' is used.
 static std::string MangleName(const std::string &name, StringRef typestr,
                               ClassKind ck) {
   if (name == "vcvt_f32_f16" || name == "vcvt_f32_f64")
