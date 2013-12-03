@@ -2671,7 +2671,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
   // FIXME: Add a flag for modules.
   TranslationUnitKind TUKind
     = (options & CXTranslationUnit_Incomplete)? TU_Prefix : TU_Complete;
-  bool CacheCodeCompetionResults
+  bool CacheCodeCompletionResults
     = options & CXTranslationUnit_CacheCompletionResults;
   bool IncludeBriefCommentsInCodeCompletion
     = options & CXTranslationUnit_IncludeBriefCommentsInCodeCompletion;
@@ -2757,7 +2757,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
                                  /*RemappedFilesKeepOriginalName=*/true,
                                  PrecompilePreamble,
                                  TUKind,
-                                 CacheCodeCompetionResults,
+                                 CacheCodeCompletionResults,
                                  IncludeBriefCommentsInCodeCompletion,
                                  /*AllowPCHWithCompilerErrors=*/true,
                                  SkipFunctionBodies,
