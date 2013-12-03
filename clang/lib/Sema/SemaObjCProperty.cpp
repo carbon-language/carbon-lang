@@ -1830,6 +1830,34 @@ void Sema::DiagnoseOwningPropertyGetterSynthesis(const ObjCImplementationDecl *D
   }
 }
 
+void Sema::DiagnoseMissingDesignatedInitOverrides(
+                                            const ObjCImplementationDecl *ImplD,
+                                            const ObjCInterfaceDecl *IFD) {
+  assert(IFD->hasDesignatedInitializers());
+  const ObjCInterfaceDecl *SuperD = IFD->getSuperClass();
+  if (!SuperD)
+    return;
+
+  SelectorSet InitSelSet;
+  for (ObjCImplementationDecl::instmeth_iterator
+         I = ImplD->instmeth_begin(), E = ImplD->instmeth_end(); I!=E; ++I)
+    if ((*I)->getMethodFamily() == OMF_init)
+      InitSelSet.insert((*I)->getSelector());
+
+  SmallVector<const ObjCMethodDecl *, 8> DesignatedInits;
+  SuperD->getDesignatedInitializers(DesignatedInits);
+  for (SmallVector<const ObjCMethodDecl *, 8>::iterator
+         I = DesignatedInits.begin(), E = DesignatedInits.end(); I != E; ++I) {
+    const ObjCMethodDecl *MD = *I;
+    if (!InitSelSet.count(MD->getSelector())) {
+      Diag(ImplD->getLocation(),
+           diag::warn_objc_implementation_missing_designated_init_override)
+        << MD->getSelector();
+      Diag(MD->getLocation(), diag::note_objc_designated_init_marked_here);
+    }
+  }
+}
+
 /// AddPropertyAttrs - Propagates attributes from a property to the
 /// implicitly-declared getter or setter for that property.
 static void AddPropertyAttrs(Sema &S, ObjCMethodDecl *PropertyMethod,

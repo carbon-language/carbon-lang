@@ -2449,6 +2449,9 @@ def warn_objc_secondary_init_super_init_call : Warning<
 def warn_objc_secondary_init_missing_init_call : Warning<
   "secondary initializer missing a 'self' call to another initializer">,
   InGroup<ObjCDesignatedInit>;
+def warn_objc_implementation_missing_designated_init_override : Warning<
+  "method override for the designated initializer of the superclass %objcinstance0 not found">,
+  InGroup<ObjCDesignatedInit>;
 
 def err_ns_bridged_not_interface : Error<
   "parameter of 'ns_bridged' attribute does not name an Objective-C class">;

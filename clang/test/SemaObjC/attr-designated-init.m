@@ -34,9 +34,9 @@ __attribute__((objc_root_class))
 
 __attribute__((objc_root_class))
 @interface B1
--(id)initB1 NS_DESIGNATED_INITIALIZER; // expected-note 2 {{method marked as designated initializer of the class here}}
+-(id)initB1 NS_DESIGNATED_INITIALIZER; // expected-note 4 {{method marked as designated initializer of the class here}}
 -(id)initB2;
--(id)initB3 NS_DESIGNATED_INITIALIZER; // expected-note {{method marked as designated initializer of the class here}}
+-(id)initB3 NS_DESIGNATED_INITIALIZER; // expected-note 3 {{method marked as designated initializer of the class here}}
 @end
 
 @implementation B1
@@ -82,21 +82,22 @@ __attribute__((objc_root_class))
 -(id)initSS1 NS_DESIGNATED_INITIALIZER;
 @end
 
-@implementation SS2
+@implementation SS2 // expected-warning {{method override for the designated initializer of the superclass '-initB1' not found}} \
+                    // expected-warning {{method override for the designated initializer of the superclass '-initB3' not found}}
 -(id)initSS1 {
   return [super initB1];
 }
 @end
 
 @interface S3 : B1
--(id)initS1 NS_DESIGNATED_INITIALIZER;
+-(id)initS1 NS_DESIGNATED_INITIALIZER; // expected-note {{method marked as designated initializer of the class here}}
 @end
 
 @interface SS3 : S3
 -(id)initSS1 NS_DESIGNATED_INITIALIZER; // expected-note 2 {{method marked as designated initializer of the class here}}
 @end
 
-@implementation SS3
+@implementation SS3 // expected-warning {{method override for the designated initializer of the superclass '-initS1' not found}}
 -(id)initSS1 { // expected-warning {{designated initializer missing a 'super' call to a designated initializer of the super class}}
   return [super initB1]; // expected-warning {{designated initializer invoked a non-designated initializer}}
 }
@@ -150,7 +151,8 @@ __attribute__((objc_root_class))
 -(id)initS4;
 @end
 
-@implementation S6
+@implementation S6 // expected-warning {{method override for the designated initializer of the superclass '-initB1' not found}} \
+                   // expected-warning {{method override for the designated initializer of the superclass '-initB3' not found}}
 -(id)initS1 {
   return [super initB1];
 }
