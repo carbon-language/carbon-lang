@@ -15,11 +15,15 @@ namespace lld {
 error_code PECOFFFileNode::parse(const LinkingContext &ctx,
                                  raw_ostream &diagnostics) {
   ErrorOr<StringRef> filePath = getPath(ctx);
-  if (!filePath)
+  if (!filePath) {
+    diagnostics << "File not found: " << _path << "\n";
     return error_code(filePath);
+  }
 
-  if (error_code ec = getBuffer(*filePath))
+  if (error_code ec = getBuffer(*filePath)) {
+    diagnostics << "Cannot open file: " << *filePath << "\n";
     return ec;
+  }
 
   if (ctx.logInputFiles())
     diagnostics << *filePath << "\n";

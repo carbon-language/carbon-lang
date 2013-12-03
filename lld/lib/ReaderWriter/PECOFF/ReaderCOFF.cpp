@@ -854,7 +854,8 @@ error_code ReaderCOFF::handleDirectiveSection(StringRef directives) const {
 
   // Print error message if error.
   if (parseFailed) {
-    llvm::errs() << "Failed to parse '" << directives << "'\n";
+    llvm::errs() << "Failed to parse '" << directives << "'\n"
+                 << "Reason: " << errorMessage;
     return make_error_code(llvm::object::object_error::invalid_file_type);
   }
   if (!errorMessage.empty()) {
