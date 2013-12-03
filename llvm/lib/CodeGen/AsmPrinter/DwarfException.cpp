@@ -730,7 +730,6 @@ void DwarfException::beginFunction(const MachineFunction *MF) {
 }
 
 /// endFunction - Gather and emit post-function exception information.
-///
-void DwarfException::endFunction() {
+void DwarfException::endFunction(const MachineFunction *) {
   llvm_unreachable("Should be implemented");
 }

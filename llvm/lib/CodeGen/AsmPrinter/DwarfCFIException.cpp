@@ -137,7 +137,7 @@ void DwarfCFIException::beginFunction(const MachineFunction *MF) {
 
 /// endFunction - Gather and emit post-function exception information.
 ///
-void DwarfCFIException::endFunction() {
+void DwarfCFIException::endFunction(const MachineFunction *) {
   if (!shouldEmitPersonality && !shouldEmitMoves)
     return;
 

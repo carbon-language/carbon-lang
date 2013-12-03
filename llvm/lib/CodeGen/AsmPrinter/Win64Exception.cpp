@@ -88,7 +88,7 @@ void Win64Exception::beginFunction(const MachineFunction *MF) {
 
 /// endFunction - Gather and emit post-function exception information.
 ///
-void Win64Exception::endFunction() {
+void Win64Exception::endFunction(const MachineFunction *) {
   if (!shouldEmitPersonality && !shouldEmitMoves)
     return;
 

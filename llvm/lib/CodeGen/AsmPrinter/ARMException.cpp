@@ -66,7 +66,7 @@ void ARMException::beginFunction(const MachineFunction *MF) {
 
 /// endFunction - Gather and emit post-function exception information.
 ///
-void ARMException::endFunction() {
+void ARMException::endFunction(const MachineFunction *) {
   ARMTargetStreamer &ATS = getTargetStreamer();
   if (!Asm->MF->getFunction()->needsUnwindTableEntry())
     ATS.emitCantUnwind();
