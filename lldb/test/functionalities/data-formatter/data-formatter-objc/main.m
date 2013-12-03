@@ -8,7 +8,18 @@
 //===----------------------------------------------------------------------===//
 
 #import <Foundation/Foundation.h>
-#include <Carbon/Carbon.h>
+
+#if defined(__APPLE__)
+#if defined(__arm__)
+#define IOS
+#endif
+#endif
+
+#if defined(IOS)
+#import <Foundation/NSGeometry.h>
+#else
+#import <Carbon/Carbon.h>
+#endif
 
 @interface MyClass : NSObject
 {
@@ -193,7 +204,7 @@ int main (int argc, const char * argv[])
 
 	    NSString *str10 = [NSString stringWithFormat:@"This is a Unicode string %S number %ld right here", myNextCharacters, (long)4];
 
-	    NSString *str11 = [str10 className];
+	    NSString *str11 = NSStringFromClass([str10 class]);
 
 	    NSString *label1 = @"Process Name: ";
 	    NSString *label2 = @"Process Id: ";
@@ -223,7 +234,7 @@ int main (int argc, const char * argv[])
 
 	    NSString *strA10 = [NSString stringWithFormat:@"This is a Unicode string %S number %ld right here", myNextCharacters, (long)4];
 
-	    NSString *strA11 = [str10 className];
+	    NSString *strA11 = NSStringFromClass([str10 class]);
 
 	    NSString *strA12 = [NSString stringWithFormat:@"%@ %@ %@ %@", label1, processName, label2, processID];
 
@@ -249,11 +260,11 @@ int main (int argc, const char * argv[])
 
 	    NSString *strB10 = [NSString stringWithFormat:@"This is a Unicode string %S number %ld right here", myNextCharacters, (long)4];
 
-	    NSString *strB11 = [str10 className];
+	    NSString *strB11 = NSStringFromClass([str10 class]);
 
 	    NSString *strB12 = [NSString stringWithFormat:@"%@ %@ %@ %@", label1, processName, label2, processID];
 
-	    NSString *strC11 = [str10 className];
+	    NSString *strC11 = NSStringFromClass([str10 class]);
 
 	    NSString *strC12 = [NSString stringWithFormat:@"%@ %@ %@ %@", label1, processName, label2, processID];
 
@@ -279,7 +290,7 @@ int main (int argc, const char * argv[])
 
 	    NSString *strC10 = [NSString stringWithFormat:@"This is a Unicode string %S number %ld right here", myNextCharacters, (long)4];
 
-	    NSString *strD11 = [str10 className];
+	    NSString *strD11 = NSStringFromClass([str10 class]);
 
 	    NSString *strD12 = [NSString stringWithFormat:@"%@ %@ %@ %@", label1, processName, label2, processID];
 
@@ -589,7 +600,9 @@ int main (int argc, const char * argv[])
 
 		NSHost *localhost = [NSHost hostWithAddress:@"127.0.0.1"];
 
+#ifndef IOS
 		NSTask *my_task = [[NSTask alloc] init];
+#endif
 
 
 	CFGregorianUnits cf_greg_units = {1,3,5,12,5,7};
@@ -610,8 +623,10 @@ int main (int argc, const char * argv[])
 	CGPoint cg_point = {2,7};
 	CGRect cg_rect = {{1,2}, {7,7}};
 	
+#ifndef IOS
 	RGBColor rgb_color = {3,56,35};
 	RGBColor* rgb_color_ptr = &rgb_color;
+#endif
 	
 	Rect rect = {4,8,4,7};
 	Rect* rect_ptr = &rect;
@@ -619,8 +634,10 @@ int main (int argc, const char * argv[])
 	Point point = {7,12};
 	Point* point_ptr = &point;
 	
+#ifndef IOS
 	HIPoint hi_point = {7,12};
 	HIRect hi_rect = {{3,5},{4,6}};
+#endif
 	
 	SEL foo_selector = @selector(foo_selector_impl);
 	
