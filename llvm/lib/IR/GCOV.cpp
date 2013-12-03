@@ -340,11 +340,12 @@ void FileInfo::print(StringRef gcnoFile, StringRef gcdaFile) const {
     OS << "        -:    0:Runs:" << RunCount << "\n";
     OS << "        -:    0:Programs:" << ProgramCount << "\n";
 
-    const LineData &L = I->second;
-    uint32_t i = 0;
-    while (!AllLines.empty()) {
-      LineData::const_iterator BlocksIt = L.find(i);
-      if (BlocksIt != L.end()) {
+    const LineData &Line = I->second;
+    for (uint32_t i = 0; !AllLines.empty(); ++i) {
+      LineData::const_iterator BlocksIt = Line.find(i);
+
+      // Add up the block counts to form line counts.
+      if (BlocksIt != Line.end()) {
         const BlockVector &Blocks = BlocksIt->second;
         uint64_t LineCount = 0;
         for (BlockVector::const_iterator I = Blocks.begin(), E = Blocks.end();
@@ -359,11 +360,8 @@ void FileInfo::print(StringRef gcnoFile, StringRef gcdaFile) const {
         OS << "        -:";
       }
       std::pair<StringRef, StringRef> P = AllLines.split('\n');
-      if (AllLines != P.first)
-        OS << format("%5u:", i+1) << P.first;
-      OS << "\n";
+      OS << format("%5u:", i+1) << P.first << "\n";
       AllLines = P.second;
-      ++i;
     }
   }
 }
