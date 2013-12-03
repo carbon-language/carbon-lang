@@ -540,7 +540,8 @@ Module *Preprocessor::getModuleForLocation(SourceLocation FilenameLoc) {
     return HeaderInfo.getModuleMap().SourceModule; // Compiling a source.
   }
   // Try to determine the module of the include directive.
-  FileID IDOfIncl = SourceMgr.getFileID(FilenameLoc);
+  // FIXME: Look into directly passing the FileEntry from LookupFile instead.
+  FileID IDOfIncl = SourceMgr.getFileID(SourceMgr.getSpellingLoc(FilenameLoc));
   if (const FileEntry *EntryOfIncl = SourceMgr.getFileEntryForID(IDOfIncl)) {
     // The include comes from a file.
     return ModMap.findModuleForHeader(EntryOfIncl).getModule();
