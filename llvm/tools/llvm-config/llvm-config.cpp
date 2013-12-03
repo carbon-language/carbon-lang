@@ -300,7 +300,12 @@ int main(int argc, char **argv) {
       } else if (Arg == "--host-target") {
         OS << LLVM_DEFAULT_TARGET_TRIPLE << '\n';
       } else if (Arg == "--build-mode") {
-        OS << LLVM_BUILDMODE << '\n';
+        char const *build_mode = LLVM_BUILDMODE;
+#if defined(CMAKE_CFG_INTDIR)
+        if (!(CMAKE_CFG_INTDIR[0] == '.' && CMAKE_CFG_INTDIR[1] == '\0'))
+          build_mode = CMAKE_CFG_INTDIR;
+#endif
+        OS << build_mode << '\n';
       } else if (Arg == "--obj-root") {
         OS << LLVM_OBJ_ROOT << '\n';
       } else if (Arg == "--src-root") {

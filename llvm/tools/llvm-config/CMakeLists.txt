@@ -22,6 +22,9 @@ set(LLVM_SYSTEM_LIBS ${SYSTEM_LIBS})
 string(REPLACE ";" " " LLVM_TARGETS_BUILT "${LLVM_TARGETS_TO_BUILD}")
 configure_file(${BUILDVARIABLES_SRCPATH} ${BUILDVARIABLES_OBJPATH} @ONLY)
 
+# Set build-time environment(s).
+add_definitions(-DCMAKE_CFG_INTDIR="${CMAKE_CFG_INTDIR}")
+
 # Add the llvm-config tool.
 add_llvm_tool(llvm-config
   llvm-config.cpp
