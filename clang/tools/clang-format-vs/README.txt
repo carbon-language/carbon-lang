@@ -8,3 +8,6 @@ Build prerequisites are:
 
 clang-format.exe must be copied into the ClangFormat/ directory before building.
 It will be bundled into the .vsix file.
+
+The extension can be built manually from ClangFormat.sln (e.g. by opening it in
+Visual Studio), or with cmake by setting the BUILD_CLANG_FORMAT_VS_PLUGIN flag.

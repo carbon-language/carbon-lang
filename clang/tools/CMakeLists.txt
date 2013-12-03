@@ -2,6 +2,7 @@ add_subdirectory(diagtool)
 add_subdirectory(driver)
 if(CLANG_ENABLE_REWRITER)
   add_subdirectory(clang-format)
+  add_subdirectory(clang-format-vs)
 endif()
 
 if(CLANG_ENABLE_ARCMT)
