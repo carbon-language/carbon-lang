@@ -86,16 +86,13 @@ Compare (BreakpointLocationSP lhs, lldb::break_id_t val)
 BreakpointLocationSP
 BreakpointLocationList::FindByID (lldb::break_id_t break_id) const
 {
-    BreakpointLocationSP bp_loc_sp;
     Mutex::Locker locker (m_mutex);
-    
-    collection::const_iterator begin = m_locations.begin(), end = m_locations.end();
-    collection::const_iterator result;
-    result = std::lower_bound(begin, end, break_id, Compare);
-    if (result == end)
-        return bp_loc_sp;
+    collection::const_iterator end = m_locations.end();
+    collection::const_iterator pos = std::lower_bound(m_locations.begin(), end, break_id, Compare);
+    if (pos != end && (*pos)->GetID() == break_id)
+        return *(pos);
     else
-        return *(result);
+        return BreakpointLocationSP();
 }
 
 size_t
