@@ -150,8 +150,20 @@
 				<div class="postcontent">
 
 				   <p>A collection of classes that implement the data formatters subsystem.</p>
-				<p>The main entry point for interacting with the LLDB data formatters is the DataVisualization class. It provides
-					a relatively stable front-end interface to ask questions of the data formatters regardless of the internal implementation.</p>
+				
+				<p>For a general user-level introduction to data formatters, you can look <a href="varformats.html">here</a>.
+				<p>A 10,000 foot view of the data formatters is based upon the <code>DataVisualization</code> class.
+					<code>DataVisualization</code> is the very high level entry point into the data formatters. It vends a stable interface in face of changing internals
+					and is the recommended entry point for components of LLDB that need to ask questions of the data formatters.
+					The main questions one can ask of <code>DataVisualization</code> are:
+					<ul>
+						<li>given a ValueObject, retrieve the formatters to be used for it</li>
+						<li>given a type, retrieve the formatters to be used for it. This is not an "exact" question,
+							i.e. one can retrieve a formatter from a type name which would not be used to then format ValueObjects of that type</li>
+						<li>given a name, retrieve a category of that name, optionally creating it if needed - more generally, categories management</li>
+						<li>given an identifier and a summary, store it as a named summary - more generally, named summary management</li>
+					</ul>
+					
 				<p>For people actively maintaining the data formatters subsystem itself, however, the FormatManager class is the relevant point of entry.
 					This class is subject to more frequent changes as the formatters evolve. Currently, it provides a thin caching layer on top of a list of categories
 					that each export a group of formatters.
