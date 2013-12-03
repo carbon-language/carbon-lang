@@ -77,19 +77,25 @@ BreakpointLocationList::FindIDByAddress (const Address &addr)
     return LLDB_INVALID_BREAK_ID;
 }
 
+static bool
+Compare (BreakpointLocationSP lhs, lldb::break_id_t val)
+{
+    return lhs->GetID() < val;
+}
+
 BreakpointLocationSP
 BreakpointLocationList::FindByID (lldb::break_id_t break_id) const
 {
     BreakpointLocationSP bp_loc_sp;
     Mutex::Locker locker (m_mutex);
-    // We never remove a breakpoint locations, so the ID can be translated into
-    // the location index by subtracting 1
-    uint32_t idx = break_id - 1;
-    if (idx <= m_locations.size())
-    {
-        bp_loc_sp = m_locations[idx];
-    }
-    return bp_loc_sp;
+    
+    collection::const_iterator begin = m_locations.begin(), end = m_locations.end();
+    collection::const_iterator result;
+    result = std::lower_bound(begin, end, break_id, Compare);
+    if (result == end)
+        return bp_loc_sp;
+    else
+        return *(result);
 }
 
 size_t
