@@ -1,4 +1,4 @@
-//====----- MachineBlockFrequencyInfo.h - MachineBlock Frequency Analysis ----====//
+//====-- MachineBlockFrequencyInfo.h - MBB Frequency Analysis -*- C++ -*--====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -49,6 +49,9 @@ public:
   /// the other block frequencies. We do this to avoid using of floating points.
   ///
   BlockFrequency getBlockFreq(const MachineBasicBlock *MBB) const;
+
+  MachineFunction *getFunction() const;
+  void view() const;
 };
 
 }
