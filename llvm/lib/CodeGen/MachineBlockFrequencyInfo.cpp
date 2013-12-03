@@ -1,4 +1,4 @@
-//====----- MachineBlockFrequencyInfo.cpp - Machine Block Frequency Analysis ----====//
+//====------ MachineBlockFrequencyInfo.cpp - MBB Frequency Analysis ------====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -33,7 +33,7 @@ static cl::opt<GVDAGType>
 ViewMachineBlockFreqPropagationDAG("view-machine-block-freq-propagation-dags",
                                    cl::Hidden,
           cl::desc("Pop up a window to show a dag displaying how machine block "
-                   "frequencies propgate through the CFG."),
+                   "frequencies propagate through the CFG."),
           cl::values(
             clEnumValN(GVDT_None, "none",
                        "do not display graphs."),
@@ -51,25 +51,31 @@ struct GraphTraits<MachineBlockFrequencyInfo *> {
   typedef MachineBasicBlock::const_succ_iterator ChildIteratorType;
   typedef MachineFunction::const_iterator nodes_iterator;
 
-  static inline const NodeType *getEntryNode(const MachineBlockFrequencyInfo *G) {
+  static inline
+  const NodeType *getEntryNode(const MachineBlockFrequencyInfo *G) {
     return G->getFunction()->begin();
   }
+
   static ChildIteratorType child_begin(const NodeType *N) {
     return N->succ_begin();
   }
+
   static ChildIteratorType child_end(const NodeType *N) {
     return N->succ_end();
   }
+
   static nodes_iterator nodes_begin(const MachineBlockFrequencyInfo *G) {
     return G->getFunction()->begin();
   }
+
   static nodes_iterator nodes_end(const MachineBlockFrequencyInfo *G) {
     return G->getFunction()->end();
   }
 };
 
 template<>
-struct DOTGraphTraits<MachineBlockFrequencyInfo*> : public DefaultDOTGraphTraits {
+struct DOTGraphTraits<MachineBlockFrequencyInfo*> :
+    public DefaultDOTGraphTraits {
   explicit DOTGraphTraits(bool isSimple=false) :
     DefaultDOTGraphTraits(isSimple) {}
 
@@ -112,7 +118,8 @@ INITIALIZE_PASS_END(MachineBlockFrequencyInfo, "machine-block-freq",
 char MachineBlockFrequencyInfo::ID = 0;
 
 
-MachineBlockFrequencyInfo::MachineBlockFrequencyInfo() : MachineFunctionPass(ID) {
+MachineBlockFrequencyInfo::
+MachineBlockFrequencyInfo() :MachineFunctionPass(ID) {
   initializeMachineBlockFrequencyInfoPass(*PassRegistry::getPassRegistry());
   MBFI = new BlockFrequencyImpl<MachineBasicBlock, MachineFunction,
                                 MachineBranchProbabilityInfo>();
@@ -129,7 +136,8 @@ void MachineBlockFrequencyInfo::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool MachineBlockFrequencyInfo::runOnMachineFunction(MachineFunction &F) {
-  MachineBranchProbabilityInfo &MBPI = getAnalysis<MachineBranchProbabilityInfo>();
+  MachineBranchProbabilityInfo &MBPI =
+    getAnalysis<MachineBranchProbabilityInfo>();
   MBFI->doFunction(&F, &MBPI);
 #ifndef NDEBUG
   if (ViewMachineBlockFreqPropagationDAG != GVDT_None) {
@@ -147,8 +155,8 @@ void MachineBlockFrequencyInfo::view() const {
   ViewGraph(const_cast<MachineBlockFrequencyInfo *>(this),
             "MachineBlockFrequencyDAGs");
 #else
-  errs() << "BlockFrequencyInfo::view is only available in debug builds on "
-            "systems with Graphviz or gv!\n";
+  errs() << "MachineBlockFrequencyInfo::view is only available in debug builds "
+    "on systems with Graphviz or gv!\n";
 #endif // NDEBUG
 }
 
@@ -160,4 +168,3 @@ getBlockFreq(const MachineBasicBlock *MBB) const {
 MachineFunction *MachineBlockFrequencyInfo::getFunction() const {
   return MBFI->Fn;
 }
-
