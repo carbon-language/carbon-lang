@@ -250,6 +250,7 @@ public:
   }
   void addLine(uint32_t N) { Lines.push_back(N); }
   void addCount(size_t DstEdgeNo, uint64_t N);
+  uint64_t getCount() const { return Counter; }
   size_t getNumSrcEdges() const { return SrcEdges.size(); }
   size_t getNumDstEdges() const { return DstEdges.size(); }
 
@@ -269,17 +270,18 @@ private:
   SmallVector<uint32_t, 16> Lines;
 };
 
-typedef DenseMap<uint32_t, uint64_t> LineCounts;
+typedef SmallVector<const GCOVBlock *, 4> BlockVector;
+typedef DenseMap<uint32_t, BlockVector> LineData;
 class FileInfo {
 public:
-  void addLineCount(StringRef Filename, uint32_t Line, uint64_t Count) {
-    LineInfo[Filename][Line-1] += Count;
+  void addBlockLine(StringRef Filename, uint32_t Line, const GCOVBlock *Block) {
+    LineInfo[Filename][Line-1].push_back(Block);
   }
   void setRunCount(uint32_t Runs) { RunCount = Runs; }
   void setProgramCount(uint32_t Programs) { ProgramCount = Programs; }
   void print(raw_fd_ostream &OS, StringRef gcnoFile, StringRef gcdaFile) const;
 private:
-  StringMap<LineCounts> LineInfo;
+  StringMap<LineData> LineInfo;
   uint32_t RunCount;
   uint32_t ProgramCount;
 };

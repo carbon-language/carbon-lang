@@ -282,7 +282,7 @@ void GCOVBlock::addCount(size_t DstEdgeNo, uint64_t N) {
 void GCOVBlock::collectLineCounts(FileInfo &FI) {
   for (SmallVectorImpl<uint32_t>::iterator I = Lines.begin(),
          E = Lines.end(); I != E; ++I)
-    FI.addLineCount(Parent.getFilename(), *I, Counter);
+    FI.addBlockLine(Parent.getFilename(), *I, this);
 }
 
 /// dump - Dump GCOVBlock content to dbgs() for debugging purposes.
@@ -319,7 +319,7 @@ void GCOVBlock::dump() const {
 /// print -  Print source files with collected line count information.
 void FileInfo::print(raw_fd_ostream &OS, StringRef gcnoFile,
                      StringRef gcdaFile) const {
-  for (StringMap<LineCounts>::const_iterator I = LineInfo.begin(),
+  for (StringMap<LineData>::const_iterator I = LineInfo.begin(),
          E = LineInfo.end(); I != E; ++I) {
     StringRef Filename = I->first();
     OwningPtr<MemoryBuffer> Buff;
@@ -335,15 +335,21 @@ void FileInfo::print(raw_fd_ostream &OS, StringRef gcnoFile,
     OS << "        -:    0:Runs:" << RunCount << "\n";
     OS << "        -:    0:Programs:" << ProgramCount << "\n";
 
-    const LineCounts &L = I->second;
+    const LineData &L = I->second;
     uint32_t i = 0;
     while (!AllLines.empty()) {
-      LineCounts::const_iterator CountIt = L.find(i);
-      if (CountIt != L.end()) {
-        if (CountIt->second == 0)
+      LineData::const_iterator BlocksIt = L.find(i);
+      if (BlocksIt != L.end()) {
+        const BlockVector &Blocks = BlocksIt->second;
+        uint64_t LineCount = 0;
+        for (BlockVector::const_iterator I = Blocks.begin(), E = Blocks.end();
+               I != E; ++I) {
+          LineCount += (*I)->getCount();
+        }
+        if (LineCount == 0)
           OS << "    #####:";
         else
-          OS << format("%9" PRIu64 ":", CountIt->second);
+          OS << format("%9" PRIu64 ":", LineCount);
       } else {
         OS << "        -:";
       }
