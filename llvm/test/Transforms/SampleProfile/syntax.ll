@@ -9,7 +9,7 @@ define void @empty() {
 entry:
   ret void
 }
-; MISSING-FILE: LLVM ERROR: Could not open profile file missing.prof: No such file or directory
+; MISSING-FILE: LLVM ERROR: Could not open profile file missing.prof:
 ; MISSING-SYMTAB: LLVM ERROR: {{.*}}missing_symtab.prof:1: Expected 'symbol table', found 1
 ; MISSING-NUM-SYMS: LLVM ERROR: {{.*}}missing_num_syms.prof:2: Expected a number, found empty
 ; BAD-FN-HEADER: LLVM ERROR: {{.*}}bad_fn_header.prof:4: Expected 'mangled_name:NUM:NUM:NUM', found empty:100:BAD
