@@ -14,7 +14,7 @@
 #include <forward_list>
 #include <cassert>
 
-#include "../../../test_allocator.h"
+#include "test_allocator.h"
 #include "min_allocator.h"
 
 int main()

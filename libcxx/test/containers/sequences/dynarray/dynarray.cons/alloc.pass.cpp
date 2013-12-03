@@ -31,7 +31,7 @@
 #include <algorithm>
 #include <complex>
 #include <string>
-#include "../../../test_allocator.h"
+#include "test_allocator.h"
 
 using std::experimental::dynarray;
 

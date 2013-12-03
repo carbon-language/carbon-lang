@@ -16,7 +16,7 @@
 #include <regex>
 #include <cassert>
 
-#include "../../test_allocator.h"
+#include "test_allocator.h"
 
 template <class CharT, class Allocator>
 void

@@ -21,7 +21,7 @@
 #include <regex>
 #include <cassert>
 
-#include "../../test_allocator.h"
+#include "test_allocator.h"
 
 int main()
 {

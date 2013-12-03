@@ -17,7 +17,7 @@
 #include <iterator>
 #include <cassert>
 
-#include "../test_allocator.h"
+#include "test_allocator.h"
 #include "../input_iterator.h"
 #include "min_allocator.h"
 

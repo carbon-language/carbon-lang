@@ -18,7 +18,7 @@
 #if _LIBCPP_STD_VER > 11
 
 #include <experimental/dynarray>
-#include "../../../test_allocator.h"
+#include "test_allocator.h"
 
 using std::experimental::dynarray;
 

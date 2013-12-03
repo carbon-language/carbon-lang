@@ -16,7 +16,7 @@
 #include <functional>
 #include <cassert>
 
-#include "../test_allocator.h"
+#include "test_allocator.h"
 
 class A
 {

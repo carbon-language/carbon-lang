@@ -14,7 +14,7 @@
 #include <string>
 #include <cassert>
 
-#include "../test_allocator.h"
+#include "test_allocator.h"
 
 #if __has_feature(cxx_noexcept)
 

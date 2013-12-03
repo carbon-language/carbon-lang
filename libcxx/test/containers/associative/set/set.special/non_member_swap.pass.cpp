@@ -15,7 +15,7 @@
 
 #include <set>
 #include <cassert>
-#include "../../../test_allocator.h"
+#include "test_allocator.h"
 #include "../../../test_compare.h"
 
 int main()

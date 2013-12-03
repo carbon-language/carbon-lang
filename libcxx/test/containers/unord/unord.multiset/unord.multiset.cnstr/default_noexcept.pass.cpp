@@ -21,7 +21,7 @@
 #include <cassert>
 
 #include "../../../MoveOnly.h"
-#include "../../../test_allocator.h"
+#include "test_allocator.h"
 #include "../../../test_hash.h"
 
 template <class T>

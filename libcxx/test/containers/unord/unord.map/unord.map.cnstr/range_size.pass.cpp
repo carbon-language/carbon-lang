@@ -25,7 +25,7 @@
 #include "../../../NotConstructible.h"
 #include "../../../test_compare.h"
 #include "../../../test_hash.h"
-#include "../../../test_allocator.h"
+#include "test_allocator.h"
 #include "min_allocator.h"
 
 int main()

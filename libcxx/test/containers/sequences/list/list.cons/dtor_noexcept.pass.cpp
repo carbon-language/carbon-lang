@@ -15,7 +15,7 @@
 #include <cassert>
 
 #include "../../../MoveOnly.h"
-#include "../../../test_allocator.h"
+#include "test_allocator.h"
 
 #if __has_feature(cxx_noexcept)
 

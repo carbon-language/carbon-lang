@@ -14,7 +14,7 @@
 #include <memory>
 #include <cassert>
 #include "../test_deleter.h"
-#include "../test_allocator.h"
+#include "test_allocator.h"
 
 struct A
 {

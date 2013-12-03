@@ -18,7 +18,7 @@
 #include <cassert>
 
 #include "../../../MoveOnly.h"
-#include "../../../test_allocator.h"
+#include "test_allocator.h"
 
 template <class T>
 struct some_alloc

@@ -20,7 +20,7 @@
 
 #include "test_iterators.h"
 #include "../../../test_compare.h"
-#include "../../../test_allocator.h"
+#include "test_allocator.h"
 
 int main()
 {

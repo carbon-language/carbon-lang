@@ -18,7 +18,7 @@
 #include <cstdlib>
 #include <cassert>
 
-#include "../test_allocator.h"
+#include "test_allocator.h"
 
 int new_called = 0;
 
