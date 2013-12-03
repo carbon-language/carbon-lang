@@ -59,6 +59,10 @@ TypeUnit::TypeUnit(unsigned UID, DIE *D, uint16_t Language, AsmPrinter *A,
 Unit::~Unit() {
   for (unsigned j = 0, M = DIEBlocks.size(); j < M; ++j)
     DIEBlocks[j]->~DIEBlock();
+  for (SmallVectorImpl<RangeSpanList *>::iterator RI = getRangeLists().begin(),
+                                                  RE = getRangeLists().end();
+       RI != RE; ++RI)
+    delete *RI;
 }
 
 /// createDIEEntry - Creates a new DIEEntry to be a proxy for a debug

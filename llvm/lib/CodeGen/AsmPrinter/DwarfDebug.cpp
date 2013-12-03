@@ -185,8 +185,8 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     : Asm(A), MMI(Asm->MMI), FirstCU(0),
       AbbreviationsSet(InitAbbreviationsSetSize),
       SourceIdMap(DIEValueAllocator), PrevLabel(NULL), GlobalCUIndexCount(0),
-      InfoHolder(A, &AbbreviationsSet, Abbreviations, "info_string",
-                 DIEValueAllocator),
+      GlobalRangeCount(0), InfoHolder(A, &AbbreviationsSet, Abbreviations,
+                                      "info_string", DIEValueAllocator),
       SkeletonAbbrevSet(InitAbbreviationsSetSize),
       SkeletonHolder(A, &SkeletonAbbrevSet, SkeletonAbbrevs, "skel_string",
                      DIEValueAllocator) {
@@ -429,12 +429,12 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU, DISubprogram SP) {
     }
   }
 
-  SPCU->addLabelAddress(
-      SPDie, dwarf::DW_AT_low_pc,
-      Asm->GetTempSymbol("func_begin", Asm->getFunctionNumber()));
-  SPCU->addLabelAddress(
-      SPDie, dwarf::DW_AT_high_pc,
-      Asm->GetTempSymbol("func_end", Asm->getFunctionNumber()));
+  MCSymbol *FuncBegin =
+      Asm->GetTempSymbol("func_begin", Asm->getFunctionNumber());
+  MCSymbol *FuncEnd = Asm->GetTempSymbol("func_end", Asm->getFunctionNumber());
+  SPCU->addLabelAddress(SPDie, dwarf::DW_AT_low_pc, FuncBegin);
+  SPCU->addLabelAddress(SPDie, dwarf::DW_AT_high_pc, FuncEnd);
+
   const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
   MachineLocation Location(RI->getFrameRegister(*Asm->MF));
   SPCU->addAddress(SPDie, dwarf::DW_AT_frame_base, Location);
@@ -478,30 +478,31 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
   if (Scope->isAbstractScope())
     return ScopeDIE;
 
-  const SmallVectorImpl<InsnRange> &Ranges = Scope->getRanges();
+  const SmallVectorImpl<InsnRange> &ScopeRanges = Scope->getRanges();
   // If we have multiple ranges, emit them into the range section.
-  if (Ranges.size() > 1) {
+  if (ScopeRanges.size() > 1) {
     // .debug_range section has not been laid out yet. Emit offset in
     // .debug_range as a relocatable label. emitDIE will handle
     // emitting it appropriately.
-    unsigned Offset = DebugRangeSymbols.size();
-    TheCU->addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges,
-                           Asm->GetTempSymbol("debug_ranges", Offset));
-    for (SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin(),
-                                                    RE = Ranges.end();
+    TheCU->addSectionLabel(
+        ScopeDIE, dwarf::DW_AT_ranges,
+        Asm->GetTempSymbol("debug_ranges", GlobalRangeCount));
+    RangeSpanList *List = new RangeSpanList(GlobalRangeCount++);
+    for (SmallVectorImpl<InsnRange>::const_iterator RI = ScopeRanges.begin(),
+                                                    RE = ScopeRanges.end();
          RI != RE; ++RI) {
-      DebugRangeSymbols.push_back(getLabelBeforeInsn(RI->first));
-      DebugRangeSymbols.push_back(getLabelAfterInsn(RI->second));
+      RangeSpan Range(getLabelBeforeInsn(RI->first),
+                      getLabelAfterInsn(RI->second));
+      List->addRange(Range);
     }
 
-    // Terminate the range list.
-    DebugRangeSymbols.push_back(NULL);
-    DebugRangeSymbols.push_back(NULL);
+    // Add the range list to the set of ranges to be emitted.
+    TheCU->addRangeList(List);
     return ScopeDIE;
   }
 
   // Construct the address range for this DIE.
-  SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin();
+  SmallVectorImpl<InsnRange>::const_iterator RI = ScopeRanges.begin();
   MCSymbol *Start = getLabelBeforeInsn(RI->first);
   MCSymbol *End = getLabelAfterInsn(RI->second);
   assert(End && "End label should not be null!");
@@ -519,8 +520,8 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
 // represent this concrete inlined copy of the function.
 DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
                                           LexicalScope *Scope) {
-  const SmallVectorImpl<InsnRange> &Ranges = Scope->getRanges();
-  assert(Ranges.empty() == false &&
+  const SmallVectorImpl<InsnRange> &ScopeRanges = Scope->getRanges();
+  assert(ScopeRanges.empty() == false &&
          "LexicalScope does not have instruction markers!");
 
   if (!Scope->getScopeNode())
@@ -536,23 +537,26 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_inlined_subroutine);
   TheCU->addDIEEntry(ScopeDIE, dwarf::DW_AT_abstract_origin, OriginDIE);
 
-  if (Ranges.size() > 1) {
+  if (ScopeRanges.size() > 1) {
     // .debug_range section has not been laid out yet. Emit offset in
     // .debug_range as a relocatable label. emitDIE will handle
     // emitting it appropriately.
-    unsigned Offset = DebugRangeSymbols.size();
-    TheCU->addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges,
-                           Asm->GetTempSymbol("debug_ranges", Offset));
-    for (SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin(),
-                                                    RE = Ranges.end();
+    TheCU->addSectionLabel(
+        ScopeDIE, dwarf::DW_AT_ranges,
+        Asm->GetTempSymbol("debug_ranges", GlobalRangeCount));
+    RangeSpanList *List = new RangeSpanList(GlobalRangeCount++);
+    for (SmallVectorImpl<InsnRange>::const_iterator RI = ScopeRanges.begin(),
+                                                    RE = ScopeRanges.end();
          RI != RE; ++RI) {
-      DebugRangeSymbols.push_back(getLabelBeforeInsn(RI->first));
-      DebugRangeSymbols.push_back(getLabelAfterInsn(RI->second));
+      RangeSpan Range(getLabelBeforeInsn(RI->first),
+                      getLabelAfterInsn(RI->second));
+      List->addRange(Range);
     }
-    DebugRangeSymbols.push_back(NULL);
-    DebugRangeSymbols.push_back(NULL);
+
+    // Add the range list to the set of ranges to be emitted.
+    TheCU->addRangeList(List);
   } else {
-    SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin();
+    SmallVectorImpl<InsnRange>::const_iterator RI = ScopeRanges.begin();
     MCSymbol *StartLabel = getLabelBeforeInsn(RI->first);
     MCSymbol *EndLabel = getLabelAfterInsn(RI->second);
 
@@ -2922,18 +2926,51 @@ void DwarfDebug::emitDebugRanges() {
   // Start the dwarf ranges section.
   Asm->OutStreamer.SwitchSection(
       Asm->getObjFileLowering().getDwarfRangesSection());
-  unsigned char Size = Asm->getDataLayout().getPointerSize();
-  for (uint32_t i = 0, e = DebugRangeSymbols.size(); i < e; ++i) {
-    // Only emit a symbol for every range pair for now.
-    // FIXME: Make this per range list.
-    if ((i % 2) == 0)
-      Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_ranges", i));
 
-    const MCSymbol *I = DebugRangeSymbols[i];
-    if (I)
-      Asm->OutStreamer.EmitSymbolValue(I, Size);
-    else
+  // Size for our labels.
+  unsigned char Size = Asm->getDataLayout().getPointerSize();
+
+  // Grab the specific ranges for the compile units in the module.
+  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
+                                                         E = CUMap.end();
+       I != E; ++I) {
+    CompileUnit *TheCU = I->second;
+    unsigned ID = TheCU->getUniqueID();
+
+    // Emit a symbol so we can find the beginning of our ranges.
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("gnu_ranges", ID));
+
+    // Iterate over the misc ranges for the compile units in the module.
+    const SmallVectorImpl<RangeSpanList *> &RangeLists = TheCU->getRangeLists();
+    for (SmallVectorImpl<RangeSpanList *>::const_iterator
+             I = RangeLists.begin(),
+             E = RangeLists.end();
+         I != E; ++I) {
+      RangeSpanList *List = *I;
+
+      // Emit a symbol so we can find the beginning of the range.
+      Asm->OutStreamer.EmitLabel(
+          Asm->GetTempSymbol("debug_ranges", List->getIndex()));
+
+      for (SmallVectorImpl<RangeSpan>::const_iterator
+               I = List->getRanges().begin(),
+               E = List->getRanges().end();
+           I != E; ++I) {
+        RangeSpan Range = *I;
+        // We occasionally have ranges without begin/end labels.
+        // FIXME: Verify and fix.
+        const MCSymbol *Begin = Range.getStart();
+        const MCSymbol *End = Range.getEnd();
+        Begin ? Asm->OutStreamer.EmitSymbolValue(Begin, Size)
+              : Asm->OutStreamer.EmitIntValue(0, Size);
+        End ? Asm->OutStreamer.EmitSymbolValue(End, Size)
+            : Asm->OutStreamer.EmitIntValue(0, Size);
+      }
+
+      // And terminate the list with two 0 values.
       Asm->OutStreamer.EmitIntValue(0, Size);
+      Asm->OutStreamer.EmitIntValue(0, Size);
+    }
   }
 }
 
@@ -3007,14 +3044,17 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
           DwarfGnuPubTypesSectionSym);
   }
 
-  // Flag if we've emitted any ranges and their location for the compile unit.
-  if (DebugRangeSymbols.size()) {
+  // Attribute if we've emitted any ranges and their location for the compile unit.
+  if (CU->getRangeLists().size()) {
     if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-      NewCU->addSectionLabel(Die, dwarf::DW_AT_GNU_ranges_base,
-                             DwarfDebugRangeSectionSym);
+      NewCU->addSectionLabel(
+          Die, dwarf::DW_AT_GNU_ranges_base,
+          Asm->GetTempSymbol("gnu_ranges", NewCU->getUniqueID()));
     else
-      NewCU->addUInt(Die, dwarf::DW_AT_GNU_ranges_base, dwarf::DW_FORM_data4,
-                     0);
+      NewCU->addSectionDelta(
+          Die, dwarf::DW_AT_GNU_ranges_base,
+          Asm->GetTempSymbol("gnu_ranges", NewCU->getUniqueID()),
+          DwarfDebugRangeSectionSym);
   }
 
   SkeletonHolder.addUnit(NewCU);

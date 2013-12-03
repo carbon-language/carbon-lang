@@ -409,8 +409,6 @@ class DwarfDebug {
     DbgValueHistoryMap;
   DbgValueHistoryMap DbgValues;
 
-  SmallVector<const MCSymbol *, 8> DebugRangeSymbols;
-
   // Previous instruction's location information. This is used to determine
   // label location to indicate scope boundries in dwarf debug info.
   DebugLoc PrevInstLoc;
@@ -436,6 +434,9 @@ class DwarfDebug {
 
   // Counter for assigning globally unique IDs for CUs.
   unsigned GlobalCUIndexCount;
+
+  // Counter for assigning globally unique IDs for ranges.
+  unsigned GlobalRangeCount;
 
   // Holder for the file specific debug information.
   DwarfUnits InfoHolder;
