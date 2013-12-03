@@ -1,40 +1,11 @@
 # RUN: yaml2obj %p/Inputs/reloc.obj.yaml > %t.obj
 #
-# RUN: llvm-objdump -d %t.obj | FileCheck -check-prefix=BEFORE %s
-#
 # RUN: lld -flavor link /out:%t1 /subsystem:console /force /opt:noref \
-# RUN:   -- %t.obj && llvm-objdump -d %t1 | FileCheck -check-prefix=AFTER %s
+# RUN:   -- %t.obj && llvm-objdump -d %t1 | FileCheck %s
 
-BEFORE: Disassembly of section .text:
-BEFORE: _main:
-BEFORE:       0:        55
-BEFORE:       1:        89 e5
-BEFORE:       3:        83 ec 14
-BEFORE:       6:        c7 45 fc 00 00 00 00
-BEFORE:       d:        c7 44 24 0c 00 00 00 00
-BEFORE:      15:        c7 44 24 08 07 00 00 00
-BEFORE:      1d:        c7 44 24 04 00 00 00 00
-BEFORE:      25:        c7 04 24 00 00 00 00
-BEFORE:      2c:        ff 15 00 00 00 00
-BEFORE:      32:        83 ec 10
-BEFORE:      35:        31 c0
-BEFORE:      37:        83 c4 14
-BEFORE:      3a:        5d
-BEFORE:      3b:        c3
-
-AFTER: Disassembly of section .text:
-AFTER: .text:
-AFTER:    pushl  %ebp
-AFTER:    movl   %esp, %ebp
-AFTER:    subl   $20, %esp
-AFTER:    movl   $0, -4(%ebp)
-AFTER:    movl   $0, 12(%esp)
-AFTER:    movl   $4198407, 8(%esp)
-AFTER:    movl   $4198400, 4(%esp)
-AFTER:    movl   $0, (%esp)
-AFTER:    calll  *4194304
-AFTER:    subl   $16, %esp
-AFTER:    xorl   %eax, %eax
-AFTER:    addl   $20, %esp
-AFTER:    popl   %ebp
-AFTER:    ret
+CHECK: .text:
+CHECK:    2000: 68 02 00 00 00
+CHECK:    2005: 68 05 00 00 00
+CHECK:    200a: 68 00 10 40 00
+CHECK:    200f: 68 00 10 40 00
+CHECK:    2014: 68 00 00 40 00

@@ -6,15 +6,21 @@ sections:
   - Name:            .text
     Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ ]
     Alignment:       16
-    SectionData:     5589E583EC14C745FC00000000C744240C00000000C744240807000000C744240400000000C7042400000000FF150000000083EC1031C083C4145DC3
+    SectionData:     68000000006800000000680000000068000000006800000000
     Relocations:
-      - VirtualAddress:  25
+      - VirtualAddress:  1
+        SymbolName:      _message
+        Type:            IMAGE_REL_I386_SECTION
+      - VirtualAddress:  6
+        SymbolName:      _message
+        Type:            IMAGE_REL_I386_SECREL
+      - VirtualAddress:  11
         SymbolName:      .data
         Type:            IMAGE_REL_I386_DIR32
-      - VirtualAddress:  33
+      - VirtualAddress:  16
         SymbolName:      .data
         Type:            IMAGE_REL_I386_DIR32
-      - VirtualAddress:  46
+      - VirtualAddress:  21
         SymbolName:      __imp__MessageBoxA@16
         Type:            IMAGE_REL_I386_DIR32
   - Name:            .data
@@ -44,6 +50,12 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
     StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            _message
+    Value:           5
+    SectionNumber:   2
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
   - Name:            __imp__MessageBoxA@16
     Value:           0
     SectionNumber:   0

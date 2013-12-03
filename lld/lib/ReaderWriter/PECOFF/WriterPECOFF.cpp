@@ -195,6 +195,7 @@ public:
 
   void applyRelocations(uint8_t *fileBuffer,
                         std::map<const Atom *, uint64_t> &atomRva,
+                        std::vector<uint64_t> &sectionRva,
                         uint64_t imageBaseAddress);
   void printAtomAddresses(uint64_t baseAddr);
   void addBaseRelocations(std::vector<uint64_t> &relocSites);
@@ -505,16 +506,18 @@ void AtomChunk::write(uint8_t *fileBuffer) {
 
 void AtomChunk::applyRelocations(uint8_t *fileBuffer,
                                  std::map<const Atom *, uint64_t> &atomRva,
+                                 std::vector<uint64_t> &sectionRva,
                                  uint64_t imageBaseAddress) {
   for (const auto *layout : _atomLayouts) {
     const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
     for (const Reference *ref : *atom) {
-      auto relocSite = reinterpret_cast<ulittle32_t *>(
+      auto relocSite32 = reinterpret_cast<ulittle32_t *>(
           fileBuffer + layout->_fileOffset + ref->offsetInAtom());
+      auto relocSite16 = reinterpret_cast<ulittle16_t *>(relocSite32);
       uint64_t targetAddr = atomRva[ref->target()];
       // Also account for whatever offset is already stored at the relocation
       // site.
-      targetAddr += *relocSite;
+      targetAddr += *relocSite32;
 
       // Skip if this reference is not for relocation.
       if (ref->kind() < lld::Reference::kindTargetLow)
@@ -526,19 +529,42 @@ void AtomChunk::applyRelocations(uint8_t *fileBuffer,
         break;
       case llvm::COFF::IMAGE_REL_I386_DIR32:
         // Set target's 32-bit VA.
-        *relocSite = targetAddr + imageBaseAddress;
+        *relocSite32 = targetAddr + imageBaseAddress;
         break;
       case llvm::COFF::IMAGE_REL_I386_DIR32NB:
         // Set target's 32-bit RVA.
-        *relocSite = targetAddr;
+        *relocSite32 = targetAddr;
         break;
       case llvm::COFF::IMAGE_REL_I386_REL32: {
         // Set 32-bit relative address of the target. This relocation is
         // usually used for relative branch or call instruction.
         uint32_t disp = atomRva[atom] + ref->offsetInAtom() + 4;
-        *relocSite = targetAddr - disp;
+        *relocSite32 = targetAddr - disp;
         break;
       }
+      case llvm::COFF::IMAGE_REL_I386_SECTION: {
+        // The 16-bit section index that contains the target symbol.
+        uint16_t i = 1;
+        for (uint64_t rva : sectionRva) {
+          if (targetAddr < rva) {
+            *relocSite16 = i;
+            break;
+          }
+          ++i;
+        }
+        break;
+      }
+      case llvm::COFF::IMAGE_REL_I386_SECREL:
+        // The 32-bit relative address from the beginning of the section that
+        // contains the target symbol.
+        for (int i = 0, e = sectionRva.size(); i < e; ++i) {
+          if (i == e - 1 ||
+              (sectionRva[i] <= targetAddr && targetAddr <= sectionRva[i + 1])) {
+            *relocSite32 = targetAddr - sectionRva[i];
+            break;
+          }
+        }
+        break;
       default:
         llvm_unreachable("Unsupported relocation kind");
       }
@@ -860,6 +886,9 @@ private:
 
   // The map from defined atoms to its RVAs. Will be used for relocation.
   std::map<const Atom *, uint64_t> atomRva;
+
+  // List of section RVAs. Will be used for relocation.
+  std::vector<uint64_t> sectionRva;
 };
 
 StringRef customSectionName(const DefinedAtom *atom) {
@@ -930,11 +959,13 @@ void ExecutableWriter::build(const File &linkedFile) {
 
   SectionChunk *text = nullptr;
   SectionChunk *data = nullptr;
+  std::vector<SectionChunk *> sectionChunks;
   for (auto i : atoms) {
     StringRef sectionName = i.first;
     std::vector<const DefinedAtom *> &contents = i.second;
     auto *section = new GenericSectionChunk(_PECOFFLinkingContext, sectionName,
                                             contents);
+    sectionChunks.push_back(section);
     addSectionChunk(section, sectionTable);
 
     if (!text && sectionName == ".text")
@@ -960,6 +991,9 @@ void ExecutableWriter::build(const File &linkedFile) {
   }
 
   setImageSizeOnDisk();
+
+  for (SectionChunk *p : sectionChunks)
+    sectionRva.push_back(p->getVirtualAddress());
 
   // Now that we know the size and file offset of sections. Set the file
   // header accordingly.
@@ -1005,7 +1039,7 @@ error_code ExecutableWriter::writeFile(const File &linkedFile, StringRef path) {
 void ExecutableWriter::applyAllRelocations(uint8_t *bufferStart) {
   for (auto &cp : _chunks)
     if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
-      chunk->applyRelocations(bufferStart, atomRva,
+      chunk->applyRelocations(bufferStart, atomRva, sectionRva,
                               _PECOFFLinkingContext.getBaseAddress());
 }
 
