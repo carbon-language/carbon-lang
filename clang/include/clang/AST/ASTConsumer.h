@@ -21,7 +21,6 @@ namespace clang {
   class CXXRecordDecl;
   class Decl;
   class DeclGroupRef;
-  class HandleTagDeclDefinition;
   class ASTMutationListener;
   class ASTDeserializationListener; // layering violation because void* is ugly
   class SemaConsumer; // layering violation required for safe SemaConsumer
