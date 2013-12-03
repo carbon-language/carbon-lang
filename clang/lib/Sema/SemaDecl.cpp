@@ -9826,6 +9826,10 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
            diag::note_objc_designated_init_marked_here);
       getCurFunction()->ObjCWarnForNoDesignatedInitChain = false;
     }
+    if (getCurFunction()->ObjCWarnForNoInitDelegation) {
+      Diag(MD->getLocation(), diag::warn_objc_secondary_init_missing_init_call);
+      getCurFunction()->ObjCWarnForNoInitDelegation = false;
+    }
   } else {
     return 0;
   }

@@ -30,6 +30,8 @@ void FunctionScopeInfo::Clear() {
   ObjCShouldCallSuper = false;
   ObjCIsDesignatedInit = false;
   ObjCWarnForNoDesignatedInitChain = false;
+  ObjCIsSecondaryInit = false;
+  ObjCWarnForNoInitDelegation = false;
 
   SwitchStack.clear();
   Returns.clear();

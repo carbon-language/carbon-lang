@@ -750,6 +750,10 @@ public:
   /// marked with the 'objc_designated_initializer' attribute.
   void setHasDesignatedInitializers();
 
+  /// Returns true if this interface decl contains at least one initializer
+  /// marked with the 'objc_designated_initializer' attribute.
+  bool hasDesignatedInitializers() const;
+
   const ObjCProtocolList &getReferencedProtocols() const {
     assert(hasDefinition() && "Caller did not check for forward reference!");
     if (data().ExternallyCompleted)

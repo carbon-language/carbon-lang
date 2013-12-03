@@ -1197,6 +1197,14 @@ void ObjCInterfaceDecl::setHasDesignatedInitializers() {
   data().HasDesignatedInitializers = true;
 }
 
+bool ObjCInterfaceDecl::hasDesignatedInitializers() const {
+  assert(hasDefinition() && "Forward declarations can't contain methods");
+  if (data().ExternallyCompleted)
+    LoadExternalDefinition();
+
+  return data().HasDesignatedInitializers;
+}
+
 ObjCImplementationDecl *ObjCInterfaceDecl::getImplementation() const {
   if (const ObjCInterfaceDecl *Def = getDefinition()) {
     if (data().ExternallyCompleted)

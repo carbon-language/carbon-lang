@@ -2443,6 +2443,12 @@ def warn_objc_designated_init_non_super_designated_init_call : Warning<
 def warn_objc_designated_init_non_designated_init_call : Warning<
   "designated initializer invoked a non-designated initializer">,
   InGroup<ObjCDesignatedInit>;
+def warn_objc_secondary_init_super_init_call : Warning<
+  "secondary initializer should not invoke an initializer on 'super'">,
+  InGroup<ObjCDesignatedInit>;
+def warn_objc_secondary_init_missing_init_call : Warning<
+  "secondary initializer missing a 'self' call to another initializer">,
+  InGroup<ObjCDesignatedInit>;
 
 def err_ns_bridged_not_interface : Error<
   "parameter of 'ns_bridged' attribute does not name an Objective-C class">;

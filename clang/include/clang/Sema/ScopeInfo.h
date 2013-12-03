@@ -117,6 +117,14 @@ public:
   /// the super class.
   bool ObjCWarnForNoDesignatedInitChain;
 
+  /// True when this is an initializer method not marked as a designated
+  /// initializer within a class that has at least one initializer marked as a
+  /// designated initializer.
+  bool ObjCIsSecondaryInit;
+  /// This starts true for a secondary initializer method and will be set to
+  /// false if there is an invocation of an initializer on 'self'.
+  bool ObjCWarnForNoInitDelegation;
+
   /// \brief Used to determine if errors occurred in this function or block.
   DiagnosticErrorTrap ErrorTrap;
 
@@ -327,6 +335,8 @@ public:
       ObjCShouldCallSuper(false),
       ObjCIsDesignatedInit(false),
       ObjCWarnForNoDesignatedInitChain(false),
+      ObjCIsSecondaryInit(false),
+      ObjCWarnForNoInitDelegation(false),
       ErrorTrap(Diag) { }
 
   virtual ~FunctionScopeInfo();

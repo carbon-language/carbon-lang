@@ -2476,6 +2476,16 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     }
   }
 
+  if (Method && Method->getMethodFamily() == OMF_init &&
+      getCurFunction()->ObjCIsSecondaryInit &&
+      (SuperLoc.isValid() || isSelfExpr(Receiver))) {
+    if (SuperLoc.isValid()) {
+      Diag(SelLoc, diag::warn_objc_secondary_init_super_init_call);
+    } else {
+      getCurFunction()->ObjCWarnForNoInitDelegation = false;
+    }
+  }
+
   // Check the message arguments.
   unsigned NumArgs = ArgsIn.size();
   Expr **Args = ArgsIn.data();
