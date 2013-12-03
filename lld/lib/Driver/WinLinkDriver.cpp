@@ -808,6 +808,10 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       ctx.setDeadStripping(false);
       break;
 
+    case OPT_verbose:
+      ctx.setLogInputFiles(true);
+      break;
+
     case OPT_force:
     case OPT_force_unresolved:
       // /force and /force:unresolved mean the same thing. We do not currently

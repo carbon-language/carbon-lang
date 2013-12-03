@@ -52,7 +52,7 @@ def incl_c : Separate<["/", "-"], "include">, Alias<incl>;
 def nodefaultlib_all : F<"nodefaultlib">;
 def noentry : F<"noentry">;
 def dll : F<"dll">;
-
+def verbose : F<"verbose">;
 def debug : F<"debug">;
 def swaprun_cd : F<"swaprun:cd">;
 def swaprun_net : F<"swaprun:net">;
@@ -94,7 +94,6 @@ def ignoreidl : F<"ignoreidl">;
 def incremental : F<"incremental">;
 def no_incremental : F<"incremental:no">;
 def nologo : F<"nologo">;
-def verbose : F<"verbose">;
 
 def delay : QF<"delay">;
 def delayload : QF<"delayload">;
