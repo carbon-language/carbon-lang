@@ -1863,7 +1863,7 @@ static std::string GenerateAppertainsTo(const Record &Attr, raw_ostream &OS) {
   // Otherwise, generate an appertainsTo check specific to this attribute which
   // checks all of the given subjects against the Decl passed in. Return the
   // name of that check to the caller.
-  std::string FnName = "check" + Attr.getName() + "AppertainTo";
+  std::string FnName = "check" + Attr.getName() + "AppertainsTo";
   std::stringstream SS;
   SS << "static bool " << FnName << "(Sema &S, const AttributeList &Attr, ";
   SS << "const Decl *D) {\n";
