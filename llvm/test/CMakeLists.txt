@@ -15,6 +15,7 @@ endif()
 # Set the depends list as a variable so that it can grow conditionally.
 # NOTE: Sync the substitutions in test/lit.cfg when adding to this list.
 set(LLVM_TEST_DEPENDS
+          llvm-config
           UnitTests
           BugpointPasses
           LLVMHello

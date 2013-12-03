@@ -154,6 +154,7 @@ Options:\n\
   --targets-built   List of all targets currently built.\n\
   --host-target     Target triple used to configure LLVM.\n\
   --build-mode      Print build mode of LLVM tree (e.g. Debug or Release).\n\
+  --assertion-mode  Print assertion mode of LLVM tree (ON or OFF).\n\
 Typical components:\n\
   all               All LLVM libraries (default).\n\
   engine            Either a native JIT or a bitcode interpreter.\n";
@@ -306,6 +307,12 @@ int main(int argc, char **argv) {
           build_mode = CMAKE_CFG_INTDIR;
 #endif
         OS << build_mode << '\n';
+      } else if (Arg == "--assertion-mode") {
+#if defined(NDEBUG)
+        OS << "OFF\n";
+#else
+        OS << "ON\n";
+#endif
       } else if (Arg == "--obj-root") {
         OS << LLVM_OBJ_ROOT << '\n';
       } else if (Arg == "--src-root") {
