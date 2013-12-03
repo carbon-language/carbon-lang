@@ -102,3 +102,13 @@ namespace return_has_expr {
     }
   };
 }
+
+// rdar://15366494
+// pr17759
+namespace ctor_returns_void {
+  void f() {}
+  struct S { 
+    S() { return f(); }; // expected-error {{constructor 'S' must not return void expression}}
+    ~S() { return f(); } // expected-error {{destructor '~S' must not return void expression}}
+  };
+}

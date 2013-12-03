@@ -6426,6 +6426,8 @@ def ext_return_has_void_expr : Extension<
 def err_return_init_list : Error<
   "%select{void function|void method|constructor|destructor}1 %0 "
   "must not return a value">;
+def err_ctor_dtor_returns_void : Error<
+  "%select{constructor|destructor}1 %0 must not return void expression">;
 def warn_noreturn_function_has_return_expr : Warning<
   "function %0 declared 'noreturn' should not return">,
   InGroup<InvalidNoreturn>;

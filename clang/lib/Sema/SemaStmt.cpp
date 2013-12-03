@@ -2801,8 +2801,14 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       } else if (!RetValExp->isTypeDependent()) {
         // C99 6.8.6.4p1 (ext_ since GCC warns)
         unsigned D = diag::ext_return_has_expr;
-        if (RetValExp->getType()->isVoidType())
-          D = diag::ext_return_has_void_expr;
+        if (RetValExp->getType()->isVoidType()) {
+          NamedDecl *CurDecl = getCurFunctionOrMethodDecl();
+          if (isa<CXXConstructorDecl>(CurDecl) ||
+              isa<CXXDestructorDecl>(CurDecl))
+            D = diag::err_ctor_dtor_returns_void;
+          else
+            D = diag::ext_return_has_void_expr;
+        }
         else {
           ExprResult Result = Owned(RetValExp);
           Result = IgnoredValueConversions(Result.take());
@@ -2812,9 +2818,15 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
           RetValExp = ImpCastExprToType(RetValExp,
                                         Context.VoidTy, CK_ToVoid).take();
         }
-
+        // return of void in constructor/destructor is illegal in C++.
+        if (D == diag::err_ctor_dtor_returns_void) {
+          NamedDecl *CurDecl = getCurFunctionOrMethodDecl();
+          Diag(ReturnLoc, D)
+            << CurDecl->getDeclName() << isa<CXXDestructorDecl>(CurDecl)
+            << RetValExp->getSourceRange();
+        }
         // return (some void expression); is legal in C++.
-        if (D != diag::ext_return_has_void_expr ||
+        else if (D != diag::ext_return_has_void_expr ||
             !getLangOpts().CPlusPlus) {
           NamedDecl *CurDecl = getCurFunctionOrMethodDecl();
 
