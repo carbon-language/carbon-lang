@@ -9,6 +9,9 @@
 
 #include "lld/Driver/WinLinkInputGraph.h"
 
+using llvm::sys::fs::file_magic;
+using llvm::sys::fs::identify_magic;
+
 namespace lld {
 
 /// \brief Parse the input file to lld::File.
@@ -30,23 +33,14 @@ error_code PECOFFFileNode::parse(const LinkingContext &ctx,
 
   if (filePath->endswith(".objtxt"))
     return ctx.getYAMLReader().parseFile(_buffer, _files);
-
-  llvm::sys::fs::file_magic FileType =
-      llvm::sys::fs::identify_magic(_buffer->getBuffer());
-  std::unique_ptr<File> f;
-
-  switch (FileType) {
-  case llvm::sys::fs::file_magic::archive: {
+  if (identify_magic(_buffer->getBuffer()) == file_magic::archive) {
     // Archive File
     error_code ec;
-    f.reset(new FileArchive(ctx, std::move(_buffer), ec, false));
-    _files.push_back(std::move(f));
+    _files.push_back(std::unique_ptr<File>(
+                       new FileArchive(ctx, std::move(_buffer), ec, false)));
     return ec;
   }
-  case llvm::sys::fs::file_magic::coff_object:
-  default:
-    return _ctx.getDefaultReader().parseFile(_buffer, _files);
-  }
+  return _ctx.getDefaultReader().parseFile(_buffer, _files);
 }
 
 ErrorOr<File &> PECOFFFileNode::getNextFile() {
