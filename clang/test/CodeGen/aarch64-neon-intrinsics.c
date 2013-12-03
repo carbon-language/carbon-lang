@@ -11236,3 +11236,39 @@ float64_t test_vabd_f64(float64_t a, float64_t b) {
 // CHECK: fabd {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
   return vabd_f64(a, b);
 }
+
+int64x1_t test_vuqadd_s64(int64x1_t a, uint64x1_t b) {
+  // CHECK-LABEL: test_vuqadd_s64
+  return vuqadd_s64(a, b);
+  // CHECK: suqadd d{{[0-9]+}}, d{{[0-9]+}}
+}
+
+uint64x1_t test_vsqadd_u64(uint64x1_t a, int64x1_t b) {
+  // CHECK-LABEL: test_vsqadd_u64
+  return vsqadd_u64(a, b);
+  // CHECK: usqadd d{{[0-9]+}}, d{{[0-9]+}}
+}
+
+int64x1_t test_vabs_s64(int64x1_t a) {
+  // CHECK-LABEL: test_vabs_s64
+  return vabs_s64(a);
+  // CHECK: abs d{{[0-9]+}}, d{{[0-9]+}}
+}
+
+int64x1_t test_vqabs_s64(int64x1_t a) {
+  // CHECK-LABEL: test_vqabs_s64
+  return vqabs_s64(a);
+  // CHECK: sqabs d{{[0-9]+}}, d{{[0-9]+}}
+}
+
+int64x1_t test_vqneg_s64(int64x1_t a) {
+  // CHECK-LABEL: test_vqneg_s64
+  return vqneg_s64(a);
+  // CHECK: sqneg d{{[0-9]+}}, d{{[0-9]+}}
+}
+
+int64x1_t test_vneg_s64(int64x1_t a) {
+  // CHECK-LABEL: test_vneg_s64
+  return vneg_s64(a);
+  // CHECK: neg d{{[0-9]+}}, d{{[0-9]+}}
+}
