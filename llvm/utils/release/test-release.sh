@@ -234,7 +234,7 @@ function export_sources() {
     check_valid_urls
 
     for proj in $projects ; do
-        echo "# Exporting $proj $Release-RC$RC sources"
+        echo "# Exporting $proj $Release-$RC sources"
         if ! svn export -q $Base_url/$proj/tags/RELEASE_$Release_no_dot/$RC $proj.src ; then
             echo "error: failed to export $proj project"
             exit 1
