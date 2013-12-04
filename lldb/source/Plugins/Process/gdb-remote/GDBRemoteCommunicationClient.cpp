@@ -2301,22 +2301,27 @@ GDBRemoteCommunicationClient::SendSpeedTestPacket (uint32_t send_size, uint32_t 
 }
 
 uint16_t
-GDBRemoteCommunicationClient::LaunchGDBserverAndGetPort (lldb::pid_t &pid)
+GDBRemoteCommunicationClient::LaunchGDBserverAndGetPort (lldb::pid_t &pid, const char *remote_accept_hostname)
 {
     pid = LLDB_INVALID_PROCESS_ID;
     StringExtractorGDBRemote response;
     StreamString stream;
     stream.PutCString("qLaunchGDBServer;");
     std::string hostname;
-    if (Host::GetHostname (hostname))
-    {
-        // Make the GDB server we launch only accept connections from this host
-        stream.Printf("host:%s;", hostname.c_str());
-    }
+    if (remote_accept_hostname  && remote_accept_hostname[0])
+        hostname = remote_accept_hostname;
     else
     {
-        // Make the GDB server we launch accept connections from any host since we can't figure out the hostname
-        stream.Printf("host:*;");
+        if (Host::GetHostname (hostname))
+        {
+            // Make the GDB server we launch only accept connections from this host
+            stream.Printf("host:%s;", hostname.c_str());
+        }
+        else
+        {
+            // Make the GDB server we launch accept connections from any host since we can't figure out the hostname
+            stream.Printf("host:*;");
+        }
     }
     const char *packet = stream.GetData();
     int packet_len = stream.GetSize();

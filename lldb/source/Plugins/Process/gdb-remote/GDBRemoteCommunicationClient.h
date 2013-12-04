@@ -94,7 +94,7 @@ public:
     GetLaunchSuccess (std::string &error_str);
 
     uint16_t
-    LaunchGDBserverAndGetPort (lldb::pid_t &pid);
+    LaunchGDBserverAndGetPort (lldb::pid_t &pid, const char *remote_accept_hostname);
     
     bool
     KillSpawnedProcess (lldb::pid_t pid);

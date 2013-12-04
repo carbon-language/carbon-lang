@@ -418,7 +418,21 @@ PlatformRemoteGDBServer::DebugProcess (lldb_private::ProcessLaunchInfo &launch_i
         if (IsConnected())
         {
             lldb::pid_t debugserver_pid = LLDB_INVALID_PROCESS_ID;
-            uint16_t port = m_gdb_client.LaunchGDBserverAndGetPort(debugserver_pid);
+            ArchSpec remote_arch = GetRemoteSystemArchitecture();
+            llvm::Triple &remote_triple = remote_arch.GetTriple();
+            uint16_t port = 0;
+            if (remote_triple.getVendor() == llvm::Triple::Apple && remote_triple.getOS() == llvm::Triple::IOS)
+            {
+                // When remote debugging to iOS, we use a USB mux that always talks
+                // to localhost, so we will need the remote debugserver to accept connections
+                // only from localhost, no matter what our current hostname is
+                port = m_gdb_client.LaunchGDBserverAndGetPort(debugserver_pid, "localhost");
+            }
+            else
+            {
+                // All other hosts should use their actual hostname
+                port = m_gdb_client.LaunchGDBserverAndGetPort(debugserver_pid, NULL);
+            }
             
             if (port == 0)
             {
@@ -492,7 +506,21 @@ PlatformRemoteGDBServer::Attach (lldb_private::ProcessAttachInfo &attach_info,
         if (IsConnected())
         {
             lldb::pid_t debugserver_pid = LLDB_INVALID_PROCESS_ID;
-            uint16_t port = m_gdb_client.LaunchGDBserverAndGetPort(debugserver_pid);
+            ArchSpec remote_arch = GetRemoteSystemArchitecture();
+            llvm::Triple &remote_triple = remote_arch.GetTriple();
+            uint16_t port = 0;
+            if (remote_triple.getVendor() == llvm::Triple::Apple && remote_triple.getOS() == llvm::Triple::IOS)
+            {
+                // When remote debugging to iOS, we use a USB mux that always talks
+                // to localhost, so we will need the remote debugserver to accept connections
+                // only from localhost, no matter what our current hostname is
+                port = m_gdb_client.LaunchGDBserverAndGetPort(debugserver_pid, "localhost");
+            }
+            else
+            {
+                // All other hosts should use their actual hostname
+                port = m_gdb_client.LaunchGDBserverAndGetPort(debugserver_pid, NULL);
+            }
             
             if (port == 0)
             {
