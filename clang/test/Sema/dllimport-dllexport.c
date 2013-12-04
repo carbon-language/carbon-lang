@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 -triple i386-mingw32 -fsyntax-only -verify %s
 // RUN: %clang_cc1 -triple x86_64-mingw32 -fsyntax-only -verify %s
 
-inline void __attribute__((dllexport)) foo1(){} // expected-warning{{dllexport attribute ignored}}
-inline void __attribute__((dllimport)) foo2(){} // expected-warning{{dllimport attribute ignored}}
+inline void __attribute__((dllexport)) foo1(){} // expected-warning{{'dllexport' attribute ignored}}
+inline void __attribute__((dllimport)) foo2(){} // expected-warning{{'dllimport' attribute ignored}}
 
 void __attribute__((dllimport)) foo3(){} // expected-error{{dllimport attribute can be applied only to symbol declaration}}
 
@@ -19,8 +19,8 @@ void __attribute__((dllimport)) foo6();
 void foo6(){} // expected-warning {{'foo6' redeclared without dllimport attribute: previous dllimport ignored}}
 
 // PR6269
-inline void __declspec(dllexport) foo7(){} // expected-warning{{dllexport attribute ignored}}
-inline void __declspec(dllimport) foo8(){} // expected-warning{{dllimport attribute ignored}}
+inline void __declspec(dllexport) foo7(){} // expected-warning{{'dllexport' attribute ignored}}
+inline void __declspec(dllimport) foo8(){} // expected-warning{{'dllimport' attribute ignored}}
 
 void __declspec(dllimport) foo9(){} // expected-error{{dllimport attribute can be applied only to symbol declaration}}
 

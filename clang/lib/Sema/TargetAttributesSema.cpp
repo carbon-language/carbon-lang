@@ -61,7 +61,7 @@ namespace {
     ARMAttributesSema() { }
     bool ProcessDeclAttribute(Scope *scope, Decl *D,
                               const AttributeList &Attr, Sema &S) const {
-      if (Attr.getName()->getName() == "interrupt") {
+      if (Attr.getKind() == AttributeList::AT_ARMInterrupt) {
         HandleARMInterruptAttr(D, Attr, S);
         return true;
       }
@@ -195,7 +195,7 @@ static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   // Currently, the dllimport attribute is ignored for inlined functions.
   // Warning is emitted.
   if (FD && FD->isInlineSpecified()) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllimport";
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
     return;
   }
 
@@ -239,7 +239,7 @@ static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   // the -fkeep-inline-functions flag has been used. Warning is emitted;
   if (FD && FD->isInlineSpecified()) {
     // FIXME: ... unless the -fkeep-inline-functions flag has been used.
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllexport";
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
     return;
   }
 
@@ -317,10 +317,10 @@ namespace {
     MipsAttributesSema() { }
     bool ProcessDeclAttribute(Scope *scope, Decl *D, const AttributeList &Attr,
                               Sema &S) const {
-      if (Attr.getName()->getName() == "mips16") {
+      if (Attr.getKind() == AttributeList::AT_Mips16) {
         HandleMips16Attr(D, Attr, S);
         return true;
-      } else if (Attr.getName()->getName() == "nomips16") {
+      } else if (Attr.getKind() == AttributeList::AT_NoMips16) {
         HandleNoMips16Attr(D, Attr, S);
         return true;
       }
