@@ -582,8 +582,7 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
   raw_svector_ostream OS(Str);
   OS << '\t' << AP.MAI->getCommentString() << "DEBUG_VALUE: ";
 
-  // cast away const; DIetc do not take const operands for some reason.
-  DIVariable V(const_cast<MDNode*>(MI->getOperand(2).getMetadata()));
+  DIVariable V(MI->getOperand(2).getMetadata());
   if (V.getContext().isSubprogram()) {
     StringRef Name = DISubprogram(V.getContext()).getDisplayName();
     if (!Name.empty())
