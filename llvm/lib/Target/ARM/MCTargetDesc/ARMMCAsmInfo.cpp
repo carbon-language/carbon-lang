@@ -54,4 +54,7 @@ ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
   // Exceptions handling
   if (EnableARMEHABI)
     ExceptionsType = ExceptionHandling::ARM;
+
+  // foo(plt) instead of foo@plt
+  UseParensForSymbolVariant = true;
 }

@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=thumbv7-linux-gnueabi | \
-; RUN:     grep "i(tpoff)"
+; RUN:     grep "i(TPOFF)"
 ; RUN: llc < %s -mtriple=thumbv7-linux-gnueabi | \
 ; RUN:     grep "__aeabi_read_tp"
 ; RUN: llc < %s -mtriple=thumbv7-linux-gnueabi \

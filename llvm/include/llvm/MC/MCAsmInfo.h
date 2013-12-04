@@ -306,6 +306,10 @@ namespace llvm {
     /// instead of symbolic register names in .cfi_* directives.
     bool DwarfRegNumForCFI;  // Defaults to false;
 
+    /// UseParensForSymbolVariant - True if target uses parens to indicate the
+    /// symbol variant instead of @. For example, foo(plt) instead of foo@plt.
+    bool UseParensForSymbolVariant; // Defaults to false;
+
     //===--- Prologue State ----------------------------------------------===//
 
     std::vector<MCCFIInstruction> InitialFrameState;
@@ -529,6 +533,9 @@ namespace llvm {
     }
     bool useDwarfRegNumForCFI() const {
       return DwarfRegNumForCFI;
+    }
+    bool useParensForSymbolVariant() const {
+      return UseParensForSymbolVariant;
     }
 
     void addInitialFrameState(const MCCFIInstruction &Inst) {

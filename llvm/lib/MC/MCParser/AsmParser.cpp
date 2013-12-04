@@ -789,20 +789,34 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
         return true;
       }
     }
+    // Parse symbol variant
+    std::pair<StringRef, StringRef> Split;
+    if (!MAI.useParensForSymbolVariant()) {
+      Split = Identifier.split('@');
+    } else if (Lexer.is(AsmToken::LParen)) {
+      Lexer.Lex(); // eat (
+      StringRef VName;
+      parseIdentifier(VName);
+      if (Lexer.isNot(AsmToken::RParen)) {
+          return Error(Lexer.getTok().getLoc(),
+                       "unexpected token in variant, expected ')'");
+      }
+      Lexer.Lex(); // eat )
+      Split = std::make_pair(Identifier, VName);
+    }
 
     EndLoc = SMLoc::getFromPointer(Identifier.end());
 
     // This is a symbol reference.
     StringRef SymbolName = Identifier;
     MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
-    std::pair<StringRef, StringRef> Split = Identifier.split('@');
 
     // Lookup the symbol variant if used.
-    if (Split.first.size() != Identifier.size()) {
+    if (Split.second.size()) {
       Variant = MCSymbolRefExpr::getVariantKindForName(Split.second);
       if (Variant != MCSymbolRefExpr::VK_Invalid) {
         SymbolName = Split.first;
-      } else if (MAI.doesAllowAtInName()) {
+      } else if (MAI.doesAllowAtInName() && !MAI.useParensForSymbolVariant()) {
         Variant = MCSymbolRefExpr::VK_None;
       } else {
         Variant = MCSymbolRefExpr::VK_None;

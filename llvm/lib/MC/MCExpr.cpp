@@ -11,6 +11,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
@@ -47,19 +48,12 @@ void MCExpr::print(raw_ostream &OS) const {
     else
       OS << Sym;
 
-    if (SRE.getKind() == MCSymbolRefExpr::VK_ARM_NONE ||
-        SRE.getKind() == MCSymbolRefExpr::VK_ARM_PLT ||
-        SRE.getKind() == MCSymbolRefExpr::VK_ARM_TLSGD ||
-        SRE.getKind() == MCSymbolRefExpr::VK_ARM_GOT ||
-        SRE.getKind() == MCSymbolRefExpr::VK_ARM_GOTOFF ||
-        SRE.getKind() == MCSymbolRefExpr::VK_ARM_TPOFF ||
-        SRE.getKind() == MCSymbolRefExpr::VK_ARM_GOTTPOFF ||
-        SRE.getKind() == MCSymbolRefExpr::VK_ARM_TARGET1 ||
-        SRE.getKind() == MCSymbolRefExpr::VK_ARM_TARGET2 ||
-        SRE.getKind() == MCSymbolRefExpr::VK_ARM_PREL31)
-      OS << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
-    else if (SRE.getKind() != MCSymbolRefExpr::VK_None)
-      OS << '@' << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
+    if (SRE.getKind() != MCSymbolRefExpr::VK_None) {
+      if (SRE.getMCAsmInfo().useParensForSymbolVariant())
+        OS << '(' << MCSymbolRefExpr::getVariantKindName(SRE.getKind()) << ')';
+      else
+        OS << '@' << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
+    }
 
     return;
   }
@@ -158,7 +152,7 @@ const MCConstantExpr *MCConstantExpr::Create(int64_t Value, MCContext &Ctx) {
 const MCSymbolRefExpr *MCSymbolRefExpr::Create(const MCSymbol *Sym,
                                                VariantKind Kind,
                                                MCContext &Ctx) {
-  return new (Ctx) MCSymbolRefExpr(Sym, Kind);
+  return new (Ctx) MCSymbolRefExpr(Sym, Kind, Ctx.getAsmInfo());
 }
 
 const MCSymbolRefExpr *MCSymbolRefExpr::Create(StringRef Name, VariantKind Kind,
@@ -186,16 +180,10 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_DTPOFF: return "DTPOFF";
   case VK_TLVP: return "TLVP";
   case VK_SECREL: return "SECREL32";
-  case VK_ARM_NONE: return "(NONE)";
-  case VK_ARM_PLT: return "(PLT)";
-  case VK_ARM_GOT: return "(GOT)";
-  case VK_ARM_GOTOFF: return "(GOTOFF)";
-  case VK_ARM_TPOFF: return "(tpoff)";
-  case VK_ARM_GOTTPOFF: return "(gottpoff)";
-  case VK_ARM_TLSGD: return "(tlsgd)";
-  case VK_ARM_TARGET1: return "(target1)";
-  case VK_ARM_TARGET2: return "(target2)";
-  case VK_ARM_PREL31: return "(prel31)";
+  case VK_ARM_NONE: return "none";
+  case VK_ARM_TARGET1: return "target1";
+  case VK_ARM_TARGET2: return "target2";
+  case VK_ARM_PREL31: return "prel31";
   case VK_PPC_LO: return "l";
   case VK_PPC_HI: return "h";
   case VK_PPC_HA: return "ha";
@@ -409,6 +397,14 @@ MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
     .Case("got@tlsld@h", VK_PPC_GOT_TLSLD_HI)
     .Case("GOT@TLSLD@HA", VK_PPC_GOT_TLSLD_HA)
     .Case("got@tlsld@ha", VK_PPC_GOT_TLSLD_HA)
+    .Case("NONE", VK_ARM_NONE)
+    .Case("none", VK_ARM_NONE)
+    .Case("TARGET1", VK_ARM_TARGET1)
+    .Case("target1", VK_ARM_TARGET1)
+    .Case("TARGET2", VK_ARM_TARGET2)
+    .Case("target2", VK_ARM_TARGET2)
+    .Case("PREL31", VK_ARM_PREL31)
+    .Case("prel31", VK_ARM_PREL31)
     .Default(VK_Invalid);
 }
 

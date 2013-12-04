@@ -88,6 +88,7 @@ MCAsmInfo::MCAsmInfo() {
   DwarfRegNumForCFI = false;
   HasMicrosoftFastStdCallMangling = false;
   NeedsDwarfSectionOffsetDirective = false;
+  UseParensForSymbolVariant = false;
 }
 
 MCAsmInfo::~MCAsmInfo() {
