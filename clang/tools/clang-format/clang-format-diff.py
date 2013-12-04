@@ -37,7 +37,7 @@ binary = 'clang-format'
 def main():
   parser = argparse.ArgumentParser(description=
                                    'Reformat changed lines in diff. Without -i '
-                                   'option just output the diff that would be'
+                                   'option just output the diff that would be '
                                    'introduced.')
   parser.add_argument('-i', action='store_true', default=False,
                       help='apply edits to files instead of displaying a diff')

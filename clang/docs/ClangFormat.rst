@@ -146,7 +146,7 @@ shortcut in the BBEdit preferences, under Menus & Shortcuts.
 Visual Studio Integration
 =========================
 
-Download the latest Visual Studio plugin from the `alpha build site
+Download the latest Visual Studio extension from the `alpha build site
 <http://llvm.org/builds/>`_. The default key-binding is Ctrl-R,Ctrl-F.
 
 
@@ -158,12 +158,14 @@ a unified diff and reformats all contained lines with :program:`clang-format`.
 
 .. code-block:: console
 
-  usage: clang-format-diff.py [-h] [-p P] [-style STYLE]
+  usage: clang-format-diff.py [-h] [-i] [-p P] [-style STYLE]
 
-  Reformat changed lines in diff.
+  Reformat changed lines in diff. Without -i option just output the diff that
+  would be introduced.
 
   optional arguments:
     -h, --help    show this help message and exit
+    -i            apply edits to files instead of displaying a diff
     -p P          strip the smallest prefix containing P slashes
     -style STYLE  formatting style to apply (LLVM, Google, Chromium, Mozilla,
                   WebKit)
@@ -172,7 +174,7 @@ So to reformat all the lines in the latest :program:`git` commit, just do:
 
 .. code-block:: console
 
-  git diff -U0 HEAD^ | clang-format-diff.py -p1
+  git diff -U0 HEAD^ | clang-format-diff.py -i -p1
 
 The :option:`-U0` will create a diff without context lines (the script would format
 those as well).
