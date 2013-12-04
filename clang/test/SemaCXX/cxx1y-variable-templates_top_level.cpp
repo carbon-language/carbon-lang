@@ -433,9 +433,8 @@ namespace nested {
 }
 
 namespace nested_name {
-  template<typename T> int a;
-  // FIXME: This triggers a crash.
-  //a<int>::b c;
+  template<typename T> int a; // expected-note {{variable template 'a' declared here}}
+  a<int>::b c; // expected-error {{qualified name refers into a specialization of variable template 'a'}}
 
   class a<int> {}; // expected-error {{identifier followed by '<' indicates a class template specialization but 'a' refers to a variable template}}
   enum a<int> {}; // expected-error {{expected identifier or '{'}} expected-warning {{does not declare anything}}

@@ -3413,7 +3413,8 @@ def warn_cxx98_compat_template_outside_of_template : Warning<
   InGroup<CXX98Compat>, DefaultIgnore;
 
 def err_non_type_template_in_nested_name_specifier : Error<
-  "qualified name refers into a specialization of function template %0">;
+  "qualified name refers into a specialization of %select{function|variable}0 "
+  "template %1">;
 def err_template_id_not_a_type : Error<
   "template name refers to non-type template %0">;
 def note_template_declared_here : Note<

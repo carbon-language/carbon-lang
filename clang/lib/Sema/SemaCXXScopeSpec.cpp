@@ -775,15 +775,15 @@ bool Sema::ActOnCXXNestedNameSpecifier(Scope *S,
     return false;
   }
 
-  // FIXME: Variable templates
+  TemplateDecl *TD = Template.get().getAsTemplateDecl();
   if (Template.get().getAsOverloadedTemplate() || DTN ||
-      isa<FunctionTemplateDecl>(Template.get().getAsTemplateDecl())) {
+      isa<FunctionTemplateDecl>(TD) || isa<VarTemplateDecl>(TD)) {
     SourceRange R(TemplateNameLoc, RAngleLoc);
     if (SS.getRange().isValid())
       R.setBegin(SS.getRange().getBegin());
 
     Diag(CCLoc, diag::err_non_type_template_in_nested_name_specifier)
-      << Template.get() << R;
+      << (TD && isa<VarTemplateDecl>(TD)) << Template.get() << R;
     NoteAllFoundTemplates(Template.get());
     return true;
   }
