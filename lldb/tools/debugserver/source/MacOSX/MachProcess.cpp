@@ -1121,7 +1121,6 @@ MachProcess::ExceptionMessageBundleComplete()
                             uint32_t info_array_count = 0;
                             if (m_task.ReadMemory(info_array_count_addr, 4, &info_array_count) == 4)
                             {
-                                DNBLog ("info_array_count is 0x%x", info_array_count);
                                 if (info_array_count == 0)
                                     m_did_exec = true;
                             }
