@@ -1,5 +1,4 @@
 // REQUIRES: nvptx-registered-target
-// REQUIRES: nvptx64-registered-target
 // RUN: %clang_cc1 -triple nvptx-unknown-unknown -S -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -triple nvptx64-unknown-unknown -S -emit-llvm -o - %s | FileCheck %s
 
