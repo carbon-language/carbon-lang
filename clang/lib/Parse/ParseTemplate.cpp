@@ -1304,9 +1304,11 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplate &LPT) {
       new ParseScope(this, Scope::TemplateParamScope));
 
   DeclaratorDecl *Declarator = dyn_cast<DeclaratorDecl>(FunD);
-  if (Declarator && Declarator->getNumTemplateParameterLists() != 0) {
+  const unsigned DeclaratorNumTemplateParameterLists = 
+      (Declarator ? Declarator->getNumTemplateParameterLists() : 0);
+  if (Declarator && DeclaratorNumTemplateParameterLists != 0) {
     Actions.ActOnReenterDeclaratorTemplateScope(getCurScope(), Declarator);
-    ++CurTemplateDepthTracker;
+    CurTemplateDepthTracker.addDepth(DeclaratorNumTemplateParameterLists);
   }
   Actions.ActOnReenterTemplateScope(getCurScope(), LPT.D);
   ++CurTemplateDepthTracker;
