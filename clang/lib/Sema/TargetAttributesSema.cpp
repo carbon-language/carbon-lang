@@ -108,6 +108,8 @@ namespace {
     MSP430AttributesSema() { }
     bool ProcessDeclAttribute(Scope *scope, Decl *D,
                               const AttributeList &Attr, Sema &S) const {
+      // Because this attribute has no spelling (see the FIXME in Attr.td as to
+      // why), we must check for the name instead of the attribute kind.
       if (Attr.getName()->getName() == "interrupt") {
         HandleMSP430InterruptAttr(D, Attr, S);
         return true;

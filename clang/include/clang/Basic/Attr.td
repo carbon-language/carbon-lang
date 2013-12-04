@@ -515,9 +515,13 @@ def MSABI : InheritableAttr {
 }
 
 def MSP430Interrupt : InheritableAttr, TargetSpecificAttr {
+  // FIXME: this attribute is spelled the same as the ARMInterrupt attribute,
+  // but two attributes cannot currently share the same name because of the
+  // getAttrKind function. However, in this case, the attributes are for
+  // different targets, so sharing the same name but different arguments is a
+  // reasonable design. For now, this attribute will remain having no spelling.
   let Spellings = [];
   let Args = [UnsignedArgument<"Number">];
-  let SemaHandler = 0;
 }
 
 def Mips16 : InheritableAttr, TargetSpecificAttr {
