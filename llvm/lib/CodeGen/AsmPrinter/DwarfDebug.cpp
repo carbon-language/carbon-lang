@@ -523,7 +523,7 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
 DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
                                           LexicalScope *Scope) {
   const SmallVectorImpl<InsnRange> &ScopeRanges = Scope->getRanges();
-  assert(ScopeRanges.empty() == false &&
+  assert(!ScopeRanges.empty() &&
          "LexicalScope does not have instruction markers!");
 
   if (!Scope->getScopeNode())
@@ -3042,7 +3042,7 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
   }
 
   // Attribute if we've emitted any ranges and their location for the compile unit.
-  if (CU->getRangeLists().size()) {
+  if (!CU->getRangeLists().empty()) {
     if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
       NewCU->addSectionLabel(
           Die, dwarf::DW_AT_GNU_ranges_base,
