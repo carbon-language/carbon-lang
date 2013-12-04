@@ -1129,35 +1129,12 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   
   allocatorArgs.add(RValue::get(allocSize), sizeType);
 
-  // Emit the rest of the arguments.
-  // FIXME: Ideally, this should just use EmitCallArgs.
-  CXXNewExpr::const_arg_iterator placementArg = E->placement_arg_begin();
-
-  // First, use the types from the function type.
   // We start at 1 here because the first argument (the allocation size)
   // has already been emitted.
-  for (unsigned i = 1, e = allocatorType->getNumArgs(); i != e;
-       ++i, ++placementArg) {
-    QualType argType = allocatorType->getArgType(i);
-
-    assert(getContext().hasSameUnqualifiedType(argType.getNonReferenceType(),
-                                               placementArg->getType()) &&
-           "type mismatch in call argument!");
-
-    EmitCallArg(allocatorArgs, *placementArg, argType);
-  }
-
-  // Either we've emitted all the call args, or we have a call to a
-  // variadic function.
-  assert((placementArg == E->placement_arg_end() ||
-          allocatorType->isVariadic()) &&
-         "Extra arguments to non-variadic function!");
-
-  // If we still have any arguments, emit them using the type of the argument.
-  for (CXXNewExpr::const_arg_iterator placementArgsEnd = E->placement_arg_end();
-       placementArg != placementArgsEnd; ++placementArg) {
-    EmitCallArg(allocatorArgs, *placementArg, placementArg->getType());
-  }
+  EmitCallArgs(allocatorArgs, allocatorType->isVariadic(),
+               allocatorType->arg_type_begin() + 1,
+               allocatorType->arg_type_end(), E->placement_arg_begin(),
+               E->placement_arg_end());
 
   // Emit the allocation call.  If the allocator is a global placement
   // operator, just "inline" it directly.

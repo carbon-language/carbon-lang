@@ -1246,6 +1246,12 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     ++AI;
   }
 
+  // Create a pointer value for every parameter declaration.  This usually
+  // entails copying one or more LLVM IR arguments into an alloca.  Don't push
+  // any cleanups or do anything that might unwind.  We do that separately, so
+  // we can push the cleanups in the correct order for the ABI.
+  SmallVector<llvm::Value *, 16> ArgVals;
+  ArgVals.reserve(Args.size());
   assert(FI.arg_size() == Args.size() &&
          "Mismatch between function signature & arguments.");
   unsigned ArgNo = 1;
@@ -1299,7 +1305,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         if (isPromoted)
           V = emitArgumentDemotion(*this, Arg, V);
       }
-      EmitParmDecl(*Arg, V, ArgNo);
+      ArgVals.push_back(V);
       break;
     }
 
@@ -1340,7 +1346,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         if (V->getType() != LTy)
           V = Builder.CreateBitCast(V, LTy);
 
-        EmitParmDecl(*Arg, V, ArgNo);
+        ArgVals.push_back(V);
         break;
       }
 
@@ -1413,7 +1419,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         if (isPromoted)
           V = emitArgumentDemotion(*this, Arg, V);
       }
-      EmitParmDecl(*Arg, V, ArgNo);
+      ArgVals.push_back(V);
       continue;  // Skip ++AI increment, already done.
     }
 
@@ -1426,7 +1432,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       Alloca->setAlignment(Align.getQuantity());
       LValue LV = MakeAddrLValue(Alloca, Ty, Align);
       llvm::Function::arg_iterator End = ExpandTypeFromArgs(Ty, LV, AI);
-      EmitParmDecl(*Arg, Alloca, ArgNo);
+      ArgVals.push_back(Alloca);
 
       // Name the arguments used in expansion and increment AI.
       unsigned Index = 0;
@@ -1438,10 +1444,9 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     case ABIArgInfo::Ignore:
       // Initialize the local variable appropriately.
       if (!hasScalarEvaluationKind(Ty))
-        EmitParmDecl(*Arg, CreateMemTemp(Ty), ArgNo);
+        ArgVals.push_back(CreateMemTemp(Ty));
       else
-        EmitParmDecl(*Arg, llvm::UndefValue::get(ConvertType(Arg->getType())),
-                     ArgNo);
+        ArgVals.push_back(llvm::UndefValue::get(ConvertType(Arg->getType())));
 
       // Skip increment, no matching LLVM parameter.
       continue;
@@ -1450,6 +1455,14 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     ++AI;
   }
   assert(AI == Fn->arg_end() && "Argument mismatch!");
+
+  if (getTarget().getCXXABI().areArgsDestroyedLeftToRightInCallee()) {
+    for (int I = Args.size() - 1; I >= 0; --I)
+      EmitParmDecl(*Args[I], ArgVals[I], I + 1);
+  } else {
+    for (unsigned I = 0, E = Args.size(); I != E; ++I)
+      EmitParmDecl(*Args[I], ArgVals[I], I + 1);
+  }
 }
 
 static void eraseUnusedBitCasts(llvm::Instruction *insn) {
@@ -1859,7 +1872,7 @@ static void emitWritebacks(CodeGenFunction &CGF,
 
 static void deactivateArgCleanupsBeforeCall(CodeGenFunction &CGF,
                                             const CallArgList &CallArgs) {
-  assert(CGF.getTarget().getCXXABI().isArgumentDestroyedByCallee());
+  assert(CGF.getTarget().getCXXABI().areArgsDestroyedLeftToRightInCallee());
   ArrayRef<CallArgList::CallArgCleanup> Cleanups =
     CallArgs.getCleanupsToDeactivate();
   // Iterate in reverse to increase the likelihood of popping the cleanup.
@@ -2004,6 +2017,41 @@ static void emitWritebackArg(CodeGenFunction &CGF, CallArgList &args,
   args.add(RValue::get(finalArgument), CRE->getType());
 }
 
+void CodeGenFunction::EmitCallArgs(CallArgList &Args,
+                                   ArrayRef<QualType> ArgTypes,
+                                   CallExpr::const_arg_iterator ArgBeg,
+                                   CallExpr::const_arg_iterator ArgEnd,
+                                   bool ForceColumnInfo) {
+  CGDebugInfo *DI = getDebugInfo();
+  SourceLocation CallLoc;
+  if (DI) CallLoc = DI->getLocation();
+
+  // We *have* to evaluate arguments from right to left in the MS C++ ABI,
+  // because arguments are destroyed left to right in the callee.
+  if (CGM.getTarget().getCXXABI().areArgsDestroyedLeftToRightInCallee()) {
+    size_t CallArgsStart = Args.size();
+    for (int I = ArgTypes.size() - 1; I >= 0; --I) {
+      CallExpr::const_arg_iterator Arg = ArgBeg + I;
+      EmitCallArg(Args, *Arg, ArgTypes[I]);
+      // Restore the debug location.
+      if (DI) DI->EmitLocation(Builder, CallLoc, ForceColumnInfo);
+    }
+
+    // Un-reverse the arguments we just evaluated so they match up with the LLVM
+    // IR function.
+    std::reverse(Args.begin() + CallArgsStart, Args.end());
+    return;
+  }
+
+  for (unsigned I = 0, E = ArgTypes.size(); I != E; ++I) {
+    CallExpr::const_arg_iterator Arg = ArgBeg + I;
+    assert(Arg != ArgEnd);
+    EmitCallArg(Args, *Arg, ArgTypes[I]);
+    // Restore the debug location.
+    if (DI) DI->EmitLocation(Builder, CallLoc, ForceColumnInfo);
+  }
+}
+
 void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
                                   QualType type) {
   if (const ObjCIndirectCopyRestoreExpr *CRE
@@ -2027,7 +2075,7 @@ void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
   // However, we still have to push an EH-only cleanup in case we unwind before
   // we make it to the call.
   if (HasAggregateEvalKind &&
-      CGM.getTarget().getCXXABI().isArgumentDestroyedByCallee()) {
+      CGM.getTarget().getCXXABI().areArgsDestroyedLeftToRightInCallee()) {
     const CXXRecordDecl *RD = type->getAsCXXRecordDecl();
     if (RD && RD->hasNonTrivialDestructor()) {
       AggValueSlot Slot = CreateAggTemp(type, "agg.arg.tmp");
