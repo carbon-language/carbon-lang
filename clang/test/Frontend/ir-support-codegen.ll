@@ -1,4 +1,4 @@
-; REQUIRES: x86-64-registered-target
+; REQUIRES: x86-registered-target
 ; RUN: %clang_cc1 -S -o - %s | FileCheck %s
 
 target triple = "x86_64-apple-darwin10"
