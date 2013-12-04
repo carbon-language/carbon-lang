@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin -mcpu=corei7 -disable-fp-elim -filetype=obj %s -o - | llvm-objdump -d - | FileCheck %s
-; RUN: llc -mtriple=x86_64-apple-darwin -mcpu=corei7 -disable-fp-elim -filetype=asm %s -o - | llvm-mc -filetype=obj - | llvm-objdump -d - | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-darwin -mcpu=corei7 -disable-fp-elim -filetype=asm %s -o - | llvm-mc -triple=x86_64-apple-darwin -mcpu=corei7 -filetype=obj - | llvm-objdump -d - | FileCheck %s
 
 define void @nop_test() {
 entry:
