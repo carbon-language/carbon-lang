@@ -250,6 +250,7 @@ public:
 private:
   GCOVFile &Parent;
   uint32_t Ident;
+  uint32_t Checksum;
   uint32_t LineNumber;
   StringRef Name;
   StringRef Filename;
