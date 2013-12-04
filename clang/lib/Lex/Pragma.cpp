@@ -1401,3 +1401,14 @@ void Preprocessor::RegisterBuiltinPragmas() {
     AddPragmaHandler(new PragmaRegionHandler("endregion"));
   }
 }
+
+/// Ignore all pragmas, useful for modes such as -Eonly which would otherwise
+/// warn about those pragmas being unknown.
+void Preprocessor::IgnorePragmas() {
+  AddPragmaHandler(new EmptyPragmaHandler());
+  // Also ignore all pragmas in all namespaces created
+  // in Preprocessor::RegisterBuiltinPragmas().
+  AddPragmaHandler("GCC", new EmptyPragmaHandler());
+  AddPragmaHandler("clang", new EmptyPragmaHandler());
+  AddPragmaHandler("STDC", new EmptyPragmaHandler());
+}

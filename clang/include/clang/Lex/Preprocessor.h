@@ -643,6 +643,9 @@ public:
     RemovePragmaHandler(StringRef(), Handler);
   }
 
+  /// Install empty handlers for all pragmas (making them ignored).
+  void IgnorePragmas();
+
   /// \brief Add the specified comment handler to the preprocessor.
   void addCommentHandler(CommentHandler *Handler);
 
