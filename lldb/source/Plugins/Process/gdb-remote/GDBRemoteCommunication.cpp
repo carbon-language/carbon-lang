@@ -13,6 +13,7 @@
 // C Includes
 #include <limits.h>
 #include <string.h>
+#include <sys/stat.h>
 
 // C++ Includes
 // Other libraries and framework includes
@@ -539,9 +540,11 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
 
 Error
 GDBRemoteCommunication::StartDebugserverProcess (const char *debugserver_url,
-                                                 const char *unix_socket_name,  // For handshaking
-                                                 lldb_private::ProcessLaunchInfo &launch_info)
+                                                 lldb_private::ProcessLaunchInfo &launch_info,
+                                                 uint16_t &port)
 {
+    port = 0;
+
     Error error;
     // If we locate debugserver, keep that located version around
     static FileSpec g_debugserver_file_spec;
@@ -598,11 +601,34 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *debugserver_url,
         // special terminal key sequences (^C) don't affect debugserver
         debugserver_args.AppendArgument("--setsid");
         
-        if (unix_socket_name && unix_socket_name[0])
+        char named_pipe_path[PATH_MAX];
+        
+        // Create a temporary file to get the stdout/stderr and redirect the
+        // output of the command into this file. We will later read this file
+        // if all goes well and fill the data into "command_output_ptr"
+        FileSpec tmpdir_file_spec;
+        if (Host::GetLLDBPath (ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
         {
-            debugserver_args.AppendArgument("--unix-socket");
-            debugserver_args.AppendArgument(unix_socket_name);
+            tmpdir_file_spec.GetFilename().SetCString("debugserver-named-pipe.XXXXXX");
+            strncpy(named_pipe_path, tmpdir_file_spec.GetPath().c_str(), sizeof(named_pipe_path));
         }
+        else
+        {
+            strncpy(named_pipe_path, "/tmp/debugserver-named-pipe.XXXXXX", sizeof(named_pipe_path));
+        }
+
+        if (::mktemp (named_pipe_path))
+        {
+            if (::mkfifo(named_pipe_path, 0600) == 0)
+            {
+                debugserver_args.AppendArgument("--named-pipe");
+                debugserver_args.AppendArgument(named_pipe_path);
+            }
+            else
+                named_pipe_path[0] = '\0';
+        }
+        else
+            named_pipe_path[0] = '\0';
 
         const char *env_debugserver_log_file = getenv("LLDB_DEBUGSERVER_LOG_FILE");
         if (env_debugserver_log_file)
@@ -617,46 +643,33 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *debugserver_url,
             ::snprintf (arg_cstr, sizeof(arg_cstr), "--log-flags=%s", env_debugserver_log_flags);
             debugserver_args.AppendArgument(arg_cstr);
         }
-        //            debugserver_args.AppendArgument("--log-file=/tmp/debugserver.txt");
-        //            debugserver_args.AppendArgument("--log-flags=0x802e0e");
-        
-        // We currently send down all arguments, attach pids, or attach 
-        // process names in dedicated GDB server packets, so we don't need
-        // to pass them as arguments. This is currently because of all the
-        // things we need to setup prior to launching: the environment,
-        // current working dir, file actions, etc.
-#if 0
-        // Now append the program arguments
-        if (inferior_argv)
-        {
-            // Terminate the debugserver args so we can now append the inferior args
-            debugserver_args.AppendArgument("--");
-            
-            for (int i = 0; inferior_argv[i] != NULL; ++i)
-                debugserver_args.AppendArgument (inferior_argv[i]);
-        }
-        else if (attach_pid != LLDB_INVALID_PROCESS_ID)
-        {
-            ::snprintf (arg_cstr, sizeof(arg_cstr), "--attach=%u", attach_pid);
-            debugserver_args.AppendArgument (arg_cstr);
-        }
-        else if (attach_name && attach_name[0])
-        {
-            if (wait_for_launch)
-                debugserver_args.AppendArgument ("--waitfor");
-            else
-                debugserver_args.AppendArgument ("--attach");
-            debugserver_args.AppendArgument (attach_name);
-        }
-#endif
         
         // Close STDIN, STDOUT and STDERR. We might need to redirect them
         // to "/dev/null" if we run into any problems.
-//        launch_info.AppendCloseFileAction (STDIN_FILENO);
-//        launch_info.AppendCloseFileAction (STDOUT_FILENO);
-//        launch_info.AppendCloseFileAction (STDERR_FILENO);
+        launch_info.AppendCloseFileAction (STDIN_FILENO);
+        launch_info.AppendCloseFileAction (STDOUT_FILENO);
+        launch_info.AppendCloseFileAction (STDERR_FILENO);
         
         error = Host::LaunchProcess(launch_info);
+        
+        if (named_pipe_path[0])
+        {
+            File name_pipe_file;
+            error = name_pipe_file.Open(named_pipe_path, File::eOpenOptionRead);
+            if (error.Success())
+            {
+                char port_cstr[256];
+                port_cstr[0] = '\0';
+                size_t num_bytes = sizeof(port_cstr);
+                error = name_pipe_file.Read(port_cstr, num_bytes);
+                assert (error.Success());
+                assert (num_bytes > 0 && port_cstr[num_bytes-1] == '\0');
+                port = Args::StringToUInt32(port_cstr, 0);
+                name_pipe_file.Close();
+            }
+            Host::Unlink(named_pipe_path);
+        }
+
     }
     else
     {

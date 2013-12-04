@@ -915,7 +915,6 @@ RNBRemote::InitializeRegisters (bool force)
 
                 if (reg_entry.nub_info.value_regs == NULL)
                 {
-                    DNBLogThreaded("%s -> %u", reg_entry.nub_info.name, reg_data_offset);
                     reg_data_offset += reg_entry.nub_info.size;
                 }
 

@@ -625,73 +625,32 @@ RNBRunLoopPlatform (RNBRemote *remote)
     return eRNBRunLoopModeExit;
 }
 
-//----------------------------------------------------------------------
-// Convenience function to set up the remote listening port
-// Returns 1 for success 0 for failure.
-//----------------------------------------------------------------------
-
 static void
-PortWasBoundCallback (const void *baton, in_port_t port)
+PortWasBoundCallbackNamedPipe (const void *baton, in_port_t port)
 {
-    //::printf ("PortWasBoundCallback (baton = %p, port = %u)\n", baton, port);
-
-    const char *unix_socket_name = (const char *)baton;
-    
-    if (unix_socket_name && unix_socket_name[0])
+    const char *named_pipe = (const char *)baton;
+    if (named_pipe && named_pipe[0])
     {
-        // We were given a unix socket name to use to communicate the port
-        // that we ended up binding to back to our parent process
-        struct sockaddr_un saddr_un;
-        int s = ::socket (AF_UNIX, SOCK_STREAM, 0);
-        if (s < 0)
+        int fd = ::open(named_pipe, O_WRONLY);
+        if (fd > -1)
         {
-            perror("error: socket (AF_UNIX, SOCK_STREAM, 0)");
-            exit(1);
+            char port_str[64];
+            const ssize_t port_str_len = ::snprintf (port_str, sizeof(port_str), "%u", port);
+            // Write the port number as a C string with the NULL terminator
+            ::write (fd, port_str, port_str_len + 1);
+            close (fd);
         }
-        
-        saddr_un.sun_family = AF_UNIX;
-        ::strncpy(saddr_un.sun_path, unix_socket_name, sizeof(saddr_un.sun_path) - 1);
-        saddr_un.sun_path[sizeof(saddr_un.sun_path) - 1] = '\0';
-        saddr_un.sun_len = SUN_LEN (&saddr_un);
-        
-        if (::connect (s, (struct sockaddr *)&saddr_un, SUN_LEN (&saddr_un)) < 0) 
-        {
-            perror("error: connect (socket, &saddr_un, saddr_un_len)");
-            exit(1);
-        }
-        
-        //::printf ("connect () sucess!!\n");
-
-        
-        // We were able to connect to the socket, now write our PID so whomever
-        // launched us will know this process's ID
-        RNBLogSTDOUT ("Listening to port %i...\n", port);
-        
-        char pid_str[64];
-        const int pid_str_len = ::snprintf (pid_str, sizeof(pid_str), "%u", port);
-        const int bytes_sent = ::send (s, pid_str, pid_str_len, 0);
-        
-        if (pid_str_len != bytes_sent)
-        {
-            perror("error: send (s, pid_str, pid_str_len, 0)");
-            exit (1);
-        }
-
-        //::printf ("send () sucess!!\n");
-
-        // We are done with the socket
-        close (s);
     }
 }
 
 static int
-StartListening (RNBRemote *remote, const char *listen_host, int listen_port, const char *unix_socket_name)
+StartListening (RNBRemote *remote, const char *listen_host, int listen_port, const char *named_pipe_path)
 {
     if (!remote->Comm().IsConnected())
     {
         if (listen_port != 0)
             RNBLogSTDOUT ("Listening to port %i for a connection from %s...\n", listen_port, listen_host ? listen_host : "localhost");
-        if (remote->Comm().Listen(listen_host, listen_port, PortWasBoundCallback, unix_socket_name) != rnb_success)
+        if (remote->Comm().Listen(listen_host, listen_port, PortWasBoundCallbackNamedPipe, named_pipe_path) != rnb_success)
         {
             RNBLogSTDERR ("Failed to get connection from a remote gdb process.\n");
             return 0;
@@ -786,7 +745,7 @@ static struct option g_long_options[] =
     { "disable-aslr",       no_argument,        NULL,               'D' },  // Use _POSIX_SPAWN_DISABLE_ASLR to avoid shared library randomization
     { "working-dir",        required_argument,  NULL,               'W' },  // The working directory that the inferior process should have (only if debugserver launches the process)
     { "platform",           required_argument,  NULL,               'p' },  // Put this executable into a remote platform mode
-    { "unix-socket",        required_argument,  NULL,               'u' },  // If we need to handshake with our parent process, an option will be passed down that specifies a unix socket name to use
+    { "named-pipe",         required_argument,  NULL,               'P' },
     { NULL,                 0,                  NULL,               0   }
 };
 
@@ -838,7 +797,7 @@ main (int argc, char *argv[])
     std::string attach_pid_name;
     std::string arch_name;
     std::string working_dir;                // The new working directory to use for the inferior
-    std::string unix_socket_name;           // If we need to handshake with our parent process, an option will be passed down that specifies a unix socket name to use
+    std::string named_pipe_path;            // If we need to handshake with our parent process, an option will be passed down that specifies a named pipe to use
     useconds_t waitfor_interval = 1000;     // Time in usecs between process lists polls when waiting for a process by name, default 1 msec.
     useconds_t waitfor_duration = 0;        // Time in seconds to wait for a process by name, 0 means wait forever.
     bool no_stdio = false;
@@ -1086,8 +1045,8 @@ main (int argc, char *argv[])
                 start_mode = eRNBRunLoopModePlatformMode;
                 break;
 
-            case 'u':
-                unix_socket_name.assign (optarg);
+            case 'P':
+                named_pipe_path.assign (optarg);
                 break;
         }
     }
@@ -1306,7 +1265,7 @@ main (int argc, char *argv[])
 #endif
                 if (listen_port != INT32_MAX)
                 {
-                    if (!StartListening (remote, listen_host.c_str(), listen_port, unix_socket_name.c_str()))
+                    if (!StartListening (remote, listen_host.c_str(), listen_port, named_pipe_path.c_str()))
                         mode = eRNBRunLoopModeExit;
                 }
                 else if (str[0] == '/')
@@ -1419,7 +1378,7 @@ main (int argc, char *argv[])
                 {
                     if (listen_port != INT32_MAX)
                     {
-                        if (!StartListening (remote, listen_host.c_str(), listen_port, unix_socket_name.c_str()))
+                        if (!StartListening (remote, listen_host.c_str(), listen_port, named_pipe_path.c_str()))
                             mode = eRNBRunLoopModeExit;
                     }
                     else if (str[0] == '/')
@@ -1444,7 +1403,7 @@ main (int argc, char *argv[])
                     {
                         if (listen_port != INT32_MAX)
                         {
-                            if (!StartListening (remote, listen_host.c_str(), listen_port, unix_socket_name.c_str()))
+                            if (!StartListening (remote, listen_host.c_str(), listen_port, named_pipe_path.c_str()))
                                 mode = eRNBRunLoopModeExit;
                         }
                         else if (str[0] == '/')
@@ -1471,7 +1430,7 @@ main (int argc, char *argv[])
             case eRNBRunLoopModePlatformMode:
                 if (listen_port != INT32_MAX)
                 {
-                    if (!StartListening (remote, listen_host.c_str(), listen_port, unix_socket_name.c_str()))
+                    if (!StartListening (remote, listen_host.c_str(), listen_port, named_pipe_path.c_str()))
                         mode = eRNBRunLoopModeExit;
                 }
                 else if (str[0] == '/')

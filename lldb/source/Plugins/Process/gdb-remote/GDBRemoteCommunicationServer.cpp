@@ -775,7 +775,6 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
     {
         // Sleep and wait a bit for debugserver to start to listen...
         ConnectionFileDescriptor file_conn;
-        char connect_url[PATH_MAX];
         Error error;
         std::string hostname;
         // TODO: /tmp/ should not be hardcoded. User might want to override /tmp
@@ -796,26 +795,6 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
 
         // Spawn a new thread to accept the port that gets bound after
         // binding to port 0 (zero).
-        lldb::thread_t accept_thread = LLDB_INVALID_HOST_THREAD;
-        const char *unix_socket_name = NULL;
-        char unix_socket_name_buf[PATH_MAX] = "/tmp/XXXXXXXXX";
-
-        if (port == 0)
-        {
-            if (::mkstemp (unix_socket_name_buf) == 0)
-            {
-                unix_socket_name = unix_socket_name_buf;
-                ::snprintf (connect_url, sizeof(connect_url), "unix-accept://%s", unix_socket_name);
-                accept_thread = Host::ThreadCreate (unix_socket_name,
-                                                    AcceptPortFromInferior,
-                                                    connect_url,
-                                                    &error);
-            }
-            else
-            {
-                error.SetErrorStringWithFormat("failed to make temporary path for a unix socket: %s", strerror(errno));
-            }
-        }
 
         if (error.Success())
         {
@@ -832,9 +811,9 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
 
             debugserver_launch_info.SetMonitorProcessCallback(ReapDebugserverProcess, this, false);
             
-            error = StartDebugserverProcess (host_and_port_cstr,
-                                             unix_socket_name,
-                                             debugserver_launch_info);
+            error = GDBRemoteCommunication::StartDebugserverProcess (host_and_port_cstr,
+                                                                     debugserver_launch_info,
+                                                                     port);
 
             lldb::pid_t debugserver_pid = debugserver_launch_info.GetProcessID();
 
@@ -856,32 +835,10 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
             {
                 bool success = false;
 
-                if (IS_VALID_LLDB_HOST_THREAD(accept_thread))
-                {
-                    thread_result_t accept_thread_result = NULL;
-                    if (Host::ThreadJoin (accept_thread, &accept_thread_result, &error))
-                    {
-                        if (accept_thread_result)
-                        {
-                            port = (intptr_t)accept_thread_result;
-                            char response[256];
-                            const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port + m_port_offset);
-                            assert (response_len < sizeof(response));
-                            //m_port_to_pid_map[port] = debugserver_launch_info.GetProcessID();
-                            success = SendPacketNoLock (response, response_len) > 0;
-                        }
-                    }
-                }
-                else
-                {
-                    char response[256];
-                    const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port + m_port_offset);
-                    assert (response_len < sizeof(response));
-                    //m_port_to_pid_map[port] = debugserver_launch_info.GetProcessID();
-                    success = SendPacketNoLock (response, response_len) > 0;
-
-                }
-                Host::Unlink (unix_socket_name);
+                char response[256];
+                const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port + m_port_offset);
+                assert (response_len < sizeof(response));
+                success = SendPacketNoLock (response, response_len) > 0;
 
                 if (!success)
                 {
@@ -889,10 +846,6 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
                         ::kill (debugserver_pid, SIGINT);
                 }
                 return success;
-            }
-            else if (accept_thread)
-            {
-                Host::Unlink (unix_socket_name);
             }
         }
     }

@@ -284,10 +284,7 @@ protected:
                       lldb_private::ThreadList &new_thread_list);
 
     lldb_private::Error
-    StartDebugserverProcess (const char *debugserver_url);
-    
-    lldb_private::Error
-    StartDebugserverProcess (const char *debugserver_url, const lldb_private::ProcessInfo &process_info);
+    LaunchAndConnectToDebugserver (const lldb_private::ProcessInfo &process_info);
 
     void
     KillDebugserverProcess ();

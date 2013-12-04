@@ -142,15 +142,6 @@ public:
     {
         return m_packet_timeout * lldb_private::TimeValue::MicroSecPerSec;
     }
-    //------------------------------------------------------------------
-    // Start a debugserver instance on the current host using the
-    // supplied connection URL.
-    //------------------------------------------------------------------
-    lldb_private::Error
-    StartDebugserverProcess (const char *connect_url,
-                             const char *unix_socket_name,
-                             lldb_private::ProcessLaunchInfo &launch_info); 
-
     
     //------------------------------------------------------------------
     // Public Request Packets

@@ -108,10 +108,10 @@ public:
     // Start a debugserver instance on the current host using the
     // supplied connection URL.
     //------------------------------------------------------------------
-    lldb_private::Error
+    static lldb_private::Error
     StartDebugserverProcess (const char *connect_url,
-                             const char *unix_socket_name,
-                             lldb_private::ProcessLaunchInfo &launch_info); 
+                             lldb_private::ProcessLaunchInfo &launch_info,
+                             uint16_t &port);
 
     void
     DumpHistory(lldb_private::Stream &strm);
