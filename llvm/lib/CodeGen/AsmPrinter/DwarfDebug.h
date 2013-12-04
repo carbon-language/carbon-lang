@@ -627,6 +627,10 @@ class DwarfDebug : public AsmPrinterHandler {
   /// \brief Emit the debug str dwo section.
   void emitDebugStrDWO();
 
+  /// Flags to let the linker know we have emitted new style pubnames. Only
+  /// emit it here if we don't have a skeleton CU for split dwarf.
+  void addGnuPubAttributes(Unit *U, DIE *D) const;
+
   /// \brief Create new CompileUnit for the given metadata node with tag
   /// DW_TAG_compile_unit.
   CompileUnit *constructCompileUnit(DICompileUnit DIUnit);

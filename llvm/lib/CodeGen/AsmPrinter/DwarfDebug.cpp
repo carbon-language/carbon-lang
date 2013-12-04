@@ -724,6 +724,28 @@ unsigned DwarfDebug::getOrCreateSourceID(StringRef FileName, StringRef DirName,
   return SrcId;
 }
 
+static void addSectionLabel(AsmPrinter *Asm, Unit *U, DIE *D,
+                            dwarf::Attribute A, const MCSymbol *L,
+                            const MCSymbol *Sec) {
+  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
+    U->addSectionLabel(D, A, L);
+  else
+    U->addSectionDelta(D, A, L, Sec);
+}
+
+void DwarfDebug::addGnuPubAttributes(Unit *U, DIE *D) const {
+  if (!GenerateGnuPubSections)
+    return;
+
+  addSectionLabel(Asm, U, D, dwarf::DW_AT_GNU_pubnames,
+                  Asm->GetTempSymbol("gnu_pubnames", U->getUniqueID()),
+                  DwarfGnuPubNamesSectionSym);
+
+  addSectionLabel(Asm, U, D, dwarf::DW_AT_GNU_pubtypes,
+                  Asm->GetTempSymbol("gnu_pubtypes", U->getUniqueID()),
+                  DwarfGnuPubTypesSectionSym);
+}
+
 // Create new CompileUnit for the given metadata node with tag
 // DW_TAG_compile_unit.
 CompileUnit *DwarfDebug::constructCompileUnit(DICompileUnit DIUnit) {
@@ -783,29 +805,7 @@ CompileUnit *DwarfDebug::constructCompileUnit(DICompileUnit DIUnit) {
     if (!CompilationDir.empty())
       NewCU->addString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
 
-    // Flags to let the linker know we have emitted new style pubnames. Only
-    // emit it here if we don't have a skeleton CU for split dwarf.
-    if (GenerateGnuPubSections) {
-      if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-        NewCU->addSectionLabel(
-            Die, dwarf::DW_AT_GNU_pubnames,
-            Asm->GetTempSymbol("gnu_pubnames", NewCU->getUniqueID()));
-      else
-        NewCU->addSectionDelta(
-            Die, dwarf::DW_AT_GNU_pubnames,
-            Asm->GetTempSymbol("gnu_pubnames", NewCU->getUniqueID()),
-            DwarfGnuPubNamesSectionSym);
-
-      if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-        NewCU->addSectionLabel(
-            Die, dwarf::DW_AT_GNU_pubtypes,
-            Asm->GetTempSymbol("gnu_pubtypes", NewCU->getUniqueID()));
-      else
-        NewCU->addSectionDelta(
-            Die, dwarf::DW_AT_GNU_pubtypes,
-            Asm->GetTempSymbol("gnu_pubtypes", NewCU->getUniqueID()),
-            DwarfGnuPubTypesSectionSym);
-    }
+    addGnuPubAttributes(NewCU, Die);
   }
 
   if (DIUnit.isOptimized())
@@ -3018,41 +3018,13 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
   if (!CompilationDir.empty())
     NewCU->addLocalString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
 
-  // Flags to let the linker know we have emitted new style pubnames.
-  if (GenerateGnuPubSections) {
-    if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-      NewCU->addSectionLabel(
-          Die, dwarf::DW_AT_GNU_pubnames,
-          Asm->GetTempSymbol("gnu_pubnames", NewCU->getUniqueID()));
-    else
-      NewCU->addSectionDelta(
-          Die, dwarf::DW_AT_GNU_pubnames,
-          Asm->GetTempSymbol("gnu_pubnames", NewCU->getUniqueID()),
-          DwarfGnuPubNamesSectionSym);
-
-    if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-      NewCU->addSectionLabel(
-          Die, dwarf::DW_AT_GNU_pubtypes,
-          Asm->GetTempSymbol("gnu_pubtypes", NewCU->getUniqueID()));
-    else
-      NewCU->addSectionDelta(
-          Die, dwarf::DW_AT_GNU_pubtypes,
-          Asm->GetTempSymbol("gnu_pubtypes", NewCU->getUniqueID()),
-          DwarfGnuPubTypesSectionSym);
-  }
+  addGnuPubAttributes(NewCU, Die);
 
   // Attribute if we've emitted any ranges and their location for the compile unit.
-  if (!CU->getRangeLists().empty()) {
-    if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-      NewCU->addSectionLabel(
-          Die, dwarf::DW_AT_GNU_ranges_base,
-          Asm->GetTempSymbol("gnu_ranges", NewCU->getUniqueID()));
-    else
-      NewCU->addSectionDelta(
-          Die, dwarf::DW_AT_GNU_ranges_base,
-          Asm->GetTempSymbol("gnu_ranges", NewCU->getUniqueID()),
-          DwarfDebugRangeSectionSym);
-  }
+  if (!CU->getRangeLists().empty())
+    addSectionLabel(Asm, NewCU, Die, dwarf::DW_AT_GNU_ranges_base,
+                    Asm->GetTempSymbol("gnu_ranges", NewCU->getUniqueID()),
+                    DwarfDebugRangeSectionSym);
 
   SkeletonHolder.addUnit(NewCU);
 
