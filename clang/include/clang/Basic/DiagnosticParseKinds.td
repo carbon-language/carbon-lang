@@ -578,8 +578,8 @@ def err_class_on_template_template_param : Error<
   "template template parameter requires 'class' after the parameter list">;
 def err_template_spec_syntax_non_template : Error<
   "identifier followed by '<' indicates a class template specialization but "
-  "%0 %select{does not refer to a template|refers to a function "
-  "template|<unused>|refers to a template template parameter}1">;
+  "%0 %select{does not refer to a template|refers to a function template|"
+  "<unused>|refers to a variable template|<unused>}1">;
 def err_id_after_template_in_nested_name_spec : Error<
   "expected template name after 'template' keyword in nested name specifier">;
 def err_two_right_angle_brackets_need_space : Error<
@@ -643,7 +643,7 @@ def err_expected_semi_after_tagdecl : Error<
   "expected ';' after %0">;
 
 def err_typename_refers_to_non_type_template : Error<
-  "typename specifier refers to a non-template">;
+  "typename specifier refers to a non-type template">;
 def err_expected_type_name_after_typename : Error<
   "expected an identifier or template-id after '::'">;
 def err_explicit_spec_non_template : Error<

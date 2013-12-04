@@ -17,6 +17,7 @@
 namespace clang {
 
 /// \brief Specifies the kind of template name that an identifier refers to.
+/// Be careful when changing this: this enumeration is used in diagnostics.
 enum TemplateNameKind {
   /// The name does not refer to a template.
   TNK_Non_template = 0,

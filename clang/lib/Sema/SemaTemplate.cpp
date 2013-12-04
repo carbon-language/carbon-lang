@@ -2910,7 +2910,7 @@ TemplateNameKind Sema::ActOnDependentTemplateName(Scope *S,
   case UnqualifiedId::IK_OperatorFunctionId:
     Result = TemplateTy::make(Context.getDependentTemplateName(Qualifier,
                                              Name.OperatorFunctionId.Operator));
-    return TNK_Dependent_template_name;
+    return TNK_Function_template;
 
   case UnqualifiedId::IK_LiteralOperatorId:
     llvm_unreachable(
