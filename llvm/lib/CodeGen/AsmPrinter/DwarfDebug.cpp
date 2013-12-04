@@ -430,11 +430,8 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU, DISubprogram SP) {
     }
   }
 
-  MCSymbol *FuncBegin =
-      Asm->GetTempSymbol("func_begin", Asm->getFunctionNumber());
-  MCSymbol *FuncEnd = Asm->GetTempSymbol("func_end", Asm->getFunctionNumber());
-  SPCU->addLabelAddress(SPDie, dwarf::DW_AT_low_pc, FuncBegin);
-  SPCU->addLabelAddress(SPDie, dwarf::DW_AT_high_pc, FuncEnd);
+  SPCU->addLabelAddress(SPDie, dwarf::DW_AT_low_pc, FunctionBeginSym);
+  SPCU->addLabelAddress(SPDie, dwarf::DW_AT_high_pc, FunctionEndSym);
 
   const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
   MachineLocation Location(RI->getFrameRegister(*Asm->MF));
@@ -2452,15 +2449,15 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
 
     // Emit a label so we can reference the beginning of this pubname section.
     if (GnuStyle)
-      Asm->OutStreamer.EmitLabel(
-          Asm->GetTempSymbol("gnu_pubnames", TheU->getUniqueID()));
+      Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("gnu_pubnames", ID));
 
     // Emit the header.
     Asm->OutStreamer.AddComment("Length of Public Names Info");
-    Asm->EmitLabelDifference(Asm->GetTempSymbol("pubnames_end", ID),
-                             Asm->GetTempSymbol("pubnames_begin", ID), 4);
+    MCSymbol *BeginLabel = Asm->GetTempSymbol("pubnames_begin", ID);
+    MCSymbol *EndLabel = Asm->GetTempSymbol("pubnames_end", ID);
+    Asm->EmitLabelDifference(EndLabel, BeginLabel, 4);
 
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubnames_begin", ID));
+    Asm->OutStreamer.EmitLabel(BeginLabel);
 
     Asm->OutStreamer.AddComment("DWARF Version");
     Asm->EmitInt16(dwarf::DW_PUBNAMES_VERSION);
@@ -2500,7 +2497,7 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
 
     Asm->OutStreamer.AddComment("End Mark");
     Asm->EmitInt32(0);
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubnames_end", ID));
+    Asm->OutStreamer.EmitLabel(EndLabel);
   }
 }
 
@@ -2514,22 +2511,22 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
                                                E = getUnits().end();
        I != E; ++I) {
     Unit *TheU = *I;
+    unsigned ID = TheU->getUniqueID();
+
     // Start the dwarf pubtypes section.
     Asm->OutStreamer.SwitchSection(PSec);
 
     // Emit a label so we can reference the beginning of this pubtype section.
     if (GnuStyle)
-      Asm->OutStreamer.EmitLabel(
-          Asm->GetTempSymbol("gnu_pubtypes", TheU->getUniqueID()));
+      Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("gnu_pubtypes", ID));
 
     // Emit the header.
     Asm->OutStreamer.AddComment("Length of Public Types Info");
-    Asm->EmitLabelDifference(
-        Asm->GetTempSymbol("pubtypes_end", TheU->getUniqueID()),
-        Asm->GetTempSymbol("pubtypes_begin", TheU->getUniqueID()), 4);
+    MCSymbol *BeginLabel = Asm->GetTempSymbol("pubtypes_begin", ID);
+    MCSymbol *EndLabel = Asm->GetTempSymbol("pubtypes_end", ID);
+    Asm->EmitLabelDifference(EndLabel, BeginLabel, 4);
 
-    Asm->OutStreamer.EmitLabel(
-        Asm->GetTempSymbol("pubtypes_begin", TheU->getUniqueID()));
+    Asm->OutStreamer.EmitLabel(BeginLabel);
 
     if (Asm->isVerbose())
       Asm->OutStreamer.AddComment("DWARF Version");
@@ -2574,8 +2571,7 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
 
     Asm->OutStreamer.AddComment("End Mark");
     Asm->EmitInt32(0);
-    Asm->OutStreamer.EmitLabel(
-        Asm->GetTempSymbol("pubtypes_end", TheU->getUniqueID()));
+    Asm->OutStreamer.EmitLabel(EndLabel);
   }
 }
 
