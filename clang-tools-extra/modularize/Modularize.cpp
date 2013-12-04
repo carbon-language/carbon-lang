@@ -771,7 +771,7 @@ int main(int Argc, const char **Argv) {
     for (EntryBinArray::iterator DI = EntryBins.begin(), DE = EntryBins.end();
          DI != DE; ++DI, ++KindIndex) {
       int ECount = DI->size();
-      // If only 1 occurrence, skip;
+      // If only 1 occurrence of this entity, skip it, as we only report duplicates.
       if (ECount <= 1)
         continue;
       LocationArray::iterator FI = DI->begin();
