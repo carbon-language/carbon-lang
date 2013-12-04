@@ -1,8 +1,7 @@
-// RUN: %clang_cc1 -g -S -masm-verbose -o - %s | FileCheck %s
+// RUN: %clang -g -S -emit-llvm %s -o - | FileCheck %s
 
-// CHECK: abbrev_begin:
-// CHECK: DW_AT_accessibility
-// CHECK-NEXT: DW_FORM_data1
+// CHECK: [ DW_TAG_member ] [p] [{{[^]]*}}] [from int]
+// CHECK: [ DW_TAG_member ] [pr] [{{[^]]*}}] [private] [from int]
 
 class A {
 public:
