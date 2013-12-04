@@ -67,7 +67,11 @@ SANITIZER_INTERFACE_ATTRIBUTE char *__dfsw_strchr(const char *s, int c,
                                                   dfsan_label *ret_label) {
   for (size_t i = 0;; ++i) {
     if (s[i] == c || s[i] == 0) {
-      *ret_label = dfsan_union(dfsan_read_label(s, i+1), c_label);
+      if (flags().strict_data_dependencies) {
+        *ret_label = s_label;
+      } else {
+        *ret_label = dfsan_union(dfsan_read_label(s, i + 1), c_label);
+      }
       return s[i] == 0 ? 0 : const_cast<char *>(s+i);
     }
   }
@@ -81,13 +85,22 @@ SANITIZER_INTERFACE_ATTRIBUTE int __dfsw_memcmp(const void *s1, const void *s2,
   const char *cs1 = (const char *) s1, *cs2 = (const char *) s2;
   for (size_t i = 0; i != n; ++i) {
     if (cs1[i] != cs2[i]) {
-      *ret_label = dfsan_union(dfsan_read_label(cs1, i+1),
-                               dfsan_read_label(cs2, i+1));
+      if (flags().strict_data_dependencies) {
+        *ret_label = 0;
+      } else {
+        *ret_label = dfsan_union(dfsan_read_label(cs1, i + 1),
+                                 dfsan_read_label(cs2, i + 1));
+      }
       return cs1[i] - cs2[i];
     }
   }
-  *ret_label = dfsan_union(dfsan_read_label(cs1, n),
-                           dfsan_read_label(cs2, n));
+
+  if (flags().strict_data_dependencies) {
+    *ret_label = 0;
+  } else {
+    *ret_label = dfsan_union(dfsan_read_label(cs1, n),
+                             dfsan_read_label(cs2, n));
+  }
   return 0;
 }
 
@@ -97,8 +110,12 @@ SANITIZER_INTERFACE_ATTRIBUTE int __dfsw_strcmp(const char *s1, const char *s2,
                                                 dfsan_label *ret_label) {
   for (size_t i = 0;; ++i) {
     if (s1[i] != s2[i] || s1[i] == 0 || s2[i] == 0) {
-      *ret_label = dfsan_union(dfsan_read_label(s1, i+1),
-                               dfsan_read_label(s2, i+1));
+      if (flags().strict_data_dependencies) {
+        *ret_label = 0;
+      } else {
+        *ret_label = dfsan_union(dfsan_read_label(s1, i + 1),
+                                 dfsan_read_label(s2, i + 1));
+      }
       return s1[i] - s2[i];
     }
   }
@@ -110,8 +127,12 @@ __dfsw_strcasecmp(const char *s1, const char *s2, dfsan_label s1_label,
                   dfsan_label s2_label, dfsan_label *ret_label) {
   for (size_t i = 0;; ++i) {
     if (tolower(s1[i]) != tolower(s2[i]) || s1[i] == 0 || s2[i] == 0) {
-      *ret_label = dfsan_union(dfsan_read_label(s1, i+1),
-                               dfsan_read_label(s2, i+1));
+      if (flags().strict_data_dependencies) {
+        *ret_label = 0;
+      } else {
+        *ret_label = dfsan_union(dfsan_read_label(s1, i + 1),
+                                 dfsan_read_label(s2, i + 1));
+      }
       return s1[i] - s2[i];
     }
   }
@@ -129,9 +150,13 @@ SANITIZER_INTERFACE_ATTRIBUTE int __dfsw_strncmp(const char *s1, const char *s2,
   }
 
   for (size_t i = 0;; ++i) {
-    if (s1[i] != s2[i] || s1[i] == 0 || s2[i] == 0 || i == n-1) {
-      *ret_label = dfsan_union(dfsan_read_label(s1, i+1),
-                               dfsan_read_label(s2, i+1));
+    if (s1[i] != s2[i] || s1[i] == 0 || s2[i] == 0 || i == n - 1) {
+      if (flags().strict_data_dependencies) {
+        *ret_label = 0;
+      } else {
+        *ret_label = dfsan_union(dfsan_read_label(s1, i + 1),
+                                 dfsan_read_label(s2, i + 1));
+      }
       return s1[i] - s2[i];
     }
   }
@@ -150,8 +175,12 @@ __dfsw_strncasecmp(const char *s1, const char *s2, size_t n,
   for (size_t i = 0;; ++i) {
     if (tolower(s1[i]) != tolower(s2[i]) || s1[i] == 0 || s2[i] == 0 ||
         i == n - 1) {
-      *ret_label = dfsan_union(dfsan_read_label(s1, i+1),
-                               dfsan_read_label(s2, i+1));
+      if (flags().strict_data_dependencies) {
+        *ret_label = 0;
+      } else {
+        *ret_label = dfsan_union(dfsan_read_label(s1, i + 1),
+                                 dfsan_read_label(s2, i + 1));
+      }
       return s1[i] - s2[i];
     }
   }
@@ -171,7 +200,11 @@ SANITIZER_INTERFACE_ATTRIBUTE void *__dfsw_calloc(size_t nmemb, size_t size,
 SANITIZER_INTERFACE_ATTRIBUTE size_t
 __dfsw_strlen(const char *s, dfsan_label s_label, dfsan_label *ret_label) {
   size_t ret = strlen(s);
-  *ret_label = dfsan_read_label(s, ret+1);
+  if (flags().strict_data_dependencies) {
+    *ret_label = 0;
+  } else {
+    *ret_label = dfsan_read_label(s, ret + 1);
+  }
   return ret;
 }
 
@@ -191,7 +224,7 @@ SANITIZER_INTERFACE_ATTRIBUTE
 void *__dfsw_memcpy(void *dest, const void *src, size_t n,
                     dfsan_label dest_label, dfsan_label src_label,
                     dfsan_label n_label, dfsan_label *ret_label) {
-  *ret_label = 0;
+  *ret_label = dest_label;
   return dfsan_memcpy(dest, src, n);
 }
 
@@ -200,7 +233,7 @@ void *__dfsw_memset(void *s, int c, size_t n,
                     dfsan_label s_label, dfsan_label c_label,
                     dfsan_label n_label, dfsan_label *ret_label) {
   dfsan_memset(s, c, c_label, n);
-  *ret_label = 0;
+  *ret_label = s_label;
   return s;
 }
 

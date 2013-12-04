@@ -1,5 +1,7 @@
-// RUN: %clang_dfsan -m64 %s -o %t && %t
-// RUN: %clang_dfsan -mllvm -dfsan-args-abi -m64 %s -o %t && %t
+// RUN: %clang_dfsan -m64 %s -o %t && DFSAN_OPTIONS="strict_data_dependencies=0" %t
+// RUN: %clang_dfsan -mllvm -dfsan-args-abi -m64 %s -o %t && DFSAN_OPTIONS="strict_data_dependencies=0" %t
+// RUN: %clang_dfsan -DSTRICT_DATA_DEPENDENCIES -m64 %s -o %t && %t
+// RUN: %clang_dfsan -DSTRICT_DATA_DEPENDENCIES -mllvm -dfsan-args-abi -m64 %s -o %t && %t
 
 // Tests custom implementations of various glibc functions.
 
@@ -75,7 +77,11 @@ void test_memcmp() {
 
   int rv = memcmp(str1, str2, sizeof(str1));
   assert(rv < 0);
+#ifdef STRICT_DATA_DEPENDENCIES
+  ASSERT_ZERO_LABEL(rv);
+#else
   ASSERT_LABEL(rv, i_j_label);
+#endif
 }
 
 void test_memcpy() {
@@ -108,7 +114,11 @@ void test_strcmp() {
 
   int rv = strcmp(str1, str2);
   assert(rv < 0);
+#ifdef STRICT_DATA_DEPENDENCIES
+  ASSERT_ZERO_LABEL(rv);
+#else
   ASSERT_LABEL(rv, i_j_label);
+#endif
 }
 
 void test_strlen() {
@@ -117,7 +127,11 @@ void test_strlen() {
 
   int rv = strlen(str1);
   assert(rv == 4);
+#ifdef STRICT_DATA_DEPENDENCIES
+  ASSERT_ZERO_LABEL(rv);
+#else
   ASSERT_LABEL(rv, i_label);
+#endif
 }
 
 void test_strdup() {
@@ -160,7 +174,11 @@ void test_strncmp() {
 
   int rv = strncmp(str1, str2, sizeof(str1));
   assert(rv < 0);
+#ifdef STRICT_DATA_DEPENDENCIES
+  ASSERT_ZERO_LABEL(rv);
+#else
   ASSERT_LABEL(rv, dfsan_union(i_label, j_label));
+#endif
 
   rv = strncmp(str1, str2, 3);
   assert(rv == 0);
@@ -175,11 +193,19 @@ void test_strcasecmp() {
 
   int rv = strcasecmp(str1, str2);
   assert(rv < 0);
+#ifdef STRICT_DATA_DEPENDENCIES
+  ASSERT_ZERO_LABEL(rv);
+#else
   ASSERT_LABEL(rv, dfsan_union(i_label, j_label));
+#endif
 
   rv = strcasecmp(str1, str3);
   assert(rv == 0);
+#ifdef STRICT_DATA_DEPENDENCIES
+  ASSERT_ZERO_LABEL(rv);
+#else
   ASSERT_LABEL(rv, dfsan_union(i_label, j_label));
+#endif
 }
 
 void test_strncasecmp() {
@@ -189,7 +215,11 @@ void test_strncasecmp() {
 
   int rv = strncasecmp(str1, str2, sizeof(str1));
   assert(rv < 0);
+#ifdef STRICT_DATA_DEPENDENCIES
+  ASSERT_ZERO_LABEL(rv);
+#else
   ASSERT_LABEL(rv, dfsan_union(i_label, j_label));
+#endif
 
   rv = strncasecmp(str1, str2, 3);
   assert(rv == 0);
@@ -206,11 +236,19 @@ void test_strchr() {
 
   crv = strchr(str1, '1');
   assert(crv == &str1[3]);
+#ifdef STRICT_DATA_DEPENDENCIES
+  ASSERT_ZERO_LABEL(crv);
+#else
   ASSERT_LABEL(crv, i_label);
+#endif
 
   crv = strchr(str1, 'x');
   assert(!crv);
+#ifdef STRICT_DATA_DEPENDENCIES
+  ASSERT_ZERO_LABEL(crv);
+#else
   ASSERT_LABEL(crv, i_label);
+#endif
 }
 
 void test_calloc() {

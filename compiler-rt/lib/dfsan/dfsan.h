@@ -55,6 +55,11 @@ struct Flags {
   bool warn_unimplemented;
   // Whether to warn on non-zero labels.
   bool warn_nonzero_labels;
+  // Whether to propagate labels only when there is an obvious data dependency
+  // (e.g., when comparing strings, ignore the fact that the output of the
+  // comparison might be data-dependent on the content of the strings). This
+  // applies only to the custom functions defined in 'custom.c'.
+  bool strict_data_dependencies;
 };
 
 extern Flags flags_data;
