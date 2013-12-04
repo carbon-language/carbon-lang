@@ -1426,8 +1426,8 @@ void AsmPrinter::EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
 /// where the size in bytes of the directive is specified by Size and Hi/Lo
 /// specify the labels.  This implicitly uses .set if it is available.
 void AsmPrinter::EmitLabelOffsetDifference(const MCSymbol *Hi, uint64_t Offset,
-                                           const MCSymbol *Lo, unsigned Size)
-  const {
+                                           const MCSymbol *Lo,
+                                           unsigned Size) const {
 
   // Emit Hi+Offset - Lo
   // Get the Hi+Offset expression.
