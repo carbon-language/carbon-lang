@@ -68,7 +68,7 @@ namespace {
         return InstTypePair(dep.getInst(), Def);
       if (dep.isNonFuncLocal())
         return InstTypePair(dep.getInst(), NonFuncLocal);
-      assert(dep.isUnknown() && "unexptected dependence type");
+      assert(dep.isUnknown() && "unexpected dependence type");
       return InstTypePair(dep.getInst(), Unknown);
     }
     static InstTypePair getInstTypePair(const Instruction* inst, DepType type) {
