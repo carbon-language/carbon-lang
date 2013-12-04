@@ -90,7 +90,7 @@ DwarfAccelTables("dwarf-accel-tables", cl::Hidden,
 
 static cl::opt<DefaultOnOff>
 SplitDwarf("split-dwarf", cl::Hidden,
-           cl::desc("Output prototype dwarf split debug info."),
+           cl::desc("Output DWARF5 split debug info."),
            cl::values(clEnumVal(Default, "Default for platform"),
                       clEnumVal(Enable, "Enabled"),
                       clEnumVal(Disable, "Disabled"), clEnumValEnd),
