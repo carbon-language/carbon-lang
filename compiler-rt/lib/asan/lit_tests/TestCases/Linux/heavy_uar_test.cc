@@ -47,8 +47,8 @@ int main(int argc, char **argv) {
   RecuriveFunctionWithStackFrame<1024>(10);
   stale_stack[100]++;
   // CHECK: ERROR: AddressSanitizer: stack-use-after-return on address
-  // CHECK: is located in stack of thread T0 at offset 132 in frame
+  // CHECK: is located in stack of thread T0 at offset {{116|132}} in frame
   // CHECK:  in LeakStack(){{.*}}heavy_uar_test.cc:
-  // CHECK: [32, 1056) 'x'
+  // CHECK: [{{16|32}}, {{1040|1056}}) 'x'
   return 0;
 }
