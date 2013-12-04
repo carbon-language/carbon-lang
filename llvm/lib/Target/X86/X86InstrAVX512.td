@@ -627,14 +627,14 @@ multiclass avx512_blendmask<bits<8> opc, string OpcodeStr, Intrinsic Int,
     def rm : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
                  (ins KRC:$mask, RC:$src1, x86memop:$src2),
                  !strconcat(OpcodeStr,
-                  "\t{$src2, $src1, $mask, $dst|$dst, $mask, $src1, $src2}"),
+                 "\t{$src2, $src1, ${dst} {${mask}}|${dst} {${mask}}, $src1, $src2}"),
                  []>, 
                  EVEX_4V, EVEX_K;
 
     def rm_Int : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
                  (ins KRC:$mask, RC:$src1, x86memop:$src2),
                  !strconcat(OpcodeStr,
-                  "\t{$src2, $src1, $mask, $dst|$dst, $mask, $src1, $src2}"),
+                 "\t{$src2, $src1, ${dst} {${mask}}|${dst} {${mask}}, $src1, $src2}"),
                  [(set RC:$dst, (Int KRC:$mask, (vt RC:$src1),
                    (mem_frag addr:$src2)))]>,
                  EVEX_4V, EVEX_K;

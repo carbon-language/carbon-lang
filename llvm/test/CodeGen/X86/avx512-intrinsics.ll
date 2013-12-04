@@ -355,6 +355,15 @@ define <8 x double> @test_x86_mskblend_pd_512(i8 %a0, <8 x double> %a1, <8 x dou
   %res = call <8 x double> @llvm.x86.avx512.mskblend.pd.512(<8 x i1> %m0, <8 x double> %a1, <8 x double> %a2) ; <<8 x double>> [#uses=1]
   ret <8 x double> %res
 }
+
+define <8 x double> @test_x86_mskblend_pd_512_memop(<8 x double> %a, <8 x double>* %ptr, i8 %mask) {
+  ; CHECK-LABEL: test_x86_mskblend_pd_512_memop
+  ; CHECK: vblendmpd {{.*}}, {{%zmm[0-9]}}, {{%zmm[0-9]}} {%k1}
+  %vmask = bitcast i8 %mask to <8 x i1>
+  %b = load <8 x double>* %ptr
+  %res = call <8 x double> @llvm.x86.avx512.mskblend.pd.512(<8 x i1> %vmask, <8 x double> %a, <8 x double> %b) ; <<8 x double>> [#uses=1]
+  ret <8 x double> %res
+}
 declare <8 x double> @llvm.x86.avx512.mskblend.pd.512(<8 x i1> %a0, <8 x double> %a1, <8 x double> %a2) nounwind readonly
 
 define <16 x i32> @test_x86_mskblend_d_512(i16 %a0, <16 x i32> %a1, <16 x i32> %a2) {
