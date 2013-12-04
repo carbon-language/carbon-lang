@@ -2655,6 +2655,10 @@ private:
                                              QualType ObjectType,
                                              NamedDecl *FirstQualifierInScope,
                                              CXXScopeSpec &SS);
+
+  TypeSourceInfo *TransformTSIInObjectScope(TypeLoc TL, QualType ObjectType,
+                                            NamedDecl *FirstQualifierInScope,
+                                            CXXScopeSpec &SS);
 };
 
 template<typename Derived>
@@ -3562,52 +3566,14 @@ TreeTransform<Derived>::TransformTypeInObjectScope(TypeLoc TL,
                                                    QualType ObjectType,
                                                    NamedDecl *UnqualLookup,
                                                    CXXScopeSpec &SS) {
-  QualType T = TL.getType();
-  if (getDerived().AlreadyTransformed(T))
+  if (getDerived().AlreadyTransformed(TL.getType()))
     return TL;
 
-  TypeLocBuilder TLB;
-  QualType Result;
-
-  if (isa<TemplateSpecializationType>(T)) {
-    TemplateSpecializationTypeLoc SpecTL =
-        TL.castAs<TemplateSpecializationTypeLoc>();
-
-    TemplateName Template =
-      getDerived().TransformTemplateName(SS,
-                                         SpecTL.getTypePtr()->getTemplateName(),
-                                         SpecTL.getTemplateNameLoc(),
-                                         ObjectType, UnqualLookup);
-    if (Template.isNull())
-      return TypeLoc();
-
-    Result = getDerived().TransformTemplateSpecializationType(TLB, SpecTL,
-                                                              Template);
-  } else if (isa<DependentTemplateSpecializationType>(T)) {
-    DependentTemplateSpecializationTypeLoc SpecTL =
-        TL.castAs<DependentTemplateSpecializationTypeLoc>();
-
-    TemplateName Template
-      = getDerived().RebuildTemplateName(SS,
-                                         *SpecTL.getTypePtr()->getIdentifier(),
-                                         SpecTL.getTemplateNameLoc(),
-                                         ObjectType, UnqualLookup);
-    if (Template.isNull())
-      return TypeLoc();
-
-    Result = getDerived().TransformDependentTemplateSpecializationType(TLB,
-                                                                       SpecTL,
-                                                                     Template,
-                                                                       SS);
-  } else {
-    // Nothing special needs to be done for these.
-    Result = getDerived().TransformType(TLB, TL);
-  }
-
-  if (Result.isNull())
-    return TypeLoc();
-
-  return TLB.getTypeSourceInfo(SemaRef.Context, Result)->getTypeLoc();
+  TypeSourceInfo *TSI =
+      TransformTSIInObjectScope(TL, ObjectType, UnqualLookup, SS);
+  if (TSI)
+    return TSI->getTypeLoc();
+  return TypeLoc();
 }
 
 template<typename Derived>
@@ -3616,16 +3582,23 @@ TreeTransform<Derived>::TransformTypeInObjectScope(TypeSourceInfo *TSInfo,
                                                    QualType ObjectType,
                                                    NamedDecl *UnqualLookup,
                                                    CXXScopeSpec &SS) {
-  // FIXME: Painfully copy-paste from the above!
-
-  QualType T = TSInfo->getType();
-  if (getDerived().AlreadyTransformed(T))
+  if (getDerived().AlreadyTransformed(TSInfo->getType()))
     return TSInfo;
+
+  return TransformTSIInObjectScope(TSInfo->getTypeLoc(), ObjectType,
+                                   UnqualLookup, SS);
+}
+
+template <typename Derived>
+TypeSourceInfo *TreeTransform<Derived>::TransformTSIInObjectScope(
+    TypeLoc TL, QualType ObjectType, NamedDecl *UnqualLookup,
+    CXXScopeSpec &SS) {
+  QualType T = TL.getType();
+  assert(!getDerived().AlreadyTransformed(T));
 
   TypeLocBuilder TLB;
   QualType Result;
 
-  TypeLoc TL = TSInfo->getTypeLoc();
   if (isa<TemplateSpecializationType>(T)) {
     TemplateSpecializationTypeLoc SpecTL =
         TL.castAs<TemplateSpecializationTypeLoc>();
