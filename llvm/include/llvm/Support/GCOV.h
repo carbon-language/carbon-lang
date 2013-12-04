@@ -217,6 +217,7 @@ public:
   ~GCOVFile();
   bool readGCNO(GCOVBuffer &Buffer);
   bool readGCDA(GCOVBuffer &Buffer);
+  uint32_t getChecksum() const { return Checksum; }
   void dump() const;
   void collectLineCounts(FileInfo &FI);
 private:
@@ -239,7 +240,7 @@ struct GCOVEdge {
 /// GCOVFunction - Collects function information.
 class GCOVFunction {
 public:
-  GCOVFunction() : Ident(0), LineNumber(0) {}
+  GCOVFunction(GCOVFile &P) : Parent(P), Ident(0), LineNumber(0) {}
   ~GCOVFunction();
   bool readGCNO(GCOVBuffer &Buffer, GCOV::GCOVVersion Version);
   bool readGCDA(GCOVBuffer &Buffer, GCOV::GCOVVersion Version);
@@ -247,6 +248,7 @@ public:
   void dump() const;
   void collectLineCounts(FileInfo &FI);
 private:
+  GCOVFile &Parent;
   uint32_t Ident;
   uint32_t LineNumber;
   StringRef Name;

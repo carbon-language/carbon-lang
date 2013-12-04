@@ -37,7 +37,7 @@ bool GCOVFile::readGCNO(GCOVBuffer &Buffer) {
   if (!Buffer.readInt(Checksum)) return false;
   while (true) {
     if (!Buffer.readFunctionTag()) break;
-    GCOVFunction *GFun = new GCOVFunction();
+    GCOVFunction *GFun = new GCOVFunction(*this);
     if (!GFun->readGCNO(Buffer, Version))
       return false;
     Functions.push_back(GFun);
@@ -62,7 +62,8 @@ bool GCOVFile::readGCDA(GCOVBuffer &Buffer) {
   uint32_t GCDAChecksum;
   if (!Buffer.readInt(GCDAChecksum)) return false;
   if (Checksum != GCDAChecksum) {
-    errs() << "File checksum does not match.\n";
+    errs() << "File checksums do not match: " << Checksum << " != "
+           << GCDAChecksum << ".\n";
     return false;
   }
   for (size_t i = 0, e = Functions.size(); i < e; ++i) {
@@ -125,9 +126,15 @@ bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
   if (!Buff.readInt(Dummy)) return false; // Function header length
   if (!Buff.readInt(Ident)) return false;
   if (!Buff.readInt(Dummy)) return false; // Checksum #1
-  if (Version != GCOV::V402)
-    if (!Buff.readInt(Dummy)) return false; // Checksum #2
-
+  if (Version != GCOV::V402) {
+    uint32_t CfgChecksum;
+    if (!Buff.readInt(CfgChecksum)) return false;
+    if (Parent.getChecksum() != CfgChecksum) {
+      errs() << "File checksums do not match: " << Parent.getChecksum()
+             << " != " << CfgChecksum << " in (" << Name << ").\n";
+      return false;
+    }
+  }
   if (!Buff.readString(Name)) return false;
   if (!Buff.readString(Filename)) return false;
   if (!Buff.readInt(LineNumber)) return false;
@@ -152,7 +159,7 @@ bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
     uint32_t BlockNo;
     if (!Buff.readInt(BlockNo)) return false;
     if (BlockNo >= BlockCount) {
-      errs() << "Unexpected block number.\n";
+      errs() << "Unexpected block number (in " << Name << ").\n";
       return false;
     }
     for (uint32_t i = 0, e = EdgeCount; i != e; ++i) {
@@ -174,7 +181,7 @@ bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
     uint32_t BlockNo;
     if (!Buff.readInt(BlockNo)) return false;
     if (BlockNo >= BlockCount) {
-      errs() << "Unexpected block number.\n";
+      errs() << "Unexpected block number (in " << Name << ").\n";
       return false;
     }
     GCOVBlock *Block = Blocks[BlockNo];
@@ -183,7 +190,8 @@ bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
       StringRef F;
       if (!Buff.readString(F)) return false;
       if (F != Filename) {
-        errs() << "Multiple sources for a single basic block.\n";
+        errs() << "Multiple sources for a single basic block (in "
+               << Name << ").\n";
         return false;
       }
       if (Buff.getCursor() == (EndPos - 4)) break;
@@ -204,15 +212,37 @@ bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
 bool GCOVFunction::readGCDA(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
   uint32_t Dummy;
   if (!Buff.readInt(Dummy)) return false; // Function header length
-  if (!Buff.readInt(Ident)) return false;
-  if (!Buff.readInt(Dummy)) return false; // Checksum #1
-  if (Version != GCOV::V402)
-    if (!Buff.readInt(Dummy)) return false; // Checksum #2
+  uint32_t GCDAIdent;
+  if (!Buff.readInt(GCDAIdent)) return false;
+  if (Ident != GCDAIdent) {
+    errs() << "Function identifiers do not match: " << Ident << " != "
+           << GCDAIdent << " (in " << Name << ").\n";
+    return false;
+  }
 
-  if (!Buff.readString(Name)) return false;
+  if (!Buff.readInt(Dummy)) return false; // Checksum #1
+
+
+  uint32_t CfgChecksum;
+  if (Version != GCOV::V402) {
+    if (!Buff.readInt(CfgChecksum)) return false;
+    if (Parent.getChecksum() != CfgChecksum) {
+      errs() << "File checksums do not match: " << Parent.getChecksum()
+             << " != " << CfgChecksum << " (in " << Name << ").\n";
+      return false;
+    }
+  }
+
+  StringRef GCDAName;
+  if (!Buff.readString(GCDAName)) return false;
+  if (Name != GCDAName) {
+    errs() << "Function names do not match: " << Name << " != " << GCDAName
+           << ".\n";
+    return false;
+  }
 
   if (!Buff.readArcTag()) {
-    errs() << "Arc tag not found.\n";
+    errs() << "Arc tag not found (in " << Name << ").\n";
     return false;
   }
 
@@ -225,14 +255,14 @@ bool GCOVFunction::readGCDA(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
   for (uint32_t BlockNo = 0; Count > 0; ++BlockNo) {
     // The last block is always reserved for exit block
     if (BlockNo >= Blocks.size()-1) {
-      errs() << "Unexpected number of edges.\n";
+      errs() << "Unexpected number of edges (in " << Name << ").\n";
       return false;
     }
     GCOVBlock &Block = *Blocks[BlockNo];
     for (size_t EdgeNo = 0, End = Block.getNumDstEdges(); EdgeNo < End;
            ++EdgeNo) {
       if (Count == 0) {
-        errs() << "Unexpected number of edges.\n";
+        errs() << "Unexpected number of edges (in " << Name << ").\n";
         return false;
       }
       uint64_t ArcCount;
