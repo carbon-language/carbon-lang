@@ -2128,8 +2128,7 @@ void DwarfDebug::emitDIE(DIE *Die, ArrayRef<DIEAbbrev *> Abbrevs) {
     for (unsigned j = 0, M = Children.size(); j < M; ++j)
       emitDIE(Children[j], Abbrevs);
 
-    if (Asm->isVerbose())
-      Asm->OutStreamer.AddComment("End Of Children Mark");
+    Asm->OutStreamer.AddComment("End Of Children Mark");
     Asm->EmitInt8(0);
   }
 }
@@ -2484,8 +2483,7 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
         Asm->EmitInt8(Desc.toBits());
       }
 
-      if (Asm->isVerbose())
-        Asm->OutStreamer.AddComment("External Name");
+      Asm->OutStreamer.AddComment("External Name");
       Asm->OutStreamer.EmitBytes(StringRef(Name, GI->getKeyLength() + 1));
     }
 
@@ -2522,8 +2520,7 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
 
     Asm->OutStreamer.EmitLabel(BeginLabel);
 
-    if (Asm->isVerbose())
-      Asm->OutStreamer.AddComment("DWARF Version");
+    Asm->OutStreamer.AddComment("DWARF Version");
     Asm->EmitInt16(dwarf::DW_PUBTYPES_VERSION);
 
     Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
@@ -2544,8 +2541,7 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
       const char *Name = GI->getKeyData();
       const DIE *Entity = GI->second;
 
-      if (Asm->isVerbose())
-        Asm->OutStreamer.AddComment("DIE offset");
+      Asm->OutStreamer.AddComment("DIE offset");
       Asm->EmitInt32(Entity->getOffset());
 
       if (GnuStyle) {
@@ -2556,8 +2552,7 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
         Asm->EmitInt8(Desc.toBits());
       }
 
-      if (Asm->isVerbose())
-        Asm->OutStreamer.AddComment("External Name");
+      Asm->OutStreamer.AddComment("External Name");
 
       // Emit the name with a terminating null byte.
       Asm->OutStreamer.EmitBytes(StringRef(Name, GI->getKeyLength() + 1));
