@@ -314,12 +314,18 @@ namespace {
       this->os = os;
 
       Function *F = SP.getFunction();
-      DEBUG(dbgs() << "Function: " << F->getName() << "\n");
+      DEBUG(dbgs() << "Function: " << getFunctionName(SP) << "\n");
       uint32_t i = 0;
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
         Blocks[BB] = new GCOVBlock(i++, os);
       }
       ReturnBlock = new GCOVBlock(i++, os);
+
+      std::string FunctionNameAndLine;
+      raw_string_ostream FNLOS(FunctionNameAndLine);
+      FNLOS << getFunctionName(SP) << SP.getLineNumber();
+      FNLOS.flush();
+      FuncChecksum = hash_value(FunctionNameAndLine);
     }
 
     ~GCOVFunction() {
@@ -347,6 +353,10 @@ namespace {
       return EdgeDestinations;
     }
 
+    uint32_t getFuncChecksum() {
+      return FuncChecksum;
+    }
+
     void setCfgChecksum(uint32_t Checksum) {
       CfgChecksum = Checksum;
     }
@@ -359,7 +369,7 @@ namespace {
         ++BlockLen;
       write(BlockLen);
       write(Ident);
-      write(0);  // lineno checksum
+      write(FuncChecksum);
       if (UseCfgChecksum)
         write(CfgChecksum);
       writeGCOVString(getFunctionName(SP));
@@ -401,6 +411,7 @@ namespace {
    private:
     DISubprogram SP;
     uint32_t Ident;
+    uint32_t FuncChecksum;
     bool UseCfgChecksum;
     uint32_t CfgChecksum;
     DenseMap<BasicBlock *, GCOVBlock *> Blocks;
@@ -731,6 +742,7 @@ Constant *GCOVProfiler::getEmitFunctionFunc() {
   Type *Args[] = {
     Type::getInt32Ty(*Ctx),    // uint32_t ident
     Type::getInt8PtrTy(*Ctx),  // const char *function_name
+    Type::getInt32Ty(*Ctx),    // uint32_t func_checksum
     Type::getInt8Ty(*Ctx),     // uint8_t use_extra_checksum
     Type::getInt32Ty(*Ctx),    // uint32_t cfg_checksum
   };
@@ -813,11 +825,12 @@ Function *GCOVProfiler::insertCounterWriteout(
                           Builder.getInt32(CfgChecksum));
       for (unsigned j = 0, e = CountersBySP.size(); j != e; ++j) {
         DISubprogram SP(CountersBySP[j].second);
-        Builder.CreateCall4(
+        Builder.CreateCall5(
             EmitFunction, Builder.getInt32(j),
             Options.FunctionNamesInData ?
               Builder.CreateGlobalStringPtr(getFunctionName(SP)) :
               Constant::getNullValue(Builder.getInt8PtrTy()),
+            Builder.getInt32(Funcs[j]->getFuncChecksum()),
             Builder.getInt8(Options.UseCfgChecksum),
             Builder.getInt32(CfgChecksum));
 
