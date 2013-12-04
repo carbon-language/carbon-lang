@@ -45,13 +45,13 @@ private:
 class RangeSpanList {
 private:
   // Index for locating within the debug_range section this particular span.
-  unsigned Index;
+  MCSymbol *RangeSym;
   // List of ranges.
   SmallVector<RangeSpan, 2> Ranges;
 
 public:
-  RangeSpanList(unsigned Idx) : Index(Idx) {}
-  unsigned getIndex() const { return Index; }
+  RangeSpanList(MCSymbol *Sym) : RangeSym(Sym) {}
+  MCSymbol *getSym() const { return RangeSym; }
   const SmallVectorImpl<RangeSpan> &getRanges() const { return Ranges; }
   void addRange(RangeSpan Range) { Ranges.push_back(Range); }
 };

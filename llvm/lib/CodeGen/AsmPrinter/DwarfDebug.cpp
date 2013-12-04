@@ -469,9 +469,9 @@ void DwarfDebug::addScopeRangeList(CompileUnit *TheCU, DIE *ScopeDIE,
                                    const SmallVectorImpl<InsnRange> &Range) {
   // Emit offset in .debug_range as a relocatable label. emitDIE will handle
   // emitting it appropriately.
-  TheCU->addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges,
-                         Asm->GetTempSymbol("debug_ranges", GlobalRangeCount));
-  RangeSpanList List(GlobalRangeCount++);
+  MCSymbol *RangeSym = Asm->GetTempSymbol("debug_ranges", GlobalRangeCount++);
+  TheCU->addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges, RangeSym);
+  RangeSpanList List(RangeSym);
   for (SmallVectorImpl<InsnRange>::const_iterator RI = Range.begin(),
                                                   RE = Range.end();
        RI != RE; ++RI) {
@@ -2940,9 +2940,8 @@ void DwarfDebug::emitDebugRanges() {
          I != E; ++I) {
       const RangeSpanList &List = *I;
 
-      // Emit a symbol so we can find the beginning of the range.
-      Asm->OutStreamer.EmitLabel(
-          Asm->GetTempSymbol("debug_ranges", List.getIndex()));
+      // Emit our symbol so we can find the beginning of the range.
+      Asm->OutStreamer.EmitLabel(List.getSym());
 
       for (SmallVectorImpl<RangeSpan>::const_iterator
                RI = List.getRanges().begin(),
