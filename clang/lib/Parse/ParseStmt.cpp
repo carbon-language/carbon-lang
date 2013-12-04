@@ -1730,8 +1730,8 @@ StmtResult Parser::ParseReturnStatement() {
           << R.get()->getSourceRange();
     } else
         R = ParseExpression();
-    if (R.isInvalid()) {  // Skip to the semicolon, but don't consume it.
-      SkipUntil(tok::semi, StopBeforeMatch);
+    if (R.isInvalid()) {
+      SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
       return StmtError();
     }
   }
