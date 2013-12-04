@@ -1,4 +1,4 @@
-// REQUIRES: ppc64-registered-target
+// REQUIRES: powerpc-registered-target
 // RUN: %clang_cc1 -triple powerpc64-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s
 
 float crealf(_Complex float);

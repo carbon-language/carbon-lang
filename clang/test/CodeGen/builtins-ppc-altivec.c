@@ -1,4 +1,4 @@
-// REQUIRES: ppc32-registered-target
+// REQUIRES: powerpc-registered-target
 // RUN: %clang_cc1 -faltivec -triple powerpc-unknown-unknown -emit-llvm %s -o - | FileCheck %s
 
 vector bool char vbc = { 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0 };

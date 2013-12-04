@@ -1,4 +1,4 @@
-// REQUIRES: ppc32-registered-target
+// REQUIRES: powerpc-registered-target
 // RUN: %clang_cc1 -triple powerpc-unknown-unknown -emit-llvm %s -o - | FileCheck %s
 
 void test_eh_return_data_regno()
