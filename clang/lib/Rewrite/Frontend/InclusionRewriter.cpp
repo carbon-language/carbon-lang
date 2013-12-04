@@ -518,7 +518,13 @@ void clang::RewriteIncludesInInput(Preprocessor &PP, raw_ostream *OS,
   InclusionRewriter *Rewrite = new InclusionRewriter(PP, *OS,
                                                      Opts.ShowLineMarkers);
   PP.addPPCallbacks(Rewrite);
-  PP.IgnorePragmas();
+  // Ignore all pragmas, otherwise there will be warnings about unknown pragmas
+  // (because there's nothing to handle them).
+  PP.AddPragmaHandler(new EmptyPragmaHandler());
+  // Ignore also all pragma in all namespaces created
+  // in Preprocessor::RegisterBuiltinPragmas().
+  PP.AddPragmaHandler("GCC", new EmptyPragmaHandler());
+  PP.AddPragmaHandler("clang", new EmptyPragmaHandler());
 
   // First let the preprocessor process the entire file and call callbacks.
   // Callbacks will record which #include's were actually performed.
