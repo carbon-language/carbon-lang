@@ -4891,6 +4891,28 @@ TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {
 
   verifyFormat("void f() {}", getLLVMStyleWithColumns(11));
   verifyFormat("void f() {\n}", getLLVMStyleWithColumns(10));
+
+  FormatStyle NoColumnLimit = getLLVMStyle();
+  NoColumnLimit.ColumnLimit = 0;
+  EXPECT_EQ("A() : b(0) {}", format("A():b(0){}", NoColumnLimit));
+  EXPECT_EQ("class C {\n"
+            "  A() : b(0) {}\n"
+            "};", format("class C{A():b(0){}};", NoColumnLimit));
+  EXPECT_EQ("A()\n"
+            "    : b(0) {\n"
+            "}",
+            format("A()\n:b(0)\n{\n}", NoColumnLimit));
+
+  FormatStyle DoNotMergeNoColumnLimit = NoColumnLimit;
+  DoNotMergeNoColumnLimit.AllowShortFunctionsOnASingleLine = false;
+  EXPECT_EQ("A()\n"
+            "    : b(0) {\n"
+            "}",
+            format("A():b(0){}", DoNotMergeNoColumnLimit));
+  EXPECT_EQ("A()\n"
+            "    : b(0) {\n"
+            "}",
+            format("A()\n:b(0)\n{\n}", DoNotMergeNoColumnLimit));
 }
 
 TEST_F(FormatTest, UnderstandContextOfRecordTypeKeywords) {
@@ -7340,12 +7362,18 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
 
   // Constructor initializers are formatted one per line with the "," on the
   // new line.
-  verifyFormat("Constructor()\n"
-               "    : aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
-               "    , aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaa, // break\n"
-               "                               aaaaaaaaaaaaaa)\n"
-               "    , aaaaaaaaaaaaaaaaaaaaaaa() {}",
-               Style);
+  EXPECT_EQ(
+      "Constructor()\n"
+      "    : aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+      "    , aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaa, // break\n"
+      "                               aaaaaaaaaaaaaa)\n"
+      "    , aaaaaaaaaaaaaaaaaaaaaaa() {}",
+      format("Constructor()\n"
+             "    : aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+             "    , aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaa, // break\n"
+             "                               aaaaaaaaaaaaaa)\n"
+             "    , aaaaaaaaaaaaaaaaaaaaaaa() {}",
+             Style));
 
   // Access specifiers should be aligned left.
   verifyFormat("class C {\n"
