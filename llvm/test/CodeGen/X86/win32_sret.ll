@@ -1,11 +1,11 @@
 ; We specify -mcpu explicitly to avoid instruction reordering that happens on
 ; some setups (e.g., Atom) from affecting the output.
 ; RUN: llc < %s -mcpu=core2 -mtriple=i686-pc-win32 | FileCheck %s -check-prefix=WIN32
-; RUN: llc < %s -mtriple=i686-pc-mingw32 | FileCheck %s -check-prefix=MINGW_X86
-; RUN: llc < %s -mtriple=i386-pc-linux | FileCheck %s -check-prefix=LINUX
+; RUN: llc < %s -mcpu=core2 -mtriple=i686-pc-mingw32 | FileCheck %s -check-prefix=MINGW_X86
+; RUN: llc < %s -mcpu=core2 -mtriple=i386-pc-linux | FileCheck %s -check-prefix=LINUX
 ; RUN: llc < %s -mcpu=core2 -O0 -mtriple=i686-pc-win32 | FileCheck %s -check-prefix=WIN32
-; RUN: llc < %s -O0 -mtriple=i686-pc-mingw32 | FileCheck %s -check-prefix=MINGW_X86
-; RUN: llc < %s -O0 -mtriple=i386-pc-linux | FileCheck %s -check-prefix=LINUX
+; RUN: llc < %s -mcpu=core2 -O0 -mtriple=i686-pc-mingw32 | FileCheck %s -check-prefix=MINGW_X86
+; RUN: llc < %s -mcpu=core2 -O0 -mtriple=i386-pc-linux | FileCheck %s -check-prefix=LINUX
 
 ; The SysV ABI used by most Unixes and Mingw on x86 specifies that an sret pointer
 ; is callee-cleanup. However, in MSVC's cdecl calling convention, sret pointer
