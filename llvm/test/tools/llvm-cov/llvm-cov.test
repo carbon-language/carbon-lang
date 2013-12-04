@@ -11,8 +11,6 @@ RUN: rm test.cpp.llcov
 
 RUN: not llvm-cov -gcno=test_read_fail.gcno -gcda=test.gcda
 
-RUN: not llvm-cov -gcno=test.gcno -gcda=test_file_checksum_fail.gcda
-
-RUN: not llvm-cov -gcno=test.gcno -gcda=test_func_checksum_fail.gcda
+RUN: not llvm-cov -gcno=test.gcno -gcda=test_checksum_mismatch.gcda
 
 XFAIL: powerpc64, s390x, mips

@@ -125,7 +125,7 @@ bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
   uint32_t Dummy;
   if (!Buff.readInt(Dummy)) return false; // Function header length
   if (!Buff.readInt(Ident)) return false;
-  if (!Buff.readInt(Checksum)) return false;
+  if (!Buff.readInt(Dummy)) return false; // Checksum #1
   if (Version != GCOV::V402) {
     uint32_t CfgChecksum;
     if (!Buff.readInt(CfgChecksum)) return false;
@@ -212,7 +212,6 @@ bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
 bool GCOVFunction::readGCDA(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
   uint32_t Dummy;
   if (!Buff.readInt(Dummy)) return false; // Function header length
-
   uint32_t GCDAIdent;
   if (!Buff.readInt(GCDAIdent)) return false;
   if (Ident != GCDAIdent) {
@@ -221,13 +220,8 @@ bool GCOVFunction::readGCDA(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
     return false;
   }
 
-  uint32_t GCDAChecksum;
-  if (!Buff.readInt(GCDAChecksum)) return false;
-  if (Checksum != GCDAChecksum) {
-    errs() << "Function checksums do not match: " << Checksum << " != "
-           << GCDAChecksum << " (in " << Name << ").\n";
-    return false;
-  }
+  if (!Buff.readInt(Dummy)) return false; // Checksum #1
+
 
   uint32_t CfgChecksum;
   if (Version != GCOV::V402) {
