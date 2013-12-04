@@ -330,7 +330,7 @@ void llvm_gcda_increment_indirect_counter(uint32_t *predecessor,
 }
 
 void llvm_gcda_emit_function(uint32_t ident, const char *function_name,
-                             uint8_t use_extra_checksum,
+                             uint32_t func_checksum, uint8_t use_extra_checksum,
                              uint32_t cfg_checksum) {
   uint32_t len = 2;
 
@@ -348,7 +348,7 @@ void llvm_gcda_emit_function(uint32_t ident, const char *function_name,
     len += 1 + length_of_string(function_name);
   write_32bit_value(len);
   write_32bit_value(ident);
-  write_32bit_value(0);
+  write_32bit_value(func_checksum);
   if (use_extra_checksum)
     write_32bit_value(cfg_checksum);
   if (function_name)
