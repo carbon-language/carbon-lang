@@ -471,17 +471,17 @@ void DwarfDebug::addScopeRangeList(CompileUnit *TheCU, DIE *ScopeDIE,
   // emitting it appropriately.
   TheCU->addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges,
                          Asm->GetTempSymbol("debug_ranges", GlobalRangeCount));
-  RangeSpanList *List = new RangeSpanList(GlobalRangeCount++);
+  RangeSpanList List(GlobalRangeCount++);
   for (SmallVectorImpl<InsnRange>::const_iterator RI = Range.begin(),
                                                   RE = Range.end();
        RI != RE; ++RI) {
     RangeSpan Span(getLabelBeforeInsn(RI->first),
                    getLabelAfterInsn(RI->second));
-    List->addRange(Span);
+    List.addRange(llvm_move(Span));
   }
 
   // Add the range list to the set of ranges to be emitted.
-  TheCU->addRangeList(List);
+  TheCU->addRangeList(llvm_move(List));
 }
 
 // Construct new DW_TAG_lexical_block for this scope and attach
@@ -2938,22 +2938,22 @@ void DwarfDebug::emitDebugRanges() {
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("gnu_ranges", ID));
 
     // Iterate over the misc ranges for the compile units in the module.
-    const SmallVectorImpl<RangeSpanList *> &RangeLists = TheCU->getRangeLists();
-    for (SmallVectorImpl<RangeSpanList *>::const_iterator
+    const SmallVectorImpl<RangeSpanList> &RangeLists = TheCU->getRangeLists();
+    for (SmallVectorImpl<RangeSpanList>::const_iterator
              I = RangeLists.begin(),
              E = RangeLists.end();
          I != E; ++I) {
-      RangeSpanList *List = *I;
+      const RangeSpanList &List = *I;
 
       // Emit a symbol so we can find the beginning of the range.
       Asm->OutStreamer.EmitLabel(
-          Asm->GetTempSymbol("debug_ranges", List->getIndex()));
+          Asm->GetTempSymbol("debug_ranges", List.getIndex()));
 
       for (SmallVectorImpl<RangeSpan>::const_iterator
-               I = List->getRanges().begin(),
-               E = List->getRanges().end();
-           I != E; ++I) {
-        RangeSpan Range = *I;
+               RI = List.getRanges().begin(),
+               RE = List.getRanges().end();
+           RI != RE; ++RI) {
+        const RangeSpan &Range = *RI;
         // We occasionally have ranges without begin/end labels.
         // FIXME: Verify and fix.
         const MCSymbol *Begin = Range.getStart();

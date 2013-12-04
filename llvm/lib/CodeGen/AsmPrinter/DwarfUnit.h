@@ -35,8 +35,8 @@ class DbgVariable;
 class RangeSpan {
 public:
   RangeSpan(MCSymbol *S, MCSymbol *E) : Start(S), End(E) {}
-  const MCSymbol *getStart() { return Start; }
-  const MCSymbol *getEnd() { return End; }
+  const MCSymbol *getStart() const { return Start; }
+  const MCSymbol *getEnd() const { return End; }
 
 private:
   const MCSymbol *Start, *End;
@@ -119,7 +119,7 @@ protected:
 
   // List of range lists for a given compile unit, separate from the ranges for
   // the CU itself.
-  SmallVector<RangeSpanList *, 1> CURangeLists;
+  SmallVector<RangeSpanList, 1> CURangeLists;
 
   // DIEValueAllocator - All DIEValues are allocated through this allocator.
   BumpPtrAllocator DIEValueAllocator;
@@ -162,13 +162,13 @@ public:
   bool hasContent() const { return !UnitDie->getChildren().empty(); }
 
   /// addRangeList - Add an address range list to the list of range lists.
-  void addRangeList(RangeSpanList *Ranges) { CURangeLists.push_back(Ranges); }
+  void addRangeList(RangeSpanList Ranges) { CURangeLists.push_back(Ranges); }
 
   /// getRangeLists - Get the vector of range lists.
-  const SmallVectorImpl<RangeSpanList *> &getRangeLists() const {
+  const SmallVectorImpl<RangeSpanList> &getRangeLists() const {
     return CURangeLists;
   }
-  SmallVectorImpl<RangeSpanList *> &getRangeLists() { return CURangeLists; }
+  SmallVectorImpl<RangeSpanList> &getRangeLists() { return CURangeLists; }
 
   /// getParentContextString - Get a string containing the language specific
   /// context for a global name.
