@@ -3713,6 +3713,24 @@ static void handleObjCBridgeMutableAttr(Sema &S, Scope *Sc, Decl *D,
                             Attr.getAttributeSpellingListIndex()));
 }
 
+static void handleObjCBridgeRelatedAttr(Sema &S, Scope *Sc, Decl *D,
+                                 const AttributeList &Attr) {
+  IdentifierInfo *RelatedClass =
+    Attr.isArgIdent(0) ? Attr.getArgAsIdent(0)->Ident : 0;
+  if (!RelatedClass) {
+    S.Diag(D->getLocStart(), diag::err_objc_attr_not_id) << Attr.getName() << 0;
+    return;
+  }
+  IdentifierInfo *ClassMethod =
+    Attr.getArgAsIdent(1) ? Attr.getArgAsIdent(1)->Ident : 0;
+  IdentifierInfo *InstanceMethod =
+    Attr.getArgAsIdent(2) ? Attr.getArgAsIdent(2)->Ident : 0;
+  D->addAttr(::new (S.Context)
+             ObjCBridgeRelatedAttr(Attr.getRange(), S.Context, RelatedClass,
+                                   ClassMethod, InstanceMethod,
+                                   Attr.getAttributeSpellingListIndex()));
+}
+
 static void handleObjCDesignatedInitializer(Sema &S, Decl *D,
                                             const AttributeList &Attr) {
   SourceLocation Loc = Attr.getLoc();
@@ -3986,6 +4004,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
       
   case AttributeList::AT_ObjCBridgeMutable:
     handleObjCBridgeMutableAttr(S, scope, D, Attr); break;
+      
+  case AttributeList::AT_ObjCBridgeRelated:
+    handleObjCBridgeRelatedAttr(S, scope, D, Attr); break;
 
   case AttributeList::AT_ObjCDesignatedInitializer:
     handleObjCDesignatedInitializer(S, D, Attr); break;

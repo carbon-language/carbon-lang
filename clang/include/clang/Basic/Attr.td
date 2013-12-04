@@ -615,6 +615,15 @@ def ObjCBridgeMutable : InheritableAttr {
   let Args = [IdentifierArgument<"BridgedType">];
 }
 
+def ObjCBridgeRelated : InheritableAttr {
+  let Spellings = [GNU<"objc_bridge_related">];
+  let Subjects = SubjectList<[Record], ErrorDiag>;
+  let Args = [IdentifierArgument<"RelatedClass">,
+          IdentifierArgument<"ClassMethod">,
+          IdentifierArgument<"InstanceMethod">];
+ let HasCustomParsing = 1;
+}
+
 def NSReturnsRetained : InheritableAttr {
   let Spellings = [GNU<"ns_returns_retained">];
 //  let Subjects = SubjectList<[ObjCMethod, ObjCProperty, Function]>;

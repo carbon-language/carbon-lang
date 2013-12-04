@@ -2003,6 +2003,11 @@ private:
                                   SourceLocation AvailabilityLoc,
                                   ParsedAttributes &attrs,
                                   SourceLocation *endLoc);
+  
+  void ParseObjCBridgeRelatedAttribute(IdentifierInfo &ObjCBridgeRelated,
+                                       SourceLocation ObjCBridgeRelatedLoc,
+                                       ParsedAttributes &attrs,
+                                       SourceLocation *endLoc);
 
   bool IsThreadSafetyAttribute(StringRef AttrName);
   void ParseThreadSafetyAttribute(IdentifierInfo &AttrName,

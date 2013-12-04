@@ -259,6 +259,12 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
     ParseAvailabilityAttribute(*AttrName, AttrNameLoc, Attrs, EndLoc);
     return;
   }
+  
+  if (AttrKind == AttributeList::AT_ObjCBridgeRelated) {
+    ParseObjCBridgeRelatedAttribute(*AttrName, AttrNameLoc, Attrs, EndLoc);
+    return;
+  }
+  
   // Thread safety attributes are parsed in an unevaluated context.
   // FIXME: Share the bulk of the parsing code here and just pull out
   // the unevaluated context.
@@ -959,6 +965,90 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
                AttributeList::AS_GNU);
 }
 
+/// \brief Parse the contents of the "objc_bridge_related" attribute.
+/// objc_bridge_related '(' related_class ',' opt-class_method ',' opt-instance_method ')'
+/// related_class:
+///     Identifier
+///
+/// opt-class_method:
+///     Identifier: | <empty>
+///
+/// opt-instance_method:
+///     Identifier | <empty>
+///
+void Parser::ParseObjCBridgeRelatedAttribute(IdentifierInfo &ObjCBridgeRelated,
+                                SourceLocation ObjCBridgeRelatedLoc,
+                                ParsedAttributes &attrs,
+                                SourceLocation *endLoc) {
+  // Opening '('.
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  if (T.consumeOpen()) {
+    Diag(Tok, diag::err_expected_lparen);
+    return;
+  }
+  
+  // Parse the related class name.
+  if (Tok.isNot(tok::identifier)) {
+    Diag(Tok, diag::err_objcbridge_related_expected_related_class);
+    SkipUntil(tok::r_paren, StopAtSemi);
+    return;
+  }
+  IdentifierLoc *RelatedClass = ParseIdentifierLoc();
+  if (Tok.isNot(tok::comma)) {
+    Diag(Tok, diag::err_expected_comma);
+    SkipUntil(tok::r_paren, StopAtSemi);
+    return;
+  }
+  ConsumeToken();
+  
+  // Parse optional class method name.
+  IdentifierLoc *ClassMethod = 0;
+  if (Tok.is(tok::identifier)) {
+    ClassMethod = ParseIdentifierLoc();
+    if (Tok.isNot(tok::colon)) {
+      Diag(Tok, diag::err_objcbridge_related_selector_name);
+      SkipUntil(tok::r_paren, StopAtSemi);
+      return;
+    }
+    ConsumeToken();
+  }
+  if (Tok.isNot(tok::comma)) {
+    if (Tok.is(tok::colon))
+      Diag(Tok, diag::err_objcbridge_related_selector_name);
+    else
+      Diag(Tok, diag::err_expected_comma);
+    SkipUntil(tok::r_paren, StopAtSemi);
+    return;
+  }
+  ConsumeToken();
+  
+  // Parse optional instance method name.
+  IdentifierLoc *InstanceMethod = 0;
+  if (Tok.is(tok::identifier))
+    InstanceMethod = ParseIdentifierLoc();
+  else if (Tok.isNot(tok::r_paren)) {
+    Diag(Tok, diag::err_expected_rparen);
+    SkipUntil(tok::r_paren, StopAtSemi);
+    return;
+  }
+  
+  // Closing ')'.
+  if (T.consumeClose())
+    return;
+  
+  if (endLoc)
+    *endLoc = T.getCloseLocation();
+  
+  // Record this attribute
+  attrs.addNew(&ObjCBridgeRelated,
+               SourceRange(ObjCBridgeRelatedLoc, T.getCloseLocation()),
+               0, ObjCBridgeRelatedLoc,
+               RelatedClass,
+               ClassMethod,
+               InstanceMethod,
+               AttributeList::AS_GNU);
+  
+}
 
 // Late Parsed Attributes:
 // See other examples of late parsing in lib/Parse/ParseCXXInlineMethods
