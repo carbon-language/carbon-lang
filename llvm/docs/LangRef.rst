@@ -291,12 +291,6 @@ symbols from (to) DLLs (Dynamic Link Libraries).
     name is formed by combining ``__imp_`` and the function or variable
     name.
 
-For example, since the "``.LC0``" variable is defined to be internal, if
-another module defined a "``.LC0``" variable and was linked with this
-one, one of the two would be renamed, preventing a collision. Since
-"``main``" and "``puts``" are external (i.e., lacking any linkage
-declarations), they are accessible outside of the current module.
-
 It is illegal for a function *declaration* to have any linkage type
 other than ``external``, ``dllimport`` or ``extern_weak``.
 
