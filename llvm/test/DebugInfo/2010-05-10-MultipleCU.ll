@@ -11,10 +11,9 @@
 ; CHECK-NOT: DW_TAG_compile_unit
 ; CHECK: info_end
 
-; CHECK: abbrev_begin
+; CHECK: debug_abbrev
 ; CHECK: DW_TAG_compile_unit
 ; CHECK-NOT: DW_TAG_compile_unit
-; CHECK: abbrev_end
 
 define i32 @foo() nounwind readnone ssp {
 return:
