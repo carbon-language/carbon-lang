@@ -194,7 +194,7 @@
 #endif
 
 #ifndef _LIBCPP_EXCEPTION_ABI
-#define _LIBCPP_EXCEPTION_ABI _LIBCPP_TYPE_VIS
+#define _LIBCPP_EXCEPTION_ABI __attribute__ ((__visibility__("default")))
 #endif
 
 #ifndef _LIBCPP_ALWAYS_INLINE
