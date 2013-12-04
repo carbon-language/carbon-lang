@@ -277,12 +277,16 @@ function(configure_lit_site_cfg input output)
   endif()
 
   # Configuration-time: See Unit/lit.site.cfg.in
-  set(LLVM_BUILD_MODE "%(build_mode)s")
+  if (CMAKE_CFG_INTDIR STREQUAL ".")
+    set(LLVM_BUILD_MODE ".")
+  else ()
+    set(LLVM_BUILD_MODE "%(build_mode)s")
+  endif ()
 
   set(LLVM_SOURCE_DIR ${LLVM_MAIN_SRC_DIR})
   set(LLVM_BINARY_DIR ${LLVM_BINARY_DIR})
-  set(LLVM_TOOLS_DIR "${LLVM_TOOLS_BINARY_DIR}/%(build_mode)s")
-  set(LLVM_LIBS_DIR "${LLVM_BINARY_DIR}/lib/%(build_mode)s")
+  set(LLVM_TOOLS_DIR "${LLVM_TOOLS_BINARY_DIR}/${LLVM_BUILD_MODE}")
+  set(LLVM_LIBS_DIR "${LLVM_BINARY_DIR}/lib/${LLVM_BUILD_MODE}")
   set(PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE})
   set(ENABLE_SHARED ${LLVM_SHARED_LIBS_ENABLED})
   set(SHLIBPATH_VAR ${SHLIBPATH_VAR})
@@ -321,10 +325,12 @@ function(add_lit_target target comment)
   parse_arguments(ARG "PARAMS;DEPENDS;ARGS" "" ${ARGN})
   set(LIT_ARGS "${ARG_ARGS} ${LLVM_LIT_ARGS}")
   separate_arguments(LIT_ARGS)
+  if (NOT CMAKE_CFG_INTDIR STREQUAL ".")
+    list(APPEND LIT_ARGS --param build_mode=${CMAKE_CFG_INTDIR})
+  endif ()
   set(LIT_COMMAND
     ${PYTHON_EXECUTABLE}
     ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py
-    --param build_mode=${CMAKE_CFG_INTDIR}
     ${LIT_ARGS}
     )
   foreach(param ${ARG_PARAMS})
