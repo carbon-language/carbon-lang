@@ -108,7 +108,7 @@ static const char *DecodeDWARFEncoding(unsigned Encoding) {
 /// encoding is specifying (e.g. "LSDA").
 void AsmPrinter::EmitEncodingByte(unsigned Val, const char *Desc) const {
   if (isVerbose()) {
-    if (Desc != 0)
+    if (Desc)
       OutStreamer.AddComment(Twine(Desc) + " Encoding = " +
                              Twine(DecodeDWARFEncoding(Val)));
     else
