@@ -469,6 +469,9 @@ public:
     if (TheLine->Last->Type == TT_LineComment)
       return 0;
 
+    if (Style.ColumnLimit > 0 && Indent > Style.ColumnLimit)
+      return 0;
+
     unsigned Limit =
         Style.ColumnLimit == 0 ? UINT_MAX : Style.ColumnLimit - Indent;
     // If we already exceed the column limit, we set 'Limit' to 0. The different
@@ -476,9 +479,6 @@ public:
     Limit = TheLine->Last->TotalLength > Limit
                 ? 0
                 : Limit - TheLine->Last->TotalLength;
-
-    if (Indent > Limit)
-      return 0;
 
     if (I + 1 == E || I[1]->Type == LT_Invalid)
       return 0;
