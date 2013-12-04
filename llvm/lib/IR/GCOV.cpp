@@ -43,14 +43,14 @@ bool GCOVFile::readGCNO(GCOVBuffer &Buffer) {
     Functions.push_back(GFun);
   }
 
-  gcnoInitialized = true;
+  GCNOInitialized = true;
   return true;
 }
 
 /// readGCDA - Read GCDA buffer. It is required that readGCDA() can only be
 /// called after readGCNO().
 bool GCOVFile::readGCDA(GCOVBuffer &Buffer) {
-  assert(gcnoInitialized && "readGCDA() can only be called after readGCNO()");
+  assert(GCNOInitialized && "readGCDA() can only be called after readGCNO()");
   if (!Buffer.readGCDAFormat()) return false;
   GCOV::GCOVVersion GCDAVersion;
   if (!Buffer.readGCOVVersion(GCDAVersion)) return false;
@@ -320,7 +320,7 @@ void GCOVBlock::dump() const {
 // FileInfo implementation.
 
 /// print -  Print source files with collected line count information.
-void FileInfo::print(StringRef gcnoFile, StringRef gcdaFile) const {
+void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) const {
   for (StringMap<LineData>::const_iterator I = LineInfo.begin(),
          E = LineInfo.end(); I != E; ++I) {
     StringRef Filename = I->first();
@@ -338,8 +338,8 @@ void FileInfo::print(StringRef gcnoFile, StringRef gcdaFile) const {
       errs() << ErrorInfo << "\n";
 
     OS << "        -:    0:Source:" << Filename << "\n";
-    OS << "        -:    0:Graph:" << gcnoFile << "\n";
-    OS << "        -:    0:Data:" << gcdaFile << "\n";
+    OS << "        -:    0:Graph:" << GCNOFile << "\n";
+    OS << "        -:    0:Data:" << GCDAFile << "\n";
     OS << "        -:    0:Runs:" << RunCount << "\n";
     OS << "        -:    0:Programs:" << ProgramCount << "\n";
 

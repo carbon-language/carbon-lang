@@ -212,7 +212,7 @@ private:
 /// (.gcno and .gcda).
 class GCOVFile {
 public:
-  GCOVFile() : gcnoInitialized(false), Checksum(0), Functions(), RunCount(0),
+  GCOVFile() : GCNOInitialized(false), Checksum(0), Functions(), RunCount(0),
                ProgramCount(0) {}
   ~GCOVFile();
   bool readGCNO(GCOVBuffer &Buffer);
@@ -220,7 +220,7 @@ public:
   void dump() const;
   void collectLineCounts(FileInfo &FI);
 private:
-  bool gcnoInitialized;
+  bool GCNOInitialized;
   GCOV::GCOVVersion Version;
   uint32_t Checksum;
   SmallVector<GCOVFunction *, 16> Functions;
@@ -302,7 +302,7 @@ public:
   }
   void setRunCount(uint32_t Runs) { RunCount = Runs; }
   void setProgramCount(uint32_t Programs) { ProgramCount = Programs; }
-  void print(StringRef gcnoFile, StringRef gcdaFile) const;
+  void print(StringRef GCNOFile, StringRef GCDAFile) const;
 private:
   StringMap<LineData> LineInfo;
   uint32_t RunCount;
