@@ -404,35 +404,33 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
       } else if (Sub == "lif") {  // "elif".
         PPConditionalInfo &CondInfo = CurPPLexer->peekConditionalLevel();
 
-        bool ShouldEnter;
-        const SourceLocation ConditionalBegin = CurPPLexer->getSourceLocation();
+        // If this is a #elif with a #else before it, report the error.
+        if (CondInfo.FoundElse) Diag(Tok, diag::pp_err_elif_after_else);
+
         // If this is in a skipping block or if we're already handled this #if
         // block, don't bother parsing the condition.
         if (CondInfo.WasSkipping || CondInfo.FoundNonSkip) {
           DiscardUntilEndOfDirective();
-          ShouldEnter = false;
         } else {
+          const SourceLocation CondBegin = CurPPLexer->getSourceLocation();
           // Restore the value of LexingRawMode so that identifiers are
           // looked up, etc, inside the #elif expression.
           assert(CurPPLexer->LexingRawMode && "We have to be skipping here!");
           CurPPLexer->LexingRawMode = false;
           IdentifierInfo *IfNDefMacro = 0;
-          ShouldEnter = EvaluateDirectiveExpression(IfNDefMacro);
+          const bool CondValue = EvaluateDirectiveExpression(IfNDefMacro);
           CurPPLexer->LexingRawMode = true;
-        }
-        const SourceLocation ConditionalEnd = CurPPLexer->getSourceLocation();
-
-        // If this is a #elif with a #else before it, report the error.
-        if (CondInfo.FoundElse) Diag(Tok, diag::pp_err_elif_after_else);
-
-        // If this condition is true, enter it!
-        if (ShouldEnter) {
-          CondInfo.FoundNonSkip = true;
-          if (Callbacks)
+          if (Callbacks) {
+            const SourceLocation CondEnd = CurPPLexer->getSourceLocation();
             Callbacks->Elif(Tok.getLocation(),
-                            SourceRange(ConditionalBegin, ConditionalEnd),
-                            ShouldEnter, CondInfo.IfLoc);
-          break;
+                            SourceRange(CondBegin, CondEnd),
+                            CondValue, CondInfo.IfLoc);
+          }
+          // If this condition is true, enter it!
+          if (CondValue) {
+            CondInfo.FoundNonSkip = true;
+            break;
+          }
         }
       }
     }

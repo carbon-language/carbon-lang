@@ -163,6 +163,11 @@
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:27:2"
 // CHECK-NEXT:   ConditionRange: ["{{.*}}{{[/\\]}}pp-trace-conditional.cpp:27:4", "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:28:1"]
 // CHECK-NEXT:   ConditionValue: false
+// CHECK-NEXT: - Callback: Elif
+// CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:28:2"
+// CHECK-NEXT:   ConditionRange: ["{{.*}}{{[/\\]}}pp-trace-conditional.cpp:28:6", "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:29:1"]
+// CHECK-NEXT:   ConditionValue: false
+// CHECK-NEXT:   IfLoc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:27:2"
 // CHECK-NEXT: - Callback: Endif
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:29:2"
 // CHECK-NEXT:   IfLoc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:27:2"
@@ -219,6 +224,11 @@
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:41:2"
 // CHECK-NEXT:   ConditionRange: ["{{.*}}{{[/\\]}}pp-trace-conditional.cpp:41:4", "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:42:1"]
 // CHECK-NEXT:   ConditionValue: false
+// CHECK-NEXT: - Callback: Elif
+// CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:42:2"
+// CHECK-NEXT:   ConditionRange: ["{{.*}}{{[/\\]}}pp-trace-conditional.cpp:42:6", "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:43:1"]
+// CHECK-NEXT:   ConditionValue: false
+// CHECK-NEXT:   IfLoc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:41:2"
 // CHECK-NEXT: - Callback: Else
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:43:2"
 // CHECK-NEXT:   IfLoc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:41:2"
