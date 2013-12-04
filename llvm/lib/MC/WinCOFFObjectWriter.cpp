@@ -845,7 +845,7 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
 
   Header.PointerToSymbolTable = offset;
 
-  // We want a deterministic output. It looks like GUN as also writes 0 in here.
+  // We want a deterministic output. It looks like GNU as also writes 0 in here.
   Header.TimeDateStamp = 0;
 
   // Write it all to disk...
