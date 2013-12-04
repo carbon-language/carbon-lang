@@ -674,27 +674,76 @@ static void LowerTlsAddr(MCStreamer &OutStreamer,
     .addExpr(tlsRef));
 }
 
+/// \brief Emit the optimal amount of multi-byte nops on X86.
+static void EmitNops(MCStreamer &OS, unsigned NumBytes, bool Is64Bit) {
+  // This works only for 64bit. For 32bit we have to do additional checking if
+  // the CPU supports multi-byte nops.
+  assert(Is64Bit && "EmitNops only supports X86-64");
+  while (NumBytes) {
+    unsigned Opc, BaseReg, ScaleVal, IndexReg, Displacement, SegmentReg;
+    Opc = IndexReg = Displacement = SegmentReg = 0;
+    BaseReg = X86::RAX; ScaleVal = 1;
+    switch (NumBytes) {
+    case  0: llvm_unreachable("Zero nops?"); break;
+    case  1: NumBytes -=  1; Opc = X86::NOOP; break;
+    case  2: NumBytes -=  2; Opc = X86::XCHG16ar; break;
+    case  3: NumBytes -=  3; Opc = X86::NOOPL; break;
+    case  4: NumBytes -=  4; Opc = X86::NOOPL; Displacement = 8; break;
+    case  5: NumBytes -=  5; Opc = X86::NOOPL; Displacement = 8;
+             IndexReg = X86::RAX; break;
+    case  6: NumBytes -=  6; Opc = X86::NOOPW; Displacement = 8;
+             IndexReg = X86::RAX; break;
+    case  7: NumBytes -=  7; Opc = X86::NOOPL; Displacement = 512; break;
+    case  8: NumBytes -=  8; Opc = X86::NOOPL; Displacement = 512;
+             IndexReg = X86::RAX; break;
+    case  9: NumBytes -=  9; Opc = X86::NOOPW; Displacement = 512;
+             IndexReg = X86::RAX; break;
+    default: NumBytes -= 10; Opc = X86::NOOPW; Displacement = 512;
+             IndexReg = X86::RAX; SegmentReg = X86::CS; break;
+    }
+
+    unsigned NumPrefixes = std::min(NumBytes, 5U);
+    NumBytes -= NumPrefixes;
+    for (unsigned i = 0; i != NumPrefixes; ++i)
+      OS.EmitBytes("\x66");
+
+    switch (Opc) {
+    default: llvm_unreachable("Unexpected opcode"); break;
+    case X86::NOOP:
+      OS.EmitInstruction(MCInstBuilder(Opc));
+      break;
+    case X86::XCHG16ar:
+      OS.EmitInstruction(MCInstBuilder(Opc).addReg(X86::AX));
+      break;
+    case X86::NOOPL:
+    case X86::NOOPW:
+      OS.EmitInstruction(MCInstBuilder(Opc).addReg(BaseReg).addImm(ScaleVal)
+                                           .addReg(IndexReg)
+                                           .addImm(Displacement)
+                                           .addReg(SegmentReg));
+      break;
+    }
+  } // while (NumBytes)
+}
+
 // Lower a stackmap of the form:
 // <id>, <shadowBytes>, ...
-static void LowerSTACKMAP(MCStreamer &OutStreamer,
-                          StackMaps &SM,
-                          const MachineInstr &MI)
-{
-  unsigned NumNOPBytes = MI.getOperand(1).getImm();
+static void LowerSTACKMAP(MCStreamer &OS, StackMaps &SM,
+                          const MachineInstr &MI, bool Is64Bit) {
+  unsigned NumBytes = MI.getOperand(1).getImm();
   SM.recordStackMap(MI);
   // Emit padding.
   // FIXME: These nops ensure that the stackmap's shadow is covered by
   // instructions from the same basic block, but the nops should not be
   // necessary if instructions from the same block follow the stackmap.
-  for (unsigned i = 0; i < NumNOPBytes; ++i)
-    OutStreamer.EmitInstruction(MCInstBuilder(X86::NOOP));
+  EmitNops(OS, NumBytes, Is64Bit);
 }
 
 // Lower a patchpoint of the form:
 // [<def>], <id>, <numBytes>, <target>, <numArgs>, <cc>, ...
-static void LowerPATCHPOINT(MCStreamer &OutStreamer,
-                            StackMaps &SM,
-                            const MachineInstr &MI) {
+static void LowerPATCHPOINT(MCStreamer &OS, StackMaps &SM,
+                            const MachineInstr &MI, bool Is64Bit) {
+  assert(Is64Bit && "Patchpoint currently only supports X86-64");
   SM.recordPatchPoint(MI);
 
   PatchPointOpers opers(&MI);
@@ -704,22 +753,21 @@ static void LowerPATCHPOINT(MCStreamer &OutStreamer,
   if (CallTarget) {
     // Emit MOV to materialize the target address and the CALL to target.
     // This is encoded with 12-13 bytes, depending on which register is used.
-    // We conservatively assume that it is 12 bytes and emit in worst case one
-    // extra NOP byte.
-    EncodedBytes = 12;
-    OutStreamer.EmitInstruction(MCInstBuilder(X86::MOV64ri)
-                                .addReg(MI.getOperand(ScratchIdx).getReg())
-                                .addImm(CallTarget));
-    OutStreamer.EmitInstruction(MCInstBuilder(X86::CALL64r)
-                                .addReg(MI.getOperand(ScratchIdx).getReg()));
+    unsigned ScratchReg = MI.getOperand(ScratchIdx).getReg();
+    if (X86II::isX86_64ExtendedReg(ScratchReg))
+      EncodedBytes = 13;
+    else
+      EncodedBytes = 12;
+    OS.EmitInstruction(MCInstBuilder(X86::MOV64ri).addReg(ScratchReg)
+                                                  .addImm(CallTarget));
+    OS.EmitInstruction(MCInstBuilder(X86::CALL64r).addReg(ScratchReg));
   }
   // Emit padding.
   unsigned NumBytes = opers.getMetaOper(PatchPointOpers::NBytesPos).getImm();
   assert(NumBytes >= EncodedBytes &&
          "Patchpoint can't request size less than the length of a call.");
 
-  for (unsigned i = EncodedBytes; i < NumBytes; ++i)
-    OutStreamer.EmitInstruction(MCInstBuilder(X86::NOOP));
+  EmitNops(OS, NumBytes - EncodedBytes, Is64Bit);
 }
 
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
@@ -813,10 +861,10 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
 
   case TargetOpcode::STACKMAP:
-    return LowerSTACKMAP(OutStreamer, SM, *MI);
+    return LowerSTACKMAP(OutStreamer, SM, *MI, Subtarget->is64Bit());
 
   case TargetOpcode::PATCHPOINT:
-    return LowerPATCHPOINT(OutStreamer, SM, *MI);
+    return LowerPATCHPOINT(OutStreamer, SM, *MI, Subtarget->is64Bit());
 
   case X86::MORESTACK_RET:
     OutStreamer.EmitInstruction(MCInstBuilder(X86::RET));

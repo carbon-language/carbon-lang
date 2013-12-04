@@ -7,10 +7,10 @@ entry:
 ; CHECK-LABEL: trivial_patchpoint_codegen:
 ; CHECK:      movabsq $-559038736, %r11
 ; CHECK-NEXT: callq *%r11
-; CHECK-NEXT: nop
+; CHECK-NEXT: xchgw %ax, %ax
 ; CHECK:      movq %rax, %[[REG:r.+]]
 ; CHECK:      callq *%r11
-; CHECK-NEXT: nop
+; CHECK-NEXT: xchgw %ax, %ax
 ; CHECK:      movq %[[REG]], %rax
 ; CHECK:      ret
   %resolveCall2 = inttoptr i64 -559038736 to i8*
@@ -84,11 +84,7 @@ define void @small_patchpoint_codegen(i64 %p1, i64 %p2, i64 %p3, i64 %p4) {
 entry:
 ; CHECK-LABEL: small_patchpoint_codegen:
 ; CHECK:      Ltmp
-; CHECK:      nop
-; CHECK-NEXT: nop
-; CHECK-NEXT: nop
-; CHECK-NEXT: nop
-; CHECK-NEXT: nop
+; CHECK:      nopl 8(%rax,%rax)
 ; CHECK-NEXT: popq
 ; CHECK-NEXT: ret
   %result = tail call i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 5, i32 5, i8* null, i32 2, i64 %p1, i64 %p2)
