@@ -3399,11 +3399,11 @@ def note_using_value_decl_missing_typename : Note<
   "add 'typename' to treat this using declaration as a type">;
 
 def err_template_kw_refers_to_non_template : Error<
-    "%0 following the 'template' keyword does not refer to a template">;
+  "%0 following the 'template' keyword does not refer to a template">;
 def err_template_kw_refers_to_class_template : Error<
-    "'%0%1' instantiated to a class template, not a function template">;
+  "'%0%1' instantiated to a class template, not a function template">;
 def note_referenced_class_template : Error<
-    "class template declared here">;
+  "class template declared here">;
 def err_template_kw_missing : Error<
   "missing 'template' keyword prior to dependent template name '%0%1'">;
 def ext_template_outside_of_template : ExtWarn<
