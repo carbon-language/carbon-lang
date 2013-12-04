@@ -291,6 +291,30 @@ namespace in_class_template {
     template<typename T> template<typename...U> T A<T>::y<tuple<U...> >[] = { U()... };
     static_assert(sizeof(A<int>::y<tuple<char, char, char> >) == 12, "");
   }
+
+  namespace bad_reference {
+    struct S {
+      template<typename T> static int A; // expected-note 4{{here}}
+    };
+
+    template<typename T> void f() {
+      typename T::template A<int> a; // expected-error {{template name refers to non-type template 'S::A'}}
+    }
+    template<typename T> void g() {
+      T::template A<int>::B = 0; // expected-error {{template name refers to non-type template 'S::A'}}
+    }
+    template<typename T> void h() {
+      class T::template A<int> c; // expected-error {{template name refers to non-type template 'S::A'}}
+    }
+
+    template<typename T>
+    struct X : T::template A<int> {}; // expected-error {{template name refers to non-type template 'S::A'}}
+
+    template void f<S>(); // expected-note {{in instantiation of}}
+    template void g<S>(); // expected-note {{in instantiation of}}
+    template void h<S>(); // expected-note {{in instantiation of}}
+    template struct X<S>; // expected-note {{in instantiation of}}
+  }
 }
 
 namespace in_nested_classes {

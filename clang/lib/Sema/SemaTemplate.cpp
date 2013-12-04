@@ -1959,7 +1959,8 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
                                                           TemplateArgs);
 
   TemplateDecl *Template = Name.getAsTemplateDecl();
-  if (!Template || isa<FunctionTemplateDecl>(Template)) {
+  if (!Template || isa<FunctionTemplateDecl>(Template) ||
+      isa<VarTemplateDecl>(Template)) {
     // We might have a substituted template template parameter pack. If so,
     // build a template specialization type for it.
     if (Name.getAsSubstTemplateTemplateParmPack())
