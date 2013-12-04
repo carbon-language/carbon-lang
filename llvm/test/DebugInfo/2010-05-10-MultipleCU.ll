@@ -1,19 +1,11 @@
-; RUN: llc -O0 -asm-verbose < %s | FileCheck %s
-; One for a.c, second one for b.c and third one for abbrev.
+; REQUIRES: object-emission
 
-; CHECK: info_begin
-; CHECK: DW_TAG_compile_unit
-; CHECK-NOT: DW_TAG_compile_unit
-; CHECK: info_end
+; RUN: llc -O0 -filetype=obj < %s | llvm-dwarfdump -debug-dump=info - | FileCheck %s
 
-; CHECK: info_begin
-; CHECK: DW_TAG_compile_unit
-; CHECK-NOT: DW_TAG_compile_unit
-; CHECK: info_end
+; Check that two compile units are generated
 
-; CHECK: debug_abbrev
-; CHECK: DW_TAG_compile_unit
-; CHECK-NOT: DW_TAG_compile_unit
+; CHECK: Compile Unit:
+; CHECK: Compile Unit:
 
 define i32 @foo() nounwind readnone ssp {
 return:
