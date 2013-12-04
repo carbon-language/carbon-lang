@@ -1329,10 +1329,10 @@ GetPosixspawnFlags (ProcessLaunchInfo &launch_info)
     if (launch_info.GetLaunchInSeparateProcessGroup())
         flags |= POSIX_SPAWN_SETPGROUP;
     
-//#ifdef POSIX_SPAWN_CLOEXEC_DEFAULT
-//    // Close all files exception those with file actions if this is supported.
-//    flags |= POSIX_SPAWN_CLOEXEC_DEFAULT;       
-//#endif
+#ifdef POSIX_SPAWN_CLOEXEC_DEFAULT
+    // Close all files exception those with file actions if this is supported.
+    flags |= POSIX_SPAWN_CLOEXEC_DEFAULT;       
+#endif
     
     return flags;
 }
