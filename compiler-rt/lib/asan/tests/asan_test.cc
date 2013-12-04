@@ -452,14 +452,12 @@ NOINLINE void SizedStackTest() {
   for (size_t i = 0; i < kSize; i++)
     A[i] = i;
   EXPECT_DEATH(A[-1] = 0, "");
-  EXPECT_DEATH(A[-5] = 0, "");
-  if (kSize > 16)
-    EXPECT_DEATH(A[-31] = 0, "");
+  EXPECT_DEATH(A[-20] = 0, "");
+  EXPECT_DEATH(A[-31] = 0, "");
   EXPECT_DEATH(A[kSize] = 0, "");
   EXPECT_DEATH(A[kSize + 1] = 0, "");
-  EXPECT_DEATH(A[kSize + 5] = 0, "");
-  if (kSize > 16)
-    EXPECT_DEATH(A[kSize + 31] = 0, "");
+  EXPECT_DEATH(A[kSize + 10] = 0, "");
+  EXPECT_DEATH(A[kSize + 31] = 0, "");
 }
 
 TEST(AddressSanitizer, SimpleStackTest) {
@@ -671,8 +669,7 @@ TEST(AddressSanitizer, ThreadStackReuseTest) {
   PTHREAD_JOIN(t, 0);
 }
 
-#if defined(__i686__) || defined(__x86_64__)
-#include <emmintrin.h>
+#if defined(__i386__) || defined(__x86_64__)
 TEST(AddressSanitizer, Store128Test) {
   char *a = Ident((char*)malloc(Ident(12)));
   char *p = a;
