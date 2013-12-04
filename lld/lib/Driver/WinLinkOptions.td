@@ -90,6 +90,7 @@ multiclass QB<string name> {
   def _no : F<name#":no">;
 }
 
+def functionpadmin : F<"functionpadmin">;
 def ignoreidl : F<"ignoreidl">;
 def incremental : F<"incremental">;
 def no_incremental : F<"incremental:no">;

@@ -565,7 +565,7 @@ TEST_F(WinLinkParserTest, Ignore) {
                     "/pdbaltpath:bar", "/verbose", "/verbose:icf", "/wx",
                     "/wx:no", "/tlbid:1", "/tlbout:foo", "/idlout:foo",
                     "/ignoreidl", "/implib:foo", "/safeseh", "/safeseh:no",
-                    "a.obj", nullptr));
+                    "/functionpadmin", "a.obj", nullptr));
   EXPECT_EQ("", errorMessage());
   EXPECT_EQ(1, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));
