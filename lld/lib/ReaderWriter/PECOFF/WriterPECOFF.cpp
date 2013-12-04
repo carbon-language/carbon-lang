@@ -302,10 +302,7 @@ public:
 protected:
   SectionChunk(StringRef sectionName, uint32_t characteristics);
 
-  void buildContents(const File &linkedFile,
-                     bool (*isEligible)(const DefinedAtom *));
   const uint32_t _characteristics;
-
   llvm::object::coff_section _sectionHeader;
 
 private:
@@ -653,22 +650,6 @@ SectionChunk::SectionChunk(StringRef sectionName, uint32_t characteristics)
       _sectionHeader(createSectionHeader(sectionName, characteristics)) {
   // The section should be aligned to disk sector.
   _align = SECTOR_SIZE;
-}
-
-void SectionChunk::buildContents(const File &linkedFile,
-                                 bool (*isEligible)(const DefinedAtom *)) {
-  // Extract atoms from the linked file and append them to this section.
-  for (const DefinedAtom *atom : linkedFile.defined()) {
-    if (isEligible(atom))
-      appendAtom(atom);
-  }
-
-  // Now that we have a list of atoms that to be written in this section,
-  // and we know the size of the section. Let's write them to the section
-  // header. VirtualSize should be the size of the actual content, and
-  // SizeOfRawData should be aligned to the section alignment.
-  _sectionHeader.VirtualSize = _size;
-  _sectionHeader.SizeOfRawData = size();
 }
 
 llvm::object::coff_section
