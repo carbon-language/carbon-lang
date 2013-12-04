@@ -1740,10 +1740,7 @@ bool Parser::TryAnnotateTypeOrScopeTokenAfterScopeSpec(bool EnteringContext,
       // annotation token to a type annotation token now.
       AnnotateTemplateIdTokenAsType();
       return false;
-    } else if (TemplateId->Kind == TNK_Var_template)
-      // FIXME: This looks suspicious. Why are we not annotating the scope token
-      // in this case?
-      return false;
+    }
   }
 
   if (SS.isEmpty())
