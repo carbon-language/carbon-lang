@@ -112,4 +112,4 @@ private:
     bool m_stopping_threads;
 };
 
-#endif  // liblldb_MacOSXProcess_H_
+#endif  // liblldb_ProcessLinux_H_
