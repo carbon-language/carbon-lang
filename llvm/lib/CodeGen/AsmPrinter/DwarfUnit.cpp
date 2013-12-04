@@ -1980,8 +1980,10 @@ void Unit::emitHeader(const MCSection *ASection, const MCSymbol *ASectionSym) {
   Asm->OutStreamer.AddComment("DWARF version number");
   Asm->EmitInt16(DD->getDwarfVersion());
   Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
-  Asm->EmitSectionOffset(Asm->GetTempSymbol(ASection->getLabelBeginName()),
-                         ASectionSym);
+  // We share one abbreviations table across all compilation units so it's
+  // always at the start of the section. Use a relocatable offset where needed
+  // to ensure linking doesn't invalidate that offset.
+  Asm->EmitSectionOffset(ASectionSym, ASectionSym);
   Asm->OutStreamer.AddComment("Address Size (in bytes)");
   Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 }

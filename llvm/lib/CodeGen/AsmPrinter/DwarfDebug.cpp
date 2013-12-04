@@ -2186,9 +2186,6 @@ void DwarfDebug::emitAbbrevs(const MCSection *Section,
     // Start the debug abbrev section.
     Asm->OutStreamer.SwitchSection(Section);
 
-    MCSymbol *Begin = Asm->GetTempSymbol(Section->getLabelBeginName());
-    Asm->OutStreamer.EmitLabel(Begin);
-
     // For each abbrevation.
     for (unsigned i = 0, N = Abbrevs->size(); i < N; ++i) {
       // Get abbreviation data
@@ -2203,9 +2200,6 @@ void DwarfDebug::emitAbbrevs(const MCSection *Section,
 
     // Mark end of abbreviations.
     Asm->EmitULEB128(0, "EOM(3)");
-
-    MCSymbol *End = Asm->GetTempSymbol(Section->getLabelEndName());
-    Asm->OutStreamer.EmitLabel(End);
   }
 }
 
