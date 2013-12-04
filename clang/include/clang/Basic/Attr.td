@@ -1189,10 +1189,13 @@ def MsStruct : InheritableAttr {
 
 def DLLExport : InheritableAttr, TargetSpecificAttr {
   let Spellings = [Declspec<"dllexport">];
+  let Subjects = SubjectList<[Function, Var]>;
 }
 
 def DLLImport : InheritableAttr, TargetSpecificAttr {
   let Spellings = [Declspec<"dllimport">];
+  // Technically, the subjects for DllImport are Function and Var, but there is
+  // custom semantic handling required when MicrosoftExt is true.
 }
 
 def ForceInline : InheritableAttr {
