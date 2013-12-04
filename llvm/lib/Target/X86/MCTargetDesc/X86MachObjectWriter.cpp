@@ -362,6 +362,7 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
                                                     MCValue Target,
                                                     unsigned Log2Size,
                                                     uint64_t &FixedValue) {
+  uint64_t OriginalFixedValue = FixedValue;
   uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
   unsigned IsPCRel = Writer->isFixupKindPCRel(Asm, Fixup.getKind());
   unsigned Type = MachO::GENERIC_RELOC_VANILLA;
@@ -431,8 +432,10 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
     // symbol, things can go badly.
     //
     // Required for 'as' compatibility.
-    if (FixupOffset > 0xffffff)
+    if (FixupOffset > 0xffffff) {
+      FixedValue = OriginalFixedValue;
       return false;
+    }
   }
 
   MachO::any_relocation_info MRE;
