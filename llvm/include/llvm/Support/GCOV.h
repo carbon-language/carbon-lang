@@ -28,12 +28,9 @@ class GCOVBlock;
 class FileInfo;
 
 namespace GCOV {
-  enum GCOVFormat {
-    InvalidGCOV,
-    GCNO_402,
-    GCNO_404,
-    GCDA_402,
-    GCDA_404
+  enum GCOVVersion {
+    V402,
+    V404
   };
 } // end GCOV namespace
 
@@ -43,21 +40,43 @@ class GCOVBuffer {
 public:
   GCOVBuffer(MemoryBuffer *B) : Buffer(B), Cursor(0) {}
   
-  /// readGCOVFormat - Read GCOV signature at the beginning of buffer.
-  GCOV::GCOVFormat readGCOVFormat() {
-    StringRef Magic = Buffer->getBuffer().slice(0, 8);
-    Cursor = 8;
-    if (Magic == "oncg*404")
-      return GCOV::GCNO_404;
-    else if (Magic == "oncg*204")
-      return GCOV::GCNO_402;
-    else if (Magic == "adcg*404")
-      return GCOV::GCDA_404;
-    else if (Magic == "adcg*204")
-      return GCOV::GCDA_402;
-    
-    Cursor = 0;
-    return GCOV::InvalidGCOV;
+  /// readGCNOFormat - Check GCNO signature is valid at the beginning of buffer.
+  bool readGCNOFormat() {
+    StringRef File = Buffer->getBuffer().slice(0, 4);
+    if (File != "oncg") {
+      errs() << "Unexpected file type: " << File << ".\n";
+      return false;
+    }
+    Cursor = 4;
+    return true;
+  }
+
+  /// readGCDAFormat - Check GCDA signature is valid at the beginning of buffer.
+  bool readGCDAFormat() {
+    StringRef File = Buffer->getBuffer().slice(0, 4);
+    if (File != "adcg") {
+      errs() << "Unexpected file type: " << File << ".\n";
+      return false;
+    }
+    Cursor = 4;
+    return true;
+  }
+
+  /// readGCOVVersion - Read GCOV version.
+  bool readGCOVVersion(GCOV::GCOVVersion &Version) {
+    StringRef VersionStr = Buffer->getBuffer().slice(Cursor, Cursor+4);
+    if (VersionStr == "*204") {
+      Cursor += 4;
+      Version = GCOV::V402;
+      return true;
+    }
+    if (VersionStr == "*404") {
+      Cursor += 4;
+      Version = GCOV::V404;
+      return true;
+    }
+    errs() << "Unexpected version: " << VersionStr << ".\n";
+    return false;
   }
 
   /// readFunctionTag - If cursor points to a function tag then increment the
@@ -193,12 +212,16 @@ private:
 /// (.gcno and .gcda).
 class GCOVFile {
 public:
-  GCOVFile() : Checksum(0), Functions(), RunCount(0), ProgramCount(0) {}
+  GCOVFile() : gcnoInitialized(false), Checksum(0), Functions(), RunCount(0),
+               ProgramCount(0) {}
   ~GCOVFile();
-  bool read(GCOVBuffer &Buffer);
+  bool readGCNO(GCOVBuffer &Buffer);
+  bool readGCDA(GCOVBuffer &Buffer);
   void dump() const;
   void collectLineCounts(FileInfo &FI);
 private:
+  bool gcnoInitialized;
+  GCOV::GCOVVersion Version;
   uint32_t Checksum;
   SmallVector<GCOVFunction *, 16> Functions;
   uint32_t RunCount;
@@ -218,8 +241,8 @@ class GCOVFunction {
 public:
   GCOVFunction() : Ident(0), LineNumber(0) {}
   ~GCOVFunction();
-  bool readGCNO(GCOVBuffer &Buffer, GCOV::GCOVFormat Format);
-  bool readGCDA(GCOVBuffer &Buffer, GCOV::GCOVFormat Format);
+  bool readGCNO(GCOVBuffer &Buffer, GCOV::GCOVVersion Version);
+  bool readGCDA(GCOVBuffer &Buffer, GCOV::GCOVVersion Version);
   StringRef getFilename() const { return Filename; }
   void dump() const;
   void collectLineCounts(FileInfo &FI);

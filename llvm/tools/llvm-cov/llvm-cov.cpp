@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
     return 1;
   }
   GCOVBuffer GCNO_GB(GCNO_Buff.get());
-  if (!GF.read(GCNO_GB)) {
+  if (!GF.readGCNO(GCNO_GB)) {
     errs() << "Invalid .gcno File!\n";
     return 1;
   }
@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
       return 1;
     }
     GCOVBuffer GCDA_GB(GCDA_Buff.get());
-    if (!GF.read(GCDA_GB)) {
+    if (!GF.readGCDA(GCDA_GB)) {
       errs() << "Invalid .gcda File!\n";
       return 1;
     }

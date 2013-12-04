@@ -29,61 +29,64 @@ GCOVFile::~GCOVFile() {
   DeleteContainerPointers(Functions);
 }
 
-/// isGCDAFile - Return true if Format identifies a .gcda file.
-static bool isGCDAFile(GCOV::GCOVFormat Format) {
-  return Format == GCOV::GCDA_402 || Format == GCOV::GCDA_404;
+/// readGCNO - Read GCNO buffer.
+bool GCOVFile::readGCNO(GCOVBuffer &Buffer) {
+  if (!Buffer.readGCNOFormat()) return false;
+  if (!Buffer.readGCOVVersion(Version)) return false;
+
+  if (!Buffer.readInt(Checksum)) return false;
+  while (true) {
+    if (!Buffer.readFunctionTag()) break;
+    GCOVFunction *GFun = new GCOVFunction();
+    if (!GFun->readGCNO(Buffer, Version))
+      return false;
+    Functions.push_back(GFun);
+  }
+
+  gcnoInitialized = true;
+  return true;
 }
 
-/// isGCNOFile - Return true if Format identifies a .gcno file.
-static bool isGCNOFile(GCOV::GCOVFormat Format) {
-  return Format == GCOV::GCNO_402 || Format == GCOV::GCNO_404;
-}
-
-/// read - Read GCOV buffer.
-bool GCOVFile::read(GCOVBuffer &Buffer) {
-  GCOV::GCOVFormat Format = Buffer.readGCOVFormat();
-  if (Format == GCOV::InvalidGCOV)
+/// readGCDA - Read GCDA buffer. It is required that readGCDA() can only be
+/// called after readGCNO().
+bool GCOVFile::readGCDA(GCOVBuffer &Buffer) {
+  assert(gcnoInitialized && "readGCDA() can only be called after readGCNO()");
+  if (!Buffer.readGCDAFormat()) return false;
+  GCOV::GCOVVersion GCDAVersion;
+  if (!Buffer.readGCOVVersion(GCDAVersion)) return false;
+  if (Version != GCDAVersion) {
+    errs() << "GCOV versions do not match.\n";
     return false;
+  }
 
-  if (isGCNOFile(Format)) {
-    if (!Buffer.readInt(Checksum)) return false;
-    while (true) {
-      if (!Buffer.readFunctionTag()) break;
-      GCOVFunction *GFun = new GCOVFunction();
-      if (!GFun->readGCNO(Buffer, Format))
-        return false;
-      Functions.push_back(GFun);
-    }
-  } else if (isGCDAFile(Format)) {
-    uint32_t Checksum2;
-    if (!Buffer.readInt(Checksum2)) return false;
-    if (Checksum != Checksum2) {
-      errs() << "File checksum does not match.\n";
+  uint32_t GCDAChecksum;
+  if (!Buffer.readInt(GCDAChecksum)) return false;
+  if (Checksum != GCDAChecksum) {
+    errs() << "File checksum does not match.\n";
+    return false;
+  }
+  for (size_t i = 0, e = Functions.size(); i < e; ++i) {
+    if (!Buffer.readFunctionTag()) {
+      errs() << "Unexpected number of functions.\n";
       return false;
     }
-    for (size_t i = 0, e = Functions.size(); i < e; ++i) {
-      if (!Buffer.readFunctionTag()) {
-        errs() << "Unexpected number of functions.\n";
-        return false;
-      }
-      if (!Functions[i]->readGCDA(Buffer, Format))
-        return false;
-    }
-    if (Buffer.readObjectTag()) {
-      uint32_t Length;
-      uint32_t Dummy;
-      if (!Buffer.readInt(Length)) return false;
-      if (!Buffer.readInt(Dummy)) return false; // checksum
-      if (!Buffer.readInt(Dummy)) return false; // num
-      if (!Buffer.readInt(RunCount)) return false;;
-      Buffer.advanceCursor(Length-3);
-    }
-    while (Buffer.readProgramTag()) {
-      uint32_t Length;
-      if (!Buffer.readInt(Length)) return false;
-      Buffer.advanceCursor(Length);
-      ++ProgramCount;
-    }
+    if (!Functions[i]->readGCDA(Buffer, Version))
+      return false;
+  }
+  if (Buffer.readObjectTag()) {
+    uint32_t Length;
+    uint32_t Dummy;
+    if (!Buffer.readInt(Length)) return false;
+    if (!Buffer.readInt(Dummy)) return false; // checksum
+    if (!Buffer.readInt(Dummy)) return false; // num
+    if (!Buffer.readInt(RunCount)) return false;;
+    Buffer.advanceCursor(Length-3);
+  }
+  while (Buffer.readProgramTag()) {
+    uint32_t Length;
+    if (!Buffer.readInt(Length)) return false;
+    Buffer.advanceCursor(Length);
+    ++ProgramCount;
   }
 
   return true;
@@ -117,12 +120,12 @@ GCOVFunction::~GCOVFunction() {
 
 /// readGCNO - Read a function from the GCNO buffer. Return false if an error
 /// occurs.
-bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
+bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
   uint32_t Dummy;
   if (!Buff.readInt(Dummy)) return false; // Function header length
   if (!Buff.readInt(Ident)) return false;
   if (!Buff.readInt(Dummy)) return false; // Checksum #1
-  if (Format != GCOV::GCNO_402)
+  if (Version != GCOV::V402)
     if (!Buff.readInt(Dummy)) return false; // Checksum #2
 
   if (!Buff.readString(Name)) return false;
@@ -198,12 +201,12 @@ bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
 
 /// readGCDA - Read a function from the GCDA buffer. Return false if an error
 /// occurs.
-bool GCOVFunction::readGCDA(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
+bool GCOVFunction::readGCDA(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
   uint32_t Dummy;
   if (!Buff.readInt(Dummy)) return false; // Function header length
   if (!Buff.readInt(Ident)) return false;
   if (!Buff.readInt(Dummy)) return false; // Checksum #1
-  if (Format != GCOV::GCDA_402)
+  if (Version != GCOV::V402)
     if (!Buff.readInt(Dummy)) return false; // Checksum #2
 
   if (!Buff.readString(Name)) return false;
