@@ -4891,6 +4891,14 @@ TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {
 
   verifyFormat("void f() {}", getLLVMStyleWithColumns(11));
   verifyFormat("void f() {\n}", getLLVMStyleWithColumns(10));
+  verifyFormat("class C {\n"
+               "  C()\n"
+               "      : iiiiiiii(nullptr),\n"
+               "        kkkkkkk(nullptr),\n"
+               "        mmmmmmm(nullptr),\n"
+               "        nnnnnnn(nullptr) {}\n"
+               "};",
+               getGoogleStyle());
 
   FormatStyle NoColumnLimit = getLLVMStyle();
   NoColumnLimit.ColumnLimit = 0;
