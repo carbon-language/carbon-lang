@@ -818,14 +818,14 @@ Function *GCOVProfiler::insertCounterWriteout(
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
       DICompileUnit CU(CU_Nodes->getOperand(i));
       std::string FilenameGcda = mangleName(CU, "gcda");
-      uint32_t CfgChecksum = FileChecksums.size() ? FileChecksums[i] : 0;
+      uint32_t CfgChecksum = FileChecksums.empty() ? 0 : FileChecksums[i];
       Builder.CreateCall3(StartFile,
                           Builder.CreateGlobalStringPtr(FilenameGcda),
                           Builder.CreateGlobalStringPtr(ReversedVersion),
                           Builder.getInt32(CfgChecksum));
       for (unsigned j = 0, e = CountersBySP.size(); j != e; ++j) {
         DISubprogram SP(CountersBySP[j].second);
-        uint32_t FuncChecksum = Funcs.size() ? Funcs[j]->getFuncChecksum() : 0;
+        uint32_t FuncChecksum = Funcs.empty() ? 0 : Funcs[j]->getFuncChecksum();
         Builder.CreateCall5(
             EmitFunction, Builder.getInt32(j),
             Options.FunctionNamesInData ?
