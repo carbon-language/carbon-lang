@@ -1054,7 +1054,8 @@ void DwarfDebug::finalizeModuleInfo() {
   // Attach DW_AT_inline attribute with inlined subprogram DIEs.
   computeInlinedDIEs();
 
-  // Handle anything that needs to be done on a per-cu basis.
+  // Handle anything that needs to be done on a per-unit basis after
+  // all other generation.
   for (SmallVectorImpl<Unit *>::const_iterator I = getUnits().begin(),
                                                E = getUnits().end();
        I != E; ++I) {
