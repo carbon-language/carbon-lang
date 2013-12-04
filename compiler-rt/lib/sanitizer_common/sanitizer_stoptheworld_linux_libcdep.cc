@@ -356,6 +356,20 @@ class StopTheWorldScope {
   int process_was_dumpable_;
 };
 
+// When sanitizer output is being redirected to file (i.e. by using log_path),
+// the tracer should write to the parent's log instead of trying to open a new
+// file. Alert the logging code to the fact that we have a tracer.
+struct ScopedSetTracerPID {
+  explicit ScopedSetTracerPID(uptr tracer_pid) {
+    stoptheworld_tracer_pid = tracer_pid;
+    stoptheworld_tracer_ppid = internal_getpid();
+  }
+  ~ScopedSetTracerPID() {
+    stoptheworld_tracer_pid = 0;
+    stoptheworld_tracer_ppid = 0;
+  }
+};
+
 void StopTheWorld(StopTheWorldCallback callback, void *argument) {
   StopTheWorldScope in_stoptheworld;
   // Prepare the arguments for TracerThread.
@@ -379,6 +393,7 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
       Report("Failed spawning a tracer thread (errno %d).\n", local_errno);
     tracer_thread_argument.mutex.Unlock();
   } else {
+    ScopedSetTracerPID scoped_set_tracer_pid(tracer_pid);
     // On some systems we have to explicitly declare that we want to be traced
     // by the tracer thread.
 #ifdef PR_SET_PTRACER

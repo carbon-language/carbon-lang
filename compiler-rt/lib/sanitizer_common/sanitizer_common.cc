@@ -42,6 +42,13 @@ char report_path_prefix[sizeof(report_path_prefix)];
 // child thread will be different from |report_fd_pid|.
 uptr report_fd_pid = 0;
 
+// PID of the tracer task in StopTheWorld. It shares the address space with the
+// main process, but has a different PID and thus requires special handling.
+uptr stoptheworld_tracer_pid = 0;
+// Cached pid of parent process - if the parent process dies, we want to keep
+// writing to the same log file.
+uptr stoptheworld_tracer_ppid = 0;
+
 static DieCallbackType DieCallback;
 void SetDieCallback(DieCallbackType callback) {
   DieCallback = callback;
