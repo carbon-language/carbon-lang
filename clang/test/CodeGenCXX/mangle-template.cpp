@@ -182,3 +182,25 @@ namespace test13 {
   template short returnShort<-32768>();
   // CHECK: @_ZN6test1311returnShortILsn32768EEEsv()
 }
+
+namespace test14 {
+  template <typename> inline int inl(bool b) {
+    if (b) {
+      static struct {
+        int field;
+      } a;
+      // CHECK: @_ZZN6test143inlIvEEibE1a
+
+      return a.field;
+    } else {
+      static struct {
+        int field;
+      } a;
+      // CHECK: @_ZZN6test143inlIvEEibE1a_0
+
+      return a.field;
+    }
+  }
+
+  int call(bool b) { return inl<void>(b); }
+}

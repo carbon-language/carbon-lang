@@ -648,6 +648,8 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
 
   Enum->setInstantiationOfMemberEnum(D, TSK_ImplicitInstantiation);
   Enum->setAccess(D->getAccess());
+  // Forward the mangling number from the template to the instantiated decl.
+  SemaRef.Context.setManglingNumber(Enum, SemaRef.Context.getManglingNumber(D));
   if (SubstQualifier(D, Enum)) return 0;
   Owner->addDecl(Enum);
 
@@ -1132,6 +1134,10 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
   if (D->isLocalClass())
     SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Record);
+
+  // Forward the mangling number from the template to the instantiated decl.
+  SemaRef.Context.setManglingNumber(Record,
+                                    SemaRef.Context.getManglingNumber(D));
 
   Owner->addDecl(Record);
 
@@ -3023,6 +3029,10 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
   if (Tmpl->isDeleted())
     New->setDeletedAsWritten();
 
+  // Forward the mangling number from the template to the instantiated decl.
+  SemaRef.Context.setManglingNumber(New,
+                                    SemaRef.Context.getManglingNumber(Tmpl));
+
   // If we are performing substituting explicitly-specified template arguments
   // or deduced template arguments into a function template and we reach this
   // point, we are now past the point where SFINAE applies and have committed
@@ -3452,6 +3462,9 @@ void Sema::BuildVariableInstantiation(
   if (NewVar->isStaticDataMember() && !InstantiatingVarTemplate)
     NewVar->setInstantiationOfStaticDataMember(OldVar,
                                                TSK_ImplicitInstantiation);
+
+  // Forward the mangling number from the template to the instantiated decl.
+  Context.setManglingNumber(NewVar, Context.getManglingNumber(OldVar));
 
   // Delay instantiation of the initializer for variable templates until a
   // definition of the variable is needed.
