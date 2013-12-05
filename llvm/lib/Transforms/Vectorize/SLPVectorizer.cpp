@@ -521,7 +521,7 @@ private:
   /// Holds all of the instructions that we gathered.
   SetVector<Instruction *> GatherSeq;
   /// A list of blocks that we are going to CSE.
-  SmallSet<BasicBlock *, 8> CSEBlocks;
+  SetVector<BasicBlock *> CSEBlocks;
 
   /// Numbers instructions in different blocks.
   DenseMap<BasicBlock *, BlockNumbering> BlocksNumbers;
