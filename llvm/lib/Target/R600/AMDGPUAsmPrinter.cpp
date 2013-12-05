@@ -46,8 +46,7 @@ extern "C" void LLVMInitializeR600AsmPrinter() {
 }
 
 AMDGPUAsmPrinter::AMDGPUAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
-    : AsmPrinter(TM, Streamer)
-{
+    : AsmPrinter(TM, Streamer) {
   DisasmEnabled = TM.getSubtarget<AMDGPUSubtarget>().dumpCode() &&
                   ! Streamer.hasRawTextSupport();
 }
@@ -56,6 +55,7 @@ AMDGPUAsmPrinter::AMDGPUAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
 /// the call to EmitFunctionHeader(), which the MCPureStreamer can't handle.
 bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
+
   if (OutStreamer.hasRawTextSupport()) {
     OutStreamer.EmitRawText("@" + MF.getName() + ":");
   }
@@ -65,9 +65,12 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
                                               ELF::SHT_PROGBITS, 0,
                                               SectionKind::getReadOnly());
   OutStreamer.SwitchSection(ConfigSection);
+
   const AMDGPUSubtarget &STM = TM.getSubtarget<AMDGPUSubtarget>();
+  SIProgramInfo KernelInfo;
   if (STM.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
-    EmitProgramInfoSI(MF);
+    findNumUsedRegistersSI(MF, KernelInfo.NumSGPR, KernelInfo.NumVGPR);
+    EmitProgramInfoSI(MF, KernelInfo);
   } else {
     EmitProgramInfoR600(MF);
   }
@@ -78,6 +81,19 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
   EmitFunctionBody();
+
+  if (isVerbose() && OutStreamer.hasRawTextSupport()) {
+    const MCSectionELF *CommentSection
+      = Context.getELFSection(".AMDGPU.csdata",
+                              ELF::SHT_PROGBITS, 0,
+                              SectionKind::getReadOnly());
+    OutStreamer.SwitchSection(CommentSection);
+
+    OutStreamer.EmitRawText(
+      Twine("; Kernel info:\n") +
+      "; NumSgprs: " + Twine(KernelInfo.NumSGPR) + "\n" +
+      "; NumVgprs: " + Twine(KernelInfo.NumVGPR) + "\n");
+  }
 
   if (STM.dumpCode()) {
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
@@ -166,8 +182,9 @@ void AMDGPUAsmPrinter::EmitProgramInfoR600(MachineFunction &MF) {
   }
 }
 
-void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF) {
-  const AMDGPUSubtarget &STM = TM.getSubtarget<AMDGPUSubtarget>();
+void AMDGPUAsmPrinter::findNumUsedRegistersSI(MachineFunction &MF,
+                                              unsigned &NumSGPR,
+                                              unsigned &NumVGPR) const {
   unsigned MaxSGPR = 0;
   unsigned MaxVGPR = 0;
   bool VCCUsed = false;
@@ -252,10 +269,24 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF) {
       }
     }
   }
-  if (VCCUsed) {
+
+  if (VCCUsed)
     MaxSGPR += 2;
-  }
-  SIMachineFunctionInfo * MFI = MF.getInfo<SIMachineFunctionInfo>();
+
+  NumSGPR = MaxSGPR;
+  NumVGPR = MaxVGPR;
+}
+
+void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &Out,
+                                        MachineFunction &MF) const {
+  findNumUsedRegistersSI(MF, Out.NumSGPR, Out.NumVGPR);
+}
+
+void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF,
+                                         const SIProgramInfo &KernelInfo) {
+  const AMDGPUSubtarget &STM = TM.getSubtarget<AMDGPUSubtarget>();
+
+  SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
   unsigned RsrcReg;
   switch (MFI->ShaderType) {
   default: // Fall through
@@ -266,7 +297,8 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF) {
   }
 
   OutStreamer.EmitIntValue(RsrcReg, 4);
-  OutStreamer.EmitIntValue(S_00B028_VGPRS(MaxVGPR / 4) | S_00B028_SGPRS(MaxSGPR / 8), 4);
+  OutStreamer.EmitIntValue(S_00B028_VGPRS(KernelInfo.NumVGPR / 4) |
+                           S_00B028_SGPRS(KernelInfo.NumSGPR / 8), 4);
 
   unsigned LDSAlignShift;
   if (STM.getGeneration() < AMDGPUSubtarget::SEA_ISLANDS) {
