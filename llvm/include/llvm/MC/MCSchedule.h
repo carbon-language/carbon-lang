@@ -36,7 +36,8 @@ struct MCProcResourceDesc {
   // some indeterminate cycle after dispatch (e.g. for instructions that may
   // issue out-of-order). Unbuffered resources (BufferSize == 0) always consume
   // their resource some fixed number of cycles after dispatch (e.g. for
-  // instruction interlocking that may stall the pipeline).
+  // instruction interlocking that may stall the pipeline). If BufferSize==1,
+  // the latency between producer and consumer is modeled as a stall.
   int BufferSize;
 
   bool operator==(const MCProcResourceDesc &Other) const {

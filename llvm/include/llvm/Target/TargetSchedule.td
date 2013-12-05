@@ -114,14 +114,46 @@ class ProcResourceKind;
 // resources implies using one of the super resoruces.
 //
 // ProcResourceUnits normally model a few buffered resources within an
-// out-of-order engine that the compiler attempts to conserve.
-// Buffered resources may be held for multiple clock cycles, but the
-// scheduler does not pin them to a particular clock cycle relative to
-// instruction dispatch. Setting BufferSize=0 changes this to an
-// in-order resource. In this case, the scheduler counts down from the
-// cycle that the instruction issues in-order, forcing an interlock
-// with subsequent instructions that require the same resource until
-// the number of ResourceCyles specified in WriteRes expire.
+// out-of-order engine. Buffered resources may be held for multiple
+// clock cycles, but the scheduler does not pin them to a particular
+// clock cycle relative to instruction dispatch. Setting BufferSize=0
+// changes this to an in-order issue/dispatch resource. In this case,
+// the scheduler counts down from the cycle that the instruction
+// issues in-order, forcing a stall whenever a subsequent instruction
+// requires the same resource until the number of ResourceCyles
+// specified in WriteRes expire. Setting BufferSize=1 changes this to
+// an in-order latency resource. In this case, the scheduler models
+// producer/consumer stalls between instructions that use the
+// resource.
+//
+// Examples (all assume an out-of-order engine):
+//
+// Use BufferSize = -1 for "issue ports" fed by a unified reservation
+// station. Here the size of the reservation station is modeled by
+// MicroOpBufferSize, which should be the minimum size of either the
+// register rename pool, unified reservation station, or reorder
+// buffer.
+//
+// Use BufferSize = 0 for resources that force "dispatch/issue
+// groups". (Different processors define dispath/issue
+// differently. Here we refer to stage between decoding into micro-ops
+// and moving them into a reservation station.) Normally NumMicroOps
+// is sufficient to limit dispatch/issue groups. However, some
+// processors can form groups of with only certain combinitions of
+// instruction types. e.g. POWER7.
+//
+// Use BufferSize = 1 for in-order execution units. This is used for
+// an in-order pipeline within an out-of-order core where scheduling
+// dependent operations back-to-back is guaranteed to cause a
+// bubble. e.g. Cortex-a9 floating-point.
+//
+// Use BufferSize > 1 for out-of-order executions units with a
+// separate reservation station. This simply models the size of the
+// reservation station.
+//
+// To model both dispatch/issue groups and in-order execution units,
+// create two types of units, one with BufferSize=0 and one with
+// BufferSize=1.
 //
 // SchedModel ties these units to a processor for any stand-alone defs
 // of this class. Instances of subclass ProcResource will be automatically
