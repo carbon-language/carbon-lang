@@ -420,6 +420,8 @@ def : Pat <(v8i64 (X86vzext VK8WM:$mask)),
 
 def : Pat<(v16i32 (X86VBroadcast (i32 GR32:$src))),
         (VPBROADCASTDrZrr GR32:$src)>;
+def : Pat<(v16i32 (X86VBroadcastm VK16WM:$mask, (i32 GR32:$src))),
+        (VPBROADCASTDrZkrr VK16WM:$mask, GR32:$src)>;
 def : Pat<(v8i64 (X86VBroadcast (i64 GR64:$src))),
         (VPBROADCASTQrZrr GR64:$src)>;
 def : Pat<(v8i64 (X86VBroadcastm VK8WM:$mask, (i64 GR64:$src))),
@@ -1536,6 +1538,8 @@ let Predicates = [HasAVX512] in {
             (VMOVZPQILo2PQIZrm addr:$src)>;
     def : Pat<(v2f64 (X86vzmovl (v2f64 VR128X:$src))),
             (VMOVZPQILo2PQIZrr VR128X:$src)>;
+    def : Pat<(v2i64 (X86vzload addr:$src)),
+            (VMOVZPQILo2PQIZrm addr:$src)>;
   }
 
   // Use regular 128-bit instructions to match 256-bit scalar_to_vec+zext.
