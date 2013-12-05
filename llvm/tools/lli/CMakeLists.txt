@@ -25,3 +25,4 @@ add_llvm_tool(lli
   RemoteTarget.cpp
   RemoteTargetExternal.cpp
   )
+set_target_properties(lli PROPERTIES ENABLE_EXPORTS 1)

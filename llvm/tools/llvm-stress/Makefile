@@ -12,7 +12,4 @@ TOOLNAME := llvm-stress
 LINK_COMPONENTS := object
 LINK_COMPONENTS := bitreader bitwriter asmparser irreader instrumentation scalaropts ipo
 
-# This tool has no plugins, optimize startup time.
-TOOL_NO_EXPORTS = 1
-
 include $(LEVEL)/Makefile.common
