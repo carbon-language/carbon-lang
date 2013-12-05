@@ -404,8 +404,10 @@
 #endif
 
 /// \brief Does the compiler support generalized initializers (using braced
-/// lists and std::initializer_list).
-#if __has_feature(cxx_generalized_initializers)
+/// lists and std::initializer_list).  While clang may claim it supports general
+/// initializers, if we're using MSVC's headers, we might not have a usable
+/// std::initializer list type from the STL.  Disable this for now.
+#if __has_feature(cxx_generalized_initializers) && !defined(_MSC_VER)
 #define LLVM_HAS_INITIALIZER_LISTS 1
 #else
 #define LLVM_HAS_INITIALIZER_LISTS 0
