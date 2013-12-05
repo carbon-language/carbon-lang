@@ -47,10 +47,7 @@ class CodeGenModule;
 class CodeGenABITypes
 {
 public:
-  CodeGenABITypes(ASTContext &C, const CodeGenOptions &CodeGenOpts,
-                  llvm::Module &M, const llvm::DataLayout &TD,
-                  DiagnosticsEngine &Diags);
-
+  CodeGenABITypes(ASTContext &C, llvm::Module &M, const llvm::DataLayout &TD);
   ~CodeGenABITypes();
 
   /// These methods all forward to methods in the private implementation class
@@ -71,6 +68,12 @@ public:
                                          RequiredArgs args);
 
 private:
+  /// Default CodeGenOptions object used to initialize the
+  /// CodeGenModule and otherwise not used. More specifically, it is
+  /// not used in ABI type generation, so none of the options matter.
+  CodeGenOptions *CGO;
+
+  /// The CodeGenModule we use get to the CodeGenTypes object.
   CodeGen::CodeGenModule *CGM;
 };
 
