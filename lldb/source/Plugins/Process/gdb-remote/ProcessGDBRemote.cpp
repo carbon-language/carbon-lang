@@ -845,31 +845,35 @@ Error
 ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
 {
     Error error;
-    // Sleep and wait a bit for debugserver to start to listen...
-    std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
-    if (conn_ap.get())
+    // Only connect if we have a valid connect URL
+    
+    if (connect_url && connect_url[0])
     {
-        const uint32_t max_retry_count = 50;
-        uint32_t retry_count = 0;
-        while (!m_gdb_comm.IsConnected())
+        std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
+        if (conn_ap.get())
         {
-            if (conn_ap->Connect(connect_url, &error) == eConnectionStatusSuccess)
+            const uint32_t max_retry_count = 50;
+            uint32_t retry_count = 0;
+            while (!m_gdb_comm.IsConnected())
             {
-                m_gdb_comm.SetConnection (conn_ap.release());
-                break;
-            }
-            else if (error.WasInterrupted())
-            {
-                // If we were interrupted, don't keep retrying.
-                break;
-            }
-            
-            retry_count++;
-            
-            if (retry_count >= max_retry_count)
-                break;
+                if (conn_ap->Connect(connect_url, &error) == eConnectionStatusSuccess)
+                {
+                    m_gdb_comm.SetConnection (conn_ap.release());
+                    break;
+                }
+                else if (error.WasInterrupted())
+                {
+                    // If we were interrupted, don't keep retrying.
+                    break;
+                }
+                
+                retry_count++;
+                
+                if (retry_count >= max_retry_count)
+                    break;
 
-            usleep (100000);
+                usleep (100000);
+            }
         }
     }
 
@@ -2501,9 +2505,9 @@ ProcessGDBRemote::LaunchAndConnectToDebugserver (const ProcessInfo &process_info
         debugserver_launch_info.SetMonitorProcessCallback (MonitorDebugserverProcess, this, false);
         debugserver_launch_info.SetUserID(process_info.GetUserID());
 
-        error = GDBRemoteCommunication::StartDebugserverProcess ("localhost:0",
-                                                                 debugserver_launch_info,
-                                                                 port);
+        error = m_gdb_comm.StartDebugserverProcess (NULL,
+                                                    debugserver_launch_info,
+                                                    port);
 
         if (error.Success ())
             m_debugserver_pid = debugserver_launch_info.GetProcessID();
@@ -2522,10 +2526,17 @@ ProcessGDBRemote::LaunchAndConnectToDebugserver (const ProcessInfo &process_info
             return error;
         }
         
-        char connect_url[128];
-        snprintf (connect_url, sizeof(connect_url), "connect://localhost:%u", port);
-        
-        error = ConnectToDebugserver (connect_url);
+        if (m_gdb_comm.IsConnected())
+        {
+            // Finish the connection process by doing the handshake without connecting (send NULL URL)
+            ConnectToDebugserver (NULL);
+        }
+        else
+        {
+            char connect_url[128];
+            snprintf (connect_url, sizeof(connect_url), "connect://localhost:%u", port);
+            error = ConnectToDebugserver (connect_url);
+        }
 
     }
     return error;

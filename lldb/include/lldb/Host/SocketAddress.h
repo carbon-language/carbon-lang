@@ -121,10 +121,12 @@ public:
     // address.
     //------------------------------------------------------------------
     bool
-    SetAddress (const struct addrinfo *hints_ptr,   // Optional hints where the family, protocol and other things can be specified.
-                const char *host,                   // Hostname ("foo.bar.com" or "foo" or IP address string ("123.234.12.1" or "2001:0db8:85a3:0000:0000:8a2e:0370:7334")
-                const char *service,                // Protocol name ("tcp", "http", etc) or a raw port number string ("81")
-                struct addrinfo *addr_info_ptr);    // If non-NULL, this will get filled in with the match
+    getaddrinfo (const char *host,          // Hostname ("foo.bar.com" or "foo" or IP address string ("123.234.12.1" or "2001:0db8:85a3:0000:0000:8a2e:0370:7334")
+                 const char *service,       // Protocol name ("tcp", "http", etc) or a raw port number string ("81")
+                 int ai_family = PF_UNSPEC,
+                 int ai_socktype = 0,
+                 int ai_protocol = 0,
+                 int ai_flags = 0);
 
     //------------------------------------------------------------------
     // Quick way to set the SocketAddress to localhost given the family.
@@ -134,6 +136,10 @@ public:
     bool
     SetToLocalhost (sa_family_t family, 
                     in_port_t port);
+
+    bool
+    SetToAnyAddress (sa_family_t family,
+                     in_port_t port);
 
     //------------------------------------------------------------------
     // Returns true if there is a valid socket address in this object.

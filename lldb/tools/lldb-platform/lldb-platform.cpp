@@ -262,24 +262,18 @@ main (int argc, char *argv[])
             std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
             if (conn_ap.get())
             {
-                for (int j = 0; j < listen_host_port.size(); j++)
-                {
-                    char c = listen_host_port[j];
-                    if (c > '9' || c < '0')
-                        printf("WARNING: passing anything but a number as argument to --listen will most probably make connecting impossible.\n");
-                }
-                std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
-                if (conn_ap.get())
-                {
-                    std::string connect_url ("listen://");
-                    connect_url.append(listen_host_port.c_str());
+                std::string connect_url ("listen://");
+                connect_url.append(listen_host_port.c_str());
 
-                    printf ("Listening for a connection on %s...\n", listen_host_port.c_str());
-                    if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
-                    {
-                        printf ("Connection established.\n");
-                        gdb_server.SetConnection (conn_ap.release());
-                    }
+                printf ("Listening for a connection from %s...\n", listen_host_port.c_str());
+                if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
+                {
+                    printf ("Connection established.\n");
+                    gdb_server.SetConnection (conn_ap.release());
+                }
+                else
+                {
+                    printf ("error: %s\n", error.AsCString());
                 }
             }
 

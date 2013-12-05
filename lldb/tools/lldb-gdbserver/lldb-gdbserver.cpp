@@ -221,18 +221,14 @@ main (int argc, char *argv[])
         std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
         if (conn_ap.get())
         {
-            std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
-            if (conn_ap.get())
-            {
-                std::string connect_url ("listen://");
-                connect_url.append(host_and_port);
+            std::string connect_url ("listen://");
+            connect_url.append(host_and_port);
 
-                printf ("Listening for a connection on %s...\n", host_and_port);
-                if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
-                {
-                    printf ("Connection established.\n");
-                    gdb_server.SetConnection (conn_ap.release());
-                }
+            printf ("Listening for a connection on %s...\n", host_and_port);
+            if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
+            {
+                printf ("Connection established.\n");
+                gdb_server.SetConnection (conn_ap.release());
             }
         }
 

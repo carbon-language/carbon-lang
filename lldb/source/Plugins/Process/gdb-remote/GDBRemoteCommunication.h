@@ -108,8 +108,8 @@ public:
     // Start a debugserver instance on the current host using the
     // supplied connection URL.
     //------------------------------------------------------------------
-    static lldb_private::Error
-    StartDebugserverProcess (const char *connect_url,
+    lldb_private::Error
+    StartDebugserverProcess (const char *host_and_port,
                              lldb_private::ProcessLaunchInfo &launch_info,
                              uint16_t &port);
 
@@ -256,9 +256,22 @@ protected:
                         // a single process
     
 
+    lldb_private::Error
+    StartListenThread (const char *hostname = "localhost",
+                       in_port_t port = 0);
 
+    bool
+    JoinListenThread ();
+
+    static lldb::thread_result_t
+    ListenThread (lldb::thread_arg_t arg);
 
 private:
+    
+    lldb::thread_t m_listen_thread;
+    std::string m_listen_url;
+    
+
     //------------------------------------------------------------------
     // For GDBRemoteCommunication only
     //------------------------------------------------------------------

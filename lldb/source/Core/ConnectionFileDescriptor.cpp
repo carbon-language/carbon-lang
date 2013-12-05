@@ -97,11 +97,11 @@ ConnectionFileDescriptor::ConnectionFileDescriptor () :
     m_fd_send_type (eFDTypeFile),
     m_fd_recv_type (eFDTypeFile),
     m_udp_send_sockaddr (new SocketAddress()),
-    m_should_close_fd (false), 
     m_socket_timeout_usec(0),
     m_pipe_read(-1),
     m_pipe_write(-1),
     m_mutex (Mutex::eMutexTypeRecursive),
+    m_should_close_fd (false),
     m_shutting_down (false)
 {
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
@@ -116,11 +116,11 @@ ConnectionFileDescriptor::ConnectionFileDescriptor (int fd, bool owns_fd) :
     m_fd_send_type (eFDTypeFile),
     m_fd_recv_type (eFDTypeFile),
     m_udp_send_sockaddr (new SocketAddress()),
-    m_should_close_fd (owns_fd),
     m_socket_timeout_usec(0),
     m_pipe_read(-1),
     m_pipe_write(-1),
     m_mutex (Mutex::eMutexTypeRecursive),
+    m_should_close_fd (owns_fd),
     m_shutting_down (false)
 {
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
@@ -218,12 +218,15 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
     
     if (s && s[0])
     {
-        char *end = NULL;
         if (strstr(s, "listen://"))
         {
             // listen://HOST:PORT
-            unsigned long listen_port = ::strtoul(s + strlen("listen://"), &end, 0);
-            return SocketListen (listen_port, error_ptr);
+            return SocketListen (s + strlen("listen://"), error_ptr);
+        }
+        else if (strstr(s, "accept://"))
+        {
+            // unix://SOCKNAME
+            return NamedSocketAccept (s + strlen("accept://"), error_ptr);
         }
         else if (strstr(s, "unix-accept://"))
         {
@@ -362,6 +365,9 @@ ConnectionFileDescriptor::Disconnect (Error *error_ptr)
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::Disconnect ()", this);
+
+    // Reset the port predicate when disconnecting and don't broadcast
+    m_port_predicate.SetValue(0, eBroadcastNever);
 
     ConnectionStatus status = eConnectionStatusSuccess;
 
@@ -1281,16 +1287,31 @@ ConnectionFileDescriptor::NamedSocketConnect (const char *socket_name, Error *er
 }
 
 ConnectionStatus
-ConnectionFileDescriptor::SocketListen (uint16_t listen_port_num, Error *error_ptr)
+ConnectionFileDescriptor::SocketListen (const char *host_and_port, Error *error_ptr)
 {
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
-        log->Printf ("%p ConnectionFileDescriptor::SocketListen (port = %i)", this, listen_port_num);
+        log->Printf ("%p ConnectionFileDescriptor::SocketListen (%s)", this, host_and_port);
 
     Disconnect (NULL);
     m_fd_send_type = m_fd_recv_type = eFDTypeSocket;
-    int listen_port = ::socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (listen_port == -1)
+    std::string host_str;
+    std::string port_str;
+    int32_t port = INT32_MIN;
+    if (!DecodeHostAndPort (host_and_port, host_str, port_str, port, error_ptr))
+    {
+        // Might be just a port number
+        port = Args::StringToSInt32(host_and_port, -1);
+        if (port == -1)
+            return eConnectionStatusError;
+        else
+            host_str.clear();
+    }
+    const sa_family_t family = AF_INET;
+    const int socktype = SOCK_STREAM;
+    const int protocol = IPPROTO_TCP;
+    int listen_fd = ::socket (family, socktype, protocol);
+    if (listen_fd == -1)
     {
         if (error_ptr)
             error_ptr->SetErrorToErrno();
@@ -1298,41 +1319,114 @@ ConnectionFileDescriptor::SocketListen (uint16_t listen_port_num, Error *error_p
     }
 
     // enable local address reuse
-    SetSocketOption (listen_port, SOL_SOCKET, SO_REUSEADDR, 1);
+    SetSocketOption (listen_fd, SOL_SOCKET, SO_REUSEADDR, 1);
 
-    SocketAddress localhost;
-    if (localhost.SetToLocalhost (AF_INET, listen_port_num))
+    SocketAddress listen_addr;
+    if (host_str.empty())
+        listen_addr.SetToLocalhost(family, port);
+    else if (host_str.compare("*") == 0)
+        listen_addr.SetToAnyAddress(family, port);
+    else
     {
-        int err = ::bind (listen_port, localhost, localhost.GetLength());
+        if (!listen_addr.getaddrinfo(host_str.c_str(), port_str.c_str(), family, socktype, protocol))
+        {
+            if (error_ptr)
+                error_ptr->SetErrorStringWithFormat("unable to resolve hostname '%s'", host_str.c_str());
+            Close (listen_fd, eFDTypeSocket, NULL);
+            return eConnectionStatusError;
+        }
+    }
+
+    SocketAddress anyaddr;
+    if (anyaddr.SetToAnyAddress (family, port))
+    {
+        int err = ::bind (listen_fd, anyaddr, anyaddr.GetLength());
         if (err == -1)
         {
             if (error_ptr)
                 error_ptr->SetErrorToErrno();
-            Close (listen_port, eFDTypeSocket, NULL);
+            Close (listen_fd, eFDTypeSocket, NULL);
             return eConnectionStatusError;
         }
 
-        err = ::listen (listen_port, 1);
+        err = ::listen (listen_fd, 1);
         if (err == -1)
         {
             if (error_ptr)
                 error_ptr->SetErrorToErrno();
-            Close (listen_port, eFDTypeSocket, NULL);
+            Close (listen_fd, eFDTypeSocket, NULL);
             return eConnectionStatusError;
         }
 
-        m_fd_send = m_fd_recv = ::accept (listen_port, NULL, 0);
+        // We were asked to listen on port zero which means we
+        // must now read the actual port that was given to us
+        // as port zero is a special code for "find an open port
+        // for me".
+        if (port == 0)
+            port = GetSocketPort(listen_fd);
+
+        // Set the port predicate since when doing a listen://<host>:<port>
+        // it often needs to accept the incoming connection which is a blocking
+        // system call. Allowing access to the bound port using a predicate allows
+        // us to wait for the port predicate to be set to a non-zero value from
+        // another thread in an efficient manor.
+        m_port_predicate.SetValue(port, eBroadcastAlways);
+        
+        
+        bool accept_connection = false;
+        
+        // Loop until we are happy with our connection
+        while (!accept_connection)
+        {
+            struct sockaddr_in accept_addr;
+            ::memset (&accept_addr, 0, sizeof accept_addr);
+            accept_addr.sin_len = sizeof accept_addr;
+            socklen_t accept_addr_len = sizeof accept_addr;
+
+            int fd = ::accept (listen_fd, (struct sockaddr *)&accept_addr, &accept_addr_len);
+            
+            if (fd == -1)
+            {
+                if (error_ptr)
+                    error_ptr->SetErrorToErrno();
+                break;
+            }
+    
+            if (listen_addr.sockaddr_in().sin_addr.s_addr == INADDR_ANY)
+            {
+                accept_connection = true;
+                m_fd_send = m_fd_recv = fd;
+            }
+            else
+            {
+                if (accept_addr_len == listen_addr.sockaddr_in().sin_len &&
+                    accept_addr.sin_addr.s_addr == listen_addr.sockaddr_in().sin_addr.s_addr)
+                {
+                    accept_connection = true;
+                    m_fd_send = m_fd_recv = fd;
+                }
+                else
+                {
+                    ::close (fd);
+                    m_fd_send = m_fd_recv = -1;
+                    const uint8_t *accept_ip = (const uint8_t *)&accept_addr.sin_addr.s_addr;
+                    const uint8_t *listen_ip = (const uint8_t *)&listen_addr.sockaddr_in().sin_addr.s_addr;
+                    ::fprintf (stderr, "error: rejecting incoming connection from %u.%u.%u.%u (expecting %u.%u.%u.%u)\n",
+                               accept_ip[0], accept_ip[1], accept_ip[2], accept_ip[3],
+                               listen_ip[0], listen_ip[1], listen_ip[2], listen_ip[3]);
+                }
+            }
+        }
+
         if (m_fd_send == -1)
         {
-            if (error_ptr)
-                error_ptr->SetErrorToErrno();
-            Close (listen_port, eFDTypeSocket, NULL);
+            Close (listen_fd, eFDTypeSocket, NULL);
             return eConnectionStatusError;
         }
     }
 
     // We are done with the listen port
-    Close (listen_port, eFDTypeSocket, NULL);
+    Close (listen_fd, eFDTypeSocket, NULL);
 
     m_should_close_fd = true;
 
@@ -1446,7 +1540,7 @@ ConnectionFileDescriptor::ConnectUDP (const char *host_and_port, Error *error_pt
     {
         // Socket was created, now lets bind to the requested port
         SocketAddress addr;
-        addr.SetToLocalhost (AF_INET, 0);
+        addr.SetToAnyAddress (AF_INET, 0);
 
         if (::bind (m_fd_recv, addr, addr.GetLength()) == -1)
         {
@@ -1585,11 +1679,13 @@ in_port_t
 ConnectionFileDescriptor::GetSocketPort (int fd)
 {
     // We bound to port zero, so we need to figure out which port we actually bound to
-    SocketAddress sock_addr;
-    socklen_t sock_addr_len = sock_addr.GetMaxLength ();
-    if (::getsockname (fd, sock_addr, &sock_addr_len) == 0)
-        return sock_addr.GetPort ();
-
+    if (fd >= 0)
+    {
+        SocketAddress sock_addr;
+        socklen_t sock_addr_len = sock_addr.GetMaxLength ();
+        if (::getsockname (fd, sock_addr, &sock_addr_len) == 0)
+            return sock_addr.GetPort ();
+    }
     return 0;
 }
 
@@ -1609,4 +1705,17 @@ ConnectionFileDescriptor::GetWritePort () const
     return ConnectionFileDescriptor::GetSocketPort (m_fd_send);
 }
 
-
+in_port_t
+ConnectionFileDescriptor::GetBoundPort (uint32_t timeout_sec)
+{
+    in_port_t bound_port = 0;
+    if (timeout_sec == UINT32_MAX)
+        m_port_predicate.WaitForValueNotEqualTo (0, bound_port);
+    else
+    {
+        TimeValue timeout = TimeValue::Now();
+        timeout.OffsetWithSeconds(timeout_sec);
+        m_port_predicate.WaitForValueNotEqualTo (0, bound_port, &timeout);
+    }
+    return bound_port;
+}

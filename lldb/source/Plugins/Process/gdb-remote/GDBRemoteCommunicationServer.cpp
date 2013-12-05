@@ -812,9 +812,9 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
 
             debugserver_launch_info.SetMonitorProcessCallback(ReapDebugserverProcess, this, false);
             
-            error = GDBRemoteCommunication::StartDebugserverProcess (host_and_port_cstr,
-                                                                     debugserver_launch_info,
-                                                                     port);
+            error = StartDebugserverProcess (host_and_port_cstr,
+                                             debugserver_launch_info,
+                                             port);
 
             lldb::pid_t debugserver_pid = debugserver_launch_info.GetProcessID();
 
@@ -1130,7 +1130,6 @@ GDBRemoteCommunicationServer::Handle_vFile_Open (StringExtractorGDBRemote &packe
                 mode_t mode = packet.GetHexMaxU32(false, 0600);
                 Error error;
                 int fd = ::open (path.c_str(), flags, mode);
-                printf ("open('%s', flags=0x%x, mode=%o) fd = %i (%s)\n", path.c_str(), flags, mode, fd, fd == -1 ? strerror(errno) : "<success>");
                 const int save_errno = fd == -1 ? errno : 0;
                 StreamString response;
                 response.PutChar('F');
