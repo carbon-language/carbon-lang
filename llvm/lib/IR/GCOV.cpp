@@ -367,7 +367,7 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) const {
     }
     StringRef AllLines = Buff->getBuffer();
 
-    std::string CovFilename = Filename.str() + ".llcov";
+    std::string CovFilename = Filename.str() + ".gcov";
     std::string ErrorInfo;
     raw_fd_ostream OS(CovFilename.c_str(), ErrorInfo);
     if (!ErrorInfo.empty())
