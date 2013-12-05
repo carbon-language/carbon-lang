@@ -679,6 +679,34 @@ def expectedFailureDarwin(bugnumber=None):
               return wrapper
         return expectedFailureDarwin_impl
 
+def skipIfRemote(func):
+    """Decorate the item to skip tests if testing remotely."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@skipIfRemote can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        from unittest2 import case
+        if lldb.remote_platform:
+            self = args[0]
+            self.skipTest("skip on remote platform")
+        else:
+            func(*args, **kwargs)
+    return wrapper
+
+def skipIfRemoteDueToDeadlock(func):
+    """Decorate the item to skip tests if testing remotely due to the test deadlocking."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@skipIfRemote can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        from unittest2 import case
+        if lldb.remote_platform:
+            self = args[0]
+            self.skipTest("skip on remote platform (deadlocks)")
+        else:
+            func(*args, **kwargs)
+    return wrapper
+
 def skipIfFreeBSD(func):
     """Decorate the item to skip tests that should be skipped on FreeBSD."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):

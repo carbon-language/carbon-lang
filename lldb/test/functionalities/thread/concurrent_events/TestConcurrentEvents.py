@@ -89,6 +89,7 @@ class ConcurrentEventsTestCase(TestBase):
     ## Tests for concurrent watchpoint and breakpoint
     #
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_watch_break_dwarf(self):
         """Test watchpoint and a breakpoint in multiple threads."""
@@ -97,6 +98,7 @@ class ConcurrentEventsTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_delay_watch_break_dwarf(self):
         """Test (1-second delay) watchpoint and a breakpoint in multiple threads."""
@@ -105,8 +107,9 @@ class ConcurrentEventsTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
-    def test_watch_break_dwarf(self):
+    def test_watch_break_dwarf_delay(self):
         """Test watchpoint and a (1 second delay) breakpoint in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_delay_breakpoint_threads=1, num_watchpoint_threads=1)
@@ -116,6 +119,7 @@ class ConcurrentEventsTestCase(TestBase):
     #
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_signal_watch_dwarf(self):
         """Test a watchpoint and a signal in multiple threads."""
@@ -124,6 +128,7 @@ class ConcurrentEventsTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_delay_signal_watch_dwarf(self):
         """Test a watchpoint and a (1 second delay) signal in multiple threads."""
@@ -132,6 +137,7 @@ class ConcurrentEventsTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_signal_delay_watch_dwarf(self):
         """Test a (1 second delay) watchpoint and a signal in multiple threads."""
@@ -182,6 +188,7 @@ class ConcurrentEventsTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_two_breakpoints_one_watchpoint_dwarf(self):
         """Test two threads that trigger a breakpoint and one watchpoint thread. """
@@ -190,6 +197,7 @@ class ConcurrentEventsTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_breakpoints_delayed_breakpoint_one_watchpoint_dwarf(self):
         """Test a breakpoint, a delayed breakpoint, and one watchpoint thread. """
@@ -203,6 +211,7 @@ class ConcurrentEventsTestCase(TestBase):
     #
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_two_watchpoint_threads_dwarf(self):
         """Test two threads that trigger a watchpoint. """
@@ -211,6 +220,7 @@ class ConcurrentEventsTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_watchpoint_with_delay_waychpoint_threads_dwarf(self):
         """Test two threads that trigger a watchpoint where one thread has a 1 second delay. """
@@ -220,6 +230,7 @@ class ConcurrentEventsTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_two_watchpoints_one_breakpoint_dwarf(self):
         """Test two threads that trigger a watchpoint and one breakpoint thread. """
@@ -228,6 +239,7 @@ class ConcurrentEventsTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_two_watchpoints_one_delay_breakpoint_dwarf(self):
         """Test two threads that trigger a watchpoint and one (1 second delay) breakpoint thread. """
@@ -236,6 +248,7 @@ class ConcurrentEventsTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_watchpoint_delay_watchpoint_one_breakpoint_dwarf(self):
         """Test two threads that trigger a watchpoint (one with a 1 second delay) and one breakpoint thread. """
@@ -246,6 +259,7 @@ class ConcurrentEventsTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_two_watchpoints_one_signal_dwarf(self):
         """Test two threads that trigger a watchpoint and one signal thread. """
@@ -256,6 +270,7 @@ class ConcurrentEventsTestCase(TestBase):
     ## Test for watchpoint, signal and breakpoint happening concurrently
     #
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_signal_watch_break_dwarf(self):
         """Test a signal/watchpoint/breakpoint in multiple threads."""
@@ -265,6 +280,7 @@ class ConcurrentEventsTestCase(TestBase):
                                num_breakpoint_threads=1)
 
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_signal_watch_break_dwarf(self):
         """Test one signal thread with 5 watchpoint and breakpoint threads."""
@@ -275,6 +291,7 @@ class ConcurrentEventsTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_signal_watch_break_dwarf(self):
         """Test with 5 watchpoint and breakpoint threads."""
@@ -295,6 +312,7 @@ class ConcurrentEventsTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_crash_with_watchpoint_dwarf(self):
         """ Test a thread that crashes while another thread hits a watchpoint."""
@@ -310,6 +328,7 @@ class ConcurrentEventsTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_crash_with_watchpoint_breakpoint_signal_dwarf(self):
         """ Test a thread that crashes while other threads generate a signal and hit a watchpoint and breakpoint. """
@@ -321,6 +340,7 @@ class ConcurrentEventsTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
+    @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_delayed_crash_with_breakpoint_watchpoint_dwarf(self):
         """ Test a thread with a delayed crash while other threads hit a watchpoint and a breakpoint. """
