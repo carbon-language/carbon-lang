@@ -408,10 +408,12 @@ bool ThreadSanitizer::instrumentLoadOrStore(Instruction *I) {
     if (isa<VectorType>(StoredValue->getType()))
       StoredValue = IRB.CreateExtractElement(
           StoredValue, ConstantInt::get(IRB.getInt32Ty(), 0));
+    if (StoredValue->getType()->isIntegerTy())
+      StoredValue = IRB.CreateIntToPtr(StoredValue, IRB.getInt8PtrTy());
     // Call TsanVptrUpdate.
     IRB.CreateCall2(TsanVptrUpdate,
                     IRB.CreatePointerCast(Addr, IRB.getInt8PtrTy()),
-                    IRB.CreateBitCast(StoredValue, IRB.getInt8PtrTy()));
+                    IRB.CreatePointerCast(StoredValue, IRB.getInt8PtrTy()));
     NumInstrumentedVtableWrites++;
     return true;
   }

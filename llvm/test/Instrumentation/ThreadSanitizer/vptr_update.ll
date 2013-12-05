@@ -11,6 +11,16 @@ entry:
   ret void
 }
 
+define void @FooInt(i64* nocapture %a, i64 %b) nounwind uwtable sanitize_thread {
+entry:
+; CHECK-LABEL: @FooInt
+; CHECK: call void @__tsan_vptr_update
+; CHECK: ret void
+  store i64 %b, i64* %a, align 8, !tbaa !0
+  ret void
+}
+
+
 declare i32 @Func1()
 declare i32 @Func2()
 
