@@ -12,8 +12,9 @@
 
 using namespace lld;
 using namespace elf;
-
 using namespace llvm::ELF;
+
+using llvm::makeArrayRef;
 
 HexagonTargetHandler::HexagonTargetHandler(HexagonLinkingContext &context)
     : DefaultTargetHandler(context), _targetLayout(context),
@@ -54,7 +55,7 @@ public:
   HexagonGOTAtom(const File &f) : GOTAtom(f, ".got") {}
 
   virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>(hexagonGotAtomContent, 4);
+    return makeArrayRef(hexagonGotAtomContent);
   }
 
   virtual Alignment alignment() const { return Alignment(2); }
@@ -65,7 +66,7 @@ public:
   HexagonGOTPLTAtom(const File &f) : GOTAtom(f, ".got.plt") {}
 
   virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>(hexagonGotPltAtomContent, 4);
+    return makeArrayRef(hexagonGotPltAtomContent);
   }
 
   virtual Alignment alignment() const { return Alignment(2); }
@@ -76,7 +77,7 @@ public:
   HexagonGOTPLT0Atom(const File &f) : GOTAtom(f, ".got.plt") {}
 
   virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>(hexagonGotPlt0AtomContent, 16);
+    return makeArrayRef(hexagonGotPlt0AtomContent);
   }
 
   virtual Alignment alignment() const { return Alignment(3); }
@@ -91,7 +92,7 @@ public:
   }
 
   virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>(hexagonPlt0AtomContent, 28);
+    return makeArrayRef(hexagonPlt0AtomContent);
   }
 };
 
@@ -101,7 +102,7 @@ public:
   HexagonPLTAtom(const File &f, StringRef secName) : PLTAtom(f, secName) {}
 
   virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>(hexagonPltAtomContent, 16);
+    return makeArrayRef(hexagonPltAtomContent);
   }
 };
 
