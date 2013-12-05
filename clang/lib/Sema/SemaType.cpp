@@ -4596,7 +4596,8 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
 }
 
 void Sema::adjustMemberFunctionCC(QualType &T, bool IsStatic) {
-  const FunctionType *FT = T->castAs<FunctionType>();
+  FunctionTypeUnwrapper Unwrapped(*this, T);
+  const FunctionType *FT = Unwrapped.get();
   bool IsVariadic = (isa<FunctionProtoType>(FT) &&
                      cast<FunctionProtoType>(FT)->isVariadic());
 
@@ -4621,7 +4622,8 @@ void Sema::adjustMemberFunctionCC(QualType &T, bool IsStatic) {
   }
 
   FT = Context.adjustFunctionType(FT, FT->getExtInfo().withCallingConv(ToCC));
-  T = Context.getAdjustedType(T, QualType(FT, T.getQualifiers()));
+  QualType Wrapped = Unwrapped.wrap(*this, FT);
+  T = Context.getAdjustedType(T, Wrapped);
 }
 
 /// Handle OpenCL image access qualifiers: read_only, write_only, read_write
