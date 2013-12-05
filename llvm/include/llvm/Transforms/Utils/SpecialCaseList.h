@@ -43,7 +43,9 @@
 // http://code.google.com/p/data-race-test/wiki/ThreadSanitizerIgnores
 //
 //===----------------------------------------------------------------------===//
-//
+
+#ifndef LLVM_TRANSFORMS_UTILS_SPECIALCASELIST_H
+#define LLVM_TRANSFORMS_UTILS_SPECIALCASELIST_H
 
 #include "llvm/ADT/StringMap.h"
 
@@ -108,3 +110,5 @@ class SpecialCaseList {
 };
 
 }  // namespace llvm
+
+#endif  // LLVM_TRANSFORMS_UTILS_SPECIALCASELIST_H
