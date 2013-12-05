@@ -697,8 +697,14 @@ void ScheduleDAGInstrs::initSUnits() {
       for (TargetSchedModel::ProcResIter
              PI = SchedModel.getWriteProcResBegin(SC),
              PE = SchedModel.getWriteProcResEnd(SC); PI != PE; ++PI) {
-        if (SchedModel.getProcResource(PI->ProcResourceIdx)->BufferSize == 1) {
+        switch (SchedModel.getProcResource(PI->ProcResourceIdx)->BufferSize) {
+        case 0:
+          SU->hasReservedResource = true;
+          break;
+        case 1:
           SU->isUnbuffered = true;
+          break;
+        default:
           break;
         }
       }
