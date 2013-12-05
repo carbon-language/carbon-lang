@@ -1926,17 +1926,16 @@ unsigned DwarfUnits::computeSizeAndOffset(DIE *Die, unsigned Offset) {
   assignAbbrevNumber(Die->getAbbrev());
 
   // Get the abbreviation for this DIE.
-  unsigned AbbrevNumber = Die->getAbbrevNumber();
-  const DIEAbbrev *Abbrev = Abbreviations[AbbrevNumber - 1];
+  const DIEAbbrev &Abbrev = Die->getAbbrev();
 
   // Set DIE offset
   Die->setOffset(Offset);
 
   // Start the size with the size of abbreviation code.
-  Offset += MCAsmInfo::getULEB128Size(AbbrevNumber);
+  Offset += MCAsmInfo::getULEB128Size(Die->getAbbrevNumber());
 
   const SmallVectorImpl<DIEValue *> &Values = Die->getValues();
-  const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev->getData();
+  const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
 
   // Size the DIE attribute values.
   for (unsigned i = 0, N = Values.size(); i < N; ++i)
@@ -1945,7 +1944,7 @@ unsigned DwarfUnits::computeSizeAndOffset(DIE *Die, unsigned Offset) {
 
   // Size the DIE children if any.
   if (!Children.empty()) {
-    assert(Abbrev->getChildrenFlag() == dwarf::DW_CHILDREN_yes &&
+    assert(Abbrev.getChildrenFlag() == dwarf::DW_CHILDREN_yes &&
            "Children flag not set");
 
     for (unsigned j = 0, M = Children.size(); j < M; ++j)
@@ -2030,21 +2029,20 @@ void DwarfDebug::emitSectionLabels() {
 }
 
 // Recursively emits a debug information entry.
-void DwarfDebug::emitDIE(DIE *Die, ArrayRef<DIEAbbrev *> Abbrevs) {
+void DwarfDebug::emitDIE(DIE *Die) {
   // Get the abbreviation for this DIE.
-  unsigned AbbrevNumber = Die->getAbbrevNumber();
-  const DIEAbbrev *Abbrev = Abbrevs[AbbrevNumber - 1];
+  const DIEAbbrev &Abbrev = Die->getAbbrev();
 
   // Emit the code (index) for the abbreviation.
   if (Asm->isVerbose())
-    Asm->OutStreamer.AddComment("Abbrev [" + Twine(AbbrevNumber) + "] 0x" +
-                                Twine::utohexstr(Die->getOffset()) + ":0x" +
-                                Twine::utohexstr(Die->getSize()) + " " +
-                                dwarf::TagString(Abbrev->getTag()));
-  Asm->EmitULEB128(AbbrevNumber);
+    Asm->OutStreamer.AddComment("Abbrev [" + Twine(Abbrev.getNumber()) +
+                                "] 0x" + Twine::utohexstr(Die->getOffset()) +
+                                ":0x" + Twine::utohexstr(Die->getSize()) + " " +
+                                dwarf::TagString(Abbrev.getTag()));
+  Asm->EmitULEB128(Abbrev.getNumber());
 
   const SmallVectorImpl<DIEValue *> &Values = Die->getValues();
-  const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev->getData();
+  const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
 
   // Emit the DIE attribute values.
   for (unsigned i = 0, N = Values.size(); i < N; ++i) {
@@ -2115,11 +2113,11 @@ void DwarfDebug::emitDIE(DIE *Die, ArrayRef<DIEAbbrev *> Abbrevs) {
   }
 
   // Emit the DIE children if any.
-  if (Abbrev->getChildrenFlag() == dwarf::DW_CHILDREN_yes) {
+  if (Abbrev.getChildrenFlag() == dwarf::DW_CHILDREN_yes) {
     const std::vector<DIE *> &Children = Die->getChildren();
 
     for (unsigned j = 0, M = Children.size(); j < M; ++j)
-      emitDIE(Children[j], Abbrevs);
+      emitDIE(Children[j]);
 
     Asm->OutStreamer.AddComment("End Of Children Mark");
     Asm->EmitInt8(0);
@@ -2147,7 +2145,7 @@ void DwarfUnits::emitUnits(DwarfDebug *DD, const MCSection *USection,
 
     TheU->emitHeader(ASection, ASectionSym);
 
-    DD->emitDIE(Die, Abbreviations);
+    DD->emitDIE(Die);
     Asm->OutStreamer.EmitLabel(
         Asm->GetTempSymbol(USection->getLabelEndName(), TheU->getUniqueID()));
   }

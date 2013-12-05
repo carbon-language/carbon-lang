@@ -734,7 +734,7 @@ public:
                                unsigned CUID);
 
   /// \brief Recursively Emits a debug information entry.
-  void emitDIE(DIE *Die, ArrayRef<DIEAbbrev *> Abbrevs);
+  void emitDIE(DIE *Die);
 
   // Experimental DWARF5 features.
 
