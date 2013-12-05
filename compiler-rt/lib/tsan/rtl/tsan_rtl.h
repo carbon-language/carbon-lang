@@ -28,6 +28,7 @@
 
 #include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_allocator_internal.h"
+#include "sanitizer_common/sanitizer_asm.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libignore.h"
 #include "sanitizer_common/sanitizer_suppressions.h"
@@ -736,11 +737,11 @@ void AcquireReleaseImpl(ThreadState *thr, uptr pc, SyncClock *c);
 // so we create a reserve stack frame for it (1024b must be enough).
 #define HACKY_CALL(f) \
   __asm__ __volatile__("sub $1024, %%rsp;" \
-                       ".cfi_adjust_cfa_offset 1024;" \
+                       CFI_INL_ADJUST_CFA_OFFSET(1024) \
                        ".hidden " #f "_thunk;" \
                        "call " #f "_thunk;" \
                        "add $1024, %%rsp;" \
-                       ".cfi_adjust_cfa_offset -1024;" \
+                       CFI_INL_ADJUST_CFA_OFFSET(-1024) \
                        ::: "memory", "cc");
 #else
 #define HACKY_CALL(f) f()
