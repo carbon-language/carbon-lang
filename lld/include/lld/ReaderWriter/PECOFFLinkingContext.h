@@ -230,11 +230,7 @@ public:
     return ArrayRef<uint8_t>(p, p + array.size());
   }
 
-  virtual bool hasInputGraph() {
-    if (_inputGraph)
-      return true;
-    return false;
-  }
+  virtual bool hasInputGraph() { return !!_inputGraph; }
 
   void setLibraryGroup(Group *group) { _libraryGroup = group; }
   Group *getLibraryGroup() const { return _libraryGroup; }
