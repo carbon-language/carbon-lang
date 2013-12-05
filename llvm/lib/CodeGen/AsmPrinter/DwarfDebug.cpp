@@ -3007,7 +3007,8 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
 
   addGnuPubAttributes(NewCU, Die);
 
-  // Attribute if we've emitted any ranges and their location for the compile unit.
+  // Attribute if we've emitted any ranges and their location for the compile
+  // unit.
   if (!CU->getRangeLists().empty())
     addSectionLabel(Asm, NewCU, Die, dwarf::DW_AT_GNU_ranges_base,
                     Asm->GetTempSymbol("gnu_ranges", NewCU->getUniqueID()),
