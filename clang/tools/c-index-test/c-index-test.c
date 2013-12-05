@@ -107,20 +107,25 @@ void free_remapped_files(struct CXUnsavedFile *unsaved_files,
   free(unsaved_files);
 }
 
-int parse_remapped_files(int argc, const char **argv, int start_arg,
-                         struct CXUnsavedFile **unsaved_files,
-                         int *num_unsaved_files) {
+static int parse_remapped_files_with_opt(const char *opt_name,
+                                         int argc, const char **argv,
+                                         int start_arg,
+                                         struct CXUnsavedFile **unsaved_files,
+                                         int *num_unsaved_files) {
   int i;
   int arg;
-  int prefix_len = strlen("-remap-file=");
+  int prefix_len = strlen(opt_name);
+  int arg_indices[20];
   *unsaved_files = 0;
   *num_unsaved_files = 0;
 
   /* Count the number of remapped files. */
   for (arg = start_arg; arg < argc; ++arg) {
-    if (strncmp(argv[arg], "-remap-file=", prefix_len))
-      break;
+    if (strncmp(argv[arg], opt_name, prefix_len))
+      continue;
 
+    assert(*num_unsaved_files < (int)(sizeof(arg_indices)/sizeof(int)));
+    arg_indices[*num_unsaved_files] = arg;
     ++*num_unsaved_files;
   }
 
@@ -130,9 +135,9 @@ int parse_remapped_files(int argc, const char **argv, int start_arg,
   *unsaved_files
     = (struct CXUnsavedFile *)malloc(sizeof(struct CXUnsavedFile) *
                                      *num_unsaved_files);
-  for (arg = start_arg, i = 0; i != *num_unsaved_files; ++i, ++arg) {
+  for (i = 0; i != *num_unsaved_files; ++i) {
     struct CXUnsavedFile *unsaved = *unsaved_files + i;
-    const char *arg_string = argv[arg] + prefix_len;
+    const char *arg_string = argv[arg_indices[i]] + prefix_len;
     int filename_len;
     char *filename;
     char *contents;
@@ -140,7 +145,7 @@ int parse_remapped_files(int argc, const char **argv, int start_arg,
     const char *colon = strchr(arg_string, ':');
     if (!colon) {
       fprintf(stderr,
-              "error: -remap-file=from:to argument is missing semicolon\n");
+              "error: %sfrom:to argument is missing semicolon\n", opt_name);
       free_remapped_files(*unsaved_files, i);
       *unsaved_files = 0;
       *num_unsaved_files = 0;
@@ -189,6 +194,48 @@ int parse_remapped_files(int argc, const char **argv, int start_arg,
     unsaved->Filename = filename;
   }
 
+  return 0;
+}
+
+static int parse_remapped_files(int argc, const char **argv, int start_arg,
+                                struct CXUnsavedFile **unsaved_files,
+                                int *num_unsaved_files) {
+  return parse_remapped_files_with_opt("-remap-file=", argc, argv, start_arg,
+      unsaved_files, num_unsaved_files);
+}
+
+static int parse_remapped_files_with_try(int try_idx,
+                                         int argc, const char **argv,
+                                         int start_arg,
+                                         struct CXUnsavedFile **unsaved_files,
+                                         int *num_unsaved_files) {
+  struct CXUnsavedFile *unsaved_files_no_try_idx;
+  int num_unsaved_files_no_try_idx;
+  struct CXUnsavedFile *unsaved_files_try_idx;
+  int num_unsaved_files_try_idx;
+  int ret;
+  char opt_name[32];
+
+  ret = parse_remapped_files(argc, argv, start_arg,
+      &unsaved_files_no_try_idx, &num_unsaved_files_no_try_idx);
+  if (ret)
+    return ret;
+
+  sprintf(opt_name, "-remap-file-%d=", try_idx);
+  ret = parse_remapped_files_with_opt(opt_name, argc, argv, start_arg,
+      &unsaved_files_try_idx, &num_unsaved_files_try_idx);
+  if (ret)
+    return ret;
+
+  *num_unsaved_files = num_unsaved_files_no_try_idx + num_unsaved_files_try_idx;
+  *unsaved_files
+    = (struct CXUnsavedFile *)realloc(unsaved_files_no_try_idx,
+                                      sizeof(struct CXUnsavedFile) *
+                                        *num_unsaved_files);
+  memcpy(*unsaved_files + num_unsaved_files_no_try_idx,
+         unsaved_files_try_idx, sizeof(struct CXUnsavedFile) *
+            num_unsaved_files_try_idx);
+  free(unsaved_files_try_idx);
   return 0;
 }
 
@@ -1415,7 +1462,8 @@ int perform_test_reparse_source(int argc, const char **argv, int trials,
   CXTranslationUnit TU;
   struct CXUnsavedFile *unsaved_files = 0;
   int num_unsaved_files = 0;
-  int result;
+  int compiler_arg_idx = 0;
+  int result, i;
   int trial;
   int remap_after_trial = 0;
   char *endptr = 0;
@@ -1428,12 +1476,21 @@ int perform_test_reparse_source(int argc, const char **argv, int trials,
     clang_disposeIndex(Idx);
     return -1;
   }
+
+  for (i = 0; i < argc; ++i) {
+    if (strcmp(argv[i], "--") == 0)
+      break;
+  }
+  if (i < argc)
+    compiler_arg_idx = i+1;
+  if (num_unsaved_files > compiler_arg_idx)
+    compiler_arg_idx = num_unsaved_files;
   
   /* Load the initial translation unit -- we do this without honoring remapped
    * files, so that we have a way to test results after changing the source. */
   TU = clang_parseTranslationUnit(Idx, 0,
-                                  argv + num_unsaved_files,
-                                  argc - num_unsaved_files,
+                                  argv + compiler_arg_idx,
+                                  argc - compiler_arg_idx,
                                   0, 0, getDefaultParsingOptions());
   if (!TU) {
     fprintf(stderr, "Unable to load translation unit!\n");
@@ -1451,6 +1508,14 @@ int perform_test_reparse_source(int argc, const char **argv, int trials,
   }
 
   for (trial = 0; trial < trials; ++trial) {
+    free_remapped_files(unsaved_files, num_unsaved_files);
+    if (parse_remapped_files_with_try(trial, argc, argv, 0,
+                                      &unsaved_files, &num_unsaved_files)) {
+      clang_disposeTranslationUnit(TU);
+      clang_disposeIndex(Idx);
+      return -1;
+    }
+
     if (clang_reparseTranslationUnit(TU,
                              trial >= remap_after_trial ? num_unsaved_files : 0,
                              trial >= remap_after_trial ? unsaved_files : 0,
