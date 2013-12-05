@@ -2431,7 +2431,7 @@ def :ItinRW<[A9WriteV3], [IIC_VSHLiD, IIC_VSHLiQ]>;
 def :ItinRW<[A9WriteV4], [IIC_VSHLi4D, IIC_VSHLi4Q]>;
 
 // NEON permute
-def :ItinRW<[A9WriteV2], [IIC_VPERMD, IIC_VPERMQ, IIC_VEXTD]>;
+def :ItinRW<[A9WriteV2, A9WriteV2], [IIC_VPERMD, IIC_VPERMQ, IIC_VEXTD]>;
 def :ItinRW<[A9WriteV3, A9WriteV4, ReadDefault, A9Read2],
             [IIC_VPERMQ3, IIC_VEXTQ]>;
 def :ItinRW<[A9WriteV3, A9Read2], [IIC_VTB1]>;
