@@ -44,7 +44,7 @@
 ; wombat wom;
 
 ; CHECK-LABEL: .debug_info contents:
-
+; CHECK: Compile Unit: length = [[CU_SIZE:[0-9a-f]+]]
 ; Check that we generate a hash for bar and the value.
 ; CHECK-LABEL: DW_AT_GNU_odr_signature [DW_FORM_data8] (0x200520c0d5b90eff)
 ; CHECK: DW_TAG_structure_type
@@ -95,7 +95,7 @@
 ; it happens to be unambiguous at the moment, but it's hardly ideal.
 ; CHECK-LABEL: .debug_pubtypes contents:
 ; Don't emit pubtype entries for type DIEs in the compile unit that just indirect to a type unit.
-; CHECK-NEXT: unit_size = 0x00000174
+; CHECK-NEXT: unit_size = [[CU_SIZE]]
 ; CHECK-NEXT: Offset Name
 ; Type unit for 'bar'
 ; CHECK-NEXT: unit_size = 0x0000001f

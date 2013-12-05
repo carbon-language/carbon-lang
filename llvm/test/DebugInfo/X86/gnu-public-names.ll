@@ -46,6 +46,7 @@
 ; ASM-NEXT: .asciz  "C"                     # External Name
 
 ; CHECK: .debug_info contents:
+; CHECK: Compile Unit: length = [[UNIT_SIZE:[0-9a-f]+]]
 ; CHECK: DW_AT_GNU_pubnames [DW_FORM_sec_offset]   (0x00000000)
 ; CHECK: DW_AT_GNU_pubtypes [DW_FORM_sec_offset]   (0x00000000)
 
@@ -105,7 +106,7 @@
 ; CHECK-NEXT: DW_AT_name {{.*}} "global_function"
 
 ; CHECK-LABEL: .debug_gnu_pubnames contents:
-; CHECK-NEXT: length = 0x000000e7 version = 0x0002 unit_offset = 0x00000000 unit_size = 0x0000017b
+; CHECK-NEXT: length = 0x000000e7 version = 0x0002 unit_offset = 0x00000000 unit_size = [[UNIT_SIZE]]
 ; CHECK-NEXT: Offset     Linkage  Kind     Name
 ; CHECK-DAG:  [[GLOBAL_FUNC]] EXTERNAL FUNCTION "global_function"
 ; CHECK-DAG:  [[NS]] EXTERNAL TYPE     "ns"
@@ -125,6 +126,7 @@
 ; CHECK-DAG:  [[INT]] STATIC   TYPE     "int"
 
 ; DWARF3: .debug_info contents:
+; DWARF3: Compile Unit: length = [[UNIT_SIZE:[0-9a-f]+]]
 ; DWARF3: DW_AT_GNU_pubnames [DW_FORM_data4]   (0x00000000)
 ; DWARF3: DW_AT_GNU_pubtypes [DW_FORM_data4]   (0x00000000)
 
@@ -184,7 +186,7 @@
 ; DWARF3-NEXT: DW_AT_name {{.*}} "global_function"
 
 ; DWARF3-LABEL: .debug_gnu_pubnames contents:
-; DWARF3-NEXT: length = 0x000000e7 version = 0x0002 unit_offset = 0x00000000 unit_size = 0x0000018b
+; DWARF3-NEXT: length = 0x000000e7 version = 0x0002 unit_offset = 0x00000000 unit_size = [[UNIT_SIZE]]
 ; DWARF3-NEXT: Offset     Linkage  Kind     Name
 ; DWARF3-DAG:  [[GLOBAL_FUNC]] EXTERNAL FUNCTION "global_function"
 ; DWARF3-DAG:  [[NS]] EXTERNAL TYPE     "ns"
