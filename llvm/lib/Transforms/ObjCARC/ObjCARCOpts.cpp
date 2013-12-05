@@ -1005,7 +1005,7 @@ static void GenerateARCAnnotation(unsigned InstMDId,
     // llvm-arc-annotation-processor tool to cross reference where the source
     // pointer is in the LLVM IR since the LLVM IR parser does not submit such
     // information via debug info for backends to use (since why would anyone
-    // need such a thing from LLVM IR besides in non standard cases
+    // need such a thing from LLVM IR besides in non-standard cases
     // [i.e. this]).
     MDString *SourcePtrMDNode =
       AppendMDNodeToSourcePtr(PtrMDId, Ptr);

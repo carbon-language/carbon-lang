@@ -880,13 +880,13 @@ protected:
   }
 
   /// Indicate whether this target prefers to use _setjmp to implement
-  /// llvm.setjmp or the non _ version.  Defaults to false.
+  /// llvm.setjmp or the version without _.  Defaults to false.
   void setUseUnderscoreSetJmp(bool Val) {
     UseUnderscoreSetJmp = Val;
   }
 
   /// Indicate whether this target prefers to use _longjmp to implement
-  /// llvm.longjmp or the non _ version.  Defaults to false.
+  /// llvm.longjmp or the version without _.  Defaults to false.
   void setUseUnderscoreLongJmp(bool Val) {
     UseUnderscoreLongJmp = Val;
   }

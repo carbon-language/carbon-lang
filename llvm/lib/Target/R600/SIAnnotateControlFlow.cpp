@@ -205,7 +205,7 @@ void SIAnnotateControlFlow::insertElse(BranchInst *Term) {
 void SIAnnotateControlFlow::handleLoopCondition(Value *Cond) {
   if (PHINode *Phi = dyn_cast<PHINode>(Cond)) {
 
-    // Handle all non constant incoming values first
+    // Handle all non-constant incoming values first
     for (unsigned i = 0, e = Phi->getNumIncomingValues(); i != e; ++i) {
       Value *Incoming = Phi->getIncomingValue(i);
       if (isa<ConstantInt>(Incoming))

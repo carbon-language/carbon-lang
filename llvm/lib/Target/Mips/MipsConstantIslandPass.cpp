@@ -17,7 +17,7 @@
 //
 // The constants can be not just numbers but addresses of functions and labels.
 // This can be particularly helpful in static relocation mode for embedded
-// non linux targets.
+// non-linux targets.
 //
 //
 

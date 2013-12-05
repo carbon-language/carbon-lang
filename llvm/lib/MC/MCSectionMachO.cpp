@@ -68,7 +68,7 @@ ENTRY(0 /*FIXME*/,           S_ATTR_EXT_RELOC)
 ENTRY(0 /*FIXME*/,           S_ATTR_LOC_RELOC)
 #undef ENTRY
   { 0, "none", 0 }, // used if section has no attributes but has a stub size
-#define AttrFlagEnd 0xffffffff // non legal value, multiple attribute bits set
+#define AttrFlagEnd 0xffffffff // non-legal value, multiple attribute bits set
   { AttrFlagEnd, 0, 0 }
 };
 

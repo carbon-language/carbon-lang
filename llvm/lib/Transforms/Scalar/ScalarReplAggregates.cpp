@@ -1731,7 +1731,7 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI,
   // Compute the offset due to this GEP and check if the alloca has a
   // component element at that offset.
   SmallVector<Value*, 8> Indices(GEPI->op_begin() + 1, GEPI->op_end());
-  // If this GEP is non constant then the last operand must have been a
+  // If this GEP is non-constant then the last operand must have been a
   // dynamic index into a vector.  Pop this now as it has no impact on the
   // constant part of the offset.
   if (NonConstant)

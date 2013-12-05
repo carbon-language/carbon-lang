@@ -844,7 +844,7 @@ Here are more examples:
 
 .. code-block:: c++
 
-  assert(Ty->isPointerType() && "Can't allocate a non pointer type!");
+  assert(Ty->isPointerType() && "Can't allocate a non-pointer type!");
 
   assert((Opcode == Shl || Opcode == Shr) && "ShiftInst Opcode invalid!");
 

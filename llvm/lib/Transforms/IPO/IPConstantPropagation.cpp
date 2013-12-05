@@ -210,7 +210,7 @@ bool IPCP::PropagateConstantReturn(Function &F) {
         // Different or no known return value? Don't propagate this return
         // value.
         RetVals[i] = 0;
-        // All values non constant? Stop looking.
+        // All values non-constant? Stop looking.
         if (++NumNonConstant == RetVals.size())
           return false;
       }

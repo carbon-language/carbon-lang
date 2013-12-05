@@ -100,7 +100,7 @@ entry:
   ret <8 x i16> %K
 }
 
-; non splat test
+; non-splat test
 
 
 define <8 x i16> @sll8_nosplat(<8 x i16> %A) nounwind {

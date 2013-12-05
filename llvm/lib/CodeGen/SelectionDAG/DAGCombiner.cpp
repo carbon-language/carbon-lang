@@ -8120,7 +8120,7 @@ bool DAGCombiner::SliceUpLoad(SDNode *N) {
 
     // The width of the type must be a power of 2 and greater than 8-bits.
     // Otherwise the load cannot be represented in LLVM IR.
-    // Moreover, if we shifted with a non 8-bits multiple, the slice
+    // Moreover, if we shifted with a non-8-bits multiple, the slice
     // will be accross several bytes. We do not support that.
     unsigned Width = User->getValueSizeInBits(0);
     if (Width < 8 || !isPowerOf2_32(Width) || (Shift & 0x7))
@@ -8762,7 +8762,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
       } else if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(StoredVal)) {
         NonZero |= !C->getConstantFPValue()->isNullValue();
       } else {
-        // Non constant.
+        // Non-constant.
         break;
       }
 

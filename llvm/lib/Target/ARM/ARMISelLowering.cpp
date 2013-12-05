@@ -2802,7 +2802,7 @@ ARMTargetLowering::StoreByValRegs(CCState &CCInfo, SelectionDAG &DAG,
                                   bool ForceMutable) const {
 
   // Currently, two use-cases possible:
-  // Case #1. Non var-args function, and we meet first byval parameter.
+  // Case #1. Non-var-args function, and we meet first byval parameter.
   //          Setup first unallocated register as first byval register;
   //          eat all remained registers
   //          (these two actions are performed by HandleByVal method).

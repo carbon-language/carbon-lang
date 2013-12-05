@@ -681,7 +681,7 @@ bool HexagonPacketizerList::CanPromoteToNewValueStore( MachineInstr *MI,
     }
   }
 
-  // Make sure that for non POST_INC stores:
+  // Make sure that for non-POST_INC stores:
   // 1. The only use of reg is DepReg and no other registers.
   //    This handles V4 base+index registers.
   //    The following store can not be dot new.

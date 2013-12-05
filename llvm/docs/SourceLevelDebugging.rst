@@ -2306,7 +2306,7 @@ stringWithCString:]``") and the basename is the selector only
 Mach-O Changes
 """"""""""""""
 
-The sections names for the apple hash tables are for non mach-o files.  For
+The sections names for the apple hash tables are for non-mach-o files.  For
 mach-o files, the sections should be contained in the ``__DWARF`` segment with
 names as follows:
 

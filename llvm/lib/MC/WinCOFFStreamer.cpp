@@ -190,7 +190,7 @@ bool WinCOFFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   assert(Symbol && "Symbol must be non-null!");
   assert((Symbol->isInSection()
          ? Symbol->getSection().getVariant() == MCSection::SV_COFF
-         : true) && "Got non COFF section in the COFF backend!");
+         : true) && "Got non-COFF section in the COFF backend!");
   switch (Attribute) {
   case MCSA_WeakReference:
   case MCSA_Weak: {
@@ -218,7 +218,7 @@ void WinCOFFStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
 void WinCOFFStreamer::BeginCOFFSymbolDef(MCSymbol const *Symbol) {
   assert((Symbol->isInSection()
          ? Symbol->getSection().getVariant() == MCSection::SV_COFF
-         : true) && "Got non COFF section in the COFF backend!");
+         : true) && "Got non-COFF section in the COFF backend!");
   assert(CurSymbol == NULL && "EndCOFFSymbolDef must be called between calls "
                               "to BeginCOFFSymbolDef!");
   CurSymbol = Symbol;
@@ -268,7 +268,7 @@ void WinCOFFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                        unsigned ByteAlignment) {
   assert((Symbol->isInSection()
          ? Symbol->getSection().getVariant() == MCSection::SV_COFF
-         : true) && "Got non COFF section in the COFF backend!");
+         : true) && "Got non-COFF section in the COFF backend!");
   AddCommonSymbol(Symbol, Size, ByteAlignment, true);
 }
 
@@ -276,7 +276,7 @@ void WinCOFFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                             unsigned ByteAlignment) {
   assert((Symbol->isInSection()
          ? Symbol->getSection().getVariant() == MCSection::SV_COFF
-         : true) && "Got non COFF section in the COFF backend!");
+         : true) && "Got non-COFF section in the COFF backend!");
   AddCommonSymbol(Symbol, Size, ByteAlignment, false);
 }
 

@@ -116,7 +116,7 @@ public:
     ColFields = MapRec->getValueAsListInit("ColFields");
 
     // Values for the fields/attributes listed in 'ColFields'.
-    // Ex: KeyCol = 'noPred' -- key instruction is non predicated
+    // Ex: KeyCol = 'noPred' -- key instruction is non-predicated
     KeyCol = MapRec->getValueAsListInit("KeyCol");
 
     // List of values for the fields/attributes listed in 'ColFields', one for

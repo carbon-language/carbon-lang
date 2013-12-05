@@ -475,7 +475,7 @@ public:
   }
 
   // createTheTimeInfo - This method either initializes the TheTimeInfo pointer
-  // to a non null value (if the -time-passes option is enabled) or it leaves it
+  // to a non-null value (if the -time-passes option is enabled) or it leaves it
   // null.  It may be called multiple times.
   static void createTheTimeInfo();
 
@@ -1755,7 +1755,7 @@ EnableTiming("time-passes", cl::location(TimePassesIsEnabled),
             cl::desc("Time each pass, printing elapsed time for each on exit"));
 
 // createTheTimeInfo - This method either initializes the TheTimeInfo pointer to
-// a non null value (if the -time-passes option is enabled) or it leaves it
+// a non-null value (if the -time-passes option is enabled) or it leaves it
 // null.  It may be called multiple times.
 void TimingInfo::createTheTimeInfo() {
   if (!TimePassesIsEnabled || TheTimeInfo) return;

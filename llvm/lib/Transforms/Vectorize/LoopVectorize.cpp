@@ -564,7 +564,7 @@ public:
   /// pointer itself is an induction variable.
   /// This check allows us to vectorize A[idx] into a wide load/store.
   /// Returns:
-  /// 0 - Stride is unknown or non consecutive.
+  /// 0 - Stride is unknown or non-consecutive.
   /// 1 - Address is consecutive.
   /// -1 - Address is consecutive, and decreasing.
   int isConsecutivePtr(Value *Ptr);
@@ -1093,7 +1093,7 @@ static unsigned getGEPInductionOperand(DataLayout *DL,
 }
 
 int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
-  assert(Ptr->getType()->isPointerTy() && "Unexpected non ptr");
+  assert(Ptr->getType()->isPointerTy() && "Unexpected non-ptr");
   // Make sure that the pointer does not point to structs.
   if (Ptr->getType()->getPointerElementType()->isAggregateType())
     return 0;
@@ -1216,7 +1216,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
   if (ScalarAllocatedSize != VectorElementSize)
     return scalarizeInstruction(Instr);
 
-  // If the pointer is loop invariant or if it is non consecutive,
+  // If the pointer is loop invariant or if it is non-consecutive,
   // scalarize the load.
   int ConsecutiveStride = Legal->isConsecutivePtr(Ptr);
   bool Reverse = ConsecutiveStride < 0;
@@ -2430,7 +2430,7 @@ void InnerLoopVectorizer::widenPHIInstruction(Instruction *PN,
   setDebugLocFromInst(Builder, P);
   // Check for PHI nodes that are lowered to vector selects.
   if (P->getParent() != OrigLoop->getHeader()) {
-    // We know that all PHIs in non header blocks are converted into
+    // We know that all PHIs in non-header blocks are converted into
     // selects, so we don't have to worry about the insertion order and we
     // can just use the builder.
     // At this point we generate the predication tree. There may be
@@ -2846,7 +2846,7 @@ bool LoopVectorizationLegality::canVectorize() {
   DEBUG(dbgs() << "LV: Found a loop: " <<
         TheLoop->getHeader()->getName() << '\n');
 
-  // Check if we can if-convert non single-bb loops.
+  // Check if we can if-convert non-single-bb loops.
   unsigned NumBlocks = TheLoop->getNumBlocks();
   if (NumBlocks != 1 && !canVectorizeWithIfConvert()) {
     DEBUG(dbgs() << "LV: Can't if-convert the loop.\n");
@@ -3499,7 +3499,7 @@ private:
   // We can access this many bytes in parallel safely.
   unsigned MaxSafeDepDistBytes;
 
-  /// \brief If we see a non constant dependence distance we can still try to
+  /// \brief If we see a non-constant dependence distance we can still try to
   /// vectorize this loop with runtime checks.
   bool ShouldRetryWithRuntimeCheck;
 
@@ -3535,7 +3535,7 @@ static bool isInBoundsGep(Value *Ptr) {
 static int isStridedPtr(ScalarEvolution *SE, DataLayout *DL, Value *Ptr,
                         const Loop *Lp) {
   const Type *Ty = Ptr->getType();
-  assert(Ty->isPointerTy() && "Unexpected non ptr");
+  assert(Ty->isPointerTy() && "Unexpected non-ptr");
 
   // Make sure that the pointer does not point to aggregate types.
   const PointerType *PtrTy = cast<PointerType>(Ty);
@@ -3699,7 +3699,7 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
 
   const SCEVConstant *C = dyn_cast<SCEVConstant>(Dist);
   if (!C) {
-    DEBUG(dbgs() << "LV: Dependence because of non constant distance\n");
+    DEBUG(dbgs() << "LV: Dependence because of non-constant distance\n");
     ShouldRetryWithRuntimeCheck = true;
     return true;
   }
@@ -4140,7 +4140,7 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
     // Check  whether we found a reduction operator.
     FoundReduxOp |= !IsAPhi;
 
-    // Process users of current instruction. Push non PHI nodes after PHI nodes
+    // Process users of current instruction. Push non-PHI nodes after PHI nodes
     // onto the stack. This way we are going to have seen all inputs to PHI
     // nodes once we get to them.
     SmallVector<Instruction *, 8> NonPHIs;

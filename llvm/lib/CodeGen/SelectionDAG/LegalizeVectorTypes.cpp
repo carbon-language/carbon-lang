@@ -2251,7 +2251,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_VSETCC(SDNode *N) {
 
   SDValue InOp1 = N->getOperand(0);
   EVT InVT = InOp1.getValueType();
-  assert(InVT.isVector() && "can not widen non vector type");
+  assert(InVT.isVector() && "can not widen non-vector type");
   EVT WidenInVT = EVT::getVectorVT(*DAG.getContext(),
                                    InVT.getVectorElementType(), WidenNumElts);
   InOp1 = GetWidenedVector(InOp1);

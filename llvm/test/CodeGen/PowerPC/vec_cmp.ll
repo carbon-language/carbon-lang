@@ -1,6 +1,6 @@
 ; RUN: llc -mcpu=pwr6 -mattr=+altivec < %s | FileCheck %s
 
-; Check vector comparisons using altivec. For non native types, just basic
+; Check vector comparisons using altivec. For non-native types, just basic
 ; comparison instruction check is done. For altivec supported type (16i8,
 ; 8i16, 4i32, and 4f32) all the comparisons operators (==, !=, >, >=, <, <=)
 ; are checked.

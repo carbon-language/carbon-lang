@@ -1239,7 +1239,7 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
       }
       Result = DAG.getNode(ISD::BUILD_VECTOR, DL, NewVT, Slots, NumElements);
     } else {
-      // non constant ptr cant be folded, keeps it as a v4f32 load
+      // non-constant ptr can't be folded, keeps it as a v4f32 load
       Result = DAG.getNode(AMDGPUISD::CONST_ADDRESS, DL, MVT::v4i32,
           DAG.getNode(ISD::SRL, DL, MVT::i32, Ptr, DAG.getConstant(4, MVT::i32)),
           DAG.getConstant(LoadNode->getAddressSpace() -

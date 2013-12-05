@@ -5,7 +5,7 @@
 	.weak	foo
         .long   foo
 
-// And that bar is after all local symbols and has non zero value.
+// And that bar is after all local symbols and has non-zero value.
         .weak bar
 bar:
 

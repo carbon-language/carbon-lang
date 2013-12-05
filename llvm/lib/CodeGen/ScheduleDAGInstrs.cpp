@@ -690,7 +690,7 @@ void ScheduleDAGInstrs::initSUnits() {
   }
 }
 
-/// If RegPressure is non null, compute register pressure as a side effect. The
+/// If RegPressure is non-null, compute register pressure as a side effect. The
 /// DAG builder is an efficient place to do it because it already visits
 /// operands.
 void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,

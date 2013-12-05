@@ -344,7 +344,7 @@ X86DAGToDAGISel::IsProfitableToFold(SDValue N, SDNode *U, SDNode *Root) const {
       // addl    %gs:0, %eax
       // if the block also has an access to a second TLS address this will save
       // a load.
-      // FIXME: This is probably also true for non TLS addresses.
+      // FIXME: This is probably also true for non-TLS addresses.
       if (Op1.getOpcode() == X86ISD::Wrapper) {
         SDValue Val = Op1.getOperand(0);
         if (Val.getOpcode() == ISD::TargetGlobalTLSAddress)

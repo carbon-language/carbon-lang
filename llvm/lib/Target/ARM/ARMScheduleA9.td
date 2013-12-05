@@ -2217,7 +2217,7 @@ def A9WriteLMfp : SchedWriteVariant<[
   SchedVar<A9PostRA, [A9WriteLMfpPostRA]>]>;
 
 //===----------------------------------------------------------------------===//
-// Resources for other (non LDM/VLDM) Variants.
+// Resources for other (non-LDM/VLDM) Variants.
 
 // These mov immediate writers are unconditionally expanded with
 // additive latency.

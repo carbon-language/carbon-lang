@@ -34,7 +34,7 @@ define void @inc(i32 %n) nounwind uwtable noinline ssp {
   ret void
 }
 
-; Can't vectorize this loop because the access to A[X] is non linear.
+; Can't vectorize this loop because the access to A[X] is non-linear.
 ;
 ;  for (i = 0; i < n; ++i) {
 ;    A[B[i]]++;

@@ -145,7 +145,7 @@ EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
                         SDValue Src, SDValue Size,
                         unsigned Align, bool isVolatile,
                         MachinePointerInfo DstPtrInfo) const {
-  // Use default for non AAPCS (or Darwin) subtargets
+  // Use default for non-AAPCS (or Darwin) subtargets
   if (!Subtarget->isAAPCS_ABI() || Subtarget->isTargetDarwin())
     return SDValue();
 

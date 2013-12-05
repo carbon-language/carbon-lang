@@ -351,7 +351,7 @@ object_t *WinCOFFObjectWriter::createCOFFEntity(StringRef Name,
 /// and creates the associated COFF section staging object.
 void WinCOFFObjectWriter::DefineSection(MCSectionData const &SectionData) {
   assert(SectionData.getSection().getVariant() == MCSection::SV_COFF
-    && "Got non COFF section in the COFF backend!");
+    && "Got non-COFF section in the COFF backend!");
   // FIXME: Not sure how to verify this (at least in a debug build).
   MCSectionCOFF const &Sec =
     static_cast<MCSectionCOFF const &>(SectionData.getSection());

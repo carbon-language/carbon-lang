@@ -1580,7 +1580,7 @@ public:
   void addRegShiftedRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 3 && "Invalid number of operands!");
     assert(isRegShiftedReg() &&
-           "addRegShiftedRegOperands() on non RegShiftedReg!");
+           "addRegShiftedRegOperands() on non-RegShiftedReg!");
     Inst.addOperand(MCOperand::CreateReg(RegShiftedReg.SrcReg));
     Inst.addOperand(MCOperand::CreateReg(RegShiftedReg.ShiftReg));
     Inst.addOperand(MCOperand::CreateImm(
@@ -1590,7 +1590,7 @@ public:
   void addRegShiftedImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     assert(isRegShiftedImm() &&
-           "addRegShiftedImmOperands() on non RegShiftedImm!");
+           "addRegShiftedImmOperands() on non-RegShiftedImm!");
     Inst.addOperand(MCOperand::CreateReg(RegShiftedImm.SrcReg));
     // Shift of #32 is encoded as 0 where permitted
     unsigned Imm = (RegShiftedImm.ShiftImm == 32 ? 0 : RegShiftedImm.ShiftImm);

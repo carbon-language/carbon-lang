@@ -289,7 +289,7 @@ protected:
 struct LoadModifier: public Modifier {
   LoadModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
   virtual void Act() {
-    // Try to use predefined pointers. If non exist, use undef pointer value;
+    // Try to use predefined pointers. If non-exist, use undef pointer value;
     Value *Ptr = getRandomPointerValue();
     Value *V = new LoadInst(Ptr, "L", BB->getTerminator());
     PT->push_back(V);
@@ -299,7 +299,7 @@ struct LoadModifier: public Modifier {
 struct StoreModifier: public Modifier {
   StoreModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
   virtual void Act() {
-    // Try to use predefined pointers. If non exist, use undef pointer value;
+    // Try to use predefined pointers. If non-exist, use undef pointer value;
     Value *Ptr = getRandomPointerValue();
     Type  *Tp = Ptr->getType();
     Value *Val = getRandomValue(Tp->getContainedType(0));

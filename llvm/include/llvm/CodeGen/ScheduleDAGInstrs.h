@@ -43,7 +43,7 @@ namespace llvm {
   };
 
   /// Record a physical register access.
-  /// For non data-dependent uses, OpIdx == -1.
+  /// For non-data-dependent uses, OpIdx == -1.
   struct PhysRegSUOper {
     SUnit *SU;
     int OpIdx;

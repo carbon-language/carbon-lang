@@ -932,7 +932,7 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
       for (unsigned i = 0, e = VL.size() - 1; i < e; ++i)
         if (!isConsecutiveAccess(VL[i], VL[i + 1])) {
           newTreeEntry(VL, false);
-          DEBUG(dbgs() << "SLP: Non consecutive store.\n");
+          DEBUG(dbgs() << "SLP: Non-consecutive store.\n");
           return;
         }
 

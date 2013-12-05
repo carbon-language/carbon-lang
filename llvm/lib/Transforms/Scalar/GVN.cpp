@@ -1789,7 +1789,7 @@ static void patchReplacementInstruction(Instruction *I, Value *Repl) {
         ReplInst->setMetadata(Kind, MDNode::getMostGenericRange(IMD, ReplMD));
         break;
       case LLVMContext::MD_prof:
-        llvm_unreachable("MD_prof in a non terminator instruction");
+        llvm_unreachable("MD_prof in a non-terminator instruction");
         break;
       case LLVMContext::MD_fpmath:
         ReplInst->setMetadata(Kind, MDNode::getMostGenericFPMath(IMD, ReplMD));

@@ -382,7 +382,7 @@ class SparseBitVector {
             AtEnd = true;
             return;
           }
-          // Set up for next non zero word in bitmap.
+          // Set up for next non-zero word in bitmap.
           BitNumber = Iter->index() * ElementSize;
           NextSetBitNumber = Iter->find_first();
           BitNumber += NextSetBitNumber;

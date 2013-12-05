@@ -147,7 +147,7 @@ static void RemoveDeadConstant(Constant *C) {
     if (OnlyUsedBy(C->getOperand(i), C))
       Operands.insert(cast<Constant>(C->getOperand(i)));
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
-    if (!GV->hasLocalLinkage()) return;   // Don't delete non static globals.
+    if (!GV->hasLocalLinkage()) return;   // Don't delete non-static globals.
     GV->eraseFromParent();
   }
   else if (!isa<Function>(C))

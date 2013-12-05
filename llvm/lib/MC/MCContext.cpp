@@ -138,7 +138,7 @@ MCSymbol *MCContext::CreateSymbol(StringRef Name) {
 
   StringMapEntry<bool> *NameEntry = &UsedNames.GetOrCreateValue(Name);
   if (NameEntry->getValue()) {
-    assert(isTemporary && "Cannot rename non temporary symbols");
+    assert(isTemporary && "Cannot rename non-temporary symbols");
     SmallString<128> NewName = Name;
     do {
       NewName.resize(Name.size());

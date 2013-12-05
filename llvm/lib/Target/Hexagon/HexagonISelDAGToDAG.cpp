@@ -1639,7 +1639,7 @@ bool HexagonDAGToDAGISel::hasNumUsesBelowThresGA(SDNode *N) const {
 }
 
 //===--------------------------------------------------------------------===//
-// Return true if the non GP-relative global address can be folded.
+// Return true if the non-GP-relative global address can be folded.
 //===--------------------------------------------------------------------===//
 inline bool HexagonDAGToDAGISel::foldGlobalAddress(SDValue &N, SDValue &R) {
   return foldGlobalAddressImpl(N, R, false);

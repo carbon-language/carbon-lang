@@ -1580,7 +1580,7 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
         continue;
       }
       // Non-kernel function, just print .param .b<size> for ABI
-      // and .reg .b<size> for non ABY
+      // and .reg .b<size> for non-ABI
       unsigned sz = 0;
       if (isa<IntegerType>(Ty)) {
         sz = cast<IntegerType>(Ty)->getBitWidth();

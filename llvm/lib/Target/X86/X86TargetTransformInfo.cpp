@@ -555,7 +555,7 @@ unsigned X86TTI::getScalarizationOverhead(Type *Ty, bool Insert,
 
 unsigned X86TTI::getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
                                  unsigned AddressSpace) const {
-  // Handle non power of two vectors such as <3 x float>
+  // Handle non-power-of-two vectors such as <3 x float>
   if (VectorType *VTy = dyn_cast<VectorType>(Src)) {
     unsigned NumElem = VTy->getVectorNumElements();
 
@@ -570,7 +570,7 @@ unsigned X86TTI::getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
       // Cost = 128 bit store + unpack + 64 bit store.
       return 3;
 
-    // Assume that all other non power-of-two numbers are scalarized.
+    // Assume that all other non-power-of-two numbers are scalarized.
     if (!isPowerOf2_32(NumElem)) {
       unsigned Cost = TargetTransformInfo::getMemoryOpCost(Opcode,
                                                            VTy->getScalarType(),

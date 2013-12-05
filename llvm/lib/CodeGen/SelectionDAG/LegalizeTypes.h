@@ -670,13 +670,13 @@ private:
                                  LoadSDNode *LD, ISD::LoadExtType ExtType);
 
   /// Helper genWidenVectorStores - Helper function to generate a set of
-  /// stores to store a widen vector into non widen memory
+  /// stores to store a widen vector into non-widen memory
   ///   StChain: list of chains for the stores we have generated
   ///   ST:      store of a widen value
   void GenWidenVectorStores(SmallVectorImpl<SDValue> &StChain, StoreSDNode *ST);
 
   /// Helper genWidenVectorTruncStores - Helper function to generate a set of
-  /// stores to store a truncate widen vector into non widen memory
+  /// stores to store a truncate widen vector into non-widen memory
   ///   StChain: list of chains for the stores we have generated
   ///   ST:      store of a widen value
   void GenWidenVectorTruncStores(SmallVectorImpl<SDValue> &StChain,

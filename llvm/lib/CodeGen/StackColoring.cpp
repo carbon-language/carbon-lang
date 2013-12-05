@@ -452,7 +452,7 @@ void StackColoring::calculateLiveIntervals(unsigned NumSlots) {
         // We have a single consecutive region.
         Intervals[i]->addSegment(LiveInterval::Segment(S, F, ValNum));
       } else {
-        // We have two non consecutive regions. This happens when
+        // We have two non-consecutive regions. This happens when
         // LIFETIME_START appears after the LIFETIME_END marker.
         SlotIndex NewStart = Indexes->getMBBStartIdx(MBB);
         SlotIndex NewFin = Indexes->getMBBEndIdx(MBB);

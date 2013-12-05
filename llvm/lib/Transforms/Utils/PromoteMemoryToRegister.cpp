@@ -679,8 +679,8 @@ void PromoteMem2Reg::run() {
 
     // Iterating over NewPhiNodes is deterministic, so it is safe to try to
     // simplify and RAUW them as we go.  If it was not, we could add uses to
-    // the values we replace with in a non deterministic order, thus creating
-    // non deterministic def->use chains.
+    // the values we replace with in a non-deterministic order, thus creating
+    // non-deterministic def->use chains.
     for (DenseMap<std::pair<unsigned, unsigned>, PHINode *>::iterator
              I = NewPhiNodes.begin(),
              E = NewPhiNodes.end();

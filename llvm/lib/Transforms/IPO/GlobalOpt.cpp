@@ -1737,7 +1737,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
   // and this function is main (which we know is not recursive), we replace
   // the global with a local alloca in this function.
   //
-  // NOTE: It doesn't make sense to promote non single-value types since we
+  // NOTE: It doesn't make sense to promote non-single-value types since we
   // are just replacing static memory to stack memory.
   //
   // If the global is in different address space, don't bring it to stack.
@@ -2571,7 +2571,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
           // We don't insert an entry into Values, as it doesn't have a
           // meaningful return value.
           if (!II->use_empty()) {
-            DEBUG(dbgs() << "Found unused invariant_start. Cant evaluate.\n");
+            DEBUG(dbgs() << "Found unused invariant_start. Can't evaluate.\n");
             return false;
           }
           ConstantInt *Size = cast<ConstantInt>(II->getArgOperand(0));

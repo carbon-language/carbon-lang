@@ -298,7 +298,7 @@ class FI8_MOV32R16_ins<string asmstr, InstrItinClass itin>:
 
 //
 // This are pseudo formats for multiply
-// This first one can be changed to non pseudo now.
+// This first one can be changed to non-pseudo now.
 //
 // MULT
 //

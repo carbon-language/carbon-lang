@@ -645,7 +645,7 @@ uint64_t mapped_file_region::size() const {
 
 char *mapped_file_region::data() const {
   assert(Mapping && "Mapping failed but used anyway!");
-  assert(Mode != readonly && "Cannot get non const data for readonly mapping!");
+  assert(Mode != readonly && "Cannot get non-const data for readonly mapping!");
   return reinterpret_cast<char*>(Mapping);
 }
 

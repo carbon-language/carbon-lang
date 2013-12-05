@@ -213,7 +213,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
                                             notDuplicatable, TTI);
     DEBUG(dbgs() << "  Loop Size = " << LoopSize << "\n");
     if (notDuplicatable) {
-      DEBUG(dbgs() << "  Not unrolling loop which contains non duplicatable"
+      DEBUG(dbgs() << "  Not unrolling loop which contains non-duplicatable"
             << " instructions.\n");
       return false;
     }

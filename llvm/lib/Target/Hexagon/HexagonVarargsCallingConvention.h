@@ -41,7 +41,7 @@ static bool CC_Hexagon32_VarArgs(unsigned ValNo, EVT ValVT,
   }
 
 
-  // Only assign registers for named (non varargs) arguments
+  // Only assign registers for named (non-varargs) arguments
   if ( !ForceMem && ((NonVarArgsParams == -1) || (CurrentParam <=
                                                   NonVarArgsParams))) {
 

@@ -301,7 +301,7 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
     CodeMetrics Metrics;
     Metrics.analyzeBasicBlock(OrigHeader, *TTI);
     if (Metrics.notDuplicatable) {
-      DEBUG(dbgs() << "LoopRotation: NOT rotating - contains non duplicatable"
+      DEBUG(dbgs() << "LoopRotation: NOT rotating - contains non-duplicatable"
             << " instructions: "; L->dump());
       return false;
     }
