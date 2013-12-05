@@ -519,8 +519,8 @@ void Unit::addAddress(DIE *Die, dwarf::Attribute Attribute,
 
 /// addComplexAddress - Start with the address based on the location provided,
 /// and generate the DWARF information necessary to find the actual variable
-/// given the extra address information encoded in the DIVariable, starting from
-/// the starting location.  Add the DWARF information to the die.
+/// given the extra address information encoded in the DbgVariable, starting
+/// from the starting location.  Add the DWARF information to the die.
 ///
 void Unit::addComplexAddress(const DbgVariable &DV, DIE *Die,
                              dwarf::Attribute Attribute,
