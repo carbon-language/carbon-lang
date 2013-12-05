@@ -44,9 +44,7 @@ static void MaybeInstallSigaction(int signum,
   sigact.sa_flags = SA_SIGINFO;
   if (flags()->use_sigaltstack) sigact.sa_flags |= SA_ONSTACK;
   CHECK_EQ(0, REAL(sigaction)(signum, &sigact, 0));
-  if (common_flags()->verbosity >= 1) {
-    Report("Installed the sigaction for signal %d\n", signum);
-  }
+  VReport(1, "Installed the sigaction for signal %d\n", signum);
 }
 
 static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
@@ -71,11 +69,9 @@ void SetAlternateSignalStack() {
   altstack.ss_flags = 0;
   altstack.ss_size = kAltStackSize;
   CHECK_EQ(0, sigaltstack(&altstack, 0));
-  if (common_flags()->verbosity > 0) {
-    Report("Alternative stack for T%d set: [%p,%p)\n",
-           GetCurrentTidOrInvalid(),
-           altstack.ss_sp, (char*)altstack.ss_sp + altstack.ss_size);
-  }
+  VReport(1, "Alternative stack for T%d set: [%p,%p)\n",
+          GetCurrentTidOrInvalid(), altstack.ss_sp,
+          (char *)altstack.ss_sp + altstack.ss_size);
 }
 
 void UnsetAlternateSignalStack() {

@@ -284,9 +284,9 @@ void AdjustStackSizeLinux(void *attr_) {
   const uptr minstacksize = GetTlsSize() + 128*1024;
   if (stacksize < minstacksize) {
     if (!stack_set) {
-      if (common_flags()->verbosity && stacksize != 0)
-        Printf("Sanitizer: increasing stacksize %zu->%zu\n", stacksize,
-               minstacksize);
+      if (stacksize != 0)
+        VPrintf(1, "Sanitizer: increasing stacksize %zu->%zu\n", stacksize,
+                minstacksize);
       pthread_attr_setstacksize(attr, minstacksize);
     } else {
       Printf("Sanitizer: pre-allocated stack size is insufficient: "

@@ -51,14 +51,12 @@ bool InitShadow(bool prot1, bool prot2, bool map_shadow, bool init_origins) {
     return false;
   }
 
-  if (common_flags()->verbosity) {
-    Printf("__msan_init %p\n", &__msan_init);
-    Printf("Memory   : %p %p\n", kMemBeg, kMemEnd);
-    Printf("Bad2     : %p %p\n", kBad2Beg, kBad2End);
-    Printf("Origins  : %p %p\n", kOriginsBeg, kOriginsEnd);
-    Printf("Shadow   : %p %p\n", kShadowBeg, kShadowEnd);
-    Printf("Bad1     : %p %p\n", kBad1Beg, kBad1End);
-  }
+  VPrintf(1, "__msan_init %p\n", &__msan_init);
+  VPrintf(1, "Memory   : %p %p\n", kMemBeg, kMemEnd);
+  VPrintf(1, "Bad2     : %p %p\n", kBad2Beg, kBad2End);
+  VPrintf(1, "Origins  : %p %p\n", kOriginsBeg, kOriginsEnd);
+  VPrintf(1, "Shadow   : %p %p\n", kShadowBeg, kShadowEnd);
+  VPrintf(1, "Bad1     : %p %p\n", kBad1Beg, kBad1End);
 
   if (!MemoryRangeIsAvailable(kShadowBeg,
                               init_origins ? kOriginsEnd : kShadowEnd)) {

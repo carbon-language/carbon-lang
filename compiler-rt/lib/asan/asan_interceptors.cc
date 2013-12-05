@@ -108,11 +108,10 @@ DECLARE_REAL_AND_INTERCEPTOR(void *, malloc, uptr)
 DECLARE_REAL_AND_INTERCEPTOR(void, free, void *)
 
 #if !SANITIZER_MAC
-#define ASAN_INTERCEPT_FUNC(name)                                      \
-  do {                                                                 \
-    if ((!INTERCEPT_FUNCTION(name) || !REAL(name)) &&                  \
-        common_flags()->verbosity > 0)                                 \
-      Report("AddressSanitizer: failed to intercept '" #name "'\n");   \
+#define ASAN_INTERCEPT_FUNC(name)                                        \
+  do {                                                                   \
+    if ((!INTERCEPT_FUNCTION(name) || !REAL(name)))                      \
+      VReport(1, "AddressSanitizer: failed to intercept '" #name "'\n"); \
   } while (0)
 #else
 // OS X interceptors don't need to be initialized with INTERCEPT_FUNCTION.
@@ -286,10 +285,9 @@ static void MlockIsUnsupported() {
   static bool printed = false;
   if (printed) return;
   printed = true;
-  if (common_flags()->verbosity > 0) {
-    Printf("INFO: AddressSanitizer ignores "
-           "mlock/mlockall/munlock/munlockall\n");
-  }
+  VPrintf(1,
+          "INFO: AddressSanitizer ignores "
+          "mlock/mlockall/munlock/munlockall\n");
 }
 
 INTERCEPTOR(int, mlock, const void *addr, uptr len) {
@@ -787,9 +785,7 @@ void InitializeAsanInterceptors() {
   InitializeWindowsInterceptors();
 #endif
 
-  if (common_flags()->verbosity > 0) {
-    Report("AddressSanitizer: libc interceptors initialized\n");
-  }
+  VReport(1, "AddressSanitizer: libc interceptors initialized\n");
 }
 
 }  // namespace __asan

@@ -96,8 +96,7 @@ void CovDump() {
       uptr fd = OpenFile(path.data(), true);
       internal_write(fd, offsets.data(), offsets.size() * sizeof(u32));
       internal_close(fd);
-      if (common_flags()->verbosity)
-        Report(" CovDump: %s: %zd PCs written\n", path.data(), vb - old_vb);
+      VReport(1, " CovDump: %s: %zd PCs written\n", path.data(), vb - old_vb);
     }
   }
 #endif  // !SANITIZER_WINDOWS

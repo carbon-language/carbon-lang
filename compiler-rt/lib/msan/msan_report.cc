@@ -36,8 +36,7 @@ class Decorator: private __sanitizer::AnsiColorDecorator {
 
 static void DescribeOrigin(u32 origin) {
   Decorator d;
-  if (common_flags()->verbosity)
-    Printf("  raw origin id: %d\n", origin);
+  VPrintf(1, "  raw origin id: %d\n", origin);
   uptr pc;
   if (const char *so = GetOriginDescrIfStack(origin, &pc)) {
     char* s = internal_strdup(so);

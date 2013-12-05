@@ -307,21 +307,19 @@ void __msan_init() {
   if (MSAN_REPLACE_OPERATORS_NEW_AND_DELETE)
     ReplaceOperatorsNewAndDelete();
   if (StackSizeIsUnlimited()) {
-    if (common_flags()->verbosity)
-      Printf("Unlimited stack, doing reexec\n");
+    VPrintf(1, "Unlimited stack, doing reexec\n");
     // A reasonably large stack size. It is bigger than the usual 8Mb, because,
     // well, the program could have been run with unlimited stack for a reason.
     SetStackSizeLimitInBytes(32 * 1024 * 1024);
     ReExec();
   }
 
-  if (common_flags()->verbosity)
-    Printf("MSAN_OPTIONS: %s\n", msan_options ? msan_options : "<empty>");
+  VPrintf(1, "MSAN_OPTIONS: %s\n", msan_options ? msan_options : "<empty>");
 
   msan_running_under_dr = IsRunningUnderDr();
   __msan_clear_on_return();
-  if (__msan_get_track_origins() && common_flags()->verbosity > 0)
-    Printf("msan_track_origins\n");
+  if (__msan_get_track_origins())
+    VPrintf(1, "msan_track_origins\n");
   if (!InitShadow(/* prot1 */ false, /* prot2 */ true, /* map_shadow */ true,
                   __msan_get_track_origins())) {
     // FIXME: prot1 = false is only required when running under DR.
@@ -345,8 +343,7 @@ void __msan_init() {
   GetThreadStackTopAndBottom(/* at_initialization */true,
                              &__msan_stack_bounds.stack_top,
                              &__msan_stack_bounds.stack_bottom);
-  if (common_flags()->verbosity)
-    Printf("MemorySanitizer init done\n");
+  VPrintf(1, "MemorySanitizer init done\n");
   msan_init_is_running = 0;
   msan_inited = 1;
 }

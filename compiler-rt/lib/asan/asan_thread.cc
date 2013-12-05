@@ -87,16 +87,13 @@ AsanThread *AsanThread::Create(thread_callback_t start_routine,
 
 void AsanThread::TSDDtor(void *tsd) {
   AsanThreadContext *context = (AsanThreadContext*)tsd;
-  if (common_flags()->verbosity >= 1)
-    Report("T%d TSDDtor\n", context->tid);
+  VReport(1, "T%d TSDDtor\n", context->tid);
   if (context->thread)
     context->thread->Destroy();
 }
 
 void AsanThread::Destroy() {
-  if (common_flags()->verbosity >= 1) {
-    Report("T%d exited\n", tid());
-  }
+  VReport(1, "T%d exited\n", tid());
 
   malloc_storage().CommitBack();
   if (flags()->use_sigaltstack) UnsetAlternateSignalStack();
@@ -142,12 +139,10 @@ void AsanThread::Init() {
   CHECK(AddrIsInMem(stack_bottom_));
   CHECK(AddrIsInMem(stack_top_ - 1));
   ClearShadowForThreadStackAndTLS();
-  if (common_flags()->verbosity >= 1) {
-    int local = 0;
-    Report("T%d: stack [%p,%p) size 0x%zx; local=%p\n",
-           tid(), (void*)stack_bottom_, (void*)stack_top_,
-           stack_top_ - stack_bottom_, &local);
-  }
+  int local = 0;
+  VReport(1, "T%d: stack [%p,%p) size 0x%zx; local=%p\n", tid(),
+          (void *)stack_bottom_, (void *)stack_top_, stack_top_ - stack_bottom_,
+          &local);
   fake_stack_ = 0;  // Will be initialized lazily if needed.
   AsanPlatformThreadInit();
 }
@@ -267,10 +262,8 @@ AsanThread *GetCurrentThread() {
 
 void SetCurrentThread(AsanThread *t) {
   CHECK(t->context());
-  if (common_flags()->verbosity >= 2) {
-    Report("SetCurrentThread: %p for thread %p\n",
-           t->context(), (void*)GetThreadSelf());
-  }
+  VReport(2, "SetCurrentThread: %p for thread %p\n", t->context(),
+          (void *)GetThreadSelf());
   // Make sure we do not reset the current AsanThread.
   CHECK_EQ(0, AsanTSDGet());
   AsanTSDSet(t->context());

@@ -69,10 +69,8 @@ void __asan_poison_memory_region(void const volatile *addr, uptr size) {
   if (!flags()->allow_user_poisoning || size == 0) return;
   uptr beg_addr = (uptr)addr;
   uptr end_addr = beg_addr + size;
-  if (common_flags()->verbosity >= 1) {
-    Printf("Trying to poison memory region [%p, %p)\n",
-           (void*)beg_addr, (void*)end_addr);
-  }
+  VPrintf(1, "Trying to poison memory region [%p, %p)\n", (void *)beg_addr,
+          (void *)end_addr);
   ShadowSegmentEndpoint beg(beg_addr);
   ShadowSegmentEndpoint end(end_addr);
   if (beg.chunk == end.chunk) {
@@ -111,10 +109,8 @@ void __asan_unpoison_memory_region(void const volatile *addr, uptr size) {
   if (!flags()->allow_user_poisoning || size == 0) return;
   uptr beg_addr = (uptr)addr;
   uptr end_addr = beg_addr + size;
-  if (common_flags()->verbosity >= 1) {
-    Printf("Trying to unpoison memory region [%p, %p)\n",
-           (void*)beg_addr, (void*)end_addr);
-  }
+  VPrintf(1, "Trying to unpoison memory region [%p, %p)\n", (void *)beg_addr,
+          (void *)end_addr);
   ShadowSegmentEndpoint beg(beg_addr);
   ShadowSegmentEndpoint end(end_addr);
   if (beg.chunk == end.chunk) {
@@ -245,14 +241,12 @@ static void PoisonAlignedStackMemory(uptr addr, uptr size, bool do_poison) {
 }
 
 void __asan_poison_stack_memory(uptr addr, uptr size) {
-  if (common_flags()->verbosity > 0)
-    Report("poisoning: %p %zx\n", (void*)addr, size);
+  VReport(1, "poisoning: %p %zx\n", (void *)addr, size);
   PoisonAlignedStackMemory(addr, size, true);
 }
 
 void __asan_unpoison_stack_memory(uptr addr, uptr size) {
-  if (common_flags()->verbosity > 0)
-    Report("unpoisoning: %p %zx\n", (void*)addr, size);
+  VReport(1, "unpoisoning: %p %zx\n", (void *)addr, size);
   PoisonAlignedStackMemory(addr, size, false);
 }
 
@@ -260,9 +254,8 @@ void __sanitizer_annotate_contiguous_container(const void *beg_p,
                                                const void *end_p,
                                                const void *old_mid_p,
                                                const void *new_mid_p) {
-  if (common_flags()->verbosity >= 2)
-    Printf("contiguous_container: %p %p %p %p\n", beg_p, end_p, old_mid_p,
-           new_mid_p);
+  VPrintf(2, "contiguous_container: %p %p %p %p\n", beg_p, end_p, old_mid_p,
+          new_mid_p);
   uptr beg = reinterpret_cast<uptr>(beg_p);
   uptr end= reinterpret_cast<uptr>(end_p);
   uptr old_mid = reinterpret_cast<uptr>(old_mid_p);

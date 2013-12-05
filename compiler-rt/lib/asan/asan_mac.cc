@@ -174,12 +174,10 @@ void MaybeReexec() {
       // Set DYLD_INSERT_LIBRARIES equal to the runtime dylib name.
       setenv(kDyldInsertLibraries, info.dli_fname, /*overwrite*/0);
     }
-    if (common_flags()->verbosity >= 1) {
-      Report("exec()-ing the program with\n");
-      Report("%s=%s\n", kDyldInsertLibraries, new_env);
-      Report("to enable ASan wrappers.\n");
-      Report("Set ASAN_OPTIONS=allow_reexec=0 to disable this.\n");
-    }
+    VReport(1, "exec()-ing the program with\n");
+    VReport(1, "%s=%s\n", kDyldInsertLibraries, new_env);
+    VReport(1, "to enable ASan wrappers.\n");
+    VReport(1, "Set ASAN_OPTIONS=allow_reexec=0 to disable this.\n");
     execv(program_name, *_NSGetArgv());
   } else {
     // DYLD_INSERT_LIBRARIES is set and contains the runtime library.
@@ -311,11 +309,10 @@ extern "C"
 void asan_dispatch_call_block_and_release(void *block) {
   GET_STACK_TRACE_THREAD;
   asan_block_context_t *context = (asan_block_context_t*)block;
-  if (common_flags()->verbosity >= 2) {
-    Report("asan_dispatch_call_block_and_release(): "
-           "context: %p, pthread_self: %p\n",
-           block, pthread_self());
-  }
+  VReport(2,
+          "asan_dispatch_call_block_and_release(): "
+          "context: %p, pthread_self: %p\n",
+          block, pthread_self());
   asan_register_worker_thread(context->parent_tid, &stack);
   // Call the original dispatcher for the block.
   context->func(context->block);
@@ -349,10 +346,10 @@ asan_block_context_t *alloc_asan_context(void *ctxt, dispatch_function_t func,
     if (common_flags()->verbosity >= 2) {                                     \
       Report(#dispatch_x_f "(): context: %p, pthread_self: %p\n",             \
              asan_ctxt, pthread_self());                                      \
-       PRINT_CURRENT_STACK();                                                 \
-     }                                                                        \
-     return REAL(dispatch_x_f)(dq, (void*)asan_ctxt,                          \
-                               asan_dispatch_call_block_and_release);         \
+      PRINT_CURRENT_STACK();                                                  \
+    }                                                                         \
+    return REAL(dispatch_x_f)(dq, (void*)asan_ctxt,                           \
+                              asan_dispatch_call_block_and_release);          \
   }
 
 INTERCEPT_DISPATCH_X_F_3(dispatch_async_f)

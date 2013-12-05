@@ -16,6 +16,7 @@
 
 
 #include "sanitizer_common.h"
+#include "sanitizer_flags.h"
 #include "sanitizer_libc.h"
 
 #include <stdio.h>

@@ -62,8 +62,8 @@ static void AsanDie() {
 
 static void AsanCheckFailed(const char *file, int line, const char *cond,
                             u64 v1, u64 v2) {
-  Report("AddressSanitizer CHECK failed: %s:%d \"%s\" (0x%zx, 0x%zx)\n",
-             file, line, cond, (uptr)v1, (uptr)v2);
+  Report("AddressSanitizer CHECK failed: %s:%d \"%s\" (0x%zx, 0x%zx)\n", file,
+         line, cond, (uptr)v1, (uptr)v2);
   // FIXME: check for infinite recursion without a thread-local counter here.
   PRINT_CURRENT_STACK();
   Die();
@@ -182,10 +182,8 @@ void InitializeFlags(Flags *f, const char *env) {
 
   // Override from user-specified string.
   ParseFlagsFromString(f, MaybeCallAsanDefaultOptions());
-  if (cf->verbosity) {
-    Report("Using the defaults from __asan_default_options: %s\n",
-           MaybeCallAsanDefaultOptions());
-  }
+  VReport(1, "Using the defaults from __asan_default_options: %s\n",
+          MaybeCallAsanDefaultOptions());
 
   // Override from command line.
   ParseFlagsFromString(f, env);
@@ -460,8 +458,8 @@ void __asan_init() {
   __asan_option_detect_stack_use_after_return =
       flags()->detect_stack_use_after_return;
 
-  if (common_flags()->verbosity && options) {
-    Report("Parsed ASAN_OPTIONS: %s\n", options);
+  if (options) {
+    VReport(1, "Parsed ASAN_OPTIONS: %s\n", options);
   }
 
   // Re-exec ourselves if we need to set additional env or command line args.
@@ -569,7 +567,5 @@ void __asan_init() {
   }
 #endif  // CAN_SANITIZE_LEAKS
 
-  if (common_flags()->verbosity) {
-    Report("AddressSanitizer Init done\n");
-  }
+  VReport(1, "AddressSanitizer Init done\n");
 }
