@@ -1611,7 +1611,7 @@ void MicrosoftCXXNameMangler::mangleType(
 
 // <type> ::= <pointer-type>
 // <pointer-type> ::= E? <pointer-cvr-qualifiers> <cvr-qualifiers> <type>
-//                       # the E is required for 64-bit non static pointers
+//                       # the E is required for 64-bit non-static pointers
 void MicrosoftCXXNameMangler::mangleType(const PointerType *T,
                                          SourceRange Range) {
   QualType PointeeTy = T->getPointeeType();
@@ -1630,7 +1630,7 @@ void MicrosoftCXXNameMangler::mangleType(const ObjCObjectPointerType *T,
 
 // <type> ::= <reference-type>
 // <reference-type> ::= A E? <cvr-qualifiers> <type>
-//                 # the E is required for 64-bit non static lvalue references
+//                 # the E is required for 64-bit non-static lvalue references
 void MicrosoftCXXNameMangler::mangleType(const LValueReferenceType *T,
                                          SourceRange Range) {
   Out << 'A';
@@ -1641,7 +1641,7 @@ void MicrosoftCXXNameMangler::mangleType(const LValueReferenceType *T,
 
 // <type> ::= <r-value-reference-type>
 // <r-value-reference-type> ::= $$Q E? <cvr-qualifiers> <type>
-//                 # the E is required for 64-bit non static rvalue references
+//                 # the E is required for 64-bit non-static rvalue references
 void MicrosoftCXXNameMangler::mangleType(const RValueReferenceType *T,
                                          SourceRange Range) {
   Out << "$$Q";

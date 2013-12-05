@@ -7,7 +7,7 @@ static void test_indvars(int *Array1, int Array2[100][200]) {
   Array1[1] = Array2[3][6] = 12345;
 
   for (i = 0; i < 100; i+=2)
-    Array1[i] = i;           /* Step by non unit amount */
+    Array1[i] = i;           /* Step by non-unit amount */
 
   for (i = 3; i < 103; i++)
     Array1[i] = i+4;         /* Step with an offset */

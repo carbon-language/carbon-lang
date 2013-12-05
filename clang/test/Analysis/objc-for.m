@@ -109,7 +109,7 @@ void collectionIsEmptyCollectionIsModified(NSMutableDictionary *D){
 }
 
 int collectionIsEmptyNSSet(NSSet *S){
-  if ([S count] == 2) { // Count is non zero.
+  if ([S count] == 2) { // Count is non-zero.
     int tapCounts[2];
     int i = 0;
     for (NSString *elem in S) {

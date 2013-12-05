@@ -99,7 +99,7 @@ public:
                            Loc lhs, Loc rhs, QualType resultTy) = 0;
 
   /// Create a new value which represents a binary expression with a memory
-  /// location and non location operands. For example, this would be used to
+  /// location and non-location operands. For example, this would be used to
   /// evaluate a pointer arithmetic operation.
   virtual SVal evalBinOpLN(ProgramStateRef state, BinaryOperator::Opcode op,
                            Loc lhs, NonLoc rhs, QualType resultTy) = 0;

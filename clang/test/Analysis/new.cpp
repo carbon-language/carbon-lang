@@ -267,7 +267,7 @@ void testNullDtorDerived() {
   clang_analyzer_eval(true); // no warn
 }
 
-//Deleting a non class pointer should not crash/warn
+//Deleting a non-class pointer should not crash/warn
 void test_var_delete() {
   int *v = new int;
   delete v;  // no crash/warn

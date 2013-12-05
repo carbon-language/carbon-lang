@@ -23,8 +23,8 @@ typedef signed char BOOL;
 
   @property (assign, nonatomic) MyClass* Y; // automatically synthesized, implemented
 
-  @property (assign, nonatomic) MyClass* Z; // non synthesized ivar, implemented setter
-  @property (readonly) id nonSynth;  // non synthesized, explicitly implemented to return ivar with expected name
+  @property (assign, nonatomic) MyClass* Z; // non-synthesized ivar, implemented setter
+  @property (readonly) id nonSynth;  // non-synthesized, explicitly implemented to return ivar with expected name
   
   - (id) initWithPtr:(MyClass*) value;
   - (id) myInitWithPtr:(MyClass*) value;

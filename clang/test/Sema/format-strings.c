@@ -544,7 +544,7 @@ void test_other_formats() {
   monformat("", 1); // expected-warning{{format string is empty}}
   monformat(str); // expected-warning{{format string is not a string literal (potentially insecure)}}
   dateformat(""); // expected-warning{{format string is empty}}
-  dateformat(str); // no-warning (using strftime non literal is not unsafe)
+  dateformat(str); // no-warning (using strftime non-literal is not unsafe)
 }
 
 // Do not warn about unused arguments coming from system headers.

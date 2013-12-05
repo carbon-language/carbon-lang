@@ -751,7 +751,7 @@ CodeGenVTables::GenerateClassData(const CXXRecordDecl *RD) {
 /// strongly elsewhere.  Otherwise, we'd just like to avoid emitting
 /// v-tables when unnecessary.
 bool CodeGenVTables::isVTableExternal(const CXXRecordDecl *RD) {
-  assert(RD->isDynamicClass() && "Non dynamic classes have no VTable.");
+  assert(RD->isDynamicClass() && "Non-dynamic classes have no VTable.");
 
   // If we have an explicit instantiation declaration (and not a
   // definition), the v-table is defined elsewhere.

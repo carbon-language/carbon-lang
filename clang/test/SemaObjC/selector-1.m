@@ -12,7 +12,7 @@
 
 SEL func()
 {
-	return @selector(compare:);	// Non warning on multiple selector found.
+	return @selector(compare:);	// no warning on multiple selector found.
 }
 
 int main() {

@@ -2485,7 +2485,7 @@ MicrosoftRecordLayoutBuilder::layoutZeroWidthBitField(const FieldDecl *FD) {
   if (!LastFieldIsNonZeroWidthBitfield) {
     placeFieldAtOffset(IsUnion ? CharUnits::Zero() : Size);
     // TODO: Add a Sema warning that MS ignores alignment for zero
-    // sized bitfields that occur after zero-size bitfields or non bitfields.
+    // sized bitfields that occur after zero-size bitfields or non-bitfields.
     return;
   }
 

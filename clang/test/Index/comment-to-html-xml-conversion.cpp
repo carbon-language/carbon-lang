@@ -693,12 +693,12 @@ void comment_to_html_conversion_34();
 /// &copy; the copyright symbol
 /// &trade; the trade mark symbol
 /// &reg; the registered trade mark symbol
-/// &nbsp; a non breakable space.
+/// &nbsp; a non-breakable space.
 /// &Delta; Greek letter Delta Δ.
 /// &Gamma; Greek letter Gamma Γ.
 void comment_to_html_conversion_35();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_35:{{.*}} FullCommentAsHTML=[<p class="para-brief"> © the copyright symbol ™ the trade mark symbol ® the registered trade mark symbol   a non breakable space. Δ Greek letter Delta Δ. Γ Greek letter Gamma Γ.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_35</Name><USR>c:@F@comment_to_html_conversion_35#</USR><Declaration>void comment_to_html_conversion_35()</Declaration><Abstract><Para> © the copyright symbol ™ the trade mark symbol ® the registered trade mark symbol   a non breakable space. Δ Greek letter Delta Δ. Γ Greek letter Gamma Γ.</Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_35:{{.*}} FullCommentAsHTML=[<p class="para-brief"> © the copyright symbol ™ the trade mark symbol ® the registered trade mark symbol   a non-breakable space. Δ Greek letter Delta Δ. Γ Greek letter Gamma Γ.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_35</Name><USR>c:@F@comment_to_html_conversion_35#</USR><Declaration>void comment_to_html_conversion_35()</Declaration><Abstract><Para> © the copyright symbol ™ the trade mark symbol ® the registered trade mark symbol   a non-breakable space. Δ Greek letter Delta Δ. Γ Greek letter Gamma Γ.</Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -713,7 +713,7 @@ void comment_to_html_conversion_35();
 // CHECK-NEXT:         (CXComment_Text Text=[ the registered trade mark symbol] HasTrailingNewline)
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
 // CHECK-NEXT:         (CXComment_Text Text=[ ])
-// CHECK-NEXT:         (CXComment_Text Text=[ a non breakable space.] HasTrailingNewline)
+// CHECK-NEXT:         (CXComment_Text Text=[ a non-breakable space.] HasTrailingNewline)
 // CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
 // CHECK-NEXT:         (CXComment_Text Text=[Δ])
 // CHECK-NEXT:         (CXComment_Text Text=[ Greek letter Delta Δ.] HasTrailingNewline)

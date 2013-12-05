@@ -6198,7 +6198,7 @@ InitializationSequence::Perform(Sema &S,
 
     case SK_OCLSamplerInit: {
       assert(Step->Type->isSamplerT() && 
-             "Sampler initialization on non sampler type.");
+             "Sampler initialization on non-sampler type.");
 
       QualType SourceType = CurInit.get()->getType();
 
@@ -6214,7 +6214,7 @@ InitializationSequence::Perform(Sema &S,
     }
     case SK_OCLZeroEvent: {
       assert(Step->Type->isEventT() && 
-             "Event initialization on non event type.");
+             "Event initialization on non-event type.");
 
       CurInit = S.ImpCastExprToType(CurInit.take(), Step->Type,
                                     CK_ZeroToOCLEvent,

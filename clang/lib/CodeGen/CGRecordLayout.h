@@ -130,7 +130,7 @@ private:
   llvm::DenseMap<const FieldDecl *, CGBitFieldInfo> BitFields;
 
   // FIXME: Maybe we could use a CXXBaseSpecifier as the key and use a single
-  // map for both virtual and non virtual bases.
+  // map for both virtual and non-virtual bases.
   llvm::DenseMap<const CXXRecordDecl *, unsigned> NonVirtualBases;
 
   /// Map from virtual bases to their field index in the complete object.
@@ -201,7 +201,7 @@ public:
 
   /// \brief Return the BitFieldInfo that corresponds to the field FD.
   const CGBitFieldInfo &getBitFieldInfo(const FieldDecl *FD) const {
-    assert(FD->isBitField() && "Invalid call for non bit-field decl!");
+    assert(FD->isBitField() && "Invalid call for non-bit-field decl!");
     llvm::DenseMap<const FieldDecl *, CGBitFieldInfo>::const_iterator
       it = BitFields.find(FD);
     assert(it != BitFields.end() && "Unable to find bitfield info");

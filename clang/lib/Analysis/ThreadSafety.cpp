@@ -2043,7 +2043,7 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
         break;
       }
 
-      // Ignore other (non thread-safety) attributes
+      // Ignore attributes unrelated to thread-safety
       default:
         break;
     }

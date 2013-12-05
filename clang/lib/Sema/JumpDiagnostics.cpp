@@ -191,7 +191,7 @@ static ScopePair GetDiagForGotoScopeDecl(ASTContext &Context, const Decl *D) {
       if (!Record)
         return ScopePair(diag::note_protected_by_variable_init, 0);
 
-      // If we need to call a non trivial destructor for this variable,
+      // If we need to call a non-trivial destructor for this variable,
       // record an out diagnostic.
       unsigned OutDiag = 0;
       if (!Init->isGLValue() && !Record->hasTrivialDestructor())

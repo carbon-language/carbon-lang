@@ -123,7 +123,7 @@ class CompilerInstance : public ModuleLoader {
   /// \brief Holds information about the output file.
   ///
   /// If TempFilename is not empty we must rename it to Filename at the end.
-  /// TempFilename may be empty and Filename non empty if creating the temporary
+  /// TempFilename may be empty and Filename non-empty if creating the temporary
   /// failed.
   struct OutputFile {
     std::string Filename;

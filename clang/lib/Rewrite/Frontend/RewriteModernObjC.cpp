@@ -2623,7 +2623,7 @@ Stmt *RewriteModernObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   unsigned i;
   for (i=0; i < tmpName.length(); i++) {
     char c = tmpName.at(i);
-    // replace any non alphanumeric characters with '_'.
+    // replace any non-alphanumeric characters with '_'.
     if (!isAlphanumeric(c))
       tmpName[i] = '_';
   }

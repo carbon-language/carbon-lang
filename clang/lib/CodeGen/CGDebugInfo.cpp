@@ -2278,7 +2278,7 @@ void CGDebugInfo::CollectContainingType(const CXXRecordDecl *RD,
   llvm::DICompositeType ContainingType;
   const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
   if (const CXXRecordDecl *PBase = RL.getPrimaryBase()) {
-    // Seek non virtual primary base root.
+    // Seek non-virtual primary base root.
     while (1) {
       const ASTRecordLayout &BRL = CGM.getContext().getASTRecordLayout(PBase);
       const CXXRecordDecl *PBT = BRL.getPrimaryBase();

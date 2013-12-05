@@ -297,7 +297,7 @@ typedef void (*NoConstType)(int*);
 int foo10595327(int b) {
   void (*fp)(int *);
   // We use path sensitivity to get the function declaration. Even when the
-  // function pointer is cast to non pointer-to-const parameter type, we can
+  // function pointer is cast to non-pointer-to-const parameter type, we can
   // find the right function declaration.
   if (b > 5)
     fp = (NoConstType)ttt2;

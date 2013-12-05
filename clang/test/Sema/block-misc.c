@@ -131,7 +131,7 @@ void test14() {
   static void *P = ^{  // expected-error {{initializer element is not a compile-time constant}}
 
     void *Q = ^{
-      // References test14's "X": outer block is non constant.
+      // References test14's "X": outer block is non-constant.
       return X+4;
     };
   };

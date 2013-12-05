@@ -97,7 +97,7 @@ SVal SimpleSValBuilder::evalCastFromNonLoc(NonLoc val, QualType castTy) {
     return UnknownVal();
   }
 
-  // If value is a non integer constant, produce unknown.
+  // If value is a non-integer constant, produce unknown.
   if (!val.getAs<nonloc::ConcreteInt>())
     return UnknownVal();
 
@@ -108,7 +108,7 @@ SVal SimpleSValBuilder::evalCastFromNonLoc(NonLoc val, QualType castTy) {
   }
 
   // Only handle casts from integers to integers - if val is an integer constant
-  // being cast to a non integer type, produce unknown.
+  // being cast to a non-integer type, produce unknown.
   if (!isLocType && !castTy->isIntegralOrEnumerationType())
     return UnknownVal();
 
@@ -158,7 +158,7 @@ SVal SimpleSValBuilder::evalCastFromLoc(Loc val, QualType castTy) {
       }
 
       case loc::GotoLabelKind:
-        // Labels and non symbolic memory regions are always true.
+        // Labels and non-symbolic memory regions are always true.
         return makeTruthVal(true, castTy);
     }
   }

@@ -9320,7 +9320,7 @@ void TemplateSpecCandidateSet::NoteCandidates(Sema &S, SourceLocation Loc) {
   for (iterator Cand = begin(), LastCand = end(); Cand != LastCand; ++Cand) {
     if (Cand->Specialization)
       Cands.push_back(Cand);
-    // Otherwise, this is a non matching builtin candidate.  We do not,
+    // Otherwise, this is a non-matching builtin candidate.  We do not,
     // in general, want to list every possible builtin candidate.
   }
 
