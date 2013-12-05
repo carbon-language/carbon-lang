@@ -1,4 +1,4 @@
-//===-- llvm/Support/GCOV.h - LLVM coverage tool ----------------*- C++ -*-===//
+//===- GCOV.h - LLVM coverage tool ----------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This header provides the interface to read and write coverage files that 
+// This header provides the interface to read and write coverage files that
 // use 'gcov' format.
 //
 //===----------------------------------------------------------------------===//

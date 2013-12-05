@@ -1,4 +1,4 @@
-//===- GCOVr.cpp - LLVM coverage tool -------------------------------------===//
+//===- GCOV.cpp - LLVM coverage tool --------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

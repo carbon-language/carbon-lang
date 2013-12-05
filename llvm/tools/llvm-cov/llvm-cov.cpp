@@ -1,4 +1,4 @@
-//===- tools/llvm-cov/llvm-cov.cpp - LLVM coverage tool -------------------===//
+//===- llvm-cov.cpp - LLVM coverage tool ----------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
