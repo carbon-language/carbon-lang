@@ -551,8 +551,7 @@ void ELFObjectWriter::WriteSymbol(MCDataFragment *SymtabF,
   // Other and Visibility share the same byte with Visibility using the lower
   // 2 bits
   uint8_t Visibility = MCELF::GetVisibility(OrigData);
-  uint8_t Other = MCELF::getOther(OrigData) <<
-    (ELF_Other_Shift - ELF_STV_Shift);
+  uint8_t Other = MCELF::getOther(OrigData) << (ELF_STO_Shift - ELF_STV_Shift);
   Other |= Visibility;
 
   uint64_t Value = SymbolValue(Data, Layout);

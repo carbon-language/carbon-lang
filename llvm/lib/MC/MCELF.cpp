@@ -72,13 +72,13 @@ unsigned MCELF::GetVisibility(MCSymbolData &SD) {
 // Other is stored in the last six bits of st_other
 // st_other values are stored in the second byte of get/setFlags
 void MCELF::setOther(MCSymbolData &SD, unsigned Other) {
-  uint32_t OtherFlags = SD.getFlags() & ~(0x3f << ELF_Other_Shift);
-  SD.setFlags(OtherFlags | (Other << ELF_Other_Shift));
+  uint32_t OtherFlags = SD.getFlags() & ~(0x3f << ELF_STO_Shift);
+  SD.setFlags(OtherFlags | (Other << ELF_STO_Shift));
 }
 
 unsigned MCELF::getOther(MCSymbolData &SD) {
   unsigned Other =
-    (SD.getFlags() & (0x3f << ELF_Other_Shift)) >> ELF_Other_Shift;
+    (SD.getFlags() & (0x3f << ELF_STO_Shift)) >> ELF_STO_Shift;
   return Other;
 }
 

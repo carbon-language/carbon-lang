@@ -21,10 +21,12 @@
 
 namespace llvm {
   enum {
-    ELF_STT_Shift   = 0, // Shift value for STT_* flags.
-    ELF_STB_Shift   = 4, // Shift value for STB_* flags.
-    ELF_STV_Shift   = 8, // Shift value for STV_* flags.
-    ELF_Other_Shift = 10 // Shift value for other flags.
+    ELF_STT_Shift   = 0,  // Shift value for STT_* flags.
+    ELF_STB_Shift   = 4,  // Shift value for STB_* flags.
+    ELF_STV_Shift   = 8,  // Shift value for STV_* flags.
+    ELF_STO_Shift   = 10, // Shift value for STO_* flags.
+    ELF_Other_Shift = 16  // Shift value for llvm local flags,
+                          // not part of the final object file
   };
 
   enum ELFSymbolFlags {
