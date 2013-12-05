@@ -535,19 +535,32 @@ static SDValue performSELECTCombine(SDNode *N, SelectionDAG &DAG,
   if (!FalseTy.isInteger())
     return SDValue();
 
-  ConstantSDNode *CN = dyn_cast<ConstantSDNode>(False);
+  ConstantSDNode *FalseC = dyn_cast<ConstantSDNode>(False);
 
-  if (!CN || CN->getZExtValue())
+  // If the RHS (False) is 0, we swap the order of the operands
+  // of ISD::SELECT (obviously also inverting the condition) so that we can
+  // take advantage of conditional moves using the $0 register.
+  // Example:
+  //   return (a != 0) ? x : 0;
+  //     load $reg, x
+  //     movz $reg, $0, a
+  if (!FalseC)
     return SDValue();
 
   const SDLoc DL(N);
-  ISD::CondCode CC = cast<CondCodeSDNode>(SetCC.getOperand(2))->get();
-  SDValue True = N->getOperand(1);
 
-  SetCC = DAG.getSetCC(DL, SetCC.getValueType(), SetCC.getOperand(0),
-                       SetCC.getOperand(1), ISD::getSetCCInverse(CC, true));
+  if (!FalseC->getZExtValue()) {
+    ISD::CondCode CC = cast<CondCodeSDNode>(SetCC.getOperand(2))->get();
+    SDValue True = N->getOperand(1);
 
-  return DAG.getNode(ISD::SELECT, DL, FalseTy, SetCC, False, True);
+    SetCC = DAG.getSetCC(DL, SetCC.getValueType(), SetCC.getOperand(0),
+                         SetCC.getOperand(1), ISD::getSetCCInverse(CC, true));
+
+    return DAG.getNode(ISD::SELECT, DL, FalseTy, SetCC, False, True);
+  }
+
+  // Couldn't optimize.
+  return SDValue();
 }
 
 static SDValue performANDCombine(SDNode *N, SelectionDAG &DAG,
