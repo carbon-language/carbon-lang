@@ -2445,10 +2445,10 @@ static bool tryLatency(GenericScheduler::SchedCandidate &TryCand,
 /// \param RPTracker describes reg pressure within the scheduled zone.
 /// \param TempTracker is a scratch pressure tracker to reuse in queries.
 void GenericScheduler::tryCandidate(SchedCandidate &Cand,
-                                       SchedCandidate &TryCand,
-                                       SchedBoundary &Zone,
-                                       const RegPressureTracker &RPTracker,
-                                       RegPressureTracker &TempTracker) {
+                                    SchedCandidate &TryCand,
+                                    SchedBoundary &Zone,
+                                    const RegPressureTracker &RPTracker,
+                                    RegPressureTracker &TempTracker) {
 
   if (DAG->isTrackingPressure()) {
     // Always initialize TryCand's RPDelta.
@@ -2651,8 +2651,8 @@ void GenericScheduler::traceCandidate(const SchedCandidate &Cand) {
 /// DAG building. To adjust for the current scheduling location we need to
 /// maintain the number of vreg uses remaining to be top-scheduled.
 void GenericScheduler::pickNodeFromQueue(SchedBoundary &Zone,
-                                            const RegPressureTracker &RPTracker,
-                                            SchedCandidate &Cand) {
+                                         const RegPressureTracker &RPTracker,
+                                         SchedCandidate &Cand) {
   ReadyQueue &Q = Zone.Available;
 
   DEBUG(Q.dump());

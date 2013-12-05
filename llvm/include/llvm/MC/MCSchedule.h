@@ -149,7 +149,7 @@ public:
   // but we balance those stalls against other heuristics.
   //
   // "> 1" means the processor is out-of-order. This is a machine independent
-  // estimate of highly machine specific characteristics such are the register
+  // estimate of highly machine specific characteristics such as the register
   // renaming pool and reorder buffer.
   unsigned MicroOpBufferSize;
   static const unsigned DefaultMicroOpBufferSize = 0;
