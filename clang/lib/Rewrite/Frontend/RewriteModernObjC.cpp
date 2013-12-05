@@ -6046,9 +6046,9 @@ void RewriteModernObjC::HandleTranslationUnit(ASTContext &C) {
   RewriteInclude();
 
   for (unsigned i = 0, e = FunctionDefinitionsSeen.size(); i < e; i++) {
-    // translation of function bodies were postponed untill all class and
+    // translation of function bodies were postponed until all class and
     // their extensions and implementations are seen. This is because, we
-    // cannot build grouping structs for bitfields untill they are all seen.
+    // cannot build grouping structs for bitfields until they are all seen.
     FunctionDecl *FDecl = FunctionDefinitionsSeen[i];
     HandleTopLevelSingleDecl(FDecl);
   }

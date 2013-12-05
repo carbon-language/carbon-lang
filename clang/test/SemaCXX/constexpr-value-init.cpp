@@ -9,7 +9,7 @@ struct B {
   A a;
 };
 
-constexpr A a; // ok, zero initialization preceeds static initialization
+constexpr A a; // ok, zero initialization precedes static initialization
 void f() {
   constexpr A a; // expected-error {{constant expression}} expected-note {{in call to 'A()'}}
 }

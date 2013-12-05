@@ -823,7 +823,7 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D) {
 }
 
 /// EmitAutoVarAlloca - Emit the alloca and debug information for a
-/// local variable.  Does not emit initalization or destruction.
+/// local variable.  Does not emit initialization or destruction.
 CodeGenFunction::AutoVarEmission
 CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
   QualType Ty = D.getType();

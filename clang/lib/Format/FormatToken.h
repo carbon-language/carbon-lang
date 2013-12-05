@@ -88,7 +88,7 @@ class TokenRole;
 class AnnotatedLine;
 
 /// \brief A wrapper around a \c Token storing information about the
-/// whitespace characters preceeding it.
+/// whitespace characters preceding it.
 struct FormatToken {
   FormatToken()
       : NewlinesBefore(0), HasUnescapedNewline(false), LastNewlineOffset(0),
@@ -117,7 +117,7 @@ struct FormatToken {
   /// Token.
   bool HasUnescapedNewline;
 
-  /// \brief The range of the whitespace immediately preceeding the \c Token.
+  /// \brief The range of the whitespace immediately preceding the \c Token.
   SourceRange WhitespaceRange;
 
   /// \brief The offset just past the last '\n' in this token's leading

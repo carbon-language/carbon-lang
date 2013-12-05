@@ -207,7 +207,7 @@ static bool IsZeroByteAllocation(ProgramStateRef state,
 
 // Generates an error report, indicating that the function whose name is given
 // will perform a zero byte allocation.
-// Returns false if an error occured, true otherwise.
+// Returns false if an error occurred, true otherwise.
 bool UnixAPIChecker::ReportZeroByteAllocation(CheckerContext &C,
                                               ProgramStateRef falseState,
                                               const Expr *arg,

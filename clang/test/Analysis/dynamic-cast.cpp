@@ -169,7 +169,7 @@ int testCastToVoidStar() {
   return *res; // no warning
 }
 
-int testReferenceSuccesfulCast() {
+int testReferenceSuccessfulCast() {
   B rb;
   B &b = dynamic_cast<B&>(rb);
   int *x = 0;

@@ -50,7 +50,7 @@ unsigned CommaSeparatedList::format(LineState &State,
   const ColumnFormat *Format = getColumnFormat(RemainingCodePoints);
   // If no ColumnFormat can be used, the braced list would generally be
   // bin-packed. Add a severe penalty to this so that column layouts are
-  // prefered if possible.
+  // preferred if possible.
   if (!Format)
     return 10000;
 

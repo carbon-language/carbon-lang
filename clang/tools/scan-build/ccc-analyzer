@@ -677,7 +677,7 @@ if ($Action eq 'compile' or $Action eq 'link') {
         my ($h, $f) = tempfile("report-XXXXXX", SUFFIX => ".plist",
                                DIR => $HtmlDir);
         $ResultFile = $f;
-        # If the HtmlDir is not set, we sould clean up the plist files.
+        # If the HtmlDir is not set, we should clean up the plist files.
         if (!defined $HtmlDir || -z $HtmlDir) {
           $CleanupFile = $f;
         }

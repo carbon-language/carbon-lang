@@ -49,7 +49,7 @@ void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
   assert(Entry->empty());
   assert(Entry->succ_size() == 1);
   
-  // Get the solitary sucessor.
+  // Get the solitary successor.
   const CFGBlock *Succ = *(Entry->succ_begin());
   
   // Construct an edge representing the starting location in the callee.

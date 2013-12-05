@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -triple x86_64-apple-macosx10.8.0 -fsyntax-only -verify %s
 
-// This test case shows that 'availablity' and 'deprecated' does not inherit
+// This test case shows that 'availability' and 'deprecated' do not inherit
 // when a property is redeclared in a subclass.  This is intentional.
 
 @interface NSObject @end

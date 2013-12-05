@@ -360,7 +360,7 @@ CFAbsoluteTime f2() {
 
 NSDate* global_x;
 
-// Test to see if we supresss an error when we store the pointer
+// Test to see if we suppress an error when we store the pointer
 // to a global.
 
 CFAbsoluteTime f3() {

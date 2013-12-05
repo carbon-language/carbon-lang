@@ -1985,7 +1985,7 @@ static bool isMsLayout(const RecordDecl* D) {
 //
 // * The alignment of bitfields in unions is ignored when computing the
 //   alignment of the union.
-// * The existance of zero-width bitfield that occurs after anything other than
+// * The existence of zero-width bitfield that occurs after anything other than
 //   a non-zero length bitfield is ignored.
 // * The Itanium equivalent vtable pointers are split into a vfptr (virtual
 //   function pointer) and a vbptr (virtual base pointer).  They can each be
@@ -2036,7 +2036,7 @@ public:
   /// \brief Initializes size and alignment and honors some flags.
   void initializeLayout(const RecordDecl *RD);
   /// \brief Initialized C++ layout, compute alignment and virtual alignment and
-  /// existance of vfptrs and vbptrs.  Alignment is needed before the vfptr is
+  /// existence of vfptrs and vbptrs.  Alignment is needed before the vfptr is
   /// laid out.
   void initializeCXXLayout(const CXXRecordDecl *RD);
   void layoutVFPtr(const CXXRecordDecl *RD);
@@ -2364,7 +2364,7 @@ MicrosoftRecordLayoutBuilder::layoutNonVirtualBase(const CXXRecordDecl *RD) {
   Bases.insert(std::make_pair(RD, BaseOffset));
   Size = BaseOffset + Layout->getDataSize();
   // Note: we don't update alignment here because it was accounted
-  // for during initalization.
+  // for during initialization.
   LastBaseWasEmpty = false;
   LastNonVirtualBaseHasVBPtr = Layout->hasVBPtr();
 }

@@ -84,7 +84,7 @@ extern __attribute__((visibility("default"))) struct dispatch_queue_s _dispatch_
 @end
 
 // Test 2.  rdar://problem/11150919
-int test2(id obj, int state) { // expected-note {{jump enters lifetime of block}} FIXME: wierd location
+int test2(id obj, int state) { // expected-note {{jump enters lifetime of block}} FIXME: weird location
   switch (state) {
   case 0:
     (void) ^{ (void) obj; };

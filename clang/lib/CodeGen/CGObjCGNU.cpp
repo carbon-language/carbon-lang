@@ -2595,7 +2595,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
             llvm::Constant::getNullValue(RegisterAlias->getType()));
     Builder.CreateCondBr(HasRegisterAlias, AliasBB, NoAliasBB);
 
-    // The true branch (has alias registration fucntion):
+    // The true branch (has alias registration function):
     Builder.SetInsertPoint(AliasBB);
     // Emit alias registration calls:
     for (std::vector<ClassAliasPair>::iterator iter = ClassAliases.begin();

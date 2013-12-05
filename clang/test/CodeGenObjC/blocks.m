@@ -65,7 +65,7 @@ void test2(Test2 *x) {
   // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds [[WEAK_T]]* [[WEAKX]], i32 0, i32 3
   // CHECK-NEXT: store i32 28, i32* [[T3]]
 
-  // Copy and dipose helpers.
+  // Copy and dispose helpers.
   // CHECK-NEXT: [[T4:%.*]] = getelementptr inbounds [[WEAK_T]]* [[WEAKX]], i32 0, i32 4
   // CHECK-NEXT: store i8* bitcast (void (i8*, i8*)* @__Block_byref_object_copy_{{.*}} to i8*), i8** [[T4]]
   // CHECK-NEXT: [[T5:%.*]] = getelementptr inbounds [[WEAK_T]]* [[WEAKX]], i32 0, i32 5

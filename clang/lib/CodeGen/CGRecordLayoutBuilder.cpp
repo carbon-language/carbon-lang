@@ -381,7 +381,7 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
   if (!Packed && D->hasAttr<PackedAttr>())
     return false;
 
-  assert(!D->isBitField() && "Bitfields should be laid out seperately.");
+  assert(!D->isBitField() && "Bitfields should be laid out separately.");
 
   CheckZeroInitializable(D->getType());
 

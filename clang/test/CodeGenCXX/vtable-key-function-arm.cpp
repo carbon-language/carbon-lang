@@ -4,7 +4,7 @@
 // The 'a' variants ask for the v-table first.
 // The 'b' variants ask for the v-table second.
 // The 'c' variants ask for the v-table third.
-// We do a separate CHECK-LATE pass because the RTTI defintion gets
+// We do a separate CHECK-LATE pass because the RTTI definition gets
 // changed after the fact, which causes reordering of the globals.
 
 // These are not separated into namespaces because the way that Sema

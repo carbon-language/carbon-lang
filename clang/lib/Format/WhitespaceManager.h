@@ -51,7 +51,7 @@ public:
                          unsigned StartOfTokenColumn,
                          bool InPPDirective = false);
 
-  /// \brief Adds information about an unchangable token's whitespace.
+  /// \brief Adds information about an unchangeable token's whitespace.
   ///
   /// Needs to be called for every token for which \c replaceWhitespace
   /// was not called.

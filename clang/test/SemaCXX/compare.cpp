@@ -225,7 +225,7 @@ void test3() {
 }
 
 // Test comparison of short to unsigned.  If tautological compare does not
-// trigger, then the signed comparision warning will.
+// trigger, then the signed comparison warning will.
 void test4(short s) {
   // A is max short plus 1.  All zero and positive shorts are smaller than it.
   // All negative shorts are cast towards the max unsigned range.  Relation

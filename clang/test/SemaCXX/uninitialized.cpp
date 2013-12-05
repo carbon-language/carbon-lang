@@ -117,7 +117,7 @@ void setupA(bool x) {
   A a20{a20};  // expected-warning {{variable 'a20' is uninitialized when used within its own initialization}}
   A a21 = {a21};  // expected-warning {{variable 'a21' is uninitialized when used within its own initialization}}
 
-  // FIXME: Make the local uninitialized warning consistant with the global
+  // FIXME: Make the local uninitialized warning consistent with the global
   // uninitialized checking.
   A *a22 = new A(a22->count);  // expected-warning {{variable 'a22' is uninitialized when used within its own initialization}}
   A *a23 = new A(a23->ONE);  // expected-warning {{variable 'a23' is uninitialized when used within its own initialization}}

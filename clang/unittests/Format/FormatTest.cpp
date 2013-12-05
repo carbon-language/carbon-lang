@@ -1731,7 +1731,7 @@ TEST_F(FormatTest, FormatsNamespaces) {
 
   // This code is more common than we thought; if we
   // layout this correctly the semicolon will go into
-  // its own line, which is undesireable.
+  // its own line, which is undesirable.
   verifyFormat("namespace {};");
   verifyFormat("namespace {\n"
                "class A {};\n"
@@ -2832,7 +2832,7 @@ TEST_F(FormatTest, ConstructorInitializers) {
                "          aaaaaaaaaaaaaaaaaaaaaaaaa(aaaa, aaaa)) {}");
 
   // Here a line could be saved by splitting the second initializer onto two
-  // lines, but that is not desireable.
+  // lines, but that is not desirable.
   verifyFormat("Constructor()\n"
                "    : aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaa),\n"
                "      aaaaaaaaaaa(aaaaaaaaaaa),\n"

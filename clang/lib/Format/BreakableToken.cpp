@@ -335,7 +335,7 @@ void BreakableBlockComment::adjustWhitespace(unsigned LineIndex,
   LeadingWhitespace[LineIndex] =
       Lines[LineIndex].begin() - Lines[LineIndex - 1].end();
 
-  // Adjust the start column uniformly accross all lines.
+  // Adjust the start column uniformly across all lines.
   StartOfLineColumn[LineIndex] = std::max<int>(
       0,
       encoding::columnWidthWithTabs(Whitespace, 0, Style.TabWidth, Encoding) +

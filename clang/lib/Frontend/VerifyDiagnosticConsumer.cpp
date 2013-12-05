@@ -240,7 +240,7 @@ public:
       if (!EnsureStartOfWord
             // Check if string literal starts a new word.
             || P == Begin || isWhitespace(P[-1])
-            // Or it could be preceeded by the start of a comment.
+            // Or it could be preceded by the start of a comment.
             || (P > (Begin + 1) && (P[-1] == '/' || P[-1] == '*')
                                 &&  P[-2] == '/'))
         return true;

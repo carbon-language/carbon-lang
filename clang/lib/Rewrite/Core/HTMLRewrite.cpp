@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the HTMLRewriter clas, which is used to translate the
+//  This file defines the HTMLRewriter class, which is used to translate the
 //  text of a source file into prettified HTML.
 //
 //===----------------------------------------------------------------------===//

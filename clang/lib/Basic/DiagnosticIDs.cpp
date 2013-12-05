@@ -111,7 +111,7 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
     return 0;
 
   // Compute the index of the requested diagnostic in the static table.
-  // 1. Add the number of diagnostics in each category preceeding the
+  // 1. Add the number of diagnostics in each category preceding the
   //    diagnostic and of the category the diagnostic is in. This gives us
   //    the offset of the category in the table.
   // 2. Subtract the number of IDs in each category from our ID. This gives us

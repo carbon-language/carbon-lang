@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -Wsemicolon-before-method-body -verify %s
 // RUN: %clang_cc1 -fsyntax-only -Wsemicolon-before-method-body -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s
 
-// Allow optional semicolon in objc method definiton after method prototype,
+// Allow optional semicolon in objc method definition after method prototype,
 // warn about it and suggest a fixit.
 
 @interface NSObject

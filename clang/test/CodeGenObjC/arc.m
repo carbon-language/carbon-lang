@@ -180,7 +180,7 @@ id test4() {
   // CHECK-NEXT: [[ALLOC:%.*]] = bitcast
   // CHECK-NEXT: [[INIT:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*, i32)*)(i8* [[ALLOC]],
 
-  // Initialization of return value, occuring within full-expression.
+  // Initialization of return value, occurring within full-expression.
   // Retain/release elided.
   // CHECK-NEXT: bitcast
   // CHECK-NEXT: [[INIT:%.*]] = bitcast

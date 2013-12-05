@@ -2557,7 +2557,7 @@ StmtResult Parser::ParseCXXTryBlock() {
 ///
 ///       [Borland] try-block:
 ///         'try' compound-statement seh-except-block
-///         'try' compound-statment  seh-finally-block
+///         'try' compound-statement seh-finally-block
 ///
 StmtResult Parser::ParseCXXTryBlockCommon(SourceLocation TryLoc, bool FnTry) {
   if (Tok.isNot(tok::l_brace))

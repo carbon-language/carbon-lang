@@ -864,7 +864,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
     // Check whether the target provides libc++.
     StringRef where;
 
-    // Complain about targetting iOS < 5.0 in any way.
+    // Complain about targeting iOS < 5.0 in any way.
     if (isTargetIPhoneOS() && isIPhoneOSVersionLT(5, 0))
       where = "iOS 5.0";
 
@@ -2450,7 +2450,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     // <prefix>/<libdir>/gcc/<triple>/<version>. This decision is somewhat
     // debatable, but is the reality today. We need to search this tree even
     // when we have a sysroot somewhere else. It is the responsibility of
-    // whomever is doing the cross build targetting a sysroot using a GCC
+    // whomever is doing the cross build targeting a sysroot using a GCC
     // installation that is *not* within the system root to ensure two things:
     //
     //  1) Any DSOs that are linked in from this tree or from the install path

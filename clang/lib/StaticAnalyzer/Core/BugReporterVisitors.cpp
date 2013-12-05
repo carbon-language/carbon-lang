@@ -869,7 +869,7 @@ static const Expr *peelOffOuterExpr(const Expr *Ex,
 
   // Peel off the ternary operator.
   if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(Ex)) {
-    // Find a node where the branching occured and find out which branch
+    // Find a node where the branching occurred and find out which branch
     // we took (true/false) by looking at the ExplodedGraph.
     const ExplodedNode *NI = N;
     do {

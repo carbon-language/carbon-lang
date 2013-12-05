@@ -953,7 +953,7 @@ VarTemplateDecl *VarTemplateDecl::CreateDeserialized(ASTContext &C,
   return new (C, ID) VarTemplateDecl(EmptyShell());
 }
 
-// TODO: Unify accross class, function and variable templates?
+// TODO: Unify across class, function and variable templates?
 //       May require moving this and Common to RedeclarableTemplateDecl.
 void VarTemplateDecl::LoadLazySpecializations() const {
   Common *CommonPtr = getCommonPtr();

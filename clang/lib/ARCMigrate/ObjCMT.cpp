@@ -418,7 +418,7 @@ static void rewriteToObjCProperty(const ObjCMethodDecl *Getter,
     // Get location past ';'
     EndLoc = EndLoc.getLocWithOffset(1);
     SourceLocation BeginOfSetterDclLoc = Setter->getLocStart();
-    // FIXME. This assumes that setter decl; is immediately preceeded by eoln.
+    // FIXME. This assumes that setter decl; is immediately preceded by eoln.
     // It is trying to remove the setter method decl. line entirely.
     BeginOfSetterDclLoc = BeginOfSetterDclLoc.getLocWithOffset(-1);
     commit.remove(SourceRange(BeginOfSetterDclLoc, EndLoc));
@@ -606,7 +606,7 @@ static bool rewriteToNSEnumDecl(const EnumDecl *EnumDcl,
                                                  /*IsDecl*/true);
   if (!EndOfEnumDclLoc.isInvalid()) {
     SourceLocation BeginOfEnumDclLoc = EnumDcl->getLocStart();
-    // FIXME. This assumes that enum decl; is immediately preceeded by eoln.
+    // FIXME. This assumes that enum decl; is immediately preceded by eoln.
     // It is trying to remove the enum decl. lines entirely.
     BeginOfEnumDclLoc = BeginOfEnumDclLoc.getLocWithOffset(-1);
     commit.remove(SourceRange(BeginOfEnumDclLoc, EndOfEnumDclLoc));
@@ -1567,9 +1567,9 @@ IsReallyASystemHeader(ASTContext &Ctx, const FileEntry *file, FileID FID) {
       if (FI.getFileCharacteristic() == SrcMgr::C_ExternCSystem)
         return true;
       if (FI.getFileCharacteristic() == SrcMgr::C_System) {
-        // This file is in a system header directory. Continue with commiting change
-        // only if it is a user specified system directory because user put a
-        // .system_framework file in the framework directory.
+        // This file is in a system header directory. Continue committing
+        // change only if it's a user-specified system directory because user
+        // put a .system_framework file in the framework directory.
         StringRef Directory(file->getDir()->getName());
         size_t Ix = Directory.rfind(".framework");
         if (Ix == StringRef::npos)

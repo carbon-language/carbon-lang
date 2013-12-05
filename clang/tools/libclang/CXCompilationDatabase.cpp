@@ -8,7 +8,7 @@ using namespace clang::tooling;
 
 extern "C" {
 
-// FIXME: do something more usefull with the error message
+// FIXME: do something more useful with the error message
 CXCompilationDatabase
 clang_CompilationDatabase_fromDirectory(const char *BuildDir,
                                         CXCompilationDatabase_Error *ErrorCode)

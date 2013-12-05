@@ -93,7 +93,7 @@ typedef void (F)(void);
  return container.pieces; // expected-warning {{type of property 'pieces' does not match type of accessor 'pieces'}}
 }
 
-- (id)firstPeice
+- (id)firstPiece
 {
   return container.first;
 }

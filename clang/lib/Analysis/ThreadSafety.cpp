@@ -277,7 +277,7 @@ private:
   /// ensure that the original expression is a valid mutex expression.
   ///
   /// NDeref returns the number of Derefence and AddressOf operations
-  /// preceeding the Expr; this is used to decide whether to pretty-print
+  /// preceding the Expr; this is used to decide whether to pretty-print
   /// SExprs with . or ->.
   unsigned buildSExpr(const Expr *Exp, CallingContext* CallCtx,
                       int* NDeref = 0) {

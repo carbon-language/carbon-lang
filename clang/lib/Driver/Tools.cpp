@@ -6503,8 +6503,8 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
       if (OpenMP) {
         CmdArgs.push_back("-lgomp");
 
-        // FIXME: Exclude this for platforms whith libgomp that doesn't require
-        // librt. Most modern Linux platfroms require it, but some may not.
+        // FIXME: Exclude this for platforms with libgomp that don't require
+        // librt. Most modern Linux platforms require it, but some may not.
         CmdArgs.push_back("-lrt");
       }
 

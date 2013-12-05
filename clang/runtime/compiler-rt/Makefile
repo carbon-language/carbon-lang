@@ -66,7 +66,7 @@ COMPILERRT_SRC_ROOT := $(LLVM_SRC_ROOT)/projects/compiler-rt
 #  3. Come up with an alternate mechanism to define all the toolchain
 #     information that compiler-rt would need to build libraries for all the
 #     requested targets. This might be a simple short term solution, but is
-#     likely to be unwieldly and irritating to maintain in the long term.
+#     likely to be unwieldy and irritating to maintain in the long term.
 ifneq ($(LLVM_CROSS_COMPILING),1)
 ifneq ($(CLANG_NO_RUNTIME),1)
 ifeq ($(shell test -d $(COMPILERRT_SRC_ROOT) && echo OK),OK)

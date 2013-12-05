@@ -268,7 +268,7 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
   llvm::MemoryBuffer *InputBuffer =
       llvm::MemoryBuffer::getMemBufferCopy(HeaderContents,
                                            Module::getModuleInputBufferName());
-  // Ownership of InputBuffer will be transfered to the SourceManager.
+  // Ownership of InputBuffer will be transferred to the SourceManager.
   setCurrentInput(FrontendInputFile(InputBuffer, getCurrentFileKind(),
                                     Module->IsSystem));
   return true;

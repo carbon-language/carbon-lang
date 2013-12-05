@@ -144,7 +144,7 @@ namespace std {
   public:
     void pop_front() {
       // Fake use-after-free.
-      // No warning is expected as we are suppressing warning comming
+      // No warning is expected as we are suppressing warning coming
       // out of std::list.
       int z = 0;
       z = 5/z;
@@ -162,7 +162,7 @@ namespace std {
   public:
     void push_back(int c) {
       // Fake error trigger.
-      // No warning is expected as we are suppressing warning comming
+      // No warning is expected as we are suppressing warning coming
       // out of std::basic_string.
       int z = 0;
       z = 5/z;

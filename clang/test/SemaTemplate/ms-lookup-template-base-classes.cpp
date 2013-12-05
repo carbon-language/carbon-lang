@@ -176,7 +176,7 @@ class B {};
 template <class T>
 class Base {
  public:
-  bool base_fun(void* p) { return false; }  // expected-note {{must qualify identifier to find this declaration in dependent base clas}}
+  bool base_fun(void* p) { return false; }  // expected-note {{must qualify identifier to find this declaration in dependent base class}}
   operator T*() const { return 0; }
 };
 

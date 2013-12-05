@@ -2931,7 +2931,7 @@ void Parser::ParseLexedObjCMethodDefs(LexedMethod &LM, bool parseMethod) {
   assert((Tok.is(tok::l_brace) || Tok.is(tok::kw_try) ||
           Tok.is(tok::colon)) && 
           "Inline objective-c method not starting with '{' or 'try' or ':'");
-  // Enter a scope for the method or c-fucntion body.
+  // Enter a scope for the method or c-function body.
   ParseScope BodyScope(this,
                        parseMethod
                        ? Scope::ObjCMethodScope|Scope::FnScope|Scope::DeclScope

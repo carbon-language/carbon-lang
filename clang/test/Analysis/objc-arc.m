@@ -138,7 +138,7 @@ NSString *CreateNSString();
 void from_cf() {
   id obj1 = (__bridge_transfer id)CFCreateSomething(); // expected-warning{{never read}}
   id obj2 = (__bridge_transfer NSString*)CFCreateString();
-  [obj2 self]; // Add a use, to show we can use the object after it has been transfered.
+  [obj2 self]; // Add a use, to show we can use the object after it has been transferred.
   id obj3 = (__bridge id)CFGetSomething();
   [obj3 self]; // Add a use, to show we can use the object after it has been bridged.
   id obj4 = (__bridge NSString*)CFGetString(); // expected-warning{{never read}}
