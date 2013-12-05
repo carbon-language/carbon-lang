@@ -61,6 +61,27 @@ public:
   virtual ErrorOr<StringRef> getPath(const LinkingContext &ctx) const;
 };
 
+/// \brief Represents a ELF control node
+class PECOFFGroup : public Group {
+public:
+  PECOFFGroup() : Group(0) {}
+
+  static inline bool classof(const InputElement *a) {
+    return a->kind() == InputElement::Kind::Control;
+  }
+
+  virtual bool validate() { return true; }
+  virtual bool dump(raw_ostream &) { return true; }
+
+  /// \brief Parse the group members.
+  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
+    for (auto &elem : _elements)
+      if (error_code ec = elem->parse(ctx, diagnostics))
+        return ec;
+    return error_code::success();
+  }
+};
+
 } // namespace lld
 
 #endif

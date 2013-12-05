@@ -30,6 +30,7 @@ using llvm::COFF::WindowsSubsystem;
 static const uint8_t DEFAULT_DOS_STUB[128] = {'M', 'Z'};
 
 namespace lld {
+class Group;
 
 class PECOFFLinkingContext : public LinkingContext {
 public:
@@ -235,6 +236,9 @@ public:
     return false;
   }
 
+  void setLibraryGroup(Group *group) { _libraryGroup = group; }
+  Group *getLibraryGroup() const { return _libraryGroup; }
+
 protected:
   /// Method to create a internal file for the entry symbol
   virtual std::unique_ptr<File> createEntrySymbolFile() const;
@@ -299,6 +303,9 @@ private:
   // a small DOS program that prints out a message "This program requires
   // Microsoft Windows." This feature was somewhat useful before Windows 95.
   ArrayRef<uint8_t> _dosStub;
+
+  // The PECOFFGroup that contains all the .lib files.
+  Group *_libraryGroup;
 };
 
 } // end namespace lld

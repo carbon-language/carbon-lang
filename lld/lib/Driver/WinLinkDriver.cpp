@@ -564,6 +564,19 @@ parseArgs(int argc, const char *argv[], raw_ostream &diagnostics,
   return parsedArgs;
 }
 
+// Returns true if the given file node has already been added to the input
+// graph.
+bool hasLibrary(const PECOFFLinkingContext &ctx, FileNode *fileNode) {
+  ErrorOr<StringRef> path = fileNode->getPath(ctx);
+  if (!path)
+    return false;
+  for (std::unique_ptr<InputElement> &p : ctx.getLibraryGroup()->elements())
+    if (auto *f = dyn_cast<FileNode>(p.get()))
+      if (*path == *f->getPath(ctx))
+        return true;
+  return false;
+}
+
 } // namespace
 
 //
@@ -597,7 +610,8 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
     return false;
 
   // The list of input files.
-  std::vector<std::unique_ptr<InputElement> > inputElements;
+  std::vector<std::unique_ptr<FileNode> > files;
+  std::vector<std::unique_ptr<FileNode> > libraries;
 
   // Handle /help
   if (parsedArgs->getLastArg(OPT_help)) {
@@ -899,8 +913,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   };
   std::stable_sort(inputFiles.begin(), inputFiles.end(), compfn);
   for (StringRef path : inputFiles)
-    inputElements.push_back(std::unique_ptr<InputElement>(
-        new PECOFFFileNode(ctx, path)));
+    files.push_back(std::unique_ptr<FileNode>(new PECOFFFileNode(ctx, path)));
 
   // Use the default entry name if /entry option is not given.
   if (ctx.entrySymbolName().empty() && !parsedArgs->getLastArg(OPT_noentry))
@@ -933,9 +946,9 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   // but useful for us to test lld on Unix.
   if (llvm::opt::Arg *dashdash = parsedArgs->getLastArg(OPT_DASH_DASH)) {
     for (const StringRef value : dashdash->getValues()) {
-      std::unique_ptr<InputElement> elem(
+      std::unique_ptr<FileNode> elem(
           new PECOFFFileNode(ctx, ctx.allocate(value)));
-      inputElements.push_back(std::move(elem));
+      files.push_back(std::move(elem));
     }
   }
 
@@ -944,10 +957,10 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   if (!ctx.getNoDefaultLibAll())
     for (const StringRef path : defaultLibs)
       if (!ctx.hasNoDefaultLib(path))
-        inputElements.push_back(std::unique_ptr<InputElement>(
-            new PECOFFLibraryNode(ctx, path)));
+        libraries.push_back(std::unique_ptr<FileNode>(
+                              new PECOFFLibraryNode(ctx, ctx.allocate(path.lower()))));
 
-  if (inputElements.empty() && !isReadingDirectiveSection) {
+  if (files.empty() && !isReadingDirectiveSection) {
     diagnostics << "No input files\n";
     return false;
   }
@@ -956,7 +969,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   // constructed by replacing an extension of the first input file
   // with ".exe".
   if (ctx.outputPath().empty()) {
-    StringRef path = *dyn_cast<FileNode>(&*inputElements[0])->getPath(ctx);
+    StringRef path = *dyn_cast<FileNode>(&*files[0])->getPath(ctx);
     ctx.setOutputPath(replaceExtension(ctx, path, ".exe"));
   }
 
@@ -968,19 +981,32 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
     ctx.setManifestOutputPath(ctx.allocate(path));
   }
 
-  // If the core linker already started, we need to explicitly call parse() for
-  // each input element, because the pass to parse input files in Driver::link
-  // has already done.
-  if (isReadingDirectiveSection)
-    for (auto &e : inputElements)
-      if (e->parse(ctx, diagnostics))
-        return false;
-
   // Add the input files to the input graph.
   if (!ctx.hasInputGraph())
     ctx.setInputGraph(std::unique_ptr<InputGraph>(new InputGraph()));
-  for (auto &e : inputElements)
-    ctx.inputGraph().addInputElement(std::move(e));
+  for (auto &file : files) {
+    if (isReadingDirectiveSection)
+      if (file->parse(ctx, diagnostics))
+        return false;
+    ctx.inputGraph().addInputElement(std::move(file));
+  }
+
+  // Add the library group to the input graph.
+  if (!isReadingDirectiveSection) {
+    auto group = std::unique_ptr<Group>(new PECOFFGroup());
+    ctx.setLibraryGroup(group.get());
+    ctx.inputGraph().addInputElement(std::move(group));
+  }
+
+  // Add the library files to the library group.
+  for (std::unique_ptr<FileNode> &lib : libraries) {
+    if (!hasLibrary(ctx, lib.get())) {
+      if (isReadingDirectiveSection)
+        if (lib->parse(ctx, diagnostics))
+          return false;
+      ctx.getLibraryGroup()->processInputElement(std::move(lib));
+    }
+  }
 
   // Validate the combination of options used.
   return ctx.validate(diagnostics);
