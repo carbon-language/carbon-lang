@@ -159,7 +159,8 @@ bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
     uint32_t BlockNo;
     if (!Buff.readInt(BlockNo)) return false;
     if (BlockNo >= BlockCount) {
-      errs() << "Unexpected block number (in " << Name << ").\n";
+      errs() << "Unexpected block number: " << BlockNo << " (in " << Name
+             << ").\n";
       return false;
     }
     for (uint32_t i = 0, e = EdgeCount; i != e; ++i) {
@@ -181,7 +182,8 @@ bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
     uint32_t BlockNo;
     if (!Buff.readInt(BlockNo)) return false;
     if (BlockNo >= BlockCount) {
-      errs() << "Unexpected block number (in " << Name << ").\n";
+      errs() << "Unexpected block number: " << BlockNo << " (in " << Name
+             << ").\n";
       return false;
     }
     GCOVBlock *Block = Blocks[BlockNo];
@@ -189,9 +191,9 @@ bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
     while (Buff.getCursor() != (EndPos - 4)) {
       StringRef F;
       if (!Buff.readString(F)) return false;
-      if (F != Filename) {
-        errs() << "Multiple sources for a single basic block (in "
-               << Name << ").\n";
+      if (Filename != F) {
+        errs() << "Multiple sources for a single basic block: " << Filename
+               << " != " << F << " (in " << Name << ").\n";
         return false;
       }
       if (Buff.getCursor() == (EndPos - 4)) break;
