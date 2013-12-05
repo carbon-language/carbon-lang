@@ -81,10 +81,9 @@ static void AddFastCallStdCallSuffix(SmallVectorImpl<char> &OutName,
 /// and the specified global variable's name.  If the global variable doesn't
 /// have a name, this fills in a unique name for the global.
 void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
-                                const GlobalValue *GV,
-                                bool isImplicitlyPrivate) {
+                                const GlobalValue *GV) {
   ManglerPrefixTy PrefixTy = Mangler::Default;
-  if (GV->hasPrivateLinkage() || isImplicitlyPrivate)
+  if (GV->hasPrivateLinkage())
     PrefixTy = Mangler::Private;
   else if (GV->hasLinkerPrivateLinkage() || GV->hasLinkerPrivateWeakLinkage())
     PrefixTy = Mangler::LinkerPrivate;

@@ -320,7 +320,7 @@ applyRestriction(GlobalValue &GV,
                  SmallPtrSet<GlobalValue*, 8> &AsmUsed,
                  Mangler &Mangler) {
   SmallString<64> Buffer;
-  Mangler.getNameWithPrefix(Buffer, &GV, false);
+  Mangler.getNameWithPrefix(Buffer, &GV);
 
   if (GV.isDeclaration())
     return;

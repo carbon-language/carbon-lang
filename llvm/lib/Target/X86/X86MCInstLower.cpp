@@ -97,7 +97,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
 
   if (MO.isGlobal()) {
     const GlobalValue *GV = MO.getGlobal();
-    getMang()->getNameWithPrefix(Name, GV, false);
+    getMang()->getNameWithPrefix(Name, GV);
   } else if (MO.isSymbol()) {
     getMang()->getNameWithPrefix(Name, MO.getSymbolName());
   } else if (MO.isMBB()) {

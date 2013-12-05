@@ -360,7 +360,7 @@ void LTOModule::addDefinedSymbol(const GlobalValue *def, bool isFunction) {
 
   // string is owned by _defines
   SmallString<64> Buffer;
-  _mangler.getNameWithPrefix(Buffer, def, false);
+  _mangler.getNameWithPrefix(Buffer, def);
 
   // set alignment part log2() can have rounding errors
   uint32_t align = def->getAlignment();
@@ -496,7 +496,7 @@ LTOModule::addPotentialUndefinedSymbol(const GlobalValue *decl, bool isFunc) {
     return;
 
   SmallString<64> name;
-  _mangler.getNameWithPrefix(name, decl, false);
+  _mangler.getNameWithPrefix(name, decl);
 
   StringMap<NameAndAttributes>::value_type &entry =
     _undefines.GetOrCreateValue(name);
