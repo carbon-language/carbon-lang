@@ -1905,7 +1905,7 @@ def A9UnitALU : ProcResource<2>;
 def A9UnitMul : ProcResource<1> { let Super = A9UnitALU; }
 def A9UnitAGU : ProcResource<1>;
 def A9UnitLS  : ProcResource<1>;
-def A9UnitFP  : ProcResource<1> { let BufferSize = 0; }
+def A9UnitFP  : ProcResource<1> { let BufferSize = 1; }
 def A9UnitB   : ProcResource<1>;
 
 //===----------------------------------------------------------------------===//

@@ -687,6 +687,22 @@ void ScheduleDAGInstrs::initSUnits() {
 
     // Assign the Latency field of SU using target-provided information.
     SU->Latency = SchedModel.computeInstrLatency(SU->getInstr());
+
+    // If this SUnit uses an unbuffered resource, mark it as such.
+    // These resources are used for in-order execution pipelines within an
+    // out-of-order core and are identified by BufferSize=1. BufferSize=0 is
+    // used for dispatch/issue groups and is not considered here.
+    if (SchedModel.hasInstrSchedModel()) {
+      const MCSchedClassDesc *SC = getSchedClass(SU);
+      for (TargetSchedModel::ProcResIter
+             PI = SchedModel.getWriteProcResBegin(SC),
+             PE = SchedModel.getWriteProcResEnd(SC); PI != PE; ++PI) {
+        if (SchedModel.getProcResource(PI->ProcResourceIdx)->BufferSize == 1) {
+          SU->isUnbuffered = true;
+          break;
+        }
+      }
+    }
   }
 }
 

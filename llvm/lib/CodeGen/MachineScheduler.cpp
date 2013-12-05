@@ -1330,7 +1330,7 @@ public:
   /// Represent the type of SchedCandidate found within a single queue.
   /// pickNodeBidirectional depends on these listed by decreasing priority.
   enum CandReason {
-    NoCand, PhysRegCopy, RegExcess, RegCritical, Cluster, Weak, RegMax,
+    NoCand, PhysRegCopy, RegExcess, RegCritical, Stall, Cluster, Weak, RegMax,
     ResourceReduce, ResourceDemand, BotHeightReduce, BotPathReduce,
     TopDepthReduce, TopPathReduce, NextDefUse, NodeOrder};
 
@@ -1582,6 +1582,10 @@ public:
       return std::max(CurrCycle * SchedModel->getLatencyFactor(),
                       MaxExecutedResCount);
     }
+
+    /// Get the difference between the given SUnit's ready time and the current
+    /// cycle.
+    unsigned getLatencyStallCycles(SUnit *SU);
 
     bool checkHazard(SUnit *SU);
 
@@ -1869,6 +1873,23 @@ void GenericScheduler::registerRoots() {
   }
 }
 
+/// Compute the stall cycles based on this SUnit's ready time. Heuristics treat
+/// these "soft stalls" differently than the hard stall cycles based on CPU
+/// resources and computed by checkHazard(). A fully in-order model
+/// (MicroOpBufferSize==0) will not make use of this since instructions are not
+/// available for scheduling until they are ready. However, a weaker in-order
+/// model may use this for heuristics. For example, if a processor has in-order
+/// behavior when reading certain resources, this may come into play.
+unsigned GenericScheduler::SchedBoundary::getLatencyStallCycles(SUnit *SU) {
+  if (!SU->isUnbuffered)
+    return 0;
+
+  unsigned ReadyCycle = (isTop() ? SU->TopReadyCycle : SU->BotReadyCycle);
+  if (ReadyCycle > CurrCycle)
+    return ReadyCycle - CurrCycle;
+  return 0;
+}
+
 /// Does this SU have a hazard within the current instruction group.
 ///
 /// The scheduler supports two modes of hazard recognition. The first is the
@@ -1948,9 +1969,9 @@ getOtherResourceCount(unsigned &OtherCritIdx) {
 /// inside and outside the zone.
 void GenericScheduler::SchedBoundary::setPolicy(CandPolicy &Policy,
                                                    SchedBoundary &OtherZone) {
-  // Now that potential stalls have been considered, apply preemptive heuristics
-  // based on the the total latency and resources inside and outside this
-  // zone.
+  // Apply preemptive heuristics based on the the total latency and resources
+  // inside and outside this zone. Potential stalls should be considered before
+  // following this policy.
 
   // Compute remaining latency. We need this both to determine whether the
   // overall schedule has become latency-limited and whether the instructions
@@ -2141,7 +2162,11 @@ void GenericScheduler::SchedBoundary::bumpNode(SUnit *SU) {
     break;
   default:
     // We don't currently model the OOO reorder buffer, so consider all
-    // scheduled MOps to be "retired".
+    // scheduled MOps to be "retired". We do loosely model in-order resource
+    // latency. If this instruction uses an in-order resource, account for any
+    // likely stall cycles.
+    if (SU->isUnbuffered && ReadyCycle > NextCycle)
+      NextCycle = ReadyCycle;
     break;
   }
   RetiredMOps += IncMOps;
@@ -2514,6 +2539,11 @@ void GenericScheduler::tryCandidate(SchedCandidate &Cand,
       && tryLatency(TryCand, Cand, Zone))
     return;
 
+  // Prioritize instructions that read unbuffered resources by stall cycles.
+  if (tryLess(Zone.getLatencyStallCycles(TryCand.SU),
+              Zone.getLatencyStallCycles(Cand.SU), TryCand, Cand, Stall))
+    return;
+
   // Keep clustered nodes together to encourage downstream peephole
   // optimizations which may reduce resource requirements.
   //
@@ -2577,6 +2607,7 @@ const char *GenericScheduler::getReasonStr(
   case PhysRegCopy:    return "PREG-COPY";
   case RegExcess:      return "REG-EXCESS";
   case RegCritical:    return "REG-CRIT  ";
+  case Stall:          return "STALL     ";
   case Cluster:        return "CLUSTER   ";
   case Weak:           return "WEAK      ";
   case RegMax:         return "REG-MAX   ";
