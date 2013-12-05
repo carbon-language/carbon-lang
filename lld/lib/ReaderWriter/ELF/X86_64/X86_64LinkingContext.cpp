@@ -21,8 +21,6 @@
 using namespace lld;
 using namespace lld::elf;
 
-using llvm::makeArrayRef;
-
 namespace {
 using namespace llvm::ELF;
 
@@ -39,7 +37,7 @@ public:
 #endif
   }
   virtual ArrayRef<uint8_t> rawContent() const {
-    return makeArrayRef(x86_64InitFiniAtomContent);
+    return x86_64InitFiniAtomContent;
   }
   virtual Alignment alignment() const { return Alignment(3); }
 };
@@ -53,8 +51,9 @@ public:
     _name += function;
 #endif
   }
+
   virtual ArrayRef<uint8_t> rawContent() const {
-    return makeArrayRef(x86_64InitFiniAtomContent);
+    return x86_64InitFiniAtomContent;
   }
 
   virtual Alignment alignment() const { return Alignment(3); }
