@@ -11,6 +11,24 @@ typedef enum CCTestEnum
 CCTestEnum test = 50; // expected-warning {{integer constant not in range of enumerated type 'CCTestEnum'}}
 CCTestEnum test1 = -50; // expected-warning {{integer constant not in range of enumerated type 'CCTestEnum'}}
 
+// Explicit cast should silence the warning.
+static const CCTestEnum SilenceWithCast1 = 51; // expected-warning {{integer constant not in range of enumerated type 'CCTestEnum'}}
+static const CCTestEnum SilenceWithCast2 = (CCTestEnum) 51; // no-warning
+static const CCTestEnum SilenceWithCast3 = (const CCTestEnum) 51; // no-warning
+static const CCTestEnum SilenceWithCast4 = (const volatile CCTestEnum) 51; // no-warning
+
+void SilenceWithCastLocalVar() {
+  CCTestEnum SilenceWithCast1 = 51; // expected-warning {{integer constant not in range of enumerated type 'CCTestEnum'}}
+  CCTestEnum SilenceWithCast2 = (CCTestEnum) 51; // no-warning
+  CCTestEnum SilenceWithCast3 = (const CCTestEnum) 51; // no-warning
+  CCTestEnum SilenceWithCast4 = (const volatile CCTestEnum) 51; // no-warning
+
+  const CCTestEnum SilenceWithCast1c = 51; // expected-warning {{integer constant not in range of enumerated type 'CCTestEnum'}}
+  const CCTestEnum SilenceWithCast2c = (CCTestEnum) 51; // no-warning
+  const CCTestEnum SilenceWithCast3c = (const CCTestEnum) 51; // no-warning
+  const CCTestEnum SilenceWithCast4c = (const volatile CCTestEnum) 51; // no-warning
+}
+
 CCTestEnum foo(CCTestEnum r) {
   return 20; // expected-warning {{integer constant not in range of enumerated type 'CCTestEnum'}}
 }

@@ -1149,7 +1149,7 @@ Sema::DiagnoseAssignmentEnum(QualType DstType, QualType SrcType,
     return;
 
   if (const EnumType *ET = DstType->getAs<EnumType>())
-    if (!Context.hasSameType(SrcType, DstType) &&
+    if (!Context.hasSameUnqualifiedType(SrcType, DstType) &&
         SrcType->isIntegerType()) {
       if (!SrcExpr->isTypeDependent() && !SrcExpr->isValueDependent() &&
           SrcExpr->isIntegerConstantExpr(Context)) {
@@ -1184,7 +1184,7 @@ Sema::DiagnoseAssignmentEnum(QualType DstType, QualType SrcType,
           EI++;
         if (EI == EIend || EI->first != RhsVal) {
           Diag(SrcExpr->getExprLoc(), diag::warn_not_in_enum_assignment)
-          << DstType;
+              << DstType.getUnqualifiedType();
         }
       }
     }
