@@ -615,9 +615,6 @@ class DwarfDebug : public AsmPrinterHandler {
   /// section.
   CompileUnit *constructSkeletonCU(const CompileUnit *CU);
 
-  /// \brief Emit the local split abbreviations.
-  void emitSkeletonAbbrevs(const MCSection *);
-
   /// \brief Emit the debug info dwo section.
   void emitDebugInfoDWO();
 

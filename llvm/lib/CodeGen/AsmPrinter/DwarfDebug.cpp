@@ -2168,7 +2168,8 @@ void DwarfDebug::emitAbbreviations() {
     emitAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevSection(),
                 &Abbreviations);
   else
-    emitSkeletonAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevSection());
+    emitAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevSection(),
+                &SkeletonAbbrevs);
 }
 
 void DwarfDebug::emitAbbrevs(const MCSection *Section,
@@ -3017,11 +3018,6 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
   SkeletonHolder.addUnit(NewCU);
 
   return NewCU;
-}
-
-void DwarfDebug::emitSkeletonAbbrevs(const MCSection *Section) {
-  assert(useSplitDwarf() && "No split dwarf debug info?");
-  emitAbbrevs(Section, &SkeletonAbbrevs);
 }
 
 // Emit the .debug_info.dwo section for separated dwarf. This contains the
