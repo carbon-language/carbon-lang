@@ -659,6 +659,29 @@ static void AdjustAPSInt(llvm::APSInt &Val, unsigned BitWidth, bool IsSigned) {
   Val.setIsSigned(IsSigned);
 }
 
+/// Returns true if we should emit a diagnostic about this case expression not
+/// being a part of the enum used in the switch controlling expression.
+static bool ShouldDiagnoseSwitchCaseNotInEnum(const ASTContext &Ctx,
+                                              const EnumDecl *ED,
+                                              const Expr *CaseExpr) {
+  // Don't warn if the 'case' expression refers to a static const variable of
+  // the enum type.
+  CaseExpr = CaseExpr->IgnoreParenImpCasts();
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CaseExpr)) {
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
+      if (!VD->hasGlobalStorage())
+        return true;
+      QualType VarType = VD->getType();
+      if (!VarType.isConstQualified())
+        return true;
+      QualType EnumType = Ctx.getTypeDeclType(ED);
+      if (Ctx.hasSameUnqualifiedType(EnumType, VarType))
+        return false;
+    }
+  }
+  return true;
+}
+
 StmtResult
 Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
                             Stmt *BodyStmt) {
@@ -1008,9 +1031,12 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
            CI != CaseVals.end(); CI++) {
         while (EI != EIend && EI->first < CI->first)
           EI++;
-        if (EI == EIend || EI->first > CI->first)
-          Diag(CI->second->getLHS()->getExprLoc(), diag::warn_not_in_enum)
-            << CondTypeBeforePromotion;
+        if (EI == EIend || EI->first > CI->first) {
+          Expr *CaseExpr = CI->second->getLHS();
+          if (ShouldDiagnoseSwitchCaseNotInEnum(Context, ED, CaseExpr))
+            Diag(CaseExpr->getExprLoc(), diag::warn_not_in_enum)
+              << CondTypeBeforePromotion;
+        }
       }
       // See which of case ranges aren't in enum
       EI = EnumVals.begin();
@@ -1020,8 +1046,10 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
           EI++;
 
         if (EI == EIend || EI->first != RI->first) {
-          Diag(RI->second->getLHS()->getExprLoc(), diag::warn_not_in_enum)
-            << CondTypeBeforePromotion;
+          Expr *CaseExpr = RI->second->getLHS();
+          if (ShouldDiagnoseSwitchCaseNotInEnum(Context, ED, CaseExpr))
+            Diag(CaseExpr->getExprLoc(), diag::warn_not_in_enum)
+              << CondTypeBeforePromotion;
         }
 
         llvm::APSInt Hi =
@@ -1029,9 +1057,12 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         AdjustAPSInt(Hi, CondWidth, CondIsSigned);
         while (EI != EIend && EI->first < Hi)
           EI++;
-        if (EI == EIend || EI->first != Hi)
-          Diag(RI->second->getRHS()->getExprLoc(), diag::warn_not_in_enum)
-            << CondTypeBeforePromotion;
+        if (EI == EIend || EI->first != Hi) {
+          Expr *CaseExpr = RI->second->getRHS();
+          if (ShouldDiagnoseSwitchCaseNotInEnum(Context, ED, CaseExpr))
+            Diag(CaseExpr->getExprLoc(), diag::warn_not_in_enum)
+              << CondTypeBeforePromotion;
+        }
       }
 
       // Check which enum vals aren't in switch
