@@ -1867,20 +1867,6 @@ void Sema::MatchAllMethodDeclarations(const SelectorSet &InsMap,
 /// warns each time an exact match is found. 
 void Sema::CheckCategoryVsClassMethodMatches(
                                   ObjCCategoryImplDecl *CatIMPDecl) {
-  SelectorSet InsMap, ClsMap;
-  
-  for (ObjCImplementationDecl::instmeth_iterator
-       I = CatIMPDecl->instmeth_begin(), 
-       E = CatIMPDecl->instmeth_end(); I!=E; ++I)
-    InsMap.insert((*I)->getSelector());
-  
-  for (ObjCImplementationDecl::classmeth_iterator
-       I = CatIMPDecl->classmeth_begin(),
-       E = CatIMPDecl->classmeth_end(); I != E; ++I)
-    ClsMap.insert((*I)->getSelector());
-  if (InsMap.empty() && ClsMap.empty())
-    return;
-  
   // Get category's primary class.
   ObjCCategoryDecl *CatDecl = CatIMPDecl->getCategoryDecl();
   if (!CatDecl)
@@ -1888,6 +1874,32 @@ void Sema::CheckCategoryVsClassMethodMatches(
   ObjCInterfaceDecl *IDecl = CatDecl->getClassInterface();
   if (!IDecl)
     return;
+  ObjCInterfaceDecl *SuperIDecl = IDecl->getSuperClass();
+  SelectorSet InsMap, ClsMap;
+  
+  for (ObjCImplementationDecl::instmeth_iterator
+       I = CatIMPDecl->instmeth_begin(), 
+       E = CatIMPDecl->instmeth_end(); I!=E; ++I) {
+    Selector Sel = (*I)->getSelector();
+    // When checking for methods implemented in the category, skip over
+    // those declared in category class's super class. This is because
+    // the super class must implement the method.
+    if (SuperIDecl && SuperIDecl->lookupMethod(Sel, true))
+      continue;
+    InsMap.insert(Sel);
+  }
+  
+  for (ObjCImplementationDecl::classmeth_iterator
+       I = CatIMPDecl->classmeth_begin(),
+       E = CatIMPDecl->classmeth_end(); I != E; ++I) {
+    Selector Sel = (*I)->getSelector();
+    if (SuperIDecl && SuperIDecl->lookupMethod(Sel, false))
+      continue;
+    ClsMap.insert(Sel);
+  }
+  if (InsMap.empty() && ClsMap.empty())
+    return;
+  
   SelectorSet InsMapSeen, ClsMapSeen;
   bool IncompleteImpl = false;
   MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,

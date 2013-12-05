@@ -39,3 +39,29 @@ __attribute__((visibility("default")))
 
 @end
 
+// rdar://15580969
+typedef char BOOL;
+
+@protocol NSObject
+- (BOOL)isEqual:(id)object;
+@end
+
+@interface NSObject <NSObject>
+@end
+
+@protocol NSApplicationDelegate <NSObject>
+- (void)ImpleThisMethod; // expected-note {{method 'ImpleThisMethod' declared here}}
+@end
+
+@interface AppDelegate : NSObject <NSApplicationDelegate>
+@end
+
+@implementation AppDelegate (MRRCategory)
+
+- (BOOL)isEqual:(id)object
+{
+    return __objc_no;
+}
+
+- (void)ImpleThisMethod {} // expected-warning {{category is implementing a method which will also be implemented by its primary class}}
+@end
