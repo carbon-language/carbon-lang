@@ -968,7 +968,8 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
           PrevDecl = (*Previous.begin())->getUnderlyingDecl();
       }
     }
-  } else if (PrevDecl && !isDeclInScope(PrevDecl, SemanticContext, S))
+  } else if (PrevDecl &&
+             !isDeclInScope(PrevDecl, SemanticContext, S, SS.isValid()))
     PrevDecl = PrevClassTemplate = 0;
 
   if (PrevClassTemplate) {

@@ -1823,11 +1823,11 @@ public:
   /// if 'D' is in Scope 'S', otherwise 'S' is ignored and isDeclInScope returns
   /// true if 'D' belongs to the given declaration context.
   ///
-  /// \param ExplicitInstantiationOrSpecialization When true, we are checking
-  /// whether the declaration is in scope for the purposes of explicit template
-  /// instantiation or specialization. The default is false.
+  /// \param AllowInlineNamespace If \c true, allow the declaration to be in the
+  ///        enclosing namespace set of the context, rather than contained
+  ///        directly within it.
   bool isDeclInScope(NamedDecl *D, DeclContext *Ctx, Scope *S = 0,
-                     bool ExplicitInstantiationOrSpecialization = false);
+                     bool AllowInlineNamespace = false);
 
   /// Finds the scope corresponding to the given decl context, if it
   /// happens to be an enclosing scope.  Otherwise return NULL.
@@ -2528,8 +2528,7 @@ public:
                                    AssociatedClassSet &AssociatedClasses);
 
   void FilterLookupForScope(LookupResult &R, DeclContext *Ctx, Scope *S,
-                            bool ConsiderLinkage,
-                            bool ExplicitInstantiationOrSpecialization);
+                            bool ConsiderLinkage, bool AllowInlineNamespace);
 
   void DiagnoseAmbiguousLookup(LookupResult &Result);
   //@}
