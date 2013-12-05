@@ -45,10 +45,12 @@ public:
   /// Return the next physical register in the allocation order, or 0.
   /// It is safe to call next() again after it returned 0, it will keep
   /// returning 0 until rewind() is called.
-  unsigned next() {
+  unsigned next(unsigned Limit = 0) {
     if (Pos < 0)
       return Hints.end()[Pos++];
-    while (Pos < int(Order.size())) {
+    if (!Limit)
+      Limit = Order.size();
+    while (Pos < int(Limit)) {
       unsigned Reg = Order[Pos++];
       if (!isHint(Reg))
         return Reg;
