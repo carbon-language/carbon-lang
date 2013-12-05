@@ -1632,8 +1632,9 @@ ASTContext::getTypeInfoImpl(const Type *T) const {
   }
   case Type::ObjCObject:
     return getTypeInfo(cast<ObjCObjectType>(T)->getBaseType().getTypePtr());
+  case Type::Adjusted:
   case Type::Decayed:
-    return getTypeInfo(cast<DecayedType>(T)->getDecayedType().getTypePtr());
+    return getTypeInfo(cast<AdjustedType>(T)->getAdjustedType().getTypePtr());
   case Type::ObjCInterface: {
     const ObjCInterfaceType *ObjCI = cast<ObjCInterfaceType>(T);
     const ASTRecordLayout &Layout = getASTObjCInterfaceLayout(ObjCI->getDecl());
@@ -2163,14 +2164,29 @@ QualType ASTContext::getPointerType(QualType T) const {
   return QualType(New, 0);
 }
 
+QualType ASTContext::getAdjustedType(QualType Orig, QualType New) const {
+  llvm::FoldingSetNodeID ID;
+  AdjustedType::Profile(ID, Orig, New);
+  void *InsertPos = 0;
+  AdjustedType *AT = AdjustedTypes.FindNodeOrInsertPos(ID, InsertPos);
+  if (AT)
+    return QualType(AT, 0);
+
+  QualType Canonical = getCanonicalType(New);
+
+  // Get the new insert position for the node we care about.
+  AT = AdjustedTypes.FindNodeOrInsertPos(ID, InsertPos);
+  assert(AT == 0 && "Shouldn't be in the map!");
+
+  AT = new (*this, TypeAlignment)
+      AdjustedType(Type::Adjusted, Orig, New, Canonical);
+  Types.push_back(AT);
+  AdjustedTypes.InsertNode(AT, InsertPos);
+  return QualType(AT, 0);
+}
+
 QualType ASTContext::getDecayedType(QualType T) const {
   assert((T->isArrayType() || T->isFunctionType()) && "T does not decay");
-
-  llvm::FoldingSetNodeID ID;
-  DecayedType::Profile(ID, T);
-  void *InsertPos = 0;
-  if (DecayedType *DT = DecayedTypes.FindNodeOrInsertPos(ID, InsertPos))
-    return QualType(DT, 0);
 
   QualType Decayed;
 
@@ -2189,17 +2205,23 @@ QualType ASTContext::getDecayedType(QualType T) const {
   if (T->isFunctionType())
     Decayed = getPointerType(T);
 
+  llvm::FoldingSetNodeID ID;
+  AdjustedType::Profile(ID, T, Decayed);
+  void *InsertPos = 0;
+  AdjustedType *AT = AdjustedTypes.FindNodeOrInsertPos(ID, InsertPos);
+  if (AT)
+    return QualType(AT, 0);
+
   QualType Canonical = getCanonicalType(Decayed);
 
   // Get the new insert position for the node we care about.
-  DecayedType *NewIP = DecayedTypes.FindNodeOrInsertPos(ID, InsertPos);
-  assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+  AT = AdjustedTypes.FindNodeOrInsertPos(ID, InsertPos);
+  assert(AT == 0 && "Shouldn't be in the map!");
 
-  DecayedType *New =
-      new (*this, TypeAlignment) DecayedType(T, Decayed, Canonical);
-  Types.push_back(New);
-  DecayedTypes.InsertNode(New, InsertPos);
-  return QualType(New, 0);
+  AT = new (*this, TypeAlignment) DecayedType(T, Decayed, Canonical);
+  Types.push_back(AT);
+  AdjustedTypes.InsertNode(AT, InsertPos);
+  return QualType(AT, 0);
 }
 
 /// getBlockPointerType - Return the uniqued reference to the type for

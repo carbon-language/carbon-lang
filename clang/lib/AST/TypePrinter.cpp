@@ -204,6 +204,7 @@ bool TypePrinter::canPrefixQualifiers(const Type *T,
       NeedARCStrongQualifier = true;
       // Fall through
       
+    case Type::Adjusted:
     case Type::Decayed:
     case Type::Pointer:
     case Type::BlockPointer:
@@ -471,12 +472,21 @@ void TypePrinter::printVariableArrayAfter(const VariableArrayType *T,
   printAfter(T->getElementType(), OS);
 }
 
+void TypePrinter::printAdjustedBefore(const AdjustedType *T, raw_ostream &OS) {
+  // Print the adjusted representation, otherwise the adjustment will be
+  // invisible.
+  printBefore(T->getAdjustedType(), OS);
+}
+void TypePrinter::printAdjustedAfter(const AdjustedType *T, raw_ostream &OS) {
+  printAfter(T->getAdjustedType(), OS);
+}
+
 void TypePrinter::printDecayedBefore(const DecayedType *T, raw_ostream &OS) {
   // Print as though it's a pointer.
-  printBefore(T->getDecayedType(), OS);
+  printAdjustedBefore(T, OS);
 }
 void TypePrinter::printDecayedAfter(const DecayedType *T, raw_ostream &OS) {
-  printAfter(T->getDecayedType(), OS);
+  printAdjustedAfter(T, OS);
 }
 
 void TypePrinter::printDependentSizedArrayBefore(

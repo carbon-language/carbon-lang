@@ -407,10 +407,11 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
       return false;
     break;
   
+  case Type::Adjusted:
   case Type::Decayed:
     if (!IsStructurallyEquivalent(Context,
-                                  cast<DecayedType>(T1)->getPointeeType(),
-                                  cast<DecayedType>(T2)->getPointeeType()))
+                                  cast<AdjustedType>(T1)->getOriginalType(),
+                                  cast<AdjustedType>(T2)->getOriginalType()))
       return false;
     break;
 

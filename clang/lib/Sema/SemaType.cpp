@@ -1812,7 +1812,10 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
     }
   }
 
-  // FIXME: Adjust member function pointer calling conventions.
+  // Adjust the default free function calling convention to the default method
+  // calling convention.
+  if (T->isFunctionType())
+    adjustMemberFunctionCC(T, /*IsStatic=*/false);
 
   return Context.getMemberPointerType(T, Class.getTypePtr());
 }
@@ -3681,6 +3684,9 @@ namespace {
     void VisitAttributedTypeLoc(AttributedTypeLoc TL) {
       fillAttributedTypeLoc(TL, Chunk.getAttrs());
     }
+    void VisitAdjustedTypeLoc(AdjustedTypeLoc TL) {
+      // nothing
+    }
     void VisitBlockPointerTypeLoc(BlockPointerTypeLoc TL) {
       assert(Chunk.Kind == DeclaratorChunk::BlockPointer);
       TL.setCaretLoc(Chunk.Loc);
@@ -3835,6 +3841,10 @@ Sema::GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,
       fillAttributedTypeLoc(TL, D.getTypeObject(i).getAttrs());
       CurrTL = TL.getNextTypeLoc().getUnqualifiedLoc();
     }
+
+    // FIXME: Ordering here?
+    while (AdjustedTypeLoc TL = CurrTL.getAs<AdjustedTypeLoc>())
+      CurrTL = TL.getNextTypeLoc().getUnqualifiedLoc();
 
     DeclaratorLocFiller(Context, D.getTypeObject(i)).Visit(CurrTL);
     CurrTL = CurrTL.getNextTypeLoc().getUnqualifiedLoc();
@@ -4589,14 +4599,15 @@ void Sema::adjustMemberFunctionCC(QualType &T, bool IsStatic) {
   const FunctionType *FT = T->castAs<FunctionType>();
   bool IsVariadic = (isa<FunctionProtoType>(FT) &&
                      cast<FunctionProtoType>(FT)->isVariadic());
-  CallingConv CC = FT->getCallConv();
 
   // Only adjust types with the default convention.  For example, on Windows we
   // should adjust a __cdecl type to __thiscall for instance methods, and a
   // __thiscall type to __cdecl for static methods.
-  CallingConv DefaultCC =
+  CallingConv CurCC = FT->getCallConv();
+  CallingConv FromCC =
       Context.getDefaultCallingConvention(IsVariadic, IsStatic);
-  if (CC != DefaultCC)
+  CallingConv ToCC = Context.getDefaultCallingConvention(IsVariadic, !IsStatic);
+  if (CurCC != FromCC || FromCC == ToCC)
     return;
 
   // Check if there was an explicit attribute, but only look through parens.
@@ -4609,12 +4620,8 @@ void Sema::adjustMemberFunctionCC(QualType &T, bool IsStatic) {
     R = AT->getModifiedType().IgnoreParens();
   }
 
-  // FIXME: This loses sugar.  This should probably be fixed with an implicit
-  // AttributedType node that adjusts the convention.
-  CC = Context.getDefaultCallingConvention(IsVariadic, !IsStatic);
-  FT = Context.adjustFunctionType(FT, FT->getExtInfo().withCallingConv(CC));
-  FunctionTypeUnwrapper Unwrapped(*this, T);
-  T = Unwrapped.wrap(*this, FT);
+  FT = Context.adjustFunctionType(FT, FT->getExtInfo().withCallingConv(ToCC));
+  T = Context.getAdjustedType(T, QualType(FT, T.getQualifiers()));
 }
 
 /// Handle OpenCL image access qualifiers: read_only, write_only, read_write

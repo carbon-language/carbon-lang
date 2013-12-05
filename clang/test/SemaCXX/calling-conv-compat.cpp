@@ -351,23 +351,24 @@ typedef void (__cdecl    fun_cdecl)();
 typedef void (__stdcall  fun_stdcall)();
 typedef void (__fastcall fun_fastcall)();
 
-// FIXME: Adjust cdecl to thiscall when forming a member pointer.
-//fun_default  A::*td1 = &A::method_thiscall;
-fun_cdecl    A::*td2 = &A::method_cdecl;
+fun_default  A::*td1 = &A::method_thiscall;
+fun_cdecl    A::*td2 = &A::method_thiscall;
 fun_stdcall  A::*td3 = &A::method_stdcall;
 fun_fastcall A::*td4 = &A::method_fastcall;
 
 // Round trip the function type through a template, and verify that only cdecl
 // gets adjusted.
-template<typename Fn> struct X {
-  typedef Fn A::*p;
-};
+template<typename Fn> struct X { typedef Fn A::*p; };
 
-// FIXME: Adjust cdecl to thiscall when forming a member pointer.
-//X<void            ()>::p tmpl1 = &A::method_thiscall;
-//X<void __cdecl    ()>::p tmpl2 = &A::method_thiscall;
+X<void            ()>::p tmpl1 = &A::method_thiscall;
+X<void __cdecl    ()>::p tmpl2 = &A::method_thiscall;
 X<void __stdcall  ()>::p tmpl3 = &A::method_stdcall;
 X<void __fastcall ()>::p tmpl4 = &A::method_fastcall;
+
+X<fun_default >::p tmpl5 = &A::method_thiscall;
+X<fun_cdecl   >::p tmpl6 = &A::method_thiscall;
+X<fun_stdcall >::p tmpl7 = &A::method_stdcall;
+X<fun_fastcall>::p tmpl8 = &A::method_fastcall;
 
 } // end namespace MemberPointers
 

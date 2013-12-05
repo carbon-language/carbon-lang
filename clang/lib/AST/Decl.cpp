@@ -2508,11 +2508,8 @@ unsigned FunctionDecl::getBuiltinID() const {
 /// based on its FunctionType.  This is the length of the ParamInfo array
 /// after it has been created.
 unsigned FunctionDecl::getNumParams() const {
-  const FunctionType *FT = getType()->castAs<FunctionType>();
-  if (isa<FunctionNoProtoType>(FT))
-    return 0;
-  return cast<FunctionProtoType>(FT)->getNumArgs();
-
+  const FunctionProtoType *FPT = getType()->getAs<FunctionProtoType>();
+  return FPT ? FPT->getNumArgs() : 0;
 }
 
 void FunctionDecl::setParams(ASTContext &C,

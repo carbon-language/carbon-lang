@@ -978,12 +978,10 @@ inline TypeLoc TypeLoc::IgnoreParens() const {
 }
 
 
-struct DecayedLocInfo { }; // Nothing.
+struct AdjustedLocInfo { }; // Nothing.
 
-/// \brief Wrapper for source info for pointers decayed from arrays and
-/// functions.
-class DecayedTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc, DecayedTypeLoc,
-                                              DecayedType, DecayedLocInfo> {
+class AdjustedTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc, AdjustedTypeLoc,
+                                               AdjustedType, AdjustedLocInfo> {
 public:
   TypeLoc getOriginalLoc() const {
     return getInnerTypeLoc();
@@ -1004,12 +1002,17 @@ public:
   }
 
   unsigned getLocalDataSize() const {
-    // sizeof(DecayedLocInfo) is 1, but we don't need its address to be unique
+    // sizeof(AdjustedLocInfo) is 1, but we don't need its address to be unique
     // anyway.  TypeLocBuilder can't handle data sizes of 1.
     return 0;  // No data.
   }
 };
 
+/// \brief Wrapper for source info for pointers decayed from arrays and
+/// functions.
+class DecayedTypeLoc : public InheritingConcreteTypeLoc<
+                           AdjustedTypeLoc, DecayedTypeLoc, DecayedType> {
+};
 
 struct PointerLikeLocInfo {
   SourceLocation StarLoc;

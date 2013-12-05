@@ -799,6 +799,10 @@ DEF_TRAVERSE_TYPE(DecayedType, {
     TRY_TO(TraverseType(T->getOriginalType()));
   })
 
+DEF_TRAVERSE_TYPE(AdjustedType, {
+    TRY_TO(TraverseType(T->getOriginalType()));
+  })
+
 DEF_TRAVERSE_TYPE(ConstantArrayType, {
     TRY_TO(TraverseType(T->getElementType()));
   })
@@ -1006,6 +1010,10 @@ DEF_TRAVERSE_TYPELOC(MemberPointerType, {
   })
 
 DEF_TRAVERSE_TYPELOC(DecayedType, {
+    TRY_TO(TraverseTypeLoc(TL.getOriginalLoc()));
+  })
+
+DEF_TRAVERSE_TYPELOC(AdjustedType, {
     TRY_TO(TraverseTypeLoc(TL.getOriginalLoc()));
   })
 

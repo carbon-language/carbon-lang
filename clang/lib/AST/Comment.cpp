@@ -251,6 +251,11 @@ void DeclInfo::fill() {
         TL = PointerTL.getPointeeLoc().getUnqualifiedLoc();
         continue;
       }
+      // Look through adjusted types.
+      if (AdjustedTypeLoc ATL = TL.getAs<AdjustedTypeLoc>()) {
+        TL = ATL.getOriginalLoc();
+        continue;
+      }
       if (BlockPointerTypeLoc BlockPointerTL =
               TL.getAs<BlockPointerTypeLoc>()) {
         TL = BlockPointerTL.getPointeeLoc().getUnqualifiedLoc();

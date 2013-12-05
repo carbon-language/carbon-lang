@@ -3664,6 +3664,13 @@ QualType TreeTransform<Derived>::TransformComplexType(TypeLocBuilder &TLB,
   return TransformTypeSpecType(TLB, T);
 }
 
+template <typename Derived>
+QualType TreeTransform<Derived>::TransformAdjustedType(TypeLocBuilder &TLB,
+                                                       AdjustedTypeLoc TL) {
+  // Adjustments applied during transformation are handled elsewhere.
+  return getDerived().TransformType(TLB, TL.getOriginalLoc());
+}
+
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformDecayedType(TypeLocBuilder &TLB,
                                                       DecayedTypeLoc TL) {
@@ -3830,6 +3837,14 @@ TreeTransform<Derived>::TransformMemberPointerType(TypeLocBuilder &TLB,
                                                    TL.getStarLoc());
     if (Result.isNull())
       return QualType();
+  }
+
+  // If we had to adjust the pointee type when building a member pointer, make
+  // sure to push TypeLoc info for it.
+  const MemberPointerType *MPT = Result->getAs<MemberPointerType>();
+  if (MPT && PointeeType != MPT->getPointeeType()) {
+    assert(isa<AdjustedType>(MPT->getPointeeType()));
+    TLB.push<AdjustedTypeLoc>(MPT->getPointeeType());
   }
 
   MemberPointerTypeLoc NewTL = TLB.push<MemberPointerTypeLoc>(Result);
@@ -9391,8 +9406,8 @@ QualType
 TreeTransform<Derived>::RebuildMemberPointerType(QualType PointeeType,
                                                  QualType ClassType,
                                                  SourceLocation Sigil) {
-  return SemaRef.BuildMemberPointerType(PointeeType, ClassType,
-                                        Sigil, getDerived().getBaseEntity());
+  return SemaRef.BuildMemberPointerType(PointeeType, ClassType, Sigil,
+                                        getDerived().getBaseEntity());
 }
 
 template<typename Derived>

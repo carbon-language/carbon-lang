@@ -1996,39 +1996,59 @@ public:
   static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
 };
 
-/// \brief Represents a pointer type decayed from an array or function type.
-class DecayedType : public Type, public llvm::FoldingSetNode {
-  QualType OriginalType;
-  QualType DecayedPointer;
+/// \brief Represents a type which was implicitly adjusted by the semantic
+/// engine for arbitrary reasons.  For example, array and function types can
+/// decay, and function types can have their calling conventions adjusted.
+class AdjustedType : public Type, public llvm::FoldingSetNode {
+  QualType OriginalTy;
+  QualType AdjustedTy;
 
-  DecayedType(QualType OriginalType, QualType DecayedPointer,
-              QualType CanonicalPtr)
-      : Type(Decayed, CanonicalPtr, OriginalType->isDependentType(),
-             OriginalType->isInstantiationDependentType(),
-             OriginalType->isVariablyModifiedType(),
-             OriginalType->containsUnexpandedParameterPack()),
-        OriginalType(OriginalType), DecayedPointer(DecayedPointer) {
-    assert(isa<PointerType>(DecayedPointer));
+protected:
+  AdjustedType(TypeClass TC, QualType OriginalTy, QualType AdjustedTy,
+               QualType CanonicalPtr)
+      : Type(TC, CanonicalPtr, OriginalTy->isDependentType(),
+             OriginalTy->isInstantiationDependentType(),
+             OriginalTy->isVariablyModifiedType(),
+             OriginalTy->containsUnexpandedParameterPack()),
+        OriginalTy(OriginalTy), AdjustedTy(AdjustedTy) {}
+
+  friend class ASTContext;  // ASTContext creates these.
+
+public:
+  QualType getOriginalType() const { return OriginalTy; }
+  QualType getAdjustedType() const { return AdjustedTy; }
+
+  bool isSugared() const { return true; }
+  QualType desugar() const { return AdjustedTy; }
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, OriginalTy, AdjustedTy);
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType Orig, QualType New) {
+    ID.AddPointer(Orig.getAsOpaquePtr());
+    ID.AddPointer(New.getAsOpaquePtr());
+  }
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == Adjusted || T->getTypeClass() == Decayed;
+  }
+};
+
+/// \brief Represents a pointer type decayed from an array or function type.
+class DecayedType : public AdjustedType {
+
+  DecayedType(QualType OriginalType, QualType DecayedPtr, QualType CanonicalPtr)
+      : AdjustedType(Decayed, OriginalType, DecayedPtr, CanonicalPtr) {
+    assert(isa<PointerType>(getAdjustedType()));
   }
 
   friend class ASTContext;  // ASTContext creates these.
 
 public:
-  QualType getDecayedType() const { return DecayedPointer; }
-  QualType getOriginalType() const { return OriginalType; }
+  QualType getDecayedType() const { return getAdjustedType(); }
 
   QualType getPointeeType() const {
-    return cast<PointerType>(DecayedPointer)->getPointeeType();
-  }
-
-  bool isSugared() const { return true; }
-  QualType desugar() const { return DecayedPointer; }
-
-  void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, OriginalType);
-  }
-  static void Profile(llvm::FoldingSetNodeID &ID, QualType OriginalType) {
-    ID.AddPointer(OriginalType.getAsOpaquePtr());
+    return cast<PointerType>(getDecayedType())->getPointeeType();
   }
 
   static bool classof(const Type *T) { return T->getTypeClass() == Decayed; }

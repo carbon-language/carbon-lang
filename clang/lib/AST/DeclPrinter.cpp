@@ -423,8 +423,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     Ty = PT->getInnerType();
   }
 
-  if (isa<FunctionType>(Ty)) {
-    const FunctionType *AFT = Ty->getAs<FunctionType>();
+  if (const FunctionType *AFT = Ty->getAs<FunctionType>()) {
     const FunctionProtoType *FT = 0;
     if (D->hasWrittenPrototype())
       FT = dyn_cast<FunctionProtoType>(AFT);
