@@ -2508,7 +2508,7 @@ DeclarationName InitializedEntity::getName() const {
     return VariableOrMember->getDeclName();
 
   case EK_LambdaCapture:
-    return Capture.Var->getDeclName();
+    return DeclarationName(Capture.VarID);
       
   case EK_Result:
   case EK_Exception:
@@ -2610,7 +2610,7 @@ unsigned InitializedEntity::dumpImpl(raw_ostream &OS) const {
   case EK_BlockElement: OS << "Block"; break;
   case EK_LambdaCapture:
     OS << "LambdaCapture ";
-    getCapturedVar()->printName(OS);
+    OS << DeclarationName(Capture.VarID);
     break;
   }
 
