@@ -142,10 +142,10 @@ static int parse_remapped_files_with_opt(const char *opt_name,
     char *filename;
     char *contents;
     FILE *to_file;
-    const char *colon = strchr(arg_string, ':');
-    if (!colon) {
+    const char *sep = strchr(arg_string, ',');
+    if (!sep) {
       fprintf(stderr,
-              "error: %sfrom:to argument is missing semicolon\n", opt_name);
+              "error: %sfrom:to argument is missing comma\n", opt_name);
       free_remapped_files(*unsaved_files, i);
       *unsaved_files = 0;
       *num_unsaved_files = 0;
@@ -153,10 +153,10 @@ static int parse_remapped_files_with_opt(const char *opt_name,
     }
 
     /* Open the file that we're remapping to. */
-    to_file = fopen(colon + 1, "rb");
+    to_file = fopen(sep + 1, "rb");
     if (!to_file) {
       fprintf(stderr, "error: cannot open file %s that we are remapping to\n",
-              colon + 1);
+              sep + 1);
       free_remapped_files(*unsaved_files, i);
       *unsaved_files = 0;
       *num_unsaved_files = 0;
@@ -172,7 +172,7 @@ static int parse_remapped_files_with_opt(const char *opt_name,
     contents = (char *)malloc(unsaved->Length + 1);
     if (fread(contents, 1, unsaved->Length, to_file) != unsaved->Length) {
       fprintf(stderr, "error: unexpected %s reading 'to' file %s\n",
-              (feof(to_file) ? "EOF" : "error"), colon + 1);
+              (feof(to_file) ? "EOF" : "error"), sep + 1);
       fclose(to_file);
       free_remapped_files(*unsaved_files, i);
       free(contents);
@@ -187,7 +187,7 @@ static int parse_remapped_files_with_opt(const char *opt_name,
     fclose(to_file);
 
     /* Copy the file name that we're remapping from. */
-    filename_len = colon - arg_string;
+    filename_len = sep - arg_string;
     filename = (char *)malloc(filename_len + 1);
     memcpy(filename, arg_string, filename_len);
     filename[filename_len] = 0;
