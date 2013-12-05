@@ -949,7 +949,6 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
   BlockChain &FunctionChain = *BlockToChain[&F.front()];
   buildChain(&F.front(), FunctionChain, BlockWorkList);
 
-  typedef SmallPtrSet<MachineBasicBlock *, 16> FunctionBlockSetType;
   DEBUG({
     // Crash at the end so we get all of the debugging output first.
     bool BadFunc = false;

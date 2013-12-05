@@ -99,6 +99,7 @@ void LLIChildTarget::handleAllocateSpace() {
   // Read and verify the message data size.
   uint32_t DataSize;
   int rc = ReadBytes(&DataSize, 4);
+  (void)rc;
   assert(rc == 4);
   assert(DataSize == 8);
 

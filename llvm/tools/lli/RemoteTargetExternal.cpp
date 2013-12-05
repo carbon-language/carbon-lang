@@ -59,6 +59,7 @@ void RemoteTargetExternal::stop() {
 
 void RemoteTargetExternal::SendAllocateSpace(uint32_t Alignment, uint32_t Size) {
   int rc;
+  (void)rc;
   uint32_t MsgType = (uint32_t)LLI_AllocateSpace;
   rc = WriteBytes(&MsgType, 4);
   assert(rc == 4 && "Error writing message type.");
