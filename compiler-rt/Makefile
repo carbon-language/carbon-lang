@@ -249,10 +249,10 @@ $(call Set,Tmp.CFLAGS,$(strip \
 
 $(Tmp.ObjPath)/%.o: $(Tmp.SrcPath)/%.s $(Tmp.Dependencies) $(Tmp.ObjPath)/.dir
 	$(Summary) "  ASSEMBLE:  $(Tmp.Name)/$(Tmp.Config)/$(Tmp.Arch): $$<"
-	$(Verb) $(Tmp.CC) $(Tmp.CFLAGS)  -c -o $$@ $$<
+	$(Verb) $(Tmp.CC) $(COMMON_ASMFLAGS) $(Tmp.CFLAGS)  -c -o $$@ $$<
 $(Tmp.ObjPath)/%.o: $(Tmp.SrcPath)/%.S $(Tmp.Dependencies) $(Tmp.ObjPath)/.dir
 	$(Summary) "  ASSEMBLE:  $(Tmp.Name)/$(Tmp.Config)/$(Tmp.Arch): $$<"
-	$(Verb) $(Tmp.CC) $(Tmp.CFLAGS) -c -o $$@ $$<
+	$(Verb) $(Tmp.CC) $(COMMON_ASMFLAGS) $(Tmp.CFLAGS) -c -o $$@ $$<
 $(Tmp.ObjPath)/%.o: $(Tmp.SrcPath)/%.c $(Tmp.Dependencies) $(Tmp.ObjPath)/.dir
 	$(Summary) "  COMPILE:   $(Tmp.Name)/$(Tmp.Config)/$(Tmp.Arch): $$<"
 	$(Verb) $(Tmp.CC) $(COMMON_CFLAGS) $(Tmp.CFLAGS) -c -o $$@ $$<

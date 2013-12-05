@@ -1,4 +1,4 @@
-#include "../../sanitizer_common/sanitizer_asm.h"
+#include "sanitizer_common/sanitizer_asm.h"
 .section .text
 
 .hidden __tsan_trace_switch
