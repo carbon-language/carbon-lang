@@ -30,7 +30,7 @@
  * compatible, thus CINDEX_VERSION_MAJOR is expected to remain stable.
  */
 #define CINDEX_VERSION_MAJOR 0
-#define CINDEX_VERSION_MINOR 20
+#define CINDEX_VERSION_MINOR 21
 
 #define CINDEX_VERSION_ENCODE(major, minor) ( \
       ((major) * 10000)                       \
@@ -597,6 +597,33 @@ CINDEX_LINKAGE CXSourceLocation clang_getRangeStart(CXSourceRange range);
  * source range.
  */
 CINDEX_LINKAGE CXSourceLocation clang_getRangeEnd(CXSourceRange range);
+
+/**
+ * \brief Identifies an array of ranges that were skipped by the preprocessor.
+ *
+ * The preprocessor will skip lines when they are surrounded by an
+ * if/ifdef/ifndef directive whose condition does not evaluate to true.
+ */
+typedef struct {
+  /** \brief The number of ranges in the \c ranges array. */
+  unsigned count;
+  /**
+   * \brief An array of \c CXSourceRange, where each range starts at the
+   * preprocessor directive after the # token, and ends at the end of the
+   * corresponding endif.
+   */
+  CXSourceRange *ranges;
+} CXSkippedRanges;
+
+/**
+ * \brief Retrieve all ranges that were skipped by the preprocessor.
+ */
+CINDEX_LINKAGE CXSkippedRanges *clang_getSkippedRanges(CXTranslationUnit tu, CXFile file);
+
+/**
+ * \brief Destroy the given \c CXSkippedRanges.
+ */
+CINDEX_LINKAGE void clang_disposeSkippedRanges(CXSkippedRanges *skipped);
 
 /**
  * @}

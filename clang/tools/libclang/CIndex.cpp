@@ -6494,6 +6494,47 @@ void clang_disposeCXTUResourceUsage(CXTUResourceUsage usage) {
     delete (MemUsageEntries*) usage.data;
 }
 
+CXSkippedRanges *clang_getSkippedRanges(CXTranslationUnit TU, CXFile file) {
+  CXSkippedRanges *skipped = new CXSkippedRanges;
+  skipped->count = 0;
+  skipped->ranges = 0;
+
+  if (!file)
+    return skipped;
+
+  ASTUnit *astUnit = cxtu::getASTUnit(TU);
+  PreprocessingRecord *ppRec = astUnit->getPreprocessor().getPreprocessingRecord();
+  if (!ppRec)
+    return skipped;
+
+  ASTContext &Ctx = astUnit->getASTContext();
+  SourceManager &sm = Ctx.getSourceManager();
+  FileEntry *fileEntry = static_cast<FileEntry *>(file);
+  FileID wantedFileID = sm.translateFile(fileEntry);
+
+  const std::vector<SourceRange> &SkippedRanges = ppRec->getSkippedRanges();
+  std::vector<SourceRange> wantedRanges;
+  for (std::vector<SourceRange>::const_iterator i = SkippedRanges.begin(), ei = SkippedRanges.end();
+       i != ei; ++i) {
+    if (sm.getFileID(i->getBegin()) == wantedFileID || sm.getFileID(i->getEnd()) == wantedFileID)
+      wantedRanges.push_back(*i);
+  }
+
+  skipped->count = wantedRanges.size();
+  skipped->ranges = new CXSourceRange[skipped->count];
+  for (unsigned i = 0, ei = skipped->count; i != ei; ++i)
+    skipped->ranges[i] = cxloc::translateSourceRange(Ctx, wantedRanges[i]);
+
+  return skipped;
+}
+
+void clang_disposeSkippedRanges(CXSkippedRanges *skipped) {
+  if (skipped) {
+    delete[] skipped->ranges;
+    delete skipped;
+  }
+}
+
 } // end extern "C"
 
 void clang::PrintLibclangResourceUsage(CXTranslationUnit TU) {

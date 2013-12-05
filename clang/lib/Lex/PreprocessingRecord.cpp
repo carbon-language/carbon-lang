@@ -406,6 +406,10 @@ void PreprocessingRecord::Defined(const Token &MacroNameTok,
                       MacroNameTok.getLocation());
 }
 
+void PreprocessingRecord::SourceRangeSkipped(SourceRange Range) {
+  SkippedRanges.push_back(Range);
+}
+
 void PreprocessingRecord::MacroExpands(const Token &Id,const MacroDirective *MD,
                                        SourceRange Range,
                                        const MacroArgs *Args) {

@@ -101,6 +101,7 @@ clang_disposeDiagnosticSet
 clang_disposeIndex
 clang_disposeOverriddenCursors
 clang_disposeCXPlatformAvailability
+clang_disposeSkippedRanges
 clang_disposeString
 clang_disposeTokens
 clang_disposeTranslationUnit
@@ -207,6 +208,7 @@ clang_getRangeStart
 clang_getRemappings
 clang_getRemappingsFromFileList
 clang_getResultType
+clang_getSkippedRanges
 clang_getSpecializedCursorTemplate
 clang_getSpellingLocation
 clang_getTUResourceUsageName

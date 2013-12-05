@@ -304,6 +304,9 @@ namespace clang {
     /// and are referenced by the iterator using negative indices.
     std::vector<PreprocessedEntity *> LoadedPreprocessedEntities;
 
+    /// \brief The set of ranges that were skipped by the preprocessor,
+    std::vector<SourceRange> SkippedRanges;
+
     /// \brief Global (loaded or local) ID for a preprocessed entity.
     /// Negative values are used to indicate preprocessed entities
     /// loaded from the external source while non-negative values are used to
@@ -556,6 +559,11 @@ namespace clang {
     /// \brief Retrieve the macro definition that corresponds to the given
     /// \c MacroInfo.
     MacroDefinition *findMacroDefinition(const MacroInfo *MI);
+
+    /// \brief Retrieve all ranges that got skipped while preprocessing.
+    const std::vector<SourceRange> &getSkippedRanges() const {
+      return SkippedRanges;
+    }
         
   private:
     virtual void MacroExpands(const Token &Id, const MacroDirective *MD,
@@ -578,6 +586,8 @@ namespace clang {
     /// \brief Hook called whenever the 'defined' operator is seen.
     virtual void Defined(const Token &MacroNameTok, const MacroDirective *MD,
                          SourceRange Range);
+
+    virtual void SourceRangeSkipped(SourceRange Range);
 
     void addMacroExpansion(const Token &Id, const MacroInfo *MI,
                            SourceRange Range);
