@@ -80,7 +80,66 @@ public:
         eServerPacketType_vFile_md5,
         eServerPacketType_vFile_stat,
         eServerPacketType_vFile_symlink,
-        eServerPacketType_vFile_unlink
+        eServerPacketType_vFile_unlink,
+      // debug server packages
+        eServerPacketType_QEnvironmentHexEncoded,
+        eServerPacketType_QListThreadsInStopReply,
+        eServerPacketType_QRestoreRegisterState,
+        eServerPacketType_QSaveRegisterState,
+        eServerPacketType_QSetLogging,
+        eServerPacketType_QSetMaxPacketSize,
+        eServerPacketType_QSetMaxPayloadSize,
+        eServerPacketType_QSetEnableAsyncProfiling,
+        eServerPacketType_QSyncThreadState,
+        eServerPacketType_QThreadSuffixSupported,
+
+        eServerPacketType_qsThreadInfo,
+        eServerPacketType_qfThreadInfo,
+        eServerPacketType_qGetPid,
+        eServerPacketType_qGetProfileData,
+        eServerPacketType_qGDBServerVersion,
+        eServerPacketType_qMemoryRegionInfo,
+        eServerPacketType_qMemoryRegionInfoSupported,
+        eServerPacketType_qProcessInfo,
+        eServerPacketType_qRcmd,
+        eServerPacketType_qRegisterInfo,
+        eServerPacketType_qShlibInfoAddr,
+        eServerPacketType_qStepPacketSupported,
+        eServerPacketType_qSyncThreadStateSupported,
+        eServerPacketType_qThreadExtraInfo,
+        eServerPacketType_qThreadStopInfo,
+        eServerPacketType_qVAttachOrWaitSupported,
+        eServerPacketType_qWatchpointSupportInfo,
+        eServerPacketType_qWatchpointSupportInfoSupported,
+
+        eServerPacketType_vAttach,
+        eServerPacketType_vAttachWait,
+        eServerPacketType_vAttachOrWait,
+        eServerPacketType_vAttachName,
+        eServerPacketType_vCont,
+        eServerPacketType_vCont_actions, // vCont?
+
+        eServerPacketType_stop_reason, // '?'
+
+        eServerPacketType_c,
+        eServerPacketType_C,
+        eServerPacketType_D,
+        eServerPacketType_g,
+        eServerPacketType_G,
+        eServerPacketType_H,
+        eServerPacketType_k,
+        eServerPacketType_m,
+        eServerPacketType_M,
+        eServerPacketType_p,
+        eServerPacketType_P,
+        eServerPacketType_s,
+        eServerPacketType_S,
+        eServerPacketType_T,
+        eServerPacketType_Z,
+        eServerPacketType_z,
+
+        eServerPacketType__M,
+        eServerPacketType__m,
     };
     
     ServerPacketType

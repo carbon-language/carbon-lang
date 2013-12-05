@@ -109,6 +109,7 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (uint32_t timeout_usec,
                 interrupt = true;
                 break;
 
+            default:
             case StringExtractorGDBRemote::eServerPacketType_unimplemented:
                 return SendUnimplementedResponse (packet.GetStringRef().c_str()) > 0;
 
