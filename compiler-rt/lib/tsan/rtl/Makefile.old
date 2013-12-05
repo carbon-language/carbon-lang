@@ -49,6 +49,8 @@ LIBTSAN_OBJ=$(patsubst %.cc,%.o,$(LIBTSAN_SRC)) \
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 %.o: $(COMMON)/%.cc Makefile.old $(LIBTSAN_HEADERS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+%.o: %.S
+	$(CXX) $(INCLUDES) -o $@ -c $<
 
 libtsan.a: $(LIBTSAN_OBJ)
 	ar ru $@ $(LIBTSAN_OBJ)
