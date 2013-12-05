@@ -537,3 +537,23 @@ int A::*reinterpret(int C::*mp) {
 }
 
 }
+
+namespace Test3 {
+// Make sure we cast 'this' to i8* before using GEP.
+
+struct A {
+  int a;
+  int b;
+};
+
+int *load_data(A *a, int A::*mp) {
+  return &(a->*mp);
+// CHECK-LABEL: define i32* @"\01?load_data@Test3@@YAPAHPAUA@1@PQ21@H@Z"{{.*}}  {
+// CHECK:    %[[a:.*]] = load %"struct.Test3::A"** %{{.*}}, align 4
+// CHECK:    %[[mp:.*]] = load i32* %{{.*}}, align 4
+// CHECK:    %[[a_i8:.*]] = bitcast %"struct.Test3::A"* %[[a]] to i8*
+// CHECK:    getelementptr inbounds i8* %[[a_i8]], i32 %[[mp]]
+// CHECK: }
+}
+
+}

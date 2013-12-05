@@ -1691,6 +1691,11 @@ MicrosoftCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF,
     Base = AdjustVirtualBase(CGF, RD, Base, VirtualBaseAdjustmentOffset,
                              VBPtrOffset);
   }
+
+  // Cast to char*.
+  Base = Builder.CreateBitCast(Base, Builder.getInt8Ty()->getPointerTo(AS));
+
+  // Apply the offset, which we assume is non-null.
   llvm::Value *Addr =
     Builder.CreateInBoundsGEP(Base, FieldOffset, "memptr.offset");
 
