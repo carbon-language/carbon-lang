@@ -1,6 +1,7 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
 
 define <8 x i16> @test_zext_load() {
+  ; CHECK: vmovq
 entry:
   %0 = load <2 x i16> ** undef, align 8
   %1 = getelementptr inbounds <2 x i16>* %0, i64 1

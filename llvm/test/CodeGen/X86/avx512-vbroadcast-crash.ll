@@ -1,6 +1,7 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl 
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
 
 define <16 x i32> @test_vbroadcast() {
+  ; CHECK: vpbroadcastd
 entry:
   %0 = sext <16 x i1> zeroinitializer to <16 x i32>
   %1 = fcmp uno <16 x float> undef, zeroinitializer
