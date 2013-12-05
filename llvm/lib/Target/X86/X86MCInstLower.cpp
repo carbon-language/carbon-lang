@@ -90,18 +90,25 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
     break;
   }
 
+  if (!Suffix.empty())
+    Name += MAI.getPrivateGlobalPrefix();
+
+  unsigned PrefixLen = Name.size();
+
   if (MO.isGlobal()) {
     const GlobalValue *GV = MO.getGlobal();
-    bool isImplicitlyPrivate = !Suffix.empty();
-    getMang()->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
+    getMang()->getNameWithPrefix(Name, GV, false);
   } else if (MO.isSymbol()) {
     getMang()->getNameWithPrefix(Name, MO.getSymbolName());
   } else if (MO.isMBB()) {
     Name += MO.getMBB()->getSymbol()->getName();
   }
+  unsigned OrigLen = Name.size() - PrefixLen;
 
   Name += Suffix;
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
+  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
+
+  StringRef OrigName = StringRef(Name).substr(PrefixLen, OrigLen);
 
   // If the target flags on the operand changes the name of the symbol, do that
   // before we return the symbol.
@@ -144,10 +151,9 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
         StubValueTy(AsmPrinter.getSymbol(MO.getGlobal()),
                     !MO.getGlobal()->hasInternalLinkage());
     } else {
-      Name.erase(Name.end()-5, Name.end());
       StubSym =
         MachineModuleInfoImpl::
-        StubValueTy(Ctx.GetOrCreateSymbol(Name.str()), false);
+        StubValueTy(Ctx.GetOrCreateSymbol(OrigName), false);
     }
     break;
   }

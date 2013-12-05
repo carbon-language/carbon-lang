@@ -5,7 +5,7 @@ declare void @llvm.memset.i32(i8*, i8, i32, i32) nounwind
 define fastcc void @t1() nounwind {
 entry:
 ; CHECK-LABEL: t1:
-; CHECK: calll _memset
+; CHECK: calll L_memset$stub
   call void @llvm.memset.p0i8.i32(i8* null, i8 0, i32 188, i32 1, i1 false)
   unreachable
 }
@@ -13,7 +13,7 @@ entry:
 define fastcc void @t2(i8 signext %c) nounwind {
 entry:
 ; CHECK-LABEL: t2:
-; CHECK: calll _memset
+; CHECK: calll L_memset$stub
   call void @llvm.memset.p0i8.i32(i8* undef, i8 %c, i32 76, i32 1, i1 false)
   unreachable
 }

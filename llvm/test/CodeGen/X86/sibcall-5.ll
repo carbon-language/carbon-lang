@@ -8,7 +8,7 @@
 define double @foo(double %a) nounwind readonly ssp {
 entry:
 ; X32-LABEL: foo:
-; X32: jmp _sin$stub
+; X32: jmp L_sin$stub
 
 ; X64-LABEL: foo:
 ; X64: jmp _sin
@@ -18,7 +18,7 @@ entry:
 
 define float @bar(float %a) nounwind readonly ssp {
 ; X32-LABEL: bar:
-; X32: jmp _sinf$stub
+; X32: jmp L_sinf$stub
 
 ; X64-LABEL: bar:
 ; X64: jmp _sinf
@@ -27,9 +27,9 @@ entry:
   ret float %0
 }
 
-; X32-LABEL: _sin$stub:
+; X32-LABEL: L_sin$stub:
 ; X32-NEXT:   .indirect_symbol        _sin
-; X32-LABEL: _sinf$stub:
+; X32-LABEL: L_sinf$stub:
 ; X32-NEXT:   .indirect_symbol        _sinf
 
 declare float @sinf(float) nounwind readonly
