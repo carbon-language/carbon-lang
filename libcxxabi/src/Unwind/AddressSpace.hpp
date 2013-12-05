@@ -19,7 +19,7 @@
 #include <dlfcn.h>
 
 #if __APPLE__
-#include <mach-o/dyld_priv.h>
+#include <mach-o/getsect.h>
 namespace libunwind {
    bool checkKeyMgrRegisteredFDEs(uintptr_t targetAddr, void *&fde);
 }
@@ -220,6 +220,47 @@ inline LocalAddressSpace::pint_t LocalAddressSpace::getEncodedP(pint_t &addr,
 
   return result;
 }
+
+#if __APPLE__ 
+  struct dyld_unwind_sections
+  {
+    const struct mach_header*   mh;
+    const void*                 dwarf_section;
+    uintptr_t                   dwarf_section_length;
+    const void*                 compact_unwind_section;
+    uintptr_t                   compact_unwind_section_length;
+  };
+  #if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \
+                                  && (__MAC_OS_X_VERSION_MIN_REQUIRED >= 1070)
+    // In 10.7.0 or later, libSystem.dylib implements this function.
+    extern "C" bool _dyld_find_unwind_sections(void *, dyld_unwind_sections *);
+  #else
+    // In 10.6.x and earlier, we need to implement this functionality.
+    static inline bool _dyld_find_unwind_sections(void* addr, 
+                                                    dyld_unwind_sections* info) {
+      // Find mach-o image containing address.
+      Dl_info dlinfo;
+      if (!dladdr(addr, &dlinfo))
+        return false;
+      const mach_header *mh = (const mach_header *)dlinfo.dli_saddr;
+      
+      // Find dwarf unwind section in that image.
+      unsigned long size;
+      const uint8_t *p = getsectiondata(mh, "__TEXT", "__eh_frame", &size);
+      if (!p)
+        return false;
+      
+      // Fill in return struct.
+      info->mh = mh;
+      info->dwarf_section = p;
+      info->dwarf_section_length = size;
+      info->compact_unwind_section = 0;
+      info->compact_unwind_section_length = 0;
+     
+      return true;
+    }
+  #endif
+#endif
 
 inline bool LocalAddressSpace::findUnwindSections(pint_t targetAddr,
                                                   UnwindInfoSections &info) {
