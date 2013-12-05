@@ -465,12 +465,23 @@ bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
   return !End;
 }
 
+static void addSectionLabel(AsmPrinter *Asm, Unit *U, DIE *D,
+                            dwarf::Attribute A, const MCSymbol *L,
+                            const MCSymbol *Sec) {
+  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
+    U->addSectionLabel(D, A, L);
+  else
+    U->addSectionDelta(D, A, L, Sec);
+}
+
 void DwarfDebug::addScopeRangeList(CompileUnit *TheCU, DIE *ScopeDIE,
                                    const SmallVectorImpl<InsnRange> &Range) {
   // Emit offset in .debug_range as a relocatable label. emitDIE will handle
   // emitting it appropriately.
   MCSymbol *RangeSym = Asm->GetTempSymbol("debug_ranges", GlobalRangeCount++);
-  TheCU->addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges, RangeSym);
+  addSectionLabel(Asm, TheCU, ScopeDIE, dwarf::DW_AT_ranges, RangeSym,
+                  DwarfDebugRangeSectionSym);
+
   RangeSpanList List(RangeSym);
   for (SmallVectorImpl<InsnRange>::const_iterator RI = Range.begin(),
                                                   RE = Range.end();
@@ -722,15 +733,6 @@ unsigned DwarfDebug::getOrCreateSourceID(StringRef FileName, StringRef DirName,
   Asm->OutStreamer.EmitDwarfFileDirective(SrcId, DirName, FileName, CUID);
 
   return SrcId;
-}
-
-static void addSectionLabel(AsmPrinter *Asm, Unit *U, DIE *D,
-                            dwarf::Attribute A, const MCSymbol *L,
-                            const MCSymbol *Sec) {
-  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-    U->addSectionLabel(D, A, L);
-  else
-    U->addSectionDelta(D, A, L, Sec);
 }
 
 void DwarfDebug::addGnuPubAttributes(Unit *U, DIE *D) const {
@@ -2084,16 +2086,6 @@ void DwarfDebug::emitDIE(DIE *Die, ArrayRef<DIEAbbrev *> Abbrevs) {
                "The referenced DIE should belong to the same CU in ref4");
         Asm->EmitInt32(Addr);
       }
-      break;
-    }
-    case dwarf::DW_AT_ranges: {
-      // DW_AT_range Value encodes offset in debug_range section.
-      DIELabel *V = cast<DIELabel>(Values[i]);
-
-      if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-        Asm->EmitSectionOffset(V->getValue(), DwarfDebugRangeSectionSym);
-      else
-        Asm->EmitLabelDifference(V->getValue(), DwarfDebugRangeSectionSym, 4);
       break;
     }
     case dwarf::DW_AT_location: {
