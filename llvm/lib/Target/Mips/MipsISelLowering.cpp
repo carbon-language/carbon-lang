@@ -559,6 +559,39 @@ static SDValue performSELECTCombine(SDNode *N, SelectionDAG &DAG,
     return DAG.getNode(ISD::SELECT, DL, FalseTy, SetCC, False, True);
   }
 
+  // If both operands are integer constants there's a possibility that we
+  // can do some interesting optimizations.
+  SDValue True = N->getOperand(1);
+  ConstantSDNode *TrueC = dyn_cast<ConstantSDNode>(True);
+
+  if (!TrueC || !True.getValueType().isInteger())
+    return SDValue();
+
+  // We'll also ignore MVT::i64 operands as this optimizations proves
+  // to be ineffective because of the required sign extensions as the result
+  // of a SETCC operator is always MVT::i32 for non-vector types.
+  if (True.getValueType() == MVT::i64)
+    return SDValue();
+
+  int64_t Diff = TrueC->getSExtValue() - FalseC->getSExtValue();
+
+  // 1)  (a < x) ? y : y-1
+  //  slti $reg1, a, x
+  //  addiu $reg2, $reg1, y-1
+  if (Diff == 1)
+    return DAG.getNode(ISD::ADD, DL, SetCC.getValueType(), SetCC, False);
+
+  // 2)  (a < x) ? y-1 : y
+  //  slti $reg1, a, x
+  //  xor $reg1, $reg1, 1
+  //  addiu $reg2, $reg1, y-1
+  if (Diff == -1) {
+    ISD::CondCode CC = cast<CondCodeSDNode>(SetCC.getOperand(2))->get();
+    SetCC = DAG.getSetCC(DL, SetCC.getValueType(), SetCC.getOperand(0),
+                         SetCC.getOperand(1), ISD::getSetCCInverse(CC, true));
+    return DAG.getNode(ISD::ADD, DL, SetCC.getValueType(), SetCC, True);
+  }
+
   // Couldn't optimize.
   return SDValue();
 }

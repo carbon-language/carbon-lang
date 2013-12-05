@@ -10,7 +10,7 @@ entry:
   %0 = load i32* @i, align 4
   %1 = load i32* @j, align 4
   %cmp = icmp eq i32 %0, %1
-  %cond = select i1 %cmp, i32 1, i32 2
+  %cond = select i1 %cmp, i32 1, i32 3
   store i32 %cond, i32* @k, align 4
   ret void
 ; cond-b-short:	bteqz	$BB0_{{[0-9]+}}  # 16 bit inst

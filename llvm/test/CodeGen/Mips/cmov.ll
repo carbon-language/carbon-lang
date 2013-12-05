@@ -74,7 +74,7 @@ entry:
 define i32 @slti0(i32 %a) {
 entry:
   %cmp = icmp sgt i32 %a, 32766
-  %cond = select i1 %cmp, i32 3, i32 4
+  %cond = select i1 %cmp, i32 3, i32 5
   ret i32 %cond
 }
 
@@ -84,7 +84,7 @@ entry:
 define i32 @slti1(i32 %a) {
 entry:
   %cmp = icmp sgt i32 %a, 32767
-  %cond = select i1 %cmp, i32 3, i32 4
+  %cond = select i1 %cmp, i32 3, i32 5
   ret i32 %cond
 }
 
@@ -95,7 +95,7 @@ entry:
 define i32 @slti2(i32 %a) {
 entry:
   %cmp = icmp sgt i32 %a, -32769
-  %cond = select i1 %cmp, i32 3, i32 4
+  %cond = select i1 %cmp, i32 3, i32 5
   ret i32 %cond
 }
 
@@ -105,7 +105,7 @@ entry:
 define i32 @slti3(i32 %a) {
 entry:
   %cmp = icmp sgt i32 %a, -32770
-  %cond = select i1 %cmp, i32 3, i32 4
+  %cond = select i1 %cmp, i32 3, i32 5
   ret i32 %cond
 }
 
@@ -162,7 +162,7 @@ entry:
 define i32 @sltiu0(i32 %a) {
 entry:
   %cmp = icmp ugt i32 %a, 32766
-  %cond = select i1 %cmp, i32 3, i32 4
+  %cond = select i1 %cmp, i32 3, i32 5
   ret i32 %cond
 }
 
@@ -172,7 +172,7 @@ entry:
 define i32 @sltiu1(i32 %a) {
 entry:
   %cmp = icmp ugt i32 %a, 32767
-  %cond = select i1 %cmp, i32 3, i32 4
+  %cond = select i1 %cmp, i32 3, i32 5
   ret i32 %cond
 }
 
@@ -183,7 +183,7 @@ entry:
 define i32 @sltiu2(i32 %a) {
 entry:
   %cmp = icmp ugt i32 %a, -32769
-  %cond = select i1 %cmp, i32 3, i32 4
+  %cond = select i1 %cmp, i32 3, i32 5
   ret i32 %cond
 }
 
@@ -193,6 +193,49 @@ entry:
 define i32 @sltiu3(i32 %a) {
 entry:
   %cmp = icmp ugt i32 %a, -32770
-  %cond = select i1 %cmp, i32 3, i32 4
+  %cond = select i1 %cmp, i32 3, i32 5
   ret i32 %cond
 }
+
+; Check if
+;  (select (setxx a, N), x, x-1) or
+;  (select (setxx a, N), x-1, x)
+; doesn't generate conditional moves
+; for constant operands whose difference is |1|
+
+define i32 @slti4(i32 %a) nounwind readnone {
+  %1 = icmp slt i32 %a, 7
+  %2 = select i1 %1, i32 4, i32 3
+  ret i32 %2
+}
+
+; O32-LABEL: slti4:
+; O32-DAG: slti [[R1:\$[0-9]+]], $4, 7
+; O32-DAG: addiu [[R2:\$[0-9]+]], [[R1]], 3
+; O32-NOT: movn
+; O32:.size slti4
+
+define i32 @slti5(i32 %a) nounwind readnone {
+  %1 = icmp slt i32 %a, 7
+  %2 = select i1 %1, i32 -3, i32 -4
+  ret i32 %2
+}
+
+; O32-LABEL: slti5:
+; O32-DAG: slti [[R1:\$[0-9]+]], $4, 7
+; O32-DAG: addiu [[R3:\$[0-9]+]], [[R2:\$[a-z0-9]+]], -4
+; O32-NOT: movn
+; O32:.size slti5
+
+define i32 @slti6(i32 %a) nounwind readnone {
+  %1 = icmp slt i32 %a, 7
+  %2 = select i1 %1, i32 3, i32 4
+  ret i32 %2
+}
+
+; O32-LABEL: slti6:
+; O32-DAG: slti [[R1:\$[0-9]+]], $4, 7
+; O32-DAG: xori [[R1]], [[R1]], 1
+; O32-DAG: addiu [[R2:\$[0-9]+]], [[R1]], 3
+; O32-NOT: movn
+; O32:.size slti6
