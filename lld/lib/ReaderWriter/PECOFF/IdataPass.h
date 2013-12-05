@@ -69,6 +69,8 @@ struct Context {
 /// The root class of all idata atoms.
 class IdataAtom : public COFFLinkerInternalAtom {
 public:
+  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+  virtual StringRef customSectionName() const { return ".idata"; };
   virtual ContentType contentType() const { return typeData; }
   virtual ContentPermissions permissions() const { return permR__; }
 
