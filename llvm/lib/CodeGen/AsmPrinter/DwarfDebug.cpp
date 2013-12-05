@@ -114,10 +114,6 @@ static const char *const DbgTimerName = "DWARF Debug Writer";
 
 //===----------------------------------------------------------------------===//
 
-// Configuration values for initial hash set sizes (log2).
-//
-static const unsigned InitAbbreviationsSetSize = 9; // log2(512)
-
 namespace llvm {
 
 /// resolve - Look in the DwarfDebug map for the MDNode that
@@ -182,14 +178,10 @@ static unsigned getDwarfVersionFromModule(const Module *M) {
 }
 
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
-    : Asm(A), MMI(Asm->MMI), FirstCU(0),
-      AbbreviationsSet(InitAbbreviationsSetSize),
-      SourceIdMap(DIEValueAllocator), PrevLabel(NULL), GlobalCUIndexCount(0),
-      GlobalRangeCount(0), InfoHolder(A, &AbbreviationsSet, Abbreviations,
-                                      "info_string", DIEValueAllocator),
-      SkeletonAbbrevSet(InitAbbreviationsSetSize),
-      SkeletonHolder(A, &SkeletonAbbrevSet, SkeletonAbbrevs, "skel_string",
-                     DIEValueAllocator) {
+    : Asm(A), MMI(Asm->MMI), FirstCU(0), SourceIdMap(DIEValueAllocator),
+      PrevLabel(NULL), GlobalCUIndexCount(0), GlobalRangeCount(0),
+      InfoHolder(A, "info_string", DIEValueAllocator),
+      SkeletonHolder(A, "skel_string", DIEValueAllocator) {
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
   DwarfStrSectionSym = TextSectionSym = 0;
@@ -288,7 +280,7 @@ unsigned DwarfUnits::getAddrPoolIndex(const MCExpr *Sym) {
 //
 void DwarfUnits::assignAbbrevNumber(DIEAbbrev &Abbrev) {
   // Check the set for priors.
-  DIEAbbrev *InSet = AbbreviationsSet->GetOrInsertNode(&Abbrev);
+  DIEAbbrev *InSet = AbbreviationsSet.GetOrInsertNode(&Abbrev);
 
   // If it's newly added.
   if (InSet == &Abbrev) {
@@ -2162,25 +2154,21 @@ void DwarfDebug::emitDebugInfo() {
 
 // Emit the abbreviation section.
 void DwarfDebug::emitAbbreviations() {
-  if (!useSplitDwarf())
-    emitAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevSection(),
-                &Abbreviations);
-  else
-    emitAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevSection(),
-                &SkeletonAbbrevs);
+  DwarfUnits &Holder = useSplitDwarf() ? SkeletonHolder : InfoHolder;
+
+  Holder.emitAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevSection());
 }
 
-void DwarfDebug::emitAbbrevs(const MCSection *Section,
-                             std::vector<DIEAbbrev *> *Abbrevs) {
+void DwarfUnits::emitAbbrevs(const MCSection *Section) {
   // Check to see if it is worth the effort.
-  if (!Abbrevs->empty()) {
+  if (!Abbreviations.empty()) {
     // Start the debug abbrev section.
     Asm->OutStreamer.SwitchSection(Section);
 
     // For each abbrevation.
-    for (unsigned i = 0, N = Abbrevs->size(); i < N; ++i) {
+    for (unsigned i = 0, N = Abbreviations.size(); i < N; ++i) {
       // Get abbreviation data
-      const DIEAbbrev *Abbrev = Abbrevs->at(i);
+      const DIEAbbrev *Abbrev = Abbreviations[i];
 
       // Emit the abbrevations code (base 1 index.)
       Asm->EmitULEB128(Abbrev->getNumber(), "Abbreviation Code");
@@ -3031,8 +3019,7 @@ void DwarfDebug::emitDebugInfoDWO() {
 // abbreviations for the .debug_info.dwo section.
 void DwarfDebug::emitDebugAbbrevDWO() {
   assert(useSplitDwarf() && "No split dwarf?");
-  emitAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevDWOSection(),
-              &Abbreviations);
+  InfoHolder.emitAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevDWOSection());
 }
 
 // Emit the .debug_str.dwo section for separated dwarf. This contains the

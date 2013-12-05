@@ -226,10 +226,10 @@ class DwarfUnits {
   AsmPrinter *Asm;
 
   // Used to uniquely define abbreviations.
-  FoldingSet<DIEAbbrev> *AbbreviationsSet;
+  FoldingSet<DIEAbbrev> AbbreviationsSet;
 
   // A list of all the unique abbreviations in use.
-  std::vector<DIEAbbrev *> &Abbreviations;
+  std::vector<DIEAbbrev *> Abbreviations;
 
   // A pointer to all units in the section.
   SmallVector<Unit *, 1> CUs;
@@ -251,12 +251,9 @@ class DwarfUnits {
   unsigned NextAddrPoolNumber;
 
 public:
-  DwarfUnits(AsmPrinter *AP, FoldingSet<DIEAbbrev> *AS,
-             std::vector<DIEAbbrev *> &A, const char *Pref,
-             BumpPtrAllocator &DA)
-      : Asm(AP), AbbreviationsSet(AS), Abbreviations(A), StringPool(DA),
-        NextStringPoolNumber(0), StringPref(Pref), AddressPool(),
-        NextAddrPoolNumber(0) {}
+  DwarfUnits(AsmPrinter *AP, const char *Pref, BumpPtrAllocator &DA)
+      : Asm(AP), StringPool(DA), NextStringPoolNumber(0), StringPref(Pref),
+        AddressPool(), NextAddrPoolNumber(0) {}
 
   ~DwarfUnits();
 
@@ -278,6 +275,9 @@ public:
   /// abbreviation section.
   void emitUnits(DwarfDebug *DD, const MCSection *USection,
                  const MCSection *ASection, const MCSymbol *ASectionSym);
+
+  /// \brief Emit a set of abbreviations to the specific section.
+  void emitAbbrevs(const MCSection *);
 
   /// \brief Emit all of the strings to the section given.
   void emitStrings(const MCSection *StrSection, const MCSection *OffsetSection,
@@ -346,12 +346,6 @@ class DwarfDebug : public AsmPrinterHandler {
   /// be shared across CUs, that is why we keep the map here instead
   /// of in CompileUnit.
   DenseMap<const MDNode *, DIE *> MDTypeNodeToDieMap;
-
-  // Used to uniquely define abbreviations.
-  FoldingSet<DIEAbbrev> AbbreviationsSet;
-
-  // A list of all the unique abbreviations in use.
-  std::vector<DIEAbbrev *> Abbreviations;
 
   // Stores the current file ID for a given compile unit.
   DenseMap <unsigned, unsigned> FileIDCUMap;
@@ -485,12 +479,6 @@ class DwarfDebug : public AsmPrinterHandler {
   // original object file, rather than things that are meant
   // to be in the .dwo sections.
 
-  // Used to uniquely define abbreviations for the skeleton emission.
-  FoldingSet<DIEAbbrev> SkeletonAbbrevSet;
-
-  // A list of all the unique abbreviations in use.
-  std::vector<DIEAbbrev *> SkeletonAbbrevs;
-
   // Holder for the skeleton information.
   DwarfUnits SkeletonHolder;
 
@@ -552,9 +540,6 @@ class DwarfDebug : public AsmPrinterHandler {
   /// \brief Emit labels to close any remaining sections that have been left
   /// open.
   void endSections();
-
-  /// \brief Emit a set of abbreviations to the specific section.
-  void emitAbbrevs(const MCSection *, std::vector<DIEAbbrev*> *);
 
   /// \brief Emit the debug info section.
   void emitDebugInfo();
