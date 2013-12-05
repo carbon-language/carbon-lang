@@ -12,11 +12,13 @@
 // RUN: ls -1 %T/SerializeTest | FileCheck %s --check-prefix=MAIN_CPP
 // RUN: ls -1 %T/SerializeTest | FileCheck %s --check-prefix=COMMON_CPP
 // We need to put the build path to the expected YAML file to diff against the generated one.
-// RUN: sed -e 's#$(path)#%/T/SerializeTest#g' -e "s#\([A-Z]:/.*\.[chp]*\)#'\1'#g" %S/main_expected.yaml > %T/SerializeTest/main_expected.yaml
+// RUN: sed -e 's#$(path)#%/T/SerializeTest#g' -e "s#^\(.*:\)[[:space:]]*\(.*\)#\1 \2#g" %S/main_expected.yaml > %T/SerializeTest/main_expected.yaml
 // RUN: sed -i -e 's#\\#/#g' %T/SerializeTest/main.cpp_*.yaml
+// RUN: sed -i -e "s#^\(.*:\)[[:space:]]*'*\(/[^']*\)'*\$#\1 \2#g" %T/SerializeTest/main.cpp_*.yaml
 // RUN: diff -b %T/SerializeTest/main_expected.yaml %T/SerializeTest/main.cpp_*.yaml
-// RUN: sed -e 's#$(path)#%/T/SerializeTest#g' -e "s#\([A-Z]:/.*\.[chp]*\)#'\1'#g" %S/common_expected.yaml > %T/SerializeTest/common_expected.yaml
+// RUN: sed -e 's#$(path)#%/T/SerializeTest#g' -e "s#^\(.*:\)[[:space:]]*\(.*\)#\1 \2#g" %S/common_expected.yaml > %T/SerializeTest/common_expected.yaml
 // RUN: sed -i -e 's#\\#/#g' %T/SerializeTest/common.cpp_*.yaml
+// RUN: sed -i -e "s#^\(.*:\)[[:space:]]*'*\(/[^']*\)'*\$#\1 \2#g" %T/SerializeTest/common.cpp_*.yaml
 // RUN: diff -b %T/SerializeTest/common_expected.yaml %T/SerializeTest/common.cpp_*.yaml
 //
 // The following are for FileCheck when used on output of 'ls'. See above.
