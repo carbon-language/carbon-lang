@@ -33,11 +33,6 @@ RunLoopVectorization("vectorize-loops", cl::Hidden,
                      cl::desc("Run the Loop vectorization passes"));
 
 static cl::opt<bool>
-LateVectorization("late-vectorize", cl::init(true), cl::Hidden,
-                  cl::desc("Run the vectorization pasess late in the pass "
-                           "pipeline (after the inliner)"));
-
-static cl::opt<bool>
 RunSLPVectorization("vectorize-slp", cl::Hidden,
                     cl::desc("Run the SLP vectorization passes"));
 
@@ -68,7 +63,6 @@ PassManagerBuilder::PassManagerBuilder() {
     BBVectorize = RunBBVectorization;
     SLPVectorize = RunSLPVectorization;
     LoopVectorize = RunLoopVectorization;
-    LateVectorize = LateVectorization;
     RerollLoops = RunLoopRerolling;
 }
 
@@ -200,9 +194,6 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   MPM.add(createLoopIdiomPass());             // Recognize idioms like memset.
   MPM.add(createLoopDeletionPass());          // Delete dead loops
 
-  if (!LateVectorize && LoopVectorize)
-      MPM.add(createLoopVectorizePass(DisableUnrollLoops));
-
   if (!DisableUnrollLoops)
     MPM.add(createLoopUnrollPass());          // Unroll small loops
   addExtensionsToPM(EP_LoopOptimizerEnd, MPM);
@@ -243,21 +234,18 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   MPM.add(createCFGSimplificationPass()); // Merge & remove BBs
   MPM.add(createInstructionCombiningPass());  // Clean up after everything.
 
-  // As an experimental mode, run any vectorization passes in a separate
-  // pipeline from the CGSCC pass manager that runs iteratively with the
-  // inliner.
-  if (LateVectorize && LoopVectorize) {
-    // FIXME: This is a HACK! The inliner pass above implicitly creates a CGSCC
-    // pass manager that we are specifically trying to avoid. To prevent this
-    // we must insert a no-op module pass to reset the pass manager.
-    MPM.add(createBarrierNoopPass());
-
-    // Add the various vectorization passes and relevant cleanup passes for
-    // them since we are no longer in the middle of the main scalar pipeline.
-    MPM.add(createLoopVectorizePass(DisableUnrollLoops));
-    MPM.add(createInstructionCombiningPass());
-    MPM.add(createCFGSimplificationPass());
-  }
+  // FIXME: This is a HACK! The inliner pass above implicitly creates a CGSCC
+  // pass manager that we are specifically trying to avoid. To prevent this
+  // we must insert a no-op module pass to reset the pass manager.
+  MPM.add(createBarrierNoopPass());
+  MPM.add(createLoopVectorizePass(DisableUnrollLoops, LoopVectorize));
+  // FIXME: Because of #pragma vectorize enable, the passes below are always
+  // inserted in the pipeline, even when the vectorizer doesn't run (ex. when
+  // on -O1 and no #pragma is found). Would be good to have these two passes
+  // as function calls, so that we can only pass them when the vectorizer
+  // changed the code.
+  MPM.add(createInstructionCombiningPass());
+  MPM.add(createCFGSimplificationPass());
 
   if (!DisableUnitAtATime) {
     // FIXME: We shouldn't bother with this anymore.

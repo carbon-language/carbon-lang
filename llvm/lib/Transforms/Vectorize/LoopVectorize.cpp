@@ -763,10 +763,13 @@ struct LoopVectorizeHints {
   unsigned Width;
   /// Vectorization unroll factor.
   unsigned Unroll;
+  /// Vectorization forced (-1 not selected, 0 force disabled, 1 force enabled)
+  int Force;
 
   LoopVectorizeHints(const Loop *L, bool DisableUnrolling)
   : Width(VectorizationFactor)
   , Unroll(DisableUnrolling ? 1 : VectorizationUnroll)
+  , Force(-1)
   , LoopID(L->getLoopID()) {
     getHints(L);
     // The command line options override any loop metadata except for when
@@ -877,6 +880,11 @@ private:
         Unroll = Val;
       else
         DEBUG(dbgs() << "LV: ignoring invalid unroll hint metadata\n");
+    } else if (Hint == "enable") {
+      if (C->getBitWidth() == 1)
+        Force = Val;
+      else
+        DEBUG(dbgs() << "LV: ignoring invalid enable hint metadata\n");
     } else {
       DEBUG(dbgs() << "LV: ignoring unknown hint " << Hint << '\n');
     }
@@ -888,8 +896,10 @@ struct LoopVectorize : public LoopPass {
   /// Pass identification, replacement for typeid
   static char ID;
 
-  explicit LoopVectorize(bool NoUnrolling = false)
-    : LoopPass(ID), DisableUnrolling(NoUnrolling) {
+  explicit LoopVectorize(bool NoUnrolling = false, bool AlwaysVectorize = true)
+    : LoopPass(ID),
+      DisableUnrolling(NoUnrolling),
+      AlwaysVectorize(AlwaysVectorize) {
     initializeLoopVectorizePass(*PassRegistry::getPassRegistry());
   }
 
@@ -900,6 +910,7 @@ struct LoopVectorize : public LoopPass {
   DominatorTree *DT;
   TargetLibraryInfo *TLI;
   bool DisableUnrolling;
+  bool AlwaysVectorize;
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
     // We only vectorize innermost loops.
@@ -919,7 +930,7 @@ struct LoopVectorize : public LoopPass {
       return false;
 
     if (DL == NULL) {
-      DEBUG(dbgs() << "LV: Not vectorizing because of missing data layout\n");
+      DEBUG(dbgs() << "LV: Not vectorizing: Missing data layout\n");
       return false;
     }
 
@@ -928,15 +939,25 @@ struct LoopVectorize : public LoopPass {
 
     LoopVectorizeHints Hints(L, DisableUnrolling);
 
+    if (Hints.Force == 0) {
+      DEBUG(dbgs() << "LV: Not vectorizing: #pragma vectorize disable.\n");
+      return false;
+    }
+
+    if (!AlwaysVectorize && Hints.Force != 1) {
+      DEBUG(dbgs() << "LV: Not vectorizing: No #pragma vectorize enable.\n");
+      return false;
+    }
+
     if (Hints.Width == 1 && Hints.Unroll == 1) {
-      DEBUG(dbgs() << "LV: Not vectorizing.\n");
+      DEBUG(dbgs() << "LV: Not vectorizing: Disabled/already vectorized.\n");
       return false;
     }
 
     // Check if it is legal to vectorize the loop.
     LoopVectorizationLegality LVL(L, SE, DL, DT, TLI);
     if (!LVL.canVectorize()) {
-      DEBUG(dbgs() << "LV: Not vectorizing.\n");
+      DEBUG(dbgs() << "LV: Not vectorizing: Cannot prove legality.\n");
       return false;
     }
 
@@ -949,7 +970,8 @@ struct LoopVectorize : public LoopPass {
     Attribute::AttrKind SzAttr = Attribute::OptimizeForSize;
     Attribute::AttrKind FlAttr = Attribute::NoImplicitFloat;
     unsigned FnIndex = AttributeSet::FunctionIndex;
-    bool OptForSize = F->getAttributes().hasAttribute(FnIndex, SzAttr);
+    bool OptForSize = Hints.Force != 1 &&
+                      F->getAttributes().hasAttribute(FnIndex, SzAttr);
     bool NoFloat = F->getAttributes().hasAttribute(FnIndex, FlAttr);
 
     if (NoFloat) {
@@ -973,6 +995,7 @@ struct LoopVectorize : public LoopPass {
       DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
       if (UF == 1)
         return false;
+      DEBUG(dbgs() << "LV: Trying to at least unroll the loops.\n");
       // We decided not to vectorize, but we may want to unroll.
       InnerLoopUnroller Unroller(L, SE, LI, DT, DL, TLI, UF);
       Unroller.vectorize(&LVL);
@@ -5016,8 +5039,8 @@ INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_END(LoopVectorize, LV_NAME, lv_name, false, false)
 
 namespace llvm {
-  Pass *createLoopVectorizePass(bool NoUnrolling) {
-    return new LoopVectorize(NoUnrolling);
+  Pass *createLoopVectorizePass(bool NoUnrolling, bool AlwaysVectorize) {
+    return new LoopVectorize(NoUnrolling, AlwaysVectorize);
   }
 }
 

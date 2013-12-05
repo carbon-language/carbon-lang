@@ -111,7 +111,6 @@ public:
   bool BBVectorize;
   bool SLPVectorize;
   bool LoopVectorize;
-  bool LateVectorize;
   bool RerollLoops;
 
 private:
