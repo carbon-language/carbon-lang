@@ -19,13 +19,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
-COMPILER_CHECK(sizeof(SIZE_T) == sizeof(size_t));
-COMPILER_CHECK(sizeof(SSIZE_T) == sizeof(ssize_t));
-COMPILER_CHECK(sizeof(PTRDIFF_T) == sizeof(ptrdiff_t));
-COMPILER_CHECK(sizeof(INTMAX_T) == sizeof(intmax_t));
+COMPILER_CHECK(sizeof(::SIZE_T) == sizeof(size_t));
+COMPILER_CHECK(sizeof(::SSIZE_T) == sizeof(ssize_t));
+COMPILER_CHECK(sizeof(::PTRDIFF_T) == sizeof(ptrdiff_t));
+COMPILER_CHECK(sizeof(::INTMAX_T) == sizeof(intmax_t));
 
 #ifndef __APPLE__
-COMPILER_CHECK(sizeof(OFF64_T) == sizeof(off64_t));
+COMPILER_CHECK(sizeof(::OFF64_T) == sizeof(off64_t));
 #endif
 
 // The following are the cases when pread (and friends) is used instead of
@@ -33,7 +33,7 @@ COMPILER_CHECK(sizeof(OFF64_T) == sizeof(off64_t));
 // rest (they depend on _FILE_OFFSET_BITS setting when building an application).
 # if defined(__ANDROID__) || !defined _FILE_OFFSET_BITS || \
   _FILE_OFFSET_BITS != 64
-COMPILER_CHECK(sizeof(OFF_T) == sizeof(off_t));
+COMPILER_CHECK(sizeof(::OFF_T) == sizeof(off_t));
 # endif
 
 #endif
