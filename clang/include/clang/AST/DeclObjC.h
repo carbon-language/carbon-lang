@@ -679,7 +679,7 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
     bool HasDesignatedInitializers : 1;
 
     enum InheritedDesignatedInitializersState {
-      /// We didn't calculated whether the designated initializers should be
+      /// We didn't calculate whether the designated initializers should be
       /// inherited or not.
       IDI_Unknown = 0,
       /// Designated initializers are inherited for the super class.
