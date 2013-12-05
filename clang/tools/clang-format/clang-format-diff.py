@@ -85,11 +85,8 @@ def main():
     if args.style:
       command.extend(['-style', args.style])
     p = subprocess.Popen(command, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE,
-                         stdin=subprocess.PIPE)
+                         stderr=None, stdin=subprocess.PIPE)
     stdout, stderr = p.communicate()
-    if stderr:
-      print stderr
     if p.returncode != 0:
       sys.exit(p.returncode);
 
@@ -102,7 +99,7 @@ def main():
                                   '(before formatting)', '(after formatting)')
       diff_string = string.join(diff, '')
       if len(diff_string) > 0:
-        print diff_string
+        sys.stdout.write(diff_string)
 
 if __name__ == '__main__':
   main()
