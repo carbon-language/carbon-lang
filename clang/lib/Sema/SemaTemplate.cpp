@@ -2914,8 +2914,7 @@ TemplateNameKind Sema::ActOnDependentTemplateName(Scope *S,
     return TNK_Function_template;
 
   case UnqualifiedId::IK_LiteralOperatorId:
-    llvm_unreachable(
-            "We don't support these; Parse shouldn't have allowed propagation");
+    llvm_unreachable("literal operator id cannot have a dependent scope");
 
   default:
     break;

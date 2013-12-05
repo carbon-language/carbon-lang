@@ -333,6 +333,34 @@ ParsedType Sema::getDestructorType(const DeclSpec& DS, ParsedType ObjectType) {
     return ParsedType();
 }
 
+bool Sema::checkLiteralOperatorId(const CXXScopeSpec &SS,
+                                  const UnqualifiedId &Name) {
+  assert(Name.getKind() == UnqualifiedId::IK_LiteralOperatorId);
+
+  if (!SS.isValid())
+    return false;
+
+  switch (SS.getScopeRep()->getKind()) {
+  case NestedNameSpecifier::Identifier:
+  case NestedNameSpecifier::TypeSpec:
+  case NestedNameSpecifier::TypeSpecWithTemplate:
+    // Per C++11 [over.literal]p2, literal operators can only be declared at
+    // namespace scope. Therefore, this unqualified-id cannot name anything.
+    // Reject it early, because we have no AST representation for this in the
+    // case where the scope is dependent.
+    Diag(Name.getLocStart(), diag::err_literal_operator_id_outside_namespace)
+      << SS.getScopeRep();
+    return true;
+
+  case NestedNameSpecifier::Global:
+  case NestedNameSpecifier::Namespace:
+  case NestedNameSpecifier::NamespaceAlias:
+    return false;
+  }
+
+  llvm_unreachable("unknown nested name specifier kind");
+}
+
 /// \brief Build a C++ typeid expression with a type operand.
 ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
                                 SourceLocation TypeidLoc,
