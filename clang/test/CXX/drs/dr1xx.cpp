@@ -592,11 +592,10 @@ namespace dr155 { // dr155: dup 632
   struct S { int n; } s = { { 1 } }; // expected-warning {{braces around scalar initializer}}
 }
 
-namespace dr159 { // dr159: no
+namespace dr159 { // dr159: 3.5
   namespace X { void f(); }
   void f();
-  // FIXME: This should be accepted.
-  void dr159::f() {} // expected-error {{extra qualification}}
+  void dr159::f() {} // expected-warning {{extra qualification}}
   void dr159::X::f() {}
 }
 

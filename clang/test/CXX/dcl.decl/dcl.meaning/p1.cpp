@@ -29,9 +29,17 @@ namespace NS {
   template<typename T> void wibble(T);
 }
 namespace NS {
-  void NS::foo() {} // expected-error{{extra qualification on member 'foo'}}
-  int NS::bar; // expected-error{{extra qualification on member 'bar'}}
-  struct NS::X { }; // expected-error{{extra qualification on member 'X'}}
-  template<typename T> struct NS::Y; // expected-error{{extra qualification on member 'Y'}}
-  template<typename T> void NS::wibble(T) { } // expected-error{{extra qualification on member 'wibble'}}
+  // Under DR482, these are all valid, except for forward-declaring a struct
+  // with a nested-name-specifier.
+  void NS::foo(); // expected-warning {{extra qualification}}
+  extern int NS::bar; // expected-warning {{extra qualification}}
+  struct NS::X; // expected-error {{forward declaration of struct cannot have a nested name specifier}} expected-warning {{extra qualification}}
+  template<typename T> struct NS::Y; // expected-error {{forward declaration of struct cannot have a nested name specifier}} expected-warning {{extra qualification}}
+  template<typename T> void NS::wibble(T); // expected-warning {{extra qualification}}
+
+  void NS::foo() {} // expected-warning{{extra qualification on member 'foo'}}
+  int NS::bar; // expected-warning{{extra qualification on member 'bar'}}
+  struct NS::X { }; // expected-warning{{extra qualification on member 'X'}}
+  template<typename T> struct NS::Y { }; // expected-warning{{extra qualification on member 'Y'}}
+  template<typename T> void NS::wibble(T) { } // expected-warning{{extra qualification on member 'wibble'}}
 }

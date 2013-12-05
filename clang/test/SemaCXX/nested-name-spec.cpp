@@ -160,7 +160,7 @@ namespace N {
   void f();
   // FIXME: if we move this to a separate definition of N, things break!
 }
-void ::global_func2(int) { } // expected-error{{extra qualification on member 'global_func2'}}
+void ::global_func2(int) { } // expected-warning{{extra qualification on member 'global_func2'}}
 
 void N::f() { } // okay
 
