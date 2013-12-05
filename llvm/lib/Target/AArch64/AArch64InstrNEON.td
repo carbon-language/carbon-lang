@@ -67,6 +67,11 @@ def Neon_vextract : SDNode<"AArch64ISD::NEON_VEXTRACT", SDTypeProfile<1, 3,
                            [SDTCisVec<0>,  SDTCisSameAs<0, 1>,
                            SDTCisSameAs<0, 2>, SDTCisVT<3, i64>]>>;
 
+def SDT_assertext : SDTypeProfile<1, 1,
+  [SDTCisInt<0>, SDTCisInt<1>, SDTCisSameAs<1, 0>]>;
+def assertsext : SDNode<"ISD::AssertSext", SDT_assertext>;
+def assertzext : SDNode<"ISD::AssertZext", SDT_assertext>;
+
 //===----------------------------------------------------------------------===//
 // Multiclasses
 //===----------------------------------------------------------------------===//
@@ -6081,7 +6086,6 @@ def : Pat<(v4i32 (bitconvert (v2f64  VPR128:$src))), (v4i32 VPR128:$src)>;
 def : Pat<(v8i16 (bitconvert (v2f64  VPR128:$src))), (v8i16 VPR128:$src)>;
 def : Pat<(v16i8 (bitconvert (v2f64  VPR128:$src))), (v16i8 VPR128:$src)>;
 
-
 // ...and scalar bitcasts...
 def : Pat<(f16 (bitconvert (v1i16  FPR16:$src))), (f16 FPR16:$src)>;
 def : Pat<(f32 (bitconvert (v1i32  FPR32:$src))), (f32 FPR32:$src)>;
@@ -8566,3 +8570,103 @@ class NeonI_Cryptosha3_qsv<bits<2> size, bits<3> opcode, string asmop,
 def SHA1C : NeonI_Cryptosha3_qsv<0b00, 0b000, "sha1c", int_aarch64_neon_sha1c>;
 def SHA1P : NeonI_Cryptosha3_qsv<0b00, 0b001, "sha1p", int_aarch64_neon_sha1p>;
 def SHA1M : NeonI_Cryptosha3_qsv<0b00, 0b010, "sha1m", int_aarch64_neon_sha1m>;
+
+//
+// Patterns for handling half-precision values
+//
+
+// Convert f16 value coming in as i16 value to f32
+def : Pat<(f32 (f16_to_f32 (i32 (and (i32 GPR32:$Rn), 65535)))),
+          (FCVTsh (EXTRACT_SUBREG (FMOVsw GPR32:$Rn), sub_16))>;
+def : Pat<(f32 (f16_to_f32 (i32 (assertzext GPR32:$Rn)))),
+          (FCVTsh (EXTRACT_SUBREG (FMOVsw GPR32:$Rn), sub_16))>;
+
+def : Pat<(f32 (f16_to_f32 (i32 (assertzext (i32 (
+            f32_to_f16 (f32 FPR32:$Rn))))))),
+          (f32 FPR32:$Rn)>;
+
+// Patterns for vector extract of half-precision FP value in i16 storage type
+def : Pat<(f32 (f16_to_f32 ( i32 (and (i32 (vector_extract
+            (v4i16 VPR64:$Rn), neon_uimm2_bare:$Imm)), 65535)))),
+          (FCVTsh (f16 (DUPhv_H
+            (v8i16 (SUBREG_TO_REG (i64 0), VPR64:$Rn, sub_64)),
+            neon_uimm2_bare:$Imm)))>;
+
+def : Pat<(f32 (f16_to_f32 ( i32 (and (i32 (vector_extract
+            (v8i16 VPR128:$Rn), neon_uimm3_bare:$Imm)), 65535)))),
+          (FCVTsh (f16 (DUPhv_H (v8i16 VPR128:$Rn), neon_uimm3_bare:$Imm)))>;
+
+// Patterns for vector insert of half-precision FP value 0 in i16 storage type
+def : Pat<(v8i16 (vector_insert (v8i16 VPR128:$Rn),
+            (i32 (assertsext (i32 (fp_to_sint(f32 (f16_to_f32 (i32 0))))))),
+            (neon_uimm3_bare:$Imm))),
+          (v8i16 (INSELh (v8i16 VPR128:$Rn),
+            (v8i16 (SUBREG_TO_REG (i64 0),
+              (f16 (EXTRACT_SUBREG (f32 (FMOVsw (i32 WZR))), sub_16)),
+              sub_16)),
+            neon_uimm3_bare:$Imm, 0))>;
+
+def : Pat<(v4i16 (vector_insert (v4i16 VPR64:$Rn),
+            (i32 (assertsext (i32 (fp_to_sint(f32 (f16_to_f32 (i32 0))))))),
+            (neon_uimm2_bare:$Imm))),
+          (v4i16 (EXTRACT_SUBREG
+            (v8i16 (INSELh
+              (v8i16 (SUBREG_TO_REG (i64 0), VPR64:$Rn, sub_64)),
+              (v8i16 (SUBREG_TO_REG (i64 0),
+                (f16 (EXTRACT_SUBREG (f32 (FMOVsw (i32 WZR))), sub_16)),
+                sub_16)),
+              neon_uimm2_bare:$Imm, 0)),
+            sub_64))>;
+
+// Patterns for vector insert of half-precision FP value in i16 storage type
+def : Pat<(v8i16 (vector_insert (v8i16 VPR128:$Rn),
+            (i32 (assertsext (i32 (fp_to_sint
+              (f32 (f16_to_f32 (i32 (and (i32 GPR32:$src), 65535)))))))),
+            (neon_uimm3_bare:$Imm))),
+          (v8i16 (INSELh (v8i16 VPR128:$Rn),
+            (v8i16 (SUBREG_TO_REG (i64 0),
+              (f16 (EXTRACT_SUBREG (f32 (FMOVsw (i32 GPR32:$src))), sub_16)),
+              sub_16)),
+            neon_uimm3_bare:$Imm, 0))>;
+
+def : Pat<(v4i16 (vector_insert (v4i16 VPR64:$Rn),
+            (i32 (assertsext (i32 (fp_to_sint
+              (f32 (f16_to_f32 (i32 (and (i32 GPR32:$src), 65535)))))))),
+            (neon_uimm2_bare:$Imm))),
+          (v4i16 (EXTRACT_SUBREG
+            (v8i16 (INSELh
+              (v8i16 (SUBREG_TO_REG (i64 0), VPR64:$Rn, sub_64)),
+              (v8i16 (SUBREG_TO_REG (i64 0),
+                (f16 (EXTRACT_SUBREG (f32 (FMOVsw (i32 GPR32:$src))), sub_16)),
+                sub_16)),
+              neon_uimm2_bare:$Imm, 0)),
+            sub_64))>;
+
+def : Pat<(v8i16 (vector_insert (v8i16 VPR128:$Rn),
+            (i32 (vector_extract (v8i16 VPR128:$src), neon_uimm3_bare:$Imm2)),
+              (neon_uimm3_bare:$Imm1))),
+          (v8i16 (INSELh (v8i16 VPR128:$Rn), (v8i16 VPR128:$src),
+            neon_uimm3_bare:$Imm1, neon_uimm3_bare:$Imm2))>;
+
+// Patterns for vector copy of half-precision FP value in i16 storage type
+def : Pat<(v8i16 (vector_insert (v8i16 VPR128:$Rn),
+            (i32 (assertsext (i32 (fp_to_sint(f32 (f16_to_f32 (i32 (and (i32
+              (vector_extract (v8i16 VPR128:$src), neon_uimm3_bare:$Imm2)),
+              65535)))))))),
+            (neon_uimm3_bare:$Imm1))),
+          (v8i16 (INSELh (v8i16 VPR128:$Rn), (v8i16 VPR128:$src),
+            neon_uimm3_bare:$Imm1, neon_uimm3_bare:$Imm2))>;
+
+def : Pat<(v4i16 (vector_insert (v4i16 VPR64:$Rn),
+            (i32 (assertsext (i32 (fp_to_sint(f32 (f16_to_f32 (i32 (and (i32
+              (vector_extract (v4i16 VPR64:$src), neon_uimm3_bare:$Imm2)),
+              65535)))))))),
+            (neon_uimm3_bare:$Imm1))),
+          (v4i16 (EXTRACT_SUBREG
+            (v8i16 (INSELh
+              (v8i16 (SUBREG_TO_REG (i64 0), VPR64:$Rn, sub_64)),
+              (v8i16 (SUBREG_TO_REG (i64 0), VPR64:$src, sub_64)),
+              neon_uimm3_bare:$Imm1, neon_uimm3_bare:$Imm2)),
+            sub_64))>;
+
+
