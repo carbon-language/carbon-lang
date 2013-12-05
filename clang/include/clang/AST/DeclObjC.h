@@ -678,6 +678,18 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
     /// marked with the 'objc_designated_initializer' attribute.
     bool HasDesignatedInitializers : 1;
 
+    enum InheritedDesignatedInitializersState {
+      /// We didn't calculated whether the designated initializers should be
+      /// inherited or not.
+      IDI_Unknown = 0,
+      /// Designated initializers are inherited for the super class.
+      IDI_Inherited = 1,
+      /// The class does not inherit designated initializers.
+      IDI_NotInherited = 2
+    };
+    /// One of the \c InheritedDesignatedInitializersState enumeratos.
+    mutable unsigned InheritedDesignatedInitializers : 2;
+
     /// \brief The location of the superclass, if any.
     SourceLocation SuperClassLoc;
     
@@ -689,7 +701,8 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
     DefinitionData() : Definition(), SuperClass(), CategoryList(), IvarList(), 
                        ExternallyCompleted(),
                        IvarListMissingImplementation(true),
-                       HasDesignatedInitializers() { }
+                       HasDesignatedInitializers(),
+                       InheritedDesignatedInitializers(IDI_Unknown) { }
   };
 
   ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
@@ -1273,6 +1286,10 @@ public:
   friend class ASTReader;
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
+
+private:
+  const ObjCInterfaceDecl *findInterfaceWithDesignatedInitializers() const;
+  bool inheritsDesignatedInitializers() const;
 };
 
 /// ObjCIvarDecl - Represents an ObjC instance variable. In general, ObjC

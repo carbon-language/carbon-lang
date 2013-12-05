@@ -380,21 +380,61 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
   data().AllReferencedProtocols.set(ProtocolRefs.data(), ProtocolRefs.size(),C);
 }
 
+const ObjCInterfaceDecl *
+ObjCInterfaceDecl::findInterfaceWithDesignatedInitializers() const {
+  const ObjCInterfaceDecl *IFace = this;
+  while (IFace) {
+    if (IFace->hasDesignatedInitializers())
+      return IFace;
+    if (!IFace->inheritsDesignatedInitializers())
+      break;
+    IFace = IFace->getSuperClass();
+  }
+  return 0;
+}
+
+bool ObjCInterfaceDecl::inheritsDesignatedInitializers() const {
+  switch (data().InheritedDesignatedInitializers) {
+  case DefinitionData::IDI_Inherited:
+    return true;
+  case DefinitionData::IDI_NotInherited:
+    return false;
+  case DefinitionData::IDI_Unknown: {
+    bool isIntroducingInitializers = false;
+    for (instmeth_iterator I = instmeth_begin(),
+                           E = instmeth_end(); I != E; ++I) {
+      const ObjCMethodDecl *MD = *I;
+      if (MD->getMethodFamily() == OMF_init && !MD->isOverriding()) {
+        isIntroducingInitializers = true;
+        break;
+      }
+    }
+    // If the class introduced initializers we conservatively assume that we
+    // don't know if any of them is a designated initializer to avoid possible
+    // misleading warnings.
+    if (isIntroducingInitializers) {
+      data().InheritedDesignatedInitializers = DefinitionData::IDI_NotInherited;
+      return false;
+    } else {
+      data().InheritedDesignatedInitializers = DefinitionData::IDI_Inherited;
+      return true;
+    }
+  }
+  }
+
+  llvm_unreachable("unexpected InheritedDesignatedInitializers value");
+}
+
 void ObjCInterfaceDecl::getDesignatedInitializers(
     llvm::SmallVectorImpl<const ObjCMethodDecl *> &Methods) const {
   assert(hasDefinition());
   if (data().ExternallyCompleted)
     LoadExternalDefinition();
 
-  const ObjCInterfaceDecl *IFace = this;
-  while (IFace) {
-    if (IFace->data().HasDesignatedInitializers)
-      break;
-    IFace = IFace->getSuperClass();
-  }
-
+  const ObjCInterfaceDecl *IFace= findInterfaceWithDesignatedInitializers();
   if (!IFace)
     return;
+
   for (instmeth_iterator I = IFace->instmeth_begin(),
                          E = IFace->instmeth_end(); I != E; ++I) {
     const ObjCMethodDecl *MD = *I;
@@ -409,13 +449,7 @@ bool ObjCInterfaceDecl::isDesignatedInitializer(Selector Sel,
   if (data().ExternallyCompleted)
     LoadExternalDefinition();
 
-  const ObjCInterfaceDecl *IFace = this;
-  while (IFace) {
-    if (IFace->data().HasDesignatedInitializers)
-      break;
-    IFace = IFace->getSuperClass();
-  }
-
+  const ObjCInterfaceDecl *IFace= findInterfaceWithDesignatedInitializers();
   if (!IFace)
     return false;
 
