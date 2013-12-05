@@ -525,7 +525,7 @@ void SlotTracker::processFunction() {
       // optimizer.
       if (const CallInst *CI = dyn_cast<CallInst>(I)) {
         if (Function *F = CI->getCalledFunction())
-          if (F->getName().startswith("llvm."))
+          if (F->isIntrinsic())
             for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
               if (MDNode *N = dyn_cast_or_null<MDNode>(I->getOperand(i)))
                 CreateMetadataSlot(N);
