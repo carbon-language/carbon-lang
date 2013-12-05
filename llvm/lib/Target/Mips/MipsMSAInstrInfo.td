@@ -2269,7 +2269,7 @@ class INSVE_D_DESC : MSA_INSVE_DESC_BASE<"insve.d", int_mips_insve_d,
 
 class LD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                    ValueType TyNode, RegisterOperand ROWD,
-                   Operand MemOpnd = mem, ComplexPattern Addr = addrRegImm,
+                   Operand MemOpnd = mem_msa, ComplexPattern Addr = addrRegImm,
                    InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs ROWD:$wd);
   dag InOperandList = (ins MemOpnd:$addr);
@@ -2590,7 +2590,7 @@ class SRLRI_D_DESC : MSA_BIT_D_X_DESC_BASE<"srlri.d", int_mips_srlri_d,
 
 class ST_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                    ValueType TyNode, RegisterOperand ROWD,
-                   Operand MemOpnd = mem, ComplexPattern Addr = addrRegImm,
+                   Operand MemOpnd = mem_msa, ComplexPattern Addr = addrRegImm,
                    InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs);
   dag InOperandList = (ins ROWD:$wd, MemOpnd:$addr);

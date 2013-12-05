@@ -565,7 +565,37 @@ static DecodeStatus DecodeMSA128Mem(MCInst &Inst, unsigned Insn,
 
   Inst.addOperand(MCOperand::CreateReg(Reg));
   Inst.addOperand(MCOperand::CreateReg(Base));
-  Inst.addOperand(MCOperand::CreateImm(Offset));
+
+  // The immediate field of an LD/ST instruction is scaled which means it must
+  // be multiplied (when decoding) by the size (in bytes) of the instructions'
+  // data format.
+  // .b - 1 byte
+  // .h - 2 bytes
+  // .w - 4 bytes
+  // .d - 8 bytes
+  switch(Inst.getOpcode())
+  {
+  default:
+    assert (0 && "Unexpected instruction");
+    return MCDisassembler::Fail;
+    break;
+  case Mips::LD_B:
+  case Mips::ST_B:
+    Inst.addOperand(MCOperand::CreateImm(Offset));
+    break;
+  case Mips::LD_H:
+  case Mips::ST_H:
+    Inst.addOperand(MCOperand::CreateImm(Offset << 1));
+    break;
+  case Mips::LD_W:
+  case Mips::ST_W:
+    Inst.addOperand(MCOperand::CreateImm(Offset << 2));
+    break;
+  case Mips::LD_D:
+  case Mips::ST_D:
+    Inst.addOperand(MCOperand::CreateImm(Offset << 3));
+    break;
+  }
 
   return MCDisassembler::Success;
 }

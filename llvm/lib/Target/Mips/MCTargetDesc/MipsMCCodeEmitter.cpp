@@ -107,6 +107,9 @@ public:
   unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO,
                              SmallVectorImpl<MCFixup> &Fixups) const;
 
+  unsigned getMSAMemEncoding(const MCInst &MI, unsigned OpNo,
+                             SmallVectorImpl<MCFixup> &Fixups) const;
+
   unsigned getMemEncoding(const MCInst &MI, unsigned OpNo,
                           SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned getMemEncodingMMImm12(const MCInst &MI, unsigned OpNo,
@@ -478,6 +481,49 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   // MO must be an Expr.
   assert(MO.isExpr());
   return getExprOpValue(MO.getExpr(),Fixups);
+}
+
+/// getMSAMemEncoding - Return binary encoding of memory operand for LD/ST
+/// instructions.
+unsigned
+MipsMCCodeEmitter::getMSAMemEncoding(const MCInst &MI, unsigned OpNo,
+                                     SmallVectorImpl<MCFixup> &Fixups) const {
+  // Base register is encoded in bits 20-16, offset is encoded in bits 15-0.
+  assert(MI.getOperand(OpNo).isReg());
+  unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo),Fixups) << 16;
+  unsigned OffBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups);
+
+  // The immediate field of an LD/ST instruction is scaled which means it must
+  // be divided (when encoding) by the size (in bytes) of the instructions'
+  // data format.
+  // .b - 1 byte
+  // .h - 2 bytes
+  // .w - 4 bytes
+  // .d - 8 bytes
+  switch(MI.getOpcode())
+  {
+  default:
+    assert (0 && "Unexpected instruction");
+    break;
+  case Mips::LD_B:
+  case Mips::ST_B:
+    // We don't need to scale the offset in this case
+    break;
+  case Mips::LD_H:
+  case Mips::ST_H:
+    OffBits >>= 1;
+    break;
+  case Mips::LD_W:
+  case Mips::ST_W:
+    OffBits >>= 2;
+    break;
+  case Mips::LD_D:
+  case Mips::ST_D:
+    OffBits >>= 3;
+    break;
+  }
+
+  return (OffBits & 0xFFFF) | RegBits;
 }
 
 /// getMemEncoding - Return binary encoding of memory related operand.

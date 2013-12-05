@@ -302,13 +302,20 @@ def InvertedImOperand : Operand<i32> {
   let ParserMatchClass = MipsInvertedImmoperand;
 }
 
-// Address operand
-def mem : Operand<iPTR> {
+class mem_generic : Operand<iPTR> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops ptr_rc, simm16);
   let EncoderMethod = "getMemEncoding";
   let ParserMatchClass = MipsMemAsmOperand;
   let OperandType = "OPERAND_MEMORY";
+}
+
+// Address operand
+def mem : mem_generic;
+
+// MSA specific address operand
+def mem_msa : mem_generic {
+  let EncoderMethod = "getMSAMemEncoding";
 }
 
 def mem_ea : Operand<iPTR> {
