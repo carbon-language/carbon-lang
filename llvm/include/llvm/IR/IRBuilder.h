@@ -832,11 +832,15 @@ public:
   }
 
   Value *CreateBinOp(Instruction::BinaryOps Opc,
-                     Value *LHS, Value *RHS, const Twine &Name = "") {
+                     Value *LHS, Value *RHS, const Twine &Name = "",
+                     MDNode *FPMathTag = 0) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Insert(Folder.CreateBinOp(Opc, LC, RC), Name);
-    return Insert(BinaryOperator::Create(Opc, LHS, RHS), Name);
+    llvm::Instruction *BinOp = BinaryOperator::Create(Opc, LHS, RHS);
+    if (isa<FPMathOperator>(BinOp))
+      BinOp = AddFPMathAttributes(BinOp, FPMathTag, FMF);
+    return Insert(BinOp, Name);
   }
 
   Value *CreateNeg(Value *V, const Twine &Name = "",

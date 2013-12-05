@@ -147,6 +147,13 @@ TEST_F(IRBuilderTest, FastMathFlags) {
   FAdd = cast<Instruction>(F);
   EXPECT_TRUE(FAdd->hasNoNaNs());
 
+  // Now, try it with CreateBinOp
+  F = Builder.CreateBinOp(Instruction::FAdd, F, F);
+  EXPECT_TRUE(Builder.getFastMathFlags().any());
+  ASSERT_TRUE(isa<Instruction>(F));
+  FAdd = cast<Instruction>(F);
+  EXPECT_TRUE(FAdd->hasNoNaNs());
+
   F = Builder.CreateFDiv(F, F);
   EXPECT_TRUE(Builder.getFastMathFlags().any());
   EXPECT_TRUE(Builder.getFastMathFlags().UnsafeAlgebra);
