@@ -30,3 +30,6 @@
 // CHECK-CHECK-I386_IOS: -fexceptions
 // CHECK-CHECK-I386_IOS-NOT: -fobjc-dispatch-method
 // CHECK-CHECK-I386_IOS: darwin-objc-options
+
+// Don't crash with an unexpected target triple.
+// RUN: %clang -target i386-apple-ios7 -S -### %s
