@@ -78,7 +78,7 @@ protected:
 
   // Holders for some common dwarf information.
   DwarfDebug *DD;
-  DwarfUnits *DU;
+  DwarfFile *DU;
 
   /// IndexTyDie - An anonymous type for index type.  Owned by UnitDie.
   DIE *IndexTyDie;
@@ -128,7 +128,7 @@ protected:
   DIEInteger *DIEIntegerOne;
 
   Unit(unsigned UID, DIE *D, DICompileUnit CU, AsmPrinter *A, DwarfDebug *DW,
-       DwarfUnits *DWU);
+       DwarfFile *DWU);
 
 public:
   virtual ~Unit();
@@ -443,7 +443,7 @@ private:
 class CompileUnit : public Unit {
 public:
   CompileUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
-              DwarfDebug *DW, DwarfUnits *DWU);
+              DwarfDebug *DW, DwarfFile *DWU);
 
   /// createGlobalVariableDIE - create global variable DIE.
   void createGlobalVariableDIE(DIGlobalVariable GV);
@@ -461,7 +461,7 @@ private:
 
 public:
   TypeUnit(unsigned UID, DIE *D, uint16_t Language, AsmPrinter *A,
-           DwarfDebug *DW, DwarfUnits *DWU);
+           DwarfDebug *DW, DwarfFile *DWU);
 
   uint16_t getLanguage() const { return Language; }
 };

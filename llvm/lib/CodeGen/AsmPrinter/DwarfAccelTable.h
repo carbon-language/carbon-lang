@@ -63,7 +63,7 @@ namespace llvm {
 
 class AsmPrinter;
 class DIE;
-class DwarfUnits;
+class DwarfFile;
 
 class DwarfAccelTable {
 
@@ -216,7 +216,7 @@ private:
   void EmitBuckets(AsmPrinter *);
   void EmitHashes(AsmPrinter *);
   void EmitOffsets(AsmPrinter *, MCSymbol *);
-  void EmitData(AsmPrinter *, DwarfUnits *D);
+  void EmitData(AsmPrinter *, DwarfFile *D);
 
   // Allocator for HashData and HashDataContents.
   BumpPtrAllocator Allocator;
@@ -243,7 +243,7 @@ public:
   ~DwarfAccelTable();
   void AddName(StringRef, const DIE *, char = 0);
   void FinalizeTable(AsmPrinter *, StringRef);
-  void Emit(AsmPrinter *, MCSymbol *, DwarfUnits *);
+  void Emit(AsmPrinter *, MCSymbol *, DwarfFile *);
 #ifndef NDEBUG
   void print(raw_ostream &O);
   void dump() { print(dbgs()); }

@@ -39,20 +39,20 @@ static cl::opt<bool> GenerateTypeUnits("generate-type-units", cl::Hidden,
 
 /// Unit - Unit constructor.
 Unit::Unit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
-           DwarfDebug *DW, DwarfUnits *DWU)
+           DwarfDebug *DW, DwarfFile *DWU)
     : UniqueID(UID), Node(Node), UnitDie(D), DebugInfoOffset(0), Asm(A), DD(DW),
       DU(DWU), IndexTyDie(0) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
 }
 
 CompileUnit::CompileUnit(unsigned UID, DIE *D, DICompileUnit Node,
-                         AsmPrinter *A, DwarfDebug *DW, DwarfUnits *DWU)
+                         AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU)
     : Unit(UID, D, Node, A, DW, DWU) {
   insertDIE(Node, D);
 }
 
 TypeUnit::TypeUnit(unsigned UID, DIE *D, uint16_t Language, AsmPrinter *A,
-                   DwarfDebug *DW, DwarfUnits *DWU)
+                   DwarfDebug *DW, DwarfFile *DWU)
     : Unit(UID, D, DICompileUnit(), A, DW, DWU), Language(Language) {}
 
 /// ~Unit - Destructor for compile unit.
