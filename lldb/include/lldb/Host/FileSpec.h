@@ -534,7 +534,7 @@ public:
     ///     as many bytes as possible.
     ///
     /// @return
-    ///     A shared pointer to the memeory mapped data. This shared
+    ///     A shared pointer to the memory mapped data. This shared
     ///     pointer can contain a NULL DataBuffer pointer, so the contained
     ///     pointer must be checked prior to using it.
     //------------------------------------------------------------------
