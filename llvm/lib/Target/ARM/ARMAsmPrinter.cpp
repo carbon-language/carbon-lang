@@ -609,7 +609,8 @@ void ARMAsmPrinter::emitAttributes() {
 
   std::string CPUString = Subtarget->getCPUString();
 
-  if (CPUString != "generic")
+  // FIXME: remove krait check when GNU tools support krait cpu
+  if (CPUString != "generic" && CPUString != "krait")
     ATS.emitTextAttribute(ARMBuildAttrs::CPU_name, CPUString);
 
   ATS.emitAttribute(ARMBuildAttrs::CPU_arch,
