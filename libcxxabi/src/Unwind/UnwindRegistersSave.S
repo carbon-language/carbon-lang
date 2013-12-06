@@ -1,4 +1,4 @@
-//===------------------------ UnwindRegistersSave.s -----------------------===//
+//===------------------------ UnwindRegistersSave.S -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
