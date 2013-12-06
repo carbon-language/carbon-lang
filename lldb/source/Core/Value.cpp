@@ -26,6 +26,7 @@
 #include "lldb/Symbol/Variable.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;

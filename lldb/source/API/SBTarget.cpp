@@ -52,6 +52,7 @@
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/Process.h"
+
 #include "lldb/Target/Target.h"
 #include "lldb/Target/TargetList.h"
 
@@ -1263,10 +1264,30 @@ SBTarget::ResolveLoadAddress (lldb::addr_t vm_addr)
     if (target_sp)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
-        if (target_sp->GetSectionLoadList().ResolveLoadAddress (vm_addr, addr))
+        if (target_sp->ResolveLoadAddress (vm_addr, addr))
             return sb_addr;
     }
 
+    // We have a load address that isn't in a section, just return an address
+    // with the offset filled in (the address) and the section set to NULL
+    addr.SetRawAddress(vm_addr);
+    return sb_addr;
+}
+
+
+lldb::SBAddress
+SBTarget::ResolvePastLoadAddress (uint32_t stop_id, lldb::addr_t vm_addr)
+{
+    lldb::SBAddress sb_addr;
+    Address &addr = sb_addr.ref();
+    TargetSP target_sp(GetSP());
+    if (target_sp)
+    {
+        Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        if (target_sp->ResolveLoadAddress (vm_addr, addr))
+            return sb_addr;
+    }
+    
     // We have a load address that isn't in a section, just return an address
     // with the offset filled in (the address) and the section set to NULL
     addr.SetRawAddress(vm_addr);
@@ -2479,10 +2500,14 @@ SBTarget::SetSectionLoadAddress (lldb::SBSection section,
                 }
                 else
                 {
-                    if (target_sp->GetSectionLoadList().SetSectionLoadAddress (section_sp, section_base_addr))
+                    ProcessSP process_sp (target_sp->GetProcessSP());
+                    uint32_t stop_id = 0;
+                    if (process_sp)
+                        stop_id = process_sp->GetStopID();
+
+                    if (target_sp->SetSectionLoadAddress (section_sp, section_base_addr))
                     {
                         // Flush info in the process (stack frames, etc)
-                        ProcessSP process_sp (target_sp->GetProcessSP());
                         if (process_sp)
                             process_sp->Flush();
                     }
@@ -2511,10 +2536,14 @@ SBTarget::ClearSectionLoadAddress (lldb::SBSection section)
         }
         else
         {
-            if (target_sp->GetSectionLoadList().SetSectionUnloaded (section.GetSP()))
+            ProcessSP process_sp (target_sp->GetProcessSP());
+            uint32_t stop_id = 0;
+            if (process_sp)
+                stop_id = process_sp->GetStopID();
+
+            if (target_sp->SetSectionUnloaded (section.GetSP()))
             {
                 // Flush info in the process (stack frames, etc)
-                ProcessSP process_sp (target_sp->GetProcessSP());
                 if (process_sp)
                     process_sp->Flush();                
             }
@@ -2586,13 +2615,18 @@ SBTarget::ClearModuleLoadAddress (lldb::SBModule module)
                 SectionList *section_list = objfile->GetSectionList();
                 if (section_list)
                 {
+                    ProcessSP process_sp (target_sp->GetProcessSP());
+                    uint32_t stop_id = 0;
+                    if (process_sp)
+                        stop_id = process_sp->GetStopID();
+
                     bool changed = false;
                     const size_t num_sections = section_list->GetSize();
                     for (size_t sect_idx = 0; sect_idx < num_sections; ++sect_idx)
                     {
                         SectionSP section_sp (section_list->GetSectionAtIndex(sect_idx));
                         if (section_sp)
-                            changed |= target_sp->GetSectionLoadList().SetSectionUnloaded (section_sp) > 0;
+                            changed |= target_sp->SetSectionUnloaded (section_sp) > 0;
                     }
                     if (changed)
                     {

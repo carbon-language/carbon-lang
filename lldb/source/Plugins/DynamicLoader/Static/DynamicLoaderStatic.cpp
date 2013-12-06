@@ -134,7 +134,7 @@ DynamicLoaderStatic::LoadAllImagesAtFileAddresses ()
                         SectionSP section_sp (section_list->GetSectionAtIndex (sect_idx));
                         if (section_sp)
                         {
-                            if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section_sp, section_sp->GetFileAddress()))
+                            if (m_process->GetTarget().SetSectionLoadAddress (section_sp, section_sp->GetFileAddress()))
                                 changed = true;
                         }
                     }

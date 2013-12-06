@@ -484,13 +484,7 @@ DynamicLoaderMacOSXDYLD::UpdateImageLoadAddress (Module *module, DYLDImageInfo& 
                             // "Section" objects, and "true" for all other sections.
                             const bool warn_multiple = section_sp->GetName() != g_section_name_LINKEDIT;
 
-                            const addr_t old_section_load_addr = m_process->GetTarget().GetSectionLoadList().GetSectionLoadAddress (section_sp);
-                            if (old_section_load_addr == LLDB_INVALID_ADDRESS ||
-                                old_section_load_addr != new_section_load_addr)
-                            {
-                                if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section_sp, new_section_load_addr, warn_multiple))
-                                    changed = true;
-                            }
+                            changed = m_process->GetTarget().SetSectionLoadAddress (section_sp, new_section_load_addr, warn_multiple);
                         }
                         else
                         {
@@ -568,7 +562,7 @@ DynamicLoaderMacOSXDYLD::UnloadImageLoadAddress (Module *module, DYLDImageInfo& 
                     if (section_sp)
                     {
                         const addr_t old_section_load_addr = info.segments[i].vmaddr + info.slide;
-                        if (m_process->GetTarget().GetSectionLoadList().SetSectionUnloaded (section_sp, old_section_load_addr))
+                        if (m_process->GetTarget().SetSectionUnloaded (section_sp, old_section_load_addr))
                             changed = true;
                     }
                     else
@@ -1524,7 +1518,7 @@ DynamicLoaderMacOSXDYLD::PrivateInitialize(Process *process)
     DEBUG_PRINTF("DynamicLoaderMacOSXDYLD::%s() process state = %s\n", __FUNCTION__, StateAsCString(m_process->GetState()));
     Clear(true);
     m_process = process;
-    m_process->GetTarget().GetSectionLoadList().Clear();
+    m_process->GetTarget().ClearAllLoadedSections();
 }
 
 bool
@@ -1541,7 +1535,7 @@ DynamicLoaderMacOSXDYLD::SetNotificationBreakpoint ()
             // breakpoint gets hit. We will use this to track when shared
             // libraries get loaded/unloaded.
 
-            if (m_process->GetTarget().GetSectionLoadList().ResolveLoadAddress(m_dyld_all_image_infos.notification, so_addr))
+            if (m_process->GetTarget().ResolveLoadAddress(m_dyld_all_image_infos.notification, so_addr))
             {
                 Breakpoint *dyld_break = m_process->GetTarget().CreateBreakpoint (so_addr, true, false).get();
                 dyld_break->SetCallback (DynamicLoaderMacOSXDYLD::NotifyBreakpointHit, this, true);

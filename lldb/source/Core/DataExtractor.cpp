@@ -37,6 +37,7 @@
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ExecutionContextScope.h"
+#include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;

@@ -25,6 +25,25 @@ using namespace lldb;
 using namespace lldb_private;
 
 
+SectionLoadList::SectionLoadList (const SectionLoadList& rhs) :
+    m_addr_to_sect(),
+    m_sect_to_addr(),
+    m_mutex (Mutex::eMutexTypeRecursive)
+{
+    Mutex::Locker locker(rhs.m_mutex);
+    m_addr_to_sect = rhs.m_addr_to_sect;
+    m_sect_to_addr = rhs.m_sect_to_addr;
+}
+
+void
+SectionLoadList::operator=(const SectionLoadList &rhs)
+{
+    Mutex::Locker lhs_locker (m_mutex);
+    Mutex::Locker rhs_locker (rhs.m_mutex);
+    m_addr_to_sect = rhs.m_addr_to_sect;
+    m_sect_to_addr = rhs.m_sect_to_addr;
+}
+
 bool
 SectionLoadList::IsEmpty() const
 {

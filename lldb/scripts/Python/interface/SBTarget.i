@@ -649,6 +649,9 @@ public:
 
     lldb::SBAddress
     ResolveLoadAddress (lldb::addr_t vm_addr);
+              
+    lldb::SBAddress
+    ResolvePastLoadAddress (uint32_t stop_id, lldb::addr_t vm_addr);
 
     SBSymbolContext
     ResolveSymbolContextForAddress (const SBAddress& addr, 

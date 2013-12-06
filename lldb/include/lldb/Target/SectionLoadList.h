@@ -36,6 +36,8 @@ public:
     {
     }
 
+    SectionLoadList (const SectionLoadList& rhs);
+
     ~SectionLoadList()
     {
         // Call clear since this takes a lock and clears the section load list
@@ -43,6 +45,9 @@ public:
         Clear();
     }
 
+    void
+    operator=(const SectionLoadList &rhs);
+    
     bool
     IsEmpty() const;
 
@@ -79,9 +84,6 @@ protected:
     addr_to_sect_collection m_addr_to_sect;
     sect_to_addr_collection m_sect_to_addr;
     mutable Mutex m_mutex;
-
-private:
-    DISALLOW_COPY_AND_ASSIGN (SectionLoadList);
 };
 
 } // namespace lldb_private

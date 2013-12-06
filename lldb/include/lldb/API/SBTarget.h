@@ -646,8 +646,46 @@ public:
     void
     Clear ();
 
+    //------------------------------------------------------------------
+    /// Resolve a current load address into a section offset address.
+    ///
+    /// @param[in] vm_addr
+    ///     A virtual address from the current process state that is to
+    ///     be translated into a section offset address.
+    ///
+    /// @return
+    ///     An SBAddress which will be valid if \a vm_addr was
+    ///     successfully resolved into a section offset address, or an
+    ///     invalid SBAddress if \a vm_addr doesn't resolve to a section
+    ///     in a module.
+    //------------------------------------------------------------------
     lldb::SBAddress
     ResolveLoadAddress (lldb::addr_t vm_addr);
+
+    //------------------------------------------------------------------
+    /// Resolve a current load address into a section offset address
+    /// using the process stop ID to identify a time in the past.
+    ///
+    /// @param[in] stop_id
+    ///     Each time a process stops, the process stop ID integer gets
+    ///     incremented. These stop IDs are used to identify past times
+    ///     and can be used in history objects as a cheap way to store
+    ///     the time at which the sample was taken. Specifying
+    ///     UINT32_MAX will always resolve the address using the
+    ///     currently loaded sections.
+    ///
+    /// @param[in] vm_addr
+    ///     A virtual address from the current process state that is to
+    ///     be translated into a section offset address.
+    ///
+    /// @return
+    ///     An SBAddress which will be valid if \a vm_addr was
+    ///     successfully resolved into a section offset address, or an
+    ///     invalid SBAddress if \a vm_addr doesn't resolve to a section
+    ///     in a module.
+    //------------------------------------------------------------------
+    lldb::SBAddress
+    ResolvePastLoadAddress (uint32_t stop_id, lldb::addr_t vm_addr);
 
     SBSymbolContext
     ResolveSymbolContextForAddress (const SBAddress& addr, 

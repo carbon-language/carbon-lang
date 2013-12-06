@@ -211,7 +211,7 @@ DynamicLoaderPOSIXDYLD::CanLoadImage()
 void
 DynamicLoaderPOSIXDYLD::UpdateLoadedSections(ModuleSP module, addr_t link_map_addr, addr_t base_addr)
 {
-    SectionLoadList &load_list = m_process->GetTarget().GetSectionLoadList();
+    Target &target = m_process->GetTarget();
     const SectionList *sections = GetSectionListFromModule(module);
 
     assert(sections && "SectionList missing from loaded module.");
@@ -224,23 +224,20 @@ DynamicLoaderPOSIXDYLD::UpdateLoadedSections(ModuleSP module, addr_t link_map_ad
     {
         SectionSP section_sp (sections->GetSectionAtIndex(i));
         lldb::addr_t new_load_addr = section_sp->GetFileAddress() + base_addr;
-        lldb::addr_t old_load_addr = load_list.GetSectionLoadAddress(section_sp);
 
         // If the file address of the section is zero then this is not an
         // allocatable/loadable section (property of ELF sh_addr).  Skip it.
         if (new_load_addr == base_addr)
             continue;
 
-        if (old_load_addr == LLDB_INVALID_ADDRESS ||
-            old_load_addr != new_load_addr)
-            load_list.SetSectionLoadAddress(section_sp, new_load_addr);
+        target.SetSectionLoadAddress(section_sp, new_load_addr);
     }
 }
 
 void
 DynamicLoaderPOSIXDYLD::UnloadSections(const ModuleSP module)
 {
-    SectionLoadList &load_list = m_process->GetTarget().GetSectionLoadList();
+    Target &target = m_process->GetTarget();
     const SectionList *sections = GetSectionListFromModule(module);
 
     assert(sections && "SectionList missing from unloaded module.");
@@ -251,7 +248,7 @@ DynamicLoaderPOSIXDYLD::UnloadSections(const ModuleSP module)
     for (size_t i = 0; i < num_sections; ++i)
     {
         SectionSP section_sp (sections->GetSectionAtIndex(i));
-        load_list.SetSectionUnloaded(section_sp);
+        target.SetSectionUnloaded(section_sp);
     }
 }
 

@@ -921,7 +921,7 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
                             const Section *memory_section = memory_section_list->FindSectionByName(ondisk_section_sp->GetName()).get();
                             if (memory_section)
                             {
-                                target.GetSectionLoadList().SetSectionLoadAddress (ondisk_section_sp, memory_section->GetFileAddress());
+                                target.SetSectionLoadAddress (ondisk_section_sp, memory_section->GetFileAddress());
                                 ++num_sections_loaded;
                             }
                         }

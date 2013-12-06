@@ -42,6 +42,7 @@
 #include "lldb/lldb-private-log.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/SystemRuntime.h"
 #include "lldb/Target/Thread.h"
@@ -69,12 +70,11 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_mutex (Mutex::eMutexTypeRecursive), 
     m_arch (target_arch),
     m_images (this),
-    m_section_load_list (),
+    m_section_load_history (),
     m_breakpoint_list (false),
     m_internal_breakpoint_list (true),
     m_watchpoint_list (),
     m_process_sp (),
-    m_valid (true),
     m_search_filter_sp (),
     m_image_search_paths (ImageSearchPathsChanged, this),
     m_scratch_ast_context_ap (),
@@ -84,6 +84,7 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_source_manager_ap(),
     m_stop_hooks (),
     m_stop_hook_next_id (0),
+    m_valid (true),
     m_suppress_stop_hooks (false)
 {
     SetEventName (eBroadcastBitBreakpointChanged, "breakpoint-changed");
@@ -158,7 +159,7 @@ Target::DeleteCurrentProcess ()
 {
     if (m_process_sp.get())
     {
-        m_section_load_list.Clear();
+        m_section_load_history.Clear();
         if (m_process_sp->IsAlive())
             m_process_sp->Destroy();
         
@@ -193,7 +194,7 @@ Target::Destroy()
     m_platform_sp.reset();
     m_arch.Clear();
     ClearModules(true);
-    m_section_load_list.Clear();
+    m_section_load_history.Clear();
     const bool notify = false;
     m_breakpoint_list.RemoveAll(notify);
     m_internal_breakpoint_list.RemoveAll(notify);
@@ -314,7 +315,7 @@ Target::CreateBreakpoint (lldb::addr_t addr, bool internal, bool hardware)
     // it doesn't resolve to section/offset.
 
     // Try and resolve as a load address if possible
-    m_section_load_list.ResolveLoadAddress(addr, so_addr);
+    GetSectionLoadList().ResolveLoadAddress(addr, so_addr);
     if (!so_addr.IsValid())
     {
         // The address didn't resolve, so just set this as an absolute address
@@ -1017,7 +1018,7 @@ void
 Target::ClearModules(bool delete_locations)
 {
     ModulesDidUnload (m_images, delete_locations);
-    GetSectionLoadList().Clear();
+    m_section_load_history.Clear();
     m_images.Clear();
     m_scratch_ast_context_ap.reset();
     m_scratch_ast_source_ap.reset();
@@ -1307,7 +1308,8 @@ Target::ReadMemory (const Address& addr,
     Address resolved_addr;
     if (!addr.IsSectionOffset())
     {
-        if (m_section_load_list.IsEmpty())
+        SectionLoadList &section_load_list = GetSectionLoadList();
+        if (section_load_list.IsEmpty())
         {
             // No sections are loaded, so we must assume we are not running
             // yet and anything we are given is a file address.
@@ -1321,7 +1323,7 @@ Target::ReadMemory (const Address& addr,
             // or because we have have a live process that has sections loaded
             // through the dynamic loader
             load_addr = addr.GetOffset(); // "addr" doesn't have a section, so its offset is the load address
-            m_section_load_list.ResolveLoadAddress (load_addr, resolved_addr);
+            section_load_list.ResolveLoadAddress (load_addr, resolved_addr);
         }
     }
     if (!resolved_addr.IsValid())
@@ -1534,7 +1536,8 @@ Target::ReadPointerFromMemory (const Address& addr,
         addr_t pointer_vm_addr = scalar.ULongLong(LLDB_INVALID_ADDRESS);
         if (pointer_vm_addr != LLDB_INVALID_ADDRESS)
         {
-            if (m_section_load_list.IsEmpty())
+            SectionLoadList &section_load_list = GetSectionLoadList();
+            if (section_load_list.IsEmpty())
             {
                 // No sections are loaded, so we must assume we are not running
                 // yet and anything we are given is a file address.
@@ -1546,7 +1549,7 @@ Target::ReadPointerFromMemory (const Address& addr,
                 // we have manually loaded some sections with "target modules load ..."
                 // or because we have have a live process that has sections loaded
                 // through the dynamic loader
-                m_section_load_list.ResolveLoadAddress (pointer_vm_addr, pointer_addr);
+                section_load_list.ResolveLoadAddress (pointer_vm_addr, pointer_addr);
             }
             // We weren't able to resolve the pointer value, so just return
             // an address with no section
@@ -2257,6 +2260,61 @@ Target::Install (ProcessLaunchInfo *launch_info)
         }
     }
     return error;
+}
+
+bool
+Target::ResolveLoadAddress (addr_t load_addr, Address &so_addr, uint32_t stop_id)
+{
+    return m_section_load_history.ResolveLoadAddress(stop_id, load_addr, so_addr);
+}
+
+bool
+Target::SetSectionLoadAddress (const SectionSP &section_sp, addr_t new_section_load_addr, bool warn_multiple)
+{
+    const addr_t old_section_load_addr = m_section_load_history.GetSectionLoadAddress (SectionLoadHistory::eStopIDNow, section_sp);
+    if (old_section_load_addr != new_section_load_addr)
+    {
+        uint32_t stop_id = 0;
+        ProcessSP process_sp(GetProcessSP());
+        if (process_sp)
+            stop_id = process_sp->GetStopID();
+        else
+            stop_id = m_section_load_history.GetLastStopID();
+        if (m_section_load_history.SetSectionLoadAddress (stop_id, section_sp, new_section_load_addr, warn_multiple))
+            return true; // Return true if the section load address was changed...
+    }
+    return false; // Return false to indicate nothing changed
+
+}
+
+bool
+Target::SetSectionUnloaded (const lldb::SectionSP &section_sp)
+{
+    uint32_t stop_id = 0;
+    ProcessSP process_sp(GetProcessSP());
+    if (process_sp)
+        stop_id = process_sp->GetStopID();
+    else
+        stop_id = m_section_load_history.GetLastStopID();
+    return m_section_load_history.SetSectionUnloaded (stop_id, section_sp);
+}
+
+bool
+Target::SetSectionUnloaded (const lldb::SectionSP &section_sp, addr_t load_addr)
+{
+    uint32_t stop_id = 0;
+    ProcessSP process_sp(GetProcessSP());
+    if (process_sp)
+        stop_id = process_sp->GetStopID();
+    else
+        stop_id = m_section_load_history.GetLastStopID();
+    return m_section_load_history.SetSectionUnloaded (stop_id, section_sp, load_addr);
+}
+
+void
+Target::ClearAllLoadedSections ()
+{
+    m_section_load_history.Clear();
 }
 
 //--------------------------------------------------------------

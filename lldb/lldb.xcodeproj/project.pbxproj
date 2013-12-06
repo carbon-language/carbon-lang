@@ -85,6 +85,8 @@
 		260E07C8136FAB9200CF21D3 /* OptionGroupFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C7136FAB9200CF21D3 /* OptionGroupFile.cpp */; };
 		261744781168585B005ADD65 /* SBType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261744771168585B005ADD65 /* SBType.cpp */; };
 		2617447A11685869005ADD65 /* SBType.h in Headers */ = {isa = PBXBuildFile; fileRef = 2617447911685869005ADD65 /* SBType.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		262173A118395D3800C52091 /* SectionLoadHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = 262173A018395D3800C52091 /* SectionLoadHistory.h */; };
+		262173A318395D4600C52091 /* SectionLoadHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262173A218395D4600C52091 /* SectionLoadHistory.cpp */; };
 		26274FA714030F79006BA130 /* DynamicLoaderDarwinKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26274FA514030F79006BA130 /* DynamicLoaderDarwinKernel.cpp */; };
 		2628A4D513D4977900F5487A /* ThreadKDP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2628A4D313D4977900F5487A /* ThreadKDP.cpp */; };
 		262CFC7711A4510000946C6C /* debugserver in Resources */ = {isa = PBXBuildFile; fileRef = 26CE05A0115C31E50022F371 /* debugserver */; };
@@ -952,6 +954,8 @@
 		2618EE641315B29C001D6D71 /* ThreadGDBRemote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadGDBRemote.h; sourceTree = "<group>"; };
 		261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SharingPtr.cpp; path = source/Utility/SharingPtr.cpp; sourceTree = "<group>"; };
 		261B5A5311C3F2AD00AABD0A /* SharingPtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SharingPtr.h; path = include/lldb/Utility/SharingPtr.h; sourceTree = "<group>"; };
+		262173A018395D3800C52091 /* SectionLoadHistory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SectionLoadHistory.h; path = include/lldb/Target/SectionLoadHistory.h; sourceTree = "<group>"; };
+		262173A218395D4600C52091 /* SectionLoadHistory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SectionLoadHistory.cpp; path = source/Target/SectionLoadHistory.cpp; sourceTree = "<group>"; };
 		26217930133BC8640083B112 /* lldb-private-types.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-private-types.h"; path = "include/lldb/lldb-private-types.h"; sourceTree = "<group>"; };
 		26217932133BCB850083B112 /* lldb-private-enumerations.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-private-enumerations.h"; path = "include/lldb/lldb-private-enumerations.h"; sourceTree = "<group>"; };
 		2623096E13D0EFFB006381D9 /* StreamBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = StreamBuffer.h; path = include/lldb/Core/StreamBuffer.h; sourceTree = "<group>"; };
@@ -3159,6 +3163,8 @@
 				26AB54111832DC3400EADFF3 /* RegisterCheckpoint.h */,
 				26BC7DF410F1B81A00F91463 /* RegisterContext.h */,
 				26BC7F3710F1B90C00F91463 /* RegisterContext.cpp */,
+				262173A018395D3800C52091 /* SectionLoadHistory.h */,
+				262173A218395D4600C52091 /* SectionLoadHistory.cpp */,
 				2618D78F1240115500F2B8FE /* SectionLoadList.h */,
 				2618D7911240116900F2B8FE /* SectionLoadList.cpp */,
 				26BC7DF510F1B81A00F91463 /* StackFrame.h */,
@@ -3688,6 +3694,7 @@
 				260CC63015D04377002BF2E0 /* OptionValueBoolean.h in Headers */,
 				260CC63115D04377002BF2E0 /* OptionValueProperties.h in Headers */,
 				260CC63215D04377002BF2E0 /* OptionValueDictionary.h in Headers */,
+				262173A118395D3800C52091 /* SectionLoadHistory.h in Headers */,
 				260CC63315D04377002BF2E0 /* OptionValueEnumeration.h in Headers */,
 				260CC63415D04377002BF2E0 /* OptionValueFileSpec.h in Headers */,
 				AF9B8F34182DB52900DA866F /* SystemRuntimeMacOSX.h in Headers */,
@@ -4130,6 +4137,7 @@
 				2689001A13353DDE00698AC0 /* CommandObjectFrame.cpp in Sources */,
 				2689001B13353DDE00698AC0 /* CommandObjectHelp.cpp in Sources */,
 				2689001D13353DDE00698AC0 /* CommandObjectLog.cpp in Sources */,
+				262173A318395D4600C52091 /* SectionLoadHistory.cpp in Sources */,
 				2689001E13353DDE00698AC0 /* CommandObjectMemory.cpp in Sources */,
 				2689001F13353DDE00698AC0 /* CommandObjectPlatform.cpp in Sources */,
 				2689002013353DDE00698AC0 /* CommandObjectProcess.cpp in Sources */,

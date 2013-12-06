@@ -35,7 +35,7 @@
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/PathMappingList.h"
-#include "lldb/Target/SectionLoadList.h"
+#include "lldb/Target/SectionLoadHistory.h"
 
 namespace lldb_private {
 
@@ -1001,14 +1001,14 @@ public:
     SectionLoadList&
     GetSectionLoadList()
     {
-        return m_section_load_list;
+        return m_section_load_history.GetCurrentSectionLoadList();
     }
 
-    const SectionLoadList&
-    GetSectionLoadList() const
-    {
-        return m_section_load_list;
-    }
+//    const SectionLoadList&
+//    GetSectionLoadList() const
+//    {
+//        return const_cast<SectionLoadHistory *>(&m_section_load_history)->GetCurrentSectionLoadList();
+//    }
 
     static Target *
     GetTargetFromContexts (const ExecutionContext *exe_ctx_ptr, 
@@ -1048,6 +1048,26 @@ public:
     Error
     Install(ProcessLaunchInfo *launch_info);
     
+    
+    bool
+    ResolveLoadAddress (lldb::addr_t load_addr,
+                        Address &so_addr,
+                        uint32_t stop_id = SectionLoadHistory::eStopIDNow);
+    
+    bool
+    SetSectionLoadAddress (const lldb::SectionSP &section,
+                           lldb::addr_t load_addr,
+                           bool warn_multiple = false);
+
+    bool
+    SetSectionUnloaded (const lldb::SectionSP &section_sp);
+
+    bool
+    SetSectionUnloaded (const lldb::SectionSP &section_sp, lldb::addr_t load_addr);
+    
+    void
+    ClearAllLoadedSections ();
+
     // Since expressions results can persist beyond the lifetime of a process,
     // and the const expression results are available after a process is gone,
     // we provide a way for expressions to be evaluated from the Target itself.
@@ -1250,7 +1270,7 @@ protected:
     Mutex           m_mutex;            ///< An API mutex that is used by the lldb::SB* classes make the SB interface thread safe
     ArchSpec        m_arch;
     ModuleList      m_images;           ///< The list of images for this process (shared libraries and anything dynamically loaded).
-    SectionLoadList m_section_load_list;
+    SectionLoadHistory m_section_load_history;
     BreakpointList  m_breakpoint_list;
     BreakpointList  m_internal_breakpoint_list;
     lldb::BreakpointSP m_last_created_breakpoint;
@@ -1260,7 +1280,6 @@ protected:
     // we can correctly tear down everything that we need to, so the only
     // class that knows about the process lifespan is this target class.
     lldb::ProcessSP m_process_sp;
-    bool m_valid;
     lldb::SearchFilterSP  m_search_filter_sp;
     PathMappingList m_image_search_paths;
     std::unique_ptr<ClangASTContext> m_scratch_ast_context_ap;
@@ -1273,8 +1292,8 @@ protected:
     typedef std::map<lldb::user_id_t, StopHookSP> StopHookCollection;
     StopHookCollection      m_stop_hooks;
     lldb::user_id_t         m_stop_hook_next_id;
+    bool                    m_valid;
     bool                    m_suppress_stop_hooks;
-    bool                    m_suppress_synthetic_value;
     
     static void
     ImageSearchPathsChanged (const PathMappingList &path_list,

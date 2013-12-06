@@ -19,7 +19,9 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
+
 
 using namespace lldb;
 using namespace lldb_private;

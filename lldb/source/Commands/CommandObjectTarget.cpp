@@ -49,6 +49,7 @@
 #include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadSpec.h"

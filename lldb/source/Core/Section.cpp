@@ -10,6 +10,7 @@
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;

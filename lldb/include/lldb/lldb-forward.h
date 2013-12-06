@@ -181,6 +181,8 @@ class   SearchFilter;
 class   Section;
 class   SectionImpl;
 class   SectionList;
+class   SectionLoadHistory;
+class   SectionLoadList;
 class   Settings;
 class   SourceManager;
 class   SourceManagerImpl;
@@ -340,6 +342,7 @@ namespace lldb {
 #endif // #ifndef LLDB_DISABLE_PYTHON
     typedef std::shared_ptr<lldb_private::Section> SectionSP;
     typedef std::weak_ptr<lldb_private::Section> SectionWP;
+    typedef std::shared_ptr<lldb_private::SectionLoadList> SectionLoadListSP;
     typedef std::shared_ptr<lldb_private::SearchFilter> SearchFilterSP;
     typedef std::shared_ptr<lldb_private::Settings> SettingsSP;
     typedef std::shared_ptr<lldb_private::StackFrame> StackFrameSP;
