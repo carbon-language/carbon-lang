@@ -80,7 +80,7 @@ AMDGPUSubtarget::isTargetELF() const {
 }
 size_t
 AMDGPUSubtarget::getDefaultSize(uint32_t dim) const {
-  if (dim > 3) {
+  if (dim > 2) {
     return 1;
   } else {
     return DefaultSize[dim];
