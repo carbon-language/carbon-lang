@@ -1066,7 +1066,7 @@ inline Registers_arm64::Registers_arm64(const void *registers) {
 
 inline Registers_arm64::Registers_arm64() {
   bzero(&_registers, sizeof(_registers));
-  bzero(&_registers, sizeof(_vectorHalfRegisters));
+  bzero(&_vectorHalfRegisters, sizeof(_vectorHalfRegisters));
 }
 
 inline bool Registers_arm64::validRegister(int regNum) const {
