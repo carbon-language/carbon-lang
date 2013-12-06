@@ -89,6 +89,11 @@ do
 
 
             ./finish-swig-${curlang}-LLDB.sh $SRC_ROOT $TARGET_DIR $CONFIG_BUILD_DIR "${PREFIX}" "${debug_flag}" "${makefile_flag}"
+            retval=$?
+            if [ $retval -ne 0 ]; then
+                echo "$(pwd)/finish-swig-${curlang}-LLDB.sh failed with exit code $retval"
+                exit $retval
+            fi
         fi
     fi
 done
