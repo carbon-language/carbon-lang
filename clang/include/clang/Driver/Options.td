@@ -1230,6 +1230,8 @@ def rtlib_EQ : Joined<["-", "--"], "rtlib=">;
 def r : Flag<["-"], "r">;
 def save_temps : Flag<["-", "--"], "save-temps">, Flags<[DriverOption]>,
   HelpText<"Save intermediate compilation results">;
+def via_file_asm : Flag<["-", "--"], "via-file-asm">, Flags<[DriverOption]>,
+  HelpText<"Write assembly to file for input to assemble jobs">;
 def sectalign : MultiArg<["-"], "sectalign", 3>;
 def sectcreate : MultiArg<["-"], "sectcreate", 3>;
 def sectobjectsymbols : MultiArg<["-"], "sectobjectsymbols", 2>;
