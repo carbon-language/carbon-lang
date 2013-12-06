@@ -29,7 +29,7 @@ static const int kAsanStackRightRedzoneMagic = 0xf3;
 struct ASanStackVariableDescription {
   const char *Name;  // Name of the variable that will be displayed by asan
                      // if a stack-related bug is reported.
-  size_t Size;       // Size of the variable in bytes.
+  uint64_t Size;     // Size of the variable in bytes.
   size_t Alignment;  // Alignment of the variable (power of 2).
   AllocaInst *AI;    // The actual AllocaInst.
   size_t Offset;     // Offset from the beginning of the frame;
