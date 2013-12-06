@@ -1486,16 +1486,11 @@ static void lowerGR128Binary(SelectionDAG &DAG, SDLoc DL, EVT VT,
   Odd = DAG.getTargetExtractSubreg(SystemZ::odd128(Is32Bit), DL, VT, Result);
 }
 
-SDValue SystemZTargetLowering::lowerSETCC(SDValue Op,
-                                          SelectionDAG &DAG) const {
-  SDValue CmpOp0   = Op.getOperand(0);
-  SDValue CmpOp1   = Op.getOperand(1);
-  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
-  SDLoc DL(Op);
-
-  unsigned CCValid, CCMask;
-  SDValue Glue = emitCmp(TM, DAG, DL, CmpOp0, CmpOp1, CC, CCValid, CCMask);
-
+// Return an i32 value that is 1 if the CC value produced by Glue is
+// in the mask CCMask and 0 otherwise.  CC is known to have a value
+// in CCValid, so other values can be ignored.
+static SDValue emitSETCC(SelectionDAG &DAG, SDLoc DL, SDValue Glue,
+                         unsigned CCValid, unsigned CCMask) {
   IPMConversion Conversion = getIPMConversion(CCValid, CCMask);
   SDValue Result = DAG.getNode(SystemZISD::IPM, DL, MVT::i32, Glue);
 
@@ -1516,6 +1511,18 @@ SDValue SystemZTargetLowering::lowerSETCC(SDValue Op,
   return Result;
 }
 
+SDValue SystemZTargetLowering::lowerSETCC(SDValue Op,
+                                          SelectionDAG &DAG) const {
+  SDValue CmpOp0   = Op.getOperand(0);
+  SDValue CmpOp1   = Op.getOperand(1);
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
+  SDLoc DL(Op);
+
+  unsigned CCValid, CCMask;
+  SDValue Glue = emitCmp(TM, DAG, DL, CmpOp0, CmpOp1, CC, CCValid, CCMask);
+  return emitSETCC(DAG, DL, Glue, CCValid, CCMask);
+}
+
 SDValue SystemZTargetLowering::lowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Chain    = Op.getOperand(0);
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
@@ -1525,10 +1532,10 @@ SDValue SystemZTargetLowering::lowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
 
   unsigned CCValid, CCMask;
-  SDValue Flags = emitCmp(TM, DAG, DL, CmpOp0, CmpOp1, CC, CCValid, CCMask);
+  SDValue Glue = emitCmp(TM, DAG, DL, CmpOp0, CmpOp1, CC, CCValid, CCMask);
   return DAG.getNode(SystemZISD::BR_CCMASK, DL, Op.getValueType(),
                      Chain, DAG.getConstant(CCValid, MVT::i32),
-                     DAG.getConstant(CCMask, MVT::i32), Dest, Flags);
+                     DAG.getConstant(CCMask, MVT::i32), Dest, Glue);
 }
 
 SDValue SystemZTargetLowering::lowerSELECT_CC(SDValue Op,
@@ -1541,14 +1548,37 @@ SDValue SystemZTargetLowering::lowerSELECT_CC(SDValue Op,
   SDLoc DL(Op);
 
   unsigned CCValid, CCMask;
-  SDValue Flags = emitCmp(TM, DAG, DL, CmpOp0, CmpOp1, CC, CCValid, CCMask);
+  SDValue Glue = emitCmp(TM, DAG, DL, CmpOp0, CmpOp1, CC, CCValid, CCMask);
+
+  // Special case for handling -1/0 results.  The shifts we use here
+  // should get optimized with the IPM conversion sequence.
+  ConstantSDNode *TrueC = dyn_cast<ConstantSDNode>(TrueOp);
+  ConstantSDNode *FalseC = dyn_cast<ConstantSDNode>(FalseOp);
+  if (TrueC && FalseC) {
+    int64_t TrueVal = TrueC->getSExtValue();
+    int64_t FalseVal = FalseC->getSExtValue();
+    if ((TrueVal == -1 && FalseVal == 0) || (TrueVal == 0 && FalseVal == -1)) {
+      // Invert the condition if we want -1 on false.
+      if (TrueVal == 0)
+        CCMask ^= CCValid;
+      SDValue Result = emitSETCC(DAG, DL, Glue, CCValid, CCMask);
+      EVT VT = Op.getValueType();
+      // Extend the result to VT.  Upper bits are ignored.
+      if (!is32Bit(VT))
+        Result = DAG.getNode(ISD::ANY_EXTEND, DL, VT, Result);
+      // Sign-extend from the low bit.
+      SDValue ShAmt = DAG.getConstant(VT.getSizeInBits() - 1, MVT::i32);
+      SDValue Shl = DAG.getNode(ISD::SHL, DL, VT, Result, ShAmt);
+      return DAG.getNode(ISD::SRA, DL, VT, Shl, ShAmt);
+    }
+  }
 
   SmallVector<SDValue, 5> Ops;
   Ops.push_back(TrueOp);
   Ops.push_back(FalseOp);
   Ops.push_back(DAG.getConstant(CCValid, MVT::i32));
   Ops.push_back(DAG.getConstant(CCMask, MVT::i32));
-  Ops.push_back(Flags);
+  Ops.push_back(Glue);
 
   SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
   return DAG.getNode(SystemZISD::SELECT_CCMASK, DL, VTs, &Ops[0], Ops.size());
