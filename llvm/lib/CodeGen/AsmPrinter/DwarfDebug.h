@@ -437,9 +437,6 @@ class DwarfDebug : public AsmPrinterHandler {
   // table for the same directory as DW_AT_comp_dir.
   StringRef CompilationDir;
 
-  // Counter for assigning globally unique IDs for CUs.
-  unsigned GlobalCUIndexCount;
-
   // Counter for assigning globally unique IDs for ranges.
   unsigned GlobalRangeCount;
 

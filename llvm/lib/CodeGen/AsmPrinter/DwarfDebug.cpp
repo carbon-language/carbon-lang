@@ -179,7 +179,7 @@ static unsigned getDwarfVersionFromModule(const Module *M) {
 
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     : Asm(A), MMI(Asm->MMI), FirstCU(0), SourceIdMap(DIEValueAllocator),
-      PrevLabel(NULL), GlobalCUIndexCount(0), GlobalRangeCount(0),
+      PrevLabel(NULL), GlobalRangeCount(0),
       InfoHolder(A, "info_string", DIEValueAllocator),
       SkeletonHolder(A, "skel_string", DIEValueAllocator) {
 
@@ -747,8 +747,10 @@ CompileUnit *DwarfDebug::constructCompileUnit(DICompileUnit DIUnit) {
   CompilationDir = DIUnit.getDirectory();
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
-  CompileUnit *NewCU = new CompileUnit(GlobalCUIndexCount++, Die, DIUnit, Asm,
-                                       this, &InfoHolder);
+  CompileUnit *NewCU = new CompileUnit(InfoHolder.getUnits().size(), Die,
+                                       DIUnit, Asm, this, &InfoHolder);
+  InfoHolder.addUnit(NewCU);
+
 
   FileIDCUMap[NewCU->getUniqueID()] = 0;
   // Call this to emit a .file directive if it wasn't emitted for the source
@@ -815,8 +817,6 @@ CompileUnit *DwarfDebug::constructCompileUnit(DICompileUnit DIUnit) {
 
   if (!FirstCU)
     FirstCU = NewCU;
-
-  InfoHolder.addUnit(NewCU);
 
   CUMap.insert(std::make_pair(DIUnit, NewCU));
   CUDieMap.insert(std::make_pair(Die, NewCU));
@@ -3048,8 +3048,10 @@ void DwarfDebug::addTypeUnitType(uint16_t Language, DIE *RefDie,
     }
   } else {
     DIE *UnitDie = new DIE(dwarf::DW_TAG_type_unit);
-    TypeUnit *NewTU = new TypeUnit(GlobalCUIndexCount++, UnitDie, Language, Asm,
-                                   this, &InfoHolder);
+    TypeUnit *NewTU = new TypeUnit(InfoHolder.getUnits().size(), UnitDie,
+                                   Language, Asm, this, &InfoHolder);
+    InfoHolder.addUnit(NewTU);
+
     NewTU->addUInt(UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                    Language);
 
@@ -3077,8 +3079,6 @@ void DwarfDebug::addTypeUnitType(uint16_t Language, DIE *RefDie,
     // Remove the References vector and add the type hash.
     I->second.first = Signature;
     I->second.second = NULL;
-
-    InfoHolder.addUnit(NewTU);
   }
 
   // Populate all the signatures.

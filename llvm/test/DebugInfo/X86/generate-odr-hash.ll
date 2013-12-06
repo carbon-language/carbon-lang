@@ -76,6 +76,9 @@
 
 ; Check that we generate a hash for wombat and the value, but not for the
 ; anonymous type contained within.
+; CHECK-LABEL: DW_AT_GNU_odr_signature [DW_FORM_data8] (0x685bcc220141e9d7)
+; CHECK: DW_TAG_structure_type
+; CHECK-NEXT: debug_str{{.*}}"wombat"
 ; CHECK: DW_TAG_type_unit
 ; CHECK: DW_TAG_structure_type
 ; The signature for the outer 'wombat' type - this can be FileChecked once the
@@ -87,9 +90,6 @@
 ; CHECK-NOT: DW_AT_GNU_odr_signature
 ; CHECK: DW_TAG_member
 ; CHECK-NEXT: debug_str{{.*}}"a"
-; CHECK-LABEL: DW_AT_GNU_odr_signature [DW_FORM_data8] (0x685bcc220141e9d7)
-; CHECK: DW_TAG_structure_type
-; CHECK-NEXT: debug_str{{.*}}"wombat"
 
 ; Use the unit size as a rough hash/identifier for the unit we're dealing with
 ; it happens to be unambiguous at the moment, but it's hardly ideal.
@@ -108,12 +108,12 @@
 ; CHECK-NEXT: unit_size = 0x0000002f
 ; CHECK-NEXT: Offset Name
 ; CHECK-NEXT: "walrus"
-; CHECK-NEXT: unit_size = 0x0000003f
-; CHECK-NEXT: Offset Name
-; CHECK-NEXT: "int"
 ; CHECK-NEXT: unit_size = 0x00000036
 ; CHECK-NEXT: Offset Name
 ; CHECK-NEXT: "wombat"
+; CHECK-NEXT: unit_size = 0x0000003f
+; CHECK-NEXT: Offset Name
+; CHECK-NEXT: "int"
 
 %struct.bar = type { i8 }
 %"class.echidna::capybara::mongoose::fluffy" = type { i32, i32 }
