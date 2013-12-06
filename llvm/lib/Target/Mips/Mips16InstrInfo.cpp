@@ -426,22 +426,6 @@ Mips16InstrInfo::loadImmediate(unsigned FrameReg,
   return Reg;
 }
 
-/// This function generates the sequence of instructions needed to get the
-/// result of adding register REG and immediate IMM.
-unsigned
-Mips16InstrInfo::basicLoadImmediate(
-  unsigned FrameReg,
-  int64_t Imm, MachineBasicBlock &MBB,
-  MachineBasicBlock::iterator II, DebugLoc DL,
-  unsigned &NewImm) const {
-  const TargetRegisterClass *RC = &Mips::CPU16RegsRegClass;
-  MachineRegisterInfo &RegInfo = MBB.getParent()->getRegInfo();
-  unsigned Reg = RegInfo.createVirtualRegister(RC);
-  BuildMI(MBB, II, DL, get(Mips::LwConstant32), Reg).addImm(Imm);
-  NewImm = 0;
-  return Reg;
-}
-
 unsigned Mips16InstrInfo::getAnalyzableBrOpc(unsigned Opc) const {
   return (Opc == Mips::BeqzRxImmX16   || Opc == Mips::BimmX16  ||
           Opc == Mips::Bimm16  ||

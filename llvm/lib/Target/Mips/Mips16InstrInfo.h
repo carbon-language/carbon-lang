@@ -88,11 +88,6 @@ public:
                          MachineBasicBlock::iterator II, DebugLoc DL,
                          unsigned &NewImm) const;
 
-  unsigned basicLoadImmediate(unsigned FrameReg,
-                              int64_t Imm, MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator II, DebugLoc DL,
-                              unsigned &NewImm) const;
-
   static bool validImmediate(unsigned Opcode, unsigned Reg, int64_t Amount);
 
   static bool validSpImm8(int offset) {
