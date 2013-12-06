@@ -246,10 +246,10 @@ private:
   /// @name FlushStmt Caches
   /// @{
 
-  /// \brief Set of parent Stmts for the currently serializing sub stmt.
+  /// \brief Set of parent Stmts for the currently serializing sub-stmt.
   llvm::DenseSet<Stmt *> ParentStmts;
 
-  /// \brief Offsets of sub stmts already serialized. The offset points
+  /// \brief Offsets of sub-stmts already serialized. The offset points
   /// just after the stmt record.
   llvm::DenseMap<Stmt *, uint64_t> SubStmtEntries;
 

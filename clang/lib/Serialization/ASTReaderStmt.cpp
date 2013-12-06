@@ -2491,7 +2491,7 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
     StmtStack.push_back(S);
   }
 Done:
-  assert(StmtStack.size() > PrevNumStmts && "Read too many sub stmts!");
+  assert(StmtStack.size() > PrevNumStmts && "Read too many sub-stmts!");
   assert(StmtStack.size() == PrevNumStmts + 1 && "Extra expressions on stack!");
   return StmtStack.pop_back_val();
 }

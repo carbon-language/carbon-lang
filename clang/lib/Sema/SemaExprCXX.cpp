@@ -5049,7 +5049,7 @@ Sema::MaybeCreateExprWithCleanups(ExprResult SubExpr) {
 }
 
 Expr *Sema::MaybeCreateExprWithCleanups(Expr *SubExpr) {
-  assert(SubExpr && "sub expression can't be null!");
+  assert(SubExpr && "subexpression can't be null!");
 
   CleanupVarDeclMarking();
 
@@ -5070,7 +5070,7 @@ Expr *Sema::MaybeCreateExprWithCleanups(Expr *SubExpr) {
 }
 
 Stmt *Sema::MaybeCreateStmtWithCleanups(Stmt *SubStmt) {
-  assert(SubStmt && "sub statement can't be null!");
+  assert(SubStmt && "sub-statement can't be null!");
 
   CleanupVarDeclMarking();
 

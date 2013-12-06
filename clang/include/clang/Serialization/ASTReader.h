@@ -1832,7 +1832,7 @@ public:
            "Should be called only during statement reading!");
     // Subexpressions are stored from last to first, so the next Stmt we need
     // is at the back of the stack.
-    assert(!StmtStack.empty() && "Read too many sub statements!");
+    assert(!StmtStack.empty() && "Read too many sub-statements!");
     return StmtStack.pop_back_val();
   }
 

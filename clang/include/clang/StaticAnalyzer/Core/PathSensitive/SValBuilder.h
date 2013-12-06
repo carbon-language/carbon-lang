@@ -88,7 +88,7 @@ public:
 
   virtual SVal evalComplement(NonLoc val) = 0;
 
-  /// Create a new value which represents a binary expression with two non
+  /// Create a new value which represents a binary expression with two non-
   /// location operands.
   virtual SVal evalBinOpNN(ProgramStateRef state, BinaryOperator::Opcode op,
                            NonLoc lhs, NonLoc rhs, QualType resultTy) = 0;

@@ -9876,7 +9876,7 @@ Sema::ActOnStmtExpr(SourceLocation LPLoc, Stmt *SubStmt,
   // example, it is not possible to goto into a stmt expression apparently.
   // More semantic analysis is needed.
 
-  // If there are sub stmts in the compound stmt, take the type of the last one
+  // If there are sub-stmts in the compound stmt, take the type of the last one
   // as the type of the stmtexpr.
   QualType Ty = Context.VoidTy;
   bool StmtExprMayBindToTemp = false;

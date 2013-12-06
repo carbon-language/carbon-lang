@@ -11893,7 +11893,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
         // Do nothing: static member functions aren't any different
         // from non-member functions.
       } else {
-        // Fix the sub expression, which really has to be an
+        // Fix the subexpression, which really has to be an
         // UnresolvedLookupExpr holding an overloaded member function
         // or template.
         Expr *SubExpr = FixOverloadedFunctionReference(UnOp->getSubExpr(),

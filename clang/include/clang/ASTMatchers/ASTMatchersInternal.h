@@ -799,7 +799,7 @@ struct TypeList {
   /// \brief The first type on the list.
   typedef T1 head;
 
-  /// \brief A sub list with the tail. ie everything but the head.
+  /// \brief A sublist with the tail. ie everything but the head.
   ///
   /// This type is used to do recursion. TypeList<>/EmptyTypeList indicates the
   /// end of the list.

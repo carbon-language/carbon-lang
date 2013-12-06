@@ -719,30 +719,30 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
           Tok.is(tok::identifier) &&
           Tok.getIdentifierInfo()->hasRevertedTokenIDToIdentifier()) {
         IdentifierInfo *II = Tok.getIdentifierInfo();
-        // Build up the mapping of revertable type traits, for future use.
-        if (RevertableTypeTraits.empty()) {
+        // Build up the mapping of revertible type traits, for future use.
+        if (RevertibleTypeTraits.empty()) {
 #define RTT_JOIN(X,Y) X##Y
-#define REVERTABLE_TYPE_TRAIT(Name)                         \
-          RevertableTypeTraits[PP.getIdentifierInfo(#Name)] \
+#define REVERTIBLE_TYPE_TRAIT(Name)                         \
+          RevertibleTypeTraits[PP.getIdentifierInfo(#Name)] \
             = RTT_JOIN(tok::kw_,Name)
 
-          REVERTABLE_TYPE_TRAIT(__is_arithmetic);
-          REVERTABLE_TYPE_TRAIT(__is_convertible);
-          REVERTABLE_TYPE_TRAIT(__is_empty);
-          REVERTABLE_TYPE_TRAIT(__is_floating_point);
-          REVERTABLE_TYPE_TRAIT(__is_function);
-          REVERTABLE_TYPE_TRAIT(__is_fundamental);
-          REVERTABLE_TYPE_TRAIT(__is_integral);
-          REVERTABLE_TYPE_TRAIT(__is_member_function_pointer);
-          REVERTABLE_TYPE_TRAIT(__is_member_pointer);
-          REVERTABLE_TYPE_TRAIT(__is_pod);
-          REVERTABLE_TYPE_TRAIT(__is_pointer);
-          REVERTABLE_TYPE_TRAIT(__is_same);
-          REVERTABLE_TYPE_TRAIT(__is_scalar);
-          REVERTABLE_TYPE_TRAIT(__is_signed);
-          REVERTABLE_TYPE_TRAIT(__is_unsigned);
-          REVERTABLE_TYPE_TRAIT(__is_void);
-#undef REVERTABLE_TYPE_TRAIT
+          REVERTIBLE_TYPE_TRAIT(__is_arithmetic);
+          REVERTIBLE_TYPE_TRAIT(__is_convertible);
+          REVERTIBLE_TYPE_TRAIT(__is_empty);
+          REVERTIBLE_TYPE_TRAIT(__is_floating_point);
+          REVERTIBLE_TYPE_TRAIT(__is_function);
+          REVERTIBLE_TYPE_TRAIT(__is_fundamental);
+          REVERTIBLE_TYPE_TRAIT(__is_integral);
+          REVERTIBLE_TYPE_TRAIT(__is_member_function_pointer);
+          REVERTIBLE_TYPE_TRAIT(__is_member_pointer);
+          REVERTIBLE_TYPE_TRAIT(__is_pod);
+          REVERTIBLE_TYPE_TRAIT(__is_pointer);
+          REVERTIBLE_TYPE_TRAIT(__is_same);
+          REVERTIBLE_TYPE_TRAIT(__is_scalar);
+          REVERTIBLE_TYPE_TRAIT(__is_signed);
+          REVERTIBLE_TYPE_TRAIT(__is_unsigned);
+          REVERTIBLE_TYPE_TRAIT(__is_void);
+#undef REVERTIBLE_TYPE_TRAIT
 #undef RTT_JOIN
         }
 
@@ -750,8 +750,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
         // update the token kind in place and parse again to treat it as
         // the appropriate kind of type trait.
         llvm::SmallDenseMap<IdentifierInfo *, tok::TokenKind>::iterator Known
-          = RevertableTypeTraits.find(II);
-        if (Known != RevertableTypeTraits.end()) {
+          = RevertibleTypeTraits.find(II);
+        if (Known != RevertibleTypeTraits.end()) {
           Tok.setKind(Known->second);
           return ParseCastExpression(isUnaryExpression, isAddressOfOperand,
                                      NotCastExpr, isTypeCast);
