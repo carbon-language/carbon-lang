@@ -199,14 +199,14 @@ GDBRemoteCommunication::SendNack ()
     return bytes_written;
 }
 
-size_t
+GDBRemoteCommunication::PacketResult
 GDBRemoteCommunication::SendPacket (const char *payload, size_t payload_length)
 {
     Mutex::Locker locker(m_sequence_mutex);
     return SendPacketNoLock (payload, payload_length);
 }
 
-size_t
+GDBRemoteCommunication::PacketResult
 GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_length)
 {
     if (IsConnected())
@@ -239,32 +239,32 @@ GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_le
         if (bytes_written == packet.GetSize())
         {
             if (GetSendAcks ())
-            {
-                if (GetAck () != '+')
-                {
-                    if (log)
-                        log->Printf("get ack failed...");
-                    return 0;
-                }
-            }
+                return GetAck ();
+            else
+                return PacketResult::Success;
         }
         else
         {
             if (log)
                 log->Printf ("error: failed to send packet: %.*s", (int)packet.GetSize(), packet.GetData());
         }
-        return bytes_written;
     }
-    return 0;
+    return PacketResult::ErrorSendFailed;
 }
 
-char
+GDBRemoteCommunication::PacketResult
 GDBRemoteCommunication::GetAck ()
 {
     StringExtractorGDBRemote packet;
-    if (WaitForPacketWithTimeoutMicroSecondsNoLock (packet, GetPacketTimeoutInMicroSeconds ()) == 1)
-        return packet.GetChar();
-    return 0;
+    PacketResult result = WaitForPacketWithTimeoutMicroSecondsNoLock (packet, GetPacketTimeoutInMicroSeconds ());
+    if (result == PacketResult::Success)
+    {
+        if (packet.GetResponseType() == StringExtractorGDBRemote::ResponseType::eAck)
+            return PacketResult::Success;
+        else
+            return PacketResult::ErrorSendAck;
+    }
+    return result;
 }
 
 bool
@@ -284,7 +284,7 @@ GDBRemoteCommunication::WaitForNotRunningPrivate (const TimeValue *timeout_ptr)
     return m_private_is_running.WaitForValueEqualTo (false, timeout_ptr, NULL);
 }
 
-size_t
+GDBRemoteCommunication::PacketResult
 GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtractorGDBRemote &packet, uint32_t timeout_usec)
 {
     uint8_t buffer[8192];
@@ -294,9 +294,10 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
 
     // Check for a packet from our cache first without trying any reading...
     if (CheckForPacket (NULL, 0, packet))
-        return packet.GetStringRef().size();
+        return PacketResult::Success;
 
     bool timed_out = false;
+    bool disconnected = false;
     while (IsConnected() && !timed_out)
     {
         lldb::ConnectionStatus status = eConnectionStatusNoConnection;
@@ -313,7 +314,7 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
         if (bytes_read > 0)
         {
             if (CheckForPacket (buffer, bytes_read, packet))
-                return packet.GetStringRef().size();
+                return PacketResult::Success;
         }
         else
         {
@@ -330,13 +331,19 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
             case eConnectionStatusNoConnection:
             case eConnectionStatusLostConnection:
             case eConnectionStatusError:
+                disconnected = true;
                 Disconnect();
                 break;
             }
         }
     }
-    packet.Clear ();    
-    return 0;
+    packet.Clear ();
+    if (disconnected)
+        return PacketResult::ErrorDisconnected;
+    if (timed_out)
+        return PacketResult::ErrorReplyTimeout;
+    else
+        return PacketResult::ErrorReplyFailed;
 }
 
 bool

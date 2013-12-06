@@ -275,7 +275,7 @@ GDBRemoteRegisterContext::SetPrimordialRegister(const lldb_private::RegisterInfo
     if (gdb_comm.SendPacketAndWaitForResponse(packet.GetString().c_str(),
                                               packet.GetString().size(),
                                               response,
-                                              false))
+                                              false) == GDBRemoteCommunication::PacketResult::Success)
     {
         if (response.IsOKResponse())
             return true;
@@ -298,7 +298,7 @@ GDBRemoteRegisterContext::SyncThreadState(Process *process)
     if (gdb_comm.SendPacketAndWaitForResponse(packet.GetString().c_str(),
                                               packet.GetString().size(),
                                               response,
-                                              false))
+                                              false) == GDBRemoteCommunication::PacketResult::Success)
     {
         if (response.IsOKResponse())
             InvalidateAllRegisters();
@@ -363,7 +363,7 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
                     if (gdb_comm.SendPacketAndWaitForResponse(packet.GetString().c_str(),
                                                               packet.GetString().size(),
                                                               response,
-                                                              false))
+                                                              false) == GDBRemoteCommunication::PacketResult::Success)
                     {
                         SetAllRegisterValid (false);
                         if (response.IsOKResponse())
@@ -519,7 +519,7 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
                 packet_len = ::snprintf (packet, sizeof(packet), "g");
             assert (packet_len < ((int)sizeof(packet) - 1));
 
-            if (gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false))
+            if (gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false) == GDBRemoteCommunication::PacketResult::Success)
             {
                 if (response.IsErrorResponse())
                     return false;
@@ -591,7 +591,7 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
             if (gdb_comm.SendPacketAndWaitForResponse (G_packet,
                                                        G_packet_len,
                                                        response,
-                                                       false))
+                                                       false) == GDBRemoteCommunication::PacketResult::Success)
             {
                 if (response.IsOKResponse())
                     return true;
@@ -660,7 +660,7 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
                                 if (gdb_comm.SendPacketAndWaitForResponse(packet.GetString().c_str(),
                                                                           packet.GetString().size(),
                                                                           response,
-                                                                          false))
+                                                                          false) == GDBRemoteCommunication::PacketResult::Success)
                                 {
                                     if (response.IsOKResponse())
                                         ++num_restored;

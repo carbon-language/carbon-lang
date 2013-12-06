@@ -358,7 +358,7 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
         const int packet_len = ::snprintf (packet, sizeof(packet), "qRegisterInfo%x", reg_num);
         assert (packet_len < (int)sizeof(packet));
         StringExtractorGDBRemote response;
-        if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false))
+        if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false) == GDBRemoteCommunication::PacketResult::Success)
         {
             response_type = response.GetResponseType();
             if (response_type == StringExtractorGDBRemote::eResponse)
@@ -617,7 +617,7 @@ ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
         // We have a valid process
         SetID (pid);
         GetThreadList();
-        if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, m_last_stop_packet, false))
+        if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, m_last_stop_packet, false) == GDBRemoteCommunication::PacketResult::Success)
         {
             if (!m_target.GetArchitecture().IsValid()) { // Make sure we have an architecture
                m_target.SetArchitecture(m_gdb_comm.GetProcessArchitecture());
@@ -807,7 +807,7 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, const ProcessLaunchInfo &launch_
                 return error;
             }
 
-            if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, m_last_stop_packet, false))
+            if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, m_last_stop_packet, false) == GDBRemoteCommunication::PacketResult::Success)
             {
                 if (!m_target.GetArchitecture().IsValid()) { // Make sure we have an architecture
                    m_target.SetArchitecture(m_gdb_comm.GetProcessArchitecture());
@@ -1972,7 +1972,7 @@ ProcessGDBRemote::DoDestroy ()
             bool send_async = true;
             const uint32_t old_packet_timeout = m_gdb_comm.SetPacketTimeout (3);
 
-            if (m_gdb_comm.SendPacketAndWaitForResponse("k", 1, response, send_async))
+            if (m_gdb_comm.SendPacketAndWaitForResponse("k", 1, response, send_async) == GDBRemoteCommunication::PacketResult::Success)
             {
                 char packet_cmd = response.GetChar(0);
 
@@ -2074,7 +2074,7 @@ ProcessGDBRemote::DoReadMemory (addr_t addr, void *buf, size_t size, Error &erro
     const int packet_len = ::snprintf (packet, sizeof(packet), "m%" PRIx64 ",%" PRIx64, (uint64_t)addr, (uint64_t)size);
     assert (packet_len + 1 < (int)sizeof(packet));
     StringExtractorGDBRemote response;
-    if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, true))
+    if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, true) == GDBRemoteCommunication::PacketResult::Success)
     {
         if (response.IsNormalResponse())
         {
@@ -2110,7 +2110,7 @@ ProcessGDBRemote::DoWriteMemory (addr_t addr, const void *buf, size_t size, Erro
     packet.Printf("M%" PRIx64 ",%" PRIx64 ":", addr, (uint64_t)size);
     packet.PutBytesAsRawHex8(buf, size, lldb::endian::InlHostByteOrder(), lldb::endian::InlHostByteOrder());
     StringExtractorGDBRemote response;
-    if (m_gdb_comm.SendPacketAndWaitForResponse(packet.GetData(), packet.GetSize(), response, true))
+    if (m_gdb_comm.SendPacketAndWaitForResponse(packet.GetData(), packet.GetSize(), response, true) == GDBRemoteCommunication::PacketResult::Success)
     {
         if (response.IsOKResponse())
         {

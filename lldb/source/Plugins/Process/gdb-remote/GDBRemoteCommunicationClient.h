@@ -47,12 +47,12 @@ public:
     bool
     HandshakeWithServer (lldb_private::Error *error_ptr);
 
-    size_t
+    PacketResult
     SendPacketAndWaitForResponse (const char *send_payload,
                                   StringExtractorGDBRemote &response,
                                   bool send_async);
 
-    size_t
+    PacketResult
     SendPacketAndWaitForResponse (const char *send_payload,
                                   size_t send_length,
                                   StringExtractorGDBRemote &response,
@@ -457,6 +457,11 @@ public:
     RestoreRegisterState (lldb::tid_t tid, uint32_t save_id);
     
 protected:
+
+    PacketResult
+    SendPacketAndWaitForResponseNoLock (const char *payload,
+                                        size_t payload_length,
+                                        StringExtractorGDBRemote &response);
 
     bool
     GetCurrentProcessInfo ();

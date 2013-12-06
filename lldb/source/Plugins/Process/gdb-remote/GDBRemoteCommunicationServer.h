@@ -150,118 +150,118 @@ protected:
     uint16_t m_port_offset;
     
 
-    size_t
+    PacketResult
     SendUnimplementedResponse (const char *packet);
 
-    size_t
+    PacketResult
     SendErrorResponse (uint8_t error);
 
-    size_t
+    PacketResult
     SendOKResponse ();
 
-    bool
+    PacketResult
     Handle_A (StringExtractorGDBRemote &packet);
     
-    bool
+    PacketResult
     Handle_qLaunchSuccess (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_qHostInfo (StringExtractorGDBRemote &packet);
     
-    bool
+    PacketResult
     Handle_qLaunchGDBServer (StringExtractorGDBRemote &packet);
     
-    bool
+    PacketResult
     Handle_qKillSpawnedProcess (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_qPlatform_mkdir (StringExtractorGDBRemote &packet);
     
-    bool
+    PacketResult
     Handle_qPlatform_chmod (StringExtractorGDBRemote &packet);
     
-    bool
+    PacketResult
     Handle_qProcessInfoPID (StringExtractorGDBRemote &packet);
     
-    bool
+    PacketResult
     Handle_qfProcessInfo (StringExtractorGDBRemote &packet);
     
-    bool 
+    PacketResult
     Handle_qsProcessInfo (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_qC (StringExtractorGDBRemote &packet);
 
-    bool 
+    PacketResult
     Handle_qUserName (StringExtractorGDBRemote &packet);
 
-    bool 
+    PacketResult
     Handle_qGroupName (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_qSpeedTest (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_QEnvironment  (StringExtractorGDBRemote &packet);
     
-    bool
+    PacketResult
     Handle_QLaunchArch (StringExtractorGDBRemote &packet);
     
-    bool
+    PacketResult
     Handle_QSetDisableASLR (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_QSetWorkingDir (StringExtractorGDBRemote &packet);
     
-    bool
+    PacketResult
     Handle_qGetWorkingDir (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_QStartNoAckMode (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_QSetSTDIN (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_QSetSTDOUT (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_QSetSTDERR (StringExtractorGDBRemote &packet);
     
-    bool
+    PacketResult
     Handle_vFile_Open (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_vFile_Close (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_vFile_pRead (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_vFile_pWrite (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_vFile_Size (StringExtractorGDBRemote &packet);
     
-    bool
+    PacketResult
     Handle_vFile_Mode (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_vFile_Exists (StringExtractorGDBRemote &packet);
     
-    bool
+    PacketResult
     Handle_vFile_symlink (StringExtractorGDBRemote &packet);
     
-    bool
+    PacketResult
     Handle_vFile_unlink (StringExtractorGDBRemote &packet);
 
-    bool
+    PacketResult
     Handle_vFile_Stat (StringExtractorGDBRemote &packet);
     
-    bool
+    PacketResult
     Handle_vFile_MD5 (StringExtractorGDBRemote &packet);
     
-    bool
+    PacketResult
     Handle_qPlatform_shell (StringExtractorGDBRemote &packet);
 
 private:

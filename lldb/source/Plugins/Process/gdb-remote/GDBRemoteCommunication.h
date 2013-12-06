@@ -35,6 +35,18 @@ public:
     {
         eBroadcastBitRunPacketSent = kLoUserBroadcastBit
     };
+    
+    enum class PacketResult
+    {
+        Success = 0,        // Success
+        ErrorSendFailed,    // Error sending the packet
+        ErrorSendAck,       // Didn't get an ack back after sending a packet
+        ErrorReplyFailed,   // Error getting the reply
+        ErrorReplyTimeout,  // Timed out waiting for reply
+        ErrorReplyInvalid,  // Got a reply but it wasn't valid for the packet that was sent
+        ErrorReplyAck,      // Sending reply ack failed
+        ErrorDisconnected   // We were disconnected
+    };
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
@@ -45,7 +57,7 @@ public:
     virtual
     ~GDBRemoteCommunication();
 
-    char
+    PacketResult
     GetAck ();
 
     size_t
@@ -223,15 +235,15 @@ protected:
         mutable bool m_dumped_to_log;
     };
 
-    size_t
+    PacketResult
     SendPacket (const char *payload,
                 size_t payload_length);
 
-    size_t
+    PacketResult
     SendPacketNoLock (const char *payload, 
                       size_t payload_length);
 
-    size_t
+    PacketResult
     WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtractorGDBRemote &response, 
                                                 uint32_t timeout_usec);
 
