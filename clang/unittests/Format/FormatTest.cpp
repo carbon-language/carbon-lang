@@ -4558,6 +4558,9 @@ TEST_F(FormatTest, FormatsArrays) {
       "llvm::outs() << \"aaaaaaaaaaaa: \"\n"
       "             << (*aaaaaaaiaaaaaaa)[aaaaaaaaaaaaaaaaaaaaaaaaa]\n"
       "                                  [aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa];");
+
+  verifyGoogleFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa<int>\n"
+                     "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[aaaaaaaaaaaa];");
 }
 
 TEST_F(FormatTest, LineStartsWithSpecialCharacter) {
