@@ -1008,7 +1008,7 @@ static StringRef getGCCToolchainDir(const ArgList &Args) {
   return GCC_INSTALL_PREFIX;
 }
 
-/// \brief Construct a GCCInstallationDetector from the driver.
+/// \brief Initialize a GCCInstallationDetector from the driver.
 ///
 /// This performs all of the autodetection and sets up the various paths.
 /// Once constructed, a GCCInstallationDetector is essentially immutable.
@@ -1017,9 +1017,9 @@ static StringRef getGCCToolchainDir(const ArgList &Args) {
 /// should instead pull the target out of the driver. This is currently
 /// necessary because the driver doesn't store the final version of the target
 /// triple.
-Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
-    const Driver &D, const llvm::Triple &TargetTriple, const ArgList &Args)
-    : IsValid(false) {
+void
+Generic_GCC::GCCInstallationDetector::init(
+    const Driver &D, const llvm::Triple &TargetTriple, const ArgList &Args) {
   llvm::Triple BiarchVariantTriple =
       TargetTriple.isArch32Bit() ? TargetTriple.get64BitArchVariant()
                                  : TargetTriple.get32BitArchVariant();
@@ -1556,7 +1556,7 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
 
 Generic_GCC::Generic_GCC(const Driver &D, const llvm::Triple& Triple,
                          const ArgList &Args)
-  : ToolChain(D, Triple, Args), GCCInstallation(getDriver(), Triple, Args) {
+  : ToolChain(D, Triple, Args), GCCInstallation() {
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
     getProgramPaths().push_back(getDriver().Dir);
@@ -2353,6 +2353,7 @@ static StringRef getMultilibDir(const llvm::Triple &Triple,
 
 Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   : Generic_ELF(D, Triple, Args) {
+  GCCInstallation.init(D, Triple, Args);
   llvm::Triple::ArchType Arch = Triple.getArch();
   std::string SysRoot = computeSysRoot();
 

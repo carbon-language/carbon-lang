@@ -91,7 +91,8 @@ protected:
     std::set<std::string> CandidateGCCInstallPaths;
 
   public:
-    GCCInstallationDetector(const Driver &D, const llvm::Triple &TargetTriple,
+    GCCInstallationDetector() : IsValid(false) {}
+    void init(const Driver &D, const llvm::Triple &TargetTriple,
                             const llvm::opt::ArgList &Args);
 
     /// \brief Check whether we detected a valid GCC install.
