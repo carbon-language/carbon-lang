@@ -3,6 +3,7 @@ set(LLVM_LINK_COMPONENTS
   )
 
 add_llvm_unittest(UtilsTests
+  ASanStackFrameLayoutTest.cpp
   Cloning.cpp
   IntegerDivision.cpp
   Local.cpp

@@ -41,8 +41,8 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
+#include "llvm/Transforms/Utils/ASanStackFrameLayout.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -93,11 +93,6 @@ static const char *const kAsanUnpoisonStackMemoryName =
 static const char *const kAsanOptionDetectUAR =
     "__asan_option_detect_stack_use_after_return";
 
-// These constants must match the definitions in the run-time library.
-static const int kAsanStackLeftRedzoneMagic = 0xf1;
-static const int kAsanStackMidRedzoneMagic = 0xf2;
-static const int kAsanStackRightRedzoneMagic = 0xf3;
-static const int kAsanStackPartialRedzoneMagic = 0xf4;
 #ifndef NDEBUG
 static const int kAsanStackAfterReturnMagic = 0xf5;
 #endif
@@ -141,8 +136,9 @@ static cl::opt<bool> ClInitializers("asan-initialization-order",
        cl::desc("Handle C++ initializer order"), cl::Hidden, cl::init(false));
 static cl::opt<bool> ClMemIntrin("asan-memintrin",
        cl::desc("Handle memset/memcpy/memmove"), cl::Hidden, cl::init(true));
-static cl::opt<bool> ClRealignStack("asan-realign-stack",
-       cl::desc("Realign stack to 32"), cl::Hidden, cl::init(true));
+static cl::opt<unsigned> ClRealignStack("asan-realign-stack",
+       cl::desc("Realign stack to the value of this flag (power of two)"),
+       cl::Hidden, cl::init(32));
 static cl::opt<std::string> ClBlacklistFile("asan-blacklist",
        cl::desc("File containing the list of objects to ignore "
                 "during instrumentation"), cl::Hidden);
@@ -376,7 +372,7 @@ class AddressSanitizerModule : public ModulePass {
 
   bool ShouldInstrumentGlobal(GlobalVariable *G);
   void createInitializerPoisonCalls(Module &M, GlobalValue *ModuleName);
-  size_t RedzoneSize() const {
+  size_t MinRedzoneSizeForGlobal() const {
     return RedzoneSizeForScale(Mapping.Scale);
   }
 
@@ -416,7 +412,6 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
 
   SmallVector<AllocaInst*, 16> AllocaVec;
   SmallVector<Instruction*, 8> RetVec;
-  uint64_t TotalStackSize;
   unsigned StackAlignment;
 
   Function *AsanStackMallocFunc[kMaxAsanStackMallocSizeClass + 1],
@@ -440,7 +435,7 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
       : F(F), ASan(ASan), DIB(*F.getParent()), C(ASan.C),
         IntptrTy(ASan.IntptrTy), IntptrPtrTy(PointerType::get(IntptrTy, 0)),
         Mapping(ASan.Mapping),
-        TotalStackSize(0), StackAlignment(1 << Mapping.Scale) {}
+        StackAlignment(1 << Mapping.Scale) {}
 
   bool runOnFunction() {
     if (!ClStack) return false;
@@ -479,8 +474,6 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
 
     StackAlignment = std::max(StackAlignment, AI.getAlignment());
     AllocaVec.push_back(&AI);
-    uint64_t AlignedSize = getAlignedAllocaSize(&AI);
-    TotalStackSize += AlignedSize;
   }
 
   /// \brief Collect lifetime intrinsic calls to check for use-after-scope
@@ -514,31 +507,20 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
 
   // Check if we want (and can) handle this alloca.
   bool isInterestingAlloca(AllocaInst &AI) const {
-    return (!AI.isArrayAllocation() &&
-            AI.isStaticAlloca() &&
-            AI.getAlignment() <= RedzoneSize() &&
-            AI.getAllocatedType()->isSized());
+    return (!AI.isArrayAllocation() && AI.isStaticAlloca() &&
+            AI.getAllocatedType()->isSized() &&
+            // alloca() may be called with 0 size, ignore it.
+            getAllocaSizeInBytes(&AI) > 0);
   }
 
-  size_t RedzoneSize() const {
-    return RedzoneSizeForScale(Mapping.Scale);
-  }
   uint64_t getAllocaSizeInBytes(AllocaInst *AI) const {
     Type *Ty = AI->getAllocatedType();
     uint64_t SizeInBytes = ASan.TD->getTypeAllocSize(Ty);
     return SizeInBytes;
   }
-  uint64_t getAlignedSize(uint64_t SizeInBytes) const {
-    size_t RZ = RedzoneSize();
-    return ((SizeInBytes + RZ - 1) / RZ) * RZ;
-  }
-  uint64_t getAlignedAllocaSize(AllocaInst *AI) const {
-    uint64_t SizeInBytes = getAllocaSizeInBytes(AI);
-    return getAlignedSize(SizeInBytes);
-  }
   /// Finds alloca where the value comes from.
   AllocaInst *findAllocaForValue(Value *V);
-  void poisonRedZones(const ArrayRef<AllocaInst*> &AllocaVec, IRBuilder<> &IRB,
+  void poisonRedZones(const ArrayRef<uint8_t> ShadowBytes, IRBuilder<> &IRB,
                       Value *ShadowBase, bool DoPoison);
   void poisonAlloca(Value *V, uint64_t Size, IRBuilder<> &IRB, bool DoPoison);
 
@@ -861,8 +843,8 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
   //   - Need to poison all copies, not just the main thread's one.
   if (G->isThreadLocal())
     return false;
-  // For now, just ignore this Alloca if the alignment is large.
-  if (G->getAlignment() > RedzoneSize()) return false;
+  // For now, just ignore this Global if the alignment is large.
+  if (G->getAlignment() > MinRedzoneSizeForGlobal()) return false;
 
   // Ignore all the globals with the names starting with "\01L_OBJC_".
   // Many of those are put into the .cstring section. The linker compresses
@@ -980,7 +962,7 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
     PointerType *PtrTy = cast<PointerType>(G->getType());
     Type *Ty = PtrTy->getElementType();
     uint64_t SizeInBytes = TD->getTypeAllocSize(Ty);
-    uint64_t MinRZ = RedzoneSize();
+    uint64_t MinRZ = MinRedzoneSizeForGlobal();
     // MinRZ <= RZ <= kMaxGlobalRedzone
     // and trying to make RZ to be ~ 1/4 of SizeInBytes.
     uint64_t RZ = std::max(MinRZ,
@@ -1323,32 +1305,6 @@ bool AddressSanitizer::runOnFunction(Function &F) {
   return res;
 }
 
-static uint64_t ValueForPoison(uint64_t PoisonByte, size_t ShadowRedzoneSize) {
-  if (ShadowRedzoneSize == 1) return PoisonByte;
-  if (ShadowRedzoneSize == 2) return (PoisonByte << 8) + PoisonByte;
-  if (ShadowRedzoneSize == 4)
-    return (PoisonByte << 24) + (PoisonByte << 16) +
-        (PoisonByte << 8) + (PoisonByte);
-  llvm_unreachable("ShadowRedzoneSize is either 1, 2 or 4");
-}
-
-static void PoisonShadowPartialRightRedzone(uint8_t *Shadow,
-                                            size_t Size,
-                                            size_t RZSize,
-                                            size_t ShadowGranularity,
-                                            uint8_t Magic) {
-  for (size_t i = 0; i < RZSize;
-       i+= ShadowGranularity, Shadow++) {
-    if (i + ShadowGranularity <= Size) {
-      *Shadow = 0;  // fully addressable
-    } else if (i >= Size) {
-      *Shadow = Magic;  // unaddressable
-    } else {
-      *Shadow = Size - i;  // first Size-i bytes are addressable
-    }
-  }
-}
-
 // Workaround for bug 11395: we don't want to instrument stack in functions
 // with large assembly blobs (32-bit only), otherwise reg alloc may crash.
 // FIXME: remove once the bug 11395 is fixed.
@@ -1378,65 +1334,32 @@ void FunctionStackPoisoner::initializeCallbacks(Module &M) {
       kAsanUnpoisonStackMemoryName, IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
 }
 
-void FunctionStackPoisoner::poisonRedZones(
-  const ArrayRef<AllocaInst*> &AllocaVec, IRBuilder<> &IRB, Value *ShadowBase,
-  bool DoPoison) {
-  size_t ShadowRZSize = RedzoneSize() >> Mapping.Scale;
-  assert(ShadowRZSize >= 1 && ShadowRZSize <= 4);
-  Type *RZTy = Type::getIntNTy(*C, ShadowRZSize * 8);
-  Type *RZPtrTy = PointerType::get(RZTy, 0);
-
-  Value *PoisonLeft  = ConstantInt::get(RZTy,
-    ValueForPoison(DoPoison ? kAsanStackLeftRedzoneMagic : 0LL, ShadowRZSize));
-  Value *PoisonMid   = ConstantInt::get(RZTy,
-    ValueForPoison(DoPoison ? kAsanStackMidRedzoneMagic : 0LL, ShadowRZSize));
-  Value *PoisonRight = ConstantInt::get(RZTy,
-    ValueForPoison(DoPoison ? kAsanStackRightRedzoneMagic : 0LL, ShadowRZSize));
-
-  // poison the first red zone.
-  IRB.CreateStore(PoisonLeft, IRB.CreateIntToPtr(ShadowBase, RZPtrTy));
-
-  // poison all other red zones.
-  uint64_t Pos = RedzoneSize();
-  for (size_t i = 0, n = AllocaVec.size(); i < n; i++) {
-    AllocaInst *AI = AllocaVec[i];
-    uint64_t SizeInBytes = getAllocaSizeInBytes(AI);
-    uint64_t AlignedSize = getAlignedAllocaSize(AI);
-    assert(AlignedSize - SizeInBytes < RedzoneSize());
-    Value *Ptr = NULL;
-
-    Pos += AlignedSize;
-
-    assert(ShadowBase->getType() == IntptrTy);
-    if (SizeInBytes < AlignedSize) {
-      // Poison the partial redzone at right
-      Ptr = IRB.CreateAdd(
-          ShadowBase, ConstantInt::get(IntptrTy,
-                                       (Pos >> Mapping.Scale) - ShadowRZSize));
-      size_t AddressableBytes = RedzoneSize() - (AlignedSize - SizeInBytes);
-      uint32_t Poison = 0;
-      if (DoPoison) {
-        PoisonShadowPartialRightRedzone((uint8_t*)&Poison, AddressableBytes,
-                                        RedzoneSize(),
-                                        1ULL << Mapping.Scale,
-                                        kAsanStackPartialRedzoneMagic);
-        Poison =
-            ASan.TD->isLittleEndian()
-                ? support::endian::byte_swap<uint32_t, support::little>(Poison)
-                : support::endian::byte_swap<uint32_t, support::big>(Poison);
-      }
-      Value *PartialPoison = ConstantInt::get(RZTy, Poison);
-      IRB.CreateStore(PartialPoison, IRB.CreateIntToPtr(Ptr, RZPtrTy));
+void
+FunctionStackPoisoner::poisonRedZones(const ArrayRef<uint8_t> ShadowBytes,
+                                      IRBuilder<> &IRB, Value *ShadowBase,
+                                      bool DoPoison) {
+  size_t n = ShadowBytes.size();
+  size_t LargeStoreSize = ASan.LongSize / 8;
+  size_t i;
+  for (i = 0; i + LargeStoreSize - 1 < n; i += LargeStoreSize) {
+    uint64_t Val = 0;
+    for (size_t j = 0; j < LargeStoreSize; j++) {
+      if (ASan.TD->isLittleEndian())
+        Val |= (uint64_t)ShadowBytes[i + j] << (8 * j);
+      else
+        Val = (Val << 8) | ShadowBytes[i + j];
     }
-
-    // Poison the full redzone at right.
-    Ptr = IRB.CreateAdd(ShadowBase,
-                        ConstantInt::get(IntptrTy, Pos >> Mapping.Scale));
-    bool LastAlloca = (i == AllocaVec.size() - 1);
-    Value *Poison = LastAlloca ? PoisonRight : PoisonMid;
-    IRB.CreateStore(Poison, IRB.CreateIntToPtr(Ptr, RZPtrTy));
-
-    Pos += RedzoneSize();
+    if (!Val) continue;
+    Value *Ptr = IRB.CreateAdd(ShadowBase, ConstantInt::get(IntptrTy, i));
+    Value *Poison = ConstantInt::get(IntptrTy, DoPoison ? Val : 0);
+    IRB.CreateStore(Poison, IRB.CreateIntToPtr(Ptr, IntptrPtrTy));
+  }
+  for (; i < n; i++) {
+    uint8_t Val =  ShadowBytes[i];
+    if (!Val) continue;
+    Value *Ptr = IRB.CreateAdd(ShadowBase, ConstantInt::get(IntptrTy, i));
+    Value *Poison = ConstantInt::get(IRB.getInt8Ty(), DoPoison ? Val : 0);
+    IRB.CreateStore(Poison, IRB.CreateIntToPtr(Ptr, IRB.getInt8PtrTy()));
   }
 }
 
@@ -1468,24 +1391,37 @@ void FunctionStackPoisoner::SetShadowToStackAfterReturnInlined(
 }
 
 void FunctionStackPoisoner::poisonStack() {
-  uint64_t LocalStackSize = TotalStackSize +
-                            (AllocaVec.size() + 1) * RedzoneSize();
-
-  bool DoStackMalloc = ASan.CheckUseAfterReturn
-      && LocalStackSize <= kMaxStackMallocSize;
   int StackMallocIdx = -1;
 
   assert(AllocaVec.size() > 0);
   Instruction *InsBefore = AllocaVec[0];
   IRBuilder<> IRB(InsBefore);
 
+  SmallVector<ASanStackVariableDescription, 16> SVD;
+  SVD.reserve(AllocaVec.size());
+  for (size_t i = 0, n = AllocaVec.size(); i < n; i++) {
+    AllocaInst *AI = AllocaVec[i];
+    ASanStackVariableDescription D = { AI->getName().data(),
+                                   getAllocaSizeInBytes(AI),
+                                   AI->getAlignment(), AI, 0};
+    SVD.push_back(D);
+  }
+  // Minimal header size (left redzone) is 4 pointers,
+  // i.e. 32 bytes on 64-bit platforms and 16 bytes in 32-bit platforms.
+  size_t MinHeaderSize = ASan.LongSize / 2;
+  ASanStackFrameLayout L;
+  ComputeASanStackFrameLayout(SVD, 1UL << Mapping.Scale, MinHeaderSize, &L);
+  DEBUG(dbgs() << L.DescriptionString << " --- " << L.FrameSize << "\n");
+  uint64_t LocalStackSize = L.FrameSize;
+  bool DoStackMalloc =
+      ASan.CheckUseAfterReturn && LocalStackSize <= kMaxStackMallocSize;
 
   Type *ByteArrayTy = ArrayType::get(IRB.getInt8Ty(), LocalStackSize);
   AllocaInst *MyAlloca =
       new AllocaInst(ByteArrayTy, "MyAlloca", InsBefore);
-  if (ClRealignStack && StackAlignment < RedzoneSize())
-    StackAlignment = RedzoneSize();
-  MyAlloca->setAlignment(StackAlignment);
+  assert((ClRealignStack & (ClRealignStack - 1)) == 0);
+  size_t FrameAlignment = std::max(L.FrameAlignment, (size_t)ClRealignStack);
+  MyAlloca->setAlignment(FrameAlignment);
   assert(MyAlloca->isStaticAlloca());
   Value *OrigStackBase = IRB.CreatePointerCast(MyAlloca, IntptrTy);
   Value *LocalStackBase = OrigStackBase;
@@ -1515,11 +1451,6 @@ void FunctionStackPoisoner::poisonStack() {
     LocalStackBase = Phi;
   }
 
-  // This string will be parsed by the run-time (DescribeAddressIfStack).
-  SmallString<2048> StackDescriptionStorage;
-  raw_svector_ostream StackDescription(StackDescriptionStorage);
-  StackDescription << AllocaVec.size() << " ";
-
   // Insert poison calls for lifetime intrinsics for alloca.
   bool HavePoisonedAllocas = false;
   for (size_t i = 0, n = AllocaPoisonCallVec.size(); i < n; i++) {
@@ -1531,24 +1462,16 @@ void FunctionStackPoisoner::poisonStack() {
     HavePoisonedAllocas |= APC.DoPoison;
   }
 
-  uint64_t Pos = RedzoneSize();
   // Replace Alloca instructions with base+offset.
-  for (size_t i = 0, n = AllocaVec.size(); i < n; i++) {
-    AllocaInst *AI = AllocaVec[i];
-    uint64_t SizeInBytes = getAllocaSizeInBytes(AI);
-    StringRef Name = AI->getName();
-    StackDescription << Pos << " " << SizeInBytes << " "
-                     << Name.size() << " " << Name << " ";
-    uint64_t AlignedSize = getAlignedAllocaSize(AI);
-    assert((AlignedSize % RedzoneSize()) == 0);
+  for (size_t i = 0, n = SVD.size(); i < n; i++) {
+    AllocaInst *AI = SVD[i].AI;
     Value *NewAllocaPtr = IRB.CreateIntToPtr(
-            IRB.CreateAdd(LocalStackBase, ConstantInt::get(IntptrTy, Pos)),
-            AI->getType());
+        IRB.CreateAdd(LocalStackBase,
+                      ConstantInt::get(IntptrTy, SVD[i].Offset)),
+        AI->getType());
     replaceDbgDeclareForAlloca(AI, NewAllocaPtr, DIB);
     AI->replaceAllUsesWith(NewAllocaPtr);
-    Pos += AlignedSize + RedzoneSize();
   }
-  assert(Pos == LocalStackSize);
 
   // The left-most redzone has enough space for at least 4 pointers.
   // Write the Magic value to redzone[0].
@@ -1560,7 +1483,7 @@ void FunctionStackPoisoner::poisonStack() {
     IRB.CreateAdd(LocalStackBase, ConstantInt::get(IntptrTy, ASan.LongSize/8)),
     IntptrPtrTy);
   GlobalVariable *StackDescriptionGlobal =
-      createPrivateGlobalForString(*F.getParent(), StackDescription.str());
+      createPrivateGlobalForString(*F.getParent(), L.DescriptionString);
   Value *Description = IRB.CreatePointerCast(StackDescriptionGlobal,
                                              IntptrTy);
   IRB.CreateStore(Description, BasePlus1);
@@ -1573,7 +1496,7 @@ void FunctionStackPoisoner::poisonStack() {
 
   // Poison the stack redzones at the entry.
   Value *ShadowBase = ASan.memToShadow(LocalStackBase, IRB);
-  poisonRedZones(AllocaVec, IRB, ShadowBase, true);
+  poisonRedZones(L.ShadowBytes, IRB, ShadowBase, true);
 
   // Unpoison the stack before all ret instructions.
   for (size_t i = 0, n = RetVec.size(); i < n; i++) {
@@ -1583,7 +1506,7 @@ void FunctionStackPoisoner::poisonStack() {
     IRBRet.CreateStore(ConstantInt::get(IntptrTy, kRetiredStackFrameMagic),
                        BasePlus0);
     // Unpoison the stack.
-    poisonRedZones(AllocaVec, IRBRet, ShadowBase, false);
+    poisonRedZones(L.ShadowBytes, IRBRet, ShadowBase, false);
     if (DoStackMalloc) {
       assert(StackMallocIdx >= 0);
       // In use-after-return mode, mark the whole stack frame unaddressable.

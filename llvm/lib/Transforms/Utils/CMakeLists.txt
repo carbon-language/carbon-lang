@@ -1,4 +1,5 @@
 add_llvm_library(LLVMTransformUtils
+  ASanStackFrameLayout.cpp
   BasicBlockUtils.cpp
   BreakCriticalEdges.cpp
   BuildLibCalls.cpp
