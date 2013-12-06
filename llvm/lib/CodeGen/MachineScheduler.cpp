@@ -2175,8 +2175,9 @@ void GenericScheduler::SchedBoundary::bumpNode(SUnit *SU) {
   // exceed the issue width.
   const MCSchedClassDesc *SC = DAG->getSchedClass(SU);
   unsigned IncMOps = SchedModel->getNumMicroOps(SU->getInstr());
-  assert(CurrMOps == 0 || (CurrMOps + IncMOps) <= SchedModel->getIssueWidth() &&
-         "Cannot scheduling this instructions MicroOps in the current cycle.");
+  assert(
+      (CurrMOps == 0 || (CurrMOps + IncMOps) <= SchedModel->getIssueWidth()) &&
+      "Cannot schedule this instructions MicroOps in the current cycle.");
 
   unsigned ReadyCycle = (isTop() ? SU->TopReadyCycle : SU->BotReadyCycle);
   DEBUG(dbgs() << "  Ready @" << ReadyCycle << "c\n");
