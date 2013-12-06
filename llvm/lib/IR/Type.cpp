@@ -156,17 +156,11 @@ int Type::getFPMantissaWidth() const {
 /// iff all of the members of the type are sized as well.  Since asking for
 /// their size is relatively uncommon, move this operation out of line.
 bool Type::isSizedDerivedType() const {
-  if (this->isIntegerTy())
-    return true;
-
   if (const ArrayType *ATy = dyn_cast<ArrayType>(this))
     return ATy->getElementType()->isSized();
 
   if (const VectorType *VTy = dyn_cast<VectorType>(this))
     return VTy->getElementType()->isSized();
-
-  if (!this->isStructTy()) 
-    return false;
 
   return cast<StructType>(this)->isSized();
 }
