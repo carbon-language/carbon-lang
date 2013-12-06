@@ -222,3 +222,13 @@
 // Test whether predefines are as expected when targeting cortex-m4.
 // RUN: %clang -target armv7 -mthumb -mcpu=cortex-m4 -x c -E -dM %s -o - | FileCheck --check-prefix=M4-THUMB %s
 // M4-THUMB:#define __ARM_ARCH_EXT_IDIV__ 1
+
+// Test whether predefines are as expected when targeting krait.
+// RUN: %clang -target armv7 -mcpu=krait -x c -E -dM %s -o - | FileCheck --check-prefix=KRAIT-ARM %s
+// KRAIT-ARM:#define __ARM_ARCH_EXT_IDIV__ 1
+// KRAIT-ARM:#define  __ARM_VFPV4__ 1
+
+// RUN: %clang -target armv7 -mthumb -mcpu=krait -x c -E -dM %s -o - | FileCheck --check-prefix=KRAIT-THUMB %s
+// KRAIT-THUMB:#define __ARM_ARCH_EXT_IDIV__ 1
+// KRAIT-THUMB:#define  __ARM_VFPV4__ 1
+
