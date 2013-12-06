@@ -5,15 +5,14 @@
 // RUN: %t 8
 // RUN: not %t 9  2>&1 | FileCheck --check-prefix=CHECK-9  %s
 // RUN: not %t 10 2>&1 | FileCheck --check-prefix=CHECK-10 %s
+// RUN: not %t 30 2>&1 | FileCheck --check-prefix=CHECK-30 %s
+// RUN: not %t 31 2>&1 | FileCheck --check-prefix=CHECK-31 %s
+// RUN: not %t 41 2>&1 | FileCheck --check-prefix=CHECK-41 %s
+// RUN: not %t 42 2>&1 | FileCheck --check-prefix=CHECK-42 %s
 // RUN: not %t 62 2>&1 | FileCheck --check-prefix=CHECK-62 %s
-// RUN: not %t 63 2>&1 | FileCheck --check-prefix=CHECK-63 %s
 // RUN: not %t 63 2>&1 | FileCheck --check-prefix=CHECK-63 %s
 // RUN: not %t 73 2>&1 | FileCheck --check-prefix=CHECK-73 %s
 // RUN: not %t 74 2>&1 | FileCheck --check-prefix=CHECK-74 %s
-// RUN: not %t 126 2>&1 | FileCheck --check-prefix=CHECK-126 %s
-// RUN: not %t 127 2>&1 | FileCheck --check-prefix=CHECK-127 %s
-// RUN: not %t 137 2>&1 | FileCheck --check-prefix=CHECK-137 %s
-// RUN: not %t 138 2>&1 | FileCheck --check-prefix=CHECK-138 %s
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,15 +30,15 @@ int main(int argc, char **argv) {
   // make sure BBB and CCC are not removed;
   return *(short*)(p) + BBB[argc % 2] + CCC[argc % 2];
 }
-// CHECK-m2:  'AAA' <== Memory access at offset 30 underflows this variable
-// CHECK-m1:  'AAA' <== Memory access at offset 31 partially underflows this variable
-// CHECK-9:   'AAA' <== Memory access at offset 41 partially overflows this variable
-// CHECK-10:  'AAA' <== Memory access at offset 42 overflows this variable
-// CHECK-62:  'BBB' <== Memory access at offset 94 underflows this variable
-// CHECK-63:  'BBB' <== Memory access at offset 95 partially underflows this variable
-// CHECK-73:  'BBB' <== Memory access at offset 105 partially overflows this variable
-// CHECK-74:  'BBB' <== Memory access at offset 106 overflows this variable
-// CHECK-126: 'CCC' <== Memory access at offset 158 underflows this variable
-// CHECK-127: 'CCC' <== Memory access at offset 159 partially underflows this variable
-// CHECK-137: 'CCC' <== Memory access at offset 169 partially overflows this variable
-// CHECK-138: 'CCC' <== Memory access at offset 170 overflows this variable
+// CHECK-m2: 'AAA' <== {{.*}}underflows this variable
+// CHECK-m1: 'AAA' <== {{.*}}partially underflows this variable
+// CHECK-9:  'AAA' <== {{.*}}partially overflows this variable
+// CHECK-10: 'AAA' <== {{.*}}overflows this variable
+// CHECK-30: 'BBB' <== {{.*}}underflows this variable
+// CHECK-31: 'BBB' <== {{.*}}partially underflows this variable
+// CHECK-41: 'BBB' <== {{.*}}partially overflows this variable
+// CHECK-42: 'BBB' <== {{.*}}overflows this variable
+// CHECK-62: 'CCC' <== {{.*}}underflows this variable
+// CHECK-63: 'CCC' <== {{.*}}partially underflows this variable
+// CHECK-73: 'CCC' <== {{.*}}partially overflows this variable
+// CHECK-74: 'CCC' <== {{.*}}overflows this variable
