@@ -920,10 +920,7 @@ def WeakRef : InheritableAttr {
 }
 
 def X86ForceAlignArgPointer : InheritableAttr, TargetSpecificAttr {
-  let Spellings = [GNU<"force_align_arg_pointer">];
-  // Technically, this appertains to a FunctionDecl, but the target-specific
-  // code silently allows anything function-like (such as typedefs or function
-  // pointers), but does not apply the attribute to them.
+  let Spellings = [];
 }
 
 // Attribute to disable AddressSanitizer (or equivalent) checks.

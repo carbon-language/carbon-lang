@@ -233,7 +233,8 @@ namespace {
         }
       }
       if (Triple.getArch() != llvm::Triple::x86_64 &&
-          Attr.getKind() == AttributeList::AT_X86ForceAlignArgPointer) {
+          (Attr.getName()->getName() == "force_align_arg_pointer" ||
+           Attr.getName()->getName() == "__force_align_arg_pointer__")) {
         HandleX86ForceAlignArgPointerAttr(D, Attr, S);
         return true;
       }
