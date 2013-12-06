@@ -6494,8 +6494,8 @@ void clang_disposeCXTUResourceUsage(CXTUResourceUsage usage) {
     delete (MemUsageEntries*) usage.data;
 }
 
-CXSkippedRanges *clang_getSkippedRanges(CXTranslationUnit TU, CXFile file) {
-  CXSkippedRanges *skipped = new CXSkippedRanges;
+CXSourceRangeList *clang_getSkippedRanges(CXTranslationUnit TU, CXFile file) {
+  CXSourceRangeList *skipped = new CXSourceRangeList;
   skipped->count = 0;
   skipped->ranges = 0;
 
@@ -6528,10 +6528,10 @@ CXSkippedRanges *clang_getSkippedRanges(CXTranslationUnit TU, CXFile file) {
   return skipped;
 }
 
-void clang_disposeSkippedRanges(CXSkippedRanges *skipped) {
-  if (skipped) {
-    delete[] skipped->ranges;
-    delete skipped;
+void clang_disposeSourceRangeList(CXSourceRangeList *ranges) {
+  if (ranges) {
+    delete[] ranges->ranges;
+    delete ranges;
   }
 }
 

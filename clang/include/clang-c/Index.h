@@ -599,31 +599,30 @@ CINDEX_LINKAGE CXSourceLocation clang_getRangeStart(CXSourceRange range);
 CINDEX_LINKAGE CXSourceLocation clang_getRangeEnd(CXSourceRange range);
 
 /**
- * \brief Identifies an array of ranges that were skipped by the preprocessor.
- *
- * The preprocessor will skip lines when they are surrounded by an
- * if/ifdef/ifndef directive whose condition does not evaluate to true.
+ * \brief Identifies an array of ranges.
  */
 typedef struct {
   /** \brief The number of ranges in the \c ranges array. */
   unsigned count;
   /**
-   * \brief An array of \c CXSourceRange, where each range starts at the
-   * preprocessor directive after the # token, and ends at the end of the
-   * corresponding endif.
+   * \brief An array of \c CXSourceRanges.
    */
   CXSourceRange *ranges;
-} CXSkippedRanges;
+} CXSourceRangeList;
 
 /**
  * \brief Retrieve all ranges that were skipped by the preprocessor.
+ *
+ * The preprocessor will skip lines when they are surrounded by an
+ * if/ifdef/ifndef directive whose condition does not evaluate to true.
  */
-CINDEX_LINKAGE CXSkippedRanges *clang_getSkippedRanges(CXTranslationUnit tu, CXFile file);
+CINDEX_LINKAGE CXSourceRangeList *clang_getSkippedRanges(CXTranslationUnit tu,
+                                                         CXFile file);
 
 /**
- * \brief Destroy the given \c CXSkippedRanges.
+ * \brief Destroy the given \c CXSourceRangeList.
  */
-CINDEX_LINKAGE void clang_disposeSkippedRanges(CXSkippedRanges *skipped);
+CINDEX_LINKAGE void clang_disposeSourceRangeList(CXSourceRangeList *ranges);
 
 /**
  * @}

@@ -3183,7 +3183,7 @@ int perform_token_annotation(int argc, const char **argv) {
   CXSourceLocation startLoc, endLoc;
   CXFile file = 0;
   CXCursor *cursors = 0;
-  CXSkippedRanges *skipped_ranges = 0;
+  CXSourceRangeList *skipped_ranges = 0;
   unsigned i;
 
   input += strlen("-test-annotate-tokens=");
@@ -3283,7 +3283,7 @@ int perform_token_annotation(int argc, const char **argv) {
     PrintExtent(stdout, start_line, start_column, end_line, end_column);
     printf("\n");
   }
-  clang_disposeSkippedRanges(skipped_ranges);
+  clang_disposeSourceRangeList(skipped_ranges);
 
   for (i = 0; i != num_tokens; ++i) {
     const char *kind = "<unknown>";
