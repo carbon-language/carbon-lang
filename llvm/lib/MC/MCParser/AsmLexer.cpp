@@ -25,6 +25,7 @@ AsmLexer::AsmLexer(const MCAsmInfo &_MAI) : MAI(_MAI)  {
   CurBuf = NULL;
   CurPtr = NULL;
   isAtStartOfLine = true;
+  AllowAtInIdentifier = !StringRef(MAI.getCommentString()).startswith("@");
 }
 
 AsmLexer::~AsmLexer() {
@@ -144,7 +145,6 @@ static bool IsIdentifierChar(char c, bool AllowAt) {
          (c == '@' && AllowAt) || c == '?';
 }
 AsmToken AsmLexer::LexIdentifier() {
-  bool AllowAtInIdentifier = !StringRef(MAI.getCommentString()).startswith("@");
   // Check for floating point literals.
   if (CurPtr[-1] == '.' && isdigit(*CurPtr)) {
     // Disambiguate a .1243foo identifier from a floating literal.
