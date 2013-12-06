@@ -3,7 +3,7 @@
 <html>
 <head>
   <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-  <title>Clang - C++98, C++11, and C++14 Status</title>
+  <title>Clang - C++14, C++11 and C++98 Status</title>
   <link type="text/css" rel="stylesheet" href="menu.css">
   <link type="text/css" rel="stylesheet" href="content.css">
   <style type="text/css">
@@ -23,13 +23,26 @@
 <div id="content">
 
 <!--*************************************************************************-->
-<h1>C++98, C++11, and C++14 Support in Clang</h1>
+<h1>C++14, C++11 and C++98 Support in Clang</h1>
 <!--*************************************************************************-->
 <p>Last updated: $Date$</p>
 
+<p>Clang fully implements all published ISO C++ standards including <a
+href="#cxx11">C++11</a> as well as the upcoming provisionally named <a
+href="#cxx14">C++14</a>.</p>
+
+<p>The LLVM community is continually striving to improve C++ standards
+compliance between releases by submitting and tracking <a
+href="cxx_dr_status.html">C++ Defect Reports</a> and implementing resolutions
+as they become available.</p>
+
+<p>Experimental work is also under way to implement <a href="#ts">C++ Technical
+Specifications</a> that will help drive the future of the C++ programming
+language.</p>
+
 <h2 id="cxx98">C++98 implementation status</h2>
 
-<p>Clang currently implements all of the ISO C++ 1998 standard
+<p>Clang implements all of the ISO C++ 1998 standard
   (including the defects addressed in the ISO C++ 2003 standard)
   except for <tt>export</tt> (which has been removed in C++11)
   and is considered a production-quality C++ compiler.  The <a
