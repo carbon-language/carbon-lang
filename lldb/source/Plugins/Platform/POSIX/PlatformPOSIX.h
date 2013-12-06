@@ -112,7 +112,7 @@ public:
                   uint64_t &high);
 
 protected:
-    std::auto_ptr<lldb_private::OptionGroupOptions> m_options;
+    std::unique_ptr<lldb_private::OptionGroupOptions> m_options;
         
     lldb::PlatformSP m_remote_platform_sp; // Allow multiple ways to connect to a remote POSIX-compliant OS
     
