@@ -58,6 +58,8 @@ ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx,
                                  const CXXRecordDecl *PrimaryBase,
                                  bool IsPrimaryBaseVirtual,
                                  const CXXRecordDecl *BaseSharingVBPtr,
+                                 bool HasZeroSizedSubObject,
+                                 bool LeadsWithZeroSizedBase,
                                  const BaseOffsetsMapTy& BaseOffsets,
                                  const VBaseOffsetsMapTy& VBaseOffsets)
   : Size(size), DataSize(datasize), Alignment(alignment),
@@ -80,6 +82,8 @@ ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx,
   CXXInfo->VBPtrOffset = vbptroffset;
   CXXInfo->HasExtendableVFPtr = hasExtendableVFPtr;
   CXXInfo->BaseSharingVBPtr = BaseSharingVBPtr;
+  CXXInfo->HasZeroSizedSubObject = HasZeroSizedSubObject;
+  CXXInfo->LeadsWithZeroSizedBase = LeadsWithZeroSizedBase;
 
 
 #ifndef NDEBUG

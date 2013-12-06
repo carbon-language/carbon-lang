@@ -104,6 +104,14 @@ private:
     /// a primary base class.
     bool HasExtendableVFPtr : 1;
 
+    /// HasZeroSizedSubObject - True if this class contains a zero sized member or base or a base
+    /// with a zero sized member or base.  Only used for MS-ABI.
+    bool HasZeroSizedSubObject : 1;
+
+    /// \brief True if this class is zero sized or first base is zero sized or
+    /// has this property.  Only used for MS-ABI.
+    bool LeadsWithZeroSizedBase : 1;
+
     /// PrimaryBase - The primary base info for this record.
     llvm::PointerIntPair<const CXXRecordDecl *, 1, bool> PrimaryBase;
 
@@ -145,6 +153,8 @@ private:
                   const CXXRecordDecl *PrimaryBase,
                   bool IsPrimaryBaseVirtual,
                   const CXXRecordDecl *BaseSharingVBPtr,
+                  bool HasZeroSizedSubObject,
+                  bool LeadsWithZeroSizedBase,
                   const BaseOffsetsMapTy& BaseOffsets,
                   const VBaseOffsetsMapTy& VBaseOffsets);
 
@@ -270,6 +280,16 @@ public:
 
   CharUnits getRequiredAlignment() const {
     return RequiredAlignment;
+  }
+
+  bool hasZeroSizedSubObject() const {
+    assert(CXXInfo && "Record layout does not have C++ specific info!");
+    return CXXInfo->HasZeroSizedSubObject;
+  }
+
+  bool leadsWithZeroSizedBase() const {
+    assert(CXXInfo && "Record layout does not have C++ specific info!");
+    return CXXInfo->LeadsWithZeroSizedBase;
   }
 
   /// getVBPtrOffset - Get the offset for virtual base table pointer.
