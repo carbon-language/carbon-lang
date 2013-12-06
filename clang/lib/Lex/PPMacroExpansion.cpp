@@ -1048,7 +1048,7 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
 static bool HasAttribute(const IdentifierInfo *II) {
   StringRef Name = II->getName();
   // Normalize the attribute name, __foo__ becomes foo.
-  if (Name.startswith("__") && Name.endswith("__") && Name.size() >= 4)
+  if (Name.size() >= 4 && Name.startswith("__") && Name.endswith("__"))
     Name = Name.substr(2, Name.size() - 4);
 
   // FIXME: Do we need to handle namespaces here?
