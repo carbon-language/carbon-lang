@@ -7,6 +7,7 @@ add_subdirectory(PECOFF)
 add_subdirectory(YAML)
 add_lld_library(lldReaderWriter
   CoreLinkingContext.cpp
+  FileArchive.cpp
   LinkerScript.cpp
   Reader.cpp
   Writer.cpp
