@@ -157,6 +157,28 @@ struct import_lookup_table_entry32 {
   }
 };
 
+struct export_directory_table_entry {
+  support::ulittle32_t ExportFlags;
+  support::ulittle32_t TimeDateStamp;
+  support::ulittle16_t MajorVersion;
+  support::ulittle16_t MinorVersion;
+  support::ulittle32_t NameRVA;
+  support::ulittle32_t OrdinalBase;
+  support::ulittle32_t AddressTableEntries;
+  support::ulittle32_t NumberOfNamePointers;
+  support::ulittle32_t ExportAddressTableRVA;
+  support::ulittle32_t NamePointerRVA;
+  support::ulittle32_t OrdinalTableRVA;
+};
+
+struct export_address_table_entry {
+  support::ulittle32_t ExportRVA;
+  support::ulittle32_t ForwarderRVA;
+};
+
+typedef support::ulittle32_t export_name_pointer_table_entry;
+typedef support::ulittle16_t export_ordinal_table_entry;
+
 struct coff_symbol {
   struct StringTableOffset {
     support::ulittle32_t Zeroes;
