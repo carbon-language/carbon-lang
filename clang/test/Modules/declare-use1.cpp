@@ -3,5 +3,5 @@
 
 #include "g.h"
 #include "e.h"
-#include "f.h" // expected-error {{use of a module not declared used}}
+#include "f.h" // expected-error {{module XG does not depend on a module exporting 'f.h'}}
 const int g2 = g1+e+f;

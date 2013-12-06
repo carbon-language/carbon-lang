@@ -610,7 +610,7 @@ void Preprocessor::verifyModuleInclude(SourceLocation FilenameLoc,
   if (RequestingModule && getLangOpts().ModulesDeclUse &&
       violatesUseDeclarations(RequestingModule, RequestedModule.getModule()))
     Diag(FilenameLoc, diag::error_undeclared_use_of_module)
-        << Filename;
+        << RequestingModule->getFullModuleName() << Filename;
 }
 
 const FileEntry *Preprocessor::LookupFile(

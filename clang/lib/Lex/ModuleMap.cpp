@@ -1066,7 +1066,7 @@ void ModuleMapParser::skipUntil(MMToken::TokenKind K) {
 bool ModuleMapParser::parseModuleId(ModuleId &Id) {
   Id.clear();
   do {
-    if (Tok.is(MMToken::Identifier)) {
+    if (Tok.is(MMToken::Identifier) || Tok.is(MMToken::StringLiteral)) {
       Id.push_back(std::make_pair(Tok.getString(), Tok.getLocation()));
       consumeToken();
     } else {
@@ -1687,25 +1687,7 @@ void ModuleMapParser::parseUseDecl() {
   consumeToken();
   // Parse the module-id.
   ModuleId ParsedModuleId;
-
-  do {
-    if (Tok.is(MMToken::Identifier)) {
-      ParsedModuleId.push_back(
-          std::make_pair(Tok.getString(), Tok.getLocation()));
-      consumeToken();
-
-      if (Tok.is(MMToken::Period)) {
-        consumeToken();
-        continue;
-      }
-
-      break;
-    }
-
-    Diags.Report(Tok.getLocation(), diag::err_mmap_module_id);
-    HadError = true;
-    return;
-  } while (true);
+  parseModuleId(ParsedModuleId);
 
   ActiveModule->UnresolvedDirectUses.push_back(ParsedModuleId);
 }

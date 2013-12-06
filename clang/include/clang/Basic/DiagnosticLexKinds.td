@@ -614,7 +614,7 @@ def err_expected_id_building_module : Error<
 def error_use_of_private_header_outside_module : Error<
   "use of private header from outside its module: '%0'">;
 def error_undeclared_use_of_module : Error<
-  "use of a module not declared used: '%0'">;
+  "module %0 does not depend on a module exporting '%1'">;
 
 def warn_header_guard : Warning<
   "%0 is used as a header guard here, followed by #define of a different macro">,
