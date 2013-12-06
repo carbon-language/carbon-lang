@@ -369,6 +369,8 @@ def fno_autolink : Flag <["-"], "fno-autolink">, Group<f_Group>,
 def fprofile_sample_use_EQ : Joined<["-"], "fprofile-sample-use=">,
     Group<f_Group>, Flags<[DriverOption, CC1Option]>,
     HelpText<"Enable sample-based profile guided optimizations">;
+def fauto_profile_EQ : Joined<["-"], "fauto-profile=">,
+    Alias<fprofile_sample_use_EQ>;
 
 def fblocks : Flag<["-"], "fblocks">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Enable the 'blocks' language feature">;
