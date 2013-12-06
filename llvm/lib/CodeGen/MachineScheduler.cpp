@@ -2177,7 +2177,7 @@ void GenericScheduler::SchedBoundary::bumpNode(SUnit *SU) {
   unsigned IncMOps = SchedModel->getNumMicroOps(SU->getInstr());
   assert(
       (CurrMOps == 0 || (CurrMOps + IncMOps) <= SchedModel->getIssueWidth()) &&
-      "Cannot schedule this instructions MicroOps in the current cycle.");
+      "Cannot schedule this instruction's MicroOps in the current cycle.");
 
   unsigned ReadyCycle = (isTop() ? SU->TopReadyCycle : SU->BotReadyCycle);
   DEBUG(dbgs() << "  Ready @" << ReadyCycle << "c\n");
