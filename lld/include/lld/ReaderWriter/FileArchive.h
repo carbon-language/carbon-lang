@@ -140,6 +140,8 @@ private:
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom>      _absoluteAtoms;
   bool _isWholeArchive;
+  std::unordered_map<StringRef, llvm::object::Archive::child_iterator>
+  _symbolMemberMap;
 
 public:
   /// only subclasses of ArchiveLibraryFile can be instantiated
@@ -166,9 +168,6 @@ public:
       _symbolMemberMap[name] = member;
     }
   }
-
-  std::unordered_map<StringRef,
-                     llvm::object::Archive::child_iterator> _symbolMemberMap;
 }; // class FileArchive
 
 } // end namespace lld
