@@ -58,13 +58,12 @@ error_code FileArchive::parseAllMembers(
   for (auto mf = _archive->begin_children(), me = _archive->end_children();
        mf != me; ++mf) {
     OwningPtr<MemoryBuffer> buff;
-    error_code ec;
-    if ((ec = mf->getMemoryBuffer(buff, true)))
+    if (error_code ec = mf->getMemoryBuffer(buff, true))
       return ec;
     if (_context.logInputFiles())
       llvm::outs() << buff->getBufferIdentifier() << "\n";
     std::unique_ptr<MemoryBuffer> mbc(buff.take());
-    if ((ec = _context.getDefaultReader().parseFile(mbc, result)))
+    if (error_code ec = _context.getDefaultReader().parseFile(mbc, result))
       return ec;
   }
   return error_code::success();
@@ -105,21 +104,21 @@ error_code FileArchive::isDataSymbol(MemoryBuffer *mb, StringRef symbol) const {
       return ec;
 
     // Get symbol name
-    if ((ec = i->getName(symbolname)))
+    if (error_code ec = i->getName(symbolname))
       return ec;
 
     if (symbolname != symbol)
       continue;
 
     // Get symbol flags
-    if ((ec = i->getFlags(symflags)))
+    if (error_code ec = i->getFlags(symflags))
       return ec;
 
     if (symflags <= llvm::object::SymbolRef::SF_Undefined)
       continue;
 
     // Get Symbol Type
-    if ((ec = (i->getType(symtype))))
+    if (error_code ec = i->getType(symtype))
       return ec;
 
     if (symtype == llvm::object::SymbolRef::ST_Data) {
