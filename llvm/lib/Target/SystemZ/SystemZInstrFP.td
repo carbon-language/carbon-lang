@@ -46,9 +46,9 @@ let Defs = [CC], CCValues = 0xF, CompareZeroCCMask = 0xF in {
   defm LTDBR : LoadAndTestRRE<"ltdb", 0xB312, FP64>;
   defm LTXBR : LoadAndTestRRE<"ltxb", 0xB342, FP128>;
 }
-def : CompareZeroFP<LTEBRCompare, FP32>;
-def : CompareZeroFP<LTDBRCompare, FP64>;
-def : CompareZeroFP<LTXBRCompare, FP128>;
+defm : CompareZeroFP<LTEBRCompare, FP32>;
+defm : CompareZeroFP<LTDBRCompare, FP64>;
+defm : CompareZeroFP<LTXBRCompare, FP128>;
 
 // Moves between 64-bit integer and floating-point registers.
 def LGDR : UnaryRRE<"lgd", 0xB3CD, bitconvert, GR64, FP64>;

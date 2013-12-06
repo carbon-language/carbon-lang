@@ -346,3 +346,22 @@ store:
 exit:
   ret double %val
 }
+
+; Repeat f2 with a comparison against -0.
+define float @f17(float %a, float %b, float *%dest) {
+; CHECK-LABEL: f17:
+; CHECK: aebr %f0, %f2
+; CHECK-NEXT: jl .L{{.*}}
+; CHECK: br %r14
+entry:
+  %res = fadd float %a, %b
+  %cmp = fcmp olt float %res, -0.0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store float %b, float *%dest
+  br label %exit
+
+exit:
+  ret float %res
+}
