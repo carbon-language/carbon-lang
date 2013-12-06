@@ -96,7 +96,24 @@ public:
     bool
     IsValid ()
     {
-        return m_valobj_sp.get() != NULL;
+        if (m_valobj_sp.get() == NULL)
+            return false;
+        else
+        {
+            // FIXME: This check is necessary but not sufficient.  We for sure don't want to touch SBValues whose owning
+            // targets have gone away.  This check is a little weak in that it enforces that restriction when you call
+            // IsValid, but since IsValid doesn't lock the target, you have no guarantee that the SBValue won't go
+            // invalid after you call this...
+            // Also, an SBValue could depend on data from one of the modules in the target, and those could go away
+            // independently of the target, for instance if a module is unloaded.  But right now, neither SBValues
+            // nor ValueObjects know which modules they depend on.  So I have no good way to make that check without
+            // tracking that in all the ValueObject subclasses.
+            TargetSP target_sp = m_valobj_sp->GetTargetSP();
+            if (target_sp && target_sp->IsValid())
+                return true;
+            else
+                return false;
+        }
     }
     
     lldb::ValueObjectSP
@@ -120,6 +137,8 @@ public:
         Target *target = value_sp->GetTargetSP().get();
         if (target)
             api_locker.Lock(target->GetAPIMutex());
+        else
+            return ValueObjectSP();
         
         ProcessSP process_sp(value_sp->GetProcessSP());
         if (process_sp && !stop_locker.TryLock (&process_sp->GetRunLock()))
@@ -276,7 +295,7 @@ SBValue::IsValid ()
     // If this function ever changes to anything that does more than just
     // check if the opaque shared pointer is non NULL, then we need to update
     // all "if (m_opaque_sp)" code in this file.
-    return m_opaque_sp.get() != NULL && m_opaque_sp->GetRootSP().get() != NULL;
+    return m_opaque_sp.get() != NULL && m_opaque_sp->IsValid() && m_opaque_sp->GetRootSP().get() != NULL;
 }
 
 void
