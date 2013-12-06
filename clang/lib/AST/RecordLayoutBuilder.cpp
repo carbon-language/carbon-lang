@@ -2064,6 +2064,7 @@ public:
   void updateAlignment(CharUnits NewAlignment) {
     Alignment = std::max(Alignment, NewAlignment);
   }
+  CharUnits getBaseAlignment(const ASTRecordLayout& Layout);
   /// \brief Gets the size and alignment taking attributes into account.
   std::pair<CharUnits, CharUnits> getAdjustedFieldInfo(const FieldDecl *FD);
   /// \brief Places a field at offset 0.
@@ -2089,9 +2090,9 @@ public:
   SmallVector<uint64_t, 16> FieldOffsets;
   /// \brief The maximum allowed field alignment. This is set by #pragma pack.
   CharUnits MaxFieldAlignment;
-  /// \brief Alignment does not occur for virtual bases unless something
-  /// forces it to by explicitly using __declspec(align())
-  bool AlignAfterVBases : 1;
+  /// \brief The alignment that this record must obey.  This is imposed by
+  /// __declspec(align()) on the record itself or one of its fields or bases.
+  CharUnits RequiredAlignment;
   bool IsUnion : 1;
   /// \brief True if the last field laid out was a bitfield and was not 0
   /// width.
@@ -2148,6 +2149,16 @@ public:
 };
 } // namespace
 
+CharUnits
+MicrosoftRecordLayoutBuilder::getBaseAlignment(const ASTRecordLayout& Layout) {
+  CharUnits BaseAlignment = Layout.getAlignment();
+  if (!MaxFieldAlignment.isZero())
+    BaseAlignment = std::min(BaseAlignment,
+                             std::max(MaxFieldAlignment,
+                                      Layout.getRequiredAlignment()));
+  return BaseAlignment;
+}
+
 std::pair<CharUnits, CharUnits>
 MicrosoftRecordLayoutBuilder::getAdjustedFieldInfo(const FieldDecl *FD) {
   std::pair<CharUnits, CharUnits> FieldInfo =
@@ -2174,8 +2185,17 @@ MicrosoftRecordLayoutBuilder::getAdjustedFieldInfo(const FieldDecl *FD) {
   // Respect alignment attributes.
   if (unsigned fieldAlign = FD->getMaxAlignment()) {
     CharUnits FieldAlign = Context.toCharUnitsFromBits(fieldAlign);
-    AlignAfterVBases = true;
+    RequiredAlignment = std::max(RequiredAlignment, FieldAlign);
     FieldInfo.second = std::max(FieldInfo.second, FieldAlign);
+  }
+  // Respect attributes applied inside field base types.
+  if (const RecordType *RT =
+      FD->getType()->getBaseElementTypeUnsafe()->getAs<RecordType>()) {
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RT->getDecl());
+    RequiredAlignment = std::max(RequiredAlignment,
+                                 Layout.getRequiredAlignment());
+    FieldInfo.second = std::max(FieldInfo.second,
+                                Layout.getRequiredAlignment());
   }
   return FieldInfo;
 }
@@ -2186,7 +2206,10 @@ void MicrosoftRecordLayoutBuilder::initializeLayout(const RecordDecl *RD) {
 
   Size = CharUnits::Zero();
   Alignment = CharUnits::One();
-  AlignAfterVBases = false;
+  // In 64-bit mode we always perform an alignment step after laying out vbases.
+  // In 32-bit mode we do not.  The check to see if we need to perform alignment
+  // checks the RequiredAlignment field and performs alignment if it isn't 0.
+  RequiredAlignment = Is64BitMode ? CharUnits::One() : CharUnits::Zero();
 
   // Compute the maximum field alignment.
   MaxFieldAlignment = CharUnits::Zero();
@@ -2236,7 +2259,6 @@ MicrosoftRecordLayoutBuilder::initializeCXXLayout(const CXXRecordDecl *RD) {
   SharedVBPtrBase = 0;
   PrimaryBase = 0;
   VirtualAlignment = CharUnits::One();
-  AlignAfterVBases = Is64BitMode;
 
   // If the record has a dynamic base class, attempt to choose a primary base
   // class. It is the first (in direct base class order) non-virtual dynamic
@@ -2247,12 +2269,12 @@ MicrosoftRecordLayoutBuilder::initializeCXXLayout(const CXXRecordDecl *RD) {
     const CXXRecordDecl *BaseDecl =
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(BaseDecl);
-    // Handle forced alignment.
-    if (Layout.getAlignAfterVBases())
-      AlignAfterVBases = true;
+    // Handle required alignment.
+    RequiredAlignment = std::max(RequiredAlignment,
+                                 Layout.getRequiredAlignment());
     // Handle virtual bases.
     if (i->isVirtual()) {
-      VirtualAlignment = std::max(VirtualAlignment, Layout.getAlignment());
+      VirtualAlignment = std::max(VirtualAlignment, getBaseAlignment(Layout));
       HasVBPtr = true;
       continue;
     }
@@ -2266,7 +2288,7 @@ MicrosoftRecordLayoutBuilder::initializeCXXLayout(const CXXRecordDecl *RD) {
       SharedVBPtrBase = BaseDecl;
       HasVBPtr = true;
     }
-    updateAlignment(Layout.getAlignment());
+    updateAlignment(getBaseAlignment(Layout));
   }
 
   // Use LayoutFields to compute the alignment of the fields.  The layout
@@ -2335,7 +2357,7 @@ MicrosoftRecordLayoutBuilder::layoutNonVirtualBase(const CXXRecordDecl *RD) {
   if (LazyEmptyBase) {
     const ASTRecordLayout &LazyLayout =
         Context.getASTRecordLayout(LazyEmptyBase);
-    Size = Size.RoundUpToAlignment(LazyLayout.getAlignment());
+    Size = Size.RoundUpToAlignment(getBaseAlignment(LazyLayout));
     // If the last non-virtual base has a vbptr we add a byte of padding for no
     // obvious reason.
     if (LastNonVirtualBaseHasVBPtr)
@@ -2360,7 +2382,7 @@ MicrosoftRecordLayoutBuilder::layoutNonVirtualBase(const CXXRecordDecl *RD) {
   }
 
   // Insert the base here.
-  CharUnits BaseOffset = Size.RoundUpToAlignment(Layout->getAlignment());
+  CharUnits BaseOffset = Size.RoundUpToAlignment(getBaseAlignment(*Layout));
   Bases.insert(std::make_pair(RD, BaseOffset));
   Size = BaseOffset + Layout->getDataSize();
   // Note: we don't update alignment here because it was accounted
@@ -2536,7 +2558,7 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBase(const CXXRecordDecl *RD,
   if (LazyEmptyBase) {
     const ASTRecordLayout &LazyLayout =
         Context.getASTRecordLayout(LazyEmptyBase);
-    Size = Size.RoundUpToAlignment(LazyLayout.getAlignment());
+    Size = Size.RoundUpToAlignment(getBaseAlignment(LazyLayout));
     VBases.insert(
         std::make_pair(LazyEmptyBase, ASTRecordLayout::VBaseInfo(Size, false)));
     // Empty bases only consume space when followed by another empty base.
@@ -2560,7 +2582,7 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBase(const CXXRecordDecl *RD,
   }
 
   CharUnits BaseNVSize = Layout.getNonVirtualSize();
-  CharUnits BaseAlign = Layout.getAlignment();
+  CharUnits BaseAlign = getBaseAlignment(Layout);
 
   // vtordisps are always 4 bytes (even in 64-bit mode)
   if (HasVtordisp)
@@ -2580,7 +2602,7 @@ void MicrosoftRecordLayoutBuilder::finalizeCXXLayout(const CXXRecordDecl *RD) {
   // Flush the lazy virtual base.
   layoutVirtualBase(0, false);
 
-  if (RD->vbases_begin() == RD->vbases_end() || AlignAfterVBases)
+  if (RD->vbases_begin() == RD->vbases_end() || !RequiredAlignment.isZero())
     Size = Size.RoundUpToAlignment(Alignment);
 
   if (Size.isZero())
@@ -2588,9 +2610,10 @@ void MicrosoftRecordLayoutBuilder::finalizeCXXLayout(const CXXRecordDecl *RD) {
 }
 
 void MicrosoftRecordLayoutBuilder::honorDeclspecAlign(const RecordDecl *RD) {
-  if (unsigned MaxAlign = RD->getMaxAlignment()) {
-    AlignAfterVBases = true;
-    updateAlignment(Context.toCharUnitsFromBits(MaxAlign));
+  RequiredAlignment = std::max(RequiredAlignment,
+      Context.toCharUnitsFromBits(RD->getMaxAlignment()));
+  if (!RequiredAlignment.isZero()) {
+    updateAlignment(RequiredAlignment);
     Size = Size.RoundUpToAlignment(Alignment);
   }
 }
@@ -2684,19 +2707,19 @@ ASTContext::BuildMicrosoftASTRecordLayout(const RecordDecl *D) const {
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     Builder.cxxLayout(RD);
     return new (*this) ASTRecordLayout(
-        *this, Builder.Size, Builder.Alignment,
+        *this, Builder.Size, Builder.Alignment, Builder.RequiredAlignment,
         Builder.HasExtendableVFPtr && !Builder.PrimaryBase,
         Builder.HasExtendableVFPtr,
         Builder.VBPtrOffset, Builder.DataSize, Builder.FieldOffsets.data(),
         Builder.FieldOffsets.size(), Builder.DataSize,
         Builder.NonVirtualAlignment, CharUnits::Zero(), Builder.PrimaryBase,
-        false, Builder.SharedVBPtrBase, Builder.AlignAfterVBases, Builder.Bases,
+        false, Builder.SharedVBPtrBase, Builder.Bases,
         Builder.VBases);
   } else {
     Builder.layout(D);
     return new (*this) ASTRecordLayout(
-        *this, Builder.Size, Builder.Alignment, Builder.Size,
-        Builder.FieldOffsets.data(), Builder.FieldOffsets.size());
+        *this, Builder.Size, Builder.Alignment, Builder.RequiredAlignment,
+        Builder.Size, Builder.FieldOffsets.data(), Builder.FieldOffsets.size());
   }
 }
 
@@ -2747,6 +2770,8 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
     NewEntry =
       new (*this) ASTRecordLayout(*this, Builder.getSize(), 
                                   Builder.Alignment,
+                                  /*RequiredAlignment : used by MS-ABI)*/
+                                  Builder.Alignment,
                                   Builder.HasOwnVFPtr,
                                   RD->isDynamicClass(),
                                   CharUnits::fromQuantity(-1),
@@ -2758,7 +2783,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
                                   EmptySubobjects.SizeOfLargestEmptySubobject,
                                   Builder.PrimaryBase,
                                   Builder.PrimaryBaseIsVirtual,
-                                  0, true,
+                                  0,
                                   Builder.Bases, Builder.VBases);
   } else {
     RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/0);
@@ -2766,6 +2791,8 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
 
     NewEntry =
       new (*this) ASTRecordLayout(*this, Builder.getSize(), 
+                                  Builder.Alignment,
+                                  /*RequiredAlignment : used by MS-ABI)*/
                                   Builder.Alignment,
                                   Builder.getSize(),
                                   Builder.FieldOffsets.data(),
@@ -2875,6 +2902,8 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
 
   const ASTRecordLayout *NewEntry =
     new (*this) ASTRecordLayout(*this, Builder.getSize(), 
+                                Builder.Alignment,
+                                /*RequiredAlignment : used by MS-ABI)*/
                                 Builder.Alignment,
                                 Builder.getDataSize(),
                                 Builder.FieldOffsets.data(),

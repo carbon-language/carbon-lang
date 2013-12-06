@@ -29,10 +29,13 @@ void ASTRecordLayout::Destroy(ASTContext &Ctx) {
 }
 
 ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx, CharUnits size,
-                                 CharUnits alignment, CharUnits datasize,
+                                 CharUnits alignment, 
+                                 CharUnits requiredAlignment,
+                                 CharUnits datasize,
                                  const uint64_t *fieldoffsets,
                                  unsigned fieldcount)
-  : Size(size), DataSize(datasize), Alignment(alignment), FieldOffsets(0),
+  : Size(size), DataSize(datasize), Alignment(alignment),
+    RequiredAlignment(requiredAlignment), FieldOffsets(0),
     FieldCount(fieldcount), CXXInfo(0) {
   if (FieldCount > 0)  {
     FieldOffsets = new (Ctx) uint64_t[FieldCount];
@@ -43,6 +46,7 @@ ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx, CharUnits size,
 // Constructor for C++ records.
 ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx,
                                  CharUnits size, CharUnits alignment,
+                                 CharUnits requiredAlignment,
                                  bool hasOwnVFPtr, bool hasExtendableVFPtr,
                                  CharUnits vbptroffset,
                                  CharUnits datasize,
@@ -54,10 +58,10 @@ ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx,
                                  const CXXRecordDecl *PrimaryBase,
                                  bool IsPrimaryBaseVirtual,
                                  const CXXRecordDecl *BaseSharingVBPtr,
-                                 bool AlignAfterVBases,
                                  const BaseOffsetsMapTy& BaseOffsets,
                                  const VBaseOffsetsMapTy& VBaseOffsets)
-  : Size(size), DataSize(datasize), Alignment(alignment), FieldOffsets(0),
+  : Size(size), DataSize(datasize), Alignment(alignment),
+    RequiredAlignment(requiredAlignment), FieldOffsets(0),
     FieldCount(fieldcount), CXXInfo(new (Ctx) CXXRecordLayoutInfo)
 {
   if (FieldCount > 0)  {
@@ -76,7 +80,6 @@ ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx,
   CXXInfo->VBPtrOffset = vbptroffset;
   CXXInfo->HasExtendableVFPtr = hasExtendableVFPtr;
   CXXInfo->BaseSharingVBPtr = BaseSharingVBPtr;
-  CXXInfo->AlignAfterVBases = AlignAfterVBases;
 
 
 #ifndef NDEBUG
