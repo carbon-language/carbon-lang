@@ -78,6 +78,7 @@ ComputeASanStackFrameLayout(SmallVectorImpl<ASanStackVariableDescription> &Vars,
   for (size_t i = 0; i < NumVars; i++) {
     bool IsLast = i == NumVars - 1;
     size_t Alignment = std::max(Granularity, Vars[i].Alignment);
+    (void)Alignment;  // Used only in asserts.
     size_t Size = Vars[i].Size;
     const char *Name = Vars[i].Name;
     assert((Alignment & (Alignment - 1)) == 0);
