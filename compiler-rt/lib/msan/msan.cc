@@ -398,7 +398,8 @@ void __msan_print_param_shadow() {
 }
 
 sptr __msan_test_shadow(const void *x, uptr size) {
-  unsigned char *s = (unsigned char*)MEM_TO_SHADOW((uptr)x);
+  if (!MEM_IS_APP(x)) return -1;
+  unsigned char *s = (unsigned char *)MEM_TO_SHADOW((uptr)x);
   for (uptr i = 0; i < size; ++i)
     if (s[i])
       return i;
