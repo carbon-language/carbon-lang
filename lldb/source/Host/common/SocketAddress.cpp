@@ -123,7 +123,7 @@ SocketAddress::SetFamily (sa_family_t family)
 #endif
 }
 
-in_port_t
+uint16_t
 SocketAddress::GetPort () const
 {
     switch (GetFamily())
@@ -135,7 +135,7 @@ SocketAddress::GetPort () const
 }
 
 bool
-SocketAddress::SetPort (in_port_t port)
+SocketAddress::SetPort (uint16_t port)
 {
     switch (GetFamily())
     {
@@ -233,7 +233,7 @@ SocketAddress::getaddrinfo (const char *host,
 
 
 bool
-SocketAddress::SetToLocalhost (sa_family_t family, in_port_t port)
+SocketAddress::SetToLocalhost (sa_family_t family, uint16_t port)
 {
     switch (family)
     {
@@ -261,7 +261,7 @@ SocketAddress::SetToLocalhost (sa_family_t family, in_port_t port)
 }
 
 bool
-SocketAddress::SetToAnyAddress (sa_family_t family, in_port_t port)
+SocketAddress::SetToAnyAddress (sa_family_t family, uint16_t port)
 {
     switch (family)
     {

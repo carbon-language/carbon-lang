@@ -67,7 +67,7 @@ ResolveIPV4HostName (const char *hostname, in_addr_t &addr)
 }
 
 rnb_err_t
-RNBSocket::Listen (const char *listen_host, in_port_t port, PortBoundCallback callback, const void *callback_baton)
+RNBSocket::Listen (const char *listen_host, uint16_t port, PortBoundCallback callback, const void *callback_baton)
 {
     //DNBLogThreadedIf(LOG_RNB_COMM, "%8u RNBSocket::%s called", (uint32_t)m_timer.ElapsedMicroSeconds(true), __FUNCTION__);
     // Disconnect without saving errno

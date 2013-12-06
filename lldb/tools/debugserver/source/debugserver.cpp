@@ -626,7 +626,7 @@ RNBRunLoopPlatform (RNBRemote *remote)
 }
 
 static void
-PortWasBoundCallbackNamedPipe (const void *baton, in_port_t port)
+PortWasBoundCallbackNamedPipe (const void *baton, uint16_t port)
 {
     const char *named_pipe = (const char *)baton;
     if (named_pipe && named_pipe[0])

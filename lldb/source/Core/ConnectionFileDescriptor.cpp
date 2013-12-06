@@ -1675,7 +1675,7 @@ ConnectionFileDescriptor::SetSocketReceiveTimeout (uint32_t timeout_usec)
     return false;
 }
 
-in_port_t
+uint16_t
 ConnectionFileDescriptor::GetSocketPort (int fd)
 {
     // We bound to port zero, so we need to figure out which port we actually bound to
@@ -1691,7 +1691,7 @@ ConnectionFileDescriptor::GetSocketPort (int fd)
 
 // If the read file descriptor is a socket, then return
 // the port number that is being used by the socket.
-in_port_t
+uint16_t
 ConnectionFileDescriptor::GetReadPort () const
 {
     return ConnectionFileDescriptor::GetSocketPort (m_fd_recv);
@@ -1699,16 +1699,16 @@ ConnectionFileDescriptor::GetReadPort () const
 
 // If the write file descriptor is a socket, then return
 // the port number that is being used by the socket.
-in_port_t
+uint16_t
 ConnectionFileDescriptor::GetWritePort () const
 {
     return ConnectionFileDescriptor::GetSocketPort (m_fd_send);
 }
 
-in_port_t
+uint16_t
 ConnectionFileDescriptor::GetBoundPort (uint32_t timeout_sec)
 {
-    in_port_t bound_port = 0;
+    uint16_t bound_port = 0;
     if (timeout_sec == UINT32_MAX)
         m_port_predicate.WaitForValueNotEqualTo (0, bound_port);
     else

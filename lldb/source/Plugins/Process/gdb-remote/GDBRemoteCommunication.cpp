@@ -542,7 +542,7 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
 }
 
 Error
-GDBRemoteCommunication::StartListenThread (const char *hostname, in_port_t port)
+GDBRemoteCommunication::StartListenThread (const char *hostname, uint16_t port)
 {
     Error error;
     if (IS_VALID_LLDB_HOST_THREAD(m_listen_thread))

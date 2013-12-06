@@ -18,7 +18,6 @@
 #include <winsock2.h>
 #include <WS2tcpip.h>
 typedef ADDRESS_FAMILY sa_family_t;
-typedef USHORT in_port_t;
 #else
 #include <sys/socket.h>
 #include <netdb.h>
@@ -103,7 +102,7 @@ public:
     //------------------------------------------------------------------
     // Get the port if the socket address for the family has a port
     //------------------------------------------------------------------
-    in_port_t
+    uint16_t
     GetPort () const;
 
     //------------------------------------------------------------------
@@ -111,7 +110,7 @@ public:
     // The family must be set correctly prior to calling this function.
     //------------------------------------------------------------------
     bool
-    SetPort (in_port_t port);
+    SetPort (uint16_t port);
 
     //------------------------------------------------------------------
     // Set the socket address according to the first match from a call
@@ -135,11 +134,11 @@ public:
     //------------------------------------------------------------------
     bool
     SetToLocalhost (sa_family_t family, 
-                    in_port_t port);
+                    uint16_t port);
 
     bool
     SetToAnyAddress (sa_family_t family,
-                     in_port_t port);
+                     uint16_t port);
 
     //------------------------------------------------------------------
     // Returns true if there is a valid socket address in this object.

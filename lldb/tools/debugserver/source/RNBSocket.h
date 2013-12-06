@@ -27,7 +27,7 @@
 class RNBSocket
 {
 public:
-    typedef void (*PortBoundCallback) (const void *baton, in_port_t port);
+    typedef void (*PortBoundCallback) (const void *baton, uint16_t port);
 
     RNBSocket () :
         m_fd (-1),
@@ -44,7 +44,7 @@ public:
     }
 
     rnb_err_t Listen (const char *listen_host,
-                      in_port_t port,
+                      uint16_t port,
                       PortBoundCallback callback,
                       const void *callback_baton);
     rnb_err_t Connect (const char *host, uint16_t port);
