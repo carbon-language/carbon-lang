@@ -41,7 +41,7 @@ static cl::opt<bool> GenerateTypeUnits("generate-type-units", cl::Hidden,
 Unit::Unit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
            DwarfDebug *DW, DwarfFile *DWU)
     : UniqueID(UID), Node(Node), UnitDie(D), DebugInfoOffset(0), Asm(A), DD(DW),
-      DU(DWU), IndexTyDie(0) {
+      DU(DWU), IndexTyDie(0), Section(0) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
 }
 

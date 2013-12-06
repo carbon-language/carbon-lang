@@ -127,11 +127,35 @@ protected:
   // DIEIntegerOne - A preallocated DIEValue because 1 is used frequently.
   DIEInteger *DIEIntegerOne;
 
+  /// The section this unit will be emitted in.
+  const MCSection *Section;
+
+  /// A label at the start of the non-dwo section related to this unit.
+  MCSymbol *SectionSym;
+
   Unit(unsigned UID, DIE *D, DICompileUnit CU, AsmPrinter *A, DwarfDebug *DW,
        DwarfFile *DWU);
 
 public:
   virtual ~Unit();
+
+  /// Pass in the SectionSym even though we could recreate it in every compile
+  /// unit (type units will have actually distinct symbols once they're in
+  /// comdat sections).
+  void initSection(const MCSection *Section, MCSymbol *SectionSym) {
+    assert(!this->Section);
+    this->Section = Section;
+    this->SectionSym = SectionSym;
+  }
+  const MCSection *getSection() const {
+    assert(Section);
+    return Section;
+  }
+
+  MCSymbol *getSectionSym() {
+    assert(Section);
+    return SectionSym;
+  }
 
   // Accessors.
   unsigned getUniqueID() const { return UniqueID; }
