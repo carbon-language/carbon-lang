@@ -1386,20 +1386,22 @@ SBFrame::EvaluateExpression (const char *expr, const SBExpressionOptions &option
             frame = exe_ctx.GetFramePtr();
             if (frame)
             {
-#ifdef LLDB_CONFIGURATION_DEBUG
-                StreamString frame_description;
-                frame->DumpUsingSettingsFormat (&frame_description);
-                Host::SetCrashDescriptionWithFormat ("SBFrame::EvaluateExpression (expr = \"%s\", fetch_dynamic_value = %u) %s",
-                                                     expr, options.GetFetchDynamicValue(), frame_description.GetString().c_str());
-#endif
-                exe_results = target->EvaluateExpression (expr, 
+                if (target->GetDisplayExpressionsInCrashlogs())
+                {
+                    StreamString frame_description;
+                    frame->DumpUsingSettingsFormat (&frame_description);
+                    Host::SetCrashDescriptionWithFormat ("SBFrame::EvaluateExpression (expr = \"%s\", fetch_dynamic_value = %u) %s",
+                                                         expr, options.GetFetchDynamicValue(), frame_description.GetString().c_str());
+                }
+                
+                exe_results = target->EvaluateExpression (expr,
                                                           frame,
                                                           expr_value_sp,
                                                           options.ref());
                 expr_result.SetSP(expr_value_sp, options.GetFetchDynamicValue());
-#ifdef LLDB_CONFIGURATION_DEBUG
-                Host::SetCrashDescription (NULL);
-#endif
+
+                if (target->GetDisplayExpressionsInCrashlogs())
+                    Host::SetCrashDescription (NULL);
             }
             else
             {
