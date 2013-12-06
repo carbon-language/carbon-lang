@@ -22,6 +22,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCSection.h"
 
 namespace llvm {
 
@@ -133,6 +134,12 @@ protected:
   /// A label at the start of the non-dwo section related to this unit.
   MCSymbol *SectionSym;
 
+  /// The start of the unit within its section.
+  MCSymbol *LabelBegin;
+
+  /// The end of the unit within its section.
+  MCSymbol *LabelEnd;
+
   Unit(unsigned UID, DIE *D, DICompileUnit CU, AsmPrinter *A, DwarfDebug *DW,
        DwarfFile *DWU);
 
@@ -146,15 +153,29 @@ public:
     assert(!this->Section);
     this->Section = Section;
     this->SectionSym = SectionSym;
+    this->LabelBegin =
+        Asm->GetTempSymbol(Section->getLabelBeginName(), getUniqueID());
+    this->LabelEnd =
+        Asm->GetTempSymbol(Section->getLabelEndName(), getUniqueID());
   }
   const MCSection *getSection() const {
     assert(Section);
     return Section;
   }
 
-  MCSymbol *getSectionSym() {
+  MCSymbol *getSectionSym() const {
     assert(Section);
     return SectionSym;
+  }
+
+  MCSymbol *getLabelBegin() const {
+    assert(Section);
+    return LabelBegin;
+  }
+
+  MCSymbol *getLabelEnd() const {
+    assert(Section);
+    return LabelEnd;
   }
 
   // Accessors.

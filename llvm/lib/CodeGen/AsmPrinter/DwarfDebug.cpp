@@ -2137,8 +2137,7 @@ void DwarfFile::emitUnits(DwarfDebug *DD, const MCSection *ASection,
     Asm->OutStreamer.SwitchSection(USection);
 
     // Emit the compile units header.
-    Asm->OutStreamer.EmitLabel(
-        Asm->GetTempSymbol(USection->getLabelBeginName(), TheU->getUniqueID()));
+    Asm->OutStreamer.EmitLabel(TheU->getLabelBegin());
 
     // Emit size of content not including length itself
     Asm->OutStreamer.AddComment("Length of Unit");
@@ -2147,8 +2146,7 @@ void DwarfFile::emitUnits(DwarfDebug *DD, const MCSection *ASection,
     TheU->emitHeader(ASection, ASectionSym);
 
     DD->emitDIE(Die);
-    Asm->OutStreamer.EmitLabel(
-        Asm->GetTempSymbol(USection->getLabelEndName(), TheU->getUniqueID()));
+    Asm->OutStreamer.EmitLabel(TheU->getLabelEnd());
   }
 }
 
@@ -2414,7 +2412,6 @@ static dwarf::PubIndexEntryDescriptor computeIndexValue(Unit *CU,
 /// emitDebugPubNames - Emit visible names into a debug pubnames section.
 ///
 void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
-  const MCSection *ISec = Asm->getObjFileLowering().getDwarfInfoSection();
   const MCSection *PSec =
       GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubNamesSection()
                : Asm->getObjFileLowering().getDwarfPubNamesSection();
@@ -2444,13 +2441,10 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
     Asm->EmitInt16(dwarf::DW_PUBNAMES_VERSION);
 
     Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
-    Asm->EmitSectionOffset(Asm->GetTempSymbol(ISec->getLabelBeginName(), ID),
-                           TheU->getSectionSym());
+    Asm->EmitSectionOffset(TheU->getLabelBegin(), TheU->getSectionSym());
 
     Asm->OutStreamer.AddComment("Compilation Unit Length");
-    Asm->EmitLabelDifference(Asm->GetTempSymbol(ISec->getLabelEndName(), ID),
-                             Asm->GetTempSymbol(ISec->getLabelBeginName(), ID),
-                             4);
+    Asm->EmitLabelDifference(TheU->getLabelEnd(), TheU->getLabelBegin(), 4);
 
     // Emit the pubnames for this compilation unit.
     const StringMap<const DIE *> &Globals = getUnits()[ID]->getGlobalNames();
@@ -2482,7 +2476,6 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
 }
 
 void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
-  const MCSection *ISec = Asm->getObjFileLowering().getDwarfInfoSection();
   const MCSection *PSec =
       GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubTypesSection()
                : Asm->getObjFileLowering().getDwarfPubTypesSection();
@@ -2512,14 +2505,10 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
     Asm->EmitInt16(dwarf::DW_PUBTYPES_VERSION);
 
     Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
-    Asm->EmitSectionOffset(
-        Asm->GetTempSymbol(ISec->getLabelBeginName(), TheU->getUniqueID()),
-        TheU->getSectionSym());
+    Asm->EmitSectionOffset(TheU->getLabelBegin(), TheU->getSectionSym());
 
     Asm->OutStreamer.AddComment("Compilation Unit Length");
-    Asm->EmitLabelDifference(
-        Asm->GetTempSymbol(ISec->getLabelEndName(), TheU->getUniqueID()),
-        Asm->GetTempSymbol(ISec->getLabelBeginName(), TheU->getUniqueID()), 4);
+    Asm->EmitLabelDifference(TheU->getLabelEnd(), TheU->getLabelBegin(), 4);
 
     // Emit the pubtypes.
     const StringMap<const DIE *> &Globals = getUnits()[ID]->getGlobalTypes();
@@ -2825,7 +2814,6 @@ void DwarfDebug::emitDebugARanges() {
     }
   }
 
-  const MCSection *ISec = Asm->getObjFileLowering().getDwarfInfoSection();
   unsigned PtrSize = Asm->getDataLayout().getPointerSize();
 
   // Build a list of CUs used.
@@ -2866,9 +2854,7 @@ void DwarfDebug::emitDebugARanges() {
     Asm->OutStreamer.AddComment("DWARF Arange version number");
     Asm->EmitInt16(dwarf::DW_ARANGES_VERSION);
     Asm->OutStreamer.AddComment("Offset Into Debug Info Section");
-    Asm->EmitSectionOffset(
-        Asm->GetTempSymbol(ISec->getLabelBeginName(), CU->getUniqueID()),
-        CU->getSectionSym());
+    Asm->EmitSectionOffset(CU->getLabelBegin(), CU->getSectionSym());
     Asm->OutStreamer.AddComment("Address Size (in bytes)");
     Asm->EmitInt8(PtrSize);
     Asm->OutStreamer.AddComment("Segment Size (in bytes)");
