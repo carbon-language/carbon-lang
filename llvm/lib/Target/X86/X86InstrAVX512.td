@@ -645,25 +645,25 @@ multiclass avx512_blendmask<bits<8> opc, string OpcodeStr, Intrinsic Int,
 
 let ExeDomain = SSEPackedSingle in
 defm VBLENDMPSZ : avx512_blendmask<0x65, "vblendmps", 
-                              int_x86_avx512_mskblend_ps_512,
+                              int_x86_avx512_mask_blend_ps_512,
                               VK16WM, VR512, f512mem,
                               memopv16f32, vselect, v16f32>, 
                               EVEX_CD8<32, CD8VF>, EVEX_V512;
 let ExeDomain = SSEPackedDouble in
 defm VBLENDMPDZ : avx512_blendmask<0x65, "vblendmpd", 
-                              int_x86_avx512_mskblend_pd_512,
+                              int_x86_avx512_mask_blend_pd_512,
                               VK8WM, VR512, f512mem,
                               memopv8f64, vselect, v8f64>, 
                               VEX_W, EVEX_CD8<64, CD8VF>, EVEX_V512;
 
 defm VPBLENDMDZ : avx512_blendmask<0x64, "vpblendmd", 
-                              int_x86_avx512_mskblend_d_512,
+                              int_x86_avx512_mask_blend_d_512,
                               VK16WM, VR512, f512mem, 
                               memopv16i32, vselect, v16i32>, 
                               EVEX_CD8<32, CD8VF>, EVEX_V512;
 
 defm VPBLENDMQZ : avx512_blendmask<0x64, "vpblendmq", 
-                              int_x86_avx512_mskblend_q_512, 
+                              int_x86_avx512_mask_blend_q_512, 
                               VK8WM, VR512, f512mem, 
                               memopv8i64, vselect, v8i64>, 
                               VEX_W, EVEX_CD8<64, CD8VF>, EVEX_V512;

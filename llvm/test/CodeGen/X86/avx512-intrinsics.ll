@@ -341,43 +341,43 @@ define <8 x i64> @test_mask_conflict_q(<8 x i64> %a, <8 x i64> %b, i8 %mask) {
 }
 declare <8 x i64> @llvm.x86.avx512.conflict.q.mask.512(<8 x i64>, <8 x i1>,<8 x i64>) nounwind readonly
 
-define <16 x float> @test_x86_mskblend_ps_512(i16 %a0, <16 x float> %a1, <16 x float> %a2) {
+define <16 x float> @test_x86_mask_blend_ps_512(i16 %a0, <16 x float> %a1, <16 x float> %a2) {
   ; CHECK: vblendmps
   %m0 = bitcast i16 %a0 to <16 x i1>
-  %res = call <16 x float> @llvm.x86.avx512.mskblend.ps.512(<16 x i1> %m0, <16 x float> %a1, <16 x float> %a2) ; <<16 x float>> [#uses=1]
+  %res = call <16 x float> @llvm.x86.avx512.mask.blend.ps.512(<16 x i1> %m0, <16 x float> %a1, <16 x float> %a2) ; <<16 x float>> [#uses=1]
   ret <16 x float> %res
 }
-declare <16 x float> @llvm.x86.avx512.mskblend.ps.512(<16 x i1> %a0, <16 x float> %a1, <16 x float> %a2) nounwind readonly
+declare <16 x float> @llvm.x86.avx512.mask.blend.ps.512(<16 x i1> %a0, <16 x float> %a1, <16 x float> %a2) nounwind readonly
 
-define <8 x double> @test_x86_mskblend_pd_512(i8 %a0, <8 x double> %a1, <8 x double> %a2) {
+define <8 x double> @test_x86_mask_blend_pd_512(i8 %a0, <8 x double> %a1, <8 x double> %a2) {
   ; CHECK: vblendmpd
   %m0 = bitcast i8 %a0 to <8 x i1>
-  %res = call <8 x double> @llvm.x86.avx512.mskblend.pd.512(<8 x i1> %m0, <8 x double> %a1, <8 x double> %a2) ; <<8 x double>> [#uses=1]
+  %res = call <8 x double> @llvm.x86.avx512.mask.blend.pd.512(<8 x i1> %m0, <8 x double> %a1, <8 x double> %a2) ; <<8 x double>> [#uses=1]
   ret <8 x double> %res
 }
 
-define <8 x double> @test_x86_mskblend_pd_512_memop(<8 x double> %a, <8 x double>* %ptr, i8 %mask) {
-  ; CHECK-LABEL: test_x86_mskblend_pd_512_memop
+define <8 x double> @test_x86_mask_blend_pd_512_memop(<8 x double> %a, <8 x double>* %ptr, i8 %mask) {
+  ; CHECK-LABEL: test_x86_mask_blend_pd_512_memop
   ; CHECK: vblendmpd {{.*}}, {{%zmm[0-9]}}, {{%zmm[0-9]}} {%k1}
   %vmask = bitcast i8 %mask to <8 x i1>
   %b = load <8 x double>* %ptr
-  %res = call <8 x double> @llvm.x86.avx512.mskblend.pd.512(<8 x i1> %vmask, <8 x double> %a, <8 x double> %b) ; <<8 x double>> [#uses=1]
+  %res = call <8 x double> @llvm.x86.avx512.mask.blend.pd.512(<8 x i1> %vmask, <8 x double> %a, <8 x double> %b) ; <<8 x double>> [#uses=1]
   ret <8 x double> %res
 }
-declare <8 x double> @llvm.x86.avx512.mskblend.pd.512(<8 x i1> %a0, <8 x double> %a1, <8 x double> %a2) nounwind readonly
+declare <8 x double> @llvm.x86.avx512.mask.blend.pd.512(<8 x i1> %a0, <8 x double> %a1, <8 x double> %a2) nounwind readonly
 
-define <16 x i32> @test_x86_mskblend_d_512(i16 %a0, <16 x i32> %a1, <16 x i32> %a2) {
+define <16 x i32> @test_x86_mask_blend_d_512(i16 %a0, <16 x i32> %a1, <16 x i32> %a2) {
   ; CHECK: vpblendmd
   %m0 = bitcast i16 %a0 to <16 x i1>
-  %res = call <16 x i32> @llvm.x86.avx512.mskblend.d.512(<16 x i1> %m0, <16 x i32> %a1, <16 x i32> %a2) ; <<16 x i32>> [#uses=1]
+  %res = call <16 x i32> @llvm.x86.avx512.mask.blend.d.512(<16 x i1> %m0, <16 x i32> %a1, <16 x i32> %a2) ; <<16 x i32>> [#uses=1]
   ret <16 x i32> %res
 }
-declare <16 x i32> @llvm.x86.avx512.mskblend.d.512(<16 x i1> %a0, <16 x i32> %a1, <16 x i32> %a2) nounwind readonly
+declare <16 x i32> @llvm.x86.avx512.mask.blend.d.512(<16 x i1> %a0, <16 x i32> %a1, <16 x i32> %a2) nounwind readonly
 
-define <8 x i64> @test_x86_mskblend_q_512(i8 %a0, <8 x i64> %a1, <8 x i64> %a2) {
+define <8 x i64> @test_x86_mask_blend_q_512(i8 %a0, <8 x i64> %a1, <8 x i64> %a2) {
   ; CHECK: vpblendmq
   %m0 = bitcast i8 %a0 to <8 x i1>
-  %res = call <8 x i64> @llvm.x86.avx512.mskblend.q.512(<8 x i1> %m0, <8 x i64> %a1, <8 x i64> %a2) ; <<8 x i64>> [#uses=1]
+  %res = call <8 x i64> @llvm.x86.avx512.mask.blend.q.512(<8 x i1> %m0, <8 x i64> %a1, <8 x i64> %a2) ; <<8 x i64>> [#uses=1]
   ret <8 x i64> %res
 }
-declare <8 x i64> @llvm.x86.avx512.mskblend.q.512(<8 x i1> %a0, <8 x i64> %a1, <8 x i64> %a2) nounwind readonly
+declare <8 x i64> @llvm.x86.avx512.mask.blend.q.512(<8 x i1> %a0, <8 x i64> %a1, <8 x i64> %a2) nounwind readonly

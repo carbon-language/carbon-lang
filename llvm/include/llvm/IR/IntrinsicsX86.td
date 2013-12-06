@@ -3076,20 +3076,20 @@ let TargetPrefix = "x86" in {
 
 // Vector blend
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_avx512_mskblend_ps_512 : GCCBuiltin<"__builtin_ia32_mskblendps512">,
+  def int_x86_avx512_mask_blend_ps_512 : GCCBuiltin<"__builtin_ia32_mask_blendps512">,
         Intrinsic<[llvm_v16f32_ty],
                   [llvm_v16i1_ty, llvm_v16f32_ty, llvm_v16f32_ty],
                   [IntrNoMem]>;
-  def int_x86_avx512_mskblend_pd_512 : GCCBuiltin<"__builtin_ia32_mskblendpd512">,
+  def int_x86_avx512_mask_blend_pd_512 : GCCBuiltin<"__builtin_ia32_mask_blendpd512">,
         Intrinsic<[llvm_v8f64_ty],
                   [llvm_v8i1_ty, llvm_v8f64_ty, llvm_v8f64_ty],
                   [IntrNoMem]>;
 
-  def int_x86_avx512_mskblend_d_512 : GCCBuiltin<"__builtin_ia32_mskblendd512">,
+  def int_x86_avx512_mask_blend_d_512 : GCCBuiltin<"__builtin_ia32_mask_blendd512">,
         Intrinsic<[llvm_v16i32_ty],
                   [llvm_v16i1_ty, llvm_v16i32_ty, llvm_v16i32_ty],
                   [IntrNoMem]>;
-  def int_x86_avx512_mskblend_q_512 : GCCBuiltin<"__builtin_ia32_mskblendq512">,
+  def int_x86_avx512_mask_blend_q_512 : GCCBuiltin<"__builtin_ia32_mask_blendq512">,
         Intrinsic<[llvm_v8i64_ty],
                   [llvm_v8i1_ty, llvm_v8i64_ty, llvm_v8i64_ty],
                   [IntrNoMem]>;
