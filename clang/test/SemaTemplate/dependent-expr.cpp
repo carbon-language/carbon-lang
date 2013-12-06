@@ -93,3 +93,10 @@ namespace PR10837 {
   }
   template struct A<int>;
 }
+
+namespace PR18152 {
+  template<int N> struct A {
+    static const int n = {N};
+  };
+  template struct A<0>;
+}

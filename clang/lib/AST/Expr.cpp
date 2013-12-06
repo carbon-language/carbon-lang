@@ -1867,12 +1867,12 @@ void InitListExpr::resizeInits(const ASTContext &C, unsigned NumInits) {
 Expr *InitListExpr::updateInit(const ASTContext &C, unsigned Init, Expr *expr) {
   if (Init >= InitExprs.size()) {
     InitExprs.insert(C, InitExprs.end(), Init - InitExprs.size() + 1, 0);
-    InitExprs.back() = expr;
+    setInit(Init, expr);
     return 0;
   }
 
   Expr *Result = cast_or_null<Expr>(InitExprs[Init]);
-  InitExprs[Init] = expr;
+  setInit(Init, expr);
   return Result;
 }
 
