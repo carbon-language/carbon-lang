@@ -139,20 +139,23 @@ AsmToken AsmLexer::LexHexFloatLiteral(bool NoIntDigits) {
 }
 
 /// LexIdentifier: [a-zA-Z_.][a-zA-Z0-9_$.@?]*
-static bool IsIdentifierChar(char c) {
-  return isalnum(c) || c == '_' || c == '$' || c == '.' || c == '@' || c == '?';
+static bool IsIdentifierChar(char c, bool AllowAt) {
+  return isalnum(c) || c == '_' || c == '$' || c == '.' ||
+         (c == '@' && AllowAt) || c == '?';
 }
 AsmToken AsmLexer::LexIdentifier() {
+  bool AllowAtInIdentifier = !StringRef(MAI.getCommentString()).startswith("@");
   // Check for floating point literals.
   if (CurPtr[-1] == '.' && isdigit(*CurPtr)) {
     // Disambiguate a .1243foo identifier from a floating literal.
     while (isdigit(*CurPtr))
       ++CurPtr;
-    if (*CurPtr == 'e' || *CurPtr == 'E' || !IsIdentifierChar(*CurPtr))
+    if (*CurPtr == 'e' || *CurPtr == 'E' ||
+        !IsIdentifierChar(*CurPtr, AllowAtInIdentifier))
       return LexFloatLiteral();
   }
 
-  while (IsIdentifierChar(*CurPtr))
+  while (IsIdentifierChar(*CurPtr, AllowAtInIdentifier))
     ++CurPtr;
 
   // Handle . as a special case.
