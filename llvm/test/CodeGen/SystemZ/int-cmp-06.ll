@@ -341,9 +341,35 @@ define i64 @f19(i32 *%ptr0) {
   ret i64 %sel9
 }
 
-; Check the comparison can be reversed if that allows CLGF to be used.
-define double @f20(double %a, double %b, i64 %i2, i32 *%ptr) {
+; Check the comparison can be reversed if that allows CLGFR to be used.
+define double @f20(double %a, double %b, i64 %i1, i32 %unext) {
 ; CHECK-LABEL: f20:
+; CHECK: clgfr %r2, %r3
+; CHECK-NEXT: jh
+; CHECK: ldr %f0, %f2
+; CHECK: br %r14
+  %i2 = zext i32 %unext to i64
+  %cond = icmp ult i64 %i2, %i1
+  %res = select i1 %cond, double %a, double %b
+  ret double %res
+}
+
+; ...and again with the AND representation.
+define double @f21(double %a, double %b, i64 %i1, i64 %unext) {
+; CHECK-LABEL: f21:
+; CHECK: clgfr %r2, %r3
+; CHECK-NEXT: jh
+; CHECK: ldr %f0, %f2
+; CHECK: br %r14
+  %i2 = and i64 %unext, 4294967295
+  %cond = icmp ult i64 %i2, %i1
+  %res = select i1 %cond, double %a, double %b
+  ret double %res
+}
+
+; Check the comparison can be reversed if that allows CLGF to be used.
+define double @f22(double %a, double %b, i64 %i2, i32 *%ptr) {
+; CHECK-LABEL: f22:
 ; CHECK: clgf %r2, 0(%r3)
 ; CHECK-NEXT: jh {{\.L.*}}
 ; CHECK: ldr %f0, %f2

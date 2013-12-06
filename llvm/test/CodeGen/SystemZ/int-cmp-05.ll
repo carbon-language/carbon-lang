@@ -291,9 +291,22 @@ define i64 @f15(i32 *%ptr0) {
   ret i64 %sel9
 }
 
-; Check the comparison can be reversed if that allows CGF to be used.
-define double @f16(double %a, double %b, i64 %i2, i32 *%ptr) {
+; Check the comparison can be reversed if that allows CGFR to be used.
+define double @f16(double %a, double %b, i64 %i1, i32 %unext) {
 ; CHECK-LABEL: f16:
+; CHECK: cgfr %r2, %r3
+; CHECK-NEXT: jh
+; CHECK: ldr %f0, %f2
+; CHECK: br %r14
+  %i2 = sext i32 %unext to i64
+  %cond = icmp slt i64 %i2, %i1
+  %res = select i1 %cond, double %a, double %b
+  ret double %res
+}
+
+; Likewise CGF.
+define double @f17(double %a, double %b, i64 %i2, i32 *%ptr) {
+; CHECK-LABEL: f17:
 ; CHECK: cgf %r2, 0(%r3)
 ; CHECK-NEXT: jh {{\.L.*}}
 ; CHECK: ldr %f0, %f2

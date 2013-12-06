@@ -1207,10 +1207,14 @@ static bool shouldSwapCmpOperands(SDValue Op0, SDValue Op1,
   if (COp1 && COp1->getZExtValue() == 0)
     return false;
 
+  // Also keep natural memory operands second if the loaded value is
+  // only used here.  Several comparisons have memory forms.
+  if (isNaturalMemoryOperand(Op1, ICmpType) && Op1.hasOneUse())
+    return false;
+
   // Look for cases where Cmp0 is a single-use load and Cmp1 isn't.
   // In that case we generally prefer the memory to be second.
-  if ((isNaturalMemoryOperand(Op0, ICmpType) && Op0.hasOneUse()) &&
-      !(isNaturalMemoryOperand(Op1, ICmpType) && Op1.hasOneUse())) {
+  if (isNaturalMemoryOperand(Op0, ICmpType) && Op0.hasOneUse()) {
     // The only exceptions are when the second operand is a constant and
     // we can use things like CHHSI.
     if (!COp1)
@@ -1227,6 +1231,19 @@ static bool shouldSwapCmpOperands(SDValue Op0, SDValue Op1,
       return false;
     return true;
   }
+
+  // Try to promote the use of CGFR and CLGFR.
+  unsigned Opcode0 = Op0.getOpcode();
+  if (ICmpType != SystemZICMP::UnsignedOnly && Opcode0 == ISD::SIGN_EXTEND)
+    return true;
+  if (ICmpType != SystemZICMP::SignedOnly && Opcode0 == ISD::ZERO_EXTEND)
+    return true;
+  if (ICmpType != SystemZICMP::SignedOnly &&
+      Opcode0 == ISD::AND &&
+      Op0.getOperand(1).getOpcode() == ISD::Constant &&
+      cast<ConstantSDNode>(Op0.getOperand(1))->getZExtValue() == 0xffffffff)
+    return true;
+
   return false;
 }
 
