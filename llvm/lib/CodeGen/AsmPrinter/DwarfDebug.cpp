@@ -2411,10 +2411,10 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
       GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubNamesSection()
                : Asm->getObjFileLowering().getDwarfPubNamesSection();
 
-  for (SmallVectorImpl<Unit *>::const_iterator I = getUnits().begin(),
-                                               E = getUnits().end();
-       I != E; ++I) {
-    Unit *TheU = *I;
+  DwarfFile &Holder = useSplitDwarf() ? SkeletonHolder : InfoHolder;
+  const SmallVectorImpl<Unit *> &Units = Holder.getUnits();
+  for (unsigned i = 0; i != Units.size(); ++i) {
+    Unit *TheU = Units[i];
     unsigned ID = TheU->getUniqueID();
 
     // Start the dwarf pubnames section.
@@ -2445,7 +2445,7 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
                              4);
 
     // Emit the pubnames for this compilation unit.
-    const StringMap<const DIE *> &Globals = TheU->getGlobalNames();
+    const StringMap<const DIE *> &Globals = getUnits()[ID]->getGlobalNames();
     for (StringMap<const DIE *>::const_iterator GI = Globals.begin(),
                                                 GE = Globals.end();
          GI != GE; ++GI) {
@@ -2479,10 +2479,10 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
       GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubTypesSection()
                : Asm->getObjFileLowering().getDwarfPubTypesSection();
 
-  for (SmallVectorImpl<Unit *>::const_iterator I = getUnits().begin(),
-                                               E = getUnits().end();
-       I != E; ++I) {
-    Unit *TheU = *I;
+  DwarfFile &Holder = useSplitDwarf() ? SkeletonHolder : InfoHolder;
+  const SmallVectorImpl<Unit *> &Units = Holder.getUnits();
+  for (unsigned i = 0; i != Units.size(); ++i) {
+    Unit *TheU = Units[i];
     unsigned ID = TheU->getUniqueID();
 
     // Start the dwarf pubtypes section.
@@ -2514,7 +2514,7 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
         Asm->GetTempSymbol(ISec->getLabelBeginName(), TheU->getUniqueID()), 4);
 
     // Emit the pubtypes.
-    const StringMap<const DIE *> &Globals = TheU->getGlobalTypes();
+    const StringMap<const DIE *> &Globals = getUnits()[ID]->getGlobalTypes();
     for (StringMap<const DIE *>::const_iterator GI = Globals.begin(),
                                                 GE = Globals.end();
          GI != GE; ++GI) {
