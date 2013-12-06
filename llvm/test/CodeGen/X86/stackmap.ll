@@ -72,7 +72,7 @@ entry:
 ;
 ; 2 live variables in register.
 ;
-; CHECK-NEXT:   .long  4
+; CHECK-NEXT:   .long   4
 ; CHECK-NEXT:   .long   L{{.*}}-_osrcold
 ; CHECK-NEXT:   .short  0
 ; CHECK-NEXT:   .short  2
@@ -83,7 +83,7 @@ entry:
 ; CHECK-NEXT:   .byte   1
 ; CHECK-NEXT:   .byte   8
 ; CHECK-NEXT:   .short  {{[0-9]+}}
-; CHECK-NEXT:   .long  0
+; CHECK-NEXT:   .long   0
 define void @osrcold(i64 %a, i64 %b) {
 entry:
   %test = icmp slt i64 %a, %b
@@ -98,33 +98,43 @@ ret:
 }
 
 ; Property Read
-; CHECK-NEXT:  .long  5
+; CHECK-NEXT:   .long   5
 ; CHECK-NEXT:   .long   L{{.*}}-_propertyRead
-; CHECK-NEXT:  .short  0
-; CHECK-NEXT:  .short  0
-;
-; FIXME: There are currently no stackmap entries. After moving to
-; AnyRegCC, we will have entries for the object and return value.
+; CHECK-NEXT:   .short  0
+; CHECK-NEXT:   .short  2
+; CHECK-NEXT:   .byte   1
+; CHECK-NEXT:   .byte   8
+; CHECK-NEXT:   .short  {{[0-9]+}}
+; CHECK-NEXT:   .long   0
+; CHECK-NEXT:   .byte   1
+; CHECK-NEXT:   .byte   8
+; CHECK-NEXT:   .short  {{[0-9]+}}
+; CHECK-NEXT:   .long   0
 define i64 @propertyRead(i64* %obj) {
 entry:
   %resolveRead = inttoptr i64 -559038737 to i8*
-  %result = call i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 5, i32 15, i8* %resolveRead, i32 1, i64* %obj)
+  %result = call anyregcc i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 5, i32 15, i8* %resolveRead, i32 1, i64* %obj)
   %add = add i64 %result, 3
   ret i64 %add
 }
 
 ; Property Write
-; CHECK-NEXT:  .long  6
+; CHECK-NEXT:   .long   6
 ; CHECK-NEXT:   .long   L{{.*}}-_propertyWrite
-; CHECK-NEXT:  .short  0
-; CHECK-NEXT:  .short  0
-;
-; FIXME: There are currently no stackmap entries. After moving to
-; AnyRegCC, we will have entries for the object and return value.
+; CHECK-NEXT:   .short  0
+; CHECK-NEXT:   .short  2
+; CHECK-NEXT:   .byte   1
+; CHECK-NEXT:   .byte   8
+; CHECK-NEXT:   .short  {{[0-9]+}}
+; CHECK-NEXT:   .long   0
+; CHECK-NEXT:   .byte   1
+; CHECK-NEXT:   .byte   8
+; CHECK-NEXT:   .short  {{[0-9]+}}
+; CHECK-NEXT:   .long   0
 define void @propertyWrite(i64 %dummy1, i64* %obj, i64 %dummy2, i64 %a) {
 entry:
   %resolveWrite = inttoptr i64 -559038737 to i8*
-  call void (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i32 6, i32 15, i8* %resolveWrite, i32 2, i64* %obj, i64 %a)
+  call anyregcc void (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i32 6, i32 15, i8* %resolveWrite, i32 2, i64* %obj, i64 %a)
   ret void
 }
 
