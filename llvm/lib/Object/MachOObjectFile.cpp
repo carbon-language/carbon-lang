@@ -899,7 +899,7 @@ MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
         "GENERIC_RELOC_LOCAL_SECTDIFF",
         "GENERIC_RELOC_TLV" };
 
-      if (RType > 6)
+      if (RType > 5)
         res = "Unknown";
       else
         res = Table[RType];
@@ -962,7 +962,10 @@ MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
         "PPC_RELOC_LO14_SECTDIFF",
         "PPC_RELOC_LOCAL_SECTDIFF" };
 
-      res = Table[RType];
+      if (RType > 15)
+        res = "Unknown";
+      else
+        res = Table[RType];
       break;
     }
     case Triple::UnknownArch:
