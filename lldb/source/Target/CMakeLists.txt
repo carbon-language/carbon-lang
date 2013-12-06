@@ -14,6 +14,7 @@ add_lldb_library(lldbTarget
   Platform.cpp
   Process.cpp
   RegisterContext.cpp
+  SectionLoadHistory.cpp
   SectionLoadList.cpp
   StackFrame.cpp
   StackFrameList.cpp
