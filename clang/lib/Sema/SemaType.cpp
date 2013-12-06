@@ -4951,9 +4951,6 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
       attr.setUsedAsTypeAttr();
       break;
 
-    case AttributeList::AT_Win64:
-      attr.setUsedAsTypeAttr();
-      break;
     MS_TYPE_ATTRS_CASELIST:
       if (!handleMSPointerTypeQualifierAttr(state, attr, type))
         attr.setUsedAsTypeAttr();

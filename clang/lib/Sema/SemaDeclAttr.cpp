@@ -4125,8 +4125,6 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleSimpleAttribute<MultipleInheritanceAttr>(S, D, Attr); break;
   case AttributeList::AT_VirtualInheritance:
     handleSimpleAttribute<VirtualInheritanceAttr>(S, D, Attr); break;
-  case AttributeList::AT_Win64:
-    handleSimpleAttribute<Win64Attr>(S, D, Attr); break;
   case AttributeList::AT_ForceInline:
     handleSimpleAttribute<ForceInlineAttr>(S, D, Attr); break;
   case AttributeList::AT_SelectAny:
