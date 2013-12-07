@@ -529,6 +529,12 @@ std::string getExpandedString(clang::Preprocessor &PP,
   return Expanded;
 }
 
+// ConditionValueKind strings.
+const char *
+ConditionValueKindStrings[] = {
+  "(not evaluated)", "false", "true"
+};
+
 // We need some operator overloads for string handles.
 bool operator==(const StringHandle &H1, const StringHandle &H2) {
   const char *S1 = (H1 ? *H1 : "");
@@ -728,7 +734,7 @@ public:
 // for use in telling the user the nested include path to the header.
 class ConditionalExpansionInstance {
 public:
-  ConditionalExpansionInstance(bool ConditionValue, InclusionPathHandle H)
+  ConditionalExpansionInstance(clang::PPCallbacks::ConditionValueKind ConditionValue, InclusionPathHandle H)
       : ConditionValue(ConditionValue) {
     InclusionPathHandles.push_back(H);
   }
@@ -753,7 +759,7 @@ public:
   }
 
   // A flag representing the evaluated condition value.
-  bool ConditionValue;
+  clang::PPCallbacks::ConditionValueKind ConditionValue;
   // The header inclusion path handles for all the instances.
   std::vector<InclusionPathHandle> InclusionPathHandles;
 };
@@ -768,7 +774,8 @@ public:
 class ConditionalTracker {
 public:
   ConditionalTracker(clang::tok::PPKeywordKind DirectiveKind,
-                     bool ConditionValue, StringHandle ConditionUnexpanded,
+                     clang::PPCallbacks::ConditionValueKind ConditionValue,
+                     StringHandle ConditionUnexpanded,
                      InclusionPathHandle InclusionPathHandle)
       : DirectiveKind(DirectiveKind), ConditionUnexpanded(ConditionUnexpanded) {
     addConditionalExpansionInstance(ConditionValue, InclusionPathHandle);
@@ -777,7 +784,7 @@ public:
 
   // Find a matching condition expansion instance.
   ConditionalExpansionInstance *
-  findConditionalExpansionInstance(bool ConditionValue) {
+  findConditionalExpansionInstance(clang::PPCallbacks::ConditionValueKind ConditionValue) {
     for (std::vector<ConditionalExpansionInstance>::iterator
              I = ConditionalExpansionInstances.begin(),
              E = ConditionalExpansionInstances.end();
@@ -791,7 +798,7 @@ public:
 
   // Add a conditional expansion instance.
   void
-  addConditionalExpansionInstance(bool ConditionValue,
+  addConditionalExpansionInstance(clang::PPCallbacks::ConditionValueKind ConditionValue,
                                   InclusionPathHandle InclusionPathHandle) {
     ConditionalExpansionInstances.push_back(
         ConditionalExpansionInstance(ConditionValue, InclusionPathHandle));
@@ -842,9 +849,9 @@ public:
   void Defined(const clang::Token &MacroNameTok,
                const clang::MacroDirective *MD, clang::SourceRange Range);
   void If(clang::SourceLocation Loc, clang::SourceRange ConditionRange,
-          bool ConditionResult);
+          clang::PPCallbacks::ConditionValueKind ConditionResult);
   void Elif(clang::SourceLocation Loc, clang::SourceRange ConditionRange,
-            bool ConditionResult, clang::SourceLocation IfLoc);
+            clang::PPCallbacks::ConditionValueKind ConditionResult, clang::SourceLocation IfLoc);
   void Ifdef(clang::SourceLocation Loc, const clang::Token &MacroNameTok,
              const clang::MacroDirective *MD);
   void Ifndef(clang::SourceLocation Loc, const clang::Token &MacroNameTok,
@@ -1138,7 +1145,7 @@ public:
   addConditionalExpansionInstance(clang::Preprocessor &PP, HeaderHandle H,
                                   clang::SourceLocation InstanceLoc,
                                   clang::tok::PPKeywordKind DirectiveKind,
-                                  bool ConditionValue,
+                                  clang::PPCallbacks::ConditionValueKind ConditionValue,
                                   llvm::StringRef ConditionUnexpanded,
                                   InclusionPathHandle InclusionPathHandle) {
     // Ignore header guards, assuming the header guard is the only conditional.
@@ -1264,7 +1271,7 @@ public:
            IMT != EMT; ++IMT) {
         ConditionalExpansionInstance &MacroInfo = *IMT;
         OS << "  '" << *CondTracker.ConditionUnexpanded << "' expanded to: '"
-           << (MacroInfo.ConditionValue ? "true" : "false")
+           << ConditionValueKindStrings[MacroInfo.ConditionValue]
            << "' with respect to these inclusion paths:\n";
         // Walk all the inclusion path hierarchies.
         for (std::vector<InclusionPathHandle>::iterator
@@ -1394,7 +1401,7 @@ void PreprocessorCallbacks::Defined(const clang::Token &MacroNameTok,
 
 void PreprocessorCallbacks::If(clang::SourceLocation Loc,
                                clang::SourceRange ConditionRange,
-                               bool ConditionResult) {
+                               clang::PPCallbacks::ConditionValueKind ConditionResult) {
   std::string Unexpanded(getSourceString(PP, ConditionRange));
   PPTracker.addConditionalExpansionInstance(
       PP, PPTracker.getCurrentHeaderHandle(), Loc, clang::tok::pp_if,
@@ -1403,7 +1410,7 @@ void PreprocessorCallbacks::If(clang::SourceLocation Loc,
 
 void PreprocessorCallbacks::Elif(clang::SourceLocation Loc,
                                  clang::SourceRange ConditionRange,
-                                 bool ConditionResult,
+                                 clang::PPCallbacks::ConditionValueKind ConditionResult,
                                  clang::SourceLocation IfLoc) {
   std::string Unexpanded(getSourceString(PP, ConditionRange));
   PPTracker.addConditionalExpansionInstance(
@@ -1414,7 +1421,8 @@ void PreprocessorCallbacks::Elif(clang::SourceLocation Loc,
 void PreprocessorCallbacks::Ifdef(clang::SourceLocation Loc,
                                   const clang::Token &MacroNameTok,
                                   const clang::MacroDirective *MD) {
-  bool IsDefined = (MD != 0);
+  clang::PPCallbacks::ConditionValueKind IsDefined =
+    (MD != 0 ? clang::PPCallbacks::CVK_True : clang::PPCallbacks::CVK_False );
   PPTracker.addConditionalExpansionInstance(
       PP, PPTracker.getCurrentHeaderHandle(), Loc, clang::tok::pp_ifdef,
       IsDefined, PP.getSpelling(MacroNameTok),
@@ -1424,7 +1432,8 @@ void PreprocessorCallbacks::Ifdef(clang::SourceLocation Loc,
 void PreprocessorCallbacks::Ifndef(clang::SourceLocation Loc,
                                    const clang::Token &MacroNameTok,
                                    const clang::MacroDirective *MD) {
-  bool IsNotDefined = (MD == 0);
+  clang::PPCallbacks::ConditionValueKind IsNotDefined =
+    (MD == 0 ? clang::PPCallbacks::CVK_True : clang::PPCallbacks::CVK_False );
   PPTracker.addConditionalExpansionInstance(
       PP, PPTracker.getCurrentHeaderHandle(), Loc, clang::tok::pp_ifndef,
       IsNotDefined, PP.getSpelling(MacroNameTok),

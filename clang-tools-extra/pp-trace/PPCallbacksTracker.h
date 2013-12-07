@@ -140,9 +140,9 @@ public:
                clang::SourceRange Range) LLVM_OVERRIDE;
   void SourceRangeSkipped(clang::SourceRange Range) LLVM_OVERRIDE;
   void If(clang::SourceLocation Loc, clang::SourceRange ConditionRange,
-          bool ConditionValue) LLVM_OVERRIDE;
+          ConditionValueKind ConditionValue) LLVM_OVERRIDE;
   void Elif(clang::SourceLocation Loc, clang::SourceRange ConditionRange,
-            bool ConditionValue, clang::SourceLocation IfLoc) LLVM_OVERRIDE;
+            ConditionValueKind ConditionValue, clang::SourceLocation IfLoc) LLVM_OVERRIDE;
   void Ifdef(clang::SourceLocation Loc, const clang::Token &MacroNameTok,
              const clang::MacroDirective *MD) LLVM_OVERRIDE;
   void Ifndef(clang::SourceLocation Loc, const clang::Token &MacroNameTok,

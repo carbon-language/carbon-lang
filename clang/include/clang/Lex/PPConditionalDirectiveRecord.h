@@ -87,9 +87,9 @@ public:
 
 private:
   virtual void If(SourceLocation Loc, SourceRange ConditionRange,
-                  bool ConditionValue);
+                  ConditionValueKind ConditionValue);
   virtual void Elif(SourceLocation Loc, SourceRange ConditionRange,
-                    bool ConditionValue, SourceLocation IfLoc);
+                    ConditionValueKind ConditionValue, SourceLocation IfLoc);
   virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok,
                      const MacroDirective *MD);
   virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok,

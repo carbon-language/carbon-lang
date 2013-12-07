@@ -45,7 +45,7 @@ X
 // CHECK-NEXT: - Callback: If
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-macro.cpp:5:2"
 // CHECK-NEXT:   ConditionRange: ["{{.*}}{{[/\\]}}pp-trace-macro.cpp:5:4", "{{.*}}{{[/\\]}}pp-trace-macro.cpp:6:1"]
-// CHECK-NEXT:   ConditionValue: true
+// CHECK-NEXT:   ConditionValue: CVK_True
 // CHECK-NEXT: - Callback: Endif
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-macro.cpp:6:2"
 // CHECK-NEXT:   IfLoc: "{{.*}}{{[/\\]}}pp-trace-macro.cpp:5:2"
@@ -59,7 +59,7 @@ X
 // CHECK-NEXT: - Callback: If
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-macro.cpp:8:2"
 // CHECK-NEXT:   ConditionRange: ["{{.*}}{{[/\\]}}pp-trace-macro.cpp:8:4", "{{.*}}{{[/\\]}}pp-trace-macro.cpp:9:1"]
-// CHECK-NEXT:   ConditionValue: false
+// CHECK-NEXT:   ConditionValue: CVK_False
 // CHECK-NEXT: - Callback: Endif
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-macro.cpp:9:2"
 // CHECK-NEXT:   IfLoc: "{{.*}}{{[/\\]}}pp-trace-macro.cpp:8:2"

@@ -424,7 +424,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
             const SourceLocation CondEnd = CurPPLexer->getSourceLocation();
             Callbacks->Elif(Tok.getLocation(),
                             SourceRange(CondBegin, CondEnd),
-                            CondValue, CondInfo.IfLoc);
+                            (CondValue ? PPCallbacks::CVK_True : PPCallbacks::CVK_False), CondInfo.IfLoc);
           }
           // If this condition is true, enter it!
           if (CondValue) {
@@ -2280,7 +2280,7 @@ void Preprocessor::HandleIfDirective(Token &IfToken,
   if (Callbacks)
     Callbacks->If(IfToken.getLocation(),
                   SourceRange(ConditionalBegin, ConditionalEnd),
-                  ConditionalTrue);
+                  (ConditionalTrue ? PPCallbacks::CVK_True : PPCallbacks::CVK_False));
 
   // Should we include the stuff contained by this directive?
   if (ConditionalTrue) {
@@ -2377,7 +2377,7 @@ void Preprocessor::HandleElifDirective(Token &ElifToken) {
   if (Callbacks)
     Callbacks->Elif(ElifToken.getLocation(),
                     SourceRange(ConditionalBegin, ConditionalEnd),
-                    true, CI.IfLoc);
+                    PPCallbacks::CVK_NotEvaluated, CI.IfLoc);
 
   // Finally, skip the rest of the contents of this block.
   SkipExcludedConditionalBlock(CI.IfLoc, /*Foundnonskip*/true,

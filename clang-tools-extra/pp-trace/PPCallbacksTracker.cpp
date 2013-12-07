@@ -77,6 +77,12 @@ static const char *PragmaIntroducerKindStrings[] = { "PIK_HashPragma",
 static const char *PragmaMessageKindStrings[] = { "PMK_Message", "PMK_Warning",
                                                   "PMK_Error" };
 
+// ConditionValueKind strings.
+const char *
+ConditionValueKindStrings[] = {
+  "CVK_NotEvaluated", "CVK_False", "CVK_True"
+};
+
 // Mapping strings.
 static const char *MappingStrings[] = { "0",           "MAP_IGNORE",
                                         "MAP_WARNING", "MAP_ERROR",
@@ -345,22 +351,22 @@ void PPCallbacksTracker::SourceRangeSkipped(clang::SourceRange Range) {
 // Hook called whenever an #if is seen.
 void PPCallbacksTracker::If(clang::SourceLocation Loc,
                             clang::SourceRange ConditionRange,
-                            bool ConditionValue) {
+                            ConditionValueKind ConditionValue) {
   beginCallback("If");
   appendArgument("Loc", Loc);
   appendArgument("ConditionRange", ConditionRange);
-  appendArgument("ConditionValue", ConditionValue);
+  appendArgument("ConditionValue", ConditionValue, ConditionValueKindStrings);
 }
 
 // Hook called whenever an #elif is seen.
 void PPCallbacksTracker::Elif(clang::SourceLocation Loc,
                               clang::SourceRange ConditionRange,
-                              bool ConditionValue,
+                              ConditionValueKind ConditionValue,
                               clang::SourceLocation IfLoc) {
   beginCallback("Elif");
   appendArgument("Loc", Loc);
   appendArgument("ConditionRange", ConditionRange);
-  appendArgument("ConditionValue", ConditionValue);
+  appendArgument("ConditionValue", ConditionValue, ConditionValueKindStrings);
   appendArgument("IfLoc", IfLoc);
 }
 
