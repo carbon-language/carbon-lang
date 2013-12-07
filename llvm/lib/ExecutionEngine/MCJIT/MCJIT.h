@@ -206,10 +206,8 @@ class MCJIT : public ExecutionEngine {
 
   OwningModuleContainer OwnedModules;
 
-  SmallVector<object::Archive*, 2> Archives;
-
-  typedef SmallVector<ObjectImage *, 2> LoadedObjectList;
-  LoadedObjectList  LoadedObjects;
+  typedef DenseMap<Module *, ObjectImage *> LoadedObjectMap;
+  LoadedObjectMap  LoadedObjects;
 
   // An optional ObjectCache to be notified of compiled objects and used to
   // perform lookup of pre-compiled code to avoid re-compilation.
@@ -229,8 +227,6 @@ public:
   /// @name ExecutionEngine interface implementation
   /// @{
   virtual void addModule(Module *M);
-  virtual void addObjectFile(object::ObjectFile *O);
-  virtual void addArchive(object::Archive *O);
   virtual bool removeModule(Module *M);
 
   /// FindFunctionNamed - Search all of the active modules to find the one that

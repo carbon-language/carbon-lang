@@ -311,18 +311,12 @@ protected:
   virtual void updateGOTEntries(StringRef Name, uint64_t Addr) {}
 
   virtual ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);
-  virtual ObjectImage *createObjectImageFromFile(object::ObjectFile *InputObject);
-
-  // This is the implementation for the two public overloads
-  ObjectImage *loadObject(ObjectImage *InputObject);
-
 public:
   RuntimeDyldImpl(RTDyldMemoryManager *mm) : MemMgr(mm), HasError(false) {}
 
   virtual ~RuntimeDyldImpl();
 
   ObjectImage *loadObject(ObjectBuffer *InputBuffer);
-  ObjectImage *loadObject(object::ObjectFile *InputObject);
 
   void *getSymbolAddress(StringRef Name) {
     // FIXME: Just look up as a function for now. Overly simple of course.
@@ -360,7 +354,6 @@ public:
   StringRef getErrorString() { return ErrorStr; }
 
   virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const = 0;
-  virtual bool isCompatibleFile(const ObjectFile *Obj) const = 0;
 
   virtual void registerEHFrames();
 

@@ -140,9 +140,7 @@ public:
                                     const SymbolTableMap &Symbols,
                                     StubMap &Stubs);
   virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const;
-  virtual bool isCompatibleFile(const object::ObjectFile *Buffer) const;
   virtual ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);
-  virtual ObjectImage *createObjectImageFromFile(object::ObjectFile *Obj);
   virtual void registerEHFrames();
   virtual void deregisterEHFrames();
   virtual void finalizeLoad(ObjSectionToIDMap &SectionMap);
