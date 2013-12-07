@@ -10639,6 +10639,9 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     MayHaveConvFixit = true;
     break;
   case IncompatiblePointer:
+    if (getLangOpts().ObjC1 &&
+        CheckObjCBridgeRelatedConversions(Loc, DstType, SrcType))
+      return false;
     MakeObjCStringLiteralFixItHint(*this, DstType, SrcExpr, Hint, IsNSString);
       DiagKind =
         (Action == AA_Passing_CFAudited ?
@@ -10718,6 +10721,9 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     DiagKind = diag::err_arc_weak_unavailable_assign;
     break;
   case Incompatible:
+    if (getLangOpts().ObjC1 &&
+        CheckObjCBridgeRelatedConversions(Loc, DstType, SrcType))
+      return true;
     DiagKind = diag::err_typecheck_convert_incompatible;
     ConvHints.tryToFixConversion(SrcExpr, SrcType, DstType, *this);
     MayHaveConvFixit = true;

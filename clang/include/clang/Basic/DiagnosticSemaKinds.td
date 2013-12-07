@@ -2468,6 +2468,23 @@ def warn_objc_invalid_bridge : Warning<
 def warn_objc_invalid_bridge_to_cf : Warning<
   "%0 cannot bridge to %1">, InGroup<ObjCBridge>;
 
+// objc_bridge_related attribute diagnostics.
+def err_objc_bridged_related_invalid_class : Error<
+  "could not find ObjectiveC class %0 to convert %1 to %2">;
+def err_objc_bridged_related_invalid_class_name : Error<
+  "%0 must be name of an ObjectiveC class to be able to convert %1 to %2">;
+def err_objc_bridged_related_class_method : Error<
+  "class method %0 for conversion of CF type %1 to an "
+ "ObjectiveC object of type %2 not found">;
+def err_objc_bridged_related_instance_method : Error<
+  "instance method %0 for conversion of an ObjectiveC type %1 to a CF "
+ "object  of type %2 not found">;
+def err_objc_bridged_related_known_method : Error<
+ "%0 must be explicitly converted to %1, use %2 method for this conversion">;
+def err_objc_bridged_related_unknown_method : Error<
+ "%0 must be explicitly converted to %1, define and then use "
+ "%select{a singular class|an instance}3 method in %2 for this conversion">;
+  
 // Function Parameter Semantic Analysis.
 def err_param_with_void_type : Error<"argument may not have 'void' type">;
 def err_void_only_param : Error<

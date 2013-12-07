@@ -6908,6 +6908,17 @@ public:
   
   void CheckTollFreeBridgeCast(QualType castType, Expr *castExpr);
   
+  bool checkObjCBridgeRelatedComponents(SourceLocation Loc,
+                                        QualType DestType, QualType SrcType,
+                                        ObjCInterfaceDecl *&RelatedClass,
+                                        ObjCMethodDecl *&ClassMethod,
+                                        ObjCMethodDecl *&InstanceMethod,
+                                        TypedefNameDecl *&TDNDecl,
+                                        bool CfToNs);
+  
+  bool CheckObjCBridgeRelatedConversions(SourceLocation Loc,
+                                         QualType DestType, QualType SrcType);
+  
   bool checkInitMethod(ObjCMethodDecl *method, QualType receiverTypeIfCall);
 
   /// \brief Check whether the given new method is a valid override of the

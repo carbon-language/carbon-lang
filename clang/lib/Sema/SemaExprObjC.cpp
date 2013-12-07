@@ -3341,6 +3341,120 @@ void Sema::CheckTollFreeBridgeCast(QualType castType, Expr *castExpr) {
   }
 }
 
+
+bool Sema::checkObjCBridgeRelatedComponents(SourceLocation Loc,
+                                            QualType DestType, QualType SrcType,
+                                            ObjCInterfaceDecl *&RelatedClass,
+                                            ObjCMethodDecl *&ClassMethod,
+                                            ObjCMethodDecl *&InstanceMethod,
+                                            TypedefNameDecl *&TDNDecl,
+                                            bool CfToNs) {
+  QualType T = CfToNs ? SrcType : DestType;
+  while (const TypedefType *TD = dyn_cast<TypedefType>(T.getTypePtr())) {
+    TDNDecl = TD->getDecl();
+    if (ObjCBridgeRelatedAttr *ObjCBAttr =
+          getObjCBridgeAttr<ObjCBridgeRelatedAttr>(TD)) {
+      IdentifierInfo *RCId = ObjCBAttr->getRelatedClass();
+      IdentifierInfo *CMId = ObjCBAttr->getClassMethod();
+      IdentifierInfo *IMId = ObjCBAttr->getInstanceMethod();
+      if (!RCId)
+        return false;
+      NamedDecl *Target = 0;
+      // Check for an existing type with this name.
+      LookupResult R(*this, DeclarationName(RCId), SourceLocation(),
+                     Sema::LookupOrdinaryName);
+      if (!LookupName(R, TUScope)) {
+        Diag(Loc, diag::err_objc_bridged_related_invalid_class) << RCId
+          << SrcType << DestType;
+        Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+        return false;
+      }
+      Target = R.getFoundDecl();
+      if (Target && isa<ObjCInterfaceDecl>(Target))
+        RelatedClass = cast<ObjCInterfaceDecl>(Target);
+      else {
+        Diag(Loc, diag::err_objc_bridged_related_invalid_class_name) << RCId
+          << SrcType << DestType;
+        Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+        if (Target)
+          Diag(Target->getLocStart(), diag::note_declared_at);
+        return false;
+      }
+      
+      // Check for an existing class method with the given selector name.
+      if (CfToNs && CMId) {
+        Selector Sel = Context.Selectors.getUnarySelector(CMId);
+        ClassMethod = RelatedClass->lookupMethod(Sel, false);
+        if (!ClassMethod) {
+          Diag(Loc, diag::err_objc_bridged_related_class_method)
+            << Sel << SrcType << DestType;
+          Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+          return false;
+        }
+      }
+      
+      // Check for an existing instance method with the given selector name.
+      if (!CfToNs && IMId) {
+        Selector Sel = Context.Selectors.getNullarySelector(IMId);
+        InstanceMethod = RelatedClass->lookupMethod(Sel, true);
+        if (!InstanceMethod) {
+          Diag(Loc, diag::err_objc_bridged_related_instance_method)
+            << Sel << SrcType << DestType;
+          Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+          return false;
+        }
+      }
+      return true;
+    }
+    T = TDNDecl->getUnderlyingType();
+  }
+  return false;
+}
+
+bool
+Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
+                                        QualType DestType, QualType SrcType) {
+  ARCConversionTypeClass rhsExprACTC = classifyTypeForARCConversion(SrcType);
+  ARCConversionTypeClass lhsExprACTC = classifyTypeForARCConversion(DestType);
+  bool CfToNs = (rhsExprACTC == ACTC_coreFoundation && lhsExprACTC == ACTC_retainable);
+  bool NsToCf = (rhsExprACTC == ACTC_retainable && lhsExprACTC == ACTC_coreFoundation);
+  if (!CfToNs && !NsToCf)
+    return false;
+  
+  ObjCInterfaceDecl *RelatedClass;
+  ObjCMethodDecl *ClassMethod = 0;
+  ObjCMethodDecl *InstanceMethod = 0;
+  TypedefNameDecl *TDNDecl = 0;
+  if (!checkObjCBridgeRelatedComponents(Loc, DestType, SrcType, RelatedClass,
+                                        ClassMethod, InstanceMethod, TDNDecl, CfToNs))
+    return false;
+  
+  if (CfToNs) {
+    // Implicit conversion from CF to ObjC object is needed.
+    if (ClassMethod)
+      Diag(Loc, diag::err_objc_bridged_related_known_method)
+        << SrcType << DestType << ClassMethod->getSelector() << 0;
+    else
+      Diag(Loc, diag::err_objc_bridged_related_unknown_method)
+        << SrcType << DestType << RelatedClass->getName() << 0;
+    Diag(RelatedClass->getLocStart(), diag::note_declared_at);
+    Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+  }
+  else {
+    // Implicit conversion from ObjC type to CF object is needed.
+    if (InstanceMethod)
+      Diag(Loc, diag::err_objc_bridged_related_known_method)
+      << SrcType << DestType << InstanceMethod->getSelector() << 1;
+    else
+      Diag(Loc, diag::err_objc_bridged_related_unknown_method)
+      << SrcType << DestType << RelatedClass->getName() << 1;
+    Diag(RelatedClass->getLocStart(), diag::note_declared_at);
+    Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+  }
+  
+  return true;
+}
+
 Sema::ARCConversionResult
 Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
                              Expr *&castExpr, CheckedConversionKind CCK,
