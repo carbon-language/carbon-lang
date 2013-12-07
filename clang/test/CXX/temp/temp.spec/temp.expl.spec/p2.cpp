@@ -80,7 +80,7 @@ template<> struct N0::X0<void> { }; // expected-warning{{C++11 extension}}
 N0::X0<void> test_X0;
 
 namespace N1 {
-  template<> struct N0::X0<const void> { }; // expected-error{{originally}}
+  template<> struct N0::X0<const void> { }; // expected-error{{not in a namespace enclosing 'N0'}}
 }
 
 namespace N0 {

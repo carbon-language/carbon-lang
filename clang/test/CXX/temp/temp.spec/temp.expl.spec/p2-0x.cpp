@@ -79,7 +79,7 @@ template<> struct N0::X0<void> { };
 N0::X0<void> test_X0;
 
 namespace N1 {
-  template<> struct N0::X0<const void> { }; // expected-error{{class template specialization of 'X0' must originally be declared in namespace 'N0'}}
+  template<> struct N0::X0<const void> { }; // expected-error{{class template specialization of 'X0' not in a namespace enclosing 'N0'}}
 }
 
 namespace N0 {

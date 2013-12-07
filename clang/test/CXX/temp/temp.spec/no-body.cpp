@@ -37,7 +37,7 @@ namespace noargs_body {
 namespace exp_spec {
 #ifndef FIXING
   template<> void f0<int>(int) { }  // expected-error {{no function template matches function template specialization 'f0'}}
-  template<> struct x0<int> { };    // expected-error {{class template specialization of 'x0' must originally be declared in the global scope}}
+  template<> struct x0<int> { };    // expected-error {{class template specialization of 'x0' must occur at global scope}}
 #endif
 }
 
@@ -51,7 +51,7 @@ namespace args_bad {
   template void f1<int>(int) { }    // expected-error {{explicit template instantiation cannot have a definition; if this definition is meant to be an explicit specialization, add '<>' after the 'template' keyword}} \
                                        expected-error {{no function template matches function template specialization 'f1'}}
   template struct x1<int> { };      // expected-error {{explicit template instantiation cannot have a definition; if this definition is meant to be an explicit specialization, add '<>' after the 'template' keyword}} \
-                                       expected-error {{class template specialization of 'x1' must originally be declared in the global scope}}
+                                       expected-error {{class template specialization of 'x1' must occur at global scope}}
 #endif
 }
 

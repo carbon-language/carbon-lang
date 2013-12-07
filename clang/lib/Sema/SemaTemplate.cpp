@@ -5596,13 +5596,37 @@ static bool CheckTemplateSpecializationScope(Sema &S,
   //   A class template partial specialization may be declared or redeclared
   //   in any namespace scope in which its definition may be defined (14.5.1
   //   and 14.5.2).
-  bool ComplainedAboutScope = false;
-  DeclContext *SpecializedContext 
+  DeclContext *SpecializedContext
     = Specialized->getDeclContext()->getEnclosingNamespaceContext();
   DeclContext *DC = S.CurContext->getEnclosingNamespaceContext();
-  if ((!PrevDecl ||
-       getTemplateSpecializationKind(PrevDecl) == TSK_Undeclared ||
-       getTemplateSpecializationKind(PrevDecl) == TSK_ImplicitInstantiation)){
+
+  // Make sure that this redeclaration (or definition) occurs in an enclosing
+  // namespace.
+  // Note that HandleDeclarator() performs this check for explicit
+  // specializations of function templates, static data members, and member
+  // functions, so we skip the check here for those kinds of entities.
+  // FIXME: HandleDeclarator's diagnostics aren't quite as good, though.
+  // Should we refactor that check, so that it occurs later?
+  if (!DC->Encloses(SpecializedContext) &&
+      !(isa<FunctionTemplateDecl>(Specialized) ||
+        isa<FunctionDecl>(Specialized) ||
+        isa<VarTemplateDecl>(Specialized) ||
+        isa<VarDecl>(Specialized))) {
+    if (isa<TranslationUnitDecl>(SpecializedContext))
+      S.Diag(Loc, diag::err_template_spec_redecl_global_scope)
+        << EntityKind << Specialized;
+    else if (isa<NamespaceDecl>(SpecializedContext))
+      S.Diag(Loc, diag::err_template_spec_redecl_out_of_scope)
+        << EntityKind << Specialized
+        << cast<NamedDecl>(SpecializedContext);
+    else
+      llvm_unreachable("unexpected namespace context for specialization");
+
+    S.Diag(Specialized->getLocation(), diag::note_specialized_entity);
+  } else if ((!PrevDecl ||
+              getTemplateSpecializationKind(PrevDecl) == TSK_Undeclared ||
+              getTemplateSpecializationKind(PrevDecl) ==
+                  TSK_ImplicitInstantiation)) {
     // C++ [temp.exp.spec]p2:
     //   An explicit specialization shall be declared in the namespace of which
     //   the template is a member, or, for member templates, in the namespace
@@ -5611,9 +5635,12 @@ static bool CheckTemplateSpecializationScope(Sema &S,
     //   static data member of a class template shall be declared in the
     //   namespace of which the class template is a member.
     //
-    // C++0x [temp.expl.spec]p2:
+    // C++11 [temp.expl.spec]p2:
     //   An explicit specialization shall be declared in a namespace enclosing
     //   the specialized template.
+    // C++11 [temp.explicit]p3:
+    //   An explicit instantiation shall appear in an enclosing namespace of its
+    //   template.
     if (!DC->InEnclosingNamespaceSetOf(SpecializedContext)) {
       bool IsCPlusPlus11Extension = DC->Encloses(SpecializedContext);
       if (isa<TranslationUnitDecl>(SpecializedContext)) {
@@ -5634,33 +5661,8 @@ static bool CheckTemplateSpecializationScope(Sema &S,
       }
 
       S.Diag(Specialized->getLocation(), diag::note_specialized_entity);
-      ComplainedAboutScope =
-        !(IsCPlusPlus11Extension && S.getLangOpts().CPlusPlus11);
     }
   }
-
-  // Make sure that this redeclaration (or definition) occurs in an enclosing
-  // namespace.
-  // Note that HandleDeclarator() performs this check for explicit
-  // specializations of function templates, static data members, and member
-  // functions, so we skip the check here for those kinds of entities.
-  // FIXME: HandleDeclarator's diagnostics aren't quite as good, though.
-  // Should we refactor that check, so that it occurs later?
-  if (!ComplainedAboutScope && !DC->Encloses(SpecializedContext) &&
-      !(isa<FunctionTemplateDecl>(Specialized) || isa<VarDecl>(Specialized) ||
-        isa<FunctionDecl>(Specialized))) {
-    if (isa<TranslationUnitDecl>(SpecializedContext))
-      S.Diag(Loc, diag::err_template_spec_redecl_global_scope)
-        << EntityKind << Specialized;
-    else if (isa<NamespaceDecl>(SpecializedContext))
-      S.Diag(Loc, diag::err_template_spec_redecl_out_of_scope)
-        << EntityKind << Specialized
-        << cast<NamedDecl>(SpecializedContext);
-
-    S.Diag(Specialized->getLocation(), diag::note_specialized_entity);
-  }
-
-  // FIXME: check for specialization-after-instantiation errors and such.
 
   return false;
 }
