@@ -33,8 +33,10 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/Pass.h"
 #include <algorithm>
 
@@ -53,6 +55,7 @@ class Loop;
 class MDNode;
 class PHINode;
 class raw_ostream;
+template<class N> class DominatorTreeBase;
 template<class N, class M> class LoopInfoBase;
 template<class N, class M> class LoopBase;
 
