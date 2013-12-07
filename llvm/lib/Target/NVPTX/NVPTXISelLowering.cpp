@@ -361,7 +361,7 @@ NVPTXTargetLowering::getPrototype(Type *retTy, const ArgListTy &Args,
     O << "()";
   } else {
     O << "(";
-    if (retTy->isPrimitiveType() || retTy->isIntegerTy()) {
+    if (retTy->isFloatingPointTy() || retTy->isIntegerTy()) {
       unsigned size = 0;
       if (const IntegerType *ITy = dyn_cast<IntegerType>(retTy)) {
         size = ITy->getBitWidth();
@@ -856,8 +856,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     //  .param .align 16 .b8 retval0[<size-in-bytes>], or
     //  .param .b<size-in-bits> retval0
     unsigned resultsz = TD->getTypeAllocSizeInBits(retTy);
-    if (retTy->isPrimitiveType() || retTy->isIntegerTy() ||
-        retTy->isPointerTy()) {
+    if (retTy->isSingleValueType()) {
       // Scalar needs to be at least 32bit wide
       if (resultsz < 32)
         resultsz = 32;

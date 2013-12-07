@@ -430,7 +430,7 @@ void NVPTXAsmPrinter::printReturnValStr(const Function *F, raw_ostream &O) {
   O << " (";
 
   if (isABI) {
-    if (Ty->isPrimitiveType() || Ty->isIntegerTy()) {
+    if (Ty->isFloatingPointTy() || Ty->isIntegerTy()) {
       unsigned size = 0;
       if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty)) {
         size = ITy->getBitWidth();
@@ -1207,7 +1207,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
   else
     O << " .align " << GVar->getAlignment();
 
-  if (ETy->isPrimitiveType() || ETy->isIntegerTy() || isa<PointerType>(ETy)) {
+  if (ETy->isSingleValueType()) {
     O << " .";
     // Special case: ABI requires that we use .u8 for predicates
     if (ETy->isIntegerTy(1))
@@ -1378,7 +1378,7 @@ void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
   else
     O << " .align " << GVar->getAlignment();
 
-  if (ETy->isPrimitiveType() || ETy->isIntegerTy() || isa<PointerType>(ETy)) {
+  if (ETy->isSingleValueType()) {
     O << " .";
     O << getPTXFundamentalTypeStr(ETy);
     O << " ";
@@ -1410,7 +1410,7 @@ void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
 }
 
 static unsigned int getOpenCLAlignment(const DataLayout *TD, Type *Ty) {
-  if (Ty->isPrimitiveType() || Ty->isIntegerTy() || isa<PointerType>(Ty))
+  if (Ty->isSingleValueType())
     return TD->getPrefTypeAlignment(Ty);
 
   const ArrayType *ATy = dyn_cast<ArrayType>(Ty);

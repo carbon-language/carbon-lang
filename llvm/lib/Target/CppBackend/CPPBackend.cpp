@@ -361,25 +361,25 @@ void CppWriter::printEscapedString(const std::string &Str) {
 }
 
 std::string CppWriter::getCppName(Type* Ty) {
-  // First, handle the primitive types .. easy
-  if (Ty->isPrimitiveType() || Ty->isIntegerTy()) {
-    switch (Ty->getTypeID()) {
-    case Type::VoidTyID:   return "Type::getVoidTy(mod->getContext())";
-    case Type::IntegerTyID: {
-      unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
-      return "IntegerType::get(mod->getContext(), " + utostr(BitWidth) + ")";
-    }
-    case Type::X86_FP80TyID: return "Type::getX86_FP80Ty(mod->getContext())";
-    case Type::FloatTyID:    return "Type::getFloatTy(mod->getContext())";
-    case Type::DoubleTyID:   return "Type::getDoubleTy(mod->getContext())";
-    case Type::LabelTyID:    return "Type::getLabelTy(mod->getContext())";
-    case Type::X86_MMXTyID:  return "Type::getX86_MMXTy(mod->getContext())";
-    default:
-      error("Invalid primitive type");
-      break;
-    }
-    // shouldn't be returned, but make it sensible
+  switch (Ty->getTypeID()) {
+  default:
+    break;
+  case Type::VoidTyID:
     return "Type::getVoidTy(mod->getContext())";
+  case Type::IntegerTyID: {
+    unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+    return "IntegerType::get(mod->getContext(), " + utostr(BitWidth) + ")";
+  }
+  case Type::X86_FP80TyID:
+    return "Type::getX86_FP80Ty(mod->getContext())";
+  case Type::FloatTyID:
+    return "Type::getFloatTy(mod->getContext())";
+  case Type::DoubleTyID:
+    return "Type::getDoubleTy(mod->getContext())";
+  case Type::LabelTyID:
+    return "Type::getLabelTy(mod->getContext())";
+  case Type::X86_MMXTyID:
+    return "Type::getX86_MMXTy(mod->getContext())";
   }
 
   // Now, see if we've seen the type before and return that
@@ -537,7 +537,8 @@ void CppWriter::printAttributes(const AttributeSet &PAL,
 
 void CppWriter::printType(Type* Ty) {
   // We don't print definitions for primitive types
-  if (Ty->isPrimitiveType() || Ty->isIntegerTy())
+  if (Ty->isFloatingPointTy() || Ty->isX86_MMXTy() || Ty->isIntegerTy() ||
+      Ty->isLabelTy() || Ty->isMetadataTy() || Ty->isVoidTy())
     return;
 
   // If we already defined this type, we don't need to define it again.

@@ -71,10 +71,7 @@ public:
     StructTyID,      ///< 12: Structures
     ArrayTyID,       ///< 13: Arrays
     PointerTyID,     ///< 14: Pointers
-    VectorTyID,      ///< 15: SIMD 'packed' format, or other vector type
-
-    LastPrimitiveTyID = X86_MMXTyID,
-    FirstDerivedTyID = IntegerTyID
+    VectorTyID       ///< 15: SIMD 'packed' format, or other vector type
   };
 
 private:
@@ -239,12 +236,6 @@ public:
   /// elements or all its elements are empty.
   bool isEmptyTy() const;
 
-  /// Here are some useful little methods to query what type derived types are
-  /// Note that all other types can just compare to see if this == Type::xxxTy;
-  ///
-  bool isPrimitiveType() const { return getTypeID() <= LastPrimitiveTyID; }
-  bool isDerivedType()   const { return getTypeID() >= FirstDerivedTyID; }
-
   /// isFirstClassType - Return true if the type is "first class", meaning it
   /// is a valid type for a Value.
   ///
@@ -257,9 +248,8 @@ public:
   /// and array types.
   ///
   bool isSingleValueType() const {
-    return (getTypeID() != VoidTyID && isPrimitiveType()) ||
-            getTypeID() == IntegerTyID || getTypeID() == PointerTyID ||
-            getTypeID() == VectorTyID;
+    return isFloatingPointTy() || isX86_MMXTy() || isIntegerTy() ||
+           isPointerTy() || isVectorTy();
   }
 
   /// isAggregateType - Return true if the type is an aggregate type. This
