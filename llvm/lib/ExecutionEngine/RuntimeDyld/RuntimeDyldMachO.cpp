@@ -455,4 +455,9 @@ bool RuntimeDyldMachO::isCompatibleFormat(
   return false;
 }
 
+bool RuntimeDyldMachO::isCompatibleFile(
+        const object::ObjectFile *Obj) const {
+  return Obj->isMachO();
+}
+
 } // end namespace llvm

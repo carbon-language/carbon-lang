@@ -82,12 +82,24 @@ ObjectImage *RuntimeDyldImpl::createObjectImage(ObjectBuffer *InputBuffer) {
   return new ObjectImageCommon(InputBuffer);
 }
 
+ObjectImage *RuntimeDyldImpl::createObjectImageFromFile(ObjectFile *InputObject) {
+  return new ObjectImageCommon(InputObject);
+}
+
+ObjectImage *RuntimeDyldImpl::loadObject(ObjectFile *InputObject) {
+  return loadObject(createObjectImageFromFile(InputObject));
+}
+
 ObjectImage *RuntimeDyldImpl::loadObject(ObjectBuffer *InputBuffer) {
+  return loadObject(createObjectImage(InputBuffer));
+} 
+
+ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
   MutexGuard locked(lock);
 
-  OwningPtr<ObjectImage> obj(createObjectImage(InputBuffer));
+  OwningPtr<ObjectImage> obj(InputObject);
   if (!obj)
-    report_fatal_error("Unable to create object image from memory buffer!");
+    return NULL;
 
   // Save information about our target
   Arch = (Triple::ArchType)obj->getArch();
@@ -139,7 +151,7 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectBuffer *InputBuffer) {
         if (si == obj->end_sections()) continue;
         Check(si->getContents(SectionData));
         Check(si->isText(IsCode));
-        const uint8_t* SymPtr = (const uint8_t*)InputBuffer->getBufferStart() +
+        const uint8_t* SymPtr = (const uint8_t*)InputObject->getData().data() +
                                 (uintptr_t)FileOffset;
         uintptr_t SectOffset = (uintptr_t)(SymPtr -
                                            (const uint8_t*)SectionData.begin());
@@ -561,6 +573,22 @@ RuntimeDyld::RuntimeDyld(RTDyldMemoryManager *mm) {
 
 RuntimeDyld::~RuntimeDyld() {
   delete Dyld;
+}
+
+ObjectImage *RuntimeDyld::loadObject(ObjectFile *InputObject) {
+  if (!Dyld) {
+    if (InputObject->isELF())
+      Dyld = new RuntimeDyldELF(MM);
+    else if (InputObject->isMachO())
+      Dyld = new RuntimeDyldMachO(MM);
+    else
+      report_fatal_error("Incompatible object format!");
+  } else {
+    if (!Dyld->isCompatibleFile(InputObject))
+      report_fatal_error("Incompatible object format!");
+  }
+
+  return Dyld->loadObject(InputObject);
 }
 
 ObjectImage *RuntimeDyld::loadObject(ObjectBuffer *InputBuffer) {

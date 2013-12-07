@@ -26,12 +26,15 @@
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
+#include "llvm/ExecutionEngine/ObjectCache.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/TypeBuilder.h"
 #include "llvm/IRReader/IRReader.h"
+#include "llvm/Object/Archive.h"
+#include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/DynamicLibrary.h"
@@ -50,6 +53,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include <cerrno>
+#include <fstream>
 
 #ifdef __CYGWIN__
 #include <cygwin/version.h>
@@ -138,6 +142,21 @@ namespace {
          cl::desc("Extra modules to be loaded"),
          cl::value_desc("input bitcode"));
 
+  cl::list<std::string>
+  ExtraObjects("extra-object",
+         cl::desc("Extra object files to be loaded"),
+         cl::value_desc("input object"));
+
+  cl::list<std::string>
+  ExtraArchives("extra-archive",
+         cl::desc("Extra archive files to be loaded"),
+         cl::value_desc("input archive"));
+
+  cl::opt<bool>
+  EnableCacheManager("enable-cache-manager",
+        cl::desc("Use cache manager to save/load mdoules."),
+        cl::init(false));
+
   cl::opt<std::string>
   FakeArgv0("fake-argv0",
             cl::desc("Override the 'argv[0]' value passed into the executing"
@@ -219,12 +238,68 @@ namespace {
     cl::init(false));
 }
 
+//===----------------------------------------------------------------------===//
+// Object cache
+//
+// This object cache implementation writes cached objects to disk using a
+// filename provided in the module descriptor and tries to load a saved object
+// using that filename if the file exists.
+//
+class LLIObjectCache : public ObjectCache {
+public:
+  LLIObjectCache() { }
+  virtual ~LLIObjectCache() {}
+
+  virtual void notifyObjectCompiled(const Module *M, const MemoryBuffer *Obj) {
+    const std::string ModuleID = M->getModuleIdentifier();
+    std::string CacheName;
+    if (!getCacheFilename(ModuleID, CacheName))
+      return;
+    std::ofstream outfile(CacheName.c_str(), std::ofstream::binary);
+    outfile.write(Obj->getBufferStart(), Obj->getBufferSize());
+    outfile.close();
+  }
+
+  virtual MemoryBuffer* getObject(const Module* M) {
+    const std::string ModuleID = M->getModuleIdentifier();
+    std::string CacheName;
+    if (!getCacheFilename(ModuleID, CacheName))
+      return NULL;
+    // Load the object from the cache filename
+    OwningPtr<MemoryBuffer> IRObjectBuffer;
+    MemoryBuffer::getFile(CacheName.c_str(), IRObjectBuffer, -1, false);
+    // If the file isn't there, that's OK.
+    if (!IRObjectBuffer)
+      return NULL;
+    // MCJIT will want to write into this buffer, and we don't want that
+    // because the file has probably just been mmapped.  Instead we make
+    // a copy.  The filed-based buffer will be released when it goes
+    // out of scope.
+    return MemoryBuffer::getMemBufferCopy(IRObjectBuffer->getBuffer());
+  }
+
+private:
+  bool getCacheFilename(const std::string &ModID, std::string &CacheName) {
+    std::string Prefix("file:");
+    size_t PrefixLength = Prefix.length();
+    if (ModID.substr(0, PrefixLength) != Prefix)
+      return false;
+    CacheName = ModID.substr(PrefixLength);
+    size_t pos = CacheName.rfind('.');
+    CacheName.replace(pos, CacheName.length() - pos, ".o");
+    return true;
+  }
+};
+
 static ExecutionEngine *EE = 0;
+static LLIObjectCache *CacheManager = 0;
 
 static void do_shutdown() {
   // Cygwin-1.5 invokes DLL's dtors before atexit handler.
 #ifndef DO_NOTHING_ATEXIT
   delete EE;
+  if (CacheManager)
+    delete CacheManager;
   llvm_shutdown();
 #endif
 }
@@ -298,6 +373,15 @@ int main(int argc, char **argv, char * const *envp) {
   if (!Mod) {
     Err.print(argv[0], errs());
     return 1;
+  }
+
+  if (EnableCacheManager) {
+    if (UseMCJIT) {
+      std::string CacheName("file:");
+      CacheName.append(InputFile);
+      Mod->setModuleIdentifier(CacheName);
+    } else
+      errs() << "warning: -enable-cache-manager can only be used with MCJIT.";
   }
 
   // If not jitting lazily, load the whole bitcode file eagerly too.
@@ -391,6 +475,11 @@ int main(int argc, char **argv, char * const *envp) {
     exit(1);
   }
 
+  if (EnableCacheManager) {
+    CacheManager = new LLIObjectCache;
+    EE->setObjectCache(CacheManager);
+  }
+
   // Load any additional modules specified on the command line.
   for (unsigned i = 0, e = ExtraModules.size(); i != e; ++i) {
     Module *XMod = ParseIRFile(ExtraModules[i], Err, Context);
@@ -398,7 +487,41 @@ int main(int argc, char **argv, char * const *envp) {
       Err.print(argv[0], errs());
       return 1;
     }
+    if (EnableCacheManager) {
+      if (UseMCJIT) {
+        std::string CacheName("file:");
+        CacheName.append(ExtraModules[i]);
+        XMod->setModuleIdentifier(CacheName);
+      }
+      // else, we already printed a warning above.
+    }
     EE->addModule(XMod);
+  }
+
+  for (unsigned i = 0, e = ExtraObjects.size(); i != e; ++i) {
+    object::ObjectFile *Obj = object::ObjectFile::createObjectFile(
+                                                         ExtraObjects[i]);
+    if (!Obj) {
+      Err.print(argv[0], errs());
+      return 1;
+    }
+    EE->addObjectFile(Obj);
+  }
+
+  for (unsigned i = 0, e = ExtraArchives.size(); i != e; ++i) {
+    OwningPtr<MemoryBuffer> ArBuf;
+    error_code ec;
+    ec = MemoryBuffer::getFileOrSTDIN(ExtraArchives[i], ArBuf);
+    if (ec) {
+      Err.print(argv[0], errs());
+      return 1;
+    }
+    object::Archive *Ar = new object::Archive(ArBuf.take(), ec);
+    if (ec || !Ar) {
+      Err.print(argv[0], errs());
+      return 1;
+    }
+    EE->addArchive(Ar);
   }
 
   // If the target is Cygwin/MingW and we are generating remote code, we
