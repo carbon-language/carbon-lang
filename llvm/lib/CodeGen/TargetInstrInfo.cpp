@@ -425,7 +425,7 @@ static MachineInstr* foldPatchpoint(MachineFunction &MF,
       MIB.addImm(StackMaps::IndirectMemRefOp);
       MIB.addImm(SpillSize);
       MIB.addFrameIndex(FrameIndex);
-      MIB.addImm(0);
+      MIB.addImm(SpillOffset);
     }
     else
       MIB.addOperand(MO);
