@@ -293,17 +293,7 @@ private:
   StringRef resolveHTMLHexCharacterReference(StringRef Name) const;
 
   void formTokenWithChars(Token &Result, const char *TokEnd,
-                          tok::TokenKind Kind) {
-    const unsigned TokLen = TokEnd - BufferPtr;
-    Result.setLocation(getSourceLocation(BufferPtr));
-    Result.setKind(Kind);
-    Result.setLength(TokLen);
-#ifndef NDEBUG
-    Result.TextPtr = "<UNSET>";
-    Result.IntVal = 7;
-#endif
-    BufferPtr = TokEnd;
-  }
+                          tok::TokenKind Kind);
 
   void formTextToken(Token &Result, const char *TokEnd) {
     StringRef Text(BufferPtr, TokEnd - BufferPtr);

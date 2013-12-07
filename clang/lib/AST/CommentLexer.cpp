@@ -268,6 +268,19 @@ const char *findCCommentEnd(const char *BufferPtr, const char *BufferEnd) {
     
 } // unnamed namespace
 
+void Lexer::formTokenWithChars(Token &Result, const char *TokEnd,
+                               tok::TokenKind Kind) {
+  const unsigned TokLen = TokEnd - BufferPtr;
+  Result.setLocation(getSourceLocation(BufferPtr));
+  Result.setKind(Kind);
+  Result.setLength(TokLen);
+#ifndef NDEBUG
+  Result.TextPtr = "<UNSET>";
+  Result.IntVal = 7;
+#endif
+  BufferPtr = TokEnd;
+}
+
 void Lexer::lexCommentText(Token &T) {
   assert(CommentState == LCS_InsideBCPLComment ||
          CommentState == LCS_InsideCComment);
