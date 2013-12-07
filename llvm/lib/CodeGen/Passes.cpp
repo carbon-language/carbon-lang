@@ -725,7 +725,10 @@ void TargetPassConfig::addMachineLateOptimization() {
     printAndVerify("After BranchFolding");
 
   // Tail duplication.
-  if (addPass(&TailDuplicateID))
+  // Note that duplicating tail just increases code size and degrades
+  // performance for targets that require Structured Control Flow.
+  // In addition it can also make CFG irreducible. Thus we disable it.
+  if (!TM->requiresStructuredCFG() && addPass(&TailDuplicateID))
     printAndVerify("After TailDuplicate");
 
   // Copy propagation.

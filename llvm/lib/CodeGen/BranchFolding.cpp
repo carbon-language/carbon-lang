@@ -83,7 +83,11 @@ INITIALIZE_PASS(BranchFolderPass, "branch-folder",
 
 bool BranchFolderPass::runOnMachineFunction(MachineFunction &MF) {
   TargetPassConfig *PassConfig = &getAnalysis<TargetPassConfig>();
-  BranchFolder Folder(PassConfig->getEnableTailMerge(), /*CommonHoist=*/true);
+  // TailMerge can create jump into if branches that make CFG irreducible for
+  // HW that requires structurized CFG.
+  bool EnableTailMerge = !MF.getTarget().requiresStructuredCFG() &&
+      PassConfig->getEnableTailMerge();
+  BranchFolder Folder(EnableTailMerge, /*CommonHoist=*/true);
   return Folder.OptimizeFunction(MF,
                                  MF.getTarget().getInstrInfo(),
                                  MF.getTarget().getRegisterInfo(),

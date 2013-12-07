@@ -72,6 +72,7 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
     InstrInfo.reset(new SIInstrInfo(*this));
     TLInfo.reset(new SITargetLowering(*this));
   }
+  setRequiresStructuredCFG(true);
   initAsmInfo();
 }
 
