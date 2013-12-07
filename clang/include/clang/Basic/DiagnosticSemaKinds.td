@@ -2037,7 +2037,8 @@ def warn_attribute_wrong_decl_type : Warning<
   "variables and fields|variables, data members and tag types|"
   "types and namespaces|Objective-C interfaces|methods and properties|"
   "struct or union|struct, union or class|types|"
-  "Objective-C instance methods|variables, functions and classes}1">,
+  "Objective-C instance methods|init methods of interface declarations|"
+  "variables, functions and classes}1">,
   InGroup<IgnoredAttributes>;
 def err_attribute_wrong_decl_type : Error<
   "%0 attribute only applies to %select{functions|unions|"
@@ -2049,7 +2050,8 @@ def err_attribute_wrong_decl_type : Error<
   "variables and fields|variables, data members and tag types|"
   "types and namespaces|Objective-C interfaces|methods and properties|"
   "struct or union|struct, union or class|types|"
-  "Objective-C instance methods|variables, functions and classes}1">;
+  "Objective-C instance methods|init methods of interface declarations|"
+  "variables, functions and classes}1">;
 def warn_type_attribute_wrong_type : Warning<
   "'%0' only applies to %select{function|pointer|"
   "Objective-C object or block pointer}1 types; type here is %2">,
@@ -2428,10 +2430,6 @@ def note_protocol_decl : Note<
   "protocol is declared here">;
 
 // objc_designated_initializer attribute diagnostics.
-def err_attr_objc_designated_not_init_family : Error<
-  "'objc_designated_initializer' only applies to methods of the init family">;
-def err_attr_objc_designated_not_interface : Error<
-  "'objc_designated_initializer' only applies to methods of interface declarations">;
 def warn_objc_designated_init_missing_super_call : Warning<
   "designated initializer missing a 'super' call to a designated initializer of the super class">,
   InGroup<ObjCDesignatedInit>;
