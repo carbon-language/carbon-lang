@@ -1861,11 +1861,12 @@ void Verifier::visitStoreInst(StoreInst &SI) {
 }
 
 void Verifier::visitAllocaInst(AllocaInst &AI) {
+  SmallPtrSet<const Type*, 4> Visited;
   PointerType *PTy = AI.getType();
   Assert1(PTy->getAddressSpace() == 0,
           "Allocation instruction pointer not in the generic address space!",
           &AI);
-  Assert1(PTy->getElementType()->isSized(), "Cannot allocate unsized type",
+  Assert1(PTy->getElementType()->isSized(&Visited), "Cannot allocate unsized type",
           &AI);
   Assert1(AI.getArraySize()->getType()->isIntegerTy(),
           "Alloca array size must have integer type", &AI);
