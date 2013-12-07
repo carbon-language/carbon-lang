@@ -322,7 +322,7 @@ protected:
   /// emitObject -- Generate a JITed object in memory from the specified module
   /// Currently, MCJIT only supports a single module and the module passed to
   /// this function call is expected to be the contained module.  The module
-  /// is passed as a parameter here to prepare for multiple module support in 
+  /// is passed as a parameter here to prepare for multiple module support in
   /// the future.
   ObjectBufferStream* emitObject(Module *M);
 

@@ -472,7 +472,7 @@ int main(int argc, char **argv, char * const *envp) {
       }
     }
 
-    // Trigger compilation separately so code regions that need to be 
+    // Trigger compilation separately so code regions that need to be
     // invalidated will be known.
     (void)EE->getPointerToFunction(EntryFn);
     // Clear instruction cache before code will be executed.

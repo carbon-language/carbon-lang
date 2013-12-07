@@ -232,7 +232,7 @@ public:
   ///
   /// This function is deprecated for the MCJIT execution engine.
   ///
-  /// FIXME: the JIT and MCJIT interfaces should be disentangled or united 
+  /// FIXME: the JIT and MCJIT interfaces should be disentangled or united
   /// again, if possible.
   ///
   virtual void *getPointerToNamedFunction(const std::string &Name,
@@ -550,7 +550,7 @@ public:
     WhichEngine = w;
     return *this;
   }
-  
+
   /// setMCJITMemoryManager - Sets the MCJIT memory manager to use. This allows
   /// clients to customize their memory allocation policies for the MCJIT. This
   /// is only appropriate for the MCJIT; setting this and configuring the builder

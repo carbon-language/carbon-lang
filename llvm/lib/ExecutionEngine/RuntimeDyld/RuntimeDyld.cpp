@@ -182,7 +182,7 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectBuffer *InputBuffer) {
       }
 
       processRelocationRef(SectionID, *i, *obj, LocalSections, LocalSymbols,
-			   Stubs);
+                           Stubs);
     }
   }
 
