@@ -283,8 +283,7 @@ public:
   }
 
   bool hasZeroSizedSubObject() const {
-    assert(CXXInfo && "Record layout does not have C++ specific info!");
-    return CXXInfo->HasZeroSizedSubObject;
+    return CXXInfo && CXXInfo->HasZeroSizedSubObject;
   }
 
   bool leadsWithZeroSizedBase() const {

@@ -2590,15 +2590,13 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBase(const CXXRecordDecl *RD,
   // vtordisps are always 4 bytes (even in 64-bit mode)
   if (HasVtordisp)
     Size = Size.RoundUpToAlignment(Alignment) + CharUnits::fromQuantity(4);
-  Size = Size.RoundUpToAlignment(BaseAlign);
 
   // Insert the base here.
-  CharUnits BaseOffset = Size.RoundUpToAlignment(BaseAlign);
+  Size = Size.RoundUpToAlignment(BaseAlign);
   VBases.insert(
-      std::make_pair(RD, ASTRecordLayout::VBaseInfo(BaseOffset, HasVtordisp)));
-  Size = BaseOffset + BaseNVSize;
-  // Note: we don't update alignment here because it was accounted for in
-  // InitializeLayout.
+      std::make_pair(RD, ASTRecordLayout::VBaseInfo(Size, HasVtordisp)));
+  Size += BaseNVSize;
+  // Alignment was upadated in InitializeCXXLayout.
 
   PreviousBaseLayout = &Layout;
 }
