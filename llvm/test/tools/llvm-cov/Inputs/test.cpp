@@ -1,3 +1,4 @@
+#include "test.h"
 #include <cstdlib>
 
 bool on = false;
@@ -5,10 +6,6 @@ int len = 42;
 double grid[10][10] = {0};
 const char * hello = "world";
 const char * world = "hello";
-
-struct A {
-  virtual void B();
-};
 
 void A::B() {}
 
