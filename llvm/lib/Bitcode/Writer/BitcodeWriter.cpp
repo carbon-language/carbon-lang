@@ -382,7 +382,6 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
     unsigned Code = 0;
 
     switch (T->getTypeID()) {
-    default: llvm_unreachable("Unknown type!");
     case Type::VoidTyID:      Code = bitc::TYPE_CODE_VOID;      break;
     case Type::HalfTyID:      Code = bitc::TYPE_CODE_HALF;      break;
     case Type::FloatTyID:     Code = bitc::TYPE_CODE_FLOAT;     break;

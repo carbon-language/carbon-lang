@@ -73,7 +73,6 @@ public:
     PointerTyID,     ///< 14: Pointers
     VectorTyID,      ///< 15: SIMD 'packed' format, or other vector type
 
-    NumTypeIDs,                         // Must remain as last defined ID
     LastPrimitiveTyID = X86_MMXTyID,
     FirstDerivedTyID = IntegerTyID
   };

@@ -175,7 +175,6 @@ LLVMContextRef LLVMGetModuleContext(LLVMModuleRef M) {
 
 LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty) {
   switch (unwrap(Ty)->getTypeID()) {
-  default: llvm_unreachable("Unhandled TypeID.");
   case Type::VoidTyID:
     return LLVMVoidTypeKind;
   case Type::HalfTyID:
@@ -209,6 +208,7 @@ LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty) {
   case Type::X86_MMXTyID:
     return LLVMX86_MMXTypeKind;
   }
+  llvm_unreachable("Unhandled TypeID.");
 }
 
 LLVMBool LLVMTypeIsSized(LLVMTypeRef Ty)

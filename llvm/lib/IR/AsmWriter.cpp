@@ -192,16 +192,16 @@ void TypePrinting::incorporateTypes(const Module &M) {
 /// use of type names or up references to shorten the type name where possible.
 void TypePrinting::print(Type *Ty, raw_ostream &OS) {
   switch (Ty->getTypeID()) {
-  case Type::VoidTyID:      OS << "void"; break;
-  case Type::HalfTyID:      OS << "half"; break;
-  case Type::FloatTyID:     OS << "float"; break;
-  case Type::DoubleTyID:    OS << "double"; break;
-  case Type::X86_FP80TyID:  OS << "x86_fp80"; break;
-  case Type::FP128TyID:     OS << "fp128"; break;
-  case Type::PPC_FP128TyID: OS << "ppc_fp128"; break;
-  case Type::LabelTyID:     OS << "label"; break;
-  case Type::MetadataTyID:  OS << "metadata"; break;
-  case Type::X86_MMXTyID:   OS << "x86_mmx"; break;
+  case Type::VoidTyID:      OS << "void"; return;
+  case Type::HalfTyID:      OS << "half"; return;
+  case Type::FloatTyID:     OS << "float"; return;
+  case Type::DoubleTyID:    OS << "double"; return;
+  case Type::X86_FP80TyID:  OS << "x86_fp80"; return;
+  case Type::FP128TyID:     OS << "fp128"; return;
+  case Type::PPC_FP128TyID: OS << "ppc_fp128"; return;
+  case Type::LabelTyID:     OS << "label"; return;
+  case Type::MetadataTyID:  OS << "metadata"; return;
+  case Type::X86_MMXTyID:   OS << "x86_mmx"; return;
   case Type::IntegerTyID:
     OS << 'i' << cast<IntegerType>(Ty)->getBitWidth();
     return;
@@ -261,10 +261,8 @@ void TypePrinting::print(Type *Ty, raw_ostream &OS) {
     OS << '>';
     return;
   }
-  default:
-    OS << "<unrecognized-type>";
-    return;
   }
+  llvm_unreachable("Invalid TypeID");
 }
 
 void TypePrinting::printStructBody(StructType *STy, raw_ostream &OS) {
