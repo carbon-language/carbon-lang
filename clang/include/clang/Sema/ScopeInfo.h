@@ -757,7 +757,7 @@ public:
         || isa<MemberExpr>(CapturingVarExpr));
     NonODRUsedCapturingExprs.insert(CapturingVarExpr);
   }
-  bool isVariableExprMarkedAsNonODRUsed(Expr *CapturingVarExpr) {
+  bool isVariableExprMarkedAsNonODRUsed(Expr *CapturingVarExpr) const {
     assert(isa<DeclRefExpr>(CapturingVarExpr) 
       || isa<MemberExpr>(CapturingVarExpr));
     return NonODRUsedCapturingExprs.count(CapturingVarExpr);
@@ -780,13 +780,11 @@ public:
     return getNumPotentialVariableCaptures() || 
                                   PotentialThisCaptureLocation.isValid(); 
   }
-  
-  // When passed the index, returns the VarDecl and Expr associated 
-  // with the index.
-  void getPotentialVariableCapture(unsigned Idx, VarDecl *&VD, Expr *&E);
- 
-};
 
+  // When passed the index, returns the VarDecl and Expr associated
+  // with the index.
+  void getPotentialVariableCapture(unsigned Idx, VarDecl *&VD, Expr *&E) const;
+};
 
 FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy()
   : Base(0, false), Property(0) {}

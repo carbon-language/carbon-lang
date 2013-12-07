@@ -5868,42 +5868,58 @@ static inline bool VariableCanNeverBeAConstantExpression(VarDecl *Var,
   return !IsVariableAConstantExpression(Var, Context); 
 }
 
-/// \brief Check if the current lambda scope has any potential captures, and 
-///  whether they can be captured by any of the enclosing lambdas that are 
-///  ready to capture. If there is a lambda that can capture a nested 
-///  potential-capture, go ahead and do so.  Also, check to see if any 
-///  variables are uncaptureable or do not involve an odr-use so do not 
-///  need to be captured.
+/// \brief Check if the current lambda has any potential captures 
+/// that must be captured by any of its enclosing lambdas that are ready to 
+/// capture. If there is a lambda that can capture a nested 
+/// potential-capture, go ahead and do so.  Also, check to see if any 
+/// variables are uncaptureable or do not involve an odr-use so do not 
+/// need to be captured.
 
-static void CheckLambdaCaptures(Expr *const FE, 
-    LambdaScopeInfo *const CurrentLSI, Sema &S) {
-    
+static void CheckIfAnyEnclosingLambdasMustCaptureAnyPotentialCaptures(
+    Expr *const FE, LambdaScopeInfo *const CurrentLSI, Sema &S) {
+
   assert(!S.isUnevaluatedContext());  
   assert(S.CurContext->isDependentContext()); 
-  const bool IsFullExprInstantiationDependent = 
-      FE->isInstantiationDependent();
-  // All the potentially captureable variables in the current nested 
+  assert(CurrentLSI->CallOperator == S.CurContext && 
+      "The current call operator must be synchronized with Sema's CurContext");
+
+  const bool IsFullExprInstantiationDependent = FE->isInstantiationDependent();
+
+  ArrayRef<const FunctionScopeInfo *> FunctionScopesArrayRef(
+      S.FunctionScopes.data(), S.FunctionScopes.size());
+  
+  // All the potentially captureable variables in the current nested
   // lambda (within a generic outer lambda), must be captured by an
   // outer lambda that is enclosed within a non-dependent context.
-     
-  for (size_t I = 0, N = CurrentLSI->getNumPotentialVariableCaptures(); 
-      I != N; ++I) {
+  const unsigned NumPotentialCaptures =
+      CurrentLSI->getNumPotentialVariableCaptures();
+  for (unsigned I = 0; I != NumPotentialCaptures; ++I) {
     Expr *VarExpr = 0;
     VarDecl *Var = 0;
     CurrentLSI->getPotentialVariableCapture(I, Var, VarExpr);
-    // 
-    if (CurrentLSI->isVariableExprMarkedAsNonODRUsed(VarExpr) && 
+    // If the variable is clearly identified as non-odr-used and the full
+    // expression is not instantiation dependent, only then do we not 
+    // need to check enclosing lambda's for speculative captures.
+    // For e.g.:
+    // Even though 'x' is not odr-used, it should be captured.
+    // int test() {
+    //   const int x = 10;
+    //   auto L = [=](auto a) {
+    //     (void) +x + a;
+    //   };
+    // }
+    if (CurrentLSI->isVariableExprMarkedAsNonODRUsed(VarExpr) &&
         !IsFullExprInstantiationDependent)
-      continue; 
-    // Climb up until we find a lambda that can capture:
-    //   - a generic-or-non-generic lambda call operator that is enclosed
-    //     within a non-dependent context.
-    unsigned FunctionScopeIndexOfCapturableLambda = 0;
-    if (GetInnermostEnclosingCapturableLambda(
-            S.FunctionScopes, FunctionScopeIndexOfCapturableLambda,
-            S.CurContext, Var, S)) {
-      MarkVarDeclODRUsed(Var, VarExpr->getExprLoc(), 
-          S, &FunctionScopeIndexOfCapturableLambda);
+      continue;
+
+    // If we have a capture-capable lambda for the variable, go ahead and
+    // capture the variable in that lambda (and all its enclosing lambdas).
+    if (const Optional<unsigned> Index =
+            getStackIndexOfNearestEnclosingCaptureCapableLambda(
+                FunctionScopesArrayRef, Var, S)) {
+      const unsigned FunctionScopeIndexOfCapturableLambda = Index.getValue();
+      MarkVarDeclODRUsed(Var, VarExpr->getExprLoc(), S,
+                         &FunctionScopeIndexOfCapturableLambda);
     } 
     const bool IsVarNeverAConstantExpression = 
         VariableCanNeverBeAConstantExpression(Var, S.Context);
@@ -5930,16 +5946,21 @@ static void CheckLambdaCaptures(Expr *const FE,
     }
   }
 
+  // Check if 'this' needs to be captured.
   if (CurrentLSI->hasPotentialThisCapture()) {
-    unsigned FunctionScopeIndexOfCapturableLambda = 0;
-    if (GetInnermostEnclosingCapturableLambda(
-            S.FunctionScopes, FunctionScopeIndexOfCapturableLambda,
-            S.CurContext, /*0 is 'this'*/ 0, S)) {
-      S.CheckCXXThisCapture(CurrentLSI->PotentialThisCaptureLocation, 
-          /*Explicit*/false, /*BuildAndDiagnose*/true,  
-          &FunctionScopeIndexOfCapturableLambda);
+    // If we have a capture-capable lambda for 'this', go ahead and capture
+    // 'this' in that lambda (and all its enclosing lambdas).
+    if (const Optional<unsigned> Index =
+            getStackIndexOfNearestEnclosingCaptureCapableLambda(
+                FunctionScopesArrayRef, /*0 is 'this'*/ 0, S)) {
+      const unsigned FunctionScopeIndexOfCapturableLambda = Index.getValue();
+      S.CheckCXXThisCapture(CurrentLSI->PotentialThisCaptureLocation,
+                            /*Explicit*/ false, /*BuildAndDiagnose*/ true,
+                            &FunctionScopeIndexOfCapturableLambda);
     }
   }
+
+  // Reset all the potential captures at the end of each full-expression.
   CurrentLSI->clearPotentialCaptures();
 }
 
@@ -6036,11 +6057,12 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FE, SourceLocation CC,
   //     FunctionScopes.size() in InstantiatingTemplate's 
   //     constructor/destructor.
   //  - Teach the handful of places that iterate over FunctionScopes to 
-  //    stop at the outermost enclosing lexical scope." 
-  const bool IsInLambdaDeclContext = isLambdaCallOperator(CurContext); 
-  if (IsInLambdaDeclContext && CurrentLSI && 
+  //    stop at the outermost enclosing lexical scope."
+  const bool IsInLambdaDeclContext = isLambdaCallOperator(CurContext);
+  if (IsInLambdaDeclContext && CurrentLSI &&
       CurrentLSI->hasPotentialCaptures() && !FullExpr.isInvalid())
-    CheckLambdaCaptures(FE, CurrentLSI, *this);
+    CheckIfAnyEnclosingLambdasMustCaptureAnyPotentialCaptures(FE, CurrentLSI,
+                                                              *this);
   return MaybeCreateExprWithCleanups(FullExpr);
 }
 

@@ -19,20 +19,17 @@
 #include "clang/Sema/ScopeInfo.h"
 namespace clang {
  
-// Given a lambda's call operator and a variable (or null for 'this'), 
-// compute the nearest enclosing lambda that is capture-ready (i.e 
-// the enclosing context is not dependent, and all intervening lambdas can 
-// either implicitly or explicitly capture Var)
-// 
-// Return the CallOperator of the capturable lambda and set function scope 
-// index to the correct index within the function scope stack to correspond 
-// to the capturable lambda.
-// If VarDecl *VD is null, we check for 'this' capture.
-CXXMethodDecl* 
-GetInnermostEnclosingCapturableLambda( 
-    ArrayRef<sema::FunctionScopeInfo*> FunctionScopes,
-    unsigned &FunctionScopeIndex,
-    DeclContext *const CurContext, VarDecl *VD, Sema &S);
+
+/// \brief Examines the FunctionScopeInfo stack to determine the nearest
+/// enclosing lambda (to the current lambda) that is 'capture-capable' for 
+/// the variable referenced in the current lambda (i.e. \p VarToCapture).
+/// If successful, returns the index into Sema's FunctionScopeInfo stack
+/// of the capture-capable lambda's LambdaScopeInfo. 
+/// See Implementation for more detailed comments. 
+
+Optional<unsigned> getStackIndexOfNearestEnclosingCaptureCapableLambda(
+    ArrayRef<const sema::FunctionScopeInfo *> FunctionScopes,
+    VarDecl *VarToCapture, Sema &S);
 
 } // clang
 
