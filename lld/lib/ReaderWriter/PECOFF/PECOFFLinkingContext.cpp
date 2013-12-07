@@ -238,8 +238,8 @@ uint32_t PECOFFLinkingContext::getSectionAttributes(StringRef sectionName,
 
 void PECOFFLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new pecoff::SetSubsystemPass(*this)));
-  pm.add(std::unique_ptr<Pass>(new pecoff::GroupedSectionsPass()));
   pm.add(std::unique_ptr<Pass>(new pecoff::IdataPass(*this)));
   pm.add(std::unique_ptr<Pass>(new LayoutPass()));
+  pm.add(std::unique_ptr<Pass>(new pecoff::GroupedSectionsPass()));
 }
 } // end namespace lld
