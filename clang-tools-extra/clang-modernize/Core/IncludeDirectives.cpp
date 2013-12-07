@@ -79,7 +79,7 @@ private:
   // Keep track of the current file in the stack
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
                            SrcMgr::CharacteristicKind FileType,
-                           FileID PrevFID) {
+                           FileID PrevFID) LLVM_OVERRIDE {
     SourceManager &SM = Self->Sources;
     switch (Reason) {
     case EnterFile:
@@ -142,7 +142,7 @@ private:
   }
 
   virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
-                      const MacroDirective *MD) {
+                      const MacroDirective *MD) LLVM_OVERRIDE {
     Guard->Count++;
 
     // If this #ifndef is the top-most directive and the symbol isn't defined
@@ -159,7 +159,7 @@ private:
   }
 
   virtual void MacroDefined(const Token &MacroNameTok,
-                            const MacroDirective *MD) {
+                            const MacroDirective *MD) LLVM_OVERRIDE {
     Guard->Count++;
 
     // If this #define is the second directive of the file and the symbol
@@ -176,7 +176,7 @@ private:
     }
   }
 
-  virtual void Endif(SourceLocation Loc, SourceLocation IfLoc) {
+  virtual void Endif(SourceLocation Loc, SourceLocation IfLoc) LLVM_OVERRIDE {
     Guard->Count++;
 
     // If it's the #endif corresponding to the top-most #ifndef
@@ -195,23 +195,32 @@ private:
   }
 
   virtual void MacroExpands(const Token &, const MacroDirective *, SourceRange,
-                            const MacroArgs *) {
+                            const MacroArgs *) LLVM_OVERRIDE {
     Guard->Count++;
   }
-  virtual void MacroUndefined(const Token &, const MacroDirective *) {
+  virtual void MacroUndefined(const Token &,
+                              const MacroDirective *) LLVM_OVERRIDE {
     Guard->Count++;
   }
-  virtual void Defined(const Token &, const MacroDirective *, SourceRange) {
+  virtual void Defined(const Token &, const MacroDirective *,
+                       SourceRange) LLVM_OVERRIDE {
     Guard->Count++;
   }
-  virtual void If(SourceLocation, SourceRange, bool) { Guard->Count++; }
-  virtual void Elif(SourceLocation, SourceRange, bool, SourceLocation) {
+  virtual void If(SourceLocation, SourceRange,
+                  ConditionValueKind) LLVM_OVERRIDE {
     Guard->Count++;
   }
-  virtual void Ifdef(SourceLocation, const Token &, const MacroDirective *) {
+  virtual void Elif(SourceLocation, SourceRange, ConditionValueKind,
+                    SourceLocation) LLVM_OVERRIDE {
     Guard->Count++;
   }
-  virtual void Else(SourceLocation, SourceLocation) { Guard->Count++; }
+  virtual void Ifdef(SourceLocation, const Token &,
+                     const MacroDirective *) LLVM_OVERRIDE {
+    Guard->Count++;
+  }
+  virtual void Else(SourceLocation, SourceLocation) LLVM_OVERRIDE {
+    Guard->Count++;
+  }
 
   IncludeDirectives *Self;
   // keep track of the guard info through the include stack
