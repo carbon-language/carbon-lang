@@ -1421,7 +1421,7 @@ SourceLocation MemberExpr::getLocEnd() const {
   return EndLoc;
 }
 
-void CastExpr::CheckCastConsistency() const {
+bool CastExpr::CastConsistency() const {
   switch (getCastKind()) {
   case CK_DerivedToBase:
   case CK_UncheckedDerivedToBase:
@@ -1524,6 +1524,7 @@ void CastExpr::CheckCastConsistency() const {
     assert(path_empty() && "Cast kind should not have a base path!");
     break;
   }
+  return true;
 }
 
 const char *CastExpr::getCastKindName() const {

@@ -259,7 +259,7 @@ public:
   }
 
   LookupResultKind getResultKind() const {
-    sanity();
+    assert(sanity());
     return ResultKind;
   }
 
@@ -637,13 +637,7 @@ private:
   void configure();
 
   // Sanity checks.
-  void sanityImpl() const;
-
-  void sanity() const {
-#ifndef NDEBUG
-    sanityImpl();
-#endif
-  }
+  bool sanity() const;
 
   bool sanityCheckUnresolved() const {
     for (iterator I = begin(), E = end(); I != E; ++I)
