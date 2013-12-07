@@ -1,7 +1,7 @@
 ; RUN: llc -march=mipsel -disable-mips-delay-filler < %s | \
-; RUN: FileCheck %s -check-prefix=O32
+; RUN:  FileCheck %s -check-prefix=O32
 ; RUN: llc -march=mipsel -mips-load-target-from-got=false \
-; RUN: -disable-mips-delay-filler < %s | FileCheck %s -check-prefix=O32-LOADTGT
+; RUN:  -disable-mips-delay-filler < %s | FileCheck %s -check-prefix=O32-LOADTGT
 
 @gd1 = common global double 0.000000e+00, align 8
 @gd2 = common global double 0.000000e+00, align 8
@@ -10,10 +10,12 @@
 ; O32-DAG:   lw $25, %call16(callee3)
 ; O32-DAG:   move $gp
 ; O32:       jalr $25
-; O32-DAG:   lw $25, %call16(callee3)
+; O32-NOT:   move $gp
+; O32:       lw $25, %call16(callee3)
 ; O32-NOT:   move $gp
 ; O32:       jalr $25
-; O32-DAG:   lw $25, %call16(callee3)
+; O32-NOT:   move $gp
+; O32:       lw $25, %call16(callee3)
 ; O32-NOT:   move $gp
 ; O32:       jalr $25
 
@@ -21,10 +23,12 @@
 ; O32-LOADTGT-DAG:   lw $25, %call16(callee3)
 ; O32-LOADTGT-DAG:   move $gp
 ; O32-LOADTGT:       jalr $25
-; O32-LOADTGT-DAG:   move $25
+; O32-LOADTGT-NOT:   move $gp
+; O32-LOADTGT:       move $25
 ; O32-LOADTGT-NOT:   move $gp
 ; O32-LOADTGT:       jalr $25
-; O32-LOADTGT-DAG:   move $25
+; O32-LOADTGT-NOT:   move $gp
+; O32-LOADTGT:       move $25
 ; O32-LOADTGT-NOT:   move $gp
 ; O32-LOADTGT:       jalr $25
 
@@ -52,10 +56,12 @@ declare void @callee3()
 ; O32-DAG:   lw $25, %call16(ceil)
 ; O32-DAG:   move $gp
 ; O32:       jalr $25
-; O32-DAG:   lw $25, %call16(ceil)
+; O32-NOT:   move $gp
+; O32:       lw $25, %call16(ceil)
 ; O32-NOT:   move $gp
 ; O32:       jalr $25
-; O32-DAG:   lw $25, %call16(ceil)
+; O32-NOT:   move $gp
+; O32:       lw $25, %call16(ceil)
 ; O32-NOT:   move $gp
 ; O32:       jalr $25
 
@@ -63,10 +69,12 @@ declare void @callee3()
 ; O32-LOADTGT-DAG:   lw $25, %call16(ceil)
 ; O32-LOADTGT-DAG:   move $gp
 ; O32-LOADTGT:       jalr $25
-; O32-LOADTGT-DAG:   move $25
+; O32-LOADTGT-NOT:   move $gp
+; O32-LOADTGT:       move $25
 ; O32-LOADTGT-NOT:   move $gp
 ; O32-LOADTGT:       jalr $25
-; O32-LOADTGT-DAG:   move $25
+; O32-LOADTGT-NOT:   move $gp
+; O32-LOADTGT:       move $25
 ; O32-LOADTGT-NOT:   move $gp
 ; O32-LOADTGT:       jalr $25
 
