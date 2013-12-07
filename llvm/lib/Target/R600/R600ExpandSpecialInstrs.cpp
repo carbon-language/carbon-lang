@@ -33,9 +33,6 @@ private:
   static char ID;
   const R600InstrInfo *TII;
 
-  bool ExpandInputPerspective(MachineInstr& MI);
-  bool ExpandInputConstant(MachineInstr& MI);
-
 public:
   R600ExpandSpecialInstrsPass(TargetMachine &tm) : MachineFunctionPass(ID),
     TII(0) { }
