@@ -93,6 +93,7 @@ class MachineLoopInfo;
 class RegisterClassInfo;
 class ScheduleDAGInstrs;
 class SchedDFSResult;
+class ScheduleHazardRecognizer;
 
 /// MachineSchedContext provides enough context from the MachineScheduler pass
 /// for the target to instantiate a scheduler.
@@ -202,63 +203,6 @@ public:
   /// When all successor dependencies have been resolved, free this node for
   /// bottom-up scheduling.
   virtual void releaseBottomNode(SUnit *SU) = 0;
-};
-
-/// ReadyQueue encapsulates vector of "ready" SUnits with basic convenience
-/// methods for pushing and removing nodes. ReadyQueue's are uniquely identified
-/// by an ID. SUnit::NodeQueueId is a mask of the ReadyQueues the SUnit is in.
-///
-/// This is a convenience class that may be used by implementations of
-/// MachineSchedStrategy.
-class ReadyQueue {
-  unsigned ID;
-  std::string Name;
-  std::vector<SUnit*> Queue;
-
-public:
-  ReadyQueue(unsigned id, const Twine &name): ID(id), Name(name.str()) {}
-
-  unsigned getID() const { return ID; }
-
-  StringRef getName() const { return Name; }
-
-  // SU is in this queue if it's NodeQueueID is a superset of this ID.
-  bool isInQueue(SUnit *SU) const { return (SU->NodeQueueId & ID); }
-
-  bool empty() const { return Queue.empty(); }
-
-  void clear() { Queue.clear(); }
-
-  unsigned size() const { return Queue.size(); }
-
-  typedef std::vector<SUnit*>::iterator iterator;
-
-  iterator begin() { return Queue.begin(); }
-
-  iterator end() { return Queue.end(); }
-
-  ArrayRef<SUnit*> elements() { return Queue; }
-
-  iterator find(SUnit *SU) {
-    return std::find(Queue.begin(), Queue.end(), SU);
-  }
-
-  void push(SUnit *SU) {
-    Queue.push_back(SU);
-    SU->NodeQueueId |= ID;
-  }
-
-  iterator remove(iterator I) {
-    (*I)->NodeQueueId &= ~ID;
-    *I = Queue.back();
-    unsigned idx = I - Queue.begin();
-    Queue.pop_back();
-    return Queue.begin() + idx;
-  }
-
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-  void dump();
-#endif
 };
 
 /// Mutate the DAG as a postpass after normal DAG building.
@@ -468,6 +412,286 @@ protected:
   void releaseSuccessors(SUnit *SU);
   void releasePred(SUnit *SU, SDep *PredEdge);
   void releasePredecessors(SUnit *SU);
+};
+
+//===----------------------------------------------------------------------===//
+///
+/// Helpers for implementing custom MachineSchedStrategy classes. These take
+/// care of the book-keeping associated with list scheduling heuristics.
+///
+//===----------------------------------------------------------------------===//
+
+/// ReadyQueue encapsulates vector of "ready" SUnits with basic convenience
+/// methods for pushing and removing nodes. ReadyQueue's are uniquely identified
+/// by an ID. SUnit::NodeQueueId is a mask of the ReadyQueues the SUnit is in.
+///
+/// This is a convenience class that may be used by implementations of
+/// MachineSchedStrategy.
+class ReadyQueue {
+  unsigned ID;
+  std::string Name;
+  std::vector<SUnit*> Queue;
+
+public:
+  ReadyQueue(unsigned id, const Twine &name): ID(id), Name(name.str()) {}
+
+  unsigned getID() const { return ID; }
+
+  StringRef getName() const { return Name; }
+
+  // SU is in this queue if it's NodeQueueID is a superset of this ID.
+  bool isInQueue(SUnit *SU) const { return (SU->NodeQueueId & ID); }
+
+  bool empty() const { return Queue.empty(); }
+
+  void clear() { Queue.clear(); }
+
+  unsigned size() const { return Queue.size(); }
+
+  typedef std::vector<SUnit*>::iterator iterator;
+
+  iterator begin() { return Queue.begin(); }
+
+  iterator end() { return Queue.end(); }
+
+  ArrayRef<SUnit*> elements() { return Queue; }
+
+  iterator find(SUnit *SU) {
+    return std::find(Queue.begin(), Queue.end(), SU);
+  }
+
+  void push(SUnit *SU) {
+    Queue.push_back(SU);
+    SU->NodeQueueId |= ID;
+  }
+
+  iterator remove(iterator I) {
+    (*I)->NodeQueueId &= ~ID;
+    *I = Queue.back();
+    unsigned idx = I - Queue.begin();
+    Queue.pop_back();
+    return Queue.begin() + idx;
+  }
+
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+  void dump();
+#endif
+};
+
+/// Summarize the unscheduled region.
+struct SchedRemainder {
+  // Critical path through the DAG in expected latency.
+  unsigned CriticalPath;
+  unsigned CyclicCritPath;
+
+  // Scaled count of micro-ops left to schedule.
+  unsigned RemIssueCount;
+
+  bool IsAcyclicLatencyLimited;
+
+  // Unscheduled resources
+  SmallVector<unsigned, 16> RemainingCounts;
+
+  void reset() {
+    CriticalPath = 0;
+    CyclicCritPath = 0;
+    RemIssueCount = 0;
+    IsAcyclicLatencyLimited = false;
+    RemainingCounts.clear();
+  }
+
+  SchedRemainder() { reset(); }
+
+  void init(ScheduleDAGMI *DAG, const TargetSchedModel *SchedModel);
+};
+
+/// Each Scheduling boundary is associated with ready queues. It tracks the
+/// current cycle in the direction of movement, and maintains the state
+/// of "hazards" and other interlocks at the current cycle.
+class SchedBoundary {
+public:
+  /// SUnit::NodeQueueId: 0 (none), 1 (top), 2 (bot), 3 (both)
+  enum {
+    TopQID = 1,
+    BotQID = 2,
+    LogMaxQID = 2
+  };
+
+  ScheduleDAGMI *DAG;
+  const TargetSchedModel *SchedModel;
+  SchedRemainder *Rem;
+
+  ReadyQueue Available;
+  ReadyQueue Pending;
+
+  ScheduleHazardRecognizer *HazardRec;
+
+private:
+  /// True if the pending Q should be checked/updated before scheduling another
+  /// instruction.
+  bool CheckPending;
+
+  // For heuristics, keep a list of the nodes that immediately depend on the
+  // most recently scheduled node.
+  SmallPtrSet<const SUnit*, 8> NextSUs;
+
+  /// Number of cycles it takes to issue the instructions scheduled in this
+  /// zone. It is defined as: scheduled-micro-ops / issue-width + stalls.
+  /// See getStalls().
+  unsigned CurrCycle;
+
+  /// Micro-ops issued in the current cycle
+  unsigned CurrMOps;
+
+  /// MinReadyCycle - Cycle of the soonest available instruction.
+  unsigned MinReadyCycle;
+
+  // The expected latency of the critical path in this scheduled zone.
+  unsigned ExpectedLatency;
+
+  // The latency of dependence chains leading into this zone.
+  // For each node scheduled bottom-up: DLat = max DLat, N.Depth.
+  // For each cycle scheduled: DLat -= 1.
+  unsigned DependentLatency;
+
+  /// Count the scheduled (issued) micro-ops that can be retired by
+  /// time=CurrCycle assuming the first scheduled instr is retired at time=0.
+  unsigned RetiredMOps;
+
+  // Count scheduled resources that have been executed. Resources are
+  // considered executed if they become ready in the time that it takes to
+  // saturate any resource including the one in question. Counts are scaled
+  // for direct comparison with other resources. Counts can be compared with
+  // MOps * getMicroOpFactor and Latency * getLatencyFactor.
+  SmallVector<unsigned, 16> ExecutedResCounts;
+
+  /// Cache the max count for a single resource.
+  unsigned MaxExecutedResCount;
+
+  // Cache the critical resources ID in this scheduled zone.
+  unsigned ZoneCritResIdx;
+
+  // Is the scheduled region resource limited vs. latency limited.
+  bool IsResourceLimited;
+
+  // Record the highest cycle at which each resource has been reserved by a
+  // scheduled instruction.
+  SmallVector<unsigned, 16> ReservedCycles;
+
+#ifndef NDEBUG
+  // Remember the greatest operand latency as an upper bound on the number of
+  // times we should retry the pending queue because of a hazard.
+  unsigned MaxObservedLatency;
+#endif
+
+public:
+  /// Pending queues extend the ready queues with the same ID and the
+  /// PendingFlag set.
+  SchedBoundary(unsigned ID, const Twine &Name):
+    DAG(0), SchedModel(0), Rem(0), Available(ID, Name+".A"),
+    Pending(ID << LogMaxQID, Name+".P"),
+    HazardRec(0) {
+    reset();
+  }
+
+  ~SchedBoundary();
+
+  void reset();
+
+  void init(ScheduleDAGMI *dag, const TargetSchedModel *smodel,
+            SchedRemainder *rem);
+
+  bool isTop() const {
+    return Available.getID() == TopQID;
+  }
+
+  /// Number of cycles to issue the instructions scheduled in this zone.
+  unsigned getCurrCycle() const { return CurrCycle; }
+
+  /// Micro-ops issued in the current cycle
+  unsigned getCurrMOps() const { return CurrMOps; }
+
+  /// Return true if the given SU is used by the most recently scheduled
+  /// instruction.
+  bool isNextSU(const SUnit *SU) const { return NextSUs.count(SU); }
+
+  // The latency of dependence chains leading into this zone.
+  unsigned getDependentLatency() const { return DependentLatency; }
+
+  /// Get the number of latency cycles "covered" by the scheduled
+  /// instructions. This is the larger of the critical path within the zone
+  /// and the number of cycles required to issue the instructions.
+  unsigned getScheduledLatency() const {
+    return std::max(ExpectedLatency, CurrCycle);
+  }
+
+  unsigned getUnscheduledLatency(SUnit *SU) const {
+    return isTop() ? SU->getHeight() : SU->getDepth();
+  }
+
+  unsigned getResourceCount(unsigned ResIdx) const {
+    return ExecutedResCounts[ResIdx];
+  }
+
+  /// Get the scaled count of scheduled micro-ops and resources, including
+  /// executed resources.
+  unsigned getCriticalCount() const {
+    if (!ZoneCritResIdx)
+      return RetiredMOps * SchedModel->getMicroOpFactor();
+    return getResourceCount(ZoneCritResIdx);
+  }
+
+  /// Get a scaled count for the minimum execution time of the scheduled
+  /// micro-ops that are ready to execute by getExecutedCount. Notice the
+  /// feedback loop.
+  unsigned getExecutedCount() const {
+    return std::max(CurrCycle * SchedModel->getLatencyFactor(),
+                    MaxExecutedResCount);
+  }
+
+  unsigned getZoneCritResIdx() const { return ZoneCritResIdx; }
+
+  // Is the scheduled region resource limited vs. latency limited.
+  bool isResourceLimited() const { return IsResourceLimited; }
+
+  /// Get the difference between the given SUnit's ready time and the current
+  /// cycle.
+  unsigned getLatencyStallCycles(SUnit *SU);
+
+  unsigned getNextResourceCycle(unsigned PIdx, unsigned Cycles);
+
+  bool checkHazard(SUnit *SU);
+
+  unsigned findMaxLatency(ArrayRef<SUnit*> ReadySUs);
+
+  unsigned getOtherResourceCount(unsigned &OtherCritIdx);
+
+  void releaseNode(SUnit *SU, unsigned ReadyCycle);
+
+  void releaseTopNode(SUnit *SU);
+
+  void releaseBottomNode(SUnit *SU);
+
+  void bumpCycle(unsigned NextCycle);
+
+  void incExecutedResources(unsigned PIdx, unsigned Count);
+
+  unsigned countResource(unsigned PIdx, unsigned Cycles, unsigned ReadyCycle);
+
+  void bumpNode(SUnit *SU);
+
+  void releasePending();
+
+  void removeReady(SUnit *SU);
+
+  /// Call this before applying any other heuristics to the Available queue.
+  /// Updates the Available/Pending Q's if necessary and returns the single
+  /// available instruction, or NULL if there are multiple candidates.
+  SUnit *pickOnlyChoice();
+
+#ifndef NDEBUG
+  void dumpScheduledState();
+#endif
 };
 
 } // namespace llvm

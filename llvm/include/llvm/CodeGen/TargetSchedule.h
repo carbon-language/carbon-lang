@@ -98,6 +98,14 @@ public:
     return SchedModel.getProcResource(PIdx);
   }
 
+#ifndef NDEBUG
+  const char *getResourceName(unsigned PIdx) const {
+    if (!PIdx)
+      return "MOps";
+    return SchedModel.getProcResource(PIdx)->Name;
+  }
+#endif
+
   typedef const MCWriteProcResEntry *ProcResIter;
 
   // \brief Get an iterator into the processor resources consumed by this
