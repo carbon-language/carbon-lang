@@ -181,12 +181,10 @@ Optional<unsigned> clang::getStackIndexOfNearestEnclosingCaptureCapableLambda(
     return FailDistance;
 
   const unsigned IndexOfCaptureReadyLambda = OptionalStackIndex.getValue();
-  assert(
-      ((IndexOfCaptureReadyLambda != (FunctionScopes.size() - 1)) ||
-       (S.getCurGenericLambda() && S.getCurGenericLambda()->ImpCaptureStyle !=
-                                       sema::LambdaScopeInfo::ImpCap_None)) &&
-      "The capture ready lambda for a potential capture can only be the "
-      "current lambda if it is a generic lambda with an implicit capture");
+  assert(((IndexOfCaptureReadyLambda != (FunctionScopes.size() - 1)) ||
+          S.getCurGenericLambda()) &&
+         "The capture ready lambda for a potential capture can only be the "
+         "current lambda if it is a generic lambda with an implicit capture");
 
   const sema::LambdaScopeInfo *const CaptureReadyLambdaLSI =
       cast<sema::LambdaScopeInfo>(FunctionScopes[IndexOfCaptureReadyLambda]);

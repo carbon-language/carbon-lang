@@ -32,11 +32,18 @@ namespace variadic_expansion {
 
   void h(int i, char c) { g(i, c); } //expected-note{{in instantiation}}
 }
+namespace simple_init_captures {
+  void test() {
+    int i;
+    auto L = [i](auto a) { return i + a; };
+    L(3.14);
+  }
+}
 
 namespace odr_use_within_init_capture {
 
 int test() {
-
+  
   { // no captures
     const int x = 10;
     auto L = [z = x + 2](int a) {
