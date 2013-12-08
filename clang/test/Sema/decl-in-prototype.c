@@ -1,4 +1,4 @@
-// RUN: %clang_cc1_only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 const int AA = 5;
 

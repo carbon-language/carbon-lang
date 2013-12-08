@@ -1,4 +1,4 @@
-// RUN: %clang_cc1_only -ast-print %s | FileCheck %s
+// RUN: %clang_cc1 -ast-print %s | FileCheck %s
 
 // This testcase checks the functionality of 
 // Sema::ActOn{Start,End}FunctionDeclarator, specifically checking that
