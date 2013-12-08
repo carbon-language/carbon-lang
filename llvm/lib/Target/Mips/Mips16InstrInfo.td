@@ -957,26 +957,18 @@ def OrRxRxRy16: FRxRxRy16_ins<0b01101, "or", IIAlu>, ArithLogic16Defs<1>;
 // stack
 //
 
-// fixed form for restoring RA and the frame
-// for direct object emitter, encoding needs to be adjusted for the
-// frame size
-//
-let ra=1, s=0,s0=1,s1=1 in
-def RestoreRaF16:
-  FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "restore\t$$ra,  $$s0, $$s1, $$s2, $frame_size", [], IILoad >, MayLoad {
+def Restore16:
+  FI8_SVRS16<0b1, (outs), (ins variable_ops),
+             "", [], IILoad >, MayLoad {
   let isCodeGenOnly = 1;
-  let Defs = [S0, S1, S2, RA, SP];
+  let Defs = [SP];
   let Uses = [SP];
 }
 
-// Use Restore to increment SP since SP is not a Mip 16 register, this
-// is an easy way to do that which does not require a register.
-//
-let ra=0, s=0,s0=0,s1=0 in
-def RestoreIncSpF16:
-  FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "restore\t$frame_size", [], IILoad >, MayLoad {
+
+def RestoreX16:
+  FI8_SVRS16<0b1, (outs), (ins variable_ops),
+             "", [], IILoad >, MayLoad {
   let isCodeGenOnly = 1;
   let Defs = [SP];
   let Uses = [SP];
@@ -989,23 +981,17 @@ def RestoreIncSpF16:
 // To set up a stack frame on entry to a subroutine,
 // saving return address and static registers, and adjusting stack
 //
-let ra=1, s=1,s0=1,s1=1 in
-def SaveRaF16:
-  FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "save\t$$ra, $$s0, $$s1, $$s2, $frame_size", [], IIStore >, MayStore {
+def Save16: 
+  FI8_SVRS16<0b1, (outs), (ins variable_ops),
+             "", [], IIStore >, MayStore {
   let isCodeGenOnly = 1;
-  let Uses = [RA, SP, S0, S1, S2];
+  let Uses = [SP];
   let Defs = [SP];
 }
 
-//
-// Use Save to decrement the SP by a constant since SP is not
-// a Mips16 register.
-//
-let ra=0, s=0,s0=0,s1=0 in
-def SaveDecSpF16:
-  FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "save\t$frame_size", [], IIStore >, MayStore {
+def SaveX16:
+  FI8_SVRS16<0b1, (outs), (ins variable_ops),
+             "", [], IIStore >, MayStore {
   let isCodeGenOnly = 1;
   let Uses = [SP];
   let Defs = [SP];

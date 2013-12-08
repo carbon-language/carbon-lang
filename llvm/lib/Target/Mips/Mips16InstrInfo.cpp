@@ -182,12 +182,17 @@ void Mips16InstrInfo::makeFrame(unsigned SP, int64_t FrameSize,
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
   if (!NeverUseSaveRestore) {
     if (isUInt<11>(FrameSize))
-      BuildMI(MBB, I, DL, get(Mips::SaveRaF16)).addImm(FrameSize);
+      //BuildMI(MBB, I, DL, get(Mips::SaveRaF16)).addImm(FrameSize);
+      BuildMI(MBB, I, DL, get(Mips::SaveX16)).addReg(Mips::RA).
+              addReg(Mips::S0).
+              addReg(Mips::S1).addReg(Mips::S2).addImm(FrameSize);
     else {
       int Base = 2040; // should create template function like isUInt that
                        // returns largest possible n bit unsigned integer
       int64_t Remainder = FrameSize - Base;
-      BuildMI(MBB, I, DL, get(Mips::SaveRaF16)). addImm(Base);
+      BuildMI(MBB, I, DL, get(Mips::SaveX16)).addReg(Mips::RA).
+              addReg(Mips::S0).
+              addReg(Mips::S1).addReg(Mips::S2).addImm(Base);
       if (isInt<16>(-Remainder))
         BuildAddiuSpImm(MBB, I, -Remainder);
       else
@@ -224,7 +229,9 @@ void Mips16InstrInfo::restoreFrame(unsigned SP, int64_t FrameSize,
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
   if (!NeverUseSaveRestore) {
     if (isUInt<11>(FrameSize))
-      BuildMI(MBB, I, DL, get(Mips::RestoreRaF16)).addImm(FrameSize);
+      BuildMI(MBB, I, DL, get(Mips::RestoreX16)).addReg(Mips::RA).
+              addReg(Mips::S0).
+              addReg(Mips::S1).addReg(Mips::S2).addImm(FrameSize);
     else {
       int Base = 2040; // should create template function like isUInt that
                        // returns largest possible n bit unsigned integer
@@ -233,7 +240,9 @@ void Mips16InstrInfo::restoreFrame(unsigned SP, int64_t FrameSize,
         BuildAddiuSpImm(MBB, I, Remainder);
       else
         adjustStackPtrBig(SP, Remainder, MBB, I, Mips::A0, Mips::A1);
-      BuildMI(MBB, I, DL, get(Mips::RestoreRaF16)). addImm(Base);
+      BuildMI(MBB, I, DL, get(Mips::RestoreX16)).addReg(Mips::RA).
+              addReg(Mips::S0).
+              addReg(Mips::S1).addReg(Mips::S2).addImm(Base);
     }
   }
   else {

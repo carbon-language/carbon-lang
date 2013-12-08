@@ -83,6 +83,19 @@ void MipsInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
   case Mips::RDHWR64:
     O << "\t.set\tpush\n";
     O << "\t.set\tmips32r2\n";
+    break;
+  case Mips::Save16:
+  case Mips::SaveX16:
+    O << "\tsave\t";
+    printSaveRestore(MI, O);
+    O << "\n";
+    return;
+  case Mips::Restore16:
+  case Mips::RestoreX16:
+    O << "\trestore\t";
+    printSaveRestore(MI, O);
+    O << "\n";
+    return;
   }
 
   // Try to print any aliases first.
@@ -286,3 +299,14 @@ bool MipsInstPrinter::printAlias(const MCInst &MI, raw_ostream &OS) {
   default: return false;
   }
 }
+
+void MipsInstPrinter::printSaveRestore(const MCInst *MI, raw_ostream &O) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    if (i != 0) O << ", ";
+    if (MI->getOperand(i).isReg())
+      printRegName(O, MI->getOperand(i).getReg());
+    else
+      printUnsignedImm(MI, i, O);
+  }
+}
+
