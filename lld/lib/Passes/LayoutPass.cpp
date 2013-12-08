@@ -23,6 +23,7 @@ using namespace lld;
 static bool compareAtoms(const LayoutPass::SortKey &,
                          const LayoutPass::SortKey &);
 
+#ifndef NDEBUG
 // Return "reason (leftval, rightval)"
 static std::string formatReason(StringRef reason, int leftVal, int rightVal) {
   Twine msg =
@@ -41,6 +42,7 @@ static void checkTransitivity(std::vector<LayoutPass::SortKey> &vec) {
     }
   }
 }
+#endif // #ifndef NDEBUG
 
 /// The function compares atoms by sorting atoms in the following order
 /// a) Sorts atoms by Section position preference
