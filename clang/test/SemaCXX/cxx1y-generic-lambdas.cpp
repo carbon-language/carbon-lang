@@ -3,6 +3,14 @@
 // RUN: %clang_cc1 -std=c++1y -verify -fsyntax-only -fblocks -fms-extensions %s -DMS_EXTENSIONS
 // RUN: %clang_cc1 -std=c++1y -verify -fsyntax-only -fblocks -fdelayed-template-parsing -fms-extensions %s -DMS_EXTENSIONS -DDELAYED_TEMPLATE_PARSING
 
+namespace simple_explicit_capture {
+  void test() {
+    int i;
+    auto L = [i](auto a) { return i + a; };
+    L(3.14);
+  }
+}
+
 namespace explicit_call {
 int test() {
   auto L = [](auto a) { return a; };
