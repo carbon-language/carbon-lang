@@ -20,20 +20,20 @@
 
 using namespace lld;
 
-#ifndef NDEBUG
-namespace {
+static bool compareAtoms(const LayoutPass::SortKey &,
+                         const LayoutPass::SortKey &);
+
 // Return "reason (leftval, rightval)"
-std::string formatReason(StringRef reason, int leftVal, int rightVal) {
+static std::string formatReason(StringRef reason, int leftVal, int rightVal) {
   Twine msg =
       Twine(reason) + " (" + Twine(leftVal) + ", " + Twine(rightVal) + ")";
   return msg.str();
 }
-} // end anonymous namespace
 
 // Less-than relationship of two atoms must be transitive, which is, if a < b
 // and b < c, a < c must be true. This function checks the transitivity by
 // checking the sort results.
-void LayoutPass::checkTransitivity(std::vector<SortKey> &vec) const {
+static void checkTransitivity(std::vector<LayoutPass::SortKey> &vec) {
   for (auto i = vec.begin(), e = vec.end(); (i + 1) != e; ++i) {
     for (auto j = i + 1; j != e; ++j) {
       assert(compareAtoms(*i, *j));
@@ -41,8 +41,6 @@ void LayoutPass::checkTransitivity(std::vector<SortKey> &vec) const {
     }
   }
 }
-
-#endif // NDEBUG
 
 /// The function compares atoms by sorting atoms in the following order
 /// a) Sorts atoms by Section position preference
@@ -52,8 +50,9 @@ void LayoutPass::checkTransitivity(std::vector<SortKey> &vec) const {
 /// d) Sorts atoms by their content
 /// e) Sorts atoms on how they appear using File Ordinality
 /// f) Sorts atoms on how they appear within the File
-bool LayoutPass::compareAtomsSub(const SortKey &lc, const SortKey &rc,
-                                 std::string &reason) {
+static bool compareAtomsSub(const LayoutPass::SortKey &lc,
+                            const LayoutPass::SortKey &rc,
+                            std::string &reason) {
   const DefinedAtom *left = lc._atom;
   const DefinedAtom *right = rc._atom;
   if (left == right) {
@@ -129,7 +128,8 @@ bool LayoutPass::compareAtomsSub(const SortKey &lc, const SortKey &rc,
   llvm_unreachable("Atoms with Same Ordinal!");
 }
 
-bool LayoutPass::compareAtoms(const SortKey &lc, const SortKey &rc) {
+static bool compareAtoms(const LayoutPass::SortKey &lc,
+                         const LayoutPass::SortKey &rc) {
   std::string reason;
   bool result = compareAtomsSub(lc, rc, reason);
   DEBUG({

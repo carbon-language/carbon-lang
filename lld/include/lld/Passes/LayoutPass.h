@@ -79,11 +79,6 @@ private:
 
   AtomToOrdinalT _ordinalOverrideMap;
 
-  // Compare and Sort Atoms by their ordinals
-  static bool compareAtoms(const SortKey &left, const SortKey &right);
-  static bool compareAtomsSub(const SortKey &left, const SortKey &right,
-                              std::string &reason);
-
   // Helper methods for buildFollowOnTable().
   const DefinedAtom *findAtomFollowedBy(const DefinedAtom *targetAtom);
   bool checkAllPrevAtomsZeroSize(const DefinedAtom *targetAtom);
@@ -97,9 +92,6 @@ private:
 #ifndef NDEBUG
   // Check if the follow-on graph is a correct structure. For debugging only.
   void checkFollowonChain(MutableFile::DefinedAtomRange &range);
-
-  typedef std::vector<const DefinedAtom *>::iterator DefinedAtomIter;
-  void checkTransitivity(std::vector<SortKey> &vec) const;
 #endif
 };
 
