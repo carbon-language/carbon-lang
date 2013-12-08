@@ -1020,11 +1020,6 @@ void CodeGenModule::EmitDeferred() {
     if (!CGRef->isDeclaration())
       continue;
 
-    // GlobalAlias::isDeclaration() defers to the aliasee, but for our
-    // purposes an alias counts as a definition.
-    if (isa<llvm::GlobalAlias>(CGRef))
-      continue;
-
     // Otherwise, emit the definition and move on to the next one.
     EmitGlobalDefinition(D);
   }
