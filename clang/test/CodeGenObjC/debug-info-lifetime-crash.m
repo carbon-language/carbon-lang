@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -cc1 -triple arm-apple-ios -emit-llvm -g -fblocks -fobjc-runtime=ios-7.0.0 -fobjc-arc %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple arm-apple-ios -emit-llvm -g -fblocks -fobjc-runtime=ios-7.0.0 -fobjc-arc %s -o - | FileCheck %s
 // rdar://problem/14990656
 @protocol NSObject
 - (id)copy;

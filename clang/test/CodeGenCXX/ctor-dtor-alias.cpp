@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 %s -triple x86_64-linux -emit-llvm -o - -mconstructor-aliases -O1 -disable-llvm-optzns | FileCheck %s
 // RUN: %clang_cc1 %s -triple x86_64-linux -emit-llvm -o - -mconstructor-aliases | FileCheck --check-prefix=NOOPT %s
 
-// RUN: %clang_cc1 -cc1 -triple x86_64--netbsd -emit-llvm \
+// RUN: %clang_cc1 -triple x86_64--netbsd -emit-llvm \
 // RUN: -mconstructor-aliases -O2 %s -o - | FileCheck --check-prefix=CHECK-RAUW %s
 
 namespace test1 {
