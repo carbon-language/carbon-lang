@@ -229,9 +229,11 @@ void Mips16InstrInfo::restoreFrame(unsigned SP, int64_t FrameSize,
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
   if (!NeverUseSaveRestore) {
     if (isUInt<11>(FrameSize))
-      BuildMI(MBB, I, DL, get(Mips::RestoreX16)).addReg(Mips::RA).
-              addReg(Mips::S0).
-              addReg(Mips::S1).addReg(Mips::S2).addImm(FrameSize);
+      BuildMI(MBB, I, DL, get(Mips::RestoreX16)).
+              addReg(Mips::RA, RegState::Define).
+              addReg(Mips::S0, RegState::Define).
+              addReg(Mips::S1, RegState::Define).
+              addReg(Mips::S2, RegState::Define).addImm(FrameSize);
     else {
       int Base = 2040; // should create template function like isUInt that
                        // returns largest possible n bit unsigned integer
@@ -240,9 +242,11 @@ void Mips16InstrInfo::restoreFrame(unsigned SP, int64_t FrameSize,
         BuildAddiuSpImm(MBB, I, Remainder);
       else
         adjustStackPtrBig(SP, Remainder, MBB, I, Mips::A0, Mips::A1);
-      BuildMI(MBB, I, DL, get(Mips::RestoreX16)).addReg(Mips::RA).
-              addReg(Mips::S0).
-              addReg(Mips::S1).addReg(Mips::S2).addImm(Base);
+      BuildMI(MBB, I, DL, get(Mips::RestoreX16)).
+              addReg(Mips::RA, RegState::Define).
+              addReg(Mips::S0, RegState::Define).
+              addReg(Mips::S1, RegState::Define).
+              addReg(Mips::S2, RegState::Define).addImm(Base);
     }
   }
   else {
