@@ -9,6 +9,7 @@
 
 #define DEBUG_TYPE "LayoutPass"
 
+#include <algorithm>
 #include <set>
 
 #include "lld/Passes/LayoutPass.h"
@@ -32,15 +33,15 @@ std::string formatReason(StringRef reason, int leftVal, int rightVal) {
 // Less-than relationship of two atoms must be transitive, which is, if a < b
 // and b < c, a < c must be true. This function checks the transitivity by
 // checking the sort results.
-void LayoutPass::checkTransitivity(DefinedAtomIter begin,
-                                   DefinedAtomIter end) const {
-  for (DefinedAtomIter i = begin; (i + 1) != end; ++i) {
-    for (DefinedAtomIter j = i + 1; j != end; ++j) {
-      assert(_compareAtoms(*i, *j));
-      assert(!_compareAtoms(*j, *i));
+void LayoutPass::checkTransitivity(std::vector<SortKey> &vec) const {
+  for (auto i = vec.begin(), e = vec.end(); (i + 1) != e; ++i) {
+    for (auto j = i + 1; j != e; ++j) {
+      assert(compareAtoms(*i, *j));
+      assert(!compareAtoms(*j, *i));
     }
   }
 }
+
 #endif // NDEBUG
 
 /// The function compares atoms by sorting atoms in the following order
@@ -51,9 +52,10 @@ void LayoutPass::checkTransitivity(DefinedAtomIter begin,
 /// d) Sorts atoms by their content
 /// e) Sorts atoms on how they appear using File Ordinality
 /// f) Sorts atoms on how they appear within the File
-bool LayoutPass::CompareAtoms::compare(const DefinedAtom *left,
-                                       const DefinedAtom *right,
-                                       std::string &reason) const {
+bool LayoutPass::compareAtomsSub(const SortKey &lc, const SortKey &rc,
+                                 std::string &reason) {
+  const DefinedAtom *left = lc._atom;
+  const DefinedAtom *right = rc._atom;
   if (left == right) {
     reason = "same";
     return false;
@@ -73,21 +75,14 @@ bool LayoutPass::CompareAtoms::compare(const DefinedAtom *left,
   }
 
   // Find the root of the chain if it is a part of a follow-on chain.
-  auto leftFind = _layout._followOnRoots.find(left);
-  auto rightFind = _layout._followOnRoots.find(right);
-  const DefinedAtom *leftRoot =
-      (leftFind == _layout._followOnRoots.end()) ? left : leftFind->second;
-  const DefinedAtom *rightRoot =
-      (rightFind == _layout._followOnRoots.end()) ? right : rightFind->second;
+  const DefinedAtom *leftRoot = lc._root;
+  const DefinedAtom *rightRoot = rc._root;
 
   // Sort atoms by their ordinal overrides only if they fall in the same
   // chain.
-  AtomToOrdinalT::const_iterator lPos = _layout._ordinalOverrideMap.find(left);
-  AtomToOrdinalT::const_iterator rPos = _layout._ordinalOverrideMap.find(right);
-  AtomToOrdinalT::const_iterator end = _layout._ordinalOverrideMap.end();
-  if (leftRoot == rightRoot && lPos != end && rPos != end) {
-    DEBUG(reason = formatReason("override", lPos->second, rPos->second));
-    return lPos->second < rPos->second;
+  if (leftRoot == rightRoot) {
+    DEBUG(reason = formatReason("override", lc._override, rc._override));
+    return lc._override < rc._override;
   }
 
   // Sort same permissions together.
@@ -134,14 +129,13 @@ bool LayoutPass::CompareAtoms::compare(const DefinedAtom *left,
   llvm_unreachable("Atoms with Same Ordinal!");
 }
 
-bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
-                                          const DefinedAtom *right) const {
+bool LayoutPass::compareAtoms(const SortKey &lc, const SortKey &rc) {
   std::string reason;
-  bool result = compare(left, right, reason);
+  bool result = compareAtomsSub(lc, rc, reason);
   DEBUG({
     StringRef comp = result ? "<" : ">=";
-    llvm::dbgs() << "Layout: '" << left->name() << "' " << comp << " '"
-                 << right->name() << "' (" << reason << ")\n";
+    llvm::dbgs() << "Layout: '" << lc._atom->name() << "' " << comp << " '"
+                 << rc._atom->name() << "' (" << reason << ")\n";
   });
   return result;
 }
@@ -533,8 +527,29 @@ void LayoutPass::checkFollowonChain(MutableFile::DefinedAtomRange &range) {
 }
 #endif  // #ifndef NDEBUG
 
+std::vector<LayoutPass::SortKey>
+LayoutPass::decorate(MutableFile::DefinedAtomRange &atomRange) const {
+  std::vector<SortKey> ret;
+  for (const DefinedAtom *atom : atomRange) {
+    auto ri = _followOnRoots.find(atom);
+    auto oi = _ordinalOverrideMap.find(atom);
+    const DefinedAtom *root = (ri == _followOnRoots.end()) ? atom : ri->second;
+    uint64_t override = (oi == _ordinalOverrideMap.end()) ? 0 : oi->second;
+    ret.push_back(SortKey(atom, root, override));
+  }
+  return ret;
+}
+
+void LayoutPass::undecorate(MutableFile::DefinedAtomRange &atomRange,
+                            std::vector<SortKey> &keys) const {
+  size_t i = 0;
+  for (SortKey &k : keys)
+    atomRange[i++] = k._atom;
+}
+
 /// Perform the actual pass
 void LayoutPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
+  // sort the atoms
   ScopedTask task(getDefaultDomain(), "LayoutPass");
   MutableFile::DefinedAtomRange atomRange = mergedFile->definedAtoms();
 
@@ -558,10 +573,10 @@ void LayoutPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
     printDefinedAtoms(atomRange);
   });
 
-  // sort the atoms
-  std::sort(atomRange.begin(), atomRange.end(), _compareAtoms);
-
-  DEBUG(checkTransitivity(atomRange.begin(), atomRange.end()));
+  std::vector<LayoutPass::SortKey> vec = decorate(atomRange);
+  std::sort(vec.begin(), vec.end(), compareAtoms);
+  DEBUG(checkTransitivity(vec));
+  undecorate(atomRange, vec);
 
   DEBUG({
     llvm::dbgs() << "sorted atoms:\n";

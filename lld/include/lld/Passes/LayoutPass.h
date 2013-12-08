@@ -33,19 +33,13 @@ class MutableFile;
 /// the sort must take that into account too.
 class LayoutPass : public Pass {
 public:
-
-  // Compare and Sort Atoms by their ordinals
-  class CompareAtoms {
-  public:
-    explicit CompareAtoms(const LayoutPass &pass) : _layout(pass) {}
-    bool operator()(const DefinedAtom *left, const DefinedAtom *right) const;
-  private:
-    bool compare(const DefinedAtom *left, const DefinedAtom *right,
-                 std::string &reason) const;
-    const LayoutPass &_layout;
+  struct SortKey {
+    SortKey(const DefinedAtom *atom, const DefinedAtom *root, uint64_t override)
+        : _atom(atom), _root(root), _override(override) {}
+    const DefinedAtom *_atom;
+    const DefinedAtom *_root;
+    uint64_t _override;
   };
-
-  LayoutPass() : Pass(), _compareAtoms(*this) {}
 
   /// Sorts atoms in mergedFile by content type then by command line order.
   virtual void perform(std::unique_ptr<MutableFile> &mergedFile);
@@ -84,7 +78,11 @@ private:
   AtomToAtomT _followOnRoots;
 
   AtomToOrdinalT _ordinalOverrideMap;
-  CompareAtoms _compareAtoms;
+
+  // Compare and Sort Atoms by their ordinals
+  static bool compareAtoms(const SortKey &left, const SortKey &right);
+  static bool compareAtomsSub(const SortKey &left, const SortKey &right,
+                              std::string &reason);
 
   // Helper methods for buildFollowOnTable().
   const DefinedAtom *findAtomFollowedBy(const DefinedAtom *targetAtom);
@@ -92,12 +90,16 @@ private:
 
   void setChainRoot(const DefinedAtom *targetAtom, const DefinedAtom *root);
 
+  std::vector<SortKey> decorate(MutableFile::DefinedAtomRange &atomRange) const;
+  void undecorate(MutableFile::DefinedAtomRange &atomRange,
+                  std::vector<SortKey> &keys) const;
+
 #ifndef NDEBUG
   // Check if the follow-on graph is a correct structure. For debugging only.
   void checkFollowonChain(MutableFile::DefinedAtomRange &range);
 
   typedef std::vector<const DefinedAtom *>::iterator DefinedAtomIter;
-  void checkTransitivity(DefinedAtomIter begin, DefinedAtomIter end) const;
+  void checkTransitivity(std::vector<SortKey> &vec) const;
 #endif
 };
 
