@@ -101,15 +101,15 @@ namespace llvm {
 
 // enums for debugging strings
 enum PassDebuggingString {
-  EXECUTION_MSG, // "Executing Pass '"
-  MODIFICATION_MSG, // "' Made Modification '"
-  FREEING_MSG, // " Freeing Pass '"
-  ON_BASICBLOCK_MSG, // "'  on BasicBlock '" + PassName + "'...\n"
+  EXECUTION_MSG, // "Executing Pass '" + PassName
+  MODIFICATION_MSG, // "Made Modification '" + PassName
+  FREEING_MSG, // " Freeing Pass '" + PassName
+  ON_BASICBLOCK_MSG, // "' on BasicBlock '" + InstructionName + "'...\n"
   ON_FUNCTION_MSG, // "' on Function '" + FunctionName + "'...\n"
   ON_MODULE_MSG, // "' on Module '" + ModuleName + "'...\n"
-  ON_REGION_MSG, // " 'on Region ...\n'"
-  ON_LOOP_MSG, // " 'on Loop ...\n'"
-  ON_CG_MSG // "' on Call Graph ...\n'"
+  ON_REGION_MSG, // "' on Region '" + Msg + "'...\n'"
+  ON_LOOP_MSG, // "' on Loop '" + Msg + "'...\n'"
+  ON_CG_MSG // "' on Call Graph Nodes '" + Msg + "'...\n'"
 };
 
 /// PassManagerPrettyStackEntry - This is used to print informative information
