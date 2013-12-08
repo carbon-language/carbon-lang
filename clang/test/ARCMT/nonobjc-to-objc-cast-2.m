@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -arcmt-check -verify -triple x86_64-apple-darwin10 %s
-// DISABLE: mingw32
 
 #include "Common.h"
 
