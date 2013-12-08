@@ -144,7 +144,6 @@ BasicBlock *InvokeInliningInfo::getInnerResumeDest() {
 void InvokeInliningInfo::forwardResume(ResumeInst *RI,
                                SmallPtrSet<LandingPadInst*, 16> &InlinedLPads) {
   BasicBlock *Dest = getInnerResumeDest();
-  LandingPadInst *OuterLPad = getLandingPadInst();
   BasicBlock *Src = RI->getParent();
 
   BranchInst::Create(Dest, Src);
@@ -155,16 +154,6 @@ void InvokeInliningInfo::forwardResume(ResumeInst *RI,
 
   InnerEHValuesPHI->addIncoming(RI->getOperand(0), Src);
   RI->eraseFromParent();
-
-  // Append the clauses from the outer landing pad instruction into the inlined
-  // landing pad instructions.
-  for (SmallPtrSet<LandingPadInst*, 16>::iterator I = InlinedLPads.begin(),
-         E = InlinedLPads.end(); I != E; ++I) {
-    LandingPadInst *InlinedLPad = *I;
-    for (unsigned OuterIdx = 0, OuterNum = OuterLPad->getNumClauses();
-         OuterIdx != OuterNum; ++OuterIdx)
-      InlinedLPad->addClause(OuterLPad->getClause(OuterIdx));
-  }
 }
 
 /// HandleCallsInBlockInlinedThroughInvoke - When we inline a basic block into
@@ -174,17 +163,8 @@ void InvokeInliningInfo::forwardResume(ResumeInst *RI,
 /// nodes in that block with the values specified in InvokeDestPHIValues.
 static void HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
                                                    InvokeInliningInfo &Invoke) {
-  LandingPadInst *LPI = Invoke.getLandingPadInst();
-
   for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
     Instruction *I = BBI++;
-
-    if (LandingPadInst *L = dyn_cast<LandingPadInst>(I)) {
-      unsigned NumClauses = LPI->getNumClauses();
-      L->reserveClauses(NumClauses);
-      for (unsigned i = 0; i != NumClauses; ++i)
-        L->addClause(LPI->getClause(i));
-    }
 
     // We only need to check for function calls: inlined invoke
     // instructions require no special handling.
@@ -247,6 +227,18 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
   for (Function::iterator I = FirstNewBlock, E = Caller->end(); I != E; ++I)
     if (InvokeInst *II = dyn_cast<InvokeInst>(I->getTerminator()))
       InlinedLPads.insert(II->getLandingPadInst());
+
+  // Append the clauses from the outer landing pad instruction into the inlined
+  // landing pad instructions.
+  LandingPadInst *OuterLPad = Invoke.getLandingPadInst();
+  for (SmallPtrSet<LandingPadInst*, 16>::iterator I = InlinedLPads.begin(),
+         E = InlinedLPads.end(); I != E; ++I) {
+    LandingPadInst *InlinedLPad = *I;
+    unsigned OuterNum = OuterLPad->getNumClauses();
+    InlinedLPad->reserveClauses(OuterNum);
+    for (unsigned OuterIdx = 0; OuterIdx != OuterNum; ++OuterIdx)
+      InlinedLPad->addClause(OuterLPad->getClause(OuterIdx));
+  }
 
   for (Function::iterator BB = FirstNewBlock, E = Caller->end(); BB != E; ++BB){
     if (InlinedCodeInfo.ContainsCalls)

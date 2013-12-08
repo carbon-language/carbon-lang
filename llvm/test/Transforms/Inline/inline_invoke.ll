@@ -96,7 +96,6 @@ eh.resume:
 ; CHECK:      landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
 ; CHECK-NEXT:    cleanup
 ; CHECK-NEXT:    catch i8* bitcast (i8** @_ZTIi to i8*)
-; CHECK-NEXT:    catch i8* bitcast (i8** @_ZTIi to i8*)
 ; CHECK-NEXT: invoke void @_ZN1AD1Ev(%struct.A* [[A]])
 ; CHECK-NEXT:   to label %[[LBL:[^\s]+]] unwind
 ; CHECK: [[LBL]]:
@@ -167,7 +166,6 @@ eh.resume:
 ; CHECK-NEXT: [[LPADVAL1:%.*]] = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
 ; CHECK-NEXT:    cleanup
 ; CHECK-NEXT:    catch i8* bitcast (i8** @_ZTIi to i8*)
-; CHECK-NEXT:    catch i8* bitcast (i8** @_ZTIi to i8*)
 ; CHECK-NEXT: invoke void @_ZN1AD1Ev(%struct.A* [[A1]])
 ; CHECK-NEXT:   to label %[[RESUME1:[^\s]+]] unwind
 ; CHECK: [[RESUME1]]:
@@ -186,7 +184,6 @@ eh.resume:
 ; CHECK:    [[LPAD2]]:
 ; CHECK-NEXT: [[LPADVAL2:%.*]] = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
 ; CHECK-NEXT:   cleanup
-; CHECK-NEXT:   catch i8* bitcast (i8** @_ZTIi to i8*)
 ; CHECK-NEXT:   catch i8* bitcast (i8** @_ZTIi to i8*)
 ; CHECK-NEXT: invoke void @_ZN1AD1Ev(%struct.A* [[A2]])
 ; CHECK-NEXT:   to label %[[RESUME2:[^\s]+]] unwind
@@ -275,7 +272,6 @@ lpad.cont:
 ; CHECK:      landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
 ; CHECK-NEXT:    cleanup
 ; CHECK-NEXT:    catch i8* bitcast (i8** @_ZTIi to i8*)
-; CHECK-NEXT:    catch i8* bitcast (i8** @_ZTIi to i8*)
 ; CHECK-NEXT: invoke void @_ZN1AD1Ev(
 ; CHECK-NEXT:   to label %[[L:[^\s]+]] unwind
 ; CHECK:    [[L]]:
@@ -321,7 +317,6 @@ terminate:
 ; CHECK: define void @test4_out()
 ; CHECK:      landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
 ; CHECK-NEXT:    cleanup
-; CHECK-NEXT:    catch i8* bitcast (i8** @_ZTIi to i8*)
 ; CHECK-NEXT:    catch i8* bitcast (i8** @_ZTIi to i8*)
 ; CHECK-NEXT: invoke void @_ZN1AD1Ev(
 ; CHECK-NEXT:   to label %[[L:[^\s]+]] unwind
