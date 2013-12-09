@@ -62,21 +62,25 @@ MipsSERegisterInfo::intRegClass(unsigned Size) const {
   return &Mips::GPR64RegClass;
 }
 
-/// Determine whether a given opcode is an MSA load/store (supporting 10-bit
-/// offsets) or a non-MSA load/store (supporting 16-bit offsets).
-static inline bool isMSALoadOrStore(const unsigned Opcode) {
+/// Get the size of the offset supported by the given load/store.
+/// The result includes the effects of any scale factors applied to the
+/// instruction immediate.
+static inline unsigned getLoadStoreOffsetSizeInBits(const unsigned Opcode) {
   switch (Opcode) {
   case Mips::LD_B:
-  case Mips::LD_H:
-  case Mips::LD_W:
-  case Mips::LD_D:
   case Mips::ST_B:
+    return 10;
+  case Mips::LD_H:
   case Mips::ST_H:
+    return 10 + 1 /* scale factor */;
+  case Mips::LD_W:
   case Mips::ST_W:
+    return 10 + 2 /* scale factor */;
+  case Mips::LD_D:
   case Mips::ST_D:
-    return true;
+    return 10 + 3 /* scale factor */;
   default:
-    return false;
+    return 16;
   }
 }
 
@@ -131,13 +135,14 @@ void MipsSERegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
 
   if (!MI.isDebugValue()) {
     // Make sure Offset fits within the field available.
-    // For MSA instructions, this is a 10-bit signed immediate, otherwise it is
-    // a 16-bit signed immediate.
-    unsigned OffsetBitSize = isMSALoadOrStore(MI.getOpcode()) ? 10 : 16;
+    // For MSA instructions, this is a 10-bit signed immediate (scaled by
+    // element size), otherwise it is a 16-bit signed immediate.
+    unsigned OffsetBitSize = getLoadStoreOffsetSizeInBits(MI.getOpcode());
 
-    if (OffsetBitSize == 10 && !isInt<10>(Offset) && isInt<16>(Offset)) {
-      // If we have an offset that needs to fit into a signed 10-bit immediate
-      // and doesn't, but does fit into 16-bits then use an ADDiu
+    if (OffsetBitSize < 16 && !isIntN(OffsetBitSize, Offset) &&
+        isInt<16>(Offset)) {
+      // If we have an offset that needs to fit into a signed n-bit immediate
+      // (where n < 16) and doesn't, but does fit into 16-bits then use an ADDiu
       MachineBasicBlock &MBB = *MI.getParent();
       DebugLoc DL = II->getDebugLoc();
       unsigned ADDiu = Subtarget.isABI_N64() ? Mips::DADDiu : Mips::ADDiu;
