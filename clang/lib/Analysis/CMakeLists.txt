@@ -1,3 +1,8 @@
+set(LLVM_LINK_COMPONENTS
+  MC
+  Support
+  )
+
 add_clang_library(clangAnalysis
   AnalysisDeclContext.cpp
   BodyFarm.cpp

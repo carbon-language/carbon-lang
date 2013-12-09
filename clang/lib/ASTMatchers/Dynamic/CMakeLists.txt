@@ -12,5 +12,7 @@ add_dependencies(clangDynamicASTMatchers
   )
 
 target_link_libraries(clangDynamicASTMatchers
+  clangAST
   clangASTMatchers
+  clangBasic
   )

@@ -1,3 +1,9 @@
+set(LLVM_LINK_COMPONENTS
+  MCParser
+  MC
+  Support
+  )
+
 add_clang_library(clangParse
   ParseAST.cpp
   ParseCXXInlineMethods.cpp

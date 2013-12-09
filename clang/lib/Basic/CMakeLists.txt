@@ -1,4 +1,7 @@
-set(LLVM_LINK_COMPONENTS mc)
+set(LLVM_LINK_COMPONENTS
+  MC
+  Support
+  )
 
 add_clang_library(clangBasic
   Builtins.cpp

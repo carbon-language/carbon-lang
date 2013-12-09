@@ -1,12 +1,20 @@
 set(LLVM_LINK_COMPONENTS
-  asmparser
-  bitreader
-  bitwriter
-  irreader
-  instrumentation
-  ipo
-  linker
-  vectorize
+  AsmParser
+  BitReader
+  BitWriter
+  Core
+  IPO
+  IRReader
+  InstCombine
+  Instrumentation
+  Linker
+  MC
+  ObjCARCOpts
+  ScalarOpts
+  Support
+  Target
+  TransformUtils
+  Vectorize
   )
 
 add_clang_library(clangCodeGen

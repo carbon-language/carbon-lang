@@ -51,9 +51,10 @@ add_dependencies(clangStaticAnalyzerCore
   )
 
 target_link_libraries(clangStaticAnalyzerCore
-  clangBasic
-  clangLex
   clangAST
+  clangAnalysis
+  clangBasic
   clangFrontend
+  clangLex
   clangRewriteCore
   )

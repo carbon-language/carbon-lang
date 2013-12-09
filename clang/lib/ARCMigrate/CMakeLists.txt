@@ -1,3 +1,7 @@
+set(LLVM_LINK_COMPONENTS
+  Support
+  )
+
 add_clang_library(clangARCMigrate
   ARCMT.cpp
   ARCMTActions.cpp
@@ -34,11 +38,16 @@ add_dependencies(clangARCMigrate
   )
 
 target_link_libraries(clangARCMigrate
-  clangBasic
   clangAST
-  clangParse
+  clangAnalysis
+  clangBasic
+  clangEdit
   clangFrontend
+  clangLex
+  clangParse
   clangRewriteCore
   clangRewriteFrontend
+  clangSema
+  clangSerialization
   clangStaticAnalyzerCheckers
   )

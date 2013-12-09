@@ -1,3 +1,7 @@
+set(LLVM_LINK_COMPONENTS
+  Support
+  )
+
 add_clang_library(clangRewriteCore
   DeltaTree.cpp
   HTMLRewrite.cpp
@@ -18,7 +22,8 @@ add_dependencies(clangRewriteCore
   )
 
 target_link_libraries(clangRewriteCore
-  clangBasic
   clangAST
+  clangBasic
+  clangLex
   clangParse
   )

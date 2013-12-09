@@ -1,4 +1,8 @@
-set(LLVM_LINK_COMPONENTS bitreader)
+set(LLVM_LINK_COMPONENTS
+  BitReader
+  Support
+  )
+
 
 add_clang_library(clangSerialization
   ASTCommon.h
@@ -32,5 +36,8 @@ add_dependencies(clangSerialization
   )
 
 target_link_libraries(clangSerialization
+  clangAST
+  clangBasic
+  clangLex
   clangSema
   )
