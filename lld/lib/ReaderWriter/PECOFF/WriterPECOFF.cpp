@@ -987,11 +987,7 @@ void ExecutableWriter::build(const File &linkedFile) {
   peHeader->setSizeOfUninitializedData(calcSizeOfUninitializedData());
   peHeader->setNumberOfSections(_numSections);
   peHeader->setSizeOfImage(_imageSizeInMemory);
-
-  // The combined size of the DOS, PE and section headers including garbage
-  // between the end of the header and the beginning of the first section.
-  peHeader->setSizeOfHeaders(dosStub->size() + peHeader->size() +
-                             sectionTable->size() + dataDirectory->size());
+  peHeader->setSizeOfHeaders(sectionTable->fileOffset() + sectionTable->size());
 
   setAddressOfEntryPoint(text, peHeader);
 }
