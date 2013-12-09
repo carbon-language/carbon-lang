@@ -184,15 +184,15 @@ namespace fs {
     defined(__OpenBSD__) || defined(__minix) || defined(__FreeBSD_kernel__) || \
     defined(__linux__) || defined(__CYGWIN__) || defined(__DragonFly__)
 static int
-test_dir(char buf[PATH_MAX], char ret[PATH_MAX],
-    const char *dir, const char *bin)
-{
+test_dir(char ret[PATH_MAX], const char *dir, const char *bin)
+{  
   struct stat sb;
+  char fullpath[PATH_MAX];
 
-  snprintf(buf, PATH_MAX, "%s/%s", dir, bin);
-  if (realpath(buf, ret) == NULL)
+  snprintf(fullpath, PATH_MAX, "%s/%s", dir, bin);
+  if (realpath(fullpath, ret) == NULL)
     return (1);
-  if (stat(buf, &sb) != 0)
+  if (stat(fullpath, &sb) != 0)
     return (1);
 
   return (0);
@@ -201,20 +201,21 @@ test_dir(char buf[PATH_MAX], char ret[PATH_MAX],
 static char *
 getprogpath(char ret[PATH_MAX], const char *bin)
 {
-  char *pv, *s, *t, buf[PATH_MAX];
+  char *pv, *s, *t;
 
   /* First approach: absolute path. */
   if (bin[0] == '/') {
-    if (test_dir(buf, ret, "/", bin) == 0)
+    if (test_dir(ret, "/", bin) == 0)
       return (ret);
     return (NULL);
   }
 
   /* Second approach: relative path. */
   if (strchr(bin, '/') != NULL) {
-    if (getcwd(buf, PATH_MAX) == NULL)
+    char cwd[PATH_MAX];
+    if (getcwd(cwd, PATH_MAX) == NULL)
       return (NULL);
-    if (test_dir(buf, ret, buf, bin) == 0)
+    if (test_dir(ret, cwd, bin) == 0)
       return (ret);
     return (NULL);
   }
@@ -226,7 +227,7 @@ getprogpath(char ret[PATH_MAX], const char *bin)
   if (pv == NULL)
     return (NULL);
   while ((t = strsep(&s, ":")) != NULL) {
-    if (test_dir(buf, ret, t, bin) == 0) {
+    if (test_dir(ret, t, bin) == 0) {
       free(pv);
       return (ret);
     }
