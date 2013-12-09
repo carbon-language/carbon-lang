@@ -150,14 +150,14 @@
                    ninja on your system. To build using ninja:
                 </p>
                 <code>
-                  &gt; cmake .. -G Ninja
+                  &gt; cmake .. -G Ninja -DLLVM_ENABLE_CXX11=ON
                   <br>&gt; ninja lldb
                   <br>&gt; ninja check-lldb
                 </code>
                 <h3>Using CMake + Unix Makefiles</h3>
                 <p>If you do not have Ninja, you can still use CMake to generate Unix Makefiles that build LLDB:</p>
                 <code>
-                  &gt; cmake ..
+                  &gt; cmake .. -DLLVM_ENABLE_CXX11=ON
                   <br>&gt; make
                   <br>&gt; make check-lldb
                 </code>
