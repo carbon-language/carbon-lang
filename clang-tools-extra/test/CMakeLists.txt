@@ -24,7 +24,7 @@ endif()
 
 set(CLANG_TOOLS_TEST_DEPS
   # Base line deps.
-  clang clang-headers FileCheck count not
+  FileCheck count not
 
   # Individual tools we test.
   clang-apply-replacements
