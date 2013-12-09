@@ -1990,39 +1990,29 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
     Int = Intrinsic::aarch64_neon_vpadd; s = "vpadd";
     break;
   case AArch64::BI__builtin_neon_vpadds_f32:
-    Int = Intrinsic::aarch64_neon_vpfadd; s = "vpfadd";
-    break;
   case AArch64::BI__builtin_neon_vpaddd_f64:
-    Int = Intrinsic::aarch64_neon_vpfaddq; s = "vpfaddq";
-    break;
+    Int = Intrinsic::aarch64_neon_vpfadd;
+    s = "vpfadd"; AcrossVec = true; break;
   // Scalar Reduce Pairwise Floating Point Max
   case AArch64::BI__builtin_neon_vpmaxs_f32:
-    Int = Intrinsic::aarch64_neon_vpmax; s = "vpmax";
-    break;
   case AArch64::BI__builtin_neon_vpmaxqd_f64:
-    Int = Intrinsic::aarch64_neon_vpmaxq; s = "vpmaxq";
-    break;
+    Int = Intrinsic::aarch64_neon_vpmax;
+    s = "vpmax"; AcrossVec = true; break;
   // Scalar Reduce Pairwise Floating Point Min
   case AArch64::BI__builtin_neon_vpmins_f32:
-    Int = Intrinsic::aarch64_neon_vpmin; s = "vpmin";
-    break;
   case AArch64::BI__builtin_neon_vpminqd_f64:
-    Int = Intrinsic::aarch64_neon_vpminq; s = "vpminq";
-    break;
+    Int = Intrinsic::aarch64_neon_vpmin;
+    s = "vpmin"; AcrossVec = true; break;
   // Scalar Reduce Pairwise Floating Point Maxnm
   case AArch64::BI__builtin_neon_vpmaxnms_f32:
-    Int = Intrinsic::aarch64_neon_vpfmaxnm; s = "vpfmaxnm";
-    break;
   case AArch64::BI__builtin_neon_vpmaxnmqd_f64:
-    Int = Intrinsic::aarch64_neon_vpfmaxnmq; s = "vpfmaxnmq";
-    break;
+    Int = Intrinsic::aarch64_neon_vpfmaxnm;
+    s = "vpfmaxnm"; AcrossVec = true; break;
   // Scalar Reduce Pairwise Floating Point Minnm
   case AArch64::BI__builtin_neon_vpminnms_f32:
-    Int = Intrinsic::aarch64_neon_vpfminnm; s = "vpfminnm";
-    break;
   case AArch64::BI__builtin_neon_vpminnmqd_f64:
-    Int = Intrinsic::aarch64_neon_vpfminnmq; s = "vpfminnmq";
-    break;
+    Int = Intrinsic::aarch64_neon_vpfminnm;
+    s = "vpfminnm"; AcrossVec = true; break;
   // The followings are intrinsics with scalar results generated AcrossVec vectors
   case AArch64::BI__builtin_neon_vaddlv_s8:
   case AArch64::BI__builtin_neon_vaddlv_s16:
