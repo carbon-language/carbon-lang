@@ -290,18 +290,18 @@ public:
   }
 
   virtual uint32_t getVirtualAddress() { return _sectionHeader.VirtualAddress; }
-
   virtual llvm::object::coff_section &getSectionHeader();
 
   ulittle32_t getSectionCharacteristics();
-
   void appendAtom(const DefinedAtom *atom);
+  StringRef getSectionName() const { return _sectionName; }
 
   static bool classof(const Chunk *c) { return c->getKind() == kindSection; }
 
 protected:
   SectionChunk(StringRef sectionName, uint32_t characteristics);
 
+  StringRef _sectionName;
   const uint32_t _characteristics;
   llvm::object::coff_section _sectionHeader;
 
@@ -646,7 +646,7 @@ void SectionChunk::appendAtom(const DefinedAtom *atom) {
 }
 
 SectionChunk::SectionChunk(StringRef sectionName, uint32_t characteristics)
-    : AtomChunk(kindSection), _characteristics(characteristics),
+  : AtomChunk(kindSection), _sectionName(sectionName), _characteristics(characteristics),
       _sectionHeader(createSectionHeader(sectionName, characteristics)) {
   // The section should be aligned to disk sector.
   _align = SECTOR_SIZE;
@@ -938,8 +938,6 @@ void ExecutableWriter::build(const File &linkedFile) {
   addChunk(dataDirectory);
   addChunk(sectionTable);
 
-  SectionChunk *text = nullptr;
-  SectionChunk *data = nullptr;
   std::vector<SectionChunk *> sectionChunks;
   for (auto i : atoms) {
     StringRef sectionName = i.first;
@@ -948,11 +946,6 @@ void ExecutableWriter::build(const File &linkedFile) {
                                             contents);
     sectionChunks.push_back(section);
     addSectionChunk(section, sectionTable);
-
-    if (!text && sectionName == ".text")
-      text = section;
-    else if (!data && (sectionName == ".data" || sectionName == ".rdata"))
-      data = section;
   }
 
   BaseRelocChunk *baseReloc = nullptr;
@@ -973,23 +966,24 @@ void ExecutableWriter::build(const File &linkedFile) {
 
   setImageSizeOnDisk();
 
-  for (SectionChunk *p : sectionChunks)
-    sectionRva.push_back(p->getVirtualAddress());
+  for (SectionChunk *section : sectionChunks) {
+    sectionRva.push_back(section->getVirtualAddress());
+    if (section->getSectionName() == ".text") {
+      peHeader->setBaseOfCode(section->getVirtualAddress());
+      setAddressOfEntryPoint(section, peHeader);
+    }
+    if (section->getSectionName() == ".data")
+      peHeader->setBaseOfData(section->getVirtualAddress());
+  }
 
   // Now that we know the size and file offset of sections. Set the file
   // header accordingly.
   peHeader->setSizeOfCode(calcSizeOfCode());
-  if (text)
-    peHeader->setBaseOfCode(text->getVirtualAddress());
-  if (data)
-    peHeader->setBaseOfData(data->getVirtualAddress());
   peHeader->setSizeOfInitializedData(calcSizeOfInitializedData());
   peHeader->setSizeOfUninitializedData(calcSizeOfUninitializedData());
   peHeader->setNumberOfSections(_numSections);
   peHeader->setSizeOfImage(_imageSizeInMemory);
   peHeader->setSizeOfHeaders(sectionTable->fileOffset() + sectionTable->size());
-
-  setAddressOfEntryPoint(text, peHeader);
 }
 
 error_code ExecutableWriter::writeFile(const File &linkedFile, StringRef path) {
