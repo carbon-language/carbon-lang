@@ -217,24 +217,19 @@ private:
     SrcManager = &SM;
   }
 
-#ifndef NDEBUG
+  // These facilities are used for validation in debug builds.
   class UnparsedFileStatus {
     llvm::PointerIntPair<const FileEntry *, 1, bool> Data;
-
   public:
     UnparsedFileStatus(const FileEntry *File, bool FoundDirectives)
       : Data(File, FoundDirectives) {}
-
     const FileEntry *getFile() const { return Data.getPointer(); }
     bool foundDirectives() const { return Data.getInt(); }
   };
-
   typedef llvm::DenseMap<FileID, const FileEntry *> ParsedFilesMap;
   typedef llvm::DenseMap<FileID, UnparsedFileStatus> UnparsedFilesMap;
-
   ParsedFilesMap ParsedFiles;
   UnparsedFilesMap UnparsedFiles;
-#endif
 
 public:
   /// Create a new verifying diagnostic client, which will issue errors to
