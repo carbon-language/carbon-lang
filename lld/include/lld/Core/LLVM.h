@@ -78,7 +78,7 @@ namespace lld {
 
   using llvm::error_code;
   using llvm::raw_ostream;
-} // end namespace clang.
+} // end namespace lld.
 
 namespace std {
 template <> struct hash<llvm::StringRef> {
