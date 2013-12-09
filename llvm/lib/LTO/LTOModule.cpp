@@ -43,8 +43,12 @@ using namespace llvm;
 
 LTOModule::LTOModule(llvm::Module *m, llvm::TargetMachine *t)
   : _module(m), _target(t),
-    _context(_target->getMCAsmInfo(), _target->getRegisterInfo(), NULL),
-    _mangler(t) {}
+    _context(_target->getMCAsmInfo(), _target->getRegisterInfo(), &ObjFileInfo),
+    _mangler(t) {
+  ObjFileInfo.InitMCObjectFileInfo(t->getTargetTriple(),
+                                   t->getRelocationModel(), t->getCodeModel(),
+                                   _context);
+}
 
 /// isBitcodeFile - Returns 'true' if the file (or memory contents) is LLVM
 /// bitcode.

@@ -19,6 +19,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/IR/Module.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetMachine.h"
 #include <string>
@@ -49,6 +50,7 @@ private:
 
   llvm::OwningPtr<llvm::Module>           _module;
   llvm::OwningPtr<llvm::TargetMachine>    _target;
+  llvm::MCObjectFileInfo ObjFileInfo;
   std::vector<NameAndAttributes>          _symbols;
 
   // _defines and _undefines only needed to disambiguate tentative definitions

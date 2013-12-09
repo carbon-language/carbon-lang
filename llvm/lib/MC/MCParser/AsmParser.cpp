@@ -22,6 +22,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCParser/AsmCond.h"
 #include "llvm/MC/MCParser/AsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
@@ -491,19 +492,20 @@ AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
 
   // Initialize the platform / file format parser.
-  //
-  // FIXME: This is a hack, we need to (majorly) cleanup how these objects are
-  // created.
-  if (_MAI.hasMicrosoftFastStdCallMangling()) {
-    PlatformParser = createCOFFAsmParser();
-    PlatformParser->Initialize(*this);
-  } else if (_MAI.hasSubsectionsViaSymbols()) {
-    PlatformParser = createDarwinAsmParser();
-    PlatformParser->Initialize(*this);
-    IsDarwin = true;
-  } else {
-    PlatformParser = createELFAsmParser();
-    PlatformParser->Initialize(*this);
+  switch (_Ctx.getObjectFileInfo()->getObjectFileType()) {
+  case MCObjectFileInfo::IsCOFF:
+      PlatformParser = createCOFFAsmParser();
+      PlatformParser->Initialize(*this);
+      break;
+  case MCObjectFileInfo::IsMachO:
+      PlatformParser = createDarwinAsmParser();
+      PlatformParser->Initialize(*this);
+      IsDarwin = true;
+      break;
+  case MCObjectFileInfo::IsELF:
+      PlatformParser = createELFAsmParser();
+      PlatformParser->Initialize(*this);
+      break;
   }
 
   initializeDirectiveKindMap();
