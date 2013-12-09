@@ -51,8 +51,14 @@
     <li>GCC supports languages that clang does not aim to, such as Java, Ada,
         FORTRAN, etc.</li>
     <li>GCC supports more targets than LLVM.</li>
+    <li>GCC supports many language extensions, some of which are not implemented
+    by Clang. For instance, in C mode, GCC supports
+    <a href="http://gcc.gnu.org/onlinedocs/gcc/Nested-Functions.html">nested
+    functions</a> and has an
+    <a href="http://gcc.gnu.org/bugzilla/show_bug.cgi?id=37428">undocumented
+    extension allowing VLAs in structs</a>.
     </ul>
-    
+
     <p>Pro's of clang vs GCC:</p>
     
     <ul>
@@ -81,7 +87,8 @@
         GCC does not track information about macro instantiations when parsing
         source code.  This makes it very difficult for source rewriting tools
         (e.g. for refactoring) to work in the presence of (even simple) 
-        macros.</li>
+        macros. This appears to be partially or fully addressed in recent
+        releases of GCC.</li>
     <li>Clang does not implicitly simplify code as it parses it like GCC does.
         Doing so causes many problems for source analysis tools: as one simple
         example, if you write "x-x" in your source code, the GCC AST will
@@ -109,8 +116,12 @@
         pluggable optimizers, link-time optimization support, Just-In-Time
         compilation, ability to link in multiple code generators, etc.</li>
     <li><a href="compatibility.html#c++">Clang's support for C++</a> is more
-        compliant than GCC's in many ways (e.g. conformant two phase name
-        lookup).</li>
+        compliant than GCC's in many ways.</li>
+    <li>Clang supports
+        <a href="http://clang.llvm.org/docs/LanguageExtensions.html">many language
+        extensions</a>, some of which are not implemented by GCC. For instance,
+        Clang provides attributes for checking thread safety and extended vector
+        types.</li>
     </ul>
 
     <!--=====================================================================-->
