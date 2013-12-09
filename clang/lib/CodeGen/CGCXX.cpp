@@ -205,8 +205,8 @@ void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *ctor,
   const CGFunctionInfo &fnInfo =
     getTypes().arrangeCXXConstructorDeclaration(ctor, ctorType);
 
-  llvm::Function *fn =
-    cast<llvm::Function>(GetAddrOfCXXConstructor(ctor, ctorType, &fnInfo));
+  llvm::Function *fn = cast<llvm::Function>(
+      GetAddrOfCXXConstructor(ctor, ctorType, &fnInfo, true));
   setFunctionLinkage(GlobalDecl(ctor, ctorType), fn);
 
   CodeGenFunction(*this).GenerateCode(GlobalDecl(ctor, ctorType), fn, fnInfo);
@@ -218,7 +218,8 @@ void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *ctor,
 llvm::GlobalValue *
 CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *ctor,
                                        CXXCtorType ctorType,
-                                       const CGFunctionInfo *fnInfo) {
+                                       const CGFunctionInfo *fnInfo,
+                                       bool DontDefer) {
   GlobalDecl GD(ctor, ctorType);
   
   StringRef name = getMangledName(GD);
@@ -230,7 +231,8 @@ CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *ctor,
 
   llvm::FunctionType *fnType = getTypes().GetFunctionType(*fnInfo);
   return cast<llvm::Function>(GetOrCreateLLVMFunction(name, fnType, GD,
-                                                      /*ForVTable=*/false));
+                                                      /*ForVTable=*/false,
+                                                      DontDefer));
 }
 
 void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *dtor,
@@ -260,8 +262,8 @@ void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *dtor,
   const CGFunctionInfo &fnInfo =
     getTypes().arrangeCXXDestructor(dtor, dtorType);
 
-  llvm::Function *fn =
-    cast<llvm::Function>(GetAddrOfCXXDestructor(dtor, dtorType, &fnInfo));
+  llvm::Function *fn = cast<llvm::Function>(
+      GetAddrOfCXXDestructor(dtor, dtorType, &fnInfo, 0, true));
   setFunctionLinkage(GlobalDecl(dtor, dtorType), fn);
 
   CodeGenFunction(*this).GenerateCode(GlobalDecl(dtor, dtorType), fn, fnInfo);
@@ -274,7 +276,8 @@ llvm::GlobalValue *
 CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *dtor,
                                       CXXDtorType dtorType,
                                       const CGFunctionInfo *fnInfo,
-                                      llvm::FunctionType *fnType) {
+                                      llvm::FunctionType *fnType,
+                                      bool DontDefer) {
   GlobalDecl GD(dtor, dtorType);
 
   StringRef name = getMangledName(GD);
@@ -286,7 +289,8 @@ CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *dtor,
     fnType = getTypes().GetFunctionType(*fnInfo);
   }
   return cast<llvm::Function>(GetOrCreateLLVMFunction(name, fnType, GD,
-                                                      /*ForVTable=*/false));
+                                                      /*ForVTable=*/false,
+                                                      DontDefer));
 }
 
 static llvm::Value *BuildAppleKextVirtualCall(CodeGenFunction &CGF,

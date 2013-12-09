@@ -639,9 +639,9 @@ public:
   /// GetAddrOfFunction - Return the address of the given function.  If Ty is
   /// non-null, then this function will use the specified type if it has to
   /// create it.
-  llvm::Constant *GetAddrOfFunction(GlobalDecl GD,
-                                    llvm::Type *Ty = 0,
-                                    bool ForVTable = false);
+  llvm::Constant *GetAddrOfFunction(GlobalDecl GD, llvm::Type *Ty = 0,
+                                    bool ForVTable = false,
+                                    bool DontDefer = false);
 
   /// GetAddrOfRTTIDescriptor - Get the address of the RTTI descriptor 
   /// for the given type.
@@ -769,14 +769,16 @@ public:
   /// given type.
   llvm::GlobalValue *GetAddrOfCXXConstructor(const CXXConstructorDecl *ctor,
                                              CXXCtorType ctorType,
-                                             const CGFunctionInfo *fnInfo = 0);
+                                             const CGFunctionInfo *fnInfo = 0,
+                                             bool DontDefer = false);
 
   /// GetAddrOfCXXDestructor - Return the address of the constructor of the
   /// given type.
   llvm::GlobalValue *GetAddrOfCXXDestructor(const CXXDestructorDecl *dtor,
                                             CXXDtorType dtorType,
                                             const CGFunctionInfo *fnInfo = 0,
-                                            llvm::FunctionType *fnType = 0);
+                                            llvm::FunctionType *fnType = 0,
+                                            bool DontDefer = false);
 
   /// getBuiltinLibFunction - Given a builtin id for a function like
   /// "__builtin_fabsf", return a Function* for "fabsf".
@@ -1009,12 +1011,11 @@ public:
 private:
   llvm::GlobalValue *GetGlobalValue(StringRef Ref);
 
-  llvm::Constant *GetOrCreateLLVMFunction(StringRef MangledName,
-                                          llvm::Type *Ty,
-                                          GlobalDecl D,
-                                          bool ForVTable,
-                                          llvm::AttributeSet ExtraAttrs =
-                                            llvm::AttributeSet());
+  llvm::Constant *
+  GetOrCreateLLVMFunction(StringRef MangledName, llvm::Type *Ty, GlobalDecl D,
+                          bool ForVTable, bool DontDefer = false,
+                          llvm::AttributeSet ExtraAttrs = llvm::AttributeSet());
+
   llvm::Constant *GetOrCreateLLVMGlobal(StringRef MangledName,
                                         llvm::PointerType *PTy,
                                         const VarDecl *D,

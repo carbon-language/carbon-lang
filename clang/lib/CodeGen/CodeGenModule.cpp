@@ -1374,6 +1374,7 @@ llvm::Constant *
 CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
                                        llvm::Type *Ty,
                                        GlobalDecl GD, bool ForVTable,
+                                       bool DontDefer,
                                        llvm::AttributeSet ExtraAttrs) {
   const Decl *D = GD.getDecl();
 
@@ -1392,14 +1393,6 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
     // Make sure the result is of the correct type.
     return llvm::ConstantExpr::getBitCast(Entry, Ty->getPointerTo());
   }
-
-  // All MSVC dtors other than the base dtor are linkonce_odr and delegate to
-  // each other bottoming out with the base dtor.  Therefore we emit non-base
-  // dtors on usage, even if there is no dtor definition in the TU.
-  if (D && isa<CXXDestructorDecl>(D) &&
-      getCXXABI().useThunkForDtorVariant(cast<CXXDestructorDecl>(D),
-                                         GD.getDtorType()))
-    DeferredDeclsToEmit.push_back(GD);
 
   // This function doesn't have a complete type (for example, the return
   // type is an incomplete struct). Use a fake type instead, and make
@@ -1428,50 +1421,64 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
                                              B));
   }
 
-  // This is the first use or definition of a mangled name.  If there is a
-  // deferred decl with this name, remember that we need to emit it at the end
-  // of the file.
-  llvm::StringMap<GlobalDecl>::iterator DDI = DeferredDecls.find(MangledName);
-  if (DDI != DeferredDecls.end()) {
-    // Move the potentially referenced deferred decl to the DeferredDeclsToEmit
-    // list, and remove it from DeferredDecls (since we don't need it anymore).
-    DeferredDeclsToEmit.push_back(DDI->second);
-    DeferredDecls.erase(DDI);
+  if (!DontDefer) {
+    // All MSVC dtors other than the base dtor are linkonce_odr and delegate to
+    // each other bottoming out with the base dtor.  Therefore we emit non-base
+    // dtors on usage, even if there is no dtor definition in the TU.
+    if (D && isa<CXXDestructorDecl>(D) &&
+        getCXXABI().useThunkForDtorVariant(cast<CXXDestructorDecl>(D),
+                                           GD.getDtorType()))
+      DeferredDeclsToEmit.push_back(GD);
 
-  // Otherwise, if this is a sized deallocation function, emit a weak definition
-  // for it at the end of the translation unit.
-  } else if (D && cast<FunctionDecl>(D)
-                      ->getCorrespondingUnsizedGlobalDeallocationFunction()) {
-    DeferredDeclsToEmit.push_back(GD);
+    // This is the first use or definition of a mangled name.  If there is a
+    // deferred decl with this name, remember that we need to emit it at the end
+    // of the file.
+    llvm::StringMap<GlobalDecl>::iterator DDI = DeferredDecls.find(MangledName);
+    if (DDI != DeferredDecls.end()) {
+      // Move the potentially referenced deferred decl to the
+      // DeferredDeclsToEmit list, and remove it from DeferredDecls (since we
+      // don't need it anymore).
+      DeferredDeclsToEmit.push_back(DDI->second);
+      DeferredDecls.erase(DDI);
 
-  // Otherwise, there are cases we have to worry about where we're
-  // using a declaration for which we must emit a definition but where
-  // we might not find a top-level definition:
-  //   - member functions defined inline in their classes
-  //   - friend functions defined inline in some class
-  //   - special member functions with implicit definitions
-  // If we ever change our AST traversal to walk into class methods,
-  // this will be unnecessary.
-  //
-  // We also don't emit a definition for a function if it's going to be an entry
-  // in a vtable, unless it's already marked as used.
-  } else if (getLangOpts().CPlusPlus && D) {
-    // Look for a declaration that's lexically in a record.
-    const FunctionDecl *FD = cast<FunctionDecl>(D);
-    FD = FD->getMostRecentDecl();
-    do {
-      if (isa<CXXRecordDecl>(FD->getLexicalDeclContext())) {
-        if (FD->isImplicit() && !ForVTable) {
-          assert(FD->isUsed() && "Sema didn't mark implicit function as used!");
-          DeferredDeclsToEmit.push_back(GD.getWithDecl(FD));
-          break;
-        } else if (FD->doesThisDeclarationHaveABody()) {
-          DeferredDeclsToEmit.push_back(GD.getWithDecl(FD));
-          break;
+      // Otherwise, if this is a sized deallocation function, emit a weak
+      // definition
+      // for it at the end of the translation unit.
+    } else if (D && cast<FunctionDecl>(D)
+                        ->getCorrespondingUnsizedGlobalDeallocationFunction()) {
+      DeferredDeclsToEmit.push_back(GD);
+
+      // Otherwise, there are cases we have to worry about where we're
+      // using a declaration for which we must emit a definition but where
+      // we might not find a top-level definition:
+      //   - member functions defined inline in their classes
+      //   - friend functions defined inline in some class
+      //   - special member functions with implicit definitions
+      // If we ever change our AST traversal to walk into class methods,
+      // this will be unnecessary.
+      //
+      // We also don't emit a definition for a function if it's going to be an
+      // entry
+      // in a vtable, unless it's already marked as used.
+    } else if (getLangOpts().CPlusPlus && D) {
+      // Look for a declaration that's lexically in a record.
+      const FunctionDecl *FD = cast<FunctionDecl>(D);
+      FD = FD->getMostRecentDecl();
+      do {
+        if (isa<CXXRecordDecl>(FD->getLexicalDeclContext())) {
+          if (FD->isImplicit() && !ForVTable) {
+            assert(FD->isUsed() &&
+                   "Sema didn't mark implicit function as used!");
+            DeferredDeclsToEmit.push_back(GD.getWithDecl(FD));
+            break;
+          } else if (FD->doesThisDeclarationHaveABody()) {
+            DeferredDeclsToEmit.push_back(GD.getWithDecl(FD));
+            break;
+          }
         }
-      }
-      FD = FD->getPreviousDecl();
-    } while (FD);
+        FD = FD->getPreviousDecl();
+      } while (FD);
+    }
   }
 
   // Make sure the result is of the requested type.
@@ -1489,13 +1496,14 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
 /// create it (this occurs when we see a definition of the function).
 llvm::Constant *CodeGenModule::GetAddrOfFunction(GlobalDecl GD,
                                                  llvm::Type *Ty,
-                                                 bool ForVTable) {
+                                                 bool ForVTable,
+                                                 bool DontDefer) {
   // If there was no specific requested type, just convert it now.
   if (!Ty)
     Ty = getTypes().ConvertType(cast<ValueDecl>(GD.getDecl())->getType());
   
   StringRef MangledName = getMangledName(GD);
-  return GetOrCreateLLVMFunction(MangledName, Ty, GD, ForVTable);
+  return GetOrCreateLLVMFunction(MangledName, Ty, GD, ForVTable, DontDefer);
 }
 
 /// CreateRuntimeFunction - Create a new runtime function with the specified
@@ -1504,9 +1512,9 @@ llvm::Constant *
 CodeGenModule::CreateRuntimeFunction(llvm::FunctionType *FTy,
                                      StringRef Name,
                                      llvm::AttributeSet ExtraAttrs) {
-  llvm::Constant *C
-    = GetOrCreateLLVMFunction(Name, FTy, GlobalDecl(), /*ForVTable=*/false,
-                              ExtraAttrs);
+  llvm::Constant *C =
+      GetOrCreateLLVMFunction(Name, FTy, GlobalDecl(), /*ForVTable=*/false,
+                              /*DontDefer=*/false, ExtraAttrs);
   if (llvm::Function *F = dyn_cast<llvm::Function>(C))
     if (F->empty())
       F->setCallingConv(getRuntimeCC());
@@ -2090,7 +2098,8 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
   llvm::FunctionType *Ty = getTypes().GetFunctionType(FI);
 
   // Get or create the prototype for the function.
-  llvm::Constant *Entry = GetAddrOfFunction(GD, Ty);
+  llvm::Constant *Entry =
+      GetAddrOfFunction(GD, Ty, /*ForVTable=*/false, /*DontDefer*/ true);
 
   // Strip off a bitcast if we got one back.
   if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(Entry)) {
