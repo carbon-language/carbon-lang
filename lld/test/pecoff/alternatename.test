@@ -1,0 +1,18 @@
+# RUN: yaml2obj %p/Inputs/alternatename1.obj.yaml > %t1.obj
+# RUN: yaml2obj %p/Inputs/alternatename2.obj.yaml > %t2.obj
+#
+# RUN: lld -flavor link /out:%t1.exe /alternatename:_main=_foo -- %t1.obj
+# RUN: llvm-objdump -d %t2.exe | FileCheck -check-prefix=CHECK1 %s
+#
+# RUN: lld -flavor link /out:%t2.exe /alternatename:_main=_foo  -- %t1.obj %t2.obj
+# RUN: llvm-objdump -d %t2.exe | FileCheck -check-prefix=CHECK2 %s
+
+CHECK1:      nop
+CHECK1-NEXT: nop
+CHECK1-NEXT: nop
+CHECK1-NEXT: nop
+
+CHECK2:      int3
+CHECK2-NEXT: int3
+CHECK2-NEXT: int3
+CHECK2-NEXT: int3

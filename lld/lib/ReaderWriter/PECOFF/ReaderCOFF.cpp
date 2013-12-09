@@ -62,7 +62,7 @@ private:
   SectionToAtomsT;
 
 public:
-  FileCOFF(const LinkingContext &context, std::unique_ptr<MemoryBuffer> mb,
+  FileCOFF(const PECOFFLinkingContext &context, std::unique_ptr<MemoryBuffer> mb,
            error_code &ec);
 
   virtual const atom_collection<DefinedAtom> &defined() const {
@@ -156,7 +156,7 @@ private:
   _definedAtomLocations;
 
   mutable llvm::BumpPtrAllocator _alloc;
-  const LinkingContext &_context;
+  const PECOFFLinkingContext &_context;
   uint64_t _ordinal;
 };
 
@@ -278,7 +278,7 @@ DefinedAtom::Merge getMerge(const coff_aux_section_definition *auxsym) {
   }
 }
 
-FileCOFF::FileCOFF(const LinkingContext &context,
+FileCOFF::FileCOFF(const PECOFFLinkingContext &context,
                    std::unique_ptr<MemoryBuffer> mb, error_code &ec)
     : File(mb->getBufferIdentifier(), kindObject), _context(context),
       _ordinal(0) {
@@ -626,6 +626,18 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
     // if this is the last symbol, take up the remaining data.
     const uint8_t *end = (si + 1 == se) ? secData.data() + secData.size()
                                         : secData.data() + (*(si + 1))->Value;
+    StringRef symbolName = _symbolName[*si];
+    StringRef alias = _context.getAlternateName(symbolName);
+
+    if (!alias.empty()) {
+      auto *atom = new (_alloc) COFFDefinedAtom(
+        *this, alias, sectionName, getScope(*si), type, isComdat,
+        perms, DefinedAtom::mergeAsWeak, ArrayRef<uint8_t>(), _ordinal++);
+      atoms.push_back(atom);
+      _symbolAtom[*si] = atom;
+      _definedAtomLocations[section][(*si)->Value].push_back(atom);
+    }
+
     ArrayRef<uint8_t> data(start, end);
     auto *atom = new (_alloc) COFFDefinedAtom(
         *this, _symbolName[*si], sectionName, getScope(*si), type, isComdat,
@@ -953,7 +965,7 @@ ReaderCOFF::parseCOFFFile(std::unique_ptr<MemoryBuffer> &mb,
                           std::vector<std::unique_ptr<File> > &result) const {
   // Parse the memory buffer as PECOFF file.
   error_code ec;
-  std::unique_ptr<FileCOFF> file(new FileCOFF(_context, std::move(mb), ec));
+  std::unique_ptr<FileCOFF> file(new FileCOFF(_PECOFFLinkingContext, std::move(mb), ec));
   if (ec)
     return ec;
 
