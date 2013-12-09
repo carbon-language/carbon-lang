@@ -1,8 +1,6 @@
 set(LLVM_LINK_COMPONENTS
-  ${LLVM_TARGETS_TO_BUILD}
-  asmparser
-  support
-  mc
+  Option
+  Support
   )
 
 add_clang_executable(modularize
