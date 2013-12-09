@@ -90,3 +90,12 @@ define <2 x double> @test_faddp_v2f64(<2 x double> %lhs, <2 x double> %rhs) {
         ret <2 x double> %val
 }
 
+define i32 @test_vaddv.v2i32(<2 x i32> %a) {
+; CHECK-LABEL: test_vaddv.v2i32
+; CHECK: addp {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+  %1 = tail call <1 x i32> @llvm.aarch64.neon.vaddv.v1i32.v2i32(<2 x i32> %a)
+  %2 = extractelement <1 x i32> %1, i32 0
+  ret i32 %2
+}
+
+declare <1 x i32> @llvm.aarch64.neon.vaddv.v1i32.v2i32(<2 x i32>)

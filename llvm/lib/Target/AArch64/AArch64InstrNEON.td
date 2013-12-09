@@ -978,6 +978,20 @@ defm FMULXvvv : NeonI_3VSame_SD_sizes<0b0, 0b0, 0b11011, "fmulx",
                                       int_aarch64_neon_vmulx,
                                       v2f32, v4f32, v2f64, 1>;
 
+// Patterns to match llvm.aarch64.* intrinsic for 
+// ADDP, SMINP, UMINP, SMAXP, UMAXP having i32 as output
+class Neon_VectorPair_v2i32_pattern<SDPatternOperator opnode, Instruction INST>
+  : Pat<(v1i32 (opnode (v2i32 VPR64:$Rn))),
+        (EXTRACT_SUBREG
+             (v2i32 (INST (v2i32 VPR64:$Rn), (v2i32 VPR64:$Rn))),
+             sub_32)>;
+
+def : Neon_VectorPair_v2i32_pattern<int_aarch64_neon_sminv, SMINPvvv_2S>;
+def : Neon_VectorPair_v2i32_pattern<int_aarch64_neon_uminv, UMINPvvv_2S>;
+def : Neon_VectorPair_v2i32_pattern<int_aarch64_neon_smaxv, SMAXPvvv_2S>;
+def : Neon_VectorPair_v2i32_pattern<int_aarch64_neon_umaxv, UMAXPvvv_2S>;
+def : Neon_VectorPair_v2i32_pattern<int_aarch64_neon_vaddv, ADDP_2S>;
+
 // Vector Immediate Instructions
 
 multiclass neon_mov_imm_shift_asmoperands<string PREFIX>
@@ -7694,6 +7708,11 @@ defm SADDLP : NeonI_PairwiseAdd<"saddlp", 0b0, 0b00010,
                                 int_arm_neon_vpaddls>;
 defm UADDLP : NeonI_PairwiseAdd<"uaddlp", 0b1, 0b00010,
                                 int_arm_neon_vpaddlu>;
+
+def : Pat<(v1i64 (int_aarch64_neon_saddlv (v2i32 VPR64:$Rn))),
+          (SADDLP2s1d $Rn)>;
+def : Pat<(v1i64 (int_aarch64_neon_uaddlv (v2i32 VPR64:$Rn))),
+          (UADDLP2s1d $Rn)>;
 
 multiclass NeonI_PairwiseAddAcc<string asmop, bit U, bits<5> opcode,
                              SDPatternOperator Neon_Padd> {

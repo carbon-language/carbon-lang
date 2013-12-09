@@ -308,3 +308,39 @@ define <2 x double> @test_fminnmp_v2f64(<2 x double> %lhs, <2 x double> %rhs) {
         ret <2 x double> %val
 }
 
+define i32 @test_vminv_s32(<2 x i32> %a) {
+; CHECK-LABEL: test_vminv_s32
+; CHECK: sminp {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+  %1 = tail call <1 x i32> @llvm.aarch64.neon.sminv.v1i32.v2i32(<2 x i32> %a)
+  %2 = extractelement <1 x i32> %1, i32 0
+  ret i32 %2
+}
+
+define i32 @test_vminv_u32(<2 x i32> %a) {
+; CHECK-LABEL: test_vminv_u32
+; CHECK: uminp {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+  %1 = tail call <1 x i32> @llvm.aarch64.neon.uminv.v1i32.v2i32(<2 x i32> %a)
+  %2 = extractelement <1 x i32> %1, i32 0
+  ret i32 %2
+}
+
+define i32 @test_vmaxv_s32(<2 x i32> %a) {
+; CHECK-LABEL: test_vmaxv_s32
+; CHECK: smaxp {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+  %1 = tail call <1 x i32> @llvm.aarch64.neon.smaxv.v1i32.v2i32(<2 x i32> %a)
+  %2 = extractelement <1 x i32> %1, i32 0
+  ret i32 %2
+}
+
+define i32 @test_vmaxv_u32(<2 x i32> %a) {
+; CHECK-LABEL: test_vmaxv_u32
+; CHECK: umaxp {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+  %1 = tail call <1 x i32> @llvm.aarch64.neon.umaxv.v1i32.v2i32(<2 x i32> %a)
+  %2 = extractelement <1 x i32> %1, i32 0
+  ret i32 %2
+}
+
+declare <1 x i32> @llvm.aarch64.neon.uminv.v1i32.v2i32(<2 x i32>)
+declare <1 x i32> @llvm.aarch64.neon.sminv.v1i32.v2i32(<2 x i32>)
+declare <1 x i32> @llvm.aarch64.neon.umaxv.v1i32.v2i32(<2 x i32>)
+declare <1 x i32> @llvm.aarch64.neon.smaxv.v1i32.v2i32(<2 x i32>)

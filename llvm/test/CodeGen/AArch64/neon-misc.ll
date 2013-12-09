@@ -1797,3 +1797,22 @@ declare <1 x double> @llvm.arm.neon.vrecps.v1f64(<1 x double>, <1 x double>)
 declare <1 x double> @llvm.sqrt.v1f64(<1 x double>)
 declare <1 x double> @llvm.arm.neon.vrecpe.v1f64(<1 x double>)
 declare <1 x double> @llvm.arm.neon.vrsqrte.v1f64(<1 x double>)
+
+define i64 @test_vaddlv_s32(<2 x i32> %a) {
+; CHECK-LABEL: test_vaddlv_s32
+; CHECK: saddlp {{v[0-9]+}}.1d, {{v[0-9]+}}.2s
+  %1 = tail call <1 x i64> @llvm.aarch64.neon.saddlv.v1i64.v2i32(<2 x i32> %a)
+  %2 = extractelement <1 x i64> %1, i32 0
+  ret i64 %2
+}
+
+define i64 @test_vaddlv_u32(<2 x i32> %a) {
+; CHECK-LABEL: test_vaddlv_u32
+; CHECK: uaddlp {{v[0-9]+}}.1d, {{v[0-9]+}}.2s
+  %1 = tail call <1 x i64> @llvm.aarch64.neon.uaddlv.v1i64.v2i32(<2 x i32> %a)
+  %2 = extractelement <1 x i64> %1, i32 0
+  ret i64 %2
+}
+
+declare <1 x i64> @llvm.aarch64.neon.saddlv.v1i64.v2i32(<2 x i32>)
+declare <1 x i64> @llvm.aarch64.neon.uaddlv.v1i64.v2i32(<2 x i32>)
