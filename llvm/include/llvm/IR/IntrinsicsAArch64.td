@@ -107,9 +107,6 @@ def int_aarch64_neon_vuqrshrn : Neon_N2V_Narrow_Intrinsic;
 class Neon_Across_Intrinsic
   : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
-class Neon_2Arg_Across_Float_Intrinsic
-  : Intrinsic<[llvm_anyvector_ty], [llvm_v4f32_ty], [IntrNoMem]>;
-
 def int_aarch64_neon_saddlv : Neon_Across_Intrinsic;
 def int_aarch64_neon_uaddlv : Neon_Across_Intrinsic;
 def int_aarch64_neon_smaxv  : Neon_Across_Intrinsic;
@@ -233,29 +230,19 @@ def int_aarch64_neon_vqrshlu : Neon_2Arg_Intrinsic;
 def int_aarch64_neon_vpadd :
   Intrinsic<[llvm_v1i64_ty], [llvm_v2i64_ty],[IntrNoMem]>;
 def int_aarch64_neon_vpfadd :
-  Intrinsic<[llvm_v1f32_ty], [llvm_v2f32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vpfaddq :
-  Intrinsic<[llvm_v1f64_ty], [llvm_v2f64_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
 // Scalar Reduce Pairwise Floating Point Max/Min.
 def int_aarch64_neon_vpmax :
-  Intrinsic<[llvm_v1f32_ty], [llvm_v2f32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vpmaxq :
-  Intrinsic<[llvm_v1f64_ty], [llvm_v2f64_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 def int_aarch64_neon_vpmin :
-  Intrinsic<[llvm_v1f32_ty], [llvm_v2f32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vpminq :
-  Intrinsic<[llvm_v1f64_ty], [llvm_v2f64_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
 // Scalar Reduce Pairwise Floating Point Maxnm/Minnm.
 def int_aarch64_neon_vpfmaxnm :
-  Intrinsic<[llvm_v1f32_ty], [llvm_v2f32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vpfmaxnmq :
-  Intrinsic<[llvm_v1f64_ty], [llvm_v2f64_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 def int_aarch64_neon_vpfminnm :
-  Intrinsic<[llvm_v1f32_ty], [llvm_v2f32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vpfminnmq :
-  Intrinsic<[llvm_v1f64_ty], [llvm_v2f64_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
 // Scalar Signed Integer Convert To Floating-point
 def int_aarch64_neon_vcvtf32_s32 :
