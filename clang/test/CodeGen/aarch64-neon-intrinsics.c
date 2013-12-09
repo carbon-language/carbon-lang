@@ -11723,3 +11723,51 @@ float64x1_t test_vrsqrts_f64(float64x1_t a, float64x1_t b) {
   return vrsqrts_f64(a, b);
   // CHECK: frsqrts d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
 }
+
+int32_t test_vminv_s32(int32x2_t a) {
+  // CHECK-LABEL: test_vminv_s32
+  return vminv_s32(a);
+  // CHECK: sminp {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+}
+
+uint32_t test_vminv_u32(uint32x2_t a) {
+  // CHECK-LABEL: test_vminv_u32
+  return vminv_u32(a);
+  // CHECK: uminp {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+}
+
+int32_t test_vmaxv_s32(int32x2_t a) {
+  // CHECK-LABEL: test_vmaxv_s32
+  return vmaxv_s32(a);
+  // CHECK: smaxp {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+}
+
+uint32_t test_vmaxv_u32(uint32x2_t a) {
+  // CHECK-LABEL: test_vmaxv_u32
+  return vmaxv_u32(a);
+  // CHECK: umaxp {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+}
+
+int32_t test_vaddv_s32(int32x2_t a) {
+  // CHECK-LABEL: test_vaddv_s32
+  return vaddv_s32(a);
+  // CHECK: addp {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+}
+
+uint32_t test_vaddv_u32(uint32x2_t a) {
+  // CHECK-LABEL: test_vaddv_u32
+  return vaddv_u32(a);
+  // CHECK: addp {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+}
+
+int64_t test_vaddlv_s32(int32x2_t a) {
+  // CHECK-LABEL: test_vaddlv_s32
+  return vaddlv_s32(a);
+  // CHECK: saddlp {{v[0-9]+}}.1d, {{v[0-9]+}}.2s
+}
+
+uint64_t test_vaddlv_u32(uint32x2_t a) {
+  // CHECK-LABEL: test_vaddlv_u32
+  return vaddlv_u32(a);
+  // CHECK: uaddlp {{v[0-9]+}}.1d, {{v[0-9]+}}.2s
+}
