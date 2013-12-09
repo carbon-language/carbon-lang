@@ -174,7 +174,6 @@ void Mips16InstrInfo::makeFrame(unsigned SP, int64_t FrameSize,
                     MachineBasicBlock::iterator I) const {
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
   if (isUInt<11>(FrameSize))
-    //BuildMI(MBB, I, DL, get(Mips::SaveRaF16)).addImm(FrameSize);
     BuildMI(MBB, I, DL, get(Mips::SaveX16)).addReg(Mips::RA).
             addReg(Mips::S0).
             addReg(Mips::S1).addReg(Mips::S2).addImm(FrameSize);
