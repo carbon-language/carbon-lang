@@ -368,6 +368,25 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::FROUND, MVT::v4f32, Legal);
     setOperationAction(ISD::FROUND, MVT::v1f64, Legal);
     setOperationAction(ISD::FROUND, MVT::v2f64, Legal);
+
+    // Vector ExtLoad and TruncStore are expanded.
+    for (unsigned I = MVT::FIRST_VECTOR_VALUETYPE;
+         I <= MVT::LAST_VECTOR_VALUETYPE; ++I) {
+      MVT VT = (MVT::SimpleValueType) I;
+      setLoadExtAction(ISD::SEXTLOAD, VT, Expand);
+      setLoadExtAction(ISD::ZEXTLOAD, VT, Expand);
+      setLoadExtAction(ISD::EXTLOAD, VT, Expand);
+      for (unsigned II = MVT::FIRST_VECTOR_VALUETYPE;
+           II <= MVT::LAST_VECTOR_VALUETYPE; ++II) {
+        MVT VT1 = (MVT::SimpleValueType) II;
+        // A TruncStore has two vector types of the same number of elements
+        // and different element sizes.
+        if (VT.getVectorNumElements() == VT1.getVectorNumElements() &&
+            VT.getVectorElementType().getSizeInBits()
+                > VT1.getVectorElementType().getSizeInBits())
+          setTruncStoreAction(VT, VT1, Expand);
+      }
+    }
   }
 }
 
