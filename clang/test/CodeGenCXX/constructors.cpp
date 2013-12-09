@@ -21,20 +21,19 @@ struct A {
 A::A(struct Undeclared &ref) : mem(0) {}
 
 // Check that delegation works.
-// CHECK-LABEL: define void @_ZN1AC1ER10Undeclared(%struct.A* %this, %struct.Undeclared* %ref) unnamed_addr
-// CHECK: call void @_ZN1AC2ER10Undeclared(
-
 // CHECK-LABEL: define void @_ZN1AC2ER10Undeclared(%struct.A* %this, %struct.Undeclared* %ref) unnamed_addr
 // CHECK: call void @_ZN6MemberC1Ei(
 
-A::A(ValueClass v) : mem(v.y - v.x) {}
+// CHECK-LABEL: define void @_ZN1AC1ER10Undeclared(%struct.A* %this, %struct.Undeclared* %ref) unnamed_addr
+// CHECK: call void @_ZN1AC2ER10Undeclared(
 
-// CHECK-LABEL: define void @_ZN1AC1E10ValueClass(%struct.A* %this, i64 %v.coerce) unnamed_addr
-// CHECK: call void @_ZN1AC2E10ValueClass(
+A::A(ValueClass v) : mem(v.y - v.x) {}
 
 // CHECK-LABEL: define void @_ZN1AC2E10ValueClass(%struct.A* %this, i64 %v.coerce) unnamed_addr
 // CHECK: call void @_ZN6MemberC1Ei(
 
+// CHECK-LABEL: define void @_ZN1AC1E10ValueClass(%struct.A* %this, i64 %v.coerce) unnamed_addr
+// CHECK: call void @_ZN1AC2E10ValueClass(
 
 /* Test that things work for inheritance. */
 struct B : A {
@@ -44,13 +43,12 @@ struct B : A {
 
 B::B(struct Undeclared &ref) : A(ref), mem(1) {}
 
-// CHECK-LABEL: define void @_ZN1BC1ER10Undeclared(%struct.B* %this, %struct.Undeclared* %ref) unnamed_addr
-// CHECK: call void @_ZN1BC2ER10Undeclared(
-
 // CHECK-LABEL: define void @_ZN1BC2ER10Undeclared(%struct.B* %this, %struct.Undeclared* %ref) unnamed_addr
 // CHECK: call void @_ZN1AC2ER10Undeclared(
 // CHECK: call void @_ZN6MemberC1Ei(
 
+// CHECK-LABEL: define void @_ZN1BC1ER10Undeclared(%struct.B* %this, %struct.Undeclared* %ref) unnamed_addr
+// CHECK: call void @_ZN1BC2ER10Undeclared(
 
 
 /* Test that the delegation optimization is disabled for classes with
@@ -64,14 +62,13 @@ struct C : virtual A {
 };
 C::C(int x) : A(ValueClass(x, x+1)), mem(x * x) {}
 
+// CHECK-LABEL: define void @_ZN1CC2Ei(%struct.C* %this, i8** %vtt, i32 %x) unnamed_addr
+// CHECK: call void @_ZN6MemberC1Ei(
+
 // CHECK-LABEL: define void @_ZN1CC1Ei(%struct.C* %this, i32 %x) unnamed_addr
 // CHECK: call void @_ZN10ValueClassC1Eii(
 // CHECK: call void @_ZN1AC2E10ValueClass(
 // CHECK: call void @_ZN6MemberC1Ei(
-
-// CHECK-LABEL: define void @_ZN1CC2Ei(%struct.C* %this, i8** %vtt, i32 %x) unnamed_addr
-// CHECK: call void @_ZN6MemberC1Ei(
-
 
 
 /* Test that the delegation optimization is disabled for varargs
@@ -83,16 +80,15 @@ struct D : A {
 
 D::D(int x, ...) : A(ValueClass(x, x+1)), mem(x*x) {}
 
-// CHECK-LABEL: define void @_ZN1DC1Eiz(%struct.D* %this, i32 %x, ...) unnamed_addr
-// CHECK: call void @_ZN10ValueClassC1Eii(
-// CHECK: call void @_ZN1AC2E10ValueClass(
-// CHECK: call void @_ZN6MemberC1Ei(
-
 // CHECK-LABEL: define void @_ZN1DC2Eiz(%struct.D* %this, i32 %x, ...) unnamed_addr
 // CHECK: call void @_ZN10ValueClassC1Eii(
 // CHECK: call void @_ZN1AC2E10ValueClass(
 // CHECK: call void @_ZN6MemberC1Ei(
 
+// CHECK-LABEL: define void @_ZN1DC1Eiz(%struct.D* %this, i32 %x, ...) unnamed_addr
+// CHECK: call void @_ZN10ValueClassC1Eii(
+// CHECK: call void @_ZN1AC2E10ValueClass(
+// CHECK: call void @_ZN6MemberC1Ei(
 
 // PR6622:  this shouldn't crash
 namespace test0 {

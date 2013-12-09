@@ -184,9 +184,6 @@ namespace test9 {
 
   struct A { A(); };
 
-  // CHECK-LABEL:      define void @_ZN5test91AC1Ev(%"struct.test9::A"* %this) unnamed_addr
-  // CHECK:      call void @_ZN5test91AC2Ev
-  // CHECK-NEXT: ret void
 
   // CHECK-LABEL: define void @_ZN5test91AC2Ev(%"struct.test9::A"* %this) unnamed_addr
   A::A() try {
@@ -199,6 +196,10 @@ namespace test9 {
   // CHECK:      call i8* @__cxa_begin_catch
   // CHECK:      invoke void @_ZN5test96opaqueEv()
   // CHECK:      invoke void @__cxa_rethrow()
+
+  // CHECK-LABEL:      define void @_ZN5test91AC1Ev(%"struct.test9::A"* %this) unnamed_addr
+  // CHECK:      call void @_ZN5test91AC2Ev
+  // CHECK-NEXT: ret void
     opaque();
   }
 }

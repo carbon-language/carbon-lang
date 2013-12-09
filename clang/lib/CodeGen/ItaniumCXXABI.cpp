@@ -815,16 +815,16 @@ void ItaniumCXXABI::EmitCXXConstructors(const CXXConstructorDecl *D) {
   // Just make sure we're in sync with TargetCXXABI.
   assert(CGM.getTarget().getCXXABI().hasConstructorVariants());
 
+  // The constructor used for constructing this as a base class;
+  // ignores virtual bases.
+  CGM.EmitGlobal(GlobalDecl(D, Ctor_Base));
+
   // The constructor used for constructing this as a complete class;
   // constucts the virtual bases, then calls the base constructor.
   if (!D->getParent()->isAbstract()) {
     // We don't need to emit the complete ctor if the class is abstract.
     CGM.EmitGlobal(GlobalDecl(D, Ctor_Complete));
   }
-
-  // The constructor used for constructing this as a base class;
-  // ignores virtual bases.
-  CGM.EmitGlobal(GlobalDecl(D, Ctor_Base));
 }
 
 /// The generic ABI passes 'this', plus a VTT if it's destroying a
@@ -844,19 +844,19 @@ void ItaniumCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
 }
 
 void ItaniumCXXABI::EmitCXXDestructors(const CXXDestructorDecl *D) {
-  // The destructor in a virtual table is always a 'deleting'
-  // destructor, which calls the complete destructor and then uses the
-  // appropriate operator delete.
-  if (D->isVirtual())
-    CGM.EmitGlobal(GlobalDecl(D, Dtor_Deleting));
+  // The destructor used for destructing this as a base class; ignores
+  // virtual bases.
+  CGM.EmitGlobal(GlobalDecl(D, Dtor_Base));
 
   // The destructor used for destructing this as a most-derived class;
   // call the base destructor and then destructs any virtual bases.
   CGM.EmitGlobal(GlobalDecl(D, Dtor_Complete));
 
-  // The destructor used for destructing this as a base class; ignores
-  // virtual bases.
-  CGM.EmitGlobal(GlobalDecl(D, Dtor_Base));
+  // The destructor in a virtual table is always a 'deleting'
+  // destructor, which calls the complete destructor and then uses the
+  // appropriate operator delete.
+  if (D->isVirtual())
+    CGM.EmitGlobal(GlobalDecl(D, Dtor_Deleting));
 }
 
 void ItaniumCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,

@@ -26,28 +26,30 @@ delegator::delegator() {
 delegator::delegator(bool)
 {}
 
-// CHECK: define {{.*}} @_ZN9delegatorC1Ec
-// CHECK: {{.*}} @_ZN9delegatorC1Eb
-// CHECK: void @__cxa_throw
-// CHECK: void @__clang_call_terminate
-// CHECK: {{.*}} @_ZN9delegatorD1Ev
-// CHECK: define {{.*}} @_ZN9delegatorC2Ec
+// CHECK-LABEL: define {{.*}} @_ZN9delegatorC2Ec
 // CHECK: {{.*}} @_ZN9delegatorC2Eb
 // CHECK: void @__cxa_throw
 // CHECK: void @__clang_call_terminate
 // CHECK: {{.*}} @_ZN9delegatorD2Ev
+
+// CHECK-LABEL: define {{.*}} @_ZN9delegatorC1Ec
+// CHECK: {{.*}} @_ZN9delegatorC1Eb
+// CHECK: void @__cxa_throw
+// CHECK: void @__clang_call_terminate
+// CHECK: {{.*}} @_ZN9delegatorD1Ev
 delegator::delegator(char)
   : delegator(true) {
   throw 0;
 }
 
-// CHECK: define {{.*}} @_ZN9delegatorC1Ei
-// CHECK: {{.*}} @_ZN9delegatorC1Ev
+// CHECK-LABEL: define {{.*}} @_ZN9delegatorC2Ei
+// CHECK: {{.*}} @_ZN9delegatorC2Ev
 // CHECK-NOT: void @_ZSt9terminatev
 // CHECK: ret
 // CHECK-NOT: void @_ZSt9terminatev
-// CHECK: define {{.*}} @_ZN9delegatorC2Ei
-// CHECK: {{.*}} @_ZN9delegatorC2Ev
+
+// CHECK-LABEL: define {{.*}} @_ZN9delegatorC1Ei
+// CHECK: {{.*}} @_ZN9delegatorC1Ev
 // CHECK-NOT: void @_ZSt9terminatev
 // CHECK: ret
 // CHECK-NOT: void @_ZSt9terminatev

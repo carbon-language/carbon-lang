@@ -11,9 +11,9 @@ struct C { template<typename T> C(T); };
 struct D : C { using C::C; };
 D d(123);
 
-// CHECK-LABEL: define void @_ZN1BD0Ev
-// CHECK-LABEL: define void @_ZN1BD1Ev
 // CHECK-LABEL: define void @_ZN1BD2Ev
+// CHECK-LABEL: define void @_ZN1BD1Ev
+// CHECK-LABEL: define void @_ZN1BD0Ev
 
 // CHECK-LABEL: define linkonce_odr void @_ZN1BC1Ei(
 // CHECK: call void @_ZN1BC2Ei(

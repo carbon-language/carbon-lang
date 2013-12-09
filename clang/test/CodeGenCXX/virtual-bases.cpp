@@ -12,16 +12,16 @@ struct B : virtual A {
   B();
 };
 
-// CHECK-LABEL: define void @_ZN1BC1Ev(%struct.B* %this) unnamed_addr
 // CHECK-LABEL: define void @_ZN1BC2Ev(%struct.B* %this, i8** %vtt) unnamed_addr
+// CHECK-LABEL: define void @_ZN1BC1Ev(%struct.B* %this) unnamed_addr
 B::B() { }
 
 struct C : virtual A {
   C(bool);
 };
 
-// CHECK-LABEL: define void @_ZN1CC1Eb(%struct.C* %this, i1 zeroext) unnamed_addr
 // CHECK-LABEL: define void @_ZN1CC2Eb(%struct.C* %this, i8** %vtt, i1 zeroext) unnamed_addr
+// CHECK-LABEL: define void @_ZN1CC1Eb(%struct.C* %this, i1 zeroext) unnamed_addr
 C::C(bool) { }
 
 // PR6251

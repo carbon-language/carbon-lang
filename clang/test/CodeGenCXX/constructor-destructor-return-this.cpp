@@ -27,15 +27,15 @@ private:
 B::B(int *i) : i_(i) { }
 B::~B() { }
 
-// CHECKGEN-LABEL: define void @_ZN1BC1EPi(%class.B* %this, i32* %i)
 // CHECKGEN-LABEL: define void @_ZN1BC2EPi(%class.B* %this, i32* %i)
-// CHECKGEN-LABEL: define void @_ZN1BD1Ev(%class.B* %this)
+// CHECKGEN-LABEL: define void @_ZN1BC1EPi(%class.B* %this, i32* %i)
 // CHECKGEN-LABEL: define void @_ZN1BD2Ev(%class.B* %this)
+// CHECKGEN-LABEL: define void @_ZN1BD1Ev(%class.B* %this)
 
-// CHECKARM-LABEL: define %class.B* @_ZN1BC1EPi(%class.B* returned %this, i32* %i)
 // CHECKARM-LABEL: define %class.B* @_ZN1BC2EPi(%class.B* returned %this, i32* %i)
-// CHECKARM-LABEL: define %class.B* @_ZN1BD1Ev(%class.B* returned %this)
+// CHECKARM-LABEL: define %class.B* @_ZN1BC1EPi(%class.B* returned %this, i32* %i)
 // CHECKARM-LABEL: define %class.B* @_ZN1BD2Ev(%class.B* returned %this)
+// CHECKARM-LABEL: define %class.B* @_ZN1BD1Ev(%class.B* returned %this)
 
 // CHECKMS-LABEL: define x86_thiscallcc %class.B* @"\01??0B@@QAE@PAH@Z"(%class.B* returned %this, i32* %i)
 // CHECKMS-LABEL: define x86_thiscallcc void @"\01??1B@@QAE@XZ"(%class.B* %this)
@@ -51,17 +51,17 @@ private:
 C::C(int *i, char *c) : B(i), c_(c) { }
 C::~C() { }
 
-// CHECKGEN-LABEL: define void @_ZN1CC1EPiPc(%class.C* %this, i32* %i, i8* %c)
 // CHECKGEN-LABEL: define void @_ZN1CC2EPiPc(%class.C* %this, i32* %i, i8* %c)
-// CHECKGEN-LABEL: define void @_ZN1CD0Ev(%class.C* %this)
-// CHECKGEN-LABEL: define void @_ZN1CD1Ev(%class.C* %this)
+// CHECKGEN-LABEL: define void @_ZN1CC1EPiPc(%class.C* %this, i32* %i, i8* %c)
 // CHECKGEN-LABEL: define void @_ZN1CD2Ev(%class.C* %this)
+// CHECKGEN-LABEL: define void @_ZN1CD1Ev(%class.C* %this)
+// CHECKGEN-LABEL: define void @_ZN1CD0Ev(%class.C* %this)
 
-// CHECKARM-LABEL: define %class.C* @_ZN1CC1EPiPc(%class.C* returned %this, i32* %i, i8* %c)
 // CHECKARM-LABEL: define %class.C* @_ZN1CC2EPiPc(%class.C* returned %this, i32* %i, i8* %c)
-// CHECKARM-LABEL: define void @_ZN1CD0Ev(%class.C* %this)
-// CHECKARM-LABEL: define %class.C* @_ZN1CD1Ev(%class.C* returned %this)
+// CHECKARM-LABEL: define %class.C* @_ZN1CC1EPiPc(%class.C* returned %this, i32* %i, i8* %c)
 // CHECKARM-LABEL: define %class.C* @_ZN1CD2Ev(%class.C* returned %this)
+// CHECKARM-LABEL: define %class.C* @_ZN1CD1Ev(%class.C* returned %this)
+// CHECKARM-LABEL: define void @_ZN1CD0Ev(%class.C* %this)
 
 // CHECKMS-LABEL: define x86_thiscallcc %class.C* @"\01??0C@@QAE@PAHPAD@Z"(%class.C* returned %this, i32* %i, i8* %c)
 // CHECKMS-LABEL: define x86_thiscallcc void @"\01??1C@@UAE@XZ"(%class.C* %this)
@@ -75,15 +75,16 @@ public:
 D::D() { }
 D::~D() { }
 
-// CHECKGEN-LABEL: define void @_ZN1DC1Ev(%class.D* %this)
 // CHECKGEN-LABEL: define void @_ZN1DC2Ev(%class.D* %this, i8** %vtt)
-// CHECKGEN-LABEL: define void @_ZN1DD1Ev(%class.D* %this)
+// CHECKGEN-LABEL: define void @_ZN1DC1Ev(%class.D* %this)
 // CHECKGEN-LABEL: define void @_ZN1DD2Ev(%class.D* %this, i8** %vtt)
+// CHECKGEN-LABEL: define void @_ZN1DD1Ev(%class.D* %this)
 
-// CHECKARM-LABEL: define %class.D* @_ZN1DC1Ev(%class.D* returned %this)
 // CHECKARM-LABEL: define %class.D* @_ZN1DC2Ev(%class.D* returned %this, i8** %vtt)
-// CHECKARM-LABEL: define %class.D* @_ZN1DD1Ev(%class.D* returned %this)
+// CHECKARM-LABEL: define %class.D* @_ZN1DC1Ev(%class.D* returned %this)
 // CHECKARM-LABEL: define %class.D* @_ZN1DD2Ev(%class.D* returned %this, i8** %vtt)
+// CHECKARM-LABEL: define %class.D* @_ZN1DD1Ev(%class.D* returned %this)
+
 
 // CHECKMS-LABEL: define x86_thiscallcc %class.D* @"\01??0D@@QAE@XZ"(%class.D* returned %this, i32 %is_most_derived)
 // CHECKMS-LABEL: define x86_thiscallcc void @"\01??1D@@QAE@XZ"(%class.D* %this)
