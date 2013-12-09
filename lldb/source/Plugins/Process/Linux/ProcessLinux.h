@@ -101,6 +101,9 @@ public:
     virtual POSIXThread *
     CreateNewPOSIXThread(lldb_private::Process &process, lldb::tid_t tid);
 
+    virtual void
+    SendMessage(const ProcessMessage &message);
+
 private:
 
     /// Linux-specific signal set.

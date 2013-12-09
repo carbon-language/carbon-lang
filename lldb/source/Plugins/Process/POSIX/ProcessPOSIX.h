@@ -64,7 +64,7 @@ public:
     DidLaunch();
 
     virtual lldb_private::Error
-    DoResume();
+    DoResume() = 0;
 
     virtual lldb_private::Error
     DoHalt(bool &caused_stop);
@@ -148,7 +148,8 @@ public:
     // ProcessPOSIX internal API.
 
     /// Registers the given message with this process.
-    void SendMessage(const ProcessMessage &message);
+    virtual void
+    SendMessage(const ProcessMessage &message) = 0;
 
     ProcessMonitor &
     GetMonitor() { assert(m_monitor); return *m_monitor; }

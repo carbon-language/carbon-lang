@@ -259,31 +259,6 @@ ProcessPOSIX::DidLaunch()
 {
 }
 
-Error
-ProcessPOSIX::DoResume()
-{
-    StateType state = GetPrivateState();
-
-    assert(state == eStateStopped);
-
-    SetPrivateState(eStateRunning);
-
-    bool did_resume = false;
-
-    Mutex::Locker lock(m_thread_list.GetMutex());
-
-    uint32_t thread_count = m_thread_list.GetSize(false);
-    for (uint32_t i = 0; i < thread_count; ++i)
-    {
-        POSIXThread *thread = static_cast<POSIXThread*>(
-            m_thread_list.GetThreadAtIndex(i, false).get());
-        did_resume = thread->Resume() || did_resume;
-    }
-    assert(did_resume && "Process resume failed!");
-
-    return Error();
-}
-
 addr_t
 ProcessPOSIX::GetImageInfoAddress()
 {
@@ -374,107 +349,6 @@ ProcessPOSIX::DoDidExec()
             target->SetExecutableModule(exe_module_sp, true);
         }
     }
-}
-
-void
-ProcessPOSIX::SendMessage(const ProcessMessage &message)
-{
-    Mutex::Locker lock(m_message_mutex);
-
-    Mutex::Locker thread_lock(m_thread_list.GetMutex());
-
-    POSIXThread *thread = static_cast<POSIXThread*>(
-        m_thread_list.FindThreadByID(message.GetTID(), false).get());
-
-    switch (message.GetKind())
-    {
-    case ProcessMessage::eInvalidMessage:
-        return;
-
-    case ProcessMessage::eAttachMessage:
-        SetPrivateState(eStateStopped);
-        return;
-
-    case ProcessMessage::eLimboMessage:
-        assert(thread);
-        thread->SetState(eStateStopped);
-        if (message.GetTID() == GetID())
-        {
-            m_exit_status = message.GetExitStatus();
-            if (m_exit_now)
-            {
-                SetPrivateState(eStateExited);
-                m_monitor->Detach(GetID());
-            }
-            else
-            {
-                StopAllThreads(message.GetTID());
-                SetPrivateState(eStateStopped);
-            }
-        }
-        else
-        {
-            StopAllThreads(message.GetTID());
-            SetPrivateState(eStateStopped);
-        }
-        break;
-
-    case ProcessMessage::eExitMessage:
-        assert(thread);
-        thread->SetState(eStateExited);
-        // FIXME: I'm not sure we need to do this.
-        if (message.GetTID() == GetID())
-        {
-            m_exit_status = message.GetExitStatus();
-            SetExitStatus(m_exit_status, NULL);
-        }
-        else if (!IsAThreadRunning())
-            SetPrivateState(eStateStopped);
-        break;
-
-    case ProcessMessage::eSignalMessage:
-    case ProcessMessage::eSignalDeliveredMessage:
-        if (message.GetSignal() == SIGSTOP &&
-            AddThreadForInitialStopIfNeeded(message.GetTID()))
-            return;
-        // Intentional fall-through
-
-    case ProcessMessage::eBreakpointMessage:
-    case ProcessMessage::eTraceMessage:
-    case ProcessMessage::eWatchpointMessage:
-    case ProcessMessage::eCrashMessage:
-        assert(thread);
-        thread->SetState(eStateStopped);
-        StopAllThreads(message.GetTID());
-        SetPrivateState(eStateStopped);
-        break;
-
-    case ProcessMessage::eNewThreadMessage:
-    {
-        lldb::tid_t  new_tid = message.GetChildTID();
-        if (WaitingForInitialStop(new_tid))
-        {
-            m_monitor->WaitForInitialTIDStop(new_tid);
-        }
-        assert(thread);
-        thread->SetState(eStateStopped);
-        StopAllThreads(message.GetTID());
-        SetPrivateState(eStateStopped);
-        break;
-    }
-
-    case ProcessMessage::eExecMessage:
-    {
-        assert(thread);
-        thread->SetState(eStateStopped);
-        StopAllThreads(message.GetTID());
-        SetPrivateState(eStateStopped);
-        break;
-    }
-    }
-
-
-    m_message_queue.push(message);
 }
 
 void 

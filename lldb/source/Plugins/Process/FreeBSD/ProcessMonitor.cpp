@@ -560,6 +560,31 @@ LwpInfoOperation::Execute(ProcessMonitor *monitor)
 }
 
 //------------------------------------------------------------------------------
+/// @class ThreadSuspendOperation
+/// @brief Implements ProcessMonitor::ThreadSuspend.
+class ThreadSuspendOperation : public Operation
+{
+public:
+    ThreadSuspendOperation(lldb::tid_t tid, bool suspend, bool &result)
+        : m_tid(tid), m_suspend(suspend), m_result(result) { }
+
+    void Execute(ProcessMonitor *monitor);
+
+private:
+    lldb::tid_t m_tid;
+    bool m_suspend;
+    bool &m_result;
+} ;
+
+void
+ThreadSuspendOperation::Execute(ProcessMonitor *monitor)
+{
+    m_result = !PTRACE(m_suspend ? PT_SUSPEND : PT_RESUME, m_tid, NULL, 0);
+}
+
+
+
+//------------------------------------------------------------------------------
 /// @class EventMessageOperation
 /// @brief Implements ProcessMonitor::GetEventMessage.
 class EventMessageOperation : public Operation
@@ -1041,6 +1066,29 @@ FINISH:
     return args->m_error.Success();
 }
 
+size_t
+ProcessMonitor::GetCurrentThreadIDs(std::vector<lldb::tid_t>&thread_ids)
+{
+    lwpid_t *tids;
+    int tdcnt;
+
+    thread_ids.clear();
+
+    tdcnt = PTRACE(PT_GETNUMLWPS, m_pid, NULL, 0);
+    if (tdcnt <= 0)
+        return 0;
+    tids = (lwpid_t *)malloc(tdcnt * sizeof(*tids));
+    if (tids == NULL)
+        return 0;
+    if (PTRACE(PT_GETLWPLIST, m_pid, (void *)tids, tdcnt) < 0) {
+        free(tids);
+        return 0;
+    }
+    thread_ids = std::vector<lldb::tid_t>(tids, tids + tdcnt);
+    free(tids);
+    return thread_ids.size();
+}
+
 bool
 ProcessMonitor::MonitorCallback(void *callback_baton,
                                 lldb::pid_t pid,
@@ -1073,11 +1121,11 @@ ProcessMonitor::MonitorCallback(void *callback_baton,
         switch (plwp.pl_siginfo.si_signo)
         {
         case SIGTRAP:
-            message = MonitorSIGTRAP(monitor, &plwp.pl_siginfo, pid);
+            message = MonitorSIGTRAP(monitor, &plwp.pl_siginfo, plwp.pl_lwpid);
             break;
             
         default:
-            message = MonitorSignal(monitor, &plwp.pl_siginfo, pid);
+            message = MonitorSignal(monitor, &plwp.pl_siginfo, plwp.pl_lwpid);
             break;
         }
 
@@ -1090,7 +1138,7 @@ ProcessMonitor::MonitorCallback(void *callback_baton,
 
 ProcessMessage
 ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor,
-                               const siginfo_t *info, lldb::pid_t pid)
+                               const siginfo_t *info, lldb::tid_t tid)
 {
     ProcessMessage message;
 
@@ -1111,26 +1159,26 @@ ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor,
         // state of "limbo" until we are explicitly commanded to detach,
         // destroy, resume, etc.
         unsigned long data = 0;
-        if (!monitor->GetEventMessage(pid, &data))
+        if (!monitor->GetEventMessage(tid, &data))
             data = -1;
         if (log)
-            log->Printf ("ProcessMonitor::%s() received exit? event, data = %lx, pid = %" PRIu64, __FUNCTION__, data, pid);
-        message = ProcessMessage::Limbo(pid, (data >> 8));
+            log->Printf ("ProcessMonitor::%s() received exit? event, data = %lx, tid = %" PRIu64, __FUNCTION__, data, tid);
+        message = ProcessMessage::Limbo(tid, (data >> 8));
         break;
     }
 
     case 0:
     case TRAP_TRACE:
         if (log)
-            log->Printf ("ProcessMonitor::%s() received trace event, pid = %" PRIu64, __FUNCTION__, pid);
-        message = ProcessMessage::Trace(pid);
+            log->Printf ("ProcessMonitor::%s() received trace event, tid = %" PRIu64, __FUNCTION__, tid);
+        message = ProcessMessage::Trace(tid);
         break;
 
     case SI_KERNEL:
     case TRAP_BRKPT:
         if (log)
-            log->Printf ("ProcessMonitor::%s() received breakpoint event, pid = %" PRIu64, __FUNCTION__, pid);
-        message = ProcessMessage::Break(pid);
+            log->Printf ("ProcessMonitor::%s() received breakpoint event, tid = %" PRIu64, __FUNCTION__, tid);
+        message = ProcessMessage::Break(tid);
         break;
     }
 
@@ -1139,7 +1187,7 @@ ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor,
 
 ProcessMessage
 ProcessMonitor::MonitorSignal(ProcessMonitor *monitor,
-                              const siginfo_t *info, lldb::pid_t pid)
+                              const siginfo_t *info, lldb::tid_t tid)
 {
     ProcessMessage message;
     int signo = info->si_signo;
@@ -1163,9 +1211,9 @@ ProcessMonitor::MonitorSignal(ProcessMonitor *monitor,
                             "SI_USER",
                             info->si_pid);
         if (info->si_pid == getpid())
-            return ProcessMessage::SignalDelivered(pid, signo);
+            return ProcessMessage::SignalDelivered(tid, signo);
         else
-            return ProcessMessage::Signal(pid, signo);
+            return ProcessMessage::Signal(tid, signo);
     }
 
     if (log)
@@ -1174,30 +1222,30 @@ ProcessMonitor::MonitorSignal(ProcessMonitor *monitor,
     if (signo == SIGSEGV) {
         lldb::addr_t fault_addr = reinterpret_cast<lldb::addr_t>(info->si_addr);
         ProcessMessage::CrashReason reason = GetCrashReasonForSIGSEGV(info);
-        return ProcessMessage::Crash(pid, reason, signo, fault_addr);
+        return ProcessMessage::Crash(tid, reason, signo, fault_addr);
     }
 
     if (signo == SIGILL) {
         lldb::addr_t fault_addr = reinterpret_cast<lldb::addr_t>(info->si_addr);
         ProcessMessage::CrashReason reason = GetCrashReasonForSIGILL(info);
-        return ProcessMessage::Crash(pid, reason, signo, fault_addr);
+        return ProcessMessage::Crash(tid, reason, signo, fault_addr);
     }
 
     if (signo == SIGFPE) {
         lldb::addr_t fault_addr = reinterpret_cast<lldb::addr_t>(info->si_addr);
         ProcessMessage::CrashReason reason = GetCrashReasonForSIGFPE(info);
-        return ProcessMessage::Crash(pid, reason, signo, fault_addr);
+        return ProcessMessage::Crash(tid, reason, signo, fault_addr);
     }
 
     if (signo == SIGBUS) {
         lldb::addr_t fault_addr = reinterpret_cast<lldb::addr_t>(info->si_addr);
         ProcessMessage::CrashReason reason = GetCrashReasonForSIGBUS(info);
-        return ProcessMessage::Crash(pid, reason, signo, fault_addr);
+        return ProcessMessage::Crash(tid, reason, signo, fault_addr);
     }
 
     // Everything else is "normal" and does not require any special action on
     // our part.
-    return ProcessMessage::Signal(pid, signo);
+    return ProcessMessage::Signal(tid, signo);
 }
 
 ProcessMessage::CrashReason
@@ -1503,6 +1551,15 @@ ProcessMonitor::GetLwpInfo(lldb::tid_t tid, void *lwpinfo, int &ptrace_err)
 {
     bool result;
     LwpInfoOperation op(tid, lwpinfo, result, ptrace_err);
+    DoOperation(&op);
+    return result;
+}
+
+bool
+ProcessMonitor::ThreadSuspend(lldb::tid_t tid, bool suspend)
+{
+    bool result;
+    ThreadSuspendOperation op(tid, suspend, result);
     DoOperation(&op);
     return result;
 }

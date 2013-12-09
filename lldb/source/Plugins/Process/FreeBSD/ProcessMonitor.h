@@ -164,10 +164,18 @@ public:
     bool
     ReadThreadPointer(lldb::tid_t tid, lldb::addr_t &value);
 
+    /// Returns current thread IDs in process
+    size_t
+    GetCurrentThreadIDs(std::vector<lldb::tid_t> &thread_ids);
+
     /// Writes a ptrace_lwpinfo structure corresponding to the given thread ID
     /// to the memory region pointed to by @p lwpinfo.
     bool
     GetLwpInfo(lldb::tid_t tid, void *lwpinfo, int &error_no);
+
+    /// Suspends or unsuspends a thread prior to process resume or step.
+    bool
+    ThreadSuspend(lldb::tid_t tid, bool suspend);
 
     /// Writes the raw event message code (vis-a-vis PTRACE_GETEVENTMSG)
     /// corresponding to the given thread IDto the memory pointed to by @p

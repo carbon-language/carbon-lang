@@ -1,4 +1,4 @@
-//===-- LinuxThread.h -------------------------------------------*- C++ -*-===//
+//===-- FreeBSDThread.h -----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_LinuxThread_H_
-#define liblldb_LinuxThread_H_
+#ifndef liblldb_FreeBSDThread_H_
+#define liblldb_FreeBSDThread_H_
 
 // Other libraries and framework includes
 #include "POSIXThread.h"
 
 //------------------------------------------------------------------------------
-// @class LinuxThread
-// @brief Abstraction of a Linux thread.
-class LinuxThread
+// @class FreeBSDThread
+// @brief Abstraction of a FreeBSD thread.
+class FreeBSDThread
     : public POSIXThread
 {
 public:
@@ -24,23 +24,16 @@ public:
     //------------------------------------------------------------------
     // Constructors and destructors
     //------------------------------------------------------------------
-    LinuxThread(lldb_private::Process &process, lldb::tid_t tid);
+    FreeBSDThread(lldb_private::Process &process, lldb::tid_t tid);
 
-    virtual ~LinuxThread();
+    virtual ~FreeBSDThread();
 
     //--------------------------------------------------------------------------
-    // LinuxThread internal API.
+    // FreeBSDThread internal API.
 
-    // POSIXThread overrides
-    virtual bool
-    LinuxThread::Resume();
-
+    // POSIXThread override
     virtual void
-    RefreshStateAfterStop();
-
-protected:
-    virtual void
-    TraceNotify(const ProcessMessage &message);
+    WillResume(lldb::StateType resume_state);
 };
 
-#endif // #ifndef liblldb_LinuxThread_H_
+#endif // #ifndef liblldb_FreeBSDThread_H_

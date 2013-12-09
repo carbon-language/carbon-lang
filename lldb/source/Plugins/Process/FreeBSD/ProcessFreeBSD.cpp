@@ -23,7 +23,7 @@
 #include "ProcessPOSIXLog.h"
 #include "Plugins/Process/Utility/InferiorCallPOSIX.h"
 #include "ProcessMonitor.h"
-#include "POSIXThread.h"
+#include "FreeBSDThread.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -140,29 +140,136 @@ ProcessFreeBSD::DoDetach(bool keep_stopped)
     return error;
 }
 
+Error
+ProcessFreeBSD::DoResume()
+{
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+
+    // FreeBSD's ptrace() uses 0 to indicate "no signal is to be sent."
+    int resume_signal = 0;
+
+    SetPrivateState(eStateRunning);
+
+    Mutex::Locker lock(m_thread_list.GetMutex());
+    bool do_step = false;
+
+    for (tid_collection::const_iterator t_pos = m_run_tids.begin(), t_end = m_run_tids.end(); t_pos != t_end; ++t_pos)
+    {
+        m_monitor->ThreadSuspend(*t_pos, false);
+    }
+    for (tid_collection::const_iterator t_pos = m_step_tids.begin(), t_end = m_step_tids.end(); t_pos != t_end; ++t_pos)
+    {
+        m_monitor->ThreadSuspend(*t_pos, false);
+        do_step = true;
+    }
+    for (tid_collection::const_iterator t_pos = m_suspend_tids.begin(), t_end = m_suspend_tids.end(); t_pos != t_end; ++t_pos)
+    {
+        m_monitor->ThreadSuspend(*t_pos, true);
+        // XXX Cannot PT_CONTINUE properly with suspended threads.
+        do_step = true;
+    }
+
+    if (log)
+        log->Printf("process %lu resuming (%s)", GetID(), do_step ? "step" : "continue");
+    if (do_step)
+        m_monitor->SingleStep(GetID(), resume_signal);
+    else
+        m_monitor->Resume(GetID(), resume_signal);
+
+    return Error();
+}
+
 bool
 ProcessFreeBSD::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
-    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
-    if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
-        log->Printf ("ProcessFreeBSD::%s() (pid = %" PRIu64 ")", __FUNCTION__, GetID());
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+    if (log)
+        log->Printf("ProcessFreeBSD::%s (pid = %" PRIu64 ")", __FUNCTION__, GetID());
 
-    bool has_updated = false;
-    const lldb::pid_t pid = GetID();
-    // Update the process thread list with this new thread.
-    // FIXME: We should be using tid, not pid.
-    assert(m_monitor);
-    ThreadSP thread_sp (old_thread_list.FindThreadByID (pid, false));
-    if (!thread_sp) {
-        ProcessSP me = this->shared_from_this();
-        thread_sp.reset(new POSIXThread(*me, pid));
-        has_updated = true;
+    std::vector<lldb::pid_t> tds;
+    if (!GetMonitor().GetCurrentThreadIDs(tds))
+    {
+        return false;
     }
 
-    if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
-        log->Printf ("ProcessFreeBSD::%s() updated tid = %" PRIu64, __FUNCTION__, pid);
+    ThreadList old_thread_list_copy(old_thread_list);
+    for (size_t i = 0; i < tds.size(); ++i)
+    {
+        tid_t tid = tds[i];
+        ThreadSP thread_sp (old_thread_list_copy.RemoveThreadByID(tid, false));
+        if (!thread_sp)
+        {
+            thread_sp.reset(new FreeBSDThread(*this, tid));
+            if (log)
+                log->Printf("ProcessFreeBSD::%s new tid = %" PRIu64, __FUNCTION__, tid);
+        }
+        else
+        {
+            if (log)
+                log->Printf("ProcessFreeBSD::%s existing tid = %" PRIu64, __FUNCTION__, tid);
+        }
+        new_thread_list.AddThread(thread_sp);
+    }
+    for (size_t i = 0; i < old_thread_list_copy.GetSize(false); ++i)
+    {
+        ThreadSP old_thread_sp(old_thread_list_copy.GetThreadAtIndex(i, false));
+        if (old_thread_sp)
+        {
+            if (log)
+                log->Printf("ProcessFreeBSD::%s remove tid", __FUNCTION__);
+        }
+    }
 
-    new_thread_list.AddThread(thread_sp);
-
-    return has_updated; // the list has been updated
+    return true;
 }
+
+Error
+ProcessFreeBSD::WillResume()
+{
+    m_suspend_tids.clear();
+    m_run_tids.clear();
+    m_step_tids.clear();
+    return ProcessPOSIX::WillResume();
+}
+
+void
+ProcessFreeBSD::SendMessage(const ProcessMessage &message)
+{
+    Mutex::Locker lock(m_message_mutex);
+
+    switch (message.GetKind())
+    {
+    case ProcessMessage::eInvalidMessage:
+        return;
+
+    case ProcessMessage::eAttachMessage:
+        SetPrivateState(eStateStopped);
+        return;
+
+    case ProcessMessage::eLimboMessage:
+    case ProcessMessage::eExitMessage:
+        m_exit_status = message.GetExitStatus();
+        SetExitStatus(m_exit_status, NULL);
+        break;
+
+    case ProcessMessage::eSignalMessage:
+    case ProcessMessage::eSignalDeliveredMessage:
+    case ProcessMessage::eBreakpointMessage:
+    case ProcessMessage::eTraceMessage:
+    case ProcessMessage::eWatchpointMessage:
+    case ProcessMessage::eCrashMessage:
+        SetPrivateState(eStateStopped);
+        break;
+
+    case ProcessMessage::eNewThreadMessage:
+        assert(0 && "eNewThreadMessage unexpected on FreeBSD");
+        break;
+
+    case ProcessMessage::eExecMessage:
+        SetPrivateState(eStateStopped);
+        break;
+    }
+
+    m_message_queue.push(message);
+}
+
