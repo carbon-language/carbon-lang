@@ -288,16 +288,11 @@ PlatformMacOSX::GetFile (const lldb_private::FileSpec &platform_file,
             }
             // bring in the remote module file
             FileSpec module_cache_folder = module_cache_spec.CopyByRemovingLastPathComponent();
-            StreamString mkdir_folder_cmd;
             // try to make the local directory first
-            mkdir_folder_cmd.Printf("mkdir -p %s/%s", module_cache_folder.GetDirectory().AsCString(), module_cache_folder.GetFilename().AsCString());
-            Host::RunShellCommand(mkdir_folder_cmd.GetData(),
-                                  NULL,
-                                  NULL,
-                                  NULL,
-                                  NULL,
-                                  60);
-            Error err = GetFile(platform_file, module_cache_spec);
+            Error err = Host::MakeDirectory(module_cache_folder.GetPath().c_str(), eFilePermissionsDirectoryDefault);
+            if (err.Fail())
+                return err;
+            err = GetFile(platform_file, module_cache_spec);
             if (err.Fail())
                 return err;
             if (module_cache_spec.Exists())

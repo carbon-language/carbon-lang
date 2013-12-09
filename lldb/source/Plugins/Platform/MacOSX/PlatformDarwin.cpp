@@ -273,14 +273,7 @@ static lldb_private::Error
 MakeCacheFolderForFile (const FileSpec& module_cache_spec)
 {
     FileSpec module_cache_folder = module_cache_spec.CopyByRemovingLastPathComponent();
-    StreamString mkdir_folder_cmd;
-    mkdir_folder_cmd.Printf("mkdir -p %s/%s", module_cache_folder.GetDirectory().AsCString(), module_cache_folder.GetFilename().AsCString());
-    return Host::RunShellCommand(mkdir_folder_cmd.GetData(),
-                          NULL,
-                          NULL,
-                          NULL,
-                          NULL,
-                          60);
+    return Host::MakeDirectory(module_cache_folder.GetPath().c_str(), eFilePermissionsDirectoryDefault);
 }
 
 static lldb_private::Error
