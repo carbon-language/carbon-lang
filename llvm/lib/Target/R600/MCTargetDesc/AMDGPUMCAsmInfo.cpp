@@ -40,7 +40,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   GPRel32Directive = 0;
   SunStyleELFSectionSwitchSyntax = true;
   UsesELFSectionDirectiveForBSS = true;
-  HasMicrosoftFastStdCallMangling = false;
 
   //===--- Alignment Information ----------------------------------------===//
   AlignDirective = ".align\t";
