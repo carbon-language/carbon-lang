@@ -36,24 +36,24 @@ class CreateDuringStepTestCase(TestBase):
         self.buildDsym(dictionary=self.getBuildFlags())
         self.create_during_step_in_test()
 
-    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
     @dwarf_test
     def test_step_inst_with_dwarf(self):
         """Test thread creation during step-inst handling."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.create_during_step_inst_test()
 
-    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
     @dwarf_test
     def test_step_over_with_dwarf(self):
         """Test thread creation during step-over handling."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.create_during_step_over_test()
 
-    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
     @dwarf_test
     def test_step_in_with_dwarf(self):
         """Test thread creation during step-in handling."""

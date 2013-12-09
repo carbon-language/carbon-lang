@@ -20,8 +20,8 @@ class MultipleBreakpointTestCase(TestBase):
         self.buildDsym(dictionary=self.getBuildFlags())
         self.multiple_breakpoint_test()
 
-    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not implemented on FreeBSD yet
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
     @dwarf_test
     def test_with_dwarf(self):
         """Test simultaneous breakpoints in multiple threads."""

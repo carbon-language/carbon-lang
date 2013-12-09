@@ -21,7 +21,7 @@ class ExitDuringBreakpointTestCase(TestBase):
         self.exit_during_breakpoint_test()
 
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
-    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
+    @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
     @skipIfLinux # llvm.org/pr16170 -- this test causes LLDB to hang in waitpid() and the inferior is left in the Sleeping (S) state
     @dwarf_test
     def test_with_dwarf(self):
