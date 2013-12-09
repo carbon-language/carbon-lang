@@ -1767,7 +1767,7 @@ public:
   }
 
   child_range children() {
-    return child_range(&Exprs[0], &Exprs[0]);
+    return child_range(&Exprs[0], &Exprs[NumInputs + NumOutputs]);
   }
 };
 
