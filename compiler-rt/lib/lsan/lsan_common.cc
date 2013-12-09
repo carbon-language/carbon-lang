@@ -47,6 +47,7 @@ static void InitializeFlags() {
   f->use_stacks = true;
   f->use_tls = true;
   f->use_unaligned = false;
+  f->use_poisoned = false;
   f->verbosity = 0;
   f->log_pointers = false;
   f->log_threads = false;
@@ -58,6 +59,7 @@ static void InitializeFlags() {
     ParseFlag(options, &f->use_stacks, "use_stacks");
     ParseFlag(options, &f->use_tls, "use_tls");
     ParseFlag(options, &f->use_unaligned, "use_unaligned");
+    ParseFlag(options, &f->use_poisoned, "use_poisoned");
     ParseFlag(options, &f->report_objects, "report_objects");
     ParseFlag(options, &f->resolution, "resolution");
     CHECK_GE(&f->resolution, 0);
@@ -148,6 +150,17 @@ void ScanRangeForPointers(uptr begin, uptr end,
     // Reachable beats ignored beats leaked.
     if (m.tag() == kReachable) continue;
     if (m.tag() == kIgnored && tag != kReachable) continue;
+
+    // Do this check relatively late so we can log only the interesting cases.
+    if (!flags()->use_poisoned && WordIsPoisoned(pp)) {
+      if (flags()->log_pointers)
+        Report(
+            "%p is poisoned: ignoring %p pointing into chunk %p-%p of size "
+            "%zu.\n",
+            pp, p, chunk, chunk + m.requested_size(), m.requested_size());
+      continue;
+    }
+
     m.set_tag(tag);
     if (flags()->log_pointers)
       Report("%p: found %p pointing into chunk %p-%p of size %zu.\n", pp, p,

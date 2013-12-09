@@ -66,6 +66,8 @@ struct Flags {
 
   // Consider unaligned pointers valid.
   bool use_unaligned;
+  // Consider pointers found in poisoned memory to be valid.
+  bool use_poisoned;
 
   // User-visible verbosity.
   int verbosity;
@@ -129,6 +131,8 @@ void GetAllocatorGlobalRange(uptr *begin, uptr *end);
 // Wrappers for allocator's ForceLock()/ForceUnlock().
 void LockAllocator();
 void UnlockAllocator();
+// Returns true if [addr, addr + sizeof(void *)) is poisoned.
+bool WordIsPoisoned(uptr addr);
 // Wrappers for ThreadRegistry access.
 void LockThreadRegistry();
 void UnlockThreadRegistry();

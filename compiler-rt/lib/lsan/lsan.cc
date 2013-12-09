@@ -35,6 +35,11 @@ static void InitializeCommonFlags() {
   ParseCommonFlagsFromString(cf, GetEnv("LSAN_OPTIONS"));
 }
 
+///// Interface to the common LSan module. /////
+bool WordIsPoisoned(uptr addr) {
+  return false;
+}
+
 }  // namespace __lsan
 
 using namespace __lsan;  // NOLINT

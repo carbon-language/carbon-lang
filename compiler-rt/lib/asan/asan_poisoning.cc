@@ -292,3 +292,11 @@ void __sanitizer_annotate_contiguous_container(const void *beg_p,
     *(u8*)MemToShadow(b1) = static_cast<u8>(new_mid - b1);
   }
 }
+
+// --- Implementation of LSan-specific functions --- {{{1
+namespace __lsan {
+bool WordIsPoisoned(uptr addr) {
+  return __asan_region_is_poisoned(addr, sizeof(uptr));
+}
+}
+
