@@ -5310,9 +5310,9 @@ defm FMINNMPvv : NeonI_ScalarPair_SD_sizes<0b1, 0b1, 0b01100, "fminnmp", 0>;
 multiclass Neon_ScalarPair_SD_size_patterns<SDPatternOperator opnode,
                                             Instruction INSTS,
                                             Instruction INSTD> {
-  def : Pat<(v1f32 (opnode (v2f32 VPR64:$Rn))),
+  def : Pat<(f32 (opnode (v2f32 VPR64:$Rn))),
             (INSTS VPR64:$Rn)>;
-  def : Pat<(v1f64 (opnode (v2f64 VPR128:$Rn))),
+  def : Pat<(f64 (opnode (v2f64 VPR128:$Rn))),
             (INSTD VPR128:$Rn)>;
 }
 
@@ -5333,7 +5333,7 @@ defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vpfmaxnm,
 defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vpfminnm,
                                         FMINNMPvv_S_2S, FMINNMPvv_D_2D>;
 
-def : Pat<(v1f32 (int_aarch64_neon_vpfadd (v4f32 VPR128:$Rn))),
+def : Pat<(f32 (int_aarch64_neon_vpfadd (v4f32 VPR128:$Rn))),
           (FADDPvv_S_2S (v2f32
                (EXTRACT_SUBREG
                    (v4f32 (FADDP_4S (v4f32 VPR128:$Rn), (v4f32 VPR128:$Rn))),

@@ -230,19 +230,19 @@ def int_aarch64_neon_vqrshlu : Neon_2Arg_Intrinsic;
 def int_aarch64_neon_vpadd :
   Intrinsic<[llvm_v1i64_ty], [llvm_v2i64_ty],[IntrNoMem]>;
 def int_aarch64_neon_vpfadd :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
 // Scalar Reduce Pairwise Floating Point Max/Min.
 def int_aarch64_neon_vpmax :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 def int_aarch64_neon_vpmin :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
 // Scalar Reduce Pairwise Floating Point Maxnm/Minnm.
 def int_aarch64_neon_vpfmaxnm :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 def int_aarch64_neon_vpfminnm :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
 // Scalar Signed Integer Convert To Floating-point
 def int_aarch64_neon_vcvtf32_s32 :
