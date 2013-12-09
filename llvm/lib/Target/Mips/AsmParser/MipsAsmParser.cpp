@@ -2308,22 +2308,7 @@ bool MipsAsmParser::parseSetAssignment() {
     return reportParseError("unexpected token in .set directive");
   Lex(); // Eat comma
 
-  if (getLexer().is(AsmToken::Dollar)) {
-    MCSymbol *Symbol;
-    SMLoc DollarLoc = getLexer().getLoc();
-    // Consume the dollar sign, and check for a following identifier.
-    Parser.Lex();
-    // We have a '$' followed by something, make sure they are adjacent.
-    if (DollarLoc.getPointer() + 1 != getTok().getLoc().getPointer())
-      return true;
-    StringRef Res =
-        StringRef(DollarLoc.getPointer(),
-                  getTok().getEndLoc().getPointer() - DollarLoc.getPointer());
-    Symbol = getContext().GetOrCreateSymbol(Res);
-    Parser.Lex();
-    Value =
-        MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None, getContext());
-  } else if (Parser.parseExpression(Value))
+ if (Parser.parseExpression(Value))
     return reportParseError("expected valid expression after comma");
 
   // Check if the Name already exists as a symbol.
