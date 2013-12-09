@@ -273,7 +273,15 @@ class CodeGenModule : public CodeGenTypeCache {
   /// DeferredDeclsToEmit - This is a list of deferred decls which we have seen
   /// that *are* actually referenced.  These get code generated when the module
   /// is done.
-  std::vector<GlobalDecl> DeferredDeclsToEmit;
+  struct DeferredGlobal {
+    DeferredGlobal(llvm::GlobalValue *GV, GlobalDecl GD) : GV(GV), GD(GD) {}
+    llvm::AssertingVH<llvm::GlobalValue> GV;
+    GlobalDecl GD;
+  };
+  std::vector<DeferredGlobal> DeferredDeclsToEmit;
+  void addDeferredDeclToEmit(llvm::GlobalValue *GV, GlobalDecl GD) {
+    DeferredDeclsToEmit.push_back(DeferredGlobal(GV, GD));
+  }
 
   /// List of alias we have emitted. Used to make sure that what they point to
   /// is defined once we get to the end of the of the translation unit.
@@ -432,6 +440,8 @@ public:
                 DiagnosticsEngine &Diags);
 
   ~CodeGenModule();
+
+  void clear();
 
   /// Release - Finalize LLVM code generation.
   void Release();
