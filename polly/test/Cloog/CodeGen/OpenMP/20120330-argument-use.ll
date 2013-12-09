@@ -58,13 +58,11 @@ for.end:                                          ; preds = %for.cond
   ret void
 }
 
-; CHECK: %omp.userContext1 = bitcast i8* %omp.userContext to { i32, i32, i32*, i32* }*
-; CHECK: %0 = getelementptr inbounds { i32, i32, i32*, i32* }* %omp.userContext1, i32 0, i32 0
+; CHECK: %omp.userContext1 = bitcast i8* %omp.userContext to { i32, i32*, i32* }*
+; CHECK: %0 = getelementptr inbounds { i32, i32*, i32* }* %omp.userContext1, i32 0, i32 0
 ; CHECK: %1 = load i32* %0
-; CHECK: %2 = getelementptr inbounds { i32, i32, i32*, i32* }* %omp.userContext1, i32 0, i32 1
-; CHECK: %3 = load i32* %2
-; CHECK: %4 = getelementptr inbounds { i32, i32, i32*, i32* }* %omp.userContext1, i32 0, i32 2
+; CHECK: %2 = getelementptr inbounds { i32, i32*, i32* }* %omp.userContext1, i32 0, i32 1
+; CHECK: %3 = load i32** %2
+; CHECK: %4 = getelementptr inbounds { i32, i32*, i32* }* %omp.userContext1, i32 0, i32 2
 ; CHECK: %5 = load i32** %4
-; CHECK: %6 = getelementptr inbounds { i32, i32, i32*, i32* }* %omp.userContext1, i32 0, i32 3
-; CHECK: %7 = load i32** %6
 

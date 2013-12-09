@@ -297,7 +297,7 @@ public:
   }
 
   class ValidatorResult visitSMaxExpr(const SCEVSMaxExpr *Expr) {
-    ValidatorResult Return(SCEVType::INT, Expr);
+    ValidatorResult Return(SCEVType::INT);
 
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
       ValidatorResult Op = visit(Expr->getOperand(i));
