@@ -12889,18 +12889,18 @@ EmulateInstructionARM::ReadInstruction ()
                 {
                     if ((thumb_opcode & 0xe000) != 0xe000 || ((thumb_opcode & 0x1800u) == 0))
                     {
-                        m_opcode.SetOpcode16 (thumb_opcode);
+                        m_opcode.SetOpcode16 (thumb_opcode, GetByteOrder());
                     }
                     else
                     {
-                        m_opcode.SetOpcode32 ((thumb_opcode << 16) | MemARead(read_inst_context, pc + 2, 2, 0, &success));
+                        m_opcode.SetOpcode32 ((thumb_opcode << 16) | MemARead(read_inst_context, pc + 2, 2, 0, &success), GetByteOrder());
                     }
                 }
             }
             else
             {
                 m_opcode_mode = eModeARM;
-                m_opcode.SetOpcode32 (MemARead(read_inst_context, pc, 4, 0, &success));
+                m_opcode.SetOpcode32 (MemARead(read_inst_context, pc, 4, 0, &success), GetByteOrder());
             }
         }
     }
@@ -13510,15 +13510,15 @@ EmulateInstructionARM::TestEmulation (Stream *out_stream, ArchSpec &arch, Option
     if (arch.GetTriple().getArch() == llvm::Triple::arm)
     {
         m_opcode_mode = eModeARM;
-        m_opcode.SetOpcode32 (test_opcode);
+        m_opcode.SetOpcode32 (test_opcode, GetByteOrder());
     }
     else if (arch.GetTriple().getArch() == llvm::Triple::thumb)
     {
         m_opcode_mode = eModeThumb;
         if (test_opcode < 0x10000)
-            m_opcode.SetOpcode16 (test_opcode);
+            m_opcode.SetOpcode16 (test_opcode, GetByteOrder());
         else
-            m_opcode.SetOpcode32 (test_opcode);
+            m_opcode.SetOpcode32 (test_opcode, GetByteOrder());
 
     }
     else

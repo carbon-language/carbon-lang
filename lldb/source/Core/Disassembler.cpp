@@ -1236,25 +1236,25 @@ PseudoInstruction::SetOpcode (size_t opcode_size, void *opcode_data)
         case 8:
         {
             uint8_t value8 = *((uint8_t *) opcode_data);
-            m_opcode.SetOpcode8 (value8);
+            m_opcode.SetOpcode8 (value8, eByteOrderInvalid);
             break;
          }   
         case 16:
         {
             uint16_t value16 = *((uint16_t *) opcode_data);
-            m_opcode.SetOpcode16 (value16);
+            m_opcode.SetOpcode16 (value16, eByteOrderInvalid);
             break;
          }   
         case 32:
         {
             uint32_t value32 = *((uint32_t *) opcode_data);
-            m_opcode.SetOpcode32 (value32);
+            m_opcode.SetOpcode32 (value32, eByteOrderInvalid);
             break;
          }   
         case 64:
         {
             uint64_t value64 = *((uint64_t *) opcode_data);
-            m_opcode.SetOpcode64 (value64);
+            m_opcode.SetOpcode64 (value64, eByteOrderInvalid);
             break;
          }   
         default:

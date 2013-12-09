@@ -128,6 +128,7 @@ public:
         bool got_op = false;
         DisassemblerLLVMC &llvm_disasm = GetDisassemblerLLVMC();
         const ArchSpec &arch = llvm_disasm.GetArchitecture();
+        const lldb::ByteOrder byte_order = data.GetByteOrder();
         
         const uint32_t min_op_byte_size = arch.GetMinimumOpcodeByteSize();
         const uint32_t max_op_byte_size = arch.GetMaximumOpcodeByteSize();
@@ -136,26 +137,26 @@ public:
             // Fixed size instructions, just read that amount of data.
             if (!data.ValidOffsetForDataOfSize(data_offset, min_op_byte_size))
                 return false;
-            
+
             switch (min_op_byte_size)
             {
                 case 1:
-                    m_opcode.SetOpcode8  (data.GetU8  (&data_offset));
+                    m_opcode.SetOpcode8  (data.GetU8  (&data_offset), byte_order);
                     got_op = true;
                     break;
 
                 case 2:
-                    m_opcode.SetOpcode16 (data.GetU16 (&data_offset));
+                    m_opcode.SetOpcode16 (data.GetU16 (&data_offset), byte_order);
                     got_op = true;
                     break;
 
                 case 4:
-                    m_opcode.SetOpcode32 (data.GetU32 (&data_offset));
+                    m_opcode.SetOpcode32 (data.GetU32 (&data_offset), byte_order);
                     got_op = true;
                     break;
 
                 case 8:
-                    m_opcode.SetOpcode64 (data.GetU64 (&data_offset));
+                    m_opcode.SetOpcode64 (data.GetU64 (&data_offset), byte_order);
                     got_op = true;
                     break;
 
@@ -178,20 +179,20 @@ public:
                     uint32_t thumb_opcode = data.GetU16(&data_offset);
                     if ((thumb_opcode & 0xe000) != 0xe000 || ((thumb_opcode & 0x1800u) == 0))
                     {
-                        m_opcode.SetOpcode16 (thumb_opcode);
+                        m_opcode.SetOpcode16 (thumb_opcode, byte_order);
                         m_is_valid = true;
                     }
                     else
                     {
                         thumb_opcode <<= 16;
                         thumb_opcode |= data.GetU16(&data_offset);
-                        m_opcode.SetOpcode16_2 (thumb_opcode);
+                        m_opcode.SetOpcode16_2 (thumb_opcode, byte_order);
                         m_is_valid = true;
                     }
                 }
                 else
                 {
-                    m_opcode.SetOpcode32 (data.GetU32(&data_offset));
+                    m_opcode.SetOpcode32 (data.GetU32(&data_offset), byte_order);
                     m_is_valid = true;
                 }
             }
@@ -304,12 +305,13 @@ public:
                 inst_size = m_opcode.GetByteSize();
                 StreamString mnemonic_strm;
                 lldb::offset_t offset = 0;
+                lldb::ByteOrder byte_order = data.GetByteOrder();
                 switch (inst_size)
                 {
                     case 1:
                         {
                             const uint8_t uval8 = data.GetU8 (&offset);
-                            m_opcode.SetOpcode8 (uval8);
+                            m_opcode.SetOpcode8 (uval8, byte_order);
                             m_opcode_name.assign (".byte");
                             mnemonic_strm.Printf("0x%2.2x", uval8);
                         }
@@ -317,7 +319,7 @@ public:
                     case 2:
                         {
                             const uint16_t uval16 = data.GetU16(&offset);
-                            m_opcode.SetOpcode16(uval16);
+                            m_opcode.SetOpcode16(uval16, byte_order);
                             m_opcode_name.assign (".short");
                             mnemonic_strm.Printf("0x%4.4x", uval16);
                         }
@@ -325,7 +327,7 @@ public:
                     case 4:
                         {
                             const uint32_t uval32 = data.GetU32(&offset);
-                            m_opcode.SetOpcode32(uval32);
+                            m_opcode.SetOpcode32(uval32, byte_order);
                             m_opcode_name.assign (".long");
                             mnemonic_strm.Printf("0x%8.8x", uval32);
                         }
@@ -333,7 +335,7 @@ public:
                     case 8:
                         {
                             const uint64_t uval64 = data.GetU64(&offset);
-                            m_opcode.SetOpcode64(uval64);
+                            m_opcode.SetOpcode64(uval64, byte_order);
                             m_opcode_name.assign (".quad");
                             mnemonic_strm.Printf("0x%16.16" PRIx64, uval64);
                         }

@@ -15,7 +15,9 @@
 
 // C++ Includes
 // Other libraries and framework includes
+#include "llvm/Support/MathExtras.h"
 // Project includes
+#include "lldb/Host/Endian.h"
 #include "lldb/lldb-public.h"
 
 namespace lldb
@@ -39,31 +41,31 @@ namespace lldb_private {
             eTypeBytes
         };
 
-        Opcode () : m_type (eTypeInvalid)
+        Opcode () : m_byte_order (lldb::eByteOrderInvalid), m_type (eTypeInvalid)
         {
         }
 
-        Opcode (uint8_t inst) : m_type (eType8)
+        Opcode (uint8_t inst, lldb::ByteOrder order) : m_byte_order (order), m_type (eType8)
         {
             m_data.inst8 = inst;
         }
 
-        Opcode (uint16_t inst) : m_type (eType16)
+        Opcode (uint16_t inst, lldb::ByteOrder order) : m_byte_order (order), m_type (eType16)
         {
             m_data.inst16 = inst;
         }
 
-        Opcode (uint32_t inst) : m_type (eType32)
+        Opcode (uint32_t inst, lldb::ByteOrder order) : m_byte_order (order), m_type (eType32)
         {
             m_data.inst32 = inst;
         }
 
-        Opcode (uint64_t inst) : m_type (eType64)
+        Opcode (uint64_t inst, lldb::ByteOrder order) : m_byte_order (order), m_type (eType64)
         {
             m_data.inst64 = inst;
         }
 
-        Opcode (uint8_t *bytes, size_t length)
+        Opcode (uint8_t *bytes, size_t length) : m_byte_order (lldb::eByteOrderInvalid)
         {
             SetOpcodeBytes (bytes, length);
         }
@@ -71,6 +73,7 @@ namespace lldb_private {
         void
         Clear()
         {
+            m_byte_order = lldb::eByteOrderInvalid;
             m_type = Opcode::eTypeInvalid;
         }
         Opcode::Type
@@ -102,7 +105,7 @@ namespace lldb_private {
             {
             case Opcode::eTypeInvalid:  break;
             case Opcode::eType8:        return m_data.inst8;
-            case Opcode::eType16:       return m_data.inst16;
+            case Opcode::eType16:       return GetEndianSwap() ? llvm::ByteSwap_16(m_data.inst16) : m_data.inst16;
             case Opcode::eType16_2:     break;
             case Opcode::eType32:       break;
             case Opcode::eType64:       break;
@@ -118,9 +121,9 @@ namespace lldb_private {
             {
             case Opcode::eTypeInvalid:  break;
             case Opcode::eType8:        return m_data.inst8;
-            case Opcode::eType16:       return m_data.inst16;
+            case Opcode::eType16:       return GetEndianSwap() ? llvm::ByteSwap_16(m_data.inst16) : m_data.inst16;
             case Opcode::eType16_2:     // passthrough
-            case Opcode::eType32:       return m_data.inst32;
+            case Opcode::eType32:       return GetEndianSwap() ? llvm::ByteSwap_32(m_data.inst32) : m_data.inst32;
             case Opcode::eType64:       break;
             case Opcode::eTypeBytes:    break;
             }
@@ -134,48 +137,53 @@ namespace lldb_private {
             {
             case Opcode::eTypeInvalid:  break;
             case Opcode::eType8:        return m_data.inst8;
-            case Opcode::eType16:       return m_data.inst16;
+            case Opcode::eType16:       return GetEndianSwap() ? llvm::ByteSwap_16(m_data.inst16) : m_data.inst16;
             case Opcode::eType16_2:     // passthrough
-            case Opcode::eType32:       return m_data.inst32;
-            case Opcode::eType64:       return m_data.inst64;
+            case Opcode::eType32:       return GetEndianSwap() ? llvm::ByteSwap_32(m_data.inst32) : m_data.inst32;
+            case Opcode::eType64:       return GetEndianSwap() ? llvm::ByteSwap_64(m_data.inst64) : m_data.inst64;
             case Opcode::eTypeBytes:    break;
             }
             return invalid_opcode;
         }
 
         void
-        SetOpcode8 (uint8_t inst)
+        SetOpcode8 (uint8_t inst, lldb::ByteOrder order)
         {
             m_type = eType8;
             m_data.inst8 = inst;
+            m_byte_order = order;
         }
 
         void
-        SetOpcode16 (uint16_t inst)
+        SetOpcode16 (uint16_t inst, lldb::ByteOrder order)
         {
             m_type = eType16;
             m_data.inst16 = inst;
+            m_byte_order = order;
         }
 
         void
-        SetOpcode16_2 (uint32_t inst)
+        SetOpcode16_2 (uint32_t inst, lldb::ByteOrder order)
         {
             m_type = eType16_2;
             m_data.inst32 = inst;
+            m_byte_order = order;
         }
 
         void
-        SetOpcode32 (uint32_t inst)
+        SetOpcode32 (uint32_t inst, lldb::ByteOrder order)
         {
             m_type = eType32;
             m_data.inst32 = inst;
+            m_byte_order = order;
         }
 
         void
-        SetOpcode64 (uint64_t inst)
+        SetOpcode64 (uint64_t inst, lldb::ByteOrder order)
         {
             m_type = eType64;
             m_data.inst64 = inst;
+            m_byte_order = order;
         }
 
         void
@@ -187,6 +195,7 @@ namespace lldb_private {
                 m_data.inst.length = length;
                 assert (length < sizeof (m_data.inst.bytes));
                 memcpy (m_data.inst.bytes, bytes, length);
+                m_byte_order = lldb::eByteOrderInvalid;
             }
             else
             {
@@ -248,6 +257,15 @@ namespace lldb_private {
 
         lldb::ByteOrder
         GetDataByteOrder () const;
+
+        bool
+        GetEndianSwap() const
+        {
+            return (m_byte_order == lldb::eByteOrderBig && lldb::endian::InlHostByteOrder() == lldb::eByteOrderLittle) ||
+                   (m_byte_order == lldb::eByteOrderLittle && lldb::endian::InlHostByteOrder() == lldb::eByteOrderBig);
+        }
+
+        lldb::ByteOrder m_byte_order;
 
         Opcode::Type m_type;
         union
