@@ -84,6 +84,23 @@ static inline unsigned getLoadStoreOffsetSizeInBits(const unsigned Opcode) {
   }
 }
 
+/// Get the scale factor applied to the immediate in the given load/store.
+static inline unsigned getLoadStoreOffsetAlign(const unsigned Opcode) {
+  switch (Opcode) {
+  case Mips::LD_H:
+  case Mips::ST_H:
+    return 2;
+  case Mips::LD_W:
+  case Mips::ST_W:
+    return 4;
+  case Mips::LD_D:
+  case Mips::ST_D:
+    return 8;
+  default:
+    return 1;
+  }
+}
+
 void MipsSERegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
                                      unsigned OpNo, int FrameIndex,
                                      uint64_t StackSize,
@@ -138,9 +155,11 @@ void MipsSERegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
     // For MSA instructions, this is a 10-bit signed immediate (scaled by
     // element size), otherwise it is a 16-bit signed immediate.
     unsigned OffsetBitSize = getLoadStoreOffsetSizeInBits(MI.getOpcode());
+    unsigned OffsetAlign = getLoadStoreOffsetAlign(MI.getOpcode());
 
-    if (OffsetBitSize < 16 && !isIntN(OffsetBitSize, Offset) &&
-        isInt<16>(Offset)) {
+    if (OffsetBitSize < 16 && isInt<16>(Offset) &&
+        (!isIntN(OffsetBitSize, Offset) ||
+         OffsetToAlignment(Offset, OffsetAlign) != 0)) {
       // If we have an offset that needs to fit into a signed n-bit immediate
       // (where n < 16) and doesn't, but does fit into 16-bits then use an ADDiu
       MachineBasicBlock &MBB = *MI.getParent();
