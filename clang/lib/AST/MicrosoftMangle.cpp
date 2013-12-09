@@ -1472,7 +1472,7 @@ void MicrosoftCXXNameMangler::mangleType(const UnresolvedUsingType *T,
 // <union-type>  ::= T <name>
 // <struct-type> ::= U <name>
 // <class-type>  ::= V <name>
-// <enum-type>   ::= W <size> <name>
+// <enum-type>   ::= W4 <name>
 void MicrosoftCXXNameMangler::mangleType(const EnumType *T, SourceRange) {
   mangleType(cast<TagType>(T)->getDecl());
 }
@@ -1492,9 +1492,7 @@ void MicrosoftCXXNameMangler::mangleType(const TagDecl *TD) {
       Out << 'V';
       break;
     case TTK_Enum:
-      Out << 'W';
-      Out << getASTContext().getTypeSizeInChars(
-                cast<EnumDecl>(TD)->getIntegerType()).getQuantity();
+      Out << "W4";
       break;
   }
   mangleName(TD);
