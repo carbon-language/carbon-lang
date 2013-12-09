@@ -42,6 +42,112 @@ static void checkTransitivity(std::vector<LayoutPass::SortKey> &vec) {
     }
   }
 }
+
+// Helper functions to check follow-on graph.
+typedef llvm::DenseMap<const DefinedAtom *, const DefinedAtom *> AtomToAtomT;
+
+static std::string atomToDebugString(const Atom *atom) {
+  const DefinedAtom *definedAtom = dyn_cast<DefinedAtom>(atom);
+  std::string str;
+  llvm::raw_string_ostream s(str);
+  if (definedAtom->name().empty())
+    s << "<anonymous " << definedAtom << ">";
+  else
+    s << definedAtom->name();
+  s << " in ";
+  if (definedAtom->customSectionName().empty())
+    s << "<anonymous>";
+  else
+    s << definedAtom->customSectionName();
+  s.flush();
+  return str;
+}
+
+static void showCycleDetectedError(AtomToAtomT &followOnNexts,
+                                   const DefinedAtom *atom) {
+  const DefinedAtom *start = atom;
+  llvm::dbgs() << "There's a cycle in a follow-on chain!\n";
+  do {
+    llvm::dbgs() << "  " << atomToDebugString(atom) << "\n";
+    for (const Reference *ref : *atom) {
+      llvm::dbgs() << "    " << ref->kindToString()
+                   << ": " << atomToDebugString(ref->target()) << "\n";
+    }
+    atom = followOnNexts[atom];
+  } while (atom != start);
+  llvm::report_fatal_error("Cycle detected");
+}
+
+/// Exit if there's a cycle in a followon chain reachable from the
+/// given root atom. Uses the tortoise and hare algorithm to detect a
+/// cycle.
+static void checkNoCycleInFollowonChain(AtomToAtomT &followOnNexts,
+                                        const DefinedAtom *root) {
+  const DefinedAtom *tortoise = root;
+  const DefinedAtom *hare = followOnNexts[root];
+  while (true) {
+    if (!tortoise || !hare)
+      return;
+    if (tortoise == hare)
+      showCycleDetectedError(followOnNexts, tortoise);
+    tortoise = followOnNexts[tortoise];
+    hare = followOnNexts[followOnNexts[hare]];
+  }
+}
+
+static void checkReachabilityFromRoot(AtomToAtomT &followOnRoots,
+                                      const DefinedAtom *atom) {
+  if (!atom) return;
+  auto i = followOnRoots.find(atom);
+  if (i == followOnRoots.end()) {
+    Twine msg(Twine("Atom <") + atomToDebugString(atom)
+              + "> has no follow-on root!");
+    llvm_unreachable(msg.str().c_str());
+  }
+  const DefinedAtom *ap = i->second;
+  while (true) {
+    const DefinedAtom *next = followOnRoots[ap];
+    if (!next) {
+      Twine msg(Twine("Atom <" + atomToDebugString(atom)
+                      + "> is not reachable from its root!"));
+      llvm_unreachable(msg.str().c_str());
+    }
+    if (next == ap)
+      return;
+    ap = next;
+  }
+}
+
+static void printDefinedAtoms(const MutableFile::DefinedAtomRange &atomRange) {
+  for (const DefinedAtom *atom : atomRange) {
+    llvm::dbgs() << "  file=" << atom->file().path()
+                 << ", name=" << atom->name()
+                 << ", size=" << atom->size()
+                 << ", type=" << atom->contentType()
+                 << ", ordinal=" << atom->ordinal()
+                 << "\n";
+  }
+}
+
+/// Verify that the followon chain is sane. Should not be called in
+/// release binary.
+void LayoutPass::checkFollowonChain(MutableFile::DefinedAtomRange &range) {
+  ScopedTask task(getDefaultDomain(), "LayoutPass::checkFollowonChain");
+
+  // Verify that there's no cycle in follow-on chain.
+  std::set<const DefinedAtom *> roots;
+  for (const auto &ai : _followOnRoots)
+    roots.insert(ai.second);
+  for (const DefinedAtom *root : roots)
+    checkNoCycleInFollowonChain(_followOnNexts, root);
+
+  // Verify that all the atoms in followOnNexts have references to
+  // their roots.
+  for (const auto &ai : _followOnNexts) {
+    checkReachabilityFromRoot(_followOnRoots, ai.first);
+    checkReachabilityFromRoot(_followOnRoots, ai.second);
+  }
+}
 #endif // #ifndef NDEBUG
 
 /// The function compares atoms by sorting atoms in the following order
@@ -418,116 +524,6 @@ void LayoutPass::buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range) {
     }
   }
 }
-
-// Helper functions to check follow-on graph.
-#ifndef NDEBUG
-namespace {
-typedef llvm::DenseMap<const DefinedAtom *, const DefinedAtom *> AtomToAtomT;
-
-std::string atomToDebugString(const Atom *atom) {
-  const DefinedAtom *definedAtom = dyn_cast<DefinedAtom>(atom);
-  std::string str;
-  llvm::raw_string_ostream s(str);
-  if (definedAtom->name().empty())
-    s << "<anonymous " << definedAtom << ">";
-  else
-    s << definedAtom->name();
-  s << " in ";
-  if (definedAtom->customSectionName().empty())
-    s << "<anonymous>";
-  else
-    s << definedAtom->customSectionName();
-  s.flush();
-  return str;
-}
-
-void showCycleDetectedError(AtomToAtomT &followOnNexts,
-                            const DefinedAtom *atom) {
-  const DefinedAtom *start = atom;
-  llvm::dbgs() << "There's a cycle in a follow-on chain!\n";
-  do {
-    llvm::dbgs() << "  " << atomToDebugString(atom) << "\n";
-    for (const Reference *ref : *atom) {
-      llvm::dbgs() << "    " << ref->kindToString()
-                   << ": " << atomToDebugString(ref->target()) << "\n";
-    }
-    atom = followOnNexts[atom];
-  } while (atom != start);
-  llvm::report_fatal_error("Cycle detected");
-}
-
-/// Exit if there's a cycle in a followon chain reachable from the
-/// given root atom. Uses the tortoise and hare algorithm to detect a
-/// cycle.
-void checkNoCycleInFollowonChain(AtomToAtomT &followOnNexts,
-                                 const DefinedAtom *root) {
-  const DefinedAtom *tortoise = root;
-  const DefinedAtom *hare = followOnNexts[root];
-  while (true) {
-    if (!tortoise || !hare)
-      return;
-    if (tortoise == hare)
-      showCycleDetectedError(followOnNexts, tortoise);
-    tortoise = followOnNexts[tortoise];
-    hare = followOnNexts[followOnNexts[hare]];
-  }
-}
-
-void checkReachabilityFromRoot(AtomToAtomT &followOnRoots,
-                               const DefinedAtom *atom) {
-  if (!atom) return;
-  auto i = followOnRoots.find(atom);
-  if (i == followOnRoots.end()) {
-    Twine msg(Twine("Atom <") + atomToDebugString(atom)
-              + "> has no follow-on root!");
-    llvm_unreachable(msg.str().c_str());
-  }
-  const DefinedAtom *ap = i->second;
-  while (true) {
-    const DefinedAtom *next = followOnRoots[ap];
-    if (!next) {
-      Twine msg(Twine("Atom <" + atomToDebugString(atom)
-                      + "> is not reachable from its root!"));
-      llvm_unreachable(msg.str().c_str());
-    }
-    if (next == ap)
-      return;
-    ap = next;
-  }
-}
-
-void printDefinedAtoms(const MutableFile::DefinedAtomRange &atomRange) {
-  for (const DefinedAtom *atom : atomRange) {
-    llvm::dbgs() << "  file=" << atom->file().path()
-                 << ", name=" << atom->name()
-                 << ", size=" << atom->size()
-                 << ", type=" << atom->contentType()
-                 << ", ordinal=" << atom->ordinal()
-                 << "\n";
-  }
-}
-} // end anonymous namespace
-
-/// Verify that the followon chain is sane. Should not be called in
-/// release binary.
-void LayoutPass::checkFollowonChain(MutableFile::DefinedAtomRange &range) {
-  ScopedTask task(getDefaultDomain(), "LayoutPass::checkFollowonChain");
-
-  // Verify that there's no cycle in follow-on chain.
-  std::set<const DefinedAtom *> roots;
-  for (const auto &ai : _followOnRoots)
-    roots.insert(ai.second);
-  for (const DefinedAtom *root : roots)
-    checkNoCycleInFollowonChain(_followOnNexts, root);
-
-  // Verify that all the atoms in followOnNexts have references to
-  // their roots.
-  for (const auto &ai : _followOnNexts) {
-    checkReachabilityFromRoot(_followOnRoots, ai.first);
-    checkReachabilityFromRoot(_followOnRoots, ai.second);
-  }
-}
-#endif  // #ifndef NDEBUG
 
 std::vector<LayoutPass::SortKey>
 LayoutPass::decorate(MutableFile::DefinedAtomRange &atomRange) const {
