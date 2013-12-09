@@ -200,7 +200,7 @@ ProcessPOSIX::GetFilePath(
 
 Error
 ProcessPOSIX::DoLaunch (Module *module,
-                       const ProcessLaunchInfo &launch_info)
+                        ProcessLaunchInfo &launch_info)
 {
     Error error;
     assert(m_monitor == NULL);

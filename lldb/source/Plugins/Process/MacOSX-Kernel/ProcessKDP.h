@@ -85,7 +85,7 @@ public:
     
     virtual lldb_private::Error
     DoLaunch (lldb_private::Module *exe_module, 
-              const lldb_private::ProcessLaunchInfo &launch_info);
+              lldb_private::ProcessLaunchInfo &launch_info);
     
     virtual lldb_private::Error
     WillAttachToProcessWithID (lldb::pid_t pid);

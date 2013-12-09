@@ -360,7 +360,7 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
 //----------------------------------------------------------------------
 Error
 ProcessKDP::DoLaunch (Module *exe_module, 
-                      const ProcessLaunchInfo &launch_info)
+                      ProcessLaunchInfo &launch_info)
 {
     Error error;
     error.SetErrorString ("launching not supported in kdp-remote plug-in");

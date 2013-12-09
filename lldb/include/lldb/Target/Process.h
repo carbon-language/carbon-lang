@@ -2225,7 +2225,7 @@ public:
     //------------------------------------------------------------------
     virtual Error
     DoLaunch (Module *exe_module,
-              const ProcessLaunchInfo &launch_info)
+              ProcessLaunchInfo &launch_info)
     {
         Error error;
         error.SetErrorStringWithFormat("error: %s does not support launching processes", GetPluginName().GetCString());

@@ -662,7 +662,7 @@ ProcessGDBRemote::WillLaunchOrAttach ()
 // Process Control
 //----------------------------------------------------------------------
 Error
-ProcessGDBRemote::DoLaunch (Module *exe_module, const ProcessLaunchInfo &launch_info)
+ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
 {
     Error error;
 
