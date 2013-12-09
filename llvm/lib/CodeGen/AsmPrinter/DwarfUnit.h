@@ -60,7 +60,7 @@ public:
 //===----------------------------------------------------------------------===//
 /// Unit - This dwarf writer support class manages information associated
 /// with a source file.
-class Unit {
+class DwarfUnit {
 protected:
   /// UniqueID - a numeric ID unique among all CUs in the module
   unsigned UniqueID;
@@ -143,11 +143,11 @@ protected:
   /// The label for the start of the range sets for the elements of this unit.
   MCSymbol *LabelRange;
 
-  Unit(unsigned UID, DIE *D, DICompileUnit CU, AsmPrinter *A, DwarfDebug *DW,
-       DwarfFile *DWU);
+  DwarfUnit(unsigned UID, DIE *D, DICompileUnit CU, AsmPrinter *A,
+            DwarfDebug *DW, DwarfFile *DWU);
 
 public:
-  virtual ~Unit();
+  virtual ~DwarfUnit();
 
   /// Pass in the SectionSym even though we could recreate it in every compile
   /// unit (type units will have actually distinct symbols once they're in
@@ -495,7 +495,7 @@ private:
   void updateAcceleratorTables(DIScope Context, DIType Ty, const DIE *TyDIE);
 };
 
-class CompileUnit : public Unit {
+class CompileUnit : public DwarfUnit {
 public:
   CompileUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
               DwarfDebug *DW, DwarfFile *DWU);
@@ -510,7 +510,7 @@ public:
   uint16_t getLanguage() const { return getNode().getLanguage(); }
 };
 
-class TypeUnit : public Unit {
+class TypeUnit : public DwarfUnit {
 private:
   uint16_t Language;
 
