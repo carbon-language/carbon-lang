@@ -373,7 +373,8 @@ bool DwarfDebug::isSubprogramContext(const MDNode *Context) {
 // Find DIE for the given subprogram and attach appropriate DW_AT_low_pc
 // and DW_AT_high_pc attributes. If there are global variables in this
 // scope then create and insert DIEs for these variables.
-DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU, DISubprogram SP) {
+DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit *SPCU,
+                                          DISubprogram SP) {
   DIE *SPDie = SPCU->getDIE(SP);
 
   assert(SPDie && "Unable to find subprogram DIE!");
@@ -466,7 +467,7 @@ static void addSectionLabel(AsmPrinter *Asm, DwarfUnit *U, DIE *D,
     U->addSectionDelta(D, A, L, Sec);
 }
 
-void DwarfDebug::addScopeRangeList(CompileUnit *TheCU, DIE *ScopeDIE,
+void DwarfDebug::addScopeRangeList(DwarfCompileUnit *TheCU, DIE *ScopeDIE,
                                    const SmallVectorImpl<InsnRange> &Range) {
   // Emit offset in .debug_range as a relocatable label. emitDIE will handle
   // emitting it appropriately.
@@ -489,7 +490,7 @@ void DwarfDebug::addScopeRangeList(CompileUnit *TheCU, DIE *ScopeDIE,
 
 // Construct new DW_TAG_lexical_block for this scope and attach
 // DW_AT_low_pc/DW_AT_high_pc labels.
-DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
+DIE *DwarfDebug::constructLexicalScopeDIE(DwarfCompileUnit *TheCU,
                                           LexicalScope *Scope) {
   if (isLexicalScopeDIENull(Scope))
     return 0;
@@ -523,7 +524,7 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
 
 // This scope represents inlined body of a function. Construct DIE to
 // represent this concrete inlined copy of the function.
-DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
+DIE *DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit *TheCU,
                                           LexicalScope *Scope) {
   const SmallVectorImpl<InsnRange> &ScopeRanges = Scope->getRanges();
   assert(!ScopeRanges.empty() &&
@@ -577,7 +578,8 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
   return ScopeDIE;
 }
 
-DIE *DwarfDebug::createScopeChildrenDIE(CompileUnit *TheCU, LexicalScope *Scope,
+DIE *DwarfDebug::createScopeChildrenDIE(DwarfCompileUnit *TheCU,
+                                        LexicalScope *Scope,
                                         SmallVectorImpl<DIE *> &Children) {
   DIE *ObjectPointer = NULL;
 
@@ -610,7 +612,8 @@ DIE *DwarfDebug::createScopeChildrenDIE(CompileUnit *TheCU, LexicalScope *Scope,
 }
 
 // Construct a DIE for this scope.
-DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
+DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit *TheCU,
+                                   LexicalScope *Scope) {
   if (!Scope || !Scope->getScopeNode())
     return NULL;
 
@@ -740,15 +743,15 @@ void DwarfDebug::addGnuPubAttributes(DwarfUnit *U, DIE *D) const {
                   DwarfGnuPubTypesSectionSym);
 }
 
-// Create new CompileUnit for the given metadata node with tag
+// Create new DwarfCompileUnit for the given metadata node with tag
 // DW_TAG_compile_unit.
-CompileUnit *DwarfDebug::constructCompileUnit(DICompileUnit DIUnit) {
+DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   StringRef FN = DIUnit.getFilename();
   CompilationDir = DIUnit.getDirectory();
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
-  CompileUnit *NewCU = new CompileUnit(InfoHolder.getUnits().size(), Die,
-                                       DIUnit, Asm, this, &InfoHolder);
+  DwarfCompileUnit *NewCU = new DwarfCompileUnit(
+      InfoHolder.getUnits().size(), Die, DIUnit, Asm, this, &InfoHolder);
   InfoHolder.addUnit(NewCU);
 
   FileIDCUMap[NewCU->getUniqueID()] = 0;
@@ -831,12 +834,13 @@ CompileUnit *DwarfDebug::constructCompileUnit(DICompileUnit DIUnit) {
 }
 
 // Construct subprogram DIE.
-void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU, const MDNode *N) {
+void DwarfDebug::constructSubprogramDIE(DwarfCompileUnit *TheCU,
+                                        const MDNode *N) {
   // FIXME: We should only call this routine once, however, during LTO if a
   // program is defined in multiple CUs we could end up calling it out of
   // beginModule as we walk the CUs.
 
-  CompileUnit *&CURef = SPMap[N];
+  DwarfCompileUnit *&CURef = SPMap[N];
   if (CURef)
     return;
   CURef = TheCU;
@@ -853,7 +857,7 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU, const MDNode *N) {
   TheCU->addGlobalName(SP.getName(), SubprogramDie, resolve(SP.getContext()));
 }
 
-void DwarfDebug::constructImportedEntityDIE(CompileUnit *TheCU,
+void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit *TheCU,
                                             const MDNode *N) {
   DIImportedEntity Module(N);
   if (!Module.Verify())
@@ -862,15 +866,15 @@ void DwarfDebug::constructImportedEntityDIE(CompileUnit *TheCU,
     constructImportedEntityDIE(TheCU, Module, D);
 }
 
-void DwarfDebug::constructImportedEntityDIE(CompileUnit *TheCU, const MDNode *N,
-                                            DIE *Context) {
+void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit *TheCU,
+                                            const MDNode *N, DIE *Context) {
   DIImportedEntity Module(N);
   if (!Module.Verify())
     return;
   return constructImportedEntityDIE(TheCU, Module, Context);
 }
 
-void DwarfDebug::constructImportedEntityDIE(CompileUnit *TheCU,
+void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit *TheCU,
                                             const DIImportedEntity &Module,
                                             DIE *Context) {
   assert(Module.Verify() &&
@@ -921,7 +925,7 @@ void DwarfDebug::beginModule() {
 
   for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
     DICompileUnit CUNode(CU_Nodes->getOperand(i));
-    CompileUnit *CU = constructCompileUnit(CUNode);
+    DwarfCompileUnit *CU = constructDwarfCompileUnit(CUNode);
     DIArray ImportedEntities = CUNode.getImportedEntities();
     for (unsigned i = 0, e = ImportedEntities.getNumElements(); i != e; ++i)
       ScopesWithImportedEntities.push_back(std::make_pair(
@@ -994,7 +998,8 @@ void DwarfDebug::collectDeadVariables() {
           continue;
 
         // Construct subprogram DIE and add variables DIEs.
-        CompileUnit *SPCU = static_cast<CompileUnit *>(CUMap.lookup(TheCU));
+        DwarfCompileUnit *SPCU =
+            static_cast<DwarfCompileUnit *>(CUMap.lookup(TheCU));
         assert(SPCU && "Unable to find Compile Unit!");
         // FIXME: See the comment in constructSubprogramDIE about duplicate
         // subprogram DIEs.
@@ -1042,7 +1047,7 @@ static bool isContainedInAnonNamespace(DIE *Die) {
 
 /// Test if the current CU language is C++ and that we have
 /// a named type that is not contained in an anonymous namespace.
-static bool shouldAddODRHash(TypeUnit *CU, DIE *Die) {
+static bool shouldAddODRHash(DwarfTypeUnit *CU, DIE *Die) {
   return CU->getLanguage() == dwarf::DW_LANG_C_plus_plus &&
          getDIEStringAttr(Die, dwarf::DW_AT_name) != "" &&
          !isContainedInAnonNamespace(Die);
@@ -1078,7 +1083,8 @@ void DwarfDebug::finalizeModuleInfo() {
       TheU->addUInt(TheU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
                     dwarf::DW_FORM_data8, ID);
       // Now construct the skeleton CU associated.
-      CompileUnit *SkCU = constructSkeletonCU(static_cast<CompileUnit *>(TheU));
+      DwarfCompileUnit *SkCU =
+          constructSkeletonCU(static_cast<DwarfCompileUnit *>(TheU));
       // This should be a unique identifier when we want to build .dwp files.
       SkCU->addUInt(SkCU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
                     dwarf::DW_FORM_data8, ID);
@@ -1586,11 +1592,11 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   // Make sure that each lexical scope will have a begin/end label.
   identifyScopeMarkers();
 
-  // Set DwarfCompileUnitID in MCContext to the Compile Unit this function
+  // Set DwarfDwarfCompileUnitID in MCContext to the Compile Unit this function
   // belongs to so that we add to the correct per-cu line table in the
   // non-asm case.
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
-  CompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
+  DwarfCompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
   assert(TheCU && "Unable to find compile unit!");
   if (Asm->TM.hasMCUseLoc() && Asm->OutStreamer.hasRawTextSupport())
     // Use a single line table if we are using .loc and generating assembly.
@@ -1815,14 +1821,14 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   FunctionEndSym = Asm->GetTempSymbol("func_end", Asm->getFunctionNumber());
   // Assumes in correct section after the entry point.
   Asm->OutStreamer.EmitLabel(FunctionEndSym);
-  // Set DwarfCompileUnitID in MCContext to default value.
+  // Set DwarfDwarfCompileUnitID in MCContext to default value.
   Asm->OutStreamer.getContext().setDwarfCompileUnitID(0);
 
   SmallPtrSet<const MDNode *, 16> ProcessedVars;
   collectVariableInfo(ProcessedVars);
 
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
-  CompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
+  DwarfCompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
   assert(TheCU && "Unable to find compile unit!");
 
   // Construct abstract scopes.
@@ -2068,7 +2074,7 @@ void DwarfDebug::emitDIE(DIE *Die) {
         // For DW_FORM_ref_addr, output the offset from beginning of debug info
         // section. Origin->getOffset() returns the offset from start of the
         // compile unit.
-        CompileUnit *CU = CUDieMap.lookup(Origin->getUnit());
+        DwarfCompileUnit *CU = CUDieMap.lookup(Origin->getUnit());
         assert(CU && "CUDie should belong to a CU.");
         Addr += CU->getDebugInfoOffset();
         if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
@@ -2754,7 +2760,7 @@ void DwarfDebug::emitDebugARanges() {
   Asm->OutStreamer.SwitchSection(
       Asm->getObjFileLowering().getDwarfARangesSection());
 
-  typedef DenseMap<CompileUnit *, std::vector<ArangeSpan> > SpansType;
+  typedef DenseMap<DwarfCompileUnit *, std::vector<ArangeSpan> > SpansType;
 
   SpansType Spans;
 
@@ -2815,9 +2821,9 @@ void DwarfDebug::emitDebugARanges() {
   unsigned PtrSize = Asm->getDataLayout().getPointerSize();
 
   // Build a list of CUs used.
-  std::vector<CompileUnit *> CUs;
+  std::vector<DwarfCompileUnit *> CUs;
   for (SpansType::iterator it = Spans.begin(); it != Spans.end(); it++) {
-    CompileUnit *CU = it->first;
+    DwarfCompileUnit *CU = it->first;
     CUs.push_back(CU);
   }
 
@@ -2826,7 +2832,7 @@ void DwarfDebug::emitDebugARanges() {
 
   // Emit an arange table for each CU we used.
   for (size_t CUIdx = 0; CUIdx < CUs.size(); CUIdx++) {
-    CompileUnit *CU = CUs[CUIdx];
+    DwarfCompileUnit *CU = CUs[CUIdx];
     std::vector<ArangeSpan> &List = Spans[CU];
 
     // Emit size of content not including length itself.
@@ -2895,10 +2901,10 @@ void DwarfDebug::emitDebugRanges() {
   unsigned char Size = Asm->getDataLayout().getPointerSize();
 
   // Grab the specific ranges for the compile units in the module.
-  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
-                                                         E = CUMap.end();
+  for (DenseMap<const MDNode *, DwarfCompileUnit *>::iterator I = CUMap.begin(),
+                                                              E = CUMap.end();
        I != E; ++I) {
-    CompileUnit *TheCU = I->second;
+    DwarfCompileUnit *TheCU = I->second;
 
     // Emit a symbol so we can find the beginning of our ranges.
     Asm->OutStreamer.EmitLabel(TheCU->getLabelRange());
@@ -2949,11 +2955,11 @@ void DwarfDebug::emitDebugMacInfo() {
 // This DIE has the following attributes: DW_AT_comp_dir, DW_AT_stmt_list,
 // DW_AT_low_pc, DW_AT_high_pc, DW_AT_ranges, DW_AT_dwo_name, DW_AT_dwo_id,
 // DW_AT_ranges_base, DW_AT_addr_base.
-CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
+DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
-  CompileUnit *NewCU = new CompileUnit(CU->getUniqueID(), Die, CU->getNode(),
-                                       Asm, this, &SkeletonHolder);
+  DwarfCompileUnit *NewCU = new DwarfCompileUnit(
+      CU->getUniqueID(), Die, CU->getNode(), Asm, this, &SkeletonHolder);
   NewCU->initSection(Asm->getObjFileLowering().getDwarfInfoSection(),
                      DwarfInfoSectionSym);
 
@@ -3024,31 +3030,33 @@ void DwarfDebug::emitDebugStrDWO() {
                          OffSec, StrSym);
 }
 
-void DwarfDebug::addTypeUnitType(uint16_t Language, DIE *RefDie,
-                                 DICompositeType CTy) {
+void DwarfDebug::addDwarfTypeUnitType(uint16_t Language, DIE *RefDie,
+                                      DICompositeType CTy) {
   DenseMap<const MDNode *,
            std::pair<uint64_t, SmallVectorImpl<DIE *> *> >::iterator I =
-      TypeUnits.find(CTy);
+      DwarfTypeUnits.find(CTy);
   SmallVector<DIE *, 8> References;
   References.push_back(RefDie);
-  if (I != TypeUnits.end()) {
+  if (I != DwarfTypeUnits.end()) {
     if (I->second.second) {
       I->second.second->push_back(RefDie);
       return;
     }
   } else {
     DIE *UnitDie = new DIE(dwarf::DW_TAG_type_unit);
-    TypeUnit *NewTU = new TypeUnit(InfoHolder.getUnits().size(), UnitDie,
-                                   Language, Asm, this, &InfoHolder);
+    DwarfTypeUnit *NewTU =
+        new DwarfTypeUnit(InfoHolder.getUnits().size(), UnitDie, Language, Asm,
+                          this, &InfoHolder);
     InfoHolder.addUnit(NewTU);
 
     NewTU->addUInt(UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                    Language);
 
-    // Register the type in the TypeUnits map with a vector of references to be
+    // Register the type in the DwarfTypeUnits map with a vector of references
+    // to be
     // populated whenever a reference is required.
-    I = TypeUnits.insert(std::make_pair(CTy, std::make_pair(0, &References)))
-            .first;
+    I = DwarfTypeUnits.insert(std::make_pair(
+                                  CTy, std::make_pair(0, &References))).first;
 
     // Construct the type, this may, recursively, require more type units that
     // may in turn require this type again - in which case they will add DIEs to

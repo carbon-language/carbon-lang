@@ -33,9 +33,10 @@
 
 using namespace llvm;
 
-static cl::opt<bool> GenerateTypeUnits("generate-type-units", cl::Hidden,
-                                       cl::desc("Generate DWARF4 type units."),
-                                       cl::init(false));
+static cl::opt<bool>
+GenerateDwarfTypeUnits("generate-type-units", cl::Hidden,
+                       cl::desc("Generate DWARF4 type units."),
+                       cl::init(false));
 
 /// Unit - Unit constructor.
 DwarfUnit::DwarfUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
@@ -45,14 +46,15 @@ DwarfUnit::DwarfUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
 }
 
-CompileUnit::CompileUnit(unsigned UID, DIE *D, DICompileUnit Node,
-                         AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU)
+DwarfCompileUnit::DwarfCompileUnit(unsigned UID, DIE *D, DICompileUnit Node,
+                                   AsmPrinter *A, DwarfDebug *DW,
+                                   DwarfFile *DWU)
     : DwarfUnit(UID, D, Node, A, DW, DWU) {
   insertDIE(Node, D);
 }
 
-TypeUnit::TypeUnit(unsigned UID, DIE *D, uint16_t Language, AsmPrinter *A,
-                   DwarfDebug *DW, DwarfFile *DWU)
+DwarfTypeUnit::DwarfTypeUnit(unsigned UID, DIE *D, uint16_t Language,
+                             AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU)
     : DwarfUnit(UID, D, DICompileUnit(), A, DW, DWU), Language(Language) {}
 
 /// ~Unit - Destructor for compile unit.
@@ -123,7 +125,7 @@ static bool isShareableAcrossCUs(DIDescriptor D) {
   // together.
   return (D.isType() ||
           (D.isSubprogram() && !DISubprogram(D).isDefinition())) &&
-         !GenerateTypeUnits;
+         !GenerateDwarfTypeUnits;
 }
 
 /// getDIE - Returns the debug information entry map slot for the
@@ -270,8 +272,8 @@ void DwarfUnit::addSectionOffset(DIE *Die, dwarf::Attribute Attribute,
 /// addLabelAddress - Add a dwarf label attribute data and value using
 /// DW_FORM_addr or DW_FORM_GNU_addr_index.
 ///
-void CompileUnit::addLabelAddress(DIE *Die, dwarf::Attribute Attribute,
-                                  MCSymbol *Label) {
+void DwarfCompileUnit::addLabelAddress(DIE *Die, dwarf::Attribute Attribute,
+                                       MCSymbol *Label) {
   if (Label)
     DD->addArangeLabel(SymbolCU(this, Label));
 
@@ -931,7 +933,7 @@ DIE *DwarfUnit::createTypeDIE(DICompositeType Ty) {
 
 /// Return true if the type is appropriately scoped to be contained inside
 /// its own type unit.
-static bool isTypeUnitScoped(DIType Ty, const DwarfDebug *DD) {
+static bool isDwarfTypeUnitScoped(DIType Ty, const DwarfDebug *DD) {
   DIScope Parent = DD->resolve(Ty.getContext());
   while (Parent) {
     // Don't generate a hash for anything scoped inside a function.
@@ -943,8 +945,9 @@ static bool isTypeUnitScoped(DIType Ty, const DwarfDebug *DD) {
 }
 
 /// Return true if the type should be split out into a type unit.
-static bool shouldCreateTypeUnit(DICompositeType CTy, const DwarfDebug *DD) {
-  if (!GenerateTypeUnits)
+static bool shouldCreateDwarfTypeUnit(DICompositeType CTy,
+                                      const DwarfDebug *DD) {
+  if (!GenerateDwarfTypeUnits)
     return false;
 
   uint16_t Tag = CTy.getTag();
@@ -957,7 +960,7 @@ static bool shouldCreateTypeUnit(DICompositeType CTy, const DwarfDebug *DD) {
     // If this is a class, structure, union, or enumeration type
     // that is a definition (not a declaration), and not scoped
     // inside a function then separate this out as a type unit.
-    return !CTy.isForwardDecl() && isTypeUnitScoped(CTy, DD);
+    return !CTy.isForwardDecl() && isDwarfTypeUnitScoped(CTy, DD);
   default:
     return false;
   }
@@ -989,8 +992,8 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     constructTypeDIE(*TyDIE, DIBasicType(Ty));
   else if (Ty.isCompositeType()) {
     DICompositeType CTy(Ty);
-    if (shouldCreateTypeUnit(CTy, DD)) {
-      DD->addTypeUnitType(getLanguage(), TyDIE, CTy);
+    if (shouldCreateDwarfTypeUnit(CTy, DD)) {
+      DD->addDwarfTypeUnitType(getLanguage(), TyDIE, CTy);
       // Skip updating the accellerator tables since this is not the full type
       return TyDIE;
     }
@@ -1543,7 +1546,7 @@ static const ConstantExpr *getMergedGlobalExpr(const Value *V) {
 }
 
 /// createGlobalVariableDIE - create global variable DIE.
-void CompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
+void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
   // Check for pre-existence.
   if (getDIE(GV))
     return;

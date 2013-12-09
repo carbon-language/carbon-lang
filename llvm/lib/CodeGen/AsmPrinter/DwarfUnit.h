@@ -495,10 +495,10 @@ private:
   void updateAcceleratorTables(DIScope Context, DIType Ty, const DIE *TyDIE);
 };
 
-class CompileUnit : public DwarfUnit {
+class DwarfCompileUnit : public DwarfUnit {
 public:
-  CompileUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
-              DwarfDebug *DW, DwarfFile *DWU);
+  DwarfCompileUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
+                   DwarfDebug *DW, DwarfFile *DWU);
 
   /// createGlobalVariableDIE - create global variable DIE.
   void createGlobalVariableDIE(DIGlobalVariable GV);
@@ -510,13 +510,13 @@ public:
   uint16_t getLanguage() const { return getNode().getLanguage(); }
 };
 
-class TypeUnit : public DwarfUnit {
+class DwarfTypeUnit : public DwarfUnit {
 private:
   uint16_t Language;
 
 public:
-  TypeUnit(unsigned UID, DIE *D, uint16_t Language, AsmPrinter *A,
-           DwarfDebug *DW, DwarfFile *DWU);
+  DwarfTypeUnit(unsigned UID, DIE *D, uint16_t Language, AsmPrinter *A,
+                DwarfDebug *DW, DwarfFile *DWU);
 
   uint16_t getLanguage() const { return Language; }
 };

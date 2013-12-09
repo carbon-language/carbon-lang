@@ -31,7 +31,7 @@
 namespace llvm {
 
 class DwarfUnit;
-class CompileUnit;
+class DwarfCompileUnit;
 class ConstantInt;
 class ConstantFP;
 class DbgVariable;
@@ -311,9 +311,9 @@ public:
 
 /// \brief Helper used to pair up a symbol and its DWARF compile unit.
 struct SymbolCU {
-  SymbolCU(CompileUnit *CU, const MCSymbol *Sym) : Sym(Sym), CU(CU) {}
+  SymbolCU(DwarfCompileUnit *CU, const MCSymbol *Sym) : Sym(Sym), CU(CU) {}
   const MCSymbol *Sym;
-  CompileUnit *CU;
+  DwarfCompileUnit *CU;
 };
 
 /// \brief Collects and handles dwarf debug information.
@@ -331,20 +331,20 @@ class DwarfDebug : public AsmPrinterHandler {
   // this is just so that the DIEValue allocator has a place to store
   // the particular elements.
   // FIXME: Store these off of DwarfDebug instead?
-  CompileUnit *FirstCU;
+  DwarfCompileUnit *FirstCU;
 
-  // Maps MDNode with its corresponding CompileUnit.
-  DenseMap<const MDNode *, CompileUnit *> CUMap;
+  // Maps MDNode with its corresponding DwarfCompileUnit.
+  DenseMap<const MDNode *, DwarfCompileUnit *> CUMap;
 
-  // Maps subprogram MDNode with its corresponding CompileUnit.
-  DenseMap<const MDNode *, CompileUnit *> SPMap;
+  // Maps subprogram MDNode with its corresponding DwarfCompileUnit.
+  DenseMap<const MDNode *, DwarfCompileUnit *> SPMap;
 
-  // Maps a CU DIE with its corresponding CompileUnit.
-  DenseMap<const DIE *, CompileUnit *> CUDieMap;
+  // Maps a CU DIE with its corresponding DwarfCompileUnit.
+  DenseMap<const DIE *, DwarfCompileUnit *> CUDieMap;
 
   /// Maps MDNodes for type sysstem with the corresponding DIEs. These DIEs can
   /// be shared across CUs, that is why we keep the map here instead
-  /// of in CompileUnit.
+  /// of in DwarfCompileUnit.
   DenseMap<const MDNode *, DIE *> MDTypeNodeToDieMap;
 
   // Stores the current file ID for a given compile unit.
@@ -456,7 +456,7 @@ class DwarfDebug : public AsmPrinterHandler {
   // the pointer is null, the hash is immediately available in the uint64_t and
   // should be directly used for proxy DIEs.
   DenseMap<const MDNode *, std::pair<uint64_t, SmallVectorImpl<DIE *> *> >
-  TypeUnits;
+  DwarfTypeUnits;
 
   // Whether to emit the pubnames/pubtypes sections.
   bool HasDwarfPubSections;
@@ -492,7 +492,7 @@ class DwarfDebug : public AsmPrinterHandler {
   /// DW_AT_low_pc and DW_AT_high_pc attributes. If there are global
   /// variables in this scope then create and insert DIEs for these
   /// variables.
-  DIE *updateSubprogramScopeDIE(CompileUnit *SPCU, DISubprogram SP);
+  DIE *updateSubprogramScopeDIE(DwarfCompileUnit *SPCU, DISubprogram SP);
 
   /// \brief A helper function to check whether the DIE for a given Scope is
   /// going to be null.
@@ -500,21 +500,21 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief A helper function to construct a RangeSpanList for a given
   /// lexical scope.
-  void addScopeRangeList(CompileUnit *TheCU, DIE *ScopeDIE,
+  void addScopeRangeList(DwarfCompileUnit *TheCU, DIE *ScopeDIE,
                          const SmallVectorImpl<InsnRange> &Range);
 
   /// \brief Construct new DW_TAG_lexical_block for this scope and
   /// attach DW_AT_low_pc/DW_AT_high_pc labels.
-  DIE *constructLexicalScopeDIE(CompileUnit *TheCU, LexicalScope *Scope);
+  DIE *constructLexicalScopeDIE(DwarfCompileUnit *TheCU, LexicalScope *Scope);
 
   /// \brief This scope represents inlined body of a function. Construct
   /// DIE to represent this concrete inlined copy of the function.
-  DIE *constructInlinedScopeDIE(CompileUnit *TheCU, LexicalScope *Scope);
+  DIE *constructInlinedScopeDIE(DwarfCompileUnit *TheCU, LexicalScope *Scope);
 
   /// \brief Construct a DIE for this scope.
-  DIE *constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope);
+  DIE *constructScopeDIE(DwarfCompileUnit *TheCU, LexicalScope *Scope);
   /// A helper function to create children of a Scope DIE.
-  DIE *createScopeChildrenDIE(CompileUnit *TheCU, LexicalScope *Scope,
+  DIE *createScopeChildrenDIE(DwarfCompileUnit *TheCU, LexicalScope *Scope,
                               SmallVectorImpl<DIE *> &Children);
 
   /// \brief Emit initial Dwarf sections with a label at the start of each one.
@@ -597,7 +597,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Construct the split debug info compile unit for the debug info
   /// section.
-  CompileUnit *constructSkeletonCU(const CompileUnit *CU);
+  DwarfCompileUnit *constructSkeletonCU(const DwarfCompileUnit *CU);
 
   /// \brief Emit the debug info dwo section.
   void emitDebugInfoDWO();
@@ -612,22 +612,22 @@ class DwarfDebug : public AsmPrinterHandler {
   /// emit it here if we don't have a skeleton CU for split dwarf.
   void addGnuPubAttributes(DwarfUnit *U, DIE *D) const;
 
-  /// \brief Create new CompileUnit for the given metadata node with tag
+  /// \brief Create new DwarfCompileUnit for the given metadata node with tag
   /// DW_TAG_compile_unit.
-  CompileUnit *constructCompileUnit(DICompileUnit DIUnit);
+  DwarfCompileUnit *constructDwarfCompileUnit(DICompileUnit DIUnit);
 
   /// \brief Construct subprogram DIE.
-  void constructSubprogramDIE(CompileUnit *TheCU, const MDNode *N);
+  void constructSubprogramDIE(DwarfCompileUnit *TheCU, const MDNode *N);
 
   /// \brief Construct imported_module or imported_declaration DIE.
-  void constructImportedEntityDIE(CompileUnit *TheCU, const MDNode *N);
+  void constructImportedEntityDIE(DwarfCompileUnit *TheCU, const MDNode *N);
 
   /// \brief Construct import_module DIE.
-  void constructImportedEntityDIE(CompileUnit *TheCU, const MDNode *N,
+  void constructImportedEntityDIE(DwarfCompileUnit *TheCU, const MDNode *N,
                                   DIE *Context);
 
   /// \brief Construct import_module DIE.
-  void constructImportedEntityDIE(CompileUnit *TheCU,
+  void constructImportedEntityDIE(DwarfCompileUnit *TheCU,
                                   const DIImportedEntity &Module, DIE *Context);
 
   /// \brief Register a source line with debug info. Returns the unique
@@ -701,7 +701,7 @@ public:
 
   /// \brief Add a DIE to the set of types that we're going to pull into
   /// type units.
-  void addTypeUnitType(uint16_t Language, DIE *Die, DICompositeType CTy);
+  void addDwarfTypeUnitType(uint16_t Language, DIE *Die, DICompositeType CTy);
 
   /// \brief Add a label so that arange data can be generated for it.
   void addArangeLabel(SymbolCU SCU) { ArangeLabels.push_back(SCU); }
