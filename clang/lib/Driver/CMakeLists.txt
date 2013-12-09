@@ -1,3 +1,9 @@
+set(LLVM_LINK_COMPONENTS
+  Option
+  Support
+  TransformUtils
+  )
+
 add_clang_library(clangDriver
   Action.cpp
   CC1AsOptions.cpp
@@ -25,6 +31,4 @@ add_dependencies(clangDriver
 
 target_link_libraries(clangDriver
   clangBasic
-  LLVMOption
-  LLVMTransformUtils
   )
