@@ -128,6 +128,7 @@ X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const Triple &Triple) {
   if (Triple.getArch() == Triple::x86_64) {
     GlobalPrefix = '\0';
     PrivateGlobalPrefix = ".L";
+    HasMicrosoftFastStdCallMangling = false;
   }
 
   AssemblerDialect = AsmWriterFlavor;
@@ -143,6 +144,7 @@ X86MCAsmInfoGNUCOFF::X86MCAsmInfoGNUCOFF(const Triple &Triple) {
   if (Triple.getArch() == Triple::x86_64) {
     GlobalPrefix = '\0';
     PrivateGlobalPrefix = ".L";
+    HasMicrosoftFastStdCallMangling = false;
   }
 
   AssemblerDialect = AsmWriterFlavor;
