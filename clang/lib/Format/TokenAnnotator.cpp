@@ -529,6 +529,7 @@ private:
     if (CurrentToken != NULL) {
       determineTokenType(*CurrentToken);
       CurrentToken->BindingStrength = Contexts.back().BindingStrength;
+      CurrentToken->NestingLevel = Contexts.size() - 1;
     }
 
     if (CurrentToken != NULL)
@@ -1141,8 +1142,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
       return 3;
     if (Left.Type == TT_StartOfName)
       return 20;
-    if (InFunctionDecl && Right.BindingStrength == 1)
-      // FIXME: Clean up hack of using BindingStrength to find top-level names.
+    if (InFunctionDecl && Right.NestingLevel == 0)
       return Style.PenaltyReturnTypeOnItsOwnLine;
     return 200;
   }
@@ -1396,9 +1396,8 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
     return true;
   } else if (Right.Previous->ClosesTemplateDeclaration &&
              Right.Previous->MatchingParen &&
-             Right.Previous->MatchingParen->BindingStrength == 1 &&
+             Right.Previous->MatchingParen->NestingLevel == 0 &&
              Style.AlwaysBreakTemplateDeclarations) {
-    // FIXME: Fix horrible hack of using BindingStrength to find top-level <>.
     return true;
   } else if (Right.Type == TT_CtorInitializerComma &&
              Style.BreakConstructorInitializersBeforeComma &&

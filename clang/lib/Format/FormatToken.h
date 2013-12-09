@@ -97,8 +97,8 @@ struct FormatToken {
         BlockKind(BK_Unknown), Type(TT_Unknown), SpacesRequiredBefore(0),
         CanBreakBefore(false), ClosesTemplateDeclaration(false),
         ParameterCount(0), PackingKind(PPK_Inconclusive), TotalLength(0),
-        UnbreakableTailLength(0), BindingStrength(0), SplitPenalty(0),
-        LongestObjCSelectorName(0), FakeRParens(0),
+        UnbreakableTailLength(0), BindingStrength(0), NestingLevel(0),
+        SplitPenalty(0), LongestObjCSelectorName(0), FakeRParens(0),
         StartsBinaryExpression(false), EndsBinaryExpression(false),
         LastInChainOfCalls(false), PartOfMultiVariableDeclStmt(false),
         MatchingParen(NULL), Previous(NULL), Next(NULL),
@@ -206,6 +206,10 @@ struct FormatToken {
   /// \brief The binding strength of a token. This is a combined value of
   /// operator precedence, parenthesis nesting, etc.
   unsigned BindingStrength;
+
+  /// \brief The nesting level of this token, i.e. the number of surrounding (),
+  /// [], {} or <>.
+  unsigned NestingLevel;
 
   /// \brief Penalty for inserting a line break before this token.
   unsigned SplitPenalty;

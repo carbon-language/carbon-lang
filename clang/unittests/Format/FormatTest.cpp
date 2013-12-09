@@ -4854,6 +4854,17 @@ TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
                "         { aaaaaaaaaaaaaaaaaaaaa },\n"
                "         { aaaaaaaaaaaaaaaaa } };",
                getLLVMStyleWithColumns(60));
+
+  // No column layout for nested lists.
+  // FIXME: For some nested lists, we can do better.
+  verifyFormat(
+      "SomeStruct my_struct_array = {\n"
+      "  { aaaaaa, aaaaaaaa, aaaaaaaaaa, aaaaaaaaa, aaaaaaaaa, aaaaaaaaaa,\n"
+      "    aaaaaaaaaaaaa, aaaaaaa, aaa },\n"
+      "  { aaaa, aaaa, aaaa, aaaa, aaaa, aaaa, aaaa, aaa },\n"
+      "  { aaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaaa,\n"
+      "    aaaaaaaaaaaa, a, aaaaaaaaaa, aaaaaaaaa, aaa },\n"
+      "};");
 }
 
 TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {

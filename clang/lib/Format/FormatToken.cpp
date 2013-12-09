@@ -92,7 +92,8 @@ static unsigned CodePointsBetween(const FormatToken *Begin,
 
 void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
   // FIXME: At some point we might want to do this for other lists, too.
-  if (!Token->MatchingParen || Token->isNot(tok::l_brace))
+  if (!Token->MatchingParen || Token->isNot(tok::l_brace) ||
+      Token->NestingLevel != 0)
     return;
 
   FormatToken *ItemBegin = Token->Next;
