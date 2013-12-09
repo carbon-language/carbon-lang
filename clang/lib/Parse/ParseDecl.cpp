@@ -1725,7 +1725,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
     } else {
       if (Tok.is(tok::l_brace)) {
         Diag(Tok, diag::err_function_definition_not_allowed);
-        SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
+        SkipMalformedDecl();
+        return DeclGroupPtrTy();
       }
     }
   }
