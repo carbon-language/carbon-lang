@@ -15,6 +15,7 @@ multiclass B<string name, string help> {
   def _no : F<name#":no">, HelpText<help>;
 }
 
+def alternatename : P<"alternatename", "Define weak alias">;
 def base    : P<"base", "Base address of the program">;
 def defaultlib : P<"defaultlib", "Add the library to the list of input files">;
 def nodefaultlib : P<"nodefaultlib", "Remove a default library">;

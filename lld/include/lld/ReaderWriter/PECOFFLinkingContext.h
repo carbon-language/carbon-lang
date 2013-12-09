@@ -198,6 +198,9 @@ public:
   bool addSectionRenaming(raw_ostream &diagnostics,
                           StringRef from, StringRef to);
 
+  StringRef getAlternateName(StringRef def) const;
+  void setAlternateName(StringRef def, StringRef weak);
+
   void addNoDefaultLib(StringRef path) { _noDefaultLibs.insert(path); }
   bool hasNoDefaultLib(StringRef path) const {
     return _noDefaultLibs.count(path) == 1;
@@ -281,6 +284,9 @@ private:
   std::vector<StringRef> _inputSearchPaths;
   std::unique_ptr<Reader> _reader;
   std::unique_ptr<Writer> _writer;
+
+  // A map for weak aliases.
+  std::map<std::string, std::string> _alternateNames;
 
   // A map for section renaming. For example, if there is an entry in the map
   // whose value is .rdata -> .text, the section contens of .rdata will be

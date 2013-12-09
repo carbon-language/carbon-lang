@@ -149,6 +149,12 @@ TEST_F(WinLinkParserTest, InputOrder) {
 // Tests for command line options that take values.
 //
 
+TEST_F(WinLinkParserTest, AlternateName) {
+  EXPECT_TRUE(parse("link.exe", "/alternatename:sym1=sym2", "a.out", nullptr));
+  EXPECT_EQ("sym1", _context.getAlternateName("sym2"));
+  EXPECT_EQ("", _context.getAlternateName("foo"));
+}
+
 TEST_F(WinLinkParserTest, MachineX86) {
   EXPECT_TRUE(parse("link.exe", "/machine:x86", "a.obj", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_FILE_MACHINE_I386, _context.getMachineType());

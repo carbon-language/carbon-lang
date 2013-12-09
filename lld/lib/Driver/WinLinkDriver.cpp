@@ -99,6 +99,18 @@ std::vector<StringRef> splitPathList(StringRef str) {
   return ret;
 }
 
+// Parse an argument for /alternatename. The expected string is
+// "<string>=<string>".
+bool parseAlternateName(StringRef arg, StringRef &weak, StringRef &def,
+                        raw_ostream &diagnostics) {
+  llvm::tie(weak, def) = arg.split('=');
+  if (weak.empty() || def.empty()) {
+    diagnostics << "Error: malformed /alternatename option: " << arg << "\n";
+    return false;
+  }
+  return true;
+}
+
 // Parse an argument for /base, /stack or /heap. The expected string
 // is "<integer>[,<integer>]".
 bool parseMemoryOption(StringRef arg, uint64_t &reserve, uint64_t &commit) {
@@ -645,6 +657,14 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
     case OPT_mllvm:
       ctx.appendLLVMOption(inputArg->getValue());
       break;
+
+    case OPT_alternatename: {
+      StringRef weak, def;
+      if (!parseAlternateName(inputArg->getValue(), weak, def, diagnostics))
+        return false;
+      ctx.setAlternateName(weak, def);
+      break;
+    }
 
     case OPT_base:
       // Parse /base command line option. The argument for the parameter is in
