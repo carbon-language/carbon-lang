@@ -182,7 +182,7 @@ ProcessLinux::DoResume()
     uint32_t thread_count = m_thread_list.GetSize(false);
     for (uint32_t i = 0; i < thread_count; ++i)
     {
-        POSIXThread *thread = static_cast<POSIXThread*>(
+        LinuxThread *thread = static_cast<LinuxThread*>(
             m_thread_list.GetThreadAtIndex(i, false).get());
         did_resume = thread->Resume() || did_resume;
     }

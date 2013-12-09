@@ -12,6 +12,10 @@
 // Other libraries and framework includes
 // Project includes
 #include "LinuxThread.h"
+#include "lldb/Core/State.h"
+#include "ProcessPOSIX.h"
+#include "ProcessMonitor.h"
+#include "ProcessPOSIXLog.h"
 
 using namespace lldb;
 using namespace lldb_private;

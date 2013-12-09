@@ -33,7 +33,7 @@ public:
 
     // POSIXThread overrides
     virtual bool
-    LinuxThread::Resume();
+    Resume();
 
     virtual void
     RefreshStateAfterStop();
