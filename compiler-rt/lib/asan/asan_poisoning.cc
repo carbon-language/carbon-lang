@@ -296,7 +296,7 @@ void __sanitizer_annotate_contiguous_container(const void *beg_p,
 // --- Implementation of LSan-specific functions --- {{{1
 namespace __lsan {
 bool WordIsPoisoned(uptr addr) {
-  return __asan_region_is_poisoned(addr, sizeof(uptr));
+  return (__asan_region_is_poisoned(addr, sizeof(uptr)) != 0);
 }
 }
 
