@@ -1608,7 +1608,7 @@ Host::RunShellCommand (const char *command,
     return error;
 }
 
-#if defined(__linux__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__GLIBC__)
 // The functions below implement process launching via posix_spawn() for Linux
 // and FreeBSD.
 
