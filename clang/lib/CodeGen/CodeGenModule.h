@@ -1048,9 +1048,9 @@ private:
                              llvm::Function *F,
                              bool IsIncompleteFunction);
 
-  void EmitGlobalDefinition(GlobalDecl D);
+  void EmitGlobalDefinition(GlobalDecl D, llvm::GlobalValue *GV = 0);
 
-  void EmitGlobalFunctionDefinition(GlobalDecl GD);
+  void EmitGlobalFunctionDefinition(GlobalDecl GD, llvm::GlobalValue *GV);
   void EmitGlobalVarDefinition(const VarDecl *D);
   void EmitAliasDefinition(GlobalDecl GD);
   void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);

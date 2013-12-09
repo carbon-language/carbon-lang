@@ -1022,7 +1022,7 @@ void CodeGenModule::EmitDeferred() {
       continue;
 
     // Otherwise, emit the definition and move on to the next one.
-    EmitGlobalDefinition(D);
+    EmitGlobalDefinition(D, GV);
   }
 }
 
@@ -1325,7 +1325,7 @@ void CodeGenModule::CompleteDIClassType(const CXXMethodDecl* D) {
     }
 }
 
-void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
+void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD, llvm::GlobalValue *GV) {
   const ValueDecl *D = cast<ValueDecl>(GD.getDecl());
 
   PrettyStackTraceDecl CrashInfo(const_cast<ValueDecl *>(D), D->getLocation(), 
@@ -1347,7 +1347,7 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
       else if (const CXXDestructorDecl *DD =dyn_cast<CXXDestructorDecl>(Method))
         EmitCXXDestructor(DD, GD.getDtorType());
       else
-        EmitGlobalFunctionDefinition(GD);
+        EmitGlobalFunctionDefinition(GD, GV);
 
       if (Method->isVirtual())
         getVTables().EmitThunks(GD);
@@ -1355,7 +1355,7 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
       return;
     }
 
-    return EmitGlobalFunctionDefinition(GD);
+    return EmitGlobalFunctionDefinition(GD, GV);
   }
   
   if (const VarDecl *VD = dyn_cast<VarDecl>(D))
@@ -2091,7 +2091,8 @@ void CodeGenModule::HandleCXXStaticMemberVarInstantiation(VarDecl *VD) {
   EmitTopLevelDecl(VD);
 }
 
-void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
+void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
+                                                 llvm::GlobalValue *GV) {
   const FunctionDecl *D = cast<FunctionDecl>(GD.getDecl());
 
   // Compute the function info and LLVM type.
@@ -2100,7 +2101,8 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
 
   // Get or create the prototype for the function.
   llvm::Constant *Entry =
-      GetAddrOfFunction(GD, Ty, /*ForVTable=*/false, /*DontDefer*/ true);
+      GV ? GV
+         : GetAddrOfFunction(GD, Ty, /*ForVTable=*/false, /*DontDefer*/ true);
 
   // Strip off a bitcast if we got one back.
   if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(Entry)) {
