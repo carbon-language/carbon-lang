@@ -59,7 +59,8 @@ def ext_integer_complex : Extension<
   "complex integer types are a GNU extension">, InGroup<GNUComplexInteger>;
 def ext_thread_before : Extension<"'__thread' before '%0'">;
 def ext_keyword_as_ident : ExtWarn<
-  "keyword '%0' will be treated as an identifier %select{here|for the remainder of the translation unit}1">,
+  "keyword '%0' will be made available as an identifier "
+  "%select{here|for the remainder of the translation unit}1">,
   InGroup<KeywordCompat>;
 
 def error_empty_enum : Error<"use of empty enum">;
