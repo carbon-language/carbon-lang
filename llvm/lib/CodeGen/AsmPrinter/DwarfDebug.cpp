@@ -2901,10 +2901,9 @@ void DwarfDebug::emitDebugRanges() {
                                                          E = CUMap.end();
        I != E; ++I) {
     CompileUnit *TheCU = I->second;
-    unsigned ID = TheCU->getUniqueID();
 
     // Emit a symbol so we can find the beginning of our ranges.
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("gnu_ranges", ID));
+    Asm->OutStreamer.EmitLabel(TheCU->getLabelRange());
 
     // Iterate over the misc ranges for the compile units in the module.
     const SmallVectorImpl<RangeSpanList> &RangeLists = TheCU->getRangeLists();
@@ -2958,6 +2957,8 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   CompileUnit *NewCU = new CompileUnit(CU->getUniqueID(), Die, CU->getNode(),
                                        Asm, this, &SkeletonHolder);
+  NewCU->initSection(Asm->getObjFileLowering().getDwarfInfoSection(),
+                     DwarfInfoSectionSym);
 
   NewCU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name,
                         CU->getNode().getSplitDebugFilename());
@@ -2992,11 +2993,8 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
   // unit.
   if (!CU->getRangeLists().empty())
     addSectionLabel(Asm, NewCU, Die, dwarf::DW_AT_GNU_ranges_base,
-                    Asm->GetTempSymbol("gnu_ranges", NewCU->getUniqueID()),
-                    DwarfDebugRangeSectionSym);
+                    NewCU->getLabelRange(), DwarfDebugRangeSectionSym);
 
-  NewCU->initSection(Asm->getObjFileLowering().getDwarfInfoSection(),
-                     DwarfInfoSectionSym);
   SkeletonHolder.addUnit(NewCU);
 
   return NewCU;
