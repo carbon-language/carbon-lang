@@ -265,11 +265,6 @@ output format of the diagnostics that it generates.
 
            t.c +3:11: warning: conversion specifies type 'char *' but the argument has type 'int'
 
-**-f[no-]diagnostics-show-name**
-   Enable the display of the diagnostic name.
-   This option, which defaults to off, controls whether or not Clang
-   prints the associated name.
-
 .. _opt_fdiagnostics-show-option:
 
 **-f[no-]diagnostics-show-option**
