@@ -5333,26 +5333,11 @@ defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vpfmaxnm,
 defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vpfminnm,
                                         FMINNMPvv_S_2S, FMINNMPvv_D_2D>;
 
-defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vaddv,
-                                        FADDPvv_S_2S, FADDPvv_D_2D>;
-
-def : Pat<(v1f32 (int_aarch64_neon_vaddv (v4f32 VPR128:$Rn))),
+def : Pat<(v1f32 (int_aarch64_neon_vpfadd (v4f32 VPR128:$Rn))),
           (FADDPvv_S_2S (v2f32
                (EXTRACT_SUBREG
                    (v4f32 (FADDP_4S (v4f32 VPR128:$Rn), (v4f32 VPR128:$Rn))),
                    sub_64)))>;
-
-defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vmaxv,
-                                        FMAXPvv_S_2S, FMAXPvv_D_2D>;
-
-defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vminv,
-                                        FMINPvv_S_2S, FMINPvv_D_2D>;
-
-defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vmaxnmv,
-                                        FMAXNMPvv_S_2S, FMAXNMPvv_D_2D>;
-
-defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vminnmv,
-                                        FMINNMPvv_S_2S, FMINNMPvv_D_2D>;
 
 // Scalar by element Arithmetic
 
