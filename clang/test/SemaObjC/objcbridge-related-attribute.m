@@ -19,23 +19,23 @@ typedef struct __attribute__((objc_bridge_related(NSColor,,))) CGColor2 *CGColor
 void foo(NSColor*);
 
 NSColor * Test1(NSTextField *textField, CGColorRef newColor) {
-  foo(newColor); // expected-error {{'CGColorRef' (aka 'struct CGColor *') must be explicitly converted to 'NSColor *', use 'colorWithCGColor:' method for this conversion}}
-  textField.backgroundColor = newColor; // expected-error {{'CGColorRef' (aka 'struct CGColor *') must be explicitly converted to 'NSColor *', use 'colorWithCGColor:' method for this conversion}}
-  return newColor; // expected-error {{'CGColorRef' (aka 'struct CGColor *') must be explicitly converted to 'NSColor *', use 'colorWithCGColor:' method for this conversion}}
+  foo(newColor); // expected-error {{'CGColorRef' (aka 'struct CGColor *') must be explicitly converted to 'NSColor *'; use '+colorWithCGColor:' method for this conversion}}
+  textField.backgroundColor = newColor; // expected-error {{'CGColorRef' (aka 'struct CGColor *') must be explicitly converted to 'NSColor *'; use '+colorWithCGColor:' method for this conversion}}
+  return newColor; // expected-error {{'CGColorRef' (aka 'struct CGColor *') must be explicitly converted to 'NSColor *'; use '+colorWithCGColor:' method for this conversion}}
 }
 
 NSColor * Test2(NSTextField *textField, CGColorRef1 newColor) {
-  foo(newColor); // expected-error {{'CGColorRef1' (aka 'struct CGColor1 *') must be explicitly converted to 'NSColor *', define and then use a singular class method in NSColor for this conversion}}
-  textField.backgroundColor = newColor;  // expected-error {{'CGColorRef1' (aka 'struct CGColor1 *') must be explicitly converted to 'NSColor *', define and then use a singular class method in NSColor for this conversion}}
-  return newColor;  // expected-error {{'CGColorRef1' (aka 'struct CGColor1 *') must be explicitly converted to 'NSColor *', define and then use a singular class method in NSColor for this conversion}}
+  foo(newColor); // expected-error {{you can't convert 'CGColorRef1' (aka 'struct CGColor1 *') to 'NSColor *', without using an existing class method for this conversion}}
+  textField.backgroundColor = newColor;  // expected-error {{you can't convert 'CGColorRef1' (aka 'struct CGColor1 *') to 'NSColor *', without using an existing class method for this conversion}}
+  return newColor;  // expected-error {{you can't convert 'CGColorRef1' (aka 'struct CGColor1 *') to 'NSColor *', without using an existing class method for this conversion}}
 }
 
 CGColorRef Test3(NSTextField *textField, CGColorRef newColor) {
-  newColor = textField.backgroundColor; // expected-error {{'NSColor *' must be explicitly converted to 'CGColorRef' (aka 'struct CGColor *'), use 'CGColor' method for this conversion}}
-  return textField.backgroundColor; // expected-error {{'NSColor *' must be explicitly converted to 'CGColorRef' (aka 'struct CGColor *'), use 'CGColor' method for this conversion}}
+  newColor = textField.backgroundColor; // expected-error {{'NSColor *' must be explicitly converted to 'CGColorRef' (aka 'struct CGColor *'); use '-CGColor' method for this conversion}}
+  return textField.backgroundColor; // expected-error {{'NSColor *' must be explicitly converted to 'CGColorRef' (aka 'struct CGColor *'); use '-CGColor' method for this conversion}}
 }
 
 CGColorRef2 Test4(NSTextField *textField, CGColorRef2 newColor) {
-  newColor = textField.backgroundColor; // expected-error {{'NSColor *' must be explicitly converted to 'CGColorRef2' (aka 'struct CGColor2 *'), define and then use an instance method in NSColor for this conversion}}
-  return textField.backgroundColor; // expected-error {{'NSColor *' must be explicitly converted to 'CGColorRef2' (aka 'struct CGColor2 *'), define and then use an instance method in NSColor for this conversion}}
+  newColor = textField.backgroundColor; // expected-error {{you can't convert 'NSColor *' to 'CGColorRef2' (aka 'struct CGColor2 *'), without using an existing instance method for this conversion}}
+  return textField.backgroundColor; // expected-error {{you can't convert 'NSColor *' to 'CGColorRef2' (aka 'struct CGColor2 *'), without using an existing instance method for this conversion}}
 }

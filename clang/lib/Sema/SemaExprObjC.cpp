@@ -3084,6 +3084,32 @@ static void addFixitForObjCARCConversion(Sema &S,
   }
 }
 
+template <typename T>
+static inline T *getObjCBridgeAttr(const TypedefType *TD) {
+  TypedefNameDecl *TDNDecl = TD->getDecl();
+  QualType QT = TDNDecl->getUnderlyingType();
+  if (QT->isPointerType()) {
+    QT = QT->getPointeeType();
+    if (const RecordType *RT = QT->getAs<RecordType>())
+      if (RecordDecl *RD = RT->getDecl())
+        if (RD->hasAttr<T>())
+          return RD->getAttr<T>();
+  }
+  return 0;
+}
+
+static ObjCBridgeRelatedAttr *ObjCBridgeRelatedAttrFromType(QualType T,
+                                                            TypedefNameDecl *&TDNDecl) {
+  while (const TypedefType *TD = dyn_cast<TypedefType>(T.getTypePtr())) {
+    TDNDecl = TD->getDecl();
+    if (ObjCBridgeRelatedAttr *ObjCBAttr =
+        getObjCBridgeAttr<ObjCBridgeRelatedAttr>(TD))
+      return ObjCBAttr;
+    T = TDNDecl->getUnderlyingType();
+  }
+  return 0;
+}
+
 static void
 diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
                           QualType castType, ARCConversionTypeClass castACTC,
@@ -3098,6 +3124,12 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
     return;
 
   QualType castExprType = castExpr->getType();
+  TypedefNameDecl *TDNDecl = 0;
+  if ((castACTC == ACTC_coreFoundation &&  exprACTC == ACTC_retainable &&
+       ObjCBridgeRelatedAttrFromType(castType, TDNDecl)) ||
+      (exprACTC == ACTC_coreFoundation && castACTC == ACTC_retainable &&
+       ObjCBridgeRelatedAttrFromType(castExprType, TDNDecl)))
+    return;
   
   unsigned srcKind = 0;
   switch (exprACTC) {
@@ -3202,20 +3234,6 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
     << (CCK != Sema::CCK_ImplicitConversion)
     << srcKind << castExprType << castType
     << castRange << castExpr->getSourceRange();
-}
-
-template <typename T>
-static inline T *getObjCBridgeAttr(const TypedefType *TD) {
-  TypedefNameDecl *TDNDecl = TD->getDecl();
-  QualType QT = TDNDecl->getUnderlyingType();
-  if (QT->isPointerType()) {
-    QT = QT->getPointeeType();
-    if (const RecordType *RT = QT->getAs<RecordType>())
-      if (RecordDecl *RD = RT->getDecl())
-        if (RD->hasAttr<T>())
-          return RD->getAttr<T>();
-  }
-  return 0;
 }
 
 template <typename TB>
@@ -3350,65 +3368,61 @@ bool Sema::checkObjCBridgeRelatedComponents(SourceLocation Loc,
                                             TypedefNameDecl *&TDNDecl,
                                             bool CfToNs) {
   QualType T = CfToNs ? SrcType : DestType;
-  while (const TypedefType *TD = dyn_cast<TypedefType>(T.getTypePtr())) {
-    TDNDecl = TD->getDecl();
-    if (ObjCBridgeRelatedAttr *ObjCBAttr =
-          getObjCBridgeAttr<ObjCBridgeRelatedAttr>(TD)) {
-      IdentifierInfo *RCId = ObjCBAttr->getRelatedClass();
-      IdentifierInfo *CMId = ObjCBAttr->getClassMethod();
-      IdentifierInfo *IMId = ObjCBAttr->getInstanceMethod();
-      if (!RCId)
-        return false;
-      NamedDecl *Target = 0;
-      // Check for an existing type with this name.
-      LookupResult R(*this, DeclarationName(RCId), SourceLocation(),
-                     Sema::LookupOrdinaryName);
-      if (!LookupName(R, TUScope)) {
-        Diag(Loc, diag::err_objc_bridged_related_invalid_class) << RCId
+  ObjCBridgeRelatedAttr *ObjCBAttr = ObjCBridgeRelatedAttrFromType(T, TDNDecl);
+  if (!ObjCBAttr)
+    return false;
+  
+  IdentifierInfo *RCId = ObjCBAttr->getRelatedClass();
+  IdentifierInfo *CMId = ObjCBAttr->getClassMethod();
+  IdentifierInfo *IMId = ObjCBAttr->getInstanceMethod();
+  if (!RCId)
+    return false;
+  NamedDecl *Target = 0;
+  // Check for an existing type with this name.
+  LookupResult R(*this, DeclarationName(RCId), SourceLocation(),
+                 Sema::LookupOrdinaryName);
+  if (!LookupName(R, TUScope)) {
+    Diag(Loc, diag::err_objc_bridged_related_invalid_class) << RCId
           << SrcType << DestType;
-        Diag(TDNDecl->getLocStart(), diag::note_declared_at);
-        return false;
-      }
-      Target = R.getFoundDecl();
-      if (Target && isa<ObjCInterfaceDecl>(Target))
-        RelatedClass = cast<ObjCInterfaceDecl>(Target);
-      else {
-        Diag(Loc, diag::err_objc_bridged_related_invalid_class_name) << RCId
-          << SrcType << DestType;
-        Diag(TDNDecl->getLocStart(), diag::note_declared_at);
-        if (Target)
-          Diag(Target->getLocStart(), diag::note_declared_at);
-        return false;
-      }
-      
-      // Check for an existing class method with the given selector name.
-      if (CfToNs && CMId) {
-        Selector Sel = Context.Selectors.getUnarySelector(CMId);
-        ClassMethod = RelatedClass->lookupMethod(Sel, false);
-        if (!ClassMethod) {
-          Diag(Loc, diag::err_objc_bridged_related_class_method)
-            << Sel << SrcType << DestType;
-          Diag(TDNDecl->getLocStart(), diag::note_declared_at);
-          return false;
-        }
-      }
-      
-      // Check for an existing instance method with the given selector name.
-      if (!CfToNs && IMId) {
-        Selector Sel = Context.Selectors.getNullarySelector(IMId);
-        InstanceMethod = RelatedClass->lookupMethod(Sel, true);
-        if (!InstanceMethod) {
-          Diag(Loc, diag::err_objc_bridged_related_instance_method)
-            << Sel << SrcType << DestType;
-          Diag(TDNDecl->getLocStart(), diag::note_declared_at);
-          return false;
-        }
-      }
-      return true;
-    }
-    T = TDNDecl->getUnderlyingType();
+    Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+    return false;
   }
-  return false;
+  Target = R.getFoundDecl();
+  if (Target && isa<ObjCInterfaceDecl>(Target))
+    RelatedClass = cast<ObjCInterfaceDecl>(Target);
+  else {
+    Diag(Loc, diag::err_objc_bridged_related_invalid_class_name) << RCId
+          << SrcType << DestType;
+    Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+    if (Target)
+      Diag(Target->getLocStart(), diag::note_declared_at);
+    return false;
+  }
+      
+  // Check for an existing class method with the given selector name.
+  if (CfToNs && CMId) {
+    Selector Sel = Context.Selectors.getUnarySelector(CMId);
+    ClassMethod = RelatedClass->lookupMethod(Sel, false);
+    if (!ClassMethod) {
+      Diag(Loc, diag::err_objc_bridged_related_known_method)
+            << SrcType << DestType << Sel << 0;
+      Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+      return false;
+    }
+  }
+      
+  // Check for an existing instance method with the given selector name.
+  if (!CfToNs && IMId) {
+    Selector Sel = Context.Selectors.getNullarySelector(IMId);
+    InstanceMethod = RelatedClass->lookupMethod(Sel, true);
+    if (!InstanceMethod) {
+      Diag(Loc, diag::err_objc_bridged_related_known_method)
+            << SrcType << DestType << Sel << 1;
+      Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+      return false;
+    }
+  }
+  return true;
 }
 
 bool
@@ -3436,7 +3450,7 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
         << SrcType << DestType << ClassMethod->getSelector() << 0;
     else
       Diag(Loc, diag::err_objc_bridged_related_unknown_method)
-        << SrcType << DestType << RelatedClass->getName() << 0;
+        << SrcType << DestType << 0;
     Diag(RelatedClass->getLocStart(), diag::note_declared_at);
     Diag(TDNDecl->getLocStart(), diag::note_declared_at);
   }
@@ -3447,7 +3461,7 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
       << SrcType << DestType << InstanceMethod->getSelector() << 1;
     else
       Diag(Loc, diag::err_objc_bridged_related_unknown_method)
-      << SrcType << DestType << RelatedClass->getName() << 1;
+        << SrcType << DestType << 1;
     Diag(RelatedClass->getLocStart(), diag::note_declared_at);
     Diag(TDNDecl->getLocStart(), diag::note_declared_at);
   }
