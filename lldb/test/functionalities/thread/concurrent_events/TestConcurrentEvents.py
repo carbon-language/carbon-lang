@@ -89,6 +89,7 @@ class ConcurrentEventsTestCase(TestBase):
     ## Tests for concurrent watchpoint and breakpoint
     #
     @dwarf_test
+    @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @skipIfRemoteDueToDeadlock
     @skipIfLinux # llvm.org/pr16714 - LLDB sometimes crashes when setting watchpoints in multithreaded programs
     def test_watch_break_dwarf(self):
