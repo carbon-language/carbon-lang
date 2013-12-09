@@ -67,6 +67,43 @@ void ARMBaseTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
 
 void ARMTargetMachine::anchor() { }
 
+static std::string computeDataLayout(ARMSubtarget &ST) {
+  std::string Ret = "e-p:32:32";
+
+  if (ST.isAPCS_ABI())
+    Ret += "-f64:32:64-i64:32:64";
+  else
+    Ret += "-f64:64:64-i64:64:64";
+
+  if (ST.isThumb()) {
+    if (ST.isAPCS_ABI())
+      Ret += "-i16:16:32-i8:8:32-i1:8:32";
+    else
+      Ret += "-i16:16:32-i8:8:32-i1:8:32";
+  }
+
+  if (ST.isAPCS_ABI())
+    Ret += "-v128:32:128-v64:32:64";
+  else
+    Ret += "-v128:64:128-v64:64:64";
+
+  if (ST.isThumb()) {
+    if (ST.isAPCS_ABI())
+      Ret += "-a:0:32";
+    else
+      Ret += "-a:0:32";
+  }
+
+  Ret += "-n32";
+
+  if (ST.isAAPCS_ABI())
+    Ret += "-S64";
+  else
+    Ret += "-S32";
+
+  return Ret;
+}
+
 ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
                                    StringRef CPU, StringRef FS,
                                    const TargetOptions &Options,
@@ -74,14 +111,7 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
                                    CodeGenOpt::Level OL)
   : ARMBaseTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
     InstrInfo(Subtarget),
-    DL(Subtarget.isAPCS_ABI() ?
-               std::string("e-p:32:32-f64:32:64-i64:32:64-"
-                           "v128:32:128-v64:32:64-n32-S32") :
-               Subtarget.isAAPCS_ABI() ?
-               std::string("e-p:32:32-f64:64:64-i64:64:64-"
-                           "v128:64:128-v64:64:64-n32-S64") :
-               std::string("e-p:32:32-f64:64:64-i64:64:64-"
-                           "v128:64:128-v64:64:64-n32-S32")),
+    DL(computeDataLayout(Subtarget)),
     TLInfo(*this),
     TSInfo(*this),
     FrameLowering(Subtarget) {
@@ -102,17 +132,7 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, StringRef TT,
     InstrInfo(Subtarget.hasThumb2()
               ? ((ARMBaseInstrInfo*)new Thumb2InstrInfo(Subtarget))
               : ((ARMBaseInstrInfo*)new Thumb1InstrInfo(Subtarget))),
-    DL(Subtarget.isAPCS_ABI() ?
-               std::string("e-p:32:32-f64:32:64-i64:32:64-"
-                           "i16:16:32-i8:8:32-i1:8:32-"
-                           "v128:32:128-v64:32:64-a:0:32-n32-S32") :
-               Subtarget.isAAPCS_ABI() ?
-               std::string("e-p:32:32-f64:64:64-i64:64:64-"
-                           "i16:16:32-i8:8:32-i1:8:32-"
-                           "v128:64:128-v64:64:64-a:0:32-n32-S64") :
-               std::string("e-p:32:32-f64:64:64-i64:64:64-"
-                           "i16:16:32-i8:8:32-i1:8:32-"
-                           "v128:64:128-v64:64:64-a:0:32-n32-S32")),
+    DL(computeDataLayout(Subtarget)),
     TLInfo(*this),
     TSInfo(*this),
     FrameLowering(Subtarget.hasThumb2()
