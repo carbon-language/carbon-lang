@@ -6,12 +6,11 @@
 define i32 @main() {
 ; 16-LABEL: main:
 ; 16: 	.cfi_startproc
-; 16: 	save	$ra, $16, $17, $18, 40
+; 16: 	save	$ra, $16, $17, 40
 ; 16:   .cfi_def_cfa_offset 40
-; 16:   .cfi_offset 18, -8
-; 16:   .cfi_offset 17, -12
-; 16: 	.cfi_offset 16, -16
 ; 16: 	.cfi_offset 31, -4
+; 16:   .cfi_offset 17, -8
+; 16: 	.cfi_offset 16, -12
 ; 16:   .cfi_endproc
 entry:
   %retval = alloca i32, align 4

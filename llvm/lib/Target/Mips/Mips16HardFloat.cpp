@@ -400,13 +400,19 @@ static bool fixupFPReturnAndCall
         Value *F = (M->getOrInsertFunction(Name, A, MyVoid, T, NULL));
         CallInst::Create(F, Params, "", &Inst );
       } else if (const CallInst *CI = dyn_cast<CallInst>(I)) {
+          Function *F_ =  CI->getCalledFunction();
+          if (F_ && !isIntrinsicInline(F_)) {
           // pic mode calls are handled by already defined
           // helper functions
-          if (Subtarget.getRelocationModel() != Reloc::PIC_ ) {
-            Function *F_ =  CI->getCalledFunction();
-            if (F_ && !isIntrinsicInline(F_) && needsFPHelperFromSig(*F_)) {
-              assureFPCallStub(*F_, M, Subtarget);
+            if (needsFPReturnHelper(*F_)) {
               Modified=true;
+              F.addFnAttr("saveS2");
+            }
+            if (Subtarget.getRelocationModel() != Reloc::PIC_ ) {
+              if (needsFPHelperFromSig(*F_)) {
+                assureFPCallStub(*F_, M, Subtarget);
+                Modified=true;
+              }
             }
           }
       }

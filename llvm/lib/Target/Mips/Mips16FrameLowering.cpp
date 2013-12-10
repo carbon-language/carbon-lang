@@ -15,6 +15,7 @@
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "Mips16InstrInfo.h"
 #include "MipsInstrInfo.h"
+#include "MipsRegisterInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -56,17 +57,31 @@ void Mips16FrameLowering::emitPrologue(MachineFunction &MF) const {
   MCSymbol *CSLabel = MMI.getContext().CreateTempSymbol();
   BuildMI(MBB, MBBI, dl,
           TII.get(TargetOpcode::PROLOG_LABEL)).addSym(CSLabel);
-  unsigned S2 = MRI->getDwarfRegNum(Mips::S2, true);
-  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S2, -8));
+
+
+  const MipsRegisterInfo &RI = TII.getRegisterInfo();
+  const BitVector Reserved = RI.getReservedRegs(MF);
+  bool SaveS2 = Reserved[Mips::S2];
+  int Offset=-4;
+  unsigned RA = MRI->getDwarfRegNum(Mips::RA, true);
+  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, RA, Offset));
+  Offset -= 4;
+
+  if (SaveS2) {
+    unsigned S2 = MRI->getDwarfRegNum(Mips::S2, true);
+    MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S2, Offset));
+    Offset -= 4;
+  }
+
 
   unsigned S1 = MRI->getDwarfRegNum(Mips::S1, true);
-  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S1, -12));
+  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S1, Offset));
+  Offset -= 4;
 
   unsigned S0 = MRI->getDwarfRegNum(Mips::S0, true);
-  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S0, -16));
+  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S0, Offset));
 
-  unsigned RA = MRI->getDwarfRegNum(Mips::RA, true);
-  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, RA, -4));
+
 
   if (hasFP(MF))
     BuildMI(MBB, MBBI, dl, TII.get(Mips::MoveR3216), Mips::S0)

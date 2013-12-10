@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -183,6 +184,8 @@ getReservedRegs(const MachineFunction &MF) const {
     Reserved.set(Mips::RA_64);
     Reserved.set(Mips::T0);
     Reserved.set(Mips::T1);
+    if (MF.getFunction()->hasFnAttribute("saveS2"))
+      Reserved.set(Mips::S2);
   }
 
   // Reserve GP if small section is used.
