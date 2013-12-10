@@ -80,6 +80,7 @@ void RemoteTargetExternal::SendLoadSection(uint64_t Addr,
                                        uint32_t Size,
                                        bool IsCode) {
   int rc;
+  (void)rc;
   uint32_t MsgType = IsCode ? LLI_LoadCodeSection : LLI_LoadDataSection;
   rc = WriteBytes(&MsgType, 4);
   assert(rc == 4 && "Error writing message type.");
@@ -97,6 +98,7 @@ void RemoteTargetExternal::SendLoadSection(uint64_t Addr,
 
 void RemoteTargetExternal::SendExecute(uint64_t Addr) {
   int rc;
+  (void)rc;
   uint32_t MsgType = (uint32_t)LLI_Execute;
   rc = WriteBytes(&MsgType, 4);
   assert(rc == 4 && "Error writing message type.");
@@ -111,6 +113,7 @@ void RemoteTargetExternal::SendExecute(uint64_t Addr) {
 
 void RemoteTargetExternal::SendTerminate() {
   int rc;
+  (void)rc;
   uint32_t MsgType = (uint32_t)LLI_Terminate;
   rc = WriteBytes(&MsgType, 4);
   assert(rc == 4 && "Error writing message type.");
@@ -121,6 +124,7 @@ void RemoteTargetExternal::SendTerminate() {
 
 void RemoteTargetExternal::Receive(LLIMessageType ExpectedMsgType) {
   int rc;
+  (void)rc;
   uint32_t MsgType;
   rc = ReadBytes(&MsgType, 4);
   assert(rc == 4 && "Error reading message type.");
@@ -140,6 +144,7 @@ void RemoteTargetExternal::Receive(LLIMessageType ExpectedMsgType, int &Data) {
 
 void RemoteTargetExternal::Receive(LLIMessageType ExpectedMsgType, uint64_t &Data) {
   int rc;
+  (void)rc;
   uint32_t MsgType;
   rc = ReadBytes(&MsgType, 4);
   assert(rc == 4 && "Error reading message type.");
