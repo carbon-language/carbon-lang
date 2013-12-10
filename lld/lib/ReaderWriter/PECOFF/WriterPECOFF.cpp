@@ -111,8 +111,8 @@ public:
       : HeaderChunk(), _context(ctx) {
     // Minimum size of DOS stub is 64 bytes. The next block (PE header) needs to
     // be aligned on 8 byte boundary.
-    _size = std::max(_context.getDosStub().size(), (size_t)64);
-    _size = llvm::RoundUpToAlignment(_size, 8);
+    size_t size = std::max(_context.getDosStub().size(), (size_t)64);
+    _size = llvm::RoundUpToAlignment(size, 8);
   }
 
   virtual void write(uint8_t *fileBuffer) {
@@ -133,34 +133,29 @@ public:
 
   virtual void write(uint8_t *fileBuffer);
 
-  virtual void setSizeOfHeaders(uint64_t size) {
+  void setSizeOfHeaders(uint64_t size) {
     // Must be multiple of FileAlignment.
     _peHeader.SizeOfHeaders = llvm::RoundUpToAlignment(size, SECTOR_SIZE);
   }
 
-  virtual void setSizeOfCode(uint64_t size) {
-    _peHeader.SizeOfCode = size;
-  }
+  void setSizeOfCode(uint64_t size) { _peHeader.SizeOfCode = size; }
+  void setBaseOfCode(uint32_t rva) { _peHeader.BaseOfCode = rva; }
+  void setBaseOfData(uint32_t rva) { _peHeader.BaseOfData = rva; }
+  void setSizeOfImage(uint32_t size) { _peHeader.SizeOfImage = size; }
 
-  virtual void setSizeOfInitializedData(uint64_t size) {
+  void setSizeOfInitializedData(uint64_t size) {
     _peHeader.SizeOfInitializedData = size;
   }
 
-  virtual void setSizeOfUninitializedData(uint64_t size) {
+  void setSizeOfUninitializedData(uint64_t size) {
     _peHeader.SizeOfUninitializedData = size;
   }
 
-  virtual void setNumberOfSections(uint32_t num) {
+  void setNumberOfSections(uint32_t num) {
     _coffHeader.NumberOfSections = num;
   }
 
-  virtual void setBaseOfCode(uint32_t rva) { _peHeader.BaseOfCode = rva; }
-
-  virtual void setBaseOfData(uint32_t rva) { _peHeader.BaseOfData = rva; }
-
-  virtual void setSizeOfImage(uint32_t size) { _peHeader.SizeOfImage = size; }
-
-  virtual void setAddressOfEntryPoint(uint32_t address) {
+  void setAddressOfEntryPoint(uint32_t address) {
     _peHeader.AddressOfEntryPoint = address;
   }
 
@@ -289,8 +284,8 @@ public:
     AtomChunk::setVirtualAddress(rva);
   }
 
-  virtual uint32_t getVirtualAddress() { return _sectionHeader.VirtualAddress; }
-  virtual llvm::object::coff_section &getSectionHeader();
+  uint32_t getVirtualAddress() { return _sectionHeader.VirtualAddress; }
+  llvm::object::coff_section &getSectionHeader();
 
   ulittle32_t getSectionCharacteristics();
   void appendAtom(const DefinedAtom *atom);
