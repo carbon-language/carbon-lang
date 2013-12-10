@@ -356,7 +356,7 @@ fi
 current_dir=`pwd`
 if [ -f "${current_dir}/modify-python-lldb.py" ]
 then
-    python ${current_dir}/modify-python-lldb.py ${CONFIG_BUILD_DIR}
+    /usr/bin/env python ${current_dir}/modify-python-lldb.py ${CONFIG_BUILD_DIR}
 fi
 
 
