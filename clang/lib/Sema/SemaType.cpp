@@ -4595,6 +4595,16 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
   return true;
 }
 
+bool Sema::hasExplicitCallingConv(QualType &T) {
+  QualType R = T.IgnoreParens();
+  while (const AttributedType *AT = dyn_cast<AttributedType>(R)) {
+    if (AT->isCallingConv())
+      return true;
+    R = AT->getModifiedType().IgnoreParens();
+  }
+  return false;
+}
+
 void Sema::adjustMemberFunctionCC(QualType &T, bool IsStatic) {
   FunctionTypeUnwrapper Unwrapped(*this, T);
   const FunctionType *FT = Unwrapped.get();
@@ -4611,15 +4621,8 @@ void Sema::adjustMemberFunctionCC(QualType &T, bool IsStatic) {
   if (CurCC != FromCC || FromCC == ToCC)
     return;
 
-  // Check if there was an explicit attribute, but only look through parens.
-  // The intent is to look for an attribute on the current declarator, but not
-  // one that came from a typedef.
-  QualType R = T.IgnoreParens();
-  while (const AttributedType *AT = dyn_cast<AttributedType>(R)) {
-    if (AT->isCallingConv())
-      return;
-    R = AT->getModifiedType().IgnoreParens();
-  }
+  if (hasExplicitCallingConv(T))
+    return;
 
   FT = Context.adjustFunctionType(FT, FT->getExtInfo().withCallingConv(ToCC));
   QualType Wrapped = Unwrapped.wrap(*this, FT);

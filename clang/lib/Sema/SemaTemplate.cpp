@@ -6654,7 +6654,10 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
            I != E; ++I) {
       NamedDecl *D = (*I)->getUnderlyingDecl();
       if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
-        if (Context.hasSameType(Function->getType(), Method->getType())) {
+        QualType Adjusted = Function->getType();
+        if (!hasExplicitCallingConv(Adjusted))
+          Adjusted = adjustCCAndNoReturn(Adjusted, Method->getType());
+        if (Context.hasSameType(Adjusted, Method->getType())) {
           Instantiation = Method;
           InstantiatedFrom = Method->getInstantiatedFromMemberFunction();
           MSInfo = Method->getMemberSpecializationInfo();

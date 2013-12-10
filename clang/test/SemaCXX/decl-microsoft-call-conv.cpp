@@ -203,3 +203,29 @@ namespace test6 {
     zed(&foo::bar);
   }
 }
+
+namespace test7 {
+  template <typename T>
+  struct S {
+    void f(T t) {
+      t = 42;
+    }
+  };
+  template<> void S<void*>::f(void*);
+  void g(S<void*> s, void* p) {
+    s.f(p);
+  }
+}
+
+namespace test8 {
+  template <typename T>
+  struct S {
+    void f(T t) { // expected-note {{previous declaration is here}}
+      t = 42; // expected-error {{assigning to 'void *' from incompatible type 'int'}}
+    }
+  };
+  template<> void __cdecl S<void*>::f(void*); // expected-error {{function declared 'cdecl' here was previously declared without calling convention}}
+  void g(S<void*> s, void* p) {
+    s.f(p); // expected-note {{in instantiation of member function 'test8::S<void *>::f' requested here}}
+  }
+}
