@@ -301,7 +301,9 @@ TEST(AddressSanitizer, LargeMallocTest) {
 TEST(AddressSanitizer, HugeMallocTest) {
   if (SANITIZER_WORDSIZE != 64 || ASAN_AVOID_EXPENSIVE_TESTS) return;
   size_t n_megs = 4100;
-  TestLargeMalloc(n_megs << 20);
+  EXPECT_DEATH(Ident((char*)malloc(n_megs << 20))[-1] = 0,
+               "is located 1 bytes to the left|"
+               "AddressSanitizer failed to allocate");
 }
 
 #ifndef __APPLE__
