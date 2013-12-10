@@ -45,6 +45,7 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.convenience_registers()
 
+    @skipIfFreeBSD # llvm.org/pr16684
     def test_convenience_registers_with_process_attach(self):
         """Test convenience registers after a 'process attach'."""
         if not self.getArchitecture() in ['amd64', 'x86_64']:
