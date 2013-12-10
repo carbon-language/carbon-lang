@@ -182,7 +182,7 @@ class AtomChunk : public Chunk {
 public:
   virtual void write(uint8_t *fileBuffer);
 
-  void buildAtomToVirtualAddr(std::map<const Atom *, uint64_t> &atomRva) const;
+  void buildAtomRvaMap(std::map<const Atom *, uint64_t> &atomRva) const;
   void applyRelocations(uint8_t *fileBuffer,
                         std::map<const Atom *, uint64_t> &atomRva,
                         std::vector<uint64_t> &sectionRva,
@@ -491,8 +491,8 @@ void AtomChunk::write(uint8_t *fileBuffer) {
 }
 
 // Add all atoms to the given map. This data will be used to do relocation.
-void AtomChunk::buildAtomToVirtualAddr(
-    std::map<const Atom *, uint64_t> &atomRva) const {
+void
+AtomChunk::buildAtomRvaMap(std::map<const Atom *, uint64_t> &atomRva) const {
   for (const auto *layout : _atomLayouts)
     atomRva[layout->_atom] = layout->_virtualAddr;
 }
@@ -861,12 +861,6 @@ private:
   // The size of the image on disk. This is basically the sum of all chunks in
   // the output file with paddings between them.
   uint32_t _imageSizeOnDisk;
-
-  // The map from defined atoms to its RVAs. Will be used for relocation.
-  std::map<const Atom *, uint64_t> atomRva;
-
-  // List of section RVAs. Will be used for relocation.
-  std::vector<uint64_t> sectionRva;
 };
 
 StringRef customSectionName(const DefinedAtom *atom) {
@@ -964,7 +958,6 @@ void ExecutableWriter::build(const File &linkedFile) {
   setImageSizeOnDisk();
 
   for (SectionChunk *section : sectionChunks) {
-    sectionRva.push_back(section->getVirtualAddress());
     if (section->getSectionName() == ".text") {
       peHeader->setBaseOfCode(section->getVirtualAddress());
       setAddressOfEntryPoint(section, peHeader);
@@ -1005,6 +998,20 @@ error_code ExecutableWriter::writeFile(const File &linkedFile, StringRef path) {
 /// address. In the second pass, we visit all relocation references to fix
 /// up addresses in the buffer.
 void ExecutableWriter::applyAllRelocations(uint8_t *bufferStart) {
+  std::map<const Atom *, uint64_t> atomRva;
+  std::vector<uint64_t> sectionRva;
+
+  // Create the list of section start addresses.
+  for (auto &cp : _chunks)
+    if (SectionChunk *section = dyn_cast<SectionChunk>(&*cp))
+      sectionRva.push_back(section->getVirtualAddress());
+
+  // Pass 1
+  for (auto &cp : _chunks)
+    if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
+      chunk->buildAtomRvaMap(atomRva);
+
+  // Pass 2
   for (auto &cp : _chunks)
     if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
       chunk->applyRelocations(bufferStart, atomRva, sectionRva,
@@ -1032,7 +1039,6 @@ void ExecutableWriter::addSectionChunk(SectionChunk *chunk,
   // memory. They are different from positions on disk because sections need
   // to be sector-aligned on disk but page-aligned in memory.
   chunk->setVirtualAddress(_imageSizeInMemory);
-  chunk->buildAtomToVirtualAddr(atomRva);
   _imageSizeInMemory =
       llvm::RoundUpToAlignment(_imageSizeInMemory + chunk->size(), PAGE_SIZE);
 }
