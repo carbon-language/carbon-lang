@@ -4208,6 +4208,11 @@ bool AsmParser::parseMSInlineAsm(
         AsmStrRewrites.push_back(AsmRewrite(AOK_Input, Start, SymName.size()));
       }
     }
+
+    // Consider implicit defs to be clobbers.  Think of cpuid and push.
+    const uint16_t *ImpDefs = Desc.getImplicitDefs();
+    for (unsigned I = 0, E = Desc.getNumImplicitDefs(); I != E; ++I)
+      ClobberRegs.push_back(ImpDefs[I]);
   }
 
   // Set the number of Outputs and Inputs.
