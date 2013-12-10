@@ -358,11 +358,11 @@ def int_aarch64_neon_vcvtfxu2fp_n :
 
 // Scalar Floating-point Convert To Signed Fixed-point (Immediate)
 def int_aarch64_neon_vcvtfp2fxs_n :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty, llvm_i32_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty, llvm_i32_ty], [IntrNoMem]>;
 
 // Scalar Floating-point Convert To Unsigned Fixed-point (Immediate)
 def int_aarch64_neon_vcvtfp2fxu_n :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty, llvm_i32_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty, llvm_i32_ty], [IntrNoMem]>;
 
 class Neon_SHA_Intrinsic
   : Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v1i32_ty, llvm_v4i32_ty],

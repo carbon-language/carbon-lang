@@ -4639,9 +4639,9 @@ multiclass Neon_ScalarShiftImm_scvtf_SD_size_patterns<SDPatternOperator opnode,
 multiclass Neon_ScalarShiftImm_fcvts_SD_size_patterns<SDPatternOperator opnode,
                                                       Instruction INSTS,
                                                       Instruction INSTD> {
-  def ssi : Pat<(v1i32 (opnode (v1f32 FPR32:$Rn), (i32 shr_imm32:$Imm))),
+  def ssi : Pat<(v1i32 (opnode (f32 FPR32:$Rn), (i32 shr_imm32:$Imm))),
                 (INSTS FPR32:$Rn, imm:$Imm)>;
-  def ddi : Pat<(v1i64 (opnode (v1f64 FPR64:$Rn), (i32 shr_imm64:$Imm))),
+  def ddi : Pat<(v1i64 (opnode (f64 FPR64:$Rn), (i32 shr_imm64:$Imm))),
                 (INSTD FPR64:$Rn, imm:$Imm)>;
 }
 
