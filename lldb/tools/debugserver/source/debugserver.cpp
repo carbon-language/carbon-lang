@@ -625,6 +625,65 @@ RNBRunLoopPlatform (RNBRemote *remote)
     return eRNBRunLoopModeExit;
 }
 
+//----------------------------------------------------------------------
+// Convenience function to set up the remote listening port
+// Returns 1 for success 0 for failure.
+//----------------------------------------------------------------------
+
+static void
+PortWasBoundCallbackUnixSocket (const void *baton, in_port_t port)
+{
+    //::printf ("PortWasBoundCallbackUnixSocket (baton = %p, port = %u)\n", baton, port);
+    
+    const char *unix_socket_name = (const char *)baton;
+    
+    if (unix_socket_name && unix_socket_name[0])
+    {
+        // We were given a unix socket name to use to communicate the port
+        // that we ended up binding to back to our parent process
+        struct sockaddr_un saddr_un;
+        int s = ::socket (AF_UNIX, SOCK_STREAM, 0);
+        if (s < 0)
+        {
+            perror("error: socket (AF_UNIX, SOCK_STREAM, 0)");
+            exit(1);
+        }
+        
+        saddr_un.sun_family = AF_UNIX;
+        ::strncpy(saddr_un.sun_path, unix_socket_name, sizeof(saddr_un.sun_path) - 1);
+        saddr_un.sun_path[sizeof(saddr_un.sun_path) - 1] = '\0';
+        saddr_un.sun_len = SUN_LEN (&saddr_un);
+        
+        if (::connect (s, (struct sockaddr *)&saddr_un, SUN_LEN (&saddr_un)) < 0)
+        {
+            perror("error: connect (socket, &saddr_un, saddr_un_len)");
+            exit(1);
+        }
+        
+        //::printf ("connect () sucess!!\n");
+        
+        
+        // We were able to connect to the socket, now write our PID so whomever
+        // launched us will know this process's ID
+        RNBLogSTDOUT ("Listening to port %i...\n", port);
+        
+        char pid_str[64];
+        const int pid_str_len = ::snprintf (pid_str, sizeof(pid_str), "%u", port);
+        const int bytes_sent = ::send (s, pid_str, pid_str_len, 0);
+        
+        if (pid_str_len != bytes_sent)
+        {
+            perror("error: send (s, pid_str, pid_str_len, 0)");
+            exit (1);
+        }
+        
+        //::printf ("send () sucess!!\n");
+        
+        // We are done with the socket
+        close (s);
+    }
+}
+
 static void
 PortWasBoundCallbackNamedPipe (const void *baton, uint16_t port)
 {
@@ -644,7 +703,12 @@ PortWasBoundCallbackNamedPipe (const void *baton, uint16_t port)
 }
 
 static int
-ConnectRemote (RNBRemote *remote, const char *host, int port, bool reverse_connect, const char *named_pipe_path)
+ConnectRemote (RNBRemote *remote,
+               const char *host,
+               int port,
+               bool reverse_connect,
+               const char *named_pipe_path,
+               const char *unix_socket_name)
 {
     if (!remote->Comm().IsConnected())
     {
@@ -665,10 +729,21 @@ ConnectRemote (RNBRemote *remote, const char *host, int port, bool reverse_conne
         {
             if (port != 0)
                 RNBLogSTDOUT ("Listening to port %i for a connection from %s...\n", port, host ? host : "localhost");
-            if (remote->Comm().Listen(host, port, PortWasBoundCallbackNamedPipe, named_pipe_path) != rnb_success)
+            if (unix_socket_name && unix_socket_name[0])
             {
-                RNBLogSTDERR ("Failed to get connection from a remote gdb process.\n");
-                return 0;
+                if (remote->Comm().Listen(host, port, PortWasBoundCallbackUnixSocket, unix_socket_name) != rnb_success)
+                {
+                    RNBLogSTDERR ("Failed to get connection from a remote gdb process.\n");
+                    return 0;
+                }
+            }
+            else
+            {
+                if (remote->Comm().Listen(host, port, PortWasBoundCallbackNamedPipe, named_pipe_path) != rnb_success)
+                {
+                    RNBLogSTDERR ("Failed to get connection from a remote gdb process.\n");
+                    return 0;
+                }
             }
         }
         remote->StartReadRemoteDataThread();
@@ -758,6 +833,7 @@ static struct option g_long_options[] =
     { "disable-aslr",       no_argument,        NULL,               'D' },  // Use _POSIX_SPAWN_DISABLE_ASLR to avoid shared library randomization
     { "working-dir",        required_argument,  NULL,               'W' },  // The working directory that the inferior process should have (only if debugserver launches the process)
     { "platform",           required_argument,  NULL,               'p' },  // Put this executable into a remote platform mode
+    { "unix-socket",        required_argument,  NULL,               'u' },  // If we need to handshake with our parent process, an option will be passed down that specifies a unix socket name to use
     { "named-pipe",         required_argument,  NULL,               'P' },
     { "reverse-connect",    no_argument,        NULL,               'R' },
     { NULL,                 0,                  NULL,               0   }
@@ -811,6 +887,7 @@ main (int argc, char *argv[])
     std::string attach_pid_name;
     std::string arch_name;
     std::string working_dir;                // The new working directory to use for the inferior
+    std::string unix_socket_name;           // If we need to handshake with our parent process, an option will be passed down that specifies a unix socket name to use
     std::string named_pipe_path;            // If we need to handshake with our parent process, an option will be passed down that specifies a named pipe to use
     useconds_t waitfor_interval = 1000;     // Time in usecs between process lists polls when waiting for a process by name, default 1 msec.
     useconds_t waitfor_duration = 0;        // Time in seconds to wait for a process by name, 0 means wait forever.
@@ -1063,9 +1140,14 @@ main (int argc, char *argv[])
                 start_mode = eRNBRunLoopModePlatformMode;
                 break;
 
+            case 'u':
+                unix_socket_name.assign (optarg);
+                break;
+
             case 'P':
                 named_pipe_path.assign (optarg);
                 break;
+                
         }
     }
     
@@ -1283,7 +1365,7 @@ main (int argc, char *argv[])
 #endif
                 if (port != INT32_MAX)
                 {
-                    if (!ConnectRemote (remote, host.c_str(), port, reverse_connect, named_pipe_path.c_str()))
+                    if (!ConnectRemote (remote, host.c_str(), port, reverse_connect, named_pipe_path.c_str(), unix_socket_name.c_str()))
                         mode = eRNBRunLoopModeExit;
                 }
                 else if (str[0] == '/')
@@ -1396,7 +1478,7 @@ main (int argc, char *argv[])
                 {
                     if (port != INT32_MAX)
                     {
-                        if (!ConnectRemote (remote, host.c_str(), port, reverse_connect, named_pipe_path.c_str()))
+                        if (!ConnectRemote (remote, host.c_str(), port, reverse_connect, named_pipe_path.c_str(), unix_socket_name.c_str()))
                             mode = eRNBRunLoopModeExit;
                     }
                     else if (str[0] == '/')
@@ -1421,7 +1503,7 @@ main (int argc, char *argv[])
                     {
                         if (port != INT32_MAX)
                         {
-                            if (!ConnectRemote (remote, host.c_str(), port, reverse_connect, named_pipe_path.c_str()))
+                            if (!ConnectRemote (remote, host.c_str(), port, reverse_connect, named_pipe_path.c_str(), unix_socket_name.c_str()))
                                 mode = eRNBRunLoopModeExit;
                         }
                         else if (str[0] == '/')
@@ -1448,7 +1530,7 @@ main (int argc, char *argv[])
             case eRNBRunLoopModePlatformMode:
                 if (port != INT32_MAX)
                 {
-                    if (!ConnectRemote (remote, host.c_str(), port, reverse_connect, named_pipe_path.c_str()))
+                    if (!ConnectRemote (remote, host.c_str(), port, reverse_connect, named_pipe_path.c_str(), unix_socket_name.c_str()))
                         mode = eRNBRunLoopModeExit;
                 }
                 else if (str[0] == '/')
