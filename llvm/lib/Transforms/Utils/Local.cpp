@@ -127,8 +127,10 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions,
       // dest.  If so, eliminate it as an explicit compare.
       if (i.getCaseSuccessor() == DefaultDest) {
         MDNode* MD = SI->getMetadata(LLVMContext::MD_prof);
-        // MD should have 2 + NumCases operands.
-        if (MD && MD->getNumOperands() == 2 + SI->getNumCases()) {
+        unsigned NCases = SI->getNumCases();
+        // Fold the case metadata into the default if there will be any branches
+        // left, unless the metadata doesn't match the switch.
+        if (NCases > 1 && MD && MD->getNumOperands() == 2 + NCases) {
           // Collect branch weights into a vector.
           SmallVector<uint32_t, 8> Weights;
           for (unsigned MD_i = 1, MD_e = MD->getNumOperands(); MD_i < MD_e;

@@ -293,6 +293,23 @@ c:
  ret void
 }
 
+;; test12 - Don't crash if the whole switch is removed
+define void @test12(i32 %M, i32 %N) nounwind uwtable {
+entry:
+  switch i32 %N, label %sw.bb [
+    i32 1, label %sw.bb
+  ], !prof !9
+; CHECK: test12
+; CHECK-NOT: switch
+
+sw.bb:
+  call void @helper(i32 0)
+  br label %sw.epilog
+
+sw.epilog:
+  ret void
+}
+
 !0 = metadata !{metadata !"branch_weights", i32 3, i32 5}
 !1 = metadata !{metadata !"branch_weights", i32 1, i32 1}
 !2 = metadata !{metadata !"branch_weights", i32 1, i32 2}
@@ -302,6 +319,7 @@ c:
 !6 = metadata !{metadata !"branch_weights", i32 1, i32 3}
 !7 = metadata !{metadata !"branch_weights", i32 33, i32 9, i32 8, i32 7}
 !8 = metadata !{metadata !"branch_weights", i32 33, i32 9, i32 8}
+!9 = metadata !{metadata !"branch_weights", i32 7, i32 6}
 
 ; CHECK: !0 = metadata !{metadata !"branch_weights", i32 5, i32 11}
 ; CHECK: !1 = metadata !{metadata !"branch_weights", i32 1, i32 5}
