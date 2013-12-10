@@ -182,18 +182,13 @@ class AtomChunk : public Chunk {
 public:
   virtual void write(uint8_t *fileBuffer);
 
-  /// Add all atoms to the given map. This data will be used to do relocation.
-  void buildAtomToVirtualAddr(std::map<const Atom *, uint64_t> &atomRva) {
-    for (const auto *layout : _atomLayouts)
-      atomRva[layout->_atom] = layout->_virtualAddr;
-  }
-
+  void buildAtomToVirtualAddr(std::map<const Atom *, uint64_t> &atomRva) const;
   void applyRelocations(uint8_t *fileBuffer,
                         std::map<const Atom *, uint64_t> &atomRva,
                         std::vector<uint64_t> &sectionRva,
                         uint64_t imageBaseAddress);
-  void printAtomAddresses(uint64_t baseAddr);
-  void addBaseRelocations(std::vector<uint64_t> &relocSites);
+  void printAtomAddresses(uint64_t baseAddr) const;
+  void addBaseRelocations(std::vector<uint64_t> &relocSites) const;
 
   // Set the file offset of the beginning of this section.
   virtual void setFileOffset(uint64_t fileOffset) {
@@ -269,9 +264,7 @@ public:
     return llvm::RoundUpToAlignment(_size, _align);
   }
 
-  virtual uint64_t rawSize() const {
-    return _size;
-  }
+  virtual uint64_t rawSize() const { return _size; }
 
   // Set the file offset of the beginning of this section.
   virtual void setFileOffset(uint64_t fileOffset) {
@@ -284,10 +277,10 @@ public:
     AtomChunk::setVirtualAddress(rva);
   }
 
-  uint32_t getVirtualAddress() { return _sectionHeader.VirtualAddress; }
+  uint32_t getVirtualAddress() const { return _sectionHeader.VirtualAddress; }
   llvm::object::coff_section &getSectionHeader();
 
-  ulittle32_t getSectionCharacteristics();
+  ulittle32_t getSectionCharacteristics() const;
   void appendAtom(const DefinedAtom *atom);
   StringRef getSectionName() const { return _sectionName; }
 
@@ -323,13 +316,14 @@ public:
   }
 
 private:
-  uint32_t getCharacteristics(const PECOFFLinkingContext &ctx, StringRef name,
-                              const std::vector<const DefinedAtom *> &atoms) {
+  uint32_t
+  getCharacteristics(const PECOFFLinkingContext &ctx, StringRef name,
+                     const std::vector<const DefinedAtom *> &atoms) const {
     return ctx.getSectionAttributes(name, getDefaultCharacteristics(name, atoms));
   }
 
   uint32_t getDefaultCharacteristics(
-      StringRef name, const std::vector<const DefinedAtom *> &atoms);
+      StringRef name, const std::vector<const DefinedAtom *> &atoms) const;
 };
 
 /// A BaseRelocAtom represents a base relocation block in ".reloc" section.
@@ -377,7 +371,7 @@ private:
   std::vector<uint64_t> listRelocSites(ChunkVectorT &chunks);
 
   // Divide the given RVAs into blocks.
-  PageOffsetT groupByPage(std::vector<uint64_t> relocSites);
+  PageOffsetT groupByPage(std::vector<uint64_t> relocSites) const;
 
   // Create the content of a relocation block.
   DefinedAtom *createBaseRelocBlock(const File &file, uint64_t ordinal,
@@ -496,6 +490,13 @@ void AtomChunk::write(uint8_t *fileBuffer) {
   }
 }
 
+// Add all atoms to the given map. This data will be used to do relocation.
+void AtomChunk::buildAtomToVirtualAddr(
+    std::map<const Atom *, uint64_t> &atomRva) const {
+  for (const auto *layout : _atomLayouts)
+    atomRva[layout->_atom] = layout->_virtualAddr;
+}
+
 void AtomChunk::applyRelocations(uint8_t *fileBuffer,
                                  std::map<const Atom *, uint64_t> &atomRva,
                                  std::vector<uint64_t> &sectionRva,
@@ -565,7 +566,7 @@ void AtomChunk::applyRelocations(uint8_t *fileBuffer,
 }
 
 /// Print atom VAs. Used only for debugging.
-void AtomChunk::printAtomAddresses(uint64_t baseAddr) {
+void AtomChunk::printAtomAddresses(uint64_t baseAddr) const {
   for (const auto *layout : _atomLayouts) {
     const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
     uint64_t addr = layout->_virtualAddr;
@@ -579,7 +580,7 @@ void AtomChunk::printAtomAddresses(uint64_t baseAddr) {
 /// to be fixed up if image base is relocated. The only relocation type that
 /// needs to be fixed is DIR32 on i386. REL32 is not (and should not be)
 /// fixed up because it's PC-relative.
-void AtomChunk::addBaseRelocations(std::vector<uint64_t> &relocSites) {
+void AtomChunk::addBaseRelocations(std::vector<uint64_t> &relocSites) const {
   // TODO: llvm-objdump doesn't support parsing the base relocation table, so
   // we can't really test this at the moment. As a temporary solution, we
   // should output debug messages with atom names and addresses so that we
@@ -625,7 +626,7 @@ llvm::object::coff_section &SectionChunk::getSectionHeader() {
   return _sectionHeader;
 }
 
-ulittle32_t SectionChunk::getSectionCharacteristics() {
+ulittle32_t SectionChunk::getSectionCharacteristics() const {
   return _sectionHeader.Characteristics;
 }
 
@@ -694,7 +695,7 @@ void GenericSectionChunk::write(uint8_t *fileBuffer) {
 }
 
 uint32_t GenericSectionChunk::getDefaultCharacteristics(
-    StringRef name, const std::vector<const DefinedAtom *> &atoms) {
+    StringRef name, const std::vector<const DefinedAtom *> &atoms) const {
   const uint32_t code = llvm::COFF::IMAGE_SCN_CNT_CODE;
   const uint32_t execute = llvm::COFF::IMAGE_SCN_MEM_EXECUTE;
   const uint32_t read = llvm::COFF::IMAGE_SCN_MEM_READ;
@@ -774,7 +775,7 @@ std::vector<uint64_t> BaseRelocChunk::listRelocSites(ChunkVectorT &chunks) {
 
 // Divide the given RVAs into blocks.
 BaseRelocChunk::PageOffsetT
-BaseRelocChunk::groupByPage(std::vector<uint64_t> relocSites) {
+BaseRelocChunk::groupByPage(std::vector<uint64_t> relocSites) const {
   PageOffsetT blocks;
   uint64_t mask = static_cast<uint64_t>(PAGE_SIZE) - 1;
   for (uint64_t addr : relocSites)
@@ -827,22 +828,23 @@ public:
 
 private:
   void applyAllRelocations(uint8_t *bufferStart);
-  void printAllAtomAddresses();
+  void printAllAtomAddresses() const;
   void addChunk(Chunk *chunk);
   void addSectionChunk(SectionChunk *chunk, SectionHeaderTableChunk *table);
   void setImageSizeOnDisk();
   void setAddressOfEntryPoint(SectionChunk *text, PEHeaderChunk *peHeader);
-  uint64_t calcSectionSize(llvm::COFF::SectionCharacteristics sectionType);
+  uint64_t
+  calcSectionSize(llvm::COFF::SectionCharacteristics sectionType) const;
 
-  uint64_t calcSizeOfInitializedData() {
+  uint64_t calcSizeOfInitializedData() const {
     return calcSectionSize(llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA);
   }
 
-  uint64_t calcSizeOfUninitializedData() {
+  uint64_t calcSizeOfUninitializedData() const {
     return calcSectionSize(llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA);
   }
 
-  uint64_t calcSizeOfCode() {
+  uint64_t calcSizeOfCode() const {
     return calcSectionSize(llvm::COFF::IMAGE_SCN_CNT_CODE);
   }
 
@@ -1010,7 +1012,7 @@ void ExecutableWriter::applyAllRelocations(uint8_t *bufferStart) {
 }
 
 /// Print atom VAs. Used only for debugging.
-void ExecutableWriter::printAllAtomAddresses() {
+void ExecutableWriter::printAllAtomAddresses() const {
   for (auto &cp : _chunks)
     if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
       chunk->printAtomAddresses(_PECOFFLinkingContext.getBaseAddress());
@@ -1062,7 +1064,7 @@ void ExecutableWriter::setAddressOfEntryPoint(SectionChunk *text,
 }
 
 uint64_t ExecutableWriter::calcSectionSize(
-    llvm::COFF::SectionCharacteristics sectionType) {
+    llvm::COFF::SectionCharacteristics sectionType) const {
   uint64_t ret = 0;
   for (auto &cp : _chunks)
     if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp))
