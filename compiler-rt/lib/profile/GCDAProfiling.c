@@ -403,7 +403,7 @@ void llvm_gcda_emit_arcs(uint32_t num_counters, uint64_t *counters) {
 }
 
 void llvm_gcda_summary_info() {
-  const int obj_summary_len = 9; // length for gcov compatibility
+  const uint32_t obj_summary_len = 9; /* Length for gcov compatibility. */
   uint32_t i;
   uint32_t runs = 1;
   uint32_t val = 0;
@@ -420,15 +420,15 @@ void llvm_gcda_summary_info() {
       return;
     }
 
-    val = read_32bit_value(); // length
+    val = read_32bit_value(); /* length */
     if (val != obj_summary_len) {
-      fprintf(stderr, "profiling:invalid object length (%d)\n", val); // length
+      fprintf(stderr, "profiling:invalid object length (%d)\n", val);
       return;
     }
 
-    read_32bit_value(); // checksum, unused
-    read_32bit_value(); // num, unused
-    runs += read_32bit_value(); // add previous run count to new counter
+    read_32bit_value(); /* checksum, unused */
+    read_32bit_value(); /* num, unused */
+    runs += read_32bit_value(); /* Add previous run count to new counter. */
   }
 
   cur_pos = save_cur_pos;
@@ -436,15 +436,15 @@ void llvm_gcda_summary_info() {
   /* Object summary tag */
   write_bytes("\0\0\0\xa1", 4);
   write_32bit_value(obj_summary_len);
-  write_32bit_value(0); // checksum, unused
-  write_32bit_value(0); // num, unused
+  write_32bit_value(0); /* checksum, unused */
+  write_32bit_value(0); /* num, unused */
   write_32bit_value(runs);
-  for (i = 3; i < obj_summary_len; ++i) 
+  for (i = 3; i < obj_summary_len; ++i)
     write_32bit_value(0);
 
   /* Program summary tag */
-  write_bytes("\0\0\0\xa3", 4); // tag indicates 1 program
-  write_32bit_value(0); // 0 length
+  write_bytes("\0\0\0\xa3", 4); /* tag indicates 1 program */
+  write_32bit_value(0); /* 0 length */
 
 #ifdef DEBUG_GCDAPROFILING
   fprintf(stderr, "llvmgcda:   %u runs\n", runs);
