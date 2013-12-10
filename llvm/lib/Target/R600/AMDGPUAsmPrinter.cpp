@@ -257,7 +257,7 @@ void AMDGPUAsmPrinter::findNumUsedRegistersSI(MachineFunction &MF,
           isSGPR = false;
           width = 16;
         } else {
-          assert(!"Unknown register class");
+          llvm_unreachable("Unknown register class");
         }
         hwReg = RI->getEncodingValue(reg) & 0xff;
         maxUsed = hwReg + width - 1;

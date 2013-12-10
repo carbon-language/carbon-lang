@@ -253,7 +253,7 @@ void SIAnnotateControlFlow::handleLoopCondition(Value *Cond) {
     PhiInserter.AddAvailableValue(Parent, Ret);
 
   } else {
-    assert(0 && "Unhandled loop condition!");
+    llvm_unreachable("Unhandled loop condition!");
   }
 }
 

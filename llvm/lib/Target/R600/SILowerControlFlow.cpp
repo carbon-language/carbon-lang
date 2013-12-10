@@ -283,16 +283,11 @@ void SILowerControlFlowPass::EndCf(MachineInstr &MI) {
 }
 
 void SILowerControlFlowPass::Branch(MachineInstr &MI) {
-  MachineBasicBlock *Next = MI.getParent()->getNextNode();
-  MachineBasicBlock *Target = MI.getOperand(0).getMBB();
-  if (Target == Next)
-    MI.eraseFromParent();
-  else
-    assert(0);
+  assert(MI.getOperand(0).getMBB() == MI.getParent()->getNextNode());
+  MI.eraseFromParent();
 }
 
 void SILowerControlFlowPass::Kill(MachineInstr &MI) {
-
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc DL = MI.getDebugLoc();
 

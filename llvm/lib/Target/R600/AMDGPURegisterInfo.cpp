@@ -38,7 +38,7 @@ void AMDGPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                              int SPAdj,
                                              unsigned FIOperandNum,
                                              RegScavenger *RS) const {
-  assert(!"Subroutines not supported yet");
+  llvm_unreachable("Subroutines not supported yet");
 }
 
 unsigned AMDGPURegisterInfo::getFrameRegister(const MachineFunction &MF) const {

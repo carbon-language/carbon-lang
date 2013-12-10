@@ -977,7 +977,7 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const 
     HWFalse = DAG.getConstant(0, CompareVT);
   }
   else {
-    assert(!"Unhandled value type in LowerSELECT_CC");
+    llvm_unreachable("Unhandled value type in LowerSELECT_CC");
   }
 
   // Lower this unsupported SELECT_CC into a combination of two supported
@@ -1099,7 +1099,7 @@ SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
                                     Ptr, DAG.getConstant(2, MVT::i32)));
 
       if (StoreNode->isTruncatingStore() || StoreNode->isIndexed()) {
-        assert(!"Truncated and indexed stores not supported yet");
+        llvm_unreachable("Truncated and indexed stores not supported yet");
       } else {
         Chain = DAG.getStore(Chain, DL, Value, Ptr, StoreNode->getMemOperand());
       }

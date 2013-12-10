@@ -63,7 +63,7 @@ public:
   DenseMap<unsigned, unsigned> RegToChan;
   std::vector<unsigned> UndefReg;
   RegSeqInfo(MachineRegisterInfo &MRI, MachineInstr *MI) : Instr(MI) {
-    assert (MI->getOpcode() == AMDGPU::REG_SEQUENCE);
+    assert(MI->getOpcode() == AMDGPU::REG_SEQUENCE);
     for (unsigned i = 1, e = Instr->getNumOperands(); i < e; i+=2) {
       MachineOperand &MO = Instr->getOperand(i);
       unsigned Chan = Instr->getOperand(i + 1).getImm();

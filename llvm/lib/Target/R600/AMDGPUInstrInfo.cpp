@@ -110,7 +110,7 @@ AMDGPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                     int FrameIndex,
                                     const TargetRegisterClass *RC,
                                     const TargetRegisterInfo *TRI) const {
-  assert(!"Not Implemented");
+  llvm_unreachable("Not Implemented");
 }
 
 void
@@ -119,7 +119,7 @@ AMDGPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                      unsigned DestReg, int FrameIndex,
                                      const TargetRegisterClass *RC,
                                      const TargetRegisterInfo *TRI) const {
-  assert(!"Not Implemented");
+  llvm_unreachable("Not Implemented");
 }
 
 bool AMDGPUInstrInfo::expandPostRAPseudo (MachineBasicBlock::iterator MI) const {

@@ -254,8 +254,8 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   switch (Op.getOpcode()) {
   default:
     Op.getNode()->dump();
-    assert(0 && "Custom lowering code for this"
-        "instruction is not implemented yet!");
+    llvm_unreachable("Custom lowering code for this"
+                     "instruction is not implemented yet!");
     break;
   // AMDIL DAG lowering
   case ISD::SDIV: return LowerSDIV(Op, DAG);
@@ -455,7 +455,7 @@ SDValue AMDGPUTargetLowering::LowerMinMax(SDValue Op,
   case ISD::SETTRUE2:
   case ISD::SETUO:
   case ISD::SETO:
-    assert(0 && "Operation should already be optimised !");
+    llvm_unreachable("Operation should already be optimised!");
   case ISD::SETULE:
   case ISD::SETULT:
   case ISD::SETOLE:
@@ -479,7 +479,7 @@ SDValue AMDGPUTargetLowering::LowerMinMax(SDValue Op,
       return DAG.getNode(AMDGPUISD::FMIN, DL, VT, LHS, RHS);
   }
   case ISD::SETCC_INVALID:
-    assert(0 && "Invalid setcc condcode !");
+    llvm_unreachable("Invalid setcc condcode!");
   }
   return Op;
 }

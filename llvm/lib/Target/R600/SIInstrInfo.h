@@ -60,7 +60,10 @@ public:
   virtual MachineInstr *commuteInstruction(MachineInstr *MI,
                                            bool NewMI=false) const;
 
-  virtual unsigned getIEQOpcode() const { assert(!"Implement"); return 0;}
+  virtual unsigned getIEQOpcode() const {
+    llvm_unreachable("Unimplemented");
+  }
+
   MachineInstr *buildMovInstr(MachineBasicBlock *MBB,
                               MachineBasicBlock::iterator I,
                               unsigned DstReg, unsigned SrcReg) const;
