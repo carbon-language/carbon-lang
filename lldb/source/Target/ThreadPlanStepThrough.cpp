@@ -161,7 +161,7 @@ ThreadPlanStepThrough::ShouldStop (Event *event_ptr)
     // First, did we hit the backstop breakpoint?
     if (HitOurBackstopBreakpoint())
     {
-        SetPlanComplete(false);
+        SetPlanComplete(true);
         return true;
     }
 
