@@ -77,7 +77,7 @@ void t9() {
     pop ebx
   }
 // CHECK: t9
-// CHECK: call void asm sideeffect inteldialect "push ebx\0A\09mov ebx, $$0x07\0A\09pop ebx", "~{ebx},~{dirflag},~{fpsr},~{flags}"()
+// CHECK: call void asm sideeffect inteldialect "push ebx\0A\09mov ebx, $$0x07\0A\09pop ebx", "~{ebx},~{esp},~{dirflag},~{fpsr},~{flags}"()
 }
 
 unsigned t10(void) {
@@ -211,7 +211,7 @@ void t21() {
     __asm pop ebx
   }
 // CHECK: t21
-// CHECK: call void asm sideeffect inteldialect "push ebx\0A\09mov ebx, $$0x07\0A\09pop ebx", "~{ebx},~{dirflag},~{fpsr},~{flags}"()
+// CHECK: call void asm sideeffect inteldialect "push ebx\0A\09mov ebx, $$0x07\0A\09pop ebx", "~{ebx},~{esp},~{dirflag},~{fpsr},~{flags}"()
 }
 
 extern void t22_helper(int x);
@@ -227,7 +227,7 @@ void t22() {
     __asm pop ebx
   }
 // CHECK: t22
-// CHECK: call void asm sideeffect inteldialect "push ebx\0A\09mov ebx, esp", "~{ebx},~{dirflag},~{fpsr},~{flags}"()
+// CHECK: call void asm sideeffect inteldialect "push ebx\0A\09mov ebx, esp", "~{ebx},~{esp},~{dirflag},~{fpsr},~{flags}"()
 // CHECK: call void @t22_helper
 // CHECK: call void asm sideeffect inteldialect "mov esp, ebx\0A\09pop ebx", "~{ebx},~{esp},~{dirflag},~{fpsr},~{flags}"()
 }
@@ -268,13 +268,14 @@ void t26() {
   __asm __emit 0a2h
   __asm __EMIT 0a2h
   __asm popad
+// FIXME: These all need to be merged into the same asm blob.
 // CHECK: t26
-// CHECK: call void asm sideeffect inteldialect "pushad", "~{dirflag},~{fpsr},~{flags}"()
+// CHECK: call void asm sideeffect inteldialect "pushad", "~{esp},~{dirflag},~{fpsr},~{flags}"()
 // CHECK: call void asm sideeffect inteldialect "mov eax, $$0", "~{eax},~{dirflag},~{fpsr},~{flags}"()
 // CHECK: call void asm sideeffect inteldialect ".byte 0fh", "~{dirflag},~{fpsr},~{flags}"()
 // CHECK: call void asm sideeffect inteldialect ".byte 0a2h", "~{dirflag},~{fpsr},~{flags}"()
 // CHECK: call void asm sideeffect inteldialect ".byte 0a2h", "~{dirflag},~{fpsr},~{flags}"()
-// CHECK: call void asm sideeffect inteldialect "popad", "~{dirflag},~{fpsr},~{flags}"()
+// CHECK: call void asm sideeffect inteldialect "popad", "~{eax},~{ebp},~{ebx},~{ecx},~{edi},~{edx},~{esi},~{esp},~{dirflag},~{fpsr},~{flags}"()
 }
 
 void t27() {
@@ -323,8 +324,8 @@ void t31() {
   __asm pushad
   __asm popad
 // CHECK: t31
-// CHECK: call void asm sideeffect inteldialect "pushad", "~{dirflag},~{fpsr},~{flags}"()
-// CHECK: call void asm sideeffect inteldialect "popad", "~{dirflag},~{fpsr},~{flags}"()
+// CHECK: call void asm sideeffect inteldialect "pushad", "~{esp},~{dirflag},~{fpsr},~{flags}"()
+// CHECK: call void asm sideeffect inteldialect "popad", "~{eax},~{ebp},~{ebx},~{ecx},~{edi},~{edx},~{esi},~{esp},~{dirflag},~{fpsr},~{flags}"()
 }
 
 void t32() {

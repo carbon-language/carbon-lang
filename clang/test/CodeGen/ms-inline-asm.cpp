@@ -97,7 +97,7 @@ void test5() {
   // CHECK: [[Y:%.*]] = alloca i32
   int x, y;
   __asm push y
-  // CHECK: call void asm sideeffect inteldialect "push dword ptr $0", "=*m,~{dirflag},~{fpsr},~{flags}"(i32* [[Y]])
+  // CHECK: call void asm sideeffect inteldialect "push dword ptr $0", "=*m,~{esp},~{dirflag},~{fpsr},~{flags}"(i32* [[Y]])
   __asm call T5<int>::create<float>
   // CHECK: call void asm sideeffect inteldialect "call $0", "r,~{dirflag},~{fpsr},~{flags}"(i32 (float)* @_ZN2T5IiE6createIfEEiT_)
   __asm mov x, eax
