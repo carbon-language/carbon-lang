@@ -34,6 +34,13 @@ namespace GCOV {
   };
 } // end GCOV namespace
 
+/// GCOVOptions - A struct for passing gcov options between functions.
+struct GCOVOptions {
+  GCOVOptions(bool A): AllBlocks(A) {}
+
+  bool AllBlocks;
+};
+
 /// GCOVBuffer - A wrapper around MemoryBuffer to provide GCOV specific
 /// read operations.
 class GCOVBuffer {
@@ -245,6 +252,7 @@ public:
   bool readGCNO(GCOVBuffer &Buffer, GCOV::GCOVVersion Version);
   bool readGCDA(GCOVBuffer &Buffer, GCOV::GCOVVersion Version);
   StringRef getFilename() const { return Filename; }
+  size_t getNumBlocks() const { return Blocks.size(); }
   void dump() const;
   void collectLineCounts(FileInfo &FI);
 private:
@@ -275,6 +283,7 @@ public:
     DstEdges.push_back(Edge);
   }
   void addLine(uint32_t N) { Lines.push_back(N); }
+  uint32_t getLastLine() const { return Lines.back(); }
   void addCount(size_t DstEdgeNo, uint64_t N);
   uint64_t getCount() const { return Counter; }
   size_t getNumSrcEdges() const { return SrcEdges.size(); }
@@ -305,7 +314,8 @@ public:
   }
   void setRunCount(uint32_t Runs) { RunCount = Runs; }
   void setProgramCount(uint32_t Programs) { ProgramCount = Programs; }
-  void print(StringRef GCNOFile, StringRef GCDAFile) const;
+  void print(StringRef GCNOFile, StringRef GCDAFile,
+             const GCOVOptions &Options) const;
 private:
   StringMap<LineData> LineInfo;
   uint32_t RunCount;

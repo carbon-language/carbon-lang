@@ -6,8 +6,12 @@ RUN: cd %t
 RUN: cp %p/Inputs/test* .
 
 RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda
-RUN: diff -aub test.cpp.orig_gcov test.cpp.gcov
-RUN: diff -aub test.h.orig_gcov test.h.gcov
+RUN: diff -aub test_no_options.cpp.gcov test.cpp.gcov
+RUN: diff -aub test_no_options.h.gcov test.h.gcov
+
+RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda -a
+RUN: diff -aub test_-a.cpp.gcov test.cpp.gcov
+RUN: diff -aub test_-a.h.gcov test.h.gcov
 
 RUN: not llvm-cov -gcno=test_read_fail.gcno -gcda=test.gcda
 
