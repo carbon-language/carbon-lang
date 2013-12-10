@@ -4627,23 +4627,21 @@ multiclass Neon_ScalarShiftImm_narrow_HSD_size_patterns<
                 (INSTD FPR64:$Rn, imm:$Imm)>;
 }
 
-multiclass Neon_ScalarShiftImm_scvtf_SD_size_patterns<SDPatternOperator Sopnode,
-                                                      SDPatternOperator Dopnode,
+multiclass Neon_ScalarShiftImm_scvtf_SD_size_patterns<SDPatternOperator opnode,
                                                       Instruction INSTS,
                                                       Instruction INSTD> {
-  def ssi : Pat<(f32 (Sopnode (v1i32 FPR32:$Rn), (i32 shr_imm32:$Imm))),
+  def ssi : Pat<(f32 (opnode (v1i32 FPR32:$Rn), (i32 shr_imm32:$Imm))),
                 (INSTS FPR32:$Rn, imm:$Imm)>;
-  def ddi : Pat<(f64 (Dopnode (v1i64 FPR64:$Rn), (i32 shr_imm64:$Imm))),
+  def ddi : Pat<(f64 (opnode (v1i64 FPR64:$Rn), (i32 shr_imm64:$Imm))),
                 (INSTD FPR64:$Rn, imm:$Imm)>;
 }
 
-multiclass Neon_ScalarShiftImm_fcvts_SD_size_patterns<SDPatternOperator Sopnode,
-                                                      SDPatternOperator Dopnode,
+multiclass Neon_ScalarShiftImm_fcvts_SD_size_patterns<SDPatternOperator opnode,
                                                       Instruction INSTS,
                                                       Instruction INSTD> {
-  def ssi : Pat<(v1i32 (Sopnode (v1f32 FPR32:$Rn), (i32 shr_imm32:$Imm))),
+  def ssi : Pat<(v1i32 (opnode (v1f32 FPR32:$Rn), (i32 shr_imm32:$Imm))),
                 (INSTS FPR32:$Rn, imm:$Imm)>;
-  def ddi : Pat<(v1i64 (Dopnode (v1f64 FPR64:$Rn), (i32 shr_imm64:$Imm))),
+  def ddi : Pat<(v1i64 (opnode (v1f64 FPR64:$Rn), (i32 shr_imm64:$Imm))),
                 (INSTD FPR64:$Rn, imm:$Imm)>;
 }
 
@@ -4763,26 +4761,22 @@ defm : Neon_ScalarShiftImm_narrow_HSD_size_patterns<int_aarch64_neon_vsqrshrun,
 
 // Scalar Signed Fixed-point Convert To Floating-Point (Immediate)
 defm SCVTF_N : NeonI_ScalarShiftImm_cvt_SD_size<0b0, 0b11100, "scvtf">;
-defm : Neon_ScalarShiftImm_scvtf_SD_size_patterns<int_aarch64_neon_vcvtf32_n_s32,
-                                                  int_aarch64_neon_vcvtf64_n_s64,
+defm : Neon_ScalarShiftImm_scvtf_SD_size_patterns<int_aarch64_neon_vcvtfxs2fp_n,
                                                   SCVTF_Nssi, SCVTF_Nddi>;
 
 // Scalar Unsigned Fixed-point Convert To Floating-Point (Immediate)
 defm UCVTF_N : NeonI_ScalarShiftImm_cvt_SD_size<0b1, 0b11100, "ucvtf">;
-defm : Neon_ScalarShiftImm_scvtf_SD_size_patterns<int_aarch64_neon_vcvtf32_n_u32,
-                                                  int_aarch64_neon_vcvtf64_n_u64,
+defm : Neon_ScalarShiftImm_scvtf_SD_size_patterns<int_aarch64_neon_vcvtfxu2fp_n,
                                                   UCVTF_Nssi, UCVTF_Nddi>;
 
 // Scalar Floating-point Convert To Signed Fixed-point (Immediate)
 defm FCVTZS_N : NeonI_ScalarShiftImm_cvt_SD_size<0b0, 0b11111, "fcvtzs">;
-defm : Neon_ScalarShiftImm_fcvts_SD_size_patterns<int_aarch64_neon_vcvts_n_s32_f32,
-                                                  int_aarch64_neon_vcvtd_n_s64_f64,
+defm : Neon_ScalarShiftImm_fcvts_SD_size_patterns<int_aarch64_neon_vcvtfp2fxs_n,
                                                   FCVTZS_Nssi, FCVTZS_Nddi>;
 
 // Scalar Floating-point Convert To Unsigned Fixed-point (Immediate)
 defm FCVTZU_N : NeonI_ScalarShiftImm_cvt_SD_size<0b1, 0b11111, "fcvtzu">;
-defm : Neon_ScalarShiftImm_fcvts_SD_size_patterns<int_aarch64_neon_vcvts_n_u32_f32,
-                                                  int_aarch64_neon_vcvtd_n_u64_f64,
+defm : Neon_ScalarShiftImm_fcvts_SD_size_patterns<int_aarch64_neon_vcvtfp2fxu_n,
                                                   FCVTZU_Nssi, FCVTZU_Nddi>;
 
 // Patterns For Convert Instructions Between v1f64 and v1i64
