@@ -10,7 +10,7 @@ from lldbtest import *
 
 class STLTestCase(TestBase):
 
-    mydir = os.path.join("lang", "cpp", "stl")
+    mydir = TestBase.compute_mydir(__file__)
 
     # rdar://problem/10400981
     @unittest2.expectedFailure

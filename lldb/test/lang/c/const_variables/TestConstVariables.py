@@ -8,7 +8,7 @@ import lldbutil
 
 class ConstVariableTestCase(TestBase):
 
-    mydir = os.path.join("lang", "c", "const_variables")
+    mydir = TestBase.compute_mydir(__file__)
 
     @dsym_test
     @unittest2.expectedFailure(13314878)

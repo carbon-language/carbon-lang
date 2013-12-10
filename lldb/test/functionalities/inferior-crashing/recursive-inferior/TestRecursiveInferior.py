@@ -7,7 +7,7 @@ from lldbtest import *
 
 class CrashingRecursiveInferiorTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "inferior-crashing", "recursive-inferior")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_recursive_inferior_crashing_dsym(self):

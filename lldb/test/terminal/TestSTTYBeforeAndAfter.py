@@ -10,7 +10,7 @@ from lldbtest import *
 
 class CommandLineCompletionTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "completion")
+    mydir = TestBase.compute_mydir(__file__)
 
     @classmethod
     def classCleanup(cls):

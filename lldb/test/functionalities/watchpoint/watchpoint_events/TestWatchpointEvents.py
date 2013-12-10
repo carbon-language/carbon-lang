@@ -8,7 +8,7 @@ from lldbtest import *
 
 class TestWatchpointEvents (TestBase):
 
-    mydir = os.path.join("functionalities", "watchpoint", "watchpoint_events")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test

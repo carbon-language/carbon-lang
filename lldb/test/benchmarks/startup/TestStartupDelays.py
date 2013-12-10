@@ -8,7 +8,7 @@ from lldbbench import *
 
 class StartupDelaysBench(BenchBase):
 
-    mydir = os.path.join("benchmarks", "startup")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         BenchBase.setUp(self)

@@ -19,7 +19,7 @@ from lldbtest import *
 
 class APIDefaultConstructorTestCase(TestBase):
 
-    mydir = os.path.join("python_api", "default-constructor")
+    mydir = TestBase.compute_mydir(__file__)
 
     @python_api_test
     def test_SBAddress(self):

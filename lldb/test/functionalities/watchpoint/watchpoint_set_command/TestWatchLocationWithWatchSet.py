@@ -10,7 +10,7 @@ import lldbutil
 
 class WatchLocationUsingWatchpointSetTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "watchpoint", "watchpoint_set_command")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test

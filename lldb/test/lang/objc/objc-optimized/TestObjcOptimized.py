@@ -19,7 +19,7 @@ import re
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class ObjcOptimizedTestCase(TestBase):
 
-    mydir = os.path.join("lang", "objc", "objc-optimized")
+    mydir = TestBase.compute_mydir(__file__)
     myclass = "MyClass"
     mymethod = "description"
     method_spec = "-[%s %s]" % (myclass, mymethod)

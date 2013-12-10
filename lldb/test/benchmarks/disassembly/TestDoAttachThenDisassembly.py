@@ -10,7 +10,7 @@ from lldbbench import *
 
 class AttachThenDisassemblyBench(BenchBase):
 
-    mydir = os.path.join("benchmarks", "disassembly")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         BenchBase.setUp(self)

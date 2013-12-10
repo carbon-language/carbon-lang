@@ -8,7 +8,7 @@ import lldbutil
 
 class AnonymousTestCase(TestBase):
 
-    mydir = os.path.join("lang", "c", "anonymous")
+    mydir = TestBase.compute_mydir(__file__)
 
     @dsym_test
     def test_expr_nest_with_dsym(self):

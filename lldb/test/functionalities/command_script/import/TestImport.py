@@ -7,7 +7,7 @@ from lldbtest import *
 
 class ImportTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "command_script", "import")
+    mydir = TestBase.compute_mydir(__file__)
 
     @python_api_test
     def test_import_command(self):

@@ -19,7 +19,7 @@ def execute_command (command):
 
 class FatArchiveTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "fat_archives")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test

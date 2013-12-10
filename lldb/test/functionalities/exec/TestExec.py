@@ -19,7 +19,7 @@ def execute_command (command):
 
 class ExecTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "exec")
+    mydir = TestBase.compute_mydir(__file__)
 
         
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")

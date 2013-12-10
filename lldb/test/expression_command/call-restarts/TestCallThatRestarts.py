@@ -9,7 +9,7 @@ from lldbtest import *
 
 class ExprCommandWithTimeoutsTestCase(TestBase):
 
-    mydir = os.path.join("expression_command", "call-restarts")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         # Call super's setUp().

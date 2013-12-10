@@ -829,11 +829,19 @@ class Base(unittest2.TestCase):
 
     # Keep track of the old current working directory.
     oldcwd = None
-
+    
+    @staticmethod
+    def compute_mydir(test_file):
+        '''Subclasses should call this function to correctly calculate the required "mydir" attribute as follows: 
+            
+            mydir = TestBase.compute_mydir(__file__)'''
+        test_dir = os.path.dirname(test_file)
+        return test_dir[len(os.environ["LLDB_TEST"])+1:]
+    
     def TraceOn(self):
         """Returns True if we are in trace mode (tracing detailed test execution)."""
         return traceAlways
-
+    
     @classmethod
     def setUpClass(cls):
         """

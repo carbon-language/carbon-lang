@@ -10,7 +10,7 @@ import lldbutil
 
 class StaticVariableTestCase(TestBase):
 
-    mydir = os.path.join("lang", "cpp", "class_static")
+    mydir = TestBase.compute_mydir(__file__)
     failing_compilers = ['clang', 'gcc']
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")

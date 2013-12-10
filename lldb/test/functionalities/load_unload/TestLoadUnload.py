@@ -14,7 +14,7 @@ class LoadUnloadTestCase(TestBase):
     def getCategories (self):
         return ['basic_process']
 
-    mydir = os.path.join("functionalities", "load_unload")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         # Call super's setUp().

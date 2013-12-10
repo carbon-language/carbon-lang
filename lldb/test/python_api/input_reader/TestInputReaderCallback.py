@@ -8,7 +8,7 @@ from lldbtest import TestBase, python_api_test, dwarf_test
 
 class InputReaderCallbackCase(TestBase):
 
-    mydir = os.path.join("python_api", "input_reader")
+    mydir = TestBase.compute_mydir(__file__)
 
     @python_api_test
     @dwarf_test

@@ -10,7 +10,7 @@ from lldbtest import *
 
 class DisassembleRawDataTestCase(TestBase):
 
-    mydir = os.path.join("python_api", "disassemble-raw-data")
+    mydir = TestBase.compute_mydir(__file__)
 
     @python_api_test
     def test_disassemble_raw_data(self):

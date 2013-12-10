@@ -10,7 +10,7 @@ import lldbutil
 
 class ThreadStepOutTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "thread", "step_out")
+    mydir = TestBase.compute_mydir(__file__)
 
     @dsym_test
     def test_step_single_thread_with_dsym(self):

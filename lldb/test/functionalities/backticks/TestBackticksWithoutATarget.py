@@ -9,7 +9,7 @@ from lldbtest import *
 
 class BackticksWithNoTargetTestCase(TestBase):
 
-    mydir = "functionalities/backticks"
+    mydir = TestBase.compute_mydir(__file__)
 
     def test_backticks_no_target(self):
         """A simple test of backticks without a target."""

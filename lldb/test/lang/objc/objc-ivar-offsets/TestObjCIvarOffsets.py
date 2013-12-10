@@ -8,7 +8,7 @@ import lldbutil
 
 class TestObjCIvarOffsets(TestBase):
 
-    mydir = os.path.join("lang", "objc", "objc-ivar-offsets")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test

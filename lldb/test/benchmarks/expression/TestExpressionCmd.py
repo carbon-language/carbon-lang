@@ -8,7 +8,7 @@ from lldbbench import *
 
 class ExpressionEvaluationCase(BenchBase):
 
-    mydir = os.path.join("benchmarks", "expression")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         BenchBase.setUp(self)

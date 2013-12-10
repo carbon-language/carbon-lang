@@ -9,7 +9,7 @@ from lldbtest import *
 
 class ProcessLaunchTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "process_launch")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         # Call super's setUp().

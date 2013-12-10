@@ -10,7 +10,7 @@ from lldbtest import *
 
 class Disassemble_VST1_64(TestBase):
 
-    mydir = os.path.join("python_api", "disassemble-raw-data")
+    mydir = TestBase.compute_mydir(__file__)
 
     @python_api_test
     def test_disassemble_invalid_vst_1_64_raw_data(self):

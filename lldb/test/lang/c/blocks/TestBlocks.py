@@ -8,7 +8,7 @@ import lldbutil
 
 class BlocksTestCase(TestBase):
 
-    mydir = os.path.join("lang", "c", "blocks")
+    mydir = TestBase.compute_mydir(__file__)
     lines = []
 
     @unittest2.expectedFailure

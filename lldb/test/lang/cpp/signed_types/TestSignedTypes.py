@@ -11,7 +11,7 @@ import lldbutil
 
 class UnsignedTypesTestCase(TestBase):
 
-    mydir = os.path.join("lang", "cpp", "signed_types")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test

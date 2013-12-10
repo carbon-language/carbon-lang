@@ -8,7 +8,7 @@ import lldbutil
 
 class TestObjCIvarsInBlocks(TestBase):
 
-    mydir = os.path.join("lang", "objc", "blocks")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     # This test requires the 2.0 runtime, so it will fail on i386.

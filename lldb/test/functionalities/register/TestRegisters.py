@@ -11,7 +11,7 @@ import lldbutil
 
 class RegisterCommandsTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "register")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         TestBase.setUp(self)

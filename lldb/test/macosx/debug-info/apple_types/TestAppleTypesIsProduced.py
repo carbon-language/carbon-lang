@@ -10,7 +10,7 @@ from lldbutil import symbol_type_to_str
 
 class AppleTypesTestCase(TestBase):
 
-    mydir = os.path.join("macosx", "debug-info", "apple_types")
+    mydir = TestBase.compute_mydir(__file__)
 
     #rdar://problem/11166975
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")

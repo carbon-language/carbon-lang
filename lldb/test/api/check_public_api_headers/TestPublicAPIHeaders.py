@@ -10,7 +10,7 @@ import lldbutil
 
 class SBDirCheckerCase(TestBase):
 
-    mydir = os.path.join("api", "check_public_api_headers")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         TestBase.setUp(self)

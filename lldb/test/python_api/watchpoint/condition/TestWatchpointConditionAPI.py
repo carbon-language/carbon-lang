@@ -10,7 +10,7 @@ from lldbtest import *
 
 class WatchpointConditionAPITestCase(TestBase):
 
-    mydir = os.path.join("python_api", "watchpoint", "condition")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         # Call super's setUp().

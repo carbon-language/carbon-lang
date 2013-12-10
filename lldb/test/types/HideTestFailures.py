@@ -10,9 +10,9 @@ from lldbtest import *
 
 # rdar://problem/9649573
 # Capture the lldb and gdb-remote log files for test failures when run with no "-w" option
-class DebugIntegerTypesFailures(AbstractBase.GenericTester):
+class DebugIntegerTypesFailures(TestBase):
 
-    mydir = "types"
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         # Call super's setUp().

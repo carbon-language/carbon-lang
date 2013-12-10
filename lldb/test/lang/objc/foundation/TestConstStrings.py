@@ -12,7 +12,7 @@ import lldbutil
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class ConstStringTestCase(TestBase):
 
-    mydir = os.path.join("lang", "objc", "foundation")
+    mydir = TestBase.compute_mydir(__file__)
     d = {'OBJC_SOURCES': 'const-strings.m'}
 
     @dsym_test

@@ -10,7 +10,7 @@ from lldbtest import dsym_test, dwarf_test
 
 class FloatTypesExprTestCase(AbstractBase.GenericTester):
 
-    mydir = "types"
+    mydir = AbstractBase.GenericTester.compute_mydir(__file__)
 
     # rdar://problem/8493023
     # test/types failures for Test*TypesExpr.py: element offset computed wrong and sign error?

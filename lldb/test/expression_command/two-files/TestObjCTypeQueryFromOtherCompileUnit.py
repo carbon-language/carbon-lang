@@ -11,7 +11,7 @@ import lldbutil
 
 class ObjCTypeQueryTestCase(TestBase):
 
-    mydir = os.path.join("expression_command", "two-files")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         # Call super's setUp().

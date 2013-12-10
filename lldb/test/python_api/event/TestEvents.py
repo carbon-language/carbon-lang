@@ -10,7 +10,7 @@ from lldbtest import *
 
 class EventAPITestCase(TestBase):
 
-    mydir = os.path.join("python_api", "event")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test

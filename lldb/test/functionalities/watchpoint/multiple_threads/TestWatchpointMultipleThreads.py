@@ -11,7 +11,7 @@ import lldbutil
 
 class WatchpointForMultipleThreadsTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "watchpoint", "multiple_threads")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test

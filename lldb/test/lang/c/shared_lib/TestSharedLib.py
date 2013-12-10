@@ -8,7 +8,7 @@ import lldbutil
 
 class SharedLibTestCase(TestBase):
 
-    mydir = os.path.join("lang", "c", "shared_lib")
+    mydir = TestBase.compute_mydir(__file__)
 
     @dsym_test
     def test_expr_with_dsym(self):

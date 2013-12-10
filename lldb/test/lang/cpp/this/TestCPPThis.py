@@ -7,7 +7,7 @@ import lldbutil
 
 class CPPThisTestCase(TestBase):
     
-    mydir = os.path.join("lang", "cpp", "this")
+    mydir = TestBase.compute_mydir(__file__)
     
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     #rdar://problem/9962849

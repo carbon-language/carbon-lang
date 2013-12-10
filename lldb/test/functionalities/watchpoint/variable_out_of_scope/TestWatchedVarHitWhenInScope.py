@@ -10,7 +10,7 @@ import lldbutil
 
 class WatchedVariableHitWhenInScopeTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "watchpoint", "variable_out_of_scope")
+    mydir = TestBase.compute_mydir(__file__)
 
     #
     # This test depends on not tracking watchpoint expression hits if we have

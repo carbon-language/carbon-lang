@@ -10,7 +10,7 @@ from lldbtest import *
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class PrintObjTestCase(TestBase):
 
-    mydir = os.path.join("lang", "objc", "print-obj")
+    mydir = TestBase.compute_mydir(__file__)
 
     @dsym_test
     def test_print_obj_with_dsym(self):

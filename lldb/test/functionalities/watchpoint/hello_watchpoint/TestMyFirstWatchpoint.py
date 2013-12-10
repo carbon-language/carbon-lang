@@ -13,7 +13,7 @@ class HelloWatchpointTestCase(TestBase):
     def getCategories (self):
         return ['basic_process']
 
-    mydir = os.path.join("functionalities", "watchpoint", "hello_watchpoint")
+    mydir = TestBase.compute_mydir(__file__)
 
     @dsym_test
     def test_hello_watchpoint_with_dsym_using_watchpoint_set(self):

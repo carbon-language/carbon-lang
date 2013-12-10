@@ -12,7 +12,7 @@ from lldbtest import *
 
 class ObjCNewSyntaxTestCase(TestBase):
 
-    mydir = os.path.join("lang", "objc", "objc-new-syntax")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.expectedFailure
     @dsym_test

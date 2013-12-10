@@ -11,7 +11,7 @@ import lldbutil
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class Rdar12408181TestCase(TestBase):
 
-    mydir = os.path.join("lang", "objc", "rdar-12408181")
+    mydir = TestBase.compute_mydir(__file__)
 
     @dsym_test
     def test_nswindow_count_with_dsym(self):

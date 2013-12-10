@@ -11,7 +11,7 @@ import lldbutil
 class Radar9973865DataFormatterTestCase(TestBase):
 
     # test for rdar://problem/9973865 (If you use "${var}" in the summary string for an aggregate type, the summary doesn't print for a pointer to that type)
-    mydir = os.path.join("functionalities", "data-formatter", "rdar-9973865")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test

@@ -11,7 +11,7 @@ import lldbutil
 class Radar10642615DataFormatterTestCase(TestBase):
 
     # test for rdar://problem/10642615 ()
-    mydir = os.path.join("functionalities", "data-formatter", "rdar-10642615")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test

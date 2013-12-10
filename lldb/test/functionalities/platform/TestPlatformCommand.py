@@ -9,7 +9,7 @@ from lldbtest import *
 
 class PlatformCommandTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "platform")
+    mydir = TestBase.compute_mydir(__file__)
 
     def test_help_platform(self):
         self.runCmd("help platform")

@@ -9,7 +9,7 @@ from lldbtest import TestBase, python_api_test
 
 class DebuggerAPITestCase(TestBase):
 
-    mydir = os.path.join("python_api", "debugger")
+    mydir = TestBase.compute_mydir(__file__)
 
     @python_api_test
     def test_debugger_api_boundary_condition(self):

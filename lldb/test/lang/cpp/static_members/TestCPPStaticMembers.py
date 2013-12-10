@@ -7,7 +7,7 @@ import lldbutil
 
 class CPPStaticMembersTestCase(TestBase):
     
-    mydir = os.path.join("lang", "cpp", "static_members")
+    mydir = TestBase.compute_mydir(__file__)
     
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @unittest2.expectedFailure # llvm.org/pr15401

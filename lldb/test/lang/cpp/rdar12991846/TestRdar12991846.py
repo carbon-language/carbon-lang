@@ -24,7 +24,7 @@ import lldbutil
 
 class Rdar12991846TestCase(TestBase):
 
-    mydir = os.path.join("lang", "cpp", "rdar12991846")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")

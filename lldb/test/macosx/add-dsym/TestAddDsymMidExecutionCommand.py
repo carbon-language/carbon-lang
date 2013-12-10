@@ -9,7 +9,7 @@ from lldbtest import *
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class AddDsymMidExecutionCommandCase(TestBase):
 
-    mydir = os.path.join ("macosx", "add-dsym")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         # Call super's setUp().

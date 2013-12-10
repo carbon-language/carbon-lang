@@ -10,7 +10,7 @@ from lldbtest import *
 
 class SingleQuoteInCommandLineTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "single-quote-in-filename-to-lldb")
+    mydir = TestBase.compute_mydir(__file__)
     myexe = "path with '09/a.out"
 
     @classmethod

@@ -12,7 +12,7 @@ import lldbutil
 
 class StructTypesTestCase(TestBase):
 
-    mydir = os.path.join("lang", "c", "struct_types")
+    mydir = TestBase.compute_mydir(__file__)
 
     # rdar://problem/12566646
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")

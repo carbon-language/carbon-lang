@@ -10,7 +10,7 @@ import lldbutil
 
 class CreateAfterAttachTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "thread", "create_after_attach")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test

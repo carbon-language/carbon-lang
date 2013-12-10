@@ -10,7 +10,7 @@ import lldbutil
 
 class BreakpointAfterJoinTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "thread", "break_after_join")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained

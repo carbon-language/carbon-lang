@@ -9,7 +9,7 @@ from lldbtest import *
 
 class PersistentVariablesTestCase(TestBase):
 
-    mydir = os.path.join("expression_command", "persistent_variables")
+    mydir = TestBase.compute_mydir(__file__)
 
     def test_persistent_variables(self):
         """Test that lldb persistent variables works correctly."""

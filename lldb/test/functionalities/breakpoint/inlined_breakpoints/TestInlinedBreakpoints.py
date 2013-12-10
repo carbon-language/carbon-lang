@@ -12,7 +12,7 @@ import lldbutil
 class InlinedBreakpointsTestCase(TestBase):
     """Bug fixed: rdar://problem/8464339"""
 
-    mydir = os.path.join("functionalities", "breakpoint", "inlined_breakpoints")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test

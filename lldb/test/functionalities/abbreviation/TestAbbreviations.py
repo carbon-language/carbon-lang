@@ -10,7 +10,7 @@ import lldbutil
 
 class AbbreviationsTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "abbreviation")
+    mydir = TestBase.compute_mydir(__file__)
 
     def test_nonrunning_command_abbreviations (self):
         self.expect("ap script",

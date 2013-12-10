@@ -7,7 +7,7 @@ import lldbutil
 
 class CPPBoolTestCase(TestBase):
     
-    mydir = os.path.join("lang", "cpp", "bool")
+    mydir = TestBase.compute_mydir(__file__)
     
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test

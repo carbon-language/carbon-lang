@@ -7,7 +7,7 @@ from lldbtest import *
 
 class Rdar12586188TestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "command_script", "import", "rdar-12586188")
+    mydir = TestBase.compute_mydir(__file__)
 
     @python_api_test
     def test_rdar12586188_command(self):

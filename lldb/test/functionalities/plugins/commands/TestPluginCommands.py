@@ -11,7 +11,7 @@ import lldbutil
 
 class PluginCommandTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "plugins", "commands")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         # Call super's setUp().

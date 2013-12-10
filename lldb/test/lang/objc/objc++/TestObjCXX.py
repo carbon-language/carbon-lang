@@ -10,7 +10,7 @@ import lldbutil
 
 class ObjCXXTestCase(TestBase):
 
-    mydir = os.path.join("lang", "objc", "objc++")
+    mydir = TestBase.compute_mydir(__file__)
 
     @dsym_test
     def test_break_with_dsym(self):

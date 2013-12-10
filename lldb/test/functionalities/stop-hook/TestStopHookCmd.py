@@ -11,7 +11,7 @@ import lldbutil
 
 class StopHookCmdTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "stop-hook")
+    mydir = TestBase.compute_mydir(__file__)
 
     # Regression test.
     def test_not_crashing_if_no_target(self):

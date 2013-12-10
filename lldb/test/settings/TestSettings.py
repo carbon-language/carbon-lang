@@ -9,7 +9,7 @@ from lldbtest import *
 
 class SettingsCommandTestCase(TestBase):
 
-    mydir = "settings"
+    mydir = TestBase.compute_mydir(__file__)
 
     @classmethod
     def classCleanup(cls):

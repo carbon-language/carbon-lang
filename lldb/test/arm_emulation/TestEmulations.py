@@ -9,7 +9,7 @@ from lldbtest import *
 
 class ARMEmulationTestCase(TestBase):
     
-    mydir = "arm_emulation"
+    mydir = TestBase.compute_mydir(__file__)
 
     def test_thumb_emulations (self):
         current_dir = os.getcwd();

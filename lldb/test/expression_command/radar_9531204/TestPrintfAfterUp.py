@@ -10,7 +10,7 @@ import lldbutil
 
 class Radar9531204TestCase(TestBase):
 
-    mydir = os.path.join("expression_command", "radar_9531204")
+    mydir = TestBase.compute_mydir(__file__)
 
     # rdar://problem/9531204
     @expectedFailureFreeBSD('llvm.org/pr17183')

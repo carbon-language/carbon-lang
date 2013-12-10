@@ -11,7 +11,7 @@ import lldbutil
 class Radar9973992DataFormatterTestCase(TestBase):
 
     # test for rdar://problem/9973992 (What should we do for "${var}" in summaries of aggregate types?)
-    mydir = os.path.join("functionalities", "data-formatter", "rdar-9973992")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test

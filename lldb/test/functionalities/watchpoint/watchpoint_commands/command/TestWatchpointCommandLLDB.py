@@ -10,7 +10,7 @@ import lldbutil
 
 class WatchpointLLDBCommandTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "watchpoint", "watchpoint_commands", "command")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         # Call super's setUp().

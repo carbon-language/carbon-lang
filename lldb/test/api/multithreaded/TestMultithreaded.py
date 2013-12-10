@@ -8,7 +8,7 @@ import subprocess
 
 class SBBreakpointCallbackCase(TestBase):
 
-    mydir = os.path.join("api", "multithreaded")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         TestBase.setUp(self)

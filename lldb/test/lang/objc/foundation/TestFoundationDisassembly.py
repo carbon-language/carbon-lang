@@ -11,7 +11,7 @@ import lldbutil
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class FoundationDisassembleTestCase(TestBase):
 
-    mydir = os.path.join("lang", "objc", "foundation")
+    mydir = TestBase.compute_mydir(__file__)
 
     # rdar://problem/8504895
     # Crash while doing 'disassemble -n "-[NSNumber descriptionWithLocale:]"

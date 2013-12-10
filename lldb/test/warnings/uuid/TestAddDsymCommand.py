@@ -9,7 +9,7 @@ from lldbtest import *
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class AddDsymCommandCase(TestBase):
 
-    mydir = os.path.join("warnings", "uuid")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         TestBase.setUp(self)

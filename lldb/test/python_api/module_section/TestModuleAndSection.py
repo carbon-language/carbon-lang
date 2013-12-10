@@ -11,7 +11,7 @@ from lldbutil import symbol_type_to_str
 
 class ModuleAndSectionAPIsTestCase(TestBase):
 
-    mydir = os.path.join("python_api", "module_section")
+    mydir = TestBase.compute_mydir(__file__)
 
     @python_api_test
     def test_module_and_section(self):

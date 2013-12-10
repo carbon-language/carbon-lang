@@ -10,7 +10,7 @@ import lldbutil
 
 class WatchpointSetErrorTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "watchpoint", "watchpoint_set_command")
+    mydir = TestBase.compute_mydir(__file__)
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints not yet on FreeBSD
     def test_error_cases_with_watchpoint_set(self):

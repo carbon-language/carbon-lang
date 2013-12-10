@@ -11,7 +11,7 @@ from lldbtest import *
 
 class HelpCommandTestCase(TestBase):
 
-    mydir = "help"
+    mydir = TestBase.compute_mydir(__file__)
 
     def test_simplehelp(self):
         """A simple test of 'help' command and its output."""

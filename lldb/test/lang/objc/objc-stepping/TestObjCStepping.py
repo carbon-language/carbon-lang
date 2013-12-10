@@ -11,7 +11,7 @@ class TestObjCStepping(TestBase):
     def getCategories (self):
         return ['basic_process']
 
-    mydir = os.path.join("lang", "objc", "objc-stepping")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test

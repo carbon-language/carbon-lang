@@ -10,7 +10,7 @@ from lldbtest import *
 
 class CppValueCastTestCase(TestBase):
 
-    mydir = os.path.join("lang", "cpp", "dynamic-value")
+    mydir = TestBase.compute_mydir(__file__)
 
     # rdar://problem/10808472 SBValue::Cast test case is failing (virtual inheritance)
     @unittest2.expectedFailure

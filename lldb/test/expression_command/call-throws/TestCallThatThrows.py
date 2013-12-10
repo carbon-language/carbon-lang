@@ -9,7 +9,7 @@ from lldbtest import *
 
 class ExprCommandWithThrowTestCase(TestBase):
 
-    mydir = os.path.join("expression_command", "call-throws")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         # Call super's setUp().

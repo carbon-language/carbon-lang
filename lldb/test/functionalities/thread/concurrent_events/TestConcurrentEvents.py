@@ -25,7 +25,7 @@ signal_names = dict((getattr(signal, n), n) \
 
 class ConcurrentEventsTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "thread", "concurrent_events")
+    mydir = TestBase.compute_mydir(__file__)
 
     #
     ## Tests for multiple threads that generate a single event.

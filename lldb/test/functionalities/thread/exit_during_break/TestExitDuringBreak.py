@@ -10,7 +10,7 @@ import lldbutil
 
 class ExitDuringBreakpointTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "thread", "exit_during_break")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained

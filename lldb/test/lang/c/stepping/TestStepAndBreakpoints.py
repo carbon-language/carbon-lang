@@ -8,7 +8,7 @@ from lldbtest import *
 
 class TestCStepping(TestBase):
 
-    mydir = os.path.join("lang", "c", "stepping")
+    mydir = TestBase.compute_mydir(__file__)
 
     def getCategories(self):
         return ['basic_process']

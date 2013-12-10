@@ -8,7 +8,7 @@ from lldbtest import *
 
 class TestObjCSuperMethod(TestBase):
 
-    mydir = os.path.join("lang", "objc", "objc-super")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @expectedFailurei386

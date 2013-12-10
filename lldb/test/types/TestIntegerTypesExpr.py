@@ -10,7 +10,7 @@ from lldbtest import dsym_test, dwarf_test
 
 class IntegerTypesExprTestCase(AbstractBase.GenericTester):
 
-    mydir = "types"
+    mydir = AbstractBase.GenericTester.compute_mydir(__file__)
 
     def setUp(self):
         # Call super's setUp().

@@ -11,7 +11,7 @@ import lldbutil
 
 class CommonShortSpellingsTestCase(TestBase):
     
-    mydir = os.path.join("functionalities", "abbreviation")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test

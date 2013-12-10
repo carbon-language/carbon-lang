@@ -10,7 +10,7 @@ from lldbtest import *
 
 class CommandHistoryTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "command_history")
+    mydir = TestBase.compute_mydir(__file__)
 
     def test_history(self):
         self.runCmd('command history --clear', inHistory=False)

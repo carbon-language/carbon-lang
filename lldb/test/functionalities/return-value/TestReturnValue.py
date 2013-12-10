@@ -10,7 +10,7 @@ from lldbtest import *
 
 class ReturnValueTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "return-value")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @expectedFailurei386

@@ -11,7 +11,7 @@ import lldbutil
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class SetDataTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "set-data")
+    mydir = TestBase.compute_mydir(__file__)
 
     @dsym_test
     def test_set_data_dsym(self):

@@ -10,7 +10,7 @@ import lldbutil
 
 class BreakpointCommandTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "breakpoint", "breakpoint_command")
+    mydir = TestBase.compute_mydir(__file__)
 
     @classmethod
     def classCleanup(cls):

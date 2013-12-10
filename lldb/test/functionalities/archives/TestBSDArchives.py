@@ -8,7 +8,7 @@ import lldbutil
 
 class BSDArchivesTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "archives")
+    mydir = TestBase.compute_mydir(__file__)
 
     def test_with_dwarf(self):
         """Break inside a() and b() defined within libfoo.a."""

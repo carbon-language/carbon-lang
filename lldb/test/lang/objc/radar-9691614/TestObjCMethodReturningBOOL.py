@@ -11,7 +11,7 @@ import lldbutil
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class MethodReturningBOOLTestCase(TestBase):
 
-    mydir = os.path.join("lang", "objc", "radar-9691614")
+    mydir = TestBase.compute_mydir(__file__)
 
     @dsym_test
     def test_method_ret_BOOL_with_dsym(self):

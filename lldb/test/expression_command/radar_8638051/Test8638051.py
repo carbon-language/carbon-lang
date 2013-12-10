@@ -9,7 +9,7 @@ from lldbtest import *
 
 class Radar8638051TestCase(TestBase):
 
-    mydir = os.path.join("expression_command", "radar_8638051")
+    mydir = TestBase.compute_mydir(__file__)
 
     def test_expr_commands(self):
         """The following expression commands should not crash."""

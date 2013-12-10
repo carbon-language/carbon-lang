@@ -8,7 +8,7 @@ from lldbbench import *
 
 class FrameVariableResponseBench(BenchBase):
 
-    mydir = os.path.join("benchmarks", "frame_variable")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         BenchBase.setUp(self)

@@ -9,7 +9,7 @@ from lldbtest import *
 
 class CmdPythonTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "command_script")
+    mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test

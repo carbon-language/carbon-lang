@@ -11,7 +11,7 @@ import lldbutil
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class ObjCDynamicSBTypeTestCase(TestBase):
 
-    mydir = os.path.join("lang", "objc", "objc-dyn-sbtype")
+    mydir = TestBase.compute_mydir(__file__)
 
     @dsym_test
     @skipIfi386

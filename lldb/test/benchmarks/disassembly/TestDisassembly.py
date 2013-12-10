@@ -12,7 +12,7 @@ def is_exe(fpath):
 
 class DisassembleDriverMainLoop(BenchBase):
 
-    mydir = os.path.join("benchmarks", "disassembly")
+    mydir = TestBase.compute_mydir(__file__)
 
     def setUp(self):
         """
