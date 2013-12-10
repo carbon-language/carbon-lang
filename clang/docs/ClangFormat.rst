@@ -158,17 +158,18 @@ a unified diff and reformats all contained lines with :program:`clang-format`.
 
 .. code-block:: console
 
-  usage: clang-format-diff.py [-h] [-i] [-p P] [-style STYLE]
+  usage: clang-format-diff.py [-h] [-i] [-p NUM] [-regex PATTERN] [-style STYLE]
 
   Reformat changed lines in diff. Without -i option just output the diff that
   would be introduced.
 
   optional arguments:
-    -h, --help    show this help message and exit
-    -i            apply edits to files instead of displaying a diff
-    -p P          strip the smallest prefix containing P slashes
-    -style STYLE  formatting style to apply (LLVM, Google, Chromium, Mozilla,
-                  WebKit)
+    -h, --help      show this help message and exit
+    -i              apply edits to files instead of displaying a diff
+    -p NUM          strip the smallest prefix containing P slashes
+    -regex PATTERN  custom pattern selecting file paths to reformat
+    -style STYLE    formatting style to apply (LLVM, Google, Chromium, Mozilla,
+                    WebKit)
 
 So to reformat all the lines in the latest :program:`git` commit, just do:
 

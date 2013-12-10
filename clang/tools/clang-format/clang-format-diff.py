@@ -41,8 +41,11 @@ def main():
                                    'introduced.')
   parser.add_argument('-i', action='store_true', default=False,
                       help='apply edits to files instead of displaying a diff')
-  parser.add_argument('-p', default=0,
+  parser.add_argument('-p', metavar='NUM', default=0,
                       help='strip the smallest prefix containing P slashes')
+  parser.add_argument('-regex', metavar='PATTERN', default=
+                      r'.*\.(cpp|cc|CPP|C|c\+\+|cxx|c|h|hpp|m|mm|inc|js)',
+                      help='custom pattern selecting file paths to reformat')
   parser.add_argument(
       '-style',
       help=
@@ -59,9 +62,7 @@ def main():
     if filename == None:
       continue
 
-    # FIXME: Add other types containing C++/ObjC code.
-    if not (filename.endswith(".cpp") or filename.endswith(".cc") or
-            filename.endswith(".h")):
+    if not re.match(args.regex, filename):
       continue
 
     match = re.search('^@@.*\+(\d+)(,(\d+))?', line)
