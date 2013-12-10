@@ -174,6 +174,8 @@ public:
   virtual void write(uint8_t *fileBuffer);
 
 private:
+  static llvm::object::coff_section createSectionHeader(SectionChunk *chunk);
+
   std::vector<SectionChunk *> _sections;
 };
 
@@ -197,7 +199,7 @@ public:
       layout->_fileOffset += fileOffset;
   }
 
-  uint64_t getSectionRva() {
+  uint64_t getVirtualAddress() {
     assert(_atomLayouts.size() > 0);
     return _atomLayouts[0]->_virtualAddr;
   }
@@ -266,22 +268,8 @@ public:
 
   virtual uint64_t rawSize() const { return _size; }
 
-  // Set the file offset of the beginning of this section.
-  virtual void setFileOffset(uint64_t fileOffset) {
-    AtomChunk::setFileOffset(fileOffset);
-    _sectionHeader.PointerToRawData = fileOffset;
-  }
-
-  virtual void setVirtualAddress(uint32_t rva) {
-    _sectionHeader.VirtualAddress = rva;
-    AtomChunk::setVirtualAddress(rva);
-  }
-
-  uint32_t getVirtualAddress() const { return _sectionHeader.VirtualAddress; }
-  llvm::object::coff_section &getSectionHeader();
-
-  ulittle32_t getSectionCharacteristics() const;
   void appendAtom(const DefinedAtom *atom);
+  uint32_t getCharacteristics() const { return _characteristics; }
   StringRef getSectionName() const { return _sectionName; }
 
   static bool classof(const Chunk *c) { return c->getKind() == kindSection; }
@@ -291,12 +279,8 @@ protected:
 
   StringRef _sectionName;
   const uint32_t _characteristics;
-  llvm::object::coff_section _sectionHeader;
 
 private:
-  llvm::object::coff_section
-  createSectionHeader(StringRef sectionName, uint32_t characteristics) const;
-
   mutable llvm::BumpPtrAllocator _alloc;
 };
 
@@ -311,8 +295,6 @@ public:
       : SectionChunk(name, getCharacteristics(ctx, name, atoms)) {
     for (auto *a : atoms)
       appendAtom(a);
-    _sectionHeader.VirtualSize = _size;
-    _sectionHeader.SizeOfRawData = size();
   }
 
 private:
@@ -612,24 +594,6 @@ void DataDirectoryChunk::write(uint8_t *fileBuffer) {
   baseReloc->Size = _baseRelocSize;
 }
 
-llvm::object::coff_section &SectionChunk::getSectionHeader() {
-  if (_characteristics & llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA) {
-    _sectionHeader.VirtualSize = 0;
-    _sectionHeader.PointerToRawData = 0;
-  } else {
-    // Fix up section size before returning it. VirtualSize should be the size
-    // of the actual content, and SizeOfRawData should be aligned to the section
-    // alignment.
-    _sectionHeader.VirtualSize = _size;
-    _sectionHeader.SizeOfRawData = size();
-  }
-  return _sectionHeader;
-}
-
-ulittle32_t SectionChunk::getSectionCharacteristics() const {
-  return _sectionHeader.Characteristics;
-}
-
 void SectionChunk::appendAtom(const DefinedAtom *atom) {
   // Atom may have to be at a proper alignment boundary. If so, move the
   // pointer to make a room after the last atom before adding new one.
@@ -642,39 +606,10 @@ void SectionChunk::appendAtom(const DefinedAtom *atom) {
 }
 
 SectionChunk::SectionChunk(StringRef sectionName, uint32_t characteristics)
-  : AtomChunk(kindSection), _sectionName(sectionName), _characteristics(characteristics),
-      _sectionHeader(createSectionHeader(sectionName, characteristics)) {
+    : AtomChunk(kindSection), _sectionName(sectionName),
+      _characteristics(characteristics) {
   // The section should be aligned to disk sector.
   _align = SECTOR_SIZE;
-}
-
-llvm::object::coff_section
-SectionChunk::createSectionHeader(StringRef sectionName,
-                                  uint32_t characteristics) const {
-  llvm::object::coff_section header;
-
-  // Section name equal to or shorter than 8 byte fits in the section
-  // header. Longer names should be stored to string table, which is not
-  // implemented yet.
-  if (sizeof(header.Name) < sectionName.size())
-    llvm_unreachable("Cannot handle section name longer than 8 byte");
-
-  // Name field must be NUL-padded. If the name is exactly 8 byte long,
-  // there's no terminating NUL.
-  std::memset(header.Name, 0, sizeof(header.Name));
-  std::strncpy(header.Name, sectionName.data(),
-               std::min(sizeof(header.Name), sectionName.size()));
-
-  header.VirtualSize = 0;
-  header.VirtualAddress = 0;
-  header.SizeOfRawData = 0;
-  header.PointerToRawData = 0;
-  header.PointerToRelocations = 0;
-  header.PointerToLinenumbers = 0;
-  header.NumberOfRelocations = 0;
-  header.NumberOfLinenumbers = 0;
-  header.Characteristics = characteristics;
-  return header;
 }
 
 void GenericSectionChunk::write(uint8_t *fileBuffer) {
@@ -736,11 +671,47 @@ uint64_t SectionHeaderTableChunk::size() const {
 void SectionHeaderTableChunk::write(uint8_t *fileBuffer) {
   uint64_t offset = 0;
   fileBuffer += fileOffset();
-  for (const auto &chunk : _sections) {
-    const llvm::object::coff_section &header = chunk->getSectionHeader();
+  for (SectionChunk *chunk : _sections) {
+    llvm::object::coff_section header = createSectionHeader(chunk);
     std::memcpy(fileBuffer + offset, &header, sizeof(header));
     offset += sizeof(header);
   }
+}
+
+llvm::object::coff_section
+SectionHeaderTableChunk::createSectionHeader(SectionChunk *chunk) {
+  llvm::object::coff_section header;
+
+  // Section name equal to or shorter than 8 byte fits in the section
+  // header. Longer names should be stored to string table, which is not
+  // implemented yet.
+  StringRef sectionName = chunk->getSectionName();
+  if (sizeof(header.Name) < sectionName.size())
+    llvm_unreachable("Cannot handle section name longer than 8 byte");
+
+  // Name field must be NUL-padded. If the name is exactly 8 byte long,
+  // there's no terminating NUL.
+  std::memset(header.Name, 0, sizeof(header.Name));
+  std::strncpy(header.Name, sectionName.data(),
+               std::min(sizeof(header.Name), sectionName.size()));
+
+  uint32_t characteristics = chunk->getCharacteristics();
+  header.VirtualAddress = chunk->getVirtualAddress();
+  header.PointerToRelocations = 0;
+  header.PointerToLinenumbers = 0;
+  header.NumberOfRelocations = 0;
+  header.NumberOfLinenumbers = 0;
+  header.SizeOfRawData = chunk->size();
+  header.Characteristics = characteristics;
+
+  if (characteristics & llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA) {
+    header.VirtualSize = 0;
+    header.PointerToRawData = 0;
+  } else {
+    header.VirtualSize = chunk->rawSize();
+    header.PointerToRawData = chunk->fileOffset();
+  }
+  return header;
 }
 
 /// Creates .reloc section content from the other sections. The content of
@@ -951,7 +922,7 @@ void ExecutableWriter::build(const File &linkedFile) {
     baseReloc->setContents(_chunks);
     if (baseReloc->size()) {
       addSectionChunk(baseReloc, sectionTable);
-      dataDirectory->setBaseRelocField(baseReloc->getSectionRva(),
+      dataDirectory->setBaseRelocField(baseReloc->getVirtualAddress(),
                                        baseReloc->rawSize());
     }
   }
@@ -1075,7 +1046,7 @@ uint64_t ExecutableWriter::calcSectionSize(
   uint64_t ret = 0;
   for (auto &cp : _chunks)
     if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp))
-      if (chunk->getSectionCharacteristics() & sectionType)
+      if (chunk->getCharacteristics() & sectionType)
         ret += chunk->size();
   return ret;
 }
