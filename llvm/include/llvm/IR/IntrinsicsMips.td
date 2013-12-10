@@ -1544,22 +1544,26 @@ def int_mips_shf_w : GCCBuiltin<"__builtin_msa_shf_w">,
   Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_i32_ty], [IntrNoMem]>;
 
 def int_mips_sld_b : GCCBuiltin<"__builtin_msa_sld_b">,
-  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_i32_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty, llvm_i32_ty], [IntrNoMem]>;
 def int_mips_sld_h : GCCBuiltin<"__builtin_msa_sld_h">,
-  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_i32_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty, llvm_i32_ty], [IntrNoMem]>;
 def int_mips_sld_w : GCCBuiltin<"__builtin_msa_sld_w">,
-  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_i32_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty, llvm_i32_ty], [IntrNoMem]>;
 def int_mips_sld_d : GCCBuiltin<"__builtin_msa_sld_d">,
-  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_i32_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty, llvm_i32_ty], [IntrNoMem]>;
 
 def int_mips_sldi_b : GCCBuiltin<"__builtin_msa_sldi_b">,
-  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_i32_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty, llvm_i32_ty],
+            [IntrNoMem]>;
 def int_mips_sldi_h : GCCBuiltin<"__builtin_msa_sldi_h">,
-  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_i32_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty, llvm_i32_ty],
+            [IntrNoMem]>;
 def int_mips_sldi_w : GCCBuiltin<"__builtin_msa_sldi_w">,
-  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_i32_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty, llvm_i32_ty],
+            [IntrNoMem]>;
 def int_mips_sldi_d : GCCBuiltin<"__builtin_msa_sldi_d">,
-  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_i32_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty, llvm_i32_ty],
+            [IntrNoMem]>;
 
 def int_mips_sll_b : GCCBuiltin<"__builtin_msa_sll_b">,
   Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [IntrNoMem]>;
