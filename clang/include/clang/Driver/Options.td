@@ -186,8 +186,10 @@ def objcmt_ns_nonatomic_iosonly: Flag<["-"], "objcmt-ns-nonatomic-iosonly">, Fla
   HelpText<"Enable migration to use NS_NONATOMIC_IOSONLY macro for setting property's 'atomic' attribute">;
 def objcmt_migrate_designated_init : Flag<["-"], "objcmt-migrate-designated-init">, Flags<[CC1Option]>,
   HelpText<"Enable migration to infer NS_DESIGNATED_INITIALIZER for initializer methods">;
-def objcmt_white_list_dir_path: Joined<["-"], "objcmt-white-list-dir-path=">, Flags<[CC1Option]>,
+def objcmt_whitelist_dir_path: Joined<["-"], "objcmt-whitelist-dir-path=">, Flags<[CC1Option]>,
   HelpText<"Only modify files with a filename contained in the provided directory path">;
+def objcmt_white_list_dir_path: Joined<["-"], "objcmt-white-list-dir-path=">, Flags<[CC1Option]>,
+    Alias<objcmt_whitelist_dir_path>;
 
 // Make sure all other -ccc- options are rejected.
 def ccc_ : Joined<["-"], "ccc-">, Group<internal_Group>, Flags<[Unsupported]>;
