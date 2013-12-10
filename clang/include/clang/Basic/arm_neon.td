@@ -30,6 +30,7 @@ def OP_MUL   : Op;
 def OP_MLA   : Op;
 def OP_MLAL  : Op;
 def OP_MULLHi : Op;
+def OP_MULLHi_P64 : Op;
 def OP_MULLHi_N : Op;
 def OP_MLALHi : Op;
 def OP_MLALHi_N : Op;
@@ -224,6 +225,7 @@ class NoTestOpInst<string n, string p, string t, Op o> : Inst<n, p, t, o> {}
 // s: short
 // i: int
 // l: long
+// k: 128-bit long
 // f: float
 // h: half-float
 // d: double
@@ -603,6 +605,9 @@ def LD3_DUP  : WInst<"vld3_dup", "3c",
 def LD4_DUP  : WInst<"vld4_dup", "4c",
                     "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsQPlUcUsUiUlcsilhfdPcPsPl">;
 
+def VLDRQ : WInst<"vldrq", "sc", "Pk">;
+def VSTRQ : WInst<"vstrq", "vps", "Pk">;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Addition
 // With additional d, Qd type.
@@ -854,6 +859,9 @@ def VQDMLAL_HIGH : SOpInst<"vqdmlal_high", "wwkk", "si", OP_QDMLALHi>;
 def VQDMLAL_HIGH_N : SOpInst<"vqdmlal_high_n", "wwks", "si", OP_QDMLALHi_N>;
 def VQDMLSL_HIGH : SOpInst<"vqdmlsl_high", "wwkk", "si", OP_QDMLSLHi>;
 def VQDMLSL_HIGH_N : SOpInst<"vqdmlsl_high_n", "wwks", "si", OP_QDMLSLHi_N>;
+def VMULL_P64    : SInst<"vmull", "rss", "Pl">;
+def VMULL_HIGH_P64 : SOpInst<"vmull_high", "rdd", "HPl", OP_MULLHi_P64>;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Extract or insert element from vector
@@ -1024,7 +1032,7 @@ def VQTBX4_A64 : WInst<"vqtbx4", "ddDt", "UccPcQUcQcQPc">;
 // With additional d, Qd, pl, Qpl types
 def REINTERPRET
   : NoTestOpInst<"vreinterpret", "dd",
-         "csilUcUsUiUlhfdPcPsPlQcQsQiQlQUcQUsQUiQUlQhQfQdQPcQPsQPl", OP_REINT>;
+         "csilUcUsUiUlhfdPcPsPlQcQsQiQlQUcQUsQUiQUlQhQfQdQPcQPsQPlQPk", OP_REINT>;
 
 
 ////////////////////////////////////////////////////////////////////////////////

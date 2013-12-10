@@ -341,6 +341,8 @@ static unsigned RFT(unsigned t, bool shift = false) {
   case NeonTypeFlags::Int64:
   case NeonTypeFlags::Poly64:
     return shift ? 63 : (1 << IsQuad) - 1;
+  case NeonTypeFlags::Poly128:
+    return shift ? 127 : (1 << IsQuad) - 1;
   case NeonTypeFlags::Float16:
     assert(!shift && "cannot shift float types!");
     return (4 << IsQuad) - 1;
@@ -374,6 +376,8 @@ static QualType getNeonEltType(NeonTypeFlags Flags, ASTContext &Context,
     return IsAArch64 ? Context.UnsignedShortTy : Context.ShortTy;
   case NeonTypeFlags::Poly64:
     return Context.UnsignedLongLongTy;
+  case NeonTypeFlags::Poly128:
+    break;
   case NeonTypeFlags::Float16:
     return Context.HalfTy;
   case NeonTypeFlags::Float32:

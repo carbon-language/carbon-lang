@@ -52,6 +52,7 @@ enum OpKind {
   OpMla,
   OpMlal,
   OpMullHi,
+  OpMullHiP64,
   OpMullHiN,
   OpMlalHi,
   OpMlalHiN,
@@ -193,6 +194,7 @@ public:
     Poly8,
     Poly16,
     Poly64,
+    Poly128,
     Float16,
     Float32,
     Float64
@@ -234,6 +236,7 @@ public:
     OpMap["OP_MLA"]   = OpMla;
     OpMap["OP_MLAL"]  = OpMlal;
     OpMap["OP_MULLHi"]  = OpMullHi;
+    OpMap["OP_MULLHi_P64"]  = OpMullHiP64;
     OpMap["OP_MULLHi_N"]  = OpMullHiN;
     OpMap["OP_MLALHi"]  = OpMlalHi;
     OpMap["OP_MLALHi_N"]  = OpMlalHiN;
@@ -403,6 +406,7 @@ static void ParseTypes(Record *r, std::string &s,
       case 's':
       case 'i':
       case 'l':
+      case 'k':
       case 'h':
       case 'f':
       case 'd':
@@ -427,6 +431,8 @@ static char Widen(const char t) {
       return 'i';
     case 'i':
       return 'l';
+    case 'l':
+      return 'k';
     case 'h':
       return 'f';
     case 'f':
@@ -446,6 +452,8 @@ static char Narrow(const char t) {
       return 's';
     case 'l':
       return 'i';
+    case 'k':
+      return 'l';
     case 'f':
       return 'h';
     case 'd':
@@ -468,6 +476,9 @@ static std::string GetNarrowTypestr(StringRef ty)
         break;
       case 'l':
         s += 'i';
+        break;
+      case 'k':
+        s += 'l';
         break;
       default:
         s += ty[i];
@@ -680,6 +691,9 @@ static std::string TypeString(const char mod, StringRef typestr) {
         break;
       s += quad ? "x2" : "x1";
       break;
+    case 'k':
+      s += "poly128";
+      break;
     case 'h':
       s += "float16";
       if (scal)
@@ -745,6 +759,9 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
   // Based on the modifying character, change the type and width if necessary.
   type = ModType(mod, type, quad, poly, usgn, scal, cnst, pntr);
 
+  usgn = usgn | poly | ((ck == ClassI || ck == ClassW) &&
+                         scal && type != 'f' && type != 'd');
+
   // All pointers are void* pointers.  Change type to 'v' now.
   if (pntr) {
     usgn = false;
@@ -756,8 +773,6 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
     type = 's';
     usgn = true;
   }
-  usgn = usgn | poly | ((ck == ClassI || ck == ClassW) &&
-                         scal && type != 'f' && type != 'd');
 
   if (scal) {
     SmallString<128> s;
@@ -769,6 +784,8 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
 
     if (type == 'l') // 64-bit long
       s += "LLi";
+    else if (type == 'k') // 128-bit long
+      s = "LLLi";
     else
       s.push_back(type);
 
@@ -864,6 +881,10 @@ static void InstructionTypeCode(const StringRef &typeStr,
     case ClassW: typeCode = "64"; break;
     default: break;
     }
+    break;
+  case 'k':
+    assert(poly && "Unrecognized 128 bit integer.");
+    typeCode = "p128";
     break;
   case 'h':
     switch (ck) {
@@ -1605,6 +1626,7 @@ static unsigned GetNumElements(StringRef typestr, bool &quad) {
   case 's': nElts = 4; break;
   case 'i': nElts = 2; break;
   case 'l': nElts = 1; break;
+  case 'k': nElts = 1; break;
   case 'h': nElts = 4; break;
   case 'f': nElts = 2; break;
   case 'd':
@@ -1717,6 +1739,13 @@ static std::string GenOpString(const std::string &name, OpKind op,
   case OpMullHi:
     s += Gen2OpWith2High(typestr, "vmull", "__a", "__b");
     break;
+  case OpMullHiP64: {
+    std::string Op1 = GetHigh("__a", typestr);
+    std::string Op2 = GetHigh("__b", typestr);
+    s += MangleName("vmull", typestr, ClassS);
+    s += "((poly64_t)" + Op1 + ", (poly64_t)" + Op2 + ");";
+    break;
+  }
   case OpMullHiN:
     s += MangleName("vmull_n", typestr, ClassS);
     s += "(" + GetHigh("__a", typestr) + ", __b);";
@@ -2278,6 +2307,9 @@ static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
     case 'l':
       ET = poly ? NeonTypeFlags::Poly64 : NeonTypeFlags::Int64;
       break;
+    case 'k':
+      ET = NeonTypeFlags::Poly128;
+      break;
     case 'h':
       ET = NeonTypeFlags::Float16;
       break;
@@ -2569,6 +2601,7 @@ void NeonEmitter::run(raw_ostream &OS) {
   OS << "typedef uint8_t poly8_t;\n";
   OS << "typedef uint16_t poly16_t;\n";
   OS << "typedef uint64_t poly64_t;\n";
+  OS << "typedef __uint128_t poly128_t;\n";
   OS << "#else\n";
   OS << "typedef int8_t poly8_t;\n";
   OS << "typedef int16_t poly16_t;\n";
@@ -2693,6 +2726,7 @@ void NeonEmitter::run(raw_ostream &OS) {
   // Emit AArch64-specific intrinsics.
   OS << "#ifdef __aarch64__\n";
 
+  emitIntrinsic(OS, Records.getDef("VMULL_P64"), EmittedMap);
   emitIntrinsic(OS, Records.getDef("VMOVL_HIGH"), EmittedMap);
   emitIntrinsic(OS, Records.getDef("VMULL_HIGH"), EmittedMap);
   emitIntrinsic(OS, Records.getDef("VABDL_HIGH"), EmittedMap);
@@ -2801,6 +2835,8 @@ static unsigned RangeFromType(const char mod, StringRef typestr) {
     case 'd':
     case 'l':
       return (1 << (int)quad) - 1;
+    case 'k':
+      return 0;
     default:
       PrintFatalError("unhandled type!");
   }
@@ -2824,6 +2860,8 @@ static unsigned RangeScalarShiftImm(const char mod, StringRef typestr) {
     case 'd':
     case 'l':
       return 63;
+    case 'k':
+      return 127;
     default:
       PrintFatalError("unhandled type!");
   }

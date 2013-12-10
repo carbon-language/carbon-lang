@@ -1624,6 +1624,11 @@ static llvm::VectorType *GetNeonType(CodeGenFunction *CGF,
   case NeonTypeFlags::Int64:
   case NeonTypeFlags::Poly64:
     return llvm::VectorType::get(CGF->Int64Ty, V1Ty ? 1 : (1 << IsQuad));
+  case NeonTypeFlags::Poly128:
+    // FIXME: i128 and f128 doesn't get fully support in Clang and llvm.
+    // There is a lot of i128 and f128 API missing.
+    // so we use v16i8 to represent poly128 and get pattern matched.
+    return llvm::VectorType::get(CGF->Int8Ty, 16);
   case NeonTypeFlags::Float32:
     return llvm::VectorType::get(CGF->FloatTy, V1Ty ? 1 : (2 << IsQuad));
   case NeonTypeFlags::Float64:
@@ -2555,6 +2560,9 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vcvtd_n_u64_f64:
     Int = Intrinsic::aarch64_neon_vcvtd_n_u64_f64;
     s = "fcvtzu"; OverloadInt = false; break;
+  case AArch64::BI__builtin_neon_vmull_p64:
+    Int = Intrinsic::aarch64_neon_vmull_p64;
+    s = "vmull"; OverloadInt = false; break;
   }
 
   if (!Int)
@@ -2908,6 +2916,28 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
 
   SmallVector<Value *, 4> Ops;
   llvm::Value *Align = 0; // Alignment for load/store
+
+  if (BuiltinID == AArch64::BI__builtin_neon_vldrq_p128) {
+   Value *Op = EmitScalarExpr(E->getArg(0));
+   unsigned addressSpace =
+     cast<llvm::PointerType>(Op->getType())->getAddressSpace();
+   llvm::Type *Ty = llvm::Type::getFP128PtrTy(getLLVMContext(), addressSpace);
+   Op = Builder.CreateBitCast(Op, Ty);
+   Op = Builder.CreateLoad(Op);
+   Ty = llvm::Type::getIntNTy(getLLVMContext(), 128);
+   return Builder.CreateBitCast(Op, Ty);
+  }
+  if (BuiltinID == AArch64::BI__builtin_neon_vstrq_p128) {
+    Value *Op0 = EmitScalarExpr(E->getArg(0));
+    unsigned addressSpace =
+      cast<llvm::PointerType>(Op0->getType())->getAddressSpace();
+    llvm::Type *PTy = llvm::Type::getFP128PtrTy(getLLVMContext(), addressSpace);
+    Op0 = Builder.CreateBitCast(Op0, PTy);
+    Value *Op1 = EmitScalarExpr(E->getArg(1));
+    llvm::Type *Ty = llvm::Type::getFP128Ty(getLLVMContext());
+    Op1 = Builder.CreateBitCast(Op1, Ty);
+    return Builder.CreateStore(Op1, Op0);
+  }
   for (unsigned i = 0, e = E->getNumArgs() - 1; i != e; i++) {
     if (i == 0) {
       switch (BuiltinID) {
