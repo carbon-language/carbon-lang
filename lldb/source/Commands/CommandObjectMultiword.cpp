@@ -235,18 +235,19 @@ CommandObjectMultiword::HandleCompletion
     // completers will override this.
     word_complete = true;
     
+    const char *arg0 = input.GetArgumentAtIndex(0);
     if (cursor_index == 0)
     {
         CommandObject::AddNamesMatchingPartialString (m_subcommand_dict, 
-                                                      input.GetArgumentAtIndex(0), 
+                                                      arg0,
                                                       matches);
 
         if (matches.GetSize() == 1
             && matches.GetStringAtIndex(0) != NULL
-            && strcmp (input.GetArgumentAtIndex(0), matches.GetStringAtIndex(0)) == 0)
+            && strcmp (arg0, matches.GetStringAtIndex(0)) == 0)
         {
             StringList temp_matches;
-            CommandObject *cmd_obj = GetSubcommandObject (input.GetArgumentAtIndex(0), 
+            CommandObject *cmd_obj = GetSubcommandObject (arg0,
                                                           &temp_matches);
             if (cmd_obj != NULL)
             {
@@ -270,7 +271,7 @@ CommandObjectMultiword::HandleCompletion
     }
     else
     {
-        CommandObject *sub_command_object = GetSubcommandObject (input.GetArgumentAtIndex(0), 
+        CommandObject *sub_command_object = GetSubcommandObject (arg0,
                                                                  &matches);
         if (sub_command_object == NULL)
         {

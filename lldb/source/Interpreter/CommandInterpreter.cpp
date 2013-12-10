@@ -1929,12 +1929,19 @@ CommandInterpreter::HandleCompletionMatches (Args &parsed_line,
             && matches.GetStringAtIndex(0) != NULL
             && strcmp (parsed_line.GetArgumentAtIndex(0), matches.GetStringAtIndex(0)) == 0)
         {
-            look_for_subcommand = true;
-            num_command_matches = 0;
-            matches.DeleteStringAtIndex(0);
-            parsed_line.AppendArgument ("");
-            cursor_index++;
-            cursor_char_position = 0;
+            if (parsed_line.GetArgumentCount() == 1)
+            {
+                word_complete = true;
+            }
+            else
+            {
+                look_for_subcommand = true;
+                num_command_matches = 0;
+                matches.DeleteStringAtIndex(0);
+                parsed_line.AppendArgument ("");
+                cursor_index++;
+                cursor_char_position = 0;
+            }
         }
     }
 
@@ -2023,7 +2030,7 @@ CommandInterpreter::HandleCompletion (const char *current_line,
         const char *current_elem = partial_parsed_line.GetArgumentAtIndex(cursor_index);
         if (cursor_char_position == 0 || current_elem[cursor_char_position - 1] != ' ')
         {
-            parsed_line.InsertArgumentAtIndex(cursor_index + 1, "", '"');
+            parsed_line.InsertArgumentAtIndex(cursor_index + 1, "", '\0');
             cursor_index++;
             cursor_char_position = 0;
         }
