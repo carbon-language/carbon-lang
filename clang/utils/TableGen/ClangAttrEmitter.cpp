@@ -1723,7 +1723,8 @@ static std::string CalculateDiagnostic(const Record &S) {
     Namespace = 1U << 11,
     FuncTemplate = 1U << 12,
     Field = 1U << 13,
-    CXXMethod = 1U << 14
+    CXXMethod = 1U << 14,
+    ObjCProtocol = 1U << 15
   };
   uint32_t SubMask = 0;
 
@@ -1752,6 +1753,7 @@ static std::string CalculateDiagnostic(const Record &S) {
                    .Case("ObjCProperty", ObjCProp)
                    .Case("Record", GenericRecord)
                    .Case("ObjCInterface", ObjCInterface)
+                   .Case("ObjCProtocol", ObjCProtocol)
                    .Case("Block", Block)
                    .Case("CXXRecord", Class)
                    .Case("Namespace", Namespace)
@@ -1783,6 +1785,7 @@ static std::string CalculateDiagnostic(const Record &S) {
     case ObjCMethod:  return "ExpectedMethod";
     case Type:  return "ExpectedType";
     case ObjCInterface: return "ExpectedObjectiveCInterface";
+    case ObjCProtocol: return "ExpectedObjectiveCProtocol";
     
     // "GenericRecord" means struct, union or class; check the language options
     // and if not compiling for C++, strip off the class part. Note that this

@@ -2038,7 +2038,7 @@ def warn_attribute_wrong_decl_type : Warning<
   "types and namespaces|Objective-C interfaces|methods and properties|"
   "struct or union|struct, union or class|types|"
   "Objective-C instance methods|init methods of interface declarations|"
-  "variables, functions and classes}1">,
+  "variables, functions and classes|Objective-C protocols}1">,
   InGroup<IgnoredAttributes>;
 def err_attribute_wrong_decl_type : Error<
   "%0 attribute only applies to %select{functions|unions|"
@@ -2051,7 +2051,7 @@ def err_attribute_wrong_decl_type : Error<
   "types and namespaces|Objective-C interfaces|methods and properties|"
   "struct or union|struct, union or class|types|"
   "Objective-C instance methods|init methods of interface declarations|"
-  "variables, functions and classes}1">;
+  "variables, functions and classes|Objective-C protocols}1">;
 def warn_type_attribute_wrong_type : Warning<
   "'%0' only applies to %select{function|pointer|"
   "Objective-C object or block pointer}1 types; type here is %2">,
