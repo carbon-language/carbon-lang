@@ -304,7 +304,9 @@ def int_aarch64_neon_vabs :
   Intrinsic<[llvm_v1i64_ty], [llvm_v1i64_ty], [IntrNoMem]>;
 
 // Scalar Absolute Difference
-def int_aarch64_neon_vabd : Neon_2Arg_Intrinsic;
+def int_aarch64_neon_vabd :
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, LLVMMatchType<0>],
+            [IntrNoMem]>;
 
 // Scalar Negate Value
 def int_aarch64_neon_vneg :

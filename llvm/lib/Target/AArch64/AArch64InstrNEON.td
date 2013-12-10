@@ -4176,6 +4176,15 @@ multiclass Neon_Scalar3Same_HS_size_patterns<SDPatternOperator opnode,
             (INSTS FPR32:$Rn, FPR32:$Rm)>;
 }
 
+multiclass Neon_Scalar3Same_fabd_SD_size_patterns<SDPatternOperator opnode,
+                                                  Instruction INSTS,
+                                                  Instruction INSTD> {
+  def : Pat<(f32 (opnode (f32 FPR32:$Rn), (f32 FPR32:$Rm))),
+            (INSTS FPR32:$Rn, FPR32:$Rm)>;
+  def : Pat<(f64 (opnode (f64 FPR64:$Rn), (f64 FPR64:$Rm))),
+            (INSTD FPR64:$Rn, FPR64:$Rm)>;
+}
+
 multiclass Neon_Scalar3Same_SD_size_patterns<SDPatternOperator opnode,
                                              Instruction INSTS,
                                              Instruction INSTD> {
@@ -5199,8 +5208,8 @@ defm : Neon_Scalar3Same_cmp_SD_size_patterns<int_aarch64_neon_vcagt,
 
 // Scakar Floating-point Absolute Difference
 defm FABD: NeonI_Scalar3Same_SD_sizes<0b1, 0b1, 0b11010, "fabd">;
-defm : Neon_Scalar3Same_SD_size_patterns<int_aarch64_neon_vabd,
-                                         FABDsss, FABDddd>;
+defm : Neon_Scalar3Same_fabd_SD_size_patterns<int_aarch64_neon_vabd,
+                                              FABDsss, FABDddd>;
 
 // Scalar Absolute Value
 defm ABS : NeonI_Scalar2SameMisc_D_size<0b0, 0b01011, "abs">;
