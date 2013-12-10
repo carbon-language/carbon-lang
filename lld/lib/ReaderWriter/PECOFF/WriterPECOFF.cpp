@@ -103,7 +103,7 @@ public:
 /// of PE/COFF files.
 class DOSStubChunk : public HeaderChunk {
 public:
-  DOSStubChunk(const PECOFFLinkingContext &ctx)
+  explicit DOSStubChunk(const PECOFFLinkingContext &ctx)
       : HeaderChunk(), _context(ctx) {
     // Minimum size of DOS stub is 64 bytes. The next block (PE header) needs to
     // be aligned on 8 byte boundary.
@@ -211,7 +211,7 @@ public:
   }
 
 protected:
-  AtomChunk(Kind kind) : Chunk(kind) {}
+  explicit AtomChunk(Kind kind) : Chunk(kind) {}
   std::vector<AtomLayout *> _atomLayouts;
 };
 
@@ -221,7 +221,8 @@ protected:
 /// in memory) and 8 byte entry data size.
 class DataDirectoryChunk : public AtomChunk {
 public:
-  DataDirectoryChunk(const DefinedAtom *atom) : AtomChunk(kindDataDirectory) {
+  explicit DataDirectoryChunk(const DefinedAtom *atom)
+      : AtomChunk(kindDataDirectory) {
     if (atom)
       _atomLayouts.push_back(new (_alloc) AtomLayout(atom, 0, 0));
   }
@@ -325,7 +326,7 @@ class BaseRelocChunk : public SectionChunk {
   typedef std::map<uint64_t, std::vector<uint16_t>> PageOffsetT;
 
 public:
-  BaseRelocChunk(const File &linkedFile)
+  explicit BaseRelocChunk(const File &linkedFile)
       : SectionChunk(".reloc", characteristics), _file(linkedFile) {}
 
   void setContents(ChunkVectorT &chunks);
