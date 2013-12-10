@@ -132,6 +132,9 @@ namespace SystemZISD {
     // Store the CC value in bits 29 and 28 of an integer.
     IPM,
 
+    // Perform a serialization operation.  (BCR 15,0 or BCR 14,0.)
+    SERIALIZE,
+
     // Wrappers around the inner loop of an 8- or 16-bit ATOMIC_SWAP or
     // ATOMIC_LOAD_<op>.
     //
@@ -244,6 +247,9 @@ public:
                 const SmallVectorImpl<ISD::OutputArg> &Outs,
                 const SmallVectorImpl<SDValue> &OutVals,
                 SDLoc DL, SelectionDAG &DAG) const LLVM_OVERRIDE;
+  virtual SDValue prepareVolatileOrAtomicLoad(SDValue Chain, SDLoc DL,
+                                              SelectionDAG &DAG) const
+    LLVM_OVERRIDE;
 
 private:
   const SystemZSubtarget &Subtarget;
@@ -273,6 +279,7 @@ private:
   SDValue lowerATOMIC_LOAD(SDValue Op, SelectionDAG &DAG,
                            unsigned Opcode) const;
   SDValue lowerATOMIC_CMP_SWAP(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerLOAD_SEQUENCE_POINT(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerSTACKSAVE(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerPREFETCH(SDValue Op, SelectionDAG &DAG) const;

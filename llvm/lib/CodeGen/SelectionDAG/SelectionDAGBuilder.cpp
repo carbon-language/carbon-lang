@@ -3400,7 +3400,7 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
 
   SDValue Root;
   bool ConstantMemory = false;
-  if (I.isVolatile() || NumValues > MaxParallelChains)
+  if (isVolatile || NumValues > MaxParallelChains)
     // Serialize volatile loads with other side effects.
     Root = getRoot();
   else if (AA->pointsToConstantMemory(
@@ -3412,6 +3412,10 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
     // Do not serialize non-volatile loads against each other.
     Root = DAG.getRoot();
   }
+
+  const TargetLowering *TLI = TM.getTargetLowering();
+  if (isVolatile)
+    Root = TLI->prepareVolatileOrAtomicLoad(Root, getCurSDLoc(), DAG);
 
   SmallVector<SDValue, 4> Values(NumValues);
   SmallVector<SDValue, 4> Chains(std::min(unsigned(MaxParallelChains),
@@ -3637,6 +3641,7 @@ void SelectionDAGBuilder::visitAtomicLoad(const LoadInst &I) {
   if (I.getAlignment() < VT.getSizeInBits() / 8)
     report_fatal_error("Cannot generate unaligned atomic load");
 
+  InChain = TLI->prepareVolatileOrAtomicLoad(InChain, dl, DAG);
   SDValue L =
     DAG.getAtomic(ISD::ATOMIC_LOAD, dl, VT, VT, InChain,
                   getValue(I.getPointerOperand()),

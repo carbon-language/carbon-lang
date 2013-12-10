@@ -26,7 +26,7 @@ SystemZSubtarget::SystemZSubtarget(const std::string &TT,
                                    const std::string &FS)
   : SystemZGenSubtargetInfo(TT, CPU, FS), HasDistinctOps(false),
     HasLoadStoreOnCond(false), HasHighWord(false), HasFPExtension(false),
-    TargetTriple(TT) {
+    HasFastSerialization(false), TargetTriple(TT) {
   std::string CPUName = CPU;
   if (CPUName.empty())
     CPUName = "generic";

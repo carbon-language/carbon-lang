@@ -151,6 +151,15 @@ void SystemZAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
 #undef LOWER_HIGH
 
+  case SystemZ::Serialize:
+    if (Subtarget->hasFastSerialization())
+      LoweredMI = MCInstBuilder(SystemZ::AsmBCR)
+        .addImm(14).addReg(SystemZ::R0D);
+    else
+      LoweredMI = MCInstBuilder(SystemZ::AsmBCR)
+        .addImm(15).addReg(SystemZ::R0D);
+    break;
+
   default:
     Lower.lower(MI, LoweredMI);
     break;

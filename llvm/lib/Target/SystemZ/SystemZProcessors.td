@@ -36,11 +36,16 @@ def FeatureFPExtension : SystemZFeature<
   "Assume that the floating-point extension facility is installed"
 >;
 
+def FeatureFastSerialization : SystemZFeature<
+  "fast-serialization", "FastSerialization",
+  "Assume that the fast-serialization facility is installed"
+>;
+
 def : Processor<"generic", NoItineraries, []>;
 def : Processor<"z10", NoItineraries, []>;
 def : Processor<"z196", NoItineraries,
                 [FeatureDistinctOps, FeatureLoadStoreOnCond, FeatureHighWord,
-                 FeatureFPExtension]>;
+                 FeatureFPExtension, FeatureFastSerialization]>;
 def : Processor<"zEC12", NoItineraries,
                 [FeatureDistinctOps, FeatureLoadStoreOnCond, FeatureHighWord,
-                 FeatureFPExtension]>;
+                 FeatureFPExtension, FeatureFastSerialization]>;

@@ -2082,6 +2082,18 @@ public:
     return NULL;
   }
 
+  /// This callback is used to prepare for a volatile or atomic load.
+  /// It takes a chain node as input and returns the chain for the load itself.
+  ///
+  /// Having a callback like this is necessary for targets like SystemZ,
+  /// which allows a CPU to reuse the result of a previous load indefinitely,
+  /// even if a cache-coherent store is performed by another CPU.  The default
+  /// implementation does nothing.
+  virtual SDValue prepareVolatileOrAtomicLoad(SDValue Chain, SDLoc DL,
+                                              SelectionDAG &DAG) const {
+    return Chain;
+  }
+
   /// This callback is invoked by the type legalizer to legalize nodes with an
   /// illegal operand type but legal result types.  It replaces the
   /// LowerOperation callback in the type Legalizer.  The reason we can not do

@@ -970,6 +970,11 @@ SystemZTargetLowering::LowerReturn(SDValue Chain,
                      RetOps.data(), RetOps.size());
 }
 
+SDValue SystemZTargetLowering::
+prepareVolatileOrAtomicLoad(SDValue Chain, SDLoc DL, SelectionDAG &DAG) const {
+  return DAG.getNode(SystemZISD::SERIALIZE, DL, MVT::Other, Chain);
+}
+
 // CC is a comparison that will be implemented using an integer or
 // floating-point comparison.  Return the condition code mask for
 // a branch on true.  In the integer case, CCMASK_CMP_UO is set for
@@ -2257,6 +2262,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(STPCPY);
     OPCODE(SEARCH_STRING);
     OPCODE(IPM);
+    OPCODE(SERIALIZE);
     OPCODE(ATOMIC_SWAPW);
     OPCODE(ATOMIC_LOADW_ADD);
     OPCODE(ATOMIC_LOADW_SUB);

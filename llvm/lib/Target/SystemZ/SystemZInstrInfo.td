@@ -1195,6 +1195,8 @@ def PFDRL : PrefetchRILPC<"pfdrl", 0xC62, z_prefetch>;
 // Atomic operations
 //===----------------------------------------------------------------------===//
 
+def Serialize : Alias<2, (outs), (ins), [(z_serialize)]>;
+
 def ATOMIC_SWAPW        : AtomicLoadWBinaryReg<z_atomic_swapw>;
 def ATOMIC_SWAP_32      : AtomicLoadBinaryReg32<atomic_swap_32>;
 def ATOMIC_SWAP_64      : AtomicLoadBinaryReg64<atomic_swap_64>;
