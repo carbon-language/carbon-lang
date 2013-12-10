@@ -179,10 +179,13 @@ public:
     ObjCMT_ReturnsInnerPointerProperty = 0x200,
     /// \brief use NS_NONATOMIC_IOSONLY for property 'atomic' attribute
     ObjCMT_NsAtomicIOSOnlyProperty = 0x400,
+    /// \brief Enable inferring NS_DESIGNATED_INITIALIZER for ObjC methods.
+    ObjCMT_DesignatedInitializer = 0x800,
     ObjCMT_MigrateDecls = (ObjCMT_ReadonlyProperty | ObjCMT_ReadwriteProperty |
                            ObjCMT_Annotation | ObjCMT_Instancetype |
                            ObjCMT_NsMacros | ObjCMT_ProtocolConformance |
-                           ObjCMT_NsAtomicIOSOnlyProperty),
+                           ObjCMT_NsAtomicIOSOnlyProperty |
+                           ObjCMT_DesignatedInitializer),
     ObjCMT_MigrateAll = (ObjCMT_Literals | ObjCMT_Subscripting | ObjCMT_MigrateDecls)
   };
   unsigned ObjCMTAction;

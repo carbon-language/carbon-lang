@@ -184,6 +184,8 @@ def objcmt_returns_innerpointer_property : Flag<["-"], "objcmt-returns-innerpoin
   HelpText<"Enable migration to annotate property with NS_RETURNS_INNER_POINTER">;
 def objcmt_ns_nonatomic_iosonly: Flag<["-"], "objcmt-ns-nonatomic-iosonly">, Flags<[CC1Option]>,
   HelpText<"Enable migration to use NS_NONATOMIC_IOSONLY macro for setting property's 'atomic' attribute">;
+def objcmt_migrate_designated_init : Flag<["-"], "objcmt-migrate-designated-init">, Flags<[CC1Option]>,
+  HelpText<"Enable migration to infer NS_DESIGNATED_INITIALIZER for initializer methods">;
 def objcmt_white_list_dir_path: Joined<["-"], "objcmt-white-list-dir-path=">, Flags<[CC1Option]>,
   HelpText<"Only modify files with a filename contained in the provided directory path">;
 

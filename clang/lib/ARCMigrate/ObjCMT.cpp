@@ -75,6 +75,10 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   
   void migrateAddMethodAnnotation(ASTContext &Ctx,
                                   const ObjCMethodDecl *MethodDecl);
+
+  void inferDesignatedInitializers(ASTContext &Ctx,
+                                   const ObjCImplementationDecl *ImplD);
+
 public:
   std::string MigrateDir;
   unsigned ASTMigrateActions;
@@ -1539,6 +1543,55 @@ void ObjCMigrateASTConsumer::migrateAddMethodAnnotation(
 }
 
 namespace {
+class SuperInitChecker : public RecursiveASTVisitor<SuperInitChecker> {
+public:
+  bool shouldVisitTemplateInstantiations() const { return false; }
+  bool shouldWalkTypesOfTypeLocs() const { return false; }
+
+  bool VisitObjCMessageExpr(ObjCMessageExpr *E) {
+    if (E->getReceiverKind() == ObjCMessageExpr::SuperInstance) {
+      if (E->getMethodFamily() == OMF_init)
+        return false;
+    }
+    return true;
+  }
+};
+} // anonymous namespace
+
+static bool hasSuperInitCall(const ObjCMethodDecl *MD) {
+  return !SuperInitChecker().TraverseStmt(MD->getBody());
+}
+
+void ObjCMigrateASTConsumer::inferDesignatedInitializers(
+    ASTContext &Ctx,
+    const ObjCImplementationDecl *ImplD) {
+
+  const ObjCInterfaceDecl *IFace = ImplD->getClassInterface();
+  if (!IFace || IFace->hasDesignatedInitializers())
+    return;
+  if (!Ctx.Idents.get("NS_DESIGNATED_INITIALIZER").hasMacroDefinition())
+    return;
+
+  for (ObjCImplementationDecl::instmeth_iterator
+         I = ImplD->instmeth_begin(), E = ImplD->instmeth_end(); I != E; ++I) {
+    const ObjCMethodDecl *MD = *I;
+    if (MD->isDeprecated() ||
+        MD->getMethodFamily() != OMF_init ||
+        MD->isDesignatedInitializerForTheInterface())
+      continue;
+    const ObjCMethodDecl *IFaceM = IFace->getMethod(MD->getSelector(),
+                                                    /*isInstance=*/true);
+    if (!IFaceM)
+      continue;
+    if (hasSuperInitCall(MD)) {
+      edit::Commit commit(*Editor);
+      commit.insert(IFaceM->getLocEnd(), " NS_DESIGNATED_INITIALIZER");
+      Editor->commit(commit);
+    }
+  }
+}
+
+namespace {
 
 class RewritesReceiver : public edit::EditsReceiver {
   Rewriter &Rewrite;
@@ -1656,6 +1709,12 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
         // annotate methods with CF annotations.
         if (ASTMigrateActions & FrontendOptions::ObjCMT_Annotation)
           migrateARCSafeAnnotation(Ctx, CDecl);
+      }
+
+      if (const ObjCImplementationDecl *
+            ImplD = dyn_cast<ObjCImplementationDecl>(*D)) {
+        if (ASTMigrateActions & FrontendOptions::ObjCMT_DesignatedInitializer)
+          inferDesignatedInitializers(Ctx, ImplD);
       }
     }
     if (ASTMigrateActions & FrontendOptions::ObjCMT_Annotation)
