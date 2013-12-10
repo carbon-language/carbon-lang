@@ -1167,7 +1167,19 @@ bool AddressSanitizer::maybeInsertAsanInitAtFunctionEntry(Function &F) {
 //  b) collect usage statistics to help improve Clang coverage design.
 bool AddressSanitizer::InjectCoverage(Function &F) {
   if (!ClCoverage) return false;
-  IRBuilder<> IRB(F.getEntryBlock().getFirstInsertionPt());
+
+  // Skip static allocas at the top of the entry block so they don't become
+  // dynamic when we split the block.  If we used our optimized stack layout,
+  // then there will only be one alloca and it will come first.
+  BasicBlock &Entry = F.getEntryBlock();
+  BasicBlock::iterator IP = Entry.getFirstInsertionPt(), BE = Entry.end();
+  for (; IP != BE; ++IP) {
+    AllocaInst *AI = dyn_cast<AllocaInst>(IP);
+    if (!AI || !AI->isStaticAlloca())
+      break;
+  }
+
+  IRBuilder<> IRB(IP);
   Type *Int8Ty = IRB.getInt8Ty();
   GlobalVariable *Guard = new GlobalVariable(
       *F.getParent(), Int8Ty, false, GlobalValue::PrivateLinkage,
