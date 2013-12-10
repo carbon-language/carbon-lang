@@ -467,7 +467,8 @@ static void EmitGenDwarfAbbrev(MCStreamer *MCOS) {
   EmitAbbrev(MCOS, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr);
   EmitAbbrev(MCOS, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr);
   EmitAbbrev(MCOS, dwarf::DW_AT_name, dwarf::DW_FORM_string);
-  EmitAbbrev(MCOS, dwarf::DW_AT_comp_dir, dwarf::DW_FORM_string);
+  if (!context.getCompilationDir().empty())
+    EmitAbbrev(MCOS, dwarf::DW_AT_comp_dir, dwarf::DW_FORM_string);
   StringRef DwarfDebugFlags = context.getDwarfDebugFlags();
   if (!DwarfDebugFlags.empty())
     EmitAbbrev(MCOS, dwarf::DW_AT_APPLE_flags, dwarf::DW_FORM_string);
@@ -643,8 +644,10 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
   MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
 
   // AT_comp_dir, the working directory the assembly was done in.
-  MCOS->EmitBytes(context.getCompilationDir());
-  MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
+  if (!context.getCompilationDir().empty()) {
+    MCOS->EmitBytes(context.getCompilationDir());
+    MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
+  }
 
   // AT_APPLE_flags, the command line arguments of the assembler tool.
   StringRef DwarfDebugFlags = context.getDwarfDebugFlags();

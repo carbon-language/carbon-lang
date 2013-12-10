@@ -278,6 +278,7 @@ namespace llvm {
     /// This can be overridden by clients which want to control the reported
     /// compilation directory and have it be something other than the current
     /// working directory.
+    /// Returns an empty string if the current directory cannot be determined.
     StringRef getCompilationDir() const { return CompilationDir; }
 
     /// \brief Set the compilation directory for DW_AT_comp_dir

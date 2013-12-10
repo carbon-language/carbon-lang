@@ -47,8 +47,8 @@ MCContext::MCContext(const MCAsmInfo *mai, const MCRegisterInfo *mri,
   AllowTemporaryLabels(true), DwarfCompileUnitID(0), AutoReset(DoAutoReset) {
 
   error_code EC = llvm::sys::fs::current_path(CompilationDir);
-  assert(!EC && "Could not determine the current directory");
-  (void)EC;
+  if (EC)
+    CompilationDir.clear();
 
   MachOUniquingMap = 0;
   ELFUniquingMap = 0;
