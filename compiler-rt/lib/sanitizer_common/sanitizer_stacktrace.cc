@@ -148,7 +148,7 @@ static bool MatchPc(uptr cur_pc, uptr trace_pc, uptr threshold) {
 }
 
 void StackTrace::PopStackFrames(uptr count) {
-  CHECK(count < size);
+  CHECK_LT(count, size);
   size -= count;
   for (uptr i = 0; i < size; ++i) {
     trace[i] = trace[i + count];

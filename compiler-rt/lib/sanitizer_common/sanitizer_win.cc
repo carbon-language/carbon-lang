@@ -382,6 +382,9 @@ void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
   // FIXME: Look at LLVMUnhandledExceptionFilter in Signals.inc
   size = CaptureStackBackTrace(2, Min(max_depth, kStackTraceMax),
                                (void**)trace, 0);
+  if (size == 0)
+    return;
+
   // Skip the RTL frames by searching for the PC in the stacktrace.
   uptr pc_location = LocatePcInTrace(pc);
   PopStackFrames(pc_location);
