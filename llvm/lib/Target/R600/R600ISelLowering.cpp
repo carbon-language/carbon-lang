@@ -1442,17 +1442,20 @@ static SDValue ReorganizeVector(SelectionDAG &DAG, SDValue VectorEntry,
       VectorEntry.getOperand(3)
   };
   bool isUnmovable[4] = { false, false, false, false };
-  for (unsigned i = 0; i < 4; i++)
+  for (unsigned i = 0; i < 4; i++) {
     RemapSwizzle[i] = i;
+    if (NewBldVec[i].getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
+      unsigned Idx = dyn_cast<ConstantSDNode>(NewBldVec[i].getOperand(1))
+          ->getZExtValue();
+      if (i == Idx)
+        isUnmovable[Idx] = true;
+    }
+  }
 
   for (unsigned i = 0; i < 4; i++) {
     if (NewBldVec[i].getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
       unsigned Idx = dyn_cast<ConstantSDNode>(NewBldVec[i].getOperand(1))
           ->getZExtValue();
-      if (i == Idx) {
-        isUnmovable[Idx] = true;
-        continue;
-      }
       if (isUnmovable[Idx])
         continue;
       // Swap i and Idx
