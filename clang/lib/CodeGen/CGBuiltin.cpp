@@ -1762,12 +1762,13 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   enum {
     ScalarRet = (1 << 0),
     VectorRet = (1 << 1),
-    VectorGetArg0 = (1 << 2),
-    VectorCastArg0 = (1 << 3),
-    ScalarArg1 = (1 << 4),
-    VectorGetArg1 = (1 << 5),
-    VectorCastArg1 = (1 << 6),
-    VectorFpCmpzArg1 = (1 << 7)
+    ScalarArg0 = (1 << 2),
+    VectorGetArg0 = (1 << 3),
+    VectorCastArg0 = (1 << 4),
+    ScalarArg1 = (1 << 5),
+    VectorGetArg1 = (1 << 6),
+    VectorCastArg1 = (1 << 7),
+    VectorFpCmpzArg1 = (1 << 8)
   };
   const char *s = NULL;
 
@@ -2544,12 +2545,12 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vcvts_n_s32_f32:
   case AArch64::BI__builtin_neon_vcvtd_n_s64_f64:
     Int = Intrinsic::aarch64_neon_vcvtfp2fxs_n;
-    s = "fcvtzs"; IntTypes = VectorRet | VectorGetArg0; break;
+    s = "fcvtzs"; IntTypes = VectorRet | ScalarArg0; break;
   // Scalar Floating-point Convert To Unsigned Fixed-point (Immediate)
   case AArch64::BI__builtin_neon_vcvts_n_u32_f32:
   case AArch64::BI__builtin_neon_vcvtd_n_u64_f64:
     Int = Intrinsic::aarch64_neon_vcvtfp2fxu_n;
-    s = "fcvtzu"; IntTypes = VectorRet | VectorGetArg0; break;
+    s = "fcvtzu"; IntTypes = VectorRet | ScalarArg0; break;
   case AArch64::BI__builtin_neon_vmull_p64:
     Int = Intrinsic::aarch64_neon_vmull_p64;
     s = "vmull"; break;
@@ -2575,10 +2576,13 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   }
 
   // Arguments.
-  if (IntTypes & (VectorGetArg0 | VectorCastArg0)) {
+  if (IntTypes & (ScalarArg0 | VectorGetArg0 | VectorCastArg0)) {
     const Expr *Arg = E->getArg(0);
-     llvm::Type *Ty = CGF.ConvertType(Arg->getType());
-    if (IntTypes & VectorGetArg0) {
+    llvm::Type *Ty = CGF.ConvertType(Arg->getType());
+    if (IntTypes & ScalarArg0) {
+      // Scalar argument.
+      Tys.push_back(Ty);
+    } else if (IntTypes & VectorGetArg0) {
       // Convert the scalar argument to one-vector element type.
       Tys.push_back(llvm::VectorType::get(Ty, 1));
     } else if (IntTypes & VectorCastArg0) {
