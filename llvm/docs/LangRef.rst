@@ -1481,13 +1481,13 @@ not feasible to perform on normal three address code representations.
 Void Type
 ---------
 
-Overview:
-^^^^^^^^^
+:Overview:
+
 
 The void type does not represent any value and has no size.
 
-Syntax:
-^^^^^^^
+:Syntax:
+
 
 ::
 
@@ -1499,16 +1499,15 @@ Syntax:
 Function Type
 -------------
 
-Overview:
-^^^^^^^^^
+:Overview:
+
 
 The function type can be thought of as a function signature. It consists of a
 return type and a list of formal parameter types. The return type of a function
 type is a void type or first class type --- except for :ref:`label <t_label>`
 and :ref:`metadata <t_metadata>` types.
 
-Syntax:
-^^^^^^^
+:Syntax:
 
 ::
 
@@ -1521,8 +1520,7 @@ argument functions can access their arguments with the :ref:`variable argument
 handling intrinsic <int_varargs>` functions.  '``<returntype>``' is any type
 except :ref:`label <t_label>` and :ref:`metadata <t_metadata>`.
 
-Examples:
-^^^^^^^^^
+:Examples:
 
 +---------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | ``i32 (i32)``                   | function taking an ``i32``, returning an ``i32``                                                                                                                    |
@@ -1555,15 +1553,13 @@ These are the types that are valid in registers from CodeGen's perspective.
 Integer Type
 """"""""""""
 
-Overview:
-*********
+:Overview:
 
 The integer type is a very simple type that simply specifies an
 arbitrary bit width for the integer type desired. Any bit width from 1
 bit to 2\ :sup:`23`\ -1 (about 8 million) can be specified.
 
-Syntax:
-*******
+:Syntax:
 
 ::
 
@@ -1617,8 +1613,7 @@ Floating Point Types
 X86mmx Type
 """""""""""
 
-Overview:
-*********
+:Overview:
 
 The x86mmx type represents a value held in an MMX register on an x86
 machine. The operations allowed on it are quite limited: parameters and
@@ -1627,8 +1622,7 @@ instructions are represented as intrinsic or asm calls with arguments
 and/or results of this type. There are no arrays, vectors or constants
 of this type.
 
-Syntax:
-*******
+:Syntax:
 
 ::
 
@@ -1640,8 +1634,7 @@ Syntax:
 Pointer Type
 """"""""""""
 
-Overview:
-*********
+:Overview:
 
 The pointer type is used to specify memory locations. Pointers are
 commonly used to reference objects in memory.
@@ -1654,15 +1647,13 @@ are target-specific.
 Note that LLVM does not permit pointers to void (``void*``) nor does it
 permit pointers to labels (``label*``). Use ``i8*`` instead.
 
-Syntax:
-*******
+:Syntax:
 
 ::
 
       <type> *
 
-Examples:
-*********
+:Examples:
 
 +-------------------------+--------------------------------------------------------------------------------------------------------------+
 | ``[4 x i32]*``          | A :ref:`pointer <t_pointer>` to :ref:`array <t_array>` of four ``i32`` values.                               |
@@ -1677,8 +1668,7 @@ Examples:
 Vector Type
 """""""""""
 
-Overview:
-*********
+:Overview:
 
 A vector type is a simple derived type that represents a vector of
 elements. Vector types are used when multiple primitive data are
@@ -1686,8 +1676,7 @@ operated in parallel using a single instruction (SIMD). A vector type
 requires a size (number of elements) and an underlying primitive data
 type. Vector types are considered :ref:`first class <t_firstclass>`.
 
-Syntax:
-*******
+:Syntax:
 
 ::
 
@@ -1697,8 +1686,7 @@ The number of elements is a constant integer value larger than 0;
 elementtype may be any integer or floating point type, or a pointer to
 these types. Vectors of size zero are not allowed.
 
-Examples:
-*********
+:Examples:
 
 +-------------------+--------------------------------------------------+
 | ``<4 x i32>``     | Vector of 4 32-bit integer values.               |
@@ -1715,13 +1703,11 @@ Examples:
 Label Type
 ^^^^^^^^^^
 
-Overview:
-"""""""""
+:Overview:
 
 The label type represents code labels.
 
-Syntax:
-"""""""
+:Syntax:
 
 ::
 
@@ -1732,14 +1718,12 @@ Syntax:
 Metadata Type
 ^^^^^^^^^^^^^
 
-Overview:
-"""""""""
+:Overview:
 
 The metadata type represents embedded metadata. No derived types may be
 created from metadata except for :ref:`function <t_function>` arguments.
 
-Syntax:
-"""""""
+:Syntax:
 
 ::
 
@@ -1760,15 +1744,13 @@ aggregate types.
 Array Type
 """"""""""
 
-Overview:
-*********
+:Overview:
 
 The array type is a very simple derived type that arranges elements
 sequentially in memory. The array type requires a size (number of
 elements) and an underlying data type.
 
-Syntax:
-*******
+:Syntax:
 
 ::
 
@@ -1777,8 +1759,7 @@ Syntax:
 The number of elements is a constant integer value; ``elementtype`` may
 be any type with a size.
 
-Examples:
-*********
+:Examples:
 
 +------------------+--------------------------------------+
 | ``[40 x i32]``   | Array of 40 32-bit integer values.   |
@@ -1811,8 +1792,7 @@ example.
 Structure Type
 """"""""""""""
 
-Overview:
-*********
+:Overview:
 
 The structure type is used to represent a collection of data members
 together in memory. The elements of a structure may be any type that has
@@ -1836,16 +1816,14 @@ Literal types are uniqued by their contents and can never be recursive
 or opaque since there is no way to write one. Identified types can be
 recursive, can be opaqued, and are never uniqued.
 
-Syntax:
-*******
+:Syntax:
 
 ::
 
       %T1 = type { <type list> }     ; Identified normal struct type
       %T2 = type <{ <type list> }>   ; Identified packed struct type
 
-Examples:
-*********
+:Examples:
 
 +------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | ``{ i32, i32, i32 }``        | A triple of three ``i32`` values                                                                                                                                                      |
@@ -1860,23 +1838,20 @@ Examples:
 Opaque Structure Types
 """"""""""""""""""""""
 
-Overview:
-*********
+:Overview:
 
 Opaque structure types are used to represent named structure types that
 do not have a body specified. This corresponds (for example) to the C
 notion of a forward declared structure.
 
-Syntax:
-*******
+:Syntax:
 
 ::
 
       %X = type opaque
       %52 = type opaque
 
-Examples:
-*********
+:Examples:
 
 +--------------+-------------------+
 | ``opaque``   | An opaque type.   |
