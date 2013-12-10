@@ -75,24 +75,16 @@ static std::string computeDataLayout(ARMSubtarget &ST) {
   else
     Ret += "-f64:64:64-i64:64:64";
 
-  if (ST.isThumb()) {
-    if (ST.isAPCS_ABI())
-      Ret += "-i16:16:32-i8:8:32-i1:8:32";
-    else
-      Ret += "-i16:16:32-i8:8:32-i1:8:32";
-  }
+  if (ST.isThumb())
+    Ret += "-i16:16:32-i8:8:32-i1:8:32";
 
   if (ST.isAPCS_ABI())
     Ret += "-v128:32:128-v64:32:64";
   else
     Ret += "-v128:64:128-v64:64:64";
 
-  if (ST.isThumb()) {
-    if (ST.isAPCS_ABI())
-      Ret += "-a:0:32";
-    else
-      Ret += "-a:0:32";
-  }
+  if (ST.isThumb())
+    Ret += "-a:0:32";
 
   Ret += "-n32";
 
