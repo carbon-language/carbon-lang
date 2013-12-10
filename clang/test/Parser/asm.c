@@ -23,3 +23,16 @@ __asm ; // expected-error {{expected '(' after 'asm'}}
 // <rdar://problem/10465079> - Don't crash on wide string literals in 'asm'.
 int foo asm (L"bar"); // expected-error {{cannot use wide string literal in 'asm'}}
 
+asm() // expected-error {{expected string literal in 'asm'}}
+// expected-error@-1 {{expected ';' after top-level asm block}}
+
+asm(; // expected-error {{expected string literal in 'asm'}}
+
+asm("") // expected-error {{expected ';' after top-level asm block}}
+
+// Unterminated asm strings at the end of the file were causing us to crash, so
+// this needs to be last. rdar://15624081
+// expected-warning@+3 {{missing terminating '"' character}}
+// expected-error@+2 {{expected string literal in 'asm'}}
+// expected-error@+1 {{expected ';' after top-level asm block}}
+asm("
