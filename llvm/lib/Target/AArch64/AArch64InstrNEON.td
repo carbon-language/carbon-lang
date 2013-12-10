@@ -3039,19 +3039,19 @@ defm SQDMLSL2vvv : NeonI_3VDL2_3Op_qdmlal_v2<0b0, 0b1011, "sqdmlsl2",
                                              int_arm_neon_vqsubs>;
 
 multiclass NeonI_3VDL_v3<bit u, bits<4> opcode, string asmop,
-                         SDPatternOperator opnode, bit Commutable = 0> {
+                         SDPatternOperator opnode_8h8b,
+                         SDPatternOperator opnode_1q1d, bit Commutable = 0> {
   let isCommutable = Commutable in {
     def _8h8b : NeonI_3VD_2Op<0b0, u, 0b00, opcode, asmop, "8h", "8b",
-                              opnode, VPR128, VPR64, v8i16, v8i8>;
+                              opnode_8h8b, VPR128, VPR64, v8i16, v8i8>;
 
-    def _1q1d : NeonI_3VDiff<0b0, u, 0b11, opcode,
-                             (outs VPR128:$Rd), (ins VPR64:$Rn, VPR64:$Rm),
-                             asmop # "\t$Rd.1q, $Rn.1d, $Rm.1d",
-                             [], NoItinerary>;
+    def _1q1d : NeonI_3VD_2Op<0b0, u, 0b11, opcode, asmop, "1q", "1d",
+                              opnode_1q1d, VPR128, VPR64, v16i8, v1i64>;
   }
 }
 
-defm PMULLvvv : NeonI_3VDL_v3<0b0, 0b1110, "pmull", int_arm_neon_vmullp, 1>;
+defm PMULLvvv : NeonI_3VDL_v3<0b0, 0b1110, "pmull", int_arm_neon_vmullp,
+                              int_aarch64_neon_vmull_p64, 1>;
 
 multiclass NeonI_3VDL2_2Op_mull_v3<bit u, bits<4> opcode, string asmop,
                                    string opnode, bit Commutable = 0> {
@@ -3060,10 +3060,17 @@ multiclass NeonI_3VDL2_2Op_mull_v3<bit u, bits<4> opcode, string asmop,
                                       !cast<PatFrag>(opnode # "_16B"),
                                       v8i16, v16i8>;
 
-    def _1q2d : NeonI_3VDiff<0b1, u, 0b11, opcode,
-                             (outs VPR128:$Rd), (ins VPR128:$Rn, VPR128:$Rm),
-                             asmop # "\t$Rd.1q, $Rn.2d, $Rm.2d",
-                             [], NoItinerary>;
+    def _1q2d : 
+      NeonI_3VDiff<0b1, u, 0b11, opcode,
+                   (outs VPR128:$Rd), (ins VPR128:$Rn, VPR128:$Rm),
+                   asmop # "\t$Rd.1q, $Rn.2d, $Rm.2d",
+                   [(set (v16i8 VPR128:$Rd),
+                      (v16i8 (int_aarch64_neon_vmull_p64 
+                        (v1i64 (scalar_to_vector
+                          (i64 (vector_extract (v2i64 VPR128:$Rn), 1)))),
+                        (v1i64 (scalar_to_vector
+                          (i64 (vector_extract (v2i64 VPR128:$Rm), 1)))))))],
+                   NoItinerary>;
   }
 }
 

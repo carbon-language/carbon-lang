@@ -1804,3 +1804,30 @@ entry:
   ret <8 x i16> %vmull.i.i
 }
 
+define i128 @test_vmull_p64(i64 %a, i64 %b) #4 {
+; CHECK: test_vmull_p64
+; CHECK: pmull {{v[0-9]+}}.1q, {{v[0-9]+}}.1d, {{v[0-9]+}}.1d
+entry:
+  %vmull.i = insertelement <1 x i64> undef, i64 %a, i32 0
+  %vmull1.i = insertelement <1 x i64> undef, i64 %b, i32 0
+  %vmull2.i = tail call <16 x i8> @llvm.aarch64.neon.vmull.p64(<1 x i64> %vmull.i, <1 x i64> %vmull1.i) #1
+  %vmull3.i = bitcast <16 x i8> %vmull2.i to i128
+  ret i128 %vmull3.i
+}
+
+define i128 @test_vmull_high_p64(<2 x i64> %a, <2 x i64> %b) #4 {
+; CHECK: test_vmull_high_p64
+; CHECK: pmull2 {{v[0-9]+}}.1q, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
+entry:
+  %0 = extractelement <2 x i64> %a, i32 1
+  %1 = extractelement <2 x i64> %b, i32 1
+  %vmull.i.i = insertelement <1 x i64> undef, i64 %0, i32 0
+  %vmull1.i.i = insertelement <1 x i64> undef, i64 %1, i32 0
+  %vmull2.i.i = tail call <16 x i8> @llvm.aarch64.neon.vmull.p64(<1 x i64> %vmull.i.i, <1 x i64> %vmull1.i.i) #1
+  %vmull3.i.i = bitcast <16 x i8> %vmull2.i.i to i128
+  ret i128 %vmull3.i.i
+}
+
+declare <16 x i8> @llvm.aarch64.neon.vmull.p64(<1 x i64>, <1 x i64>) #5
+
+

@@ -312,6 +312,9 @@ def int_aarch64_neon_vqdmlal : Neon_3Arg_Long_Intrinsic;
 // Signed Saturating Doubling Multiply-Subtract Long
 def int_aarch64_neon_vqdmlsl : Neon_3Arg_Long_Intrinsic;
 
+def int_aarch64_neon_vmull_p64 :
+  Intrinsic<[llvm_v16i8_ty], [llvm_v1i64_ty, llvm_v1i64_ty], [IntrNoMem]>;
+
 class Neon_2Arg_ShiftImm_Intrinsic
   : Intrinsic<[llvm_v1i64_ty], [llvm_v1i64_ty, llvm_i32_ty], [IntrNoMem]>;
 
