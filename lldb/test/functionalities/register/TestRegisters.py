@@ -188,7 +188,7 @@ class RegisterCommandsTestCase(TestBase):
 
         self.runCmd("register write " + st0regname + " \"{0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00}\"")
         self.expect("register read " + st0regname + " --format f",
-            substrs = ['stmm0 = 0'])
+            substrs = [st0regname + ' = 0'])
 
         has_avx = False 
         registerSets = currentFrame.GetRegisters() # Returns an SBValueList.
