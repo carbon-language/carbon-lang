@@ -695,10 +695,9 @@ def ObjCRootClass : InheritableAttr {
   let Subjects = SubjectList<[ObjCInterface], ErrorDiag>;
 }
 
-def ObjCSuppressProtocol : InheritableAttr {
-  let Spellings = [GNU<"objc_suppress_protocol_methods">];
-  let Subjects = SubjectList<[ObjCInterface], ErrorDiag>;
-  let Args = [IdentifierArgument<"Protocol">];
+def ObjCExplicitProtocolImpl : InheritableAttr {
+  let Spellings = [GNU<"objc_protocol_requires_explicit_implementation">];
+  let Subjects = SubjectList<[ObjCProtocol], ErrorDiag>;
 }
 
 def ObjCDesignatedInitializer : Attr {

@@ -256,18 +256,6 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
 
 void ObjCInterfaceDecl::anchor() { }
 
-bool ObjCInterfaceDecl::shouldSuppressProtocol(const ObjCProtocolDecl *P) const{
-  if (!hasAttrs())
-    return false;
-  const IdentifierInfo *PI = P->getIdentifier();
-  for (specific_attr_iterator<ObjCSuppressProtocolAttr>
-        I = specific_attr_begin<ObjCSuppressProtocolAttr>(),
-        E = specific_attr_end<ObjCSuppressProtocolAttr>(); I != E; ++I)
-      if ((*I)->getProtocol() == PI)
-        return true;
-  return false;
-}
-
 /// FindPropertyVisibleInPrimaryClass - Finds declaration of the property
 /// with name 'PropertyId' in the primary class; including those in protocols
 /// (direct or indirect) used by the primary class.
@@ -555,8 +543,7 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
                                                 bool isInstance,
                                                 bool shallowCategoryLookup,
                                                 bool followSuper,
-                                                const ObjCCategoryDecl *C,
-                                                const ObjCProtocolDecl *P) const
+                                                const ObjCCategoryDecl *C) const
 {
   // FIXME: Should make sure no callers ever do this.
   if (!hasDefinition())
@@ -569,12 +556,6 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
     LoadExternalDefinition();
 
   while (ClassDecl) {
-    // If we are looking for a method that is part of protocol conformance,
-    // check if the superclass has been marked to suppress conformance
-    // of that protocol.
-    if (P && ClassDecl->shouldSuppressProtocol(P))
-      return 0;
-
     if ((MethodDecl = ClassDecl->getMethod(Sel, isInstance)))
       return MethodDecl;
 

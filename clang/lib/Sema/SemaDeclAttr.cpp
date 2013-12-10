@@ -1740,16 +1740,9 @@ static void handleAttrWithMessage(Sema &S, Decl *D,
 
 static void handleObjCSuppresProtocolAttr(Sema &S, Decl *D,
                                           const AttributeList &Attr) {
-  IdentifierLoc *Parm = Attr.isArgIdent(0) ? Attr.getArgAsIdent(0) : 0;
-
-  if (!Parm) {
-    S.Diag(D->getLocStart(), diag::err_objc_attr_not_id) << Attr.getName() << 1;
-    return;
-  }
-
   D->addAttr(::new (S.Context)
-             ObjCSuppressProtocolAttr(Attr.getRange(), S.Context, Parm->Ident,
-                                      Attr.getAttributeSpellingListIndex()));
+          ObjCExplicitProtocolImplAttr(Attr.getRange(), S.Context,
+                                       Attr.getAttributeSpellingListIndex()));
 }
 
 static bool checkAvailabilityAttr(Sema &S, SourceRange Range,
@@ -4032,7 +4025,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleSimpleAttribute<ArcWeakrefUnavailableAttr>(S, D, Attr); break;
   case AttributeList::AT_ObjCRootClass:
     handleSimpleAttribute<ObjCRootClassAttr>(S, D, Attr); break;
-  case AttributeList::AT_ObjCSuppressProtocol:
+  case AttributeList::AT_ObjCExplicitProtocolImpl:
     handleObjCSuppresProtocolAttr(S, D, Attr);
     break;
   case AttributeList::AT_ObjCRequiresPropertyDefs:

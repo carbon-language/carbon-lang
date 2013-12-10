@@ -1666,6 +1666,8 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
   // the method was implemented by a base class or an inherited
   // protocol. This lookup is slow, but occurs rarely in correct code
   // and otherwise would terminate in a warning.
+  if (PDecl->hasAttr<ObjCExplicitProtocolImplAttr>())
+    Super = NULL;
 
   // check unimplemented instance methods.
   if (!NSIDecl)
@@ -1679,8 +1681,7 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
                                           true /* instance */,
                                           false /* shallowCategory */,
                                           true /* followsSuper */,
-                                          NULL /* category */,
-                                          PDecl /* protocol */))) {
+                                          NULL /* category */))) {
             // If a method is not implemented in the category implementation but
             // has been declared in its primary class, superclass,
             // or in one of their protocols, no need to issue the warning. 
@@ -1717,8 +1718,7 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
                                         false /* class method */,
                                         false /* shallowCategoryLookup */,
                                         true  /* followSuper */,
-                                        NULL /* category */,
-                                        PDecl /* protocol */))) {
+                                        NULL /* category */))) {
       // See above comment for instance method lookups.
       if (C && IDecl->lookupMethod(method->getSelector(),
                                    false /* class */,
