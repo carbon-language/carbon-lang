@@ -94,10 +94,6 @@ struct FormatStyle {
   /// <tt>A<A<int> ></tt> instead of \c A<A<int>> for LS_Cpp03.
   LanguageStandard Standard;
 
-  /// \brief When \c true, blocks (including braces) get an additional level of
-  /// indentation.
-  bool IndentBlocks;
-
   /// \brief Indent case labels one level from the switch statement.
   ///
   /// When \c false, use the same indentation level as for the switch statement.
@@ -312,7 +308,6 @@ struct FormatStyle {
            DerivePointerBinding == R.DerivePointerBinding &&
            ExperimentalAutoDetectBinPacking ==
                R.ExperimentalAutoDetectBinPacking &&
-           IndentBlocks == R.IndentBlocks &&
            IndentCaseLabels == R.IndentCaseLabels &&
            IndentFunctionDeclarationAfterType ==
                R.IndentFunctionDeclarationAfterType &&

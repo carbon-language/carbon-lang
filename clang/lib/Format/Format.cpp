@@ -256,7 +256,6 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.Cpp11BracedListStyle = false;
   LLVMStyle.DerivePointerBinding = false;
   LLVMStyle.ExperimentalAutoDetectBinPacking = false;
-  LLVMStyle.IndentBlocks = false;
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.IndentFunctionDeclarationAfterType = false;
   LLVMStyle.IndentWidth = 2;
@@ -363,7 +362,6 @@ FormatStyle getGNUStyle() {
   Style.BreakBeforeBraces = FormatStyle::BS_Allman;
   Style.BreakBeforeTernaryOperators = true;
   Style.ColumnLimit = 79;
-  Style.IndentBlocks = true;
   Style.SpaceBeforeParens = FormatStyle::SBPO_Always;
   return Style;
 }
