@@ -2361,7 +2361,7 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vabds_f32:
   case AArch64::BI__builtin_neon_vabdd_f64:
     Int = Intrinsic::aarch64_neon_vabd;
-    s = "vabd"; IntTypes = VectorRet; break;
+    s = "vabd"; IntTypes = ScalarRet; break;
   // Scalar Signed Saturating Absolute Value
   case AArch64::BI__builtin_neon_vqabsb_s8:
   case AArch64::BI__builtin_neon_vqabsh_s16:
