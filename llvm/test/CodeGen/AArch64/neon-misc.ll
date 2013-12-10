@@ -894,13 +894,13 @@ define <4 x float> @test_vcvt_high_f32_f64(<2 x float> %a, <2 x double> %b) #0 {
 
 define <2 x float> @test_vcvtx_f32_f64(<2 x double> %a) #0 {
 ; CHECK: fcvtxn v{{[0-9]+}}.2s, v{{[0-9]+}}.2d
-  %vcvtx_f32_f641.i = tail call <2 x float> @llvm.aarch64.neon.fcvtxn.v2f32.v2f64(<2 x double> %a) #4
+  %vcvtx_f32_f641.i = call <2 x float> @llvm.aarch64.neon.vcvtxn.v2f32.v2f64(<2 x double> %a) #4
   ret <2 x float> %vcvtx_f32_f641.i
 }
 
 define <4 x float> @test_vcvtx_high_f32_f64(<2 x float> %a, <2 x double> %b) #0 {
 ; CHECK: fcvtxn2 v{{[0-9]+}}.4s, v{{[0-9]+}}.2d
-  %vcvtx_f32_f641.i.i = tail call <2 x float> @llvm.aarch64.neon.fcvtxn.v2f32.v2f64(<2 x double> %b) #4
+  %vcvtx_f32_f641.i.i = tail call <2 x float> @llvm.aarch64.neon.vcvtxn.v2f32.v2f64(<2 x double> %b) #4
   %shuffle.i = shufflevector <2 x float> %a, <2 x float> %vcvtx_f32_f641.i.i, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
   ret <4 x float> %shuffle.i
 }
@@ -1462,7 +1462,7 @@ declare <4 x float> @llvm.aarch64.neon.frintn.v4f32(<4 x float>) #2
 
 declare <2 x float> @llvm.aarch64.neon.frintn.v2f32(<2 x float>) #2
 
-declare <2 x float> @llvm.aarch64.neon.fcvtxn.v2f32.v2f64(<2 x double>) #2
+declare <2 x float> @llvm.aarch64.neon.vcvtxn.v2f32.v2f64(<2 x double>) #2
 
 declare <2 x float> @llvm.aarch64.neon.fcvtn.v2f32.v2f64(<2 x double>) #2
 

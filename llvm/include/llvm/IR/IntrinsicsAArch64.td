@@ -36,11 +36,11 @@ def int_aarch64_neon_xtn :
 // Vector floating-point convert
 def int_aarch64_neon_frintn : Neon_1Arg_Intrinsic;
 def int_aarch64_neon_fsqrt : Neon_1Arg_Intrinsic;
-def int_aarch64_neon_fcvtxn :
+def int_aarch64_neon_vcvtxn :
   Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtzs :
+def int_aarch64_neon_vcvtzs :
   Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtzu :
+def int_aarch64_neon_vcvtzu :
   Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
 // Vector maxNum (Floating Point)
@@ -239,6 +239,30 @@ def int_aarch64_neon_vcvtf32_u32 :
   Intrinsic<[llvm_float_ty], [llvm_v1i32_ty], [IntrNoMem]>;
 def int_aarch64_neon_vcvtf64_u64 :
   Intrinsic<[llvm_double_ty], [llvm_v1i64_ty], [IntrNoMem]>;
+
+// Scalar Floating-point Convert
+def int_aarch64_neon_fcvtxn :
+  Intrinsic<[llvm_float_ty], [llvm_double_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtns : 
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtnu :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtps :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtpu :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtms :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtmu :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtas :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtau :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtzs :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtzu :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
 
 // Scalar Floating-point Reciprocal Exponent
 def int_aarch64_neon_vrecpx : Neon_1Arg_Intrinsic;

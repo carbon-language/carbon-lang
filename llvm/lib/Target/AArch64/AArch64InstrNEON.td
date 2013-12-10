@@ -4307,17 +4307,22 @@ multiclass NeonI_Scalar2SameMisc_accum_BHSD_size<bit u, bits<5> opcode,
 
 class Neon_Scalar2SameMisc_fcvtxn_D_size_patterns<SDPatternOperator opnode,
                                                   Instruction INSTD>
-  : Pat<(v1f32 (opnode (v1f64 FPR64:$Rn))),
+  : Pat<(f32 (opnode (f64 FPR64:$Rn))),
         (INSTD FPR64:$Rn)>;
 
 multiclass Neon_Scalar2SameMisc_fcvt_SD_size_patterns<SDPatternOperator opnode,
                                                       Instruction INSTS,
                                                       Instruction INSTD> {
-  def : Pat<(v1i32 (opnode (v1f32 FPR32:$Rn))),
+  def : Pat<(v1i32 (opnode (f32 FPR32:$Rn))),
             (INSTS FPR32:$Rn)>;
-  def : Pat<(v1i64 (opnode (v1f64 FPR64:$Rn))),
+  def : Pat<(v1i64 (opnode (f64 FPR64:$Rn))),
             (INSTD FPR64:$Rn)>;
 }
+
+class Neon_Scalar2SameMisc_vcvt_D_size_patterns<SDPatternOperator opnode,
+                                                Instruction INSTD>
+  : Pat<(v1i64 (opnode (v1f64 FPR64:$Rn))),
+            (INSTD FPR64:$Rn)>;
 
 multiclass Neon_Scalar2SameMisc_cvt_SD_size_patterns<SDPatternOperator Sopnode,
                                                      SDPatternOperator Dopnode,
@@ -4982,44 +4987,56 @@ def : Neon_Scalar2SameMisc_fcvtxn_D_size_patterns<int_aarch64_neon_fcvtxn,
                                                   FCVTXN>;
 
 defm FCVTNS : NeonI_Scalar2SameMisc_SD_size<0b0, 0b0, 0b11010, "fcvtns">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtns,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtns,
                                                   FCVTNSss, FCVTNSdd>;
+def : Neon_Scalar2SameMisc_vcvt_D_size_patterns<int_arm_neon_vcvtns, FCVTNSdd>;
 
 defm FCVTNU : NeonI_Scalar2SameMisc_SD_size<0b1, 0b0, 0b11010, "fcvtnu">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtnu,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtnu,
                                                   FCVTNUss, FCVTNUdd>;
+def : Neon_Scalar2SameMisc_vcvt_D_size_patterns<int_arm_neon_vcvtnu, FCVTNUdd>;
 
 defm FCVTMS : NeonI_Scalar2SameMisc_SD_size<0b0, 0b0, 0b11011, "fcvtms">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtms,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtms,
                                                   FCVTMSss, FCVTMSdd>;
+def : Neon_Scalar2SameMisc_vcvt_D_size_patterns<int_arm_neon_vcvtms, FCVTMSdd>;
 
 defm FCVTMU : NeonI_Scalar2SameMisc_SD_size<0b1, 0b0, 0b11011, "fcvtmu">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtmu,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtmu,
                                                   FCVTMUss, FCVTMUdd>;
+def : Neon_Scalar2SameMisc_vcvt_D_size_patterns<int_arm_neon_vcvtmu, FCVTMUdd>;
 
 defm FCVTAS : NeonI_Scalar2SameMisc_SD_size<0b0, 0b0, 0b11100, "fcvtas">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtas,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtas,
                                                   FCVTASss, FCVTASdd>;
+def : Neon_Scalar2SameMisc_vcvt_D_size_patterns<int_arm_neon_vcvtas, FCVTASdd>;
 
 defm FCVTAU : NeonI_Scalar2SameMisc_SD_size<0b1, 0b0, 0b11100, "fcvtau">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtau,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtau,
                                                   FCVTAUss, FCVTAUdd>;
+def : Neon_Scalar2SameMisc_vcvt_D_size_patterns<int_arm_neon_vcvtau, FCVTAUdd>;
 
 defm FCVTPS : NeonI_Scalar2SameMisc_SD_size<0b0, 0b1, 0b11010, "fcvtps">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtps,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtps,
                                                   FCVTPSss, FCVTPSdd>;
+def : Neon_Scalar2SameMisc_vcvt_D_size_patterns<int_arm_neon_vcvtps, FCVTPSdd>;
 
 defm FCVTPU : NeonI_Scalar2SameMisc_SD_size<0b1, 0b1, 0b11010, "fcvtpu">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtpu,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtpu,
                                                   FCVTPUss, FCVTPUdd>;
+def : Neon_Scalar2SameMisc_vcvt_D_size_patterns<int_arm_neon_vcvtpu, FCVTPUdd>;
 
 defm FCVTZS : NeonI_Scalar2SameMisc_SD_size<0b0, 0b1, 0b11011, "fcvtzs">;
 defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtzs,
                                                   FCVTZSss, FCVTZSdd>;
+def : Neon_Scalar2SameMisc_vcvt_D_size_patterns<int_aarch64_neon_vcvtzs,
+                                                FCVTZSdd>;
 
 defm FCVTZU : NeonI_Scalar2SameMisc_SD_size<0b1, 0b1, 0b11011, "fcvtzu">;
 defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtzu,
                                                   FCVTZUss, FCVTZUdd>;
+def : Neon_Scalar2SameMisc_vcvt_D_size_patterns<int_aarch64_neon_vcvtzu,
+                                                FCVTZUdd>;
 
 // Patterns For Convert Instructions Between v1f64 and v1i64
 class Neon_Scalar2SameMisc_cvtf_v1f64_pattern<SDPatternOperator opnode,
@@ -8297,12 +8314,12 @@ multiclass NeonI_2VMisc_D_Narrow<string asmop, string prefix, bit U,
     let Constraints = "$src = $Rd";
   }
 
-  def : Pat<(v2f32 (int_aarch64_neon_fcvtxn (v2f64 VPR128:$Rn))),
+  def : Pat<(v2f32 (int_aarch64_neon_vcvtxn (v2f64 VPR128:$Rn))),
             (!cast<Instruction>(prefix # "2d2s") VPR128:$Rn)>;
 
   def : Pat<(v4f32 (concat_vectors
               (v2f32 VPR64:$src),
-              (v2f32 (int_aarch64_neon_fcvtxn (v2f64 VPR128:$Rn))))),
+              (v2f32 (int_aarch64_neon_vcvtxn (v2f64 VPR128:$Rn))))),
             (!cast<Instruction>(prefix # "2d4s")
                (v4f32 (SUBREG_TO_REG (i32 0), VPR64:$src, sub_64)),
                VPR128:$Rn)>;
