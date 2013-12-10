@@ -1,5 +1,4 @@
 set(LLVM_LINK_COMPONENTS
-  AsmParser
   BitReader
   BitWriter
   Core
@@ -14,7 +13,6 @@ set(LLVM_LINK_COMPONENTS
   Support
   Target
   TransformUtils
-  Vectorize
   )
 
 add_clang_library(clangCodeGen

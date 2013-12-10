@@ -30,6 +30,5 @@ target_link_libraries(clangRewriteFrontend
   clangEdit
   clangFrontend
   clangLex
-  clangParse
   clangRewriteCore
   )

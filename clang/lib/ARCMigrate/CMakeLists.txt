@@ -44,9 +44,7 @@ target_link_libraries(clangARCMigrate
   clangEdit
   clangFrontend
   clangLex
-  clangParse
   clangRewriteCore
-  clangRewriteFrontend
   clangSema
   clangSerialization
   clangStaticAnalyzerCheckers

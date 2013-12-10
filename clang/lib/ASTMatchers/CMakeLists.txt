@@ -18,6 +18,5 @@ add_dependencies(clangASTMatchers
   )
 
 target_link_libraries(clangASTMatchers
-  clangBasic
   clangAST
   )

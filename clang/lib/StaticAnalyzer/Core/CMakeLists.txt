@@ -54,7 +54,6 @@ target_link_libraries(clangStaticAnalyzerCore
   clangAST
   clangAnalysis
   clangBasic
-  clangFrontend
   clangLex
   clangRewriteCore
   )

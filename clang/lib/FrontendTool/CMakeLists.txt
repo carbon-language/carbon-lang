@@ -18,7 +18,6 @@ target_link_libraries(clangFrontendTool
   clangCodeGen
   clangDriver
   clangFrontend
-  clangRewriteCore
   clangRewriteFrontend
   )
 
@@ -31,7 +30,5 @@ endif()
 if(CLANG_ENABLE_STATIC_ANALYZER)
   target_link_libraries(clangFrontendTool
     clangStaticAnalyzerFrontend
-    clangStaticAnalyzerCheckers
-    clangStaticAnalyzerCore
     )
 endif()

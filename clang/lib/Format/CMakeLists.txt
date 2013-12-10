@@ -20,12 +20,7 @@ add_dependencies(clangFormat
   )
 
 target_link_libraries(clangFormat
-  clangAST
-  clangASTMatchers
   clangBasic
-  clangFrontend
   clangLex
-  clangRewriteCore
-  clangRewriteFrontend
   clangTooling
   )
