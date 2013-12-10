@@ -3467,16 +3467,28 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
   else {
     // Implicit conversion from ObjC type to CF object is needed.
     if (InstanceMethod) {
-      // Provide a fixit: [ObjectExpr InstanceMethod];
-      std::string ExpressionString = " ";
-      ExpressionString += InstanceMethod->getSelector().getAsString();
-      ExpressionString += "]";
+      std::string ExpressionString;
       SourceLocation SrcExprEndLoc = PP.getLocForEndOfToken(SrcExpr->getLocEnd());
+      if (InstanceMethod->isPropertyAccessor())
+        if (const ObjCPropertyDecl *PDecl = InstanceMethod->findPropertyDecl()) {
+          // fixit: ObjectExpr.propertyname when it is  aproperty accessor.
+          ExpressionString = ".";
+          ExpressionString += PDecl->getNameAsString();
+          Diag(Loc, diag::err_objc_bridged_related_known_method)
+          << SrcType << DestType << InstanceMethod->getSelector() << true
+          << FixItHint::CreateInsertion(SrcExprEndLoc, ExpressionString);
+        }
+      if (ExpressionString.empty()) {
+        // Provide a fixit: [ObjectExpr InstanceMethod]
+        ExpressionString = " ";
+        ExpressionString += InstanceMethod->getSelector().getAsString();
+        ExpressionString += "]";
       
-      Diag(Loc, diag::err_objc_bridged_related_known_method)
-      << SrcType << DestType << InstanceMethod->getSelector() << true
-      << FixItHint::CreateInsertion(SrcExpr->getLocStart(), "[")
-      << FixItHint::CreateInsertion(SrcExprEndLoc, ExpressionString);
+        Diag(Loc, diag::err_objc_bridged_related_known_method)
+        << SrcType << DestType << InstanceMethod->getSelector() << true
+        << FixItHint::CreateInsertion(SrcExpr->getLocStart(), "[")
+        << FixItHint::CreateInsertion(SrcExprEndLoc, ExpressionString);
+      }
     }
     else
       Diag(Loc, diag::err_objc_bridged_related_unknown_method)
