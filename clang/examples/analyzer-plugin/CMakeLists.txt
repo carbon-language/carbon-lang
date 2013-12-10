@@ -1,6 +1,8 @@
 set(MODULE TRUE)
 
-set( LLVM_LINK_COMPONENTS support mc)
+set(LLVM_LINK_COMPONENTS
+  Support
+  )
 
 add_clang_library(SampleAnalyzerPlugin MainCallChecker.cpp)
 
@@ -14,6 +16,8 @@ add_dependencies(SampleAnalyzerPlugin
   )
 
 target_link_libraries(SampleAnalyzerPlugin
+  clangAST
+  clangAnalysis
   clangStaticAnalyzerCore
   )
 

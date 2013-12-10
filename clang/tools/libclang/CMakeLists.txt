@@ -1,9 +1,6 @@
 set(LLVM_LINK_COMPONENTS
-  ${LLVM_TARGETS_TO_BUILD}
-  asmparser
-  support
-  bitreader
-  mc
+  BitReader
+  Support
   )
 
 set(SOURCES
@@ -43,19 +40,14 @@ set(SOURCES
   )
 
 set(LIBRARIES
-  clangIndex
   clangARCMigrate
-  clangRewriteCore
-  clangRewriteFrontend
-  clangFrontend
-  clangDriver
-  clangSerialization
-  clangSema
-  clangEdit
   clangAST
-  clangLex
-  clangTooling
   clangBasic
+  clangFrontend
+  clangIndex
+  clangLex
+  clangSema
+  clangTooling
   )
 
 set(GENERATED_HEADERS

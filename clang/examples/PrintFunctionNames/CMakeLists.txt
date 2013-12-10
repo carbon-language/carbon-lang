@@ -1,6 +1,8 @@
 set(MODULE TRUE)
 
-set( LLVM_LINK_COMPONENTS support mc)
+set( LLVM_LINK_COMPONENTS
+  Support
+  )
 
 add_clang_library(PrintFunctionNames PrintFunctionNames.cpp)
 
@@ -14,8 +16,9 @@ add_dependencies(PrintFunctionNames
   )
 
 target_link_libraries(PrintFunctionNames
-  clangFrontend
   clangAST
+  clangBasic
+  clangFrontend
   )
 
 set_target_properties(PrintFunctionNames

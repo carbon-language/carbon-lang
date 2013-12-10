@@ -1,9 +1,5 @@
 set(LLVM_LINK_COMPONENTS
-  ${LLVM_TARGETS_TO_BUILD}
-  asmparser
-  bitreader
-  support
-  mc
+  Support
   )
 
 add_clang_unittest(ToolingTests
@@ -19,6 +15,10 @@ add_clang_unittest(ToolingTests
 
 target_link_libraries(ToolingTests
   clangAST
-  clangTooling
+  clangASTMatchers
+  clangBasic
+  clangFrontend
+  clangLex
   clangRewriteCore
+  clangTooling
   )

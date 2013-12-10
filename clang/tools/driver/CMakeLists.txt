@@ -1,14 +1,19 @@
 set( LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
-  asmparser
-  bitreader
-  bitwriter
-  irreader
-  codegen
-  instrumentation
-  ipo
-  linker
-  selectiondag
+  Analysis
+  Core
+  IPA
+  IPO
+  InstCombine
+  Instrumentation
+  MC
+  MCParser
+  ObjCARCOpts
+  Option
+  ScalarOpts
+  Support
+  TransformUtils
+  Vectorize
   )
 
 add_clang_executable(clang
@@ -18,19 +23,10 @@ add_clang_executable(clang
   )
 
 target_link_libraries(clang
-  clangFrontendTool
-  clangAST
-  clangAnalysis
   clangBasic
-  clangCodeGen
   clangDriver
-  clangEdit
   clangFrontend
-  clangLex
-  clangParse
-  clangEdit
-  clangSema
-  clangSerialization
+  clangFrontendTool
   )
 
 if(CLANG_ENABLE_STATIC_ANALYZER)
