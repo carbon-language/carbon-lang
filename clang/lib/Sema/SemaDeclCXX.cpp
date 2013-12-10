@@ -3375,8 +3375,8 @@ struct BaseAndFieldInfo {
     if (!Record->isUnion())
       return false;
 
-    FieldDecl *Active = ActiveUnionMember.lookup(Record->getCanonicalDecl());
-    if (Active)
+    if (FieldDecl *Active =
+            ActiveUnionMember.lookup(Record->getCanonicalDecl()))
       return Active != Field->getCanonicalDecl();
 
     // In an implicit copy or move constructor, ignore any in-class initializer.
