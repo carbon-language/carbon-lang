@@ -2,6 +2,21 @@
 
 /* Only one expected warning per function allowed at the very end. */
 
+int func(void)
+{
+  return 0;
+}
+
+int func2(void)
+{
+  return 0;
+}
+
+int funcParam(int a)
+{
+  return 0;
+}
+
 /* '!=' operator*/
 
 /* '!=' with float */
@@ -295,6 +310,38 @@ int checkNotEqualNestedBinaryOpIntPointerCompare2(void) {
 }
 /*   end '!=' int*          */
 
+/* '!=' with function*/
+
+int checkNotEqualSameFunction() {
+  unsigned a = 0;
+  unsigned b = 1;
+  int res = (a+func() != a+func());  // no warning
+  return (0);
+}
+
+int checkNotEqualDifferentFunction() {
+  unsigned a = 0;
+  unsigned b = 1;
+  int res = (a+func() != a+func2());  // no warning
+  return (0);
+}
+
+int checkNotEqualSameFunctionSameParam() {
+  unsigned a = 0;
+  unsigned b = 1;
+  int res = (a+funcParam(a) != a+funcParam(a));  // no warning
+  return (0);
+}
+
+int checkNotEqualSameFunctionDifferentParam() {
+  unsigned a = 0;
+  unsigned b = 1;
+  int res = (a+funcParam(a) != a+funcParam(b));  // no warning
+  return (0);
+}
+
+/*   end '!=' with function*/
+
 /*   end '!=' */
 
 
@@ -526,6 +573,37 @@ int checkEqualNestedBinaryOpIntCompare3(void) {
   return (0);
 }
 
+/* '==' with function*/
+
+int checkEqualSameFunction() {
+  unsigned a = 0;
+  unsigned b = 1;
+  int res = (a+func() == a+func());  // no warning
+  return (0);
+}
+
+int checkEqualDifferentFunction() {
+  unsigned a = 0;
+  unsigned b = 1;
+  int res = (a+func() == a+func2());  // no warning
+  return (0);
+}
+
+int checkEqualSameFunctionSameParam() {
+  unsigned a = 0;
+  unsigned b = 1;
+  int res = (a+funcParam(a) == a+funcParam(a));  // no warning
+  return (0);
+}
+
+int checkEqualSameFunctionDifferentParam() {
+  unsigned a = 0;
+  unsigned b = 1;
+  int res = (a+funcParam(a) == a+funcParam(b));  // no warning
+  return (0);
+}
+
+/*   end '==' with function*/
 
 /*   end EQ int          */
 
@@ -940,3 +1018,143 @@ int checkGreaterThanNestedBinaryOpIntCompare3(void) {
 /* end GT with int */
 
 /* end GT */
+
+
+/* Checking use of identical expressions in conditional operator*/
+
+unsigned test_unsigned(unsigned a) {
+  unsigned b = 1;
+  a = a > 5 ? b : b; // expected-warning {{identical expressions on both sides of ':' in conditional expression}}
+  return a;
+}
+
+void test_signed() {
+  int a = 0;
+  a = a > 5 ? a : a; // expected-warning {{identical expressions on both sides of ':' in conditional expression}}
+}
+
+void test_bool(bool a) {
+  a = a > 0 ? a : a; // expected-warning {{identical expressions on both sides of ':' in conditional expression}}
+}
+
+void test_float() {
+  float a = 0;
+  float b = 0;
+  a = a > 5 ? a : a; // expected-warning {{identical expressions on both sides of ':' in conditional expression}}
+}
+
+void test_unsigned_expr() {
+  unsigned a = 0;
+  unsigned b = 0;
+  a = a > 5 ? a+b : a+b; // expected-warning {{identical expressions on both sides of ':' in conditional expression}}
+}
+
+void test_signed_expr() {
+  int a = 0;
+  int b = 1;
+  a = a > 5 ? a+b : a+b; // expected-warning {{identical expressions on both sides of ':' in conditional expression}}
+}
+
+void test_bool_expr(bool a) {
+  bool b = 0;
+  a = a > 0 ? a&&b : a&&b; // expected-warning {{identical expressions on both sides of ':' in conditional expression}}
+}
+
+void test_unsigned_expr_negative() {
+  unsigned a = 0;
+  unsigned b = 0;
+  a = a > 5 ? a+b : b+a; // no warning
+}
+
+void test_signed_expr_negative() {
+  int a = 0;
+  int b = 1;
+  a = a > 5 ? b+a : a+b; // no warning
+}
+
+void test_bool_expr_negative(bool a) {
+  bool b = 0;
+  a = a > 0 ? a&&b : b&&a; // no warning
+}
+
+void test_float_expr_positive() {
+  float a = 0;
+  float b = 0;
+  a = a > 5 ? a+b : a+b; // expected-warning {{identical expressions on both sides of ':' in conditional expression}}
+}
+
+void test_expr_positive_func() {
+  unsigned a = 0;
+  unsigned b = 1;
+  a = a > 5 ? a+func() : a+func(); // expected-warning {{identical expressions on both sides of ':' in conditional expression}}
+}
+
+void test_expr_negative_func() {
+  unsigned a = 0;
+  unsigned b = 1;
+  a = a > 5 ? a+func() : a+func2(); // no warning
+}
+
+void test_expr_positive_funcParam() {
+  unsigned a = 0;
+  unsigned b = 1;
+  a = a > 5 ? a+funcParam(b) : a+funcParam(b); // expected-warning {{identical expressions on both sides of ':' in conditional expression}}
+}
+
+void test_expr_negative_funcParam() {
+  unsigned a = 0;
+  unsigned b = 1;
+  a = a > 5 ? a+funcParam(a) : a+funcParam(b); // no warning
+}
+
+void test_expr_positive_inc() {
+  unsigned a = 0;
+  unsigned b = 1;
+  a = a > 5 ? a++ : a++; // expected-warning {{identical expressions on both sides of ':' in conditional expression}}
+}
+
+void test_expr_negative_inc() {
+  unsigned a = 0;
+  unsigned b = 1;
+  a = a > 5 ? a++ : b++; // no warning
+}
+
+void test_expr_positive_assign() {
+  unsigned a = 0;
+  unsigned b = 1;
+  a = a > 5 ? a=1 : a=1;  // expected-warning {{identical expressions on both sides of ':' in conditional expression}}
+}
+
+void test_expr_negative_assign() {
+  unsigned a = 0;
+  unsigned b = 1;
+  a = a > 5 ? a=1 : a=2; // no warning
+}
+
+void test_signed_nested_expr() {
+  int a = 0;
+  int b = 1;
+  int c = 3;
+  a = a > 5 ? a+b+(c+a)*(a + b*(c+a)) : a+b+(c+a)*(a + b*(c+a)); // expected-warning {{identical expressions on both sides of ':' in conditional expression}}
+}
+
+void test_signed_nested_expr_negative() {
+  int a = 0;
+  int b = 1;
+  int c = 3;
+  a = a > 5 ? a+b+(c+a)*(a + b*(c+a)) : a+b+(c+a)*(a + b*(a+c)); // no warning
+}
+
+void test_signed_nested_cond_expr_negative() {
+  int a = 0;
+  int b = 1;
+  int c = 3;
+  a = a > 5 ? (b > 5 ? 1 : 4) : (b > 5 ? 2 : 4); // no warning
+}
+
+void test_signed_nested_cond_expr() {
+  int a = 0;
+  int b = 1;
+  int c = 3;
+  a = a > 5 ? (b > 5 ? 1 : 4) : (b > 5 ? 4 : 4); // expected-warning {{identical expressions on both sides of ':' in conditional expression}}
+}

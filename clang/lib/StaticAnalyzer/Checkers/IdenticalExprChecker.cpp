@@ -11,7 +11,8 @@
 /// \brief This defines IdenticalExprChecker, a check that warns about
 /// unintended use of identical expressions.
 ///
-/// It checks for use of identical expressions with comparison operators.
+/// It checks for use of identical expressions with comparison operators and
+/// inside conditional expressions.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -26,7 +27,7 @@ using namespace clang;
 using namespace ento;
 
 static bool isIdenticalExpr(const ASTContext &Ctx, const Expr *Expr1,
-                            const Expr *Expr2);
+                            const Expr *Expr2, bool IgnoreSideEffects = false);
 //===----------------------------------------------------------------------===//
 // FindIdenticalExprVisitor - Identify nodes using identical expressions.
 //===----------------------------------------------------------------------===//
@@ -38,8 +39,9 @@ public:
   explicit FindIdenticalExprVisitor(BugReporter &B, AnalysisDeclContext *A)
       : BR(B), AC(A) {}
   // FindIdenticalExprVisitor only visits nodes
-  // that are binary operators.
+  // that are binary operators or conditional operators.
   bool VisitBinaryOperator(const BinaryOperator *B);
+  bool VisitConditionalOperator(const ConditionalOperator *C);
 
 private:
   BugReporter &BR;
@@ -118,6 +120,34 @@ bool FindIdenticalExprVisitor::VisitBinaryOperator(const BinaryOperator *B) {
   // True is always returned to traverse ALL nodes.
   return true;
 }
+
+bool FindIdenticalExprVisitor::VisitConditionalOperator(
+    const ConditionalOperator *C) {
+
+  // Check if expressions in conditional expression are identical
+  // from a symbolic point of view.
+
+  if (isIdenticalExpr(AC->getASTContext(), C->getTrueExpr(),
+                      C->getFalseExpr(), true)) {
+    PathDiagnosticLocation ELoc =
+        PathDiagnosticLocation::createConditionalColonLoc(
+            C, BR.getSourceManager());
+
+    SourceRange Sr[2];
+    Sr[0] = C->getTrueExpr()->getSourceRange();
+    Sr[1] = C->getFalseExpr()->getSourceRange();
+    BR.EmitBasicReport(
+        AC->getDecl(), "Identical expressions in conditional expression",
+        categories::LogicError,
+        "identical expressions on both sides of ':' in conditional expression",
+        ELoc, Sr);
+  }
+  // We want to visit ALL nodes (expressions in conditional
+  // expressions too) that contains conditional operators,
+  // thus always return true to traverse ALL nodes.
+  return true;
+}
+
 /// \brief Determines whether two expression trees are identical regarding
 /// operators and symbols.
 ///
@@ -127,14 +157,14 @@ bool FindIdenticalExprVisitor::VisitBinaryOperator(const BinaryOperator *B) {
 /// t*(u + t) and t*u + t*t are not considered identical.
 ///
 static bool isIdenticalExpr(const ASTContext &Ctx, const Expr *Expr1,
-                            const Expr *Expr2) {
+                            const Expr *Expr2, bool IgnoreSideEffects) {
   // If Expr1 & Expr2 are of different class then they are not
   // identical expression.
   if (Expr1->getStmtClass() != Expr2->getStmtClass())
     return false;
   // If Expr1 has side effects then don't warn even if expressions
   // are identical.
-  if (Expr1->HasSideEffects(Ctx))
+  if (!IgnoreSideEffects && Expr1->HasSideEffects(Ctx))
     return false;
   // Is expression is based on macro then don't warn even if
   // the expressions are identical.
@@ -146,7 +176,8 @@ static bool isIdenticalExpr(const ASTContext &Ctx, const Expr *Expr1,
   while (I1 != Expr1->child_end() && I2 != Expr2->child_end()) {
     const Expr *Child1 = dyn_cast<Expr>(*I1);
     const Expr *Child2 = dyn_cast<Expr>(*I2);
-    if (!Child1 || !Child2 || !isIdenticalExpr(Ctx, Child1, Child2))
+    if (!Child1 || !Child2 || !isIdenticalExpr(Ctx, Child1, Child2,
+                                               IgnoreSideEffects))
       return false;
     ++I1;
     ++I2;
@@ -161,6 +192,7 @@ static bool isIdenticalExpr(const ASTContext &Ctx, const Expr *Expr1,
   switch (Expr1->getStmtClass()) {
   default:
     return false;
+  case Stmt::CallExprClass:
   case Stmt::ArraySubscriptExprClass:
   case Stmt::CStyleCastExprClass:
   case Stmt::ImplicitCastExprClass:
@@ -201,7 +233,7 @@ static bool isIdenticalExpr(const ASTContext &Ctx, const Expr *Expr1,
     const UnaryOperator *UnaryOp2 = dyn_cast<UnaryOperator>(Expr2);
     if (UnaryOp1->getOpcode() != UnaryOp2->getOpcode())
       return false;
-    return !UnaryOp1->isIncrementDecrementOp();
+    return IgnoreSideEffects || !UnaryOp1->isIncrementDecrementOp();
   }
   }
 }

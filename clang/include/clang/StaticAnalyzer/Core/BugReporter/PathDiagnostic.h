@@ -27,7 +27,7 @@
 #include <vector>
 
 namespace clang {
-
+class ConditionalOperator;
 class AnalysisDeclContext;
 class BinaryOperator;
 class CompoundStmt;
@@ -210,6 +210,9 @@ public:
   /// Create the location for the operator of the binary expression.
   /// Assumes the statement has a valid location.
   static PathDiagnosticLocation createOperatorLoc(const BinaryOperator *BO,
+                                                  const SourceManager &SM);
+  static PathDiagnosticLocation createConditionalColonLoc(
+                                                  const ConditionalOperator *CO,
                                                   const SourceManager &SM);
 
   /// For member expressions, return the location of the '.' or '->'.

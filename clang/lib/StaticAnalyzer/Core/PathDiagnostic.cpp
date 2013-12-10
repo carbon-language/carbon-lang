@@ -610,6 +610,14 @@ PathDiagnosticLocation
 }
 
 PathDiagnosticLocation
+  PathDiagnosticLocation::createConditionalColonLoc(
+                                            const ConditionalOperator *CO,
+                                            const SourceManager &SM) {
+  return PathDiagnosticLocation(CO->getColonLoc(), SM, SingleLocK);
+}
+
+
+PathDiagnosticLocation
   PathDiagnosticLocation::createMemberLoc(const MemberExpr *ME,
                                           const SourceManager &SM) {
   return PathDiagnosticLocation(ME->getMemberLoc(), SM, SingleLocK);
