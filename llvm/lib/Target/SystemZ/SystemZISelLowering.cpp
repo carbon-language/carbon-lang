@@ -134,10 +134,10 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
       setOperationAction(ISD::SDIVREM, VT, Custom);
       setOperationAction(ISD::UDIVREM, VT, Custom);
 
-      // Expand ATOMIC_LOAD and ATOMIC_STORE using ATOMIC_CMP_SWAP.
-      // FIXME: probably much too conservative.
-      setOperationAction(ISD::ATOMIC_LOAD,  VT, Expand);
-      setOperationAction(ISD::ATOMIC_STORE, VT, Expand);
+      // Lower ATOMIC_LOAD and ATOMIC_STORE into normal volatile loads and
+      // stores, putting a serialization instruction after the stores.
+      setOperationAction(ISD::ATOMIC_LOAD,  VT, Custom);
+      setOperationAction(ISD::ATOMIC_STORE, VT, Custom);
 
       // No special instructions for these.
       setOperationAction(ISD::CTPOP,           VT, Expand);
@@ -2001,11 +2001,32 @@ SDValue SystemZTargetLowering::lowerOR(SDValue Op, SelectionDAG &DAG) const {
                                    MVT::i64, HighOp, Low32);
 }
 
+// Op is an atomic load.  Lower it into a normal volatile load.
+SDValue SystemZTargetLowering::lowerATOMIC_LOAD(SDValue Op,
+                                                SelectionDAG &DAG) const {
+  AtomicSDNode *Node = cast<AtomicSDNode>(Op.getNode());
+  return DAG.getExtLoad(ISD::EXTLOAD, SDLoc(Op), Op.getValueType(),
+                        Node->getChain(), Node->getBasePtr(),
+                        Node->getMemoryVT(), Node->getMemOperand());
+}
+
+// Op is an atomic store.  Lower it into a normal volatile store followed
+// by a serialization.
+SDValue SystemZTargetLowering::lowerATOMIC_STORE(SDValue Op,
+                                                 SelectionDAG &DAG) const {
+  AtomicSDNode *Node = cast<AtomicSDNode>(Op.getNode());
+  SDValue Chain = DAG.getTruncStore(Node->getChain(), SDLoc(Op), Node->getVal(),
+                                    Node->getBasePtr(), Node->getMemoryVT(),
+                                    Node->getMemOperand());
+  return SDValue(DAG.getMachineNode(SystemZ::Serialize, SDLoc(Op), MVT::Other,
+                                    Chain), 0);
+}
+
 // Op is an 8-, 16-bit or 32-bit ATOMIC_LOAD_* operation.  Lower the first
 // two into the fullword ATOMIC_LOADW_* operation given by Opcode.
-SDValue SystemZTargetLowering::lowerATOMIC_LOAD(SDValue Op,
-                                                SelectionDAG &DAG,
-                                                unsigned Opcode) const {
+SDValue SystemZTargetLowering::lowerATOMIC_LOAD_OP(SDValue Op,
+                                                   SelectionDAG &DAG,
+                                                   unsigned Opcode) const {
   AtomicSDNode *Node = cast<AtomicSDNode>(Op.getNode());
 
   // 32-bit operations need no code outside the main loop.
@@ -2195,27 +2216,31 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
   case ISD::OR:
     return lowerOR(Op, DAG);
   case ISD::ATOMIC_SWAP:
-    return lowerATOMIC_LOAD(Op, DAG, SystemZISD::ATOMIC_SWAPW);
+    return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_SWAPW);
+  case ISD::ATOMIC_STORE:
+    return lowerATOMIC_STORE(Op, DAG);
+  case ISD::ATOMIC_LOAD:
+    return lowerATOMIC_LOAD(Op, DAG);
   case ISD::ATOMIC_LOAD_ADD:
-    return lowerATOMIC_LOAD(Op, DAG, SystemZISD::ATOMIC_LOADW_ADD);
+    return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_LOADW_ADD);
   case ISD::ATOMIC_LOAD_SUB:
-    return lowerATOMIC_LOAD(Op, DAG, SystemZISD::ATOMIC_LOADW_SUB);
+    return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_LOADW_SUB);
   case ISD::ATOMIC_LOAD_AND:
-    return lowerATOMIC_LOAD(Op, DAG, SystemZISD::ATOMIC_LOADW_AND);
+    return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_LOADW_AND);
   case ISD::ATOMIC_LOAD_OR:
-    return lowerATOMIC_LOAD(Op, DAG, SystemZISD::ATOMIC_LOADW_OR);
+    return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_LOADW_OR);
   case ISD::ATOMIC_LOAD_XOR:
-    return lowerATOMIC_LOAD(Op, DAG, SystemZISD::ATOMIC_LOADW_XOR);
+    return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_LOADW_XOR);
   case ISD::ATOMIC_LOAD_NAND:
-    return lowerATOMIC_LOAD(Op, DAG, SystemZISD::ATOMIC_LOADW_NAND);
+    return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_LOADW_NAND);
   case ISD::ATOMIC_LOAD_MIN:
-    return lowerATOMIC_LOAD(Op, DAG, SystemZISD::ATOMIC_LOADW_MIN);
+    return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_LOADW_MIN);
   case ISD::ATOMIC_LOAD_MAX:
-    return lowerATOMIC_LOAD(Op, DAG, SystemZISD::ATOMIC_LOADW_MAX);
+    return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_LOADW_MAX);
   case ISD::ATOMIC_LOAD_UMIN:
-    return lowerATOMIC_LOAD(Op, DAG, SystemZISD::ATOMIC_LOADW_UMIN);
+    return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_LOADW_UMIN);
   case ISD::ATOMIC_LOAD_UMAX:
-    return lowerATOMIC_LOAD(Op, DAG, SystemZISD::ATOMIC_LOADW_UMAX);
+    return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_LOADW_UMAX);
   case ISD::ATOMIC_CMP_SWAP:
     return lowerATOMIC_CMP_SWAP(Op, DAG);
   case ISD::STACKSAVE:

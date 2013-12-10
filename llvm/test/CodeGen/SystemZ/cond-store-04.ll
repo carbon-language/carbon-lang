@@ -164,7 +164,7 @@ define void @f9(i64 *%ptr, i64 %alt, i32 %limit) {
 define void @f10(i64 *%ptr, i64 %alt, i32 %limit) {
 ; FIXME: should use a normal load instead of CSG.
 ; CHECK-LABEL: f10:
-; CHECK: csg {{%r[0-5]}}, {{%r[0-5]}}, 0(%r2)
+; CHECK: lg {{%r[0-5]}}, 0(%r2)
 ; CHECK: {{jl|jnl}} [[LABEL:[^ ]*]]
 ; CHECK: [[LABEL]]:
 ; CHECK: stg {{%r[0-5]}}, 0(%r2)
@@ -183,7 +183,7 @@ define void @f11(i64 *%ptr, i64 %alt, i32 %limit) {
 ; CHECK: jhe [[LABEL:[^ ]*]]
 ; CHECK: lg %r3, 0(%r2)
 ; CHECK: [[LABEL]]:
-; CHECK: csg {{%r[0-5]}}, %r3, 0(%r2)
+; CHECK: stg %r3, 0(%r2)
 ; CHECK: br %r14
   %cond = icmp ult i32 %limit, 420
   %orig = load i64 *%ptr

@@ -166,13 +166,6 @@ See CodeGen/SystemZ/alloca-01.ll for an example.
 
 --
 
-Atomic loads and stores use the default compare-and-swap based implementation.
-This is much too conservative in practice, since the architecture guarantees
-that 1-, 2-, 4- and 8-byte loads and stores to aligned addresses are
-inherently atomic.
-
---
-
 If needed, we can support 16-byte atomics using LPQ, STPQ and CSDG.
 
 --
