@@ -4324,13 +4324,12 @@ class Neon_Scalar2SameMisc_vcvt_D_size_patterns<SDPatternOperator opnode,
   : Pat<(v1i64 (opnode (v1f64 FPR64:$Rn))),
             (INSTD FPR64:$Rn)>;
 
-multiclass Neon_Scalar2SameMisc_cvt_SD_size_patterns<SDPatternOperator Sopnode,
-                                                     SDPatternOperator Dopnode,
+multiclass Neon_Scalar2SameMisc_cvt_SD_size_patterns<SDPatternOperator opnode,
                                                      Instruction INSTS,
                                                      Instruction INSTD> {
-  def : Pat<(f32 (Sopnode (v1i32 FPR32:$Rn))),
+  def : Pat<(f32 (opnode (v1i32 FPR32:$Rn))),
             (INSTS FPR32:$Rn)>;
-  def : Pat<(f64 (Dopnode (v1i64 FPR64:$Rn))),
+  def : Pat<(f64 (opnode (v1i64 FPR64:$Rn))),
             (INSTD FPR64:$Rn)>;
 }
 
@@ -4971,14 +4970,12 @@ defm : Neon_Scalar3Diff_HS_size_patterns<int_arm_neon_vqdmull,
 
 // Scalar Signed Integer Convert To Floating-point
 defm SCVTF  : NeonI_Scalar2SameMisc_SD_size<0b0, 0b0, 0b11101, "scvtf">;
-defm : Neon_Scalar2SameMisc_cvt_SD_size_patterns<int_aarch64_neon_vcvtf32_s32,
-                                                 int_aarch64_neon_vcvtf64_s64,
+defm : Neon_Scalar2SameMisc_cvt_SD_size_patterns<int_aarch64_neon_vcvtint2fps,
                                                  SCVTFss, SCVTFdd>;
 
 // Scalar Unsigned Integer Convert To Floating-point
 defm UCVTF  : NeonI_Scalar2SameMisc_SD_size<0b1, 0b0, 0b11101, "ucvtf">;
-defm : Neon_Scalar2SameMisc_cvt_SD_size_patterns<int_aarch64_neon_vcvtf32_u32,
-                                                 int_aarch64_neon_vcvtf64_u64,
+defm : Neon_Scalar2SameMisc_cvt_SD_size_patterns<int_aarch64_neon_vcvtint2fpu,
                                                  UCVTFss, UCVTFdd>;
 
 // Scalar Floating-point Converts
