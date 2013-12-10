@@ -368,10 +368,10 @@ private:
 
   // Returns a list of RVAs that needs to be relocated if the binary is loaded
   // at an address different from its preferred one.
-  std::vector<uint64_t> listRelocSites(ChunkVectorT &chunks);
+  std::vector<uint64_t> listRelocSites(ChunkVectorT &chunks) const;
 
   // Divide the given RVAs into blocks.
-  PageOffsetT groupByPage(std::vector<uint64_t> relocSites) const;
+  PageOffsetT groupByPage(const std::vector<uint64_t> &relocSites) const;
 
   // Create the content of a relocation block.
   DefinedAtom *createBaseRelocBlock(const File &file, uint64_t ordinal,
@@ -765,7 +765,8 @@ void BaseRelocChunk::setContents(ChunkVectorT &chunks) {
 
 // Returns a list of RVAs that needs to be relocated if the binary is loaded
 // at an address different from its preferred one.
-std::vector<uint64_t> BaseRelocChunk::listRelocSites(ChunkVectorT &chunks) {
+std::vector<uint64_t>
+BaseRelocChunk::listRelocSites(ChunkVectorT &chunks) const {
   std::vector<uint64_t> ret;
   for (auto &cp : chunks)
     if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp))
@@ -775,7 +776,7 @@ std::vector<uint64_t> BaseRelocChunk::listRelocSites(ChunkVectorT &chunks) {
 
 // Divide the given RVAs into blocks.
 BaseRelocChunk::PageOffsetT
-BaseRelocChunk::groupByPage(std::vector<uint64_t> relocSites) const {
+BaseRelocChunk::groupByPage(const std::vector<uint64_t> &relocSites) const {
   PageOffsetT blocks;
   uint64_t mask = static_cast<uint64_t>(PAGE_SIZE) - 1;
   for (uint64_t addr : relocSites)
