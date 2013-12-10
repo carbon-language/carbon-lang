@@ -29,5 +29,5 @@ has_disassembler = 1
 type = Library
 name = XCoreCodeGen
 parent = XCore
-required_libraries = AsmPrinter CodeGen Core MC SelectionDAG Support Target XCoreDesc XCoreInfo
+required_libraries = Analysis AsmPrinter CodeGen Core MC SelectionDAG Support Target TransformUtils XCoreAsmPrinter XCoreDesc XCoreInfo
 add_to_library_groups = XCore
