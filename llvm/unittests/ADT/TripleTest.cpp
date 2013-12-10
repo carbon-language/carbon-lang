@@ -417,7 +417,7 @@ TEST(TripleTest, getOSVersion) {
   EXPECT_EQ((unsigned)5, Minor);
   EXPECT_EQ((unsigned)0, Micro);
   T.getiOSVersion(Major, Minor, Micro);
-  EXPECT_EQ((unsigned)3, Major);
+  EXPECT_EQ((unsigned)5, Major);
   EXPECT_EQ((unsigned)0, Minor);
   EXPECT_EQ((unsigned)0, Micro);
 
@@ -432,7 +432,7 @@ TEST(TripleTest, getOSVersion) {
   EXPECT_EQ((unsigned)5, Minor);
   EXPECT_EQ((unsigned)0, Micro);
   T.getiOSVersion(Major, Minor, Micro);
-  EXPECT_EQ((unsigned)3, Major);
+  EXPECT_EQ((unsigned)5, Major);
   EXPECT_EQ((unsigned)0, Minor);
   EXPECT_EQ((unsigned)0, Micro);
 
@@ -447,7 +447,7 @@ TEST(TripleTest, getOSVersion) {
   EXPECT_EQ((unsigned)4, Minor);
   EXPECT_EQ((unsigned)0, Micro);
   T.getiOSVersion(Major, Minor, Micro);
-  EXPECT_EQ((unsigned)3, Major);
+  EXPECT_EQ((unsigned)5, Major);
   EXPECT_EQ((unsigned)0, Minor);
   EXPECT_EQ((unsigned)0, Micro);
 
@@ -462,7 +462,7 @@ TEST(TripleTest, getOSVersion) {
   EXPECT_EQ((unsigned)7, Minor);
   EXPECT_EQ((unsigned)0, Micro);
   T.getiOSVersion(Major, Minor, Micro);
-  EXPECT_EQ((unsigned)3, Major);
+  EXPECT_EQ((unsigned)5, Major);
   EXPECT_EQ((unsigned)0, Minor);
   EXPECT_EQ((unsigned)0, Micro);
 
@@ -477,11 +477,11 @@ TEST(TripleTest, getOSVersion) {
   EXPECT_EQ((unsigned)4, Minor);
   EXPECT_EQ((unsigned)0, Micro);
   T.getiOSVersion(Major, Minor, Micro);
-  EXPECT_EQ((unsigned)3, Major);
+  EXPECT_EQ((unsigned)5, Major);
   EXPECT_EQ((unsigned)0, Minor);
   EXPECT_EQ((unsigned)0, Micro);
 
-  T = Triple("armv7-apple-ios5.0");
+  T = Triple("armv7-apple-ios7.0");
   EXPECT_FALSE(T.isMacOSX());
   EXPECT_TRUE(T.isiOS());
   EXPECT_FALSE(T.isArch16Bit());
@@ -492,7 +492,7 @@ TEST(TripleTest, getOSVersion) {
   EXPECT_EQ((unsigned)4, Minor);
   EXPECT_EQ((unsigned)0, Micro);
   T.getiOSVersion(Major, Minor, Micro);
-  EXPECT_EQ((unsigned)5, Major);
+  EXPECT_EQ((unsigned)7, Major);
   EXPECT_EQ((unsigned)0, Minor);
   EXPECT_EQ((unsigned)0, Micro);
 }
