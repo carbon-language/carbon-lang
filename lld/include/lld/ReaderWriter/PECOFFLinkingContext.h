@@ -47,7 +47,7 @@ public:
         _createManifest(true), _embedManifest(false), _manifestId(1),
         _manifestLevel("'asInvoker'"), _manifestUiAccess("'false'"),
         _imageType(ImageType::IMAGE_EXE),
-        _dosStub(DEFAULT_DOS_STUB) {
+        _dosStub(llvm::makeArrayRef(DEFAULT_DOS_STUB)) {
     setDeadStripping(true);
   }
 
