@@ -42,7 +42,7 @@ MCContext::MCContext(const MCAsmInfo *mai, const MCRegisterInfo *mri,
   SrcMgr(mgr), MAI(mai), MRI(mri), MOFI(mofi),
   Allocator(), Symbols(Allocator), UsedNames(Allocator),
   NextUniqueID(0),
-  CurrentDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0), 
+  CurrentDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0),
   DwarfLocSeen(false), GenDwarfForAssembly(false), GenDwarfFileNumber(0),
   AllowTemporaryLabels(true), DwarfCompileUnitID(0), AutoReset(DoAutoReset) {
 
@@ -71,7 +71,7 @@ MCContext::~MCContext() {
 
   // NOTE: The symbols are all allocated out of a bump pointer allocator,
   // we don't need to free them here.
-  
+
   // If the stream for the .secure_log_unique directive was created free it.
   delete (raw_ostream*)SecureLog;
 }
