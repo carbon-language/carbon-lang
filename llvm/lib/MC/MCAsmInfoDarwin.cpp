@@ -36,6 +36,7 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
 
   // Directives:
   HasWeakDefDirective = true;
+  HasWeakDefCanBeHiddenDirective = true;
   WeakRefDirective = "\t.weak_reference ";
   ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
   HasMachoZeroFillDirective = true;  // Uses .zerofill

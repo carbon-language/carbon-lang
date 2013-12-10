@@ -232,7 +232,8 @@ void AsmPrinter::EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
 
       bool CanBeHidden = false;
 
-      if (Linkage == GlobalValue::LinkOnceODRLinkage) {
+      if (Linkage == GlobalValue::LinkOnceODRLinkage &&
+          MAI->hasWeakDefCanBeHiddenDirective()) {
         if (GV->hasUnnamedAddr()) {
           CanBeHidden = true;
         } else {
