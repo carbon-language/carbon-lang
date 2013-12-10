@@ -319,27 +319,37 @@ define <8 x i64> @test_x86_pmins_q(<8 x i64> %a0, <8 x i64> %a1) {
 declare <8 x i64> @llvm.x86.avx512.pmins.q(<8 x i64>, <8 x i64>) nounwind readonly
 
 define <16 x i32> @test_conflict_d(<16 x i32> %a) {
+  ; CHECK: movw $-1, %ax
+  ; CHECK: vpxor
   ; CHECK: vpconflictd
-  %res = call <16 x i32> @llvm.x86.avx512.conflict.d.512(<16 x i32> %a)
+  %res = call <16 x i32> @llvm.x86.avx512.mask.conflict.d.512(<16 x i32> %a, <16 x i32> zeroinitializer, i16 -1)
   ret <16 x i32> %res
 }
-declare <16 x i32> @llvm.x86.avx512.conflict.d.512(<16 x i32>) nounwind readonly
 
-define <16 x i32> @test_maskz_conflict_d(<16 x i32> %a, i16 %mask) {
-  ; CHECK: vpconflictd %zmm0, %zmm0 {%k1} {z}
-  %vmask = bitcast i16 %mask to <16 x i1>
-  %res = call <16 x i32> @llvm.x86.avx512.conflict.d.maskz.512(<16 x i1> %vmask, <16 x i32> %a)
-  ret <16 x i32> %res
-}
-declare <16 x i32> @llvm.x86.avx512.conflict.d.maskz.512(<16 x i1>,<16 x i32>) nounwind readonly
+declare <16 x i32> @llvm.x86.avx512.mask.conflict.d.512(<16 x i32>, <16 x i32>, i16) nounwind readonly
 
-define <8 x i64> @test_mask_conflict_q(<8 x i64> %a, <8 x i64> %b, i8 %mask) {
-  ; CHECK: vpconflictq {{.*}} {%k1}
-  %vmask = bitcast i8 %mask to <8 x i1>
-  %res = call <8 x i64> @llvm.x86.avx512.conflict.q.mask.512(<8 x i64> %b, <8 x i1> %vmask, <8 x i64> %a)
+define <8 x i64> @test_conflict_q(<8 x i64> %a) {
+  ; CHECK: movb $-1, %al
+  ; CHECK: vpxor
+  ; CHECK: vpconflictq
+  %res = call <8 x i64> @llvm.x86.avx512.mask.conflict.q.512(<8 x i64> %a, <8 x i64> zeroinitializer, i8 -1)
   ret <8 x i64> %res
 }
-declare <8 x i64> @llvm.x86.avx512.conflict.q.mask.512(<8 x i64>, <8 x i1>,<8 x i64>) nounwind readonly
+
+declare <8 x i64> @llvm.x86.avx512.mask.conflict.q.512(<8 x i64>, <8 x i64>, i8) nounwind readonly
+
+
+define <16 x i32> @test_maskz_conflict_d(<16 x i32> %a, i16 %mask) {
+  ; CHECK: vpconflictd 
+  %res = call <16 x i32> @llvm.x86.avx512.mask.conflict.d.512(<16 x i32> %a, <16 x i32> zeroinitializer, i16 %mask)
+  ret <16 x i32> %res
+}
+
+define <8 x i64> @test_mask_conflict_q(<8 x i64> %a, <8 x i64> %b, i8 %mask) {
+  ; CHECK: vpconflictq
+  %res = call <8 x i64> @llvm.x86.avx512.mask.conflict.q.512(<8 x i64> %a, <8 x i64> %b, i8 %mask)
+  ret <8 x i64> %res
+}
 
 define <16 x float> @test_x86_mask_blend_ps_512(i16 %a0, <16 x float> %a1, <16 x float> %a2) {
   ; CHECK: vblendmps
@@ -347,6 +357,7 @@ define <16 x float> @test_x86_mask_blend_ps_512(i16 %a0, <16 x float> %a1, <16 x
   %res = call <16 x float> @llvm.x86.avx512.mask.blend.ps.512(<16 x i1> %m0, <16 x float> %a1, <16 x float> %a2) ; <<16 x float>> [#uses=1]
   ret <16 x float> %res
 }
+
 declare <16 x float> @llvm.x86.avx512.mask.blend.ps.512(<16 x i1> %a0, <16 x float> %a1, <16 x float> %a2) nounwind readonly
 
 define <8 x double> @test_x86_mask_blend_pd_512(i8 %a0, <8 x double> %a1, <8 x double> %a2) {

@@ -3029,6 +3029,22 @@ unsigned copyPhysRegOpcode_AVX512(unsigned& DestReg, unsigned& SrcReg) {
       (X86::VK8RegClass.contains(SrcReg) ||
        X86::VK16RegClass.contains(SrcReg)))
     return X86::KMOVWkk;
+  if ((X86::VK8RegClass.contains(DestReg) ||
+       X86::VK16RegClass.contains(DestReg)) &&
+      (X86::GR32RegClass.contains(SrcReg) ||
+       X86::GR16RegClass.contains(SrcReg) ||
+       X86::GR8RegClass.contains(SrcReg))) {
+    SrcReg = getX86SubSuperRegister(SrcReg, MVT::i32);
+    return X86::KMOVWkr;
+  }
+  if ((X86::GR32RegClass.contains(DestReg) ||
+       X86::GR16RegClass.contains(DestReg) ||
+       X86::GR8RegClass.contains(DestReg)) &&
+      (X86::VK8RegClass.contains(SrcReg) ||
+       X86::VK16RegClass.contains(SrcReg))) {
+    DestReg = getX86SubSuperRegister(DestReg, MVT::i32);
+    return X86::KMOVWrk;
+  }
   return 0;
 }
 

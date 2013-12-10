@@ -3459,18 +3459,17 @@ defm VPABSQ : avx512_vpabs<0x1F, "vpabsq", VR512, i512mem>, EVEX_V512, VEX_W,
                         EVEX_CD8<64, CD8VF>;
 
 multiclass avx512_conflict<bits<8> opc, string OpcodeStr, 
-                        RegisterClass RC, RegisterClass KRC, PatFrag memop_frag,
-                        X86MemOperand x86memop, PatFrag scalar_mfrag,
-                        X86MemOperand x86scalar_mop, string BrdcstStr,
-                        Intrinsic Int, Intrinsic maskInt, Intrinsic maskzInt> {
+                        RegisterClass RC, RegisterClass KRC,
+                        X86MemOperand x86memop,
+                        X86MemOperand x86scalar_mop, string BrdcstStr> {
   def rr : AVX5128I<opc, MRMSrcReg, (outs RC:$dst),
        (ins RC:$src),
        !strconcat(OpcodeStr, "\t{$src, ${dst} |${dst}, $src}"),
-       [(set RC:$dst, (Int RC:$src))]>, EVEX;
+       []>, EVEX;
   def rm : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
        (ins x86memop:$src),
        !strconcat(OpcodeStr, "\t{$src, ${dst}|${dst}, $src}"),
-       [(set RC:$dst, (Int (memop_frag addr:$src)))]>, EVEX;
+       []>, EVEX;
   def rmb : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
        (ins x86scalar_mop:$src),
        !strconcat(OpcodeStr, "\t{${src}", BrdcstStr,
@@ -3480,13 +3479,12 @@ multiclass avx512_conflict<bits<8> opc, string OpcodeStr,
        (ins KRC:$mask, RC:$src),
        !strconcat(OpcodeStr,
                   "\t{$src, ${dst} {${mask}} {z}|${dst} {${mask}} {z}, $src}"),
-       [(set RC:$dst, (maskzInt KRC:$mask, RC:$src))]>, EVEX, EVEX_KZ;
+       []>, EVEX, EVEX_KZ;
   def rmkz : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
        (ins KRC:$mask, x86memop:$src),
        !strconcat(OpcodeStr,
                   "\t{$src, ${dst} {${mask}} {z}|${dst} {${mask}} {z}, $src}"),
-       [(set RC:$dst, (maskzInt KRC:$mask, (memop_frag addr:$src)))]>,
-       EVEX, EVEX_KZ;
+       []>, EVEX, EVEX_KZ;
   def rmbkz : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
        (ins KRC:$mask, x86scalar_mop:$src),
        !strconcat(OpcodeStr, "\t{${src}", BrdcstStr,
@@ -3499,12 +3497,12 @@ multiclass avx512_conflict<bits<8> opc, string OpcodeStr,
        (ins RC:$src1, KRC:$mask, RC:$src2),
        !strconcat(OpcodeStr,
                   "\t{$src2, ${dst} {${mask}}|${dst} {${mask}}, $src2}"),
-       [(set RC:$dst, (maskInt RC:$src1, KRC:$mask, RC:$src2))]>, EVEX, EVEX_K;
+       []>, EVEX, EVEX_K;
   def rmk : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
        (ins RC:$src1, KRC:$mask, x86memop:$src2),
        !strconcat(OpcodeStr,
                   "\t{$src2, ${dst} {${mask}}|${dst} {${mask}}, $src2}"),
-       [(set RC:$dst, (maskInt RC:$src1, KRC:$mask, (memop_frag addr:$src2)))]>, EVEX, EVEX_K;
+       []>, EVEX, EVEX_K;
   def rmbk : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
        (ins RC:$src1, KRC:$mask, x86scalar_mop:$src2),
        !strconcat(OpcodeStr, "\t{${src2}", BrdcstStr,
@@ -3515,16 +3513,22 @@ multiclass avx512_conflict<bits<8> opc, string OpcodeStr,
 
 let Predicates = [HasCDI] in {
 defm VPCONFLICTD : avx512_conflict<0xC4, "vpconflictd", VR512, VK16WM,
-                    memopv16i32, i512mem, loadi32, i32mem, "{1to16}",
-                    int_x86_avx512_conflict_d_512,
-                    int_x86_avx512_conflict_d_mask_512,
-                    int_x86_avx512_conflict_d_maskz_512>,
+                    i512mem, i32mem, "{1to16}">,
                     EVEX_V512, EVEX_CD8<32, CD8VF>;
 
+
 defm VPCONFLICTQ : avx512_conflict<0xC4, "vpconflictq", VR512, VK8WM,
-                    memopv8i64, i512mem, loadi64, i64mem, "{1to8}",
-                    int_x86_avx512_conflict_q_512,
-                    int_x86_avx512_conflict_q_mask_512,
-                    int_x86_avx512_conflict_q_maskz_512>,
+                    i512mem, i64mem, "{1to8}">,
                     EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
+
 }
+
+def : Pat<(int_x86_avx512_mask_conflict_d_512 VR512:$src2, VR512:$src1,
+                                              GR16:$mask),
+          (VPCONFLICTDrrk VR512:$src1,
+           (v16i1 (COPY_TO_REGCLASS GR16:$mask, VK16WM)), VR512:$src2)>;
+
+def : Pat<(int_x86_avx512_mask_conflict_q_512 VR512:$src2, VR512:$src1,
+                                              GR8:$mask),
+          (VPCONFLICTQrrk VR512:$src1,
+           (v8i1 (COPY_TO_REGCLASS GR8:$mask, VK8WM)), VR512:$src2)>;
