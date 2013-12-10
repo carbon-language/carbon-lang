@@ -549,12 +549,9 @@ const FileEntry *HeaderSearch::LookupFile(
   // a subsequent include of "baz.h" should resolve to "whatever/foo/baz.h".
   // This search is not done for <> headers.
   if (CurFileEnt && !isAngled && !NoCurDirSearch) {
-    SmallString<1024> TmpDir;
     // Concatenate the requested file onto the directory.
-    // FIXME: Portability.  Filename concatenation should be in sys::Path.
-    TmpDir += CurFileEnt->getDir()->getName();
-    TmpDir.push_back('/');
-    TmpDir.append(Filename.begin(), Filename.end());
+    SmallString<1024> TmpDir(CurFileEnt->getDir()->getName());
+    llvm::sys::path::append(TmpDir, Filename);
     if (const FileEntry *FE = FileMgr.getFile(TmpDir.str(),/*openFile=*/true)) {
       // Leave CurDir unset.
       // This file is a system header or C++ unfriendly if the old file is.
