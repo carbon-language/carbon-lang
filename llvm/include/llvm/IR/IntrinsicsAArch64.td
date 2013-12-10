@@ -38,22 +38,6 @@ def int_aarch64_neon_frintn : Neon_1Arg_Intrinsic;
 def int_aarch64_neon_fsqrt : Neon_1Arg_Intrinsic;
 def int_aarch64_neon_fcvtxn :
   Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtns : 
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtnu :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtps :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtpu :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtms :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtmu :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtas :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtau :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 def int_aarch64_neon_fcvtzs :
   Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 def int_aarch64_neon_fcvtzu :

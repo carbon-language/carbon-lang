@@ -4982,35 +4982,35 @@ def : Neon_Scalar2SameMisc_fcvtxn_D_size_patterns<int_aarch64_neon_fcvtxn,
                                                   FCVTXN>;
 
 defm FCVTNS : NeonI_Scalar2SameMisc_SD_size<0b0, 0b0, 0b11010, "fcvtns">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtns,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtns,
                                                   FCVTNSss, FCVTNSdd>;
 
 defm FCVTNU : NeonI_Scalar2SameMisc_SD_size<0b1, 0b0, 0b11010, "fcvtnu">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtnu,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtnu,
                                                   FCVTNUss, FCVTNUdd>;
 
 defm FCVTMS : NeonI_Scalar2SameMisc_SD_size<0b0, 0b0, 0b11011, "fcvtms">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtms,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtms,
                                                   FCVTMSss, FCVTMSdd>;
 
 defm FCVTMU : NeonI_Scalar2SameMisc_SD_size<0b1, 0b0, 0b11011, "fcvtmu">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtmu,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtmu,
                                                   FCVTMUss, FCVTMUdd>;
 
 defm FCVTAS : NeonI_Scalar2SameMisc_SD_size<0b0, 0b0, 0b11100, "fcvtas">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtas,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtas,
                                                   FCVTASss, FCVTASdd>;
 
 defm FCVTAU : NeonI_Scalar2SameMisc_SD_size<0b1, 0b0, 0b11100, "fcvtau">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtau,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtau,
                                                   FCVTAUss, FCVTAUdd>;
 
 defm FCVTPS : NeonI_Scalar2SameMisc_SD_size<0b0, 0b1, 0b11010, "fcvtps">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtps,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtps,
                                                   FCVTPSss, FCVTPSdd>;
 
 defm FCVTPU : NeonI_Scalar2SameMisc_SD_size<0b1, 0b1, 0b11010, "fcvtpu">;
-defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_aarch64_neon_fcvtpu,
+defm : Neon_Scalar2SameMisc_fcvt_SD_size_patterns<int_arm_neon_vcvtpu,
                                                   FCVTPUss, FCVTPUdd>;
 
 defm FCVTZS : NeonI_Scalar2SameMisc_SD_size<0b0, 0b1, 0b11011, "fcvtzs">;
@@ -8392,23 +8392,23 @@ multiclass NeonI_2VMisc_fp_to_int<string asmop, bit Size, bit U,
 }
 
 defm FCVTNS : NeonI_2VMisc_fp_to_int<"fcvtns", 0b0, 0b0, 0b11010,
-                                     int_aarch64_neon_fcvtns>;
+                                     int_arm_neon_vcvtns>;
 defm FCVTNU : NeonI_2VMisc_fp_to_int<"fcvtnu", 0b0, 0b1, 0b11010,
-                                     int_aarch64_neon_fcvtnu>;
+                                     int_arm_neon_vcvtnu>;
 defm FCVTPS : NeonI_2VMisc_fp_to_int<"fcvtps", 0b1, 0b0, 0b11010,
-                                     int_aarch64_neon_fcvtps>;
+                                     int_arm_neon_vcvtps>;
 defm FCVTPU : NeonI_2VMisc_fp_to_int<"fcvtpu", 0b1, 0b1, 0b11010,
-                                     int_aarch64_neon_fcvtpu>;
+                                     int_arm_neon_vcvtpu>;
 defm FCVTMS : NeonI_2VMisc_fp_to_int<"fcvtms", 0b0, 0b0, 0b11011,
-                                     int_aarch64_neon_fcvtms>;
+                                     int_arm_neon_vcvtms>;
 defm FCVTMU : NeonI_2VMisc_fp_to_int<"fcvtmu", 0b0, 0b1, 0b11011,
-                                     int_aarch64_neon_fcvtmu>;
+                                     int_arm_neon_vcvtmu>;
 defm FCVTZS : NeonI_2VMisc_fp_to_int<"fcvtzs", 0b1, 0b0, 0b11011, fp_to_sint>;
 defm FCVTZU : NeonI_2VMisc_fp_to_int<"fcvtzu", 0b1, 0b1, 0b11011, fp_to_uint>;
 defm FCVTAS : NeonI_2VMisc_fp_to_int<"fcvtas", 0b0, 0b0, 0b11100,
-                                     int_aarch64_neon_fcvtas>;
+                                     int_arm_neon_vcvtas>;
 defm FCVTAU : NeonI_2VMisc_fp_to_int<"fcvtau", 0b0, 0b1, 0b11100,
-                                     int_aarch64_neon_fcvtau>;
+                                     int_arm_neon_vcvtau>;
 
 multiclass NeonI_2VMisc_int_to_fp<string asmop, bit Size, bit U,
                                   bits<5> opcode, SDPatternOperator Neon_Op> {
