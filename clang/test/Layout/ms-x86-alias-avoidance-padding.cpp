@@ -166,9 +166,9 @@ struct __declspec(align(1)) T3 : virtual T1, virtual T2 {
 // CHECK-X64:    8 |     struct T0 (base) (empty)
 // CHECK-X64:    8 |       struct AT (base) (empty)
 // CHECK-X64:    8 |     char a
-// CHECK-X64:   20 |   struct T2 (virtual base)
-// CHECK-X64:   20 |     struct AT (base) (empty)
-// CHECK-X64:   20 |     char a
+// CHECK-X64:   16 |   struct T2 (virtual base)
+// CHECK-X64:   16 |     struct AT (base) (empty)
+// CHECK-X64:   16 |     char a
 // CHECK-X64:      | [sizeof=24, align=8
 // CHECK-X64:      |  nvsize=8, nvalign=8]
 

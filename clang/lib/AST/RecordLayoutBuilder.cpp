@@ -2060,12 +2060,13 @@ public:
   /// \brief Lays out a single zero-width bit-field in the record and handles
   /// special cases associated with zero-width bit-fields.
   void layoutZeroWidthBitField(const FieldDecl *FD);
+  void fixSizeAndAlignment(const RecordDecl *FD);
   void layoutVirtualBases(const CXXRecordDecl *RD);
   void layoutVirtualBase(const CXXRecordDecl *RD, bool HasVtordisp);
   /// \brief Flushes the lazy virtual base and conditionally rounds up to
   /// alignment.
   void finalizeCXXLayout(const CXXRecordDecl *RD);
-  void honorDeclspecAlign(const RecordDecl *RD);
+  void finalizeLayout(const RecordDecl *RD);
 
   /// \brief Updates the alignment of the type.  This function doesn't take any
   /// properties (such as packedness) into account.  getAdjustedFieldInfo()
@@ -2233,7 +2234,8 @@ void MicrosoftRecordLayoutBuilder::initializeLayout(const RecordDecl *RD) {
 void MicrosoftRecordLayoutBuilder::layout(const RecordDecl *RD) {
   initializeLayout(RD);
   layoutFields(RD);
-  honorDeclspecAlign(RD);
+  fixSizeAndAlignment(RD);
+  finalizeLayout(RD);
 }
 
 void MicrosoftRecordLayoutBuilder::cxxLayout(const CXXRecordDecl *RD) {
@@ -2243,11 +2245,10 @@ void MicrosoftRecordLayoutBuilder::cxxLayout(const CXXRecordDecl *RD) {
   layoutNonVirtualBases(RD);
   layoutVBPtr(RD);
   layoutFields(RD);
-  DataSize = Size;
-  NonVirtualAlignment = Alignment;
+  fixSizeAndAlignment(RD);
   layoutVirtualBases(RD);
   finalizeCXXLayout(RD);
-  honorDeclspecAlign(RD);
+  finalizeLayout(RD);
 }
 
 void
@@ -2543,6 +2544,13 @@ MicrosoftRecordLayoutBuilder::layoutZeroWidthBitField(const FieldDecl *FD) {
   }
 }
 
+void MicrosoftRecordLayoutBuilder::fixSizeAndAlignment(const RecordDecl *RD) {
+  DataSize = Size;
+  NonVirtualAlignment = Alignment;
+  RequiredAlignment = std::max(RequiredAlignment,
+      Context.toCharUnitsFromBits(RD->getMaxAlignment()));
+}
+
 void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
   if (!HasVBPtr)
     return;
@@ -2581,8 +2589,9 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBase(const CXXRecordDecl *RD,
   // bytes (in both 32 and 64 bits modes), we don't know why.
   if (PreviousBaseLayout && PreviousBaseLayout->hasZeroSizedSubObject() &&
       Layout.leadsWithZeroSizedBase())
-    Size = Size.RoundUpToAlignment(Alignment) +
-        std::max(CharUnits::fromQuantity(4), Layout.getAlignment());
+    Size = Size.RoundUpToAlignment(std::max(CharUnits::fromQuantity(4),
+                                            RequiredAlignment)) +
+        CharUnits::fromQuantity(4);
 
   CharUnits BaseNVSize = Layout.getNonVirtualSize();
   CharUnits BaseAlign = getBaseAlignment(Layout);
@@ -2612,9 +2621,7 @@ void MicrosoftRecordLayoutBuilder::finalizeCXXLayout(const CXXRecordDecl *RD) {
   }
 }
 
-void MicrosoftRecordLayoutBuilder::honorDeclspecAlign(const RecordDecl *RD) {
-  RequiredAlignment = std::max(RequiredAlignment,
-      Context.toCharUnitsFromBits(RD->getMaxAlignment()));
+void MicrosoftRecordLayoutBuilder::finalizeLayout(const RecordDecl *RD) {
   if (!RequiredAlignment.isZero()) {
     updateAlignment(RequiredAlignment);
     Size = Size.RoundUpToAlignment(Alignment);

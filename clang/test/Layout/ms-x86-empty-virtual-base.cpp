@@ -679,6 +679,31 @@ struct __declspec(align(32)) V : virtual D1 {
 // CHECK-X64:      | [sizeof=32, align=32
 // CHECK-X64:      |  nvsize=16, nvalign=8]
 
+struct T0 {};
+struct T1 : T0 { char a; };
+struct T3 : virtual T1, virtual T0 { long long a; };
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK:    0 | struct T3
+// CHECK:    0 |   (T3 vbtable pointer)
+// CHECK:    8 |   long long a
+// CHECK:   16 |   struct T1 (virtual base)
+// CHECK:   16 |     struct T0 (base) (empty)
+// CHECK:   16 |     char a
+// CHECK:   24 |   struct T0 (virtual base) (empty)
+// CHECK:      | [sizeof=24, align=8
+// CHECK:      |  nvsize=16, nvalign=8]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct T3
+// CHECK-X64:    0 |   (T3 vbtable pointer)
+// CHECK-X64:    8 |   long long a
+// CHECK-X64:   16 |   struct T1 (virtual base)
+// CHECK-X64:   16 |     struct T0 (base) (empty)
+// CHECK-X64:   16 |     char a
+// CHECK-X64:   24 |   struct T0 (virtual base) (empty)
+// CHECK-X64:      | [sizeof=24, align=8
+// CHECK-X64:      |  nvsize=16, nvalign=8]
+
 int a[
 sizeof(A)+
 sizeof(B)+
@@ -701,4 +726,5 @@ sizeof(R)+
 sizeof(S)+
 sizeof(T)+
 sizeof(U)+
-sizeof(V)];
+sizeof(V)+
+sizeof(T3)];
