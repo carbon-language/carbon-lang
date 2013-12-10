@@ -2943,6 +2943,7 @@ void DwarfDebug::emitDebugRanges() {
 // This DIE has the following attributes: DW_AT_comp_dir, DW_AT_stmt_list,
 // DW_AT_low_pc, DW_AT_high_pc, DW_AT_ranges, DW_AT_dwo_name, DW_AT_dwo_id,
 // DW_AT_ranges_base, DW_AT_addr_base.
+// TODO: Implement DW_AT_ranges_base.
 DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
@@ -2978,12 +2979,6 @@ DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
     NewCU->addLocalString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
 
   addGnuPubAttributes(NewCU, Die);
-
-  // Attribute if we've emitted any ranges and their location for the compile
-  // unit.
-  if (!CU->getRangeLists().empty())
-    addSectionLabel(Asm, NewCU, Die, dwarf::DW_AT_GNU_ranges_base,
-                    NewCU->getLabelRange(), DwarfDebugRangeSectionSym);
 
   SkeletonHolder.addUnit(NewCU);
 
