@@ -74,11 +74,11 @@ public:
   explicit Chunk(Kind kind) : _kind(kind), _size(0), _align(1) {}
   virtual ~Chunk() {};
   virtual void write(uint8_t *buffer) = 0;
-
-  virtual uint64_t fileOffset() const { return _fileOffset; }
   virtual uint64_t size() const { return _size; }
-  virtual uint64_t align() const { return _align; }
-  virtual void setFileOffset(uint64_t fileOffset) { _fileOffset = fileOffset; }
+
+  uint64_t align() const { return _align; }
+  uint64_t fileOffset() const { return _fileOffset; }
+  void setFileOffset(uint64_t fileOffset) { _fileOffset = fileOffset; }
   Kind getKind() const { return _kind; }
 
 protected:
