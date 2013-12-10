@@ -504,6 +504,10 @@ void AtomChunk::applyRelocations(uint8_t *fileBuffer,
   for (const auto *layout : _atomLayouts) {
     const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
     for (const Reference *ref : *atom) {
+      // Skip if this reference is not for relocation.
+      if (ref->kind() < lld::Reference::kindTargetLow)
+        continue;
+
       auto relocSite32 = reinterpret_cast<ulittle32_t *>(
           fileBuffer + layout->_fileOffset + ref->offsetInAtom());
       auto relocSite16 = reinterpret_cast<ulittle16_t *>(relocSite32);
@@ -511,10 +515,6 @@ void AtomChunk::applyRelocations(uint8_t *fileBuffer,
       // Also account for whatever offset is already stored at the relocation
       // site.
       targetAddr += *relocSite32;
-
-      // Skip if this reference is not for relocation.
-      if (ref->kind() < lld::Reference::kindTargetLow)
-        continue;
 
       switch (ref->kind()) {
       case llvm::COFF::IMAGE_REL_I386_ABSOLUTE:
