@@ -16,7 +16,7 @@ NO_INSTALL = 1
 TOOL_NO_EXPORTS = 1
 
 LINK_COMPONENTS := jit interpreter nativecodegen bitreader bitwriter irreader \
-	ipo linker selectiondag asmparser instrumentation option
+	ipo linker selectiondag asmparser instrumentation objcarcopts option
 USEDLIBS = clangFrontend.a clangSerialization.a clangDriver.a clangCodeGen.a \
            clangParse.a clangSema.a clangStaticAnalyzerFrontend.a \
            clangStaticAnalyzerCheckers.a clangStaticAnalyzerCore.a \
