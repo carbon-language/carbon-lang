@@ -426,7 +426,7 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile,
           if (Block->getCount() == 0)
             OS << "    $$$$$:";
           else
-            OS << format("%9lu:", Block->getCount());
+            OS << format("%9" PRIu64 ":", (uint64_t)Block->getCount());
           OS << format("%5u-block  %u\n", i+1, BlockNo++);
         }
       }
