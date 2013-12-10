@@ -33,6 +33,9 @@ private:
   static char ID;
   const R600InstrInfo *TII;
 
+  void SetFlagInNewMI(MachineInstr *NewMI, const MachineInstr *OldMI,
+      unsigned Op);
+
 public:
   R600ExpandSpecialInstrsPass(TargetMachine &tm) : MachineFunctionPass(ID),
     TII(0) { }
@@ -50,6 +53,15 @@ char R600ExpandSpecialInstrsPass::ID = 0;
 
 FunctionPass *llvm::createR600ExpandSpecialInstrsPass(TargetMachine &TM) {
   return new R600ExpandSpecialInstrsPass(TM);
+}
+
+void R600ExpandSpecialInstrsPass::SetFlagInNewMI(MachineInstr *NewMI,
+    const MachineInstr *OldMI, unsigned Op) {
+  int OpIdx = TII->getOperandIdx(*OldMI, Op);
+  if (OpIdx > -1) {
+    uint64_t Val = OldMI->getOperand(OpIdx).getImm();
+    TII->setImmOperand(NewMI, Op, Val);
+  }
 }
 
 bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
@@ -322,6 +334,12 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
         if (NotLast) {
           TII->addFlag(NewMI, 0, MO_FLAG_NOT_LAST);
         }
+        SetFlagInNewMI(NewMI, &MI, AMDGPU::OpName::clamp);
+        SetFlagInNewMI(NewMI, &MI, AMDGPU::OpName::literal);
+        SetFlagInNewMI(NewMI, &MI, AMDGPU::OpName::src0_abs);
+        SetFlagInNewMI(NewMI, &MI, AMDGPU::OpName::src1_abs);
+        SetFlagInNewMI(NewMI, &MI, AMDGPU::OpName::src0_neg);
+        SetFlagInNewMI(NewMI, &MI, AMDGPU::OpName::src1_neg);
       }
       MI.eraseFromParent();
     }
