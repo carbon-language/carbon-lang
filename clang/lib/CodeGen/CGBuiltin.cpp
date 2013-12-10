@@ -2147,35 +2147,35 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
     s = "vcvtxn"; OverloadCvtInt = true; break;
   case AArch64::BI__builtin_neon_vcvtas_s32_f32:
   case AArch64::BI__builtin_neon_vcvtad_s64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtas;
+    Int = Intrinsic::arm_neon_vcvtas;
     s = "vcvtas"; OverloadCvtInt = true; break;
   case AArch64::BI__builtin_neon_vcvtas_u32_f32:
   case AArch64::BI__builtin_neon_vcvtad_u64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtau;
+    Int = Intrinsic::arm_neon_vcvtau;
     s = "vcvtau"; OverloadCvtInt = true; break;
   case AArch64::BI__builtin_neon_vcvtms_s32_f32:
   case AArch64::BI__builtin_neon_vcvtmd_s64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtms;
+    Int = Intrinsic::arm_neon_vcvtms;
     s = "vcvtms"; OverloadCvtInt = true; break;
   case AArch64::BI__builtin_neon_vcvtms_u32_f32:
   case AArch64::BI__builtin_neon_vcvtmd_u64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtmu;
+    Int = Intrinsic::arm_neon_vcvtmu;
     s = "vcvtmu"; OverloadCvtInt = true; break;
   case AArch64::BI__builtin_neon_vcvtns_s32_f32:
   case AArch64::BI__builtin_neon_vcvtnd_s64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtns;
+    Int = Intrinsic::arm_neon_vcvtns;
     s = "vcvtns"; OverloadCvtInt = true; break;
   case AArch64::BI__builtin_neon_vcvtns_u32_f32:
   case AArch64::BI__builtin_neon_vcvtnd_u64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtnu;
+    Int = Intrinsic::arm_neon_vcvtnu;
     s = "vcvtnu"; OverloadCvtInt = true; break;
   case AArch64::BI__builtin_neon_vcvtps_s32_f32:
   case AArch64::BI__builtin_neon_vcvtpd_s64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtps;
+    Int = Intrinsic::arm_neon_vcvtps;
     s = "vcvtps"; OverloadCvtInt = true; break;
   case AArch64::BI__builtin_neon_vcvtps_u32_f32:
   case AArch64::BI__builtin_neon_vcvtpd_u64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtpu;
+    Int = Intrinsic::arm_neon_vcvtpu;
     s = "vcvtpu"; OverloadCvtInt = true; break;
   case AArch64::BI__builtin_neon_vcvts_s32_f32:
   case AArch64::BI__builtin_neon_vcvtd_s64_f64:
@@ -3817,112 +3817,112 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case AArch64::BI__builtin_neon_vcvtnq_s32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtns;
+    Int = Intrinsic::arm_neon_vcvtns;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtns_f32");
   }
   case AArch64::BI__builtin_neon_vcvtn_s64_v:
   case AArch64::BI__builtin_neon_vcvtnq_s64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtns;
+    Int = Intrinsic::arm_neon_vcvtns;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtns_f64");
   }
   case AArch64::BI__builtin_neon_vcvtn_u32_v:
   case AArch64::BI__builtin_neon_vcvtnq_u32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtnu;
+    Int = Intrinsic::arm_neon_vcvtnu;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtnu_f32");
   }
   case AArch64::BI__builtin_neon_vcvtn_u64_v:
   case AArch64::BI__builtin_neon_vcvtnq_u64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtnu;
+    Int = Intrinsic::arm_neon_vcvtnu;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtnu_f64");
   }
   case AArch64::BI__builtin_neon_vcvtp_s32_v:
   case AArch64::BI__builtin_neon_vcvtpq_s32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtps;
+    Int = Intrinsic::arm_neon_vcvtps;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtps_f32");
   }
   case AArch64::BI__builtin_neon_vcvtp_s64_v:
   case AArch64::BI__builtin_neon_vcvtpq_s64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtps;
+    Int = Intrinsic::arm_neon_vcvtps;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtps_f64");
   }
   case AArch64::BI__builtin_neon_vcvtp_u32_v:
   case AArch64::BI__builtin_neon_vcvtpq_u32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtpu;
+    Int = Intrinsic::arm_neon_vcvtpu;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtpu_f32");
   }
   case AArch64::BI__builtin_neon_vcvtp_u64_v:
   case AArch64::BI__builtin_neon_vcvtpq_u64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtpu;
+    Int = Intrinsic::arm_neon_vcvtpu;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtpu_f64");
   }
   case AArch64::BI__builtin_neon_vcvtm_s32_v:
   case AArch64::BI__builtin_neon_vcvtmq_s32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtms;
+    Int = Intrinsic::arm_neon_vcvtms;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtms_f32");
   }
   case AArch64::BI__builtin_neon_vcvtm_s64_v:
   case AArch64::BI__builtin_neon_vcvtmq_s64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtms;
+    Int = Intrinsic::arm_neon_vcvtms;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtms_f64");
   }
   case AArch64::BI__builtin_neon_vcvtm_u32_v:
   case AArch64::BI__builtin_neon_vcvtmq_u32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtmu;
+    Int = Intrinsic::arm_neon_vcvtmu;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtmu_f32");
   }
   case AArch64::BI__builtin_neon_vcvtm_u64_v:
   case AArch64::BI__builtin_neon_vcvtmq_u64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtmu;
+    Int = Intrinsic::arm_neon_vcvtmu;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtmu_f64");
   }
   case AArch64::BI__builtin_neon_vcvta_s32_v:
   case AArch64::BI__builtin_neon_vcvtaq_s32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtas;
+    Int = Intrinsic::arm_neon_vcvtas;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtas_f32");
   }
   case AArch64::BI__builtin_neon_vcvta_s64_v:
   case AArch64::BI__builtin_neon_vcvtaq_s64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtas;
+    Int = Intrinsic::arm_neon_vcvtas;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtas_f64");
   }
   case AArch64::BI__builtin_neon_vcvta_u32_v:
   case AArch64::BI__builtin_neon_vcvtaq_u32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtau;
+    Int = Intrinsic::arm_neon_vcvtau;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtau_f32");
   }
   case AArch64::BI__builtin_neon_vcvta_u64_v:
   case AArch64::BI__builtin_neon_vcvtaq_u64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtau;
+    Int = Intrinsic::arm_neon_vcvtau;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtau_f64");
   }
   case AArch64::BI__builtin_neon_vrecpe_v:
