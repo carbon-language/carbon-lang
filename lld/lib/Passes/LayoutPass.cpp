@@ -416,19 +416,17 @@ void LayoutPass::buildInGroupTable(MutableFile::DefinedAtomRange &range) {
         // Check if the current atom is part of the chain
         bool isAtomInChain = false;
         const DefinedAtom *lastAtom = rootAtom;
-        while (true) {
+        for (;;) {
           AtomToAtomT::iterator followOnAtomsIter =
-                  _followOnNexts.find(lastAtom);
+              _followOnNexts.find(lastAtom);
           if (followOnAtomsIter != _followOnNexts.end()) {
             lastAtom = followOnAtomsIter->second;
-            if (lastAtom == ai) {
-              isAtomInChain = true;
-              break;
-            }
+            if (lastAtom != ai)
+              continue;
+            isAtomInChain = true;
           }
-          else
-            break;
-        } // findAtomInChain
+          break;
+        }
 
         if (!isAtomInChain)
           _followOnNexts[lastAtom] = ai;
@@ -517,9 +515,8 @@ void LayoutPass::buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range) {
       for (const DefinedAtom *nextAtom = start->second; nextAtom != NULL;
            nextAtom = _followOnNexts[nextAtom]) {
         AtomToOrdinalT::iterator pos = _ordinalOverrideMap.find(nextAtom);
-        if (pos == _ordinalOverrideMap.end()) {
+        if (pos == _ordinalOverrideMap.end())
           _ordinalOverrideMap[nextAtom] = index++;
-        }
       }
     }
   }

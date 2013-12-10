@@ -41,10 +41,9 @@ public:
     if (_liveAtoms.count(atom))
       return false;
     // don't remove if marked never-dead-strip
-    if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom)) {
+    if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom))
       if (defAtom->deadStrip() == DefinedAtom::deadStripNever)
         return false;
-    }
     // do remove this atom
     return true;
   }
@@ -249,16 +248,14 @@ void Resolver::doAbsoluteAtom(const AbsoluteAtom &atom) {
   _atoms.push_back(&atom);
 
   // tell symbol table
-  if (atom.scope() != Atom::scopeTranslationUnit) {
+  if (atom.scope() != Atom::scopeTranslationUnit)
     _symbolTable.add(atom);
-  }
 }
 
 // utility to add a vector of atoms
 void Resolver::addAtoms(const std::vector<const DefinedAtom *> &newAtoms) {
-  for (const DefinedAtom *newAtom : newAtoms) {
+  for (const DefinedAtom *newAtom : newAtoms)
     this->doDefinedAtom(*newAtom);
-  }
 }
 
 // Keep adding atoms until _context.nextFile() returns an error. This function
@@ -363,9 +360,8 @@ void Resolver::deadStripOptimize() {
   }
 
   // mark all roots as live, and recursively all atoms they reference
-  for (const Atom *dsrAtom : _deadStripRoots) {
+  for (const Atom *dsrAtom : _deadStripRoots)
     this->markLive(*dsrAtom);
-  }
 
   // now remove all non-live atoms from _atoms
   _atoms.erase(
@@ -443,10 +439,9 @@ bool Resolver::resolve() {
     return false;
   this->updateReferences();
   this->deadStripOptimize();
-  if (this->checkUndefines(false)) {
+  if (this->checkUndefines(false))
     if (!_context.allowRemainingUndefines())
       return false;
-  }
   this->removeCoalescedAwayAtoms();
   this->linkTimeOptimize();
   this->_result->addAtoms(_atoms);

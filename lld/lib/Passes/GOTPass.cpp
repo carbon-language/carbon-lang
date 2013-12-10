@@ -100,8 +100,8 @@ void GOTPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   }
 
   // add all created GOT Atoms to master file
-  for (auto &it : targetToGOT) {
+  for (auto &it : targetToGOT)
     mergedFile->addAtom(*it.second);
-  }
 }
-}
+
+} // end namesapce lld
