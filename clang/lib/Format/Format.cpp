@@ -103,7 +103,7 @@ template <> struct MappingTraits<FormatStyle> {
 
     if (IO.outputting()) {
       StringRef StylesArray[] = { "LLVM",    "Google", "Chromium",
-                                  "Mozilla", "WebKit" };
+                                  "Mozilla", "WebKit", "GNU" };
       ArrayRef<StringRef> Styles(StylesArray);
       for (size_t i = 0, e = Styles.size(); i < e; ++i) {
         StringRef StyleName(Styles[i]);
@@ -233,13 +233,6 @@ template <> struct DocumentListTraits<std::vector<FormatStyle> > {
 namespace clang {
 namespace format {
 
-void setDefaultPenalties(FormatStyle &Style) {
-  Style.PenaltyBreakComment = 60;
-  Style.PenaltyBreakFirstLessLess = 120;
-  Style.PenaltyBreakString = 1000;
-  Style.PenaltyExcessCharacter = 1000000;
-}
-
 FormatStyle getLLVMStyle() {
   FormatStyle LLVMStyle;
   LLVMStyle.Language = FormatStyle::LK_Cpp;
@@ -263,6 +256,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.Cpp11BracedListStyle = false;
   LLVMStyle.DerivePointerBinding = false;
   LLVMStyle.ExperimentalAutoDetectBinPacking = false;
+  LLVMStyle.IndentBlocks = false;
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.IndentFunctionDeclarationAfterType = false;
   LLVMStyle.IndentWidth = 2;
@@ -282,7 +276,10 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.ContinuationIndentWidth = 4;
   LLVMStyle.SpacesInAngles = false;
 
-  setDefaultPenalties(LLVMStyle);
+  LLVMStyle.PenaltyBreakComment = 60;
+  LLVMStyle.PenaltyBreakFirstLessLess = 120;
+  LLVMStyle.PenaltyBreakString = 1000;
+  LLVMStyle.PenaltyExcessCharacter = 1000000;
   LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 60;
   LLVMStyle.PenaltyBreakBeforeFirstCallParameter = 19;
 
@@ -290,48 +287,23 @@ FormatStyle getLLVMStyle() {
 }
 
 FormatStyle getGoogleStyle() {
-  FormatStyle GoogleStyle;
-  GoogleStyle.Language = FormatStyle::LK_Cpp;
+  FormatStyle GoogleStyle = getLLVMStyle();
   GoogleStyle.AccessModifierOffset = -1;
   GoogleStyle.AlignEscapedNewlinesLeft = true;
-  GoogleStyle.AlignTrailingComments = true;
-  GoogleStyle.AllowAllParametersOfDeclarationOnNextLine = true;
-  GoogleStyle.AllowShortFunctionsOnASingleLine = true;
   GoogleStyle.AllowShortIfStatementsOnASingleLine = true;
   GoogleStyle.AllowShortLoopsOnASingleLine = true;
   GoogleStyle.AlwaysBreakBeforeMultilineStrings = true;
   GoogleStyle.AlwaysBreakTemplateDeclarations = true;
-  GoogleStyle.BinPackParameters = true;
-  GoogleStyle.BreakBeforeBinaryOperators = false;
-  GoogleStyle.BreakBeforeTernaryOperators = true;
-  GoogleStyle.BreakBeforeBraces = FormatStyle::BS_Attach;
-  GoogleStyle.BreakConstructorInitializersBeforeComma = false;
-  GoogleStyle.ColumnLimit = 80;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
-  GoogleStyle.ConstructorInitializerIndentWidth = 4;
   GoogleStyle.Cpp11BracedListStyle = true;
   GoogleStyle.DerivePointerBinding = true;
-  GoogleStyle.ExperimentalAutoDetectBinPacking = false;
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.IndentFunctionDeclarationAfterType = true;
-  GoogleStyle.IndentWidth = 2;
-  GoogleStyle.TabWidth = 8;
-  GoogleStyle.MaxEmptyLinesToKeep = 1;
-  GoogleStyle.NamespaceIndentation = FormatStyle::NI_None;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
   GoogleStyle.PointerBindsToType = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
   GoogleStyle.Standard = FormatStyle::LS_Auto;
-  GoogleStyle.UseTab = FormatStyle::UT_Never;
-  GoogleStyle.SpacesInParentheses = false;
-  GoogleStyle.SpaceInEmptyParentheses = false;
-  GoogleStyle.SpacesInCStyleCastParentheses = false;
-  GoogleStyle.SpaceBeforeParens = FormatStyle::SBPO_ControlStatements;
-  GoogleStyle.SpaceBeforeAssignmentOperators = true;
-  GoogleStyle.ContinuationIndentWidth = 4;
-  GoogleStyle.SpacesInAngles = false;
 
-  setDefaultPenalties(GoogleStyle);
   GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 200;
   GoogleStyle.PenaltyBreakBeforeFirstCallParameter = 1;
 
@@ -385,6 +357,17 @@ FormatStyle getWebKitStyle() {
   return Style;
 }
 
+FormatStyle getGNUStyle() {
+  FormatStyle Style = getLLVMStyle();
+  Style.BreakBeforeBinaryOperators = true;
+  Style.BreakBeforeBraces = FormatStyle::BS_Allman;
+  Style.BreakBeforeTernaryOperators = true;
+  Style.ColumnLimit = 79;
+  Style.IndentBlocks = true;
+  Style.SpaceBeforeParens = FormatStyle::SBPO_Always;
+  return Style;
+}
+
 bool getPredefinedStyle(StringRef Name, FormatStyle::LanguageKind Language,
                         FormatStyle *Style) {
   if (Name.equals_lower("llvm")) {
@@ -398,6 +381,8 @@ bool getPredefinedStyle(StringRef Name, FormatStyle::LanguageKind Language,
                                                     : getGoogleStyle();
   } else if (Name.equals_lower("webkit")) {
     *Style = getWebKitStyle();
+  } else if (Name.equals_lower("gnu")) {
+    *Style = getGNUStyle();
   } else {
     return false;
   }

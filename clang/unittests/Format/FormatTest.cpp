@@ -6992,6 +6992,11 @@ TEST_F(FormatTest, GetsPredefinedStyleByName) {
   EXPECT_TRUE(getPredefinedStyle("wEbKit", FormatStyle::LK_Cpp, &Styles[2]));
   EXPECT_ALL_STYLES_EQUAL(Styles);
 
+  Styles[0] = getGNUStyle();
+  EXPECT_TRUE(getPredefinedStyle("GNU", FormatStyle::LK_Cpp, &Styles[1]));
+  EXPECT_TRUE(getPredefinedStyle("gnU", FormatStyle::LK_Cpp, &Styles[2]));
+  EXPECT_ALL_STYLES_EQUAL(Styles);
+
   EXPECT_FALSE(getPredefinedStyle("qwerty", FormatStyle::LK_Cpp, &Styles[0]));
 }
 
