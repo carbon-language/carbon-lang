@@ -4640,8 +4640,8 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   // FIXME: at run-time detect assembler capabilities or rely on version
   // information forwarded by -target-assembler-version (future)
   if (Args.hasArg(options::OPT_no_integrated_as)) {
-    const llvm::Triple& t(getToolChain().getTriple());
-    if (!(t.isMacOSX() && t.isMacOSXVersionLT(10, 7)))
+    const llvm::Triple &T(getToolChain().getTriple());
+    if (!(T.isMacOSX() && T.isMacOSXVersionLT(10, 7)))
       CmdArgs.push_back("-Q");
   }
 
