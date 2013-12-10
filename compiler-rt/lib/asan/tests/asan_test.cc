@@ -454,8 +454,6 @@ NOINLINE void SizedStackTest() {
     A[i] = i;
   EXPECT_DEATH(A[-1] = 0, expected_death);
   EXPECT_DEATH(A[-5] = 0, expected_death);
-  if (kSize > 16 && SANITIZER_WORDSIZE == 64)
-    EXPECT_DEATH(A[-31] = 0, expected_death);
   EXPECT_DEATH(A[kSize] = 0, expected_death);
   EXPECT_DEATH(A[kSize + 1] = 0, expected_death);
   EXPECT_DEATH(A[kSize + 5] = 0, expected_death);
