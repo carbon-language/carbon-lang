@@ -73,16 +73,12 @@ public:
 
   explicit Chunk(Kind kind) : _kind(kind), _size(0), _align(1) {}
   virtual ~Chunk() {};
-  virtual void write(uint8_t *fileBuffer) = 0;
+  virtual void write(uint8_t *buffer) = 0;
 
   virtual uint64_t fileOffset() const { return _fileOffset; }
   virtual uint64_t size() const { return _size; }
   virtual uint64_t align() const { return _align; }
-
-  virtual void setFileOffset(uint64_t fileOffset) {
-    _fileOffset = fileOffset;
-  }
-
+  virtual void setFileOffset(uint64_t fileOffset) { _fileOffset = fileOffset; }
   Kind getKind() const { return _kind; }
 
 protected:
@@ -115,10 +111,10 @@ public:
     _size = llvm::RoundUpToAlignment(size, 8);
   }
 
-  virtual void write(uint8_t *fileBuffer) {
+  virtual void write(uint8_t *buffer) {
     ArrayRef<uint8_t> array = _context.getDosStub();
-    std::memcpy(fileBuffer, array.data(), array.size());
-    auto *header = reinterpret_cast<llvm::object::dos_header *>(fileBuffer);
+    std::memcpy(buffer, array.data(), array.size());
+    auto *header = reinterpret_cast<llvm::object::dos_header *>(buffer);
     header->AddressOfNewExeHeader = _size;
   }
 
@@ -131,7 +127,7 @@ class PEHeaderChunk : public HeaderChunk {
 public:
   explicit PEHeaderChunk(const PECOFFLinkingContext &context);
 
-  virtual void write(uint8_t *fileBuffer);
+  virtual void write(uint8_t *buffer);
 
   void setSizeOfHeaders(uint64_t size) {
     // Must be multiple of FileAlignment.
@@ -171,7 +167,7 @@ public:
   SectionHeaderTableChunk() : HeaderChunk() {}
   void addSection(SectionChunk *chunk);
   virtual uint64_t size() const;
-  virtual void write(uint8_t *fileBuffer);
+  virtual void write(uint8_t *buffer);
 
 private:
   static llvm::object::coff_section createSectionHeader(SectionChunk *chunk);
@@ -182,22 +178,15 @@ private:
 /// An AtomChunk represents a section containing atoms.
 class AtomChunk : public Chunk {
 public:
-  virtual void write(uint8_t *fileBuffer);
+  virtual void write(uint8_t *buffer);
 
   void buildAtomRvaMap(std::map<const Atom *, uint64_t> &atomRva) const;
-  void applyRelocations(uint8_t *fileBuffer,
+  void applyRelocations(uint8_t *buffer,
                         std::map<const Atom *, uint64_t> &atomRva,
                         std::vector<uint64_t> &sectionRva,
                         uint64_t imageBaseAddress);
   void printAtomAddresses(uint64_t baseAddr) const;
   void addBaseRelocations(std::vector<uint64_t> &relocSites) const;
-
-  // Set the file offset of the beginning of this section.
-  virtual void setFileOffset(uint64_t fileOffset) {
-    Chunk::setFileOffset(fileOffset);
-    for (AtomLayout *layout : _atomLayouts)
-      layout->_fileOffset += fileOffset;
-  }
 
   uint64_t getVirtualAddress() {
     assert(_atomLayouts.size() > 0);
@@ -246,7 +235,7 @@ public:
     _baseRelocSize = size;
   }
 
-  virtual void write(uint8_t *fileBuffer);
+  virtual void write(uint8_t *buffer);
 
 private:
   uint32_t _baseRelocAddr;
@@ -288,7 +277,7 @@ private:
 // .data.
 class GenericSectionChunk : public SectionChunk {
 public:
-  virtual void write(uint8_t *fileBuffer);
+  virtual void write(uint8_t *buffer);
 
   GenericSectionChunk(const PECOFFLinkingContext &ctx, StringRef name,
                       const std::vector<const DefinedAtom *> &atoms)
@@ -454,20 +443,19 @@ PEHeaderChunk::PEHeaderChunk(const PECOFFLinkingContext &context)
   _peHeader.NumberOfRvaAndSize = 16;
 }
 
-void PEHeaderChunk::write(uint8_t *fileBuffer) {
-  fileBuffer += fileOffset();
-  std::memcpy(fileBuffer, llvm::COFF::PEMagic, sizeof(llvm::COFF::PEMagic));
-  fileBuffer += sizeof(llvm::COFF::PEMagic);
-  std::memcpy(fileBuffer, &_coffHeader, sizeof(_coffHeader));
-  fileBuffer += sizeof(_coffHeader);
-  std::memcpy(fileBuffer, &_peHeader, sizeof(_peHeader));
+void PEHeaderChunk::write(uint8_t *buffer) {
+  std::memcpy(buffer, llvm::COFF::PEMagic, sizeof(llvm::COFF::PEMagic));
+  buffer += sizeof(llvm::COFF::PEMagic);
+  std::memcpy(buffer, &_coffHeader, sizeof(_coffHeader));
+  buffer += sizeof(_coffHeader);
+  std::memcpy(buffer, &_peHeader, sizeof(_peHeader));
 }
 
-void AtomChunk::write(uint8_t *fileBuffer) {
+void AtomChunk::write(uint8_t *buffer) {
   for (const auto *layout : _atomLayouts) {
     const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
     ArrayRef<uint8_t> rawContent = atom->rawContent();
-    std::memcpy(fileBuffer + layout->_fileOffset, rawContent.data(),
+    std::memcpy(buffer + layout->_fileOffset, rawContent.data(),
                 rawContent.size());
   }
 }
@@ -479,10 +467,11 @@ AtomChunk::buildAtomRvaMap(std::map<const Atom *, uint64_t> &atomRva) const {
     atomRva[layout->_atom] = layout->_virtualAddr;
 }
 
-void AtomChunk::applyRelocations(uint8_t *fileBuffer,
+void AtomChunk::applyRelocations(uint8_t *buffer,
                                  std::map<const Atom *, uint64_t> &atomRva,
                                  std::vector<uint64_t> &sectionRva,
                                  uint64_t imageBaseAddress) {
+  buffer += _fileOffset;
   for (const auto *layout : _atomLayouts) {
     const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
     for (const Reference *ref : *atom) {
@@ -491,7 +480,7 @@ void AtomChunk::applyRelocations(uint8_t *fileBuffer,
         continue;
 
       auto relocSite32 = reinterpret_cast<ulittle32_t *>(
-          fileBuffer + layout->_fileOffset + ref->offsetInAtom());
+          buffer + layout->_fileOffset + ref->offsetInAtom());
       auto relocSite16 = reinterpret_cast<ulittle16_t *>(relocSite32);
       uint64_t targetAddr = atomRva[ref->target()];
       // Also account for whatever offset is already stored at the relocation
@@ -576,20 +565,20 @@ void AtomChunk::addBaseRelocations(std::vector<uint64_t> &relocSites) const {
   }
 }
 
-void DataDirectoryChunk::write(uint8_t *fileBuffer) {
+void DataDirectoryChunk::write(uint8_t *buffer) {
   if (!_atomLayouts.empty()) {
     assert(_atomLayouts.size() == 1);
     const AtomLayout *layout = _atomLayouts[0];
     ArrayRef<uint8_t> content =
         static_cast<const DefinedAtom *>(layout->_atom)->rawContent();
-    std::memcpy(fileBuffer + _fileOffset, content.data(), content.size());
+    std::memcpy(buffer, content.data(), content.size());
   }
 
   // Write base relocation table entry.
   int baseRelocOffset = llvm::COFF::DataDirectoryIndex::BASE_RELOCATION_TABLE *
                         sizeof(llvm::object::data_directory);
   auto *baseReloc = reinterpret_cast<llvm::object::data_directory *>(
-      fileBuffer + _fileOffset + baseRelocOffset);
+      buffer + baseRelocOffset);
   baseReloc->RelativeVirtualAddress = _baseRelocAddr;
   baseReloc->Size = _baseRelocSize;
 }
@@ -612,7 +601,7 @@ SectionChunk::SectionChunk(StringRef sectionName, uint32_t characteristics)
   _align = SECTOR_SIZE;
 }
 
-void GenericSectionChunk::write(uint8_t *fileBuffer) {
+void GenericSectionChunk::write(uint8_t *buffer) {
   if (_atomLayouts.empty())
     return;
   if (_characteristics & llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)
@@ -622,11 +611,11 @@ void GenericSectionChunk::write(uint8_t *fileBuffer) {
     // disassembler will not interpret a garbage between atoms as the beginning
     // of multi-byte machine code. This does not change the behavior of
     // resulting binary but help debugging.
-    uint8_t *start = fileBuffer + _atomLayouts.front()->_fileOffset;
-    uint8_t *end = fileBuffer + _atomLayouts.back()->_fileOffset;
+    uint8_t *start = buffer + _atomLayouts.front()->_fileOffset;
+    uint8_t *end = buffer + _atomLayouts.back()->_fileOffset;
     memset(start, 0xCC, end - start);
   }
-  SectionChunk::write(fileBuffer);
+  SectionChunk::write(buffer);
 }
 
 uint32_t GenericSectionChunk::getDefaultCharacteristics(
@@ -668,12 +657,11 @@ uint64_t SectionHeaderTableChunk::size() const {
   return _sections.size() * sizeof(llvm::object::coff_section);
 }
 
-void SectionHeaderTableChunk::write(uint8_t *fileBuffer) {
+void SectionHeaderTableChunk::write(uint8_t *buffer) {
   uint64_t offset = 0;
-  fileBuffer += fileOffset();
   for (SectionChunk *chunk : _sections) {
     llvm::object::coff_section header = createSectionHeader(chunk);
-    std::memcpy(fileBuffer + offset, &header, sizeof(header));
+    std::memcpy(buffer + offset, &header, sizeof(header));
     offset += sizeof(header);
   }
 }
@@ -958,8 +946,8 @@ error_code ExecutableWriter::writeFile(const File &linkedFile, StringRef path) {
   if (ec)
     return ec;
 
-  for (const auto &chunk : _chunks)
-    chunk->write(buffer->getBufferStart());
+  for (std::unique_ptr<Chunk> &chunk : _chunks)
+    chunk->write(buffer->getBufferStart() + chunk->fileOffset());
   applyAllRelocations(buffer->getBufferStart());
   DEBUG(printAllAtomAddresses());
   return buffer->commit();
