@@ -587,9 +587,6 @@ class DwarfDebug : public AsmPrinterHandler {
   /// \brief Emit visible names into a debug ranges section.
   void emitDebugRanges();
 
-  /// \brief Emit visible names into a debug macinfo section.
-  void emitDebugMacInfo();
-
   /// \brief Emit inline info using custom format.
   void emitDebugInlineInfo();
 

@@ -1180,9 +1180,6 @@ void DwarfDebug::endModule() {
   // Emit info into a debug ranges section.
   emitDebugRanges();
 
-  // Emit info into a debug macinfo section.
-  emitDebugMacInfo();
-
   if (useSplitDwarf()) {
     emitDebugStrDWO();
     emitDebugInfoDWO();
@@ -2938,15 +2935,6 @@ void DwarfDebug::emitDebugRanges() {
       Asm->OutStreamer.EmitIntValue(0, Size);
       Asm->OutStreamer.EmitIntValue(0, Size);
     }
-  }
-}
-
-// Emit visible names into a debug macinfo section.
-void DwarfDebug::emitDebugMacInfo() {
-  if (const MCSection *LineInfo =
-          Asm->getObjFileLowering().getDwarfMacroInfoSection()) {
-    // Start the dwarf macinfo section.
-    Asm->OutStreamer.SwitchSection(LineInfo);
   }
 }
 
