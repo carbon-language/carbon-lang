@@ -268,7 +268,7 @@ static MCInstPrinter *createARMMCInstPrinter(const Target &T,
 static MCRelocationInfo *createARMMCRelocationInfo(StringRef TT,
                                                    MCContext &Ctx) {
   Triple TheTriple(TT);
-  if (TheTriple.isEnvironmentMachO())
+  if (TheTriple.isOSBinFormatMachO())
     return createARMMachORelocationInfo(Ctx);
   // Default to the stock relocation info.
   return llvm::createMCRelocationInfo(TT, Ctx);
