@@ -715,7 +715,7 @@ int main(int Argc, const char **Argv) {
   }
 
   // If we are in assistant mode, output the module map and quit.
-  if (ModuleMapPath[0]) {
+  if (ModuleMapPath.length() != 0) {
     if (!createModuleMap(ModuleMapPath, Headers, Dependencies, HeaderPrefix,
                          RootModule))
       return 1; // Failed.
