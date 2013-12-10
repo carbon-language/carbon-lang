@@ -880,7 +880,8 @@ static bool CheckConstexprDeclStmt(Sema &SemaRef, const FunctionDecl *Dcl,
               diag::err_constexpr_local_var_non_literal_type,
               isa<CXXConstructorDecl>(Dcl)))
           return false;
-        if (!VD->hasInit() && !VD->isCXXForRangeDecl()) {
+        if (!VD->getType()->isDependentType() &&
+            !VD->hasInit() && !VD->isCXXForRangeDecl()) {
           SemaRef.Diag(VD->getLocation(),
                        diag::err_constexpr_local_var_no_init)
             << isa<CXXConstructorDecl>(Dcl);
@@ -932,8 +933,13 @@ static void CheckConstexprCtorInitializer(Sema &SemaRef,
   if (Field->isUnnamedBitfield())
     return;
 
+  // Anonymous unions with no variant members and empty anonymous structs do not
+  // need to be explicitly initialized. FIXME: Anonymous structs that contain no
+  // indirect fields don't need initializing.
   if (Field->isAnonymousStructOrUnion() &&
-      Field->getType()->getAsCXXRecordDecl()->isEmpty())
+      (Field->getType()->isUnionType()
+           ? !Field->getType()->getAsCXXRecordDecl()->hasVariantMembers()
+           : Field->getType()->getAsCXXRecordDecl()->isEmpty()))
     return;
 
   if (!Inits.count(Field)) {
@@ -1116,11 +1122,12 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
     // DR1359:
     // - every non-variant non-static data member and base class sub-object
     //   shall be initialized;
-    // - if the class is a non-empty union, or for each non-empty anonymous
-    //   union member of a non-union class, exactly one non-static data member
+    // DR1460:
+    // - if the class is a union having variant members, exactly one of them
     //   shall be initialized;
     if (RD->isUnion()) {
-      if (Constructor->getNumCtorInitializers() == 0 && !RD->isEmpty()) {
+      if (Constructor->getNumCtorInitializers() == 0 &&
+          RD->hasVariantMembers()) {
         Diag(Dcl->getLocation(), diag::err_constexpr_union_ctor_no_init);
         return false;
       }
@@ -1139,6 +1146,10 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
           break;
         }
       }
+      // DR1460:
+      // - if the class is a union-like class, but is not a union, for each of
+      //   its anonymous union members having variant members, exactly one of
+      //   them shall be initialized;
       if (AnyAnonStructUnionMembers ||
           Constructor->getNumCtorInitializers() != RD->getNumBases() + Fields) {
         // Check initialization of non-static data members. Base classes are
@@ -3320,6 +3331,7 @@ struct BaseAndFieldInfo {
   ImplicitInitializerKind IIK;
   llvm::DenseMap<const void *, CXXCtorInitializer*> AllBaseFields;
   SmallVector<CXXCtorInitializer*, 8> AllToInit;
+  llvm::DenseMap<TagDecl*, FieldDecl*> ActiveUnionMember;
 
   BaseAndFieldInfo(Sema &S, CXXConstructorDecl *Ctor, bool ErrorsInInits)
     : S(S), Ctor(Ctor), AnyErrorsInInits(ErrorsInInits) {
@@ -3357,20 +3369,50 @@ struct BaseAndFieldInfo {
 
     return false;
   }
-};
-}
 
-/// \brief Determine whether the given indirect field declaration is somewhere
-/// within an anonymous union.
-static bool isWithinAnonymousUnion(IndirectFieldDecl *F) {
-  for (IndirectFieldDecl::chain_iterator C = F->chain_begin(), 
-                                      CEnd = F->chain_end();
-       C != CEnd; ++C)
-    if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>((*C)->getDeclContext()))
-      if (Record->isUnion())
+  bool isInactiveUnionMember(FieldDecl *Field) {
+    RecordDecl *Record = Field->getParent();
+    if (!Record->isUnion())
+      return false;
+
+    FieldDecl *Active = ActiveUnionMember.lookup(Record->getCanonicalDecl());
+    if (Active)
+      return Active != Field->getCanonicalDecl();
+
+    // In an implicit copy or move constructor, ignore any in-class initializer.
+    if (isImplicitCopyOrMove())
+      return true;
+
+    // If there's no explicit initialization, the field is active only if it
+    // has an in-class initializer...
+    if (Field->hasInClassInitializer())
+      return false;
+    // ... or it's an anonymous struct or union whose class has an in-class
+    // initializer.
+    if (!Field->isAnonymousStructOrUnion())
+      return true;
+    CXXRecordDecl *FieldRD = Field->getType()->getAsCXXRecordDecl();
+    return !FieldRD->hasInClassInitializer();
+  }
+
+  /// \brief Determine whether the given field is, or is within, a union member
+  /// that is inactive (because there was an initializer given for a different
+  /// member of the union, or because the union was not initialized at all).
+  bool isWithinInactiveUnionMember(FieldDecl *Field,
+                                   IndirectFieldDecl *Indirect) {
+    if (!Indirect)
+      return isInactiveUnionMember(Field);
+
+    for (IndirectFieldDecl::chain_iterator C = Indirect->chain_begin(),
+                                           CEnd = Indirect->chain_end();
+         C != CEnd; ++C) {
+      FieldDecl *Field = dyn_cast<FieldDecl>(*C);
+      if (Field && isInactiveUnionMember(Field))
         return true;
-        
-  return false;
+    }
+    return false;
+  }
+};
 }
 
 /// \brief Determine whether the given type is an incomplete or zero-lenfgth
@@ -3399,9 +3441,21 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
   if (CXXCtorInitializer *Init = Info.AllBaseFields.lookup(Field))
     return Info.addFieldInitializer(Init);
 
-  // C++11 [class.base.init]p8: if the entity is a non-static data member that
-  // has a brace-or-equal-initializer, the entity is initialized as specified
-  // in [dcl.init].
+  // C++11 [class.base.init]p8:
+  //   if the entity is a non-static data member that has a
+  //   brace-or-equal-initializer and either
+  //   -- the constructor's class is a union and no other variant member of that
+  //      union is designated by a mem-initializer-id or
+  //   -- the constructor's class is not a union, and, if the entity is a member
+  //      of an anonymous union, no other member of that union is designated by
+  //      a mem-initializer-id,
+  //   the entity is initialized as specified in [dcl.init].
+  //
+  // We also apply the same rules to handle anonymous structs within anonymous
+  // unions.
+  if (Info.isWithinInactiveUnionMember(Field, Indirect))
+    return false;
+
   if (Field->hasInClassInitializer() && !Info.isImplicitCopyOrMove()) {
     Expr *DIE = CXXDefaultInitExpr::Create(SemaRef.Context,
                                            Info.Ctor->getLocation(), Field);
@@ -3418,12 +3472,6 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
                                                       SourceLocation());
     return Info.addFieldInitializer(Init);
   }
-
-  // Don't build an implicit initializer for union members if none was
-  // explicitly specified.
-  if (Field->getParent()->isUnion() ||
-      (Indirect && isWithinAnonymousUnion(Indirect)))
-    return false;
 
   // Don't initialize incomplete or zero-length arrays.
   if (isIncompleteOrZeroLengthArrayType(SemaRef.Context, Field->getType()))
@@ -3502,8 +3550,24 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor, bool AnyErrors,
 
     if (Member->isBaseInitializer())
       Info.AllBaseFields[Member->getBaseClass()->getAs<RecordType>()] = Member;
-    else
+    else {
       Info.AllBaseFields[Member->getAnyMember()] = Member;
+
+      if (IndirectFieldDecl *F = Member->getIndirectMember()) {
+        for (IndirectFieldDecl::chain_iterator C = F->chain_begin(),
+                                            CEnd = F->chain_end();
+             C != CEnd; ++C) {
+          FieldDecl *FD = dyn_cast<FieldDecl>(*C);
+          if (FD && FD->getParent()->isUnion())
+            Info.ActiveUnionMember.insert(std::make_pair(
+                FD->getParent()->getCanonicalDecl(), FD->getCanonicalDecl()));
+        }
+      } else if (FieldDecl *FD = Member->getMember()) {
+        if (FD->getParent()->isUnion())
+          Info.ActiveUnionMember.insert(std::make_pair(
+              FD->getParent()->getCanonicalDecl(), FD->getCanonicalDecl()));
+      }
+    }
   }
 
   // Keep track of the direct virtual bases.

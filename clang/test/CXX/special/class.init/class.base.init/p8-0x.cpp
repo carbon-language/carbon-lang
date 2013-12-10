@@ -16,16 +16,13 @@ struct S {
 } s(0);
 
 union U {
-  int a = 0; // desired-note 5 {{previous initialization is here}}
-  char b = 'x';
+  int a = 0; // expected-note {{previous initialization}}
+  char b = 'x'; // expected-error {{initializing multiple members of union}}
 
-  // FIXME: these should all be rejected
-  U() {} // desired-error {{initializing multiple members of union}}
-  U(int) : a(1) {} // desired-error {{initializing multiple members of union}}
-  U(char) : b('y') {} // desired-error {{initializing multiple members of union}}
-  // this expected note should be removed & the note should appear on the 
-  // declaration of 'a' when this set of cases is handled correctly.
-  U(double) : a(1), // expected-note{{previous initialization is here}} desired-error {{initializing multiple members of union}}
+  U() {}
+  U(int) : a(1) {}
+  U(char) : b('y') {}
+  U(double) : a(1), // expected-note{{previous initialization is here}}
               b('y') {} // expected-error{{initializing multiple members of union}}
 };
 

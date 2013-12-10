@@ -3547,6 +3547,39 @@ StorageClassSpecToVarDeclStorageClass(const DeclSpec &DS) {
   llvm_unreachable("unknown storage class specifier");
 }
 
+static SourceLocation findDefaultInitializer(const CXXRecordDecl *Record) {
+  assert(Record->hasInClassInitializer());
+
+  for (DeclContext::decl_iterator I = Record->decls_begin(),
+                                  E = Record->decls_end();
+       I != E; ++I) {
+    FieldDecl *FD = dyn_cast<FieldDecl>(*I);
+    if (IndirectFieldDecl *IFD = dyn_cast<IndirectFieldDecl>(*I))
+      FD = IFD->getAnonField();
+    if (FD && FD->hasInClassInitializer())
+      return FD->getLocation();
+  }
+
+  llvm_unreachable("couldn't find in-class initializer");
+}
+
+static void checkDuplicateDefaultInit(Sema &S, CXXRecordDecl *Parent,
+                                      SourceLocation DefaultInitLoc) {
+  if (!Parent->isUnion() || !Parent->hasInClassInitializer())
+    return;
+
+  S.Diag(DefaultInitLoc, diag::err_multiple_mem_union_initialization);
+  S.Diag(findDefaultInitializer(Parent), diag::note_previous_initializer) << 0;
+}
+
+static void checkDuplicateDefaultInit(Sema &S, CXXRecordDecl *Parent,
+                                      CXXRecordDecl *AnonUnion) {
+  if (!Parent->isUnion() || !Parent->hasInClassInitializer())
+    return;
+
+  checkDuplicateDefaultInit(S, Parent, findDefaultInitializer(AnonUnion));
+}
+
 /// BuildAnonymousStructOrUnion - Handle the declaration of an
 /// anonymous structure or union. Anonymous unions are a C++ feature
 /// (C++ [class.union]) and a C11 feature; anonymous structures
@@ -3704,6 +3737,14 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
         }
       }
     }
+
+    // C++11 [class.union]p8 (DR1460):
+    //   At most one variant member of a union may have a
+    //   brace-or-equal-initializer.
+    if (cast<CXXRecordDecl>(Record)->hasInClassInitializer() &&
+        Owner->isRecord())
+      checkDuplicateDefaultInit(*this, cast<CXXRecordDecl>(Owner),
+                                cast<CXXRecordDecl>(Record));
   }
 
   if (!Record->isUnion() && !Owner->isRecord()) {
@@ -3756,11 +3797,14 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   }
   Anon->setImplicit();
 
+  // Mark this as an anonymous struct/union type.
+  Record->setAnonymousStructOrUnion(true);
+
   // Add the anonymous struct/union object to the current
   // context. We'll be referencing this object when we refer to one of
   // its members.
   Owner->addDecl(Anon);
-  
+
   // Inject the members of the anonymous struct/union into the owning
   // context and into the identifier resolver chain for name lookup
   // purposes.
@@ -3770,14 +3814,6 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   if (InjectAnonymousStructOrUnionMembers(*this, S, Owner, Record, AS,
                                           Chain, false))
     Invalid = true;
-
-  // Mark this as an anonymous struct/union type. Note that we do not
-  // do this until after we have already checked and injected the
-  // members of this anonymous struct/union type, because otherwise
-  // the members could be injected twice: once by DeclContext when it
-  // builds its lookup table, and once by
-  // InjectAnonymousStructOrUnionMembers.
-  Record->setAnonymousStructOrUnion(true);
 
   if (Invalid)
     Anon->setInvalidDecl();
@@ -11515,6 +11551,12 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
       InvalidDecl = true;
     }
   }
+
+  // C++11 [class.union]p8 (DR1460):
+  //   At most one variant member of a union may have a
+  //   brace-or-equal-initializer.
+  if (InitStyle != ICIS_NoInit)
+    checkDuplicateDefaultInit(*this, cast<CXXRecordDecl>(Record), Loc);
 
   FieldDecl *NewFD = FieldDecl::Create(Context, Record, TSSL, Loc, II, T, TInfo,
                                        BitWidth, Mutable, InitStyle);

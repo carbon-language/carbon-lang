@@ -21,11 +21,41 @@ int g() {
     int a;
     int b = 81;
   };
-  // CHECK: define {{.*}}_Z1gv
+  // CHECK-LABEL: define {{.*}}_Z1gv
   // CHECK-NOT: }
   // CHECK: call {{.*}}@"[[CONSTRUCT_LOCAL:.*]]C1Ev"
   return b;
 }
+
+struct A {
+  A();
+};
+union B {
+  int k;
+  struct {
+    A x;
+    int y = 123;
+  };
+  B() {}
+  B(int n) : k(n) {}
+};
+
+B b1;
+B b2(0);
+
+
+// CHECK-LABEL: define {{.*}} @_ZN1BC2Ei(
+// CHECK-NOT: call void @_ZN1AC1Ev(
+// CHECK-NOT: store i32 123,
+// CHECK: store i32 %
+// CHECK-NOT: call void @_ZN1AC1Ev(
+// CHECK-NOT: store i32 123,
+// CHECK: }
+
+// CHECK-LABEL: define {{.*}} @_ZN1BC2Ev(
+// CHECK: call void @_ZN1AC1Ev(
+// CHECK: store i32 123,
+// CHECK: }
 
 
 // CHECK: define {{.*}}@"[[CONSTRUCT_LOCAL]]C2Ev"
