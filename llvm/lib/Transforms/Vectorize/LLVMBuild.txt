@@ -21,4 +21,3 @@ name = Vectorize
 parent = Transforms
 library_name = Vectorize
 required_libraries = Analysis Core InstCombine Support Target TransformUtils
-

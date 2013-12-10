@@ -21,4 +21,3 @@ name = AArch64AsmParser
 parent = AArch64
 required_libraries = AArch64Desc AArch64Info MC MCParser Support
 add_to_library_groups = AArch64
-

@@ -21,4 +21,3 @@ name = AArch64Disassembler
 parent = AArch64
 required_libraries = AArch64CodeGen AArch64Desc AArch64Info AArch64Utils MC Support
 add_to_library_groups = AArch64
-

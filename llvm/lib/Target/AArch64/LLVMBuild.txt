@@ -33,4 +33,3 @@ name = AArch64CodeGen
 parent = AArch64
 required_libraries = AArch64AsmPrinter AArch64Desc AArch64Info AsmPrinter CodeGen Core MC SelectionDAG Support Target
 add_to_library_groups = AArch64
-
