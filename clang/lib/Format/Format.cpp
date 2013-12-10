@@ -31,93 +31,81 @@
 #include <queue>
 #include <string>
 
+using clang::format::FormatStyle;
+
 namespace llvm {
 namespace yaml {
+template <> struct ScalarEnumerationTraits<FormatStyle::LanguageKind> {
+  static void enumeration(IO &IO, FormatStyle::LanguageKind &Value) {
+    IO.enumCase(Value, "Cpp", FormatStyle::LK_Cpp);
+    IO.enumCase(Value, "JavaScript", FormatStyle::LK_JavaScript);
+  }
+};
+
+template <> struct ScalarEnumerationTraits<FormatStyle::LanguageStandard> {
+  static void enumeration(IO &IO, FormatStyle::LanguageStandard &Value) {
+    IO.enumCase(Value, "Cpp03", FormatStyle::LS_Cpp03);
+    IO.enumCase(Value, "C++03", FormatStyle::LS_Cpp03);
+    IO.enumCase(Value, "Cpp11", FormatStyle::LS_Cpp11);
+    IO.enumCase(Value, "C++11", FormatStyle::LS_Cpp11);
+    IO.enumCase(Value, "Auto", FormatStyle::LS_Auto);
+  }
+};
+
+template <> struct ScalarEnumerationTraits<FormatStyle::UseTabStyle> {
+  static void enumeration(IO &IO, FormatStyle::UseTabStyle &Value) {
+    IO.enumCase(Value, "Never", FormatStyle::UT_Never);
+    IO.enumCase(Value, "false", FormatStyle::UT_Never);
+    IO.enumCase(Value, "Always", FormatStyle::UT_Always);
+    IO.enumCase(Value, "true", FormatStyle::UT_Always);
+    IO.enumCase(Value, "ForIndentation", FormatStyle::UT_ForIndentation);
+  }
+};
+
+template <> struct ScalarEnumerationTraits<FormatStyle::BraceBreakingStyle> {
+  static void enumeration(IO &IO, FormatStyle::BraceBreakingStyle &Value) {
+    IO.enumCase(Value, "Attach", FormatStyle::BS_Attach);
+    IO.enumCase(Value, "Linux", FormatStyle::BS_Linux);
+    IO.enumCase(Value, "Stroustrup", FormatStyle::BS_Stroustrup);
+    IO.enumCase(Value, "Allman", FormatStyle::BS_Allman);
+  }
+};
+
 template <>
-struct ScalarEnumerationTraits<clang::format::FormatStyle::LanguageKind> {
+struct ScalarEnumerationTraits<FormatStyle::NamespaceIndentationKind> {
   static void enumeration(IO &IO,
-                          clang::format::FormatStyle::LanguageKind &Value) {
-    IO.enumCase(Value, "Cpp", clang::format::FormatStyle::LK_Cpp);
-    IO.enumCase(Value, "JavaScript", clang::format::FormatStyle::LK_JavaScript);
+                          FormatStyle::NamespaceIndentationKind &Value) {
+    IO.enumCase(Value, "None", FormatStyle::NI_None);
+    IO.enumCase(Value, "Inner", FormatStyle::NI_Inner);
+    IO.enumCase(Value, "All", FormatStyle::NI_All);
   }
 };
 
 template <>
-struct ScalarEnumerationTraits<clang::format::FormatStyle::LanguageStandard> {
+struct ScalarEnumerationTraits<FormatStyle::SpaceBeforeParensOptions> {
   static void enumeration(IO &IO,
-                          clang::format::FormatStyle::LanguageStandard &Value) {
-    IO.enumCase(Value, "Cpp03", clang::format::FormatStyle::LS_Cpp03);
-    IO.enumCase(Value, "C++03", clang::format::FormatStyle::LS_Cpp03);
-    IO.enumCase(Value, "Cpp11", clang::format::FormatStyle::LS_Cpp11);
-    IO.enumCase(Value, "C++11", clang::format::FormatStyle::LS_Cpp11);
-    IO.enumCase(Value, "Auto", clang::format::FormatStyle::LS_Auto);
-  }
-};
-
-template <>
-struct ScalarEnumerationTraits<clang::format::FormatStyle::UseTabStyle> {
-  static void enumeration(IO &IO,
-                          clang::format::FormatStyle::UseTabStyle &Value) {
-    IO.enumCase(Value, "Never", clang::format::FormatStyle::UT_Never);
-    IO.enumCase(Value, "false", clang::format::FormatStyle::UT_Never);
-    IO.enumCase(Value, "Always", clang::format::FormatStyle::UT_Always);
-    IO.enumCase(Value, "true", clang::format::FormatStyle::UT_Always);
-    IO.enumCase(Value, "ForIndentation",
-                clang::format::FormatStyle::UT_ForIndentation);
-  }
-};
-
-template <>
-struct ScalarEnumerationTraits<clang::format::FormatStyle::BraceBreakingStyle> {
-  static void
-  enumeration(IO &IO, clang::format::FormatStyle::BraceBreakingStyle &Value) {
-    IO.enumCase(Value, "Attach", clang::format::FormatStyle::BS_Attach);
-    IO.enumCase(Value, "Linux", clang::format::FormatStyle::BS_Linux);
-    IO.enumCase(Value, "Stroustrup", clang::format::FormatStyle::BS_Stroustrup);
-    IO.enumCase(Value, "Allman", clang::format::FormatStyle::BS_Allman);
-  }
-};
-
-template <>
-struct ScalarEnumerationTraits<
-    clang::format::FormatStyle::NamespaceIndentationKind> {
-  static void
-  enumeration(IO &IO,
-              clang::format::FormatStyle::NamespaceIndentationKind &Value) {
-    IO.enumCase(Value, "None", clang::format::FormatStyle::NI_None);
-    IO.enumCase(Value, "Inner", clang::format::FormatStyle::NI_Inner);
-    IO.enumCase(Value, "All", clang::format::FormatStyle::NI_All);
-  }
-};
-
-template <>
-struct ScalarEnumerationTraits<
-    clang::format::FormatStyle::SpaceBeforeParensOptions> {
-  static void
-  enumeration(IO &IO,
-              clang::format::FormatStyle::SpaceBeforeParensOptions &Value) {
-    IO.enumCase(Value, "Never", clang::format::FormatStyle::SBPO_Never);
+                          FormatStyle::SpaceBeforeParensOptions &Value) {
+    IO.enumCase(Value, "Never", FormatStyle::SBPO_Never);
     IO.enumCase(Value, "ControlStatements",
-                clang::format::FormatStyle::SBPO_ControlStatements);
-    IO.enumCase(Value, "Always", clang::format::FormatStyle::SBPO_Always);
+                FormatStyle::SBPO_ControlStatements);
+    IO.enumCase(Value, "Always", FormatStyle::SBPO_Always);
 
     // For backward compatibility.
-    IO.enumCase(Value, "false", clang::format::FormatStyle::SBPO_Never);
-    IO.enumCase(Value, "true",
-                clang::format::FormatStyle::SBPO_ControlStatements);
+    IO.enumCase(Value, "false", FormatStyle::SBPO_Never);
+    IO.enumCase(Value, "true", FormatStyle::SBPO_ControlStatements);
   }
 };
 
-template <> struct MappingTraits<clang::format::FormatStyle> {
-  static void mapping(llvm::yaml::IO &IO, clang::format::FormatStyle &Style) {
+template <> struct MappingTraits<FormatStyle> {
+  static void mapping(llvm::yaml::IO &IO, FormatStyle &Style) {
     if (IO.outputting()) {
       StringRef StylesArray[] = { "LLVM",    "Google", "Chromium",
                                   "Mozilla", "WebKit" };
       ArrayRef<StringRef> Styles(StylesArray);
       for (size_t i = 0, e = Styles.size(); i < e; ++i) {
         StringRef StyleName(Styles[i]);
-        clang::format::FormatStyle PredefinedStyle;
-        if (clang::format::getPredefinedStyle(StyleName, &PredefinedStyle) &&
+        FormatStyle PredefinedStyle;
+        if (getPredefinedStyle(StyleName, &PredefinedStyle) &&
             Style == PredefinedStyle) {
           IO.mapOptional("# BasedOnStyle", StyleName);
           break;
@@ -127,8 +115,8 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
       StringRef BasedOnStyle;
       IO.mapOptional("BasedOnStyle", BasedOnStyle);
       if (!BasedOnStyle.empty()) {
-        clang::format::FormatStyle::LanguageKind Language = Style.Language;
-        if (!clang::format::getPredefinedStyle(BasedOnStyle, &Style)) {
+        FormatStyle::LanguageKind Language = Style.Language;
+        if (!getPredefinedStyle(BasedOnStyle, &Style)) {
           IO.setError(Twine("Unknown value for BasedOnStyle: ", BasedOnStyle));
           return;
         }
@@ -217,22 +205,20 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
 // copied from the 0th element of the vector. If the first element had no
 // Language specified, it will be treated as the default one for the following
 // elements.
-template <>
-struct DocumentListTraits<std::vector<clang::format::FormatStyle> > {
-  static size_t size(IO &io, std::vector<clang::format::FormatStyle> &Seq) {
+template <> struct DocumentListTraits<std::vector<FormatStyle> > {
+  static size_t size(IO &io, std::vector<FormatStyle> &Seq) {
     return Seq.size() - 1;
   }
-  static clang::format::FormatStyle &
-  element(IO &io, std::vector<clang::format::FormatStyle> &Seq, size_t Index) {
+  static FormatStyle &element(IO &io, std::vector<FormatStyle> &Seq,
+                              size_t Index) {
     if (Index + 2 > Seq.size()) {
       assert(Index + 2 == Seq.size() + 1);
-      clang::format::FormatStyle Template;
-      if (Seq.size() > 1 &&
-          Seq[1].Language == clang::format::FormatStyle::LK_None) {
+      FormatStyle Template;
+      if (Seq.size() > 1 && Seq[1].Language == FormatStyle::LK_None) {
         Template = Seq[1];
       } else {
         Template = Seq[0];
-        Template.Language = clang::format::FormatStyle::LK_None;
+        Template.Language = FormatStyle::LK_None;
       }
       Seq.resize(Index + 2, Template);
     }
@@ -512,7 +498,7 @@ public:
                  : 0;
     }
     if (TheLine->Last->is(tok::l_brace)) {
-      return Style.BreakBeforeBraces == clang::format::FormatStyle::BS_Attach
+      return Style.BreakBeforeBraces == FormatStyle::BS_Attach
                  ? tryMergeSimpleBlock(I, E, Limit)
                  : 0;
     }
