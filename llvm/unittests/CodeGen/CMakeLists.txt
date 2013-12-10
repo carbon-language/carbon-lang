@@ -1,7 +1,6 @@
 set(LLVM_LINK_COMPONENTS
-  asmprinter
-  codegen
-  support
+  AsmPrinter
+  Support
   )
 
 set(CodeGenSources

@@ -1,4 +1,7 @@
-set(LLVM_LINK_COMPONENTS support object bitreader)
+set(LLVM_LINK_COMPONENTS
+  Object
+  Support
+  )
 
 add_llvm_tool(llvm-ar
   llvm-ar.cpp

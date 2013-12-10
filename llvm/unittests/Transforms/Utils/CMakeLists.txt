@@ -1,4 +1,6 @@
 set(LLVM_LINK_COMPONENTS
+  Core
+  Support
   TransformUtils
   )
 

@@ -1,4 +1,11 @@
-set(LLVM_LINK_COMPONENTS all)
+set(LLVM_LINK_COMPONENTS
+  ${LLVM_TARGETS_TO_BUILD}
+  BitReader
+  Core
+  MCDisassembler
+  Object
+  Target
+  )
 
 if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wstrict-prototypes")

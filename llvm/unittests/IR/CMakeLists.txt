@@ -1,7 +1,9 @@
 set(LLVM_LINK_COMPONENTS
-  asmparser
-  core
-  ipa
+  Analysis
+  AsmParser
+  Core
+  IPA
+  Support
   )
 
 set(IRSources

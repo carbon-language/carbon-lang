@@ -1,5 +1,6 @@
 set(LLVM_LINK_COMPONENTS
-  object
+  Object
+  Support
   )
 
 add_llvm_unittest(ObjectTests

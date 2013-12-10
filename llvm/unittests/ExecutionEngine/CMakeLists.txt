@@ -1,5 +1,8 @@
 set(LLVM_LINK_COMPONENTS
-  interpreter
+  Core
+  ExecutionEngine
+  Interpreter
+  Support
   )
 
 add_llvm_unittest(ExecutionEngineTests

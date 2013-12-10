@@ -1,4 +1,11 @@
-set(LLVM_LINK_COMPONENTS jit bitwriter nativecodegen interpreter)
+set(LLVM_LINK_COMPONENTS
+  BitWriter
+  Core
+  ExecutionEngine
+  JIT
+  Support
+  nativecodegen
+  )
 
 add_llvm_example(BrainF
   BrainF.cpp

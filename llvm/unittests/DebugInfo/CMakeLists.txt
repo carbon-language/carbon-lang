@@ -1,7 +1,5 @@
 set(LLVM_LINK_COMPONENTS
-  debuginfo
-  object
-  support
+  DebugInfo
   )
 
 set(DebugInfoSources

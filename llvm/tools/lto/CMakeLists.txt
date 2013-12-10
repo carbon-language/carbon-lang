@@ -1,6 +1,10 @@
 set(LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
-  ipo scalaropts linker bitreader bitwriter lto mcdisassembler vectorize)
+  Core
+  LTO
+  MC
+  Support
+  )
 
 add_definitions( -DLLVM_VERSION_INFO=\"${PACKAGE_VERSION}\" )
 
