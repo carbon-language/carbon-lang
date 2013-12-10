@@ -41,8 +41,8 @@
 
 namespace lld {
 
-namespace {
-bool shouldReplaceTargetWithGOTAtom(const Atom *target, bool canBypassGOT) {
+static bool shouldReplaceTargetWithGOTAtom(const Atom *target,
+                                           bool canBypassGOT) {
   // Accesses to shared library symbols must go through GOT.
   if (target->definition() == Atom::definitionSharedLibrary)
     return true;
@@ -59,13 +59,12 @@ bool shouldReplaceTargetWithGOTAtom(const Atom *target, bool canBypassGOT) {
   return !canBypassGOT;
 }
 
-const DefinedAtom *
+static const DefinedAtom *
 findGOTAtom(const Atom *target,
             llvm::DenseMap<const Atom *, const DefinedAtom *> &targetToGOT) {
   auto pos = targetToGOT.find(target);
   return (pos == targetToGOT.end()) ? nullptr : pos->second;
 }
-} // end anonymous namespace
 
 void GOTPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   // Use map so all pointers to same symbol use same GOT entry.

@@ -13,9 +13,8 @@
 using namespace lld;
 using namespace elf;
 
-namespace {
 /// \brief R_X86_64_64 - word64: S + A
-void reloc64(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
+static void reloc64(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   uint64_t result = S + A;
   *reinterpret_cast<llvm::support::ulittle64_t *>(location) =
       result |
@@ -23,7 +22,7 @@ void reloc64(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
 }
 
 /// \brief R_X86_64_PC32 - word32: S + A - P
-void relocPC32(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
+static void relocPC32(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   uint32_t result = (uint32_t)((S + A) - P);
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
       result +
@@ -31,7 +30,7 @@ void relocPC32(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
 }
 
 /// \brief R_X86_64_32 - word32:  S + A
-void reloc32(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
+static void reloc32(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   int32_t result = (uint32_t)(S + A);
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
       result |
@@ -40,14 +39,13 @@ void reloc32(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
 }
 
 /// \brief R_X86_64_32S - word32:  S + A
-void reloc32S(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
+static void reloc32S(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   int32_t result = (int32_t)(S + A);
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       result |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
   // TODO: Make sure that the result sign extends to the 64bit value.
 }
-} // end anon namespace
 
 int64_t X86_64TargetRelocationHandler::relocAddend(const Reference &ref) const {
   switch (ref.kind()) {

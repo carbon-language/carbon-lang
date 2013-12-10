@@ -18,9 +18,7 @@
 
 #ifdef _MSC_VER
 // Exceptions are disabled so this isn't defined, but concrt assumes it is.
-namespace {
-void *__uncaught_exception() { return nullptr; }
-}
+static void *__uncaught_exception() { return nullptr; }
 #endif
 
 #include <algorithm>

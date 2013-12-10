@@ -21,9 +21,10 @@ using namespace llvm::ELF;
 ///  A: Added used to compute the value, r_addend
 ///  P: Place address of the field being relocated, r_offset
 ///  S: Value of the symbol whose index resides in the relocation entry.
-namespace {
+
 /// \brief low24 (S + A - P) >> 2 : Verify
-int relocB24PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+static int relocB24PCREL(uint8_t *location, uint64_t P, uint64_t S,
+                         uint64_t A) {
   int32_t result = (uint32_t)(((S + A) - P));
   if ((result < 0x1000000) && (result > -0x1000000)) {
     result &= ~-(0x1000000);
@@ -33,7 +34,6 @@ int relocB24PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   }
   return 1;
 }
-} // end anon namespace
 
 error_code PPCTargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,

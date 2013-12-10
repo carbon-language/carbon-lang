@@ -31,12 +31,11 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
 
-namespace {
-LLVM_ATTRIBUTE_UNUSED std::string kindOrUnknown(llvm::ErrorOr<std::string> k) {
+static LLVM_ATTRIBUTE_UNUSED std::string
+kindOrUnknown(llvm::ErrorOr<std::string> k) {
   if (k)
     return *k;
   return "<unknown>";
-}
 }
 
 namespace lld {

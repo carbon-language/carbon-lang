@@ -13,11 +13,9 @@
 
 using namespace lld;
 
-namespace {
-bool sortInputElements(const std::unique_ptr<InputElement> &a,
-                       const std::unique_ptr<InputElement> &b) {
+static bool sortInputElements(const std::unique_ptr<InputElement> &a,
+                              const std::unique_ptr<InputElement> &b) {
   return a->getOrdinal() < b->getOrdinal();
-}
 }
 
 bool InputGraph::addInputElement(std::unique_ptr<InputElement> ie) {

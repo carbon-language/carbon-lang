@@ -15,9 +15,8 @@ using namespace elf;
 
 using namespace llvm::ELF;
 
-namespace {
 /// \brief R_386_32 - word32:  S + A
-int reloc32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+static int reloc32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   int32_t result = (uint32_t)(S + A);
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
             (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
@@ -25,13 +24,12 @@ int reloc32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 }
 
 /// \brief R_386_PC32 - word32: S + A - P
-int relocPC32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+static int relocPC32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)((S + A) - P);
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result +
             (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
   return 0;
 }
-} // end anon namespace
 
 error_code X86TargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
