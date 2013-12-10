@@ -3427,7 +3427,8 @@ bool Sema::checkObjCBridgeRelatedComponents(SourceLocation Loc,
 
 bool
 Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
-                                        QualType DestType, QualType SrcType) {
+                                        QualType DestType, QualType SrcType,
+                                        Expr *SrcExpr) {
   ARCConversionTypeClass rhsExprACTC = classifyTypeForARCConversion(SrcType);
   ARCConversionTypeClass lhsExprACTC = classifyTypeForARCConversion(DestType);
   bool CfToNs = (rhsExprACTC == ACTC_coreFoundation && lhsExprACTC == ACTC_retainable);
@@ -3445,9 +3446,18 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
   
   if (CfToNs) {
     // Implicit conversion from CF to ObjC object is needed.
-    if (ClassMethod)
+    if (ClassMethod) {
+      std::string ExpressionString = "[";
+      ExpressionString += RelatedClass->getNameAsString();
+      ExpressionString += " ";
+      ExpressionString += ClassMethod->getSelector().getAsString();
+      SourceLocation SrcExprEndLoc = PP.getLocForEndOfToken(SrcExpr->getLocEnd());
+      // Provide a fixit: [RelatedClass ClassMethod SrcExpr]
       Diag(Loc, diag::err_objc_bridged_related_known_method)
-        << SrcType << DestType << ClassMethod->getSelector() << 0;
+        << SrcType << DestType << ClassMethod->getSelector() << 0
+        << FixItHint::CreateInsertion(SrcExpr->getLocStart(), ExpressionString)
+        << FixItHint::CreateInsertion(SrcExprEndLoc, "]");
+    }
     else
       Diag(Loc, diag::err_objc_bridged_related_unknown_method)
         << SrcType << DestType << 0;
@@ -3456,9 +3466,18 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
   }
   else {
     // Implicit conversion from ObjC type to CF object is needed.
-    if (InstanceMethod)
+    if (InstanceMethod) {
+      // Provide a fixit: [ObjectExpr InstanceMethod];
+      std::string ExpressionString = " ";
+      ExpressionString += InstanceMethod->getSelector().getAsString();
+      ExpressionString += "]";
+      SourceLocation SrcExprEndLoc = PP.getLocForEndOfToken(SrcExpr->getLocEnd());
+      
       Diag(Loc, diag::err_objc_bridged_related_known_method)
-      << SrcType << DestType << InstanceMethod->getSelector() << 1;
+      << SrcType << DestType << InstanceMethod->getSelector() << 1
+      << FixItHint::CreateInsertion(SrcExpr->getLocStart(), "[")
+      << FixItHint::CreateInsertion(SrcExprEndLoc, ExpressionString);
+    }
     else
       Diag(Loc, diag::err_objc_bridged_related_unknown_method)
         << SrcType << DestType << 1;

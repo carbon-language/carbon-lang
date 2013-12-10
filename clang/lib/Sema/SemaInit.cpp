@@ -6484,7 +6484,7 @@ bool InitializationSequence::Diagnose(Sema &S,
     QualType FromType = Args[0]->getType();
     if (S.getLangOpts().ObjC1)
         S.CheckObjCBridgeRelatedConversions(Kind.getLocation(),
-                                            DestType, FromType);
+                                            DestType, FromType, Args[0]);
     PartialDiagnostic PDiag = S.PDiag(diag::err_init_conversion_failed)
       << (int)Entity.getKind()
       << DestType

@@ -6922,7 +6922,8 @@ public:
                                         bool CfToNs);
   
   bool CheckObjCBridgeRelatedConversions(SourceLocation Loc,
-                                         QualType DestType, QualType SrcType);
+                                         QualType DestType, QualType SrcType,
+                                         Expr *SrcExpr);
   
   bool checkInitMethod(ObjCMethodDecl *method, QualType receiverTypeIfCall);
 
