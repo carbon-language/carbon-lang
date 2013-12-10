@@ -3405,7 +3405,7 @@ bool Sema::checkObjCBridgeRelatedComponents(SourceLocation Loc,
     ClassMethod = RelatedClass->lookupMethod(Sel, false);
     if (!ClassMethod) {
       Diag(Loc, diag::err_objc_bridged_related_known_method)
-            << SrcType << DestType << Sel << 0;
+            << SrcType << DestType << Sel << false;
       Diag(TDNDecl->getLocStart(), diag::note_declared_at);
       return false;
     }
@@ -3417,7 +3417,7 @@ bool Sema::checkObjCBridgeRelatedComponents(SourceLocation Loc,
     InstanceMethod = RelatedClass->lookupMethod(Sel, true);
     if (!InstanceMethod) {
       Diag(Loc, diag::err_objc_bridged_related_known_method)
-            << SrcType << DestType << Sel << 1;
+            << SrcType << DestType << Sel << true;
       Diag(TDNDecl->getLocStart(), diag::note_declared_at);
       return false;
     }
@@ -3454,13 +3454,13 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
       SourceLocation SrcExprEndLoc = PP.getLocForEndOfToken(SrcExpr->getLocEnd());
       // Provide a fixit: [RelatedClass ClassMethod SrcExpr]
       Diag(Loc, diag::err_objc_bridged_related_known_method)
-        << SrcType << DestType << ClassMethod->getSelector() << 0
+        << SrcType << DestType << ClassMethod->getSelector() << false
         << FixItHint::CreateInsertion(SrcExpr->getLocStart(), ExpressionString)
         << FixItHint::CreateInsertion(SrcExprEndLoc, "]");
     }
     else
       Diag(Loc, diag::err_objc_bridged_related_unknown_method)
-        << SrcType << DestType << 0;
+        << SrcType << DestType << false;
     Diag(RelatedClass->getLocStart(), diag::note_declared_at);
     Diag(TDNDecl->getLocStart(), diag::note_declared_at);
   }
@@ -3474,13 +3474,13 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
       SourceLocation SrcExprEndLoc = PP.getLocForEndOfToken(SrcExpr->getLocEnd());
       
       Diag(Loc, diag::err_objc_bridged_related_known_method)
-      << SrcType << DestType << InstanceMethod->getSelector() << 1
+      << SrcType << DestType << InstanceMethod->getSelector() << true
       << FixItHint::CreateInsertion(SrcExpr->getLocStart(), "[")
       << FixItHint::CreateInsertion(SrcExprEndLoc, ExpressionString);
     }
     else
       Diag(Loc, diag::err_objc_bridged_related_unknown_method)
-        << SrcType << DestType << 1;
+        << SrcType << DestType << true;
     Diag(RelatedClass->getLocStart(), diag::note_declared_at);
     Diag(TDNDecl->getLocStart(), diag::note_declared_at);
   }

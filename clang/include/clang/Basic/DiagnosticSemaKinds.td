@@ -2472,8 +2472,9 @@ def err_objc_bridged_related_invalid_class : Error<
 def err_objc_bridged_related_invalid_class_name : Error<
   "%0 must be name of an Objective-C class to be able to convert %1 to %2">;
  def err_objc_bridged_related_unknown_method : Error<
- "you can't convert %0 to %1, without using an existing "
- "%select{class|instance}2 method for this conversion">;
+ "%0 cannot be directly converted to %1; specify "
+ "%select{a class|an instance}2 method in objc_bridge_related attribute"
+ " for this conversion">;
 def err_objc_bridged_related_known_method : Error<
  "%0 must be explicitly converted to %1; use %select{%objcclass2|%objcinstance2}3 "
  "method for this conversion">;
