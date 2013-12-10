@@ -3460,7 +3460,7 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
     }
     else
       Diag(Loc, diag::err_objc_bridged_related_unknown_method)
-        << SrcType << DestType << false;
+        << SrcType << DestType;
     Diag(RelatedClass->getLocStart(), diag::note_declared_at);
     Diag(TDNDecl->getLocStart(), diag::note_declared_at);
   }
@@ -3480,7 +3480,7 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
     }
     else
       Diag(Loc, diag::err_objc_bridged_related_unknown_method)
-        << SrcType << DestType << true;
+        << SrcType << DestType;
     Diag(RelatedClass->getLocStart(), diag::note_declared_at);
     Diag(TDNDecl->getLocStart(), diag::note_declared_at);
   }
