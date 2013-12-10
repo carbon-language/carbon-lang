@@ -428,9 +428,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 
   SDB->init(GFI, *AA, LibInfo);
 
-  MF->setHasInlineAsm(false);
-  MF->getFrameInfo()->setHasInlineAsmWithSPAdjust(false);
-
+  MF->setHasMSInlineAsm(false);
   SelectAllBasicBlocks(Fn);
 
   // If the first basic block in the function has live ins that need to be
@@ -514,7 +512,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end(); I != E;
        ++I) {
 
-    if (MFI->hasCalls() && MF->hasInlineAsm())
+    if (MFI->hasCalls() && MF->hasMSInlineAsm())
       break;
 
     const MachineBasicBlock *MBB = I;
@@ -525,8 +523,8 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
           II->isStackAligningInlineAsm()) {
         MFI->setHasCalls(true);
       }
-      if (II->isInlineAsm()) {
-        MF->setHasInlineAsm(true);
+      if (II->isMSInlineAsm()) {
+        MF->setHasMSInlineAsm(true);
       }
     }
   }

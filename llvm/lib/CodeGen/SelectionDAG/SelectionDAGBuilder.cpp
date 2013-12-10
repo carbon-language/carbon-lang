@@ -851,20 +851,12 @@ void RegsForValue::AddInlineAsmOperands(unsigned Code, bool HasMatching,
   SDValue Res = DAG.getTargetConstant(Flag, MVT::i32);
   Ops.push_back(Res);
 
-  unsigned SP = TLI.getStackPointerRegisterToSaveRestore();
   for (unsigned Value = 0, Reg = 0, e = ValueVTs.size(); Value != e; ++Value) {
     unsigned NumRegs = TLI.getNumRegisters(*DAG.getContext(), ValueVTs[Value]);
     MVT RegisterVT = RegVTs[Value];
     for (unsigned i = 0; i != NumRegs; ++i) {
       assert(Reg < Regs.size() && "Mismatch in # registers expected");
-      unsigned TheReg = Regs[Reg++];
-      Ops.push_back(DAG.getRegister(TheReg, RegisterVT));
-
-      // Notice if we clobbered the stack pointer.  Yes, inline asm can do this.
-      if (TheReg == SP && Code == InlineAsm::Kind_Clobber) {
-        MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
-        MFI->setHasInlineAsmWithSPAdjust(true);
-      }
+      Ops.push_back(DAG.getRegister(Regs[Reg++], RegisterVT));
     }
   }
 }

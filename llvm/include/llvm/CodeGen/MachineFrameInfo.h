@@ -223,10 +223,6 @@ class MachineFrameInfo {
   /// Whether the "realign-stack" option is on.
   bool RealignOption;
 
-  /// True if the function includes inline assembly that adjusts the stack
-  /// pointer.
-  bool HasInlineAsmWithSPAdjust;
-
   const TargetFrameLowering *getFrameLowering() const;
 public:
     explicit MachineFrameInfo(const TargetMachine &TM, bool RealignOpt)
@@ -454,10 +450,6 @@ public:
   /// hasCalls - Return true if the current function has any function calls.
   bool hasCalls() const { return HasCalls; }
   void setHasCalls(bool V) { HasCalls = V; }
-
-  /// Returns true if the function contains any stack-adjusting inline assembly.
-  bool hasInlineAsmWithSPAdjust() const { return HasInlineAsmWithSPAdjust; }
-  void setHasInlineAsmWithSPAdjust(bool B) { HasInlineAsmWithSPAdjust = B; }
 
   /// getMaxCallFrameSize - Return the maximum size of a call frame that must be
   /// allocated for an outgoing function call.  This is only available if

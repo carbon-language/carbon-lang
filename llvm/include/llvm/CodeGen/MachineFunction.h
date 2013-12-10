@@ -131,8 +131,8 @@ class MachineFunction {
   /// about the control flow of such functions.
   bool ExposesReturnsTwice;
 
-  /// True if the function includes any inline assembly.
-  bool HasInlineAsm;
+  /// True if the function includes MS-style inline assembly.
+  bool HasMSInlineAsm;
 
   MachineFunction(const MachineFunction &) LLVM_DELETED_FUNCTION;
   void operator=(const MachineFunction&) LLVM_DELETED_FUNCTION;
@@ -218,14 +218,15 @@ public:
     ExposesReturnsTwice = B;
   }
 
-  /// Returns true if the function contains any inline assembly.
-  bool hasInlineAsm() const {
-    return HasInlineAsm;
+  /// Returns true if the function contains any MS-style inline assembly.
+  bool hasMSInlineAsm() const {
+    return HasMSInlineAsm;
   }
 
-  /// Set a flag that indicates that the function contains inline assembly.
-  void setHasInlineAsm(bool B) {
-    HasInlineAsm = B;
+  /// Set a flag that indicates that the function contains MS-style inline
+  /// assembly.
+  void setHasMSInlineAsm(bool B) {
+    HasMSInlineAsm = B;
   }
   
   /// getInfo - Keep track of various per-function pieces of information for
