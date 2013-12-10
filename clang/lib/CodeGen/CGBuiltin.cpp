@@ -2532,32 +2532,24 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
     s = "vsqrshrun"; IntTypes = VectorRet; break;
   // Scalar Signed Fixed-point Convert To Floating-Point (Immediate)
   case AArch64::BI__builtin_neon_vcvts_n_f32_s32:
-    Int = Intrinsic::aarch64_neon_vcvtf32_n_s32;
-    s = "vcvtf"; break;
   case AArch64::BI__builtin_neon_vcvtd_n_f64_s64:
-    Int = Intrinsic::aarch64_neon_vcvtf64_n_s64;
-    s = "vcvtf"; break;
+    Int = Intrinsic::aarch64_neon_vcvtfxs2fp_n;
+    s = "vcvtf"; IntTypes = ScalarRet | VectorGetArg0; break;
   // Scalar Unsigned Fixed-point Convert To Floating-Point (Immediate)
   case AArch64::BI__builtin_neon_vcvts_n_f32_u32:
-    Int = Intrinsic::aarch64_neon_vcvtf32_n_u32;
-    s = "vcvtf"; break;
   case AArch64::BI__builtin_neon_vcvtd_n_f64_u64:
-    Int = Intrinsic::aarch64_neon_vcvtf64_n_u64;
-    s = "vcvtf"; break;
+    Int = Intrinsic::aarch64_neon_vcvtfxu2fp_n;
+    s = "vcvtf"; IntTypes = ScalarRet | VectorGetArg0; break;
   // Scalar Floating-point Convert To Signed Fixed-point (Immediate)
   case AArch64::BI__builtin_neon_vcvts_n_s32_f32:
-    Int = Intrinsic::aarch64_neon_vcvts_n_s32_f32;
-    s = "fcvtzs"; break;
   case AArch64::BI__builtin_neon_vcvtd_n_s64_f64:
-    Int = Intrinsic::aarch64_neon_vcvtd_n_s64_f64;
-    s = "fcvtzs"; break;
+    Int = Intrinsic::aarch64_neon_vcvtfp2fxs_n;
+    s = "fcvtzs"; IntTypes = VectorRet | VectorGetArg0; break;
   // Scalar Floating-point Convert To Unsigned Fixed-point (Immediate)
   case AArch64::BI__builtin_neon_vcvts_n_u32_f32:
-    Int = Intrinsic::aarch64_neon_vcvts_n_u32_f32;
-    s = "fcvtzu"; break;
   case AArch64::BI__builtin_neon_vcvtd_n_u64_f64:
-    Int = Intrinsic::aarch64_neon_vcvtd_n_u64_f64;
-    s = "fcvtzu"; break;
+    Int = Intrinsic::aarch64_neon_vcvtfp2fxu_n;
+    s = "fcvtzu"; IntTypes = VectorRet | VectorGetArg0; break;
   case AArch64::BI__builtin_neon_vmull_p64:
     Int = Intrinsic::aarch64_neon_vmull_p64;
     s = "vmull"; break;
