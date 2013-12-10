@@ -347,12 +347,6 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
         "Stack realignment in presence of dynamic allocas is not supported with"
         "this calling convention.");
 
-    // FIXME: Do a proper analysis of the inline asm to see if it actually
-    // conflicts with the base register we chose.
-    if (MF.hasInlineAsm())
-      report_fatal_error("Stack realignment in presence of dynamic stack "
-                         "adjustments is not supported with inline assembly.");
-
     for (MCSubRegIterator I(getBaseRegister(), this, /*IncludeSelf=*/true);
          I.isValid(); ++I)
       Reserved.set(*I);

@@ -1,8 +1,8 @@
 ; RUN: not llc -mtriple=i686-pc-win32 < %s 2>&1 | FileCheck %s
 
-; We don't currently support realigning the stack and adjusting the stack
-; pointer in inline asm.  This commonly happens in MS inline assembly using
-; push and pop.
+; FIXME: This is miscompiled due to our unconditional use of ESI as the base
+; pointer.
+; XFAIL:
 
 ; CHECK: Stack realignment in presence of dynamic stack adjustments is not supported with inline assembly
 
