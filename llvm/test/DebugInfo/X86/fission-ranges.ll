@@ -29,7 +29,7 @@
 
 ; clang -g -S -gsplit-dwarf -O1 small.c
 
-; CHECK: DW_AT_GNU_ranges_base
+; CHECK: DW_AT_ranges
 
 @c = external global i32
 
