@@ -33,19 +33,6 @@ define i16 @mand16(i16 %x, i16 %y) {
   ret i16 %ret
 }
 
-; CHECK: unpckbw_test
-; CHECK: kunpckbw
-; CHECK:ret
-declare <16 x i1> @llvm.x86.kunpck.v16i1(<8 x i1>, <8 x i1>) nounwind readnone
-
-define i16 @unpckbw_test(i8 %x, i8 %y) {
-  %m0 = bitcast i8 %x to <8 x i1>
-  %m1 = bitcast i8 %y to <8 x i1>
-  %k = tail call <16 x i1> @llvm.x86.kunpck.v16i1(<8 x i1> %m0, <8 x i1> %m1)
-  %r = bitcast <16 x i1> %k to i16
-  ret i16 %r
-}
-
 ; CHECK: shuf_test1
 ; CHECK: kshiftrw        $8
 ; CHECK:ret

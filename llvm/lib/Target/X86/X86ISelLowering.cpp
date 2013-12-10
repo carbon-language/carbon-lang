@@ -11490,9 +11490,9 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8, CC, Test);
     return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
   }
-  case Intrinsic::x86_avx512_kortestz:
-  case Intrinsic::x86_avx512_kortestc: {
-    unsigned X86CC = (IntNo == Intrinsic::x86_avx512_kortestz)? X86::COND_E: X86::COND_B;
+  case Intrinsic::x86_avx512_kortestz_w:
+  case Intrinsic::x86_avx512_kortestc_w: {
+    unsigned X86CC = (IntNo == Intrinsic::x86_avx512_kortestz_w)? X86::COND_E: X86::COND_B;
     SDValue LHS = DAG.getNode(ISD::BITCAST, dl, MVT::v16i1, Op.getOperand(1));
     SDValue RHS = DAG.getNode(ISD::BITCAST, dl, MVT::v16i1, Op.getOperand(2));
     SDValue CC = DAG.getConstant(X86CC, MVT::i8);

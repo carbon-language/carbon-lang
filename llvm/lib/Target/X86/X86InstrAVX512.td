@@ -898,6 +898,15 @@ multiclass avx512_mask_unop_w<bits<8> opc, string OpcodeStr,
 
 defm KNOT : avx512_mask_unop_w<0x44, "knot", not>;
 
+multiclass avx512_mask_unop_int<string IntName, string InstName> {
+  let Predicates = [HasAVX512] in
+    def : Pat<(!cast<Intrinsic>("int_x86_avx512_"##IntName##"_w")
+                (i16 GR16:$src)),
+              (COPY_TO_REGCLASS (!cast<Instruction>(InstName##"Wrr")
+              (v16i1 (COPY_TO_REGCLASS GR16:$src, VK16))), GR16)>;
+}
+defm : avx512_mask_unop_int<"knot", "KNOT">;
+
 def : Pat<(xor VK16:$src1, (v16i1 immAllOnesV)), (KNOTWrr VK16:$src1)>;
 def : Pat<(xor VK8:$src1,  (v8i1 immAllOnesV)),
           (COPY_TO_REGCLASS (KNOTWrr (COPY_TO_REGCLASS VK8:$src1, VK16)), VK8)>;
@@ -908,7 +917,7 @@ def : Pat<(not VK8:$src),
             (KNOTWrr (COPY_TO_REGCLASS VK8:$src, VK16)), VK8)>;
 
 // Mask binary operation
-// - KADD, KAND, KANDN, KOR, KXNOR, KXOR
+// - KAND, KANDN, KOR, KXNOR, KXOR
 multiclass avx512_mask_binop<bits<8> opc, string OpcodeStr,
                            RegisterClass KRC, SDPatternOperator OpNode> {
   let Predicates = [HasAVX512] in
@@ -928,7 +937,6 @@ def andn : PatFrag<(ops node:$i0, node:$i1), (and (not node:$i0), node:$i1)>;
 def xnor : PatFrag<(ops node:$i0, node:$i1), (not (xor node:$i0, node:$i1))>;
 
 let isCommutable = 1 in {
-  defm KADD  : avx512_mask_binop_w<0x4a, "kadd",  add>;
   defm KAND  : avx512_mask_binop_w<0x41, "kand",  and>;
   let isCommutable = 0 in
   defm KANDN : avx512_mask_binop_w<0x42, "kandn", andn>;
@@ -939,17 +947,19 @@ let isCommutable = 1 in {
 
 multiclass avx512_mask_binop_int<string IntName, string InstName> {
   let Predicates = [HasAVX512] in
-    def : Pat<(!cast<Intrinsic>("int_x86_"##IntName##"_v16i1")
-                VK16:$src1, VK16:$src2),
-              (!cast<Instruction>(InstName##"Wrr") VK16:$src1, VK16:$src2)>;
+    def : Pat<(!cast<Intrinsic>("int_x86_avx512_"##IntName##"_w")
+                (i16 GR16:$src1), (i16 GR16:$src2)),
+              (COPY_TO_REGCLASS (!cast<Instruction>(InstName##"Wrr")
+              (v16i1 (COPY_TO_REGCLASS GR16:$src1, VK16)),
+              (v16i1 (COPY_TO_REGCLASS GR16:$src2, VK16))), GR16)>;
 }
 
-defm : avx512_mask_binop_int<"kadd",  "KADD">;
 defm : avx512_mask_binop_int<"kand",  "KAND">;
 defm : avx512_mask_binop_int<"kandn", "KANDN">;
 defm : avx512_mask_binop_int<"kor",   "KOR">;
 defm : avx512_mask_binop_int<"kxnor", "KXNOR">;
 defm : avx512_mask_binop_int<"kxor",  "KXOR">;
+
 // With AVX-512, 8-bit mask is promoted to 16-bit mask.
 multiclass avx512_binop_pat<SDPatternOperator OpNode, Instruction Inst> {
   let Predicates = [HasAVX512] in
@@ -967,15 +977,15 @@ defm : avx512_binop_pat<xor,  KXORWrr>;
 
 // Mask unpacking
 multiclass avx512_mask_unpck<bits<8> opc, string OpcodeStr,
-                           RegisterClass KRC1, RegisterClass KRC2> {
+                           RegisterClass KRC> {
   let Predicates = [HasAVX512] in
-    def rr : I<opc, MRMSrcReg, (outs KRC1:$dst), (ins KRC2:$src1, KRC2:$src2),
+    def rr : I<opc, MRMSrcReg, (outs KRC:$dst), (ins KRC:$src1, KRC:$src2),
                !strconcat(OpcodeStr,
                           "\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
 }
 
 multiclass avx512_mask_unpck_bw<bits<8> opc, string OpcodeStr> {
-  defm BW : avx512_mask_unpck<opc, !strconcat(OpcodeStr, "bw"), VK16, VK8>,
+  defm BW : avx512_mask_unpck<opc, !strconcat(OpcodeStr, "bw"), VK16>,
                             VEX_4V, VEX_L, OpSize, TB;
 }
 
@@ -983,12 +993,14 @@ defm KUNPCK : avx512_mask_unpck_bw<0x4b, "kunpck">;
 
 multiclass avx512_mask_unpck_int<string IntName, string InstName> {
   let Predicates = [HasAVX512] in
-    def : Pat<(!cast<Intrinsic>("int_x86_"##IntName##"_v16i1")
-                VK8:$src1, VK8:$src2),
-              (!cast<Instruction>(InstName##"BWrr") VK8:$src1, VK8:$src2)>;
+    def : Pat<(!cast<Intrinsic>("int_x86_avx512_"##IntName##"_bw")
+                (i16 GR16:$src1), (i16 GR16:$src2)),
+              (COPY_TO_REGCLASS (!cast<Instruction>(InstName##"BWrr")
+              (v16i1 (COPY_TO_REGCLASS GR16:$src1, VK16)),
+              (v16i1 (COPY_TO_REGCLASS GR16:$src2, VK16))), GR16)>;
 }
+defm : avx512_mask_unpck_int<"kunpck",  "KUNPCK">;
 
-defm : avx512_mask_unpck_int<"kunpck", "KUNPCK">;
 // Mask bit testing
 multiclass avx512_mask_testop<bits<8> opc, string OpcodeStr, RegisterClass KRC,
                             SDNode OpNode> {

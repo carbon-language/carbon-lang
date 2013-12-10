@@ -1,21 +1,49 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
 
-declare i32 @llvm.x86.avx512.kortestz(i16, i16) nounwind readnone
-; CHECK: test_kortestz
+declare i32 @llvm.x86.avx512.kortestz.w(i16, i16) nounwind readnone
+; CHECK-LABEL: test_kortestz
 ; CHECK: kortestw
 ; CHECK: sete
 define i32 @test_kortestz(i16 %a0, i16 %a1) {
-  %res = call i32 @llvm.x86.avx512.kortestz(i16 %a0, i16 %a1) 
+  %res = call i32 @llvm.x86.avx512.kortestz.w(i16 %a0, i16 %a1) 
   ret i32 %res
 }
 
-declare i32 @llvm.x86.avx512.kortestc(i16, i16) nounwind readnone
-; CHECK: test_kortestc
+declare i32 @llvm.x86.avx512.kortestc.w(i16, i16) nounwind readnone
+; CHECK-LABEL: test_kortestc
 ; CHECK: kortestw
 ; CHECK: sbbl
 define i32 @test_kortestc(i16 %a0, i16 %a1) {
-  %res = call i32 @llvm.x86.avx512.kortestc(i16 %a0, i16 %a1) 
+  %res = call i32 @llvm.x86.avx512.kortestc.w(i16 %a0, i16 %a1) 
   ret i32 %res
+}
+
+declare i16 @llvm.x86.avx512.kand.w(i16, i16) nounwind readnone
+; CHECK-LABEL: test_kand
+; CHECK: kandw
+; CHECK: kandw
+define i16 @test_kand(i16 %a0, i16 %a1) {
+  %t1 = call i16 @llvm.x86.avx512.kand.w(i16 %a0, i16 8)
+  %t2 = call i16 @llvm.x86.avx512.kand.w(i16 %t1, i16 %a1)
+  ret i16 %t2
+}
+
+declare i16 @llvm.x86.avx512.knot.w(i16) nounwind readnone
+; CHECK-LABEL: test_knot
+; CHECK: knotw
+define i16 @test_knot(i16 %a0) {
+  %res = call i16 @llvm.x86.avx512.knot.w(i16 %a0)
+  ret i16 %res
+}
+
+declare i16 @llvm.x86.avx512.kunpck.bw(i16, i16) nounwind readnone
+
+; CHECK-LABEL: unpckbw_test
+; CHECK: kunpckbw
+; CHECK:ret
+define i16 @unpckbw_test(i16 %a0, i16 %a1) {
+  %res = call i16 @llvm.x86.avx512.kunpck.bw(i16 %a0, i16 %a1)
+  ret i16 %res
 }
 
 define <16 x float> @test_rcp_ps_512(<16 x float> %a0) {
