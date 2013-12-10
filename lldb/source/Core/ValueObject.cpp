@@ -3516,7 +3516,8 @@ ValueObject::CreateConstantValue (const ConstString &name)
     
     if (!valobj_sp)
     {
-        valobj_sp = ValueObjectConstResult::Create (NULL, m_error);
+        ExecutionContext exe_ctx (GetExecutionContextRef());
+        valobj_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(), m_error);
     }
     return valobj_sp;
 }

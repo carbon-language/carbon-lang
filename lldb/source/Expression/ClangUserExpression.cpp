@@ -1024,7 +1024,9 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     }
     
     if (result_valobj_sp.get() == NULL)
-        result_valobj_sp = ValueObjectConstResult::Create (NULL, error);
+    {
+        result_valobj_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(), error);
+    }
 
     return execution_results;
 }
