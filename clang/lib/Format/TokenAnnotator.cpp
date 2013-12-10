@@ -1293,9 +1293,12 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return Line.Type == LT_ObjCDecl ||
            Left.isOneOf(tok::kw_return, tok::kw_new, tok::kw_delete,
                         tok::semi) ||
-           (Style.SpaceAfterControlStatementKeyword &&
+           (Style.SpaceBeforeParens != FormatStyle::SBPO_Never &&
             Left.isOneOf(tok::kw_if, tok::kw_for, tok::kw_while, tok::kw_switch,
-                         tok::kw_catch));
+                         tok::kw_catch)) ||
+           (Style.SpaceBeforeParens == FormatStyle::SBPO_Always &&
+            Left.isOneOf(tok::identifier, tok::kw___attribute) &&
+            Line.Type != LT_PreprocessorDirective);
   }
   if (Left.is(tok::at) && Right.Tok.getObjCKeywordID() != tok::objc_not_keyword)
     return false;

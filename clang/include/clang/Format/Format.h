@@ -256,9 +256,22 @@ struct FormatStyle {
   /// \brief If \c false, spaces may be inserted into C style casts.
   bool SpacesInCStyleCastParentheses;
 
-  /// \brief If \c true, spaces will be inserted between 'for'/'if'/'while'/...
-  /// and '('.
-  bool SpaceAfterControlStatementKeyword;
+  /// \brief Different ways to put a space before opening parentheses.
+  enum SpaceBeforeParensOptions {
+    /// Never put a space before opening parentheses.
+    SBPO_Never,
+    /// Put a space before opening parentheses only after control statement
+    /// keywords (<tt>for/if/while...</tt>).
+    SBPO_ControlStatements,
+    /// Always put a space before opening parentheses, except when it's
+    /// prohibited by the syntax rules (in function-like macro definitions) or
+    /// when determined by other style rules (after unary operators, opening
+    /// parentheses, etc.)
+    SBPO_Always
+  };
+
+  /// \brief Defines in which cases to put a space before opening parentheses.
+  SpaceBeforeParensOptions SpaceBeforeParens;
 
   /// \brief If \c false, spaces will be removed before assignment operators.
   bool SpaceBeforeAssignmentOperators;
@@ -315,8 +328,7 @@ struct FormatStyle {
            SpacesInAngles == R.SpacesInAngles &&
            SpaceInEmptyParentheses == R.SpaceInEmptyParentheses &&
            SpacesInCStyleCastParentheses == R.SpacesInCStyleCastParentheses &&
-           SpaceAfterControlStatementKeyword ==
-               R.SpaceAfterControlStatementKeyword &&
+           SpaceBeforeParens == R.SpaceBeforeParens &&
            SpaceBeforeAssignmentOperators == R.SpaceBeforeAssignmentOperators &&
            ContinuationIndentWidth == R.ContinuationIndentWidth;
   }

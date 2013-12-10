@@ -2082,7 +2082,8 @@ TEST_F(FormatTest, HashInMacroDefinition) {
 }
 
 TEST_F(FormatTest, RespectWhitespaceInMacroDefinitions) {
-  verifyFormat("#define A (1)");
+  EXPECT_EQ("#define A (x)", format("#define A (x)"));
+  EXPECT_EQ("#define A(x)", format("#define A(x)"));
 }
 
 TEST_F(FormatTest, EmptyLinesInMacroDefinitions) {
@@ -6660,9 +6661,9 @@ TEST_F(FormatTest, CalculatesOriginalColumn) {
                    getLLVMStyle()));
 }
 
-TEST_F(FormatTest, ConfigurableSpaceAfterControlStatementKeyword) {
+TEST_F(FormatTest, ConfigurableSpaceBeforeParens) {
   FormatStyle NoSpace = getLLVMStyle();
-  NoSpace.SpaceAfterControlStatementKeyword = false;
+  NoSpace.SpaceBeforeParens = FormatStyle::SBPO_Never;
 
   verifyFormat("while(true)\n"
                "  continue;", NoSpace);
@@ -6679,6 +6680,42 @@ TEST_F(FormatTest, ConfigurableSpaceAfterControlStatementKeyword) {
                "default:\n"
                "  break;\n"
                "}", NoSpace);
+
+  FormatStyle Space = getLLVMStyle();
+  Space.SpaceBeforeParens = FormatStyle::SBPO_Always;
+
+  verifyFormat("int f ();", Space);
+  verifyFormat("void f (int a, T b) {\n"
+               "  while (true)\n"
+               "    continue;\n"
+               "}",
+               Space);
+  verifyFormat("if (true)\n"
+               "  f ();\n"
+               "else if (true)\n"
+               "  f ();",
+               Space);
+  verifyFormat("do {\n"
+               "  do_something ();\n"
+               "} while (something ());",
+               Space);
+  verifyFormat("switch (x) {\n"
+               "default:\n"
+               "  break;\n"
+               "}",
+               Space);
+  verifyFormat("A::A () : a (1) {}", Space);
+  verifyFormat("void f () __attribute__ ((asdf));", Space);
+  verifyFormat("*(&a + 1);\n"
+               "&((&a)[1]);\n"
+               "a[(b + c) * d];\n"
+               "(((a + 1) * 2) + 3) * 4;",
+               Space);
+  verifyFormat("#define A(x) x", Space);
+  verifyFormat("#define A (x) x", Space);
+  verifyFormat("#if defined(x)\n"
+               "#endif",
+               Space);
 }
 
 TEST_F(FormatTest, ConfigurableSpacesInParentheses) {
@@ -6988,7 +7025,6 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE_BOOL(SpacesInAngles);
   CHECK_PARSE_BOOL(SpaceInEmptyParentheses);
   CHECK_PARSE_BOOL(SpacesInCStyleCastParentheses);
-  CHECK_PARSE_BOOL(SpaceAfterControlStatementKeyword);
   CHECK_PARSE_BOOL(SpaceBeforeAssignmentOperators);
 
   CHECK_PARSE("AccessModifierOffset: -1234", AccessModifierOffset, -1234);
@@ -7019,6 +7055,19 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE("UseTab: Never", UseTab, FormatStyle::UT_Never);
   CHECK_PARSE("UseTab: ForIndentation", UseTab, FormatStyle::UT_ForIndentation);
   CHECK_PARSE("UseTab: Always", UseTab, FormatStyle::UT_Always);
+
+  Style.SpaceBeforeParens = FormatStyle::SBPO_Always;
+  CHECK_PARSE("SpaceBeforeParens: Never", SpaceBeforeParens,
+              FormatStyle::SBPO_Never);
+  CHECK_PARSE("SpaceBeforeParens: Always", SpaceBeforeParens,
+              FormatStyle::SBPO_Always);
+  CHECK_PARSE("SpaceBeforeParens: ControlStatements", SpaceBeforeParens,
+              FormatStyle::SBPO_ControlStatements);
+  // For backward compatibility:
+  CHECK_PARSE("SpaceAfterControlStatementKeyword: false", SpaceBeforeParens,
+              FormatStyle::SBPO_Never);
+  CHECK_PARSE("SpaceAfterControlStatementKeyword: true", SpaceBeforeParens,
+              FormatStyle::SBPO_ControlStatements);
 
   Style.ColumnLimit = 123;
   FormatStyle BaseStyle = getLLVMStyle();

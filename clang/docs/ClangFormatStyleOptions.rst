@@ -106,6 +106,10 @@ the configuration (without a prefix: ``Auto``).
   Allow putting all parameters of a function declaration onto
   the next line even if ``BinPackParameters`` is ``false``.
 
+**AllowShortFunctionsOnASingleLine** (``bool``)
+  If ``true``, ``int f() { return 0; }`` can be put on a single
+  line.
+
 **AllowShortIfStatementsOnASingleLine** (``bool``)
   If ``true``, ``if (a) return;`` can be put on a single
   line.
@@ -144,6 +148,9 @@ the configuration (without a prefix: ``Auto``).
     Always break before braces.
 
 
+**BreakBeforeTernaryOperators** (``bool``)
+  If ``true``, ternary operators will be placed after line breaks.
+
 **BreakConstructorInitializersBeforeComma** (``bool``)
   Always break constructor initializers before commas and align
   the commas with the colon.
@@ -153,7 +160,7 @@ the configuration (without a prefix: ``Auto``).
 
   A column limit of ``0`` means that there is no column limit. In this case,
   clang-format will respect the input's line breaking decisions within
-  statements.
+  statements unless they contradict other rules.
 
 **ConstructorInitializerAllOnOneLineOrOnePerLine** (``bool``)
   If the constructor initializers don't fit on a line, put each
@@ -162,6 +169,9 @@ the configuration (without a prefix: ``Auto``).
 **ConstructorInitializerIndentWidth** (``unsigned``)
   The number of characters to use for indentation of constructor
   initializer lists.
+
+**ContinuationIndentWidth** (``unsigned``)
+  Indent width for line continuations.
 
 **Cpp11BracedListStyle** (``bool``)
   If ``true``, format braced lists as best suited for C++11 braced
@@ -206,6 +216,19 @@ the configuration (without a prefix: ``Auto``).
 **IndentWidth** (``unsigned``)
   The number of columns to use for indentation.
 
+**Language** (``LanguageKind``)
+  Language, this format style is targeted at.
+
+  Possible values:
+
+  * ``LK_None`` (in configuration: ``None``)
+    Do not use.
+  * ``LK_Cpp`` (in configuration: ``Cpp``)
+    Should be used for C, C++, ObjectiveC, ObjectiveC++.
+  * ``LK_JavaScript`` (in configuration: ``JavaScript``)
+    Should be used for JavaScript.
+
+
 **MaxEmptyLinesToKeep** (``unsigned``)
   The maximum number of consecutive empty lines to keep.
 
@@ -226,6 +249,9 @@ the configuration (without a prefix: ``Auto``).
   Add a space in front of an Objective-C protocol list, i.e. use
   ``Foo <Protocol>`` instead of ``Foo<Protocol>``.
 
+**PenaltyBreakBeforeFirstCallParameter** (``unsigned``)
+  The penalty for breaking a function call after "call(".
+
 **PenaltyBreakComment** (``unsigned``)
   The penalty for each line break introduced inside a comment.
 
@@ -245,12 +271,25 @@ the configuration (without a prefix: ``Auto``).
 **PointerBindsToType** (``bool``)
   Set whether & and * bind to the type as opposed to the variable.
 
-**SpaceAfterControlStatementKeyword** (``bool``)
-  If ``true``, spaces will be inserted between 'for'/'if'/'while'/...
-  and '('.
-
 **SpaceBeforeAssignmentOperators** (``bool``)
   If ``false``, spaces will be removed before assignment operators.
+
+**SpaceBeforeParens** (``SpaceBeforeParensOptions``)
+  Defines in which cases to put a space before opening parentheses.
+
+  Possible values:
+
+  * ``SBPO_Never`` (in configuration: ``Never``)
+    Never put a space before opening parentheses.
+  * ``SBPO_ControlStatements`` (in configuration: ``ControlStatements``)
+    Put a space before opening parentheses only after control statement
+    keywords (``for/if/while...``).
+  * ``SBPO_Always`` (in configuration: ``Always``)
+    Always put a space before opening parentheses, except when it's
+    prohibited by the syntax rules (in function-like macro definitions) or
+    when determined by other style rules (after unary operators, opening
+    parentheses, etc.)
+
 
 **SpaceInEmptyParentheses** (``bool``)
   If ``false``, spaces may be inserted into '()'.
@@ -258,12 +297,15 @@ the configuration (without a prefix: ``Auto``).
 **SpacesBeforeTrailingComments** (``unsigned``)
   The number of spaces to before trailing line comments.
 
+**SpacesInAngles** (``bool``)
+  If ``true``, spaces will be inserted after '<' and before '>' in
+  template argument lists
+
 **SpacesInCStyleCastParentheses** (``bool``)
   If ``false``, spaces may be inserted into C style casts.
 
 **SpacesInParentheses** (``bool``)
-  If ``true``, spaces will be inserted after every '(' and before
-  every ')'.
+  If ``true``, spaces will be inserted after '(' and before ')'.
 
 **Standard** (``LanguageStandard``)
   Format compatible with this standard, e.g. use

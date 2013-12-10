@@ -90,6 +90,24 @@ struct ScalarEnumerationTraits<
   }
 };
 
+template <>
+struct ScalarEnumerationTraits<
+    clang::format::FormatStyle::SpaceBeforeParensOptions> {
+  static void
+  enumeration(IO &IO,
+              clang::format::FormatStyle::SpaceBeforeParensOptions &Value) {
+    IO.enumCase(Value, "Never", clang::format::FormatStyle::SBPO_Never);
+    IO.enumCase(Value, "ControlStatements",
+                clang::format::FormatStyle::SBPO_ControlStatements);
+    IO.enumCase(Value, "Always", clang::format::FormatStyle::SBPO_Always);
+
+    // For backward compatibility.
+    IO.enumCase(Value, "false", clang::format::FormatStyle::SBPO_Never);
+    IO.enumCase(Value, "true",
+                clang::format::FormatStyle::SBPO_ControlStatements);
+  }
+};
+
 template <> struct MappingTraits<clang::format::FormatStyle> {
   static void mapping(llvm::yaml::IO &IO, clang::format::FormatStyle &Style) {
     if (IO.outputting()) {
@@ -179,11 +197,16 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
     IO.mapOptional("SpaceInEmptyParentheses", Style.SpaceInEmptyParentheses);
     IO.mapOptional("SpacesInCStyleCastParentheses",
                    Style.SpacesInCStyleCastParentheses);
-    IO.mapOptional("SpaceAfterControlStatementKeyword",
-                   Style.SpaceAfterControlStatementKeyword);
     IO.mapOptional("SpaceBeforeAssignmentOperators",
                    Style.SpaceBeforeAssignmentOperators);
     IO.mapOptional("ContinuationIndentWidth", Style.ContinuationIndentWidth);
+
+    // For backward compatibility.
+    if (!IO.outputting()) {
+      IO.mapOptional("SpaceAfterControlStatementKeyword",
+                     Style.SpaceBeforeParens);
+    }
+    IO.mapOptional("SpaceBeforeParens", Style.SpaceBeforeParens);
   }
 };
 
@@ -266,7 +289,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.SpacesInParentheses = false;
   LLVMStyle.SpaceInEmptyParentheses = false;
   LLVMStyle.SpacesInCStyleCastParentheses = false;
-  LLVMStyle.SpaceAfterControlStatementKeyword = true;
+  LLVMStyle.SpaceBeforeParens = FormatStyle::SBPO_ControlStatements;
   LLVMStyle.SpaceBeforeAssignmentOperators = true;
   LLVMStyle.ContinuationIndentWidth = 4;
   LLVMStyle.SpacesInAngles = false;
@@ -315,7 +338,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.SpacesInParentheses = false;
   GoogleStyle.SpaceInEmptyParentheses = false;
   GoogleStyle.SpacesInCStyleCastParentheses = false;
-  GoogleStyle.SpaceAfterControlStatementKeyword = true;
+  GoogleStyle.SpaceBeforeParens = FormatStyle::SBPO_ControlStatements;
   GoogleStyle.SpaceBeforeAssignmentOperators = true;
   GoogleStyle.ContinuationIndentWidth = 4;
   GoogleStyle.SpacesInAngles = false;
