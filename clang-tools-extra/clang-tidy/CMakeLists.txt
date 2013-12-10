@@ -7,11 +7,13 @@ add_clang_library(clangTidy
   ClangTidyModule.cpp
   )
 target_link_libraries(clangTidy
-  clangTooling
+  clangAST
+  clangASTMatchers
   clangBasic
-  clangRewriteFrontend
+  clangFrontend
+  clangRewriteCore
   clangStaticAnalyzerFrontend
-  clangStaticAnalyzerCheckers
+  clangTooling
   )
 
 add_subdirectory(tool)

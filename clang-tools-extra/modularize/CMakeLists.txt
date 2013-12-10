@@ -10,7 +10,9 @@ add_clang_executable(modularize
   )
 
 target_link_libraries(modularize
-  clangTooling
   clangBasic
-  clangRewriteFrontend
+  clangDriver
+  clangFrontend
+  clangLex
+  clangTooling
   )

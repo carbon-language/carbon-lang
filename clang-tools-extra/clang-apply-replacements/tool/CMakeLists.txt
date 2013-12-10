@@ -7,6 +7,10 @@ add_clang_executable(clang-apply-replacements
   )
 target_link_libraries(clang-apply-replacements
   clangApplyReplacements
+  clangBasic
+  clangFormat
+  clangRewriteCore
+  clangTooling
   )
 
 install(TARGETS clang-apply-replacements

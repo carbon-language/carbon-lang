@@ -11,12 +11,12 @@ add_extra_unittest(ClangTidyTests
   GoogleModuleTest.cpp)
 
 target_link_libraries(ClangTidyTests
-  gtest
-  gtest_main
-  clangTidy
-  clangTidyLLVMModule
-  clangTidyGoogleModule
-  clangTooling
-  clangBasic
+  clangAST
   clangASTMatchers
+  clangBasic
+  clangFrontend
+  clangTidy
+  clangTidyGoogleModule
+  clangTidyLLVMModule
+  clangTooling
   )

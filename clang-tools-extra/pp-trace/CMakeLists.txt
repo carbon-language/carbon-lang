@@ -8,8 +8,9 @@ add_clang_executable(pp-trace
   )
 
 target_link_libraries(pp-trace
+  clangAST
+  clangBasic
+  clangFrontend
   clangLex
-  clangParse
-  clangSema
   clangTooling
   )

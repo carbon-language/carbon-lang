@@ -9,9 +9,10 @@ add_clang_library(modernizeCore
   IncludeDirectives.cpp
   )
 target_link_libraries(modernizeCore
-  clangFormat
-  clangTooling
-  clangBasic
+  clangAST
   clangASTMatchers
-  clangRewriteFrontend
+  clangBasic
+  clangFrontend
+  clangLex
+  clangTooling
   )

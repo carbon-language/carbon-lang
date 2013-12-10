@@ -34,6 +34,13 @@ add_dependencies(clang-modernize
   )
 
 target_link_libraries(clang-modernize
+  clangAST
+  clangASTMatchers
+  clangBasic
+  clangFormat
+  clangFrontend
+  clangLex
+  clangTooling
   modernizeCore
   )
 

@@ -23,10 +23,10 @@ add_extra_unittest(ClangModernizeTests
   )
 
 target_link_libraries(ClangModernizeTests
-  modernizeCore
-  clangFormat
-  clangTooling
-  clangBasic
+  clangAST
   clangASTMatchers
-  clangRewriteFrontend
+  clangBasic
+  clangFrontend
+  clangTooling
+  modernizeCore
   )
