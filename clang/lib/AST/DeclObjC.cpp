@@ -453,9 +453,7 @@ bool ObjCInterfaceDecl::isDesignatedInitializer(Selector Sel,
   if (!IFace)
     return false;
 
-  if (const ObjCMethodDecl *MD = IFace->lookupMethod(Sel, /*isInstance=*/true,
-                                                 /*shallowCategoryLookup=*/true,
-                                                 /*followSuper=*/false)) {
+  if (const ObjCMethodDecl *MD = IFace->getMethod(Sel, /*isInstance=*/true)) {
     if (MD->isThisDeclarationADesignatedInitializer()) {
       if (InitMethod)
         *InitMethod = MD;
