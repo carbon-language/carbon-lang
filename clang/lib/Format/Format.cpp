@@ -97,7 +97,10 @@ struct ScalarEnumerationTraits<FormatStyle::SpaceBeforeParensOptions> {
 };
 
 template <> struct MappingTraits<FormatStyle> {
-  static void mapping(llvm::yaml::IO &IO, FormatStyle &Style) {
+  static void mapping(IO &IO, FormatStyle &Style) {
+    // When reading, read the language first, we need it for getPredefinedStyle.
+    IO.mapOptional("Language", Style.Language);
+
     if (IO.outputting()) {
       StringRef StylesArray[] = { "LLVM",    "Google", "Chromium",
                                   "Mozilla", "WebKit" };
@@ -105,7 +108,7 @@ template <> struct MappingTraits<FormatStyle> {
       for (size_t i = 0, e = Styles.size(); i < e; ++i) {
         StringRef StyleName(Styles[i]);
         FormatStyle PredefinedStyle;
-        if (getPredefinedStyle(StyleName, &PredefinedStyle) &&
+        if (getPredefinedStyle(StyleName, Style.Language, &PredefinedStyle) &&
             Style == PredefinedStyle) {
           IO.mapOptional("# BasedOnStyle", StyleName);
           break;
@@ -115,16 +118,17 @@ template <> struct MappingTraits<FormatStyle> {
       StringRef BasedOnStyle;
       IO.mapOptional("BasedOnStyle", BasedOnStyle);
       if (!BasedOnStyle.empty()) {
-        FormatStyle::LanguageKind Language = Style.Language;
-        if (!getPredefinedStyle(BasedOnStyle, &Style)) {
+        FormatStyle::LanguageKind OldLanguage = Style.Language;
+        FormatStyle::LanguageKind Language =
+            ((FormatStyle *)IO.getContext())->Language;
+        if (!getPredefinedStyle(BasedOnStyle, Language, &Style)) {
           IO.setError(Twine("Unknown value for BasedOnStyle: ", BasedOnStyle));
           return;
         }
-        Style.Language = Language;
+        Style.Language = OldLanguage;
       }
     }
 
-    IO.mapOptional("Language", Style.Language);
     IO.mapOptional("AccessModifierOffset", Style.AccessModifierOffset);
     IO.mapOptional("ConstructorInitializerIndentWidth",
                    Style.ConstructorInitializerIndentWidth);
@@ -199,30 +203,28 @@ template <> struct MappingTraits<FormatStyle> {
 };
 
 // Allows to read vector<FormatStyle> while keeping default values.
-// Elements will be written or read starting from the 1st element.
-// When writing, the 0th element is ignored.
-// When reading, keys that are not present in the serialized form will be
-// copied from the 0th element of the vector. If the first element had no
-// Language specified, it will be treated as the default one for the following
-// elements.
+// IO.getContext() should contain a pointer to the FormatStyle structure, that
+// will be used to get default values for missing keys.
+// If the first element has no Language specified, it will be treated as the
+// default one for the following elements.
 template <> struct DocumentListTraits<std::vector<FormatStyle> > {
-  static size_t size(IO &io, std::vector<FormatStyle> &Seq) {
-    return Seq.size() - 1;
+  static size_t size(IO &IO, std::vector<FormatStyle> &Seq) {
+    return Seq.size();
   }
-  static FormatStyle &element(IO &io, std::vector<FormatStyle> &Seq,
+  static FormatStyle &element(IO &IO, std::vector<FormatStyle> &Seq,
                               size_t Index) {
-    if (Index + 2 > Seq.size()) {
-      assert(Index + 2 == Seq.size() + 1);
+    if (Index >= Seq.size()) {
+      assert(Index == Seq.size());
       FormatStyle Template;
-      if (Seq.size() > 1 && Seq[1].Language == FormatStyle::LK_None) {
-        Template = Seq[1];
-      } else {
+      if (Seq.size() > 0 && Seq[0].Language == FormatStyle::LK_None) {
         Template = Seq[0];
+      } else {
+        Template = *((const FormatStyle*)IO.getContext());
         Template.Language = FormatStyle::LK_None;
       }
-      Seq.resize(Index + 2, Template);
+      Seq.resize(Index + 1, Template);
     }
-    return Seq[Index + 1];
+    return Seq[Index];
   }
 };
 }
@@ -336,6 +338,16 @@ FormatStyle getGoogleStyle() {
   return GoogleStyle;
 }
 
+FormatStyle getGoogleJSStyle() {
+  FormatStyle GoogleJSStyle = getGoogleStyle();
+  GoogleJSStyle.Language = FormatStyle::LK_JavaScript;
+  GoogleJSStyle.BreakBeforeTernaryOperators = false;
+  // FIXME: Currently unimplemented:
+  // var arr = [1, 2, 3];  // No space after [ or before ].
+  // var obj = {a: 1, b: 2, c: 3};  // No space after ':'.
+  return GoogleJSStyle;
+}
+
 FormatStyle getChromiumStyle() {
   FormatStyle ChromiumStyle = getGoogleStyle();
   ChromiumStyle.AllowAllParametersOfDeclarationOnNextLine = false;
@@ -373,56 +385,67 @@ FormatStyle getWebKitStyle() {
   return Style;
 }
 
-bool getPredefinedStyle(StringRef Name, FormatStyle *Style) {
-  if (Name.equals_lower("llvm"))
+bool getPredefinedStyle(StringRef Name, FormatStyle::LanguageKind Language,
+                        FormatStyle *Style) {
+  if (Name.equals_lower("llvm")) {
     *Style = getLLVMStyle();
-  else if (Name.equals_lower("chromium"))
+  } else if (Name.equals_lower("chromium")) {
     *Style = getChromiumStyle();
-  else if (Name.equals_lower("mozilla"))
+  } else if (Name.equals_lower("mozilla")) {
     *Style = getMozillaStyle();
-  else if (Name.equals_lower("google"))
-    *Style = getGoogleStyle();
-  else if (Name.equals_lower("webkit"))
+  } else if (Name.equals_lower("google")) {
+    *Style = Language == FormatStyle::LK_JavaScript ? getGoogleJSStyle()
+                                                    : getGoogleStyle();
+  } else if (Name.equals_lower("webkit")) {
     *Style = getWebKitStyle();
-  else
+  } else {
     return false;
+  }
 
+  Style->Language = Language;
   return true;
 }
 
 llvm::error_code parseConfiguration(StringRef Text, FormatStyle *Style) {
   assert(Style);
-  assert(Style->Language != FormatStyle::LK_None);
+  FormatStyle::LanguageKind Language = Style->Language;
+  assert(Language != FormatStyle::LK_None);
   if (Text.trim().empty())
     return llvm::make_error_code(llvm::errc::invalid_argument);
 
   std::vector<FormatStyle> Styles;
-  // DocumentListTraits<vector<FormatStyle>> uses 0th element as the default one
-  // for the fields, keys for which are missing from the configuration.
-  Styles.push_back(*Style);
   llvm::yaml::Input Input(Text);
+  // DocumentListTraits<vector<FormatStyle>> uses the context to get default
+  // values for the fields, keys for which are missing from the configuration.
+  // Mapping also uses the context to get the language to find the correct
+  // base style.
+  Input.setContext(Style);
   Input >> Styles;
   if (Input.error())
     return Input.error();
 
-  for (unsigned i = 1; i < Styles.size(); ++i) {
+  for (unsigned i = 0; i < Styles.size(); ++i) {
     // Ensures that only the first configuration can skip the Language option.
-    if (Styles[i].Language == FormatStyle::LK_None && i != 1)
+    if (Styles[i].Language == FormatStyle::LK_None && i != 0)
       return llvm::make_error_code(llvm::errc::invalid_argument);
     // Ensure that each language is configured at most once.
-    for (unsigned j = 1; j < i; ++j) {
-      if (Styles[i].Language == Styles[j].Language)
+    for (unsigned j = 0; j < i; ++j) {
+      if (Styles[i].Language == Styles[j].Language) {
+        DEBUG(llvm::dbgs()
+              << "Duplicate languages in the config file on positions " << j
+              << " and " << i << "\n");
         return llvm::make_error_code(llvm::errc::invalid_argument);
+      }
     }
   }
   // Look for a suitable configuration starting from the end, so we can
   // find the configuration for the specific language first, and the default
-  // configuration (which can only be at slot 1) after it.
-  for (unsigned i = Styles.size() - 1; i > 0; --i) {
-    if (Styles[i].Language == Styles[0].Language ||
+  // configuration (which can only be at slot 0) after it.
+  for (int i = Styles.size() - 1; i >= 0; --i) {
+    if (Styles[i].Language == Language ||
         Styles[i].Language == FormatStyle::LK_None) {
       *Style = Styles[i];
-      Style->Language = Styles[0].Language;
+      Style->Language = Language;
       return llvm::make_error_code(llvm::errc::success);
     }
   }
@@ -1667,28 +1690,22 @@ const char *StyleOptionHelpDescription =
     "parameters, e.g.:\n"
     "  -style=\"{BasedOnStyle: llvm, IndentWidth: 8}\"";
 
-static void fillLanguageByFileName(StringRef FileName, FormatStyle *Style) {
-  if (FileName.endswith_lower(".c") || FileName.endswith_lower(".h") ||
-      FileName.endswith_lower(".cpp") || FileName.endswith_lower(".hpp") ||
-      FileName.endswith_lower(".cc") || FileName.endswith_lower(".hh") ||
-      FileName.endswith_lower(".cxx") || FileName.endswith_lower(".hxx") ||
-      FileName.endswith_lower(".m") || FileName.endswith_lower(".mm")) {
-    Style->Language = FormatStyle::LK_Cpp;
-  }
+static FormatStyle::LanguageKind getLanguageByFileName(StringRef FileName) {
   if (FileName.endswith_lower(".js")) {
-    Style->Language = FormatStyle::LK_JavaScript;
+    return FormatStyle::LK_JavaScript;
   }
+  return FormatStyle::LK_Cpp;
 }
 
 FormatStyle getStyle(StringRef StyleName, StringRef FileName,
                      StringRef FallbackStyle) {
-  FormatStyle Style;
-  if (!getPredefinedStyle(FallbackStyle, &Style)) {
+  FormatStyle Style = getLLVMStyle();
+  Style.Language = getLanguageByFileName(FileName);
+  if (!getPredefinedStyle(FallbackStyle, Style.Language, &Style)) {
     llvm::errs() << "Invalid fallback style \"" << FallbackStyle
                  << "\" using LLVM style\n";
-    return getLLVMStyle();
+    return Style;
   }
-  fillLanguageByFileName(FileName, &Style);
 
   if (StyleName.startswith("{")) {
     // Parse YAML/JSON style from the command line.
@@ -1700,13 +1717,13 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName,
   }
 
   if (!StyleName.equals_lower("file")) {
-    if (!getPredefinedStyle(StyleName, &Style))
+    if (!getPredefinedStyle(StyleName, Style.Language, &Style))
       llvm::errs() << "Invalid value for -style, using " << FallbackStyle
                    << " style\n";
-    fillLanguageByFileName(FileName, &Style);
     return Style;
   }
 
+  // Look for .clang-format/_clang-format file in the file's parent directories.
   SmallString<128> UnsuitableConfigFiles;
   SmallString<128> Path(FileName);
   llvm::sys::fs::make_absolute(Path);

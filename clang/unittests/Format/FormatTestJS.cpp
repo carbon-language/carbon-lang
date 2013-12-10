@@ -33,24 +33,18 @@ protected:
   }
 
   static std::string format(llvm::StringRef Code,
-                            const FormatStyle &Style = getJSStyle()) {
+                            const FormatStyle &Style = getGoogleJSStyle()) {
     return format(Code, 0, Code.size(), Style);
   }
 
-  static FormatStyle getJSStyle() {
-    FormatStyle Style = getLLVMStyle();
-    Style.Language = FormatStyle::LK_JavaScript;
-    return Style;
-  }
-
-  static FormatStyle getJSStyleWithColumns(unsigned ColumnLimit) {
-    FormatStyle Style = getJSStyle();
+  static FormatStyle getGoogleJSStyleWithColumns(unsigned ColumnLimit) {
+    FormatStyle Style = getGoogleJSStyle();
     Style.ColumnLimit = ColumnLimit;
     return Style;
   }
 
   static void verifyFormat(llvm::StringRef Code,
-                           const FormatStyle &Style = getJSStyle()) {
+                           const FormatStyle &Style = getGoogleJSStyle()) {
     EXPECT_EQ(Code.str(), format(test::messUp(Code), Style));
   }
 };
@@ -60,26 +54,30 @@ TEST_F(FormatTestJS, UnderstandsJavaScriptOperators) {
   verifyFormat("a != = b;");
 
   verifyFormat("a === b;");
-  verifyFormat("aaaaaaa ===\n    b;", getJSStyleWithColumns(10));
+  verifyFormat("aaaaaaa ===\n    b;", getGoogleJSStyleWithColumns(10));
   verifyFormat("a !== b;");
-  verifyFormat("aaaaaaa !==\n    b;", getJSStyleWithColumns(10));
+  verifyFormat("aaaaaaa !==\n    b;", getGoogleJSStyleWithColumns(10));
   verifyFormat("if (a + b + c +\n"
                "        d !==\n"
                "    e + f + g)\n"
                "  q();",
-               getJSStyleWithColumns(20));
+               getGoogleJSStyleWithColumns(20));
 
   verifyFormat("a >> >= b;");
 
   verifyFormat("a >>> b;");
-  verifyFormat("aaaaaaa >>>\n    b;", getJSStyleWithColumns(10));
+  verifyFormat("aaaaaaa >>>\n    b;", getGoogleJSStyleWithColumns(10));
   verifyFormat("a >>>= b;");
-  verifyFormat("aaaaaaa >>>=\n    b;", getJSStyleWithColumns(10));
+  verifyFormat("aaaaaaa >>>=\n    b;", getGoogleJSStyleWithColumns(10));
   verifyFormat("if (a + b + c +\n"
                "        d >>>\n"
                "    e + f + g)\n"
                "  q();",
-               getJSStyleWithColumns(20));
+               getGoogleJSStyleWithColumns(20));
+  verifyFormat("var x = aaaaaaaaaa ?\n"
+               "            bbbbbb :\n"
+               "            ccc;",
+               getGoogleJSStyleWithColumns(20));
 }
 
 } // end namespace tooling

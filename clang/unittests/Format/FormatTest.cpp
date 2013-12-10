@@ -6950,42 +6950,88 @@ TEST_F(FormatTest, UnderstandsPragmas) {
   verifyFormat("#pragma omp reduction(+ : var)");
 }
 
-bool allStylesEqual(ArrayRef<FormatStyle> Styles) {
-  for (size_t i = 1; i < Styles.size(); ++i)
-    if (!(Styles[0] == Styles[i]))
-      return false;
-  return true;
-}
+#define EXPECT_ALL_STYLES_EQUAL(Styles)                                        \
+  for (size_t i = 1; i < Styles.size(); ++i)                                   \
+    EXPECT_EQ(Styles[0], Styles[i]) << "Style #" << i << " of "                \
+                                    << Styles.size()                           \
+                                    << " differs from Style #0"
 
 TEST_F(FormatTest, GetsPredefinedStyleByName) {
-  FormatStyle Styles[3];
+  SmallVector<FormatStyle, 3> Styles;
+  Styles.resize(3);
 
   Styles[0] = getLLVMStyle();
-  EXPECT_TRUE(getPredefinedStyle("LLVM", &Styles[1]));
-  EXPECT_TRUE(getPredefinedStyle("lLvM", &Styles[2]));
-  EXPECT_TRUE(allStylesEqual(Styles));
+  EXPECT_TRUE(getPredefinedStyle("LLVM", FormatStyle::LK_Cpp, &Styles[1]));
+  EXPECT_TRUE(getPredefinedStyle("lLvM", FormatStyle::LK_Cpp, &Styles[2]));
+  EXPECT_ALL_STYLES_EQUAL(Styles);
 
   Styles[0] = getGoogleStyle();
-  EXPECT_TRUE(getPredefinedStyle("Google", &Styles[1]));
-  EXPECT_TRUE(getPredefinedStyle("gOOgle", &Styles[2]));
-  EXPECT_TRUE(allStylesEqual(Styles));
+  EXPECT_TRUE(getPredefinedStyle("Google", FormatStyle::LK_Cpp, &Styles[1]));
+  EXPECT_TRUE(getPredefinedStyle("gOOgle", FormatStyle::LK_Cpp, &Styles[2]));
+  EXPECT_ALL_STYLES_EQUAL(Styles);
+
+  Styles[0] = getGoogleJSStyle();
+  EXPECT_TRUE(
+      getPredefinedStyle("Google", FormatStyle::LK_JavaScript, &Styles[1]));
+  EXPECT_TRUE(
+      getPredefinedStyle("gOOgle", FormatStyle::LK_JavaScript, &Styles[2]));
+  EXPECT_ALL_STYLES_EQUAL(Styles);
 
   Styles[0] = getChromiumStyle();
-  EXPECT_TRUE(getPredefinedStyle("Chromium", &Styles[1]));
-  EXPECT_TRUE(getPredefinedStyle("cHRoMiUM", &Styles[2]));
-  EXPECT_TRUE(allStylesEqual(Styles));
+  EXPECT_TRUE(getPredefinedStyle("Chromium", FormatStyle::LK_Cpp, &Styles[1]));
+  EXPECT_TRUE(getPredefinedStyle("cHRoMiUM", FormatStyle::LK_Cpp, &Styles[2]));
+  EXPECT_ALL_STYLES_EQUAL(Styles);
 
   Styles[0] = getMozillaStyle();
-  EXPECT_TRUE(getPredefinedStyle("Mozilla", &Styles[1]));
-  EXPECT_TRUE(getPredefinedStyle("moZILla", &Styles[2]));
-  EXPECT_TRUE(allStylesEqual(Styles));
+  EXPECT_TRUE(getPredefinedStyle("Mozilla", FormatStyle::LK_Cpp, &Styles[1]));
+  EXPECT_TRUE(getPredefinedStyle("moZILla", FormatStyle::LK_Cpp, &Styles[2]));
+  EXPECT_ALL_STYLES_EQUAL(Styles);
 
   Styles[0] = getWebKitStyle();
-  EXPECT_TRUE(getPredefinedStyle("WebKit", &Styles[1]));
-  EXPECT_TRUE(getPredefinedStyle("wEbKit", &Styles[2]));
-  EXPECT_TRUE(allStylesEqual(Styles));
+  EXPECT_TRUE(getPredefinedStyle("WebKit", FormatStyle::LK_Cpp, &Styles[1]));
+  EXPECT_TRUE(getPredefinedStyle("wEbKit", FormatStyle::LK_Cpp, &Styles[2]));
+  EXPECT_ALL_STYLES_EQUAL(Styles);
 
-  EXPECT_FALSE(getPredefinedStyle("qwerty", &Styles[0]));
+  EXPECT_FALSE(getPredefinedStyle("qwerty", FormatStyle::LK_Cpp, &Styles[0]));
+}
+
+TEST_F(FormatTest, GetsCorrectBasedOnStyle) {
+  SmallVector<FormatStyle, 8> Styles;
+  Styles.resize(2);
+
+  Styles[0] = getGoogleStyle();
+  Styles[1] = getLLVMStyle();
+  EXPECT_EQ(0, parseConfiguration("BasedOnStyle: Google", &Styles[1]).value());
+  EXPECT_ALL_STYLES_EQUAL(Styles);
+
+  Styles.resize(5);
+  Styles[0] = getGoogleJSStyle();
+  Styles[1] = getLLVMStyle();
+  Styles[1].Language = FormatStyle::LK_JavaScript;
+  EXPECT_EQ(0, parseConfiguration("BasedOnStyle: Google", &Styles[1]).value());
+
+  Styles[2] = getLLVMStyle();
+  Styles[2].Language = FormatStyle::LK_JavaScript;
+  EXPECT_EQ(0, parseConfiguration("Language: JavaScript\n"
+                                  "BasedOnStyle: Google",
+                                  &Styles[2]).value());
+
+  Styles[3] = getLLVMStyle();
+  Styles[3].Language = FormatStyle::LK_JavaScript;
+  EXPECT_EQ(0, parseConfiguration("BasedOnStyle: Google\n"
+                                  "Language: JavaScript",
+                                  &Styles[3]).value());
+
+  Styles[4] = getLLVMStyle();
+  Styles[4].Language = FormatStyle::LK_JavaScript;
+  EXPECT_EQ(0, parseConfiguration("---\n"
+                                  "BasedOnStyle: LLVM\n"
+                                  "IndentWidth: 123\n"
+                                  "---\n"
+                                  "BasedOnStyle: Google\n"
+                                  "Language: JavaScript",
+                                  &Styles[4]).value());
+  EXPECT_ALL_STYLES_EQUAL(Styles);
 }
 
 #define CHECK_PARSE(TEXT, FIELD, VALUE)                                        \
@@ -7190,6 +7236,23 @@ TEST_F(FormatTest, ParsesConfigurationWithLanguages) {
                                &Style));
 
   EXPECT_EQ(FormatStyle::LK_Cpp, Style.Language);
+}
+
+TEST_F(FormatTest, UsesLanguageForBasedOnStyle) {
+  FormatStyle Style = {};
+  Style.Language = FormatStyle::LK_JavaScript;
+  Style.BreakBeforeTernaryOperators = true;
+  CHECK_PARSE("BasedOnStyle: Google", BreakBeforeTernaryOperators, false);
+  Style.BreakBeforeTernaryOperators = true;
+  CHECK_PARSE("---\n"
+              "BasedOnStyle: Google\n"
+              "---\n"
+              "Language: JavaScript\n"
+              "IndentWidth: 76\n"
+              "...\n",
+              BreakBeforeTernaryOperators, false);
+  EXPECT_EQ(76u, Style.IndentWidth);
+  EXPECT_EQ(FormatStyle::LK_JavaScript, Style.Language);
 }
 
 #undef CHECK_PARSE

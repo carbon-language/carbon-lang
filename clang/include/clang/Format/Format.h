@@ -342,6 +342,11 @@ FormatStyle getLLVMStyle();
 /// http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml.
 FormatStyle getGoogleStyle();
 
+/// \brief Returns a format style complying with Google's JavaScript style
+/// guide:
+/// http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml.
+FormatStyle getGoogleJSStyle();
+
 /// \brief Returns a format style complying with Chromium's style guide:
 /// http://www.chromium.org/developers/coding-style.
 FormatStyle getChromiumStyle();
@@ -354,15 +359,22 @@ FormatStyle getMozillaStyle();
 /// http://www.webkit.org/coding/coding-style.html
 FormatStyle getWebKitStyle();
 
-/// \brief Gets a predefined style by name.
+/// \brief Gets a predefined style for the specified language by name.
 ///
 /// Currently supported names: LLVM, Google, Chromium, Mozilla. Names are
 /// compared case-insensitively.
 ///
 /// Returns \c true if the Style has been set.
-bool getPredefinedStyle(StringRef Name, FormatStyle *Style);
+bool getPredefinedStyle(StringRef Name, FormatStyle::LanguageKind Language,
+                        FormatStyle *Style);
 
 /// \brief Parse configuration from YAML-formatted text.
+///
+/// Style->Language is used to get the base style, if the \c BasedOnStyle
+/// option is present.
+///
+/// When \c BasedOnStyle is not present, options not present in the YAML
+/// document, are retained in \p Style.
 llvm::error_code parseConfiguration(StringRef Text, FormatStyle *Style);
 
 /// \brief Gets configuration in a YAML string.
