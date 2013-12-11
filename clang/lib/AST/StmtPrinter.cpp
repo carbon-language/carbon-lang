@@ -330,7 +330,8 @@ void StmtPrinter::VisitCXXForRangeStmt(CXXForRangeStmt *Node) {
   PrintExpr(Node->getRangeInit());
   OS << ") {\n";
   PrintStmt(Node->getBody());
-  Indent() << "}\n";
+  Indent() << "}";
+  if (Policy.IncludeNewlines) OS << "\n";
 }
 
 void StmtPrinter::VisitMSDependentExistsStmt(MSDependentExistsStmt *Node) {
@@ -350,21 +351,25 @@ void StmtPrinter::VisitMSDependentExistsStmt(MSDependentExistsStmt *Node) {
 }
 
 void StmtPrinter::VisitGotoStmt(GotoStmt *Node) {
-  Indent() << "goto " << Node->getLabel()->getName() << ";\n";
+  Indent() << "goto " << Node->getLabel()->getName() << ";";
+  if (Policy.IncludeNewlines) OS << "\n";
 }
 
 void StmtPrinter::VisitIndirectGotoStmt(IndirectGotoStmt *Node) {
   Indent() << "goto *";
   PrintExpr(Node->getTarget());
-  OS << ";\n";
+  OS << ";";
+  if (Policy.IncludeNewlines) OS << "\n";
 }
 
 void StmtPrinter::VisitContinueStmt(ContinueStmt *Node) {
-  Indent() << "continue;\n";
+  Indent() << "continue;";
+  if (Policy.IncludeNewlines) OS << "\n";
 }
 
 void StmtPrinter::VisitBreakStmt(BreakStmt *Node) {
-  Indent() << "break;\n";
+  Indent() << "break;";
+  if (Policy.IncludeNewlines) OS << "\n";
 }
 
 
@@ -374,7 +379,8 @@ void StmtPrinter::VisitReturnStmt(ReturnStmt *Node) {
     OS << " ";
     PrintExpr(Node->getRetValue());
   }
-  OS << ";\n";
+  OS << ";";
+  if (Policy.IncludeNewlines) OS << "\n";
 }
 
 
@@ -437,7 +443,8 @@ void StmtPrinter::VisitGCCAsmStmt(GCCAsmStmt *Node) {
     VisitStringLiteral(Node->getClobberStringLiteral(i));
   }
 
-  OS << ");\n";
+  OS << ");";
+  if (Policy.IncludeNewlines) OS << "\n";
 }
 
 void StmtPrinter::VisitMSAsmStmt(MSAsmStmt *Node) {

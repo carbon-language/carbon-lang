@@ -41,7 +41,8 @@ struct PrintingPolicy {
       ConstantArraySizeAsWritten(false), AnonymousTagLocations(true),
       SuppressStrongLifetime(false), SuppressLifetimeQualifiers(false),
       Bool(LO.Bool), TerseOutput(false), PolishForDeclaration(false),
-      MSWChar(LO.MicrosoftExt && !LO.WChar) { }
+      MSWChar(LO.MicrosoftExt && !LO.WChar),
+      IncludeNewlines(true) { }
 
   /// \brief What language we're printing.
   LangOptions LangOpts;
@@ -155,6 +156,9 @@ struct PrintingPolicy {
   /// \brief When true, print the built-in wchar_t type as __wchar_t. For use in
   /// Microsoft mode when wchar_t is not available.
   unsigned MSWChar : 1;
+
+  /// \brief When true, include newlines after statements like "break", etc.
+  unsigned IncludeNewlines : 1;
 };
 
 } // end namespace clang
