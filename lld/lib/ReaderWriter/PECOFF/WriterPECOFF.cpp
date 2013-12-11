@@ -68,8 +68,7 @@ class Chunk {
 public:
   enum Kind {
     kindHeader,
-    kindSection,
-    kindDataDirectory
+    kindSection
   };
 
   explicit Chunk(Kind kind) : _kind(kind), _size(0) {}
@@ -206,8 +205,7 @@ public:
   }
 
   static bool classof(const Chunk *c) {
-    Kind kind = c->getKind();
-    return kind == kindSection || kind == kindDataDirectory;
+    return c->getKind() == kindSection;
   }
 
 protected:
