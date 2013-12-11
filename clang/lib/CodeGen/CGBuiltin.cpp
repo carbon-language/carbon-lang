@@ -2098,16 +2098,16 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
     s = "vaddv"; IntTypes = VectorRet | VectorCastArg1; break;
   case AArch64::BI__builtin_neon_vmaxvq_f32:
     Int = Intrinsic::aarch64_neon_vmaxv;
-    s = "vmaxv"; IntTypes = VectorRet | VectorCastArg1; break;
+    s = "vmaxv"; break;
   case AArch64::BI__builtin_neon_vminvq_f32:
     Int = Intrinsic::aarch64_neon_vminv;
-    s = "vminv"; IntTypes = VectorRet | VectorCastArg1; break;
+    s = "vminv"; break;
   case AArch64::BI__builtin_neon_vmaxnmvq_f32:
     Int = Intrinsic::aarch64_neon_vmaxnmv;
-    s = "vmaxnmv"; IntTypes = VectorRet | VectorCastArg1; break;
+    s = "vmaxnmv"; break;
   case AArch64::BI__builtin_neon_vminnmvq_f32:
     Int = Intrinsic::aarch64_neon_vminnmv;
-     s = "vminnmv"; IntTypes = VectorRet | VectorCastArg1; break;
+     s = "vminnmv"; break;
   // Scalar Integer Saturating Doubling Multiply Half High
   case AArch64::BI__builtin_neon_vqdmulhh_s16:
   case AArch64::BI__builtin_neon_vqdmulhs_s32:
