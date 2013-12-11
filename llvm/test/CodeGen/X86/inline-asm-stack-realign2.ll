@@ -2,7 +2,7 @@
 
 ; FIXME: This is miscompiled due to our unconditional use of ESI as the base
 ; pointer.
-; XFAIL:
+; XFAIL: *
 
 ; CHECK: Stack realignment in presence of dynamic stack adjustments is not supported with inline assembly
 
