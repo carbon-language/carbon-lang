@@ -1,4 +1,5 @@
 
 @interface I1 : NSObject
 @property (nonatomic) int prop;
++(instancetype)i1;
 @end

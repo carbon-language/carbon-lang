@@ -144,6 +144,30 @@ protected:
     return WhiteListFilenames.find(llvm::sys::path::filename(Path))
         != WhiteListFilenames.end();
   }
+  bool canModifyFile(const FileEntry *FE) {
+    if (!FE)
+      return false;
+    return canModifyFile(FE->getName());
+  }
+  bool canModifyFile(FileID FID) {
+    if (FID.isInvalid())
+      return false;
+    return canModifyFile(PP.getSourceManager().getFileEntryForID(FID));
+  }
+
+  bool canModify(const Decl *D) {
+    if (!D)
+      return false;
+    if (const ObjCCategoryImplDecl *CatImpl = dyn_cast<ObjCCategoryImplDecl>(D))
+      return canModify(CatImpl->getCategoryDecl());
+    if (const ObjCImplementationDecl *Impl = dyn_cast<ObjCImplementationDecl>(D))
+      return canModify(Impl->getClassInterface());
+    if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
+      return canModify(cast<Decl>(MD->getDeclContext()));
+
+    FileID FID = PP.getSourceManager().getFileID(D->getLocation());
+    return canModifyFile(FID);
+  }
 };
 
 }
@@ -1651,19 +1675,24 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
         }
       
       if (ObjCInterfaceDecl *CDecl = dyn_cast<ObjCInterfaceDecl>(*D))
-        migrateObjCInterfaceDecl(Ctx, CDecl);
+        if (canModify(CDecl))
+          migrateObjCInterfaceDecl(Ctx, CDecl);
       if (ObjCCategoryDecl *CatDecl = dyn_cast<ObjCCategoryDecl>(*D)) {
-        migrateObjCInterfaceDecl(Ctx, CatDecl);
+        if (canModify(CatDecl))
+          migrateObjCInterfaceDecl(Ctx, CatDecl);
       }
       else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(*D))
         ObjCProtocolDecls.insert(PDecl);
       else if (const ObjCImplementationDecl *ImpDecl =
                dyn_cast<ObjCImplementationDecl>(*D)) {
-        if (ASTMigrateActions & FrontendOptions::ObjCMT_ProtocolConformance)
+        if ((ASTMigrateActions & FrontendOptions::ObjCMT_ProtocolConformance) &&
+            canModify(ImpDecl))
           migrateProtocolConformance(Ctx, ImpDecl);
       }
       else if (const EnumDecl *ED = dyn_cast<EnumDecl>(*D)) {
         if (!(ASTMigrateActions & FrontendOptions::ObjCMT_NsMacros))
+          continue;
+        if (!canModify(ED))
           continue;
         DeclContext::decl_iterator N = D;
         if (++N != DEnd) {
@@ -1676,6 +1705,8 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
       }
       else if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(*D)) {
         if (!(ASTMigrateActions & FrontendOptions::ObjCMT_NsMacros))
+          continue;
+        if (!canModify(TD))
           continue;
         DeclContext::decl_iterator N = D;
         if (++N == DEnd)
@@ -1698,22 +1729,27 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
         CacheObjCNSIntegerTypedefed(TD);
       }
       else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*D)) {
-        if (ASTMigrateActions & FrontendOptions::ObjCMT_Annotation)
+        if ((ASTMigrateActions & FrontendOptions::ObjCMT_Annotation) &&
+            canModify(FD))
           migrateCFAnnotation(Ctx, FD);
       }
       
       if (ObjCContainerDecl *CDecl = dyn_cast<ObjCContainerDecl>(*D)) {
+        bool CanModify = canModify(CDecl);
         // migrate methods which can have instancetype as their result type.
-        if (ASTMigrateActions & FrontendOptions::ObjCMT_Instancetype)
+        if ((ASTMigrateActions & FrontendOptions::ObjCMT_Instancetype) &&
+            CanModify)
           migrateAllMethodInstaceType(Ctx, CDecl);
         // annotate methods with CF annotations.
-        if (ASTMigrateActions & FrontendOptions::ObjCMT_Annotation)
+        if ((ASTMigrateActions & FrontendOptions::ObjCMT_Annotation) &&
+            CanModify)
           migrateARCSafeAnnotation(Ctx, CDecl);
       }
 
       if (const ObjCImplementationDecl *
             ImplD = dyn_cast<ObjCImplementationDecl>(*D)) {
-        if (ASTMigrateActions & FrontendOptions::ObjCMT_DesignatedInitializer)
+        if ((ASTMigrateActions & FrontendOptions::ObjCMT_DesignatedInitializer) &&
+            canModify(ImplD))
           inferDesignatedInitializers(Ctx, ImplD);
       }
     }
@@ -1732,8 +1768,6 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
     const FileEntry *file = Ctx.getSourceManager().getFileEntryForID(FID);
     assert(file);
     if (IsReallyASystemHeader(Ctx, file, FID))
-      continue;
-    if (!canModifyFile(file->getName()))
       continue;
     SmallString<512> newText;
     llvm::raw_svector_ostream vecOS(newText);
