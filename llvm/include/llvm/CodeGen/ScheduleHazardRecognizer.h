@@ -70,6 +70,22 @@ public:
   /// emitted, to advance the hazard state.
   virtual void EmitInstruction(SUnit *) {}
 
+  /// PreEmitNoops - This callback is invoked prior to emitting an instruction.
+  /// It should return the number of noops to emit prior to the provided
+  /// instruction.
+  /// Note: This is only used during PostRA scheduling. EmitNoop is not called
+  /// for these noops.
+  virtual unsigned PreEmitNoops(SUnit *) {
+    return 0;
+  }
+
+  /// ShouldPreferAnother - This callback may be invoked if getHazardType
+  /// returns NoHazard. If, even though there is no hazard, it would be better to
+  /// schedule another available instruction, this callback should return true.
+  virtual bool ShouldPreferAnother(SUnit *) {
+    return false;
+  }
+
   /// AdvanceCycle - This callback is invoked whenever the next top-down
   /// instruction to be scheduled cannot issue in the current cycle, either
   /// because of latency or resource conflicts.  This should increment the

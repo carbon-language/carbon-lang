@@ -192,6 +192,7 @@ namespace {
     bool ToggleKillFlag(MachineInstr *MI, MachineOperand &MO);
 
     void dumpSchedule() const;
+    void emitNoop(unsigned CurCycle);
   };
 }
 
@@ -630,6 +631,14 @@ void SchedulePostRATDList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   AvailableQueue.scheduledNode(SU);
 }
 
+/// emitNoop - Add a noop to the current instruction sequence.
+void SchedulePostRATDList::emitNoop(unsigned CurCycle) {
+  DEBUG(dbgs() << "*** Emitting noop in cycle " << CurCycle << '\n');
+  HazardRec->EmitNoop();
+  Sequence.push_back(0);   // NULL here means noop
+  ++NumNoops;
+}
+
 /// ListScheduleTopDown - The main loop of list scheduling for top-down
 /// schedulers.
 void SchedulePostRATDList::ListScheduleTopDown() {
@@ -678,7 +687,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
 
     DEBUG(dbgs() << "\n*** Examining Available\n"; AvailableQueue.dump(this));
 
-    SUnit *FoundSUnit = 0;
+    SUnit *FoundSUnit = 0, *NotPreferredSUnit = 0;
     bool HasNoopHazards = false;
     while (!AvailableQueue.empty()) {
       SUnit *CurSUnit = AvailableQueue.pop();
@@ -686,14 +695,39 @@ void SchedulePostRATDList::ListScheduleTopDown() {
       ScheduleHazardRecognizer::HazardType HT =
         HazardRec->getHazardType(CurSUnit, 0/*no stalls*/);
       if (HT == ScheduleHazardRecognizer::NoHazard) {
-        FoundSUnit = CurSUnit;
-        break;
+        if (HazardRec->ShouldPreferAnother(CurSUnit)) {
+          if (!NotPreferredSUnit) {
+	    // If this is the first non-preferred node for this cycle, then
+	    // record it and continue searching for a preferred node. If this
+	    // is not the first non-preferred node, then treat it as though
+	    // there had been a hazard.
+            NotPreferredSUnit = CurSUnit;
+            continue;
+          }
+        } else {
+          FoundSUnit = CurSUnit;
+          break;
+        }
       }
 
       // Remember if this is a noop hazard.
       HasNoopHazards |= HT == ScheduleHazardRecognizer::NoopHazard;
 
       NotReady.push_back(CurSUnit);
+    }
+
+    // If we have a non-preferred node, push it back onto the available list.
+    // If we did not find a preferred node, then schedule this first
+    // non-preferred node.
+    if (NotPreferredSUnit) {
+      if (!FoundSUnit) {
+        DEBUG(dbgs() << "*** Will schedule a non-preferred instruction...\n");
+        FoundSUnit = NotPreferredSUnit;
+      } else {
+        AvailableQueue.push(NotPreferredSUnit);
+      }
+
+      NotPreferredSUnit = 0;
     }
 
     // Add the nodes that aren't ready back onto the available list.
@@ -704,6 +738,11 @@ void SchedulePostRATDList::ListScheduleTopDown() {
 
     // If we found a node to schedule...
     if (FoundSUnit) {
+      // If we need to emit noops prior to this instruction, then do so.
+      unsigned NumPreNoops = HazardRec->PreEmitNoops(FoundSUnit);
+      for (unsigned i = 0; i != NumPreNoops; ++i)
+        emitNoop(CurCycle);
+
       // ... schedule the node...
       ScheduleNodeTopDown(FoundSUnit, CurCycle);
       HazardRec->EmitInstruction(FoundSUnit);
@@ -728,10 +767,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
         // Otherwise, we have no instructions to issue and we have instructions
         // that will fault if we don't do this right.  This is the case for
         // processors without pipeline interlocks and other cases.
-        DEBUG(dbgs() << "*** Emitting noop in cycle " << CurCycle << '\n');
-        HazardRec->EmitNoop();
-        Sequence.push_back(0);   // NULL here means noop
-        ++NumNoops;
+        emitNoop(CurCycle);
       }
 
       ++CurCycle;
