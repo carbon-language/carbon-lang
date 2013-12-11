@@ -299,3 +299,18 @@ void call_nv_deleting_dtor(D *d) {
 }
 
 }
+
+// Dtor thunks for classes in anonymous namespaces should be internal, not
+// linkonce_odr.
+namespace {
+struct A {
+  virtual ~A() { }
+};
+}
+void *getA() {
+  return (void*)new A();
+}
+// CHECK: define internal x86_thiscallcc void @"\01??_GA@?A@@UAEPAXI@Z"
+// CHECK:               (%"struct.<anonymous namespace>::A"* %this, i32 %should_call_delete)
+// CHECK: define internal x86_thiscallcc void @"\01??1A@?A@@UAE@XZ"
+// CHECK:               (%"struct.<anonymous namespace>::A"* %this)

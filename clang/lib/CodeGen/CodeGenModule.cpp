@@ -585,11 +585,6 @@ llvm::GlobalValue::LinkageTypes
 CodeGenModule::getFunctionLinkage(GlobalDecl GD) {
   const FunctionDecl *D = cast<FunctionDecl>(GD.getDecl());
 
-  if (isa<CXXDestructorDecl>(D) &&
-      getCXXABI().useThunkForDtorVariant(cast<CXXDestructorDecl>(D),
-                                         GD.getDtorType()))
-    return llvm::Function::LinkOnceODRLinkage;
-
   GVALinkage Linkage = getContext().GetGVALinkageForFunction(D);
 
   if (Linkage == GVA_Internal)
@@ -630,7 +625,14 @@ CodeGenModule::getFunctionLinkage(GlobalDecl GD) {
     return !Context.getLangOpts().AppleKext
              ? llvm::Function::WeakODRLinkage
              : llvm::Function::ExternalLinkage;
-  
+
+  // Destructor variants in the Microsoft C++ ABI are always linkonce_odr thunks
+  // emitted on an as-needed basis.
+  if (isa<CXXDestructorDecl>(D) &&
+      getCXXABI().useThunkForDtorVariant(cast<CXXDestructorDecl>(D),
+                                         GD.getDtorType()))
+    return llvm::Function::LinkOnceODRLinkage;
+
   // Otherwise, we have strong external linkage.
   assert(Linkage == GVA_StrongExternal);
   return llvm::Function::ExternalLinkage;
