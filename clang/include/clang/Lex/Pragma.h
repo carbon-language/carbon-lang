@@ -28,6 +28,12 @@ namespace clang {
   /**
    * \brief Describes how the pragma was introduced, e.g., with \#pragma,
    * _Pragma, or __pragma.
+   *
+   * This is a callback and there is code outside of clang using it.
+   *
+   * The source location passed down together with the introducer kind is
+   * the one of the token *following* the introducer, so it would not be
+   * immediate for clients to re-lex to see which introducer it was.
    */
   enum PragmaIntroducerKind {
     /**
