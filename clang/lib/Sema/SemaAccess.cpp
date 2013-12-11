@@ -1482,11 +1482,10 @@ void Sema::HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *D) {
   // However, this does not apply to local extern declarations.
 
   DeclContext *DC = D->getDeclContext();
-  if (FunctionDecl *FN = dyn_cast<FunctionDecl>(D)) {
-    if (D->getLexicalDeclContext()->isFunctionOrMethod())
-      DC = D->getLexicalDeclContext();
-    else
-      DC = FN;
+  if (D->isLocalExternDecl()) {
+    DC = D->getLexicalDeclContext();
+  } else if (FunctionDecl *FN = dyn_cast<FunctionDecl>(D)) {
+    DC = FN;
   } else if (TemplateDecl *TD = dyn_cast<TemplateDecl>(D)) {
     DC = cast<DeclContext>(TD->getTemplatedDecl());
   }

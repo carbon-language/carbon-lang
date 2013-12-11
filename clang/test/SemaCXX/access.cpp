@@ -136,3 +136,25 @@ namespace PR7434 {
     };
   }
 }
+
+namespace LocalExternVar {
+  class test {
+  private:
+    struct private_struct { // expected-note 2{{here}}
+      int x;
+    };
+    int use_private();
+  };
+
+  int test::use_private() {
+    extern int array[sizeof(test::private_struct)]; // ok
+    return array[0];
+  }
+
+  int f() {
+    extern int array[sizeof(test::private_struct)]; // expected-error {{private}}
+    return array[0];
+  }
+
+  int array[sizeof(test::private_struct)]; // expected-error {{private}}
+}
