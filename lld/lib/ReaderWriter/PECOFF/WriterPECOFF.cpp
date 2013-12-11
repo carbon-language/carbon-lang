@@ -311,7 +311,7 @@ private:
       llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
       llvm::COFF::IMAGE_SCN_MEM_DISCARDABLE;
 
-  std::vector<uint8_t> createContents(ChunkVectorT &chunks);
+  std::vector<uint8_t> createContents(ChunkVectorT &chunks) const;
 
   // Returns a list of RVAs that needs to be relocated if the binary is loaded
   // at an address different from its preferred one.
@@ -322,9 +322,9 @@ private:
 
   // Create the content of a relocation block.
   std::vector<uint8_t>
-  createBaseRelocBlock(uint64_t pageAddr, const std::vector<uint16_t> &offsets);
+  createBaseRelocBlock(uint64_t pageAddr,
+                       const std::vector<uint16_t> &offsets) const;
 
-  mutable llvm::BumpPtrAllocator _alloc;
   std::vector<uint8_t> _contents;
 };
 
@@ -676,7 +676,8 @@ void BaseRelocChunk::write(uint8_t *buffer) {
 /// the base relocation. A block consists of a 32 bit page RVA and 16 bit
 /// relocation entries which represent offsets in the page. That is a more
 /// compact representation than a simple vector of 32 bit RVAs.
-std::vector<uint8_t> BaseRelocChunk::createContents(ChunkVectorT &chunks) {
+std::vector<uint8_t>
+BaseRelocChunk::createContents(ChunkVectorT &chunks) const {
   std::vector<uint8_t> contents;
   std::vector<uint64_t> relocSites = listRelocSites(chunks);
   PageOffsetT blocks = groupByPage(relocSites);
@@ -711,9 +712,8 @@ BaseRelocChunk::groupByPage(const std::vector<uint64_t> &relocSites) const {
 }
 
 // Create the content of a relocation block.
-std::vector<uint8_t>
-BaseRelocChunk::createBaseRelocBlock(uint64_t pageAddr,
-                                     const std::vector<uint16_t> &offsets) {
+std::vector<uint8_t> BaseRelocChunk::createBaseRelocBlock(
+    uint64_t pageAddr, const std::vector<uint16_t> &offsets) const {
   // Relocation blocks should be padded with IMAGE_REL_I386_ABSOLUTE to be
   // aligned to a DWORD size boundary.
   uint32_t size = llvm::RoundUpToAlignment(
