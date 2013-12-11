@@ -14,9 +14,6 @@
 //===----------------------------------------------------------------------===//
 // NEON-specific DAG Nodes.
 //===----------------------------------------------------------------------===//
-def Neon_bsl       : SDNode<"AArch64ISD::NEON_BSL", SDTypeProfile<1, 3,
-                      [SDTCisVec<0>, SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>,
-                      SDTCisSameAs<0, 3>]>>;
 
 // (outs Result), (ins Imm, OpCmode)
 def SDT_Neon_movi : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVT<1, i32>]>;
@@ -407,26 +404,30 @@ defm : Neon_bitwise2V_patterns<Neon_orn8B, Neon_orn16B, ORNvvv_8B, ORNvvv_16B>;
 
 //   Vector Bitwise Select
 def BSLvvv_8B  : NeonI_3VSame_Constraint_impl<"bsl", ".8b",  VPR64, v8i8,
-                                              0b0, 0b1, 0b01, 0b00011, Neon_bsl>;
+                                              0b0, 0b1, 0b01, 0b00011, vselect>;
 
 def BSLvvv_16B : NeonI_3VSame_Constraint_impl<"bsl", ".16b", VPR128, v16i8,
-                                              0b1, 0b1, 0b01, 0b00011, Neon_bsl>;
+                                              0b1, 0b1, 0b01, 0b00011, vselect>;
 
 multiclass Neon_bitwise3V_patterns<SDPatternOperator opnode,
                                    Instruction INST8B,
                                    Instruction INST16B> {
   // Disassociate type from instruction definition
-  def : Pat<(v2i32 (opnode VPR64:$src,VPR64:$Rn, VPR64:$Rm)),
+  def : Pat<(v8i8 (opnode (v8i8 VPR64:$src), VPR64:$Rn, VPR64:$Rm)),
             (INST8B VPR64:$src, VPR64:$Rn, VPR64:$Rm)>;
-  def : Pat<(v4i16 (opnode VPR64:$src, VPR64:$Rn, VPR64:$Rm)),
+  def : Pat<(v2i32 (opnode (v2i32 VPR64:$src), VPR64:$Rn, VPR64:$Rm)),
             (INST8B VPR64:$src, VPR64:$Rn, VPR64:$Rm)>;
-  def : Pat<(v1i64 (opnode VPR64:$src, VPR64:$Rn, VPR64:$Rm)),
+  def : Pat<(v4i16 (opnode (v4i16 VPR64:$src), VPR64:$Rn, VPR64:$Rm)),
             (INST8B VPR64:$src, VPR64:$Rn, VPR64:$Rm)>;
-  def : Pat<(v4i32 (opnode VPR128:$src, VPR128:$Rn, VPR128:$Rm)),
+  def : Pat<(v1i64 (opnode (v1i64 VPR64:$src), VPR64:$Rn, VPR64:$Rm)),
+            (INST8B VPR64:$src, VPR64:$Rn, VPR64:$Rm)>;
+  def : Pat<(v16i8 (opnode (v16i8 VPR128:$src), VPR128:$Rn, VPR128:$Rm)),
             (INST16B VPR128:$src, VPR128:$Rn, VPR128:$Rm)>;
-  def : Pat<(v8i16 (opnode VPR128:$src, VPR128:$Rn, VPR128:$Rm)),
+  def : Pat<(v4i32 (opnode (v4i32 VPR128:$src), VPR128:$Rn, VPR128:$Rm)),
             (INST16B VPR128:$src, VPR128:$Rn, VPR128:$Rm)>;
-  def : Pat<(v2i64 (opnode VPR128:$src, VPR128:$Rn, VPR128:$Rm)),
+  def : Pat<(v8i16 (opnode (v8i16 VPR128:$src), VPR128:$Rn, VPR128:$Rm)),
+            (INST16B VPR128:$src, VPR128:$Rn, VPR128:$Rm)>;
+  def : Pat<(v2i64 (opnode (v2i64 VPR128:$src), VPR128:$Rn, VPR128:$Rm)),
             (INST16B VPR128:$src, VPR128:$Rn, VPR128:$Rm)>;
 
   // Allow to match BSL instruction pattern with non-constant operand
@@ -495,10 +496,10 @@ multiclass Neon_bitwise3V_patterns<SDPatternOperator opnode,
 }
 
 // Additional patterns for bitwise instruction BSL
-defm: Neon_bitwise3V_patterns<Neon_bsl, BSLvvv_8B, BSLvvv_16B>;
+defm: Neon_bitwise3V_patterns<vselect, BSLvvv_8B, BSLvvv_16B>;
 
 def Neon_NoBSLop : PatFrag<(ops node:$src, node:$Rn, node:$Rm),
-                           (Neon_bsl node:$src, node:$Rn, node:$Rm),
+                           (vselect node:$src, node:$Rn, node:$Rm),
                            [{ (void)N; return false; }]>;
 
 // Vector Bitwise Insert if True

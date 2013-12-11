@@ -113,9 +113,6 @@ namespace AArch64ISD {
     // get selected.
     WrapperSmall,
 
-    // Vector bitwise select
-    NEON_BSL,
-
     // Vector move immediate
     NEON_MOVIMM,
 

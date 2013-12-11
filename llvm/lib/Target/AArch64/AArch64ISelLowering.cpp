@@ -941,8 +941,6 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AArch64ISD::WrapperLarge:   return "AArch64ISD::WrapperLarge";
   case AArch64ISD::WrapperSmall:   return "AArch64ISD::WrapperSmall";
 
-  case AArch64ISD::NEON_BSL:
-    return "AArch64ISD::NEON_BSL";
   case AArch64ISD::NEON_MOVIMM:
     return "AArch64ISD::NEON_MOVIMM";
   case AArch64ISD::NEON_MVNIMM:
@@ -3434,12 +3432,9 @@ static SDValue PerformORCombine(SDNode *N,
       if (BVN1 && BVN1->isConstantSplat(SplatBits1, SplatUndef, SplatBitSize,
                                         HasAnyUndefs) &&
           !HasAnyUndefs && SplatBits0 == ~SplatBits1) {
-        // Canonicalize the vector type to make instruction selection simpler.
-        EVT CanonicalVT = VT.is128BitVector() ? MVT::v16i8 : MVT::v8i8;
-        SDValue Result = DAG.getNode(AArch64ISD::NEON_BSL, DL, CanonicalVT,
-                                     N0->getOperand(1), N0->getOperand(0),
-                                     N1->getOperand(0));
-        return DAG.getNode(ISD::BITCAST, DL, VT, Result);
+
+        return DAG.getNode(ISD::VSELECT, DL, VT, N0->getOperand(1),
+                           N0->getOperand(0), N1->getOperand(0));
       }
     }
   }
