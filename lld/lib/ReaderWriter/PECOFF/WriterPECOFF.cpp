@@ -361,7 +361,7 @@ PEHeaderChunk::PEHeaderChunk(const PECOFFLinkingContext &context)
   std::memset(&_peHeader, 0, sizeof(_peHeader));
 
   _coffHeader.Machine = context.getMachineType();
-  _coffHeader.TimeDateStamp = time(NULL);
+  _coffHeader.TimeDateStamp = time(nullptr);
 
   // The size of PE header including optional data directory is always 224.
   _coffHeader.SizeOfOptionalHeader = 224;
