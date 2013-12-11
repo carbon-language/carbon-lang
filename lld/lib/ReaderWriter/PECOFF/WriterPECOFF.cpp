@@ -886,14 +886,11 @@ void ExecutableWriter::build(const File &linkedFile) {
     addSectionChunk(section, sectionTable);
   }
 
-  BaseRelocChunk *baseReloc = nullptr;
-  if (_PECOFFLinkingContext.getBaseRelocationEnabled())
-    baseReloc = new BaseRelocChunk(linkedFile);
-
   // Now that we know the addresses of all defined atoms that needs to be
   // relocated. So we can create the ".reloc" section which contains all the
   // relocation sites.
-  if (baseReloc) {
+  if (_PECOFFLinkingContext.getBaseRelocationEnabled()) {
+    BaseRelocChunk *baseReloc = new BaseRelocChunk(linkedFile);
     baseReloc->setContents(_chunks);
     if (baseReloc->size()) {
       addSectionChunk(baseReloc, sectionTable);
