@@ -114,7 +114,32 @@ struct Z : virtual B {
 
 #pragma pack(pop)
 
+struct A1 { long long a; };
+#pragma pack(push, 1)
+struct B1 : virtual A1 { char a; };
+#pragma pack(pop)
+struct C1 : B1 {};
+// CHECK: *** Dumping AST Record Layout
+// CHECK:    0 | struct C1
+// CHECK:    0 |   struct B1 (base)
+// CHECK:    0 |     (B1 vbtable pointer)
+// CHECK:    4 |     char a
+// CHECK:    8 |   struct A1 (virtual base)
+// CHECK:    8 |     long long a
+// CHECK:      | [sizeof=16, align=8
+// CHECK:      |  nvsize=5, nvalign=1]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct C1
+// CHECK-X64:    0 |   struct B1 (base)
+// CHECK-X64:    0 |     (B1 vbtable pointer)
+// CHECK-X64:    8 |     char a
+// CHECK-X64:   16 |   struct A1 (virtual base)
+// CHECK-X64:   16 |     long long a
+// CHECK-X64:      | [sizeof=24, align=8
+// CHECK-X64:      |  nvsize=9, nvalign=1]
+
 int a[
 sizeof(X)+
 sizeof(Y)+
-sizeof(Z)];
+sizeof(Z)+
+sizeof(C1)];

@@ -2125,8 +2125,6 @@ public:
   /// \brief The alignment of the non-virtual portion of the record layout
   /// Only used for C++ layouts.
   CharUnits NonVirtualAlignment;
-  /// \brief The additional alignment imposed by the virtual bases.
-  CharUnits VirtualAlignment;
   /// \brief The primary base class (if one exists).
   const CXXRecordDecl *PrimaryBase;
   /// \brief The class we share our vb-pointer with.
@@ -2265,7 +2263,6 @@ MicrosoftRecordLayoutBuilder::initializeCXXLayout(const CXXRecordDecl *RD) {
   HasExtendableVFPtr = false;
   SharedVBPtrBase = 0;
   PrimaryBase = 0;
-  VirtualAlignment = CharUnits::One();
   LeadsWithZeroSizedBase = false;
 
   // If the record has a dynamic base class, attempt to choose a primary base
@@ -2285,7 +2282,6 @@ MicrosoftRecordLayoutBuilder::initializeCXXLayout(const CXXRecordDecl *RD) {
       HasZeroSizedSubObject = true;
     // Handle virtual bases.
     if (i->isVirtual()) {
-      VirtualAlignment = std::max(VirtualAlignment, getBaseAlignment(Layout));
       HasVBPtr = true;
       continue;
     }
@@ -2555,7 +2551,14 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
   if (!HasVBPtr)
     return;
 
-  updateAlignment(VirtualAlignment);
+  for (CXXRecordDecl::base_class_const_iterator i = RD->vbases_begin(),
+                                                e = RD->vbases_end();
+       i != e; ++i) {
+    const CXXRecordDecl *BaseDecl =
+        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(BaseDecl);
+    updateAlignment(getBaseAlignment(Layout));
+  }
   PreviousBaseLayout = 0;
 
   // Zero-sized v-bases obey the alignment attribute so apply it here.  The
