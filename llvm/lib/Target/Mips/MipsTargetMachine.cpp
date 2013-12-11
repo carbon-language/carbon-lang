@@ -45,8 +45,36 @@ extern "C" void LLVMInitializeMipsTarget() {
   RegisterTargetMachine<MipselTargetMachine> B(TheMips64elTarget);
 }
 
-// DataLayout --> Big-endian, 32-bit pointer/ABI/alignment
-// The stack is always 8 byte aligned
+static std::string computeDataLayout(const MipsSubtarget &ST) {
+  std::string Ret = "";
+
+  // There are both little and big endian mips.
+  if (ST.isLittle())
+    Ret += "e";
+  else
+    Ret += "E";
+
+  // Pointers are 64 or 32 bit depending on the ABI.
+  if (ST.isABI_N64())
+    Ret += "-p:64:64:64";
+  else
+    Ret += "-p:32:32:32";
+
+  // 8 and 16 bit integers only need no have natural alignment, but try to
+  // align them to 32 bits. 64 bit integers have natural alignment.
+  Ret += "-i8:8:32-i16:16:32-i64:64:64";
+
+  // 32 bit registers are always available and the stack is at least 64 bit
+  // aligned. On N64 64 bit registers are also available and the stack is
+  // 128 bit aligned.
+  if (ST.isABI_N64())
+    Ret += "-n32:64-S128";
+  else
+    Ret += "-n32-S64";
+
+  return Ret;
+}
+
 // On function prologue, the stack is created by decrementing
 // its pointer. Once decremented, all references are done with positive
 // offset from the stack/frame pointer, using StackGrowsUp enables
@@ -60,15 +88,7 @@ MipsTargetMachine(const Target &T, StringRef TT,
                   bool isLittle)
   : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
     Subtarget(TT, CPU, FS, isLittle, RM, this),
-    DL(isLittle ?
-               (Subtarget.isABI_N64() ?
-                "e-p:64:64:64-i8:8:32-i16:16:32-i64:64:64-f128:128:128-"
-                "n32:64-S128" :
-                "e-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32-S64") :
-               (Subtarget.isABI_N64() ?
-                "E-p:64:64:64-i8:8:32-i16:16:32-i64:64:64-f128:128:128-"
-                "n32:64-S128" :
-                "E-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32-S64")),
+    DL(computeDataLayout(Subtarget)),
     InstrInfo(MipsInstrInfo::create(*this)),
     FrameLowering(MipsFrameLowering::create(*this, Subtarget)),
     TLInfo(MipsTargetLowering::create(*this)), TSInfo(*this),
