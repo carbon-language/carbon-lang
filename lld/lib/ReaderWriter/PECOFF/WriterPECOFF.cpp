@@ -240,8 +240,6 @@ class SectionChunk : public AtomChunk {
 public:
   virtual uint64_t align() const { return SECTOR_SIZE; }
 
-  virtual uint64_t rawSize() const { return _size; }
-
   void appendAtom(const DefinedAtom *atom);
   uint32_t getCharacteristics() const { return _characteristics; }
   StringRef getSectionName() const { return _sectionName; }
@@ -668,7 +666,7 @@ SectionHeaderTableChunk::createSectionHeader(SectionChunk *chunk) {
     header.VirtualSize = 0;
     header.PointerToRawData = 0;
   } else {
-    header.VirtualSize = chunk->rawSize();
+    header.VirtualSize = chunk->size();
     header.PointerToRawData = chunk->fileOffset();
   }
   return header;
@@ -874,7 +872,7 @@ void ExecutableWriter::build(const File &linkedFile) {
       addSectionChunk(baseReloc, sectionTable);
       dataDirectory->setField(DataDirectoryIndex::BASE_RELOCATION_TABLE,
                               baseReloc->getVirtualAddress(),
-                              baseReloc->rawSize());
+                              baseReloc->size());
     }
   }
 
@@ -892,10 +890,10 @@ void ExecutableWriter::build(const File &linkedFile) {
       peHeader->setBaseOfData(section->getVirtualAddress());
     if (section->getSectionName() == ".idata.a")
       dataDirectory->setField(DataDirectoryIndex::IAT,
-                              section->getVirtualAddress(), section->rawSize());
+                              section->getVirtualAddress(), section->size());
     if (section->getSectionName() == ".idata.d")
       dataDirectory->setField(DataDirectoryIndex::IMPORT_TABLE,
-                              section->getVirtualAddress(), section->rawSize());
+                              section->getVirtualAddress(), section->size());
   }
 
   // Now that we know the size and file offset of sections. Set the file
