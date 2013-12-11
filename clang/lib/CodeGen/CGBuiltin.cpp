@@ -1768,7 +1768,7 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
     ScalarArg1 = (1 << 5),
     VectorGetArg1 = (1 << 6),
     VectorCastArg1 = (1 << 7),
-    VectorFpCmpzArg1 = (1 << 8)
+    ScalarFpCmpzArg1 = (1 << 8)
   };
   const char *s = NULL;
 
@@ -2268,86 +2268,86 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   // Scalar Floating-point Compare Equal
   case AArch64::BI__builtin_neon_vceqs_f32:
   case AArch64::BI__builtin_neon_vceqd_f64:
-    Int = Intrinsic::aarch64_neon_vceq; s = "vceq";
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
+    Int = Intrinsic::aarch64_neon_fceq; s = "vceq";
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Compare Equal To Zero
   case AArch64::BI__builtin_neon_vceqzs_f32:
   case AArch64::BI__builtin_neon_vceqzd_f64:
-    Int = Intrinsic::aarch64_neon_vceq; s = "vceq";
+    Int = Intrinsic::aarch64_neon_fceq; s = "vceq";
     // Add implicit zero operand.
     Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
-    IntTypes = VectorRet | VectorGetArg0 | VectorFpCmpzArg1; break;
+    IntTypes = VectorRet | ScalarArg0 | ScalarFpCmpzArg1; break;
   // Scalar Floating-point Compare Greater Than Or Equal
   case AArch64::BI__builtin_neon_vcges_f32:
   case AArch64::BI__builtin_neon_vcged_f64:
-    Int = Intrinsic::aarch64_neon_vcge; s = "vcge";
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
+    Int = Intrinsic::aarch64_neon_fcge; s = "vcge";
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Compare Greater Than Or Equal To Zero
   case AArch64::BI__builtin_neon_vcgezs_f32:
   case AArch64::BI__builtin_neon_vcgezd_f64:
-    Int = Intrinsic::aarch64_neon_vcge; s = "vcge";
+    Int = Intrinsic::aarch64_neon_fcge; s = "vcge";
     // Add implicit zero operand.
     Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
-    IntTypes = VectorRet | VectorGetArg0 | VectorFpCmpzArg1; break;
+    IntTypes = VectorRet | ScalarArg0 | ScalarFpCmpzArg1; break;
   // Scalar Floating-point Compare Greather Than
   case AArch64::BI__builtin_neon_vcgts_f32:
   case AArch64::BI__builtin_neon_vcgtd_f64:
-    Int = Intrinsic::aarch64_neon_vcgt; s = "vcgt";
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
+    Int = Intrinsic::aarch64_neon_fcgt; s = "vcgt";
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Compare Greather Than Zero
   case AArch64::BI__builtin_neon_vcgtzs_f32:
   case AArch64::BI__builtin_neon_vcgtzd_f64:
-    Int = Intrinsic::aarch64_neon_vcgt; s = "vcgt";
+    Int = Intrinsic::aarch64_neon_fcgt; s = "vcgt";
     // Add implicit zero operand.
     Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
-    IntTypes = VectorRet | VectorGetArg0 | VectorFpCmpzArg1; break;
+    IntTypes = VectorRet | ScalarArg0 | ScalarFpCmpzArg1; break;
   // Scalar Floating-point Compare Less Than or Equal
   case AArch64::BI__builtin_neon_vcles_f32:
   case AArch64::BI__builtin_neon_vcled_f64:
-    Int = Intrinsic::aarch64_neon_vcge; s = "vcge";
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
+    Int = Intrinsic::aarch64_neon_fcge; s = "vcge";
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Compare Less Than Or Equal To Zero
   case AArch64::BI__builtin_neon_vclezs_f32:
   case AArch64::BI__builtin_neon_vclezd_f64:
-    Int = Intrinsic::aarch64_neon_vclez; s = "vcle";
+    Int = Intrinsic::aarch64_neon_fclez; s = "vcle";
     // Add implicit zero operand.
     Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
-    IntTypes = VectorRet | VectorGetArg0 | VectorFpCmpzArg1; break;
+    IntTypes = VectorRet | ScalarArg0 | ScalarFpCmpzArg1; break;
   // Scalar Floating-point Compare Less Than Zero
   case AArch64::BI__builtin_neon_vclts_f32:
   case AArch64::BI__builtin_neon_vcltd_f64:
-    Int = Intrinsic::aarch64_neon_vcgt; s = "vcgt";
+    Int = Intrinsic::aarch64_neon_fcgt; s = "vcgt";
     std::swap(Ops[0], Ops[1]);
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Compare Less Than Zero
   case AArch64::BI__builtin_neon_vcltzs_f32:
   case AArch64::BI__builtin_neon_vcltzd_f64:
-    Int = Intrinsic::aarch64_neon_vcltz; s = "vclt";
+    Int = Intrinsic::aarch64_neon_fcltz; s = "vclt";
     // Add implicit zero operand.
     Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
-    IntTypes = VectorRet | VectorGetArg0 | VectorFpCmpzArg1; break;
+    IntTypes = VectorRet | ScalarArg0 | ScalarFpCmpzArg1; break;
   // Scalar Floating-point Absolute Compare Greater Than Or Equal
   case AArch64::BI__builtin_neon_vcages_f32:
   case AArch64::BI__builtin_neon_vcaged_f64:
-    Int = Intrinsic::aarch64_neon_vcage; s = "vcage";
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
+    Int = Intrinsic::aarch64_neon_fcage; s = "vcage";
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Absolute Compare Greater Than
   case AArch64::BI__builtin_neon_vcagts_f32:
   case AArch64::BI__builtin_neon_vcagtd_f64:
-    Int = Intrinsic::aarch64_neon_vcagt; s = "vcagt";
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
+    Int = Intrinsic::aarch64_neon_fcagt; s = "vcagt";
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Absolute Compare Less Than Or Equal
   case AArch64::BI__builtin_neon_vcales_f32:
   case AArch64::BI__builtin_neon_vcaled_f64:
-    Int = Intrinsic::aarch64_neon_vcage; s = "vcage";
+    Int = Intrinsic::aarch64_neon_fcage; s = "vcage";
     std::swap(Ops[0], Ops[1]);
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Absolute Compare Less Than
   case AArch64::BI__builtin_neon_vcalts_f32:
   case AArch64::BI__builtin_neon_vcaltd_f64:
-    Int = Intrinsic::aarch64_neon_vcagt; s = "vcalt";
+    Int = Intrinsic::aarch64_neon_fcagt; s = "vcalt";
     std::swap(Ops[0], Ops[1]);
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Compare Bitwise Test Bits
   case AArch64::BI__builtin_neon_vtstd_s64:
   case AArch64::BI__builtin_neon_vtstd_u64:
@@ -2608,9 +2608,9 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
       // Cast the argument to a vector type.
       Tys.push_back(cast<llvm::VectorType>(Ty));
     }
-  } else if (IntTypes & VectorFpCmpzArg1) {
+  } else if (IntTypes & ScalarFpCmpzArg1) {
     // Floating-point zero argument.
-    Tys.push_back(llvm::VectorType::get(CGF.FloatTy, 1));
+    Tys.push_back(CGF.FloatTy);
   }
  
   if (IntTypes)
