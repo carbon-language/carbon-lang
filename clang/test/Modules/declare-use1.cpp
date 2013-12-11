@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -x objective-c++ -fmodules-cache-path=%t -fmodules -fmodules-decluse -fmodule-name=XG -I %S/Inputs/declare-use %s -verify
+// RUN: %clang_cc1 -fmodule-maps -fmodules-cache-path=%t -fmodules-decluse -fmodule-name=XG -I %S/Inputs/declare-use %s -verify
 
 #include "g.h"
 #include "e.h"

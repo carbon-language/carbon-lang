@@ -9,11 +9,13 @@ module XB {
 module XC {
   header "c.h"
   use XA
+  // Intentionally doesn't use XB to show that -fdecl-use isn't transitive.
 }
 
 module XD {
   header "d.h"
   use XA
+  // Intentionally doesn't use XB to show that -fdecl-use isn't transitive.
 }
 
 module XE {
