@@ -67,6 +67,7 @@ USEDLIBS = lldbAPI.a \
 	clangSema.a \
 	clangSerialization.a \
 	LLVMMCDisassembler.a \
+	LLVMObjCARCOpts.a \
 	lldbPluginPlatformMacOSX.a \
 	lldbPluginPlatformLinux.a \
 	lldbPluginPlatformWindows.a \
