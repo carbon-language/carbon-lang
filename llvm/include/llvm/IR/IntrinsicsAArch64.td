@@ -272,6 +272,16 @@ def int_aarch64_neon_vrecpx :
 def int_aarch64_neon_vrsqrte :
   Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
+// Scalar Floating-point Reciprocal Step
+def int_aarch64_neon_vrecps :
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, LLVMMatchType<0>],
+            [IntrNoMem]>;
+
+// Scalar Floating-point Reciprocal Square Root Step
+def int_aarch64_neon_vrsqrts :
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, LLVMMatchType<0>],
+            [IntrNoMem]>;
+
 class Neon_Cmp_Intrinsic
   : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty, llvm_anyvector_ty],
               [IntrNoMem]>;

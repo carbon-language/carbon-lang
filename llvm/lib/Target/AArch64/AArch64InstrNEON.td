@@ -4187,11 +4187,14 @@ multiclass Neon_Scalar3Same_fabd_SD_size_patterns<SDPatternOperator opnode,
 }
 
 multiclass Neon_Scalar3Same_SD_size_patterns<SDPatternOperator opnode,
+                                             SDPatternOperator opnodeV,
                                              Instruction INSTS,
                                              Instruction INSTD> {
-  def : Pat<(v1f32 (opnode (v1f32 FPR32:$Rn), (v1f32 FPR32:$Rm))),
+  def : Pat<(f32 (opnode (f32 FPR32:$Rn), (f32 FPR32:$Rm))),
             (INSTS FPR32:$Rn, FPR32:$Rm)>;
-  def : Pat<(v1f64 (opnode (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
+  def : Pat<(f64 (opnode (f64 FPR64:$Rn), (f64 FPR64:$Rm))),
+            (INSTD FPR64:$Rn, FPR64:$Rm)>;
+  def : Pat<(v1f64 (opnodeV (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
             (INSTD FPR64:$Rn, FPR64:$Rm)>;
 }
 
@@ -4874,18 +4877,15 @@ defm FMULX : NeonI_Scalar3Same_SD_sizes<0b0, 0b0, 0b11011, "fmulx", 1>;
 
 // Scalar Floating-point Reciprocal Step
 defm FRECPS : NeonI_Scalar3Same_SD_sizes<0b0, 0b0, 0b11111, "frecps", 0>;
+defm : Neon_Scalar3Same_SD_size_patterns<int_aarch64_neon_vrecps,
+                                         int_arm_neon_vrecps, FRECPSsss,
+                                         FRECPSddd>;
 
 // Scalar Floating-point Reciprocal Square Root Step
 defm FRSQRTS : NeonI_Scalar3Same_SD_sizes<0b0, 0b1, 0b11111, "frsqrts", 0>;
-
-// Patterns to match llvm.arm.* intrinsic for
-// Scalar Floating-point Reciprocal Step and
-// Scalar Floating-point Reciprocal Square Root Step
-defm : Neon_Scalar3Same_SD_size_patterns<int_arm_neon_vrecps, FRECPSsss,
-                                                              FRECPSddd>;
-defm : Neon_Scalar3Same_SD_size_patterns<int_arm_neon_vrsqrts, FRSQRTSsss,
-                                                               FRSQRTSddd>;
-
+defm : Neon_Scalar3Same_SD_size_patterns<int_aarch64_neon_vrsqrts,
+                                         int_arm_neon_vrsqrts, FRSQRTSsss,
+                                         FRSQRTSddd>;
 def : Pat<(v1f64 (fsqrt (v1f64 FPR64:$Rn))), (FSQRTdd FPR64:$Rn)>;
 
 // Patterns to match llvm.aarch64.* intrinsic for
