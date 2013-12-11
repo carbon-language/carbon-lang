@@ -1,3 +1,4 @@
+
 //===-- Mips16InstrInfo.cpp - Mips16 Instruction Information --------------===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -176,9 +177,10 @@ void Mips16InstrInfo::makeFrame(unsigned SP, int64_t FrameSize,
   const BitVector Reserved = RI.getReservedRegs(*MBB.getParent());
   bool SaveS2 = Reserved[Mips::S2];
   MachineInstrBuilder MIB;
+  unsigned Opc = ((FrameSize <= 128) && !SaveS2)? Mips::Save16:Mips::SaveX16;
   if (isUInt<11>(FrameSize))
     MIB = BuildMI(
-            MBB, I, DL, get(Mips::SaveX16)).addReg(Mips::RA).
+            MBB, I, DL, get(Opc)).addReg(Mips::RA).
             addReg(Mips::S0).
             addReg(Mips::S1).addImm(FrameSize);
   else {
@@ -186,7 +188,7 @@ void Mips16InstrInfo::makeFrame(unsigned SP, int64_t FrameSize,
                      // returns largest possible n bit unsigned integer
     int64_t Remainder = FrameSize - Base;
     MIB = BuildMI(
-            MBB, I, DL, get(Mips::SaveX16)).addReg(Mips::RA).
+            MBB, I, DL, get(Opc)).addReg(Mips::RA).
             addReg(Mips::S0).
             addReg(Mips::S1).addImm(Base);
     if (isInt<16>(-Remainder))
@@ -206,9 +208,11 @@ void Mips16InstrInfo::restoreFrame(unsigned SP, int64_t FrameSize,
   const BitVector Reserved = RI.getReservedRegs(*MBB.getParent());
   bool SaveS2 = Reserved[Mips::S2];
   MachineInstrBuilder MIB;
+  unsigned Opc = ((FrameSize <= 128) && !SaveS2)?
+    Mips::Restore16:Mips::RestoreX16;
   if (isUInt<11>(FrameSize))
     MIB = BuildMI(
-            MBB, I, DL, get(Mips::RestoreX16)).
+            MBB, I, DL, get(Opc)).
             addReg(Mips::RA, RegState::Define).
             addReg(Mips::S0, RegState::Define).
             addReg(Mips::S1, RegState::Define).
@@ -222,7 +226,7 @@ void Mips16InstrInfo::restoreFrame(unsigned SP, int64_t FrameSize,
     else
       adjustStackPtrBig(SP, Remainder, MBB, I, Mips::A0, Mips::A1);
     MIB = BuildMI(
-            MBB, I, DL, get(Mips::RestoreX16)).
+            MBB, I, DL, get(Opc)).
             addReg(Mips::RA, RegState::Define).
             addReg(Mips::S0, RegState::Define).
             addReg(Mips::S1, RegState::Define).

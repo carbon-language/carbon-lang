@@ -85,12 +85,20 @@ void MipsInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     O << "\t.set\tmips32r2\n";
     break;
   case Mips::Save16:
+    O << "\tsave\t";
+    printSaveRestore(MI, O);
+    O << " # 16 bit inst\n";
+    return;
   case Mips::SaveX16:
     O << "\tsave\t";
     printSaveRestore(MI, O);
     O << "\n";
     return;
   case Mips::Restore16:
+    O << "\trestore\t";
+    printSaveRestore(MI, O);
+    O << " # 16 bit inst\n";
+    return;
   case Mips::RestoreX16:
     O << "\trestore\t";
     printSaveRestore(MI, O);
