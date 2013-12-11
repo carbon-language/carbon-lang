@@ -85,36 +85,36 @@ ImportTableEntryAtom::assembleRawContent(uint32_t contents) {
 void ImportDirectoryAtom::addRelocations(
     Context &context, StringRef loadName,
     const std::vector<COFFSharedLibraryAtom *> &sharedAtoms) {
-  size_t lookupEnd = context.importLookupTables.size();
-  size_t addressEnd = context.importAddressTables.size();
-
   // Create parallel arrays. The contents of the two are initially the
   // same. The PE/COFF loader overwrites the import address tables with the
   // pointers to the referenced items after loading the executable into
   // memory.
-  addImportTableAtoms(context, sharedAtoms, false, context.importLookupTables);
-  addImportTableAtoms(context, sharedAtoms, true, context.importAddressTables);
+  std::vector<ImportTableEntryAtom *> importLookupTables =
+      createImportTableAtoms(context, sharedAtoms, false, ".idata.t");
+  std::vector<ImportTableEntryAtom *> importAddressTables =
+      createImportTableAtoms(context, sharedAtoms, true, ".idata.a");
 
-  addDir32NBReloc(this, context.importLookupTables[lookupEnd],
+  addDir32NBReloc(this, importLookupTables[0],
                   offsetof(ImportDirectoryTableEntry, ImportLookupTableRVA));
-  addDir32NBReloc(this, context.importAddressTables[addressEnd],
+  addDir32NBReloc(this, importAddressTables[0],
                   offsetof(ImportDirectoryTableEntry, ImportAddressTableRVA));
   addDir32NBReloc(this, new (_alloc) DLLNameAtom(context, loadName),
                   offsetof(ImportDirectoryTableEntry, NameRVA));
 }
 
-void ImportDirectoryAtom::addImportTableAtoms(
+std::vector<ImportTableEntryAtom *> ImportDirectoryAtom::createImportTableAtoms(
     Context &context, const std::vector<COFFSharedLibraryAtom *> &sharedAtoms,
-    bool shouldAddReference, std::vector<ImportTableEntryAtom *> &ret) const {
+    bool shouldAddReference, StringRef sectionName) const {
+  std::vector<ImportTableEntryAtom *> ret;
   for (COFFSharedLibraryAtom *atom : sharedAtoms) {
     ImportTableEntryAtom *entry = nullptr;
     if (atom->importName().empty()) {
       // Import by ordinal
       uint32_t hint = (1U << 31) | atom->hint();
-      entry = new (_alloc) ImportTableEntryAtom(context, hint);
+      entry = new (_alloc) ImportTableEntryAtom(context, hint, sectionName);
     } else {
       // Import by name
-      entry = new (_alloc) ImportTableEntryAtom(context, 0);
+      entry = new (_alloc) ImportTableEntryAtom(context, 0, sectionName);
       HintNameAtom *hintName = createHintNameAtom(context, atom);
       addDir32NBReloc(entry, hintName);
     }
@@ -123,7 +123,8 @@ void ImportDirectoryAtom::addImportTableAtoms(
       atom->setImportTableEntry(entry);
   }
   // Add the NULL entry.
-  ret.push_back(new (_alloc) ImportTableEntryAtom(context, 0));
+  ret.push_back(new (_alloc) ImportTableEntryAtom(context, 0, sectionName));
+  return ret;
 }
 
 HintNameAtom *ImportDirectoryAtom::createHintNameAtom(
@@ -151,7 +152,6 @@ void IdataPass::perform(std::unique_ptr<MutableFile> &file) {
   new (_alloc) idata::NullImportDirectoryAtom(context);
 
   connectAtoms(context);
-  createDataDirectoryAtoms(context);
   replaceSharedLibraryAtoms(context);
 }
 
@@ -183,46 +183,9 @@ void IdataPass::appendAtoms(std::vector<T *> &vec1,
 
 void IdataPass::connectAtoms(idata::Context &context) {
   std::vector<COFFBaseDefinedAtom *> atoms;
-  appendAtoms(atoms, context.importDirectories);
-  appendAtoms(atoms, context.importLookupTables);
-  appendAtoms(atoms, context.importAddressTables);
   appendAtoms(atoms, context.dllNameAtoms);
   appendAtoms(atoms, context.hintNameAtoms);
   coff::connectAtomsWithLayoutEdge(atoms);
-}
-
-/// The addresses of the import dirctory and the import address table needs to
-/// be set to the COFF Optional Data Directory header. A COFFDataDirectoryAtom
-/// represents the data directory header. We create a COFFDataDirectoryAtom
-/// and set relocations to them, so that the address will be set by the
-/// writer.
-void IdataPass::createDataDirectoryAtoms(idata::Context &context) {
-  // CLR_RUNTIME_HEADER is the last index of the data directory.
-  int nentries = llvm::COFF::CLR_RUNTIME_HEADER + 1;
-  int entSize = sizeof(llvm::object::data_directory);
-  std::vector<uint8_t> contents(nentries * entSize, 0);
-
-  auto importTableOffset =
-      llvm::COFF::DataDirectoryIndex::IMPORT_TABLE * entSize;
-  auto iatOffset = llvm::COFF::DataDirectoryIndex::IAT * entSize;
-
-  auto *importTableEntry = reinterpret_cast<llvm::object::data_directory *>(
-      &contents[0] + importTableOffset);
-  auto *iatEntry = reinterpret_cast<llvm::object::data_directory *>(
-      &contents[0] + iatOffset);
-
-  importTableEntry->Size =
-      context.importDirectories.size() * context.importDirectories[0]->size();
-  iatEntry->Size = context.importAddressTables.size() *
-                   context.importAddressTables[0]->size();
-
-  auto *dir = new (_alloc) coff::COFFDataDirectoryAtom(
-      context.dummyFile, context.dummyFile.getNextOrdinal(),
-      std::move(contents));
-  addDir32NBReloc(dir, context.importDirectories[0], importTableOffset);
-  addDir32NBReloc(dir, context.importAddressTables[0], iatOffset);
-
-  context.file.addAtom(*dir);
 }
 
 /// Transforms a reference to a COFFSharedLibraryAtom to a real reference.

@@ -47,6 +47,7 @@
 
 using llvm::support::ulittle16_t;
 using llvm::support::ulittle32_t;
+using llvm::COFF::DataDirectoryIndex;
 
 namespace lld {
 namespace pecoff {
@@ -218,29 +219,20 @@ protected:
 /// header in the output file. An entry consists of an 8 byte field that
 /// indicates a relative virtual address (the starting address of the entry data
 /// in memory) and 8 byte entry data size.
-class DataDirectoryChunk : public AtomChunk {
+class DataDirectoryChunk : public HeaderChunk {
 public:
-  explicit DataDirectoryChunk(const DefinedAtom *atom)
-      : AtomChunk(kindDataDirectory) {
-    if (atom)
-      _atomLayouts.push_back(new (_alloc) AtomLayout(atom, 0, 0));
-  }
+  DataDirectoryChunk()
+      : HeaderChunk(), _data(std::vector<llvm::object::data_directory>(16)) {}
 
   virtual uint64_t size() const {
-    return sizeof(llvm::object::data_directory) * 16;
+    return sizeof(llvm::object::data_directory) * _data.size();
   }
 
-  void setBaseRelocField(uint32_t addr, uint32_t size) {
-    _baseRelocAddr = addr;
-    _baseRelocSize = size;
-  }
-
+  void setField(DataDirectoryIndex index, uint32_t addr, uint32_t size);
   virtual void write(uint8_t *buffer);
 
 private:
-  uint32_t _baseRelocAddr;
-  uint32_t _baseRelocSize;
-  mutable llvm::BumpPtrAllocator _alloc;
+  std::vector<llvm::object::data_directory> _data;
 };
 
 /// A SectionChunk represents a section containing atoms. It consists of a
@@ -561,22 +553,15 @@ void AtomChunk::addBaseRelocations(std::vector<uint64_t> &relocSites) const {
   }
 }
 
-void DataDirectoryChunk::write(uint8_t *buffer) {
-  if (!_atomLayouts.empty()) {
-    assert(_atomLayouts.size() == 1);
-    const AtomLayout *layout = _atomLayouts[0];
-    ArrayRef<uint8_t> content =
-        static_cast<const DefinedAtom *>(layout->_atom)->rawContent();
-    std::memcpy(buffer, content.data(), content.size());
-  }
+void DataDirectoryChunk::setField(DataDirectoryIndex index, uint32_t addr,
+                                  uint32_t size) {
+  llvm::object::data_directory &dir = _data[index];
+  dir.RelativeVirtualAddress = addr;
+  dir.Size = size;
+}
 
-  // Write base relocation table entry.
-  int baseRelocOffset = llvm::COFF::DataDirectoryIndex::BASE_RELOCATION_TABLE *
-                        sizeof(llvm::object::data_directory);
-  auto *baseReloc = reinterpret_cast<llvm::object::data_directory *>(
-      buffer + baseRelocOffset);
-  baseReloc->RelativeVirtualAddress = _baseRelocAddr;
-  baseReloc->Size = _baseRelocSize;
+void DataDirectoryChunk::write(uint8_t *buffer) {
+  std::memcpy(buffer, &_data[0], size());
 }
 
 void SectionChunk::appendAtom(const DefinedAtom *atom) {
@@ -842,7 +827,7 @@ StringRef chooseSectionByContent(const DefinedAtom *atom) {
 typedef std::map<StringRef, std::vector<const DefinedAtom *> > AtomVectorMap;
 
 void groupAtoms(const PECOFFLinkingContext &ctx, const File &file,
-                AtomVectorMap &result, const DefinedAtom *&datadir) {
+                AtomVectorMap &result) {
   for (const DefinedAtom *atom : file.defined()) {
     if (atom->sectionChoice() == DefinedAtom::sectionCustomRequired) {
       StringRef section = customSectionName(atom);
@@ -850,12 +835,8 @@ void groupAtoms(const PECOFFLinkingContext &ctx, const File &file,
       continue;
     }
     if (atom->sectionChoice() == DefinedAtom::sectionBasedOnContent) {
-      if (atom->contentType() == DefinedAtom::typeDataDirectoryEntry) {
-        datadir = atom;
-      } else {
-        StringRef section = chooseSectionByContent(atom);
-        result[ctx.getOutputSectionName(section)].push_back(atom);
-      }
+      StringRef section = chooseSectionByContent(atom);
+      result[ctx.getOutputSectionName(section)].push_back(atom);
       continue;
     }
     llvm_unreachable("Unknown section choice");
@@ -865,13 +846,12 @@ void groupAtoms(const PECOFFLinkingContext &ctx, const File &file,
 // Create all chunks that consist of the output file.
 void ExecutableWriter::build(const File &linkedFile) {
   AtomVectorMap atoms;
-  const DefinedAtom *dataDirAtom = nullptr;
-  groupAtoms(_PECOFFLinkingContext, linkedFile, atoms, dataDirAtom);
+  groupAtoms(_PECOFFLinkingContext, linkedFile, atoms);
 
   // Create file chunks and add them to the list.
   auto *dosStub = new DOSStubChunk(_PECOFFLinkingContext);
   auto *peHeader = new PEHeaderChunk(_PECOFFLinkingContext);
-  auto *dataDirectory = new DataDirectoryChunk(dataDirAtom);
+  auto *dataDirectory = new DataDirectoryChunk();
   auto *sectionTable = new SectionHeaderTableChunk();
   addChunk(dosStub);
   addChunk(peHeader);
@@ -894,8 +874,9 @@ void ExecutableWriter::build(const File &linkedFile) {
     baseReloc->setContents(_chunks);
     if (baseReloc->size()) {
       addSectionChunk(baseReloc, sectionTable);
-      dataDirectory->setBaseRelocField(baseReloc->getVirtualAddress(),
-                                       baseReloc->rawSize());
+      dataDirectory->setField(DataDirectoryIndex::BASE_RELOCATION_TABLE,
+                              baseReloc->getVirtualAddress(),
+                              baseReloc->rawSize());
     }
   }
 
@@ -911,6 +892,12 @@ void ExecutableWriter::build(const File &linkedFile) {
     }
     if (section->getSectionName() == ".data")
       peHeader->setBaseOfData(section->getVirtualAddress());
+    if (section->getSectionName() == ".idata.a")
+      dataDirectory->setField(DataDirectoryIndex::IAT,
+                              section->getVirtualAddress(), section->rawSize());
+    if (section->getSectionName() == ".idata.d")
+      dataDirectory->setField(DataDirectoryIndex::IMPORT_TABLE,
+                              section->getVirtualAddress(), section->rawSize());
   }
 
   // Now that we know the size and file offset of sections. Set the file

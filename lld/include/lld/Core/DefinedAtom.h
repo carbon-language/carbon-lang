@@ -144,7 +144,6 @@ public:
     typeTLVInitialData,     // initial data for a TLV [Darwin]
     typeTLVInitialZeroFill, // TLV initial zero fill data [Darwin]
     typeTLVInitializerPtr,  // pointer to thread local initializer [Darwin]
-    typeDataDirectoryEntry, // linker created for data directory header [PECOFF]
     typeThreadZeroFill,     // Uninitialized thread local data(TBSS) [ELF]
     typeThreadData,         // Initialized thread local data(TDATA) [ELF]
     typeRONote,             // Identifies readonly note sections [ELF]

@@ -246,18 +246,6 @@ private:
   std::vector<uint8_t> _data;
 };
 
-// A COFFDataDirectoryAtom represents an entry of Optional Data Directory in the
-// COFF header.
-class COFFDataDirectoryAtom : public COFFLinkerInternalAtom {
-public:
-  COFFDataDirectoryAtom(const File &file, uint64_t ordinal,
-                        std::vector<uint8_t> contents)
-      : COFFLinkerInternalAtom(file, ordinal, contents) {}
-
-  virtual ContentType contentType() const { return typeDataDirectoryEntry; }
-  virtual ContentPermissions permissions() const { return permR__; }
-};
-
 // A COFFSharedLibraryAtom represents a symbol for data in an import library.  A
 // reference to a COFFSharedLibraryAtom will be transformed to a real reference
 // to an import address table entry in Idata pass.

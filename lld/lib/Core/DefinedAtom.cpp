@@ -53,7 +53,6 @@ DefinedAtom::ContentPermissions DefinedAtom::permissions(ContentType type) {
   case typeLazyPointer:
   case typeLazyDylibPointer:
   case typeThunkTLV:
-  case typeDataDirectoryEntry:
   case typeRWNote:
     return permRW_;
 

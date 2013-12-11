@@ -58,8 +58,6 @@ struct Context {
   // accumulate all atoms created in the pass in the following vectors, and add
   // layout edges when finishing the pass.
   std::vector<COFFBaseDefinedAtom *> importDirectories;
-  std::vector<ImportTableEntryAtom *> importLookupTables;
-  std::vector<ImportTableEntryAtom *> importAddressTables;
   std::vector<HintNameAtom *> hintNameAtoms;
   std::vector<DLLNameAtom *> dllNameAtoms;
 
@@ -106,11 +104,16 @@ private:
 
 class ImportTableEntryAtom : public IdataAtom {
 public:
-  ImportTableEntryAtom(Context &context, uint32_t contents)
-      : IdataAtom(context, assembleRawContent(contents)) {}
+  ImportTableEntryAtom(Context &context, uint32_t contents,
+                       StringRef sectionName)
+      : IdataAtom(context, assembleRawContent(contents)),
+        _sectionName(sectionName) {}
+
+  virtual StringRef customSectionName() const { return _sectionName; };
 
 private:
   std::vector<uint8_t> assembleRawContent(uint32_t contents);
+  StringRef _sectionName;
 };
 
 /// An ImportDirectoryAtom includes information to load a DLL, including a DLL
@@ -126,12 +129,15 @@ public:
     context.importDirectories.push_back(this);
   }
 
+  virtual StringRef customSectionName() const { return ".idata.d"; }
+
 private:
   void addRelocations(Context &context, StringRef loadName,
                       const std::vector<COFFSharedLibraryAtom *> &sharedAtoms);
-  void addImportTableAtoms(
+
+  std::vector<ImportTableEntryAtom *> createImportTableAtoms(
       Context &context, const std::vector<COFFSharedLibraryAtom *> &sharedAtoms,
-      bool shouldAddReference, std::vector<ImportTableEntryAtom *> &ret) const;
+      bool shouldAddReference, StringRef sectionName) const;
   HintNameAtom *createHintNameAtom(Context &context,
                                    const COFFSharedLibraryAtom *atom) const;
 
@@ -145,6 +151,8 @@ public:
       : IdataAtom(context, std::vector<uint8_t>(20, 0)) {
     context.importDirectories.push_back(this);
   }
+
+  virtual StringRef customSectionName() const { return ".idata.d"; }
 };
 
 // An instance of this class represents "input file" for atoms created in this
@@ -181,7 +189,6 @@ private:
   void appendAtoms(std::vector<T *> &vec1, const std::vector<U *> &vec2);
 
   void connectAtoms(idata::Context &context);
-  void createDataDirectoryAtoms(idata::Context &context);
   void replaceSharedLibraryAtoms(idata::Context &context);
 
   // A dummy file with which all the atoms created in the pass will be
