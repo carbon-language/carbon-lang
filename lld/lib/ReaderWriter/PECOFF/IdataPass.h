@@ -49,19 +49,8 @@ class ImportTableEntryAtom;
 // A state object of this pass.
 struct Context {
   Context(MutableFile &f, IdataPassFile &g) : file(f), dummyFile(g) {}
-
   MutableFile &file;
   IdataPassFile &dummyFile;
-
-  // The object to accumulate idata atoms. Idata atoms need to be grouped by
-  // type and be continuous in the output file. To force such layout, we
-  // accumulate all atoms created in the pass in the following vectors, and add
-  // layout edges when finishing the pass.
-  std::vector<COFFBaseDefinedAtom *> importDirectories;
-  std::vector<HintNameAtom *> hintNameAtoms;
-  std::vector<DLLNameAtom *> dllNameAtoms;
-
-  std::map<StringRef, COFFBaseDefinedAtom *> sharedToDefinedAtom;
 };
 
 /// The root class of all idata atoms.
@@ -126,7 +115,6 @@ public:
                       const std::vector<COFFSharedLibraryAtom *> &sharedAtoms)
       : IdataAtom(context, std::vector<uint8_t>(20, 0)) {
     addRelocations(context, loadName, sharedAtoms);
-    context.importDirectories.push_back(this);
   }
 
   virtual StringRef customSectionName() const { return ".idata.d"; }
@@ -138,8 +126,6 @@ private:
   std::vector<ImportTableEntryAtom *> createImportTableAtoms(
       Context &context, const std::vector<COFFSharedLibraryAtom *> &sharedAtoms,
       bool shouldAddReference, StringRef sectionName) const;
-  HintNameAtom *createHintNameAtom(Context &context,
-                                   const COFFSharedLibraryAtom *atom) const;
 
   mutable llvm::BumpPtrAllocator _alloc;
 };
@@ -148,9 +134,7 @@ private:
 class NullImportDirectoryAtom : public IdataAtom {
 public:
   explicit NullImportDirectoryAtom(Context &context)
-      : IdataAtom(context, std::vector<uint8_t>(20, 0)) {
-    context.importDirectories.push_back(this);
-  }
+      : IdataAtom(context, std::vector<uint8_t>(20, 0)) {}
 
   virtual StringRef customSectionName() const { return ".idata.d"; }
 };
@@ -182,13 +166,6 @@ private:
   std::map<StringRef, std::vector<COFFSharedLibraryAtom *> >
   groupByLoadName(MutableFile &file);
 
-  void createImportDirectory(idata::Context &context, StringRef loadName,
-                             std::vector<COFFSharedLibraryAtom *> &dllAtoms);
-
-  template <typename T, typename U>
-  void appendAtoms(std::vector<T *> &vec1, const std::vector<U *> &vec2);
-
-  void connectAtoms(idata::Context &context);
   void replaceSharedLibraryAtoms(idata::Context &context);
 
   // A dummy file with which all the atoms created in the pass will be

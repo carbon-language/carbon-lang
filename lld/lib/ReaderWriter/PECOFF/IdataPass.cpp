@@ -38,9 +38,6 @@ static void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target,
 }
 
 namespace idata {
-class DLLNameAtom;
-class HintNameAtom;
-class ImportTableEntryAtom;
 
 IdataAtom::IdataAtom(Context &context, std::vector<uint8_t> data)
     : COFFLinkerInternalAtom(context.dummyFile,
@@ -49,16 +46,12 @@ IdataAtom::IdataAtom(Context &context, std::vector<uint8_t> data)
 }
 
 DLLNameAtom::DLLNameAtom(Context &context, StringRef name)
-    : IdataAtom(context, stringRefToVector(name)) {
-  context.dllNameAtoms.push_back(this);
-}
+    : IdataAtom(context, stringRefToVector(name)) {}
 
 HintNameAtom::HintNameAtom(Context &context, uint16_t hint,
                            StringRef importName)
     : IdataAtom(context, assembleRawContent(hint, importName)),
-      _importName(importName) {
-  context.hintNameAtoms.push_back(this);
-}
+      _importName(importName) {}
 
 std::vector<uint8_t> HintNameAtom::assembleRawContent(uint16_t hint,
                                                       StringRef importName) {
@@ -115,7 +108,8 @@ std::vector<ImportTableEntryAtom *> ImportDirectoryAtom::createImportTableAtoms(
     } else {
       // Import by name
       entry = new (_alloc) ImportTableEntryAtom(context, 0, sectionName);
-      HintNameAtom *hintName = createHintNameAtom(context, atom);
+      HintNameAtom *hintName =
+          new (_alloc) HintNameAtom(context, atom->hint(), atom->importName());
       addDir32NBReloc(entry, hintName);
     }
     ret.push_back(entry);
@@ -125,11 +119,6 @@ std::vector<ImportTableEntryAtom *> ImportDirectoryAtom::createImportTableAtoms(
   // Add the NULL entry.
   ret.push_back(new (_alloc) ImportTableEntryAtom(context, 0, sectionName));
   return ret;
-}
-
-HintNameAtom *ImportDirectoryAtom::createHintNameAtom(
-    Context &context, const COFFSharedLibraryAtom *atom) const {
-  return new (_alloc) HintNameAtom(context, atom->hint(), atom->importName());
 }
 
 } // namespace idata
@@ -144,14 +133,13 @@ void IdataPass::perform(std::unique_ptr<MutableFile> &file) {
   for (auto i : sharedAtoms) {
     StringRef loadName = i.first;
     std::vector<COFFSharedLibraryAtom *> &atoms = i.second;
-    createImportDirectory(context, loadName, atoms);
+    new (_alloc) idata::ImportDirectoryAtom(context, loadName, atoms);
   }
 
   // All atoms, including those of tyep NullImportDirectoryAtom, are added to
   // context.file in the IdataAtom's constructor.
   new (_alloc) idata::NullImportDirectoryAtom(context);
 
-  connectAtoms(context);
   replaceSharedLibraryAtoms(context);
 }
 
@@ -167,25 +155,6 @@ IdataPass::groupByLoadName(MutableFile &file) {
     ret[atom->loadName()].push_back(atom);
   }
   return ret;
-}
-
-void IdataPass::createImportDirectory(
-    idata::Context &context, StringRef loadName,
-    std::vector<COFFSharedLibraryAtom *> &dllAtoms) {
-  new (_alloc) idata::ImportDirectoryAtom(context, loadName, dllAtoms);
-}
-
-template <typename T, typename U>
-void IdataPass::appendAtoms(std::vector<T *> &vec1,
-                            const std::vector<U *> &vec2) {
-  vec1.insert(vec1.end(), vec2.begin(), vec2.end());
-}
-
-void IdataPass::connectAtoms(idata::Context &context) {
-  std::vector<COFFBaseDefinedAtom *> atoms;
-  appendAtoms(atoms, context.dllNameAtoms);
-  appendAtoms(atoms, context.hintNameAtoms);
-  coff::connectAtomsWithLayoutEdge(atoms);
 }
 
 /// Transforms a reference to a COFFSharedLibraryAtom to a real reference.
