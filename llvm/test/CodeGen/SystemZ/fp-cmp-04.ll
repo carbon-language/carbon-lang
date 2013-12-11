@@ -365,3 +365,43 @@ store:
 exit:
   ret float %res
 }
+
+; Test another form of f7 in which the condition is based on the unnegated
+; result.  This is what InstCombine would produce.
+define float @f18(float %dummy, float %a, float *%dest) {
+; CHECK-LABEL: f18:
+; CHECK: lnebr %f0, %f2
+; CHECK-NEXT: jl .L{{.*}}
+; CHECK: br %r14
+entry:
+  %abs = call float @llvm.fabs.f32(float %a)
+  %res = fsub float -0.0, %abs
+  %cmp = fcmp ogt float %abs, 0.0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store float %res, float *%dest
+  br label %exit
+
+exit:
+  ret float %res
+}
+
+; Similarly for f8.
+define float @f19(float %dummy, float %a, float *%dest) {
+; CHECK-LABEL: f19:
+; CHECK: lcebr %f0, %f2
+; CHECK-NEXT: jle .L{{.*}}
+; CHECK: br %r14
+entry:
+  %res = fsub float -0.0, %a
+  %cmp = fcmp oge float %a, 0.0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store float %res, float *%dest
+  br label %exit
+
+exit:
+  ret float %res
+}

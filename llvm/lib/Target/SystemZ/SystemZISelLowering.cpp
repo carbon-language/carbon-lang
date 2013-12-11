@@ -1252,6 +1252,34 @@ static bool shouldSwapCmpOperands(SDValue Op0, SDValue Op1,
   return false;
 }
 
+// Return a version of comparison CC mask CCMask in which the LT and GT
+// actions are swapped.
+static unsigned reverseCCMask(unsigned CCMask) {
+  return ((CCMask & SystemZ::CCMASK_CMP_EQ) |
+          (CCMask & SystemZ::CCMASK_CMP_GT ? SystemZ::CCMASK_CMP_LT : 0) |
+          (CCMask & SystemZ::CCMASK_CMP_LT ? SystemZ::CCMASK_CMP_GT : 0) |
+          (CCMask & SystemZ::CCMASK_CMP_UO));
+}
+
+// CmpOp0 and CmpOp1 are being compared using CC mask CCMask.  Check whether
+// CmpOp0 is a floating-point result that is also negated and if CmpOp1
+// is zero.  In this case we can use the negation to set CC, so avoiding
+// separate LOAD AND TEST and LOAD (NEGATIVE/COMPLEMENT) instructions.
+static void adjustForFNeg(SDValue &CmpOp0, SDValue &CmpOp1, unsigned &CCMask) {
+  ConstantFPSDNode *C1 = dyn_cast<ConstantFPSDNode>(CmpOp1);
+  if (C1 && C1->isZero()) {
+    for (SDNode::use_iterator I = CmpOp0->use_begin(), E = CmpOp0->use_end();
+         I != E; ++I) {
+      SDNode *N = *I;
+      if (N->getOpcode() == ISD::FNEG) {
+        CmpOp0 = SDValue(N, 0);
+        CCMask = reverseCCMask(CCMask);
+        return;
+      }
+    }
+  }
+}
+
 // Return true if shift operation N has an in-range constant shift value.
 // Store it in ShiftVal if so.
 static bool isSimpleShift(SDValue N, unsigned &ShiftVal) {
@@ -1463,14 +1491,12 @@ static SDValue emitCmp(const SystemZTargetMachine &TM, SelectionDAG &DAG,
 
   if (shouldSwapCmpOperands(CmpOp0, CmpOp1, ICmpType)) {
     std::swap(CmpOp0, CmpOp1);
-    CCMask = ((CCMask & SystemZ::CCMASK_CMP_EQ) |
-              (CCMask & SystemZ::CCMASK_CMP_GT ? SystemZ::CCMASK_CMP_LT : 0) |
-              (CCMask & SystemZ::CCMASK_CMP_LT ? SystemZ::CCMASK_CMP_GT : 0) |
-              (CCMask & SystemZ::CCMASK_CMP_UO));
+    CCMask = reverseCCMask(CCMask);
   }
 
   adjustForTestUnderMask(DAG, Opcode, CmpOp0, CmpOp1, CCValid, CCMask,
                          ICmpType);
+  adjustForFNeg(CmpOp0, CmpOp1, CCMask);
   if (Opcode == SystemZISD::ICMP || Opcode == SystemZISD::TM)
     return DAG.getNode(Opcode, DL, MVT::Glue, CmpOp0, CmpOp1,
                        DAG.getConstant(ICmpType, MVT::i32));
