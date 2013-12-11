@@ -12,7 +12,7 @@ __wchar_t g = L'a'; // expected-note {{previous}}
 unsigned short g; // expected-error {{redefinition of 'g' with a different type: 'unsigned short' vs '__wchar_t'}}
 
 // The type of a wide string literal is actually not __wchar_t.
-__wchar_t s[] = L"Hello world!"; // expected-error-re {{array initializer must be an initializer list$}}
+__wchar_t s[] = L"Hello world!"; // expected-error-re {{array initializer must be an initializer list{{$}}}}
 
 // Do not suggest initializing with a string here, because it would not work.
-__wchar_t t[] = 1; // expected-error-re {{array initializer must be an initializer list$}}
+__wchar_t t[] = 1; // expected-error-re {{array initializer must be an initializer list{{$}}}}

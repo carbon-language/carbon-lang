@@ -7,8 +7,8 @@ struct s s1; // expected-error {{tentative definition has type 'struct s' that i
 struct s s2; // expected-error {{tentative definition has type}}
 
 // regex matching
-struct s r1; // expected-error-re {{tentative definition has type 'struct s' that is never completed}}
-struct s r2; // expected-error-re {{tentative definition has type '.*[[:space:]]*.*' that is never completed}}
-struct s r3; // expected-error-re {{tentative definition has type '(.*)[[:space:]]*(.*)' that is never completed}}
-struct s r4; // expected-error-re {{^tentative}}
-struct s r5; // expected-error-re {{completed$}}
+struct s r1; // expected-error    {{tentative definition has type 'struct s' that is never completed}}
+struct s r2; // expected-error-re {{tentative definition has type '{{.*[[:space:]]*.*}}' that is never completed}}
+struct s r3; // expected-error-re {{tentative definition has type '{{(.*)[[:space:]]*(.*)}}' that is never completed}}
+struct s r4; // expected-error-re {{{{^}}tentative}}
+struct s r5; // expected-error-re {{completed{{$}}}}

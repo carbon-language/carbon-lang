@@ -21,7 +21,7 @@ __thread static int t3;
 __thread __private_extern__ int t4;
 struct t5 { __thread int x; };
 #ifdef __cplusplus
-// expected-error-re@-2 {{'(__thread|_Thread_local|thread_local)' is only allowed on variable declarations}}
+// expected-error-re@-2 {{'{{__thread|_Thread_local|thread_local}}' is only allowed on variable declarations}}
 #else
 // FIXME: The 'is only allowed on variable declarations' diagnostic is better here.
 // expected-error@-5 {{type name does not allow storage class to be specified}}
@@ -47,17 +47,17 @@ int f(__thread int t7) { // expected-error {{' is only allowed on variable decla
   static __thread int t10;
   __thread __private_extern__ int t11;
 #if __cplusplus < 201103L
-  __thread auto int t12a; // expected-error-re {{cannot combine with previous '(__thread|_Thread_local)' declaration specifier}}
+  __thread auto int t12a; // expected-error-re {{cannot combine with previous '{{__thread|_Thread_local}}' declaration specifier}}
   auto __thread int t12b; // expected-error {{cannot combine with previous 'auto' declaration specifier}}
 #elif !defined(CXX11)
-  __thread auto t12a = 0; // expected-error-re {{'_Thread_local' variables must have global storage}}
-  auto __thread t12b = 0; // expected-error-re {{'_Thread_local' variables must have global storage}}
+  __thread auto t12a = 0; // expected-error {{'_Thread_local' variables must have global storage}}
+  auto __thread t12b = 0; // expected-error {{'_Thread_local' variables must have global storage}}
 #endif
-  __thread register int t13a; // expected-error-re {{cannot combine with previous '(__thread|_Thread_local|thread_local)' declaration specifier}}
+  __thread register int t13a; // expected-error-re {{cannot combine with previous '{{__thread|_Thread_local|thread_local}}' declaration specifier}}
   register __thread int t13b; // expected-error {{cannot combine with previous 'register' declaration specifier}}
 }
 
-__thread typedef int t14; // expected-error-re {{cannot combine with previous '(__thread|_Thread_local|thread_local)' declaration specifier}}
+__thread typedef int t14; // expected-error-re {{cannot combine with previous '{{__thread|_Thread_local|thread_local}}' declaration specifier}}
 __thread int t15; // expected-note {{previous declaration is here}}
 extern int t15; // expected-error {{non-thread-local declaration of 't15' follows thread-local declaration}}
 extern int t16; // expected-note {{previous declaration is here}}

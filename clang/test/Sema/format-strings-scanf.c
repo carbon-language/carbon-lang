@@ -107,9 +107,9 @@ void test_alloc_extension(char **sp, wchar_t **lsp, float *fp) {
 
   // Test argument type check for the 'm' length modifier.
   scanf("%ms", fp); // expected-warning{{format specifies type 'char **' but the argument has type 'float *'}}
-  scanf("%mS", fp); // expected-warning-re{{format specifies type 'wchar_t \*\*' \(aka '[^']+'\) but the argument has type 'float \*'}}
+  scanf("%mS", fp); // expected-warning-re{{format specifies type 'wchar_t **' (aka '{{[^']+}}') but the argument has type 'float *'}}
   scanf("%mc", fp); // expected-warning{{format specifies type 'char **' but the argument has type 'float *'}}
-  scanf("%mC", fp); // expected-warning-re{{format specifies type 'wchar_t \*\*' \(aka '[^']+'\) but the argument has type 'float \*'}}
+  scanf("%mC", fp); // expected-warning-re{{format specifies type 'wchar_t **' (aka '{{[^']+}}') but the argument has type 'float *'}}
   scanf("%m[abc]", fp); // expected-warning{{format specifies type 'char **' but the argument has type 'float *'}}
 }
 

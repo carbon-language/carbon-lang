@@ -94,7 +94,7 @@ namespace a {
 void test_a() {
   a::a::i = 3; // expected-error{{no member named 'i' in namespace 'a::a'; did you mean 'a::a::a::i'?}}
   a::a::a::i = 4;
-  a::a::j = 3; // expected-error-re{{no member named 'j' in namespace 'a::a'$}}
+  a::a::j = 3; // expected-error-re{{no member named 'j' in namespace 'a::a'{{$}}}}
 }
   
 struct Undef { // expected-note{{definition of 'Undef' is not complete until the closing '}'}}

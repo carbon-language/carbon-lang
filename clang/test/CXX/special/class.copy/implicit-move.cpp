@@ -258,8 +258,8 @@ namespace DR1402 {
 
     template<typename T>
     struct F :
-      E<T, 0>, // expected-note-re 2{{'[BD]' is a virtual base class of base class 'E<}}
-      E<T, 1> {}; // expected-note-re 2{{'[BD]' is a virtual base class of base class 'E<}}
+      E<T, 0>, // expected-note-re 2{{'{{[BD]}}' is a virtual base class of base class 'E<}}
+      E<T, 1> {}; // expected-note-re 2{{'{{[BD]}}' is a virtual base class of base class 'E<}}
 
     template<typename T>
     struct G : E<T, 0, true>, E<T, 0> {};
@@ -272,11 +272,11 @@ namespace DR1402 {
 
     template<typename T>
     struct J :
-      E<T, 0>, // expected-note-re 2{{'[BD]' is a virtual base class of base class 'E<}}
-      virtual T {}; // expected-note-re 2{{virtual base class '[BD]' declared here}}
+      E<T, 0>, // expected-note-re 2{{'{{[BD]}}' is a virtual base class of base class 'E<}}
+      virtual T {}; // expected-note-re 2{{virtual base class '{{[BD]}}' declared here}}
 
     template<typename T> void move(T t) { t = static_cast<T&&>(t); }
-    // expected-warning-re@-1 4{{defaulted move assignment operator of .* will move assign virtual base class '[BD]' multiple times}}
+    // expected-warning-re@-1 4{{defaulted move assignment operator of {{.*}} will move assign virtual base class '{{[BD]}}' multiple times}}
     template void move(F<A>);
     template void move(F<B>); // expected-note {{in instantiation of}}
     template void move(F<C>);

@@ -27,7 +27,7 @@ void f2(constexpr int i) {} // expected-error {{function parameter cannot be con
 struct s2 {
   constexpr int mi1; // expected-error {{non-static data member cannot be constexpr; did you intend to make it const?}}
   static constexpr int mi2; // expected-error {{requires an initializer}}
-  mutable constexpr int mi3 = 3; // expected-error-re {{non-static data member cannot be constexpr$}} expected-error {{'mutable' and 'const' cannot be mixed}}
+  mutable constexpr int mi3 = 3; // expected-error-re {{non-static data member cannot be constexpr{{$}}}} expected-error {{'mutable' and 'const' cannot be mixed}}
 };
 // typedef
 typedef constexpr int CI; // expected-error {{typedef cannot be constexpr}}

@@ -84,7 +84,7 @@ namespace dr1460 { // dr1460: 3.5
 
 #if __cplusplus > 201103L
   template<typename T> constexpr bool check() {
-    T t; // expected-note-re 2{{non-constexpr constructor '[BE]'}}
+    T t; // expected-note-re 2{{non-constexpr constructor '{{[BE]}}'}}
     return true;
   }
   static_assert(check<A>(), "");

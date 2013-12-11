@@ -137,8 +137,8 @@ class ExampleClass1 {
 
   void foo() {
     pair<ExampleItemSet::iterator, int> i; // expected-error {{template argument for template type parameter must be a type; did you forget 'typename'?}}
-    pair<this->ExampleItemSet::iterator, int> i; // expected-error-re {{template argument for template type parameter must be a type$}}
-    pair<ExampleItemSet::operator[], int> i; // expected-error-re {{template argument for template type parameter must be a type$}}
+    pair<this->ExampleItemSet::iterator, int> i; // expected-error-re {{template argument for template type parameter must be a type{{$}}}}
+    pair<ExampleItemSet::operator[], int> i; // expected-error-re {{template argument for template type parameter must be a type{{$}}}}
   }
   pair<ExampleItemSet::iterator, int> elt; // expected-error {{template argument for template type parameter must be a type; did you forget 'typename'?}}
 

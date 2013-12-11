@@ -84,7 +84,7 @@ struct C {
 
   void h() {
     // Do not suggest '()' since an int argument is required
-    q1<int>; // expected-error-re{{reference to non-static member function must be called$}}
+    q1<int>; // expected-error-re{{reference to non-static member function must be called{{$}}}}
     // Suggest '()' since there's a default value for the only argument & the
     // type argument is already provided
     q2<int>; // expected-error{{reference to non-static member function must be called; did you mean to call it with no arguments?}}
@@ -92,7 +92,7 @@ struct C {
     // already provided
     q3<int>; // expected-error{{reference to non-static member function must be called; did you mean to call it with no arguments?}}
     // Do not suggest '()' since another type argument is required
-    q4<int>; // expected-error-re{{reference to non-static member function must be called$}}
+    q4<int>; // expected-error-re{{reference to non-static member function must be called{{$}}}}
     // Suggest '()' since the type parameter has a default value
     q5; // expected-error{{reference to non-static member function must be called; did you mean to call it with no arguments?}}
   }

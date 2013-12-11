@@ -299,6 +299,6 @@ namespace CorrectTypo_has_reached_its_limit {
 int flibberdy();  // expected-note{{'flibberdy' declared here}}
 int no_correction() {
   return hibberdy() +  // expected-error{{use of undeclared identifier 'hibberdy'; did you mean 'flibberdy'?}}
-         gibberdy();  // expected-error-re{{use of undeclared identifier 'gibberdy'$}}
+         gibberdy();  // expected-error-re{{use of undeclared identifier 'gibberdy'{{$}}}}
 };
 }

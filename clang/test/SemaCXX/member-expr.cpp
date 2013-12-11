@@ -193,7 +193,7 @@ namespace PR15045 {
   };
 
   template <class T> void call_func(T t) {
-    t->func();  // expected-error-re 2 {{member reference type 'PR15045::bar' is not a pointer$}} \
+    t->func();  // expected-error-re 2 {{member reference type 'PR15045::bar' is not a pointer{{$}}}} \
                 // expected-note {{did you mean to use '.' instead?}}
   }
 
@@ -207,7 +207,7 @@ namespace PR15045 {
 
     // Make sure a fixit isn't given in the case that the '->' isn't actually
     // the problem (the problem is with the return value of an operator->).
-    f->func();  // expected-error-re {{member reference type 'PR15045::bar' is not a pointer$}}
+    f->func();  // expected-error-re {{member reference type 'PR15045::bar' is not a pointer{{$}}}}
 
     call_func(e);  // expected-note {{in instantiation of function template specialization 'PR15045::call_func<PR15045::bar>' requested here}}
 

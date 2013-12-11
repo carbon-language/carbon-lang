@@ -143,7 +143,7 @@ namespace A {
   void g(int&); // expected-note{{type of 1st parameter of member declaration does not match definition ('int &' vs 'const int &')}}
 } 
 
-void A::f() {} // expected-error-re{{out-of-line definition of 'f' does not match any declaration in namespace 'A'$}}
+void A::f() {} // expected-error-re{{out-of-line definition of 'f' does not match any declaration in namespace 'A'{{$}}}}
 
 void A::g(const int&) { } // expected-error{{out-of-line definition of 'g' does not match any declaration in namespace 'A'}}
 

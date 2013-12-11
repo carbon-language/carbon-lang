@@ -108,10 +108,11 @@ class FileEntry;
 ///
 /// In this example, the diagnostic may appear only once, if at all.
 ///
-/// Regex matching mode may be selected by appending '-re' to type, such as:
+/// Regex matching mode may be selected by appending '-re' to type and
+/// including regexes wrapped in double curly braces in the directive, such as:
 ///
 /// \code
-///   expected-error-re
+///   expected-error-re {{format specifies type 'wchar_t **' (aka '{{.+}}')}}
 /// \endcode
 ///
 /// Examples matching error: "variable has incomplete type 'struct s'"
@@ -120,10 +121,10 @@ class FileEntry;
 ///   // expected-error {{variable has incomplete type 'struct s'}}
 ///   // expected-error {{variable has incomplete type}}
 ///
-///   // expected-error-re {{variable has has type 'struct .'}}
-///   // expected-error-re {{variable has has type 'struct .*'}}
-///   // expected-error-re {{variable has has type 'struct (.*)'}}
-///   // expected-error-re {{variable has has type 'struct[[:space:]](.*)'}}
+///   // expected-error-re {{variable has type 'struct {{.}}'}}
+///   // expected-error-re {{variable has type 'struct {{.*}}'}}
+///   // expected-error-re {{variable has type 'struct {{(.*)}}'}}
+///   // expected-error-re {{variable has type 'struct{{[[:space:]](.*)}}'}}
 /// \endcode
 ///
 /// VerifyDiagnosticConsumer expects at least one expected-* directive to

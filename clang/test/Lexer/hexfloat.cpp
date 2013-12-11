@@ -12,4 +12,4 @@ double h = 0x1.p2; // expected-warning{{hexadecimal floating constants are a C99
 double i = 0p+3; // expected-error{{invalid suffix 'p' on integer constant}}
 #define PREFIX(x) foo ## x
 double foo0p = 1, j = PREFIX(0p+3); // ok
-double k = 0x42_amp+3; // expected-error-re{{invalid suffix '_amp' on integer constant|no matching literal operator for call to 'operator "" _amp'}}
+double k = 0x42_amp+3; // expected-error-re{{{{invalid suffix '_amp' on integer constant|no matching literal operator for call to 'operator "" _amp'}}}}
