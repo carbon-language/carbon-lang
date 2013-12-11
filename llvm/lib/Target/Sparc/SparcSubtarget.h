@@ -45,15 +45,6 @@ public:
   void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
 
   bool is64Bit() const { return Is64Bit; }
-  std::string getDataLayout() const {
-    const char *p;
-    if (is64Bit()) {
-      p = "E-p:64:64:64-i64:64:64-f64:64:64-f128:128:128-n32:64";
-    } else {
-      p = "E-p:32:32:32-i64:64:64-f64:64:64-f128:64:64-n32";
-    }
-    return std::string(p);
-  }
 
   /// The 64-bit ABI uses biased stack and frame pointers, so the stack frame
   /// of the current function is the area from [%sp+BIAS] to [%fp+BIAS].
