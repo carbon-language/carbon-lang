@@ -39,11 +39,22 @@
 #include <sys/mman.h>
 #include <sys/syscall.h>  /* for SYS_mmap */
 
-#include <algorithm>
-#include <string>
-#include <set>
-#include <vector>
 #include <string.h>
+
+// XXX: it seems setting macro in CMakeLists.txt does not work,
+// so manually set it here now.
+
+// Building msandr client for running in DynamoRIO hybrid mode,
+// which allows some module running natively.
+// TODO: turn it on by default when hybrid is stable enough
+// #define MSANDR_NATIVE_EXEC
+
+#ifndef MSANDR_NATIVE_EXEC
+#include <algorithm>
+#include <set>
+#include <string>
+#include <vector>
+#endif
 
 #define TESTALL(mask, var) (((mask) & (var)) == (mask))
 #define TESTANY(mask, var) (((mask) & (var)) != 0)
@@ -59,14 +70,6 @@
 #define CHECK(condition) CHECK_IMPL(condition, __FILE__, __LINE__)
 
 #define VERBOSITY 0
-
-// XXX: it seems setting macro in CMakeLists.txt does not work,
-// so manually set it here now.
-
-// Building msandr client for running in DynamoRIO hybrid mode,
-// which allows some module running natively.
-// TODO: turn it on by default when hybrid is stable enough
-// #define MSANDR_NATIVE_EXEC
 
 // Building msandr client for standalone test that does not need to
 // run with msan build executables. Disable by default.
@@ -90,8 +93,6 @@
 #endif /* MSANDR_STANDALONE_TEST */
 
 namespace {
-
-std::string g_app_path;
 
 int msan_retval_tls_offset;
 int msan_param_tls_offset;
@@ -186,7 +187,6 @@ void InitializeMSanCallbacks() {
               dr_get_application_name());
     CHECK(app);
   }
-  g_app_path = app->full_path;
 
   __msan_get_retval_tls_offset = (int (*)())
       LookupCallback(app, "__msan_get_retval_tls_offset");
