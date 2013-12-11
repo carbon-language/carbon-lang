@@ -3,9 +3,9 @@
 @ This test case will check the default .ARM.attributes value for the
 @ armv6-m architecture.
 
-@ RUN: llvm-mc < %s -arch=arm -filetype=asm \
+@ RUN: llvm-mc < %s -triple=arm-linux-gnueabi -filetype=asm \
 @ RUN:   | FileCheck %s --check-prefix=CHECK-ASM
-@ RUN: llvm-mc < %s -arch=arm -filetype=obj \
+@ RUN: llvm-mc < %s -triple=arm-linux-gnueabi -filetype=obj \
 @ RUN:   | llvm-readobj -s -sd | FileCheck %s --check-prefix=CHECK-OBJ
 
 	.syntax	unified
