@@ -12058,6 +12058,13 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
   if (NewCC == OldCC)
     return false;
 
+  // If the calling conventions mismatch because the new function is static,
+  // suppress the calling convention mismatch error; the error about static
+  // function override (err_static_overrides_virtual from
+  // Sema::CheckFunctionDeclaration) is more clear.
+  if (New->getStorageClass() == SC_Static)
+    return false;
+
   Diag(New->getLocation(),
        diag::err_conflicting_overriding_cc_attributes)
     << New->getDeclName() << New->getType() << Old->getType();

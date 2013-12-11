@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11
+// RUN: %clang_cc1 -fsyntax-only -cxx-abi itanium -verify %s -std=c++11
+// RUN: %clang_cc1 -fsyntax-only -cxx-abi microsoft -verify %s -std=c++11
 namespace T1 {
 
 class A {
