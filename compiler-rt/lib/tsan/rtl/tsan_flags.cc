@@ -25,12 +25,8 @@ Flags *flags() {
 
 // Can be overriden in frontend.
 #ifdef TSAN_EXTERNAL_HOOKS
-void OverrideFlags(Flags *f);
 extern "C" const char* __tsan_default_options();
 #else
-void WEAK OverrideFlags(Flags *f) {
-  (void)f;
-}
 extern "C" const char *WEAK __tsan_default_options() {
   return "";
 }
@@ -95,7 +91,6 @@ void InitializeFlags(Flags *f, const char *env) {
   SetCommonFlagsDefaults(f);
 
   // Let a frontend override.
-  OverrideFlags(f);
   ParseFlags(f, __tsan_default_options());
   ParseCommonFlagsFromString(f, __tsan_default_options());
   // Override from command line.

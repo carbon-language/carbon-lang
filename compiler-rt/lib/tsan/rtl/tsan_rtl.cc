@@ -41,10 +41,12 @@ static char ctx_placeholder[sizeof(Context)] ALIGNED(64);
 // Can be overriden by a front-end.
 #ifdef TSAN_EXTERNAL_HOOKS
 bool OnFinalize(bool failed);
+void OnInitialize();
 #else
 bool WEAK OnFinalize(bool failed) {
   return failed;
 }
+void WEAK OnInitialize() {}
 #endif
 
 static Context *ctx;
@@ -231,6 +233,7 @@ void Initialize(ThreadState *thr) {
   InitializeShadowMemory();
 #endif
   InitializeFlags(&ctx->flags, env);
+  OnInitialize();
   // Setup correct file descriptor for error reports.
   __sanitizer_set_report_path(flags()->log_path);
   InitializeSuppressions();
