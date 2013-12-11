@@ -97,12 +97,12 @@
 // CHECK-NORMAL: crt1.o
 // CHECK-NORMAL: crtbegin.o
 
-// RUN: %clang %s -### -o %t.o -target arm-unknown-freebsd10.0 2>&1 \
+// RUN: %clang %s -### -o %t.o -target arm-unknown-freebsd10.0 -no-integrated-as 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-ARM %s
 // CHECK-ARM: clang{{.*}}" "-cc1"{{.*}}" "-fsjlj-exceptions"
 // CHECK-ARM: as{{.*}}" "-mfpu=softvfp"{{.*}}"-matpcs"
 
-// RUN: %clang %s -### -o %t.o -target arm-gnueabi-freebsd10.0 2>&1 \
+// RUN: %clang %s -### -o %t.o -target arm-gnueabi-freebsd10.0 -no-integrated-as 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-ARM-EABI %s
 // CHECK-ARM-EABI-NOT: clang{{.*}}" "-cc1"{{.*}}" "-fsjlj-exceptions"
 // CHECK-ARM-EABI: as{{.*}}" "-mfpu=softvfp" "-meabi=5"

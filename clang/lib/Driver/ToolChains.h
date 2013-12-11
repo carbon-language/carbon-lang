@@ -413,12 +413,6 @@ public:
   Generic_ELF(const Driver &D, const llvm::Triple &Triple,
               const llvm::opt::ArgList &Args)
       : Generic_GCC(D, Triple, Args) {}
-
-  virtual bool IsIntegratedAssemblerDefault() const {
-    if (getTriple().getArch() == llvm::Triple::aarch64)
-      return true;
-    return Generic_GCC::IsIntegratedAssemblerDefault();
-  }
 };
 
 class LLVM_LIBRARY_VISIBILITY AuroraUX : public Generic_GCC {
