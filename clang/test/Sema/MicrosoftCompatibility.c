@@ -19,3 +19,5 @@ __declspec(align(32768)) struct S1 { int a; } s;	/* expected-error {{requested a
 struct __declspec(aligned) S2 {}; /* expected-warning {{unknown __declspec attribute 'aligned' ignored}} */
 
 struct __declspec(appdomain) S3 {}; /* expected-warning {{__declspec attribute 'appdomain' is not supported}} */
+
+__declspec(__noreturn__) void f7(void); /* expected-warning {{unknown __declspec attribute '__noreturn__' ignored}} */

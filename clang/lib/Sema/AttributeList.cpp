@@ -121,21 +121,25 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name,
                                            Syntax SyntaxUsed) {
   StringRef AttrName = Name->getName();
 
-  // Normalize the attribute name, __foo__ becomes foo.
-  if (AttrName.size() >= 4 && AttrName.startswith("__") &&
-      AttrName.endswith("__"))
-    AttrName = AttrName.substr(2, AttrName.size() - 4);
-
-  SmallString<64> Buf;
+  SmallString<64> FullName;
   if (ScopeName)
-    Buf += ScopeName->getName();
+    FullName += ScopeName->getName();
+
+  // Normalize the attribute name, __foo__ becomes foo. This is only allowable
+  // for GNU attributes.
+  bool IsGNU = SyntaxUsed == AS_GNU || (SyntaxUsed == AS_CXX11 &&
+                                        FullName.equals("gnu"));
+  if (IsGNU && AttrName.size() >= 4 && AttrName.startswith("__") &&
+      AttrName.endswith("__"))
+    AttrName = AttrName.slice(2, AttrName.size() - 2);
+
   // Ensure that in the case of C++11 attributes, we look for '::foo' if it is
   // unscoped.
   if (ScopeName || SyntaxUsed == AS_CXX11)
-    Buf += "::";
-  Buf += AttrName;
+    FullName += "::";
+  FullName += AttrName;
 
-  return ::getAttrKind(Buf);
+  return ::getAttrKind(FullName);
 }
 
 unsigned AttributeList::getAttributeSpellingListIndex() const {
