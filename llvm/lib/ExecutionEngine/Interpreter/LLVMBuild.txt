@@ -19,4 +19,4 @@
 type = Library
 name = Interpreter
 parent = ExecutionEngine
-required_libraries = CodeGen Core ExecutionEngine Support Target
+required_libraries = CodeGen Core ExecutionEngine Support

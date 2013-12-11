@@ -19,5 +19,5 @@
 type = Library
 name = AArch64Info
 parent = AArch64
-required_libraries = MC Support Target
+required_libraries = Support
 add_to_library_groups = AArch64

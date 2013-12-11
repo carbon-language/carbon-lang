@@ -19,4 +19,4 @@
 type = Library
 name = JIT
 parent = ExecutionEngine
-required_libraries = CodeGen Core ExecutionEngine MC RuntimeDyld Support Target
+required_libraries = CodeGen Core ExecutionEngine Support

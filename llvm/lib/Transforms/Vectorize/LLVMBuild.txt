@@ -20,4 +20,4 @@ type = Library
 name = Vectorize
 parent = Transforms
 library_name = Vectorize
-required_libraries = Analysis Core InstCombine Support Target TransformUtils
+required_libraries = Analysis Core Support Target TransformUtils

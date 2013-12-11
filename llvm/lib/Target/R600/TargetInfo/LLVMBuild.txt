@@ -19,5 +19,5 @@
 type = Library
 name = R600Info
 parent = R600
-required_libraries = MC Support
+required_libraries = Support
 add_to_library_groups = R600

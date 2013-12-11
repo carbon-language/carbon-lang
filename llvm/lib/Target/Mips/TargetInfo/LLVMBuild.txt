@@ -19,5 +19,5 @@
 type = Library
 name = MipsInfo
 parent = Mips
-required_libraries = MC Support Target
+required_libraries = Support
 add_to_library_groups = Mips
