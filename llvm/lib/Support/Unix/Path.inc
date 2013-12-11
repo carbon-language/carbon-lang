@@ -531,17 +531,20 @@ error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
   Times[0].tv_nsec = 0;
   Times[1] = Times[0];
   if (::futimens(FD, Times))
+    return error_code(errno, system_category());
+  return error_code::success();
 #elif defined(HAVE_FUTIMES)
   timeval Times[2];
   Times[0].tv_sec = Time.toPosixTime();
   Times[0].tv_usec = 0;
   Times[1] = Times[0];
   if (::futimes(FD, Times))
-#else
-#error Missing futimes() and futimens()
-#endif
     return error_code(errno, system_category());
   return error_code::success();
+#else
+#warning Missing futimes() and futimens()
+  return make_error_code(errc::not_supported);
+#endif
 }
 
 error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {

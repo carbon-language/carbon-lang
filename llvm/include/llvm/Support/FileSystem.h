@@ -545,6 +545,11 @@ inline error_code file_size(const Twine &Path, uint64_t &Result) {
   return error_code::success();
 }
 
+/// @brief Set the file modification and access time.
+///
+/// @returns errc::success if the file times were successfully set, otherwise a
+///          platform specific error_code or errc::not_supported on platforms
+///          where the functionality isn't available.
 error_code setLastModificationAndAccessTime(int FD, TimeValue Time);
 
 /// @brief Is status available?
