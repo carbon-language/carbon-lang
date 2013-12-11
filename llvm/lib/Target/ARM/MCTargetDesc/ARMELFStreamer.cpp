@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMBuildAttrs.h"
+#include "ARMArchName.h"
 #include "ARMFPUName.h"
 #include "ARMRegisterInfo.h"
 #include "ARMUnwindOp.h"
@@ -61,6 +62,42 @@ static const char *GetFPUName(unsigned ID) {
   return NULL;
 }
 
+static const char *GetArchName(unsigned ID) {
+  switch (ID) {
+  default:
+    llvm_unreachable("Unknown ARCH kind");
+    break;
+#define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
+  case ARM::ID: return NAME;
+#include "ARMArchName.def"
+  }
+  return NULL;
+}
+
+static const char *GetArchDefaultCPUName(unsigned ID) {
+  switch (ID) {
+  default:
+    llvm_unreachable("Unknown ARCH kind");
+    break;
+#define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
+  case ARM::ID: return DEFAULT_CPU_NAME;
+#include "ARMArchName.def"
+  }
+  return NULL;
+}
+
+static unsigned GetArchDefaultCPUArch(unsigned ID) {
+  switch (ID) {
+  default:
+    llvm_unreachable("Unknown ARCH kind");
+    break;
+#define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
+  case ARM::ID: return ARMBuildAttrs::DEFAULT_CPU_ARCH;
+#include "ARMArchName.def"
+  }
+  return 0;
+}
+
 namespace {
 
 class ARMELFStreamer;
@@ -82,6 +119,7 @@ class ARMTargetAsmStreamer : public ARMTargetStreamer {
   virtual void switchVendor(StringRef Vendor);
   virtual void emitAttribute(unsigned Attribute, unsigned Value);
   virtual void emitTextAttribute(unsigned Attribute, StringRef String);
+  virtual void emitArch(unsigned Arch);
   virtual void emitFPU(unsigned FPU);
   virtual void finishAttributeSection();
 
@@ -143,6 +181,9 @@ void ARMTargetAsmStreamer::emitTextAttribute(unsigned Attribute,
     break;
   }
 }
+void ARMTargetAsmStreamer::emitArch(unsigned Arch) {
+  OS << "\t.arch\t" << GetArchName(Arch) << "\n";
+}
 void ARMTargetAsmStreamer::emitFPU(unsigned FPU) {
   OS << "\t.fpu\t" << GetFPUName(FPU) << "\n";
 }
@@ -171,6 +212,7 @@ private:
 
   StringRef CurrentVendor;
   unsigned FPU;
+  unsigned Arch;
   SmallVector<AttributeItem, 64> Contents;
 
   const MCSection *AttributeSection;
@@ -233,6 +275,7 @@ private:
     Contents.push_back(Item);
   }
 
+  void emitArchDefaultAttributes();
   void emitFPUDefaultAttributes();
 
   ARMELFStreamer &getStreamer();
@@ -250,6 +293,7 @@ private:
   virtual void switchVendor(StringRef Vendor);
   virtual void emitAttribute(unsigned Attribute, unsigned Value);
   virtual void emitTextAttribute(unsigned Attribute, StringRef String);
+  virtual void emitArch(unsigned Arch);
   virtual void emitFPU(unsigned FPU);
   virtual void finishAttributeSection();
 
@@ -258,7 +302,7 @@ private:
 public:
   ARMTargetELFStreamer()
     : ARMTargetStreamer(), CurrentVendor("aeabi"), FPU(ARM::INVALID_FPU),
-      AttributeSection(0) {
+      Arch(ARM::INVALID_ARCH), AttributeSection(0) {
   }
 };
 
@@ -491,6 +535,96 @@ void ARMTargetELFStreamer::emitTextAttribute(unsigned Attribute,
                                              StringRef Value) {
   setAttributeItem(Attribute, Value, /* OverwriteExisting= */ true);
 }
+void ARMTargetELFStreamer::emitArch(unsigned Value) {
+  Arch = Value;
+}
+void ARMTargetELFStreamer::emitArchDefaultAttributes() {
+  using namespace ARMBuildAttrs;
+  setAttributeItem(CPU_name, GetArchDefaultCPUName(Arch), false);
+  setAttributeItem(CPU_arch, GetArchDefaultCPUArch(Arch), false);
+
+  switch (Arch) {
+  case ARM::ARMV2:
+  case ARM::ARMV2A:
+  case ARM::ARMV3:
+  case ARM::ARMV3M:
+  case ARM::ARMV4:
+  case ARM::ARMV5:
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    break;
+
+  case ARM::ARMV4T:
+  case ARM::ARMV5T:
+  case ARM::ARMV5TE:
+  case ARM::ARMV6:
+  case ARM::ARMV6J:
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, Allowed, false);
+    break;
+
+  case ARM::ARMV6T2:
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
+    break;
+
+  case ARM::ARMV6Z:
+  case ARM::ARMV6ZK:
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, Allowed, false);
+    setAttributeItem(Virtualization_use, AllowTZ, false);
+    break;
+
+  case ARM::ARMV6M:
+    setAttributeItem(CPU_arch_profile, MicroControllerProfile, false);
+    setAttributeItem(THUMB_ISA_use, Allowed, false);
+    break;
+
+  case ARM::ARMV7:
+    setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
+    break;
+
+  case ARM::ARMV7A:
+    setAttributeItem(CPU_arch_profile, ApplicationProfile, false);
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
+    break;
+
+  case ARM::ARMV7R:
+    setAttributeItem(CPU_arch_profile, RealTimeProfile, false);
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
+    break;
+
+  case ARM::ARMV7M:
+    setAttributeItem(CPU_arch_profile, MicroControllerProfile, false);
+    setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
+    break;
+
+  case ARM::ARMV8A:
+    setAttributeItem(CPU_arch_profile, ApplicationProfile, false);
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
+    setAttributeItem(MPextension_use, Allowed, false);
+    setAttributeItem(Virtualization_use, AllowTZVirtualization, false);
+    break;
+
+  case ARM::IWMMXT:
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, Allowed, false);
+    setAttributeItem(WMMX_arch, AllowWMMXv1, false);
+    break;
+
+  case ARM::IWMMXT2:
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, Allowed, false);
+    setAttributeItem(WMMX_arch, AllowWMMXv2, false);
+    break;
+
+  default:
+    report_fatal_error("Unknown Arch: " + Twine(Arch));
+    break;
+  }
+}
 void ARMTargetELFStreamer::emitFPU(unsigned Value) {
   FPU = Value;
 }
@@ -596,6 +730,9 @@ void ARMTargetELFStreamer::finishAttributeSection() {
 
   if (FPU != ARM::INVALID_FPU)
     emitFPUDefaultAttributes();
+
+  if (Arch != ARM::INVALID_ARCH)
+    emitArchDefaultAttributes();
 
   if (Contents.empty())
     return;

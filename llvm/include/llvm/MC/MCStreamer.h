@@ -93,6 +93,7 @@ public:
   virtual void emitAttribute(unsigned Attribute, unsigned Value) = 0;
   virtual void emitTextAttribute(unsigned Attribute, StringRef String) = 0;
   virtual void emitFPU(unsigned FPU) = 0;
+  virtual void emitArch(unsigned Arch) = 0;
   virtual void finishAttributeSection() = 0;
 };
 
