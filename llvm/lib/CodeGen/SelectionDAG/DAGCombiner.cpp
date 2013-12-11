@@ -5632,6 +5632,20 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
     SDValue Reduced = ReduceLoadWidth(N);
     if (Reduced.getNode())
       return Reduced;
+    // Handle the case where the load remains an extending load even
+    // after truncation.
+    if (N0.hasOneUse() && ISD::isUNINDEXEDLoad(N0.getNode())) {
+      LoadSDNode *LN0 = cast<LoadSDNode>(N0);
+      if (!LN0->isVolatile() &&
+          LN0->getMemoryVT().getStoreSizeInBits() < VT.getSizeInBits()) {
+        SDValue NewLoad = DAG.getExtLoad(LN0->getExtensionType(), SDLoc(LN0),
+                                         VT, LN0->getChain(), LN0->getBasePtr(),
+                                         LN0->getMemoryVT(),
+                                         LN0->getMemOperand());
+        DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), NewLoad.getValue(1));
+        return NewLoad;
+      }
+    }
   }
   // fold (trunc (concat ... x ...)) -> (concat ..., (trunc x), ...)),
   // where ... are all 'undef'.
