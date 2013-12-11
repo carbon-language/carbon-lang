@@ -6,6 +6,25 @@
 
 Description := Static runtime libraries for embedded clang/Darwin
 
+# A function that ensures we don't try to build for architectures that we
+# don't have working toolchains for.
+CheckArches = \
+  $(shell \
+    result=""; \
+    for arch in $(1); do \
+      if $(CC) -arch $$arch -c \
+	  -integrated-as \
+	  $(ProjSrcRoot)/make/platform/clang_darwin_test_input.c \
+	  -isysroot $(ProjSrcRoot)/SDKs/darwin \
+	  -o /dev/null > /dev/null 2> /dev/null; then \
+        result="$$result$$arch "; \
+      else \
+	printf 1>&2 \
+	  "warning: clang_darwin.mk: dropping arch '$$arch' from lib '$(2)'\n"; \
+      fi; \
+    done; \
+    echo $$result)
+
 XCRun = \
   $(shell \
     result=`xcrun -find $(1) 2> /dev/null`; \
@@ -27,20 +46,20 @@ UniversalArchs :=
 # Soft-float version of the runtime. No floating-point instructions will be used
 # and the ABI (out of necessity) passes floating values in normal registers:
 # non-VFP variant of the AAPCS.
-Configs += soft_static
-UniversalArchs.soft_static := armv6m armv7m armv7em armv7
+UniversalArchs.soft_static := $(call CheckArches,armv6m armv7m armv7em armv7,soft_static)
+Configs += $(if $(UniversalArchs.soft_static),soft_static)
 
 # Hard-float version of the runtime. On ARM VFP instructions and registers are
 # allowed, and floating point values get passed in them. VFP variant of the
 # AAPCS.
-Configs += hard_static
-UniversalArchs.hard_static := armv7em armv7 i386 x86_64
+UniversalArchs.hard_static := $(call CheckArches,armv7em armv7 i386 x86_64,hard_static)
+Configs += $(if $(UniversalArchs.hard_static),hard_static)
 
-Configs += soft_pic
-UniversalArchs.soft_pic := armv6m armv7m armv7em armv7
+UniversalArchs.soft_pic := $(call CheckArches,armv6m armv7m armv7em armv7,soft_pic)
+Configs += $(if $(UniversalArchs.soft_pic),soft_pic)
 
-Configs += hard_pic
-UniversalArchs.hard_pic := armv7em armv7 i386 x86_64
+UniversalArchs.hard_pic := $(call CheckArches,armv7em armv7 i386 x86_64,hard_pic)
+Configs += $(if $(UniversalArchs.hard_pic),hard_pic)
 
 CFLAGS := -Wall -Werror -Oz -fomit-frame-pointer -ffreestanding
 
