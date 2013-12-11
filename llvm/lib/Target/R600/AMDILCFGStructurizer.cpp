@@ -54,6 +54,10 @@ STATISTIC(numLoopcontPatternMatch,  "CFGStructurizer number of loop-continue "
 STATISTIC(numClonedBlock,           "CFGStructurizer cloned blocks");
 STATISTIC(numClonedInstr,           "CFGStructurizer cloned instructions");
 
+namespace llvm {
+  void initializeAMDGPUCFGStructurizerPass(PassRegistry&);
+}
+
 //===----------------------------------------------------------------------===//
 //
 // Miscellaneous utility for CFGStructurizer.
@@ -131,13 +135,13 @@ public:
 
   static char ID;
 
-  AMDGPUCFGStructurizer(TargetMachine &tm) :
-      MachineFunctionPass(ID), TM(tm),
-      TII(static_cast<const R600InstrInfo *>(tm.getInstrInfo())),
-      TRI(&TII->getRegisterInfo()) { }
+  AMDGPUCFGStructurizer() :
+      MachineFunctionPass(ID), TII(NULL), TRI(NULL) {
+    initializeAMDGPUCFGStructurizerPass(*PassRegistry::getPassRegistry());
+  }
 
    const char *getPassName() const {
-    return "AMD IL Control Flow Graph structurizer Pass";
+    return "AMDGPU Control Flow Graph structurizer Pass";
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -157,6 +161,8 @@ public:
   bool prepare();
 
   bool runOnMachineFunction(MachineFunction &MF) {
+    TII = static_cast<const R600InstrInfo *>(MF.getTarget().getInstrInfo());
+    TRI = &TII->getRegisterInfo();
     DEBUG(MF.dump(););
     OrderedBlks.clear();
     FuncRep = &MF;
@@ -173,7 +179,6 @@ public:
   }
 
 protected:
-  TargetMachine &TM;
   MachineDominatorTree *MDT;
   MachinePostDominatorTree *PDT;
   MachineLoopInfo *MLI;
@@ -1899,6 +1904,14 @@ char AMDGPUCFGStructurizer::ID = 0;
 } // end anonymous namespace
 
 
-FunctionPass *llvm::createAMDGPUCFGStructurizerPass(TargetMachine &tm) {
-  return new AMDGPUCFGStructurizer(tm);
+INITIALIZE_PASS_BEGIN(AMDGPUCFGStructurizer, "amdgpustructurizer",
+                      "AMDGPU CFG Structurizer", false, false)
+INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(MachinePostDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
+INITIALIZE_PASS_END(AMDGPUCFGStructurizer, "amdgpustructurizer",
+                      "AMDGPU CFG Structurizer", false, false)
+
+FunctionPass *llvm::createAMDGPUCFGStructurizerPass() {
+  return new AMDGPUCFGStructurizer();
 }

@@ -32,7 +32,7 @@ FunctionPass *createR600EmitClauseMarkers();
 FunctionPass *createR600ClauseMergePass(TargetMachine &tm);
 FunctionPass *createR600Packetizer(TargetMachine &tm);
 FunctionPass *createR600ControlFlowFinalizer(TargetMachine &tm);
-FunctionPass *createAMDGPUCFGStructurizerPass(TargetMachine &tm);
+FunctionPass *createAMDGPUCFGStructurizerPass();
 
 // SI Passes
 FunctionPass *createSITypeRewriter();
