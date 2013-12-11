@@ -74,3 +74,20 @@ typedef char BOOL;
   return 0;
 }
 @end
+
+// rdar://15630719
+@interface CDBModifyRecordsOperation : NSObject
+@property (nonatomic, assign) BOOL atomic;
+@end
+
+@class NSString;
+
+@implementation CDBModifyRecordsOperation
+- (void)setAtomic:(BOOL)atomic {
+  if (atomic == __objc_yes) {
+    NSString *recordZoneID = 0;
+  }
+  _atomic = atomic;
+}
+@end
+

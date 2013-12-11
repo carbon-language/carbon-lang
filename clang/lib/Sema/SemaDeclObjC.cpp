@@ -3498,7 +3498,7 @@ Sema::GetIvarBackingPropertyAccessor(const ObjCMethodDecl *Method,
 }
 
 void Sema::DiagnoseUnusedBackingIvarInAccessor(Scope *S) {
-  if (S->hasUnrecoverableErrorOccurred() || !S->isInObjcMethodScope())
+  if (S->hasUnrecoverableErrorOccurred() || !S->isInObjcMethodOuterScope())
     return;
   
   const ObjCMethodDecl *CurMethod = getCurMethodDecl();
