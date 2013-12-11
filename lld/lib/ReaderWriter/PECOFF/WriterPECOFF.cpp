@@ -186,13 +186,10 @@ public:
                         uint64_t imageBaseAddress);
   void printAtomAddresses(uint64_t baseAddr) const;
   void addBaseRelocations(std::vector<uint64_t> &relocSites) const;
-
-  uint64_t getVirtualAddress() {
-    assert(_atomLayouts.size() > 0);
-    return _atomLayouts[0]->_virtualAddr;
-  }
+  uint64_t getVirtualAddress() { return _virtualAddress; }
 
   void setVirtualAddress(uint32_t rva) {
+    _virtualAddress = rva;
     for (AtomLayout *layout : _atomLayouts)
       layout->_virtualAddr += rva;
   }
@@ -209,8 +206,9 @@ public:
   }
 
 protected:
-  explicit AtomChunk(Kind kind) : Chunk(kind) {}
+  explicit AtomChunk(Kind kind) : Chunk(kind), _virtualAddress(0) {}
   std::vector<AtomLayout *> _atomLayouts;
+  uint64_t _virtualAddress;
 };
 
 /// A DataDirectoryChunk represents data directory entries that follows the PE
@@ -281,16 +279,6 @@ private:
       StringRef name, const std::vector<const DefinedAtom *> &atoms) const;
 };
 
-/// A BaseRelocAtom represents a base relocation block in ".reloc" section.
-class BaseRelocAtom : public coff::COFFLinkerInternalAtom {
-public:
-  BaseRelocAtom(const File &file, uint64_t ordinal, std::vector<uint8_t> data)
-      : COFFLinkerInternalAtom(file, ordinal, std::move(data)) {}
-
-  virtual ContentType contentType() const { return typeData; }
-  virtual Alignment alignment() const { return Alignment(2); }
-};
-
 /// A BaseRelocChunk represents ".reloc" section.
 ///
 /// .reloc section contains a list of addresses. If the PE/COFF loader decides
@@ -309,10 +297,12 @@ class BaseRelocChunk : public SectionChunk {
   typedef std::map<uint64_t, std::vector<uint16_t>> PageOffsetT;
 
 public:
-  explicit BaseRelocChunk(const File &linkedFile)
-      : SectionChunk(".reloc", characteristics), _file(linkedFile) {}
+  BaseRelocChunk(ChunkVectorT &chunks)
+      : SectionChunk(".reloc", characteristics),
+        _contents(createContents(chunks)) {}
 
-  void setContents(ChunkVectorT &chunks);
+  virtual void write(uint8_t *buffer);
+  virtual uint64_t size() const { return _contents.size(); }
 
 private:
   // When loaded into memory, reloc section should be readable and writable.
@@ -320,6 +310,8 @@ private:
       llvm::COFF::IMAGE_SCN_MEM_READ |
       llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
       llvm::COFF::IMAGE_SCN_MEM_DISCARDABLE;
+
+  std::vector<uint8_t> createContents(ChunkVectorT &chunks);
 
   // Returns a list of RVAs that needs to be relocated if the binary is loaded
   // at an address different from its preferred one.
@@ -329,12 +321,11 @@ private:
   PageOffsetT groupByPage(const std::vector<uint64_t> &relocSites) const;
 
   // Create the content of a relocation block.
-  DefinedAtom *createBaseRelocBlock(const File &file, uint64_t ordinal,
-                                    uint64_t pageAddr,
-                                    const std::vector<uint16_t> &offsets);
+  std::vector<uint8_t>
+  createBaseRelocBlock(uint64_t pageAddr, const std::vector<uint16_t> &offsets);
 
   mutable llvm::BumpPtrAllocator _alloc;
-  const File &_file;
+  std::vector<uint8_t> _contents;
 };
 
 PEHeaderChunk::PEHeaderChunk(const PECOFFLinkingContext &context)
@@ -672,6 +663,10 @@ SectionHeaderTableChunk::createSectionHeader(SectionChunk *chunk) {
   return header;
 }
 
+void BaseRelocChunk::write(uint8_t *buffer) {
+  std::memcpy(buffer, &_contents[0], _contents.size());
+}
+
 /// Creates .reloc section content from the other sections. The content of
 /// .reloc is basically a list of relocation sites. The relocation sites are
 /// divided into blocks. Each block represents the base relocation for a 4K
@@ -681,15 +676,17 @@ SectionHeaderTableChunk::createSectionHeader(SectionChunk *chunk) {
 /// the base relocation. A block consists of a 32 bit page RVA and 16 bit
 /// relocation entries which represent offsets in the page. That is a more
 /// compact representation than a simple vector of 32 bit RVAs.
-void BaseRelocChunk::setContents(ChunkVectorT &chunks) {
+std::vector<uint8_t> BaseRelocChunk::createContents(ChunkVectorT &chunks) {
+  std::vector<uint8_t> contents;
   std::vector<uint64_t> relocSites = listRelocSites(chunks);
   PageOffsetT blocks = groupByPage(relocSites);
-  uint64_t ordinal = 0;
   for (auto &i : blocks) {
     uint64_t pageAddr = i.first;
     const std::vector<uint16_t> &offsetsInPage = i.second;
-    appendAtom(createBaseRelocBlock(_file, ordinal++, pageAddr, offsetsInPage));
+    std::vector<uint8_t> block = createBaseRelocBlock(pageAddr, offsetsInPage);
+    contents.insert(contents.end(), block.begin(), block.end());
   }
+  return contents;
 }
 
 // Returns a list of RVAs that needs to be relocated if the binary is loaded
@@ -714,9 +711,8 @@ BaseRelocChunk::groupByPage(const std::vector<uint64_t> &relocSites) const {
 }
 
 // Create the content of a relocation block.
-DefinedAtom *
-BaseRelocChunk::createBaseRelocBlock(const File &file, uint64_t ordinal,
-                                     uint64_t pageAddr,
+std::vector<uint8_t>
+BaseRelocChunk::createBaseRelocBlock(uint64_t pageAddr,
                                      const std::vector<uint16_t> &offsets) {
   // Relocation blocks should be padded with IMAGE_REL_I386_ABSOLUTE to be
   // aligned to a DWORD size boundary.
@@ -742,7 +738,7 @@ BaseRelocChunk::createBaseRelocBlock(const File &file, uint64_t ordinal,
     *reinterpret_cast<ulittle16_t *>(ptr) = val;
     ptr += sizeof(ulittle16_t);
   }
-  return new (_alloc) BaseRelocAtom(file, ordinal, std::move(contents));
+  return contents;
 }
 
 } // end anonymous namespace
@@ -866,8 +862,7 @@ void ExecutableWriter::build(const File &linkedFile) {
   // relocated. So we can create the ".reloc" section which contains all the
   // relocation sites.
   if (_PECOFFLinkingContext.getBaseRelocationEnabled()) {
-    BaseRelocChunk *baseReloc = new BaseRelocChunk(linkedFile);
-    baseReloc->setContents(_chunks);
+    BaseRelocChunk *baseReloc = new BaseRelocChunk(_chunks);
     if (baseReloc->size()) {
       addSectionChunk(baseReloc, sectionTable);
       dataDirectory->setField(DataDirectoryIndex::BASE_RELOCATION_TABLE,
