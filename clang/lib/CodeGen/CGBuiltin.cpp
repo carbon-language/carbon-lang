@@ -2185,18 +2185,18 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   // Scalar Floating-point Reciprocal Estimate
   case AArch64::BI__builtin_neon_vrecpes_f32:
   case AArch64::BI__builtin_neon_vrecped_f64:
-    Int = Intrinsic::arm_neon_vrecpe;
-    s = "vrecpe"; IntTypes = VectorRet; break;
+    Int = Intrinsic::aarch64_neon_vrecpe;
+    s = "vrecpe"; IntTypes = ScalarRet; break;
   // Scalar Floating-point Reciprocal Exponent
   case AArch64::BI__builtin_neon_vrecpxs_f32:
   case AArch64::BI__builtin_neon_vrecpxd_f64:
     Int = Intrinsic::aarch64_neon_vrecpx;
-    s = "vrecpx"; IntTypes = VectorRet; break;
+    s = "vrecpx"; IntTypes = ScalarRet; break;
   // Scalar Floating-point Reciprocal Square Root Estimate
   case AArch64::BI__builtin_neon_vrsqrtes_f32:
   case AArch64::BI__builtin_neon_vrsqrted_f64:
-    Int = Intrinsic::arm_neon_vrsqrte;
-    s = "vrsqrte"; IntTypes = VectorRet; break;
+    Int = Intrinsic::aarch64_neon_vrsqrte;
+    s = "vrsqrte"; IntTypes = ScalarRet; break;
   // Scalar Compare Equal
   case AArch64::BI__builtin_neon_vceqd_s64:
   case AArch64::BI__builtin_neon_vceqd_u64:
