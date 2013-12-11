@@ -420,7 +420,7 @@ public:
   }
 
   /// Emit the header for this unit, not including the initial length field.
-  void emitHeader(const MCSection *ASection, const MCSymbol *ASectionSym);
+  void emitHeader(const MCSection *ASection, const MCSymbol *ASectionSym) const;
 
 protected:
   /// getOrCreateStaticMemberDIE - Create new static data member DIE.
@@ -507,7 +507,7 @@ public:
   /// either DW_FORM_addr or DW_FORM_GNU_addr_index.
   void addLabelAddress(DIE *Die, dwarf::Attribute Attribute, MCSymbol *Label);
 
-  uint16_t getLanguage() const { return getNode().getLanguage(); }
+  uint16_t getLanguage() const LLVM_OVERRIDE { return getNode().getLanguage(); }
 };
 
 class DwarfTypeUnit : public DwarfUnit {
@@ -518,7 +518,7 @@ public:
   DwarfTypeUnit(unsigned UID, DIE *D, uint16_t Language, AsmPrinter *A,
                 DwarfDebug *DW, DwarfFile *DWU);
 
-  uint16_t getLanguage() const { return Language; }
+  uint16_t getLanguage() const LLVM_OVERRIDE { return Language; }
 };
 } // end llvm namespace
 #endif

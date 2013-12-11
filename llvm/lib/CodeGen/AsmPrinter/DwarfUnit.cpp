@@ -1986,7 +1986,7 @@ DIE *DwarfUnit::getOrCreateStaticMemberDIE(DIDerivedType DT) {
 }
 
 void DwarfUnit::emitHeader(const MCSection *ASection,
-                           const MCSymbol *ASectionSym) {
+                           const MCSymbol *ASectionSym) const {
   Asm->OutStreamer.AddComment("DWARF version number");
   Asm->EmitInt16(DD->getDwarfVersion());
   Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
