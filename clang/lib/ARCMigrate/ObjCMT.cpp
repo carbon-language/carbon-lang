@@ -1947,7 +1947,7 @@ struct EditEntry {
 }
 
 namespace llvm {
-template<> struct llvm::DenseMapInfo<EditEntry> {
+template<> struct DenseMapInfo<EditEntry> {
   static inline EditEntry getEmptyKey() {
     EditEntry Entry;
     Entry.Offset = unsigned(-1);
