@@ -890,13 +890,11 @@ void ExecutableWriter::build(const File &linkedFile) {
   addChunk(dataDirectory);
   addChunk(sectionTable);
 
-  std::vector<SectionChunk *> sectionChunks;
   for (auto i : atoms) {
     StringRef sectionName = i.first;
     std::vector<const DefinedAtom *> &contents = i.second;
     auto *section = new GenericSectionChunk(_PECOFFLinkingContext, sectionName,
                                             contents);
-    sectionChunks.push_back(section);
     addSectionChunk(section, sectionTable);
   }
 
@@ -918,7 +916,10 @@ void ExecutableWriter::build(const File &linkedFile) {
 
   setImageSizeOnDisk();
 
-  for (SectionChunk *section : sectionChunks) {
+  for (std::unique_ptr<Chunk> &chunk : _chunks) {
+    SectionChunk *section = dyn_cast<SectionChunk>(chunk.get());
+    if (!section)
+      continue;
     if (section->getSectionName() == ".text") {
       peHeader->setBaseOfCode(section->getVirtualAddress());
       setAddressOfEntryPoint(section, peHeader);
