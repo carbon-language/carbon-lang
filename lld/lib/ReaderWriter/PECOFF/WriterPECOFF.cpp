@@ -51,16 +51,16 @@ using llvm::support::ulittle32_t;
 namespace lld {
 namespace pecoff {
 
-namespace {
-class SectionChunk;
-
 // Page size of x86 processor. Some data needs to be aligned at page boundary
 // when loaded into memory.
-const int PAGE_SIZE = 4096;
+static const int PAGE_SIZE = 4096;
 
 // Disk sector size. Some data needs to be aligned at disk sector boundary in
 // file.
-const int SECTOR_SIZE = 512;
+static const int SECTOR_SIZE = 512;
+
+namespace {
+class SectionChunk;
 
 /// A Chunk is an abstrace contiguous range in an output file.
 class Chunk {
