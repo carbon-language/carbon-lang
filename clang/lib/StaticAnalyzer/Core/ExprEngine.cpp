@@ -1751,75 +1751,85 @@ void ExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr *A,
 
 /// VisitMemberExpr - Transfer function for member expressions.
 void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
-                                 ExplodedNodeSet &TopDst) {
+                                 ExplodedNodeSet &Dst) {
 
-  StmtNodeBuilder Bldr(Pred, TopDst, *currBldrCtx);
-  ExplodedNodeSet Dst;
+  // FIXME: Prechecks eventually go in ::Visit().
+  ExplodedNodeSet CheckedSet;
+  getCheckerManager().runCheckersForPreStmt(CheckedSet, Pred, M, *this);
+
+  ExplodedNodeSet EvalSet;
   ValueDecl *Member = M->getMemberDecl();
 
   // Handle static member variables and enum constants accessed via
   // member syntax.
   if (isa<VarDecl>(Member) || isa<EnumConstantDecl>(Member)) {
-    Bldr.takeNodes(Pred);
-    VisitCommonDeclRefExpr(M, Member, Pred, Dst);
-    Bldr.addNodes(Dst);
-    return;
-  }
+    ExplodedNodeSet Dst;
+    for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
+         I != E; ++I) {
+      VisitCommonDeclRefExpr(M, Member, Pred, EvalSet);
+    }
+  } else {
+    StmtNodeBuilder Bldr(CheckedSet, EvalSet, *currBldrCtx);
+    ExplodedNodeSet Tmp;
 
-  ProgramStateRef state = Pred->getState();
-  const LocationContext *LCtx = Pred->getLocationContext();
-  Expr *BaseExpr = M->getBase();
+    for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
+         I != E; ++I) {
+      ProgramStateRef state = (*I)->getState();
+      const LocationContext *LCtx = (*I)->getLocationContext();
+      Expr *BaseExpr = M->getBase();
 
-  // Handle C++ method calls.
-  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member)) {
-    if (MD->isInstance())
+      // Handle C++ method calls.
+      if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member)) {
+        if (MD->isInstance())
+          state = createTemporaryRegionIfNeeded(state, LCtx, BaseExpr);
+
+        SVal MDVal = svalBuilder.getFunctionPointer(MD);
+        state = state->BindExpr(M, LCtx, MDVal);
+
+        Bldr.generateNode(M, *I, state);
+        continue;
+      }
+
+      // Handle regular struct fields / member variables.
       state = createTemporaryRegionIfNeeded(state, LCtx, BaseExpr);
+      SVal baseExprVal = state->getSVal(BaseExpr, LCtx);
 
-    SVal MDVal = svalBuilder.getFunctionPointer(MD);
-    state = state->BindExpr(M, LCtx, MDVal);
+      FieldDecl *field = cast<FieldDecl>(Member);
+      SVal L = state->getLValue(field, baseExprVal);
 
-    Bldr.generateNode(M, Pred, state);
-    return;
-  }
+      if (M->isGLValue() || M->getType()->isArrayType()) {
+        // We special-case rvalues of array type because the analyzer cannot
+        // reason about them, since we expect all regions to be wrapped in Locs.
+        // We instead treat these as lvalues and assume that they will decay to
+        // pointers as soon as they are used.
+        if (!M->isGLValue()) {
+          assert(M->getType()->isArrayType());
+          const ImplicitCastExpr *PE =
+            dyn_cast<ImplicitCastExpr>((*I)->getParentMap().getParent(M));
+          if (!PE || PE->getCastKind() != CK_ArrayToPointerDecay) {
+            llvm_unreachable("should always be wrapped in ArrayToPointerDecay");
+            L = UnknownVal();
+          }
+        }
 
-  // Handle regular struct fields / member variables.
-  state = createTemporaryRegionIfNeeded(state, LCtx, BaseExpr);
-  SVal baseExprVal = state->getSVal(BaseExpr, LCtx);
+        if (field->getType()->isReferenceType()) {
+          if (const MemRegion *R = L.getAsRegion())
+            L = state->getSVal(R);
+          else
+            L = UnknownVal();
+        }
 
-  FieldDecl *field = cast<FieldDecl>(Member);
-  SVal L = state->getLValue(field, baseExprVal);
-
-  if (M->isGLValue() || M->getType()->isArrayType()) {
-
-    // We special case rvalue of array type because the analyzer cannot reason
-    // about it, since we expect all regions to be wrapped in Locs. So we will
-    // treat these as lvalues assuming that they will decay to pointers as soon
-    // as they are used.
-    if (!M->isGLValue()) {
-      assert(M->getType()->isArrayType());
-      const ImplicitCastExpr *PE =
-        dyn_cast<ImplicitCastExpr>(Pred->getParentMap().getParent(M));
-      if (!PE || PE->getCastKind() != CK_ArrayToPointerDecay) {
-        assert(false &&
-               "We assume that array is always wrapped in ArrayToPointerDecay");
-        L = UnknownVal();
+        Bldr.generateNode(M, *I, state->BindExpr(M, LCtx, L), 0,
+                          ProgramPoint::PostLValueKind);
+      } else {
+        Bldr.takeNodes(*I);
+        evalLoad(Tmp, M, M, *I, state, L);
+        Bldr.addNodes(Tmp);
       }
     }
-
-    if (field->getType()->isReferenceType()) {
-      if (const MemRegion *R = L.getAsRegion())
-        L = state->getSVal(R);
-      else
-        L = UnknownVal();
-    }
-
-    Bldr.generateNode(M, Pred, state->BindExpr(M, LCtx, L), 0,
-                      ProgramPoint::PostLValueKind);
-  } else {
-    Bldr.takeNodes(Pred);
-    evalLoad(Dst, M, M, Pred, state, L);
-    Bldr.addNodes(Dst);
   }
+
+  getCheckerManager().runCheckersForPostStmt(Dst, EvalSet, M, *this);
 }
 
 namespace {
