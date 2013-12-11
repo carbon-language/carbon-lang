@@ -61,7 +61,9 @@ void FakeStack::Destroy(int tid) {
                  NumberOfFrames(stack_size_log(), class_id));
     Report("T%d: FakeStack destroyed: %s\n", tid, str.data());
   }
-  UnmapOrDie(this, RequiredSize(stack_size_log_));
+  uptr size = RequiredSize(stack_size_log_);
+  FlushUnneededASanShadowMemory(reinterpret_cast<uptr>(this), size);
+  UnmapOrDie(this, size);
 }
 
 void FakeStack::PoisonAll(u8 magic) {

@@ -57,4 +57,8 @@ ALWAYS_INLINE void FastPoisonShadowPartialRightRedzone(
   }
 }
 
+// Calls __sanitizer::FlushUnneededShadowMemory() on
+// [MemToShadow(p), MemToShadow(p+size)] with proper rounding.
+void FlushUnneededASanShadowMemory(uptr p, uptr size);
+
 }  // namespace __asan
