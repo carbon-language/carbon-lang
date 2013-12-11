@@ -79,6 +79,8 @@ public:
     //--------------------------------------------------------------------------
     // These methods form a specialized interface to POSIX threads.
     //
+    bool Resume();
+
     void Notify(const ProcessMessage &message);
 
     //--------------------------------------------------------------------------

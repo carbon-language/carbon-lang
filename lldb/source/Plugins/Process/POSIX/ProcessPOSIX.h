@@ -64,7 +64,7 @@ public:
     DidLaunch();
 
     virtual lldb_private::Error
-    DoResume() = 0;
+    DoResume();
 
     virtual lldb_private::Error
     DoHalt(bool &caused_stop);
@@ -149,7 +149,7 @@ public:
 
     /// Registers the given message with this process.
     virtual void
-    SendMessage(const ProcessMessage &message) = 0;
+    SendMessage(const ProcessMessage &message);
 
     ProcessMonitor &
     GetMonitor() { assert(m_monitor); return *m_monitor; }

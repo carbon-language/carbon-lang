@@ -31,10 +31,7 @@ public:
     //--------------------------------------------------------------------------
     // LinuxThread internal API.
 
-    // POSIXThread overrides
-    virtual bool
-    Resume();
-
+    // POSIXThread override
     virtual void
     RefreshStateAfterStop();
 

@@ -276,6 +276,43 @@ POSIXThread::DidStop()
     // Don't set the thread state to stopped unless we really stopped.
 }
 
+bool
+POSIXThread::Resume()
+{
+    lldb::StateType resume_state = GetResumeState();
+    ProcessMonitor &monitor = GetMonitor();
+    bool status;
+
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
+    if (log)
+        log->Printf ("POSIXThread::%s (), resume_state = %s", __FUNCTION__,
+                         StateAsCString(resume_state));
+
+    switch (resume_state)
+    {
+    default:
+        assert(false && "Unexpected state for resume!");
+        status = false;
+        break;
+
+    case lldb::eStateRunning:
+        SetState(resume_state);
+        status = monitor.Resume(GetID(), GetResumeSignal());
+        break;
+
+    case lldb::eStateStepping:
+        SetState(resume_state);
+        status = monitor.SingleStep(GetID(), GetResumeSignal());
+        break;
+    case lldb::eStateStopped:
+    case lldb::eStateSuspended:
+        status = true;
+        break;
+    }
+
+    return status;
+}
+
 void
 POSIXThread::Notify(const ProcessMessage &message)
 {
