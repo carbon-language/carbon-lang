@@ -792,6 +792,8 @@ DR_EXPORT void dr_init(client_id_t id) {
   drmgr_init();
   drutil_init();
 
+#ifndef MSANDR_NATIVE_EXEC
+  // We should use drconfig to ignore these applications.
   std::string app_name = dr_get_application_name();
   // This blacklist will still run these apps through DR's code cache.  On the
   // other hand, we are able to follow children of these apps.
@@ -802,6 +804,7 @@ DR_EXPORT void dr_init(client_id_t id) {
       app_name == "sh" || app_name == "true" || app_name == "exit" ||
       app_name == "yes" || app_name == "echo")
     return;
+#endif /* !MSANDR_NATIVE_EXEC */
 
   drsys_options_t ops;
   memset(&ops, 0, sizeof(ops));
