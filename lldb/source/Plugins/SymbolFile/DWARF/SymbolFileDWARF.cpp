@@ -1644,6 +1644,13 @@ struct BitfieldInfo
     {
     }
     
+    void
+    Clear()
+    {
+        bit_size = LLDB_INVALID_ADDRESS;
+        bit_offset = LLDB_INVALID_ADDRESS;
+    }
+
     bool IsValid ()
     {
         return (bit_size != LLDB_INVALID_ADDRESS) &&
@@ -1915,12 +1922,14 @@ SymbolFileDWARF::ParseChildMembers
                                     accessibility = default_accessibility;
                                 member_accessibilities.push_back(accessibility);
                                 
-                                BitfieldInfo this_field_info;
-                        
-                                this_field_info.bit_size = bit_size;
-                                
-                                if (member_byte_offset != UINT32_MAX || bit_size != 0)
+                                uint64_t field_bit_offset = (member_byte_offset == UINT32_MAX ? 0 : (member_byte_offset * 8));
+                                if (bit_size > 0)
                                 {
+                                    
+                                    BitfieldInfo this_field_info;
+                                    this_field_info.bit_offset = field_bit_offset;
+                                    this_field_info.bit_size = bit_size;
+                                    
                                     /////////////////////////////////////////////////////////////
                                     // How to locate a field given the DWARF debug information
                                     //
@@ -1937,10 +1946,9 @@ SymbolFileDWARF::ParseChildMembers
                                     // AT_bit_size indicates the size of the field in bits.
                                     /////////////////////////////////////////////////////////////
                                     
-                                    this_field_info.bit_offset = 0;
-                                    
-                                    this_field_info.bit_offset += (member_byte_offset == UINT32_MAX ? 0 : (member_byte_offset * 8));
-                                    
+                                    if (byte_size == 0)
+                                        byte_size = member_type->GetByteSize();
+                                        
                                     if (GetObjectFile()->GetByteOrder() == eByteOrderLittle)
                                     {
                                         this_field_info.bit_offset += byte_size * 8;
@@ -1950,30 +1958,30 @@ SymbolFileDWARF::ParseChildMembers
                                     {
                                         this_field_info.bit_offset += bit_offset;
                                     }
-                                }
+                                    
+                                    // Update the field bit offset we will report for layout
+                                    field_bit_offset = this_field_info.bit_offset;
 
-                                // If the member to be emitted did not start on a character boundary and there is
-                                // empty space between the last field and this one, then we need to emit an
-                                // anonymous member filling up the space up to its start.  There are three cases
-                                // here:
-                                //
-                                // 1 If the previous member ended on a character boundary, then we can emit an
-                                //   anonymous member starting at the most recent character boundary.
-                                //
-                                // 2 If the previous member did not end on a character boundary and the distance
-                                //   from the end of the previous member to the current member is less than a
-                                //   word width, then we can emit an anonymous member starting right after the
-                                //   previous member and right before this member.
-                                //
-                                // 3 If the previous member did not end on a character boundary and the distance
-                                //   from the end of the previous member to the current member is greater than
-                                //   or equal a word width, then we act as in Case 1.
-                                
-                                const uint64_t character_width = 8;
-                                const uint64_t word_width = 32;
-                                
-                                if (this_field_info.IsValid())
-                                {
+                                    // If the member to be emitted did not start on a character boundary and there is
+                                    // empty space between the last field and this one, then we need to emit an
+                                    // anonymous member filling up the space up to its start.  There are three cases
+                                    // here:
+                                    //
+                                    // 1 If the previous member ended on a character boundary, then we can emit an
+                                    //   anonymous member starting at the most recent character boundary.
+                                    //
+                                    // 2 If the previous member did not end on a character boundary and the distance
+                                    //   from the end of the previous member to the current member is less than a
+                                    //   word width, then we can emit an anonymous member starting right after the
+                                    //   previous member and right before this member.
+                                    //
+                                    // 3 If the previous member did not end on a character boundary and the distance
+                                    //   from the end of the previous member to the current member is greater than
+                                    //   or equal a word width, then we act as in Case 1.
+                                    
+                                    const uint64_t character_width = 8;
+                                    const uint64_t word_width = 32;
+                                    
                                     // Objective-C has invalid DW_AT_bit_offset values in older versions
                                     // of clang, so we have to be careful and only insert unnammed bitfields
                                     // if we have a new enough clang.
@@ -2019,6 +2027,11 @@ SymbolFileDWARF::ParseChildMembers
                                             layout_info.field_offsets.insert(std::make_pair(unnamed_bitfield_decl, anon_field_info.bit_offset));
                                         }
                                     }
+                                    last_field_info = this_field_info;
+                                }
+                                else
+                                {
+                                    last_field_info.Clear();
                                 }
                                 
                                 ClangASTType member_clang_type = member_type->GetClangLayoutType();
@@ -2062,11 +2075,8 @@ SymbolFileDWARF::ParseChildMembers
                                 
                                 GetClangASTContext().SetMetadataAsUserID (field_decl, MakeUserID(die->GetOffset()));
                                 
-                                if (this_field_info.IsValid())
-                                {
-                                    layout_info.field_offsets.insert(std::make_pair(field_decl, this_field_info.bit_offset));
-                                    last_field_info = this_field_info;
-                                }
+                                layout_info.field_offsets.insert(std::make_pair(field_decl, field_bit_offset));
+
                             }
                             else
                             {
