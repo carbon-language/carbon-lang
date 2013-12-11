@@ -4,7 +4,8 @@ set(SANITIZER_HEADERS
   sanitizer/dfsan_interface.h
   sanitizer/linux_syscall_hooks.h
   sanitizer/lsan_interface.h
-  sanitizer/msan_interface.h)
+  sanitizer/msan_interface.h
+  sanitizer/tsan_interface_atomic.h)
 
 set(output_dir ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/include)
 
