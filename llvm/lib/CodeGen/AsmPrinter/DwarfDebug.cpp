@@ -3056,17 +3056,19 @@ void DwarfDebug::addDwarfTypeUnitType(uint16_t Language, DIE *RefDie,
     // referenced type, or possibly walk the precomputed hashes of related types
     // at the end.
     uint64_t Signature = DIEHash().computeTypeSignature(*Die);
-    NewTU->setTypeSignature(Signature);
-    NewTU->setType(Die);
 
     // Remove the References vector and add the type hash.
     I->second.first = Signature;
     I->second.second = NULL;
 
     NewTU->initSection(
-        useSplitDwarf()
-            ? Asm->getObjFileLowering().getDwarfTypesDWOSection(Signature)
-            : Asm->getObjFileLowering().getDwarfTypesSection(Signature));
+        useSplitDwarf() ? Asm->getObjFileLowering().getDwarfInfoDWOSection()
+                        : Asm->getObjFileLowering().getDwarfInfoSection(),
+        // FIXME: This is subtle (using the info section even when
+        // this CU is in the dwo section) and necessary for the
+        // current arange code - ideally it should iterate
+        // skeleton units, not full units, if it's going to reference skeletons
+        useSplitDwarf() ? NULL : DwarfInfoSectionSym);
   }
 
   // Populate all the signatures.
