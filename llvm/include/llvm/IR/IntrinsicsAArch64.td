@@ -282,35 +282,50 @@ def int_aarch64_neon_vrsqrts :
   Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, LLVMMatchType<0>],
             [IntrNoMem]>;
 
-class Neon_Cmp_Intrinsic
-  : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty, llvm_anyvector_ty],
-              [IntrNoMem]>;
+// Compare with vector operands.
+class Neon_Cmp_Intrinsic :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty, llvm_anyvector_ty],
+            [IntrNoMem]>;
+
+// Floating-point compare with scalar operands.
+class Neon_Float_Cmp_Intrinsic :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty, llvm_anyfloat_ty],
+            [IntrNoMem]>;
 
 // Scalar Compare Equal
 def int_aarch64_neon_vceq : Neon_Cmp_Intrinsic;
+def int_aarch64_neon_fceq : Neon_Float_Cmp_Intrinsic;
 
 // Scalar Compare Greater-Than or Equal
 def int_aarch64_neon_vcge : Neon_Cmp_Intrinsic;
 def int_aarch64_neon_vchs : Neon_Cmp_Intrinsic;
+def int_aarch64_neon_fcge : Neon_Float_Cmp_Intrinsic;
+def int_aarch64_neon_fchs : Neon_Float_Cmp_Intrinsic;
 
 // Scalar Compare Less-Than or Equal
 def int_aarch64_neon_vclez : Neon_Cmp_Intrinsic;
+def int_aarch64_neon_fclez : Neon_Float_Cmp_Intrinsic;
 
 // Scalar Compare Less-Than
 def int_aarch64_neon_vcltz : Neon_Cmp_Intrinsic;
+def int_aarch64_neon_fcltz : Neon_Float_Cmp_Intrinsic;
 
 // Scalar Compare Greater-Than
 def int_aarch64_neon_vcgt : Neon_Cmp_Intrinsic;
 def int_aarch64_neon_vchi : Neon_Cmp_Intrinsic;
+def int_aarch64_neon_fcgt : Neon_Float_Cmp_Intrinsic;
+def int_aarch64_neon_fchi : Neon_Float_Cmp_Intrinsic;
 
 // Scalar Compare Bitwise Test Bits
 def int_aarch64_neon_vtstd : Neon_Cmp_Intrinsic;
 
 // Scalar Floating-point Absolute Compare Greater Than Or Equal
 def int_aarch64_neon_vcage : Neon_Cmp_Intrinsic;
- 
+def int_aarch64_neon_fcage : Neon_Float_Cmp_Intrinsic;
+
 // Scalar Floating-point Absolute Compare Greater Than
 def int_aarch64_neon_vcagt : Neon_Cmp_Intrinsic;
+def int_aarch64_neon_fcagt : Neon_Float_Cmp_Intrinsic;
 
 // Scalar Signed Saturating Accumulated of Unsigned Value
 def int_aarch64_neon_vuqadd : Neon_2Arg_Intrinsic;
