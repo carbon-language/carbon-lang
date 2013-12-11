@@ -98,10 +98,14 @@ def int_aarch64_neon_umaxv  : Neon_Across_Intrinsic;
 def int_aarch64_neon_sminv  : Neon_Across_Intrinsic;
 def int_aarch64_neon_uminv  : Neon_Across_Intrinsic;
 def int_aarch64_neon_vaddv  : Neon_Across_Intrinsic;
-def int_aarch64_neon_vmaxv  : Neon_Across_Intrinsic;
-def int_aarch64_neon_vminv  : Neon_Across_Intrinsic;
-def int_aarch64_neon_vmaxnmv : Neon_Across_Intrinsic;
-def int_aarch64_neon_vminnmv : Neon_Across_Intrinsic;
+def int_aarch64_neon_vmaxv :
+  Intrinsic<[llvm_float_ty], [llvm_v4f32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vminv :
+  Intrinsic<[llvm_float_ty], [llvm_v4f32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vmaxnmv :
+  Intrinsic<[llvm_float_ty], [llvm_v4f32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vminnmv :
+  Intrinsic<[llvm_float_ty], [llvm_v4f32_ty], [IntrNoMem]>;
 
 // Vector Table Lookup.
 def int_aarch64_neon_vtbl1 :

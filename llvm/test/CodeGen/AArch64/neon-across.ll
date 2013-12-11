@@ -1,12 +1,12 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
 
-declare <1 x float> @llvm.aarch64.neon.vminnmv.v1f32.v4f32(<4 x float>)
+declare float @llvm.aarch64.neon.vminnmv(<4 x float>)
 
-declare <1 x float> @llvm.aarch64.neon.vmaxnmv.v1f32.v4f32(<4 x float>)
+declare float @llvm.aarch64.neon.vmaxnmv(<4 x float>)
 
-declare <1 x float> @llvm.aarch64.neon.vminv.v1f32.v4f32(<4 x float>)
+declare float @llvm.aarch64.neon.vminv(<4 x float>)
 
-declare <1 x float> @llvm.aarch64.neon.vmaxv.v1f32.v4f32(<4 x float>)
+declare float @llvm.aarch64.neon.vmaxv(<4 x float>)
 
 declare <1 x i32> @llvm.aarch64.neon.vaddv.v1i32.v4i32(<4 x i32>)
 
@@ -442,8 +442,7 @@ define float @test_vmaxvq_f32(<4 x float> %a) {
 ; CHECK: test_vmaxvq_f32:
 ; CHECK: fmaxv s{{[0-9]+}}, {{v[0-9]+}}.4s
 entry:
-  %vmaxv.i = tail call <1 x float> @llvm.aarch64.neon.vmaxv.v1f32.v4f32(<4 x float> %a)
-  %0 = extractelement <1 x float> %vmaxv.i, i32 0
+  %0 = call float @llvm.aarch64.neon.vmaxv(<4 x float> %a)
   ret float %0
 }
 
@@ -451,8 +450,7 @@ define float @test_vminvq_f32(<4 x float> %a) {
 ; CHECK: test_vminvq_f32:
 ; CHECK: fminv s{{[0-9]+}}, {{v[0-9]+}}.4s
 entry:
-  %vminv.i = tail call <1 x float> @llvm.aarch64.neon.vminv.v1f32.v4f32(<4 x float> %a)
-  %0 = extractelement <1 x float> %vminv.i, i32 0
+  %0 = call float @llvm.aarch64.neon.vminv(<4 x float> %a)
   ret float %0
 }
 
@@ -460,8 +458,7 @@ define float @test_vmaxnmvq_f32(<4 x float> %a) {
 ; CHECK: test_vmaxnmvq_f32:
 ; CHECK: fmaxnmv s{{[0-9]+}}, {{v[0-9]+}}.4s
 entry:
-  %vmaxnmv.i = tail call <1 x float> @llvm.aarch64.neon.vmaxnmv.v1f32.v4f32(<4 x float> %a)
-  %0 = extractelement <1 x float> %vmaxnmv.i, i32 0
+  %0 = call float @llvm.aarch64.neon.vmaxnmv(<4 x float> %a)
   ret float %0
 }
 
@@ -469,8 +466,7 @@ define float @test_vminnmvq_f32(<4 x float> %a) {
 ; CHECK: test_vminnmvq_f32:
 ; CHECK: fminnmv s{{[0-9]+}}, {{v[0-9]+}}.4s
 entry:
-  %vminnmv.i = tail call <1 x float> @llvm.aarch64.neon.vminnmv.v1f32.v4f32(<4 x float> %a)
-  %0 = extractelement <1 x float> %vminnmv.i, i32 0
+  %0 = call float @llvm.aarch64.neon.vminnmv(<4 x float> %a)
   ret float %0
 }
 

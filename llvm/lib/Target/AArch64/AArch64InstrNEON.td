@@ -2385,8 +2385,8 @@ multiclass NeonI_2VAcross_3<bit u, bits<5> opcode, bits<2> size,
     def _1s4s:  NeonI_2VAcross<0b1, u, size, opcode,
                 (outs FPR32:$Rd), (ins VPR128:$Rn),
                 asmop # "\t$Rd, $Rn.4s",
-                [(set (v1f32 FPR32:$Rd),
-                    (v1f32 (opnode (v4f32 VPR128:$Rn))))],
+                [(set (f32 FPR32:$Rd),
+                    (f32 (opnode (v4f32 VPR128:$Rn))))],
                 NoItinerary>;
 }
 
