@@ -84,8 +84,13 @@ RuntimeLibrary.darwin.Configs := \
 	asan_osx_dynamic.dylib \
 	profile_osx.a profile_ios.a \
 	ubsan_osx.a
+
 RuntimeLibrary.darwin_embedded.Configs := \
-	soft_static.a hard_static.a soft_pic.a hard_pic.a
+	hard_static.a hard_pic.a
+ifneq (,$(findstring ARM,$(TARGETS_TO_BUILD)))
+RuntimeLibrary.darwin_embedded.Configs += \
+	soft_static.a soft_pic.a
+endif
 
 # Support building compiler-rt with relocatable SDKs.
 #
