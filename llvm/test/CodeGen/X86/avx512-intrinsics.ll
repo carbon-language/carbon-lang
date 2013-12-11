@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl --show-mc-encoding| FileCheck %s
 
 declare i32 @llvm.x86.avx512.kortestz.w(i16, i16) nounwind readnone
 ; CHECK-LABEL: test_kortestz
@@ -147,42 +147,42 @@ define <16 x float> @test_sqrt_ps_512(<16 x float> %a0) {
 declare <16 x float> @llvm.x86.avx512.sqrt.ps.512(<16 x float>) nounwind readnone
 
 define <4 x float> @test_sqrt_ss(<4 x float> %a0, <4 x float> %a1) {
-  ; CHECK: vsqrtssz
+  ; CHECK: vsqrtss {{.*}}encoding: [0x62
   %res = call <4 x float> @llvm.x86.avx512.sqrt.ss(<4 x float> %a0, <4 x float> %a1) ; <<4 x float>> [#uses=1]
   ret <4 x float> %res
 }
 declare <4 x float> @llvm.x86.avx512.sqrt.ss(<4 x float>, <4 x float>) nounwind readnone
 
 define <2 x double> @test_sqrt_sd(<2 x double> %a0, <2 x double> %a1) {
-  ; CHECK: vsqrtsdz
+  ; CHECK: vsqrtsd {{.*}}encoding: [0x62
   %res = call <2 x double> @llvm.x86.avx512.sqrt.sd(<2 x double> %a0, <2 x double> %a1) ; <<2 x double>> [#uses=1]
   ret <2 x double> %res
 }
 declare <2 x double> @llvm.x86.avx512.sqrt.sd(<2 x double>, <2 x double>) nounwind readnone
 
 define i64 @test_x86_sse2_cvtsd2si64(<2 x double> %a0) {
-  ; CHECK: vcvtsd2siz
+  ; CHECK: vcvtsd2si {{.*}}encoding: [0x62
   %res = call i64 @llvm.x86.sse2.cvtsd2si64(<2 x double> %a0) ; <i64> [#uses=1]
   ret i64 %res
 }
 declare i64 @llvm.x86.sse2.cvtsd2si64(<2 x double>) nounwind readnone
 
 define <2 x double> @test_x86_sse2_cvtsi642sd(<2 x double> %a0, i64 %a1) {
-  ; CHECK: vcvtsi2sdqz
+  ; CHECK: vcvtsi2sdq {{.*}}encoding: [0x62
   %res = call <2 x double> @llvm.x86.sse2.cvtsi642sd(<2 x double> %a0, i64 %a1) ; <<2 x double>> [#uses=1]
   ret <2 x double> %res
 }
 declare <2 x double> @llvm.x86.sse2.cvtsi642sd(<2 x double>, i64) nounwind readnone
 
 define <2 x double> @test_x86_avx512_cvtusi642sd(<2 x double> %a0, i64 %a1) {
-  ; CHECK: vcvtusi2sdqz
+  ; CHECK: vcvtusi2sdq {{.*}}encoding: [0x62
   %res = call <2 x double> @llvm.x86.avx512.cvtusi642sd(<2 x double> %a0, i64 %a1) ; <<2 x double>> [#uses=1]
   ret <2 x double> %res
 }
 declare <2 x double> @llvm.x86.avx512.cvtusi642sd(<2 x double>, i64) nounwind readnone
 
 define i64 @test_x86_sse2_cvttsd2si64(<2 x double> %a0) {
-  ; CHECK: vcvttsd2siz
+  ; CHECK: vcvttsd2si {{.*}}encoding: [0x62
   %res = call i64 @llvm.x86.sse2.cvttsd2si64(<2 x double> %a0) ; <i64> [#uses=1]
   ret i64 %res
 }
@@ -190,7 +190,7 @@ declare i64 @llvm.x86.sse2.cvttsd2si64(<2 x double>) nounwind readnone
 
 
 define i64 @test_x86_sse_cvtss2si64(<4 x float> %a0) {
-  ; CHECK: vcvtss2siz
+  ; CHECK: vcvtss2si {{.*}}encoding: [0x62
   %res = call i64 @llvm.x86.sse.cvtss2si64(<4 x float> %a0) ; <i64> [#uses=1]
   ret i64 %res
 }
@@ -198,7 +198,7 @@ declare i64 @llvm.x86.sse.cvtss2si64(<4 x float>) nounwind readnone
 
 
 define <4 x float> @test_x86_sse_cvtsi642ss(<4 x float> %a0, i64 %a1) {
-  ; CHECK: vcvtsi2ssqz
+  ; CHECK: vcvtsi2ssq {{.*}}encoding: [0x62
   %res = call <4 x float> @llvm.x86.sse.cvtsi642ss(<4 x float> %a0, i64 %a1) ; <<4 x float>> [#uses=1]
   ret <4 x float> %res
 }
@@ -206,14 +206,14 @@ declare <4 x float> @llvm.x86.sse.cvtsi642ss(<4 x float>, i64) nounwind readnone
 
 
 define i64 @test_x86_sse_cvttss2si64(<4 x float> %a0) {
-  ; CHECK: vcvttss2siz
+  ; CHECK: vcvttss2si {{.*}}encoding: [0x62
   %res = call i64 @llvm.x86.sse.cvttss2si64(<4 x float> %a0) ; <i64> [#uses=1]
   ret i64 %res
 }
 declare i64 @llvm.x86.sse.cvttss2si64(<4 x float>) nounwind readnone
 
 define i64 @test_x86_avx512_cvtsd2usi64(<2 x double> %a0) {
-  ; CHECK: vcvtsd2usiz
+  ; CHECK: vcvtsd2usi {{.*}}encoding: [0x62
   %res = call i64 @llvm.x86.avx512.cvtsd2usi64(<2 x double> %a0) ; <i64> [#uses=1]
   ret i64 %res
 }

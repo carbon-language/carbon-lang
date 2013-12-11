@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl --show-mc-encoding| FileCheck %s
 ; CHECK: LCP
 ; CHECK: .long 2
 ; CHECK: .long 5
@@ -107,7 +107,7 @@ define <16 x i32> @test11(<16 x i32> %a, <16 x i32>* %b) nounwind {
 }
 
 ; CHECK-LABEL: test12
-; CHECK: vmovlhpsz %xmm
+; CHECK: vmovlhps {{.*}}## encoding: [0x62
 ; CHECK: ret
 define <4 x i32> @test12(<4 x i32> %a, <4 x i32> %b) nounwind {
   %c = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
@@ -186,7 +186,7 @@ define <16 x float> @test21(<16 x float> %a, <16 x float> %c) {
 }
 
 ; CHECK-LABEL: test22
-; CHECK: vmovhlpsz %xmm
+; CHECK: vmovhlps {{.*}}## encoding: [0x62
 ; CHECK: ret
 define <4 x i32> @test22(<4 x i32> %a, <4 x i32> %b) nounwind {
   %c = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 2, i32 3, i32 6, i32 7>

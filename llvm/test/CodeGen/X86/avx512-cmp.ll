@@ -1,6 +1,6 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl --show-mc-encoding | FileCheck %s
 
-; CHECK: vucomisdz
+; CHECK: vucomisd {{.*}}encoding: [0x62
 define double @test1(double %a, double %b) nounwind {
   %tobool = fcmp une double %a, %b
   br i1 %tobool, label %l1, label %l2
@@ -13,7 +13,7 @@ l2:
   ret double %c1
 }
 
-; CHECK: vucomissz
+; CHECK: vucomiss {{.*}}encoding: [0x62
 define float @test2(float %a, float %b) nounwind {
   %tobool = fcmp olt float %a, %b
   br i1 %tobool, label %l1, label %l2

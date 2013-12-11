@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl --show-mc-encoding | FileCheck %s
 
 ; CHECK-LABEL: sitof32
 ; CHECK: vcvtdq2ps %zmm
@@ -67,7 +67,7 @@ define <8 x double> @fpext00(<8 x float> %b) nounwind {
 }
 
 ; CHECK-LABEL: funcA
-; CHECK: vcvtsi2sdqz (%
+; CHECK: vcvtsi2sdq (%rdi){{.*}} encoding: [0x62
 ; CHECK: ret
 define double @funcA(i64* nocapture %e) {
 entry:
@@ -77,7 +77,7 @@ entry:
 }
 
 ; CHECK-LABEL: funcB
-; CHECK: vcvtsi2sdlz (%
+; CHECK: vcvtsi2sdl (%{{.*}} encoding: [0x62
 ; CHECK: ret
 define double @funcB(i32* %e) {
 entry:
@@ -87,7 +87,7 @@ entry:
 }
 
 ; CHECK-LABEL: funcC
-; CHECK: vcvtsi2sslz (%
+; CHECK: vcvtsi2ssl (%{{.*}} encoding: [0x62
 ; CHECK: ret
 define float @funcC(i32* %e) {
 entry:
@@ -97,7 +97,7 @@ entry:
 }
 
 ; CHECK-LABEL: i64tof32
-; CHECK: vcvtsi2ssqz  (%
+; CHECK: vcvtsi2ssq  (%{{.*}} encoding: [0x62
 ; CHECK: ret
 define float @i64tof32(i64* %e) {
 entry:
@@ -107,7 +107,7 @@ entry:
 }
 
 ; CHECK-LABEL: fpext
-; CHECK: vcvtss2sdz
+; CHECK: vcvtss2sd {{.*}} encoding: [0x62
 ; CHECK: ret
 define void @fpext() {
 entry:
@@ -120,9 +120,9 @@ entry:
 }
 
 ; CHECK-LABEL: fpround_scalar
-; CHECK: vmovsdz
-; CHECK: vcvtsd2ssz
-; CHECK: vmovssz
+; CHECK: vmovsd {{.*}} encoding: [0x62
+; CHECK: vcvtsd2ss {{.*}} encoding: [0x62
+; CHECK: vmovss {{.*}} encoding: [0x62
 ; CHECK: ret
 define void @fpround_scalar() nounwind uwtable {
 entry:
@@ -135,7 +135,7 @@ entry:
 }
 
 ; CHECK-LABEL: long_to_double
-; CHECK: vmovqz
+; CHECK: vmovq {{.*}} encoding: [0x62
 ; CHECK: ret
 define double @long_to_double(i64 %x) {
    %res = bitcast i64 %x to double
@@ -143,7 +143,7 @@ define double @long_to_double(i64 %x) {
 }
 
 ; CHECK-LABEL: double_to_long
-; CHECK: vmovqz
+; CHECK: vmovq {{.*}} encoding: [0x62
 ; CHECK: ret
 define i64 @double_to_long(double %x) {
    %res = bitcast double %x to i64
@@ -151,7 +151,7 @@ define i64 @double_to_long(double %x) {
 }
 
 ; CHECK-LABEL: int_to_float
-; CHECK: vmovdz
+; CHECK: vmovd {{.*}} encoding: [0x62
 ; CHECK: ret
 define float @int_to_float(i32 %x) {
    %res = bitcast i32 %x to float
@@ -159,7 +159,7 @@ define float @int_to_float(i32 %x) {
 }
 
 ; CHECK-LABEL: float_to_int
-; CHECK: vmovdz
+; CHECK: vmovd {{.*}} encoding: [0x62
 ; CHECK: ret
 define i32 @float_to_int(float %x) {
    %res = bitcast float %x to i32
@@ -185,7 +185,7 @@ define <16 x float> @uitof32(<16 x i32> %a) nounwind {
 }
 
 ; CHECK-LABEL: @fptosi02
-; CHECK vcvttss2siz
+; CHECK vcvttss2si {{.*}} encoding: [0x62
 ; CHECK: ret
 define i32 @fptosi02(float %a) nounwind {
   %b = fptosi float %a to i32
@@ -193,7 +193,7 @@ define i32 @fptosi02(float %a) nounwind {
 }
 
 ; CHECK-LABEL: @fptoui02
-; CHECK vcvttss2usiz
+; CHECK vcvttss2usi {{.*}} encoding: [0x62
 ; CHECK: ret
 define i32 @fptoui02(float %a) nounwind {
   %b = fptoui float %a to i32

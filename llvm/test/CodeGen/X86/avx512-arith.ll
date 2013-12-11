@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl --show-mc-encoding| FileCheck %s
 
 ; CHECK-LABEL: addpd512
 ; CHECK: vaddpd
@@ -196,7 +196,7 @@ define <16 x i32> @vpmulld_test(<16 x i32> %i, <16 x i32> %j) {
 }
 
 ; CHECK-LABEL: sqrtA
-; CHECK: vsqrtssz
+; CHECK: vsqrtss {{.*}} encoding: [0x62
 ; CHECK: ret
 declare float @sqrtf(float) readnone
 define float @sqrtA(float %a) nounwind uwtable readnone ssp {
@@ -206,7 +206,7 @@ entry:
 }
 
 ; CHECK-LABEL: sqrtB
-; CHECK: vsqrtsdz
+; CHECK: vsqrtsd {{.*}}## encoding: [0x62
 ; CHECK: ret
 declare double @sqrt(double) readnone
 define double @sqrtB(double %a) nounwind uwtable readnone ssp {
@@ -216,7 +216,7 @@ entry:
 }
 
 ; CHECK-LABEL: sqrtC
-; CHECK: vsqrtssz
+; CHECK: vsqrtss {{.*}}## encoding: [0x62
 ; CHECK: ret
 declare float @llvm.sqrt.f32(float)
 define float @sqrtC(float %a) nounwind {

@@ -44,7 +44,7 @@ define <8 x i64> @test4(<8 x i64> %x) nounwind {
 }
 
 ;CHECK-LABEL: test5:
-;CHECK: vextractpsz
+;CHECK: vextractps
 ;CHECK: ret
 define i32 @test5(<4 x float> %x) nounwind {
   %ef = extractelement <4 x float> %x, i32 3
@@ -53,7 +53,7 @@ define i32 @test5(<4 x float> %x) nounwind {
 }
 
 ;CHECK-LABEL: test6:
-;CHECK: vextractpsz {{.*}}, (%rdi)
+;CHECK: vextractps {{.*}}, (%rdi)
 ;CHECK: ret
 define void @test6(<4 x float> %x, float* %out) nounwind {
   %ef = extractelement <4 x float> %x, i32 3
@@ -62,7 +62,7 @@ define void @test6(<4 x float> %x, float* %out) nounwind {
 }
 
 ;CHECK-LABEL: test7
-;CHECK: vmovdz
+;CHECK: vmovd
 ;CHECK: vpermps %zmm
 ;CHECK: ret
 define float @test7(<16 x float> %x, i32 %ind) nounwind {
@@ -71,7 +71,7 @@ define float @test7(<16 x float> %x, i32 %ind) nounwind {
 }
 
 ;CHECK-LABEL: test8
-;CHECK: vmovqz
+;CHECK: vmovq
 ;CHECK: vpermpd %zmm
 ;CHECK: ret
 define double @test8(<8 x double> %x, i32 %ind) nounwind {
@@ -89,7 +89,7 @@ define float @test9(<8 x float> %x, i32 %ind) nounwind {
 }
 
 ;CHECK-LABEL: test10
-;CHECK: vmovdz
+;CHECK: vmovd
 ;CHECK: vpermd %zmm
 ;CHEKK: vmovdz  %xmm0, %eax
 ;CHECK: ret
