@@ -3615,7 +3615,9 @@ class CFGBlockTerminatorPrint
 public:
   CFGBlockTerminatorPrint(raw_ostream &os, StmtPrinterHelper* helper,
                           const PrintingPolicy &Policy)
-    : OS(os), Helper(helper), Policy(Policy) {}
+    : OS(os), Helper(helper), Policy(Policy) {
+    this->Policy.IncludeNewlines = false;
+  }
 
   void VisitIfStmt(IfStmt *I) {
     OS << "if ";

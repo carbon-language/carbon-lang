@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=debug.DumpCFG -triple x86_64-apple-darwin12 -std=c++11 %s 2>&1 | FileCheck %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=debug.DumpCFG -triple x86_64-apple-darwin12 -std=c++11 %s > %t 2>&1
+// RUN: FileCheck --input-file=%t %s
 
 // CHECK: ENTRY
 // CHECK-NEXT: Succs (1): B1
@@ -180,4 +181,131 @@ namespace NoReturnSingleSuccessor {
     if (x)
       return 1;
   }
+}
+
+// Test CFG support for "extending" an enum.
+// CHECK:  [B7 (ENTRY)]
+// CHECK-NEXT:    Succs (1): B2
+// CHECK:  [B1]
+// CHECK-NEXT:    1: x
+// CHECK-NEXT:    2: [B1.1] (ImplicitCastExpr, LValueToRValue, int)
+// CHECK-NEXT:    3: return [B1.2];
+// CHECK-NEXT:    Preds (4): B3 B4 B5 B6
+// CHECK-NEXT:    Succs (1): B0
+// CHECK:  [B2]
+// CHECK-NEXT:    1: 0
+// CHECK-NEXT:    2: int x = 0;
+// CHECK-NEXT:    3: value
+// CHECK-NEXT:    4: [B2.3] (ImplicitCastExpr, LValueToRValue, enum MyEnum)
+// CHECK-NEXT:    5: [B2.4] (ImplicitCastExpr, IntegralCast, int)
+// CHECK-NEXT:    T: switch [B2.5]
+// CHECK-NEXT:    Preds (1): B7
+// CHECK-NEXT:    Succs (5): B3 B4 B5 B6 NULL
+// CHECK:  [B3]
+// CHECK-NEXT:   case D:
+// CHECK-NEXT:    1: 4
+// CHECK-NEXT:    2: x
+// CHECK-NEXT:    3: [B3.2] = [B3.1]
+// CHECK-NEXT:    T: break;
+// CHECK-NEXT:    Preds (1): B2
+// CHECK-NEXT:    Succs (1): B1
+// CHECK:  [B4]
+// CHECK-NEXT:   case C:
+// CHECK-NEXT:    1: 3
+// CHECK-NEXT:    2: x
+// CHECK-NEXT:    3: [B4.2] = [B4.1]
+// CHECK-NEXT:    T: break;
+// CHECK-NEXT:    Preds (1): B2
+// CHECK-NEXT:    Succs (1): B1
+// CHECK:  [B5]
+// CHECK-NEXT:   case B:
+// CHECK-NEXT:    1: 2
+// CHECK-NEXT:    2: x
+// CHECK-NEXT:    3: [B5.2] = [B5.1]
+// CHECK-NEXT:    T: break;
+// CHECK-NEXT:    Preds (1): B2
+// CHECK-NEXT:    Succs (1): B1
+// CHECK:  [B6]
+// CHECK-NEXT:   case A:
+// CHECK-NEXT:    1: 1
+// CHECK-NEXT:    2: x
+// CHECK-NEXT:    3: [B6.2] = [B6.1]
+// CHECK-NEXT:    T: break;
+// CHECK-NEXT:    Preds (1): B2
+// CHECK-NEXT:    Succs (1): B1
+// CHECK:  [B0 (EXIT)]
+// CHECK-NEXT:    Preds (1): B1
+enum MyEnum { A, B, C };
+static const enum MyEnum D = (enum MyEnum) 32;
+
+int test_enum_with_extension(enum MyEnum value) {
+  int x = 0;
+  switch (value) {
+    case A: x = 1; break;
+    case B: x = 2; break;
+    case C: x = 3; break;
+    case D: x = 4; break;
+  }
+  return x;
+}
+
+// CHECK:  [B7 (ENTRY)]
+// CHECK-NEXT:    Succs (1): B2
+// CHECK:  [B1]
+// CHECK-NEXT:    1: x
+// CHECK-NEXT:    2: [B1.1] (ImplicitCastExpr, LValueToRValue, int)
+// CHECK-NEXT:    3: return [B1.2];
+// CHECK-NEXT:    Preds (4): B3 B4 B5 B6
+// CHECK-NEXT:    Succs (1): B0
+// CHECK:  [B2]
+// CHECK-NEXT:    1: 0
+// CHECK-NEXT:    2: int x = 0;
+// CHECK-NEXT:    3: value
+// CHECK-NEXT:    4: [B2.3] (ImplicitCastExpr, LValueToRValue, enum MyEnum)
+// CHECK-NEXT:    5: [B2.4] (ImplicitCastExpr, IntegralCast, int)
+// CHECK-NEXT:    T: switch [B2.5]
+// CHECK-NEXT:    Preds (1): B7
+// CHECK-NEXT:    Succs (4): B4 B5 B6 NULL
+// CHECK:  [B3]
+// CHECK-NEXT:   default:
+// CHECK-NEXT:    1: 4
+// CHECK-NEXT:    2: x
+// CHECK-NEXT:    3: [B3.2] = [B3.1]
+// CHECK-NEXT:    T: break;
+// CHECK-NEXT:    Succs (1): B1
+// CHECK:  [B4]
+// CHECK-NEXT:   case C:
+// CHECK-NEXT:    1: 3
+// CHECK-NEXT:    2: x
+// CHECK-NEXT:    3: [B4.2] = [B4.1]
+// CHECK-NEXT:    T: break;
+// CHECK-NEXT:    Preds (1): B2
+// CHECK-NEXT:    Succs (1): B1
+// CHECK:  [B5]
+// CHECK-NEXT:   case B:
+// CHECK-NEXT:    1: 2
+// CHECK-NEXT:    2: x
+// CHECK-NEXT:    3: [B5.2] = [B5.1]
+// CHECK-NEXT:    T: break;
+// CHECK-NEXT:    Preds (1): B2
+// CHECK-NEXT:    Succs (1): B1
+// CHECK:  [B6]
+// CHECK-NEXT:   case A:
+// CHECK-NEXT:    1: 1
+// CHECK-NEXT:    2: x
+// CHECK-NEXT:    3: [B6.2] = [B6.1]
+// CHECK-NEXT:    T: break;
+// CHECK-NEXT:    Preds (1): B2
+// CHECK-NEXT:    Succs (1): B1
+// CHECK:  [B0 (EXIT)]
+// CHECK-NEXT:    Preds (1): B1
+int test_enum_with_extension_default(enum MyEnum value) {
+  int x = 0;
+  switch (value) {
+    case A: x = 1; break;
+    case B: x = 2; break;
+    case C: x = 3; break;
+    default: x = 4; break;
+  }
+  return x;
 }
