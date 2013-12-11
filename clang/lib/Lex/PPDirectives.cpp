@@ -588,9 +588,13 @@ void Preprocessor::verifyModuleInclude(SourceLocation FilenameLoc,
   Module *RequestingModule = getModuleForLocation(FilenameLoc);
   if (RequestingModule)
     HeaderInfo.getModuleMap().resolveUses(RequestingModule, /*Complain=*/false);
+  bool FoundInModule = false;
   ModuleMap::KnownHeader RequestedModule =
-      HeaderInfo.getModuleMap().findModuleForHeader(IncFileEnt,
-                                                    RequestingModule);
+      HeaderInfo.getModuleMap().findModuleForHeader(
+          IncFileEnt, RequestingModule, &FoundInModule);
+
+  if (!FoundInModule)
+    return; // The header is not part of a module.
 
   if (RequestingModule == RequestedModule.getModule())
     return; // No faults wihin a module, or between files both not in modules.

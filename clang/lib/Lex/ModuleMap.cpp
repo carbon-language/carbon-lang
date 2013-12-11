@@ -168,8 +168,19 @@ static bool isBuiltinHeader(StringRef FileName) {
 
 ModuleMap::KnownHeader
 ModuleMap::findModuleForHeader(const FileEntry *File,
-                               Module *RequestingModule) {
+                               Module *RequestingModule,
+                               bool *FoundInModule) {
   HeadersMap::iterator Known = Headers.find(File);
+
+  // If we've found a builtin header within Clang's builtin include directory,
+  // load all of the module maps to see if it will get associated with a
+  // specific module (e.g., in /usr/include).
+  if (Known == Headers.end() && File->getDir() == BuiltinIncludeDir &&
+      isBuiltinHeader(llvm::sys::path::filename(File->getName()))) {
+    HeaderInfo.loadTopLevelSystemModules();
+    Known = Headers.find(File);
+  }
+
   if (Known != Headers.end()) {
     ModuleMap::KnownHeader Result = KnownHeader();
 
@@ -177,9 +188,15 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
     for (SmallVectorImpl<KnownHeader>::iterator I = Known->second.begin(),
                                                 E = Known->second.end();
          I != E; ++I) {
-      // Cannot use a module if the header is excluded or unavailable in it.
-      if (I->getRole() == ModuleMap::ExcludedHeader ||
-          !I->getModule()->isAvailable())
+      // Cannot use a module if the header is excluded in it.
+      if (I->getRole() == ModuleMap::ExcludedHeader)
+        continue;
+
+      if (FoundInModule)
+        *FoundInModule = true;
+
+      // Cannot use a module if it is unavailable.
+      if (!I->getModule()->isAvailable())
         continue;
 
       // If 'File' is part of 'RequestingModule', 'RequestingModule' is the
@@ -194,6 +211,7 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
                     RequestingModule->DirectUses.end(),
                     I->getModule()) == RequestingModule->DirectUses.end())
         continue;
+
       Result = *I;
       // If 'File' is a public header of this module, this is as good as we
       // are going to get.
@@ -203,18 +221,6 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
     return Result;
   }
 
-  // If we've found a builtin header within Clang's builtin include directory,
-  // load all of the module maps to see if it will get associated with a
-  // specific module (e.g., in /usr/include).
-  if (File->getDir() == BuiltinIncludeDir &&
-      isBuiltinHeader(llvm::sys::path::filename(File->getName()))) {
-    HeaderInfo.loadTopLevelSystemModules();
-
-    // Check again.
-    if (Headers.find(File) != Headers.end())
-      return findModuleForHeader(File, RequestingModule);
-  }
-  
   const DirectoryEntry *Dir = File->getDir();
   SmallVector<const DirectoryEntry *, 2> SkippedDirs;
 
