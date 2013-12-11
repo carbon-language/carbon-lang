@@ -124,10 +124,12 @@ namespace llvm {
     /// file.
     const char *PrivateGlobalPrefix;         // Defaults to "L"
 
-    /// LinkerPrivateGlobalPrefix - This prefix is used for symbols that should
-    /// be passed through the assembler but be removed by the linker.  This
-    /// is "l" on Darwin, currently used for some ObjC metadata.
-    const char *LinkerPrivateGlobalPrefix;   // Defaults to ""
+    /// This prefix is used for symbols that should be passed through the
+    /// assembler but be removed by the linker.  This is 'l' on Darwin,
+    /// currently used for some ObjC metadata.
+    /// The default of "" meast that for this system a plain private symbol
+    /// should be used.
+    const char *LinkerPrivateGlobalPrefix;    // Defaults to "".
 
     /// InlineAsmStart/End - If these are nonempty, they contain a directive to
     /// emit before and after an inline assembly statement.
@@ -441,8 +443,13 @@ namespace llvm {
     const char *getPrivateGlobalPrefix() const {
       return PrivateGlobalPrefix;
     }
+    bool hasLinkerPrivateGlobalPrefix() const {
+      return LinkerPrivateGlobalPrefix[0] != '\0';
+    }
     const char *getLinkerPrivateGlobalPrefix() const {
-      return LinkerPrivateGlobalPrefix;
+      if (hasLinkerPrivateGlobalPrefix())
+        return LinkerPrivateGlobalPrefix;
+      return getPrivateGlobalPrefix();
     }
     const char *getInlineAsmStart() const {
       return InlineAsmStart;
