@@ -192,7 +192,8 @@ bb12:
 ; LINUX:   .LJTI7_0@GOTOFF(
 ; LINUX:   jmpl	*
 
-; LINUX: .LJTI7_0:
+; LINUX: .align 4
+; LINUX-NEXT: .LJTI7_0:
 ; LINUX:   .long	 .LBB7_2@GOTOFF
 ; LINUX:   .long	 .LBB7_8@GOTOFF
 ; LINUX:   .long	 .LBB7_14@GOTOFF
