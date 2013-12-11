@@ -259,7 +259,9 @@ public:
   static bool classof(const Chunk *c) { return c->getKind() == kindSection; }
 
 protected:
-  SectionChunk(StringRef sectionName, uint32_t characteristics);
+  SectionChunk(StringRef sectionName, uint32_t characteristics)
+    : AtomChunk(kindSection), _sectionName(sectionName),
+      _characteristics(characteristics) {}
 
 private:
   StringRef _sectionName;
@@ -587,10 +589,6 @@ void SectionChunk::appendAtom(const DefinedAtom *atom) {
   _atomLayouts.push_back(layout);
   _size += atom->size();
 }
-
-SectionChunk::SectionChunk(StringRef sectionName, uint32_t characteristics)
-    : AtomChunk(kindSection), _sectionName(sectionName),
-      _characteristics(characteristics) {}
 
 void GenericSectionChunk::write(uint8_t *buffer) {
   if (_atomLayouts.empty())
