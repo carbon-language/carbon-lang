@@ -106,4 +106,10 @@ class ScopedThreadLocalStateBackup {
 #define MSAN_FREE_HOOK(ptr) \
   if (&__msan_free_hook) __msan_free_hook(ptr)
 
+struct MsanStackBounds {
+  uptr stack_top, stack_bottom;
+};
+
+extern THREADLOCAL MsanStackBounds msan_stack_bounds;
+
 #endif  // MSAN_H

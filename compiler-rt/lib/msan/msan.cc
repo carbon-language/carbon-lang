@@ -59,9 +59,7 @@ THREADLOCAL u64 __msan_va_arg_overflow_size_tls;
 SANITIZER_INTERFACE_ATTRIBUTE
 THREADLOCAL u32 __msan_origin_tls;
 
-static THREADLOCAL struct {
-  uptr stack_top, stack_bottom;
-} __msan_stack_bounds;
+THREADLOCAL MsanStackBounds msan_stack_bounds;
 
 static THREADLOCAL int is_in_symbolizer;
 static THREADLOCAL int is_in_loader;
@@ -168,19 +166,6 @@ static void InitializeFlags(Flags *f, const char *options) {
   ParseFlagsFromString(f, options);
 }
 
-static void GetCurrentStackBounds(uptr *stack_top, uptr *stack_bottom) {
-  if (__msan_stack_bounds.stack_top == 0) {
-    // Break recursion (GetStackTrace -> GetThreadStackTopAndBottom ->
-    // realloc -> GetStackTrace).
-    __msan_stack_bounds.stack_top = __msan_stack_bounds.stack_bottom = 1;
-    GetThreadStackTopAndBottom(/* at_initialization */false,
-                               &__msan_stack_bounds.stack_top,
-                               &__msan_stack_bounds.stack_bottom);
-  }
-  *stack_top = __msan_stack_bounds.stack_top;
-  *stack_bottom = __msan_stack_bounds.stack_bottom;
-}
-
 void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
                    bool request_fast_unwind) {
   if (!StackTrace::WillUseFastUnwind(request_fast_unwind)) {
@@ -188,9 +173,8 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
     SymbolizerScope sym_scope;
     return stack->Unwind(max_s, pc, bp, 0, 0, request_fast_unwind);
   }
-  uptr stack_top, stack_bottom;
-  GetCurrentStackBounds(&stack_top, &stack_bottom);
-  stack->Unwind(max_s, pc, bp, stack_top, stack_bottom, request_fast_unwind);
+  stack->Unwind(max_s, pc, bp, msan_stack_bounds.stack_top,
+                msan_stack_bounds.stack_bottom, request_fast_unwind);
 }
 
 void PrintWarning(uptr pc, uptr bp) {
@@ -340,9 +324,9 @@ void __msan_init() {
   }
   Symbolizer::Get()->AddHooks(EnterSymbolizer, ExitSymbolizer);
 
-  GetThreadStackTopAndBottom(/* at_initialization */true,
-                             &__msan_stack_bounds.stack_top,
-                             &__msan_stack_bounds.stack_bottom);
+  GetThreadStackTopAndBottom(/* at_initialization */ true,
+                             &msan_stack_bounds.stack_top,
+                             &msan_stack_bounds.stack_bottom);
   VPrintf(1, "MemorySanitizer init done\n");
   msan_init_is_running = 0;
   msan_inited = 1;

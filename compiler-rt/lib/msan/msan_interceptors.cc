@@ -1088,6 +1088,10 @@ static void *MsanThreadStartFunc(void *arg) {
     Die();
   }
   atomic_store(&p->done, 1, memory_order_release);
+
+  GetThreadStackTopAndBottom(/* at_initialization */ false,
+                             &msan_stack_bounds.stack_top,
+                             &msan_stack_bounds.stack_bottom);
   return callback(param);
 }
 
