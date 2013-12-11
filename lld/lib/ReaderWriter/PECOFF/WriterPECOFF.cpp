@@ -192,7 +192,7 @@ public:
     return _atomLayouts[0]->_virtualAddr;
   }
 
-  virtual void setVirtualAddress(uint32_t rva) {
+  void setVirtualAddress(uint32_t rva) {
     for (AtomLayout *layout : _atomLayouts)
       layout->_virtualAddr += rva;
   }
