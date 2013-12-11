@@ -4346,11 +4346,16 @@ multiclass Neon_Scalar2SameMisc_cvt_SD_size_patterns<SDPatternOperator opnode,
 multiclass Neon_Scalar2SameMisc_SD_size_patterns<SDPatternOperator opnode,
                                                  Instruction INSTS,
                                                  Instruction INSTD> {
-  def : Pat<(v1f32 (opnode (v1f32 FPR32:$Rn))),
+  def : Pat<(f32 (opnode (f32 FPR32:$Rn))),
             (INSTS FPR32:$Rn)>;
-  def : Pat<(v1f64 (opnode (v1f64 FPR64:$Rn))),
+  def : Pat<(f64 (opnode (f64 FPR64:$Rn))),
             (INSTD FPR64:$Rn)>;
 }
+
+class Neon_Scalar2SameMisc_V1_D_size_patterns<SDPatternOperator opnode,
+                                              Instruction INSTD>
+  : Pat<(v1f64 (opnode (v1f64 FPR64:$Rn))),
+        (INSTD FPR64:$Rn)>;
 
 class NeonI_Scalar2SameMisc_cmpz_D_size<bit u, bits<5> opcode, string asmop>
   : NeonI_Scalar2SameMisc<u, 0b11, opcode,
@@ -4592,8 +4597,8 @@ multiclass Neon_ScalarShiftLImm_D_size_patterns<SDPatternOperator opnode,
                 (INSTD FPR64:$Rn, imm:$Imm)>;
 }
 
-class Neon_ScalarShiftImm_arm_D_size_patterns<SDPatternOperator opnode,
-                                              Instruction INSTD>
+class Neon_ScalarShiftImm_V1_D_size_patterns<SDPatternOperator opnode,
+                                             Instruction INSTD>
   : Pat<(v1i64 (opnode (v1i64 FPR64:$Rn),
             (v1i64 (Neon_vdup (i32 shr_imm64:$Imm))))),
         (INSTD FPR64:$Rn, imm:$Imm)>;
@@ -4659,13 +4664,13 @@ multiclass Neon_ScalarShiftImm_fcvts_SD_size_patterns<SDPatternOperator opnode,
 defm SSHR : NeonI_ScalarShiftRightImm_D_size<0b0, 0b00000, "sshr">;
 defm : Neon_ScalarShiftRImm_D_size_patterns<int_aarch64_neon_vshrds_n, SSHRddi>;
 // Pattern to match llvm.arm.* intrinsic.
-def : Neon_ScalarShiftImm_arm_D_size_patterns<sra, SSHRddi>;
+def : Neon_ScalarShiftImm_V1_D_size_patterns<sra, SSHRddi>;
 
 // Scalar Unsigned Shift Right (Immediate)
 defm USHR : NeonI_ScalarShiftRightImm_D_size<0b1, 0b00000, "ushr">;
 defm : Neon_ScalarShiftRImm_D_size_patterns<int_aarch64_neon_vshrdu_n, USHRddi>;
 // Pattern to match llvm.arm.* intrinsic.
-def : Neon_ScalarShiftImm_arm_D_size_patterns<srl, USHRddi>;
+def : Neon_ScalarShiftImm_V1_D_size_patterns<srl, USHRddi>;
 
 // Scalar Signed Rounding Shift Right (Immediate)
 defm SRSHR : NeonI_ScalarShiftRightImm_D_size<0b0, 0b00100, "srshr">;
@@ -4699,7 +4704,7 @@ def : Neon_ScalarShiftRImm_accum_D_size_patterns
 defm SHL : NeonI_ScalarShiftLeftImm_D_size<0b0, 0b01010, "shl">;
 defm : Neon_ScalarShiftLImm_D_size_patterns<int_aarch64_neon_vshld_n, SHLddi>;
 // Pattern to match llvm.arm.* intrinsic.
-def : Neon_ScalarShiftImm_arm_D_size_patterns<shl, SHLddi>;
+def : Neon_ScalarShiftImm_V1_D_size_patterns<shl, SHLddi>;
 
 // Signed Saturating Shift Left (Immediate)
 defm SQSHL : NeonI_ScalarShiftLeftImm_BHSD_size<0b0, 0b01110, "sqshl">;
@@ -5056,8 +5061,10 @@ def : Neon_Scalar2SameMisc_fcvt_v1f64_pattern<fp_to_uint, FCVTZUdd>;
 
 // Scalar Floating-point Reciprocal Estimate
 defm FRECPE : NeonI_Scalar2SameMisc_SD_size<0b0, 0b1, 0b11101, "frecpe">;
-defm : Neon_Scalar2SameMisc_SD_size_patterns<int_arm_neon_vrecpe,
+defm : Neon_Scalar2SameMisc_SD_size_patterns<int_aarch64_neon_vrecpe,
                                              FRECPEss, FRECPEdd>;
+def : Neon_Scalar2SameMisc_V1_D_size_patterns<int_arm_neon_vrecpe,
+                                              FRECPEdd>;
 
 // Scalar Floating-point Reciprocal Exponent
 defm FRECPX : NeonI_Scalar2SameMisc_SD_size<0b0, 0b1, 0b11111, "frecpx">;
@@ -5066,8 +5073,10 @@ defm : Neon_Scalar2SameMisc_SD_size_patterns<int_aarch64_neon_vrecpx,
 
 // Scalar Floating-point Reciprocal Square Root Estimate
 defm FRSQRTE: NeonI_Scalar2SameMisc_SD_size<0b1, 0b1, 0b11101, "frsqrte">;
-defm : Neon_Scalar2SameMisc_SD_size_patterns<int_arm_neon_vrsqrte,
-                                             FRSQRTEss, FRSQRTEdd>;
+defm : Neon_Scalar2SameMisc_SD_size_patterns<int_aarch64_neon_vrsqrte,
+                                                 FRSQRTEss, FRSQRTEdd>;
+def : Neon_Scalar2SameMisc_V1_D_size_patterns<int_arm_neon_vrsqrte,
+                                              FRSQRTEdd>;
 
 // Scalar Floating-point Round
 class Neon_ScalarFloatRound_pattern<SDPatternOperator opnode, Instruction INST>

@@ -260,8 +260,17 @@ def int_aarch64_neon_fcvtzs :
 def int_aarch64_neon_fcvtzu :
   Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
 
+// Scalar Floating-point Reciprocal Estimate.
+def int_aarch64_neon_vrecpe :
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+
 // Scalar Floating-point Reciprocal Exponent
-def int_aarch64_neon_vrecpx : Neon_1Arg_Intrinsic;
+def int_aarch64_neon_vrecpx :
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+
+// Scalar Floating-point Reciprocal Square Root Estimate
+def int_aarch64_neon_vrsqrte :
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
 class Neon_Cmp_Intrinsic
   : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty, llvm_anyvector_ty],
