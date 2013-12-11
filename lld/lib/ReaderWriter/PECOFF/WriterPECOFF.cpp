@@ -63,12 +63,13 @@ static const int SECTOR_SIZE = 512;
 namespace {
 class SectionChunk;
 
-/// A Chunk is an abstrace contiguous range in an output file.
+/// A Chunk is an abstract contiguous range in an output file.
 class Chunk {
 public:
   enum Kind {
     kindHeader,
-    kindSection
+    kindSection,
+    kindAtomChunk
   };
 
   explicit Chunk(Kind kind) : _kind(kind), _size(0) {}
@@ -174,11 +175,40 @@ private:
   std::vector<SectionChunk *> _sections;
 };
 
-/// An AtomChunk represents a section containing atoms.
-class AtomChunk : public Chunk {
+class SectionChunk : public Chunk {
 public:
+  virtual uint64_t align() const { return SECTOR_SIZE; }
+  uint32_t getCharacteristics() const { return _characteristics; }
+  StringRef getSectionName() const { return _sectionName; }
+
+  static bool classof(const Chunk *c) {
+    Kind kind = c->getKind();
+    return kind == kindSection || kind == kindAtomChunk;
+  }
+
+  uint64_t getVirtualAddress() { return _virtualAddress; }
+  virtual void setVirtualAddress(uint32_t rva) { _virtualAddress = rva; }
+
+protected:
+  SectionChunk(Kind kind, StringRef sectionName, uint32_t characteristics)
+      : Chunk(kind), _sectionName(sectionName),
+        _characteristics(characteristics), _virtualAddress(0) {}
+
+private:
+  StringRef _sectionName;
+  const uint32_t _characteristics;
+  uint64_t _virtualAddress;
+};
+
+/// An AtomChunk represents a section containing atoms.
+class AtomChunk : public SectionChunk {
+public:
+  AtomChunk(const PECOFFLinkingContext &ctx, StringRef name,
+            const std::vector<const DefinedAtom *> &atoms);
+
   virtual void write(uint8_t *buffer);
 
+  void appendAtom(const DefinedAtom *atom);
   void buildAtomRvaMap(std::map<const Atom *, uint64_t> &atomRva) const;
   void applyRelocations(uint8_t *buffer,
                         std::map<const Atom *, uint64_t> &atomRva,
@@ -186,29 +216,28 @@ public:
                         uint64_t imageBaseAddress);
   void printAtomAddresses(uint64_t baseAddr) const;
   void addBaseRelocations(std::vector<uint64_t> &relocSites) const;
-  uint64_t getVirtualAddress() { return _virtualAddress; }
 
-  void setVirtualAddress(uint32_t rva) {
-    _virtualAddress = rva;
-    for (AtomLayout *layout : _atomLayouts)
-      layout->_virtualAddr += rva;
-  }
+  virtual void setVirtualAddress(uint32_t rva);
+  uint64_t getAtomVirtualAddress(StringRef name) const;
 
-  uint64_t getAtomVirtualAddress(StringRef name) {
-    for (auto atomLayout : _atomLayouts)
-      if (atomLayout->_atom->name() == name)
-        return atomLayout->_virtualAddr;
-    return 0;
-  }
-
-  static bool classof(const Chunk *c) {
-    return c->getKind() == kindSection;
-  }
+  static bool classof(const Chunk *c) { return c->getKind() == kindAtomChunk; }
 
 protected:
-  explicit AtomChunk(Kind kind) : Chunk(kind), _virtualAddress(0) {}
   std::vector<AtomLayout *> _atomLayouts;
   uint64_t _virtualAddress;
+
+private:
+  uint32_t
+  computeCharacteristics(const PECOFFLinkingContext &ctx, StringRef name,
+                         const std::vector<const DefinedAtom *> &atoms) const {
+    return ctx.getSectionAttributes(name,
+                                    getDefaultCharacteristics(name, atoms));
+  }
+
+  uint32_t getDefaultCharacteristics(
+      StringRef name, const std::vector<const DefinedAtom *> &atoms) const;
+
+  mutable llvm::BumpPtrAllocator _alloc;
 };
 
 /// A DataDirectoryChunk represents data directory entries that follows the PE
@@ -231,54 +260,6 @@ private:
   std::vector<llvm::object::data_directory> _data;
 };
 
-/// A SectionChunk represents a section containing atoms. It consists of a
-/// section header that to be written to PECOFF header and atoms which to be
-/// written to the raw data section.
-class SectionChunk : public AtomChunk {
-public:
-  virtual uint64_t align() const { return SECTOR_SIZE; }
-
-  void appendAtom(const DefinedAtom *atom);
-  uint32_t getCharacteristics() const { return _characteristics; }
-  StringRef getSectionName() const { return _sectionName; }
-
-  static bool classof(const Chunk *c) { return c->getKind() == kindSection; }
-
-protected:
-  SectionChunk(StringRef sectionName, uint32_t characteristics)
-    : AtomChunk(kindSection), _sectionName(sectionName),
-      _characteristics(characteristics) {}
-
-private:
-  StringRef _sectionName;
-  const uint32_t _characteristics;
-  mutable llvm::BumpPtrAllocator _alloc;
-};
-
-// \brief A GenericSectionChunk represents various sections such as .text or
-// .data.
-class GenericSectionChunk : public SectionChunk {
-public:
-  virtual void write(uint8_t *buffer);
-
-  GenericSectionChunk(const PECOFFLinkingContext &ctx, StringRef name,
-                      const std::vector<const DefinedAtom *> &atoms)
-      : SectionChunk(name, computeCharacteristics(ctx, name, atoms)) {
-    for (auto *a : atoms)
-      appendAtom(a);
-  }
-
-private:
-  uint32_t
-  computeCharacteristics(const PECOFFLinkingContext &ctx, StringRef name,
-                         const std::vector<const DefinedAtom *> &atoms) const {
-    return ctx.getSectionAttributes(name, getDefaultCharacteristics(name, atoms));
-  }
-
-  uint32_t getDefaultCharacteristics(
-      StringRef name, const std::vector<const DefinedAtom *> &atoms) const;
-};
-
 /// A BaseRelocChunk represents ".reloc" section.
 ///
 /// .reloc section contains a list of addresses. If the PE/COFF loader decides
@@ -298,10 +279,13 @@ class BaseRelocChunk : public SectionChunk {
 
 public:
   BaseRelocChunk(ChunkVectorT &chunks)
-      : SectionChunk(".reloc", characteristics),
+      : SectionChunk(kindSection, ".reloc", characteristics),
         _contents(createContents(chunks)) {}
 
-  virtual void write(uint8_t *buffer);
+  virtual void write(uint8_t *buffer) {
+    std::memcpy(buffer, &_contents[0], _contents.size());
+  }
+
   virtual uint64_t size() const { return _contents.size(); }
 
 private:
@@ -426,7 +410,30 @@ void PEHeaderChunk::write(uint8_t *buffer) {
   std::memcpy(buffer, &_peHeader, sizeof(_peHeader));
 }
 
+AtomChunk::AtomChunk(const PECOFFLinkingContext &ctx, StringRef sectionName,
+                     const std::vector<const DefinedAtom *> &atoms)
+    : SectionChunk(kindAtomChunk, sectionName,
+                   computeCharacteristics(ctx, sectionName, atoms)),
+      _virtualAddress(0) {
+  for (auto *a : atoms)
+    appendAtom(a);
+}
+
 void AtomChunk::write(uint8_t *buffer) {
+  if (_atomLayouts.empty())
+    return;
+  if (getCharacteristics() & llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)
+    return;
+  if (getCharacteristics() & llvm::COFF::IMAGE_SCN_CNT_CODE) {
+    // Fill the section with INT 3 (0xCC) rather than NUL, so that the
+    // disassembler will not interpret a garbage between atoms as the beginning
+    // of multi-byte machine code. This does not change the behavior of
+    // resulting binary but help debugging.
+    uint8_t *start = buffer + _atomLayouts.front()->_fileOffset;
+    uint8_t *end = buffer + _atomLayouts.back()->_fileOffset;
+    memset(start, 0xCC, end - start);
+  }
+
   for (const auto *layout : _atomLayouts) {
     const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
     ArrayRef<uint8_t> rawContent = atom->rawContent();
@@ -540,6 +547,19 @@ void AtomChunk::addBaseRelocations(std::vector<uint64_t> &relocSites) const {
   }
 }
 
+void AtomChunk::setVirtualAddress(uint32_t rva) {
+  SectionChunk::setVirtualAddress(rva);
+  for (AtomLayout *layout : _atomLayouts)
+    layout->_virtualAddr += rva;
+}
+
+uint64_t AtomChunk::getAtomVirtualAddress(StringRef name) const {
+  for (auto atomLayout : _atomLayouts)
+    if (atomLayout->_atom->name() == name)
+      return atomLayout->_virtualAddr;
+  return 0;
+}
+
 void DataDirectoryChunk::setField(DataDirectoryIndex index, uint32_t addr,
                                   uint32_t size) {
   llvm::object::data_directory &dir = _data[index];
@@ -551,7 +571,7 @@ void DataDirectoryChunk::write(uint8_t *buffer) {
   std::memcpy(buffer, &_data[0], size());
 }
 
-void SectionChunk::appendAtom(const DefinedAtom *atom) {
+void AtomChunk::appendAtom(const DefinedAtom *atom) {
   // Atom may have to be at a proper alignment boundary. If so, move the
   // pointer to make a room after the last atom before adding new one.
   _size = llvm::RoundUpToAlignment(_size, 1 << atom->alignment().powerOf2);
@@ -562,24 +582,7 @@ void SectionChunk::appendAtom(const DefinedAtom *atom) {
   _size += atom->size();
 }
 
-void GenericSectionChunk::write(uint8_t *buffer) {
-  if (_atomLayouts.empty())
-    return;
-  if (getCharacteristics() & llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)
-    return;
-  if (getCharacteristics() & llvm::COFF::IMAGE_SCN_CNT_CODE) {
-    // Fill the section with INT 3 (0xCC) rather than NUL, so that the
-    // disassembler will not interpret a garbage between atoms as the beginning
-    // of multi-byte machine code. This does not change the behavior of
-    // resulting binary but help debugging.
-    uint8_t *start = buffer + _atomLayouts.front()->_fileOffset;
-    uint8_t *end = buffer + _atomLayouts.back()->_fileOffset;
-    memset(start, 0xCC, end - start);
-  }
-  SectionChunk::write(buffer);
-}
-
-uint32_t GenericSectionChunk::getDefaultCharacteristics(
+uint32_t AtomChunk::getDefaultCharacteristics(
     StringRef name, const std::vector<const DefinedAtom *> &atoms) const {
   const uint32_t code = llvm::COFF::IMAGE_SCN_CNT_CODE;
   const uint32_t execute = llvm::COFF::IMAGE_SCN_MEM_EXECUTE;
@@ -663,10 +666,6 @@ SectionHeaderTableChunk::createSectionHeader(SectionChunk *chunk) {
   return header;
 }
 
-void BaseRelocChunk::write(uint8_t *buffer) {
-  std::memcpy(buffer, &_contents[0], _contents.size());
-}
-
 /// Creates .reloc section content from the other sections. The content of
 /// .reloc is basically a list of relocation sites. The relocation sites are
 /// divided into blocks. Each block represents the base relocation for a 4K
@@ -696,7 +695,7 @@ std::vector<uint64_t>
 BaseRelocChunk::listRelocSites(ChunkVectorT &chunks) const {
   std::vector<uint64_t> ret;
   for (auto &cp : chunks)
-    if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp))
+    if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
       chunk->addBaseRelocations(ret);
   return ret;
 }
@@ -758,7 +757,7 @@ private:
   void addChunk(Chunk *chunk);
   void addSectionChunk(SectionChunk *chunk, SectionHeaderTableChunk *table);
   void setImageSizeOnDisk();
-  void setAddressOfEntryPoint(SectionChunk *text, PEHeaderChunk *peHeader);
+  void setAddressOfEntryPoint(AtomChunk *text, PEHeaderChunk *peHeader);
   uint64_t
   calcSectionSize(llvm::COFF::SectionCharacteristics sectionType) const;
 
@@ -853,8 +852,7 @@ void ExecutableWriter::build(const File &linkedFile) {
   for (auto i : atoms) {
     StringRef sectionName = i.first;
     std::vector<const DefinedAtom *> &contents = i.second;
-    auto *section = new GenericSectionChunk(_PECOFFLinkingContext, sectionName,
-                                            contents);
+    auto *section = new AtomChunk(_PECOFFLinkingContext, sectionName, contents);
     addSectionChunk(section, sectionTable);
   }
 
@@ -879,7 +877,7 @@ void ExecutableWriter::build(const File &linkedFile) {
       continue;
     if (section->getSectionName() == ".text") {
       peHeader->setBaseOfCode(section->getVirtualAddress());
-      setAddressOfEntryPoint(section, peHeader);
+      setAddressOfEntryPoint(dyn_cast<AtomChunk>(section), peHeader);
     }
     if (section->getSectionName() == ".data")
       peHeader->setBaseOfData(section->getVirtualAddress());
@@ -978,7 +976,7 @@ void ExecutableWriter::setImageSizeOnDisk() {
   }
 }
 
-void ExecutableWriter::setAddressOfEntryPoint(SectionChunk *text,
+void ExecutableWriter::setAddressOfEntryPoint(AtomChunk *text,
                                               PEHeaderChunk *peHeader) {
   // Find the virtual address of the entry point symbol if any.
   // PECOFF spec says that entry point for dll images is optional, in which
