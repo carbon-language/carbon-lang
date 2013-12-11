@@ -2118,16 +2118,16 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vqrdmulhs_s32:
     Int = Intrinsic::arm_neon_vqrdmulh;
     s = "vqrdmulh"; IntTypes = VectorRet; break;
-  // Scalar Floating-point Reciprocal Step and
+  // Scalar Floating-point Reciprocal Step
   case AArch64::BI__builtin_neon_vrecpss_f32:
   case AArch64::BI__builtin_neon_vrecpsd_f64:
-    Int = Intrinsic::arm_neon_vrecps;
-    s = "vrecps"; IntTypes = VectorRet; break;
+    Int = Intrinsic::aarch64_neon_vrecps;
+    s = "vrecps"; IntTypes = ScalarRet; break;
   // Scalar Floating-point Reciprocal Square Root Step
   case AArch64::BI__builtin_neon_vrsqrtss_f32:
   case AArch64::BI__builtin_neon_vrsqrtsd_f64:
-    Int = Intrinsic::arm_neon_vrsqrts;
-    s = "vrsqrts"; IntTypes = VectorRet; break;
+    Int = Intrinsic::aarch64_neon_vrsqrts;
+    s = "vrsqrts"; IntTypes = ScalarRet; break;
   // Scalar Signed Integer Convert To Floating-point
   case AArch64::BI__builtin_neon_vcvts_f32_s32:
   case AArch64::BI__builtin_neon_vcvtd_f64_s64:
