@@ -2063,9 +2063,6 @@ public:
   void fixSizeAndAlignment(const RecordDecl *FD);
   void layoutVirtualBases(const CXXRecordDecl *RD);
   void layoutVirtualBase(const CXXRecordDecl *RD, bool HasVtordisp);
-  /// \brief Flushes the lazy virtual base and conditionally rounds up to
-  /// alignment.
-  void finalizeCXXLayout(const CXXRecordDecl *RD);
   void finalizeLayout(const RecordDecl *RD);
 
   /// \brief Updates the alignment of the type.  This function doesn't take any
@@ -2245,7 +2242,6 @@ void MicrosoftRecordLayoutBuilder::cxxLayout(const CXXRecordDecl *RD) {
   layoutFields(RD);
   fixSizeAndAlignment(RD);
   layoutVirtualBases(RD);
-  finalizeCXXLayout(RD);
   finalizeLayout(RD);
 }
 
@@ -2613,18 +2609,13 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBase(const CXXRecordDecl *RD,
   PreviousBaseLayout = &Layout;
 }
 
-void MicrosoftRecordLayoutBuilder::finalizeCXXLayout(const CXXRecordDecl *RD) {
-  if (RD->vbases_begin() == RD->vbases_end() || !RequiredAlignment.isZero())
-    Size = Size.RoundUpToAlignment(Alignment);
-
+void MicrosoftRecordLayoutBuilder::finalizeLayout(const RecordDecl *RD) {
   if (Size.isZero()) {
     HasZeroSizedSubObject = true;
     LeadsWithZeroSizedBase = true;
     Size = Alignment;
   }
-}
 
-void MicrosoftRecordLayoutBuilder::finalizeLayout(const RecordDecl *RD) {
   if (!RequiredAlignment.isZero()) {
     updateAlignment(RequiredAlignment);
     Size = Size.RoundUpToAlignment(Alignment);
