@@ -78,12 +78,12 @@ class AsanThread {
     return addr >= stack_bottom_ && addr < stack_top_;
   }
 
-  void DeleteFakeStack() {
+  void DeleteFakeStack(int tid) {
     if (!fake_stack_) return;
     FakeStack *t = fake_stack_;
     fake_stack_ = 0;
     SetTLSFakeStack(0);
-    t->Destroy();
+    t->Destroy(tid);
   }
 
   bool has_fake_stack() {

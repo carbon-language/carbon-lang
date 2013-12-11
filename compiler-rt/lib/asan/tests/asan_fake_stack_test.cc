@@ -63,7 +63,7 @@ TEST(FakeStack, CreateDestroy) {
   for (int i = 0; i < 1000; i++) {
     for (uptr stack_size_log = 20; stack_size_log <= 22; stack_size_log++) {
       FakeStack *fake_stack = FakeStack::Create(stack_size_log);
-      fake_stack->Destroy();
+      fake_stack->Destroy(0);
     }
   }
 }
@@ -98,7 +98,7 @@ TEST(FakeStack, GetFrame) {
   EXPECT_EQ(base + 0*stack_size + 64 * 7, fs->GetFrame(stack_size_log, 0, 7U));
   EXPECT_EQ(base + 1*stack_size + 128 * 3, fs->GetFrame(stack_size_log, 1, 3U));
   EXPECT_EQ(base + 2*stack_size + 256 * 5, fs->GetFrame(stack_size_log, 2, 5U));
-  fs->Destroy();
+  fs->Destroy(0);
 }
 
 TEST(FakeStack, Allocate) {
@@ -127,7 +127,7 @@ TEST(FakeStack, Allocate) {
       fs->Deallocate(reinterpret_cast<uptr>(it->first), it->second);
     }
   }
-  fs->Destroy();
+  fs->Destroy(0);
 }
 
 static void RecursiveFunction(FakeStack *fs, int depth) {
@@ -144,7 +144,7 @@ TEST(FakeStack, RecursiveStressTest) {
   const uptr stack_size_log = 16;
   FakeStack *fs = FakeStack::Create(stack_size_log);
   RecursiveFunction(fs, 22);  // with 26 runs for 2-3 seconds.
-  fs->Destroy();
+  fs->Destroy(0);
 }
 
 }  // namespace __asan

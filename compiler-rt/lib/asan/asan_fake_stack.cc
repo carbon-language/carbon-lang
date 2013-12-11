@@ -52,8 +52,15 @@ FakeStack *FakeStack::Create(uptr stack_size_log) {
   return res;
 }
 
-void FakeStack::Destroy() {
+void FakeStack::Destroy(int tid) {
   PoisonAll(0);
+  if (common_flags()->verbosity >= 2) {
+    InternalScopedString str(kNumberOfSizeClasses * 50);
+    for (uptr class_id = 0; class_id < kNumberOfSizeClasses; class_id++)
+      str.append("%zd: %zd/%zd; ", class_id, hint_position_[class_id],
+                 NumberOfFrames(stack_size_log(), class_id));
+    Report("T%d: FakeStack destroyed: %s\n", tid, str.data());
+  }
   UnmapOrDie(this, RequiredSize(stack_size_log_));
 }
 

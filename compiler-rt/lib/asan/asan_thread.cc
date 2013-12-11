@@ -93,17 +93,18 @@ void AsanThread::TSDDtor(void *tsd) {
 }
 
 void AsanThread::Destroy() {
-  VReport(1, "T%d exited\n", tid());
+  int tid = this->tid();
+  VReport(1, "T%d exited\n", tid);
 
   malloc_storage().CommitBack();
   if (flags()->use_sigaltstack) UnsetAlternateSignalStack();
-  asanThreadRegistry().FinishThread(tid());
+  asanThreadRegistry().FinishThread(tid);
   FlushToDeadThreadStats(&stats_);
   // We also clear the shadow on thread destruction because
   // some code may still be executing in later TSD destructors
   // and we don't want it to have any poisoned stack.
   ClearShadowForThreadStackAndTLS();
-  DeleteFakeStack();
+  DeleteFakeStack(tid);
   uptr size = RoundUpTo(sizeof(AsanThread), GetPageSizeCached());
   UnmapOrDie(this, size);
 }
