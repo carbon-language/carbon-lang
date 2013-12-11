@@ -57,7 +57,7 @@ struct Context {
 class IdataAtom : public COFFLinkerInternalAtom {
 public:
   virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
-  virtual StringRef customSectionName() const { return ".idata"; };
+  virtual StringRef customSectionName() const { return ".idata"; }
   virtual ContentType contentType() const { return typeData; }
   virtual ContentPermissions permissions() const { return permR__; }
 
@@ -98,7 +98,9 @@ public:
       : IdataAtom(context, assembleRawContent(contents)),
         _sectionName(sectionName) {}
 
-  virtual StringRef customSectionName() const { return _sectionName; };
+  virtual StringRef customSectionName() const {
+    return _sectionName;
+  };
 
 private:
   std::vector<uint8_t> assembleRawContent(uint32_t contents);

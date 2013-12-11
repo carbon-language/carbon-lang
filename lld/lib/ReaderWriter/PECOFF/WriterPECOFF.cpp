@@ -147,9 +147,7 @@ public:
     _peHeader.SizeOfUninitializedData = size;
   }
 
-  void setNumberOfSections(uint32_t num) {
-    _coffHeader.NumberOfSections = num;
-  }
+  void setNumberOfSections(uint32_t num) { _coffHeader.NumberOfSections = num; }
 
   void setAddressOfEntryPoint(uint32_t address) {
     _peHeader.AddressOfEntryPoint = address;
@@ -274,8 +272,8 @@ private:
 /// load-time relocation because it may conflict with other DLLs or the
 /// executable.
 class BaseRelocChunk : public SectionChunk {
-  typedef std::vector<std::unique_ptr<Chunk>> ChunkVectorT;
-  typedef std::map<uint64_t, std::vector<uint16_t>> PageOffsetT;
+  typedef std::vector<std::unique_ptr<Chunk> > ChunkVectorT;
+  typedef std::map<uint64_t, std::vector<uint16_t> > PageOffsetT;
 
 public:
   BaseRelocChunk(ChunkVectorT &chunks)
@@ -504,8 +502,8 @@ void AtomChunk::applyRelocations(uint8_t *buffer,
         // The 32-bit relative address from the beginning of the section that
         // contains the target symbol.
         for (int i = 0, e = sectionRva.size(); i < e; ++i) {
-          if (i == e - 1 ||
-              (sectionRva[i] <= targetAddr && targetAddr <= sectionRva[i + 1])) {
+          if (i == e - 1 || (sectionRva[i] <= targetAddr &&
+                             targetAddr <= sectionRva[i + 1])) {
             *relocSite32 = targetAddr - sectionRva[i];
             break;
           }
@@ -600,16 +598,16 @@ uint32_t AtomChunk::getDefaultCharacteristics(
     return bss | read | write;
   assert(atoms.size() > 0);
   switch (atoms[0]->permissions()) {
-    case DefinedAtom::permR__:
-      return data | read;
-    case DefinedAtom::permRW_:
-      return data | read | write;
-    case DefinedAtom::permR_X:
-      return code | execute | read;
-    case DefinedAtom::permRWX:
-      return code | execute | read | write;
-    default:
-      llvm_unreachable("Unsupported permission");
+  case DefinedAtom::permR__:
+    return data | read;
+  case DefinedAtom::permRW_:
+    return data | read | write;
+  case DefinedAtom::permR_X:
+    return code | execute | read;
+  case DefinedAtom::permRWX:
+    return code | execute | read | write;
+  default:
+    llvm_unreachable("Unsupported permission");
   }
 }
 
@@ -773,7 +771,7 @@ private:
     return calcSectionSize(llvm::COFF::IMAGE_SCN_CNT_CODE);
   }
 
-  std::vector<std::unique_ptr<Chunk>> _chunks;
+  std::vector<std::unique_ptr<Chunk> > _chunks;
   const PECOFFLinkingContext &_PECOFFLinkingContext;
   uint32_t _numSections;
 

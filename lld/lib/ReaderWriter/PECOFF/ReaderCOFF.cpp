@@ -62,8 +62,8 @@ private:
   SectionToAtomsT;
 
 public:
-  FileCOFF(const PECOFFLinkingContext &context, std::unique_ptr<MemoryBuffer> mb,
-           error_code &ec);
+  FileCOFF(const PECOFFLinkingContext &context,
+           std::unique_ptr<MemoryBuffer> mb, error_code &ec);
 
   virtual const atom_collection<DefinedAtom> &defined() const {
     return _definedAtoms;
@@ -601,9 +601,9 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
   // Create an atom for the entire section.
   if (symbols.empty()) {
     ArrayRef<uint8_t> data(secData.data(), secData.size());
-    auto *atom = new (_alloc)
-        COFFDefinedAtom(*this, "", sectionName, Atom::scopeTranslationUnit,
-                        type, isComdat, perms, _merge[section], data, _ordinal++);
+    auto *atom = new (_alloc) COFFDefinedAtom(
+        *this, "", sectionName, Atom::scopeTranslationUnit, type, isComdat,
+        perms, _merge[section], data, _ordinal++);
     atoms.push_back(atom);
     _definedAtomLocations[section][0].push_back(atom);
     return error_code::success();
@@ -631,8 +631,8 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
 
     if (!alias.empty()) {
       auto *atom = new (_alloc) COFFDefinedAtom(
-        *this, alias, sectionName, getScope(*si), type, isComdat,
-        perms, DefinedAtom::mergeAsWeak, ArrayRef<uint8_t>(), _ordinal++);
+          *this, alias, sectionName, getScope(*si), type, isComdat, perms,
+          DefinedAtom::mergeAsWeak, ArrayRef<uint8_t>(), _ordinal++);
       atoms.push_back(atom);
       _symbolAtom[*si] = atom;
       _definedAtomLocations[section][(*si)->Value].push_back(atom);
@@ -965,7 +965,8 @@ ReaderCOFF::parseCOFFFile(std::unique_ptr<MemoryBuffer> &mb,
                           std::vector<std::unique_ptr<File> > &result) const {
   // Parse the memory buffer as PECOFF file.
   error_code ec;
-  std::unique_ptr<FileCOFF> file(new FileCOFF(_PECOFFLinkingContext, std::move(mb), ec));
+  std::unique_ptr<FileCOFF> file(
+      new FileCOFF(_PECOFFLinkingContext, std::move(mb), ec));
   if (ec)
     return ec;
 

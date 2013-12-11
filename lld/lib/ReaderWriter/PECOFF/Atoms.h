@@ -93,7 +93,8 @@ private:
 class COFFBaseDefinedAtom : public DefinedAtom {
 public:
   enum class Kind {
-    File, Internal
+    File,
+    Internal
   };
 
   virtual const File &file() const { return _file; }
@@ -102,7 +103,7 @@ public:
   virtual Merge merge() const { return mergeNo; }
   virtual Alignment alignment() const { return Alignment(0); }
   virtual SectionChoice sectionChoice() const = 0;
-  virtual StringRef customSectionName() const { return ""; };
+  virtual StringRef customSectionName() const { return ""; }
   virtual SectionPosition sectionPosition() const { return sectionPositionAny; }
   virtual DeadStripKind deadStrip() const { return deadStripNormal; }
   virtual bool isAlias() const { return false; }
@@ -140,7 +141,7 @@ private:
   const File &_file;
   StringRef _name;
   Kind _kind;
-  std::vector<std::unique_ptr<COFFReference>> _references;
+  std::vector<std::unique_ptr<COFFReference> > _references;
 };
 
 /// This is the root class of the atom read from a file. This class have two
@@ -158,10 +159,10 @@ public:
     return atom->getKind() == Kind::File;
   }
 
-  void setAlignment(Alignment val) { _alignment = val; };
+  void setAlignment(Alignment val) { _alignment = val; }
 
   virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
-  virtual StringRef customSectionName() const { return _sectionName; };
+  virtual StringRef customSectionName() const { return _sectionName; }
   virtual Scope scope() const { return _scope; }
   virtual ContentType contentType() const { return _contentType; }
   virtual ContentPermissions permissions() const { return _permissions; }
@@ -175,7 +176,7 @@ private:
   ContentPermissions _permissions;
   uint64_t _ordinal;
   Alignment _alignment;
-  std::vector<std::unique_ptr<COFFReference>> _references;
+  std::vector<std::unique_ptr<COFFReference> > _references;
 };
 
 // A COFFDefinedAtom represents an atom read from a file and has contents.
@@ -254,8 +255,8 @@ public:
   COFFSharedLibraryAtom(const File &file, uint16_t hint, StringRef symbolName,
                         StringRef importName, StringRef dllName)
       : _file(file), _hint(hint), _mangledName(addImpPrefix(symbolName)),
-        _importName(importName), _dllName(dllName),
-        _importTableEntry(nullptr) {}
+        _importName(importName), _dllName(dllName), _importTableEntry(nullptr) {
+  }
 
   virtual const File &file() const { return _file; }
   uint16_t hint() const { return _hint; }
@@ -276,9 +277,7 @@ public:
     _importTableEntry = atom;
   }
 
-  const DefinedAtom *getImportTableEntry() const {
-    return _importTableEntry;
-  }
+  const DefinedAtom *getImportTableEntry() const { return _importTableEntry; }
 
 private:
   /// Mangle the symbol name by adding "__imp_" prefix. See the file comment of
@@ -303,15 +302,14 @@ private:
 //
 //===----------------------------------------------------------------------===//
 
-template<typename T, typename U>
+template <typename T, typename U>
 void addLayoutEdge(T *a, U *b, lld::Reference::Kind kind) {
   auto ref = new COFFReference(kind);
   ref->setTarget(b);
   a->addReference(std::unique_ptr<COFFReference>(ref));
 }
 
-template<typename T, typename U>
-void connectWithLayoutEdge(T *a, U *b) {
+template <typename T, typename U> void connectWithLayoutEdge(T *a, U *b) {
   addLayoutEdge(a, b, lld::Reference::kindLayoutAfter);
   addLayoutEdge(b, a, lld::Reference::kindLayoutBefore);
 }
@@ -327,8 +325,7 @@ void connectWithLayoutEdge(T *a, U *b) {
 ///     GC'ed.
 ///   - To preserve the order of atmos. We want to emit the atoms in the
 ///     same order as they appeared in the input object file.
-template<typename T>
-void connectAtomsWithLayoutEdge(std::vector<T *> &atoms) {
+template <typename T> void connectAtomsWithLayoutEdge(std::vector<T *> &atoms) {
   if (atoms.size() < 2)
     return;
   for (auto it = atoms.begin(), e = atoms.end(); it + 1 != e; ++it)

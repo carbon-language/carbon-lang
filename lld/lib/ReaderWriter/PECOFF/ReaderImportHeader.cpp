@@ -79,8 +79,8 @@
 ///
 /// The above functions do the same thing. fn's content is a JMP instruction to
 /// branch to the address pointed by _imp__fn. The latter may be a little bit
-/// slower than the former because it will execute the extra JMP instruction, but
-/// that's usually negligible.
+/// slower than the former because it will execute the extra JMP instruction,
+/// but that's usually negligible.
 ///
 /// If a function is dllimport'ed, which is usually done in a header file,
 /// mangled name will be used at compile time so the jump table will not be
@@ -175,15 +175,14 @@ public:
 class FileImportLibrary : public File {
 public:
   FileImportLibrary(const LinkingContext &context,
-                    std::unique_ptr<MemoryBuffer> mb,
-                    error_code &ec)
+                    std::unique_ptr<MemoryBuffer> mb, error_code &ec)
       : File(mb->getBufferIdentifier(), kindSharedLibrary), _context(context) {
     const char *buf = mb->getBufferStart();
     const char *end = mb->getBufferEnd();
 
     // The size of the string that follows the header.
     uint32_t dataSize = *reinterpret_cast<const support::ulittle32_t *>(
-        buf + offsetof(COFF::ImportHeader, SizeOfData));
+                             buf + offsetof(COFF::ImportHeader, SizeOfData));
 
     // Check if the total size is valid.
     if (end - buf != sizeof(COFF::ImportHeader) + dataSize) {
@@ -192,14 +191,14 @@ public:
     }
 
     uint16_t hint = *reinterpret_cast<const support::ulittle16_t *>(
-        buf + offsetof(COFF::ImportHeader, OrdinalHint));
+                         buf + offsetof(COFF::ImportHeader, OrdinalHint));
     StringRef symbolName(buf + sizeof(COFF::ImportHeader));
     StringRef dllName(buf + sizeof(COFF::ImportHeader) + symbolName.size() + 1);
 
     // TypeInfo is a bitfield. The least significant 2 bits are import
     // type, followed by 3 bit import name type.
     uint16_t typeInfo = *reinterpret_cast<const support::ulittle16_t *>(
-        buf + offsetof(COFF::ImportHeader, TypeInfo));
+                             buf + offsetof(COFF::ImportHeader, TypeInfo));
     int type = typeInfo & 0x3;
     int nameType = (typeInfo >> 2) & 0x7;
 
@@ -208,8 +207,8 @@ public:
     // have name if it's imported by ordinal.
     StringRef importName = symbolNameToImportName(symbolName, nameType);
 
-    const COFFSharedLibraryAtom *dataAtom = addSharedLibraryAtom(
-        hint, symbolName, importName, dllName);
+    const COFFSharedLibraryAtom *dataAtom =
+        addSharedLibraryAtom(hint, symbolName, importName, dllName);
     if (type == llvm::COFF::IMPORT_CODE)
       addDefinedAtom(symbolName, dllName, dataAtom);
 
@@ -235,11 +234,12 @@ public:
   virtual const LinkingContext &getLinkingContext() const { return _context; }
 
 private:
-  const COFFSharedLibraryAtom *
-  addSharedLibraryAtom(uint16_t hint, StringRef symbolName,
-                       StringRef importName, StringRef dllName) {
-    auto *atom = new (_alloc) COFFSharedLibraryAtom(
-        *this, hint, symbolName, importName, dllName);
+  const COFFSharedLibraryAtom *addSharedLibraryAtom(uint16_t hint,
+                                                    StringRef symbolName,
+                                                    StringRef importName,
+                                                    StringRef dllName) {
+    auto *atom = new (_alloc)
+        COFFSharedLibraryAtom(*this, hint, symbolName, importName, dllName);
     _sharedLibraryAtoms._atoms.push_back(atom);
     return atom;
   }
@@ -298,7 +298,7 @@ private:
 
 error_code parseCOFFImportLibrary(const LinkingContext &targetInfo,
                                   std::unique_ptr<MemoryBuffer> &mb,
-                                  std::vector<std::unique_ptr<File>> &result) {
+                                  std::vector<std::unique_ptr<File> > &result) {
   // Check the file magic.
   const char *buf = mb->getBufferStart();
   const char *end = mb->getBufferEnd();

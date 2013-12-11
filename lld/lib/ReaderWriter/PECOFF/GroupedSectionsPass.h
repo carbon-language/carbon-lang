@@ -43,11 +43,11 @@ static bool compare(const DefinedAtom *left, const DefinedAtom *right) {
     return left->customSectionName().compare(right->customSectionName()) < 0;
   }
   return left->sectionChoice() == DefinedAtom::sectionCustomRequired &&
-    right->sectionChoice() != DefinedAtom::sectionCustomRequired;
+         right->sectionChoice() != DefinedAtom::sectionCustomRequired;
 }
 
 class GroupedSectionsPass : public lld::Pass {
-  public:
+public:
   virtual void perform(std::unique_ptr<MutableFile> &file) {
     auto definedAtoms = file->definedAtoms();
     std::stable_sort(definedAtoms.begin(), definedAtoms.end(), compare);

@@ -24,10 +24,9 @@ class File;
 
 namespace coff {
 
-error_code
-parseCOFFImportLibrary(const LinkingContext &context,
-                       std::unique_ptr<MemoryBuffer> &mb,
-                       std::vector<std::unique_ptr<File> > &result);
+error_code parseCOFFImportLibrary(const LinkingContext &context,
+                                  std::unique_ptr<MemoryBuffer> &mb,
+                                  std::vector<std::unique_ptr<File> > &result);
 }
 }
 
