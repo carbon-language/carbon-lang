@@ -15,7 +15,7 @@
 # objdump does.
 
 BASEREL-SECTION: Contents of section .reloc:
-BASEREL-SECTION-NEXT:  3000 00200000 0c000000 07300c30 00000000
+BASEREL-SECTION-NEXT:  3000 00200000 0c000000 07300c30
 
 NOBASEREL-SECTION-NOT: Contents of section .reloc:
 
@@ -36,7 +36,7 @@ BASEREL-HEADER:     BaseRelocationTableSize: 0xC
 BASEREL-HEADER:     Name: .reloc (2E 72 65 6C 6F 63 00 00)
 BASEREL-HEADER-NEXT:     VirtualSize: 0xC
 BASEREL-HEADER-NEXT:     VirtualAddress: 0x3000
-BASEREL-HEADER-NEXT:     RawDataSize: 512
+BASEREL-HEADER-NEXT:     RawDataSize: 12
 BASEREL-HEADER-NEXT:     PointerToRawData: 0x600
 BASEREL-HEADER-NEXT:     PointerToRelocations: 0x0
 BASEREL-HEADER-NEXT:     PointerToLineNumbers: 0x0

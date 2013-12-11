@@ -4,7 +4,7 @@
 # RUN: llvm-readobj -file-headers %t1 | FileCheck -check-prefix=FILE %s
 
 FILE: ImageOptionalHeader {
-FILE:   SizeOfInitializedData: 1024
+FILE:   SizeOfInitializedData: 30
 FILE:   SizeOfHeaders: 512
 FILE: }
 
@@ -20,7 +20,7 @@ SECTIONS-NEXT:     Number: 1
 SECTIONS-NEXT:     Name: .data
 SECTIONS-NEXT:     VirtualSize: 0x12
 SECTIONS-NEXT:     VirtualAddress: 0x1000
-SECTIONS-NEXT:     RawDataSize: 512
+SECTIONS-NEXT:     RawDataSize: 18
 SECTIONS-NEXT:     PointerToRawData: 0x200
 SECTIONS-NEXT:     PointerToRelocations: 0x0
 SECTIONS-NEXT:     PointerToLineNumbers: 0x0
@@ -37,7 +37,7 @@ SECTIONS-NEXT:     Number: 2
 SECTIONS-NEXT:     Name: .text (2E 74 65 78 74 00 00 00)
 SECTIONS-NEXT:     VirtualSize: 0x1C
 SECTIONS-NEXT:     VirtualAddress: 0x2000
-SECTIONS-NEXT:     RawDataSize: 512
+SECTIONS-NEXT:     RawDataSize: 28
 SECTIONS-NEXT:     PointerToRawData: 0x400
 SECTIONS-NEXT:     PointerToRelocations: 0x0
 SECTIONS-NEXT:     PointerToLineNumbers: 0x0

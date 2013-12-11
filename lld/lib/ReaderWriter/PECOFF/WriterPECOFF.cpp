@@ -71,12 +71,12 @@ public:
     kindDataDirectory
   };
 
-  explicit Chunk(Kind kind) : _kind(kind), _size(0), _align(1) {}
+  explicit Chunk(Kind kind) : _kind(kind), _size(0) {}
   virtual ~Chunk() {};
   virtual void write(uint8_t *buffer) = 0;
   virtual uint64_t size() const { return _size; }
+  virtual uint64_t align() const { return 1; }
 
-  uint64_t align() const { return _align; }
   uint64_t fileOffset() const { return _fileOffset; }
   void setFileOffset(uint64_t fileOffset) { _fileOffset = fileOffset; }
   Kind getKind() const { return _kind; }
@@ -85,7 +85,6 @@ protected:
   Kind _kind;
   uint64_t _size;
   uint64_t _fileOffset;
-  uint64_t _align;
 };
 
 /// A HeaderChunk is an abstract class to represent a file header for
@@ -249,12 +248,7 @@ private:
 /// written to the raw data section.
 class SectionChunk : public AtomChunk {
 public:
-  /// Returns the size of the section on disk. The returned value is multiple
-  /// of disk sector, so the size may include the null padding at the end of
-  /// section.
-  virtual uint64_t size() const {
-    return llvm::RoundUpToAlignment(_size, _align);
-  }
+  virtual uint64_t align() const { return SECTOR_SIZE; }
 
   virtual uint64_t rawSize() const { return _size; }
 
@@ -596,10 +590,7 @@ void SectionChunk::appendAtom(const DefinedAtom *atom) {
 
 SectionChunk::SectionChunk(StringRef sectionName, uint32_t characteristics)
     : AtomChunk(kindSection), _sectionName(sectionName),
-      _characteristics(characteristics) {
-  // The section should be aligned to disk sector.
-  _align = SECTOR_SIZE;
-}
+      _characteristics(characteristics) {}
 
 void GenericSectionChunk::write(uint8_t *buffer) {
   if (_atomLayouts.empty())

@@ -30,7 +30,7 @@ FILE-NEXT: }
 FILE-NEXT: ImageOptionalHeader {
 FILE-NEXT:   MajorLinkerVersion: 0
 FILE-NEXT:   MinorLinkerVersion: 0
-FILE-NEXT:   SizeOfCode: 512
+FILE-NEXT:   SizeOfCode: 6
 FILE-NEXT:   SizeOfInitializedData: 0
 FILE-NEXT:   SizeOfUninitializedData: 0
 FILE-NEXT:   AddressOfEntryPoint: 0x1000
@@ -86,7 +86,7 @@ SECTIONS-NEXT:     Number: 2
 SECTIONS-NEXT:     Name: .text (2E 74 65 78 74 00 00 00)
 SECTIONS-NEXT:     VirtualSize: 0x6
 SECTIONS-NEXT:     VirtualAddress: 0x1000
-SECTIONS-NEXT:     RawDataSize: 512
+SECTIONS-NEXT:     RawDataSize: 6
 SECTIONS-NEXT:     PointerToRawData: 0x200
 SECTIONS-NEXT:     PointerToRelocations: 0x0
 SECTIONS-NEXT:     PointerToLineNumbers: 0x0
