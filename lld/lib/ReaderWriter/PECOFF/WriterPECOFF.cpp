@@ -267,10 +267,9 @@ public:
 protected:
   SectionChunk(StringRef sectionName, uint32_t characteristics);
 
+private:
   StringRef _sectionName;
   const uint32_t _characteristics;
-
-private:
   mutable llvm::BumpPtrAllocator _alloc;
 };
 
@@ -282,15 +281,15 @@ public:
 
   GenericSectionChunk(const PECOFFLinkingContext &ctx, StringRef name,
                       const std::vector<const DefinedAtom *> &atoms)
-      : SectionChunk(name, getCharacteristics(ctx, name, atoms)) {
+      : SectionChunk(name, computeCharacteristics(ctx, name, atoms)) {
     for (auto *a : atoms)
       appendAtom(a);
   }
 
 private:
   uint32_t
-  getCharacteristics(const PECOFFLinkingContext &ctx, StringRef name,
-                     const std::vector<const DefinedAtom *> &atoms) const {
+  computeCharacteristics(const PECOFFLinkingContext &ctx, StringRef name,
+                         const std::vector<const DefinedAtom *> &atoms) const {
     return ctx.getSectionAttributes(name, getDefaultCharacteristics(name, atoms));
   }
 
@@ -605,9 +604,9 @@ SectionChunk::SectionChunk(StringRef sectionName, uint32_t characteristics)
 void GenericSectionChunk::write(uint8_t *buffer) {
   if (_atomLayouts.empty())
     return;
-  if (_characteristics & llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)
+  if (getCharacteristics() & llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)
     return;
-  if (_characteristics & llvm::COFF::IMAGE_SCN_CNT_CODE) {
+  if (getCharacteristics() & llvm::COFF::IMAGE_SCN_CNT_CODE) {
     // Fill the section with INT 3 (0xCC) rather than NUL, so that the
     // disassembler will not interpret a garbage between atoms as the beginning
     // of multi-byte machine code. This does not change the behavior of
