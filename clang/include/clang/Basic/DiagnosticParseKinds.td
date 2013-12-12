@@ -777,6 +777,11 @@ def warn_availability_and_unavailable : Warning<
 def err_type_safety_unknown_flag : Error<
   "invalid comparison flag %0; use 'layout_compatible' or 'must_be_null'">;
 
+// Type traits
+def err_type_trait_arity : Error<
+  "type trait requires %0%select{| or more}1 argument%select{|s}2; have "
+  "%3 argument%s3">;
+
 // Language specific pragmas
 // - Generic warnings
 def warn_pragma_expected_lparen : Warning<

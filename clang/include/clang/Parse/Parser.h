@@ -2312,9 +2312,7 @@ private:
   DeclGroupPtrTy ParseModuleImport(SourceLocation AtLoc);
 
   //===--------------------------------------------------------------------===//
-  // GNU G++: Type Traits [Type-Traits.html in the GCC manual]
-  ExprResult ParseUnaryTypeTrait();
-  ExprResult ParseBinaryTypeTrait();
+  // C++11/G++: Type Traits [Type-Traits.html in the GCC manual]
   ExprResult ParseTypeTrait();
   
   //===--------------------------------------------------------------------===//

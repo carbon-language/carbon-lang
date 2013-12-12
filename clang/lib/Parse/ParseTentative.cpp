@@ -935,7 +935,6 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
   case tok::kw___alignof:
   case tok::kw___builtin_choose_expr:
   case tok::kw___builtin_offsetof:
-  case tok::kw___builtin_types_compatible_p:
   case tok::kw___builtin_va_arg:
   case tok::kw___imag:
   case tok::kw___real:
@@ -943,33 +942,10 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
   case tok::kw___FUNCDNAME__:
   case tok::kw_L__FUNCTION__:
   case tok::kw___PRETTY_FUNCTION__:
-  case tok::kw___has_nothrow_assign:
-  case tok::kw___has_nothrow_copy:
-  case tok::kw___has_nothrow_constructor:
-  case tok::kw___has_trivial_assign:
-  case tok::kw___has_trivial_copy:
-  case tok::kw___has_trivial_constructor:
-  case tok::kw___has_trivial_destructor:
-  case tok::kw___has_virtual_destructor:
-  case tok::kw___is_abstract:
-  case tok::kw___is_base_of:
-  case tok::kw___is_class:
-  case tok::kw___is_convertible_to:
-  case tok::kw___is_empty:
-  case tok::kw___is_enum:
-  case tok::kw___is_interface_class:
-  case tok::kw___is_final:
-  case tok::kw___is_literal:
-  case tok::kw___is_literal_type:
-  case tok::kw___is_pod:
-  case tok::kw___is_polymorphic:
-  case tok::kw___is_sealed:
-  case tok::kw___is_trivial:
-  case tok::kw___is_trivially_assignable:
-  case tok::kw___is_trivially_constructible:
-  case tok::kw___is_trivially_copyable:
-  case tok::kw___is_union:
   case tok::kw___uuidof:
+#define TYPE_TRAIT(N,Spelling,K) \
+  case tok::kw_##Spelling:
+#include "clang/Basic/TokenKinds.def"
     return TPResult::True();
       
   // Obviously starts a type-specifier-seq:

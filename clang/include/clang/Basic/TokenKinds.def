@@ -23,6 +23,18 @@
 #ifndef KEYWORD
 #define KEYWORD(X,Y) TOK(kw_ ## X)
 #endif
+#ifndef TYPE_TRAIT
+#define TYPE_TRAIT(N,I,K) KEYWORD(I,K)
+#endif
+#ifndef TYPE_TRAIT_1
+#define TYPE_TRAIT_1(I,E,K) TYPE_TRAIT(1,I,K)
+#endif
+#ifndef TYPE_TRAIT_2
+#define TYPE_TRAIT_2(I,E,K) TYPE_TRAIT(2,I,K)
+#endif
+#ifndef TYPE_TRAIT_N
+#define TYPE_TRAIT_N(I,E,K) TYPE_TRAIT(0,I,K)
+#endif
 #ifndef ALIAS
 #define ALIAS(X,Y,Z)
 #endif
@@ -334,7 +346,9 @@ KEYWORD(__alignof                   , KEYALL)
 KEYWORD(__attribute                 , KEYALL)
 KEYWORD(__builtin_choose_expr       , KEYALL)
 KEYWORD(__builtin_offsetof          , KEYALL)
-KEYWORD(__builtin_types_compatible_p, KEYALL)
+// __builtin_types_compatible_p is a GNU C extension that we handle like a C++
+// type trait.
+TYPE_TRAIT_2(__builtin_types_compatible_p, TypeCompatible, KEYALL)
 KEYWORD(__builtin_va_arg            , KEYALL)
 KEYWORD(__extension__               , KEYALL)
 KEYWORD(__imag                      , KEYALL)
@@ -351,42 +365,42 @@ KEYWORD(typeof                      , KEYGNU)
 // MS Extensions
 KEYWORD(__FUNCDNAME__               , KEYMS)
 KEYWORD(L__FUNCTION__               , KEYMS)
-KEYWORD(__is_interface_class        , KEYMS)
-KEYWORD(__is_sealed                 , KEYMS)
+TYPE_TRAIT_1(__is_interface_class, IsInterfaceClass, KEYMS)
+TYPE_TRAIT_1(__is_sealed, IsSealed, KEYMS)
 
 // GNU and MS Type Traits
-KEYWORD(__has_nothrow_assign          , KEYCXX)
-KEYWORD(__has_nothrow_move_assign     , KEYCXX)
-KEYWORD(__has_nothrow_copy            , KEYCXX)
-KEYWORD(__has_nothrow_constructor     , KEYCXX)
-KEYWORD(__has_trivial_assign          , KEYCXX)
-KEYWORD(__has_trivial_move_assign     , KEYCXX)
-KEYWORD(__has_trivial_copy            , KEYCXX)
-KEYWORD(__has_trivial_constructor     , KEYCXX)
-KEYWORD(__has_trivial_move_constructor, KEYCXX)
-KEYWORD(__has_trivial_destructor      , KEYCXX)
-KEYWORD(__has_virtual_destructor      , KEYCXX)
-KEYWORD(__is_abstract                 , KEYCXX)
-KEYWORD(__is_base_of                  , KEYCXX)
-KEYWORD(__is_class                    , KEYCXX)
-KEYWORD(__is_convertible_to           , KEYCXX)
-KEYWORD(__is_empty                    , KEYCXX)
-KEYWORD(__is_enum                     , KEYCXX)
-KEYWORD(__is_final                    , KEYCXX)
+TYPE_TRAIT_1(__has_nothrow_assign, HasNothrowAssign, KEYCXX)
+TYPE_TRAIT_1(__has_nothrow_move_assign, HasNothrowMoveAssign, KEYCXX)
+TYPE_TRAIT_1(__has_nothrow_copy, HasNothrowCopy, KEYCXX)
+TYPE_TRAIT_1(__has_nothrow_constructor, HasNothrowConstructor, KEYCXX)
+TYPE_TRAIT_1(__has_trivial_assign, HasTrivialAssign, KEYCXX)
+TYPE_TRAIT_1(__has_trivial_move_assign, HasTrivialMoveAssign, KEYCXX)
+TYPE_TRAIT_1(__has_trivial_copy, HasTrivialCopy, KEYCXX)
+TYPE_TRAIT_1(__has_trivial_constructor, HasTrivialDefaultConstructor, KEYCXX)
+TYPE_TRAIT_1(__has_trivial_move_constructor, HasTrivialMoveConstructor, KEYCXX)
+TYPE_TRAIT_1(__has_trivial_destructor, HasTrivialDestructor, KEYCXX)
+TYPE_TRAIT_1(__has_virtual_destructor, HasVirtualDestructor, KEYCXX)
+TYPE_TRAIT_1(__is_abstract, IsAbstract, KEYCXX)
+TYPE_TRAIT_2(__is_base_of, IsBaseOf, KEYCXX)
+TYPE_TRAIT_1(__is_class, IsClass, KEYCXX)
+TYPE_TRAIT_2(__is_convertible_to, IsConvertibleTo, KEYCXX)
+TYPE_TRAIT_1(__is_empty, IsEmpty, KEYCXX)
+TYPE_TRAIT_1(__is_enum, IsEnum, KEYCXX)
+TYPE_TRAIT_1(__is_final, IsFinal, KEYCXX)
 // Tentative name - there's no implementation of std::is_literal_type yet.
-KEYWORD(__is_literal                  , KEYCXX)
+TYPE_TRAIT_1(__is_literal, IsLiteral, KEYCXX)
 // Name for GCC 4.6 compatibility - people have already written libraries using
 // this name unfortunately.
-KEYWORD(__is_literal_type             , KEYCXX)
-KEYWORD(__is_pod                      , KEYCXX)
-KEYWORD(__is_polymorphic              , KEYCXX)
-KEYWORD(__is_trivial                  , KEYCXX)
-KEYWORD(__is_union                    , KEYCXX)
+ALIAS("__is_literal_type", __is_literal, KEYCXX)
+TYPE_TRAIT_1(__is_pod, IsPOD, KEYCXX)
+TYPE_TRAIT_1(__is_polymorphic, IsPolymorphic, KEYCXX)
+TYPE_TRAIT_1(__is_trivial, IsTrivial, KEYCXX)
+TYPE_TRAIT_1(__is_union, IsUnion, KEYCXX)
 
 // Clang-only C++ Type Traits
-KEYWORD(__is_trivially_constructible, KEYCXX)
-KEYWORD(__is_trivially_copyable     , KEYCXX)
-KEYWORD(__is_trivially_assignable   , KEYCXX)
+TYPE_TRAIT_N(__is_trivially_constructible, IsTriviallyConstructible, KEYCXX)
+TYPE_TRAIT_1(__is_trivially_copyable, IsTriviallyCopyable, KEYCXX)
+TYPE_TRAIT_2(__is_trivially_assignable, IsTriviallyAssignable, KEYCXX)
 KEYWORD(__underlying_type           , KEYCXX)
 
 // Embarcadero Expression Traits
@@ -394,33 +408,33 @@ KEYWORD(__is_lvalue_expr            , KEYCXX)
 KEYWORD(__is_rvalue_expr            , KEYCXX)
 
 // Embarcadero Unary Type Traits
-KEYWORD(__is_arithmetic             , KEYCXX)
-KEYWORD(__is_floating_point         , KEYCXX)
-KEYWORD(__is_integral               , KEYCXX)
-KEYWORD(__is_complete_type          , KEYCXX)
-KEYWORD(__is_void                   , KEYCXX)
-KEYWORD(__is_array                  , KEYCXX)
-KEYWORD(__is_function               , KEYCXX)
-KEYWORD(__is_reference              , KEYCXX)
-KEYWORD(__is_lvalue_reference       , KEYCXX)
-KEYWORD(__is_rvalue_reference       , KEYCXX)
-KEYWORD(__is_fundamental            , KEYCXX)
-KEYWORD(__is_object                 , KEYCXX)
-KEYWORD(__is_scalar                 , KEYCXX)
-KEYWORD(__is_compound               , KEYCXX)
-KEYWORD(__is_pointer                , KEYCXX)
-KEYWORD(__is_member_object_pointer  , KEYCXX)
-KEYWORD(__is_member_function_pointer, KEYCXX)
-KEYWORD(__is_member_pointer         , KEYCXX)
-KEYWORD(__is_const                  , KEYCXX)
-KEYWORD(__is_volatile               , KEYCXX)
-KEYWORD(__is_standard_layout        , KEYCXX)
-KEYWORD(__is_signed                 , KEYCXX)
-KEYWORD(__is_unsigned               , KEYCXX)
+TYPE_TRAIT_1(__is_arithmetic, IsArithmetic, KEYCXX)
+TYPE_TRAIT_1(__is_floating_point, IsFloatingPoint, KEYCXX)
+TYPE_TRAIT_1(__is_integral, IsIntegral, KEYCXX)
+TYPE_TRAIT_1(__is_complete_type, IsCompleteType, KEYCXX)
+TYPE_TRAIT_1(__is_void, IsVoid, KEYCXX)
+TYPE_TRAIT_1(__is_array, IsArray, KEYCXX)
+TYPE_TRAIT_1(__is_function, IsFunction, KEYCXX)
+TYPE_TRAIT_1(__is_reference, IsReference, KEYCXX)
+TYPE_TRAIT_1(__is_lvalue_reference, IsLvalueReference, KEYCXX)
+TYPE_TRAIT_1(__is_rvalue_reference, IsRvalueReference, KEYCXX)
+TYPE_TRAIT_1(__is_fundamental, IsFundamental, KEYCXX)
+TYPE_TRAIT_1(__is_object, IsObject, KEYCXX)
+TYPE_TRAIT_1(__is_scalar, IsScalar, KEYCXX)
+TYPE_TRAIT_1(__is_compound, IsCompound, KEYCXX)
+TYPE_TRAIT_1(__is_pointer, IsPointer, KEYCXX)
+TYPE_TRAIT_1(__is_member_object_pointer, IsMemberObjectPointer, KEYCXX)
+TYPE_TRAIT_1(__is_member_function_pointer, IsMemberFunctionPointer, KEYCXX)
+TYPE_TRAIT_1(__is_member_pointer, IsMemberPointer, KEYCXX)
+TYPE_TRAIT_1(__is_const, IsConst, KEYCXX)
+TYPE_TRAIT_1(__is_volatile, IsVolatile, KEYCXX)
+TYPE_TRAIT_1(__is_standard_layout, IsStandardLayout, KEYCXX)
+TYPE_TRAIT_1(__is_signed, IsSigned, KEYCXX)
+TYPE_TRAIT_1(__is_unsigned, IsUnsigned, KEYCXX)
 
 // Embarcadero Binary Type Traits
-KEYWORD(__is_same                   , KEYCXX)
-KEYWORD(__is_convertible            , KEYCXX)
+TYPE_TRAIT_2(__is_same, IsSame, KEYCXX)
+TYPE_TRAIT_2(__is_convertible, IsConvertible, KEYCXX)
 KEYWORD(__array_rank                , KEYCXX)
 KEYWORD(__array_extent              , KEYCXX)
 
@@ -679,6 +693,10 @@ ANNOTATION(module_end)
 #undef CXX_KEYWORD_OPERATOR
 #undef PPKEYWORD
 #undef ALIAS
+#undef TYPE_TRAIT_N
+#undef TYPE_TRAIT_2
+#undef TYPE_TRAIT_1
+#undef TYPE_TRAIT
 #undef KEYWORD
 #undef PUNCTUATOR
 #undef TOK

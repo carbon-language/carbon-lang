@@ -5750,9 +5750,6 @@ def note_inequality_comparison_to_or_assign : Note<
 
 def err_incomplete_type_used_in_type_trait_expr : Error<
   "incomplete type %0 used in type trait expression">;
-def err_type_trait_arity : Error<
-  "type trait requires %0%select{| or more}1 argument%select{|s}2; have "
-  "%3 argument%s3">;
   
 def err_dimension_expr_not_constant_integer : Error<
   "dimension expression does not evaluate to a constant unsigned int">;

@@ -1168,65 +1168,9 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     return Result;
   }
 
-  case tok::kw___is_abstract: // [GNU] unary-type-trait
-  case tok::kw___is_class:
-  case tok::kw___is_empty:
-  case tok::kw___is_enum:
-  case tok::kw___is_interface_class:
-  case tok::kw___is_literal:
-  case tok::kw___is_arithmetic:
-  case tok::kw___is_integral:
-  case tok::kw___is_floating_point:
-  case tok::kw___is_complete_type:
-  case tok::kw___is_void:
-  case tok::kw___is_array:
-  case tok::kw___is_function:
-  case tok::kw___is_reference:
-  case tok::kw___is_lvalue_reference:
-  case tok::kw___is_rvalue_reference:
-  case tok::kw___is_fundamental:
-  case tok::kw___is_object:
-  case tok::kw___is_scalar:
-  case tok::kw___is_compound:
-  case tok::kw___is_pointer:
-  case tok::kw___is_member_object_pointer:
-  case tok::kw___is_member_function_pointer:
-  case tok::kw___is_member_pointer:
-  case tok::kw___is_const:
-  case tok::kw___is_volatile:
-  case tok::kw___is_standard_layout:
-  case tok::kw___is_signed:
-  case tok::kw___is_unsigned:
-  case tok::kw___is_literal_type:
-  case tok::kw___is_pod:
-  case tok::kw___is_polymorphic:
-  case tok::kw___is_trivial:
-  case tok::kw___is_trivially_copyable:
-  case tok::kw___is_union:
-  case tok::kw___is_final:
-  case tok::kw___is_sealed:
-  case tok::kw___has_trivial_constructor:
-  case tok::kw___has_trivial_move_constructor:
-  case tok::kw___has_trivial_copy:
-  case tok::kw___has_trivial_assign:
-  case tok::kw___has_trivial_move_assign:
-  case tok::kw___has_trivial_destructor:
-  case tok::kw___has_nothrow_assign:
-  case tok::kw___has_nothrow_move_assign:
-  case tok::kw___has_nothrow_copy:
-  case tok::kw___has_nothrow_constructor:
-  case tok::kw___has_virtual_destructor:
-    return ParseUnaryTypeTrait();
-
-  case tok::kw___builtin_types_compatible_p:
-  case tok::kw___is_base_of:
-  case tok::kw___is_same:
-  case tok::kw___is_convertible:
-  case tok::kw___is_convertible_to:
-  case tok::kw___is_trivially_assignable:
-    return ParseBinaryTypeTrait();
-
-  case tok::kw___is_trivially_constructible:
+#define TYPE_TRAIT(N,Spelling,K) \
+  case tok::kw_##Spelling:
+#include "clang/Basic/TokenKinds.def"
     return ParseTypeTrait();
       
   case tok::kw___array_rank:

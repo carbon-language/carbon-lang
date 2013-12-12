@@ -3650,11 +3650,7 @@ static bool evaluateTypeTrait(Sema &S, TypeTrait Kind, SourceLocation KWLoc,
     //   variable t:
     //
     //     T t(create<Args>()...);
-    if (Args.empty()) {
-      S.Diag(KWLoc, diag::err_type_trait_arity)
-        << 1 << 1 << 1 << (int)Args.size();
-      return false;
-    }
+    assert(!Args.empty());
 
     // Precondition: T and all types in the parameter pack Args shall be
     // complete types, (possibly cv-qualified) void, or arrays of
