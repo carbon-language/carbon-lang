@@ -122,7 +122,7 @@ tool is also checked into the clang tree at
 
   // Apply a custom category to all command-line options so that they are the
   // only ones displayed.
-  cl::MyToolCategory("my-tool options");
+  cl::OptionCategory MyToolCategory("my-tool options");
 
   // CommonOptionsParser declares HelpMessage with a description of the common
   // command-line options related to the compilation database and input files.
