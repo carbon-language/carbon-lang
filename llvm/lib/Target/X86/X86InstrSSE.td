@@ -3142,6 +3142,89 @@ let AddedComplexity = 20, Predicates = [HasAVX] in {
             (VDIVSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
 }
 
+// Patterns used to select SSE scalar fp arithmetic instructions from
+// a vector packed single/double fp operation followed by a vector insert.
+//
+// The effect is that the backend converts the packed fp instruction
+// followed by a vector insert into a single SSE scalar fp instruction.
+//
+// For example, given the following code:
+//   __m128 foo(__m128 A, __m128 B) {
+//     __m128 C = A + B;
+//     return (__m128) {c[0], a[1], a[2], a[3]};
+//   }
+//
+// previously we generated:
+//   addps %xmm0, %xmm1
+//   movss %xmm1, %xmm0
+// 
+// we now generate:
+//   addss %xmm1, %xmm0
+
+def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst),
+                 (fadd (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
+          (ADDSSrr_Int v4f32:$dst, v4f32:$src)>;
+def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst), 
+                 (fsub (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
+          (SUBSSrr_Int v4f32:$dst, v4f32:$src)>;
+def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst),
+                 (fmul (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
+          (MULSSrr_Int v4f32:$dst, v4f32:$src)>;
+def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst), 
+                 (fdiv (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
+          (DIVSSrr_Int v4f32:$dst, v4f32:$src)>;
+
+let Predicates = [HasSSE2] in {
+  // SSE2 patterns to select scalar double-precision fp arithmetic instructions
+  // from a packed double-precision fp instruction plus movsd.
+
+  def : Pat<(v2f64 (X86Movsd (v2f64 VR128:$dst),
+                   (fadd (v2f64 VR128:$dst), (v2f64 VR128:$src)))),
+            (ADDSDrr_Int v2f64:$dst, v2f64:$src)>;
+  def : Pat<(v2f64 (X86Movsd (v2f64 VR128:$dst),
+                   (fsub (v2f64 VR128:$dst), (v2f64 VR128:$src)))),
+            (SUBSDrr_Int v2f64:$dst, v2f64:$src)>;
+  def : Pat<(v2f64 (X86Movsd (v2f64 VR128:$dst),
+                   (fmul (v2f64 VR128:$dst), (v2f64 VR128:$src)))),
+            (MULSDrr_Int v2f64:$dst, v2f64:$src)>;
+  def : Pat<(v2f64 (X86Movsd (v2f64 VR128:$dst),
+                   (fdiv (v2f64 VR128:$dst), (v2f64 VR128:$src)))),
+            (DIVSDrr_Int v2f64:$dst, v2f64:$src)>;
+}
+
+let AddedComplexity = 20, Predicates = [HasAVX] in {
+  // The following patterns select AVX Scalar single/double precision fp
+  // arithmetic instructions from a packed single precision fp instruction
+  // plus movss/movsd.
+  // The 'AddedComplexity' is required to give them higher priority over
+  // the equivalent SSE/SSE2 patterns.
+
+  def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst),
+                   (fadd (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
+            (VADDSSrr_Int v4f32:$dst, v4f32:$src)>;
+  def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst),
+                   (fsub (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
+            (VSUBSSrr_Int v4f32:$dst, v4f32:$src)>;
+  def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst),
+                   (fmul (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
+            (VMULSSrr_Int v4f32:$dst, v4f32:$src)>;
+  def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst),
+                   (fdiv (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
+            (VDIVSSrr_Int v4f32:$dst, v4f32:$src)>;
+  def : Pat<(v2f64 (X86Movsd (v2f64 VR128:$dst),
+                   (fadd (v2f64 VR128:$dst), (v2f64 VR128:$src)))),
+            (VADDSDrr_Int v2f64:$dst, v2f64:$src)>;
+  def : Pat<(v2f64 (X86Movsd (v2f64 VR128:$dst),
+                   (fsub (v2f64 VR128:$dst), (v2f64 VR128:$src)))),
+            (VSUBSDrr_Int v2f64:$dst, v2f64:$src)>;
+  def : Pat<(v2f64 (X86Movsd (v2f64 VR128:$dst),
+                   (fmul (v2f64 VR128:$dst), (v2f64 VR128:$src)))),
+            (VMULSDrr_Int v2f64:$dst, v2f64:$src)>;
+  def : Pat<(v2f64 (X86Movsd (v2f64 VR128:$dst),
+                   (fdiv (v2f64 VR128:$dst), (v2f64 VR128:$src)))),
+            (VDIVSDrr_Int v2f64:$dst, v2f64:$src)>;
+}
+
 /// Unop Arithmetic
 /// In addition, we also have a special variant of the scalar form here to
 /// represent the associated intrinsic operation.  This form is unlike the
