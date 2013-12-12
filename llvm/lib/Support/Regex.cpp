@@ -169,37 +169,22 @@ std::string Regex::sub(StringRef Repl, StringRef String,
   return Res;
 }
 
+// These are the special characters matched in functions like "p_ere_exp".
+static const char RegexMetachars[] = "()^$|*+?.[]\\{}";
+
 bool Regex::isLiteralERE(StringRef Str) {
   // Check for regex metacharacters.  This list was derived from our regex
   // implementation in regcomp.c and double checked against the POSIX extended
   // regular expression specification.
-  return Str.find_first_of("()^$|*+?.[]\\{}") == StringRef::npos;
+  return Str.find_first_of(RegexMetachars) == StringRef::npos;
 }
 
 std::string Regex::escape(StringRef String) {
   std::string RegexStr;
-
   for (unsigned i = 0, e = String.size(); i != e; ++i) {
-    switch (String[i]) {
-    // These are the special characters matched in "p_ere_exp".
-    case '(':
-    case ')':
-    case '^':
-    case '$':
-    case '|':
-    case '*':
-    case '+':
-    case '?':
-    case '.':
-    case '[':
-    case '\\':
-    case '{':
+    if (strchr(RegexMetachars, String[i]))
       RegexStr += '\\';
-      // FALL THROUGH.
-    default:
-      RegexStr += String[i];
-      break;
-    }
+    RegexStr += String[i];
   }
 
   return RegexStr;

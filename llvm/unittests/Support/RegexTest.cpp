@@ -127,6 +127,11 @@ TEST_F(RegexTest, IsLiteralERE) {
   EXPECT_FALSE(Regex::isLiteralERE("abc{1,2}"));
 }
 
+TEST_F(RegexTest, Escape) {
+  EXPECT_EQ(Regex::escape("a[bc]"), "a\\[bc\\]");
+  EXPECT_EQ(Regex::escape("abc{1\\,2}"), "abc\\{1\\\\,2\\}");
+}
+
 TEST_F(RegexTest, IsValid) {
   std::string Error;
   EXPECT_FALSE(Regex("(foo").isValid(Error));
