@@ -21,8 +21,6 @@
 
 using namespace llvm;
 
-int dummy;
-
 namespace {
 
 struct FunctionEmittedEvent {
