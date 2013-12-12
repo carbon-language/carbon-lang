@@ -17,7 +17,7 @@
 #include <string.h>
 #include <stdio.h>
 
-extern void *__crashreporter_info__;
+void *__crashreporter_info__ = NULL;
 
 asm(".desc ___crashreporter_info__, 0x10");
 
