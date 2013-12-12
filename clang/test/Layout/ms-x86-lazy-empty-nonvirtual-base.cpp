@@ -706,6 +706,28 @@ struct DX : B8X, B1X, virtual B0X {
 // CHECK-X64:      | [sizeof=24, align=8
 // CHECK-X64:      |  nvsize=24, nvalign=8]
 
+
+struct C0 {};
+struct C1 : public C0 { int C1F0; };
+struct C2 : public C1, public C0 {};
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK:    0 | struct C2
+// CHECK:    0 |   struct C1 (base)
+// CHECK:    0 |     struct C0 (base) (empty)
+// CHECK:    0 |     int C1F0
+// CHECK:    5 |   struct C0 (base) (empty)
+// CHECK:      | [sizeof=8, align=4
+// CHECK:      |  nvsize=8, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct C2
+// CHECK-X64:    0 |   struct C1 (base)
+// CHECK-X64:    0 |     struct C0 (base) (empty)
+// CHECK-X64:    0 |     int C1F0
+// CHECK-X64:    5 |   struct C0 (base) (empty)
+// CHECK-X64:      | [sizeof=8, align=4
+// CHECK-X64:      |  nvsize=8, nvalign=4]
+
 int a[
 sizeof(AA)+
 sizeof(AB)+
@@ -732,4 +754,5 @@ sizeof(G)+
 sizeof(AX)+
 sizeof(BX)+
 sizeof(CX)+
-sizeof(DX)];
+sizeof(DX)+
+sizeof(C2)];

@@ -2273,7 +2273,7 @@ MicrosoftRecordLayoutBuilder::initializeCXXLayout(const CXXRecordDecl *RD) {
     // Handle required alignment.
     RequiredAlignment = std::max(RequiredAlignment,
                                  Layout.getRequiredAlignment());
-    // Check for zero sized subobjects
+    // Check for zero sized subobjects.
     if (Layout.hasZeroSizedSubObject())
       HasZeroSizedSubObject = true;
     // Handle virtual bases.
@@ -2347,72 +2347,53 @@ MicrosoftRecordLayoutBuilder::layoutNonVirtualBases(const CXXRecordDecl *RD) {
       continue;
     const CXXRecordDecl *BaseDecl =
         cast<CXXRecordDecl>(i->getType()->castAs<RecordType>()->getDecl());
+    if (BaseDecl == PrimaryBase)
+      continue;
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(BaseDecl);
     if (!LeadingBase) {
-      const ASTRecordLayout &Layout = Context.getASTRecordLayout(BaseDecl);
       LeadsWithZeroSizedBase = Layout.leadsWithZeroSizedBase();
       LeadingBase = BaseDecl;
     }
-    if (BaseDecl != PrimaryBase)
+
+    if (LazyEmptyBase) {
+      layoutNonVirtualBase(LazyEmptyBase);
+      LazyEmptyBase = 0;
+    }
+    // Insert padding between two bases if the left first one is zero sized or
+    // contains a zero sized subobject and the right is zero sized or one leads
+    // with a zero sized base.
+    if (PreviousBaseLayout && PreviousBaseLayout->hasZeroSizedSubObject() &&
+        Layout.leadsWithZeroSizedBase())
+      Size++;
+    if (Layout.getNonVirtualSize().isZero())
+      LazyEmptyBase = BaseDecl;
+    else
       layoutNonVirtualBase(BaseDecl);
   }
 }
 
 void
 MicrosoftRecordLayoutBuilder::layoutNonVirtualBase(const CXXRecordDecl *RD) {
-  const ASTRecordLayout *Layout = RD ? &Context.getASTRecordLayout(RD) : 0;
-
-  // If we have a lazy empty base we haven't laid out yet, do that now.
-  if (LazyEmptyBase) {
-    const ASTRecordLayout &LazyLayout =
-        Context.getASTRecordLayout(LazyEmptyBase);
-    Size = Size.RoundUpToAlignment(getBaseAlignment(LazyLayout));
-    // If the last non-virtual base has a vbptr we add a byte of padding for no
-    // obvious reason.
-    if (PreviousBaseLayout && PreviousBaseLayout->hasVBPtr())
-      Size++;
-    Bases.insert(std::make_pair(LazyEmptyBase, Size));
-    // Empty bases only consume space when followed by another empty base.
-    if (RD && Layout->getNonVirtualSize().isZero())
-      Size++;
-    LazyEmptyBase = 0;
-    PreviousBaseLayout = &LazyLayout;
-  }
-
-  // RD is null when flushing the final lazy base.
-  if (!RD)
-    return;
-
-  if (Layout->getNonVirtualSize().isZero()) {
-    LazyEmptyBase = RD;
-    return;
-  }
-
-  // Insert padding between two bases if the left first one is zero sized or
-  // contains a zero sized subobject and the right is zero sized or one leads
-  // with a zero sized base.
-  if (PreviousBaseLayout && PreviousBaseLayout->hasZeroSizedSubObject() &&
-      Layout->leadsWithZeroSizedBase())
-    Size++;
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
   // Insert the base here.
-  CharUnits BaseOffset = Size.RoundUpToAlignment(getBaseAlignment(*Layout));
+  CharUnits BaseOffset = Size.RoundUpToAlignment(getBaseAlignment(Layout));
   Bases.insert(std::make_pair(RD, BaseOffset));
-  Size = BaseOffset + Layout->getDataSize();
-  // Note: we don't update alignment here because it was accounted
-  // for during initalization.
-  PreviousBaseLayout = Layout;
+  Size = BaseOffset + Layout.getDataSize();
+  // Alignment was upadated in InitializeCXXLayout.
+  PreviousBaseLayout = &Layout;
 }
 
 void MicrosoftRecordLayoutBuilder::layoutVBPtr(const CXXRecordDecl *RD) {
   if (!HasVBPtr)
     VBPtrOffset = CharUnits::fromQuantity(-1);
-  else if (SharedVBPtrBase) {
-    const ASTRecordLayout &Layout = Context.getASTRecordLayout(SharedVBPtrBase);
-    VBPtrOffset = Bases[SharedVBPtrBase] + Layout.getVBPtrOffset();
-  } else {
+  else if (SharedVBPtrBase)
+    VBPtrOffset = Bases[SharedVBPtrBase] +
+                  Context.getASTRecordLayout(SharedVBPtrBase).getVBPtrOffset();
+  else {
     VBPtrOffset = Size.RoundUpToAlignment(PointerAlignment);
     CharUnits OldSize = Size;
     Size = VBPtrOffset + PointerSize;
-    if (BasesAndFieldsAlignment <= PointerAlignment) {
+    if (BasesAndFieldsAlignment <= PointerAlignment)
       // Handle strange padding rules for the lazily placed base.  I have no
       // explanation for why the last virtual base is padded in such an odd way.
       // Two things to note about this padding are that the rules are different
@@ -2420,7 +2401,7 @@ void MicrosoftRecordLayoutBuilder::layoutVBPtr(const CXXRecordDecl *RD) {
       // pointer and that the rule in 64-bit mode behaves differently depending
       // on if the second to last base was also zero sized.
       Size += OldSize % BasesAndFieldsAlignment.getQuantity();
-    } else {
+    else {
       if (!Is64BitMode)
         Size = OldSize + BasesAndFieldsAlignment;
       else if (PreviousBaseLayout &&
@@ -2429,9 +2410,8 @@ void MicrosoftRecordLayoutBuilder::layoutVBPtr(const CXXRecordDecl *RD) {
     }
     updateAlignment(PointerAlignment);
   }
-
-  // Flush the lazy empty base.
-  layoutNonVirtualBase(0);
+  if (LazyEmptyBase)
+    layoutNonVirtualBase(LazyEmptyBase);
 }
 
 void MicrosoftRecordLayoutBuilder::layoutFields(const RecordDecl *RD) {
@@ -2541,12 +2521,14 @@ void MicrosoftRecordLayoutBuilder::fixSizeAndAlignment(const RecordDecl *RD) {
   NonVirtualAlignment = Alignment;
   RequiredAlignment = std::max(RequiredAlignment,
       Context.toCharUnitsFromBits(RD->getMaxAlignment()));
+  updateAlignment(RequiredAlignment);
 }
 
 void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
   if (!HasVBPtr)
     return;
 
+  // Update the alignment 
   for (CXXRecordDecl::base_class_const_iterator i = RD->vbases_begin(),
                                                 e = RD->vbases_end();
        i != e; ++i) {
@@ -2556,11 +2538,6 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
     updateAlignment(getBaseAlignment(Layout));
   }
   PreviousBaseLayout = 0;
-
-  // Zero-sized v-bases obey the alignment attribute so apply it here.  The
-  // alignment attribute is normally accounted for in FinalizeLayout.
-  if (unsigned MaxAlign = RD->getMaxAlignment())
-    updateAlignment(Context.toCharUnitsFromBits(MaxAlign));
 
   llvm::SmallPtrSet<const CXXRecordDecl *, 2> HasVtordisp =
       computeVtorDispSet(RD);
@@ -2582,30 +2559,25 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
 void MicrosoftRecordLayoutBuilder::layoutVirtualBase(const CXXRecordDecl *RD,
                                                      bool HasVtordisp) {
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+  const CharUnits Four = CharUnits::fromQuantity(4);
   // Insert padding between two bases if the left first one is zero sized or
   // contains a zero sized subobject and the right is zero sized or one leads
   // with a zero sized base.  The minimal padding between virtual bases is 4
   // bytes (in both 32 and 64 bits modes), we don't know why.
   if (PreviousBaseLayout && PreviousBaseLayout->hasZeroSizedSubObject() &&
       Layout.leadsWithZeroSizedBase())
-    Size = Size.RoundUpToAlignment(std::max(CharUnits::fromQuantity(4),
-                                            RequiredAlignment)) +
-        CharUnits::fromQuantity(4);
-
-  CharUnits BaseNVSize = Layout.getNonVirtualSize();
-  CharUnits BaseAlign = getBaseAlignment(Layout);
+    Size = Size.RoundUpToAlignment(std::max(Four, RequiredAlignment)) + Four;
 
   // vtordisps are always 4 bytes (even in 64-bit mode)
   if (HasVtordisp)
-    Size = Size.RoundUpToAlignment(Alignment) + CharUnits::fromQuantity(4);
+    Size = Size.RoundUpToAlignment(Alignment) + Four;
 
   // Insert the base here.
-  Size = Size.RoundUpToAlignment(BaseAlign);
+  Size = Size.RoundUpToAlignment(getBaseAlignment(Layout));
   VBases.insert(
       std::make_pair(RD, ASTRecordLayout::VBaseInfo(Size, HasVtordisp)));
-  Size += BaseNVSize;
+  Size += Layout.getNonVirtualSize();
   // Alignment was upadated in InitializeCXXLayout.
-
   PreviousBaseLayout = &Layout;
 }
 
@@ -2616,10 +2588,8 @@ void MicrosoftRecordLayoutBuilder::finalizeLayout(const RecordDecl *RD) {
     Size = Alignment;
   }
 
-  if (!RequiredAlignment.isZero()) {
-    updateAlignment(RequiredAlignment);
+  if (!RequiredAlignment.isZero())
     Size = Size.RoundUpToAlignment(Alignment);
-  }
 }
 
 static bool
