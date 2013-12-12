@@ -22,6 +22,7 @@ def nodefaultlib : P<"nodefaultlib", "Remove a default library">;
 def disallowlib : Joined<["/", "-", "-?"], "disallowlib:">, Alias<nodefaultlib>;
 def entry   : P<"entry", "Name of entry point symbol">;
 // No help text because /failifmismatch is not intended to be used by the user.
+def export  : P<"export", "Export a function">;
 def failifmismatch : P<"failifmismatch", "">;
 def heap    : P<"heap", "Size of the heap">;
 def align   : P<"align", "Section alignment">;

@@ -155,6 +155,13 @@ TEST_F(WinLinkParserTest, AlternateName) {
   EXPECT_EQ("", _context.getAlternateName("foo"));
 }
 
+TEST_F(WinLinkParserTest, Export) {
+  EXPECT_TRUE(parse("link.exe", "/export:_foo", "a.out", nullptr));
+  const std::set<std::string> &exports = _context.getDllExports();
+  EXPECT_TRUE(exports.count("_foo") == 1);
+  EXPECT_TRUE(exports.count("nosuchsym") == 0);
+}
+
 TEST_F(WinLinkParserTest, MachineX86) {
   EXPECT_TRUE(parse("link.exe", "/machine:x86", "a.obj", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_FILE_MACHINE_I386, _context.getMachineType());

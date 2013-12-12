@@ -832,6 +832,10 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       ctx.setEntrySymbolName(ctx.allocate(inputArg->getValue()));
       break;
 
+    case OPT_export:
+      ctx.addDllExport(inputArg->getValue());
+      break;
+
     case OPT_libpath:
       ctx.appendInputSearchPath(ctx.allocate(inputArg->getValue()));
       break;
