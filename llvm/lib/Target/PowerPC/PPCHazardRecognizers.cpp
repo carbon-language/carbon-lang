@@ -15,11 +15,220 @@
 #include "PPCHazardRecognizers.h"
 #include "PPC.h"
 #include "PPCInstrInfo.h"
+#include "PPCTargetMachine.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+bool PPCDispatchGroupSBHazardRecognizer::isLoadAfterStore(SUnit *SU) {
+  // FIXME: Move this.
+  if (isBCTRAfterSet(SU))
+    return true;
+
+  const MCInstrDesc *MCID = DAG->getInstrDesc(SU);
+  if (!MCID)
+    return false;
+
+  if (!MCID->mayLoad())
+    return false;
+
+  // SU is a load; for any predecessors in this dispatch group, that are stores,
+  // and with which we have an ordering dependency, return true.
+  for (unsigned i = 0, ie = (unsigned) SU->Preds.size(); i != ie; ++i) {
+    const MCInstrDesc *PredMCID = DAG->getInstrDesc(SU->Preds[i].getSUnit());
+    if (!PredMCID || !PredMCID->mayStore())
+      continue;
+
+    if (!SU->Preds[i].isNormalMemory() && !SU->Preds[i].isBarrier())
+      continue;
+
+    for (unsigned j = 0, je = CurGroup.size(); j != je; ++j)
+      if (SU->Preds[i].getSUnit() == CurGroup[j])
+        return true;
+  }
+
+  return false; 
+}
+
+bool PPCDispatchGroupSBHazardRecognizer::isBCTRAfterSet(SUnit *SU) {
+  const MCInstrDesc *MCID = DAG->getInstrDesc(SU);
+  if (!MCID)
+    return false;
+
+  if (!MCID->isBranch())
+    return false;
+
+  // SU is a branch; for any predecessors in this dispatch group, with which we
+  // have a data dependence and set the counter register, return true.
+  for (unsigned i = 0, ie = (unsigned) SU->Preds.size(); i != ie; ++i) {
+    const MCInstrDesc *PredMCID = DAG->getInstrDesc(SU->Preds[i].getSUnit());
+    if (!PredMCID || PredMCID->getSchedClass() != PPC::Sched::IIC_SprMTSPR)
+      continue;
+
+    if (SU->Preds[i].isCtrl())
+      continue;
+
+    for (unsigned j = 0, je = CurGroup.size(); j != je; ++j)
+      if (SU->Preds[i].getSUnit() == CurGroup[j])
+        return true;
+  }
+
+  return false; 
+}
+
+// FIXME: Remove this when we don't need this:
+namespace llvm { namespace PPC { extern int getNonRecordFormOpcode(uint16_t); } }
+
+// FIXME: A lot of code in PPCDispatchGroupSBHazardRecognizer is P7 specific.
+
+bool PPCDispatchGroupSBHazardRecognizer::mustComeFirst(const MCInstrDesc *MCID,
+                                                       unsigned &NSlots) {
+  // FIXME: Indirectly, this information is contained in the itinerary, and
+  // we should derive it from there instead of separately specifying it
+  // here.
+  unsigned IIC = MCID->getSchedClass();
+  switch (IIC) {
+  default:
+    NSlots = 1;
+    break;
+  case PPC::Sched::IIC_IntDivW:
+  case PPC::Sched::IIC_IntDivD:
+  case PPC::Sched::IIC_LdStLoadUpd:
+  case PPC::Sched::IIC_LdStLDU:
+  case PPC::Sched::IIC_LdStLFDU:
+  case PPC::Sched::IIC_LdStLFDUX:
+  case PPC::Sched::IIC_LdStLHA:
+  case PPC::Sched::IIC_LdStLHAU:
+  case PPC::Sched::IIC_LdStLWA:
+  case PPC::Sched::IIC_LdStSTDU:
+  case PPC::Sched::IIC_LdStSTFDU:
+    NSlots = 2;
+    break;
+  case PPC::Sched::IIC_LdStLoadUpdX:
+  case PPC::Sched::IIC_LdStLDUX:
+  case PPC::Sched::IIC_LdStLHAUX:
+  case PPC::Sched::IIC_LdStLWARX:
+  case PPC::Sched::IIC_LdStLDARX:
+  case PPC::Sched::IIC_LdStSTDUX:
+  case PPC::Sched::IIC_LdStSTDCX:
+  case PPC::Sched::IIC_LdStSTWCX:
+  case PPC::Sched::IIC_BrMCRX: // mtcr
+  // FIXME: Add sync/isync (here and in the itinerary).
+    NSlots = 4;
+    break;
+  }
+
+  // FIXME: record-form instructions need a different itinerary class.
+  if (NSlots == 1 && PPC::getNonRecordFormOpcode(MCID->getOpcode()) != -1)
+    NSlots = 2;
+
+  switch (IIC) {
+  default:
+    // All multi-slot instructions must come first.
+    return NSlots > 1;
+  case PPC::Sched::IIC_SprMFCR:
+  case PPC::Sched::IIC_SprMFCRF:
+  case PPC::Sched::IIC_SprMTSPR:
+    return true;
+  }
+}
+
+ScheduleHazardRecognizer::HazardType
+PPCDispatchGroupSBHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
+  if (Stalls == 0 && isLoadAfterStore(SU))
+    return NoopHazard;
+
+  return ScoreboardHazardRecognizer::getHazardType(SU, Stalls);
+}
+
+bool PPCDispatchGroupSBHazardRecognizer::ShouldPreferAnother(SUnit *SU) {
+  const MCInstrDesc *MCID = DAG->getInstrDesc(SU);
+  unsigned NSlots;
+  if (MCID && mustComeFirst(MCID, NSlots) && CurSlots)
+    return true;
+
+  return ScoreboardHazardRecognizer::ShouldPreferAnother(SU);
+}
+
+unsigned PPCDispatchGroupSBHazardRecognizer::PreEmitNoops(SUnit *SU) {
+  // We only need to fill out a maximum of 5 slots here: The 6th slot could
+  // only be a second branch, and otherwise the next instruction will start a
+  // new group.
+  if (isLoadAfterStore(SU) && CurSlots < 6) {
+    unsigned Directive =
+      DAG->TM.getSubtarget<PPCSubtarget>().getDarwinDirective();
+    // If we're using a special group-terminating nop, then we need only one.
+    if (Directive == PPC::DIR_PWR6 || Directive == PPC::DIR_PWR7)
+      return 1;
+
+    return 5 - CurSlots;
+  }
+
+  return ScoreboardHazardRecognizer::PreEmitNoops(SU);
+}
+
+void PPCDispatchGroupSBHazardRecognizer::EmitInstruction(SUnit *SU) {
+  const MCInstrDesc *MCID = DAG->getInstrDesc(SU);
+  if (MCID) {
+    if (CurSlots == 5 || (MCID->isBranch() && CurBranches == 1)) {
+      CurGroup.clear();
+      CurSlots = CurBranches = 0;
+    } else {
+      DEBUG(dbgs() << "**** Adding to dispatch group: SU(" <<
+                      SU->NodeNum << "): ");
+      DEBUG(DAG->dumpNode(SU));
+
+      unsigned NSlots;
+      bool MustBeFirst = mustComeFirst(MCID, NSlots);
+
+      // If this instruction must come first, but does not, then it starts a
+      // new group.
+      if (MustBeFirst && CurSlots) {
+        CurSlots = CurBranches = 0;
+        CurGroup.clear();
+      }
+
+      CurSlots += NSlots;
+      CurGroup.push_back(SU);
+
+      if (MCID->isBranch())
+        ++CurBranches;
+    }
+  }
+
+  return ScoreboardHazardRecognizer::EmitInstruction(SU);
+}
+
+void PPCDispatchGroupSBHazardRecognizer::AdvanceCycle() {
+  return ScoreboardHazardRecognizer::AdvanceCycle();
+}
+
+void PPCDispatchGroupSBHazardRecognizer::RecedeCycle() {
+  llvm_unreachable("Bottom-up scheduling not supported");
+}
+
+void PPCDispatchGroupSBHazardRecognizer::Reset() {
+  CurGroup.clear();
+  CurSlots = CurBranches = 0;
+  return ScoreboardHazardRecognizer::Reset();
+}
+
+void PPCDispatchGroupSBHazardRecognizer::EmitNoop() {
+  unsigned Directive =
+    DAG->TM.getSubtarget<PPCSubtarget>().getDarwinDirective();
+  // If the group has now filled all of its slots, or if we're using a special
+  // group-terminating nop, the group is complete.
+  if (Directive == PPC::DIR_PWR6 || Directive == PPC::DIR_PWR7 ||
+      CurSlots == 6)  {
+    CurGroup.clear();
+    CurSlots = CurBranches = 0;
+  } else {
+    CurGroup.push_back(0);
+    ++CurSlots;
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // PowerPC 970 Hazard Recognizer

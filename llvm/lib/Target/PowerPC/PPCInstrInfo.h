@@ -95,6 +95,18 @@ public:
   CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II,
                                      const ScheduleDAG *DAG) const;
 
+  virtual
+  int getOperandLatency(const InstrItineraryData *ItinData,
+                        const MachineInstr *DefMI, unsigned DefIdx,
+                        const MachineInstr *UseMI, unsigned UseIdx) const;
+  virtual
+  int getOperandLatency(const InstrItineraryData *ItinData,
+                        SDNode *DefNode, unsigned DefIdx,
+                        SDNode *UseNode, unsigned UseIdx) const {
+    return PPCGenInstrInfo::getOperandLatency(ItinData, DefNode, DefIdx,
+                                              UseNode, UseIdx);
+  }
+
   bool isCoalescableExtInstr(const MachineInstr &MI,
                              unsigned &SrcReg, unsigned &DstReg,
                              unsigned &SubIdx) const;

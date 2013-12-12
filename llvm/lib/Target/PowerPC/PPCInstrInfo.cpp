@@ -74,6 +74,9 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetPostRAHazardRecognizer(
   const ScheduleDAG *DAG) const {
   unsigned Directive = TM.getSubtarget<PPCSubtarget>().getDarwinDirective();
 
+  if (Directive == PPC::DIR_PWR7)
+    return new PPCDispatchGroupSBHazardRecognizer(II, DAG);
+
   // Most subtargets use a PPC970 recognizer.
   if (Directive != PPC::DIR_440 && Directive != PPC::DIR_A2 &&
       Directive != PPC::DIR_E500mc && Directive != PPC::DIR_E5500) {
@@ -83,6 +86,56 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetPostRAHazardRecognizer(
   }
 
   return new ScoreboardHazardRecognizer(II, DAG);
+}
+
+
+int PPCInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
+                                    const MachineInstr *DefMI, unsigned DefIdx,
+                                    const MachineInstr *UseMI,
+                                    unsigned UseIdx) const {
+  int Latency = PPCGenInstrInfo::getOperandLatency(ItinData, DefMI, DefIdx,
+                                                   UseMI, UseIdx);
+
+  const MachineOperand &DefMO = DefMI->getOperand(DefIdx);
+  unsigned Reg = DefMO.getReg();
+
+  const TargetRegisterInfo *TRI = &getRegisterInfo();
+  bool IsRegCR;
+  if (TRI->isVirtualRegister(Reg)) {
+    const MachineRegisterInfo *MRI =
+      &DefMI->getParent()->getParent()->getRegInfo();
+    IsRegCR = MRI->getRegClass(Reg)->hasSuperClassEq(&PPC::CRRCRegClass) ||
+              MRI->getRegClass(Reg)->hasSuperClassEq(&PPC::CRBITRCRegClass);
+  } else {
+    IsRegCR = PPC::CRRCRegClass.contains(Reg) ||
+              PPC::CRBITRCRegClass.contains(Reg);
+  }
+
+  if (UseMI->isBranch() && IsRegCR) {
+    if (Latency < 0)
+      Latency = getInstrLatency(ItinData, DefMI);
+
+    // On some cores, there is an additional delay between writing to a condition
+    // register, and using it from a branch.
+    unsigned Directive = TM.getSubtarget<PPCSubtarget>().getDarwinDirective();
+    switch (Directive) {
+    default: break;
+    case PPC::DIR_7400:
+    case PPC::DIR_750:
+    case PPC::DIR_970:
+    case PPC::DIR_E5500:
+    case PPC::DIR_PWR4:
+    case PPC::DIR_PWR5:
+    case PPC::DIR_PWR5X:
+    case PPC::DIR_PWR6:
+    case PPC::DIR_PWR6X:
+    case PPC::DIR_PWR7:
+      Latency += 2;
+      break;
+    }
+  }
+
+  return Latency;
 }
 
 // Detect 32 -> 64-bit extensions where we may reuse the low sub-register.
@@ -218,10 +271,19 @@ PPCInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
 
 void PPCInstrInfo::insertNoop(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator MI) const {
-  DebugLoc DL;
-  BuildMI(MBB, MI, DL, get(PPC::NOP));
-}
+  // This function is used for scheduling, and the nop wanted here is the type
+  // that terminates dispatch groups on the POWER cores.
+  unsigned Directive = TM.getSubtarget<PPCSubtarget>().getDarwinDirective();
+  unsigned Opcode;
+  switch (Directive) {
+  default:            Opcode = PPC::NOP; break;
+  case PPC::DIR_PWR6: Opcode = PPC::NOP_GT_PWR6; break;
+  case PPC::DIR_PWR7: Opcode = PPC::NOP_GT_PWR7; break;
+  }
 
+  DebugLoc DL;
+  BuildMI(MBB, MI, DL, get(Opcode));
+}
 
 // Branch analysis.
 // Note: If the condition register is set to CTR or CTR8 then this is a

@@ -93,6 +93,7 @@ def P7Itineraries : ProcessorItineraries<
                                                   P7_DU3, P7_DU4], 0>,
                                    InstrStage<1, [P7_FX1, P7_FX2]>],
                                   [1, 1, 1]>,
+  // FIXME: Add record-form itinerary data.
   InstrItinData<IIC_IntDivW     , [InstrStage<1, [P7_DU1], 0>,
                                    InstrStage<1, [P7_DU2], 0>,
                                    InstrStage<36, [P7_FX1, P7_FX2]>],
@@ -290,7 +291,10 @@ def P7Itineraries : ProcessorItineraries<
                                    InstrStage<1, [P7_DU4], 0>,
                                    InstrStage<1, [P7_LS1, P7_LS2]>],
                                   [1, 1, 1]>,
-  InstrItinData<IIC_BrMCRX      , [InstrStage<1, [P7_DU4], 0>,
+  InstrItinData<IIC_BrMCRX      , [InstrStage<1, [P7_DU1], 0>,
+                                   InstrStage<1, [P7_DU2], 0>,
+                                   InstrStage<1, [P7_DU3], 0>,
+                                   InstrStage<1, [P7_DU4], 0>,
                                    InstrStage<1, [P7_CRU]>,
                                    InstrStage<1, [P7_FX1, P7_FX2]>],
                                   [3, 1]>, // mtcr
@@ -300,6 +304,9 @@ def P7Itineraries : ProcessorItineraries<
   InstrItinData<IIC_SprMFCRF    , [InstrStage<1, [P7_DU1], 0>,
                                    InstrStage<1, [P7_CRU]>],
                                   [3, 1]>,
+  InstrItinData<IIC_SprMTSPR    , [InstrStage<1, [P7_DU1], 0>,
+                                   InstrStage<1, [P7_FX1]>],
+                                  [4, 1]>, // mtctr
   InstrItinData<IIC_FPGeneral   , [InstrStage<1, [P7_DU1, P7_DU2,
                                                   P7_DU3, P7_DU4], 0>,
                                    InstrStage<1, [P7_VS1, P7_VS2]>],

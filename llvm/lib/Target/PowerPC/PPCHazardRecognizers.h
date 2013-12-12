@@ -21,6 +21,32 @@
 
 namespace llvm {
 
+/// PPCDispatchGroupSBHazardRecognizer - This class implements a scoreboard-based
+/// hazard recognizer for PPC ooo processors with dispatch-group hazards.
+class PPCDispatchGroupSBHazardRecognizer : public ScoreboardHazardRecognizer {
+  const ScheduleDAG *DAG;
+  SmallVector<SUnit *, 7> CurGroup;
+  unsigned CurSlots, CurBranches;
+
+  bool isLoadAfterStore(SUnit *SU);
+  bool isBCTRAfterSet(SUnit *SU);
+  bool mustComeFirst(const MCInstrDesc *MCID, unsigned &NSlots);
+public:
+  PPCDispatchGroupSBHazardRecognizer(const InstrItineraryData *ItinData,
+                         const ScheduleDAG *DAG_) :
+    ScoreboardHazardRecognizer(ItinData, DAG_), DAG(DAG_),
+    CurSlots(0), CurBranches(0) {}
+
+  virtual HazardType getHazardType(SUnit *SU, int Stalls);
+  virtual bool ShouldPreferAnother(SUnit* SU);
+  virtual unsigned PreEmitNoops(SUnit *SU);
+  virtual void EmitInstruction(SUnit *SU);
+  virtual void AdvanceCycle();
+  virtual void RecedeCycle();
+  virtual void Reset();
+  virtual void EmitNoop();
+};
+
 /// PPCHazardRecognizer970 - This class defines a finite state automata that
 /// models the dispatch logic on the PowerPC 970 (aka G5) processor.  This
 /// promotes good dispatch group formation and implements noop insertion to

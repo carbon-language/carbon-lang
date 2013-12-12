@@ -258,6 +258,15 @@ class DForm_4_zero<bits<6> opcode, dag OOL, dag IOL, string asmstr,
   let Addr = 0;
 }
 
+class DForm_4_fixedreg_zero<bits<6> opcode, bits<5> R, dag OOL, dag IOL,
+                            string asmstr, InstrItinClass itin,
+                            list<dag> pattern>
+  : DForm_4<opcode, OOL, IOL, asmstr, itin, pattern> {
+  let A = R;
+  let B = R;
+  let C = 0; 
+}
+
 class IForm_and_DForm_1<bits<6> opcode1, bit aa, bit lk, bits<6> opcode2,
             dag OOL, dag IOL, string asmstr,
             InstrItinClass itin, list<dag> pattern>
