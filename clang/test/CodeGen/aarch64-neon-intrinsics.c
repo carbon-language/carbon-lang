@@ -4386,969 +4386,969 @@ uint64x2_t test_vcvtq_n_u64_f64(float64x2_t a) {
 int16x8_t test_vaddl_s8(int8x8_t a, int8x8_t b) {
   // CHECK: test_vaddl_s8
   return vaddl_s8(a, b);
-  // CHECK: saddl {{v[0-31]+}}.8h, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+  // CHECK: saddl {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 
 int32x4_t test_vaddl_s16(int16x4_t a, int16x4_t b) {
   // CHECK: test_vaddl_s16
   return vaddl_s16(a, b);
-  // CHECK: saddl {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: saddl {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 
 int64x2_t test_vaddl_s32(int32x2_t a, int32x2_t b) {
   // CHECK: test_vaddl_s32
   return vaddl_s32(a, b);
-  // CHECK: saddl {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: saddl {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 
 uint16x8_t test_vaddl_u8(uint8x8_t a, uint8x8_t b) {
   // CHECK: test_vaddl_u8
   return vaddl_u8(a, b);
-  // CHECK: uaddl {{v[0-31]+}}.8h, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+  // CHECK: uaddl {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 
 uint32x4_t test_vaddl_u16(uint16x4_t a, uint16x4_t b) {
   // CHECK: test_vaddl_u16
   return vaddl_u16(a, b);
-  // CHECK: uaddl {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: uaddl {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 
 uint64x2_t test_vaddl_u32(uint32x2_t a, uint32x2_t b) {
   // CHECK: test_vaddl_u32
   return vaddl_u32(a, b);
-  // CHECK: uaddl {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: uaddl {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 
 int16x8_t test_vaddl_high_s8(int8x16_t a, int8x16_t b) {
   // CHECK: test_vaddl_high_s8
   return vaddl_high_s8(a, b);
-  // CHECK: saddl2 {{v[0-31]+}}.8h, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+  // CHECK: saddl2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }
 
 int32x4_t test_vaddl_high_s16(int16x8_t a, int16x8_t b) {
   // CHECK: test_vaddl_high_s16
   return vaddl_high_s16(a, b);
-  // CHECK: saddl2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: saddl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 int64x2_t test_vaddl_high_s32(int32x4_t a, int32x4_t b) {
   // CHECK: test_vaddl_high_s32
   return vaddl_high_s32(a, b);
-  // CHECK: saddl2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: saddl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 uint16x8_t test_vaddl_high_u8(uint8x16_t a, uint8x16_t b) {
   // CHECK: test_vaddl_high_u8
   return vaddl_high_u8(a, b);
-  // CHECK: uaddl2 {{v[0-31]+}}.8h, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+  // CHECK: uaddl2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }
 
 uint32x4_t test_vaddl_high_u16(uint16x8_t a, uint16x8_t b) {
   // CHECK: test_vaddl_high_u16
   return vaddl_high_u16(a, b);
-  // CHECK: uaddl2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: uaddl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 uint64x2_t test_vaddl_high_u32(uint32x4_t a, uint32x4_t b) {
   // CHECK: test_vaddl_high_u32
   return vaddl_high_u32(a, b);
-  // CHECK: uaddl2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: uaddl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int16x8_t test_vaddw_s8(int16x8_t a, int8x8_t b) {
   // CHECK: test_vaddw_s8
   return vaddw_s8(a, b);
-  // CHECK: saddw {{v[0-31]+}}.8h, {{v[0-31]+}}.8h, {{v[0-31]+}}.8b
+  // CHECK: saddw {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8b
 }
 
 int32x4_t test_vaddw_s16(int32x4_t a, int16x4_t b) {
   // CHECK: test_vaddw_s16
   return vaddw_s16(a, b);
-  // CHECK: saddw {{v[0-31]+}}.4s, {{v[0-31]+}}.4s, {{v[0-31]+}}.4h
+  // CHECK: saddw {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4h
 }
 
 int64x2_t test_vaddw_s32(int64x2_t a, int32x2_t b) {
   // CHECK: test_vaddw_s32
   return vaddw_s32(a, b);
-  // CHECK: saddw {{v[0-31]+}}.2d, {{v[0-31]+}}.2d, {{v[0-31]+}}.2s
+  // CHECK: saddw {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2s
 }
 
 uint16x8_t test_vaddw_u8(uint16x8_t a, uint8x8_t b) {
   // CHECK: test_vaddw_u8
   return vaddw_u8(a, b);
-  // CHECK: uaddw {{v[0-31]+}}.8h, {{v[0-31]+}}.8h, {{v[0-31]+}}.8b
+  // CHECK: uaddw {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8b
 }
 
 uint32x4_t test_vaddw_u16(uint32x4_t a, uint16x4_t b) {
   // CHECK: test_vaddw_u16
   return vaddw_u16(a, b);
-  // CHECK: uaddw {{v[0-31]+}}.4s, {{v[0-31]+}}.4s, {{v[0-31]+}}.4h
+  // CHECK: uaddw {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4h
 }
 
 uint64x2_t test_vaddw_u32(uint64x2_t a, uint32x2_t b) {
   // CHECK: test_vaddw_u32
   return vaddw_u32(a, b);
-  // CHECK: uaddw {{v[0-31]+}}.2d, {{v[0-31]+}}.2d, {{v[0-31]+}}.2s
+  // CHECK: uaddw {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2s
 }
 
 int16x8_t test_vaddw_high_s8(int16x8_t a, int8x16_t b) {
   // CHECK: test_vaddw_high_s8
   return vaddw_high_s8(a, b);
-  // CHECK: saddw2 {{v[0-31]+}}.8h, {{v[0-31]+}}.8h, {{v[0-31]+}}.16b
+  // CHECK: saddw2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.16b
 }
 
 int32x4_t test_vaddw_high_s16(int32x4_t a, int16x8_t b) {
   // CHECK: test_vaddw_high_s16
   return vaddw_high_s16(a, b);
-  // CHECK: saddw2 {{v[0-31]+}}.4s, {{v[0-31]+}}.4s, {{v[0-31]+}}.8h
+  // CHECK: saddw2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.8h
 }
 
 int64x2_t test_vaddw_high_s32(int64x2_t a, int32x4_t b) {
   // CHECK: test_vaddw_high_s32
   return vaddw_high_s32(a, b);
-  // CHECK: saddw2 {{v[0-31]+}}.2d, {{v[0-31]+}}.2d, {{v[0-31]+}}.4s
+  // CHECK: saddw2 {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.4s
 }
 
 uint16x8_t test_vaddw_high_u8(uint16x8_t a, uint8x16_t b) {
   // CHECK: test_vaddw_high_u8
   return vaddw_high_u8(a, b);
-  // CHECK: uaddw2 {{v[0-31]+}}.8h, {{v[0-31]+}}.8h, {{v[0-31]+}}.16b
+  // CHECK: uaddw2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.16b
 }
 
 uint32x4_t test_vaddw_high_u16(uint32x4_t a, uint16x8_t b) {
   // CHECK: test_vaddw_high_u16
   return vaddw_high_u16(a, b);
-  // CHECK: uaddw2 {{v[0-31]+}}.4s, {{v[0-31]+}}.4s, {{v[0-31]+}}.8h
+  // CHECK: uaddw2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.8h
 }
 
 uint64x2_t test_vaddw_high_u32(uint64x2_t a, uint32x4_t b) {
   // CHECK: test_vaddw_high_u32
   return vaddw_high_u32(a, b);
-  // CHECK: uaddw2 {{v[0-31]+}}.2d, {{v[0-31]+}}.2d, {{v[0-31]+}}.4s
+  // CHECK: uaddw2 {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.4s
 }
 
 int16x8_t test_vsubl_s8(int8x8_t a, int8x8_t b) {
   // CHECK: test_vsubl_s8
   return vsubl_s8(a, b);
-  // CHECK: ssubl {{v[0-31]+}}.8h, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+  // CHECK: ssubl {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 
 int32x4_t test_vsubl_s16(int16x4_t a, int16x4_t b) {
   // CHECK: test_vsubl_s16
   return vsubl_s16(a, b);
-  // CHECK: ssubl {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: ssubl {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 
 int64x2_t test_vsubl_s32(int32x2_t a, int32x2_t b) {
   // CHECK: test_vsubl_s32
   return vsubl_s32(a, b);
-  // CHECK: ssubl {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: ssubl {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 
 uint16x8_t test_vsubl_u8(uint8x8_t a, uint8x8_t b) {
   // CHECK: test_vsubl_u8
   return vsubl_u8(a, b);
-  // CHECK: usubl {{v[0-31]+}}.8h, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+  // CHECK: usubl {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 
 uint32x4_t test_vsubl_u16(uint16x4_t a, uint16x4_t b) {
   // CHECK: test_vsubl_u16
   return vsubl_u16(a, b);
-  // CHECK: usubl {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: usubl {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 
 uint64x2_t test_vsubl_u32(uint32x2_t a, uint32x2_t b) {
   // CHECK: test_vsubl_u32
   return vsubl_u32(a, b);
-  // CHECK: usubl {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: usubl {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 
 int16x8_t test_vsubl_high_s8(int8x16_t a, int8x16_t b) {
   // CHECK: test_vsubl_high_s8
   return vsubl_high_s8(a, b);
-  // CHECK: ssubl2 {{v[0-31]+}}.8h, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+  // CHECK: ssubl2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }
 
 int32x4_t test_vsubl_high_s16(int16x8_t a, int16x8_t b) {
   // CHECK: test_vsubl_high_s16
   return vsubl_high_s16(a, b);
-  // CHECK: ssubl2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: ssubl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 int64x2_t test_vsubl_high_s32(int32x4_t a, int32x4_t b) {
   // CHECK: test_vsubl_high_s32
   return vsubl_high_s32(a, b);
-  // CHECK: ssubl2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: ssubl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 uint16x8_t test_vsubl_high_u8(uint8x16_t a, uint8x16_t b) {
   // CHECK: test_vsubl_high_u8
   return vsubl_high_u8(a, b);
-  // CHECK: usubl2 {{v[0-31]+}}.8h, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+  // CHECK: usubl2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }
 
 uint32x4_t test_vsubl_high_u16(uint16x8_t a, uint16x8_t b) {
   // CHECK: test_vsubl_high_u16
   return vsubl_high_u16(a, b);
-  // CHECK: usubl2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: usubl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 uint64x2_t test_vsubl_high_u32(uint32x4_t a, uint32x4_t b) {
   // CHECK: test_vsubl_high_u32
   return vsubl_high_u32(a, b);
-  // CHECK: usubl2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: usubl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int16x8_t test_vsubw_s8(int16x8_t a, int8x8_t b) {
   // CHECK: test_vsubw_s8
   return vsubw_s8(a, b);
-  // CHECK: ssubw {{v[0-31]+}}.8h, {{v[0-31]+}}.8h, {{v[0-31]+}}.8b
+  // CHECK: ssubw {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8b
 }
 
 int32x4_t test_vsubw_s16(int32x4_t a, int16x4_t b) {
   // CHECK: test_vsubw_s16
   return vsubw_s16(a, b);
-  // CHECK: ssubw {{v[0-31]+}}.4s, {{v[0-31]+}}.4s, {{v[0-31]+}}.4h
+  // CHECK: ssubw {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4h
 }
 
 int64x2_t test_vsubw_s32(int64x2_t a, int32x2_t b) {
   // CHECK: test_vsubw_s32
   return vsubw_s32(a, b);
-  // CHECK: ssubw {{v[0-31]+}}.2d, {{v[0-31]+}}.2d, {{v[0-31]+}}.2s
+  // CHECK: ssubw {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2s
 }
 
 uint16x8_t test_vsubw_u8(uint16x8_t a, uint8x8_t b) {
   // CHECK: test_vsubw_u8
   return vsubw_u8(a, b);
-  // CHECK: usubw {{v[0-31]+}}.8h, {{v[0-31]+}}.8h, {{v[0-31]+}}.8b
+  // CHECK: usubw {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8b
 }
 
 uint32x4_t test_vsubw_u16(uint32x4_t a, uint16x4_t b) {
   // CHECK: test_vsubw_u16
   return vsubw_u16(a, b);
-  // CHECK: usubw {{v[0-31]+}}.4s, {{v[0-31]+}}.4s, {{v[0-31]+}}.4h
+  // CHECK: usubw {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4h
 }
 
 uint64x2_t test_vsubw_u32(uint64x2_t a, uint32x2_t b) {
   // CHECK: test_vsubw_u32
   return vsubw_u32(a, b);
-  // CHECK: usubw {{v[0-31]+}}.2d, {{v[0-31]+}}.2d, {{v[0-31]+}}.2s
+  // CHECK: usubw {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2s
 }
 
 int16x8_t test_vsubw_high_s8(int16x8_t a, int8x16_t b) {
   // CHECK: test_vsubw_high_s8
   return vsubw_high_s8(a, b);
-  // CHECK: ssubw2 {{v[0-31]+}}.8h, {{v[0-31]+}}.8h, {{v[0-31]+}}.16b
+  // CHECK: ssubw2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.16b
 }
 
 int32x4_t test_vsubw_high_s16(int32x4_t a, int16x8_t b) {
   // CHECK: test_vsubw_high_s16
   return vsubw_high_s16(a, b);
-  // CHECK: ssubw2 {{v[0-31]+}}.4s, {{v[0-31]+}}.4s, {{v[0-31]+}}.8h
+  // CHECK: ssubw2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.8h
 }
 
 int64x2_t test_vsubw_high_s32(int64x2_t a, int32x4_t b) {
   // CHECK: test_vsubw_high_s32
   return vsubw_high_s32(a, b);
-  // CHECK: ssubw2 {{v[0-31]+}}.2d, {{v[0-31]+}}.2d, {{v[0-31]+}}.4s
+  // CHECK: ssubw2 {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.4s
 }
 
 uint16x8_t test_vsubw_high_u8(uint16x8_t a, uint8x16_t b) {
   // CHECK: test_vsubw_high_u8
   return vsubw_high_u8(a, b);
-  // CHECK: usubw2 {{v[0-31]+}}.8h, {{v[0-31]+}}.8h, {{v[0-31]+}}.16b
+  // CHECK: usubw2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.16b
 }
 
 uint32x4_t test_vsubw_high_u16(uint32x4_t a, uint16x8_t b) {
   // CHECK: test_vsubw_high_u16
   return vsubw_high_u16(a, b);
-  // CHECK: usubw2 {{v[0-31]+}}.4s, {{v[0-31]+}}.4s, {{v[0-31]+}}.8h
+  // CHECK: usubw2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.8h
 }
 
 uint64x2_t test_vsubw_high_u32(uint64x2_t a, uint32x4_t b) {
   // CHECK: test_vsubw_high_u32
   return vsubw_high_u32(a, b);
-  // CHECK: usubw2 {{v[0-31]+}}.2d, {{v[0-31]+}}.2d, {{v[0-31]+}}.4s
+  // CHECK: usubw2 {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.4s
 }
 
 int8x8_t test_vaddhn_s16(int16x8_t a, int16x8_t b) {
   // CHECK: test_vaddhn_s16
   return vaddhn_s16(a, b);
-  // CHECK: addhn {{v[0-31]+}}.8b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: addhn {{v[0-9]+}}.8b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 int16x4_t test_vaddhn_s32(int32x4_t a, int32x4_t b) {
   // CHECK: test_vaddhn_s32
   return vaddhn_s32(a, b);
-  // CHECK: addhn {{v[0-31]+}}.4h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: addhn {{v[0-9]+}}.4h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int32x2_t test_vaddhn_s64(int64x2_t a, int64x2_t b) {
   // CHECK: test_vaddhn_s64
   return vaddhn_s64(a, b);
-  // CHECK: addhn {{v[0-31]+}}.2s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: addhn {{v[0-9]+}}.2s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 uint8x8_t test_vaddhn_u16(uint16x8_t a, uint16x8_t b) {
   // CHECK: test_vaddhn_u16
   return vaddhn_u16(a, b);
-  // CHECK: addhn {{v[0-31]+}}.8b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: addhn {{v[0-9]+}}.8b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 uint16x4_t test_vaddhn_u32(uint32x4_t a, uint32x4_t b) {
   // CHECK: test_vaddhn_u32
   return vaddhn_u32(a, b);
-  // CHECK: addhn {{v[0-31]+}}.4h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: addhn {{v[0-9]+}}.4h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 uint32x2_t test_vaddhn_u64(uint64x2_t a, uint64x2_t b) {
   // CHECK: test_vaddhn_u64
   return vaddhn_u64(a, b);
-  // CHECK: addhn {{v[0-31]+}}.2s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: addhn {{v[0-9]+}}.2s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 int8x16_t test_vaddhn_high_s16(int8x8_t r, int16x8_t a, int16x8_t b) {
   // CHECK: test_vaddhn_high_s16
   return vaddhn_high_s16(r, a, b);
-  // CHECK: addhn2 {{v[0-31]+}}.16b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: addhn2 {{v[0-9]+}}.16b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 int16x8_t test_vaddhn_high_s32(int16x4_t r, int32x4_t a, int32x4_t b) {
   // CHECK: test_vaddhn_high_s32
   return vaddhn_high_s32(r, a, b);
-  // CHECK: addhn2 {{v[0-31]+}}.8h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: addhn2 {{v[0-9]+}}.8h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int32x4_t test_vaddhn_high_s64(int32x2_t r, int64x2_t a, int64x2_t b) {
   // CHECK: test_vaddhn_high_s64
   return vaddhn_high_s64(r, a, b);
-  // CHECK: addhn2 {{v[0-31]+}}.4s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: addhn2 {{v[0-9]+}}.4s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 uint8x16_t test_vaddhn_high_u16(uint8x8_t r, uint16x8_t a, uint16x8_t b) {
   // CHECK: test_vaddhn_high_u16
   return vaddhn_high_u16(r, a, b);
-  // CHECK: addhn2 {{v[0-31]+}}.16b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: addhn2 {{v[0-9]+}}.16b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 uint16x8_t test_vaddhn_high_u32(uint16x4_t r, uint32x4_t a, uint32x4_t b) {
   // CHECK: test_vaddhn_high_u32
   return vaddhn_high_u32(r, a, b);
-  // CHECK: addhn2 {{v[0-31]+}}.8h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: addhn2 {{v[0-9]+}}.8h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 uint32x4_t test_vaddhn_high_u64(uint32x2_t r, uint64x2_t a, uint64x2_t b) {
   // CHECK: test_vaddhn_high_u64
   return vaddhn_high_u64(r, a, b);
-  // CHECK: addhn2 {{v[0-31]+}}.4s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: addhn2 {{v[0-9]+}}.4s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 int8x8_t test_vraddhn_s16(int16x8_t a, int16x8_t b) {
   // CHECK: test_vraddhn_s16
   return vraddhn_s16(a, b);
-  // CHECK: raddhn {{v[0-31]+}}.8b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: raddhn {{v[0-9]+}}.8b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 int16x4_t test_vraddhn_s32(int32x4_t a, int32x4_t b) {
   // CHECK: test_vraddhn_s32
   return vraddhn_s32(a, b);
-  // CHECK: raddhn {{v[0-31]+}}.4h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: raddhn {{v[0-9]+}}.4h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int32x2_t test_vraddhn_s64(int64x2_t a, int64x2_t b) {
   // CHECK: test_vraddhn_s64
   return vraddhn_s64(a, b);
-  // CHECK: raddhn {{v[0-31]+}}.2s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: raddhn {{v[0-9]+}}.2s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 uint8x8_t test_vraddhn_u16(uint16x8_t a, uint16x8_t b) {
   // CHECK: test_vraddhn_u16
   return vraddhn_u16(a, b);
-  // CHECK: raddhn {{v[0-31]+}}.8b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: raddhn {{v[0-9]+}}.8b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 uint16x4_t test_vraddhn_u32(uint32x4_t a, uint32x4_t b) {
   // CHECK: test_vraddhn_u32
   return vraddhn_u32(a, b);
-  // CHECK: raddhn {{v[0-31]+}}.4h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: raddhn {{v[0-9]+}}.4h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 uint32x2_t test_vraddhn_u64(uint64x2_t a, uint64x2_t b) {
   // CHECK: test_vraddhn_u64
   return vraddhn_u64(a, b);
-  // CHECK: raddhn {{v[0-31]+}}.2s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: raddhn {{v[0-9]+}}.2s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 int8x16_t test_vraddhn_high_s16(int8x8_t r, int16x8_t a, int16x8_t b) {
   // CHECK: test_vraddhn_high_s16
   return vraddhn_high_s16(r, a, b);
-  // CHECK: raddhn2 {{v[0-31]+}}.16b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: raddhn2 {{v[0-9]+}}.16b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 int16x8_t test_vraddhn_high_s32(int16x4_t r, int32x4_t a, int32x4_t b) {
   // CHECK: test_vraddhn_high_s32
   return vraddhn_high_s32(r, a, b);
-  // CHECK: raddhn2 {{v[0-31]+}}.8h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: raddhn2 {{v[0-9]+}}.8h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int32x4_t test_vraddhn_high_s64(int32x2_t r, int64x2_t a, int64x2_t b) {
   // CHECK: test_vraddhn_high_s64
   return vraddhn_high_s64(r, a, b);
-  // CHECK: raddhn2 {{v[0-31]+}}.4s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: raddhn2 {{v[0-9]+}}.4s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 uint8x16_t test_vraddhn_high_u16(uint8x8_t r, uint16x8_t a, uint16x8_t b) {
   // CHECK: test_vraddhn_high_u16
   return vraddhn_high_u16(r, a, b);
-  // CHECK: raddhn2 {{v[0-31]+}}.16b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: raddhn2 {{v[0-9]+}}.16b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 uint16x8_t test_vraddhn_high_u32(uint16x4_t r, uint32x4_t a, uint32x4_t b) {
   // CHECK: test_vraddhn_high_u32
   return vraddhn_high_u32(r, a, b);
-  // CHECK: raddhn2 {{v[0-31]+}}.8h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: raddhn2 {{v[0-9]+}}.8h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 uint32x4_t test_vraddhn_high_u64(uint32x2_t r, uint64x2_t a, uint64x2_t b) {
   // CHECK: test_vraddhn_high_u64
   return vraddhn_high_u64(r, a, b);
-  // CHECK: raddhn2 {{v[0-31]+}}.4s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: raddhn2 {{v[0-9]+}}.4s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 int8x8_t test_vsubhn_s16(int16x8_t a, int16x8_t b) {
   // CHECK: test_vsubhn_s16
   return vsubhn_s16(a, b);
-  // CHECK: subhn {{v[0-31]+}}.8b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: subhn {{v[0-9]+}}.8b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 int16x4_t test_vsubhn_s32(int32x4_t a, int32x4_t b) {
   // CHECK: test_vsubhn_s32
   return vsubhn_s32(a, b);
-  // CHECK: subhn {{v[0-31]+}}.4h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: subhn {{v[0-9]+}}.4h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int32x2_t test_vsubhn_s64(int64x2_t a, int64x2_t b) {
   // CHECK: test_vsubhn_s64
   return vsubhn_s64(a, b);
-  // CHECK: subhn {{v[0-31]+}}.2s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: subhn {{v[0-9]+}}.2s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 uint8x8_t test_vsubhn_u16(uint16x8_t a, uint16x8_t b) {
   // CHECK: test_vsubhn_u16
   return vsubhn_u16(a, b);
-  // CHECK: subhn {{v[0-31]+}}.8b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: subhn {{v[0-9]+}}.8b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 uint16x4_t test_vsubhn_u32(uint32x4_t a, uint32x4_t b) {
   // CHECK: test_vsubhn_u32
   return vsubhn_u32(a, b);
-  // CHECK: subhn {{v[0-31]+}}.4h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: subhn {{v[0-9]+}}.4h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 uint32x2_t test_vsubhn_u64(uint64x2_t a, uint64x2_t b) {
   // CHECK: test_vsubhn_u64
   return vsubhn_u64(a, b);
-  // CHECK: subhn {{v[0-31]+}}.2s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: subhn {{v[0-9]+}}.2s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 int8x16_t test_vsubhn_high_s16(int8x8_t r, int16x8_t a, int16x8_t b) {
   // CHECK: test_vsubhn_high_s16
   return vsubhn_high_s16(r, a, b);
-  // CHECK: subhn2 {{v[0-31]+}}.16b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: subhn2 {{v[0-9]+}}.16b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 int16x8_t test_vsubhn_high_s32(int16x4_t r, int32x4_t a, int32x4_t b) {
   // CHECK: test_vsubhn_high_s32
   return vsubhn_high_s32(r, a, b);
-  // CHECK: subhn2 {{v[0-31]+}}.8h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: subhn2 {{v[0-9]+}}.8h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int32x4_t test_vsubhn_high_s64(int32x2_t r, int64x2_t a, int64x2_t b) {
   // CHECK: test_vsubhn_high_s64
   return vsubhn_high_s64(r, a, b);
-  // CHECK: subhn2 {{v[0-31]+}}.4s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: subhn2 {{v[0-9]+}}.4s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 uint8x16_t test_vsubhn_high_u16(uint8x8_t r, uint16x8_t a, uint16x8_t b) {
   // CHECK: test_vsubhn_high_u16
   return vsubhn_high_u16(r, a, b);
-  // CHECK: subhn2 {{v[0-31]+}}.16b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: subhn2 {{v[0-9]+}}.16b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 uint16x8_t test_vsubhn_high_u32(uint16x4_t r, uint32x4_t a, uint32x4_t b) {
   // CHECK: test_vsubhn_high_u32
   return vsubhn_high_u32(r, a, b);
-  // CHECK: subhn2 {{v[0-31]+}}.8h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: subhn2 {{v[0-9]+}}.8h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 uint32x4_t test_vsubhn_high_u64(uint32x2_t r, uint64x2_t a, uint64x2_t b) {
   // CHECK: test_vsubhn_high_u64
   return vsubhn_high_u64(r, a, b);
-  // CHECK: subhn2 {{v[0-31]+}}.4s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: subhn2 {{v[0-9]+}}.4s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 int8x8_t test_vrsubhn_s16(int16x8_t a, int16x8_t b) {
   // CHECK: test_vrsubhn_s16
   return vrsubhn_s16(a, b);
-  // CHECK: rsubhn {{v[0-31]+}}.8b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: rsubhn {{v[0-9]+}}.8b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 int16x4_t test_vrsubhn_s32(int32x4_t a, int32x4_t b) {
   // CHECK: test_vrsubhn_s32
   return vrsubhn_s32(a, b);
-  // CHECK: rsubhn {{v[0-31]+}}.4h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: rsubhn {{v[0-9]+}}.4h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int32x2_t test_vrsubhn_s64(int64x2_t a, int64x2_t b) {
   // CHECK: test_vrsubhn_s64
   return vrsubhn_s64(a, b);
-  // CHECK: rsubhn {{v[0-31]+}}.2s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: rsubhn {{v[0-9]+}}.2s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 uint8x8_t test_vrsubhn_u16(uint16x8_t a, uint16x8_t b) {
   // CHECK: test_vrsubhn_u16
   return vrsubhn_u16(a, b);
-  // CHECK: rsubhn {{v[0-31]+}}.8b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: rsubhn {{v[0-9]+}}.8b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 uint16x4_t test_vrsubhn_u32(uint32x4_t a, uint32x4_t b) {
   // CHECK: test_vrsubhn_u32
   return vrsubhn_u32(a, b);
-  // CHECK: rsubhn {{v[0-31]+}}.4h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: rsubhn {{v[0-9]+}}.4h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 uint32x2_t test_vrsubhn_u64(uint64x2_t a, uint64x2_t b) {
   // CHECK: test_vrsubhn_u64
   return vrsubhn_u64(a, b);
-  // CHECK: rsubhn {{v[0-31]+}}.2s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: rsubhn {{v[0-9]+}}.2s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 int8x16_t test_vrsubhn_high_s16(int8x8_t r, int16x8_t a, int16x8_t b) {
   // CHECK: test_vrsubhn_high_s16
   return vrsubhn_high_s16(r, a, b);
-  // CHECK: rsubhn2 {{v[0-31]+}}.16b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: rsubhn2 {{v[0-9]+}}.16b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 int16x8_t test_vrsubhn_high_s32(int16x4_t r, int32x4_t a, int32x4_t b) {
   // CHECK: test_vrsubhn_high_s32
   return vrsubhn_high_s32(r, a, b);
-  // CHECK: rsubhn2 {{v[0-31]+}}.8h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: rsubhn2 {{v[0-9]+}}.8h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int32x4_t test_vrsubhn_high_s64(int32x2_t r, int64x2_t a, int64x2_t b) {
   // CHECK: test_vrsubhn_high_s64
   return vrsubhn_high_s64(r, a, b);
-  // CHECK: rsubhn2 {{v[0-31]+}}.4s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: rsubhn2 {{v[0-9]+}}.4s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 uint8x16_t test_vrsubhn_high_u16(uint8x8_t r, uint16x8_t a, uint16x8_t b) {
   // CHECK: test_vrsubhn_high_u16
   return vrsubhn_high_u16(r, a, b);
-  // CHECK: rsubhn2 {{v[0-31]+}}.16b, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: rsubhn2 {{v[0-9]+}}.16b, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 uint16x8_t test_vrsubhn_high_u32(uint16x4_t r, uint32x4_t a, uint32x4_t b) {
   // CHECK: test_vrsubhn_high_u32
   return vrsubhn_high_u32(r, a, b);
-  // CHECK: rsubhn2 {{v[0-31]+}}.8h, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: rsubhn2 {{v[0-9]+}}.8h, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 uint32x4_t test_vrsubhn_high_u64(uint32x2_t r, uint64x2_t a, uint64x2_t b) {
   // CHECK: test_vrsubhn_high_u64
   return vrsubhn_high_u64(r, a, b);
-  // CHECK: rsubhn2 {{v[0-31]+}}.4s, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+  // CHECK: rsubhn2 {{v[0-9]+}}.4s, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 int16x8_t test_vabdl_s8(int8x8_t a, int8x8_t b) {
   // CHECK: test_vabdl_s8
   return vabdl_s8(a, b);
-  // CHECK: sabdl {{v[0-31]+}}.8h, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+  // CHECK: sabdl {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 int32x4_t test_vabdl_s16(int16x4_t a, int16x4_t b) {
   // CHECK: test_vabdl_s16
   return vabdl_s16(a, b);
-  // CHECK: sabdl {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: sabdl {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 int64x2_t test_vabdl_s32(int32x2_t a, int32x2_t b) {
   // CHECK: test_vabdl_s32
   return vabdl_s32(a, b);
-  // CHECK: sabdl {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: sabdl {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 uint16x8_t test_vabdl_u8(uint8x8_t a, uint8x8_t b) {
   // CHECK: test_vabdl_u8
   return vabdl_u8(a, b);
-  // CHECK: uabdl {{v[0-31]+}}.8h, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+  // CHECK: uabdl {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 uint32x4_t test_vabdl_u16(uint16x4_t a, uint16x4_t b) {
   // CHECK: test_vabdl_u16
   return vabdl_u16(a, b);
-  // CHECK: uabdl {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: uabdl {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 uint64x2_t test_vabdl_u32(uint32x2_t a, uint32x2_t b) {
   // CHECK: test_vabdl_u32
   return vabdl_u32(a, b);
-  // CHECK: uabdl {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: uabdl {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 
 int16x8_t test_vabal_s8(int16x8_t a, int8x8_t b, int8x8_t c) {
   // CHECK: test_vabal_s8
   return vabal_s8(a, b, c);
-  // CHECK: sabal {{v[0-31]+}}.8h, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+  // CHECK: sabal {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 int32x4_t test_vabal_s16(int32x4_t a, int16x4_t b, int16x4_t c) {
   // CHECK: test_vabal_s16
   return vabal_s16(a, b, c);
-  // CHECK: sabal {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: sabal {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 int64x2_t test_vabal_s32(int64x2_t a, int32x2_t b, int32x2_t c) {
   // CHECK: test_vabal_s32
   return vabal_s32(a, b, c);
-  // CHECK: sabal {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: sabal {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 uint16x8_t test_vabal_u8(uint16x8_t a, uint8x8_t b, uint8x8_t c) {
   // CHECK: test_vabal_u8
   return vabal_u8(a, b, c);
-  // CHECK: uabal {{v[0-31]+}}.8h, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+  // CHECK: uabal {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 uint32x4_t test_vabal_u16(uint32x4_t a, uint16x4_t b, uint16x4_t c) {
   // CHECK: test_vabal_u16
   return vabal_u16(a, b, c);
-  // CHECK: uabal {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: uabal {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 uint64x2_t test_vabal_u32(uint64x2_t a, uint32x2_t b, uint32x2_t c) {
   // CHECK: test_vabal_u32
   return vabal_u32(a, b, c);
-  // CHECK: uabal {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: uabal {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 
 int16x8_t test_vabdl_high_s8(int8x16_t a, int8x16_t b) {
   // CHECK: test_vabdl_high_s8
   return vabdl_high_s8(a, b);
-  // CHECK: sabdl2 {{v[0-31]+}}.8h, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+  // CHECK: sabdl2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }
 int32x4_t test_vabdl_high_s16(int16x8_t a, int16x8_t b) {
   // CHECK: test_vabdl_high_s16
   return vabdl_high_s16(a, b);
-  // CHECK: sabdl2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: sabdl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 int64x2_t test_vabdl_high_s32(int32x4_t a, int32x4_t b) {
   // CHECK: test_vabdl_high_s32
   return vabdl_high_s32(a, b);
-  // CHECK: sabdl2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: sabdl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 uint16x8_t test_vabdl_high_u8(uint8x16_t a, uint8x16_t b) {
   // CHECK: test_vabdl_high_u8
   return vabdl_high_u8(a, b);
-  // CHECK: uabdl2 {{v[0-31]+}}.8h, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+  // CHECK: uabdl2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }
 uint32x4_t test_vabdl_high_u16(uint16x8_t a, uint16x8_t b) {
   // CHECK: test_vabdl_high_u16
   return vabdl_high_u16(a, b);
-  // CHECK: uabdl2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: uabdl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 uint64x2_t test_vabdl_high_u32(uint32x4_t a, uint32x4_t b) {
   // CHECK: test_vabdl_high_u32
   return vabdl_high_u32(a, b);
-  // CHECK: uabdl2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: uabdl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int16x8_t test_vabal_high_s8(int16x8_t a, int8x16_t b, int8x16_t c) {
   // CHECK: test_vabal_high_s8
   return vabal_high_s8(a, b, c);
-  // CHECK: sabal2 {{v[0-31]+}}.8h, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+  // CHECK: sabal2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }
 int32x4_t test_vabal_high_s16(int32x4_t a, int16x8_t b, int16x8_t c) {
   // CHECK: test_vabal_high_s16
   return vabal_high_s16(a, b, c);
-  // CHECK: sabal2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: sabal2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 int64x2_t test_vabal_high_s32(int64x2_t a, int32x4_t b, int32x4_t c) {
   // CHECK: test_vabal_high_s32
   return vabal_high_s32(a, b, c);
-  // CHECK: sabal2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: sabal2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 uint16x8_t test_vabal_high_u8(uint16x8_t a, uint8x16_t b, uint8x16_t c) {
   // CHECK: test_vabal_high_u8
   return vabal_high_u8(a, b, c);
-  // CHECK: uabal2 {{v[0-31]+}}.8h, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+  // CHECK: uabal2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }
 uint32x4_t test_vabal_high_u16(uint32x4_t a, uint16x8_t b, uint16x8_t c) {
   // CHECK: test_vabal_high_u16
   return vabal_high_u16(a, b, c);
-  // CHECK: uabal2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: uabal2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 uint64x2_t test_vabal_high_u32(uint64x2_t a, uint32x4_t b, uint32x4_t c) {
   // CHECK: test_vabal_high_u32
   return vabal_high_u32(a, b, c);
-  // CHECK: uabal2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: uabal2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int16x8_t test_vmull_s8(int8x8_t a, int8x8_t b) {
   // CHECK: test_vmull_s8
   return vmull_s8(a, b);
-  // CHECK: smull {{v[0-31]+}}.8h, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+  // CHECK: smull {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 int32x4_t test_vmull_s16(int16x4_t a, int16x4_t b) {
   // CHECK: test_vmull_s16
   return vmull_s16(a, b);
-  // CHECK: smull {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: smull {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 int64x2_t test_vmull_s32(int32x2_t a, int32x2_t b) {
   // CHECK: test_vmull_s32
   return vmull_s32(a, b);
-  // CHECK: smull {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: smull {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 uint16x8_t test_vmull_u8(uint8x8_t a, uint8x8_t b) {
   // CHECK: test_vmull_u8
   return vmull_u8(a, b);
-  // CHECK: umull {{v[0-31]+}}.8h, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+  // CHECK: umull {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 uint32x4_t test_vmull_u16(uint16x4_t a, uint16x4_t b) {
   // CHECK: test_vmull_u16
   return vmull_u16(a, b);
-  // CHECK: umull {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: umull {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 uint64x2_t test_vmull_u32(uint32x2_t a, uint32x2_t b) {
   // CHECK: test_vmull_u32
   return vmull_u32(a, b);
-  // CHECK: umull {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: umull {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 
 int16x8_t test_vmull_high_s8(int8x16_t a, int8x16_t b) {
   // CHECK: test_vmull_high_s8
   return vmull_high_s8(a, b);
-  // CHECK: smull2 {{v[0-31]+}}.8h, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+  // CHECK: smull2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }
 int32x4_t test_vmull_high_s16(int16x8_t a, int16x8_t b) {
   // CHECK: test_vmull_high_s16
   return vmull_high_s16(a, b);
-  // CHECK: smull2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: smull2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 int64x2_t test_vmull_high_s32(int32x4_t a, int32x4_t b) {
   // CHECK: test_vmull_high_s32
   return vmull_high_s32(a, b);
-  // CHECK: smull2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: smull2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 uint16x8_t test_vmull_high_u8(uint8x16_t a, uint8x16_t b) {
   // CHECK: test_vmull_high_u8
   return vmull_high_u8(a, b);
-  // CHECK: umull2 {{v[0-31]+}}.8h, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+  // CHECK: umull2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }
 uint32x4_t test_vmull_high_u16(uint16x8_t a, uint16x8_t b) {
   // CHECK: test_vmull_high_u16
   return vmull_high_u16(a, b);
-  // CHECK: umull2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: umull2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 uint64x2_t test_vmull_high_u32(uint32x4_t a, uint32x4_t b) {
   // CHECK: test_vmull_high_u32
   return vmull_high_u32(a, b);
-  // CHECK: umull2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: umull2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int16x8_t test_vmlal_s8(int16x8_t a, int8x8_t b, int8x8_t c) {
   // CHECK: test_vmlal_s8
   return vmlal_s8(a, b, c);
-  // CHECK: smlal {{v[0-31]+}}.8h, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+  // CHECK: smlal {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 int32x4_t test_vmlal_s16(int32x4_t a, int16x4_t b, int16x4_t c) {
   // CHECK: test_vmlal_s16
   return vmlal_s16(a, b, c);
-  // CHECK: smlal {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: smlal {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 int64x2_t test_vmlal_s32(int64x2_t a, int32x2_t b, int32x2_t c) {
   // CHECK: test_vmlal_s32
   return vmlal_s32(a, b, c);
-  // CHECK: smlal {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: smlal {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 uint16x8_t test_vmlal_u8(uint16x8_t a, uint8x8_t b, uint8x8_t c) {
   // CHECK: test_vmlal_u8
   return vmlal_u8(a, b, c);
-  // CHECK: umlal {{v[0-31]+}}.8h, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+  // CHECK: umlal {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 uint32x4_t test_vmlal_u16(uint32x4_t a, uint16x4_t b, uint16x4_t c) {
   // CHECK: test_vmlal_u16
   return vmlal_u16(a, b, c);
-  // CHECK: umlal {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: umlal {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 uint64x2_t test_vmlal_u32(uint64x2_t a, uint32x2_t b, uint32x2_t c) {
   // CHECK: test_vmlal_u32
   return vmlal_u32(a, b, c);
-  // CHECK: umlal {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: umlal {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 
 int16x8_t test_vmlal_high_s8(int16x8_t a, int8x16_t b, int8x16_t c) {
   // CHECK: test_vmlal_high_s8
   return vmlal_high_s8(a, b, c);
-  // CHECK: smlal2 {{v[0-31]+}}.8h, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+  // CHECK: smlal2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }
 int32x4_t test_vmlal_high_s16(int32x4_t a, int16x8_t b, int16x8_t c) {
   // CHECK: test_vmlal_high_s16
   return vmlal_high_s16(a, b, c);
-  // CHECK: smlal2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: smlal2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 int64x2_t test_vmlal_high_s32(int64x2_t a, int32x4_t b, int32x4_t c) {
   // CHECK: test_vmlal_high_s32
   return vmlal_high_s32(a, b, c);
-  // CHECK: smlal2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: smlal2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 uint16x8_t test_vmlal_high_u8(uint16x8_t a, uint8x16_t b, uint8x16_t c) {
   // CHECK: test_vmlal_high_u8
   return vmlal_high_u8(a, b, c);
-  // CHECK: umlal2 {{v[0-31]+}}.8h, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+  // CHECK: umlal2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }
 uint32x4_t test_vmlal_high_u16(uint32x4_t a, uint16x8_t b, uint16x8_t c) {
   // CHECK: test_vmlal_high_u16
   return vmlal_high_u16(a, b, c);
-  // CHECK: umlal2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: umlal2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 uint64x2_t test_vmlal_high_u32(uint64x2_t a, uint32x4_t b, uint32x4_t c) {
   // CHECK: test_vmlal_high_u32
   return vmlal_high_u32(a, b, c);
-  // CHECK: umlal2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: umlal2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int16x8_t test_vmlsl_s8(int16x8_t a, int8x8_t b, int8x8_t c) {
   // CHECK: test_vmlsl_s8
   return vmlsl_s8(a, b, c);
-  // CHECK: smlsl {{v[0-31]+}}.8h, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+  // CHECK: smlsl {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 int32x4_t test_vmlsl_s16(int32x4_t a, int16x4_t b, int16x4_t c) {
   // CHECK: test_vmlsl_s16
   return vmlsl_s16(a, b, c);
-  // CHECK: smlsl {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: smlsl {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 int64x2_t test_vmlsl_s32(int64x2_t a, int32x2_t b, int32x2_t c) {
   // CHECK: test_vmlsl_s32
   return vmlsl_s32(a, b, c);
-  // CHECK: smlsl {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: smlsl {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 uint16x8_t test_vmlsl_u8(uint16x8_t a, uint8x8_t b, uint8x8_t c) {
   // CHECK: test_vmlsl_u8
   return vmlsl_u8(a, b, c);
-  // CHECK: umlsl {{v[0-31]+}}.8h, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+  // CHECK: umlsl {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 uint32x4_t test_vmlsl_u16(uint32x4_t a, uint16x4_t b, uint16x4_t c) {
   // CHECK: test_vmlsl_u16
   return vmlsl_u16(a, b, c);
-  // CHECK: umlsl {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: umlsl {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 uint64x2_t test_vmlsl_u32(uint64x2_t a, uint32x2_t b, uint32x2_t c) {
   // CHECK: test_vmlsl_u32
   return vmlsl_u32(a, b, c);
-  // CHECK: umlsl {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: umlsl {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 
 int16x8_t test_vmlsl_high_s8(int16x8_t a, int8x16_t b, int8x16_t c) {
   // CHECK: test_vmlsl_high_s8
   return vmlsl_high_s8(a, b, c);
-  // CHECK: smlsl2 {{v[0-31]+}}.8h, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+  // CHECK: smlsl2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }
 int32x4_t test_vmlsl_high_s16(int32x4_t a, int16x8_t b, int16x8_t c) {
   // CHECK: test_vmlsl_high_s16
   return vmlsl_high_s16(a, b, c);
-  // CHECK: smlsl2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: smlsl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 int64x2_t test_vmlsl_high_s32(int64x2_t a, int32x4_t b, int32x4_t c) {
   // CHECK: test_vmlsl_high_s32
   return vmlsl_high_s32(a, b, c);
-  // CHECK: smlsl2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: smlsl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 uint16x8_t test_vmlsl_high_u8(uint16x8_t a, uint8x16_t b, uint8x16_t c) {
   // CHECK: test_vmlsl_high_u8
   return vmlsl_high_u8(a, b, c);
-  // CHECK: umlsl2 {{v[0-31]+}}.8h, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+  // CHECK: umlsl2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }
 uint32x4_t test_vmlsl_high_u16(uint32x4_t a, uint16x8_t b, uint16x8_t c) {
   // CHECK: test_vmlsl_high_u16
   return vmlsl_high_u16(a, b, c);
-  // CHECK: umlsl2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: umlsl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 uint64x2_t test_vmlsl_high_u32(uint64x2_t a, uint32x4_t b, uint32x4_t c) {
   // CHECK: test_vmlsl_high_u32
   return vmlsl_high_u32(a, b, c);
-  // CHECK: umlsl2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: umlsl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int32x4_t test_vqdmull_s16(int16x4_t a, int16x4_t b) {
   // CHECK: test_vqdmull_s16
   return vqdmull_s16(a, b);
-  // CHECK: sqdmull {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: sqdmull {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 int64x2_t test_vqdmull_s32(int32x2_t a, int32x2_t b) {
   // CHECK: test_vqdmull_s32
   return vqdmull_s32(a, b);
-  // CHECK: sqdmull {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: sqdmull {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 
 int32x4_t test_vqdmlal_s16(int32x4_t a, int16x4_t b, int16x4_t c) {
   // CHECK: test_vqdmlal_s16
   return vqdmlal_s16(a, b, c);
-  // CHECK: sqdmlal {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: sqdmlal {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 
 int64x2_t test_vqdmlal_s32(int64x2_t a, int32x2_t b, int32x2_t c) {
   // CHECK: test_vqdmlal_s32
   return vqdmlal_s32(a, b, c);
-  // CHECK: sqdmlal {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: sqdmlal {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 
 int32x4_t test_vqdmlsl_s16(int32x4_t a, int16x4_t b, int16x4_t c) {
   // CHECK: test_vqdmlsl_s16
   return vqdmlsl_s16(a, b, c);
-  // CHECK: sqdmlsl {{v[0-31]+}}.4s, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+  // CHECK: sqdmlsl {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 }
 
 int64x2_t test_vqdmlsl_s32(int64x2_t a, int32x2_t b, int32x2_t c) {
   // CHECK: test_vqdmlsl_s32
   return vqdmlsl_s32(a, b, c);
-  // CHECK: sqdmlsl {{v[0-31]+}}.2d, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+  // CHECK: sqdmlsl {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 }
 
 int32x4_t test_vqdmull_high_s16(int16x8_t a, int16x8_t b) {
   // CHECK: test_vqdmull_high_s16
   return vqdmull_high_s16(a, b);
-  // CHECK: sqdmull2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: sqdmull2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 int64x2_t test_vqdmull_high_s32(int32x4_t a, int32x4_t b) {
   // CHECK: test_vqdmull_high_s32
   return vqdmull_high_s32(a, b);
-  // CHECK: sqdmull2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: sqdmull2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int32x4_t test_vqdmlal_high_s16(int32x4_t a, int16x8_t b, int16x8_t c) {
   // CHECK: test_vqdmlal_high_s16
   return vqdmlal_high_s16(a, b, c);
-  // CHECK: sqdmlal2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: sqdmlal2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 int64x2_t test_vqdmlal_high_s32(int64x2_t a, int32x4_t b, int32x4_t c) {
   // CHECK: test_vqdmlal_high_s32
   return vqdmlal_high_s32(a, b, c);
-  // CHECK: sqdmlal2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: sqdmlal2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 int32x4_t test_vqdmlsl_high_s16(int32x4_t a, int16x8_t b, int16x8_t c) {
   // CHECK: test_vqdmlsl_high_s16
   return vqdmlsl_high_s16(a, b, c);
-  // CHECK: sqdmlsl2 {{v[0-31]+}}.4s, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+  // CHECK: sqdmlsl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 int64x2_t test_vqdmlsl_high_s32(int64x2_t a, int32x4_t b, int32x4_t c) {
   // CHECK: test_vqdmlsl_high_s32
   return vqdmlsl_high_s32(a, b, c);
-  // CHECK: sqdmlsl2 {{v[0-31]+}}.2d, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+  // CHECK: sqdmlsl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
 poly16x8_t test_vmull_p8(poly8x8_t a, poly8x8_t b) {
   // CHECK: test_vmull_p8
   return vmull_p8(a, b);
-  // CHECK: pmull {{v[0-31]+}}.8h, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+  // CHECK: pmull {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 
 poly16x8_t test_vmull_high_p8(poly8x16_t a, poly8x16_t b) {
   // CHECK: test_vmull_high_p8
   return vmull_high_p8(a, b);
-  // CHECK: pmull2 {{v[0-31]+}}.8h, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+  // CHECK: pmull2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 }
 
 int64_t test_vaddd_s64(int64_t a, int64_t b) {
