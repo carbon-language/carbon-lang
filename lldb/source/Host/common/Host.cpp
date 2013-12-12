@@ -490,10 +490,10 @@ Host::GetSignalAsCString (int signo)
     case SIGILL:    return "SIGILL";    // 4    illegal instruction (not reset when caught)
     case SIGTRAP:   return "SIGTRAP";   // 5    trace trap (not reset when caught)
     case SIGABRT:   return "SIGABRT";   // 6    abort()
-#if  (defined(_POSIX_C_SOURCE) && !defined(_DARWIN_C_SOURCE))
+#if  defined(SIGPOLL)
     case SIGPOLL:   return "SIGPOLL";   // 7    pollable event ([XSR] generated, not supported)
 #endif
-#if  !defined(_POSIX_C_SOURCE)
+#if  defined(SIGEMT)
     case SIGEMT:    return "SIGEMT";    // 7    EMT instruction
 #endif
     case SIGFPE:    return "SIGFPE";    // 8    floating point exception
@@ -511,15 +511,17 @@ Host::GetSignalAsCString (int signo)
     case SIGCHLD:   return "SIGCHLD";   // 20    to parent on child stop or exit
     case SIGTTIN:   return "SIGTTIN";   // 21    to readers pgrp upon background tty read
     case SIGTTOU:   return "SIGTTOU";   // 22    like TTIN for output if (tp->t_local&LTOSTOP)
-#if  !defined(_POSIX_C_SOURCE)
+#if  defined(SIGIO)
     case SIGIO:     return "SIGIO";     // 23    input/output possible signal
 #endif
     case SIGXCPU:   return "SIGXCPU";   // 24    exceeded CPU time limit
     case SIGXFSZ:   return "SIGXFSZ";   // 25    exceeded file size limit
     case SIGVTALRM: return "SIGVTALRM"; // 26    virtual time alarm
     case SIGPROF:   return "SIGPROF";   // 27    profiling time alarm
-#if  !defined(_POSIX_C_SOURCE)
+#if  defined(SIGWINCH)
     case SIGWINCH:  return "SIGWINCH";  // 28    window size changes
+#endif
+#if  defined(SIGINFO)
     case SIGINFO:   return "SIGINFO";   // 29    information request
 #endif
     case SIGUSR1:   return "SIGUSR1";   // 30    user defined signal 1
