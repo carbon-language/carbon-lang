@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Transforms.h"
+#include "clang/ARCMigrate/ARCMT.h"
 #include "clang/ARCMigrate/ARCMTActions.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -29,6 +30,8 @@
 #include "clang/AST/Attr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/YAMLParser.h"
 
 using namespace clang;
 using namespace arcmt;
@@ -1633,6 +1636,84 @@ public:
   }
 };
 
+class JSONEditWriter : public edit::EditsReceiver {
+  SourceManager &SourceMgr;
+  llvm::raw_ostream &OS;
+
+public:
+  JSONEditWriter(SourceManager &SM, llvm::raw_ostream &OS)
+    : SourceMgr(SM), OS(OS) {
+    OS << "[\n";
+  }
+  ~JSONEditWriter() {
+    OS << "]\n";
+  }
+
+private:
+  struct EntryWriter {
+    SourceManager &SourceMgr;
+    llvm::raw_ostream &OS;
+
+    EntryWriter(SourceManager &SM, llvm::raw_ostream &OS)
+      : SourceMgr(SM), OS(OS) {
+      OS << " {\n";
+    }
+    ~EntryWriter() {
+      OS << " },\n";
+    }
+
+    void writeLoc(SourceLocation Loc) {
+      FileID FID;
+      unsigned Offset;
+      llvm::tie(FID, Offset) = SourceMgr.getDecomposedLoc(Loc);
+      assert(!FID.isInvalid());
+      SmallString<200> Path =
+          StringRef(SourceMgr.getFileEntryForID(FID)->getName());
+      llvm::sys::fs::make_absolute(Path);
+      OS << "  \"file\": \"";
+      OS.write_escaped(Path.str()) << "\",\n";
+      OS << "  \"offset\": " << Offset << ",\n";
+    }
+
+    void writeRemove(CharSourceRange Range) {
+      assert(Range.isCharRange());
+      std::pair<FileID, unsigned> Begin =
+          SourceMgr.getDecomposedLoc(Range.getBegin());
+      std::pair<FileID, unsigned> End =
+          SourceMgr.getDecomposedLoc(Range.getEnd());
+      assert(Begin.first == End.first);
+      assert(Begin.second <= End.second);
+      unsigned Length = End.second - Begin.second;
+
+      OS << "  \"remove\": " << Length << ",\n";
+    }
+
+    void writeText(StringRef Text) {
+      OS << "  \"text\": \"";
+      OS.write_escaped(Text) << "\",\n";
+    }
+  };
+ 
+  virtual void insert(SourceLocation Loc, StringRef Text) {
+    EntryWriter Writer(SourceMgr, OS);
+    Writer.writeLoc(Loc);
+    Writer.writeText(Text);
+  }
+
+  virtual void replace(CharSourceRange Range, StringRef Text) {
+    EntryWriter Writer(SourceMgr, OS);
+    Writer.writeLoc(Range.getBegin());
+    Writer.writeRemove(Range);
+    Writer.writeText(Text);
+  }
+
+  virtual void remove(CharSourceRange Range) {
+    EntryWriter Writer(SourceMgr, OS);
+    Writer.writeLoc(Range.getBegin());
+    Writer.writeRemove(Range);
+  }
+};
+
 }
 
 static bool
@@ -1759,6 +1840,21 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
       AnnotateImplicitBridging(Ctx);
   }
   
+ if (IsOutputFile) {
+   std::string Error;
+   llvm::raw_fd_ostream OS(MigrateDir.c_str(), Error, llvm::sys::fs::F_Binary);
+    if (!Error.empty()) {
+      unsigned ID = Ctx.getDiagnostics().getDiagnosticIDs()->
+          getCustomDiagID(DiagnosticIDs::Error, Error);
+      Ctx.getDiagnostics().Report(ID);
+      return;
+    }
+
+   JSONEditWriter Writer(Ctx.getSourceManager(), OS);
+   Editor->applyRewrites(Writer);
+   return;
+ }
+
   Rewriter rewriter(Ctx.getSourceManager(), Ctx.getLangOpts());
   RewritesReceiver Rec(rewriter);
   Editor->applyRewrites(Rec);
@@ -1839,4 +1935,248 @@ ASTConsumer *MigrateSourceAction::CreateASTConsumer(CompilerInstance &CI,
                                     CI.getPreprocessor(),
                                     /*isOutputFile=*/true,
                                     WhiteList);
+}
+
+namespace {
+struct EditEntry {
+  const FileEntry *File;
+  unsigned Offset;
+  unsigned RemoveLen;
+  std::string Text;
+
+  EditEntry() : File(), Offset(), RemoveLen() {}
+};
+}
+
+namespace llvm {
+template<> struct DenseMapInfo<EditEntry> {
+  static inline EditEntry getEmptyKey() {
+    EditEntry Entry;
+    Entry.Offset = unsigned(-1);
+    return Entry;
+  }
+  static inline EditEntry getTombstoneKey() {
+    EditEntry Entry;
+    Entry.Offset = unsigned(-2);
+    return Entry;
+  }
+  static unsigned getHashValue(const EditEntry& Val) {
+    llvm::FoldingSetNodeID ID;
+    ID.AddPointer(Val.File);
+    ID.AddInteger(Val.Offset);
+    ID.AddInteger(Val.RemoveLen);
+    ID.AddString(Val.Text);
+    return ID.ComputeHash();
+  }
+  static bool isEqual(const EditEntry &LHS, const EditEntry &RHS) {
+    return LHS.File == RHS.File &&
+        LHS.Offset == RHS.Offset &&
+        LHS.RemoveLen == RHS.RemoveLen &&
+        LHS.Text == RHS.Text;
+  }
+};
+}
+
+namespace {
+class RemapFileParser {
+  FileManager &FileMgr;
+
+public:
+  RemapFileParser(FileManager &FileMgr) : FileMgr(FileMgr) { }
+
+  bool parse(StringRef File, SmallVectorImpl<EditEntry> &Entries) {
+    using namespace llvm::yaml;
+
+    OwningPtr<llvm::MemoryBuffer> FileBuf;
+    if (llvm::MemoryBuffer::getFile(File, FileBuf))
+      return true;
+
+    llvm::SourceMgr SM;
+    Stream YAMLStream(FileBuf.take(), SM);
+    document_iterator I = YAMLStream.begin();
+    if (I == YAMLStream.end())
+      return true;
+    Node *Root = I->getRoot();
+    if (!Root)
+      return true;
+
+    SequenceNode *SeqNode = dyn_cast<SequenceNode>(Root);
+    if (!SeqNode)
+      return true;
+
+    for (SequenceNode::iterator
+           AI = SeqNode->begin(), AE = SeqNode->end(); AI != AE; ++AI) {
+      MappingNode *MapNode = dyn_cast<MappingNode>(&*AI);
+      if (!MapNode)
+        continue;
+      parseEdit(MapNode, Entries);
+    }
+
+    return false;
+  }
+
+private:
+  void parseEdit(llvm::yaml::MappingNode *Node,
+                 SmallVectorImpl<EditEntry> &Entries) {
+    using namespace llvm::yaml;
+    EditEntry Entry;
+    bool Ignore = false;
+
+    for (MappingNode::iterator
+           KVI = Node->begin(), KVE = Node->end(); KVI != KVE; ++KVI) {
+      ScalarNode *KeyString = dyn_cast<ScalarNode>((*KVI).getKey());
+      if (!KeyString)
+        continue;
+      SmallString<10> KeyStorage;
+      StringRef Key = KeyString->getValue(KeyStorage);
+
+      ScalarNode *ValueString = dyn_cast<ScalarNode>((*KVI).getValue());
+      if (!ValueString)
+        continue;
+      SmallString<64> ValueStorage;
+      StringRef Val = ValueString->getValue(ValueStorage);
+
+      if (Key == "file") {
+        const FileEntry *FE = FileMgr.getFile(Val);
+        if (!FE)
+          Ignore = true;
+        Entry.File = FE;
+      } else if (Key == "offset") {
+        if (Val.getAsInteger(10, Entry.Offset))
+          Ignore = true;
+      } else if (Key == "remove") {
+        if (Val.getAsInteger(10, Entry.RemoveLen))
+          Ignore = true;
+      } else if (Key == "text") {
+        Entry.Text = Val;
+      }
+    }
+
+    if (!Ignore)
+      Entries.push_back(Entry);
+  }
+};
+}
+
+static bool reportDiag(const Twine &Err, DiagnosticsEngine &Diag) {
+  SmallString<128> Buf;
+  unsigned ID = Diag.getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Error,
+                                                         Err.toStringRef(Buf));
+  Diag.Report(ID);
+  return true;
+}
+
+static std::string applyEditsToTemp(const FileEntry *FE,
+                                    ArrayRef<EditEntry> Edits,
+                                    FileManager &FileMgr,
+                                    DiagnosticsEngine &Diag) {
+  using namespace llvm::sys;
+
+  SourceManager SM(Diag, FileMgr);
+  FileID FID = SM.createFileID(FE, SourceLocation(), SrcMgr::C_User);
+  LangOptions LangOpts;
+  edit::EditedSource Editor(SM, LangOpts);
+  for (ArrayRef<EditEntry>::iterator
+        I = Edits.begin(), E = Edits.end(); I != E; ++I) {
+    const EditEntry &Entry = *I;
+    assert(Entry.File == FE);
+    SourceLocation Loc =
+        SM.getLocForStartOfFile(FID).getLocWithOffset(Entry.Offset);
+    CharSourceRange Range;
+    if (Entry.RemoveLen != 0) {
+      Range = CharSourceRange::getCharRange(Loc,
+                                         Loc.getLocWithOffset(Entry.RemoveLen));
+    }
+
+    edit::Commit commit(Editor);
+    if (Range.isInvalid()) {
+      commit.insert(Loc, Entry.Text);
+    } else if (Entry.Text.empty()) {
+      commit.remove(Range);
+    } else {
+      commit.replace(Range, Entry.Text);
+    }
+    Editor.commit(commit);
+  }
+
+  Rewriter rewriter(SM, LangOpts);
+  RewritesReceiver Rec(rewriter);
+  Editor.applyRewrites(Rec);
+
+  const RewriteBuffer *Buf = rewriter.getRewriteBufferFor(FID);
+  SmallString<512> NewText;
+  llvm::raw_svector_ostream OS(NewText);
+  Buf->write(OS);
+  OS.flush();
+
+  SmallString<64> TempPath;
+  int FD;
+  if (fs::createTemporaryFile(path::filename(FE->getName()),
+                              path::extension(FE->getName()), FD,
+                              TempPath)) {
+    reportDiag("Could not create file: " + TempPath.str(), Diag);
+    return std::string();
+  }
+
+  llvm::raw_fd_ostream TmpOut(FD, /*shouldClose=*/true);
+  TmpOut.write(NewText.data(), NewText.size());
+  TmpOut.close();
+
+  return TempPath.str();
+}
+
+bool arcmt::getFileRemappingsFromFileList(
+                        std::vector<std::pair<std::string,std::string> > &remap,
+                        ArrayRef<StringRef> remapFiles,
+                        DiagnosticConsumer *DiagClient) {
+  bool hasErrorOccurred = false;
+
+  FileSystemOptions FSOpts;
+  FileManager FileMgr(FSOpts);
+  RemapFileParser Parser(FileMgr);
+
+  IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
+  IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
+      new DiagnosticsEngine(DiagID, new DiagnosticOptions,
+                            DiagClient, /*ShouldOwnClient=*/false));
+
+  typedef llvm::DenseMap<const FileEntry *, std::vector<EditEntry> >
+      FileEditEntriesTy;
+  FileEditEntriesTy FileEditEntries;
+
+  llvm::DenseSet<EditEntry> EntriesSet;
+
+  for (ArrayRef<StringRef>::iterator
+         I = remapFiles.begin(), E = remapFiles.end(); I != E; ++I) {
+    SmallVector<EditEntry, 16> Entries;
+    if (Parser.parse(*I, Entries))
+      continue;
+
+    for (SmallVectorImpl<EditEntry>::iterator
+           EI = Entries.begin(), EE = Entries.end(); EI != EE; ++EI) {
+      EditEntry &Entry = *EI;
+      if (!Entry.File)
+        continue;
+      std::pair<llvm::DenseSet<EditEntry>::iterator, bool>
+        Insert = EntriesSet.insert(Entry);
+      if (!Insert.second)
+        continue;
+
+      FileEditEntries[Entry.File].push_back(Entry);
+    }
+  }
+
+  for (FileEditEntriesTy::iterator
+         I = FileEditEntries.begin(), E = FileEditEntries.end(); I != E; ++I) {
+    std::string TempFile = applyEditsToTemp(I->first, I->second,
+                                            FileMgr, *Diags);
+    if (TempFile.empty()) {
+      hasErrorOccurred = true;
+      continue;
+    }
+
+    remap.push_back(std::make_pair(I->first->getName(), TempFile));
+  }
+
+  return hasErrorOccurred;
 }
