@@ -90,23 +90,23 @@ TEST_F(RegexTest, Substitution) {
 
   // Standard Escapes
   EXPECT_EQ("a\\ber", Regex("[0-9]+").sub("\\\\", "a1234ber", &Error));
-  EXPECT_EQ(Error, "");
+  EXPECT_EQ("", Error);
   EXPECT_EQ("a\nber", Regex("[0-9]+").sub("\\n", "a1234ber", &Error));
-  EXPECT_EQ(Error, "");
+  EXPECT_EQ("", Error);
   EXPECT_EQ("a\tber", Regex("[0-9]+").sub("\\t", "a1234ber", &Error));
-  EXPECT_EQ(Error, "");
+  EXPECT_EQ("", Error);
   EXPECT_EQ("ajber", Regex("[0-9]+").sub("\\j", "a1234ber", &Error));
-  EXPECT_EQ(Error, "");
+  EXPECT_EQ("", Error);
 
   EXPECT_EQ("aber", Regex("[0-9]+").sub("\\", "a1234ber", &Error));
   EXPECT_EQ(Error, "replacement string contained trailing backslash");
   
   // Backreferences
   EXPECT_EQ("aa1234bber", Regex("a[0-9]+b").sub("a\\0b", "a1234ber", &Error));
-  EXPECT_EQ(Error, "");
+  EXPECT_EQ("", Error);
 
   EXPECT_EQ("a1234ber", Regex("a([0-9]+)b").sub("a\\1b", "a1234ber", &Error));
-  EXPECT_EQ(Error, "");
+  EXPECT_EQ("", Error);
 
   EXPECT_EQ("aber", Regex("a[0-9]+b").sub("a\\100b", "a1234ber", &Error));
   EXPECT_EQ(Error, "invalid backreference string '100'");
@@ -128,8 +128,8 @@ TEST_F(RegexTest, IsLiteralERE) {
 }
 
 TEST_F(RegexTest, Escape) {
-  EXPECT_EQ(Regex::escape("a[bc]"), "a\\[bc\\]");
-  EXPECT_EQ(Regex::escape("abc{1\\,2}"), "abc\\{1\\\\,2\\}");
+  EXPECT_EQ("a\\[bc\\]", Regex::escape("a[bc]"));
+  EXPECT_EQ("abc\\{1\\\\,2\\}", Regex::escape("abc{1\\,2}"));
 }
 
 TEST_F(RegexTest, IsValid) {
