@@ -301,7 +301,8 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
     // FIXME: Thumb should just be another -target-feaure, not in the triple.
     StringRef Suffix =
       getLLVMArchSuffixForARM(getARMTargetCPU(Args, Triple));
-    bool ThumbDefault = Suffix.startswith("v6m") ||
+    bool ThumbDefault = Suffix.startswith("v6m") || Suffix.startswith("v7m") ||
+      Suffix.startswith("v7em") ||
       (Suffix.startswith("v7") && getTriple().isOSDarwin());
     std::string ArchName = "arm";
 
