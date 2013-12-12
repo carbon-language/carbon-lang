@@ -4532,10 +4532,9 @@ const char *arm::getARMCPUForMArch(const ArgList &Args,
       : "arm7tdmi";
 }
 
-/// FIXME: this should return a stringref once getHostCPUName return one.
 /// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targeting.
-std::string arm::getARMTargetCPU(const ArgList &Args,
-                                 const llvm::Triple &Triple) {
+StringRef arm::getARMTargetCPU(const ArgList &Args,
+                               const llvm::Triple &Triple) {
   // FIXME: Warn on inconsistent use of -mcpu and -march.
   // If we have -mcpu=, use that.
   if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
@@ -4544,7 +4543,7 @@ std::string arm::getARMTargetCPU(const ArgList &Args,
     if (MCPU == "native")
       return llvm::sys::getHostCPUName();
     else
-      return MCPU.str();
+      return MCPU;
   }
 
   return getARMCPUForMArch(Args, Triple);
