@@ -159,118 +159,6 @@ ObjCRuntime ToolChain::getDefaultObjCRuntime(bool isNonFragile) const {
                      VersionTuple());
 }
 
-/// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targeting.
-//
-// FIXME: tblgen this.
-static const char *getARMTargetCPU(const ArgList &Args,
-                                   const llvm::Triple &Triple) {
-  // For Darwin targets, the -arch option (which is translated to a
-  // corresponding -march option) should determine the architecture
-  // (and the Mach-O slice) regardless of any -mcpu options.
-  if (!Triple.isOSDarwin()) {
-    // FIXME: Warn on inconsistent use of -mcpu and -march.
-    // If we have -mcpu=, use that.
-    if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
-      return A->getValue();
-  }
-
-  StringRef MArch;
-  if (Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
-    // Otherwise, if we have -march= choose the base CPU for that arch.
-    MArch = A->getValue();
-  } else {
-    // Otherwise, use the Arch from the triple.
-    MArch = Triple.getArchName();
-  }
-
-  if (Triple.getOS() == llvm::Triple::NetBSD) {
-    if (MArch == "armv6")
-      return "arm1176jzf-s";
-  }
-
-  const char *result = llvm::StringSwitch<const char *>(MArch)
-    .Cases("armv2", "armv2a","arm2")
-    .Case("armv3", "arm6")
-    .Case("armv3m", "arm7m")
-    .Case("armv4", "strongarm")
-    .Case("armv4t", "arm7tdmi")
-    .Case("thumbv4t", "arm7tdmi")
-    .Cases("armv5", "armv5t", "arm10tdmi")
-    .Cases("thumbv5", "thumbv5t", "arm10tdmi")
-    .Cases("armv5e", "armv5te", "arm1022e")
-    .Cases("thumbv5e", "thumbv5te", "arm1022e")
-    .Case("armv5tej", "arm926ej-s")
-    .Case("thumbv5tej", "arm926ej-s")
-    .Cases("armv6", "armv6k", "arm1136jf-s")
-    .Cases("thumbv6", "thumbv6k", "arm1136jf-s")
-    .Case("armv6j", "arm1136j-s")
-    .Case("thumbv6j", "arm1136j-s")
-    .Cases("armv6z", "armv6zk", "arm1176jzf-s")
-    .Cases("thumbv6z", "thumbv6zk", "arm1176jzf-s")
-    .Case("armv6t2", "arm1156t2-s")
-    .Case("thumbv6t2", "arm1156t2-s")
-    .Cases("armv6m", "armv6-m", "cortex-m0")
-    .Case("thumbv6m", "cortex-m0")
-    .Cases("armv7", "armv7a", "armv7-a", "cortex-a8")
-    .Cases("thumbv7", "thumbv7a", "cortex-a8")
-    .Cases("armv7l", "armv7-l", "cortex-a8")
-    .Cases("armv7f", "armv7-f", "cortex-a9-mp")
-    .Cases("armv7s", "armv7-s", "swift")
-    .Cases("armv7r", "armv7-r", "cortex-r4")
-    .Case("thumbv7r", "cortex-r4")
-    .Cases("armv7m", "armv7-m", "cortex-m3")
-    .Case("thumbv7m", "cortex-m3")
-    .Cases("armv7em", "armv7e-m", "cortex-m4")
-    .Case("thumbv7em", "cortex-m4")
-    .Cases("armv8", "armv8a", "armv8-a", "cortex-a53")
-    .Cases("thumbv8", "thumbv8a", "cortex-a53")
-    .Case("ep9312", "ep9312")
-    .Case("iwmmxt", "iwmmxt")
-    .Case("xscale", "xscale")
-    // If all else failed, return the most base CPU with thumb interworking
-    // supported by LLVM.
-    .Default(0);
-
-  if (result)
-    return result;
-
-  return
-    Triple.getEnvironment() == llvm::Triple::GNUEABIHF
-      ? "arm1176jzf-s"
-      : "arm7tdmi";
-}
-
-/// getLLVMArchSuffixForARM - Get the LLVM arch name to use for a particular
-/// CPU.
-//
-// FIXME: This is redundant with -mcpu, why does LLVM use this.
-// FIXME: tblgen this, or kill it!
-static const char *getLLVMArchSuffixForARM(StringRef CPU) {
-  return llvm::StringSwitch<const char *>(CPU)
-    .Case("strongarm", "v4")
-    .Cases("arm7tdmi", "arm7tdmi-s", "arm710t", "v4t")
-    .Cases("arm720t", "arm9", "arm9tdmi", "v4t")
-    .Cases("arm920", "arm920t", "arm922t", "v4t")
-    .Cases("arm940t", "ep9312","v4t")
-    .Cases("arm10tdmi",  "arm1020t", "v5")
-    .Cases("arm9e",  "arm926ej-s",  "arm946e-s", "v5e")
-    .Cases("arm966e-s",  "arm968e-s",  "arm10e", "v5e")
-    .Cases("arm1020e",  "arm1022e",  "xscale", "iwmmxt", "v5e")
-    .Cases("arm1136j-s",  "arm1136jf-s",  "arm1176jz-s", "v6")
-    .Cases("arm1176jzf-s",  "mpcorenovfp",  "mpcore", "v6")
-    .Cases("arm1156t2-s",  "arm1156t2f-s", "v6t2")
-    .Cases("cortex-a5", "cortex-a7", "cortex-a8", "v7")
-    .Cases("cortex-a9", "cortex-a12", "cortex-a15", "krait", "v7")
-    .Cases("cortex-r4", "cortex-r5", "v7r")
-    .Case("cortex-m0", "v6m")
-    .Case("cortex-m3", "v7m")
-    .Case("cortex-m4", "v7em")
-    .Case("cortex-a9-mp", "v7f")
-    .Case("swift", "v7s")
-    .Cases("cortex-a53", "cortex-a57", "v8")
-    .Default("");
-}
-
 std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
                                          types::ID InputType) const {
   switch (getTriple().getArch()) {
@@ -299,8 +187,9 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
     // Thumb2 is the default for V7 on Darwin.
     //
     // FIXME: Thumb should just be another -target-feaure, not in the triple.
-    StringRef Suffix =
-      getLLVMArchSuffixForARM(getARMTargetCPU(Args, Triple));
+    StringRef Suffix = Triple.isOSDarwin()
+      ? tools::arm::getLLVMArchSuffixForARM(tools::arm::getARMCPUForMArch(Args, Triple))
+      : tools::arm::getLLVMArchSuffixForARM(tools::arm::getARMTargetCPU(Args, Triple));
     bool ThumbDefault = Suffix.startswith("v6m") || Suffix.startswith("v7m") ||
       Suffix.startswith("v7em") ||
       (Suffix.startswith("v7") && getTriple().isOSDarwin());

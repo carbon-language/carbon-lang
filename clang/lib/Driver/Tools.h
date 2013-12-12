@@ -201,6 +201,13 @@ namespace hexagon {
   };
 } // end namespace hexagon.
 
+namespace arm {
+  const char* getARMTargetCPU(const llvm::opt::ArgList &Args,
+                              const llvm::Triple &Triple);
+  const char* getARMCPUForMArch(const llvm::opt::ArgList &Args,
+                                const llvm::Triple &Triple);
+  const char* getLLVMArchSuffixForARM(StringRef CPU);
+}
 
 namespace darwin {
   llvm::Triple::ArchType getArchTypeForDarwinArchName(StringRef Str);
