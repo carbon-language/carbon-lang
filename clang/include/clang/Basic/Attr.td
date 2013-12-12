@@ -54,7 +54,7 @@ def SharedVar : SubsetSubject<Var,
                               [{S->hasGlobalStorage() && !S->getTLSKind()}]>;
 
 def GlobalVar : SubsetSubject<Var,
-                             [{!S->hasLocalStorage()}]>;
+                             [{S->hasGlobalStorage()}]>;
 
 // A single argument to an attribute
 class Argument<string name, bit optional> {
