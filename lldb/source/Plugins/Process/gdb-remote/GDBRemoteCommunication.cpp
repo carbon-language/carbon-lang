@@ -608,10 +608,6 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *host_and_port,
     // If we locate debugserver, keep that located version around
     static FileSpec g_debugserver_file_spec;
     
-    // This function will fill in the launch information for the debugserver
-    // instance that gets launched.
-    launch_info.Clear();
-    
     char debugserver_path[PATH_MAX];
     FileSpec &debugserver_file_spec = launch_info.GetExecutableFile();
     
