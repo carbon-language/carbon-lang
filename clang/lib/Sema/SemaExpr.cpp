@@ -5143,9 +5143,9 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc,
     CastExpr = Result.take();
   }
 
-  if (getLangOpts().CPlusPlus && !castType->isVoidType())
-    Diag(CastExpr->getLocStart(), diag::warn_old_style_cast)
-        << SourceRange(LParenLoc, RParenLoc);
+  if (getLangOpts().CPlusPlus && !castType->isVoidType() &&
+      !getSourceManager().isInSystemMacro(LParenLoc))
+    Diag(LParenLoc, diag::warn_old_style_cast) << CastExpr->getSourceRange();
 
   return BuildCStyleCastExpr(LParenLoc, castTInfo, RParenLoc, CastExpr);
 }
