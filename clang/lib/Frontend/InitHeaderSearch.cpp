@@ -395,26 +395,22 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOp
     break;
   case llvm::Triple::MinGW32:
     // mingw-w64 C++ include paths (i686-w64-mingw32 and x86_64-w64-mingw32)
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.0");
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.1");
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.2");
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.3");
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.4");
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.6.0");
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.6.1");
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.6.2");
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.6.3");
     AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.7.0");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.7.1");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.7.2");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.7.3");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.8.0");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.8.1");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.8.2");
     // mingw.org C++ include paths
-    AddMinGWCPlusPlusIncludePaths("/mingw/lib/gcc", "mingw32", "4.5.2"); //MSYS
 #if defined(_WIN32)
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.7.0");
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.7.1");
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.7.2");
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.7.3");
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.8.0");
     AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.8.1");
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.6.2");
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.6.1");
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.5.2");
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.5.0");
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.4.0");
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.3.0");
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.8.2");
 #endif
     break;
   case llvm::Triple::DragonFly:
