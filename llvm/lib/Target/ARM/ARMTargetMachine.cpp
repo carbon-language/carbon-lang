@@ -75,9 +75,9 @@ static std::string computeDataLayout(ARMSubtarget &ST) {
   // aligned s them to 32 bits, others to 64 bits. We always try to align to
   // 64 bits.
   if (ST.isAPCS_ABI())
-    Ret += "-f64:32:64-i64:32:64";
+    Ret += "-f64:32:64";
   else
-    Ret += "-f64:64:64-i64:64:64";
+    Ret += "-i64:64:64";
 
   // On thumb, i16,i18 and i1 have natural aligment requirements, but we try to
   // align to 32.
@@ -89,7 +89,7 @@ static std::string computeDataLayout(ARMSubtarget &ST) {
   if (ST.isAPCS_ABI())
     Ret += "-v128:32:128-v64:32:64";
   else
-    Ret += "-v128:64:128-v64:64:64";
+    Ret += "-v128:64:128";
 
   // An aggregate of size 0 is ABI aligned to 0.
   // FIXME: explain better what this means.
