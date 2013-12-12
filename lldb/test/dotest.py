@@ -29,6 +29,7 @@ import subprocess
 import sys
 import textwrap
 import time
+import inspect
 import unittest2
 
 if sys.version_info >= (2, 7):
@@ -376,6 +377,17 @@ def validate_categories(categories):
         result.append(category)
     return result
 
+def setCrashInfoHook_Mac(text):
+    import crashinfo
+    crashinfo.setCrashReporterDescription(text)
+
+# implement this in some suitable way for your platform, and then bind it
+# to setCrashInfoHook
+def setCrashInfoHook_NonMac(text):
+    pass
+
+setCrashInfoHook = None
+
 def parseOptionsAndInitTestdirs():
     """Initialize the list of directories containing our unittest scripts.
 
@@ -422,6 +434,7 @@ def parseOptionsAndInitTestdirs():
     global lldb_platform_name
     global lldb_platform_url
     global lldb_platform_working_dir
+    global setCrashInfoHook
 
     do_help = False
 
@@ -534,6 +547,11 @@ def parseOptionsAndInitTestdirs():
             archs = ['x86_64', 'i386']
         else:
             archs = [platform_machine]
+
+    if platform_system == 'Darwin':
+        setCrashInfoHook = setCrashInfoHook_Mac
+    else:
+        setCrashInfoHook = setCrashInfoHook_NonMac
 
     if args.categoriesList:
         categoriesList = set(validate_categories(args.categoriesList))
@@ -1558,6 +1576,8 @@ for ia in range(len(archs) if iterArchs else 1):
             def startTest(self, test):
                 if self.shouldSkipBecauseOfCategories(test):
                     self.hardMarkAsSkipped(test)
+                global setCrashInfoHook
+                setCrashInfoHook("%s at %s" % (str(test),inspect.getfile(test.__class__)))
                 self.counter += 1
                 test.test_number = self.counter
                 if self.showAll:
