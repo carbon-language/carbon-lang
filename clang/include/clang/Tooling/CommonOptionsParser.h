@@ -28,6 +28,7 @@
 #define LLVM_TOOLS_CLANG_INCLUDE_CLANG_TOOLING_COMMONOPTIONSPARSER_H
 
 #include "clang/Tooling/CompilationDatabase.h"
+#include "llvm/Support/CommandLine.h"
 
 namespace clang {
 namespace tooling {
@@ -46,13 +47,14 @@ namespace tooling {
 /// using namespace clang::tooling;
 /// using namespace llvm;
 ///
+/// static cl::OptionCategory MyToolCategory("My tool options");
 /// static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 /// static cl::extrahelp MoreHelp("\nMore help text...");
 /// static cl:opt<bool> YourOwnOption(...);
 /// ...
 ///
 /// int main(int argc, const char **argv) {
-///   CommonOptionsParser OptionsParser(argc, argv);
+///   CommonOptionsParser OptionsParser(argc, argv, MyToolCategory);
 ///   ClangTool Tool(OptionsParser.getCompilations(),
 ///                  OptionsParser.getSourcePathListi());
 ///   return Tool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>());
@@ -61,10 +63,16 @@ namespace tooling {
 class CommonOptionsParser {
 public:
   /// \brief Parses command-line, initializes a compilation database.
+  ///
   /// This constructor can change argc and argv contents, e.g. consume
   /// command-line options used for creating FixedCompilationDatabase.
+  ///
+  /// All options not belonging to \p Category become hidden.
+  ///
   /// This constructor exits program in case of error.
-  CommonOptionsParser(int &argc, const char **argv, const char *Overview = 0);
+  CommonOptionsParser(int &argc, const char **argv,
+                      llvm::cl::OptionCategory &Category,
+                      const char *Overview = 0);
 
   /// Returns a reference to the loaded compilations database.
   CompilationDatabase &getCompilations() {
