@@ -64,7 +64,6 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     addRegisterClass(MVT::v1i16, &AArch64::FPR16RegClass);
     addRegisterClass(MVT::v1i32, &AArch64::FPR32RegClass);
     addRegisterClass(MVT::v1i64, &AArch64::FPR64RegClass);
-    addRegisterClass(MVT::v1f32, &AArch64::FPR32RegClass);
     addRegisterClass(MVT::v1f64, &AArch64::FPR64RegClass);
     addRegisterClass(MVT::v8i8,  &AArch64::FPR64RegClass);
     addRegisterClass(MVT::v4i16, &AArch64::FPR64RegClass);
@@ -296,7 +295,6 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4i32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v1i64, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v2i64, Custom);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v1f32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v2f32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v1f64, Custom);
@@ -333,7 +331,6 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::SETCC, MVT::v4i32, Custom);
     setOperationAction(ISD::SETCC, MVT::v1i64, Custom);
     setOperationAction(ISD::SETCC, MVT::v2i64, Custom);
-    setOperationAction(ISD::SETCC, MVT::v1f32, Custom);
     setOperationAction(ISD::SETCC, MVT::v2f32, Custom);
     setOperationAction(ISD::SETCC, MVT::v4f32, Custom);
     setOperationAction(ISD::SETCC, MVT::v1f64, Custom);

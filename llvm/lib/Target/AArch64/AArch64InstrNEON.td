@@ -5995,12 +5995,6 @@ defm : NeonI_Scalar_DUP_Copy_pattern1<DUPhv_H,
 defm : NeonI_Scalar_DUP_Copy_pattern1<DUPbv_B,
   v1i8, v16i8, i32, neon_uimm4_bare,
   v8i8, v16i8, neon_uimm3_bare>;
-defm : NeonI_Scalar_DUP_Copy_pattern1<DUPdv_D,
-  v1f64, v2f64, f64, neon_uimm1_bare,
-  v1f64, v2f64, neon_uimm0_bare>;
-defm : NeonI_Scalar_DUP_Copy_pattern1<DUPsv_S,
-  v1f32, v4f32, f32, neon_uimm2_bare,
-  v2f32, v4f32, neon_uimm1_bare>;
 defm : NeonI_Scalar_DUP_Copy_pattern2<DUPdv_D,
   v1i64, v2i64, i64, neon_uimm1_bare,
   v1i64, v2i64, neon_uimm0_bare>;
@@ -6013,12 +6007,6 @@ defm : NeonI_Scalar_DUP_Copy_pattern2<DUPhv_H,
 defm : NeonI_Scalar_DUP_Copy_pattern2<DUPbv_B,
   v1i8, v16i8, i32, neon_uimm4_bare,
   v8i8, v16i8, neon_uimm3_bare>;
-defm : NeonI_Scalar_DUP_Copy_pattern2<DUPdv_D,
-  v1f64, v2f64, f64, neon_uimm1_bare,
-  v1f64, v2f64, neon_uimm0_bare>;
-defm : NeonI_Scalar_DUP_Copy_pattern2<DUPsv_S,
-  v1f32, v4f32, f32, neon_uimm2_bare,
-  v2f32, v4f32, neon_uimm1_bare>;
 
 multiclass NeonI_Scalar_DUP_alias<string asmop, string asmlane,
                                   Instruction DUPI, Operand OpImm,
@@ -6123,7 +6111,6 @@ def : Pat<(v16i8 (bitconvert (v2f64  VPR128:$src))), (v16i8 VPR128:$src)>;
 def : Pat<(f16 (bitconvert (v1i16  FPR16:$src))), (f16 FPR16:$src)>;
 def : Pat<(f32 (bitconvert (v1i32  FPR32:$src))), (f32 FPR32:$src)>;
 def : Pat<(f64 (bitconvert (v1i64  FPR64:$src))), (f64 FPR64:$src)>;
-def : Pat<(f32 (bitconvert (v1f32  FPR32:$src))), (f32 FPR32:$src)>;
 def : Pat<(f64 (bitconvert (v1f64  FPR64:$src))), (f64 FPR64:$src)>;
 
 def : Pat<(i64 (bitconvert (v1i64  FPR64:$src))), (FMOVxd $src)>;
@@ -6155,7 +6142,6 @@ def : Pat<(f128  (bitconvert (v2f64  VPR128:$src))), (f128 VPR128:$src)>;
 def : Pat<(v1i16 (bitconvert (f16  FPR16:$src))), (v1i16 FPR16:$src)>;
 def : Pat<(v1i32 (bitconvert (f32  FPR32:$src))), (v1i32 FPR32:$src)>;
 def : Pat<(v1i64 (bitconvert (f64  FPR64:$src))), (v1i64 FPR64:$src)>;
-def : Pat<(v1f32 (bitconvert (f32  FPR32:$src))), (v1f32 FPR32:$src)>;
 def : Pat<(v1f64 (bitconvert (f64  FPR64:$src))), (v1f64 FPR64:$src)>;
 
 def : Pat<(v1i64 (bitconvert (i64  GPR64:$src))), (FMOVdx $src)>;
@@ -6688,9 +6674,6 @@ def : Pat<(i64 (vector_extract (v1i64 FPR64:$Rn), (i64 0))),
 def : Pat<(f64 (vector_extract (v1f64 FPR64:$Rn), (i64 0))),
           (f64 FPR64:$Rn)>;
 
-def : Pat<(f32 (vector_extract (v1f32 FPR32:$Rn), (i64 0))),
-          (f32 FPR32:$Rn)>;
-
 def : Pat<(v1i8 (scalar_to_vector GPR32:$Rn)),
           (v1i8 (EXTRACT_SUBREG (v16i8
             (INSbw (v16i8 (IMPLICIT_DEF)), $Rn, (i64 0))),
@@ -6744,8 +6727,6 @@ def : Pat<(v2i32 (scalar_to_vector GPR32:$Rn)),
             (INSsw (v4i32 (IMPLICIT_DEF)), $Rn, (i64 0))),
             sub_64))>;
 
-def : Pat<(v1f32 (scalar_to_vector (f32 FPR32:$Rn))),
-          (v1f32 FPR32:$Rn)>;
 def : Pat<(v1f64 (scalar_to_vector (f64 FPR64:$Rn))),
           (v1f64 FPR64:$Rn)>;
 
@@ -7467,8 +7448,6 @@ defm SQDMULLve : NI_2VE_v3_2op<0b0, 0b1011, "sqdmull">;
 
 def : Pat<(v1f64 (scalar_to_vector (f64 FPR64:$src))),
           (FMOVdd $src)>;
-def : Pat<(v1f32 (scalar_to_vector (f32 FPR32:$src))),
-          (FMOVss $src)>;
 
 // Pattern for lane in 128-bit vector
 class NI_2VEL2_laneq<Instruction INST, Operand OpImm, SDPatternOperator op,

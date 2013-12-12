@@ -20,8 +20,8 @@ define <2 x i32> @test_v8i8_to_v2i32(<8 x i8> %in) nounwind {
   ret <2 x i32> %val
 }
 
-define <2 x float> @test_v8i8_to_v1f32(<8 x i8> %in) nounwind{
-; CHECK: test_v8i8_to_v1f32:
+define <2 x float> @test_v8i8_to_v2f32(<8 x i8> %in) nounwind{
+; CHECK: test_v8i8_to_v2f32:
 ; CHECK-NEXT: // BB#0:
 ; CHECK-NEXT: ret
 
@@ -67,8 +67,8 @@ define <2 x i32> @test_v4i16_to_v2i32(<4 x i16> %in) nounwind {
   ret <2 x i32> %val
 }
 
-define <2 x float> @test_v4i16_to_v1f32(<4 x i16> %in) nounwind{
-; CHECK: test_v4i16_to_v1f32:
+define <2 x float> @test_v4i16_to_v2f32(<4 x i16> %in) nounwind{
+; CHECK: test_v4i16_to_v2f32:
 ; CHECK-NEXT: // BB#0:
 ; CHECK-NEXT: ret
 
@@ -114,8 +114,8 @@ define <2 x i32> @test_v2i32_to_v2i32(<2 x i32> %in) nounwind {
   ret <2 x i32> %val
 }
 
-define <2 x float> @test_v2i32_to_v1f32(<2 x i32> %in) nounwind{
-; CHECK: test_v2i32_to_v1f32:
+define <2 x float> @test_v2i32_to_v2f32(<2 x i32> %in) nounwind{
+; CHECK: test_v2i32_to_v2f32:
 ; CHECK-NEXT: // BB#0:
 ; CHECK-NEXT: ret
 

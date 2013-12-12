@@ -60,7 +60,7 @@ def CC_A64_APCS : CallingConv<[
   // registers. This makes sense because the PCS does not distinguish Short
   // Vectors and Floating-point types.
   CCIfType<[v1i16, v2i8], CCBitConvertToType<f16>>,
-  CCIfType<[v1i32, v4i8, v2i16, v1f32], CCBitConvertToType<f32>>,
+  CCIfType<[v1i32, v4i8, v2i16], CCBitConvertToType<f32>>,
   CCIfType<[v8i8, v4i16, v2i32, v2f32, v1i64, v1f64], CCBitConvertToType<f64>>,
   CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
            CCBitConvertToType<f128>>,

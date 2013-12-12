@@ -155,7 +155,7 @@ def FPR16 : RegisterClass<"AArch64", [f16, v1i16], 16,
                           (sequence "H%u", 0, 31)> {
 }
 
-def FPR32 : RegisterClass<"AArch64", [f32, v1i32, v1f32], 32,
+def FPR32 : RegisterClass<"AArch64", [f32, v1i32], 32,
                           (sequence "S%u", 0, 31)> {
 }
 
