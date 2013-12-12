@@ -2,72 +2,72 @@
 
 
 define <8 x i8> @mul8xi8(<8 x i8> %A, <8 x i8> %B) {
-;CHECK: mul {{v[0-31]+}}.8b, {{v[0-31]+}}.8b, {{v[0-31]+}}.8b
+;CHECK: mul {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 	%tmp3 = mul <8 x i8> %A, %B;
 	ret <8 x i8> %tmp3
 }
 
 define <16 x i8> @mul16xi8(<16 x i8> %A, <16 x i8> %B) {
-;CHECK: mul {{v[0-31]+}}.16b, {{v[0-31]+}}.16b, {{v[0-31]+}}.16b
+;CHECK: mul {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = mul <16 x i8> %A, %B;
 	ret <16 x i8> %tmp3
 }
 
 define <4 x i16> @mul4xi16(<4 x i16> %A, <4 x i16> %B) {
-;CHECK: mul {{v[0-31]+}}.4h, {{v[0-31]+}}.4h, {{v[0-31]+}}.4h
+;CHECK: mul {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
 	%tmp3 = mul <4 x i16> %A, %B;
 	ret <4 x i16> %tmp3
 }
 
 define <8 x i16> @mul8xi16(<8 x i16> %A, <8 x i16> %B) {
-;CHECK: mul {{v[0-31]+}}.8h, {{v[0-31]+}}.8h, {{v[0-31]+}}.8h
+;CHECK: mul {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 	%tmp3 = mul <8 x i16> %A, %B;
 	ret <8 x i16> %tmp3
 }
 
 define <2 x i32> @mul2xi32(<2 x i32> %A, <2 x i32> %B) {
-;CHECK: mul {{v[0-31]+}}.2s, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+;CHECK: mul {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 	%tmp3 = mul <2 x i32> %A, %B;
 	ret <2 x i32> %tmp3
 }
 
 define <4 x i32> @mul4x32(<4 x i32> %A, <4 x i32> %B) {
-;CHECK: mul {{v[0-31]+}}.4s, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+;CHECK: mul {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 	%tmp3 = mul <4 x i32> %A, %B;
 	ret <4 x i32> %tmp3
 }
 
  define <2 x float> @mul2xfloat(<2 x float> %A, <2 x float> %B) {
-;CHECK: fmul {{v[0-31]+}}.2s, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+;CHECK: fmul {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 	%tmp3 = fmul <2 x float> %A, %B;
 	ret <2 x float> %tmp3
 }
 
 define <4 x float> @mul4xfloat(<4 x float> %A, <4 x float> %B) {
-;CHECK: fmul {{v[0-31]+}}.4s, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+;CHECK: fmul {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 	%tmp3 = fmul <4 x float> %A, %B;
 	ret <4 x float> %tmp3
 }
 define <2 x double> @mul2xdouble(<2 x double> %A, <2 x double> %B) {
-;CHECK: fmul {{v[0-31]+}}.2d, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+;CHECK: fmul {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 	%tmp3 = fmul <2 x double> %A, %B;
 	ret <2 x double> %tmp3
 }
 
 
  define <2 x float> @div2xfloat(<2 x float> %A, <2 x float> %B) {
-;CHECK: fdiv {{v[0-31]+}}.2s, {{v[0-31]+}}.2s, {{v[0-31]+}}.2s
+;CHECK: fdiv {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 	%tmp3 = fdiv <2 x float> %A, %B;
 	ret <2 x float> %tmp3
 }
 
 define <4 x float> @div4xfloat(<4 x float> %A, <4 x float> %B) {
-;CHECK: fdiv {{v[0-31]+}}.4s, {{v[0-31]+}}.4s, {{v[0-31]+}}.4s
+;CHECK: fdiv {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 	%tmp3 = fdiv <4 x float> %A, %B;
 	ret <4 x float> %tmp3
 }
 define <2 x double> @div2xdouble(<2 x double> %A, <2 x double> %B) {
-;CHECK: fdiv {{v[0-31]+}}.2d, {{v[0-31]+}}.2d, {{v[0-31]+}}.2d
+;CHECK: fdiv {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 	%tmp3 = fdiv <2 x double> %A, %B;
 	ret <2 x double> %tmp3
 }
