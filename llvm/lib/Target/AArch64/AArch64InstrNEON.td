@@ -6707,13 +6707,47 @@ def : Pat<(v1i32 (scalar_to_vector GPR32:$src)),
 def : Pat<(v1i64 (scalar_to_vector GPR64:$src)),
           (FMOVdx $src)>;
 
+def : Pat<(v8i8 (scalar_to_vector GPR32:$Rn)),
+          (v8i8 (EXTRACT_SUBREG (v16i8
+            (INSbw (v16i8 (IMPLICIT_DEF)), $Rn, (i64 0))),
+            sub_64))>;
+
+def : Pat<(v4i16 (scalar_to_vector GPR32:$Rn)),
+          (v4i16 (EXTRACT_SUBREG (v8i16
+            (INShw (v8i16 (IMPLICIT_DEF)), $Rn, (i64 0))),
+            sub_64))>;
+
+def : Pat<(v2i32 (scalar_to_vector GPR32:$Rn)),
+          (v2i32 (EXTRACT_SUBREG (v16i8
+            (INSsw (v4i32 (IMPLICIT_DEF)), $Rn, (i64 0))),
+            sub_64))>;
+
+def : Pat<(v16i8 (scalar_to_vector GPR32:$Rn)),
+          (INSbw (v16i8 (IMPLICIT_DEF)), $Rn, (i64 0))>;
+
+def : Pat<(v8i16 (scalar_to_vector GPR32:$Rn)),
+          (INShw (v8i16 (IMPLICIT_DEF)), $Rn, (i64 0))>;
+
+def : Pat<(v4i32 (scalar_to_vector GPR32:$Rn)),
+          (INSsw (v4i32 (IMPLICIT_DEF)), $Rn, (i64 0))>;
+
+def : Pat<(v2i64 (scalar_to_vector GPR64:$Rn)),
+          (INSdx (v2i64 (IMPLICIT_DEF)), $Rn, (i64 0))>;
+
+def : Pat<(v2i32 (scalar_to_vector GPR32:$Rn)),
+          (v2i32 (EXTRACT_SUBREG (v16i8
+            (INSsw (v4i32 (IMPLICIT_DEF)), $Rn, (i64 0))),
+            sub_64))>;
+
+def : Pat<(v2i32 (scalar_to_vector GPR32:$Rn)),
+          (v2i32 (EXTRACT_SUBREG (v16i8
+            (INSsw (v4i32 (IMPLICIT_DEF)), $Rn, (i64 0))),
+            sub_64))>;
+
 def : Pat<(v1f32 (scalar_to_vector (f32 FPR32:$Rn))),
           (v1f32 FPR32:$Rn)>;
 def : Pat<(v1f64 (scalar_to_vector (f64 FPR64:$Rn))),
           (v1f64 FPR64:$Rn)>;
-
-def : Pat<(v1f64 (scalar_to_vector (f64 FPR64:$src))),
-          (FMOVdd $src)>;
 
 def : Pat<(v2f64 (scalar_to_vector (f64 FPR64:$src))),
           (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)),

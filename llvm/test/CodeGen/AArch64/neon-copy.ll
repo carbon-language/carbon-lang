@@ -613,3 +613,53 @@ define <1 x double> @test_bitcasti64tov1f64(i64 %in) {
 ; CHECK: fmov {{d[0-9]+}}, {{x[0-9]+}}
    ret <1 x double> %res
 }
+
+; Test insert element into an undef vector
+define <8 x i8> @scalar_to_vector.v8i8(i8 %a) {
+; CHECK-LABEL: scalar_to_vector.v8i8:
+; CHECK: ins {{v[0-9]+}}.b[0], {{w[0-9]+}}
+  %b = insertelement <8 x i8> undef, i8 %a, i32 0
+  ret <8 x i8> %b
+}
+
+define <16 x i8> @scalar_to_vector.v16i8(i8 %a) {
+; CHECK-LABEL: scalar_to_vector.v16i8:
+; CHECK: ins {{v[0-9]+}}.b[0], {{w[0-9]+}}
+  %b = insertelement <16 x i8> undef, i8 %a, i32 0
+  ret <16 x i8> %b
+}
+
+define <4 x i16> @scalar_to_vector.v4i16(i16 %a) {
+; CHECK-LABEL: scalar_to_vector.v4i16:
+; CHECK: ins {{v[0-9]+}}.h[0], {{w[0-9]+}}
+  %b = insertelement <4 x i16> undef, i16 %a, i32 0
+  ret <4 x i16> %b
+}
+
+define <8 x i16> @scalar_to_vector.v8i16(i16 %a) {
+; CHECK-LABEL: scalar_to_vector.v8i16:
+; CHECK: ins {{v[0-9]+}}.h[0], {{w[0-9]+}}
+  %b = insertelement <8 x i16> undef, i16 %a, i32 0
+  ret <8 x i16> %b
+}
+
+define <2 x i32> @scalar_to_vector.v2i32(i32 %a) {
+; CHECK-LABEL: scalar_to_vector.v2i32:
+; CHECK: ins {{v[0-9]+}}.s[0], {{w[0-9]+}}
+  %b = insertelement <2 x i32> undef, i32 %a, i32 0
+  ret <2 x i32> %b
+}
+
+define <4 x i32> @scalar_to_vector.v4i32(i32 %a) {
+; CHECK-LABEL: scalar_to_vector.v4i32:
+; CHECK: ins {{v[0-9]+}}.s[0], {{w[0-9]+}}
+  %b = insertelement <4 x i32> undef, i32 %a, i32 0
+  ret <4 x i32> %b
+}
+
+define <2 x i64> @scalar_to_vector.v2i64(i64 %a) {
+; CHECK-LABEL: scalar_to_vector.v2i64:
+; CHECK: ins {{v[0-9]+}}.d[0], {{x[0-9]+}}
+  %b = insertelement <2 x i64> undef, i64 %a, i32 0
+  ret <2 x i64> %b
+}
