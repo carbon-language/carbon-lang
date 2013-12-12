@@ -184,6 +184,12 @@ namespace llvm {
                                     || Contents.OrdKind == MustAliasMem);
     }
 
+    /// isBarrier - Test if this is an Order dependence that is marked
+    /// as a barrier.
+    bool isBarrier() const {
+      return getKind() == Order && Contents.OrdKind == Barrier;
+    }
+
     /// isMustAlias - Test if this is an Order dependence that is marked
     /// as "must alias", meaning that the SUnits at either end of the edge
     /// have a memory dependence on a known memory location.
