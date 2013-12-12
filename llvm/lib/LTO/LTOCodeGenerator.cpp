@@ -460,6 +460,10 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
   // Add an appropriate DataLayout instance for this module...
   passes.add(new DataLayout(*TargetMach->getDataLayout()));
+
+  // Add appropriate TargetLibraryInfo for this module. 
+  passes.add(new TargetLibraryInfo(Triple(TargetMach->getTargetTriple())));
+
   TargetMach->addAnalysisPasses(passes);
 
   // Enabling internalize here would use its AllButMain variant. It
