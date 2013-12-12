@@ -87,7 +87,7 @@ typedef char BOOL;
 
 @property (getter=getStringValue, strong) NSString *stringValue;
 @property (getter=getCounterValue, readonly) BOOL counterValue;
-@property (getter=getns_dixtionary, readonly, strong) NSDictionary *ns_dixtionary;
+@property (getter=getns_dixtionary, readonly, copy) NSDictionary *ns_dixtionary;
 
 - (BOOL)is3bar; // watch out
 - (NSString *)get3foo; // watch out

@@ -94,7 +94,7 @@ typedef char BOOL;
 
 @property (NS_NONATOMIC_IOSONLY, getter=getStringValue, strong) NSString *stringValue;
 @property (NS_NONATOMIC_IOSONLY, getter=getCounterValue, readonly) BOOL counterValue;
-@property (NS_NONATOMIC_IOSONLY, getter=getns_dixtionary, readonly, strong) NSDictionary *ns_dixtionary;
+@property (NS_NONATOMIC_IOSONLY, getter=getns_dixtionary, readonly, copy) NSDictionary *ns_dixtionary;
 
 - (BOOL)is3bar; // watch out
 - (NSString *)get3foo; // watch out

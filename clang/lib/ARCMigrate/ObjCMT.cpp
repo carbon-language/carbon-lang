@@ -324,7 +324,9 @@ void MigrateBlockOrFunctionPointerTypeVariable(std::string & PropertyString,
 static const char *PropertyMemoryAttribute(ASTContext &Context, QualType ArgType) {
   Qualifiers::ObjCLifetime propertyLifetime = ArgType.getObjCLifetime();
   bool RetainableObject = ArgType->isObjCRetainableType();
-  if (RetainableObject && propertyLifetime == Qualifiers::OCL_Strong) {
+  if (RetainableObject &&
+      (propertyLifetime == Qualifiers::OCL_Strong
+       || propertyLifetime == Qualifiers::OCL_None)) {
     if (const ObjCObjectPointerType *ObjPtrTy =
         ArgType->getAs<ObjCObjectPointerType>()) {
       ObjCInterfaceDecl *IDecl = ObjPtrTy->getObjectType()->getInterface();
