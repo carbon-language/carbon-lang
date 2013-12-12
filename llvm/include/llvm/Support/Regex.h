@@ -81,6 +81,9 @@ namespace llvm {
     /// expression that matches Str and only Str.
     static bool isLiteralERE(StringRef Str);
 
+    /// \brief Turn String into a regex by escaping its special characters.
+    static std::string escape(StringRef String);
+
   private:
     struct llvm_regex *preg;
     int error;

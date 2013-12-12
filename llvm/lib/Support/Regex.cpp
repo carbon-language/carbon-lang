@@ -175,3 +175,32 @@ bool Regex::isLiteralERE(StringRef Str) {
   // regular expression specification.
   return Str.find_first_of("()^$|*+?.[]\\{}") == StringRef::npos;
 }
+
+std::string Regex::escape(StringRef String) {
+  std::string RegexStr;
+
+  for (unsigned i = 0, e = String.size(); i != e; ++i) {
+    switch (String[i]) {
+    // These are the special characters matched in "p_ere_exp".
+    case '(':
+    case ')':
+    case '^':
+    case '$':
+    case '|':
+    case '*':
+    case '+':
+    case '?':
+    case '.':
+    case '[':
+    case '\\':
+    case '{':
+      RegexStr += '\\';
+      // FALL THROUGH.
+    default:
+      RegexStr += String[i];
+      break;
+    }
+  }
+
+  return RegexStr;
+}

@@ -136,7 +136,6 @@ public:
   Check::CheckType getCheckTy() const { return CheckTy; }
 
 private:
-  static void AddFixedStringToRegEx(StringRef FixedStr, std::string &TheStr);
   bool AddRegExToRegEx(StringRef RS, unsigned &CurParen, SourceMgr &SM);
   void AddBackrefToRegEx(unsigned BackrefNum);
 
@@ -314,38 +313,11 @@ bool Pattern::ParsePattern(StringRef PatternStr,
     // Find the end, which is the start of the next regex.
     size_t FixedMatchEnd = PatternStr.find("{{");
     FixedMatchEnd = std::min(FixedMatchEnd, PatternStr.find("[["));
-    AddFixedStringToRegEx(PatternStr.substr(0, FixedMatchEnd), RegExStr);
+    RegExStr += Regex::escape(PatternStr.substr(0, FixedMatchEnd));
     PatternStr = PatternStr.substr(FixedMatchEnd);
   }
 
   return false;
-}
-
-void Pattern::AddFixedStringToRegEx(StringRef FixedStr, std::string &TheStr) {
-  // Add the characters from FixedStr to the regex, escaping as needed.  This
-  // avoids "leaning toothpicks" in common patterns.
-  for (unsigned i = 0, e = FixedStr.size(); i != e; ++i) {
-    switch (FixedStr[i]) {
-    // These are the special characters matched in "p_ere_exp".
-    case '(':
-    case ')':
-    case '^':
-    case '$':
-    case '|':
-    case '*':
-    case '+':
-    case '?':
-    case '.':
-    case '[':
-    case '\\':
-    case '{':
-      TheStr += '\\';
-      // FALL THROUGH.
-    default:
-      TheStr += FixedStr[i];
-      break;
-    }
-  }
 }
 
 bool Pattern::AddRegExToRegEx(StringRef RS, unsigned &CurParen,
@@ -428,8 +400,8 @@ size_t Pattern::Match(StringRef Buffer, size_t &MatchLen,
         if (it == VariableTable.end())
           return StringRef::npos;
 
-        // Look up the value and escape it so that we can plop it into the regex.
-        AddFixedStringToRegEx(it->second, Value);
+        // Look up the value and escape it so that we can put it into the regex.
+        Value += Regex::escape(it->second);
       }
 
       // Plop it into the regex at the adjusted offset.
