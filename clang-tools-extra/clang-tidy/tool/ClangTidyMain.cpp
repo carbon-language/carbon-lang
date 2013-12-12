@@ -17,7 +17,6 @@
 
 #include "../ClangTidy.h"
 #include "clang/Tooling/CommonOptionsParser.h"
-#include "llvm/Support/CommandLine.h"
 #include <vector>
 
 using namespace clang::ast_matchers;
@@ -39,7 +38,7 @@ static cl::opt<bool> Fix("fix", cl::desc("Fix detected errors if possible."),
 // FIXME: Add option to list name/description of all checks.
 
 int main(int argc, const char **argv) {
-  CommonOptionsParser OptionsParser(argc, argv);
+  CommonOptionsParser OptionsParser(argc, argv, ClangTidyCategory);
 
   SmallVector<clang::tidy::ClangTidyError, 16> Errors;
   clang::tidy::runClangTidy(Checks, OptionsParser.getCompilations(),
