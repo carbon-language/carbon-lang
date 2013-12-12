@@ -20,6 +20,7 @@ Type:
 for available options.
 """
 
+import atexit
 import commands
 import os
 import platform
@@ -388,6 +389,28 @@ def setCrashInfoHook_NonMac(text):
 
 setCrashInfoHook = None
 
+def deleteCrashInfoDylib(dylib_path):
+    try:
+        os.remove(dylib_path)
+    finally:
+        pass
+
+def setupCrashInfoHook():
+    global setCrashInfoHook
+    setCrashInfoHook = setCrashInfoHook_NonMac # safe default
+    if platform.system() == "Darwin":
+        test_dir = os.environ['LLDB_TEST']
+        if not test_dir or not os.path.exists(test_dir):
+            return
+        dylib_src = os.path.join(test_dir,"crashinfo.c")
+        dylib_dst = os.path.join(test_dir,"crashinfo.so")
+        cmd = "xcrun clang %s -o %s -framework Python -Xlinker -dylib -iframework /System/Library/Frameworks/ -Xlinker -F /System/Library/Frameworks/" % (dylib_src,dylib_dst)
+        if subprocess.call(cmd,shell=True) == 0 and os.path.exists(dylib_dst):
+            setCrashInfoHook = setCrashInfoHook_Mac
+            atexit.register(deleteCrashInfoDylib,dylib_dst)
+    else:
+        pass
+
 def parseOptionsAndInitTestdirs():
     """Initialize the list of directories containing our unittest scripts.
 
@@ -547,11 +570,6 @@ def parseOptionsAndInitTestdirs():
             archs = ['x86_64', 'i386']
         else:
             archs = [platform_machine]
-
-    if platform_system == 'Darwin':
-        setCrashInfoHook = setCrashInfoHook_Mac
-    else:
-        setCrashInfoHook = setCrashInfoHook_NonMac
 
     if args.categoriesList:
         categoriesList = set(validate_categories(args.categoriesList))
@@ -1186,6 +1204,7 @@ if sys.platform.startswith("darwin"):
 #
 parseOptionsAndInitTestdirs()
 setupSysPath()
+setupCrashInfoHook()
 
 #
 # If '-l' is specified, do not skip the long running tests.
@@ -1579,6 +1598,9 @@ for ia in range(len(archs) if iterArchs else 1):
                 global setCrashInfoHook
                 setCrashInfoHook("%s at %s" % (str(test),inspect.getfile(test.__class__)))
                 self.counter += 1
+                #if self.counter == 4:
+                #    import crashinfo
+                #    crashinfo.testCrashReporterDescription(None)
                 test.test_number = self.counter
                 if self.showAll:
                     self.stream.write(self.fmt % self.counter)

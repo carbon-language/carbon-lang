@@ -10,9 +10,6 @@
 * and call crashinfo.setCrashReporterDescription("hello world")
 * The testCrashReporterDescription() API is simply there to let you test that this
 * is doing what it is intended to do without having to actually cons up a crash
-*
-* WARNING: LLDB is using the prebuilt crashinfo.so rather than rebuilding this
-* from scratch each time - rebuild manually if you need to change this module
 ******************************************************************************/
 
 #include <Python/Python.h>
