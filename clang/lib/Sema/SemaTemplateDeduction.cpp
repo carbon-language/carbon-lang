@@ -4653,7 +4653,7 @@ Sema::getMoreSpecializedPartialSpecialization(
   SmallVector<DeducedTemplateArgument, 4> Deduced;
   TemplateDeductionInfo Info(Loc);
 
-  assert(PS1->getSpecializedTemplate() == PS1->getSpecializedTemplate() &&
+  assert(PS1->getSpecializedTemplate() == PS2->getSpecializedTemplate() &&
          "the partial specializations being compared should specialize"
          " the same template.");
   TemplateName Name(PS1->getSpecializedTemplate());
