@@ -83,7 +83,7 @@ bool Darwin::HasNativeLLVMSupport() const {
 
 /// Darwin provides an ARC runtime starting in MacOS X 10.7 and iOS 5.0.
 ObjCRuntime Darwin::getDefaultObjCRuntime(bool isNonFragile) const {
-  if (isTargetIPhoneOS())
+  if (isTargetIOSBased())
     return ObjCRuntime(ObjCRuntime::iOS, TargetVersion);
   if (isNonFragile)
     return ObjCRuntime(ObjCRuntime::MacOSX, TargetVersion);
@@ -92,10 +92,14 @@ ObjCRuntime Darwin::getDefaultObjCRuntime(bool isNonFragile) const {
 
 /// Darwin provides a blocks runtime starting in MacOS X 10.6 and iOS 3.2.
 bool Darwin::hasBlocksRuntime() const {
-  if (isTargetIPhoneOS())
+  if (isTargetIOSBased())
     return !isIPhoneOSVersionLT(3, 2);
-  else
+  else if (isTargetMacOS())
     return !isMacosxVersionLT(10, 6);
+  else {
+    assert(isTargetEmbedded() && "unexpected target platform");
+    return false;
+  }
 }
 
 static const char *GetArmArchForMArch(StringRef Value) {
@@ -132,6 +136,17 @@ static const char *GetArmArchForMCpu(StringRef Value) {
     .Case("cortex-m4", "armv7em")
     .Case("swift", "armv7s")
     .Default(0);
+}
+
+static bool isSoftFloatABI(const ArgList &Args) {
+  Arg *A = Args.getLastArg(options::OPT_msoft_float,
+                           options::OPT_mhard_float,
+                           options::OPT_mfloat_abi_EQ);
+  if (!A) return false;
+
+  return A->getOption().matches(options::OPT_msoft_float) ||
+         (A->getOption().matches(options::OPT_mfloat_abi_EQ) &&
+          A->getValue() == StringRef("soft"));
 }
 
 StringRef Darwin::getDarwinArchName(const ArgList &Args) const {
@@ -174,7 +189,7 @@ std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args,
     Triple.setEnvironment(llvm::Triple::EABI);
   } else {
     SmallString<16> Str;
-    Str += isTargetIPhoneOS() ? "ios" : "macosx";
+    Str += isTargetIOSBased() ? "ios" : "macosx";
     Str += getTargetVersion().getAsString();
     Triple.setOSName(Str);
   }
@@ -247,10 +262,12 @@ void DarwinClang::AddLinkARCArgs(const ArgList &Args,
 
 void DarwinClang::AddLinkRuntimeLib(const ArgList &Args,
                                     ArgStringList &CmdArgs,
-                                    const char *DarwinStaticLib,
-                                    bool AlwaysLink) const {
+                                    StringRef DarwinStaticLib,
+                                    bool AlwaysLink,
+                                    bool IsEmbedded) const {
   SmallString<128> P(getDriver().ResourceDir);
-  llvm::sys::path::append(P, "lib", "darwin", DarwinStaticLib);
+  llvm::sys::path::append(P, "lib", IsEmbedded ? "darwin_embedded" : "darwin",
+                          DarwinStaticLib);
 
   // For now, allow missing resource libraries to support developers who may
   // not have compiler-rt checked out or integrated into their build (unless
@@ -268,6 +285,21 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   default:
     getDriver().Diag(diag::err_drv_unsupported_rtlib_for_platform)
       << Args.getLastArg(options::OPT_rtlib_EQ)->getValue() << "darwin";
+    return;
+  }
+
+  if (isTargetEmbedded()) {
+    // Embedded targets are simple at the moment, not supporting sanitizers and
+    // with different libraries for each member of the product { static, PIC } x
+    // { hard-float, soft-float }
+    llvm::SmallString<32> CompilerRT = StringRef("libclang_rt.");
+    CompilerRT +=
+        tools::arm::getARMFloatABI(getDriver(), Args, getTriple()) == "hard"
+            ? "hard"
+            : "soft";
+    CompilerRT += Args.hasArg(options::OPT_fPIC) ? "_pic.a" : "_static.a";
+
+    AddLinkRuntimeLib(Args, CmdArgs, CompilerRT, false, true);
     return;
   }
 
@@ -293,7 +325,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
       Args.hasArg(options::OPT_fcreate_profile) ||
       Args.hasArg(options::OPT_coverage)) {
     // Select the appropriate runtime library for the target.
-    if (isTargetIPhoneOS()) {
+    if (isTargetIOSBased()) {
       AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.profile_ios.a");
     } else {
       AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.profile_osx.a");
@@ -305,10 +337,11 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   // Add Ubsan runtime library, if required.
   if (Sanitize.needsUbsanRt()) {
     // FIXME: Move this check to SanitizerArgs::filterUnsupportedKinds.
-    if (isTargetIPhoneOS()) {
+    if (isTargetIOSBased()) {
       getDriver().Diag(diag::err_drv_clang_unsupported_per_platform)
         << "-fsanitize=undefined";
     } else {
+      assert(isTargetMacOS() && "unexpected non OS X target");
       AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.ubsan_osx.a", true);
 
       // The Ubsan runtime library requires C++.
@@ -320,7 +353,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   // should not be linked with the runtime library.
   if (Sanitize.needsAsanRt()) {
     // FIXME: Move this check to SanitizerArgs::filterUnsupportedKinds.
-    if (isTargetIPhoneOS() && !isTargetIOSSimulator()) {
+    if (isTargetIPhoneOS()) {
       getDriver().Diag(diag::err_drv_clang_unsupported_per_platform)
         << "-fsanitize=address";
     } else {
@@ -348,7 +381,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   CmdArgs.push_back("-lSystem");
 
   // Select the dynamic runtime library and the target specific static library.
-  if (isTargetIPhoneOS()) {
+  if (isTargetIOSBased()) {
     // If we are compiling as iOS / simulator, don't attempt to link libgcc_s.1,
     // it never went into the SDK.
     // Linking against libgcc_s.1 isn't needed for iOS 5.0+
@@ -358,6 +391,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
     // We currently always need a static runtime library for iOS.
     AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.ios.a");
   } else {
+    assert(isTargetMacOS() && "unexpected non MacOS platform");
     // The dynamic runtime library was merged with libSystem for 10.6 and
     // beyond; only 10.4 and 10.5 need an additional runtime library.
     if (isMacosxVersionLT(10, 5))
@@ -448,9 +482,9 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
 
     // If no OSX or iOS target has been specified and we're compiling for armv7,
     // go ahead as assume we're targeting iOS.
+    StringRef DarwinArchName = getDarwinArchName(Args);
     if (OSXTarget.empty() && iOSTarget.empty() &&
-        (getDarwinArchName(Args) == "armv7" ||
-         getDarwinArchName(Args) == "armv7s"))
+        (DarwinArchName == "armv7" || DarwinArchName == "armv7s"))
         iOSTarget = iOSVersionMin;
 
     // Handle conflicting deployment targets
@@ -488,13 +522,24 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
         options::OPT_mios_simulator_version_min_EQ);
       iOSSimVersion = Args.MakeJoinedArg(0, O, iOSSimTarget);
       Args.append(iOSSimVersion);
-    } else {
+    } else if (DarwinArchName != "armv6m" && DarwinArchName != "armv7m" &&
+               DarwinArchName != "armv7em") {
       // Otherwise, assume we are targeting OS X.
       const Option O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
       OSXVersion = Args.MakeJoinedArg(0, O, MacosxVersionMin);
       Args.append(OSXVersion);
     }
   }
+
+  DarwinPlatformKind Platform;
+  if (OSXVersion)
+    Platform = MacOS;
+  else if (iOSVersion)
+    Platform = IPhoneOS;
+  else if (iOSSimVersion)
+    Platform = IPhoneOSSimulator;
+  else
+    Platform = Embedded;
 
   // Reject invalid architecture combinations.
   if (iOSSimVersion && (getTriple().getArch() != llvm::Triple::x86 &&
@@ -506,14 +551,14 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   // Set the tool chain target information.
   unsigned Major, Minor, Micro;
   bool HadExtra;
-  if (OSXVersion) {
+  if (Platform == MacOS) {
     assert((!iOSVersion && !iOSSimVersion) && "Unknown target platform!");
     if (!Driver::GetReleaseVersion(OSXVersion->getValue(), Major, Minor,
                                    Micro, HadExtra) || HadExtra ||
         Major != 10 || Minor >= 100 || Micro >= 100)
       getDriver().Diag(diag::err_drv_invalid_version_number)
         << OSXVersion->getAsString(Args);
-  } else {
+  } else if (Platform == IPhoneOS || Platform == IPhoneOSSimulator) {
     const Arg *Version = iOSVersion ? iOSVersion : iOSSimVersion;
     assert(Version && "Unknown target platform!");
     if (!Driver::GetReleaseVersion(Version->getValue(), Major, Minor,
@@ -521,9 +566,10 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
         Major >= 10 || Minor >= 100 || Micro >= 100)
       getDriver().Diag(diag::err_drv_invalid_version_number)
         << Version->getAsString(Args);
+  } else {
+    assert(Platform == Embedded && "unexpected platform");
+    Major = Minor = Micro = 0;
   }
-
-  bool IsIOSSim = bool(iOSSimVersion);
 
   // In GCC, the simulator historically was treated as being OS X in some
   // contexts, like determining the link logic, despite generally being called
@@ -531,9 +577,9 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   // simulator as iOS + x86, and treat it differently in a few contexts.
   if (iOSVersion && (getTriple().getArch() == llvm::Triple::x86 ||
                      getTriple().getArch() == llvm::Triple::x86_64))
-    IsIOSSim = true;
+    Platform = IPhoneOSSimulator;
 
-  setTarget(/*IsIPhoneOS=*/ !OSXVersion, Major, Minor, Micro, IsIOSSim);
+  setTarget(Platform, Major, Minor, Micro);
 }
 
 void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,
@@ -837,7 +883,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
   // FIXME: It would be far better to avoid inserting those -static arguments,
   // but we can't check the deployment target in the translation code until
   // it is set here.
-  if (isTargetIPhoneOS() && !isIPhoneOSVersionLT(6, 0)) {
+  if (isTargetIOSBased() && !isIPhoneOSVersionLT(6, 0)) {
     for (ArgList::iterator it = DAL->begin(), ie = DAL->end(); it != ie; ) {
       Arg *A = *it;
       ++it;
@@ -854,7 +900,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
 
   // Default to use libc++ on OS X 10.9+ and iOS 7+.
   if (((isTargetMacOS() && !isMacosxVersionLT(10, 9)) ||
-       (isTargetIPhoneOS() && !isIPhoneOSVersionLT(7, 0))) &&
+       (isTargetIOSBased() && !isIPhoneOSVersionLT(7, 0))) &&
       !Args.getLastArg(options::OPT_stdlib_EQ))
     DAL->AddJoinedArg(0, Opts.getOption(options::OPT_stdlib_EQ), "libc++");
 
@@ -865,7 +911,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
     StringRef where;
 
     // Complain about targeting iOS < 5.0 in any way.
-    if (isTargetIPhoneOS() && isIPhoneOSVersionLT(5, 0))
+    if (isTargetIOSBased() && isIPhoneOSVersionLT(5, 0))
       where = "iOS 5.0";
 
     if (where != StringRef()) {
@@ -911,12 +957,11 @@ bool Darwin::SupportsProfiling() const {
 }
 
 bool Darwin::SupportsObjCGC() const {
-  // Garbage collection is supported everywhere except on iPhone OS.
-  return !isTargetIPhoneOS();
+  return isTargetMacOS();
 }
 
 void Darwin::CheckObjCARC() const {
-  if (isTargetIPhoneOS() || !isMacosxVersionLT(10, 6))
+  if (isTargetIOSBased()|| (isTargetMacOS() && !isMacosxVersionLT(10, 6)))
     return;
   getDriver().Diag(diag::err_arc_unsupported_on_toolchain);
 }
@@ -1297,17 +1342,6 @@ void Generic_GCC::GCCInstallationDetector::print(raw_ostream &OS) const {
   // Also include the multiarch variant if it's different.
   if (TargetTriple.str() != BiarchTriple.str())
     BiarchTripleAliases.push_back(BiarchTriple.str());
-}
-
-static bool isSoftFloatABI(const ArgList &Args) {
-  Arg *A = Args.getLastArg(options::OPT_msoft_float,
-                           options::OPT_mhard_float,
-                           options::OPT_mfloat_abi_EQ);
-  if (!A) return false;
-
-  return A->getOption().matches(options::OPT_msoft_float) ||
-         (A->getOption().matches(options::OPT_mfloat_abi_EQ) &&
-          A->getValue() == StringRef("soft"));
 }
 
 static bool isMipsArch(llvm::Triple::ArchType Arch) {

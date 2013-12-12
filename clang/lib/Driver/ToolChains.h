@@ -210,11 +210,14 @@ private:
   // the argument translation business.
   mutable bool TargetInitialized;
 
-  /// Whether we are targeting iPhoneOS target.
-  mutable bool TargetIsIPhoneOS;
+  enum DarwinPlatformKind {
+    MacOS,
+    IPhoneOS,
+    IPhoneOSSimulator,
+    Embedded // FIXME: embedded isn't really a Darwin platform.
+  };
 
-  /// Whether we are targeting the iPhoneOS simulator target.
-  mutable bool TargetIsIPhoneOSSimulator;
+  mutable DarwinPlatformKind TargetPlatform;
 
   /// The OS version we are targeting.
   mutable VersionTuple TargetVersion;
@@ -244,36 +247,42 @@ public:
 
   // FIXME: Eliminate these ...Target functions and derive separate tool chains
   // for these targets and put version in constructor.
-  void setTarget(bool IsIPhoneOS, unsigned Major, unsigned Minor,
-                 unsigned Micro, bool IsIOSSim) const {
-    assert((!IsIOSSim || IsIPhoneOS) && "Unexpected deployment target!");
-
+  void setTarget(DarwinPlatformKind Platform, unsigned Major, unsigned Minor,
+                 unsigned Micro) const {
     // FIXME: For now, allow reinitialization as long as values don't
     // change. This will go away when we move away from argument translation.
-    if (TargetInitialized && TargetIsIPhoneOS == IsIPhoneOS &&
-        TargetIsIPhoneOSSimulator == IsIOSSim &&
+    if (TargetInitialized && TargetPlatform == Platform &&
         TargetVersion == VersionTuple(Major, Minor, Micro))
       return;
 
     assert(!TargetInitialized && "Target already initialized!");
     TargetInitialized = true;
-    TargetIsIPhoneOS = IsIPhoneOS;
-    TargetIsIPhoneOSSimulator = IsIOSSim;
+    TargetPlatform = Platform;
     TargetVersion = VersionTuple(Major, Minor, Micro);
   }
 
   bool isTargetIPhoneOS() const {
     assert(TargetInitialized && "Target not initialized!");
-    return TargetIsIPhoneOS;
+    return TargetPlatform == IPhoneOS;
   }
 
   bool isTargetIOSSimulator() const {
     assert(TargetInitialized && "Target not initialized!");
-    return TargetIsIPhoneOSSimulator;
+    return TargetPlatform == IPhoneOSSimulator;
+  }
+
+  bool isTargetIOSBased() const {
+    assert(TargetInitialized && "Target not initialized!");
+    return isTargetIPhoneOS() || isTargetIOSSimulator();
   }
 
   bool isTargetMacOS() const {
-    return !isTargetIOSSimulator() && !isTargetIPhoneOS();
+    return TargetPlatform == MacOS;
+  }
+
+  bool isTargetEmbedded() const {
+    assert(TargetInitialized && "Target not initialized!");
+    return TargetPlatform == Embedded;
   }
 
   bool isTargetInitialized() const { return TargetInitialized; }
@@ -289,12 +298,12 @@ public:
   StringRef getDarwinArchName(const llvm::opt::ArgList &Args) const;
 
   bool isIPhoneOSVersionLT(unsigned V0, unsigned V1=0, unsigned V2=0) const {
-    assert(isTargetIPhoneOS() && "Unexpected call for OS X target!");
+    assert(isTargetIOSBased() && "Unexpected call for non iOS target!");
     return TargetVersion < VersionTuple(V0, V1, V2);
   }
 
   bool isMacosxVersionLT(unsigned V0, unsigned V1=0, unsigned V2=0) const {
-    assert(!isTargetIPhoneOS() && "Unexpected call for iPhoneOS target!");
+    assert(isTargetMacOS() && "Unexpected call for non OS X target!");
     return TargetVersion < VersionTuple(V0, V1, V2);
   }
 
@@ -350,15 +359,20 @@ public:
     // This is only used with the non-fragile ABI and non-legacy dispatch.
 
     // Mixed dispatch is used everywhere except OS X before 10.6.
-    return !(!isTargetIPhoneOS() && isMacosxVersionLT(10, 6));
+    return !(isTargetMacOS() && isMacosxVersionLT(10, 6));
   }
   virtual bool IsUnwindTablesDefault() const;
   virtual unsigned GetDefaultStackProtectorLevel(bool KernelOrKext) const {
     // Stack protectors default to on for user code on 10.5,
     // and for everything in 10.6 and beyond
-    return isTargetIPhoneOS() ||
-      (!isMacosxVersionLT(10, 6) ||
-         (!isMacosxVersionLT(10, 5) && !KernelOrKext));
+    if (isTargetIOSBased())
+      return 1;
+    else if (isTargetMacOS() && !isMacosxVersionLT(10, 6))
+      return 1;
+    else if (isTargetMacOS() && !isMacosxVersionLT(10, 5) && !KernelOrKext)
+      return 1;
+
+    return 0;
   }
   virtual RuntimeLibType GetDefaultRuntimeLibType() const {
     return ToolChain::RLT_CompilerRT;
@@ -393,8 +407,9 @@ public:
                                      llvm::opt::ArgStringList &CmdArgs) const;
   void AddLinkRuntimeLib(const llvm::opt::ArgList &Args,
                          llvm::opt::ArgStringList &CmdArgs,
-                         const char *DarwinStaticLib,
-                         bool AlwaysLink = false) const;
+                         StringRef DarwinStaticLib,
+                         bool AlwaysLink = false,
+                         bool IsEmbedded = false) const;
 
   virtual void AddCXXStdlibLibArgs(const llvm::opt::ArgList &Args,
                                    llvm::opt::ArgStringList &CmdArgs) const;

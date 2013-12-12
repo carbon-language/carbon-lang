@@ -606,6 +606,10 @@ namespace visualstudio {
   };
 } // end namespace visualstudio
 
+namespace arm {
+  StringRef getARMFloatABI(const Driver &D, const llvm::opt::ArgList &Args,
+                         const llvm::Triple &Triple);
+}
 namespace XCore {
   // For XCore, we do not need to instantiate tools for PreProcess, PreCompile and Compile.
   // We simply use "clang -cc1" for those actions.

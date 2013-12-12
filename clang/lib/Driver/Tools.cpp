@@ -703,9 +703,8 @@ static void getARMFPUFeatures(const Driver &D, const Arg *A,
 
 // Select the float ABI as determined by -msoft-float, -mhard-float, and
 // -mfloat-abi=.
-static StringRef getARMFloatABI(const Driver &D,
-                                const ArgList &Args,
-                                const llvm::Triple &Triple) {
+StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
+                                     const llvm::Triple &Triple) {
   StringRef FloatABI;
   if (Arg *A = Args.getLastArg(options::OPT_msoft_float,
                                options::OPT_mhard_float,
@@ -785,7 +784,7 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
                                  const ArgList &Args,
                                  std::vector<const char *> &Features,
                                  bool ForAS) {
-  StringRef FloatABI = getARMFloatABI(D, Args, Triple);
+  StringRef FloatABI = tools::arm::getARMFloatABI(D, Args, Triple);
   if (!ForAS) {
     // FIXME: Note, this is a hack, the LLVM backend doesn't actually use these
     // yet (it uses the -mfloat-abi and -msoft-float options), and it is
@@ -872,7 +871,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   CmdArgs.push_back(ABIName);
 
   // Determine floating point ABI from the options & target defaults.
-  StringRef FloatABI = getARMFloatABI(D, Args, Triple);
+  StringRef FloatABI = tools::arm::getARMFloatABI(D, Args, Triple);
   if (FloatABI == "soft") {
     // Floating point operations and argument passing are soft.
     //
@@ -4824,7 +4823,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
   Args.AddLastArg(CmdArgs, options::OPT_all__load);
   Args.AddAllArgs(CmdArgs, options::OPT_allowable__client);
   Args.AddLastArg(CmdArgs, options::OPT_bind__at__load);
-  if (DarwinTC.isTargetIPhoneOS())
+  if (DarwinTC.isTargetIOSBased())
     Args.AddLastArg(CmdArgs, options::OPT_arch__errors__fatal);
   Args.AddLastArg(CmdArgs, options::OPT_dead__strip);
   Args.AddLastArg(CmdArgs, options::OPT_no__dead__strip__inits__and__terms);
@@ -4847,13 +4846,16 @@ void darwin::Link::AddLinkArgs(Compilation &C,
   //
   // FIXME: We may be able to remove this, once we can verify no one depends on
   // it.
-  if (Args.hasArg(options::OPT_mios_simulator_version_min_EQ))
+  if (Args.hasArg(options::OPT_mios_simulator_version_min_EQ)) {
     CmdArgs.push_back("-ios_simulator_version_min");
-  else if (DarwinTC.isTargetIPhoneOS())
+    CmdArgs.push_back(Args.MakeArgString(TargetVersion.getAsString()));
+  } else if (DarwinTC.isTargetIOSBased()) {
     CmdArgs.push_back("-iphoneos_version_min");
-  else
+    CmdArgs.push_back(Args.MakeArgString(TargetVersion.getAsString()));
+  } else if (DarwinTC.isTargetMacOS()) {
     CmdArgs.push_back("-macosx_version_min");
-  CmdArgs.push_back(Args.MakeArgString(TargetVersion.getAsString()));
+    CmdArgs.push_back(Args.MakeArgString(TargetVersion.getAsString()));
+  }
 
   Args.AddLastArg(CmdArgs, options::OPT_nomultidefs);
   Args.AddLastArg(CmdArgs, options::OPT_multi__module);
@@ -4978,7 +4980,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
       } else if (getDarwinToolChain().isTargetIPhoneOS()) {
         if (getDarwinToolChain().isIPhoneOSVersionLT(3, 1))
           CmdArgs.push_back("-ldylib1.o");
-      } else {
+      } else if (getDarwinToolChain().isTargetMacOS()) {
         if (getDarwinToolChain().isMacosxVersionLT(10, 5))
           CmdArgs.push_back("-ldylib1.o");
         else if (getDarwinToolChain().isMacosxVersionLT(10, 6))
@@ -4994,7 +4996,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
           } else if (getDarwinToolChain().isTargetIPhoneOS()) {
             if (getDarwinToolChain().isIPhoneOSVersionLT(3, 1))
               CmdArgs.push_back("-lbundle1.o");
-          } else {
+          } else if (getDarwinToolChain().isTargetMacOS()) {
             if (getDarwinToolChain().isMacosxVersionLT(10, 6))
               CmdArgs.push_back("-lbundle1.o");
           }
@@ -5034,7 +5036,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
                 CmdArgs.push_back("-lcrt1.o");
               else if (getDarwinToolChain().isIPhoneOSVersionLT(6, 0))
                 CmdArgs.push_back("-lcrt1.3.1.o");
-            } else {
+            } else if (getDarwinToolChain().isTargetMacOS()) {
               if (getDarwinToolChain().isMacosxVersionLT(10, 5))
                 CmdArgs.push_back("-lcrt1.o");
               else if (getDarwinToolChain().isMacosxVersionLT(10, 6))
@@ -5049,7 +5051,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
       }
     }
 
-    if (!getDarwinToolChain().isTargetIPhoneOS() &&
+    if (getDarwinToolChain().isTargetMacOS() &&
         Args.hasArg(options::OPT_shared_libgcc) &&
         getDarwinToolChain().isMacosxVersionLT(10, 5)) {
       const char *Str =
@@ -6234,8 +6236,8 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     if (MArch == "armv8" || MArch == "armv8a" || MArch == "armv8-a")
       CmdArgs.push_back("-mfpu=crypto-neon-fp-armv8");
 
-    StringRef ARMFloatABI = getARMFloatABI(getToolChain().getDriver(), Args,
-                                           getToolChain().getTriple());
+    StringRef ARMFloatABI = tools::arm::getARMFloatABI(
+        getToolChain().getDriver(), Args, getToolChain().getTriple());
     CmdArgs.push_back(Args.MakeArgString("-mfloat-abi=" + ARMFloatABI));
 
     Args.AddLastArg(CmdArgs, options::OPT_march_EQ);
