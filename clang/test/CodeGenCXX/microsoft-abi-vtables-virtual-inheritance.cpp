@@ -430,6 +430,26 @@ void X::f() {}
 X x;
 }
 
+namespace Test11 {
+struct X : virtual A {};
+struct Y { virtual void g(); };
+
+struct Z : virtual X, Y {
+  // MANGLING-DAG: @"\01??_7Z@Test11@@6BY@1@@"
+
+  // FIXME this one is wrong:
+  // MANGLING-DAG-SHOULD-BE: @"\01??_7Z@Test11@@6BX@1@@"
+  // INCORRECT MANGLING-DAG: @"\01??_7Z@Test11@@6BA@@@"
+};
+
+Z z;
+
+struct W : virtual X, A {};
+
+// PR17748 FIXME this one hits UNREACHABLE:
+// W w;
+}
+
 namespace vdtors {
 struct X {
   virtual ~X();
