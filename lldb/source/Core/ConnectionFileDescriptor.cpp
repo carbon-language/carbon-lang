@@ -1380,7 +1380,9 @@ ConnectionFileDescriptor::SocketListen (const char *host_and_port, Error *error_
         {
             struct sockaddr_in accept_addr;
             ::memset (&accept_addr, 0, sizeof accept_addr);
+#ifndef __linux__
             accept_addr.sin_len = sizeof accept_addr;
+#endif
             socklen_t accept_addr_len = sizeof accept_addr;
 
             int fd = ::accept (listen_fd, (struct sockaddr *)&accept_addr, &accept_addr_len);
@@ -1399,7 +1401,10 @@ ConnectionFileDescriptor::SocketListen (const char *host_and_port, Error *error_
             }
             else
             {
-                if (accept_addr_len == listen_addr.sockaddr_in().sin_len &&
+                if (
+#ifndef __linux__
+                    accept_addr_len == listen_addr.sockaddr_in().sin_len &&
+#endif
                     accept_addr.sin_addr.s_addr == listen_addr.sockaddr_in().sin_addr.s_addr)
                 {
                     accept_connection = true;
