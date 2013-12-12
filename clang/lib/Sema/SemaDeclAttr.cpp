@@ -2349,12 +2349,6 @@ static void handleSectionAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  // This attribute cannot be applied to local variables.
-  if (isa<VarDecl>(D) && cast<VarDecl>(D)->hasLocalStorage()) {
-    S.Diag(LiteralLoc, diag::err_attribute_section_local_variable);
-    return;
-  }
-  
   unsigned Index = Attr.getAttributeSpellingListIndex();
   SectionAttr *NewAttr = S.mergeSectionAttr(D, Attr.getRange(), Str, Index);
   if (NewAttr)

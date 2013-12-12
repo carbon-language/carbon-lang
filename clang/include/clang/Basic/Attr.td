@@ -53,6 +53,9 @@ def TLSVar : SubsetSubject<Var,
 def SharedVar : SubsetSubject<Var,
                               [{S->hasGlobalStorage() && !S->getTLSKind()}]>;
 
+def GlobalVar : SubsetSubject<Var,
+                             [{!S->hasLocalStorage()}]>;
+
 // A single argument to an attribute
 class Argument<string name, bit optional> {
   string Name = name;
@@ -787,6 +790,8 @@ def InitPriority : InheritableAttr {
 def Section : InheritableAttr {
   let Spellings = [GNU<"section">, CXX11<"gnu", "section">];
   let Args = [StringArgument<"Name">];
+  let Subjects = SubjectList<[Function, GlobalVar], ErrorDiag,
+                             "ExpectedFunctionOrGlobalVar">;
 }
 
 def Sentinel : InheritableAttr {
