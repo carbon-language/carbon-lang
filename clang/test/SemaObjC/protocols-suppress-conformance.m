@@ -24,6 +24,25 @@ __attribute__((objc_protocol_requires_explicit_implementation))
 @implementation ClassB // expected-warning {{method 'theBestOfTimes' in protocol not implemented}}
 @end
 
+// Test that inherited protocols do not get the explicit conformance requirement.
+@protocol Inherited
+- (void) fairIsFoul;
+@end
+
+__attribute__((objc_protocol_requires_explicit_implementation))
+@protocol Derived <Inherited>
+- (void) foulIsFair; // expected-note {{method 'foulIsFair' declared here}}
+@end
+
+@interface ClassC <Inherited>
+@end
+
+@interface ClassD : ClassC <Derived> // expected-note {{required for direct or indirect protocol 'Derived'}}
+@end
+
+@implementation ClassD // expected-warning {{method 'foulIsFair' in protocol not implemented}}
+@end
+
 // Test that the attribute is used correctly.
 __attribute__((objc_protocol_requires_explicit_implementation(1+2))) // expected-error {{attribute takes no arguments}}
 @protocol AnotherProtocol @end
