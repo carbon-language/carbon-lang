@@ -248,11 +248,11 @@ void test() {
   // gcc.
 
   // Not a use.  gcc forgets to do the assignment.
-  // CHECK-NEXT: call
+  // CHECK-NEXT: call {{.*}}void
   ((a=a),a);
 
   // Not a use.  gcc gets this wrong, it doesn't emit the copy!  
-  // CHECK-NEXT: call
+  // CHECK-NEXT: call {{.*}}void
   (void)(a=a);
 
   // Not a use.  gcc got this wrong in 4.2 and omitted the side effects

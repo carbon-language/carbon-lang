@@ -184,7 +184,7 @@ namespace pointer_to_member_function {
   template<int (Y::*)(int)> struct X0 {}; // expected-note{{template parameter is declared here}}
   X0<&Y::f> x0a;
   X0<&Y::g> x0b;
-  X0<&Y::h> x0c; // expected-error{{non-type template argument of type 'float (pointer_to_member_function::Y::*)(float)' cannot be converted to a value of type 'int (pointer_to_member_function::Y::*)(int)'}}
+  X0<&Y::h> x0c; // expected-error-re{{non-type template argument of type 'float (pointer_to_member_function::Y::*)(float){{.*}}' cannot be converted to a value of type 'int (pointer_to_member_function::Y::*)(int){{.*}}'}}
 }
 
 //     -- For a non-type template-parameter of type pointer to data member,

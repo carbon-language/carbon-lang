@@ -59,6 +59,10 @@ public:
   }
 
   CallingConv getDefaultMethodCallConv(bool isVariadic) const {
+    const llvm::Triple &T = Context.getTargetInfo().getTriple();
+    if (!isVariadic && T.getOS() == llvm::Triple::MinGW32 &&
+        T.getArch() == llvm::Triple::x86)
+      return CC_X86ThisCall;
     return CC_C;
   }
 

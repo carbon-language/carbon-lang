@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -fblocks %s -verify
+// RUN: %clang_cc1 -triple i686-pc-linux -std=c++11 -fblocks %s -verify
 
 void block_capture_errors() {
   __block int var; // expected-note 2{{'var' declared here}}

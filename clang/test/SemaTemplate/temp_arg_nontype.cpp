@@ -82,7 +82,7 @@ struct Z {
 template<int (Z::*pmf)(int)> struct A6; // expected-note{{template parameter is declared here}}
 A6<&Z::foo> *a17_1;
 A6<&Z::bar> *a17_2;
-A6<&Z::baz> *a17_3; // expected-error{{non-type template argument of type 'double (Z::*)(double)' cannot be converted to a value of type 'int (Z::*)(int)'}}
+A6<&Z::baz> *a17_3; // expected-error-re{{non-type template argument of type 'double (Z::*)(double){{.*}}' cannot be converted to a value of type 'int (Z::*)(int){{.*}}'}}
 
 
 template<int Z::*pm> struct A7;  // expected-note{{template parameter is declared here}}

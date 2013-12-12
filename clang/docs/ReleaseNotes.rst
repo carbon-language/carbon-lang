@@ -47,6 +47,11 @@ sections with improvements to Clang's support for those languages.
 Major New Features
 ------------------
 
+- Clang uses the new MingW ABI
+GCC 4.7 changed the mingw ABI. Clang 3.4 and older use the GCC 4.6
+ABI. Clang 3.5 and newer use the GCC 4.7 abi.
+
+
 Improvements to Clang's diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

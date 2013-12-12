@@ -177,7 +177,7 @@ namespace test8 {
   };
 
   void test(A &a) {
-    if (a) return; // expected-error {{'operator void *(class test8::A::*)(void) const' is a private member of 'test8::A'}}
+    if (a) return; // expected-error-re {{'operator void *(class test8::A::*)(void) {{.*}}const' is a private member of 'test8::A'}}
   }
 }
 

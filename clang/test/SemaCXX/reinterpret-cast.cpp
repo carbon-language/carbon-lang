@@ -96,12 +96,12 @@ void memptrs()
   void (structure::*psf)() = 0;
   (void)reinterpret_cast<int (structure::*)()>(psf);
 
-  (void)reinterpret_cast<void (structure::*)()>(psi); // expected-error {{reinterpret_cast from 'const int structure::*' to 'void (structure::*)()' is not allowed}}
-  (void)reinterpret_cast<int structure::*>(psf); // expected-error {{reinterpret_cast from 'void (structure::*)()' to 'int structure::*' is not allowed}}
+  (void)reinterpret_cast<void (structure::*)()>(psi); // expected-error-re {{reinterpret_cast from 'const int structure::*' to 'void (structure::*)(){{.*}}' is not allowed}}
+  (void)reinterpret_cast<int structure::*>(psf); // expected-error-re {{reinterpret_cast from 'void (structure::*)(){{.*}}' to 'int structure::*' is not allowed}}
 
   // Cannot cast from integers to member pointers, not even the null pointer
   // literal.
-  (void)reinterpret_cast<void (structure::*)()>(0); // expected-error {{reinterpret_cast from 'int' to 'void (structure::*)()' is not allowed}}
+  (void)reinterpret_cast<void (structure::*)()>(0); // expected-error-re {{reinterpret_cast from 'int' to 'void (structure::*)(){{.*}}' is not allowed}}
   (void)reinterpret_cast<int structure::*>(0); // expected-error {{reinterpret_cast from 'int' to 'int structure::*' is not allowed}}
 }
 

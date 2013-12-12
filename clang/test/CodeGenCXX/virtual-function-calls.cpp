@@ -8,7 +8,7 @@ struct A {
 };
 
 void f(A *a) {
-  // CHECK: call void %
+  // CHECK: call {{.*}}void %
   a->f('c');
 }
 
@@ -45,7 +45,7 @@ namespace VirtualNoreturn {
   // CHECK: @_ZN15VirtualNoreturn1f
   void f(A *p) {
     p->f();
-    // CHECK: call void %{{[^#]*$}}
+    // CHECK: call {{.*}}void %{{[^#]*$}}
     // CHECK-NOT: unreachable
   }
 }

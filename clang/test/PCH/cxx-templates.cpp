@@ -17,8 +17,8 @@
 // RUN: %clang_cc1 -std=c++11 -fcxx-exceptions -fdelayed-template-parsing -fexceptions -include-pch %t -verify %s -ast-dump  -o -
 // RUN: %clang_cc1 -std=c++11 -fcxx-exceptions -fdelayed-template-parsing -fexceptions -include-pch %t %s -emit-llvm -o - -DNO_ERRORS | FileCheck %s
 
-// CHECK: define weak_odr void @_ZN2S4IiE1mEv
-// CHECK: define linkonce_odr void @_ZN2S3IiE1mEv
+// CHECK: define weak_odr {{.*}}void @_ZN2S4IiE1mEv
+// CHECK: define linkonce_odr {{.*}}void @_ZN2S3IiE1mEv
 
 struct A {
   typedef int type;

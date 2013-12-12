@@ -10,7 +10,7 @@ extern "C" {
   }
 }
 
-// CHECK-LABEL: define void @_ZN1N1X1fEv
+// CHECK-LABEL: define {{.*}}void @_ZN1N1X1fEv
 
 extern "C" {
   static void test2_f() {
