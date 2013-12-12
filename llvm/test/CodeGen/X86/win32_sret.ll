@@ -19,7 +19,7 @@ entry:
 ; WIN32:    {{ret$}}
 
 ; MINGW_X86-LABEL:  _sret1:
-; MINGW_X86:  ret $4
+; MINGW_X86:  {{ret$}}
 
 ; LINUX-LABEL:      sret1:
 ; LINUX:      ret $4
@@ -36,7 +36,7 @@ entry:
 ; WIN32:    {{ret$}}
 
 ; MINGW_X86-LABEL:  _sret2:
-; MINGW_X86:  ret $4
+; MINGW_X86:  {{ret$}}
 
 ; LINUX-LABEL:      sret2:
 ; LINUX:      ret $4
@@ -54,7 +54,7 @@ entry:
 ; WIN32:    {{ret$}}
 
 ; MINGW_X86-LABEL:  _sret3:
-; MINGW_X86:  ret $4
+; MINGW_X86:  {{ret$}}
 
 ; LINUX-LABEL:      sret3:
 ; LINUX:      ret $4
@@ -75,7 +75,7 @@ entry:
 ; WIN32:   {{ret$}}
 
 ; MINGW_X86-LABEL: _sret4:
-; MINGW_X86: ret $4
+; MINGW_X86: {{ret$}}
 
 ; LINUX-LABEL:     sret4:
 ; LINUX:     ret $4

@@ -1863,7 +1863,7 @@ static unsigned computeBytesPoppedByCallee(const X86Subtarget &Subtarget,
                                            const ImmutableCallSite &CS) {
   if (Subtarget.is64Bit())
     return 0;
-  if (Subtarget.isTargetWindows())
+  if (Subtarget.getTargetTriple().isOSMSVCRT())
     return 0;
   CallingConv::ID CC = CS.getCallingConv();
   if (CC == CallingConv::Fast || CC == CallingConv::GHC)
