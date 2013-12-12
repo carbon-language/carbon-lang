@@ -679,6 +679,14 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       ctx.setBaseAddress(addr);
       break;
 
+    case OPT_dll:
+      // Parse /dll command line option
+      ctx.setImageType(PECOFFLinkingContext::IMAGE_DLL);
+      // Default base address of a DLL is 0x10000000.
+      if (!parsedArgs->getLastArg(OPT_base))
+        ctx.setBaseAddress(0x10000000);
+      break;
+
     case OPT_stack: {
       // Parse /stack command line option
       uint64_t reserve;

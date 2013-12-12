@@ -250,7 +250,7 @@ protected:
 
 private:
   // The start address for the program. The default value for the executable is
-  // 0x400000, but can be altered using -base command line option.
+  // 0x400000, but can be altered using /base command line option.
   uint64_t _baseAddress;
 
   uint64_t _stackReserve;
