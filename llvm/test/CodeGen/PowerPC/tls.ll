@@ -1,6 +1,8 @@
 ; RUN: llc -O0 < %s -march=ppc64 -mcpu=ppc64 | FileCheck -check-prefix=OPT0 %s
 ; RUN: llc -O1 < %s -march=ppc64 -mcpu=ppc64 | FileCheck -check-prefix=OPT1 %s
 
+target triple = "powerpc64-unknown-linux-gnu"
+
 @a = thread_local global i32 0, align 4
 
 ;OPT0-LABEL:          localexec:

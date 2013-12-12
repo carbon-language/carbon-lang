@@ -1,6 +1,7 @@
 ; RUN: llc -march=ppc64 -mcpu=pwr7 -O0 -relocation-model=pic < %s | FileCheck -check-prefix=OPT0 %s
 ; RUN: llc -march=ppc64 -mcpu=pwr7 -O1 -relocation-model=pic < %s | FileCheck -check-prefix=OPT1 %s
 
+target triple = "powerpc64-unknown-linux-gnu"
 ; Test correct assembly code generation for thread-local storage using
 ; the local dynamic model.
 
