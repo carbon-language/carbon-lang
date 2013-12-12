@@ -994,9 +994,6 @@ Host::GetOSKernelDescription (std::string &s)
     s.clear();
     return false;
 }
-    
-#include <libxml/parser.h>
-#include <libxml/tree.h>
 
 bool
 Host::GetOSVersion 
