@@ -37,7 +37,7 @@ extern "C" void LLVMInitializePowerPCTarget() {
 static std::string getDataLayoutString(const PPCSubtarget &ST) {
   const Triple &T = ST.getTargetTriple();
 
-  // PPC is big endian
+  // PPC is big endian.
   std::string Ret = "E";
 
   // PPC64 has 64 bit pointers, PPC32 has 32 bit pointers.
@@ -62,7 +62,7 @@ static std::string getDataLayoutString(const PPCSubtarget &ST) {
   if (ST.isPPC64() && ST.isSVR4ABI())
     Ret += "-v128:128:128";
 
-  // PPC64 has 32 and 64 bit register, PPC32 has only 32 bit ones.
+  // PPC64 has 32 and 64 bit registers, PPC32 has only 32 bit ones.
   if (ST.isPPC64())
     Ret += "-n32:64";
   else
