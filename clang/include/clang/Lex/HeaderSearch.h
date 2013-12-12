@@ -232,6 +232,8 @@ class HeaderSearch {
   unsigned NumMultiIncludeFileOptzn;
   unsigned NumFrameworkLookups, NumSubFrameworkLookups;
 
+  bool EnabledModules;
+
   // HeaderSearch doesn't support default or copy construction.
   HeaderSearch(const HeaderSearch&) LLVM_DELETED_FUNCTION;
   void operator=(const HeaderSearch&) LLVM_DELETED_FUNCTION;
@@ -458,6 +460,9 @@ public:
   /// FileEntry, uniquing them through the 'HeaderMaps' datastructure.
   const HeaderMap *CreateHeaderMap(const FileEntry *FE);
 
+  /// Returns true if modules are enabled.
+  bool enabledModules() const { return EnabledModules; }
+
   /// \brief Retrieve the name of the module file that should be used to 
   /// load the given module.
   ///
@@ -491,6 +496,7 @@ public:
 
   /// \brief Determine whether there is a module map that may map the header
   /// with the given file name to a (sub)module.
+  /// Always returns false if modules are disabled.
   ///
   /// \param Filename The name of the file.
   ///
