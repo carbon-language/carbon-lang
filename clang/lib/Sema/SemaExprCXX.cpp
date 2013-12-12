@@ -4136,22 +4136,23 @@ QualType Sema::CheckPointerToMemberOperands(ExprResult &LHS, ExprResult &RHS,
                             OpSpelling, (int)isIndirect)) {
       return QualType();
     }
-    CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                       /*DetectVirtual=*/false);
-    // FIXME: Would it be useful to print full ambiguity paths, or is that
-    // overkill?
-    if (!IsDerivedFrom(LHSType, Class, Paths) ||
-        Paths.isAmbiguous(Context.getCanonicalType(Class))) {
+
+    if (!IsDerivedFrom(LHSType, Class)) {
       Diag(Loc, diag::err_bad_memptr_lhs) << OpSpelling
         << (int)isIndirect << LHS.get()->getType();
       return QualType();
     }
+
+    CXXCastPath BasePath;
+    if (CheckDerivedToBaseConversion(LHSType, Class, Loc,
+                                     SourceRange(LHS.get()->getLocStart(),
+                                                 RHS.get()->getLocEnd()),
+                                     &BasePath))
+      return QualType();
+
     // Cast LHS to type of use.
     QualType UseType = isIndirect ? Context.getPointerType(Class) : Class;
     ExprValueKind VK = isIndirect ? VK_RValue : LHS.get()->getValueKind();
-
-    CXXCastPath BasePath;
-    BuildBasePathArray(Paths, BasePath);
     LHS = ImpCastExprToType(LHS.take(), UseType, CK_DerivedToBase, VK,
                             &BasePath);
   }
