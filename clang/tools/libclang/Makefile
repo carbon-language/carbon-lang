@@ -22,6 +22,7 @@ USEDLIBS = clangIndex.a clangFrontend.a clangDriver.a \
 	   clangSerialization.a \
 	   clangParse.a clangSema.a \
 	   clangARCMigrate.a clangRewriteFrontend.a clangRewriteCore.a \
+	   clangStaticAnalyzerCheckers.a clangStaticAnalyzerCore.a \
 	   clangAnalysis.a clangEdit.a \
 	   clangAST.a clangLex.a clangBasic.a \
 	   clangFormat.a
