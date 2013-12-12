@@ -2556,6 +2556,37 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (ClangASTType &clang_type)
                     
                     if (!base_classes.empty())
                     {
+                        // Make sure all base classes refer to complete types and not
+                        // forward declarations. If we don't do this, clang will crash
+                        // with an assertion in the call to clang_type.SetBaseClassesForClassType()
+                        bool base_class_error = false;
+                        for (auto &base_class : base_classes)
+                        {
+                            clang::TypeSourceInfo *type_source_info = base_class->getTypeSourceInfo();
+                            if (type_source_info)
+                            {
+                                ClangASTType base_class_type (GetClangASTContext().getASTContext(), type_source_info->getType());
+                                if (base_class_type.GetCompleteType() == false)
+                                {
+                                    if (!base_class_error)
+                                    {
+                                        GetObjectFile()->GetModule()->ReportError ("DWARF DIE at 0x%8.8x for class '%s' has a base class '%s' that is a forward declaration, not a complete definition.\nPlease file a bug against the compiler and include the preprocessed output for %s",
+                                                                                   die->GetOffset(),
+                                                                                   die->GetName(this, dwarf_cu),
+                                                                                   base_class_type.GetTypeName().GetCString(),
+                                                                                   sc.comp_unit ? sc.comp_unit->GetPath().c_str() : "the source file");
+                                    }
+                                    // We have no choice other than to pretend that the base class
+                                    // is complete. If we don't do this, clang will crash when we
+                                    // call setBases() inside of "clang_type.SetBaseClassesForClassType()"
+                                    // below. Since we provide layout assistance, all ivars in this
+                                    // class and other classe will be fine, this is the best we can do
+                                    // short of crashing.
+                                    base_class_type.StartTagDeclarationDefinition ();
+                                    base_class_type.CompleteTagDeclarationDefinition ();
+                                }
+                            }
+                        }
                         clang_type.SetBaseClassesForClassType (&base_classes.front(),
                                                                base_classes.size());
                         
