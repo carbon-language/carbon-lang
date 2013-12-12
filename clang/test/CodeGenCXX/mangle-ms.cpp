@@ -445,3 +445,10 @@ decltype(a) fun(decltype(a) x, decltype(a)) { return x; }
 // CHECK-DAG: ?fun@PR18022@@YA?AU<unnamed-type-a>@1@U21@0@Z
 
 }
+
+// Binding to a bit-field that requires a temporary.
+struct { int bitfield : 3; } object_with_bitfield = { 3 };
+const int &reference_to_bitfield = object_with_bitfield.bitfield;
+// CHECK-DAG: ?object_with_bitfield@@3U<unnamed-type-object_with_bitfield>@@A
+// CHECK-DAG: ?reference_to_bitfield@@3ABHB
+// CHECK-DAG: ??__Ereference_to_bitfield@@YAXXZ
