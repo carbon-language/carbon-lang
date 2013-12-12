@@ -1115,7 +1115,7 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
     }
   }
 
-  // If this is a noduplicate call, we can still inline as long as 
+  // If this is a noduplicate call, we can still inline as long as
   // inlining this would cause the removal of the caller (so the instruction
   // is not actually duplicated, just moved).
   if (!OnlyOneCallAndLocalLinkage && ContainsNoDuplicateCall)
