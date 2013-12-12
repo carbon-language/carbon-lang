@@ -68,6 +68,7 @@ template <> struct ScalarEnumerationTraits<FormatStyle::BraceBreakingStyle> {
     IO.enumCase(Value, "Linux", FormatStyle::BS_Linux);
     IO.enumCase(Value, "Stroustrup", FormatStyle::BS_Stroustrup);
     IO.enumCase(Value, "Allman", FormatStyle::BS_Allman);
+    IO.enumCase(Value, "GNU", FormatStyle::BS_GNU);
   }
 };
 
@@ -359,7 +360,7 @@ FormatStyle getWebKitStyle() {
 FormatStyle getGNUStyle() {
   FormatStyle Style = getLLVMStyle();
   Style.BreakBeforeBinaryOperators = true;
-  Style.BreakBeforeBraces = FormatStyle::BS_Allman;
+  Style.BreakBeforeBraces = FormatStyle::BS_GNU;
   Style.BreakBeforeTernaryOperators = true;
   Style.ColumnLimit = 79;
   Style.SpaceBeforeParens = FormatStyle::SBPO_Always;
@@ -561,7 +562,8 @@ private:
       SmallVectorImpl<AnnotatedLine *>::const_iterator E, unsigned Limit) {
     if (Limit == 0)
       return 0;
-    if (Style.BreakBeforeBraces == FormatStyle::BS_Allman &&
+    if ((Style.BreakBeforeBraces == FormatStyle::BS_Allman ||
+         Style.BreakBeforeBraces == FormatStyle::BS_GNU) &&
         I[1]->First->is(tok::l_brace))
       return 0;
     if (I[1]->InPPDirective != (*I)->InPPDirective ||

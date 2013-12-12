@@ -6935,6 +6935,91 @@ TEST_F(FormatTest, AllmanBraceBreaking) {
                BreakBeforeBraceShortIfs);
 }
 
+TEST_F(FormatTest, GNUBraceBreaking) {
+  FormatStyle GNUBraceStyle = getLLVMStyle();
+  GNUBraceStyle.BreakBeforeBraces = FormatStyle::BS_GNU;
+  verifyFormat("namespace a\n"
+               "{\n"
+               "class A\n"
+               "{\n"
+               "  void f()\n"
+               "  {\n"
+               "    int a;\n"
+               "    {\n"
+               "      int b;\n"
+               "    }\n"
+               "    if (true)\n"
+               "      {\n"
+               "        a();\n"
+               "        b();\n"
+               "      }\n"
+               "  }\n"
+               "  void g() { return; }\n"
+               "}\n"
+               "}",
+               GNUBraceStyle);
+
+  verifyFormat("void f()\n"
+               "{\n"
+               "  if (true)\n"
+               "    {\n"
+               "      a();\n"
+               "    }\n"
+               "  else if (false)\n"
+               "    {\n"
+               "      b();\n"
+               "    }\n"
+               "  else\n"
+               "    {\n"
+               "      c();\n"
+               "    }\n"
+               "}\n",
+               GNUBraceStyle);
+
+  verifyFormat("void f()\n"
+               "{\n"
+               "  for (int i = 0; i < 10; ++i)\n"
+               "    {\n"
+               "      a();\n"
+               "    }\n"
+               "  while (false)\n"
+               "    {\n"
+               "      b();\n"
+               "    }\n"
+               "  do\n"
+               "    {\n"
+               "      c();\n"
+               "    }\n"
+               "  while (false);\n"
+               "}\n",
+               GNUBraceStyle);
+
+  verifyFormat("void f(int a)\n"
+               "{\n"
+               "  switch (a)\n"
+               "    {\n"
+               "    case 0:\n"
+               "      break;\n"
+               "    case 1:\n"
+               "      {\n"
+               "        break;\n"
+               "      }\n"
+               "    case 2:\n"
+               "      {\n"
+               "      }\n"
+               "      break;\n"
+               "    default:\n"
+               "      break;\n"
+               "    }\n"
+               "}\n",
+               GNUBraceStyle);
+
+  verifyFormat("enum X\n"
+               "{\n"
+               "  Y = 0,\n"
+               "}\n",
+               GNUBraceStyle);
+}
 TEST_F(FormatTest, CatchExceptionReferenceBinding) {
   verifyFormat("void f() {\n"
                "  try {\n"
@@ -7132,6 +7217,9 @@ TEST_F(FormatTest, ParsesConfiguration) {
               FormatStyle::BS_Linux);
   CHECK_PARSE("BreakBeforeBraces: Stroustrup", BreakBeforeBraces,
               FormatStyle::BS_Stroustrup);
+  CHECK_PARSE("BreakBeforeBraces: Allman", BreakBeforeBraces,
+              FormatStyle::BS_Allman);
+  CHECK_PARSE("BreakBeforeBraces: GNU", BreakBeforeBraces, FormatStyle::BS_GNU);
 
   Style.NamespaceIndentation = FormatStyle::NI_All;
   CHECK_PARSE("NamespaceIndentation: None", NamespaceIndentation,

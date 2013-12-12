@@ -185,6 +185,7 @@ private:
   std::stack<int> PPChainBranchIndex;
 
   friend class ScopedLineState;
+  friend class CompoundStatementIndenter;
 };
 
 struct UnwrappedLineNode {

@@ -218,7 +218,11 @@ struct FormatStyle {
     /// Like \c Attach, but break before function definitions.
     BS_Stroustrup,
     /// Always break before braces.
-    BS_Allman
+    BS_Allman,
+    /// Always break before braces and add an extra level of indentation to
+    /// braces of control statements, not to those of class, function
+    /// or other definitions.
+    BS_GNU
   };
 
   /// \brief The brace breaking style to use.

@@ -1410,7 +1410,8 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
              Right.Previous->isNot(tok::r_brace) && Right.isNot(tok::r_brace)) {
     return true;
   } else if (Right.is(tok::l_brace) && (Right.BlockKind == BK_Block)) {
-    return Style.BreakBeforeBraces == FormatStyle::BS_Allman;
+    return Style.BreakBeforeBraces == FormatStyle::BS_Allman ||
+           Style.BreakBeforeBraces == FormatStyle::BS_GNU;
   }
   return false;
 }
