@@ -851,36 +851,6 @@ void VerifyDiagnosticConsumer::CheckDiagnostics() {
   ED.Notes.clear();
 }
 
-// Add the characters from FixedStr to RegexStr, escaping as needed.  This
-// avoids the need for backslash-escaping in common patterns.
-static void AddFixedStringToRegEx(StringRef FixedStr, std::string &RegexStr) {
-  // FIXME: Expose FileCheck.cpp's Pattern::AddFixedStringToRegEx as a utility
-  // method in RegEx.
-
-  for (unsigned i = 0, e = FixedStr.size(); i != e; ++i) {
-    switch (FixedStr[i]) {
-    // These are the special characters matched in "p_ere_exp".
-    case '(':
-    case ')':
-    case '^':
-    case '$':
-    case '|':
-    case '*':
-    case '+':
-    case '?':
-    case '.':
-    case '[':
-    case '\\':
-    case '{':
-      RegexStr += '\\';
-      // FALL THROUGH.
-    default:
-      RegexStr += FixedStr[i];
-      break;
-    }
-  }
-}
-
 Directive *Directive::create(bool RegexKind, SourceLocation DirectiveLoc,
                              SourceLocation DiagnosticLoc, StringRef Text,
                              unsigned Min, unsigned Max) {
@@ -905,7 +875,7 @@ Directive *Directive::create(bool RegexKind, SourceLocation DirectiveLoc,
       if (VerbatimMatchLength == StringRef::npos)
         VerbatimMatchLength = S.size();
       // Escape and append the fixed string.
-      AddFixedStringToRegEx(S.substr(0, VerbatimMatchLength), RegexStr);
+      RegexStr += llvm::Regex::escape(S.substr(0, VerbatimMatchLength));
       S = S.drop_front(VerbatimMatchLength);
     }
   }
