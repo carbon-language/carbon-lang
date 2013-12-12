@@ -202,7 +202,7 @@ namespace hexagon {
 } // end namespace hexagon.
 
 namespace arm {
-  const char* getARMTargetCPU(const llvm::opt::ArgList &Args,
+  std::string getARMTargetCPU(const llvm::opt::ArgList &Args,
                               const llvm::Triple &Triple);
   const char* getARMCPUForMArch(const llvm::opt::ArgList &Args,
                                 const llvm::Triple &Triple);
