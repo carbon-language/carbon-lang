@@ -43,14 +43,13 @@ namespace idata {
 
 class DLLNameAtom;
 class HintNameAtom;
-class IdataPassFile;
 class ImportTableEntryAtom;
 
 // A state object of this pass.
 struct Context {
-  Context(MutableFile &f, IdataPassFile &g) : file(f), dummyFile(g) {}
+Context(MutableFile &f, coff::VirtualFile &g) : file(f), dummyFile(g) {}
   MutableFile &file;
-  IdataPassFile &dummyFile;
+  coff::VirtualFile &dummyFile;
 };
 
 /// The root class of all idata atoms.
@@ -141,21 +140,6 @@ public:
   virtual StringRef customSectionName() const { return ".idata.d"; }
 };
 
-// An instance of this class represents "input file" for atoms created in this
-// pass. Only one instance of this class is created as a field of IdataPass.
-class IdataPassFile : public SimpleFile {
-public:
-  IdataPassFile(const LinkingContext &ctx)
-      : SimpleFile(ctx, "<idata-pass-file>"), _nextOrdinal(0) {
-    setOrdinal(ctx.getNextOrdinalAndIncrement());
-  }
-
-  uint64_t getNextOrdinal() { return _nextOrdinal++; }
-
-private:
-  uint64_t _nextOrdinal;
-};
-
 } // namespace idata
 
 class IdataPass : public lld::Pass {
@@ -173,7 +157,7 @@ private:
   // A dummy file with which all the atoms created in the pass will be
   // associated. Atoms need to be associated to an input file even if it's not
   // read from a file, so we use this object.
-  idata::IdataPassFile _dummyFile;
+  coff::VirtualFile _dummyFile;
 
   llvm::BumpPtrAllocator _alloc;
 };

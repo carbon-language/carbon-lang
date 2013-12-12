@@ -11,6 +11,7 @@
 #define LLD_READER_WRITER_PE_COFF_ATOMS_H
 
 #include "lld/Core/File.h"
+#include "lld/ReaderWriter/Simple.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/COFF.h"
 
@@ -294,6 +295,22 @@ private:
   std::string _importName;
   StringRef _dllName;
   const DefinedAtom *_importTableEntry;
+};
+
+// An instance of this class represents "input file" for atoms created in a
+// pass. Atoms need to be associated to an input file even if it's not read from
+// a file, so we use this class for that.
+class VirtualFile : public SimpleFile {
+public:
+  VirtualFile(const LinkingContext &ctx)
+      : SimpleFile(ctx, "<virtual-file>"), _nextOrdinal(0) {
+    setOrdinal(ctx.getNextOrdinalAndIncrement());
+  }
+
+  uint64_t getNextOrdinal() { return _nextOrdinal++; }
+
+private:
+  uint64_t _nextOrdinal;
 };
 
 //===----------------------------------------------------------------------===//
