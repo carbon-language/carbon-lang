@@ -425,7 +425,16 @@ unsigned MachineFunction::addLiveIn(unsigned PReg,
   MachineRegisterInfo &MRI = getRegInfo();
   unsigned VReg = MRI.getLiveInVirtReg(PReg);
   if (VReg) {
-    assert(MRI.getRegClass(VReg) == RC && "Register class mismatch!");
+    const TargetRegisterClass *VRegRC = MRI.getRegClass(VReg);
+    (void)VRegRC;
+    // A physical register can be added several times.
+    // Between two calls, the register class of the related virtual register
+    // may have been constrained to match some operation constraints.
+    // In that case, check that the current register class includes the
+    // physical register and is a sub class of the specified RC.
+    assert((VRegRC == RC || (VRegRC->contains(PReg) &&
+                             RC->hasSubClassEq(VRegRC))) &&
+            "Register class mismatch!");
     return VReg;
   }
   VReg = MRI.createVirtualRegister(RC);
