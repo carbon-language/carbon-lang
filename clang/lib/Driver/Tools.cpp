@@ -4466,14 +4466,12 @@ const char *arm::getARMCPUForMArch(const ArgList &Args,
   }
 
   // Handle -march=native.
-  std::string NativeMArch;
   if (MArch == "native") {
     std::string CPU = llvm::sys::getHostCPUName();
     if (CPU != "generic") {
       // Translate the native cpu into the architecture. The switch below will
       // then chose the minimum cpu for that arch.
-      NativeMArch = std::string("arm") + arm::getLLVMArchSuffixForARM(CPU);
-      MArch = NativeMArch;
+      MArch = std::string("arm") + arm::getLLVMArchSuffixForARM(CPU);
     }
   }
 
