@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "IdataPass.h"
+#include "Pass.h"
 
 #include "lld/Core/File.h"
 #include "lld/Core/Pass.h"
@@ -23,13 +24,6 @@
 
 namespace lld {
 namespace pecoff {
-
-static void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target,
-                            size_t offsetInAtom = 0) {
-  atom->addReference(std::unique_ptr<COFFReference>(new COFFReference(
-      target, offsetInAtom, llvm::COFF::IMAGE_REL_I386_DIR32NB)));
-}
-
 namespace idata {
 
 IdataAtom::IdataAtom(Context &context, std::vector<uint8_t> data)

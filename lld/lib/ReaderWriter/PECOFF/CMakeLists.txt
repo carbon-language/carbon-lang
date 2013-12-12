@@ -1,6 +1,7 @@
 add_lld_library(lldPECOFF
   IdataPass.cpp
   PECOFFLinkingContext.cpp
+  Pass.cpp
   ReaderCOFF.cpp
   ReaderImportHeader.cpp
   WriterPECOFF.cpp
