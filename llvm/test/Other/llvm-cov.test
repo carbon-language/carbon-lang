@@ -1,4 +1,0 @@
-PR11760
-RUN: llvm-cov -gcda=%S/Inputs/llvm_cov.gcda -gcno=%S/Inputs/llvm_cov.gcno
-REQUIRES: asserts
-XFAIL: *
