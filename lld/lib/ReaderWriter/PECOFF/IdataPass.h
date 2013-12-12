@@ -64,13 +64,6 @@ protected:
   IdataAtom(Context &context, std::vector<uint8_t> data);
 };
 
-/// A DLLNameAtom contains a name of a DLL and is referenced by the Name RVA
-/// field in the import directory table entry.
-class DLLNameAtom : public IdataAtom {
-public:
-  DLLNameAtom(Context &context, StringRef name);
-};
-
 /// A HintNameAtom represents a symbol that will be imported from a DLL at
 /// runtime. It consists with an optional hint, which is a small integer, and a
 /// symbol name.

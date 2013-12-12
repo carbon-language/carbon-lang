@@ -24,13 +24,6 @@
 namespace lld {
 namespace pecoff {
 
-static std::vector<uint8_t> stringRefToVector(StringRef name) {
-  std::vector<uint8_t> ret(name.size() + 1);
-  memcpy(&ret[0], name.data(), name.size());
-  ret[name.size()] = 0;
-  return ret;
-}
-
 static void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target,
                             size_t offsetInAtom = 0) {
   atom->addReference(std::unique_ptr<COFFReference>(new COFFReference(
@@ -44,9 +37,6 @@ IdataAtom::IdataAtom(Context &context, std::vector<uint8_t> data)
                              context.dummyFile.getNextOrdinal(), data) {
   context.file.addAtom(*this);
 }
-
-DLLNameAtom::DLLNameAtom(Context &context, StringRef name)
-    : IdataAtom(context, stringRefToVector(name)) {}
 
 HintNameAtom::HintNameAtom(Context &context, uint16_t hint,
                            StringRef importName)
@@ -91,8 +81,11 @@ void ImportDirectoryAtom::addRelocations(
                   offsetof(ImportDirectoryTableEntry, ImportLookupTableRVA));
   addDir32NBReloc(this, importAddressTables[0],
                   offsetof(ImportDirectoryTableEntry, ImportAddressTableRVA));
-  addDir32NBReloc(this, new (_alloc) DLLNameAtom(context, loadName),
-                  offsetof(ImportDirectoryTableEntry, NameRVA));
+  auto *atom = new (_alloc) coff::COFFStringAtom(
+      context.dummyFile, context.dummyFile.getNextOrdinal(), ".idata",
+      loadName);
+  context.file.addAtom(*atom);
+  addDir32NBReloc(this, atom, offsetof(ImportDirectoryTableEntry, NameRVA));
 }
 
 std::vector<ImportTableEntryAtom *> ImportDirectoryAtom::createImportTableAtoms(

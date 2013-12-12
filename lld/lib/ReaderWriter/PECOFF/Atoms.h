@@ -248,6 +248,29 @@ private:
   std::vector<uint8_t> _data;
 };
 
+class COFFStringAtom : public COFFLinkerInternalAtom {
+public:
+  COFFStringAtom(const File &file, uint64_t ordinal, StringRef sectionName,
+                 StringRef contents)
+      : COFFLinkerInternalAtom(file, ordinal, stringRefToVector(contents)),
+        _sectionName(sectionName) {}
+
+  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+  virtual StringRef customSectionName() const { return _sectionName; }
+  virtual ContentType contentType() const { return typeData; }
+  virtual ContentPermissions permissions() const { return permR__; }
+
+private:
+  StringRef _sectionName;
+
+  std::vector<uint8_t> stringRefToVector(StringRef name) const {
+    std::vector<uint8_t> ret(name.size() + 1);
+    memcpy(&ret[0], name.data(), name.size());
+    ret[name.size()] = 0;
+    return ret;
+  }
+};
+
 // A COFFSharedLibraryAtom represents a symbol for data in an import library.  A
 // reference to a COFFSharedLibraryAtom will be transformed to a real reference
 // to an import address table entry in Idata pass.
