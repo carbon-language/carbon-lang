@@ -1,7 +1,7 @@
 ; RUN: opt < %s -inline -S | FileCheck %s
 
 ; Check that functions with "returns_twice" calls are only inlined,
-; if they are themselve marked as such.
+; if they are themselves marked as such.
 
 declare i32 @a() returns_twice
 declare i32 @b() returns_twice
