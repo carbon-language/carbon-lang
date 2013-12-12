@@ -121,9 +121,11 @@ typedef std::pair<unsigned,unsigned> ScopePair;
 
 /// GetDiagForGotoScopeDecl - If this decl induces a new goto scope, return a
 /// diagnostic that should be emitted if control goes over it. If not, return 0.
-static ScopePair GetDiagForGotoScopeDecl(ASTContext &Context, const Decl *D) {
+static ScopePair GetDiagForGotoScopeDecl(Sema &S, const Decl *D) {
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     unsigned InDiag = 0;
+    unsigned OutDiag = 0;
+
     if (VD->getType()->isVariablyModifiedType())
       InDiag = diag::note_protected_by_vla;
 
@@ -135,21 +137,24 @@ static ScopePair GetDiagForGotoScopeDecl(ASTContext &Context, const Decl *D) {
       return ScopePair(diag::note_protected_by_cleanup,
                        diag::note_exits_cleanup);
 
-    if (Context.getLangOpts().ObjCAutoRefCount && VD->hasLocalStorage()) {
-      switch (VD->getType().getObjCLifetime()) {
-      case Qualifiers::OCL_None:
-      case Qualifiers::OCL_ExplicitNone:
-      case Qualifiers::OCL_Autoreleasing:
-        break;
-
-      case Qualifiers::OCL_Strong:
-      case Qualifiers::OCL_Weak:
+    if (VD->hasLocalStorage()) {
+      switch (VD->getType().isDestructedType()) {
+      case QualType::DK_objc_strong_lifetime:
+      case QualType::DK_objc_weak_lifetime:
         return ScopePair(diag::note_protected_by_objc_ownership,
                          diag::note_exits_objc_ownership);
+
+      case QualType::DK_cxx_destructor:
+        OutDiag = diag::note_exits_dtor;
+        break;
+
+      case QualType::DK_none:
+        break;
       }
     }
 
-    if (Context.getLangOpts().CPlusPlus && VD->hasLocalStorage()) {
+    const Expr *Init = VD->getInit();
+    if (S.Context.getLangOpts().CPlusPlus && VD->hasLocalStorage() && Init) {
       // C++11 [stmt.dcl]p3:
       //   A program that jumps from a point where a variable with automatic
       //   storage duration is not in scope to a point where it is in scope
@@ -164,68 +169,34 @@ static ScopePair GetDiagForGotoScopeDecl(ASTContext &Context, const Decl *D) {
       //   where it is in scope is ill-formed unless the variable has
       //   POD type and is declared without an initializer.
 
-      const Expr *Init = VD->getInit();
-      if (!Init)
-        return ScopePair(InDiag, 0);
+      InDiag = diag::note_protected_by_variable_init;
 
-      const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(Init);
-      if (EWC)
-        Init = EWC->getSubExpr();
-
-      const MaterializeTemporaryExpr *M = NULL;
-      Init = Init->findMaterializedTemporary(M);
-
-      SmallVector<const Expr *, 2> CommaLHSs;
-      SmallVector<SubobjectAdjustment, 2> Adjustments;
-      Init = Init->skipRValueSubobjectAdjustments(CommaLHSs, Adjustments);
-
-      QualType QT = Init->getType();
-      if (QT.isNull())
-        return ScopePair(diag::note_protected_by_variable_init, 0);
-
-      const Type *T = QT.getTypePtr();
-      if (T->isArrayType())
-        T = T->getBaseElementTypeUnsafe();
-
-      const CXXRecordDecl *Record = T->getAsCXXRecordDecl();
-      if (!Record)
-        return ScopePair(diag::note_protected_by_variable_init, 0);
-
-      // If we need to call a non-trivial destructor for this variable,
-      // record an out diagnostic.
-      unsigned OutDiag = 0;
-      if (!Init->isGLValue() && !Record->hasTrivialDestructor())
-        OutDiag = diag::note_exits_dtor;
-
-      if (const CXXConstructExpr *cce = dyn_cast<CXXConstructExpr>(Init)) {
-        const CXXConstructorDecl *ctor = cce->getConstructor();
-        // For a variable declared without an initializer, we will have
-        // call-style initialization and the initializer will be the
-        // CXXConstructExpr with no intervening nodes.
-        if (ctor->isTrivial() && ctor->isDefaultConstructor() &&
-            VD->getInit() == Init && VD->getInitStyle() == VarDecl::CallInit) {
+      // For a variable of (array of) class type declared without an
+      // initializer, we will have call-style initialization and the initializer
+      // will be the CXXConstructExpr with no intervening nodes.
+      if (const CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(Init)) {
+        const CXXConstructorDecl *Ctor = CCE->getConstructor();
+        if (Ctor->isTrivial() && Ctor->isDefaultConstructor() &&
+            VD->getInitStyle() == VarDecl::CallInit) {
           if (OutDiag)
             InDiag = diag::note_protected_by_variable_nontriv_destructor;
-          else if (!Record->isPOD())
+          else if (!Ctor->getParent()->isPOD())
             InDiag = diag::note_protected_by_variable_non_pod;
-          return ScopePair(InDiag, OutDiag);
+          else
+            InDiag = 0;
         }
       }
-
-      return ScopePair(diag::note_protected_by_variable_init, OutDiag);
     }
 
-    return ScopePair(InDiag, 0);
+    return ScopePair(InDiag, OutDiag);
   }
 
-  if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+  if (const TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
     if (TD->getUnderlyingType()->isVariablyModifiedType())
-      return ScopePair(diag::note_protected_by_vla_typedef, 0);
-  }
-
-  if (const TypeAliasDecl *TD = dyn_cast<TypeAliasDecl>(D)) {
-    if (TD->getUnderlyingType()->isVariablyModifiedType())
-      return ScopePair(diag::note_protected_by_vla_type_alias, 0);
+      return ScopePair(isa<TypedefDecl>(TD)
+                           ? diag::note_protected_by_vla_typedef
+                           : diag::note_protected_by_vla_type_alias,
+                       0);
   }
 
   return ScopePair(0U, 0U);
@@ -234,7 +205,7 @@ static ScopePair GetDiagForGotoScopeDecl(ASTContext &Context, const Decl *D) {
 /// \brief Build scope information for a declaration that is part of a DeclStmt.
 void JumpScopeChecker::BuildScopeInformation(Decl *D, unsigned &ParentScope) {
   // If this decl causes a new scope, push and switch to it.
-  std::pair<unsigned,unsigned> Diags = GetDiagForGotoScopeDecl(S.Context, D);
+  std::pair<unsigned,unsigned> Diags = GetDiagForGotoScopeDecl(S, D);
   if (Diags.first || Diags.second) {
     Scopes.push_back(GotoScope(ParentScope, Diags.first, Diags.second,
                                D->getLocation()));
@@ -481,7 +452,26 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned &origParentScope)
         }
       }
     }
-    
+
+    // Disallow jumps out of scopes containing temporaries lifetime-extended to
+    // automatic storage duration.
+    if (MaterializeTemporaryExpr *MTE =
+            dyn_cast<MaterializeTemporaryExpr>(SubStmt)) {
+      if (MTE->getStorageDuration() == SD_Automatic) {
+        SmallVector<const Expr *, 4> CommaLHS;
+        SmallVector<SubobjectAdjustment, 4> Adjustments;
+        const Expr *ExtendedObject =
+            MTE->GetTemporaryExpr()->skipRValueSubobjectAdjustments(
+                CommaLHS, Adjustments);
+        if (ExtendedObject->getType().isDestructedType()) {
+          Scopes.push_back(GotoScope(ParentScope, 0,
+                                     diag::note_exits_temporary_dtor,
+                                     ExtendedObject->getExprLoc()));
+          ParentScope = Scopes.size()-1;
+        }
+      }
+    }
+
     // Recursively walk the AST.
     BuildScopeInformation(SubStmt, ParentScope);
   }

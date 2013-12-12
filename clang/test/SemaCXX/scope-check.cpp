@@ -226,7 +226,7 @@ namespace test12 {
     static void *ips[] = { &&l0 };
     const C c0 = 17;
   l0: // expected-note {{possible target of indirect goto}}
-    const C &c1 = 42; // expected-note {{jump exits scope of variable with non-trivial destructor}}
+    const C &c1 = 42; // expected-note {{jump exits scope of lifetime-extended temporary with non-trivial destructor}}
     const C &c2 = c0;
     goto *ip; // expected-error {{indirect goto might cross protected scopes}}
   }
@@ -241,7 +241,7 @@ namespace test13 {
   void f(void **ip) {
     static void *ips[] = { &&l0 };
   l0: // expected-note {{possible target of indirect goto}}
-    const int &c1 = C(1).i; // expected-note {{jump exits scope of variable with non-trivial destructor}}
+    const int &c1 = C(1).i; // expected-note {{jump exits scope of lifetime-extended temporary with non-trivial destructor}}
     goto *ip;  // expected-error {{indirect goto might cross protected scopes}}
   }
 }
@@ -294,6 +294,120 @@ x:  return s.get();
   }
 }
 #endif
+
+namespace test18 {
+  struct A { ~A(); };
+  struct B { const int &r; const A &a; };
+  int f() {
+    void *p = &&x;
+    const A a = A();
+  x:
+    B b = { 0, a }; // ok
+    goto *p;
+  }
+  int g() {
+    void *p = &&x;
+  x: // expected-note {{possible target of indirect goto}}
+    B b = { 0, A() }; // expected-note {{jump exits scope of lifetime-extended temporary with non-trivial destructor}}
+    goto *p; // expected-error {{indirect goto might cross protected scopes}}
+  }
+}
+
+#if __cplusplus >= 201103L
+namespace std {
+  typedef decltype(sizeof(int)) size_t;
+  template<typename T> struct initializer_list {
+    const T *begin;
+    size_t size;
+    initializer_list(const T *, size_t);
+  };
+}
+namespace test19 {
+  struct A { ~A(); };
+
+  int f() {
+    void *p = &&x;
+    A a;
+  x: // expected-note {{possible target of indirect goto}}
+    std::initializer_list<A> il = { a }; // expected-note {{jump exits scope of lifetime-extended temporary with non-trivial destructor}}
+    goto *p; // expected-error {{indirect goto might cross protected scopes}}
+  }
+}
+
+namespace test20 {
+  struct A { ~A(); };
+  struct B {
+    const A &a;
+  };
+
+  int f() {
+    void *p = &&x;
+    A a;
+  x:
+    std::initializer_list<B> il = {
+      a,
+      a
+    };
+    goto *p;
+  }
+  int g() {
+    void *p = &&x;
+    A a;
+  x: // expected-note {{possible target of indirect goto}}
+    std::initializer_list<B> il = {
+      a,
+      { A() } // expected-note {{jump exits scope of lifetime-extended temporary with non-trivial destructor}}
+    };
+    goto *p; // expected-error {{indirect goto might cross protected scopes}}
+  }
+}
+#endif
+
+namespace test21 {
+  template<typename T> void f() {
+  goto x; // expected-error {{protected scope}}
+    T t; // expected-note {{bypasses}}
+ x: return;
+  }
+
+  template void f<int>();
+  struct X { ~X(); };
+  template void f<X>(); // expected-note {{instantiation of}}
+}
+
+namespace PR18217 {
+  typedef int *X;
+
+  template <typename T>
+  class MyCl {
+    T mem;
+  };
+
+  class Source {
+    MyCl<X> m;
+  public:
+    int getKind() const;
+  };
+
+  bool b;
+  template<typename TT>
+  static void foo(const Source &SF, MyCl<TT *> Source::*m) {
+    switch (SF.getKind()) {
+      case 1: return;
+      case 2: break;
+      case 3:
+      case 4: return;
+    };
+    if (b) {
+      auto &y = const_cast<MyCl<TT *> &>(SF.*m); // expected-warning 0-1{{extension}}
+    }
+  }
+
+  int Source::getKind() const {
+    foo(*this, &Source::m);
+    return 0;
+  }
+}
 
 // This test must be last, because the error prohibits further jump diagnostics.
 namespace testInvalid {

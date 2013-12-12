@@ -105,37 +105,6 @@ const Expr *Expr::skipRValueSubobjectAdjustments(
   return E;
 }
 
-const Expr *
-Expr::findMaterializedTemporary(const MaterializeTemporaryExpr *&MTE) const {
-  const Expr *E = this;
-
-  // This might be a default initializer for a reference member. Walk over the
-  // wrapper node for that.
-  if (const CXXDefaultInitExpr *DAE = dyn_cast<CXXDefaultInitExpr>(E))
-    E = DAE->getExpr();
-
-  // Look through single-element init lists that claim to be lvalues. They're
-  // just syntactic wrappers in this case.
-  if (const InitListExpr *ILE = dyn_cast<InitListExpr>(E)) {
-    if (ILE->getNumInits() == 1 && ILE->isGLValue()) {
-      E = ILE->getInit(0);
-      if (const CXXDefaultInitExpr *DAE = dyn_cast<CXXDefaultInitExpr>(E))
-        E = DAE->getExpr();
-    }
-  }
-
-  // Look through expressions for materialized temporaries (for now).
-  if (const MaterializeTemporaryExpr *M
-      = dyn_cast<MaterializeTemporaryExpr>(E)) {
-    MTE = M;
-    E = M->GetTemporaryExpr();
-  }
-
-  if (const CXXDefaultArgExpr *DAE = dyn_cast<CXXDefaultArgExpr>(E))
-    E = DAE->getExpr();
-  return E;
-}
-
 /// isKnownToHaveBooleanValue - Return true if this is an integer expression
 /// that is known to return 0 or 1.  This happens for _Bool/bool expressions
 /// but also int expressions which are produced by things like comparisons in
