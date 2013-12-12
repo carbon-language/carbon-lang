@@ -136,5 +136,5 @@
 @interface MyClass <MyProtocol> 
 @end
  
-@implementation MyClass // expected-warning {{auto property synthesis will not synthesize property declared in a protocol}}
+@implementation MyClass // expected-warning {{auto property synthesis will not synthesize property 'requiredString' declared in protocol 'MyProtocol'}}
 @end

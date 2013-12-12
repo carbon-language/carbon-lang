@@ -172,12 +172,12 @@ typedef NSObject<Fooing> FooObject;
 @interface Okay : NSObject<Fooing>
 @end
 
-@implementation Okay // expected-warning 2 {{auto property synthesis will not synthesize property declared in a protocol}}
+@implementation Okay // expected-warning {{auto property synthesis will not synthesize property 'muahahaha' declared in protocol 'Fooing'}} expected-warning {{auto property synthesis will not synthesize property 'hoho' declared in protocol 'SubFooling'}}
 @end
 
 @interface Fail : FooObject
 @end
 
-@implementation Fail // expected-warning 2 {{auto property synthesis will not synthesize property declared in a protocol}}
+@implementation Fail // expected-warning {{auto property synthesis will not synthesize property 'muahahaha' declared in protocol 'Fooing'}} expected-warning {{auto property synthesis will not synthesize property 'hoho' declared in protocol 'SubFooling'}}
 @end
 

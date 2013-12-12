@@ -1574,10 +1574,12 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
       }
       continue;
     }
-    if (isa<ObjCProtocolDecl>(Prop->getDeclContext())) {
+    if (ObjCProtocolDecl *Proto =
+          dyn_cast<ObjCProtocolDecl>(Prop->getDeclContext())) {
       // We won't auto-synthesize properties declared in protocols.
       Diag(IMPDecl->getLocation(), 
-           diag::warn_auto_synthesizing_protocol_property);
+           diag::warn_auto_synthesizing_protocol_property)
+        << Prop << Proto;
       Diag(Prop->getLocation(), diag::note_property_declare);
       continue;
     }

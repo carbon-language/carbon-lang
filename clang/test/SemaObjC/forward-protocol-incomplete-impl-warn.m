@@ -15,6 +15,6 @@
 @interface IBImageCatalogDocument : NSObject <DVTInvalidation> // expected-note {{required for direct or indirect protocol 'DVTInvalidation'}}
 @end
 
-@implementation IBImageCatalogDocument // expected-warning {{auto property synthesis will not synthesize property declared in a protocol}} \ 
+@implementation IBImageCatalogDocument // expected-warning {{auto property synthesis will not synthesize property 'Prop' declared in protocol 'DVTInvalidation'}} \ 
 				       // expected-warning {{method 'invalidate' in protocol not implemented}}
 @end
