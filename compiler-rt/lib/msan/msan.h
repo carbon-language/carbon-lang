@@ -107,7 +107,8 @@ class ScopedThreadLocalStateBackup {
   if (&__msan_free_hook) __msan_free_hook(ptr)
 
 struct MsanStackBounds {
-  uptr stack_top, stack_bottom;
+  uptr stack_addr, stack_size;
+  uptr tls_addr, tls_size;
 };
 
 extern THREADLOCAL MsanStackBounds msan_stack_bounds;

@@ -173,8 +173,9 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
     SymbolizerScope sym_scope;
     return stack->Unwind(max_s, pc, bp, 0, 0, request_fast_unwind);
   }
-  stack->Unwind(max_s, pc, bp, msan_stack_bounds.stack_top,
-                msan_stack_bounds.stack_bottom, request_fast_unwind);
+  uptr stack_bottom = msan_stack_bounds.stack_addr;
+  uptr stack_top = stack_bottom + msan_stack_bounds.stack_size;
+  stack->Unwind(max_s, pc, bp, stack_top, stack_bottom, request_fast_unwind);
 }
 
 void PrintWarning(uptr pc, uptr bp) {
@@ -324,9 +325,10 @@ void __msan_init() {
   }
   Symbolizer::Get()->AddHooks(EnterSymbolizer, ExitSymbolizer);
 
-  GetThreadStackTopAndBottom(/* at_initialization */ true,
-                             &msan_stack_bounds.stack_top,
-                             &msan_stack_bounds.stack_bottom);
+  GetThreadStackAndTls(/* main */ true, &msan_stack_bounds.stack_addr,
+                       &msan_stack_bounds.stack_size,
+                       &msan_stack_bounds.tls_addr,
+                       &msan_stack_bounds.tls_size);
   VPrintf(1, "MemorySanitizer init done\n");
   msan_init_is_running = 0;
   msan_inited = 1;

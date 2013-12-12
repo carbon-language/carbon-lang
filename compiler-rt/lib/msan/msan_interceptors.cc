@@ -1070,6 +1070,11 @@ static void thread_finalize(void *v) {
     return;
   }
   MsanAllocatorThreadFinish();
+  __msan_unpoison((void *)msan_stack_bounds.stack_addr,
+                  msan_stack_bounds.stack_size);
+  if (msan_stack_bounds.tls_size)
+    __msan_unpoison((void *)msan_stack_bounds.tls_addr,
+                    msan_stack_bounds.tls_size);
 }
 
 struct ThreadParam {
@@ -1089,9 +1094,10 @@ static void *MsanThreadStartFunc(void *arg) {
   }
   atomic_store(&p->done, 1, memory_order_release);
 
-  GetThreadStackTopAndBottom(/* at_initialization */ false,
-                             &msan_stack_bounds.stack_top,
-                             &msan_stack_bounds.stack_bottom);
+  GetThreadStackAndTls(/* main */ false, &msan_stack_bounds.stack_addr,
+                       &msan_stack_bounds.stack_size,
+                       &msan_stack_bounds.tls_addr,
+                       &msan_stack_bounds.tls_size);
   return callback(param);
 }
 
