@@ -1147,7 +1147,7 @@ specifications are given in this list:
 -  ``f128:128:128`` - quad is 128-bit aligned
 -  ``v64:64:64`` - 64-bit vector is 64-bit aligned
 -  ``v128:128:128`` - 128-bit vector is 128-bit aligned
--  ``a0:0:64`` - aggregates are 64-bit aligned
+-  ``a:0:64`` - aggregates are 64-bit aligned
 
 When LLVM is determining the alignment for a given type, it uses the
 following rules:
