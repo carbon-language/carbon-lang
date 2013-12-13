@@ -845,3 +845,23 @@ store:
 exit:
   ret i64 %ext
 }
+
+; Try a form of f7 in which the subtraction operands are compared directly.
+define i32 @f41(i32 %a, i32 %b, i32 *%dest) {
+; CHECK-LABEL: f41:
+; CHECK: s %r2, 0(%r4)
+; CHECK-NEXT: jne .L{{.*}}
+; CHECK: br %r14
+entry:
+  %cur = load i32 *%dest
+  %res = sub i32 %a, %cur
+  %cmp = icmp ne i32 %a, %cur
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i32 %b, i32 *%dest
+  br label %exit
+
+exit:
+  ret i32 %res
+}

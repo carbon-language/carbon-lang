@@ -1271,6 +1271,26 @@ static unsigned reverseCCMask(unsigned CCMask) {
           (CCMask & SystemZ::CCMASK_CMP_UO));
 }
 
+// Check whether C tests for equality between X and Y and whether X - Y
+// or Y - X is also computed.  In that case it's better to compare the
+// result of the subtraction against zero.
+static void adjustForSubtraction(SelectionDAG &DAG, Comparison &C) {
+  if (C.CCMask == SystemZ::CCMASK_CMP_EQ ||
+      C.CCMask == SystemZ::CCMASK_CMP_NE) {
+    for (SDNode::use_iterator I = C.Op0->use_begin(), E = C.Op0->use_end();
+         I != E; ++I) {
+      SDNode *N = *I;
+      if (N->getOpcode() == ISD::SUB &&
+          ((N->getOperand(0) == C.Op0 && N->getOperand(1) == C.Op1) ||
+           (N->getOperand(0) == C.Op1 && N->getOperand(1) == C.Op0))) {
+        C.Op0 = SDValue(N, 0);
+        C.Op1 = DAG.getConstant(0, N->getValueType(0));
+        return;
+      }
+    }
+  }
+}
+
 // Check whether C compares a floating-point value with zero and if that
 // floating-point value is also negated.  In this case we can use the
 // negation to set CC, so avoiding separate LOAD AND TEST and
@@ -1540,6 +1560,7 @@ static Comparison getCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
     C.CCMask &= ~SystemZ::CCMASK_CMP_UO;
     adjustZeroCmp(DAG, C);
     adjustSubwordCmp(DAG, C);
+    adjustForSubtraction(DAG, C);
   }
 
   if (shouldSwapCmpOperands(C)) {
