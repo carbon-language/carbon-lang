@@ -2,6 +2,3 @@
 
 // CHECK: C++ requires
 invalid;
-
-// MSVC targeted drivers (*-win32) are incapable of invoking external assembler.
-// XFAIL: win32
