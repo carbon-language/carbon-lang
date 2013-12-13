@@ -484,7 +484,7 @@ const uptr kPthreadDestructorIterations = 0;
 // Callback type for iterating over a set of memory ranges.
 typedef void (*RangeIteratorCallback)(uptr begin, uptr end, void *arg);
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !defined(SANITIZER_GO)
 extern uptr indirect_call_wrapper;
 void InitializeIndirectCallWrapping(const char *wrapper_name);
 

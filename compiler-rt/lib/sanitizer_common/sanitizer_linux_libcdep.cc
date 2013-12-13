@@ -353,12 +353,14 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
 }
 #endif  // SANITIZER_ANDROID
 
+#ifndef SANITIZER_GO
 uptr indirect_call_wrapper;
 
 void InitializeIndirectCallWrapping(const char *wrapper_name) {
   CHECK(wrapper_name && *wrapper_name);
   indirect_call_wrapper = (uptr)dlsym(RTLD_DEFAULT, wrapper_name);
 }
+#endif
 
 }  // namespace __sanitizer
 
