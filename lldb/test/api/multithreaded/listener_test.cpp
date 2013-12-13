@@ -49,7 +49,7 @@ void test(SBDebugger &dbg, std::vector<string> args) {
       throw Exception("Error launching process.");
 
     /* FIXME: the approach below deadlocks
-    SBProcess process = target.LaunchSimple(0, 0, working_dir.get());
+    SBProcess process = target.LaunchSimple (0, 0, working_dir.get());
 
     // get debugger listener (which is attached to process by default)
     g_listener = dbg.GetListener();

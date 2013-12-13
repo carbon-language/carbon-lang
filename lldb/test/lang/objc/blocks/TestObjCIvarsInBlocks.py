@@ -51,7 +51,7 @@ class TestObjCIvarsInBlocks(TestBase):
         breakpoint_two = target.BreakpointCreateBySourceRegex ('// Break here inside the class method block.', self.class_source_file_spec)
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
-        process = target.LaunchSimple (None, None, os.getcwd())
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
         self.assertTrue (process, "Created a process.")
         self.assertTrue (process.GetState() == lldb.eStateStopped, "Stopped it too.")
 

@@ -52,7 +52,7 @@ class ObjCDynamicValueTestCase(TestBase):
         # Set up our breakpoints:
 
         target.BreakpointCreateByLocation('main.m', self.line)
-        process = target.LaunchSimple (None, None, os.getcwd())
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
 
         self.assertTrue(process.GetState() == lldb.eStateStopped,
                         PROCESS_STOPPED)

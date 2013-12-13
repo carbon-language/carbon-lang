@@ -113,7 +113,7 @@ class BasicExprCommandsTestCase(TestBase):
 
         # Launch the process, and do not stop at the entry point.
         # Pass 'X Y Z' as the args, which makes argc == 4.
-        process = target.LaunchSimple(['X', 'Y', 'Z'], None, os.getcwd())
+        process = target.LaunchSimple (['X', 'Y', 'Z'], None, self.get_process_working_directory())
 
         if not process:
             self.fail("SBTarget.LaunchProcess() failed")

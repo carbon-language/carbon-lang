@@ -95,7 +95,7 @@ class ReturnValueTestCase(TestBase):
         self.assertTrue(inner_sint_bkpt, VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
-        self.process = self.target.LaunchSimple(None, None, os.getcwd())
+        self.process = self.target.LaunchSimple (None, None, self.get_process_working_directory())
 
         self.assertTrue(self.process, PROCESS_IS_VALID)
 

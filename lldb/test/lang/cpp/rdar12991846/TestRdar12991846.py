@@ -63,7 +63,7 @@ class Rdar12991846TestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line)
 
         # Now launch the process, and do not stop at entry point.
-        process = target.LaunchSimple(None, None, os.getcwd())
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
 
         if not process:
             self.fail("SBTarget.Launch() failed")

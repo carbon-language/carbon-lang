@@ -28,7 +28,7 @@ class AddDsymMidExecutionCommandCase(TestBase):
         self.assertTrue(main_bp, VALID_BREAKPOINT)
 
         self.runCmd("settings set target.disable-aslr false")
-        self.process = self.target.LaunchSimple(None, None, os.getcwd())
+        self.process = self.target.LaunchSimple (None, None, self.get_process_working_directory())
         self.assertTrue(self.process, PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.

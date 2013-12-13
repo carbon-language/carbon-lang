@@ -122,7 +122,7 @@ class TestInlineStepping(TestBase):
         self.assertTrue(break_1_in_main, VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
-        self.process = target.LaunchSimple (None, None, os.getcwd())
+        self.process = target.LaunchSimple (None, None, self.get_process_working_directory())
 
         self.assertTrue(self.process, PROCESS_IS_VALID)
 
@@ -218,7 +218,7 @@ class TestInlineStepping(TestBase):
         self.assertTrue(break_1_in_main, VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
-        self.process = target.LaunchSimple (None, None, os.getcwd())
+        self.process = target.LaunchSimple (None, None, self.get_process_working_directory())
 
         self.assertTrue(self.process, PROCESS_IS_VALID)
 

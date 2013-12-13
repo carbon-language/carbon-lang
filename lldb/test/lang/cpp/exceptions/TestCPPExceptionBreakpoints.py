@@ -44,7 +44,7 @@ class CPPBreakpointTestCase(TestBase):
         self.assertTrue (exception_bkpt, "Made an exception breakpoint")
 
         # Now run, and make sure we hit our breakpoint:
-        process = target.LaunchSimple (None, None, os.getcwd())
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
         self.assertTrue (process, "Got a valid process")
         
         stopped_threads = []

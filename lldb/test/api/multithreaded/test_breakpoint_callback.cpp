@@ -37,7 +37,7 @@ void test(SBDebugger &dbg, vector<string> args) {
   breakpoint.SetCallback(BPCallback, 0);
 
   std::unique_ptr<char> working_dir(get_working_dir());
-  SBProcess process = target.LaunchSimple(0, 0, working_dir.get());
+  SBProcess process = target.LaunchSimple (0, 0, working_dir.get());
 
   {
     unique_lock<mutex> lock(g_mutex);

@@ -53,7 +53,7 @@ class ObjectDescriptionAPITestCase(TestBase):
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
-        process = target.LaunchSimple(None, None, os.getcwd())
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
         self.assertTrue(process, PROCESS_IS_VALID)
         # Make sure we hit our breakpoint:
         thread_list = lldbutil.get_threads_stopped_at_breakpoint (process, breakpoint)

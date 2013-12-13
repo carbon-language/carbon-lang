@@ -155,7 +155,7 @@ class RegisterCommandsTestCase(TestBase):
         lldbutil.run_break_set_by_symbol (self, "main", num_expected_locations=-1)
 
         # Launch the process, and do not stop at the entry point.
-        process = target.LaunchSimple(None, None, os.getcwd())
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
 
         process = target.GetProcess()
         self.assertTrue(process.GetState() == lldb.eStateStopped,

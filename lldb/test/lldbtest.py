@@ -1692,7 +1692,7 @@ class TestBase(Base):
                 self.runCmd("file %s" % arg)
                 target = self.dbg.GetSelectedTarget()
                 #
-                # SBTarget.LaunchSimple() currently not working for remote platform?
+                # SBtarget.LaunchSimple () currently not working for remote platform?
                 # johnny @ 04/23/2012
                 #
                 def DecoratedLaunchSimple(argv, envp, wd):
@@ -1753,6 +1753,15 @@ class TestBase(Base):
             raise Exception('Invalid debugger instance')
         return self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
 
+    def get_process_working_directory(self):
+        '''Get the working directory that should be used when launching processes for local or remote processes.'''
+        if lldb.remote_platform:
+            # Remote tests set the platform working directory up in TestBase.setUp()
+            return lldb.remote_platform.GetWorkingDirectory()
+        else:
+            # local tests change directory into each test subdirectory
+            return os.getcwd() 
+    
     def tearDown(self):
         #import traceback
         #traceback.print_stack()

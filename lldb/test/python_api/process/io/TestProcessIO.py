@@ -38,7 +38,7 @@ class ProcessIOTestCase(TestBase):
         # Perform synchronous interaction with the debugger.
         self.setAsync(True)
 
-        process = target.LaunchSimple(None, None, os.getcwd())
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
         if self.TraceOn():
             print "process launched."
 

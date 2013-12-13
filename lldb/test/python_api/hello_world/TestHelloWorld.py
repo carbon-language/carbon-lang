@@ -117,7 +117,7 @@ class HelloWorldTestCase(TestBase):
         # rdar://problem/8364687
         # SBTarget.Launch() issue (or is there some race condition)?
 
-        process = target.LaunchSimple(None, None, os.getcwd())
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
         # The following isn't needed anymore, rdar://8364687 is fixed.
         #
         # Apply some dances after LaunchProcess() in order to break at "main".

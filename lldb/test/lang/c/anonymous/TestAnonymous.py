@@ -162,7 +162,7 @@ class AnonymousTestCase(TestBase):
         break_in_main = target.BreakpointCreateBySourceRegex ('// Set breakpoint 2 here.', lldb.SBFileSpec("main.c"))
         self.assertTrue(break_in_main, VALID_BREAKPOINT)
 
-        process = target.LaunchSimple (None, None, os.getcwd())
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
         self.assertTrue (process, PROCESS_IS_VALID)
 
         threads = lldbutil.get_threads_stopped_at_breakpoint (process, break_in_main)

@@ -34,7 +34,7 @@ class Issue11581TestCase(TestBase):
 
         breakpoint = target.BreakpointCreateBySourceRegex('Set breakpoint here.',lldb.SBFileSpec ("main.cpp", False))
         
-        process = target.LaunchSimple (None, None, os.getcwd())
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
         self.assertTrue (process, "Created a process.")
         self.assertTrue (process.GetState() == lldb.eStateStopped, "Stopped it too.")
 

@@ -112,7 +112,7 @@ class ArrayTypesTestCase(TestBase):
             substrs = ["resolved = 1"])
 
         # Now launch the process, and do not stop at entry point.
-        process = target.LaunchSimple(None, None, os.getcwd())
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
         self.assertTrue(process, PROCESS_IS_VALID)
 
         # Sanity check the print representation of process.
