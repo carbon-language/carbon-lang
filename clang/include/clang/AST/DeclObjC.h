@@ -767,6 +767,12 @@ public:
   /// marked with the 'objc_designated_initializer' attribute.
   bool hasDesignatedInitializers() const;
 
+  /// Returns true if this interface decl declares a designated initializer
+  /// or it inherites one from its super class.
+  bool declaresOrInheritsDesignatedInitializers() const {
+    return hasDesignatedInitializers() || inheritsDesignatedInitializers();
+  }
+
   const ObjCProtocolList &getReferencedProtocols() const {
     assert(hasDefinition() && "Caller did not check for forward reference!");
     if (data().ExternallyCompleted)

@@ -2455,7 +2455,10 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
       if (const ObjCObjectPointerType *
             OCIType = ReceiverType->getAsObjCInterfacePointerType()) {
         if (const ObjCInterfaceDecl *ID = OCIType->getInterfaceDecl()) {
-          if (ID->isDesignatedInitializer(Sel)) {
+          // Either we know this is a designated initializer or we
+          // conservatively assume it because we don't know for sure.
+          if (!ID->declaresOrInheritsDesignatedInitializers() ||
+              ID->isDesignatedInitializer(Sel)) {
             isDesignatedInitChain = true;
             getCurFunction()->ObjCWarnForNoDesignatedInitChain = false;
           }

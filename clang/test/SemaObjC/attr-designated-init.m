@@ -203,3 +203,19 @@ __attribute__((objc_root_class))
   return 0;
 }
 @end
+
+__attribute__((objc_root_class))
+@interface B2
+-(id)init;
+@end
+
+@interface S8: B2
+-(id)initS8 NS_DESIGNATED_INITIALIZER;
+@end
+
+@implementation S8
+-(id)initS8
+{
+  return [super init];
+}
+@end
