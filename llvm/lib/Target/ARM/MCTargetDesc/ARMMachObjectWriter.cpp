@@ -82,10 +82,14 @@ static bool getARMFixupKindMachOInfo(unsigned Kind, unsigned &RelocType,
     Log2Size = llvm::Log2_32(8);
     return true;
 
-    // Handle 24-bit branch kinds.
+    // These fixups are expected to always be resolvable at assembly time and
+    // have no relocations supported.
   case ARM::fixup_arm_ldst_pcrel_12:
   case ARM::fixup_arm_pcrel_10:
   case ARM::fixup_arm_adr_pcrel_12:
+    return false;
+
+    // Handle 24-bit branch kinds.
   case ARM::fixup_arm_condbranch:
   case ARM::fixup_arm_uncondbranch:
   case ARM::fixup_arm_uncondbl:
