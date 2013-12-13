@@ -4217,6 +4217,7 @@ void Sema::ProcessDeclAttributeList(Scope *S, Decl *D,
   for (const AttributeList* l = AttrList; l; l = l->getNext())
     ProcessDeclAttribute(*this, S, D, *l, IncludeCXX11Attributes);
 
+  // FIXME: We should be able to handle these cases in TableGen.
   // GCC accepts
   // static int a9 __attribute__((weakref));
   // but that looks really pointless. We reject it.
@@ -4225,6 +4226,24 @@ void Sema::ProcessDeclAttributeList(Scope *S, Decl *D,
     cast<NamedDecl>(D)->getNameAsString();
     D->dropAttr<WeakRefAttr>();
     return;
+  }
+
+  if (!D->hasAttr<OpenCLKernelAttr>()) {
+    // These attributes cannot be applied to a non-kernel function.
+    if (D->hasAttr<ReqdWorkGroupSizeAttr>()) {
+      Diag(D->getLocation(), diag::err_opencl_kernel_attr)
+          << "reqd_work_group_size";
+      D->setInvalidDecl();
+    }
+    if (D->hasAttr<WorkGroupSizeHintAttr>()) {
+      Diag(D->getLocation(), diag::err_opencl_kernel_attr)
+          << "work_group_size_hint";
+      D->setInvalidDecl();
+    }
+    if (D->hasAttr<VecTypeHintAttr>()) {
+      Diag(D->getLocation(), diag::err_opencl_kernel_attr) << "vec_type_hint";
+      D->setInvalidDecl();
+    }
   }
 }
 
