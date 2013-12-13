@@ -948,7 +948,7 @@ static int msan_dl_iterate_phdr_cb(__sanitizer_dl_phdr_info *info, SIZE_T size,
   }
   dl_iterate_phdr_data *cbdata = (dl_iterate_phdr_data *)data;
   UnpoisonParam(3);
-  return cbdata->callback(info, size, cbdata->data);
+  return IndirectExternCall(cbdata->callback)(info, size, cbdata->data);
 }
 
 INTERCEPTOR(int, dl_iterate_phdr, dl_iterate_phdr_cb callback, void *data) {
@@ -985,7 +985,7 @@ static void SignalHandler(int signo) {
   typedef void (*signal_cb)(int x);
   signal_cb cb =
       (signal_cb)atomic_load(&sigactions[signo], memory_order_relaxed);
-  cb(signo);
+  IndirectExternCall(cb)(signo);
 }
 
 static void SignalAction(int signo, void *si, void *uc) {
@@ -997,7 +997,7 @@ static void SignalAction(int signo, void *si, void *uc) {
   typedef void (*sigaction_cb)(int, void *, void *);
   sigaction_cb cb =
       (sigaction_cb)atomic_load(&sigactions[signo], memory_order_relaxed);
-  cb(signo, si, uc);
+  IndirectExternCall(cb)(signo, si, uc);
 }
 
 INTERCEPTOR(int, sigaction, int signo, const __sanitizer_sigaction *act,
@@ -1098,7 +1098,7 @@ static void *MsanThreadStartFunc(void *arg) {
                        &msan_stack_bounds.stack_size,
                        &msan_stack_bounds.tls_addr,
                        &msan_stack_bounds.tls_size);
-  return callback(param);
+  return IndirectExternCall(callback)(param);
 }
 
 INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
@@ -1168,7 +1168,7 @@ struct MSanAtExitRecord {
 void MSanAtExitWrapper(void *arg) {
   UnpoisonParam(1);
   MSanAtExitRecord *r = (MSanAtExitRecord *)arg;
-  r->func(r->arg);
+  IndirectExternCall(r->func)(r->arg);
   InternalFree(r);
 }
 

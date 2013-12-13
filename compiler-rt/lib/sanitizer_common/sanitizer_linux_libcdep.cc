@@ -98,7 +98,7 @@ bool SetEnv(const char *name, const char *value) {
   setenv_ft setenv_f;
   CHECK_EQ(sizeof(setenv_f), sizeof(f));
   internal_memcpy(&setenv_f, &f, sizeof(f));
-  return setenv_f(name, value, 1) == 0;
+  return IndirectExternCall(setenv_f)(name, value, 1) == 0;
 }
 #endif
 
@@ -196,7 +196,7 @@ void InitTlsSize() {
   CHECK_NE(get_tls, 0);
   size_t tls_size = 0;
   size_t tls_align = 0;
-  get_tls(&tls_size, &tls_align);
+  IndirectExternCall(get_tls)(&tls_size, &tls_align);
   g_tls_size = tls_size;
 #endif
 }
@@ -352,6 +352,13 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
   return data.current_n;
 }
 #endif  // SANITIZER_ANDROID
+
+uptr indirect_call_wrapper;
+
+void InitializeIndirectCallWrapping(const char *wrapper_name) {
+  CHECK(wrapper_name && *wrapper_name);
+  indirect_call_wrapper = (uptr)dlsym(RTLD_DEFAULT, wrapper_name);
+}
 
 }  // namespace __sanitizer
 

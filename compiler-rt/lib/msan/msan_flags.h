@@ -26,6 +26,7 @@ struct Flags {
   bool report_umrs;
   bool wrap_signals;
   bool halt_on_error;
+  const char *wrap_indirect_calls;
 };
 
 Flags *flags();

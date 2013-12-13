@@ -134,6 +134,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   }
   ParseFlag(str, &f->report_umrs, "report_umrs");
   ParseFlag(str, &f->wrap_signals, "wrap_signals");
+  ParseFlag(str, &f->wrap_indirect_calls, "wrap_indirect_calls");
 
   // keep_going is an old name for halt_on_error,
   // and it has inverse meaning.
@@ -158,6 +159,7 @@ static void InitializeFlags(Flags *f, const char *options) {
   f->exit_code = 77;
   f->report_umrs = true;
   f->wrap_signals = true;
+  f->wrap_indirect_calls = "dr_app_handle_mbr_target";
   f->halt_on_error = !&__msan_keep_going;
 
   // Override from user-specified string.
@@ -331,8 +333,11 @@ void __msan_init() {
                        &msan_stack_bounds.tls_addr,
                        &msan_stack_bounds.tls_size);
   VPrintf(1, "MemorySanitizer init done\n");
+
   msan_init_is_running = 0;
   msan_inited = 1;
+
+  InitializeIndirectCallWrapping(flags()->wrap_indirect_calls);
 }
 
 void __msan_set_exit_code(int exit_code) {
