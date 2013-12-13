@@ -33,7 +33,7 @@ PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit, const Triple& T) {
   AssemblerDialect = 1;           // New-Style mnemonics.
   SupportsDebugInformation= true; // Debug information.
 
-  // old assembler lacks some directives
+  // The installed assembler for OSX < 10.6 lacks some directives.
   // FIXME: this should really be a check on the assembler characteristics
   // rather than OS version
   if (T.isMacOSX() && T.isMacOSXVersionLT(10, 6))
