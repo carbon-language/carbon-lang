@@ -22,6 +22,7 @@
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/Support/MathExtras.h"
 
 using namespace llvm;
 
@@ -219,6 +220,10 @@ class MipsAsmParser : public MCTargetAsmParser {
   }
 
   bool isN64() const { return STI.getFeatureBits() & Mips::FeatureN64; }
+
+  bool isMicroMips() const {
+    return STI.getFeatureBits() & Mips::FeatureMicroMips;
+  }
 
   int matchRegisterName(StringRef Symbol, bool is64BitReg);
 
@@ -563,6 +568,45 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
                                        SmallVectorImpl<MCInst> &Instructions) {
   const MCInstrDesc &MCID = getInstDesc(Inst.getOpcode());
   Inst.setLoc(IDLoc);
+
+  if (MCID.isBranch() || MCID.isCall()) {
+    const unsigned Opcode = Inst.getOpcode();
+    MCOperand Offset;
+
+    switch (Opcode) {
+    default:
+      break;
+    case Mips::BEQ:
+    case Mips::BNE:
+      assert (MCID.getNumOperands() == 3 && "unexpected number of operands");
+      Offset = Inst.getOperand(2);
+      if (!Offset.isImm())
+        break; // We'll deal with this situation later on when applying fixups.
+      if (!isIntN(isMicroMips() ? 17 : 18, Offset.getImm()))
+        return Error(IDLoc, "branch target out of range");
+      if (OffsetToAlignment (Offset.getImm(), 1LL << (isMicroMips() ? 1 : 2)))
+        return Error(IDLoc, "branch to misaligned address");
+      break;
+    case Mips::BGEZ:
+    case Mips::BGTZ:
+    case Mips::BLEZ:
+    case Mips::BLTZ:
+    case Mips::BGEZAL:
+    case Mips::BLTZAL:
+    case Mips::BC1F:
+    case Mips::BC1T:
+      assert (MCID.getNumOperands() == 2 && "unexpected number of operands");
+      Offset = Inst.getOperand(1);
+      if (!Offset.isImm())
+        break; // We'll deal with this situation later on when applying fixups.
+      if (!isIntN(isMicroMips() ? 17 : 18, Offset.getImm()))
+        return Error(IDLoc, "branch target out of range");
+      if (OffsetToAlignment (Offset.getImm(), 1LL << (isMicroMips() ? 1 : 2)))
+        return Error(IDLoc, "branch to misaligned address");
+      break;
+    }
+  }
+
   if (MCID.hasDelaySlot() && Options.isReorder()) {
     // If this instruction has a delay slot and .set reorder is active,
     // emit a NOP after it.
