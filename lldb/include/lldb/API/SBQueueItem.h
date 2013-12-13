@@ -11,7 +11,6 @@
 #define LLDB_SBQueueItem_h_
 
 #include "lldb/API/SBDefines.h"
-#include "lldb/Core/Address.h"
 #include "lldb/API/SBAddress.h"
 
 namespace lldb {
