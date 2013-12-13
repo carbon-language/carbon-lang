@@ -79,7 +79,7 @@ namespace llvm {
   public:
     friend struct TargetRegistry;
 
-    typedef unsigned (*TripleMatchQualityFnTy)(const std::string &TT);
+    typedef bool (*ArchMatchFnTy)(Triple::ArchType Arch);
 
     typedef MCAsmInfo *(*MCAsmInfoCtorFnTy)(const MCRegisterInfo &MRI,
                                             StringRef TT);
@@ -154,9 +154,8 @@ namespace llvm {
     /// TargetRegistry.
     Target *Next;
 
-    /// TripleMatchQualityFn - The target function for rating the match quality
-    /// of a triple.
-    TripleMatchQualityFnTy TripleMatchQualityFn;
+    /// The target function for checking if an architecture is supported.
+    ArchMatchFnTy ArchMatchFn;
 
     /// Name - The target name.
     const char *Name;
@@ -578,14 +577,13 @@ namespace llvm {
     /// @param Name - The target name. This should be a static string.
     /// @param ShortDesc - A short target description. This should be a static
     /// string.
-    /// @param TQualityFn - The triple match quality computation function for
-    /// this target.
+    /// @param ArchMatchFn - The arch match checking function for this target.
     /// @param HasJIT - Whether the target supports JIT code
     /// generation.
     static void RegisterTarget(Target &T,
                                const char *Name,
                                const char *ShortDesc,
-                               Target::TripleMatchQualityFnTy TQualityFn,
+                               Target::ArchMatchFnTy ArchMatchFn,
                                bool HasJIT = false);
 
     /// RegisterMCAsmInfo - Register a MCAsmInfo implementation for the
@@ -831,15 +829,11 @@ namespace llvm {
            bool HasJIT = false>
   struct RegisterTarget {
     RegisterTarget(Target &T, const char *Name, const char *Desc) {
-      TargetRegistry::RegisterTarget(T, Name, Desc,
-                                     &getTripleMatchQuality,
-                                     HasJIT);
+      TargetRegistry::RegisterTarget(T, Name, Desc, &getArchMatch, HasJIT);
     }
 
-    static unsigned getTripleMatchQuality(const std::string &TT) {
-      if (Triple(TT).getArch() == TargetArchType)
-        return 20;
-      return 0;
+    static bool getArchMatch(Triple::ArchType Arch) {
+      return Arch == TargetArchType;
     }
   };
 

@@ -14,9 +14,10 @@ using namespace llvm;
 
 Target llvm::TheCppBackendTarget;
 
-static unsigned CppBackend_TripleMatchQuality(const std::string &TT) {
-  // This class always works, but shouldn't be the default in most cases.
-  return 1;
+static bool CppBackend_TripleMatchQuality(Triple::ArchType Arch) {
+  // This backend doesn't correspond to any architecture. It must be explicitly
+  // selected with -march.
+  return false;
 }
 
 extern "C" void LLVMInitializeCppBackendTargetInfo() { 

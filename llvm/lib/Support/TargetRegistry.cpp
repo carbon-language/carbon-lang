@@ -71,42 +71,34 @@ const Target *TargetRegistry::lookupTarget(const std::string &TT,
     Error = "Unable to find target for this triple (no targets are registered)";
     return 0;
   }
-  const Target *Best = 0, *EquallyBest = 0;
-  unsigned BestQuality = 0;
+  const Target *Matching = 0;
+  Triple::ArchType Arch =  Triple(TT).getArch();
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
-    if (unsigned Qual = it->TripleMatchQualityFn(TT)) {
-      if (!Best || Qual > BestQuality) {
-        Best = &*it;
-        EquallyBest = 0;
-        BestQuality = Qual;
-      } else if (Qual == BestQuality)
-        EquallyBest = &*it;
+    if (it->ArchMatchFn(Arch)) {
+      if (Matching) {
+        Error = std::string("Cannot choose between targets \"") +
+          Matching->Name  + "\" and \"" + it->Name + "\"";
+        return 0;
+      }
+      Matching = &*it;
     }
   }
 
-  if (!Best) {
+  if (!Matching) {
     Error = "No available targets are compatible with this triple, "
       "see -version for the available targets.";
     return 0;
   }
 
-  // Otherwise, take the best target, but make sure we don't have two equally
-  // good best targets.
-  if (EquallyBest) {
-    Error = std::string("Cannot choose between targets \"") +
-      Best->Name  + "\" and \"" + EquallyBest->Name + "\"";
-    return 0;
-  }
-
-  return Best;
+  return Matching;
 }
 
 void TargetRegistry::RegisterTarget(Target &T,
                                     const char *Name,
                                     const char *ShortDesc,
-                                    Target::TripleMatchQualityFnTy TQualityFn,
+                                    Target::ArchMatchFnTy ArchMatchFn,
                                     bool HasJIT) {
-  assert(Name && ShortDesc && TQualityFn &&
+  assert(Name && ShortDesc && ArchMatchFn &&
          "Missing required target information!");
 
   // Check if this target has already been initialized, we allow this as a
@@ -120,7 +112,7 @@ void TargetRegistry::RegisterTarget(Target &T,
 
   T.Name = Name;
   T.ShortDesc = ShortDesc;
-  T.TripleMatchQualityFn = TQualityFn;
+  T.ArchMatchFn = ArchMatchFn;
   T.HasJIT = HasJIT;
 }
 
