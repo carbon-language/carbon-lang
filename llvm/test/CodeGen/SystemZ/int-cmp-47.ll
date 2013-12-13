@@ -232,3 +232,112 @@ store:
 exit:
   ret void
 }
+
+; Check a case where TMHH can be used to implement a ult comparison.
+define void @f13(i64 %a) {
+; CHECK-LABEL: f13:
+; CHECK: tmhh %r2, 49152
+; CHECK: jno {{\.L.*}}
+; CHECK: br %r14
+entry:
+  %cmp = icmp ult i64 %a, 13835058055282163712
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i32 1, i32 *@g
+  br label %exit
+
+exit:
+  ret void
+}
+
+; And again with ule.
+define void @f14(i64 %a) {
+; CHECK-LABEL: f14:
+; CHECK: tmhh %r2, 49152
+; CHECK: jno {{\.L.*}}
+; CHECK: br %r14
+entry:
+  %cmp = icmp ule i64 %a, 13835058055282163711
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i32 1, i32 *@g
+  br label %exit
+
+exit:
+  ret void
+}
+
+; And again with ugt.
+define void @f15(i64 %a) {
+; CHECK-LABEL: f15:
+; CHECK: tmhh %r2, 49152
+; CHECK: jo {{\.L.*}}
+; CHECK: br %r14
+entry:
+  %cmp = icmp ugt i64 %a, 13835058055282163711
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i32 1, i32 *@g
+  br label %exit
+
+exit:
+  ret void
+}
+
+; And again with uge.
+define void @f16(i64 %a) {
+; CHECK-LABEL: f16:
+; CHECK: tmhh %r2, 49152
+; CHECK: jo {{\.L.*}}
+; CHECK: br %r14
+entry:
+  %cmp = icmp uge i64 %a, 13835058055282163712
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i32 1, i32 *@g
+  br label %exit
+
+exit:
+  ret void
+}
+
+; Decrease the constant from f13 to make TMHH invalid.
+define void @f17(i64 %a) {
+; CHECK-LABEL: f17:
+; CHECK-NOT: tmhh
+; CHECK: llihh {{%r[0-5]}}, 49151
+; CHECK-NOT: tmhh
+; CHECK: br %r14
+entry:
+  %cmp = icmp ult i64 %a, 13834776580305453056
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i32 1, i32 *@g
+  br label %exit
+
+exit:
+  ret void
+}
+
+; Check that we don't use TMHH just to test the top bit.
+define void @f18(i64 %a) {
+; CHECK-LABEL: f18:
+; CHECK-NOT: tmhh
+; CHECK: cgijhe %r2, 0,
+; CHECK: br %r14
+entry:
+  %cmp = icmp ult i64 %a, 9223372036854775808
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i32 1, i32 *@g
+  br label %exit
+
+exit:
+  ret void
+}

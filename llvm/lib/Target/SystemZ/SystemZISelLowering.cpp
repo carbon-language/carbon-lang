@@ -1440,47 +1440,75 @@ static void adjustForTestUnderMask(SelectionDAG &DAG, Comparison &C) {
   uint64_t CmpVal = ConstOp1->getZExtValue();
 
   // Check whether the nonconstant input is an AND with a constant mask.
-  if (C.Op0.getOpcode() != ISD::AND)
-    return;
-  SDValue AndOp0 = C.Op0.getOperand(0);
-  SDValue AndOp1 = C.Op0.getOperand(1);
-  ConstantSDNode *Mask = dyn_cast<ConstantSDNode>(AndOp1.getNode());
-  if (!Mask)
-    return;
-  uint64_t MaskVal = Mask->getZExtValue();
+  Comparison NewC(C);
+  uint64_t MaskVal;
+  ConstantSDNode *Mask = 0;
+  if (C.Op0.getOpcode() == ISD::AND) {
+    NewC.Op0 = C.Op0.getOperand(0);
+    NewC.Op1 = C.Op0.getOperand(1);
+    Mask = dyn_cast<ConstantSDNode>(NewC.Op1);
+    if (!Mask)
+      return;
+    MaskVal = Mask->getZExtValue();
+  } else {
+    // There is no instruction to compare with a 64-bit immediate
+    // so use TMHH instead if possible.  We need an unsigned ordered
+    // comparison with an i64 immediate.
+    if (NewC.Op0.getValueType() != MVT::i64 ||
+        NewC.CCMask == SystemZ::CCMASK_CMP_EQ ||
+        NewC.CCMask == SystemZ::CCMASK_CMP_NE ||
+        NewC.ICmpType == SystemZICMP::SignedOnly)
+      return;
+    // Convert LE and GT comparisons into LT and GE.
+    if (NewC.CCMask == SystemZ::CCMASK_CMP_LE ||
+        NewC.CCMask == SystemZ::CCMASK_CMP_GT) {
+      if (CmpVal == uint64_t(-1))
+        return;
+      CmpVal += 1;
+      NewC.CCMask ^= SystemZ::CCMASK_CMP_EQ;
+    }
+    // If the low N bits of Op1 are zero than the low N bits of Op0 can
+    // be masked off without changing the result.
+    MaskVal = -(CmpVal & -CmpVal);
+    NewC.ICmpType = SystemZICMP::UnsignedOnly;
+  }
 
   // Check whether the combination of mask, comparison value and comparison
   // type are suitable.
-  unsigned BitSize = C.Op0.getValueType().getSizeInBits();
+  unsigned BitSize = NewC.Op0.getValueType().getSizeInBits();
   unsigned NewCCMask, ShiftVal;
-  if (C.ICmpType != SystemZICMP::SignedOnly &&
-      AndOp0.getOpcode() == ISD::SHL &&
-      isSimpleShift(AndOp0, ShiftVal) &&
-      (NewCCMask = getTestUnderMaskCond(BitSize, C.CCMask, MaskVal >> ShiftVal,
+  if (NewC.ICmpType != SystemZICMP::SignedOnly &&
+      NewC.Op0.getOpcode() == ISD::SHL &&
+      isSimpleShift(NewC.Op0, ShiftVal) &&
+      (NewCCMask = getTestUnderMaskCond(BitSize, NewC.CCMask,
+                                        MaskVal >> ShiftVal,
                                         CmpVal >> ShiftVal,
                                         SystemZICMP::Any))) {
-    AndOp0 = AndOp0.getOperand(0);
-    AndOp1 = DAG.getConstant(MaskVal >> ShiftVal, AndOp0.getValueType());
-  } else if (C.ICmpType != SystemZICMP::SignedOnly &&
-             AndOp0.getOpcode() == ISD::SRL &&
-             isSimpleShift(AndOp0, ShiftVal) &&
-             (NewCCMask = getTestUnderMaskCond(BitSize, C.CCMask,
+    NewC.Op0 = NewC.Op0.getOperand(0);
+    MaskVal >>= ShiftVal;
+  } else if (NewC.ICmpType != SystemZICMP::SignedOnly &&
+             NewC.Op0.getOpcode() == ISD::SRL &&
+             isSimpleShift(NewC.Op0, ShiftVal) &&
+             (NewCCMask = getTestUnderMaskCond(BitSize, NewC.CCMask,
                                                MaskVal << ShiftVal,
                                                CmpVal << ShiftVal,
                                                SystemZICMP::UnsignedOnly))) {
-    AndOp0 = AndOp0.getOperand(0);
-    AndOp1 = DAG.getConstant(MaskVal << ShiftVal, AndOp0.getValueType());
+    NewC.Op0 = NewC.Op0.getOperand(0);
+    MaskVal <<= ShiftVal;
   } else {
-    NewCCMask = getTestUnderMaskCond(BitSize, C.CCMask, MaskVal, CmpVal,
-                                     C.ICmpType);
+    NewCCMask = getTestUnderMaskCond(BitSize, NewC.CCMask, MaskVal, CmpVal,
+                                     NewC.ICmpType);
     if (!NewCCMask)
       return;
   }
 
   // Go ahead and make the change.
   C.Opcode = SystemZISD::TM;
-  C.Op0 = AndOp0;
-  C.Op1 = AndOp1;
+  C.Op0 = NewC.Op0;
+  if (Mask && Mask->getZExtValue() == MaskVal)
+    C.Op1 = SDValue(Mask, 0);
+  else
+    C.Op1 = DAG.getConstant(MaskVal, C.Op0.getValueType());
   C.CCValid = SystemZ::CCMASK_TM;
   C.CCMask = NewCCMask;
 }
