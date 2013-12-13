@@ -557,7 +557,7 @@ void ExeDepsFix::processUndefReads(MachineBasicBlock *MBB) {
 
   for (MachineBasicBlock::reverse_iterator I = MBB->rbegin(), E = MBB->rend();
        I != E; ++I) {
-    // Update liveness, including the current instrucion's defs.
+    // Update liveness, including the current instruction's defs.
     LiveUnits.stepBackward(*I, *TRI);
 
     if (UndefMI == &*I) {
