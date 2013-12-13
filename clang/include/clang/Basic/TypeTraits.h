@@ -68,16 +68,6 @@ namespace clang {
     UTT_IsVolatile
   };
 
-  /// \brief Names for the binary type traits.
-  enum BinaryTypeTrait {
-    BTT_IsBaseOf,
-    BTT_IsConvertible,
-    BTT_IsConvertibleTo,
-    BTT_IsSame,
-    BTT_TypeCompatible,
-    BTT_IsTriviallyAssignable
-  };
-
   /// \brief Names for the array type traits.
   enum ArrayTypeTrait {
     ATT_ArrayRank,
@@ -93,6 +83,13 @@ namespace clang {
   
   /// \brief Names for type traits that operate specifically on types.
   enum TypeTrait {
+    BTT_IsBaseOf,
+    BTT_IsConvertible,
+    BTT_IsConvertibleTo,
+    BTT_IsSame,
+    BTT_TypeCompatible,
+    BTT_IsTriviallyAssignable,
+    BTT_Last = BTT_IsTriviallyAssignable,
     TT_IsTriviallyConstructible
   };
   

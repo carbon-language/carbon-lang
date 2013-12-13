@@ -1495,16 +1495,6 @@ void ASTStmtWriter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   Code = serialization::EXPR_CXX_UNARY_TYPE_TRAIT;
 }
 
-void ASTStmtWriter::VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E) {
-  VisitExpr(E);
-  Record.push_back(E->getTrait());
-  Record.push_back(E->getValue());
-  Writer.AddSourceRange(E->getSourceRange(), Record);
-  Writer.AddTypeSourceInfo(E->getLhsTypeSourceInfo(), Record);
-  Writer.AddTypeSourceInfo(E->getRhsTypeSourceInfo(), Record);
-  Code = serialization::EXPR_BINARY_TYPE_TRAIT;
-}
-
 void ASTStmtWriter::VisitTypeTraitExpr(TypeTraitExpr *E) {
   VisitExpr(E);
   Record.push_back(E->TypeTraitExprBits.NumArgs);

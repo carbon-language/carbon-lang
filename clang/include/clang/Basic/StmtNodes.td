@@ -116,7 +116,6 @@ def CXXDeleteExpr : DStmt<Expr>;
 def CXXPseudoDestructorExpr : DStmt<Expr>;
 def TypeTraitExpr : DStmt<Expr>;
 def UnaryTypeTraitExpr : DStmt<Expr>;
-def BinaryTypeTraitExpr : DStmt<Expr>;
 def ArrayTypeTraitExpr : DStmt<Expr>;
 def ExpressionTraitExpr : DStmt<Expr>;
 def DependentScopeDeclRefExpr : DStmt<Expr>;

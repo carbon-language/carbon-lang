@@ -1308,7 +1308,6 @@ namespace clang {
 
       EXPR_OPAQUE_VALUE,          // OpaqueValueExpr
       EXPR_BINARY_CONDITIONAL_OPERATOR,  // BinaryConditionalOperator
-      EXPR_BINARY_TYPE_TRAIT,     // BinaryTypeTraitExpr
       EXPR_TYPE_TRAIT,            // TypeTraitExpr
       EXPR_ARRAY_TYPE_TRAIT,      // ArrayTypeTraitIntExpr
       

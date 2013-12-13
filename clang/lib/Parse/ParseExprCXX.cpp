@@ -2693,18 +2693,12 @@ static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   }
 }
 
-static BinaryTypeTrait BinaryTypeTraitFromTokKind(tok::TokenKind kind) {
-  switch(kind) {
-  default: llvm_unreachable("Not a known binary type trait");
-#define TYPE_TRAIT_2(Spelling, Name, Key) \
-  case tok::kw_ ## Spelling: return BTT_ ## Name;
-#include "clang/Basic/TokenKinds.def"
-  }
-}
-
 static TypeTrait TypeTraitFromTokKind(tok::TokenKind kind) {
   switch (kind) {
   default: llvm_unreachable("Not a known type trait");
+#define TYPE_TRAIT_2(Spelling, Name, Key) \
+case tok::kw_ ## Spelling: return BTT_ ## Name;
+#include "clang/Basic/TokenKinds.def"
 #define TYPE_TRAIT_N(Spelling, Name, Key) \
   case tok::kw_ ## Spelling: return TT_ ## Name;
 #include "clang/Basic/TokenKinds.def"
@@ -2805,15 +2799,9 @@ ExprResult Parser::ParseTypeTrait() {
   if (Arity == 1)
     return Actions.ActOnUnaryTypeTrait(UnaryTypeTraitFromTokKind(Kind), Loc,
                                        Args[0], EndLoc);
-  if (Arity == 2)
-    return Actions.ActOnBinaryTypeTrait(BinaryTypeTraitFromTokKind(Kind), Loc,
-                                        Args[0], Args[1], EndLoc);
-  if (!Arity)
-    return Actions.ActOnTypeTrait(TypeTraitFromTokKind(Kind), Loc, Args,
-                                  EndLoc);
 
-  llvm_unreachable("unhandled type trait rank");
-  return ExprError();
+  return Actions.ActOnTypeTrait(TypeTraitFromTokKind(Kind), Arity, Loc, Args,
+                                EndLoc);
 }
 
 /// ParseArrayTypeTrait - Parse the built-in array type-trait

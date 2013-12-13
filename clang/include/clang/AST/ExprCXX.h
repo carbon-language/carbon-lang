@@ -2168,76 +2168,6 @@ public:
   friend class ASTStmtReader;
 };
 
-/// \brief Represents a GCC or MS binary type trait, as used in the
-/// implementation of TR1/C++11 type trait templates.
-///
-/// Example:
-/// \code
-///   __is_base_of(Base, Derived) == true
-/// \endcode
-class BinaryTypeTraitExpr : public Expr {
-  /// \brief The trait. A BinaryTypeTrait enum in MSVC compatible unsigned.
-  unsigned BTT : 8;
-
-  /// The value of the type trait. Unspecified if dependent.
-  bool Value : 1;
-
-  /// \brief The location of the type trait keyword.
-  SourceLocation Loc;
-
-  /// \brief The location of the closing paren.
-  SourceLocation RParen;
-
-  /// \brief The lhs type being queried.
-  TypeSourceInfo *LhsType;
-
-  /// \brief The rhs type being queried.
-  TypeSourceInfo *RhsType;
-
-public:
-  BinaryTypeTraitExpr(SourceLocation loc, BinaryTypeTrait btt,
-                     TypeSourceInfo *lhsType, TypeSourceInfo *rhsType,
-                     bool value, SourceLocation rparen, QualType ty)
-    : Expr(BinaryTypeTraitExprClass, ty, VK_RValue, OK_Ordinary, false,
-           lhsType->getType()->isDependentType() ||
-           rhsType->getType()->isDependentType(),
-           (lhsType->getType()->isInstantiationDependentType() ||
-            rhsType->getType()->isInstantiationDependentType()),
-           (lhsType->getType()->containsUnexpandedParameterPack() ||
-            rhsType->getType()->containsUnexpandedParameterPack())),
-      BTT(btt), Value(value), Loc(loc), RParen(rparen),
-      LhsType(lhsType), RhsType(rhsType) { }
-
-
-  explicit BinaryTypeTraitExpr(EmptyShell Empty)
-    : Expr(BinaryTypeTraitExprClass, Empty), BTT(0), Value(false),
-      LhsType(), RhsType() { }
-
-  SourceLocation getLocStart() const LLVM_READONLY { return Loc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RParen; }
-
-  BinaryTypeTrait getTrait() const {
-    return static_cast<BinaryTypeTrait>(BTT);
-  }
-
-  QualType getLhsType() const { return LhsType->getType(); }
-  QualType getRhsType() const { return RhsType->getType(); }
-
-  TypeSourceInfo *getLhsTypeSourceInfo() const { return LhsType; }
-  TypeSourceInfo *getRhsTypeSourceInfo() const { return RhsType; }
-
-  bool getValue() const { assert(!isTypeDependent()); return Value; }
-
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == BinaryTypeTraitExprClass;
-  }
-
-  // Iterators
-  child_range children() { return child_range(); }
-
-  friend class ASTStmtReader;
-};
-
 /// \brief A type trait used in the implementation of various C++11 and
 /// Library TR1 trait templates.
 ///
@@ -2334,7 +2264,7 @@ public:
   friend class ASTStmtWriter;
 
 };
-  
+
 /// \brief An Embarcadero array type trait, as used in the implementation of
 /// __array_rank and __array_extent.
 ///

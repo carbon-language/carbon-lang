@@ -1840,7 +1840,6 @@ public:
   void VisitSwitchStmt(const SwitchStmt *S);
   void VisitWhileStmt(const WhileStmt *W);
   void VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E);
-  void VisitBinaryTypeTraitExpr(const BinaryTypeTraitExpr *E);
   void VisitTypeTraitExpr(const TypeTraitExpr *E);
   void VisitArrayTypeTraitExpr(const ArrayTypeTraitExpr *E);
   void VisitExpressionTraitExpr(const ExpressionTraitExpr *E);
@@ -2187,11 +2186,6 @@ void EnqueueVisitor::VisitWhileStmt(const WhileStmt *W) {
 
 void EnqueueVisitor::VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E) {
   AddTypeLoc(E->getQueriedTypeSourceInfo());
-}
-
-void EnqueueVisitor::VisitBinaryTypeTraitExpr(const BinaryTypeTraitExpr *E) {
-  AddTypeLoc(E->getRhsTypeSourceInfo());
-  AddTypeLoc(E->getLhsTypeSourceInfo());
 }
 
 void EnqueueVisitor::VisitTypeTraitExpr(const TypeTraitExpr *E) {

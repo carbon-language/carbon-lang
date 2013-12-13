@@ -2145,11 +2145,6 @@ DEF_TRAVERSE_STMT(UnaryTypeTraitExpr, {
     TRY_TO(TraverseTypeLoc(S->getQueriedTypeSourceInfo()->getTypeLoc()));
   })
 
-DEF_TRAVERSE_STMT(BinaryTypeTraitExpr, {
-    TRY_TO(TraverseTypeLoc(S->getLhsTypeSourceInfo()->getTypeLoc()));
-    TRY_TO(TraverseTypeLoc(S->getRhsTypeSourceInfo()->getTypeLoc()));
-  })
-
 DEF_TRAVERSE_STMT(TypeTraitExpr, {
   for (unsigned I = 0, N = S->getNumArgs(); I != N; ++I)
     TRY_TO(TraverseTypeLoc(S->getArg(I)->getTypeLoc()));

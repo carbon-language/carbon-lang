@@ -1691,17 +1691,11 @@ static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   llvm_unreachable("Type trait not covered by switch statement");
 }
 
-static const char *getTypeTraitName(BinaryTypeTrait BTT) {
-  switch (BTT) {
-#define TYPE_TRAIT_2(Spelling, Name, Key) \
-  case clang::BTT_##Name: return #Spelling;
-#include "clang/Basic/TokenKinds.def"
-  }
-  llvm_unreachable("Binary type trait not covered by switch");
-}
-
 static const char *getTypeTraitName(TypeTrait TT) {
   switch (TT) {
+#define TYPE_TRAIT_2(Spelling, Name, Key) \
+case clang::BTT_##Name: return #Spelling;
+#include "clang/Basic/TokenKinds.def"
 #define TYPE_TRAIT_N(Spelling, Name, Key) \
   case clang::TT_##Name: return #Spelling;
 #include "clang/Basic/TokenKinds.def"
@@ -1728,14 +1722,6 @@ static const char *getExpressionTraitName(ExpressionTrait ET) {
 void StmtPrinter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   OS << getTypeTraitName(E->getTrait()) << '(';
   E->getQueriedType().print(OS, Policy);
-  OS << ')';
-}
-
-void StmtPrinter::VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E) {
-  OS << getTypeTraitName(E->getTrait()) << '(';
-  E->getLhsType().print(OS, Policy);
-  OS << ',';
-  E->getRhsType().print(OS, Policy);
   OS << ')';
 }
 

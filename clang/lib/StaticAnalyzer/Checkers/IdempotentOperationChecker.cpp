@@ -646,7 +646,6 @@ bool IdempotentOperationChecker::CanVary(const Expr *Ex,
   case Stmt::OffsetOfExprClass:
   case Stmt::CompoundLiteralExprClass:
   case Stmt::AddrLabelExprClass:
-  case Stmt::BinaryTypeTraitExprClass:
   case Stmt::GNUNullExprClass:
   case Stmt::InitListExprClass:
   case Stmt::DesignatedInitExprClass:
