@@ -45,6 +45,9 @@ namespace SystemZISD {
     // as a register base.
     PCREL_OFFSET,
 
+    // Integer absolute.
+    IABS,
+
     // Integer comparisons.  There are three operands: the two values
     // to compare, and an integer of type SystemZICMP.
     ICMP,

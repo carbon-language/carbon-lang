@@ -595,22 +595,28 @@ let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isMoveImm = 1,
 
 let Defs = [CC] in {
   let CCValues = 0xF, CompareZeroCCMask = 0x8 in {
-    def LPR  : UnaryRR <"lp",  0x10,   z_iabs32, GR32, GR32>;
-    def LPGR : UnaryRRE<"lpg", 0xB900, z_iabs64, GR64, GR64>;
+    def LPR  : UnaryRR <"lp",  0x10,   z_iabs, GR32, GR32>;
+    def LPGR : UnaryRRE<"lpg", 0xB900, z_iabs, GR64, GR64>;
   }
   let CCValues = 0xE, CompareZeroCCMask = 0xE in
     def LPGFR : UnaryRRE<"lpgf", 0xB910, null_frag, GR64, GR32>;
 }
+def : Pat<(z_iabs32 GR32:$src), (LPR  GR32:$src)>;
+def : Pat<(z_iabs64 GR64:$src), (LPGR GR64:$src)>;
+defm : SXU<z_iabs,   LPGFR>;
 defm : SXU<z_iabs64, LPGFR>;
 
 let Defs = [CC] in {
   let CCValues = 0xF, CompareZeroCCMask = 0x8 in {
-    def LNR  : UnaryRR <"ln",  0x11,   z_inegabs32, GR32, GR32>;
-    def LNGR : UnaryRRE<"lng", 0xB901, z_inegabs64, GR64, GR64>;
+    def LNR  : UnaryRR <"ln",  0x11,   z_inegabs, GR32, GR32>;
+    def LNGR : UnaryRRE<"lng", 0xB901, z_inegabs, GR64, GR64>;
   }
   let CCValues = 0xE, CompareZeroCCMask = 0xE in
     def LNGFR : UnaryRRE<"lngf", 0xB911, null_frag, GR64, GR32>;
 }
+def : Pat<(z_inegabs32 GR32:$src), (LNR  GR32:$src)>;
+def : Pat<(z_inegabs64 GR64:$src), (LNGR GR64:$src)>;
+defm : SXU<z_inegabs,   LNGFR>;
 defm : SXU<z_inegabs64, LNGFR>;
 
 let Defs = [CC] in {

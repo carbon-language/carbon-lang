@@ -1622,6 +1622,28 @@ SDValue SystemZTargetLowering::lowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
                      DAG.getConstant(C.CCMask, MVT::i32), Dest, Glue);
 }
 
+// Return true if Pos is CmpOp and Neg is the negative of CmpOp,
+// allowing Pos and Neg to be wider than CmpOp.
+static bool isAbsolute(SDValue CmpOp, SDValue Pos, SDValue Neg) {
+  return (Neg.getOpcode() == ISD::SUB &&
+          Neg.getOperand(0).getOpcode() == ISD::Constant &&
+          cast<ConstantSDNode>(Neg.getOperand(0))->getZExtValue() == 0 &&
+          Neg.getOperand(1) == Pos &&
+          (Pos == CmpOp ||
+           (Pos.getOpcode() == ISD::SIGN_EXTEND &&
+            Pos.getOperand(0) == CmpOp)));
+}
+
+// Return the absolute or negative absolute of Op; IsNegative decides which.
+static SDValue getAbsolute(SelectionDAG &DAG, SDLoc DL, SDValue Op,
+                           bool IsNegative) {
+  Op = DAG.getNode(SystemZISD::IABS, DL, Op.getValueType(), Op);
+  if (IsNegative)
+    Op = DAG.getNode(ISD::SUB, DL, Op.getValueType(),
+                     DAG.getConstant(0, Op.getValueType()), Op);
+  return Op;
+}
+
 SDValue SystemZTargetLowering::lowerSELECT_CC(SDValue Op,
                                               SelectionDAG &DAG) const {
   SDValue CmpOp0   = Op.getOperand(0);
@@ -1632,6 +1654,21 @@ SDValue SystemZTargetLowering::lowerSELECT_CC(SDValue Op,
   SDLoc DL(Op);
 
   Comparison C(getCmp(DAG, CmpOp0, CmpOp1, CC));
+
+  // Check for absolute and negative-absolute selections, including those
+  // where the comparison value is sign-extended (for LPGFR and LNGFR).
+  // This check supplements the one in DAGCombiner.
+  if (C.Opcode == SystemZISD::ICMP &&
+      C.CCMask != SystemZ::CCMASK_CMP_EQ &&
+      C.CCMask != SystemZ::CCMASK_CMP_NE &&
+      C.Op1.getOpcode() == ISD::Constant &&
+      cast<ConstantSDNode>(C.Op1)->getZExtValue() == 0) {
+    if (isAbsolute(C.Op0, TrueOp, FalseOp))
+      return getAbsolute(DAG, DL, TrueOp, C.CCMask & SystemZ::CCMASK_CMP_LT);
+    if (isAbsolute(C.Op0, FalseOp, TrueOp))
+      return getAbsolute(DAG, DL, FalseOp, C.CCMask & SystemZ::CCMASK_CMP_GT);
+  }
+
   SDValue Glue = emitCmp(DAG, DL, C);
 
   // Special case for handling -1/0 results.  The shifts we use here
@@ -2324,6 +2361,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(SIBCALL);
     OPCODE(PCREL_WRAPPER);
     OPCODE(PCREL_OFFSET);
+    OPCODE(IABS);
     OPCODE(ICMP);
     OPCODE(FCMP);
     OPCODE(TM);

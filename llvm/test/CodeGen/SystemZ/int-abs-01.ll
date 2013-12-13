@@ -81,3 +81,67 @@ define i64 @f7(i64 %val) {
   %res = select i1 %cmp, i64 %neg, i64 %val
   ret i64 %res
 }
+
+; Test another form of f6, which is that produced by InstCombine.
+define i64 @f8(i64 %val) {
+; CHECK-LABEL: f8:
+; CHECK: lpgfr %r2, %r2
+; CHECK: br %r14
+  %shl = shl i64 %val, 32
+  %ashr = ashr i64 %shl, 32
+  %neg = sub i64 0, %ashr
+  %cmp = icmp slt i64 %shl, 0
+  %abs = select i1 %cmp, i64 %neg, i64 %ashr
+  ret i64 %abs
+}
+
+; Try again with sle rather than slt.
+define i64 @f9(i64 %val) {
+; CHECK-LABEL: f9:
+; CHECK: lpgfr %r2, %r2
+; CHECK: br %r14
+  %shl = shl i64 %val, 32
+  %ashr = ashr i64 %shl, 32
+  %neg = sub i64 0, %ashr
+  %cmp = icmp sle i64 %shl, 0
+  %abs = select i1 %cmp, i64 %neg, i64 %ashr
+  ret i64 %abs
+}
+
+; Repeat f8 with the operands reversed.
+define i64 @f10(i64 %val) {
+; CHECK-LABEL: f10:
+; CHECK: lpgfr %r2, %r2
+; CHECK: br %r14
+  %shl = shl i64 %val, 32
+  %ashr = ashr i64 %shl, 32
+  %neg = sub i64 0, %ashr
+  %cmp = icmp sgt i64 %shl, 0
+  %abs = select i1 %cmp, i64 %ashr, i64 %neg
+  ret i64 %abs
+}
+
+; Try again with sge rather than sgt.
+define i64 @f11(i64 %val) {
+; CHECK-LABEL: f11:
+; CHECK: lpgfr %r2, %r2
+; CHECK: br %r14
+  %shl = shl i64 %val, 32
+  %ashr = ashr i64 %shl, 32
+  %neg = sub i64 0, %ashr
+  %cmp = icmp sge i64 %shl, 0
+  %abs = select i1 %cmp, i64 %ashr, i64 %neg
+  ret i64 %abs
+}
+
+; Repeat f5 with the comparison on the unextended value.
+define i64 @f12(i32 %val) {
+; CHECK-LABEL: f12:
+; CHECK: lpgfr %r2, %r2
+; CHECK: br %r14
+  %ext = sext i32 %val to i64
+  %cmp = icmp slt i32 %val, 0
+  %neg = sub i64 0, %ext
+  %abs = select i1 %cmp, i64 %neg, i64 %ext
+  ret i64 %abs
+}
