@@ -28,6 +28,7 @@
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/SourceManager.h"
+#include "lldb/Core/State.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
@@ -2317,6 +2318,114 @@ Target::ClearAllLoadedSections ()
     m_section_load_history.Clear();
 }
 
+
+Error
+Target::Launch (Listener &listener, ProcessLaunchInfo &launch_info)
+{
+    Error error;
+    Error error2;
+    
+    StateType state = eStateInvalid;
+    
+    launch_info.GetFlags().Set (eLaunchFlagDebug);
+    
+    // Get the value of synchronous execution here.  If you wait till after you have started to
+    // run, then you could have hit a breakpoint, whose command might switch the value, and
+    // then you'll pick up that incorrect value.
+    Debugger &debugger = GetDebugger();
+    const bool synchronous_execution = debugger.GetCommandInterpreter().GetSynchronous ();
+    
+    PlatformSP platform_sp (GetPlatform());
+    
+    // Finalize the file actions, and if none were given, default to opening
+    // up a pseudo terminal
+    const bool default_to_use_pty = platform_sp ? platform_sp->IsHost() : false;
+    launch_info.FinalizeFileActions (this, default_to_use_pty);
+    
+    if (state == eStateConnected)
+    {
+        if (launch_info.GetFlags().Test (eLaunchFlagLaunchInTTY))
+        {
+            error.SetErrorString("can't launch in tty when launching through a remote connection");
+            return error;
+        }
+    }
+    
+    if (!launch_info.GetArchitecture().IsValid())
+        launch_info.GetArchitecture() = GetArchitecture();
+    
+    if (state != eStateConnected && platform_sp && platform_sp->CanDebugProcess ())
+    {
+        m_process_sp = GetPlatform()->DebugProcess (launch_info,
+                                                    debugger,
+                                                    this,
+                                                    listener,
+                                                    error);
+    }
+    else
+    {
+        if (state == eStateConnected)
+        {
+            assert(m_process_sp);
+        }
+        else
+        {
+            const char *plugin_name = launch_info.GetProcessPluginName();
+            CreateProcess (listener, plugin_name, NULL);
+        }
+        
+        if (m_process_sp)
+            error = m_process_sp->Launch (launch_info);
+    }
+    
+    if (!m_process_sp)
+    {
+        if (error.Success())
+            error.SetErrorString("failed to launch or debug process");
+        return error;
+    }
+
+    if (error.Success())
+    {
+        if (launch_info.GetFlags().Test(eLaunchFlagStopAtEntry) == false)
+        {
+            StateType state = m_process_sp->WaitForProcessToStop (NULL, NULL, false);
+            
+            if (state == eStateStopped)
+            {
+                error = m_process_sp->Resume();
+                if (error.Success())
+                {
+                    if (synchronous_execution)
+                    {
+                        state = m_process_sp->WaitForProcessToStop (NULL);
+                        const bool must_be_alive = false; // eStateExited is ok, so this must be false
+                        if (!StateIsStoppedState(state, must_be_alive))
+                        {
+                            error2.SetErrorStringWithFormat("process isn't stopped: %s", StateAsCString(state));
+                            return error2;
+                        }
+                    }
+                }
+                else
+                {
+                    error2.SetErrorStringWithFormat("process resume at entry point failed: %s", error.AsCString());
+                    return error2;
+                }
+            }
+            else
+            {
+                error.SetErrorStringWithFormat ("initial process state wasn't stopped: %s", StateAsCString(state));
+            }
+        }
+    }
+    else
+    {
+        error2.SetErrorStringWithFormat ("process launch failed: %s", error.AsCString());
+        return error2;
+    }
+    return error;
+}
 //--------------------------------------------------------------
 // Target::StopHook
 //--------------------------------------------------------------

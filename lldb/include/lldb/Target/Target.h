@@ -529,6 +529,10 @@ public:
 
     void
     Destroy();
+    
+    Error
+    Launch (Listener &listener,
+            ProcessLaunchInfo &launch_info);
 
     //------------------------------------------------------------------
     // This part handles the breakpoints.

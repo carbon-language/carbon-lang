@@ -49,7 +49,7 @@ public:
     virtual ~CommandObjectProcessLaunchOrAttach () {}
 protected:
     bool
-    StopProcessIfNecessary (Process *&process, StateType &state, CommandReturnObject &result)
+    StopProcessIfNecessary (Process *process, StateType &state, CommandReturnObject &result)
     {
         state = eStateInvalid;
         if (process)
@@ -187,12 +187,10 @@ protected:
     {
         Debugger &debugger = m_interpreter.GetDebugger();
         Target *target = debugger.GetSelectedTarget().get();
-        Error error;
         // If our listener is NULL, users aren't allows to launch
-        char filename[PATH_MAX];
-        const Module *exe_module = target->GetExecutableModulePointer();
+        ModuleSP exe_module_sp = target->GetExecutableModule();
 
-        if (exe_module == NULL)
+        if (exe_module_sp == NULL)
         {
             result.AppendError ("no file in target, create a debug target using the 'target create' command");
             result.SetStatus (eReturnStatusFailed);
@@ -200,23 +198,31 @@ protected:
         }
         
         StateType state = eStateInvalid;
-        Process *process = m_exe_ctx.GetProcessPtr();
         
-        if (!StopProcessIfNecessary(process, state, result))
+        if (!StopProcessIfNecessary(m_exe_ctx.GetProcessPtr(), state, result))
             return false;
         
         const char *target_settings_argv0 = target->GetArg0();
         
-        exe_module->GetFileSpec().GetPath (filename, sizeof(filename));
+        if (target->GetDisableASLR())
+            m_options.launch_info.GetFlags().Set (eLaunchFlagDisableASLR);
         
+        if (target->GetDisableSTDIO())
+            m_options.launch_info.GetFlags().Set (eLaunchFlagDisableSTDIO);
+        
+        Args environment;
+        target->GetEnvironmentAsArgs (environment);
+        if (environment.GetArgumentCount() > 0)
+            m_options.launch_info.GetEnvironmentEntries ().AppendArguments (environment);
+
         if (target_settings_argv0)
         {
             m_options.launch_info.GetArguments().AppendArgument (target_settings_argv0);
-            m_options.launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), false);
+            m_options.launch_info.SetExecutableFile(exe_module_sp->GetPlatformFileSpec(), false);
         }
         else
         {
-            m_options.launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), true);
+            m_options.launch_info.SetExecutableFile(exe_module_sp->GetPlatformFileSpec(), true);
         }
 
         if (launch_args.GetArgumentCount() == 0)
@@ -228,122 +234,33 @@ protected:
         else
         {
             m_options.launch_info.GetArguments().AppendArguments (launch_args);
-
             // Save the arguments for subsequent runs in the current target.
             target->SetRunArguments (launch_args);
         }
         
-        if (target->GetDisableASLR())
-            m_options.launch_info.GetFlags().Set (eLaunchFlagDisableASLR);
-    
-        if (target->GetDisableSTDIO())
-            m_options.launch_info.GetFlags().Set (eLaunchFlagDisableSTDIO);
-
-        m_options.launch_info.GetFlags().Set (eLaunchFlagDebug);
-
-        Args environment;
-        target->GetEnvironmentAsArgs (environment);
-        if (environment.GetArgumentCount() > 0)
-            m_options.launch_info.GetEnvironmentEntries ().AppendArguments (environment);
-
-        // Get the value of synchronous execution here.  If you wait till after you have started to
-        // run, then you could have hit a breakpoint, whose command might switch the value, and
-        // then you'll pick up that incorrect value.
-        bool synchronous_execution = m_interpreter.GetSynchronous ();
-
-        PlatformSP platform_sp (target->GetPlatform());
-
-        // Finalize the file actions, and if none were given, default to opening
-        // up a pseudo terminal
-        const bool default_to_use_pty = platform_sp ? platform_sp->IsHost() : false;
-        m_options.launch_info.FinalizeFileActions (target, default_to_use_pty);
-
-        if (state == eStateConnected)
-        {
-            if (m_options.launch_info.GetFlags().Test (eLaunchFlagLaunchInTTY))
-            {
-                result.AppendWarning("can't launch in tty when launching through a remote connection");
-                m_options.launch_info.GetFlags().Clear (eLaunchFlagLaunchInTTY);
-            }
-        }
+        Error error = target->Launch(debugger.GetListener(), m_options.launch_info);
         
-        if (!m_options.launch_info.GetArchitecture().IsValid())
-            m_options.launch_info.GetArchitecture() = target->GetArchitecture();
-        
-        if (platform_sp && platform_sp->CanDebugProcess ())
-        {
-            process = target->GetPlatform()->DebugProcess (m_options.launch_info, 
-                                                           debugger,
-                                                           target,
-                                                           debugger.GetListener(),
-                                                           error).get();
-        }
-        else
-        {
-            const char *plugin_name = m_options.launch_info.GetProcessPluginName();
-            process = target->CreateProcess (debugger.GetListener(), plugin_name, NULL).get();
-            if (process)
-                error = process->Launch (m_options.launch_info);
-        }
-
-        if (process == NULL)
-        {
-            result.SetError (error, "failed to launch or debug process");
-            return false;
-        }
-
-             
         if (error.Success())
         {
-            const char *archname = exe_module->GetArchitecture().GetArchitectureName();
-
-            result.AppendMessageWithFormat ("Process %" PRIu64 " launched: '%s' (%s)\n", process->GetID(), filename, archname);
-            result.SetDidChangeProcessState (true);
-            if (m_options.launch_info.GetFlags().Test(eLaunchFlagStopAtEntry) == false)
+            const char *archname = exe_module_sp->GetArchitecture().GetArchitectureName();
+            ProcessSP process_sp (target->GetProcessSP());
+            if (process_sp)
             {
-                result.SetStatus (eReturnStatusSuccessContinuingNoResult);
-                StateType state = process->WaitForProcessToStop (NULL, NULL, false);
-
-                if (state == eStateStopped)
-                {
-                    error = process->Resume();
-                    if (error.Success())
-                    {
-                        if (synchronous_execution)
-                        {
-                            state = process->WaitForProcessToStop (NULL);
-                            const bool must_be_alive = true;
-                            if (!StateIsStoppedState(state, must_be_alive))
-                            {
-                                result.AppendErrorWithFormat ("process isn't stopped: %s", StateAsCString(state));
-                            }                    
-                            result.SetDidChangeProcessState (true);
-                            result.SetStatus (eReturnStatusSuccessFinishResult);
-                        }
-                        else
-                        {
-                            result.SetStatus (eReturnStatusSuccessContinuingNoResult);
-                        }
-                    }
-                    else
-                    {
-                        result.AppendErrorWithFormat ("process resume at entry point failed: %s", error.AsCString());
-                        result.SetStatus (eReturnStatusFailed);
-                    }                    
-                }
-                else
-                {
-                    result.AppendErrorWithFormat ("initial process state wasn't stopped: %s", StateAsCString(state));
-                    result.SetStatus (eReturnStatusFailed);
-                }                    
+                result.AppendMessageWithFormat ("Process %" PRIu64 " launched: '%s' (%s)\n", process_sp->GetID(), exe_module_sp->GetFileSpec().GetPath().c_str(), archname);
+                result.SetStatus (eReturnStatusSuccessFinishResult);
+                result.SetDidChangeProcessState (true);
+            }
+            else
+            {
+                result.AppendError("no error returned from Target::Launch, and target has no process");
+                result.SetStatus (eReturnStatusFailed);
             }
         }
         else
         {
-            result.AppendErrorWithFormat ("process launch failed: %s", error.AsCString());
+            result.AppendError(error.AsCString());
             result.SetStatus (eReturnStatusFailed);
         }
-
         return result.Succeeded();
     }
 

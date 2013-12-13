@@ -689,57 +689,26 @@ SBTarget::Launch
                 return sb_process;
             }
         }
+
+        if (getenv("LLDB_LAUNCH_FLAG_DISABLE_STDIO"))
+            launch_flags |= eLaunchFlagDisableSTDIO;
+
+        ProcessLaunchInfo launch_info (stdin_path, stdout_path, stderr_path, working_directory, launch_flags);
+        
+        Module *exe_module = target_sp->GetExecutableModulePointer();
+        if (exe_module)
+            launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), true);
+        if (argv)
+            launch_info.GetArguments().AppendArguments (argv);
+        if (envp)
+            launch_info.GetEnvironmentEntries ().SetArguments (envp);
+
+        if (listener.IsValid())
+            error.SetError (target_sp->Launch(listener.ref(), launch_info));
         else
-        {
-            if (listener.IsValid())
-                process_sp = target_sp->CreateProcess (listener.ref(), NULL, NULL);
-            else
-                process_sp = target_sp->CreateProcess (target_sp->GetDebugger().GetListener(), NULL, NULL);
-        }
+            error.SetError (target_sp->Launch(target_sp->GetDebugger().GetListener(), launch_info));
 
-        if (process_sp)
-        {
-            sb_process.SetSP (process_sp);
-            if (getenv("LLDB_LAUNCH_FLAG_DISABLE_STDIO"))
-                launch_flags |= eLaunchFlagDisableSTDIO;
-
-            ProcessLaunchInfo launch_info (stdin_path, stdout_path, stderr_path, working_directory, launch_flags);
-            
-            Module *exe_module = target_sp->GetExecutableModulePointer();
-            if (exe_module)
-                launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), true);
-            if (argv)
-                launch_info.GetArguments().AppendArguments (argv);
-            if (envp)
-                launch_info.GetEnvironmentEntries ().SetArguments (envp);
-
-            error.SetError (process_sp->Launch (launch_info));
-            if (error.Success())
-            {
-                // We we are stopping at the entry point, we can return now!
-                if (stop_at_entry)
-                    return sb_process;
-                
-                // Make sure we are stopped at the entry
-                StateType state = process_sp->WaitForProcessToStop (NULL);
-                if (state == eStateStopped)
-                {
-                    // resume the process to skip the entry point
-                    error.SetError (process_sp->Resume());
-                    if (error.Success())
-                    {
-                        // If we are doing synchronous mode, then wait for the
-                        // process to stop yet again!
-                        if (target_sp->GetDebugger().GetAsyncExecution () == false)
-                            process_sp->WaitForProcessToStop (NULL);
-                    }
-                }
-            }
-        }
-        else
-        {
-            error.SetErrorString ("unable to create lldb_private::Process");
-        }
+        sb_process.SetSP(target_sp->GetProcessSP());
     }
     else
     {
@@ -750,7 +719,7 @@ SBTarget::Launch
     if (log)
     {
         log->Printf ("SBTarget(%p)::Launch (...) => SBProcess(%p)", 
-                     target_sp.get(), process_sp.get());
+                     target_sp.get(), sb_process.GetSP().get());
     }
 
     return sb_process;
@@ -762,7 +731,6 @@ SBTarget::Launch (SBLaunchInfo &sb_launch_info, SBError& error)
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     SBProcess sb_process;
-    ProcessSP process_sp;
     TargetSP target_sp(GetSP());
     
     if (log)
@@ -774,7 +742,8 @@ SBTarget::Launch (SBLaunchInfo &sb_launch_info, SBError& error)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
         StateType state = eStateInvalid;
-        process_sp = target_sp->GetProcessSP();
+        {
+        ProcessSP process_sp = target_sp->GetProcessSP();
         if (process_sp)
         {
             state = process_sp->GetState();
@@ -788,58 +757,20 @@ SBTarget::Launch (SBLaunchInfo &sb_launch_info, SBError& error)
                 return sb_process;
             }            
         }
-        
-        if (state != eStateConnected)
-            process_sp = target_sp->CreateProcess (target_sp->GetDebugger().GetListener(), NULL, NULL);
-        
-        if (process_sp)
-        {
-            sb_process.SetSP (process_sp);
-            lldb_private::ProcessLaunchInfo &launch_info = sb_launch_info.ref();
-
-            Module *exe_module = target_sp->GetExecutableModulePointer();
-            if (exe_module)
-                launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), true);
-
-            const ArchSpec &arch_spec = target_sp->GetArchitecture();
-            if (arch_spec.IsValid())
-                launch_info.GetArchitecture () = arch_spec;
-    
-            error.SetError (process_sp->Launch (launch_info));
-            const bool synchronous_execution = target_sp->GetDebugger().GetAsyncExecution () == false;
-            if (error.Success())
-            {
-                if (launch_info.GetFlags().Test(eLaunchFlagStopAtEntry))
-                {
-                    // If we are doing synchronous mode, then wait for the initial
-                    // stop to happen, else, return and let the caller watch for
-                    // the stop
-                    if (synchronous_execution)
-                         process_sp->WaitForProcessToStop (NULL);
-                    // We we are stopping at the entry point, we can return now!
-                    return sb_process;
-                }
-                
-                // Make sure we are stopped at the entry
-                StateType state = process_sp->WaitForProcessToStop (NULL);
-                if (state == eStateStopped)
-                {
-                    // resume the process to skip the entry point
-                    error.SetError (process_sp->Resume());
-                    if (error.Success())
-                    {
-                        // If we are doing synchronous mode, then wait for the
-                        // process to stop yet again!
-                        if (synchronous_execution)
-                            process_sp->WaitForProcessToStop (NULL);
-                    }
-                }
-            }
         }
-        else
-        {
-            error.SetErrorString ("unable to create lldb_private::Process");
-        }
+
+        lldb_private::ProcessLaunchInfo &launch_info = sb_launch_info.ref();
+
+        Module *exe_module = target_sp->GetExecutableModulePointer();
+        if (exe_module)
+            launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), true);
+
+        const ArchSpec &arch_spec = target_sp->GetArchitecture();
+        if (arch_spec.IsValid())
+            launch_info.GetArchitecture () = arch_spec;
+        
+        error.SetError (target_sp->Launch (target_sp->GetDebugger().GetListener(), launch_info));
+        sb_process.SetSP(target_sp->GetProcessSP());
     }
     else
     {
@@ -849,8 +780,8 @@ SBTarget::Launch (SBLaunchInfo &sb_launch_info, SBError& error)
     log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
     {
-        log->Printf ("SBTarget(%p)::Launch (...) => SBProcess(%p)", 
-                     target_sp.get(), process_sp.get());
+        log->Printf ("SBTarget(%p)::Launch (...) => SBProcess(%p)",
+                     target_sp.get(), sb_process.GetSP().get());
     }
     
     return sb_process;
