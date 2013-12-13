@@ -490,23 +490,6 @@ public:
   }
 };
 
-// FIXME: Need a real SPU target.
-// PS3 SPU Target
-template<typename Target>
-class PS3SPUTargetInfo : public OSTargetInfo<Target> {
-protected:
-  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
-                            MacroBuilder &Builder) const {
-    // PS3 PPU defines.
-    Builder.defineMacro("__SPU__");
-    Builder.defineMacro("__ELF__");
-  }
-public:
-  PS3SPUTargetInfo(const llvm::Triple &Triple) : OSTargetInfo<Target>(Triple) {
-    this->UserLabelPrefix = "";
-  }
-};
-
 // AuroraUX target
 template<typename Target>
 class AuroraUXTargetInfo : public OSTargetInfo<Target> {
