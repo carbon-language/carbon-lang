@@ -238,6 +238,8 @@ when qualifying the build of ``llvm``, ``clang``, and ``dragonegg``.
 +--------------+---------------+----------------------+
 | x86-64       | FreeBSD       | gcc 4.2.X            |
 +--------------+---------------+----------------------+
+| ARMv7        | Linux         | gcc 4.6.X, gcc 4.7.X |
++--------------+---------------+----------------------+
 
 Release Qualification Criteria
 ------------------------------
@@ -295,6 +297,10 @@ Specific Target Qualification Details
 |              |             |                | test-suite (including spec) |
 +--------------+-------------+----------------+-----------------------------+
 | x86-64       | FreeBSD     | last release   | llvm regression tests,      |
+|              |             |                | clang regression tests,     |
+|              |             |                | test-suite                  |
++--------------+-------------+----------------+-----------------------------+
+| ARMv7A       | Linux       | last release   | llvm regression tests,      |
 |              |             |                | clang regression tests,     |
 |              |             |                | test-suite                  |
 +--------------+-------------+----------------+-----------------------------+
