@@ -68,8 +68,8 @@ EdataPass::createNamePointerTable(const std::vector<const DefinedAtom *> &atoms,
 
   size_t offset = 0;
   for (const DefinedAtom *atom : atoms) {
-    COFFStringAtom *stringAtom = new (_alloc) COFFStringAtom(
-      _file, _file.getNextOrdinal(), ".edata", atom->name());
+    COFFStringAtom *stringAtom = new (_alloc)
+        COFFStringAtom(_file, _stringOrdinal++, ".edata", atom->name());
     file->addAtom(*stringAtom);
     addDir32NBReloc(table, stringAtom, offset);
     offset += sizeof(uint32_t);
@@ -114,9 +114,9 @@ void EdataPass::perform(std::unique_ptr<MutableFile> &file) {
   EdataAtom *table = createExportDirectoryTable(atoms.size());
   file->addAtom(*table);
 
-  COFFStringAtom *dllName = new (_alloc) COFFStringAtom(
-    _file, _file.getNextOrdinal(),
-    ".edata", llvm::sys::path::filename(_ctx.outputPath()));
+  COFFStringAtom *dllName =
+      new (_alloc) COFFStringAtom(_file, _stringOrdinal++, ".edata",
+                                  llvm::sys::path::filename(_ctx.outputPath()));
   file->addAtom(*dllName);
   addDir32NBReloc(table, dllName, offsetof(export_directory_table_entry, NameRVA));
 

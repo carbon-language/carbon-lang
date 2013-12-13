@@ -56,7 +56,8 @@ public:
 
 class EdataPass : public lld::Pass {
 public:
-  EdataPass(const PECOFFLinkingContext &ctx) : _ctx(ctx), _file(ctx) {}
+  EdataPass(const PECOFFLinkingContext &ctx)
+      : _ctx(ctx), _file(ctx), _stringOrdinal(1024) {}
 
   virtual void perform(std::unique_ptr<MutableFile> &file);
 
@@ -64,14 +65,16 @@ private:
   edata::EdataAtom *createExportDirectoryTable(size_t numEntries);
   edata::EdataAtom *createAddressTable(
     const std::vector<const DefinedAtom *> &atoms);
-  edata::EdataAtom *createNamePointerTable(
-    const std::vector<const DefinedAtom *> &atoms, MutableFile *file);
+  edata::EdataAtom *
+  createNamePointerTable(const std::vector<const DefinedAtom *> &atoms,
+                         MutableFile *file);
   edata::EdataAtom *createOrdinalTable(
     const std::vector<const DefinedAtom *> &atoms,
     const std::vector<const DefinedAtom *> &sortedAtoms);
 
   const PECOFFLinkingContext &_ctx;
   VirtualFile _file;
+  int _stringOrdinal;
   mutable llvm::BumpPtrAllocator _alloc;
 };
 
