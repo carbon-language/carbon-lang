@@ -579,6 +579,7 @@ public:
   }
 
   const char *getTargetDescription() const {
+    assert(DescriptionString);
     return DescriptionString;
   }
 
