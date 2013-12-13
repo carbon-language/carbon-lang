@@ -885,7 +885,8 @@ sub AddIfNotPresent {
 sub SetEnv {
   my $Options = shift @_;
   foreach my $opt ('CC', 'CXX', 'CLANG', 'CLANG_CXX',
-                    'CCC_ANALYZER_ANALYSIS', 'CCC_ANALYZER_PLUGINS') {
+                    'CCC_ANALYZER_ANALYSIS', 'CCC_ANALYZER_PLUGINS',
+                    'CCC_ANALYZER_CONFIG') {
     die "$opt is undefined\n" if (!defined $opt);
     $ENV{$opt} = $Options->{$opt};
   }
@@ -1164,6 +1165,10 @@ ADVANCED OPTIONS:
  --override-compiler 
    Always resort to the ccc-analyzer even when better interposition methods 
    are available.
+
+ -analyzer-config <options>
+
+   Provide options to pass through to the analyzer's -analyzer-config flag.
    
 CONTROLLING CHECKERS:
 
@@ -1336,6 +1341,7 @@ my @AnalysesToRun;
 my $StoreModel;
 my $ConstraintsModel;
 my $InternalStats;
+my @ConfigOptions;
 my $OutputFormat = "html";
 my $AnalyzerStats = 0;
 my $MaxLoop = 0;
@@ -1483,7 +1489,13 @@ while (@ARGV) {
     $OutputFormat = "plist-html";
     next;
   }
-  
+
+  if ($arg eq "-analyzer-config") {
+    shift @ARGV;
+    push @ConfigOptions, "-analyzer-config", shift @ARGV;
+    next;
+  }
+
   if ($arg eq "-no-failure-reports") {
     $ENV{"CCC_REPORT_FAILURES"} = 0;
     next;
@@ -1636,6 +1648,7 @@ if ($MaxLoop > 0) { push @AnalysesToRun, "-analyzer-max-loop $MaxLoop"; }
 # interposition.
 my $CCC_ANALYZER_ANALYSIS = join ' ',@AnalysesToRun;
 my $CCC_ANALYZER_PLUGINS = join ' ',@PluginsToLoad;
+my $CCC_ANALYZER_CONFIG = join ' ',@ConfigOptions;
 my %Options = (
   'CC' => $Cmd,
   'CXX' => $CmdCXX,
@@ -1644,6 +1657,7 @@ my %Options = (
   'VERBOSE' => $Verbose,
   'CCC_ANALYZER_ANALYSIS' => $CCC_ANALYZER_ANALYSIS,
   'CCC_ANALYZER_PLUGINS' => $CCC_ANALYZER_PLUGINS,
+  'CCC_ANALYZER_CONFIG' => $CCC_ANALYZER_CONFIG,
   'OUTPUT_DIR' => $HtmlDir
 );
 

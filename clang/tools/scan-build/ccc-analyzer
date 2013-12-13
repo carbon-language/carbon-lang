@@ -444,6 +444,9 @@ my $InternalStats = $ENV{'CCC_ANALYZER_INTERNAL_STATS'};
 my $OutputFormat = $ENV{'CCC_ANALYZER_OUTPUT_FORMAT'};
 if (!defined $OutputFormat) { $OutputFormat = "html"; }
 
+# Get the config options.
+my $ConfigOptions = $ENV{'CCC_ANALYZER_CONFIG'};
+
 # Determine the level of verbosity.
 my $Verbose = 0;
 if (defined $ENV{'CCC_ANALYZER_VERBOSE'}) { $Verbose = 1; }
@@ -682,6 +685,9 @@ if ($Action eq 'compile' or $Action eq 'link') {
           $CleanupFile = $f;
         }
       }
+    }
+    if (defined $ConfigOptions) {
+      push @AnalyzeArgs, split '\s+', $ConfigOptions;
     }
 
     push @CmdArgs, @CompileOpts;
