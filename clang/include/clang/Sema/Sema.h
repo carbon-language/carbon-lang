@@ -2583,8 +2583,6 @@ public:
   StmtResult ProcessStmtAttributes(Stmt *Stmt, AttributeList *Attrs,
                                    SourceRange Range);
 
-  void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
-                           bool &IncompleteImpl, unsigned DiagID);
   void WarnConflictingTypedMethods(ObjCMethodDecl *Method,
                                    ObjCMethodDecl *MethodDecl,
                                    bool IsProtocolMethodDecl);

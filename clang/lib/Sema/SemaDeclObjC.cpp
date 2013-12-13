@@ -1225,8 +1225,10 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
     Diag(IVI->getLocation(), diag::err_inconsistent_ivar_count);
 }
 
-void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
-                               bool &IncompleteImpl, unsigned DiagID) {
+static void WarnUndefinedMethod(Sema &S, SourceLocation ImpLoc,
+                                ObjCMethodDecl *method,
+                                bool &IncompleteImpl,
+                                unsigned DiagID) {
   // No point warning no definition of method which is 'unavailable'.
   switch (method->getAvailability()) {
   case AR_Available:
@@ -1244,13 +1246,12 @@ void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
   // warning, but some users strongly voiced that they would prefer
   // separate warnings.  We will give that approach a try, as that
   // matches what we do with protocols.
-  
-  Diag(ImpLoc, DiagID) << method->getDeclName();
+  S.Diag(ImpLoc, DiagID) << method->getDeclName();
 
   // Issue a note to the original declaration.
   SourceLocation MethodLoc = method->getLocStart();
   if (MethodLoc.isValid())
-    Diag(MethodLoc, diag::note_method_declared_at) << method;
+    S.Diag(MethodLoc, diag::note_method_declared_at) << method;
 }
 
 /// Determines if type B can be substituted for type A.  Returns true if we can
@@ -1701,7 +1702,7 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
             unsigned DIAG = diag::warn_unimplemented_protocol_method;
             if (Diags.getDiagnosticLevel(DIAG, ImpLoc)
                 != DiagnosticsEngine::Ignored) {
-              WarnUndefinedMethod(ImpLoc, method, IncompleteImpl, DIAG);
+              WarnUndefinedMethod(*this, ImpLoc, method, IncompleteImpl, DIAG);
               Diag(CDecl->getLocation(), diag::note_required_for_protocol_at)
                 << PDecl->getDeclName();
             }
@@ -1729,7 +1730,7 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
       unsigned DIAG = diag::warn_unimplemented_protocol_method;
       if (Diags.getDiagnosticLevel(DIAG, ImpLoc) !=
             DiagnosticsEngine::Ignored) {
-        WarnUndefinedMethod(ImpLoc, method, IncompleteImpl, DIAG);
+        WarnUndefinedMethod(*this, ImpLoc, method, IncompleteImpl, DIAG);
         Diag(IDecl->getLocation(), diag::note_required_for_protocol_at) <<
           PDecl->getDeclName();
       }
@@ -1762,7 +1763,7 @@ void Sema::MatchAllMethodDeclarations(const SelectorSet &InsMap,
     if (!(*I)->isPropertyAccessor() &&
         !InsMap.count((*I)->getSelector())) {
       if (ImmediateClass)
-        WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl,
+        WarnUndefinedMethod(*this, IMPDecl->getLocation(), *I, IncompleteImpl,
                             diag::warn_undef_method_impl);
       continue;
     } else {
@@ -1792,7 +1793,7 @@ void Sema::MatchAllMethodDeclarations(const SelectorSet &InsMap,
       continue;
     if (!ClsMap.count((*I)->getSelector())) {
       if (ImmediateClass)
-        WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl,
+        WarnUndefinedMethod(*this, IMPDecl->getLocation(), *I, IncompleteImpl,
                             diag::warn_undef_method_impl);
     } else {
       ObjCMethodDecl *ImpMethodDecl =
