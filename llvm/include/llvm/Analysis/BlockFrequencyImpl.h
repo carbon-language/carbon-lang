@@ -343,6 +343,30 @@ public:
   void dump() const {
     print(dbgs());
   }
+
+  // Utility method that looks up the block frequency associated with BB and
+  // prints it to OS.
+  raw_ostream &printBlockFreq(raw_ostream &OS,
+                              const BlockT *BB) {
+    return printBlockFreq(OS, getBlockFreq(BB));
+  }
+
+  raw_ostream &printBlockFreq(raw_ostream &OS,
+                              const BlockFrequency &Freq) const {
+    // Convert fixed-point number to decimal.
+    uint64_t Frequency = Freq.getFrequency();
+    OS << Frequency / EntryFreq << ".";
+    uint64_t Rem = Frequency % EntryFreq;
+    uint64_t Eps = 1;
+    do {
+      Rem *= 10;
+      Eps *= 10;
+      OS << Rem / EntryFreq;
+      Rem = Rem % EntryFreq;
+    } while (Rem >= Eps/2);
+    return OS;
+  }
+
 };
 
 }
