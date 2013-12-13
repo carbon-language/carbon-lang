@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s | grep "store i32\* @x, i32\*\*"
+// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm -o - %s | FileCheck %s
 
 int x;
 struct A {
@@ -6,4 +6,4 @@ struct A {
   A() : y(x) {}
 };
 A z;
-
+// CHECK: store i32* @x, i32**

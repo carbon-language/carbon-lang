@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -DDEFINE_GUID -triple=i386-pc-win32 -fms-extensions | FileCheck %s --check-prefix=CHECK-DEFINE-GUID
-// RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-pc-win32 -fms-extensions | FileCheck %s
-// RUN: %clang_cc1 -emit-llvm %s -o - -DDEFINE_GUID -DWRONG_GUID -triple=i386-pc-win32 -fms-extensions | FileCheck %s --check-prefix=CHECK-DEFINE-WRONG-GUID
+// RUN: %clang_cc1 -emit-llvm %s -o - -DDEFINE_GUID -triple=i386-pc-win32 -fms-extensions -cxx-abi itanium | FileCheck %s --check-prefix=CHECK-DEFINE-GUID
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-pc-win32 -fms-extensions -cxx-abi itanium | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -DDEFINE_GUID -DWRONG_GUID -triple=i386-pc-win32 -fms-extensions -cxx-abi itanium | FileCheck %s --check-prefix=CHECK-DEFINE-WRONG-GUID
 
 #ifdef DEFINE_GUID
 struct _GUID {

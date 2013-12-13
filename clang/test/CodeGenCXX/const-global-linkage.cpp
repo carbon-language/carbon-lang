@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm -o - %s | FileCheck %s
 
 const int x = 10;
 const int y = 20;

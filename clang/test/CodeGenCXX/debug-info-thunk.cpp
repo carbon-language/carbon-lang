@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -g -S -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -cxx-abi itanium -g -S -emit-llvm -o - | FileCheck %s
 
 struct A {
   virtual void f();

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -cxx-abi itanium -o - | FileCheck %s
 
 // CHECK: @_ZTVZ3foovEN1C1DE =
 // CHECK: @_ZTVZN1A3fooEiE1B =

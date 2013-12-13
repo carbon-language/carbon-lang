@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -cxx-abi itanium -o - | FileCheck %s
 // rdar: //8620524
 // PR7851
 struct string {

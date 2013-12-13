@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fvisibility hidden -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -fvisibility hidden -cxx-abi itanium -emit-llvm -o - %s | FileCheck %s
 
 // Verify that symbols are hidden.
 // CHECK: @_ZN1CIiE5Inner6Inner26StaticE = weak_odr hidden global

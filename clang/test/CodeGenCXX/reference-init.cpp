@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only -verify %s
+// RUN: %clang_cc1 -emit-llvm-only -cxx-abi itanium -verify %s
 // expected-no-diagnostics
 
 struct XPTParamDescriptor {};

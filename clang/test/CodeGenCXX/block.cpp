@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - -fblocks 
+// RUN: %clang_cc1 %s -cxx-abi itanium -emit-llvm -o - -fblocks 
+// RUN: %clang_cc1 %s -cxx-abi microsoft -fno-rtti -emit-llvm -o - -fblocks 
 // Just test that this doesn't crash the compiler...
 
 void func(void*);

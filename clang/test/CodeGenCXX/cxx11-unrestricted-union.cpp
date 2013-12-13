@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -cxx-abi itanium -std=c++11 -emit-llvm %s -o - | FileCheck %s
 
 struct A {
   A(); A(const A&); A(A&&); A &operator=(const A&); A &operator=(A&&); ~A();

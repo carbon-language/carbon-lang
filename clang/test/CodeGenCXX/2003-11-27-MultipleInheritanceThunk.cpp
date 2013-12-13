@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -emit-llvm %s -o -
+// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm %s -o -
+// RUN: %clang_cc1 -cxx-abi microsoft -fno-rtti -emit-llvm %s -o -
 
 
 struct CallSite {

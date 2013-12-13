@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm %s -o - | FileCheck %s
 namespace foo {
 
 // CHECK-NOT: @a = global i32

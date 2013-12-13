@@ -1,4 +1,4 @@
-// RUN: %clang -flimit-debug-info -emit-llvm -g -S %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -flimit-debug-info -cxx-abi itanium -g %s -o - | FileCheck %s
 
 // Check that this pointer type is TC<int>
 // CHECK: ![[LINE:[0-9]+]] = {{.*}}"TC<int>", {{.*}} metadata !"_ZTS2TCIiE"} ; [ DW_TAG_class_type ]

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm-only -verify -fcxx-exceptions -fexceptions
+// RUN: %clang_cc1 %s -emit-llvm-only -verify -cxx-abi itanium -fcxx-exceptions -fexceptions
 // expected-no-diagnostics
 // PR7281
 

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i686-pc-win32 -fms-extensions -Wmicrosoft %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i686-pc-mingw32 -fms-extensions -Wmicrosoft %s -emit-llvm -o - | FileCheck %s
 
 class Test1 {
 public:
@@ -22,10 +22,10 @@ public:
 
 void f2() {
   // CHECK:  %var = alloca %class.Test2, align 4
-  // CHECK-NEXT:  call void @_ZN5Test2C1Ev(%class.Test2* %var)
+  // CHECK-NEXT:  call x86_thiscallcc void @_ZN5Test2C1Ev(%class.Test2* %var)
   Test2 var;
 
-  // CHECK-NEXT:  call void @_ZN5Test2C1Ev(%class.Test2* %var)
+  // CHECK-NEXT:  call x86_thiscallcc void @_ZN5Test2C1Ev(%class.Test2* %var)
   var.Test2::Test2();
 
   // CHECK:  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %{{.*}}, i8* %{{.*}}, i32 8, i32 4, i1 false)
@@ -45,16 +45,16 @@ public:
 };
 
 void f3() {
-  // CHECK: call void @_ZN5Test3C1Ev(%class.Test3* %var)
+  // CHECK: call x86_thiscallcc void @_ZN5Test3C1Ev(%class.Test3* %var)
   Test3 var;
 
-  // CHECK-NEXT: call void @_ZN5Test3C1Ev(%class.Test3* %var2)
+  // CHECK-NEXT: call x86_thiscallcc void @_ZN5Test3C1Ev(%class.Test3* %var2)
   Test3 var2;
 
-  // CHECK-NEXT: call void @_ZN5Test3C1Ev(%class.Test3* %var)
+  // CHECK-NEXT: call x86_thiscallcc void @_ZN5Test3C1Ev(%class.Test3* %var)
   var.Test3::Test3();
 
-  // CHECK-NEXT: call void @_ZN5Test3C1ERKS_(%class.Test3* %var, %class.Test3* %var2)
+  // CHECK-NEXT: call x86_thiscallcc void @_ZN5Test3C1ERKS_(%class.Test3* %var, %class.Test3* %var2)
   var.Test3::Test3(var2);
 }
 

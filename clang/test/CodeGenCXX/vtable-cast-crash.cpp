@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only %s
+// RUN: %clang_cc1 -emit-llvm-only -cxx-abi itanium %s
 struct A
 {
 A();    

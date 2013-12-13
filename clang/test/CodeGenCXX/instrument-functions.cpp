@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -S -emit-llvm -o - %s -finstrument-functions | FileCheck %s
+// RUN: %clang_cc1 -S -emit-llvm -cxx-abi itanium -o - %s -finstrument-functions | FileCheck %s
 
 // CHECK: @_Z5test1i
 int test1(int x) {

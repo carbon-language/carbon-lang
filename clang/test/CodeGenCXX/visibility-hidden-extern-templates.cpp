@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -O1 -emit-llvm -o - -fvisibility hidden %s | FileCheck %s
+// RUN: %clang_cc1 -O1 -cxx-abi itanium -emit-llvm -o - -fvisibility hidden %s | FileCheck %s
 
 template<typename T>
 struct X {

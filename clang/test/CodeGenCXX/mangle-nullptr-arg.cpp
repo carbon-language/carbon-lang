@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -emit-llvm -o - %s | FileCheck %s
 
 template<int *ip> struct IP {};
 

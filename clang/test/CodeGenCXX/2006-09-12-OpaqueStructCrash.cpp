@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s
+// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm -o - %s
+// RUN: %clang_cc1 -cxx-abi microsoft -fno-rtti -emit-llvm -o - %s
 
 struct A {
    virtual ~A();

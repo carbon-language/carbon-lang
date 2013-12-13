@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
-// RUN: %clang_cc1 -emit-llvm -O -o - %s | FileCheck %s --check-prefix=CHECK-OPT
+// RUN: %clang_cc1 -emit-llvm -cxx-abi itanium -o - %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -cxx-abi itanium -O -o - %s | FileCheck %s --check-prefix=CHECK-OPT
 
 // CHECK:     @_Z9no_return
 // CHECK-OPT: @_Z9no_return

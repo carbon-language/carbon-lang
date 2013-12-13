@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -emit-llvm -o - %s | FileCheck %s
 struct A { A(); };
 template<typename T>
 struct X : A // default constructor is not trivial

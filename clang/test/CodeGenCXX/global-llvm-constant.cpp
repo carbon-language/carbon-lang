@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -cxx-abi itanium -o - %s | FileCheck %s
 
 struct A {
   A() { x = 10; }

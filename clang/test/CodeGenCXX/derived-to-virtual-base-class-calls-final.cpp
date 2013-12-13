@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -cxx-abi itanium -emit-llvm -o - | FileCheck %s
 
 struct A { int i; };
 struct B { char j; };

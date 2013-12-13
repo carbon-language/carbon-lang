@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -verify -fno-rtti -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -verify -fno-rtti -cxx-abi itanium -o - | FileCheck %s
 // expected-no-diagnostics
 
 struct A {

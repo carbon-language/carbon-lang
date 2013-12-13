@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - -test-coverage -femit-coverage-notes | FileCheck %s
+// RUN: %clang_cc1 %s -cxx-abi itanium -emit-llvm -o - -test-coverage -femit-coverage-notes | FileCheck %s
 
 extern "C" void test_name1() {}
 void test_name2() {}

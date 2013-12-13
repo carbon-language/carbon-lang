@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -cxx-abi itanium %s -o - | FileCheck %s
 
 // CHECK-NOT: ZN12basic_stringIcEC1Ev
 // CHECK: ZN12basic_stringIcED1Ev

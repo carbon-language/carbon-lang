@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -std=c++11 -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -cxx-abi itanium -std=c++11 -emit-llvm -o - | FileCheck %s
 
 // PR5021
 namespace PR5021 {
