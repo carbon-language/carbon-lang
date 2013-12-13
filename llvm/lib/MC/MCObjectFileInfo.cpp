@@ -9,6 +9,7 @@
 
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionCOFF.h"
@@ -716,6 +717,17 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
     Env = IsELF;
     InitELFMCObjectFileInfo(T);
   }
+}
+
+const MCSection *MCObjectFileInfo::getDwarfTypesSection(uint64_t Hash) const {
+  return Ctx->getELFSection(".debug_types", ELF::SHT_PROGBITS, ELF::SHF_GROUP,
+                            SectionKind::getMetadata(), 0, utostr(Hash));
+}
+
+const MCSection *
+MCObjectFileInfo::getDwarfTypesDWOSection(uint64_t Hash) const {
+  return Ctx->getELFSection(".debug_types.dwo", ELF::SHT_GROUP, 0,
+                            SectionKind::getMetadata(), 0, utostr(Hash));
 }
 
 void MCObjectFileInfo::InitEHFrameSection() {
