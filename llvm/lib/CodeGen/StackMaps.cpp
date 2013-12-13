@@ -183,7 +183,7 @@ StackMaps::parseRegisterLiveOutMask(const uint32_t *Mask) const {
   return LiveOuts;
 }
 
-void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint32_t ID,
+void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
                                     MachineInstr::const_mop_iterator MOI,
                                     MachineInstr::const_mop_iterator MOE,
                                     bool recordResult) {
@@ -244,7 +244,6 @@ void StackMaps::recordStackMap(const MachineInstr &MI) {
   assert(MI.getOpcode() == TargetOpcode::STACKMAP && "expected stackmap");
 
   int64_t ID = MI.getOperand(0).getImm();
-  assert((int32_t)ID == ID && "Stack maps hold 32-bit IDs");
   recordStackMapOpers(MI, ID, llvm::next(MI.operands_begin(), 2),
                       getStackMapEndMOP(MI.operands_begin(),
                                         MI.operands_end()));
@@ -255,7 +254,7 @@ void StackMaps::recordPatchPoint(const MachineInstr &MI) {
 
   PatchPointOpers opers(&MI);
   int64_t ID = opers.getMetaOper(PatchPointOpers::IDPos).getImm();
-  assert((int32_t)ID == ID && "Stack maps hold 32-bit IDs");
+
   MachineInstr::const_mop_iterator MOI =
     llvm::next(MI.operands_begin(), opers.getStackMapStartIdx());
   recordStackMapOpers(MI, ID, MOI, getStackMapEndMOP(MOI, MI.operands_end()),
@@ -280,7 +279,7 @@ void StackMaps::recordPatchPoint(const MachineInstr &MI) {
 /// int64  : Constants[NumConstants]
 /// uint32 : NumRecords
 /// StkMapRecord[NumRecords] {
-///   uint32 : PatchPoint ID
+///   uint64 : PatchPoint ID
 ///   uint32 : Instruction Offset
 ///   uint16 : Reserved (record flags)
 ///   uint16 : NumLocations
@@ -345,7 +344,7 @@ void StackMaps::serializeToStackMapSection() {
                                         CSIE = CSInfos.end();
        CSII != CSIE; ++CSII) {
 
-    unsigned CallsiteID = CSII->ID;
+    uint64_t CallsiteID = CSII->ID;
     const LocationVec &CSLocs = CSII->Locations;
     const LiveOutVec &LiveOuts = CSII->LiveOuts;
 
@@ -356,7 +355,7 @@ void StackMaps::serializeToStackMapSection() {
     // simple overflow checks, but we may eventually communicate other
     // compilation errors this way.
     if (CSLocs.size() > UINT16_MAX || LiveOuts.size() > UINT16_MAX) {
-      AP.OutStreamer.EmitIntValue(UINT32_MAX, 4); // Invalid ID.
+      AP.OutStreamer.EmitIntValue(UINT64_MAX, 8); // Invalid ID.
       AP.OutStreamer.EmitValue(CSII->CSOffsetExpr, 4);
       AP.OutStreamer.EmitIntValue(0, 2); // Reserved.
       AP.OutStreamer.EmitIntValue(0, 2); // 0 locations.
@@ -364,7 +363,7 @@ void StackMaps::serializeToStackMapSection() {
       continue;
     }
 
-    AP.OutStreamer.EmitIntValue(CallsiteID, 4);
+    AP.OutStreamer.EmitIntValue(CallsiteID, 8);
     AP.OutStreamer.EmitValue(CSII->CSOffsetExpr, 4);
 
     // Reserved for flags.

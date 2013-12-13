@@ -14,9 +14,9 @@ entry:
 ; CHECK:      movq %[[REG]], %rax
 ; CHECK:      ret
   %resolveCall2 = inttoptr i64 -559038736 to i8*
-  %result = tail call i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 2, i32 15, i8* %resolveCall2, i32 4, i64 %p1, i64 %p2, i64 %p3, i64 %p4)
+  %result = tail call i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 2, i32 15, i8* %resolveCall2, i32 4, i64 %p1, i64 %p2, i64 %p3, i64 %p4)
   %resolveCall3 = inttoptr i64 -559038737 to i8*
-  tail call void (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i32 3, i32 15, i8* %resolveCall3, i32 2, i64 %p1, i64 %result)
+  tail call void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 3, i32 15, i8* %resolveCall3, i32 2, i64 %p1, i64 %result)
   ret i64 %result
 }
 
@@ -34,7 +34,7 @@ entry:
   store i64 11, i64* %metadata
   store i64 12, i64* %metadata
   store i64 13, i64* %metadata
-  call void (i32, i32, ...)* @llvm.experimental.stackmap(i32 4, i32 0, i64* %metadata)
+  call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 4, i32 0, i64* %metadata)
   ret void
 }
 
@@ -53,9 +53,9 @@ entry:
 ; CHECK:      movq %rax, 8(%rsp)
 ; CHECK:      callq
   %resolveCall2 = inttoptr i64 -559038736 to i8*
-  %result = tail call webkit_jscc i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 5, i32 15, i8* %resolveCall2, i32 2, i64 %p1, i64 %p2)
+  %result = tail call webkit_jscc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 5, i32 15, i8* %resolveCall2, i32 2, i64 %p1, i64 %p2)
   %resolveCall3 = inttoptr i64 -559038737 to i8*
-  tail call webkit_jscc void (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i32 6, i32 15, i8* %resolveCall3, i32 2, i64 %p1, i64 %result)
+  tail call webkit_jscc void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 6, i32 15, i8* %resolveCall3, i32 2, i64 %p1, i64 %result)
   ret void
 }
 
@@ -68,14 +68,14 @@ entry:
   %tmp80 = add i64 %tmp79, -16
   %tmp81 = inttoptr i64 %tmp80 to i64*
   %tmp82 = load i64* %tmp81, align 8
-  tail call void (i32, i32, ...)* @llvm.experimental.stackmap(i32 14, i32 5, i64 %arg, i64 %tmp2, i64 %tmp10, i64 %tmp82)
-  tail call void (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i32 15, i32 30, i8* null, i32 3, i64 %arg, i64 %tmp10, i64 %tmp82)
+  tail call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 14, i32 5, i64 %arg, i64 %tmp2, i64 %tmp10, i64 %tmp82)
+  tail call void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 15, i32 30, i8* null, i32 3, i64 %arg, i64 %tmp10, i64 %tmp82)
   %tmp83 = load i64* %tmp33, align 8
   %tmp84 = add i64 %tmp83, -24
   %tmp85 = inttoptr i64 %tmp84 to i64*
   %tmp86 = load i64* %tmp85, align 8
-  tail call void (i32, i32, ...)* @llvm.experimental.stackmap(i32 17, i32 5, i64 %arg, i64 %tmp10, i64 %tmp86)
-  tail call void (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i32 18, i32 30, i8* null, i32 3, i64 %arg, i64 %tmp10, i64 %tmp86)
+  tail call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 17, i32 5, i64 %arg, i64 %tmp10, i64 %tmp86)
+  tail call void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 18, i32 30, i8* null, i32 3, i64 %arg, i64 %tmp10, i64 %tmp86)
   ret i64 10
 }
 
@@ -87,10 +87,10 @@ entry:
 ; CHECK:      nopl 8(%rax,%rax)
 ; CHECK-NEXT: popq
 ; CHECK-NEXT: ret
-  %result = tail call i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 5, i32 5, i8* null, i32 2, i64 %p1, i64 %p2)
+  %result = tail call i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 5, i32 5, i8* null, i32 2, i64 %p1, i64 %p2)
   ret void
 }
 
-declare void @llvm.experimental.stackmap(i32, i32, ...)
-declare void @llvm.experimental.patchpoint.void(i32, i32, i8*, i32, ...)
-declare i64 @llvm.experimental.patchpoint.i64(i32, i32, i8*, i32, ...)
+declare void @llvm.experimental.stackmap(i64, i32, ...)
+declare void @llvm.experimental.patchpoint.void(i64, i32, i8*, i32, ...)
+declare i64 @llvm.experimental.patchpoint.i64(i64, i32, i8*, i32, ...)

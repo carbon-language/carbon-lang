@@ -70,16 +70,16 @@
 define void @liveness() {
 entry:
   %a1 = call <2 x double> asm sideeffect "", "={xmm2}"() nounwind
-  call void (i32, i32, ...)* @llvm.experimental.stackmap(i32 1, i32 5)
+  call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 1, i32 5)
   %a2 = call i64 asm sideeffect "", "={r8}"() nounwind
   %a3 = call i8 asm sideeffect "", "={ah}"() nounwind
   %a4 = call <4 x double> asm sideeffect "", "={ymm0}"() nounwind
   %a5 = call <4 x double> asm sideeffect "", "={ymm1}"() nounwind
-  call void (i32, i32, ...)* @llvm.experimental.stackmap(i32 2, i32 5)
+  call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 2, i32 5)
   call void asm sideeffect "", "{r8},{ah},{ymm0},{ymm1}"(i64 %a2, i8 %a3, <4 x double> %a4, <4 x double> %a5) nounwind
-  call void (i32, i32, ...)* @llvm.experimental.stackmap(i32 3, i32 5)
+  call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 3, i32 5)
   call void asm sideeffect "", "{xmm2}"(<2 x double> %a1) nounwind
   ret void
 }
 
-declare void @llvm.experimental.stackmap(i32, i32, ...)
+declare void @llvm.experimental.stackmap(i64, i32, ...)
