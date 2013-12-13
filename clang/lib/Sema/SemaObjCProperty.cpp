@@ -321,21 +321,6 @@ static unsigned getOwnershipRule(unsigned attr) {
                  ObjCPropertyDecl::OBJC_PR_unsafe_unretained);
 }
 
-static const char *NameOfOwnershipAttribute(unsigned attr) {
-  if (attr & ObjCPropertyDecl::OBJC_PR_assign)
-    return "assign";
-  if (attr & ObjCPropertyDecl::OBJC_PR_retain )
-    return "retain";
-  if (attr & ObjCPropertyDecl::OBJC_PR_copy)
-    return "copy";
-  if (attr & ObjCPropertyDecl::OBJC_PR_weak)
-    return "weak";
-  if (attr & ObjCPropertyDecl::OBJC_PR_strong)
-    return "strong";
-  assert(attr & ObjCPropertyDecl::OBJC_PR_unsafe_unretained);
-  return "unsafe_unretained";
-}
-
 ObjCPropertyDecl *
 Sema::HandlePropertyInClassExtension(Scope *S,
                                      SourceLocation AtLoc,
@@ -2057,21 +2042,13 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
   QualType PropertyTy = PropertyDecl->getType();
   unsigned PropertyOwnership = getOwnershipRule(Attributes);
 
-  if (Attributes & ObjCDeclSpec::DQ_PR_readonly) {
-    if (getLangOpts().ObjCAutoRefCount &&
-        PropertyTy->isObjCRetainableType() &&
-        !PropertyOwnership) {
-      // 'readonly' property with no obvious lifetime.
-      // its life time will be determined by its backing ivar.
-      return;
-    }
-    else if (PropertyOwnership) {
-      if (!getSourceManager().isInSystemHeader(Loc))
-        Diag(Loc, diag::warn_objc_property_attr_mutually_exclusive)
-          << "readonly" << NameOfOwnershipAttribute(Attributes);
-      return;
-    }
-  }
+  // 'readonly' property with no obvious lifetime.
+  // its life time will be determined by its backing ivar.
+  if (getLangOpts().ObjCAutoRefCount &&
+      Attributes & ObjCDeclSpec::DQ_PR_readonly &&
+      PropertyTy->isObjCRetainableType() &&
+      !PropertyOwnership)
+    return;
 
   // Check for copy or retain on non-object types.
   if ((Attributes & (ObjCDeclSpec::DQ_PR_weak | ObjCDeclSpec::DQ_PR_copy |
