@@ -22,13 +22,10 @@
 + (void) cls_meth : (int) arg1;   // expected-note {{method 'cls_meth:' declared here}}
 @end
 
-@interface INTF <PROTO> // expected-note 3 {{required for direct or indirect protocol 'PROTO'}} \
-			// expected-note 2 {{required for direct or indirect protocol 'P1'}} \
-			// expected-note 2 {{required for direct or indirect protocol 'P3'}} \
-			// expected-note 2 {{required for direct or indirect protocol 'P2'}}
+@interface INTF <PROTO>
 @end
 
-@implementation INTF // expected-warning 9 {{in protocol not implemented}}
+@implementation INTF // expected-warning 9 {{in protocol '}}
 - (void) DefP1proto{}
 + (void) DefClsP3Proto{}
 @end

@@ -852,7 +852,7 @@ def warn_unimplemented_selector:  Warning<
 def warning_multiple_selectors: Warning<
   "multiple selectors named %0 found">, InGroup<SelectorTypeMismatch>, DefaultIgnore;
 def warn_unimplemented_protocol_method : Warning<
-  "method %0 in protocol not implemented">, InGroup<Protocol>;
+  "method %0 in protocol %1 not implemented">, InGroup<Protocol>;
 
 // C++ declarations
 def err_static_assert_expression_is_not_constant : Error<

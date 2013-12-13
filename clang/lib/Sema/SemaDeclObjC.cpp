@@ -1228,7 +1228,8 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
 static void WarnUndefinedMethod(Sema &S, SourceLocation ImpLoc,
                                 ObjCMethodDecl *method,
                                 bool &IncompleteImpl,
-                                unsigned DiagID) {
+                                unsigned DiagID,
+                                NamedDecl *NeededFor = 0) {
   // No point warning no definition of method which is 'unavailable'.
   switch (method->getAvailability()) {
   case AR_Available:
@@ -1246,7 +1247,12 @@ static void WarnUndefinedMethod(Sema &S, SourceLocation ImpLoc,
   // warning, but some users strongly voiced that they would prefer
   // separate warnings.  We will give that approach a try, as that
   // matches what we do with protocols.
-  S.Diag(ImpLoc, DiagID) << method->getDeclName();
+  {
+    const Sema::SemaDiagnosticBuilder &B = S.Diag(ImpLoc, DiagID);
+    B << method;
+    if (NeededFor)
+      B << NeededFor;
+  }
 
   // Issue a note to the original declaration.
   SourceLocation MethodLoc = method->getLocStart();
@@ -1702,9 +1708,8 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
             unsigned DIAG = diag::warn_unimplemented_protocol_method;
             if (Diags.getDiagnosticLevel(DIAG, ImpLoc)
                 != DiagnosticsEngine::Ignored) {
-              WarnUndefinedMethod(*this, ImpLoc, method, IncompleteImpl, DIAG);
-              Diag(CDecl->getLocation(), diag::note_required_for_protocol_at)
-                << PDecl->getDeclName();
+              WarnUndefinedMethod(*this, ImpLoc, method, IncompleteImpl, DIAG,
+                                  PDecl);
             }
           }
     }
@@ -1730,9 +1735,7 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
       unsigned DIAG = diag::warn_unimplemented_protocol_method;
       if (Diags.getDiagnosticLevel(DIAG, ImpLoc) !=
             DiagnosticsEngine::Ignored) {
-        WarnUndefinedMethod(*this, ImpLoc, method, IncompleteImpl, DIAG);
-        Diag(IDecl->getLocation(), diag::note_required_for_protocol_at) <<
-          PDecl->getDeclName();
+        WarnUndefinedMethod(*this, ImpLoc, method, IncompleteImpl, DIAG, PDecl);
       }
     }
   }

@@ -18,10 +18,10 @@ __attribute__((objc_protocol_requires_explicit_implementation))
 
 // This class subclasses ClassA (which adopts 'Protocol'),
 // but does not provide the needed implementation.
-@interface ClassB : ClassA <Protocol> // expected-note {{required for direct or indirect protocol 'Protocol'}}
+@interface ClassB : ClassA <Protocol>
 @end
 
-@implementation ClassB // expected-warning {{method 'theBestOfTimes' in protocol not implemented}}
+@implementation ClassB // expected-warning {{method 'theBestOfTimes' in protocol 'Protocol' not implemented}}
 @end
 
 // Test that inherited protocols do not get the explicit conformance requirement.
@@ -37,10 +37,10 @@ __attribute__((objc_protocol_requires_explicit_implementation))
 @interface ClassC <Inherited>
 @end
 
-@interface ClassD : ClassC <Derived> // expected-note {{required for direct or indirect protocol 'Derived'}}
+@interface ClassD : ClassC <Derived>
 @end
 
-@implementation ClassD // expected-warning {{method 'foulIsFair' in protocol not implemented}}
+@implementation ClassD // expected-warning {{method 'foulIsFair' in protocol 'Derived' not implemented}}
 @end
 
 // Test that the attribute is used correctly.

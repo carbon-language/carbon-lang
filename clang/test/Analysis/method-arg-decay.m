@@ -67,12 +67,12 @@ extern NSMutableArray *XCFindPossibleKeyModules(PBXModule *module, BOOL useExpos
 @interface XCExtendedTabView : NSTabView <XCDockViewHeader> {
 }
 @end     @class PBXProjectDocument, PBXFileReference, PBXModule, XCWindowTool;
-@interface XCPerspectiveModule : PBXProjectModule <PBXSelectionTarget> { // expected-note {{required for direct or indirect protocol 'PBXSelectionTarget'}}
+@interface XCPerspectiveModule : PBXProjectModule <PBXSelectionTarget> {
   XCExtendedTabView *_perspectivesTabView;
 }
 - (PBXModule *) moduleForTab:(NSTabViewItem *)item;
 @end  
-@implementation XCPerspectiveModule // expected-warning {{method 'performAction:withSelection:' in protocol not implemented}}}
+@implementation XCPerspectiveModule // expected-warning {{method 'performAction:withSelection:' in protocol 'PBXSelectionTarget' not implemented}}}
 + (void) openForProjectDocument:(PBXProjectDocument *)projectDocument {
 }
 - (PBXModule *) type:(Class)type inPerspective:(id)perspectiveIdentifer  matchingFunction:(BOOL (void *, void *))comparator usingData:(void *)data {
