@@ -13,6 +13,9 @@ add_lldb_library(lldbTarget
   PathMappingList.cpp
   Platform.cpp
   Process.cpp
+  Queue.cpp
+  QueueItem.cpp
+  QueueList.cpp
   RegisterContext.cpp
   SectionLoadHistory.cpp
   SectionLoadList.cpp

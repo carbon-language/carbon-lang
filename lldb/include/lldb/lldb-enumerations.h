@@ -726,6 +726,19 @@ namespace lldb {
         eFilePermissionsDirectoryDefault = eFilePermissionsUserRWX,
     } FilePermissions;
 
+    //----------------------------------------------------------------------
+    // Queue work item types
+    //
+    // The different types of work that can be enqueued on a libdispatch
+    // aka Grand Central Dispatch (GCD) queue.
+    //----------------------------------------------------------------------
+    typedef enum QueueItemKind
+    {
+        eQueueItemKindUnknown = 0,
+        eQueueItemKindFunction,
+        eQueueItemKindBlock
+    } QueueItemKind;
+
 } // namespace lldb
 
 

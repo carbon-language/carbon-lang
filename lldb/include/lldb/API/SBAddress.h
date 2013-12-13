@@ -118,6 +118,7 @@ protected:
     friend class SBTarget;
     friend class SBThread;
     friend class SBValue;
+    friend class SBQueueItem;
 
     lldb_private::Address *
     operator->();

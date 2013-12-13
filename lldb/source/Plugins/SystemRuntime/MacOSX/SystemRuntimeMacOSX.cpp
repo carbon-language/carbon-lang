@@ -22,9 +22,10 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "Plugins/Process/Utility/HistoryThread.h"
+#include "lldb/Target/Queue.h"
+#include "lldb/Target/QueueList.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
-
 
 #include "SystemRuntimeMacOSX.h"
 
@@ -441,6 +442,26 @@ SystemRuntimeMacOSX::GetExtendedBacktraceThread (ThreadSP original_thread_sp, Co
     SetNewThreadQueueID (original_thread_sp, new_extended_thread_sp);
     SetNewThreadExtendedBacktraceToken (original_thread_sp, new_extended_thread_sp);
     return new_extended_thread_sp;
+}
+
+void
+SystemRuntimeMacOSX::PopulateQueueList (lldb_private::QueueList &queue_list)
+{
+    // For now, iterate over the threads and see what queue each thread is associated with.
+    // If we haven't already added this queue, add it to the QueueList.
+    // (a single libdispatch queue may be using multiple threads simultaneously.)
+
+    for (ThreadSP thread_sp : m_process->Threads())
+    {
+        if (thread_sp->GetQueueID() != LLDB_INVALID_QUEUE_ID)
+        {
+            if (queue_list.FindQueueByID (thread_sp->GetQueueID()).get() == NULL)
+            {
+                QueueSP queue_sp (new Queue(m_process->shared_from_this(), thread_sp->GetQueueID(), thread_sp->GetQueueName()));
+                queue_list.AddQueue (queue_sp);
+            }
+        }
+    }
 }
 
 

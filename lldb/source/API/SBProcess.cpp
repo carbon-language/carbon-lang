@@ -535,6 +535,53 @@ SBProcess::GetThreadAtIndex (size_t index)
 }
 
 uint32_t
+SBProcess::GetNumQueues ()
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    uint32_t num_queues = 0;
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
+    {
+        Process::StopLocker stop_locker;
+        
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        num_queues = process_sp->GetQueueList().GetSize();
+    }
+
+    if (log)
+        log->Printf ("SBProcess(%p)::GetNumQueues () => %d", process_sp.get(), num_queues);
+
+    return num_queues;
+}
+
+SBQueue
+SBProcess::GetQueueAtIndex (size_t index)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    SBQueue sb_queue;
+    QueueSP queue_sp;
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
+    {
+        Process::StopLocker stop_locker;
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        queue_sp = process_sp->GetQueueList().GetQueueAtIndex(index);
+        sb_queue.SetQueue (queue_sp);
+    }
+
+    if (log)
+    {
+        log->Printf ("SBProcess(%p)::GetQueueAtIndex (index=%d) => SBQueue(%p)",
+                     process_sp.get(), (uint32_t) index, queue_sp.get());
+    }
+
+    return sb_queue;
+}
+
+
+uint32_t
 SBProcess::GetStopID(bool include_expression_stops)
 {
     ProcessSP process_sp(GetSP());

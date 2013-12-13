@@ -180,6 +180,15 @@ public:
     SetSelectedThreadByIndexID (uint32_t index_id);
     
     //------------------------------------------------------------------
+    // Queue related functions
+    //------------------------------------------------------------------
+    uint32_t
+    GetNumQueues ();
+
+    lldb::SBQueue
+    GetQueueAtIndex (uint32_t index);
+
+    //------------------------------------------------------------------
     // Stepping related functions
     //------------------------------------------------------------------
 

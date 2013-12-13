@@ -40,6 +40,8 @@
 #include "lldb/API/SBListener.h"
 #include "lldb/API/SBModule.h"
 #include "lldb/API/SBProcess.h"
+#include "lldb/API/SBQueue.h"
+#include "lldb/API/SBQueueItem.h"
 #include "lldb/API/SBSourceManager.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/API/SBStringList.h"

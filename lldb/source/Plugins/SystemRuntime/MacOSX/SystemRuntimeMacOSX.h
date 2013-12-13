@@ -104,6 +104,9 @@ private:
     SystemRuntimeMacOSX::ArchivedBacktrace
     GetLibdispatchExtendedBacktrace (lldb::ThreadSP thread);
 
+    void
+    PopulateQueueList (lldb_private::QueueList &queue_list);
+
 protected:
     lldb::user_id_t m_break_id;
     mutable lldb_private::Mutex m_mutex;

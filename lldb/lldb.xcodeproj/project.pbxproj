@@ -608,10 +608,17 @@
 		AF061F88182C97ED00B6A19C /* RegisterContextHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = AF061F86182C97ED00B6A19C /* RegisterContextHistory.h */; };
 		AF061F8B182C980000B6A19C /* HistoryThread.h in Headers */ = {isa = PBXBuildFile; fileRef = AF061F89182C980000B6A19C /* HistoryThread.h */; };
 		AF061F8C182C980000B6A19C /* HistoryUnwind.h in Headers */ = {isa = PBXBuildFile; fileRef = AF061F8A182C980000B6A19C /* HistoryUnwind.h */; };
+		AF0C112818580CD800C4C45B /* QueueItem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0C112718580CD800C4C45B /* QueueItem.cpp */; };
+		AF0EBBE8185940FB0059E52F /* SBQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0EBBE6185940FB0059E52F /* SBQueue.cpp */; };
+		AF0EBBE9185940FB0059E52F /* SBQueueItem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0EBBE7185940FB0059E52F /* SBQueueItem.cpp */; };
+		AF0EBBEC185941360059E52F /* SBQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = AF0EBBEA185941360059E52F /* SBQueue.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		AF0EBBED185941360059E52F /* SBQueueItem.h in Headers */ = {isa = PBXBuildFile; fileRef = AF0EBBEB185941360059E52F /* SBQueueItem.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AF1729D6182C907200E0AB97 /* HistoryThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1729D4182C907200E0AB97 /* HistoryThread.cpp */; };
 		AF1729D7182C907200E0AB97 /* HistoryUnwind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1729D5182C907200E0AB97 /* HistoryUnwind.cpp */; };
 		AF254E31170CCC33007AE5C9 /* PlatformDarwinKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF254E2F170CCC33007AE5C9 /* PlatformDarwinKernel.cpp */; };
 		AF254E32170CCC33007AE5C9 /* PlatformDarwinKernel.h in Headers */ = {isa = PBXBuildFile; fileRef = AF254E30170CCC33007AE5C9 /* PlatformDarwinKernel.h */; };
+		AF26703A1852D01E00B6CC36 /* Queue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF2670381852D01E00B6CC36 /* Queue.cpp */; };
+		AF26703B1852D01E00B6CC36 /* QueueList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF2670391852D01E00B6CC36 /* QueueList.cpp */; };
 		AF37E10A17C861F20061E18E /* ProcessRunLock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF37E10917C861F20061E18E /* ProcessRunLock.cpp */; };
 		AF81DEFA1828A23F0042CF19 /* SystemRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF81DEF91828A23F0042CF19 /* SystemRuntime.cpp */; };
 		AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF90106315AB7C5700FF120D /* lldb.1 */; };
@@ -1777,10 +1784,19 @@
 		AF061F86182C97ED00B6A19C /* RegisterContextHistory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextHistory.h; path = Utility/RegisterContextHistory.h; sourceTree = "<group>"; };
 		AF061F89182C980000B6A19C /* HistoryThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HistoryThread.h; path = Utility/HistoryThread.h; sourceTree = "<group>"; };
 		AF061F8A182C980000B6A19C /* HistoryUnwind.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HistoryUnwind.h; path = Utility/HistoryUnwind.h; sourceTree = "<group>"; };
+		AF0C112718580CD800C4C45B /* QueueItem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = QueueItem.cpp; path = source/Target/QueueItem.cpp; sourceTree = "<group>"; };
+		AF0EBBE6185940FB0059E52F /* SBQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBQueue.cpp; path = source/API/SBQueue.cpp; sourceTree = "<group>"; };
+		AF0EBBE7185940FB0059E52F /* SBQueueItem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBQueueItem.cpp; path = source/API/SBQueueItem.cpp; sourceTree = "<group>"; };
+		AF0EBBEA185941360059E52F /* SBQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBQueue.h; path = include/lldb/API/SBQueue.h; sourceTree = "<group>"; };
+		AF0EBBEB185941360059E52F /* SBQueueItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBQueueItem.h; path = include/lldb/API/SBQueueItem.h; sourceTree = "<group>"; };
+		AF0EBBEE1859419F0059E52F /* SBQueue.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBQueue.i; sourceTree = "<group>"; };
+		AF0EBBEF1859419F0059E52F /* SBQueueItem.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBQueueItem.i; sourceTree = "<group>"; };
 		AF1729D4182C907200E0AB97 /* HistoryThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HistoryThread.cpp; path = Utility/HistoryThread.cpp; sourceTree = "<group>"; };
 		AF1729D5182C907200E0AB97 /* HistoryUnwind.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HistoryUnwind.cpp; path = Utility/HistoryUnwind.cpp; sourceTree = "<group>"; };
 		AF254E2F170CCC33007AE5C9 /* PlatformDarwinKernel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformDarwinKernel.cpp; sourceTree = "<group>"; };
 		AF254E30170CCC33007AE5C9 /* PlatformDarwinKernel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformDarwinKernel.h; sourceTree = "<group>"; };
+		AF2670381852D01E00B6CC36 /* Queue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Queue.cpp; path = source/Target/Queue.cpp; sourceTree = "<group>"; };
+		AF2670391852D01E00B6CC36 /* QueueList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = QueueList.cpp; path = source/Target/QueueList.cpp; sourceTree = "<group>"; };
 		AF37E10917C861F20061E18E /* ProcessRunLock.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessRunLock.cpp; sourceTree = "<group>"; };
 		AF68D2541255416E002FF25B /* RegisterContextLLDB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextLLDB.cpp; path = Utility/RegisterContextLLDB.cpp; sourceTree = "<group>"; };
 		AF68D2551255416E002FF25B /* RegisterContextLLDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextLLDB.h; path = Utility/RegisterContextLLDB.h; sourceTree = "<group>"; };
@@ -2203,6 +2219,8 @@
 				263C493B178B61CC0070F12D /* SBModuleSpec.i */,
 				262F12B8183546C900AEB384 /* SBPlatform.i */,
 				2611FF07142D83060017FEA3 /* SBProcess.i */,
+				AF0EBBEE1859419F0059E52F /* SBQueue.i */,
+				AF0EBBEF1859419F0059E52F /* SBQueueItem.i */,
 				2611FF08142D83060017FEA3 /* SBSection.i */,
 				2611FF09142D83060017FEA3 /* SBSourceManager.i */,
 				2611FF0A142D83060017FEA3 /* SBStream.i */,
@@ -2304,6 +2322,10 @@
 				263C4937178B50C40070F12D /* SBModuleSpec.cpp */,
 				262F12B61835469C00AEB384 /* SBPlatform.h */,
 				262F12B41835468600AEB384 /* SBPlatform.cpp */,
+				AF0EBBEA185941360059E52F /* SBQueue.h */,
+				AF0EBBE6185940FB0059E52F /* SBQueue.cpp */,
+				AF0EBBEB185941360059E52F /* SBQueueItem.h */,
+				AF0EBBE7185940FB0059E52F /* SBQueueItem.cpp */,
 				9A9831041125FC5800A56CB0 /* SBProcess.h */,
 				9A9831031125FC5800A56CB0 /* SBProcess.cpp */,
 				26B8283C142D01E9002DBC64 /* SBSection.h */,
@@ -3160,6 +3182,9 @@
 				264A43BD1320BCEB005B4096 /* Platform.cpp */,
 				26BC7DF310F1B81A00F91463 /* Process.h */,
 				26BC7F3610F1B90C00F91463 /* Process.cpp */,
+				AF2670381852D01E00B6CC36 /* Queue.cpp */,
+				AF2670391852D01E00B6CC36 /* QueueList.cpp */,
+				AF0C112718580CD800C4C45B /* QueueItem.cpp */,
 				26AB54111832DC3400EADFF3 /* RegisterCheckpoint.h */,
 				26BC7DF410F1B81A00F91463 /* RegisterContext.h */,
 				26BC7F3710F1B90C00F91463 /* RegisterContext.cpp */,
@@ -3628,6 +3653,7 @@
 				26680220115FD13D008E1FE4 /* SBDebugger.h in Headers */,
 				490A966B1628C3BF00F0002E /* SBDeclaration.h in Headers */,
 				26680221115FD13D008E1FE4 /* SBDefines.h in Headers */,
+				AF0EBBEC185941360059E52F /* SBQueue.h in Headers */,
 				26680222115FD13D008E1FE4 /* SBError.h in Headers */,
 				26680223115FD13D008E1FE4 /* SBEvent.h in Headers */,
 				26680224115FD13D008E1FE4 /* SBFileSpec.h in Headers */,
@@ -3639,6 +3665,7 @@
 				9AC7038E117674FB0086C050 /* SBInstruction.h in Headers */,
 				9AC70390117675270086C050 /* SBInstructionList.h in Headers */,
 				26DE205911618FE700A093E2 /* SBLineEntry.h in Headers */,
+				AF0EBBED185941360059E52F /* SBQueueItem.h in Headers */,
 				26680227115FD13D008E1FE4 /* SBListener.h in Headers */,
 				26DE204F11618E9800A093E2 /* SBModule.h in Headers */,
 				2668022A115FD13D008E1FE4 /* SBProcess.h in Headers */,
@@ -4073,6 +4100,8 @@
 				26DE204D11618E7A00A093E2 /* SBModule.cpp in Sources */,
 				26DE205D1161901400A093E2 /* SBFunction.cpp in Sources */,
 				26DE205F1161901B00A093E2 /* SBCompileUnit.cpp in Sources */,
+				AF0EBBE9185940FB0059E52F /* SBQueueItem.cpp in Sources */,
+				AF0EBBE8185940FB0059E52F /* SBQueue.cpp in Sources */,
 				26DE20611161902700A093E2 /* SBBlock.cpp in Sources */,
 				26DE20631161904200A093E2 /* SBLineEntry.cpp in Sources */,
 				26DE20651161904E00A093E2 /* SBSymbol.cpp in Sources */,
@@ -4182,6 +4211,7 @@
 				2689004513353E0400698AC0 /* ModuleChild.cpp in Sources */,
 				2689004613353E0400698AC0 /* ModuleList.cpp in Sources */,
 				2689004713353E0400698AC0 /* PluginManager.cpp in Sources */,
+				AF0C112818580CD800C4C45B /* QueueItem.cpp in Sources */,
 				AF254E31170CCC33007AE5C9 /* PlatformDarwinKernel.cpp in Sources */,
 				2689004813353E0400698AC0 /* RegularExpression.cpp in Sources */,
 				2689004913353E0400698AC0 /* Scalar.cpp in Sources */,
@@ -4313,6 +4343,7 @@
 				268900DB13353E6F00698AC0 /* LineTable.cpp in Sources */,
 				268900DC13353E6F00698AC0 /* ObjectFile.cpp in Sources */,
 				268900DD13353E6F00698AC0 /* Symbol.cpp in Sources */,
+				AF26703A1852D01E00B6CC36 /* Queue.cpp in Sources */,
 				268900DE13353E6F00698AC0 /* SymbolContext.cpp in Sources */,
 				268900DF13353E6F00698AC0 /* SymbolFile.cpp in Sources */,
 				268900E013353E6F00698AC0 /* SymbolVendor.cpp in Sources */,
@@ -4389,6 +4420,7 @@
 				264D8D5013661BD7003A368F /* UnwindAssembly.cpp in Sources */,
 				26ECA04313665FED008D1F18 /* ARM_DWARF_Registers.cpp in Sources */,
 				AF061F87182C97ED00B6A19C /* RegisterContextHistory.cpp in Sources */,
+				AF26703B1852D01E00B6CC36 /* QueueList.cpp in Sources */,
 				267C012B136880DF006E963E /* OptionGroupValueObjectDisplay.cpp in Sources */,
 				26BCFC521368AE38006DC050 /* OptionGroupFormat.cpp in Sources */,
 				AF81DEFA1828A23F0042CF19 /* SystemRuntime.cpp in Sources */,

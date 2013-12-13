@@ -13,6 +13,7 @@
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBTarget.h"
+#include "lldb/API/SBQueue.h"
 #include <stdio.h>
 
 namespace lldb {
@@ -140,6 +141,15 @@ public:
     
     bool
     SetSelectedThreadByIndexID (uint32_t index_id);
+
+    //------------------------------------------------------------------
+    // Queue related functions
+    //------------------------------------------------------------------
+    uint32_t
+    GetNumQueues ();
+
+    lldb::SBQueue
+    GetQueueAtIndex (size_t index);
 
     //------------------------------------------------------------------
     // Stepping related functions
@@ -312,6 +322,7 @@ protected:
     friend class SBTarget;
     friend class SBThread;
     friend class SBValue;
+    friend class SBQueue;
 
     lldb::ProcessSP
     GetSP() const;

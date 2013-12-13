@@ -43,6 +43,7 @@
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/Memory.h"
+#include "lldb/Target/QueueList.h"
 #include "lldb/Target/ThreadList.h"
 #include "lldb/Target/UnixSignals.h"
 #include "lldb/Utility/PseudoTerminal.h"
@@ -3317,10 +3318,10 @@ public:
     {
         return m_thread_list.Threads();
     }
-    
+
     uint32_t
     GetNextThreadIndexID (uint64_t thread_id);
-    
+
     lldb::ThreadSP
     CreateOSPluginThread (lldb::tid_t tid, lldb::addr_t context);
     
@@ -3332,6 +3333,36 @@ public:
     // If the thread_id has previously been assigned, the same index id will be used.
     uint32_t
     AssignIndexIDToThread(uint64_t thread_id);
+
+    // Returns true if an index id has been assigned to a queue.
+    bool
+    HasAssignedIndexIDToQueue(lldb::queue_id_t queue_id);
+
+    // Given a queue_id, it will assign a more reasonable index id for display to the user.
+    // If the queue_id has previously been assigned, the same index id will be used.
+    uint32_t
+    AssignIndexIDToQueue(lldb::queue_id_t queue_id);
+
+    //------------------------------------------------------------------
+    // Queue Queries
+    //------------------------------------------------------------------
+
+    void
+    UpdateQueueListIfNeeded ();
+
+    QueueList &
+    GetQueueList ()
+    {
+        UpdateQueueListIfNeeded();
+        return m_queue_list;
+    }
+
+    QueueList::QueueIterable
+    Queues ()
+    {
+        UpdateQueueListIfNeeded();
+        return m_queue_list.Queues();
+    }
 
     //------------------------------------------------------------------
     // Event Handling
@@ -3676,7 +3707,9 @@ protected:
     ProcessModID                m_mod_id;               ///< Tracks the state of the process over stops and other alterations.
     uint32_t                    m_process_unique_id;    ///< Each lldb_private::Process class that is created gets a unique integer ID that increments with each new instance
     uint32_t                    m_thread_index_id;      ///< Each thread is created with a 1 based index that won't get re-used.
+    uint32_t                    m_queue_index_id;       ///< Each queue is created with a 1 based index that won't get re-used.
     std::map<uint64_t, uint32_t> m_thread_id_to_index_id_map;
+    std::map<uint64_t, uint32_t> m_queue_id_to_index_id_map;
     int                         m_exit_status;          ///< The exit status of the process, or -1 if not set.
     std::string                 m_exit_string;          ///< A textual description of why a process exited.
     Mutex                       m_thread_mutex;
@@ -3685,6 +3718,8 @@ protected:
                                                         ///< m_thread_list_real, but might be different if there is an OS plug-in creating memory threads
     ThreadList                  m_extended_thread_list; ///< Owner for extended threads that may be generated, cleared on natural stops
     uint32_t                    m_extended_thread_stop_id; ///< The natural stop id when extended_thread_list was last updated
+    QueueList                   m_queue_list;           ///< The list of libdispatch queues at a given stop point
+    uint32_t                    m_queue_list_stop_id;   ///< The natural stop id when queue list was last fetched
     std::vector<Notifications>  m_notifications;        ///< The list of notifications that this process can deliver.
     std::vector<lldb::addr_t>   m_image_tokens;
     Listener                    &m_listener;

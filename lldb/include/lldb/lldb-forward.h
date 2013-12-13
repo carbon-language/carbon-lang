@@ -216,6 +216,8 @@ class   TypeFilterImpl;
 #ifndef LLDB_DISABLE_PYTHON
 class   ScriptedSyntheticChildren;
 #endif
+class   Queue;
+class   QueueItem;
 class   Target;
 class   TargetList;
 class   Thread;
@@ -336,6 +338,9 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::RegisterCheckpoint> RegisterCheckpointSP;
     typedef std::shared_ptr<lldb_private::RegisterContext> RegisterContextSP;
     typedef std::shared_ptr<lldb_private::RegularExpression> RegularExpressionSP;
+    typedef std::shared_ptr<lldb_private::Queue> QueueSP;
+    typedef std::weak_ptr<lldb_private::Queue> QueueWP;
+    typedef std::shared_ptr<lldb_private::QueueItem> QueueItemSP;
     typedef std::shared_ptr<lldb_private::ScriptInterpreterObject> ScriptInterpreterObjectSP;
 #ifndef LLDB_DISABLE_PYTHON
     typedef std::shared_ptr<lldb_private::ScriptSummaryFormat> ScriptSummaryFormatSP;

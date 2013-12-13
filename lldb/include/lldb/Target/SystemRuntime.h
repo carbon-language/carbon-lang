@@ -20,6 +20,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/PluginInterface.h"
+#include "lldb/Target/QueueList.h"
 #include "lldb/lldb-private.h"
 
 
@@ -159,6 +160,23 @@ public:
     //------------------------------------------------------------------
     virtual lldb::ThreadSP
     GetExtendedBacktraceThread (lldb::ThreadSP thread, ConstString type);
+
+    //------------------------------------------------------------------
+    /// Populate the Process' QueueList with libdispatch / GCD queues that exist.
+    ///
+    /// When process execution is paused, the SystemRuntime may be called to fill
+    /// in the list of Queues that currently exist.
+    ///
+    /// @param [out] queue_list
+    ///     This QueueList will be cleared, and any queues that currently exist
+    ///     will be added.  An empty QueueList will be returned if no queues
+    ///     exist or if this Systemruntime does not support libdispatch queues.
+    //------------------------------------------------------------------
+    virtual void
+    PopulateQueueList (lldb_private::QueueList &queue_list)
+    {
+    }
+
 
 protected:
     //------------------------------------------------------------------
