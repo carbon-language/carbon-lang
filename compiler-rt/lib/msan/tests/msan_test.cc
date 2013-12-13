@@ -1470,6 +1470,45 @@ TEST(MemorySanitizer, stpcpy) {  // NOLINT
   EXPECT_NOT_POISONED(y[2]);
 }
 
+TEST(MemorySanitizer, strcat) {  // NOLINT
+  char a[10];
+  char b[] = "def";
+  strcpy(a, "abc");
+  __msan_poison(b + 1, 1);
+  strcat(a, b);
+  EXPECT_NOT_POISONED(a[3]);
+  EXPECT_POISONED(a[4]);
+  EXPECT_NOT_POISONED(a[5]);
+  EXPECT_NOT_POISONED(a[6]);
+  EXPECT_POISONED(a[7]);
+}
+
+TEST(MemorySanitizer, strncat) {  // NOLINT
+  char a[10];
+  char b[] = "def";
+  strcpy(a, "abc");
+  __msan_poison(b + 1, 1);
+  strncat(a, b, 5);
+  EXPECT_NOT_POISONED(a[3]);
+  EXPECT_POISONED(a[4]);
+  EXPECT_NOT_POISONED(a[5]);
+  EXPECT_NOT_POISONED(a[6]);
+  EXPECT_POISONED(a[7]);
+}
+
+TEST(MemorySanitizer, strncat_overflow) {  // NOLINT
+  char a[10];
+  char b[] = "def";
+  strcpy(a, "abc");
+  __msan_poison(b + 1, 1);
+  strncat(a, b, 2);
+  EXPECT_NOT_POISONED(a[3]);
+  EXPECT_POISONED(a[4]);
+  EXPECT_NOT_POISONED(a[5]);
+  EXPECT_POISONED(a[6]);
+  EXPECT_POISONED(a[7]);
+}
+
 TEST(MemorySanitizer, strtol) {
   char *e;
   assert(1 == strtol("1", &e, 10));

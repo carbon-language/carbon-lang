@@ -284,11 +284,10 @@ INTERCEPTOR(char *, strcat, char *dest, const char *src) {  // NOLINT
 INTERCEPTOR(char *, strncat, char *dest, const char *src, SIZE_T n) {  // NOLINT
   ENSURE_MSAN_INITED();
   SIZE_T dest_size = REAL(strlen)(dest);
-  SIZE_T copy_size = REAL(strlen)(src);
-  if (copy_size < n)
-    copy_size++;  // trailing \0
+  SIZE_T copy_size = REAL(strnlen)(src, n);
   char *res = REAL(strncat)(dest, src, n);  // NOLINT
   __msan_copy_poison(dest + dest_size, src, copy_size);
+  __msan_unpoison(dest + dest_size + copy_size, 1); // \0
   return res;
 }
 
