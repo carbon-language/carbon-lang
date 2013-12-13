@@ -109,6 +109,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->detect_stack_use_after_return,
             "detect_stack_use_after_return");
   ParseFlag(str, &f->uar_stack_size_log, "uar_stack_size_log");
+  ParseFlag(str, &f->uar_noreserve, "uar_noreserve");
   ParseFlag(str, &f->max_malloc_fill_size, "max_malloc_fill_size");
   ParseFlag(str, &f->malloc_fill_byte, "malloc_fill_byte");
   ParseFlag(str, &f->exitcode, "exitcode");
@@ -151,6 +152,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->mac_ignore_invalid_free = false;
   f->detect_stack_use_after_return = false;  // Also needs the compiler flag.
   f->uar_stack_size_log = 0;
+  f->uar_noreserve = false;
   f->max_malloc_fill_size = 0x1000;  // By default, fill only the first 4K.
   f->malloc_fill_byte = 0xbe;
   f->exitcode = ASAN_DEFAULT_FAILURE_EXITCODE;

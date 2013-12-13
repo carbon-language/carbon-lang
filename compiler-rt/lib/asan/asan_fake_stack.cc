@@ -42,13 +42,17 @@ FakeStack *FakeStack::Create(uptr stack_size_log) {
     stack_size_log = kMinStackSizeLog;
   if (stack_size_log > kMaxStackSizeLog)
     stack_size_log = kMaxStackSizeLog;
+  uptr size = RequiredSize(stack_size_log);
   FakeStack *res = reinterpret_cast<FakeStack *>(
-      MmapOrDie(RequiredSize(stack_size_log), "FakeStack"));
+      flags()->uar_noreserve ? MmapNoReserveOrDie(size, "FakeStack")
+                             : MmapOrDie(size, "FakeStack"));
   res->stack_size_log_ = stack_size_log;
   u8 *p = reinterpret_cast<u8 *>(res);
-  VReport(1, "T%d: FakeStack created: %p -- %p stack_size_log: %zd \n",
+  VReport(1, "T%d: FakeStack created: %p -- %p stack_size_log: %zd; "
+          "noreserve=%d \n",
           GetCurrentTidOrInvalid(), p,
-          p + FakeStack::RequiredSize(stack_size_log), stack_size_log);
+          p + FakeStack::RequiredSize(stack_size_log), stack_size_log,
+          flags()->uar_noreserve);
   return res;
 }
 

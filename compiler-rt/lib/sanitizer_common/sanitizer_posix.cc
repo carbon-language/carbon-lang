@@ -80,6 +80,23 @@ void UnmapOrDie(void *addr, uptr size) {
   }
 }
 
+void *MmapNoReserveOrDie(uptr size, const char *mem_type) {
+  uptr PageSize = GetPageSizeCached();
+  uptr p = internal_mmap(0,
+      RoundUpTo(size, PageSize),
+      PROT_READ | PROT_WRITE,
+      MAP_PRIVATE | MAP_ANON | MAP_NORESERVE,
+      -1, 0);
+  int reserrno;
+  if (internal_iserror(p, &reserrno)) {
+    Report("ERROR: "
+           "%s failed to allocate noreserve 0x%zx (%zd) bytes for '%s' (%d)\n",
+           SanitizerToolName, size, size, mem_type, reserrno);
+    CHECK("unable to mmap" && 0);
+  }
+  return (void *)p;
+}
+
 void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
   uptr PageSize = GetPageSizeCached();
   uptr p = internal_mmap((void*)(fixed_addr & ~(PageSize - 1)),

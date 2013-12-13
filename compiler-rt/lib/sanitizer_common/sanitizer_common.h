@@ -49,6 +49,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 void *MmapOrDie(uptr size, const char *mem_type);
 void UnmapOrDie(void *addr, uptr size);
 void *MmapFixedNoReserve(uptr fixed_addr, uptr size);
+void *MmapNoReserveOrDie(uptr size, const char *mem_type);
 void *MmapFixedOrDie(uptr fixed_addr, uptr size);
 void *Mprotect(uptr fixed_addr, uptr size);
 // Map aligned chunk of address space; size and alignment are powers of two.

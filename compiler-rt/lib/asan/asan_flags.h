@@ -54,6 +54,8 @@ struct Flags {
   bool detect_stack_use_after_return;
   // The minimal fake stack size log.
   int uar_stack_size_log;
+  // Use mmap with 'norserve' flag to allocate fake stack.
+  bool uar_noreserve;
   // ASan allocator flag. max_malloc_fill_size is the maximal amount of bytes
   // that will be filled with malloc_fill_byte on malloc.
   int max_malloc_fill_size, malloc_fill_byte;

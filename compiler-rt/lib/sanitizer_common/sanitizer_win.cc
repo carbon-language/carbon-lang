@@ -110,6 +110,11 @@ void *MmapFixedOrDie(uptr fixed_addr, uptr size) {
   return MmapFixedNoReserve(fixed_addr, size);
 }
 
+void *MmapNoReserveOrDie(uptr size, const char *mem_type) {
+  // FIXME: make this really NoReserve?
+  return MmapOrDie(size, mem_type);
+}
+
 void *Mprotect(uptr fixed_addr, uptr size) {
   return VirtualAlloc((LPVOID)fixed_addr, size,
                       MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
