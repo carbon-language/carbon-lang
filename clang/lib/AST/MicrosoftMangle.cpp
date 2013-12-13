@@ -2048,6 +2048,15 @@ void MicrosoftMangleContextImpl::mangleReferenceTemporary(const VarDecl *VD,
 
 void MicrosoftMangleContextImpl::mangleStaticGuardVariable(const VarDecl *VD,
                                                            raw_ostream &Out) {
+  // TODO: This is not correct, especially with respect to MSVC2013.  MSVC2013
+  // utilizes thread local variables to implement thread safe, re-entrant
+  // initialization for statics.  They no longer differentiate between an
+  // externally visible and non-externally visible static with respect to
+  // mangling, they all get $TSS <number>.
+  //
+  // N.B. This means that they can get more than 32 static variable guards in a
+  // scope.  It also means that they broke compatibility with their own ABI.
+
   // <guard-name> ::= ?_B <postfix> @51
   //              ::= ?$S <guard-num> @ <postfix> @4IA
 
