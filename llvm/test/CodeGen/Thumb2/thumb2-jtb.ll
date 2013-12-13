@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2 -arm-adjust-jump-tables=0 | FileCheck %s
+; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 -arm-adjust-jump-tables=0 | FileCheck %s
 
 ; Do not use tbb / tbh if any destination is before the jumptable.
 ; rdar://7102917

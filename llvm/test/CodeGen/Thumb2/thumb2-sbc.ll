@@ -1,4 +1,4 @@
-; RUN: llc -march=thumb -mattr=+thumb2 < %s | FileCheck %s
+; RUN: llc -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 < %s | FileCheck %s
 
 define i64 @f1(i64 %a, i64 %b) {
 ; CHECK: f1

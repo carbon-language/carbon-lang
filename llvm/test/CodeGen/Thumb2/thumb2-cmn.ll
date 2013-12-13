@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck %s
+; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 | FileCheck %s
 
 ; These tests could be improved by 'movs r0, #0' being rematerialized below the
 ; test as 'mov.w r0, #0'.

@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2,+t2xtpk | FileCheck %s
+; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2,+t2xtpk | FileCheck %s
 
 define i32 @test0(i8 %A) {
 ; CHECK: test0

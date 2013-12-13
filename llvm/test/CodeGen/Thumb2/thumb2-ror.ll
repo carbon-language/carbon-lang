@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck %s
+; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 | FileCheck %s
 ; RUN: llc < %s -march=thumb | FileCheck %s -check-prefix=THUMB1
 
 ; CHECK-LABEL: f1:
