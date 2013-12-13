@@ -491,7 +491,11 @@ Host::GetSignalAsCString (int signo)
     case SIGTRAP:   return "SIGTRAP";   // 5    trace trap (not reset when caught)
     case SIGABRT:   return "SIGABRT";   // 6    abort()
 #if  defined(SIGPOLL)
+#if !defined(SIGIO) || (SIGPOLL != SIGIO)
+// Under some GNU/Linux, SIGPOLL and SIGIO are the same. Causing the build to
+// fail with 'multiple define cases with same value'
     case SIGPOLL:   return "SIGPOLL";   // 7    pollable event ([XSR] generated, not supported)
+#endif
 #endif
 #if  defined(SIGEMT)
     case SIGEMT:    return "SIGEMT";    // 7    EMT instruction
