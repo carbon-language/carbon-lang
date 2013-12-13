@@ -56,7 +56,6 @@ public:
     MO_GlobalAddress,          ///< Address of a global value
     MO_BlockAddress,           ///< Address of a basic block
     MO_RegisterMask,           ///< Mask of preserved registers.
-    MO_RegisterLiveOut,        ///< Mask of live-out registers.
     MO_Metadata,               ///< Metadata reference (for debug info)
     MO_MCSymbol                ///< MCSymbol reference (for debug/eh info)
   };
@@ -154,7 +153,7 @@ private:
     const ConstantFP *CFP;    // For MO_FPImmediate.
     const ConstantInt *CI;    // For MO_CImmediate. Integers > 64bit.
     int64_t ImmVal;           // For MO_Immediate.
-    const uint32_t *RegMask;  // For MO_RegisterMask and MO_RegisterLiveOut.
+    const uint32_t *RegMask;  // For MO_RegisterMask.
     const MDNode *MD;         // For MO_Metadata.
     MCSymbol *Sym;            // For MO_MCSymbol
 
@@ -247,8 +246,6 @@ public:
   bool isBlockAddress() const { return OpKind == MO_BlockAddress; }
   /// isRegMask - Tests if this is a MO_RegisterMask operand.
   bool isRegMask() const { return OpKind == MO_RegisterMask; }
-  /// isRegLiveOut - Tests if this is a MO_RegisterLiveOut operand.
-  bool isRegLiveOut() const { return OpKind == MO_RegisterLiveOut; }
   /// isMetadata - Tests if this is a MO_Metadata operand.
   bool isMetadata() const { return OpKind == MO_Metadata; }
   bool isMCSymbol() const { return OpKind == MO_MCSymbol; }
@@ -479,12 +476,6 @@ public:
     return Contents.RegMask;
   }
 
-  /// getRegLiveOut - Returns a bit mask of live-out registers.
-  const uint32_t *getRegLiveOut() const {
-    assert(isRegLiveOut() && "Wrong MachineOperand accessor");
-    return Contents.RegMask;
-  }
-
   const MDNode *getMetadata() const {
     assert(isMetadata() && "Wrong MachineOperand accessor");
     return Contents.MD;
@@ -665,12 +656,6 @@ public:
   static MachineOperand CreateRegMask(const uint32_t *Mask) {
     assert(Mask && "Missing register mask");
     MachineOperand Op(MachineOperand::MO_RegisterMask);
-    Op.Contents.RegMask = Mask;
-    return Op;
-  }
-  static MachineOperand CreateRegLiveOut(const uint32_t *Mask) {
-    assert(Mask && "Missing live-out register mask");
-    MachineOperand Op(MachineOperand::MO_RegisterLiveOut);
     Op.Contents.RegMask = Mask;
     return Op;
   }

@@ -97,7 +97,6 @@ add_llvm_library(LLVMCodeGen
   StackColoring.cpp
   StackProtector.cpp
   StackSlotColoring.cpp
-  StackMapLivenessAnalysis.cpp
   StackMaps.cpp
   TailDuplication.cpp
   TargetFrameLoweringImpl.cpp
