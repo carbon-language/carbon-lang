@@ -11,7 +11,6 @@
 ; CHECK-NEXT:   .long   8
 
 ; test
-; CHECK-NEXT:   .long   0
 ; CHECK-LABEL:  .long   L{{.*}}-_test
 ; CHECK-NEXT:   .short  0
 ; 3 locations
@@ -38,7 +37,6 @@ entry:
 }
 
 ; property access 1 - %obj is an anyreg call argument and should therefore be in a register
-; CHECK-NEXT:   .long   1
 ; CHECK-LABEL:  .long   L{{.*}}-_property_access1
 ; CHECK-NEXT:   .short  0
 ; 2 locations
@@ -61,7 +59,6 @@ entry:
 }
 
 ; property access 2 - %obj is an anyreg call argument and should therefore be in a register
-; CHECK-NEXT:   .long   2
 ; CHECK-LABEL:  .long   L{{.*}}-_property_access2
 ; CHECK-NEXT:   .short  0
 ; 2 locations
@@ -85,7 +82,6 @@ entry:
 }
 
 ; property access 3 - %obj is a frame index
-; CHECK-NEXT:   .long   3
 ; CHECK-LABEL:  .long   L{{.*}}-_property_access3
 ; CHECK-NEXT:   .short  0
 ; 2 locations
@@ -109,7 +105,6 @@ entry:
 }
 
 ; anyreg_test1
-; CHECK-NEXT:   .long   4
 ; CHECK-LABEL:  .long   L{{.*}}-_anyreg_test1
 ; CHECK-NEXT:   .short  0
 ; 14 locations
@@ -192,7 +187,6 @@ entry:
 }
 
 ; anyreg_test2
-; CHECK-NEXT:   .long   5
 ; CHECK-LABEL:  .long   L{{.*}}-_anyreg_test2
 ; CHECK-NEXT:   .short  0
 ; 14 locations
@@ -278,7 +272,6 @@ entry:
 ;
 ; <rdar://problem/15432754> [JS] Assertion: "Folded a def to a non-store!"
 ;
-; CHECK-LABEL: .long 12
 ; CHECK-LABEL: .long L{{.*}}-_patchpoint_spilldef
 ; CHECK-NEXT: .short 0
 ; CHECK-NEXT: .short 3
@@ -308,7 +301,6 @@ entry:
 ;
 ; <rdar://problem/15487687> [JS] AnyRegCC argument ends up being spilled
 ;
-; CHECK-LABEL: .long 13
 ; CHECK-LABEL: .long L{{.*}}-_patchpoint_spillargs
 ; CHECK-NEXT: .short 0
 ; CHECK-NEXT: .short 5

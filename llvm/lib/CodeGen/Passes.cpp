@@ -69,6 +69,8 @@ static cl::opt<bool> DisableCGP("disable-cgp", cl::Hidden,
     cl::desc("Disable Codegen Prepare"));
 static cl::opt<bool> DisableCopyProp("disable-copyprop", cl::Hidden,
     cl::desc("Disable Copy Propagation pass"));
+static cl::opt<bool> EnableStackMapLiveness("enable-stackmap-liveness",
+    cl::Hidden, cl::desc("Enable StackMap Liveness Analysis Pass"));
 static cl::opt<bool> PrintLSR("print-lsr-output", cl::Hidden,
     cl::desc("Print LLVM IR produced by the loop-reduce pass"));
 static cl::opt<bool> PrintISelInput("print-isel-input", cl::Hidden,
@@ -536,6 +538,9 @@ void TargetPassConfig::addMachinePasses() {
 
   if (addPreEmitPass())
     printAndVerify("After PreEmit passes");
+
+  if (EnableStackMapLiveness)
+    addPass(&StackMapLivenessID);
 }
 
 /// Add passes that optimize machine instructions in SSA form.

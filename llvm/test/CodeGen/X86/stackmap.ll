@@ -47,8 +47,7 @@ entry:
 
 ; Inline OSR Exit
 ;
-; CHECK-NEXT:   .long   3
-; CHECK-NEXT:   .long   L{{.*}}-_osrinline
+; CHECK-LABEL:  .long   L{{.*}}-_osrinline
 ; CHECK-NEXT:   .short  0
 ; CHECK-NEXT:   .short  2
 ; CHECK-NEXT:   .byte   1
@@ -72,8 +71,7 @@ entry:
 ;
 ; 2 live variables in register.
 ;
-; CHECK-NEXT:   .long   4
-; CHECK-NEXT:   .long   L{{.*}}-_osrcold
+; CHECK-LABEL:  .long   L{{.*}}-_osrcold
 ; CHECK-NEXT:   .short  0
 ; CHECK-NEXT:   .short  2
 ; CHECK-NEXT:   .byte   1
@@ -98,8 +96,7 @@ ret:
 }
 
 ; Property Read
-; CHECK-NEXT:   .long   5
-; CHECK-NEXT:   .long   L{{.*}}-_propertyRead
+; CHECK-LABEL:  .long   L{{.*}}-_propertyRead
 ; CHECK-NEXT:   .short  0
 ; CHECK-NEXT:   .short  2
 ; CHECK-NEXT:   .byte   1
@@ -119,8 +116,7 @@ entry:
 }
 
 ; Property Write
-; CHECK-NEXT:   .long   6
-; CHECK-NEXT:   .long   L{{.*}}-_propertyWrite
+; CHECK-LABEL:  .long   L{{.*}}-_propertyWrite
 ; CHECK-NEXT:   .short  0
 ; CHECK-NEXT:   .short  2
 ; CHECK-NEXT:   .byte   1
@@ -142,8 +138,7 @@ entry:
 ;
 ; 2 live variables in registers.
 ;
-; CHECK-NEXT:   .long  7
-; CHECK-NEXT:   .long   L{{.*}}-_jsVoidCall
+; CHECK-LABEL:  .long   L{{.*}}-_jsVoidCall
 ; CHECK-NEXT:   .short  0
 ; CHECK-NEXT:   .short  2
 ; CHECK-NEXT:   .byte   1
@@ -165,8 +160,7 @@ entry:
 ;
 ; 2 live variables in registers.
 ;
-; CHECK:        .long  8
-; CHECK-NEXT:   .long   L{{.*}}-_jsIntCall
+; CHECK-LABEL:  .long   L{{.*}}-_jsIntCall
 ; CHECK-NEXT:   .short  0
 ; CHECK-NEXT:   .short  2
 ; CHECK-NEXT:   .byte   1
@@ -189,16 +183,15 @@ entry:
 ;
 ; Verify 17 stack map entries.
 ;
-; CHECK:      .long 11
-; CHECK-NEXT: .long L{{.*}}-_spilledValue
-; CHECK-NEXT: .short 0
-; CHECK-NEXT: .short 17
+; CHECK-LABEL:  .long L{{.*}}-_spilledValue
+; CHECK-NEXT:   .short 0
+; CHECK-NEXT:   .short 17
 ;
 ; Check that at least one is a spilled entry from RBP.
 ; Location: Indirect RBP + ...
-; CHECK:      .byte 3
-; CHECK-NEXT: .byte 8
-; CHECK-NEXT: .short 6
+; CHECK:        .byte 3
+; CHECK-NEXT:   .byte 8
+; CHECK-NEXT:   .short 6
 define void @spilledValue(i64 %arg0, i64 %arg1, i64 %arg2, i64 %arg3, i64 %arg4, i64 %l0, i64 %l1, i64 %l2, i64 %l3, i64 %l4, i64 %l5, i64 %l6, i64 %l7, i64 %l8, i64 %l9, i64 %l10, i64 %l11, i64 %l12, i64 %l13, i64 %l14, i64 %l15, i64 %l16) {
 entry:
   call void (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i32 11, i32 15, i8* null, i32 5, i64 %arg0, i64 %arg1, i64 %arg2, i64 %arg3, i64 %arg4, i64 %l0, i64 %l1, i64 %l2, i64 %l3, i64 %l4, i64 %l5, i64 %l6, i64 %l7, i64 %l8, i64 %l9, i64 %l10, i64 %l11, i64 %l12, i64 %l13, i64 %l14, i64 %l15, i64 %l16)
@@ -209,16 +202,15 @@ entry:
 ;
 ; Verify 17 stack map entries.
 ;
-; CHECK:       .long 12
-; CHECK-LABEL: .long L{{.*}}-_spilledStackMapValue
-; CHECK-NEXT:  .short 0
-; CHECK-NEXT:  .short 17
+; CHECK-LABEL:  .long L{{.*}}-_spilledStackMapValue
+; CHECK-NEXT:   .short 0
+; CHECK-NEXT:   .short 17
 ;
 ; Check that at least one is a spilled entry from RBP.
 ; Location: Indirect RBP + ...
-; CHECK:      .byte 3
-; CHECK-NEXT: .byte 8
-; CHECK-NEXT: .short 6
+; CHECK:        .byte 3
+; CHECK-NEXT:   .byte 8
+; CHECK-NEXT:   .short 6
 define webkit_jscc void @spilledStackMapValue(i64 %l0, i64 %l1, i64 %l2, i64 %l3, i64 %l4, i64 %l5, i64 %l6, i64 %l7, i64 %l8, i64 %l9, i64 %l10, i64 %l11, i64 %l12, i64 %l13, i64 %l14, i64 %l15, i64 %l16) {
 entry:
   call void (i32, i32, ...)* @llvm.experimental.stackmap(i32 12, i32 15, i64 %l0, i64 %l1, i64 %l2, i64 %l3, i64 %l4, i64 %l5, i64 %l6, i64 %l7, i64 %l8, i64 %l9, i64 %l10, i64 %l11, i64 %l12, i64 %l13, i64 %l14, i64 %l15, i64 %l16)
@@ -227,17 +219,16 @@ entry:
 
 ; Spill a subregister stackmap operand.
 ;
-; CHECK:       .long 13
-; CHECK-LABEL: .long L{{.*}}-_spillSubReg
-; CHECK-NEXT:  .short 0
+; CHECK-LABEL:  .long L{{.*}}-_spillSubReg
+; CHECK-NEXT:   .short 0
 ; 4 locations
-; CHECK-NEXT:  .short 1
+; CHECK-NEXT:   .short 1
 ;
 ; Check that the subregister operand is a 4-byte spill.
 ; Location: Indirect, 4-byte, RBP + ...
-; CHECK:      .byte 3
-; CHECK-NEXT: .byte 4
-; CHECK-NEXT: .short 6
+; CHECK:        .byte 3
+; CHECK-NEXT:   .byte 4
+; CHECK-NEXT:   .short 6
 define void @spillSubReg(i64 %arg) #0 {
 bb:
   br i1 undef, label %bb1, label %bb2
@@ -268,24 +259,23 @@ bb61:
 ; Map a single byte subregister. There is no DWARF register number, so
 ; we expect the register to be encoded with the proper size and spill offset. We don't know which
 ;
-; CHECK:       .long 14
-; CHECK-LABEL: .long L{{.*}}-_subRegOffset
-; CHECK-NEXT:  .short 0
+; CHECK-LABEL:  .long L{{.*}}-_subRegOffset
+; CHECK-NEXT:   .short 0
 ; 2 locations
-; CHECK-NEXT:  .short 2
+; CHECK-NEXT:   .short 2
 ;
 ; Check that the subregister operands are 1-byte spills.
 ; Location 0: Register, 4-byte, AL
-; CHECK-NEXT: .byte 1
-; CHECK-NEXT: .byte 1
-; CHECK-NEXT: .short 0
-; CHECK-NEXT: .long 0
+; CHECK-NEXT:   .byte 1
+; CHECK-NEXT:   .byte 1
+; CHECK-NEXT:   .short 0
+; CHECK-NEXT:   .long 0
 ;
 ; Location 1: Register, 4-byte, BL
-; CHECK-NEXT: .byte 1
-; CHECK-NEXT: .byte 1
-; CHECK-NEXT: .short 3
-; CHECK-NEXT: .long 0
+; CHECK-NEXT:   .byte 1
+; CHECK-NEXT:   .byte 1
+; CHECK-NEXT:   .short 3
+; CHECK-NEXT:   .long 0
 define void @subRegOffset(i16 %arg) {
   %v = mul i16 %arg, 5
   %a0 = trunc i16 %v to i8
@@ -299,11 +289,10 @@ define void @subRegOffset(i16 %arg) {
 
 ; Map a constant value.
 ;
-; CHECK:       .long 15
-; CHECK-LABEL: .long L{{.*}}-_liveConstant
-; CHECK-NEXT:  .short 0
+; CHECK-LABEL:  .long L{{.*}}-_liveConstant
+; CHECK-NEXT:   .short 0
 ; 1 location
-; CHECK-NEXT:  .short 1
+; CHECK-NEXT:   .short 1
 ; Loc 0: SmallConstant
 ; CHECK-NEXT:   .byte   4
 ; CHECK-NEXT:   .byte   8
@@ -318,7 +307,6 @@ define void @liveConstant() {
 ; Directly map an alloca's address.
 ;
 ; Callsite 16
-; CHECK:        .long 16
 ; CHECK-LABEL:  .long L{{.*}}-_directFrameIdx
 ; CHECK-NEXT:   .short 0
 ; 1 location
@@ -328,9 +316,9 @@ define void @liveConstant() {
 ; CHECK-NEXT:   .byte	8
 ; CHECK-NEXT:   .short	6
 ; CHECK-NEXT:   .long
+
 ; Callsite 17
-; CHECK-NEXT:   .long	17
-; CHECK-NEXT:   .long	L{{.*}}-_directFrameIdx
+; CHECK-LABEL:  .long	L{{.*}}-_directFrameIdx
 ; CHECK-NEXT:   .short	0
 ; 2 locations
 ; CHECK-NEXT:   .short	2
