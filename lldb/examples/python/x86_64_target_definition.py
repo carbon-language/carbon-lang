@@ -328,6 +328,7 @@ def get_target_definition ():
             # Only fill in the offset if there is no 'slice' in the register info
             if 'slice' not in reg_info and 'composite' not in reg_info:
                 reg_info['offset'] = offset
+                offset += reg_info['bitsize']/8
             
             # Set the GCC/DWARF register number for this register if it has one    
             reg_num = get_reg_num(name_to_gcc_dwarf_regnum, reg_name)
@@ -345,7 +346,6 @@ def get_target_definition ():
             if reg_num != LLDB_INVALID_REGNUM:
                 reg_info['gdb'] = reg_num
 
-            offset += reg_info['bitsize']/8
         g_target_definition['sets'] = ['General Purpose Registers', 'Floating Point Registers']
         g_target_definition['registers'] = x86_64_register_infos
         g_target_definition['host-info'] = { 'triple'   : 'x86_64-apple-macosx', 'endian': eByteOrderLittle }
