@@ -1244,6 +1244,9 @@ public:
   /// as "bitPosition".
   void flipBit(unsigned bitPosition);
 
+  /// \brief Returns true if the bit in bitPosition is set.
+  bool extractBit(unsigned bitPosition) const;
+
   /// @}
   /// \name Value Characterization Functions
   /// @{

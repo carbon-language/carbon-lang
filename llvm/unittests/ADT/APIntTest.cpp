@@ -597,4 +597,30 @@ TEST(APIntTest, tcDecrement) {
     EXPECT_EQ(APInt::tcCompare(test, expected, 4), 0);
   }
 }
+
+TEST(APIntTest, extractBit) {
+  // Single word check.
+  uint64_t E1 = 0x2CA7F46BF6569915ULL;
+  APInt A1(64, E1);
+  for (unsigned i = 0, e = 64; i < e; ++i) {    
+    EXPECT_EQ(bool(E1 & (1ULL << i)),
+              A1.extractBit(i));
+  }
+
+  // Multiword check.
+  integerPart E2[4] = {
+    0xeb6eb136591cba21ULL,
+    0x7b9358bd6a33f10aULL,
+    0x7e7ffa5eadd8846ULL,
+    0x305f341ca00b613dULL
+  };
+  APInt A2(integerPartWidth*4, ArrayRef<integerPart>(E2, 4));
+  for (unsigned i = 0; i < 4; ++i) {
+    for (unsigned j = 0; j < integerPartWidth; ++j) {
+      EXPECT_EQ(bool(E2[i] & (1ULL << j)),
+                A2.extractBit(i*integerPartWidth + j));
+    }
+  }
+}
+
 }

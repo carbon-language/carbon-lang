@@ -607,6 +607,14 @@ void APInt::flipBit(unsigned bitPosition) {
   else setBit(bitPosition);
 }
 
+bool APInt::extractBit(unsigned bitPosition) const {
+  assert(bitPosition < BitWidth && "Out of the bit-width range!");
+  if (isSingleWord())
+    return VAL & maskBit(bitPosition);
+  else
+    return pVal[whichWord(bitPosition)] & maskBit(bitPosition);
+}
+
 unsigned APInt::getBitsNeeded(StringRef str, uint8_t radix) {
   assert(!str.empty() && "Invalid string length");
   assert((radix == 10 || radix == 8 || radix == 16 || radix == 2 || 
