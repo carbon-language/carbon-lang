@@ -13,7 +13,6 @@
 #include <vector>
 
 #include "lldb/lldb-forward.h"
-#include "lldb/Host/Mutex.h"
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBQueueItem.h"
 
