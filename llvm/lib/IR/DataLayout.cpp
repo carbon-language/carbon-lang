@@ -125,14 +125,14 @@ DataLayout::InvalidAlignmentElem = { INVALID_ALIGN, 0, 0, 0 };
 //===----------------------------------------------------------------------===//
 
 PointerAlignElem
-PointerAlignElem::get(uint32_t addr_space, unsigned abi_align,
-                      unsigned pref_align, uint32_t bit_width) {
-  assert(abi_align <= pref_align && "Preferred alignment worse than ABI!");
+PointerAlignElem::get(uint32_t AddressSpace, unsigned ABIAlign,
+                      unsigned PrefAlign, uint32_t TypeByteWidth) {
+  assert(ABIAlign <= PrefAlign && "Preferred alignment worse than ABI!");
   PointerAlignElem retval;
-  retval.AddressSpace = addr_space;
-  retval.ABIAlign = abi_align;
-  retval.PrefAlign = pref_align;
-  retval.TypeBitWidth = bit_width;
+  retval.AddressSpace = AddressSpace;
+  retval.ABIAlign = ABIAlign;
+  retval.PrefAlign = PrefAlign;
+  retval.TypeByteWidth = TypeByteWidth;
   return retval;
 }
 
@@ -141,7 +141,7 @@ PointerAlignElem::operator==(const PointerAlignElem &rhs) const {
   return (ABIAlign == rhs.ABIAlign
           && AddressSpace == rhs.AddressSpace
           && PrefAlign == rhs.PrefAlign
-          && TypeBitWidth == rhs.TypeBitWidth);
+          && TypeByteWidth == rhs.TypeByteWidth);
 }
 
 const PointerAlignElem
@@ -335,18 +335,18 @@ DataLayout::setAlignment(AlignTypeEnum align_type, unsigned abi_align,
                                             pref_align, bit_width));
 }
 
-void
-DataLayout::setPointerAlignment(uint32_t addr_space, unsigned abi_align,
-                         unsigned pref_align, uint32_t bit_width) {
-  assert(abi_align <= pref_align && "Preferred alignment worse than ABI!");
-  DenseMap<unsigned,PointerAlignElem>::iterator val = Pointers.find(addr_space);
+void DataLayout::setPointerAlignment(uint32_t AddrSpace, unsigned ABIAlign,
+                                     unsigned PrefAlign,
+                                     uint32_t TypeByteWidth) {
+  assert(ABIAlign <= PrefAlign && "Preferred alignment worse than ABI!");
+  DenseMap<unsigned,PointerAlignElem>::iterator val = Pointers.find(AddrSpace);
   if (val == Pointers.end()) {
-    Pointers[addr_space] = PointerAlignElem::get(addr_space,
-          abi_align, pref_align, bit_width);
+    Pointers[AddrSpace] =
+        PointerAlignElem::get(AddrSpace, ABIAlign, PrefAlign, TypeByteWidth);
   } else {
-    val->second.ABIAlign = abi_align;
-    val->second.PrefAlign = pref_align;
-    val->second.TypeBitWidth = bit_width;
+    val->second.ABIAlign = ABIAlign;
+    val->second.PrefAlign = PrefAlign;
+    val->second.TypeByteWidth = TypeByteWidth;
   }
 }
 
@@ -487,7 +487,7 @@ std::string DataLayout::getStringRepresentation() const {
     if (PI.AddressSpace) {
       OS << PI.AddressSpace;
     }
-     OS << ":" << PI.TypeBitWidth*8 << ':' << PI.ABIAlign*8
+     OS << ":" << PI.TypeByteWidth*8 << ':' << PI.ABIAlign*8
         << ':' << PI.PrefAlign*8;
   }
   OS << "-S" << StackNaturalAlign*8;

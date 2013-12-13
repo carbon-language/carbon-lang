@@ -78,12 +78,12 @@ struct LayoutAlignElem {
 struct PointerAlignElem {
   unsigned            ABIAlign;       ///< ABI alignment for this type/bitw
   unsigned            PrefAlign;      ///< Pref. alignment for this type/bitw
-  uint32_t            TypeBitWidth;   ///< Type bit width
+  uint32_t            TypeByteWidth;  ///< Type byte width
   uint32_t            AddressSpace;   ///< Address space for the pointer type
 
   /// Initializer
-  static PointerAlignElem get(uint32_t addr_space, unsigned abi_align,
-                             unsigned pref_align, uint32_t bit_width);
+  static PointerAlignElem get(uint32_t AddressSpace, unsigned ABIAlign,
+                             unsigned PrefAlign, uint32_t TypeByteWidth);
   /// Equality predicate
   bool operator==(const PointerAlignElem &rhs) const;
 };
@@ -129,8 +129,8 @@ private:
                             bool ABIAlign, Type *Ty) const;
 
   //! Set/initialize pointer alignments
-  void setPointerAlignment(uint32_t addr_space, unsigned abi_align,
-      unsigned pref_align, uint32_t bit_width);
+  void setPointerAlignment(uint32_t AddrSpace, unsigned ABIAlign,
+                           unsigned PrefAlign, uint32_t TypeByteWidth);
 
   //! Internal helper method that returns requested alignment for type.
   unsigned getAlignment(Type *Ty, bool abi_or_pref) const;
@@ -263,7 +263,7 @@ public:
     if (val == Pointers.end()) {
       val = Pointers.find(0);
     }
-    return val->second.TypeBitWidth;
+    return val->second.TypeByteWidth;
   }
   /// Layout pointer size, in bits
   /// FIXME: The defaults need to be removed once all of
