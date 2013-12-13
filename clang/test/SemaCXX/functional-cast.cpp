@@ -305,8 +305,8 @@ void memptrs()
   (void)structureimfp(psf);
 
   typedef void (structure::*structurevmfp)();
-  (void)structurevmfp(psi); // expected-error-re {{functional-style cast from 'const int structure::*' to 'structurevmfp' (aka 'void (structure::*)(){{.*}}') is not allowed}}
-  (void)structureimp(psf); // expected-error-re {{functional-style cast from 'void (structure::*)(){{.*}}' to 'structureimp' (aka 'int structure::*') is not allowed}}
+  (void)structurevmfp(psi); // expected-error-re {{functional-style cast from 'const int structure::*' to 'structurevmfp' (aka 'void (structure::*)(){{( __attribute__\(\(thiscall\)\))?}}') is not allowed}}
+  (void)structureimp(psf); // expected-error-re {{functional-style cast from 'void (structure::*)(){{( __attribute__\(\(thiscall\)\))?}}' to 'structureimp' (aka 'int structure::*') is not allowed}}
 }
 
 // ---------------- misc ------------------

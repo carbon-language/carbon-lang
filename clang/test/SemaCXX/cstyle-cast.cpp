@@ -227,6 +227,6 @@ void memptrs()
   void (structure::*psf)() = 0;
   (void)(int (structure::*)())(psf);
 
-  (void)(void (structure::*)())(psi); // expected-error-re {{C-style cast from 'const int structure::*' to 'void (structure::*)(){{.*}}' is not allowed}}
-  (void)(int structure::*)(psf); // expected-error-re {{C-style cast from 'void (structure::*)(){{.*}}' to 'int structure::*' is not allowed}}
+  (void)(void (structure::*)())(psi); // expected-error-re {{C-style cast from 'const int structure::*' to 'void (structure::*)(){{( __attribute__\(\(thiscall\)\))?}}' is not allowed}}
+  (void)(int structure::*)(psf); // expected-error-re {{C-style cast from 'void (structure::*)(){{( __attribute__\(\(thiscall\)\))?}}' to 'int structure::*' is not allowed}}
 }

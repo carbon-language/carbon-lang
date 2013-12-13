@@ -22,13 +22,13 @@ void test(X *xp, int (X::*pmf)(int), int (X::*l_pmf)(int) &,
 
   // Lvalue ref-qualifier.
   (lvalue<X>().*l_pmf)(17);
-  (xvalue<X>().*l_pmf)(17); // expected-error-re{{pointer-to-member function type 'int (X::*)(int) {{.*}}&' can only be called on an lvalue}}
-  (prvalue<X>().*l_pmf)(17); // expected-error-re{{pointer-to-member function type 'int (X::*)(int) {{.*}}&' can only be called on an lvalue}}
+  (xvalue<X>().*l_pmf)(17); // expected-error-re{{pointer-to-member function type 'int (X::*)(int){{( __attribute__\(\(thiscall\)\))?}} &' can only be called on an lvalue}}
+  (prvalue<X>().*l_pmf)(17); // expected-error-re{{pointer-to-member function type 'int (X::*)(int){{( __attribute__\(\(thiscall\)\))?}} &' can only be called on an lvalue}}
   (xp->*l_pmf)(17);
 
   // Rvalue ref-qualifier.
-  (lvalue<X>().*r_pmf)(17); // expected-error-re{{pointer-to-member function type 'int (X::*)(int) {{.*}}&&' can only be called on an rvalue}}
+  (lvalue<X>().*r_pmf)(17); // expected-error-re{{pointer-to-member function type 'int (X::*)(int){{( __attribute__\(\(thiscall\)\))?}} &&' can only be called on an rvalue}}
   (xvalue<X>().*r_pmf)(17);
   (prvalue<X>().*r_pmf)(17);
-  (xp->*r_pmf)(17);  // expected-error-re{{pointer-to-member function type 'int (X::*)(int) {{.*}}&&' can only be called on an rvalue}}
+  (xp->*r_pmf)(17);  // expected-error-re{{pointer-to-member function type 'int (X::*)(int){{( __attribute__\(\(thiscall\)\))?}} &&' can only be called on an rvalue}}
 }

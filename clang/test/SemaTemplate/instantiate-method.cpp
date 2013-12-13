@@ -178,7 +178,7 @@ namespace PR7022 {
 namespace SameSignatureAfterInstantiation {
   template<typename T> struct S {
     void f(T *); // expected-note {{previous}}
-    void f(const T*); // expected-error-re {{multiple overloads of 'f' instantiate to the same signature 'void (const int *){{.*}}'}}
+    void f(const T*); // expected-error-re {{multiple overloads of 'f' instantiate to the same signature 'void (const int *){{( __attribute__\(\(thiscall\)\))?}}'}}
   };
   S<const int> s; // expected-note {{instantiation}}
 }
