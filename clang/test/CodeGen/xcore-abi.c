@@ -7,7 +7,6 @@ _Static_assert(_Alignof(double) == 4, "alignof double is wrong");
 
 // RUN: %clang_cc1 -triple xcore-unknown-unknown -fno-signed-char -fno-common -emit-llvm -o - %s | FileCheck %s
 
-// CHECK: target datalayout = "e-p:32:32:32-a:0:32-n32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f16:16:32-f32:32:32-f64:32:32"
 // CHECK: target triple = "xcore-unknown-unknown"
 
 // CHECK: @g1 = global i32 0, align 4
