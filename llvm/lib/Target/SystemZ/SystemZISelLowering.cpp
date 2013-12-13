@@ -1280,6 +1280,36 @@ static void adjustForFNeg(SDValue &CmpOp0, SDValue &CmpOp1, unsigned &CCMask) {
   }
 }
 
+// Check whether CmpOp0 is (shl X, 32), CmpOp1 is 0, and whether X is
+// also sign-extended.  In that case it is better to test the result
+// of the sign extension using LTGFR.
+//
+// This case is important because InstCombine transforms a comparison
+// with (sext (trunc X)) into a comparison with (shl X, 32).
+static void adjustForLTGFR(SDValue &CmpOp0, SDValue &CmpOp1,
+                           unsigned &IcmpType) {
+  // Check for a comparison between (shl X, 32) and 0.
+  if (CmpOp0.getOpcode() == ISD::SHL &&
+      CmpOp0.getValueType() == MVT::i64 &&
+      CmpOp1.getOpcode() == ISD::Constant &&
+      cast<ConstantSDNode>(CmpOp1)->getZExtValue() == 0) {
+    ConstantSDNode *C1 = dyn_cast<ConstantSDNode>(CmpOp0.getOperand(1));
+    if (C1 && C1->getZExtValue() == 32) {
+      SDValue ShlOp0 = CmpOp0.getOperand(0);
+      // See whether X has any SIGN_EXTEND_INREG uses.
+      for (SDNode::use_iterator I = ShlOp0->use_begin(), E = ShlOp0->use_end();
+           I != E; ++I) {
+        SDNode *N = *I;
+        if (N->getOpcode() == ISD::SIGN_EXTEND_INREG &&
+            cast<VTSDNode>(N->getOperand(1))->getVT() == MVT::i32) {
+          CmpOp0 = SDValue(N, 0);
+          return;
+        }
+      }
+    }
+  }
+}
+
 // Return true if shift operation N has an in-range constant shift value.
 // Store it in ShiftVal if so.
 static bool isSimpleShift(SDValue N, unsigned &ShiftVal) {
@@ -1497,6 +1527,7 @@ static SDValue emitCmp(const SystemZTargetMachine &TM, SelectionDAG &DAG,
   adjustForTestUnderMask(DAG, Opcode, CmpOp0, CmpOp1, CCValid, CCMask,
                          ICmpType);
   adjustForFNeg(CmpOp0, CmpOp1, CCMask);
+  adjustForLTGFR(CmpOp0, CmpOp1, ICmpType);
   if (Opcode == SystemZISD::ICMP || Opcode == SystemZISD::TM)
     return DAG.getNode(Opcode, DL, MVT::Glue, CmpOp0, CmpOp1,
                        DAG.getConstant(ICmpType, MVT::i32));

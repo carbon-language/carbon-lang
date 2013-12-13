@@ -797,3 +797,51 @@ store:
 exit:
   ret i32 %val
 }
+
+; Test f35 for in-register extensions.
+define i64 @f39(i64 %dummy, i64 %a, i64 *%dest) {
+; CHECK-LABEL: f39:
+; CHECK: ltgfr %r2, %r3
+; CHECK-NEXT: #APP
+; CHECK-NEXT: blah %r2
+; CHECK-NEXT: #NO_APP
+; CHECK-NEXT: jh .L{{.*}}
+; CHECK: br %r14
+entry:
+  %val = trunc i64 %a to i32
+  %ext = sext i32 %val to i64
+  call void asm sideeffect "blah $0", "{r2}"(i64 %ext)
+  %cmp = icmp sgt i64 %ext, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i64 %ext, i64 *%dest
+  br label %exit
+
+exit:
+  ret i64 %ext
+}
+
+; ...and again with what InstCombine would produce for f40.
+define i64 @f40(i64 %dummy, i64 %a, i64 *%dest) {
+; CHECK-LABEL: f40:
+; CHECK: ltgfr %r2, %r3
+; CHECK-NEXT: #APP
+; CHECK-NEXT: blah %r2
+; CHECK-NEXT: #NO_APP
+; CHECK-NEXT: jh .L{{.*}}
+; CHECK: br %r14
+entry:
+  %shl = shl i64 %a, 32
+  %ext = ashr i64 %shl, 32
+  call void asm sideeffect "blah $0", "{r2}"(i64 %ext)
+  %cmp = icmp sgt i64 %shl, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i64 %ext, i64 *%dest
+  br label %exit
+
+exit:
+  ret i64 %ext
+}
