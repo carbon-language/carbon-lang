@@ -64,11 +64,6 @@ about them. The improvements since the 3.4 release include:
 New Compiler Flags
 ------------------
 
-...
-
-C Language Changes in Clang
----------------------------
-
 The integrated assembler is now turned on by default on ARM (and Thumb),
 so the use of the option `-integrated-as` is now redundant on those
 architectures. This is an important move to both *eat our own dog food*
@@ -79,6 +74,11 @@ rely on specific GNU syntax or extensions, and we're working towards
 getting them all fixed. Please, report bugs or feature requests if
 you find anything. In the meantime, use `-no-integrated-as` to revert
 back the call to GNU assembler.
+
+C Language Changes in Clang
+---------------------------
+
+...
 
 C11 Feature Support
 ^^^^^^^^^^^^^^^^^^^
