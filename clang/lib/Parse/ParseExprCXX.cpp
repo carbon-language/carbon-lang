@@ -2800,8 +2800,7 @@ ExprResult Parser::ParseTypeTrait() {
     return Actions.ActOnUnaryTypeTrait(UnaryTypeTraitFromTokKind(Kind), Loc,
                                        Args[0], EndLoc);
 
-  return Actions.ActOnTypeTrait(TypeTraitFromTokKind(Kind), Arity, Loc, Args,
-                                EndLoc);
+  return Actions.ActOnTypeTrait(TypeTraitFromTokKind(Kind), Loc, Args, EndLoc);
 }
 
 /// ParseArrayTypeTrait - Parse the built-in array type-trait

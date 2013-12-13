@@ -3734,8 +3734,8 @@ ExprResult Sema::BuildTypeTrait(TypeTrait Kind, SourceLocation KWLoc,
                                RParenLoc, Result);
 }
 
-ExprResult Sema::ActOnTypeTrait(TypeTrait Kind, unsigned Arity,
-                                SourceLocation KWLoc, ArrayRef<ParsedType> Args,
+ExprResult Sema::ActOnTypeTrait(TypeTrait Kind, SourceLocation KWLoc,
+                                ArrayRef<ParsedType> Args,
                                 SourceLocation RParenLoc) {
   SmallVector<TypeSourceInfo *, 4> ConvertedArgs;
   ConvertedArgs.reserve(Args.size());

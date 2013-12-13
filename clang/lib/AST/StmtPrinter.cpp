@@ -1695,7 +1695,6 @@ static const char *getTypeTraitName(TypeTrait TT) {
   switch (TT) {
 #define TYPE_TRAIT_2(Spelling, Name, Key) \
 case clang::BTT_##Name: return #Spelling;
-#include "clang/Basic/TokenKinds.def"
 #define TYPE_TRAIT_N(Spelling, Name, Key) \
   case clang::TT_##Name: return #Spelling;
 #include "clang/Basic/TokenKinds.def"
