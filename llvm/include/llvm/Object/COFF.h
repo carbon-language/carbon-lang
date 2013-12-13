@@ -171,7 +171,7 @@ struct export_directory_table_entry {
   support::ulittle32_t OrdinalTableRVA;
 };
 
-struct export_address_table_entry {
+union export_address_table_entry {
   support::ulittle32_t ExportRVA;
   support::ulittle32_t ForwarderRVA;
 };
