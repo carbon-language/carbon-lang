@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wreadonly-setter-attrs -verify %s  -fblocks
+// RUN: %clang_cc1 -fsyntax-only -verify %s  -fblocks
 
 // Check property attribute consistency.
 
