@@ -885,6 +885,9 @@ void ExecutableWriter::build(const File &linkedFile) {
     if (section->getSectionName() == ".idata.d")
       dataDirectory->setField(DataDirectoryIndex::IMPORT_TABLE,
                               section->getVirtualAddress(), section->size());
+    if (section->getSectionName() == ".edata")
+      dataDirectory->setField(DataDirectoryIndex::EXPORT_TABLE,
+                              section->getVirtualAddress(), section->size());
   }
 
   // Now that we know the size and file offset of sections. Set the file

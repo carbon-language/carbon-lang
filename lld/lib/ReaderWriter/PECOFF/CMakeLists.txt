@@ -1,4 +1,5 @@
 add_lld_library(lldPECOFF
+  EdataPass.cpp
   IdataPass.cpp
   PECOFFLinkingContext.cpp
   Pass.cpp

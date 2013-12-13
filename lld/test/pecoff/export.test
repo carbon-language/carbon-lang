@@ -1,0 +1,12 @@
+# RUN: yaml2obj %p/Inputs/export.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link /out:%t.dll /dll /subsystem:console /entry:_init \
+# RUN:   /export:exportfn -- %t.obj
+# RUN: llvm-objdump -s %t.dll | FileCheck %s
+
+CHECK:      Contents of section .edata:
+CHECK-NEXT:  1000 00000000 {{........}} 00000000 28100000
+CHECK-NEXT:  1010 01000000 01000000 01000000 3c100000
+CHECK-NEXT:  1020 40100000 4e100000 6578706f 72742e74
+CHECK-NEXT:  1030 6573742e 746d702e 646c6c00 08200000
+CHECK-NEXT:  1040 44100000 5f657870 6f727466 6e000000
