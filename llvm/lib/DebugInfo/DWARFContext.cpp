@@ -297,8 +297,10 @@ void DWARFContext::parseCompileUnits() {
 }
 
 void DWARFContext::parseTypeUnits() {
-  const TypeSectionMap &Sections = getTypesSections();
-  for (TypeSectionMap::const_iterator I = Sections.begin(), E = Sections.end();
+  const std::map<object::SectionRef, Section> &Sections = getTypesSections();
+  for (std::map<object::SectionRef, Section>::const_iterator
+           I = Sections.begin(),
+           E = Sections.end();
        I != E; ++I) {
     uint32_t offset = 0;
     const DataExtractor &DIData =

@@ -45,19 +45,13 @@
 
 ; CHECK-LABEL: .debug_info contents:
 ; CHECK: Compile Unit: length = [[CU_SIZE:[0-9a-f]+]]
-
-; CHECK-LABEL: .debug_types contents:
-
 ; Check that we generate a hash for bar and the value.
-; CHECK-LABEL: type_signature = 0x6a7ee3d400662e88
-; CHECK: DW_AT_GNU_odr_signature [DW_FORM_data8] (0x200520c0d5b90eff)
+; CHECK-LABEL: DW_AT_GNU_odr_signature [DW_FORM_data8] (0x200520c0d5b90eff)
 ; CHECK: DW_TAG_structure_type
 ; CHECK-NEXT: debug_str{{.*}}"bar"
 
-
 ; Check that we generate a hash for fluffy and the value.
-; CHECK-LABEL: type_signature = 0x139b2e1ea94afec7
-; CHECK: DW_AT_GNU_odr_signature [DW_FORM_data8]   (0x9a0124d5a0c21c52)
+; CHECK-LABEL: DW_AT_GNU_odr_signature [DW_FORM_data8]   (0x9a0124d5a0c21c52)
 ; CHECK: DW_TAG_namespace
 ; CHECK-NEXT: debug_str{{.*}}"echidna"
 ; CHECK: DW_TAG_namespace
@@ -67,11 +61,10 @@
 ; CHECK: DW_TAG_class_type
 ; CHECK-NEXT: debug_str{{.*}}"fluffy"
 
+; We emit no hash for walrus since the type is contained in an anonymous
 ; namespace and won't violate any ODR-ness.
-; CHECK-LABEL: type_signature = 0xc0d031d6449dbca7
 ; CHECK: DW_TAG_type_unit
 ; CHECK-NOT: NULL
-; We emit no hash for walrus since the type is contained in an anonymous
 ; CHECK-NOT: DW_AT_GNU_odr_signature
 ; CHECK: DW_TAG_structure_type
 ; CHECK-NEXT: debug_str{{.*}}"walrus"
@@ -80,20 +73,17 @@
 ; CHECK-NEXT: DW_AT_decl_line
 ; CHECK: DW_TAG_subprogram
 
+
 ; Check that we generate a hash for wombat and the value, but not for the
 ; anonymous type contained within.
-; CHECK-LABEL: type_signature = 0x73776f130648b986
-; CHECK: DW_AT_GNU_odr_signature [DW_FORM_data8] (0x685bcc220141e9d7)
+; CHECK-LABEL: DW_AT_GNU_odr_signature [DW_FORM_data8] (0x685bcc220141e9d7)
 ; CHECK: DW_TAG_structure_type
 ; CHECK-NEXT: debug_str{{.*}}"wombat"
-
-; CHECK-LABEL: type_signature = 0xbf6fc40e82583d7c
 ; CHECK: DW_TAG_type_unit
-; CHECK-NOT: NULL
-; Check that we generate no ODR hash for the anonymous type nested inside 'wombat'
-; CHECK-NOT: DW_AT_GNU_odr_signature
 ; CHECK: DW_TAG_structure_type
-; The signature for the outer 'wombat' type
+; The signature for the outer 'wombat' type - this can be FileChecked once the
+; type units are moved to their own section with the full type unit header
+; including the signature
 ; CHECK: DW_AT_signature [DW_FORM_ref_sig8] (0x73776f130648b986)
 ; CHECK: DW_TAG_structure_type
 ; CHECK-NOT: DW_AT_name
@@ -108,20 +98,20 @@
 ; CHECK-NEXT: unit_size = [[CU_SIZE]]
 ; CHECK-NEXT: Offset Name
 ; Type unit for 'bar'
-; CHECK-NEXT: unit_size = 0x0000002b
+; CHECK-NEXT: unit_size = 0x0000001f
 ; CHECK-NEXT: Offset Name
 ; CHECK-NEXT: "bar"
-; CHECK-NEXT: unit_size = 0x00000065
+; CHECK-NEXT: unit_size = 0x00000059
 ; CHECK-NEXT: Offset Name
 ; CHECK-NEXT: "int"
 ; CHECK-NEXT: "echidna::capybara::mongoose::fluffy"
-; CHECK-NEXT: unit_size = 0x0000003b
+; CHECK-NEXT: unit_size = 0x0000002f
 ; CHECK-NEXT: Offset Name
 ; CHECK-NEXT: "walrus"
-; CHECK-NEXT: unit_size = 0x00000042
+; CHECK-NEXT: unit_size = 0x00000036
 ; CHECK-NEXT: Offset Name
 ; CHECK-NEXT: "wombat"
-; CHECK-NEXT: unit_size = 0x0000004b
+; CHECK-NEXT: unit_size = 0x0000003f
 ; CHECK-NEXT: Offset Name
 ; CHECK-NEXT: "int"
 

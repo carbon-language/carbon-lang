@@ -19,7 +19,6 @@
 #include "DWARFTypeUnit.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/MapVector.h"
 #include "llvm/DebugInfo/DIContext.h"
 
 namespace llvm {
@@ -139,9 +138,7 @@ public:
   virtual bool isLittleEndian() const = 0;
   virtual uint8_t getAddressSize() const = 0;
   virtual const Section &getInfoSection() = 0;
-  typedef MapVector<object::SectionRef, Section,
-                    std::map<object::SectionRef, unsigned> > TypeSectionMap;
-  virtual const TypeSectionMap &getTypesSections() = 0;
+  virtual const std::map<object::SectionRef, Section> &getTypesSections() = 0;
   virtual StringRef getAbbrevSection() = 0;
   virtual const Section &getLocSection() = 0;
   virtual StringRef getARangeSection() = 0;
@@ -182,7 +179,7 @@ class DWARFContextInMemory : public DWARFContext {
   bool IsLittleEndian;
   uint8_t AddressSize;
   Section InfoSection;
-  TypeSectionMap TypesSections;
+  std::map<object::SectionRef, Section> TypesSections;
   StringRef AbbrevSection;
   Section LocSection;
   StringRef ARangeSection;
@@ -211,7 +208,9 @@ public:
   virtual bool isLittleEndian() const { return IsLittleEndian; }
   virtual uint8_t getAddressSize() const { return AddressSize; }
   virtual const Section &getInfoSection() { return InfoSection; }
-  virtual const TypeSectionMap &getTypesSections() { return TypesSections; }
+  virtual const std::map<object::SectionRef, Section> &getTypesSections() {
+    return TypesSections;
+  }
   virtual StringRef getAbbrevSection() { return AbbrevSection; }
   virtual const Section &getLocSection() { return LocSection; }
   virtual StringRef getARangeSection() { return ARangeSection; }
