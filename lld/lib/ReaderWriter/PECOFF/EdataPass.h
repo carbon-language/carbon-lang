@@ -39,15 +39,15 @@ namespace edata {
 class EdataAtom : public COFFLinkerInternalAtom {
 public:
   EdataAtom(VirtualFile &file, size_t size)
-    : COFFLinkerInternalAtom(file, file.getNextOrdinal(),
-                             std::vector<uint8_t>(size)) {}
+      : COFFLinkerInternalAtom(file, file.getNextOrdinal(),
+                               std::vector<uint8_t>(size)) {}
 
   virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
   virtual StringRef customSectionName() const { return ".edata"; }
   virtual ContentType contentType() const { return typeData; }
   virtual ContentPermissions permissions() const { return permR__; }
 
-  template<typename T> T *getContents() const {
+  template <typename T> T *getContents() const {
     return (T *)rawContent().data();
   }
 };
@@ -63,14 +63,14 @@ public:
 
 private:
   edata::EdataAtom *createExportDirectoryTable(size_t numEntries);
-  edata::EdataAtom *createAddressTable(
-    const std::vector<const DefinedAtom *> &atoms);
+  edata::EdataAtom *
+  createAddressTable(const std::vector<const DefinedAtom *> &atoms);
   edata::EdataAtom *
   createNamePointerTable(const std::vector<const DefinedAtom *> &atoms,
                          MutableFile *file);
-  edata::EdataAtom *createOrdinalTable(
-    const std::vector<const DefinedAtom *> &atoms,
-    const std::vector<const DefinedAtom *> &sortedAtoms);
+  edata::EdataAtom *
+  createOrdinalTable(const std::vector<const DefinedAtom *> &atoms,
+                     const std::vector<const DefinedAtom *> &sortedAtoms);
 
   const PECOFFLinkingContext &_ctx;
   VirtualFile _file;

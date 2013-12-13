@@ -24,9 +24,8 @@ using llvm::object::export_directory_table_entry;
 namespace lld {
 namespace pecoff {
 
-static bool
-getExportedAtoms(const PECOFFLinkingContext &ctx, MutableFile *file,
-                 std::vector<const DefinedAtom *> &ret) {
+static bool getExportedAtoms(const PECOFFLinkingContext &ctx, MutableFile *file,
+                             std::vector<const DefinedAtom *> &ret) {
   std::map<StringRef, const DefinedAtom *> definedAtoms;
   for (const DefinedAtom *atom : file->defined())
     definedAtoms[atom->name()] = atom;
@@ -50,8 +49,8 @@ static bool compare(const DefinedAtom *a, const DefinedAtom *b) {
 
 edata::EdataAtom *
 EdataPass::createAddressTable(const std::vector<const DefinedAtom *> &atoms) {
-  EdataAtom *addressTable = new (_alloc) EdataAtom(
-    _file, sizeof(export_address_table_entry) * atoms.size());
+  EdataAtom *addressTable = new (_alloc)
+      EdataAtom(_file, sizeof(export_address_table_entry) * atoms.size());
 
   size_t offset = 0;
   for (const DefinedAtom *atom : atoms) {
@@ -64,7 +63,8 @@ EdataPass::createAddressTable(const std::vector<const DefinedAtom *> &atoms) {
 edata::EdataAtom *
 EdataPass::createNamePointerTable(const std::vector<const DefinedAtom *> &atoms,
                                   MutableFile *file) {
-  EdataAtom *table = new (_alloc) EdataAtom(_file, sizeof(uint32_t) * atoms.size());
+  EdataAtom *table =
+      new (_alloc) EdataAtom(_file, sizeof(uint32_t) * atoms.size());
 
   size_t offset = 0;
   for (const DefinedAtom *atom : atoms) {
@@ -78,7 +78,8 @@ EdataPass::createNamePointerTable(const std::vector<const DefinedAtom *> &atoms,
 }
 
 edata::EdataAtom *EdataPass::createExportDirectoryTable(size_t numEntries) {
-  EdataAtom *ret = new (_alloc) EdataAtom(_file, sizeof(export_directory_table_entry));
+  EdataAtom *ret =
+      new (_alloc) EdataAtom(_file, sizeof(export_directory_table_entry));
   auto *data = ret->getContents<export_directory_table_entry>();
   data->TimeDateStamp = time(nullptr);
   data->OrdinalBase = 1;
@@ -87,10 +88,11 @@ edata::EdataAtom *EdataPass::createExportDirectoryTable(size_t numEntries) {
   return ret;
 }
 
-edata::EdataAtom *
-EdataPass::createOrdinalTable(const std::vector<const DefinedAtom *> &atoms,
-                              const std::vector<const DefinedAtom *> &sortedAtoms) {
-  EdataAtom *ret = new (_alloc) EdataAtom(_file, sizeof(uint16_t) * atoms.size());
+edata::EdataAtom *EdataPass::createOrdinalTable(
+    const std::vector<const DefinedAtom *> &atoms,
+    const std::vector<const DefinedAtom *> &sortedAtoms) {
+  EdataAtom *ret =
+      new (_alloc) EdataAtom(_file, sizeof(uint16_t) * atoms.size());
   uint16_t *data = ret->getContents<uint16_t>();
 
   std::map<const DefinedAtom *, size_t> ordinals;
@@ -118,12 +120,13 @@ void EdataPass::perform(std::unique_ptr<MutableFile> &file) {
       new (_alloc) COFFStringAtom(_file, _stringOrdinal++, ".edata",
                                   llvm::sys::path::filename(_ctx.outputPath()));
   file->addAtom(*dllName);
-  addDir32NBReloc(table, dllName, offsetof(export_directory_table_entry, NameRVA));
+  addDir32NBReloc(table, dllName,
+                  offsetof(export_directory_table_entry, NameRVA));
 
   EdataAtom *addressTable = createAddressTable(atoms);
   file->addAtom(*addressTable);
-  addDir32NBReloc(table, addressTable,
-                  offsetof(export_directory_table_entry, ExportAddressTableRVA));
+  addDir32NBReloc(table, addressTable, offsetof(export_directory_table_entry,
+                                                ExportAddressTableRVA));
 
   std::vector<const DefinedAtom *> sortedAtoms(atoms);
   std::sort(sortedAtoms.begin(), sortedAtoms.end(), compare);
