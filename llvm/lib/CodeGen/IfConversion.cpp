@@ -23,7 +23,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetSchedule.h"
-#include "llvm/CodeGen/LivePhysRegs.h"
+#include "llvm/CodeGen/LiveRegUnits.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -162,8 +162,8 @@ namespace {
     const MachineBranchProbabilityInfo *MBPI;
     MachineRegisterInfo *MRI;
 
-    LivePhysRegs Redefs;
-    LivePhysRegs DontKill;
+    LiveRegUnits Redefs;
+    LiveRegUnits DontKill;
 
     bool PreRegAlloc;
     bool MadeChange;
@@ -968,22 +968,23 @@ void IfConverter::RemoveExtraEdges(BBInfo &BBI) {
 
 /// Behaves like LiveRegUnits::StepForward() but also adds implicit uses to all
 /// values defined in MI which are not live/used by MI.
-static void UpdatePredRedefs(MachineInstr *MI, LivePhysRegs &Redefs) {
+static void UpdatePredRedefs(MachineInstr *MI, LiveRegUnits &Redefs,
+                             const TargetRegisterInfo *TRI) {
   for (ConstMIBundleOperands Ops(MI); Ops.isValid(); ++Ops) {
     if (!Ops->isReg() || !Ops->isKill())
       continue;
     unsigned Reg = Ops->getReg();
     if (Reg == 0)
       continue;
-    Redefs.removeReg(Reg);
+    Redefs.removeReg(Reg, *TRI);
   }
   for (MIBundleOperands Ops(MI); Ops.isValid(); ++Ops) {
     if (!Ops->isReg() || !Ops->isDef())
       continue;
     unsigned Reg = Ops->getReg();
-    if (Reg == 0 || Redefs.contains(Reg))
+    if (Reg == 0 || Redefs.contains(Reg, *TRI))
       continue;
-    Redefs.addReg(Reg);
+    Redefs.addReg(Reg, *TRI);
 
     MachineOperand &Op = *Ops;
     MachineInstr *MI = Op.getParent();
@@ -995,11 +996,12 @@ static void UpdatePredRedefs(MachineInstr *MI, LivePhysRegs &Redefs) {
 /**
  * Remove kill flags from operands with a registers in the @p DontKill set.
  */
-static void RemoveKills(MachineInstr &MI, const LivePhysRegs &DontKill) {
+static void RemoveKills(MachineInstr &MI, const LiveRegUnits &DontKill,
+                        const MCRegisterInfo &MCRI) {
   for (MIBundleOperands O(&MI); O.isValid(); ++O) {
     if (!O->isReg() || !O->isKill())
       continue;
-    if (DontKill.contains(O->getReg()))
+    if (DontKill.contains(O->getReg(), MCRI))
       O->setIsKill(false);
   }
 }
@@ -1010,10 +1012,10 @@ static void RemoveKills(MachineInstr &MI, const LivePhysRegs &DontKill) {
  */
 static void RemoveKills(MachineBasicBlock::iterator I,
                         MachineBasicBlock::iterator E,
-                        const LivePhysRegs &DontKill,
+                        const LiveRegUnits &DontKill,
                         const MCRegisterInfo &MCRI) {
   for ( ; I != E; ++I)
-    RemoveKills(*I, DontKill);
+    RemoveKills(*I, DontKill, MCRI);
 }
 
 /// IfConvertSimple - If convert a simple (split, no rejoin) sub-CFG.
@@ -1047,13 +1049,13 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI, IfcvtKind Kind) {
   // Initialize liveins to the first BB. These are potentiall redefined by
   // predicated instructions.
   Redefs.init(TRI);
-  Redefs.addLiveIns(CvtBBI->BB);
-  Redefs.addLiveIns(NextBBI->BB);
+  Redefs.addLiveIns(CvtBBI->BB, *TRI);
+  Redefs.addLiveIns(NextBBI->BB, *TRI);
 
   // Compute a set of registers which must not be killed by instructions in
   // BB1: This is everything live-in to BB2.
   DontKill.init(TRI);
-  DontKill.addLiveIns(NextBBI->BB);
+  DontKill.addLiveIns(NextBBI->BB, *TRI);
 
   if (CvtBBI->BB->pred_size() > 1) {
     BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
@@ -1152,8 +1154,8 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
   // Initialize liveins to the first BB. These are potentially redefined by
   // predicated instructions.
   Redefs.init(TRI);
-  Redefs.addLiveIns(CvtBBI->BB);
-  Redefs.addLiveIns(NextBBI->BB);
+  Redefs.addLiveIns(CvtBBI->BB, *TRI);
+  Redefs.addLiveIns(NextBBI->BB, *TRI);
 
   DontKill.clear();
 
@@ -1282,7 +1284,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   // Initialize liveins to the first BB. These are potentially redefined by
   // predicated instructions.
   Redefs.init(TRI);
-  Redefs.addLiveIns(BBI1->BB);
+  Redefs.addLiveIns(BBI1->BB, *TRI);
 
   // Remove the duplicated instructions at the beginnings of both paths.
   MachineBasicBlock::iterator DI1 = BBI1->BB->begin();
@@ -1315,12 +1317,12 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   DontKill.init(TRI);
   for (MachineBasicBlock::reverse_iterator I = BBI2->BB->rbegin(),
        E = MachineBasicBlock::reverse_iterator(DI2); I != E; ++I) {
-    DontKill.stepBackward(*I);
+    DontKill.stepBackward(*I, *TRI);
   }
 
   for (MachineBasicBlock::const_iterator I = BBI1->BB->begin(), E = DI1; I != E;
        ++I) {
-    Redefs.stepForward(*I);
+    Redefs.stepForward(*I, *TRI);
   }
   BBI.BB->splice(BBI.BB->end(), BBI1->BB, BBI1->BB->begin(), DI1);
   BBI2->BB->erase(BBI2->BB->begin(), DI2);
@@ -1504,7 +1506,7 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
 
     // If the predicated instruction now redefines a register as the result of
     // if-conversion, add an implicit kill.
-    UpdatePredRedefs(I, Redefs);
+    UpdatePredRedefs(I, Redefs, TRI);
   }
 
   std::copy(Cond.begin(), Cond.end(), std::back_inserter(BBI.Predicate));
@@ -1550,11 +1552,11 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
 
     // If the predicated instruction now redefines a register as the result of
     // if-conversion, add an implicit kill.
-    UpdatePredRedefs(MI, Redefs);
+    UpdatePredRedefs(MI, Redefs, TRI);
 
     // Some kill flags may not be correct anymore.
     if (!DontKill.empty())
-      RemoveKills(*MI, DontKill);
+      RemoveKills(*MI, DontKill, *TRI);
   }
 
   if (!IgnoreBr) {
