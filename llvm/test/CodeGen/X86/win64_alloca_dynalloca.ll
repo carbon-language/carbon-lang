@@ -12,11 +12,11 @@ entry:
 
   %buf0 = alloca i8, i64 4096, align 1
 
-; ___chkstk must adjust %rsp.
+; ___chkstk_ms does not adjust %rsp.
 ; M64: movq  %rsp, %rbp
 ; M64:       $4096, %rax
-; M64: callq ___chkstk
-; M64-NOT:   %rsp
+; M64: callq ___chkstk_ms
+; M64: subq  %rax, %rsp
 
 ; __chkstk does not adjust %rsp.
 ; W64: movq  %rsp, %rbp

@@ -608,14 +608,12 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   // virtual memory manager are allocated in correct sequence.
   if (NumBytes >= 4096 && STI.isOSWindows() && !STI.isTargetMacho()) {
     const char *StackProbeSymbol;
-    bool isSPUpdateNeeded = false;
 
     if (Is64Bit) {
-      if (STI.isTargetCygMing())
-        StackProbeSymbol = "___chkstk";
-      else {
+      if (STI.isTargetCygMing()) {
+        StackProbeSymbol = "___chkstk_ms";
+      } else {
         StackProbeSymbol = "__chkstk";
-        isSPUpdateNeeded = true;
       }
     } else if (STI.isTargetCygMing())
       StackProbeSymbol = "_alloca";
@@ -657,15 +655,15 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit)
       .setMIFlag(MachineInstr::FrameSetup);
 
-    // MSVC x64's __chkstk does not adjust %rsp itself.
-    // It also does not clobber %rax so we can reuse it when adjusting %rsp.
-    if (isSPUpdateNeeded) {
+    if (Is64Bit) {
+      // MSVC x64's __chkstk and cygwin/mingw's ___chkstk_ms do not adjust %rsp
+      // themself. It also does not clobber %rax so we can reuse it when
+      // adjusting %rsp.
       BuildMI(MBB, MBBI, DL, TII.get(X86::SUB64rr), StackPtr)
         .addReg(StackPtr)
         .addReg(X86::RAX)
         .setMIFlag(MachineInstr::FrameSetup);
     }
-
     if (isEAXAlive) {
         // Restore EAX
         MachineInstr *MI = addRegOffset(BuildMI(MF, DL, TII.get(X86::MOV32rm),
