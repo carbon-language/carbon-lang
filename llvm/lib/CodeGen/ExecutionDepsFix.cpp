@@ -23,7 +23,7 @@
 #define DEBUG_TYPE "execution-fix"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/PostOrderIterator.h"
-#include "llvm/CodeGen/LiveRegUnits.h"
+#include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Allocator.h"
@@ -141,7 +141,7 @@ class ExeDepsFix : public MachineFunctionPass {
   std::vector<std::pair<MachineInstr*, unsigned> > UndefReads;
 
   /// Storage for register unit liveness.
-  LiveRegUnits LiveUnits;
+  LivePhysRegs LiveRegSet;
 
   /// Current instruction number.
   /// The first instruction in each basic block is 0.
@@ -352,7 +352,7 @@ void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
 
   // Set up UndefReads to track undefined register reads.
   UndefReads.clear();
-  LiveUnits.clear();
+  LiveRegSet.clear();
 
   // Set up LiveRegs to represent registers entering MBB.
   if (!LiveRegs)
@@ -547,21 +547,19 @@ void ExeDepsFix::processUndefReads(MachineBasicBlock *MBB) {
     return;
 
   // Collect this block's live out register units.
-  LiveUnits.init(TRI);
-  for (MachineBasicBlock::const_succ_iterator SI = MBB->succ_begin(),
-         SE = MBB->succ_end(); SI != SE; ++SI) {
-    LiveUnits.addLiveIns(*SI, *TRI);
-  }
+  LiveRegSet.init(TRI);
+  LiveRegSet.addLiveOuts(MBB);
+
   MachineInstr *UndefMI = UndefReads.back().first;
   unsigned OpIdx = UndefReads.back().second;
 
   for (MachineBasicBlock::reverse_iterator I = MBB->rbegin(), E = MBB->rend();
        I != E; ++I) {
     // Update liveness, including the current instrucion's defs.
-    LiveUnits.stepBackward(*I, *TRI);
+    LiveRegSet.stepBackward(*I);
 
     if (UndefMI == &*I) {
-      if (!LiveUnits.contains(UndefMI->getOperand(OpIdx).getReg(), *TRI))
+      if (!LiveRegSet.contains(UndefMI->getOperand(OpIdx).getReg()))
         TII->breakPartialRegDependency(UndefMI, OpIdx, TRI);
 
       UndefReads.pop_back();
