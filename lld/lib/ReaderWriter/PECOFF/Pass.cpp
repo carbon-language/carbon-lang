@@ -16,9 +16,9 @@
 namespace lld {
 namespace pecoff {
 
-void addDir32NBReloc(coff::COFFBaseDefinedAtom *atom, const Atom *target,
+void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target,
                      size_t offsetInAtom) {
-  std::unique_ptr<coff::COFFReference> ref(new coff::COFFReference(
+  std::unique_ptr<COFFReference> ref(new COFFReference(
       target, offsetInAtom, llvm::COFF::IMAGE_REL_I386_DIR32NB));
   atom->addReference(std::move(ref));
 }

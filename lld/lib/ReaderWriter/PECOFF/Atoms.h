@@ -18,7 +18,7 @@
 #include <vector>
 
 namespace lld {
-namespace coff {
+namespace pecoff {
 class COFFDefinedAtom;
 
 /// A COFFReference represents relocation information for an atom. For
@@ -372,7 +372,7 @@ template <typename T> void connectAtomsWithLayoutEdge(std::vector<T *> &atoms) {
     connectWithLayoutEdge(*it, *(it + 1));
 }
 
-} // namespace coff
+} // namespace pecoff
 } // namespace lld
 
 #endif

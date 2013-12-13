@@ -37,12 +37,12 @@
 #include <vector>
 
 using std::vector;
-using lld::coff::COFFAbsoluteAtom;
-using lld::coff::COFFBSSAtom;
-using lld::coff::COFFDefinedAtom;
-using lld::coff::COFFDefinedFileAtom;
-using lld::coff::COFFReference;
-using lld::coff::COFFUndefinedAtom;
+using lld::pecoff::COFFAbsoluteAtom;
+using lld::pecoff::COFFBSSAtom;
+using lld::pecoff::COFFDefinedAtom;
+using lld::pecoff::COFFDefinedFileAtom;
+using lld::pecoff::COFFReference;
+using lld::pecoff::COFFUndefinedAtom;
 using llvm::object::coff_aux_section_definition;
 using llvm::object::coff_aux_weak_external;
 using llvm::object::coff_relocation;
@@ -829,7 +829,7 @@ ReaderCOFF::parseFile(std::unique_ptr<MemoryBuffer> &mb,
   if (fileType == llvm::sys::fs::file_magic::windows_resource)
     return convertAndParseResourceFile(mb, result);
   if (fileType == llvm::sys::fs::file_magic::coff_import_library)
-    return lld::coff::parseCOFFImportLibrary(_context, mb, result);
+    return lld::pecoff::parseCOFFImportLibrary(_context, mb, result);
   return parseCOFFFile(mb, result);
 }
 

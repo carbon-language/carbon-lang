@@ -75,9 +75,9 @@ void ImportDirectoryAtom::addRelocations(
                   offsetof(ImportDirectoryTableEntry, ImportLookupTableRVA));
   addDir32NBReloc(this, importAddressTables[0],
                   offsetof(ImportDirectoryTableEntry, ImportAddressTableRVA));
-  auto *atom = new (_alloc) coff::COFFStringAtom(
-      context.dummyFile, context.dummyFile.getNextOrdinal(), ".idata",
-      loadName);
+  auto *atom = new (_alloc)
+      COFFStringAtom(context.dummyFile, context.dummyFile.getNextOrdinal(),
+                     ".idata", loadName);
   context.file.addAtom(*atom);
   addDir32NBReloc(this, atom, offsetof(ImportDirectoryTableEntry, NameRVA));
 }

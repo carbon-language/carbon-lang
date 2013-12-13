@@ -13,7 +13,7 @@
 #include "lld/ReaderWriter/Simple.h"
 
 namespace lld {
-namespace coff {
+namespace pecoff {
 
 // A virtual file containing absolute symbol __ImageBase. __ImageBase (or
 // ___ImageBase on x86) is a linker-generated symbol whose address is the same
@@ -31,5 +31,5 @@ private:
   COFFAbsoluteAtom _imageBaseAtom;
 };
 
-} // end namespace coff
+} // end namespace pecoff
 } // end namespace lld

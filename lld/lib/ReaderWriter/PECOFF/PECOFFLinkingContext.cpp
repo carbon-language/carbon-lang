@@ -96,7 +96,7 @@ bool PECOFFLinkingContext::createImplicitFiles(
   std::unique_ptr<SimpleFileNode> fileNode(
       new SimpleFileNode("Implicit Files"));
   std::unique_ptr<File> linkerGeneratedSymFile(
-      new coff::LinkerGeneratedSymbolFile(*this));
+      new pecoff::LinkerGeneratedSymbolFile(*this));
   fileNode->appendInputFile(std::move(linkerGeneratedSymFile));
   inputGraph().insertOneElementAt(std::move(fileNode),
                                   InputGraph::Position::END);
@@ -253,4 +253,5 @@ void PECOFFLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new LayoutPass()));
   pm.add(std::unique_ptr<Pass>(new pecoff::GroupedSectionsPass()));
 }
+
 } // end namespace lld

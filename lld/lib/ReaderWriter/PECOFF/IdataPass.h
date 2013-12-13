@@ -29,12 +29,6 @@
 #include <algorithm>
 #include <map>
 
-using lld::coff::COFFBaseDefinedAtom;
-using lld::coff::COFFDefinedAtom;
-using lld::coff::COFFLinkerInternalAtom;
-using lld::coff::COFFReference;
-using lld::coff::COFFSharedLibraryAtom;
-using lld::coff::COFFSharedLibraryAtom;
 using llvm::COFF::ImportDirectoryTableEntry;
 
 namespace lld {
@@ -47,9 +41,9 @@ class ImportTableEntryAtom;
 
 // A state object of this pass.
 struct Context {
-Context(MutableFile &f, coff::VirtualFile &g) : file(f), dummyFile(g) {}
+  Context(MutableFile &f, VirtualFile &g) : file(f), dummyFile(g) {}
   MutableFile &file;
-  coff::VirtualFile &dummyFile;
+  VirtualFile &dummyFile;
 };
 
 /// The root class of all idata atoms.
@@ -150,7 +144,7 @@ private:
   // A dummy file with which all the atoms created in the pass will be
   // associated. Atoms need to be associated to an input file even if it's not
   // read from a file, so we use this object.
-  coff::VirtualFile _dummyFile;
+  VirtualFile _dummyFile;
 
   llvm::BumpPtrAllocator _alloc;
 };

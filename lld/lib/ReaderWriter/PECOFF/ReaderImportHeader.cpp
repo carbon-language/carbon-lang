@@ -146,7 +146,7 @@ using namespace lld;
 using namespace llvm;
 
 namespace lld {
-namespace coff {
+namespace pecoff {
 
 namespace {
 
@@ -316,5 +316,5 @@ error_code parseCOFFImportLibrary(const LinkingContext &targetInfo,
   return error_code::success();
 }
 
-} // end namespace coff
+} // end namespace pecoff
 } // end namespace lld
