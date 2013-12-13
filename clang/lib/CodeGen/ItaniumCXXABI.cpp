@@ -878,7 +878,7 @@ void ItaniumCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
       = ImplicitParamDecl::Create(Context, 0, MD->getLocation(),
                                   &Context.Idents.get("vtt"), T);
     Params.push_back(VTTDecl);
-    getVTTDecl(CGF) = VTTDecl;
+    getStructorImplicitParamDecl(CGF) = VTTDecl;
   }
 }
 
@@ -887,10 +887,9 @@ void ItaniumCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
   EmitThisParam(CGF);
 
   /// Initialize the 'vtt' slot if needed.
-  if (getVTTDecl(CGF)) {
-    getVTTValue(CGF)
-      = CGF.Builder.CreateLoad(CGF.GetAddrOfLocalVar(getVTTDecl(CGF)),
-                               "vtt");
+  if (getStructorImplicitParamDecl(CGF)) {
+    getStructorImplicitParamValue(CGF) = CGF.Builder.CreateLoad(
+        CGF.GetAddrOfLocalVar(getStructorImplicitParamDecl(CGF)), "vtt");
   }
 
   /// If this is a function that the ABI specifies returns 'this', initialize

@@ -60,15 +60,6 @@ protected:
   /// Get a null value for unsupported member pointers.
   llvm::Constant *GetBogusMemberPointer(QualType T);
 
-  // FIXME: Every place that calls getVTT{Decl,Value} is something
-  // that needs to be abstracted properly.
-  ImplicitParamDecl *&getVTTDecl(CodeGenFunction &CGF) {
-    return CGF.CXXStructorImplicitParamDecl;
-  }
-  llvm::Value *&getVTTValue(CodeGenFunction &CGF) {
-    return CGF.CXXStructorImplicitParamValue;
-  }
-
   ImplicitParamDecl *&getStructorImplicitParamDecl(CodeGenFunction &CGF) {
     return CGF.CXXStructorImplicitParamDecl;
   }
