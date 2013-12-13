@@ -300,6 +300,41 @@ bool parseManifestUac(StringRef option, llvm::Optional<std::string> &level,
   }
 }
 
+// Parse /export:name[,@ordinal[,NONAME]][,DATA].
+bool parseExport(StringRef option, PECOFFLinkingContext::ExportDesc &ret) {
+  StringRef name;
+  StringRef rest;
+  llvm::tie(name, rest) = option.split(",");
+  if (name.empty())
+    return false;
+  ret.name = name;
+
+  for (;;) {
+    if (rest.empty())
+      return true;
+    StringRef arg;
+    llvm::tie(arg, rest) = rest.split(",");
+    if (arg.equals_lower("noname")) {
+      if (ret.ordinal < 0)
+        return false;
+      ret.noname = true;
+      continue;
+    }
+    if (arg.equals_lower("data")) {
+      ret.isData = true;
+      continue;
+    }
+    if (arg.startswith("@")) {
+      int ordinal;
+      if (arg.substr(1).getAsInteger(0, ordinal))
+        return false;
+      ret.ordinal = ordinal;
+      continue;
+    }
+    return false;
+  }
+}
+
 StringRef replaceExtension(PECOFFLinkingContext &ctx,
                            StringRef path, StringRef extension) {
   SmallString<128> val = path;
@@ -840,9 +875,15 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       ctx.setEntrySymbolName(ctx.allocate(inputArg->getValue()));
       break;
 
-    case OPT_export:
-      ctx.addDllExport(inputArg->getValue());
+    case OPT_export: {
+      PECOFFLinkingContext::ExportDesc desc;
+      if (!parseExport(inputArg->getValue(), desc)) {
+        diagnostics << "Error: malformed /export option\n";
+        return false;
+      }
+      ctx.addDllExport(desc);
       break;
+    }
 
     case OPT_libpath:
       ctx.appendInputSearchPath(ctx.allocate(inputArg->getValue()));

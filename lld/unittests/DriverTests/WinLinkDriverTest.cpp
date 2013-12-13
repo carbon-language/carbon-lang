@@ -157,10 +157,30 @@ TEST_F(WinLinkParserTest, AlternateName) {
 }
 
 TEST_F(WinLinkParserTest, Export) {
-  EXPECT_TRUE(parse("link.exe", "/export:_foo", "a.out", nullptr));
-  const std::set<std::string> &exports = _context.getDllExports();
-  EXPECT_TRUE(exports.count("_foo") == 1);
-  EXPECT_TRUE(exports.count("nosuchsym") == 0);
+  EXPECT_TRUE(parse("link.exe", "/export:foo", "a.out", nullptr));
+  const std::vector<PECOFFLinkingContext::ExportDesc> &exports =
+      _context.getDllExports();
+  EXPECT_TRUE(exports.size() == 1);
+  EXPECT_EQ("foo", exports[0].name);
+  EXPECT_EQ(-1, exports[0].ordinal);
+  EXPECT_FALSE(exports[0].noname);
+  EXPECT_FALSE(exports[0].isData);
+}
+
+TEST_F(WinLinkParserTest, ExportWithOptions) {
+  EXPECT_TRUE(parse("link.exe", "/export:foo,@8,noname,data",
+                    "/export:bar,@10,data", "a.out", nullptr));
+  const std::vector<PECOFFLinkingContext::ExportDesc> &exports =
+      _context.getDllExports();
+  EXPECT_TRUE(exports.size() == 2);
+  EXPECT_EQ("foo", exports[0].name);
+  EXPECT_EQ(8, exports[0].ordinal);
+  EXPECT_TRUE(exports[0].noname);
+  EXPECT_TRUE(exports[0].isData);
+  EXPECT_EQ("bar", exports[1].name);
+  EXPECT_EQ(10, exports[1].ordinal);
+  EXPECT_FALSE(exports[1].noname);
+  EXPECT_TRUE(exports[1].isData);
 }
 
 TEST_F(WinLinkParserTest, MachineX86) {

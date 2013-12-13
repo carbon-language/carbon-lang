@@ -57,6 +57,14 @@ public:
     int minorVersion;
   };
 
+  struct ExportDesc {
+    ExportDesc() : ordinal(-1), noname(false), isData(false) {}
+    std::string name;
+    int ordinal;
+    bool noname;
+    bool isData;
+  };
+
   /// \brief Casting support
   static inline bool classof(const LinkingContext *info) { return true; }
 
@@ -219,8 +227,8 @@ public:
   void setDosStub(ArrayRef<uint8_t> data) { _dosStub = data; }
   ArrayRef<uint8_t> getDosStub() const { return _dosStub; }
 
-  void addDllExport(StringRef sym) { _dllExports.insert(sym); }
-  const std::set<std::string> &getDllExports() const { return _dllExports; }
+  void addDllExport(ExportDesc &desc) { _dllExports.push_back(desc); }
+  const std::vector<ExportDesc> &getDllExports() const { return _dllExports; }
 
   StringRef allocate(StringRef ref) const {
     char *x = _allocator.Allocate<char>(ref.size() + 1);
@@ -301,7 +309,7 @@ private:
   std::map<std::string, uint32_t> _sectionClearMask;
 
   // DLLExport'ed symbols.
-  std::set<std::string> _dllExports;
+  std::vector<ExportDesc> _dllExports;
 
   // List of files that will be removed on destruction.
   std::vector<std::unique_ptr<llvm::FileRemover> > _tempFiles;

@@ -30,10 +30,10 @@ static bool getExportedAtoms(const PECOFFLinkingContext &ctx, MutableFile *file,
   for (const DefinedAtom *atom : file->defined())
     definedAtoms[atom->name()] = atom;
 
-  for (StringRef dllExport : ctx.getDllExports()) {
-    auto it = definedAtoms.find(ctx.decorateSymbol(dllExport));
+  for (const PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports()) {
+    auto it = definedAtoms.find(ctx.decorateSymbol(desc.name));
     if (it == definedAtoms.end()) {
-      llvm::errs() << "Symbol <" << dllExport
+      llvm::errs() << "Symbol <" << desc.name
                    << "> is exported but not defined.\n";
       return false;
     }
