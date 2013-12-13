@@ -33,10 +33,11 @@ static PyObject* setCrashReporterDescription(PyObject* self, PyObject* string)
 	{
 		Py_ssize_t size = PyString_Size(string);
 		char* data = PyString_AsString(string);
-		if (size && data)
+		if (size > 0 && data)
 		{
+            ++size; // Include the NULL terminateor in allocation and memcpy()
 			__crashreporter_info__ = malloc(size);
-			memcpy(__crashreporter_info__,data,size+1);
+			memcpy(__crashreporter_info__, data, size);
 			return Py_True;
 		}
 	}
