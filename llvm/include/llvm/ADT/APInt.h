@@ -1507,6 +1507,19 @@ public:
     return BitWidth - (*this - 1).countLeadingZeros();
   }
 
+  /// \returns the nearest log base 2 of this APInt. Ties round up.
+  unsigned nearestLogBase2() const {
+    // This is implemented by taking the normal log 2 of a number and adding 1
+    // to it if MSB - 1 is set.
+
+    // We follow the model from logBase2 that logBase2(0) == UINT32_MAX. This
+    // works since if we have 0, MSB will be 0. Then we subtract one yielding
+    // UINT32_MAX. Finally extractBit of MSB - 1 will be UINT32_MAX implying
+    // that we get BitWidth - 1.
+    unsigned lg = logBase2();
+    return lg + unsigned(extractBit(std::min(lg - 1, BitWidth - 1)));
+  }
+
   /// \returns the log base 2 of this APInt if its an exact power of two, -1
   /// otherwise
   int32_t exactLogBase2() const {
