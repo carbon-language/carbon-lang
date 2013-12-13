@@ -48,7 +48,7 @@ class BlockFrequencyImpl {
 
   typedef GraphTraits< Inverse<BlockT *> > GT;
 
-  const uint32_t EntryFreq;
+  static const uint64_t EntryFreq = 1 << 14;
 
   std::string getBlockName(BasicBlock *BB) const {
     return BB->getName().str();
@@ -263,7 +263,7 @@ class BlockFrequencyImpl {
   friend class BlockFrequencyInfo;
   friend class MachineBlockFrequencyInfo;
 
-  BlockFrequencyImpl() : EntryFreq(BlockFrequency::getEntryFrequency()) { }
+  BlockFrequencyImpl() { }
 
   void doFunction(FunctionT *fn, BlockProbInfoT *bpi) {
     Fn = fn;
@@ -312,6 +312,9 @@ class BlockFrequencyImpl {
   }
 
 public:
+
+  uint64_t getEntryFrequency() { return EntryFreq; }
+
   /// getBlockFreq - Return block frequency. Return 0 if we don't have it.
   BlockFrequency getBlockFreq(const BlockT *BB) const {
     typename DenseMap<const BlockT *, BlockFrequency>::const_iterator
