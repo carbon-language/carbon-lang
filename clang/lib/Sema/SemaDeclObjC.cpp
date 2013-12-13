@@ -1641,7 +1641,8 @@ static void CheckProtocolMethodDefs(Sema &S,
                                     bool& IncompleteImpl,
                                     const Sema::SelectorSet &InsMap,
                                     const Sema::SelectorSet &ClsMap,
-                                    ObjCContainerDecl *CDecl) {
+                                    ObjCContainerDecl *CDecl,
+                                    bool isExplicitProtocol = true) {
   ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(CDecl);
   ObjCInterfaceDecl *IDecl = C ? C->getClassInterface() 
                                : dyn_cast<ObjCInterfaceDecl>(CDecl);
@@ -1674,7 +1675,7 @@ static void CheckProtocolMethodDefs(Sema &S,
   // the method was implemented by a base class or an inherited
   // protocol. This lookup is slow, but occurs rarely in correct code
   // and otherwise would terminate in a warning.
-  if (PDecl->hasAttr<ObjCExplicitProtocolImplAttr>())
+  if (isExplicitProtocol && PDecl->hasAttr<ObjCExplicitProtocolImplAttr>())
     Super = NULL;
 
   // check unimplemented instance methods.
@@ -1744,7 +1745,7 @@ static void CheckProtocolMethodDefs(Sema &S,
   for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
        E = PDecl->protocol_end(); PI != E; ++PI)
     CheckProtocolMethodDefs(S, ImpLoc, *PI, IncompleteImpl, InsMap, ClsMap,
-                            CDecl);
+                            CDecl, /* isExplicitProtocl */ false);
 }
 
 /// MatchAllMethodDeclarations - Check methods declared in interface

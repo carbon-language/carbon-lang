@@ -54,3 +54,49 @@ __attribute__((objc_protocol_requires_explicit_implementation)) // expected-erro
 __attribute__((objc_protocol_requires_explicit_implementation)) // expected-error {{attribute only applies to Objective-C protocols}}
 int x;
 
+// Test that inherited protocols with the attribute
+// are treated properly.
+__attribute__((objc_protocol_requires_explicit_implementation))
+@protocol ProtocolA
+@required
+- (void)rlyeh;
+- (void)innsmouth;
+@end
+
+@protocol ProtocolB <ProtocolA>
+@required
+- (void)dunwich;
+- (id)innsmouth;
+@end
+
+@protocol ProtocolC
+@required
+- (void)rlyeh;
+- (void)innsmouth;
+- (void)dunwich;
+@end
+
+@interface MyObject <ProtocolC>
+@end
+
+@interface MyLovecraft <ProtocolA>
+@end
+
+@interface MyShoggoth : MyLovecraft <ProtocolB>
+@end
+
+@implementation MyObject
+- (void)innsmouth {}
+- (void)rlyeh {}
+- (void)dunwich {}
+@end
+
+@implementation MyLovecraft
+- (void)innsmouth {}
+- (void)rlyeh {}
+@end
+
+@implementation MyShoggoth
+- (void)dunwich {}
+@end
+
