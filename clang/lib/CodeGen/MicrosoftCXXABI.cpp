@@ -156,6 +156,10 @@ public:
                            CallExpr::const_arg_iterator ArgBeg,
                            CallExpr::const_arg_iterator ArgEnd);
 
+  void EmitDestructorCall(CodeGenFunction &CGF, const CXXDestructorDecl *DD,
+                          CXXDtorType Type, bool ForVirtualBase,
+                          bool Delegating, llvm::Value *This);
+
   void emitVTableDefinitions(CodeGenVTables &CGVT, const CXXRecordDecl *RD);
 
   llvm::Value *getVTableAddressPointInStructor(
@@ -805,6 +809,20 @@ void MicrosoftCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
   // FIXME: Provide a source location here.
   CGF.EmitCXXMemberCall(D, SourceLocation(), Callee, ReturnValueSlot(), This,
                         ImplicitParam, ImplicitParamTy, ArgBeg, ArgEnd);
+}
+
+void MicrosoftCXXABI::EmitDestructorCall(CodeGenFunction &CGF,
+                                         const CXXDestructorDecl *DD,
+                                         CXXDtorType Type, bool ForVirtualBase,
+                                         bool Delegating, llvm::Value *This) {
+  llvm::Value *Callee = CGM.GetAddrOfCXXDestructor(DD, Type);
+
+  if (DD->isVirtual())
+    This = adjustThisArgumentForVirtualCall(CGF, GlobalDecl(DD, Type), This);
+
+  // FIXME: Provide a source location here.
+  CGF.EmitCXXMemberCall(DD, SourceLocation(), Callee, ReturnValueSlot(), This,
+                        /*ImplicitParam=*/0, /*ImplicitParamTy=*/QualType(), 0, 0);
 }
 
 void MicrosoftCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,

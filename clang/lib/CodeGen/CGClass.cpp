@@ -1814,23 +1814,8 @@ void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
                                             bool ForVirtualBase,
                                             bool Delegating,
                                             llvm::Value *This) {
-  GlobalDecl GD(DD, Type);
-  llvm::Value *VTT = GetVTTParameter(GD, ForVirtualBase, Delegating);
-  llvm::Value *Callee = 0;
-  if (getLangOpts().AppleKext)
-    Callee = BuildAppleKextVirtualDestructorCall(DD, Type, 
-                                                 DD->getParent());
-    
-  if (!Callee)
-    Callee = CGM.GetAddrOfCXXDestructor(DD, Type);
-
-  if (DD->isVirtual())
-    This = CGM.getCXXABI().adjustThisArgumentForVirtualCall(*this, GD, This);
-
-  // FIXME: Provide a source location here.
-  EmitCXXMemberCall(DD, SourceLocation(), Callee, ReturnValueSlot(), This,
-                    VTT, getContext().getPointerType(getContext().VoidPtrTy),
-                    0, 0);
+  CGM.getCXXABI().EmitDestructorCall(*this, DD, Type, ForVirtualBase,
+                                     Delegating, This);
 }
 
 namespace {

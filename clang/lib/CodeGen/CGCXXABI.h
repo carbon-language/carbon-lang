@@ -291,7 +291,7 @@ public:
   /// Emit the ABI-specific prolog for the function.
   virtual void EmitInstanceFunctionProlog(CodeGenFunction &CGF) = 0;
 
-  /// Emit the constructor call. Return the function that is called.
+  /// Emit the constructor call.
   virtual void EmitConstructorCall(CodeGenFunction &CGF,
                                    const CXXConstructorDecl *D,
                                    CXXCtorType Type,
@@ -299,6 +299,12 @@ public:
                                    llvm::Value *This,
                                    CallExpr::const_arg_iterator ArgBeg,
                                    CallExpr::const_arg_iterator ArgEnd) = 0;
+
+  /// Emit the destructor call.
+  virtual void EmitDestructorCall(CodeGenFunction &CGF,
+                                  const CXXDestructorDecl *DD, CXXDtorType Type,
+                                  bool ForVirtualBase, bool Delegating,
+                                  llvm::Value *This) = 0;
 
   /// Emits the VTable definitions required for the given record type.
   virtual void emitVTableDefinitions(CodeGenVTables &CGVT,
