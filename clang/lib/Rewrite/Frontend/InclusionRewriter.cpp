@@ -77,7 +77,7 @@ private:
   void OutputContentUpTo(const MemoryBuffer &FromFile,
                          unsigned &WriteFrom, unsigned WriteTo,
                          StringRef EOL, int &lines,
-                         bool EnsureNewline = false);
+                         bool EnsureNewline);
   void CommentOutDirective(Lexer &DirectivesLex, const Token &StartToken,
                            const MemoryBuffer &FromFile, StringRef EOL,
                            unsigned &NextToWrite, int &Lines);
@@ -250,7 +250,7 @@ void InclusionRewriter::CommentOutDirective(Lexer &DirectiveLex,
                                             StringRef EOL,
                                             unsigned &NextToWrite, int &Line) {
   OutputContentUpTo(FromFile, NextToWrite,
-    SM.getFileOffset(StartToken.getLocation()), EOL, Line);
+    SM.getFileOffset(StartToken.getLocation()), EOL, Line, false);
   Token DirectiveToken;
   do {
     DirectiveLex.LexFromRawLexer(DirectiveToken);
@@ -258,7 +258,7 @@ void InclusionRewriter::CommentOutDirective(Lexer &DirectiveLex,
   OS << "#if 0 /* expanded by -frewrite-includes */" << EOL;
   OutputContentUpTo(FromFile, NextToWrite,
     SM.getFileOffset(DirectiveToken.getLocation()) + DirectiveToken.getLength(),
-    EOL, Line);
+    EOL, Line, true);
   OS << "#endif /* expanded by -frewrite-includes */" << EOL;
 }
 
@@ -462,12 +462,12 @@ bool InclusionRewriter::Process(FileID FileId,
                 // Replace the macro with (0) or (1), followed by the commented
                 // out macro for reference.
                 OutputContentUpTo(FromFile, NextToWrite, SM.getFileOffset(Loc),
-                                  EOL, Line);
+                                  EOL, Line, false);
                 OS << '(' << (int) HasFile << ")/*";
                 OutputContentUpTo(FromFile, NextToWrite,
                                   SM.getFileOffset(RawToken.getLocation()) +
                                   RawToken.getLength(),
-                                  EOL, Line);
+                                  EOL, Line, false);
                 OS << "*/";
               }
             } while (RawToken.isNot(tok::eod));

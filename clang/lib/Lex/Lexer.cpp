@@ -2460,7 +2460,8 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
     FormTokenWithChars(Result, CurPtr, tok::eod);
 
     // Restore comment saving mode, in case it was disabled for directive.
-    resetExtendedTokenMode();
+    if (PP)
+      resetExtendedTokenMode();
     return true;  // Have a token.
   }
  
