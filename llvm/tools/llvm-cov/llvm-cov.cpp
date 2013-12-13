@@ -33,6 +33,9 @@ InputGCDA("gcda", cl::desc("<input gcda file>"), cl::init(""));
 static cl::opt<bool>
 AllBlocks("a", cl::init(false), cl::desc("display all block info"));
 
+static cl::opt<bool>
+BranchProb("b", cl::init(false), cl::desc("display branch info"));
+
 //===----------------------------------------------------------------------===//
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
@@ -73,8 +76,9 @@ int main(int argc, char **argv) {
   if (DumpGCOV)
     GF.dump();
 
-  FileInfo FI;
+  GCOVOptions Options(AllBlocks, BranchProb);
+  FileInfo FI(Options);
   GF.collectLineCounts(FI);
-  FI.print(InputGCNO, InputGCDA, GCOVOptions(AllBlocks));
+  FI.print(InputGCNO, InputGCDA);
   return 0;
 }

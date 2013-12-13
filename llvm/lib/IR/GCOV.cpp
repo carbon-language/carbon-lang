@@ -19,6 +19,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/system_error.h"
+#include <algorithm>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -278,8 +279,21 @@ bool GCOVFunction::readGCDA(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
       Block.addCount(EdgeNo, ArcCount);
       --Count;
     }
+    Block.sortDstEdges();
   }
   return true;
+}
+
+/// getEntryCount - Get the number of times the function was called by
+/// retrieving the entry block's count.
+uint64_t GCOVFunction::getEntryCount() const {
+  return Blocks.front()->getCount();
+}
+
+/// getExitCount - Get the number of times the function returned by retrieving
+/// the exit block's count.
+uint64_t GCOVFunction::getExitCount() const {
+  return Blocks.back()->getCount();
 }
 
 /// dump - Dump GCOVFunction content to dbgs() for debugging purposes.
@@ -296,6 +310,7 @@ void GCOVFunction::collectLineCounts(FileInfo &FI) {
   for (SmallVectorImpl<GCOVBlock *>::iterator I = Blocks.begin(),
          E = Blocks.end(); I != E; ++I)
     (*I)->collectLineCounts(FI);
+  FI.addFunctionLine(Filename, LineNumber, this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -316,6 +331,15 @@ void GCOVBlock::addCount(size_t DstEdgeNo, uint64_t N) {
   Counter += N;
   if (!DstEdges[DstEdgeNo]->Dst->getNumDstEdges())
     DstEdges[DstEdgeNo]->Dst->Counter += N;
+}
+
+/// sortDstEdges - Sort destination edges by block number, nop if already
+/// sorted. This is required for printing branch info in the correct order.
+void GCOVBlock::sortDstEdges() {
+  if (!DstEdgesAreSorted) {
+    SortDstEdgesFunctor SortEdges;
+    std::stable_sort(DstEdges.begin(), DstEdges.end(), SortEdges);
+  }
 }
 
 /// collectLineCounts - Collect line counts. This must be used after
@@ -357,9 +381,32 @@ void GCOVBlock::dump() const {
 //===----------------------------------------------------------------------===//
 // FileInfo implementation.
 
+// Safe integer division, returns 0 if numerator is 0.
+static uint32_t safeDiv(uint64_t Numerator, uint64_t Divisor) {
+  if (!Numerator)
+    return 0;
+  return Numerator/Divisor;
+}
+
+// This custom division function mimics gcov's branch ouputs:
+//   - Round to closest whole number
+//   - Only output 0% or 100% if it's exactly that value
+static uint32_t branchDiv(uint64_t Numerator, uint64_t Divisor) {
+  if (!Numerator)
+    return 0;
+  if (Numerator == Divisor)
+    return 100;
+
+  uint8_t Res = (Numerator*100+Divisor/2) / Divisor;
+  if (Res == 0)
+    return 1;
+  if (Res == 100)
+    return 99;
+  return Res;
+}
+
 /// print -  Print source files with collected line count information.
-void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile,
-                     const GCOVOptions &Options) const {
+void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) const {
   for (StringMap<LineData>::const_iterator I = LineInfo.begin(),
          E = LineInfo.end(); I != E; ++I) {
     StringRef Filename = I->first();
@@ -383,12 +430,24 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile,
     OS << "        -:    0:Programs:" << ProgramCount << "\n";
 
     const LineData &Line = I->second;
-    for (uint32_t i = 0; !AllLines.empty(); ++i) {
-      LineData::const_iterator BlocksIt = Line.find(i);
+    for (uint32_t LineIndex = 0; !AllLines.empty(); ++LineIndex) {
+      if (Options.BranchProb) {
+        FunctionLines::const_iterator FuncsIt = Line.Functions.find(LineIndex);
+        if (FuncsIt != Line.Functions.end())
+          printFunctionSummary(OS, FuncsIt->second);
+      }
 
-      if (BlocksIt != Line.end()) {
-        // Add up the block counts to form line counts.
+      BlockLines::const_iterator BlocksIt = Line.Blocks.find(LineIndex);
+      if (BlocksIt == Line.Blocks.end()) {
+        // No basic blocks are on this line. Not an executable line of code.
+        OS << "        -:";
+        std::pair<StringRef, StringRef> P = AllLines.split('\n');
+        OS << format("%5u:", LineIndex+1) << P.first << "\n";
+        AllLines = P.second;
+      } else {
         const BlockVector &Blocks = BlocksIt->second;
+
+        // Add up the block counts to form line counts.
         uint64_t LineCount = 0;
         for (BlockVector::const_iterator I = Blocks.begin(), E = Blocks.end();
                I != E; ++I) {
@@ -406,30 +465,84 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile,
           OS << "    #####:";
         else
           OS << format("%9" PRIu64 ":", LineCount);
-      } else {
-        OS << "        -:";
-      }
-      std::pair<StringRef, StringRef> P = AllLines.split('\n');
-      OS << format("%5u:", i+1) << P.first << "\n";
-      AllLines = P.second;
 
-      if (Options.AllBlocks && BlocksIt != Line.end()) {
-        // Output the counts for each block at the last line of the block.
+        std::pair<StringRef, StringRef> P = AllLines.split('\n');
+        OS << format("%5u:", LineIndex+1) << P.first << "\n";
+        AllLines = P.second;
+
         uint32_t BlockNo = 0;
-        const BlockVector &Blocks = BlocksIt->second;
+        uint32_t EdgeNo = 0;
         for (BlockVector::const_iterator I = Blocks.begin(), E = Blocks.end();
                I != E; ++I) {
           const GCOVBlock *Block = *I;
-          if (Block->getLastLine() != i+1)
-            continue;
 
-          if (Block->getCount() == 0)
-            OS << "    $$$$$:";
-          else
-            OS << format("%9" PRIu64 ":", (uint64_t)Block->getCount());
-          OS << format("%5u-block  %u\n", i+1, BlockNo++);
+          // Only print block and branch information at the end of the block.
+          if (Block->getLastLine() != LineIndex+1)
+            continue;
+          if (Options.AllBlocks)
+            printBlockInfo(OS, *Block, LineIndex, BlockNo);
+          if (Options.BranchProb)
+            printBranchInfo(OS, *Block, LineIndex, EdgeNo);
         }
       }
     }
+  }
+}
+
+/// printFunctionSummary - Print function and block summary.
+void FileInfo::printFunctionSummary(raw_fd_ostream &OS,
+                                    const FunctionVector &Funcs) const {
+  for (FunctionVector::const_iterator I = Funcs.begin(), E = Funcs.end();
+         I != E; ++I) {
+    const GCOVFunction *Func = *I;
+    uint64_t EntryCount = Func->getEntryCount();
+    uint32_t BlocksExecuted = 0;
+    for (GCOVFunction::BlockIterator I = Func->block_begin(),
+           E = Func->block_end(); I != E; ++I) {
+      const GCOVBlock *Block = *I;
+      if (Block->getNumDstEdges() && Block->getCount())
+          ++BlocksExecuted;
+    }
+
+    OS << "function " << Func->getName() << " called " << EntryCount
+       << " returned " << safeDiv(Func->getExitCount()*100, EntryCount)
+       << "% blocks executed "
+       << safeDiv(BlocksExecuted*100, Func->getNumBlocks()-1) << "%\n";
+  }
+}
+
+/// printBlockInfo - Output counts for each block.
+void FileInfo::printBlockInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
+                              uint32_t LineIndex, uint32_t &BlockNo) const {
+  if (Block.getCount() == 0)
+    OS << "    $$$$$:";
+  else
+    OS << format("%9" PRIu64 ":", Block.getCount());
+  OS << format("%5u-block %2u\n", LineIndex+1, BlockNo++);
+}
+
+/// printBranchInfo - Print branch probabilities for blocks that have
+/// conditional branches.
+void FileInfo::printBranchInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
+                               uint32_t LineIndex, uint32_t &EdgeNo) const {
+  if (Block.getNumDstEdges() < 2)
+    return;
+
+  SmallVector<uint64_t, 16> BranchCounts;
+  uint64_t TotalCounts = 0;
+  for (GCOVBlock::EdgeIterator I = Block.dst_begin(), E = Block.dst_end();
+         I != E; ++I) {
+    const GCOVEdge *Edge = *I;
+    BranchCounts.push_back(Edge->Count);
+    TotalCounts += Edge->Count;
+  }
+
+  for (SmallVectorImpl<uint64_t>::const_iterator I = BranchCounts.begin(),
+         E = BranchCounts.end(); I != E; ++I) {
+    if (TotalCounts)
+      OS << format("branch %2u taken %u%%\n", EdgeNo++,
+                   branchDiv(*I, TotalCounts));
+    else
+      OS << format("branch %2u never executed\n", EdgeNo++);
   }
 }
