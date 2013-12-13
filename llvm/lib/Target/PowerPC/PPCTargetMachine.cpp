@@ -35,8 +35,6 @@ extern "C" void LLVMInitializePowerPCTarget() {
 
 /// Return the datalayout string of a subtarget.
 static std::string getDataLayoutString(const PPCSubtarget &ST) {
-  const Triple &T = ST.getTargetTriple();
-
   // PPC is big endian.
   std::string Ret = "E";
 
@@ -48,19 +46,11 @@ static std::string getDataLayoutString(const PPCSubtarget &ST) {
 
   // Note, the alignment values for f64 and i64 on ppc64 in Darwin
   // documentation are wrong; these are correct (i.e. "what gcc does").
-  Ret += "-f64:64:64-i64:64:64";
+  Ret += "-i64:64:64";
 
   // Set support for 128 floats depending on the ABI.
-  if (ST.isPPC64() && ST.isSVR4ABI()) {
-    if (T.getOS() != llvm::Triple::FreeBSD)
-      Ret += "-f128:128:128";
-  } else {
+  if (!ST.isPPC64() || !ST.isSVR4ABI())
     Ret += "-f128:64:128";
-  }
-
-  // Some ABIs support 128 bit vectors.
-  if (ST.isPPC64() && ST.isSVR4ABI())
-    Ret += "-v128:128:128";
 
   // PPC64 has 32 and 64 bit registers, PPC32 has only 32 bit ones.
   if (ST.isPPC64())
