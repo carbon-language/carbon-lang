@@ -1244,9 +1244,6 @@ public:
   /// as "bitPosition".
   void flipBit(unsigned bitPosition);
 
-  /// \brief Returns true if the bit in bitPosition is set.
-  bool extractBit(unsigned bitPosition) const;
-
   /// @}
   /// \name Value Characterization Functions
   /// @{
@@ -1517,7 +1514,7 @@ public:
     // UINT32_MAX. Finally extractBit of MSB - 1 will be UINT32_MAX implying
     // that we get BitWidth - 1.
     unsigned lg = logBase2();
-    return lg + unsigned(extractBit(std::min(lg - 1, BitWidth - 1)));
+    return lg + unsigned((*this)[std::min(lg - 1, BitWidth - 1)]);
   }
 
   /// \returns the log base 2 of this APInt if its an exact power of two, -1
