@@ -51,16 +51,27 @@ void test2() {
 }
 
 namespace PR12709 {
+  template<class T> class TemplateClass {
+    void member_function() { specialized_member_template<false>(); }
 
-template<class T> class TemplateClass {
-  void member_function() { specialized_member_template<false>(); }
+    template<bool b> void specialized_member_template() {}
 
-  template<bool b> void specialized_member_template() {}
+    template<> void specialized_member_template<false>() {
+      // expected-warning@-1 {{explicit specialization of 'specialized_member_template' within class scope is a Microsoft extension}}
+    }
+  };
 
-  template<> void specialized_member_template<false>() {
-    // expected-warning@-1 {{explicit specialization of 'specialized_member_template' within class scope is a Microsoft extension}}
-  }
-};
+  void f() { TemplateClass<int> t; }
+}
 
-void f() { TemplateClass<int> t; }
+namespace Duplicates {
+  template<typename T> struct A {
+    template<typename U> void f();
+    template<> void f<int>() {} // expected-warning {{Microsoft extension}}
+    template<> void f<T>() {} // expected-warning {{Microsoft extension}}
+  };
+
+  // FIXME: We should diagnose the duplicate explicit specialization definitions
+  // here.
+  template struct A<int>;
 }
