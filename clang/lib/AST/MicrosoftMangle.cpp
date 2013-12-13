@@ -2040,9 +2040,10 @@ void MicrosoftMangleContextImpl::mangleCXXDtor(const CXXDestructorDecl *D,
 }
 
 void MicrosoftMangleContextImpl::mangleReferenceTemporary(const VarDecl *VD,
-                                                          raw_ostream &Out) {
-  MicrosoftCXXNameMangler mangler(*this, Out);
-  mangler.mangle(VD);
+                                                          raw_ostream &) {
+  unsigned DiagID = getDiags().getCustomDiagID(DiagnosticsEngine::Error,
+    "cannot mangle this reference temporary yet");
+  getDiags().Report(VD->getLocation(), DiagID);
 }
 
 void MicrosoftMangleContextImpl::mangleStaticGuardVariable(const VarDecl *VD,
