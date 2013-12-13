@@ -269,7 +269,7 @@ TEST(InstructionsTest, VectorGep) {
 
   int64_t Offset;
   DataLayout TD("e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3"
-                "2:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80"
+                "2:32:32-f64:64:64-v64:64:64-v128:128:128-a:0:64-s:64:64-f80"
                 ":128:128-n8:16:32:64-S128");
   // Make sure we don't crash
   GetPointerBaseWithConstantOffset(Gep0, Offset, &TD);
@@ -381,7 +381,7 @@ TEST(InstructionsTest, isEliminableCastPair) {
   // or if we don't have available pointer size information.
   DataLayout DL("e-p:32:32:32-p1:16:16:16-p2:64:64:64-i1:8:8-i8:8:8-i16:16:16"
                 "-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64"
-                "-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128");
+                "-v128:128:128-a:0:64-s:64:64-f80:128:128-n8:16:32:64-S128");
 
   Type* Int64PtrTyAS1 = Type::getInt64PtrTy(C, 1);
   Type* Int64PtrTyAS2 = Type::getInt64PtrTy(C, 2);
