@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/raw_ostream.h"
@@ -60,8 +61,13 @@ public:
 
   StringRef getSectionName() const { return SectionName; }
   virtual std::string getLabelBeginName() const {
-    return SectionName.str() + "_begin"; }
+    if (Group)
+      return (SectionName.str() + '_' + Group->getName() + "_begin").str();
+    return SectionName.str() + "_begin";
+  }
   virtual std::string getLabelEndName() const {
+    if (Group)
+      return (SectionName.str() + '_' + Group->getName() + "_end").str();
     return SectionName.str() + "_end";
   }
   unsigned getType() const { return Type; }

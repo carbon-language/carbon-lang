@@ -262,6 +262,8 @@ public:
   const MCSection *getDwarfInfoDWOSection() const {
     return DwarfInfoDWOSection;
   }
+  const MCSection *getDwarfTypesSection(uint64_t Hash) const;
+  const MCSection *getDwarfTypesDWOSection(uint64_t Hash) const;
   const MCSection *getDwarfAbbrevDWOSection() const {
     return DwarfAbbrevDWOSection;
   }
