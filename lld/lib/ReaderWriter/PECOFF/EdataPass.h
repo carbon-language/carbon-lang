@@ -69,8 +69,7 @@ private:
   createNamePointerTable(const std::vector<const DefinedAtom *> &atoms,
                          MutableFile *file);
   edata::EdataAtom *
-  createOrdinalTable(const std::vector<const DefinedAtom *> &atoms,
-                     const std::vector<const DefinedAtom *> &sortedAtoms);
+  createOrdinalTable(const std::vector<const DefinedAtom *> &atoms);
 
   const PECOFFLinkingContext &_ctx;
   VirtualFile _file;
