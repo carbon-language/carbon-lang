@@ -91,7 +91,7 @@ struct DOTGraphTraits<MachineBlockFrequencyInfo*> :
     OS << Node->getName().str() << ":";
     switch (ViewMachineBlockFreqPropagationDAG) {
     case GVDT_Fraction:
-      Graph->getBlockFreq(Node).print(OS);
+      Graph->printBlockFreq(OS, Node);
       break;
     case GVDT_Integer:
       OS << Graph->getBlockFreq(Node).getFrequency();

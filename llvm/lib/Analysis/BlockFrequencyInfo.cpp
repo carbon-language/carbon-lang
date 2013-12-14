@@ -86,7 +86,7 @@ struct DOTGraphTraits<BlockFrequencyInfo*> : public DefaultDOTGraphTraits {
     OS << Node->getName().str() << ":";
     switch (ViewBlockFreqPropagationDAG) {
     case GVDT_Fraction:
-      Graph->getBlockFreq(Node).print(OS);
+      Graph->printBlockFreq(OS, Node);
       break;
     case GVDT_Integer:
       OS << Graph->getBlockFreq(Node).getFrequency();
