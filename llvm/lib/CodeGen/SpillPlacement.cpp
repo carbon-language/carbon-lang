@@ -188,10 +188,10 @@ bool SpillPlacement::runOnMachineFunction(MachineFunction &mf) {
 
   // Compute total ingoing and outgoing block frequencies for all bundles.
   BlockFrequencies.resize(mf.getNumBlockIDs());
-  MachineBlockFrequencyInfo &MBFI = getAnalysis<MachineBlockFrequencyInfo>();
+  MBFI = &getAnalysis<MachineBlockFrequencyInfo>();
   for (MachineFunction::iterator I = mf.begin(), E = mf.end(); I != E; ++I) {
     unsigned Num = I->getNumber();
-    BlockFrequencies[Num] = MBFI.getBlockFreq(I);
+    BlockFrequencies[Num] = MBFI->getBlockFreq(I);
   }
 
   // We never change the function.
@@ -221,7 +221,7 @@ void SpillPlacement::activate(unsigned n) {
   // Hopfield network.
   if (bundles->getBlocks(n).size() > 100) {
     nodes[n].BiasP = 0;
-    nodes[n].BiasN = (BlockFrequency::getEntryFrequency() / 16);
+    nodes[n].BiasN = (MBFI->getEntryFrequency() / 16);
   }
 }
 

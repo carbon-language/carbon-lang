@@ -38,12 +38,14 @@ class BitVector;
 class EdgeBundles;
 class MachineBasicBlock;
 class MachineLoopInfo;
+class MachineBlockFrequencyInfo;
 
 class SpillPlacement  : public MachineFunctionPass {
   struct Node;
   const MachineFunction *MF;
   const EdgeBundles *bundles;
   const MachineLoopInfo *loops;
+  const MachineBlockFrequencyInfo *MBFI;
   Node *nodes;
 
   // Nodes that are active in the current computation. Owned by the prepare()
