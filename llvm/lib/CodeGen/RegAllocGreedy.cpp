@@ -1203,7 +1203,8 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     // No benefit from the compact region, our fallback will be per-block
     // splitting. Make sure we find a solution that is cheaper than spilling.
     BestCost = calcSpillCost();
-    DEBUG(dbgs() << "Cost of isolating all blocks = " << BestCost << '\n');
+    DEBUG(dbgs() << "Cost of isolating all blocks = ";
+                 MBFI->printBlockFreq(dbgs(), BestCost) << '\n');
   }
 
   Order.rewind();
@@ -1237,7 +1238,8 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
       DEBUG(dbgs() << PrintReg(PhysReg, TRI) << "\tno positive bundles\n");
       continue;
     }
-    DEBUG(dbgs() << PrintReg(PhysReg, TRI) << "\tstatic = " << Cost);
+    DEBUG(dbgs() << PrintReg(PhysReg, TRI) << "\tstatic = ";
+                 MBFI->printBlockFreq(dbgs(), Cost));
     if (Cost >= BestCost) {
       DEBUG({
         if (BestCand == NoCand)
@@ -1260,7 +1262,8 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
     Cost += calcGlobalSplitCost(Cand);
     DEBUG({
-      dbgs() << ", total = " << Cost << " with bundles";
+      dbgs() << ", total = "; MBFI->printBlockFreq(dbgs(), Cost)
+                                << " with bundles";
       for (int i = Cand.LiveBundles.find_first(); i>=0;
            i = Cand.LiveBundles.find_next(i))
         dbgs() << " EB#" << i;
@@ -1588,7 +1591,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
   const float blockFreq =
     SpillPlacer->getBlockFrequency(BI.MBB->getNumber()).getFrequency() *
-    (1.0f / BlockFrequency::getEntryFrequency());
+    (1.0f / MBFI->getEntryFrequency());
   SmallVector<float, 8> GapWeight;
 
   Order.rewind();
