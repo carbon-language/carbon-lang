@@ -75,7 +75,6 @@ public:
 
   // Helper functions to simplify if statements
   bool isTargetELF() const;
-  std::string getDataLayout() const;
   std::string getDeviceName() const;
   virtual size_t getDefaultSize(uint32_t dim) const;
   bool dumpCode() const { return DumpCode; }
