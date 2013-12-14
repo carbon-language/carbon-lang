@@ -145,6 +145,14 @@ class MachineFrameInfo {
   /// to builtin \@llvm.returnaddress.
   bool ReturnAddressTaken;
 
+  /// HasStackMap - This boolean keeps track of whether there is a call
+  /// to builtin \@llvm.experimental.stackmap.
+  bool HasStackMap;
+
+  /// HasPatchPoint - This boolean keeps track of whether there is a call
+  /// to builtin \@llvm.experimental.patchpoint.
+  bool HasPatchPoint;
+
   /// StackSize - The prolog/epilog code inserter calculates the final stack
   /// offsets for all of the fixed size objects, updating the Objects list
   /// above.  It then updates StackSize to contain the number of bytes that need
@@ -235,6 +243,8 @@ public:
     HasVarSizedObjects = false;
     FrameAddressTaken = false;
     ReturnAddressTaken = false;
+    HasStackMap = false;
+    HasPatchPoint = false;
     AdjustsStack = false;
     HasCalls = false;
     StackProtectorIdx = -1;
@@ -279,6 +289,18 @@ public:
   /// \@llvm.returnaddress in this function.
   bool isReturnAddressTaken() const { return ReturnAddressTaken; }
   void setReturnAddressIsTaken(bool s) { ReturnAddressTaken = s; }
+
+  /// hasStackMap - This method may be called any time after instruction
+  /// selection is complete to determine if there is a call to builtin
+  /// \@llvm.experimental.stackmap.
+  bool hasStackMap() const { return HasStackMap; }
+  void setHasStackMap(bool s = true) { HasStackMap = s; }
+
+  /// hasPatchPoint - This method may be called any time after instruction
+  /// selection is complete to determine if there is a call to builtin
+  /// \@llvm.experimental.patchpoint.
+  bool hasPatchPoint() const { return HasPatchPoint; }
+  void setHasPatchPoint(bool s = true) { HasPatchPoint = s; }
 
   /// getObjectIndexBegin - Return the minimum frame object index.
   ///

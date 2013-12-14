@@ -568,6 +568,11 @@ namespace llvm {
   /// bundles (created earlier, e.g. during pre-RA scheduling).
   extern char &FinalizeMachineBundlesID;
 
+  /// StackMapLiveness - This pass analyses the register live-out set of
+  /// stackmap/patchpoint intrinsics and attaches the calculated information to
+  /// the intrinsic for later emission to the StackMap.
+  extern char &StackMapLivenessID;
+
 } // End llvm namespace
 
 #endif
