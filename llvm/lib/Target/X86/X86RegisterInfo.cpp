@@ -239,10 +239,8 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   case CallingConv::HiPE:
     return CSR_NoRegs_SaveList;
 
-  case CallingConv::WebKit_JS:
-    return CSR_64_SaveList;
   case CallingConv::AnyReg:
-    return CSR_MostRegs_64_SaveList;
+    return CSR_AllRegs_64_SaveList;
 
   case CallingConv::Intel_OCL_BI: {
     bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
@@ -301,8 +299,8 @@ X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
   }
   if (CC == CallingConv::GHC || CC == CallingConv::HiPE)
     return CSR_NoRegs_RegMask;
-  if (CC == CallingConv::WebKit_JS || CC == CallingConv::AnyReg)
-    return CSR_MostRegs_64_RegMask;
+  if (CC == CallingConv::AnyReg)
+    return CSR_AllRegs_64_RegMask;
   if (!Is64Bit)
     return CSR_32_RegMask;
   if (CC == CallingConv::Cold)
