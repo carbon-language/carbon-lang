@@ -322,7 +322,7 @@ protected:
     friend class SBTarget;
     friend class SBThread;
     friend class SBValue;
-    friend class SBQueue;
+    friend class lldb_private::QueueImpl;
 
     lldb::ProcessSP
     GetSP() const;

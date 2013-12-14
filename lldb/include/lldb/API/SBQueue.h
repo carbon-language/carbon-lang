@@ -25,6 +25,11 @@ public:
 
     SBQueue (const QueueSP& queue_sp);
     
+    SBQueue (const SBQueue& rhs);
+
+    const SBQueue &
+    operator= (const lldb::SBQueue& rhs);
+
    ~SBQueue();
 
     bool
@@ -70,11 +75,7 @@ protected:
     FetchItems ();
 
 private:
-    lldb::QueueWP                   m_queue_wp;
-    std::vector<lldb::ThreadWP>     m_threads;              // threads currently executing this queue's items
-    bool                            m_thread_list_fetched;  // have we tried to fetch the threads list already?
-    std::vector<lldb::QueueItemSP>  m_items;       // items currently enqueued
-    bool                            m_queue_items_fetched;  // have we tried to fetch the item list already?
+    std::shared_ptr<lldb_private::QueueImpl> m_opaque_sp;
 };
 
 } // namespace lldb

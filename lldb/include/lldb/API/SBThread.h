@@ -214,7 +214,7 @@ protected:
     friend class SBProcess;
     friend class SBDebugger;
     friend class SBValue;
-    friend class SBQueue;
+    friend class lldb_private::QueueImpl;
     friend class SBQueueItem;
 
     void

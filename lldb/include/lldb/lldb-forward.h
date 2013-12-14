@@ -218,6 +218,7 @@ class   ScriptedSyntheticChildren;
 #endif
 class   Queue;
 class   QueueItem;
+class   QueueImpl;
 class   Target;
 class   TargetList;
 class   Thread;
