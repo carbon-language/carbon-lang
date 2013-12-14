@@ -13,7 +13,7 @@ namespace gatekeeper_v1 {
     };
   }
   // FIXME: Typo correction should remove the 'gatekeeper_v1::' name specifier
-  gatekeeper_v1::closure_t *x; // expected-error {{no type named 'closure_t' in namespace 'gatekeeper_v1'{{$}}}}
+  gatekeeper_v1::closure_t *x; // expected-error-re {{no type named 'closure_t' in namespace 'gatekeeper_v1'{{$}}}}
 }
 
 namespace Foo {

@@ -38,7 +38,7 @@ constexpr int test_printing(int a, float b, _Complex int c, _Complex float d,
 U u2(0); // expected-note {{here}}
 static_assert(test_printing(12, 39.762, 3 + 4i, 12.9 + 3.6i, &u2.arr[4], u2.another.arr[2], (vector_int){5, 1, 2, 3}, u1) == 0, ""); // \
 expected-error {{constant expression}} \
-expected-note {{in call to 'test_printing(12, 3.976200e+01, 3+4i, 1.290000e+01+3.600000e+00i, &u2.T::arr[4], u2.another.arr[2], {5, 1, 2, 3}, {{[{][{][{][}][}]}}, {{[{][{][}][}]}}}}, &u1.T::arr[2]})'}}
+expected-note {{in call to 'test_printing(12, 3.976200e+01, 3+4i, 1.290000e+01+3.600000e+00i, &u2.T::arr[4], u2.another.arr[2], {5, 1, 2, 3}, {{{}}, {{}}, &u1.T::arr[2]})'}}
 
 struct V {
   // FIXME: when we can generate these as constexpr constructors, remove the
@@ -50,7 +50,7 @@ struct V {
 constexpr V v;
 constexpr int get(const int *p) { return *p; } // expected-note {{read of dereferenced one-past-the-end pointer}}
 constexpr int passLargeArray(V v) { return get(v.arr+256); } // expected-note {{in call to 'get(&v.arr[256])'}}
-static_assert(passLargeArray(v) == 0, ""); // expected-error {{constant expression}} expected-note {{in call to 'passLargeArray({{[{][{]}}0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...{{[}][}]}})'}}
+static_assert(passLargeArray(v) == 0, ""); // expected-error {{constant expression}} expected-note {{in call to 'passLargeArray({{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...}})'}}
 
 union Union {
   constexpr Union(int n) : b(n) {}

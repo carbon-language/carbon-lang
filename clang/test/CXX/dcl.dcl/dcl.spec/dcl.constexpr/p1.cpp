@@ -27,7 +27,7 @@ void f2(constexpr int i) {} // expected-error {{function parameter cannot be con
 struct s2 {
   constexpr int mi1; // expected-error {{non-static data member cannot be constexpr; did you intend to make it const?}}
   static constexpr int mi2; // expected-error {{requires an initializer}}
-  mutable constexpr int mi3 = 3; // expected-error {{non-static data member cannot be constexpr{{$}}}} expected-error {{'mutable' and 'const' cannot be mixed}}
+  mutable constexpr int mi3 = 3; // expected-error-re {{non-static data member cannot be constexpr{{$}}}} expected-error {{'mutable' and 'const' cannot be mixed}}
 };
 // typedef
 typedef constexpr int CI; // expected-error {{typedef cannot be constexpr}}
@@ -73,7 +73,7 @@ template <typename T> T gt(T t) { return t; }
 struct S {
   template<typename T> constexpr T f(); // expected-warning {{C++1y}}
   template <typename T>
-  T g() const; // expected-note {{candidate template ignored: could not match 'T (){{( __attribute__\(\(thiscall\)\))?}} const' against 'char (){{( __attribute__\(\(thiscall\)\))?}}'}}
+  T g() const; // expected-note-re {{candidate template ignored: could not match 'T (){{( __attribute__\(\(thiscall\)\))?}} const' against 'char (){{( __attribute__\(\(thiscall\)\))?}}'}}
 };
 
 // explicit specialization can differ in constepxr

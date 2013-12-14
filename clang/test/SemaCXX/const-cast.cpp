@@ -60,7 +60,7 @@ short *bad_const_cast_test(char const *volatile *const volatile *var)
   // Function pointers.
   f fp2 = const_cast<f>(fp1); // expected-error {{const_cast to 'f' (aka 'int (*)(int)'), which is not a reference, pointer-to-object, or pointer-to-data-member}}
   void (A::*mfn)() = 0;
-  (void)const_cast<void (A::*)()>(mfn); // expected-error {{const_cast to 'void (A::*)(){{( __attribute__\(\(thiscall\)\))?}}', which is not a reference, pointer-to-object, or pointer-to-data-member}}
+  (void)const_cast<void (A::*)()>(mfn); // expected-error-re {{const_cast to 'void (A::*)(){{( __attribute__\(\(thiscall\)\))?}}', which is not a reference, pointer-to-object, or pointer-to-data-member}}
   (void)const_cast<int&&>(0); // expected-error {{const_cast from rvalue to reference type 'int &&'}} expected-warning {{C++11}}
   return **var3;
 }
