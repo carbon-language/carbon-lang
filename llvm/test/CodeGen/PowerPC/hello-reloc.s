@@ -1,14 +1,10 @@
 ; This tests for the basic implementation of PPCMachObjectWriter.cpp,
 ; which is responsible for writing mach-o relocation entries for (PIC)
 ; PowerPC objects.
-; NOTE: Darwin PPC asm syntax is not yet supported by PPCAsmParser,
-; so this test case uses ELF PPC asm syntax to produce a mach-o object.
-; Once PPCAsmParser supports darwin asm syntax, this test case should
-; be updated accordingly.  
 
 ; RUN: llvm-mc -filetype=obj -relocation-model=pic -mcpu=g4 -triple=powerpc-apple-darwin8 %s -o - | llvm-readobj -relocations | FileCheck -check-prefix=DARWIN-G4-DUMP %s
 
-;	.machine ppc7400
+	.machine ppc7400
 	.section	__TEXT,__textcoal_nt,coalesced,pure_instructions
 	.section	__TEXT,__picsymbolstub1,symbol_stubs,pure_instructions,32
 	.section	__TEXT,__text,regular,pure_instructions
@@ -16,40 +12,40 @@
 	.align	4
 _main:                                  ; @main
 ; BB#0:                                 ; %entry
-	mflr 0
-	stw 31, -4(1)
-	stw 0, 8(1)
-	stwu 1, -80(1)
+	mflr r0
+	stw r31, -4(r1)
+	stw r0, 8(r1)
+	stwu r1, -80(r1)
 	bl L0$pb
 L0$pb:
-	mr 31, 1
-	li 5, 0
+	mr r31, r1
+	li r5, 0
 	mflr 2
-	stw 3, 68(31)
-	stw 5, 72(31)
-	stw 4, 64(31)
-	addis 2, 2, (L_.str-L0$pb)@ha
-	la 3, (L_.str-L0$pb)@l(2)
+	stw r3, 68(r31)
+	stw r5, 72(r31)
+	stw r4, 64(r31)
+	addis r2, r2, ha16(L_.str-L0$pb)
+	la r3, lo16(L_.str-L0$pb)(r2)
 	bl L_puts$stub
-	li 3, 0
-	addi 1, 1, 80
-	lwz 0, 8(1)
-	lwz 31, -4(1)
-	mtlr 0
+	li r3, 0
+	addi r1, r1, 80
+	lwz r0, 8(r1)
+	lwz r31, -4(r1)
+	mtlr r0
 	blr
 
 	.section	__TEXT,__picsymbolstub1,symbol_stubs,pure_instructions,32
 	.align	4
 L_puts$stub:
 	.indirect_symbol	_puts
-	mflr 0
+	mflr r0
 	bcl 20, 31, L_puts$stub$tmp
 L_puts$stub$tmp:
-	mflr 11
-	addis 11, 11, (L_puts$lazy_ptr-L_puts$stub$tmp)@ha
-	mtlr 0
-	lwzu 12, (L_puts$lazy_ptr-L_puts$stub$tmp)@l(11)
-	mtctr 12
+	mflr r11
+	addis r11, r11, ha16(L_puts$lazy_ptr-L_puts$stub$tmp)
+	mtlr r0
+	lwzu r12, lo16(L_puts$lazy_ptr-L_puts$stub$tmp)(r11)
+	mtctr r12
 	bctr
 	.section	__DATA,__la_symbol_ptr,lazy_symbol_pointers
 L_puts$lazy_ptr:
