@@ -399,12 +399,14 @@ ObjectSizeOffsetVisitor::ObjectSizeOffsetVisitor(const DataLayout *DL,
                                                  LLVMContext &Context,
                                                  bool RoundToAlign)
 : DL(DL), TLI(TLI), RoundToAlign(RoundToAlign) {
-  IntegerType *IntTy = DL->getIntPtrType(Context);
-  IntTyBits = IntTy->getBitWidth();
-  Zero = APInt::getNullValue(IntTyBits);
+  // Pointer size must be rechecked for each object visited since it could have
+  // a different address space.
 }
 
 SizeOffsetType ObjectSizeOffsetVisitor::compute(Value *V) {
+  IntTyBits = DL->getPointerTypeSizeInBits(V->getType());
+  Zero = APInt::getNullValue(IntTyBits);
+
   V = V->stripPointerCasts();
   if (Instruction *I = dyn_cast<Instruction>(V)) {
     // If we have already seen this instruction, bail out. Cycles can happen in
@@ -592,11 +594,15 @@ ObjectSizeOffsetEvaluator::ObjectSizeOffsetEvaluator(const DataLayout *DL,
                                                      bool RoundToAlign)
 : DL(DL), TLI(TLI), Context(Context), Builder(Context, TargetFolder(DL)),
   RoundToAlign(RoundToAlign) {
-  IntTy = DL->getIntPtrType(Context);
-  Zero = ConstantInt::get(IntTy, 0);
+  // IntTy and Zero must be set for each compute() since the address space may
+  // be different for later objects.
 }
 
 SizeOffsetEvalType ObjectSizeOffsetEvaluator::compute(Value *V) {
+  // XXX - Are vectors of pointers possible here?
+  IntTy = cast<IntegerType>(DL->getIntPtrType(V->getType()));
+  Zero = ConstantInt::get(IntTy, 0);
+
   SizeOffsetEvalType Result = compute_(V);
 
   if (!bothKnown(Result)) {

@@ -190,6 +190,8 @@ public:
     return knownSize(SizeOffset) && knownOffset(SizeOffset);
   }
 
+  // These are "private", except they can't actually be made private. Only
+  // compute() should be used by external users.
   SizeOffsetType visitAllocaInst(AllocaInst &I);
   SizeOffsetType visitArgument(Argument &A);
   SizeOffsetType visitCallSite(CallSite CS);
@@ -256,6 +258,7 @@ public:
     return knownSize(SizeOffset) && knownOffset(SizeOffset);
   }
 
+  // The individual instruction visitors should be treated as private.
   SizeOffsetEvalType visitAllocaInst(AllocaInst &I);
   SizeOffsetEvalType visitCallSite(CallSite CS);
   SizeOffsetEvalType visitExtractElementInst(ExtractElementInst &I);

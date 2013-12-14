@@ -1,7 +1,10 @@
 ; RUN: opt < %s -bounds-checking -S | FileCheck %s
-target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
+target datalayout = "e-p:64:64:64-p1:16:16:16-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 
 @.str = private constant [8 x i8] c"abcdefg\00"   ; <[8 x i8]*>
+
+@.str_as1 = private addrspace(1) constant [8 x i8] c"abcdefg\00"   ; <[8 x i8] addrspace(1)*>
+
 
 declare noalias i8* @malloc(i64) nounwind
 declare noalias i8* @calloc(i64, i64) nounwind
@@ -60,6 +63,16 @@ define void @f5(i64 %x) nounwind {
   ret void
 }
 
+define void @f5_as1(i64 %x) nounwind {
+; CHECK: @f5_as1
+  %idx = getelementptr inbounds [8 x i8] addrspace(1)* @.str_as1, i64 0, i64 %x
+  ; CHECK: sub i16
+  ; CHECK icmp ult i16
+; CHECK: trap
+  %1 = load i8 addrspace(1)* %idx, align 4
+  ret void
+}
+
 ; CHECK: @f6
 define void @f6(i64 %x) nounwind {
   %1 = alloca i128
@@ -114,6 +127,15 @@ define void @f11(i128* byval %x) nounwind {
   %2 = getelementptr inbounds i8* %1, i64 16
 ; CHECK: br label
   %3 = load i8* %2, align 4
+  ret void
+}
+
+; CHECK: @f11_as1
+define void @f11_as1(i128 addrspace(1)* byval %x) nounwind {
+  %1 = bitcast i128 addrspace(1)* %x to i8 addrspace(1)*
+  %2 = getelementptr inbounds i8 addrspace(1)* %1, i16 16
+; CHECK: br label
+  %3 = load i8 addrspace(1)* %2, align 4
   ret void
 }
 
