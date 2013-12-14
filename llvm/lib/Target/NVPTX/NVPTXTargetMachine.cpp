@@ -63,12 +63,22 @@ extern "C" void LLVMInitializeNVPTXTarget() {
   initializeGenericToNVVMPass(*PassRegistry::getPassRegistry());
 }
 
+static std::string computeDataLayout(const NVPTXSubtarget &ST) {
+  if (ST.is64Bit())
+    return "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-"
+           "f32:32:32-f64:64:64-v16:16:16-v32:32:32-v64:64:64-v128:128:128-"
+           "n16:32:64";
+  return "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-"
+         "f32:32:32-f64:64:64-v16:16:16-v32:32:32-v64:64:64-v128:128:128-"
+         "n16:32:64";
+}
+
 NVPTXTargetMachine::NVPTXTargetMachine(
     const Target &T, StringRef TT, StringRef CPU, StringRef FS,
     const TargetOptions &Options, Reloc::Model RM, CodeModel::Model CM,
     CodeGenOpt::Level OL, bool is64bit)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-      Subtarget(TT, CPU, FS, is64bit), DL(Subtarget.getDataLayout()),
+      Subtarget(TT, CPU, FS, is64bit), DL(computeDataLayout(Subtarget)),
       InstrInfo(*this), TLInfo(*this), TSInfo(*this),
       FrameLowering(
           *this, is64bit) /*FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0)*/ {

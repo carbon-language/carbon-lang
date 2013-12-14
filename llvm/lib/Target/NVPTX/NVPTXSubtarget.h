@@ -74,21 +74,6 @@ public:
   unsigned getPTXVersion() const { return PTXVersion; }
 
   void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
-
-  std::string getDataLayout() const {
-    const char *p;
-    if (is64Bit())
-      p = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-"
-          "f32:32:32-f64:64:64-v16:16:16-v32:32:32-v64:64:64-v128:128:128-"
-          "n16:32:64";
-    else
-      p = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-"
-          "f32:32:32-f64:64:64-v16:16:16-v32:32:32-v64:64:64-v128:128:128-"
-          "n16:32:64";
-
-    return std::string(p);
-  }
-
 };
 
 } // End llvm namespace
