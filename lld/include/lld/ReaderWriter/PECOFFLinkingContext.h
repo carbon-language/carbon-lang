@@ -99,16 +99,8 @@ public:
 
   StringRef searchLibraryFile(StringRef path) const;
 
-  /// Returns the decorated name of the given symbol name. On 32-bit x86, it
-  /// adds "_" at the beginning of the string. On other architectures, the
-  /// return value is the same as the argument.
-  StringRef decorateSymbol(StringRef name) const {
-    if (_machineType != llvm::COFF::IMAGE_FILE_MACHINE_I386)
-      return name;
-    std::string str = "_";
-    str.append(name);
-    return allocate(str);
-  }
+  StringRef decorateSymbol(StringRef name) const;
+  StringRef undecorateSymbol(StringRef name) const;
 
   void setEntrySymbolName(StringRef name) {
     if (!name.empty())

@@ -66,7 +66,8 @@ private:
   edata::EdataAtom *
   createAddressTable(const std::vector<const DefinedAtom *> &atoms);
   edata::EdataAtom *
-  createNamePointerTable(const std::vector<const DefinedAtom *> &atoms,
+  createNamePointerTable(const PECOFFLinkingContext &ctx,
+                         const std::vector<const DefinedAtom *> &atoms,
                          MutableFile *file);
   edata::EdataAtom *
   createOrdinalTable(const std::vector<const DefinedAtom *> &atoms);
