@@ -77,8 +77,6 @@ def err_verify_missing_end : Error<
     "cannot find end ('}}') of expected %0">;
 def err_verify_invalid_content : Error<
     "invalid expected %0: %1">;
-def err_verify_missing_regex : Error<
-    "cannot find start of regex ('{{') in %0">;
 def err_verify_inconsistent_diags : Error<
     "'%0' diagnostics %select{expected|seen}1 but not %select{seen|expected}1: "
     "%2">;

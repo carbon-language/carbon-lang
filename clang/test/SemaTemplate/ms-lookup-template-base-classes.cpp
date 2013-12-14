@@ -222,7 +222,7 @@ template <typename T> struct C : T {
 };
 
 template struct B<A>;
-template struct C<A>;  // expected-note-re 1+ {{in instantiation of member function 'PR16014::C<PR16014::A>::{{.*}}' requested here}}
+template struct C<A>;  // expected-note 1+ {{in instantiation of member function 'PR16014::C<PR16014::A>::{{.*}}' requested here}}
 
 template <typename T> struct D : T {
   struct Inner {

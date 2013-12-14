@@ -356,15 +356,7 @@ static bool ParseDirective(StringRef S, ExpectedData *ED, SourceManager &SM,
       return true;
 
     // Default directive kind.
-    bool RegexKind = false;
     const char* KindStr = "string";
-
-    // Next optional token: -
-    if (PH.Next("-re")) {
-      PH.Advance();
-      RegexKind = true;
-      KindStr = "regex";
-    }
 
     // Next optional token: @
     SourceLocation ExpectedLoc;
@@ -483,16 +475,8 @@ static bool ParseDirective(StringRef S, ExpectedData *ED, SourceManager &SM,
     if (Text.empty())
       Text.assign(ContentBegin, ContentEnd);
 
-    // Check that regex directives contain at least one regex.
-    if (RegexKind && Text.find("{{") == StringRef::npos) {
-      Diags.Report(Pos.getLocWithOffset(ContentBegin-PH.Begin),
-                   diag::err_verify_missing_regex) << Text;
-      return false;
-    }
-
     // Construct new directive.
-    Directive *D = Directive::create(RegexKind, Pos, ExpectedLoc, Text,
-                                     Min, Max);
+    Directive *D = Directive::create(Pos, ExpectedLoc, Text, Min, Max);
     std::string Error;
     if (D->isValid(Error)) {
       DL->push_back(D);
@@ -851,10 +835,10 @@ void VerifyDiagnosticConsumer::CheckDiagnostics() {
   ED.Notes.clear();
 }
 
-Directive *Directive::create(bool RegexKind, SourceLocation DirectiveLoc,
+Directive *Directive::create(SourceLocation DirectiveLoc,
                              SourceLocation DiagnosticLoc, StringRef Text,
                              unsigned Min, unsigned Max) {
-  if (!RegexKind)
+  if (Text.find("}}") == StringRef::npos)
     return new StandardDirective(DirectiveLoc, DiagnosticLoc, Text, Min, Max);
 
   // Parse the directive into a regular expression.

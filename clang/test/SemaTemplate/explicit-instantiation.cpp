@@ -16,7 +16,7 @@ struct X0 {
   } 
   T* f0(T*, T*) { return T(); } // expected-warning{{expression which evaluates to zero treated as a null pointer constant of type 'int *'}}
 
-  template <typename U> T f0(T, U) { return T(); } // expected-note-re {{candidate template ignored: could not match 'int (int, U){{( __attribute__\(\(thiscall\)\))?}}' against 'int (int){{( __attribute__\(\(thiscall\)\))?}} const'}} \
+  template <typename U> T f0(T, U) { return T(); } // expected-note {{candidate template ignored: could not match 'int (int, U){{( __attribute__\(\(thiscall\)\))?}}' against 'int (int){{( __attribute__\(\(thiscall\)\))?}} const'}} \
                                                    // expected-note {{candidate template ignored: could not match 'int' against 'int *'}}
 };
 
