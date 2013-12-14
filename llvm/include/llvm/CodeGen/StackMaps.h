@@ -171,9 +171,10 @@ private:
   CallsiteInfoList CSInfos;
   ConstantPool ConstPool;
 
-  std::pair<Location, MachineInstr::const_mop_iterator>
+  MachineInstr::const_mop_iterator
   parseOperand(MachineInstr::const_mop_iterator MOI,
-               MachineInstr::const_mop_iterator MOE) const;
+               MachineInstr::const_mop_iterator MOE,
+               LocationVec &Locs, LiveOutVec &LiveOuts) const;
 
   /// \brief Create a live-out register record for the given register @p Reg.
   LiveOutReg createLiveOutReg(unsigned Reg, const MCRegisterInfo &MCRI,

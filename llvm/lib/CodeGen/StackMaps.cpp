@@ -29,14 +29,13 @@
 
 using namespace llvm;
 
-PatchPointOpers::PatchPointOpers(const MachineInstr *MI):
-  MI(MI),
-  HasDef(MI->getOperand(0).isReg() && MI->getOperand(0).isDef() &&
-         !MI->getOperand(0).isImplicit()),
-  IsAnyReg(MI->getOperand(getMetaIdx(CCPos)).getImm() == CallingConv::AnyReg) {
-
+PatchPointOpers::PatchPointOpers(const MachineInstr *MI)
+  : MI(MI),
+    HasDef(MI->getOperand(0).isReg() && MI->getOperand(0).isDef() &&
+           !MI->getOperand(0).isImplicit()),
+    IsAnyReg(MI->getOperand(getMetaIdx(CCPos)).getImm() == CallingConv::AnyReg)
+{
 #ifndef NDEBUG
-  {
   unsigned CheckStartIdx = 0, e = MI->getNumOperands();
   while (CheckStartIdx < e && MI->getOperand(CheckStartIdx).isReg() &&
          MI->getOperand(CheckStartIdx).isDef() &&
@@ -45,7 +44,6 @@ PatchPointOpers::PatchPointOpers(const MachineInstr *MI):
 
   assert(getMetaIdx() == CheckStartIdx &&
          "Unexpected additonal definition in Patchpoint intrinsic.");
-  }
 #endif
 }
 
@@ -66,61 +64,64 @@ unsigned PatchPointOpers::getNextScratchIdx(unsigned StartIdx) const {
   return ScratchIdx;
 }
 
-std::pair<StackMaps::Location, MachineInstr::const_mop_iterator>
+MachineInstr::const_mop_iterator
 StackMaps::parseOperand(MachineInstr::const_mop_iterator MOI,
-                        MachineInstr::const_mop_iterator MOE) const {
-  const MachineOperand &MOP = *MOI;
-  assert((!MOP.isReg() || !MOP.isImplicit()) &&
-         "Implicit operands should not be processed.");
-
-  if (MOP.isImm()) {
-    // Verify anyregcc
-    // [<def>], <id>, <numBytes>, <target>, <numArgs>, <cc>, ...
-
-    switch (MOP.getImm()) {
-      default: llvm_unreachable("Unrecognized operand type.");
-      case StackMaps::DirectMemRefOp: {
-        unsigned Size = AP.TM.getDataLayout()->getPointerSizeInBits();
-        assert((Size % 8) == 0 && "Need pointer size in bytes.");
-        Size /= 8;
-        unsigned Reg = (++MOI)->getReg();
-        int64_t Imm = (++MOI)->getImm();
-        return std::make_pair(
-          Location(StackMaps::Location::Direct, Size, Reg, Imm), ++MOI);
-      }
-      case StackMaps::IndirectMemRefOp: {
-        int64_t Size = (++MOI)->getImm();
-        assert(Size > 0 && "Need a valid size for indirect memory locations.");
-        unsigned Reg = (++MOI)->getReg();
-        int64_t Imm = (++MOI)->getImm();
-        return std::make_pair(
-          Location(StackMaps::Location::Indirect, Size, Reg, Imm), ++MOI);
-      }
-      case StackMaps::ConstantOp: {
-        ++MOI;
-        assert(MOI->isImm() && "Expected constant operand.");
-        int64_t Imm = MOI->getImm();
-        return std::make_pair(
-          Location(Location::Constant, sizeof(int64_t), 0, Imm), ++MOI);
-      }
+                        MachineInstr::const_mop_iterator MOE,
+                        LocationVec &Locs, LiveOutVec &LiveOuts) const {
+  if (MOI->isImm()) {
+    switch (MOI->getImm()) {
+    default: llvm_unreachable("Unrecognized operand type.");
+    case StackMaps::DirectMemRefOp: {
+      unsigned Size = AP.TM.getDataLayout()->getPointerSizeInBits();
+      assert((Size % 8) == 0 && "Need pointer size in bytes.");
+      Size /= 8;
+      unsigned Reg = (++MOI)->getReg();
+      int64_t Imm = (++MOI)->getImm();
+      Locs.push_back(Location(StackMaps::Location::Direct, Size, Reg, Imm));
+      break;
     }
+    case StackMaps::IndirectMemRefOp: {
+      int64_t Size = (++MOI)->getImm();
+      assert(Size > 0 && "Need a valid size for indirect memory locations.");
+      unsigned Reg = (++MOI)->getReg();
+      int64_t Imm = (++MOI)->getImm();
+      Locs.push_back(Location(StackMaps::Location::Indirect, Size, Reg, Imm));
+      break;
+    }
+    case StackMaps::ConstantOp: {
+      ++MOI;
+      assert(MOI->isImm() && "Expected constant operand.");
+      int64_t Imm = MOI->getImm();
+      Locs.push_back(Location(Location::Constant, sizeof(int64_t), 0, Imm));
+      break;
+    }
+    }
+    return ++MOI;
   }
 
-  if (MOP.isRegMask() || MOP.isRegLiveOut())
-    return std::make_pair(Location(), ++MOI);
+  // The physical register number will ultimately be encoded as a DWARF regno.
+  // The stack map also records the size of a spill slot that can hold the
+  // register content. (The runtime can track the actual size of the data type
+  // if it needs to.)
+  if (MOI->isReg()) {
+    // Skip implicit registers (this includes our scratch registers)
+    if (MOI->isImplicit())
+      return ++MOI;
 
-  // Otherwise this is a reg operand. The physical register number will
-  // ultimately be encoded as a DWARF regno. The stack map also records the size
-  // of a spill slot that can hold the register content. (The runtime can
-  // track the actual size of the data type if it needs to.)
-  assert(MOP.isReg() && "Expected register operand here.");
-  assert(TargetRegisterInfo::isPhysicalRegister(MOP.getReg()) &&
-         "Virtreg operands should have been rewritten before now.");
-  const TargetRegisterClass *RC =
-    AP.TM.getRegisterInfo()->getMinimalPhysRegClass(MOP.getReg());
-  assert(!MOP.getSubReg() && "Physical subreg still around.");
-  return std::make_pair(
-    Location(Location::Register, RC->getSize(), MOP.getReg(), 0), ++MOI);
+    assert(TargetRegisterInfo::isPhysicalRegister(MOI->getReg()) &&
+           "Virtreg operands should have been rewritten before now.");
+    const TargetRegisterClass *RC =
+      AP.TM.getRegisterInfo()->getMinimalPhysRegClass(MOI->getReg());
+    assert(!MOI->getSubReg() && "Physical subreg still around.");
+    Locs.push_back(
+      Location(Location::Register, RC->getSize(), MOI->getReg(), 0));
+    return ++MOI;
+  }
+
+  if (MOI->isRegLiveOut())
+    LiveOuts = parseRegisterLiveOutMask(MOI->getRegLiveOut());
+
+  return ++MOI;
 }
 
 /// Go up the super-register chain until we hit a valid dwarf register number.
@@ -195,28 +196,23 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
   LiveOutVec LiveOuts;
 
   if (recordResult) {
-    std::pair<Location, MachineInstr::const_mop_iterator> ParseResult =
-      parseOperand(MI.operands_begin(), llvm::next(MI.operands_begin()));
-
-    Location &Loc = ParseResult.first;
-    assert(Loc.LocType == Location::Register &&
-           "Stackmap return location must be a register.");
-    Locations.push_back(Loc);
+    assert(PatchPointOpers(&MI).hasDef() && "Stackmap has no return value.");
+    parseOperand(MI.operands_begin(), llvm::next(MI.operands_begin()),
+                 Locations, LiveOuts);
   }
 
+  // Parse operands.
   while (MOI != MOE) {
-    Location Loc;
-    tie(Loc, MOI) = parseOperand(MOI, MOE);
+    MOI = parseOperand(MOI, MOE, Locations, LiveOuts);
+  }
 
-    // Move large constants into the constant pool.
-    if (Loc.LocType == Location::Constant && (Loc.Offset & ~0xFFFFFFFFULL)) {
-      Loc.LocType = Location::ConstantIndex;
-      Loc.Offset = ConstPool.getConstantIndex(Loc.Offset);
+  // Move large constants into the constant pool.
+  for (LocationVec::iterator I = Locations.begin(), E = Locations.end();
+       I != E; ++I) {
+    if (I->LocType == Location::Constant && (I->Offset & ~0xFFFFFFFFULL)) {
+      I->LocType = Location::ConstantIndex;
+      I->Offset = ConstPool.getConstantIndex(I->Offset);
     }
-
-    // Skip the register mask and register live-out mask
-    if (Loc.LocType != Location::Unprocessed)
-      Locations.push_back(Loc);
   }
 
   const MCExpr *CSOffsetExpr = MCBinaryExpr::CreateSub(
@@ -224,19 +220,7 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
     MCSymbolRefExpr::Create(AP.CurrentFnSym, OutContext),
     OutContext);
 
-  if (MOI->isRegLiveOut())
-    LiveOuts = parseRegisterLiveOutMask(MOI->getRegLiveOut());
-
   CSInfos.push_back(CallsiteInfo(CSOffsetExpr, ID, Locations, LiveOuts));
-}
-
-static MachineInstr::const_mop_iterator
-getStackMapEndMOP(MachineInstr::const_mop_iterator MOI,
-                  MachineInstr::const_mop_iterator MOE) {
-  for (; MOI != MOE; ++MOI)
-    if (MOI->isRegLiveOut() || (MOI->isReg() && MOI->isImplicit()))
-      break;
-  return MOI;
 }
 
 void StackMaps::recordStackMap(const MachineInstr &MI) {
@@ -244,8 +228,7 @@ void StackMaps::recordStackMap(const MachineInstr &MI) {
 
   int64_t ID = MI.getOperand(0).getImm();
   recordStackMapOpers(MI, ID, llvm::next(MI.operands_begin(), 2),
-                      getStackMapEndMOP(MI.operands_begin(),
-                                        MI.operands_end()));
+                      MI.operands_end());
 }
 
 void StackMaps::recordPatchPoint(const MachineInstr &MI) {
@@ -256,7 +239,7 @@ void StackMaps::recordPatchPoint(const MachineInstr &MI) {
 
   MachineInstr::const_mop_iterator MOI =
     llvm::next(MI.operands_begin(), opers.getStackMapStartIdx());
-  recordStackMapOpers(MI, ID, MOI, getStackMapEndMOP(MOI, MI.operands_end()),
+  recordStackMapOpers(MI, ID, MOI, MI.operands_end(),
                       opers.isAnyReg() && opers.hasDef());
 
 #ifndef NDEBUG
