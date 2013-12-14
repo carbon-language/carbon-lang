@@ -168,3 +168,19 @@ getBlockFreq(const MachineBasicBlock *MBB) const {
 MachineFunction *MachineBlockFrequencyInfo::getFunction() const {
   return MBFI->Fn;
 }
+
+raw_ostream &
+MachineBlockFrequencyInfo::printBlockFreq(raw_ostream &OS,
+                                          const BlockFrequency Freq) const {
+  return MBFI->printBlockFreq(OS, Freq);
+}
+
+raw_ostream &
+MachineBlockFrequencyInfo::printBlockFreq(raw_ostream &OS,
+                                          const MachineBasicBlock *MBB) const {
+  return MBFI->printBlockFreq(OS, MBB);
+}
+
+uint64_t MachineBlockFrequencyInfo::getEntryFrequency() const {
+  return MBFI->getEntryFrequency();
+}

@@ -159,3 +159,14 @@ void BlockFrequencyInfo::view() const {
 const Function *BlockFrequencyInfo::getFunction() const {
   return BFI->Fn;
 }
+
+raw_ostream &BlockFrequencyInfo::
+printBlockFreq(raw_ostream &OS, const BlockFrequency Freq) const {
+  return BFI->printBlockFreq(OS, Freq);
+}
+
+raw_ostream &
+BlockFrequencyInfo::printBlockFreq(raw_ostream &OS,
+                                   const BasicBlock *BB) const {
+  return BFI->printBlockFreq(OS, BB);
+}
