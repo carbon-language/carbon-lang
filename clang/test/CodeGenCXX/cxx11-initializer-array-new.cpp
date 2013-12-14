@@ -99,8 +99,9 @@ void *q = new S[n][3]{ { 1, 2, 3 }, { 4, 5, 6 } };
 //   CHECK: icmp eq %[[S]]* %[[NEXT_INNER]], %[[END_INNER]]
 //   CHECK: br i1
 //
-// CHECK: %[[NEXT_OUTER:.*]] = getelementptr %[[S]]* %{{.*}}, i32 1
-// CHECK: icmp eq %[[S]]* %[[NEXT_OUTER]], %[[END_AS_S]]
+// CHECK: %[[NEXT_OUTER:.*]] = getelementptr [3 x %[[S]]]* %{{.*}}, i32 1
+// CHECK: %[[NEXT_OUTER_AS_S:.*]] = bitcast [3 x %[[S]]]* %[[NEXT_OUTER]] to %[[S]]*
+// CHECK: icmp eq %[[S]]* %[[NEXT_OUTER_AS_S]], %[[END_AS_S]]
 // CHECK: br i1
 //
 // CHECK: }

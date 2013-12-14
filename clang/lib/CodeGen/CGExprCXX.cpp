@@ -864,9 +864,29 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
     cleanupDominator->eraseFromParent();
   }
 
-  // Advance to the next element.
-  llvm::Value *nextPtr = Builder.CreateConstGEP1_32(curPtr, 1, "array.next");
+  // FIXME: The code below intends to initialize the individual array base
+  // elements, one at a time - but when dealing with multi-dimensional arrays -
+  // the pointer arithmetic can get confused - so the fix below entails casting
+  // to the allocated type to ensure that we get the pointer arithmetic right.
+  // It seems like the right approach here, it to really initialize the
+  // individual array base elements one at a time since it'll generate less
+  // code. I think the problem is that the wrong type is being passed into
+  // StoreAnyExprIntoOneUnit, but directly fixing that doesn't really work,
+  // because the Init expression has the wrong type at this point.
+  // So... this is ok for a quick fix, but we can and should do a lot better
+  // here long-term.
 
+  // Advance to the next element by adjusting the pointer type as necessary.
+  // For new int[10][20][30], alloc type is int[20][30], base type is 'int'.
+  QualType AllocType = E->getAllocatedType();
+  llvm::Type *AllocPtrTy = ConvertTypeForMem(AllocType)->getPointerTo(
+      curPtr->getType()->getPointerAddressSpace());
+  llvm::Value *curPtrAllocTy = Builder.CreateBitCast(curPtr, AllocPtrTy);
+  llvm::Value *nextPtrAllocTy =
+      Builder.CreateConstGEP1_32(curPtrAllocTy, 1, "array.next");
+  // Cast it back to the base type so that we can compare it to the endPtr.
+  llvm::Value *nextPtr =
+      Builder.CreateBitCast(nextPtrAllocTy, endPtr->getType());
   // Check whether we've gotten to the end of the array and, if so,
   // exit the loop.
   llvm::Value *isEnd = Builder.CreateICmpEQ(nextPtr, endPtr, "array.atend");
