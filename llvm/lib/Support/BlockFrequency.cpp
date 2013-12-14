@@ -149,24 +149,3 @@ uint32_t BlockFrequency::scale(const BranchProbability &Prob) {
   return scale(Prob.getNumerator(), Prob.getDenominator());
 }
 
-void BlockFrequency::print(raw_ostream &OS) const {
-  // Convert fixed-point number to decimal.
-  OS << Frequency / getEntryFrequency() << ".";
-  uint64_t Rem = Frequency % getEntryFrequency();
-  uint64_t Eps = 1;
-  do {
-    Rem *= 10;
-    Eps *= 10;
-    OS << Rem / getEntryFrequency();
-    Rem = Rem % getEntryFrequency();
-  } while (Rem >= Eps/2);
-}
-
-namespace llvm {
-
-raw_ostream &operator<<(raw_ostream &OS, const BlockFrequency &Freq) {
-  Freq.print(OS);
-  return OS;
-}
-
-}
