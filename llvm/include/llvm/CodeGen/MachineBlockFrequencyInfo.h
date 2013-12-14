@@ -62,7 +62,7 @@ public:
   raw_ostream &printBlockFreq(raw_ostream &OS,
                               const MachineBasicBlock *MBB) const;
 
-  uint64_t getEntryFrequency() const;
+  uint64_t getEntryFreq() const;
 
 };
 

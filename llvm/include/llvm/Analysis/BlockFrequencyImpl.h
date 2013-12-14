@@ -317,7 +317,7 @@ class BlockFrequencyImpl {
 
 public:
 
-  uint64_t getEntryFrequency() { return EntryFreq; }
+  uint64_t getEntryFreq() { return EntryFreq; }
 
   /// getBlockFreq - Return block frequency. Return 0 if we don't have it.
   BlockFrequency getBlockFreq(const BlockT *BB) const {

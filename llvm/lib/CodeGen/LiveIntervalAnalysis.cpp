@@ -625,7 +625,7 @@ LiveIntervals::getSpillWeight(bool isDef, bool isUse,
                               const MachineBlockFrequencyInfo *MBFI,
                               const MachineInstr *MI) {
   BlockFrequency Freq = MBFI->getBlockFreq(MI->getParent());
-  const float Scale = 1.0f / MBFI->getEntryFrequency();
+  const float Scale = 1.0f / MBFI->getEntryFreq();
   return (isDef + isUse) * (Freq.getFrequency() * Scale);
 }
 

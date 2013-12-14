@@ -181,6 +181,6 @@ MachineBlockFrequencyInfo::printBlockFreq(raw_ostream &OS,
   return MBFI->printBlockFreq(OS, MBB);
 }
 
-uint64_t MachineBlockFrequencyInfo::getEntryFrequency() const {
-  return MBFI->getEntryFrequency();
+uint64_t MachineBlockFrequencyInfo::getEntryFreq() const {
+  return MBFI->getEntryFreq();
 }

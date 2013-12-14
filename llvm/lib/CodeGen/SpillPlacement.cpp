@@ -221,7 +221,7 @@ void SpillPlacement::activate(unsigned n) {
   // Hopfield network.
   if (bundles->getBlocks(n).size() > 100) {
     nodes[n].BiasP = 0;
-    nodes[n].BiasN = (MBFI->getEntryFrequency() / 16);
+    nodes[n].BiasN = (MBFI->getEntryFreq() / 16);
   }
 }
 
