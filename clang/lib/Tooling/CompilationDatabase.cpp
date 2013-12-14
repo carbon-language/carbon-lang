@@ -239,7 +239,8 @@ static bool stripPositionalArgs(std::vector<const char *> Args,
 
   // Remove -no-integrated-as; it's not used for syntax checking,
   // and it confuses targets which don't support this option.
-  std::remove_if(Args.begin(), Args.end(), MatchesAny(std::string("no-integrated-as")));
+  std::remove_if(Args.begin(), Args.end(),
+                 MatchesAny(std::string("-no-integrated-as")));
 
   const OwningPtr<driver::Compilation> Compilation(
       NewDriver->BuildCompilation(Args));
