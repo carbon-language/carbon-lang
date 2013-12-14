@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -emit-llvm -cxx-abi itanium -o - %s | FileCheck %s
+// RUN: %clang_cc1 -verify -Wno-return-type -Wno-main -std=c++11 -emit-llvm -cxx-abi itanium -o - %s | FileCheck %s
+// expected-no-diagnostics
+
 namespace test1 {
 int x;
 template <int& D> class T { };
@@ -156,7 +158,7 @@ namespace test11 {
 
 namespace test12 {
   // Make sure we can mangle non-type template args with internal linkage.
-  static int f();
+  static int f() {}
   const int n = 10;
   template<typename T, T v> void test() {}
   void use() {
