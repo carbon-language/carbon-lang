@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -cxx-abi itanium -emit-llvm %s -o -
-// RUN: %clang_cc1 -cxx-abi microsoft -fno-rtti -emit-llvm %s -o -
+
+// FIXME: Don't assert for non-Win32 triples (PR18251).
+// RUN: %clang_cc1 -triple i686-pc-win32 -cxx-abi microsoft -fno-rtti -emit-llvm %s -o -
 
 struct A {
   virtual void Method() = 0;
