@@ -27,7 +27,7 @@ class MCSymbol;
 /// or EH information.
 class AsmPrinterHandler {
 public:
-  virtual ~AsmPrinterHandler() {}
+  virtual ~AsmPrinterHandler();
 
   /// \brief For symbols that have a size designated (e.g. common symbols),
   /// this tracks that size.

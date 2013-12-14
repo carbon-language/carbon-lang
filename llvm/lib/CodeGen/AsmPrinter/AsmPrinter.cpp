@@ -2256,3 +2256,6 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
 
   report_fatal_error("no GCMetadataPrinter registered for GC: " + Twine(Name));
 }
+
+/// Pin vtable to this file.
+AsmPrinterHandler::~AsmPrinterHandler() {}

@@ -1998,6 +1998,9 @@ void DwarfUnit::emitHeader(const MCSection *ASection,
   Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 }
 
+DwarfCompileUnit::~DwarfCompileUnit() {}
+DwarfTypeUnit::~DwarfTypeUnit() {}
+
 void DwarfTypeUnit::emitHeader(const MCSection *ASection,
                                const MCSymbol *ASectionSym) const {
   DwarfUnit::emitHeader(ASection, ASectionSym);

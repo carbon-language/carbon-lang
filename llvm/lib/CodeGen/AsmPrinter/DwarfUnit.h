@@ -500,6 +500,7 @@ class DwarfCompileUnit : public DwarfUnit {
 public:
   DwarfCompileUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
                    DwarfDebug *DW, DwarfFile *DWU);
+  virtual ~DwarfCompileUnit() LLVM_OVERRIDE;
 
   /// createGlobalVariableDIE - create global variable DIE.
   void createGlobalVariableDIE(DIGlobalVariable GV);
@@ -520,6 +521,7 @@ private:
 public:
   DwarfTypeUnit(unsigned UID, DIE *D, uint16_t Language, AsmPrinter *A,
                 DwarfDebug *DW, DwarfFile *DWU);
+  virtual ~DwarfTypeUnit() LLVM_OVERRIDE;
 
   void setTypeSignature(uint64_t Signature) { TypeSignature = Signature; }
   void setType(const DIE *Ty) { this->Ty = Ty; }
