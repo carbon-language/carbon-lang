@@ -132,7 +132,7 @@ VirtRegAuxInfo::calculateSpillWeightAndHint(LiveInterval &li) {
       bool reads, writes;
       tie(reads, writes) = mi->readsWritesVirtualRegister(li.reg);
       weight = LiveIntervals::getSpillWeight(
-          writes, reads, MBFI.getBlockFreq(mi->getParent()));
+        writes, reads, &MBFI, mi);
 
       // Give extra weight to what looks like a loop induction variable update.
       if (writes && isExiting && LIS.isLiveOutOfMBB(li, mbb))

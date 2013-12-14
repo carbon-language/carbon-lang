@@ -348,8 +348,7 @@ PBQPRAProblem *PBQPBuilderWithCoalescing::build(MachineFunction *mf,
       // value plucked randomly out of the air.
 
       PBQP::PBQPNum cBenefit =
-        copyFactor * LiveIntervals::getSpillWeight(false, true,
-                                                   mbfi->getBlockFreq(mbb));
+        copyFactor * LiveIntervals::getSpillWeight(false, true, mbfi, mi);
 
       if (cp.isPhys()) {
         if (!mf->getRegInfo().isAllocatable(dst)) {

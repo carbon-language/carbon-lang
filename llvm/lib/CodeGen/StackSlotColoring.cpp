@@ -142,7 +142,6 @@ void StackSlotColoring::ScanForSpillSlotRefs(MachineFunction &MF) {
   for (MachineFunction::iterator MBBI = MF.begin(), E = MF.end();
        MBBI != E; ++MBBI) {
     MachineBasicBlock *MBB = &*MBBI;
-    BlockFrequency Freq = MBFI->getBlockFreq(MBB);
     for (MachineBasicBlock::iterator MII = MBB->begin(), EE = MBB->end();
          MII != EE; ++MII) {
       MachineInstr *MI = &*MII;
@@ -157,7 +156,7 @@ void StackSlotColoring::ScanForSpillSlotRefs(MachineFunction &MF) {
           continue;
         LiveInterval &li = LS->getInterval(FI);
         if (!MI->isDebugValue())
-          li.weight += LiveIntervals::getSpillWeight(false, true, Freq);
+          li.weight += LiveIntervals::getSpillWeight(false, true, MBFI, MI);
       }
       for (MachineInstr::mmo_iterator MMOI = MI->memoperands_begin(),
            EE = MI->memoperands_end(); MMOI != EE; ++MMOI) {

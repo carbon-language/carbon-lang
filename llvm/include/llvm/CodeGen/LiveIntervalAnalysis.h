@@ -45,6 +45,7 @@ namespace llvm {
   class TargetInstrInfo;
   class TargetRegisterClass;
   class VirtRegMap;
+  class MachineBlockFrequencyInfo;
 
   class LiveIntervals : public MachineFunctionPass {
     MachineFunction* MF;
@@ -100,7 +101,9 @@ namespace llvm {
     virtual ~LiveIntervals();
 
     // Calculate the spill weight to assign to a single instruction.
-    static float getSpillWeight(bool isDef, bool isUse, BlockFrequency freq);
+    static float getSpillWeight(bool isDef, bool isUse,
+                                const MachineBlockFrequencyInfo *MBFI,
+                                const MachineInstr *Instr);
 
     LiveInterval &getInterval(unsigned Reg) {
       if (hasInterval(Reg))

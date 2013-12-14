@@ -22,6 +22,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
+#include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -620,9 +621,12 @@ LiveIntervals::hasPHIKill(const LiveInterval &LI, const VNInfo *VNI) const {
 }
 
 float
-LiveIntervals::getSpillWeight(bool isDef, bool isUse, BlockFrequency freq) {
-  const float Scale = 1.0f / BlockFrequency::getEntryFrequency();
-  return (isDef + isUse) * (freq.getFrequency() * Scale);
+LiveIntervals::getSpillWeight(bool isDef, bool isUse,
+                              const MachineBlockFrequencyInfo *MBFI,
+                              const MachineInstr *MI) {
+  BlockFrequency Freq = MBFI->getBlockFreq(MI->getParent());
+  const float Scale = 1.0f / MBFI->getEntryFrequency();
+  return (isDef + isUse) * (Freq.getFrequency() * Scale);
 }
 
 LiveRange::Segment
