@@ -67,7 +67,8 @@ class BlockFrequencyImpl {
 
   void setBlockFreq(BlockT *BB, BlockFrequency Freq) {
     Freqs[BB] = Freq;
-    DEBUG(dbgs() << "Frequency(" << getBlockName(BB) << ") = " << Freq << "\n");
+    DEBUG(dbgs() << "Frequency(" << getBlockName(BB) << ") = ";
+          printBlockFreq(dbgs(), Freq) << "\n");
   }
 
   /// getEdgeFreq - Return edge frequency based on SRC frequency and Src -> Dst
@@ -81,8 +82,9 @@ class BlockFrequencyImpl {
   ///
   void incBlockFreq(BlockT *BB, BlockFrequency Freq) {
     Freqs[BB] += Freq;
-    DEBUG(dbgs() << "Frequency(" << getBlockName(BB) << ") += " << Freq
-                 << " --> " << Freqs[BB] << "\n");
+    DEBUG(dbgs() << "Frequency(" << getBlockName(BB) << ") += ";
+          printBlockFreq(dbgs(), Freq) << " --> ";
+          printBlockFreq(dbgs(), Freqs[BB]) << "\n");
   }
 
   // All blocks in postorder.
@@ -194,7 +196,8 @@ class BlockFrequencyImpl {
     typename LoopExitProbMap::const_iterator I = LoopExitProb.find(BB);
     assert(I != LoopExitProb.end() && "Loop header missing from table");
     Freqs[BB] /= I->second;
-    DEBUG(dbgs() << "Loop header scaled to " << Freqs[BB] << ".\n");
+    DEBUG(dbgs() << "Loop header scaled to ";
+          printBlockFreq(dbgs(), Freqs[BB]) << ".\n");
   }
 
   /// doLoop - Propagate block frequency down through the loop.
@@ -256,8 +259,9 @@ class BlockFrequencyImpl {
     BranchProbability LEP = BranchProbability(N, D);
     LoopExitProb.insert(std::make_pair(Head, LEP));
     DEBUG(dbgs() << "LoopExitProb[" << getBlockName(Head) << "] = " << LEP
-                 << " from 1 - " << BackFreq << " / " << getBlockFreq(Head)
-                 << ".\n");
+          << " from 1 - ";
+          printBlockFreq(dbgs(), BackFreq) << " / ";
+          printBlockFreq(dbgs(), getBlockFreq(Head)) << ".\n");
   }
 
   friend class BlockFrequencyInfo;
@@ -328,14 +332,15 @@ public:
     OS << "\n\n---- Block Freqs ----\n";
     for (typename FunctionT::iterator I = Fn->begin(), E = Fn->end(); I != E;) {
       BlockT *BB = I++;
-      OS << " " << getBlockName(BB) << " = " << getBlockFreq(BB) << "\n";
+      OS << " " << getBlockName(BB) << " = ";
+      printBlockFreq(OS, getBlockFreq(BB)) << "\n";
 
       for (typename GraphTraits<BlockT *>::ChildIteratorType
            SI = GraphTraits<BlockT *>::child_begin(BB),
            SE = GraphTraits<BlockT *>::child_end(BB); SI != SE; ++SI) {
         BlockT *Succ = *SI;
         OS << "  " << getBlockName(BB) << " -> " << getBlockName(Succ)
-           << " = " << getEdgeFreq(BB, Succ) << "\n";
+           << " = "; printBlockFreq(OS, getEdgeFreq(BB, Succ)) << "\n";
       }
     }
   }
