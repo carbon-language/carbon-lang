@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "branch-prob"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -483,6 +484,8 @@ void BranchProbabilityInfo::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool BranchProbabilityInfo::runOnFunction(Function &F) {
+  DEBUG(dbgs() << "---- Branch Probability Info : " << F.getName()
+               << " ----\n\n");
   LastF = &F; // Store the last function we ran on for printing.
   LI = &getAnalysis<LoopInfo>();
   assert(PostDominatedByUnreachable.empty());
@@ -589,6 +592,13 @@ getEdgeWeight(const BasicBlock *Src, unsigned IndexInSuccessors) const {
     return I->second;
 
   return DEFAULT_WEIGHT;
+}
+
+uint32_t
+BranchProbabilityInfo::
+getEdgeWeight(const BasicBlock *Src, succ_const_iterator Dst) const {
+  size_t index = std::distance(succ_begin(Src), Dst);
+  return getEdgeWeight(Src, index);
 }
 
 /// Get the raw edge weight calculated for the block pair. This returns the sum
