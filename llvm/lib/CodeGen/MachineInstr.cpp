@@ -481,6 +481,10 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
   else
     WriteAsOperand(OS, MMO.getValue(), /*PrintType=*/false);
 
+  unsigned AS = MMO.getAddrSpace();
+  if (AS != 0)
+    OS << "(addrspace=" << AS << ')';
+
   // If the alignment of the memory reference itself differs from the alignment
   // of the base pointer, print the base alignment explicitly, next to the base
   // pointer.

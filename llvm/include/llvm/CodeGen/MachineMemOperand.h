@@ -134,6 +134,8 @@ public:
   /// number.
   int64_t getOffset() const { return PtrInfo.Offset; }
 
+  unsigned getAddrSpace() const { return PtrInfo.getAddrSpace(); }
+
   /// getSize - Return the size in bytes of the memory reference.
   uint64_t getSize() const { return Size; }
 
