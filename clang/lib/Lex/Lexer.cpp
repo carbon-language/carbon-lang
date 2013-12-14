@@ -2023,8 +2023,11 @@ bool Lexer::SkipLineComment(Token &Result, const char *CurPtr,
     if (C != 0) {
       // We found a newline, see if it's escaped.
       const char *EscapePtr = CurPtr-1;
-      while (isHorizontalWhitespace(*EscapePtr)) // Skip whitespace.
+      bool HasSpace = false;
+      while (isHorizontalWhitespace(*EscapePtr)) { // Skip whitespace.
         --EscapePtr;
+        HasSpace = true;
+      }
 
       if (*EscapePtr == '\\') // Escaped newline.
         CurPtr = EscapePtr;
@@ -2033,6 +2036,10 @@ bool Lexer::SkipLineComment(Token &Result, const char *CurPtr,
         CurPtr = EscapePtr-2;
       else
         break; // This is a newline, we're done.
+
+      // If there was space between the backslash and newline, warn about it.
+      if (HasSpace && !isLexingRawMode())
+        Diag(EscapePtr, diag::backslash_newline_space);
     }
 
     // Otherwise, this is a hard case.  Fall back on getAndAdvanceChar to
