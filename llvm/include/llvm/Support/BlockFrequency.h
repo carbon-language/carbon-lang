@@ -55,6 +55,9 @@ public:
   BlockFrequency &operator+=(const BlockFrequency &Freq);
   const BlockFrequency operator+(const BlockFrequency &Freq) const;
 
+  /// \brief Shift block frequency to the right by count digits saturating to 1.
+  BlockFrequency &operator>>=(const unsigned count);
+
   /// \brief Scale the given BlockFrequency by N/D. Return the remainder from
   /// the division by D. Upon overflow, the routine will saturate.
   uint32_t scale(const BranchProbability &Prob);

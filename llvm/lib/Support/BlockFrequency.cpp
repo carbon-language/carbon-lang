@@ -145,6 +145,18 @@ BlockFrequency::operator+(const BlockFrequency &Prob) const {
   return Freq;
 }
 
+BlockFrequency &BlockFrequency::operator>>=(const unsigned count) {
+  // Frequency can never be 0 by design.
+  assert(Frequency != 0);
+
+  // Shift right by count.
+  Frequency >>= count;
+
+  // Saturate to 1 if we are 0.
+  Frequency |= Frequency == 0;
+  return *this;
+}
+
 uint32_t BlockFrequency::scale(const BranchProbability &Prob) {
   return scale(Prob.getNumerator(), Prob.getDenominator());
 }

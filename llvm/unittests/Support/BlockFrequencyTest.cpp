@@ -237,4 +237,12 @@ TEST(BlockFrequencyTest, ProbabilityCompare) {
   EXPECT_FALSE(BigZero >= BigOne);
 }
 
+TEST(BlockFrequencyTest, SaturatingRightShift) {
+  BlockFrequency Freq(0x10080ULL);
+  Freq >>= 2;
+  EXPECT_EQ(Freq.getFrequency(), 0x4020ULL);
+  Freq >>= 20;
+  EXPECT_EQ(Freq.getFrequency(), 0x1ULL);
+}
+
 }
