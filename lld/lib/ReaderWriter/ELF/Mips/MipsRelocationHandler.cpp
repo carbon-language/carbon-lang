@@ -21,7 +21,7 @@ namespace {
 
 inline void applyReloc(uint8_t *location, uint32_t result) {
   auto target = reinterpret_cast<llvm::support::ulittle32_t *>(location);
-  *target = result | *target;
+  *target = result | uint32_t(*target);
 }
 
 /// \brief Calculate AHL value combines addends from 'hi' and 'lo' relocations.
