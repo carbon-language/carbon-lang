@@ -57,20 +57,20 @@ void Mips16FrameLowering::emitPrologue(MachineFunction &MF) const {
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
 
   if (CSI.size()) {
-  MCSymbol *CSLabel = MMI.getContext().CreateTempSymbol();
-  BuildMI(MBB, MBBI, dl,
-          TII.get(TargetOpcode::PROLOG_LABEL)).addSym(CSLabel);
+    MCSymbol *CSLabel = MMI.getContext().CreateTempSymbol();
+    BuildMI(MBB, MBBI, dl,
+            TII.get(TargetOpcode::PROLOG_LABEL)).addSym(CSLabel);
 
 
-  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+    const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
 
-  for (std::vector<CalleeSavedInfo>::const_iterator I = CSI.begin(),
+    for (std::vector<CalleeSavedInfo>::const_iterator I = CSI.begin(),
          E = CSI.end(); I != E; ++I) {
-    int64_t Offset = MFI->getObjectOffset(I->getFrameIdx());
-    unsigned Reg = I->getReg();
-    unsigned DReg = MRI->getDwarfRegNum(Reg, true);
-    MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, DReg, Offset));
-  }
+      int64_t Offset = MFI->getObjectOffset(I->getFrameIdx());
+      unsigned Reg = I->getReg();
+      unsigned DReg = MRI->getDwarfRegNum(Reg, true);
+      MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, DReg, Offset));
+    }
   }
   if (hasFP(MF))
     BuildMI(MBB, MBBI, dl, TII.get(Mips::MoveR3216), Mips::S0)
