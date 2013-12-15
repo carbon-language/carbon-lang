@@ -189,11 +189,17 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUString);
 
-  if ((TargetTriple.getTriple().find("eabi") != std::string::npos) ||
-      (isTargetIOS() && isMClass()))
-    // FIXME: We might want to separate AAPCS and EABI. Some systems, e.g.
-    // Darwin-EABI conforms to AACPS but not the rest of EABI.
+  switch (TargetTriple.getEnvironment()) {
+  case Triple::EABI:
+  case Triple::GNUEABI:
+  case Triple::GNUEABIHF:
     TargetABI = ARM_ABI_AAPCS;
+    break;
+  default:
+    if (isTargetIOS() && isMClass())
+      TargetABI = ARM_ABI_AAPCS;
+    break;
+  }
 
   if (isAAPCS_ABI())
     stackAlignment = 8;
