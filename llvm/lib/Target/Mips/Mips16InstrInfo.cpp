@@ -169,35 +169,59 @@ unsigned Mips16InstrInfo::getOppositeBranchOpc(unsigned Opc) const {
   return 0;
 }
 
+static void addSaveRestoreRegs(MachineInstrBuilder &MIB,
+                          const std::vector<CalleeSavedInfo> &CSI, unsigned Flags=0) {
+  if (CSI.size()==0) return;
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+    // Add the callee-saved register as live-in. Do not add if the register is
+    // RA and return address is taken, because it has already been added in
+    // method MipsTargetLowering::LowerRETURNADDR.
+    // It's killed at the spill, unless the register is RA and return address
+    // is taken.
+    unsigned Reg = CSI[e-i-1].getReg();
+    switch (Reg) {
+    case Mips::RA:
+    case Mips::S0:
+    case Mips::S1:
+      MIB.addReg(Reg, Flags);
+      break;
+    case Mips::S2:
+      break;
+    default:
+      llvm_unreachable("unexpected mips16 callee saved register");
+
+    }
+  }
+
+}
 // Adjust SP by FrameSize bytes. Save RA, S0, S1
 void Mips16InstrInfo::makeFrame(unsigned SP, int64_t FrameSize,
                     MachineBasicBlock &MBB,
                     MachineBasicBlock::iterator I) const {
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
-  const BitVector Reserved = RI.getReservedRegs(*MBB.getParent());
+  MachineFunction &MF = *MBB.getParent();
+  MachineFrameInfo *MFI    = MF.getFrameInfo();
+  const BitVector Reserved = RI.getReservedRegs(MF);
   bool SaveS2 = Reserved[Mips::S2];
   MachineInstrBuilder MIB;
   unsigned Opc = ((FrameSize <= 128) && !SaveS2)? Mips::Save16:Mips::SaveX16;
+  MIB = BuildMI(MBB, I, DL, get(Opc));
+  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+  addSaveRestoreRegs(MIB, CSI);
+  if (SaveS2)
+    MIB.addReg(Mips::S2);
   if (isUInt<11>(FrameSize))
-    MIB = BuildMI(
-            MBB, I, DL, get(Opc)).addReg(Mips::RA).
-            addReg(Mips::S0).
-            addReg(Mips::S1).addImm(FrameSize);
+    MIB.addImm(FrameSize);
   else {
     int Base = 2040; // should create template function like isUInt that
                      // returns largest possible n bit unsigned integer
     int64_t Remainder = FrameSize - Base;
-    MIB = BuildMI(
-            MBB, I, DL, get(Opc)).addReg(Mips::RA).
-            addReg(Mips::S0).
-            addReg(Mips::S1).addImm(Base);
+    MIB.addImm(Base);
     if (isInt<16>(-Remainder))
       BuildAddiuSpImm(MBB, I, -Remainder);
     else
       adjustStackPtrBig(SP, -Remainder, MBB, I, Mips::V0, Mips::V1);
   }
-  if (SaveS2)
-    MIB.addReg(Mips::S2);
 }
 
 // Adjust SP by FrameSize bytes. Restore RA, S0, S1
@@ -205,35 +229,31 @@ void Mips16InstrInfo::restoreFrame(unsigned SP, int64_t FrameSize,
                                    MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator I) const {
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
-  const BitVector Reserved = RI.getReservedRegs(*MBB.getParent());
+  MachineFunction *MF = MBB.getParent();
+  MachineFrameInfo *MFI    = MF->getFrameInfo();
+  const BitVector Reserved = RI.getReservedRegs(*MF);
   bool SaveS2 = Reserved[Mips::S2];
   MachineInstrBuilder MIB;
   unsigned Opc = ((FrameSize <= 128) && !SaveS2)?
     Mips::Restore16:Mips::RestoreX16;
-  if (isUInt<11>(FrameSize))
-    MIB = BuildMI(
-            MBB, I, DL, get(Opc)).
-            addReg(Mips::RA, RegState::Define).
-            addReg(Mips::S0, RegState::Define).
-            addReg(Mips::S1, RegState::Define).
-            addImm(FrameSize);
-  else {
-    int Base = 2040; // should create template function like isUInt that
-                     // returns largest possible n bit unsigned integer
+
+  if (!isUInt<11>(FrameSize)) {
+    unsigned Base = 2040;
     int64_t Remainder = FrameSize - Base;
+    FrameSize = Base; // should create template function like isUInt that
+                     // returns largest possible n bit unsigned integer
+
     if (isInt<16>(Remainder))
       BuildAddiuSpImm(MBB, I, Remainder);
     else
       adjustStackPtrBig(SP, Remainder, MBB, I, Mips::A0, Mips::A1);
-    MIB = BuildMI(
-            MBB, I, DL, get(Opc)).
-            addReg(Mips::RA, RegState::Define).
-            addReg(Mips::S0, RegState::Define).
-            addReg(Mips::S1, RegState::Define).
-            addImm(Base);
   }
+  MIB = BuildMI(MBB, I, DL, get(Opc));
+  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+  addSaveRestoreRegs(MIB, CSI, RegState::Define);
   if (SaveS2)
     MIB.addReg(Mips::S2, RegState::Define);
+  MIB.addImm(FrameSize);
 }
 
 // Adjust SP by Amount bytes where bytes can be up to 32bit number.

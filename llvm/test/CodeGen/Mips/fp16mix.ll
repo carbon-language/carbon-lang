@@ -17,7 +17,7 @@ entry:
 ; fmask1: .set	reorder
 ; fmask1: .end	foo1
 ; fmask2: .ent	foo1
-; fmask2: save	{{.*}}
+; fmask2: jrc $ra
 ; fmask2: .end	foo1
 ; fmask1nr: .ent foo1
 ; fmask1nr: .set	noreorder
@@ -42,10 +42,10 @@ entry:
 ; fmask2: .set	reorder
 ; fmask2: .end	foo2
 ; fmask1: .ent	foo2
-; fmask1: save	{{.*}}
+; fmask1: jrc $ra
 ; fmask1: .end	foo2
 ; fmask1nr: .ent	foo2
-; fmask1nr: save	{{.*}}
+; fmask1nr: jrc $ra
 ; fmask1nr: .end	foo2
 }
 
@@ -62,10 +62,10 @@ entry:
 ; fmask1: .set	reorder
 ; fmask1: .end	foo3
 ; fmask2:  .ent	foo3
-; fmask2:  save	{{.*}}
+; fmask2:  jrc $ra
 ; fmask2:  .end	foo3
 ; fmask1r:  .ent	foo3
-; fmask1r:  save	{{.*}}
+; fmask1r:  jrc $ra
 ; fmask1r:  .end	foo3
 }
 
@@ -82,10 +82,10 @@ entry:
 ; fmask2: .set	reorder
 ; fmask2: .end	foo4
 ; fmask1: .ent	foo4
-; fmask1: save	{{.*}}
+; fmask1: jrc $ra
 ; fmask1: .end	foo4
 ; fmask1nr: .ent	foo4
-; fmask1nr: save	{{.*}}
+; fmask1nr: jrc $ra
 ; fmask1nr: .end	foo4
 }
 

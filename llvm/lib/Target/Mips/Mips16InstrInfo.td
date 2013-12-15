@@ -1376,7 +1376,9 @@ def: Mips16Pat<
 let isCall=1, hasDelaySlot=0 in
 def JumpLinkReg16:
   FRR16_JALRC<0, 0, 0, (outs), (ins CPU16Regs:$rs),
-              "jalrc \t$rs", [(MipsJmpLink CPU16Regs:$rs)], IIBranch>;
+              "jalrc \t$rs", [(MipsJmpLink CPU16Regs:$rs)], IIBranch> {
+  let Defs = [RA];
+}
 
 // Mips16 pseudos
 let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1, hasCtrlDep=1,
@@ -1892,7 +1894,7 @@ def GotPrologue16:
   MipsPseudo16<
     (outs CPU16Regs:$rh, CPU16Regs:$rl),
     (ins simm16:$immHi, simm16:$immLo),
-    ".align 2\n\tli\t$rh, $immHi\n\taddiu\t$rl, $$pc, $immLo\n ",[]> ;
+    "\tli\t$rh, $immHi\n\taddiu\t$rl, $$pc, $immLo\n ",[]> ;
 
 // An operand for the CONSTPOOL_ENTRY pseudo-instruction.
 def cpinst_operand : Operand<i32> {

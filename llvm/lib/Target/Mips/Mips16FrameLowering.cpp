@@ -54,35 +54,24 @@ void Mips16FrameLowering::emitPrologue(MachineFunction &MF) const {
   MMI.addFrameInst(
       MCCFIInstruction::createDefCfaOffset(AdjustSPLabel, -StackSize));
 
+  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+
+  if (CSI.size()) {
   MCSymbol *CSLabel = MMI.getContext().CreateTempSymbol();
   BuildMI(MBB, MBBI, dl,
           TII.get(TargetOpcode::PROLOG_LABEL)).addSym(CSLabel);
 
 
-  const MipsRegisterInfo &RI = TII.getRegisterInfo();
-  const BitVector Reserved = RI.getReservedRegs(MF);
-  bool SaveS2 = Reserved[Mips::S2];
-  int Offset=-4;
-  unsigned RA = MRI->getDwarfRegNum(Mips::RA, true);
-  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, RA, Offset));
-  Offset -= 4;
+  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
 
-  if (SaveS2) {
-    unsigned S2 = MRI->getDwarfRegNum(Mips::S2, true);
-    MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S2, Offset));
-    Offset -= 4;
+  for (std::vector<CalleeSavedInfo>::const_iterator I = CSI.begin(),
+         E = CSI.end(); I != E; ++I) {
+    int64_t Offset = MFI->getObjectOffset(I->getFrameIdx());
+    unsigned Reg = I->getReg();
+    unsigned DReg = MRI->getDwarfRegNum(Reg, true);
+    MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, DReg, Offset));
   }
-
-
-  unsigned S1 = MRI->getDwarfRegNum(Mips::S1, true);
-  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S1, Offset));
-  Offset -= 4;
-
-  unsigned S0 = MRI->getDwarfRegNum(Mips::S0, true);
-  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S0, Offset));
-
-
-
+  }
   if (hasFP(MF))
     BuildMI(MBB, MBBI, dl, TII.get(Mips::MoveR3216), Mips::S0)
       .addReg(Mips::SP);
@@ -183,10 +172,15 @@ Mips16FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
 void Mips16FrameLowering::
 processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                      RegScavenger *RS) const {
-  MF.getRegInfo().setPhysRegUsed(Mips::RA);
-  MF.getRegInfo().setPhysRegUsed(Mips::S0);
-  MF.getRegInfo().setPhysRegUsed(Mips::S1);
-  MF.getRegInfo().setPhysRegUsed(Mips::S2);
+  const Mips16InstrInfo &TII =
+    *static_cast<const Mips16InstrInfo*>(MF.getTarget().getInstrInfo());
+  const MipsRegisterInfo &RI = TII.getRegisterInfo();
+  const BitVector Reserved = RI.getReservedRegs(MF);
+  bool SaveS2 = Reserved[Mips::S2];
+  if (SaveS2)
+    MF.getRegInfo().setPhysRegUsed(Mips::S2);
+  if (hasFP(MF))
+    MF.getRegInfo().setPhysRegUsed(Mips::S0);
 }
 
 const MipsFrameLowering *

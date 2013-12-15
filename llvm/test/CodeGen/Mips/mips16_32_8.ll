@@ -16,8 +16,7 @@ entry:
 
 ; 32: 	.set	mips16                  # @foo
 ; 32: 	.ent	foo
-; 32:	save	{{.+}}
-; 32:	restore	{{.+}} 
+; 32:	jrc $ra
 ; 32:	.end	foo
 
 define void @nofoo() #1 {

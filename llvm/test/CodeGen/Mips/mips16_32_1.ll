@@ -8,7 +8,6 @@ entry:
 
 ; CHECK: 	.set	mips16                  # @foo
 ; CHECK:	.ent	foo
-; CHECK:	save	{{.+}}
-; CHECK:	restore	{{.+}} 
+; CHECK:	jrc $ra
 ; CHECK:	.end	foo
 attributes #0 = { nounwind "less-precise-fpmad"="false" "mips16" "no-frame-pointer-elim"="false" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }

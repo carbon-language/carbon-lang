@@ -8,8 +8,7 @@ entry:
 
 ; 16: 	.set	mips16                  # @foo
 ; 16: 	.ent	foo
-; 16:	save	{{.+}}
-; 16:	restore	{{.+}} 
+; 16:	jrc $ra
 ; 16:	.end	foo
 ; 32: 	.set	nomips16                  # @foo
 ; 32: 	.ent	foo

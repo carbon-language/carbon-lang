@@ -25,7 +25,7 @@ entry:
   call void @p(i32* %arrayidx1)
   ret void
 }
-; 16:	save	$ra, $16, $17, 2040
-; 16:	addiu	$sp, -56 # 16 bit inst
-; 16:	addiu	$sp, 56 # 16 bit inst
-; 16:	restore	$ra,  $16, $17, 2040
+; 16:	save	$ra, 2040
+; 16:	addiu	$sp, -40 # 16 bit inst
+; 16:	addiu	$sp, 40 # 16 bit inst
+; 16:	restore	$ra, 2040

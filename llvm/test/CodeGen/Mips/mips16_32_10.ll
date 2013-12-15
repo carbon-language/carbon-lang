@@ -24,8 +24,7 @@ entry:
 ; 16: 	.set	mips16                  # @nofoo
 ; 16: 	.ent	nofoo
 
-; 16:	save	{{.+}}
-; 16:	restore	{{.+}} 
+; 16:	jrc $ra
 ; 16:	.end	nofoo
 
 define i32 @main() #2 {

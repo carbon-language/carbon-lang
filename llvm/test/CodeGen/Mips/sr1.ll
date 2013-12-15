@@ -1,6 +1,6 @@
-; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -relocation-model=static  < %s | FileCheck %s -check-prefix=NEG
-
 ; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -relocation-model=static  < %s | FileCheck %s 
+
+; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -relocation-model=static  < %s | FileCheck %s -check-prefix=NEG
 
 @f = common global float 0.000000e+00, align 4
 
@@ -14,8 +14,8 @@ entry:
   call void @x(i8* %arraydecay1)
   ret void
 ; CHECK: 	.ent	foo1
-; CHECK: 	save	$ra, $16, $17, [[FS:[0-9]+]] # 16 bit inst
-; CHECK: 	restore	$ra, $16, $17, [[FS]]
+; CHECK: 	save	$16, $17, $ra, [[FS:[0-9]+]]  # 16 bit inst
+; CHECK: 	restore	$16, $17, $ra, [[FS]] # 16 bit inst
 ; CHECK: 	.end	foo1
 }
 
@@ -31,13 +31,9 @@ entry:
   call void @x(i8* %arraydecay1)
   ret void
 ; CHECK: 	.ent	foo2
-; CHECK: 	save	$ra, $16, $17, [[FS:[0-9]+]]
-; CHECK: 	restore	$ra, $16, $17, [[FS]]
+; CHECK: 	save	$16, $17, $ra, [[FS:[0-9]+]] 
+; CHECK: 	restore	$16, $17, $ra, [[FS]] 
 ; CHECK: 	.end	foo2
-; NEG: 	.ent	foo2
-; NEG-NOT: 	save	$ra, $16, $17, [[FS:[0-9]+]]  # 16 bit inst
-; NEG-NOT: 	restore	$ra, $16, $17, [[FS]]  # 16 bit inst
-; NEG: 	.end	foo2
 }
 
 ; Function Attrs: nounwind
@@ -47,12 +43,12 @@ entry:
   store float %call, float* @f, align 4
   ret void
 ; CHECK: 	.ent	foo3
-; CHECK: 	save	$ra, $16, $17, [[FS:[0-9]+]], $18
-; CHECK: 	restore	$ra, $16, $17, [[FS]], $18
+; CHECK: 	save	$16, $17, $ra, $18, [[FS:[0-9]+]]
+; CHECK: 	restore	$16, $17, $ra, $18, [[FS]]
 ; CHECK: 	.end	foo3
 ; NEG: 	.ent	foo3
-; NEG-NOT: 	save	$ra, $16, $17, [[FS:[0-9]+]], $18  # 16 bit inst
-; NEG-NOT: 	restore	$ra, $16, $17, [[FS]], $18  # 16 bit inst
+; NEG-NOT: 	save	$16, $17, $ra, $18, [[FS:[0-9]+]] # 16 bit inst
+; NEG-NOT: 	restore	$16, $17, $ra, $18, [[FS]] # 16 bit inst
 ; NEG: 	.end	foo3
 }
 

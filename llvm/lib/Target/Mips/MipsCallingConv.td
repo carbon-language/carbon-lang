@@ -246,4 +246,6 @@ def CSR_N64 : CalleeSavedRegs<(add (sequence "D%u_64", 31, 24), RA_64, FP_64,
                                    GP_64, (sequence "S%u_64", 7, 0))>;
 
 def CSR_Mips16RetHelper :
-  CalleeSavedRegs<(add V0, V1, (sequence "A%u", 3, 0), S0, S1)>;
+  CalleeSavedRegs<(add V0, V1, FP,
+                   (sequence "A%u", 3, 0), (sequence "S%u", 7, 0),
+                   (sequence "D%u", 15, 10))>;

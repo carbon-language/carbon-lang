@@ -8,13 +8,11 @@ entry:
 
 ; 16: 	.set	mips16                  # @foo
 ; 16: 	.ent	foo
-; 16:	save	{{.+}}
-; 16:	restore	{{.+}} 
+; 16:	jrc $ra
 ; 16:	.end	foo
 ; 32: 	.set	mips16                  # @foo
 ; 32: 	.ent	foo
-; 32:	save	{{.+}}
-; 32:	restore	{{.+}} 
+; 32:	jrc $ra
 ; 32:	.end	foo
 define void @nofoo() #1 {
 entry:
@@ -50,8 +48,7 @@ entry:
 
 ; 16: 	.set	mips16                  # @main
 ; 16: 	.ent	main
-; 16:	save	{{.+}}
-; 16:	restore	{{.+}} 
+; 16:	jrc $ra
 ; 16:	.end	main
 ; 32: 	.set	nomips16                  # @main
 ; 32: 	.ent	main
