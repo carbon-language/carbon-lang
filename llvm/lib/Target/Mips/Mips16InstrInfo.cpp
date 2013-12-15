@@ -171,7 +171,6 @@ unsigned Mips16InstrInfo::getOppositeBranchOpc(unsigned Opc) const {
 
 static void addSaveRestoreRegs(MachineInstrBuilder &MIB,
                           const std::vector<CalleeSavedInfo> &CSI, unsigned Flags=0) {
-  if (CSI.size()==0) return;
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     // Add the callee-saved register as live-in. Do not add if the register is
     // RA and return address is taken, because it has already been added in
@@ -192,7 +191,6 @@ static void addSaveRestoreRegs(MachineInstrBuilder &MIB,
 
     }
   }
-
 }
 // Adjust SP by FrameSize bytes. Save RA, S0, S1
 void Mips16InstrInfo::makeFrame(unsigned SP, int64_t FrameSize,
