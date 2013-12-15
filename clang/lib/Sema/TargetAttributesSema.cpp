@@ -61,7 +61,7 @@ namespace {
     ARMAttributesSema() { }
     bool ProcessDeclAttribute(Scope *scope, Decl *D,
                               const AttributeList &Attr, Sema &S) const {
-      if (Attr.getKind() == AttributeList::AT_ARMInterrupt) {
+      if (Attr.getKind() == AttributeList::AT_Interrupt) {
         HandleARMInterruptAttr(D, Attr, S);
         return true;
       }
@@ -72,28 +72,39 @@ namespace {
 
 static void HandleMSP430InterruptAttr(Decl *d,
                                       const AttributeList &Attr, Sema &S) {
-    // FIXME: Check for decl - it should be void ()(void).
-
-    Expr *NumParamsExpr = static_cast<Expr *>(Attr.getArgAsExpr(0));
-    llvm::APSInt NumParams(32);
-    if (!NumParamsExpr->isIntegerConstantExpr(NumParams, S.Context)) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
-        << Attr.getName() << AANT_ArgumentIntegerConstant
-        << NumParamsExpr->getSourceRange();
-      return;
-    }
-
-    unsigned Num = NumParams.getLimitedValue(255);
-    if ((Num & 1) || Num > 30) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
-        << "interrupt" << (int)NumParams.getSExtValue()
-        << NumParamsExpr->getSourceRange();
-      return;
-    }
-
-    d->addAttr(::new (S.Context) MSP430InterruptAttr(Attr.getLoc(), S.Context, Num));
-    d->addAttr(::new (S.Context) UsedAttr(Attr.getLoc(), S.Context));
+  if (Attr.getNumArgs() != 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 1;
+    return;
   }
+
+  if (!Attr.isArgExpr(0)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type) << Attr.getName()
+      << AANT_ArgumentIntegerConstant;
+    return;
+  }
+
+  // FIXME: Check for decl - it should be void ()(void).
+  Expr *NumParamsExpr = Attr.getArgAsExpr(0);
+  llvm::APSInt NumParams(32);
+  if (!NumParamsExpr->isIntegerConstantExpr(NumParams, S.Context)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+      << Attr.getName() << AANT_ArgumentIntegerConstant
+      << NumParamsExpr->getSourceRange();
+    return;
+  }
+
+  unsigned Num = NumParams.getLimitedValue(255);
+  if ((Num & 1) || Num > 30) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
+      << "interrupt" << (int)NumParams.getSExtValue()
+      << NumParamsExpr->getSourceRange();
+    return;
+  }
+
+  d->addAttr(::new (S.Context) MSP430InterruptAttr(Attr.getLoc(), S.Context, Num));
+  d->addAttr(::new (S.Context) UsedAttr(Attr.getLoc(), S.Context));
+}
 
 namespace {
   class MSP430AttributesSema : public TargetAttributesSema {
@@ -101,9 +112,7 @@ namespace {
     MSP430AttributesSema() { }
     bool ProcessDeclAttribute(Scope *scope, Decl *D,
                               const AttributeList &Attr, Sema &S) const {
-      // Because this attribute has no spelling (see the FIXME in Attr.td as to
-      // why), we must check for the name instead of the attribute kind.
-      if (Attr.getName()->getName() == "interrupt") {
+      if (Attr.getKind() == AttributeList::AT_Interrupt) {
         HandleMSP430InterruptAttr(D, Attr, S);
         return true;
       }

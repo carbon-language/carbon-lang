@@ -187,7 +187,22 @@ class InheritableAttr : Attr;
 /// A target-specific attribute that is meant to be processed via
 /// TargetAttributesSema::ProcessDeclAttribute.  This class is meant to be used
 /// as a mixin with InheritableAttr or Attr depending on the attribute's needs.
-class TargetSpecificAttr;
+class TargetSpecificAttr {
+  // Attributes are generally required to have unique spellings for their names
+  // so that the parser can determine what kind of attribute it has parsed.
+  // However, target-specific attributes are special in that the attribute only
+  // "exists" for a given target. So two target-specific attributes can share
+  // the same name when they exist in different targets. To support this, a
+  // Kind can be explicitly specified for a target-specific attribute. This
+  // corresponds to the AttributeList::AT_* enum that is generated and it
+  // should contain a shared value between the attributes.
+  //
+  // Target-specific attributes which use this feature should ensure that the
+  // spellings match exactly betweeen the attributes, and if the arguments or
+  // subjects differ, should specify HasCustomParsing = 1 and implement their
+  // own parsing and semantic handling requirements as-needed.
+  string ParseKind;
+}
 
 /// An inheritable parameter attribute is inherited by later
 /// redeclarations, even when it's written on a parameter.
@@ -257,11 +272,15 @@ def Annotate : InheritableParamAttr {
 }
 
 def ARMInterrupt : InheritableAttr, TargetSpecificAttr {
+  // NOTE: If you add any additional spellings, MSP430Interrupt's spellings
+  // must match.
   let Spellings = [GNU<"interrupt">];
   let Args = [EnumArgument<"Interrupt", "InterruptType",
                            ["IRQ", "FIQ", "SWI", "ABORT", "UNDEF", ""],
                            ["IRQ", "FIQ", "SWI", "ABORT", "UNDEF", "Generic"],
                            1>];
+  let ParseKind = "Interrupt";
+  let HasCustomParsing = 1;
 }
 
 def AsmLabel : InheritableAttr {
@@ -522,13 +541,12 @@ def MSABI : InheritableAttr {
 }
 
 def MSP430Interrupt : InheritableAttr, TargetSpecificAttr {
-  // FIXME: this attribute is spelled the same as the ARMInterrupt attribute,
-  // but two attributes cannot currently share the same name because of the
-  // getAttrKind function. However, in this case, the attributes are for
-  // different targets, so sharing the same name but different arguments is a
-  // reasonable design. For now, this attribute will remain having no spelling.
-  let Spellings = [];
+  // NOTE: If you add any additional spellings, ARMInterrupt's spellings must
+  // match.
+  let Spellings = [GNU<"interrupt">];
   let Args = [UnsignedArgument<"Number">];
+  let ParseKind = "Interrupt";
+  let HasCustomParsing = 1;
 }
 
 def Mips16 : InheritableAttr, TargetSpecificAttr {
