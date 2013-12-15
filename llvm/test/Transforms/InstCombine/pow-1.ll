@@ -5,6 +5,7 @@
 ; RUN: opt -instcombine -S < %s -mtriple=arm-apple-ios7.0 | FileCheck %s --check-prefix=CHECK-EXP10
 ; RUN: opt -instcombine -S < %s -mtriple=x86_64-apple-macosx10.8 | FileCheck %s --check-prefix=CHECK-NO-EXP10
 ; RUN: opt -instcombine -S < %s -mtriple=arm-apple-ios6.0 | FileCheck %s --check-prefix=CHECK-NO-EXP10
+; RUN: opt -instcombine -S < %s -mtriple=x86_64-netbsd | FileCheck %s --check-prefix=CHECK-NO-EXP10
 ; rdar://7251832
 
 ; NOTE: The readonly attribute on the pow call should be preserved

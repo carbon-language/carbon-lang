@@ -426,6 +426,12 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
     }
   }
 
+  if (T.getOS() == Triple::NetBSD) {
+    TLI.setUnavailable(LibFunc::exp10l);
+    TLI.setUnavailable(LibFunc::exp10);
+    TLI.setUnavailable(LibFunc::exp10f);
+  }
+
   // iprintf and friends are only available on XCore and TCE.
   if (T.getArch() != Triple::xcore && T.getArch() != Triple::tce) {
     TLI.setUnavailable(LibFunc::iprintf);
