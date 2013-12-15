@@ -58,6 +58,24 @@ public:
   /// \brief allocate Commons, some architectures may move small common
   /// symbols over to small data, this would also be used
   void allocateCommons() {}
+
+  /// \brief create dynamic table
+  LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) createDynamicTable() {
+    return LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>)(
+        new (_alloc) DynamicTable<ELFT>(
+            this->_context, ".dynamic", DefaultLayout<ELFT>::ORDER_DYNAMIC));
+  }
+
+  /// \brief create dynamic symbol table
+  LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>) createDynamicSymbolTable() {
+    return LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>)(
+        new (_alloc) DynamicSymbolTable<ELFT>(
+            this->_context, ".dynsym",
+            DefaultLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS));
+  }
+
+private:
+  llvm::BumpPtrAllocator _alloc;
 };
 } // end namespace elf
 } // end namespace lld

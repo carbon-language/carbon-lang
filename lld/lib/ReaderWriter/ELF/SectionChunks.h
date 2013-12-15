@@ -607,19 +607,10 @@ template<class ELFT>
 class SymbolTable : public Section<ELFT> {
   typedef typename llvm::object::ELFDataTypeTypedefHelper<ELFT>::Elf_Addr
       Elf_Addr;
-  typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
-
-  struct SymbolEntry {
-    SymbolEntry(const Atom *a, const Elf_Sym &sym,
-                const lld::AtomLayout *layout)
-        : _atom(a), _atomLayout(layout), _symbol(sym) {}
-
-    const Atom *_atom;
-    const lld::AtomLayout *_atomLayout;
-    Elf_Sym _symbol;
-  };
 
 public:
+  typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
+
   SymbolTable(const ELFLinkingContext &context, const char *str, int32_t order);
 
   /// \brief set the number of entries that would exist in the symbol
@@ -628,6 +619,9 @@ public:
     if (_stringSection)
       _stringSection->setNumEntries(numEntries);
   }
+
+  /// \brief return number of entries
+  std::size_t size() const { return _symbolTable.size(); }
 
   void addSymbol(const Atom *atom, int32_t sectionIndex, uint64_t addr = 0,
                  const lld::AtomLayout *layout = nullptr);
@@ -669,6 +663,16 @@ public:
   StringTable<ELFT> *getStringTable() const { return _stringSection; }
 
 protected:
+  struct SymbolEntry {
+    SymbolEntry(const Atom *a, const Elf_Sym &sym,
+                const lld::AtomLayout *layout)
+        : _atom(a), _atomLayout(layout), _symbol(sym) {}
+
+    const Atom *_atom;
+    const lld::AtomLayout *_atomLayout;
+    Elf_Sym _symbol;
+  };
+
   llvm::BumpPtrAllocator _symbolAllocate;
   StringTable<ELFT> *_stringSection;
   std::vector<SymbolEntry> _symbolTable;
@@ -982,10 +986,10 @@ private:
 template <class ELFT> class HashSection;
 
 template <class ELFT> class DynamicTable : public Section<ELFT> {
+public:
   typedef llvm::object::Elf_Dyn_Impl<ELFT> Elf_Dyn;
   typedef std::vector<Elf_Dyn> EntriesT;
 
-public:
   DynamicTable(const ELFLinkingContext &context, StringRef str, int32_t order)
       : Section<ELFT>(context, str) {
     this->setOrder(order);
@@ -1020,7 +1024,7 @@ public:
     std::memcpy(dest, _entries.data(), this->_fsize);
   }
 
-  void createDefaultEntries() {
+  virtual void createDefaultEntries() {
     Elf_Dyn dyn;
     dyn.d_un.d_val = 0;
 
@@ -1074,9 +1078,13 @@ public:
     _dynamicSymbolTable = dynsym;
   }
 
+  const DynamicSymbolTable<ELFT> *getSymbolTable() const {
+    return _dynamicSymbolTable;
+  }
+
   void setHashTable(HashSection<ELFT> *hsh) { _hashTable = hsh; }
 
-  void updateDynamicTable() {
+  virtual void updateDynamicTable() {
     StringTable<ELFT> *dynamicStringTable =
         _dynamicSymbolTable->getStringTable();
     _entries[_dt_hash].d_un.d_val = _hashTable->virtualAddr();
@@ -1104,8 +1112,10 @@ public:
     }
   }
 
-private:
+protected:
   EntriesT _entries;
+
+private:
   std::size_t _dt_hash;
   std::size_t _dt_strtab;
   std::size_t _dt_symtab;

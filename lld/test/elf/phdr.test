@@ -92,7 +92,7 @@ I386-NEXT:     MemSize: 64
 I386-NEXT:     Flags [ (0x4)
 I386-NEXT:       PF_R (0x4)
 I386-NEXT:     ]
-I386-NEXT:     Alignment: 4
+I386-NEXT:     Alignment: 2
 I386-NEXT:   }
 
 X86_64: LOAD off    0x0000000000000000

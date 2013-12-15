@@ -20,6 +20,7 @@
 
 #include "lld/Core/LLVM.h"
 #include "lld/Core/LinkingContext.h"
+#include "lld/Core/STDExtras.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 
 #include "llvm/ADT/Hashing.h"
@@ -30,6 +31,8 @@
 
 namespace lld {
 namespace elf {
+template <class ELFT> class DynamicTable;
+template <class ELFT> class DynamicSymbolTable;
 template <class ELFT> class ELFDefinedAtom;
 template <class ELFT> class ELFReference;
 class ELFWriter;
@@ -117,8 +120,15 @@ public:
   /// symbols over to small data, this would also be used
   virtual void allocateCommons() = 0;
 
+  /// \brief create dynamic table
+  virtual LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) createDynamicTable() = 0;
+
+  /// \brief create dynamic symbol table
+  virtual LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>)
+  createDynamicSymbolTable() = 0;
+
 protected:
-  const ELFLinkingContext &_context;
+  ELFLinkingContext &_context;
 };
 } // end namespace elf
 } // end namespace lld

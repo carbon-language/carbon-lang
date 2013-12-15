@@ -67,6 +67,8 @@ uint16_t ELFLinkingContext::getOutputMachine() const {
     return llvm::ELF::EM_X86_64;
   case llvm::Triple::hexagon:
     return llvm::ELF::EM_HEXAGON;
+  case llvm::Triple::mipsel:
+    return llvm::ELF::EM_MIPS;
   case llvm::Triple::ppc:
     return llvm::ELF::EM_PPC;
   default:
@@ -124,6 +126,9 @@ ELFLinkingContext::create(llvm::Triple triple) {
   case llvm::Triple::hexagon:
     return std::unique_ptr<ELFLinkingContext>(
         new lld::elf::HexagonLinkingContext(triple));
+  case llvm::Triple::mipsel:
+    return std::unique_ptr<ELFLinkingContext>(
+        new lld::elf::MipsLinkingContext(triple));
   case llvm::Triple::ppc:
     return std::unique_ptr<ELFLinkingContext>(
         new lld::elf::PPCLinkingContext(triple));
