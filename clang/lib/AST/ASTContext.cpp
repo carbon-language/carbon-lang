@@ -857,45 +857,49 @@ void ASTContext::PrintStats() const {
   BumpAlloc.PrintStats();
 }
 
+/// CreateRecordDecl - Utility to build implicit CXXRecordDecl or RecordDecl
+/// instances.
+static RecordDecl *CreateRecordDecl(const ASTContext &Ctx,
+                                    RecordDecl::TagKind TK, DeclContext *DC,
+                                    IdentifierInfo *Id) {
+  SourceLocation Loc;
+  RecordDecl *NewDecl;
+  if (Ctx.getLangOpts().CPlusPlus)
+    NewDecl = CXXRecordDecl::Create(Ctx, TK, DC, Loc, Loc, Id);
+  else
+    NewDecl = RecordDecl::Create(Ctx, TK, DC, Loc, Loc, Id);
+  NewDecl->setImplicit();
+  return NewDecl;
+}
+
+TypedefDecl *ASTContext::buildImplicitTypedef(QualType T,
+                                              StringRef Name) const {
+  TypeSourceInfo *TInfo = getTrivialTypeSourceInfo(T);
+  TypedefDecl *NewDecl = TypedefDecl::Create(
+      const_cast<ASTContext &>(*this), getTranslationUnitDecl(),
+      SourceLocation(), SourceLocation(), &Idents.get(Name), TInfo);
+  NewDecl->setImplicit();
+  return NewDecl;
+}
+
 TypedefDecl *ASTContext::getInt128Decl() const {
-  if (!Int128Decl) {
-    TypeSourceInfo *TInfo = getTrivialTypeSourceInfo(Int128Ty);
-    Int128Decl = TypedefDecl::Create(const_cast<ASTContext &>(*this), 
-                                     getTranslationUnitDecl(),
-                                     SourceLocation(),
-                                     SourceLocation(),
-                                     &Idents.get("__int128_t"),
-                                     TInfo);
-  }
-  
+  if (!Int128Decl)
+    Int128Decl = buildImplicitTypedef(Int128Ty, "__int128_t");
   return Int128Decl;
 }
 
 TypedefDecl *ASTContext::getUInt128Decl() const {
-  if (!UInt128Decl) {
-    TypeSourceInfo *TInfo = getTrivialTypeSourceInfo(UnsignedInt128Ty);
-    UInt128Decl = TypedefDecl::Create(const_cast<ASTContext &>(*this), 
-                                     getTranslationUnitDecl(),
-                                     SourceLocation(),
-                                     SourceLocation(),
-                                     &Idents.get("__uint128_t"),
-                                     TInfo);
-  }
-  
+  if (!UInt128Decl)
+    UInt128Decl = buildImplicitTypedef(UnsignedInt128Ty, "__uint128_t");
   return UInt128Decl;
 }
 
 TypeDecl *ASTContext::getFloat128StubType() const {
   assert(LangOpts.CPlusPlus && "should only be called for c++");
-  if (!Float128StubDecl) {
-    Float128StubDecl = CXXRecordDecl::Create(const_cast<ASTContext &>(*this), 
-                                             TTK_Struct,
-                                             getTranslationUnitDecl(),
-                                             SourceLocation(),
-                                             SourceLocation(),
-                                             &Idents.get("__float128"));
-  }
-  
+  if (!Float128StubDecl)
+    Float128StubDecl = CreateRecordDecl(
+        *this, TTK_Struct, getTranslationUnitDecl(), &Idents.get("__float128"));
+
   return Float128StubDecl;
 }
 
@@ -4557,16 +4561,6 @@ int ASTContext::getIntegerTypeOrder(QualType LHS, QualType RHS) const {
   return 1;
 }
 
-static RecordDecl *
-CreateRecordDecl(const ASTContext &Ctx, RecordDecl::TagKind TK,
-                 DeclContext *DC, IdentifierInfo *Id) {
-  SourceLocation Loc;
-  if (Ctx.getLangOpts().CPlusPlus)
-    return CXXRecordDecl::Create(Ctx, TK, DC, Loc, Loc, Id);
-  else
-    return RecordDecl::Create(Ctx, TK, DC, Loc, Loc, Id);
-}
-
 // getCFConstantStringType - Return the type used for constant CFStrings.
 QualType ASTContext::getCFConstantStringType() const {
   if (!CFConstantStringTypeDecl) {
@@ -4769,12 +4763,8 @@ bool ASTContext::getByrefLifetime(QualType Ty,
 
 TypedefDecl *ASTContext::getObjCInstanceTypeDecl() {
   if (!ObjCInstanceTypeDecl)
-    ObjCInstanceTypeDecl = TypedefDecl::Create(*this, 
-                                               getTranslationUnitDecl(),
-                                               SourceLocation(), 
-                                               SourceLocation(),
-                                               &Idents.get("instancetype"), 
-                                     getTrivialTypeSourceInfo(getObjCIdType()));
+    ObjCInstanceTypeDecl =
+        buildImplicitTypedef(getObjCIdType(), "instancetype");
   return ObjCInstanceTypeDecl;
 }
 
@@ -5760,24 +5750,15 @@ TypedefDecl *ASTContext::getObjCIdDecl() const {
   if (!ObjCIdDecl) {
     QualType T = getObjCObjectType(ObjCBuiltinIdTy, 0, 0);
     T = getObjCObjectPointerType(T);
-    TypeSourceInfo *IdInfo = getTrivialTypeSourceInfo(T);
-    ObjCIdDecl = TypedefDecl::Create(const_cast<ASTContext &>(*this),
-                                     getTranslationUnitDecl(),
-                                     SourceLocation(), SourceLocation(),
-                                     &Idents.get("id"), IdInfo);
+    ObjCIdDecl = buildImplicitTypedef(T, "id");
   }
-  
   return ObjCIdDecl;
 }
 
 TypedefDecl *ASTContext::getObjCSelDecl() const {
   if (!ObjCSelDecl) {
-    QualType SelT = getPointerType(ObjCBuiltinSelTy);
-    TypeSourceInfo *SelInfo = getTrivialTypeSourceInfo(SelT);
-    ObjCSelDecl = TypedefDecl::Create(const_cast<ASTContext &>(*this),
-                                      getTranslationUnitDecl(),
-                                      SourceLocation(), SourceLocation(),
-                                      &Idents.get("SEL"), SelInfo);
+    QualType T = getPointerType(ObjCBuiltinSelTy);
+    ObjCSelDecl = buildImplicitTypedef(T, "SEL");
   }
   return ObjCSelDecl;
 }
@@ -5786,13 +5767,8 @@ TypedefDecl *ASTContext::getObjCClassDecl() const {
   if (!ObjCClassDecl) {
     QualType T = getObjCObjectType(ObjCBuiltinClassTy, 0, 0);
     T = getObjCObjectPointerType(T);
-    TypeSourceInfo *ClassInfo = getTrivialTypeSourceInfo(T);
-    ObjCClassDecl = TypedefDecl::Create(const_cast<ASTContext &>(*this),
-                                        getTranslationUnitDecl(),
-                                        SourceLocation(), SourceLocation(),
-                                        &Idents.get("Class"), ClassInfo);
+    ObjCClassDecl = buildImplicitTypedef(T, "Class");
   }
-  
   return ObjCClassDecl;
 }
 
@@ -5815,37 +5791,22 @@ ObjCInterfaceDecl *ASTContext::getObjCProtocolDecl() const {
 
 static TypedefDecl *CreateCharPtrBuiltinVaListDecl(const ASTContext *Context) {
   // typedef char* __builtin_va_list;
-  QualType CharPtrType = Context->getPointerType(Context->CharTy);
-  TypeSourceInfo *TInfo
-    = Context->getTrivialTypeSourceInfo(CharPtrType);
-
-  TypedefDecl *VaListTypeDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          TInfo);
-  return VaListTypeDecl;
+  QualType T = Context->getPointerType(Context->CharTy);
+  return Context->buildImplicitTypedef(T, "__builtin_va_list");
 }
 
 static TypedefDecl *CreateVoidPtrBuiltinVaListDecl(const ASTContext *Context) {
   // typedef void* __builtin_va_list;
-  QualType VoidPtrType = Context->getPointerType(Context->VoidTy);
-  TypeSourceInfo *TInfo
-    = Context->getTrivialTypeSourceInfo(VoidPtrType);
-
-  TypedefDecl *VaListTypeDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          TInfo);
-  return VaListTypeDecl;
+  QualType T = Context->getPointerType(Context->VoidTy);
+  return Context->buildImplicitTypedef(T, "__builtin_va_list");
 }
 
 static TypedefDecl *
 CreateAArch64ABIBuiltinVaListDecl(const ASTContext *Context) {
-  RecordDecl *VaListTagDecl;
+  // struct __va_list
+  RecordDecl *VaListTagDecl =
+      CreateRecordDecl(*Context, TTK_Struct, Context->getTranslationUnitDecl(),
+                       &Context->Idents.get("__va_list"));
   if (Context->getLangOpts().CPlusPlus) {
     // namespace std { struct __va_list {
     NamespaceDecl *NS;
@@ -5854,17 +5815,8 @@ CreateAArch64ABIBuiltinVaListDecl(const ASTContext *Context) {
                                /*Inline*/false, SourceLocation(),
                                SourceLocation(), &Context->Idents.get("std"),
                                /*PrevDecl*/0);
-
-    VaListTagDecl = CXXRecordDecl::Create(*Context, TTK_Struct,
-                                          Context->getTranslationUnitDecl(),
-                                          SourceLocation(), SourceLocation(),
-                                          &Context->Idents.get("__va_list"));
+    NS->setImplicit();
     VaListTagDecl->setDeclContext(NS);
-  } else {
-    // struct __va_list
-    VaListTagDecl = CreateRecordDecl(*Context, TTK_Struct,
-                                   Context->getTranslationUnitDecl(),
-                                   &Context->Idents.get("__va_list"));
   }
 
   VaListTagDecl->startDefinition();
@@ -5912,14 +5864,7 @@ CreateAArch64ABIBuiltinVaListDecl(const ASTContext *Context) {
   Context->VaListTagTy = VaListTagType;
 
   // } __builtin_va_list;
-  TypedefDecl *VaListTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          Context->getTrivialTypeSourceInfo(VaListTagType));
-
-  return VaListTypedefDecl;
+  return Context->buildImplicitTypedef(VaListTagType, "__builtin_va_list");
 }
 
 static TypedefDecl *CreatePowerABIBuiltinVaListDecl(const ASTContext *Context) {
@@ -5973,12 +5918,9 @@ static TypedefDecl *CreatePowerABIBuiltinVaListDecl(const ASTContext *Context) {
   Context->VaListTagTy = VaListTagType;
 
   // } __va_list_tag;
-  TypedefDecl *VaListTagTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__va_list_tag"),
-                          Context->getTrivialTypeSourceInfo(VaListTagType));
+  TypedefDecl *VaListTagTypedefDecl =
+      Context->buildImplicitTypedef(VaListTagType, "__va_list_tag");
+
   QualType VaListTagTypedefType =
     Context->getTypedefType(VaListTagTypedefDecl);
 
@@ -5987,16 +5929,7 @@ static TypedefDecl *CreatePowerABIBuiltinVaListDecl(const ASTContext *Context) {
   QualType VaListTagArrayType
     = Context->getConstantArrayType(VaListTagTypedefType,
                                     Size, ArrayType::Normal, 0);
-  TypeSourceInfo *TInfo
-    = Context->getTrivialTypeSourceInfo(VaListTagArrayType);
-  TypedefDecl *VaListTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          TInfo);
-
-  return VaListTypedefDecl;
+  return Context->buildImplicitTypedef(VaListTagArrayType, "__builtin_va_list");
 }
 
 static TypedefDecl *
@@ -6047,12 +5980,9 @@ CreateX86_64ABIBuiltinVaListDecl(const ASTContext *Context) {
   Context->VaListTagTy = VaListTagType;
 
   // } __va_list_tag;
-  TypedefDecl *VaListTagTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__va_list_tag"),
-                          Context->getTrivialTypeSourceInfo(VaListTagType));
+  TypedefDecl *VaListTagTypedefDecl =
+      Context->buildImplicitTypedef(VaListTagType, "__va_list_tag");
+
   QualType VaListTagTypedefType =
     Context->getTypedefType(VaListTagTypedefDecl);
 
@@ -6061,16 +5991,7 @@ CreateX86_64ABIBuiltinVaListDecl(const ASTContext *Context) {
   QualType VaListTagArrayType
     = Context->getConstantArrayType(VaListTagTypedefType,
                                       Size, ArrayType::Normal,0);
-  TypeSourceInfo *TInfo
-    = Context->getTrivialTypeSourceInfo(VaListTagArrayType);
-  TypedefDecl *VaListTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          TInfo);
-
-  return VaListTypedefDecl;
+  return Context->buildImplicitTypedef(VaListTagArrayType, "__builtin_va_list");
 }
 
 static TypedefDecl *CreatePNaClABIBuiltinVaListDecl(const ASTContext *Context) {
@@ -6079,19 +6000,15 @@ static TypedefDecl *CreatePNaClABIBuiltinVaListDecl(const ASTContext *Context) {
   QualType IntArrayType
     = Context->getConstantArrayType(Context->IntTy,
 				    Size, ArrayType::Normal, 0);
-  TypedefDecl *VaListTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          Context->getTrivialTypeSourceInfo(IntArrayType));
-
-  return VaListTypedefDecl;
+  return Context->buildImplicitTypedef(IntArrayType, "__builtin_va_list");
 }
 
 static TypedefDecl *
 CreateAAPCSABIBuiltinVaListDecl(const ASTContext *Context) {
-  RecordDecl *VaListDecl;
+  // struct __va_list
+  RecordDecl *VaListDecl =
+      CreateRecordDecl(*Context, TTK_Struct, Context->getTranslationUnitDecl(),
+                       &Context->Idents.get("__va_list"));
   if (Context->getLangOpts().CPlusPlus) {
     // namespace std { struct __va_list {
     NamespaceDecl *NS;
@@ -6100,19 +6017,8 @@ CreateAAPCSABIBuiltinVaListDecl(const ASTContext *Context) {
                                /*Inline*/false, SourceLocation(),
                                SourceLocation(), &Context->Idents.get("std"),
                                /*PrevDecl*/0);
-
-    VaListDecl = CXXRecordDecl::Create(*Context, TTK_Struct,
-                                       Context->getTranslationUnitDecl(),
-                                       SourceLocation(), SourceLocation(),
-                                       &Context->Idents.get("__va_list"));
-
+    NS->setImplicit();
     VaListDecl->setDeclContext(NS);
-
-  } else {
-    // struct __va_list {
-    VaListDecl = CreateRecordDecl(*Context, TTK_Struct,
-                                  Context->getTranslationUnitDecl(),
-                                  &Context->Idents.get("__va_list"));
   }
 
   VaListDecl->startDefinition();
@@ -6135,17 +6041,8 @@ CreateAAPCSABIBuiltinVaListDecl(const ASTContext *Context) {
   VaListDecl->completeDefinition();
 
   // typedef struct __va_list __builtin_va_list;
-  TypeSourceInfo *TInfo
-    = Context->getTrivialTypeSourceInfo(Context->getRecordType(VaListDecl));
-
-  TypedefDecl *VaListTypeDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          TInfo);
-
-  return VaListTypeDecl;
+  QualType T = Context->getRecordType(VaListDecl);
+  return Context->buildImplicitTypedef(T, "__builtin_va_list");
 }
 
 static TypedefDecl *
@@ -6196,12 +6093,8 @@ CreateSystemZBuiltinVaListDecl(const ASTContext *Context) {
   Context->VaListTagTy = VaListTagType;
 
   // } __va_list_tag;
-  TypedefDecl *VaListTagTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__va_list_tag"),
-                          Context->getTrivialTypeSourceInfo(VaListTagType));
+  TypedefDecl *VaListTagTypedefDecl =
+      Context->buildImplicitTypedef(VaListTagType, "__va_list_tag");
   QualType VaListTagTypedefType =
     Context->getTypedefType(VaListTagTypedefDecl);
 
@@ -6210,16 +6103,8 @@ CreateSystemZBuiltinVaListDecl(const ASTContext *Context) {
   QualType VaListTagArrayType
     = Context->getConstantArrayType(VaListTagTypedefType,
                                       Size, ArrayType::Normal,0);
-  TypeSourceInfo *TInfo
-    = Context->getTrivialTypeSourceInfo(VaListTagArrayType);
-  TypedefDecl *VaListTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          TInfo);
 
-  return VaListTypedefDecl;
+  return Context->buildImplicitTypedef(VaListTagArrayType, "__builtin_va_list");
 }
 
 static TypedefDecl *CreateVaListDecl(const ASTContext *Context,
@@ -6247,8 +6132,10 @@ static TypedefDecl *CreateVaListDecl(const ASTContext *Context,
 }
 
 TypedefDecl *ASTContext::getBuiltinVaListDecl() const {
-  if (!BuiltinVaListDecl)
+  if (!BuiltinVaListDecl) {
     BuiltinVaListDecl = CreateVaListDecl(this, Target->getBuiltinVaListKind());
+    assert(BuiltinVaListDecl->isImplicit());
+  }
 
   return BuiltinVaListDecl;
 }

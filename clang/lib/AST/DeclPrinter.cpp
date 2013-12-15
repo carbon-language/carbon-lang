@@ -238,17 +238,6 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
     if (D->isImplicit())
       continue;
 
-    // FIXME: Ugly hack so we don't pretty-print the builtin declaration
-    // of __builtin_va_list or __[u]int128_t.  There should be some other way
-    // to check that.
-    if (NamedDecl *ND = dyn_cast<NamedDecl>(*D)) {
-      if (IdentifierInfo *II = ND->getIdentifier()) {
-        if (II->isStr("__builtin_va_list") ||
-            II->isStr("__int128_t") || II->isStr("__uint128_t"))
-          continue;
-      }
-    }
-
     // The next bits of code handles stuff like "struct {int x;} a,b"; we're
     // forced to merge the declarations because there's no other way to
     // refer to the struct in question.  This limited merging is safe without

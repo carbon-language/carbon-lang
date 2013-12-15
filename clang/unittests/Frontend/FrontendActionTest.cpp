@@ -76,10 +76,9 @@ TEST(ASTFrontendAction, Sanity) {
 
   TestASTFrontendAction test_action;
   ASSERT_TRUE(compiler.ExecuteAction(test_action));
-  ASSERT_EQ(3U, test_action.decl_names.size());
-  EXPECT_EQ("__builtin_va_list", test_action.decl_names[0]);
-  EXPECT_EQ("main", test_action.decl_names[1]);
-  EXPECT_EQ("x", test_action.decl_names[2]);
+  ASSERT_EQ(2U, test_action.decl_names.size());
+  EXPECT_EQ("main", test_action.decl_names[0]);
+  EXPECT_EQ("x", test_action.decl_names[1]);
 }
 
 TEST(ASTFrontendAction, IncrementalParsing) {
@@ -96,10 +95,9 @@ TEST(ASTFrontendAction, IncrementalParsing) {
 
   TestASTFrontendAction test_action(/*enableIncrementalProcessing=*/true);
   ASSERT_TRUE(compiler.ExecuteAction(test_action));
-  ASSERT_EQ(3U, test_action.decl_names.size());
-  EXPECT_EQ("__builtin_va_list", test_action.decl_names[0]);
-  EXPECT_EQ("main", test_action.decl_names[1]);
-  EXPECT_EQ("x", test_action.decl_names[2]);
+  ASSERT_EQ(2U, test_action.decl_names.size());
+  EXPECT_EQ("main", test_action.decl_names[0]);
+  EXPECT_EQ("x", test_action.decl_names[1]);
 }
 
 } // anonymous namespace
