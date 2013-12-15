@@ -1894,7 +1894,7 @@ def GotPrologue16:
   MipsPseudo16<
     (outs CPU16Regs:$rh, CPU16Regs:$rl),
     (ins simm16:$immHi, simm16:$immLo),
-    "\tli\t$rh, $immHi\n\taddiu\t$rl, $$pc, $immLo\n ",[]> ;
+    "li\t$rh, $immHi\n\taddiu\t$rl, $$pc, $immLo\n ",[]> ;
 
 // An operand for the CONSTPOOL_ENTRY pseudo-instruction.
 def cpinst_operand : Operand<i32> {
