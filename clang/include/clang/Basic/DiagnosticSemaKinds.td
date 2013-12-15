@@ -551,8 +551,6 @@ def err_inconsistent_ivar_count : Error<
   "inconsistent number of instance variables specified">;
 def warn_undef_method_impl : Warning<"method definition for %0 not found">,
   InGroup<DiagGroup<"incomplete-implementation">>;
-def note_required_for_protocol_at : 
-  Note<"required for direct or indirect protocol %0">;
 
 def warn_conflicting_overriding_ret_types : Warning<
   "conflicting return type in "
