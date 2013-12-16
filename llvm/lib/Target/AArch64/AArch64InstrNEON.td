@@ -4382,11 +4382,14 @@ class Neon_Scalar2SameMisc_cmpz_D_V1_size_patterns<CondCode CC,
         (INSTD FPR64:$Rn, neon_uimm0:$Imm)>;
 
 multiclass Neon_Scalar2SameMisc_cmpz_SD_size_patterns<SDPatternOperator opnode,
+                                                      CondCode CC,
                                                       Instruction INSTS,
                                                       Instruction INSTD> {
   def : Pat<(v1i32 (opnode (f32 FPR32:$Rn), (f32 fpz32:$FPImm))),
             (INSTS FPR32:$Rn, fpz32:$FPImm)>;
   def : Pat<(v1i64 (opnode (f64 FPR64:$Rn), (f32 fpz32:$FPImm))),
+            (INSTD FPR64:$Rn, fpz32:$FPImm)>;
+  def : Pat<(v1i64 (Neon_cmpz (v1f64 FPR64:$Rn), (f32 fpz32:$FPImm), CC)),
             (INSTD FPR64:$Rn, fpz32:$FPImm)>;
 }
 
@@ -4888,7 +4891,9 @@ multiclass Neon_Scalar3Same_MULX_SD_size_patterns<SDPatternOperator opnode,
 }
 
 defm : Neon_Scalar3Same_MULX_SD_size_patterns<int_aarch64_neon_vmulx,
-                                              FMULXsss,FMULXddd>;
+                                              FMULXsss, FMULXddd>;
+def : Pat<(v1f64 (int_aarch64_neon_vmulx (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
+          (FMULXddd FPR64:$Rn, FPR64:$Rm)>;
 
 // Scalar Integer Shift Left (Signed, Unsigned)
 def SSHLddd : NeonI_Scalar3Same_D_size<0b0, 0b01000, "sshl">;
@@ -5157,10 +5162,8 @@ def : Neon_Scalar3Same_cmp_V1_D_size_patterns<SETEQ, FCMEQddd>;
 
 // Scalar Floating-point Compare Mask Equal To Zero
 defm FCMEQZ: NeonI_Scalar2SameMisc_cmpz_SD_size<0b0, 0b01101, "fcmeq">;
-defm : Neon_Scalar2SameMisc_cmpz_SD_size_patterns<int_aarch64_neon_fceq,
+defm : Neon_Scalar2SameMisc_cmpz_SD_size_patterns<int_aarch64_neon_fceq, SETEQ,
                                                   FCMEQZssi, FCMEQZddi>;
-def : Pat<(v1i64 (Neon_cmpz (v1f64 FPR64:$Rn), (f32 fpz32:$FPImm), SETEQ)),
-          (FCMEQZddi FPR64:$Rn, fpz32:$FPImm)>;
 
 // Scalar Floating-point Compare Mask Greater Than Or Equal
 defm FCMGE: NeonI_Scalar3Same_SD_sizes<0b1, 0b0, 0b11100, "fcmge">;
@@ -5170,7 +5173,7 @@ def : Neon_Scalar3Same_cmp_V1_D_size_patterns<SETGE, FCMGEddd>;
 
 // Scalar Floating-point Compare Mask Greater Than Or Equal To Zero
 defm FCMGEZ: NeonI_Scalar2SameMisc_cmpz_SD_size<0b1, 0b01100, "fcmge">;
-defm : Neon_Scalar2SameMisc_cmpz_SD_size_patterns<int_aarch64_neon_fcge,
+defm : Neon_Scalar2SameMisc_cmpz_SD_size_patterns<int_aarch64_neon_fcge, SETGE,
                                                   FCMGEZssi, FCMGEZddi>;
 
 // Scalar Floating-point Compare Mask Greather Than
@@ -5181,17 +5184,17 @@ def : Neon_Scalar3Same_cmp_V1_D_size_patterns<SETGT, FCMGTddd>;
 
 // Scalar Floating-point Compare Mask Greather Than Zero
 defm FCMGTZ: NeonI_Scalar2SameMisc_cmpz_SD_size<0b0, 0b01100, "fcmgt">;
-defm : Neon_Scalar2SameMisc_cmpz_SD_size_patterns<int_aarch64_neon_fcgt,
+defm : Neon_Scalar2SameMisc_cmpz_SD_size_patterns<int_aarch64_neon_fcgt, SETGT,
                                                   FCMGTZssi, FCMGTZddi>;
 
 // Scalar Floating-point Compare Mask Less Than Or Equal To Zero
 defm FCMLEZ: NeonI_Scalar2SameMisc_cmpz_SD_size<0b1, 0b01101, "fcmle">;
-defm : Neon_Scalar2SameMisc_cmpz_SD_size_patterns<int_aarch64_neon_fclez,
+defm : Neon_Scalar2SameMisc_cmpz_SD_size_patterns<int_aarch64_neon_fclez, SETLE,
                                                   FCMLEZssi, FCMLEZddi>;
 
 // Scalar Floating-point Compare Mask Less Than Zero
 defm FCMLTZ: NeonI_Scalar2SameMisc_cmpz_SD_size<0b0, 0b01110, "fcmlt">;
-defm : Neon_Scalar2SameMisc_cmpz_SD_size_patterns<int_aarch64_neon_fcltz,
+defm : Neon_Scalar2SameMisc_cmpz_SD_size_patterns<int_aarch64_neon_fcltz, SETLT,
                                                   FCMLTZssi, FCMLTZddi>;
 
 // Scalar Floating-point Absolute Compare Mask Greater Than Or Equal
