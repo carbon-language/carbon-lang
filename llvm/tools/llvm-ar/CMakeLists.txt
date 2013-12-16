@@ -15,10 +15,10 @@ if(UNIX)
   set(llvm_ar_binary "llvm-ar${CMAKE_EXECUTABLE_SUFFIX}")
 else()
   set(LLVM_LINK_OR_COPY copy)
-  set(llvm_ar_binary "${LLVM_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/llvm-ar${CMAKE_EXECUTABLE_SUFFIX}")
+  set(llvm_ar_binary "${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-ar${CMAKE_EXECUTABLE_SUFFIX}")
 endif()
 
-set(llvm_ranlib "${LLVM_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/llvm-ranlib${CMAKE_EXECUTABLE_SUFFIX}")
+set(llvm_ranlib "${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-ranlib${CMAKE_EXECUTABLE_SUFFIX}")
 add_custom_command(TARGET llvm-ar POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E ${LLVM_LINK_OR_COPY} "${llvm_ar_binary}" "${llvm_ranlib}")
 
