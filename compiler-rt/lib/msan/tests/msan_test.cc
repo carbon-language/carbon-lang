@@ -1067,7 +1067,6 @@ TEST(MemorySanitizer, gethostbyname_r_bad_host_name) {
   struct hostent *result;
   int err;
   int res = gethostbyname_r("bad-host-name", &he, buf, sizeof(buf), &result, &err);
-  ASSERT_EQ(0, res);
   ASSERT_EQ((struct hostent *)0, result);
   EXPECT_NOT_POISONED(err);
 }
