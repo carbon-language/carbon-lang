@@ -3075,6 +3075,7 @@ public:
     case llvm::Triple::Android:
     case llvm::Triple::EABI:
     case llvm::Triple::GNUEABI:
+    case llvm::Triple::GNUEABIHF:
       return true;
     default:
       return false;
