@@ -3048,7 +3048,7 @@ public:
     WCharType = UnsignedShort;
     DoubleAlign = LongLongAlign = 64;
     DescriptionString = "e-p:32:32:32-"
-                        "i64:64:64-f80:128:128-"
+                        "i64:64:64-"
                         "f80:32:32-n8:16:32-S32";
   }
   virtual void getTargetDefines(const LangOptions &Opts,
