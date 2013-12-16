@@ -1,22 +1,22 @@
 // RUN: %clang_cc1 -triple i686-unknown-unknown -emit-llvm -o - %s | \
 // RUN:     FileCheck --check-prefix=I686-UNKNOWN %s
-// I686-UNKNOWN: target datalayout = "e-p:32:32:32-f64:32:64-a:0:64-f80:32:32-n8:16:32-S128"
+// I686-UNKNOWN: target datalayout = "e-p:32:32:32-f64:32:64-f80:32:32-n8:16:32-S128"
 
 // RUN: %clang_cc1 -triple i686-apple-darwin9 -emit-llvm -o - %s | \
 // RUN:     FileCheck --check-prefix=I686-DARWIN %s
-// I686-DARWIN: target datalayout = "e-p:32:32:32-f64:32:64-a:0:64-f80:128:128-n8:16:32-S128"
+// I686-DARWIN: target datalayout = "e-p:32:32:32-f64:32:64-f80:128:128-n8:16:32-S128"
 
 // RUN: %clang_cc1 -triple i686-unknown-win32 -emit-llvm -o - %s | \
 // RUN:     FileCheck --check-prefix=I686-WIN32 %s
-// I686-WIN32: target datalayout = "e-p:32:32:32-i64:64:64-f80:128:128-a:0:64-f80:32:32-n8:16:32-S32"
+// I686-WIN32: target datalayout = "e-p:32:32:32-i64:64:64-f80:128:128-f80:32:32-n8:16:32-S32"
 
 // RUN: %clang_cc1 -triple i686-unknown-cygwin -emit-llvm -o - %s | \
 // RUN:     FileCheck --check-prefix=I686-CYGWIN %s
-// I686-CYGWIN: target datalayout = "e-p:32:32:32-i64:64:64-a:0:64-f80:32:32-n8:16:32-S32"
+// I686-CYGWIN: target datalayout = "e-p:32:32:32-i64:64:64-f80:32:32-n8:16:32-S32"
 
 // RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s | \
 // RUN:     FileCheck --check-prefix=X86_64 %s
-// X86_64: target datalayout = "e-p:64:64:64-i64:64:64-a:0:64-s:64:64-f80:128:128-n8:16:32:64-S128"
+// X86_64: target datalayout = "e-p:64:64:64-i64:64:64-s:64:64-f80:128:128-n8:16:32:64-S128"
 
 // RUN: %clang_cc1 -triple xcore-unknown-unknown -emit-llvm -o - %s | \
 // RUN:     FileCheck --check-prefix=XCORE %s
@@ -114,7 +114,7 @@
 
 // RUN: %clang_cc1 -triple arm-unknown -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=ARM
-// ARM: target datalayout = "e-p:32:32:32-i64:64:64-v128:64:128-a:0:64-n32-S64"
+// ARM: target datalayout = "e-p:32:32:32-i64:64:64-v128:64:128-n32-S64"
 
 // RUN: %clang_cc1 -triple thumb-unknown -o - -emit-llvm -target-abi apcs-gnu \
 // RUN: %s | FileCheck %s -check-prefix=THUMB-GNU
